@@ -392,6 +392,14 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
       if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
       rtn = (unsigned int)  *((unsigned char **)addr->off);
       type2 = addr->type->un.pointer.pointsto;
+
+      if (!type2)
+      {
+        def_format = "Internal symbol error: unable to access memory location 0x%08x";
+        rtn = 0;
+        break;
+      }
+
       if( type2->type == DT_BASIC && type2->un.basic.basic_size == 1 )
 	{
 	  def_format = "\"%s\"";
