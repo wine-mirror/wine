@@ -495,7 +495,7 @@ static RMCB *DPMI_AllocRMCB( void )
    the DPMI 0.9 spec states that if it doesn't, it will be called again */
 	*p++ = 0xeb;
 	*p++ = 0xfc; /* jmp RMCB */
-#else
+#elif defined(__i386__)
 	LPVOID RMCBmem = DOSMEM_GetBlock(0, 15, &uParagraph);
 	LPBYTE p = RMCBmem;
 
@@ -508,6 +508,8 @@ static RMCB *DPMI_AllocRMCB( void )
 	*(WORD *)p = __get_cs();
 	p+=2;
 	*p++=0xc3; /* lret (FIXME?) */
+#else
+	uParagraph = 0;
 #endif
 	NewRMCB->address = MAKELONG(0, uParagraph);
 	NewRMCB->next = FirstRMCB;

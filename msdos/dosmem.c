@@ -174,13 +174,14 @@ static void DOSMEM_FillBiosSegments(void)
     BIOSDATA *pBiosData = (BIOSDATA *)GlobalLock16( DOSMEM_BiosDataSeg );
 
     /* bogus 0xe0xx addresses !! Adapt int 0x10/0x1b if change needed */
-    BYTE *pVideoStaticFuncTable = pBiosSys+0xe000;
-    BYTE *pVideoStateInfo = pBiosSys+0xe010;
-    BYTE *p;
+    VIDEOFUNCTIONALITY *pVidFunc = (VIDEOFUNCTIONALITY *)(pBiosSys+0xe000);
+    VIDEOSTATE *pVidState = (VIDEOSTATE *)(pBiosSys+0xe010);
     int i;
 
       /* Clear all unused values */
     memset( pBiosData, 0, sizeof(*pBiosData) );
+    memset( pVidFunc,  0, sizeof(*pVidFunc ) );
+    memset( pVidState, 0, sizeof(*pVidState) );
 
     /* FIXME: should check the number of configured drives and ports */
 
@@ -210,7 +211,8 @@ static void DOSMEM_FillBiosSegments(void)
     pBiosData->DiskDataRate         = 0;
 
     /* fill ROM configuration table (values from Award) */
-    *(WORD *)(pBiosROMTable)= 0x08; /* number of bytes following */
+    *(pBiosROMTable+0x0)	= 0x08; /* number of bytes following LO */
+    *(pBiosROMTable+0x1)	= 0x00; /* number of bytes following HI */
     *(pBiosROMTable+0x2)	= 0xfc; /* model */
     *(pBiosROMTable+0x3)	= 0x01; /* submodel */
     *(pBiosROMTable+0x4)	= 0x00; /* BIOS revision */
@@ -220,59 +222,46 @@ static void DOSMEM_FillBiosSegments(void)
     *(pBiosROMTable+0x8)	= 0x00; /* feature byte 4 */
     *(pBiosROMTable+0x9)	= 0x00; /* feature byte 5 */
 
-    p = pVideoStaticFuncTable;
-    for (i=0; i < 7; i++)
-      *(p+i)  = 0xff; /* modes supported 1 to 7 */
     
-    *(p+0x7)  = 7;                  /* scan lines supported */
-    *(p+0x8)  = 0;                  /* tot nr of char blocks in text mode */
-    *(p+0x9)  = 0;                  /* max nr of active char blocks in text */
-    *(WORD *)(p+0xa) = 0x8ff;       /* misc support flags */
-    *(WORD *)(p+0xc) = 0;           /* reserved */
-    *(p+0xe)  = 0x3f;               /* save pointer function flags */  
-    *(p+0xf)  = 0;                  /* reserved */
+    for (i = 0; i < 7; i++)
+        pVidFunc->ModeSupport[i] = 0xff;
+    
+    pVidFunc->ScanlineSupport     = 7;
+    pVidFunc->NumberCharBlocks    = 0;
+    pVidFunc->ActiveCharBlocks    = 0;
+    pVidFunc->MiscFlags           = 0x8ff;
+    pVidFunc->SavePointerFlags    = 0x3f;
 
-    p = pVideoStateInfo;
-    *(DWORD *)p = 0xf000e000;       /* address of pVideoStaticFuncTable, FIXME: always real mode ? */
-    *(p+0x04) =                     /* current video mode, needs updates ! */
-      pBiosData->VideoMode;
-    *(WORD *)(p+0x05) =             /* number of columns, needs updates ! */
-      pBiosData->VideoColumns;
-    *(WORD *)(p+0x07) = 0;          /* length of regen (???) buffer in bytes */
-    *(WORD *)(p+0x09) = 0;          /* starting address of regen (?) buffer */
-    *(WORD *)(p+0x0b) = 0;          /* cursorpos page 0 */
-    *(WORD *)(p+0x0d) = 0;          /* cursorpos page 1 */
-    *(WORD *)(p+0x0f) = 0;          /* page 2 */
-    *(WORD *)(p+0x11) = 0;          /* page 3 */
-    *(WORD *)(p+0x13) = 0;          /* page 4 */
-    *(WORD *)(p+0x15) = 0;          /* page 5 */
-    *(WORD *)(p+0x17) = 0;          /* page 6 */
-    *(WORD *)(p+0x19) = 0;          /* page 7 */
-    *(WORD *)(p+0x1b) = 0x0a0b;     /* cursor size (start/end line) */
-    *(p+0x1d) = 0;                  /* active display page */
-    *(WORD *)(p+0x1e) = 0x3da;      /* CRTC port address */
-    *(p+0x20) = 0x0;                /* current setting of port 0x3x8 */
-    *(p+0x21) = 0x0;                /* current setting of port 0x3x9 */
-    *(p+0x22) = 23;                 /* number of rows - 1 */
-    *(WORD *)(p+0x23) = 0x10;       /* bytes/character */
-    *(p+0x25) =                     /* comb. of active display */
-      pBiosData->DisplayCombination;
-    *(p+0x26) = 0;                  /* DCC (???) of alternate display */
-    *(WORD *)(p+0x27) = 16;         /* number of colors in current mode */
-    *(p+0x29) = 1;                  /* number of pages in current mode */
-    *(p+0x2a) = 3;                  /* number of scan lines active */
-                                    /* (0,1,2,3) =  (200,350,400,480) */
-    *(p+0x2b) = 0;                  /* primary character block (?) */
-    *(p+0x2c) = 0;                  /* secondary character block (?) */
-    *(p+0x2d) =                     /* miscellaneous flags */
-        (pBiosData->VGASettings & 0x0f)
-      | ((pBiosData->ModeOptions & 1) << 4); /* cursor emulation */
-    *(p+0x2e) = 0;                  /* non-VGA mode support */
-    *(WORD *)(p+0x2f) = 0;          /* reserved */
-    *(p+0x31) =                     /* video memory available */
-      (pBiosData->ModeOptions & 0x60 >> 5);
-    *(p+0x32) = 0;                  /* save pointer state flags */
-    *(p+0x33) = 4;                  /* display info and status */
+    pVidState->StaticFuncTable    = 0xf000e000;  /* FIXME: always real mode ? */
+    pVidState->VideoMode          = pBiosData->VideoMode; /* needs updates! */
+    pVidState->NumberColumns      = pBiosData->VideoColumns; /* needs updates! */
+    pVidState->RegenBufLen        = 0;
+    pVidState->RegenBufAddr       = 0;
+
+    for (i = 0; i < 8; i++)
+        pVidState->CursorPos[i] = 0;
+
+    pVidState->CursorType         = 0x0a0b;  /* start/end line */
+    pVidState->ActivePage         = 0;
+    pVidState->CRTCPort           = 0x3da;
+    pVidState->Port3x8            = 0;
+    pVidState->Port3x9            = 0;
+    pVidState->NumberRows         = 23;     /* number of rows - 1 */
+    pVidState->BytesPerChar       = 0x10;
+    pVidState->DCCActive          = pBiosData->DisplayCombination;
+    pVidState->DCCAlternate       = 0;
+    pVidState->NumberColors       = 16;
+    pVidState->NumberPages        = 1;
+    pVidState->NumberScanlines    = 3; /* (0,1,2,3) = (200,350,400,480) */
+    pVidState->CharBlockPrimary   = 0;
+    pVidState->CharBlockSecondary = 0;
+    pVidState->MiscFlags =
+                           (pBiosData->VGASettings & 0x0f)
+                         | ((pBiosData->ModeOptions & 1) << 4); /* cursor emulation */
+    pVidState->NonVGASupport      = 0;
+    pVidState->VideoMem           = (pBiosData->ModeOptions & 0x60 >> 5);
+    pVidState->SavePointerState   = 0;
+    pVidState->DisplayStatus      = 4;
 
     /* BIOS date string */
     strcpy((char *)pBiosSys+0xfff5, "13/01/99");

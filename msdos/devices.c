@@ -15,12 +15,11 @@
 #include "pshpack1.h"
 
 typedef struct {
-  DOS_DEVICE_HEADER hdr;
   BYTE ljmp1;
   RMCBPROC strategy;
   BYTE ljmp2;
   RMCBPROC interrupt;
-} WINEDEV;
+} WINEDEV_THUNK;
 
 typedef struct {
   BYTE size; /* length of header + data */
@@ -46,12 +45,10 @@ typedef struct {
 
 #include "poppack.h"
 
-#define REQ_SCRATCH sizeof(REQ_IO)
+#define CON_BUFFER 128
 
 #define SYSTEM_STRATEGY_NUL 0x0100
 #define SYSTEM_STRATEGY_CON 0x0101
-
-DWORD DOS_LOLSeg;
 
 #define NONEXT ((DWORD)-1)
 
@@ -94,10 +91,6 @@ DWORD DOS_LOLSeg;
 
 #define LJMP 0xea
 
-#define DEV0_OFS (sizeof(DOS_LISTOFLISTS) - sizeof(DOS_DEVICE_HEADER))
-#define DEV1_OFS (DEV0_OFS + sizeof(WINEDEV))
-#define ALLDEV_OFS (DEV1_OFS + sizeof(devs))
-#define ALL_OFS (ALLDEV_OFS + REQ_SCRATCH)
 
 /* prototypes */
 static void WINAPI nul_strategy(CONTEXT86*ctx);
@@ -105,27 +98,44 @@ static void WINAPI nul_interrupt(CONTEXT86*ctx);
 static void WINAPI con_strategy(CONTEXT86*ctx);
 static void WINAPI con_interrupt(CONTEXT86*ctx);
 
-/* the device headers */
-#define STRATEGY_OFS sizeof(DOS_DEVICE_HEADER)
-#define INTERRUPT_OFS STRATEGY_OFS+5
-
-static DOS_DEVICE_HEADER dev_nul_hdr={
- NONEXT,
- ATTR_CHAR|ATTR_NUL|ATTR_DEVICE,
- STRATEGY_OFS,INTERRUPT_OFS,
- "NUL     "
-};
-
-static WINEDEV devs[]={
+/* devices */
+typedef struct 
 {
- {NONEXT,
-  ATTR_CHAR|ATTR_STDIN|ATTR_STDOUT|ATTR_FASTCON|ATTR_NOTEOF|ATTR_DEVICE,
-  STRATEGY_OFS,INTERRUPT_OFS,
-  "CON     "},
- LJMP,con_strategy,
- LJMP,con_interrupt}
+    char name[8];
+    WORD attr;
+    RMCBPROC strategy;
+    RMCBPROC interrupt;
+    
+} WINEDEV;
+
+static WINEDEV devs[] = 
+{
+  { "NUL     ",
+    ATTR_CHAR|ATTR_NUL|ATTR_DEVICE,
+    nul_strategy, nul_interrupt },
+
+  { "CON     ",
+    ATTR_CHAR|ATTR_STDIN|ATTR_STDOUT|ATTR_FASTCON|ATTR_NOTEOF|ATTR_DEVICE,
+    con_strategy, con_interrupt }
 };
-#define nr_devs (sizeof(devs)/sizeof(WINEDEV))
+
+#define NR_DEVS (sizeof(devs)/sizeof(WINEDEV))
+
+/* DOS data segment */
+typedef struct
+{
+    DOS_LISTOFLISTS    lol;
+    DOS_DEVICE_HEADER  dev[NR_DEVS-1];
+    WINEDEV_THUNK      thunk[NR_DEVS];
+    REQ_IO             req;
+    BYTE               buffer[CON_BUFFER];
+
+} DOS_DATASEG;
+
+#define DOS_DATASEG_OFF(xxx) FIELD_OFFSET(DOS_DATASEG, xxx)
+
+DWORD DOS_LOLSeg;
+
 
 /* the device implementations */
 static void do_lret(CONTEXT86*ctx)
@@ -182,8 +192,6 @@ static void WINAPI nul_interrupt(CONTEXT86*ctx)
   do_lret(ctx);
 }
 
-#define CON_BUFFER 128
-
 static void WINAPI con_strategy(CONTEXT86*ctx)
 {
   do_strategy(ctx, SYSTEM_STRATEGY_CON, sizeof(int));
@@ -196,10 +204,11 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
   BIOSDATA *bios = DOSMEM_BiosData();
   WORD CurOfs = bios->NextKbdCharPtr;
   DOS_LISTOFLISTS *lol = DOSMEM_LOL();
-  BYTE *linebuffer = ((BYTE*)lol) + ALL_OFS;
+  DOS_DATASEG *dataseg = (DOS_DATASEG *)lol;
+  BYTE *linebuffer = dataseg->buffer;
   BYTE *curbuffer = (lol->offs_unread_CON) ?
-    (((BYTE*)lol) + lol->offs_unread_CON) : (BYTE*)NULL;
-  DOS_DEVICE_HEADER *con = (DOS_DEVICE_HEADER*)(((BYTE*)lol) + DEV1_OFS);
+    (((BYTE*)dataseg) + lol->offs_unread_CON) : (BYTE*)NULL;
+  DOS_DEVICE_HEADER *con = dataseg->dev;
   LPDOSTASK lpDosTask = MZ_Current();
 
   switch (hdr->command) {
@@ -429,50 +438,47 @@ Output of DOS 6.22:
 
 void DOSDEV_InstallDOSDevices(void)
 {
-  WINEDEV *dev;
-  DOS_DEVICE_HEADER *pdev;
+  DOS_DATASEG *dataseg;
   UINT16 seg;
   int n;
-  WORD ofs = DEV0_OFS;
-  DOS_LISTOFLISTS *DOS_LOL;
 
   /* allocate DOS data segment or something */
-  DOS_LOLSeg = GlobalDOSAlloc16(ALL_OFS+CON_BUFFER);
+  DOS_LOLSeg = GlobalDOSAlloc16(sizeof(DOS_DATASEG));
   seg = HIWORD(DOS_LOLSeg);
-  DOS_LOL = PTR_SEG_OFF_TO_LIN(LOWORD(DOS_LOLSeg), 0);
+  dataseg = PTR_SEG_OFF_TO_LIN(LOWORD(DOS_LOLSeg), 0);
 
   /* initialize the magnificent List Of Lists */
-  InitListOfLists(DOS_LOL);
+  InitListOfLists(&dataseg->lol);
 
-  /* copy first device (NUL) */
-  pdev = &(DOS_LOL->NUL_dev);
-  memcpy(pdev,&dev_nul_hdr,sizeof(DOS_DEVICE_HEADER));
-  pdev->strategy += ofs;
-  pdev->interrupt += ofs;
-  /* set up dev so we can copy over the rest */
-  dev = (WINEDEV*)(((char*)DOS_LOL)+ofs);
-  dev[0].ljmp1 = LJMP;
-  dev[0].strategy = (RMCBPROC)DPMI_AllocInternalRMCB(nul_strategy);
-  dev[0].ljmp2 = LJMP;
-  dev[0].interrupt = (RMCBPROC)DPMI_AllocInternalRMCB(nul_interrupt);
+  /* Set up first device (NUL) */
+  dataseg->lol.NUL_dev.next_dev  = PTR_SEG_OFF_TO_SEGPTR(seg, DOS_DATASEG_OFF(dev[0]));
+  dataseg->lol.NUL_dev.attr      = devs[0].attr;
+  dataseg->lol.NUL_dev.strategy  = DOS_DATASEG_OFF(thunk[0].ljmp1);
+  dataseg->lol.NUL_dev.interrupt = DOS_DATASEG_OFF(thunk[0].ljmp2);
+  memcpy(dataseg->lol.NUL_dev.name, devs[0].name, 8);
 
-  dev++;
-  ofs += sizeof(WINEDEV);
-
-  /* first of remaining devices is CON */
-  DOS_LOL->ptr_CON_dev_hdr = PTR_SEG_OFF_TO_SEGPTR(seg, ofs);
-
-  /* copy remaining devices */
-  memcpy(dev,&devs,sizeof(devs));
-  for (n=0; n<nr_devs; n++) {
-    pdev->next_dev = PTR_SEG_OFF_TO_SEGPTR(seg, ofs);
-    dev[n].hdr.strategy += ofs;
-    dev[n].hdr.interrupt += ofs;
-    dev[n].strategy = (RMCBPROC)DPMI_AllocInternalRMCB(dev[n].strategy);
-    dev[n].interrupt = (RMCBPROC)DPMI_AllocInternalRMCB(dev[n].interrupt);
-    ofs += sizeof(WINEDEV);
-    pdev = &(dev[n].hdr);
+  /* Set up the remaining devices */
+  for (n = 1; n < NR_DEVS; n++)
+  {
+    dataseg->dev[n-1].next_dev  = (n+1) == NR_DEVS ? NONEXT :
+                                  PTR_SEG_OFF_TO_SEGPTR(seg, DOS_DATASEG_OFF(dev[n]));
+    dataseg->dev[n-1].attr      = devs[n].attr;
+    dataseg->dev[n-1].strategy  = DOS_DATASEG_OFF(thunk[n].ljmp1);
+    dataseg->dev[n-1].interrupt = DOS_DATASEG_OFF(thunk[n].ljmp2);
+    memcpy(dataseg->dev[n-1].name, devs[n].name, 8);
   }
+
+  /* Set up thunks */
+  for (n = 0; n < NR_DEVS; n++)
+  {
+    dataseg->thunk[n].ljmp1     = LJMP;
+    dataseg->thunk[n].strategy  = (RMCBPROC)DPMI_AllocInternalRMCB(devs[n].strategy);
+    dataseg->thunk[n].ljmp2     = LJMP;
+    dataseg->thunk[n].interrupt = (RMCBPROC)DPMI_AllocInternalRMCB(devs[n].interrupt);
+  }
+
+  /* CON is device 1 */
+  dataseg->lol.ptr_CON_dev_hdr = PTR_SEG_OFF_TO_SEGPTR(seg, DOS_DATASEG_OFF(dev[0]));
 }
 
 DWORD DOSDEV_Console(void)
@@ -513,7 +519,7 @@ static void DOSDEV_DoReq(void*req, DWORD dev)
   char *phdr;
 
   dhdr = DOSMEM_MapRealToLinear(dev);
-  phdr = ((char*)DOSMEM_LOL()) + ALLDEV_OFS;
+  phdr = ((char*)DOSMEM_LOL()) + DOS_DATASEG_OFF(req);
 
   /* copy request to request scratch area */
   memcpy(phdr, req, hdr->size);
@@ -523,7 +529,7 @@ static void DOSDEV_DoReq(void*req, DWORD dev)
 
   /* ES:BX points to request for strategy routine */
   ES_reg(&ctx)  = HIWORD(DOS_LOLSeg);
-  EBX_reg(&ctx) = ALLDEV_OFS;
+  EBX_reg(&ctx) = DOS_DATASEG_OFF(req);
 
   /* call strategy routine */
   CS_reg(&ctx) = SELECTOROF(dev);

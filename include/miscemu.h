@@ -74,6 +74,51 @@ typedef struct
     BYTE  DiskDataRate;              /* 8B: Last disk data rate selected */
 } BIOSDATA;
 
+typedef struct
+{
+    DWORD StaticFuncTable;           /* 00: static functionality table */
+    BYTE  VideoMode;                 /* 04: video mode in effect */
+    WORD  NumberColumns;             /* 05: number of columns */
+    WORD  RegenBufLen;               /* 07: length of regen buffer in bytes */
+    WORD  RegenBufAddr;              /* 09: starting address of regen buffer */
+    WORD  CursorPos[8];              /* 0B: cursor position for page 0..7 */
+    WORD  CursorType;                /* 1B: cursor "type" (start/stop scan lines) */
+    BYTE  ActivePage;                /* 1D: active display page */
+    WORD  CRTCPort;                  /* 1E: CRTC port address */
+    BYTE  Port3x8;                   /* 20: current setting of PORT 03x8h */
+    BYTE  Port3x9;                   /* 21: current setting of PORT 03x9h */
+    BYTE  NumberRows;                /* 22: number of rows - 1 */
+    WORD  BytesPerChar;              /* 23: bytes/character */
+    BYTE  DCCActive;                 /* 25: display combination code of active display */
+    BYTE  DCCAlternate;              /* 26: DCC of alternate display */
+    WORD  NumberColors;              /* 27: number of colors supported in current mode (0000h = mono) */
+    BYTE  NumberPages;               /* 29: number of pages supported in current mode */
+    BYTE  NumberScanlines;           /* 2A: number of scan lines active */
+    BYTE  CharBlockPrimary;          /* 2B: primary character block */
+    BYTE  CharBlockSecondary;        /* 2C: secondary character block */
+    BYTE  MiscFlags;                 /* 2D: miscellaneous flags */
+    BYTE  NonVGASupport;             /* 2E: non-VGA mode support */
+    BYTE  _reserved1[2];             /* 2F: */
+    BYTE  VideoMem;                  /* 31: video memory available */
+    BYTE  SavePointerState;          /* 32: save pointer state flags */
+    BYTE  DisplayStatus;             /* 33: display information and status */
+    BYTE  _reserved2[12];            /* 34: */
+
+} VIDEOSTATE;
+
+typedef struct
+{
+    BYTE  ModeSupport[7];           /* 00: modes supported 1..7 */
+    BYTE  ScanlineSupport;          /* 07: scan lines supported */
+    BYTE  NumberCharBlocks;         /* 08: total number of character blocks */
+    BYTE  ActiveCharBlocks;         /* 09: max. number of active character blocks */
+    WORD  MiscFlags;                /* 0A: miscellaneous function support flags */
+    WORD  _reserved1;               /* 0C: */
+    BYTE  SavePointerFlags;         /* 0E: save pointer function flags */
+    BYTE  _reserved2;               /* OF: */
+
+} VIDEOFUNCTIONALITY;
+
 #include "poppack.h"
 
 extern HANDLE16 DOSMEM_BiosDataSeg;
