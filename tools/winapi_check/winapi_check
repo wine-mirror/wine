@@ -180,8 +180,7 @@ my %type_found = ();
 
 foreach my $file (@c_files) {
     my %functions = ();
-    my @includes = ();
-    my %needed_includes = ();
+    my %includes = ();
 
     my $file_module16 = $modules->allowed_modules_in_file("$current_dir/$file");
     my $file_module32 = $modules->allowed_modules_in_file("$current_dir/$file");
@@ -241,8 +240,14 @@ foreach my $file (@c_files) {
 	    }
 	}
 
-	if(defined($declared_function)) {
-	    $needed_includes{$declared_function->file}++;
+	if($options->headers_needed && defined($declared_function)) {
+	    my $needed_include = $declared_function->file;
+
+	    if(!defined($includes{$needed_include})) {
+		my $header = $needed_include;
+		$header =~ s%^(include|$file_dir)/%%;
+		$output->write("prototype not included: #include \"$header\" is needed\n");
+	    }
 	}
 
 	if(1) {
@@ -399,20 +404,28 @@ foreach my $file (@c_files) {
 		}
 
 		if(defined($header)) {
+		    my $include;
 		    if(-e "$wine_dir/include/$header") {
-			push @includes, "include/$header";
+			$include = "include/$header";
 		    } elsif(-e "$file_dir/$header") {
-			push @includes, "$file_dir/$header";
+			$include = "$file_dir/$header";
 		    } elsif(-e "$file_dir/../$header") {
 			if($file_dir =~ m%^(.*?)/[^/]+$%) {
-			    push @includes, "$1/$header";
+			    $include = "$1/$header";
 			} else {
-			    push @includes, "$header";
+			    $include = "$header";
 			}
 		    } elsif($header eq "controls.h") { # FIXME: Kludge
-			push @includes, "dlls/user/controls.h";
+			$include = "dlls/user/controls.h";
 		    } elsif($check_local) {
 			$output->write("$file: #include \"$header\": file not found\n");
+		    }
+
+		    if(defined($include)) {
+			$includes{$include}++;
+			foreach my $include (keys(%{$include2info{$include}{includes}})) {
+			    $includes{$include}++;
+			}
 		    }
 		}
 
@@ -494,28 +507,6 @@ foreach my $file (@c_files) {
 	    $output->write("$file: include2info config.h but do not use any conditionals\n");
 	}
     }
-
-    if($options->headers_needed) {
-	my %includes2;
-	foreach my $include (@includes) {
-	    $includes2{$include}++;
-	    foreach my $include (keys(%{$include2info{$include}{includes}})) {
-		$includes2{$include}++;
-	    }
-	}
-	foreach my $needed_include (sort(keys(%needed_includes))) {
-	    my $found = 0;
-	    foreach my $include (sort(keys(%includes2))) {
-		if($needed_include eq $include) {
-		    $found = 1;
-		}
-	    }
-	    if(!$found) {
-		$output->write("$file: file '$needed_include' needed but not included\n");
-	    }
-	}
-    }
-	
 
     winapi_local::check_file $options, $output, $file, \%functions;
 }

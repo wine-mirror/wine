@@ -10,7 +10,7 @@ BEGIN {
 }
 
 use config qw(
-    &file_type &file_skip &files_skip &get_spec_files
+    &file_type &files_skip &files_filter &get_spec_files
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
 use modules;
