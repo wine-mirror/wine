@@ -9858,7 +9858,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-static void ac_asm(void) { asm("\t.globl _ac_test\n\t.def _ac_test; .scl 2; .type 32; .endef\n_ac_test:\t.long 0"); }
+void ac_asm(void) { asm("\t.globl _ac_test\n\t.def _ac_test; .scl 2; .type 32; .endef\n_ac_test:\t.long 0"); }
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -9893,7 +9893,7 @@ cat conftest.$ac_ext >&5
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-static void ac_asm(void) { asm("\t.globl _ac_test\n\t.type _ac_test,@function\n_ac_test:\t.long 0"); }
+void ac_asm(void) { asm("\t.globl _ac_test\n\t.type _ac_test,@function\n_ac_test:\t.long 0"); }
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -9928,7 +9928,7 @@ cat conftest.$ac_ext >&5
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-static void ac_asm(void) { asm("\t.globl _ac_test\n\t.type _ac_test,2\n_ac_test:\t.long 0"); }
+void ac_asm(void) { asm("\t.globl _ac_test\n\t.type _ac_test,2\n_ac_test:\t.long 0"); }
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -10005,7 +10005,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-static void ac_asm(void) { asm(".globl _ac_test\n_ac_test:\t.long 0"); }
+void ac_asm(void) { asm(".globl _ac_test\n_ac_test:\t.long 0"); }
 extern int ac_test;
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -10068,7 +10068,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-static void ac_asm(void) { asm("\t.globl _ac_test@0\n_ac_test@0:\n\t.globl ac_test@0\nac_test@0:"); }
+void ac_asm(void) { asm("\t.globl _ac_test@0\n_ac_test@0:\n\t.globl ac_test@0\nac_test@0:"); }
 extern void __attribute__((__stdcall__)) ac_test(void);
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -10124,7 +10124,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-static void ac_asm(void) { asm(".string \"test\""); }
+void ac_asm(void) { asm(".string \"test\""); }
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus

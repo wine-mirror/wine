@@ -81,7 +81,7 @@ dnl
 dnl Usage: WINE_TRY_ASM_LINK(asm-code,includes,function,[action-if-found,[action-if-not-found]])
 dnl
 AC_DEFUN([WINE_TRY_ASM_LINK],
-[AC_TRY_LINK([static void ac_asm(void) { asm([$1]); }
+[AC_TRY_LINK([void ac_asm(void) { asm([$1]); }
 [$2]],[$3],[$4],[$5])])
 
 dnl **** Check if we can link an empty program with special CFLAGS ****
