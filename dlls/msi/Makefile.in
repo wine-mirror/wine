@@ -8,6 +8,7 @@ EXTRALIBS = -luuid $(LIBUNICODE)
 
 C_SRCS = \
 	action.c \
+	appsearch.c \
 	create.c \
 	custom.c \
 	dialog.c \

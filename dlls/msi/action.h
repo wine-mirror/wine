@@ -101,7 +101,7 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action);
 void ACTION_FinishCustomActions( MSIPACKAGE* package);
 UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL execute);
 void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature);
-
+UINT ACTION_AppSearch(MSIPACKAGE *package);
 
 DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data );
 WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index);

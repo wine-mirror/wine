@@ -157,6 +157,8 @@ const static WCHAR szForceReboot[] =
 {'F','o','r','c','e','R','e','b','o','o','t',0};
 const static WCHAR szResolveSource[] = 
 {'R','e','s','o','l','v','e','S','o','u','r','c','e',0};
+const static WCHAR szAppSearch[] =
+{'A','p','p','S','e','a','r','c','h',0};
 
 struct _actions {
     LPCWSTR action;
@@ -164,6 +166,7 @@ struct _actions {
 };
 
 struct _actions StandardActions[] = {
+    { szAppSearch, ACTION_AppSearch },
     { szCostFinalize, ACTION_CostFinalize },
     { szCostInitialize, ACTION_CostInitialize },
     { szCreateFolders, ACTION_CreateFolders },
