@@ -45,12 +45,8 @@ static inline HANDLE ntdll_get_process_heap(void)
     return NtCurrentTeb()->Peb->ProcessHeap;
 }
 
-/* FIXME: this should be part of PEB, once it's defined */
-extern RTL_USER_PROCESS_PARAMETERS process_pmts;
-BOOL build_initial_environment(void);
-
 static inline RTL_USER_PROCESS_PARAMETERS* ntdll_get_process_pmts(void)
 {
-    return &process_pmts;
+    return NtCurrentTeb()->Peb->ProcessParameters;
 }
 #endif

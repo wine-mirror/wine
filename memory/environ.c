@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winerror.h"
@@ -33,27 +34,14 @@
 #include "heap.h"
 #include "winternl.h"
 #include "selectors.h"
+#include "wine/unicode.h"
+#include "wine/debug.h"
 
-/* Win32 process environment database */
-typedef struct _ENVDB
-{
-    LPSTR            env;              /* 00 Process environment strings */
-    DWORD            unknown1;         /* 04 Unknown */
-    LPSTR            cmd_line;         /* 08 Command line */
-    LPSTR            cur_dir;          /* 0c Current directory */
-    STARTUPINFOA    *startup_info;     /* 10 Startup information */
-    HANDLE           hStdin;           /* 14 Handle for standard input */
-    HANDLE           hStdout;          /* 18 Handle for standard output */
-    HANDLE           hStderr;          /* 1c Handle for standard error */
-    DWORD            unknown2;         /* 20 Unknown */
-    DWORD            inherit_console;  /* 24 Inherit console flag */
-    DWORD            break_type;       /* 28 Console events flag */
-    void            *break_sem;        /* 2c SetConsoleCtrlHandler semaphore */
-    void            *break_event;      /* 30 SetConsoleCtrlHandler event */
-    void            *break_thread;     /* 34 SetConsoleCtrlHandler thread */
-    void            *break_handlers;   /* 38 List of console handlers */
-} ENVDB;
+WINE_DEFAULT_DEBUG_CHANNEL(environ);
 
+/* TODO:
+ * - 16 bit environment ??? (see generate_env_block16 for the details)
+ */
 
 /* Format of an environment block:
  * ASCIIZ   string 1 (xx=yy format)
@@ -67,385 +55,60 @@ typedef struct _ENVDB
  * - contrary to Microsoft docs, the environment strings do not appear
  *   to be sorted on Win95 (although they are on NT); so we don't bother
  *   to sort them either.
+ * - on Win2K (and likely most of NT versions) the last part (WORD 1 and 
+ *   program name no longer appear in the environment block (from the 32
+ *   bit interface)
  */
 
 static const char ENV_program_name[] = "C:\\WINDOWS\\SYSTEM\\KRNL386.EXE";
 
+static STARTUPINFOW startup_infoW;
+static STARTUPINFOA startup_infoA;
+
 /* Maximum length of a Win16 environment string (including NULL) */
 #define MAX_WIN16_LEN  128
 
-STARTUPINFOA current_startupinfo =
-{
-    sizeof(STARTUPINFOA),    /* cb */
-    0,                       /* lpReserved */
-    0,                       /* lpDesktop */
-    0,                       /* lpTitle */
-    0,                       /* dwX */
-    0,                       /* dwY */
-    0,                       /* dwXSize */
-    0,                       /* dwYSize */
-    0,                       /* dwXCountChars */
-    0,                       /* dwYCountChars */
-    0,                       /* dwFillAttribute */
-    0,                       /* dwFlags */
-    0,                       /* wShowWindow */
-    0,                       /* cbReserved2 */
-    0,                       /* lpReserved2 */
-    0,                       /* hStdInput */
-    0,                       /* hStdOutput */
-    0                        /* hStdError */
-};
+static WORD env_sel;     /* selector to the 16 bit environment */
 
-ENVDB current_envdb =
-{
-    0,                       /* environ */
-    0,                       /* unknown1 */
-    0,                       /* cmd_line */
-    0,                       /* cur_dir */
-    &current_startupinfo,    /* startup_info */
-    0,                       /* hStdin */
-    0,                       /* hStdout */
-    0,                       /* hStderr */
-    0,                       /* unknown2 */
-    0,                       /* inherit_console */
-    0,                       /* break_type */
-    0,                       /* break_sem */
-    0,                       /* break_event */
-    0,                       /* break_thread */
-    0                        /* break_handlers */
-};
-
-
-static WCHAR *cmdlineW;  /* Unicode command line */
-static WORD env_sel;     /* selector to the environment */
-
-/***********************************************************************
- *           ENV_FindVariable
+/******************************************************************
+ *		generate_env_block16
  *
- * Find a variable in the environment and return a pointer to the value.
- * Helper function for GetEnvironmentVariable and ExpandEnvironmentStrings.
+ * This internal function generates a suitable environment for the 16 bit
+ * subsystem and returns the value as a segmented pointer.
+ *
+ * FIXME: current implementation will allocate a private copy of the
+ *        environment strings, but will not follow the modifications (if any)
+ *        from the unicode env block stored in the PEB
+ *              => how should this be updated from the ntdll modifications ?
+ *                 should we use the peb->EnvironmentUpdateCount field to 
+ *                 know when environment has changed ???
+ *        we currently regenerate this block each time an environment 
+ *        variable is modified from a Win32 API call, but we'll miss all
+ *        direct access to the NTDLL APIs
  */
-static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT len )
+static SEGPTR generate_env_block16(void)
 {
-    while (*env)
-    {
-        if (!strncasecmp( name, env, len ) && (env[len] == '='))
-            return env + len + 1;
-        env += strlen(env) + 1;
-    }
-    return NULL;
+    static LPSTR env16;
+
+    DWORD       size, new_size;
+    WORD        one = 1;
+
+    if (env16) FreeEnvironmentStringsA( env16 );
+
+    env16 = GetEnvironmentStringsA();
+    size = HeapSize(GetProcessHeap(), 0, env16);
+    new_size = size + sizeof(WORD) + sizeof(ENV_program_name);
+    if (!(env16 = HeapReAlloc( GetProcessHeap(), 0, env16, new_size ))) return 0;
+
+    memcpy(env16 + size, &one, sizeof(one));
+    memcpy(env16 + size + sizeof(WORD), ENV_program_name, sizeof(ENV_program_name));
+    if (env_sel)
+        env_sel = SELECTOR_ReallocBlock( env_sel, env16, new_size );
+    else
+        env_sel = SELECTOR_AllocBlock( env16, 0x10000, WINE_LDT_FLAGS_DATA );
+
+    return MAKESEGPTR( env_sel, 0 );
 }
-
-
-/***********************************************************************
- *           build_environment
- *
- * Build the environment for the initial process
- */
-static BOOL build_environment(void)
-{
-    extern char **environ;
-    static const WORD one = 1;
-    LPSTR p, *e;
-    int size;
-
-    /* Compute the total size of the Unix environment */
-
-    size = sizeof(BYTE) + sizeof(WORD) + sizeof(ENV_program_name);
-    for (e = environ; *e; e++)
-    {
-        if (!memcmp( *e, "PATH=", 5 )) continue;
-        size += strlen(*e) + 1;
-    }
-
-    /* Now allocate the environment */
-
-    if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-    current_envdb.env = p;
-    env_sel = SELECTOR_AllocBlock( p, 0x10000, WINE_LDT_FLAGS_DATA );
-
-    /* And fill it with the Unix environment */
-
-    for (e = environ; *e; e++)
-    {
-        /* skip Unix PATH and store WINEPATH as PATH */
-        if (!memcmp( *e, "PATH=", 5 )) continue;
-        if (!memcmp( *e, "WINEPATH=", 9 )) strcpy( p, *e + 4 );
-        else strcpy( p, *e );
-        p += strlen(p) + 1;
-    }
-
-    /* Now add the program name */
-
-    *p++ = 0;
-    memcpy( p, &one, sizeof(WORD) );
-    strcpy( p + sizeof(WORD), ENV_program_name );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           copy_str
- *
- * Small helper for ENV_InitStartupInfo.
- */
-inline static char *copy_str( char **dst, const char **src, size_t len )
-{
-    char *ret;
-
-    if (!len) return NULL;
-    ret = *dst;
-    memcpy( ret, *src, len );
-    ret[len] = 0;
-    *dst += len + 1;
-    *src += len;
-    return ret;
-}
-
-
-/***********************************************************************
- *           ENV_InitStartupInfo
- *
- * Fill the startup info structure from the server.
- */
-ENVDB *ENV_InitStartupInfo( size_t info_size, char *main_exe_name, size_t main_exe_size )
-{
-    startup_info_t info;
-    void *data;
-    char *dst;
-    const char *src;
-    size_t len;
-
-    if (!build_environment()) return NULL;
-    if (!info_size) return &current_envdb;  /* nothing to retrieve */
-
-    if (!(data = HeapAlloc( GetProcessHeap(), 0, info_size ))) return NULL;
-
-    SERVER_START_REQ( get_startup_info )
-    {
-        wine_server_set_reply( req, data, info_size );
-        wine_server_call( req );
-        info_size = wine_server_reply_size( reply );
-    }
-    SERVER_END_REQ;
-    if (info_size < sizeof(info.size)) goto done;
-    len = min( info_size, ((startup_info_t *)data)->size );
-    memset( &info, 0, sizeof(info) );
-    memcpy( &info, data, len );
-    src = (char *)data + len;
-    info_size -= len;
-
-    /* fixup the lengths */
-    if (info.filename_len > info_size) info.filename_len = info_size;
-    info_size -= info.filename_len;
-    if (info.cmdline_len > info_size) info.cmdline_len = info_size;
-    info_size -= info.cmdline_len;
-    if (info.desktop_len > info_size) info.desktop_len = info_size;
-    info_size -= info.desktop_len;
-    if (info.title_len > info_size) info.title_len = info_size;
-
-    /* store the filename */
-    if (info.filename_len)
-    {
-        len = min( info.filename_len, main_exe_size-1 );
-        memcpy( main_exe_name, src, len );
-        main_exe_name[len] = 0;
-        src += info.filename_len;
-    }
-
-    /* copy the other strings */
-    len = info.cmdline_len + info.desktop_len + info.title_len;
-    if (len && (dst = HeapAlloc( GetProcessHeap(), 0, len + 3 )))
-    {
-        current_envdb.cmd_line = copy_str( &dst, &src, info.cmdline_len );
-        current_startupinfo.lpDesktop = copy_str( &dst, &src, info.desktop_len );
-        current_startupinfo.lpTitle = copy_str( &dst, &src, info.title_len );
-    }
-
-    current_startupinfo.dwX             = info.x;
-    current_startupinfo.dwY             = info.y;
-    current_startupinfo.dwXSize         = info.cx;
-    current_startupinfo.dwYSize         = info.cy;
-    current_startupinfo.dwXCountChars   = info.x_chars;
-    current_startupinfo.dwYCountChars   = info.y_chars;
-    current_startupinfo.dwFillAttribute = info.attribute;
-    current_startupinfo.wShowWindow     = info.cmd_show;
-    current_startupinfo.dwFlags         = info.flags;
- done:
-    HeapFree( GetProcessHeap(), 0, data );
-    return &current_envdb;
-}
-
-
-
-/***********************************************************************
- *              set_library_argv
- *
- * Set the Wine library argc/argv global variables.
- */
-static void set_library_argv( char **argv )
-{
-    int argc;
-    WCHAR *p;
-    WCHAR **wargv;
-    DWORD total = 0;
-
-    for (argc = 0; argv[argc]; argc++)
-        total += MultiByteToWideChar( CP_ACP, 0, argv[argc], -1, NULL, 0 );
-
-    wargv = HeapAlloc( GetProcessHeap(), 0,
-                       total * sizeof(WCHAR) + (argc + 1) * sizeof(*wargv) );
-    p = (WCHAR *)(wargv + argc + 1);
-    for (argc = 0; argv[argc]; argc++)
-    {
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, argv[argc], -1, p, total );
-        wargv[argc] = p;
-        p += len;
-        total -= len;
-    }
-    wargv[argc] = NULL;
-
-    __wine_main_argc  = argc;
-    __wine_main_argv  = argv;
-    __wine_main_wargv = wargv;
-}
-
-
-/***********************************************************************
- *           ENV_BuildCommandLine
- *
- * Build the command line of a process from the argv array.
- *
- * Note that it does NOT necessarily include the file name.
- * Sometimes we don't even have any command line options at all.
- *
- * We must quote and escape characters so that the argv array can be rebuilt
- * from the command line:
- * - spaces and tabs must be quoted
- *   'a b'   -> '"a b"'
- * - quotes must be escaped
- *   '"'     -> '\"'
- * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
- *   resulting in an odd number of '\' followed by a '"'
- *   '\"'    -> '\\\"'
- *   '\\"'   -> '\\\\\"'
- * - '\'s that are not followed by a '"' can be left as is
- *   'a\b'   == 'a\b'
- *   'a\\b'  == 'a\\b'
- */
-BOOL ENV_BuildCommandLine( char **argv )
-{
-    int len;
-    char *p, **arg;
-
-    set_library_argv( argv );
-
-    if (current_envdb.cmd_line) goto done;  /* already got it from the server */
-
-    len = 0;
-    for (arg = argv; *arg; arg++)
-    {
-        int has_space,bcount;
-        char* a;
-
-        has_space=0;
-        bcount=0;
-        a=*arg;
-        while (*a!='\0') {
-            if (*a=='\\') {
-                bcount++;
-            } else {
-                if (*a==' ' || *a=='\t') {
-                    has_space=1;
-                } else if (*a=='"') {
-                    /* doubling of '\' preceeding a '"',
-                     * plus escaping of said '"'
-                     */
-                    len+=2*bcount+1;
-                }
-                bcount=0;
-            }
-            a++;
-        }
-        len+=(a-*arg)+1 /* for the separating space */;
-        if (has_space)
-            len+=2; /* for the quotes */
-    }
-
-    if (!(current_envdb.cmd_line = HeapAlloc( GetProcessHeap(), 0, len )))
-        return FALSE;
-
-    p = current_envdb.cmd_line;
-    for (arg = argv; *arg; arg++)
-    {
-        int has_space,has_quote;
-        char* a;
-
-        /* Check for quotes and spaces in this argument */
-        has_space=has_quote=0;
-        a=*arg;
-        while (*a!='\0') {
-            if (*a==' ' || *a=='\t') {
-                has_space=1;
-                if (has_quote)
-                    break;
-            } else if (*a=='"') {
-                has_quote=1;
-                if (has_space)
-                    break;
-            }
-            a++;
-        }
-
-        /* Now transfer it to the command line */
-        if (has_space)
-            *p++='"';
-        if (has_quote) {
-            int bcount;
-            char* a;
-
-            bcount=0;
-            a=*arg;
-            while (*a!='\0') {
-                if (*a=='\\') {
-                    *p++=*a;
-                    bcount++;
-                } else {
-                    if (*a=='"') {
-                        int i;
-
-                        /* Double all the '\\' preceeding this '"', plus one */
-                        for (i=0;i<=bcount;i++)
-                            *p++='\\';
-                        *p++='"';
-                    } else {
-                        *p++=*a;
-                    }
-                    bcount=0;
-                }
-                a++;
-            }
-        } else {
-            strcpy(p,*arg);
-            p+=strlen(*arg);
-        }
-        if (has_space)
-            *p++='"';
-        *p++=' ';
-    }
-    if (p > current_envdb.cmd_line)
-        p--;  /* remove last space */
-    *p = '\0';
-
-    /* now allocate the Unicode version */
- done:
-    len = MultiByteToWideChar( CP_ACP, 0, current_envdb.cmd_line, -1, NULL, 0 );
-    if (!(cmdlineW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-        return FALSE;
-    MultiByteToWideChar( CP_ACP, 0, current_envdb.cmd_line, -1, cmdlineW, len );
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           GetCommandLineA      (KERNEL32.@)
@@ -467,7 +130,18 @@ BOOL ENV_BuildCommandLine( char **argv )
  */
 LPSTR WINAPI GetCommandLineA(void)
 {
-    return current_envdb.cmd_line;
+    static char *cmdlineA;  /* ASCII command line */
+    
+    if (!cmdlineA) /* make an ansi version if we don't have it */
+    {
+        ANSI_STRING     ansi;
+        RtlAcquirePebLock();
+
+        cmdlineA = (RtlUnicodeStringToAnsiString( &ansi, &NtCurrentTeb()->Peb->ProcessParameters->CommandLine, TRUE) == STATUS_SUCCESS) ?
+            ansi.Buffer : NULL;
+        RtlReleasePebLock();
+    }
+    return cmdlineA;
 }
 
 /***********************************************************************
@@ -475,7 +149,7 @@ LPSTR WINAPI GetCommandLineA(void)
  */
 LPWSTR WINAPI GetCommandLineW(void)
 {
-    return cmdlineW;
+    return NtCurrentTeb()->Peb->ProcessParameters->CommandLine.Buffer;
 }
 
 
@@ -485,7 +159,38 @@ LPWSTR WINAPI GetCommandLineW(void)
  */
 LPSTR WINAPI GetEnvironmentStringsA(void)
 {
-    return current_envdb.env;
+    LPWSTR      ptrW;
+    unsigned    len, slen;
+    LPSTR       ret, ptrA;
+
+    RtlAcquirePebLock();
+
+    len = 1;
+
+    ptrW = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+    while (*ptrW)
+    {
+        slen = strlenW(ptrW) + 1;
+        len += WideCharToMultiByte( CP_ACP, 0, ptrW, slen, NULL, 0, NULL, NULL );
+        ptrW += slen;
+    }
+
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, len )) != NULL)
+    {
+        ptrW = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+        ptrA = ret;
+        while (*ptrW)
+        {
+            slen = strlenW(ptrW) + 1;
+            WideCharToMultiByte( CP_ACP, 0, ptrW, slen, ptrA, len, NULL, NULL );
+            ptrW += slen;
+            ptrA += strlen(ptrA) + 1;
+        }
+        *ptrA = 0;
+    }
+
+    RtlReleasePebLock();
+    return ret;
 }
 
 
@@ -494,19 +199,7 @@ LPSTR WINAPI GetEnvironmentStringsA(void)
  */
 LPWSTR WINAPI GetEnvironmentStringsW(void)
 {
-    INT size;
-    LPWSTR ret;
-
-    RtlAcquirePebLock();
-    size = HeapSize( GetProcessHeap(), 0, current_envdb.env );
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) )) != NULL)
-    {
-        LPSTR pA = current_envdb.env;
-        LPWSTR pW = ret;
-        while (size--) *pW++ = (WCHAR)(BYTE)*pA++;
-    }
-    RtlReleasePebLock();
-    return ret;
+    return NtCurrentTeb()->Peb->ProcessParameters->Environment;
 }
 
 
@@ -515,12 +208,7 @@ LPWSTR WINAPI GetEnvironmentStringsW(void)
  */
 BOOL WINAPI FreeEnvironmentStringsA( LPSTR ptr )
 {
-    if (ptr != current_envdb.env)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    return TRUE;
+    return HeapFree( GetProcessHeap(), 0, ptr );
 }
 
 
@@ -529,7 +217,7 @@ BOOL WINAPI FreeEnvironmentStringsA( LPSTR ptr )
  */
 BOOL WINAPI FreeEnvironmentStringsW( LPWSTR ptr )
 {
-    return HeapFree( GetProcessHeap(), 0, ptr );
+    return TRUE;
 }
 
 
@@ -538,30 +226,36 @@ BOOL WINAPI FreeEnvironmentStringsW( LPWSTR ptr )
  */
 DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
 {
-    LPCSTR p;
-    INT ret = 0;
+    UNICODE_STRING      us_name;
+    PWSTR               valueW;
+    DWORD               ret;
 
     if (!name || !*name)
     {
-        SetLastError( ERROR_ENVVAR_NOT_FOUND );
+        SetLastError(ERROR_ENVVAR_NOT_FOUND);
         return 0;
     }
 
-    RtlAcquirePebLock();
-    if ((p = ENV_FindVariable( current_envdb.env, name, strlen(name) )))
+    if (!(valueW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR))))
+        return 0;
+
+    RtlCreateUnicodeStringFromAsciiz( &us_name, name );
+    SetLastError(0);
+    ret = GetEnvironmentVariableW( us_name.Buffer, valueW, size);
+    if (ret && ret < size)
     {
-        ret = strlen(p);
-        if (size <= ret)
-        {
-            /* If not enough room, include the terminating null
-             * in the returned size */
-            ret++;
-        }
-        else if (value) strcpy( value, p );
+        WideCharToMultiByte( CP_ACP, 0, valueW, ret + 1, value, size, NULL, NULL );
     }
-    RtlReleasePebLock();
-    if (!ret)
-	SetLastError( ERROR_ENVVAR_NOT_FOUND );
+    /* this is needed to tell, with 0 as a return value, the difference between:
+     * - an error (GetLastError() != 0)
+     * - returning an empty string (in this case, we need to update the buffer)
+     */
+    if (ret == 0 && size && GetLastError() == 0)
+        value[0] = '\0';
+
+    RtlFreeUnicodeString( &us_name );
+    HeapFree(GetProcessHeap(), 0, valueW);
+
     return ret;
 }
 
@@ -569,28 +263,36 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
 /***********************************************************************
  *           GetEnvironmentVariableW   (KERNEL32.@)
  */
-DWORD WINAPI GetEnvironmentVariableW( LPCWSTR nameW, LPWSTR valW, DWORD size)
+DWORD WINAPI GetEnvironmentVariableW( LPCWSTR name, LPWSTR val, DWORD size )
 {
-    LPSTR name, val;
-    DWORD ret;
+    UNICODE_STRING      us_name;
+    UNICODE_STRING      us_value;
+    NTSTATUS            status;
+    unsigned            len;
 
-    if (!nameW || !*nameW)
+    TRACE("(%s %p %lu)\n", debugstr_w(name), val, size);
+
+    if (!name || !*name)
     {
-        SetLastError( ERROR_ENVVAR_NOT_FOUND );
+        SetLastError(ERROR_ENVVAR_NOT_FOUND);
         return 0;
     }
 
-    name = HEAP_strdupWtoA( GetProcessHeap(), 0, nameW );
-    val  = valW ? HeapAlloc( GetProcessHeap(), 0, size ) : NULL;
-    ret  = GetEnvironmentVariableA( name, val, size );
-    if (ret && val)
+    RtlInitUnicodeString(&us_name, name);
+    us_value.Length = 0;
+    us_value.MaximumLength = (size ? size - 1 : 0) * sizeof(WCHAR);
+    us_value.Buffer = val;
+
+    status = RtlQueryEnvironmentVariable_U(NULL, &us_name, &us_value);
+    len = us_value.Length / sizeof(WCHAR);
+    if (status != STATUS_SUCCESS)
     {
-        if (size && !MultiByteToWideChar( CP_ACP, 0, val, -1, valW, size ))
-            valW[size-1] = 0;
+        SetLastError( RtlNtStatusToDosError(status) );
+        return (status == STATUS_BUFFER_TOO_SMALL) ? len + 1 : 0;
     }
-    HeapFree( GetProcessHeap(), 0, name );
-    if (val) HeapFree( GetProcessHeap(), 0, val );
-    return ret;
+    if (size) val[len] = '\0';
+
+    return us_value.Length / sizeof(WCHAR);
 }
 
 
@@ -599,59 +301,28 @@ DWORD WINAPI GetEnvironmentVariableW( LPCWSTR nameW, LPWSTR valW, DWORD size)
  */
 BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
 {
-    INT old_size, len, res;
-    LPSTR p, env, new_env;
-    BOOL ret = FALSE;
+    UNICODE_STRING      us_name;
+    BOOL                ret;
 
-    if (!name || !*name)
+    if (!name)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
+        SetLastError(ERROR_ENVVAR_NOT_FOUND);
+        return 0;
     }
 
-    RtlAcquirePebLock();
-    env = p = current_envdb.env;
-
-    /* Find a place to insert the string */
-
-    res = -1;
-    len = strlen(name);
-    while (*p)
-    {
-        if (!strncasecmp( name, p, len ) && (p[len] == '=')) break;
-        p += strlen(p) + 1;
-    }
-    if (!value && !*p) goto done;  /* Value to remove doesn't exist */
-
-    /* Realloc the buffer */
-
-    len = value ? strlen(name) + strlen(value) + 2 : 0;
-    if (*p) len -= strlen(p) + 1;  /* The name already exists */
-    old_size = HeapSize( GetProcessHeap(), 0, env );
-    if (len < 0)
-    {
-        LPSTR next = p + strlen(p) + 1;  /* We know there is a next one */
-        memmove( next + len, next, old_size - (next - env) );
-    }
-    if (!(new_env = HeapReAlloc( GetProcessHeap(), 0, env, old_size + len )))
-        goto done;
-    if (env_sel) env_sel = SELECTOR_ReallocBlock( env_sel, new_env, old_size + len );
-    p = new_env + (p - env);
-    if (len > 0) memmove( p + len, p, old_size - (p - new_env) );
-
-    /* Set the new string */
-
+    RtlCreateUnicodeStringFromAsciiz( &us_name, name );
     if (value)
     {
-        strcpy( p, name );
-        strcat( p, "=" );
-        strcat( p, value );
-    }
-    current_envdb.env = new_env;
-    ret = TRUE;
+        UNICODE_STRING      us_value;
 
-done:
-    RtlReleasePebLock();
+        RtlCreateUnicodeStringFromAsciiz( &us_value, value );
+        ret = SetEnvironmentVariableW( us_name.Buffer, us_value.Buffer );
+        RtlFreeUnicodeString( &us_value );
+    }
+    else ret = SetEnvironmentVariableW( us_name.Buffer, NULL );
+
+    RtlFreeUnicodeString( &us_name );
+
     return ret;
 }
 
@@ -661,12 +332,36 @@ done:
  */
 BOOL WINAPI SetEnvironmentVariableW( LPCWSTR name, LPCWSTR value )
 {
-    LPSTR nameA  = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    LPSTR valueA = HEAP_strdupWtoA( GetProcessHeap(), 0, value );
-    BOOL ret = SetEnvironmentVariableA( nameA, valueA );
-    HeapFree( GetProcessHeap(), 0, nameA );
-    HeapFree( GetProcessHeap(), 0, valueA );
-    return ret;
+    UNICODE_STRING      us_name;
+    NTSTATUS            status;
+
+    TRACE("(%s %s)\n", debugstr_w(name), debugstr_w(value));
+
+    if (!name)
+    {
+        SetLastError(ERROR_ENVVAR_NOT_FOUND);
+        return 0;
+    }
+
+    RtlInitUnicodeString(&us_name, name);
+    if (value)
+    {
+        UNICODE_STRING      us_value;
+
+        RtlInitUnicodeString(&us_value, value);
+        status = RtlSetEnvironmentVariable(NULL, &us_name, &us_value);
+    }
+    else status = RtlSetEnvironmentVariable(NULL, &us_name, NULL);
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    /* FIXME: see comments in generate_env_block16 */
+    if (env_sel) generate_env_block16();
+    return TRUE;
 }
 
 
@@ -674,66 +369,29 @@ BOOL WINAPI SetEnvironmentVariableW( LPCWSTR name, LPCWSTR value )
  *           ExpandEnvironmentStringsA   (KERNEL32.@)
  *
  * Note: overlapping buffers are not supported; this is how it should be.
+ * FIXME: return value is wrong for MBCS
  */
 DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
 {
-    DWORD len, total_size = 1;  /* 1 for terminating '\0' */
-    LPCSTR p, var;
+    UNICODE_STRING      us_src;
+    PWSTR               dstW = NULL;
+    DWORD               ret;
 
-    if (!count) dst = NULL;
-    RtlAcquirePebLock();
-
-    while (*src)
+    RtlCreateUnicodeStringFromAsciiz( &us_src, src );
+    if (count)
     {
-        if (*src != '%')
-        {
-            if ((p = strchr( src, '%' ))) len = p - src;
-            else len = strlen(src);
-            var = src;
-            src += len;
-        }
-        else  /* we are at the start of a variable */
-        {
-            if ((p = strchr( src + 1, '%' )))
-            {
-                len = p - src - 1;  /* Length of the variable name */
-                if ((var = ENV_FindVariable( current_envdb.env, src + 1, len )))
-                {
-                    src += len + 2;  /* Skip the variable name */
-                    len = strlen(var);
-                }
-                else
-                {
-                    var = src;  /* Copy original name instead */
-                    len += 2;
-                    src += len;
-                }
-            }
-            else  /* unfinished variable name, ignore it */
-            {
-                var = src;
-                len = strlen(src);  /* Copy whole string */
-                src += len;
-            }
-        }
-        total_size += len;
-        if (dst)
-        {
-            if (count < len) len = count;
-            memcpy( dst, var, len );
-            dst += len;
-            count -= len;
-        }
+        if (!(dstW = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
+            return 0;
+        ret = ExpandEnvironmentStringsW( us_src.Buffer, dstW, count);
+        if (ret)
+            WideCharToMultiByte( CP_ACP, 0, dstW, ret, dst, count, NULL, NULL );
     }
-    RtlReleasePebLock();
+    else ret = ExpandEnvironmentStringsW( us_src.Buffer, NULL, 0);
 
-    /* Null-terminate the string */
-    if (dst)
-    {
-        if (!count) dst--;
-        *dst = '\0';
-    }
-    return total_size;
+    RtlFreeUnicodeString( &us_src );
+    if (dstW) HeapFree(GetProcessHeap(), 0, dstW);
+
+    return ret;
 }
 
 
@@ -742,16 +400,29 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
  */
 DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
 {
-    LPSTR srcA = HEAP_strdupWtoA( GetProcessHeap(), 0, src );
-    LPSTR dstA = dst ? HeapAlloc( GetProcessHeap(), 0, len ) : NULL;
-    DWORD ret  = ExpandEnvironmentStringsA( srcA, dstA, len );
-    if (dstA)
+    UNICODE_STRING      us_src;
+    UNICODE_STRING      us_dst;
+    NTSTATUS            status;
+    DWORD               res;
+
+    TRACE("(%s %p %lu)\n", debugstr_w(src), dst, len);
+
+    RtlInitUnicodeString(&us_src, src);
+    us_dst.Length = 0;
+    us_dst.MaximumLength = len * sizeof(WCHAR);
+    us_dst.Buffer = dst;
+
+    res = 0;
+    status = RtlExpandEnvironmentStrings_U(NULL, &us_src, &us_dst, &res);
+    res /= sizeof(WCHAR);
+    if (status != STATUS_SUCCESS)
     {
-        ret = MultiByteToWideChar( CP_ACP, 0, dstA, -1, dst, len );
-        HeapFree( GetProcessHeap(), 0, dstA );
+        SetLastError( RtlNtStatusToDosError(status) );
+        if (status != STATUS_BUFFER_TOO_SMALL) return 0;
+        if (len && dst) dst[len - 1] = '\0';
     }
-    HeapFree( GetProcessHeap(), 0, srcA );
-    return ret;
+
+    return res;
 }
 
 
@@ -760,7 +431,7 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
  */
 SEGPTR WINAPI GetDOSEnvironment16(void)
 {
-    return MAKESEGPTR( env_sel, 0 );
+    return generate_env_block16();
 }
 
 
@@ -769,11 +440,11 @@ SEGPTR WINAPI GetDOSEnvironment16(void)
  */
 HANDLE WINAPI GetStdHandle( DWORD std_handle )
 {
-    switch(std_handle)
+    switch (std_handle)
     {
-        case STD_INPUT_HANDLE:  return current_envdb.hStdin;
-        case STD_OUTPUT_HANDLE: return current_envdb.hStdout;
-        case STD_ERROR_HANDLE:  return current_envdb.hStderr;
+        case STD_INPUT_HANDLE:  return NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
+        case STD_OUTPUT_HANDLE: return NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
+        case STD_ERROR_HANDLE:  return NtCurrentTeb()->Peb->ProcessParameters->hStdError;
     }
     SetLastError( ERROR_INVALID_PARAMETER );
     return INVALID_HANDLE_VALUE;
@@ -785,23 +456,23 @@ HANDLE WINAPI GetStdHandle( DWORD std_handle )
  */
 BOOL WINAPI SetStdHandle( DWORD std_handle, HANDLE handle )
 {
-    switch(std_handle)
+    switch (std_handle)
     {
-        case STD_INPUT_HANDLE:  current_envdb.hStdin = handle;  return TRUE;
-        case STD_OUTPUT_HANDLE: current_envdb.hStdout = handle; return TRUE;
-        case STD_ERROR_HANDLE:  current_envdb.hStderr = handle; return TRUE;
+        case STD_INPUT_HANDLE:  NtCurrentTeb()->Peb->ProcessParameters->hStdInput = handle;  return TRUE;
+        case STD_OUTPUT_HANDLE: NtCurrentTeb()->Peb->ProcessParameters->hStdOutput = handle; return TRUE;
+        case STD_ERROR_HANDLE:  NtCurrentTeb()->Peb->ProcessParameters->hStdError = handle;  return TRUE;
     }
     SetLastError( ERROR_INVALID_PARAMETER );
     return FALSE;
 }
-
 
 /***********************************************************************
  *              GetStartupInfoA         (KERNEL32.@)
  */
 VOID WINAPI GetStartupInfoA( LPSTARTUPINFOA info )
 {
-    *info = current_startupinfo;
+    assert(startup_infoA.cb);
+    memcpy(info, &startup_infoA, sizeof(startup_infoA));
 }
 
 
@@ -810,25 +481,65 @@ VOID WINAPI GetStartupInfoA( LPSTARTUPINFOA info )
  */
 VOID WINAPI GetStartupInfoW( LPSTARTUPINFOW info )
 {
-    UNICODE_STRING      usBuffer;
-    info->cb              = sizeof(STARTUPINFOW);
-    info->dwX             = current_startupinfo.dwX;
-    info->dwY             = current_startupinfo.dwY;
-    info->dwXSize         = current_startupinfo.dwXSize;
-    info->dwXCountChars   = current_startupinfo.dwXCountChars;
-    info->dwYCountChars   = current_startupinfo.dwYCountChars;
-    info->dwFillAttribute = current_startupinfo.dwFillAttribute;
-    info->dwFlags         = current_startupinfo.dwFlags;
-    info->wShowWindow     = current_startupinfo.wShowWindow;
-    info->cbReserved2     = current_startupinfo.cbReserved2;
-    info->lpReserved2     = current_startupinfo.lpReserved2;
-    info->hStdInput       = current_startupinfo.hStdInput;
-    info->hStdOutput      = current_startupinfo.hStdOutput;
-    info->hStdError       = current_startupinfo.hStdError;
-    RtlCreateUnicodeStringFromAsciiz (&usBuffer,current_startupinfo.lpReserved);
-    info->lpReserved = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz (&usBuffer,current_startupinfo.lpDesktop);
-    info->lpDesktop  = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz (&usBuffer,current_startupinfo.lpTitle);
-    info->lpTitle    = usBuffer.Buffer;
+    assert(startup_infoW.cb);
+    memcpy(info, &startup_infoW, sizeof(startup_infoW));
+}
+
+/******************************************************************
+ *		ENV_CopyStartupInformation (internal)
+ *
+ * Creates the STARTUPINFO information from the ntdll information
+ */
+void ENV_CopyStartupInformation(void)
+{
+    RTL_USER_PROCESS_PARAMETERS* rupp;
+    ANSI_STRING         ansi;
+
+    RtlAcquirePebLock();
+    
+    rupp = NtCurrentTeb()->Peb->ProcessParameters;
+
+    startup_infoW.cb                   = sizeof(startup_infoW);
+    startup_infoW.lpReserved           = NULL;
+    startup_infoW.lpDesktop            = rupp->Desktop.Buffer;
+    startup_infoW.lpTitle              = rupp->WindowTitle.Buffer;
+    startup_infoW.dwX                  = rupp->dwX;
+    startup_infoW.dwY                  = rupp->dwY;
+    startup_infoW.dwXSize              = rupp->dwXSize;
+    startup_infoW.dwYSize              = rupp->dwYSize;
+    startup_infoW.dwXCountChars        = rupp->dwXCountChars;
+    startup_infoW.dwYCountChars        = rupp->dwYCountChars;
+    startup_infoW.dwFillAttribute      = rupp->dwFillAttribute;
+    startup_infoW.dwFlags              = rupp->dwFlags;
+    startup_infoW.wShowWindow          = rupp->wShowWindow;
+    startup_infoW.cbReserved2          = 0;
+    startup_infoW.lpReserved2          = NULL;
+    startup_infoW.hStdInput            = rupp->hStdInput;
+    startup_infoW.hStdOutput           = rupp->hStdOutput;
+    startup_infoW.hStdError            = rupp->hStdError;
+
+    startup_infoA.cb                   = sizeof(startup_infoW);
+    startup_infoA.lpReserved           = NULL;
+    startup_infoA.lpDesktop = (rupp->Desktop.Length &&
+                               RtlUnicodeStringToAnsiString( &ansi, &rupp->Desktop, TRUE) == STATUS_SUCCESS) ?
+        ansi.Buffer : NULL;
+    startup_infoA.lpTitle = (rupp->WindowTitle.Length &&
+                             RtlUnicodeStringToAnsiString( &ansi, &rupp->WindowTitle, TRUE) == STATUS_SUCCESS) ?
+        ansi.Buffer : NULL;
+    startup_infoA.dwX                  = rupp->dwX;
+    startup_infoA.dwY                  = rupp->dwY;
+    startup_infoA.dwXSize              = rupp->dwXSize;
+    startup_infoA.dwYSize              = rupp->dwYSize;
+    startup_infoA.dwXCountChars        = rupp->dwXCountChars;
+    startup_infoA.dwYCountChars        = rupp->dwYCountChars;
+    startup_infoA.dwFillAttribute      = rupp->dwFillAttribute;
+    startup_infoA.dwFlags              = rupp->dwFlags;
+    startup_infoA.wShowWindow          = rupp->wShowWindow;
+    startup_infoA.cbReserved2          = 0;
+    startup_infoA.lpReserved2          = NULL;
+    startup_infoA.hStdInput            = rupp->hStdInput;
+    startup_infoA.hStdOutput           = rupp->hStdOutput;
+    startup_infoA.hStdError            = rupp->hStdError;
+
+    RtlReleasePebLock();
 }

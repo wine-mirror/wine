@@ -126,7 +126,7 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS
     ULONG               dwFlags;
     ULONG               wShowWindow;
     UNICODE_STRING      WindowTitle;
-    UNICODE_STRING      DesktopInfo;
+    UNICODE_STRING      Desktop;
     UNICODE_STRING      ShellInfo;
     UNICODE_STRING      RuntimeInfo;
     RTL_DRIVE_LETTER_CURDIR DLCurrentDirectory[0x20];

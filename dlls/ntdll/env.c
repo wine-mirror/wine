@@ -130,6 +130,7 @@ NTSTATUS WINAPI RtlQueryEnvironmentVariable_U(PWSTR env,
     if (var != NULL)
     {
         value->Length = strlenW(var) * sizeof(WCHAR);
+
         if (value->Length <= value->MaximumLength)
         {
             memmove(value->Buffer, var, min(value->Length + sizeof(WCHAR), value->MaximumLength));
@@ -171,7 +172,9 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
     NTSTATUS    nts = STATUS_VARIABLE_NOT_FOUND;
     MEMORY_BASIC_INFORMATION mbi;
 
-    TRACE("(%p,%s,%s): stub!\n", penv, debugstr_w(name->Buffer), debugstr_w(value->Buffer));
+    TRACE("(%p,%s,%s)\n", 
+          penv, debugstr_w(name->Buffer), 
+          value ? debugstr_w(value->Buffer) : "--nil--");
 
     if (!name || !name->Buffer || !name->Buffer[0])
         return STATUS_INVALID_PARAMETER_1;
@@ -245,7 +248,6 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
         strcatW(p, equalW);
         strcatW(p, value->Buffer);
     }
-
 done:
     if (!penv) RtlReleasePebLock();
 
@@ -256,18 +258,23 @@ done:
  *		RtlExpandEnvironmentStrings_U (NTDLL.@)
  *
  */
-NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PWSTR env, const UNICODE_STRING* us_src,
+NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PWSTR renv, const UNICODE_STRING* us_src,
                                               PUNICODE_STRING us_dst, PULONG plen)
 {
     DWORD       len, count, total_size = 1;  /* 1 for terminating '\0' */
-    LPCWSTR     src, p, var;
+    LPCWSTR     env, src, p, var;
     LPWSTR      dst;
 
     src = us_src->Buffer;
     count = us_dst->MaximumLength / sizeof(WCHAR);
     dst = count ? us_dst->Buffer : NULL;
 
-    RtlAcquirePebLock();
+    if (!renv)
+    {
+        RtlAcquirePebLock();
+        env = ntdll_get_process_pmts()->Environment;
+    }
+    else env = renv;
 
     while (*src)
     {
@@ -312,12 +319,12 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PWSTR env, const UNICODE_STRING* u
         }
     }
 
-    RtlReleasePebLock();
+    if (!renv) RtlReleasePebLock();
 
     /* Null-terminate the string */
     if (dst && count) *dst = '\0';
 
-    us_dst->Length = (dst) ? (dst - us_dst->Buffer) * sizeof(WCHAR): 0;
+    us_dst->Length = (dst) ? (dst - us_dst->Buffer) * sizeof(WCHAR) : 0;
     if (plen) *plen = total_size * sizeof(WCHAR);
 
     return (count) ? STATUS_SUCCESS : STATUS_BUFFER_TOO_SMALL;
@@ -328,7 +335,7 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PWSTR env, const UNICODE_STRING* u
  *
  * Build the Win32 environment from the Unix environment
  */
-BOOL build_initial_environment(void)
+static NTSTATUS build_initial_environment(void)
 {
     extern char **environ;
     LPSTR*      e, te;
@@ -349,9 +356,10 @@ BOOL build_initial_environment(void)
     /* Now allocate the environment */
     nts = NtAllocateVirtualMemory(NtCurrentProcess(), (void**)&p, 0, &size, 
                                   MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    if (nts != STATUS_SUCCESS) return FALSE;
+    if (nts != STATUS_SUCCESS) return nts;
 
     ntdll_get_process_pmts()->Environment = p;
+
     /* And fill it with the Unix environment */
     for (e = environ; *e; e++)
     {
@@ -364,6 +372,259 @@ BOOL build_initial_environment(void)
         p += len + 1;
     }
     *p = 0;
+
+    return STATUS_SUCCESS;
+}
+
+static void init_unicode( UNICODE_STRING* us, const char** src, size_t len)
+{
+    if (len)
+    {
+        STRING ansi;
+        ansi.Buffer = (char*)*src;
+        ansi.Length = len;
+        ansi.MaximumLength = len;       
+        /* FIXME: should check value returned */
+        RtlAnsiStringToUnicodeString( us, &ansi, TRUE );
+        *src += len;
+    }
+}
+
+/***********************************************************************
+ *           init_user_process_pmts
+ *
+ * Fill the RTL_USER_PROCESS_PARAMETERS structure from the server.
+ */
+BOOL init_user_process_pmts( size_t info_size, char *main_exe_name, size_t main_exe_size )
+{
+    startup_info_t info;
+    void *data;
+    const char *src;
+    size_t len;
+    RTL_USER_PROCESS_PARAMETERS *rupp;
+
+    if (build_initial_environment() != STATUS_SUCCESS) return FALSE;
+    if (!info_size) return TRUE;
+    if (!(data = RtlAllocateHeap( ntdll_get_process_heap(), 0, info_size )))
+        return FALSE;
+
+    SERVER_START_REQ( get_startup_info )
+    {
+        wine_server_set_reply( req, data, info_size );
+        wine_server_call( req );
+        info_size = wine_server_reply_size( reply );
+    }
+    SERVER_END_REQ;
+
+    if (info_size < sizeof(info.size)) goto done;
+    len = min( info_size, ((startup_info_t *)data)->size );
+    memset( &info, 0, sizeof(info) );
+    memcpy( &info, data, len );
+    src = (char *)data + len;
+    info_size -= len;
+
+    /* fixup the lengths */
+    if (info.filename_len > info_size) info.filename_len = info_size;
+    info_size -= info.filename_len;
+    if (info.cmdline_len > info_size) info.cmdline_len = info_size;
+    info_size -= info.cmdline_len;
+    if (info.desktop_len > info_size) info.desktop_len = info_size;
+    info_size -= info.desktop_len;
+    if (info.title_len > info_size) info.title_len = info_size;
+
+    /* store the filename */
+    len = min( info.filename_len, main_exe_size-1 );
+    memcpy( main_exe_name, src, len );
+    main_exe_name[len] = 0;
+
+    rupp = NtCurrentTeb()->Peb->ProcessParameters;
+
+    init_unicode( &rupp->ImagePathName, &src, info.filename_len );
+    init_unicode( &rupp->CommandLine, &src, info.cmdline_len );
+    init_unicode( &rupp->Desktop, &src, info.desktop_len );
+    init_unicode( &rupp->WindowTitle, &src, info.title_len );
+
+    rupp->dwX             = info.x;
+    rupp->dwY             = info.y;
+    rupp->dwXSize         = info.cx;
+    rupp->dwYSize         = info.cy;
+    rupp->dwXCountChars   = info.x_chars;
+    rupp->dwYCountChars   = info.y_chars;
+    rupp->dwFillAttribute = info.attribute;
+    rupp->wShowWindow     = info.cmd_show;
+    rupp->dwFlags         = info.flags;
+
+ done:
+    RtlFreeHeap( ntdll_get_process_heap(), 0, data );
+    return TRUE;
+}
+
+/***********************************************************************
+ *              set_library_argv
+ *
+ * Set the Wine library argc/argv global variables.
+ */
+static void set_library_argv( char **argv )
+{
+    int argc;
+    WCHAR *p;
+    WCHAR **wargv;
+    DWORD total = 0, len, reslen;
+
+    for (argc = 0; argv[argc]; argc++)
+    {
+        len = strlen(argv[argc]) + 1;
+        RtlMultiByteToUnicodeN(NULL, 0, &reslen, argv[argc], len);
+        total += reslen;
+    }
+    wargv = RtlAllocateHeap( ntdll_get_process_heap(), 0,
+                             total + (argc + 1) * sizeof(*wargv) );
+    p = (WCHAR *)(wargv + argc + 1);
+    for (argc = 0; argv[argc]; argc++)
+    {
+        len = strlen(argv[argc]) + 1;
+        RtlMultiByteToUnicodeN(p, total, &reslen, argv[argc], len);
+        wargv[argc] = p;
+        p += reslen / sizeof(WCHAR);
+        total -= reslen;
+    }
+    wargv[argc] = NULL;
+
+    __wine_main_argc  = argc;
+    __wine_main_argv  = argv;
+    __wine_main_wargv = wargv;
+}
+
+/***********************************************************************
+ *           build_command_line
+ *
+ * Build the command line of a process from the argv array.
+ *
+ * Note that it does NOT necessarily include the file name.
+ * Sometimes we don't even have any command line options at all.
+ *
+ * We must quote and escape characters so that the argv array can be rebuilt
+ * from the command line:
+ * - spaces and tabs must be quoted
+ *   'a b'   -> '"a b"'
+ * - quotes must be escaped
+ *   '"'     -> '\"'
+ * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
+ *   resulting in an odd number of '\' followed by a '"'
+ *   '\"'    -> '\\\"'
+ *   '\\"'   -> '\\\\\"'
+ * - '\'s that are not followed by a '"' can be left as is
+ *   'a\b'   == 'a\b'
+ *   'a\\b'  == 'a\\b'
+ */
+BOOL build_command_line( char **argv )
+{
+    int len;
+    char **arg;
+    LPWSTR p;
+    RTL_USER_PROCESS_PARAMETERS* rupp;
+
+    set_library_argv( argv );
+
+    rupp = ntdll_get_process_pmts();
+    if (rupp->CommandLine.Buffer) return TRUE; /* already got it from the server */
+
+    len = 0;
+    for (arg = argv; *arg; arg++)
+    {
+        int has_space,bcount;
+        char* a;
+
+        has_space=0;
+        bcount=0;
+        a=*arg;
+        while (*a!='\0') {
+            if (*a=='\\') {
+                bcount++;
+            } else {
+                if (*a==' ' || *a=='\t') {
+                    has_space=1;
+                } else if (*a=='"') {
+                    /* doubling of '\' preceeding a '"',
+                     * plus escaping of said '"'
+                     */
+                    len+=2*bcount+1;
+                }
+                bcount=0;
+            }
+            a++;
+        }
+        len+=(a-*arg)+1 /* for the separating space */;
+        if (has_space)
+            len+=2; /* for the quotes */
+    }
+
+    if (!(rupp->CommandLine.Buffer = RtlAllocateHeap( ntdll_get_process_heap(), 0, len * sizeof(WCHAR))))
+        return FALSE;
+
+    p = rupp->CommandLine.Buffer;
+    rupp->CommandLine.Length = (len - 1) * sizeof(WCHAR);
+    rupp->CommandLine.MaximumLength = len * sizeof(WCHAR);
+    for (arg = argv; *arg; arg++)
+    {
+        int has_space,has_quote;
+        char* a;
+
+        /* Check for quotes and spaces in this argument */
+        has_space=has_quote=0;
+        a=*arg;
+        while (*a!='\0') {
+            if (*a==' ' || *a=='\t') {
+                has_space=1;
+                if (has_quote)
+                    break;
+            } else if (*a=='"') {
+                has_quote=1;
+                if (has_space)
+                    break;
+            }
+            a++;
+        }
+
+        /* Now transfer it to the command line */
+        if (has_space)
+            *p++='"';
+        if (has_quote) {
+            int bcount;
+            char* a;
+
+            bcount=0;
+            a=*arg;
+            while (*a!='\0') {
+                if (*a=='\\') {
+                    *p++=*a;
+                    bcount++;
+                } else {
+                    if (*a=='"') {
+                        int i;
+
+                        /* Double all the '\\' preceeding this '"', plus one */
+                        for (i=0;i<=bcount;i++)
+                            *p++='\\';
+                        *p++='"';
+                    } else {
+                        *p++=*a;
+                    }
+                    bcount=0;
+                }
+                a++;
+            }
+        } else {
+            char* x = *arg;
+            while ((*p=*x++)) p++;
+        }
+        if (has_space)
+            *p++='"';
+        *p++=' ';
+    }
+    if (p > rupp->CommandLine.Buffer)
+        p--;  /* remove last space */
+    *p = '\0';
 
     return TRUE;
 }

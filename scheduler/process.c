@@ -47,7 +47,6 @@
 #include "wine/server.h"
 #include "options.h"
 #include "wine/debug.h"
-#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(server);
@@ -55,15 +54,13 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(win32);
 
-struct _ENVDB;
-
 /* Win32 process database */
 typedef struct _PDB
 {
     LONG             header[2];        /* 00 Kernel object header */
     HMODULE          module;           /* 08 Main exe module (NT) */
     void            *event;            /* 0c Pointer to an event object (unused) */
-    DWORD            exit_code;        /* 10 Process exit code */
+    RTL_USER_PROCESS_PARAMETERS *ProcessParameters;  /*  10 Process parameters*/
     DWORD            unknown2;         /* 14 Unknown */
     HANDLE           heap;             /* 18 Default process heap */
     HANDLE           mem_context;      /* 1c Process memory context */
@@ -109,7 +106,7 @@ typedef struct _PDB
 
 PDB current_process;
 
-RTL_USER_PROCESS_PARAMETERS     process_pmts;
+static RTL_USER_PROCESS_PARAMETERS     process_pmts;
 
 /* Process flags */
 #define PDB32_DEBUGGED      0x0001  /* Process is being debugged */
@@ -126,14 +123,12 @@ static unsigned int server_startticks;
 
 int main_create_flags = 0;
 
-/* memory/environ.c */
-extern struct _ENVDB *ENV_InitStartupInfo( size_t info_size, char *main_exe_name,
-                                           size_t main_exe_size );
-extern BOOL ENV_BuildCommandLine( char **argv );
-extern STARTUPINFOA current_startupinfo;
-
 /* scheduler/pthread.c */
 extern void PTHREAD_init_done(void);
+
+/* dlls/ntdll/env.c */
+extern BOOL init_user_process_pmts( size_t, char*, size_t );
+extern BOOL build_command_line( char **argv );
 
 extern void RELAY_InitDebugLists(void);
 extern void SHELL_LoadRegistry(void);
@@ -302,12 +297,12 @@ static BOOL process_init( char *argv[] )
     argv0 = argv[0];
 
     /* Fill the initial process structure */
-    current_process.exit_code       = STILL_ACTIVE;
     current_process.threads         = 1;
     current_process.running_threads = 1;
     current_process.ring0_threads   = 1;
     current_process.group           = &current_process;
     current_process.priority        = 8;  /* Normal */
+    current_process.ProcessParameters = &process_pmts;
 
     /* Setup the server connection */
     CLIENT_InitServer();
@@ -322,9 +317,9 @@ static BOOL process_init( char *argv[] )
             main_create_flags = reply->create_flags;
             info_size         = reply->info_size;
             server_startticks = reply->server_start;
-            current_startupinfo.hStdInput   = reply->hstdin;
-            current_startupinfo.hStdOutput  = reply->hstdout;
-            current_startupinfo.hStdError   = reply->hstderr;
+            process_pmts.hStdInput   = reply->hstdin;
+            process_pmts.hStdOutput  = reply->hstdout;
+            process_pmts.hStdError   = reply->hstderr;
         }
     }
     SERVER_END_REQ;
@@ -334,44 +329,33 @@ static BOOL process_init( char *argv[] )
     current_process.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
 
     if (main_create_flags == 0 &&
-	current_startupinfo.hStdInput  == 0 &&
-	current_startupinfo.hStdOutput == 0 &&
-	current_startupinfo.hStdError  == 0)
+	process_pmts.hStdInput  == 0 &&
+	process_pmts.hStdOutput == 0 &&
+	process_pmts.hStdError  == 0)
     {
-	/* no parent, and no new console requested, create a simple console with bare handles to
+	/* This is wine specific:
+         * no parent, and no new console requested, create a simple console with bare handles to
 	 * unix stdio input & output streams (aka simple console)
 	 */
-        HANDLE handle;
-        wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE, TRUE, &handle );
-        SetStdHandle( STD_INPUT_HANDLE, handle );
-        wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &handle );
-        SetStdHandle( STD_OUTPUT_HANDLE, handle );
-        wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &handle );
-        SetStdHandle( STD_ERROR_HANDLE, handle );
-    }
-    else if (!(main_create_flags & (DETACHED_PROCESS|CREATE_NEW_CONSOLE)))
-    {
-	SetStdHandle( STD_INPUT_HANDLE,  current_startupinfo.hStdInput  );
-	SetStdHandle( STD_OUTPUT_HANDLE, current_startupinfo.hStdOutput );
-	SetStdHandle( STD_ERROR_HANDLE,  current_startupinfo.hStdError  );
+        wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  TRUE, &process_pmts.hStdInput );
+        wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &process_pmts.hStdOutput );
+        wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &process_pmts.hStdError );
     }
 
     /* Now we can use the pthreads routines */
     PTHREAD_init_done();
 
     /* Copy the parent environment */
-    if (!(current_process.env_db = ENV_InitStartupInfo( info_size, main_exe_name,
-                                                        sizeof(main_exe_name) )))
+    if (!init_user_process_pmts( info_size, main_exe_name, sizeof(main_exe_name) ))
         return FALSE;
 
     /* Parse command line arguments */
     OPTIONS_ParseOptions( !info_size ? argv : NULL );
 
     /* <hack: to be changed later on> */
-    build_initial_environment();
     process_pmts.CurrentDirectoryName.Length = 3 * sizeof(WCHAR);
     process_pmts.CurrentDirectoryName.MaximumLength = RtlGetLongestNtPathLength() * sizeof(WCHAR);
-    process_pmts.CurrentDirectoryName.Buffer = RtlAllocateHeap( ntdll_get_process_heap(), 0, process_pmts.CurrentDirectoryName.MaximumLength);
+    process_pmts.CurrentDirectoryName.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, process_pmts.CurrentDirectoryName.MaximumLength);
     process_pmts.CurrentDirectoryName.Buffer[0] = 'C';
     process_pmts.CurrentDirectoryName.Buffer[1] = ':';
     process_pmts.CurrentDirectoryName.Buffer[2] = '\\';
@@ -579,7 +563,7 @@ void __wine_process_init( int argc, char *argv[] )
 
  found:
     /* build command line */
-    if (!ENV_BuildCommandLine( argv )) goto error;
+    if (!build_command_line( argv )) goto error;
 
     /* create 32-bit module for main exe */
     if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module ))) goto error;
@@ -861,7 +845,7 @@ static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCST
     int execfd[2];
     pid_t pid;
     int err;
-    char dummy;
+    char dummy = 0;
 
     if (!env)
     {
@@ -1404,7 +1388,8 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
  */
 DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
 {
-    DWORD x, y;
+    DWORD               x, y;
+    STARTUPINFOW        siw;
 
     TRACE_(win32)("(%ld, %d)\n", dwProcessID, offset );
 
@@ -1435,30 +1420,36 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
         return (DWORD)&current_process;
 
     case GPD_STARTF_SHELLDATA: /* return stdoutput handle from startupinfo ??? */
-        return (DWORD)current_startupinfo.hStdOutput;
+        GetStartupInfoW(&siw);
+        return (DWORD)siw.hStdOutput;
 
     case GPD_STARTF_HOTKEY: /* return stdinput handle from startupinfo ??? */
-        return (DWORD)current_startupinfo.hStdInput;
+        GetStartupInfoW(&siw);
+        return (DWORD)siw.hStdInput;
 
     case GPD_STARTF_SHOWWINDOW:
-        return current_startupinfo.wShowWindow;
+        GetStartupInfoW(&siw);
+        return siw.wShowWindow;
 
     case GPD_STARTF_SIZE:
-        x = current_startupinfo.dwXSize;
+        GetStartupInfoW(&siw);
+        x = siw.dwXSize;
         if ( (INT)x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
-        y = current_startupinfo.dwYSize;
+        y = siw.dwYSize;
         if ( (INT)y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
         return MAKELONG( x, y );
 
     case GPD_STARTF_POSITION:
-        x = current_startupinfo.dwX;
+        GetStartupInfoW(&siw);
+        x = siw.dwX;
         if ( (INT)x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
-        y = current_startupinfo.dwY;
+        y = siw.dwY;
         if ( (INT)y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
         return MAKELONG( x, y );
 
     case GPD_STARTF_FLAGS:
-        return current_startupinfo.dwFlags;
+        GetStartupInfoW(&siw);
+        return process_pmts.dwFlags;
 
     case GPD_PARENT:
         return 0;

@@ -48,6 +48,8 @@ extern BOOL RELAY_Init(void);
 extern void COMPUTERNAME_Init(void);
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
+/* memory/environ.c */
+extern void ENV_CopyStartupInformation(void);
 
 extern int main_create_flags;
 
@@ -113,6 +115,9 @@ static BOOL process_attach(void)
 
     /* Setup computer name */
     COMPUTERNAME_Init();
+    
+    /* copy process information from ntdll */
+    ENV_CopyStartupInformation();
 
     if ((hModule = LoadLibrary16( "krnl386.exe" )) >= 32)
     {
@@ -168,6 +173,14 @@ static BOOL process_attach(void)
         if (RtlImageNtHeader(mod)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
             AllocConsole();
     }
+    else if (!(main_create_flags & DETACHED_PROCESS))
+    {
+        /* 1/ shall inherit console + handles
+         * 2/ shall create std handles, if handles are not inherited
+         * TBD when not using wineserver handles for console handles
+         */
+    }
+
     if (main_create_flags & CREATE_NEW_PROCESS_GROUP)
         SetConsoleCtrlHandler(NULL, TRUE);
 
