@@ -1234,7 +1234,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST REC
     ENTER_GL();
 
     glXSwapBuffers(This->display, This->drawable);
-    checkGLcall("glXSwapBuffers");
+    /* Dont call checkGLcall, as glGetError is not applicable here */
+    TRACE("glXSwapBuffers called, Starting new frame");
 
     LEAVE_GL();
 
@@ -2922,10 +2923,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_ALPHAFUNC                 :
         {
             int glParm = GL_LESS;
-            float ref = 1.0;
-
-            glGetFloatv(GL_ALPHA_TEST_REF, &ref);
-            checkGLcall("glGetFloatv(GL_ALPHA_TEST_REF, &ref);");
+            float ref = ((float) This->StateBlock->renderstate[D3DRS_ALPHAREF]) / 255.0f;
 
             switch ((D3DCMPFUNC) Value) {
             case D3DCMP_NEVER:         glParm=GL_NEVER; break;
@@ -2941,17 +2939,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             }
             TRACE("glAlphaFunc with Parm=%x, ref=%f\n", glParm, ref);
             glAlphaFunc(glParm, ref);
+            This->alphafunc = glParm;
             checkGLcall("glAlphaFunc");
         }
         break;
 
     case D3DRS_ALPHAREF                  :
         {
-            int glParm = GL_LESS;
+            int glParm = This->alphafunc;
             float ref = 1.0f;
-
-            glGetIntegerv(GL_ALPHA_TEST_FUNC, &glParm);
-            checkGLcall("glGetFloatv(GL_ALPHA_TEST_FUNC, &glParm);");
 
             ref = ((float) Value) / 255.0f;
             TRACE("glAlphaFunc with Parm=%x, ref=%f\n", glParm, ref);
@@ -3075,13 +3071,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_STENCILFUNC               :
         {
            int glParm = GL_ALWAYS;
-           int ref = 0;
-           GLuint mask = 0xFFFFFFFF;
-
-           glGetIntegerv(GL_STENCIL_REF, &ref);
-           checkGLcall("glGetFloatv(GL_STENCIL_REF, &ref);");
-           glGetIntegerv(GL_STENCIL_VALUE_MASK, &mask);
-           checkGLcall("glGetFloatv(GL_STENCIL_VALUE_MASK, &glParm);");
+           int ref = This->StateBlock->renderstate[D3DRS_STENCILREF];
+           GLuint mask = This->StateBlock->renderstate[D3DRS_STENCILMASK];
 
            switch ((D3DCMPFUNC) Value) {
            case D3DCMP_NEVER:         glParm=GL_NEVER; break;
@@ -3103,14 +3094,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_STENCILREF                :
         {
-           int glParm = GL_ALWAYS;
+           int glParm = This->stencilfunc;
            int ref = 0;
-           GLuint mask = 0xFFFFFFFF;
-
-           glGetIntegerv(GL_STENCIL_FUNC, &glParm);
-           checkGLcall("glGetFloatv(GL_STENCIL_FUNC, &glParm);");
-           glGetIntegerv(GL_STENCIL_VALUE_MASK, &mask);
-           checkGLcall("glGetFloatv(GL_STENCIL_VALUE_MASK, &glParm);");
+           GLuint mask = This->StateBlock->renderstate[D3DRS_STENCILMASK];
 
            ref = Value;
            TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
@@ -3121,14 +3107,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_STENCILMASK               :
         {
-           int glParm = GL_ALWAYS;
-           int ref = 0.0;
+           int glParm = This->stencilfunc;
+           int ref = This->StateBlock->renderstate[D3DRS_STENCILREF];
            GLuint mask = Value;
-
-           glGetIntegerv(GL_STENCIL_REF, &ref);
-           checkGLcall("glGetFloatv(GL_STENCIL_REF, &ref);");
-           glGetIntegerv(GL_STENCIL_FUNC, &glParm);
-           checkGLcall("glGetFloatv(GL_STENCIL_FUNC, &glParm);");
 
            TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
            glStencilFunc(glParm, ref, mask);

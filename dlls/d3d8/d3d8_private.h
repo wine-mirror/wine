@@ -322,6 +322,8 @@ struct IDirect3DDevice8Impl
 
     UINT                          srcBlend;
     UINT                          dstBlend;
+    UINT                          alphafunc;
+    UINT                          stencilfunc;
 
     /* State block related */
     BOOL                          isRecordingState;

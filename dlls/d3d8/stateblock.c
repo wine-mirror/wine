@@ -106,9 +106,16 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
+
+    /* Setting stencil func also uses values for stencil ref/mask, so manually set defaults
+     * so only a single call performed (and ensure defaults initialized before making that call)    
+     *
+     * IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_STENCILREF, 0);
+     * IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_STENCILMASK, 0xFFFFFFFF);
+     */
+    This->StateBlock->renderstate[D3DRS_STENCILREF] = 0;
+    This->StateBlock->renderstate[D3DRS_STENCILMASK] = 0xFFFFFFFF;
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
-    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_STENCILREF, 0);
-    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_STENCILMASK, 0xFFFFFFFF);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_STENCILWRITEMASK, 0xFFFFFFFF);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_TEXTUREFACTOR, 0xFFFFFFFF);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_WRAP0, 0);
