@@ -497,7 +497,7 @@ TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc, TOOLBAR_INFO *infoPtr)
 /***********************************************************************
 * 		TOOLBAR_DrawDDFlatSeparator
 *
-* This function draws the separator that was flaged as TBSTYLE_DROPDOWN.
+* This function draws the separator that was flaged as BTNS_DROPDOWN.
 * In this case, the separator is a pixel high line of COLOR_BTNSHADOW,
 * followed by a pixel high line of COLOR_BTNHIGHLIGHT. These separators
 * are horizontal as opposed to the vertical separators for not dropdown
@@ -685,7 +685,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     BOOL hasDropDownArrow = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) &&
-	                    (btnPtr->fsStyle & TBSTYLE_DROPDOWN);
+	                    (btnPtr->fsStyle & BTNS_DROPDOWN);
     RECT rc, rcArrow, rcBitmap, rcText, rcFill;
     LPWSTR lpText = NULL;
     NMTBCUSTOMDRAW tbcd;
@@ -745,7 +745,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 		 * I changed it. IE4 "Links" toolbar would not
 		 * draw correctly with the original code.  - GA 8/01
 		 *   ((dwStyle & TBSTYLE_LIST) &&
-		 *    ((btnPtr->fsStyle & TBSTYLE_AUTOSIZE) == 0) &&
+		 *    ((btnPtr->fsStyle & BTNS_AUTOSIZE) == 0) &&
 		 *       (btnPtr->iBitmap != I_IMAGENONE))
 		 */
 	        if (dwStyle & TBSTYLE_LIST) {
@@ -822,19 +822,19 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	FillRect( hdc, &rcFill, GetSysColorBrush(COLOR_BTNFACE));
 
     /* separator */
-    if (btnPtr->fsStyle & TBSTYLE_SEP) {
+    if (btnPtr->fsStyle & BTNS_SEP) {
         /* with the FLAT style, iBitmap is the width and has already */
         /* been taken into consideration in calculating the width    */
         /* so now we need to draw the vertical separator             */
         /* empirical tests show that iBitmap can/will be non-zero    */
         /* when drawing the vertical bar...      */
         if ((dwStyle & TBSTYLE_FLAT) /* && (btnPtr->iBitmap == 0) */) {
-	    if (btnPtr->fsStyle & TBSTYLE_DROPDOWN)
+	    if (btnPtr->fsStyle & BTNS_DROPDOWN)
 		TOOLBAR_DrawDDFlatSeparator (&rc, hdc, btnPtr, infoPtr);
 	    else
 		TOOLBAR_DrawFlatSeparator (&rc, hdc, infoPtr);
 	}
-	else if (btnPtr->fsStyle != TBSTYLE_SEP) {
+	else if (btnPtr->fsStyle != BTNS_SEP) {
 	    FIXME("Draw some kind of separator: fsStyle=%x\n",
 		  btnPtr->fsStyle);
 	}
@@ -891,7 +891,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	goto FINALNOTIFY;
     }
 
-    /* pressed TBSTYLE_BUTTON */
+    /* pressed BTNS_BUTTON */
     if (tbcd.nmcd.uItemState & CDIS_SELECTED) {
 	offset = (infoPtr->dwItemCDFlag & TBCDRF_NOOFFSET) ? 0 : 1;
 	if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
@@ -922,9 +922,9 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	goto FINALNOTIFY;
     }
 
-    /* checked TBSTYLE_CHECK */
+    /* checked BTNS_CHECK */
     if ((tbcd.nmcd.uItemState & CDIS_CHECKED) &&
-	(btnPtr->fsStyle & TBSTYLE_CHECK)) {
+	(btnPtr->fsStyle & BTNS_CHECK)) {
 	if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
 	{
 	    if (dwStyle & TBSTYLE_FLAT)
@@ -1096,7 +1096,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 * prefix characters as M$ likes to call them). The prefix character
 * indicates where the underline goes, except for the string "&&" which
 * is reduced to a single "&". GetTextExtentPoint does not process these
-* only DrawText does. Note that the TBSTYLE_NOPREFIX is handled here.
+* only DrawText does. Note that the BTNS_NOPREFIX is handled here.
 */
 static void
 TOOLBAR_MeasureString(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
@@ -1124,7 +1124,7 @@ TOOLBAR_MeasureString(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 
 	    /* Use DrawText to get true size as drawn (less pesky "&") */
 	    DrawTextW (hdc, lpText, -1, &myrect, DT_VCENTER | DT_SINGLELINE |
-	    	   DT_CALCRECT | ((btnPtr->fsStyle & TBSTYLE_NOPREFIX) ?
+	    	   DT_CALCRECT | ((btnPtr->fsStyle & BTNS_NOPREFIX) ?
 				  DT_NOPREFIX : 0));
 
 	    /* feed back to caller  */
@@ -1233,10 +1233,10 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 	/* it is the actual width of the separator. This is used for */
 	/* custom controls in toolbars.                              */
 	/*                                                           */
-	/* TBSTYLE_DROPDOWN separators are treated as buttons for    */
+	/* BTNS_DROPDOWN separators are treated as buttons for    */
 	/* width.  - GA 8/01                                         */
-	if ((btnPtr[i].fsStyle & TBSTYLE_SEP) &&
-	    !(btnPtr[i].fsStyle & TBSTYLE_DROPDOWN))
+	if ((btnPtr[i].fsStyle & BTNS_SEP) &&
+	    !(btnPtr[i].fsStyle & BTNS_DROPDOWN))
 	    cx = (btnPtr[i].iBitmap > 0) ?
 			btnPtr[i].iBitmap : SEPARATOR_WIDTH;
 	else
@@ -1246,9 +1246,9 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 	/* The first separator in a group should be wrapped to the   */
 	/* next row if the previous wrapping is on a button.	     */
 	if( bButtonWrap &&
-		(btnPtr[i].fsStyle & TBSTYLE_SEP) &&
+		(btnPtr[i].fsStyle & BTNS_SEP) &&
 		(i + 1 < infoPtr->nNumButtons ) &&
-		(btnPtr[i + 1].fsStyle & TBSTYLE_SEP) )
+		(btnPtr[i + 1].fsStyle & BTNS_SEP) )
 	{
 	    TRACE("wrap point 1 btn %d style %02x\n", i, btnPtr[i].fsStyle);
 	    btnPtr[i].fsState |= TBSTATE_WRAP;
@@ -1270,8 +1270,8 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 	    /* 	If the current button is a separator and not hidden,  */
 	    /*	go to the next until it reaches a non separator.      */
 	    /*	Wrap the last separator if it is before a button.     */
-	    while( ( ((btnPtr[i].fsStyle & TBSTYLE_SEP) &&
-		      !(btnPtr[i].fsStyle & TBSTYLE_DROPDOWN)) ||
+	    while( ( ((btnPtr[i].fsStyle & BTNS_SEP) &&
+		      !(btnPtr[i].fsStyle & BTNS_DROPDOWN)) ||
 		     (btnPtr[i].fsState & TBSTATE_HIDDEN) ) &&
 			i < infoPtr->nNumButtons )
 	    {
@@ -1296,7 +1296,7 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 	    /*	separator and wrap it.   				 */
 	    for ( j = i - 1; j >= 0  &&  !(btnPtr[j].fsState & TBSTATE_WRAP); j--)
 	    {
-		if ((btnPtr[j].fsStyle & TBSTYLE_SEP) &&
+		if ((btnPtr[j].fsStyle & BTNS_SEP) &&
 			!(btnPtr[j].fsState & TBSTATE_HIDDEN))
 		{
 		    bFound = TRUE;
@@ -1339,7 +1339,7 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 		btnPtr[i].fsState |= TBSTATE_WRAP;
 		bFound = TRUE;
 		x = infoPtr->nIndent;
-		if (btnPtr[i].fsStyle & TBSTYLE_SEP )
+		if (btnPtr[i].fsStyle & BTNS_SEP )
 		    bButtonWrap = FALSE;
 		else
 		    bButtonWrap = TRUE;
@@ -1476,8 +1476,8 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	/* UNDOCUMENTED: If a separator has a non zero bitmap index, */
 	/* it is the actual width of the separator. This is used for */
 	/* custom controls in toolbars.                              */
-	if (btnPtr->fsStyle & TBSTYLE_SEP) {
-	    if (btnPtr->fsStyle & TBSTYLE_DROPDOWN) {
+	if (btnPtr->fsStyle & BTNS_SEP) {
+	    if (btnPtr->fsStyle & BTNS_DROPDOWN) {
 		cy = (btnPtr->iBitmap > 0) ?
 		     btnPtr->iBitmap : SEPARATOR_WIDTH;
 		cx = infoPtr->nButtonWidth;
@@ -1489,7 +1489,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	else
 	{
             if ((infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || 
-                (btnPtr->fsStyle & TBSTYLE_AUTOSIZE))
+                (btnPtr->fsStyle & BTNS_AUTOSIZE))
             {
               SIZE sz;
 	      HDC hdc;
@@ -1519,7 +1519,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
             else
 	      cx = infoPtr->nButtonWidth;
 
-	    if (hasDropDownArrows && (btnPtr->fsStyle & TBSTYLE_DROPDOWN))
+	    if (hasDropDownArrows && (btnPtr->fsStyle & BTNS_DROPDOWN))
 	      cx += DDARROW_WIDTH;
 	}
 	if (btnPtr->fsState & TBSTATE_WRAP )
@@ -1535,7 +1535,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	    infoPtr->rcBound.bottom = y + cy;
 
 	/* Set the toolTip only for non-hidden, non-separator button */
-	if (infoPtr->hwndToolTip && !(btnPtr->fsStyle & TBSTYLE_SEP ))
+	if (infoPtr->hwndToolTip && !(btnPtr->fsStyle & BTNS_SEP ))
 	{
 	    TTTOOLINFOA ti;
 
@@ -1558,14 +1558,14 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 
 	if( bWrap )
 	{
-	    if ( !(btnPtr->fsStyle & TBSTYLE_SEP) )
+	    if ( !(btnPtr->fsStyle & BTNS_SEP) )
 	        y += cy;
 	    else
 	    {
 		/* UNDOCUMENTED: If a separator has a non zero bitmap index, */
 		/* it is the actual width of the separator. This is used for */
 		/* custom controls in toolbars. 			     */
-		if ( !(btnPtr->fsStyle & TBSTYLE_DROPDOWN))
+		if ( !(btnPtr->fsStyle & BTNS_DROPDOWN))
 		    y += cy + ( (btnPtr->iBitmap > 0 ) ?
 				btnPtr->iBitmap : SEPARATOR_WIDTH) * 2 /3;
 		else
@@ -1625,7 +1625,7 @@ TOOLBAR_InternalHitTest (HWND hwnd, LPPOINT lpPt)
 	if (btnPtr->fsState & TBSTATE_HIDDEN)
 	    continue;
 
-	if (btnPtr->fsStyle & TBSTYLE_SEP) {
+	if (btnPtr->fsStyle & BTNS_SEP) {
 	    if (PtInRect (&btnPtr->rect, *lpPt)) {
 		TRACE(" ON SEPARATOR %d!\n", i);
 		return -i;
@@ -1678,7 +1678,7 @@ TOOLBAR_GetCheckedGroupButtonIndex (TOOLBAR_INFO *infoPtr, INT nIndex)
 
     /* check index button */
     btnPtr = &infoPtr->buttons[nIndex];
-    if ((btnPtr->fsStyle & TBSTYLE_CHECKGROUP) == TBSTYLE_CHECKGROUP) {
+    if ((btnPtr->fsStyle & BTNS_CHECKGROUP) == BTNS_CHECKGROUP) {
 	if (btnPtr->fsState & TBSTATE_CHECKED)
 	    return nIndex;
     }
@@ -1687,7 +1687,7 @@ TOOLBAR_GetCheckedGroupButtonIndex (TOOLBAR_INFO *infoPtr, INT nIndex)
     nRunIndex = nIndex - 1;
     while (nRunIndex >= 0) {
 	btnPtr = &infoPtr->buttons[nRunIndex];
-	if ((btnPtr->fsStyle & TBSTYLE_CHECKGROUP) == TBSTYLE_CHECKGROUP) {
+	if ((btnPtr->fsStyle & BTNS_CHECKGROUP) == BTNS_CHECKGROUP) {
 	    if (btnPtr->fsState & TBSTATE_CHECKED)
 		return nRunIndex;
 	}
@@ -1700,7 +1700,7 @@ TOOLBAR_GetCheckedGroupButtonIndex (TOOLBAR_INFO *infoPtr, INT nIndex)
     nRunIndex = nIndex + 1;
     while (nRunIndex < infoPtr->nNumButtons) {
 	btnPtr = &infoPtr->buttons[nRunIndex];
-	if ((btnPtr->fsStyle & TBSTYLE_CHECKGROUP) == TBSTYLE_CHECKGROUP) {
+	if ((btnPtr->fsStyle & BTNS_CHECKGROUP) == BTNS_CHECKGROUP) {
 	    if (btnPtr->fsState & TBSTATE_CHECKED)
 		return nRunIndex;
 	}
@@ -1778,7 +1778,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 {
 		    btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
                     memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
-                    btnInfo->btn.fsStyle = TBSTYLE_SEP;
+                    btnInfo->btn.fsStyle = BTNS_SEP;
                     btnInfo->bVirtual = FALSE;
 		    LoadStringW (COMCTL32_hModule, IDS_SEPARATOR, btnInfo->text, 64);
 
@@ -1792,7 +1792,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		/* insert separator button into 'available buttons' list */
 		btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
 		memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
-		btnInfo->btn.fsStyle = TBSTYLE_SEP;
+		btnInfo->btn.fsStyle = BTNS_SEP;
 		btnInfo->bVirtual = FALSE;
 		btnInfo->bRemovable = TRUE;
 		LoadStringW (COMCTL32_hModule, IDS_SEPARATOR, btnInfo->text, 64);
@@ -1840,7 +1840,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     }
 
                     memcpy (&btnInfo->btn, &nmtb.tbButton, sizeof(TBBUTTON));
-                    if (!(nmtb.tbButton.fsStyle & TBSTYLE_SEP))
+                    if (!(nmtb.tbButton.fsStyle & BTNS_SEP))
                     {
                         if (lstrlenW(nmtb.pszText))
                             lstrcpyW(btnInfo->text, nmtb.pszText);
@@ -1859,7 +1859,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		/* append 'virtual' separator button to the 'toolbar buttons' list */
 		btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
 		memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
-		btnInfo->btn.fsStyle = TBSTYLE_SEP;
+		btnInfo->btn.fsStyle = BTNS_SEP;
 		btnInfo->bVirtual = TRUE;
 		btnInfo->bRemovable = FALSE;
 		LoadStringW (COMCTL32_hModule, IDS_SEPARATOR, btnInfo->text, 64);
@@ -2029,7 +2029,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			    SendMessageA (custInfo->tbHwnd, TB_DELETEBUTTON, index, 0);
 
 			    /* insert into 'available button' list */
-			    if (!(btnInfo->btn.fsStyle & TBSTYLE_SEP))
+			    if (!(btnInfo->btn.fsStyle & BTNS_SEP))
 			    {
 				index = (int)SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_ADDSTRING, 0, 0);
 				SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMDATA, index, (LPARAM)btnInfo);
@@ -2176,7 +2176,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		DrawEdge (lpdis->hDC, &rcButton, EDGE_RAISED, BF_RECT|BF_MIDDLE|BF_SOFT);
 
 		/* draw image and text */
-		if ((btnInfo->btn.fsStyle & TBSTYLE_SEP) == 0) {
+		if ((btnInfo->btn.fsStyle & BTNS_SEP) == 0) {
 			HIMAGELIST himl = GETDEFIMAGELIST(infoPtr, GETHIMLID(infoPtr, 
 				btnInfo->btn.iBitmap));
 		    ImageList_Draw (himl, GETIBITMAP(infoPtr, btnInfo->btn.iBitmap), 
@@ -2476,7 +2476,7 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->iString   = lpTbb[nCount].iString;
 	btnPtr->bHot      = FALSE;
 
-	if ((infoPtr->hwndToolTip) && !(btnPtr->fsStyle & TBSTYLE_SEP)) {
+	if ((infoPtr->hwndToolTip) && !(btnPtr->fsStyle & BTNS_SEP)) {
 	    TTTOOLINFOA ti;
 
 	    ZeroMemory (&ti, sizeof(TTTOOLINFOA));
@@ -2540,7 +2540,7 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->iString   = lpTbb[nCount].iString;
 	btnPtr->bHot      = FALSE;
 
-	if ((infoPtr->hwndToolTip) && !(btnPtr->fsStyle & TBSTYLE_SEP)) {
+	if ((infoPtr->hwndToolTip) && !(btnPtr->fsStyle & BTNS_SEP)) {
 	    TTTOOLINFOW ti;
 
 	    ZeroMemory (&ti, sizeof(TTTOOLINFOW));
@@ -2881,7 +2881,7 @@ TOOLBAR_CheckButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     btnPtr = &infoPtr->buttons[nIndex];
 
-    if (!(btnPtr->fsStyle & TBSTYLE_CHECK))
+    if (!(btnPtr->fsStyle & BTNS_CHECK))
 	return FALSE;
 
     bChecked = (btnPtr->fsState & TBSTATE_CHECKED) ? TRUE : FALSE;
@@ -2889,7 +2889,7 @@ TOOLBAR_CheckButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (LOWORD(lParam) == FALSE)
 	btnPtr->fsState &= ~TBSTATE_CHECKED;
     else {
-	if (btnPtr->fsStyle & TBSTYLE_GROUP) {
+	if (btnPtr->fsStyle & BTNS_GROUP) {
 	    nOldIndex =
 		TOOLBAR_GetCheckedGroupButtonIndex (infoPtr, nIndex);
 	    if (nOldIndex == nIndex)
@@ -2974,7 +2974,7 @@ TOOLBAR_DeleteButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 
     if ((infoPtr->hwndToolTip) &&
-	!(infoPtr->buttons[nIndex].fsStyle & TBSTYLE_SEP)) {
+	!(infoPtr->buttons[nIndex].fsStyle & BTNS_SEP)) {
 	TTTOOLINFOA ti;
 
 	ZeroMemory (&ti, sizeof(TTTOOLINFOA));
@@ -3608,7 +3608,7 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
         infoPtr->buttons[nIndex].iString   = lpTbb->iString;
 
-    if ((infoPtr->hwndToolTip) && !(lpTbb->fsStyle & TBSTYLE_SEP)) {
+    if ((infoPtr->hwndToolTip) && !(lpTbb->fsStyle & BTNS_SEP)) {
 	TTTOOLINFOA ti;
 
 	ZeroMemory (&ti, sizeof(TTTOOLINFOA));
@@ -3708,7 +3708,7 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
         infoPtr->buttons[nIndex].iString   = lpTbb->iString;
 
-    if ((infoPtr->hwndToolTip) && !(lpTbb->fsStyle & TBSTYLE_SEP)) {
+    if ((infoPtr->hwndToolTip) && !(lpTbb->fsStyle & BTNS_SEP)) {
 	TTTOOLINFOW ti;
 
 	ZeroMemory (&ti, sizeof(TTTOOLINFOW));
@@ -4975,7 +4975,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	arrowRect.left = max(btnPtr->rect.left, btnPtr->rect.right - DDARROW_WIDTH);
 
 	/* for EX_DRAWDDARROWS style,  click must be in the drop-down arrow rect */
-	if ((btnPtr->fsState & TBSTATE_ENABLED) && (btnPtr->fsStyle & TBSTYLE_DROPDOWN) &&
+	if ((btnPtr->fsState & TBSTATE_ENABLED) && (btnPtr->fsStyle & BTNS_DROPDOWN) &&
 	     ((TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && PtInRect(&arrowRect, pt)) ||
 	      (!TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle))))
 	{
@@ -5058,8 +5058,8 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
 	btnPtr->fsState &= ~TBSTATE_PRESSED;
 
-	if (btnPtr->fsStyle & TBSTYLE_CHECK) {
-		if (btnPtr->fsStyle & TBSTYLE_GROUP) {
+	if (btnPtr->fsStyle & BTNS_CHECK) {
+		if (btnPtr->fsStyle & BTNS_GROUP) {
 		    nOldIndex = TOOLBAR_GetCheckedGroupButtonIndex (infoPtr,
 			nHit);
 		    if (nOldIndex == nHit)

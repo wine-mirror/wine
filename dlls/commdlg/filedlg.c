@@ -1017,15 +1017,15 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
 
   TBBUTTON tbb[] =
   {
-   {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
-   {VIEW_PARENTFOLDER, FCIDM_TB_UPFOLDER,   TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
-   {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
-   {VIEW_NEWFOLDER+1,  FCIDM_TB_DESKTOP,    TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
-   {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
-   {VIEW_NEWFOLDER,    FCIDM_TB_NEWFOLDER,  TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
-   {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
-   {VIEW_LIST,         FCIDM_TB_SMALLICON,  TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
-   {VIEW_DETAILS,      FCIDM_TB_REPORTVIEW, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+   {0,                 0,                   TBSTATE_ENABLED, BTNS_SEP, {0, 0}, 0, 0 },
+   {VIEW_PARENTFOLDER, FCIDM_TB_UPFOLDER,   TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0 },
+   {0,                 0,                   TBSTATE_ENABLED, BTNS_SEP, {0, 0}, 0, 0 },
+   {VIEW_NEWFOLDER+1,  FCIDM_TB_DESKTOP,    TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0 },
+   {0,                 0,                   TBSTATE_ENABLED, BTNS_SEP, {0, 0}, 0, 0 },
+   {VIEW_NEWFOLDER,    FCIDM_TB_NEWFOLDER,  TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0 },
+   {0,                 0,                   TBSTATE_ENABLED, BTNS_SEP, {0, 0}, 0, 0 },
+   {VIEW_LIST,         FCIDM_TB_SMALLICON,  TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0 },
+   {VIEW_DETAILS,      FCIDM_TB_REPORTVIEW, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0 },
   };
   TBADDBITMAP tba[2];
   RECT rectTB;
