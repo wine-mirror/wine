@@ -948,7 +948,7 @@ void UPDOWN_Register(void)
     WNDCLASSW wndClass;
 
     ZeroMemory( &wndClass, sizeof( WNDCLASSW ) );
-    wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW;
+    wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
     wndClass.lpfnWndProc   = (WNDPROC)UpDownWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(UPDOWN_INFO*);
