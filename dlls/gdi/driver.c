@@ -335,6 +335,14 @@ void DRIVER_release_driver( const DC_FUNCTIONS *funcs )
 BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size )
 {
     char *p;
+
+    /* display is a special case */
+    if (!strcasecmp( device, "display" ))
+    {
+        lstrcpynA( driver, "display", size );
+        return TRUE;
+    }
+
     size = GetProfileStringA("devices", device, "", driver, size);
     if(!size) {
         WARN("Unable to find '%s' in [devices] section of win.ini\n", device);
