@@ -16,7 +16,6 @@
 #include "wine/exception.h"
 #include "wine/library.h"
 #include "drive.h"
-#include "main.h"
 #include "module.h"
 #include "file.h"
 #include "global.h"
@@ -106,6 +105,8 @@ unsigned int server_startticks;
 extern struct _ENVDB *ENV_BuildEnvironment(void);
 extern BOOL ENV_BuildCommandLine( char **argv );
 extern STARTUPINFOA current_startupinfo;
+
+extern BOOL MAIN_MainInit(void);
 
 
 /***********************************************************************

@@ -16,7 +16,6 @@
 #include "task.h"
 #include "syslevel.h"
 #include "debugtools.h"
-#include "main.h"
 #include "callback.h"
 
 DEFAULT_DEBUG_CHANNEL(relay);
@@ -137,6 +136,7 @@ DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, DWORD *esi, INT *nArg
 
 /* from relay32/relay386.c */
 extern char **debug_relay_excludelist,**debug_relay_includelist;
+extern int RELAY_ShowDebugmsgRelay(const char *func);
 
 /***********************************************************************
  *           RELAY_DebugCallFrom16

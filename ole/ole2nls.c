@@ -22,7 +22,6 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "main.h"
 
 DEFAULT_DEBUG_CHANNEL(string);
 

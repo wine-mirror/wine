@@ -2,15 +2,19 @@
  * Main initialization code
  */
 
+#include <locale.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <string.h>
+#ifdef MALLOC_DEBUGGING
+# include <malloc.h>
+#endif
 #include "windef.h"
 #include "wine/winbase16.h"
-#include "main.h"
 #include "drive.h"
 #include "file.h"
 #include "options.h"
@@ -20,12 +24,28 @@
 
 DEFAULT_DEBUG_CHANNEL(server);
 
+extern void SHELL_LoadRegistry(void);
+
 /***********************************************************************
  *           Main initialisation routine
  */
 BOOL MAIN_MainInit(void)
 {
-    MAIN_WineInit();
+#ifdef MALLOC_DEBUGGING
+    char *trace;
+
+    mcheck(NULL);
+    if (!(trace = getenv("MALLOC_TRACE")))
+        MESSAGE( "MALLOC_TRACE not set. No trace generated\n" );
+    else
+    {
+        MESSAGE( "malloc trace goes to %s\n", trace );
+        mtrace();
+    }
+#endif
+    setbuf(stdout,NULL);
+    setbuf(stderr,NULL);
+    setlocale(LC_CTYPE,"");
 
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return FALSE;
@@ -44,9 +64,6 @@ BOOL MAIN_MainInit(void)
 
     /* Initialize module loadorder */
     if (!MODULE_InitLoadOrder()) return FALSE;
-
-    /* Initialize relay code */
-    if (!RELAY_Init()) return FALSE;
 
     return TRUE;
 }

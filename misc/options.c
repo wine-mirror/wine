@@ -10,7 +10,6 @@
 
 #include "winbase.h"
 #include "wine/library.h"
-#include "main.h"
 #include "options.h"
 #include "version.h"
 #include "debugtools.h"

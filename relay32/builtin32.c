@@ -25,7 +25,6 @@
 #include "module.h"
 #include "file.h"
 #include "heap.h"
-#include "main.h"
 #include "winerror.h"
 #include "server.h"
 #include "debugtools.h"

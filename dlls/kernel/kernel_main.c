@@ -15,6 +15,7 @@
 #include "global.h"
 
 extern void CODEPAGE_Init(void);
+extern BOOL RELAY_Init(void);
 extern BOOL THUNK_Init(void);
 extern void COMM_Init(void);
 
@@ -30,6 +31,9 @@ static BOOL process_attach(void)
 
     /* Setup codepage info */
     CODEPAGE_Init();
+
+    /* Initialize relay entry points */
+    if (!RELAY_Init()) return FALSE;
 
     /* Initialize thunking */
     if (!THUNK_Init()) return FALSE;

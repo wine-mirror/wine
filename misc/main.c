@@ -12,9 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef MALLOC_DEBUGGING
-# include <malloc.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -179,33 +176,6 @@ void MAIN_ParseDebugOptions( const char *arg )
   ExitProcess(1);
 }
 #endif
-
-/***********************************************************************
- *           MAIN_WineInit
- *
- * Wine initialisation
- */
-void MAIN_WineInit(void)
-{
-#ifdef MALLOC_DEBUGGING
-    char *trace;
-
-    mcheck(NULL);
-    if (!(trace = getenv("MALLOC_TRACE")))
-    {       
-        MESSAGE( "MALLOC_TRACE not set. No trace generated\n" );
-    }
-    else
-    {
-        MESSAGE( "malloc trace goes to %s\n", trace );
-        mtrace();
-    }
-#endif
-
-    setbuf(stdout,NULL);
-    setbuf(stderr,NULL);
-    setlocale(LC_CTYPE,"");
-}
 
 /***********************************************************************
  *           Beep   (KERNEL32.11)
