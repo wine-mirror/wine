@@ -904,20 +904,8 @@ static IPersistFolder2Vtbl vt_PersistFolder2 =
     ICPanel_PersistFolder2_GetCurFolder
 };
 
-HRESULT WINAPI CPanel_GetIconLocationA(LPITEMIDLIST pidl, LPSTR szIconFile, UINT cchMax, int* piIndex)
-{
-    PIDLCPanelStruct* pcpanel = _ILGetCPanelPointer(pidl);
-
-    if (!pcpanel)
-	return E_INVALIDARG;
-
-    lstrcpyA(szIconFile, pcpanel->szName);
-    *piIndex = pcpanel->iconIdx!=-1? pcpanel->iconIdx: 0;
-
-    return S_OK;
-}
-
-HRESULT WINAPI CPanel_GetIconLocationW(LPITEMIDLIST pidl, LPWSTR szIconFile, UINT cchMax, int* piIndex)
+HRESULT CPanel_GetIconLocationW(LPITEMIDLIST pidl,
+               LPWSTR szIconFile, UINT cchMax, int* piIndex)
 {
     PIDLCPanelStruct* pcpanel = _ILGetCPanelPointer(pidl);
 
@@ -935,7 +923,8 @@ HRESULT WINAPI CPanel_GetIconLocationW(LPITEMIDLIST pidl, LPWSTR szIconFile, UIN
 * IShellExecuteHookW Implementation
 */
 
-static HRESULT WINAPI IShellExecuteHookW_fnQueryInterface(IShellExecuteHookW* iface, REFIID riid, void** ppvObject)
+static HRESULT WINAPI IShellExecuteHookW_fnQueryInterface(
+               IShellExecuteHookW* iface, REFIID riid, void** ppvObject)
 {
     _ICOM_THIS_From_IShellExecuteHookW(ICPanelImpl, iface);
 
@@ -1087,10 +1076,8 @@ static HRESULT WINAPI IShellExecuteHookA_fnExecute(IShellExecuteHookA* iface, LP
 
 static IShellExecuteHookAVtbl vt_ShellExecuteHookA =
 {
-
     IShellExecuteHookA_fnQueryInterface,
     IShellExecuteHookA_fnAddRef,
     IShellExecuteHookA_fnRelease,
-
     IShellExecuteHookA_fnExecute
 };
