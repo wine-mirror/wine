@@ -24,6 +24,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -513,6 +514,37 @@ static BOOL DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
     return TRUE;
 }
 
+static BOOL DIR_SearchSemicolonedPaths(LPCSTR name, DOS_FULL_NAME *full_name, LPSTR pathlist)
+{
+    LPSTR next, buffer = NULL;
+    INT len = strlen(name), newlen, currlen = 0;
+    BOOL ret = FALSE;
+   
+    next = pathlist;
+    while (!ret && next)
+    {
+        LPSTR cur = next;
+        while (*cur == ';') cur++;
+        if (!*cur) break;
+        next = strchr( cur, ';' );
+        if (next) *next++ = '\0';
+	newlen = strlen(cur) + len + 2;
+	if (newlen > currlen)
+	{
+            if (!(buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, newlen)))
+                goto done;
+	    currlen = newlen;
+	}
+        strcpy( buffer, cur );
+        strcat( buffer, "\\" );
+        strcat( buffer, name );
+        ret = DOSFS_GetFullName( buffer, TRUE, full_name );
+    }
+done:
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return ret;
+}
+
 
 /***********************************************************************
  *           DIR_TryEnvironmentPath
@@ -522,9 +554,8 @@ static BOOL DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
  */
 static BOOL DIR_TryEnvironmentPath( LPCSTR name, DOS_FULL_NAME *full_name, LPCSTR envpath )
 {
-    LPSTR path, next, buffer;
+    LPSTR path;
     BOOL ret = FALSE;
-    INT len = strlen(name);
     DWORD size;
 
     size = envpath ? strlen(envpath)+1 : GetEnvironmentVariableA( "PATH", NULL, 0 );
@@ -532,22 +563,8 @@ static BOOL DIR_TryEnvironmentPath( LPCSTR name, DOS_FULL_NAME *full_name, LPCST
     if (!(path = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
     if (envpath) strcpy( path, envpath );
     else if (!GetEnvironmentVariableA( "PATH", path, size )) goto done;
-    next = path;
-    while (!ret && next)
-    {
-        LPSTR cur = next;
-        while (*cur == ';') cur++;
-        if (!*cur) break;
-        next = strchr( cur, ';' );
-        if (next) *next++ = '\0';
-        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, strlen(cur) + len + 2)))
-            goto done;
-        strcpy( buffer, cur );
-        strcat( buffer, "\\" );
-        strcat( buffer, name );
-        ret = DOSFS_GetFullName( buffer, TRUE, full_name );
-        HeapFree( GetProcessHeap(), 0, buffer );
-    }
+
+    ret = DIR_SearchSemicolonedPaths(name, full_name, path);
 
 done:
     HeapFree( GetProcessHeap(), 0, path );
@@ -583,6 +600,47 @@ static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name, BOOL win32
     return DOSFS_GetFullName( buffer, TRUE, full_name );
 }
 
+
+/***********************************************************************
+ *           DIR_TryAppPath
+ *
+ * Helper function for DIR_SearchPath.
+ */
+static BOOL DIR_TryAppPath( LPCSTR name, DOS_FULL_NAME *full_name )
+{
+    HKEY hkAppPaths, hkApp;
+    char lpAppName[MAX_PATHNAME_LEN], lpAppPaths[MAX_PATHNAME_LEN];
+    LPSTR lpFileName;
+    BOOL res = FALSE;
+    DWORD type, count;
+
+    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths", &hkAppPaths) != ERROR_SUCCESS)
+	return FALSE;
+
+    if (GetModuleFileNameA(0, lpAppName, sizeof(lpAppName)) == 0)
+    {
+	WARN("huh, module not found ??\n");
+	goto end;
+    }
+    lpFileName = strrchr(lpAppName, '\\');
+    if (!lpFileName)
+	goto end;
+    else lpFileName++; /* skip '\\' */
+    if (RegOpenKeyA(hkAppPaths, lpFileName, &hkApp) != ERROR_SUCCESS)
+	goto end;
+    count = sizeof(lpAppPaths);
+    if (RegQueryValueExA(hkApp, "Path", 0, &type, (LPBYTE)lpAppPaths, &count) != ERROR_SUCCESS)
+        goto end;
+    TRACE("successfully opened App Paths for '%s'\n", lpFileName);
+
+    res = DIR_SearchSemicolonedPaths(name, full_name, lpAppPaths);
+end:
+    if (hkApp)
+	RegCloseKey(hkApp);
+    if (hkAppPaths)
+	RegCloseKey(hkAppPaths);
+    return res;
+}
 
 /***********************************************************************
  *           DIR_SearchPath
@@ -661,6 +719,10 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     if (!win32 && DIR_TryModulePath( name, full_name, win32 )) goto done;
 
+    /* Try the "App Paths" entry if existing (undocumented ??) */
+    if (DIR_TryAppPath(name, full_name))
+	goto done;
+    
     /* Try all directories in path */
 
     ret = DIR_TryEnvironmentPath( name, full_name, NULL );
