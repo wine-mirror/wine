@@ -373,7 +373,7 @@ static	DWORD	wodGetPosition(WAVEMAPDATA* wom, LPMMTIME lpTime, DWORD dwParam2)
 {
     DWORD       val = waveOutGetPosition(wom->u.out.hInnerWave, lpTime, dwParam2);
     if (lpTime->wType == TIME_BYTES)
-        val = MulDiv(val, wom->avgSpeedOuter, wom->avgSpeedInner);
+        lpTime->u.cb = MulDiv(lpTime->u.cb, wom->avgSpeedOuter, wom->avgSpeedInner);
     /* other time types don't require conversion */
     return val;
 }
@@ -598,7 +598,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wim->dwClientInstance = lpDesc->dwInstance;
     wim->u.in.hOuterWave = (HWAVEIN)lpDesc->hWave;
 
-    ndhi = waveOutGetNumDevs();
+    ndhi = waveInGetNumDevs();
     if (dwFlags & WAVE_MAPPED) {
 	if (lpDesc->uMappedDeviceID >= ndhi) return MMSYSERR_INVALPARAM;
 	ndlo = lpDesc->uMappedDeviceID;
@@ -631,14 +631,46 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
                         {wim->avgSpeedInner = wfx.nAvgBytesPerSec; goto found;}
         
         for (i = ndlo; i < ndhi; i++) {
+	    wfx.nSamplesPerSec=lpDesc->lpFormat->nSamplesPerSec;
             /* first try with same stereo/mono option as source */
             wfx.nChannels = lpDesc->lpFormat->nChannels;
+			TRY(wfx.nSamplesPerSec, 16);
+			TRY(wfx.nSamplesPerSec, 8);
+			wfx.nChannels ^= 3;
+			TRY(wfx.nSamplesPerSec, 16);
+			TRY(wfx.nSamplesPerSec, 8);
+	}
+
+        for (i = ndlo; i < ndhi; i++) {
+	    wfx.nSamplesPerSec=lpDesc->lpFormat->nSamplesPerSec;
+            /* first try with same stereo/mono option as source */
+            wfx.nChannels = lpDesc->lpFormat->nChannels;
+            TRY(96000, 16);
+            TRY(48000, 16);
+            TRY(44100, 16);
+            TRY(22050, 16);
+            TRY(11025, 16);
+            
+            /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
+            wfx.nChannels ^= 3;
+            TRY(96000, 16);
+            TRY(48000, 16);
+            TRY(44100, 16);
+            TRY(22050, 16);
+            TRY(11025, 16);
+
+            /* first try with same stereo/mono option as source */
+            wfx.nChannels = lpDesc->lpFormat->nChannels;
+            TRY(96000, 8);
+            TRY(48000, 8);
             TRY(44100, 8);
             TRY(22050, 8);
             TRY(11025, 8);
             
             /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
             wfx.nChannels ^= 3;
+            TRY(96000, 8);
+            TRY(48000, 8);
             TRY(44100, 8);
             TRY(22050, 8);
             TRY(11025, 8);
@@ -767,7 +799,7 @@ static	DWORD	widGetPosition(WAVEMAPDATA* wim, LPMMTIME lpTime, DWORD dwParam2)
 {
     DWORD       val = waveInGetPosition(wim->u.in.hInnerWave, lpTime, dwParam2);
     if (lpTime->wType == TIME_BYTES)
-        val = MulDiv(val, wim->avgSpeedOuter, wim->avgSpeedInner);
+        lpTime->u.cb = MulDiv(lpTime->u.cb, wim->avgSpeedOuter, wim->avgSpeedInner);
     /* other time types don't require conversion */
     return val;
 }
