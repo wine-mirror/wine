@@ -158,8 +158,8 @@ OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
 BOOL WINAPI
 AllocateLocallyUniqueId( PLUID lpluid )
 {
-	lpluid->LowPart = time(NULL);
-	lpluid->HighPart = 0;
+	lpluid->s.LowPart = time(NULL);
+	lpluid->s.HighPart = 0;
 	return TRUE;
 }
 

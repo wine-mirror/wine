@@ -175,7 +175,7 @@ static BOOL BIGBLOCKFILE_FileInit(LPBIGBLOCKFILE This, HANDLE hFile)
     return FALSE;
   }
 
-  This->filesize.LowPart = GetFileSize(This->hfile, NULL);
+  This->filesize.s.LowPart = GetFileSize(This->hfile, NULL);
 
   /* create the mapped pages list
    */
@@ -221,8 +221,8 @@ static BOOL BIGBLOCKFILE_MemInit(LPBIGBLOCKFILE This, ILockBytes* plkbyt)
    */
   ILockBytes_AddRef(This->pLkbyt);
 
-  This->filesize.LowPart = GlobalSize(This->hbytearray);
-  This->filesize.HighPart = 0;
+  This->filesize.s.LowPart = GlobalSize(This->hbytearray);
+  This->filesize.s.HighPart = 0;
 
   This->pbytearray = GlobalLock(This->hbytearray);
 
@@ -289,8 +289,8 @@ void* BIGBLOCKFILE_GetROBigBlock(
    * 
    */
   if ((This->blocksize * (index + 1)) >
-      (This->filesize.LowPart +
-       (This->blocksize - (This->filesize.LowPart % This->blocksize))))
+      (This->filesize.s.LowPart +
+       (This->blocksize - (This->filesize.s.LowPart % This->blocksize))))
     return 0;
 
   return BIGBLOCKFILE_GetBigBlockPointer(This, index, FILE_MAP_READ);
@@ -316,12 +316,12 @@ void* BIGBLOCKFILE_GetBigBlock(LPBIGBLOCKFILE This, ULONG index)
   /*
    * make sure that the block physically exists
    */
-  if ((This->blocksize * (index + 1)) > This->filesize.LowPart)
+  if ((This->blocksize * (index + 1)) > This->filesize.s.LowPart)
   {
     ULARGE_INTEGER newSize;
 
-    newSize.HighPart = 0;
-    newSize.LowPart = This->blocksize * (index + 1);
+    newSize.s.HighPart = 0;
+    newSize.s.LowPart = This->blocksize * (index + 1);
 
     BIGBLOCKFILE_SetSize(This, newSize);
   }
@@ -377,7 +377,7 @@ void BIGBLOCKFILE_ReleaseBigBlock(LPBIGBLOCKFILE This, void *pBlock)
  */
 void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
 {
-  if (This->filesize.LowPart == newSize.LowPart)
+  if (This->filesize.s.LowPart == newSize.s.LowPart)
     return;
 
   if (This->fileBased)
@@ -396,7 +396,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
     /*
      * set the new end of file
      */
-    SetFilePointer(This->hfile, newSize.LowPart, NULL, FILE_BEGIN);
+    SetFilePointer(This->hfile, newSize.s.LowPart, NULL, FILE_BEGIN);
     SetEndOfFile(This->hfile);
   
     /*
@@ -429,8 +429,8 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
    */
   BIGBLOCKFILE_RemoveAllBlocks(This);
 
-  This->filesize.LowPart = newSize.LowPart;
-  This->filesize.HighPart = newSize.HighPart;
+  This->filesize.s.LowPart = newSize.s.LowPart;
+  This->filesize.s.HighPart = newSize.s.HighPart;
 }
 
 /******************************************************************************
@@ -811,8 +811,8 @@ static void * BIGBLOCKFILE_GetMappedView(
     newMappedPage->next = This->maplisthead->next;
     This->maplisthead->next = newMappedPage;
 
-    if (((pagenum + 1) * PAGE_SIZE) > This->filesize.LowPart)
-      numBytesToMap = This->filesize.LowPart - (pagenum * PAGE_SIZE);
+    if (((pagenum + 1) * PAGE_SIZE) > This->filesize.s.LowPart)
+      numBytesToMap = This->filesize.s.LowPart - (pagenum * PAGE_SIZE);
     else
       numBytesToMap = PAGE_SIZE;
 

@@ -28,8 +28,8 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
     struct timeval tv;
 
     gettimeofday(&tv,NULL);
-    counter->LowPart = tv.tv_usec+tv.tv_sec*1000000;
-    counter->HighPart = 0;
+    counter->s.LowPart = tv.tv_usec+tv.tv_sec*1000000;
+    counter->s.HighPart = 0;
     return TRUE;
 }
 
@@ -38,8 +38,8 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
  */
 BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 {
-	frequency->LowPart	= 1000000;
-	frequency->HighPart	= 0;
+	frequency->s.LowPart	= 1000000;
+	frequency->s.HighPart	= 0;
 	return TRUE;
 }
 

@@ -261,9 +261,9 @@ HRESULT WINAPI AntiMonikerImpl_GetSizeMax(IMoniker* iface,
     
     /* Normaly the sizemax must be the  size of DWORD ! but I tested this function it ususlly return 16 bytes */
     /* more than the number of bytes used by AntiMoniker::Save function */
-    pcbSize->LowPart =  sizeof(DWORD)+16;
+    pcbSize->s.LowPart =  sizeof(DWORD)+16;
 
-    pcbSize->HighPart=0;
+    pcbSize->s.HighPart=0;
 
     return S_OK;
 }

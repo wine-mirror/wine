@@ -84,14 +84,14 @@ StgStreamImpl* StgStreamImpl_Construct(
     /*
      * Start the stream at the begining.
      */
-    newStream->currentPosition.HighPart = 0;
-    newStream->currentPosition.LowPart = 0;
+    newStream->currentPosition.s.HighPart = 0;
+    newStream->currentPosition.s.LowPart = 0;
     
     /*
      * Initialize the rest of the data.
      */
-    newStream->streamSize.HighPart = 0;
-    newStream->streamSize.LowPart  = 0;
+    newStream->streamSize.s.HighPart = 0;
+    newStream->streamSize.s.LowPart  = 0;
     newStream->bigBlockChain       = 0;
     newStream->smallBlockChain     = 0;
     
@@ -272,16 +272,16 @@ void StgStreamImpl_OpenBlockChain(
     /*
      * This code supports only streams that are <32 bits in size.
      */
-    assert(This->streamSize.HighPart == 0);
+    assert(This->streamSize.s.HighPart == 0);
     
     if(curProperty.startingBlock == BLOCK_END_OF_CHAIN)
     {
-      assert( (This->streamSize.HighPart == 0) && (This->streamSize.LowPart == 0) );
+      assert( (This->streamSize.s.HighPart == 0) && (This->streamSize.s.LowPart == 0) );
     }
     else
     {
-      if ( (This->streamSize.HighPart == 0) &&
-	   (This->streamSize.LowPart < LIMIT_TO_USE_SMALL_BLOCK) )
+      if ( (This->streamSize.s.HighPart == 0) &&
+	   (This->streamSize.s.LowPart < LIMIT_TO_USE_SMALL_BLOCK) )
       {
 	This->smallBlockChain = SmallBlockChainStream_Construct(
 								This->parentStorage->ancestorStorage,	
@@ -332,7 +332,7 @@ HRESULT WINAPI StgStreamImpl_Read(
    * Using the known size of the stream, calculate the number of bytes
    * to read from the block chain
    */
-  bytesToReadFromBuffer = MIN( This->streamSize.LowPart - This->currentPosition.LowPart, cb);
+  bytesToReadFromBuffer = MIN( This->streamSize.s.LowPart - This->currentPosition.s.LowPart, cb);
   
   /*
    * Depending on the type of chain that was opened when the stream was constructed,
@@ -375,7 +375,7 @@ HRESULT WINAPI StgStreamImpl_Read(
   /*
    * Advance the pointer for the number of positions read.
    */
-  This->currentPosition.LowPart += *pcbRead;
+  This->currentPosition.s.LowPart += *pcbRead;
   
   /*
    * The function returns S_OK if the buffer was filled completely
@@ -430,14 +430,14 @@ HRESULT WINAPI StgStreamImpl_Write(
   }
   else
   {
-    newSize.HighPart = 0;
-    newSize.LowPart = This->currentPosition.LowPart + cb;
+    newSize.s.HighPart = 0;
+    newSize.s.LowPart = This->currentPosition.s.LowPart + cb;
   }
   
   /*
    * Verify if we need to grow the stream
    */
-  if (newSize.LowPart > This->streamSize.LowPart)
+  if (newSize.s.LowPart > This->streamSize.s.LowPart)
   {
     /* grow stream */
     IStream_SetSize(iface, newSize);
@@ -470,7 +470,7 @@ HRESULT WINAPI StgStreamImpl_Write(
   /*
    * Advance the position pointer for the number of positions written.
    */
-  This->currentPosition.LowPart += *pcbWritten;
+  This->currentPosition.s.LowPart += *pcbWritten;
   
   return S_OK;
 }
@@ -494,7 +494,7 @@ HRESULT WINAPI StgStreamImpl_Seek(
   ULARGE_INTEGER newPosition;
 
   TRACE("(%p, %ld, %ld, %p)\n",
-	iface, dlibMove.LowPart, dwOrigin, plibNewPosition);
+	iface, dlibMove.s.LowPart, dwOrigin, plibNewPosition);
 
   /* 
    * The caller is allowed to pass in NULL as the new position return value.
@@ -513,8 +513,8 @@ HRESULT WINAPI StgStreamImpl_Seek(
   switch (dwOrigin)
   {
     case STREAM_SEEK_SET:
-      plibNewPosition->HighPart = 0;
-      plibNewPosition->LowPart  = 0;
+      plibNewPosition->s.HighPart = 0;
+      plibNewPosition->s.LowPart  = 0;
       break;
     case STREAM_SEEK_CUR:
       *plibNewPosition = This->currentPosition;
@@ -529,13 +529,13 @@ HRESULT WINAPI StgStreamImpl_Seek(
   /*
    * We don't support files with offsets of 64 bits.
    */
-  assert(dlibMove.HighPart == 0);
+  assert(dlibMove.s.HighPart == 0);
 
   /*
    * Check if we end-up before the beginning of the file. That should trigger an
    * error.
    */
-  if ( (dlibMove.LowPart<0) && (plibNewPosition->LowPart < (ULONG)(-dlibMove.LowPart)) )
+  if ( (dlibMove.s.LowPart<0) && (plibNewPosition->s.LowPart < (ULONG)(-dlibMove.s.LowPart)) )
   {
     /*
      * I don't know what error to send there.
@@ -548,7 +548,7 @@ HRESULT WINAPI StgStreamImpl_Seek(
    * If the file pointer ends-up after the end of the stream, the next Write operation will
    * make the file larger. This is how it is documented.
    */
-  plibNewPosition->LowPart += dlibMove.LowPart;
+  plibNewPosition->s.LowPart += dlibMove.s.LowPart;
   This->currentPosition = *plibNewPosition;
  
   return S_OK;
@@ -572,15 +572,15 @@ HRESULT WINAPI StgStreamImpl_SetSize(
   StgProperty    curProperty;
   BOOL         Success;
 
-  TRACE("(%p, %ld)\n", iface, libNewSize.LowPart);
+  TRACE("(%p, %ld)\n", iface, libNewSize.s.LowPart);
 
   /*
    * As documented.
    */
-  if (libNewSize.HighPart != 0)
+  if (libNewSize.s.HighPart != 0)
     return STG_E_INVALIDFUNCTION;
   
-  if (This->streamSize.LowPart == libNewSize.LowPart)
+  if (This->streamSize.s.LowPart == libNewSize.s.LowPart)
     return S_OK;
 
   /*
@@ -588,7 +588,7 @@ HRESULT WINAPI StgStreamImpl_SetSize(
    */
   if ((This->smallBlockChain == 0) && (This->bigBlockChain == 0))
   {
-    if (libNewSize.LowPart < LIMIT_TO_USE_SMALL_BLOCK)
+    if (libNewSize.s.LowPart < LIMIT_TO_USE_SMALL_BLOCK)
     {
       This->smallBlockChain = SmallBlockChainStream_Construct(
                                     This->parentStorage->ancestorStorage,
@@ -613,9 +613,9 @@ HRESULT WINAPI StgStreamImpl_SetSize(
    * Determine if we have to switch from small to big blocks or vice versa
    */  
   if ( (This->smallBlockChain!=0) && 
-       (curProperty.size.LowPart < LIMIT_TO_USE_SMALL_BLOCK) )
+       (curProperty.size.s.LowPart < LIMIT_TO_USE_SMALL_BLOCK) )
   {
-    if (libNewSize.LowPart >= LIMIT_TO_USE_SMALL_BLOCK)
+    if (libNewSize.s.LowPart >= LIMIT_TO_USE_SMALL_BLOCK)
     {
       /*
        * Transform the small block chain into a big block chain
@@ -642,8 +642,8 @@ HRESULT WINAPI StgStreamImpl_SetSize(
                                        This->ownerProperty,
                                        &curProperty);
 
-  curProperty.size.HighPart = libNewSize.HighPart;
-  curProperty.size.LowPart = libNewSize.LowPart;
+  curProperty.size.s.HighPart = libNewSize.s.HighPart;
+  curProperty.size.s.LowPart = libNewSize.s.LowPart;
   
   if (Success)
   {
@@ -678,7 +678,7 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
   ULARGE_INTEGER totalBytesWritten;
 
   TRACE("(%p, %p, %ld, %p, %p)\n", 
-	iface, pstm, cb.LowPart, pcbRead, pcbWritten);
+	iface, pstm, cb.s.LowPart, pcbRead, pcbWritten);
 
   /*
    * Sanity check
@@ -686,28 +686,28 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
   if ( pstm == 0 )
     return STG_E_INVALIDPOINTER;
 
-  totalBytesRead.LowPart = totalBytesRead.HighPart = 0;
-  totalBytesWritten.LowPart = totalBytesWritten.HighPart = 0;
+  totalBytesRead.s.LowPart = totalBytesRead.s.HighPart = 0;
+  totalBytesWritten.s.LowPart = totalBytesWritten.s.HighPart = 0;
 
   /*
    * use stack to store data temporarly
    * there is surely more performant way of doing it, for now this basic
    * implementation will do the job
    */
-  while ( cb.LowPart > 0 )
+  while ( cb.s.LowPart > 0 )
   {
-    if ( cb.LowPart >= 128 )
+    if ( cb.s.LowPart >= 128 )
       copySize = 128;
     else
-      copySize = cb.LowPart;
+      copySize = cb.s.LowPart;
     
     IStream_Read(iface, tmpBuffer, copySize, &bytesRead);
 
-    totalBytesRead.LowPart += bytesRead;
+    totalBytesRead.s.LowPart += bytesRead;
     
     IStream_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
 
-    totalBytesWritten.LowPart += bytesWritten;
+    totalBytesWritten.s.LowPart += bytesWritten;
 
     /*
      * Check that read & write operations were succesfull
@@ -719,9 +719,9 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
     }
     
     if (bytesRead!=copySize)
-      cb.LowPart = 0;
+      cb.s.LowPart = 0;
     else
-      cb.LowPart -= bytesRead;
+      cb.s.LowPart -= bytesRead;
   }
 
   /*
@@ -729,14 +729,14 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
    */
   if (pcbRead)
   {
-    pcbRead->LowPart = totalBytesRead.LowPart;
-    pcbRead->HighPart = totalBytesRead.HighPart;
+    pcbRead->s.LowPart = totalBytesRead.s.LowPart;
+    pcbRead->s.HighPart = totalBytesRead.s.HighPart;
   }
 
   if (pcbWritten)
   {
-    pcbWritten->LowPart = totalBytesWritten.LowPart;
-    pcbWritten->HighPart = totalBytesWritten.HighPart;
+    pcbWritten->s.LowPart = totalBytesWritten.s.LowPart;
+    pcbWritten->s.HighPart = totalBytesWritten.s.HighPart;
   }
   return hr;
 }

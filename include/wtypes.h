@@ -147,19 +147,20 @@ typedef struct tagBLOB
 
 #ifndef _tagCY_DEFINED
 #define _tagCY_DEFINED
-typedef union tagCY
-{
+
+typedef union tagCY {
     struct {
 #ifdef BIG_ENDIAN
-        long Hi;
-        long Lo;
-#else
-        unsigned long Lo;
-        long Hi;
-#endif
-    } u;
+        LONG  Hi;
+        LONG  Lo;
+#else /* defined(BIG_ENDIAN) */
+        ULONG Lo;
+        LONG  Hi;
+#endif /* defined(BIG_ENDIAN) */
+    } DUMMYSTRUCTNAME;
     LONGLONG int64;
 } CY;
+
 #endif /* _tagCY_DEFINED */
 
 /*

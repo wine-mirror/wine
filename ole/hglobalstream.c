@@ -257,14 +257,14 @@ HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
     /*
      * Start the stream at the begining.
      */
-    newStream->currentPosition.HighPart = 0;
-    newStream->currentPosition.LowPart = 0;
+    newStream->currentPosition.s.HighPart = 0;
+    newStream->currentPosition.s.LowPart = 0;
     
     /*
      * Initialize the size of the stream to the size of the handle.
      */
-    newStream->streamSize.HighPart = 0;
-    newStream->streamSize.LowPart  = GlobalSize(newStream->supportHandle);
+    newStream->streamSize.s.HighPart = 0;
+    newStream->streamSize.s.LowPart  = GlobalSize(newStream->supportHandle);
   }
   
   return newStream;
@@ -420,19 +420,19 @@ HRESULT WINAPI HGLOBALStreamImpl_Read(
    * Using the known size of the stream, calculate the number of bytes
    * to read from the block chain
    */
-  bytesToReadFromBuffer = MIN( This->streamSize.LowPart - This->currentPosition.LowPart, cb);
+  bytesToReadFromBuffer = MIN( This->streamSize.s.LowPart - This->currentPosition.s.LowPart, cb);
 
   /*
    * Lock the buffer in position and copy the data.
    */
   supportBuffer = GlobalLock(This->supportHandle);
 
-  memcpy(pv, (char *) supportBuffer+This->currentPosition.LowPart, bytesToReadFromBuffer);
+  memcpy(pv, (char *) supportBuffer+This->currentPosition.s.LowPart, bytesToReadFromBuffer);
 
   /*
    * Move the current position to the new position
    */
-  This->currentPosition.LowPart+=bytesToReadFromBuffer;
+  This->currentPosition.s.LowPart+=bytesToReadFromBuffer;
 
   /*
    * Return the number of bytes read.
@@ -493,14 +493,14 @@ HRESULT WINAPI HGLOBALStreamImpl_Write(
   }
   else
   {
-    newSize.HighPart = 0;
-    newSize.LowPart = This->currentPosition.LowPart + cb;
+    newSize.s.HighPart = 0;
+    newSize.s.LowPart = This->currentPosition.s.LowPart + cb;
   }
   
   /*
    * Verify if we need to grow the stream
    */
-  if (newSize.LowPart > This->streamSize.LowPart)
+  if (newSize.s.LowPart > This->streamSize.s.LowPart)
   {
     /* grow stream */
    IStream_SetSize(iface, newSize);
@@ -511,12 +511,12 @@ HRESULT WINAPI HGLOBALStreamImpl_Write(
    */
   supportBuffer = GlobalLock(This->supportHandle);
 
-  memcpy((char *) supportBuffer+This->currentPosition.LowPart, pv, cb);  
+  memcpy((char *) supportBuffer+This->currentPosition.s.LowPart, pv, cb);  
 
   /*
    * Move the current position to the new position
    */
-  This->currentPosition.LowPart+=cb;
+  This->currentPosition.s.LowPart+=cb;
 
   /*
    * Return the number of bytes read.
@@ -550,7 +550,7 @@ HRESULT WINAPI HGLOBALStreamImpl_Seek(
   ULARGE_INTEGER newPosition;
 
   TRACE("(%p, %ld, %ld, %p)\n", iface,
-	dlibMove.LowPart, dwOrigin, plibNewPosition);
+	dlibMove.s.LowPart, dwOrigin, plibNewPosition);
 
   /* 
    * The caller is allowed to pass in NULL as the new position return value.
@@ -569,8 +569,8 @@ HRESULT WINAPI HGLOBALStreamImpl_Seek(
   switch (dwOrigin)
   {
     case STREAM_SEEK_SET:
-      plibNewPosition->HighPart = 0;
-      plibNewPosition->LowPart  = 0;
+      plibNewPosition->s.HighPart = 0;
+      plibNewPosition->s.LowPart  = 0;
       break;
     case STREAM_SEEK_CUR:
       *plibNewPosition = This->currentPosition;
@@ -585,13 +585,13 @@ HRESULT WINAPI HGLOBALStreamImpl_Seek(
   /*
    * We don't support files with offsets of 64 bits.
    */
-  assert(dlibMove.HighPart == 0);
+  assert(dlibMove.s.HighPart == 0);
 
   /*
    * Check if we end-up before the beginning of the file. That should trigger an
    * error.
    */
-  if ( (dlibMove.LowPart<0) && (plibNewPosition->LowPart < (ULONG)(-dlibMove.LowPart)) )
+  if ( (dlibMove.s.LowPart<0) && (plibNewPosition->s.LowPart < (ULONG)(-dlibMove.s.LowPart)) )
   {
     /*
      * I don't know what error to send there.
@@ -604,7 +604,7 @@ HRESULT WINAPI HGLOBALStreamImpl_Seek(
    * If the file pointer ends-up after the end of the stream, the next Write operation will
    * make the file larger. This is how it is documented.
    */
-  plibNewPosition->LowPart += dlibMove.LowPart;
+  plibNewPosition->s.LowPart += dlibMove.s.LowPart;
   This->currentPosition = *plibNewPosition;
  
   return S_OK;
@@ -625,25 +625,25 @@ HRESULT WINAPI HGLOBALStreamImpl_SetSize(
 {
   HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
 
-  TRACE("(%p, %ld)\n", iface, libNewSize.LowPart);
+  TRACE("(%p, %ld)\n", iface, libNewSize.s.LowPart);
 
   /*
    * As documented.
    */
-  if (libNewSize.HighPart != 0)
+  if (libNewSize.s.HighPart != 0)
     return STG_E_INVALIDFUNCTION;
   
-  if (This->streamSize.LowPart == libNewSize.LowPart)
+  if (This->streamSize.s.LowPart == libNewSize.s.LowPart)
     return S_OK;
 
   /*
    * Re allocate the HGlobal to fit the new size of the stream.
    */
   This->supportHandle = GlobalReAlloc(This->supportHandle, 
-				      libNewSize.LowPart,
+				      libNewSize.s.LowPart,
 				      0);
 
-  This->streamSize.LowPart = libNewSize.LowPart;
+  This->streamSize.s.LowPart = libNewSize.s.LowPart;
   
   return S_OK;
 }
@@ -669,7 +669,7 @@ HRESULT WINAPI HGLOBALStreamImpl_CopyTo(
   ULARGE_INTEGER totalBytesWritten;
 
   TRACE("(%p, %p, %ld, %p, %p)\n", iface, pstm, 
-	cb.LowPart, pcbRead, pcbWritten);
+	cb.s.LowPart, pcbRead, pcbWritten);
 
   /*
    * Sanity check
@@ -677,28 +677,28 @@ HRESULT WINAPI HGLOBALStreamImpl_CopyTo(
   if ( pstm == 0 )
     return STG_E_INVALIDPOINTER;
 
-  totalBytesRead.LowPart = totalBytesRead.HighPart = 0;
-  totalBytesWritten.LowPart = totalBytesWritten.HighPart = 0;
+  totalBytesRead.s.LowPart = totalBytesRead.s.HighPart = 0;
+  totalBytesWritten.s.LowPart = totalBytesWritten.s.HighPart = 0;
 
   /*
    * use stack to store data temporarly
    * there is surely more performant way of doing it, for now this basic
    * implementation will do the job
    */
-  while ( cb.LowPart > 0 )
+  while ( cb.s.LowPart > 0 )
   {
-    if ( cb.LowPart >= 128 )
+    if ( cb.s.LowPart >= 128 )
       copySize = 128;
     else
-      copySize = cb.LowPart;
+      copySize = cb.s.LowPart;
     
     IStream_Read(iface, tmpBuffer, copySize, &bytesRead);
 
-    totalBytesRead.LowPart += bytesRead;
+    totalBytesRead.s.LowPart += bytesRead;
     
     IStream_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
 
-    totalBytesWritten.LowPart += bytesWritten;
+    totalBytesWritten.s.LowPart += bytesWritten;
 
     /*
      * Check that read & write operations were succesfull
@@ -710,9 +710,9 @@ HRESULT WINAPI HGLOBALStreamImpl_CopyTo(
     }
     
     if (bytesRead!=copySize)
-      cb.LowPart = 0;
+      cb.s.LowPart = 0;
     else
-      cb.LowPart -= bytesRead;
+      cb.s.LowPart -= bytesRead;
   }
 
   /*
@@ -720,14 +720,14 @@ HRESULT WINAPI HGLOBALStreamImpl_CopyTo(
    */
   if (pcbRead)
   {
-    pcbRead->LowPart = totalBytesRead.LowPart;
-    pcbRead->HighPart = totalBytesRead.HighPart;
+    pcbRead->s.LowPart = totalBytesRead.s.LowPart;
+    pcbRead->s.HighPart = totalBytesRead.s.HighPart;
   }
 
   if (pcbWritten)
   {
-    pcbWritten->LowPart = totalBytesWritten.LowPart;
-    pcbWritten->HighPart = totalBytesWritten.HighPart;
+    pcbWritten->s.LowPart = totalBytesWritten.s.LowPart;
+    pcbWritten->s.HighPart = totalBytesWritten.s.HighPart;
   }
   return hr;
 }

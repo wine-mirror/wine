@@ -2206,7 +2206,7 @@ HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbO
  * Convert currency to unsigned char
  */
 HRESULT WINAPI VarUI1FromCy(CY cyIn, BYTE* pbOut) {
-   double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
+   double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
    
    if (t > UI1_MAX || t < UI1_MIN) return DISP_E_OVERFLOW;
    
@@ -2412,7 +2412,7 @@ HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psO
  * Convert currency to signed short
  */
 HRESULT WINAPI VarI2FromCy(CY cyIn, short* psOut) {
-   double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
+   double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
    
    if (t > I2_MAX || t < I2_MIN) return DISP_E_OVERFLOW;
    
@@ -2605,7 +2605,7 @@ HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOu
  * Convert currency to signed long
  */
 HRESULT WINAPI VarI4FromCy(CY cyIn, LONG* plOut) {
-   double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
+   double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
    
    if (t > I4_MAX || t < I4_MIN) return DISP_E_OVERFLOW;
    
@@ -2779,7 +2779,7 @@ HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfl
  * Convert currency to float
  */
 HRESULT WINAPI VarR4FromCy(CY cyIn, FLOAT* pfltOut) {
-   *pfltOut = (FLOAT)((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
+   *pfltOut = (FLOAT)((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
    
    return S_OK;
 }
@@ -2929,7 +2929,7 @@ HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pd
  * Convert currency to double
  */
 HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut) {
-   *pdblOut = (double)((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
+   *pdblOut = (double)((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
    
    return S_OK;
 }
@@ -3120,7 +3120,7 @@ HRESULT WINAPI VarDateFromBool(VARIANT_BOOL boolIn, DATE* pdateOut)
  * Convert currency to date
  */
 HRESULT WINAPI VarDateFromCy(CY cyIn, DATE* pdateOut) {
-   *pdateOut = (DATE)((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
+   *pdateOut = (DATE)((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
 
    if (*pdateOut > DATE_MAX || *pdateOut < DATE_MIN) return DISP_E_TYPEMISMATCH;
    return S_OK;
@@ -3537,7 +3537,7 @@ HRESULT WINAPI VarBoolFromUI4(ULONG ulIn, VARIANT_BOOL* pboolOut)
  * Convert currency to boolean
  */
 HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL* pboolOut) {
-      if (cyIn.u.Hi || cyIn.u.Lo) *pboolOut = -1;
+      if (cyIn.s.Hi || cyIn.s.Lo) *pboolOut = -1;
       else *pboolOut = 0;
       
       return S_OK;
@@ -3741,7 +3741,7 @@ HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR* pcOut)
  * Convert currency to signed char
  */
 HRESULT WINAPI VarI1FromCy(CY cyIn, CHAR* pcOut) {
-   double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
+   double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
    
    if (t > CHAR_MAX || t < CHAR_MIN) return DISP_E_OVERFLOW;
    
@@ -3975,7 +3975,7 @@ HRESULT WINAPI VarUI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG* pu
  * Convert currency to unsigned short
  */
 HRESULT WINAPI VarUI2FromCy(CY cyIn, USHORT* pusOut) {
-   double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
+   double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
    
    if (t > UI2_MAX || t < UI2_MIN) return DISP_E_OVERFLOW;
       
@@ -4123,7 +4123,7 @@ HRESULT WINAPI VarUI4FromUI2(USHORT uiIn, ULONG* pulOut)
  * Convert currency to unsigned long
  */
 HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG* pulOut) {
-   double t = round((((double)cyIn.u.Hi * 4294967296.0) + (double)cyIn.u.Lo) / 10000);
+   double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
    
    if (t > UI4_MAX || t < UI4_MIN) return DISP_E_OVERFLOW;
 
@@ -4137,8 +4137,8 @@ HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG* pulOut) {
  * Convert unsigned char to currency
  */
 HRESULT WINAPI VarCyFromUI1(BYTE bIn, CY* pcyOut) {
-   pcyOut->u.Hi = 0;
-   pcyOut->u.Lo = ((ULONG)bIn) * 10000;
+   pcyOut->s.Hi = 0;
+   pcyOut->s.Lo = ((ULONG)bIn) * 10000;
    
    return S_OK;
 }
@@ -4148,9 +4148,9 @@ HRESULT WINAPI VarCyFromUI1(BYTE bIn, CY* pcyOut) {
  * Convert signed short to currency
  */
 HRESULT WINAPI VarCyFromI2(short sIn, CY* pcyOut) {
-   if (sIn < 0) pcyOut->u.Hi = -1;
-   else pcyOut->u.Hi = 0;
-   pcyOut->u.Lo = ((ULONG)sIn) * 10000;
+   if (sIn < 0) pcyOut->s.Hi = -1;
+   else pcyOut->s.Hi = 0;
+   pcyOut->s.Lo = ((ULONG)sIn) * 10000;
    
    return S_OK;
 }
@@ -4161,9 +4161,9 @@ HRESULT WINAPI VarCyFromI2(short sIn, CY* pcyOut) {
  */
 HRESULT WINAPI VarCyFromI4(LONG lIn, CY* pcyOut) {
       double t = (double)lIn * (double)10000;
-      pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
-      pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);
-      if (lIn < 0) pcyOut->u.Hi--;
+      pcyOut->s.Hi = (LONG)(t / (double)4294967296.0);
+      pcyOut->s.Lo = (ULONG)fmod(t, (double)4294967296.0);
+      if (lIn < 0) pcyOut->s.Hi--;
    
       return S_OK;
 }
@@ -4174,9 +4174,9 @@ HRESULT WINAPI VarCyFromI4(LONG lIn, CY* pcyOut) {
  */
 HRESULT WINAPI VarCyFromR4(FLOAT fltIn, CY* pcyOut) {
    double t = round((double)fltIn * (double)10000);
-   pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
-   pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);
-   if (fltIn < 0) pcyOut->u.Hi--;
+   pcyOut->s.Hi = (LONG)(t / (double)4294967296.0);
+   pcyOut->s.Lo = (ULONG)fmod(t, (double)4294967296.0);
+   if (fltIn < 0) pcyOut->s.Hi--;
    
    return S_OK;
 }
@@ -4187,9 +4187,9 @@ HRESULT WINAPI VarCyFromR4(FLOAT fltIn, CY* pcyOut) {
  */
 HRESULT WINAPI VarCyFromR8(double dblIn, CY* pcyOut) {
    double t = round(dblIn * (double)10000);
-   pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
-   pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);
-   if (dblIn < 0) pcyOut->u.Hi--;
+   pcyOut->s.Hi = (LONG)(t / (double)4294967296.0);
+   pcyOut->s.Lo = (ULONG)fmod(t, (double)4294967296.0);
+   if (dblIn < 0) pcyOut->s.Hi--;
 
    return S_OK;
 }
@@ -4200,9 +4200,9 @@ HRESULT WINAPI VarCyFromR8(double dblIn, CY* pcyOut) {
  */
 HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
    double t = round((double)dateIn * (double)10000);
-   pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
-   pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);
-   if (dateIn < 0) pcyOut->u.Hi--;
+   pcyOut->s.Hi = (LONG)(t / (double)4294967296.0);
+   pcyOut->s.Lo = (ULONG)fmod(t, (double)4294967296.0);
+   if (dateIn < 0) pcyOut->s.Hi--;
 
    return S_OK;
 }
@@ -4221,9 +4221,9 @@ HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut
  * Convert boolean to currency
  */
 HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut) {
-   if (boolIn < 0) pcyOut->u.Hi = -1;
-   else pcyOut->u.Hi = 0;
-   pcyOut->u.Lo = (ULONG)boolIn * (ULONG)10000;
+   if (boolIn < 0) pcyOut->s.Hi = -1;
+   else pcyOut->s.Hi = 0;
+   pcyOut->s.Lo = (ULONG)boolIn * (ULONG)10000;
    
    return S_OK;
 }
@@ -4233,9 +4233,9 @@ HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut) {
  * Convert signed char to currency
  */
 HRESULT WINAPI VarCyFromI1(CHAR cIn, CY* pcyOut) {
-   if (cIn < 0) pcyOut->u.Hi = -1;
-   else pcyOut->u.Hi = 0;
-   pcyOut->u.Lo = (ULONG)cIn * (ULONG)10000;
+   if (cIn < 0) pcyOut->s.Hi = -1;
+   else pcyOut->s.Hi = 0;
+   pcyOut->s.Lo = (ULONG)cIn * (ULONG)10000;
    
    return S_OK;
 }
@@ -4245,8 +4245,8 @@ HRESULT WINAPI VarCyFromI1(CHAR cIn, CY* pcyOut) {
  * Convert unsigned short to currency
  */
 HRESULT WINAPI VarCyFromUI2(USHORT usIn, CY* pcyOut) {
-   pcyOut->u.Hi = 0;
-   pcyOut->u.Lo = (ULONG)usIn * (ULONG)10000;
+   pcyOut->s.Hi = 0;
+   pcyOut->s.Lo = (ULONG)usIn * (ULONG)10000;
    
    return S_OK;
 }
@@ -4257,8 +4257,8 @@ HRESULT WINAPI VarCyFromUI2(USHORT usIn, CY* pcyOut) {
  */
 HRESULT WINAPI VarCyFromUI4(ULONG ulIn, CY* pcyOut) {
    double t = (double)ulIn * (double)10000;
-   pcyOut->u.Hi = (LONG)(t / (double)4294967296.0);
-   pcyOut->u.Lo = (ULONG)fmod(t, (double)4294967296.0);
+   pcyOut->s.Hi = (LONG)(t / (double)4294967296.0);
+   pcyOut->s.Lo = (ULONG)fmod(t, (double)4294967296.0);
       
    return S_OK;
 }

@@ -89,8 +89,8 @@ DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM lPar
 
     *phDpa = (HDPA)NULL;
 
-    position.LowPart = 0;
-    position.HighPart = 0;
+    position.s.LowPart = 0;
+    position.s.HighPart = 0;
 
     errCode = IStream_Seek (pStream, position, STREAM_SEEK_CUR, &newPosition);
     if (errCode != S_OK)

@@ -1044,8 +1044,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             TRACE("NtCreateSection: name=%s\n", atom? name : NULL);
 
             result = CreateFileMappingA(hFile, NULL, protect, 
-                                          size? size->HighPart : 0, 
-                                          size? size->LowPart  : 0, 
+                                          size? size->s.HighPart : 0, 
+                                          size? size->s.LowPart  : 0, 
                                           atom? name : NULL);
         }
 
@@ -1207,12 +1207,12 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
                    InheritDisposition, AllocationType, Protect);
         TRACE("NtMapViewOfSection: "
                    "base=%lx, offset=%lx, size=%lx, access=%lx\n", 
-                   (DWORD)address, SectionOffset? SectionOffset->LowPart : 0, 
+                   (DWORD)address, SectionOffset? SectionOffset->s.LowPart : 0, 
                    ViewSize? *ViewSize : 0, access);
 
         result = (DWORD)MapViewOfFileEx(SectionHandle, access, 
-                            SectionOffset? SectionOffset->HighPart : 0, 
-                            SectionOffset? SectionOffset->LowPart  : 0,
+                            SectionOffset? SectionOffset->s.HighPart : 0, 
+                            SectionOffset? SectionOffset->s.LowPart  : 0,
                             ViewSize? *ViewSize : 0, address);
 
         TRACE("NtMapViewOfSection: result=%lx\n", result);

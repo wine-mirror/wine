@@ -409,8 +409,8 @@ HRESULT WINAPI CompositeMonikerImpl_GetSizeMax(IMoniker* iface,ULARGE_INTEGER* p
     if (pcbSize!=NULL)
         return E_POINTER;
 
-    pcbSize->LowPart =0;
-    pcbSize->HighPart=0;
+    pcbSize->s.LowPart =0;
+    pcbSize->s.HighPart=0;
 
     IMoniker_Enum(iface,TRUE,&enumMk);
 
@@ -420,8 +420,8 @@ HRESULT WINAPI CompositeMonikerImpl_GetSizeMax(IMoniker* iface,ULARGE_INTEGER* p
 
         IMoniker_Release(pmk);
 
-        pcbSize->LowPart +=ptmpSize.LowPart;
-        pcbSize->HighPart+=ptmpSize.HighPart;
+        pcbSize->s.LowPart +=ptmpSize.s.LowPart;
+        pcbSize->s.HighPart+=ptmpSize.s.HighPart;
     }
 
     IEnumMoniker_Release(enumMk);

@@ -773,8 +773,8 @@ static HMETAFILE DataCache_ReadPresMetafile(
   /*
    * Skip the header
    */
-  offset.HighPart = 0;
-  offset.LowPart  = sizeof(PresentationDataHeader);
+  offset.s.HighPart = 0;
+  offset.s.LowPart  = sizeof(PresentationDataHeader);
 
   hres = IStream_Seek(
            presStream,
@@ -787,7 +787,7 @@ static HMETAFILE DataCache_ReadPresMetafile(
    */
   metafileBits = HeapAlloc(GetProcessHeap(), 
 			   0, 
-			   streamInfo.cbSize.LowPart);
+			   streamInfo.cbSize.s.LowPart);
 
   /*
    * Read the metafile bits.
@@ -795,7 +795,7 @@ static HMETAFILE DataCache_ReadPresMetafile(
   hres = IStream_Read(
 	   presStream,
 	   metafileBits,
-	   streamInfo.cbSize.LowPart,
+	   streamInfo.cbSize.s.LowPart,
 	   NULL);
 
   /*
@@ -803,7 +803,7 @@ static HMETAFILE DataCache_ReadPresMetafile(
    */
   if (SUCCEEDED(hres))
   {
-    newMetafile = SetMetaFileBitsEx(streamInfo.cbSize.LowPart, metafileBits);
+    newMetafile = SetMetaFileBitsEx(streamInfo.cbSize.s.LowPart, metafileBits);
   }
 
   /*

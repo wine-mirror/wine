@@ -540,8 +540,8 @@ static HRESULT WINAPI OLEFontImpl_get_Size(
   if (psize==0)
     return E_POINTER;
 
-  psize->u.Hi = 0;
-  psize->u.Lo = this->description.cySize.u.Lo;
+  psize->s.Hi = 0;
+  psize->s.Lo = this->description.cySize.s.Lo;
 
   return S_OK;
 }
@@ -557,8 +557,8 @@ static HRESULT WINAPI OLEFontImpl_put_Size(
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
-  this->description.cySize.u.Hi = 0;
-  this->description.cySize.u.Lo = this->description.cySize.u.Lo;
+  this->description.cySize.s.Hi = 0;
+  this->description.cySize.s.Lo = this->description.cySize.s.Lo;
 
   return S_OK;
 }
@@ -810,7 +810,7 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
      */
     IFont_get_Size(iface, &cySize);
 
-    fontHeight = MulDiv(cySize.u.Lo, 2540L, 72L);
+    fontHeight = MulDiv(cySize.s.Lo, 2540L, 72L);
     fontHeight = MulDiv(fontHeight, this->cyLogical,this->cyHimetric);
 
     memset(&logFont, 0, sizeof(LOGFONTW));
@@ -1232,12 +1232,12 @@ static HRESULT WINAPI OLEFontImpl_Load(
   /*
    * Size
    */
-  IStream_Read(pLoadStream, &this->description.cySize.u.Lo, 4, &cbRead);
+  IStream_Read(pLoadStream, &this->description.cySize.s.Lo, 4, &cbRead);
 
   if (cbRead!=4)
     return E_FAIL;
 
-  this->description.cySize.u.Hi = 0;
+  this->description.cySize.s.Hi = 0;
 
   /*
    * FontName
@@ -1327,7 +1327,7 @@ static HRESULT WINAPI OLEFontImpl_Save(
   /*
    * Size
    */
-  IStream_Write(pOutStream, &this->description.cySize.u.Lo, 4, &cbWritten);
+  IStream_Write(pOutStream, &this->description.cySize.s.Lo, 4, &cbWritten);
 
   if (cbWritten!=4)
     return E_FAIL;
@@ -1379,18 +1379,18 @@ static HRESULT WINAPI OLEFontImpl_GetSizeMax(
   if (pcbSize==NULL)
     return E_POINTER;
 
-  pcbSize->HighPart = 0;
-  pcbSize->LowPart = 0;
+  pcbSize->s.HighPart = 0;
+  pcbSize->s.LowPart = 0;
 
-  pcbSize->LowPart += sizeof(BYTE);  /* Version */
-  pcbSize->LowPart += sizeof(WORD);  /* Lang code */
-  pcbSize->LowPart += sizeof(BYTE);  /* Flags */
-  pcbSize->LowPart += sizeof(WORD);  /* Weight */
-  pcbSize->LowPart += sizeof(DWORD); /* Size */
-  pcbSize->LowPart += sizeof(BYTE);  /* StrLength */
+  pcbSize->s.LowPart += sizeof(BYTE);  /* Version */
+  pcbSize->s.LowPart += sizeof(WORD);  /* Lang code */
+  pcbSize->s.LowPart += sizeof(BYTE);  /* Flags */
+  pcbSize->s.LowPart += sizeof(WORD);  /* Weight */
+  pcbSize->s.LowPart += sizeof(DWORD); /* Size */
+  pcbSize->s.LowPart += sizeof(BYTE);  /* StrLength */
 
   if (this->description.lpstrName!=0)
-    pcbSize->LowPart += lstrlenW(this->description.lpstrName);
+    pcbSize->s.LowPart += lstrlenW(this->description.lpstrName);
 
   return S_OK;
 }

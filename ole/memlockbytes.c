@@ -215,8 +215,8 @@ HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
     /*
      * Initialize the size of the array to the size of the handle.
      */
-    newLockBytes->byteArraySize.HighPart = 0;
-    newLockBytes->byteArraySize.LowPart  = GlobalSize(
+    newLockBytes->byteArraySize.s.HighPart = 0;
+    newLockBytes->byteArraySize.s.LowPart  = GlobalSize(
                                               newLockBytes->supportHandle);
   }
 
@@ -365,15 +365,15 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
   /*
    * Make sure the offset is valid.
    */
-  if (ulOffset.LowPart > This->byteArraySize.LowPart)
+  if (ulOffset.s.LowPart > This->byteArraySize.s.LowPart)
     return E_FAIL;
 
   /*
    * Using the known size of the array, calculate the number of bytes
    * to read.
    */
-  bytesToReadFromBuffer = MIN(This->byteArraySize.LowPart -
-                              ulOffset.LowPart, cb);
+  bytesToReadFromBuffer = MIN(This->byteArraySize.s.LowPart -
+                              ulOffset.s.LowPart, cb);
 
   /*
    * Lock the buffer in position and copy the data.
@@ -381,7 +381,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
   supportBuffer = GlobalLock(This->supportHandle);
 
   memcpy(pv,
-         (char *) supportBuffer + ulOffset.LowPart,
+         (char *) supportBuffer + ulOffset.s.LowPart,
          bytesToReadFromBuffer);
 
   /*
@@ -440,14 +440,14 @@ HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
   }
   else
   {
-    newSize.HighPart = 0;
-    newSize.LowPart = ulOffset.LowPart + cb;
+    newSize.s.HighPart = 0;
+    newSize.s.LowPart = ulOffset.s.LowPart + cb;
   }
 
   /*
    * Verify if we need to grow the stream
    */
-  if (newSize.LowPart > This->byteArraySize.LowPart)
+  if (newSize.s.LowPart > This->byteArraySize.s.LowPart)
   {
     /* grow stream */
     if (HGLOBALLockBytesImpl_SetSize(iface, newSize) == STG_E_MEDIUMFULL)
@@ -459,7 +459,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
    */
   supportBuffer = GlobalLock(This->supportHandle);
 
-  memcpy((char *) supportBuffer + ulOffset.LowPart, pv, cb);
+  memcpy((char *) supportBuffer + ulOffset.s.LowPart, pv, cb);
 
   /*
    * Return the number of bytes written.
@@ -500,23 +500,23 @@ HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
   /*
    * As documented.
    */
-  if (libNewSize.HighPart != 0)
+  if (libNewSize.s.HighPart != 0)
     return STG_E_INVALIDFUNCTION;
  
-  if (This->byteArraySize.LowPart == libNewSize.LowPart)
+  if (This->byteArraySize.s.LowPart == libNewSize.s.LowPart)
     return S_OK;
 
   /*
    * Re allocate the HGlobal to fit the new size of the stream.
    */
   This->supportHandle = GlobalReAlloc(This->supportHandle,
-                                      libNewSize.LowPart,
+                                      libNewSize.s.LowPart,
                                       0);
 
   if (This->supportHandle == 0)
     return STG_E_MEDIUMFULL;
 
-  This->byteArraySize.LowPart = libNewSize.LowPart;
+  This->byteArraySize.s.LowPart = libNewSize.s.LowPart;
  
   return S_OK;
 }

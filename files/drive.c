@@ -678,10 +678,10 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
 #  error "statfs has no bfree/bavail member!"
 # endif
 #endif
-    size->LowPart = (DWORD)bigsize;
-    size->HighPart = (DWORD)(bigsize>>32);
-    available->LowPart = (DWORD)bigavail;
-    available->HighPart = (DWORD)(bigavail>>32);
+    size->s.LowPart = (DWORD)bigsize;
+    size->s.HighPart = (DWORD)(bigsize>>32);
+    available->s.LowPart = (DWORD)bigavail;
+    available->s.HighPart = (DWORD)(bigavail>>32);
     return 1;
 }
 
@@ -755,37 +755,37 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
     if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
 
     /* Cap the size and available at 2GB as per specs.  */
-    if ((size.HighPart) ||(size.LowPart > 0x7fffffff))
+    if ((size.s.HighPart) ||(size.s.LowPart > 0x7fffffff))
 	{
-	  size.HighPart = 0;
-	  size.LowPart = 0x7fffffff;
+	  size.s.HighPart = 0;
+	  size.s.LowPart = 0x7fffffff;
 	}
-    if ((available.HighPart) ||(available.LowPart > 0x7fffffff))
+    if ((available.s.HighPart) ||(available.s.LowPart > 0x7fffffff))
       {
-	available.HighPart =0;
-	available.LowPart = 0x7fffffff;
+	available.s.HighPart =0;
+	available.s.LowPart = 0x7fffffff;
       }
     if (DRIVE_GetType(drive)==TYPE_CDROM) {
 	if (sector_bytes)
 	*sector_bytes    = 2048;
-	size.LowPart            /= 2048;
-	available.LowPart       /= 2048;
+	size.s.LowPart            /= 2048;
+	available.s.LowPart       /= 2048;
     } else {
 	if (sector_bytes)
 	*sector_bytes    = 512;
-	size.LowPart            /= 512;
-	available.LowPart       /= 512;
+	size.s.LowPart            /= 512;
+	available.s.LowPart       /= 512;
     }
     /* fixme: probably have to adjust those variables too for CDFS */
     cluster_sec = 1;
-    while (cluster_sec * 65536 < size.LowPart) cluster_sec *= 2;
+    while (cluster_sec * 65536 < size.s.LowPart) cluster_sec *= 2;
 
     if (cluster_sectors)
 	*cluster_sectors = cluster_sec;
     if (free_clusters)
-	*free_clusters   = available.LowPart / cluster_sec;
+	*free_clusters   = available.s.LowPart / cluster_sec;
     if (total_clusters)
-	*total_clusters  = size.LowPart / cluster_sec;
+	*total_clusters  = size.s.LowPart / cluster_sec;
     return TRUE;
 }
 
@@ -846,14 +846,14 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 
     if (total)
     {
-        total->HighPart = size.HighPart;
-        total->LowPart = size.LowPart ;
+        total->s.HighPart = size.s.HighPart;
+        total->s.LowPart = size.s.LowPart ;
     }
 
     if (totalfree)
     {
-        totalfree->HighPart = available.HighPart;
-        totalfree->LowPart = available.LowPart ;
+        totalfree->s.HighPart = available.s.HighPart;
+        totalfree->s.LowPart = available.s.LowPart ;
     }
 
     if (avail)
@@ -877,8 +877,8 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 
         /* Quick hack, should eventually be fixed to work 100% with
            Windows2000 (see comment above). */
-        avail->HighPart = available.HighPart;
-        avail->LowPart = available.LowPart ;
+        avail->s.HighPart = available.s.HighPart;
+        avail->s.LowPart = available.s.LowPart ;
     }
 
     return TRUE;

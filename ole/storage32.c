@@ -630,8 +630,8 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
  
     renamedProperty.propertyType  = currentProperty.propertyType;
     renamedProperty.startingBlock = currentProperty.startingBlock;
-    renamedProperty.size.LowPart  = currentProperty.size.LowPart;
-    renamedProperty.size.HighPart = currentProperty.size.HighPart;
+    renamedProperty.size.s.LowPart  = currentProperty.size.s.LowPart;
+    renamedProperty.size.s.HighPart = currentProperty.size.s.HighPart;
   
     renamedProperty.previousProperty = PROPERTY_NULL;
     renamedProperty.nextProperty     = PROPERTY_NULL;
@@ -800,8 +800,8 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
 
   newStreamProperty.propertyType  = PROPTYPE_STREAM;
   newStreamProperty.startingBlock = BLOCK_END_OF_CHAIN;
-  newStreamProperty.size.LowPart  = 0;
-  newStreamProperty.size.HighPart = 0;
+  newStreamProperty.size.s.LowPart  = 0;
+  newStreamProperty.size.s.HighPart = 0;
 
   newStreamProperty.previousProperty = PROPERTY_NULL;
   newStreamProperty.nextProperty     = PROPERTY_NULL;
@@ -985,8 +985,8 @@ HRESULT WINAPI StorageImpl_CreateStorage(
 
   newProperty.propertyType  = PROPTYPE_STORAGE;
   newProperty.startingBlock = BLOCK_END_OF_CHAIN;
-  newProperty.size.LowPart  = 0;
-  newProperty.size.HighPart = 0;
+  newProperty.size.s.LowPart  = 0;
+  newProperty.size.s.HighPart = 0;
 
   newProperty.previousProperty = PROPERTY_NULL;
   newProperty.nextProperty     = PROPERTY_NULL;
@@ -1107,8 +1107,8 @@ static ULONG getFreeProperty(
     /* 
      * initialize the size used by the property stream 
      */
-    newSize.HighPart = 0;
-    newSize.LowPart  = storage->bigBlockSize * blockCount;
+    newSize.s.HighPart = 0;
+    newSize.s.LowPart  = storage->bigBlockSize * blockCount;
 
     /* 
      * add a property block to the property chain 
@@ -1699,8 +1699,8 @@ static HRESULT deleteStreamProperty(
   HRESULT        hr;
   ULARGE_INTEGER size;
 
-  size.HighPart = 0;
-  size.LowPart = 0;
+  size.s.HighPart = 0;
+  size.s.LowPart = 0;
 
   hr = StorageBaseImpl_OpenStream(
          (IStorage*)parentStorage,
@@ -2094,8 +2094,8 @@ HRESULT StorageImpl_Construct(
     /*
      * Add one block for the big block depot and one block for the properties
      */
-    size.HighPart = 0;
-    size.LowPart  = This->bigBlockSize * 3;
+    size.s.HighPart = 0;
+    size.s.LowPart  = This->bigBlockSize * 3;
     BIGBLOCKFILE_SetSize(This->bigBlockFile, size);
 
     /*
@@ -2161,8 +2161,8 @@ HRESULT StorageImpl_Construct(
     rootProp.nextProperty     = PROPERTY_NULL;
     rootProp.dirProperty      = PROPERTY_NULL;
     rootProp.startingBlock    = BLOCK_END_OF_CHAIN;
-    rootProp.size.HighPart    = 0;
-    rootProp.size.LowPart     = 0;
+    rootProp.size.s.HighPart    = 0;
+    rootProp.size.s.LowPart     = 0;
 
     StorageImpl_WriteProperty(This, 0, &rootProp);
   }
@@ -2924,8 +2924,8 @@ BOOL StorageImpl_ReadProperty(
   BOOL         readSucessful;
   ULONG          bytesRead;
 
-  offsetInPropSet.HighPart = 0;
-  offsetInPropSet.LowPart  = index * PROPSET_BLOCK_SIZE;
+  offsetInPropSet.s.HighPart = 0;
+  offsetInPropSet.s.LowPart  = index * PROPSET_BLOCK_SIZE;
   
   readSucessful = BlockChainStream_ReadAt(
                     This->rootBlockChain,
@@ -2997,9 +2997,9 @@ BOOL StorageImpl_ReadProperty(
     StorageUtl_ReadDWord(
       currentProperty, 
       OFFSET_PS_SIZE,         
-      &buffer->size.LowPart);
+      &buffer->size.s.LowPart);
 
-    buffer->size.HighPart = 0;
+    buffer->size.s.HighPart = 0;
   }
 
   return readSucessful;
@@ -3018,8 +3018,8 @@ BOOL StorageImpl_WriteProperty(
   BOOL         writeSucessful;
   ULONG          bytesWritten;
 
-  offsetInPropSet.HighPart = 0;
-  offsetInPropSet.LowPart  = index * PROPSET_BLOCK_SIZE;
+  offsetInPropSet.s.HighPart = 0;
+  offsetInPropSet.s.LowPart  = index * PROPSET_BLOCK_SIZE;
 
   memset(currentProperty, 0, PROPSET_BLOCK_SIZE);
 
@@ -3088,7 +3088,7 @@ BOOL StorageImpl_WriteProperty(
   StorageUtl_WriteDWord(
     currentProperty, 
       OFFSET_PS_SIZE,         
-      buffer->size.LowPart);
+      buffer->size.s.LowPart);
 
   writeSucessful = BlockChainStream_WriteAt(This->rootBlockChain,
                                             offsetInPropSet,
@@ -3200,8 +3200,8 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
    * Copy the contents of the small block chain to the big block chain
    * by small block size increments.
    */
-  offset.LowPart = 0;
-  offset.HighPart = 0;
+  offset.s.LowPart = 0;
+  offset.s.HighPart = 0;
   cbTotalRead = 0;
   cbTotalWritten = 0;
 
@@ -3222,7 +3222,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
                                             &cbWritten);
     cbTotalWritten += cbWritten;
 
-    offset.LowPart += This->smallBlockSize;
+    offset.s.LowPart += This->smallBlockSize;
 
   } while (successRead && successWrite);
   free(buffer);
@@ -3233,8 +3233,8 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
    * Destroy the small block chain.
    */
   propertyIndex = (*ppsbChain)->ownerPropertyIndex;
-  size.HighPart = 0;
-  size.LowPart  = 0;
+  size.s.HighPart = 0;
+  size.s.LowPart  = 0;
   SmallBlockChainStream_SetSize(*ppsbChain, size);
   SmallBlockChainStream_Destroy(*ppsbChain);
   *ppsbChain = 0;
@@ -4054,8 +4054,8 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
   void*          buffer,
   ULONG*         bytesRead)
 {
-  ULONG blockNoInSequence = offset.LowPart / This->parentStorage->bigBlockSize;
-  ULONG offsetInBlock     = offset.LowPart % This->parentStorage->bigBlockSize;
+  ULONG blockNoInSequence = offset.s.LowPart / This->parentStorage->bigBlockSize;
+  ULONG offsetInBlock     = offset.s.LowPart % This->parentStorage->bigBlockSize;
   ULONG bytesToReadInBuffer;
   ULONG blockIndex;
   BYTE* bufferWalker;
@@ -4143,8 +4143,8 @@ BOOL BlockChainStream_WriteAt(BlockChainStream* This,
   const void*       buffer,
   ULONG*            bytesWritten)
 {
-  ULONG blockNoInSequence = offset.LowPart / This->parentStorage->bigBlockSize;
-  ULONG offsetInBlock     = offset.LowPart % This->parentStorage->bigBlockSize;
+  ULONG blockNoInSequence = offset.s.LowPart / This->parentStorage->bigBlockSize;
+  ULONG offsetInBlock     = offset.s.LowPart % This->parentStorage->bigBlockSize;
   ULONG bytesToWrite;
   ULONG blockIndex;
   BYTE* bufferWalker;
@@ -4239,9 +4239,9 @@ BOOL BlockChainStream_Shrink(BlockChainStream* This,
   /*
    * Figure out how many blocks are needed to contain the new size
    */
-  numBlocks = newSize.LowPart / This->parentStorage->bigBlockSize;
+  numBlocks = newSize.s.LowPart / This->parentStorage->bigBlockSize;
 
-  if ((newSize.LowPart % This->parentStorage->bigBlockSize) != 0)
+  if ((newSize.s.LowPart % This->parentStorage->bigBlockSize) != 0)
     numBlocks++;
 
   blockIndex = BlockChainStream_GetHeadOfChain(This);
@@ -4338,9 +4338,9 @@ BOOL BlockChainStream_Enlarge(BlockChainStream* This,
   /*
    * Figure out how many blocks are needed to contain this stream
    */
-  newNumBlocks = newSize.LowPart / This->parentStorage->bigBlockSize;
+  newNumBlocks = newSize.s.LowPart / This->parentStorage->bigBlockSize;
 
-  if ((newSize.LowPart % This->parentStorage->bigBlockSize) != 0)
+  if ((newSize.s.LowPart % This->parentStorage->bigBlockSize) != 0)
     newNumBlocks++;
 
   /*
@@ -4411,10 +4411,10 @@ BOOL BlockChainStream_SetSize(
 {
   ULARGE_INTEGER size = BlockChainStream_GetSize(This);
 
-  if (newSize.LowPart == size.LowPart)
+  if (newSize.s.LowPart == size.s.LowPart)
     return TRUE;
 
-  if (newSize.LowPart < size.LowPart)
+  if (newSize.s.LowPart < size.s.LowPart)
   {
     BlockChainStream_Shrink(This, newSize);
   }
@@ -4423,7 +4423,7 @@ BOOL BlockChainStream_SetSize(
     ULARGE_INTEGER fileSize = 
       BIGBLOCKFILE_GetSize(This->parentStorage->bigBlockFile);
 
-    ULONG diff = newSize.LowPart - size.LowPart;
+    ULONG diff = newSize.s.LowPart - size.s.LowPart;
 
     /*
      * Make sure the file stays a multiple of blocksize
@@ -4432,7 +4432,7 @@ BOOL BlockChainStream_SetSize(
       diff += (This->parentStorage->bigBlockSize - 
                 (diff % This->parentStorage->bigBlockSize) );
 
-    fileSize.LowPart += diff;
+    fileSize.s.LowPart += diff;
     BIGBLOCKFILE_SetSize(This->parentStorage->bigBlockFile, fileSize);
 
     BlockChainStream_Enlarge(This, newSize);
@@ -4472,9 +4472,9 @@ ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
      * size of them
      */
     ULARGE_INTEGER result;
-    result.HighPart = 0;
+    result.s.HighPart = 0;
 
-    result.LowPart  = 
+    result.s.LowPart  = 
       BlockChainStream_GetCount(This) * 
       This->parentStorage->bigBlockSize;
 
@@ -4553,8 +4553,8 @@ ULONG SmallBlockChainStream_GetNextBlockInChain(
   ULONG  bytesRead;
   BOOL success;
 
-  offsetOfBlockInDepot.HighPart = 0;
-  offsetOfBlockInDepot.LowPart  = blockIndex * sizeof(ULONG);
+  offsetOfBlockInDepot.s.HighPart = 0;
+  offsetOfBlockInDepot.s.LowPart  = blockIndex * sizeof(ULONG);
 
   /*
    * Read those bytes in the buffer from the small block file.
@@ -4591,8 +4591,8 @@ void SmallBlockChainStream_SetNextBlockInChain(
   DWORD  buffer;
   ULONG  bytesWritten;
 
-  offsetOfBlockInDepot.HighPart = 0;
-  offsetOfBlockInDepot.LowPart  = blockIndex * sizeof(ULONG);
+  offsetOfBlockInDepot.s.HighPart = 0;
+  offsetOfBlockInDepot.s.LowPart  = blockIndex * sizeof(ULONG);
 
   StorageUtl_WriteDWord(&buffer, 0, nextBlock);
 
@@ -4637,14 +4637,14 @@ ULONG SmallBlockChainStream_GetNextFreeBlock(
   BOOL success = TRUE;
   ULONG smallBlocksPerBigBlock;
 
-  offsetOfBlockInDepot.HighPart = 0;
+  offsetOfBlockInDepot.s.HighPart = 0;
 
   /*
    * Scan the small block depot for a free block
    */
   while (nextBlockIndex != BLOCK_UNUSED)
   {
-    offsetOfBlockInDepot.LowPart = blockIndex * sizeof(ULONG);
+    offsetOfBlockInDepot.s.LowPart = blockIndex * sizeof(ULONG);
 
     success = BlockChainStream_ReadAt(
                 This->parentStorage->smallBlockDepotChain,
@@ -4732,8 +4732,8 @@ ULONG SmallBlockChainStream_GetNextFreeBlock(
           &rootProp);
 
         rootProp.startingBlock = sbStartIndex;
-        rootProp.size.HighPart = 0;
-        rootProp.size.LowPart  = This->parentStorage->bigBlockSize;
+        rootProp.size.s.HighPart = 0;
+        rootProp.size.s.LowPart  = This->parentStorage->bigBlockSize;
 
         StorageImpl_WriteProperty(
           This->parentStorage, 
@@ -4759,10 +4759,10 @@ ULONG SmallBlockChainStream_GetNextFreeBlock(
       This->parentStorage->rootPropertySetIndex, 
       &rootProp);
 
-    if (rootProp.size.LowPart < 
+    if (rootProp.size.s.LowPart < 
        (blocksRequired * This->parentStorage->bigBlockSize))
     {
-      rootProp.size.LowPart += This->parentStorage->bigBlockSize;
+      rootProp.size.s.LowPart += This->parentStorage->bigBlockSize;
 
       BlockChainStream_SetSize(
         This->parentStorage->smallBlockRootChain, 
@@ -4794,9 +4794,9 @@ BOOL SmallBlockChainStream_ReadAt(
 {
   ULARGE_INTEGER offsetInBigBlockFile;
   ULONG blockNoInSequence = 
-    offset.LowPart / This->parentStorage->smallBlockSize;
+    offset.s.LowPart / This->parentStorage->smallBlockSize;
 
-  ULONG offsetInBlock = offset.LowPart % This->parentStorage->smallBlockSize;
+  ULONG offsetInBlock = offset.s.LowPart % This->parentStorage->smallBlockSize;
   ULONG bytesToReadInBuffer;
   ULONG blockIndex;
   ULONG bytesReadFromBigBlockFile;
@@ -4805,7 +4805,7 @@ BOOL SmallBlockChainStream_ReadAt(
   /*
    * This should never happen on a small block file.
    */
-  assert(offset.HighPart==0);
+  assert(offset.s.HighPart==0);
 
   /*
    * Find the first block in the stream that contains part of the buffer.
@@ -4836,11 +4836,11 @@ BOOL SmallBlockChainStream_ReadAt(
     /*
      * Calculate the offset of the small block in the small block file.
      */
-    offsetInBigBlockFile.HighPart  = 0;
-    offsetInBigBlockFile.LowPart   = 
+    offsetInBigBlockFile.s.HighPart  = 0;
+    offsetInBigBlockFile.s.LowPart   = 
       blockIndex * This->parentStorage->smallBlockSize;
 
-    offsetInBigBlockFile.LowPart  += offsetInBlock;
+    offsetInBigBlockFile.s.LowPart  += offsetInBlock;
 
     /*
      * Read those bytes in the buffer from the small block file.
@@ -4882,9 +4882,9 @@ BOOL SmallBlockChainStream_WriteAt(
 {
   ULARGE_INTEGER offsetInBigBlockFile;
   ULONG blockNoInSequence = 
-    offset.LowPart / This->parentStorage->smallBlockSize;
+    offset.s.LowPart / This->parentStorage->smallBlockSize;
 
-  ULONG offsetInBlock = offset.LowPart % This->parentStorage->smallBlockSize;
+  ULONG offsetInBlock = offset.s.LowPart % This->parentStorage->smallBlockSize;
   ULONG bytesToWriteInBuffer;
   ULONG blockIndex;
   ULONG bytesWrittenFromBigBlockFile;
@@ -4893,7 +4893,7 @@ BOOL SmallBlockChainStream_WriteAt(
   /*
    * This should never happen on a small block file.
    */
-  assert(offset.HighPart==0);
+  assert(offset.s.HighPart==0);
   
   /*
    * Find the first block in the stream that contains part of the buffer.
@@ -4926,11 +4926,11 @@ BOOL SmallBlockChainStream_WriteAt(
     /*
      * Calculate the offset of the small block in the small block file.
      */
-    offsetInBigBlockFile.HighPart  = 0;
-    offsetInBigBlockFile.LowPart   = 
+    offsetInBigBlockFile.s.HighPart  = 0;
+    offsetInBigBlockFile.s.LowPart   = 
       blockIndex * This->parentStorage->smallBlockSize;
 
-    offsetInBigBlockFile.LowPart  += offsetInBlock;
+    offsetInBigBlockFile.s.LowPart  += offsetInBlock;
     
     /*
      * Write those bytes in the buffer to the small block file.
@@ -4969,9 +4969,9 @@ BOOL SmallBlockChainStream_Shrink(
   ULONG numBlocks;
   ULONG count = 0;
 
-  numBlocks = newSize.LowPart / This->parentStorage->smallBlockSize;
+  numBlocks = newSize.s.LowPart / This->parentStorage->smallBlockSize;
 
-  if ((newSize.LowPart % This->parentStorage->smallBlockSize) != 0)
+  if ((newSize.s.LowPart % This->parentStorage->smallBlockSize) != 0)
     numBlocks++;
 
   blockIndex = SmallBlockChainStream_GetHeadOfChain(This);
@@ -5076,9 +5076,9 @@ BOOL SmallBlockChainStream_Enlarge(
   /*
    * Figure out how many blocks are needed to contain this stream
    */
-  newNumBlocks = newSize.LowPart / This->parentStorage->smallBlockSize;
+  newNumBlocks = newSize.s.LowPart / This->parentStorage->smallBlockSize;
 
-  if ((newSize.LowPart % This->parentStorage->smallBlockSize) != 0)
+  if ((newSize.s.LowPart % This->parentStorage->smallBlockSize) != 0)
     newNumBlocks++;
 
   /*
@@ -5150,10 +5150,10 @@ BOOL SmallBlockChainStream_SetSize(
 {
   ULARGE_INTEGER size = SmallBlockChainStream_GetSize(This);
 
-  if (newSize.LowPart == size.LowPart)
+  if (newSize.s.LowPart == size.s.LowPart)
     return TRUE;
 
-  if (newSize.LowPart < size.LowPart)
+  if (newSize.s.LowPart < size.s.LowPart)
   {
     SmallBlockChainStream_Shrink(This, newSize);
   }
@@ -5514,8 +5514,8 @@ HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt)
   BYTE sig[8];
   ULARGE_INTEGER offset;
 
-  offset.HighPart = 0;
-  offset.LowPart  = 0;
+  offset.s.HighPart = 0;
+  offset.s.LowPart  = 0;
 
   ILockBytes_ReadAt(plkbyt, offset, sig, sizeof(sig), NULL);
 
