@@ -51,7 +51,7 @@ debug_channels (ole)
   42 stdcall OleRevokeClientDoc(long) OleRevokeClientDoc
   43 stdcall OleRenameClientDoc(long str) OleRenameClientDoc
   44 stub OleRevertClientDoc
-  45 stub OleSavedClientDoc
+  45 stdcall OleSavedClientDoc(long) OleSavedClientDoc
   46 stub OleRename
   47 stub OleEnumObjects
   48 stub OleQueryName

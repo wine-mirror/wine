@@ -45,7 +45,7 @@ owner	olecli32
 42  pascal OleRevokeClientDoc(long) OleRevokeClientDoc16
 43  pascal OleRenameClientDoc(long ptr) OleRenameClientDoc16
 44 pascal16 OleRevertClientDoc(long) OleRevertClientDoc16
-45 stub OLESAVEDCLIENTDOC
+45  pascal OleSavedClientDoc(long) OleSavedClientDoc16
 46 stub OLERENAME
 47 pascal16 OleEnumObjects(long segptr) OleEnumObjects16
 48 stub OLEQUERYNAME

@@ -18,6 +18,24 @@ DEFAULT_DEBUG_CHANNEL(ole);
 static LONG OLE_current_handle;
 
 /******************************************************************************
+ *		OleSavedClientDoc	[OLECLI32.45]
+ */
+OLESTATUS WINAPI OleSavedClientDoc(LHCLIENTDOC hDoc)
+{
+    FIXME("(%ld: stub\n", hDoc);
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *		OleSavedClientDoc16	[OLECLI.45]
+ */
+OLESTATUS WINAPI OleSavedClientDoc16(LHCLIENTDOC hDoc)
+{
+    FIXME("(%ld: stub\n", hDoc);
+    return OLE_OK;
+}
+
+/******************************************************************************
  *		OleRegisterClientDoc16	[OLECLI.41]
  */
 OLESTATUS WINAPI OleRegisterClientDoc16(LPCSTR classname, LPCSTR docname,
