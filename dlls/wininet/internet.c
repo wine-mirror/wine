@@ -224,7 +224,31 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
             if ((lpwai->lpszAgent = HeapAlloc( GetProcessHeap(),0,strlen(lpszAgent)+1)))
                 strcpy( lpwai->lpszAgent, lpszAgent );
         }
-        if (NULL != lpszProxy)
+        if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
+        {
+            HKEY key;
+            if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", &key))
+            {
+                DWORD keytype, len, enabled;
+                RegQueryValueExA(key, "ProxyEnable", NULL, NULL, (BYTE*)&enabled, NULL);
+                if(enabled)
+                {
+                    if(!RegQueryValueExA(key, "ProxyServer", NULL, &keytype, NULL, &len) && len && keytype == REG_SZ)
+                    {
+                        lpwai->lpszProxy=HeapAlloc( GetProcessHeap(), 0, len+1 );
+                        RegQueryValueExA(key, "ProxyServer", NULL, &keytype, (BYTE*)lpwai->lpszProxy, &len);
+						TRACE("Proxy = %s\n", lpwai->lpszProxy);
+                        dwAccessType = INTERNET_OPEN_TYPE_PROXY;
+                    }
+                }
+                else
+                {
+                    TRACE("Proxy is not enabled.\n");
+                }
+                RegCloseKey(key);
+            }
+        }
+        else if (NULL != lpszProxy)
         {
             if ((lpwai->lpszProxy = HeapAlloc( GetProcessHeap(), 0, strlen(lpszProxy)+1 )))
                 strcpy( lpwai->lpszProxy, lpszProxy );
@@ -641,7 +665,7 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 /***********************************************************************
  *           ConvertUrlComponentValue (Internal)
  *
- * Helper function for InternetCrackUrlA
+ * Helper function for InternetCrackUrlW
  *
  */
 void ConvertUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen,

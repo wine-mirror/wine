@@ -382,6 +382,40 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
         InternetCrackUrlA(lpszReferrer, 0, 0, &UrlComponents);
         if (strlen(UrlComponents.lpszHostName))
             lpwhr->lpszHostName = HTTP_strdup(UrlComponents.lpszHostName);
+    } else if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0) {
+        char buf[MAXHOSTNAME];
+        char proxy[MAXHOSTNAME + 13]; /* 13 == "http://" + sizeof(port#) + ":/\0" */
+        URL_COMPONENTSA UrlComponents;
+
+        UrlComponents.lpszExtraInfo = NULL;
+        UrlComponents.lpszPassword = NULL;
+        UrlComponents.lpszScheme = NULL;
+        UrlComponents.lpszUrlPath = NULL;
+        UrlComponents.lpszUserName = NULL;
+        UrlComponents.lpszHostName = buf;
+        UrlComponents.dwHostNameLength = MAXHOSTNAME;
+
+        sprintf(proxy, "http://%s/", hIC->lpszProxy);
+        InternetCrackUrlA(proxy, 0, 0, &UrlComponents);
+        if (strlen(UrlComponents.lpszHostName)) {
+			 /* for constant 13 see above */
+             char* url = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhr->lpszHostName) + strlen(lpwhr->lpszPath) + 13);
+
+             if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
+                 UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
+			
+            if(lpwhr->lpszHostName != 0) {
+                HeapFree(GetProcessHeap(), 0, lpwhr->lpszHostName);
+                lpwhr->lpszHostName = 0;
+            }
+            sprintf(url, "http://%s:%d/%s", lpwhs->lpszServerName, lpwhs->nServerPort, lpwhr->lpszPath);
+            if(lpwhr->lpszPath)
+                HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
+            lpwhr->lpszPath = url;
+            /* FIXME: Do I have to free lpwhs->lpszServerName here ? */
+            lpwhs->lpszServerName = HTTP_strdup(UrlComponents.lpszHostName);
+            lpwhs->nServerPort = UrlComponents.nPort;
+        }
     } else {
         lpwhr->lpszHostName = HTTP_strdup(lpwhs->lpszServerName);
     }
@@ -910,7 +944,8 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     if (NULL == lpwhr->lpszPath)
         lpwhr->lpszPath = HTTP_strdup("/");
 
-    if(lpwhr->lpszPath[0] != '/') /* not an absolute path ?? --> fix it !! */
+    if(strncmp(lpwhr->lpszPath, "http://", sizeof("http://") -1) != 0
+    	&& lpwhr->lpszPath[0] != '/') /* not an absolute path ?? --> fix it !! */
     {
         char *fixurl = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhr->lpszPath) + 2);
         *fixurl = '/';
@@ -1100,7 +1135,7 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 
     hIC = (LPWININETAPPINFOA) hInternet;
     hIC->hdr.dwContext = dwContext;
-
+    
     lpwhs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETHTTPSESSIONA));
     if (NULL == lpwhs)
     {
@@ -1119,6 +1154,12 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
     lpwhs->hdr.lpwhparent = (LPWININETHANDLEHEADER)hInternet;
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
+    if(hIC->lpszProxy && hIC->dwAccessType == INTERNET_OPEN_TYPE_PROXY) {
+        if(strchr(hIC->lpszProxy, ' '))
+            FIXME("Several proxies not implemented.\n");
+        if(hIC->lpszProxyBypass)
+            FIXME("Proxy bypass is ignored.\n");
+    }
     if (NULL != lpszServerName)
         lpwhs->lpszServerName = HTTP_strdup(lpszServerName);
     if (NULL != lpszUserName)
