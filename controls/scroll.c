@@ -565,6 +565,7 @@ void SCROLL_DrawScrollBar( HWND32 hwnd, HDC32 hdc, INT32 nBar,
     if (!wndPtr || !infoPtr ||
         ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
         ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) return;
+    if (!WIN_IsWindowDrawable( wndPtr, FALSE )) return;
 
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbSize, &thumbPos );
