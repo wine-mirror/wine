@@ -95,4 +95,10 @@ void MSCMS_get_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *
 {
     memcpy( buffer, (char *)iccprofile + tag->offset + offset, tag->size - offset );
 }
+
+void MSCMS_set_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer )
+{
+    memcpy( (char *)iccprofile + tag->offset + offset, buffer, tag->size - offset );
+}
+
 #endif /* HAVE_LCMS_H */

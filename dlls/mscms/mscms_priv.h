@@ -81,6 +81,7 @@ extern void MSCMS_destroy_hprofile_handle( HPROFILE profile );
 extern DWORD MSCMS_get_tag_count( icProfile *iccprofile );
 extern void MSCMS_get_tag_by_index( icProfile *iccprofile, DWORD index, icTag *tag );
 extern void MSCMS_get_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer );
+extern void MSCMS_set_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer );
 extern void MSCMS_get_profile_header( icProfile *iccprofile, PROFILEHEADER *header );
 extern void MSCMS_set_profile_header( icProfile *iccprofile, PROFILEHEADER *header );
 

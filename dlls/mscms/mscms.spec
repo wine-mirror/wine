@@ -46,7 +46,7 @@
 @ stub RegisterCMMA
 @ stub RegisterCMMW
 @ stub SelectCMM
-@ stub SetColorProfileElement
+@ stdcall SetColorProfileElement(ptr long long ptr ptr)
 @ stub SetColorProfileElementReference
 @ stub SetColorProfileElementSize
 @ stdcall SetColorProfileHeader(ptr ptr)

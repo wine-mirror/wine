@@ -103,7 +103,7 @@ BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
  * PARAMS
  *  machine  [I]   Name of the machine for which to get the color directory.
  *                 Must be NULL, which indicates the local machine.
- *  buffer   [I]   Buffer to recieve the path name in.
+ *  buffer   [I]   Buffer to receive the path name.
  *  size     [I/O] Size of the buffer in bytes. On return the variable holds
  *                 the number of bytes actually needed.
  */
@@ -133,6 +133,25 @@ BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
     return FALSE;
 }
 
+/******************************************************************************
+ * GetColorProfileElement               [MSCMS.@]
+ *
+ * Retrieve data for a specified tag type.
+ *
+ * PARAMS
+ *  profile  [I]   Handle to a color profile.
+ *  type     [I]   ICC tag type. 
+ *  offset   [I]   Offset in bytes to start copying from. 
+ *  size     [I/O] Size of the buffer in bytes. On return the variable holds
+ *                 the number of bytes actually needed.
+ *  buffer   [O]   Buffer to receive the tag data.
+ *  ref      [O]   Pointer to a BOOL that specifies whether more than one tag
+ *                 references the data.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
 BOOL WINAPI GetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset, PDWORD size,
                                     PVOID buffer, PBOOL ref )
 {
@@ -173,12 +192,12 @@ BOOL WINAPI GetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
 /******************************************************************************
  * GetColorProfileElementTag               [MSCMS.@]
  *
- * Get a tag from a color profile by index. 
+ * Get the tag type from a color profile by index. 
  *
  * PARAMS
  *  profile  [I]   Handle to a color profile.
  *  index    [I]   Index into the tag table of the color profile.
- *  tag      [O]   Pointer to a TAGTYPE variable.
+ *  type     [O]   Pointer to a variable that holds the ICC tag type on return.
  *
  * RETURNS
  *  Success: TRUE
@@ -212,6 +231,24 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE profile, DWORD index, PTAGTYPE t
     return ret;
 }
 
+/******************************************************************************
+ * GetColorProfileFromHandle               [MSCMS.@]
+ *
+ * Retrieve an ICC color profile by handle.
+ *
+ * PARAMS
+ *  profile  [I]   Handle to a color profile.
+ *  buffer   [O]   Buffer to receive the ICC profile.
+ *  size     [I/O] Size of the buffer in bytes. On return the variable holds the
+ *                 number of bytes actually needed.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  The profile returned will be in big-endian format.
+ */
 BOOL WINAPI GetColorProfileFromHandle( HPROFILE profile, PBYTE buffer, PDWORD size )
 {
     BOOL ret = FALSE;
@@ -238,6 +275,22 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE profile, PBYTE buffer, PDWORD si
     return ret;
 }
 
+/******************************************************************************
+ * GetColorProfileHeader               [MSCMS.@]
+ *
+ * Retrieve a color profile header by handle.
+ *
+ * PARAMS
+ *  profile  [I]   Handle to a color profile.
+ *  header   [O]   Buffer to receive the ICC profile header.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  The profile header returned will be adjusted for endianess.
+ */
 BOOL WINAPI GetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
 {
     BOOL ret = FALSE;
@@ -420,28 +473,28 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
 /******************************************************************************
  * IsColorProfileTagPresent               [MSCMS.@]
  *
- * Determine if a given ICC tag is present in a color profile.
+ * Determine if a given ICC tag type is present in a color profile.
  *
  * PARAMS
  *  profile  [I] Color profile handle.
- *  tag      [I] ICC tag.
- *  present  [O] Pointer to a BOOL variable. Set to TRUE if tag is present,
+ *  tag      [I] ICC tag type.
+ *  present  [O] Pointer to a BOOL variable. Set to TRUE if tag type is present,
  *               FALSE otherwise.
  *
  * RETURNS
  *  Success: TRUE
  *  Failure: FALSE
  */
-BOOL WINAPI IsColorProfileTagPresent( HPROFILE profile, TAGTYPE tag, PBOOL present )
+BOOL WINAPI IsColorProfileTagPresent( HPROFILE profile, TAGTYPE type, PBOOL present )
 {
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS_H
     cmsHPROFILE cmsprofile = MSCMS_hprofile2cmsprofile( profile );
 
-    TRACE( "( %p, 0x%08lx, %p )\n", profile, tag, present );
+    TRACE( "( %p, 0x%08lx, %p )\n", profile, type, present );
 
     if (!cmsprofile || !present) return FALSE;
-    ret = cmsIsTag( cmsprofile, tag );
+    ret = cmsIsTag( cmsprofile, type );
 
 #endif /* HAVE_LCMS_H */
     return *present = ret;
@@ -471,6 +524,54 @@ BOOL WINAPI IsColorProfileValid( HPROFILE profile, PBOOL valid )
 
     if (!valid) return FALSE;
     if (iccprofile) return *valid = TRUE;
+
+#endif /* HAVE_LCMS_H */
+    return ret;
+}
+
+/******************************************************************************
+ * SetColorProfileElement               [MSCMS.@]
+ *
+ * Set data for a specified tag type.
+ *
+ * PARAMS
+ *  profile  [I]   Handle to a color profile.
+ *  type     [I]   ICC tag type.
+ *  offset   [I]   Offset in bytes to start copying to.
+ *  size     [I/O] Size of the buffer in bytes. On return the variable holds the
+ *                 number of bytes actually needed.
+ *  buffer   [O]   Buffer holding the tag data.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+BOOL WINAPI SetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset, PDWORD size,
+                                    PVOID buffer )
+{
+    BOOL ret = FALSE;
+#ifdef HAVE_LCMS_H
+    icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
+    DWORD i, count;
+    icTag tag;
+
+    TRACE( "( %p, 0x%08lx, %ld, %p, %p )\n", profile, type, offset, size, buffer );
+
+    if (!iccprofile || !size || !buffer) return FALSE;
+    count = MSCMS_get_tag_count( iccprofile );
+
+    for (i = 0; i < count; i++)
+    {
+        MSCMS_get_tag_by_index( iccprofile, i, &tag );
+
+        if (tag.sig == type)
+        {
+            if (offset > tag.size) return FALSE;
+
+            MSCMS_set_tag_data( iccprofile, &tag, offset, buffer );
+            return TRUE;
+        }
+    }
 
 #endif /* HAVE_LCMS_H */
     return ret;
