@@ -271,7 +271,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     pad->obj.dwType = WINE_ACMOBJ_DRIVER;
     pad->obj.pACMDriverID = padid;
 
-    if (!(pad->hDrvr = padid->hInstModule))
+    if (!(pad->hDrvr = (HDRVR)padid->hInstModule))
     {
         ACMDRVOPENDESCW	adod;
         int		len;

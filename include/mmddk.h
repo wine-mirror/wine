@@ -515,10 +515,9 @@ BOOL16  		WINAPI	mmThreadIsCurrent16(HANDLE16 hndl);
 
 BOOL16			WINAPI	DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 						 WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
-BOOL		 	WINAPI	DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev,
+BOOL		 	WINAPI	DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 					       UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 
 #include "poppack.h"
 
 #endif /* __MMDDK_H */
-

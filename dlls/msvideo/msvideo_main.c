@@ -46,6 +46,9 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2);
 void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID lpv, LPDWORD lParam1, LPDWORD lParam2);
 LRESULT MSVIDEO_SendMessage(HIC hic, UINT msg, DWORD lParam1, DWORD lParam2, BOOL bFrom32);
 
+#define HDRVR_16(h32)		(LOWORD(h32))
+
+
 /***********************************************************************
  *		VideoForWindowsVersion		[MSVFW32.2]
  *		VideoForWindowsVersion		[MSVIDEO.2]
@@ -268,7 +271,7 @@ HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHa
 	MSVIDEO_SendMessage(hic,DRV_ENABLE,0L,0L,bFrom32);
 
         seg_icopen = MapLS( &icopen );
-        whic->hdrv = MSVIDEO_SendMessage(hic,DRV_OPEN,0,seg_icopen,FALSE);
+        whic->hdrv = (HDRVR)MSVIDEO_SendMessage(hic,DRV_OPEN,0,seg_icopen,FALSE);
         UnMapLS( seg_icopen );
 	if (whic->hdrv == 0) {
 		WARN("DRV_OPEN failed for hic 0x%08lx\n",(DWORD)hic);
@@ -976,7 +979,7 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL b
 		if (bDrv32) {
 			ret = whic->driverproc(whic->hdrv,hic,msg,lParam1,lParam2);
 		} else {
-			ret = MSVIDEO_CallTo16_long_lwwll((FARPROC16)whic->driverproc,whic->hdrv,hic,msg,lParam1,lParam2);
+			ret = MSVIDEO_CallTo16_long_lwwll((FARPROC16)whic->driverproc,HDRVR_16(whic->hdrv),hic,msg,lParam1,lParam2);
 		}
 	} else {
 		ret = SendDriverMessage(whic->hdrv,msg,lParam1,lParam2);

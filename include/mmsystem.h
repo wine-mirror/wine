@@ -30,7 +30,7 @@ extern "C" {
 typedef LPSTR		HPSTR;          /* a huge version of LPSTR */
 typedef LPCSTR		HPCSTR;         /* a huge version of LPCSTR */
 
-DECLARE_OLD_HANDLE(HDRVR);
+DECLARE_HANDLE(HDRVR);
 DECLARE_HANDLE(HWAVE);
 DECLARE_HANDLE(HWAVEIN);
 DECLARE_HANDLE(HWAVEOUT);

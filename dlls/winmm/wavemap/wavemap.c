@@ -94,8 +94,8 @@ static void	CALLBACK wodCallback(HWAVE hWave, UINT uMsg, DWORD dwInstance,
 	ERR("Unknown msg %u\n", uMsg);
     }
 
-    DriverCallback(wom->dwCallback, HIWORD(wom->dwFlags), wom->hOuterWave, uMsg,
-		   wom->dwClientInstance, dwParam1, dwParam2);
+    DriverCallback(wom->dwCallback, HIWORD(wom->dwFlags), (HDRVR)wom->hOuterWave,
+		   uMsg, wom->dwClientInstance, dwParam1, dwParam2);
 }
 
 static	DWORD	wodOpenHelper(WAVEMAPDATA* wom, UINT idx,
@@ -502,8 +502,8 @@ static void	CALLBACK widCallback(HWAVE hWave, UINT uMsg, DWORD dwInstance,
 	ERR("Unknown msg %u\n", uMsg);
     }
 
-    DriverCallback(wim->dwCallback, HIWORD(wim->dwFlags), wim->hOuterWave, uMsg,
-		   wim->dwClientInstance, dwParam1, dwParam2);
+    DriverCallback(wim->dwCallback, HIWORD(wim->dwFlags), (HDRVR)wim->hOuterWave,
+		   uMsg, wim->dwClientInstance, dwParam1, dwParam2);
 }
 
 static	DWORD	widOpenHelper(WAVEMAPDATA* wim, UINT idx,

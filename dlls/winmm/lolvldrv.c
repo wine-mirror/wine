@@ -198,7 +198,7 @@ static void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam1
     if (!mld->bFrom32 && (mld->dwFlags & DCB_TYPEMASK) == DCB_FUNCTION) {
 	/* 16 bit func, call it */
 	TRACE("Function (16 bit) !\n");
-	MMDRV_CallTo16_word_wwlll((FARPROC16)mld->dwCallback, hDev, uMsg,
+	MMDRV_CallTo16_word_wwlll((FARPROC16)mld->dwCallback, HDRVR_16(hDev), uMsg,
 				  mld->dwClientInstance, dwParam1, dwParam2);
     } else {
 	DriverCallback(mld->dwCallback, mld->dwFlags, hDev, uMsg,

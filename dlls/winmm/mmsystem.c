@@ -755,11 +755,11 @@ BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 	break;
     case DCB_WINDOW:
 	TRACE("Window(%04lX) handle=%04X!\n", dwCallBack, hDev);
-	PostMessageA((HWND)dwCallBack, wMsg, hDev, dwParam1);
+	PostMessageA((HWND)dwCallBack, wMsg, (WPARAM)hDev, dwParam1);
 	break;
     case DCB_TASK: /* aka DCB_THREAD */
 	TRACE("Task(%04lx) !\n", dwCallBack);
-	PostThreadMessageA(dwCallBack, wMsg, hDev, dwParam1);
+	PostThreadMessageA(dwCallBack, wMsg, (WPARAM)hDev, dwParam1);
 	break;
     case DCB_FUNCTION:
 	TRACE("Function (32 bit) !\n");
@@ -804,7 +804,7 @@ BOOL16 WINAPI DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HDRVR16 hDev,
 			       WORD wMsg, DWORD dwUser, DWORD dwParam1,
 			       DWORD dwParam2)
 {
-    return DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwUser, dwParam1, dwParam2);
+    return DriverCallback(dwCallBack, uFlags, HDRVR_32(hDev), wMsg, dwUser, dwParam1, dwParam2);
 }
 
 /**************************************************************************
@@ -3158,8 +3158,9 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 
-	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice,
-			   MM_MOM_DONE, lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
+	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
+			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
+			   lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
 	}
 	lpMidiStrm->lpMidiHdr = 0;
 	SetEvent(lpMidiStrm->hEvent);
@@ -3231,8 +3232,9 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 
-	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice,
-			   MM_MOM_DONE, lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
+	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
+			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
+			   lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
 	    break;
 	}
 
@@ -3352,8 +3354,9 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	    break;
 	}
 	if (me->dwEvent & MEVT_F_CALLBACK) {
-	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice,
-			   MM_MOM_POSITIONCB, lpwm->mod.dwInstance, (LPARAM)lpMidiHdr, 0L);
+	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
+			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_POSITIONCB,
+			   lpwm->mod.dwInstance, (LPARAM)lpMidiHdr, 0L);
 	}
 	lpMidiHdr->dwOffset += sizeof(MIDIEVENT) - sizeof(me->dwParms);
 	if (me->dwEvent & MEVT_F_LONG)
@@ -3364,8 +3367,9 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 
 	    lpMidiStrm->lpMidiHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
-	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice,
-			   MM_MOM_DONE, lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
+	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
+			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
+			   lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
 	    lpData = 0;
 	}
     }
