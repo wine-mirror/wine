@@ -36,15 +36,15 @@
 #include "wine/winbase16.h"
 #include "winreg.h"
 
-#include "wine/debug.h"
 #include "gdi.h"
-#include "file.h"
 #include "user.h"
 #include "win.h"
 #include "wine_gl.h"
 #include "x11drv.h"
 #include "xvidmode.h"
 #include "dga2.h"
+#include "wine/server.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -449,8 +449,12 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     fcntl( ConnectionNumber(data->display), F_SETFD, 1 ); /* set close on exec flag */
     if (synchronous) XSynchronize( data->display, True );
     wine_tsx11_unlock();
-    data->display_fd = FILE_DupUnixHandle( ConnectionNumber(data->display),
-                                           GENERIC_READ | SYNCHRONIZE, FALSE );
+    if (wine_server_fd_to_handle( ConnectionNumber(data->display), GENERIC_READ | SYNCHRONIZE,
+                                  FALSE, &data->display_fd ))
+    {
+        MESSAGE( "x11drv: Can't allocate handle for display fd\n" );
+        ExitProcess(1);
+    }
     data->process_event_count = 0;
     NtCurrentTeb()->driver_data = data;
     return data;

@@ -365,6 +365,30 @@ inline static int store_cached_fd( int fd, obj_handle_t handle )
 
 
 /***********************************************************************
+ *           wine_server_fd_to_handle   (NTDLL.@)
+ *
+ * Allocate a file handle for a Unix fd.
+ */
+int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_handle_t *handle )
+{
+    int ret;
+
+    *handle = 0;
+    wine_server_send_fd( fd );
+
+    SERVER_START_REQ( alloc_file_handle )
+    {
+        req->access  = access;
+        req->inherit = inherit;
+        req->fd      = fd;
+        if (!(ret = wine_server_call( req ))) *handle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/***********************************************************************
  *           wine_server_handle_to_fd   (NTDLL.@)
  *
  * Retrieve the Unix fd corresponding to a file handle.

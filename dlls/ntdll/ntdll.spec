@@ -1023,6 +1023,7 @@ name	ntdll
 
 # Server interface
 @ cdecl -norelay wine_server_call(ptr) wine_server_call
+@ cdecl wine_server_fd_to_handle(long long long ptr) wine_server_fd_to_handle
 @ cdecl wine_server_handle_to_fd(long long ptr ptr ptr) wine_server_handle_to_fd
 
 # Codepages

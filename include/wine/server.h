@@ -51,6 +51,7 @@ struct __server_request_info
 
 extern unsigned int wine_server_call( void *req_ptr );
 extern void wine_server_send_fd( int fd );
+extern int wine_server_fd_to_handle( int fd, unsigned int access, int inherit, obj_handle_t *handle );
 extern int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
                                      enum fd_type *type, int *flags );
 

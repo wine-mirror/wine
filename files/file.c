@@ -307,31 +307,6 @@ void FILE_SetDosError(void)
 
 
 /***********************************************************************
- *           FILE_DupUnixHandle
- *
- * Duplicate a Unix handle into a task handle.
- * Returns 0 on failure.
- */
-HANDLE FILE_DupUnixHandle( int fd, DWORD access, BOOL inherit )
-{
-    HANDLE ret;
-
-    wine_server_send_fd( fd );
-
-    SERVER_START_REQ( alloc_file_handle )
-    {
-        req->access  = access;
-        req->inherit = inherit;
-        req->fd      = fd;
-        wine_server_call( req );
-        ret = reply->handle;
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
  *           FILE_GetUnixHandleType
  *
  * Retrieve the Unix handle corresponding to a file handle.
