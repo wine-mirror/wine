@@ -833,7 +833,13 @@ extern int WIN32_LastError;
 #define RPC_S_PRF_ELT_NOT_REMOVED                          1927
 #define RPC_S_GRP_ELT_NOT_ADDED                            1928
 #define RPC_S_GRP_ELT_NOT_REMOVED                          1929
+#define ERROR_KM_DRIVER_BLOCKED                            1930
 #define ERROR_CONTEXT_EXPIRED                              1931
+#define ERROR_PER_USER_TRUST_QUOTA_EXCEEDED                1932
+#define ERROR_ALL_USER_TRUST_QUOTA_EXCEEDED                1933
+#define ERROR_USER_DELETE_TRUST_QUOTA_EXCEEDED             1934
+#define ERROR_AUTHENTICATION_FIREWALL_FAILED               1935
+#define ERROR_REMOTE_PRINT_CONNECTIONS_BLOCKED             1936
 #define ERROR_INVALID_PIXEL_FORMAT                         2000
 #define ERROR_BAD_DRIVER                                   2001
 #define ERROR_INVALID_WINDOW_STYLE                         2002
