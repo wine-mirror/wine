@@ -2033,7 +2033,7 @@ BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
     if (is_pointer_message(msg))
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
     }
 
@@ -2086,7 +2086,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 
     if (is_pointer_message(msg))
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
     }
 
@@ -2175,7 +2175,7 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 
     if (is_pointer_message( msg ))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
     }
 
@@ -2223,7 +2223,7 @@ BOOL WINAPI PostThreadMessageW( DWORD thread, UINT msg, WPARAM wparam, LPARAM lp
 
     if (is_pointer_message( msg ))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
     }
     if (USER_IsExitingThread( thread )) return TRUE;

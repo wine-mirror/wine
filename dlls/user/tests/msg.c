@@ -32,7 +32,6 @@
 #include "winuser.h"
 
 #include "wine/test.h"
-#include "wine/unicode.h"
 
 #define MDI_FIRST_CHILD_ID 2004
 
@@ -2945,9 +2944,9 @@ static LRESULT CALLBACK MsgConversionProcW(HWND hwnd, UINT uMsg, WPARAM wParam, 
     {
     case CB_FINDSTRINGEXACT:
         trace("String: %p\n", (LPCWSTR)lParam);
-        if (!strcmpW((LPCWSTR)lParam, wszUnicode))
+        if (!lstrcmpW((LPCWSTR)lParam, wszUnicode))
             return 1;
-        if (!strcmpW((LPCWSTR)lParam, wszAnsi))
+        if (!lstrcmpW((LPCWSTR)lParam, wszAnsi))
             return 0;
         return -1;
     }
@@ -3006,8 +3005,6 @@ static void test_message_conversion(void)
 
     /* Asynchronous messages */
 
-    todo_wine
-    {
     SetLastError(0);
     lRes = PostMessageA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
     ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
@@ -3016,7 +3013,30 @@ static void test_message_conversion(void)
     lRes = PostMessageW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
     ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
         "PostMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
-    }
+    SetLastError(0);
+    lRes = PostThreadMessageA(GetCurrentThreadId(), CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+        "PosThreadtMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+    SetLastError(0);
+    lRes = PostThreadMessageW(GetCurrentThreadId(), CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+        "PosThreadtMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+    SetLastError(0);
+    lRes = SendNotifyMessageA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+        "SendNotifyMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+    SetLastError(0);
+    lRes = SendNotifyMessageW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode);
+    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+        "SendNotifyMessage on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+    SetLastError(0);
+    lRes = SendMessageCallbackA(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode, NULL, 0);
+    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+        "SendMessageCallback on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
+    SetLastError(0);
+    lRes = SendMessageCallbackW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode, NULL, 0);
+    ok(lRes == 0 && GetLastError() == ERROR_MESSAGE_SYNC_ONLY,
+        "SendMessageCallback on sync only message returned %ld, last error %ld\n", lRes, GetLastError());
 }
 
 START_TEST(msg)
