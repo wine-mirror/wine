@@ -1167,7 +1167,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_LoadWave (LPPERSISTSTREAM
     return hr;
   }
   /* acquire PersistStream interface */
-  hr = IDirectMusicTrack_QueryInterface (*ppWaveObject, &IID_IPersistStream, (LPVOID*) &pPersistStream);
+  hr = IDirectMusicObject_QueryInterface (*ppWaveObject, &IID_IPersistStream, (LPVOID*) &pPersistStream);
   if (FAILED(hr)) {
     ERR(": could not acquire IPersistStream\n");
     return hr;
