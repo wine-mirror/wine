@@ -1957,11 +1957,7 @@ DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 
     if (hdpa->nItemCount <= i) {
 	/* within the old array */
-	if (hdpa->nMaxCount > i) {
-	    /* within the allocated space, set a new boundary */
-	    hdpa->nItemCount = i+1;
-	}
-	else {
+	if (hdpa->nMaxCount <= i) {
 	    /* resize the block of memory */
 	    INT nNewItems =
 		hdpa->nGrow * ((INT)(((i+1) - 1) / hdpa->nGrow) + 1);
@@ -1972,9 +1968,10 @@ DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 	    if (!lpTemp)
 		return FALSE;
 
-	    hdpa->nItemCount = nNewItems;
+	    hdpa->nMaxCount = nNewItems;
 	    hdpa->ptrs = lpTemp;
 	}
+        hdpa->nItemCount = i+1;
     }
 
     /* put the new entry in */
