@@ -176,6 +176,7 @@ PCRYPTPROV CRYPT_LoadProvider(PSTR pImage)
 	if ( !(provider->hModule = LoadLibraryA(pImage)) )
 	{
 		errorcode = (GetLastError() == ERROR_FILE_NOT_FOUND) ? NTE_PROV_DLL_NOT_FOUND : NTE_PROVIDER_DLL_FAIL;
+		FIXME("Failed to load dll %s\n", debugstr_a(pImage));
 		goto error;
 	}
 
@@ -277,14 +278,21 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		/* No CSP name specified so try the user default CSP first
 		 * then try the machine default CSP
 		 */
-		if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, TRUE)) )
+		if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, TRUE)) ) {
+			FIXME("No provider registered for crypto provider type %ld.\n", dwProvType);
 			CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
+		}
 		if (RegOpenKeyA(HKEY_CURRENT_USER, keyname, &key))
 		{
 			CRYPT_Free(keyname);
-			if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, FALSE)) )
+			if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, FALSE)) ) {
+				FIXME("No type registered for crypto provider type %ld.\n", dwProvType);
 				CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
-			if (RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &key)) goto error;
+			}
+			if (RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &key)) {
+				FIXME("Did not find registry entry of crypto provider for %s.\n", debugstr_a(keyname)); 
+				goto error;
+			}
 		}
 		CRYPT_Free(keyname);
 		RegQueryValueExA(key, "Name", NULL, &keytype, NULL, &len);
@@ -304,6 +312,7 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	RegQueryValueExA(key, "Type", NULL, NULL, (BYTE*)&type, &len);
 	if (type != dwProvType)
 	{
+		FIXME("Crypto provider has wrong type (%ld vs expected %ld).\n", type, dwProvType);
 		SetLastError(NTE_BAD_PROV_TYPE);
 		goto error;
 	}
@@ -327,8 +336,10 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	pProv = CRYPT_LoadProvider(imagepath);
 	CRYPT_Free(temp);
 	CRYPT_Free(imagepath);
-	if (!pProv) goto error;
-
+	if (!pProv) {
+		FIXME("Could not load crypto provider from DLL %s\n", debugstr_a(imagepath));
+		goto error;
+	}
 	if (pProv->pFuncs->pCPAcquireContext(&pProv->hPrivate, (CHAR*)pszContainer, dwFlags, pProv->pVTable))
 	{
 		/* MSDN: When this flag is set, the value returned in phProv is undefined,
