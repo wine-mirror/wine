@@ -28,7 +28,7 @@ char *MSVCRT_getenv(const char *name)
       pos =strchr(pp,'=');
       if ((pos) && ((pos - pp) == length))
       {
-          if (!strncmp(pp,name,length)) break;
+          if (!strncasecmp(pp,name,length)) break;
       }
   }
   if ((*pp)&& (pos))
@@ -56,7 +56,7 @@ WCHAR *_wgetenv(const WCHAR *name)
       pos = strchrW(pp,'=');
       if ((pos) && ((pos - pp) == length))
       {
-          if (!strncmpW(pp,name,length))
+          if (!strncmpiW(pp,name,length))
           {
               pp = pos+1;
               TRACE("got %s\n",debugstr_w(pp));
