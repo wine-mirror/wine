@@ -810,6 +810,15 @@ BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
 
 /***********************************************************************
  *           GetDiskFreeSpaceEx32A   (KERNEL32.871)
+ *
+ *  This function is used to aquire the size of the available and
+ *  total space on a logical volume.
+ *
+ * RETURNS
+ *
+ *  Zero on failure, nonzero upon success. Use GetLastError to obtain
+ *  detailed error information.
+ *
  */
 BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 				     PULARGE_INTEGER avail,
@@ -824,21 +833,37 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
     {
         if ((root[1]) && ((root[1] != ':') || (root[2] != '\\')))
         {
+            FIXME_(dosfs)("there are valid root names which are not supported yet\n");
+	    /* ..like UNC names, for instance. */
+
             WARN_(dosfs)("invalid root '%s'\n", root );
             return FALSE;
         }
         drive = toupper(root[0]) - 'A';
     }
+
     if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
-    /*FIXME: Do we have the number of bytes available to the user? */
-    if (totalfree) {
-    	totalfree->HighPart = size.HighPart;
-    	totalfree->LowPart = size.LowPart ;
+
+    if (total)
+    {
+        total->HighPart = size.HighPart;
+        total->LowPart = size.LowPart ;
     }
-    if (avail) {
-        avail->HighPart = available.HighPart;
-        avail->LowPart = available.LowPart ;
+
+    if (totalfree)
+    {
+        totalfree->HighPart = available.HighPart;
+        totalfree->LowPart = available.LowPart ;
     }
+
+    if (avail)
+    {
+        FIXME_(dosfs)("no per-user quota support yet\n");
+        /* Quick hack */
+        avail->HighPart = totalfree->HighPart;
+        avail->LowPart = totalfree->LowPart ;
+    }
+
     return TRUE;
 }
 
