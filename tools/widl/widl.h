@@ -39,6 +39,8 @@ extern int debuglevel;
 extern int win32;
 extern int pedantic;
 extern int header_only;
+extern int compat_icom;
+extern int use_icom;
 
 extern char *input_name;
 extern char *header_name;

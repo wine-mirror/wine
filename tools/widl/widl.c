@@ -39,8 +39,27 @@
 #include "proxy.h"
 #include "../wpp/wpp.h"
 
+/* future options to reserve characters for: */
+/* a = alignment of structures */
+/* A = ACF input filename */
+/* c = client stub only? */
+/* C = client stub filename */
+/* J = do not search standard include path */
+/* O = generate interpreted stubs */
+/* p = proxy only? */
+/* P = proxy filename */
+/* s = server stub only? */
+/* S = server stub filename */
+/* t = typelib only? */
+/* T = typelib filename */
+/* u = UUID file only? */
+/* U = UUID filename */
+/* w = select win16/win32 output (?) */
+
 static char usage[] =
 "Usage: widl [options...] infile.idl\n"
+"   -b          Make headers compatible with ICOM macros\n"
+"   -B          Make headers use ICOM macros\n"
 "   -d n        Set debug level to 'n'\n"
 "   -D id[=val] Define preprocessor identifier id=val\n"
 "   -E          Preprocess only\n"
@@ -69,6 +88,8 @@ int pedantic = 0;
 int preprocess_only = 0;
 int header_only = 0;
 int no_preprocess = 0;
+int compat_icom = 0;
+int use_icom = 0;
 
 char *input_name;
 char *header_name;
@@ -117,8 +138,14 @@ int main(int argc,char *argv[])
 
   now = time(NULL);
 
-  while((optc = getopt(argc, argv, "d:D:EhH:I:NVW")) != EOF) {
+  while((optc = getopt(argc, argv, "bBd:D:EhH:I:NVW")) != EOF) {
     switch(optc) {
+    case 'b':
+      compat_icom = 1;
+      break;
+    case 'B':
+      use_icom = 1;
+      break;
     case 'd':
       debuglevel = strtol(optarg, NULL, 0);
       break;

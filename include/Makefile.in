@@ -244,7 +244,7 @@ EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine
 .SUFFIXES: .idl .h
 
 .idl.h:
-	$(LDPATH) $(WIDL) $(DEFS) -h -H $@ $<
+	$(LDPATH) $(WIDL) $(DEFS) -b -h -H $@ $<
 
 install::
 	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/msvcrt $(includedir)/msvcrt/sys

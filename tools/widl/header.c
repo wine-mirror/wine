@@ -72,7 +72,7 @@ char* get_name(var_t *v)
   return v->name;
 }
 
-static void write_array(FILE *h, expr_t *v)
+static void write_array(FILE *h, expr_t *v, int field)
 {
   if (!v) return;
   while (NEXT_LINK(v)) v = NEXT_LINK(v);
@@ -81,7 +81,7 @@ static void write_array(FILE *h, expr_t *v)
     if (v->is_const)
       fprintf(h, "%ld", v->cval); /* statically sized array */
     else
-      fprintf(h, "1"); /* dynamically sized array */
+      if (field) fprintf(h, "1"); /* dynamically sized array */
     if (PREV_LINK(v))
       fprintf(h, ", ");
     v = PREV_LINK(v);
@@ -114,7 +114,7 @@ static void write_field(FILE *h, var_t *v)
         break;
       }
     }
-    write_array(h, v->array);
+    write_array(h, v->array, 1);
     fprintf(h, ";\n");
   }
 }
@@ -404,11 +404,10 @@ var_t *is_callas(attr_t *a)
   return get_attrp(a, ATTR_CALLAS);
 }
 
-static void write_method_def(type_t *iface)
+static void write_icom_method_def(type_t *iface)
 {
   func_t *cur = iface->funcs;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-  fprintf(header, "#define %s_METHODS", iface->name);
   while (cur) {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
@@ -438,6 +437,9 @@ static void write_method_def(type_t *iface)
       while (arg) {
 	fprintf(header, ",");
 	write_type(header, arg->type, arg, arg->tname);
+	/* since the ICOM macros can't express arrays,
+	 * we have to pretend they're pointers instead */
+	if (arg->array) fprintf(header, "*");
 	fprintf(header, ",");
 	write_name(header,arg);
 	arg = PREV_LINK(arg);
@@ -476,12 +478,19 @@ static int write_method_macro(type_t *iface, char *name)
 	fprintf(header, ",%c", c+'a');
       fprintf(header, ") ");
 
-      if (argc)
-	fprintf(header, "ICOM_CALL%d(", argc);
-      else
-	fprintf(header, "ICOM_CALL(");
-      write_name(header,def);
-      fprintf(header, ",p");
+      if (use_icom) {
+	if (argc)
+	  fprintf(header, "ICOM_CALL%d(", argc);
+	else
+	  fprintf(header, "ICOM_CALL(");
+	write_name(header, def);
+	fprintf(header, ",p");
+      }
+      else {
+	fprintf(header, "(p)->lpVtbl->");
+	write_name(header, def);
+	fprintf(header, "(p");
+      }
       for (c=0; c<argc; c++)
 	fprintf(header, ",%c", c+'a');
       fprintf(header, ")\n");
@@ -501,18 +510,73 @@ void write_args(FILE *h, var_t *arg, char *name, int method)
     while (NEXT_LINK(arg))
       arg = NEXT_LINK(arg);
   }
-  if (method) {
-    fprintf(h, "    %s* This", name);
+  if (h == header) {
+    indentation++;
+    indent(0);
+  } else fprintf(h, "    ");
+  if (method == 1) {
+    fprintf(h, "%s* This", name);
     count++;
   }
-  else fprintf(h, "    ");
   while (arg) {
-    if (count) fprintf(h, ",\n    ");
+    if (count) {
+      fprintf(h, ",\n");
+      if (h == header) indent(0);
+      else fprintf(h, "    ");
+    }
     write_type(h, arg->type, arg, arg->tname);
+    if (method && use_icom && arg->array) fprintf(header, "*"); /* as write_icom_method_def */
     fprintf(h, " ");
-    write_name(h,arg);
+    write_name(h, arg);
+    if (!(method && use_icom)) write_array(header, arg->array, 0);
     arg = PREV_LINK(arg);
     count++;
+  }
+  if (h == header) indentation--;
+}
+
+static void write_cpp_method_def(type_t *iface)
+{
+  func_t *cur = iface->funcs;
+  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+  while (cur) {
+    var_t *def = cur->def;
+    if (!is_callas(def->attrs)) {
+      indent(0);
+      fprintf(header, "virtual ");
+      write_type(header, def->type, def, def->tname);
+      fprintf(header, " CALLBACK ");
+      write_name(header, def);
+      fprintf(header, "(\n");
+      write_args(header, cur->args, iface->name, 2);
+      fprintf(header, ") = 0;\n");
+      fprintf(header, "\n");
+    }
+    cur = PREV_LINK(cur);
+  }
+}
+
+static void write_c_method_def(type_t *iface)
+{
+  func_t *cur = iface->funcs;
+  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+
+  if (iface->ref) write_c_method_def(iface->ref);
+  indent(0);
+  fprintf(header, "/*** %s methods ***/\n", iface->name);
+  while (cur) {
+    var_t *def = cur->def;
+    if (!is_callas(def->attrs)) {
+      indent(0);
+      write_type(header, def->type, def, def->tname);
+      fprintf(header, " (CALLBACK *");
+      write_name(header, def);
+      fprintf(header, ")(\n");
+      write_args(header, cur->args, iface->name, 1);
+      fprintf(header, ");\n");
+      fprintf(header, "\n");
+    }
+    cur = PREV_LINK(cur);
   }
 }
 
@@ -622,19 +686,59 @@ void write_com_interface(type_t *iface)
   fprintf(header, " */\n");
   write_guid(iface);
   write_forward(iface);
-  fprintf(header, "#define ICOM_INTERFACE %s\n", iface->name);
-  write_method_def(iface);
-  fprintf(header, "#define %s_IMETHODS \\\n", iface->name);
-  if (iface->ref)
-    fprintf(header, "    %s_IMETHODS \\\n", iface->ref->name);
-  fprintf(header, "    %s_METHODS\n", iface->name);
-  if (iface->ref)
-    fprintf(header, "ICOM_DEFINE(%s,%s)\n", iface->name, iface->ref->name);
-  else
-    fprintf(header, "ICOM_DEFINE1(%s)\n", iface->name);
-  fprintf(header, "#undef ICOM_INTERFACE\n");
-  fprintf(header, "\n");
-  write_method_macro(iface, iface->name);
+  if (use_icom) {
+    fprintf(header, "#define ICOM_INTERFACE %s\n", iface->name);
+    fprintf(header, "#define %s_METHODS", iface->name);
+    write_icom_method_def(iface);
+    fprintf(header, "#define %s_IMETHODS \\\n", iface->name);
+    if (iface->ref)
+      fprintf(header, "    %s_IMETHODS \\\n", iface->ref->name);
+    fprintf(header, "    %s_METHODS\n", iface->name);
+    if (iface->ref)
+      fprintf(header, "ICOM_DEFINE(%s,%s)\n", iface->name, iface->ref->name);
+    else
+      fprintf(header, "ICOM_DEFINE1(%s)\n", iface->name);
+    fprintf(header, "#undef ICOM_INTERFACE\n");
+    fprintf(header, "\n");
+    write_method_macro(iface, iface->name);
+  }
+  else {
+    /* C++ interface */
+    fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
+    fprintf(header, "struct %s", iface->name);
+    if (iface->ref)
+      fprintf(header, ": %s", iface->ref->name);
+    fprintf(header, " {\n");
+    indentation++;
+    fprintf(header, "\n");
+    write_cpp_method_def(iface);
+    indentation--;
+    fprintf(header, "} ICOM_COM_INTERFACE_ATTRIBUTE;\n");
+    fprintf(header, "#else\n");
+    /* C interface */
+    fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);
+    fprintf(header, "struct %s {\n", iface->name);
+    fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
+    fprintf(header, "};\n");
+    fprintf(header, "struct %sVtbl {\n", iface->name);
+    indentation++;
+    fprintf(header, "    ICOM_MSVTABLE_COMPAT_FIELDS\n");
+    fprintf(header, "\n");
+    write_c_method_def(iface);
+    indentation--;
+    fprintf(header, "};\n");
+    fprintf(header, "\n");
+    if (compat_icom) {
+      fprintf(header, "#define %s_IMETHODS", iface->name);
+      if (iface->ref)
+	fprintf(header, " \\\n    %s_IMETHODS", iface->ref->name);
+      write_icom_method_def(iface);
+      fprintf(header, "\n");
+    }
+    write_method_macro(iface, iface->name);
+    fprintf(header, "\n");
+    fprintf(header, "#endif\n");
+  }
   fprintf(header, "\n");
   write_method_proto(iface);
   fprintf(header, "\n");
