@@ -67,15 +67,6 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
 }
 
 /******************************************************************************
- *              OleSetAutoConvert        [OLE32.@]
- */
-HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
-{
-    FIXME("(%p,%p), stub!\n", clsidOld, clsidNew);
-    return S_OK;
-}
-
-/******************************************************************************
  *              IsAccelerator        [OLE32.75]
  */
 BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* lpwCmd)

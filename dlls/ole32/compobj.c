@@ -1976,21 +1976,68 @@ BOOL WINAPI COMPOBJ_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD
  */
 HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
 {
-  HKEY	hkey;
-  char	buf[200];
-  WCHAR	wbuf[200];
-  DWORD	len;
+    HKEY hkey = 0;
+    char buf[200];
+    WCHAR wbuf[200];
+    DWORD len;
+    HRESULT res = S_OK;
 
-  sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
-  if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
-      return REGDB_E_CLASSNOTREG;
-  len = 200;
-  if (RegQueryValueA(hkey,"AutoConvertTo",buf,&len))
-      return REGDB_E_KEYMISSING;
-  RegCloseKey(hkey);
-  MultiByteToWideChar( CP_ACP, 0, buf, -1, wbuf, sizeof(wbuf)/sizeof(WCHAR) );
-  CLSIDFromString(wbuf,pClsidNew);
-  return S_OK;
+    sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
+    if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
+    {
+        res = REGDB_E_CLASSNOTREG;
+	goto done;
+    }
+    len = 200;
+    /* we can just query for the default value of AutoConvertTo key like that,
+       without opening the AutoConvertTo key and querying for NULL (default) */
+    if (RegQueryValueA(hkey,"AutoConvertTo",buf,&len))
+    {
+        res = REGDB_E_KEYMISSING;
+	goto done;
+    }
+    MultiByteToWideChar( CP_ACP, 0, buf, -1, wbuf, sizeof(wbuf)/sizeof(WCHAR) );
+    CLSIDFromString(wbuf,pClsidNew);
+done:
+  if (hkey) RegCloseKey(hkey);
+
+  return res;
+}
+
+/******************************************************************************
+ *              OleSetAutoConvert        [OLE32.126]
+ */
+HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
+{
+    HKEY hkey = 0, hkeyConvert = 0;
+    char buf[200], szClsidNew[200];
+    HRESULT res = S_OK;
+
+    TRACE("(%p,%p);\n", clsidOld, clsidNew);
+    sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
+    WINE_StringFromCLSID(clsidNew, szClsidNew);
+    if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
+    {
+        res = REGDB_E_CLASSNOTREG;
+	goto done;
+    }
+    if (RegCreateKeyA(hkey, "AutoConvertTo", &hkeyConvert))
+    {
+        res = REGDB_E_WRITEREGDB;
+	goto done;
+    }
+    if (RegSetValueExA(hkeyConvert, NULL, 0,
+                            REG_SZ, (LPBYTE)szClsidNew, strlen(szClsidNew)+1))
+    {
+        res = REGDB_E_WRITEREGDB;
+	goto done;
+    }
+
+done:
+    if (hkeyConvert) RegCloseKey(hkeyConvert);
+    if (hkey) RegCloseKey(hkey);
+
+    return res;
 }
 
 /***********************************************************************
