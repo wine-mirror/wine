@@ -31,5 +31,11 @@
 #define	SH_DENYRD	0x30	/* Deny read */
 #define	SH_DENYNO	0x40	/* Deny nothing */
 
+#define _SH_COMPAT SH_COMPAT
+#define _SH_DENYRW SH_DENYRW
+#define _SH_DENYWR SH_DENYWR
+#define _SH_DENYRD SH_DENYRD
+#define _SH_DENYNO SH_DENYNO
+
 #endif	/* __WINE_SHARE_H_ */
 
