@@ -558,9 +558,9 @@ LPDOSTASK MZ_Current( void )
 
 #else /* !MZ_SUPPORTED */
 
-BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env, 
+BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                       BOOL inherit, LPSTARTUPINFOA startup, 
+                       BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )
 {
  WARN(module,"DOS executables not supported on this architecture\n");
@@ -568,7 +568,7 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
  return FALSE;
 }
 
-LPDOSTASK *MZ_Current( void )
+LPDOSTASK MZ_Current( void )
 {
   return NULL;
 }
