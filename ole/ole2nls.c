@@ -2529,7 +2529,7 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
 {
 	int len,ret;
 	if(fdwStyle & NORM_IGNORENONSPACE)
-		FIXME("IGNORENONSPACE not supprted\n");
+		FIXME("IGNORENONSPACE not supported\n");
 	if(fdwStyle & NORM_IGNORESYMBOLS)
 		FIXME("IGNORESYMBOLS not supported\n");
 

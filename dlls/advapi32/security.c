@@ -120,7 +120,7 @@ GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 
 BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
 {
-    FIXME("(%p, %x): stub\n", thread, token);
+    FIXME("(%p, %x): stub (NT impl. only)\n", thread, token);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 

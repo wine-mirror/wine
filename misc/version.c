@@ -78,6 +78,9 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x07000304,
         0xC0000004,
 	{
+	    /* 0x40003B6 == 4.00.950 == Win95 orig. release and Win95a
+	     * 0x4000457 == 4.00.1111 == Win95B aka Win95 OSR2
+	     * Win95a/B can be discerned via regkey SubVersionNumber */
             sizeof(OSVERSIONINFOA), 4, 0, 0x40003B6,
             VER_PLATFORM_WIN32_WINDOWS, "Win95"
 	}

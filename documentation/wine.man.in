@@ -168,7 +168,13 @@ or in Unix format (
 ).  You may pass arguments to the program being executed by adding them 
 to the end of the command line invoking
 .B wine
-(such as: wine notepad C:\(rs\(rsTEMP\(rs\(rsREADME.TXT). Command line processing goes as
+(such as: wine notepad C:\(rs\(rsTEMP\(rs\(rsREADME.TXT).
+Note that you need to '\(rs' escape special characters (and spaces) when invoking Wine via
+a shell, e.g.
+.PP
+wine C:\(rs\(rsProgram\(rs Files\(rs\(rsMyPrg\(rs\(rstest.exe
+.PP
+Command line processing goes as
 follows: first 
 .B wine
 checks whether one or more of the above mentioned 

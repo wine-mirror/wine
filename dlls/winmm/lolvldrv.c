@@ -2544,7 +2544,7 @@ static BOOL	MMDRV_InitFromRegistry(void)
 static BOOL	MMDRV_InitHardcoded(void)
 {
     ERR("You didn't setup properly the config file for the Wine multimedia modules.\n"
-	"Will use the hard-coded setup, but this will disapear soon.\n"
+	"Will use the hard-coded setup, but this will disappear soon.\n"
 	"Please add a WinMM section to your Wine config file.\n");
 
     /* first load hardware drivers */

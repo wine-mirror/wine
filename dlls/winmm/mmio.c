@@ -543,7 +543,7 @@ static FOURCC MMIO_ParseExt(LPCSTR szFileName)
 /**************************************************************************
  *				MMIO_Get			[internal]
  *
- * Retirieves from current process the mmio object
+ * Retrieves the mmio object from current process
  */
 static	LPWINE_MMIO	MMIO_Get(LPWINE_MM_IDATA iData, HMMIO h)
 {

@@ -2,6 +2,7 @@
 *.dvi
 *.junk
 *.log
+*.out
 *.tex
 DBTOHTML_OUTPUT_DIR*
 Makefile

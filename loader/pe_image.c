@@ -383,7 +383,7 @@ static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *f
     if (!dir->VirtualAddress || !dir->Size)
     {
         if (nt->OptionalHeader.ImageBase == 0x400000)
-            ERR("Standard load address for a Win32 program not available - patched kernel ?\n");
+            ERR("Standard load address for a Win32 program (0x00400000) not available - patched kernel ?\n");
         ERR( "FATAL: Need to relocate %s, but no relocation records present (%s). Try to run that file directly !\n",
              filename,
              (nt->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?
@@ -455,7 +455,7 @@ static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *f
  * (at least) Linux does only support offsets which are page-aligned.
  *
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
- * want to access them. (HMODULE32 point to the start of it)
+ * want to access them. (HMODULE points to the start of it)
  */
 HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
 {
