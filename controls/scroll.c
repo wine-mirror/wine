@@ -257,7 +257,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
 
         if (info->Page)
         {
-            *thumbSize = pixels * info->Page / (info->MaxVal-info->MinVal+1);
+	    *thumbSize = MulDiv(pixels,info->Page,(info->MaxVal-info->MinVal+1));
             if (*thumbSize < SCROLL_MIN_THUMB) *thumbSize = SCROLL_MIN_THUMB;
         }
         else *thumbSize = GetSystemMetrics(SM_CXVSCROLL);
@@ -275,7 +275,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
                 *thumbPos = *arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
             else
                 *thumbPos = *arrowSize - SCROLL_ARROW_THUMB_OVERLAP
-		 + pixels * (info->CurVal-info->MinVal) / (max - info->MinVal);
+		  + MulDiv(pixels, (info->CurVal-info->MinVal),(max - info->MinVal));
         }
     }
     WIN_ReleaseWndPtr(wndPtr);
@@ -300,7 +300,7 @@ static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT *rect,
 
     if (infoPtr->Page)
     {
-        thumbSize = pixels * infoPtr->Page/(infoPtr->MaxVal-infoPtr->MinVal+1);
+        thumbSize = MulDiv(pixels,infoPtr->Page,(infoPtr->MaxVal-infoPtr->MinVal+1));
         if (thumbSize < SCROLL_MIN_THUMB) thumbSize = SCROLL_MIN_THUMB;
     }
     else thumbSize = GetSystemMetrics(SM_CXVSCROLL);
