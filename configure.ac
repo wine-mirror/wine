@@ -1087,7 +1087,9 @@ AC_CHECK_HEADERS(\
 	stdint.h \
 	strings.h \
 	sys/cdio.h \
+	sys/elf32.h \
 	sys/errno.h \
+	sys/exec_elf.h \
 	sys/file.h \
 	sys/filio.h \
 	sys/inttypes.h \

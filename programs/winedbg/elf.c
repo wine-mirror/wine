@@ -41,16 +41,28 @@
 #define __ELF__
 #endif
 
-#ifdef __ELF__
 #ifdef HAVE_ELF_H
 # include <elf.h>
+#endif
+#ifdef HAVE_SYS_ELF32_H
+# include <sys/elf32.h>
+#endif
+#ifdef HAVE_SYS_EXEC_ELF_H
+# include <sys/exec_elf.h>
+#endif
+#if !defined(DT_NUM)
+# if defined(DT_COUNT)
+#  define DT_NUM DT_COUNT
+# else
+/* this seems to be a satisfactory value on Solaris, which doesn't support this AFAICT */
+#  define DT_NUM 24
+# endif
 #endif
 #ifdef HAVE_LINK_H
 # include <link.h>
 #endif
 #ifdef HAVE_SYS_LINK_H
 # include <sys/link.h>
-#endif
 #endif
 
 #include "wine/debug.h"
@@ -249,6 +261,24 @@ leave:
     return dil;
 }
 
+static unsigned is_dt_flag_valid(unsigned d_tag)
+{
+#ifndef DT_PROCNUM
+#define DT_PROCNUM 0
+#endif
+#ifndef DT_EXTRANUM
+#define DT_PROCNUM 0
+#endif
+    return (d_tag >= 0 && d_tag < DT_NUM + DT_PROCNUM + DT_EXTRANUM)
+#if defined(DT_LOOS) && defined(DT_HIOS)
+        || (d_tag >= DT_LOOS && d_tag < DT_HIOS)
+#endif
+#if defined(DT_LOPROC) && defined(DT_HIPROC)
+        || (d_tag >= DT_LOPROC && d_tag < DT_HIPROC)
+#endif
+        ;
+}
+
 /*
  * Loads the information for ELF module stored in 'filename'
  * the module has been loaded at 'load_offset' address
@@ -339,12 +369,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(HANDLE hProcess,
                 do
                 {
                     if (!ReadProcessMemory(hProcess, ptr, &dyn, sizeof(dyn), &len) ||
-                        len != sizeof(dyn) ||
-                        !((dyn.d_tag >= 0 && 
-                           dyn.d_tag < DT_NUM+DT_PROCNUM+DT_EXTRANUM) ||
-                          (dyn.d_tag >= DT_LOOS && dyn.d_tag < DT_HIOS) ||
-                          (dyn.d_tag >= DT_LOPROC && dyn.d_tag < DT_HIPROC))
-                        )
+                        len != sizeof(dyn) || !is_dt_flag_valid(dyn.d_tag))
                         dyn.d_tag = DT_NULL;
                     ptr += sizeof(dyn);
                 } while (dyn.d_tag != DT_DEBUG && dyn.d_tag != DT_NULL);
@@ -402,7 +427,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFileFromPath(HANDLE hProcess,
     char                *s, *t, *fn;
     char*	        paths = NULL;
 
-    if (!path) return -1;
+    if (!path) return dil;
 
     for (s = paths = DBG_strdup(path); s && *s; s = (t) ? (t+1) : NULL) 
     {
@@ -430,7 +455,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfObject(HANDLE hProcess,
 {
    enum DbgInfoLoad	dil = DIL_ERROR;
 
-   if (filename == NULL) return DIL_ERROR;
+   if (filename == NULL || *filename == '\0') return DIL_ERROR;
    if (DEBUG_FindModuleByName(filename, DMT_ELF))
    {
        assert(!(elf_info->flags & ELF_INFO_PATH));
