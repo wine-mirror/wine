@@ -99,12 +99,9 @@ MSIHANDLE WINAPI MsiCreateRecord( unsigned int cParams )
     TRACE("%d\n", cParams);
 
     sz = sizeof (MSIRECORD) + sizeof(MSIFIELD)*(cParams+1) ;
-    handle = alloc_msihandle( MSIHANDLETYPE_RECORD, sz, MSI_CloseRecord );
+    handle = alloc_msihandle( MSIHANDLETYPE_RECORD, sz,
+                              MSI_CloseRecord, (void**) &rec );
     if( !handle )
-        return 0;
-
-    rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
-    if( !rec )
         return 0;
 
     rec->count = cParams;
@@ -238,12 +235,12 @@ UINT WINAPI MsiRecordSetInteger( MSIHANDLE handle, unsigned int iField, int iVal
     if( !rec )
         return ERROR_INVALID_HANDLE;
 
-    if( iField > rec->count )
-        return ERROR_INVALID_FIELD;
-
-    MSI_FreeField( &rec->fields[iField] );
-    rec->fields[iField].type = MSIFIELD_INT;
-    rec->fields[iField].u.iVal = iVal;
+    if( iField <= rec->count )
+    {
+        MSI_FreeField( &rec->fields[iField] );
+        rec->fields[iField].type = MSIFIELD_INT;
+        rec->fields[iField].u.iVal = iVal;
+    }
 
     return ERROR_SUCCESS;
 }
@@ -251,6 +248,7 @@ UINT WINAPI MsiRecordSetInteger( MSIHANDLE handle, unsigned int iField, int iVal
 BOOL WINAPI MsiRecordIsNull( MSIHANDLE handle, unsigned int iField )
 {
     MSIRECORD *rec;
+    BOOL r = TRUE;
 
     TRACE("%ld %d\n", handle,iField );
 
@@ -258,13 +256,10 @@ BOOL WINAPI MsiRecordIsNull( MSIHANDLE handle, unsigned int iField )
     if( !rec )
         return ERROR_INVALID_HANDLE;
 
-    if( iField > rec->count ) 
-        return TRUE;
+    r = ( iField > rec->count ) ||
+        ( rec->fields[iField].type == MSIFIELD_NULL );
 
-    if( rec->fields[iField].type == MSIFIELD_NULL )
-        return TRUE;
-
-    return FALSE;
+    return r;
 }
 
 UINT WINAPI MsiRecordGetStringA(MSIHANDLE handle, unsigned int iField, 

@@ -33,10 +33,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 MSIHANDLEINFO *msihandletable[MSIMAXHANDLES];
 
-MSIHANDLE alloc_msihandle(UINT type, UINT size, msihandledestructor destroy)
+MSIHANDLE alloc_msihandle(UINT type, UINT size, msihandledestructor destroy, void **out)
 {
     MSIHANDLEINFO *info;
     UINT i;
+
+    *out = NULL;
 
     /* find a slot */
     for(i=0; i<MSIMAXHANDLES; i++)
@@ -55,6 +57,7 @@ MSIHANDLE alloc_msihandle(UINT type, UINT size, msihandledestructor destroy)
     info->destructor = destroy;
 
     msihandletable[i] = info;
+    *out = (void*) &info[1];
 
     return (MSIHANDLE) (i+1);
 }

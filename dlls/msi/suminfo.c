@@ -120,15 +120,9 @@ UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE hDatabase,
     }
 
     handle = alloc_msihandle( MSIHANDLETYPE_SUMMARYINFO, 
-                  sizeof (MSISUMMARYINFO), MSI_CloseSummaryInfo );
+                  sizeof (MSISUMMARYINFO), MSI_CloseSummaryInfo,
+                  (void**) &suminfo );
     if( !handle )
-    {
-        ret = ERROR_FUNCTION_FAILED;
-        goto end;
-    }
-
-    suminfo = msihandle2msiinfo( handle, MSIHANDLETYPE_SUMMARYINFO );
-    if( !suminfo )
     {
         ret = ERROR_FUNCTION_FAILED;
         goto end;

@@ -135,11 +135,9 @@ UINT WINAPI MsiDatabaseOpenViewW(MSIHANDLE hdb,
         return ERROR_INVALID_HANDLE;
 
     /* pre allocate a handle to hold a pointer to the view */
-    handle = alloc_msihandle( MSIHANDLETYPE_VIEW, sizeof (MSIQUERY), MSI_CloseView );
+    handle = alloc_msihandle( MSIHANDLETYPE_VIEW, sizeof (MSIQUERY),
+                              MSI_CloseView, (void**) &query );
     if( !handle )
-        return ERROR_FUNCTION_FAILED;
-    query = msihandle2msiinfo( handle, MSIHANDLETYPE_VIEW );
-    if( !query )
         return ERROR_FUNCTION_FAILED;
 
     query->row = 0;

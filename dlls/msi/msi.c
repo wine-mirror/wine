@@ -231,7 +231,8 @@ UINT WINAPI MsiOpenDatabaseW(
         return ERROR_FUNCTION_FAILED;
     }
 
-    handle = alloc_msihandle(MSIHANDLETYPE_DATABASE, sizeof (MSIDATABASE), MSI_CloseDatabase );
+    handle = alloc_msihandle( MSIHANDLETYPE_DATABASE, sizeof (MSIDATABASE),
+                              MSI_CloseDatabase, (void**) &db );
     if( !handle )
     {
         FIXME("Failed to allocate a handle\n");
@@ -239,15 +240,12 @@ UINT WINAPI MsiOpenDatabaseW(
         goto end;
     }
 
-    db = msihandle2msiinfo( handle, MSIHANDLETYPE_DATABASE );
-    if( !db )
-    {
-        FIXME("Failed to get handle pointer \n");
-        ret = ERROR_FUNCTION_FAILED;
-        goto end;
-    }
     db->storage = stg;
     db->mode = szMode;
+    /* db->strings = NULL;
+    db->first_table = NULL;
+    db->last_table = NULL; */
+
     ret = load_string_table( db );
     if( ret != ERROR_SUCCESS )
         goto end;

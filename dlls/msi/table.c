@@ -553,9 +553,9 @@ HRESULT init_string_table( IStorage *stg )
     IStream *stm = NULL;
     WCHAR encname[0x20];
 
-    encode_streamname(TRUE, szStringData, encname);
+    encode_streamname(TRUE, szStringPool, encname);
 
-    /* create the StringData stream... add the zero string to it*/
+    /* create the StringPool stream... add the zero string to it*/
     r = IStorage_CreateStream( stg, encname,
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
     if( r ) 
@@ -573,8 +573,8 @@ HRESULT init_string_table( IStorage *stg )
         return E_FAIL;
     }
 
-    /* create the StringPool stream... make it zero length */
-    encode_streamname(TRUE, szStringPool, encname);
+    /* create the StringData stream... make it zero length */
+    encode_streamname(TRUE, szStringData, encname);
     r = IStorage_CreateStream( stg, encname,
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
     if( r ) 
@@ -671,12 +671,15 @@ UINT save_string_table( MSIDATABASE *db )
     }
 
     used = 0;
-    for( i=0; i<count; i++ )
+    pool[0]=0;   /* the first element is always zero */
+    pool[1]=0;
+    for( i=1; i<count; i++ )
     {
         sz = datasize - used;
         r = msi_id2stringA( db->strings, i, data+used, &sz );
         if( r != ERROR_SUCCESS )
         {
+            ERR("failed to fetch string\n");
             sz = 0;
         }
         else
@@ -791,7 +794,6 @@ LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid)
     r = msi_id2stringW( db->strings, stringid, NULL, &sz );
     if( r != ERROR_SUCCESS )
         return NULL;
-    sz ++; /* space for NUL char */
     str = HeapAlloc( GetProcessHeap(), 0, sz*sizeof (WCHAR));
     if( !str )
         return str;

@@ -110,11 +110,6 @@ static UINT CREATE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
     if( r )
         return r;
 
-    row = -1;
-    r = tv->ops->insert_row( tv, &row );
-    if( r )
-        goto err;
-
     /*
      * need to set the table, column number, col name and type
      * for each column we enter in the table
@@ -122,6 +117,11 @@ static UINT CREATE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
     nField = 1;
     for( col = cv->col_info; col; col = col->next )
     {
+        row = -1;
+        r = tv->ops->insert_row( tv, &row );
+        if( r )
+            goto err;
+
         column_val = msi_addstringW( cv->db->strings, 0, col->colname, -1, 1 );
         TRACE("New string %s -> %d\n", debugstr_w( col->colname ), column_val );
         if( column_val < 0 )

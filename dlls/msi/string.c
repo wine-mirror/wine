@@ -131,8 +131,6 @@ static void st_mark_entry_used( string_table *st, int n )
 
 int msi_addstring( string_table *st, UINT n, const CHAR *data, UINT len, UINT refcount )
 {
-    /* TRACE("[%2d] = %s\n", string_no, debugstr_an(data,len) ); */
-
     if( !data[0] )
         return 0;
     if( n > 0 )
@@ -209,48 +207,45 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, UINT len, UINT 
     return n;
 }
 
-UINT msi_id2stringW( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz )
+/* find the string identified by an id - return null if there's none */
+static const char *string_lookup_id( string_table *st, UINT id )
 {
-    UINT len;
-    LPSTR str;
+    if( id == 0 )
+        return "";
 
-    TRACE("Finding string %d of %d\n", string_no, st->count);
-    if( string_no >= st->count )
-        return ERROR_FUNCTION_FAILED;
+    if( id >= st->count )
+        return NULL;
 
-    if( string_no && !st->strings[string_no].refcount )
-        return ERROR_FUNCTION_FAILED;
+    if( id && !st->strings[id].refcount )
+        return NULL;
 
-    str = st->strings[string_no].str;
-    len = strlen( str );
-
-    if( !buffer )
-    {
-        *sz = MultiByteToWideChar(CP_ACP,0,str,len,NULL,0);
-        return ERROR_SUCCESS;
-    }
-
-    len = MultiByteToWideChar(CP_ACP,0,str,len+1,buffer,*sz);
-    if (!len) buffer[*sz-1] = 0;
-    else *sz = len;
-
-    return ERROR_SUCCESS;
+    return st->strings[id].str;
 }
 
-UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz )
+/*
+ *  msi_id2stringW
+ *
+ *  [in] st         - pointer to the string table
+ *  [in] id  - id of the string to retreive
+ *  [out] buffer    - destination of the string
+ *  [in/out] sz     - number of bytes available in the buffer on input
+ *                    number of bytes used on output
+ *
+ *   The size includes the terminating nul character.  Short buffers
+ *  will be filled, but not nul terminated.
+ */
+UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
 {
     UINT len;
-    LPSTR str;
+    const char *str;
 
-    TRACE("Finding string %d of %d\n", string_no, st->count);
-    if( string_no >= st->count )
+    TRACE("Finding string %d of %d\n", id, st->count);
+
+    str = string_lookup_id( st, id );
+    if( !str )
         return ERROR_FUNCTION_FAILED;
 
-    if( string_no && !st->strings[string_no].refcount )
-        return ERROR_FUNCTION_FAILED;
-
-    str = st->strings[string_no].str;
-    len = strlen( str );
+    len = MultiByteToWideChar(CP_UTF8,0,str,-1,NULL,0); 
 
     if( !buffer )
     {
@@ -258,14 +253,57 @@ UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz )
         return ERROR_SUCCESS;
     }
 
-    if (len >= *sz) len = *sz - 1;
-    memcpy( buffer, str, len );
-    buffer[len] = 0;
-    *sz = len+1;
+    *sz = MultiByteToWideChar(CP_UTF8,0,str,-1,buffer,*sz); 
 
     return ERROR_SUCCESS;
 }
 
+/*
+ *  msi_id2stringA
+ *
+ *  [in] st         - pointer to the string table
+ *  [in] id         - id of the string to retreive
+ *  [out] buffer    - destination of the UTF8 string
+ *  [in/out] sz     - number of bytes available in the buffer on input
+ *                    number of bytes used on output
+ *
+ *   The size includes the terminating nul character.  Short buffers
+ *  will be filled, but not nul terminated.
+ */
+UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
+{
+    UINT len;
+    const char *str;
+
+    TRACE("Finding string %d of %d\n", id, st->count);
+
+    str = string_lookup_id( st, id );
+    if( !str )
+        return ERROR_FUNCTION_FAILED;
+
+    len = strlen( str ) + 1;
+
+    if( !buffer )
+    {
+        *sz = len;
+        return ERROR_SUCCESS;
+    }
+
+    if( *sz < len )
+        *sz = len;
+    memcpy( buffer, str, *sz ); 
+    *sz = len;
+
+    return ERROR_SUCCESS;
+}
+
+/*
+ *  msi_string2idA
+ *
+ *  [in] st         - pointer to the string table
+ *  [in] str        - UTF8 string to find in the string table
+ *  [out] id        - id of the string, if found
+ */
 UINT msi_string2idA( string_table *st, LPCSTR str, UINT *id )
 {
     int hash;
@@ -293,6 +331,12 @@ UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
     LPSTR str;
 
     TRACE("Finding string %s in string table\n", debugstr_w(buffer) );
+
+    if( buffer[0] == 0 )
+    {
+        *id = 0;
+        return ERROR_SUCCESS;
+    }
 
     sz = WideCharToMultiByte( CP_UTF8, 0, buffer, -1, NULL, 0, NULL, NULL );
     if( sz <= 0 )

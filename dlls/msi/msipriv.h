@@ -156,7 +156,7 @@ typedef struct tagMSIHANDLEINFO
 
 extern void *msihandle2msiinfo(MSIHANDLE handle, UINT type);
 
-MSIHANDLE alloc_msihandle(UINT type, UINT extra, msihandledestructor destroy);
+MSIHANDLE alloc_msihandle(UINT type, UINT extra, msihandledestructor destroy, void **out);
 
 /* add this table to the list of cached tables in the database */
 extern void add_table(MSIDATABASE *db, MSITABLE *table);
