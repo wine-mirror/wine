@@ -82,6 +82,17 @@ void WINAPI SetLastErrorEx(
     SetLastError( error );
 }
 
+BOOL WINAPI GetAltTabInfoA(HWND hwnd, int iItem, PALTTABINFO pati, LPSTR pszItemText, UINT cchItemText)
+{
+    FIXME("(%p, 0x%08x, %p, %p, 0x%08x)\n", hwnd, iItem, pati, pszItemText, cchItemText);
+    return FALSE;
+}
+
+BOOL WINAPI GetAltTabInfoW(HWND hwnd, int iItem, PALTTABINFO pati, LPWSTR pszItemText, UINT cchItemText)
+{
+    FIXME("(%p, 0x%08x, %p, %p, 0x%08x)\n", hwnd, iItem, pati, pszItemText, cchItemText);
+    return FALSE;
+}
 
 /******************************************************************************
  * GetProcessWindowStation [USER32.@]  Returns handle of window station

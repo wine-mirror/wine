@@ -3610,6 +3610,20 @@ typedef struct tagLASTINPUTINFO {
     DWORD dwTime;
 } LASTINPUTINFO, *PLASTINPUTINFO;
 
+/* used by GetAltTabInfo */
+typedef struct
+{
+    DWORD cbSize;
+    INT cItems;
+    INT cColumns;
+    INT cRows;
+    INT iColFocus;
+    INT iRowFocus;
+    INT cxItem;
+    INT cyItem;
+    POINT ptStart;
+} ALTTABINFO, *PALTTABINFO, *LPALTTABINFO;
+
 /* SetWinEventHook() flags */
 #define WINEVENT_OUTOFCONTEXT   0x0
 #define WINEVENT_SKIPOWNTHREAD  0x1
@@ -3813,8 +3827,11 @@ BOOL      WINAPI EnumDisplayMonitors(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 INT       WINAPI EnumPropsExA(HWND,PROPENUMPROCEXA,LPARAM);
 INT       WINAPI EnumPropsExW(HWND,PROPENUMPROCEXW,LPARAM);
 #define     EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)
-BOOL      WINAPI EnumThreadWindows(DWORD,WNDENUMPROC,LPARAM);
-BOOL      WINAPI ExitWindowsEx(UINT,DWORD);
+BOOL        WINAPI EnumThreadWindows(DWORD,WNDENUMPROC,LPARAM);
+BOOL        WINAPI ExitWindowsEx(UINT,DWORD);
+BOOL        WINAPI GetAltTabInfoA(HWND,INT,PALTTABINFO,LPSTR,UINT);
+BOOL        WINAPI GetAltTabInfoW(HWND,INT,PALTTABINFO,LPWSTR,UINT);
+#define     GetAltTabInfo WINELIB_NAME_AW(GetAltTabInfo)
 BOOL      WINAPI GetIconInfo(HICON,PICONINFO);
 HKL       WINAPI GetKeyboardLayout(DWORD);
 UINT      WINAPI GetKeyboardLayoutList(INT,HKL *);

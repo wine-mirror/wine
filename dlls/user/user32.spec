@@ -693,7 +693,9 @@
 @ stdcall DrawMenuBarTemp(long long long long long)
 @ stdcall EnumDisplaySettingsExA(str long ptr long)
 @ stdcall EnumDisplaySettingsExW(wstr long ptr long)
-# @ stub GetAltTabInfo
+@ stdcall GetAltTabInfo(long long ptr ptr long) GetAltTabInfoA
+@ stdcall GetAltTabInfoA(long long ptr ptr long)
+@ stdcall GetAltTabInfoW(long long ptr ptr long)
 @ stdcall GetAncestor(long long)
 @ stdcall GetClipboardSequenceNumber ()
 @ stdcall GetWindowModuleFileNameA(long ptr long)
