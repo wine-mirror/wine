@@ -68,10 +68,6 @@ searched exclusively via the \fI\-I\fR set path, whereas the '""' quoted
 filenames are first tried to be opened in the current directory. Also
 resource statements with file references are located in the same way.
 .TP
-.I \-J
-Do not search the standard include path, look for include files only
-in the directories explicitly specified with the \fI\-I\fR option.
-.TP
 .I \-l lan
 Set default language to \fIlan\fR. Default is the neutral language 0
 (i.e. "LANGUAGE 0, 0").
@@ -87,6 +83,10 @@ for example, big\-endian platforms. The \fI\-m\fR option is usefull for
 source\-files that contain overlapping type\-IDs, or when the format of the
 resource is not 100% compliant.
 .TP
+.I \--nostdinc
+Do not search the standard include path, look for include files only
+in the directories explicitly specified with the \fI\-I\fR option.
+.TP
 .I \-o file
 Write output to \fIfile\fR. Default is \fBinputfile.res\fR
 with \fB.rc\fR stripped or \fBwrc.tab.res\fR if input is read
@@ -97,7 +97,7 @@ Sets the output format. The only supported \fformat\fR is 'res', which
 is also the default format if this option is not specified. The option
 exists mainly for compatibility with \fBwindres\fR.
 .TP
-.I \-P program
+.I \--preprocessor program
 This option may be used to specify the preprocessor to use, including any 
 leading arguments. If not specified, \fBwrc\fR uses its builtin processor.
 To disable preprocessing, use \fB-P cat\fR.
@@ -105,7 +105,7 @@ To disable preprocessing, use \fB-P cat\fR.
 .I \-v
 Turns on verbose mode (equivalent to -d 1).
 .TP
-.I \-V
+.I \--version
 Print version end exit.
 .TP
 .I \-w 16|32

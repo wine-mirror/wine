@@ -96,32 +96,27 @@ static char usage[] =
 	"   -h		Prints this summary.\n"
 	"   -i file	The name of the input file.\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
-	"   -J		Do not search the standard include path\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -m          Do not remap numerical resource IDs\n"
 	"   -o file     Output to file (default is infile.res)\n"
 	"   -O format	The output format (must be `res').\n"
-	"   -P program	Specifies the preprocessor to use, including arguments.\n"
 	"   -v          Enable verbose mode.\n"
-	"   -V          Print version and exit\n"
 	"   -w 16|32    Select win16 or win32 output (default is win32)\n"
 	"   -W          Enable pedantic warnings\n"
-#ifdef HAVE_GETOPT_LONG
 	"The following long options are supported:\n"
 	"   --input		Synonym for -i.\n"
 	"   --output		Synonym for -o.\n"
+	"   --output-format	Synonym for -O.\n"
 	"   --target		Synonym for -F.\n"
-	"   --format		Synonym for -O.\n"
+	"   --preprocessor	Specifies the preprocessor to use, including arguments.\n"
 	"   --include-dir	Synonym for -I.\n"
-	"   --nostdinc		Synonym for -J.\n"
 	"   --define		Synonym for -D.\n"
 	"   --language		Synonym for -l.\n"
+	"   --nostdinc		Disables searching the standard include path.\n"
 	"   --use-temp-file	Ignored for compatibility with windres.\n"
 	"   --no-use-temp-file	Ignored for compatibility with windres.\n"
-	"   --preprocessor	Synonym for -P.\n"
 	"   --help		Synonym for -h.\n"
-	"   --version		Synonym for -V.\n"
-#endif
+	"   --version		Print version and exit.\n"
 	"Input is taken from stdin if no sourcefile specified.\n"
 	"Debug level 'n' is a bitmask with following meaning:\n"
 	"    * 0x01 Tell which resource is parsed (verbose mode)\n"
@@ -223,34 +218,30 @@ static void rm_tempfile(void);
 static void segvhandler(int sig);
 
 static const char* short_options = 
-	"a:AB:cC:d:D:eEF:hH:i:I:Jl:LmnNo:O:P:rtTvVw:W";
-#ifdef HAVE_GETOPT_LONG
+	"a:AB:cC:d:D:eEF:hH:i:I:l:LmnNo:O:P:rtTvVw:W";
 static struct option long_options[] = {
 	{ "input", 1, 0, 'i' },
 	{ "output", 1, 0, 'o' },
+	{ "output-format", 1, 0, 'O' },
 	{ "target", 1, 0, 'F' },
-	{ "format", 1, 0, 'O' },
+	{ "preprocessor", 1, 0, 4 },
 	{ "include-dir", 1, 0, 'I' },
-	{ "nostdinc", 0, 0, 'J' },
 	{ "define", 1, 0, 'D' },
 	{ "language", 1, 0, 'l' },
-	{ "version", 0, 0, 'V' },
-	{ "help", 0, 0, 'h' },
-	{ "preprocessor", 1, 0, 'P' },
+	{ "nostdinc", 0, 0, 1 },
 	{ "use-temp-file", 0, 0, 2 },
 	{ "no-use-temp-file", 0, 0, 3 },
+	{ "help", 0, 0, 'h' },
+	{ "version", 0, 0, 5 },
 	{ 0, 0, 0, 0 }
 };
-#endif
 
 int main(int argc,char *argv[])
 {
 	extern char* optarg;
 	extern int   optind;
 	int optc;
-#ifdef HAVE_GETOPT_LONG
 	int opti = 0;
-#endif
 	int stdinc = 1;
 	int lose = 0;
 	int ret;
@@ -276,19 +267,26 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-#ifdef HAVE_GETOPT_LONG
 	while((optc = getopt_long(argc, argv, short_options, long_options, &opti)) != EOF)
-#else
-	while((optc = getopt(argc, argv, short_options)) != EOF)
-#endif
 	{
 		switch(optc)
 		{
+		case 1:
+			stdinc = 0;
+			break;
 		case 2:
-			fprintf(stderr, "--use-temp-file option not yet supported, ignored.\n");
+			if (debuglevel) warning("--use-temp-file option not yet supported, ignored.\n");
 			break;
 		case 3:
-			fprintf(stderr, "--no-use-temp-file option not yet supported, ignored.\n");
+			if (debuglevel) warning("--no-use-temp-file option not yet supported, ignored.\n");
+			break;
+		case 4:
+			if (strcmp(optarg, "cat") == 0) no_preprocess = 1;
+			else fprintf(stderr, "-P option not yet supported, ignored.\n");
+			break;
+		case 5:
+			printf(version_string);
+			exit(0);
 			break;
 		case 'a':
 			alignment = atoi(optarg);
@@ -339,10 +337,8 @@ int main(int argc,char *argv[])
 			else error("Too many input files.\n");
 			break;
 		case 'I':
-			wpp_add_include_path(optarg);
-			break;
-		case 'J':
-			stdinc = 0;
+			if (strcmp(optarg, "-") == 0) stdinc = 0;
+			else wpp_add_include_path(optarg);
 			break;
 		case 'l':
 			{
@@ -362,18 +358,10 @@ int main(int argc,char *argv[])
 			break;
 		case 'O':
 			if (strcmp(optarg, "res")) 
-				error("Output format %s not supported.", optarg);
-			break;
-		case 'P':
-			if (strcmp(optarg, "cat") == 0) no_preprocess = 1;
-			else fprintf(stderr, "-P option not yet supported, ignored.\n");
+				warning("Output format %s not supported.", optarg);
 			break;
 		case 'v':
 			debuglevel = DEBUGLEVEL_CHAT;
-			break;
-		case 'V':
-			printf(version_string);
-			exit(0);
 			break;
 		case 'w':
 			if(!strcmp(optarg, "16"))
