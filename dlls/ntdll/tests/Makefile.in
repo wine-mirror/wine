@@ -10,7 +10,8 @@ CTESTS = \
 	generated.c \
 	large_int.c \
 	rtlbitmap.c \
-	rtlstr.c
+	rtlstr.c \
+	string.c
 
 @MAKE_TEST_RULES@
 
