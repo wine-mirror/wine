@@ -27,6 +27,9 @@ typedef struct
     /* Cached XImage */
     XImage     *image;
 
+    /* Selector for 16-bit access to bits */
+    WORD selector;
+
 } DIBSECTIONOBJ;
 
 /* Flags used for BitmapBits. We only use the first two at the moment */

@@ -124,7 +124,21 @@ HPALETTE32 WINAPI CreatePalette32(
 
 
 /***********************************************************************
- * CreateHalftonePalette [GDI32.47]  Creates a halftone palette
+ * CreateHalftonePalette16 [GDI.?]  Creates a halftone palette
+ *
+ * RETURNS
+ *    Success: Handle to logical halftone palette
+ *    Failure: 0
+ */
+HPALETTE16 WINAPI CreateHalftonePalette16(
+    HDC16 hdc) /* [in] Handle to device context */
+{
+    return CreateHalftonePalette32(hdc);
+	}
+
+	
+/***********************************************************************
+ * CreateHalftonePalette32 [GDI32.47]  Creates a halftone palette
  *
  * RETURNS
  *    Success: Handle to logical halftone palette
@@ -132,46 +146,40 @@ HPALETTE32 WINAPI CreatePalette32(
  *
  * FIXME: not truly tested
  */
-HPALETTE32 WINAPI CreateHalftonePalette(HDC32 hdc) /* [in] Handle to device context */
-{	int r,g,b,i;
-	HPALETTE32 hPalette = 0;
-	int palNumEntries = 216 + NB_RESERVED_COLORS;
-	
-	const PALETTEENTRY* __sysPalTemplate = COLOR_GetSystemPaletteTemplate();
+HPALETTE32 WINAPI CreateHalftonePalette32(
+    HDC32 hdc) /* [in] Handle to device context */
+{
+    int i, r, g, b;
+    struct {
+	WORD Version;
+	WORD NumberOfEntries;
+	PALETTEENTRY aEntries[256];
+    } Palette = {
+	0x300, 256
+    };
 
-	LOGPALETTE * pLogPal = (LOGPALETTE*) HeapAlloc( GetProcessHeap(), 0,
-             sizeof(LOGPALETTE) + (palNumEntries-1)*sizeof(PALETTEENTRY)); 
-	
-	TRACE(palette,"(0x%x)\n", hdc);
+    GetSystemPaletteEntries32(hdc, 0, 256, Palette.aEntries);
+    return CreatePalette32((LOGPALETTE *)&Palette);
 
-	pLogPal->palVersion = 0x300;
-	pLogPal->palNumEntries = palNumEntries;
-	
-	for( i = 0; i < NB_RESERVED_COLORS; i ++ )
-	{ pLogPal->palPalEntry[i].peRed   = __sysPalTemplate[i].peRed;
-	  pLogPal->palPalEntry[i].peGreen = __sysPalTemplate[i].peGreen;
-	  pLogPal->palPalEntry[i].peBlue  = __sysPalTemplate[i].peBlue;
-	  pLogPal->palPalEntry[i].peFlags = 0;
-	}
-	
-	for (r=0; r<6; r++)
-  	{ for (g=0; g<6; g++)
-	  { for (b=0; b<6; b++) 
-	    { pLogPal->palPalEntry[NB_RESERVED_COLORS+r*36+g*6+b].peRed   = r*51;
-	      pLogPal->palPalEntry[NB_RESERVED_COLORS+r*36+g*6+b].peGreen = g*51;
-	      pLogPal->palPalEntry[NB_RESERVED_COLORS+r*36+g*6+b].peBlue  = b*51;
-	      pLogPal->palPalEntry[NB_RESERVED_COLORS+r*36+g*6+b].peFlags = 0;
+    for (r = 0; r < 6; r++) {
+	for (g = 0; g < 6; g++) {
+	    for (b = 0; b < 6; b++) {
+		i = r + g*6 + b*36 + 10;
+		Palette.aEntries[i].peRed = r * 51;
+		Palette.aEntries[i].peGreen = g * 51;
+		Palette.aEntries[i].peBlue = b * 51;
 	    }    
 	  }
 	}
-	hPalette = CreatePalette32 (pLogPal);
 	
-	if (hPalette)
-	{ SelectPalette32 (hdc, hPalette, FALSE);
+    for (i = 216; i < 246; i++) {
+	int v = (i - 216) * 8;
+	Palette.aEntries[i].peRed = v;
+	Palette.aEntries[i].peGreen = v;
+	Palette.aEntries[i].peBlue = v;
 	}
 	
-	HeapFree (GetProcessHeap(), 0, pLogPal);
-	return hPalette;
+    return CreatePalette32((LOGPALETTE *)&Palette);
 }
 
 

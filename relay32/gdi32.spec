@@ -49,7 +49,7 @@ init	MAIN_GdiInit
  44 stdcall CreateFontIndirectA(ptr) CreateFontIndirect32A
  45 stdcall CreateFontIndirectW(ptr) CreateFontIndirect32W
  46 stdcall CreateFontW(long long long long long long long long long long long long long wstr) CreateFont32W
- 47 stdcall CreateHalftonePalette(long) CreateHalftonePalette
+ 47 stdcall CreateHalftonePalette(long) CreateHalftonePalette32
  48 stdcall CreateHatchBrush(long long) CreateHatchBrush32
  49 stdcall CreateICA(str str str ptr) CreateIC32A
  50 stdcall CreateICW(wstr wstr wstr ptr) CreateIC32W

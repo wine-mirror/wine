@@ -18,9 +18,12 @@
 #include "x11drv.h"
 
 #include "bitmap.h"
+#include "palette.h"
 #include "dc.h"
 #include "debug.h"
 #include "gdi.h"
+#include "heap.h"
+#include "selectors.h"
 #include "monitor.h"
 #include "wintypes.h"
 #include "xmalloc.h"
@@ -29,8 +32,6 @@ typedef enum WING_DITHER_TYPE
 {
   WING_DISPERSED_4x4, WING_DISPERSED_8x8, WING_CLUSTERED_4x4
 } WING_DITHER_TYPE;
-
-static int	__WinGOK = -1;
 
 /* 
  * WinG DIB bitmaps can be selected into DC and then scribbled upon
@@ -45,198 +46,85 @@ static int	__WinGOK = -1;
  * 961208 - AK
  */
 
-static BITMAPINFOHEADER __bmpiWinG = { 0, 1, -1, 1, 8, BI_RGB, 1, 0, 0, 0, 0 };
-
-static void __initWinG(void)
-{
-  if( __WinGOK < 0 )
-  {
-#ifdef HAVE_LIBXXSHM
-    Status s = TSXShmQueryExtension(display);
-    if( s )
-    {
-      int i = TSXShmPixmapFormat(display);
-      if( i == ZPixmap && MONITOR_GetDepth(&MONITOR_PrimaryMonitor) == 8 ) 
-      {
-        __WinGOK = 1;
-	return;
-      }
-    } 
-#endif /* defined(HAVE_LIBXXSHM) */
-    FIXME(wing,"WinG: incorrect depth or unsupported card.\n");
-    __WinGOK = 0;
-  }
-}
-
 /***********************************************************************
  *          WinGCreateDC16	(WING.1001)
  */
 HDC16 WINAPI WinGCreateDC16(void)
 {
-  __initWinG();
-
-  if( __WinGOK > 0 )
+    TRACE(wing, "(void)\n");
 	return CreateCompatibleDC16(0);
-  return (HDC16)NULL;
 }
 
 /***********************************************************************
  *  WinGRecommendDIBFormat16    (WING.1002)
  */
-BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *fmt)
+BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
 {
-  FIXME(wing,"(%p): stub\n", fmt);
+    TRACE(wing, "(%p)\n", bmpi);
+    if (!bmpi)
+	return FALSE;
 
-  if( __WinGOK > 0 && fmt )
-  {
-    memcpy(&fmt->bmiHeader, &__bmpiWinG, sizeof(BITMAPINFOHEADER));
+    bmpi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmpi->bmiHeader.biWidth = 320;
+    bmpi->bmiHeader.biHeight = -1;
+    bmpi->bmiHeader.biPlanes = 1;
+    bmpi->bmiHeader.biBitCount = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
+    bmpi->bmiHeader.biCompression = BI_RGB;
+    bmpi->bmiHeader.biSizeImage = 0;
+    bmpi->bmiHeader.biXPelsPerMeter = 0;
+    bmpi->bmiHeader.biYPelsPerMeter = 0;
+    bmpi->bmiHeader.biClrUsed = 0;
+    bmpi->bmiHeader.biClrImportant = 0;
+
     return TRUE;
   }
-  return FALSE;
-}
 
 /***********************************************************************
  *        WinGCreateBitmap16    (WING.1003)
  */
-HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header,
-                                    void **bits)
+HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
+                                    SEGPTR *bits)
 {
-  FIXME(wing,"(%x,%p,%p): empty stub! (expect failure)\n", 
-	winDC, header, bits);
-  if( __WinGOK > 0 && header )
-  {
-    BITMAPINFOHEADER* bmpi = &header->bmiHeader;
-
-     FIXME(wing,"bytes=%i,planes=%i,bpp=%i,x=%i,y=%i,rle=0x%08x,size=%i\n",
-	   (int)bmpi->biSize, bmpi->biPlanes, bmpi->biBitCount,
-	   (int)bmpi->biWidth, (int)bmpi->biHeight, 
-	   (unsigned)bmpi->biCompression, (int)bmpi->biSizeImage);
-
-#ifdef PRELIMINARY_WING16_SUPPORT
-    if( bmpi->biPlanes == __bmpiWinG.biPlanes && bmpi->biBitCount == __bmpiWinG.biBitCount &&
-	bmpi->biCompression == __bmpiWinG.biCompression && (int)bmpi->biHeight < 0 &&
-	bmpi->biWidth )
-    {
-	unsigned bytes = (bmpi->biWidth + bmpi->biWidth % 2)*(-bmpi->biHeight) * bmpi->biBitCount/8;
-	int	 key = shmget(IPC_PRIVATE, bytes, IPC_CREAT | 0x01FF);
-
-	if( key )
-	{
-	    /* Create the BITMAPOBJ 
-	     *
-	     * FIXME: A facility to manage shared memory structures
-	     * which would clean up when Wine crashes. Perhaps a part of 
-	     * IPC code can be adapted. Otherwise this code leaves a lot
-	     * of junk in shared memory. 
-	     */
-
-	    HBITMAP16 hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
-	    if (hbitmap)
-	    {
-#ifdef HAVE_LIBXXSHM
-	        __ShmBitmapCtl* p = (__ShmBitmapCtl*)xmalloc(sizeof(__ShmBitmapCtl));
-#endif /* defined(HAVE_LIBXXSHM) */
-		BITMAPOBJ* 	 bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LOCK( hbitmap );
-
-		bmpObjPtr->size.cx = 0;
-		bmpObjPtr->size.cy = 0;
-		bmpObjPtr->bitmap.bmType = 0;
-		bmpObjPtr->bitmap.bmWidth = (INT16)abs(bmpi->biWidth);
-		bmpObjPtr->bitmap.bmHeight = -(INT16)bmpi->biHeight;
-		bmpObjPtr->bitmap.bmPlanes = (BYTE)bmpi->biPlanes;
-		bmpObjPtr->bitmap.bmBitsPixel = (BYTE)bmpi->biBitCount;
-		bmpObjPtr->bitmap.bmWidthBytes = 
-		  (INT16)BITMAP_WIDTH_BYTES( bmpObjPtr->bitmap.bmWidth, bmpi->biBitCount );
-
-#ifdef HAVE_LIBXXSHM
-		bmpObjPtr->bitmap.bmBits = (SEGPTR)p;
-
-		p->si.shmid = key;
-		p->si.shmaddr = shmat(key, NULL, 0);
-		p->si.readOnly = False;
-
-		if( p->si.shmaddr )
-		{
-		    WORD	sel = 0;
-
-		    TSXShmAttach(display, &p->si);
-		    bmpObjPtr->pixmap = TSXShmCreatePixmap(display, rootWindow, 
-				  p->si.shmaddr, &p->si, bmpObjPtr->bitmap.bmWidth, 
-				  bmpObjPtr->bitmap.bmHeight, bmpi->biBitCount );
-		    if( bmpObjPtr->pixmap )
-		    {
-                        sel = SELECTOR_AllocBlock( p->si.shmaddr, bytes,
-                                                   SEGMENT_DATA, FALSE, FALSE);
-                        if (sel) p->bits = PTR_SEG_OFF_TO_SEGPTR(sel,0);
-			else TSXFreePixmap( display, bmpObjPtr->pixmap );
-		    }
-		    if( !sel )
-		    {
-		      shmdt( p->si.shmaddr );
-		      p->si.shmaddr = NULL;
-		    }
+    TRACE(wing, "(%d,%p,%p)\n", hdc, bmpi, bits);
+    TRACE(wing, ": create %ldx%ldx%d bitmap\n", bmpi->bmiHeader.biWidth,
+	  bmpi->bmiHeader.biHeight, bmpi->bmiHeader.biPlanes);
+    return CreateDIBSection16(hdc, bmpi, 0, bits, 0, 0);
 		} 
-		if( !p->si.shmaddr )
-		{
-		    GDI_FreeObject( hbitmap );
-		    hbitmap = 0;
-		}
-#else /* defined(HAVE_LIBXXSHM) */
-		bmpObjPtr->bitmap.bmBits = (SEGPTR) NULL;
-		bmpObjPtr->pixmap = NULL;
-#endif /* defined(HAVE_LIBXXSHM) */
-	    }
-	    GDI_HEAP_UNLOCK( hbitmap );
-	    return hbitmap;
-	}
-    }
-#endif /* defined(PRELIMINARY_WING16_SUPPORT) */
-  }
-  return 0;
-}
 
 /***********************************************************************
  *  WinGGetDIBPointer   (WING.1004)
  */
 SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 {
-#ifdef PRELIMINARY_WING16_SUPPORT
-#ifdef HAVE_LIBXXSHM
   BITMAPOBJ*	bmp = (BITMAPOBJ *) GDI_GetObjPtr( hWinGBitmap, BITMAP_MAGIC );
 
-  if( bmp )
-  {
-    __ShmBitmapCtl* p = (__ShmBitmapCtl*)bmp->bitmap.bmBits;
-    if( p )
-    {
-      if( bmpi ) memcpy( bmpi, &__bmpiWinG, sizeof(BITMAPINFOHEADER));
-      GDI_HEAP_UNLOCK( hWinGBitmap );
-      return p->bits;
-    }
-  }
-#endif /* defined(HAVE_LIBXXSHM) */
-#endif /* defined(PRELIMINARY_WING16_SUPPORT) */
-  return (SEGPTR)NULL;
+    TRACE(wing, "(%d,%p)\n", hWinGBitmap, bmpi);
+    if (!bmp) return (SEGPTR)NULL;
+
+    if (bmpi)
+	FIXME(wing, ": Todo - implement setting BITMAPINFO\n");
+
+    return PTR_SEG_OFF_TO_SEGPTR(bmp->dib->selector, 0);
 }
 
 /***********************************************************************
  *  WinGSetDIBColorTable   (WING.1004)
  */
-UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hWinGDC, UINT16 start, UINT16 num,
-                                     RGBQUAD* pColor)
+UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
+                                     RGBQUAD *colors)
 {
-        FIXME(wing,"(%x,%d,%d,%p): empty stub!\n",hWinGDC,start,num,pColor);
-        return num;
+    TRACE(wing, "(%d,%d,%d,%p)\n", hdc, start, num, colors);
+    return SetDIBColorTable16(hdc, start, num, colors);
 }
 
 /***********************************************************************
  *  WinGGetDIBColorTable16   (WING.1005)
  */
-UINT16 WINAPI WinGGetDIBColorTable16(HDC16 winDC, UINT16 start,
-                                     UINT16 num, RGBQUAD* colors)
+UINT16 WINAPI WinGGetDIBColorTable16(HDC16 hdc, UINT16 start, UINT16 num,
+				     RGBQUAD *colors)
 {
-        FIXME(wing,"(%x,%d,%d,%p): empty stub!\n",winDC,start,num,colors);
-	return 0;
+    TRACE(wing, "(%d,%d,%d,%p)\n", hdc, start, num, colors);
+    return GetDIBColorTable16(hdc, start, num, colors);
 }
 
 /***********************************************************************
@@ -244,18 +132,18 @@ UINT16 WINAPI WinGGetDIBColorTable16(HDC16 winDC, UINT16 start,
  */
 HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 {
-        FIXME(wing,"(void): empty stub!\n");
-	return 0;
+    TRACE(wing, "(void)\n");
+    return CreateHalftonePalette16(GetDC16(0));
 }
 
 /***********************************************************************
  *  WinGCreateHalfToneBrush16   (WING.1008)
  */
-HPALETTE16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
+HBRUSH16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
                                             WING_DITHER_TYPE type)
 {
-        FIXME(wing,"(...): empty stub!\n");
-	return 0;
+    TRACE(wing, "(%d,%ld,%d)\n", winDC, col, type);
+    return CreateSolidBrush16(col);
 }
 
 /***********************************************************************
@@ -266,8 +154,9 @@ BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                                HDC16 srcDC, INT16 xSrc, INT16 ySrc,
                                INT16 widSrc, INT16 heiSrc)
 {
-
-        return StretchBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC, xSrc, ySrc, widSrc, heiSrc, SRCCOPY);
+    TRACE(wing, "(%d,%d,...)\n", destDC, srcDC);
+    return StretchBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC,
+			xSrc, ySrc, widSrc, heiSrc, SRCCOPY);
 }
 
 /***********************************************************************
@@ -277,31 +166,7 @@ BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                            INT16 widDest, INT16 heiDest, HDC16 srcDC,
                            INT16 xSrc, INT16 ySrc)
 {
-    /* destDC is a display DC, srcDC is a memory DC */
-
-    DC *dcDst, *dcSrc;
-    X11DRV_PDEVICE *physDevDst, *physDevSrc;
-
-    if (!(dcDst = (DC *)GDI_GetObjPtr( destDC, DC_MAGIC ))) return FALSE;
-    if (!(dcSrc = (DC *) GDI_GetObjPtr( srcDC, DC_MAGIC ))) return FALSE;
-    physDevDst = (X11DRV_PDEVICE *)dcDst->physDev;
-    physDevSrc = (X11DRV_PDEVICE *)dcSrc->physDev;
-
-    if (dcDst->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion( dcDst );
-
-    xSrc    = dcSrc->w.DCOrgX + XLPTODP( dcSrc, xSrc );
-    ySrc    = dcSrc->w.DCOrgY + YLPTODP( dcSrc, ySrc );
-    xDest   = dcDst->w.DCOrgX + XLPTODP( dcDst, xDest );
-    yDest   = dcDst->w.DCOrgY + YLPTODP( dcDst, yDest );
-    widDest = widDest * dcDst->vportExtX / dcDst->wndExtX;
-    heiDest = heiDest * dcDst->vportExtY / dcDst->wndExtY;
-
-
-    TSXSetFunction( display, physDevDst->gc, GXcopy );
-    TSXCopyArea( display, physDevSrc->drawable,
-		 physDevDst->drawable, physDevDst->gc,
-		 xSrc, ySrc, widDest, heiDest, xDest, yDest );
-
-    return TRUE;
+    TRACE(wing, "(%d,%d,...)\n", destDC, srcDC);
+    return BitBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC,
+		    xSrc, ySrc, SRCCOPY);
 }
-

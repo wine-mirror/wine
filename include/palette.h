@@ -24,4 +24,7 @@ extern int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer );
 extern BOOL32 PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette );
 extern BOOL32 PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette);
      
+extern HPALETTE16 WINAPI CreateHalftonePalette16(HDC16 hdc);
+extern HPALETTE32 WINAPI CreateHalftonePalette32(HDC32 hdc);
+
 #endif /* __WINE_PALETTE_H */

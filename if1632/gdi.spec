@@ -350,7 +350,7 @@ file	gdi.exe
 526 stub GetMiterLimit
 527 stub SetMiterLimit
 528 stub GDIParametersInfo
-529 stub CreateHalftonePalette
+529 pascal16 CreateHalftonePalette(word) CreateHalftonePalette16
 # Stubs for Hebrew version
 530 pascal16 GDI_530() stub_GDI_530
 531 pascal16 GDI_531() stub_GDI_531
