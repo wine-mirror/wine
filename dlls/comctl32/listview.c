@@ -637,6 +637,7 @@ static VOID LISTVIEW_UpdateScroll(HWND hwnd)
     scrollInfo.nPage = nCountPerRow;
     scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
     SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE);
+    ShowScrollBar(hwnd, SB_VERT, FALSE);
   }
   else if (uView == LVS_REPORT)
   {
@@ -1692,7 +1693,7 @@ static BOOL LISTVIEW_ToggleSelection(HWND hwnd, INT nItem)
 
 /***
  * DESCRIPTION:
- * Selects items based on view coorddiantes. 
+ * Selects items based on view coordinates. 
  * 
  * PARAMETER(S):
  * [I] HWND : window handle
@@ -2586,7 +2587,7 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
               if (nmlv.uNewState & LVIS_SELECTED)
               {
                 /*
-                 * This is redundent if called through SetSelection
+                 * This is redundant if called through SetSelection
                  *
                  * however is required if the used directly calls SetItem
                  * to set the selection.
@@ -2608,9 +2609,9 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
               {
                 /*
                  * This is a fun hoop to jump to try to catch if
-                 * the user is calling us directly to call focuse or if
+                 * the user is calling us directly to call focus or if
                  * this function is being called as a result of a 
-                 * SetItemFocuse call. 
+                 * SetItemFocus call. 
                  */
                 if (infoPtr->nFocusedItem >= 0)
                   LISTVIEW_SetItemFocus(hwnd, lpLVItem->iItem);
@@ -2626,8 +2627,8 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
             /* copy information */
             bResult = LISTVIEW_InitItem(hwnd, lpItem, lpLVItem);
 
-            /* if LVS_LIST or LVS_SMALLICON, update the width of the items based on */
-            /* the width of the items text */
+            /* if LVS_LIST or LVS_SMALLICON, update the width of the items
+               based on the width of the items text */
             if((uView == LVS_LIST) || (uView == LVS_SMALLICON))
             {
               item_width = LISTVIEW_GetStringWidthA(hwnd, lpItem->pszText);
@@ -3537,7 +3538,7 @@ static VOID LISTVIEW_Refresh(HWND hwnd, HDC hdc)
   /* select font */
   hOldFont = SelectObject(hdc, infoPtr->hFont);
 
-  /* select the doted pen (for drawing the focus box) */
+  /* select the dotted pen (for drawing the focus box) */
   hPen = CreatePen(PS_DOT, 1, 0);
   hOldPen = SelectObject(hdc, hPen);
 
