@@ -94,6 +94,7 @@ INSTALLED_INCLUDES = \
 	nb30.h \
 	nspapi.h \
 	ntsecapi.h \
+	ntstatus.h \
 	oaidl.h \
 	objbase.h \
 	objidl.h \

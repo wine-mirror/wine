@@ -18,13 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+
+#include "wine/test.h"
+
 #include "winbase.h"
-#include "winerror.h"
 #include "rpcnterr.h"
 #include "winternl.h"
 #include "ntsecapi.h"
-#include "wine/test.h"
-#include <stdio.h>
 
 ULONG (*statustodoserror)(NTSTATUS Status);
 
