@@ -20,7 +20,6 @@
 #include <unistd.h>
 
 #include "clipboard.h"
-#include "console.h"
 #include "debugtools.h"
 #include "desktop.h"
 #include "keyboard.h"
@@ -49,7 +48,6 @@ void X11DRV_USER_RestoreSetup(void);
 
 static XrmOptionDescRec optionsTable[] =
 {
-    { "-backingstore",  ".backingstore",    XrmoptionNoArg,  (caddr_t)"on" },
     { "-desktop",       ".desktop",         XrmoptionSepArg, (caddr_t)NULL },
     { "-depth",         ".depth",           XrmoptionSepArg, (caddr_t)NULL },
     { "-display",       ".display",         XrmoptionSepArg, (caddr_t)NULL },
@@ -58,20 +56,17 @@ static XrmOptionDescRec optionsTable[] =
     { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
     { "-perfect",       ".perfect",         XrmoptionNoArg,  (caddr_t)"on" },
     { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
-    { "-fixedmap",      ".fixedmap",        XrmoptionNoArg,  (caddr_t)"on" },
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
     { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
     { "-failreadonly",  ".failreadonly",    XrmoptionNoArg,  (caddr_t)"on" },
-    { "-mode",          ".mode",            XrmoptionSepArg, (caddr_t)NULL },
     { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"},
     { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL },
     { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL },
     { "-nodga",         ".nodga",           XrmoptionNoArg,  (caddr_t)"off"},
     { "-noxshm",        ".noxshm",          XrmoptionNoArg,  (caddr_t)"off"},
     { "-dxgrab",        ".dxgrab",          XrmoptionNoArg,  (caddr_t)"on" },
-    { "-console",       ".console",         XrmoptionSepArg, (caddr_t)NULL },
     { "-dosver",        ".dosver",          XrmoptionSepArg, (caddr_t)NULL }
 };
 
@@ -229,16 +224,10 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
 		     Options.programName, argc, argv );
   
   /* Get all options */
-  if (X11DRV_USER_GetResource( db, ".iconic", &value ))
-    Options.cmdShow = SW_SHOWMINIMIZED;
   if (X11DRV_USER_GetResource( db, ".privatemap", &value ))
     Options.usePrivateMap = TRUE;
-  if (X11DRV_USER_GetResource( db, ".fixedmap", &value ))
-    Options.useFixedMap = TRUE;
   if (X11DRV_USER_GetResource( db, ".synchronous", &value ))
     Options.synchronous = TRUE;
-  if (X11DRV_USER_GetResource( db, ".backingstore", &value ))
-    Options.backingstore = TRUE;	
   if (X11DRV_USER_GetResource( db, ".debug", &value ))
     Options.debug = TRUE;
   if (X11DRV_USER_GetResource( db, ".failreadonly", &value ))
@@ -253,8 +242,6 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
     MAIN_ParseLanguageOption( (char *)value.addr );
   if (X11DRV_USER_GetResource( db, ".managed", &value))
     Options.managed = TRUE;
-  if (X11DRV_USER_GetResource( db, ".mode", &value))
-    MAIN_ParseModeOption( (char *)value.addr );
   if (X11DRV_USER_GetResource( db, ".debugoptions", &value))
     MAIN_ParseDebugOptions((char*)value.addr);
   if (X11DRV_USER_GetResource( db, ".debugmsg", &value))
@@ -284,10 +271,6 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
     Options.noXSHM = TRUE;
   if (X11DRV_USER_GetResource( db, ".dxgrab", &value))
     Options.DXGrab = TRUE;
-  if (X11DRV_USER_GetResource( db, ".console", &value))
-      driver.driver_list = xstrdup((char *)value.addr);
-  else
-      driver.driver_list = CONSOLE_DEFAULT_DRIVER;
 }
 
 /***********************************************************************

@@ -216,7 +216,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 
       win_attr.bit_gravity   = (classPtr->style & (CS_VREDRAW | CS_HREDRAW)) ? BGForget : BGNorthWest;
       win_attr.colormap      = X11DRV_PALETTE_PaletteXColormap;
-      win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
+      win_attr.backing_store = NotUseful;
       win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
       win_attr.cursor        = X11DRV_MOUSE_XCursor;
 

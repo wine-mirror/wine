@@ -15,7 +15,6 @@ extern int MAIN_GetLanguageID(char*lang, char*country, char*charset, char*dialec
 extern BOOL MAIN_ParseDebugOptions(char *options);
 
 extern void MAIN_ParseLanguageOption( char *arg );
-extern void MAIN_ParseModeOption( char *arg );
 
 extern BOOL RELAY_Init(void);
 extern void THUNK_InitCallout(void);

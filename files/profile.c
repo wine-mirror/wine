@@ -21,11 +21,13 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "file.h"
 #include "heap.h"
 #include "debugtools.h"
 #include "xmalloc.h"
 #include "options.h"
+#include "server.h"
 
 DEFAULT_DEBUG_CHANNEL(profile);
 
@@ -62,8 +64,8 @@ static PROFILE *MRUProfile[N_CACHED_PROFILES]={NULL};
 
 #define CurProfile (MRUProfile[0])
 
-/* wine.ini profile content */
-static PROFILESECTION *PROFILE_WineProfile;
+/* wine.ini config file registry root */
+static HKEY wine_profile_key;
 
 #define PROFILE_MAX_LINE_LEN   1024
 
@@ -79,7 +81,7 @@ static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 #define WINE_INI_GLOBAL ETCDIR "/wine.conf"
 #define WINE_CONFIG_DIR "/.wine"   /* config dir inside $HOME */
 
-static LPCWSTR wininiW = NULL;
+static const WCHAR wininiW[] = { 'w','i','n','.','i','n','i',0 };
 
 static CRITICAL_SECTION PROFILE_CritSect;
 
@@ -296,6 +298,70 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
           }
     }
     return first_section;
+}
+
+
+/***********************************************************************
+ *           PROFILE_RegistryLoad
+ *
+ * Load a profile tree from a file into a registry key.
+ */
+static DWORD PROFILE_RegistryLoad( HKEY root, FILE *file )
+{
+    HKEY hkey = 0;
+    DWORD err = 0;
+    char buffer[PROFILE_MAX_LINE_LEN];
+    char *p, *p2;
+    int line = 0;
+
+    while (fgets( buffer, PROFILE_MAX_LINE_LEN, file ))
+    {
+        line++;
+        p = buffer;
+        while (*p && PROFILE_isspace(*p)) p++;
+        if (*p == '[')  /* section start */
+        {
+            if (!(p2 = strrchr( p, ']' )))
+            {
+                WARN("Invalid section header at line %d: '%s'\n",
+		     line, p );
+            }
+            else
+            {
+                *p2 = '\0';
+                p++;
+                if (hkey) RegCloseKey( hkey );
+                if ((err = RegCreateKeyExA( root, p, 0, NULL, REG_OPTION_VOLATILE,
+                                            KEY_ALL_ACCESS, NULL, &hkey, NULL ))) return err;
+                TRACE("New section: '%s'\n",p);
+                continue;
+            }
+        }
+
+        p2=p+strlen(p) - 1;
+        while ((p2 > p) && ((*p2 == '\n') || PROFILE_isspace(*p2))) *p2--='\0';
+
+        if ((p2 = strchr( p, '=' )) != NULL)
+        {
+            char *p3 = p2 - 1;
+            while ((p3 > p) && PROFILE_isspace(*p3)) *p3-- = '\0';
+            *p2++ = '\0';
+            while (*p2 && PROFILE_isspace(*p2)) p2++;
+        }
+
+        if (*p && hkey && !IS_ENTRY_COMMENT(p))
+        {
+            if (!p2) p2 = "";
+            if ((err = RegSetValueExA( hkey, p, 0, REG_SZ, p2, strlen(p2)+1 )))
+            {
+                RegCloseKey( hkey );
+                return err;
+            }
+            TRACE("New key: name='%s', value='%s'\n",p,p2);
+        }
+    }
+    if (hkey) RegCloseKey( hkey );
+    return 0;
 }
 
 
@@ -766,26 +832,45 @@ static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
 int PROFILE_GetWineIniString( const char *section, const char *key_name,
                               const char *def, char *buffer, int len )
 {
-    int	ret;
+    char tmp[PROFILE_MAX_LINE_LEN];
+    HKEY hkey;
+    DWORD err;
 
-    EnterCriticalSection( &PROFILE_CritSect );
-
-    if (key_name)
+    if (!(err = RegOpenKeyA( wine_profile_key, section, &hkey )))
     {
-        PROFILEKEY *key = PROFILE_Find(&PROFILE_WineProfile, section, key_name, FALSE);
-        PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def,
-                           len, TRUE );
-        TRACE("('%s','%s','%s'): returning '%s'\n",
-                         section, key_name, def, buffer );
-        ret = strlen( buffer );
-    } 
-    else 
-    {
-       ret = PROFILE_GetSection( PROFILE_WineProfile, section, buffer, len, TRUE, FALSE );
+        DWORD type;
+        DWORD count = sizeof(tmp);
+        err = RegQueryValueExA( hkey, key_name, 0, &type, tmp, &count );
+        RegCloseKey( hkey );
     }
-    LeaveCriticalSection( &PROFILE_CritSect );
+    PROFILE_CopyEntry( buffer, err ? def : tmp, len, TRUE );
+    TRACE( "('%s','%s','%s'): returning '%s'\n", section, key_name, def, buffer );
+    return strlen(buffer);
+}
 
-    return ret;
+
+/***********************************************************************
+ *           PROFILE_EnumWineIniString
+ *
+ * Get a config string from the wine.ini file.
+ */
+BOOL PROFILE_EnumWineIniString( const char *section, int index,
+                                char *name, int name_len, char *buffer, int len )
+{
+    char tmp[PROFILE_MAX_LINE_LEN];
+    HKEY hkey;
+    DWORD err, type;
+    DWORD count = sizeof(tmp);
+
+    if (RegOpenKeyA( wine_profile_key, section, &hkey )) return FALSE;
+    err = RegEnumValueA( hkey, index, name, (DWORD*)&name_len, NULL, &type, tmp, &count );
+    RegCloseKey( hkey );
+    if (!err)
+    {
+        PROFILE_CopyEntry( buffer, tmp, len, TRUE );
+        TRACE( "('%s',%d): returning '%s'='%s'\n", section, index, name, buffer );
+    }
+    return !err;
 }
 
 
@@ -799,87 +884,11 @@ int PROFILE_GetWineIniInt( const char *section, const char *key_name, int def )
     char buffer[20];
     char *p;
     long result;
-    PROFILEKEY *key;
-    int	ret;
 
-    EnterCriticalSection( &PROFILE_CritSect );
-
-    key = PROFILE_Find( &PROFILE_WineProfile, section, key_name, FALSE );
-    if (!key || !key->value) {
-       ret = def;
-    } else {
-       PROFILE_CopyEntry( buffer, key->value, sizeof(buffer), TRUE );
-       result = strtol( buffer, &p, 0 );
-       ret = (p == buffer) ? 0  /* No digits at all */ : (int)result;
-    }
-
-    LeaveCriticalSection( &PROFILE_CritSect );
-
-    return ret;
-}
-
-
-/******************************************************************************
- *
- *   int  PROFILE_EnumerateWineIniSection(
- *     char const  *section,  #Name of the section to enumerate
- *     void  (*cbfn)(char const *key, char const *value, void *user),
- *                            # Address of the callback function 
- *     void  *user )          # User-specified pointer.
- *
- *   For each entry in a section in the wine.conf file, this function will
- *   call the specified callback function, informing it of each key and
- *   value.  An optional user pointer may be passed to it (if this is not
- *   needed, pass NULL through it and ignore the value in the callback
- *   function).
- *
- *   The callback function must accept three parameters:
- *      The name of the key (char const *)
- *      The value of the key (char const *)
- *      A user-specified parameter (void *)
- *   Note that the first two are char CONST *'s, not char *'s!  The callback
- *   MUST not modify these strings!
- *
- *   The return value indicates the number of times the callback function
- *   was called.
- */
-int  PROFILE_EnumerateWineIniSection(
-    char const  *section,
-    void  (*cbfn)(char const *, char const *, void *),
-    void  *userptr )
-{
-    PROFILESECTION  *scansect;
-    PROFILEKEY  *scankey;
-    int  calls = 0;
-
-    EnterCriticalSection( &PROFILE_CritSect );
-
-    /* Search for the correct section */
-    for(scansect = PROFILE_WineProfile; scansect; scansect = scansect->next) {
-	if(scansect->name && !strcasecmp(scansect->name, section)) {
-
-	    /* Enumerate each key with the callback */
-	    for(scankey = scansect->key; scankey; scankey = scankey->next) {
-
-		/* Ignore blank entries -- these shouldn't exist, but let's
-		   be extra careful */
-		if (!scankey->name[0]) continue;
-                if (!scankey->value) cbfn(scankey->name, NULL, userptr);
-                else
-                {
-                    char value[1024];
-                    PROFILE_CopyEntry(value, scankey->value, sizeof(value), TRUE);
-		    cbfn(scankey->name, value, userptr);
-                }
-                ++calls;
-	    }
-	
-	    break;
-	}
-    }
-    LeaveCriticalSection( &PROFILE_CritSect );
-
-    return calls;
+    PROFILE_GetWineIniString( section, key_name, "", buffer, sizeof(buffer) );
+    if (!buffer[0]) return def;
+    result = strtol( buffer, &p, 0 );
+    return (p == buffer) ? 0  /* No digits at all */ : (int)result;
 }
 
 
@@ -950,24 +959,29 @@ int PROFILE_LoadWineIni(void)
     const char *p;
     FILE *f;
 
+    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config", 0, NULL,
+                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &wine_profile_key, NULL ))
+    {
+        ERR("Cannot create config registry key\n" );
+        return 0;
+    }
+
     InitializeCriticalSection( &PROFILE_CritSect );
     MakeCriticalSectionGlobal( &PROFILE_CritSect );
+
+    if (!CLIENT_IsBootThread()) return 1;  /* already loaded */
 
     if ( (Options.configFileName!=NULL) && (f = fopen(Options.configFileName, "r")) )
     {
       /* Open -config specified file */
-      PROFILE_WineProfile = PROFILE_Load ( f);
-      fclose ( f );
       lstrcpynA(PROFILE_WineIniUsed,Options.configFileName,MAX_PATHNAME_LEN);
-      return 1;
+      goto found;
     }
 
     if ( (p = getenv( "WINE_INI" )) && (f = fopen( p, "r" )) )
     {
-	PROFILE_WineProfile = PROFILE_Load( f );
-	fclose( f );
 	lstrcpynA(PROFILE_WineIniUsed,p,MAX_PATHNAME_LEN);
-	return 1;
+	goto found;
     }
     if ((p = getenv( "HOME" )) != NULL)
     {
@@ -975,10 +989,8 @@ int PROFILE_LoadWineIni(void)
         strcat( buffer, PROFILE_WineIniName );
         if ((f = fopen( buffer, "r" )) != NULL)
         {
-            PROFILE_WineProfile = PROFILE_Load( f );
-            fclose( f );
 	    lstrcpynA(PROFILE_WineIniUsed,buffer,MAX_PATHNAME_LEN);
-            return 1;
+            goto found;
         }
     }
     else WARN("could not get $HOME value for config file.\n" );
@@ -987,14 +999,17 @@ int PROFILE_LoadWineIni(void)
 
     if ((f = fopen( WINE_INI_GLOBAL, "r" )) != NULL)
     {
-        PROFILE_WineProfile = PROFILE_Load( f );
-        fclose( f );
 	lstrcpynA(PROFILE_WineIniUsed,WINE_INI_GLOBAL,MAX_PATHNAME_LEN);
-        return 1;
+        goto found;
     }
     MESSAGE( "Can't open configuration file %s or $HOME%s\n",
 	 WINE_INI_GLOBAL, PROFILE_WineIniName );
     return 0;
+
+ found:
+    PROFILE_RegistryLoad( wine_profile_key, f );
+    fclose( f );
+    return 1;
 }
 
 
@@ -1066,7 +1081,6 @@ UINT WINAPI GetProfileIntA( LPCSTR section, LPCSTR entry, INT def_val )
  */
 UINT WINAPI GetProfileIntW( LPCWSTR section, LPCWSTR entry, INT def_val )
 {
-    if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini" );
     return GetPrivateProfileIntW( section, entry, def_val, wininiW );
 }
 
@@ -1096,7 +1110,6 @@ INT WINAPI GetProfileStringA( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 INT WINAPI GetProfileStringW( LPCWSTR section, LPCWSTR entry,
 			      LPCWSTR def_val, LPWSTR buffer, UINT len )
 {
-    if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini" );
     return GetPrivateProfileStringW( section, entry, def_val,
 				     buffer, len, wininiW );
 }
@@ -1125,7 +1138,6 @@ BOOL WINAPI WriteProfileStringA( LPCSTR section, LPCSTR entry,
 BOOL WINAPI WriteProfileStringW( LPCWSTR section, LPCWSTR entry,
                                      LPCWSTR string )
 {
-    if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini" );
     return WritePrivateProfileStringW( section, entry, string, wininiW );
 }
 
@@ -1306,7 +1318,6 @@ INT WINAPI GetProfileSectionA( LPCSTR section, LPSTR buffer, DWORD len )
  */
 INT WINAPI GetProfileSectionW( LPCWSTR section, LPWSTR buffer, DWORD len )
 {
-    if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini" );
     return GetPrivateProfileSectionW( section, buffer, len, wininiW );
 }
 
@@ -1442,8 +1453,6 @@ BOOL WINAPI WriteProfileSectionA( LPCSTR section, LPCSTR keys_n_values)
  */
 BOOL WINAPI WriteProfileSectionW( LPCWSTR section, LPCWSTR keys_n_values)
 {
-   if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini");
-   
    return (WritePrivateProfileSectionW (section,keys_n_values, wininiW));
 }
 

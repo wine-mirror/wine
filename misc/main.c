@@ -94,13 +94,9 @@ struct options Options =
     NULL,           /* programName */
     NULL,           /* dllFlags */
     FALSE,          /* usePrivateMap */
-    FALSE,          /* useFixedMap */
     FALSE,          /* synchronous */
-    FALSE,          /* backing store */
-    SW_SHOWNORMAL,  /* cmdShow */
     FALSE,
     FALSE,          /* failReadOnly */
-    MODE_ENHANCED,  /* Enhanced mode */
 #ifdef DEFAULT_LANG
     DEFAULT_LANG,   /* Default language */
 #else
@@ -122,9 +118,7 @@ static const char szUsage[] =
   "Usage:  %s [options] \"program_name [arguments]\"\n"
   "\n"
   "Options:\n"
-  "    -backingstore   Turn on backing store\n"
   "    -config name    Specify config file to use\n"
-  "    -console driver Select which driver(s) to use for the console\n"
   "    -debug          Enter debugger before starting application\n"
   "    -debugmsg name  Turn debugging-messages on or off\n"
   "    -depth n        Change the depth to use for multiple-depth screens\n"
@@ -132,13 +126,10 @@ static const char szUsage[] =
   "    -display name   Use the specified display\n"
   "    -dll name       Enable or disable built-in DLLs\n"
   "    -failreadonly   Read only files may not be opened in write mode\n"
-  "    -fixedmap       Use a \"standard\" color map\n"
   "    -help           Show this help message\n"
-  "    -iconic         Start as an icon\n"
   "    -language xx    Set the language (one of Br,Ca,Cs,Cy,Da,De,En,Eo,Es,Fi,Fr,Ga,Gd,Gv\n"
   "                    Hu,It,Ko,Kw,Nl,No,Pl,Pt,Sv,Ru,Wa)\n"
   "    -managed        Allow the window manager to manage created windows\n"
-  "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n"
   "    -name name      Set the application name\n"
   "    -nodga          Disable XFree86 DGA extensions\n"
   "    -noxshm         Disable XSHM extension\n"
@@ -717,23 +708,6 @@ void MAIN_ParseLanguageOption( char *arg )
     ExitProcess(1);
 }
 
-
-/***********************************************************************
- *           MAIN_ParseModeOption
- *
- * Parse -mode option.
- */
-void MAIN_ParseModeOption( char *arg )
-{
-    if (!lstrcmpiA("enhanced", arg)) Options.mode = MODE_ENHANCED;
-    else if (!lstrcmpiA("standard", arg)) Options.mode = MODE_STANDARD;
-    else
-    {
-        MESSAGE( "Invalid mode '%s' specified.\n", arg);
-        MESSAGE( "Valid modes are: 'standard', 'enhanced' (default).\n");
-	ExitProcess(1);
-    }
-}
 
 /***********************************************************************
  *           MAIN_ParseOptions

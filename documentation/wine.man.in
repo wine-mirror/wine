@@ -91,12 +91,6 @@ For more information, see the
 file contained in the source distribution.
 .SH OPTIONS
 .TP
-.I -backingstore
-Turn on backing store
-Backingstore stores pixels of obscured window parts off-screen.
-This buffer is used to restore these parts faster once they are to reappear,
-but it consumes additional memory of course.
-.TP
 .I -config filename
 Use the named configuration file rather than the default
 (@sysconfdir@/wine.conf or ~/.winerc).
@@ -212,12 +206,6 @@ Read only files may not be opened in write mode (the default is to
 allow opening read-only files for writing, because most Windows
 programs always request read-write access, even on CD-ROM drives...).
 .TP
-.I -fixedmap
-Use a "standard" color map.
-.TP
-.I -iconic
-Start as an icon
-.TP
 .I -language xx
 Set the language to
 .I xx
@@ -226,15 +214,6 @@ Set the language to
 .I -managed
 Create each top-level window as a properly managed X window instead of
 creating our own "sticky" window.
-.TP
-.I -mode modename
-Determines the mode in which
-.B wine
-is started. Possible mode names are
-.I standard
-and
-.I enhanced.
-Enhanced mode is the default (when no -mode option is specified).
 .TP
 .I -name name
 Set the application name

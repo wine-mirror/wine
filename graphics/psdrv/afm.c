@@ -382,31 +382,6 @@ static void PSDRV_ReencodeCharWidths(AFM *afm)
     return;
 }
 
-/***********************************************************
- *
- *	PSDRV_afmfilesCallback
- *
- * Callback for PROFILE_EnumerateWineIniSection
- * Try to parse AFM file `value', alter the CharWidths field of afm struct if
- * the font is using AdobeStandardEncoding to correspond to WinANSI, then add
- * afm to system font list.
- */
-static void PSDRV_afmfilesCallback(char const *key, char const *value,
-void *user)
-{
-    AFM *afm;
-
-    afm = PSDRV_AFMParse(value);
-    if(afm) {
-        if(afm->EncodingScheme && 
-	   !strcmp(afm->EncodingScheme, "AdobeStandardEncoding")) {
-	    PSDRV_ReencodeCharWidths(afm);
-	}
-        PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm);
-    }
-    return;
-}
-
 
 /***********************************************************
  *
@@ -437,7 +412,22 @@ static void PSDRV_DumpFontList(void)
  */
 BOOL PSDRV_GetFontMetrics(void)
 {
-    PROFILE_EnumerateWineIniSection( "afmfiles", PSDRV_afmfilesCallback, NULL);
+    int idx = 0;
+    char key[256];
+    char value[256];
+
+    while (PROFILE_EnumWineIniString( "afmfiles", idx++, key, sizeof(key), value, sizeof(value)))
+    {
+        AFM *afm = PSDRV_AFMParse(value);
+        if (afm)
+        {
+            if(afm->EncodingScheme && 
+               !strcmp(afm->EncodingScheme, "AdobeStandardEncoding")) {
+                PSDRV_ReencodeCharWidths(afm);
+            }
+            PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm);
+        }
+    }
     PSDRV_DumpFontList();
     return TRUE;
 }

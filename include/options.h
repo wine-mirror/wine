@@ -51,13 +51,6 @@ typedef struct
 
 extern const WINE_LANGUAGE_DEF Languages[];
 
-/* Supported modes */
-typedef enum
-{
-    MODE_STANDARD,
-    MODE_ENHANCED
-} WINE_MODE;
-
 struct options
 {
     int  *argc;
@@ -66,15 +59,10 @@ struct options
     char * programName;     /* To use when loading resources */
     char  *dllFlags;        /* -dll flags (hack for Winelib support) */
     int    usePrivateMap;
-    int    useFixedMap;
     int    synchronous;     /* X synchronous mode */
-    int    backingstore;    /* Use backing store */
-    short  cmdShow;
     int    debug;
     int    failReadOnly;    /* Opening a read only file will fail
 			       if write access is requested */
-    WINE_MODE mode;         /* Start Wine in selected mode
-			       (standard/enhanced) */
     WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */
     int    perfectGraphics; /* Favor correctness over speed for graphics */
@@ -95,14 +83,10 @@ extern int PROFILE_LoadWineIni(void);
 extern void PROFILE_UsageWineIni(void);
 extern int PROFILE_GetWineIniString( const char *section, const char *key_name,
                                      const char *def, char *buffer, int len );
-extern int PROFILE_GetWineIniInt( const char *section, const char *key_name,
-                                  int def );
-extern int PROFILE_EnumerateWineIniSection(
-    char const *section,
-    void (*callback)(char const *key, char const *name, void *user),
-    void *userptr );		     
-extern int PROFILE_GetWineIniBool( char const *section, char const *key_name,
-				   int def );
+extern BOOL PROFILE_EnumWineIniString( const char *section, int index,
+                                       char *name, int name_len, char *buffer, int len );
+extern int PROFILE_GetWineIniInt( const char *section, const char *key_name, int def );
+extern int PROFILE_GetWineIniBool( char const *section, char const *key_name, int def );
 extern char* PROFILE_GetStringItem( char* );
 
 /* Version functions */

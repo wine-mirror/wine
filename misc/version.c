@@ -471,22 +471,7 @@ DWORD WINAPI GetWinFlags16(void)
   GetSystemInfo(&si);
 
   /* There doesn't seem to be any Pentium flag.  */
-  result = cpuflags[MIN (si.wProcessorLevel, 4)];
-
-  switch(Options.mode)
-  {
-  case MODE_STANDARD:
-      result |= WF_STANDARD | WF_PMODE | WF_80x87;
-      break;
-
-  case MODE_ENHANCED:
-      result |= WF_ENHANCED | WF_PMODE | WF_80x87 | WF_PAGING;
-      break;
-
-  default:
-      ERR("Unknown mode set? This shouldn't happen. Check GetWinFlags()!\n");
-      break;
-  }
+  result = cpuflags[MIN (si.wProcessorLevel, 4)] | WF_ENHANCED | WF_PMODE | WF_80x87 | WF_PAGING;
   if (si.wProcessorLevel >= 4) result |= WF_HASCPUID;
   ovi.dwOSVersionInfoSize = sizeof(ovi);
   GetVersionExA(&ovi);

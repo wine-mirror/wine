@@ -58,7 +58,6 @@ typedef struct CONSOLE_DRIVER
    
    /* Other data */
    int norefresh;
-   char *driver_list;
    FILE *console_out;
    FILE *console_in;
    int x_res;
@@ -69,7 +68,6 @@ typedef struct CONSOLE_DRIVER
 extern CONSOLE_device driver; /* Global driver struct */
 
 /* Generic defines */
-int  CONSOLE_Init(char *drivers);
 void CONSOLE_Close(void);
 void CONSOLE_Write(char out, int fg_color, int bg_color, int attribute);
 void CONSOLE_MoveCursor(char row, char col);

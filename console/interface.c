@@ -21,20 +21,10 @@ static int pop_driver(char **, char **, int *);
 
 static int console_initialized = FALSE;
 
-int CONSOLE_Init(char *drivers)
+static int CONSOLE_Init(void)
 {
-      /* When this function is called drivers should be a string
-         that consists of driver names followed by plus (+) signs
-         to denote additions. 
-
-         For example:
-            drivers = tty                Load just the tty driver
-            drivers = ncurses+xterm      Load ncurses then xterm
-
-         The "default" value is just tty.
-      */
-      
-      char *single;
+      char buffer[256];
+      char *single, *drivers = buffer;
       int length;
       char initial_rows[5];
       char initial_columns[5];
@@ -42,6 +32,18 @@ int CONSOLE_Init(char *drivers)
       /* Suitable defaults... */
       driver.console_out = stdout;
       driver.console_in = stdin;
+
+      /* drivers should be a string that consists of driver names
+         followed by plus (+) signs to denote additions. 
+
+         For example:
+            drivers = tty                Load just the tty driver
+            drivers = ncurses+xterm      Load ncurses then xterm
+
+         The "default" value is just tty.
+      */
+      PROFILE_GetWineIniString( "console", "Drivers", CONSOLE_DEFAULT_DRIVER,
+                                buffer, sizeof(buffer) );
 
       while (pop_driver(&drivers, &single, &length))
       {
@@ -92,7 +94,7 @@ int CONSOLE_Init(char *drivers)
 void CONSOLE_Write(char out, int fg_color, int bg_color, int attribute)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.write)
    {
@@ -111,7 +113,7 @@ void CONSOLE_Close()
 void CONSOLE_MoveCursor(char row, char col)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.moveCursor)
    {
@@ -125,7 +127,7 @@ void CONSOLE_ClearWindow(char row1, char col1, char row2, char col2,
    int bg_color, int attribute)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.clearWindow)
    {
@@ -139,7 +141,7 @@ void CONSOLE_ScrollUpWindow(char row1, char col1, char row2, char col2,
    char lines, int bg_color, int attribute)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.scrollUpWindow)
    {
@@ -154,7 +156,7 @@ void CONSOLE_ScrollDownWindow(char row1, char col1, char row2, char col2,
    char lines, int bg_color, int attribute)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.scrollDownWindow)
    {
@@ -171,7 +173,7 @@ int CONSOLE_CheckForKeystroke(char *scan, char *ascii)
    a conv_* function in int16.c. Yuck. */
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.checkForKeystroke)
       return driver.checkForKeystroke(scan, ascii);
@@ -182,7 +184,7 @@ int CONSOLE_CheckForKeystroke(char *scan, char *ascii)
 void CONSOLE_GetKeystroke(char *scan, char *ascii)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.getKeystroke)
       driver.getKeystroke(scan, ascii);
@@ -191,7 +193,7 @@ void CONSOLE_GetKeystroke(char *scan, char *ascii)
 void CONSOLE_GetCursorPosition(char *row, char *col)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.getCursorPosition)
       driver.getCursorPosition(row, col);
@@ -200,7 +202,7 @@ void CONSOLE_GetCursorPosition(char *row, char *col)
 void CONSOLE_GetCharacterAtCursor(char *ch, int *fg, int *bg, int *a)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.getCharacterAtCursor)
       driver.getCharacterAtCursor(ch, fg, bg, a);
@@ -209,7 +211,7 @@ void CONSOLE_GetCharacterAtCursor(char *ch, int *fg, int *bg, int *a)
 void CONSOLE_Refresh()
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.refresh)
       driver.refresh();
@@ -218,7 +220,7 @@ void CONSOLE_Refresh()
 int CONSOLE_AllocColor(int color)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.allocColor)
       return driver.allocColor(color);
@@ -229,7 +231,7 @@ int CONSOLE_AllocColor(int color)
 void CONSOLE_ClearScreen()
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.clearScreen)
    {
@@ -242,7 +244,7 @@ void CONSOLE_ClearScreen()
 char CONSOLE_GetCharacter()
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    /* I'm not sure if we need this really. This is a function that can be
       accelerated that returns the next *non extended* keystroke */
@@ -255,7 +257,7 @@ char CONSOLE_GetCharacter()
 void CONSOLE_ResizeScreen(int x, int y)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.resizeScreen)
       driver.resizeScreen(x, y);
@@ -270,7 +272,7 @@ void CONSOLE_NotifyResizeScreen(int x, int y)
 void CONSOLE_SetBackgroundColor(int fg, int bg)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.setBackgroundColor)
       driver.setBackgroundColor(fg, bg);
@@ -279,7 +281,7 @@ void CONSOLE_SetBackgroundColor(int fg, int bg)
 void CONSOLE_GetBackgroundColor(int *fg, int *bg)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    if (driver.getBackgroundColor)
       driver.getBackgroundColor(fg, bg);
@@ -288,7 +290,7 @@ void CONSOLE_GetBackgroundColor(int *fg, int *bg)
 void CONSOLE_WriteRawString(char *str)
 {
    if (!console_initialized)
-      console_initialized = CONSOLE_Init(driver.driver_list);
+      console_initialized = CONSOLE_Init();
       
    /* This is a special function that is only for internal use and 
       does not actually call any of the console drivers. It's 

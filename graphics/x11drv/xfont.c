@@ -2121,83 +2121,6 @@ static BOOL XFONT_WriteCachedMetrics( int fd, unsigned x_checksum, int x_count, 
 }
 
 /***********************************************************************
- *           XFONT_CheckIniSection
- *
- * INIT ONLY
- *
- *   Examines wine.conf for old/invalid font entries and recommend changes to
- *   the user.
- *
- *   Revision history
- *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *             Original implementation.
- */
-static void XFONT_CheckIniCallback(char const *, char const *, void *);
-
-static char const  *fontmsgprologue =
-"Wine warning:\n"
-"   The following entries in the [fonts] section of the wine.conf file are\n"
-"   obsolete or invalid:\n";
-
-static char const  *fontmsgepilogue =
-"   These entries should be eliminated or updated.\n"
-"   See the documentation/fonts file for more information.\n";
-
-static int XFONT_CheckIniSection(void)
-{
-    int  found = 0;
-
-    PROFILE_EnumerateWineIniSection("Fonts", &XFONT_CheckIniCallback,
-                    (void *)&found);
-    if(found)
-	MESSAGE(fontmsgepilogue);
-
-    return 1;
-}
-
-static void  XFONT_CheckIniCallback(
-    char const  *key,
-    char const  *value,
-    void  *found)
-{
-    /* Ignore any keys that start with potential comment characters "'", '#',
-       or ';'. */
-    if(key[0] == '\'' || key[0] == '#' || key[0] == ';' || key[0] == '\0')
-	return;
-
-    /* Make sure this is a valid key */
-    if((strncasecmp(key, INIAliasSection, 5) == 0) ||
-       (strncasecmp(key, INIIgnoreSection, 6) == 0) ||
-       (strcasecmp( key, INIDefault) == 0) ||
-       (strcasecmp( key, INIDefaultFixed) == 0) ||
-       (strcasecmp( key, INIGlobalMetrics) == 0) ||
-       (strcasecmp( key, INIResolution) == 0) ||
-       (strcasecmp( key, INIDefaultSerif) == 0) ||
-       (strcasecmp( key, INIDefaultSansSerif) ==0) )
-    {
-	/* Valid key; make sure the value doesn't contain a wildcard */
-	if(strchr(value, '*')) {
-	    if(*(int *)found == 0) {
-		MESSAGE(fontmsgprologue);
-		++*(int *)found;
-	    }
-	    MESSAGE("     %s=%s [no wildcards allowed]\n", key, value);
-	}
-    }
-    else {
-	/* Not a valid key */
-	if(*(int *)found == 0) {
-	    MESSAGE(fontmsgprologue);
-	    ++*(int *)found;
-	}
-	
-	MESSAGE("     %s=%s [obsolete]\n", key, value);
-    }
-
-    return;
-}
-
-/***********************************************************************
  *           XFONT_GetPointResolution()
  *
  * INIT ONLY
@@ -2630,8 +2553,6 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   unsigned  x_checksum;
   int       i,res, x_count, fd, buf_size;
   char      *buffer;
-
-  XFONT_CheckIniSection();
 
   res = XFONT_GetPointResolution( pDevCaps );
       
