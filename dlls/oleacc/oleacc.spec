@@ -2,7 +2,7 @@
 @ stub AccessibleObjectFromEvent
 @ stub AccessibleObjectFromPoint
 @ stub AccessibleObjectFromWindow
-@ stub CreateStdAccessibleObject
+@ stdcall CreateStdAccessibleObject(ptr long ptr ptr)
 @ stub CreateStdAccessibleProxyA
 @ stub CreateStdAccessibleProxyW
 @ stub DllRegisterServer
