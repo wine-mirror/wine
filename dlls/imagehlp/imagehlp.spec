@@ -62,4 +62,4 @@ init	IMAGEHLP_LibMain
 @ stdcall UnMapAndLoad(ptr) UnMapAndLoad
 @ stdcall UnmapDebugInformation(ptr) UnmapDebugInformation
 @ stdcall UpdateDebugInfoFile(str str str ptr) UpdateDebugInfoFile
-@ stub UpdateDebugInfoFileEx
+@ stdcall UpdateDebugInfoFileEx(str str str ptr long) UpdateDebugInfoFileEx

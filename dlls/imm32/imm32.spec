@@ -73,4 +73,4 @@ type	win32
 @ stub ImmUnlockIMC
 @ stub ImmUnlockIMCC
 @ stdcall ImmUnregisterWordA(long str long str) ImmUnregisterWordA
-@ stub ImmUnregisterWordW
+@ stdcall ImmUnregisterWordW(long wstr long wstr) ImmUnregisterWordW
