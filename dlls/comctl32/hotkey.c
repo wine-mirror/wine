@@ -18,8 +18,21 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Sep. 21, 2004, by Robert Shearman.
+ * 
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features or bugs please note them below.
+ *
  * TODO:
- *   - What are we meant to do with the WM_CHAR message?
+ *   Messages:
+ *     WM_CHAR
+ *     WM_SYSCHAR
+ *   Styles:
+ *     WS_DISABLED
+ *   Notifications:
+ *     EN_CHANGED
  */
 
 #include <stdarg.h>
@@ -91,7 +104,6 @@ HOTKEY_DrawHotKey(HOTKEY_INFO *infoPtr, LPCWSTR KeyName, WORD NameLen,
                   LPRECT rc, HDC hdc)
 {
     SIZE TextSize;
-    DWORD dwExStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_EXSTYLE);
 
     /* We have to allow some space for the frame to be drawn */
     rc->left += 2;
@@ -99,8 +111,6 @@ HOTKEY_DrawHotKey(HOTKEY_INFO *infoPtr, LPCWSTR KeyName, WORD NameLen,
     DrawTextW(hdc, KeyName, NameLen, rc, DT_LEFT | DT_VCENTER);
     rc->left -= 2;
     rc->top--;
-    if(dwExStyle & WS_EX_CLIENTEDGE)
-	DrawEdge(hdc, rc, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     /* Get the text size and position the caret accordingly */
     GetTextExtentPoint32W (hdc, KeyName, NameLen, &TextSize);
@@ -209,28 +219,18 @@ HOTKEY_SetRules(HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 /* << HOTKEY_Char >> */
 
 static LRESULT
-HOTKEY_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
+HOTKEY_Create (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    HOTKEY_INFO *infoPtr;
     TEXTMETRICW tm;
     HDC hdc;
 
-    /* allocate memory for info structure */
-    infoPtr = (HOTKEY_INFO *)Alloc (sizeof(HOTKEY_INFO));
-    SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
-
-    /* initialize info structure */
-    infoPtr->HotKey = infoPtr->InvComb = infoPtr->InvMod = infoPtr->CurrMod = 0;
-    infoPtr->CaretPos = 2;
-    infoPtr->hwndSelf = hwnd;
     infoPtr->hwndNotify = ((LPCREATESTRUCTA)lParam)->hwndParent;
-    LoadStringW(COMCTL32_hModule, HKY_NONE, infoPtr->strNone, 15);
 
     /* get default font height */
-    hdc = GetDC (hwnd);
+    hdc = GetDC (infoPtr->hwndSelf);
     GetTextMetricsW (hdc, &tm);
     infoPtr->nHeight = tm.tmHeight;
-    ReleaseDC (hwnd, hdc);
+    ReleaseDC (infoPtr->hwndSelf, hdc);
 
     return 0;
 }
@@ -358,11 +358,24 @@ HOTKEY_LButtonDown (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 inline static LRESULT
-HOTKEY_NCCreate (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+HOTKEY_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    DWORD dwExStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_EXSTYLE);
-    SetWindowLongW (infoPtr->hwndSelf, GWL_EXSTYLE, 
+    HOTKEY_INFO *infoPtr;
+    DWORD dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
+    SetWindowLongW (hwnd, GWL_EXSTYLE, 
                     dwExStyle | WS_EX_CLIENTEDGE);
+
+    /* allocate memory for info structure */
+    infoPtr = (HOTKEY_INFO *)Alloc (sizeof(HOTKEY_INFO));
+    SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
+
+    /* initialize info structure */
+    infoPtr->HotKey = infoPtr->InvComb = infoPtr->InvMod = infoPtr->CurrMod = 0;
+    infoPtr->CaretPos = 2;
+    infoPtr->hwndSelf = hwnd;
+    LoadStringW(COMCTL32_hModule, HKY_NONE, infoPtr->strNone, 15);
+
+
     return DefWindowProcW (infoPtr->hwndSelf, WM_NCCREATE, wParam, lParam);
 }
 
@@ -414,7 +427,7 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr (hwnd);
     TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
-    if (!infoPtr && (uMsg != WM_CREATE))
+    if (!infoPtr && (uMsg != WM_NCCREATE))
         return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
     {
@@ -430,7 +443,7 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*	case WM_CHAR: */
 
 	case WM_CREATE:
-	    return HOTKEY_Create (hwnd, wParam, lParam);
+	    return HOTKEY_Create (infoPtr, wParam, lParam);
 
 	case WM_DESTROY:
 	    return HOTKEY_Destroy (infoPtr, wParam, lParam);
@@ -459,7 +472,7 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return HOTKEY_LButtonDown (infoPtr, wParam, lParam);
 
 	case WM_NCCREATE:
-	    return HOTKEY_NCCreate (infoPtr, wParam, lParam);
+	    return HOTKEY_NCCreate (hwnd, wParam, lParam);
 
 	case WM_PAINT:
 	    HOTKEY_Paint(infoPtr, (HDC)wParam);
