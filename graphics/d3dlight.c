@@ -244,7 +244,9 @@ static HRESULT WINAPI IDirect3DLightImpl_Initialize(LPDIRECT3DLIGHT iface,
 /*******************************************************************************
  *				IDirect3DLight VTable
  */
-static ICOM_VTABLE(IDirect3DLight) light_vtable = {
+static ICOM_VTABLE(IDirect3DLight) light_vtable = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
   IDirect3DLightImpl_QueryInterface,
   IDirect3DLightImpl_AddRef,

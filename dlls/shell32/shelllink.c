@@ -246,6 +246,7 @@ static HRESULT WINAPI IPersistFile_fnGetCurFile(const IPersistFile* iface, LPOLE
   
 static struct ICOM_VTABLE(IPersistFile) pfvt = 
 {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IPersistFile_fnQueryInterface,
 	IPersistFile_fnAddRef,
 	IPersistFile_fnRelease,
@@ -389,6 +390,7 @@ static HRESULT WINAPI IShellLink_CF_LockServer(IClassFactory* iface, BOOL fLock)
 }
 static ICOM_VTABLE(IClassFactory) slcfvt = 
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IShellLink_CF_QueryInterface,
     IShellLink_CF_AddRef,
   IShellLink_CF_Release,
@@ -636,7 +638,9 @@ static HRESULT WINAPI IShellLink_fnSetPath(IShellLink * iface, LPCSTR pszFile)
 */
 
 static ICOM_VTABLE(IShellLink) slvt = 
-{	IShellLink_fnQueryInterface,
+{	
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IShellLink_fnQueryInterface,
 	IShellLink_fnAddRef,
 	IShellLink_fnRelease,
 	IShellLink_fnGetPath,
@@ -786,6 +790,7 @@ static HRESULT WINAPI IShellLinkW_CF_LockServer(LPCLASSFACTORY iface, BOOL fLock
 
 static ICOM_VTABLE(IClassFactory) slwcfvt = 
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IShellLinkW_CF_QueryInterface,
     IShellLinkW_CF_AddRef,
   IShellLinkW_CF_Release,
@@ -1049,7 +1054,9 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
 */
 
 static ICOM_VTABLE(IShellLinkW) slvtw = 
-{	IShellLinkW_fnQueryInterface,
+{	
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IShellLinkW_fnQueryInterface,
 	IShellLinkW_fnAddRef,
 	IShellLinkW_fnRelease,
 	IShellLinkW_fnGetPath,

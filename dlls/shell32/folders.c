@@ -217,7 +217,9 @@ static HRESULT WINAPI IExtractIconA_fnExtract(IExtractIconA * iface, LPCSTR pszF
 }
 
 static struct ICOM_VTABLE(IExtractIconA) eivt = 
-{	IExtractIconA_fnQueryInterface,
+{	
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IExtractIconA_fnQueryInterface,
 	IExtractIconA_fnAddRef,
 	IExtractIconA_fnRelease,
 	IExtractIconA_fnGetIconLocation,
@@ -289,6 +291,7 @@ static HRESULT WINAPI IEIPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFi
 
 static struct ICOM_VTABLE(IPersistFile) pfvt =
 {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IEIPersistFile_fnQueryInterface,
 	IEIPersistFile_fnAddRef,
 	IEIPersistFile_fnRelease,

@@ -386,6 +386,7 @@ static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
  */
 static struct ICOM_VTABLE(IDataAdviseHolder) DataAdviseHolderImpl_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DataAdviseHolder_QueryInterface,
   DataAdviseHolder_AddRef,
   DataAdviseHolder_Release,

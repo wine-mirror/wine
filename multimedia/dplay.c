@@ -1196,7 +1196,9 @@ static HRESULT WINAPI IDirectPlayLobby2AImpl_CreateCompoundAddress
 
 /* Direct Play Lobby 1 (ascii) Virtual Table for methods */
 /* All lobby 1 methods are exactly the same except QueryInterface */
-static struct ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyAVT = {
+static struct ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyAVT = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectPlayLobbyAImpl_QueryInterface,
   XCAST(AddRef)IDirectPlayLobby2AImpl_AddRef,
   XCAST(Release)IDirectPlayLobby2AImpl_Release,
@@ -1223,7 +1225,9 @@ static struct ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyAVT = {
 #endif
 
 /* Direct Play Lobby 1 (unicode) Virtual Table for methods */
-static ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyWVT = {
+static ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyWVT = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectPlayLobbyW_QueryInterface,
   XCAST(AddRef)IDirectPlayLobby2WImpl_AddRef,
   XCAST(Release)IDirectPlayLobby2WImpl_Release,
@@ -1243,7 +1247,9 @@ static ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyWVT = {
 
 
 /* Direct Play Lobby 2 (ascii) Virtual Table for methods */
-static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT = {
+static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectPlayLobby2AImpl_QueryInterface,
   IDirectPlayLobby2AImpl_AddRef,
   IDirectPlayLobby2AImpl_Release,
@@ -1262,7 +1268,9 @@ static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT = {
 };
 
 /* Direct Play Lobby 2 (unicode) Virtual Table for methods */
-static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2WVT = {
+static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2WVT = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectPlayLobby2WImpl_QueryInterface,
   IDirectPlayLobby2WImpl_AddRef, 
   IDirectPlayLobby2WImpl_Release,
@@ -2473,7 +2481,9 @@ HRESULT WINAPI DirectPlay3WImpl_GetPlayerFlags
 # define XCAST(fun)     (void*)
 #endif
 
-static ICOM_VTABLE(IDirectPlay2) directPlay2WVT = {
+static ICOM_VTABLE(IDirectPlay2) directPlay2WVT = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DirectPlay2W_QueryInterface,
   XCAST(AddRef)DirectPlay3WImpl_AddRef,
   XCAST(Release)DirectPlay3WImpl_Release,
@@ -2517,7 +2527,9 @@ static ICOM_VTABLE(IDirectPlay2) directPlay2WVT = {
 # define XCAST(fun)     (void*)
 #endif
 
-static ICOM_VTABLE(IDirectPlay2) directPlay2AVT = {
+static ICOM_VTABLE(IDirectPlay2) directPlay2AVT = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DirectPlay2A_QueryInterface,
   XCAST(AddRef)DirectPlay3WImpl_AddRef,
   XCAST(Release)DirectPlay3A_Release,
@@ -2554,7 +2566,9 @@ static ICOM_VTABLE(IDirectPlay2) directPlay2AVT = {
 #undef XCAST
 
 
-static ICOM_VTABLE(IDirectPlay3) directPlay3AVT = {
+static ICOM_VTABLE(IDirectPlay3) directPlay3AVT = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DirectPlay3A_QueryInterface,
   DirectPlay3WImpl_AddRef,
   DirectPlay3A_Release,
@@ -2605,7 +2619,9 @@ static ICOM_VTABLE(IDirectPlay3) directPlay3AVT = {
   DirectPlay3A_GetPlayerFlags
 };
 
-static ICOM_VTABLE(IDirectPlay3) directPlay3WVT = {
+static ICOM_VTABLE(IDirectPlay3) directPlay3WVT = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DirectPlay3WImpl_QueryInterface,
   DirectPlay3WImpl_AddRef,
   DirectPlay3WImpl_Release,

@@ -455,6 +455,7 @@ static HRESULT WINAPI IContextMenu_fnHandleMenuMsg(
 */
 static struct ICOM_VTABLE(IContextMenu) cmvt = 
 {	
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IContextMenu_fnQueryInterface,
 	IContextMenu_fnAddRef,
 	IContextMenu_fnRelease,

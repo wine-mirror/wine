@@ -168,6 +168,7 @@ static HRESULT WINAPI OLEFontImpl_GetSizeMax(IPersistStream*  iface,
  */
 static ICOM_VTABLE(IFont) OLEFontImpl_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_QueryInterface,
   OLEFontImpl_AddRef,
   OLEFontImpl_Release,
@@ -199,6 +200,7 @@ static ICOM_VTABLE(IFont) OLEFontImpl_VTable =
 
 static ICOM_VTABLE(IDispatch) OLEFontImpl_IDispatch_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IDispatch_QueryInterface,
   OLEFontImpl_IDispatch_AddRef,
   OLEFontImpl_IDispatch_Release,
@@ -210,6 +212,7 @@ static ICOM_VTABLE(IDispatch) OLEFontImpl_IDispatch_VTable =
 
 static ICOM_VTABLE(IPersistStream) OLEFontImpl_IPersistStream_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   OLEFontImpl_IPersistStream_QueryInterface,
   OLEFontImpl_IPersistStream_AddRef,
   OLEFontImpl_IPersistStream_Release,

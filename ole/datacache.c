@@ -354,6 +354,7 @@ static HRESULT WINAPI DataCache_OnStop(
  */
 static ICOM_VTABLE(IUnknown) DataCache_NDIUnknown_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DataCache_NDIUnknown_QueryInterface,
   DataCache_NDIUnknown_AddRef,
   DataCache_NDIUnknown_Release
@@ -361,6 +362,7 @@ static ICOM_VTABLE(IUnknown) DataCache_NDIUnknown_VTable =
 
 static ICOM_VTABLE(IDataObject) DataCache_IDataObject_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DataCache_IDataObject_QueryInterface,
   DataCache_IDataObject_AddRef,
   DataCache_IDataObject_Release,
@@ -377,6 +379,7 @@ static ICOM_VTABLE(IDataObject) DataCache_IDataObject_VTable =
 
 static ICOM_VTABLE(IPersistStorage) DataCache_IPersistStorage_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DataCache_IPersistStorage_QueryInterface,
   DataCache_IPersistStorage_AddRef,
   DataCache_IPersistStorage_Release,
@@ -391,6 +394,7 @@ static ICOM_VTABLE(IPersistStorage) DataCache_IPersistStorage_VTable =
 
 static ICOM_VTABLE(IViewObject2) DataCache_IViewObject2_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DataCache_IViewObject2_QueryInterface,
   DataCache_IViewObject2_AddRef,
   DataCache_IViewObject2_Release,
@@ -405,6 +409,7 @@ static ICOM_VTABLE(IViewObject2) DataCache_IViewObject2_VTable =
 
 static ICOM_VTABLE(IOleCache2) DataCache_IOleCache2_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DataCache_IOleCache2_QueryInterface,
   DataCache_IOleCache2_AddRef,
   DataCache_IOleCache2_Release,
@@ -419,6 +424,7 @@ static ICOM_VTABLE(IOleCache2) DataCache_IOleCache2_VTable =
 
 static ICOM_VTABLE(IOleCacheControl) DataCache_IOleCacheControl_VTable =
 {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   DataCache_IOleCacheControl_QueryInterface,
   DataCache_IOleCacheControl_AddRef,
   DataCache_IOleCacheControl_Release,

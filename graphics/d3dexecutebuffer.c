@@ -843,7 +843,9 @@ static HRESULT WINAPI IDirect3DExecuteBufferImpl_Optimize(LPDIRECT3DEXECUTEBUFFE
 /*******************************************************************************
  *				IDirect3DLight VTable
  */
-static ICOM_VTABLE(IDirect3DExecuteBuffer) executebuffer_vtable = {
+static ICOM_VTABLE(IDirect3DExecuteBuffer) executebuffer_vtable = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
   IDirect3DExecuteBufferImpl_QueryInterface,
   IDirect3DExecuteBufferImpl_AddRef,

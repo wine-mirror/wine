@@ -84,6 +84,7 @@ HRESULT WINAPI AntiMonikerImpl_Destroy(AntiMonikerImpl* iface);
 /* IPersistStream and IMoniker functions.                                       */
 static ICOM_VTABLE(IMoniker) VT_AntiMonikerImpl =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     AntiMonikerImpl_QueryInterface,
     AntiMonikerImpl_AddRef,
     AntiMonikerImpl_Release,
@@ -113,6 +114,7 @@ static ICOM_VTABLE(IMoniker) VT_AntiMonikerImpl =
 /* Virtual function table for the IROTData class.                               */
 static ICOM_VTABLE(IROTData) VT_ROTDataImpl =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     AntiMonikerROTDataImpl_QueryInterface,
     AntiMonikerROTDataImpl_AddRef,
     AntiMonikerROTDataImpl_Release,

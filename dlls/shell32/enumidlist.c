@@ -401,7 +401,9 @@ static BOOL WINAPI IEnumIDList_fnDeleteList(
  *  IEnumIDList_fnVTable
  */
 static ICOM_VTABLE (IEnumIDList) eidlvt = 
-{	IEnumIDList_fnQueryInterface,
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IEnumIDList_fnQueryInterface,
 	IEnumIDList_fnAddRef,
 	IEnumIDList_fnRelease,
 	IEnumIDList_fnNext,

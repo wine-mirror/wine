@@ -152,6 +152,7 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG 
 }
 
 struct ICOM_VTABLE(IAVIFile) iavift = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IAVIFile_fnQueryInterface,
     IAVIFile_fnAddRef,
     IAVIFile_fnRelease,
@@ -330,6 +331,7 @@ HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG in
 }
 
 struct ICOM_VTABLE(IAVIStream) iavist = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IAVIStream_fnQueryInterface,
     IAVIStream_fnAddRef,
     IAVIStream_fnRelease,

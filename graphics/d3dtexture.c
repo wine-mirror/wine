@@ -528,7 +528,9 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 /*******************************************************************************
  *				IDirect3DTexture2 VTable
  */
-static ICOM_VTABLE(IDirect3DTexture2) texture2_vtable = {
+static ICOM_VTABLE(IDirect3DTexture2) texture2_vtable = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
   IDirect3DTexture2Impl_QueryInterface,
   IDirect3DTexture2Impl_AddRef,
@@ -542,7 +544,9 @@ static ICOM_VTABLE(IDirect3DTexture2) texture2_vtable = {
 /*******************************************************************************
  *				IDirect3DTexture VTable
  */
-static ICOM_VTABLE(IDirect3DTexture) texture_vtable = {
+static ICOM_VTABLE(IDirect3DTexture) texture_vtable = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
   IDirect3DTexture2Impl_QueryInterface,
   IDirect3DTexture2Impl_AddRef,

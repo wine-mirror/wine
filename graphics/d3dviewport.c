@@ -348,7 +348,9 @@ static HRESULT WINAPI IDirect3DViewport2Impl_SetViewport2(LPDIRECT3DVIEWPORT2 if
 /*******************************************************************************
  *				IDirect3DViewport1/2 VTable
  */
-static ICOM_VTABLE(IDirect3DViewport2) viewport2_vtable = {
+static ICOM_VTABLE(IDirect3DViewport2) viewport2_vtable = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
   IDirect3DViewport2Impl_QueryInterface,
   IDirect3DViewport2Impl_AddRef,

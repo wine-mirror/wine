@@ -69,7 +69,9 @@ static HRESULT WINAPI IUnknown_fnQueryInterface(LPUNKNOWN iface,REFIID refiid,LP
 	return OLE_E_ENUM_NOMORE; 
 }
 
-static ICOM_VTABLE(IUnknown) uvt = {
+static ICOM_VTABLE(IUnknown) uvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IUnknown_fnQueryInterface,
 	IUnknown_fnAddRef,
 	IUnknown_fnRelease
@@ -328,7 +330,9 @@ static LPVOID WINAPI IMalloc_fnHeapMinimize(LPMALLOC iface) {
 	return NULL;
 }
 
-static ICOM_VTABLE(IMalloc) VT_IMalloc32 = {
+static ICOM_VTABLE(IMalloc) VT_IMalloc32 = 
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IMalloc_fnQueryInterface,
     IMalloc_fnAddRef,
   IMalloc_fnRelease,

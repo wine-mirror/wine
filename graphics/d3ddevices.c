@@ -1157,7 +1157,9 @@ static HRESULT WINAPI IDirect3DDevice2Impl_GetClipStatus(LPDIRECT3DDEVICE2 iface
  *				OpenGL-specific VTable
  */
 
-static ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable = {
+static ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirect3DDevice2Impl_QueryInterface,
   IDirect3DDevice2Impl_AddRef,
   IDirect3DDevice2Impl_Release,
@@ -1674,7 +1676,9 @@ static HRESULT WINAPI IDirect3DDeviceImpl_GetDirect3D(LPDIRECT3DDEVICE iface,
 /*******************************************************************************
  *				Direct3DDevice VTable
  */
-static ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3 = {
+static ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3 = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirect3DDeviceImpl_QueryInterface,
   IDirect3DDeviceImpl_AddRef,
   IDirect3DDeviceImpl_Release,

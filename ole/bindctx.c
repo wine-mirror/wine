@@ -68,6 +68,7 @@ HRESULT WINAPI BindCtxImpl_GetObjectIndex(BindCtxImpl* This,IUnknown* punk,LPOLE
 /* Virtual function table for the BindCtx class. */
 static ICOM_VTABLE(IBindCtx) VT_BindCtxImpl =
     {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     BindCtxImpl_QueryInterface,
     BindCtxImpl_AddRef,
     BindCtxImpl_Release,

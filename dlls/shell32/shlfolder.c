@@ -167,6 +167,7 @@ static HRESULT WINAPI ISFDropTarget_Drop(
 
 static struct ICOM_VTABLE(IDropTarget) dtvt = 
 {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISFDropTarget_QueryInterface,
 	ISFDropTarget_AddRef,
 	ISFDropTarget_Release,
@@ -965,7 +966,9 @@ static HRESULT WINAPI IShellFolder_fnGetFolderPath(IShellFolder * iface, LPSTR l
 }
 
 static ICOM_VTABLE(IShellFolder) sfvt = 
-{	IShellFolder_fnQueryInterface,
+{	
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IShellFolder_fnQueryInterface,
 	IShellFolder_fnAddRef,
 	IShellFolder_fnRelease,
 	IShellFolder_fnParseDisplayName,
@@ -1067,6 +1070,7 @@ static HRESULT WINAPI ISFPersistFolder_Initialize(
 
 static ICOM_VTABLE(IPersistFolder) psfvt = 
 {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISFPersistFolder_QueryInterface,
 	ISFPersistFolder_AddRef,
 	ISFPersistFolder_Release,

@@ -430,7 +430,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(
 	return DS_OK;
 }
 
-ICOM_VTABLE(IDirectSound3DBuffer) ds3dbvt = {
+ICOM_VTABLE(IDirectSound3DBuffer) ds3dbvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown methods */
 	IDirectSound3DBufferImpl_QueryInterface,
 	IDirectSound3DBufferImpl_AddRef,
@@ -691,7 +693,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_CommitDeferredSettings(
 	return DS_OK;
 }
 
-ICOM_VTABLE(IDirectSound3DListener) ds3dlvt = {
+ICOM_VTABLE(IDirectSound3DListener) ds3dlvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown methods */
 	IDirectSound3DListenerImpl_QueryInterface,
 	IDirectSound3DListenerImpl_AddRef,
@@ -766,7 +770,9 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	return 0;
 }
 
-ICOM_VTABLE(IDirectSoundNotify) dsnvt = {
+ICOM_VTABLE(IDirectSoundNotify) dsnvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectSoundNotifyImpl_QueryInterface,
 	IDirectSoundNotifyImpl_AddRef,
 	IDirectSoundNotifyImpl_Release,
@@ -1251,7 +1257,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 	return E_FAIL;
 }
 
-static ICOM_VTABLE(IDirectSoundBuffer) dsbvt = {
+static ICOM_VTABLE(IDirectSoundBuffer) dsbvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectSoundBufferImpl_QueryInterface,
 	IDirectSoundBufferImpl_AddRef,
 	IDirectSoundBufferImpl_Release,
@@ -1589,7 +1597,9 @@ static HRESULT WINAPI IDirectSoundImpl_Initialize(
 	return DS_OK;
 }
 
-static ICOM_VTABLE(IDirectSound) dsvt = {
+static ICOM_VTABLE(IDirectSound) dsvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectSoundImpl_QueryInterface,
 	IDirectSoundImpl_AddRef,
 	IDirectSoundImpl_Release,

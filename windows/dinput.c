@@ -291,7 +291,9 @@ static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUTA iface,
   return DI_OK;
 }
 
-static ICOM_VTABLE(IDirectInputA) ddiavt= {
+static ICOM_VTABLE(IDirectInputA) ddiavt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputAImpl_QueryInterface,
 	IDirectInputAImpl_AddRef,
 	IDirectInputAImpl_Release,
@@ -1096,7 +1098,9 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
 }
 
 
-static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt={
+static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
 	IDirectInputDevice2AImpl_Release,
@@ -1126,7 +1130,9 @@ static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt={
 	IDirectInputDevice2AImpl_SendDeviceData,
 };
 
-static ICOM_VTABLE(IDirectInputDevice2A) SysMouseAvt={
+static ICOM_VTABLE(IDirectInputDevice2A) SysMouseAvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
 	SysMouseAImpl_Release,

@@ -220,7 +220,9 @@ static HRESULT WINAPI IDirect3DMaterialImpl_Initialize(LPDIRECT3DMATERIAL iface,
 /*******************************************************************************
  *				IDirect3DMaterial VTable
  */
-static ICOM_VTABLE(IDirect3DMaterial) material_vtable = {
+static ICOM_VTABLE(IDirect3DMaterial) material_vtable = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
   IDirect3DMaterial2Impl_QueryInterface,
   IDirect3DMaterial2Impl_AddRef,
@@ -238,7 +240,9 @@ static ICOM_VTABLE(IDirect3DMaterial) material_vtable = {
 /*******************************************************************************
  *				IDirect3DMaterial2 VTable
  */
-static ICOM_VTABLE(IDirect3DMaterial2) material2_vtable = {
+static ICOM_VTABLE(IDirect3DMaterial2) material2_vtable = 
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
   IDirect3DMaterial2Impl_QueryInterface,
   IDirect3DMaterial2Impl_AddRef,

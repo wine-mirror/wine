@@ -28,6 +28,7 @@ DEFAULT_DEBUG_CHANNEL(storage)
  */
 static ICOM_VTABLE(IStream) StgStreamImpl_Vtbl =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     StgStreamImpl_QueryInterface,
     StgStreamImpl_AddRef,
     StgStreamImpl_Release,

@@ -116,6 +116,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_Stat(
  */
 static ICOM_VTABLE(ILockBytes) HGLOBALLockBytesImpl_Vtbl =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     HGLOBALLockBytesImpl_QueryInterface,
     HGLOBALLockBytesImpl_AddRef,
     HGLOBALLockBytesImpl_Release,

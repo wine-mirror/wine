@@ -62,6 +62,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* Thi
 /* Virtual function table for the IRunningObjectTable class. */
 static ICOM_VTABLE(IRunningObjectTable) VT_RunningObjectTableImpl =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     RunningObjectTableImpl_QueryInterface,
     RunningObjectTableImpl_AddRef,
     RunningObjectTableImpl_Release,

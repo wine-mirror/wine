@@ -371,6 +371,7 @@ static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface, BOOL fLoc
 
 static ICOM_VTABLE(IClassFactory) clfvt = 
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IClassFactory_fnQueryInterface,
     IClassFactory_fnAddRef,
   IClassFactory_fnRelease,

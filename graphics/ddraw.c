@@ -1791,7 +1791,9 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_ChangeUniquenessValue(LPDIRECTDRAW
   return DD_OK;
 }
 
-static ICOM_VTABLE(IDirectDrawSurface4) dga_dds4vt = {
+static ICOM_VTABLE(IDirectDrawSurface4) dga_dds4vt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectDrawSurface4Impl_QueryInterface,
 	IDirectDrawSurface4Impl_AddRef,
 	DGA_IDirectDrawSurface4Impl_Release,
@@ -1839,7 +1841,9 @@ static ICOM_VTABLE(IDirectDrawSurface4) dga_dds4vt = {
 	IDirectDrawSurface4Impl_ChangeUniquenessValue
 };
 
-static ICOM_VTABLE(IDirectDrawSurface4) xlib_dds4vt = {
+static ICOM_VTABLE(IDirectDrawSurface4) xlib_dds4vt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectDrawSurface4Impl_QueryInterface,
 	IDirectDrawSurface4Impl_AddRef,
 	Xlib_IDirectDrawSurface4Impl_Release,
@@ -1988,7 +1992,9 @@ static HRESULT WINAPI IDirectDrawClipperImpl_IsClipListChanged(
    return DD_OK;
 }
 
-static ICOM_VTABLE(IDirectDrawClipper) ddclipvt = {
+static ICOM_VTABLE(IDirectDrawClipper) ddclipvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         IDirectDrawClipperImpl_QueryInterface,
         IDirectDrawClipperImpl_AddRef,
         IDirectDrawClipperImpl_Release,
@@ -2155,7 +2161,9 @@ static HRESULT WINAPI IDirectDrawPaletteImpl_QueryInterface(
   return S_OK;
 }
 
-static ICOM_VTABLE(IDirectDrawPalette) dga_ddpalvt = {
+static ICOM_VTABLE(IDirectDrawPalette) dga_ddpalvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectDrawPaletteImpl_QueryInterface,
 	IDirectDrawPaletteImpl_AddRef,
 	IDirectDrawPaletteImpl_Release,
@@ -2165,7 +2173,9 @@ static ICOM_VTABLE(IDirectDrawPalette) dga_ddpalvt = {
 	DGA_IDirectDrawPaletteImpl_SetEntries
 };
 
-static ICOM_VTABLE(IDirectDrawPalette) xlib_ddpalvt = {
+static ICOM_VTABLE(IDirectDrawPalette) xlib_ddpalvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectDrawPaletteImpl_QueryInterface,
 	IDirectDrawPaletteImpl_AddRef,
 	IDirectDrawPaletteImpl_Release,
@@ -2319,7 +2329,9 @@ static HRESULT WINAPI IDirect3DImpl_FindDevice(LPDIRECT3D iface,
   return DD_OK;
 }
 
-static ICOM_VTABLE(IDirect3D) d3dvt = {
+static ICOM_VTABLE(IDirect3D) d3dvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         IDirect3DImpl_QueryInterface,
         IDirect3DImpl_AddRef,
         IDirect3DImpl_Release,
@@ -2480,7 +2492,9 @@ static HRESULT WINAPI IDirect3D2Impl_CreateDevice(LPDIRECT3D2 iface,
   return DDERR_INVALIDPARAMS;
 }
 
-static ICOM_VTABLE(IDirect3D2) d3d2vt = {
+static ICOM_VTABLE(IDirect3D2) d3d2vt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirect3D2Impl_QueryInterface,
 	IDirect3D2Impl_AddRef,
         IDirect3D2Impl_Release,
@@ -4098,7 +4112,9 @@ static HRESULT WINAPI IDirectDraw2Impl_Initialize(LPDIRECTDRAW2 iface,
 # define XCAST(fun)	(void *)
 #endif
 
-static ICOM_VTABLE(IDirectDraw) dga_ddvt = {
+static ICOM_VTABLE(IDirectDraw) dga_ddvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)DGA_IDirectDraw2Impl_QueryInterface,
 	XCAST(AddRef)IDirectDraw2Impl_AddRef,
 	XCAST(Release)DGA_IDirectDraw2Impl_Release,
@@ -4124,7 +4140,9 @@ static ICOM_VTABLE(IDirectDraw) dga_ddvt = {
 	XCAST(WaitForVerticalBlank)IDirectDraw2Impl_WaitForVerticalBlank,
 };
 
-static ICOM_VTABLE(IDirectDraw) xlib_ddvt = {
+static ICOM_VTABLE(IDirectDraw) xlib_ddvt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)Xlib_IDirectDraw2Impl_QueryInterface,
 	XCAST(AddRef)IDirectDraw2Impl_AddRef,
 	XCAST(Release)Xlib_IDirectDraw2Impl_Release,
@@ -4194,7 +4212,9 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetAvailableVidMem(
 	return DD_OK;
 }
 
-static ICOM_VTABLE(IDirectDraw2) dga_dd2vt = {
+static ICOM_VTABLE(IDirectDraw2) dga_dd2vt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	DGA_IDirectDraw2Impl_QueryInterface,
 	IDirectDraw2Impl_AddRef,
 	DGA_IDirectDraw2Impl_Release,
@@ -4221,7 +4241,9 @@ static ICOM_VTABLE(IDirectDraw2) dga_dd2vt = {
 	DGA_IDirectDraw2Impl_GetAvailableVidMem
 };
 
-static ICOM_VTABLE(IDirectDraw2) xlib_dd2vt = {
+static ICOM_VTABLE(IDirectDraw2) xlib_dd2vt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	Xlib_IDirectDraw2Impl_QueryInterface,
 	IDirectDraw2Impl_AddRef,
 	Xlib_IDirectDraw2Impl_Release,
@@ -4292,7 +4314,9 @@ static HRESULT WINAPI IDirectDraw4Impl_GetDeviceIdentifier(LPDIRECTDRAW4 iface,
 #endif
 
 
-static ICOM_VTABLE(IDirectDraw4) dga_dd4vt = {
+static ICOM_VTABLE(IDirectDraw4) dga_dd4vt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)DGA_IDirectDraw2Impl_QueryInterface,
 	XCAST(AddRef)IDirectDraw2Impl_AddRef,
 	XCAST(Release)DGA_IDirectDraw2Impl_Release,
@@ -4323,7 +4347,9 @@ static ICOM_VTABLE(IDirectDraw4) dga_dd4vt = {
 	IDirectDraw4Impl_GetDeviceIdentifier
 };
 
-static ICOM_VTABLE(IDirectDraw4) xlib_dd4vt = {
+static ICOM_VTABLE(IDirectDraw4) xlib_dd4vt = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)Xlib_IDirectDraw2Impl_QueryInterface,
 	XCAST(AddRef)IDirectDraw2Impl_AddRef,
 	XCAST(Release)Xlib_IDirectDraw2Impl_Release,
@@ -4719,7 +4745,9 @@ static HRESULT WINAPI DDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DDCF_Vtbl = {
+static ICOM_VTABLE(IClassFactory) DDCF_Vtbl = 
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	DDCF_QueryInterface,
 	DDCF_AddRef,
 	DDCF_Release,

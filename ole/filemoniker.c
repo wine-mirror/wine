@@ -89,6 +89,7 @@ int     WINAPI FileMonikerImpl_DecomposePath(LPOLESTR str, LPOLESTR** tabStr);
 /* IPersistStream and IMoniker functions.                                       */
 static ICOM_VTABLE(IMoniker) VT_FileMonikerImpl =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     FileMonikerImpl_QueryInterface,
     FileMonikerImpl_AddRef,
     FileMonikerImpl_Release,
@@ -118,6 +119,7 @@ static ICOM_VTABLE(IMoniker) VT_FileMonikerImpl =
 /* Virtual function table for the IROTData class.                               */
 static ICOM_VTABLE(IROTData) VT_ROTDataImpl =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     FileMonikerROTDataImpl_QueryInterface,
     FileMonikerROTDataImpl_AddRef,
     FileMonikerROTDataImpl_Release,
