@@ -877,6 +877,16 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 
 
 /***********************************************************************
+ *           InternetCrackUrlW   (WININET.@)
+ */
+BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
+                              LPURL_COMPONENTSW lpUrlComponents)
+{
+    FIXME("stub\n");
+    return FALSE;
+}
+
+/***********************************************************************
  *           GetUrlCacheEntryInfoA (WININET.@)
  *
  */

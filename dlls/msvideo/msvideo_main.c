@@ -457,6 +457,27 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	return ret;
 }
 
+
+/***********************************************************************
+ *		ICCompressorChoose   [MSVFW32.@]
+ */
+BOOL VFWAPI ICCompressorChoose(HWND hwnd, UINT uiFlags, LPVOID pvIn, LPVOID lpData,
+                               PCOMPVARS pc, LPSTR lpszTitle)
+{
+    FIXME("stub\n");
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *		ICCompressorFree   [MSVFW32.@]
+ */
+void VFWAPI ICCompressorFree(PCOMPVARS pc)
+{
+    FIXME("stub\n");
+}
+
+
 /******************************************************************
  *		MSVIDEO_SendMessage
  *

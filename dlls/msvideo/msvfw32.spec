@@ -24,8 +24,8 @@
 @ stub    GetSaveFileNamePreviewW
 @ stdcall ICClose(long) ICClose
 @ cdecl   ICCompress(long long ptr ptr ptr ptr ptr ptr long long long ptr ptr) ICCompress
-@ stub    ICCompressorChoose
-@ stub    ICCompressorFree
+@ stdcall ICCompressorChoose(long long ptr ptr ptr ptr) ICCompressorChoose
+@ stdcall ICCompressorFree(ptr) ICCompressorFree
 @ cdecl   ICDecompress(long long ptr ptr ptr ptr) ICDecompress
 @ cdecl   ICDraw(long long ptr ptr long long) ICDraw
 @ cdecl   ICDrawBegin(long long long long long long long long long ptr long long long long long long) ICDrawBegin

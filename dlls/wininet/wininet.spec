@@ -93,7 +93,7 @@
 @ stdcall InternetConnectA(ptr str long str str long long long) InternetConnectA
 @ stdcall InternetConnectW(ptr wstr long wstr wstr long long long) InternetConnectW
 @ stdcall InternetCrackUrlA(str long long ptr) InternetCrackUrlA
-@ stub InternetCrackUrlW
+@ stdcall InternetCrackUrlW(wstr long long ptr) InternetCrackUrlW
 @ stub InternetCreateUrlA
 @ stub InternetCreateUrlW
 @ stub InternetDebugGetLocalTime
