@@ -143,7 +143,7 @@ struct thread *create_process( int fd, struct process *parent,
     process->thread_list     = NULL;
     process->debugger        = NULL;
     process->handles         = NULL;
-    process->exit_code       = 0x103;  /* STILL_ACTIVE */
+    process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
     process->priority        = NORMAL_PRIORITY_CLASS;
     process->affinity        = 1;

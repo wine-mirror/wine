@@ -302,7 +302,7 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
     PDB *pdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(PDB) );
 
     if (!pdb) return NULL;
-    pdb->exit_code       = 0x103; /* STILL_ACTIVE */
+    pdb->exit_code       = STILL_ACTIVE;
     pdb->threads         = 1;
     pdb->running_threads = 1;
     pdb->ring0_threads   = 1;
@@ -329,7 +329,7 @@ BOOL PROCESS_Init( BOOL win32 )
     server_fd = CLIENT_InitServer();
 
     /* Fill the initial process structure */
-    initial_pdb.exit_code       = 0x103; /* STILL_ACTIVE */
+    initial_pdb.exit_code       = STILL_ACTIVE;
     initial_pdb.threads         = 1;
     initial_pdb.running_threads = 1;
     initial_pdb.ring0_threads   = 1;

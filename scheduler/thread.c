@@ -176,7 +176,7 @@ TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
     initial_teb.tibflags    = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
     initial_teb.tls_ptr     = initial_teb.tls_array;
     initial_teb.process     = pdb;
-    initial_teb.exit_code   = 0x103; /* STILL_ACTIVE */
+    initial_teb.exit_code   = STILL_ACTIVE;
     initial_teb.socket      = server_fd;
 
     /* Allocate the TEB selector (%fs register) */
@@ -220,7 +220,7 @@ TEB *THREAD_Create( PDB *pdb, int fd, DWORD flags, DWORD stack_size, BOOL alloc_
     teb->tibflags    = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
     teb->tls_ptr     = teb->tls_array;
     teb->process     = pdb;
-    teb->exit_code   = 0x103; /* STILL_ACTIVE */
+    teb->exit_code   = STILL_ACTIVE;
     teb->socket      = fd;
 
     /* Allocate the TEB selector (%fs register) */

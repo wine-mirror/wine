@@ -128,7 +128,7 @@ struct thread *create_thread( int fd, struct process *process, int suspend )
     thread->pass_fd     = -1;
     thread->state       = RUNNING;
     thread->attached    = 0;
-    thread->exit_code   = 0x103;  /* STILL_ACTIVE */
+    thread->exit_code   = STILL_ACTIVE;
     thread->next        = NULL;
     thread->prev        = NULL;
     thread->priority    = THREAD_PRIORITY_NORMAL;
