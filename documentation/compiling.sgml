@@ -1,6 +1,6 @@
   <chapter id="compiling">
     <title>Getting and Compiling the Wine Source</title>
-    <para>How to obtain and compile wine, and problems that may arise...</para>
+    <para>How to obtain and compile Wine, and problems that may arise...</para>
 
     <sect1 id="getting-source">
       <title>Getting Wine Source</title>
@@ -24,7 +24,7 @@
         and received a patch from a developer to hopefully fix the
         bug.  We will show you how to
         <link linkend="getting-upgrading">safely apply the
-        patch</link> and revert it if the patch doesn't work.
+        patch</link> and revert it if it doesn't work.
       </para>
 
       <sect2 id="getting-source-ftp">
@@ -74,24 +74,24 @@
           the latest one.
         </para>
         <para>
-          Once you have downloaded this, you must first compile wine, and then
+          Once you have downloaded this, you must first compile Wine, and then
           install it.  This is not very hard to do.  First switch to the
           directory containing the file you just downloaded.  Then extract the
           source with (e.g.):
 <screen>
-<prompt># </><userinput>tar xzvf wine-<replaceable>20021031</>.tar.gz</>
+<prompt>$ </><userinput>tar xzvf wine-<replaceable>20021031</>.tar.gz</>
 </screen>
         </para>
         <para>
           Then, switch to the directory that was created and compile it by typing (e.g.):
 <screen>
-<prompt># </><userinput>./tools/wineinstall</>
+<prompt>$ </><userinput>./tools/wineinstall</>
 </screen>
         </para>
         <para>
           NOTE: You must make sure that you are not the superuser (root) when doing this,
           and that you have write permission to the directory that was created by the tar
-          command as well as all of its subdirectories and files..
+          command as well as all of its subdirectories and files.
         </para>
       </sect2>
 
@@ -107,7 +107,7 @@
           First, you need to get a copy of the latest Wine sources
           using CVS. You can tell it where to find the source tree by
           setting the <envar>CVSROOT</envar> environment variable. You
-          also have to log in anonymously to the wine CVS server.  In
+          also have to log in anonymously to the Wine CVS server.  In
           <command>bash</>, it might look something like this:
 <screen>
 <prompt>$ </><userinput>export CVSROOT=:pserver:cvs@cvs.winehq.com:/home/wine</>
@@ -124,7 +124,7 @@ Password:
           anywhere in the revision history.  Later, you can grab just
           the updates:
 <screen>
-<prompt>$ </><userinput>cvs -PAd update</>
+<prompt>$ </><userinput>cvs update -PAd</>
 </screen>
         </para>
         <para>
@@ -139,7 +139,7 @@ Password:
           After you've made changes, you can create a patch with
           <command>cvs diff -u</>, which sends output to stdout
           (the <parameter>-u</> controls the format of the
-          patch). So, to create an <filename>my_patch.diff</>
+          patch). So, to create a <filename>my_patch.diff</>
           file, you would do this:
 <screen>
 <prompt>$ </><userinput>cvs diff -u &gt;<replaceable>my_patch.diff</></>
@@ -148,7 +148,7 @@ Password:
         <para>
           You can call <command>cvs diff</command> from anywhere in the
           tree (just like <command>cvs update</command>), and it will
-          always grab recursively from that point.  You can also specify
+          diff recursively from that point.  You can also specify
           single files or subdirectories:
 <screen>
 <prompt>$ </><userinput>cvs diff -u dlls/winaspi &gt;<replaceable>my_aspi_patch.diff</></>
@@ -209,11 +209,11 @@ Password:
           <filename>wine/programs/clock/main.c </>.
           Setting the <parameter>-p1</> option would strip off the
           first part of the file name and apply
-          the patch instead to <filename>programs/clock/main.c </>.
+          the patch to <filename>programs/clock/main.c </>.
           The <parameter>-p1</> option would be useful if you named
-          your top level wine directory differently to the person who sent you
-          the patch. For the <parameter>-p1</> option
-          <command>patch</> should be run from the top level wine directory.
+          your top level Wine directory differently than the person who sent
+          you the patch. For the <parameter>-p1</> option
+          <command>patch</> should be run from the top level Wine directory.
         </para>
       </sect2>
     </sect1>
@@ -227,7 +227,7 @@ Password:
 	  <itemizedlist>
 	    <listitem>
 	      <para>
-	        gcc -- 2.7.x required (Wine uses attribute stdcall).
+	        gcc >= 2.7.x required (Wine uses the stdcall attribute).
 		Versions earlier than 2.7.2.3 barf on shellord.c
 		-- compile without optimizing for that file.
 		In addition EGCS 1.1.x and GCC 2.95.x are reported
@@ -277,8 +277,9 @@ Password:
 	  </itemizedlist>
 	</para>
 	<para>
-	  The Red Hat RPMs are gcc-XXX, flex-XXX, and
-	  XFree86-devel-XXX, where XXX is the version number.
+	  The Red Hat RPMs are gcc-<replaceable>XXX</>,
+          flex-<replaceable>XXX</>, and XFree86-devel-<replaceable>XXX</>,
+          where XXX is the version number.
 	</para>
       </sect2>
 
@@ -289,7 +290,7 @@ Password:
 	  The compiled libwine.so binary takes around 5 MB of disk space,
 	  which can be reduced to about 1 MB by stripping ('strip wine').
 	  Stripping is not recommended, however, as you can't submit
-	  proper crash reports with a stripped binary any more.
+	  proper crash reports with a stripped binary.
 	</para>
       </sect2>
       
@@ -345,25 +346,33 @@ Password:
 	    </listitem>
 	    <listitem>
 	      <para>
-	        OS/2 -- not a complete port. See <ulink url="http://odin.netlabs.org/ProjectAbout.phtml">Odin</ulink> for a project which uses some Wine code.
+		Solaris x86 2.x -- Needs the GNU toolchain (gcc, gas, flex as above, yacc may work) to compile, seems functional (980215).
 	      </para>
 	    </listitem>
 	    <listitem>
 	      <para>
-		Solaris x86 2.x -- Needs GNU toolchain (gcc, gas, flex as above, yacc may work) to compile, seems functional (980215). 
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		DGUX, HP, Irix, or other Unixes; non-intel Linux.
+		DGUX, HP, Irix, or other Unixes; non-x86 Linux.
 		No ports have been seriously attempted.
-		For non-intel Unixes, only a winelib port is relevant.
+		For non-x86 Unixes, only a Winelib port is relevant.
 		Alignment may be a problem.
 	      </para>
 	    </listitem>
 	    <listitem>
 	      <para>
-	        Macintosh/Rhapsody/BeOS -- no ports have been attempted.
+	        OS/2 -- not a complete port. See <ulink
+                url="http://odin.netlabs.org/">Odin</>. Note that this
+                project uses some Wine code but is not based on Wine.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        BeOS -- not a complete port. See <ulink
+                url="http://bewine.beunited.org/">BeWine</>.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        Macintosh/Rhapsody -- no ports have been attempted.
 	      </para>
 	    </listitem>
 	  </itemizedlist>
