@@ -22,6 +22,7 @@
 #include "shell32_main.h"
 #include "pidl.h"
 #include "shresdef.h"
+#include "if_macros.h"
 
 /***********************************************************************
 *   IShellView implementation
@@ -83,6 +84,8 @@ static struct IShellView_VTable svvt =
 #define GET_WM_COMMAND_CMD(wp, lp)              HIWORD(wp)
 // winuser.h
 #define WM_SETTINGCHANGE                WM_WININICHANGE
+extern void WINAPI _InsertMenuItem (HMENU32 hmenu, UINT32 indexMenu, BOOL32 fByPosition, 
+			UINT32 wID, UINT32 fType, LPSTR dwTypeData, UINT32 fState);
 
 typedef struct
 {  int   idCommand;
@@ -113,7 +116,7 @@ LPSHELLVIEW IShellView_Constructor( LPSHELLFOLDER pFolder, LPCITEMIDLIST pidl)
 	sv->lpvtbl=&svvt;
   
 	sv->mpidl	= ILClone(pidl);
-	sv->hMenu	=0;
+	sv->hMenu	= 0;
 	sv->pSFParent	= pFolder;
 	sv->uSelected = 0;
 	sv->aSelectedItems = NULL;
@@ -152,6 +155,83 @@ static HRESULT OnStateChange(LPSHELLVIEW this, UINT32 uFlags)
 	}
 	return S_FALSE;
 }
+static void SetStyle(LPSHELLVIEW this, DWORD dwAdd, DWORD dwRemove)
+{	DWORD tmpstyle;
+
+	TRACE(shell,"(%p)\n", this);
+
+	tmpstyle = GetWindowLong32A(this->hWndList, GWL_STYLE);
+	SetWindowLong32A(this->hWndList, GWL_STYLE, dwAdd | (tmpstyle & ~dwRemove));
+}
+
+static void CheckToolbar(LPSHELLVIEW this)
+{	LRESULT result;
+
+	TRACE(shell,"\n");
+	
+	IShellBrowser_SendControlMsg(this->pShellBrowser, FCW_TOOLBAR, TB_CHECKBUTTON,
+		FCIDM_TB_SMALLICON, (this->FolderSettings.ViewMode==FVM_LIST)? TRUE : FALSE, &result);
+	IShellBrowser_SendControlMsg(this->pShellBrowser, FCW_TOOLBAR, TB_CHECKBUTTON,
+		FCIDM_TB_REPORTVIEW, (this->FolderSettings.ViewMode==FVM_DETAILS)? TRUE : FALSE, &result);
+	IShellBrowser_SendControlMsg(this->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON,
+		FCIDM_TB_SMALLICON, TRUE, &result);
+	IShellBrowser_SendControlMsg(this->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON,
+		FCIDM_TB_REPORTVIEW, TRUE, &result);
+	TRACE(shell,"--\n");
+}
+
+static void MergeToolBar(LPSHELLVIEW this)
+{	LRESULT iStdBMOffset;
+	LRESULT iViewBMOffset;
+	TBADDBITMAP ab;
+	TBBUTTON tbActual[6];
+	int i;
+	enum
+	{ IN_STD_BMP = 0x4000,
+	  IN_VIEW_BMP = 0x8000,
+	} ;
+	static const TBBUTTON c_tbDefault[] =
+	{ { STD_COPY | IN_STD_BMP, FCIDM_SHVIEW_COPY, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0,0}, 0, -1},
+	  { 0,	0,	TBSTATE_ENABLED, TBSTYLE_SEP, {0,0}, 0, -1 },
+	  { VIEW_LARGEICONS | IN_VIEW_BMP, FCIDM_SHVIEW_BIGICON,	TBSTATE_ENABLED, TBSTYLE_BUTTON, {0,0}, 0L, -1 },
+	  { VIEW_SMALLICONS | IN_VIEW_BMP, FCIDM_SHVIEW_SMALLICON,	TBSTATE_ENABLED, TBSTYLE_BUTTON, {0,0}, 0L, -1 },
+	  { VIEW_LIST       | IN_VIEW_BMP, FCIDM_SHVIEW_LISTVIEW,	TBSTATE_ENABLED, TBSTYLE_BUTTON, {0,0}, 0L, -1 },
+	  { VIEW_DETAILS    | IN_VIEW_BMP, FCIDM_SHVIEW_REPORTVIEW,	TBSTATE_ENABLED, TBSTYLE_BUTTON, {0,0}, 0L, -1 },
+	} ;
+
+	TRACE(shell,"\n");
+
+	ab.hInst = HINST_COMMCTRL;		// hinstCommctrl
+	ab.nID   = IDB_STD_SMALL_COLOR;	// std bitmaps
+	IShellBrowser_SendControlMsg(this->pShellBrowser,FCW_TOOLBAR,
+				 TB_ADDBITMAP, 8, (LPARAM)&ab, &iStdBMOffset);
+
+	TRACE(shell,"TB_ADDBITMAP returns %x\n", iStdBMOffset);
+
+	ab.nID   = IDB_VIEW_SMALL_COLOR;	// std view bitmaps
+	IShellBrowser_SendControlMsg(this->pShellBrowser,FCW_TOOLBAR,
+				 TB_ADDBITMAP, 8, (LPARAM)&ab, &iViewBMOffset);
+
+	TRACE(shell,"TB_ADDBITMAP returns %x\n", iViewBMOffset);
+
+	for (i=0; i<6; ++i)
+	{ tbActual[i] = c_tbDefault[i];
+	  if (!(tbActual[i].fsStyle & TBSTYLE_SEP))
+	  { if (tbActual[i].iBitmap & IN_VIEW_BMP)
+	    { tbActual[i].iBitmap = (tbActual[i].iBitmap & ~IN_VIEW_BMP) + iViewBMOffset;
+	    }
+	    else if (tbActual[i].iBitmap & IN_STD_BMP)
+	    { tbActual[i].iBitmap = (tbActual[i].iBitmap & ~IN_STD_BMP) + iStdBMOffset;
+	    }
+	  }
+	}
+
+	IShellBrowser_SetToolbarItems(this->pShellBrowser,tbActual, 6, FCT_MERGE);
+
+	CheckToolbar(this);
+	TRACE(shell,"--\n");
+
+}
 
 /**************************************************************************
 * ShellView_CreateList()
@@ -163,7 +243,8 @@ BOOL32 ShellView_CreateList (LPSHELLVIEW this)
 
 	TRACE(shell,"%p\n",this);
 
-	dwStyle = WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | LVS_SHAREIMAGELISTS | LVS_EDITLABELS;
+	dwStyle = WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER |
+		  LVS_SHAREIMAGELISTS | LVS_EDITLABELS;
 	switch (this->FolderSettings.ViewMode)
 	{ case FVM_ICON:	dwStyle |= LVS_ICON;		break;
 	  case FVM_SMALLICON: 	dwStyle |= LVS_SMALLICON;	break;
@@ -202,41 +283,39 @@ int  nColumn3=100;
 int  nColumn4=100;
 
 BOOL32 ShellView_InitList(LPSHELLVIEW this)
-{ LVCOLUMN32A lvColumn;
-  CHAR        szString[50];
+{	LVCOLUMN32A lvColumn;
+	CHAR        szString[50];
 
-  TRACE(shell,"%p\n",this);
+	TRACE(shell,"%p\n",this);
 
+	ListView_DeleteAllItems(this->hWndList);
 
-  ListView_DeleteAllItems(this->hWndList);		/*empty the list*/
+	//initialize the columns
+	lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;	/*  |  LVCF_SUBITEM;*/
+	lvColumn.fmt = LVCFMT_LEFT;
+	lvColumn.pszText = szString;
 
-  //initialize the columns
-  lvColumn.mask = LVCF_FMT | LVCF_WIDTH  |  LVCF_SUBITEM;
+	lvColumn.cx = nColumn1;
+	strcpy(szString,"File");
+	/*LoadString32A(shell32_hInstance, IDS_COLUMN1, szString, sizeof(szString));*/
+	ListView_InsertColumn32A(this->hWndList, 0, &lvColumn);
 
-  lvColumn.fmt = LVCFMT_LEFT;
-  lvColumn.pszText = szString;
+	lvColumn.cx = nColumn2;
+	strcpy(szString,"Size");
+	ListView_InsertColumn32A(this->hWndList, 1, &lvColumn);
 
-  lvColumn.cx = nColumn1;
-  strcpy(szString,"File");
-  /*LoadString32A(shell32_hInstance, IDS_COLUMN1, szString, sizeof(szString));*/
-  ListView_InsertColumn32A(this->hWndList, 0, &lvColumn);
+	lvColumn.cx = nColumn3;
+	strcpy(szString,"Type");
+	ListView_InsertColumn32A(this->hWndList, 2, &lvColumn);
 
-  lvColumn.cx = nColumn2;
-  strcpy(szString,"COLUMN2");
-  ListView_InsertColumn32A(this->hWndList, 1, &lvColumn);
+	lvColumn.cx = nColumn4;
+	strcpy(szString,"Modified");
+	ListView_InsertColumn32A(this->hWndList, 3, &lvColumn);
 
-  lvColumn.cx = nColumn3;
-  strcpy(szString,"COLUMN3");
-  ListView_InsertColumn32A(this->hWndList, 2, &lvColumn);
-
-  lvColumn.cx = nColumn4;
-  strcpy(szString,"COLUMN4");
-  ListView_InsertColumn32A(this->hWndList, 3, &lvColumn);
-
-  ListView_SetImageList(this->hWndList, ShellSmallIconList, LVSIL_SMALL);
-  ListView_SetImageList(this->hWndList, ShellBigIconList, LVSIL_NORMAL);
+	ListView_SetImageList(this->hWndList, ShellSmallIconList, LVSIL_SMALL);
+	ListView_SetImageList(this->hWndList, ShellBigIconList, LVSIL_NORMAL);
   
-  return TRUE;
+	return TRUE;
 }
 /**************************************************************************
 * ShellView_CompareItems() 
@@ -401,33 +480,13 @@ HMENU32 ShellView_BuildFileMenu(LPSHELLVIEW this)
 * ShellView_MergeFileMenu()
 */   
 void ShellView_MergeFileMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
-{	MENUITEMINFO32A   mii;
-	CHAR          szText[MAX_PATH];
+{	TRACE(shell,"(%p)->(submenu=0x%08x) stub\n",this,hSubMenu);
 
-	TRACE(shell,"(%p)->(submenu=0x%08x) stub\n",this,hSubMenu);
 	if(hSubMenu)
-	{ ZeroMemory(&mii, sizeof(mii));
+	{ /*insert this item at the beginning of the menu */
+	  _InsertMenuItem(hSubMenu, 0, TRUE, 0, MFT_SEPARATOR, NULL, MFS_ENABLED);
+	  _InsertMenuItem(hSubMenu, 0, TRUE, IDM_MYFILEITEM, MFT_STRING, TEXT("dummy45"), MFS_ENABLED);
 
-	  /* add a separator */
-	  mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
-	  mii.fType = MFT_SEPARATOR;
-	  mii.fState = MFS_ENABLED;
-
-	  /*insert this item at the beginning of the menu */
-	  InsertMenuItem32A(hSubMenu, 0, TRUE, &mii);
-
-	  /*add the file menu items */
-	  strcpy(szText,"dummy 45");
-      
-	  mii.cbSize = sizeof(mii);
-	  mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
-	  mii.fType = MFT_STRING;
-	  mii.fState = MFS_ENABLED;
-	  mii.dwTypeData = szText;
-	  mii.wID = IDM_MYFILEITEM;
-
-	  /*insert this item at the beginning of the menu */
-	  InsertMenuItem32A(hSubMenu, 0, TRUE, &mii);
 	}
 	TRACE(shell,"--\n");	
 }
@@ -436,29 +495,11 @@ void ShellView_MergeFileMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
 * ShellView_MergeViewMenu()
 */   
 void ShellView_MergeViewMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
-{	MENUITEMINFO32A	mii;
-	CHAR	szText[MAX_PATH];
-
-	TRACE(shell,"(%p)->(submenu=0x%08x) stub\n",this,hSubMenu);
+{	TRACE(shell,"(%p)->(submenu=0x%08x) stub\n",this,hSubMenu);
 	if(hSubMenu)
-	{ ZeroMemory(&mii, sizeof(mii));
-
-	  /*add a separator at the correct position in the menu*/
-	  mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
-	  mii.fType = MFT_SEPARATOR;
-	  mii.fState = MFS_ENABLED;
-	  InsertMenuItem32A(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
-
-	  /*add the view menu items at the correct position in the menu*/
-	  strcpy(szText,"Dummy 46");
-      
-	  mii.cbSize = sizeof(mii);
-	  mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
-	  mii.fType = MFT_STRING;
-	  mii.fState = MFS_ENABLED;
-	  mii.dwTypeData = szText;
-	  mii.wID = IDM_VIEW_FILES;
-	  InsertMenuItem32A(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
+	{ /*add a separator at the correct position in the menu*/
+	  _InsertMenuItem(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, 0, MFT_SEPARATOR, NULL, MFS_ENABLED);
+	  _InsertMenuItem(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, IDM_VIEW_FILES, MFT_STRING, TEXT("_View"), MFS_ENABLED);
 	}
 }
 /**************************************************************************
@@ -489,8 +530,8 @@ void ShellView_OnDeactivate(LPSHELLVIEW this)
 { TRACE(shell,"%p\n",this);
   if(this->uState != SVUIA_DEACTIVATE)
   { if(this->hMenu)
-    { this->pShellBrowser->lpvtbl->fnSetMenuSB(this->pShellBrowser,0, 0, 0);
-      this->pShellBrowser->lpvtbl->fnRemoveMenusSB(this->pShellBrowser,this->hMenu);
+    { IShellBrowser_SetMenuSB(this->pShellBrowser,0, 0, 0);
+      IShellBrowser_RemoveMenusSB(this->pShellBrowser,this->hMenu);
       DestroyMenu32(this->hMenu);
       this->hMenu = 0;
       }
@@ -522,7 +563,7 @@ LRESULT ShellView_OnActivate(LPSHELLVIEW this, UINT32 uState)
 	  this->hMenu = CreateMenu32();
    
 	  if(this->hMenu)
-	  { this->pShellBrowser->lpvtbl->fnInsertMenusSB(this->pShellBrowser, this->hMenu, &omw);
+	  { IShellBrowser_InsertMenusSB(this->pShellBrowser, this->hMenu, &omw);
 	    TRACE(shell,"-- after fnInsertMenusSB\n");    
 	    /*build the top level menu get the menu item's text*/
 	    strcpy(szText,"dummy 31");
@@ -561,7 +602,7 @@ LRESULT ShellView_OnActivate(LPSHELLVIEW this, UINT32 uState)
 	      }
 	    }
 	  TRACE(shell,"-- before fnSetMenuSB\n");      
-	  this->pShellBrowser->lpvtbl->fnSetMenuSB(this->pShellBrowser, this->hMenu, 0, this->hWnd);
+	  IShellBrowser_SetMenuSB(this->pShellBrowser, this->hMenu, 0, this->hWnd);
 	  }
 	}
 	this->uState = uState;
@@ -580,7 +621,7 @@ LRESULT ShellView_OnSetFocus(LPSHELLVIEW this)
 	/* Tell the browser one of our windows has received the focus. This should always 
 	be done before merging menus (OnActivate merges the menus) if one of our 
 	windows has the focus.*/
-	this->pShellBrowser->lpvtbl->fnOnViewWindowActive(this->pShellBrowser,this);
+	IShellBrowser_OnViewWindowActive(this->pShellBrowser,this);
 	ShellView_OnActivate(this, SVUIA_ACTIVATE_FOCUS);
 
 	return 0;
@@ -607,7 +648,7 @@ BOOL32 ShellView_AddRemoveDockingWindow(LPSHELLVIEW this, BOOL32 bAdd)
 	WARN(shell,"(%p)->(badd=0x%08x) semi-stub\n",this,bAdd);
 
 	/* get the browser's IServiceProvider */
-	hr = this->pShellBrowser->lpvtbl->fnQueryInterface(this->pShellBrowser, (REFIID)&IID_IServiceProvider, (LPVOID*)&pSP);
+	hr = IShellBrowser_QueryInterface(this->pShellBrowser, (REFIID)&IID_IServiceProvider, (LPVOID*)&pSP);
 	if(SUCCEEDED(hr))
 	{ /*get the IDockingWindowFrame pointer*/
 	  hr = pSP->lpvtbl->fnQueryService(pSP, (REFGUID)&SID_SShellBrowser, (REFIID)&IID_IDockingWindowFrame, (LPVOID*)&pFrame);
@@ -663,7 +704,7 @@ BOOL32 ShellView_CanDoIDockingWindow(LPSHELLVIEW this)
 	FIXME(shell,"(%p) stub\n",this);
 	
 	/*get the browser's IServiceProvider*/
-	hr = this->pShellBrowser->lpvtbl->fnQueryInterface(this->pShellBrowser, (REFIID)&IID_IServiceProvider, (LPVOID*)&pSP);
+	hr = IShellBrowser_QueryInterface(this->pShellBrowser, (REFIID)&IID_IServiceProvider, (LPVOID*)&pSP);
 	if(hr==S_OK)
 	{ hr = pSP->lpvtbl->fnQueryService(pSP, (REFGUID)&SID_SShellBrowser, (REFIID)&IID_IDockingWindowFrame, (LPVOID*)&pFrame);
    	  if(SUCCEEDED(hr))
@@ -778,9 +819,8 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 	CMINVOKECOMMANDINFO32  cmi;
 	
 	TRACE(shell,"(%p)->(0x%08x 0x%08x 0x%08x) stub\n",this, x, y, fDefault);
-	this->uSelected = ListView_GetSelectedCount(this->hWndList);
-	this->aSelectedItems = (LPITEMIDLIST*)SHAlloc(this->uSelected * sizeof(LPITEMIDLIST));
 
+	/* look, what's selected and create a context menu object of it*/
 	if(ShellView_GetSelections(this))
 	{ this->pSFParent->lpvtbl->fnGetUIObjectOf(	this->pSFParent,
 							this->hWndParent,
@@ -794,12 +834,11 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 	  { TRACE(shell,"-- pContextMenu\n");
 	    hMenu = CreatePopupMenu32();
 
-            /* See if we are in Explore or Open mode. If the browser's tree is present, 
-            then we are in Explore mode.*/
+            /* See if we are in Explore or Open mode. If the browser's tree
+	     is present, then we are in Explore mode.*/
         
 	    fExplore = FALSE;
-	    hwndTree = 0;
-	    if(SUCCEEDED(this->pShellBrowser->lpvtbl->fnGetControlWindow(this->pShellBrowser,FCW_TREE, &hwndTree)) && hwndTree)
+	    if(SUCCEEDED(IShellBrowser_GetControlWindow(this->pShellBrowser,FCW_TREE, &hwndTree)) && hwndTree)
 	    { TRACE(shell,"-- fExplore\n");
 	      fExplore = TRUE;
 	    }
@@ -844,7 +883,7 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 		  else					/* we are acting with a full featured IShellBrowser */
 		  { TRACE(shell,"-- fnBrowseObject pidl =%p\n", this->aSelectedItems[0]);
 		    wFlags = SBSP_SAMEBROWSER | SBSP_DEFMODE | SBSP_RELATIVE;
-		    this->pShellBrowser->lpvtbl->fnBrowseObject(this->pShellBrowser, 
+		    IShellBrowser_BrowseObject(this->pShellBrowser, 
 								this->aSelectedItems[0], 
 								wFlags);
 		  }
@@ -885,6 +924,26 @@ LRESULT ShellView_OnCommand(LPSHELLVIEW this,DWORD dwCmdID, DWORD dwCmd, HWND32 
    
 	  case IDM_MYFILEITEM:
 	    MessageBeep32(MB_OK);
+	    break;
+
+	  case FCIDM_SHVIEW_SMALLICON:
+	    this->FolderSettings.ViewMode = FVM_SMALLICON;
+	    SetStyle (this, LVS_SMALLICON, LVS_TYPEMASK);
+	    break;
+
+	  case FCIDM_SHVIEW_BIGICON:
+	    this->FolderSettings.ViewMode = FVM_ICON;
+	    SetStyle (this, LVS_ICON, LVS_TYPEMASK);
+	    break;
+
+	  case FCIDM_SHVIEW_LISTVIEW:
+	    this->FolderSettings.ViewMode = FVM_LIST;
+	    SetStyle (this, LVS_LIST, LVS_TYPEMASK);
+	    break;
+
+	  case FCIDM_SHVIEW_REPORTVIEW:
+	    this->FolderSettings.ViewMode = FVM_DETAILS;
+	    SetStyle (this, LVS_REPORT, LVS_TYPEMASK);
 	    break;
 
 	  default:
@@ -954,12 +1013,30 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 	    if(lpdi->item.iSubItem)		  /*is the sub-item information being requested?*/
 	    { if(lpdi->item.mask & LVIF_TEXT)	 /*is the text being requested?*/
 	      { if(_ILIsValue(pidl))	/*is this a value or a folder?*/
-	        {  _ILGetDataText(this->mpidl, pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
-	           if(!*lpdi->item.pszText)
-	           sprintf(lpdi->item.pszText, "file attrib %u", lpdi->item.iSubItem );
+	        { switch (lpdi->item.iSubItem)
+		  { case 1:
+		      _ILGetFileSize (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
+		      break;
+		    case 2:
+		      strncpy (lpdi->item.pszText, "File", lpdi->item.cchTextMax);
+		      break;
+		    case 3:  
+		      _ILGetFileDate (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
+		      break;
+		  }
 	        }
 	        else  /*its a folder*/
-	        { sprintf(lpdi->item.pszText, "folder attrib %u", lpdi->item.iSubItem );
+	        { switch (lpdi->item.iSubItem)
+		  { case 1:
+		      sprintf(lpdi->item.pszText, "fixme");
+		      break;
+	            case 2:
+		      strncpy (lpdi->item.pszText, "Folder", lpdi->item.cchTextMax);
+		      break;
+		    case 3:  
+		      _ILGetFileDate (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
+		      break;
+		  }
 	        }
 	      }
 	    }
@@ -976,19 +1053,19 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 		  else
 		  { FIXME(shell,"type wrong\n");
 		  }
+	          TRACE(shell,"-- text=%s\n",lpdi->item.pszText);
 	        }
 	      }
 
 	      if(lpdi->item.mask & LVIF_IMAGE) 		/*is the image being requested?*/
 	      { if(SUCCEEDED(this->pSFParent->lpvtbl->fnGetUIObjectOf(this->pSFParent,this->hWnd,1,
 				(LPCITEMIDLIST*)&pidl, (REFIID)&IID_IExtractIcon, NULL, (LPVOID*)&pei)))
-	        { //GetIconLoaction will give us the index into our image list
-	          pei->lpvtbl->fnGetIconLocation(pei, GIL_FORSHELL, NULL, 0, &lpdi->item.iImage, &uFlags);
+	        { pei->lpvtbl->fnGetIconLocation(pei, GIL_FORSHELL, NULL, 0, &lpdi->item.iImage, &uFlags);
 	          pei->lpvtbl->fnRelease(pei);
+		  TRACE(shell,"-- image=%x\n",lpdi->item.iImage);
 	        }
 	      }
 	    }
-	    TRACE(shell,"-- text=%s image=%x\n",lpdi->item.pszText, lpdi->item.iImage);
 	    break;
 
 	  case NM_CLICK:
@@ -1295,20 +1372,12 @@ static HRESULT WINAPI IShellView_UIActivate(LPSHELLVIEW this,UINT32 uState)
 						    sizeof(szName) - strlen(szName));
 
 	  /* set the number of parts */
-	  this->pShellBrowser->lpvtbl->fnSendControlMsg(this->pShellBrowser,
-	  						FCW_STATUS,
-							SB_SETPARTS,
-							1,
-							(LPARAM)nPartArray,
-							&lResult);
+	  IShellBrowser_SendControlMsg(this->pShellBrowser, FCW_STATUS, SB_SETPARTS, 1,
+	  						(LPARAM)nPartArray, &lResult);
 
 	  /* set the text for the parts */
-	  this->pShellBrowser->lpvtbl->fnSendControlMsg(this->pShellBrowser,
-							FCW_STATUS,
-							SB_SETTEXT32A,
-							0,
-							(LPARAM)szName,
-							&lResult);
+	  IShellBrowser_SendControlMsg(this->pShellBrowser, FCW_STATUS, SB_SETTEXT32A,
+							0, (LPARAM)szName, &lResult);
 
 	  //add the docking window if necessary
 	  if(g_bShowIDW)
@@ -1326,7 +1395,7 @@ static HRESULT WINAPI IShellView_Refresh(LPSHELLVIEW this)
 	return S_OK;
 }
 static HRESULT WINAPI IShellView_CreateViewWindow(LPSHELLVIEW this, IShellView *lpPrevView,
-                     LPCFOLDERSETTINGS lpfs, IShellBrowser * psb,RECT32 * prcView, HWND32  *phWnd)
+                     LPCFOLDERSETTINGS lpfs, IShellBrowser * psb, RECT32 * prcView, HWND32  *phWnd)
 {	WNDCLASS32A wc;
 /*	LRESULT dwResult;*/
 	*phWnd = 0;
@@ -1340,14 +1409,14 @@ static HRESULT WINAPI IShellView_CreateViewWindow(LPSHELLVIEW this, IShellView *
 	this->FolderSettings = *lpfs;
 
 	/*get our parent window*/
-	this->pShellBrowser->lpvtbl->fnAddRef(this->pShellBrowser);
-	this->pShellBrowser->lpvtbl->fnGetWindow(this->pShellBrowser, &(this->hWndParent));
+	IShellBrowser_AddRef(this->pShellBrowser);
+	IShellBrowser_GetWindow(this->pShellBrowser, &(this->hWndParent));
 
-/*	this->pShellBrowser->lpvtbl->fnSendControlMsg(this->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON, 0xa004, TRUE, &dwResult);
+/*	IShellBrowser_SendControlMsg(this->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON, 0xa004, TRUE, &dwResult);
 */
 	/* try to get the ICommDlgBrowserInterface */
 	this->pCommDlgBrowser=NULL;
-	if ( SUCCEEDED (this->pShellBrowser->lpvtbl->fnQueryInterface( this->pShellBrowser,
+	if ( SUCCEEDED (IShellBrowser_QueryInterface( this->pShellBrowser,
 								        (REFIID)&IID_ICommDlgBrowser,
 									(LPVOID*) &this->pCommDlgBrowser)))
 	{ TRACE(shell,"-- CommDlgBrowser\n");
@@ -1375,6 +1444,8 @@ static HRESULT WINAPI IShellView_CreateViewWindow(LPSHELLVIEW this, IShellView *
                            prcView->left, prcView->top, prcView->right - prcView->left, prcView->bottom - prcView->top,
                            this->hWndParent, 0, shell32_hInstance, (LPVOID)this);
                            
+	MergeToolBar(this);
+	
 	if(!*phWnd)
 	  return E_FAIL;
 
@@ -1390,7 +1461,7 @@ static HRESULT WINAPI IShellView_DestroyViewWindow(LPSHELLVIEW this)
    	{ DestroyMenu32(this->hMenu);
 	}
 	DestroyWindow32(this->hWnd);
-	this->pShellBrowser->lpvtbl->fnRelease(this->pShellBrowser);
+	IShellBrowser_Release(this->pShellBrowser);
 	return S_OK;
 }
 static HRESULT WINAPI IShellView_GetCurrentInfo(LPSHELLVIEW this, LPFOLDERSETTINGS lpfs)
@@ -1425,8 +1496,7 @@ static HRESULT WINAPI IShellView_GetItemObject(LPSHELLVIEW this, UINT32 uItem, R
 
 	*ppvOut = NULL;
 	if(IsEqualIID(riid, &IID_IContextMenu))
-	{ TRACE(shell,"-- (%p)->IID_IContextMenu not implemented\n",this);       
-	  return(E_NOTIMPL);
+	{ pObj =(LPUNKNOWN)IContextMenu_Constructor(this->pSFParent,this->aSelectedItems,this->uSelected);	
 	}
 	else if (IsEqualIID(riid, &IID_IDataObject))
 	{ pObj =(LPUNKNOWN)IDataObject_Constructor(this->hWndParent, this->pSFParent,this->aSelectedItems,this->uSelected);
