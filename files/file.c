@@ -311,11 +311,12 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
     static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
 
-    if (!filename)
+    if (!filename || !filename[0])
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_PATH_NOT_FOUND );
         return INVALID_HANDLE_VALUE;
     }
+
     TRACE("%s %s%s%s%s%s%s%s attributes 0x%lx\n", debugstr_w(filename),
 	  ((access & GENERIC_READ)==GENERIC_READ)?"GENERIC_READ ":"",
 	  ((access & GENERIC_WRITE)==GENERIC_WRITE)?"GENERIC_WRITE ":"",
@@ -1191,71 +1192,6 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
- *           DeleteFileW   (KERNEL32.@)
- */
-BOOL WINAPI DeleteFileW( LPCWSTR path )
-{
-    DOS_FULL_NAME full_name;
-    HANDLE hFile;
-
-    TRACE("%s\n", debugstr_w(path) );
-    if (!path || !*path)
-    {
-        SetLastError(ERROR_PATH_NOT_FOUND);
-        return FALSE;
-    }
-    if (RtlIsDosDeviceName_U( path ))
-    {
-        WARN("cannot remove DOS device %s!\n", debugstr_w(path));
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return FALSE;
-    }
-
-    if (!DOSFS_GetFullName( path, TRUE, &full_name )) return FALSE;
-
-    /* check if we are allowed to delete the source */
-    hFile = FILE_CreateFile( full_name.long_name, GENERIC_READ|GENERIC_WRITE, 0,
-                             NULL, OPEN_EXISTING, 0, 0,
-                             GetDriveTypeW( full_name.short_name ) );
-    if (!hFile) return FALSE;
-
-    if (unlink( full_name.long_name ) == -1)
-    {
-        FILE_SetDosError();
-        CloseHandle(hFile);
-        return FALSE;
-    }
-    CloseHandle(hFile);
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           DeleteFileA   (KERNEL32.@)
- */
-BOOL WINAPI DeleteFileA( LPCSTR path )
-{
-    UNICODE_STRING pathW;
-    BOOL ret = FALSE;
-
-    if (!path)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if (RtlCreateUnicodeStringFromAsciiz(&pathW, path))
-    {
-        ret = DeleteFileW(pathW.Buffer);
-        RtlFreeUnicodeString(&pathW);
-    }
-    else
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return ret;
 }
 

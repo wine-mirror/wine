@@ -552,6 +552,44 @@ void WINAPI DisposeLZ32Handle( HANDLE handle )
  *                      Operations on file names                          *
  **************************************************************************/
 
+/***********************************************************************
+ *           DeleteFileW   (KERNEL32.@)
+ */
+BOOL WINAPI DeleteFileW( LPCWSTR path )
+{
+    HANDLE hFile;
+
+    TRACE("%s\n", debugstr_w(path) );
+
+    hFile = CreateFileW( path, GENERIC_READ | GENERIC_WRITE,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                         NULL, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE, 0 );
+    if (hFile == INVALID_HANDLE_VALUE) return FALSE;
+
+    CloseHandle(hFile);  /* last close will delete the file */
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DeleteFileA   (KERNEL32.@)
+ */
+BOOL WINAPI DeleteFileA( LPCSTR path )
+{
+    UNICODE_STRING pathW;
+    BOOL ret = FALSE;
+
+    if (RtlCreateUnicodeStringFromAsciiz(&pathW, path))
+    {
+        ret = DeleteFileW(pathW.Buffer);
+        RtlFreeUnicodeString(&pathW);
+    }
+    else
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return ret;
+}
+
+
 /**************************************************************************
  *           ReplaceFileW   (KERNEL32.@)
  *           ReplaceFile    (KERNEL32.@)

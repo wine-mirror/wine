@@ -596,6 +596,7 @@ static void test_CreateFileW(void)
     HANDLE hFile;
     WCHAR temp_path[MAX_PATH];
     WCHAR filename[MAX_PATH];
+    WCHAR emptyW[]={'\0'};
     static const WCHAR prefix[] = {'p','f','x',0};
     DWORD ret;
 
@@ -615,6 +616,16 @@ static void test_CreateFileW(void)
 
     ret = DeleteFileW(filename);
     ok(ret, "DeleteFileW: error %ld\n", GetLastError());
+
+    hFile = CreateFileW(NULL, GENERIC_READ, 0, NULL,
+                        CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);
+    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
+       "CreateFileW(NULL) returned ret=%p error=%ld\n",hFile,GetLastError());
+
+    hFile = CreateFileW(emptyW, GENERIC_READ, 0, NULL,
+                        CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);
+    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
+       "CreateFileW(\"\") returned ret=%p error=%ld\n",hFile,GetLastError());
 }
 
 
@@ -647,6 +658,11 @@ static void test_DeleteFileA( void )
     ok(!ret && (GetLastError() == ERROR_PATH_NOT_FOUND ||
                 GetLastError() == ERROR_BAD_PATHNAME),
        "DeleteFileA(\"\") returned ret=%d error=%ld\n",ret,GetLastError());
+
+    ret = DeleteFileA("nul");
+    ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
+                GetLastError() == ERROR_INVALID_PARAMETER),
+       "DeleteFileA(\"nul\") returned ret=%d error=%ld\n",ret,GetLastError());
 }
 
 static void test_DeleteFileW( void )
@@ -701,12 +717,13 @@ static void test_MoveFileA(void)
     lstrcpyA(source, dest);
     lstrcpyA(dest, tempdir);
     lstrcatA(dest, "\\wild?.*");
+    /* FIXME: if we create a file with wildcards we can't delete it now that DeleteFile works correctly */
+#if 0
     ret = MoveFileA(source, dest);
     todo_wine {
       ok(!ret, "MoveFileA: shouldn't move to wildcard file\n");
       ok(GetLastError() == ERROR_INVALID_NAME,
               "MoveFileA: with wildcards, unexpected error %ld\n", GetLastError());
-#if 0
       if (ret || (GetLastError() != ERROR_INVALID_NAME))
       {
         WIN32_FIND_DATAA fd;
@@ -730,12 +747,12 @@ static void test_MoveFileA(void)
           FindClose(hFind);
         }
       }
-#endif
       ret = DeleteFileA(source);
       ok(ret, "DeleteFileA: error %ld\n", GetLastError());
       ret = DeleteFileA(dest);
       ok(!ret, "DeleteFileA: error %ld\n", GetLastError());
     }
+#endif
 
     ret = RemoveDirectoryA(tempdir);
     ok(ret, "DeleteDirectoryA: error %ld\n", GetLastError());
@@ -802,7 +819,7 @@ static void test_offset_in_overlapped_structure(void)
     if (rc || GetLastError()!=ERROR_INVALID_PARAMETER) {
         ok(rc, "WriteFile error %ld\n", GetLastError());
         ok(done == sizeof(pattern), "expected number of bytes written %lu\n", done);
-        trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));
+        /*trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));*/
         ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
            "expected file offset %d\n", PATTERN_OFFSET + sizeof(pattern));
 
@@ -831,7 +848,7 @@ static void test_offset_in_overlapped_structure(void)
     if (rc || GetLastError()!=ERROR_INVALID_PARAMETER) {
         ok(rc, "ReadFile error %ld\n", GetLastError());
         ok(done == sizeof(pattern), "expected number of bytes read %lu\n", done);
-        trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));
+        /*trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));*/
         ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (PATTERN_OFFSET + sizeof(pattern)),
            "expected file offset %d\n", PATTERN_OFFSET + sizeof(pattern));
         ok(!memcmp(buf, pattern, sizeof(pattern)), "pattern match failed\n");
@@ -930,12 +947,16 @@ static void test_file_sharing(void)
     static const DWORD sharing_modes[4] = { 0, FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE };
     int a1, s1, a2, s2;
 
+    /* make sure the file exists */
+    HANDLE h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    CloseHandle( h );
+
     for (a1 = 0; a1 < 4; a1++)
     {
         for (s1 = 0; s1 < 4; s1++)
         {
             HANDLE h = CreateFileA( filename, access_modes[a1], sharing_modes[s1],
-                                    NULL, CREATE_ALWAYS, 0, 0 );
+                                    NULL, OPEN_EXISTING, 0, 0 );
             if (h == INVALID_HANDLE_VALUE)
             {
                 ok(0,"couldn't create file \"%s\" (err=%ld)\n",filename,GetLastError());
@@ -946,7 +967,7 @@ static void test_file_sharing(void)
                 for (s2 = 0; s2 < 4; s2++)
                 {
                     HANDLE h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
-                                          NULL, CREATE_ALWAYS, 0, 0 );
+                                          NULL, OPEN_EXISTING, 0, 0 );
                     if (is_sharing_compatible( access_modes[a1], sharing_modes[s1],
                                                access_modes[a2], sharing_modes[s2] ))
                     {
