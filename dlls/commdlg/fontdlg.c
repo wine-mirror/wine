@@ -916,6 +916,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 
                     if( GetWindowInfo( GetDlgItem( hDlg, stc5), &wininfo ) )
 		    {
+                        MapWindowPoints( 0, hDlg, (LPPOINT) &wininfo.rcWindow, 2);
                         InvalidateRect( hDlg, &wininfo.rcWindow, TRUE );
 		    }
                   }
@@ -932,6 +933,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 
                     if( GetWindowInfo( GetDlgItem( hDlg, stc5), &wininfo ) )
 		    {
+                        MapWindowPoints( 0, hDlg, (LPPOINT) &wininfo.rcWindow, 2);
                         InvalidateRect( hDlg, &wininfo.rcWindow, TRUE );
 		    }
 		  }
@@ -983,8 +985,10 @@ static LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
         HFONT hOrigFont;
         COLORREF rgbPrev;
         WCHAR sample[SAMPLE_EXTLEN+5]={'A','a','B','b'};
+        LOGFONTA lf = *(lpcf->lpLogFont);
         /* Always start with this basic sample */
 
+        MapWindowPoints( 0, hDlg, (LPPOINT) &info.rcWindow, 2);
         hdc=BeginPaint( hDlg, &ps );
 
         /* Paint frame */
@@ -1006,7 +1010,8 @@ static LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
         info.rcWindow.bottom--;
         info.rcWindow.top++;
         info.rcWindow.left++;
-        hOrigFont=SelectObject( hdc, CreateFontIndirectA( lpcf->lpLogFont ) );
+        lf.lfHeight = MulDiv(lf.lfHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        hOrigFont = SelectObject( hdc, CreateFontIndirectA( &lf ) );
         rgbPrev=SetTextColor( hdc, lpcf->rgbColors );
 
         DrawTextW( hdc, sample, -1, &info.rcWindow, DT_CENTER|DT_VCENTER|DT_SINGLELINE );
