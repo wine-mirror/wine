@@ -43,9 +43,8 @@ extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern DWORD errorlevel;
 
-int file_total, dir_total, line_count, page_mode, recurse, wide, bare,
-    max_width;
-ULONGLONG byte_total;
+static int file_total, dir_total, recurse, wide, bare, max_width;
+static ULONGLONG byte_total;
 
 /*****************************************************************************
  * WCMD_directory
@@ -54,19 +53,18 @@ ULONGLONG byte_total;
  *
  */
 
-void WCMD_directory () {
+void WCMD_directory (void) {
 
 char path[MAX_PATH], drive[8];
-int status;
+int status, paged_mode;
 ULARGE_INTEGER avail, total, free;
 CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
-  line_count = 5;
   byte_total = 0;
   file_total = dir_total = 0;
 
   /* Handle args */
-  page_mode = (strstr(quals, "/P") != NULL);
+  paged_mode = (strstr(quals, "/P") != NULL);
   recurse = (strstr(quals, "/S") != NULL);
   wide    = (strstr(quals, "/W") != NULL);
   bare    = (strstr(quals, "/B") != NULL);
@@ -78,11 +76,15 @@ CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
      GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
      max_width = consoleInfo.dwSize.X;
   }
+  if (paged_mode) {
+     WCMD_enter_paged_mode();
+  }
 
   if (param1[0] == '\0') strcpy (param1, ".");
   status = GetFullPathName (param1, sizeof(path), path, NULL);
   if (!status) {
     WCMD_print_error();
+    if (paged_mode) WCMD_leave_paged_mode();
     return;
   }
   lstrcpyn (drive, path, 3);
@@ -90,6 +92,7 @@ CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   if (!bare) {
      status = WCMD_volume (0, drive);
      if (!status) {
+         if (paged_mode) WCMD_leave_paged_mode();
        return;
      }
   }
@@ -108,6 +111,7 @@ CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
        WCMD_output (" %18s bytes free\n\n", WCMD_filesize64 (free.QuadPart));
      }
   }
+  if (paged_mode) WCMD_leave_paged_mode();
 }
 
 /*****************************************************************************
@@ -128,12 +132,11 @@ char string[1024], datestring[32], timestring[32];
 char mem_err[] = "Memory Allocation Error";
 char *p;
 char real_path[MAX_PATH];
-DWORD count;
 WIN32_FIND_DATA *fd;
 FILETIME ft;
 SYSTEMTIME st;
 HANDLE hff;
-int status, dir_count, file_count, entry_count, i, widest, linesout, cur_width, tmp_width;
+int status, dir_count, file_count, entry_count, i, widest, cur_width, tmp_width;
 ULARGE_INTEGER byte_count, file_size;
 
   dir_count = 0;
@@ -141,7 +144,6 @@ ULARGE_INTEGER byte_count, file_size;
   entry_count = 0;
   byte_count.QuadPart = 0;
   widest = 0;
-  linesout = 0;
   cur_width = 0;
 
 /*
@@ -202,14 +204,6 @@ ULARGE_INTEGER byte_count, file_size;
   if (!bare) {
      if (level != 0) WCMD_output ("\n\n");
      WCMD_output ("Directory of %s\n\n", real_path);
-     if (page_mode) {
-       line_count += 2;
-       if (line_count > 23) {
-         line_count = 0;
-         WCMD_output (anykey);
-         ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
-       }
-     }
   }
 
   for (i=0; i<entry_count; i++) {
@@ -224,9 +218,7 @@ ULARGE_INTEGER byte_count, file_size;
 
       tmp_width = cur_width;
       if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-          WCMD_output ("[");
-          WCMD_output ("%s", (fd+i)->cFileName);
-          WCMD_output ("]");
+          WCMD_output ("[%s]", (fd+i)->cFileName);
           dir_count++;
           tmp_width = tmp_width + strlen((fd+i)->cFileName) + 2;
       } else {
@@ -247,7 +239,6 @@ ULARGE_INTEGER byte_count, file_size;
       if ((cur_width + widest) > max_width) {
           WCMD_output ("\n");
           cur_width = 0;
-          linesout++;
       } else {
           WCMD_output ("%*.s", (tmp_width - cur_width) ,"");
       }
@@ -258,12 +249,10 @@ ULARGE_INTEGER byte_count, file_size;
       if (!bare) {
          WCMD_output ("%10s  %8s  <DIR>         %s\n",
       	     datestring, timestring, (fd+i)->cFileName);
-         linesout++;
       } else {
          if (!((strcmp((fd+i)->cFileName, ".") == 0) ||
                (strcmp((fd+i)->cFileName, "..") == 0))) {
             WCMD_output ("%s%s\n", recurse?real_path:"", (fd+i)->cFileName);
-            linesout++;
          }
       }
     }
@@ -281,32 +270,14 @@ ULARGE_INTEGER byte_count, file_size;
          WCMD_output ("%10s  %8s    %10s  %s\n",
      	     datestring, timestring,
 	         WCMD_filesize64(file_size.QuadPart), (fd+i)->cFileName);
-         linesout++;
       } else {
          WCMD_output ("%s%s\n", recurse?real_path:"", (fd+i)->cFileName);
-         linesout++;
-      }
-    }
-    if (page_mode) {
-      line_count = line_count + linesout;
-      linesout = 0;
-      if (line_count > 23) {
-        line_count = 0;
-        WCMD_output (anykey);
-        ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
       }
     }
   }
 
   if (wide && cur_width>0) {
       WCMD_output ("\n");
-      if (page_mode) {
-        if (++line_count > 23) {
-          line_count = 0;
-          WCMD_output (anykey);
-          ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
-        }
-      }
   }
 
   if (!bare) {
@@ -316,13 +287,6 @@ ULARGE_INTEGER byte_count, file_size;
      else {
        WCMD_output ("%8d files %24s bytes\n", file_count, WCMD_filesize64 (byte_count.QuadPart));
      }
-     if (page_mode) {
-       if (++line_count > 23) {
-         line_count = 0;
-         WCMD_output (anykey);
-         ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
-       }
-     }
   }
   byte_total = byte_total + byte_count.QuadPart;
   file_total = file_total + file_count;
@@ -331,13 +295,6 @@ ULARGE_INTEGER byte_count, file_size;
   if (!bare) {
      if (dir_count == 1) WCMD_output ("1 directory         ");
      else WCMD_output ("%8d directories", dir_count);
-     if (page_mode) {
-       if (++line_count > 23) {
-         line_count = 0;
-         WCMD_output (anykey);
-         ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
-       }
-     }
   }
   for (i=0; i<entry_count; i++) {
     if ((recurse) &&

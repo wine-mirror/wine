@@ -587,12 +587,31 @@ void WCMD_output (char *format, ...) {
 
 va_list ap;
 char string[1024];
-DWORD count;
 
   va_start(ap,format);
   vsprintf (string, format, ap);
-  WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), string, lstrlen(string), &count, NULL);
   va_end(ap);
+  WCMD_output_asis(string);
+}
+
+
+static int line_count;
+static int max_height;
+static BOOL paged_mode;
+
+void WCMD_enter_paged_mode(void)
+{
+CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+
+  GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
+  max_height = consoleInfo.dwSize.Y;
+  paged_mode = TRUE;
+  line_count = 5; /* keep 5 lines from previous output */
+}
+
+void WCMD_leave_paged_mode(void)
+{
+  paged_mode = FALSE;
 }
 
 /*******************************************************************
@@ -602,9 +621,26 @@ DWORD count;
 
 void WCMD_output_asis (char *message) {
   DWORD count;
-  WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), message, lstrlen(message), &count, NULL);
-}
+  char* ptr;
+  char string[1024];
 
+  if (paged_mode) {
+    do {
+      if ((ptr = strchr(message, '\n')) != NULL) ptr++;
+      WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), message, 
+                 (ptr) ? ptr - message : lstrlen(message), &count, NULL);
+      if (ptr) {
+        if (++line_count >= max_height - 1) {
+          line_count = 0;
+          WCMD_output_asis (anykey);
+          ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
+        }
+      }
+    } while ((message = ptr) != NULL);
+  } else {
+      WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), message, lstrlen(message), &count, NULL);
+  }
+}
 
 
 /***************************************************************************
