@@ -1464,17 +1464,18 @@ VOID WINAPI GlobalMemoryStatus(
     if (f)
     {
         char buffer[256];
-        int total, used, free;
+        int total, used, free, shared, buffers, cached;
 
+        lpmem->dwLength = sizeof(MEMORYSTATUS);
         lpmem->dwTotalPhys = lpmem->dwAvailPhys = 0;
         lpmem->dwTotalPageFile = lpmem->dwAvailPageFile = 0;
         while (fgets( buffer, sizeof(buffer), f ))
         {
 	    /* old style /proc/meminfo ... */
-            if (sscanf( buffer, "Mem: %d %d %d", &total, &used, &free ))
+            if (sscanf( buffer, "Mem: %d %d %d %d %d %d", &total, &used, &free, &shared, &buffers, &cached ))
             {
                 lpmem->dwTotalPhys += total;
-                lpmem->dwAvailPhys += free;
+                lpmem->dwAvailPhys += free + buffers + cached;
             }
             if (sscanf( buffer, "Swap: %d %d %d", &total, &used, &free ))
             {
@@ -1491,6 +1492,10 @@ VOID WINAPI GlobalMemoryStatus(
 	        lpmem->dwTotalPageFile = total*1024;
 	    if (sscanf(buffer, "SwapFree: %d", &free))
 	        lpmem->dwAvailPageFile = free*1024;
+	    if (sscanf(buffer, "Buffers: %d", &buffers))
+	        lpmem->dwAvailPhys += buffers*1024;
+	    if (sscanf(buffer, "Cached: %d", &cached))
+	        lpmem->dwAvailPhys += cached*1024;
         }
         fclose( f );
 
