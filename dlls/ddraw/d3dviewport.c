@@ -311,9 +311,19 @@ HRESULT WINAPI IDirect3DViewport2Impl_DeleteLight(LPDIRECT3DVIEWPORT2 iface,
 						     LPDIRECT3DLIGHT lpLight)
 {
   ICOM_THIS(IDirect3DViewport2Impl,iface);
-  FIXME("(%p)->(%p): stub\n", This, lpLight);
+  IDirect3DLightImpl** currentlplpLight;
+  TRACE("(%p)->(%p): stub\n", This, lpLight);
 
-  return DD_OK;
+  currentlplpLight = &(This->lights);
+  while(*currentlplpLight) {
+    if (*currentlplpLight == (IDirect3DLightImpl*)lpLight) {
+      *currentlplpLight = (*currentlplpLight)->next;
+      return DD_OK;
+    }
+    currentlplpLight = &((*currentlplpLight)->next);
+  }
+
+  return DDERR_INVALIDOBJECT;
 }
 
 HRESULT WINAPI IDirect3DViewport2Impl_NextLight(LPDIRECT3DVIEWPORT2 iface,
