@@ -416,6 +416,17 @@ PERMCHECK:
 		          $reason = "no Device option found -> CD-ROM labels can\'t be read";
 			  $advice = "add Device option and make sure the device given is accessible by you";
 		        }
+			else
+			{
+			  my $fs_line = `grep $device /etc/fstab`;
+			  my @entry = split /\s+/, $fs_line;
+			  if (! ($entry[3] =~ /unhide/)) 
+			  {
+			    $level = $is_suspect;
+			    $reason = "no unhide option found";
+			    $advice = "add unhide option to fstab, check http://www.winehq.org/site/docs/wine-user/config-drive-main"
+			  }
+			}
                         last;
 		         };
         /^ramdisk$/i && do { last; };
