@@ -303,6 +303,11 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
         return DSERR_INVALIDPARAM;
     }
 
+    if (This->initialized == FALSE) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
     if (dsbd == NULL) {
         WARN("invalid parameter: dsbd == NULL\n");
         return DSERR_INVALIDPARAM;
@@ -379,6 +384,11 @@ static HRESULT WINAPI IDirectSoundImpl_GetCaps(
         return DSERR_INVALIDPARAM;
     }
 
+    if (This->initialized == FALSE) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
     if (lpDSCaps == NULL) {
         WARN("invalid parameter: lpDSCaps = NULL\n");
         return DSERR_INVALIDPARAM;
@@ -434,6 +444,11 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     if (This == NULL) {
         WARN("invalid parameter: This == NULL\n");
         return DSERR_INVALIDPARAM;
+    }
+
+    if (This->initialized == FALSE) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
     }
 
     if (psb == NULL) {
@@ -577,6 +592,11 @@ static HRESULT WINAPI IDirectSoundImpl_GetSpeakerConfig(
     ICOM_THIS(IDirectSoundImpl,iface);
     TRACE("(%p, %p)\n",This,lpdwSpeakerConfig);
 
+    if (This->initialized == FALSE) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
     if (lpdwSpeakerConfig == NULL) {
         WARN("invalid parameter: lpdwSpeakerConfig == NULL\n");
         return DSERR_INVALIDPARAM;
@@ -594,6 +614,11 @@ static HRESULT WINAPI IDirectSoundImpl_SetSpeakerConfig(
     ICOM_THIS(IDirectSoundImpl,iface);
     TRACE("(%p,0x%08lx)\n",This,config);
 
+    if (This->initialized == FALSE) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
     This->speaker_config = config;
     WARN("not fully functional\n");
     return DS_OK;
@@ -606,6 +631,8 @@ static HRESULT WINAPI IDirectSoundImpl_Initialize(
     ICOM_THIS(IDirectSoundImpl,iface);
     TRACE("(%p,%s)\n",This,debugstr_guid(lpcGuid));
 
+    This->initialized = TRUE;
+
     return DS_OK;
 }
 
@@ -615,6 +642,11 @@ static HRESULT WINAPI IDirectSoundImpl_VerifyCertification(
 {
     ICOM_THIS(IDirectSoundImpl,iface);
     TRACE("(%p, %p)\n",This,pdwCertified);
+
+    if (This->initialized == FALSE) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
 
     if (This->drvcaps.dwFlags & DSCAPS_CERTIFIED)
         *pdwCertified = DS_CERTIFIED;
@@ -718,6 +750,7 @@ HRESULT WINAPI IDirectSoundImpl_Create(
     pDS->buffers        = NULL;
     pDS->primary        = NULL;
     pDS->speaker_config = DSSPEAKER_STEREO | (DSSPEAKER_GEOMETRY_NARROW << 16);
+    pDS->initialized    = FALSE;
 
     /* 3D listener initial parameters */
     pDS->listener       = NULL;
@@ -1524,22 +1557,7 @@ HRESULT WINAPI IDirectSound8_IDirectSound8_Create(
     return DS_OK;
 }
 
-/*******************************************************************************
- *		DirectSoundCreate (DSOUND.1)
- *
- *  Creates and initializes a DirectSound interface.
- *
- *  PARAMS
- *     lpcGUID   [I] Address of the GUID that identifies the sound device.
- *     ppDS      [O] Address of a variable to receive the interface pointer.
- *     pUnkOuter [I] Must be NULL.
- *
- *  RETURNS
- *     Success: DS_OK
- *     Failure: DSERR_ALLOCATED, DSERR_INVALIDPARAM, DSERR_NOAGGREGATION,
- *              DSERR_NODRIVER, DSERR_OUTOFMEMORY
- */
-HRESULT WINAPI DirectSoundCreate(
+HRESULT WINAPI DSOUND_Create(
     LPCGUID lpcGUID,
     LPDIRECTSOUND *ppDS,
     IUnknown *pUnkOuter)
@@ -1548,6 +1566,11 @@ HRESULT WINAPI DirectSoundCreate(
     GUID devGuid;
 
     TRACE("(%s,%p,%p)\n",debugstr_guid(lpcGUID),ppDS,pUnkOuter);
+
+    if (pUnkOuter != NULL) {
+        WARN("invalid parameter: pUnkOuter != NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
 
     if (ppDS == NULL) {
         WARN("invalid parameter: ppDS == NULL\n");
@@ -1609,9 +1632,9 @@ HRESULT WINAPI DirectSoundCreate(
 }
 
 /*******************************************************************************
- *        DirectSoundCreate8 (DSOUND.11)
+ *		DirectSoundCreate (DSOUND.1)
  *
- *  Creates and initializes a DirectSound8 interface.
+ *  Creates and initializes a DirectSound interface.
  *
  *  PARAMS
  *     lpcGUID   [I] Address of the GUID that identifies the sound device.
@@ -1623,7 +1646,23 @@ HRESULT WINAPI DirectSoundCreate(
  *     Failure: DSERR_ALLOCATED, DSERR_INVALIDPARAM, DSERR_NOAGGREGATION,
  *              DSERR_NODRIVER, DSERR_OUTOFMEMORY
  */
-HRESULT WINAPI DirectSoundCreate8(
+HRESULT WINAPI DirectSoundCreate(
+    LPCGUID lpcGUID,
+    LPDIRECTSOUND *ppDS,
+    IUnknown *pUnkOuter)
+{
+    HRESULT hr;
+
+    TRACE("(%s,%p,%p)\n",debugstr_guid(lpcGUID),ppDS,pUnkOuter);
+
+    hr = DSOUND_Create(lpcGUID, ppDS, pUnkOuter);
+    if (hr == DS_OK)
+        IDirectSoundImpl_Initialize((LPDIRECTSOUND8)dsound, lpcGUID);
+
+    return hr;
+}
+
+HRESULT WINAPI DSOUND_Create8(
     LPCGUID lpcGUID,
     LPDIRECTSOUND8 *ppDS,
     IUnknown *pUnkOuter)
@@ -1632,6 +1671,11 @@ HRESULT WINAPI DirectSoundCreate8(
     GUID devGuid;
 
     TRACE("(%s,%p,%p)\n",debugstr_guid(lpcGUID),ppDS,pUnkOuter);
+
+    if (pUnkOuter != NULL) {
+        WARN("invalid parameter: pUnkOuter != NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
 
     if (ppDS == NULL) {
         WARN("invalid parameter: ppDS == NULL\n");
@@ -1688,6 +1732,37 @@ HRESULT WINAPI DirectSoundCreate8(
         } else
             WARN("IDirectSoundImpl_Create failed\n");
     }
+
+    return hr;
+}
+
+/*******************************************************************************
+ *        DirectSoundCreate8 (DSOUND.11)
+ *
+ *  Creates and initializes a DirectSound8 interface.
+ *
+ *  PARAMS
+ *     lpcGUID   [I] Address of the GUID that identifies the sound device.
+ *     ppDS      [O] Address of a variable to receive the interface pointer.
+ *     pUnkOuter [I] Must be NULL.
+ *
+ *  RETURNS
+ *     Success: DS_OK
+ *     Failure: DSERR_ALLOCATED, DSERR_INVALIDPARAM, DSERR_NOAGGREGATION,
+ *              DSERR_NODRIVER, DSERR_OUTOFMEMORY
+ */
+HRESULT WINAPI DirectSoundCreate8(
+    LPCGUID lpcGUID,
+    LPDIRECTSOUND8 *ppDS,
+    IUnknown *pUnkOuter)
+{
+    HRESULT hr;
+
+    TRACE("(%s,%p,%p)\n",debugstr_guid(lpcGUID),ppDS,pUnkOuter);
+
+    hr = DSOUND_Create8(lpcGUID, ppDS, pUnkOuter);
+    if (hr == DS_OK)
+        IDirectSoundImpl_Initialize((LPDIRECTSOUND8)dsound, lpcGUID);
 
     return hr;
 }

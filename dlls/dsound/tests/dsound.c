@@ -69,6 +69,10 @@ static void dsound_dsound_tests()
         if (rc==DS_OK)
             IDirectSound8_Release(ds8);
 
+        /* try unitialized object */
+        rc=IDirectSound_GetCaps(dso,0);
+        ok(rc==DSERR_UNINITIALIZED,"GetCaps should have returned DSERR_UNINITIALIZED, returned: %s\n",DXGetErrorString9(rc));
+
         rc=IDirectSound_Initialize(dso,NULL);
         ok(rc==DS_OK,"IDirectSound_Initialize(NULL) failed: %s\n",DXGetErrorString9(rc));
 
@@ -170,6 +174,10 @@ static void dsound_dsound8_tests()
         ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IDirectSound8) should have failed: %s\n",DXGetErrorString9(rc));
         if (rc==DS_OK)
             IDirectSound8_Release(ds8);
+
+        /* try unitialized object */
+        rc=IDirectSound8_GetCaps(dso,0);
+        ok(rc==DSERR_UNINITIALIZED,"GetCaps should have returned DSERR_UNINITIALIZED, returned: %s\n",DXGetErrorString9(rc));
 
         rc=IDirectSound8_Initialize(dso,NULL);
         ok(rc==DS_OK,"IDirectSound_Initialize(NULL) failed: %s\n",DXGetErrorString9(rc));

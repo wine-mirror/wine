@@ -95,6 +95,7 @@ struct IDirectSoundImpl
     PrimaryBufferImpl*          primary;
     DSBUFFERDESC                dsbd;
     DWORD                       speaker_config;
+    BOOL                        initialized;
 
     /* DirectSound3DListener fields */
     IDirectSound3DListenerImpl*	listener;
@@ -116,6 +117,16 @@ typedef struct BufferMemory
 HRESULT WINAPI IDirectSoundImpl_Create(
     LPCGUID lpcGUID,
     LPDIRECTSOUND8 * ppds);
+
+HRESULT WINAPI DSOUND_Create(
+    LPCGUID lpcGUID,
+    LPDIRECTSOUND *ppDS,
+    IUnknown *pUnkOuter);
+
+HRESULT WINAPI DSOUND_Create8(
+    LPCGUID lpcGUID,
+    LPDIRECTSOUND8 *ppDS,
+    IUnknown *pUnkOuter);
 
 /*****************************************************************************
  * IDirectSound COM components

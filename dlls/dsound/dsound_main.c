@@ -478,10 +478,10 @@ static HRESULT WINAPI DSCF_CreateInstance(
 	*ppobj = NULL;
 
 	if ( IsEqualIID( &IID_IDirectSound, riid ) )
-		return DirectSoundCreate(0,(LPDIRECTSOUND*)ppobj,pOuter);
+		return DSOUND_Create(0,(LPDIRECTSOUND*)ppobj,pOuter);
 
 	if ( IsEqualIID( &IID_IDirectSound8, riid ) )
-		return DirectSoundCreate8(0,(LPDIRECTSOUND8*)ppobj,pOuter);
+		return DSOUND_Create8(0,(LPDIRECTSOUND8*)ppobj,pOuter);
 
 	WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
 	return E_NOINTERFACE;
