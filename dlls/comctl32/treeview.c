@@ -1752,10 +1752,22 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		else 
           aChild = &infoPtr->items[(INT)infoPtr->TopRootItem];
   
+        /* lookup the text if using LPSTR_TEXTCALLBACKs */
+        if (wineItem->pszText==LPSTR_TEXTCALLBACKA) {
+          TREEVIEW_SendDispInfoNotify (hwnd, wineItem, TVN_GETDISPINFO, TVIF_TEXT);
+        }
+    
         /* Iterate the parent children to see where we fit in */
         while ( aChild != NULL )
         {
-          INT comp = strcmp(wineItem->pszText, aChild->pszText);
+          INT comp;
+
+          /* lookup the text if using LPSTR_TEXTCALLBACKs */
+          if (aChild->pszText==LPSTR_TEXTCALLBACKA) {
+            TREEVIEW_SendDispInfoNotify (hwnd, aChild, TVN_GETDISPINFO, TVIF_TEXT);
+	  }
+
+          comp = strcmp(wineItem->pszText, aChild->pszText);
           if ( comp < 0 )  /* we are smaller than the current one */
           {
             TREEVIEW_InsertBefore(infoPtr, wineItem, aChild, parentItem);
@@ -1941,7 +1953,11 @@ TREEVIEW_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   	iItem= (INT) lParam;
   	wineItem = TREEVIEW_ValidItem (infoPtr, (HTREEITEM)iItem);
   	if (!wineItem) return FALSE;
-    TRACE("%s\n",wineItem->pszText);
+
+        if (wineItem->pszText==LPSTR_TEXTCALLBACKA)
+           TRACE("LPSTR_TEXTCALLBACK\n");
+	else
+           TRACE("%s\n",wineItem->pszText);
 	TREEVIEW_RemoveItem (hwnd, wineItem);
   }
 
@@ -3041,6 +3057,10 @@ TREEVIEW_CreateDragImage (HWND hwnd, WPARAM wParam, LPARAM lParam)
  dragItem=TREEVIEW_ValidItem (infoPtr, (HTREEITEM) lParam);
  
  if (!dragItem) return 0;
+
+ if (dragItem->pszText==LPSTR_TEXTCALLBACKA) {
+     TREEVIEW_SendDispInfoNotify (hwnd, dragItem, TVN_GETDISPINFO, TVIF_TEXT);
+ }
  itemtxt=dragItem->pszText;
 
  hwtop=GetDesktopWindow ();
