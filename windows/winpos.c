@@ -2764,7 +2764,20 @@ Pos:  /* -----------------------------------------------------------------------
         EVENT_Synchronize( TRUE );  /* Synchronize with the host window system */
 
     if (!GetCapture() && ((wndPtr->dwStyle & WS_VISIBLE) || (flags & SWP_HIDEWINDOW)))
-        EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
+    { 
+        /* Simulate a mouse event to set the cursor */
+        DWORD posX, posY, keyState;
+
+        if ( EVENT_QueryPointer( &posX, &posY, &keyState ) )
+        {
+            int iWndsLocks = WIN_SuspendWndsLock();
+
+            hardware_event( WM_MOUSEMOVE, keyState, 0,
+                            posX, posY, GetTickCount(), 0 );
+
+            WIN_RestoreWndsLock(iWndsLocks);
+        }
+    }
 
     wndTemp = WIN_GetDesktop();
 

@@ -50,13 +50,4 @@ BOOL EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
   return EVENT_Driver->pQueryPointer(posX, posY, state);
 }
 
-/***********************************************************************
- *		EVENT_DummyMotionNotify
- *
- * Generate a dummy MotionNotify event. Used to force a WM_SETCURSOR message.
- */
-void EVENT_DummyMotionNotify(void)
-{
-  EVENT_Driver->pDummyMotionNotify();
-}
 

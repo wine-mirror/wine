@@ -565,23 +565,6 @@ static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
 
 
 /***********************************************************************
- *           X11DRV_EVENT_DummyMotionNotify
- *
- * Generate a dummy MotionNotify event. Used to force a WM_SETCURSOR message.
- */
-void X11DRV_EVENT_DummyMotionNotify(void)
-{
-  DWORD winX, winY, state;
-  
-  if ( EVENT_QueryPointer( &winX, &winY, &state ) )
-    {
-      MOUSE_SendEvent( MOUSEEVENTF_MOVE, winX, winY, state,
-		       GetTickCount(), 0 );
-    }
-}
-
-
-/***********************************************************************
  *           EVENT_ButtonPress
  */
 static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )

@@ -94,7 +94,6 @@ extern BOOL TTYDRV_EVENT_Init(void);
 extern void TTYDRV_EVENT_Synchronize(BOOL bProcessEvents);
 extern BOOL TTYDRV_EVENT_CheckFocus(void);
 extern BOOL TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
-extern void TTYDRV_EVENT_DummyMotionNotify(void);
 extern void TTYDRV_EVENT_UserRepaintDisable(BOOL bDisable);
 
 /* TTY keyboard driver */

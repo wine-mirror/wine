@@ -345,7 +345,6 @@ extern BOOL X11DRV_EVENT_Init(void);
 extern void X11DRV_EVENT_Synchronize( BOOL bProcessEvents );
 extern BOOL X11DRV_EVENT_CheckFocus( void );
 extern BOOL X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
-extern void X11DRV_EVENT_DummyMotionNotify(void);
 extern void X11DRV_EVENT_UserRepaintDisable( BOOL bDisable );
 
 /* X11 keyboard driver */

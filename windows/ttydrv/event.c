@@ -47,13 +47,6 @@ BOOL TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
 }
 
 /***********************************************************************
- *		TTYDRV_EVENT_DummyMotionNotify
- */
-void TTYDRV_EVENT_DummyMotionNotify(void)
-{
-}
-
-/***********************************************************************
  *		TTYDRV_EVENT_UserRepaintDisable
  */
 void TTYDRV_EVENT_UserRepaintDisable( BOOL bDisable )

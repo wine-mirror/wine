@@ -46,7 +46,6 @@ EVENT_DRIVER X11DRV_EVENT_Driver =
   X11DRV_EVENT_Synchronize,
   X11DRV_EVENT_CheckFocus,
   X11DRV_EVENT_QueryPointer,
-  X11DRV_EVENT_DummyMotionNotify,
   X11DRV_EVENT_UserRepaintDisable
 };
 

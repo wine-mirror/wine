@@ -42,7 +42,6 @@ EVENT_DRIVER TTYDRV_EVENT_Driver =
   TTYDRV_EVENT_Synchronize,
   TTYDRV_EVENT_CheckFocus,
   TTYDRV_EVENT_QueryPointer,
-  TTYDRV_EVENT_DummyMotionNotify,
   TTYDRV_EVENT_UserRepaintDisable
 };
 

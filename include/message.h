@@ -30,7 +30,6 @@ typedef struct tagEVENT_DRIVER {
   void   (*pSynchronize)(BOOL);
   BOOL   (*pCheckFocus)(void);
   BOOL   (*pQueryPointer)(DWORD *, DWORD *, DWORD *);
-  void   (*pDummyMotionNotify)(void);
   void   (*pUserRepaintDisable)(BOOL);
 } EVENT_DRIVER;
 
@@ -40,7 +39,6 @@ extern BOOL EVENT_Init( void );
 extern void EVENT_Synchronize( BOOL bProcessEvents );
 extern BOOL EVENT_CheckFocus( void );
 extern BOOL EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
-extern void EVENT_DummyMotionNotify(void);
 
 /* input.c */
 
