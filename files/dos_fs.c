@@ -986,7 +986,7 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
  * NOTES
  *  observed:
  *  longpath=NULL: LastError=ERROR_INVALID_PARAMETER, ret=0
- *  *longpath="" or invalid: LastError=ERROR_BAD_PATHNAME, ret=0
+ *  longpath="" or invalid: LastError=ERROR_BAD_PATHNAME, ret=0
  * 
  * more observations ( with NT 3.51 (WinDD) ):
  * longpath <= 8.3 -> just copy longpath to shortpath
@@ -997,7 +997,7 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
  *   file is not a directory
  * - the absolute/relative path of the short name is reproduced like found
  *   in the long name
- * - longpath and shortpath may have the same adress
+ * - longpath and shortpath may have the same address
  * Peter Ganten, 1999
  */
 DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
@@ -1107,13 +1107,27 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
 
 /***********************************************************************
  *           GetLongPathNameA   (KERNEL32.@)
+ *
+ * NOTES
+ *  observed (Win2000):
+ *  shortpath=NULL: LastError=ERROR_INVALID_PARAMETER, ret=0
+ *  shortpath="":   LastError=ERROR_PATH_NOT_FOUND, ret=0
  */
 DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
                                   DWORD longlen )
 {
     DOS_FULL_NAME full_name;
     char *p, *r, *ll, *ss;
-    
+
+    if (!shortpath) {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return 0;
+    }
+    if (!shortpath[0]) {
+      SetLastError(ERROR_PATH_NOT_FOUND);
+      return 0;
+    }
+
     if (!DOSFS_GetFullName( shortpath, TRUE, &full_name )) return 0;
     lstrcpynA( longpath, full_name.short_name, longlen );
 
