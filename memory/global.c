@@ -16,7 +16,6 @@
 #include "toolhelp.h"
 #include "selectors.h"
 #include "miscemu.h"
-#include "dde_mem.h"
 #include "stackframe.h"
 #include "module.h"
 #include "debugtools.h"
@@ -35,9 +34,6 @@ typedef struct
     BYTE      pageLockCount; /* Count of GlobalPageLock() calls */
     BYTE      flags;         /* Allocation flags */
     BYTE      selCount;      /* Number of selectors allocated for this block */
-#ifdef CONFIG_IPC
-    int       shmid;
-#endif
 } GLOBALARENA;
 
   /* Flags definitions */
@@ -124,22 +120,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
 
     pArena->base = (DWORD)ptr;
     pArena->size = GET_SEL_LIMIT(sel) + 1;
-
-#ifdef CONFIG_IPC
-    if (flags & GMEM_DDESHARE)
-    {
-	pArena->handle = shmdata->handle;
-	pArena->shmid  = shmdata->shmid;
-	shmdata->sel   = sel;
-    }
-    else
-    {
-	pArena->handle = (flags & GMEM_MOVEABLE) ? sel - 1 : sel;
-	pArena->shmid  = 0;
-    }
-#else
     pArena->handle = (flags & GMEM_MOVEABLE) ? sel - 1 : sel;
-#endif
     pArena->hOwner = hOwner;
     pArena->lockCount = 0;
     pArena->pageLockCount = 0;
@@ -225,16 +206,8 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
     if (size >= GLOBAL_MAX_ALLOC_SIZE - 0x1f) return 0;
     size = (size + 0x1f) & ~0x1f;
 
-      /* Allocate the linear memory */
-
-#ifdef CONFIG_IPC
-    if (flags & GMEM_DDESHARE)
-        ptr = DDE_malloc(flags, size, &shmdata);
-    else 
-#endif  /* CONFIG_IPC */
-    {
-	ptr = HeapAlloc( SystemHeap, 0, size );
-    }
+    /* Allocate the linear memory */
+    ptr = HeapAlloc( SystemHeap, 0, size );
       /* FIXME: free discardable blocks and try again? */
     if (!ptr) return 0;
 
@@ -251,50 +224,6 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
     if (flags & GMEM_ZEROINIT) memset( ptr, 0, size );
     return handle;
 }
-
-
-#ifdef CONFIG_IPC
-/***********************************************************************
- *           GLOBAL_FindArena
- *
- * Find the arena  for a given handle
- * (when handle is not serial - e.g. DDE)
- */
-static GLOBALARENA *GLOBAL_FindArena( HGLOBAL16 handle)
-{
-    int i;
-    for (i = globalArenaSize-1 ; i>=0 ; i--) {
-	if (pGlobalArena[i].size!=0 && pGlobalArena[i].handle == handle)
-	    return ( &pGlobalArena[i] );
-    }
-    return NULL;
-}
-
-
-/***********************************************************************
- *           DDE_GlobalHandleToSel
- */
-
-WORD DDE_GlobalHandleToSel( HGLOBAL16 handle )
-{
-    GLOBALARENA *pArena;
-    SEGPTR segptr;
-    
-    pArena= GLOBAL_FindArena(handle);
-    if (pArena) {
-	int ArenaIdx = pArena - pGlobalArena;
-
-	/* See if synchronized to the shared memory  */
-	return DDE_SyncHandle(handle, ( ArenaIdx << __AHSHIFT) | 7);
-    }
-
-    /* attach the block */
-    DDE_AttachHandle(handle, &segptr);
-
-    return SELECTOROF( segptr );
-}
-#endif  /* CONFIG_IPC */
-
 
 /***********************************************************************
  *           GlobalAlloc16   (KERNEL.15)
@@ -335,14 +264,6 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
                     handle, size, flags );
     if (!handle) return 0;
     
-#ifdef CONFIG_IPC
-    if (flags & GMEM_DDESHARE || is_dde_handle(handle))
-    {
-	FIXME("shared memory reallocating unimplemented\n"); 
-	return 0;
-    }
-#endif  /* CONFIG_IPC */
-
     if (!VALID_HANDLE(handle)) {
     	WARN("Invalid handle 0x%04x!\n", handle);
     	return 0;
@@ -456,9 +377,6 @@ HGLOBAL16 WINAPI GlobalFree16(
 
     TRACE("%04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
-#ifdef CONFIG_IPC
-    if (is_dde_handle(handle)) return DDE_GlobalFree(handle);
-#endif  /* CONFIG_IPC */
     if (ptr) HeapFree( SystemHeap, 0, ptr );
     return 0;
 }
@@ -476,11 +394,6 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
     if (handle)
     {
 	if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
-
-#ifdef CONFIG_IPC
-	if (is_dde_handle(handle))
-	    return PTR_SEG_OFF_TO_SEGPTR( DDE_GlobalHandleToSel(handle), 0 );
-#endif  /* CONFIG_IPC */
 
 	if (!VALID_HANDLE(handle)) {
 	    WARN("Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
@@ -511,9 +424,6 @@ LPVOID WINAPI GlobalLock16(
     if (!VALID_HANDLE(handle))
 	return (LPVOID)0;
     GET_ARENA_PTR(handle)->lockCount++;
-#ifdef CONFIG_IPC
-    if (is_dde_handle(handle)) return DDE_AttachHandle(handle, NULL);
-#endif
     return (LPVOID)GET_ARENA_PTR(handle)->base;
 }
 
@@ -893,9 +803,6 @@ HANDLE16 WINAPI FarGetOwner16( HGLOBAL16 handle )
 WORD WINAPI GlobalHandleToSel16( HGLOBAL16 handle )
 {
     if (!handle) return 0;
-#ifdef CONFIG_IPC
-    if (is_dde_handle(handle)) return DDE_GlobalHandleToSel(handle);
-#endif
     if (!VALID_HANDLE(handle)) {
 	WARN("Invalid handle 0x%04x passed to GlobalHandleToSel!\n",handle);
 	return 0;

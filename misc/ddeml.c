@@ -15,7 +15,6 @@
 #include "ddeml.h"
 #include "winerror.h"
 #include "heap.h"
-#include "shm_semaph.h"
 #include "debugtools.h"
 #include "tchar.h"
 #include "winnt.h"

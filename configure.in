@@ -31,10 +31,6 @@ AC_ARG_ENABLE(lib,
 [  --disable-lib           build the Wine without building libwine.a],
 [if test "$enableval" = "no"; then ALT_LINK="\$(LIBOBJS) \$(X11OBJS)"; LIB_TARGET=""; fi])
 
-dnl AC_ARG_WITH(ipc,
-dnl [  --enable-ipc            use inter-process communication for DDE],
-dnl [if test "$enableval" = "no"; then : ; else OPTIONS="-DCONFIG_IPC"; fi])
-
 AC_ARG_ENABLE(debug,
 [  --disable-debug         compile out all debugging messages],
 [if test "$enableval" = "no"; then DEBUG_MSGS="no"; fi])
@@ -785,7 +781,6 @@ graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile
 include/Makefile
-ipc/Makefile
 library/Makefile
 libtest/Makefile
 loader/Makefile

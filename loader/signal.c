@@ -187,10 +187,6 @@ BOOL SIGNAL_Init(void)
     sigemptyset(&async_signal_set);
 
     SIGNAL_SetHandler( SIGCHLD, (void (*)())SIGNAL_child, 1);
-#ifdef CONFIG_IPC
-    sigaddset(&async_signal_set, SIGUSR2);
-    SIGNAL_SetHandler( SIGUSR2, (void (*)())stop_wait, 1); 	/* For IPC */
-#endif
 #ifdef SIGIO
     sigaddset(&async_signal_set, SIGIO);
 /*    SIGNAL_SetHandler( SIGIO,   (void (*)())WINSOCK_sigio, 0);  */

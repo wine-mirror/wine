@@ -988,11 +988,6 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
     POINT16 pt16;
     int iWndsLocks;
 
-#ifdef CONFIG_IPC
-    DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
-    DDE_GetRemoteMessage();
-#endif  /* CONFIG_IPC */
-
     mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
     if (first || last)
     {
@@ -1458,11 +1453,6 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
     msg.pt.x    = 0;
     msg.pt.y    = 0;
 
-#ifdef CONFIG_IPC
-    if (DDE_PostMessage(&msg))
-       return TRUE;
-#endif  /* CONFIG_IPC */
-    
     if (hwnd == HWND_BROADCAST)
     {
         WND *pDesktop = WIN_GetDesktop();
@@ -1672,13 +1662,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                               LPARAM lParam)
 {
     LRESULT res;
-#ifdef CONFIG_IPC
-    MSG16 DDE_msg = { hwnd, msg, wParam, lParam };
-    if (DDE_SendMessage(&DDE_msg)) return TRUE;
-#endif  /* CONFIG_IPC */
-
     MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE, 0, &res);
-
     return res;
 }
 

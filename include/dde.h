@@ -12,7 +12,6 @@
 #define __WINE_DDE_H
 
 #include "windef.h"
-#include "dde_proc.h"
 
 #define WM_DDE_INITIATE   0x3E0
 #define WM_DDE_TERMINATE  0x3E1

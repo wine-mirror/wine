@@ -19,7 +19,6 @@
 #include "callback.h"
 #include "clipboard.h"
 #include "dce.h"
-#include "dde_proc.h"
 #include "debugtools.h"
 #include "drive.h"
 #include "heap.h"

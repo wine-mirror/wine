@@ -35,7 +35,6 @@
 #include "syslevel.h"
 #include "debugtools.h"
 #include "dosexe.h"
-#include "dde_proc.h"
 #include "services.h"
 #include "server.h"
 

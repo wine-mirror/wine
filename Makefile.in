@@ -51,7 +51,6 @@ LIBSUBDIRS = \
 	graphics/metafiledrv \
 	graphics/psdrv \
 	graphics/ttydrv \
-	ipc \
 	library \
 	loader \
 	loader/ne \
@@ -127,7 +126,6 @@ LIBOBJS = \
 	graphics/metafiledrv/metafiledrv.o \
 	graphics/psdrv/psdrv.o \
 	graphics/ttydrv/ttydrv.o \
-	ipc/ipc.o \
 	loader/loader.o \
 	loader/ne/ne.o \
 	loader/dos/dos.o \

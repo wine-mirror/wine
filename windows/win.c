@@ -21,8 +21,6 @@
 #include "nonclient.h"
 #include "queue.h"
 #include "winpos.h"
-#include "shm_main_blk.h"
-#include "dde_proc.h"
 #include "clipboard.h"
 #include "winproc.h"
 #include "task.h"
@@ -440,11 +438,6 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 
     TRACE_(win)("%04x\n", wndPtr->hwndSelf );
 
-#ifdef CONFIG_IPC
-    if (main_block)
-	DDE_DestroyWindow(wndPtr->hwndSelf);
-#endif  /* CONFIG_IPC */
-	
     /* free child windows */
     WIN_LockWndPtr(wndPtr->child);
     while ((pWnd = wndPtr->child))
