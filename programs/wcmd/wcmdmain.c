@@ -395,20 +395,21 @@ char filetorun[MAX_PATH];
     return;
   }
   console = SHGetFileInfo (filetorun, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
-  if (!console) {
-    WCMD_print_error ();
-    return;
-  }
   ZeroMemory (&st, sizeof(STARTUPINFO));
   st.cb = sizeof(STARTUPINFO);
   status = CreateProcess (NULL, command, NULL, NULL, FALSE,
   		 0, NULL, NULL, &st, &pe);
   if (!status) {
     WCMD_print_error ();
+    return;
   }
-  if (!HIWORD(console)) WaitForSingleObject (pe.hProcess, INFINITE);
-  GetExitCodeProcess (pe.hProcess, &errorlevel);
-  if (errorlevel == STILL_ACTIVE) errorlevel = 0;
+  if (!console) errorlevel = 0;
+  else
+  {
+      if (!HIWORD(console)) WaitForSingleObject (pe.hProcess, INFINITE);
+      GetExitCodeProcess (pe.hProcess, &errorlevel);
+      if (errorlevel == STILL_ACTIVE) errorlevel = 0;
+  }
 }
 
 /******************************************************************************
