@@ -161,7 +161,7 @@ DWORD WINAPI WsControl(DWORD protocol,
             }
 
             GetNumberOfInterfaces(&numInt);
-            spaceNeeded = sizeof(TDIEntityID) * (numInt + 4);
+            spaceNeeded = sizeof(TDIEntityID) * (numInt * 2 + 3);
 
             if (*pcbResponseInfoLen < spaceNeeded)
                return (ERROR_LOCK_VIOLATION);
@@ -184,10 +184,10 @@ DWORD WINAPI WsControl(DWORD protocol,
 
             for (i = 0; i < table->dwNumEntries; i++)
             {
-               /* Return IF_GENERIC on every interface, and AT_ENTITY,
-                * CL_NL_ENTITY, CL_TL_ENTITY, and CO_TL_ENTITY on the first
-                * interface.  MS returns them only on the loopback
-                * interface, but it doesn't seem to matter.
+               /* Return IF_GENERIC and CL_NL_ENTITY on every interface, and
+                * AT_ENTITY, CL_TL_ENTITY, and CO_TL_ENTITY on the first
+                * interface.  MS returns them only on the loopback interface,
+                * but it doesn't seem to matter.
                 */
                if (i == 0)
                {
@@ -197,13 +197,13 @@ DWORD WINAPI WsControl(DWORD protocol,
                   baseptr->tei_entity = CL_TL_ENTITY;
                   baseptr->tei_instance = table->table[i].dwIndex;
                   baseptr++;
-                  baseptr->tei_entity = CL_NL_ENTITY;
-                  baseptr->tei_instance = table->table[i].dwIndex;
-                  baseptr++;
                   baseptr->tei_entity = AT_ENTITY;
                   baseptr->tei_instance = table->table[i].dwIndex;
                   baseptr++;
                }
+               baseptr->tei_entity = CL_NL_ENTITY;
+               baseptr->tei_instance = table->table[i].dwIndex;
+               baseptr++;
                baseptr->tei_entity = IF_GENERIC;
                baseptr->tei_instance = table->table[i].dwIndex;
                baseptr++;
@@ -242,9 +242,18 @@ DWORD WINAPI WsControl(DWORD protocol,
                   ret = GetIfEntry(&row);
                   if (ret != NO_ERROR)
                   {
-                    ERR ("Error retrieving data for interface index %lu\n",
-                     index);
-                    return ret;
+                     /* FIXME: Win98's arp.exe insists on querying index 1 for
+                      * its MIB-II stats, regardless of the tei_instances
+                      * returned in the ENTITY_LIST query above.  If the query
+                      * fails, arp.exe fails.  So, I do this hack return value
+                      * if index is 1 and the query failed just to get arp.exe
+                      * to continue.
+                      */
+                     if (index == 1)
+                        return NO_ERROR;
+                     ERR ("Error retrieving data for interface index %lu\n",
+                      index);
+                     return ret;
                   }
                   size = sizeof(row) - sizeof(row.wszName) -
                    sizeof(row.bDescr) + row.dwDescrLen;
@@ -257,8 +266,6 @@ DWORD WINAPI WsControl(DWORD protocol,
 
             /* Returns address-translation related data.  In our case, this is
              * ARP.
-             * FIXME: Win98 seems to assume ARP will always be on interface
-             * index 1, so arp.exe fails when this isn't the case.
              */
             case AT_ENTITY:
                if (pcommand->toi_class == INFO_CLASS_GENERIC)
@@ -397,12 +404,14 @@ DWORD WINAPI WsControl(DWORD protocol,
             GetIpAddrTable(table, &tableSize, FALSE);
             for (i = 0; i < table->dwNumEntries; i++)
             {
-                 if (table->table[i].dwIndex == index)
-                 {
-                    memcpy(baseIPInfo, &table->table[i],
-                     sizeof(MIB_IPADDRROW));
-                    break;
-                 }
+               if (table->table[i].dwIndex == index)
+               {
+                  TRACE("Found IP info for tei_instance 0x%lx:\n", index);
+                  TRACE("IP 0x%08lx, mask 0x%08lx\n", table->table[i].dwAddr,
+                   table->table[i].dwMask);
+                  memcpy(baseIPInfo, &table->table[i], sizeof(MIB_IPADDRROW));
+                  break;
+               }
             }
             free(table);
 
@@ -410,59 +419,113 @@ DWORD WINAPI WsControl(DWORD protocol,
             break;
          }
 
-         /* This call returns the routing table.
-          * No official documentation found, even the name of the command is unknown.
-          * Work is based on
-          * http://www.cyberport.com/~tangent/programming/winsock/articles/wscontrol.html
-          * and testings done with winipcfg.exe, route.exe and ipconfig.exe.
-          * pcommand->toi_entity.tei_instance seems to be the interface number
-          * but route.exe outputs only the information for the last interface
-          * if only the routes for the pcommand->toi_entity.tei_instance
-          * interface are returned. */
-         case IP_MIB_ROUTETABLE_ENTRY_ID:  /* FIXME: not real name. Value is 0x101 */
+         /* FIXME: not real name. Value is 0x101.  Obviously it's a bad name,
+          * too, because it can be used to get the ARP table--see below. */
+         case IP_MIB_ROUTETABLE_ENTRY_ID:
          {
-            DWORD routeTableSize, numRoutes, ndx;
-            PMIB_IPFORWARDTABLE table;
-            IPRouteEntry *winRouteTable  = (IPRouteEntry *) pResponseInfo;
-
-            if (!pcbResponseInfoLen)
-               return ERROR_BAD_ENVIRONMENT;
-            GetIpForwardTable(NULL, &routeTableSize, FALSE);
-            numRoutes = min(routeTableSize - sizeof(MIB_IPFORWARDTABLE), 0)
-             / sizeof(MIB_IPFORWARDROW) + 1;
-            if (*pcbResponseInfoLen < sizeof(IPRouteEntry) * numRoutes)
-               return (ERROR_LOCK_VIOLATION);
-            table = (PMIB_IPFORWARDTABLE)calloc(1, routeTableSize);
-            if (!table)
-               return ERROR_NOT_ENOUGH_MEMORY;
-            GetIpForwardTable(table, &routeTableSize, FALSE);
-
-            memset(pResponseInfo, 0, sizeof(IPRouteEntry) * numRoutes);
-            for (ndx = 0; ndx < table->dwNumEntries; ndx++)
+            switch (pcommand->toi_entity.tei_entity)
             {
-               winRouteTable->ire_addr = table->table[ndx].dwForwardDest;
-               winRouteTable->ire_index = table->table[ndx].dwForwardIfIndex;
-               winRouteTable->ire_metric =
-                table->table[ndx].dwForwardMetric1;
-               /* winRouteTable->ire_option4 =
-               winRouteTable->ire_option5 =
-               winRouteTable->ire_option6 = */
-               winRouteTable->ire_gw = table->table[ndx].dwForwardNextHop;
-               /* winRouteTable->ire_option8 =
-               winRouteTable->ire_option9 =
-               winRouteTable->ire_option10 = */
-               winRouteTable->ire_mask = table->table[ndx].dwForwardMask;
-               /* winRouteTable->ire_option12 = */
-               winRouteTable++;
+            /* This call returns the routing table.
+             * No official documentation found, even the name of the command is unknown.
+             * Work is based on
+             * http://www.cyberport.com/~tangent/programming/winsock/articles/wscontrol.html
+             * and testings done with winipcfg.exe, route.exe and ipconfig.exe.
+             * pcommand->toi_entity.tei_instance seems to be the interface number
+             * but route.exe outputs only the information for the last interface
+             * if only the routes for the pcommand->toi_entity.tei_instance
+             * interface are returned. */
+               case CL_NL_ENTITY:
+               {
+                  DWORD routeTableSize, numRoutes, ndx;
+                  PMIB_IPFORWARDTABLE table;
+                  IPRouteEntry *winRouteTable  = (IPRouteEntry *) pResponseInfo;
+
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  GetIpForwardTable(NULL, &routeTableSize, FALSE);
+                  numRoutes = min(routeTableSize - sizeof(MIB_IPFORWARDTABLE),
+                   0) / sizeof(MIB_IPFORWARDROW) + 1;
+                  if (*pcbResponseInfoLen < sizeof(IPRouteEntry) * numRoutes)
+                     return (ERROR_LOCK_VIOLATION);
+                  table = (PMIB_IPFORWARDTABLE)calloc(1, routeTableSize);
+                  if (!table)
+                     return ERROR_NOT_ENOUGH_MEMORY;
+                  GetIpForwardTable(table, &routeTableSize, FALSE);
+
+                  memset(pResponseInfo, 0, sizeof(IPRouteEntry) * numRoutes);
+                  for (ndx = 0; ndx < table->dwNumEntries; ndx++)
+                  {
+                     winRouteTable->ire_addr = table->table[ndx].dwForwardDest;
+                     winRouteTable->ire_index =
+                      table->table[ndx].dwForwardIfIndex;
+                     winRouteTable->ire_metric =
+                      table->table[ndx].dwForwardMetric1;
+                     /* winRouteTable->ire_option4 =
+                     winRouteTable->ire_option5 =
+                     winRouteTable->ire_option6 = */
+                     winRouteTable->ire_gw = table->table[ndx].dwForwardNextHop;
+                     /* winRouteTable->ire_option8 =
+                     winRouteTable->ire_option9 =
+                     winRouteTable->ire_option10 = */
+                     winRouteTable->ire_mask = table->table[ndx].dwForwardMask;
+                     /* winRouteTable->ire_option12 = */
+                     winRouteTable++;
+                  }
+
+                  /* calculate the length of the data in the output buffer */
+                  *pcbResponseInfoLen = sizeof(IPRouteEntry) *
+                   table->dwNumEntries;
+
+                  free(table);
+               }
+               break;
+
+               case AT_ARP:
+               {
+                  DWORD arpTableSize, numEntries, ret;
+                  PMIB_IPNETTABLE table;
+
+                  if (!pcbResponseInfoLen)
+                     return ERROR_BAD_ENVIRONMENT;
+                  GetIpNetTable(NULL, &arpTableSize, FALSE);
+                  numEntries = min(arpTableSize - sizeof(MIB_IPNETTABLE),
+                   0) / sizeof(MIB_IPNETROW) + 1;
+                  if (*pcbResponseInfoLen < sizeof(MIB_IPNETROW) * numEntries)
+                     return (ERROR_LOCK_VIOLATION);
+                  table = (PMIB_IPNETTABLE)calloc(1, arpTableSize);
+                  if (!table)
+                     return ERROR_NOT_ENOUGH_MEMORY;
+                  ret = GetIpNetTable(table, &arpTableSize, FALSE);
+                  if (ret != NO_ERROR)
+                     return ret;
+                  if (*pcbResponseInfoLen < sizeof(MIB_IPNETROW) *
+                   table->dwNumEntries)
+                  {
+                     free(table);
+                     return ERROR_LOCK_VIOLATION;
+                  }
+                  memcpy(pResponseInfo, table->table, sizeof(MIB_IPNETROW) *
+                   table->dwNumEntries);
+
+                  /* calculate the length of the data in the output buffer */
+                  *pcbResponseInfoLen = sizeof(MIB_IPNETROW) *
+                   table->dwNumEntries;
+
+                  free(table);
+               }
+               break;
+
+               default:
+               {
+                  FIXME ("Command ID Not Supported -> toi_id=0x%lx, toi_entity={tei_entity=0x%lx, tei_instance=0x%lx}, toi_class=0x%lx\n",
+                     pcommand->toi_id, pcommand->toi_entity.tei_entity,
+                     pcommand->toi_entity.tei_instance, pcommand->toi_class);
+
+                  return (ERROR_BAD_ENVIRONMENT);
+               }
             }
-
-            /* calculate the length of the data in the output buffer */
-            *pcbResponseInfoLen = sizeof(IPRouteEntry) *
-             table->dwNumEntries;
-
-            free(table);
-            break;
          }
+         break;
 
 
          default:
