@@ -1124,10 +1124,13 @@ int _wcreat(const MSVCRT_wchar_t *path, int flags)
  */
 int _open_osfhandle(long hand, int flags)
 {
-  /* _O_RDONLY (0) always matches, so set the read flag*/
+  /* _O_RDONLY (0) always matches, so set the read flag
+   * MFC's CStdioFile clears O_RDONLY (0)! if it wants to write to the
+   * file, so set the write flag
+   */
   /* FIXME: handle more flags */
-  int fd= msvcrt_alloc_fd((HANDLE)hand,flags|MSVCRT__IOREAD);
-  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n",hand,fd, flags |MSVCRT__IOREAD);
+  int fd= msvcrt_alloc_fd((HANDLE)hand,flags|MSVCRT__IOREAD|MSVCRT__IOWRT);
+  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n",hand,fd, flags |MSVCRT__IOREAD|MSVCRT__IOWRT);
   return fd;
 }
 
@@ -1556,9 +1559,11 @@ void MSVCRT_clearerr(MSVCRT_FILE* file)
  */
 int MSVCRT_fclose(MSVCRT_FILE* file)
 {
-  int r;
+  int r, flag;
+
+  flag = file->_flag;
   r=_close(file->_file);
-  return ((r==MSVCRT_EOF) || (file->_flag & MSVCRT__IOERR) ? MSVCRT_EOF : 0);
+  return ((r==MSVCRT_EOF) || (flag & MSVCRT__IOERR) ? MSVCRT_EOF : 0);
 }
 
 /*********************************************************************
