@@ -83,7 +83,7 @@
 @ stub __STRINGTOLD #(ptr ptr str long)
 @ extern __argc MSVCRT___argc
 @ extern __argv MSVCRT___argv
-@ stub __badioinfo
+@ extern __badioinfo MSVCRT___badioinfo
 @ stub __crtCompareStringA
 @ stub __crtGetLocaleInfoW
 @ cdecl __crtLCMapStringA(long long str long ptr long long long)
@@ -95,9 +95,9 @@
 @ cdecl __isascii(long) MSVCRT___isascii
 @ cdecl __iscsym(long) MSVCRT___iscsym
 @ cdecl __iscsymf(long) MSVCRT___iscsymf
-@ stub __lc_codepage
+# extern __lc_codepage
 @ stub __lc_collate
-@ stub __lc_handle
+# extern __lc_handle
 @ cdecl __lconv_init()
 @ extern __mb_cur_max MSVCRT___mb_cur_max
 @ cdecl __p___argc()
@@ -129,7 +129,7 @@
 @ cdecl __p__winminor()
 @ cdecl __p__winver()
 @ cdecl __p__wpgmptr()
-@ stub __pioinfo #()
+@ extern __pioinfo MSVCRT___pioinfo
 @ stub __pxcptinfoptrs #()
 @ cdecl __set_app_type(long) MSVCRT___set_app_type
 @ extern __setlc_active MSVCRT___setlc_active
@@ -159,8 +159,8 @@
 @ cdecl _adj_fprem()
 @ cdecl _adj_fprem1()
 @ cdecl _adj_fptan()
-@ cdecl _adjust_fdiv()
-@ extern _aexit_rtn
+@ extern _adjust_fdiv MSVCRT__adjust_fdiv 
+# extern _aexit_rtn
 @ cdecl _amsg_exit(long)
 @ cdecl _assert(str str long) MSVCRT__assert
 @ stub _atodbl #(ptr str)
@@ -194,7 +194,7 @@
 @ extern _ctype MSVCRT__ctype
 @ cdecl _cwait(ptr long long)
 @ extern _daylight MSVCRT___daylight
-@ stub _dstbias
+# extern _dstbias
 @ cdecl _dup (long)
 @ cdecl _dup2 (long long)
 @ cdecl _ecvt(double long ptr ptr)
@@ -221,7 +221,7 @@
 @ cdecl _fgetchar()
 @ cdecl _fgetwchar()
 @ cdecl _filbuf(ptr) MSVCRT__filbuf
-@ stub _fileinfo
+# extern _fileinfo
 @ cdecl _filelength(long)
 @ cdecl -ret64 _filelengthi64(long)
 @ cdecl _fileno(ptr) MSVCRT__fileno
@@ -334,7 +334,7 @@
 @ cdecl _matherr(ptr) MSVCRT__matherr
 @ cdecl _mbbtombc(long)
 @ stub _mbbtype #(long long)
-@ stub _mbcasemap
+# extern _mbcasemap
 @ cdecl _mbccpy (str str) strcpy
 @ stub _mbcjistojms #(long)
 @ stub _mbcjmstojis #(long)
@@ -410,7 +410,7 @@
 @ cdecl _putenv(str)
 @ cdecl _putw(long ptr) MSVCRT__putw
 @ cdecl _putws(wstr)
-@ stub _pwctype
+# extern _pwctype
 @ cdecl _read(long ptr long)
 @ cdecl _rmdir(str)
 @ cdecl _rmtmp()
@@ -469,10 +469,10 @@
 @ cdecl _tell(long)
 @ cdecl -ret64 _telli64(long)
 @ cdecl _tempnam(str str)
-@ stub _timezone # extern
+# extern _timezone
 @ cdecl _tolower(long) MSVCRT__tolower
 @ cdecl _toupper(long) MSVCRT__toupper
-@ stub _tzname # extern
+# extern _tzname
 @ cdecl _tzset() tzset
 @ cdecl _ui64toa(long long ptr long) ntdll._ui64toa
 @ cdecl _ui64tow(long long ptr long) ntdll._ui64tow
@@ -763,4 +763,4 @@
 @ varargs wprintf(wstr) MSVCRT_wprintf
 @ varargs wscanf(wstr) MSVCRT_wscanf
 @ cdecl _Gettnames() _Gettnames
-@ stub __lc_collate_cp
+# extern __lc_collate_cp

@@ -60,12 +60,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define WX_APPEND         0x20
 #define WX_TEXT           0x80
 
+/* FIXME: this should be allocated dynamically */
 #define MSVCRT_MAX_FILES 2048
 
-static struct {
+typedef struct {
     HANDLE              handle;
     unsigned char       wxflag;
-} MSVCRT_fdesc[MSVCRT_MAX_FILES];
+    DWORD               unkn[7]; /* critical section and init flag */       
+} ioinfo;
+
+static ioinfo MSVCRT_fdesc[MSVCRT_MAX_FILES];
 
 MSVCRT_FILE MSVCRT__iob[3];
 
@@ -2888,3 +2892,26 @@ int MSVCRT_wprintf(const MSVCRT_wchar_t *format, ...)
     va_end(valist);
     return res;
 }
+
+/*********************************************************************
+ *		__pioinfo (MSVCRT.@)
+ * FIXME: see MSVCRT_MAX_FILES define.
+ */
+ioinfo * MSVCRT___pioinfo[] = { /* array of pointers to ioinfo arrays [64] */
+    &MSVCRT_fdesc[0 * 64], &MSVCRT_fdesc[1 * 64], &MSVCRT_fdesc[2 * 64],
+    &MSVCRT_fdesc[3 * 64], &MSVCRT_fdesc[4 * 64], &MSVCRT_fdesc[5 * 64],
+    &MSVCRT_fdesc[6 * 64], &MSVCRT_fdesc[7 * 64], &MSVCRT_fdesc[8 * 64],
+    &MSVCRT_fdesc[9 * 64], &MSVCRT_fdesc[10 * 64], &MSVCRT_fdesc[11 * 64],
+    &MSVCRT_fdesc[12 * 64], &MSVCRT_fdesc[13 * 64], &MSVCRT_fdesc[14 * 64],
+    &MSVCRT_fdesc[15 * 64], &MSVCRT_fdesc[16 * 64], &MSVCRT_fdesc[17 * 64],
+    &MSVCRT_fdesc[18 * 64], &MSVCRT_fdesc[19 * 64], &MSVCRT_fdesc[20 * 64],
+    &MSVCRT_fdesc[21 * 64], &MSVCRT_fdesc[22 * 64], &MSVCRT_fdesc[23 * 64],
+    &MSVCRT_fdesc[24 * 64], &MSVCRT_fdesc[25 * 64], &MSVCRT_fdesc[26 * 64],
+    &MSVCRT_fdesc[27 * 64], &MSVCRT_fdesc[28 * 64], &MSVCRT_fdesc[29 * 64],
+    &MSVCRT_fdesc[30 * 64], &MSVCRT_fdesc[31 * 64]
+} ;
+
+/*********************************************************************
+ *		__badioinfo (MSVCRT.@)
+ */
+ioinfo MSVCRT___badioinfo = { INVALID_HANDLE_VALUE, WX_TEXT };

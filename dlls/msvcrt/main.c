@@ -117,4 +117,13 @@ const char* msvcrt_get_reason(DWORD reason)
 void MSVCRT_I10_OUTPUT(void)
 {
   /* FIXME: This is probably data, not a function */
+  /* no it is a function. I10 is an Int of 10 bytes */
+  /* also known as 80 bit flotaing point (long double */
+  /* for some compilers, not MSVC) */
 }
+
+/*********************************************************************
+ *		_adjust_fdiv (MSVCRT.@)
+ * Used by the MSVC compiler to work around the Pentium FDIV bug.
+ */
+int MSVCRT__adjust_fdiv = 0;

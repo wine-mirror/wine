@@ -572,7 +572,7 @@
 @ cdecl _adj_fprem() msvcrt._adj_fprem
 @ cdecl _adj_fprem1() msvcrt._adj_fprem1
 @ cdecl _adj_fptan() msvcrt._adj_fptan
-@ cdecl _adjust_fdiv() msvcrt._adjust_fdiv
+@ extern _adjust_fdiv msvcrt._adjust_fdiv
 @ extern _aexit_rtn msvcrt._aexit_rtn
 @ cdecl _amsg_exit(long) msvcrt._amsg_exit
 @ cdecl _assert(str str long) msvcrt._assert
