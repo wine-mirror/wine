@@ -3202,7 +3202,7 @@ DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 
 #endif
 
-#ifndef HAVE_ALSA
+#if !(defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1))
 
 /**************************************************************************
  * 				widMessage (WINEALSA.@)
@@ -3213,6 +3213,10 @@ DWORD WINAPI ALSA_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
+
+#endif
+
+#ifndef HAVE_ALSA
 
 /**************************************************************************
  * 				wodMessage (WINEALSA.@)
