@@ -177,6 +177,8 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
           if (GetLastError() == ERROR_PIPE_CONNECTED) {
             SetEvent(Connection->ovl.hEvent);
             return RPC_S_OK;
+          } else if (GetLastError() == ERROR_IO_PENDING) {
+            return RPC_S_OK;
           }
           return RPC_S_SERVER_UNAVAILABLE;
         }
