@@ -1,9 +1,7 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
 MODULE    = lz32
 SOVERSION = 1.0
 
@@ -12,12 +10,7 @@ SPEC_SRCS = lz32.spec lzexpand.spec
 C_SRCS = \
 	lzexpand_main.c
 
-all: lib$(MODULE).$(LIBEXT)
-
-@MAKE_RULES@
-
-clean::
-	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+@MAKE_DLL_RULES@
 
 ### Dependencies:
 

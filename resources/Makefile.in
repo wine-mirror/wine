@@ -13,6 +13,4 @@ all: check_wrc $(MODULE).o
 
 @MAKE_RULES@
 
-$(RC_SRCS:.rc=.s): $(WRC)
-
 ### Dependencies:

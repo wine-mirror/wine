@@ -1,9 +1,7 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
 MODULE    = dplayx
 SOVERSION = 1.0
 IMPORTS   = ole32
@@ -16,12 +14,8 @@ C_SRCS = dplay.c \
          dplayx_main.c \
          dplayx_global.c
 
-all: lib$(MODULE).$(LIBEXT)
 
-@MAKE_RULES@
-
-clean::
-	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+@MAKE_DLL_RULES@
 
 ### Dependencies:
 

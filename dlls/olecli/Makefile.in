@@ -1,9 +1,7 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
 MODULE    = olecli32
 SOVERSION = 1.0
 IMPORTS   = olesvr32 ole32
@@ -13,12 +11,7 @@ SPEC_SRCS = olecli32.spec olecli.spec
 C_SRCS = \
 	olecli_main.c
 
-all: lib$(MODULE).$(LIBEXT)
-
-@MAKE_RULES@
-
-clean::
-	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+@MAKE_DLL_RULES@
 
 ### Dependencies:
 

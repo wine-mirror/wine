@@ -36,14 +36,11 @@ LN_S      = @LN_S@
 DIVINCL   = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include
 ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(DEFS) $(OPTIONS) $(X_CFLAGS)
 LDCOMBINE = ld -r
-SONAME    = lib$(MODULE).so
-LDSHARED  = @LDSHARED@
 AR        = ar rc
 RM        = rm -f
 MV        = mv
 MKDIR     = mkdir -p
 C2MAN     = @C2MAN@
-LDCONFIG  = @LDCONFIG@
 MANSPECS  = -w $(TOPSRCDIR)/relay32/gdi32.spec \
 	    -w $(TOPSRCDIR)/relay32/user32.spec \
 	    -w $(TOPSRCDIR)/relay32/comctl32.spec \
@@ -174,6 +171,10 @@ DLLS = \
 
 .PHONY: all install uninstall clean distclean depend dummy
 
+# 'all' target first in case the enclosing Makefile didn't define any target
+
+all: Makefile
+
 # Rule to rebuild the resource compiler
 
 $(WRC) check_wrc:
@@ -199,55 +200,11 @@ $(WINESTUB) check_winestub:
 $(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
 	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
 
-lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDSHARED) $(OBJS) -o $@
-
-lib$(MODULE).so: lib$(MODULE).so.$(SOVERSION)
-	$(RM) $@
-	$(LN_S) lib$(MODULE).so.$(SOVERSION) $@
-
-lib$(MODULE).a: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(RM) $@
-	$(AR) $@ $(OBJS)
-	$(RANLIB) $@
-
 # Rules for makefile
 
 Makefile: Makefile.in $(TOPSRCDIR)/configure
 	@echo Makefile is older than $?, please rerun $(TOPSRCDIR)/configure
 	@exit 1
-
-all: Makefile
-
-# Rules for checking that no imports are missing
-
-IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
-
-checklink_so checklink_a: lib$(MODULE).$(LIBEXT) $(IMPORTLIBS)
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) -L$(DLLDIR) $(IMPORTS:%=-l%) -L$(TOPOBJDIR) -lwine $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS) && $(RM) checklink
-
-checklink:: $(LIBEXT:%=checklink_%)
-
-$(IMPORTLIBS): dummy
-	@cd $(DLLDIR) && $(MAKE) `basename $@`
-
-# Rules for installation
-
-install_so: lib$(MODULE).so.$(SOVERSION)
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	$(INSTALL_PROGRAM) lib$(MODULE).so.$(SOVERSION) $(libdir)/lib$(MODULE).so.$(SOVERSION)
-	cd $(libdir) && $(RM) lib$(MODULE).so && $(LN_S) lib$(MODULE).so.$(SOVERSION) lib$(MODULE).so
-
-install_a: lib$(MODULE).a
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	$(INSTALL_DATA) lib$(MODULE).a $(libdir)/lib$(MODULE).a
-
-uninstall_so uninstall_a:
-	cd $(libdir) && $(RM) lib$(MODULE).so lib$(MODULE).so.$(SOVERSION) lib$(MODULE).a
-
-install:: $(LIBEXT:%=install_%)
-
-uninstall:: $(LIBEXT:%=uninstall_%)
 
 # Rules for auto documentation
 
@@ -280,6 +237,8 @@ winapi_check::
 $(SPEC_SRCS:.spec=.spec.c): $(BUILD) $(TOPSRCDIR)/include/builtin16.h $(TOPSRCDIR)/include/builtin32.h
 
 $(GLUE:.c=.glue.c): $(BUILD) $(TOPSRCDIR)/include/builtin16.h $(TOPSRCDIR)/include/builtin32.h
+
+$(RC_SRCS:.rc=.s): $(WRC)
 
 depend:: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)

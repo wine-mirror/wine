@@ -1,9 +1,7 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
 MODULE    = winmm
 SOVERSION = 1.0
 WRCEXTRA  = -s -pwinmm
@@ -27,8 +25,6 @@ GLUE =  lolvldrv.c \
 RC_SRCS= \
 	winmm_res.rc
 
-all: check_wrc $ lib$(MODULE).$(LIBEXT)
-
 SUBDIRS = \
 	joystick \
 	mcianim \
@@ -40,14 +36,11 @@ SUBDIRS = \
 	wavemap \
 	wineoss
 
+@MAKE_DLL_RULES@
+
+all: check_wrc
+
 $(SUBDIRS): dummy
-	@cd $@; $(MAKE)
-
-@MAKE_RULES@
-
-$(RC_SRCS:.rc=.s): $(WRC)
-
-clean::
-	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+	@cd $@ && $(MAKE)
 
 ### Dependencies:

@@ -930,12 +930,16 @@ dnl **** Generate output files ****
 MAKE_RULES=Make.rules
 AC_SUBST_FILE(MAKE_RULES)
 
+MAKE_DLL_RULES=dlls/Makedll.rules
+AC_SUBST_FILE(MAKE_DLL_RULES)
+
 AC_OUTPUT([
 Make.rules
 Makefile
 console/Makefile
 controls/Makefile
 debugger/Makefile
+dlls/Makedll.rules
 dlls/Makefile
 dlls/advapi32/Makefile
 dlls/avifil32/Makefile

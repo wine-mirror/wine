@@ -1,19 +1,12 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
 MODULE    = dciman32
 SOVERSION = 1.0
 
 SPEC_SRCS = dciman32.spec
 
-all: lib$(MODULE).$(LIBEXT)
-
-@MAKE_RULES@
-
-clean::
-	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+@MAKE_DLL_RULES@
 
 ### Dependencies:

@@ -1,9 +1,7 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
 MODULE    = w32skrnl
 SOVERSION = 1.0
 
@@ -14,12 +12,7 @@ C_SRCS = \
 	w32sys.c \
 	win32s16.c
 
-all: lib$(MODULE).$(LIBEXT)
-
-@MAKE_RULES@
-
-clean::
-	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+@MAKE_DLL_RULES@
 
 ### Dependencies:
 

@@ -17,8 +17,11 @@ TOPOBJDIR = .
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
+LDSHARED  = @LDSHARED@
+LDCONFIG  = @LDCONFIG@
 MODULE    = wine
 SOVERSION = 1.0
+SONAME    = libwine.so
 
 TOOLSUBDIRS = \
 	tools \
@@ -176,13 +179,22 @@ wine wine.sym: lib$(MODULE).$(LIBEXT) $(DLLOBJS) $(EMUOBJS)
 llib-lwine.ln : $(LIBLINTS) $(X11LINTS)
 	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS) $(X11LINTS)
 
+install_so: lib$(MODULE).so.$(SOVERSION)
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_PROGRAM) lib$(MODULE).so.$(SOVERSION) $(libdir)/lib$(MODULE).so.$(SOVERSION)
+	cd $(libdir) && $(RM) lib$(MODULE).so && $(LN_S) lib$(MODULE).so.$(SOVERSION) lib$(MODULE).so
+
+install_a: lib$(MODULE).a
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_DATA) lib$(MODULE).a $(libdir)/lib$(MODULE).a
+
 install_wine: wine
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	[ -f wine.sym ] && $(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 
-install:: $(PROGRAMS) $(EMU_TARGET:%=install_%)
+install:: $(PROGRAMS) $(EMU_TARGET:%=install_%) $(LIBEXT:%=install_%)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) server/wineserver $(bindir)/wineserver
 	$(INSTALL_PROGRAM) windows/x11drv/wineclipsrv $(bindir)/wineclipsrv
@@ -191,6 +203,20 @@ install:: $(PROGRAMS) $(EMU_TARGET:%=install_%)
 uninstall::
 	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION) wine.sym
 	cd $(bindir) && $(RM) wine wineserver wineclipsrv dosmod
+
+lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in Make.rules.in
+	$(LDSHARED) $(OBJS) -o $@
+
+lib$(MODULE).so: lib$(MODULE).so.$(SOVERSION)
+	$(RM) $@ && $(LN_S) lib$(MODULE).so.$(SOVERSION) $@
+
+lib$(MODULE).a: $(OBJS) Makefile.in Make.rules.in
+	$(RM) $@
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+checklink::
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS) && $(RM) checklink
 
 $(X11OBJS) $(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
@@ -237,7 +263,7 @@ clean::
 	$(RM) wine wine.sym libwine.so.1.0 TAGS .#*
 
 distclean: clean
-	$(RM) config.* Make.rules include/config.h documentation/wine.man documentation/wine.conf.man
+	$(RM) config.* Make.rules dlls/Makedll.rules include/config.h documentation/wine.man documentation/wine.conf.man
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
 # We depend on configure above for checks, so we better don't use this rule.

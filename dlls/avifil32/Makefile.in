@@ -1,9 +1,7 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
 MODULE    = avifil32
 SOVERSION = 1.0
 IMPORTS   = msvfw32 winmm
@@ -13,12 +11,7 @@ SPEC_SRCS = avifil32.spec avifile.spec
 C_SRCS = \
 	avifile.c
 
-all: lib$(MODULE).$(LIBEXT)
-
-@MAKE_RULES@
-
-clean::
-	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+@MAKE_DLL_RULES@
 
 ### Dependencies:
 

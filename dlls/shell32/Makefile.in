@@ -1,9 +1,7 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
 MODULE    = shell32
 SOVERSION = 1.0
 IMPORTS   = ole32 comctl32 winmm
@@ -45,17 +43,9 @@ C_SRCS = \
 RC_SRCS= \
 	shres.rc
 
-#GEN_ASM_SRCS = \
-#	shellres.s
+@MAKE_DLL_RULES@
 
-all: check_wrc lib$(MODULE).$(LIBEXT)
-
-@MAKE_RULES@
-
-$(RC_SRCS:.rc=.s): $(WRC)
-
-clean::
-	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+all: check_wrc
 
 ### Dependencies:
 

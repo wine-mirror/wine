@@ -1,0 +1,61 @@
+# Global rules for building dlls     -*-Makefile-*-
+#
+# Each individual makefile should define the following variables:
+# MODULE       : name of the main module being built
+# SOVERSION    : version of the .so file
+# IMPORTS      : dlls to import (optional)
+#
+# plus all variables required by the global Make.rules.in
+#
+
+DEFS       = @DLLFLAGS@ -D__WINE__
+LIBEXT     = @LIBEXT@
+LDSHARED   = @LDSHARED@
+SONAME     = lib$(MODULE).so
+IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
+
+all: lib$(MODULE).$(LIBEXT)
+
+@MAKE_RULES@
+
+lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
+	$(LDSHARED) $(OBJS) -o $@
+
+lib$(MODULE).so: lib$(MODULE).so.$(SOVERSION)
+	$(RM) $@ && $(LN_S) lib$(MODULE).so.$(SOVERSION) $@
+
+lib$(MODULE).a: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
+	$(RM) $@
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+# Rules for checking that no imports are missing
+
+IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
+
+checklink:: lib$(MODULE).$(LIBEXT) $(IMPORTLIBS)
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) -L$(DLLDIR) $(IMPORTS:%=-l%) -L$(TOPOBJDIR) -lwine $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS) && $(RM) checklink
+
+$(IMPORTLIBS): dummy
+	@cd $(DLLDIR) && $(MAKE) `basename $@`
+
+# Rules for installation
+
+.PHONY: install_so install_a
+
+install_so: lib$(MODULE).so.$(SOVERSION)
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_PROGRAM) lib$(MODULE).so.$(SOVERSION) $(libdir)/lib$(MODULE).so.$(SOVERSION)
+	cd $(libdir) && $(RM) lib$(MODULE).so && $(LN_S) lib$(MODULE).so.$(SOVERSION) lib$(MODULE).so
+
+install_a: lib$(MODULE).a
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_DATA) lib$(MODULE).a $(libdir)/lib$(MODULE).a
+
+install:: $(LIBEXT:%=install_%)
+
+uninstall::
+	cd $(libdir) && $(RM) lib$(MODULE).so lib$(MODULE).so.$(SOVERSION) lib$(MODULE).a
+
+clean::
+	$(RM) lib$(MODULE).so.$(SOVERSION)
