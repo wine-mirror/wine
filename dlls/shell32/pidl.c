@@ -119,6 +119,9 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
 {	DWORD len;
 	LPITEMIDLIST newpidl=NULL;
 	
+	TRACE(pidl,"pidl=%p \n",pidl);
+	pdump(pidl);
+	
 	if (pidl)
 	{ len = pidl->mkid.cb;	
 	  newpidl = (LPITEMIDLIST) SHAlloc (len+2);
@@ -126,8 +129,8 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
 	  { memcpy(newpidl,pidl,len);
    	    ILGetNext(newpidl)->mkid.cb = 0x00;
 	  }
-	 }
-	TRACE(pidl,"pidl=%p newpidl=%p\n",pidl, newpidl);
+	}
+	TRACE(pidl,"-- newpidl=%p\n",newpidl);
 
   	return newpidl;
 }
@@ -196,6 +199,16 @@ LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
   return pidlNew;
 }
 /*************************************************************************
+ *  SHGetRealIDL [SHELL32.98]
+ *
+ * NOTES
+ */
+LPITEMIDLIST WINAPI SHGetRealIDL(DWORD x, DWORD y, DWORD z)
+{	FIXME(pidl,"0x%04lx 0x%04lx 0x%04lx\n",x,y,z);
+	return 0;
+}
+
+/*************************************************************************
  *  SHLogILFromFSIL [SHELL32.95]
  *
  * NOTES
@@ -263,12 +276,24 @@ LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl)
  * NOTES
  *  Adds the single item to the idlist indicated by pidl.
  *  if bEnd is 0, adds the item to the front of the list,
- *  otherwise adds the item to the end.
- *  Destroys the passed in idlist!
+ *  otherwise adds the item to the end. (???)
+ *  Destroys the passed in idlist! (???)
  */
 LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd)
-{	FIXME(pidl,"(pidl=%p,pidl=%p,%08u)stub\n",pidl,item,bEnd);
-	return NULL;
+{	LPITEMIDLIST idlRet;
+	WARN(pidl,"(pidl=%p,pidl=%p,%08u)semi-stub\n",pidl,item,bEnd);
+	pdump (pidl);
+	pdump (item);
+	
+	if (_ILIsDesktop(pidl))
+	{  idlRet = ILClone(item);
+	   if (pidl)
+	     SHFree (pidl);
+	   return idlRet;
+	}  
+	idlRet=ILCombine(pidl,item);
+	SHFree(pidl);
+	return idlRet;
 }
 /*************************************************************************
  * ILFree [SHELL32.155]

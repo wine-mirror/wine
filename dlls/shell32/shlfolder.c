@@ -242,6 +242,9 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	    { pidlFull = (LPITEMIDLIST)HeapAlloc(GetProcessHeap(),0,2);
 	      pidlFull->mkid.cb = 0;
 	    }
+	    else if (strcmp(pszTemp,"My Computer")==0)
+	    { pidlFull = _ILCreateMyComputer();
+	    }
 	    else
 	    { pidlFull = _ILCreateMyComputer();
 
@@ -394,6 +397,8 @@ static HRESULT WINAPI  IShellFolder_CompareIDs(LPSHELLFOLDER this,
   LPCITEMIDLIST  pidlTemp1 = pidl1, pidlTemp2 = pidl2;
 
   TRACE(shell,"(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n",this,lParam,pidl1,pidl2);
+  pdump (pidl1);
+  pdump (pidl2);
 
   if (!pidl1 && !pidl2)
     return 0;
@@ -601,13 +606,13 @@ static HRESULT WINAPI IShellFolder_GetUIObjectOf( LPSHELLFOLDER this,HWND32 hwnd
 #define GET_SHGDN_RELATION(dwFlags)    ((DWORD)dwFlags & (DWORD)0x000000FF)
 
 static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEMIDLIST pidl, DWORD dwFlags, LPSTRRET lpName)
-{	CHAR           szText[MAX_PATH];
-	CHAR           szTemp[MAX_PATH];
-	CHAR           szSpecial[MAX_PATH];
-	CHAR           szDrive[MAX_PATH];
-	DWORD          dwVolumeSerialNumber,dwMaximumComponetLength,dwFileSystemFlags;
-	LPITEMIDLIST   pidlTemp=NULL;
-	BOOL32				 bSimplePidl=FALSE;
+{	CHAR	szText[MAX_PATH];
+	CHAR	szTemp[MAX_PATH];
+	CHAR	szSpecial[MAX_PATH];
+	CHAR	szDrive[MAX_PATH];
+	DWORD	dwVolumeSerialNumber,dwMaximumComponetLength,dwFileSystemFlags;
+	LPITEMIDLIST	pidlTemp=NULL;
+	BOOL32	bSimplePidl=FALSE;
 		
 	TRACE(shell,"(%p)->(pidl=%p,0x%08lx,%p)\n",this,pidl,dwFlags,lpName);
 
@@ -740,7 +745,10 @@ static BOOL32 WINAPI IShellFolder_GetFolderPath(LPSHELLFOLDER this, LPSTR lpszOu
 	}
     
 	*lpszOut=0;
-    
+
+	if (! this->mlpszFolder)
+	  return FALSE;
+	  
 	dwSize = strlen (this->mlpszFolder) +1;
 	if ( dwSize > dwOutSize)
 	  return FALSE;

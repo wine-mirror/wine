@@ -361,10 +361,10 @@ LRESULT ShellView_OnSize(LPSHELLVIEW this, WORD wWidth, WORD wHeight)
 * ShellView_BuildFileMenu()
 */   
 HMENU32 ShellView_BuildFileMenu(LPSHELLVIEW this)
-{	CHAR			szText[MAX_PATH];
+{	CHAR	szText[MAX_PATH];
 	MENUITEMINFO32A	mii;
-	int				nTools,i;
-	HMENU32 		hSubMenu;
+	int	nTools,i;
+	HMENU32	hSubMenu;
 
 	TRACE(shell,"(%p) semi-stub\n",this);
 
@@ -381,7 +381,7 @@ HMENU32 ShellView_BuildFileMenu(LPSHELLVIEW this)
 	    mii.cbSize = sizeof(mii);
 	    mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
 
-	    if(TBSTYLE_SEP != g_Tools[i].bStyle)
+	    if(TBSTYLE_SEP != g_Tools[i].bStyle) /* no seperator*/
 	    { mii.fType = MFT_STRING;
 	      mii.fState = MFS_ENABLED;
 	      mii.dwTypeData = szText;
@@ -394,13 +394,14 @@ HMENU32 ShellView_BuildFileMenu(LPSHELLVIEW this)
 	    InsertMenuItem32A(hSubMenu, (UINT32)-1, TRUE, &mii);
 	  }
 	}
+	TRACE(shell,"-- return (menu=0x%x)\n",hSubMenu);
 	return hSubMenu;
 }
 /**************************************************************************
 * ShellView_MergeFileMenu()
 */   
 void ShellView_MergeFileMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
-{   MENUITEMINFO32A   mii;
+{	MENUITEMINFO32A   mii;
 	CHAR          szText[MAX_PATH];
 
 	TRACE(shell,"(%p)->(submenu=0x%08x) stub\n",this,hSubMenu);
@@ -416,7 +417,7 @@ void ShellView_MergeFileMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
 	  InsertMenuItem32A(hSubMenu, 0, TRUE, &mii);
 
 	  /*add the file menu items */
-      strcpy(szText,"dummy 45");
+	  strcpy(szText,"dummy 45");
       
 	  mii.cbSize = sizeof(mii);
 	  mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
@@ -428,14 +429,15 @@ void ShellView_MergeFileMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
 	  /*insert this item at the beginning of the menu */
 	  InsertMenuItem32A(hSubMenu, 0, TRUE, &mii);
 	}
+	TRACE(shell,"--\n");	
 }
 
 /**************************************************************************
 * ShellView_MergeViewMenu()
 */   
 void ShellView_MergeViewMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
-{   MENUITEMINFO32A   mii;
-    CHAR          szText[MAX_PATH];
+{	MENUITEMINFO32A	mii;
+	CHAR	szText[MAX_PATH];
 
 	TRACE(shell,"(%p)->(submenu=0x%08x) stub\n",this,hSubMenu);
 	if(hSubMenu)
@@ -448,7 +450,7 @@ void ShellView_MergeViewMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
 	  InsertMenuItem32A(hSubMenu, FCIDM_MENU_VIEW_SEP_OPTIONS, FALSE, &mii);
 
 	  /*add the view menu items at the correct position in the menu*/
-      strcpy(szText,"Dummy 46");
+	  strcpy(szText,"Dummy 46");
       
 	  mii.cbSize = sizeof(mii);
 	  mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
@@ -463,7 +465,7 @@ void ShellView_MergeViewMenu(LPSHELLVIEW this, HMENU32 hSubMenu)
 * ShellView_UpdateMenu()
 */
 LRESULT ShellView_UpdateMenu(LPSHELLVIEW this, HMENU32 hMenu)
-{	TRACE(shell,"(%p)->(menu=0x%08x\n",this,hMenu);
+{	TRACE(shell,"(%p)->(menu=0x%08x)\n",this,hMenu);
 	CheckMenuItem32(hMenu, IDM_VIEW_FILES, MF_BYCOMMAND | (g_bViewKeys ? MF_CHECKED: MF_UNCHECKED));
 
 	if(ShellView_CanDoIDockingWindow(this))
@@ -474,7 +476,7 @@ LRESULT ShellView_UpdateMenu(LPSHELLVIEW this, HMENU32 hMenu)
 	{ EnableMenuItem32(hMenu, IDM_VIEW_IDW, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 	  CheckMenuItem32(hMenu, IDM_VIEW_IDW, MF_BYCOMMAND | MF_UNCHECKED);
 	}
-	return 0;
+	return S_OK;
 }
 
 /**************************************************************************
@@ -498,7 +500,7 @@ void ShellView_OnDeactivate(LPSHELLVIEW this)
 }
 
 /**************************************************************************
-* CShellView_OnActivate()
+* ShellView_OnActivate()
 */   
 LRESULT ShellView_OnActivate(LPSHELLVIEW this, UINT32 uState)
 {	OLEMENUGROUPWIDTHS32   omw = { {0, 0, 0, 0, 0, 0} };
@@ -521,7 +523,7 @@ LRESULT ShellView_OnActivate(LPSHELLVIEW this, UINT32 uState)
    
 	  if(this->hMenu)
 	  { this->pShellBrowser->lpvtbl->fnInsertMenusSB(this->pShellBrowser, this->hMenu, &omw);
-
+	    TRACE(shell,"-- after fnInsertMenusSB\n");    
 	    /*build the top level menu get the menu item's text*/
 	    strcpy(szText,"dummy 31");
       
@@ -558,11 +560,13 @@ LRESULT ShellView_OnActivate(LPSHELLVIEW this, UINT32 uState)
 	      { ShellView_MergeFileMenu(this, mii.hSubMenu);
 	      }
 	    }
+	  TRACE(shell,"-- before fnSetMenuSB\n");      
 	  this->pShellBrowser->lpvtbl->fnSetMenuSB(this->pShellBrowser, this->hMenu, 0, this->hWnd);
 	  }
 	}
 	this->uState = uState;
-	return 0;
+	TRACE(shell,"--\n");    
+	return S_OK;
 }
 
 /**************************************************************************
@@ -600,7 +604,7 @@ BOOL32 ShellView_AddRemoveDockingWindow(LPSHELLVIEW this, BOOL32 bAdd)
 	LPSERVICEPROVIDER	pSP;
 	LPDOCKINGWINDOWFRAME	pFrame;
 	
-	FIXME(shell,"(%p)->(badd=0x%08x) stub\n",this,bAdd);
+	WARN(shell,"(%p)->(badd=0x%08x) semi-stub\n",this,bAdd);
 
 	/* get the browser's IServiceProvider */
 	hr = this->pShellBrowser->lpvtbl->fnQueryInterface(this->pShellBrowser, (REFIID)&IID_IServiceProvider, (LPVOID*)&pSP);
@@ -610,6 +614,7 @@ BOOL32 ShellView_AddRemoveDockingWindow(LPSHELLVIEW this, BOOL32 bAdd)
 	  if(SUCCEEDED(hr))
 	  { if(bAdd)
 	    { hr = S_OK;
+	      FIXME(shell,"no docking implemented\n");
 	      /*if(!this->pDockingWindow)
 	      { //create the toolbar object
 	        this->pDockingWindow = DockingWindow_Constructor(this, this->hWnd);
@@ -625,8 +630,9 @@ BOOL32 ShellView_AddRemoveDockingWindow(LPSHELLVIEW this, BOOL32 bAdd)
 	      }*/
 	    }
 	    else
-	    { /*if(this->pDockingWindow)
-	      { hr = pFrame->->lpvtbl->fnRemoveToolbar(pFrame, (IDockingWindow*)this->pDockingWindow, DWFRF_NORMAL);
+	    { FIXME(shell,"no docking implemented\n");
+/*	      if(this->pDockingWindow)
+	      { hr = pFrame->lpvtbl->fnRemoveToolbar(pFrame, (IDockingWindow*)this->pDockingWindow, DWFRF_NORMAL);
 
 	        if(SUCCEEDED(hr))
 	        { // RemoveToolbar should release the toolbar object which will cause 
@@ -820,7 +826,7 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 		  }
 		  else					/* we are acting with a full featured IShellBrowser */
 		  { TRACE(shell,"-- fnBrowseObject pidl =%p\n", this->aSelectedItems[0]);
-		    wFlags = SBSP_DEFBROWSER | SBSP_DEFMODE | SBSP_RELATIVE;
+		    wFlags = SBSP_SAMEBROWSER | SBSP_DEFMODE | SBSP_RELATIVE;
 		    this->pShellBrowser->lpvtbl->fnBrowseObject(this->pShellBrowser, 
 								this->aSelectedItems[0], 
 								wFlags);

@@ -451,10 +451,11 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	enum 
 	{ FT_UNKNOWN= 0x00000000,
 	  FT_DIR=     0x00000001, 
-	  FT_DESKTOP= 0x00000002
+	  FT_DESKTOP= 0x00000002,
+	  FT_SPECIAL= 0x00000003
 	} tFolder; 
 
-	TRACE(shell,"(%04x,%d,%p)\n", hwndOwner,nFolder,ppidl);
+	TRACE(shell,"(%04x,0x%x,%p)\n", hwndOwner,nFolder,ppidl);
 
 	strcpy(buffer,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders\\");
 
@@ -467,15 +468,15 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	tFolder=FT_DIR;	
 	switch (nFolder)
 	{ case CSIDL_BITBUCKET:
-		strcpy (buffer,"xxx");			/*not in the registry*/
-		TRACE (shell,"looking for Recycler\n");
-		tFolder=FT_UNKNOWN;
-        break;
-	  case CSIDL_CONTROLS:
-		strcpy (buffer,"xxx");			/*virtual folder*/
-        TRACE (shell,"looking for Control\n");
+	    strcpy (buffer,"xxx");			/*not in the registry*/
+	    TRACE (shell,"looking for Recycler\n");
 	    tFolder=FT_UNKNOWN;
-        break;
+	    break;
+	  case CSIDL_CONTROLS:
+	    strcpy (buffer,"xxx");			/*virtual folder*/
+	    TRACE (shell,"looking for Control\n");
+	    tFolder=FT_UNKNOWN;
+	    break;
 	  case CSIDL_DESKTOP:
 	    strcpy (buffer,"xxx");			/*virtual folder*/
 	    TRACE (shell,"looking for Desktop\n");
@@ -487,7 +488,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	  case CSIDL_DRIVES:
 	    strcpy (buffer,"xxx");			/*virtual folder*/
 	    TRACE (shell,"looking for Drives\n");
-	    tFolder=FT_UNKNOWN;
+	    tFolder=FT_SPECIAL;
 	    break;
 	  case CSIDL_FONTS:
 	    strcpy (buffer,"Fonts");			
@@ -545,7 +546,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
   	    { GetWindowsDirectory32A(npath,MAX_PATH);
 	      PathAddBackslash(npath);
 	      switch (nFolder)
-  		  { case CSIDL_DESKTOPDIRECTORY:
+	      { case CSIDL_DESKTOPDIRECTORY:
       		  strcat (npath,"Desktop");
          	  break;
       		case CSIDL_FONTS:
@@ -554,13 +555,13 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
       		case CSIDL_NETHOOD:
          	  strcat (npath,"NetHood");			
          	  break;
-  		    case CSIDL_PERSONAL:
+	        case CSIDL_PERSONAL:
          	  strcpy (npath,"C:\\Personal");			
          	  break;
       		case CSIDL_FAVORITES:
          	  strcat (npath,"Favorites");			
          	  break;
-  		    case CSIDL_PRINTERS:
+	        case CSIDL_PRINTERS:
          	  strcat (npath,"PrintHood");			
          	  break;
       		case CSIDL_PROGRAMS:
@@ -596,16 +597,19 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	      }
 	      TRACE(shell,"value %s=%s created\n",buffer,npath);
 	      CreateDirectory32A(npath,NULL);
-          strcpy(tpath,npath);
+	      strcpy(tpath,npath);
 	    }
 	    break;
 	  case FT_DESKTOP:
-	    strcpy (tpath,"Desktop");			
-		break;
-	  default:
-        RegCloseKey(key);
-	    return E_OUTOFMEMORY;
+	    strcpy (tpath,"Desktop");
 	    break;
+	  case FT_SPECIAL:
+	    if (nFolder==CSIDL_DRIVES)
+	    strcpy (tpath,"My Computer");
+	    break;
+	  default:
+	    RegCloseKey(key);
+	    return E_OUTOFMEMORY;
 	}
 
 	RegCloseKey(key);

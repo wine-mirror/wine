@@ -990,54 +990,66 @@ HRESULT WINAPI SHGetDataFromIDListA(DWORD u, DWORD v, DWORD w, DWORD x, DWORD y)
 	return 0;
 }
 /*************************************************************************
- * SHRegCloseKey [SHELL32.505]
+ * SHRegCloseKey32 [NT4.0:SHELL32.505]
  *
- * XXX I am not sure if the given param is correct. :-)
  */
-HRESULT WINAPI SHRegCloseKey(HKEY key)
-{	FIXME(shell,"(0x%08lx)\n", key);
-	/* XXX Is this correct? */ 
-	return RegCloseKey(key);
+HRESULT WINAPI SHRegCloseKey32 (HKEY hkey)
+{	TRACE(shell,"0x%04x\n",hkey);
+	return RegCloseKey( hkey );
 }
 /*************************************************************************
  * SHRegOpenKey32A [SHELL32.506]
  *
- * XXX I am not sure if the given param is correct. :-)
  */
 HRESULT WINAPI SHRegOpenKey32A(HKEY hKey, LPSTR lpSubKey, LPHKEY phkResult)
-{	FIXME(shell,"(0x%08lx, %s, 0x%08lx)\n", hKey, debugstr_a(lpSubKey),
+{	FIXME(shell,"(0x%08x, %s, %p)\n", hKey, debugstr_a(lpSubKey),
 	      phkResult);
-	/* XXX Is this correct? */ 
 	return RegOpenKey32A(hKey, lpSubKey, phkResult);
 }
+
 /*************************************************************************
- * SHRegOpenKey32W [SHELL32.507]
+ * SHRegOpenKey32W [NT4.0:SHELL32.507]
  *
- * XXX I am not sure if the given param is correct. :-)
  */
-HRESULT WINAPI SHRegOpenKey32W(HKEY hKey, LPWSTR lpSubKey, LPHKEY phkResult)
-{	FIXME(shell,"(0x%08lx, %s, 0x%08lx)\n", hKey, debugstr_w(lpSubKey),
-	      phkResult);
-	/* XXX Is this correct? */ 
-	return RegOpenKey32W(hKey, lpSubKey, phkResult);
+HRESULT WINAPI SHRegOpenKey32W (HKEY hkey, LPCWSTR lpszSubKey, LPHKEY retkey)
+{	WARN(shell,"0x%04x %s %p\n",hkey,debugstr_w(lpszSubKey),retkey);
+	return RegOpenKey32W( hkey, lpszSubKey, retkey );
 }
 /*************************************************************************
  * SHRegQueryValueExA [SHELL32.509]
  *
- * XXX I know this is not the correct parameter. Check with documentation.
  */
 HRESULT WINAPI SHRegQueryValueEx32A(DWORD u, LPSTR v, DWORD w, DWORD x,
 				  DWORD y, DWORD z)
-{	FIXME(shell,"0x%04lx %s 0x%04lx 0x%04lx 0x%04lx  0x%04lx stub\n",u,debugstr_a(v),w,x,y,z);
+{	FIXME(shell,"0x%04lx %s 0x%04lx 0x%04lx 0x%04lx  0x%04lx stub\n",
+		u,debugstr_a(v),w,x,y,z);
 	return 0;
 }
 /*************************************************************************
- * SHRegQueryValueEx32W [NT4.0:SHELL32.511]
+ * SHRegQueryValue32W [NT4.0:SHELL32.510]
  *
  */
-HRESULT WINAPI SHRegQueryValueEx32W (DWORD u, LPWSTR v, DWORD w, DWORD x, DWORD y, DWORD z)
-{	FIXME(shell,"0x%04lx %s 0x%04lx 0x%04lx 0x%04lx  0x%04lx stub\n",u,debugstr_w(v),w,x,y,z);
-	return 0;
+HRESULT WINAPI SHRegQueryValue32W (HKEY hkey, LPWSTR lpszSubKey,
+				 LPWSTR lpszData, LPDWORD lpcbData )
+{	WARN(shell,"0x%04x %s %p %p semi-stub\n",
+		hkey, debugstr_w(lpszSubKey), lpszData, lpcbData);
+	return RegQueryValue32W( hkey, lpszSubKey, lpszData, lpcbData );
+}
+
+/*************************************************************************
+ * SHRegQueryValueEx32W [NT4.0:SHELL32.511]
+ *
+ * FIXME 
+ *  if the datatype REG_EXPAND_SZ then expand the string and change
+ *  *pdwType to REG_SZ. 
+ */
+HRESULT WINAPI SHRegQueryValueEx32W (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserved,
+		 LPDWORD pdwType, LPVOID pvData, LPDWORD pcbData)
+{	DWORD ret;
+	WARN(shell,"0x%04x %s %p %p %p %p semi-stub\n",
+		hkey, debugstr_w(pszValue), pdwReserved, pdwType, pvData, pcbData);
+	ret = RegQueryValueEx32W ( hkey, pszValue, pdwReserved, pdwType, pvData, pcbData);
+	return ret;
 }
 
 /*************************************************************************
@@ -1073,10 +1085,286 @@ HRESULT WINAPI IsUserAdmin()
 	return TRUE;
 }
 /*************************************************************************
+ * StrRetToStrN [SHELL32.96]
+ * 
+ * converts a STRRET to a normal string
+ *
+ * NOTES
+ *  FIXME the string handling is to simple (different STRRET choices)
+ *  at the moment only CSTR
+ *  the pidl is for STRRET OFFSET
+ */
+HRESULT WINAPI StrRetToStrN (LPSTR dest, DWORD len, LPSTRRET src, LPITEMIDLIST x)
+{	FIXME(shell,"dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,x);
+	strncpy(dest,src->u.cStr,len);
+	return S_OK;
+}
+
+/*************************************************************************
+ * StrChrW [NT 4.0:SHELL32.651]
+ *
+ */
+HRESULT WINAPI StrChrW (LPWSTR u, DWORD v)
+{	FIXME(shell,"%s 0x%lx stub\n",debugstr_w(u),v);
+	return 0;
+}
+/*************************************************************************
+ * SHAllocShared [SHELL32.520]
+ *
+ * NOTES
+ *  parameter1 is return value from HeapAlloc
+ *  parameter2 is equal to the size allocated with HeapAlloc
+ *  parameter3 is return value from GetCurrentProcessId
+ *
+ *  the return value is posted as lParam with 0x402 (WM_USER+2) to somewhere
+ *  WM_USER+2 could be the undocumented CWM_SETPATH
+ *  the allocated memory contains a pidl
+ */
+HGLOBAL32 WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
+{	HGLOBAL32 hmem;
+	LPVOID pmem;
+	
+	TRACE(shell,"ptr=%p size=0x%04lx procID=0x%04lx\n",psrc,size,procID);
+	hmem = GlobalAlloc32(GMEM_FIXED, size);
+	if (!hmem)
+	  return 0;
+	
+	pmem =  GlobalLock32 (hmem);
+
+	if (! pmem)
+	  return 0;
+	  
+	memcpy (pmem, psrc, size);
+	GlobalUnlock32(hmem); 
+	return hmem;
+}
+/*************************************************************************
+ * SHLockShared [SHELL32.521]
+ *
+ * NOTES
+ *  parameter1 is return value from SHAllocShared
+ *  parameter2 is return value from GetCurrentProcessId
+ *  the receiver of (WM_USER+2) trys to lock the HANDLE (?) 
+ *  the returnvalue seems to be a memoryadress
+ */
+void * WINAPI SHLockShared(HANDLE32 hmem, DWORD procID)
+{	TRACE(shell,"handle=0x%04x procID=0x%04lx\n",hmem,procID);
+	return GlobalLock32(hmem);
+}
+/*************************************************************************
+ * SHUnlockShared [SHELL32.522]
+ *
+ * NOTES
+ *  parameter1 is return value from SHLockShared
+ */
+BOOL32 WINAPI SHUnlockShared(HANDLE32 pmem)
+{	TRACE(shell,"handle=0x%04x\n",pmem);
+	return GlobalUnlock32(pmem); 
+}
+/*************************************************************************
+ * SHFreeShared [SHELL32.523]
+ *
+ * NOTES
+ *  parameter1 is return value from SHAllocShared
+ *  parameter2 is return value from GetCurrentProcessId
+ */
+HANDLE32 WINAPI SHFreeShared(HANDLE32 hmem, DWORD procID)
+{	TRACE(shell,"handle=0x%04x 0x%04lx\n",hmem,procID);
+	return GlobalFree32(hmem);
+}
+
+/*************************************************************************
+ * SetAppStartingCursor32 [SHELL32.99]
+ *
+ */
+HRESULT WINAPI SetAppStartingCursor32(DWORD u, DWORD v)
+{	FIXME(shell,"0x%04lx 0x%04lx stub\n",u,v );
+	return 0;
+}
+/*************************************************************************
+ * SHLoadOLE32 [SHELL32.151]
+ *
+ */
+HRESULT WINAPI SHLoadOLE32(DWORD u)
+{	FIXME(shell,"0x%04lx stub\n",u);
+	return S_OK;
+}
+/*************************************************************************
+ * Shell_MergeMenus32 [SHELL32.67]
+ *
+ */
+BOOL32 _SHIsMenuSeparator(HMENU32 hm, int i)
+{
+	MENUITEMINFO32A mii;
+
+	mii.cbSize = sizeof(MENUITEMINFO32A);
+	mii.fMask = MIIM_TYPE;
+	mii.cch = 0;    /* WARNING: We MUST initialize it to 0*/
+	if (!GetMenuItemInfo32A(hm, i, TRUE, &mii))
+	{ return(FALSE);
+	}
+
+	if (mii.fType & MFT_SEPARATOR)
+	{ return(TRUE);
+	}
+
+        return(FALSE);
+}
+#define MM_ADDSEPARATOR         0x00000001L
+#define MM_SUBMENUSHAVEIDS      0x00000002L
+HRESULT WINAPI Shell_MergeMenus32 (HMENU32 hmDst, HMENU32 hmSrc, UINT32 uInsert, UINT32 uIDAdjust, UINT32 uIDAdjustMax, ULONG uFlags)
+{	int		nItem;
+	HMENU32		hmSubMenu;
+	BOOL32		bAlreadySeparated;
+	MENUITEMINFO32A miiSrc;
+	char		szName[256];
+	UINT32		uTemp, uIDMax = uIDAdjust;
+
+	FIXME(shell,"hmenu1=0x%04x hmenu2=0x%04x 0x%04x 0x%04x 0x%04x  0x%04lx stub\n",
+		 hmDst, hmSrc, uInsert, uIDAdjust, uIDAdjustMax, uFlags);
+
+	if (!hmDst || !hmSrc)
+	{ return uIDMax;
+	}
+
+	nItem = GetMenuItemCount32(hmDst);
+	if (uInsert >= (UINT32)nItem)
+	{ uInsert = (UINT32)nItem;
+	  bAlreadySeparated = TRUE;
+	}
+	else
+	{ bAlreadySeparated = _SHIsMenuSeparator(hmDst, uInsert);;
+	}
+	if ((uFlags & MM_ADDSEPARATOR) && !bAlreadySeparated)
+	{ /* Add a separator between the menus */
+	  InsertMenu32A(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+	  bAlreadySeparated = TRUE;
+        }
+
+
+        /* Go through the menu items and clone them*/
+        for (nItem = GetMenuItemCount32(hmSrc) - 1; nItem >= 0; nItem--)
+        { miiSrc.cbSize = sizeof(MENUITEMINFO32A);
+	  miiSrc.fMask = MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_CHECKMARKS | MIIM_TYPE | MIIM_DATA;
+	  /* We need to reset this every time through the loop in case
+	  menus DON'T have IDs*/
+	  miiSrc.fType = MFT_STRING;
+	  miiSrc.dwTypeData = szName;
+	  miiSrc.dwItemData = 0;
+	  miiSrc.cch = sizeof(szName);
+
+	  if (!GetMenuItemInfo32A(hmSrc, nItem, TRUE, &miiSrc))
+	  { continue;
+	  }
+	  if (miiSrc.fType & MFT_SEPARATOR)
+	  { /* This is a separator; don't put two of them in a row*/
+	    if (bAlreadySeparated)
+	    { continue;
+	    }
+	    bAlreadySeparated = TRUE;
+	  }
+	  else if (miiSrc.hSubMenu)
+	  { if (uFlags & MM_SUBMENUSHAVEIDS)
+	    { /* Adjust the ID and check it*/
+	      miiSrc.wID += uIDAdjust;
+	      if (miiSrc.wID > uIDAdjustMax)
+	      { continue;
+	      }
+	      if (uIDMax <= miiSrc.wID)
+	      { uIDMax = miiSrc.wID + 1;
+	      }
+	    }
+	    else
+	    { /* Don't set IDs for submenus that didn't have them already */
+	      miiSrc.fMask &= ~MIIM_ID;
+	    }
+	    hmSubMenu = miiSrc.hSubMenu;
+	    miiSrc.hSubMenu = CreatePopupMenu32();
+	    if (!miiSrc.hSubMenu)
+	    { return(uIDMax);
+	    }
+	    uTemp = Shell_MergeMenus32(miiSrc.hSubMenu, hmSubMenu, 0, uIDAdjust, uIDAdjustMax, uFlags&MM_SUBMENUSHAVEIDS);
+	    if (uIDMax <= uTemp)
+	    { uIDMax = uTemp;
+	    }
+	    bAlreadySeparated = FALSE;
+	  }
+	  else
+	  { /* Adjust the ID and check it*/
+	    miiSrc.wID += uIDAdjust;
+	    if (miiSrc.wID > uIDAdjustMax)
+	    { continue;
+	    }
+	    if (uIDMax <= miiSrc.wID)
+	    { uIDMax = miiSrc.wID + 1;
+	    }
+	    bAlreadySeparated = FALSE;
+	  }
+	  if (!InsertMenuItem32A(hmDst, uInsert, TRUE, &miiSrc))
+	  { return(uIDMax);
+	  }
+	}
+
+	/* Ensure the correct number of separators at the beginning of the
+        inserted menu items*/
+        if (uInsert == 0)
+        { if (bAlreadySeparated)
+	  { DeleteMenu32(hmDst, uInsert, MF_BYPOSITION);
+	  }
+	}
+	else
+	{ if (_SHIsMenuSeparator(hmDst, uInsert-1))
+	  { if (bAlreadySeparated)
+	    { DeleteMenu32(hmDst, uInsert, MF_BYPOSITION);
+	    }
+	  }
+	  else
+	  { if ((uFlags & MM_ADDSEPARATOR) && !bAlreadySeparated)
+	    { /* Add a separator between the menus*/
+	      InsertMenu32A(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+	    }
+	  }
+	}
+        return(uIDMax);
+
+}
+/*************************************************************************
+ * PathGetDriveNumber32 [SHELL32.57]
+ *
+ */
+HRESULT WINAPI PathGetDriveNumber32(LPSTR u)
+{	FIXME(shell,"%s stub\n",debugstr_a(u));
+	return 0;
+}
+/*************************************************************************
+ * DriveType32 [SHELL32.64]
+ *
+ */
+HRESULT WINAPI DriveType32(DWORD u)
+{	FIXME(shell,"0x%04lx stub\n",u);
+	return 0;
+}
+/*************************************************************************
+ * SHAbortInvokeCommand [SHELL32.198]
+ *
+ */
+HRESULT WINAPI SHAbortInvokeCommand()
+{	FIXME(shell,"stub\n");
+	return 1;
+}
+/*************************************************************************
+ * SHOutOfMemoryMessageBox [SHELL32.126]
+ *
+ */
+HRESULT WINAPI SHOutOfMemoryMessageBox(DWORD u, DWORD v, DWORD w)
+{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w);
+	return 0;
+}
+/*************************************************************************
  * SHFlushClipboard [SHELL32.121]
  *
  */
-HRESULT WINAPI SHFlushClipboard(VOID)
+HRESULT WINAPI SHFlushClipboard()
 {	FIXME(shell,"stub\n");
-	return 0;
+	return 1;
 }

@@ -52,27 +52,27 @@ init	Shell32LibMain
   44 stub DoEnvironmentSubstA   # exported by name
   45 stdcall PathFileExists(str) PathFileExists
   46 stdcall PathMatchSpec (str str) PathMatchSpec
-  47 stub PathMakeUniqueName
-  48 stub PathSetDlgItemPath
-  49 stub PathQualify
+  47 stub PathMakeUniqueName@20
+  48 stub PathSetDlgItemPath@12
+  49 stub PathQualify@4
   50 stub PathStripToRoot
   51 stdcall PathResolve(str long long) PathResolve
   52 stdcall PathGetArgs(str) PathGetArgs
-  53 stub DoEnvironmentSubstW   # exported by name
+  53 stub DoEnvironmentSubstW@8  # exported by name
   54 stdcall DragAcceptFiles(long long) DragAcceptFiles   # exported by name
   55 stub PathQuoteSpaces
   56 stdcall PathUnquoteSpaces(str) PathUnquoteSpaces
-  57 stub PathGetDriveNumber
+  57 stdcall PathGetDriveNumber (str) PathGetDriveNumber32
   58 stdcall ParseField(str long str long) ParseField
   59 stub RestartDialog
   60 stdcall ExitWindowsDialog(long) ExitWindowsDialog
   61 stdcall RunFileDlg(long long long str str long) RunFileDlg
   62 stdcall PickIconDlg(long long long long) PickIconDlg
   63 stdcall GetFileNameFromBrowse(long long long long str str str) GetFileNameFromBrowse
-  64 stub DriveType
+  64 stdcall DriveType (long) DriveType32
   65 stub InvalidateDriveType
   66 stub IsNetDrive
-  67 stub Shell_MergeMenus
+  67 stdcall Shell_MergeMenus (long long long long long long) Shell_MergeMenus32
   68 stdcall SHGetSettings(long long long) SHGetSettings
   69 stub SHGetNetResource
   70 stub SHCreateDefClassObject
@@ -101,10 +101,10 @@ init	Shell32LibMain
   93 stub Win32CreateDirectory
   94 stub Win32RemoveDirectory
   95 stdcall SHLogILFromFSIL (ptr) SHLogILFromFSIL
-  96 stub StrRetToStrN
+  96 stdcall StrRetToStrN (long long long long) StrRetToStrN
   97 stub SHWaitForFileToOpen
-  98 stub SHGetRealIDL
-  99 stub SetAppStartingCursor
+  98 stdcall SHGetRealIDL (long long long) SHGetRealIDL
+  99 stdcall SetAppStartingCursor (long long) SetAppStartingCursor32
  100 stdcall SHRestricted(long) SHRestricted
  101 stub DragQueryFileAorW   # exported by name
  102 stdcall SHCoCreateInstance(ptr ptr long ptr ptr) SHCoCreateInstance
@@ -126,12 +126,12 @@ init	Shell32LibMain
  118 stdcall FileMenu_Destroy (long) FileMenu_Destroy
  119 stdcall IsLFNDrive(str) IsLFNDrive
  120 stub FileMenu_AbortInitMenu
- 121 stdcall SHFlushClipboard() SHFlushClipboard
+ 121 stdcall SHFlushClipboard () SHFlushClipboard
  122 stub RunDLL_CallEntry16
  123 stdcall SHFreeUnusedLibraries (long) SHFreeUnusedLibraries
  124 stub FileMenu_AppendFilesForPidl
  125 stub FileMenu_AddFilesForPidl
- 126 stub SHOutOfMemoryMessageBox
+ 126 stdcall SHOutOfMemoryMessageBox (long long long) SHOutOfMemoryMessageBox
  127 stdcall SHWinHelp (long long long long) SHWinHelp
  128 stdcall DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
  129 stub DAD_AutoScroll
@@ -156,17 +156,17 @@ init	Shell32LibMain
  148 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIcon32A   # exported by name
  149 stdcall SHFind_InitMenuPopup(long long long long) SHFind_InitMenuPopup
  150 stub ExtractAssociatedIconExA   # exported by name
- 151 stub SHLoadOLE
+ 151 stdcall SHLoadOLE (long) SHLoadOLE32
  152 stdcall ILGetSize(ptr) ILGetSize
  153 stdcall ILGetNext(ptr) ILGetNext
- 154 stub ILAppend
+ 154 stdcall ILAppend (long long long) ILAppend
  155 stdcall ILFree(ptr) ILFree
  156 stub ILGlobalFree
  157 stdcall ILCreateFromPath (ptr) ILCreateFromPath
  158 stdcall PathGetExtension(str long long) PathGetExtension
  159 stub PathIsDirectory
  160 stub SHNetConnectionDialog
- 161 stdcall SHRunControlPanel (long long)SHRunControlPanel
+ 161 stdcall SHRunControlPanel (long long) SHRunControlPanel
  162 stub SHSimpleIDListFromPath
  163 stub StrToOleStr
  164 stub Win32DeleteFile
@@ -203,7 +203,7 @@ init	Shell32LibMain
  195 stdcall SHFree(ptr) SHFree
  196 stdcall SHAlloc(long) SHAlloc
  197 stub SHGlobalDefect
- 198 stub SHAbortInvokeCommand
+ 198 stdcall SHAbortInvokeCommand () SHAbortInvokeCommand
  199 stub SHGetFileIcon
  200 stub SHLocalAlloc
  201 stub SHLocalFree
@@ -310,7 +310,7 @@ init	Shell32LibMain
  301 stub StrChrA # proper ordinal unknown
  302 stub StrChrIA # proper ordinal unknown
  303 stub StrChrIW # proper ordinal unknown
- 304 stub StrChrW # proper ordinal unknown
+ 304 stdcall StrChrW (ptr ptr) StrChrW # proper ordinal unknown
  305 stub StrCmpNA # proper ordinal unknown
  306 stub StrCmpNIA # proper ordinal unknown
  307 stub StrCmpNIW # proper ordinal unknown
@@ -337,19 +337,19 @@ init	Shell32LibMain
  328 stub StrStrW # proper ordinal unknown 
  329 stub WOWShellExecute # proper ordinal unknown
 
- 505 stdcall SHRegCloseKey (long) SHRegCloseKey
+ 505 stdcall SHRegCloseKey (long) SHRegCloseKey32
  506 stdcall SHRegOpenKeyA (long str long) SHRegOpenKey32A
- 507 stdcall SHRegOpenKeyW (long wstr long) SHRegOpenKey32W
+ 507 stdcall SHRegOpenKeyW (long wstr long long) SHRegOpenKey32W
  508 stub SHRegQueryValueA@16
  509 stdcall SHRegQueryValueExA(long str ptr ptr ptr ptr) SHRegQueryValueEx32A
- 510 stub SHRegQueryValueW@16
+ 510 stdcall SHRegQueryValueW (long long long long) SHRegQueryValue32W
  511 stdcall SHRegQueryValueExW (long wstr ptr ptr ptr ptr) SHRegQueryValueEx32W
  512 stub SHRegDeleteKeyW@8
 
- 520 stub SHAllocShared@12
- 521 stub SHLockShared@8
- 522 stub SHUnlockShared@4
- 523 stub SHFreeShared@8
+ 520 stdcall SHAllocShared (long long long) SHAllocShared
+ 521 stdcall SHLockShared (long long) SHLockShared 
+ 522 stdcall SHUnlockShared (long) SHUnlockShared
+ 523 stdcall SHFreeShared (long long) SHFreeShared
  524 stub RealDriveType@8
  525 stub RealDriveTypeFlags@8
 
@@ -360,13 +360,13 @@ init	Shell32LibMain
  644 stub SHChangeNotification_Lock@16
  645 stub SHChangeNotification_Unlock@4
  646 stub SHChangeRegistrationReceive@8
- 647 stub ReceiveAddToRecentDocs
+ 647 stub ReceiveAddToRecentDocs@8
  648 stub SHWaitOp_Operate@8
 
- 650 stub PathIsSameRoot
+ 650 stub PathIsSameRoot@8
  651 stdcall ReadCabinetState (long long) ReadCabinetState 
  652 stdcall WriteCabinetState (long) WriteCabinetState
- 653 stub PathProcessCommand
+ 653 stub PathProcessCommand@16
 
  660 stdcall FileIconInit (long) FileIconInit
 
