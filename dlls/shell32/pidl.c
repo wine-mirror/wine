@@ -279,25 +279,35 @@ HRESULT WINAPI ILLoadFromStream (IStream * pStream, LPITEMIDLIST * ppPidl)
 	IStream_AddRef (pStream);
 
 	if (SUCCEEDED(IStream_Read(pStream, (LPVOID)&wLen, 2, &dwBytesRead)))
-	{ *ppPidl = SHAlloc (wLen);
-	  if (SUCCEEDED(IStream_Read(pStream, *ppPidl , wLen, &dwBytesRead)))
-	  { ret = S_OK;
-	  }
-	  else
-	  { SHFree(*ppPidl);
+	{
+	  TRACE("PIDL length is %d\n", wLen);
+	  if (wLen != 0) {
+	    *ppPidl = SHAlloc (wLen);
+	    if (SUCCEEDED(IStream_Read(pStream, *ppPidl , wLen, &dwBytesRead))) {
+		TRACE("Stream read OK\n");
+		ret = S_OK;
+	    } else {
+		WARN("reading pidl failed\n");
+		SHFree(*ppPidl);
+		*ppPidl = NULL;
+	    }
+	  } else {
 	    *ppPidl = NULL;
+	    ret = S_OK;
 	  }
 	}
 
 	/* we are not yet fully compatible */
-	if (!pcheck(*ppPidl))
-	{ SHFree(*ppPidl);
+	if (*ppPidl && !pcheck(*ppPidl))
+	{
+	  WARN("Check failed\n");
+	  SHFree(*ppPidl);
 	  *ppPidl = NULL;
 	}
 
-
+	
 	IStream_Release (pStream);
-
+	TRACE("done\n");
 	return ret;
 }
 
