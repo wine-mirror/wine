@@ -163,7 +163,7 @@
 
 	  <para>
 	    Both Midi in and Midi out are provided. The type of MIDI devices
-	    supported is external MIDI port (requires an MIDI capable device -
+	    supported is external MIDI port (requires a MIDI capable device -
 	    keyboard...) and OPL/2 synthesis (the OPL/2 patches for all
 	    instruments are in midiPatch.c).
 	  </para>
@@ -610,7 +610,7 @@
 
 	  <para>
 	    The implementation can be found in dlls/winmm/mciseq/mcimidi.c. Except
-	    from the Record command, should be close to completion (except for non
+	    for the Record command, should be close to completion (except for non
 	    blocking commands, as many MCI drivers).
 	  </para>
 
@@ -758,8 +758,8 @@
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	      it seems that some program check what's installed in registry
-	      against value returned by drivers. Wine is currently broken
+	      it seems that some programs check what's installed in registry
+	      against the value returned by drivers. Wine is currently broken
 	      regarding this point.
 	    </para>
 	  </listitem>

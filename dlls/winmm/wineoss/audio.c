@@ -2756,7 +2756,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
      * so we need to somehow signal to our DirectSound implementation
      * that it should completely recreate this HW buffer...
      * this unexpected error code should do the trick... */
-    /* FIXME: ...unless we are doing full duplex, then its not nice to close the device */
+    /* FIXME: ...unless we are doing full duplex, then it's not nice to close the device */
     if (WOutDev[This->drv->wDevID].ossdev->open_count == 1)
 	return DSERR_BUFFERLOST;
 

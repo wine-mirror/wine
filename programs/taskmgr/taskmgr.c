@@ -72,7 +72,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     SetPriorityClass(hProcess, HIGH_PRIORITY_CLASS);
     CloseHandle(hProcess);
 
-    /* Now lets get the SE_DEBUG_NAME priviledge
+    /* Now let's get the SE_DEBUG_NAME privilege
      * so that we can debug processes 
      */
 

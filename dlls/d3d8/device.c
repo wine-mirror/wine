@@ -1234,7 +1234,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, I
         numerous null pointer checks                                   */
     if (pNewZStencil == NULL) pNewZStencil = (IDirect3DSurface8*)This->stencilBufferTarget;
 
-    /* If we are trying to set what we already have, dont bother */
+    /* If we are trying to set what we already have, don't bother */
     if ((IDirect3DSurface8Impl*) pRenderTarget == This->renderTarget && (IDirect3DSurface8Impl*) pNewZStencil == This->stencilBufferTarget) {
       TRACE("Trying to do a NOP SetRenderTarget operation\n");
     } else {
