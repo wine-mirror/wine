@@ -279,6 +279,7 @@ StdMarshalImpl_MarshalInterface(
   IPSFactoryBuffer	*psfacbuf;
 
   TRACE("(...,%s,...)\n",debugstr_guid(riid));
+
   IUnknown_QueryInterface((LPUNKNOWN)pv,&IID_IUnknown,(LPVOID*)&pUnk);
   mid.processid = GetCurrentProcessId();
   mid.objectid = (DWORD)pUnk; /* FIXME */
@@ -537,7 +538,10 @@ CoMarshalInterface( IStream *pStm, REFIID riid, IUnknown *pUnk,
     FIXME("Stream write failed, %lx\n",hres);
     goto release_marshal;
   }
+
+  TRACE("Calling IMarshal::MarshalInterace\n");
   hres = IMarshal_MarshalInterface(pMarshal,pStm,riid,pUnk,dwDestContext,pvDestContext,mshlflags);
+
   if (hres) {
     if (IsEqualGUID(riid,&IID_IOleObject)) {
       ERR("WINE currently cannot marshal IOleObject interfaces. This means you cannot embed/link OLE objects between applications.\n");

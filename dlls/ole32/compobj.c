@@ -903,6 +903,7 @@ HRESULT WINAPI CoGetPSClsid(
     /* Open the key.. */
     if (RegOpenKeyA(HKEY_CLASSES_ROOT, buf, &xhkey))
     {
+       WARN("No PSFactoryBuffer object is registered for this IID\n");
        HeapFree(GetProcessHeap(),0,buf);
        return (E_INVALIDARG);
     }

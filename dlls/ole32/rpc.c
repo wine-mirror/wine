@@ -492,12 +492,14 @@ PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf) {
 
 static HRESULT
 create_server(REFCLSID rclsid) {
+  static const WCHAR embedding[] = { ' ', '-','E','m','b','e','d','d','i','n','g',0 };
   HKEY		key;
   char 		buf[200];
   HRESULT	hres = E_UNEXPECTED;
   char		xclsid[80];
-  WCHAR 	dllName[MAX_PATH+1];
-  DWORD 	dllNameLen = sizeof(dllName);
+  WCHAR        exe[MAX_PATH+1];
+  DWORD        exelen = sizeof(exe);
+  WCHAR         command[MAX_PATH+sizeof(embedding)/sizeof(WCHAR)];
   STARTUPINFOW	sinfo;
   PROCESS_INFORMATION	pinfo;
 
@@ -506,18 +508,35 @@ create_server(REFCLSID rclsid) {
   sprintf(buf,"CLSID\\%s\\LocalServer32",xclsid);
   hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key);
 
-  if (hres != ERROR_SUCCESS)
+  if (hres != ERROR_SUCCESS) {
+      WARN("CLSID %s not registered as LocalServer32\n", xclsid);
       return REGDB_E_READREGDB; /* Probably */
+  }
 
-  memset(dllName,0,sizeof(dllName));
-  hres= RegQueryValueExW(key,NULL,NULL,NULL,(LPBYTE)dllName,&dllNameLen);
+  memset(exe,0,sizeof(exe));
+  hres= RegQueryValueExW(key, NULL, NULL, NULL, (LPBYTE)exe, &exelen);
   RegCloseKey(key);
-  if (hres)
-	  return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
+  if (hres) {
+      WARN("No default value for LocalServer32 key\n");
+      return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
+  }
+
   memset(&sinfo,0,sizeof(sinfo));
   sinfo.cb = sizeof(sinfo);
-  if (!CreateProcessW(NULL,dllName,NULL,NULL,FALSE,0,NULL,NULL,&sinfo,&pinfo))
+
+  /* EXE servers are started with the -Embedding switch. MSDN also claims /Embedding is used,
+     9x does -Embedding, perhaps an 9x/NT difference?  */
+
+  strcpyW(command, exe);
+  strcatW(command, embedding);
+
+  TRACE("activating local server '%s' for %s\n", debugstr_w(command), xclsid);
+
+  if (!CreateProcessW(exe, command, NULL, NULL, FALSE, 0, NULL, NULL, &sinfo, &pinfo)) {
+      WARN("failed to run local server %s\n", debugstr_w(exe));
       return E_FAIL;
+  }
+
   return S_OK;
 }
 /* http://msdn.microsoft.com/library/en-us/dnmsj99/html/com0199.asp, Figure 4 */
@@ -532,6 +551,8 @@ HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv) {
   ULARGE_INTEGER newpos;
   int		tries = 0;
 #define MAXTRIES 10000
+
+  TRACE("rclsid=%s, iid=%s\n", debugstr_guid(rclsid), debugstr_guid(iid));
 
   strcpy(pipefn,PIPEPREF);
   WINE_StringFromCLSID(rclsid,pipefn+strlen(PIPEPREF));
