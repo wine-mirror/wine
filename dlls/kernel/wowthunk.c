@@ -39,7 +39,8 @@ DWORD WINAPI CallProcEx32W16(VOID);
  */
 
 /**********************************************************************
- *           K32WOWGetDescriptor        (WOW32.1) (KERNEL32.70)
+ *           K32WOWGetDescriptor        (WOW32.1)
+ *           K32WOWGetDescriptor        (KERNEL32.70)
  */
 BOOL WINAPI K32WOWGetDescriptor( SEGPTR segptr, LPLDT_ENTRY ldtent )
 {
@@ -48,7 +49,8 @@ BOOL WINAPI K32WOWGetDescriptor( SEGPTR segptr, LPLDT_ENTRY ldtent )
 }
 
 /**********************************************************************
- *           K32WOWGetVDMPointer        (WOW32.5) (KERNEL32.56)
+ *           K32WOWGetVDMPointer        (WOW32.5)
+ *           K32WOWGetVDMPointer        (KERNEL32.56)
  */
 LPVOID WINAPI K32WOWGetVDMPointer( DWORD vp, DWORD dwBytes, BOOL fProtectedMode )
 {
@@ -61,7 +63,8 @@ LPVOID WINAPI K32WOWGetVDMPointer( DWORD vp, DWORD dwBytes, BOOL fProtectedMode 
 }
 
 /**********************************************************************
- *           K32WOWGetVDMPointerFix     (WOW32.6) (KERNEL32.68)
+ *           K32WOWGetVDMPointerFix     (WOW32.6)
+ *           K32WOWGetVDMPointerFix     (KERNEL32.68)
  */
 LPVOID WINAPI K32WOWGetVDMPointerFix( DWORD vp, DWORD dwBytes, BOOL fProtectedMode )
 {
@@ -81,7 +84,8 @@ LPVOID WINAPI K32WOWGetVDMPointerFix( DWORD vp, DWORD dwBytes, BOOL fProtectedMo
 }
 
 /**********************************************************************
- *           K32WOWGetVDMPointerUnFix   (WOW32.7) (KERNEL32.69)
+ *           K32WOWGetVDMPointerUnFix   (WOW32.7)
+ *           K32WOWGetVDMPointerUnFix   (KERNEL32.69)
  */
 VOID WINAPI K32WOWGetVDMPointerUnfix( DWORD vp )
 {
@@ -94,7 +98,8 @@ VOID WINAPI K32WOWGetVDMPointerUnfix( DWORD vp )
 }
 
 /**********************************************************************
- *           K32WOWGlobalAlloc16        (WOW32.8) (KERNEL32.59)
+ *           K32WOWGlobalAlloc16        (WOW32.8)
+ *           K32WOWGlobalAlloc16        (KERNEL32.59)
  */
 WORD WINAPI K32WOWGlobalAlloc16( WORD wFlags, DWORD cb )
 {
@@ -102,7 +107,8 @@ WORD WINAPI K32WOWGlobalAlloc16( WORD wFlags, DWORD cb )
 }
 
 /**********************************************************************
- *           K32WOWGlobalFree16         (WOW32.10) (KERNEL32.62)
+ *           K32WOWGlobalFree16         (WOW32.10)
+ *           K32WOWGlobalFree16         (KERNEL32.62)
  */
 WORD WINAPI K32WOWGlobalFree16( WORD hMem )
 {
@@ -110,7 +116,8 @@ WORD WINAPI K32WOWGlobalFree16( WORD hMem )
 }
 
 /**********************************************************************
- *           K32WOWGlobalUnlock16       (WOW32.13) (KERNEL32.61)
+ *           K32WOWGlobalUnlock16       (WOW32.13)
+ *           K32WOWGlobalUnlock16       (KERNEL32.61)
  */
 BOOL WINAPI K32WOWGlobalUnlock16( WORD hMem )
 {
@@ -118,7 +125,8 @@ BOOL WINAPI K32WOWGlobalUnlock16( WORD hMem )
 }
 
 /**********************************************************************
- *           K32WOWGlobalAllocLock16    (WOW32.9) (KERNEL32.63)
+ *           K32WOWGlobalAllocLock16    (WOW32.9)
+ *           K32WOWGlobalAllocLock16    (KERNEL32.63)
  */
 DWORD WINAPI K32WOWGlobalAllocLock16( WORD wFlags, DWORD cb, WORD *phMem )
 {
@@ -129,7 +137,8 @@ DWORD WINAPI K32WOWGlobalAllocLock16( WORD wFlags, DWORD cb, WORD *phMem )
 }
 
 /**********************************************************************
- *           K32WOWGlobalLockSize16     (WOW32.12) (KERNEL32.65)
+ *           K32WOWGlobalLockSize16     (WOW32.12)
+ *           K32WOWGlobalLockSize16     (KERNEL32.65)
  */
 DWORD WINAPI K32WOWGlobalLockSize16( WORD hMem, PDWORD pcb )
 {
@@ -140,7 +149,8 @@ DWORD WINAPI K32WOWGlobalLockSize16( WORD hMem, PDWORD pcb )
 }
 
 /**********************************************************************
- *           K32WOWGlobalUnlockFree16   (WOW32.14) (KERNEL32.64)
+ *           K32WOWGlobalUnlockFree16   (WOW32.14)
+ *           K32WOWGlobalUnlockFree16   (KERNEL32.64)
  */
 WORD WINAPI K32WOWGlobalUnlockFree16( DWORD vpMem )
 {
@@ -152,7 +162,8 @@ WORD WINAPI K32WOWGlobalUnlockFree16( DWORD vpMem )
 
 
 /**********************************************************************
- *           K32WOWYield16              (WOW32.17) (KERNEL32.66)
+ *           K32WOWYield16              (WOW32.17)
+ *           K32WOWYield16              (KERNEL32.66)
  */
 VOID WINAPI K32WOWYield16( void )
 {
@@ -164,7 +175,8 @@ VOID WINAPI K32WOWYield16( void )
 }
 
 /**********************************************************************
- *           K32WOWDirectedYield16       (WOW32.4) (KERNEL32.67)
+ *           K32WOWDirectedYield16       (WOW32.4)
+ *           K32WOWDirectedYield16       (KERNEL32.67)
  */
 VOID WINAPI K32WOWDirectedYield16( WORD htask16 )
 {
@@ -178,7 +190,8 @@ VOID WINAPI K32WOWDirectedYield16( WORD htask16 )
 
 
 /***********************************************************************
- *           K32WOWHandle32              (WOW32.16) (KERNEL32.57)
+ *           K32WOWHandle32              (WOW32.16)
+ *           K32WOWHandle32              (KERNEL32.57)
  */
 HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
 {
@@ -208,7 +221,8 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
 }
 
 /***********************************************************************
- *           K32WOWHandle16              (WOW32.15) (KERNEL32.58)
+ *           K32WOWHandle16              (WOW32.15)
+ *           K32WOWHandle16              (KERNEL32.58)
  */
 WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
 {
@@ -241,7 +255,8 @@ WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
 }
 
 /**********************************************************************
- *           K32WOWCallback16Ex         (WOW32.3) (KERNEL32.55)
+ *           K32WOWCallback16Ex         (WOW32.3)
+ *           K32WOWCallback16Ex         (KERNEL32.55)
  */
 BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
                                 DWORD cbArgs, LPVOID pArgs, LPDWORD pdwRetCode )
@@ -272,7 +287,8 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
 }
 
 /**********************************************************************
- *           K32WOWCallback16            (WOW32.2) (KERNEL32.54)
+ *           K32WOWCallback16            (WOW32.2)
+ *           K32WOWCallback16            (KERNEL32.54)
  */
 DWORD WINAPI K32WOWCallback16( DWORD vpfn16, DWORD dwParam )
 {

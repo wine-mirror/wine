@@ -32,7 +32,7 @@ static PWINE_ACMSTREAM	ACM_GetStream(HACMSTREAM has)
 }
 
 /***********************************************************************
- *           acmStreamClose (MSACM32.37)
+ *           acmStreamClose (MSACM32.@)
  */
 MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
 {
@@ -55,7 +55,7 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
 }
 
 /***********************************************************************
- *           acmStreamConvert (MSACM32.38)
+ *           acmStreamConvert (MSACM32.@)
  */
 MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash, 
 				 DWORD fdwConvert)
@@ -99,7 +99,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 }
 
 /***********************************************************************
- *           acmStreamMessage (MSACM32.39)
+ *           acmStreamMessage (MSACM32.@)
  */
 MMRESULT WINAPI acmStreamMessage(HACMSTREAM has, UINT uMsg, LPARAM lParam1, 
 				 LPARAM lParam2)
@@ -110,7 +110,7 @@ MMRESULT WINAPI acmStreamMessage(HACMSTREAM has, UINT uMsg, LPARAM lParam1,
 }
 
 /***********************************************************************
- *           acmStreamOpen (MSACM32.40)
+ *           acmStreamOpen (MSACM32.@)
  */
 MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
 			      PWAVEFORMATEX pwfxDst, PWAVEFILTER pwfltr, DWORD dwCallback,
@@ -231,7 +231,7 @@ errCleanUp:
 
 
 /***********************************************************************
- *           acmStreamPrepareHeader (MSACM32.41)
+ *           acmStreamPrepareHeader (MSACM32.@)
  */
 MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash, 
 				       DWORD fdwPrepare)
@@ -293,7 +293,7 @@ MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 }
 
 /***********************************************************************
- *           acmStreamReset (MSACM32.42)
+ *           acmStreamReset (MSACM32.@)
  */
 MMRESULT WINAPI acmStreamReset(HACMSTREAM has, DWORD fdwReset)
 {
@@ -314,7 +314,7 @@ MMRESULT WINAPI acmStreamReset(HACMSTREAM has, DWORD fdwReset)
 }
 
 /***********************************************************************
- *           acmStreamSize (MSACM32.43)
+ *           acmStreamSize (MSACM32.@)
  */
 MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput, 
 			      LPDWORD pdwOutputBytes, DWORD fdwSize)
@@ -366,7 +366,7 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
 }
 
 /***********************************************************************
- *           acmStreamUnprepareHeader (MSACM32.44)
+ *           acmStreamUnprepareHeader (MSACM32.@)
  */
 MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash, 
 					 DWORD fdwUnprepare)

@@ -25,7 +25,7 @@
 DEFAULT_DEBUG_CHANNEL(msacm);
 	
 /***********************************************************************
- *           acmDriverAddA (MSACM32.2)
+ *           acmDriverAddA (MSACM32.@)
  */
 MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 			      LPARAM lParam, DWORD dwPriority, DWORD fdwAdd)
@@ -56,7 +56,7 @@ MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 }
 
 /***********************************************************************
- *           acmDriverAddW (MSACM32.3)
+ *           acmDriverAddW (MSACM32.@)
  * FIXME
  *   Not implemented
  */
@@ -71,7 +71,7 @@ MMRESULT WINAPI acmDriverAddW(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 }
 
 /***********************************************************************
- *           acmDriverClose (MSACM32.4)
+ *           acmDriverClose (MSACM32.@)
  */
 MMRESULT WINAPI acmDriverClose(HACMDRIVER had, DWORD fdwClose)
 {
@@ -106,7 +106,7 @@ MMRESULT WINAPI acmDriverClose(HACMDRIVER had, DWORD fdwClose)
 }
 
 /***********************************************************************
- *           acmDriverDetailsA (MSACM32.5)
+ *           acmDriverDetailsA (MSACM32.@)
  */
 MMRESULT WINAPI acmDriverDetailsA(HACMDRIVERID hadid, PACMDRIVERDETAILSA padd, DWORD fdwDetails)
 {
@@ -141,7 +141,7 @@ MMRESULT WINAPI acmDriverDetailsA(HACMDRIVERID hadid, PACMDRIVERDETAILSA padd, D
 }
 
 /***********************************************************************
- *           acmDriverDetailsW (MSACM32.6)
+ *           acmDriverDetailsW (MSACM32.@)
  */
 MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, DWORD fdwDetails)
 {
@@ -162,7 +162,7 @@ MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, D
 }
 
 /***********************************************************************
- *           acmDriverEnum (MSACM32.7)
+ *           acmDriverEnum (MSACM32.@)
  */
 MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
@@ -191,7 +191,7 @@ MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWOR
 }
 
 /***********************************************************************
- *           acmDriverID (MSACM32.8)
+ *           acmDriverID (MSACM32.@)
  */
 MMRESULT WINAPI acmDriverID(HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID)
 {
@@ -213,7 +213,7 @@ MMRESULT WINAPI acmDriverID(HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID
 }
 
 /***********************************************************************
- *           acmDriverMessage (MSACM32.9)
+ *           acmDriverMessage (MSACM32.@)
  *
  */
 LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARAM lParam2)
@@ -284,7 +284,7 @@ static	MMRESULT	MSACM_DriverOpenHelper(PWINE_ACMDRIVER* ppad, PWINE_ACMDRIVERID 
 }
 
 /***********************************************************************
- *           acmDriverOpen (MSACM32.10)
+ *           acmDriverOpen (MSACM32.@)
  */
 MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpen)
 {
@@ -338,7 +338,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 }
 
 /***********************************************************************
- *           acmDriverPriority (MSACM32.11)
+ *           acmDriverPriority (MSACM32.@)
  */
 MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fdwPriority)
 {
@@ -396,7 +396,7 @@ MMRESULT WINAPI acmDriverPriority(HACMDRIVERID hadid, DWORD dwPriority, DWORD fd
 }
 
 /***********************************************************************
- *           acmDriverRemove (MSACM32.12)
+ *           acmDriverRemove (MSACM32.@)
  */
 MMRESULT WINAPI acmDriverRemove(HACMDRIVERID hadid, DWORD fdwRemove)
 {

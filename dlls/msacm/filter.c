@@ -19,7 +19,7 @@
 DEFAULT_DEBUG_CHANNEL(msacm);
 
 /***********************************************************************
- *           acmFilterChooseA (MSACM32.13)
+ *           acmFilterChooseA (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterChooseA(PACMFILTERCHOOSEA pafltrc)
 {
@@ -29,7 +29,7 @@ MMRESULT WINAPI acmFilterChooseA(PACMFILTERCHOOSEA pafltrc)
 }
 
 /***********************************************************************
- *           acmFilterChooseW (MSACM32.14)
+ *           acmFilterChooseW (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterChooseW(PACMFILTERCHOOSEW pafltrc)
 {
@@ -39,7 +39,7 @@ MMRESULT WINAPI acmFilterChooseW(PACMFILTERCHOOSEW pafltrc)
 }
 
 /***********************************************************************
- *           acmFilterDetailsA (MSACM32.15)
+ *           acmFilterDetailsA (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterDetailsA(HACMDRIVER had, PACMFILTERDETAILSA pafd, 
 				  DWORD fdwDetails)
@@ -65,7 +65,7 @@ MMRESULT WINAPI acmFilterDetailsA(HACMDRIVER had, PACMFILTERDETAILSA pafd,
 }
 
 /***********************************************************************
- *           acmFilterDetailsW (MSACM32.16)
+ *           acmFilterDetailsW (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd, 
 				  DWORD fdwDetails)
@@ -144,7 +144,7 @@ static BOOL CALLBACK MSACM_FilterEnumCallbackWtoA(HACMDRIVERID hadid,
 }
 
 /***********************************************************************
- *           acmFilterEnumA (MSACM32.17)
+ *           acmFilterEnumA (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterEnumA(HACMDRIVER had, PACMFILTERDETAILSA pafda, 
 			       ACMFILTERENUMCBA fnCallback, DWORD dwInstance, 
@@ -201,7 +201,7 @@ static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 }
 
 /***********************************************************************
- *           acmFilterEnumW (MSACM32.18)
+ *           acmFilterEnumW (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd, 
 			       ACMFILTERENUMCBW fnCallback, DWORD dwInstance, 
@@ -241,7 +241,7 @@ MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
 }
 
 /***********************************************************************
- *           acmFilterTagDetailsA (MSACM32.19)
+ *           acmFilterTagDetailsA (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterTagDetailsA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda, 
 				     DWORD fdwDetails)
@@ -268,7 +268,7 @@ MMRESULT WINAPI acmFilterTagDetailsA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftd
 }
 
 /***********************************************************************
- *           acmFilterTagDetailsW (MSACM32.20)
+ *           acmFilterTagDetailsW (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd, 
 				     DWORD fdwDetails)
@@ -377,7 +377,7 @@ static BOOL CALLBACK MSACM_FilterTagEnumCallbackWtoA(HACMDRIVERID hadid,
 }
 
 /***********************************************************************
- *           acmFilterTagEnumA (MSACM32.21)
+ *           acmFilterTagEnumA (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterTagEnumA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda,
 				  ACMFILTERTAGENUMCBA fnCallback, DWORD dwInstance, 
@@ -400,7 +400,7 @@ MMRESULT WINAPI acmFilterTagEnumA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda,
 }
 
 /***********************************************************************
- *           acmFilterTagEnumW (MSACM32.22)
+ *           acmFilterTagEnumW (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterTagEnumW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
 				  ACMFILTERTAGENUMCBW fnCallback, DWORD dwInstance, 

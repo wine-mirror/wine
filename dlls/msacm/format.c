@@ -246,7 +246,7 @@ static BOOL WINAPI FormatChooseDlgProc(HWND hWnd, UINT msg,
 }
 
 /***********************************************************************
- *           acmFormatChooseA (MSACM32.23)
+ *           acmFormatChooseA (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatChooseA(PACMFORMATCHOOSEA pafmtc)
 {
@@ -255,7 +255,7 @@ MMRESULT WINAPI acmFormatChooseA(PACMFORMATCHOOSEA pafmtc)
 }
 
 /***********************************************************************
- *           acmFormatChooseW (MSACM32.24)
+ *           acmFormatChooseW (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatChooseW(PACMFORMATCHOOSEW pafmtc)
 {
@@ -265,7 +265,7 @@ MMRESULT WINAPI acmFormatChooseW(PACMFORMATCHOOSEW pafmtc)
 }
 
 /***********************************************************************
- *           acmFormatDetailsA (MSACM32.25)
+ *           acmFormatDetailsA (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatDetailsA(HACMDRIVER had, PACMFORMATDETAILSA pafd, 
 				  DWORD fdwDetails)
@@ -291,7 +291,7 @@ MMRESULT WINAPI acmFormatDetailsA(HACMDRIVER had, PACMFORMATDETAILSA pafd,
 }
 
 /***********************************************************************
- *           acmFormatDetailsW (MSACM32.26)
+ *           acmFormatDetailsW (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD fdwDetails)
 {
@@ -381,7 +381,7 @@ static BOOL CALLBACK MSACM_FormatEnumCallbackWtoA(HACMDRIVERID hadid,
 }
 
 /***********************************************************************
- *           acmFormatEnumA (MSACM32.27)
+ *           acmFormatEnumA (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatEnumA(HACMDRIVER had, PACMFORMATDETAILSA pafda,
 			       ACMFORMATENUMCBA fnCallback, DWORD dwInstance, 
@@ -406,7 +406,7 @@ MMRESULT WINAPI acmFormatEnumA(HACMDRIVER had, PACMFORMATDETAILSA pafda,
 }
 
 /***********************************************************************
- *           acmFormatEnumW (MSACM32.28)
+ *           acmFormatEnumW (MSACM32.@)
  */
 static BOOL MSACM_FormatEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had, 
 				   PACMFORMATDETAILSW pafd, PWAVEFORMATEX pwfxRef, 
@@ -510,7 +510,7 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
 }
 
 /***********************************************************************
- *           acmFormatSuggest (MSACM32.29)
+ *           acmFormatSuggest (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatSuggest(HACMDRIVER had, PWAVEFORMATEX pwfxSrc, 
 				 PWAVEFORMATEX pwfxDst, DWORD cbwfxDst, DWORD fdwSuggest)
@@ -559,7 +559,7 @@ MMRESULT WINAPI acmFormatSuggest(HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
 }
 
 /***********************************************************************
- *           acmFormatTagDetailsA (MSACM32.30)
+ *           acmFormatTagDetailsA (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatTagDetailsA(HACMDRIVER had, PACMFORMATTAGDETAILSA paftda, 
 				     DWORD fdwDetails)
@@ -586,7 +586,7 @@ MMRESULT WINAPI acmFormatTagDetailsA(HACMDRIVER had, PACMFORMATTAGDETAILSA paftd
 }
 
 /***********************************************************************
- *           acmFormatTagDetailsW (MSACM32.31)
+ *           acmFormatTagDetailsW (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatTagDetailsW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd, 
 				     DWORD fdwDetails)
@@ -701,7 +701,7 @@ static BOOL CALLBACK MSACM_FormatTagEnumCallbackWtoA(HACMDRIVERID hadid,
 }
 
 /***********************************************************************
- *           acmFormatTagEnumA (MSACM32.32)
+ *           acmFormatTagEnumA (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatTagEnumA(HACMDRIVER had, PACMFORMATTAGDETAILSA paftda,
 				  ACMFORMATTAGENUMCBA fnCallback, DWORD dwInstance, 
@@ -724,7 +724,7 @@ MMRESULT WINAPI acmFormatTagEnumA(HACMDRIVER had, PACMFORMATTAGDETAILSA paftda,
 }
 
 /***********************************************************************
- *           acmFormatTagEnumW (MSACM32.33)
+ *           acmFormatTagEnumW (MSACM32.@)
  */
 MMRESULT WINAPI acmFormatTagEnumW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd,
 				  ACMFORMATTAGENUMCBW fnCallback, DWORD dwInstance, 

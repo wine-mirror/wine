@@ -171,7 +171,6 @@ BOOL WINAPI DebugActiveProcess(
 
 
 /***********************************************************************
- *           OutputDebugStringA   (KERNEL.115)
  *           OutputDebugStringA   (KERNEL32.548)
  *
  *  Output by an application of a unicode string to a debugger (if attached)

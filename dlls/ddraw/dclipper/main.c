@@ -17,7 +17,7 @@
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /******************************************************************************
- *			DirectDrawCreateClipper (DDRAW.7)
+ *			DirectDrawCreateClipper (DDRAW.@)
  */
 
 static ICOM_VTABLE(IDirectDrawClipper) DDRAW_Clipper_VTable;

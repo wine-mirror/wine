@@ -1652,7 +1652,8 @@ SEGPTR WINAPI AllocSLThunkletCallbackEx16( FARPROC target,
 }
 
 /***********************************************************************
- *     AllocLSThunkletCallback             (KERNEL.561) (KERNEL.606)
+ *     AllocLSThunkletCallback             (KERNEL.561)
+ *     AllocLSThunkletCallback             (KERNEL.606)
  */
 FARPROC WINAPI AllocLSThunkletCallback16( SEGPTR target, DWORD relay )
 {
@@ -1660,7 +1661,8 @@ FARPROC WINAPI AllocLSThunkletCallback16( SEGPTR target, DWORD relay )
 }
 
 /***********************************************************************
- *     AllocSLThunkletCallback             (KERNEL.562) (KERNEL.605)
+ *     AllocSLThunkletCallback             (KERNEL.562)
+ *     AllocSLThunkletCallback             (KERNEL.605)
  */
 SEGPTR WINAPI AllocSLThunkletCallback16( FARPROC target, DWORD relay )
 {
@@ -1668,7 +1670,8 @@ SEGPTR WINAPI AllocSLThunkletCallback16( FARPROC target, DWORD relay )
 }
 
 /***********************************************************************
- *     FindLSThunkletCallback              (KERNEL.563) (KERNEL.609)
+ *     FindLSThunkletCallback              (KERNEL.563)
+ *     FindLSThunkletCallback              (KERNEL.609)
  */
 FARPROC WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
 {
@@ -1684,7 +1687,8 @@ FARPROC WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
 }
 
 /***********************************************************************
- *     FindSLThunkletCallback              (KERNEL.564) (KERNEL.610)
+ *     FindSLThunkletCallback              (KERNEL.564)
+ *     FindSLThunkletCallback              (KERNEL.610)
  */
 SEGPTR WINAPI FindSLThunkletCallback( FARPROC target, DWORD relay )
 {

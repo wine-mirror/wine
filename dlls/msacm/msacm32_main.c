@@ -57,7 +57,7 @@ BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReser
  */
 
 /***********************************************************************
- *           acmGetVersion (MSACM32.34)
+ *           acmGetVersion (MSACM32.@)
  */
 DWORD WINAPI acmGetVersion(void)
 {
@@ -84,7 +84,7 @@ DWORD WINAPI acmGetVersion(void)
  */
 
 /***********************************************************************
- *           acmMetrics (MSACM32.36)
+ *           acmMetrics (MSACM32.@)
  */
 MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
 {

@@ -381,7 +381,7 @@ static ICOM_VTABLE(IClassFactory) DDCF_Vtbl =
 };
 
 /*******************************************************************************
- * DllGetClassObject [DDRAW.13]
+ * DllGetClassObject [DDRAW.@]
  * Retrieves class object from a DLL object
  *
  * NOTES
@@ -434,7 +434,7 @@ DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 
 
 /*******************************************************************************
- * DllCanUnloadNow [DDRAW.12]  Determines whether the DLL is in use.
+ * DllCanUnloadNow [DDRAW.@]  Determines whether the DLL is in use.
  *
  * RETURNS
  *    Success: S_OK
