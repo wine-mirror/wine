@@ -135,7 +135,14 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
                        const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     DC *dc = DC_GetDCPtr( hdc );
+
     if(!dc) return FALSE;
+
+    if (widthDst == widthSrc && heightDst == heightSrc && dwRop == SRCCOPY) {
+       return SetDIBitsToDevice( hdc, xDst, yDst, widthDst, heightDst, 
+				 xSrc, ySrc, 0, info->bmiHeader.biHeight,
+				 bits, info, 0/*FIXME coloruse*/ );
+    }
 
     if(dc->funcs->pStretchDIBits)
     	   return dc->funcs->pStretchDIBits(dc, xDst, yDst, widthDst, 
@@ -143,24 +150,23 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 					    heightSrc, bits, info, wUsage,
 					    dwRop);
     else { /* use StretchBlt32 */
-        HBITMAP hBitmap, hOldBitmap;
-	HDC hdcMem;
-    
-	hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
-				    bits, info, wUsage );
-	hdcMem = CreateCompatibleDC( hdc );
-	hOldBitmap = SelectObject( hdcMem, hBitmap );
-        /* Origin for DIBitmap is bottom left ! */
-        StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
-                      hdcMem, xSrc, info->bmiHeader.biHeight - heightSrc - ySrc, 
-                      widthSrc, heightSrc, dwRop );
-	SelectObject( hdcMem, hOldBitmap );
-	DeleteDC( hdcMem );
-	DeleteObject( hBitmap );
-	return heightSrc;
+       HBITMAP hBitmap, hOldBitmap;
+       HDC hdcMem;
+       
+       hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
+				 bits, info, wUsage );
+       hdcMem = CreateCompatibleDC( hdc );
+       hOldBitmap = SelectObject( hdcMem, hBitmap );
+       /* Origin for DIBitmap is bottom left ! */
+       StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
+		   hdcMem, xSrc, info->bmiHeader.biHeight - heightSrc - ySrc, 
+		   widthSrc, heightSrc, dwRop );
+       SelectObject( hdcMem, hOldBitmap );
+       DeleteDC( hdcMem );
+       DeleteObject( hBitmap );
     }
+    return heightSrc;
 }
-
 
 /***********************************************************************
  *           SetDIBits16    (GDI.440)
