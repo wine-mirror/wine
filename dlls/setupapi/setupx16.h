@@ -73,5 +73,6 @@ extern INF_FILE *InfList;
 extern WORD InfNumEntries;
 
 extern LPCSTR IP_GetFileName(HINF16 hInf);
+extern void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR szDst, LPCSTR szSrc, HINF16 hInf);
 
 #endif /* __SETUPX16_H */

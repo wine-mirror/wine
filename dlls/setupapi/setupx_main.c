@@ -13,10 +13,17 @@
  * http://mmatrix.tripod.com/customsystemfolder/infsysntaxfull.html
  * http://www.rdrop.com/~cary/html/inf_faq.html
  *
- * Stuff tested with rs405deu.exe (German Acroread 4.05 setup)
+ * Stuff tested with:
+ * - rs405deu.exe (German Acroread 4.05 setup)
+ * - ie5setup.exe
+ * - Netmeeting
+ *
+ * FIXME:
+ * - check buflen
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "winreg.h"
 #include "wine/winuser16.h"
 #include "setupx16.h"
@@ -70,7 +77,7 @@ typedef struct
     LPCSTR StdString; /* fallback string; sub dir of windows directory */
 } LDID_DATA;
 
-static LDID_DATA LDID_Data[34] =
+static const LDID_DATA LDID_Data[34] =
 {
     { /* 0 (LDID_NULL) -- not defined */
 	NULL,
@@ -211,10 +218,186 @@ static LDID_DATA LDID_Data[34] =
     /* the rest (34-38) isn't too interesting, so I'll forget about it */
 };
 
+static void SETUPX_IsolateSubString(LPSTR *begin, LPSTR *end)
+{
+    LPSTR p, q;
+
+    p = *begin;
+    q = *end;
+
+    while ((p < q) && ((*p == ' ') || (*p == '\t'))) p++;
+    while ((p < q) && (*p == '"')) p++;
+
+    while ((q-1 >= p) && ((*(q-1) == ' ') || (*(q-1) == '\t'))) q--;
+    while ((q-1 >= p) && (*(q-1) == '"')) q--;
+
+    *begin = p;
+    *end = q;
+}
+
+/*
+ * Example: HKLM,"Software\Microsoft\Windows\CurrentVersion","ProgramFilesDir",,"C:\"
+ */
+static BOOL SETUPX_LookupRegistryString(LPSTR regstr, LPSTR buffer, DWORD buflen)
+{
+    HANDLE heap = GetProcessHeap();
+    LPSTR items[5];
+    LPSTR p, q, next;
+    int len, n;
+    HKEY hkey, hsubkey;
+    DWORD dwType;
+
+    TRACE("retrieving '%s'\n", regstr);
+
+    p = regstr;
+
+    /* isolate root key, subkey, value, flag, defval */
+    for (n=0; n < 5; n++)
+    {
+	q = strchr(p, ',');
+	if (!q)
+	{
+	    if (n == 4)
+		q = p+strlen(p);
+	    else
+		return FALSE;
+	}
+	next = q+1;
+	if (q < regstr)
+            return FALSE;
+        SETUPX_IsolateSubString(&p, &q);
+        len = (int)q - (int)p;
+        items[n] = HeapAlloc(heap, 0, len+1);
+        strncpy(items[n], p, len);
+        items[n][len] = '\0';
+	p = next;
+    }
+    TRACE("got '%s','%s','%s','%s','%s'\n",
+			items[0], items[1], items[2], items[3], items[4]);
+    
+    /* check root key */
+    if (!strcasecmp(items[0], "HKCR"))
+	hkey = HKEY_CLASSES_ROOT;
+    else
+    if (!strcasecmp(items[0], "HKCU"))
+	hkey = HKEY_CURRENT_USER;
+    else
+    if (!strcasecmp(items[0], "HKLM"))
+	hkey = HKEY_LOCAL_MACHINE;
+    else
+    if (!strcasecmp(items[0], "HKU"))
+	hkey = HKEY_USERS;
+    else
+    { /* HKR ? -> relative to key passed to GenInstallEx */
+	FIXME("unsupported regkey '%s'\n", items[0]);
+        goto regfailed;
+    }
+
+    if (RegOpenKeyA(hkey, items[1], &hsubkey) != ERROR_SUCCESS)
+        goto regfailed;
+
+    if (RegQueryValueExA(hsubkey, items[2], 0, &dwType, buffer, &buflen)
+		!= ERROR_SUCCESS)
+        goto regfailed;
+    goto done;
+
+regfailed:
+    strcpy(buffer, items[4]); /* I don't care about buflen */
+done:
+    for (n=0; n < 5; n++)
+        HeapFree(heap, 0, items[n]);
+    TRACE("return '%s'\n", buffer);
+    return TRUE;
+}
+
+/*
+ * Find the value of a custom LDID in a .inf file
+ * e.g. for 49301:
+ * 49300,49301=ProgramFilesDir,5
+ * -- profile section lookup -->
+ * [ProgramFilesDir]
+ * HKLM,"Software\Microsoft\Windows\CurrentVersion","ProgramFilesDir",,"%24%"
+ * -- GenFormStrWithoutPlaceHolders16 -->
+ * HKLM,"Software\Microsoft\Windows\CurrentVersion","ProgramFilesDir",,"C:\"
+ * -- registry lookup -->
+ * C:\Program Files (or C:\ if not found in registry)
+ * 
+ * FIXME:
+ * - maybe we ought to add a caching array for speed ? - I don't care :)
+ * - not sure whether the processing is correct - sometimes there are equal
+ *   LDIDs for both install and removal sections.
+ */
+static BOOL SETUPX_TranslateCustomLDID(int ldid, LPSTR buffer, WORD buflen, INT16 hInf)
+{
+    char ldidstr[6], sectionbuf[0xffff], entrybuf[0xffff], section[256];
+    LPCSTR filename;
+    LPSTR pSec, pEnt, pEqual, p, pEnd;
+    BOOL ret = FALSE;
+
+    sprintf(ldidstr, "%d", ldid);
+    filename = IP_GetFileName(hInf);
+    if (!GetPrivateProfileStringA(NULL, NULL, NULL,
+			    	sectionbuf, sizeof(sectionbuf), filename))
+    {
+	ERR("section buffer too small ?\n");
+	return FALSE;
+    }
+    for (pSec=sectionbuf; *pSec; pSec += strlen(pSec)+1)
+    {
+	if (!GetPrivateProfileSectionA(pSec,
+				entrybuf, sizeof(entrybuf), filename))
+	{
+	    ERR("entry buffer too small ?\n");
+	    return FALSE;
+	}
+	for (pEnt=entrybuf; *pEnt; pEnt += strlen(pEnt)+1)
+	{
+	    if (strstr(pEnt, ldidstr))
+	    {
+		pEqual = strchr(pEnt, '=');
+		if (!pEqual) /* crippled entry ?? */
+		    continue;
+
+		/* make sure we found the LDID on left side of the equation */
+		if (pEnt+strlen(ldidstr) <= pEqual)
+		{ /* found */
+
+		    /* but we don't want entries in the strings section */
+		    if (!strcasecmp(pSec, "Strings"))
+			goto next_section;
+		    p = pEqual+1;
+		    while ((*p == ' ') || (*p == '\t')) p++;
+		    goto found;
+		}
+	    }
+	}
+next_section:
+    }
+    return FALSE;
+found:
+    TRACE("found entry '%s'\n", p);
+    /* strip off any flags we get
+     * FIXME: what are these flags used for ?? */
+    pEnd = strchr(p, ',');
+    strncpy(section, p, (int)pEnd - (int)p);
+    section[(int)pEnd - (int)p] = '\0';
+
+    /* get the location of the registry key from that section */
+    if (!GetPrivateProfileSectionA(section, entrybuf, sizeof(entrybuf), filename))
+    {
+	ERR("entrybuf too small ?\n");
+	return FALSE;
+    }
+    GenFormStrWithoutPlaceHolders16(sectionbuf, entrybuf, hInf);
+    ret = SETUPX_LookupRegistryString(sectionbuf, buffer, buflen);
+    TRACE("return '%s'\n", buffer);
+    return ret;
+}
+
 /*
  * Translate a logical disk identifier (LDID) into its string representation
  */
-BOOL SETUPX_TranslateLDID(int ldid, LPSTR buffer, WORD buflen)
+static BOOL SETUPX_TranslateLDID(int ldid, LPSTR buffer, WORD buflen, HINF16 hInf)
 {
     BOOL handled = FALSE;
 
@@ -260,15 +443,9 @@ BOOL SETUPX_TranslateLDID(int ldid, LPSTR buffer, WORD buflen)
 		buffer[buflen-1] = '\0';
 		handled = TRUE;
 		break;
-	    case 49001: /* what's this ???
-			   does this have to pop up a dialog or what ? */
-		strncpy(buffer, "C:\\Program Files", buflen);
-		buffer[buflen-1] = '\0';
-		FIXME("what is LDID 49001 ?? returning %s for now.\n", buffer);
-		handled = TRUE;
-		break;
 	    default:
-		if (LDID_Data[ldid].StdString)
+		if ( (ldid >= LDID_NULL) && (ldid <= LDID_OLD_WIN)
+		  && (LDID_Data[ldid].StdString) )
 		{
 		    UINT len = GetWindowsDirectoryA(buffer, buflen);
 		    if (len <= buflen-1)
@@ -287,7 +464,10 @@ BOOL SETUPX_TranslateLDID(int ldid, LPSTR buffer, WORD buflen)
     }
 
     if (!handled)
-	FIXME("unimplemented LDID %d\n", ldid);
+	handled = SETUPX_TranslateCustomLDID(ldid, buffer, buflen, hInf);
+
+    if (!handled)
+        FIXME("unimplemented LDID %d\n", ldid);
 
     return handled;
 }
@@ -324,7 +504,7 @@ void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR szDst, LPCSTR szSrc, HINF16 h
 		ldid = atoi(placeholder);
 		if (ldid)
 		{
-		    done = SETUPX_TranslateLDID(ldid, pDst, 256);
+		    done = SETUPX_TranslateLDID(ldid, pDst, 256, hInf);
 		    if (done)
 			pDst += strlen(pDst);
 		}
@@ -379,6 +559,9 @@ RETERR16 WINAPI CtlSetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
     return OK;
 }
 
+/*
+ * p2 is "\001" for Netmeeting.
+ */
 RETERR16 WINAPI vcpOpen16(LPWORD p1, LPWORD p2)
 {
     FIXME("(%p, %p), stub.\n", p1, p2);
@@ -393,6 +576,6 @@ RETERR16 WINAPI vcpClose16(WORD w1, WORD w2, WORD w3)
 
 RETERR16 WINAPI GenInstall16(HINF16 hInfFile, LPCSTR szInstallSection, WORD wFlags)
 {
-    FIXME("(%04x, '%s', %04x), stub. This doesn't install anything yet !\n", hInfFile, szInstallSection, wFlags);
+    FIXME("(%04x, '%s', %04x), stub. This doesn't install anything yet ! Use native SETUPX.DLL instead !!\n", hInfFile, szInstallSection, wFlags);
     return OK;
 }
