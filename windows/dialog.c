@@ -688,8 +688,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 	}
 	return hwnd;
     }
-    if( IsWindow(hwnd) ) DestroyWindow( hwnd );
     if (modal && ownerEnabled) DIALOG_EnableOwner(owner);
+    if( IsWindow(hwnd) ) DestroyWindow( hwnd );
     return 0;
 }
 
