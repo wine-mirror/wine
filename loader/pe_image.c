@@ -33,8 +33,6 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-#define MAP_ANONYMOUS	0x20
-
 struct w_files *wine_files = NULL;
 
 void my_wcstombs(char * result, u_short * source, int len)
@@ -48,6 +46,7 @@ void my_wcstombs(char * result, u_short * source, int len)
   };
 }
 
+#if 0
 char * xmmap(char * vaddr, unsigned int v_size, unsigned int r_size,
 	int prot, int flags, int fd, unsigned int file_offset)
 {
@@ -75,6 +74,7 @@ char * xmmap(char * vaddr, unsigned int v_size, unsigned int r_size,
   read(fd, vaddr, v_size);
   return vaddr;
 };
+#endif
 
 void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_addr)
 { 
@@ -102,14 +102,76 @@ void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_add
     }
 }
 
-void fixup_imports(struct PE_Import_Directory *pe_imports,unsigned int load_addr)
+DWORD PE_FindExportedFunction(struct w_files* wpnt, char* funcName)
+{
+	struct PE_Export_Directory * exports = wpnt->pe->pe_export;
+	unsigned load_addr = wpnt->pe->load_addr;
+	u_short * ordinal;
+	u_long * function;
+	u_char ** name, *ename;
+	int i;
+	if(!exports)return 0;
+	ordinal = (u_short *) (((char *) load_addr) + (int) exports->Address_Of_Name_Ordinals);
+	function = (u_long *)  (((char *) load_addr) + (int) exports->AddressOfFunctions);
+	name = (u_char **)  (((char *) load_addr) + (int) exports->AddressOfNames);
+	for(i=0; i<exports->Number_Of_Functions; i++)
+	{
+		ename =  (char *) (((char *) load_addr) + (int) *name);
+		if(strcmp(ename,funcName)==0)
+			return load_addr+*function;
+		function++;
+		ordinal++;
+		name++;
+	}
+	return 0;
+}
+
+DWORD PE_GetProcAddress(HMODULE hModule, char* function)
+{
+	struct w_files *wpnt;
+	for(wpnt=wine_files;wpnt;wpnt=wpnt->next)
+		if(wpnt->hModule==hModule) break;
+	if(!wpnt)return 0;
+	return PE_FindExportedFunction(wpnt,function);
+}
+
+void fixup_imports(struct w_files* wpnt)
 { 
   struct PE_Import_Directory * pe_imp;
   int fixup_failed=0;
+  unsigned int load_addr = wpnt->pe->load_addr;
+  int i;
+  NE_MODULE *ne_mod;
+  HMODULE *mod_ptr;
 
  /* OK, now dump the import list */
   dprintf_win32(stddeb, "\nDumping imports list\n");
-  pe_imp = pe_imports;
+
+  /* first, count the number of imported non-internal modules */
+  pe_imp = wpnt->pe->pe_import;
+  for(i=0;pe_imp->ModuleName;pe_imp++)
+  	i++;
+
+  /* Now, allocate memory for dlls_to_init */
+  ne_mod = GlobalLock(wpnt->hModule);
+  ne_mod->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,(i+1) * sizeof(HMODULE),
+  					wpnt->hModule, FALSE, FALSE, FALSE );
+  mod_ptr = GlobalLock(ne_mod->dlls_to_init);
+  /* load the modules and put their handles into the list */
+  for(i=0,pe_imp = wpnt->pe->pe_import;pe_imp->ModuleName;pe_imp++)
+  {
+  	char *name = (char*)load_addr+pe_imp->ModuleName;
+  	if(RELAY32_GetBuiltinDLL(name))
+		continue;
+	mod_ptr[i] = LoadModule(name,(LPVOID)-1);
+	if(mod_ptr[i]<=(HMODULE)32)
+	{
+		fprintf(stderr,"Module %s not found\n",name);
+		exit(0);
+	}
+	i++;
+  }
+  pe_imp = wpnt->pe->pe_import;
   while (pe_imp->ModuleName)
     {
       char * Module;
@@ -126,6 +188,8 @@ void fixup_imports(struct PE_Import_Directory *pe_imports,unsigned int load_addr
       if (c) *c = 0;
 #endif
 
+   if(pe_imp->Import_List != 0) { /* original microsoft style */
+      dprintf_win32(stddeb, "Microsoft style imports used\n");
       import_list = (unsigned int *) 
 	(((unsigned int) load_addr) + pe_imp->Import_List);
 	  thunk_list = (unsigned int *)
@@ -142,7 +206,12 @@ void fixup_imports(struct PE_Import_Directory *pe_imports,unsigned int load_addr
 	  }
 	  dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
+	/* Both calls should be unified into GetProcAddress */
 	  *thunk_list=(unsigned int)RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
+	  if(*thunk_list == 0)
+	  	*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
+				pe_name->Name);
+
 #else
 	  fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
 #endif
@@ -155,12 +224,35 @@ void fixup_imports(struct PE_Import_Directory *pe_imports,unsigned int load_addr
 	  import_list++;
 	  thunk_list++;
 	}
-      pe_imp++;
-    };
-	if(fixup_failed)exit(1);
+    } else { /* Borland style */
+      dprintf_win32(stddeb, "Borland style imports used\n");
+      thunk_list = (unsigned int *)
+        (((unsigned int) load_addr) + pe_imp->Thunk_List);
+      while(*thunk_list) {
+        pe_name = (struct pe_import_name *) ((int) load_addr + *thunk_list);
+        if((unsigned)pe_name & 0x80000000) {
+          fprintf(stderr,"Import by ordinal not supported\n");
+          exit(0);
+        }
+        dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
+#ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
+        *thunk_list=(unsigned int)RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
+#else
+        fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
+#endif
+        if(!*thunk_list) {
+          fprintf(stderr,"No implementation for %s.%d\n",Module, pe_name->Hint);
+          fixup_failed=1;
+        }
+        thunk_list++;
+      }
+    }
+    pe_imp++;
+  }
+  if(fixup_failed)exit(1);
 }
 
-static void dump_table(struct w_files *wpnt)
+static void calc_vma_size(struct w_files *wpnt)
 {
   int i;
 
@@ -179,48 +271,138 @@ static void dump_table(struct w_files *wpnt)
 	     wpnt->pe->pe_seg[i].NumberOfRelocations,
 	     wpnt->pe->pe_seg[i].NumberOfLinenumbers,
 	     wpnt->pe->pe_seg[i].Characteristics);
+	  wpnt->pe->vma_size = max(wpnt->pe->vma_size,
+	  		wpnt->pe->pe_seg[i].Virtual_Address + 
+			wpnt->pe->pe_seg[i].Size_Of_Raw_Data);
     }
 }
+
+static void do_relocations(struct w_files *wpnt)
+{
+	int delta = wpnt->pe->load_addr - wpnt->pe->base_addr;
+	struct PE_Reloc_Block *r = wpnt->pe->pe_reloc;
+	int hdelta = (delta >> 16) & 0xFFFF;
+	int ldelta = delta & 0xFFFF;
+	/* int reloc_size = */
+	if(delta == 0)
+		/* Nothing to do */
+		return;
+	while(r->PageRVA)
+	{
+		char *page = (char*)wpnt->pe->load_addr + r->PageRVA;
+		int count = (r->BlockSize - 8)/2;
+		int i;
+		dprintf_fixup(stddeb, "%x relocations for page %lx\n",
+			count, r->PageRVA);
+		/* patching in reverse order */
+		for(i=0;i<count;i++)
+		{
+			int offset = r->Relocations[i] & 0xFFF;
+			int type = r->Relocations[i] >> 12;
+			dprintf_fixup(stddeb,"patching %x type %x\n", offset, type);
+			switch(type)
+			{
+			case IMAGE_REL_BASED_ABSOLUTE: break;
+			case IMAGE_REL_BASED_HIGH:
+				*(short*)(page+offset) += hdelta;
+				break;
+			case IMAGE_REL_BASED_LOW:
+				*(short*)(page+offset) += ldelta;
+				break;
+			case IMAGE_REL_BASED_HIGHLOW:
+#if 1
+				*(int*)(page+offset) += delta;
+#else
+				{ int h=*(unsigned short*)(page+offset);
+				  int l=r->Relocations[++i];
+				  *(unsigned int*)(page + offset) = (h<<16) + l + delta;
+				}
+#endif
+				break;
+			case IMAGE_REL_BASED_HIGHADJ:
+				fprintf(stderr, "Don't know what to do with IMAGE_REL_BASED_HIGHADJ\n");
+				break;
+			case IMAGE_REL_BASED_MIPS_JMPADDR:
+				fprintf(stderr, "Is this a MIPS machine ???\n");
+				break;
+			default:
+				fprintf(stderr, "Unknown fixup type\n");
+				break;
+			}
+		}
+		r = (struct PE_Reloc_Block*)((char*)r + r->BlockSize);
+	}
+}
+		
+
+	
+	
 
 /**********************************************************************
  *			PE_LoadImage
  * Load one PE format executable into memory
  */
-HINSTANCE PE_LoadImage(struct w_files *wpnt)
+static HINSTANCE PE_LoadImage( int fd, struct w_files *wpnt )
 {
 	int i, result;
-        unsigned int load_addr;
+    unsigned int load_addr;
 
 	wpnt->pe = xmalloc(sizeof(struct pe_data));
 	memset(wpnt->pe,0,sizeof(struct pe_data));
 	wpnt->pe->pe_header = xmalloc(sizeof(struct pe_header_s));
 
 	/* read PE header */
-	lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
-	read(wpnt->fd, wpnt->pe->pe_header, sizeof(struct pe_header_s));
+	lseek( fd, wpnt->mz_header->ne_offset, SEEK_SET);
+	read( fd, wpnt->pe->pe_header, sizeof(struct pe_header_s));
 
 	/* read sections */
 	wpnt->pe->pe_seg = xmalloc(sizeof(struct pe_segment_table) * 
 				   wpnt->pe->pe_header->coff.NumberOfSections);
-	read(wpnt->fd, wpnt->pe->pe_seg, sizeof(struct pe_segment_table) * 
+	read( fd, wpnt->pe->pe_seg, sizeof(struct pe_segment_table) * 
 			wpnt->pe->pe_header->coff.NumberOfSections);
 
 	load_addr = wpnt->pe->pe_header->opt_coff.BaseOfImage;
+	wpnt->pe->base_addr=load_addr;
+	wpnt->pe->vma_size=0;
 	dprintf_win32(stddeb, "Load addr is %x\n",load_addr);
-	dump_table(wpnt);
+	calc_vma_size(wpnt);
+
+	/* We use malloc here, while a huge part of that address space does
+	   not be supported by actual memory. It has to be contiguous, though.
+	   I don't know if mmap("/dev/null"); would do any better.
+	   What I'd really like to do is a Win32 style VirtualAlloc/MapViewOfFile
+	   sequence */
+	load_addr = wpnt->pe->load_addr = malloc(wpnt->pe->vma_size);
+	dprintf_win32(stddeb, "Load addr is really %x, range %x\n",
+		wpnt->pe->load_addr, wpnt->pe->vma_size);
+
 
 	for(i=0; i < wpnt->pe->pe_header->coff.NumberOfSections; i++)
 	{
+		/* load only non-BSS segments */
+		if(wpnt->pe->pe_seg[i].Characteristics & 
+			~ IMAGE_SCN_TYPE_CNT_UNINITIALIZED_DATA)
+		if(lseek(fd,wpnt->pe->pe_seg[i].PointerToRawData,SEEK_SET) == -1
+		|| read(fd,load_addr + wpnt->pe->pe_seg[i].Virtual_Address,
+				wpnt->pe->pe_seg[i].Size_Of_Raw_Data) 
+				!= wpnt->pe->pe_seg[i].Size_Of_Raw_Data)
+		{
+			fprintf(stderr,"Failed to load section %x\n", i);
+			exit(0);
+		}
+		result = load_addr + wpnt->pe->pe_seg[i].Virtual_Address;
+#if 0
 	if(!load_addr) {
+		
 		result = (int)xmmap((char *)0, wpnt->pe->pe_seg[i].Virtual_Size,
 			wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7,
-			MAP_PRIVATE, wpnt->fd, wpnt->pe->pe_seg[i].PointerToRawData);
+			MAP_PRIVATE, fd, wpnt->pe->pe_seg[i].PointerToRawData);
 		load_addr = (unsigned int) result -  wpnt->pe->pe_seg[i].Virtual_Address;
 	} else {
 		result = (int)xmmap((char *) load_addr + wpnt->pe->pe_seg[i].Virtual_Address, 
 			  wpnt->pe->pe_seg[i].Virtual_Size,
 		      wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7, MAP_PRIVATE | MAP_FIXED, 
-		      wpnt->fd, wpnt->pe->pe_seg[i].PointerToRawData);
+		      fd, wpnt->pe->pe_seg[i].PointerToRawData);
 	}
 	if(result==-1){
 		fprintf(stderr,"Could not load section %x to desired address %lx\n",
@@ -228,6 +410,13 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 		fprintf(stderr,"Need to implement relocations now\n");
 		exit(0);
 	}
+#endif
+
+        if(strcmp(wpnt->pe->pe_seg[i].Name, ".bss") == 0)
+            memset((void *)result, 0, 
+                   wpnt->pe->pe_seg[i].Virtual_Size ?
+                   wpnt->pe->pe_seg[i].Virtual_Size :
+                   wpnt->pe->pe_seg[i].Size_Of_Raw_Data);
 
 	if(strcmp(wpnt->pe->pe_seg[i].Name, ".idata") == 0)
 		wpnt->pe->pe_import = (struct PE_Import_Directory *) result;
@@ -242,10 +431,16 @@ HINSTANCE PE_LoadImage(struct w_files *wpnt)
 	    wpnt->pe->resource_offset = wpnt->pe->pe_seg[i].Virtual_Address - 
 					wpnt->pe->pe_seg[i].PointerToRawData;
 	    }
+	
+	if(strcmp(wpnt->pe->pe_seg[i].Name, ".reloc") == 0)
+		wpnt->pe->pe_reloc = (struct PE_Reloc_Block *) result;
+
 	}
 
-	if(wpnt->pe->pe_import) fixup_imports(wpnt->pe->pe_import,load_addr);
+
+	if(wpnt->pe->pe_import) fixup_imports(wpnt);
 	if(wpnt->pe->pe_export) dump_exports(wpnt->pe->pe_export,load_addr);
+	if(wpnt->pe->pe_reloc) do_relocations(wpnt);
   
 	wpnt->hinstance = (HINSTANCE)0x8000;
 	wpnt->load_addr = load_addr;
@@ -271,7 +466,6 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 
 	wpnt=xmalloc(sizeof(struct w_files));
 	wpnt->ofs=*ofs;
-	wpnt->fd=fd;
 	wpnt->type=0;
 	wpnt->hinstance=0;
 	wpnt->hModule=0;
@@ -348,7 +542,9 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	pModule->res_table=pModule->import_table=pModule->entry_table=
 		(int)pStr-(int)pModule;
 
-	PE_LoadImage(wpnt);
+        MODULE_RegisterModule(hModule);
+
+	PE_LoadImage( fd, wpnt );
 
 	pModule->heap_size=0x1000;
 	pModule->stack_size=0xE000;
@@ -358,34 +554,38 @@ HINSTANCE PE_LoadModule(int fd, OFSTRUCT *ofs, LOADPARAMS* params)
 	wpnt->hinstance=hInstance;
 
 	if (wpnt->pe->pe_export) {
-		wpnt->name = xmalloc(strlen(wpnt->pe->pe_export->ModuleName)+1);
-		strcpy(wpnt->name, wpnt->pe->pe_export->ModuleName);
+		pStr = ((unsigned char *)(wpnt->load_addr))+wpnt->pe->pe_export->Name;
+		wpnt->name = xstrdup(pStr);
 	} else {
-		wpnt->name = xmalloc(strlen(ofs->szPathName)+1);
-		strcpy(wpnt->name, ofs->szPathName);
+		wpnt->name = xstrdup( ofs->szPathName );
 	}
 
 	wpnt->next=wine_files;
 	wine_files=wpnt;
 
-	if (!(wpnt->pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL))
-	TASK_CreateTask(hModule,hInstance,0,
+        /* FIXME: Is this really the correct place to initialise the DLL? */
+	if ((wpnt->pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)) {
+            PE_InitDLL(wpnt);
+        } else {
+            TASK_CreateTask(hModule,hInstance,0,
 		params->hEnvironment,(LPSTR)PTR_SEG_TO_LIN(params->cmdLine),
 		*((WORD*)PTR_SEG_TO_LIN(params->showCmd)+1));
-	
+	}
 	return hInstance;
 }
 
 int USER_InitApp(HINSTANCE hInstance);
+void PE_InitTEB(int hTEB);
 
 void PE_Win32CallToStart(struct sigcontext_struct context)
 {
 	int fs;
 	struct w_files *wpnt=wine_files;
-	fs=(int)GlobalAlloc(GHND,0x10000);
 	dprintf_win32(stddeb,"Going to start Win32 program\n");	
 	InitTask(context);
 	USER_InitApp(wpnt->hModule);
+        fs=(int)GlobalAlloc(GHND,0x10000);
+        PE_InitTEB(fs);
 	__asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
 	((void(*)())(wpnt->load_addr+wpnt->pe->pe_header->opt_coff.AddressOfEntryPoint))();
 }
@@ -397,11 +597,68 @@ int PE_UnloadImage(struct w_files *wpnt)
 	return 1;
 }
 
-void PE_InitDLL(struct w_files *wpnt)
+void PE_InitDLL(HMODULE hModule)
 {
+	struct w_files *wpnt;
+	hModule = GetExePtr(hModule);
+	for(wpnt = wine_files;wpnt && wpnt->hModule != hModule;
+		wpnt = wpnt->next) /*nothing*/;
+	if(!wpnt || wpnt->initialised)
+		return;
+        /* FIXME: What are the correct values for parameters 2 and 3? */
+        
 	/* Is this a library? */
 	if (wpnt->pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL) {
+		/* Should call DLLEntryPoint here */
 		printf("InitPEDLL() called!\n");
+		wpnt->initialised = 1;
+                ((void(*)())(wpnt->load_addr+wpnt->pe->pe_header->opt_coff.AddressOfEntryPoint))(wpnt->hModule, 0, 0);
 	}
+}
+
+
+/* FIXME: This stuff is all on a "well it works" basis. An implementation
+based on some kind of documentation would be greatly appreciated :-) */
+
+typedef struct
+{
+    void        *Except;
+    void        *stack;
+    int	        dummy1[4];
+    struct TEB  *TEBDSAlias;
+    int	        dummy2[2];
+    int	        taskid;
+} TEB;
+
+void PE_InitTEB(int hTEB)
+{
+    TDB *pTask;
+    TEB *pTEB;
+
+    pTask = (TDB *)(GlobalLock(GetCurrentTask() & 0xffff));
+    pTEB = (TEB *)(PTR_SEG_OFF_TO_LIN(hTEB, 0));
+    pTEB->stack = (void *)(GlobalLock(pTask->hStack32));
+    pTEB->Except = (void *)(-1); 
+    pTEB->TEBDSAlias = pTEB;
+    pTEB->taskid = getpid();
+}
+
+void PE_InitializeDLLs(HMODULE hModule)
+{
+	NE_MODULE *pModule;
+	HMODULE *pDLL;
+	pModule = (NE_MODULE *)GlobalLock( GetExePtr(hModule) );
+	if (pModule->dlls_to_init)
+	{
+		HANDLE to_init = pModule->dlls_to_init;
+		pModule->dlls_to_init = 0;
+		for (pDLL = (HMODULE *)GlobalLock( to_init ); *pDLL; pDLL++)
+		{
+			PE_InitializeDLLs( *pDLL );
+			PE_InitDLL( *pDLL );
+		}
+		GlobalFree( to_init );
+	}
+	PE_InitDLL( hModule );
 }
 #endif /* WINELIB */

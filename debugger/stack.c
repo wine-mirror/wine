@@ -66,6 +66,10 @@ void DEBUG_BackTrace(void)
     if (SS_reg(DEBUG_context) == WINE_DATA_SELECTOR)  /* 32-bit mode */
     {
         addr.seg = 0;
+        fprintf(stderr,"%d ",frameno++);
+        addr.off = EIP_reg(DEBUG_context);
+        DEBUG_PrintAddress( &addr, 32 );
+        fprintf( stderr, "\n" );
         addr.off = EBP_reg(DEBUG_context);
         for (;;)
         {
@@ -87,7 +91,12 @@ void DEBUG_BackTrace(void)
           fprintf( stderr, "Not implemented: 32-bit backtrace on a different stack segment.\n" );
           return;
       }
-      addr.seg = SS_reg(DEBUG_context);
+      fprintf( stderr,"%d ", frameno++ );
+      addr.seg = cs;
+      addr.off = IP_reg(DEBUG_context);
+      DEBUG_PrintAddress( &addr, 16 );
+      fprintf( stderr, "\n" );
+      addr.seg = ss;
       addr.off = BP_reg(DEBUG_context) & ~1;
       for (;;)
       {

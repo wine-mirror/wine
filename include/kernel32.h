@@ -14,6 +14,7 @@ DWORD ErrnoToLastError(int errno_num);
 /* Linux's wchar_t is unsigned long but Win32 wants unsigned short
  */
 typedef unsigned short WCHAR;
+typedef WCHAR *LPTSTR;
 
 /* Code page information.
  */

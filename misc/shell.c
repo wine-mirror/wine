@@ -150,11 +150,11 @@ _LoadLevel(FILE *f,LPKEYSTRUCT lpKey,int tabsexp,char *buf)
 			if (NULL!=(t=strchr(s,'='))) {
 				*t='\0';t++;
 				lpNewKey->dwType	= REG_SZ;
-				lpNewKey->lpSubKey	= strdup(s);
-				lpNewKey->lpValue	= strdup(t);
+				lpNewKey->lpSubKey	= xstrdup(s);
+				lpNewKey->lpValue	= xstrdup(t);
 			} else {
 				lpNewKey->dwType	= REG_SZ;
-				lpNewKey->lpSubKey	= strdup(s);
+				lpNewKey->lpSubKey	= xstrdup(s);
 			}
 			_LoadLevel(f,lpNewKey,tabsexp+1,buf);
 		}
@@ -175,11 +175,11 @@ _LoadLevel(FILE *f,LPKEYSTRUCT lpKey,int tabsexp,char *buf)
 		if (NULL!=(t=strchr(s,'='))) {
 			*t='\0';t++;
 			lpNewKey->dwType	= REG_SZ;
-			lpNewKey->lpSubKey	= strdup(s);
-			lpNewKey->lpValue	= strdup(t);
+			lpNewKey->lpSubKey	= xstrdup(s);
+			lpNewKey->lpValue	= xstrdup(t);
 		} else {
 			lpNewKey->dwType	= REG_SZ;
-			lpNewKey->lpSubKey	= strdup(s);
+			lpNewKey->lpSubKey	= xstrdup(s);
 		}
 		lpKey=lpNewKey;
 	}
@@ -280,6 +280,7 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 	  lpKey = lphTopKey; break;
         case HKEY_CLASSES_ROOT: /* == 1 */
         case 0x80000000:
+        case 0x80000001:
           lpKey = lphRootKey; break;
         default: 
 	  dprintf_reg(stddeb,"RegCreateKey // specific key = %08lX !\n", (DWORD)hKey);

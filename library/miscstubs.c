@@ -45,7 +45,7 @@ WORD CallTo16_word_ ( FARPROC func, WORD arg ) { return func(arg); }
 
 void GlobalFreeAll(HANDLE owner)
 {
-  fprintf(stderr,"JBP: GlobalFreeAll() ignored.\n");
+  WINELIB_UNIMP("GlobalFreeAll()");
 }
 
 SEGPTR WIN16_GlobalLock(HGLOBAL h) 
@@ -65,7 +65,7 @@ WORD LOCAL_Size( WORD ds, HLOCAL handle )
 
 void FarSetOwner(HANDLE a, WORD b)
 {
-  fprintf(stderr,"JBP: FarSetOwner() ignored.\n");
+  WINELIB_UNIMP("FarSetOwner()");
 }
 
 #define GLOBAL_MAX_ALLOC_SIZE 0x00ff0000  /* Largest allocation is 16M - 64K */
@@ -114,13 +114,11 @@ HGLOBAL GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
 			    BOOL is32Bit, BOOL isReadOnly,
 			    SHMDATA *shmdata)
 {
-/*  fprintf(stderr,"JBP: GLOBAL_CreateBlock() faked.\n");*/
   return (HGLOBAL)ptr;
 }
 
 BOOL GLOBAL_FreeBlock( HGLOBAL handle )
 {
-/*  fprintf(stderr,"JBP: GLOBAL_FreeBlock() ignored.\n");*/
   return 1;
 }
 
@@ -132,10 +130,10 @@ HGLOBAL GlobalHandle(LPCVOID a)
 
 void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 {
-/*  fprintf(stderr,"JBP: RELAY32_GetEntryPoint() ignored.\n");*/
   return NULL;
 }
 
+extern LRESULT ACTIVATEAPP_callback(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ButtonWndProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT CARET_Callback(HWND,UINT,WPARAM,LPARAM);
@@ -172,6 +170,7 @@ LRESULT ErrorProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 WNDPROC GetWndProcEntry16( char *name )
 {
 #define MAP_STR_TO_PROC(str,proc) if(!strcmp(name,str))return proc
+  MAP_STR_TO_PROC("ActivateAppProc",ACTIVATEAPP_callback);
   MAP_STR_TO_PROC("AboutDlgProc",AboutDlgProc);
   MAP_STR_TO_PROC("ButtonWndProc",ButtonWndProc);
   MAP_STR_TO_PROC("CARET_Callback",CARET_Callback);
@@ -194,5 +193,6 @@ WNDPROC GetWndProcEntry16( char *name )
   MAP_STR_TO_PROC("StaticWndProc",StaticWndProc);
   MAP_STR_TO_PROC("SystemMessageBoxProc",SystemMessageBoxProc);
   MAP_STR_TO_PROC("TASK_Reschedule",TASK_Reschedule);
+  fprintf(stderr,"warning: No mapping for %s(), add one in library/miscstubs.c\n",name);
   return ErrorProc;
 }

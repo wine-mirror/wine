@@ -30,6 +30,8 @@
 extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
 			      HWND hwnd, BOOL remove );  /* timer.c */
 
+DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
+
 /* ------- Internal Queues ------ */
 
 static HANDLE hmemSysMsgQueue = 0;
@@ -1243,12 +1245,14 @@ LONG DispatchMessage( LPMSG msg )
 /*    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
     retval = CallWindowProc( wndPtr->lpfnWndProc, msg->hwnd, msg->message,
 			     msg->wParam, msg->lParam );
-    if (painting && IsWindow(msg->hwnd) &&
-        (wndPtr->flags & WIN_NEEDS_BEGINPAINT))
+    if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
+        (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
 	fprintf(stderr, "BeginPaint not called on WM_PAINT for hwnd "NPFMT"!\n", 
 		msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
+        /* Validate the update region to avoid infinite WM_PAINT loop */
+        ValidateRect( msg->hwnd, NULL );
     }
     return retval;
 }
@@ -1307,7 +1311,7 @@ DWORD GetTickCount(void)
 {
     struct timeval t;
     gettimeofday( &t, NULL );
-    return (t.tv_sec * 1000) + (t.tv_usec / 1000);
+    return ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - MSG_WineStartTicks;
 }
 
 /***********************************************************************

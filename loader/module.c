@@ -13,6 +13,7 @@
 #include "windows.h"
 #include "dlls.h"
 #include "dos_fs.h"
+#include "file.h"
 #include "global.h"
 #include "ldt.h"
 #include "module.h"
@@ -56,7 +57,7 @@ static HMODULE MODULE_LoadBuiltin( LPCSTR name, BOOL force )
     if ((p = strrchr( dllname, '.' ))) *p = '\0';
 
     for (i = 0, table = dll_builtin_table; i < N_BUILTINS; i++, table++)
-        if (!strcasecmp( table->name, dllname )) break;
+        if (!lstrcmpi( table->name, dllname )) break;
     if (i >= N_BUILTINS) return 0;
     if (!table->used && !force) return 0;
 
@@ -110,9 +111,6 @@ BOOL MODULE_Init(void)
         !MODULE_LoadBuiltin( "GDI", TRUE ) ||
         !MODULE_LoadBuiltin( "USER", TRUE ) ||
         !MODULE_LoadBuiltin( "WINPROCS", TRUE )) return FALSE;
-
-#else
-    fprintf(stderr, "JBP: MODULE_Init() ignored.\n");
 #endif
     /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
 
@@ -260,6 +258,7 @@ int MODULE_OpenFile( HMODULE hModule )
 {
     NE_MODULE *pModule;
     char *name;
+    const char *unixName;
 
     static int cachedfd = -1;
 
@@ -271,19 +270,21 @@ int MODULE_OpenFile( HMODULE hModule )
     close( cachedfd );
     hCachedModule = hModule;
     name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
-    if ((cachedfd = open( DOS_GetUnixFileName( name ), O_RDONLY )) == -1)
+    if (!(unixName = DOSFS_GetUnixFileName( name, TRUE )) ||
+        (cachedfd = open( unixName, O_RDONLY )) == -1)
         fprintf( stderr, "MODULE_OpenFile: can't open file '%s' for module "NPFMT"\n",
                  name, hModule );
     dprintf_module( stddeb, "MODULE_OpenFile: opened '%s' -> %d\n",
                     name, cachedfd );
     return cachedfd;
 }
+
+
 /***********************************************************************
  *           MODULE_Ne2MemFlags
+ *
+ * This function translates NE segment flags to GlobalAlloc flags
  */
-
-/* This function translates NE segment flags to GlobalAlloc flags */
-
 static WORD MODULE_Ne2MemFlags(WORD flags)
 { 
     WORD memflags = 0;
@@ -813,6 +814,17 @@ LPSTR MODULE_GetModuleName( HMODULE hModule )
 
 
 /**********************************************************************
+ *           MODULE_RegisterModule
+ */
+void MODULE_RegisterModule( HMODULE hModule )
+{
+	NE_MODULE *pModule;
+	pModule = (NE_MODULE *)GlobalLock( hModule );
+	pModule->next = hFirstModule;
+	hFirstModule = hModule;
+}
+
+/**********************************************************************
  *	    MODULE_FindModule
  *
  * Find a module from a path name.
@@ -837,10 +849,10 @@ HMODULE MODULE_FindModule( LPCSTR path )
         if (!(modulename = strrchr( modulepath, '\\' )))
             modulename = modulepath;
         else modulename++;
-        if (!strcasecmp( modulename, filename )) return hModule;
+        if (!lstrcmpi( modulename, filename )) return hModule;
 
         name_table = (BYTE *)pModule + pModule->name_table;
-        if ((*name_table == len) && !strncasecmp(filename, name_table+1, len))
+        if ((*name_table == len) && !lstrncmpi(filename, name_table+1, len))
             return hModule;
         hModule = pModule->next;
     }
@@ -928,8 +940,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
         /* Try to load the built-in first if not disabled */
         if ((hModule = MODULE_LoadBuiltin( name, FALSE ))) return hModule;
 
-        if (strchr( name, '/' )) name = DOS_GetDosFileName( name );
-        if ((fd = OpenFile( name, &ofs, OF_READ )) == -1)
+        if ((fd = FILE_OpenFile( name, &ofs, OF_READ )) == -1)
         {
             /* Now try the built-in even if disabled */
             if ((hModule = MODULE_LoadBuiltin( name, TRUE )))
@@ -942,11 +953,11 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
           /* Create the module structure */
 
-        if ((hModule = MODULE_LoadExeHeader( fd, &ofs )) < 32)
+        hModule = MODULE_LoadExeHeader( fd, &ofs );
+        if (hModule == 21) hModule = PE_LoadModule( fd, &ofs, paramBlock );
+        close( fd );
+        if (hModule < 32)
         {
-			if(hModule == 21)
-				return PE_LoadModule(fd,&ofs,paramBlock);
-            close( fd );
             fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
                      name, hModule );
             return hModule;
@@ -1214,7 +1225,7 @@ HANDLE LoadLibrary( LPCSTR libname )
     if (handle == (HANDLE)2)  /* file not found */
     {
         char buffer[256];
-        strcpy( buffer, libname );
+        lstrcpyn( buffer, libname, 252 );
         strcat( buffer, ".dll" );
         handle = LoadModule( buffer, (LPVOID)-1 );
     }

@@ -11,6 +11,7 @@
 #include "winerror.h"
 #include "kernel32.h"
 #include "handle32.h"
+#include "pe_image.h"
 #include "stddebug.h"
 #define DEBUG_WIN32
 #include "debug.h"
@@ -72,10 +73,13 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
  */
 HMODULE WIN32_GetModuleHandle(char *module)
 {
-    if(module == NULL)
-        return (HMODULE)0;
-    else
-        return GetModuleHandle(module);
+    HMODULE hModule;
+
+    dprintf_win32(stddeb, "GetModuleHandle: %s\n", module ? module : "NULL");
+    if (module == NULL) hModule = GetExePtr( GetCurrentTask() );
+    else hModule = GetModuleHandle(module);
+    dprintf_win32(stddeb, "GetModuleHandle: returning %d\n", hModule );
+    return hModule;
 }
 
 /***********************************************************************
@@ -88,6 +92,7 @@ VOID GetStartupInfoA(LPSTARTUPINFO lpStartupInfo)
     lpStartupInfo->lpDesktop = "Desktop";
     lpStartupInfo->lpTitle = "Title";
 
+    lpStartupInfo->cbReserved2 = 0;
     lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
     lpStartupInfo->hStdInput  = (HANDLE)0;
     lpStartupInfo->hStdOutput = (HANDLE)1;

@@ -1,11 +1,9 @@
-#ifndef  WINE_H
-#define  WINE_H
+#ifndef  __WINE_WINE_H
+#define  __WINE_WINE_H
 
 extern char *WineIniFileName(void);
-extern char *WinIniFileName(void);
 
 #define WINE_INI WineIniFileName()
-#define WIN_INI WinIniFileName()
 
 #ifdef i386
 extern int runtime_cpu (void);
@@ -13,6 +11,7 @@ extern int runtime_cpu (void);
 static inline int runtime_cpu(void) { return 3; }
 #endif
 
+#ifndef WINELIB
 
 #if defined ( linux) 
 struct sigcontext_struct
@@ -66,4 +65,6 @@ struct sigcontext_struct
 #define WINE_CODE_SELECTOR 0x1f
 #endif
 
-#endif /* WINE_H */
+#endif  /* WINELIB */
+
+#endif /* __WINE_WINE_H */

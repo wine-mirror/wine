@@ -21,20 +21,23 @@ extern void TASK_KillCurrentTask( int exitCode );
 
 typedef struct
 {
-    WORD   int20;            /* int 20h instruction */
-    WORD   nextParagraph;    /* Segment of next paragraph */
+    WORD   int20;                   /* 00 int 20h instruction */
+    WORD   nextParagraph;           /* 02 Segment of next paragraph */
     BYTE   reserved1;
-    BYTE   dispatcher[5];    /* Long call to DOS */
-    SEGPTR savedint22;       /* Saved int 22h handler */
-    SEGPTR savedint23;       /* Saved int 23h handler */
-    SEGPTR savedint24;       /* Saved int 24h handler */
-    WORD   parentPSP;        /* Selector of parent PSP */
-    BYTE   fileHandles[20];  /* Open file handles */
-    HANDLE environment;      /* Selector of environment */
-    WORD   reserved2[23];
-    BYTE   fcb1[16];         /* First FCB */
-    BYTE   fcb2[20];         /* Second FCB */
-    BYTE   cmdLine[128];     /* Command-line (first byte is length) */
+    BYTE   dispatcher[5];           /* 05 Long call to DOS */
+    SEGPTR savedint22 WINE_PACKED;  /* 0a Saved int 22h handler */
+    SEGPTR savedint23 WINE_PACKED;  /* 0e Saved int 23h handler */
+    SEGPTR savedint24 WINE_PACKED;  /* 12 Saved int 24h handler */
+    WORD   parentPSP;               /* 16 Selector of parent PSP */
+    BYTE   fileHandles[20];         /* 18 Open file handles */
+    HANDLE environment;             /* 2c Selector of environment */
+    WORD   reserved2[2];
+    WORD   nbFiles;                 /* 32 Number of file handles */
+    SEGPTR fileHandlesPtr;          /* 34 Pointer to file handle table */
+    WORD   reserved3[18];
+    BYTE   fcb1[16];                /* 5c First FCB */
+    BYTE   fcb2[20];                /* 6c Second FCB */
+    BYTE   cmdLine[128];            /* 80 Command-line (first byte is len) */
 } PDB;
 
 
@@ -66,7 +69,7 @@ typedef struct
     DWORD   esp;                        /* 32-bit stack pointer */
     WORD    ctrlword8087;               /* 80x87 control word */
     WORD    flags;                      /* Task flags */
-    WORD    error_flags;                /* Error handling flags */
+    UINT    error_mode;                 /* Error mode (see SetErrorMode) */
     WORD    version;                    /* Expected Windows version */
     HANDLE  hInstance;                  /* Instance handle for this task */
     HMODULE hModule;                    /* Module handle */

@@ -508,6 +508,11 @@ void NE_InitializeDLLs( HMODULE hModule )
     HMODULE *pDLL;
 
     pModule = (NE_MODULE *)GlobalLock( hModule );
+	if (pModule->magic == PE_SIGNATURE)
+	{
+		PE_InitializeDLLs(hModule);
+		return;
+	}
     if (pModule->dlls_to_init)
     {
 	HANDLE to_init = pModule->dlls_to_init;

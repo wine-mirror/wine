@@ -29,8 +29,6 @@ dnl **** Check for some programs and libraries ****
 
 AC_PROG_MAKE_SET
 AC_PROG_CC
-dnl Add some options for gcc
-test "x${GCC}" = "xyes" && CFLAGS="$CFLAGS -Wall -fno-strength-reduce"
 AC_PROG_CPP
 AC_PATH_XTRA
 AC_PROG_YACC
@@ -40,9 +38,33 @@ AC_PROG_INSTALL
 dnl Check for -li386 for NetBSD
 AC_CHECK_LIB(i386,i386_set_ldt,LDLIBS="$LDLIBS -li386")
 
+dnl **** Check for gcc strength-reduce bug ****
+
+if test "x${GCC}" = "xyes"
+then
+  CFLAGS="$CFLAGS -Wall"
+  AC_C_CROSS
+  AC_CACHE_CHECK( "for gcc strength-reduce bug", ac_cv_c_gcc_strength_bug,
+                  AC_TRY_RUN([
+int main(void) {
+  static int Array[3];
+  unsigned int B = 3;
+  int i;
+  for(i=0; i<B; i++) Array[i] = i - 3;
+  exit( Array[1] != -2 );
+}],
+    ac_cv_c_gcc_strength_bug="no",
+    ac_cv_c_gcc_strength_bug="yes",
+    ac_cv_c_gcc_strength_bug="yes") )
+  if test "$ac_cv_c_gcc_strength_bug" = "yes"
+  then
+    CFLAGS="$CFLAGS -fno-strength-reduce"
+  fi
+fi
+
 dnl **** Check for functions and header files ****
 
-AC_CHECK_FUNCS(tcgetattr)
+AC_CHECK_FUNCS(tcgetattr usleep)
 AC_CHECK_HEADERS(stdlib.h)
 AC_HEADER_STAT()
 AC_C_CONST()
@@ -59,6 +81,7 @@ Makefile
 controls/Makefile
 debugger/Makefile
 debugger/readline/Makefile
+files/Makefile
 if1632/Makefile
 ipc/Makefile
 library/Makefile

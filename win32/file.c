@@ -60,9 +60,6 @@ WINAPI HANDLE32 CreateFileMapping(HANDLE32 h,SECURITY_ATTRIBUTES *ats,
         return INVALID_HANDLE_VALUE;
     }
     fd = open(lpName, O_CREAT, 0666);
-    #if 0
-    fd = open(DOS_GetUnixFileName(lpName), 0, 0666);
-    #endif
     if(fd == -1)
     {
         SetLastError(ErrnoToLastError(errno));
@@ -374,13 +371,13 @@ HANDLE32 CreateFileA(LPSTR filename, DWORD access, DWORD sharing,
     }
     else
     {
+        const char *unixName = DOSFS_GetUnixFileName( filename, FALSE );
         type = FILE_TYPE_DISK;
 
         /* Try to open the file.
          */
-        fd = open(DOS_GetUnixFileName(filename),
-                  access_flags | create_flags, 0666);
-        if(fd == -1)
+        if (!unixName ||
+            ((fd = open(unixName, access_flags | create_flags, 0666)) == -1))
         {
             SetLastError(ErrnoToLastError(errno));
             return INVALID_HANDLE_VALUE;
@@ -404,6 +401,15 @@ HANDLE32 CreateFileA(LPSTR filename, DWORD access, DWORD sharing,
     file_obj->create_flags = create_flags;
 
     return (HANDLE32)file_obj;
+}
+
+/*************************************************************************
+ *              W32_SetHandleCount             (KERNEL32.??)
+ *
+ */
+UINT W32_SetHandleCount(UINT cHandles)
+{
+    return SetHandleCount(cHandles);
 }
 
 int CloseFileHandle(FILE_OBJECT *hFile)

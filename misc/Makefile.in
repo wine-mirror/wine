@@ -10,7 +10,6 @@ C_SRCS = \
 	driver.c \
 	exec.c \
 	escape.c \
-	file.c \
 	keyboard.c \
 	lstr.c \
 	main.c \
@@ -20,6 +19,7 @@ C_SRCS = \
 	ole2nls.c \
 	olecli.c \
 	olesvr.c \
+	port.c \
 	profile.c \
 	rect.c \
 	shell.c \

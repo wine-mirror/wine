@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include "windows.h"
@@ -239,6 +240,11 @@ void INT_Int31Handler( struct sigcontext_struct context )
 
     case 0x0601:  /* Unlock linear region */
         break;  /* Just ignore it */
+
+    case 0x0604:  /* Get page size */
+        BX_reg(&context) = 0;
+        CX_reg(&context) = 4096;
+	break;
 
     default:
         INT_BARF( &context, 0x31 );

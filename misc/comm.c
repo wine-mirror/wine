@@ -136,7 +136,7 @@ int BuildCommDCB(LPSTR device, DCB FAR *lpdcb)
 		"BuildCommDCB: (%s), ptr %p\n", device, lpdcb);
 	commerror = 0;
 
-	if (!strncasecmp(device,"COM",3)) {
+	if (!lstrncmpi(device,"COM",3)) {
 		port = device[3] - '0';
 	
 
@@ -227,7 +227,7 @@ int OpenComm(LPSTR device, UINT cbInQueue, UINT cbOutQueue)
 		"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
 	commerror = 0;
 
-	if (!strncasecmp(device,"COM",3)) {
+	if (!lstrncmpi(device,"COM",3)) {
 		port = device[3] - '0';
 
 		if (port-- == 0) {
@@ -256,7 +256,7 @@ int OpenComm(LPSTR device, UINT cbInQueue, UINT cbOutQueue)
 		}
 	} 
 	else 
-	if (!strncasecmp(device,"LPT",3)) {
+	if (!lstrncmpi(device,"LPT",3)) {
 		port = device[3] - '0';
 	
 		if (!ValidLPTPort(port)) {

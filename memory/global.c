@@ -6,6 +6,7 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 
 #include "windows.h"
@@ -755,7 +756,48 @@ BOOL GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE hModule, WORD wSeg )
  */
 BOOL MemManInfo( MEMMANINFO *pInfo )
 {
+#ifdef linux
+    /* FIXME: does not take into account the dwSize member
+     * could be corrupting memory therefore
+     */
+    /* shamefully stolen from free */
+    DWORD availmem = 0;
+    DWORD totalmem = 0;
+    FILE *meminfo;
+    char buf[80];
+    int col[5];
+    int n;
+
+    if ((meminfo = fopen("/proc/meminfo", "r")) < 0) {
+        perror("wine: open");
+        exit(1);
+    }
+
+    fgets(buf, 80, meminfo); /* read first line */
+    while ( fgets(buf, 80, meminfo) ) {
+        n = sscanf( buf, "%*s %d %d %d %d %d", &col[0], &col[1], &col[2], &col[3], &col[4]);
+        if ( n < 1 ) continue; /* escape the loop at the top */
+        totalmem += col[0];
+        availmem += col[2] + col[4];
+    }
+
+    fprintf(stderr,"MemManInfo called with dwSize = %ld\n",pInfo->dwSize);
+    pInfo->wPageSize = getpagesize();
+    pInfo->dwLargestFreeBlock = availmem;
+    pInfo->dwTotalLinearSpace = totalmem / pInfo->wPageSize;
+    pInfo->dwMaxPagesAvailable = pInfo->dwLargestFreeBlock / pInfo->wPageSize;
+    pInfo->dwMaxPagesLockable = pInfo->dwMaxPagesLockable;
+    /* FIXME: the next three are not quite correct */
+    pInfo->dwTotalUnlockedPages = pInfo->dwMaxPagesAvailable;
+    pInfo->dwFreePages = pInfo->dwMaxPagesAvailable;
+    pInfo->dwTotalPages = pInfo->dwMaxPagesAvailable;
+    /* FIXME: the three above are not quite correct */
+    pInfo->dwFreeLinearSpace = pInfo->dwMaxPagesAvailable;
+    pInfo->dwSwapFilePages = 0L;
     return TRUE;
+#else
+    return TRUE;
+#endif
 }
 
 /***********************************************************************

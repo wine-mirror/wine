@@ -1,0 +1,14 @@
+TOPSRC = @top_srcdir@
+MODULE = files
+
+C_SRCS = \
+	directory.c \
+	dos_fs.c \
+	drive.c \
+	file.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

@@ -14,6 +14,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "metafile.h"
 #include "wine.h"
 #include "callback.h"
+#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -67,15 +68,15 @@ BOOL FONT_Init( void )
   if( GetPrivateProfileString("fonts", NULL, "*", temp, sizeof(temp), WINE_INI) > 2 ) {
     for( ptr = temp, i = 1; strlen(ptr) != 0; ptr += strlen(ptr) + 1 )
       if( strcmp( ptr, "default" ) )
-	FontNames[i++].window = strdup( ptr );
+	FontNames[i++].window = xstrdup( ptr );
     FontSize = i;
 
     for( i = 1; i < FontSize; i++ ) {
       GetPrivateProfileString("fonts", FontNames[i].window, "*", temp, sizeof(temp), WINE_INI);
-      FontNames[i].x11 = strdup( temp );
+      FontNames[i].x11 = xstrdup( temp );
     }
     GetPrivateProfileString("fonts", "default", "*", temp, sizeof(temp), WINE_INI);
-    FontNames[0].x11 = strdup( temp );
+    FontNames[0].x11 = xstrdup( temp );
 
   } else {
     FontNames[0].window = NULL; FontNames[0].x11 = "*-helvetica";

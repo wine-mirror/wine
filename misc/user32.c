@@ -13,6 +13,7 @@
 #include "relay32.h"
 #include "alias.h"
 #include "stackframe.h"
+#include "xmalloc.h"
 
 /* Structure copy functions */
 static void MSG16to32(MSG *msg16,struct WIN32_MSG *msg32)
@@ -43,7 +44,11 @@ static void MSG32to16(struct WIN32_MSG *msg32,MSG *msg16)
 ATOM USER32_RegisterClassA(WNDCLASSA* wndclass)
 {
 	WNDCLASS copy;
-	char *s1,*s2;
+	HANDLE classh = 0, menuh = 0;
+	SEGPTR classsegp, menusegp;
+	char *classbuf, *menubuf;
+
+	ATOM retval;
 	copy.style=wndclass->style;
 	ALIAS_RegisterAlias(0,0,(DWORD)wndclass->lpfnWndProc);
 	copy.lpfnWndProc=wndclass->lpfnWndProc;
@@ -53,29 +58,31 @@ ATOM USER32_RegisterClassA(WNDCLASSA* wndclass)
 	copy.hIcon=(HICON)wndclass->hIcon;
 	copy.hCursor=(HCURSOR)wndclass->hCursor;
 	copy.hbrBackground=(HBRUSH)wndclass->hbrBackground;
+
+	/* FIXME: There has to be a better way of doing this - but neither
+	malloc nor alloca will work */
+
 	if(wndclass->lpszMenuName)
 	{
-		s1=alloca(strlen(wndclass->lpszMenuName)+1);
-		strcpy(s1,wndclass->lpszMenuName);
-		copy.lpszMenuName=MAKE_SEGPTR(s1);
+		menuh = GlobalAlloc(0, strlen(wndclass->lpszMenuName)+1);
+		menusegp = WIN16_GlobalLock(menuh);
+		menubuf = PTR_SEG_TO_LIN(menusegp);
+		strcpy( menubuf, wndclass->lpszMenuName);
+		copy.lpszMenuName=menusegp;
 	}else
 		copy.lpszMenuName=0;
 	if(wndclass->lpszClassName)
 	{
-		s2=alloca(strlen(wndclass->lpszClassName)+1);
-		strcpy(s2,wndclass->lpszClassName);
-		copy.lpszClassName=MAKE_SEGPTR(s2);
+		classh = GlobalAlloc(0, strlen(wndclass->lpszClassName)+1);
+		classsegp = WIN16_GlobalLock(classh);
+		classbuf = PTR_SEG_TO_LIN(classsegp);
+		strcpy( classbuf, wndclass->lpszClassName);
+		copy.lpszClassName=classsegp;
 	}
-	return RegisterClass(&copy);
-}
-
-/***********************************************************************
- *          DefWindowProcA       (USER32.125)
- */
-LRESULT USER32_DefWindowProcA(DWORD hwnd,DWORD msg,DWORD wParam,DWORD lParam)
-{
-	/* some messages certainly need special casing. We come to that later */
-	return DefWindowProc((HWND)hwnd,msg,wParam,lParam);
+	retval = RegisterClass(&copy);
+	GlobalFree(menuh);
+	GlobalFree(classh);
+	return retval;
 }
 
 /***********************************************************************
@@ -141,22 +148,50 @@ LONG USER32_DispatchMessageA(struct WIN32_MSG* lpmsg)
 }
 
 /***********************************************************************
+ *         TranslateMessage       (USER32.555)
+ */
+BOOL USER32_TranslateMessage(struct WIN32_MSG* lpmsg)
+{
+	MSG msg;
+	MSG32to16(lpmsg,&msg);
+	return TranslateMessage(&msg);
+}
+
+/***********************************************************************
  *         CreateWindowExA        (USER32.82)
  */
 DWORD USER32_CreateWindowExA(long flags,char* class,char *title,
 	long style,int x,int y,int width,int height,DWORD parent,DWORD menu,
 	DWORD instance,DWORD param)
 {
+    DWORD retval;
+    HANDLE classh, titleh;
+    SEGPTR classsegp, titlesegp;
     char *classbuf, *titlebuf;
+
     /*Have to translate CW_USEDEFAULT */
     if(x==0x80000000)x=CW_USEDEFAULT;
+    if(y==0x80000000)y=CW_USEDEFAULT;
     if(width==0x80000000)width=CW_USEDEFAULT;
-    classbuf = alloca( strlen(class)+1 );
+    if(height==0x80000000)height=CW_USEDEFAULT;
+
+    /* FIXME: There has to be a better way of doing this - but neither
+    malloc nor alloca will work */
+
+    classh = GlobalAlloc(0, strlen(class)+1);
+    titleh = GlobalAlloc(0, strlen(title)+1);
+    classsegp = WIN16_GlobalLock(classh);
+    titlesegp = WIN16_GlobalLock(titleh);
+    classbuf = PTR_SEG_TO_LIN(classsegp);
+    titlebuf = PTR_SEG_TO_LIN(titlesegp);
     strcpy( classbuf, class );
-    titlebuf = alloca( strlen(title)+1 );
     strcpy( titlebuf, title );
-    return (DWORD) CreateWindowEx(flags,MAKE_SEGPTR(classbuf),
-				  MAKE_SEGPTR(titlebuf),style,x,y,width,height,
+    
+    retval = (DWORD) CreateWindowEx(flags,classsegp,
+				  titlesegp,style,x,y,width,height,
 				  (HWND)parent,(HMENU)menu,(HINSTANCE)instance,
 				  (LPVOID)param);
+    GlobalFree(classh);
+    GlobalFree(titleh);
+    return retval;
 }

@@ -426,8 +426,7 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
                           (long_addr ? ECX_reg(context) : CX_reg(context)) : 1;
 	      int opsize = (typ & 1) ? (long_op ? 4 : 2) : 1;
 	      int step = (EFL_reg(context) & 0x400) ? -opsize : +opsize;
-	      int seg = outp ? (segprefix >= 0 ? segprefix : DS_reg(context))
-                             : ES_reg(context);  /* FIXME: is this right? */
+	      int seg = outp ? DS_reg(context) : ES_reg(context);  /* FIXME: is this right? */
 
 	      if (outp)
 		/* FIXME: Check segment readable.  */

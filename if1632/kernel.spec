@@ -80,7 +80,7 @@ id	1
 81  pascal16 _lclose(word) _lclose
 82  pascal16 _lread(word ptr word) _lread
 83  pascal16 _lcreat(ptr word) _lcreat
-84  pascal _llseek(word long word) _llseek
+84  pascal   _llseek(word long word) _llseek
 85  pascal16 _lopen(ptr word) _lopen
 86  pascal16 _lwrite(word ptr word) _lwrite
 87  pascal16 RESERVED5(ptr ptr) lstrcmp
@@ -103,7 +103,7 @@ id	1
 104 stub GetCodeInfo
 105 stub GetExeVersion
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize
-107 pascal SetErrorMode(word) SetErrorMode
+107 pascal16 SetErrorMode(word) SetErrorMode
 108 stub SwitchStackTo
 109 stub SwitchStackBack
 110 pascal16 PatchCodeHandle(word) PatchCodeHandle
@@ -205,15 +205,15 @@ id	1
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray
 207 return IsDBCSLeadByte 2 0
-216 stub RegEnumKey
-217 stub RegOpenKey
-218 stub RegCreateKey
+216 pascal   RegEnumKey(long long ptr long) RegEnumKey
+217 pascal   RegOpenKey(long ptr ptr) RegOpenKey
+218 pascal   RegCreateKey(long ptr ptr) RegCreateKey
 219 stub RegDeleteValue
-220 stub RegCloseKey
-221 stub RegSetValue
+220 pascal   RegCloseKey(long) RegCloseKey
+221 pascal   RegSetValue(long ptr long ptr long) RegSetValue
 222 stub RegDeleteValue
 223 stub RegEnumValue
-224 stub RegQueryValue
+224 pascal   RegQueryValue(long ptr ptr ptr) RegQueryValue
 225 stub RegQueryValueEx
 226 stub RegSetValueEx
 227 stub RegFlushKey
@@ -255,9 +255,9 @@ id	1
 345 stub IsSharedSelector
 346 pascal16 IsBadHugeReadPtr(segptr long) IsBadHugeReadPtr
 347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr
-348 pascal hmemcpy(ptr ptr long) hmemcpy
-349 pascal _hread(word ptr long) _hread
-350 pascal _hwrite(word ptr long) _hwrite
+348 pascal16 hmemcpy(ptr ptr long) hmemcpy
+349 pascal   _hread(word ptr long) _hread
+350 pascal   _hwrite(word ptr long) _hwrite
 #351 BUNNY_351
 352 stub lstrcatn
 353 pascal lstrcpyn(segptr segptr word) WIN16_lstrcpyn

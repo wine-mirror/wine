@@ -1,37 +1,42 @@
+/*
+ * DOS file system declarations
+ *
+ * Copyright 1996 Alexandre Julliard
+ */
+
 #ifndef __WINE_DOS_FS_H
 #define __WINE_DOS_FS_H
 
-#include <wintypes.h>
+#include <time.h>
+#include "wintypes.h"
 
-extern void DOS_InitFS(void);
-extern WORD DOS_GetEquipment(void);
-extern int DOS_ValidDrive(int drive);
-extern int DOS_GetDefaultDrive(void); 
-extern void DOS_SetDefaultDrive(int drive);
-extern void ToUnix(char *s); 
-extern void ToDos(char *s); 
-extern int DOS_DisableDrive(int drive);
-extern int DOS_EnableDrive(int drive); 
-extern char *DOS_GetUnixFileName(const char *dosfilename);
-extern char *DOS_GetDosFileName(char *unixfilename);
-extern char *DOS_GetCurrentDir(int drive);
-extern int DOS_ChangeDir(int drive, char *dirname);
-extern int DOS_MakeDir(int drive, char *dirname);
-extern int DOS_GetSerialNumber(int drive, unsigned long *serialnumber); 
-extern int DOS_SetSerialNumber(int drive, unsigned long serialnumber); 
-extern char *DOS_GetVolumeLabel(int drive);
-extern int DOS_SetVolumeLabel(int drive, char *label);
+#define MAX_FILENAME_LEN   256
+#define MAX_PATHNAME_LEN   1024
+
+typedef struct
+{
+    char   name[12];                    /* File name in FCB format */
+    char   unixname[MAX_FILENAME_LEN];  /* Unix file name */
+    DWORD  size;                        /* File size in bytes */
+    WORD   date;                        /* File date in DOS format */
+    WORD   time;                        /* File time in DOS format */
+    BYTE   attr;                        /* File DOS attributes */
+} DOS_DIRENT;
+
+#define IS_END_OF_NAME(ch)  (!(ch) || ((ch) == '/') || ((ch) == '\\'))
+
+extern void DOSFS_ToDosDateTime( time_t *unixtime, WORD *pDate, WORD *pTime );
+extern const char *DOSFS_ToDosFCBFormat( const char *name );
+extern const char *DOSFS_ToDosDTAFormat( const char *name );
+extern const char *DOSFS_IsDevice( const char *name );
+extern const char * DOSFS_GetUnixFileName( const char * name, int check_last );
+extern const char * DOSFS_GetDosTrueName( const char *name, int unix_format );
+extern int DOSFS_GetDosFileName( const char *name, char *buffer, int len );
+extern int DOSFS_FindNext( const char *path, const char *mask, int drive,
+                           BYTE attr, int skip, DOS_DIRENT *entry );
+
+
 extern int DOS_GetFreeSpace(int drive, long *size, long *available);
-extern char *DOS_FindFile(char *buffer, int buflen, const char *rootname, char **extensions, char *path);
 extern char *WineIniFileName(void);
-extern char *WinIniFileName(void); 
-extern struct dosdirent *DOS_opendir(char *dosdirname); 
-extern struct dosdirent *DOS_readdir(struct dosdirent *de);
-extern void DOS_closedir(struct dosdirent *de);
-extern char *DOS_GetRedirectedDir(int drive);
-extern void errno_to_doserr(void);
-extern int DOS_Error(int extended, int class, int locus);
-
-extern char WindowsPath[256];
 
 #endif /* __WINE_DOS_FS_H */

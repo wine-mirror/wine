@@ -6,7 +6,7 @@
 #include "ldt.h"
 #include "wine.h"
 #include "miscemu.h"
-#include "dos_fs.h"
+#include "drive.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"
@@ -21,7 +21,7 @@ void INT_Int25Handler( struct sigcontext_struct context )
     BYTE *dataptr = PTR_SEG_OFF_TO_LIN( DS_reg(&context), BX_reg(&context) );
     DWORD begin, length;
 
-    if (!DOS_ValidDrive(AL_reg(&context)))
+    if (!DRIVE_IsValid(AL_reg(&context)))
     {
         SET_CFLAG(&context);
         AX_reg(&context) = 0x0101;        /* unknown unit */
@@ -30,9 +30,9 @@ void INT_Int25Handler( struct sigcontext_struct context )
 
     if (CX_reg(&context) == 0xffff)
     {
-        begin = getdword(dataptr);
-        length = getword(&dataptr[4]);
-        dataptr = (BYTE *) PTR_SEG_TO_LIN(getdword(&dataptr[6]));
+        begin   = *(DWORD *)dataptr;
+        length  = *(WORD *)(dataptr + 4);
+        dataptr = (BYTE *)PTR_SEG_TO_LIN( *(SEGPTR *)(dataptr + 6) );
     }
     else
     {

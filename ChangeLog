@@ -1,4 +1,206 @@
 ----------------------------------------------------------------------
+Sun Jan 14 13:45:22 1996  Alexandre Julliard  <julliard@sunsite.unc.edu>
+
+	* [configure.in]
+	Added check for gcc strength-reduce bug.
+
+	* [controls/listbox.c]
+	Changed ListBoxDirectory() to use the new DOS file functions.
+
+	* [controls/menu.c]
+	Fixed parameters for DeleteMenu() call in ChangeMenu().
+
+	* [debugger/stack.c]
+	Also display current frame in back-trace.
+
+	* [files/directory.c] [files/dos_fs.c] [files/drive.c] [files/file.c]
+	Complete rewrite of the DOS file handling.
+	Implemented per-task file handles.
+	Removed default Z: drive; needs to be put explicitely in wine.ini
+	if desired.
+
+	* [loader/module.c]
+	Fixed file descriptor leak in LoadModule().
+
+	* [loader/task.c]
+	Initialise PDB file handle table in TASK_CreateTask().
+	Close file handles on task termination.
+	Implemented SetErrorMode().
+
+	* [misc/network.c]
+	Fixed WNetGetConnection() to use GetDriveType().
+
+	* [misc/xmalloc.c]
+	Added function xstrdup().
+
+	* [miscemu/int21.c]
+	Many changes for new DOS file functions.
+
+	* [miscemu/interrupts.c]
+	Moved DOS_GetEquipment() function into INT_Int11Handler().
+
+	* [windows/win.c]
+	Bug fix: create system menu before sending WM_NCCREATE.
+
+	* [*/*.c]
+	Replaced strcasecmp and strncasecmp by lstrcmpi and lstrncmpi for
+	better portability.
+
+Sat Jan 13 16:13:02 1996  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [include/wintypes.h]
+	Added 'typedef HGLOBAL GOBALHANDLE;'.  This is not precisely in line
+	with the true windows 'typedef HANDLE GLOBALHANDLE;', but I believe
+	it should suffice.
+
+	* [include/winsock.h]
+	Added '#include <arpa/inet.h>' for various declarations.  '#ifdef'-ed
+	out some old style internet address #define's.
+
+	* [loader/task.c]
+	Made MakeProcInstance() return first parameter #ifdef WINELIB32.
+	Made FreeProcInstance() do nothing #ifdef WINELIB32.
+	'#ifdef'-ed out TASK_AllocThunk(), as it was unused in WINELIB32.
+
+	* [library/miscstubs.c]
+	Made GetWndProcEntry16() return ACTIVATEAPP_callback() when called
+	with name="ActivateAppProc".  This hardly seems correct, but it's my
+	best guess as to how the emulator responds.
+
+Sat Jan  6 17:57:45 1996  Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [if1632/kernel32.spec][win32/process.c]
+	WIN32_GetProcAddress, LoadLibraryA: new functions
+
+	* [if1632/relay32.c]
+	RELAY32_GetEntryPoint: Removed code to load PE DLLs
+
+	* [include/pe_image.h][include/pe_exe.h]
+	struct pe_data: new fields base_addr,load_addr,vma_size,pe_reloc
+	struct PE_Reloc_Block: new structure
+
+	* [loader/module.c]
+	MODULE_RegisterModule: new function
+
+	* [loader/pe_image.c]
+	PE_FindExportedFunction,PE_GetProcAddress: new functions
+	fixup_imports: expect struct w_files* now, fill dlls_to_init,
+	               load PE DLLs
+	do_relocations: new functions
+	calc_vma_size: renamed from dump_table
+	PE_LoadImage: use malloc to allocate memory for image
+	PE_InitDLL: expect HMODULE
+	PE_InitializeDLLs: new function
+
+	* [loader/task.c]
+	NE_InitializeDLLs: branch to PE_InitializeDLLs for PE modules
+	GetExePtr: Accept PE modules
+
+	* [misc/commdlg.c]
+	FILEDLG_WMCommand: unpack WIN32 WM_COMMAND appropriately for WineLib
+
+Thu Jan  4 11:36:21 1996  Manfred Weichel <Manfred.Weichel@mch.sni.de>
+
+	* [misc/port.c]
+	New file with usleep() function for SVR4.
+
+	* [configure.in]
+	Check for usleep() function.
+
+Tue Jan 02 14:00:00 1996  Anand Kumria <akumria@ozemail.com.au>
+
+	* [if1632/toolhelp.spec] [include/toolhelp.h]
+	  [misc/user.c] [windows/message.c]
+	Implement TOOLHELP.80 TimerCount. Fix GetTickCount.
+
+	* [miscemu/dpmi.c]
+	Implement DPMI Get Page Size (AX=0604, INT 31)
+
+	* [memory/global.c]
+	Implement TOOLHELP.72 GetMemManInfo.
+
+Mon Jan  2 10:33:00 1996  Thomas Sandford <t.d.g.sandford@prds-grn.demon.co.uk>
+
+	* [if1632/callback.c]
+	CallWindowProc() - When calling RELAY32_CallWindowProc, check
+	whether lParam should be a SEGPTR, and if so convert it to one.
+
+	* [if1632/gdi.spec] [if1632/kernel32.spec] [if1632/user32.spec]
+	Numerous functions added, mostly calls to original (win16)
+ 	functions.  Note that some (many) of these are probably not
+ 	strictly correct, but with these additions freecell will at least
+ 	display its main window though it is garbled.
+
+	* [if1632/winprocs.spec]
+	Completely rewritten - all WndProcs now have win32 versions to
+	help with the lparam SEGPTR fix in callback.c
+
+	* [include/kernel32.h]
+	LPTCSTR defined.
+
+	* [include/peexe.h]
+	Definition of PE_Export_Directory amended.
+
+	* [include/resource32.h]
+	New file.
+
+	* [include/stackframe.h]
+	Definition of MAKE_SEGPTR macro #ifdef'd out and replaced with
+	prototype for replacement function in memory/selector.c which
+	can operate on any given memory address. This is currently
+	required for win32 support. It is a dreadful cludge, and will
+	certainly slow down other programs. If you are not interested
+	in win32 development you may wish to reverse this patch.
+
+	* [include/windows.h]
+	Definition of SW_SHOWDEFAULT added.
+
+	* [loader/pe_image.c]
+	Extensive rewrites of xmmap() fixup_imports().
+	PE_LoadImage() - initialisation of bss added, extraction of
+	module name fixed, initialisation of DLL added.
+	PE_InitDLL() - now does something.
+	PE_Win32CallToStart() - initialisation of TEB pointed to by
+	fs added.
+	PE_InitTEB() created to perform TEB initialisation.
+
+	* [memory/selector.c] 
+	New function MAKE_SEGPTR() - see include/stackframe.h above.
+
+	* [misc/user32.c]
+	USER32_RegisterClassA(), CreateWindowExA() memory allocation
+	method changed. This is probably now unnecessary with the
+	new MAKE_SEGPTR handling code.
+	USER32_DefWndProcA() removed to win32/winprocs.c
+	USER32_TranslateMessage added.
+
+	* [tools/build.c]
+	handling of win32 spec files changed to support gcc2.6.X
+	this requires optimisations to be disabled.
+
+	* [win32/resource.c] [win32/newfns.c] [win32/heap.c] [win32/winprocs.c]
+	New files.
+
+	* [win32/Makefile.in]
+	New files heap.c, newfns.c, resource.c and winprocs.c added to build.
+
+	* [win32/file.c]
+	New function W32_SetHandleCount.
+
+	* [win32/init.c]
+	WIN32_GetModuleHandle() - now returns handle of running process
+	if called with NULL.
+	GetStartupInfoA() - set cbReserved2 to 0.
+
+	* [win32/memory.c]
+	VirtualAlloc() - set mmap() file parameter to -1 instead of 0 to make
+	it work with FreeBSD. Also check for return value. Removed extra
+	return.
+
+	* [windows/winpos.c]
+	ShowWindow() - SW_SHOWDEFAULT handling kludged in.
+
+----------------------------------------------------------------------
 Sat Dec 23 18:15:59 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
 
 	* [configure.in] [Makefile.in] [tools/install-sh]

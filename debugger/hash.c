@@ -51,7 +51,7 @@ void DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr )
 
     new = (struct name_hash *) xmalloc(sizeof(struct name_hash));
     new->addr = *addr;
-    new->name = strdup(name);
+    new->name = xstrdup(name);
     new->next = NULL;
     hash = name_hash(name);
 

@@ -112,6 +112,7 @@ typedef struct
 extern BOOL MODULE_Init(void);
 extern int MODULE_OpenFile( HMODULE hModule );
 extern LPSTR MODULE_GetModuleName( HMODULE hModule );
+extern void MODULE_RegisterModule( HMODULE hModule );
 extern WORD MODULE_GetOrdinal( HMODULE hModule, char *name );
 extern SEGPTR MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal );
 extern BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset );

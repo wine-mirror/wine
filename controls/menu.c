@@ -57,7 +57,6 @@ extern void NC_DrawSysButton(HWND hwnd, HDC hdc, BOOL down);  /* nonclient.c */
 static HBITMAP hStdCheck = 0;
 static HBITMAP hStdMnArrow = 0;
 
-HMENU CopySysMenu();
 WORD * ParseMenuResource(WORD *first_item, int level, HMENU hMenu);
 
 
@@ -99,6 +98,30 @@ static BOOL MENU_HasSysMenu( POPUPMENU *menu )
     if (menu->wFlags & MF_POPUP) return FALSE;
     if (!(wndPtr = WIN_FindWndPtr( menu->hWnd ))) return FALSE;
     return (wndPtr->dwStyle & WS_SYSMENU) != 0;
+}
+
+
+/**********************************************************************
+ *           MENU_CopySysMenu
+ */
+static HMENU MENU_CopySysMenu(void)
+{
+    HMENU hMenu;
+    HGLOBAL handle;
+    POPUPMENU *menu;
+
+    if (!(handle = SYSRES_LoadResource( SYSRES_MENU_SYSMENU ))) return 0;
+    hMenu = LoadMenuIndirect( GlobalLock( handle ) );
+    SYSRES_FreeResource( handle );
+    if (!hMenu)
+    {
+	dprintf_menu(stddeb,"No SYSMENU\n");
+	return 0;
+    }
+    menu = (POPUPMENU*) USER_HEAP_LIN_ADDR(hMenu);
+    menu->wFlags |= MF_SYSMENU | MF_POPUP;
+    dprintf_menu(stddeb,"CopySysMenu hMenu="NPFMT" !\n", hMenu);
+    return hMenu;
 }
 
 
@@ -1549,8 +1572,10 @@ BOOL ChangeMenu(HMENU hMenu, UINT nPos, LPSTR lpNewItem,
     return AppendMenu(hMenu, wFlags & ~MF_APPEND, wItemID, lpNewItem);
   }
   if (wFlags & MF_DELETE) {
-    return DeleteMenu(hMenu, wFlags & MF_BYPOSITION ? nPos : wItemID, 
-		      wFlags & ~MF_DELETE);
+    /* FIXME: Word passes the item id in nPos and 0 or 0xffff as id */
+    /* for MF_DELETE. We should check the parameters for all others */
+    /* MF_* actions also (anybody got a doc on ChangeMenu?). */
+    return DeleteMenu(hMenu, nPos, wFlags & ~MF_DELETE);
   }
   if (wFlags & MF_CHANGE) {
     return ModifyMenu(hMenu, nPos, wFlags & ~MF_CHANGE, wItemID, lpNewItem);
@@ -2015,8 +2040,8 @@ HMENU GetSystemMenu(HWND hWnd, BOOL bRevert)
     if (!wndPtr) return 0;
 
     if (!bRevert) return wndPtr->hSysMenu;
-    DestroyMenu(wndPtr->hSysMenu);
-    wndPtr->hSysMenu = CopySysMenu();
+    if (wndPtr->hSysMenu) DestroyMenu(wndPtr->hSysMenu);
+    wndPtr->hSysMenu = MENU_CopySysMenu();
     return wndPtr->hSysMenu;
 }
 
@@ -2177,30 +2202,6 @@ HMENU LoadMenuIndirect(LPSTR menu_template)
 	menu_desc = (MENU_HEADER *)menu_template;
 	ParseMenuResource((WORD *)(menu_desc + 1), 0, hMenu); 
 	return hMenu;
-}
-
-
-/**********************************************************************
- *			CopySysMenu (Internal)
- */
-HMENU CopySysMenu()
-{
-    HMENU hMenu;
-    HGLOBAL handle;
-    LPPOPUPMENU menu;
-
-    if (!(handle = SYSRES_LoadResource( SYSRES_MENU_SYSMENU ))) return 0;
-    hMenu = LoadMenuIndirect( GlobalLock( handle ) );
-    SYSRES_FreeResource( handle );
-    if(!hMenu)
-    {
-	dprintf_menu(stddeb,"No SYSMENU\n");
-	return 0;
-    }
-    menu = (POPUPMENU*) USER_HEAP_LIN_ADDR(hMenu);
-    menu->wFlags |= MF_SYSMENU|MF_POPUP;
-    dprintf_menu(stddeb,"CopySysMenu hMenu="NPFMT" !\n", hMenu);
-    return hMenu;
 }
 
 

@@ -20,6 +20,7 @@
 #include "graphics.h"
 #include "listbox.h"
 #include "dos_fs.h"
+#include "drive.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -996,48 +997,28 @@ BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, int nIDLBox)
 /************************************************************************
  * 					DlgDirListComboBox     [USER.195]
  */
-int DlgDirListComboBox(HWND hDlg, SEGPTR PathSpec,
-		       int nIDLBox, int nIDStat, WORD wType)
+INT DlgDirListComboBox( HWND hDlg, SEGPTR path, INT idCBox,
+                        INT idStatic, WORD wType )
 {
-  HWND	hWnd;
-  int ret;
-  LPSTR lpPathSpec = PTR_SEG_TO_LIN(PathSpec);
+    INT ret = 0;
 
-  dprintf_combo(stddeb,"DlgDirListComboBox("NPFMT", '%s', %d, %d, %04X) \n",
-		  hDlg, lpPathSpec, nIDLBox, nIDStat, wType);
-  if (nIDLBox) {
-    LPHEADLIST lphl;
-    LPHEADCOMBO lphc;
-    hWnd = GetDlgItem(hDlg, nIDLBox);
-    lphl = ComboGetListHeader(hWnd);
-    lphc = ComboGetStorageHeader(hWnd);
-    ListBoxResetContent(lphl);
-    ret = ListBoxDirectory(lphl, wType, lpPathSpec);
-    ComboUpdateWindow(hWnd, lphl, lphc, TRUE);
-  } else {
-    ret = 0;
-  }
-  if (nIDStat) {
-      int drive;
-      HANDLE hTemp;
-      char *temp;
-      drive = DOS_GetDefaultDrive();
-      hTemp = USER_HEAP_ALLOC( 256 );
-      temp = (char *) USER_HEAP_LIN_ADDR( hTemp );
-      strcpy( temp+3, DOS_GetCurrentDir(drive) );
-      if( temp[3] == '\\' ) {
-	temp[1] = 'A'+drive;
-	temp[2] = ':';
-	SendDlgItemMessage( hDlg, nIDStat, WM_SETTEXT, 0,
-                            (LPARAM)(USER_HEAP_SEG_ADDR(hTemp) + 1) );
-      } else {
-	temp[0] = 'A'+drive;
-	temp[1] = ':';
-	temp[2] = '\\';
-	SendDlgItemMessage( hDlg, nIDStat, WM_SETTEXT, 0,
-                            (LPARAM)USER_HEAP_SEG_ADDR(hTemp) );
-      }
-      USER_HEAP_FREE( hTemp );
-  } 
-  return ret;
+    dprintf_combo( stddeb,"DlgDirListComboBox("NPFMT",%08lx,%d,%d,%04X) \n",
+                   hDlg, (DWORD)path, idCBox, idStatic, wType );
+
+    if (idCBox)
+    {
+        SendDlgItemMessage( hDlg, idCBox, CB_RESETCONTENT, 0, 0 );
+        ret = (SendDlgItemMessage( hDlg, idCBox, CB_DIR, wType, path ) >= 0);
+    }
+    if (idStatic)
+    {
+        char temp[256];
+        int drive = DRIVE_GetCurrentDrive();
+        strcpy( temp, "A:\\" );
+        temp[0] += drive;
+        lstrcpyn( temp+3, DRIVE_GetDosCwd(drive), 253 );
+        SendDlgItemMessage( hDlg, idStatic, WM_SETTEXT,
+                            0, (LPARAM)MAKE_SEGPTR(temp) );
+    } 
+    return ret;
 }

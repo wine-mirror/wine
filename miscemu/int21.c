@@ -16,6 +16,8 @@
 #include <utime.h>
 #include <ctype.h>
 #include "dos_fs.h"
+#include "drive.h"
+#include "file.h"
 #include "windows.h"
 #include "msdos.h"
 #include "registers.h"
@@ -23,6 +25,7 @@
 #include "task.h"
 #include "options.h"
 #include "miscemu.h"
+#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 #ifdef __svr4__
@@ -31,6 +34,10 @@
 #define LOCK_SH  1
 #define LOCK_NB  8
 #endif
+
+
+#define DOS_GET_DRIVE(reg) ((reg) ? (reg) - 1 : DRIVE_GetCurrentDrive())
+
 /* Define the drive parameter block, as used by int21/1F
  * and int21/32.  This table can be accessed through the
  * global 'dpb' pointer, which points into the local dos
@@ -78,7 +85,7 @@ extern char TempDirectory[];
 
 static int Error(int e, int class, int el)
 {
-  return DOS_Error(e,class,el);
+    return DOS_ERROR( e, class, SA_Abort, el );
 }
 
 
@@ -135,53 +142,48 @@ static void CreateBPB(int drive, BYTE *data)
 
 static void GetFreeDiskSpace(struct sigcontext_struct *context)
 {
-	int drive;
-	long size,available;
+    long size,available;
+    int drive = DOS_GET_DRIVE( DL_reg(context) );
 
-	if (DL_reg(context) == 0) drive = DOS_GetDefaultDrive();
-	else drive = DL_reg(context) - 1;
+    if (!DRIVE_IsValid(drive))
+    {
+        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        AX_reg(context) = 0xffff;
+        return;
+    }
 	
-	if (!DOS_ValidDrive(drive)) {
-		Error(InvalidDrive, EC_MediaError , EL_Disk);
-		AX_reg(context) = 0xffff;
-		return;
-	}
-	
-	if (!DOS_GetFreeSpace(drive, &size, &available)) {
-		Error(GeneralFailure, EC_MediaError , EL_Disk);
-		AX_reg(context) = 0xffff;
-		return;
-	}
+    if (!DOS_GetFreeSpace(drive, &size, &available)) {
+        DOS_ERROR( ER_GeneralFailure, EC_MediaError, SA_Abort, EL_Disk );
+        AX_reg(context) = 0xffff;
+        return;
+    }
 
-	AX_reg(context) = (drive < 2) ? 1 : 64;  /* 64 for hard-disks, 1 for diskettes */
-	CX_reg(context) = 512;
-
-	BX_reg(context) = (available / (CX_reg(context) * AX_reg(context)));
-	DX_reg(context) = (size / (CX_reg(context) * AX_reg(context)));
-	Error (0,0,0);
+    AX_reg(context) = (drive < 2) ? 1 : 64;  /* 64 for hard-disks, 1 for diskettes */
+    CX_reg(context) = 512;
+    BX_reg(context) = (available / (CX_reg(context) * AX_reg(context)));
+    DX_reg(context) = (size / (CX_reg(context) * AX_reg(context)));
+    Error (0,0,0);
 }
 
 static void GetDriveAllocInfo(struct sigcontext_struct *context)
 {
-        int drive;
-	long size, available;
+    long size, available;
+    int drive = DOS_GET_DRIVE( DL_reg(context) );
 	
-	if (DL_reg(context) == 0) drive = DOS_GetDefaultDrive();
-	else drive = DL_reg(context) - 1;
+    if (!DRIVE_IsValid(drive))
+    {
+        AX_reg(context) = 4;
+        CX_reg(context) = 512;
+        DX_reg(context) = 0;
+        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        return;
+    }
 
-	if (!DOS_ValidDrive(drive))
+	if (!DOS_GetFreeSpace(drive, &size, &available))
         {
-		AX_reg(context) = 4;
-		CX_reg(context) = 512;
-		DX_reg(context) = 0;
-		Error (InvalidDrive, EC_MediaError, EL_Disk);
-		return;
-	}
-
-	if (!DOS_GetFreeSpace(drive, &size, &available)) {
-		Error(GeneralFailure, EC_MediaError , EL_Disk);
-		AX_reg(context) = 0xffff;
-		return;
+            DOS_ERROR( ER_GeneralFailure, EC_MediaError, SA_Abort, EL_Disk );
+            AX_reg(context) = 0xffff;
+            return;
 	}
 	
 	AX_reg(context) = (drive < 2) ? 1 : 64;  /* 64 for hard-disks, 1 for diskettes */
@@ -197,10 +199,10 @@ static void GetDriveAllocInfo(struct sigcontext_struct *context)
 
 static void GetDrivePB(struct sigcontext_struct *context, int drive)
 {
-        if(!DOS_ValidDrive(drive))
+        if(!DRIVE_IsValid(drive))
         {
-	        Error (InvalidDrive, EC_MediaError, EL_Disk);
-                AX_reg(context) = 0x00ff;
+            DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+            AX_reg(context) = 0x00ff;
         }
         else
         {
@@ -237,116 +239,6 @@ static void GetDrivePB(struct sigcontext_struct *context, int drive)
         }
 }
 
-static void ReadFile(struct sigcontext_struct *context)
-{
-	char *ptr;
-	int size;
-
-	/* can't read from stdout / stderr */
-	if ((BX_reg(context) == 1) || (BX_reg(context) == 2)) {
-		Error (InvalidHandle, EL_Unknown, EC_Unknown);
-		AX_reg(context) = InvalidHandle;
-		SET_CFLAG(context);
-        	dprintf_int(stddeb, "int21: read (%d, void *, 0x%x) = EBADF\n",
-                            BX_reg(context), CX_reg(context));
-		return;
-	}
-
-	ptr = PTR_SEG_OFF_TO_LIN (DS_reg(context),DX_reg(context));
-	if (BX_reg(context) == 0) {
-		*ptr = EOF;
-		Error (0,0,0);
-		AX_reg(context) = 1;
-		RESET_CFLAG(context);
-        	dprintf_int(stddeb, "int21: read (%d, void *, 0x%x) = EOF\n",
-                            BX_reg(context), CX_reg(context));
-		return;
-	} else {
-		size = read(BX_reg(context), ptr, CX_reg(context));
-        	dprintf_int(stddeb,"int21: read(%d, %04x:%04x, 0x%x) = 0x%x\n",
-                            BX_reg(context), DS_reg(context), DX_reg(context),
-                            CX_reg(context), size );
-		if (size == -1) {
-			errno_to_doserr();
-			AX_reg(context) = ExtendedError;
-			SET_CFLAG(context);
-			return;
-		}		
-		Error (0,0,0);
-		AX_reg(context) = size;
-		RESET_CFLAG(context);
-	}
-}
-
-static void WriteFile(struct sigcontext_struct *context)
-{
-	char *ptr;
-	int x,size;
-	
-	ptr = PTR_SEG_OFF_TO_LIN (DS_reg(context),DX_reg(context));
-	
-	if (BX_reg(context) == 0) {
-		Error (InvalidHandle, EC_Unknown, EL_Unknown);
-		EAX_reg(context) = InvalidHandle;
-		SET_CFLAG(context);
-		return;
-	}
-
-	if (BX_reg(context) < 3) {
-		for (x = 0;x != CX_reg(context);x++) {
-			dprintf_int(stddeb, "%c", *ptr++);
-		}
-		fflush(stddeb);
-
-		Error (0,0,0);
-		AX_reg(context) = CX_reg(context);
-		RESET_CFLAG(context);
-	} else {
-		/* well, this function already handles everything we need */
-		size = _lwrite(BX_reg(context),ptr,CX_reg(context));
-		if (size == -1) { /* HFILE_ERROR == -1 */
-			errno_to_doserr();
-			AX_reg(context) = ExtendedError;
-			SET_CFLAG(context);
-			return;
-		}		
-		Error (0,0,0);
-		AX_reg(context) = size;
-		RESET_CFLAG(context);
-	}
-}
-
-static void SeekFile(struct sigcontext_struct *context)
-{
-	off_t status, fileoffset;
-	
-	switch (AL_reg(context))
-        {
-		case 1: fileoffset = SEEK_CUR;
-			break;
-		case 2: fileoffset = SEEK_END;
-			break;
-		default:
-		case 0: fileoffset = SEEK_SET;
-			break;
-	}
-        status = lseek(BX_reg(context), (CX_reg(context) << 16) + DX_reg(context), fileoffset);
-
-	dprintf_int (stddeb, "int21: seek (%d, 0x%x, %d) = 0x%lx\n",
-			BX_reg(context), (CX_reg(context) << 16) + DX_reg(context), AL_reg(context), status);
-
-	if (status == -1)
-        {
-		errno_to_doserr();
-		AX_reg(context) = ExtendedError;
-                SET_CFLAG(context);
-		return;
-	}		
-	Error (0,0,0);
-	AX_reg(context) = LOWORD(status);
-	DX_reg(context) = HIWORD(status);
-	RESET_CFLAG(context);
-}
 
 static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
 {
@@ -357,6 +249,8 @@ static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
         {
 		case 0:
 		case 1:
+                    DX_reg(context) = 2;  /* FIXME */
+                    break;
 		case 2:
 			DX_reg(context) = 0x80d0 | (1 << (BX_reg(context) != 0));
                         RESET_CFLAG(context);
@@ -387,17 +281,14 @@ static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
 static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 {
 	BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
-	int drive;
+	int drive = DOS_GET_DRIVE( BL_reg(context) );
 
-	if (BL_reg(context) == 0) drive = DOS_GetDefaultDrive();
-	else drive = BL_reg(context) - 1;
-
-	if (!DOS_ValidDrive(drive))
+	if (!DRIVE_IsValid(drive))
         {
-                Error( FileNotFound, EC_NotFound, EL_Disk );
-                AX_reg(context) = FileNotFound;
-		SET_CFLAG(context);
-		return;
+            DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+            AX_reg(context) = DOS_ExtendedError;
+            SET_CFLAG(context);
+            return;
 	}
 
 	if (CH_reg(context) != 0x08)
@@ -459,68 +350,32 @@ static void INT21_GetSystemTime(struct sigcontext_struct *context)
 					/* Note hundredths of seconds */
 }
 
-static void GetExtendedErrorInfo(struct sigcontext_struct *context)
-{
-	AX_reg(context) = ExtendedError;
-	BX_reg(context) = (ErrorClass << 8) | Action;
-	CH_reg(context) = ErrorLocus;
-}
-
 static void CreateFile(struct sigcontext_struct *context)
 {
-    int handle;
-    handle = open(DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),
-                                                          DX_reg(context))), 
-		  O_CREAT | O_TRUNC | O_RDWR, 0666 );
-    if (handle == -1) {
-	errno_to_doserr();
-	AX_reg(context) = ExtendedError;
+    AX_reg(context) = _lcreat( PTR_SEG_OFF_TO_LIN( DS_reg(context),
+                                          DX_reg(context) ), CX_reg(context) );
+    if (AX_reg(context) == (WORD)HFILE_ERROR)
+    {
+	AX_reg(context) = DOS_ExtendedError;
 	SET_CFLAG(context);
-	return;
     }
-    Error (0,0,0);
-    AX_reg(context) = handle;
-    RESET_CFLAG(context);
 }
+
 
 void OpenExistingFile(struct sigcontext_struct *context)
 {
+    AX_reg(context) = _lopen( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
+                              AL_reg(context) );
+    if (AX_reg(context) == (WORD)HFILE_ERROR)
+    {
+        AX_reg(context) = DOS_ExtendedError;
+        SET_CFLAG(context);
+    }
+#if 0
 	int handle;
 	int mode;
 	int lock;
 	
-	switch (AX_reg(context) & 0x0007)
-	{
-	  case 0:
-	    mode = O_RDONLY;
-	    break;
-	    
-	  case 1:
-	    mode = O_WRONLY;
-	    break;
-
-	  default:
-	    mode = O_RDWR;
-	    break;
-	}
-
-	if ((handle = open(DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context))),
-                           mode)) == -1)
-        {
-            if( Options.allowReadOnly )
-                handle = open( DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context))),
-                               O_RDONLY );
-            if( handle == -1 )
-            {
-		dprintf_int (stddeb, "int21: open (%s, %d) = -1\n",
-			DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context))), mode);
-                errno_to_doserr();
-                AX_reg(context) = ExtendedError;
-                SET_CFLAG(context);
-                return;
-            }
-	}		
-
 	dprintf_int (stddeb, "int21: open (%s, %d) = %d\n",
 		DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),
                                              DX_reg(context))), mode, handle);
@@ -585,28 +440,22 @@ void OpenExistingFile(struct sigcontext_struct *context)
 	Error (0,0,0);
 	AX_reg(context) = handle;
 	RESET_CFLAG(context);
+#endif
 }
 
 static void CloseFile(struct sigcontext_struct *context)
 {
-	dprintf_int (stddeb, "int21: close (%d)\n", BX_reg(context));
-
-	if (_lclose( BX_reg(context) ))
-        {
-		errno_to_doserr();
-		AX_reg(context) = ExtendedError;
-		SET_CFLAG(context);
-		return;
-	}
-	Error (0,0,0);
-	AX_reg(context) = NoError;
-	RESET_CFLAG(context);
+    if ((AX_reg(context) = _lclose( BX_reg(context) )) != 0)
+    {
+        AX_reg(context) = DOS_ExtendedError;
+        SET_CFLAG(context);
+    }
 }
 
 void ExtendedOpenCreateFile(struct sigcontext_struct *context)
 {
   dprintf_int(stddeb, "int21: extended open/create: file= %s \n",
-	      DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context))));
+	      DOSFS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),FALSE));
   /* Shuffle arguments to call OpenExistingFile */
   AL_reg(context) = BL_reg(context);
   DX_reg(context) = SI_reg(context);
@@ -615,7 +464,7 @@ void ExtendedOpenCreateFile(struct sigcontext_struct *context)
   if ((EFL_reg(context) & 0x0001)==0) 
     { /* It exists */
       dprintf_int(stddeb, "int21: extended open/create %s exists \n",
-		  DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context))));
+		  DOSFS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),TRUE));
       /* Now decide what do do */
       if ((DL_reg(context) & 0x0007)== 0)
 	{
@@ -668,7 +517,7 @@ void ExtendedOpenCreateFile(struct sigcontext_struct *context)
   else /* file does not exist */
     {
      dprintf_int(stddeb, "int21: extended open/create %s dosen't exists \n",
-		  DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context))));
+		  DOSFS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),FALSE));
       if ((DL_reg(context) & 0x00F0)== 0) {
 	CX_reg(context) = 0;
 	SET_CFLAG(context);
@@ -689,317 +538,221 @@ void ExtendedOpenCreateFile(struct sigcontext_struct *context)
       return;
     }
 }
-static void RenameFile(struct sigcontext_struct *context)
-{
-	char *newname, *oldname;
 
-        /* FIXME: should not rename over an existing file */
-	dprintf_int(stddeb,"int21: renaming %s to %s\n",
-                  (char *)PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
-                  (char *)PTR_SEG_OFF_TO_LIN(ES_reg(context),DI_reg(context)));
+
+static int INT21_RenameFile(struct sigcontext_struct *context)
+{
+    const char *newname, *oldname;
+    char *buffer;
+
+    /* FIXME: should not rename over an existing file */
+    dprintf_int(stddeb,"int21: renaming %s to %s\n",
+                (char *)PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
+                (char *)PTR_SEG_OFF_TO_LIN(ES_reg(context),DI_reg(context)));
 	
-	oldname = DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),
-                                                          DX_reg(context)) );
-	newname = DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(ES_reg(context),
-                                                          DI_reg(context)) );
-
-	rename( oldname, newname);
-	RESET_CFLAG(context);
+    oldname = DOSFS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),
+                                                DX_reg(context)), TRUE );
+    if (!oldname) return 0;
+    buffer = xstrdup( oldname );
+    newname = DOSFS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(ES_reg(context),
+                                                   DI_reg(context)), FALSE );
+    if (!newname)
+    {
+        free( buffer );
+        return 0;
+    }
+    
+    if (rename( buffer, newname) == -1)
+    {
+        FILE_SetDosError();
+        free( buffer );
+        return 0;
+    }
+    free( buffer );
+    return 1;
 }
 
 
-static void MakeDir(struct sigcontext_struct *context)
+static void INT21_ChangeDir(struct sigcontext_struct *context)
 {
-	char *dirname;
+    int drive;
+    char *dirname = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));
 
-	dprintf_int(stddeb,"int21: makedir %s\n", (char *)PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)) );
+    dprintf_int(stddeb,"int21: changedir %s\n", dirname);
+    if (dirname[1] == ':')
+    {
+        drive = toupper(dirname[0]) - 'A';
+        dirname += 2;
+    }
+    else drive = DRIVE_GetCurrentDrive();
+    if (!DRIVE_Chdir( drive, dirname ))
+    {
+        AX_reg(context) = DOS_ExtendedError;
+        SET_CFLAG(context);
+    }
+}
+
+
+static int INT21_FindFirst(struct sigcontext_struct *context)
+{
+    const char *path, *unixPath, *mask;
+    char *p;
+    FINDFILE_DTA *dta = (FINDFILE_DTA *)GetCurrentDTA();
+
+    path = (const char *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
+    dta->unixPath = NULL;
+    if (!(unixPath = DOSFS_GetUnixFileName( path, FALSE )))
+    {
+        AX_reg(context) = DOS_ExtendedError;
+        SET_CFLAG(context);
+        return 0;
+    }
+    dta->unixPath = xstrdup( unixPath );
+    p = strrchr( dta->unixPath, '/' );
+    *p = '\0';
+    if (!(mask = DOSFS_ToDosFCBFormat( p + 1 )))
+    {
+        free( dta->unixPath );
+        dta->unixPath = NULL;
+        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        AX_reg(context) = ER_FileNotFound;
+        SET_CFLAG(context);
+        return 0;
+    }
+    memcpy( dta->mask, mask, sizeof(dta->mask) );
+    dta->drive = (path[1] == ':') ? toupper(path[0]) - 'A'
+                                  : DRIVE_GetCurrentDrive();
+    dta->count = 0;
+    dta->search_attr = CL_reg(context);
+    return 1;
+}
+
+
+static int INT21_FindNext(struct sigcontext_struct *context)
+{
+    FINDFILE_DTA *dta = (FINDFILE_DTA *)GetCurrentDTA();
+    DOS_DIRENT entry;
+    int count;
+
+    if (!dta->unixPath) return 0;
+    if (!(count = DOSFS_FindNext( dta->unixPath, dta->mask, dta->drive,
+                                  dta->search_attr, dta->count, &entry )))
+    {
+        free( dta->unixPath );
+        dta->unixPath = NULL;
+        return 0;
+    }
+    if ((int)dta->count + count > 0xffff)
+    {
+        fprintf( stderr, "Too many directory entries in %s\n", dta->unixPath );
+        free( dta->unixPath );
+        dta->unixPath = NULL;
+        return 0;
+    }
+    dta->count += count;
+    dta->fileattr = entry.attr;
+    dta->filetime = entry.time;
+    dta->filedate = entry.date;
+    dta->filesize = entry.size;
+    strcpy( dta->filename, DOSFS_ToDosDTAFormat( entry.name ) );
+    return 1;
+}
+
+
+static int INT21_SetFileDateTime(struct sigcontext_struct *context)
+{
+    fprintf( stderr, "INT21_SetFileDateTime: not implemented yet.\n" );
+    return 1;
+#if 0
+    char *filename;
+    struct utimbuf filetime;
 	
-	if ((dirname = DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),
-                                                               DX_reg(context)) ))== NULL) {
-            Error( CanNotMakeDir, EC_AccessDenied, EL_Disk );
-            AX_reg(context) = CanNotMakeDir;
-            SET_CFLAG(context);
-            return;
-	}
+    /* FIXME: Argument isn't the name of the file in DS:DX,
+       but the file handle in BX */
+    filename = DOSFS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),
+                                                         DX_reg(context)),TRUE );
 
-	if ((mkdir(dirname, S_IRWXU | S_IRWXG | S_IRWXO) == -1)  && errno!=EEXIST) {
-            Error( CanNotMakeDir, EC_AccessDenied, EL_Disk );
-            AX_reg(context) = CanNotMakeDir;
-            SET_CFLAG(context);
-            return;
-	}
-	RESET_CFLAG(context);
+    filetime.actime = 0L;
+    filetime.modtime = filetime.actime;
+    
+    utime(filename, &filetime);
+    RESET_CFLAG(context);
+#endif
 }
 
-static void ChangeDir(struct sigcontext_struct *context)
+
+static int INT21_CreateTempFile(struct sigcontext_struct *context)
 {
-	int drive;
-	char *dirname = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));
-	drive = DOS_GetDefaultDrive();
-	dprintf_int(stddeb,"int21: changedir %s\n", dirname);
-	if (dirname != NULL && dirname[1] == ':') {
-		drive = toupper(dirname[0]) - 'A';
-		dirname += 2;
-		}
-	if (!DOS_ChangeDir(drive, dirname))
-	{
-		SET_CFLAG(context);
-		AX_reg(context)=0x03;
-	}
-}
+    static int counter = 0;
+    char *name = PTR_SEG_OFF_TO_LIN( DS_reg(context), DX_reg(context) );
+    char *p = name + strlen(name);
 
-static void RemoveDir(struct sigcontext_struct *context)
-{
-	char *dirname;
-
-	dprintf_int(stddeb,"int21: removedir %s\n", (char *)PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)) );
-
-	if ((dirname = DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)) ))== NULL) {
-            Error( PathNotFound, EC_NotFound, EL_Disk );
-            AX_reg(context) = PathNotFound;
-            SET_CFLAG(context);
-            return;
-	}
-
-/*
-	if (strcmp(unixname,DosDrives[drive].CurrentDirectory)) {
-		AL = CanNotRemoveCwd;
-		SET_CFLAG(context);
-	}
-*/	
-	if (rmdir(dirname) == -1) {
-            Error( AccessDenied, EC_AccessDenied, EL_Disk );
-            AX_reg(context) = AccessDenied;
-            SET_CFLAG(context);
-            return;
-	} 
-	RESET_CFLAG(context);
-}
-
-static void FindNext(struct sigcontext_struct *context)
-{
-	struct dosdirent *dp;
-        struct tm *t;
-	BYTE *dta = GetCurrentDTA();
-        
-        memcpy(&dp, dta+0x11, sizeof(dp));
-
-        dprintf_int(stddeb, "int21: FindNext, dta %p, dp %p\n", dta, dp);
-	do {
-		if ((dp = DOS_readdir(dp)) == NULL) {
-			Error(NoMoreFiles, EC_MediaError , EL_Disk);
-			AX_reg(context) = NoMoreFiles;
-			SET_CFLAG(context);
-			return;
-		}
-	} /* while (*(dta + 0x0c) != dp->attribute);*/
-        while ( ( dp->search_attribute & dp->attribute) != dp->attribute);
-	
-  	*(dta + 0x15) = dp->attribute;
-        setword(&dta[0x0d], dp->entnum);
-
-        t = localtime(&(dp->filetime));
-	setword(&dta[0x16], (t->tm_hour << 11) + (t->tm_min << 5) +
-                (t->tm_sec / 2)); /* time */
-	setword(&dta[0x18], ((t->tm_year - 80) << 9) + (t->tm_mon << 5) +
-                (t->tm_mday)); /* date */
-	setdword(&dta[0x1a], dp->filesize);
-	strncpy(dta + 0x1e, dp->filename, 12);
-        *(dta + 0x1e + 13) = 0;
-        AnsiUpper(dta+0x1e);
-
-	AX_reg(context) = 0;
-	RESET_CFLAG(context);
-
-        dprintf_int(stddeb, "int21: FindNext -- (%s) index=%d size=%ld\n", dp->filename, dp->entnum, dp->filesize);
-}
-
-static void FindFirst(struct sigcontext_struct *context)
-{
-	BYTE drive, *path = PTR_SEG_OFF_TO_LIN(DS_reg(context),
-                                               DX_reg(context));
-	struct dosdirent *dp;
-
-	BYTE *dta = GetCurrentDTA();
-
-        dprintf_int(stddeb, "int21: FindFirst path = %s\n", path);
-
-	if ((*path)&&(path[1] == ':')) {
-		drive = (islower(*path) ? toupper(*path) : *path) - 'A';
-
-		if (!DOS_ValidDrive(drive)) {
-			Error(InvalidDrive, EC_MediaError , EL_Disk);
-			AX_reg(context) = InvalidDrive;
-			SET_CFLAG(context);
-			return;
-		}
-	} else
-		drive = DOS_GetDefaultDrive();
-
-	*dta = drive;
-	memset(dta + 1 , '?', 11);
-	*(dta + 0x0c) = ECX_reg(context) & (FA_LABEL | FA_DIREC);
-
-	if ((dp = DOS_opendir(path)) == NULL) {
-		Error(PathNotFound, EC_MediaError, EL_Disk);
-		AX_reg(context) = FileNotFound;
-		SET_CFLAG(context);
-		return;
-	}
-
-	dp->search_attribute = ECX_reg(context) & (FA_LABEL | FA_DIREC);
-	memcpy(dta + 0x11, &dp, sizeof(dp));
-	FindNext(context);
-
-}
-
-static void GetFileDateTime(struct sigcontext_struct *context)
-{
-	struct stat filestat;
-	struct tm *now;
-
-        fstat( BX_reg(context), &filestat );
-	now = localtime (&filestat.st_mtime);
-	
-	CX_reg(context) = ((now->tm_hour * 0x2000) + (now->tm_min * 0x20) + now->tm_sec/2);
-	DX_reg(context) = (((now->tm_year + 1900 - 1980) * 0x200) +
-              (now->tm_mon * 0x20) + now->tm_mday);
-
-	RESET_CFLAG(context);
-}
-
-static void SetFileDateTime(struct sigcontext_struct *context)
-{
-	char *filename;
-	struct utimbuf filetime;
-	
-        /* FIXME: Argument isn't the name of the file in DS:DX,
-           but the file handle in BX */
-	filename = DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),
-                                                           DX_reg(context)) );
-
-	filetime.actime = 0L;
-	filetime.modtime = filetime.actime;
-
-	utime(filename, &filetime);
-	RESET_CFLAG(context);
-}
-
-static void CreateTempFile(struct sigcontext_struct *context)
-{
-	char temp[256];
-	int handle;
-	static int counter = 0;
-
-	sprintf(temp,"%s\\win%d.%03d",TempDirectory,(int) getpid(), counter);
+    for (;;)
+    {
+        sprintf( p, "wine%04x.%03d", (int)getpid(), counter );
         counter = (counter + 1) % 1000;
 
-	dprintf_int(stddeb,"CreateTempFile %s\n",temp);
-
-	handle = open(DOS_GetUnixFileName(temp), O_CREAT | O_TRUNC | O_RDWR, 0666);
-
-	if (handle == -1) {
-            Error( WriteProtected, EC_AccessDenied, EL_Disk );
-            AX_reg(context) = WriteProtected;
-            SET_CFLAG(context);
-            return;
-	}
-
-	strcpy(PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)), temp);
-	
-	AX_reg(context) = handle;
-	RESET_CFLAG(context);
-}
-
-static void CreateNewFile(struct sigcontext_struct *context)
-{
-	int handle;
-	
-	if ((handle = open(DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)) ),
-                           O_CREAT | O_EXCL | O_RDWR, 0666)) == -1)
+        if ((AX_reg(context) = _lcreat_uniq( name, 0 )) != (WORD)HFILE_ERROR)
         {
-            Error( WriteProtected, EC_AccessDenied, EL_Disk );
-            AX_reg(context) = WriteProtected;
-            SET_CFLAG(context);
-            return;
-	}
-
-	AX_reg(context) = handle;
-	RESET_CFLAG(context);
+            dprintf_int( stddeb, "INT21_CreateTempFile: created %s\n", name );
+            return 1;
+        }
+        if (DOS_ExtendedError != ER_FileExists) return 0;
+    }
 }
 
-static void GetCurrentDirectory(struct sigcontext_struct *context)
+
+static int INT21_GetCurrentDirectory(struct sigcontext_struct *context)
 {
-	int drive;
+    int drive = DOS_GET_DRIVE( DL_reg(context) );
+    char *ptr = (char *)PTR_SEG_OFF_TO_LIN( DS_reg(context), SI_reg(context) );
 
-	if (DL_reg(context) == 0) drive = DOS_GetDefaultDrive();
-	else drive = DL_reg(context) - 1;
+    if (!DRIVE_IsValid(drive))
+    {
+        DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
+        return 0;
+    }
 
-	if (!DOS_ValidDrive(drive))
-        {
-            Error( InvalidDrive, EC_NotFound, EL_Disk );
-            AX_reg(context) = InvalidDrive;
-            SET_CFLAG(context);
-            return;
-	}
-
-	strcpy(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),
-               DOS_GetCurrentDir(drive) );
-	RESET_CFLAG(context);
+    lstrcpyn( ptr, DRIVE_GetDosCwd(drive), 64 );
+    if (!ptr[0]) strcpy( ptr, "\\" );
+    return 1;
 }
 
-static void GetDiskSerialNumber(struct sigcontext_struct *context)
+
+static int INT21_GetDiskSerialNumber(struct sigcontext_struct *context)
 {
-	int drive;
-	BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
-	DWORD serialnumber;
+    BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
+    int drive = DOS_GET_DRIVE( BL_reg(context) );
 	
-	if (BL_reg(context) == 0) drive = DOS_GetDefaultDrive();
-	else drive = BL_reg(context) - 1;
-
-	if (!DOS_ValidDrive(drive))
-        {
-            Error( InvalidDrive, EC_NotFound, EL_Disk );
-            AX_reg(context) = InvalidDrive;
-            SET_CFLAG(context);
-            return;
-	}
-
-	DOS_GetSerialNumber(drive, &serialnumber);
-
-	setword(dataptr, 0);
-	setdword(&dataptr[2], serialnumber);
-	strncpy(dataptr + 6, DOS_GetVolumeLabel(drive), 8);
-	strncpy(dataptr + 0x11, "FAT16   ", 8);
-	
-	AX_reg(context) = 0;
-	RESET_CFLAG(context);
+    if (!DRIVE_IsValid(drive))
+    {
+        DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
+        return 0;
+    }
+    
+    *(WORD *)dataptr = 0;
+    *(DWORD *)(dataptr + 2) = DRIVE_GetSerialNumber( drive );
+    memcpy( dataptr + 6, DRIVE_GetLabel( drive ), 11 );
+    strncpy(dataptr + 0x11, "FAT16   ", 8);
+    return 1;
 }
 
-static void SetDiskSerialNumber(struct sigcontext_struct *context)
+
+static int INT21_SetDiskSerialNumber(struct sigcontext_struct *context)
 {
-	int drive;
-	BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
-	DWORD serialnumber;
+    BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
+    int drive = DOS_GET_DRIVE( BL_reg(context) );
 
-	if (BL_reg(context) == 0) drive = DOS_GetDefaultDrive();
-	else drive = BL_reg(context) - 1;
+    if (!DRIVE_IsValid(drive))
+    {
+        DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
+        return 0;
+    }
 
-	if (!DOS_ValidDrive(drive))
-        {
-            Error( InvalidDrive, EC_NotFound, EL_Disk );
-            AX_reg(context) = InvalidDrive;
-            SET_CFLAG(context);
-            return;
-	}
-
-	serialnumber = dataptr[1] + (dataptr[2] << 8) + (dataptr[3] << 16) + 
-			(dataptr[4] << 24);
-
-	DOS_SetSerialNumber(drive, serialnumber);
-	AX_reg(context) = 1;
-	RESET_CFLAG(context);
+    DRIVE_SetSerialNumber( drive, *(DWORD *)(dataptr + 2) );
+    return 1;
 }
+
 
 static void DumpFCB(BYTE *fcb)
 {
@@ -1044,15 +797,15 @@ static void FindFirstFCB(struct sigcontext_struct *context)
 	if (standard_fcb->drive)
 	  {
 	    drive = standard_fcb->drive - 1;
-	    if (!DOS_ValidDrive(drive))
+	    if (!DRIVE_IsValid(drive))
 	      {
-		Error (InvalidDrive, EC_MediaError, EL_Disk);
-		AX_reg(context) = 0xff;
-		return;
+                  DOS_ERROR(ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk);
+                  AX_reg(context) = 0xff;
+                  return;
 	      }
 	  }
 	else
-	  drive = DOS_GetDefaultDrive();
+	  drive = DRIVE_GetCurrentDrive();
 
 	output_fcb->drive = drive;
 
@@ -1062,19 +815,17 @@ static void FindFirstFCB(struct sigcontext_struct *context)
 	      {
 		*(dta+6) = FA_LABEL;
 		memset(&output_fcb->name, ' ', 11);
-		if (DOS_GetVolumeLabel(drive) != NULL) 
-		  {
-		    strncpy(output_fcb->name, DOS_GetVolumeLabel(drive), 11);
-		    AX_reg(context) = 0x00;
-		    return;
-		  }
+                memcpy(output_fcb->name, DRIVE_GetLabel(drive), 11);
+                AX_reg(context) = 0x00;
+                return;
 	      }
 	  }
 
 	strncpy(output_fcb->name, standard_fcb->name, 11);
 	if (*fcb == 0xff)
-	  *(dta+6) = ( *(fcb+6) & (!FA_DIREC));
+	  *(dta+6) = ( *(fcb+6) & (!FA_DIRECTORY));
 
+#if 0
 	sprintf(path,"%c:*.*",drive+'A');
 	if ((output_fcb->directory = DOS_opendir(path))==NULL)
 	  {
@@ -1082,25 +833,23 @@ static void FindFirstFCB(struct sigcontext_struct *context)
 	    AX_reg(context) = 0xff;
 	    return;
 	  }
-	
+#endif	
 }
 
 
 static void DeleteFileFCB(struct sigcontext_struct *context)
 {
+    fprintf( stderr, "DeleteFileFCB: not implemented yet\n" );
+#if 0
 	BYTE *fcb = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
-	int drive;
 	struct dosdirent *dp;
 	char temp[256], *ptr;
+        int drive = DOS_GET_DRIVE( *fcb );
 
 	DumpFCB( fcb );
 
-	if (*fcb)
-		drive = *fcb - 1;
-	else
-		drive = DOS_GetDefaultDrive();
-
-	strcpy(temp, DOS_GetCurrentDir(drive));
+        temp[0] = '\\';
+	strcpy(temp+1, DRIVE_GetDosCwd(drive));
 	strcat(temp, "\\");
 	strncat(temp, fcb + 1, 8);
 	ChopOffWhiteSpace(temp);
@@ -1113,7 +862,8 @@ static void DeleteFileFCB(struct sigcontext_struct *context)
 		return;
 	}
 
-	strcpy(temp, DOS_GetCurrentDir(drive) );
+        temp[0] = '\\';
+	strcpy(temp+1, DRIVE_GetDosCwd(drive) );
 	strcat(temp, "\\");
 	
 	ptr = temp + strlen(temp);
@@ -1126,23 +876,22 @@ static void DeleteFileFCB(struct sigcontext_struct *context)
 	}
 	DOS_closedir(dp);
 	AX_reg(context) = 0;
+#endif
 }
 
 static void RenameFileFCB(struct sigcontext_struct *context)
 {
+    fprintf( stderr, "RenameFileFCB: not implemented yet\n" );
+#if 0
 	BYTE *fcb = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
-	int drive;
 	struct dosdirent *dp;
 	char temp[256], oldname[256], newname[256], *oldnameptr, *newnameptr;
+        int drive = DOS_GET_DRIVE( *fcb );
 
 	DumpFCB( fcb );
 
-	if (*fcb)
-		drive = *fcb - 1;
-	else
-		drive = DOS_GetDefaultDrive();
-
-	strcpy(temp, DOS_GetCurrentDir(drive));
+        temp[0] = '\\';
+	strcpy(temp+1, DRIVE_GetDosCwd(drive) );
 	strcat(temp, "\\");
 	strncat(temp, fcb + 1, 8);
 	ChopOffWhiteSpace(temp);
@@ -1155,12 +904,11 @@ static void RenameFileFCB(struct sigcontext_struct *context)
 		return;
 	}
 
-	strcpy(oldname, DOS_GetCurrentDir(drive) );
+        oldname[0] = '\\';
+	strcpy(oldname+1, DRIVE_GetDosCwd(drive) );
 	strcat(oldname, "\\");
+        strcpy( newname, oldname );
 	oldnameptr = oldname + strlen(oldname);
-
-	strcpy(newname, DOS_GetCurrentDir(drive) );
-	strcat(newname, "\\");
 	newnameptr = newname + strlen(newname);
 	
 	while (DOS_readdir(dp) != NULL)
@@ -1172,12 +920,14 @@ static void RenameFileFCB(struct sigcontext_struct *context)
 	}
 	DOS_closedir(dp);
 	AX_reg(context) = 0;
+#endif
 }
 
 
 
 static void fLock (struct sigcontext_struct * context)
 {
+#if 0
     struct flock f;
     int result,retries=sharing_retries;
 
@@ -1217,43 +967,26 @@ static void fLock (struct sigcontext_struct * context)
 
       if(result)  
       {
-         errno_to_doserr();
-         AX_reg(context) = ExtendedError;
-         SET_CFLAG(context);
-         return;
+          FILE_SetDosError();
+          AX_reg(context) = DOS_ExtendedError;
+          SET_CFLAG(context);
+          return;
       }
-
-       Error (0,0,0);
-       RESET_CFLAG(context);
+#endif
 } 
 
 
-static void GetFileAttribute (struct sigcontext_struct * context)
+static int INT21_GetFileAttribute (struct sigcontext_struct * context)
 {
-  char *filename = PTR_SEG_OFF_TO_LIN (DS_reg(context),DX_reg(context));
-  struct stat s;
-  int res;
+    const char *unixName;
 
-  res = stat(DOS_GetUnixFileName(filename), &s);
-  if (res==-1)
-  {
-    errno_to_doserr();
-    AX_reg(context) = ExtendedError;
-    SET_CFLAG(context);
-    return;
-  }
-  
-  CX_reg(context) = 0;
-  if (S_ISDIR(s.st_mode))
-    CX_reg(context) |= 0x10;
-  if ((S_IWRITE & s.st_mode) != S_IWRITE)
-    CX_reg(context) |= 0x01;
-
-  dprintf_int (stddeb, "int21: GetFileAttributes (%s) = 0x%x\n",
-		filename, CX_reg(context) );
-
-  RESET_CFLAG(context);
-  Error (0,0,0); 
+    unixName = DOSFS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)), TRUE );
+    if (!unixName) return 0;
+    if (!FILE_Stat( unixName, &CL_reg(context), NULL, NULL, NULL )) return 0;
+    CH_reg(context) = 0;
+    dprintf_int( stddeb, "INT21_GetFileAttributes(%s) = 0x%x\n",
+                 unixName, CX_reg(context) );
+    return 1;
 }
 
 
@@ -1264,176 +997,173 @@ extern void LOCAL_PrintHeap (WORD ds);
  */
 void DOS3Call( struct sigcontext_struct context )
 {
-    int drive;
+    dprintf_int( stddeb, "int21: AX=%04x BX=%04x CX=%04x DX=%04x "
+                 "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
+                 AX_reg(&context), BX_reg(&context), CX_reg(&context),
+                 DX_reg(&context), SI_reg(&context), DI_reg(&context),
+                 DS_reg(&context), ES_reg(&context), EFL_reg(&context));
 
-    if (AH_reg(&context) == 0x59) 
+    if (AH_reg(&context) == 0x59)  /* Get extended error info */
     {
-	GetExtendedErrorInfo(&context);
-	return;
-    } 
-    else 
+        AX_reg(&context) = DOS_ExtendedError;
+        BH_reg(&context) = DOS_ErrorClass;
+        BL_reg(&context) = DOS_ErrorAction;
+        CH_reg(&context) = DOS_ErrorLocus;
+        return;
+    }
+
+    DOS_ERROR( 0, 0, 0, 0 );
+    RESET_CFLAG(&context);  /* Not sure if this is a good idea */
+
+    switch(AH_reg(&context)) 
     {
-	Error (0,0,0);
-	switch(AH_reg(&context)) 
-	{
-	  case 0x00: /* TERMINATE PROGRAM */
-            TASK_KillCurrentTask( 0 );
-            break;
+    case 0x00: /* TERMINATE PROGRAM */
+        TASK_KillCurrentTask( 0 );
+        break;
 
-	  case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
-	  case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
-	  case 0x03: /* READ CHARACTER FROM STDAUX  */
-	  case 0x04: /* WRITE CHARACTER TO STDAUX */
-	  case 0x05: /* WRITE CHARACTER TO PRINTER */
-	  case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
-	  case 0x07: /* DIRECT CHARACTER INPUT, WITHOUT ECHO */
-	  case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
-	  case 0x09: /* WRITE STRING TO STANDARD OUTPUT */
-	  case 0x0a: /* BUFFERED INPUT */
-	  case 0x0b: /* GET STDIN STATUS */
-	  case 0x0c: /* FLUSH BUFFER AND READ STANDARD INPUT */
-	  case 0x0f: /* OPEN FILE USING FCB */
-	  case 0x10: /* CLOSE FILE USING FCB */
-	  case 0x12: /* FIND NEXT MATCHING FILE USING FCB */
-	  case 0x14: /* SEQUENTIAL READ FROM FCB FILE */		
-	  case 0x15: /* SEQUENTIAL WRITE TO FCB FILE */
-	  case 0x16: /* CREATE OR TRUNCATE FILE USING FCB */
-	  case 0x21: /* READ RANDOM RECORD FROM FCB FILE */
-	  case 0x22: /* WRITE RANDOM RECORD TO FCB FILE */
-	  case 0x23: /* GET FILE SIZE FOR FCB */
-	  case 0x24: /* SET RANDOM RECORD NUMBER FOR FCB */
-	  case 0x26: /* CREATE NEW PROGRAM SEGMENT PREFIX */
-	  case 0x27: /* RANDOM BLOCK READ FROM FCB FILE */
-	  case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
-	  case 0x29: /* PARSE FILENAME INTO FCB */
-	  case 0x2e: /* SET VERIFY FLAG */
-            INT_BARF( &context, 0x21 );
-	    break;
+    case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
+    case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
+    case 0x03: /* READ CHARACTER FROM STDAUX  */
+    case 0x04: /* WRITE CHARACTER TO STDAUX */
+    case 0x05: /* WRITE CHARACTER TO PRINTER */
+    case 0x06: /* DIRECT CONSOLE IN/OUTPUT */
+    case 0x07: /* DIRECT CHARACTER INPUT, WITHOUT ECHO */
+    case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
+    case 0x09: /* WRITE STRING TO STANDARD OUTPUT */
+    case 0x0a: /* BUFFERED INPUT */
+    case 0x0b: /* GET STDIN STATUS */
+    case 0x0c: /* FLUSH BUFFER AND READ STANDARD INPUT */
+    case 0x0f: /* OPEN FILE USING FCB */
+    case 0x10: /* CLOSE FILE USING FCB */
+    case 0x12: /* FIND NEXT MATCHING FILE USING FCB */
+    case 0x14: /* SEQUENTIAL READ FROM FCB FILE */		
+    case 0x15: /* SEQUENTIAL WRITE TO FCB FILE */
+    case 0x16: /* CREATE OR TRUNCATE FILE USING FCB */
+    case 0x21: /* READ RANDOM RECORD FROM FCB FILE */
+    case 0x22: /* WRITE RANDOM RECORD TO FCB FILE */
+    case 0x23: /* GET FILE SIZE FOR FCB */
+    case 0x24: /* SET RANDOM RECORD NUMBER FOR FCB */
+    case 0x26: /* CREATE NEW PROGRAM SEGMENT PREFIX */
+    case 0x27: /* RANDOM BLOCK READ FROM FCB FILE */
+    case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
+    case 0x29: /* PARSE FILENAME INTO FCB */
+    case 0x2e: /* SET VERIFY FLAG */
+    case 0x37: /* "SWITCHAR" - GET SWITCH CHARACTER
+                  "SWITCHAR" - SET SWITCH CHARACTER
+                  "AVAILDEV" - SPECIFY \DEV\ PREFIX USE */
+    case 0x54: /* GET VERIFY FLAG */
+        INT_BARF( &context, 0x21 );
+        break;
 
-	  case 0x37: /* "SWITCHAR" - GET SWITCH CHARACTER
-			"SWITCHAR" - SET SWITCH CHARACTER
-			"AVAILDEV" - SPECIFY \DEV\ PREFIX USE */
-	  case 0x54: /* GET VERIFY FLAG */
-            INT_BARF( &context, 0x21 );
-	    break;
-
-	  case 0x18: /* NULL FUNCTIONS FOR CP/M COMPATIBILITY */
-	  case 0x1d:
-	  case 0x1e:
-	  case 0x20:
-	  case 0x6b: /* NULL FUNCTION */
-            AL_reg(&context) = 0;
-	    break;
+    case 0x18: /* NULL FUNCTIONS FOR CP/M COMPATIBILITY */
+    case 0x1d:
+    case 0x1e:
+    case 0x20:
+    case 0x6b: /* NULL FUNCTION */
+        AL_reg(&context) = 0;
+        break;
 	
-	  case 0x5c: /* "FLOCK" - RECORD LOCKING */
-	    fLock(&context);
-	    break;
+    case 0x5c: /* "FLOCK" - RECORD LOCKING */
+        fLock(&context);
+        break;
 
-	  case 0x0d: /* DISK BUFFER FLUSH */
-            RESET_CFLAG(&context); /* dos 6+ only */
-            break;
+    case 0x0d: /* DISK BUFFER FLUSH */
+        RESET_CFLAG(&context); /* dos 6+ only */
+        break;
 
-	  case 0x0e: /* SELECT DEFAULT DRIVE */
-		if (!DOS_ValidDrive(DL_reg(&context)))
-                    Error (InvalidDrive, EC_MediaError, EL_Disk);
-		else
-                {
-                    DOS_SetDefaultDrive(DL_reg(&context));
-                    Error(0,0,0);
-		}
-                AL_reg(&context) = MAX_DOS_DRIVES;
-		break;
+    case 0x0e: /* SELECT DEFAULT DRIVE */
+        DRIVE_SetCurrentDrive( DL_reg(&context) );
+        AL_reg(&context) = MAX_DOS_DRIVES;
+        break;
 
-	  case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
-            FindFirstFCB(&context);
-            break;
+    case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
+        FindFirstFCB(&context);
+        break;
 
-	  case 0x13: /* DELETE FILE USING FCB */
-            DeleteFileFCB(&context);
-            break;
+    case 0x13: /* DELETE FILE USING FCB */
+        DeleteFileFCB(&context);
+        break;
             
-	  case 0x17: /* RENAME FILE USING FCB */
-            RenameFileFCB(&context);
-            break;
+    case 0x17: /* RENAME FILE USING FCB */
+        RenameFileFCB(&context);
+        break;
 
-	  case 0x19: /* GET CURRENT DEFAULT DRIVE */
-		AL_reg(&context) = DOS_GetDefaultDrive();
-		Error (0,0,0);
-	    break;
+    case 0x19: /* GET CURRENT DEFAULT DRIVE */
+        AL_reg(&context) = DRIVE_GetCurrentDrive();
+        break;
 
-	  case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
-            {
-                TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
-                pTask->dta = MAKELONG( DX_reg(&context), DS_reg(&context) );
-                dprintf_int(stddeb, "int21: Set DTA: %08lx\n", pTask->dta);
-            }
-            break;
+    case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
+        {
+            TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+            pTask->dta = MAKELONG( DX_reg(&context), DS_reg(&context) );
+            dprintf_int(stddeb, "int21: Set DTA: %08lx\n", pTask->dta);
+        }
+        break;
 
-	  case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
-            DL_reg(&context) = 0;
-	    GetDriveAllocInfo(&context);
-	    break;
+    case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
+        DL_reg(&context) = 0;
+        GetDriveAllocInfo(&context);
+        break;
 	
-	  case 0x1c: /* GET ALLOCATION INFORMATION FOR SPECIFIC DRIVE */
-	    GetDriveAllocInfo(&context);
-	    break;
+    case 0x1c: /* GET ALLOCATION INFORMATION FOR SPECIFIC DRIVE */
+        GetDriveAllocInfo(&context);
+        break;
 
-	  case 0x1f: /* GET DRIVE PARAMETER BLOCK FOR DEFAULT DRIVE */
-	    GetDrivePB(&context, DOS_GetDefaultDrive());
-	    break;
+    case 0x1f: /* GET DRIVE PARAMETER BLOCK FOR DEFAULT DRIVE */
+        GetDrivePB(&context, DRIVE_GetCurrentDrive());
+        break;
 		
-	  case 0x25: /* SET INTERRUPT VECTOR */
-            INT_SetHandler( AL_reg(&context),
-                            MAKELONG( DX_reg(&context), DS_reg(&context) ) );
-            break;
+    case 0x25: /* SET INTERRUPT VECTOR */
+        INT_SetHandler( AL_reg(&context),
+                        MAKELONG( DX_reg(&context), DS_reg(&context) ) );
+        break;
 
-	  case 0x2a: /* GET SYSTEM DATE */
-	    GetSystemDate(&context);
-            break;
+    case 0x2a: /* GET SYSTEM DATE */
+        GetSystemDate(&context);
+        break;
 
-          case 0x2b: /* SET SYSTEM DATE */
-            fprintf( stdnimp, "SetSystemDate(%02d/%02d/%04d): not allowed\n",
-                     DL_reg(&context), DH_reg(&context), CX_reg(&context) );
-            AL_reg(&context) = 0;  /* Let's pretend we succeeded */
-            break;
+    case 0x2b: /* SET SYSTEM DATE */
+        fprintf( stdnimp, "SetSystemDate(%02d/%02d/%04d): not allowed\n",
+                 DL_reg(&context), DH_reg(&context), CX_reg(&context) );
+        AL_reg(&context) = 0;  /* Let's pretend we succeeded */
+        break;
 
-	  case 0x2c: /* GET SYSTEM TIME */
-	    INT21_GetSystemTime(&context);
-	    break;
+    case 0x2c: /* GET SYSTEM TIME */
+        INT21_GetSystemTime(&context);
+        break;
 
-          case 0x2d: /* SET SYSTEM TIME */
-            fprintf( stdnimp, "SetSystemTime(%02d:%02d:%02d.%02d): not allowed\n",
-                     CH_reg(&context), CL_reg(&context),
-                     DH_reg(&context), DL_reg(&context) );
-            AL_reg(&context) = 0;  /* Let's pretend we succeeded */
-            break;
+    case 0x2d: /* SET SYSTEM TIME */
+        fprintf( stdnimp, "SetSystemTime(%02d:%02d:%02d.%02d): not allowed\n",
+                 CH_reg(&context), CL_reg(&context),
+                 DH_reg(&context), DL_reg(&context) );
+        AL_reg(&context) = 0;  /* Let's pretend we succeeded */
+        break;
 
-	  case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
-            {
-                TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
-                ES_reg(&context) = SELECTOROF( pTask->dta );
-                BX_reg(&context) = OFFSETOF( pTask->dta );
-            }
-            break;
+    case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
+        {
+            TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+            ES_reg(&context) = SELECTOROF( pTask->dta );
+            BX_reg(&context) = OFFSETOF( pTask->dta );
+        }
+        break;
             
-	  case 0x30: /* GET DOS VERSION */
-	    AX_reg(&context) = DOSVERSION;
-	    BX_reg(&context) = 0x0012;     /* 0x123456 is Wine's serial # */
-	    CX_reg(&context) = 0x3456;
-	    break;
+    case 0x30: /* GET DOS VERSION */
+        AX_reg(&context) = DOSVERSION;
+        BX_reg(&context) = 0x0012;     /* 0x123456 is Wine's serial # */
+        CX_reg(&context) = 0x3456;
+        break;
 
-	  case 0x31: /* TERMINATE AND STAY RESIDENT */
-            INT_BARF( &context, 0x21 );
-	    break;
+    case 0x31: /* TERMINATE AND STAY RESIDENT */
+        INT_BARF( &context, 0x21 );
+        break;
 
-	  case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
-	    GetDrivePB(&context, (DL_reg(&context) == 0) ?
-                                (DOS_GetDefaultDrive()) : (DL_reg(&context)-1));
-	    break;
+    case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
+        GetDrivePB(&context, DOS_GET_DRIVE( DL_reg(&context) ) );
+        break;
 
-	  case 0x33: /* MULTIPLEXED */
-	    switch (AL_reg(&context))
-            {
+    case 0x33: /* MULTIPLEXED */
+        switch (AL_reg(&context))
+        {
 	      case 0x00: /* GET CURRENT EXTENDED BREAK STATE */
                 DL_reg(&context) = 0;
 		break;
@@ -1458,403 +1188,495 @@ void DOS3Call( struct sigcontext_struct context )
 	      default:
                 INT_BARF( &context, 0x21 );
 		break;			
-	    }
-	    break;	
+        }
+        break;	
 	    
-	  case 0x34: /* GET ADDRESS OF INDOS FLAG */
-		ES_reg(&context) = DosHeapHandle;
-		BX_reg(&context) = (int)&heap->InDosFlag - (int)heap;
-	    break;
+    case 0x34: /* GET ADDRESS OF INDOS FLAG */
+        ES_reg(&context) = DosHeapHandle;
+        BX_reg(&context) = (int)&heap->InDosFlag - (int)heap;
+        break;
 
-	  case 0x35: /* GET INTERRUPT VECTOR */
+    case 0x35: /* GET INTERRUPT VECTOR */
+        {
+            SEGPTR addr = INT_GetHandler( AL_reg(&context) );
+            ES_reg(&context) = SELECTOROF(addr);
+            BX_reg(&context) = OFFSETOF(addr);
+        }
+        break;
+
+    case 0x36: /* GET FREE DISK SPACE */
+        GetFreeDiskSpace(&context);
+        break;
+
+    case 0x38: /* GET COUNTRY-SPECIFIC INFORMATION */
+        AX_reg(&context) = 0x02; /* no country support available */
+        SET_CFLAG(&context);
+        break;
+
+    case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
+        if (!FILE_MakeDir( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                               DX_reg(&context) )))
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+	
+    case 0x3a: /* "RMDIR" - REMOVE SUBDIRECTORY */
+        if (!FILE_RemoveDir( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                                 DX_reg(&context) )))
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x3b: /* "CHDIR" - SET CURRENT DIRECTORY */
+        INT21_ChangeDir(&context);
+        break;
+	
+    case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
+        AX_reg(&context) = _lcreat( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                    DX_reg(&context) ), CX_reg(&context) );
+        if (AX_reg(&context) == (WORD)HFILE_ERROR)
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x3d: /* "OPEN" - OPEN EXISTING FILE */
+        OpenExistingFile(&context);
+        break;
+
+    case 0x3e: /* "CLOSE" - CLOSE FILE */
+        if ((AX_reg(&context) = _lclose( BX_reg(&context) )) != 0)
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
+        if ((AX_reg(&context) = _lread( BX_reg(&context),
+                       PTR_SEG_OFF_TO_LIN( DS_reg(&context),DX_reg(&context) ),
+                       CX_reg(&context))) == (WORD)HFILE_ERROR)
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x40: /* "WRITE" - WRITE TO FILE OR DEVICE */
+        if ((AX_reg(&context) = _lwrite( BX_reg(&context),
+                       PTR_SEG_OFF_TO_LIN( DS_reg(&context),DX_reg(&context) ),
+                       CX_reg(&context))) == (WORD)HFILE_ERROR)
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x41: /* "UNLINK" - DELETE FILE */
+        if (!FILE_Unlink( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                              DX_reg(&context) )))
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }		
+        break;
+
+    case 0x42: /* "LSEEK" - SET CURRENT FILE POSITION */
+        {
+            LONG status = _llseek( BX_reg(&context),
+                                   MAKELONG(DX_reg(&context),CX_reg(&context)),
+                                   AL_reg(&context) );
+            if (status == HFILE_ERROR)
             {
-                SEGPTR addr = INT_GetHandler( AL_reg(&context) );
-                ES_reg(&context) = SELECTOROF(addr);
-                BX_reg(&context) = OFFSETOF(addr);
-            }
-	    break;
-
-	  case 0x36: /* GET FREE DISK SPACE */
-	    GetFreeDiskSpace(&context);
-	    break;
-
-	  case 0x38: /* GET COUNTRY-SPECIFIC INFORMATION */
-	    AX_reg(&context) = 0x02; /* no country support available */
-	    SET_CFLAG(&context);
-	    break;
-		
-	  case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
-	    MakeDir(&context);
-	    break;
-	
-	  case 0x3a: /* "RMDIR" - REMOVE SUBDIRECTORY */
-	    RemoveDir(&context);
-	    break;
-	
-	  case 0x3b: /* "CHDIR" - SET CURRENT DIRECTORY */
-	    ChangeDir(&context);
-	    break;
-	
-	  case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
-	    CreateFile(&context);
-	    break;
-
-	  case 0x3d: /* "OPEN" - OPEN EXISTING FILE */
-	    OpenExistingFile(&context);
-	    break;
-	
-	  case 0x3e: /* "CLOSE" - CLOSE FILE */
-	    CloseFile(&context);
-	    break;
-	
-	  case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
-	    ReadFile(&context);
-	    break;
-	
-	  case 0x40: /* "WRITE" - WRITE TO FILE OR DEVICE */
-	    WriteFile(&context);
-	    break;
-	
-	  case 0x41: /* "UNLINK" - DELETE FILE */
-		if (unlink( DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(&context),DX_reg(&context))) ) == -1) {
-			errno_to_doserr();
-			AX_reg(&context) = ExtendedError;
-			SET_CFLAG(&context);
-			break;
-		}		
-		Error(0,0,0);
-		RESET_CFLAG(&context);
-		break;
-	
-	  case 0x42: /* "LSEEK" - SET CURRENT FILE POSITION */
-	    SeekFile(&context);
-	    break;
-	    
-	  case 0x43: /* FILE ATTRIBUTES */
-	    switch (AL_reg(&context))
-	    {
-	      case 0x00:
-                        GetFileAttribute(&context);
-		break;
-	      case 0x01:
-			RESET_CFLAG(&context);
-		break;
-	    }
-	    break;
-		
-	  case 0x44: /* IOCTL */
-	    switch (AL_reg(&context))
-	    {
-              case 0x00:
-                ioctlGetDeviceInfo(&context);
-		break;
-
-	      case 0x01:
-
-	        break;
-              case 0x08:   /* Check if drive is removable. */
-                drive = BL_reg(&context) ? (BL_reg(&context) - 1)
-                                        : DOS_GetDefaultDrive();
-                if(!DOS_ValidDrive(drive))
-                {
-                    Error( InvalidDrive, EC_NotFound, EL_Disk );
-                    AX_reg(&context) = InvalidDrive;
-                    SET_CFLAG(&context);
-                }
-                else
-                {
-                    if (drive > 1)
-                        AX_reg(&context) = 1;   /* not removable */
-                    else
-                        AX_reg(&context) = 0;      /* removable */
-                    RESET_CFLAG(&context);
-                }
-                break;
-		   
-	      case 0x09:   /* CHECK IF BLOCK DEVICE REMOTE */
-                drive = BL_reg(&context) ? (BL_reg(&context) - 1)
-                                        : DOS_GetDefaultDrive();
-                if(!DOS_ValidDrive(drive))
-                {
-                    Error( InvalidDrive, EC_NotFound, EL_Disk );
-                    AX_reg(&context) = InvalidDrive;
-                    SET_CFLAG(&context);
-                }
-                else
-                {
-		    DX_reg(&context) = (1<<9) | (1<<12) | (1<<15);
-		    RESET_CFLAG(&context);
-                }
-		break;
-	      case 0x0a: /* check if handle (BX) is remote */
-	      	/* returns DX, bit 15 set if remote, bit 14 set if date/time
-	      	 * not set on close
-	      	 */
-		DX_reg(&context) = 0;
-		RESET_CFLAG(&context);
-		break;
-	      case 0x0b:   /* SET SHARING RETRY COUNT */
-		if (!CX_reg(&context))
-		{ 
-		  AX_reg(&context) = 1;
-		  SET_CFLAG(&context);
-		  break;
-		}
-		sharing_pause = CX_reg(&context);
-		if (!DX_reg(&context))
-		  sharing_retries = DX_reg(&context);
-		RESET_CFLAG(&context);
-		break;
-
-              case 0x0d:
-                ioctlGenericBlkDevReq(&context);
-                break;
-
-              case 0x0F:   /* Set logical drive mapping */
-                /* FIXME: Not implemented at the moment, always returns error
-                 */
-		fprintf(stdnimp,"Attempt to map drive %02x\n",BL_reg(&context));
-                AX_reg(&context) = 0x0001; /* invalid function */
+                AX_reg(&context) = DOS_ExtendedError;
                 SET_CFLAG(&context);
                 break;
+            }
+            AX_reg(&context) = LOWORD(status);
+            DX_reg(&context) = HIWORD(status);
+        }
+        break;
+
+    case 0x43: /* FILE ATTRIBUTES */
+        switch (AL_reg(&context))
+        {
+        case 0x00:
+            if (!INT21_GetFileAttribute(&context))
+            {
+                AX_reg(&context) = DOS_ExtendedError;
+                SET_CFLAG(&context);
+            }
+            break;
+        case 0x01:
+            RESET_CFLAG(&context);
+            break;
+        }
+        break;
+	
+    case 0x44: /* IOCTL */
+        switch (AL_reg(&context))
+        {
+        case 0x00:
+            ioctlGetDeviceInfo(&context);
+            break;
+
+        case 0x01:
+            break;
+
+        case 0x08:   /* Check if drive is removable. */
+            switch(GetDriveType( DOS_GET_DRIVE( BL_reg(&context) )))
+            {
+            case DRIVE_CANNOTDETERMINE:
+                DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
+                AX_reg(&context) = ER_InvalidDrive;
+                SET_CFLAG(&context);
+                break;
+            case DRIVE_REMOVABLE:
+                AX_reg(&context) = 0;      /* removable */
+                break;
+            default:
+                AX_reg(&context) = 1;   /* not removable */
+                break;
+            }
+            break;
+
+        case 0x09:   /* CHECK IF BLOCK DEVICE REMOTE */
+            switch(GetDriveType( DOS_GET_DRIVE( BL_reg(&context) )))
+            {
+            case DRIVE_CANNOTDETERMINE:
+                DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
+                AX_reg(&context) = ER_InvalidDrive;
+                SET_CFLAG(&context);
+                break;
+            case DRIVE_REMOTE:
+                DX_reg(&context) = (1<<9) | (1<<12);  /* remote */
+                break;
+            default:
+                DX_reg(&context) = 0;  /* FIXME: use driver attr here */
+                break;
+            }
+            break;
+
+        case 0x0a: /* check if handle (BX) is remote */
+            /* returns DX, bit 15 set if remote, bit 14 set if date/time
+             * not set on close
+             */
+            DX_reg(&context) = 0;
+            break;
+
+        case 0x0b:   /* SET SHARING RETRY COUNT */
+            if (!CX_reg(&context))
+            { 
+                AX_reg(&context) = 1;
+                SET_CFLAG(&context);
+                break;
+            }
+            sharing_pause = CX_reg(&context);
+            if (!DX_reg(&context))
+                sharing_retries = DX_reg(&context);
+            RESET_CFLAG(&context);
+            break;
+
+        case 0x0d:
+            ioctlGenericBlkDevReq(&context);
+            break;
+
+        case 0x0F:   /* Set logical drive mapping */
+            /* FIXME: Not implemented at the moment, always returns error
+             */
+            INT_BARF( &context, 0x21 );
+            AX_reg(&context) = 0x0001; /* invalid function */
+            SET_CFLAG(&context);
+            break;
                 
-	      default:
-                INT_BARF( &context, 0x21 );
-		break;
-	    }
-	    break;
+        default:
+            INT_BARF( &context, 0x21 );
+            break;
+        }
+        break;
 
-	  case 0x45: /* "DUP" - DUPLICATE FILE HANDLE */
-            if ((AX_reg(&context) = dup(BX_reg(&context))) == 0xffff)
+    case 0x45: /* "DUP" - DUPLICATE FILE HANDLE */
+        if ((AX_reg(&context) = FILE_Dup(BX_reg(&context))) == (WORD)HFILE_ERROR)
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
+        if (FILE_Dup2( BX_reg(&context), CX_reg(&context) ) == HFILE_ERROR)
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
+        if (!INT21_GetCurrentDirectory(&context))
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        else AX_reg(&context) = 0x0100; 
+        /* intlist: many Microsoft products for Windows rely on this */
+        break;
+	
+    case 0x48: /* ALLOCATE MEMORY */
+    case 0x49: /* FREE MEMORY */
+    case 0x4a: /* RESIZE MEMORY BLOCK */
+        INT_BARF( &context, 0x21 );
+        break;
+	
+    case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
+        WinExec( PTR_SEG_OFF_TO_LIN( DS_reg(&context), DX_reg(&context) ),
+                 SW_NORMAL );
+        break;		
+	
+    case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
+        TASK_KillCurrentTask( AL_reg(&context) );
+        break;
+
+    case 0x4d: /* GET RETURN CODE */
+        AX_reg(&context) = 0; /* normal exit */
+        break;
+
+    case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */
+        if (!INT21_FindFirst(&context)) break;
+        /* fall through */
+
+    case 0x4f: /* "FINDNEXT" - FIND NEXT MATCHING FILE */
+        if (!INT21_FindNext(&context))
+        {
+            DOS_ERROR( ER_NoMoreFiles, EC_MediaError, SA_Abort, EL_Disk );
+            AX_reg(&context) = ER_NoMoreFiles;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x51: /* GET PSP ADDRESS */
+    case 0x62: /* GET PSP ADDRESS */
+        /* FIXME: should we return the original DOS PSP upon */
+        /*        Windows startup ? */
+        BX_reg(&context) = GetCurrentPDB();
+        break;
+
+    case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
+        ES_reg(&context) = 0x0;
+        BX_reg(&context) = 0x0;
+        INT_BARF( &context, 0x21 );
+        break;
+
+    case 0x56: /* "RENAME" - RENAME FILE */
+        if (!INT21_RenameFile(&context))
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x57: /* FILE DATE AND TIME */
+        switch (AL_reg(&context))
+        {
+        case 0x00:
+            if (!FILE_Fstat( BX_reg(&context), NULL, NULL,
+                             &DX_reg(&context), &CX_reg(&context) ))
             {
-                errno_to_doserr();
-                AX_reg(&context) = ExtendedError;
+                AX_reg(&context) = DOS_ExtendedError;
                 SET_CFLAG(&context);
             }
-            else RESET_CFLAG(&context);
-	    break;
-
-	  case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
-            if (dup2( BX_reg(&context), CX_reg(&context) ) == -1)
+            break;
+        case 0x01:
+            if (!INT21_SetFileDateTime(&context))
             {
-                errno_to_doserr();
-                AX_reg(&context) = ExtendedError;
+                AX_reg(&context) = DOS_ExtendedError;
                 SET_CFLAG(&context);
             }
-            else RESET_CFLAG(&context);
             break;
+        }
+        break;
 
-	  case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
-	    GetCurrentDirectory(&context);
-	    AX_reg(&context) = 0x0100; 
-	    /* intlist: many Microsoft products for Windows rely on this */
-	    break;
-	
-	  case 0x48: /* ALLOCATE MEMORY */
-	  case 0x49: /* FREE MEMORY */
-	  case 0x4a: /* RESIZE MEMORY BLOCK */
-            INT_BARF( &context, 0x21 );
+    case 0x58: /* GET OR SET MEMORY/UMB ALLOCATION STRATEGY */
+        switch (AL_reg(&context))
+        {
+        case 0x00:
+            AX_reg(&context) = 1;
             break;
-	
-	  case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
-            WinExec( PTR_SEG_OFF_TO_LIN(DS_reg(&context),DX_reg(&context)),
-                     SW_NORMAL );
-	    break;		
-	
-	  case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
-            TASK_KillCurrentTask( AL_reg(&context) );
-	    break;
-
-	  case 0x4d: /* GET RETURN CODE */
-	    AX_reg(&context) = NoError; /* normal exit */
-	    break;
-
-	  case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */
-	    FindFirst(&context);
-	    break;
-
-	  case 0x4f: /* "FINDNEXT" - FIND NEXT MATCHING FILE */
-	    FindNext(&context);
-	    break;
-
-	  case 0x51: /* GET PSP ADDRESS */
-	  case 0x62: /* GET PSP ADDRESS */
-	    /* FIXME: should we return the original DOS PSP upon */
-	    /*        Windows startup ? */
-	    BX_reg(&context) = GetCurrentPDB();
-	    break;
-
-	  case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
-            ES_reg(&context) = 0x0;
-            BX_reg(&context) = 0x0;
-            INT_BARF( &context, 0x21 );
+        case 0x02:
+            AX_reg(&context) = 0;
             break;
-		
-	  case 0x56: /* "RENAME" - RENAME FILE */
-	    RenameFile(&context);
-	    break;
-	
-	  case 0x57: /* FILE DATE AND TIME */
-	    switch (AL_reg(&context))
-	    {
-	      case 0x00:
-		GetFileDateTime(&context);
-		break;
-	      case 0x01:
-		SetFileDateTime(&context);
-		break;
-	    }
-	    break;
-
-	  case 0x58: /* GET OR SET MEMORY/UMB ALLOCATION STRATEGY */
-	    switch (AL_reg(&context))
-	    {
-	      case 0x00:
-		AX_reg(&context) = 1;
-		break;
-	      case 0x02:
-		AX_reg(&context) = 0;
-		break;
-	      case 0x01:
-	      case 0x03:
-		break;
-	    }
-	    RESET_CFLAG(&context);
-	    break;
-	
-	  case 0x5a: /* CREATE TEMPORARY FILE */
-	    CreateTempFile(&context);
-	    break;
-	
-	  case 0x5b: /* CREATE NEW FILE */
-	    CreateNewFile(&context);
-	    break;
-	
-	  case 0x5d: /* NETWORK */
-	  case 0x5e:
-	    /* network software not installed */
-	    AX_reg(&context) = NoNetwork;
-	    SET_CFLAG(&context);
-	    break;
-	
-	  case 0x5f: /* NETWORK */
-	    switch (AL_reg(&context))
-	    {
-	      case 0x07: /* ENABLE DRIVE */
-		if (!DOS_EnableDrive(DL_reg(&context))) 
-		{
-		    Error(InvalidDrive, EC_MediaError , EL_Disk);
-		    AX_reg(&context) = InvalidDrive;
-		    SET_CFLAG(&context);
-		    break;
-		}
-		else 
-		{
-		    RESET_CFLAG(&context);
-		    break;
-		}
-	      case 0x08: /* DISABLE DRIVE */
-		if (!DOS_DisableDrive(DL_reg(&context)))
-		{
-		    Error(InvalidDrive, EC_MediaError , EL_Disk);
-		    AX_reg(&context) = InvalidDrive;
-		    SET_CFLAG(&context);
-		    break;
-		} 
-		else 
-		{
-		    RESET_CFLAG(&context);
-		    break;
-		}
-	      default:
-		/* network software not installed */
-		AX_reg(&context) = NoNetwork; 
-		SET_CFLAG(&context);
-		break;
-	    }
-	    break;
-
-	  case 0x60: /* "TRUENAME" - CANONICALIZE FILENAME OR PATH */
-		strncpy(PTR_SEG_OFF_TO_LIN(ES_reg(&context),DI_reg(&context)),
-                        PTR_SEG_OFF_TO_LIN(DS_reg(&context),SI_reg(&context)),
-                        strlen(PTR_SEG_OFF_TO_LIN(DS_reg(&context),SI_reg(&context))) & 0x7f);
-		RESET_CFLAG(&context);
-	    break;
-
-	  case 0x61: /* UNUSED */
-	  case 0x63: /* UNUSED */
-	  case 0x64: /* OS/2 DOS BOX */
-	  case 0x65: /* GET EXTENDED COUNTRY INFORMATION */
-            INT_BARF( &context, 0x21 );
+        case 0x01:
+        case 0x03:
             break;
-	
-	  case 0x66: /* GLOBAL CODE PAGE TABLE */
-	    switch (AL_reg(&context))
+        }
+        RESET_CFLAG(&context);
+        break;
+
+    case 0x5a: /* CREATE TEMPORARY FILE */
+        if (!INT21_CreateTempFile(&context))
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x5b: /* CREATE NEW FILE */
+        if ((AX_reg(&context) = _lcreat_uniq( PTR_SEG_OFF_TO_LIN(DS_reg(&context),DX_reg(&context)), 0 )) == (WORD)HFILE_ERROR)
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x5d: /* NETWORK */
+    case 0x5e:
+        /* network software not installed */
+        DOS_ERROR( ER_NoNetwork, EC_NotFound, SA_Abort, EL_Network );
+        AX_reg(&context) = DOS_ExtendedError;
+        SET_CFLAG(&context);
+        break;
+
+    case 0x5f: /* NETWORK */
+        switch (AL_reg(&context))
+        {
+        case 0x07: /* ENABLE DRIVE */
+            if (!DRIVE_Enable( DL_reg(&context) ))
             {
-	      case 0x01:
-		DX_reg(&context) = BX_reg(&context) = CodePage;
-		RESET_CFLAG(&context);
-		break;			
-	      case 0x02: 
-		CodePage = BX_reg(&context);
-		RESET_CFLAG(&context);
-		break;
-	    }
-	    break;
+                DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+                AX_reg(&context) = DOS_ExtendedError;
+                SET_CFLAG(&context);
+            }
+            break;
 
-	  case 0x67: /* SET HANDLE COUNT */			
-	    RESET_CFLAG(&context);
-	    break;
+        case 0x08: /* DISABLE DRIVE */
+            if (!DRIVE_Disable( DL_reg(&context) ))
+            {
+                DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+                AX_reg(&context) = DOS_ExtendedError;
+                SET_CFLAG(&context);
+            } 
+            break;
 
-	  case 0x68: /* "FFLUSH" - COMMIT FILE */
-	  case 0x6a: /* COMMIT FILE */
-            fsync( BX_reg(&context) );
-	    RESET_CFLAG(&context);
-	    break;		
+        default:
+            /* network software not installed */
+            DOS_ERROR( ER_NoNetwork, EC_NotFound, SA_Abort, EL_Network );
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+            break;
+        }
+        break;
+
+    case 0x60: /* "TRUENAME" - CANONICALIZE FILENAME OR PATH */
+        {
+            const char *truename = DOSFS_GetDosTrueName( PTR_SEG_OFF_TO_LIN(DS_reg(&context),SI_reg(&context) ), FALSE );
+            if (!truename)
+            {
+                AX_reg(&context) = DOS_ExtendedError;
+                SET_CFLAG(&context);
+            }
+            else
+            {
+                lstrcpyn(PTR_SEG_OFF_TO_LIN(ES_reg(&context),DI_reg(&context)),
+                         truename, 128 );
+                AX_reg(&context) = 0;
+            }
+        }
+        break;
+
+    case 0x61: /* UNUSED */
+    case 0x63: /* UNUSED */
+    case 0x64: /* OS/2 DOS BOX */
+    case 0x65: /* GET EXTENDED COUNTRY INFORMATION */
+        INT_BARF( &context, 0x21 );
+        break;
 	
-	  case 0x69: /* DISK SERIAL NUMBER */
-	    switch (AL_reg(&context))
-	    {
-	      case 0x00:
-		GetDiskSerialNumber(&context);
-		break;			
-	      case 0x01: 
-		SetDiskSerialNumber(&context);
-		break;
-	    }
-	    break;
+    case 0x66: /* GLOBAL CODE PAGE TABLE */
+        switch (AL_reg(&context))
+        {
+        case 0x01:
+            DX_reg(&context) = BX_reg(&context) = CodePage;
+            RESET_CFLAG(&context);
+            break;			
+        case 0x02: 
+            CodePage = BX_reg(&context);
+            RESET_CFLAG(&context);
+            break;
+        }
+        break;
+
+    case 0x67: /* SET HANDLE COUNT */
+        SetHandleCount( BX_reg(&context) );
+        if (DOS_ExtendedError)
+        {
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x68: /* "FFLUSH" - COMMIT FILE */
+    case 0x6a: /* COMMIT FILE */
+        if (fsync( FILE_GetUnixHandle( BX_reg(&context) )) == -1)
+        {
+            FILE_SetDosError();
+            AX_reg(&context) = DOS_ExtendedError;
+            SET_CFLAG(&context);
+        }
+        break;		
+	
+    case 0x69: /* DISK SERIAL NUMBER */
+        switch (AL_reg(&context))
+        {
+        case 0x00:
+            if (!INT21_GetDiskSerialNumber(&context))
+            {
+                AX_reg(&context) = DOS_ExtendedError;
+                SET_CFLAG(&context);
+            }
+            else AX_reg(&context) = 0;
+            break;
+        case 0x01:
+            if (!INT21_SetDiskSerialNumber(&context))
+            {
+                AX_reg(&context) = DOS_ExtendedError;
+                SET_CFLAG(&context);
+            }
+            else AX_reg(&context) = 1;
+            break;
+        }
+        break;
     
-	  case 0x6C: /* Extended Open/Create*/
-	    ExtendedOpenCreateFile(&context);
-	    break;
+    case 0x6C: /* Extended Open/Create*/
+        ExtendedOpenCreateFile(&context);
+        break;
 	
-          case 0x70: /* MS-DOS 7 (Windows95) - ??? (country-specific?)*/
-          case 0x71: /* MS-DOS 7 (Chicago) - LONG FILENAME FUNCTIONS */
-          case 0x72: /* MS-DOS 7 (Windows95) - ??? */
-          case 0x73: /* MS-DOS 7 (Windows95) - DRIVE LOCKING ??? */
-            dprintf_int(stddeb,"int21: windows95 function AX %04x\n",
- 			AX_reg(&context));
- 	    dprintf_int(stddeb, "        returning unimplemented\n");
- 	    SET_CFLAG(&context);
- 	    AL_reg(&context) = 0;
- 	    break;
+    case 0x70: /* MS-DOS 7 (Windows95) - ??? (country-specific?)*/
+    case 0x71: /* MS-DOS 7 (Chicago) - LONG FILENAME FUNCTIONS */
+    case 0x72: /* MS-DOS 7 (Windows95) - ??? */
+    case 0x73: /* MS-DOS 7 (Windows95) - DRIVE LOCKING ??? */
+        dprintf_int(stddeb,"int21: windows95 function AX %04x\n",
+                    AX_reg(&context));
+        dprintf_int(stddeb, "        returning unimplemented\n");
+        SET_CFLAG(&context);
+        AL_reg(&context) = 0;
+        break;
 
-          case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
-            break;
+    case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
+    case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
+        break;
 
-	  case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
-	    break;
-
-	  default:
-            INT_BARF( &context, 0x21 );
-            break;
-	}
+    default:
+        INT_BARF( &context, 0x21 );
+        break;
     }
-    dprintf_int(stddeb,"ret21: AX %04x, BX %04x, CX %04x, DX %04x, "
-                "SI %04x, DI %04x, DS %04x, ES %04x EFL %08lx\n",
-                AX_reg(&context), BX_reg(&context), CX_reg(&context),
-                DX_reg(&context), SI_reg(&context), DI_reg(&context),
-                DS_reg(&context), ES_reg(&context), EFL_reg(&context));
+    dprintf_int( stddeb, "ret21: AX=%04x BX=%04x CX=%04x DX=%04x "
+                 "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
+                 AX_reg(&context), BX_reg(&context), CX_reg(&context),
+                 DX_reg(&context), SI_reg(&context), DI_reg(&context),
+                 DS_reg(&context), ES_reg(&context), EFL_reg(&context));
 }
 
 

@@ -80,7 +80,7 @@ static ATOM ATOM_AddAtom( ATOMtoHANDLEtable** tableptr, SEGPTR name )
 	  FirstUnusedIndex=Index;
 	}
 	else if ((table->a2h[i].length == len) && 
-		 (!strncasecmp( table->a2h[i].str, str, len )))
+		 (!lstrncmpi( table->a2h[i].str, str, len )))
 	{
 	    table->a2h[i].refCount++;
 	    return Index;
@@ -176,7 +176,7 @@ static ATOM ATOM_FindAtom( ATOMtoHANDLEtable** tableptr, SEGPTR name )
       {
 	if ((table->a2h[i].refCount != 0) &&
 	    (table->a2h[i].length == len) && 
-	    (!strncasecmp( table->a2h[i].str, str, len )))
+	    (!lstrncmpi( table->a2h[i].str, str, len )))
 	  return Index;
       }
       table=table->next;

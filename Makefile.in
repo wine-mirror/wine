@@ -49,6 +49,7 @@ MAIN_TARGET = @MAIN_TARGET@
 COMMONSUBDIRS = \
 	rc \
 	controls \
+	files \
 	ipc \
 	loader \
 	misc \
@@ -72,6 +73,7 @@ ALLSUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS) $(LIBSUBDIRS) libtest
 
 COMMONOBJS = \
 	controls/controls.o \
+	files/files.o \
 	ipc/ipc.o \
 	loader/loader.o \
 	misc/misc.o \

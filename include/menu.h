@@ -15,8 +15,6 @@ extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );       /* menu.c */
 extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam );      /* menu.c */
 extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
 			      HWND hwnd, BOOL suppress_draw );   /* menu.c */
-extern HMENU CopySysMenu(); /* menu.c */
-
 extern LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam );
 
 typedef struct tagMENUITEM

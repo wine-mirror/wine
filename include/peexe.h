@@ -167,7 +167,7 @@ struct PE_Export_Directory
   u_long * AddressOfFunctions;
   u_long * AddressOfNames;
   u_short * Address_Of_Name_Ordinals;
-  u_char ModuleName[1];
+/*  u_char ModuleName[1]; */
 };
 
 /*
@@ -212,5 +212,19 @@ struct PE_Resource_Leaf_Entry
 
 #define IMAGE_RESOURCE_NAME_IS_STRING    0x80000000
 #define IMAGE_RESOURCE_DATA_IS_DIRECTORY 0x80000000
+
+struct PE_Reloc_Block
+{
+	u_long PageRVA;
+	u_long BlockSize;
+	short Relocations[1];
+};
+
+#define IMAGE_REL_BASED_ABSOLUTE 		0
+#define IMAGE_REL_BASED_HIGH			1
+#define IMAGE_REL_BASED_LOW				2
+#define IMAGE_REL_BASED_HIGHLOW			3
+#define IMAGE_REL_BASED_HIGHADJ			4
+#define IMAGE_REL_BASED_MIPS_JMPADDR	5
 
 #endif /* __WINE_PEEXE_H */

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <locale.h>
 #ifdef MALLOC_DEBUGGING
@@ -17,9 +18,9 @@
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include "wine.h"
+#include "message.h"
 #include "msdos.h"
 #include "windows.h"
-#include "miscemu.h"
 #include "winsock.h"
 #include "options.h"
 #include "desktop.h"
@@ -226,7 +227,7 @@ BOOL ParseDebugOptions(char *options)
       l=strchr(options,',')-options;
     else
       l=strlen(options);
-    if (!strncasecmp(options+1,"all",l-1))
+    if (!lstrncmpi(options+1,"all",l-1))
       {
 	int i;
 	for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
@@ -236,7 +237,7 @@ BOOL ParseDebugOptions(char *options)
       {
 	int i;
 	for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
-	  if (debug_msg_name && (!strncasecmp(options+1,debug_msg_name[i],l-1)))
+	  if (debug_msg_name && (!lstrncmpi(options+1,debug_msg_name[i],l-1)))
 	    {
 	      debug_msg_enabled[i]=(*options=='+');
 	      break;
@@ -275,7 +276,7 @@ static BOOL MAIN_ParseDLLOptions(char *options)
       l=strchr(options,',')-options;
     else l=strlen(options);
     for (i=0;i<N_BUILTINS;i++)
-         if (!strncasecmp(options+1,dll_builtin_table[i].name,l-1))
+         if (!lstrncmpi(options+1,dll_builtin_table[i].name,l-1))
            {
              dll_builtin_table[i].used = (*options=='+');
              break;
@@ -306,7 +307,7 @@ static void MAIN_ParseLanguageOption( char *arg )
     Options.language = LANG_En;  /* First language */
     for (p = langNames; *p; p++)
     {
-        if (!strcasecmp( *p, arg )) return;
+        if (!lstrcmpi( *p, arg )) return;
         Options.language++;
     }
     fprintf( stderr, "Invalid language specified '%s'. Supported languages are: ", arg );
@@ -335,7 +336,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 #ifdef WINELIB
     /* Need to assemble command line and pass it to WinMain */
 #else
-    if (*argc < 2 || strcasecmp(argv[1], "-h") == 0) 
+    if (*argc < 2 || lstrcmpi(argv[1], "-h") == 0) 
     	MAIN_Usage( argv[0] );
 #endif
 
@@ -550,6 +551,7 @@ int main( int argc, char *argv[] )
     int ret_val;
     int depth_count, i;
     int *depth_list;
+    struct timeval tv;
 
     extern int _WinMain(int argc, char **argv);
 
@@ -557,6 +559,8 @@ int main( int argc, char *argv[] )
     setbuf(stderr,NULL);
 
     setlocale(LC_CTYPE,"");
+    gettimeofday( &tv, NULL);
+    MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 
     XrmInitialize();
     
@@ -603,11 +607,7 @@ int main( int argc, char *argv[] )
     else rootWindow = DefaultRootWindow( display );
 
     MAIN_SaveSetup();
-#ifndef sparc
     atexit(called_at_exit);
-#else
-    on_exit (called_at_exit, 0);
-#endif
 
     ret_val = _WinMain( argc, argv );
 

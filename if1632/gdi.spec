@@ -232,7 +232,7 @@ id	3
 346 pascal16 SetTextAlign(word word) SetTextAlign
 348 pascal16 Chord(word s_word s_word s_word s_word s_word s_word
                    s_word s_word) Chord
-349 pascal SetMapperFlags(word word) SetMapperFlags
+349 pascal SetMapperFlags(word long) SetMapperFlags
 350 pascal16 GetCharWidth(word word word ptr) GetCharWidth
 351 pascal16 ExtTextOut(word s_word s_word word ptr ptr s_word ptr) ExtTextOut
 352 stub GetPhysicalFontHandle

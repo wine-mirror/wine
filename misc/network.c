@@ -3,12 +3,10 @@
  */
 
 #include <ctype.h>
-#include "stdio.h"
-#include "windows.h"
-#include "user.h"
+#include <stdio.h>
 
-#include "msdos.h"
-#include "dos_fs.h"
+#include "windows.h"
+#include "drive.h"
 
 #define WN_SUCCESS       			0x0000
 #define WN_NOT_SUPPORTED 			0x0001
@@ -158,29 +156,28 @@ int WNetUnlockQueueData(LPSTR szQueue)
 int WNetGetConnection(LPSTR lpLocalName, 
 	LPSTR lpRemoteName, UINT FAR *cbRemoteName)
 {
-    int drive, rc;
+    const char *path;
 
-    if(lpLocalName[1] == ':')
+    if (lpLocalName[1] == ':')
     {
-        drive = toupper(lpLocalName[0]) - 'A';
-        if(!DOS_ValidDrive(drive))
-            rc = WN_NOT_CONNECTED;
-        else
+        int drive = toupper(lpLocalName[0]) - 'A';
+        switch(GetDriveType(drive))
         {
-            if(strlen(DOS_GetRedirectedDir(drive)) + 1 > *cbRemoteName)
-                rc = WN_MORE_DATA;
-            else
-            {
-                strcpy(lpRemoteName, DOS_GetRedirectedDir(drive));
-                *cbRemoteName = strlen(lpRemoteName) + 1;
-                rc = WN_SUCCESS;
-            }
+        case DRIVE_CANNOTDETERMINE:
+        case DRIVE_DOESNOTEXIST:
+            return WN_BAD_LOCALNAME;
+        case DRIVE_REMOVABLE:
+        case DRIVE_FIXED:
+            return WN_NOT_CONNECTED;
+        case DRIVE_REMOTE:
+            path = DRIVE_GetDosCwd(drive);
+            if (strlen(path) + 1 > *cbRemoteName) return WN_MORE_DATA;
+            strcpy( lpRemoteName, path );
+            *cbRemoteName = strlen(lpRemoteName) + 1;
+            return WN_SUCCESS;
         }
     }
-    else
-        rc = WN_BAD_LOCALNAME;
-
-    return rc;
+    return WN_BAD_LOCALNAME;
 }
 
 /**************************************************************************

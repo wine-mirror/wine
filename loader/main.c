@@ -20,12 +20,13 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "kernel32.h"
 #include "atom.h"
 #include "dialog.h"
+#include "directory.h"
+#include "drive.h"
 #include "message.h"
 #include "syscolor.h"
 #include "sysmetrics.h"
 #include "gdi.h"
 #include "debugger.h"
-#include "dos_fs.h"
 #include "dlls.h"
 #include "miscemu.h"
 #include "neexe.h"
@@ -63,8 +64,11 @@ int MAIN_Init(void)
       /* Create built-in modules */
     if (!MODULE_Init()) return 0;
 
-      /* Initialize the DOS file system */
-    DOS_InitFS();
+    /* Initialise DOS drives */
+    if (!DRIVE_Init()) return 0;
+
+    /* Initialise DOS directories */
+    if (!DIR_Init()) return 0;
 
       /* Initialize tasks */
     if (!TASK_Init()) return 0;

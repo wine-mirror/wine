@@ -13,7 +13,6 @@
 #include "user.h"
 #include "dce.h"
 #include "sysmetrics.h"
-#include "menu.h"
 #include "cursoricon.h"
 #include "event.h"
 #include "message.h"
@@ -481,6 +480,8 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     }
     else wndPtr->wIDmenu = (UINT)menu;
 
+    GetSystemMenu( hwnd, TRUE );  /* Create a copy of the system menu */
+
       /* Send the WM_CREATE message */
 
     createStruct.lpCreateParams = (LPSTR)data;
@@ -516,9 +517,6 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
         WIN_DestroyWindow( hwnd );
 	return 0;
     }
-
-      /* Create a copy of SysMenu */
-    if (style & WS_SYSMENU) wndPtr->hSysMenu = CopySysMenu();
 
     WIN_SendParentNotify( hwnd, WM_CREATE, wndPtr->wIDmenu, (LONG)hwnd );
 

@@ -23,7 +23,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <unistd.h>
-#undef TRANSPARENT
+
 #include "winsock.h"
 #include "toolhelp.h"
 #include "stddebug.h"
@@ -35,9 +35,7 @@ static key_t wine_key = 0;
 static FARPROC BlockFunction;
 static fd_set fd_in_use;
 
-#ifdef __FreeBSD__
 extern int h_errno;
-#endif /* __FreeBSD__ */
 
 struct ipc_packet {
 	long	mtype;
@@ -660,11 +658,10 @@ SOCKET WINSOCK_socket(INT af, INT type, INT protocol)
     }
     
     if (sock > 0xffff) {
-	/* we set the value of wsa_errno directly, because 
-	 * only support socket numbers up to 0xffff. The
-	 * value return indicates there are no descriptors available
+	/* we only support socket numbers up to 0xffff. The return
+	 * value indicates there are no more descriptors available
 	 */
-	wsa_errno = WSAEMFILE;
+        WSASetLastError(WSAEMFILE);
 	return INVALID_SOCKET;
     }
 
@@ -846,7 +843,7 @@ static void recv_message(int sig)
 		if (!message_is_valid) {
 			if (msgrcv(wine_key, (struct msgbuf*)&(message), 
 				   IPC_PACKET_SIZE, MTYPE, IPC_NOWAIT) == -1) {
-				perror("wine: msgrcv");
+				perror("wine: winsock: msgrcv");
 				break;
 			}
 		}
@@ -877,7 +874,7 @@ static void send_message( HWND hWnd, u_int wMsg, HANDLE handle, long lParam)
 
 	if (msgsnd(wine_key, (struct msgbuf*)&(message),  
 		   IPC_PACKET_SIZE, 0/*IPC_NOWAIT*/) == -1)
-		perror("wine: msgsnd");
+		perror("wine: winsock: msgsnd");
 		
 	kill(getppid(), SIGUSR1);
 }
@@ -1046,42 +1043,44 @@ HANDLE WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port, const char
 
 INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent)
 {
-	long event;
-	fd_set read_fds, write_fds, except_fds;
+    long event;
+    fd_set read_fds, write_fds, except_fds;
+    int errors = 0;
 
-	dprintf_winsock(stddeb, "WSA_AsyncSelect: socket %d, HWND "NPFMT", wMsg %d, event %ld\n", s, hWnd, wMsg, lEvent);
+    dprintf_winsock(stddeb, "WSA_AsyncSelect: socket %d, HWND "NPFMT", wMsg %d, event %ld\n", s, hWnd, wMsg, lEvent);
 
-	/* remove outstanding asyncselect() processes */
-	/* kill */
+    /* remove outstanding asyncselect() processes */
+    /* kill */
 
-	if (wMsg == 0 && lEvent == 0) 
-		return 0;
+    if (wMsg == 0 && lEvent == 0) 
+        return 0;
 
-	if (fork()) {
-		return 0;
-	} else {
-		while (1) {
-			FD_ZERO(&read_fds);
-			FD_ZERO(&write_fds);
-			FD_ZERO(&except_fds);
+    if (fork()) {
+        return 0;
+    } else {
+        while (1) {
+            FD_ZERO(&read_fds);
+            FD_ZERO(&write_fds);
+            FD_ZERO(&except_fds);
 
-			if (lEvent & FD_READ)
-				FD_SET(s, &read_fds);
-			if (lEvent & FD_WRITE)
-				FD_SET(s, &write_fds);
+            if (lEvent & FD_READ)
+                FD_SET(s, &read_fds);
+            if (lEvent & FD_WRITE)
+                FD_SET(s, &write_fds);
 
-			fcntl(s, F_SETFL, O_NONBLOCK);
-			select(s + 1, &read_fds, &write_fds, &except_fds, NULL);
+            fcntl(s, F_SETFL, O_NONBLOCK);
+            if (select(s + 1, &read_fds, &write_fds, &except_fds, NULL)<0) {
+                errors = wsaerrno();
+            }
 
-			event = 0;
-			if (FD_ISSET(s, &read_fds))
-				event |= FD_READ;
-			if (FD_ISSET(s, &write_fds))
-				event |= FD_WRITE;
-	/* FIXME: the first time through we get a winsock error of 2, why? */
-			send_message(hWnd, wMsg, (HANDLE)s, (wsaerrno() << 16) | event);
-		}
-	}
+            event = 0;
+            if (FD_ISSET(s, &read_fds))
+                event |= FD_READ;
+            if (FD_ISSET(s, &write_fds))
+                event |= FD_WRITE;
+            send_message(hWnd, wMsg, s, WSAMAKESELECTREPLY(event,errors));
+        }
+    }
 }
 
 INT WSAFDIsSet(INT fd, fd_set *set)
@@ -1183,7 +1182,7 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
     /* ipc stuff */
 
     if ((wine_key = msgget(IPC_PRIVATE, 0600)) == -1)
-	perror("wine: msgget"); 
+	perror("wine: winsock: msgget"); 
 
     signal(SIGUSR1, recv_message);
 
@@ -1201,7 +1200,7 @@ INT WSACleanup(void)
 
 	if (wine_key)
 		if (msgctl(wine_key, IPC_RMID, NULL) == -1)
-			perror("wine: shmctl");
+			perror("wine: winsock: shmctl");
 
 	for (fd = 0; fd != FD_SETSIZE; fd++)
 		if (FD_ISSET(fd, &fd_in_use))

@@ -765,6 +765,9 @@ typedef struct tagLOGPEN
 #define WINDING           2
 
   /* Background modes */
+#ifdef TRANSPARENT  /*Apparently some broken svr4 includes define TRANSPARENT*/
+#undef TRANSPARENT
+#endif
 #define TRANSPARENT       1
 #define OPAQUE            2
 
@@ -1034,37 +1037,42 @@ typedef KANJISTRUCT *LPKANJISTRUCT;
 typedef KANJISTRUCT *NPKANJISTRUCT;
 typedef KANJISTRUCT *PKANJISTRUCT;
 
-typedef struct {
-	BYTE cBytes, fFixedDisk;
-	WORD nErrCode;
-	BYTE reserved[4], szPathName[128];
+typedef struct
+{
+    BYTE cBytes;
+    BYTE fFixedDisk;
+    WORD nErrCode;
+    BYTE reserved[4];
+    BYTE szPathName[128];
 } OFSTRUCT;
-typedef OFSTRUCT *POFSTRUCT;
-typedef OFSTRUCT *NPOFSTRUCT;
 typedef OFSTRUCT *LPOFSTRUCT;
 
-#define OF_READ 0x0000
-#define OF_WRITE 0x0001
-#define OF_READWRITE 0x0002
-#define OF_CANCEL 0x0800
-#define OF_CREATE 0x1000
-#define OF_DELETE 0x0200
-#define OF_EXIST 0x4000
-#define OF_PARSE 0x0100
-#define OF_PROMPT 0x2000
-#define OF_REOPEN 0x8000
-#define OF_SHARE_COMPAT 0x0000
-#define OF_SHARE_DENY_NONE 0x0040
-#define OF_SHARE_DENY_READ 0x0030
-#define OF_SHARE_DENY_WRITE 0x0020
-#define OF_SHARE_EXCLUSIVE 0x0010
-#define OF_VERIFY 0x0400
+#define OF_READ               0x0000
+#define OF_WRITE              0x0001
+#define OF_READWRITE          0x0002
+#define OF_SHARE_COMPAT       0x0000
+#define OF_SHARE_EXCLUSIVE    0x0010
+#define OF_SHARE_DENY_WRITE   0x0020
+#define OF_SHARE_DENY_READ    0x0030
+#define OF_SHARE_DENY_NONE    0x0040
+#define OF_PARSE              0x0100
+#define OF_DELETE             0x0200
+#define OF_VERIFY             0x0400   /* Used with OF_REOPEN */
+#define OF_SEARCH             0x0400   /* Used without OF_REOPEN */
+#define OF_CANCEL             0x0800
+#define OF_CREATE             0x1000
+#define OF_PROMPT             0x2000
+#define OF_EXIST              0x4000
+#define OF_REOPEN             0x8000
 
-#define DRIVE_CANNOTDETERMINE	0
-#define DRIVE_DOESNOTEXIST	1
-#define DRIVE_REMOVABLE	2
-#define DRIVE_FIXED	3
-#define DRIVE_REMOTE	4
+/* GetTempFileName() Flags */
+#define TF_FORCEDRIVE	        0x80
+
+#define DRIVE_CANNOTDETERMINE      0
+#define DRIVE_DOESNOTEXIST         1
+#define DRIVE_REMOVABLE            2
+#define DRIVE_FIXED                3
+#define DRIVE_REMOTE               4
 
 #define HFILE_ERROR	-1
 
@@ -1687,6 +1695,8 @@ typedef struct tagDRAGINFO {
 #define SW_SHOWMINNOACTIVE  7
 #define SW_SHOWNA           8
 #define SW_RESTORE          9
+#define SW_SHOWDEFAULT	    10
+#define SW_MAX		    10
 
   /* WM_SIZE message wParam values */
 #define SIZE_RESTORED        0
@@ -2648,8 +2658,8 @@ int        DialogBoxParam(HANDLE,SEGPTR,HWND,WNDPROC,LONG);
 HANDLE     DirectResAlloc(HANDLE,WORD,WORD);
 void       DirectedYield(HTASK);
 LONG       DispatchMessage(LPMSG);
-int        DlgDirList(HWND,LPSTR,int,int,WORD);
-int        DlgDirListComboBox(HWND,SEGPTR,int,int,WORD);
+INT        DlgDirList(HWND,SEGPTR,INT,INT,WORD);
+INT        DlgDirListComboBox(HWND,SEGPTR,INT,INT,WORD);
 BOOL       DlgDirSelect(HWND,LPSTR,int);
 BOOL       DlgDirSelectComboBox(HWND,LPSTR,int);
 BOOL       DragDetect(HWND,POINT);
@@ -2808,11 +2818,11 @@ HWND       GetParent(HWND);
 DWORD      GetPixel(HDC,short,short);
 WORD       GetPolyFillMode(HDC);
 int        GetPriorityClipboardFormat(WORD*,short);
-WORD       GetPrivateProfileInt(LPSTR,LPSTR,short,LPSTR);
-short      GetPrivateProfileString(LPSTR,LPSTR,LPSTR,LPSTR,short,LPSTR);
+WORD       GetPrivateProfileInt(LPCSTR,LPCSTR,short,LPCSTR);
+short      GetPrivateProfileString(LPCSTR,LPCSTR,LPCSTR,LPSTR,short,LPCSTR);
 FARPROC    GetProcAddress(HANDLE,SEGPTR);
-WORD       GetProfileInt(LPSTR,LPSTR,int);
-int        GetProfileString(LPSTR,LPSTR,LPSTR,LPSTR,int);
+WORD       GetProfileInt(LPCSTR,LPCSTR,int);
+int        GetProfileString(LPCSTR,LPCSTR,LPCSTR,LPSTR,int);
 HANDLE     GetProp(HWND,SEGPTR);
 WORD       GetROP2(HDC);
 WORD       GetRelAbs(HDC);
@@ -2933,6 +2943,7 @@ BOOL       IsDialogMessage(HWND,LPMSG);
 WORD       IsDlgButtonChecked(HWND,WORD);
 BOOL       IsIconic(HWND);
 BOOL       IsRectEmpty(LPRECT);
+HTASK      IsTaskLocked(void);
 BOOL       IsTwoByteCharPrefix(char);
 BOOL       IsWindow(HWND);
 BOOL       IsWindowEnabled(HWND);
@@ -2996,7 +3007,7 @@ DWORD      OffsetWindowOrg(HDC,short,short);
 BOOL       OffsetWindowOrgEx(HDC,short,short,LPPOINT);
 BOOL       OpenClipboard(HWND);
 int        OpenComm(LPSTR,UINT,UINT);
-INT        OpenFile(LPCSTR,LPOFSTRUCT,UINT);
+HFILE      OpenFile(LPCSTR,OFSTRUCT*,UINT);
 BOOL       OpenIcon(HWND);
 int        OpenSound(void);
 void       OutputDebugString(LPSTR);
@@ -3088,12 +3099,12 @@ void       SetDCState(HDC,HDC);
 int        SetDIBits(HDC,HANDLE,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
 int        SetDIBitsToDevice(HDC,short,short,WORD,WORD,WORD,WORD,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
 BOOL       SetDeskPattern(void);
-BOOL       SetDeskWallPaper(LPSTR);
+BOOL       SetDeskWallPaper(LPCSTR);
 void       SetDlgItemInt(HWND,WORD,WORD,BOOL);
 void       SetDlgItemText(HWND,WORD,SEGPTR);
 void       SetDoubleClickTime(WORD);
 int        SetEnvironment(LPSTR,LPSTR,WORD);
-BOOL       SetErrorMode(WORD);
+UINT       SetErrorMode(UINT);
 HWND       SetFocus(HWND);
 WORD       SetHandleCount(WORD);
 void       SetInternalWindowPos(HWND,WORD,LPRECT,LPPOINT);
@@ -3206,19 +3217,20 @@ int        WriteComm(int,LPSTR,int);
 BOOL       WritePrivateProfileString(LPSTR,LPSTR,LPSTR,LPSTR);
 BOOL       WriteProfileString(LPSTR,LPSTR,LPSTR);
 void       Yield(void);
-LONG       _hread(INT,LPSTR,LONG);
-LONG       _hwrite(INT,LPCSTR,LONG);
-INT        _lclose(INT);
-INT        _lcreat(LPSTR,INT);
-LONG       _llseek(INT,LONG,INT);
-INT        _lopen(LPSTR,INT);
-INT        _lread(INT,LPSTR,WORD);
-INT        _lwrite(INT,LPCSTR,WORD);
+LONG       _hread(HFILE,LPSTR,LONG);
+LONG       _hwrite(HFILE,LPCSTR,LONG);
+HFILE      _lclose(HFILE);
+HFILE      _lcreat(LPCSTR,INT);
+LONG       _llseek(HFILE,LONG,INT);
+HFILE      _lopen(LPCSTR,INT);
+INT        _lread(HFILE,LPSTR,WORD);
+INT        _lwrite(HFILE,LPCSTR,WORD);
 SEGPTR     lstrcat(SEGPTR,SEGPTR);
 INT        lstrcmp(LPCSTR,LPCSTR);
 INT        lstrcmpi(LPCSTR,LPCSTR);
+INT        lstrncmpi(LPCSTR,LPCSTR,int);
 SEGPTR     lstrcpy(SEGPTR,SEGPTR);
-char *     lstrcpyn(char *,char *,int);
+char *     lstrcpyn(char *,const char *,int);
 INT        lstrlen(LPCSTR);
 int        wvsprintf(LPSTR,LPSTR,LPSTR);
 

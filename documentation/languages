@@ -1,0 +1,64 @@
+This file documents the necessary procedure for adding a new language
+to the list of languages that Wine can display system menus and forms
+in.
+
+To add a new language you need to be able to translate the relatively
+few texts, of course.  You will need very little knowledge of
+programming, so you have almost no excuses for not adding your language,
+right?  We should easily be able to support 20 languages within a few
+months, get going!  Apart from re-compilation it'll take you about an
+hour.
+
+To add a new language to the list of languages that Wine can handle
+you must...
+
+1.  Edit resources/Makefile.in variable "LANGUAGES" to include a new
+    abbreviation for the language.
+
+2.  Edit ./wine.man (search for -language) to show the new language
+    abbreviation.
+
+3.  Edit misc/main.c variable "langNames" to contain the new language
+    abbreviation.  Also edit macro "USAGE" to show the new abbreviation.
+
+4.  Edit include/options.h enum "WINE_LANGUAGE" to have a member called
+    LANG_XX where XX is the new abbreviation.
+
+5.  Edit misc/ole2nls.c function "GetUserDefaultLCID" to contain an
+    extra case for your language.  The correct return values seem to
+    be a mystery, but don't worry.
+
+6.  Edit resources/sysrec.c to include "sysres_XX.h" where XX is the
+    abbreviation for your language.  (That file will be produced auto-
+    matically.)  Edit variable "SYSRES_Resources" to contain an entry
+    for your language.
+
+7.  Create a new file, resources/sysres_XX.rc, where XX is the
+    abbreviation that you chose.  Your best bet is to copy one of the
+    other *.rc files and start translating.  [Warning: the author of
+    this file does not know the details of the structure of these
+    files.  There seems to be no need to, however.]
+
+    In menus, the character "&" means that the next character will
+    be highlighted and that pressing that letter will select the item.
+    You should place these "&"s suitably for your language, not just
+    copy the positions from (say) English.  In particular, items within
+    one menu should have different highlighted letters.
+
+8.  Edit misc/ole2nls.c function "GetLocaleInfoA" to contain a case for
+    your language.
+
+9.  Re-configure, re-make dependencies, and re-make Wine.
+
+10. Check your new menus and forms; when they're ok, submit patches
+    for inclusion in the next Wine release, see file ./ANNOUNCE for
+    details about where to submit.
+
+
+January 1996
+Morten Welinder
+
+[I hope I got all the places where changes are needed.  If you see any
+place missing from the above list, submit a patch to this file please.
+Also note that re-organization of the source code might change the list
+of places.]

@@ -74,6 +74,26 @@ BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
 
 
 /***********************************************************************
+ *           TimerCount   (TOOLHELP.80)
+ */
+BOOL TimerCount( TIMERINFO *pTimerInfo )
+{
+        /* FIXME
+         * In standard mode, dwmsSinceStart = dwmsThisVM 
+         *
+         * I tested this, under Windows in enhanced mode, and
+         * if you never switch VM (ie start/stop DOS) these
+         * values should be the same as well. 
+         *
+         * Also, Wine should adjust for the hardware timer
+         * to reduce the amount of error to ~1ms. 
+         * I can't be bothered, can you?
+         */
+        pTimerInfo->dwmsSinceStart = pTimerInfo->dwmsThisVM = GetTickCount();
+        return TRUE;
+}
+
+/***********************************************************************
  *           USER_HeapInit
  */
 BOOL USER_HeapInit(void)

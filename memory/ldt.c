@@ -7,11 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef __svr4__
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 #include <errno.h>
 #include "ldt.h"
 #include "stddebug.h"

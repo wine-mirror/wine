@@ -51,4 +51,20 @@ call32.S: $(SPEC16_FILES)
 clean::
 	rm -f $(SPEC16_FILES) $(SPEC32_FILES) call32.S call16.S
 
+# Kludge: don't use optimisation flags to compile these files
+advapi32.o: advapi32.c
+	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o advapi32.o advapi32.c
+comdlg32.o: comdlg32.c
+	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o comdlg32.o comdlg32.c
+gdi32.o: gdi32.c
+	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o gdi32.o gdi32.c
+kernel32.o: kernel32.c
+	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o kernel32.o kernel32.c
+shell32.o: shell32.c
+	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o shell32.o shell32.c
+user32.o: user32.c
+	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o user32.o user32.c
+winprocs32.o: winprocs32.c
+	$(CC) -c $(DEFS) $(DIVINCL) $(EXTRA_DEFS) -o winprocs32.o winprocs32.c
+
 ### Dependencies:

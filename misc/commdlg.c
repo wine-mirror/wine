@@ -15,6 +15,7 @@
 #include "selectors.h"
 #include "resource.h"
 #include "dos_fs.h"
+#include "drive.h"
 #include "stackframe.h"
 
 static	DWORD 		CommDlgLastError = 0;
@@ -164,9 +165,9 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPSTR newPath)
   strncpy(str,newPath,511); str[511]=0;
   SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, (LPARAM)MAKE_SEGPTR(str2));
   strncat(str,str2,511-strlen(str)); str[511]=0;
-  if (!DlgDirList(hWnd, str, lst1, 0, 0x0000)) return FALSE;
-  DlgDirList(hWnd, "*.*", lst2, stc1, 0x8010);
-  
+  if (!DlgDirList(hWnd, MAKE_SEGPTR(str), lst1, 0, 0x0000)) return FALSE;
+  strcpy( str, "*.*" );
+  DlgDirList(hWnd, MAKE_SEGPTR(str), lst2, stc1, 0x8010);
   return TRUE;
 }
 
@@ -360,7 +361,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   if (!FILEDLG_ScanDir(hWnd, tmpstr))
     fprintf(stderr, "FileDlg: couldn't read initial directory %s!\n", tmpstr);
   /* select current drive in combo 2 */
-  n = DOS_GetDefaultDrive();
+  n = DRIVE_GetCurrentDrive();
   SendDlgItemMessage(hWnd, cmb2, CB_SETCURSEL, n, 0);
   if (!(lpofn->Flags & OFN_SHOWHELP))
     ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
@@ -378,13 +379,23 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
   LPOPENFILENAME lpofn;
   char tmpstr[512], tmpstr2[512];
   LPSTR pstr, pstr2;
+  UINT control,notification;
+
+  /* Notifications are packaged differently in Win32 */
+#ifdef WINELIB32
+  control = LOWORD(wParam);
+  notification = HIWORD(wParam);
+#else
+  control = wParam;
+  notification = HIWORD(lParam);
+#endif
     
   lpofn = (LPOPENFILENAME)GetWindowLong(hWnd, DWL_USER);
-  switch (wParam)
+  switch (control)
     {
     case lst1: /* file list */
       FILEDLG_StripEditControl(hWnd);
-      if (HIWORD(lParam) == LBN_DBLCLK)
+      if (notification == LBN_DBLCLK)
 	goto almost_ok;
       lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0);
       if (lRet == LB_ERR) return TRUE;
@@ -394,7 +405,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       return TRUE;
     case lst2: /* directory list */
       FILEDLG_StripEditControl(hWnd);
-      if (HIWORD(lParam) == LBN_DBLCLK)
+      if (notification == LBN_DBLCLK)
 	{
 	  lRet = SendDlgItemMessage(hWnd, lst2, LB_GETCURSEL, 0, 0);
 	  if (lRet == LB_ERR) return TRUE;
@@ -410,7 +421,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	}
       return TRUE;
     case cmb1: /* file type drop list */
-      if (HIWORD(lParam) == CBN_SELCHANGE) 
+      if (notification == CBN_SELCHANGE) 
 	{
 	  *tmpstr = 0;
 	  goto reset_scan;
@@ -494,12 +505,11 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(tmpstr));
       ShowWindow(hWnd, SW_HIDE);
       {
-	int drive;
-	drive = DOS_GetDefaultDrive();
+	int drive = DRIVE_GetCurrentDrive();
 	tmpstr2[0] = 'A'+ drive;
 	tmpstr2[1] = ':';
 	tmpstr2[2] = '\\';
-	strncpy(tmpstr2 + 3, DOS_GetCurrentDir(drive), 507); tmpstr2[510]=0;
+	strncpy(tmpstr2 + 3, DRIVE_GetDosCwd(drive), 507); tmpstr2[510]=0;
 	if (strlen(tmpstr2) > 3)
 	   strcat(tmpstr2, "\\");
 	strncat(tmpstr2, tmpstr, 511-strlen(tmpstr2)); tmpstr2[511]=0;

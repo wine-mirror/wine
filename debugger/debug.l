@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debugger.h"
+#include "xmalloc.h"
 #include "y.tab.h"
 
 #ifdef USE_READLINE
@@ -202,7 +203,7 @@ static char *local_symbols[10];
 static int next_symbol;
 
 char * make_symbol(char * symbol){
-        return local_symbols[next_symbol++] = strdup(symbol);
+        return local_symbols[next_symbol++] = xstrdup(symbol);
 }
 
 void

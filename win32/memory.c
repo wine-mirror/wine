@@ -49,12 +49,20 @@ LPVOID VirtualAlloc(LPVOID lpvAddress, DWORD cbSize,
     if (fdwAllocationType & MEM_RESERVE || !lpvAddress) {
         ptr = mmap((void *)((((unsigned long)lpvAddress-1) & 0xFFFF0000L) 
 	                + 0x00010000L),
-		   cbSize, PROT_NONE, MAP_ANON|MAP_PRIVATE,0,0);
+		   cbSize, PROT_NONE, MAP_ANON|MAP_PRIVATE,-1,0);
+	if (ptr == (caddr_t) -1) {
+	    dprintf_win32(stddeb, "VirtualAlloc: returning NULL");
+	    return (LPVOID) NULL;
+	}
         if (lpvAddress && ((unsigned long)ptr & 0xFFFF0000L)) {
 	    munmap(ptr, cbSize);
 	    cbSize += 65535;
 	    ptr =  mmap(lpvAddress, cbSize, 
-	                PROT_NONE, MAP_ANON|MAP_PRIVATE,0,0);
+	                PROT_NONE, MAP_ANON|MAP_PRIVATE,-1,0);
+	    if (ptr == (caddr_t) -1) {
+		dprintf_win32(stddeb, "VirtualAlloc: returning NULL");
+		return (LPVOID) NULL;
+	    }
 	    ptr = (void *)((((unsigned long)ptr-1) & 0xFFFF0000L)+0x00010000L);
 	}
 	/* remember the size for VirtualFree since it's going to be handed
@@ -84,7 +92,6 @@ LPVOID VirtualAlloc(LPVOID lpvAddress, DWORD cbSize,
                                           ~(PAGE_GUARD | PAGE_NOCACHE));
 	mprotect(ptr, cbSize, prot);
     }
-    return ptr;
 #if 0
 /* kludge for gnu-win32 */
     if (fdwAllocationType & MEM_RESERVE) return sbrk(0);

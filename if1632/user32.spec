@@ -46,7 +46,7 @@ base	1
 0042 stub CharUpperBuffW
 0043 stub CharUpperW
 0044 stub CheckDlgButton
-0045 stub CheckMenuItem
+0045 stdcall CheckMenuItem(long long long) CheckMenuItem
 0046 stub CheckMenuRadioItem
 0047 stub CheckRadioButton
 0048 stub ChildWindowFromPoint
@@ -162,10 +162,10 @@ base	1
 0157 stub DrawFrameControl
 0158 stub DrawIcon
 0159 stub DrawIconEx
-0160 stub DrawMenuBar
+0160 stdcall DrawMenuBar(long) DrawMenuBar
 0161 stub DrawStateA
 0162 stub DrawStateW
-0163 stub DrawTextA
+0163 stdcall DrawTextA(long ptr long ptr long) DrawText
 0164 stub DrawTextExA
 0165 stub DrawTextExW
 0166 stub DrawTextW
@@ -221,7 +221,7 @@ base	1
 0216 stub GetClassNameA
 0217 stub GetClassNameW
 0218 stub GetClassWord
-0219 stub GetClientRect
+0219 stdcall GetClientRect(long long) GetClientRect
 0220 stub GetClipCursor
 0221 stub GetClipboardData
 0222 stub GetClipboardFormatNameA
@@ -231,7 +231,7 @@ base	1
 0226 stub GetCursor
 0227 stub GetCursorInfo
 0228 stub GetCursorPos
-0229 stub GetDC
+0229 stdcall GetDC(long) GetDC
 0230 stub GetDCEx
 0231 stub GetDesktopWindow
 0232 stub GetDialogBaseUnits
@@ -258,7 +258,7 @@ base	1
 0253 stub GetKeyboardState
 0254 stub GetKeyboardType
 0255 stub GetLastActivePopup
-0256 stub GetMenu
+0256 stdcall GetMenu(long) GetMenu
 0257 stub GetMenuCheckMarkDimensions
 0258 stub GetMenuContextHelpId
 0259 stub GetMenuDefaultItem
@@ -293,7 +293,7 @@ base	1
 0288 	stdcall GetSysColor(long) GetSysColor
 0289 stub GetSysColorBrush
 0290 stub GetSystemMenu
-0291 stub GetSystemMetrics
+0291 stdcall GetSystemMetrics(long) GetSystemMetrics
 0292 stub GetTabbedTextExtentA
 0293 stub GetTabbedTextExtentW
 0294 stub GetThreadDesktop
@@ -305,7 +305,7 @@ base	1
 0300 stub GetUserObjectSecurity
 0301 stub GetWindow
 0302 stub GetWindowContextHelpId
-0303 stub GetWindowDC
+0303 stdcall GetWindowDC(long) GetWindowDC
 0304 stub GetWindowLongA
 0305 stub GetWindowLongW
 0306 stub GetWindowPlacement
@@ -346,7 +346,7 @@ base	1
 0341 stub IsDialogMessageA
 0342 stub IsDialogMessageW
 0343 stub IsDlgButtonChecked
-0344 stub IsIconic
+0344 stdcall IsIconic(long) IsIconic
 0345 stub IsMenu
 0346 stub IsRectEmpty
 0347 stub IsWindow
@@ -356,16 +356,17 @@ base	1
 0351 stub IsZoomed
 0352 stub KillSystemTimer
 0353 stub KillTimer
-0354 	stdcall LoadAcceleratorsA(long ptr) LoadAccelerators
+0354 	stdcall LoadAcceleratorsA(long ptr) LoadAccelerators32
 0355 stub LoadAcceleratorsW
-0356 	stdcall LoadBitmapA(long ptr) LoadBitmap
+0356 	stdcall LoadBitmapA(long ptr) LoadBitmapA32
+0357 	stdcall LoadBitmapW(long ptr) LoadBitmapW32
 0357 stub LoadBitmapW
 0358 	stdcall LoadCursorA(long ptr) LoadCursor
 0359 stub LoadCursorFromFileA
 0360 stub LoadCursorFromFileW
 0361 stub LoadCursorW
-0362 	stdcall LoadIconA(long ptr) LoadIcon
-0363 stub LoadIconW
+0362 	stdcall LoadIconA(long ptr) LoadIconA32
+0363 stdcall LoadIconW(long ptr) LoadIconW32
 0364 stub LoadImageA
 0365 stub LoadImageW
 0366 stub LoadKeyboardLayoutA
@@ -376,8 +377,8 @@ base	1
 0371 stub LoadMenuIndirectW
 0372 stub LoadMenuW
 0373 stub LoadRemoteFonts
-0374 	stdcall LoadStringA(long long ptr long) LoadString
-0375 stub LoadStringW
+0374 	stdcall LoadStringA(long long ptr long) LoadStringA32
+0375 	stdcall LoadStringW(long long ptr long) LoadString32
 0376 stub LockWindowStation
 0377 stub LockWindowUpdate
 0378 stub LookupIconIdFromDirectory
@@ -422,7 +423,7 @@ base	1
 0417 stub PlaySoundEvent
 0418 stub PostMessageA
 0419 stub PostMessageW
-0420 stub PostQuitMessage
+0420 stdcall PostQuitMessage(long) PostQuitMessage
 0421 stub PostThreadMessageA
 0422 stub PostThreadMessageW
 0423 stub PtInRect
@@ -441,7 +442,7 @@ base	1
 0436 stub RegisterWindowMessageA
 0437 stub RegisterWindowMessageW
 0438 stub ReleaseCapture
-0439 stub ReleaseDC
+0439 stdcall ReleaseDC(long long) ReleaseDC
 0440 stub RemoveMenu
 0441 stub RemovePropA
 0442 stub RemovePropW
@@ -531,7 +532,7 @@ base	1
 0526 stub SetWindowsHookExW
 0527 stub SetWindowsHookW
 0528 stub ShowCaret
-0529 stub ShowCursor
+0529 stdcall ShowCursor(long) ShowCursor
 0530 stub ShowOwnedPopups
 0531 stub ShowScrollBar
 0532 stub ShowStartGlass
@@ -553,11 +554,11 @@ base	1
 0548 stub TrackPopupMenu
 0549 stub TrackPopupMenuEx
 0550 stub TranslateAccelerator
-0551 stub TranslateAcceleratorA
+0551 stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator
 0552 stub TranslateAcceleratorW
 0553 stub TranslateCharsetInfo
 0554 stub TranslateMDISysAccel
-0555 stub TranslateMessage
+0555 stdcall TranslateMessage(ptr) USER32_TranslateMessage
 0556 stub UnhookWindowsHook
 0557 stub UnhookWindowsHookEx
 0558 stub UnionRect

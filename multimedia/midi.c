@@ -296,7 +296,6 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
     if (dwFlags & MCI_OPEN_ELEMENT) {
 		lpstrElementName = (LPSTR)PTR_SEG_TO_LIN(lpParms->lpstrElementName);
 		dprintf_midi(stddeb, "MIDI_mciOpen // MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
-/*		dprintf_midi(stddeb, "MIDI_mciOpen // cdw='%s'\n", DOS_GetCurrentDir(DOS_GetDefaultDrive())); */
 		if (strlen(lpstrElementName) > 0) {
 			strcpy(str, lpstrElementName);
 			AnsiUpper(str);

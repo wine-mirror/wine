@@ -146,7 +146,7 @@ static ATOM ATOM_AddAtom( WORD selector, SEGPTR name )
     {
 	entryPtr = ATOM_MakePtr( selector, entry );
 	if ((entryPtr->length == len) && 
-	    (!strncasecmp( entryPtr->str, str, len )))
+	    (!lstrncmpi( entryPtr->str, str, len )))
 	{
 	    entryPtr->refCount++;
 	    return HANDLETOATOM( entry );
@@ -227,7 +227,7 @@ static ATOM ATOM_FindAtom( WORD selector, SEGPTR name )
     {
 	ATOMENTRY * entryPtr = ATOM_MakePtr( selector, entry );
 	if ((entryPtr->length == len) && 
-	    (!strncasecmp( entryPtr->str, str, len )))
+	    (!lstrncmpi( entryPtr->str, str, len )))
 	    return HANDLETOATOM( entry );
 	entry = entryPtr->next;
     }

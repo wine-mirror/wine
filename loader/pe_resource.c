@@ -72,7 +72,7 @@ find_resource(char *root, struct PE_Resource_Directory *resource,
 			memset(res_name, 0, sizeof(res_name));
 			my_wcstombs(res_name, name->NameString, name->Length);
 			dprintf_resource(stddeb, "\tPE_findresource: name %s\n", res_name);
-			if (strcasecmp(res_name, resource_name) == 0) 
+			if (lstrcmpi(res_name, resource_name) == 0) 
 				return find_lang(root, (struct PE_Resource_Directory *) (root + (type_dir->OffsetToData & ~IMAGE_RESOURCE_DATA_IS_DIRECTORY)), r);
 			type_dir++;
 		}
@@ -107,7 +107,7 @@ find_type(struct PE_Resource_Directory *resource, LPSTR resource_name,
 			my_wcstombs(res_name, name->NameString, name->Length);
 			dprintf_resource(stddeb, "PE_findtype: type %s\n", 
 				res_name);
-			if (strcasecmp(res_name, type_name) == 0) 
+			if (lstrcmpi(res_name, type_name) == 0) 
 				return find_resource(root, (struct PE_Resource_Directory *) (root + (type_dir->OffsetToData & ~IMAGE_RESOURCE_DATA_IS_DIRECTORY)), resource_name, r);
 			type_dir++;
 		}

@@ -8,12 +8,16 @@ C_SRCS = \
 	environment.c \
 	error.c \
 	file.c \
+	heap.c \
 	init.c \
 	memory.c \
+	newfns.c \
 	object_mgt.c \
 	process.c \
+	resource.c \
 	thread.c \
-	time.c
+	time.c \
+	winprocs.c
 
 all: $(MODULE).o
 

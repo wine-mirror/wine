@@ -58,13 +58,33 @@ static TSecHeader *is_loaded (char *FileName)
     TProfile *p = Base;
     
     while (p){
-	if (!strcasecmp (FileName, p->FileName)){
+	if (!lstrcmpi( FileName, p->FileName)){
 	    Current = p;
 	    return p->Section;
 	}
 	p = p->link;
     }
     return 0;
+}
+
+#define WIN_INI WinIniFileName()
+
+static char *WinIniFileName(void)
+{
+    static char *name = NULL;
+    int len;
+    const char *unixName;
+
+    if (name) return name;
+
+    len = GetWindowsDirectory( NULL, 0 ) + 9;
+    name = xmalloc( len );
+    GetWindowsDirectory( name, len );
+    strcat( name, "/win.ini" );
+    if (!(unixName = DOSFS_GetUnixFileName( name, TRUE ))) return NULL;
+    free( name );
+    name = strdup( unixName );
+    return name;
 }
 
 static char *GetIniFileName(char *name, char *dir)
@@ -81,7 +101,7 @@ static char *GetIniFileName(char *name, char *dir)
 	}
 	else
 	  strcpy(temp, name);
-	return DOS_GetUnixFileName(temp);
+	return DOSFS_GetUnixFileName(temp,TRUE);
 }
 
 static TSecHeader *load (char *filename, char **pfullname)
@@ -103,26 +123,27 @@ static TSecHeader *load (char *filename, char **pfullname)
 
     /* First try it as is */
     file = GetIniFileName(filename, "");
-    f = fopen(file, "r");
-    
-    if (f == NULL) {
-
+    if (!file || !(f = fopen(file, "r")))
+    {
       if  ((purefilename = strrchr( filename, '\\' )))
 	purefilename++; 
       else if  ((purefilename = strrchr( filename, '/' ))) 
 	purefilename++; 
       else
 	purefilename = filename;
-      ToUnix(purefilename);
 
       /* Now try the Windows directory */
       GetWindowsDirectory(path, sizeof(path));
-      file = GetIniFileName(purefilename, path);
-      dprintf_profile(stddeb,"Trying to load  in windows directory file %s\n",
-		      file);
-      f = fopen(file, "r");
-    
-      if (f == NULL) { 	/* Try the path of the current executable */
+      if ((file = GetIniFileName(purefilename, path)))
+      {
+          dprintf_profile(stddeb,"Trying to load  in windows directory file %s\n",
+                          file);
+          f = fopen(file, "r");
+      }
+      else f = NULL;
+
+      if (f == NULL)
+      { 	/* Try the path of the current executable */
     
 	if (GetCurrentTask())
 	{
@@ -131,30 +152,34 @@ static TSecHeader *load (char *filename, char **pfullname)
 	    if ((p = strrchr( path, '\\' )))
 	    {
 		p[0] = '\0'; /* Remove trailing slash */
-		file = GetIniFileName(purefilename, path);
-		dprintf_profile(stddeb,
-				"Trying to load in current directory%s\n",
-				file);
-		f = fopen(file, "r");
+		if ((file = GetIniFileName(purefilename, path)))
+                {
+                    dprintf_profile(stddeb,
+                                    "Trying to load in current directory%s\n",
+                                    file);
+                    f = fopen(file, "r");
+                }
 	    }
 	}
     }
       if (f == NULL) { 	/* And now in $HOME/.wine */
 	
-	strcpy(file,getenv("HOME"));
-	strcat(file, "/.wine/");
-	strcat(file, purefilename);
-	dprintf_profile(stddeb,"Trying to load in user-directory %s\n", file);
+	strcpy(path,getenv("HOME"));
+	strcat(path, "/.wine/");
+	strcat(path, purefilename);
+	dprintf_profile(stddeb,"Trying to load in user-directory %s\n", path);
+        file = path;
 	f = fopen(file, "r");
       }
       
       if (f == NULL) {
 	/* FIXED: we ought to create it now (in which directory?) */
 	/* lets do it in ~/.wine */
-	strcpy(file,getenv("HOME"));
-	strcat(file, "/.wine/");
-	strcat(file, purefilename);
-	dprintf_profile(stddeb,"Creating %s\n", file);
+	strcpy(path,getenv("HOME"));
+	strcat(path, "/.wine/");
+	strcat(path, purefilename);
+	dprintf_profile(stddeb,"Creating %s\n", path);
+        file = path;
 	f = fopen(file, "w+");
     if (f == NULL) {
 	fprintf(stderr, "profile.c: load() can't find file %s\n", filename);
@@ -163,7 +188,7 @@ static TSecHeader *load (char *filename, char **pfullname)
       }
     }
     
-    *pfullname = strdup(file);
+    *pfullname = xstrdup(file);
     dprintf_profile(stddeb,"Loading %s\n", file);
 
     firstbrace = TRUE;
@@ -205,7 +230,7 @@ static TSecHeader *load (char *filename, char **pfullname)
 	    *lastnonspc = 0;
 	    if (!strlen(CharBuffer))
 	    	fprintf(stderr, "warning: empty section name in ini file\n");
-	    SecHeader->AppName = strdup (CharBuffer);
+	    SecHeader->AppName = xstrdup (CharBuffer);
 	    dprintf_profile(stddeb,"%s: section %s\n", file, CharBuffer);
 	    firstbrace = FALSE;
 	} else if (SecHeader) {
@@ -232,7 +257,7 @@ static TSecHeader *load (char *filename, char **pfullname)
 	    	fprintf(stderr, "warning: empty key name in ini file\n");
 	    SecHeader->Keys = (TKeys *) xmalloc (sizeof (TKeys));
 	    SecHeader->Keys->link = temp;
-	    SecHeader->Keys->KeyName = strdup (CharBuffer);
+	    SecHeader->Keys->KeyName = xstrdup (CharBuffer);
 
 	    dprintf_profile(stddeb,"%s:   key %s\n", file, CharBuffer);
 	    
@@ -251,7 +276,7 @@ static TSecHeader *load (char *filename, char **pfullname)
 		}
 	    } while(bufsize < STRSIZE-1);
 	    *lastnonspc = 0;
-	    SecHeader->Keys->Value = strdup (CharBuffer);
+	    SecHeader->Keys->Value = xstrdup (CharBuffer);
 	    dprintf_profile (stddeb, "[%s] (%s)=%s\n", SecHeader->AppName,
 			     SecHeader->Keys->KeyName, SecHeader->Keys->Value);
 	    if (c == ';') {
@@ -275,8 +300,8 @@ static void new_key (TSecHeader *section, char *KeyName, char *Value)
     TKeys *key;
     
     key = (TKeys *) xmalloc (sizeof (TKeys));
-    key->KeyName = strdup (KeyName);
-    key->Value   = strdup (Value);
+    key->KeyName = xstrdup (KeyName);
+    key->Value   = xstrdup (Value);
     key->link = section->Keys;
     section->Keys = key;
 }
@@ -297,7 +322,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
     if (!(section = is_loaded (FileName))){
 	New = (TProfile *) xmalloc (sizeof (TProfile));
 	New->link = Base;
-	New->FileName = strdup (FileName);
+	New->FileName = xstrdup (FileName);
 	New->Section = load (FileName, &New->FullName);
 	New->changed = FALSE;
 	Base = New;
@@ -307,7 +332,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 
     /* Start search */
     for (; section; section = section->link){
-	if (strcasecmp (section->AppName, AppName))
+	if (lstrcmpi(section->AppName, AppName))
 	    continue;
 
 	/* If no key value given, then list all the keys */
@@ -333,11 +358,11 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	}
 	for (key = section->Keys; key; key = key->link){
 	    int slen;
-	    if (strcasecmp (key->KeyName, KeyName))
+	    if (lstrcmpi(key->KeyName, KeyName))
 		continue;
 	    if (set){
 		free (key->Value);
-		key->Value = strdup (Default ? Default : "");
+		key->Value = xstrdup (Default ? Default : "");
 		Current->changed=TRUE;
 		return 1;
 	    }
@@ -362,7 +387,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
     /* Non existent section */
     if (set){
 	section = (TSecHeader *) xmalloc (sizeof (TSecHeader));
-	section->AppName = strdup (AppName);
+	section->AppName = xstrdup (AppName);
 	section->Keys = 0;
 	new_key (section, KeyName, Default);
 	section->link = Current->Section;
@@ -376,9 +401,9 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
     return 1;
 }
 
-short GetPrivateProfileString (LPSTR AppName, LPSTR KeyName,
-			       LPSTR Default, LPSTR ReturnedString,
-			       short Size, LPSTR FileName)
+short GetPrivateProfileString (LPCSTR AppName, LPCSTR KeyName,
+			       LPCSTR Default, LPSTR ReturnedString,
+			       short Size, LPCSTR FileName)
 {
     int v;
 
@@ -391,15 +416,15 @@ short GetPrivateProfileString (LPSTR AppName, LPSTR KeyName,
 	return Size - v;
 }
 
-int GetProfileString (LPSTR AppName, LPSTR KeyName, LPSTR Default, 
+int GetProfileString (LPCSTR AppName, LPCSTR KeyName, LPCSTR Default, 
 		      LPSTR ReturnedString, int Size)
 {
     return GetPrivateProfileString (AppName, KeyName, Default,
-				    ReturnedString, Size, WIN_INI);
+				    ReturnedString, Size, WIN_INI );
 }
 
-WORD GetPrivateProfileInt (LPSTR AppName, LPSTR KeyName, short Default,
-			   LPSTR File)
+WORD GetPrivateProfileInt (LPCSTR AppName, LPCSTR KeyName, short Default,
+			   LPCSTR File)
 {
     static char IntBuf[10];
     static char buf[10];
@@ -408,14 +433,14 @@ WORD GetPrivateProfileInt (LPSTR AppName, LPSTR KeyName, short Default,
     
     /* Check the exact semantic with the SDK */
     GetPrivateProfileString (AppName, KeyName, buf, IntBuf, 10, File);
-    if (!strcasecmp (IntBuf, "true"))
+    if (!lstrcmpi(IntBuf, "true"))
 	return 1;
-    if (!strcasecmp (IntBuf, "yes"))
+    if (!lstrcmpi(IntBuf, "yes"))
 	return 1;
     return strtoul( IntBuf, NULL, 0 );
 }
 
-WORD GetProfileInt (LPSTR AppName, LPSTR KeyName, int Default)
+WORD GetProfileInt (LPCSTR AppName, LPCSTR KeyName, int Default)
 {
     return GetPrivateProfileInt (AppName, KeyName, Default, WIN_INI);
 }

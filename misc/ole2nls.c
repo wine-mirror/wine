@@ -460,7 +460,7 @@ int CompareStringA(DWORD lcid, DWORD fdwStyle,
 	l2 = (l2==-1)?strlen(s2):l2;
 	len = l1<l2 ? l1:l2;
 	ret = (fdwStyle & NORM_IGNORECASE) ?
-		strncasecmp(s1,s2,len)	:
+		lstrncmpi(s1,s2,len)	:
 		strncmp(s1,s2,len);
 	/* not equal, return 1 or 3 */
 	if(ret!=0)return ret+2;

@@ -66,7 +66,7 @@ static int FindHash(LPCSTR str)	   /* ignore str case */
       deleted=hash1;
       break;
     default :			   /* non empty atom entry */
-      if (  strcasecmp( OFS2AtomStr(atom_ofs) , str) == 0)
+      if (lstrcmpi( OFS2AtomStr(atom_ofs) , str) == 0)
 	 return hash1;		   /* found string in atom table */
   }
   hash2%= DDE_ATOMS-1 ;		   /* hash2=0..(DDE_ATOMS-2) */
@@ -92,7 +92,7 @@ static int FindHash(LPCSTR str)	   /* ignore str case */
 	    deleted= i;
 	 break;
        default :		   /* nonempty atom entry */
-	 if (  strcasecmp( OFS2AtomStr(atom_ofs) , str) == 0)
+	 if (lstrcmpi( OFS2AtomStr(atom_ofs) , str) == 0)
 	    return i;	   /* found string in atom table */
      }
   }

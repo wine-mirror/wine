@@ -434,6 +434,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
             if (GetActiveWindow()) swpflags |= SWP_NOACTIVATE;
             /* fall through */
 	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
+	case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
 	case SW_RESTORE:
 	    swpflags |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
 

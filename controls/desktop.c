@@ -22,18 +22,19 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
  *
  * Load a bitmap from a file. Used by SetDeskWallPaper().
  */
-static HBITMAP DESKTOP_LoadBitmap( HDC hdc, char *filename )
+static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
 {
     BITMAPFILEHEADER *fileHeader;
     BITMAPINFO *bitmapInfo;
     HBITMAP hbitmap;
-    char *unixFileName, *buffer;
+    char *buffer;
+    const char *unixFileName;
     int file;
     long size;
 
       /* Read all the file into memory */
 
-    if (!(unixFileName = DOS_GetUnixFileName( filename ))) return 0;
+    if (!(unixFileName = DOSFS_GetUnixFileName( filename, TRUE ))) return 0;
     if ((file = open( unixFileName, O_RDONLY )) == -1) return 0;
     size = lseek( file, 0, SEEK_END );
     if (!(buffer = (char *)malloc( size )))
@@ -159,7 +160,7 @@ BOOL SetDeskPattern(void)
 /***********************************************************************
  *           SetDeskWallPaper   (USER.285)
  */
-BOOL SetDeskWallPaper( LPSTR filename )
+BOOL SetDeskWallPaper( LPCSTR filename )
 {
     HBITMAP hbitmap;
     HDC hdc;

@@ -63,6 +63,8 @@ typedef struct tagMESSAGEQUEUE
 #pragma pack(4)
 #endif
 
+extern DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
+
 extern void MSG_IncPaintCount( HANDLE hQueue );
 extern void MSG_DecPaintCount( HANDLE hQueue );
 extern void MSG_IncTimerCount( HANDLE hQueue );

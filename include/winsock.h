@@ -7,6 +7,7 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <fcntl.h>
@@ -26,12 +27,14 @@ extern int PASCAL FAR __WSAFDIsSet(SOCKET, fd_set FAR *);
 /*
  * Internet address (old style... should be updated)
  */
+#ifdef WS_USE_OLD_STYLE
 #define s_addr  S_un.S_addr	/* can be used for most tcp & ip code */
 #define s_host  S_un.S_un_b.s_b2	/* host on imp */
 #define s_net   S_un.S_un_b.s_b1	/* network */
 #define s_imp   S_un.S_un_w.s_w2	/* imp */
 #define s_impno S_un.S_un_b.s_b4	/* imp # */
 #define s_lh    S_un.S_un_b.s_b3	/* logical host */
+#endif
 
 #define WSADESCRIPTION_LEN      256
 #define WSASYS_STATUS_LEN       128
@@ -60,23 +63,6 @@ typedef WSADATA FAR *LPWSADATA;
  */
 #ifndef SO_DONTLINGER
 #define SO_DONTLINGER   (u_int)(~SO_LINGER)
-#endif
-
-#ifndef _SYS_SOCKET_H_
-#ifndef _sys_socket_h
-#ifndef _NET_TRANSPORT_SOCKET_H
-#ifndef _NET_SOCKET_H
-/*
- * Structure used by kernel to pass protocol
- * information in raw sockets.
- */
-struct sockproto {
-        u_short sp_family;              /* address family */
-        u_short sp_protocol;            /* protocol */
-};
-#endif
-#endif
-#endif
 #endif
 
 /*

@@ -48,6 +48,7 @@ typedef DWORD SEGPTR;
 #endif
 typedef LONG LPARAM;
 typedef LONG LRESULT;
+typedef INT HFILE;
 typedef DWORD HHOOK;
 typedef char *LPSTR;
 typedef const char *LPCSTR;
@@ -89,6 +90,8 @@ DECLARE_HANDLE(HRSRC);
 DECLARE_HANDLE(HTASK);
 DECLARE_HANDLE(HWND);
 DECLARE_HANDLE(LOCALHANDLE);
+
+typedef HGLOBAL GLOBALHANDLE;
 
 #ifdef WINELIB
 typedef long (*FARPROC)();

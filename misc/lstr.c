@@ -66,17 +66,36 @@ SEGPTR lstrcat( SEGPTR target, SEGPTR source )
 /* USER.430 */
 INT lstrcmp(LPCSTR str1,LPCSTR str2)
 {
-  return strcmp(str1,str2);
+    return strcmp( str1, str2 );
 }
 
 /* USER.471 */
-INT lstrcmpi(LPCSTR str1,LPCSTR str2)
+INT lstrcmpi( LPCSTR str1, LPCSTR str2 )
 {
-  int i;
-  i=0;
-  while((toupper(str1[i])==toupper(str2[i]))&&(str1[i]!=0))
-    i++;
-  return toupper(str1[i])-toupper(str2[i]);
+    INT res;
+
+    while (*str1)
+    {
+        if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
+        str1++;
+        str2++;
+    }
+    return toupper(*str1) - toupper(*str2);
+}
+
+/* Not a Windows API*/
+INT lstrncmpi( LPCSTR str1, LPCSTR str2, int n )
+{
+    INT res;
+
+    if (!n) return 0;
+    while ((--n > 0) && *str1)
+    {
+        if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
+        str1++;
+        str2++;
+    }
+    return toupper(*str1) - toupper(*str2);
 }
 
 /* KERNEL.88 */
@@ -87,13 +106,13 @@ SEGPTR lstrcpy( SEGPTR target, SEGPTR source )
 }
 
 /* KERNEL.353 32-bit version*/
-char *lstrcpyn(char *dst, char *src, int n)
+char *lstrcpyn( char *dst, const char *src, int n )
 {
     char *tmp = dst;
     while(n-- > 1 && *src)
-    	*dst++ = *src++;
-    *dst = 0;
-    return tmp;
+    	*tmp++ = *src++;
+    *tmp = 0;
+    return dst;
 }
 
 /* KERNEL.353 16-bit version*/

@@ -1,3 +1,16 @@
+/*********************************************************************
+ *                                                                   *
+ *  rolex.c: Windows clock application for WINE (by Jim Peterson)    *
+ *                                                                   *
+ *  This is a translation of a Turbo Pascal OWL application I made   *
+ *  once, so it's a little flaky (tons of globals, functions that    *
+ *  could have been in-lined, etc.).  The source code should easily  *
+ *  compile with a standard Win32 C compiler.                        *
+ *                                                                   *
+ *  To try it out, type 'make rolex'.                                *
+ *                                                                   *
+ *********************************************************************/
+
 #include <math.h>
 #include <string.h>
 #include "windows.h"

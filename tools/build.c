@@ -789,6 +789,7 @@ static void BuildSpec32Files( char *specname )
         case TYPE_CDECL:
 	    varargs=0;
             argc=strlen(fdp->arg_types);
+#if 0
 	    if(odp->type == TYPE_STDCALL)
 	    {
 		/* Output a function prototype with stdcall attribute */
@@ -810,22 +811,34 @@ static void BuildSpec32Files( char *specname )
 		}
 		printf( ") __attribute((stdcall));\n" );
 	    }
-
+#endif
             printf( "void %s_%d(", UpperDLLName, i);
             for(argno=0;argno<argc;argno++)
             {
+	      if(odp->type == TYPE_STDCALL) {
+                switch(fdp->arg_types[argno])
+                {
+                case 'p': printf( "void *");break;
+                case 'l': printf( "int ");break;
+		default:
+                    fprintf(stderr, "Not supported argument type %c\n",
+                            fdp->arg_types[argno]);
+                    exit(1);
+                }
+	      } else {
                 switch(fdp->arg_types[argno])
                 {
                 case 'p': printf( "void *");break;
                 case 'l': printf( "int ");break;
                 case '.': printf( "... ");varargs=argno;break;
-                default:
+		default:
                     fprintf(stderr, "Not supported argument type %c\n",
                             fdp->arg_types[argno]);
                     exit(1);
                 }
-                if(fdp->arg_types[argno]!='.') putchar( 'a'+argno );
-                if (argno!=argc-1) putchar( ',' );
+	      }
+              if(fdp->arg_types[argno]!='.') putchar( 'a'+argno );
+              if (argno!=argc-1) putchar( ',' );
             }
             printf( ")" );
             printf( "\n{\n" );
@@ -849,7 +862,14 @@ static void BuildSpec32Files( char *specname )
 		else putchar('a'+argno);
                 if (argno!=argc-1) putchar(',');
             }
-            printf( ");\n}\n\n");
+            printf( ");\n");
+	    if(odp->type == TYPE_STDCALL) {
+	    	printf( "\t__asm__ __volatile__ (\"movl %%ebp,%%esp\");\n");
+	    	printf( "\t__asm__ __volatile__ (\"popl %%ebp\");\n");
+	    	printf( "\t__asm__ __volatile__ (\"addl $%d,%%esp\");\n", argc*4+4);
+	    	printf( "\t__asm__ __volatile__ (\"jmp -%d(%%esp)\");\n", argc*4+4);
+	    }
+	    printf( "}\n\n");
             break;
         case TYPE_RETURN:
             printf( "void %s_%d()\n{\n\t", UpperDLLName, i);

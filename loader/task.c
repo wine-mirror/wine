@@ -10,7 +10,9 @@
 #include "windows.h"
 #include "task.h"
 #include "callback.h"
+#include "directory.h"
 #include "dos_fs.h"
+#include "file.h"
 #include "debugger.h"
 #include "global.h"
 #include "instance.h"
@@ -75,11 +77,10 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 {
     static const char program_name[] = "KRNL386.EXE";
     char **e, *p;
-    int initial_size, size;
+    int initial_size, size, i, winpathlen, windirlen, sysdirlen;
     HANDLE handle;
 
     extern char **environ;
-    extern char WindowsDirectory[], SystemDirectory[];
 
     /* DOS environment format:
      * ASCIIZ   string 1
@@ -95,20 +96,27 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 
     /* First compute the size of the fixed part of the environment */
 
-    initial_size = 5 +                            /* PATH= */
-                   strlen(WindowsPath) + 1 +      /* path value */
-                   7 +                            /* windir= */
-                   strlen(WindowsDirectory) + 1 + /* windir value */
-                   1 +                            /* BYTE 0 at end */
-                   sizeof(WORD) +                 /* WORD 1 */
-                   strlen(SystemDirectory) + 1 +  /* program directory */
-                   strlen(program_name) + 1;      /* program name */
+    for (i = winpathlen = 0; ; i++)
+    {
+        int len = DIR_GetDosPath( i, NULL, 0 );
+        if (!len) break;
+        winpathlen += len + 1;
+    }
+    if (!winpathlen) winpathlen = 1;
+    windirlen  = GetWindowsDirectory( NULL, 0 ) + 1;
+    sysdirlen  = GetSystemDirectory( NULL, 0 ) + 1;
+    initial_size = 5 + winpathlen +           /* PATH=xxxx */
+                   7 + windirlen +            /* windir=xxxx */
+                   1 +                        /* BYTE 0 at end */
+                   sizeof(WORD) +             /* WORD 1 */
+                   sysdirlen +                /* program directory */
+                   strlen(program_name) + 1;  /* program name */
 
     /* Compute the total size of the Unix environment (except path) */
 
     for (e = environ, size = initial_size; *e; e++)
     {
-	if (strncasecmp(*e, "path=", 5))
+	if (lstrncmpi(*e, "path=", 5))
 	{
             int len = strlen(*e) + 1;
             if (size + len >= 32767)
@@ -130,7 +138,7 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 
     for (e = environ, size = initial_size; *e; e++)
     {
-	if (strncasecmp(*e, "path=", 5))
+	if (lstrncmpi(*e, "path=", 5))
 	{
             int len = strlen(*e) + 1;
             if (size + len >= 32767) break;
@@ -143,19 +151,25 @@ static HANDLE TASK_CreateDOSEnvironment(void)
     /* Now add the path and Windows directory */
 
     strcpy( p, "PATH=" );
-    strcat( p, WindowsPath );
-    p += strlen(p) + 1;
+    for (i = 0, p += 5; ; i++)
+    {
+        if (!DIR_GetDosPath( i, p, winpathlen )) break;
+        p += strlen(p);
+        *p++ = ';';
+    }
+    if (p[-1] == ';') p[-1] = '\0';
+    else p++;
 
     strcpy( p, "windir=" );
-    strcat( p, WindowsDirectory );
-    p += strlen(p) + 1;
+    GetWindowsDirectory( p + 7, windirlen );
+    p += 7 + windirlen;
 
     /* Now add the program name */
 
     *p++ = '\0';
     *(WORD *)p = 1;
     p += sizeof(WORD);
-    strcpy( p, SystemDirectory );
+    GetSystemDirectory( p, sysdirlen );
     strcat( p, "\\" );
     strcat( p, program_name );
 
@@ -247,6 +261,7 @@ static void TASK_CreateThunks( HGLOBAL handle, WORD offset, WORD count )
  *
  * Allocate a thunk for MakeProcInstance().
  */
+#ifndef WINELIB32
 static SEGPTR TASK_AllocThunk( HTASK hTask )
 {
     TDB *pTask;
@@ -275,6 +290,7 @@ static SEGPTR TASK_AllocThunk( HTASK hTask )
     pThunk->free = *(WORD *)((BYTE *)pThunk + pThunk->free);
     return MAKELONG( base, sel );
 }
+#endif
 
 
 /***********************************************************************
@@ -282,6 +298,7 @@ static SEGPTR TASK_AllocThunk( HTASK hTask )
  *
  * Free a MakeProcInstance() thunk.
  */
+#ifndef WINELIB32
 static BOOL TASK_FreeThunk( HTASK hTask, SEGPTR thunk )
 {
     TDB *pTask;
@@ -303,6 +320,7 @@ static BOOL TASK_FreeThunk( HTASK hTask, SEGPTR thunk )
     pThunk->free = LOWORD(thunk) - base;
     return TRUE;
 }
+#endif
 
 
 /***********************************************************************
@@ -335,10 +353,7 @@ static void TASK_CallToStart(void)
     cs_reg = pSegTable[pModule->cs - 1].selector;
     ip_reg = pModule->ip;
     ds_reg = pSegTable[pModule->dgroup - 1].selector;
-#ifndef WINELIB
-/* JBP: I doubt a CallTo16_regs_ is possible in libwine.a, and IF1632 is not
- *      allowed.
- */
+
     IF1632_Saved16_ss = pTask->ss;
     IF1632_Saved16_sp = pTask->sp;
     dprintf_task( stddeb, "Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
@@ -349,11 +364,7 @@ static void TASK_CallToStart(void)
                    pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
                    pModule->stack_size /*bx*/, pModule->heap_size /*cx*/,
                    0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
-#else
-    fprintf(stderr, "JBP: Ignoring main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
-                 cs_reg, ip_reg, ds_reg,
-                 pTask->ss, pTask->sp);
-#endif
+
     /* This should never return */
     fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
     TASK_KillCurrentTask( 1 );
@@ -426,12 +437,13 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     pTask->hParent       = hCurrentTask;
 #ifdef WINELIB
     pTask->curdrive      = 'C' - 'A' + 0x80;
+    strcpy( pTask->curdir, "\\" );
 #else
     pTask->curdrive      = filename[0] - 'A' + 0x80;
+    strcpy( pTask->curdir, filename+2 );
 #endif
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
-    strcpy( pTask->curdir, filename+2 );
 
       /* Create the thunks block */
 
@@ -442,29 +454,34 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     name = MODULE_GetModuleName( hModule );
     strncpy( pTask->module_name, name, sizeof(pTask->module_name) );
 
+      /* Allocate a selector for the PDB */
+
+    pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB),
+                                      hModule, FALSE, FALSE, FALSE, NULL );
+
       /* Fill the PDB */
 
     pTask->pdb.int20 = 0x20cd;
+#ifndef WINELIB
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
     *(DWORD *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
-#ifndef WINELIB
     pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
     pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
     pTask->pdb.savedint24 = INT_GetHandler( 0x24 );
+    pTask->pdb.fileHandlesPtr = (SEGPTR)MAKELONG( 0x18,
+                                              GlobalHandleToSel(pTask->hPDB) );
+#else
+    pTask->pdb.fileHandlesPtr = pTask->pdb.fileHandles;
 #endif
-    pTask->pdb.environment = hEnvironment;
-    strncpy( pTask->pdb.cmdLine + 1, cmdLine, 126 );
-    pTask->pdb.cmdLine[127] = '\0';
+    memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
+    pTask->pdb.environment    = hEnvironment;
+    pTask->pdb.nbFiles        = 20;
+    lstrcpyn( pTask->pdb.cmdLine + 1, cmdLine, 127 );
     pTask->pdb.cmdLine[0] = strlen( pTask->pdb.cmdLine + 1 );
 
       /* Get the compatibility flags */
 
     pTask->compat_flags = GetProfileInt( name, "Compatibility", 0 );
-
-      /* Allocate a selector for the PDB */
-
-    pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB),
-                                      hModule, FALSE, FALSE, FALSE, NULL );
 
       /* Allocate a code segment alias for the TDB */
 
@@ -560,6 +577,10 @@ static void TASK_DeleteTask( HTASK hTask )
     TDB *pTask;
 
     if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+
+    /* Close all open files of this task */
+
+    FILE_CloseAllFiles( pTask->hPDB );
 
       /* Free the task module */
 
@@ -718,7 +739,11 @@ void TASK_Reschedule(void)
 /***********************************************************************
  *           InitTask  (KERNEL.91)
  */
+#ifdef WINELIB
+void InitTask(void)
+#else
 void InitTask( struct sigcontext_struct context )
+#endif
 {
     static int firstTask = 1;
     TDB *pTask;
@@ -727,7 +752,9 @@ void InitTask( struct sigcontext_struct context )
     INSTANCEDATA *pinstance;
     LONG stacklow, stackhi;
 
+#ifndef WINELIB
     EAX_reg(&context) = 0;
+#endif
     if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return;
     if (!(pModule = (NE_MODULE *)GlobalLock( pTask->hModule ))) return;
 
@@ -782,7 +809,7 @@ void InitTask( struct sigcontext_struct context )
     pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
     pinstance->stackbottom = stackhi; /* yup, that's right. Confused me too. */
     pinstance->stacktop    = stacklow; 
-#ifndef WINELIB /* FIXME: JBP: IF1632 not allowed in libwine.a */
+#ifndef WINELIB
     pinstance->stackmin    = IF1632_Saved16_sp;
 #endif
 }
@@ -857,7 +884,7 @@ HTASK LockCurrentTask( BOOL bLock )
 /***********************************************************************
  *           IsTaskLocked  (KERNEL.122)
  */
-WORD IsTaskLocked(void)
+HTASK IsTaskLocked(void)
 {
     return hLockedTask;
 }
@@ -905,6 +932,9 @@ void Yield(void)
  */
 FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
 {
+#ifdef WINELIB32
+    return func; /* func can be called directly in Win32 */
+#else
     BYTE *thunk;
     SEGPTR thunkaddr;
     
@@ -916,13 +946,12 @@ FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
                   (SEGPTR)func, hInstance, (SEGPTR)thunkaddr );
     
     *thunk++ = 0xb8;    /* movw instance, %ax */
-#ifndef WINELIB
     *thunk++ = (BYTE)(hInstance & 0xff);
     *thunk++ = (BYTE)(hInstance >> 8);
-#endif
     *thunk++ = 0xea;    /* ljmp func */
     *(DWORD *)thunk = (DWORD)func;
     return (FARPROC)thunkaddr;
+#endif
 }
 
 
@@ -931,8 +960,10 @@ FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
  */
 void FreeProcInstance( FARPROC func )
 {
+#ifndef WINELIB32
     dprintf_task( stddeb, "FreeProcInstance("SPFMT")\n", (SEGPTR)func );
     TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
+#endif
 }
 
 
@@ -953,8 +984,6 @@ HANDLE GetCodeHandle( FARPROC proc )
     else
         handle = GlobalHandle( HIWORD(proc) );
 
-    printf( "STUB: GetCodeHandle(%08lx) returning "NPFMT"\n",
-            (DWORD)proc, handle );
     return handle;
 }
 
@@ -1050,6 +1079,21 @@ int GetInstanceData( HANDLE instance, WORD buffer, int len )
 
 
 /***********************************************************************
+ *           SetErrorMode   (KERNEL.107)
+ */
+UINT SetErrorMode( UINT mode )
+{
+    TDB *pTask;
+    UINT oldMode;
+
+    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
+    oldMode = pTask->error_mode;
+    pTask->error_mode = mode;
+    return oldMode;
+}
+
+
+/***********************************************************************
  *           GetDOSEnvironment   (KERNEL.131)
  */
 SEGPTR GetDOSEnvironment(void)
@@ -1108,6 +1152,8 @@ HMODULE GetExePtr( HANDLE handle )
 
     if (!(ptr = GlobalLock( handle ))) return 0;
     if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return handle;
+	/* Fake modules describing PE modules have a PE signature */
+    if (((NE_MODULE *)ptr)->magic == PE_SIGNATURE) return handle;
 
       /* Check the owner for module handle */
 
@@ -1115,10 +1161,10 @@ HMODULE GetExePtr( HANDLE handle )
     owner = FarGetOwner( handle );
 #else
     owner = NULL;
-    fprintf(stderr,"JBP: FarGetOwner() ignored.\n");
 #endif
     if (!(ptr = GlobalLock( owner ))) return 0;
     if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return owner;
+    if (((NE_MODULE *)ptr)->magic == PE_SIGNATURE) return owner;
 
       /* Search for this handle and its owner inside all tasks */
 

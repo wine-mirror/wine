@@ -67,8 +67,8 @@ static DWORD NE_FindNameTableId( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
                 if (p[1] & 0x8000)
                 {
                     if (!HIWORD(typeId)) continue;
-                    if (strcasecmp( (char *)PTR_SEG_TO_LIN(typeId),
-                                   (char *)(p + 3) )) continue;
+                    if (lstrcmpi( (char *)PTR_SEG_TO_LIN(typeId),
+                                  (char *)(p + 3) )) continue;
                 }
                 else if (HIWORD(typeId) || ((typeId & ~0x8000)!= p[1]))
                   continue;
@@ -78,7 +78,7 @@ static DWORD NE_FindNameTableId( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
                 if (p[2] & 0x8000)
                 {
                     if (!HIWORD(resId)) continue;
-                    if (strcasecmp( (char *)PTR_SEG_TO_LIN(resId),
+                    if (lstrcmpi( (char *)PTR_SEG_TO_LIN(resId),
                                (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
                     
                 }
@@ -119,7 +119,7 @@ static HRSRC NE_FindResourceFromType( NE_MODULE *pModule,
         {
             if (pNameInfo->id & 0x8000) continue;
             p = (BYTE *)pModule + pModule->res_table + pNameInfo->id;
-            if ((*p == len) && !strncasecmp( p+1, str, len ))
+            if ((*p == len) && !lstrncmpi( p+1, str, len ))
                 return (HRSRC)((int)pNameInfo - (int)pModule);
         }
     }
@@ -167,7 +167,7 @@ HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
             if (!(pTypeInfo->type_id & 0x8000))
             {
                 BYTE *p = (BYTE*)pModule+pModule->res_table+pTypeInfo->type_id;
-                if ((*p == len) && !strncasecmp( p+1, str, len ))
+                if ((*p == len) && !lstrncmpi( p+1, str, len ))
                 {
                     dprintf_resource( stddeb, "  Found type '%s'\n", str );
                     hRsrc = NE_FindResourceFromType(pModule, pTypeInfo, resId);
@@ -240,20 +240,21 @@ int NE_AccessResource( HMODULE hModule, HRSRC hRsrc )
 {
     NE_MODULE *pModule;
     NE_NAMEINFO *pNameInfo=NULL;
-    WORD sizeShift;
     char *name;
     int fd;
 
     pModule = (NE_MODULE *)GlobalLock( hModule );
-    if (!pModule || !pModule->res_table) return 0;
+    if (!pModule || !pModule->res_table) return -1;
 #ifndef WINELIB
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
 #endif
 
     name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
-    fd = open( DOS_GetUnixFileName(name), O_RDONLY );
-    sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
-    lseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
+    if ((fd = _lopen( name, OF_READ )) != -1)
+    {
+        WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+        _llseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
+    }
     return fd;
 }
 

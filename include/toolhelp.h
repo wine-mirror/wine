@@ -232,6 +232,15 @@ typedef struct
 BOOL MemManInfo(LPMEMMANINFO lpEnhMode);
 BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo );
 
+/* timer info */
+
+typedef struct tagTIMERINFO {
+	DWORD dwSize;
+	DWORD dwmsSinceStart;
+	DWORD dwmsThisVM;
+} TIMERINFO;
+
+BOOL TimerInfo( TIMERINFO *pTimerInfo );
 
 /* Window classes */
 

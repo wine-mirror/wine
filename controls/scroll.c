@@ -770,7 +770,7 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
             if (lpCreat->style & SBS_SIZEBOX)
             {
                 fprintf( stdnimp, "Unimplemented style SBS_SIZEBOX.\n" );
-                return -1;
+                return 0;  /* FIXME */
             }
             
 	    if (lpCreat->style & SBS_VERT)

@@ -14,6 +14,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include "xmalloc.h"
 
 void *
@@ -36,6 +37,18 @@ xrealloc (void *ptr, size_t size)
 {
     void *res = realloc (ptr, size);
     if (res == NULL)
+    {
+        fprintf (stderr, "Virtual memory exhausted.\n");
+        exit (1);
+    }
+    return res;
+}
+
+
+char *xstrdup( const char *str )
+{
+    char *res = strdup( str );
+    if (!res)
     {
         fprintf (stderr, "Virtual memory exhausted.\n");
         exit (1);

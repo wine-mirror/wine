@@ -11,7 +11,7 @@ base	1
 0007 stub Arc
 0008 stub ArcTo
 0009 stub BeginPath
-0010 stub BitBlt
+0010 stdcall BitBlt(long long long long long long long long long) BitBlt
 0011 stub CancelDC
 0012 stub CheckColorsInGamut
 0013 stub ChoosePixelFormat
@@ -31,8 +31,8 @@ base	1
 0027 stub CreateBrushIndirect
 0028 stub CreateColorSpaceA
 0029 stub CreateColorSpaceW
-0030 stub CreateCompatibleBitmap
-0031 stub CreateCompatibleDC
+0030 stdcall CreateCompatibleBitmap(long long long) CreateCompatibleBitmap
+0031 stdcall CreateCompatibleDC(long) CreateCompatibleDC
 0032 stub CreateDCA
 0033 stub CreateDCW
 0034 stub CreateDIBPatternBrush
@@ -50,13 +50,13 @@ base	1
 0046 stub CreateFontW
 0047 stub CreateHalftonePalette
 0048 stub CreateHatchBrush
-0049 stub CreateICA
+0049 stdcall CreateICA(ptr ptr ptr ptr) CreateIC
 0050 stub CreateICW
 0051 stub CreateMetaFileA
 0052 stub CreateMetaFileW
 0053 stub CreatePalette
 0054 stub CreatePatternBrush
-0055 stub CreatePen
+0055 stdcall CreatePen(long long long) CreatePen
 0056 stub CreatePenIndirect
 0057 stub CreatePolyPolygonRgn
 0058 stub CreatePolygonRgn
@@ -65,10 +65,10 @@ base	1
 0061 stub CreateRoundRectRgn
 0062 stub CreateScalableFontResourceA
 0063 stub CreateScalableFontResourceW
-0064 stub CreateSolidBrush
+0064 stdcall CreateSolidBrush(long) CreateSolidBrush
 0065 stub DPtoLP
 0066 stub DeleteColorSpace
-0067 stub DeleteDC
+0067 stdcall DeleteDC(long) DeleteDC
 0068 stub DeleteEnhMetaFile
 0069 stub DeleteMetaFile
 0070 stub DeleteObject
@@ -172,7 +172,7 @@ base	1
 0168 stub GetDCOrgEx
 0169 stub GetDIBColorTable
 0170 stub GetDIBits
-0171 stub GetDeviceCaps
+0171 stdcall GetDeviceCaps(long long) GetDeviceCaps
 0172 stub GetDeviceGammaRamp
 0173 stub GetETM
 0174 stub GetEnhMetaFileA
@@ -205,7 +205,7 @@ base	1
 0201 stub GetMiterLimit
 0202 stub GetNearestColor
 0203 stub GetNearestPaletteIndex
-0204 stub GetObjectA
+0204 stdcall GetObjectA(long long ptr) GetObject
 0205 stub GetObjectType
 0206 stub GetObjectW
 0207 stub GetOutlineTextMetricsA
@@ -233,7 +233,7 @@ base	1
 0229 stub GetTextExtentExPointW
 0230 stub GetTextExtentPoint32A
 0231 stub GetTextExtentPoint32W
-0232 stub GetTextExtentPointA
+0232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint
 0233 stub GetTextExtentPointW
 0234 stub GetTextFaceA
 0235 stub GetTextFaceW
@@ -250,18 +250,18 @@ base	1
 0246 stub InvertRgn
 0247 stub LPtoDP
 0248 stub LineDDA
-0249 stub LineTo
+0249 stdcall LineTo(long long long) LineTo
 0250 stub LoadImageColorMatcherA
 0251 stub LoadImageColorMatcherW
 0252 stub MaskBlt
 0253 stub ModifyWorldTransform
-0254 stub MoveToEx
+0254 stdcall MoveToEx(long long long ptr) MoveToEx
 0255 stub OffsetClipRgn
 0256 stub OffsetRgn
 0257 stub OffsetViewportOrgEx
 0258 stub OffsetWindowOrgEx
 0259 stub PaintRgn
-0260 stub PatBlt
+0260 stdcall PatBlt(long long long long long long) PatBlt
 0261 stub PathToRegion
 0262 stub Pie
 0263 stub PlayEnhMetaFile
@@ -300,13 +300,13 @@ base	1
 0296 stub SelectClipPath
 0297 stub SelectClipRgn
 0298 stub SelectFontLocal
-0299 stub SelectObject
+0299 stdcall SelectObject(long long) SelectObject
 0300 stub SelectPalette
 0301 stub SetAbortProc
 0302 stub SetArcDirection
 0303 stub SetBitmapBits
 0304 stub SetBitmapDimensionEx
-0305 stub SetBkColor
+0305 stdcall SetBkColor(long long) SetBkColor
 0306 stub SetBkMode
 0307 stub SetBoundsRect
 0308 stub SetBrushOrgEx
@@ -339,7 +339,7 @@ base	1
 0335 stub SetSystemPaletteUse
 0336 stub SetTextAlign
 0337 stub SetTextCharacterExtra
-0338 stub SetTextColor
+0338 stdcall SetTextColor(long long) SetTextColor
 0339 stub SetTextJustification
 0340 stub SetViewportExtEx
 0341 stub SetViewportOrgEx

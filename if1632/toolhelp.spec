@@ -31,7 +31,7 @@ id	12
 77 stub TERMINATEAPP
 78 pascal   MemoryRead(word long ptr long) MemoryRead
 79 pascal   MemoryWrite(word long ptr long) MemoryWrite
-80 stub TIMERCOUNT
+80 pascal16 TimerCount(ptr) TimerCount
 81 stub TASKSETCSIP
 82 stub TASKGETCSIP
 83 stub TASKSWITCH

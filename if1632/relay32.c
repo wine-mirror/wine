@@ -15,8 +15,8 @@
 #include "pe_image.h"
 #include "peexe.h"
 #include "relay32.h"
+#include "xmalloc.h"
 #include "stddebug.h"
-/* #define DEBUG_RELAY */
 #include "debug.h"
 
 WIN32_builtin	*WIN32_builtin_list;
@@ -54,7 +54,7 @@ WIN32_builtin *RELAY32_GetBuiltinDLL(char *name)
 
 	len = (cp=strchr(name,'.')) ? (cp-name) : strlen(name);
 	for(it=WIN32_builtin_list;it;it=it->next)
-	if(strncasecmp(name,it->name,len)==0)
+	if(lstrncmpi(name,it->name,len)==0)
 		return it;
 	return NULL;
 }
@@ -78,19 +78,22 @@ void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 	int i;
   	u_short * ordinal;
   	u_long * function;
-  	u_char ** name, *ename;
+  	u_char ** name;
 	struct PE_Export_Directory * pe_exports;
 	unsigned int load_addr;
 
 	dprintf_module(stddeb, "Looking for %s in %s, hint %x\n",
 		item ? item: "(no name)", dll_name, hint);
 	dll=RELAY32_GetBuiltinDLL(dll_name);
+	/* This should deal with built-in DLLs only. See pe_module on loading
+	   PE DLLs */
+#if 0
 	if(!dll) {
 		if(!wine_files || !wine_files->name ||
-		   strcasecmp(dll_name, wine_files->name)) {
+		   lstrcmpi(dll_name, wine_files->name)) {
 			LoadModule(dll_name, (LPVOID) -1);
 			if(!wine_files || !wine_files->name ||
-		   	   strcasecmp(dll_name, wine_files->name)) 
+		   	   lstrcmpi(dll_name, wine_files->name)) 
 				return 0;
 		}
 		load_addr = wine_files->load_addr;
@@ -118,7 +121,7 @@ void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 		#if 0
 		if(hint && hint<dll->size && !dll->functions[hint].name)
 		{
-			dll->functions[hint].name=strdup(item);
+			dll->functions[hint].name=xstrdup(item);
 			dprintf_module(stddeb, "Returning unimplemented function %s.%d\n",
 				dll_name,hint);
 			return dll->functions[hint].definition;
@@ -127,6 +130,7 @@ void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 		printf("Not found\n");
 		return 0;
 	}
+#endif
 	/* import by ordinal */
 	if(!item){
 		if(hint && hint<dll->size)return dll->functions[hint].definition;
@@ -145,12 +149,11 @@ void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 	/* function at hint has no name (unimplemented) */
 	if(hint && hint<dll->size && !dll->functions[hint].name)
 	{
-		dll->functions[hint].name=strdup(item);
+		dll->functions[hint].name=xstrdup(item);
 		dprintf_module(stddeb, "Returning unimplemented function %s.%d\n",
 			dll_name,hint);
 		return dll->functions[hint].definition;
 	}
-	printf("Not found\n");
 	return 0;
 }
 

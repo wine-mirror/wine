@@ -9,6 +9,10 @@ struct pe_data {
 	struct PE_Import_Directory *pe_import;
 	struct PE_Export_Directory *pe_export;
 	struct PE_Resource_Directory *pe_resource;
+	struct PE_Reloc_Block *pe_reloc;
+	int base_addr;
+	int load_addr;
+	int vma_size;
 	int resource_offset; /* offset to resource typedirectory in file */
 };
 
@@ -18,7 +22,6 @@ struct w_files
     char * name;   /* Name, as it appears in the windows binaries */
     char * filename; /* Actual name of the unix file that satisfies this */
     int type;        /* DLL or EXE */
-    int fd;
     HINSTANCE hinstance;
     HMODULE hModule;
     int initialised;
@@ -31,8 +34,7 @@ struct w_files
 
 extern int PE_unloadImage(struct w_files *wpnt);
 extern int PE_StartProgram(struct w_files *wpnt);
-extern void PE_InitDLL(struct w_files *wpnt);
-extern HINSTANCE PE_LoadImage(struct w_files *wpnt);
+extern void PE_InitDLL(HMODULE hModule);
 extern void my_wcstombs(char * result, u_short * source, int len);
 extern struct w_files *wine_files;
 

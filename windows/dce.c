@@ -146,7 +146,7 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
 static HRGN DCE_ClipWindows( HWND hwndStart, HWND hwndEnd,
                              HRGN hrgn, int xoffset, int yoffset )
 {
-    HRGN hrgnTmp, hrgnNew;
+    HRGN hrgnTmp = 0, hrgnNew = 0;
     WND *wndPtr;
 
     if (!hwndStart) return hrgn;

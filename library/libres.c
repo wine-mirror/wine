@@ -101,7 +101,6 @@ LPVOID LIBRES_LockResource( HGLOBAL handle )
  */
 BOOL LIBRES_FreeResource( HGLOBAL handle )
 {
-  WINELIB_UNIMP("LIBRES_FreeResource()");
   return 0; /* Obsolete in Win32 */
 }
 

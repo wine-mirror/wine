@@ -106,10 +106,18 @@
 
                             
 #define EIP_reg(context)      ((context)->uc_mcontext.gregs[EIP])
+#ifdef R_ESP
 #define ESP_reg(context)     ((context)->uc_mcontext.gregs[R_ESP])
+#else
+#define ESP_reg(context)     ((context)->uc_mcontext.gregs[ESP])
+#endif
                             
 #define IP_reg(context)      (*(WORD*)(&(context)->uc_mcontext.gregs[EIP]))
+#ifdef R_ESP
 #define SP_reg(context)      (*(WORD*)(&(context)->uc_mcontext.gregs[R_ESP]))
+#else
+#define SP_reg(context)      (*(WORD*)(&(context)->uc_mcontext.gregs[ESP]))
+#endif
                             
 #define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
 #define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)

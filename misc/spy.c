@@ -539,7 +539,7 @@ void SpyInit(void)
 	    if(MessageTypeNames[i])
 	       if(strstr(lpstrBuffer,MessageTypeNames[i])) SpyFilters[i] = TRUE; 
 
-    GetPrivateProfileString("spy", "Include", "",lpstrBuffer ,511 , WINE_INI);
+    GetPrivateProfileString("spy", "Include", "INCLUDEALL",lpstrBuffer ,511 , WINE_INI);
     dprintf_message(stddeb,"SpyInit: Include=%s\n",lpstrBuffer);
     if( *lpstrBuffer != 0 )
       if(strstr(lpstrBuffer,"INCLUDEALL"))

@@ -129,7 +129,7 @@ base	1
 0125 stub FindNextChangeNotification
 0126 stub FindNextFileA
 0127 stub FindNextFileW
-0128 stub FindResourceA
+0128 stdcall FindResourceA(long ptr ptr) FindResource32
 0129 stub FindResourceExA
 0130 stub FindResourceExW
 0131 stub FindResourceW
@@ -146,7 +146,7 @@ base	1
 0142 stub FreeEnvironmentStringsW
 0143 stub FreeLibrary
 0144 stub FreeLibraryAndExitThread
-0145 stub FreeResource
+0145 stdcall FreeResource(long) FreeResource32
 0146 stub FreeVirtualBuffer
 0147 stub GenerateConsoleCtrlEvent
 0148    stdcall GetACP() GetACP
@@ -252,13 +252,13 @@ base	1
 0248    stdcall GetOEMCP() GetOEMCP
 0249 stub GetOverlappedResult
 0250 stub GetPriorityClass
-0251 stub GetPrivateProfileIntA
+0251 stdcall GetPrivateProfileIntA(ptr ptr long ptr) GetPrivateProfileInt
 0252 stub GetPrivateProfileIntW
 0253 stub GetPrivateProfileSectionA
 0254 stub GetPrivateProfileSectionW
 0255 stub GetPrivateProfileStringA
 0256 stub GetPrivateProfileStringW
-0257 stub GetProcAddress
+0257	stdcall GetProcAddress(long long)	WIN32_GetProcAddress
 0258 stub GetProcessAffinityMask
 0259	return GetProcessHeap 0 0
 0260 stub GetProcessHeaps
@@ -336,7 +336,7 @@ base	1
 0331 stub GlobalUnfix
 0332 stub GlobalUnlock
 0333 stub GlobalWire
-0334 stub HeapAlloc
+0334 stdcall HeapAlloc(long long long) HeapAlloc
 0335 stub HeapCompact
 0336 stub HeapCreate
 0337 stub HeapDestroy
@@ -367,12 +367,12 @@ base	1
 0362 stub LCMapStringA
 0363 stub LCMapStringW
 0364 stub LeaveCriticalSection
-0365 stub LoadLibraryA
+0365	stdcall LoadLibraryA(long)		LoadLibraryA
 0366 stub LoadLibraryExA
 0367 stub LoadLibraryExW
 0368 stub LoadLibraryW
 0369 stub LoadModule
-0370 stub LoadResource
+0370 stdcall LoadResource(long long) LoadResource32
 0371	stdcall LocalAlloc(long long)	GlobalAlloc32
 0372 stub LocalCompact
 0373 stub LocalFileTimeToFileTime
@@ -420,7 +420,7 @@ base	1
 0415 stub QueryPerformanceCounter
 0416 stub QueryPerformanceFrequency
 0417 stub QueryWin31IniFilesMappedToRegistry
-0418 stub RaiseException
+0418 stdcall RaiseException(long long long ptr) RaiseException
 0419 stub ReadConsoleA
 0420 stub ReadConsoleInputA
 0421 stub ReadConsoleInputW
@@ -496,7 +496,7 @@ base	1
 0491 stub SetFileAttributesW
 0492    stdcall SetFilePointer(long long ptr long) SetFilePointer
 0493 stub SetFileTime
-0494 stub SetHandleCount
+0494    stdcall SetHandleCount(long) W32_SetHandleCount
 0495 stub SetHandleInformation
 0496 stub SetLastConsoleEventActive
 0497    stdcall SetLastError(long) SetLastError

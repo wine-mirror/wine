@@ -23,7 +23,7 @@ int runtime_cpu (void)
 	{
 	  char info[5], value[5];
 	  while (fscanf (f, " %4s%*s : %4s%*s", info, value) == 2)
-	    if (!strcasecmp (info, "cpu"))
+	    if (!lstrcmpi (info, "cpu"))
 	      {
 		if (isdigit (value[0]) && value[1] == '8'
 		    && value[2] == '6' && value[3] == 0)
