@@ -1309,6 +1309,23 @@ then
     LINTFLAGS="$LINTFLAGS -D__i386__"
 fi
 
+dnl *** check for the need to define __ALPHA__
+
+case $host_cpu in
+  *alpha* )
+    AC_CACHE_CHECK([whether we need to define __ALPHA__],ac_cv_cpp_def_alpha,
+      AC_EGREP_CPP(yes,[#ifndef __ALPHA__
+yes
+#endif],
+ ac_cv_cpp_def_alpha="yes", ac_cv_cpp_def_alpha="no"))
+    ;;
+esac
+if test "$ac_cv_cpp_def_alpha" = "yes"
+then
+    CFLAGS="$CFLAGS -D__ALPHA__"
+    LINTFLAGS="$LINTFLAGS -D__ALPHA__"
+fi
+
 dnl *** check for the need to define __sparc__
 
 case $host_cpu in
