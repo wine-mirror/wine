@@ -194,8 +194,10 @@ static void pixel_convert_32_to_24(
     for (y = height; y--; ) {
 	unsigned char * srclineend = c_src+width*3;
 	while (c_src < srclineend ) {
-	    *c_dst++ = (c_src[0] << 16)|(c_src[1] << 8)|c_src[2];
+	    /* FIXME: wrong for big endian */
+	    memcpy(c_dst,c_src,3);
 	    c_src+=3;
+	    c_dst++;
 	}
 	c_src+=pitch-width*3;
     }
