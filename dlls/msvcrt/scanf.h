@@ -29,16 +29,20 @@
 #define _EOF_RET MSVCRT_WEOF
 #define _ISSPACE_(c) MSVCRT_iswspace(c)
 #define _ISDIGIT_(c) MSVCRT_iswdigit(c)
-#define _CONVERT_(c) c /*** FIXME ***/
+#define _WIDE2SUPPORTED_(c) c /* No conversion needed (wide to wide) */
+#define _CHAR2SUPPORTED_(c) c /* FIXME: convert char to wide char */
 #define _CHAR2DIGIT_(c, base) wchar2digit((c), (base))
+#define _BITMAPSIZE_ 256*256
 #else /* WIDE_SCANF */
 #define _CHAR_ char
 #define _EOF_ MSVCRT_EOF
 #define _EOF_RET MSVCRT_EOF
 #define _ISSPACE_(c) isspace(c)
 #define _ISDIGIT_(c) isdigit(c)
-#define _CONVERT_(c) c /*** FIXME ***/
+#define _WIDE2SUPPORTED_(c) c /* FIXME: convert wide char to char */
+#define _CHAR2SUPPORTED_(c) c /* No conversion needed (char to char) */
 #define _CHAR2DIGIT_(c, base) char2digit((c), (base))
+#define _BITMAPSIZE_ 256
 #endif /* WIDE_SCANF */
 
 #ifdef CONSOLE
@@ -348,11 +352,7 @@ int _FUNCTION_ {
                         nch = _GETC_(file);
                     /* read until whitespace */
                     while (width!=0 && (nch!=_EOF_) && !_ISSPACE_(nch)) {
-#ifdef WIDE_SCANF
-                        if (!suppress) *sptr++ = _CONVERT_(nch);
-#else /* WIDE_SCANF */
-                        if (!suppress) *sptr++ = nch;
-#endif /* WIDE_SCANF */
+                        if (!suppress) *sptr++ = _CHAR2SUPPORTED_(nch);
 			st++;
                         nch = _GETC_(file);
 			if (width>0) width--;
@@ -370,11 +370,7 @@ int _FUNCTION_ {
                         nch = _GETC_(file);
                     /* read until whitespace */
                     while (width!=0 && (nch!=_EOF_) && !_ISSPACE_(nch)) {
-#ifdef WIDE_SCANF
-                        if (!suppress) *sptr++ = nch;
-#else /* WIDE_SCANF */
-                        if (!suppress) *sptr++ = _CONVERT_(nch);
-#endif /* WIDE_SCANF */
+                        if (!suppress) *sptr++ = _WIDE2SUPPORTED_(nch);
 			st++;
                         nch = _GETC_(file);
 			if (width>0) width--;
@@ -404,11 +400,7 @@ int _FUNCTION_ {
 	  character: { /* read single character into char */
 		    if (!suppress) {
 			char*c = va_arg(ap, char*);
-#ifdef WIDE_SCANF
-			*c = _CONVERT_(nch);
-#else /* WIDE_SCANF */
-			*c = nch;
-#endif /* WIDE_SCANF */
+			*c = _CHAR2SUPPORTED_(nch);
 		    }
 		    st = 1;
  		    nch = _GETC_(file);
@@ -417,11 +409,7 @@ int _FUNCTION_ {
 	  widecharacter: {
 		    if (!suppress) { /* read single character into a wchar_t */
 			MSVCRT_wchar_t*c = va_arg(ap, MSVCRT_wchar_t*);
-#ifdef WIDE_SCANF
-			*c = nch;
-#else /* WIDE_SCANF */
-			*c = _CONVERT_(nch);
-#endif /* WIDE_SCANF */
+			*c = _WIDE2SUPPORTED_(nch);
 		    }
 		    nch = _GETC_(file);
 		    st = 1;
@@ -442,13 +430,8 @@ int _FUNCTION_ {
 		    int invert = 0; /* Set if we are NOT to find the chars */
 
 		    /* Init our bitmap */
-#ifdef WIDE_SCANF
-		    Mask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 65536/8);
-		    RtlInitializeBitMap(&bitMask, Mask, 65536);
-#else /* WIDE_SCANF */
-		    Mask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 256/8);
-		    RtlInitializeBitMap(&bitMask, Mask, 256);
-#endif /* WIDE_SCANF */
+		    Mask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _BITMAPSIZE_/8);
+		    RtlInitializeBitMap(&bitMask, Mask, _BITMAPSIZE_);
 
 		    /* Read the format */
 		    format++;
@@ -474,20 +457,12 @@ int _FUNCTION_ {
                     while ((width != 0) && (nch != _EOF_)) {
 			if(!invert) {
 			    if(RtlAreBitsSet(&bitMask, nch, 1)) {
-#ifdef WIDE_SCANF
-				if (!suppress) *sptr++ = _CONVERT_(nch);
-#else /* WIDE_SCANF */
-				if (!suppress) *sptr++ = nch;
-#endif /* WIDE_SCANF */
+				if (!suppress) *sptr++ = _CHAR2SUPPORTED_(nch);
 			    } else
 				break;
 			} else {
 			    if(RtlAreBitsClear(&bitMask, nch, 1)) {
-#ifdef WIDE_SCANF
-				if (!suppress) *sptr++ = _CONVERT_(nch);
-#else /* WIDE_SCANF */
-				if (!suppress) *sptr++ = nch;
-#endif /* WIDE_SCANF */
+				if (!suppress) *sptr++ = _CHAR2SUPPORTED_(nch);
 			    } else
 				break;
 			}
@@ -543,8 +518,10 @@ int _FUNCTION_ {
 #undef _EOF_RET
 #undef _ISSPACE_
 #undef _ISDIGIT_
-#undef _CONVERT_
+#undef _CHAR2SUPPORTED_
+#undef _WIDE2SUPPORTED_
 #undef _CHAR2DIGIT_
 #undef _GETC_
 #undef _UNGETC_
 #undef _FUNCTION_
+#undef _BITMAPSIZE_
