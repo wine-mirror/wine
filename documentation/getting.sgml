@@ -19,10 +19,10 @@
         though, about mixing packages between different distributions,
         and even from different versions of the same distribution.
         Often a package will only work on the distribution it's
-        compiled for.  We'll cover <link
-        linkend="getting-dist-debian">Debian</link>, <link
-        linkend="getting-dist-redhat">Redhat</link>, and <link
-        linkend="getting-dist-other">other</link> distributions.
+        compiled for.  We'll cover
+        <link linkend="getting-dist-debian">Debian</link>, 
+        <link linkend="getting-dist-redhat">Redhat</link>, and 
+        <link linkend="getting-dist-other">other</link> distributions.
       </para>
       <para>
         If you're not lucky enough to have a package available for
@@ -96,9 +96,9 @@
       </para>
       <screen>
 $ su -
-<emphasis>&lt;Type in root password></emphasis>
+<emphasis>&lt;Type in root password&gt;</emphasis>
 # cd /home/user
-# dpkg -i wine_0.0.20000109-3.deb
+# dpkg -i wine_0.0.20021031-1.deb
     </screen>
       <para>
         You may also want to install the
@@ -116,13 +116,27 @@ $ su -
           rpmfind.net</ulink> to track down available Wine RPM binaries.
         <ulink url="http://rpmfind.net/linux/RPM/WByName.html"> This
           page</ulink> contains a list of all rpmfind packages that start with
-        the letter "W", including a few Wine packages
+        the letter "W", including a few Wine packages.
       </para>
 
-      <!-- *** Should really flesh this out more!  Any Redhat-running
-      *** volunteers?
-      -->
+      <para>
+        Of course now that you have the RPM package, you may be wondering
+        "What in the world do I do with this thing?".
+      </para>
 
+      <para>
+        The easiest way to install an RPM is to make sure that you have not
+        previously installed wine (perhaps, when you installed linux)
+        and then switch to the directory you downloaded the rpm file to.
+        Once there, type this one command as root:
+      </para>
+      <screen>
+# rpm -ivh wine-20020605-2.i386.rpm
+      </screen>
+      <para>
+        You may also want to install the
+        <systemitem>wine-devel</systemitem> package.
+      </para>
     </sect1>
 
     <sect1 id="getting-dist-other">
@@ -142,7 +156,14 @@ $ su -
         tracking down miscellaneous distribution packages.
       </para>
 
-      <!-- *** Add other distributions, e.g., Mandrake, SUSE, Slackware *** -->
+      <para>
+        NOTE: If you are running a Mandrake system, please see the page
+        on how to get wine for a 
+        <link linkend="getting-dist-redhat">Redhat</link> system,
+        as Mandrake is based on Redhat.
+      </para>
+
+      <!-- *** Add other distributions, e.g., SUSE, Slackware *** -->
 
     </sect1>
 
@@ -162,7 +183,7 @@ $ su -
         FTP archives.  An up to date listing is in the <ulink
         url="http://www.winehq.com/source/ANNOUNCE">ANNOUNCE</ulink>
         file in the Wine distribution (which you would have if you
-        already downloaded it).  Here is a (possibly out of date) list
+        already downloaded it).  Here is a list
         of FTP servers carrying Wine:
       </para>
       <itemizedlist>
@@ -182,8 +203,8 @@ $ su -
         </listitem>
         <listitem>
           <para>
-            <ulink url="ftp://sunsite.informatik.rwth-aachen.de/pub/Linux/sunsite.unc.edu/ALPHA/wine/development/">
-              ftp://sunsite.informatik.rwth-aachen.de/pub/Linux/sunsite.unc.edu/ALPHA/wine/development/
+            <ulink url="ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/">
+              ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/
             </ulink>
           </para>
         </listitem>
@@ -201,10 +222,24 @@ $ su -
         one.
       </para>
       <para>
-        FIXME: Explain how to un-tar, compile, and install Wine from a tarball.
+        Once you have downloaded this, you must first compile wine, and then install it.
+        To do this is not very hard.  First switch to the directory containing the file
+        you just downloaded.  Then extract the source with (e.g.):
       </para>
-
-      <para></para>
+      <screen>
+# tar xzvf wine-20021031.tar.gz
+      </screen>
+      <para>
+        Then, switch to the directory that was created and compile it by typing (e.g.):
+      </para>
+      <screen>
+# ./tools/wineinstall
+      </screen>
+      <para>
+        NOTE: You must make sure that you are not the superuser (root) when doing this,
+        and that you have write permission to the directory that was created by the tar
+        command as well as all of its subdirectories and files..
+      </para>
     </sect1>
 
     <sect1 id="getting-source-cvs">
@@ -312,7 +347,7 @@ $ patch -p0 --dry-run < ../patch_to_apply.diff
         look like a patch.
       </para>
       <para>
-        The <parameter>-p0</parameter> option to  <command>patch</command>
+        The <parameter>-p0</parameter> option to <command>patch</command>
 	tells it to keep the full file name from the patch file. For example,
 	if the file name in the patch file was
 	 <filename>wine/programs/clock/main.c</filename>.
