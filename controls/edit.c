@@ -1747,7 +1747,7 @@ static BOOL EDIT_MakeUndoFit(EDITSTATE *es, UINT size)
 
 	alloc_size = ROUND_TO_GROW((size + 1) * sizeof(WCHAR));
 	if ((es->undo_text = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, es->undo_text, alloc_size))) {
-		es->undo_buffer_size = alloc_size/sizeof(WCHAR);
+		es->undo_buffer_size = alloc_size/sizeof(WCHAR) - 1;
 		return TRUE;
 	}
 	else
@@ -4216,9 +4216,9 @@ static LRESULT EDIT_WM_LButtonDown(EDITSTATE *es, DWORD keys, INT x, INT y)
  */
 static LRESULT EDIT_WM_LButtonUp(EDITSTATE *es)
 {
-	if (es->bCaptureState && GetCapture() == es->hwndSelf) {
+	if (es->bCaptureState) {
 		KillTimer(es->hwndSelf, 0);
-		ReleaseCapture();
+		if (GetCapture() == es->hwndSelf) ReleaseCapture();
 	}
 	es->bCaptureState = FALSE;
 	return 0;
