@@ -27,10 +27,7 @@
  * only supports IPv4.)
  * The indexes returned are not guaranteed to be contiguous, so don't call
  * getNumInterfaces() and assume the values [0,getNumInterfaces() - 1] will be
- * valid indexes; use getInterfaceIndexTable() instead.  Non-loopback
- * interfaces have lower index values than loopback interfaces, in order to
- * make the indexes somewhat reusable as Netbios LANA numbers.  See ifenum.c
- * for more detail on this.
+ * valid indexes; use getInterfaceIndexTable() instead.
  *
  * See also the companion file, ipstats.h, for functions related to getting
  * statistics.
