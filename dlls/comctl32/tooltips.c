@@ -18,10 +18,26 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Sep. 08, 2004, by Robert Shearman.
+ * 
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features or bugs please note them below.
+ * 
  * TODO:
  *   - Custom draw support.
- *   - Balloon tips.
- *   - Messages.
+ *   - Animation.
+ *   - Links.
+ *   - Messages:
+ *     o TTM_ADJUSTRECT
+ *     o TTM_GETTITLEA
+ *     o TTM_GETTTILEW
+ *     o TTM_POPUP
+ *   - Styles:
+ *     o TTS_NOANIMATE
+ *     o TTS_NOFADE
+ *     o TTS_CLOSE
  *
  * Testing:
  *   - Run tests using Waite Group Windows95 API Bible Volume 2.
@@ -152,11 +168,12 @@ typedef struct
 #define ICON_HEIGHT 16
 #define ICON_WIDTH  16
 
-LRESULT CALLBACK
+static LRESULT CALLBACK
 TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR dwRef);
 
 
-static inline UINT_PTR TOOLTIPS_GetTitleIconIndex(HICON hIcon)
+inline static UINT_PTR
+TOOLTIPS_GetTitleIconIndex(HICON hIcon)
 {
     UINT i;
     for (i = 0; i <= TTI_ERROR; i++)
@@ -183,7 +200,7 @@ TOOLTIPS_InitSystemSettings (TOOLTIPS_INFO *infoPtr)
     infoPtr->hTitleFont = CreateFontIndirectW (&nclm.lfStatusFont);
 }
 
-static VOID
+static void
 TOOLTIPS_Refresh (HWND hwnd, HDC hdc)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr(hwnd);
@@ -203,8 +220,6 @@ TOOLTIPS_Refresh (HWND hwnd, HDC hdc)
 
     hBrush = CreateSolidBrush(infoPtr->clrBk);
 
-    /* already drawn the background; don't need to draw it again
-     * when drawing text */
     oldBkMode = SetBkMode (hdc, TRANSPARENT);
     SetTextColor (hdc, infoPtr->clrText);
 
@@ -384,7 +399,7 @@ static void TOOLTIPS_GetDispInfoW(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO
     }
 }
 
-static VOID
+static void
 TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 {
     TTTOOL_INFO *toolPtr = &infoPtr->tools[nTool];
@@ -417,7 +432,7 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 }
 
 
-static VOID
+static void
 TOOLTIPS_CalcTipSize (HWND hwnd, TOOLTIPS_INFO *infoPtr, LPSIZE lpSize)
 {
     HDC hdc;
@@ -475,7 +490,7 @@ TOOLTIPS_CalcTipSize (HWND hwnd, TOOLTIPS_INFO *infoPtr, LPSIZE lpSize)
 }
 
 
-static VOID
+static void
 TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 {
     TTTOOL_INFO *toolPtr;
@@ -666,7 +681,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 }
 
 
-static VOID
+static void
 TOOLTIPS_Hide (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 {
     TTTOOL_INFO *toolPtr;
@@ -693,7 +708,7 @@ TOOLTIPS_Hide (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 }
 
 
-static VOID
+static void
 TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 {
     TTTOOL_INFO *toolPtr;
@@ -791,7 +806,7 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 }
 
 
-static VOID
+static void
 TOOLTIPS_TrackHide (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 {
     TTTOOL_INFO *toolPtr;
@@ -1139,7 +1154,8 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-static void TOOLTIPS_DelToolCommon (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
+static void
+TOOLTIPS_DelToolCommon (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 {
     TTTOOL_INFO *toolPtr;
 
@@ -2549,7 +2565,7 @@ TOOLTIPS_WinIniChange (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-LRESULT CALLBACK
+static LRESULT CALLBACK
 TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uID, DWORD_PTR dwRef)
 {
     MSG msg;
@@ -2721,12 +2737,11 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_GETFONT:
 	    return TOOLTIPS_GetFont (hwnd, wParam, lParam);
 
-        case WM_GETTEXT:
-            return TOOLTIPS_OnWMGetText (hwnd, wParam, lParam);
+	case WM_GETTEXT:
+	    return TOOLTIPS_OnWMGetText (hwnd, wParam, lParam);
 
-        case WM_GETTEXTLENGTH:
-            return TOOLTIPS_OnWMGetTextLength (hwnd, wParam, lParam);
-
+	case WM_GETTEXTLENGTH:
+	    return TOOLTIPS_OnWMGetTextLength (hwnd, wParam, lParam);
 
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
