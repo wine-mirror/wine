@@ -1680,3 +1680,98 @@ BOOL WINAPI GetCharWidthFloatW(HDC hdc, UINT iFirstChar,
        return 0;
 }
  
+
+/***********************************************************************
+ *								       *
+ *           Font Resource API					       *
+ *								       *
+ ***********************************************************************/
+/***********************************************************************
+ *           AddFontResource16    (GDI.119)
+ *
+ *  Can be either .FON, or .FNT, or .TTF, or .FOT font file.
+ *
+ *  FIXME: Load header and find the best-matching font in the fontList;
+ * 	   fixup dfPoints if all metrics are identical, otherwise create
+ *	   new fontAlias. When soft font support is ready this will
+ *	   simply create a new fontResource ('filename' will go into
+ *	   the pfr->resource field) with FR_SOFTFONT/FR_SOFTRESOURCE 
+ *	   flag set. 
+ */
+INT16 WINAPI AddFontResource16( LPCSTR filename )
+{
+    return AddFontResourceA( filename );
+}
+
+
+/***********************************************************************
+ *           AddFontResource32A    (GDI32.2)
+ */
+INT WINAPI AddFontResourceA( LPCSTR str )
+{
+    FIXME("(%s): stub! Read \"documentation/fonts\" how to install "
+            "this font manually.\n", debugres_a(str));
+    return 1;
+}
+
+
+/***********************************************************************
+ *           AddFontResource32W    (GDI32.4)
+ */
+INT WINAPI AddFontResourceW( LPCWSTR str )
+{
+    FIXME("(%s): stub! Read \"documentation/fonts\" how to install "
+            "this font manually.\n", debugres_w(str));
+    return 1;
+}
+
+/***********************************************************************
+ *           RemoveFontResource16    (GDI.136)
+ */
+BOOL16 WINAPI RemoveFontResource16( SEGPTR str )
+{
+    FIXME("(%s): stub\n",	debugres_a(PTR_SEG_TO_LIN(str)));
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           RemoveFontResource32A    (GDI32.284)
+ */
+BOOL WINAPI RemoveFontResourceA( LPCSTR str )
+{
+/*  This is how it should look like */
+/*
+    fontResource** ppfr;
+    BOOL32 retVal = FALSE;
+
+    EnterCriticalSection( &crtsc_fonts_X11 );
+    for( ppfr = &fontList; *ppfr; ppfr = &(*ppfr)->next )
+	 if( !strcasecmp( (*ppfr)->lfFaceName, str ) )
+	 {
+	     if(((*ppfr)->fr_flags & (FR_SOFTFONT | FR_SOFTRESOURCE)) &&
+		 (*ppfr)->hOwnerProcess == GetCurrentProcess() )
+	     {
+		 if( (*ppfr)->fo_count )
+		     (*ppfr)->fr_flags |= FR_REMOVED;
+		 else
+		     XFONT_RemoveFontResource( ppfr );
+	     }
+	     retVal = TRUE;
+	 }
+    LeaveCriticalSection( &crtsc_fonts_X11 );
+    return retVal;
+ */
+    FIXME("(%s): stub\n", debugres_a(str));
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           RemoveFontResource32W    (GDI32.286)
+ */
+BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
+{
+    FIXME("(%s): stub\n", debugres_w(str) );
+    return TRUE;
+}
