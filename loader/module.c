@@ -1103,15 +1103,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     if (lpStartupInfo->lpDesktop)
         FIXME("(%s,...): lpStartupInfo->lpDesktop %s ignored\n", 
                       name, debugstr_a(lpStartupInfo->lpDesktop));
-    if (lpStartupInfo->lpTitle)
-        FIXME("(%s,...): lpStartupInfo->lpTitle %s ignored\n", 
-                      name, lpStartupInfo->lpTitle);
-    if (lpStartupInfo->dwFlags & STARTF_USECOUNTCHARS)
-        FIXME("(%s,...): STARTF_USECOUNTCHARS (%ld,%ld) ignored\n", 
-                      name, lpStartupInfo->dwXCountChars, lpStartupInfo->dwYCountChars);
-    if (lpStartupInfo->dwFlags & STARTF_USEFILLATTRIBUTE)
-        FIXME("(%s,...): STARTF_USEFILLATTRIBUTE %lx ignored\n", 
-                      name, lpStartupInfo->dwFillAttribute);
     if (lpStartupInfo->dwFlags & STARTF_RUNFULLSCREEN)
         FIXME("(%s,...): STARTF_RUNFULLSCREEN ignored\n", name);
     if (lpStartupInfo->dwFlags & STARTF_FORCEONFEEDBACK)
