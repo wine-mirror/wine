@@ -948,6 +948,8 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall GetDOSEnvironment16() GetDOSEnvironment16
 @ stdcall GetModuleFileName16(long ptr long) GetModuleFileName16
 @ stdcall GetModuleHandle16(str) GetModuleHandle16
+@ stdcall IsTask16(long) IsTask16
+@ stdcall LoadModule16(str long) LoadModule16
 @ stdcall LoadResource16(long long) LoadResource16
 @ stdcall LockResource16(long) LockResource16
 @ stdcall WinExec16(str long) WinExec16

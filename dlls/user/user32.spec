@@ -353,7 +353,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall IsCharUpperW(long) IsCharUpperW
 @ stdcall IsChild(long long) IsChild
 @ stdcall IsClipboardFormatAvailable(long) IsClipboardFormatAvailable
-@ stub IsDialogMessage
+@ stdcall IsDialogMessage(long ptr) IsDialogMessageA
 @ stdcall IsDialogMessageA(long ptr) IsDialogMessageA
 @ stdcall IsDialogMessageW(long ptr) IsDialogMessageW
 @ stdcall IsDlgButtonChecked(long long) IsDlgButtonChecked
@@ -658,9 +658,16 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 #
 @ stdcall CallNextHookEx16(long long long long) CallNextHookEx16
 @ stdcall CallWindowProc16(long long long long long) CallWindowProc16
+@ stdcall CloseDriver16(long long long) CloseDriver16
 @ stdcall CreateDialogIndirectParam16(long ptr long long long) CreateDialogIndirectParam16
+@ stdcall DefDriverProc16(long long long long long) DefDriverProc16
 @ stdcall DialogBoxIndirectParam16(long long long long long) DialogBoxIndirectParam16
+@ stdcall GetDriverModuleHandle16(long) GetDriverModuleHandle16
+@ stdcall OpenDriver16(str str long) OpenDriver16
+@ stdcall PostAppMessage16(long long long long) PostAppMessage16
+@ stdcall SendDriverMessage16(long long long long) SendDriverMessage16
 @ stdcall SetWindowsHookEx16(long long long long) SetWindowsHookEx16
+@ stdcall UserYield16() UserYield16
 
 ################################################################
 # Wine extensions: extra useful functions not exported under Windows
