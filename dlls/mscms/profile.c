@@ -246,6 +246,18 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     return NULL;
 }
 
+/******************************************************************************
+ * CloseColorProfile               [MSCMS.@]
+ *
+ * Close a color profile.
+ *
+ * PARAMS
+ *  profile [I] Handle to the profile
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
 BOOL WINAPI CloseColorProfile( HPROFILE profile )
 {
     BOOL ret1, ret2 = FALSE;

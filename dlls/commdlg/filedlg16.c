@@ -329,7 +329,7 @@ static LONG FD16_WMMeasureItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 /* ------------------ Dialog procedures ---------------------- */
 
 /***********************************************************************
- *           FileOpenDlgProc16   (COMMDLG.6)
+ *           FileOpenDlgProc   (COMMDLG.6)
  */
 BOOL16 CALLBACK FileOpenDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
 {
@@ -377,7 +377,7 @@ BOOL16 CALLBACK FileOpenDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam, L
 }
 
 /***********************************************************************
- *           FileSaveDlgProc16   (COMMDLG.7)
+ *           FileSaveDlgProc   (COMMDLG.7)
  */
 BOOL16 CALLBACK FileSaveDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
 {
