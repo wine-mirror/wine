@@ -114,6 +114,34 @@ typedef struct _CERT_CONTEXT {
 } CERT_CONTEXT, *PCERT_CONTEXT;
 typedef const CERT_CONTEXT *PCCERT_CONTEXT;
 
+typedef struct _CRL_ENTRY {
+    CRYPT_INTEGER_BLOB SerialNumber;
+    FILETIME           RevocationDate;
+    DWORD              cExtension;
+    PCERT_EXTENSION    rgExtension;
+} CRL_ENTRY, *PCRL_ENTRY;
+
+typedef struct _CRL_INFO {
+    DWORD           dwVersion;
+    CRYPT_ALGORITHM_IDENTIFIER SignatureAlgorithm;
+    CERT_NAME_BLOB  Issuer;
+    FILETIME        ThisUpdate;
+    FILETIME        NextUpdate;
+    DWORD           cCRLEntry;
+    PCRL_ENTRY      rgCRLEntry;
+    DWORD           cExtension;
+    PCERT_EXTENSION rgExtension;
+} CRL_INFO, *PCRL_INFO;
+
+typedef struct _CRL_CONTEXT {
+    DWORD      dwCertEncodingType;
+    BYTE      *pbCrlEncoded;
+    DWORD      cbCrlEncoded;
+    PCRL_INFO  pCrlInfo;
+    HCERTSTORE hCertStore;
+} CRL_CONTEXT, *PCRL_CONTEXT;
+typedef const CRL_CONTEXT *PCCRL_CONTEXT;
+
 typedef struct _VTableProvStruc {
     DWORD    Version;
     FARPROC  pFuncVerifyImage;

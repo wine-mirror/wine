@@ -137,3 +137,16 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
           dwMsgAndCertEncodingType, dwSaveAs, dwSaveTo, pvSaveToPara, dwFlags);
     return TRUE;
 }
+
+PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
+  const BYTE* pbCrlEncoded, DWORD cbCrlEncoded)
+{
+    FIXME("%08lx %p %08lx\n", dwCertEncodingType, pbCrlEncoded, cbCrlEncoded);
+    return NULL;
+}
+
+BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags )
+{
+    FIXME("%p %08lx\n", hCertStore, dwFlags );
+    return TRUE;
+}

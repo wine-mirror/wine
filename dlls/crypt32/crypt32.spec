@@ -10,13 +10,13 @@
 @ stub CertAddSerializedElementToStore
 @ stub CertAddStoreToCollection
 @ stub CertAlgIdToOID
-@ stub CertCloseStore
+@ stdcall CertCloseStore(ptr long)
 @ stub CertCompareCertificate
 @ stub CertCompareCertificateName
 @ stub CertCompareIntegerBlob
 @ stub CertComparePublicKeyInfo
 @ stub CertControlStore
-@ stub CertCreateCRLContext
+@ stdcall CertCreateCRLContext(long ptr long)
 @ stub CertCreateCTLContext
 @ stub CertCreateCertificateChainEngine
 @ stub CertCreateCertificateContext
