@@ -100,9 +100,7 @@ static const char * const default_ignored_symbols[] =
     "qsort",
     "sin",
     "sinh",
-    "sprintf",
     "sqrt",
-    "sscanf",
     "strcat",
     "strchr",
     "strcmp",
@@ -117,8 +115,7 @@ static const char * const default_ignored_symbols[] =
     "strspn",
     "strstr",
     "tan",
-    "tanh",
-    "vsprintf"
+    "tanh"
 };
 
 /* compare function names; helper for resolve_imports */
