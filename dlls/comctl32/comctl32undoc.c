@@ -407,20 +407,35 @@ COMCTL32_GetSize (LPVOID lpMem)
  * The MRU-API is a set of functions to manipulate MRU(Most Recently Used)
  * lists.
  *
- *
+ * Stored in the reg. as a set of values under a single key.  Each item in the
+ * list has a value name that is a single char. 'a' - 'z', '{', '|' or '}'.
+ * The order of the list is stored with value name 'MRUList' which is a string
+ * containing the value names (i.e. 'a', 'b', etc.) in the relevant order.
  */
 
 typedef struct tagCREATEMRULIST
 {
-    DWORD  cbSize;
-    DWORD  nMaxItems;
-    DWORD  dwFlags;
-    HKEY   hKey;
-    LPCSTR lpszSubKey;
-    DWORD  lpfnCompare;
+    DWORD  cbSize;        /* size of struct */
+    DWORD  nMaxItems;     /* max no. of items in list */
+    DWORD  dwFlags;       /* see below */
+    HKEY   hKey;          /* root reg. key under which list is saved */
+    LPCSTR lpszSubKey;    /* reg. subkey */
+    PROC   lpfnCompare;   /* item compare proc */
 } CREATEMRULIST, *LPCREATEMRULIST;
 
- 
+/* dwFlags */
+#define MRUF_STRING_LIST  0 /* list will contain strings */
+#define MRUF_BINARY_LIST  1 /* list will contain binary data */
+#define MRUF_DELAYED_SAVE 2 /* only save list order to reg. is FreeMRUList */
+
+/* If list is a string list lpfnCompare has the following prototype
+ * int CALLBACK MRUCompareString(LPCSTR s1, LPCSTR s2)
+ * for binary lists the prototype is
+ * int CALLBACK MRUCompareBinary(LPCVOID data1, LPCVOID data2, DWORD cbData)
+ * where cbData is the no. of bytes to compare.
+ * Need to check what return value means identical - 0?
+ */
+
 typedef struct tagMRU
 {
     DWORD  dwParam1;  /* some kind of flag */
@@ -437,25 +452,31 @@ CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2,
 
 
 /**************************************************************************
- * CreateMRUListA [COMCTL32.151]
+ *              CreateMRUListA [COMCTL32.151]
  *
  * PARAMS
- *     dwParam
+ *     lpcml [I] ptr to CREATEMRULIST structure.
  *
  * RETURNS
+ *     Handle to MRU list.
  */
-
 HANDLE WINAPI
 CreateMRUListA (LPCREATEMRULIST lpcml)
 {
      return CreateMRUListLazyA (lpcml, 0, 0, 0);
 }
 
-
+/**************************************************************************
+ *              FreeMRUListA [COMCTL32.152]
+ *
+ * PARAMS
+ *     hMRUList [I] Handle to list.
+ *
+ */
 DWORD WINAPI
 FreeMRUListA (HANDLE hMRUList)
 {
-    FIXME("(%p) empty stub!\n", hMRUList);
+    FIXME("(%08x) empty stub!\n", hMRUList);
 
 #if 0
     if (!(hmru->dwParam1 & 1001)) {
@@ -473,28 +494,120 @@ FreeMRUListA (HANDLE hMRUList)
 }
 
 
-
-DWORD WINAPI
-AddMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+/**************************************************************************
+ *              AddMRUData [COMCTL32.167]
+ * 
+ * Add item to MRU binary list.  If item already exists in list them it is
+ * simply moved up to the top of the list and not added again.  If list is
+ * full then the least recently used item is removed to make room.
+ *
+ * PARAMS
+ *     hList [I] Handle to list.
+ *     lpData [I] ptr to data to add.
+ *     cbData [I] no. of bytes of data.
+ *
+ * RETURNS
+ *     No. corresponding to registry name where value is stored 'a' -> 0 etc.
+ *     -1 on error.
+ */
+INT WINAPI
+AddMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData)
 {
-
-    FIXME("(%lx %lx %lx) empty stub!\n",
-	   dwParam1, dwParam2, dwParam3);
+    FIXME("(%08x, %p, %ld) empty stub!\n", hList, lpData, cbData);
 
     return 0;
 }
 
-
-DWORD WINAPI
-FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
+/**************************************************************************
+ *              AddMRUStringA [COMCTL32.153]
+ * 
+ * Add item to MRU string list.  If item already exists in list them it is
+ * simply moved up to the top of the list and not added again.  If list is
+ * full then the least recently used item is removed to make room.
+ *
+ * PARAMS
+ *     hList [I] Handle to list.
+ *     lpszString [I] ptr to string to add.
+ *
+ * RETURNS
+ *     No. corresponding to registry name where value is stored 'a' -> 0 etc.
+ *     -1 on error.
+ */
+INT WINAPI
+AddMRUStringA(HANDLE hList, LPCSTR lpszString)
 {
+    FIXME("(%08x, %s) empty stub!\n", hList, debugstr_a(lpszString));
 
-    FIXME("(%lx %lx %lx %lx) empty stub!\n",
-	   dwParam1, dwParam2, dwParam3, dwParam4);
+    return 0;
+}
 
+/**************************************************************************
+ *              DelMRUString [COMCTL32.156]
+ *
+ * Removes item from either string or binary list (despite its name)
+ *
+ * PARAMS
+ *    hList [I] list handle
+ *    nItemPos [I] item position to remove 0 -> MRU
+ *
+ * RETURNS
+ *    TRUE is successful, FALSE if nItemPos is out of range.
+ */
+BOOL WINAPI
+DelMRUString(HANDLE hList, INT nItemPos)
+{
+    FIXME("(%08x, %d): stub\n", hList, nItemPos);
     return TRUE;
 }
 
+/**************************************************************************
+ *                  FindMRUData [COMCTL32.169]
+ * 
+ * Searches binary list for item that matches lpData of length cbData.
+ * Returns position in list order 0 -> MRU and if lpRegNum != NULL then value
+ * corresponding to item's reg. name will be stored in it ('a' -> 0).
+ *
+ * PARAMS
+ *    hList [I] list handle
+ *    lpData [I] data to find
+ *    cbData [I] length of data
+ *    lpRegNum [O] position in registry (maybe NULL)
+ *
+ * RETURNS
+ *    Position in list 0 -> MRU.  -1 if item not found.
+ */
+INT WINAPI
+FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
+{
+    FIXME("(%08x, %p, %ld, %p) empty stub!\n",
+	   hList, lpData, cbData, lpRegNum);
+
+    return 0;
+}
+
+/**************************************************************************
+ *                  FindMRUStringA [COMCTL32.155]
+ * 
+ * Searches string list for item that matches lpszString.
+ * Returns position in list order 0 -> MRU and if lpRegNum != NULL then value
+ * corresponding to item's reg. name will be stored in it ('a' -> 0).
+ *
+ * PARAMS
+ *    hList [I] list handle
+ *    lpszString [I] string to find
+ *    lpRegNum [O] position in registry (maybe NULL)
+ *
+ * RETURNS
+ *    Position in list 0 -> MRU.  -1 if item not found.
+ */
+INT WINAPI
+FindMRUStringA (HANDLE hList, LPCSTR lpszString, LPINT lpRegNum)
+{
+    FIXME("(%08x, %s, %p) empty stub!\n", hList, debugstr_a(lpszString),
+	  lpRegNum);
+
+    return 0;
+}
 
 HANDLE WINAPI
 CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
@@ -514,12 +627,12 @@ CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2, DWORD dwParam3, DWORD
     FIXME("(%p) empty stub!\n", lpcml);
 
     if (lpcml == NULL)
-	return NULL;
+	return 0;
 
     if (lpcml->cbSize < sizeof(CREATEMRULIST))
-	return NULL;
+	return 0;
 
-    FIXME("(%lu %lu %lx %lx \"%s\" %lx)\n",
+    FIXME("(%lu %lu %lx %lx \"%s\" %p)\n",
 	  lpcml->cbSize, lpcml->nMaxItems, lpcml->dwFlags,
 	  (DWORD)lpcml->hKey, lpcml->lpszSubKey, lpcml->lpfnCompare);
 
@@ -531,8 +644,31 @@ CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2, DWORD dwParam3, DWORD
     return (HANDLE)ptr;
 }
 
-
-
+/**************************************************************************
+ *                EnumMRUListA [COMCTL32.154]
+ * 
+ * Enumerate item in a list
+ *
+ * PARAMS
+ *    hList [I] list handle
+ *    nItemPos [I] item position to enumerate
+ *    lpBuffer [O] buffer to receive item
+ *    nBufferSize [I] size of buffer
+ *
+ * RETURNS
+ *    For binary lists specifies how many bytes were copied to buffer, for
+ *    string lists specifies full length of string.  Enumerating past the end
+ *    of list returns -1.
+ *    If lpBuffer == NULL or nItemPos is -ve return value is no. of items in
+ *    the list. 
+ */
+INT WINAPI EnumMRUListA(HANDLE hList, INT nItemPos, LPVOID lpBuffer,
+DWORD nBufferSize)
+{
+    FIXME("(%08x, %d, %p, %ld): stub\n", hList, nItemPos, lpBuffer,
+	  nBufferSize);
+    return 0;
+}
 
 /**************************************************************************
  * Str_GetPtrA [COMCTL32.233]
@@ -2148,7 +2284,7 @@ BOOL WINAPI comctl32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
 
 BOOL WINAPI InitMUILanguage( LANGID uiLang) {
 
-   FIXME_(commctrl)("(%lx): stub!\n", uiLang);
+   FIXME_(commctrl)("(%04x): stub!\n", uiLang);
 
    return TRUE;
 }

@@ -96,17 +96,17 @@ init	COMCTL32_LibMain
 
 151 stdcall CreateMRUListA(ptr) CreateMRUListA
 152 stdcall FreeMRUList(ptr) FreeMRUListA
-153 stub AddMRUStringA@8
-154 stub EnumMRUListA@16
-155 stub FindMRUStringA@12
-156 stub DelMRUString@8
+153 stdcall AddMRUStringA(long str) AddMRUStringA
+154 stdcall EnumMRUListA(long long ptr long) EnumMRUListA 
+155 stdcall FindMRUStringA(long str ptr) FindMRUStringA
+156 stdcall DelMRUString(long long) DelMRUString
 157 stdcall CreateMRUListLazyA(ptr long long long) CreateMRUListLazyA
 
 163 stub CreatePage
 164 stub CreateProxyPage
 
-167 stdcall AddMRUData(ptr long long) AddMRUData
-169 stdcall FindMRUData(ptr long long long) FindMRUData
+167 stdcall AddMRUData(long ptr long) AddMRUData
+169 stdcall FindMRUData(long ptr long ptr) FindMRUData
 
 233 stdcall Str_GetPtrA(str str long) Str_GetPtrA
 234 stdcall Str_SetPtrA(str str) Str_SetPtrA
