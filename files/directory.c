@@ -261,24 +261,37 @@ UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
 
 /***********************************************************************
  *           GetWindowsDirectoryA   (KERNEL32.@)
+ *
+ * See comment for GetWindowsDirectoryW.
  */
 UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
 {
-    if (path) lstrcpynA( path, DIR_Windows.short_name, count );
-    return strlen( DIR_Windows.short_name );
+    UINT len = strlen( DIR_Windows.short_name ) + 1;
+    if (path && count >= len)
+    {
+        strcpy( path, DIR_Windows.short_name );
+        len--;
+    }
+    return len;
 }
 
 
 /***********************************************************************
  *           GetWindowsDirectoryW   (KERNEL32.@)
+ *
+ * Return value:
+ * If buffer is large enough to hold full path and terminating '\0' character
+ * function copies path to buffer and returns length of the path without '\0'.
+ * Otherwise function returns required size including '\0' character and
+ * does not touch the buffer.
  */
 UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
 {
     UINT len = MultiByteToWideChar( CP_ACP, 0, DIR_Windows.short_name, -1, NULL, 0 );
-    if (path && count)
+    if (path && count >= len)
     {
-        if (!MultiByteToWideChar( CP_ACP, 0, DIR_Windows.short_name, -1, path, count ))
-            path[count-1] = 0;
+        MultiByteToWideChar( CP_ACP, 0, DIR_Windows.short_name, -1, path, count );
+        len--;
     }
     return len;
 }
@@ -313,24 +326,33 @@ UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
 
 /***********************************************************************
  *           GetSystemDirectoryA   (KERNEL32.@)
+ *
+ * See comment for GetWindowsDirectoryW.
  */
 UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 {
-    if (path) lstrcpynA( path, DIR_System.short_name, count );
-    return strlen( DIR_System.short_name );
+    UINT len = strlen( DIR_System.short_name ) + 1;
+    if (path && count >= len)
+    {
+        strcpy( path, DIR_System.short_name );
+        len--;
+    }
+    return len;
 }
 
 
 /***********************************************************************
  *           GetSystemDirectoryW   (KERNEL32.@)
+ *
+ * See comment for GetWindowsDirectoryW.
  */
 UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
 {
     UINT len = MultiByteToWideChar( CP_ACP, 0, DIR_System.short_name, -1, NULL, 0 );
-    if (path && count)
+    if (path && count >= len)
     {
-        if (!MultiByteToWideChar( CP_ACP, 0, DIR_System.short_name, -1, path, count ))
-            path[count-1] = 0;
+        MultiByteToWideChar( CP_ACP, 0, DIR_System.short_name, -1, path, count );
+        len--;
     }
     return len;
 }
