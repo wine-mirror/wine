@@ -418,7 +418,7 @@ UINT32 WINAPI GetDIBColorTable32( HDC32 hdc, UINT32 startpos, UINT32 entries,
  *           GetDIBits16    (GDI.441)
  */
 INT16 WINAPI GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
-                          UINT16 lines, LPSTR bits, BITMAPINFO * info,
+                          UINT16 lines, LPVOID bits, BITMAPINFO * info,
                           UINT16 coloruse )
 {
     return GetDIBits32( hdc, hbitmap, startscan, lines, bits, info, coloruse );
@@ -439,7 +439,7 @@ INT32 WINAPI GetDIBits32(
     HBITMAP32 hbitmap, /* [in]  Handle to bitmap */
     UINT32 startscan,  /* [in]  First scan line to set in dest bitmap */
     UINT32 lines,      /* [in]  Number of scan lines to copy */
-    LPSTR bits,        /* [out] Address of array for bitmap bits */
+    LPVOID bits,       /* [out] Address of array for bitmap bits */
     BITMAPINFO * info, /* [out] Address of structure with bitmap data */
     UINT32 coloruse)   /* [in]  RGB or palette index */
 {
@@ -488,7 +488,7 @@ INT32 WINAPI GetDIBits32(
 
     if (bits)
     {	
-	BYTE*	bbits = bits;
+	BYTE*	bbits = (BYTE*)bits;
 	int	pad, yend, xend = bmp->bitmap.bmWidth;
 
         TRACE(bitmap, "%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
