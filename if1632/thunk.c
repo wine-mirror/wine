@@ -7,17 +7,14 @@
 
 #include <string.h>
 #include "wine/winbase16.h"
+#include "task.h"
 #include "hook.h"
 #include "callback.h"
 #include "user.h"
 #include "heap.h"
-#include "module.h"
 #include "neexe.h"
 #include "process.h"
 #include "stackframe.h"
-#include "selectors.h"
-#include "syslevel.h"
-#include "task.h"
 #include "win.h"
 #include "flatthunk.h"
 #include "mouse.h"
