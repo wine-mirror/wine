@@ -1032,7 +1032,7 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	{
         BOOL failed = TRUE;
 
-        if ((!sei->lpVerb)||(strcasecmp(sei->lpVerb,"open")))
+        if ((!sei->lpVerb)||(!strcasecmp(sei->lpVerb,"open")))
         {
             LPSTR   ext = PathFindExtensionA(szApplicationName);
             CHAR    key[1023];
