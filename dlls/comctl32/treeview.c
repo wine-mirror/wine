@@ -784,9 +784,24 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
   r.left=xpos;
   if ((wineItem->mask & TVIF_TEXT) && (wineItem->pszText)) 
   {
-    COLORREF oldBkColor = 0;
     COLORREF oldTextColor = 0;
     INT      oldBkMode;
+    HBRUSH   hbrBk = 0;
+    BOOL     inFocus = GetFocus() == hwnd;
+
+    TREEVIEW_ITEM tmpItem;
+    char  buf[128];
+
+    if (wineItem->pszText == LPSTR_TEXTCALLBACKA) 
+    {
+        tmpItem.hItem      = wineItem->hItem;
+        tmpItem.state      = wineItem->state;
+        tmpItem.lParam     = wineItem->lParam;
+        tmpItem.pszText    = buf;
+        tmpItem.cchTextMax = sizeof(buf);
+
+        TREEVIEW_SendDispInfoNotify(hwnd, &tmpItem, TVN_GETDISPINFOA, TVIF_TEXT);
+    }
 
     r.left += 3;
     r.right -= 3;
@@ -796,81 +811,103 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
     wineItem->text.top   = r.top;
     wineItem->text.bottom= r.bottom;
 
-    if (wineItem->pszText== LPSTR_TEXTCALLBACKA) {
-      TRACE("LPSTR_TEXTCALLBACK\n");
-      TREEVIEW_SendDispInfoNotify (hwnd, wineItem, TVN_GETDISPINFOA, TVIF_TEXT);
+    oldBkMode = SetBkMode(hdc, TRANSPARENT);
+
+    /* - If item is drop target or it is selected and window is in focus -
+     * use blue background (COLOR_HIGHLIGHT).
+     * - If item is selected, window is not in focus, but it has style
+     * TVS_SHOWSELALWAYS - use grey background (COLOR_BTNFACE)
+     * - Otherwise - don't fill background
+     */
+    if ((wineItem->state & TVIS_DROPHILITED) ||
+        ((wineItem->state & TVIS_SELECTED) &&
+        (inFocus || (GetWindowLongA( hwnd, GWL_STYLE) & TVS_SHOWSELALWAYS))))
+    {
+       if ((wineItem->state & TVIS_DROPHILITED) || inFocus)
+       {
+          hbrBk = CreateSolidBrush(GetSysColor( COLOR_HIGHLIGHT));
+          oldTextColor = SetTextColor(hdc, GetSysColor( COLOR_HIGHLIGHTTEXT));
+       }
+       else
+       {
+          hbrBk = CreateSolidBrush(GetSysColor( COLOR_BTNFACE));
+
+          if (infoPtr->clrText == -1)
+             oldTextColor = SetTextColor(hdc, GetSysColor( COLOR_WINDOWTEXT));
+          else
+             oldTextColor = SetTextColor(hdc, infoPtr->clrText);
+       }
+    } 
+    else 
+    {
+       if (infoPtr->clrText == -1)
+          oldTextColor = SetTextColor(hdc, GetSysColor( COLOR_WINDOWTEXT));
+       else
+          oldTextColor = SetTextColor(hdc, infoPtr->clrText);
     }
 
-/* Yep, there are some things that need to be straightened out here. 
-   Removing the comments around the setTextColor does not give the right
-   results. Dito FillRect.
-*/
-
-        
-/*    GetTextExtentPoint32A (hdc, wineItem->pszText, 
-					strlen (wineItem->pszText), &size); */
-	
-/*    FillRect ( hdc, &wineItem->text, GetSysColorBrush (infoPtr->clrBk));
- */
-    
-
-    if (!(cditem & CDRF_NOTIFYPOSTPAINT) && 
-        (wineItem->state & (TVIS_SELECTED | TVIS_DROPHILITED)) ) {
-    	oldBkMode    = SetBkMode  (hdc, OPAQUE);
-    	oldBkColor   = SetBkColor  (hdc, GetSysColor( COLOR_HIGHLIGHT));
-    	oldTextColor = SetTextColor(hdc, GetSysColor( COLOR_HIGHLIGHTTEXT));
-	} else {
-    	oldBkMode    = SetBkMode  (hdc, TRANSPARENT);
-	  	oldBkColor   = SetBkColor (hdc, infoPtr->clrBk);
- /*	    oldTextColor = SetTextColor(hdc, infoPtr->clrText);  */
-	}
-
-
-
-    /* Draw it */
-    DrawTextA ( hdc, 
-      wineItem->pszText, 
-      lstrlenA(wineItem->pszText), 
-      &wineItem->text, 
-      uTextJustify | DT_VCENTER | DT_SINGLELINE ); 
+    if (wineItem->pszText != LPSTR_TEXTCALLBACKA)
+       tmpItem.pszText = wineItem->pszText;
 
     /* Obtain the text coordinate */
     DrawTextA (
-      hdc, 
-      wineItem->pszText, 
-      lstrlenA(wineItem->pszText), 
+         hdc,
+         tmpItem.pszText,
+         lstrlenA(tmpItem.pszText),
+         &wineItem->text,
+         uTextJustify | DT_VCENTER | DT_SINGLELINE | DT_CALCRECT | DT_NOPREFIX);
+
+    /* We need to reset it to items height */
+    wineItem->text.top = r.top;
+    wineItem->text.bottom = r.bottom;
+    wineItem->text.right += 4; /* This is extra for focus rectangle */
+
+    if (hbrBk)
+    {
+       FillRect(hdc, &wineItem->text, hbrBk);
+       DeleteObject(hbrBk);
+    }
+
+    wineItem->text.left += 2;
+
+    /* Draw it */
+    DrawTextA ( hdc, 
+      tmpItem.pszText, 
+      lstrlenA(tmpItem.pszText), 
       &wineItem->text, 
-      uTextJustify | DT_VCENTER | DT_SINGLELINE | DT_CALCRECT); 
+      uTextJustify | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX); 
+
+    wineItem->text.left -=2;
 
     /* Restore the hdc state */
     SetTextColor( hdc, oldTextColor);
 
-    if (oldBkMode != TRANSPARENT)
-      SetBkMode(hdc, oldBkMode);
-    if (wineItem->state & (TVIS_SELECTED | TVIS_DROPHILITED))
-      SetBkColor (hdc, oldBkColor);
-
     /* Draw the box arround the selected item */
-    if (wineItem->state & TVIS_SELECTED ) 
+    if (wineItem->state & TVIS_SELECTED && inFocus) 
     {
       HPEN  hNewPen     = CreatePen(PS_DOT, 0, GetSysColor(COLOR_WINDOWTEXT) );
       HPEN  hOldPen     = SelectObject( hdc, hNewPen );
-      POINT points[4];
-      
-      points[0].x = wineItem->text.left-1;
-      points[0].y = wineItem->text.top+1; 
-      points[1].x = wineItem->text.right;
-      points[1].y = wineItem->text.top+1; 
-      points[2].x = wineItem->text.right;
-      points[2].y = wineItem->text.bottom; 
-      points[3].x = wineItem->text.left-1;
-      points[3].y = wineItem->text.bottom;
+      INT   rop         = SetROP2(hdc, R2_XORPEN);
+      POINT points[5];
 
-      Polyline (hdc,points,4); 
+      points[4].x = points[0].x = wineItem->text.left;
+      points[4].y = points[0].y = wineItem->text.top; 
+      points[1].x = wineItem->text.right-1 ;
+      points[1].y = wineItem->text.top; 
+      points[2].x = wineItem->text.right-1;
+      points[2].y = wineItem->text.bottom-1; 
+      points[3].x = wineItem->text.left;
+      points[3].y = wineItem->text.bottom-1;
 
+      Polyline (hdc,points,5); 
+
+      SetROP2(hdc, rop);
       DeleteObject(hNewPen);
       SelectObject(hdc, hOldPen);
     }
+
+    if (oldBkMode != TRANSPARENT)
+       SetBkMode(hdc, oldBkMode);
   }
 
   /* Draw insertion mark if necessary */
@@ -1021,20 +1058,29 @@ tvItem->stateMask);
 		wineItem->stateMask|= tvItem->stateMask;  
   }
 
-  if (tvItem->mask & TVIF_TEXT) {
-		if (tvItem->pszText!=LPSTR_TEXTCALLBACKA) {
-        len=lstrlenA (tvItem->pszText);
-        if (len>wineItem->cchTextMax) 
-			wineItem->pszText= COMCTL32_ReAlloc (wineItem->pszText, len+1);
-        lstrcpynA (wineItem->pszText, tvItem->pszText,len+1);
-		} else {
-			if (wineItem->cchTextMax) {
-				COMCTL32_Free (wineItem->pszText);
-				wineItem->cchTextMax=0;
-			}
-		wineItem->pszText=LPSTR_TEXTCALLBACKA;
-		}
-   }
+  if (tvItem->mask & TVIF_TEXT)
+  {
+    if (tvItem->pszText!=LPSTR_TEXTCALLBACKA)
+    {
+      len=lstrlenA (tvItem->pszText) + 1;
+      if (len>wineItem->cchTextMax)
+      {
+        wineItem->pszText= COMCTL32_ReAlloc (wineItem->pszText, len);
+        wineItem->cchTextMax = len;
+      }
+
+      lstrcpynA (wineItem->pszText, tvItem->pszText,len);
+    }
+    else
+    {
+      if (wineItem->cchTextMax)
+      {
+        COMCTL32_Free (wineItem->pszText);
+	    wineItem->cchTextMax=0;
+      }
+      wineItem->pszText=LPSTR_TEXTCALLBACKA;
+    }
+  }
 
   wineItem->mask |= tvItem->mask;
 
