@@ -133,7 +133,7 @@ static struct res_type *add_type( struct res_tree *tree, const struct resource *
 /* get the next word from the current resource file */
 static WORD get_word(void)
 {
-    WORD ret = *(WORD *)file_pos;
+    WORD ret = *(const WORD *)file_pos;
     file_pos += sizeof(WORD);
     if (file_pos > file_end) fatal_error( "%s is a truncated file\n", file_name );
     return ret;
@@ -142,7 +142,7 @@ static WORD get_word(void)
 /* get the next dword from the current resource file */
 static DWORD get_dword(void)
 {
-    DWORD ret = *(DWORD *)file_pos;
+    DWORD ret = *(const DWORD *)file_pos;
     file_pos += sizeof(DWORD);
     if (file_pos > file_end) fatal_error( "%s is a truncated file\n", file_name );
     return ret;
@@ -151,7 +151,7 @@ static DWORD get_dword(void)
 /* get a string from the current resource file */
 static void get_string( struct string_id *str )
 {
-    if (*(WCHAR *)file_pos == 0xffff)
+    if (*(const WCHAR *)file_pos == 0xffff)
     {
         get_word();  /* skip the 0xffff */
         str->str = NULL;
@@ -159,7 +159,7 @@ static void get_string( struct string_id *str )
     }
     else
     {
-        WCHAR *p = xmalloc( (strlenW((WCHAR*)file_pos) + 1) * sizeof(WCHAR) );
+        WCHAR *p = xmalloc( (strlenW((const WCHAR*)file_pos) + 1) * sizeof(WCHAR) );
         str->str = p;
         str->id  = 0;
         while ((*p++ = get_word()));
@@ -202,7 +202,7 @@ static void load_next_resource( DLLSPEC *spec )
     get_dword();                        /* skip version */
     get_dword();                        /* skip characteristics */
 
-    file_pos = (char *)res->data + res->data_size;
+    file_pos = (const char *)res->data + res->data_size;
     if (file_pos > file_end) fatal_error( "%s is a truncated file\n", file_name );
 }
 

@@ -471,8 +471,8 @@ static const char *get_function_name( const ORDDEF *odp )
  */
 static int Spec16TypeCompare( const void *e1, const void *e2 )
 {
-    const ORDDEF *odp1 = *(const ORDDEF **)e1;
-    const ORDDEF *odp2 = *(const ORDDEF **)e2;
+    const ORDDEF *odp1 = *(const ORDDEF * const *)e1;
+    const ORDDEF *odp2 = *(const ORDDEF * const *)e2;
     int retval;
     int type1 = odp1->type;
     int type2 = odp2->type;

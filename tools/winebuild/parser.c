@@ -540,8 +540,8 @@ error:
 
 static int name_compare( const void *name1, const void *name2 )
 {
-    ORDDEF *odp1 = *(ORDDEF **)name1;
-    ORDDEF *odp2 = *(ORDDEF **)name2;
+    const ORDDEF *odp1 = *(const ORDDEF * const *)name1;
+    const ORDDEF *odp2 = *(const ORDDEF * const *)name2;
     return strcmp( odp1->name, odp2->name );
 }
 
