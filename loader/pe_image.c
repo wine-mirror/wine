@@ -498,13 +498,18 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
         WARN("MapViewOfFile error %ld\n", GetLastError() );
         return 0;
     }
+    if ( *(WORD*)hModule !=IMAGE_DOS_SIGNATURE)
+    {
+        WARN("%s image doesn't have DOS signature, but 0x%04x\n", filename,*(WORD*)hModule);
+        goto error;
+    }
+
     nt = PE_HEADER( hModule );
 
     /* Check signature */
     if ( nt->Signature != IMAGE_NT_SIGNATURE )
     {
-        WARN("image doesn't have PE signature, but 0x%08lx\n",
-                    nt->Signature );
+        WARN("%s image doesn't have PE signature, but 0x%08lx\n", nt->Signature );
         goto error;
     }
 
