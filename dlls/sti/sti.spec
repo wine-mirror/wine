@@ -4,6 +4,6 @@ name sti
 @ stub DllGetClassObject
 @ stub DllRegisterServer
 @ stub DllUnregisterServer
-@ stub StiCreateInstance
+@ stdcall StiCreateInstance(ptr long ptr ptr) StiCreateInstance
 @ stub StiCreateInstanceA
 @ stub StiCreateInstanceW
