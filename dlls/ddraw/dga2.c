@@ -182,13 +182,4 @@ ddraw_driver dga2_driver = {
     DGA2_Create
 }; 
 
-#ifdef __GNUC__
-static void DGA2_register(void) __attribute__((constructor));
-#else /* defined(__GNUC__) */
-static void __asm__dummy_dll_init(void) {
-    asm("\t.section .init ,\"ax\"\n"
-	        "\tcall DGA2_register\n"
-		    "\t.previous\n");
-}
-#endif /* defined(__GNUC__) */
-static void DGA2_register(void) { ddraw_register_driver(&dga2_driver); }
+DECL_GLOBAL_CONSTRUCTOR(DGA2_register) { ddraw_register_driver(&dga2_driver); }

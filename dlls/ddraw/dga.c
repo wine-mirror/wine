@@ -190,13 +190,4 @@ ddraw_driver dga_driver = {
     DGA_Create
 }; 
 
-#ifdef __GNUC__
-static void DGA_register(void) __attribute__((constructor));
-#else /* defined(__GNUC__) */
-static void __asm__dummy_dll_init(void) {
-    asm("\t.section .init ,\"ax\"\n"
-	        "\tcall DGA_register\n"
-		    "\t.previous\n");
-}
-#endif /* defined(__GNUC__) */
-static void DGA_register(void) { ddraw_register_driver(&dga_driver); }
+DECL_GLOBAL_CONSTRUCTOR(DGA_register) { ddraw_register_driver(&dga_driver); }

@@ -105,13 +105,4 @@ ddraw_driver x11_driver = {
     X11_Create
 }; 
 
-#ifdef __GNUC__
-static void X11_register(void) __attribute__((constructor));
-#else /* defined(__GNUC__) */
-static void __asm__dummy_dll_init(void) {
-    asm("\t.section .init ,\"ax\"\n"
-	        "\tcall X11_register\n"
-		    "\t.previous\n");
-}
-#endif /* defined(__GNUC__) */
-static void X11_register(void) { ddraw_register_driver(&x11_driver); }
+DECL_GLOBAL_CONSTRUCTOR(X11_register) { ddraw_register_driver(&x11_driver); }
