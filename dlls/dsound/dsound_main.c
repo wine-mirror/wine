@@ -98,6 +98,7 @@ struct IDirectSoundImpl
     IDirectSoundBufferImpl*     primary;
     IDirectSound3DListenerImpl* listener;
     WAVEFORMATEX                wfx; /* current main waveformat */
+    CRITICAL_SECTION		lock;
 };
 
 /*****************************************************************************
@@ -803,7 +804,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 	}
 
 	/* **** */
-	EnterCriticalSection(&(primarybuf->lock));
+	EnterCriticalSection(&(This->dsound->lock));
 
 	if (primarybuf->wfx.nSamplesPerSec != wfex->nSamplesPerSec) {
 		dsb = dsound->buffers;
@@ -829,10 +830,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 
 	primarybuf->wfx.nAvgBytesPerSec =
 		This->wfx.nSamplesPerSec * This->wfx.nBlockAlign;
-
 	DSOUND_CloseAudio();
 
-	LeaveCriticalSection(&(primarybuf->lock));
+	LeaveCriticalSection(&(This->dsound->lock));
 	/* **** */
 
 	return DS_OK;
@@ -963,6 +963,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 	if (--This->ref)
 		return This->ref;
 
+	EnterCriticalSection(&(This->dsound->lock));
 	for (i=0;i<This->dsound->nrofbuffers;i++)
 		if (This->dsound->buffers[i] == This)
 			break;
@@ -973,12 +974,11 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 		This->dsound->nrofbuffers--;
 		IDirectSound_Release((LPDIRECTSOUND)This->dsound);
 	}
+	LeaveCriticalSection(&(This->dsound->lock));
 
 	DeleteCriticalSection(&(This->lock));
-
 	if (This->ds3db && ICOM_VTBL(This->ds3db))
 		IDirectSound3DBuffer_Release((LPDIRECTSOUND3DBUFFER)This->ds3db);
-
 	if (This->parent)
 		/* this is a duplicate buffer */
 		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)This->parent);
@@ -1369,12 +1369,15 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 
 	memcpy(&((*ippdsb)->dsbd),dsbd,sizeof(*dsbd));
 
+	EnterCriticalSection(&(This->lock));
 	/* register buffer */
 	if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
 		This->buffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,This->buffers,sizeof(IDirectSoundBufferImpl*)*(This->nrofbuffers+1));
 		This->buffers[This->nrofbuffers] = *ippdsb;
 		This->nrofbuffers++;
 	}
+	LeaveCriticalSection(&(This->lock));
+
 	IDirectSound_AddRef(iface);
 
 	if (dsbd->lpwfxFormat)
@@ -1439,10 +1442,12 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 	(*ippdsb)->parent = ipdsb;
 	memcpy(&((*ippdsb)->wfx), &(ipdsb->wfx), sizeof((*ippdsb)->wfx));
 	/* register buffer */
+	EnterCriticalSection(&(This->lock));
 	This->buffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,This->buffers,sizeof(IDirectSoundBufferImpl**)*(This->nrofbuffers+1));
 	This->buffers[This->nrofbuffers] = *ippdsb;
 	This->nrofbuffers++;
 	IDirectSound_AddRef(iface);
+	LeaveCriticalSection(&(This->lock));
 	return DS_OK;
 }
 
@@ -2222,7 +2227,7 @@ static DWORD WINAPI DSOUND_thread(LPVOID arg)
 		}
 #endif
  		/* RACE: dsound could be deleted */
-		IDirectSound_AddRef((LPDIRECTSOUND)dsound);
+		EnterCriticalSection(&(dsound->lock));
 		if (primarybuf == NULL) {
 			/* Should never happen */
 			WARN("Lost the primary buffer!\n");
@@ -2230,11 +2235,12 @@ static DWORD WINAPI DSOUND_thread(LPVOID arg)
 			ExitThread(0);
 		}
 
-		/* **** */
 		EnterCriticalSection(&(primarybuf->lock));
+
 		len = DSOUND_MixPrimary();
+
 		LeaveCriticalSection(&(primarybuf->lock));
-		/* **** */
+		LeaveCriticalSection(&(dsound->lock));
 
 		if (primarybuf->playing)
 			len = DSOUND_FRAGLEN > len ? DSOUND_FRAGLEN : len;
@@ -2247,7 +2253,6 @@ static DWORD WINAPI DSOUND_thread(LPVOID arg)
 				DSOUND_CloseAudio();
 			Sleep(100);
 		}
-		IDirectSound_Release((LPDIRECTSOUND)dsound);
 	}
 	ExitThread(0);
 }
@@ -2308,6 +2313,8 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	(*ippDS)->wfx.nAvgBytesPerSec	= 44100;
 	(*ippDS)->wfx.nBlockAlign	= 2;
 	(*ippDS)->wfx.wBitsPerSample	= 8;
+
+	InitializeCriticalSection(&((*ippDS)->lock));
 
 	if (!dsound) {
 		HANDLE	hnd;
