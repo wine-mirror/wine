@@ -1338,6 +1338,25 @@ static void add_timeout( struct timeval *when, int timeout )
 }
 
 /***********************************************************************
+ *              FILE_GetTimeout                (INTERNAL)
+ */
+static BOOL FILE_GetTimeout(HANDLE hFile, DWORD txcount, DWORD type, int *timeout)
+{
+    BOOL ret;
+    SERVER_START_REQ(create_async)
+    {
+        req->count = txcount;
+        req->type = type;
+        req->file_handle = hFile;
+        ret = SERVER_CALL();
+        if(timeout)
+            *timeout = req->timeout;
+    }
+    SERVER_END_REQ;
+    return !ret;
+}
+
+/***********************************************************************
  *              FILE_ReadFileEx                (INTERNAL)
  */
 static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
@@ -1345,7 +1364,7 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
     async_private *ovp;
-    int fd, timeout, ret;
+    int fd, timeout=0;
 
     TRACE("file %d to buf %p num %ld %p func %p\n",
 	  hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
@@ -1358,23 +1377,9 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         return FALSE;
     }
 
-    /* 
-     * Although the overlapped transfer will be done in this thread
-     * we still need to register the operation with the server, in
-     * case it is cancelled and to get a file handle and the timeout info.
-     */
-    SERVER_START_REQ(create_async)
+    if ( !FILE_GetTimeout(hFile, bytesToRead, ASYNC_TYPE_READ, &timeout ) )
     {
-        req->count = bytesToRead;
-        req->type = ASYNC_TYPE_READ;
-        req->file_handle = hFile;
-        ret = SERVER_CALL();
-        timeout = req->timeout;
-    }
-    SERVER_END_REQ;
-    if (ret)
-    {
-        TRACE("server call failed\n");
+        TRACE("FILE_GetTimeout failed\n");
         return FALSE;
     }
 
@@ -1576,7 +1581,7 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
     async_private *ovp;
-    int timeout,ret;
+    int timeout=0;
 
     TRACE("file %d to buf %p num %ld %p func %p stub\n",
 	  hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
@@ -1590,19 +1595,9 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     overlapped->Internal     = STATUS_PENDING;
     overlapped->InternalHigh = 0;
 
-    /* need to check the server to get the timeout info */
-    SERVER_START_REQ(create_async)
+    if (!FILE_GetTimeout(hFile, bytesToWrite, ASYNC_TYPE_WRITE, &timeout))
     {
-        req->count = bytesToWrite;
-        req->type = ASYNC_TYPE_WRITE;
-        req->file_handle = hFile;
-        ret = SERVER_CALL();
-        timeout = req->timeout;
-    }
-    SERVER_END_REQ;
-    if (ret)
-    {
-        TRACE("server call failed\n");
+        TRACE("FILE_GetTimeout failed\n");
         return FALSE;
     }
 
