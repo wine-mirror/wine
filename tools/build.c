@@ -50,6 +50,7 @@ typedef enum
     TYPE_PASCAL,       /* pascal function with 32-bit return (Win16) */
     TYPE_ABS,          /* absolute value (Win16) */
     TYPE_REGISTER,     /* register function */
+    TYPE_INTERRUPT,    /* interrupt handler function (Win16) */
     TYPE_STUB,         /* unimplemented stub */
     TYPE_STDCALL,      /* stdcall function (Win32) */
     TYPE_CDECL,        /* cdecl function (Win32) */
@@ -69,6 +70,7 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "pascal",       /* TYPE_PASCAL */
     "equate",       /* TYPE_ABS */
     "register",     /* TYPE_REGISTER */
+    "interrupt",    /* TYPE_INTERRUPT */
     "stub",         /* TYPE_STUB */
     "stdcall",      /* TYPE_STDCALL */
     "cdecl",        /* TYPE_CDECL */
@@ -549,6 +551,42 @@ static int ParseVarargs( ORDDEF *odp )
     return 0;
 }
 
+/*******************************************************************
+ *         ParseInterrupt
+ *
+ * Parse an 'interrupt' definition.
+ */
+static int ParseInterrupt( ORDDEF *odp )
+{
+    char *token;
+
+    if (SpecType == SPEC_WIN32)
+    {
+        fprintf( stderr, "%s:%d: 'interrupt' not supported for Win32\n",
+                 SpecName, Line );
+        return -1;
+    }
+
+    token = GetToken();
+    if (*token != '(')
+    {
+	fprintf(stderr, "%s:%d: Expected '(' got '%s'\n",
+                SpecName, Line, token);
+	return -1;
+    }
+    token = GetToken();
+    if (*token != ')')
+    {
+	fprintf(stderr, "%s:%d: Expected ')' got '%s'\n",
+                SpecName, Line, token);
+	return -1;
+    }
+
+    odp->u.func.arg_types[0] = '\0';
+    strcpy( odp->u.func.link_name, GetToken() );
+    return 0;
+}
+
 
 /*******************************************************************
  *         ParseExtern
@@ -643,6 +681,8 @@ static int ParseOrdinal(int ordinal)
     case TYPE_STDCALL:
     case TYPE_CDECL:
 	return ParseExportFunction( odp );
+    case TYPE_INTERRUPT:
+	return ParseInterrupt( odp );
     case TYPE_ABS:
 	return ParseEquate( odp );
     case TYPE_STUB:
@@ -944,6 +984,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
         case TYPE_PASCAL:
         case TYPE_PASCAL_16:
         case TYPE_REGISTER:
+        case TYPE_INTERRUPT:
         case TYPE_STUB:
             selector = 1;  /* Code selector */
             break;
@@ -1238,10 +1279,12 @@ static int Spec16TypeCompare( const void *e1, const void *e2 )
 
     int type1 = (odp1->type == TYPE_CDECL) ? 0
               : (odp1->type == TYPE_REGISTER) ? 3
+              : (odp1->type == TYPE_INTERRUPT) ? 4
               : (odp1->type == TYPE_PASCAL_16) ? 1 : 2;
 
     int type2 = (odp2->type == TYPE_CDECL) ? 0
               : (odp2->type == TYPE_REGISTER) ? 3
+              : (odp2->type == TYPE_INTERRUPT) ? 4
               : (odp2->type == TYPE_PASCAL_16) ? 1 : 2;
 
     int retval = type1 - type2;
@@ -1285,6 +1328,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
         switch (odp->type)
         {
           case TYPE_REGISTER:
+          case TYPE_INTERRUPT:
           case TYPE_CDECL:
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
@@ -1315,6 +1359,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
                  DLLName,
                  (typelist[i]->type == TYPE_CDECL) ? "c" : "p",
                  (typelist[i]->type == TYPE_REGISTER) ? "regs" :
+                 (typelist[i]->type == TYPE_INTERRUPT) ? "intr" :
                  (typelist[i]->type == TYPE_PASCAL_16) ? "word" : "long",
                  typelist[i]->u.func.arg_types );
 
@@ -1328,6 +1373,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
         switch(odp->type)
         {
         case TYPE_REGISTER:
+        case TYPE_INTERRUPT:
         case TYPE_CDECL:
         case TYPE_PASCAL:
         case TYPE_PASCAL_16:
@@ -1372,6 +1418,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
             break;
 
           case TYPE_REGISTER:
+          case TYPE_INTERRUPT:
           case TYPE_CDECL:
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
@@ -1382,6 +1429,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
                               DLLName,
                               (odp->type == TYPE_CDECL) ? "c" : "p",
                               (odp->type == TYPE_REGISTER) ? "regs" :
+                              (odp->type == TYPE_INTERRUPT) ? "intr" :
                               (odp->type == TYPE_PASCAL_16) ? "word" : "long",
                               odp->u.func.arg_types );
                                  
@@ -1461,12 +1509,16 @@ static int BuildSpecFile( FILE *outfile, char *specname )
  *
  * Build a 16-bit-to-Wine callback glue function. The syntax of the function
  * profile is: call_type_xxxxx, where 'call' is the letter 'c' or 'p' for C or
- * Pascal calling convention, 'type' is one of 'regs', 'word' or
+ * Pascal calling convention, 'type' is one of 'regs', 'intr', 'word' or
  * 'long' and each 'x' is an argument ('w'=word, 's'=signed word,
  * 'l'=long, 'p'=linear pointer, 't'=linear pointer to null-terminated string,
  * 'T'=segmented pointer to null-terminated string).
- * For register functions, the arguments are ignored, but they are still
- * removed from the stack upon return.  !! FIXME !!
+ * For register functions, the arguments (if present) are converted just
+ * the same as for normal functions, but in addition a CONTEXT pointer 
+ * filled with the current register values is passed to the 32-bit routine.
+ * A 'intr' interrupt handler routine is treated like a register routine
+ * without arguments, except that upon return, the flags word pushed onto
+ * the stack by the interrupt is removed.
  *
  * This glue function contains only that part of the 16->32 thunk that is
  * variable (depending on the type and number of arguments); the glue routine
@@ -1526,6 +1578,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix )
 
     if (!strncmp( "word_", profile + 2, 5 )) short_ret = 1;
     else if (!strncmp( "regs_", profile + 2, 5 )) reg_func = 1;
+    else if (!strncmp( "intr_", profile + 2, 5 )) reg_func = 2;
     else if (strncmp( "long_", profile + 2, 5 ))
     {
         fprintf( stderr, "Invalid function name '%s', ignored\n", profile );
@@ -1590,8 +1643,6 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix )
                           prefix, profile, prefix, profile, 
                           STACK16OFFSET(relay));
 
-if ( !reg_func )      /* FIXME */
-{
     /* Copy the arguments */
     pos = (usecdecl? argsize : 0) + sizeof( STACK16FRAME );
     args = profile + 7;
@@ -1636,13 +1687,12 @@ if ( !reg_func )      /* FIXME */
         default:
             fprintf( stderr, "Unknown arg type '%c'\n", args[i] );
         }
-}
 
     /* Call entry point */
     fprintf( outfile, "\tcall *%d(%%edx)\n", STACK16OFFSET(entry_point) );
 
     if ( reg_func )
-        fprintf( outfile, "\tmovl $%d, %%eax\n", argsize );
+        fprintf( outfile, "\tmovl $%d, %%eax\n", reg_func == 2 ? 2 : argsize );
 
     fprintf( outfile, "\tret\n" );
 

@@ -69,6 +69,7 @@ by the ordinal number corresponding to the function.
 - "pascal16" for a Win16 function returning a 16-bit value
 - "pascal" for a Win16 function returning a 32-bit value
 - "register" for a function using CPU register to pass arguments
+- "interrupt" for a Win16 interrupt handler routine
 - "stdcall" for a normal Win32 function
 - "cdecl" for a Win32 function using the C calling convention
 - "varargs" for a Win32 function taking a variable number of arguments

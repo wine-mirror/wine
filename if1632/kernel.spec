@@ -55,8 +55,8 @@ file	krnl386.exe
 52  pascal16 FreeProcInstance(segptr) FreeProcInstance16
 53  stub CallProcInstance
 54  pascal16 GetInstanceData(word word word) GetInstanceData16
-55  register Catch(segptr) Catch16 
-56  register Throw(segptr word) Throw16
+55  register Catch(ptr) Catch16 
+56  register Throw(ptr word) Throw16
 57  pascal16 GetProfileInt(str str s_word) GetProfileInt16
 58  pascal16 GetProfileString(str str str ptr word) GetProfileString16
 59  pascal16 WriteProfileString(str str str) WriteProfileString16

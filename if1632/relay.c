@@ -85,7 +85,8 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
 
     usecdecl = ( *args == 'c' );
     args += 2;
-    reg_func = ( memcmp( args, "regs_", 5 ) == 0 );
+    reg_func = (    memcmp( args, "regs_", 5 ) == 0
+                 || memcmp( args, "intr_", 5 ) == 0 );
     args += 5;
 
     if (usecdecl)
@@ -219,7 +220,8 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
         DPRINTF( "retval=0x%04x ret=%04x:%04x ds=%04x\n",
                  ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
     }
-    else if ( memcmp( args+2, "regs_", 5 ) == 0 )
+    else if (    memcmp( args+2, "regs_", 5 ) == 0 
+              || memcmp( args+2, "intr_", 5 ) == 0 )
     {
         DPRINTF("retval=none ret=%04x:%04x ds=%04x\n",
                 (WORD)CS_reg(context), IP_reg(context), (WORD)DS_reg(context));
@@ -324,17 +326,8 @@ void RELAY_DebugCallTo16Ret( int ret_val )
  * Real prototype is:
  *   INT16 WINAPI Catch( LPCATCHBUF lpbuf );
  */
-void WINAPI Catch16( CONTEXT86 *context )
+void WINAPI Catch16( LPCATCHBUF lpbuf, CONTEXT86 *context )
 {
-    VA_LIST16 valist;
-    SEGPTR buf;
-    LPCATCHBUF lpbuf;
-
-    VA_START16( valist );
-    buf   = VA_ARG16( valist, SEGPTR );
-    lpbuf = (LPCATCHBUF)PTR_SEG_TO_LIN( buf );
-    VA_END16( valist );
-
     /* Note: we don't save the current ss, as the catch buffer is */
     /* only 9 words long. Hopefully no one will have the silly    */
     /* idea to change the current stack before calling Throw()... */
@@ -371,20 +364,13 @@ void WINAPI Catch16( CONTEXT86 *context )
  * Real prototype is:
  *   INT16 WINAPI Throw( LPCATCHBUF lpbuf, INT16 retval );
  */
-void WINAPI Throw16( CONTEXT86 *context )
+void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
 {
-    VA_LIST16 valist;
-    SEGPTR buf;
-    LPCATCHBUF lpbuf;
     STACK16FRAME *pFrame;
     STACK32FRAME *frame32;
     TEB *teb = NtCurrentTeb();
 
-    VA_START16( valist );
-    AX_reg(context) = VA_ARG16( valist, WORD );  /* retval */
-    buf    = VA_ARG16( valist, SEGPTR );
-    lpbuf  = (LPCATCHBUF)PTR_SEG_TO_LIN( buf );
-    VA_END16( valist );
+    AX_reg(context) = retval;
 
     /* Find the frame32 corresponding to the frame16 we are jumping to */
     pFrame = THREAD_STACK16(teb);
