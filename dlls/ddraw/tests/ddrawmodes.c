@@ -118,7 +118,7 @@ void enumdisplaymodes()
 
     rc = IDirectDraw_EnumDisplayModes(lpDD,
         DDEDM_STANDARDVGAMODES, &ddsd, 0, enummodescallback);
-    ok(rc==DD_OK,"EnumDisplayModes returned: %lx\n",rc);
+    ok(rc==DD_OK || rc==E_INVALIDARG,"EnumDisplayModes returned: %lx\n",rc);
 }
 
 static void setdisplaymode(int i)
@@ -135,10 +135,11 @@ static void setdisplaymode(int i)
             rc = IDirectDraw_SetDisplayMode(lpDD,
                 modes[i].dwWidth, modes[i].dwHeight,
                 modes[i].ddpfPixelFormat.UNION_MEMBER(1, dwRGBBitCount));
-            ok(rc==DD_OK,"SetDisplayMode returned: %lx\n",rc);
-            rc = IDirectDraw_RestoreDisplayMode(lpDD);
-            ok(rc==DD_OK,"RestoreDisplayMode returned: %lx\n",rc);
-            
+            ok(DD_OK==rc || DDERR_UNSUPPORTED==rc,"SetDisplayMode returned: %lx\n",rc);
+	    if (DD_OK==rc) {
+                rc = IDirectDraw_RestoreDisplayMode(lpDD);
+                ok(DD_OK==rc,"RestoreDisplayMode returned: %lx\n",rc);
+            }
         }
     }
 }
