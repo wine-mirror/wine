@@ -55,7 +55,10 @@
 #define IDC_XSHM                        1028
 #define IDC_RAD_BUILTIN                 1029
 #define IDC_RAD_NATIVE                  1030
-#define IDC_TREE_DLLS                   1031
+#define IDC_RAD_BUILTIN_NATIVE          1031
+#define IDC_RAD_NATIVE_BUILTIN          1032
+#define IDC_RAD_DISABLE                 1033
+#define IDC_TREE_DLLS                   1034
 #define IDC_DLLS_ADDAPP                 8000
 #define IDC_DLLS_ADDDLL                 8001
 #define IDC_DLLS_REMOVEAPP              8002

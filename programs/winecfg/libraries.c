@@ -37,9 +37,76 @@ typedef enum _DLGMODE
 } DLGMODE;
 
 typedef enum _DLLMODE {
+	BUILTIN_NATIVE,
+	NATIVE_BUILTIN,
 	BUILTIN,
-	NATIVE
+	NATIVE,
+	DISABLE,
+	UNKNOWN /*Special value indicating an erronous DLL override mode*/
 } DLLMODE;
+
+static void removeSpaces(char* in, char* out)
+{
+  int i,j;
+  j = 0;
+  for (i = 0; i < strlen(in); i++)
+  {
+    if (in[i] != ' ')
+    {
+      out[j] = in[i];
+      j++;
+    }
+  }
+  out[j] = 0;
+}
+
+static DLLMODE Str2DLLMode(char* c)
+{
+  /*Parse a string into a DLLMode*/ 
+  char* d = HeapAlloc(GetProcessHeap(), 0, sizeof(c));
+  removeSpaces(c,d);
+  if (strcmp (d, "builtin,native") == 0) {
+    return BUILTIN_NATIVE;
+  } else
+  if (strcmp (d, "native,builtin") == 0) {
+    return NATIVE_BUILTIN;
+  } else
+  if (strcmp (d, "native") == 0){
+    return NATIVE;
+  } else
+  if (strcmp (d, "builtin") == 0) {
+    return BUILTIN;
+  } else
+  if (strcmp (d, "") == 0) {
+    return DISABLE;
+  } else
+    return UNKNOWN;
+}
+
+static char* DLLMode2Str(DLLMODE mode)
+{
+  char* res;
+  switch (mode) {
+    case NATIVE:
+      res = "native";
+      break;
+    case BUILTIN:
+      res = "builtin";
+      break;
+    case NATIVE_BUILTIN:
+      res = "native, builtin";
+      break;
+    case BUILTIN_NATIVE:
+      res = "builtin, native";
+      break;
+    case DISABLE:
+      res = "";
+      break;
+    default:
+      res = "unknown";
+  }
+  return strdup(res);
+}
 
 typedef struct _DLLOVERRIDE
 {
@@ -158,11 +225,9 @@ static VOID LoadLibrarySettings(LPAPPL appl /*DON'T FREE, treeview will own this
 			lpIt->lpDo = lpdo;
 			tis.u.item.lParam = (LPARAM)lpIt;
 			tis.u.item.pszText = name;
-			if (strncmp (read, "built", 5) == 0)
-				lpdo->mode = BUILTIN;
-			else
-				lpdo->mode = NATIVE;
-
+			
+			lpdo->mode = Str2DLLMode(read);
+			
 			TreeView_InsertItem(hwndTV,&tis);
 			UpdateDLLList(hDlg, name);
 			i ++; size = 255; readSize = 255;
@@ -176,10 +241,16 @@ static VOID SetEnabledDLLControls(HWND dialog, DLGMODE dlgmode)
 	if (dlgmode == DLL) {
 		enable(IDC_RAD_BUILTIN);
 		enable(IDC_RAD_NATIVE);
+		enable(IDC_RAD_BUILTIN_NATIVE);
+		enable(IDC_RAD_NATIVE_BUILTIN);
+		enable(IDC_RAD_DISABLE);
 		enable(IDC_DLLS_REMOVEDLL);
 	} else {
 		disable(IDC_RAD_BUILTIN);
 		disable(IDC_RAD_NATIVE);
+		disable(IDC_RAD_BUILTIN_NATIVE);
+		disable(IDC_RAD_NATIVE_BUILTIN);
+		disable(IDC_RAD_DISABLE);
 		disable(IDC_DLLS_REMOVEDLL);
 	}
 
@@ -227,6 +298,7 @@ static VOID OnTreeViewChangeItem(HWND hDlg, HWND hTV)
 {
 	TVITEM ti;
 	LPITEMTAG lpit;
+	int buttonId;
 
 	ti.mask = TVIF_PARAM;
 	ti.hItem = TreeView_GetSelection(hTV);
@@ -236,11 +308,29 @@ static VOID OnTreeViewChangeItem(HWND hDlg, HWND hTV)
 		if (lpit->lpDo)
 		{
 			WINE_TRACE("%s\n", lpit->lpDo->lpcKey);
-			if (lpit->lpDo->mode == BUILTIN) {
-				CheckRadioButton(hDlg, IDC_RAD_BUILTIN, IDC_RAD_NATIVE, IDC_RAD_BUILTIN);
-			} else {
-				CheckRadioButton(hDlg, IDC_RAD_BUILTIN, IDC_RAD_NATIVE, IDC_RAD_NATIVE);
+			buttonId = IDC_RAD_BUILTIN;
+			switch (lpit->lpDo->mode)
+			{
+				case NATIVE:
+					buttonId = IDC_RAD_NATIVE;
+					break;
+				case BUILTIN:
+					buttonId = IDC_RAD_BUILTIN;
+					break;
+				case NATIVE_BUILTIN:
+					buttonId = IDC_RAD_NATIVE_BUILTIN;
+					break;
+				case BUILTIN_NATIVE:
+					buttonId = IDC_RAD_BUILTIN_NATIVE;
+					break;
+				case DISABLE:
+					buttonId = IDC_RAD_DISABLE;
+					break;
+				case UNKNOWN:
+					buttonId = -1;
+					break;
 			}
+			CheckRadioButton(hDlg, IDC_RAD_BUILTIN, IDC_RAD_DISABLE, buttonId);
 			SetEnabledDLLControls(hDlg, DLL);
 		} else {
 			if (lpit->lpAppl)
@@ -272,11 +362,7 @@ static VOID SetDLLMode(HWND hDlg, DLLMODE mode)
 		if (lpit->lpDo)
 		{
 			lpit->lpDo->mode = mode;
-			if (mode == NATIVE)
-				cMode = "native, builtin";
-			else
-				cMode = "builtin, native";
-
+			cMode = DLLMode2Str (mode);
 			/*Find parent, so we can read registry section*/
 			tiPar.mask = TVIF_PARAM;
 			tiPar.hItem = TreeView_GetParent(hTV, ti.hItem);
@@ -288,6 +374,7 @@ static VOID SetDLLMode(HWND hDlg, DLLMODE mode)
 					addTransaction(lpitPar->lpAppl->lpcSection, lpit->lpDo->lpcKey, ACTION_SET, cMode);
 				}
 			}
+			free(cMode);
 		}
 	}
 }
@@ -300,6 +387,21 @@ static VOID OnBuiltinClick(HWND hDlg)
 static VOID OnNativeClick(HWND hDlg)
 {
 	SetDLLMode(hDlg, NATIVE);
+}
+
+static VOID OnBuiltinNativeClick(HWND hDlg)
+{
+	SetDLLMode(hDlg, BUILTIN_NATIVE);
+}
+
+static VOID OnNativeBuiltinClick(HWND hDlg)
+{
+	SetDLLMode(hDlg, NATIVE_BUILTIN);
+}
+
+static VOID OnDisableClick(HWND hDlg)
+{
+	SetDLLMode(hDlg, DISABLE);
 }
 
 static VOID OnTreeViewDeleteItem(NMTREEVIEW* nmt)
@@ -362,7 +464,7 @@ static VOID OnAddDLLClick(HWND hDlg)
 				tis.hParent = ti.hItem;
 				TreeView_InsertItem(hTV,&tis);
 				UpdateDLLList(hDlg, dll);
-				addTransaction(lpit->lpAppl->lpcSection, dll, ACTION_SET, "native, builtin");
+				addTransaction(lpit->lpAppl->lpcSection, dll, ACTION_SET, "native");
 			} else MessageBox(hDlg, "A DLL with that name is already in this list...", "", MB_OK | MB_ICONINFORMATION);
 		}
 	} else return;
@@ -485,6 +587,15 @@ LibrariesDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			case IDC_RAD_NATIVE:
 				OnNativeClick(hDlg);
+				break;
+			case IDC_RAD_BUILTIN_NATIVE:
+				OnBuiltinNativeClick(hDlg);
+				break;
+			case IDC_RAD_NATIVE_BUILTIN:
+				OnNativeBuiltinClick(hDlg);
+				break;
+			case IDC_RAD_DISABLE:
+				OnDisableClick(hDlg);
 				break;
 			case IDC_DLLS_ADDAPP:
 				OnAddApplicationClick(hDlg);
