@@ -98,6 +98,153 @@
   #define CD_FRAMES            75 /* frames per second */
 #endif
 
+/* definitions taken from libdvdcss */
+
+#define IOCTL_DVD_BASE                 FILE_DEVICE_DVD
+
+#define IOCTL_DVD_START_SESSION     CTL_CODE(IOCTL_DVD_BASE, 0x0400, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_DVD_READ_KEY          CTL_CODE(IOCTL_DVD_BASE, 0x0401, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_DVD_SEND_KEY          CTL_CODE(IOCTL_DVD_BASE, 0x0402, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_DVD_END_SESSION       CTL_CODE(IOCTL_DVD_BASE, 0x0403, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_DVD_SET_READ_AHEAD    CTL_CODE(IOCTL_DVD_BASE, 0x0404, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_DVD_GET_REGION        CTL_CODE(IOCTL_DVD_BASE, 0x0405, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_DVD_SEND_KEY2         CTL_CODE(IOCTL_DVD_BASE, 0x0406, METHOD_BUFFERED, FILE_READ_ACCESS | FILE_WRITE_ACCESS)
+
+#define IOCTL_DVD_READ_STRUCTURE    CTL_CODE(IOCTL_DVD_BASE, 0x0450, METHOD_BUFFERED, FILE_READ_ACCESS)
+
+typedef enum {
+    DvdChallengeKey = 0x01,
+    DvdBusKey1,
+    DvdBusKey2,
+    DvdTitleKey,
+    DvdAsf,
+    DvdSetRpcKey = 0x6,
+    DvdGetRpcKey = 0x8,
+    DvdDiskKey = 0x80,
+    DvdInvalidateAGID = 0x3f
+} DVD_KEY_TYPE;
+
+typedef ULONG DVD_SESSION_ID, *PDVD_SESSION_ID;
+
+typedef struct _DVD_COPY_PROTECT_KEY {
+    ULONG KeyLength;
+    DVD_SESSION_ID SessionId;
+    DVD_KEY_TYPE KeyType;
+    ULONG KeyFlags;
+    union {
+        struct {
+            ULONG FileHandle;
+            ULONG Reserved;   /* used for NT alignment */
+        } s;
+        LARGE_INTEGER TitleOffset;
+    } Parameters;
+    UCHAR KeyData[1];
+} DVD_COPY_PROTECT_KEY, *PDVD_COPY_PROTECT_KEY;
+
+typedef struct _DVD_RPC_KEY {
+    UCHAR UserResetsAvailable:3;
+    UCHAR ManufacturerResetsAvailable:3;
+    UCHAR TypeCode:2;
+    UCHAR RegionMask;
+    UCHAR RpcScheme;
+    UCHAR Reserved2[1];
+} DVD_RPC_KEY, * PDVD_RPC_KEY;
+
+typedef struct _DVD_ASF {
+    UCHAR Reserved0[3];
+    UCHAR SuccessFlag:1;
+    UCHAR Reserved1:7;
+} DVD_ASF, * PDVD_ASF;
+
+typedef struct _DVD_REGION
+{
+        unsigned char copy_system;
+        unsigned char region_data;              /* current media region (not playable when set) */
+        unsigned char system_region;    /* current drive region (playable when set) */
+        unsigned char reset_count;              /* number of resets available */
+} DVD_REGION, * PDVD_REGION;
+
+typedef struct _DVD_READ_STRUCTURE {
+        /* Contains an offset to the logical block address of the descriptor to be retrieved. */
+        LARGE_INTEGER block_byte_offset;
+
+        /* 0:Physical descriptor, 1:Copyright descriptor, 2:Disk key descriptor
+           3:BCA descriptor, 4:Manufacturer descriptor, 5:Max descriptor
+         */
+        long format;
+
+        /* Session ID, that is obtained by IOCTL_DVD_START_SESSION */
+        long session;
+
+        /* From 0 to 4 */
+        unsigned char layer_no;
+}DVD_READ_STRUCTURE, * PDVD_READ_STRUCTURE;
+
+typedef struct _DVD_LAYER_DESCRIPTOR
+{
+    unsigned short length;
+
+        unsigned char book_version : 4;
+
+        /* 0:DVD-ROM, 1:DVD-RAM, 2:DVD-R, 3:DVD-RW, 9:DVD-RW */
+        unsigned char book_type : 4;
+
+        unsigned char minimum_rate : 4;
+
+        /* The physical size of the media. 0:120 mm, 1:80 mm. */
+    unsigned char disk_size : 4;
+
+    /* 1:Read-only layer, 2:Recordable layer, 4:Rewritable layer */
+        unsigned char layer_type : 4;
+
+        /* 0:parallel track path, 1:opposite track path */
+    unsigned char track_path : 1;
+
+        /* 0:one layers, 1:two layers, and so on */
+    unsigned char num_of_layers : 2;
+
+    unsigned char reserved1 : 1;
+
+        /* 0:0.74 µm/track, 1:0.80 µm/track, 2:0.615 µm/track */
+    unsigned char track_density : 4;
+
+        /* 0:0.267 µm/bit, 1:0.293 µm/bit, 2:0.409 to 0.435 µm/bit, 4:0.280 to 0.291 µm/bit, 8:0.353 µm/bit */
+    unsigned char linear_density : 4;
+
+        /* Must be either 0x30000:DVD-ROM or DVD-R/-RW or 0x31000:DVD-RAM or DVD+RW */
+    unsigned long starting_data_sector;
+
+    unsigned long end_data_sector;
+    unsigned long end_layer_zero_sector;
+    unsigned char reserved5 : 7;
+
+        /* 0 indicates no BCA data */
+        unsigned char BCA_flag : 1;
+
+        unsigned char reserved6;
+}DVD_LAYER_DESCRIPTOR, * PDVD_LAYER_DESCRIPTOR;
+
+typedef struct _DVD_COPYRIGHT_DESCRIPTOR
+{
+        unsigned char protection;
+    unsigned char region;
+    unsigned short reserved;
+}DVD_COPYRIGHT_DESCRIPTOR, * PDVD_COPYRIGHT_DESCRIPTOR;
+
+typedef struct _DVD_MANUFACTURER_DESCRIPTOR
+{
+        unsigned char manufacturing[2048];
+}DVD_MANUFACTURER_DESCRIPTOR, * PDVD_MANUFACTURER_DESCRIPTOR;
+
+#define DVD_CHALLENGE_KEY_LENGTH    (12 + sizeof(DVD_COPY_PROTECT_KEY) - sizeof(UCHAR))
+
+#define DVD_DISK_KEY_LENGTH         (2048 + sizeof(DVD_COPY_PROTECT_KEY) - sizeof(UCHAR))
+
+#define DVD_KEY_SIZE 5
+#define DVD_CHALLENGE_SIZE 10
+#define DVD_DISCKEY_SIZE 2048
+#define DVD_SECTOR_PROTECTED            0x00000020
+
 static const struct iocodexs
 {
   DWORD code;
@@ -124,7 +271,15 @@ static const struct iocodexs
 {IOCTL_CDROM_LOAD_MEDIA, "IOCTL_CDROM_LOAD_MEDIA"},
 {IOCTL_CDROM_RESERVE, "IOCTL_CDROM_RESERVE"},
 {IOCTL_CDROM_RELEASE, "IOCTL_CDROM_RELEASE"},
-{IOCTL_CDROM_FIND_NEW_DEVICES, "IOCTL_CDROM_FIND_NEW_DEVICES"}
+{IOCTL_CDROM_FIND_NEW_DEVICES, "IOCTL_CDROM_FIND_NEW_DEVICES"},
+{IOCTL_DVD_READ_KEY,"IOCTL_DVD_READ_KEY"},
+{IOCTL_DVD_SEND_KEY,"IOCTL_DVD_SEND_KEY"},
+{IOCTL_DVD_END_SESSION,"IOCTL_DVD_END_SESSION"},
+{IOCTL_DVD_SET_READ_AHEAD,"IOCTL_DVD_SET_READ_AHEAD"},
+{IOCTL_DVD_GET_REGION,"IOCTL_DVD_GET_REGION"},
+{IOCTL_DVD_SEND_KEY2,"IOCTL_DVD_SEND_KEY2"},
+{IOCTL_SCSI_PASS_THROUGH,"IOCTL_SCSI_PASS_THROUGH"},
+{IOCTL_SCSI_PASS_THROUGH_DIRECT,"IOCTL_SCSI_PASS_THROUGH_DIRECT"}
 };
 static const char *iocodex(DWORD code)
 {
@@ -1539,6 +1694,215 @@ static NTSTATUS CDROM_GetAddress(int fd, SCSI_ADDRESS* address)
 }
 
 /******************************************************************
+ *		DVD_StartSession
+ *
+ *
+ */
+static NTSTATUS DVD_StartSession(int fd, PDVD_SESSION_ID sid_in, PDVD_SESSION_ID sid_out)
+{
+#if defined(linux)
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    dvd_authinfo auth_info;
+
+    memset( &auth_info, 0, sizeof( auth_info ) );
+    auth_info.type = DVD_LU_SEND_AGID;
+    if (sid_in) auth_info.lsa.agid = *(int*)sid_in; /* ?*/
+
+    TRACE("fd 0x%08x\n",fd);
+    ret =CDROM_GetStatusCode(ioctl(fd, DVD_AUTH, &auth_info));
+    *sid_out = auth_info.lsa.agid;
+    return ret;
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+    return STATUS_NOT_SUPPORTED;
+#else
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
+/******************************************************************
+ *		DVD_EndSession
+ *
+ *
+ */
+static NTSTATUS DVD_EndSession(int fd, PDVD_SESSION_ID sid)
+{
+#if defined(linux)
+    dvd_authinfo auth_info;
+
+    memset( &auth_info, 0, sizeof( auth_info ) );
+    auth_info.type = DVD_INVALIDATE_AGID;
+    auth_info.lsa.agid = *(int*)sid;
+
+    TRACE("\n");
+    return CDROM_GetStatusCode(ioctl(fd, DVD_AUTH, &auth_info));
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, (rmv->PreventMediaRemoval) ? CDIOCPREVENT : CDIOCALLOW, NULL));
+#else
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
+/******************************************************************
+ *		DVD_SendKey
+ *
+ *
+ */
+static NTSTATUS DVD_SendKey(int fd, PDVD_COPY_PROTECT_KEY key)
+{
+#if defined(linux)
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    dvd_authinfo auth_info;
+
+    memset( &auth_info, 0, sizeof( auth_info ) );
+    switch (key->KeyType)
+    {
+    case DvdChallengeKey:
+	auth_info.type = DVD_HOST_SEND_CHALLENGE;
+	auth_info.hsc.agid = (int)key->SessionId;
+	TRACE("DvdChallengeKey ioc 0x%x\n", DVD_AUTH );
+	memcpy( auth_info.hsc.chal, key->KeyData, DVD_CHALLENGE_SIZE );
+	ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
+	break;
+    case DvdBusKey2:
+	auth_info.type = DVD_HOST_SEND_KEY2;
+	auth_info.hsk.agid = (int)key->SessionId;
+
+	memcpy( auth_info.hsk.key, key->KeyData, DVD_KEY_SIZE );
+	
+	TRACE("DvdBusKey2\n");
+	ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
+	break;
+
+    default:
+	FIXME("Unknown Keytype 0x%x\n",key->KeyType);
+    }
+    return ret;
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+    TRACE("bsd\n");
+    return STATUS_NOT_SUPPORTED;
+#else
+    TRACE("outside\n");
+    return STATUS_NOT_SUPPORTED;
+#endif
+    TRACE("not reached\n");
+}
+
+/******************************************************************
+ *		DVD_ReadKey
+ *
+ *
+ */
+static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
+{
+#if defined(linux)
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    dvd_struct dvd;
+    dvd_authinfo auth_info;
+
+    memset( &dvd, 0, sizeof( dvd_struct ) );
+    memset( &auth_info, 0, sizeof( auth_info ) );
+    switch (key->KeyType)
+    {
+    case DvdDiskKey:
+	
+	dvd.type = DVD_STRUCT_DISCKEY;
+	dvd.disckey.agid = (int)key->SessionId;
+	memset( dvd.disckey.value, 0, DVD_DISCKEY_SIZE );
+	
+	TRACE("DvdDiskKey\n");
+	ret = CDROM_GetStatusCode(ioctl( fd, DVD_READ_STRUCT, &dvd ));
+	if (ret == STATUS_SUCCESS)
+	    memcpy(key->KeyData,dvd.disckey.value,DVD_DISCKEY_SIZE);
+	break;
+    case DvdTitleKey:
+	auth_info.type = DVD_LU_SEND_TITLE_KEY;
+	auth_info.lstk.agid = (int)key->SessionId;
+	auth_info.lstk.lba = (int)(key->Parameters.TitleOffset.QuadPart>>11);
+	TRACE("DvdTitleKey session %d Quadpart 0x%08lx offset 0x%08x\n",
+	      (int)key->SessionId, (long)key->Parameters.TitleOffset.QuadPart, 
+	      auth_info.lstk.lba);
+	ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
+	if (ret == STATUS_SUCCESS)
+	    memcpy(key->KeyData, auth_info.lstk.title_key, DVD_KEY_SIZE );
+	break;
+    case DvdChallengeKey:
+
+	auth_info.type = DVD_LU_SEND_CHALLENGE;
+	auth_info.lsc.agid = (int)key->SessionId;
+
+	TRACE("DvdChallengeKey\n");
+	ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
+	if (ret == STATUS_SUCCESS)
+	    memcpy( key->KeyData, auth_info.lsc.chal, DVD_CHALLENGE_SIZE );
+	break;
+    case DvdAsf:
+	auth_info.type = DVD_LU_SEND_ASF;
+	TRACE("DvdAsf\n");
+	auth_info.lsasf.asf=((PDVD_ASF)key->KeyData)->SuccessFlag;
+	ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
+	((PDVD_ASF)key->KeyData)->SuccessFlag = auth_info.lsasf.asf;
+	break;
+    case DvdBusKey1:
+	auth_info.type = DVD_LU_SEND_KEY1;
+	auth_info.lsk.agid = (int)key->SessionId;
+
+	TRACE("DvdBusKey1\n");
+	ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
+
+	if (ret == STATUS_SUCCESS)
+	    memcpy( key->KeyData, auth_info.lsk.key, DVD_KEY_SIZE );
+	break;
+    case DvdGetRpcKey:
+	auth_info.type = DVD_LU_SEND_RPC_STATE;
+
+	TRACE("DvdGetRpcKey\n");
+	ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
+
+	if (ret == STATUS_SUCCESS)
+	{
+	    ((PDVD_RPC_KEY)key->KeyData)->TypeCode = auth_info.lrpcs.type;
+	    ((PDVD_RPC_KEY)key->KeyData)->RegionMask = auth_info.lrpcs.region_mask;
+	    ((PDVD_RPC_KEY)key->KeyData)->RpcScheme = auth_info.lrpcs.rpc_scheme;
+	}
+	break;
+    default:
+	FIXME("Unknown keytype 0x%x\n",key->KeyType);
+    }
+    return ret;
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+    TRACE("bsd\n");
+    return STATUS_NOT_SUPPORTED;
+#else
+    TRACE("outside\n");
+    return STATUS_NOT_SUPPORTED;
+#endif
+    TRACE("not reached\n");
+}
+
+/******************************************************************
+ *		DVD_GetRegion
+ *
+ *
+ */
+static NTSTATUS DVD_GetRegion(int dev, PDVD_REGION region)
+{
+    FIXME("\n");
+    return STATUS_SUCCESS;
+
+}
+
+/******************************************************************
+ *		DVD_GetRegion
+ *
+ *
+ */
+static NTSTATUS DVD_ReadStructure(int dev, PDVD_READ_STRUCTURE structure, PDVD_LAYER_DESCRIPTOR layer)
+{
+    FIXME("\n");
+    return STATUS_SUCCESS;
+
+}
+/******************************************************************
  *		CDROM_DeviceIoControl
  *
  *
@@ -1747,6 +2111,62 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         else if (nOutBufferSize < sizeof(IO_SCSI_CAPABILITIES)) status = STATUS_BUFFER_TOO_SMALL;
         else status = CDROM_ScsiGetCaps((PIO_SCSI_CAPABILITIES)lpOutBuffer);
         break;
+    case IOCTL_DVD_START_SESSION:
+        sz = sizeof(DVD_SESSION_ID);
+        if (lpOutBuffer == NULL) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            TRACE("before in 0x%08lx out 0x%08lx\n",(lpInBuffer)?*(PDVD_SESSION_ID)lpInBuffer:0,
+                  *(PDVD_SESSION_ID)lpOutBuffer);
+            status = DVD_StartSession(fd, (PDVD_SESSION_ID)lpInBuffer, (PDVD_SESSION_ID)lpOutBuffer);
+            TRACE("before in 0x%08lx out 0x%08lx\n",(lpInBuffer)?*(PDVD_SESSION_ID)lpInBuffer:0,
+                  *(PDVD_SESSION_ID)lpOutBuffer);
+        }
+        break;
+    case IOCTL_DVD_END_SESSION:
+        sz = sizeof(DVD_SESSION_ID);
+        if ((lpInBuffer == NULL) ||  (nInBufferSize < sz))status = STATUS_INVALID_PARAMETER;
+        else status = DVD_EndSession(fd, (PDVD_SESSION_ID)lpInBuffer);
+        break;
+    case IOCTL_DVD_SEND_KEY:
+        sz = 0;
+        if (!lpInBuffer ||
+            (((PDVD_COPY_PROTECT_KEY)lpInBuffer)->KeyLength != nInBufferSize))
+            status = STATUS_INVALID_PARAMETER;
+        else
+        {
+            TRACE("doing DVD_SendKey\n");
+            status = DVD_SendKey(fd, (PDVD_COPY_PROTECT_KEY)lpInBuffer);
+        }
+        break;
+    case IOCTL_DVD_READ_KEY:
+        if (!lpInBuffer ||
+            (((PDVD_COPY_PROTECT_KEY)lpInBuffer)->KeyLength != nInBufferSize))
+            status = STATUS_INVALID_PARAMETER;
+        else if (lpInBuffer !=lpOutBuffer) status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            TRACE("doing DVD_READ_KEY\n");
+            sz = ((PDVD_COPY_PROTECT_KEY)lpInBuffer)->KeyLength;
+            status = DVD_ReadKey(fd, (PDVD_COPY_PROTECT_KEY)lpInBuffer);
+        }
+        break;
+    case IOCTL_DVD_GET_REGION:
+        sz = sizeof(DVD_REGION);
+        if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        TRACE("doing DVD_Get_REGION\n");
+        status = DVD_GetRegion(fd, (PDVD_REGION)lpOutBuffer);
+        break;
+    case IOCTL_DVD_READ_STRUCTURE:
+        sz = sizeof(DVD_LAYER_DESCRIPTOR);
+        if (lpInBuffer == NULL || nInBufferSize != sizeof(DVD_READ_STRUCTURE)) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        TRACE("doing DVD_READ_STRUCTURE\n");
+        status = DVD_ReadStructure(fd, (PDVD_READ_STRUCTURE)lpInBuffer, (PDVD_LAYER_DESCRIPTOR)lpOutBuffer);
+        break;
+
     default:
         FIXME("Unsupported IOCTL %lx (type=%lx access=%lx func=%lx meth=%lx)\n", 
               dwIoControlCode, dwIoControlCode >> 16, (dwIoControlCode >> 14) & 3,
