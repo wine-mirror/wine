@@ -1,5 +1,3 @@
-rsrc	version16.res
-
 1   pascal   SetBkColor(word long) SetBkColor16
 2   pascal16 SetBkMode(word word) SetBkMode16
 3   pascal16 SetMapMode(word word) SetMapMode16

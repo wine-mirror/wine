@@ -38,6 +38,8 @@ ORDDEF *Ordinals[MAX_ORDINALS];
 ORDDEF *Names[MAX_ORDINALS];
 
 SPEC_MODE SpecMode = SPEC_MODE_DLL;
+SPEC_TYPE SpecType = SPEC_WIN32;
+
 int Base = MAX_ORDINALS;
 int Limit = 0;
 int DLLHeapSize = 0;
@@ -69,6 +71,8 @@ const char *output_file_name = NULL;
 static FILE *input_file;
 static FILE *output_file;
 static const char *current_src_dir;
+static int nb_res_files;
+static char **res_files;
 
 /* execution mode */
 static enum
@@ -285,6 +289,7 @@ static void do_exe_mode( const char *arg )
 static void do_module( const char *arg )
 {
     strcpy( owner_name, arg );
+    SpecType = SPEC_WIN16;
 }
 
 static void do_glue(void)
@@ -334,7 +339,8 @@ static void do_dimport( const char *arg )
 
 static void do_rsrc( const char *arg )
 {
-    load_res32_file( arg );
+    res_files = xrealloc( res_files, (nb_res_files+1) * sizeof(*res_files) );
+    res_files[nb_res_files++] = xstrdup( arg );
 }
 
 /* parse options from the argv array and remove all the recognized ones */
@@ -387,6 +393,22 @@ static void parse_options( char *argv[] )
 }
 
 
+/* load all specified resource files */
+static void load_resources(void)
+{
+    int i;
+
+    switch (SpecType)
+    {
+    case SPEC_WIN16:
+        for (i = 0; i < nb_res_files; i++) load_res16_file( res_files[i] );
+        break;
+    case SPEC_WIN32:
+        for (i = 0; i < nb_res_files; i++) load_res32_file( res_files[i] );
+        break;
+    }
+}
+
 /*******************************************************************
  *         main
  */
@@ -398,7 +420,9 @@ int main(int argc, char **argv)
     switch(exec_mode)
     {
     case MODE_SPEC:
-        switch (ParseTopLevel( input_file, 0 ))
+        load_resources();
+        ParseTopLevel( input_file );
+        switch (SpecType)
         {
             case SPEC_WIN16:
                 if (argv[1])
@@ -413,21 +437,17 @@ int main(int argc, char **argv)
         }
         break;
     case MODE_EXE:
+        if (SpecType == SPEC_WIN16) fatal_error( "Cannot build 16-bit exe files\n" );
+        load_resources();
         read_undef_symbols( argv + 1 );
         BuildSpec32File( output_file );
         break;
     case MODE_DEF:
         if (argv[1]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
-        switch (ParseTopLevel( input_file, 1 ))
-        {
-            case SPEC_WIN16:
-                fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
-                break;
-            case SPEC_WIN32:
-                BuildDef32File( output_file );
-                break;
-            default: assert(0);
-        }
+        if (SpecType == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
+        load_resources();
+        ParseTopLevel( input_file );
+        BuildDef32File( output_file );
         break;
     case MODE_DEBUG:
         BuildDebugFile( output_file, current_src_dir, argv + 1 );

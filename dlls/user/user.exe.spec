@@ -1,5 +1,3 @@
-rsrc	resources/version16.res
-
 1   pascal16 MessageBox(word str str word) MessageBox16
 2   stub OldExitWindows
 3   stub EnableOEMLayer

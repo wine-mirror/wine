@@ -36,8 +36,6 @@
 
 int current_line = 0;
 
-static SPEC_TYPE SpecType = SPEC_WIN32;
-
 static char ParseBuffer[512];
 static char TokenBuffer[512];
 static char *ParseNext = ParseBuffer;
@@ -494,26 +492,16 @@ static void sort_names(void)
  *
  * Parse a spec file.
  */
-SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
+void ParseTopLevel( FILE *file )
 {
     const char *token;
 
     input_file = file;
     current_line = 0;
-    if (owner_name[0]) SpecType = SPEC_WIN16;
 
     while ((token = GetToken(1)) != NULL)
     {
-        if (strcmp(token, "rsrc") == 0)
-        {
-            if (!def_only)
-            {
-                if (SpecType != SPEC_WIN16) load_res32_file( GetToken(0) );
-                else load_res16_file( GetToken(0) );
-            }
-            else GetToken(0);  /* skip it */
-        }
-        else if (strcmp(token, "ignore") == 0)
+        if (strcmp(token, "ignore") == 0)
         {
             if (SpecType != SPEC_WIN32)
                 fatal_error( "'ignore' only supported for Win32 spec files\n" );
@@ -533,12 +521,8 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
             fatal_error( "Expected ordinal declaration\n" );
     }
 
-    if (SpecType == SPEC_WIN16 && !owner_name[0])
-        fatal_error( "'owner' not specified for Win16 dll\n" );
-
     current_line = 0;  /* no longer parsing the input file */
     sort_names();
-    return SpecType;
 }
 
 

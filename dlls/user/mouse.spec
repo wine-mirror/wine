@@ -1,5 +1,3 @@
-rsrc	resources/mouse.res
-
 1 pascal16 Inquire(ptr) MOUSE_Inquire
 2 pascal16 Enable(segptr) MOUSE_Enable
 3 pascal16 Disable() MOUSE_Disable

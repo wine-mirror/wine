@@ -84,7 +84,7 @@ EXTRASUBDIRS = \
 # Special rules for 16-bit resource and spec files
 
 gdi.exe.spec.c: gdi.exe.spec version16.res
-	$(LDPATH) $(WINEBUILD) $(DEFS) -H 65520 -o $@ -M $(MODULE) -spec $(SRCDIR)/gdi.exe.spec
+	$(LDPATH) $(WINEBUILD) $(DEFS) -H 65520 -o $@ -M $(MODULE) -r version16.res --spec $(SRCDIR)/gdi.exe.spec
 
 version16.res: version16.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/version16.rc

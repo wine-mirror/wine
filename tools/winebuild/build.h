@@ -166,7 +166,7 @@ extern void BuildSpec16File( FILE *outfile );
 extern void BuildSpec32File( FILE *outfile );
 extern void BuildDef32File( FILE *outfile );
 extern void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv );
-extern SPEC_TYPE ParseTopLevel( FILE *file, int def_only );
+extern void ParseTopLevel( FILE *file );
 
 /* global variables */
 
@@ -196,5 +196,6 @@ extern ORDDEF *EntryPoints[MAX_ORDINALS];
 extern ORDDEF *Ordinals[MAX_ORDINALS];
 extern ORDDEF *Names[MAX_ORDINALS];
 extern SPEC_MODE SpecMode;
+extern SPEC_TYPE SpecType;
 
 #endif  /* __WINE_BUILD_H */

@@ -167,8 +167,6 @@ Turn on warnings.
 A spec file should contain a number of optional directives, and then a
 list of ordinal declarations. The general syntax is the following:
 .PP
-.RB [ rsrc\  \fIresfile\fR]
-.br
 .RB [ ignore\ (\  [ \fIsymbols...\fR ]\  )\  ]
 .br
 .BI #\  comments
@@ -191,9 +189,6 @@ list of ordinal declarations. The general syntax is the following:
 .IB ordinal\  forward
 .RI [ flags ]\  exportname\ forwardname
 .SS "Optional directives"
-.B rsrc
-specifies the path of the compiled resource file.
-.PP
 .B ignore
 specifies a list of symbols that should be ignored when
 resolving undefined symbols against the imported libraries.

@@ -1,5 +1,3 @@
-rsrc	version16.res
-
   1 pascal   RegOpenKey(long str ptr) RegOpenKey16
   2 pascal   RegCreateKey(long str ptr) RegCreateKey16
   3 pascal   RegCloseKey(long) RegCloseKey16

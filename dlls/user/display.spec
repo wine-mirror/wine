@@ -1,5 +1,3 @@
-rsrc	resources/display.res
-
 1   stub BitBlt
 2   stub ColorInfo
 3   stub Control

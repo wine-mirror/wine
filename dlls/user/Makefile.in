@@ -105,7 +105,13 @@ EXTRASUBDIRS = \
 # Special rules for 16-bit resource and spec files
 
 user.exe.spec.c: user.exe.spec resources/version16.res
-	$(LDPATH) $(WINEBUILD) $(DEFS) -H 65520 -o $@ -M $(MODULE) --spec $(SRCDIR)/user.exe.spec
+	$(LDPATH) $(WINEBUILD) $(DEFS) -H 65520 -o $@ -M $(MODULE) -r resources/version16.res --spec $(SRCDIR)/user.exe.spec
+
+display.spec.c: display.spec resources/display.res
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -M $(MODULE) -r resources/display.res --spec $(SRCDIR)/display.spec
+
+mouse.spec.c: mouse.spec resources/mouse.res
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -M $(MODULE) -r resources/mouse.res --spec $(SRCDIR)/mouse.spec
 
 resources/display.res: resources/display.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/resources/display.rc
@@ -115,9 +121,5 @@ resources/mouse.res: resources/mouse.rc
 
 resources/version16.res: resources/version16.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/resources/version16.rc
-
-display.spec.c: resources/display.res
-
-mouse.spec.c: resources/mouse.res
 
 ### Dependencies:
