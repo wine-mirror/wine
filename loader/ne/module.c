@@ -1193,7 +1193,8 @@ static void NE_InitProcess(void)
               SELECTOROF(pTask->teb->cur_stack),
               OFFSETOF(pTask->teb->cur_stack) );
 
-        ExitThread( CallTo16RegisterShort( &context, 0 ) );
+        CallTo16RegisterShort( &context, 0 );
+        ExitThread( AX_reg( &context ) );
     }
 
     SYSLEVEL_LeaveWin16Lock();

@@ -238,7 +238,8 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     args[3] = msg;
     args[4] = hwnd;
 
-    ret = CallTo16RegisterShort( &context, 5 * sizeof(WORD) );
+    CallTo16RegisterShort( &context, 5 * sizeof(WORD) );
+    ret = MAKELONG( AX_reg(&context), DX_reg(&context) );
     if (offset) stack16_pop( offset );
 
     WIN_RestoreWndsLock(iWndsLocks);

@@ -504,20 +504,44 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     fprintf( outfile, "\tpushl %%cs\n" );
     fprintf( outfile, "\tcall .LCallTo16%s\n", name );
 
-    /* Convert and push return value */
-    if ( short_ret )
+    if ( !reg_func )
     {
-        fprintf( outfile, "\tmovzwl %%ax, %%eax\n" );
-        fprintf( outfile, "\tpushl %%eax\n" );
-    }
-    else if ( reg_func != 2 )
-    {
-        fprintf( outfile, "\tshll $16,%%edx\n" );
-        fprintf( outfile, "\tmovw %%ax,%%dx\n" );
-        fprintf( outfile, "\tpushl %%edx\n" );
+        /* Convert and push return value */
+        if ( short_ret )
+        {
+            fprintf( outfile, "\tmovzwl %%ax, %%eax\n" );
+            fprintf( outfile, "\tpushl %%eax\n" );
+        }
+        else
+        {
+            fprintf( outfile, "\tshll $16,%%edx\n" );
+            fprintf( outfile, "\tmovw %%ax,%%dx\n" );
+            fprintf( outfile, "\tpushl %%edx\n" );
+        }
     }
     else
-        fprintf( outfile, "\tpushl %%eax\n" );
+    {
+        /* 
+         * Modify CONTEXT86 structure to contain new values
+         *
+         * NOTE:  We restore only EAX, EBX, EDX, EDX, EBP, and ESP.
+         *        The segment registers as well as ESI and EDI should
+         *        not be modified by a well-behaved 16-bit routine in
+         *        any case.  [If necessary, we could restore them as well,
+         *        at the cost of a somewhat less efficient return path.]
+         */
+        
+        fprintf( outfile, "\tmovl %d(%%esp), %%edi\n", STACK32OFFSET(target)-12 );
+        fprintf( outfile, "\tmovl %%eax, %d(%%edi)\n", CONTEXTOFFSET(Eax) );
+        fprintf( outfile, "\tmovl %%ebx, %d(%%edi)\n", CONTEXTOFFSET(Ebx) );
+        fprintf( outfile, "\tmovl %%ecx, %d(%%edi)\n", CONTEXTOFFSET(Ecx) );
+        fprintf( outfile, "\tmovl %%edx, %d(%%edi)\n", CONTEXTOFFSET(Edx) );
+        fprintf( outfile, "\tmovl %%ebp, %d(%%edi)\n", CONTEXTOFFSET(Ebp) );
+        fprintf( outfile, "\tmovl %%esi, %d(%%edi)\n", CONTEXTOFFSET(Esp) );
+                 /* The return glue code saved %esp into %esi */
+
+        fprintf( outfile, "\tpushl %%edi\n" );
+    }
 
     if ( UsePIC )
     {
@@ -531,10 +555,14 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     /* Print debugging info */
     if (debugging)
     {
+        fprintf( outfile, "\tpushl $%d\n", reg_func );
+
         if ( UsePIC )
             fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16Ret@PLT\n" );
         else
             fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16Ret\n" );
+
+        fprintf( outfile, "\taddl $4, %%esp\n" );
     }
 
     /* Leave Win16 Mutex */
@@ -657,17 +685,20 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\t.globl " PREFIX "CallTo16_Ret\n" );
     fprintf( outfile, PREFIX "CallTo16_Ret:\n" );
 
+    /* Save %esp into %esi */
+    fprintf( outfile, "\tmovl %%esp,%%esi\n" );
+
     /* Restore 32-bit segment registers */
 
-    fprintf( outfile, "\tmovw $0x%04x,%%bx\n", data_selector );
+    fprintf( outfile, "\tmovw $0x%04x,%%di\n", data_selector );
 #ifdef __svr4__
     fprintf( outfile, "\tdata16\n");
 #endif
-    fprintf( outfile, "\tmovw %%bx,%%ds\n" );
+    fprintf( outfile, "\tmovw %%di,%%ds\n" );
 #ifdef __svr4__
     fprintf( outfile, "\tdata16\n");
 #endif
-    fprintf( outfile, "\tmovw %%bx,%%es\n" );
+    fprintf( outfile, "\tmovw %%di,%%es\n" );
 
     fprintf( outfile, "\tmovw " PREFIX "SYSLEVEL_Win16CurrentTeb,%%fs\n" );
 
@@ -676,7 +707,7 @@ static void BuildRet16Func( FILE *outfile )
 #ifdef __svr4__
     fprintf( outfile, "\tdata16\n");
 #endif
-    fprintf( outfile, "\tmovw %%bx,%%ss\n" );
+    fprintf( outfile, "\tmovw %%di,%%ss\n" );
     fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%esp\n", STACKOFFSET );
     fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 

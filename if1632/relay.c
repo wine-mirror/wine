@@ -67,10 +67,10 @@ WORD CALLBACK CallTo16Word( FARPROC16 target, INT nArgs )
 LONG CALLBACK CallTo16Long( FARPROC16 target, INT nArgs )
 { assert( FALSE ); }
 
-LONG CALLBACK CallTo16RegisterShort( const CONTEXT86 *context, INT nArgs )
+void CALLBACK CallTo16RegisterShort( CONTEXT86 *context, INT nArgs )
 { assert( FALSE ); }
 
-LONG CALLBACK CallTo16RegisterLong ( const CONTEXT86 *context, INT nArgs )
+void CALLBACK CallTo16RegisterLong ( CONTEXT86 *context, INT nArgs )
 { assert( FALSE ); }
 
 WORD CallFrom16Word( void )       
@@ -327,12 +327,27 @@ void RELAY_DebugCallTo16( LPVOID target, int nb_args, BOOL reg_func )
 /***********************************************************************
  *           RELAY_DebugCallTo16Ret
  */
-void RELAY_DebugCallTo16Ret( int ret_val )
+void RELAY_DebugCallTo16Ret( BOOL reg_func, int ret_val )
 {
     if (!TRACE_ON(relay)) return;
 
-    DPRINTF("CallTo16() ss:sp=%04x:%04x retval=0x%08x\n", 
-            SELECTOROF(NtCurrentTeb()->cur_stack),
-            OFFSETOF(NtCurrentTeb()->cur_stack), ret_val);
+    if (!reg_func)
+    {
+        DPRINTF("CallTo16() ss:sp=%04x:%04x retval=0x%08x\n", 
+                SELECTOROF(NtCurrentTeb()->cur_stack),
+                OFFSETOF(NtCurrentTeb()->cur_stack), ret_val);
+    }
+    else
+    {
+        CONTEXT86 *context = (CONTEXT86 *)ret_val;
+
+        DPRINTF("CallTo16() ss:sp=%04x:%04x\n", 
+                SELECTOROF(NtCurrentTeb()->cur_stack),
+                OFFSETOF(NtCurrentTeb()->cur_stack));
+        DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x BP=%04x SP=%04x\n",
+                AX_reg(context), BX_reg(context), CX_reg(context),
+                DX_reg(context), BP_reg(context), LOWORD(ESP_reg(context)));
+    }
+
     SYSLEVEL_CheckNotLevel( 2 );
 }
