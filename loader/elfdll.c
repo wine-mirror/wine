@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include "config.h"
 #include "windef.h"
@@ -40,6 +41,70 @@ struct elfdll_image
 	NE_MODULE	*ne_module_start;
 	DWORD		ne_module_size;
 };
+
+
+/****************************************************************************
+ *	ELFDLL_dlopen
+ *
+ * Wrapper for dlopen to search the LD_LIBRARY_PATH manually because
+ * libdl.so caches the environment and does not accept our changes.
+ */
+void *ELFDLL_dlopen(const char *libname, int flags)
+{
+	char *ldpath = getenv("LD_LIBRARY_PATH");
+	char buffer[256];
+	int namelen;
+
+	if(!ldpath)
+	{
+		WARN(elfdll, "No LD_LIBRARY_PATH set\n");
+		return dlopen(libname, flags);
+	}
+
+	namelen = strlen(libname);
+	while(ldpath)
+	{
+		int len;
+		char *cptr;
+		char *from;
+		void *handle;
+
+		from = ldpath;
+		cptr = strchr(ldpath, ':');
+		if(!cptr)
+		{
+			len = strlen(ldpath);
+			ldpath = NULL;
+		}
+		else
+		{
+			len = cptr - ldpath;
+			ldpath = cptr + 1;
+		}
+
+		if(len + namelen + 1 >= sizeof(buffer))
+		{
+			ERR(elfdll, "Buffer overflow! Check LD_LIBRARY_PATH or increase buffer size.\n");
+			return NULL;
+		}
+
+		strncpy(buffer, from, len);
+		if(len)
+		{
+			buffer[len] = '/';
+			strcpy(buffer + len + 1, libname);
+		}
+		else
+			strcpy(buffer + len, libname);
+
+		TRACE(elfdll, "Trying dlopen('%s', %d)\n", buffer, flags);
+
+		handle = dlopen(buffer, flags);
+		if(handle)
+			return handle;
+	}
+	return NULL;
+}
 
 
 /****************************************************************************
@@ -221,11 +286,8 @@ WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	strcpy(soname, name);
 	strcat(soname, ".so");
 
-	/* Try to open the elf-dll.
-	 * The dlopen will search the correct path and our extended
-	 * LD_LIBRARY as well.
-	 */
-	dlhandle = dlopen(soname, RTLD_LAZY);
+	/* Try to open the elf-dll */
+	dlhandle = ELFDLL_dlopen(soname, RTLD_LAZY);
 	if(!dlhandle)
 	{
 		WARN(elfdll, "Could not load %s (%s)\n", soname, dlerror());

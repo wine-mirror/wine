@@ -50,7 +50,7 @@ static char *get_tok(const char *str, const char *delim)
 	static char *buf = NULL;
 	char *cptr;
 
-	if(!str && (!buf || !index))
+	if(!str && !buf)
 		return NULL;
 
 	if(str && buf)
@@ -335,7 +335,6 @@ BOOL MODULE_InitLoadOrder(void)
 
 	if(nbuffer)
 	{
-		extern char *_dl_library_path;
 		char *ld_lib_path = getenv("LD_LIBRARY_PATH");
 		if(ld_lib_path)
 		{
@@ -343,22 +342,13 @@ BOOL MODULE_InitLoadOrder(void)
 			 * Append new path to current
 			 */
 			char *tmp = HEAP_strdupA(SystemHeap, 0, buffer);
-			sprintf(buffer, "%s:%s", ld_lib_path, tmp);
+			sprintf(buffer, "LD_LIBRARY_PATH=%s:%s", ld_lib_path, tmp);
 			HeapFree( SystemHeap, 0, tmp );
 		}
 
 		TRACE(module, "Setting new LD_LIBRARY_PATH=%s\n", buffer);
 
-		setenv("LD_LIBRARY_PATH", buffer, 1);
-
-		/*
-		 * This is a cruel hack required to have libdl check this path.
-		 * The problem is that libdl caches the environment variable
-		 * and we won't get our modifications applied. We ensure the
-		 * the correct search path by explicitely modifying the libdl
-		 * internal variable which holds the path.
-		 */
-		_dl_library_path = HEAP_strdupA(SystemHeap, 0, buffer);
+		putenv(buffer);
 	}
 
 	/* Get the default load order */

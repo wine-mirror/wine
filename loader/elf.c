@@ -25,6 +25,7 @@
 #include "pe_image.h"
 #include "debug.h"
 #include "winerror.h"
+#include "elfdll.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
 
@@ -138,7 +139,7 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err)
 	/* FIXME: make UNIX filename from DOS fn? */
 
 	/* ... and open it */
-	dlhandle = dlopen(t,RTLD_NOW);
+	dlhandle = ELFDLL_dlopen(t,RTLD_NOW);
 	if (!dlhandle) {
 		HeapFree( GetProcessHeap(), 0, t );
 		*err = ERROR_FILE_NOT_FOUND;
