@@ -90,8 +90,8 @@ pointer_default(unique)
 interface IMultiMediaStream : IUnknown {
 
 	HRESULT GetInformation(
-		[out] /*[optional]*/ char *pdwFlags,
-		[out] /*[optional]*/ STREAM_TYPE *pStreamType);
+		[out, optional] char *pdwFlags,
+		[out, optional] STREAM_TYPE *pStreamType);
 
 	HRESULT GetMediaStream(
 		[in] REFMSPID idPurpose,
@@ -132,8 +132,8 @@ interface IMediaStream : IUnknown {
 		[out] IMultiMediaStream **ppMultiMediaStream);
 
 	HRESULT GetInformation(
-		[out] /*[optional]*/ MSPID *pPurposeId,
-		[out] /*[optional]*/ STREAM_TYPE *pType);
+		[out, optional] MSPID *pPurposeId,
+		[out, optional] STREAM_TYPE *pType);
 
 	HRESULT SetSameFormat(
 		[in] IMediaStream *pStreamThatHasDesiredFormat,
@@ -164,21 +164,21 @@ interface IStreamSample : IUnknown {
 		[in] IMediaStream **ppMediaStream);
 
 	HRESULT GetSampleTimes(
-		[out] /*[optional]*/ STREAM_TIME * pStartTime,
-		[out] /*[optional]*/ STREAM_TIME * pEndTime,
-		[out] /*[optional]*/ STREAM_TIME * pCurrentTime);
+		[out, optional] STREAM_TIME * pStartTime,
+		[out, optional] STREAM_TIME * pEndTime,
+		[out, optional] STREAM_TIME * pCurrentTime);
 
 	HRESULT SetSampleTimes(
-		[in] /*[optional]*/ const STREAM_TIME *pStartTime,
-		[in] /*[optional]*/ const STREAM_TIME *pEndTime);
+		[in, optional] const STREAM_TIME *pStartTime,
+		[in, optional] const STREAM_TIME *pEndTime);
 
 	HRESULT Update(
 		[in] DWORD dwFlags,
-		[in] /*[optional]*/ HANDLE hEvent,
-		[in] /*[optional]*/ PAPCFUNC pfnAPC,
-		[in] /*[optional]*/ DWORD dwAPCData);
+		[in, optional] HANDLE hEvent,
+		[in, optional] PAPCFUNC pfnAPC,
+		[in, optional] DWORD dwAPCData);
 
 	HRESULT CompletionStatus(
 		[in] DWORD dwFlags,
-		[in] /*[optional]*/ DWORD dwMilliseconds);
+		[in, optional] DWORD dwMilliseconds);
 };

@@ -91,7 +91,7 @@ interface IAMMultiMediaStream : IMultiMediaStream
 	HRESULT Initialize(
 		[in] STREAM_TYPE StreamType,
 		[in] DWORD dwFlags,
-		[in] /*[optional]*/ IGraphBuilder *pFilterGraph);
+		[in, optional] IGraphBuilder *pFilterGraph);
 
 	HRESULT GetFilterGraph(
 		[out] IGraphBuilder **ppGraphBuilder);
@@ -100,10 +100,10 @@ interface IAMMultiMediaStream : IMultiMediaStream
 		[out] IMediaStreamFilter **ppFilter);
 
 	HRESULT AddMediaStream(
-		[in] /*[optional]*/ IUnknown *pStreamObject,
-		[in] /*[optional]*/ const MSPID *PurposeId,
+		[in, optional] IUnknown *pStreamObject,
+		[in, optional] const MSPID *PurposeId,
 		[in] DWORD dwFlags,
-		[out] /*[optional]*/ IMediaStream **ppNewStream);
+		[out, optional] IMediaStream **ppNewStream);
 
 	HRESULT OpenFile(
 		[in] LPCWSTR pszFileName,
@@ -127,7 +127,7 @@ pointer_default(unique)
 interface IAMMediaStream : IMediaStream
 {
 	HRESULT Initialize(
-		[in] /*[optional]*/ IUnknown *pSourceObject,
+		[in, optional] IUnknown *pSourceObject,
 		[in] DWORD dwFlags,
 		[in] REFMSPID PurposeId,
 		[in] const STREAM_TYPE StreamType);
@@ -231,9 +231,9 @@ interface IAMMediaTypeStream : IMediaStream
 
 	HRESULT CreateSample(
 		[in] long lSampleSize,
-		[in] /*[optional]*/ BYTE * pbBuffer,
+		[in, optional] BYTE * pbBuffer,
 		[in] DWORD dwFlags,
-		[in] /*[optional]*/ IUnknown *pUnkOuter,
+		[in, optional] IUnknown *pUnkOuter,
 		[out] IAMMediaTypeSample ** ppAMMediaTypeSample);
 
 	HRESULT GetStreamAllocatorRequirements(
