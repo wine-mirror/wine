@@ -1894,15 +1894,14 @@ static int may_use_dibsection(HDC hdc) {
 
 /* helper for ImageList_Read, see comments below */
 static HBITMAP _read_bitmap(LPSTREAM pstm,int ilcFlag,int cx,int cy) {
-    HDC			xdc = 0;
+    HDC                        xdc = 0, hBitmapDC =0;
     BITMAPFILEHEADER	bmfh;
     BITMAPINFOHEADER	bmih;
     int			bitsperpixel,palspace,longsperline,width,height;
     LPBITMAPINFOHEADER	bmihc = NULL;
     int			result = 0;
-    HBITMAP		hbitmap = 0;
-    LPBYTE		bits = NULL,nbits = NULL;
-    int			nbytesperline,bytesperline;
+    HBITMAP            hbitmap = 0, hDIB = 0;
+    LPBYTE             bits = NULL;
 
     if (!SUCCEEDED(IStream_Read ( pstm, &bmfh, sizeof(bmfh), NULL))	||
     	(bmfh.bfType != (('M'<<8)|'B'))					||
@@ -1942,44 +1941,41 @@ static HBITMAP _read_bitmap(LPSTREAM pstm,int ilcFlag,int cx,int cy) {
     } else
 #endif
     {
-	int i,nwidth,nheight;
+       int i,nwidth,nheight,nRows;
 
 	nwidth	= width*(height/cy);
 	nheight	= cy;
+        nRows   = (height/cy);
 
 	if (bitsperpixel==1)
 	    hbitmap = CreateBitmap(nwidth,nheight,1,1,NULL);
 	else
 	    hbitmap = CreateCompatibleBitmap(xdc,nwidth,nheight);
 
-	/* Might be a bit excessive memory use here */
-	bits = (LPBYTE)LocalAlloc(LMEM_ZEROINIT,bmihc->biSizeImage);
-	nbits = (LPBYTE)LocalAlloc(LMEM_ZEROINIT,bmihc->biSizeImage);
-	if (!SUCCEEDED(IStream_Read ( pstm, bits, bmihc->biSizeImage, NULL)))
-		goto ret1;
+       hDIB = CreateDIBSection(xdc,(BITMAPINFO*)bmihc,0,(LPVOID*)&bits,0,0);
+       if (!hDIB)
+           goto ret1;
+       if (!SUCCEEDED(IStream_Read( pstm, bits, bmihc->biSizeImage, NULL)))
+           goto ret1;
+
+        hBitmapDC = CreateCompatibleDC(0);
+        SelectObject(hBitmapDC, hbitmap);
 
 	/* Copy the NxM bitmap into a 1x(N*M) bitmap we need, linewise */
 	/* Do not forget that windows bitmaps are bottom->top */
-	bytesperline	= longsperline*4;
-	nbytesperline	= (height/cy)*bytesperline;
-	for (i=0;i<height;i++) {
-	    memcpy(
-		nbits+((height-1-i)%cy)*nbytesperline+(i/cy)*bytesperline,
-		bits+bytesperline*(height-1-i),
-		bytesperline
-	    );
-	}
-	bmihc->biWidth	= nwidth;
-	bmihc->biHeight	= nheight;
-	if (!SetDIBits(xdc,hbitmap,0,nheight,nbits,(BITMAPINFO*)bmihc,0))
-		goto ret1;
-	LocalFree((HLOCAL)nbits);
-	LocalFree((HLOCAL)bits);
+        TRACE("nRows=%d\n", nRows);
+        for (i=0; i < nRows; i++){
+            StretchDIBits(hBitmapDC, width*i, 0, width, cy, 0, cy*(nRows-1-i), width, cy, bits,
+                (BITMAPINFO*)bmihc, DIB_RGB_COLORS, SRCCOPY);
+        }
+        
 	result = 1;
     }
 ret1:
     if (xdc)	ReleaseDC(0,xdc);
     if (bmihc)	LocalFree((HLOCAL)bmihc);
+    if (hDIB)   DeleteObject(hDIB);
+    if (hBitmapDC)   DeleteDC(hBitmapDC);
     if (!result) {
 	if (hbitmap) {
 	    DeleteObject(hbitmap);
