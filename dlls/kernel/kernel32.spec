@@ -143,8 +143,8 @@
 @ stdcall BackupSeek(ptr long long ptr ptr ptr)
 @ stdcall BackupWrite(ptr ptr long ptr long long ptr)
 @ stdcall Beep(long long)
-@ stub BeginUpdateResourceA
-@ stub BeginUpdateResourceW
+@ stdcall BeginUpdateResourceA(str long)
+@ stdcall BeginUpdateResourceW(wstr long)
 @ stdcall BuildCommDCBA(str ptr)
 @ stdcall BuildCommDCBAndTimeoutsA(str ptr ptr)
 @ stdcall BuildCommDCBAndTimeoutsW(wstr ptr ptr)
@@ -231,8 +231,8 @@
 @ stdcall DisconnectNamedPipe(long)
 @ stdcall DosDateTimeToFileTime(long long ptr)
 @ stdcall DuplicateHandle(long long long ptr long long long)
-@ stub EndUpdateResourceA
-@ stub EndUpdateResourceW
+@ stdcall EndUpdateResourceA(long long)
+@ stdcall EndUpdateResourceW(long long)
 @ stdcall EnterCriticalSection(ptr) ntdll.RtlEnterCriticalSection
 @ stdcall EnumCalendarInfoA(ptr long long long)
 @ stub EnumCalendarInfoW

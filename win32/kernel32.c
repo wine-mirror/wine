@@ -36,6 +36,48 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
 
 /***********************************************************************
+ *          BeginUpdateResourceA                 (KERNEL32.@)
+ */
+HANDLE WINAPI BeginUpdateResourceA( LPCSTR pFileName, BOOL bDeleteExistingResources )
+{
+  FIXME("(%s,%d): stub\n",debugstr_a(pFileName),bDeleteExistingResources);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return 0;
+}
+
+/***********************************************************************
+ *          BeginUpdateResourceW                 (KERNEL32.@)
+ */
+HANDLE WINAPI BeginUpdateResourceW( LPCWSTR pFileName, BOOL bDeleteExistingResources )
+{
+
+  FIXME("(%s,%d): stub\n",debugstr_w(pFileName),bDeleteExistingResources);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return 0;
+}
+
+/***********************************************************************
+ *          EndUpdateResourceA                 (KERNEL32.@)
+ */
+BOOL WINAPI EndUpdateResourceA( HANDLE hUpdate, BOOL fDiscard )
+{
+
+  FIXME("(%p,%d): stub\n",hUpdate, fDiscard);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/***********************************************************************
+ *          EndUpdateResourceW                 (KERNEL32.@)
+ */
+BOOL WINAPI EndUpdateResourceW( HANDLE hUpdate, BOOL fDiscard )
+{
+  FIXME("(%p,%d): stub\n",hUpdate, fDiscard);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/***********************************************************************
  *           UpdateResourceA                 (KERNEL32.@)
  */
 BOOL WINAPI UpdateResourceA(
