@@ -21,13 +21,13 @@
 #ifndef __WINE_BUILTIN16_H
 #define __WINE_BUILTIN16_H
 
-#include "windef.h"
-#include "wine/windef16.h"
+#include <windef.h>
+#include <wine/windef16.h>
 
 struct _CONTEXT86;
 struct _STACK16FRAME;
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 #ifdef __i386__
 
@@ -70,7 +70,7 @@ typedef struct
 
 #endif
 
-#include "poppack.h"
+#include <poppack.h>
 
 /* argument type flags for relay debugging */
 enum arg_types

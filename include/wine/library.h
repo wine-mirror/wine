@@ -22,7 +22,7 @@
 #define __WINE_WINE_LIBRARY_H
 
 #include <sys/types.h>
-#include "winbase.h"
+#include <winbase.h>
 
 /* configuration */
 

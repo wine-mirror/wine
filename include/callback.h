@@ -21,8 +21,8 @@
 #ifndef __WINE_CALLBACK_H
 #define __WINE_CALLBACK_H
 
-#include "windef.h"
-#include "winnt.h"
+#include <windef.h>
+#include <winnt.h>
 
 typedef struct {
     void (WINAPI *EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );

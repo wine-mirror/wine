@@ -21,7 +21,7 @@
 #ifndef __WINE_PALETTE_H
 #define __WINE_PALETTE_H
 
-#include "gdi.h"
+#include <gdi.h>
 
 #define NB_RESERVED_COLORS     20   /* number of fixed colors in system palette */
 

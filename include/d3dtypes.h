@@ -28,7 +28,7 @@
 /* #include <windows.h> FIXME: Need to include for compatibility. Inclusion caused compile fail */
 
 #include <float.h>
-#include "ddraw.h"
+#include <ddraw.h>
 
 #define D3DVALP(val, prec)      ((float)(val))
 #define D3DVAL(val)             ((float)(val))
@@ -332,7 +332,7 @@ typedef struct _D3DMATRIX {
 } D3DMATRIX, *LPD3DMATRIX;
 
 #if defined(__cplusplus) && defined(D3D_OVERLOADS)
-#include "d3dvec.inl"
+#include <d3dvec.inl>
 #endif
 
 typedef struct _D3DVIEWPORT {

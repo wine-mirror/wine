@@ -21,12 +21,12 @@
 #ifndef __WINE_MISCEMU_H
 #define __WINE_MISCEMU_H
 
-#include "windef.h"
-#include "selectors.h"
-#include "wine/windef16.h"
+#include <windef.h>
+#include <selectors.h>
+#include <wine/windef16.h>
 
 /* msdos/dosmem.c */
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 typedef struct
 {
@@ -86,7 +86,7 @@ typedef struct
     BYTE  DiskDataRate;              /* 8B: Last disk data rate selected */
 } BIOSDATA;
 
-#include "poppack.h"
+#include <poppack.h>
 
 extern WORD DOSMEM_0000H;
 extern WORD DOSMEM_BiosDataSeg;

@@ -21,7 +21,7 @@
 #ifndef __WINE_SNOOP_H
 #define __WINE_SNOOP_H
 
-#include "module.h"
+#include <module.h>
 
 extern void SNOOP_RegisterDLL(HMODULE,LPCSTR,DWORD,DWORD);
 extern void SNOOP16_RegisterDLL(NE_MODULE*,LPCSTR);

@@ -21,7 +21,7 @@
 #ifndef __WINE_NONCLIENT_H
 #define __WINE_NONCLIENT_H
 
-#include "windef.h"
+#include <windef.h>
 
 extern LONG NC_HandleNCPaint( HWND hwnd , HRGN clip);
 extern LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam );

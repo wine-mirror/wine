@@ -19,7 +19,7 @@
 #ifndef __WINE_RPCDCE_H
 #define __WINE_RPCDCE_H
 
-#include "windef.h"
+#include <windef.h>
 
 /* avoid delving into windows.h ifndef __WINESRC__; this
    would pull in rpcndr.h, which needs rpcdcep.h, which
@@ -29,7 +29,7 @@
 #define RPC_NO_WINDOWS_H
 #endif
 
-#include "rpc.h"
+#include <rpc.h>
 
 #ifdef __NO_HAD_RPC_NO_WINDOWS_H
 #undef RPC_NO_WINDOWS_H
@@ -37,7 +37,7 @@
 #endif
 
 #ifndef GUID_DEFINED
-#include "guiddef.h"
+#include <guiddef.h>
 #endif
 
 #ifndef UUID_DEFINED
@@ -285,6 +285,6 @@ RPCRTAPI unsigned short RPC_ENTRY
 RPCRTAPI int RPC_ENTRY
   UuidIsNil( UUID* Uuid, RPC_STATUS* Status_ );
 
-#include "rpcdcep.h"
+#include <rpcdcep.h>
 
 #endif /*__WINE_RPCDCE_H */

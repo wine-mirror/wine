@@ -21,12 +21,12 @@
 #ifndef __WINE_OLE2_H
 #define __WINE_OLE2_H
 
-#include "windef.h"
-#include "winerror.h"
-#include "objbase.h"
-#include "oleauto.h"
+#include <windef.h>
+#include <winerror.h>
+#include <objbase.h>
+#include <oleauto.h>
 #define __WINE_INCLUDE_OLEIDL
-#include "oleidl.h"
+#include <oleidl.h>
 #undef __WINE_INCLUDE_OLEIDL
 
 struct tagMSG;

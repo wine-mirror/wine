@@ -21,10 +21,10 @@
 #ifndef __WINE_OLEDLG_H
 #define __WINE_OLEDLG_H
 
-#include "commdlg.h"
-#include "prsht.h"
-#include "windef.h"
-#include "ole2.h"
+#include <commdlg.h>
+#include <prsht.h>
+#include <windef.h>
+#include <ole2.h>
 
 #ifdef __cplusplus
 extern "C" {

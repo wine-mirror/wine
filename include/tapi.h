@@ -21,7 +21,7 @@
 #ifndef __WINE_TAPI_H
 #define __WINE_TAPI_H
 
-#include "windef.h"
+#include <windef.h>
 
 #ifdef __cplusplus
 extern "C" {

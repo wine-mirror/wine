@@ -23,7 +23,7 @@
 #error Wine should not include tchar.h internally
 #endif
 
-#include "windef.h"
+#include <windef.h>
 
 #ifdef __cplusplus
 extern "C" {

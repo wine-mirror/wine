@@ -23,8 +23,8 @@
  * Wine Digital Video extensions
  */
 
-#include "mmsystem.h"
-#include "windef.h"
+#include <mmsystem.h>
+#include <windef.h>
 
 #ifdef __cplusplus
 extern "C" {

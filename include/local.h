@@ -21,8 +21,8 @@
 #ifndef __WINE_LOCAL_H
 #define __WINE_LOCAL_H
 
-#include "windef.h"
-#include "wine/windef16.h"
+#include <windef.h>
+#include <wine/windef16.h>
 
   /* These function are equivalent to the Local* API functions, */
   /* excepted that they need DS as the first parameter. This    */

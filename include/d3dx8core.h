@@ -19,11 +19,11 @@
 #ifndef __WINE_D3DX8CORE_H
 #define __WINE_D3DX8CORE_H
 
-#include "objbase.h"
+#include <objbase.h>
 
-#include "d3d8.h"
-#include "d3d8types.h"
-#include "d3d8caps.h"
+#include <d3d8.h>
+#include <d3d8types.h>
+#include <d3d8caps.h>
 
 /*****************************************************************************
  * #defines and error codes

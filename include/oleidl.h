@@ -16,11 +16,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "rpc.h"
-#include "rpcndr.h"
+#include <rpc.h>
+#include <rpcndr.h>
 #ifndef COM_NO_WINDOWS_H
-#include "windows.h"
-#include "ole2.h"
+#include <windows.h>
+#include <ole2.h>
 #endif
 
 #ifndef __WINE_OLEIDL_H
@@ -30,11 +30,11 @@
 #error DO NOT INCLUDE DIRECTLY
 #endif
 
-#include "objbase.h"
-#include "wine/obj_inplace.h"
-#include "wine/obj_cache.h"
-#include "wine/obj_oleobj.h"
-#include "wine/obj_oleview.h"
-#include "wine/obj_dragdrop.h"
+#include <objbase.h>
+#include <wine/obj_inplace.h>
+#include <wine/obj_cache.h>
+#include <wine/obj_oleobj.h>
+#include <wine/obj_oleview.h>
+#include <wine/obj_dragdrop.h>
 
 #endif /* __WINE_OLEIDL_H */

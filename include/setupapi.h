@@ -19,7 +19,7 @@
 #ifndef _INC_SETUPAPI
 #define _INC_SETUPAPI
 
-#include "commctrl.h"
+#include <commctrl.h>
 
 /* Define type for handle to a loaded inf file */
 typedef PVOID HINF;

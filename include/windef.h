@@ -179,7 +179,7 @@ typedef float           FLOAT,      *PFLOAT;
 typedef double          DOUBLE;
 typedef double          DATE;
 
-#include "winnt.h"
+#include <winnt.h>
 
 /* Macros to map Winelib names to the correct implementation name */
 /* Note that Winelib is purely Win32.                             */

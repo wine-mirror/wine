@@ -23,7 +23,7 @@
 #ifndef __WINE_WINDEF16_H
 #define __WINE_WINDEF16_H
 
-#include "windef.h"
+#include <windef.h>
 
 /* Standard data types */
 
@@ -107,7 +107,7 @@ typedef HANDLE16 HGDIOBJ16;
 typedef HANDLE16 HGLOBAL16;
 typedef HANDLE16 HLOCAL16;
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 /* The SIZE structure */
 
@@ -135,7 +135,7 @@ typedef struct
     INT16  bottom;
 } RECT16, *LPRECT16;
 
-#include "poppack.h"
+#include <poppack.h>
 
 /* Callback function pointers types */
 

@@ -26,8 +26,8 @@
 #ifndef __MMDDK_H
 #define __MMDDK_H
 
-#include "mmsystem.h"
-#include "winbase.h"
+#include <mmsystem.h>
+#include <winbase.h>
 
 #define MAX_MIDIINDRV 	(16)
 /* For now I'm making 16 the maximum number of midi devices one can
@@ -41,7 +41,7 @@
  *   Multimedia DDK compatible part
  * ================================== */
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 #define DRVM_INIT		100
 #define DRVM_EXIT		101
@@ -439,6 +439,6 @@ BOOL			WINAPI	mciFreeCommandResource(UINT uTable);
 BOOL		 	WINAPI	DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 					       UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 
-#include "poppack.h"
+#include <poppack.h>
 
 #endif /* __MMDDK_H */

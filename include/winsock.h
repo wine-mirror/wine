@@ -88,9 +88,9 @@
 #endif /* __WINE_WINSOCKAPI_STDLIB_H */
 
 #ifndef __WINESRC__
-# include "windows.h"
+# include <windows.h>
 #else
-# include "windef.h"
+# include <windef.h>
 #endif
 
 #ifndef _WINSOCKAPI_
@@ -115,7 +115,7 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 /* proper 4-byte packing */
-#include "pshpack4.h"
+#include <pshpack4.h>
 
 /*
  * Address families
@@ -993,13 +993,13 @@ SOCKET WINAPI WS(socket)(int,int,int);
 #if defined(__WINESRC__) || !defined(__WINE_WINSOCK2__)
 /* Stuff specific to winsock.h */
 
-#include "mswsock.h"
+#include <mswsock.h>
 
 #endif /* __WINE_WINSOCK2__ */
 #endif /* !defined(__WINE_WINSOCK2__) || WS_API_PROTOTYPES */
 
 
-#include "poppack.h"
+#include <poppack.h>
 
 #ifdef __cplusplus
 }

@@ -22,9 +22,9 @@
 #define __WINE_WINE_DEBUG_H
 
 #include <stdarg.h>
-#include "windef.h"
+#include <windef.h>
 #ifndef GUID_DEFINED
-#include "guiddef.h"
+#include <guiddef.h>
 #endif
 
 #ifdef __cplusplus

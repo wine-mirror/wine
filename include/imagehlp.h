@@ -21,8 +21,8 @@
 #ifndef __WINE_IMAGEHLP_H
 #define __WINE_IMAGEHLP_H
 
-#include "windef.h"
-#include "winbase.h"
+#include <windef.h>
+#include <winbase.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -21,11 +21,11 @@
 #ifndef __WINE_WINE_MMSYSTEM16_H
 #define __WINE_WINE_MMSYSTEM16_H
 
-#include "windef.h"
-#include "wine/windef16.h"
-#include "mmddk.h"
+#include <windef.h>
+#include <wine/windef16.h>
+#include <mmddk.h>
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 typedef UINT16	MMVERSION16;
 typedef UINT16	MCIDEVICEID16;
@@ -803,6 +803,6 @@ typedef struct {
     LPSTR   lpstrText;
 } MCI_DGV_WINDOW_PARMS16, *LPMCI_DGV_WINDOW_PARMS16;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #endif  /* __WINE_WINE_MMSYSTEM16_H */

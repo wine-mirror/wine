@@ -19,24 +19,24 @@
 #ifndef __WINE_SHLOBJ_H
 #define __WINE_SHLOBJ_H
 
-#include "windef.h"
-#include "winbase.h"	/* WIN32_FIND_* */
-#include "ole2.h"
-#include "oleauto.h"
-#include "commctrl.h"
-#include "prsht.h"
-#include "shlguid.h"
+#include <windef.h>
+#include <winbase.h>	/* WIN32_FIND_* */
+#include <ole2.h>
+#include <oleauto.h>
+#include <commctrl.h>
+#include <prsht.h>
+#include <shlguid.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 /****************************************************************************
 * SHITEMID, ITEMIDLIST, PIDL API
 */
-#include "pshpack1.h"
+#include <pshpack1.h>
 typedef struct
 {
     WORD cb;      /* nr of bytes in this item */
@@ -48,23 +48,23 @@ typedef struct _ITEMIDLIST
 {
     SHITEMID mkid; /* first itemid in list */
 } ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
-#include "poppack.h"
+#include <poppack.h>
 
 BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
 BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define     SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
 
-#include "wine/obj_enumidlist.h"
-#include "wine/obj_shellfolder.h"
-#include "wine/obj_shellview.h"
-#include "wine/obj_shelllink.h"
-#include "wine/obj_shellbrowser.h"
-#include "wine/obj_contextmenu.h"
-#include "wine/obj_shellextinit.h"
-#include "wine/obj_extracticon.h"
-#include "wine/obj_commdlgbrowser.h"
-#include "wine/obj_dockingwindowframe.h"
+#include <wine/obj_enumidlist.h>
+#include <wine/obj_shellfolder.h>
+#include <wine/obj_shellview.h>
+#include <wine/obj_shelllink.h>
+#include <wine/obj_shellbrowser.h>
+#include <wine/obj_contextmenu.h>
+#include <wine/obj_shellextinit.h>
+#include <wine/obj_extracticon.h>
+#include <wine/obj_commdlgbrowser.h>
+#include <wine/obj_dockingwindowframe.h>
 
 /*****************************************************************************
  * Predeclare interfaces
@@ -605,7 +605,7 @@ typedef struct _DROPFILES
   BOOL  fWide;
 } DROPFILES, *LPDROPFILES;
 
-#include "poppack.h" 
+#include <poppack.h> 
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -21,13 +21,13 @@
 #ifndef __WINE_WIN_H
 #define __WINE_WIN_H
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/windef16.h"
+#include <windef.h>
+#include <winbase.h>
+#include <wingdi.h>
+#include <winuser.h>
+#include <wine/windef16.h>
 
-#include "user.h"
+#include <user.h>
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 

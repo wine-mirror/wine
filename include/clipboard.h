@@ -22,7 +22,7 @@
 #ifndef __WINE_CLIPBOARD_H
 #define __WINE_CLIPBOARD_H
 
-#include "windef.h"
+#include <windef.h>
 
 typedef struct tagCLIPBOARDINFO
 {

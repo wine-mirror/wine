@@ -23,10 +23,10 @@
 #define DIRECT3D_VERSION  0x0800
 #endif
 
-#include "objbase.h"
+#include <objbase.h>
 
-#include "d3d8types.h"
-#include "d3d8caps.h"
+#include <d3d8types.h>
+#include <d3d8caps.h>
 
 /*****************************************************************************
  * Behavior Flags for IDirect3D8::CreateDevice

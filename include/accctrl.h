@@ -19,7 +19,7 @@
 #ifndef __WINE_ACCCTRL_H
 #define __WINE_ACCCTRL_H
 
-#include "wtypes.h"
+#include <wtypes.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,7 @@
 #ifndef __WINE_D3DCAPS_H
 #define __WINE_D3DCAPS_H
 
-#include "ddraw.h"
+#include <ddraw.h>
 
 typedef struct _D3DTRANSFORMCAPS {
 	DWORD dwSize;

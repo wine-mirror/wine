@@ -21,11 +21,11 @@
 #ifndef __WINE_MODULE_H
 #define __WINE_MODULE_H
 
-#include "windef.h"
-#include "winbase.h"
-#include "wine/windef16.h"
-#include "wine/winbase16.h"
-#include "winternl.h"
+#include <windef.h>
+#include <winbase.h>
+#include <wine/windef16.h>
+#include <wine/winbase16.h>
+#include <winternl.h>
 
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE
@@ -98,7 +98,7 @@ typedef struct
 
   /* Self-loading modules contain this structure in their first segment */
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 typedef struct
 {
@@ -123,7 +123,7 @@ typedef struct
     DWORD dwReserved;
 } LOADPARAMS;
 
-#include "poppack.h"
+#include <poppack.h>
 
 /* internal representation of 32bit modules. per process. */
 typedef struct _wine_modref

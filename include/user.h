@@ -21,11 +21,11 @@
 #ifndef __WINE_USER_H
 #define __WINE_USER_H
 
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
+#include <winbase.h>
+#include <wingdi.h>
+#include <winuser.h>
 
-#include "local.h"
+#include <local.h>
 
 extern WORD USER_HeapSel;
 

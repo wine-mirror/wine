@@ -11,7 +11,7 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#include "sys/types.h"
+#include <sys/types.h>
 
 #ifndef MSVCRT
 # ifdef USE_MSVCRT_PREFIX

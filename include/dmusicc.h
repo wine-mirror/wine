@@ -20,17 +20,17 @@
 #ifndef __WINE_DMUSIC_CORE_H
 #define __WINE_DMUSIC_CORE_H
 
-#include "objbase.h"
+#include <objbase.h>
 
-#include "mmsystem.h"
-#include "dsound.h"
+#include <mmsystem.h>
+#include <dsound.h>
 
-#include "dls1.h"
-#include "dmerror.h"
-#include "dmdls.h"
-#include "dmusbuff.h"
+#include <dls1.h>
+#include <dmerror.h>
+#include <dmdls.h>
+#include <dmusbuff.h>
 
-/*#include "pshpack8.h" */
+/*#include <pshpack8.h> */
 
 #ifdef __cplusplus
 extern "C" {
@@ -675,6 +675,6 @@ ICOM_DEFINE(IReferenceClock,IUnknown)
 } /* extern "C" */
 #endif /* __cplusplus */
 
-/*#include "poppack.h" */
+/*#include <poppack.h> */
 
 #endif /* __WINE_DMUSIC_CORE_H */

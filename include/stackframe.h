@@ -23,11 +23,11 @@
 
 #include <string.h>
 
-#include "thread.h"
-#include "winnt.h"
-#include "wine/winbase16.h"
+#include <thread.h>
+#include <winnt.h>
+#include <wine/winbase16.h>
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
   /* 32-bit stack layout after CallTo16() */
 typedef struct _STACK32FRAME
@@ -66,7 +66,7 @@ typedef struct _STACK16FRAME
     WORD          cs;             /* 2e */
 } STACK16FRAME;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #define CURRENT_STACK16      ((STACK16FRAME*)MapSL(NtCurrentTeb()->cur_stack))
 #define CURRENT_DS           (CURRENT_STACK16->ds)

@@ -19,11 +19,11 @@
 #ifndef __WINE_WINE_WINGDI16_H
 #define __WINE_WINE_WINGDI16_H
 
-#include "windef.h"
-#include "wingdi.h"
-#include "wine/winbase16.h"
+#include <windef.h>
+#include <wingdi.h>
+#include <wine/winbase16.h>
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 typedef HANDLE16 HPQ16;
 typedef HANDLE16 HPJOB16;
@@ -375,7 +375,7 @@ struct PATH_INFO {
 #define RENDERMODE_OPEN 1
 #define RENDERMODE_CLOSED 2
 
-#include "poppack.h"
+#include <poppack.h>
 
 
 INT16       WINAPI AbortDoc16(HDC16);

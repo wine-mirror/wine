@@ -19,7 +19,7 @@
 #ifndef __WINE_DSCONF_H
 #define __WINE_DSCONF_H
 
-#include "dsound.h"
+#include <dsound.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -21,9 +21,9 @@
 #ifndef __WINE_MSACM_H
 #define __WINE_MSACM_H
 
-#include "windef.h"
-#include "mmsystem.h"
-#include "mmreg.h"
+#include <windef.h>
+#include <mmsystem.h>
+#include <mmreg.h>
 
 #ifdef __cplusplus
 extern "C" {

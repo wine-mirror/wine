@@ -20,9 +20,9 @@
 #ifndef __WINE_MSDOS_H
 #define __WINE_MSDOS_H
 
-#include "wine/windef16.h"
+#include <wine/windef16.h>
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 struct fcb {
         BYTE drive;
@@ -121,7 +121,7 @@ typedef struct _DOS_LISTOFLISTS
     SEGPTR wine_pm_lol;         /* -- wine: Protected mode pointer to LOL */
 } DOS_LISTOFLISTS;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #define MAX_DOS_DRIVES	26
 

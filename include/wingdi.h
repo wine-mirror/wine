@@ -1688,7 +1688,7 @@ typedef struct {
   BYTE rgbtRed;
 } RGBTRIPLE;
 
-#include "pshpack2.h"
+#include <pshpack2.h>
 typedef struct
 {
     WORD    bfType;
@@ -1697,7 +1697,7 @@ typedef struct
     WORD    bfReserved2;
     DWORD   bfOffBits;
 } BITMAPFILEHEADER, *PBITMAPFILEHEADER, *LPBITMAPFILEHEADER;
-#include "poppack.h"
+#include <poppack.h>
 
 #define MAKEPOINTS(l)  (*((POINTS *)&(l)))
 
@@ -1835,7 +1835,7 @@ typedef struct
 
 #define CLR_INVALID         0xffffffff
 /* Metafile header structure */
-#include "pshpack2.h"
+#include <pshpack2.h>
 typedef struct
 {
     WORD       mtType;
@@ -1846,7 +1846,7 @@ typedef struct
     DWORD      mtMaxRecord;
     WORD       mtNoParameters;
 } METAHEADER, *PMETAHEADER, *LPMETAHEADER;
-#include "poppack.h"
+#include <poppack.h>
 
 /* Metafile typical record structure */
 typedef struct

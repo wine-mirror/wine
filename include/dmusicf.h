@@ -21,8 +21,8 @@
 #ifndef __WINE_DMUSIC_FILEFORMATS_H
 #define __WINE_DMUSIC_FILEFORMATS_H
 
-#include "objbase.h"
-#include "mmsystem.h"
+#include <objbase.h>
+#include <mmsystem.h>
 
 #ifdef __cplusplus
 extern "C" {

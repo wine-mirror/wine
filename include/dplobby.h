@@ -20,7 +20,7 @@
 #ifndef __WINE_DPLOBBY_H
 #define __WINE_DPLOBBY_H
 
-#include "dplay.h"
+#include <dplay.h>
 
 #ifdef __cplusplus
 extern "C" {

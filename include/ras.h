@@ -19,13 +19,13 @@
 #ifndef __WINE_RAS_H
 #define __WINE_RAS_H
 
-#include "windef.h"
-#include "lmcons.h"
+#include <windef.h>
+#include <lmcons.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "pshpack4.h"
+#include <pshpack4.h>
 
 #define RAS_MaxCallbackNumber RAS_MaxPhoneNumber
 #define RAS_MaxDeviceName     128
@@ -334,7 +334,7 @@ DWORD WINAPI RasSetAutodialEnableA(DWORD dwDialingLocation, BOOL fEnabled);
 DWORD WINAPI RasSetAutodialEnableW(DWORD dwDialingLocation, BOOL fEnabled);
 #define RasSetAutodialEnable WINELIB_NAME_AW(RasSetAutodialEnable)
 
-#include "poppack.h"
+#include <poppack.h>
 #ifdef __cplusplus
 }
 #endif

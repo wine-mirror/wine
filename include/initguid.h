@@ -23,4 +23,4 @@
  */
 
 #define INITGUID
-#include "guiddef.h"
+#include <guiddef.h>

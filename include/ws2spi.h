@@ -22,10 +22,10 @@
 #define _WINSOCK2SPI_
 
 #ifndef _WINSOCK2API_
-#include "winsock2.h"
+#include <winsock2.h>
 #endif /* !defined(_WINSOCK2API_) */
 
-#include "pshpack4.h"
+#include <pshpack4.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +37,6 @@ typedef BOOL (WINAPI *LPWPUPOSTMESSAGE)(HWND,UINT,WPARAM,LPARAM);
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#include "poppack.h"
+#include <poppack.h>
 
 #endif /* !defined(_WINSOCK2SPI_) */

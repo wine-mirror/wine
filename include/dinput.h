@@ -19,8 +19,8 @@
 #ifndef __WINE_DINPUT_H
 #define __WINE_DINPUT_H
 
-#include "windef.h" /* for MAX_PATH */
-#include "objbase.h"
+#include <windef.h> /* for MAX_PATH */
+#include <objbase.h>
 
 #ifndef DIRECTINPUT_VERSION
 #define DIRECTINPUT_VERSION	0x0800

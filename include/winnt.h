@@ -21,7 +21,7 @@
 #ifndef __WINE_WINNT_H
 #define __WINE_WINNT_H
 
-#include "basetsd.h"
+#include <basetsd.h>
 
 #ifndef RC_INVOKED
 #include <ctype.h>
@@ -1514,7 +1514,7 @@ static DWORD __builtin_return_address(int p_iDepth)
 #define IS_TEXT_UNICODE_NULL_BYTES         0x1000
 #define IS_TEXT_UNICODE_NOT_ASCII_MASK     0xF000
 
-#include "ntstatus.h"
+#include <ntstatus.h>
 
 #define MAXIMUM_WAIT_OBJECTS 64
 #define MAXIMUM_SUSPEND_COUNT 127
@@ -1659,7 +1659,7 @@ extern struct _TEB * WINAPI NtCurrentTeb(void);
  * File formats definitions
  */
 
-#include "pshpack2.h"
+#include <pshpack2.h>
 typedef struct _IMAGE_DOS_HEADER {
     WORD  e_magic;      /* 00: MZ Header signature */
     WORD  e_cblp;       /* 02: Bytes on last page of file */
@@ -1681,7 +1681,7 @@ typedef struct _IMAGE_DOS_HEADER {
     WORD  e_res2[10];   /* 28: Reserved words */
     DWORD e_lfanew;     /* 3c: Offset to extended header */
 } IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
-#include "poppack.h"
+#include <poppack.h>
 
 #define IMAGE_DOS_SIGNATURE    0x5A4D     /* MZ   */
 #define IMAGE_OS2_SIGNATURE    0x454E     /* NE   */
@@ -1694,7 +1694,7 @@ typedef struct _IMAGE_DOS_HEADER {
  * This is the Windows executable (NE) header.
  * the name IMAGE_OS2_HEADER is misleading, but in the SDK this way.
  */
-#include "pshpack2.h"
+#include <pshpack2.h>
 typedef struct
 {
     WORD  ne_magic;             /* 00 NE signature 'NE' */
@@ -1728,9 +1728,9 @@ typedef struct
     WORD  ne_swaparea;          /* 3c Reserved by Microsoft */
     WORD  ne_expver;            /* 3e Expected Windows version number */
 } IMAGE_OS2_HEADER, *PIMAGE_OS2_HEADER;
-#include "poppack.h"
+#include <poppack.h>
 
-#include "pshpack2.h"
+#include <pshpack2.h>
 typedef struct _IMAGE_VXD_HEADER {
   WORD  e32_magic;
   BYTE  e32_border;
@@ -1784,7 +1784,7 @@ typedef struct _IMAGE_VXD_HEADER {
   WORD  e32_devid;
   WORD  e32_ddkver;
 } IMAGE_VXD_HEADER, *PIMAGE_VXD_HEADER;
-#include "poppack.h"
+#include <poppack.h>
 
 /* These defines describe the meanings of the bits in the Characteristics
    field */
@@ -2046,7 +2046,7 @@ typedef struct _IMAGE_SECTION_HEADER {
 #define IMAGE_SCN_MEM_READ			0x40000000
 #define IMAGE_SCN_MEM_WRITE			0x80000000
 
-#include "pshpack2.h"
+#include <pshpack2.h>
 
 typedef struct _IMAGE_SYMBOL {
     union {
@@ -2115,7 +2115,7 @@ typedef IMAGE_AUX_SYMBOL *PIMAGE_AUX_SYMBOL;
 
 #define IMAGE_SIZEOF_AUX_SYMBOL 18
 
-#include "poppack.h"
+#include <poppack.h>
 
 #define IMAGE_SYM_UNDEFINED           (SHORT)0
 #define IMAGE_SYM_ABSOLUTE            (SHORT)-1
@@ -2295,7 +2295,7 @@ typedef struct _IMAGE_BASE_RELOCATION
 	/* WORD	TypeOffset[1]; */
 } IMAGE_BASE_RELOCATION,*PIMAGE_BASE_RELOCATION;
 
-#include "pshpack2.h"
+#include <pshpack2.h>
 
 typedef struct _IMAGE_RELOCATION
 {
@@ -2307,7 +2307,7 @@ typedef struct _IMAGE_RELOCATION
     WORD    Type;
 } IMAGE_RELOCATION, *PIMAGE_RELOCATION;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #define IMAGE_SIZEOF_RELOCATION 10
 
@@ -3026,12 +3026,12 @@ typedef struct _LUID {
     LONG HighPart;
 } LUID, *PLUID;
 
-#include "pshpack4.h"
+#include <pshpack4.h>
 typedef struct _LUID_AND_ATTRIBUTES {
   LUID   Luid;
   DWORD  Attributes;
 } LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
-#include "poppack.h"
+#include <poppack.h>
 
 /*
  * PRIVILEGE_SET
@@ -3533,7 +3533,7 @@ typedef enum _CM_ERROR_CONTROL_TYPE
 #define RtlFillMemory(Destination, Length, Fill) memset((Destination),(Fill),(Length))
 #define RtlZeroMemory(Destination, Length) memset((Destination),0,(Length))
 
-#include "guiddef.h"
+#include <guiddef.h>
 
 typedef struct _RTL_CRITICAL_SECTION_DEBUG
 {

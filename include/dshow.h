@@ -21,24 +21,24 @@
 
 #define AM_NOVTABLE
 
-#include "windef.h"
-#include "wingdi.h"
-#include "objbase.h"
-#include "ddraw.h"
-#include "mmsystem.h"
+#include <windef.h>
+#include <wingdi.h>
+#include <objbase.h>
+#include <ddraw.h>
+#include <mmsystem.h>
 
 #ifndef NUMELMS
 #define NUMELMS(array) (sizeof(array)/sizeof((array)[0]))
 #endif
 
-#include "strmif.h"
-/*#include "amvideo.h"*/
-/*#include "amaudio.h"*/
-#include "control.h"
-/*#include "evcode.h"*/
-#include "uuids.h"
-/*#include "errors.h"*/
-#include "audevcod.h"
+#include <strmif.h>
+/*#include <amvideo.h>*/
+/*#include <amaudio.h>*/
+#include <control.h>
+/*#include <evcode.h>*/
+#include <uuids.h>
+/*#include <errors.h>*/
+#include <audevcod.h>
 
 #ifndef OATRUE
 #define OATRUE (-1)

@@ -44,7 +44,7 @@
 #endif
 
 #define __WINE_WINSOCK2__
-#include "winsock.h"
+#include <winsock.h>
 #undef  __WINE_WINSOCK2__
 
 
@@ -53,7 +53,7 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 /* proper 4-byte packing */
-#include "pshpack4.h"
+#include <pshpack4.h>
 
 
 #ifndef USE_WS_PREFIX
@@ -139,7 +139,7 @@ extern "C" {
 
 
 #ifndef GUID_DEFINED
-#include "guiddef.h"
+#include <guiddef.h>
 #endif
 
 #define MAX_PROTOCOL_CHAIN         7
@@ -526,7 +526,7 @@ typedef DWORD (WINAPI *LPFN_WSAWAITFORMULTIPLEEVENTS)(DWORD,const WSAEVENT*,BOOL
 #define CF_REJECT       0x0001
 #define CF_DEFER        0x0002
 
-#include "poppack.h"
+#include <poppack.h>
 
 #ifdef __cplusplus
 }

@@ -25,8 +25,8 @@
 extern "C" {
 #endif
 
-#include "prsht.h"
-#include "pshpack1.h"
+#include <prsht.h>
+#include <pshpack1.h>
 
 #ifndef SNDMSG
 #ifdef __cplusplus
@@ -686,7 +686,7 @@ BOOL  WINAPI ChooseFontW(LPCHOOSEFONTW);
 void COMDLG32_SetCommDlgExtendedError(DWORD err);
 
 
-#include "poppack.h"
+#include <poppack.h>
 
 #ifdef __cplusplus
 }

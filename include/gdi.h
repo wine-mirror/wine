@@ -21,9 +21,9 @@
 #ifndef __WINE_GDI_H
 #define __WINE_GDI_H
 
-#include "windef.h"
-#include "wingdi.h"
-#include "wine/wingdi16.h"
+#include <windef.h>
+#include <wingdi.h>
+#include <wine/wingdi16.h>
 #include <math.h>
 
   /* GDI objects magic numbers */

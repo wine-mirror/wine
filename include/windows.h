@@ -29,73 +29,73 @@
 #endif
 
 #if defined(RC_INVOKED) && !defined(NOWINRES)
-#include "winresrc.h"
+#include <winresrc.h>
 #else /* RC_INVOKED && !NOWINRES */
 
 /* All the basic includes */
-#include "excpt.h"
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "wincon.h"
-#include "winver.h"
-#include "winreg.h"
-#include "winnetwk.h"
+#include <excpt.h>
+#include <windef.h>
+#include <winbase.h>
+#include <wingdi.h>
+#include <winuser.h>
+#include <winnls.h>
+#include <wincon.h>
+#include <winver.h>
+#include <winreg.h>
+#include <winnetwk.h>
 
 /* Not so essential ones */
 #ifndef WIN32_LEAN_AND_MEAN
 
-#include "cderr.h"
-#include "dde.h"
-#include "ddeml.h"
-#include "dlgs.h"
-#include "lzexpand.h"
-#include "mmsystem.h"
-#include "nb30.h"
-#include "rpc.h"
-#include "shellapi.h"
-/* #include "winperf.h" */
+#include <cderr.h>
+#include <dde.h>
+#include <ddeml.h>
+#include <dlgs.h>
+#include <lzexpand.h>
+#include <mmsystem.h>
+#include <nb30.h>
+#include <rpc.h>
+#include <shellapi.h>
+/* #include <winperf.h> */
 
 #ifndef WINE_NOWINSOCK
-#include "winsock2.h"
+#include <winsock2.h>
 #endif /* WINE_NOWINSOCK */
 
 #ifndef NOCRYPT
-#include "wincrypt.h"
-/* #include "winefs.h" */
-/* #include "winscard.h" */
+#include <wincrypt.h>
+/* #include <winefs.h> */
+/* #include <winscard.h> */
 #endif /* !NOCRYPT */
 
 #ifndef NOGDI
-#include "winspool.h"
+#include <winspool.h>
 #ifdef INC_OLE1
-/* #include "ole.h" */
+/* #include <ole.h> */
 #else
-#include "ole2.h"
+#include <ole2.h>
 #endif
-#include "commdlg.h"
+#include <commdlg.h>
 #endif /* !NOGDI */
 
 #endif /* !WIN32_LEAN_AND_MEAN */
 
-/* #include "stralign.h" */
+/* #include <stralign.h> */
 
 #ifdef INC_OLE2
-#include "ole2.h"
+#include <ole2.h>
 #endif /* INC_OLE2 */
 
 #ifndef NOSERVICE
-#include "winsvc.h"
+#include <winsvc.h>
 #endif /* !NOSERVICE */
 
 #ifndef NOMCX
-#include "mcx.h"
+#include <mcx.h>
 #endif /* !NOMCX */
 
 #ifndef NOIMM
-#include "imm.h"
+#include <imm.h>
 #endif /* !NOIMM */
 
 #endif  /* RC_INVOKED && !NOWINRES */

@@ -19,9 +19,9 @@
 #ifndef __WINE_VFW_H
 #define __WINE_VFW_H
 
-#include "windef.h"
-#include "mmsystem.h"
-#include "wingdi.h"
+#include <windef.h>
+#include <mmsystem.h>
+#include <wingdi.h>
 
 #define VFWAPI	WINAPI
 #define VFWAPIV	WINAPIV
@@ -974,7 +974,7 @@ typedef struct {
 #define FIND_SIZE       0x00003000L     /* return physical size */
 #define FIND_INDEX      0x00004000L     /* return physical index position */
 
-#include "ole2.h"
+#include <ole2.h>
 
 #define DEFINE_AVIGUID(name, l, w1, w2) \
     DEFINE_GUID(name, l, w1, w2, 0xC0,0,0,0,0,0,0,0x46)

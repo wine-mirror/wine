@@ -21,10 +21,10 @@
 #ifndef __WINE_TASK_H
 #define __WINE_TASK_H
 
-#include "windef.h"
-#include "wine/windef16.h"
+#include <windef.h>
+#include <wine/windef16.h>
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
   /* Process database (i.e. a normal DOS PSP) */
 
@@ -155,7 +155,7 @@ typedef struct _THHOOK
     HTASK16    LockTDB;             /* 14 hLockedTask */
 } THHOOK;
 
-#include "poppack.h"
+#include <poppack.h>
 
 extern THHOOK *pThhook;
 

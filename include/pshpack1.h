@@ -30,12 +30,12 @@
 #    define __WINE_PSHPACK_H2 1
      /* Depth == 2 */
 #    define __WINE_INTERNAL_POPPACK
-#    include "poppack.h"
+#    include <poppack.h>
 #  elif !defined(__WINE_PSHPACK_H3)
 #    define __WINE_PSHPACK_H3 1
      /* Depth == 3 */
 #    define __WINE_INTERNAL_POPPACK
-#    include "poppack.h"
+#    include <poppack.h>
 #  endif
 
 #  if _MSC_VER >= 800

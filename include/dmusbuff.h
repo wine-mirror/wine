@@ -20,7 +20,7 @@
 #ifndef __WINE_DMUSIC_BUFFER_H
 #define __WINE_DMUSIC_BUFFER_H
 
-#include "pshpack4.h"
+#include <pshpack4.h>
 
 /*****************************************************************************
  * Definitions
@@ -40,6 +40,6 @@ typedef struct _DMUS_EVENTHEADER
     DWORD           dwFlags;
 } DMUS_EVENTHEADER, *LPDMUS_EVENTHEADER;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #endif /* __WINE_DMUSIC_BUFFER_H */

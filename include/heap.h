@@ -23,8 +23,8 @@
 
 #include <string.h>
 
-#include "winbase.h"
-#include "winnls.h"
+#include <winbase.h>
+#include <winnls.h>
 
 /* strdup macros */
 /* DO NOT USE IT!!  it will go away soon */

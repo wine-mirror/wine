@@ -21,7 +21,7 @@
 #ifndef __WINE_BITMAP_H
 #define __WINE_BITMAP_H
 
-#include "gdi.h"
+#include <gdi.h>
 
 /* DIB Section sync state */
 enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod, DIB_Status_AuxMod };

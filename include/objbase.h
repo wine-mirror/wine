@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "rpc.h"
-#include "rpcndr.h"
+#include <rpc.h>
+#include <rpcndr.h>
 
 #ifndef _OBJBASE_H_
 #define _OBJBASE_H_
@@ -303,7 +303,7 @@
 #define ICOM_THIS(impl,iface)    impl* const This=(impl*)(iface)
 #define ICOM_THIS_MULTI(impl,field,iface)  impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
-#include "objidl.h"
+#include <objidl.h>
 
 #ifndef RC_INVOKED
 /* For compatibility only, at least for now */
@@ -311,7 +311,7 @@
 #endif
 
 #ifndef INITGUID
-#include "cguid.h"
+#include <cguid.h>
 #endif
 
 #ifdef __cplusplus

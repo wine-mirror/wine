@@ -21,7 +21,7 @@
 #ifndef __WINE_DCE_H
 #define __WINE_DCE_H
 
-#include "windef.h"
+#include <windef.h>
 
 /* internal DCX flags */
 #define DCX_DCEEMPTY		0x00000800

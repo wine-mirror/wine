@@ -21,8 +21,8 @@
 #ifndef __WINE_SELECTORS_H
 #define __WINE_SELECTORS_H
 
-#include "windef.h"
-#include "wine/library.h"
+#include <windef.h>
+#include <wine/library.h>
 
 extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags );
 extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );

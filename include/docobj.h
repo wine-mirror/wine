@@ -16,23 +16,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "rpc.h"
-#include "rpcndr.h"
+#include <rpc.h>
+#include <rpcndr.h>
 #ifndef COM_NO_WINDOWS_H
-#include "windows.h"
-#include "ole2.h"
+#include <windows.h>
+#include <ole2.h>
 #endif
 
 #ifndef __WINE_DOCOBJ_H
 #define __WINE_DOCOBJ_H
 
-#include "winbase.h"
-#include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "ole2.h"
+#include <winbase.h>
+#include <windef.h>
+#include <wingdi.h>
+#include <winuser.h>
+#include <ole2.h>
 #define __WINE_INCLUDE_OAIDL
-#include "oaidl.h"
+#include <oaidl.h>
 #undef __WINE_INCLUDE_OAIDL
 
 /*****************************************************************************

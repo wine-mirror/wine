@@ -19,7 +19,7 @@
 #ifndef __WINE_MSIQUERY_H
 #define __WINE_MSIQUERY_H
 
-#include "msi.h"
+#include <msi.h>
 
 typedef enum tagMSICONDITION
 {

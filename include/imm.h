@@ -21,7 +21,7 @@
 #ifndef __WINE_IMM_H
 #define __WINE_IMM_H
 
-#include "windef.h"
+#include <windef.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,7 @@
 #ifndef __WINE_WINIOCTL_H
 #define __WINE_WINIOCTL_H
 
-#include "winnt.h"
+#include <winnt.h>
 
 #define CTL_CODE( DeviceType, Function, Method, Access ) (                 \
     (DWORD)((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method) \
@@ -337,14 +337,14 @@ typedef struct tagDIOCRegs {
 
 /* Important: All MS_DOS data structures must be packed on a one-byte boundary - good old 16 bit. */
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 typedef struct tagMID {
     WORD  midInfoLevel;
     DWORD midSerialNum;
     BYTE  midVolLabel[11];
     BYTE  midFileSysType[8];
 } MID, *PMID;
-#include "poppack.h"
+#include <poppack.h>
 
 /* End VWIN32 information */
 

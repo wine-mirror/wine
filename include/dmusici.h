@@ -21,10 +21,10 @@
 #ifndef __WINE_DMUSIC_PERFORMANCE_H
 #define __WINE_DMUSIC_PERFORMANCE_H
 
-#include "objbase.h"
-#include "mmsystem.h"
+#include <objbase.h>
+#include <mmsystem.h>
 
-#include "oleauto.h"
+#include <oleauto.h>
 
 #ifdef __cplusplus
 extern "C" {

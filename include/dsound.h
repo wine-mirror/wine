@@ -23,8 +23,8 @@
 #define DIRECTSOUND_VERSION 0x0800
 #endif
 
-#include "mmsystem.h"
-#include "d3dtypes.h"
+#include <mmsystem.h>
+#include <d3dtypes.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -21,12 +21,12 @@
 #ifndef __WINE_COMMCTRL_H
 #define __WINE_COMMCTRL_H
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "prsht.h"
+#include <windef.h>
+#include <winbase.h>
+#include <wingdi.h>
+#include <winuser.h>
+#include <winnls.h>
+#include <prsht.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1986,7 +1986,7 @@ static const WCHAR WC_PAGESCROLLERW[] = { 'S','y','s','P','a','g','e','r',0 };
 #define PGN_SCROLL              (PGN_FIRST-1)
 #define PGN_CALCSIZE            (PGN_FIRST-2)
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 typedef struct
 {
@@ -1999,7 +1999,7 @@ typedef struct
     INT  iScroll;
 } NMPGSCROLL, *LPNMPGSCROLL;
 
-#include "poppack.h"
+#include <poppack.h>
 
 typedef struct
 {
@@ -2428,14 +2428,14 @@ typedef struct tagNMTVGETINFOTIPW
 #define NMTVGETINFOTIP WINELIB_NAME_AW(NMTVGETINFOTIP)
 #define LPNMTVGETINFOTIP WINELIB_NAME_AW(LPNMTVGETINFOTIP)
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 typedef struct tagTVKEYDOWN
 {
     NMHDR hdr;
     WORD wVKey;
     UINT flags;
 } NMTVKEYDOWN, *LPNMTVKEYDOWN;
-#include "poppack.h"
+#include <poppack.h>
 
 #define TV_KEYDOWN      NMTVKEYDOWN
 
@@ -3092,14 +3092,14 @@ typedef struct tagLVDISPINFOW
 #define LV_DISPINFOA	NMLVDISPINFOA
 #define LV_DISPINFOW	NMLVDISPINFOW
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 typedef struct tagLVKEYDOWN
 {
   NMHDR hdr;
   WORD  wVKey;
   UINT flags;
 } NMLVKEYDOWN, *LPNMLVKEYDOWN;
-#include "poppack.h"
+#include <poppack.h>
 
 #define LV_KEYDOWN     NMLVKEYDOWN
 
@@ -3692,14 +3692,14 @@ typedef struct tagTCITEMW
 #define TCN_SELCHANGING         (TCN_FIRST - 2)
 #define TCN_GETOBJECT           (TCN_FIRST - 3)
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 typedef struct tagTCKEYDOWN
 {
     NMHDR hdr;
     WORD wVKey;
     UINT flags;
 } NMTCKEYDOWN;
-#include "poppack.h"
+#include <poppack.h>
 
 #define TC_KEYDOWN              NMTCKEYDOWN
 

@@ -24,11 +24,11 @@
 #ifndef __WINE_RPCPROXY_H
 #define __WINE_RPCPROXY_H
 
-#include "basetsd.h"
-#include "guiddef.h"
-#include "winnt.h"
-#include "rpc.h"
-#include "rpcndr.h"
+#include <basetsd.h>
+#include <guiddef.h>
+#include <winnt.h>
+#include <rpc.h>
+#include <rpcndr.h>
 
 typedef struct tagCInterfaceStubVtbl *PCInterfaceStubVtblList;
 typedef struct tagCInterfaceProxyVtbl *PCInterfaceProxyVtblList;

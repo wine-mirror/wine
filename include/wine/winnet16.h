@@ -22,10 +22,10 @@
 #ifndef __WINE_WINNET16_H
 #define __WINE_WINNET16_H
 
-#include "windef.h"
-#include "wine/windef16.h"
+#include <windef.h>
+#include <wine/windef16.h>
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 /*
  * Remote printing
@@ -61,7 +61,7 @@ typedef struct
 
 } JOBSTRUCT16, *LPJOBSTRUCT16;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #define WNPRJ_QSTATUS           0x0007
 #define WNPRJ_DEVSTATUS         0x0FF8

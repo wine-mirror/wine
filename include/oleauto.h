@@ -19,9 +19,9 @@
 #ifndef __WINE_OLEAUTO_H
 #define __WINE_OLEAUTO_H
 
-#include "winbase.h"
+#include <winbase.h>
 #define __WINE_INCLUDE_OAIDL
-#include "oaidl.h"
+#include <oaidl.h>
 #undef __WINE_INCLUDE_OAIDL
 
 #ifdef __cplusplus

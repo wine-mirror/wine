@@ -21,7 +21,7 @@
 #ifndef __WINE_DMUSIC_SOFTWARESYNTH_H
 #define __WINE_DMUSIC_SOFTWARESYNTH_H
 
-#include "dmusicc.h"
+#include <dmusicc.h>
 
 
 /*****************************************************************************

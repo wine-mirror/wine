@@ -16,18 +16,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "rpc.h"
-#include "rpcndr.h"
+#include <rpc.h>
+#include <rpcndr.h>
 #ifndef COM_NO_WINDOWS_H
-#include "windows.h"
-#include "ole2.h"
+#include <windows.h>
+#include <ole2.h>
 #endif
 
 #ifndef __WINE_COMCAT_H
 #define __WINE_COMCAT_H
 
-#include "unknwn.h"
-#include "wine/obj_enumguid.h"
-#include "wine/obj_comcat.h"
+#include <unknwn.h>
+#include <wine/obj_enumguid.h>
+#include <wine/obj_comcat.h>
 
 #endif /*__WINE_COMCAT_H */

@@ -23,7 +23,7 @@
 #define __WINASPI_H__
 
 /* Include base aspi defs */
-#include "wnaspi32.h"
+#include <wnaspi32.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +33,7 @@ extern "C" {
 #define ASPI_DOS        1
 #define ASPI_WIN16      2
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 /* SRB HA_INQUIRY */
 
@@ -131,7 +131,7 @@ typedef union tagSRB16 {
     SRB_GDEVBlock16       devtype;
 } SRB16, *LPSRB16;
 
-#include "poppack.h"
+#include <poppack.h>
 
 extern WORD WINAPI SendASPICommand16(SEGPTR);
 extern WORD WINAPI GetASPISupportInfo16(void);

@@ -22,8 +22,8 @@
 #define __WINE_THREAD_H
 
 #define WINE_NO_TEB
-#include "winternl.h"
-#include "wine/windef16.h"
+#include <winternl.h>
+#include <wine/windef16.h>
 
 struct _SECURITY_ATTRIBUTES;
 struct tagSYSLEVEL;

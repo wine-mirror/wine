@@ -21,9 +21,9 @@
 #ifndef __WINE_CURSORICON_H
 #define __WINE_CURSORICON_H
 
-#include "windef.h"
+#include <windef.h>
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 typedef struct
 {
@@ -78,7 +78,7 @@ typedef struct
 } CURSORICONFILEDIR;
 
 
-#include "poppack.h"
+#include <poppack.h>
 
 #define CID_RESOURCE  0x0001
 #define CID_WIN32     0x0004

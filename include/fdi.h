@@ -23,7 +23,7 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#include "pshpack4.h"
+#include <pshpack4.h>
 
 #ifndef INCLUDED_TYPES_FCI_FDI
 #define INCLUDED_TYPES_FCI_FDI 1
@@ -257,14 +257,14 @@ typedef INT_PTR (__cdecl *PFNFDINOTIFY)(FDINOTIFICATIONTYPE fdint,
 #define FNFDINOTIFY(fn) INT_PTR __cdecl fn(FDINOTIFICATIONTYPE fdint, \
 					   PFDINOTIFICATION pfdin)
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 typedef struct {
     char ach[2];  /* Set to { '*', '\0' } */
     long cbFile;  /* Required spill file size */
 } FDISPILLFILE, *PFDISPILLFILE;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #define cpuUNKNOWN (-1)  /* FDI does detection */
 #define cpu80286   (0)   /* '286 opcodes only */
@@ -282,7 +282,7 @@ BOOL __cdecl FDITruncateCabinet(HFDI, char *, USHORT);
 
 /**********************************************************************/
 
-#include "poppack.h"
+#include <poppack.h>
 
 #ifdef __cplusplus
 } /* extern "C" */

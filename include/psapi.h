@@ -21,7 +21,7 @@
 #ifndef __WINE_PSAPI_H
 #define __WINE_PSAPI_H
 
-#include "windef.h"
+#include <windef.h>
 
 typedef struct _MODULEINFO {
   LPVOID lpBaseOfDll;

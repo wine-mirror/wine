@@ -21,6 +21,6 @@
 
 /* "storage.h" is obsolete, you should include "objbase.h" instead */
 
-#include "objbase.h"
+#include <objbase.h>
 
 #endif

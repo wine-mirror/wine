@@ -20,7 +20,7 @@
 #ifndef __WINE_RICHEDIT_H
 #define __WINE_RICHEDIT_H
 
-#include "pshpack4.h"
+#include <pshpack4.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -619,6 +619,6 @@ typedef struct _gettextlengthex {
 }
 #endif
 
-#include "poppack.h"
+#include <poppack.h>
 
 #endif /* __WINE_RICHEDIT_H */

@@ -19,7 +19,7 @@
 #ifndef __WINE_DPLAY_H
 #define __WINE_DPLAY_H
 
-#include "ole2.h"
+#include <ole2.h>
 
 #ifdef __cplusplus
 extern "C" {

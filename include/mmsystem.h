@@ -21,7 +21,7 @@
 #ifndef __WINE_MMSYSTEM_H
 #define __WINE_MMSYSTEM_H
 
-#include "windef.h"
+#include <windef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,7 +52,7 @@ typedef HMIXEROBJ *LPHMIXEROBJ;
 typedef HWAVEIN *LPHWAVEIN;
 typedef HWAVEOUT *LPHWAVEOUT;
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
 
@@ -2225,7 +2225,7 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_OVLY_LOAD_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OVLY_LOAD_PARMS)
 
-#include "poppack.h"
+#include <poppack.h>
 
 #ifdef __cplusplus
 }

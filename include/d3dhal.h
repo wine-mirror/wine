@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-#include "d3d.h"
+#include <d3d.h>
 
 /*****************************************************************************
  * device info structures

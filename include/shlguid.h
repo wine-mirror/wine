@@ -19,7 +19,7 @@
 #ifndef __WINE_SHLGUID_H
 #define __WINE_SHLGUID_H
 
-#include "objbase.h"
+#include <objbase.h>
 
 #define DEFINE_SHLGUID(name, l, w1, w2) DEFINE_OLEGUID(name,l,w1,w2)
 

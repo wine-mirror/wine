@@ -21,7 +21,7 @@
 #ifndef __WINE_OPTIONS_H
 #define __WINE_OPTIONS_H
 
-#include "windef.h"
+#include <windef.h>
 
 extern const char *argv0;
 extern const char *full_argv0;

@@ -16,18 +16,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "rpc.h"
-#include "rpcndr.h"
+#include <rpc.h>
+#include <rpcndr.h>
 #ifndef COM_NO_WINDOWS_H
-#include "windows.h"
-#include "ole2.h"
+#include <windows.h>
+#include <ole2.h>
 #endif
 
 #ifndef __WINE_SERVPROV_H
 #define __WINE_SERVPROV_H
 
 
-#include "objbase.h"
+#include <objbase.h>
 
 
 /*****************************************************************************

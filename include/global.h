@@ -21,9 +21,9 @@
 #ifndef __WINE_GLOBAL_H
 #define __WINE_GLOBAL_H
 
-#include "windef.h"
-#include "wine/windef16.h"
-#include "wine/library.h"
+#include <windef.h>
+#include <wine/windef16.h>
+#include <wine/library.h>
 
 /* memory/global.c */
 extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, const void *ptr, DWORD size,

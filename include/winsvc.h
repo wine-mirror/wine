@@ -23,7 +23,7 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#include "windef.h"
+#include <windef.h>
 
 /* Controls */
 #define SERVICE_CONTROL_STOP                  0x00000001

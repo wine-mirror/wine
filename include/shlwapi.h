@@ -21,13 +21,13 @@
 #ifndef __WINE_SHLWAPI_H
 #define __WINE_SHLWAPI_H
 
-#include "objbase.h"
+#include <objbase.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 #ifndef NO_SHLWAPI_REG
 
@@ -930,7 +930,7 @@ typedef struct _DLLVERSIONINFO2 {
 
 HRESULT WINAPI DllInstall(BOOL,LPCWSTR);
 
-#include "poppack.h" 
+#include <poppack.h> 
 
 #ifdef __cplusplus
 } /* extern "C" */

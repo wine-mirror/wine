@@ -20,7 +20,7 @@
 #ifndef __WINE_DMUSIC_DLS_H
 #define __WINE_DMUSIC_DLS_H
 
-#include "dls1.h"
+#include <dls1.h>
 
 typedef long PCENT, GCENT, TCENT, PERCENT;
 typedef LONGLONG REFERENCE_TIME, *LPREFERENCE_TIME;

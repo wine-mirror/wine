@@ -22,7 +22,7 @@
 #ifndef __WINE_DDE_H
 #define __WINE_DDE_H
 
-#include "windef.h"
+#include <windef.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -24,10 +24,10 @@
 #define DIRECT3D_VERSION  0x0900
 #endif
 
-#include "objbase.h"
+#include <objbase.h>
 
-#include "d3d9types.h"
-#include "d3d9caps.h"
+#include <d3d9types.h>
+#include <d3d9caps.h>
 
 /*****************************************************************************
  * Behavior Flags for IDirect3D8::CreateDevice

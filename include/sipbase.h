@@ -19,6 +19,6 @@
 #ifndef __WINE_SIPBASE_H
 #define __WINE_SIPBASE_H
 
-#include "mssip.h"
+#include <mssip.h>
 
 #endif  /* __WINE_SIPBASE_H */

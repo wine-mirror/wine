@@ -19,13 +19,13 @@
 #ifndef __WINE_WINE_WINBASE16_H
 #define __WINE_WINE_WINBASE16_H
 
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
-#include "wine/windef16.h"
-#include "wine/library.h"
+#include <windef.h>
+#include <winbase.h>
+#include <winnls.h>
+#include <wine/windef16.h>
+#include <wine/library.h>
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 typedef struct _SEGINFO {
     UINT16    offSegment;
     UINT16    cbSegment;
@@ -76,7 +76,7 @@ typedef struct
     DWORD   dwAllocCount WINE_PACKED;
 } WINDEBUGINFO16, *LPWINDEBUGINFO16;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #define INVALID_HANDLE_VALUE16  ((HANDLE16) -1)
 #define INFINITE16      0xFFFF

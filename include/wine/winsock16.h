@@ -19,8 +19,8 @@
 #ifndef __WINE_WINE_WINSOCK16_H
 #define __WINE_WINE_WINSOCK16_H
 
-#include "windef.h"
-#include "pshpack1.h"
+#include <windef.h>
+#include <pshpack1.h>
 
 typedef UINT16 SOCKET16;
 
@@ -75,7 +75,7 @@ typedef struct WSAData16
     SEGPTR                  lpVendorInfo;
 } WSADATA16, *LPWSADATA16;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #define WS_FD_CLR16(fd, set)   __WS_FD_CLR((fd),(set), ws_fd_set16)
 #define WS_FD_SET16(fd, set)   __WS_FD_SET1((fd),(set), ws_fd_set16)

@@ -23,9 +23,9 @@
 #include <stdarg.h>
 #endif
 
-#include "basetsd.h"
-#include "windef.h"
-#include "winerror.h"
+#include <basetsd.h>
+#include <windef.h>
+#include <winerror.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -23,8 +23,8 @@
 #ifndef __WINE_WINE_OBJ_SERVICEPROVIDER_H
 #define __WINE_WINE_OBJ_SERVICEPROVIDER_H
 
-#include "objbase.h"
-#include "winbase.h"
+#include <objbase.h>
+#include <winbase.h>
 
 #ifdef __cplusplus
 extern "C" {

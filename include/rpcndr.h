@@ -24,8 +24,8 @@
 #ifndef __WINE_RPCNDR_H
 #define __WINE_RPCNDR_H
 
-#include "basetsd.h"
-#include "rpcdcep.h"
+#include <basetsd.h>
+#include <rpcdcep.h>
 
 /* stupid #if can't handle casts... this __stupidity 
    is just a workaround for that limitation */
@@ -141,7 +141,7 @@ typedef struct _NDR_PIPE_MESSAGE *PNDR_PIPE_MESSAGE;
 typedef struct _NDR_ASYNC_MESSAGE *PNDR_ASYNC_MESSAGE;
 typedef struct _NDR_CORRELATION_INFO *PNDR_CORRELATION_INFO;
 
-#include "pshpack4.h"
+#include <pshpack4.h>
 typedef struct _MIDL_STUB_MESSAGE
 {
   PRPC_MESSAGE RpcMsg;
@@ -198,7 +198,7 @@ typedef struct _MIDL_STUB_MESSAGE
   void *pMemoryList;
   ULONG_PTR w2kReserved[5];
 } MIDL_STUB_MESSAGE, *PMIDL_STUB_MESSAGE;
-#include "poppack.h"
+#include <poppack.h>
 
 typedef struct _GENERIC_BINDING_ROUTINE_PAIR GENERIC_BINDING_ROUTINE_PAIR, *PGENERIC_BINDING_ROUTINE_PAIR;
 

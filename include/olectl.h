@@ -19,9 +19,9 @@
 #ifndef __WINE_OLECTL_H
 #define __WINE_OLECTL_H
 
-#include "windef.h"
+#include <windef.h>
 #define __WINE_INCLUDE_OCIDL
-#include "ocidl.h"
+#include <ocidl.h>
 #undef __WINE_INCLUDE_OCIDL
 
 #ifdef __cplusplus

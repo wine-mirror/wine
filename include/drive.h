@@ -21,7 +21,7 @@
 #ifndef __WINE_DRIVE_H
 #define __WINE_DRIVE_H
 
-#include "windef.h"
+#include <windef.h>
 
 #define MAX_DOS_DRIVES  26
 

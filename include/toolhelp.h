@@ -19,15 +19,15 @@
 #ifndef __WINE_TOOLHELP_H
 #define __WINE_TOOLHELP_H
 
-#include "windef.h"
-#include "wine/windef16.h"
+#include <windef.h>
+#include <wine/windef16.h>
 
 #define MAX_DATA	11
 #define MAX_MODULE_NAME	9
 #define MAX_PATH16	255
 #define MAX_CLASSNAME	255
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 /* Global heap */
 
@@ -416,6 +416,6 @@ typedef struct {
     WORD wFlags;
 } STACKTRACEENTRY;
 
-#include "poppack.h"
+#include <poppack.h>
 
 #endif /* __WINE_TOOLHELP_H */

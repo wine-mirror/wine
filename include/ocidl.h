@@ -16,11 +16,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "rpc.h"
-#include "rpcndr.h"
+#include <rpc.h>
+#include <rpcndr.h>
 #ifndef COM_NO_WINDOWS_H
-#include "windows.h"
-#include "ole2.h"
+#include <windows.h>
+#include <ole2.h>
 #endif
 
 #ifndef __WINE_OCIDL_H
@@ -31,19 +31,19 @@
 #endif
 
 #define __WINE_INCLUDE_OLEIDL
-#include "oleidl.h"
+#include <oleidl.h>
 #undef __WINE_INCLUDE_OLEIDL
 
 #define __WINE_INCLUDE_OAIDL
-#include "oaidl.h"
+#include <oaidl.h>
 #undef __WINE_INCLUDE_OAIDL
 
-#include "wine/obj_olefont.h"
-#include "wine/obj_picture.h"
+#include <wine/obj_olefont.h>
+#include <wine/obj_picture.h>
 
-#include "wine/obj_control.h"
-#include "wine/obj_connection.h"
-#include "wine/obj_property.h"
-#include "wine/obj_oleundo.h"
+#include <wine/obj_control.h>
+#include <wine/obj_connection.h>
+#include <wine/obj_property.h>
+#include <wine/obj_oleundo.h>
 
 #endif /* __WINE_OCIDL_H */

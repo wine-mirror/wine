@@ -19,10 +19,10 @@
 #ifndef __WINE_WINE_WINUSER16_H
 #define __WINE_WINE_WINUSER16_H
 
-#include "wine/wingdi16.h" /* wingdi.h needed for COLORREF */
-#include "winuser.h" /* winuser.h needed for MSGBOXCALLBACK */
+#include <wine/wingdi16.h> /* wingdi.h needed for COLORREF */
+#include <winuser.h> /* winuser.h needed for MSGBOXCALLBACK */
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 typedef struct tagCOMSTAT16
 {
@@ -559,7 +559,7 @@ typedef struct
     DWORD       itemData2 WINE_PACKED;
 } COMPAREITEMSTRUCT16, *LPCOMPAREITEMSTRUCT16;
 
-#include "poppack.h"
+#include <poppack.h>
 
 /* WM_COMMNOTIFY flags */
 #define CN_RECEIVE	0x0001

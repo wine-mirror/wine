@@ -19,13 +19,13 @@
 #ifndef __WINE_SHELLAPI_H
 #define __WINE_SHELLAPI_H
 
-#include "windef.h"
+#include <windef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#include "pshpack1.h"
+#include <pshpack1.h>
 
 DECLARE_HANDLE(HDROP);
 
@@ -289,6 +289,6 @@ BOOL        WINAPI ShellAboutW(HWND,LPCWSTR,LPCWSTR,HICON);
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#include "poppack.h"
+#include <poppack.h>
 
 #endif /* __WINE_SHELLAPI_H */

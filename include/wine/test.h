@@ -22,7 +22,7 @@
 #define __WINE_TEST_H
 
 #include <stdarg.h>
-#include "windef.h"
+#include <windef.h>
 
 /* debug level */
 extern int winetest_debug;

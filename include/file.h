@@ -26,9 +26,9 @@
 # include <sys/time.h>
 #endif
 #include <sys/types.h>
-#include "winbase.h"
-#include "wine/windef16.h"  /* HFILE16 */
-#include "winternl.h"
+#include <winbase.h>
+#include <wine/windef16.h>  /* HFILE16 */
+#include <winternl.h>
 
 #define MAX_PATHNAME_LEN   1024
 

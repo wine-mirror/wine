@@ -19,9 +19,9 @@
 #ifndef __WINE_DDRAW_H
 #define __WINE_DDRAW_H
 
-#include "windef.h" /* LARGE_INTEGER ... */
-#include "wingdi.h" /* PALETTE stuff ... */
-#include "objbase.h"
+#include <windef.h> /* LARGE_INTEGER ... */
+#include <wingdi.h> /* PALETTE stuff ... */
+#include <objbase.h>
 
 #ifdef __cplusplus
 extern "C" {

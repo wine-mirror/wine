@@ -22,6 +22,6 @@
 #ifndef __WINE_VER_H
 #define __WINE_VER_H
 
-#include "winver.h"
+#include <winver.h>
 
 #endif	/* __WINE_VER_H */

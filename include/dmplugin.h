@@ -21,8 +21,8 @@
 #ifndef __WINE_DMUSIC_PLUGIN_H
 #define __WINE_DMUSIC_PLUGIN_H
 
-#include "objbase.h"
-#include "mmsystem.h"
+#include <objbase.h>
+#include <mmsystem.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,7 @@
  */
 
 #if !defined(RPC_NO_WINDOWS_H) && !defined(__WINESRC__)
-#include "windows.h"
+#include <windows.h>
 #endif
 
 #ifndef __WINE_RPC_H
@@ -45,11 +45,11 @@ typedef long RPC_STATUS;
 
 typedef void* I_RPC_HANDLE;
 
-#include "rpcdce.h"
-/* #include "rpcnsi.h" */
-#include "rpcnterr.h"
-#include "excpt.h"
-#include "winerror.h"
+#include <rpcdce.h>
+/* #include <rpcnsi.h> */
+#include <rpcnterr.h>
+#include <excpt.h>
+#include <winerror.h>
 
 /* ignore exception handling for now */
 #define RpcTryExcept if (1) {

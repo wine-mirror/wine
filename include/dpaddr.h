@@ -20,7 +20,7 @@
 #define __WINE_DPLAY8_DPADDR_H
 
 #include <ole2.h>
-#include "dplay8.h"
+#include <dplay8.h>
 
 #ifdef __cplusplus
 extern "C" {
