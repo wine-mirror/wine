@@ -107,6 +107,35 @@ typedef struct
     UINT flags;
 } CLIPBOARDINFO, *LPCLIPBOARDINFO;
 
+typedef struct tagWINE_CLIPDATA {
+    UINT        wFormatID;
+    HANDLE16    hData16;
+    HANDLE      hData32;
+    UINT        drvData;
+    UINT        wFlags;
+    struct tagWINE_CLIPDATA *PrevData;
+    struct tagWINE_CLIPDATA *NextData;
+} WINE_CLIPDATA, *LPWINE_CLIPDATA;
+
+typedef HANDLE (*DRVEXPORTFUNC)(Window requestor, Atom aTarget, Atom rprop,
+    LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+typedef HANDLE (*DRVIMPORTFUNC)(LPBYTE hData, UINT cBytes);
+
+typedef struct tagWINE_CLIPFORMAT {
+    UINT        wFormatID;
+    LPCWSTR     Name;
+    UINT        drvData;
+    UINT        wFlags;
+    DRVIMPORTFUNC  lpDrvImportFunc;
+    DRVEXPORTFUNC  lpDrvExportFunc;
+    struct tagWINE_CLIPFORMAT *PrevFormat;
+    struct tagWINE_CLIPFORMAT *NextFormat;
+} WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
+
+#define CF_FLAG_BUILTINFMT   1 /* Built-in windows format */
+#define CF_FLAG_UNOWNED      2 /* cached data is not owned */
+#define CF_FLAG_SYNTHESIZED  8 /* Implicitly converted data */
+
 static int selectionAcquired = 0;              /* Contains the current selection masks */
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
 static BOOL usePrimary = FALSE;                /* Use primary selection in additon to the clipboard selection */
@@ -115,20 +144,20 @@ static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from whic
 INT X11DRV_RegisterClipboardFormat(LPCWSTR FormatName);
 void X11DRV_EmptyClipboard(BOOL keepunowned);
 void X11DRV_EndClipboardUpdate(void);
-HANDLE X11DRV_CLIPBOARD_ImportClipboardData(LPBYTE lpdata, UINT cBytes);
-HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(LPBYTE lpdata, UINT cBytes);
-HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(LPBYTE lpdata, UINT cBytes);
-HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(LPBYTE lpdata, UINT cBytes);
-HANDLE X11DRV_CLIPBOARD_ImportXAString(LPBYTE lpdata, UINT cBytes);
-HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Window requestor, Atom aTarget,
+static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(LPBYTE lpdata, UINT cBytes);
+static HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(LPBYTE lpdata, UINT cBytes);
+static HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(LPBYTE lpdata, UINT cBytes);
+static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(LPBYTE lpdata, UINT cBytes);
+static HANDLE X11DRV_CLIPBOARD_ImportXAString(LPBYTE lpdata, UINT cBytes);
+static HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-HANDLE X11DRV_CLIPBOARD_ExportString(Window requestor, Atom aTarget,
+static HANDLE X11DRV_CLIPBOARD_ExportString(Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Window requestor, Atom aTarget,
+static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Window requestor, Atom aTarget,
+static HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Window requestor, Atom aTarget,
+static HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCWSTR FormatName, Atom prop);
 static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, Atom prop);
@@ -143,6 +172,7 @@ static BOOL X11DRV_CLIPBOARD_SynthesizeData(UINT wFormatID);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedFormat(LPWINE_CLIPDATA lpData);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedDIB(void);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedBitmap(void);
+static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple );
 
 /* Clipboard formats
  * WARNING: This data ordering is dependent on the WINE_CLIPFORMAT structure
@@ -2573,4 +2603,356 @@ void X11DRV_EndClipboardUpdate(void)
     X11DRV_CLIPBOARD_SynthesizeData(CF_BITMAP);
 
     TRACE("%d formats added to cached data\n", ClipDataCount - count);
+}
+
+
+/***********************************************************************
+ *           add_targets
+ *
+ * Utility function for X11DRV_SelectionRequest_TARGETS.
+ */
+static BOOL add_targets(Atom* targets, unsigned long cTargets, Atom prop)
+{
+    unsigned int i;
+    BOOL bExists;
+
+    /* Scan through what we have so far to avoid duplicates */
+    for (i = 0, bExists = FALSE; i < cTargets; i++)
+    {
+        if (targets[i] == prop)
+        {
+            bExists = TRUE;
+            break;
+        }
+    }
+
+    if (!bExists)
+        targets[cTargets] = prop;
+
+    return !bExists;
+}
+
+
+/***********************************************************************
+ *           X11DRV_SelectionRequest_TARGETS
+ *  Service a TARGETS selection request event
+ */
+static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
+                                             Atom target, Atom rprop )
+{
+    Atom* targets;
+    UINT wFormat;
+    UINT alias;
+    ULONG cTargets;
+    LPWINE_CLIPFORMAT lpFormat;
+
+    /*
+     * Count the number of items we wish to expose as selection targets.
+     * We include the TARGETS item, and property aliases
+     */
+    cTargets = X11DRV_CountClipboardFormats() + 1;
+
+    for (wFormat = 0; (wFormat = X11DRV_EnumClipboardFormats(wFormat));)
+    {
+        lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
+
+        if (lpFormat)
+        {
+            if (!lpFormat->lpDrvExportFunc)
+                cTargets--;
+
+            if (X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData))
+                cTargets++;
+        }
+        /* else most likely unregistered format such as CF_PRIVATE or CF_GDIOBJ */
+    }
+
+    TRACE(" found %ld formats\n", cTargets);
+
+    /* Allocate temp buffer */
+    targets = (Atom*)HeapAlloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
+    if(targets == NULL)
+        return None;
+
+    /* Create TARGETS property list (First item in list is TARGETS itself) */
+    for (targets[0] = x11drv_atom(TARGETS), cTargets = 1, wFormat = 0;
+         (wFormat = X11DRV_EnumClipboardFormats(wFormat));)
+    {
+        lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
+
+        if (lpFormat)
+        {
+            if (lpFormat->lpDrvExportFunc)
+            {
+                if (add_targets(targets, cTargets, lpFormat->drvData))
+                    cTargets++;
+            }
+
+            /* Check if any alias should be listed */
+            alias = X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData);
+            if (alias)
+            {
+                if (add_targets(targets, cTargets, alias))
+                    cTargets++;
+            }
+        }
+    }
+
+    wine_tsx11_lock();
+
+    if (TRACE_ON(clipboard))
+    {
+        unsigned int i;
+        for ( i = 0; i < cTargets; i++)
+        {
+            if (targets[i])
+            {
+                char *itemFmtName = XGetAtomName(display, targets[i]);
+                TRACE("\tAtom# %d:  Property %ld Type %s\n", i, targets[i], itemFmtName);
+                XFree(itemFmtName);
+            }
+        }
+    }
+
+    /* We may want to consider setting the type to xaTargets instead,
+     * in case some apps expect this instead of XA_ATOM */
+    XChangeProperty(display, requestor, rprop, XA_ATOM, 32,
+                    PropModeReplace, (unsigned char *)targets, cTargets);
+    wine_tsx11_unlock();
+
+    HeapFree(GetProcessHeap(), 0, targets);
+
+    return rprop;
+}
+
+
+/***********************************************************************
+ *           X11DRV_SelectionRequest_MULTIPLE
+ *  Service a MULTIPLE selection request event
+ *  rprop contains a list of (target,property) atom pairs.
+ *  The first atom names a target and the second names a property.
+ *  The effect is as if we have received a sequence of SelectionRequest events
+ *  (one for each atom pair) except that:
+ *  1. We reply with a SelectionNotify only when all the requested conversions
+ *  have been performed.
+ *  2. If we fail to convert the target named by an atom in the MULTIPLE property,
+ *  we replace the atom in the property by None.
+ */
+static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *pevent )
+{
+    Display *display = pevent->display;
+    Atom           rprop;
+    Atom           atype=AnyPropertyType;
+    int            aformat;
+    unsigned long  remain;
+    Atom*          targetPropList=NULL;
+    unsigned long  cTargetPropList = 0;
+
+    /* If the specified property is None the requestor is an obsolete client.
+     * We support these by using the specified target atom as the reply property.
+     */
+    rprop = pevent->property;
+    if( rprop == None )
+        rprop = pevent->target;
+    if (!rprop)
+        return 0;
+
+    /* Read the MULTIPLE property contents. This should contain a list of
+     * (target,property) atom pairs.
+     */
+    wine_tsx11_lock();
+    if(XGetWindowProperty(display, pevent->requestor, rprop,
+                          0, 0x3FFF, False, AnyPropertyType, &atype,&aformat,
+                          &cTargetPropList, &remain,
+                          (unsigned char**)&targetPropList) != Success)
+    {
+        wine_tsx11_unlock();
+        TRACE("\tCouldn't read MULTIPLE property\n");
+    }
+    else
+    {
+        TRACE("\tType %s,Format %d,nItems %ld, Remain %ld\n",
+              XGetAtomName(display, atype), aformat, cTargetPropList, remain);
+        wine_tsx11_unlock();
+
+        /*
+         * Make sure we got what we expect.
+         * NOTE: According to the X-ICCCM Version 2.0 documentation the property sent
+         * in a MULTIPLE selection request should be of type ATOM_PAIR.
+         * However some X apps(such as XPaint) are not compliant with this and return
+         * a user defined atom in atype when XGetWindowProperty is called.
+         * The data *is* an atom pair but is not denoted as such.
+         */
+        if(aformat == 32 /* atype == xAtomPair */ )
+        {
+            unsigned int i;
+
+            /* Iterate through the ATOM_PAIR list and execute a SelectionRequest
+             * for each (target,property) pair */
+
+            for (i = 0; i < cTargetPropList; i+=2)
+            {
+                XSelectionRequestEvent event;
+
+                if (TRACE_ON(clipboard))
+                {
+                    char *targetName, *propName;
+                    wine_tsx11_lock();
+                    targetName = XGetAtomName(display, targetPropList[i]);
+                    propName = XGetAtomName(display, targetPropList[i+1]);
+                    TRACE("MULTIPLE(%d): Target='%s' Prop='%s'\n",
+                          i/2, targetName, propName);
+                    XFree(targetName);
+                    XFree(propName);
+                    wine_tsx11_unlock();
+                }
+
+                /* We must have a non "None" property to service a MULTIPLE target atom */
+                if ( !targetPropList[i+1] )
+                {
+                    TRACE("\tMULTIPLE(%d): Skipping target with empty property!\n", i);
+                    continue;
+                }
+
+                /* Set up an XSelectionRequestEvent for this (target,property) pair */
+                memcpy( &event, pevent, sizeof(XSelectionRequestEvent) );
+                event.target = targetPropList[i];
+                event.property = targetPropList[i+1];
+
+                /* Fire a SelectionRequest, informing the handler that we are processing
+                 * a MULTIPLE selection request event.
+                 */
+                X11DRV_HandleSelectionRequest( hWnd, &event, TRUE );
+            }
+        }
+
+        /* Free the list of targets/properties */
+        wine_tsx11_lock();
+        XFree(targetPropList);
+        wine_tsx11_unlock();
+    }
+
+    return rprop;
+}
+
+
+/***********************************************************************
+ *           X11DRV_HandleSelectionRequest
+ *  Process an event selection request event.
+ *  The bIsMultiple flag is used to signal when EVENT_SelectionRequest is called
+ *  recursively while servicing a "MULTIPLE" selection target.
+ *
+ *  Note: We only receive this event when WINE owns the X selection
+ */
+static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple )
+{
+    Display *display = event->display;
+    XSelectionEvent result;
+    Atom rprop = None;
+    Window request = event->requestor;
+
+    TRACE("\n");
+
+    /*
+     * We can only handle the selection request if :
+     * The selection is PRIMARY or CLIPBOARD, AND we can successfully open the clipboard.
+     * Don't do these checks or open the clipboard while recursively processing MULTIPLE,
+     * since this has been already done.
+     */
+    if ( !bIsMultiple )
+    {
+        if (((event->selection != XA_PRIMARY) && (event->selection != x11drv_atom(CLIPBOARD))))
+            goto END;
+    }
+
+    /* If the specified property is None the requestor is an obsolete client.
+     * We support these by using the specified target atom as the reply property.
+     */
+    rprop = event->property;
+    if( rprop == None )
+        rprop = event->target;
+
+    if(event->target == x11drv_atom(TARGETS))  /*  Return a list of all supported targets */
+    {
+        /* TARGETS selection request */
+        rprop = X11DRV_SelectionRequest_TARGETS( display, request, event->target, rprop );
+    }
+    else if(event->target == x11drv_atom(MULTIPLE))  /*  rprop contains a list of (target, property) atom pairs */
+    {
+        /* MULTIPLE selection request */
+        rprop = X11DRV_SelectionRequest_MULTIPLE( hWnd, event );
+    }
+    else
+    {
+        LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupProperty(event->target);
+
+        if (!lpFormat)
+            lpFormat = X11DRV_CLIPBOARD_LookupAliasProperty(event->target);
+
+        if (lpFormat && lpFormat->lpDrvExportFunc)
+        {
+            LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(lpFormat->wFormatID);
+
+            if (lpData)
+            {
+                unsigned char* lpClipData;
+                DWORD cBytes;
+                HANDLE hClipData = lpFormat->lpDrvExportFunc(request, event->target,
+                                                             rprop, lpData, &cBytes);
+
+                if (hClipData && (lpClipData = GlobalLock(hClipData)))
+                {
+                    TRACE("\tUpdating property %s, %ld bytes\n", debugstr_w(lpFormat->Name), cBytes);
+
+                    wine_tsx11_lock();
+                    XChangeProperty(display, request, rprop, event->target,
+                                    8, PropModeReplace, (unsigned char *)lpClipData, cBytes);
+                    wine_tsx11_unlock();
+
+                    GlobalUnlock(hClipData);
+                    GlobalFree(hClipData);
+                }
+            }
+        }
+    }
+
+END:
+    /* reply to sender
+     * SelectionNotify should be sent only at the end of a MULTIPLE request
+     */
+    if ( !bIsMultiple )
+    {
+        result.type = SelectionNotify;
+        result.display = display;
+        result.requestor = request;
+        result.selection = event->selection;
+        result.property = rprop;
+        result.target = event->target;
+        result.time = event->time;
+        TRACE("Sending SelectionNotify event...\n");
+        wine_tsx11_lock();
+        XSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
+        wine_tsx11_unlock();
+    }
+}
+
+
+/***********************************************************************
+ *           X11DRV_SelectionRequest
+ */
+void X11DRV_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event )
+{
+    if (!hWnd) return;
+    X11DRV_HandleSelectionRequest( hWnd, event, FALSE );
+}
+
+
+/***********************************************************************
+ *           X11DRV_SelectionClear
+ */
+void X11DRV_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
+{
+    if (!hWnd) return;
+    if (event->selection == XA_PRIMARY || event->selection == x11drv_atom(CLIPBOARD))
+        X11DRV_CLIPBOARD_ReleaseSelection( event->selection, event->window, hWnd, event->time );
 }

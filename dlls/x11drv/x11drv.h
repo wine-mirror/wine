@@ -454,47 +454,6 @@ extern Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
 
 #define x11drv_atom(name) (X11DRV_Atoms[XATOM_##name - FIRST_XATOM])
 
-/* X11 clipboard driver */
-
-typedef struct tagWINE_CLIPDATA {
-    UINT        wFormatID;
-    HANDLE16    hData16;
-    HANDLE      hData32;
-    UINT        drvData;
-    UINT        wFlags;
-    struct tagWINE_CLIPDATA *PrevData;
-    struct tagWINE_CLIPDATA *NextData;
-} WINE_CLIPDATA, *LPWINE_CLIPDATA;
-
-typedef HANDLE (*DRVEXPORTFUNC)(Window requestor, Atom aTarget, Atom rprop,
-    LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-typedef HANDLE (*DRVIMPORTFUNC)(LPBYTE hData, UINT cBytes);
-
-typedef struct tagWINE_CLIPFORMAT {
-    UINT        wFormatID;
-    LPCWSTR     Name;
-    UINT        drvData;
-    UINT        wFlags;
-    DRVIMPORTFUNC  lpDrvImportFunc;
-    DRVEXPORTFUNC  lpDrvExportFunc;
-    struct tagWINE_CLIPFORMAT *PrevFormat;
-    struct tagWINE_CLIPFORMAT *NextFormat;
-} WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
-
-#define CF_FLAG_BUILTINFMT   1 /* Built-in windows format */
-#define CF_FLAG_UNOWNED      2 /* cached data is not owned */
-#define CF_FLAG_SYNTHESIZED  8 /* Implicitly converted data */
-
-extern void X11DRV_InitClipboard(void);
-extern void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd, Time time);
-extern INT X11DRV_CountClipboardFormats(void);
-extern UINT X11DRV_EnumClipboardFormats(UINT wFormat);
-extern LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID);
-extern LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(UINT drvData);
-extern LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID);
-extern UINT X11DRV_CLIPBOARD_LookupPropertyAlias(UINT drvDataProperty);
-extern LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupAliasProperty(UINT drvDataAlias);
-
 /* X11 event driver */
 
 typedef enum {
@@ -513,6 +472,8 @@ extern void X11DRV_Expose( HWND hwnd, XExposeEvent *event );
 extern void X11DRV_MapNotify( HWND hwnd, XMapEvent *event );
 extern void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event );
 extern void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
+extern void X11DRV_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event );
+extern void X11DRV_SelectionClear( HWND hWnd, XSelectionClearEvent *event );
 extern void X11DRV_MappingNotify( XMappingEvent *event );
 
 #ifdef HAVE_LIBXXF86DGA2
@@ -551,6 +512,7 @@ extern XIC X11DRV_get_ic( HWND hwnd );
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
 
+extern void X11DRV_InitClipboard(void);
 extern void X11DRV_SetFocus( HWND hwnd );
 extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
 
