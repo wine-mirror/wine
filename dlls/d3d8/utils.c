@@ -1602,8 +1602,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		break;
 	case D3DTOP_ADDSMOOTH:
 		if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
-		  glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI));
-		  checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI)");
+		  glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
+		  checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
 		  glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
 		  checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
 		  switch (opr1) {
@@ -1629,8 +1629,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		break;
 	case D3DTOP_BLENDTEXTUREALPHAPM:
 		if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
-		  glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI));
-		  checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI)");
+		  glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
+		  checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
 		  glTexEnvi(GL_TEXTURE_ENV, src0_target, GL_TEXTURE);
 		  checkGLcall("GL_TEXTURE_ENV, src0_target, GL_TEXTURE");
 		  glTexEnvi(GL_TEXTURE_ENV, opr0_target, GL_ONE_MINUS_SRC_ALPHA);
@@ -1650,8 +1650,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		break;
 	case D3DTOP_MODULATEALPHA_ADDCOLOR:
 		if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
-		  glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI));
-		  checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI)");
+		  glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
+		  checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
 		  glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
 		  checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
 		  glTexEnvi(GL_TEXTURE_ENV, opr0_target, GL_SRC_ALPHA);
@@ -1671,8 +1671,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		break;
 	case D3DTOP_MODULATECOLOR_ADDALPHA:
 		if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
-		  glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI));
-		  checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI)");
+		  glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
+		  checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
 		  glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
 		  checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
 		  glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -1692,8 +1692,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		break;
 	case D3DTOP_MODULATEINVALPHA_ADDCOLOR:
 		if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
-		  glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI));
-		  checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI)");
+		  glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
+		  checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
 		  glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
 		  checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
 		  glTexEnvi(GL_TEXTURE_ENV, opr0_target, GL_ONE_MINUS_SRC_ALPHA);
@@ -1713,8 +1713,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		break;
 	case D3DTOP_MODULATEINVCOLOR_ADDALPHA:
 		if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
-		  glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI));
-		  checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI)");
+		  glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
+		  checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
 		  glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
 		  checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
 		  glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
@@ -1734,8 +1734,8 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 		break;
 	case D3DTOP_MULTIPLYADD:
 		if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
-		  glTexEnvi(GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI));
-		  checkGLcall("GL_TEXTURE_ENV, comb_target, useext(GL_MODULATE_ADD_ATI)");
+		  glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
+		  checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
 		  glTexEnvi(GL_TEXTURE_ENV, src0_target, src3);
 		  checkGLcall("GL_TEXTURE_ENV, src0_target, src3");
 		  glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr3);
