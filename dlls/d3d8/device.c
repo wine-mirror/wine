@@ -1875,6 +1875,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             default:
                 FIXME("Unrecognized/Unhandled D3DBLENDOP value %ld\n", Value);
             }
+            TRACE("glBlendEquation(%x)\n", glParm);
             glBlendEquation(glParm);
             checkGLcall("glBlendEquation");
         }
@@ -2530,6 +2531,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     checkGLcall("glActiveTextureARB");
 
     /* Decrement the count of the previous texture */
+    /* FIXME PERF: If old == new and not dirty then skip all this */
     if (oldTxt != NULL) {
         IDirect3DBaseTexture8Impl_Release(oldTxt);
     }
@@ -2828,7 +2830,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             } else {
 
                 /* Enable only the appropriate texture dimension */
-                if (Type==D3DTSS_ALPHAOP && Value != D3DTOP_DISABLE) {
+                if (Type==D3DTSS_COLOROP) {
                     if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_1D) {
                         glEnable(GL_TEXTURE_1D);
                         checkGLcall("Enable GL_TEXTURE_1D");
@@ -2862,6 +2864,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
                 case D3DTOP_SELECTARG1                :
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
                     break;
 
                 case D3DTOP_MODULATE4X                : Scale = Scale * 2;  /* Drop through */
@@ -2869,18 +2872,26 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                 case D3DTOP_MODULATE                  :
 
                     /* Correct scale */
-                    if (Type == D3DTSS_ALPHAOP) glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale);
-                    else glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale);
+                    if (Type == D3DTSS_ALPHAOP) {
+                        glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale);
+                        checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale)");
+                    } else {
+                        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale);
+                        checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale)");
+                    }
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_MODULATE);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_MODULATE);");
                     break;
 
                 case D3DTOP_ADD                       :
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD)");
                     break;
 
                 case D3DTOP_ADDSIGNED2X               : Scale = Scale * 2;  /* Drop through */
                 case D3DTOP_ADDSIGNED                 :
                     glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT);
+                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT)");
                     break;
 
                 case D3DTOP_DOTPRODUCT3               :
