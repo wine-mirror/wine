@@ -197,7 +197,7 @@ fwMode);
   if((fwMode & DM_PROMPT) || (fwMode & DM_UPDATE))
     FIXME(psdrv, "Mode %d not implemented\n", fwMode);
 
-  if(fwMode & DM_MODIFY) {
+  if((fwMode & DM_MODIFY) && lpdmInput) {
     TRACE(psdrv, "DM_MODIFY set. devIn->dmFields = %08lx\n", lpdmInput->dmFields);
     PSDRV_MergeDevmodes(pi->Devmode, (PSDRV_DEVMODE16 *)lpdmInput, pi);
   }
