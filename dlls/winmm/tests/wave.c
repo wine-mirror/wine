@@ -35,6 +35,17 @@
  * So this is only done if the test is being run in interactive mode.
  */
 
+#ifndef WAVE_FORMAT_48M08
+#define WAVE_FORMAT_48M08      0x00001000    /* 48     kHz, Mono,   8-bit  */
+#define WAVE_FORMAT_48S08      0x00002000    /* 48     kHz, Stereo, 8-bit  */
+#define WAVE_FORMAT_48M16      0x00004000    /* 48     kHz, Mono,   16-bit */
+#define WAVE_FORMAT_48S16      0x00008000    /* 48     kHz, Stereo, 16-bit */
+#define WAVE_FORMAT_96M08      0x00010000    /* 96     kHz, Mono,   8-bit  */
+#define WAVE_FORMAT_96S08      0x00020000    /* 96     kHz, Stereo, 8-bit  */
+#define WAVE_FORMAT_96M16      0x00040000    /* 96     kHz, Mono,   16-bit */
+#define WAVE_FORMAT_96S16      0x00080000    /* 96     kHz, Stereo, 16-bit */
+#endif
+
 static const unsigned int win_formats[][4]={
     {WAVE_FORMAT_1M08,  11025,  8, 1},
     {WAVE_FORMAT_1S08,  11025,  8, 2},
@@ -48,7 +59,6 @@ static const unsigned int win_formats[][4]={
     {WAVE_FORMAT_4S08,  44100,  8, 2},
     {WAVE_FORMAT_4M16,  44100, 16, 1},
     {WAVE_FORMAT_4S16,  44100, 16, 2},
-#ifdef WAVE_FORMAT_48M08
     {WAVE_FORMAT_48M08, 48000,  8, 1},
     {WAVE_FORMAT_48S08, 48000,  8, 2},
     {WAVE_FORMAT_48M16, 48000, 16, 1},
@@ -57,7 +67,6 @@ static const unsigned int win_formats[][4]={
     {WAVE_FORMAT_96S08, 96000,  8, 2},
     {WAVE_FORMAT_96M16, 96000, 16, 1},
     {WAVE_FORMAT_96S16, 96000, 16, 2}
-#endif
 };
 #define NB_WIN_FORMATS (sizeof(win_formats)/sizeof(*win_formats))
 
