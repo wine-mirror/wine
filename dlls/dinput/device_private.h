@@ -49,7 +49,7 @@ typedef struct {
   DataTransform *dt;
 } DataFormat;
 extern void fill_DataFormat(void *out, void *in, DataFormat *df) ;
-extern DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_format, int *offset) ;
+extern DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_format, int *offset) ;
 
 /* Used to fill events in the queue */
 #define GEN_EVENT(offset,data,xtime,seq)					\
@@ -91,6 +91,8 @@ extern void _dump_EnumObjects_flags(DWORD dwFlags) ;
 extern void _dump_DIPROPHEADER(DIPROPHEADER *diph) ;
 extern void _dump_OBJECTINSTANCEA(DIDEVICEOBJECTINSTANCEA *ddoi) ;
 extern void _dump_OBJECTINSTANCEW(DIDEVICEOBJECTINSTANCEW *ddoi) ;
+extern void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) ;
+extern const char *_dump_dinput_GUID(const GUID *guid) ;
 
 /* And the stubs */
 extern HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(

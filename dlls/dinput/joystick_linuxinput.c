@@ -349,23 +349,11 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 )
 {
   ICOM_THIS(JoystickImpl,iface);
-  int i;
 
   TRACE("(this=%p,%p)\n",This,df);
 
-  TRACE("(df.dwSize=%ld)\n",df->dwSize);
-  TRACE("(df.dwObjsize=%ld)\n",df->dwObjSize);
-  TRACE("(df.dwFlags=0x%08lx)\n",df->dwFlags);
-  TRACE("(df.dwDataSize=%ld)\n",df->dwDataSize);
-  TRACE("(df.dwNumObjs=%ld)\n",df->dwNumObjs);
-
-  for (i=0;i<df->dwNumObjs;i++) {
-    TRACE("df.rgodf[%d].guid %s (%p)\n",i,debugstr_guid(df->rgodf[i].pguid), df->rgodf[i].pguid);
-    TRACE("df.rgodf[%d].dwOfs %ld\n",i,df->rgodf[i].dwOfs);
-    TRACE("dwType 0x%02x,dwInstance %d\n",DIDFT_GETTYPE(df->rgodf[i].dwType),DIDFT_GETINSTANCE(df->rgodf[i].dwType));
-    TRACE("df.rgodf[%d].dwFlags 0x%08lx\n",i,df->rgodf[i].dwFlags);
-  }
-
+  _dump_DIDATAFORMAT(df);
+  
   /* Store the new data format */
   This->df = HeapAlloc(GetProcessHeap(),0,df->dwSize);
   memcpy(This->df, df, df->dwSize);
