@@ -56,10 +56,8 @@
 
 static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
-	"   -a n        Alignment of resource (win16 only, default is 4)\n"
 	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
 	"               (win32 only; default is " ENDIAN "-endian)\n"
-	"   -C cp       Set the resource's codepage to cp (default is 0)\n"
 	"   -d n        Set debug level to 'n'\n"
 	"   -D id[=val] Define preprocessor identifier id=val\n"
 	"   -E          Preprocess only\n"
@@ -71,9 +69,8 @@ static char usage[] =
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -m          Do not remap numerical resource IDs\n"
 	"   -o file     Output to file (default is infile.res)\n"
-	"   -O format	The output format (must be `res').\n"
+	"   -O format	The output format (either `res' or `res16`).\n"
 	"   -v          Enable verbose mode.\n"
-	"   -w 16|32    Select win16 or win32 output (default is win32)\n"
 	"   -W          Enable pedantic warnings\n"
 	"The following long options are supported:\n"
 	"   --input		Synonym for -i.\n"
@@ -134,20 +131,9 @@ int debuglevel = DEBUGLEVEL_NONE;
 int extensions = 1;
 
 /*
- * NE segment resource aligment (-a option)
- */
-int alignment = 4;
-int alignment_pwr;
-
-/*
  * Language setting for resources (-l option)
  */
 language_t *currentlanguage = NULL;
-
-/*
- * The codepage to write in win32 PE resource segment (-C option)
- */
-DWORD codepage = 0;
 
 /*
  * Set when extra warnings should be generated (-W option)
@@ -191,7 +177,7 @@ static void rm_tempfile(void);
 static void segvhandler(int sig);
 
 static const char* short_options = 
-	"a:AB:cC:d:D:eEF:hH:i:I:l:LmnNo:O:P:rtTvVw:W";
+	"B:d:D:EF:hi:I:J:l:mo:O:vW";
 static struct option long_options[] = {
 	{ "input", 1, 0, 'i' },
 	{ "input-format", 1, 0, 'J' },
@@ -219,7 +205,6 @@ int main(int argc,char *argv[])
 	int stdinc = 1;
 	int lose = 0;
 	int ret;
-	int a;
 	int i;
 	int cmdlen;
 
@@ -262,9 +247,6 @@ int main(int argc,char *argv[])
 			printf(version_string);
 			exit(0);
 			break;
-		case 'a':
-			alignment = atoi(optarg);
-			break;
 		case 'B':
 			switch(optarg[0])
 			{
@@ -284,9 +266,6 @@ int main(int argc,char *argv[])
 				fprintf(stderr, "Byte ordering must be n[ative], l[ittle] or b[ig]\n");
 				lose++;
 			}
-			break;
-		case 'C':
-			codepage = strtol(optarg, NULL, 0);
 			break;
 		case 'd':
 			debuglevel = strtol(optarg, NULL, 0);
@@ -331,19 +310,11 @@ int main(int argc,char *argv[])
 			else error("Too many output files.\n");
 			break;
 		case 'O':
-			if (strcmp(optarg, "res")) 
-				warning("Output format %s not supported.", optarg);
+			if (strcmp(optarg, "res16") == 0) win32 = 0;
+			else if (strcmp(optarg, "res")) warning("Output format %s not supported.", optarg);
 			break;
 		case 'v':
 			debuglevel = DEBUGLEVEL_CHAT;
-			break;
-		case 'w':
-			if(!strcmp(optarg, "16"))
-				win32 = 0;
-			else if(!strcmp(optarg, "32"))
-				win32 = 1;
-			else
-				lose++;
 			break;
 		case 'W':
 			pedantic = 1;
@@ -380,31 +351,6 @@ int main(int argc,char *argv[])
 	{
 		if (!output_name) output_name = argv[optind++];
 		else error("Too many output files.\n");
-	}
-
-	/* Check the command line options for invalid combinations */
-	if(win32)
-	{
-		if(!extensions)
-		{
-			warning("Option -e ignored with 32bit compile\n");
-			extensions = 1;
-		}
-	}
-
-	/* Set alignment power */
-	a = alignment;
-	for(alignment_pwr = 0; alignment_pwr < 10 && a > 1; alignment_pwr++)
-	{
-		a >>= 1;
-	}
-	if(a != 1)
-	{
-		error("Alignment must be between 1 and 1024");
-	}
-	if((1 << alignment_pwr) != alignment)
-	{
-		error("Alignment must be a power of 2");
 	}
 
 	/* Kill io buffering when some kind of debuglevel is enabled */
