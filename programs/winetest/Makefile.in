@@ -6,7 +6,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = winetest
+MODULE    = winetest.exe
 APPMODE   = cui
 IMPORTS   = kernel32
 

@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = osversioncheck
+MODULE    = osversioncheck.exe
 APPMODE   = cui
 IMPORTS   = kernel32
 

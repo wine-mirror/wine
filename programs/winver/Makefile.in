@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = winver
+MODULE    = winver.exe
 APPMODE   = gui
 IMPORTS   = shell32 kernel32
 

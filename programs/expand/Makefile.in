@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = expand
+MODULE    = expand.exe
 APPMODE   = cui
 IMPORTS   = lz32 kernel32
 

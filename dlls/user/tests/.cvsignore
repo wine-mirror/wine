@@ -1,5 +1,5 @@
 class.ok
 sysparams.ok
 testlist.c
-user32_test.spec.c
+user32_test.exe.spec.c
 wsprintf.ok

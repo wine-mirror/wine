@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = winepath
+MODULE    = winepath.exe
 APPMODE   = cui
 IMPORTS   = kernel32
 

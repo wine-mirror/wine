@@ -1,4 +1,3 @@
 Makefile
-osversioncheck
-osversioncheck.dbg.c
-osversioncheck.spec.c
+osversioncheck.exe.dbg.c
+osversioncheck.exe.spec.c

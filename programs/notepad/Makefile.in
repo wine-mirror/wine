@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = notepad
+MODULE    = notepad.exe
 APPMODE   = gui
 IMPORTS   = comdlg32 shell32 user32 gdi32 kernel32
 

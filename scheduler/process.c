@@ -450,15 +450,14 @@ void *open_winelib_app( char *argv[] )
             else name++;
             if (!strcmp( name, "wine" )) return NULL;
         }
-
         /* now try argv[0] with ".so" appended */
-        if ((tmp = HeapAlloc( GetProcessHeap(), 0, strlen(argv0) + 4 )))
+        if ((tmp = HeapAlloc( GetProcessHeap(), 0, strlen(argv0) + 8 )))
         {
             strcpy( tmp, argv0 );
-            strcat( tmp, ".so" );
+            strcat( tmp, ".exe.so" );
             /* search in PATH only if there was no '/' in argv[0] */
             ret = wine_dll_load_main_exe( tmp, (name == argv0), errStr, sizeof(errStr) );
-            if (!ret && !argv[1])
+            if (!ret && !argv[1] && !main_exe_name[0])
             {
                 /* if no argv[1], this will be better than displaying usage */
                 MESSAGE( "%s: could not load library '%s' as Winelib application: %s\n",

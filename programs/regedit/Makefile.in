@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = regedit
+MODULE    = regedit.exe
 APPMODE   = gui
 IMPORTS   = msvcrt advapi32 kernel32
 

@@ -1,5 +1,4 @@
 Makefile
-notepad
-notepad.dbg.c
-notepad.spec.c
+notepad.exe.dbg.c
+notepad.exe.spec.c
 rsrc.res

@@ -1,5 +1,4 @@
 Makefile
-view
-view.dbg.c
-view.spec.c
+view.exe.dbg.c
+view.exe.spec.c
 viewrc.res

@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = regapi
+MODULE    = regapi.exe
 APPMODE   = gui
 IMPORTS   = advapi32 kernel32
 

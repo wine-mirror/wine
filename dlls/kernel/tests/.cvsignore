@@ -2,7 +2,7 @@ alloc.ok
 atom.ok
 directory.ok
 file.ok
-kernel32_test.spec.c
+kernel32_test.exe.spec.c
 path.ok
 process.ok
 testlist.c

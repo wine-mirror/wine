@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = control
+MODULE    = control.exe
 APPMODE   = gui
 IMPORTS   = shell32 user32 kernel32
 

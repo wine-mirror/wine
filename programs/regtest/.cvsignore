@@ -1,4 +1,3 @@
 Makefile
-regtest
-regtest.dbg.c
-regtest.spec.c
+regtest.exe.dbg.c
+regtest.exe.spec.c

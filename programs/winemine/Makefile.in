@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = winemine
+MODULE    = winemine.exe
 APPMODE   = gui
 IMPORTS   = user32 gdi32 advapi32 kernel32
 

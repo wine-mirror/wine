@@ -1,4 +1,3 @@
 Makefile
-control
-control.dbg.c
-control.spec.c
+control.exe.dbg.c
+control.exe.spec.c

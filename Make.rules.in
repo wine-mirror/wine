@@ -284,18 +284,18 @@ $(TESTMAIN):
 $(TESTLIST): Makefile.in
 	$(TOPSRCDIR)/programs/winetest/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
 
-$(TESTPROGRAM): $(TESTPROGRAM).so
+$(TESTPROGRAM): $(TESTPROGRAM).exe.so
 	$(RM) $(TESTPROGRAM) && cd tests && $(LN_S) $(TOPOBJDIR)/../wine `basename $(TESTPROGRAM)`
 
-$(TESTPROGRAM).so: $(TESTPROGRAM).spec.o $(TESTOBJS)
-	$(LDSHARED) $(LDDLLFLAGS) $(TESTPROGRAM).spec.o $(TESTOBJS) -o $@ $(LIBWINE) $(LIBS)
+$(TESTPROGRAM).exe.so: $(TESTPROGRAM).exe.spec.o $(TESTOBJS)
+	$(LDSHARED) $(LDDLLFLAGS) $(TESTPROGRAM).exe.spec.o $(TESTOBJS) -o $@ $(LIBWINE) $(LIBS)
 
-$(TESTPROGRAM).tmp.o: $(TESTOBJS)
+$(TESTPROGRAM).exe.tmp.o: $(TESTOBJS)
 	$(LDCOMBINE) $(TESTOBJS) -o $@
 	-$(STRIP) --strip-unneeded $@
 
-$(TESTPROGRAM).spec.c: $(TESTPROGRAM).tmp.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym $(TESTPROGRAM).tmp.o -o $@ -exe $(TESTPROGRAM) -mcui -L$(DLLDIR) $(TESTIMPORTS:%=-l%)
+$(TESTPROGRAM).exe.spec.c: $(TESTPROGRAM).exe.tmp.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym $(TESTPROGRAM).exe.tmp.o -o $@ -exe $(TESTPROGRAM).exe -mcui -L$(DLLDIR) $(TESTIMPORTS:%=-l%)
 
 $(TESTPROGRAM).exe: $(TESTOBJS)
 	$(CC) $(TESTOBJS) -o $@ $(TESTIMPORTS:%=-l%) $(LIBWINE) $(LIBS)

@@ -5,54 +5,77 @@ TOPOBJDIR  = ../..
 SRCDIR     = @srcdir@
 VPATH      = @srcdir@
 MODULE     = none
-PROGRAMS   = icinfo aviinfo aviplay
+PROGRAMS   = aviinfo.exe aviplay.exe icinfo.exe
 ALL_LIBS   = $(LIBWINE) $(LIBS)
 
-all: $(PROGRAMS)
+C_SRCS = \
+	aviinfo.c \
+	aviplay.c \
+	icinfo.c
 
 @MAKE_RULES@
 
-aviinfo.spec.c: aviinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym aviinfo.o -o aviinfo.spec.c -exe aviinfo -mgui -L$(DLLDIR) -lkernel32
+all: $(PROGRAMS:%=%$(DLLEXT)) $(PROGRAMS:%.exe=%$(EXEEXT))
 
-aviplay.spec.c: aviplay.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym aviplay.o -o aviplay.spec.c -exe aviplay -mgui -L$(DLLDIR) -lddraw -lkernel32
+aviinfo.exe.spec.c: aviinfo.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym aviinfo.o -o aviinfo.exe.spec.c -exe aviinfo.exe -mgui -L$(DLLDIR) -lkernel32
 
-icinfo.spec.c: icinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym icinfo.o -o icinfo.spec.c -exe icinfo -mgui -L$(DLLDIR) -lmsvfw32 -lkernel32
+aviplay.exe.spec.c: aviplay.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym aviplay.o -o aviplay.exe.spec.c -exe aviplay.exe -mgui -L$(DLLDIR) -lddraw -lkernel32
 
-aviinfo.so: aviinfo.o aviinfo.spec.o
-	$(LDSHARED) $(LDDLLFLAGS) -o aviinfo.so aviinfo.o aviinfo.spec.o $(ALL_LIBS)
+icinfo.exe.spec.c: icinfo.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym icinfo.o -o icinfo.exe.spec.c -exe icinfo.exe -mgui -L$(DLLDIR) -lmsvfw32 -lkernel32
 
-aviplay.so: aviplay.o aviplay.spec.o
-	$(LDSHARED) $(LDDLLFLAGS) -o aviplay.so aviplay.o aviplay.spec.o $(ALL_LIBS)
+aviinfo.exe.so: aviinfo.o aviinfo.exe.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o aviinfo.exe.so aviinfo.o aviinfo.exe.spec.o $(ALL_LIBS)
 
-icinfo.so: icinfo.o icinfo.spec.o
-	$(LDSHARED) $(LDDLLFLAGS) -o icinfo.so icinfo.o icinfo.spec.o $(ALL_LIBS)
+aviplay.exe.so: aviplay.o aviplay.exe.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o aviplay.exe.so aviplay.o aviplay.exe.spec.o $(ALL_LIBS)
 
-aviinfo: aviinfo.so
+icinfo.exe.so: icinfo.o icinfo.exe.spec.o
+	$(LDSHARED) $(LDDLLFLAGS) -o icinfo.exe.so icinfo.o icinfo.exe.spec.o $(ALL_LIBS)
+
+aviinfo.exe: aviinfo.o
+	$(CC) -o $@ aviinfo.o -lkernel32 $(ALL_LIBS)
+
+aviplay.exe: aviplay.o
+	$(CC) -o $@ aviplay.o -lddraw -lkernel32 $(ALL_LIBS)
+
+icinfo.exe: icinfo.o
+	$(CC) -o $@ icinfo.o -lmsvfw32 -lkernel32 $(ALL_LIBS)
+
+aviinfo: aviinfo.exe.so
 	$(RM) aviinfo && $(LN_S) $(TOPOBJDIR)/wine aviinfo
 
-aviplay: aviplay.so
+aviplay: aviplay.exe.so
 	$(RM) aviplay && $(LN_S) $(TOPOBJDIR)/wine aviplay
 
-icinfo: icinfo.so
+icinfo: icinfo.exe.so
 	$(RM) icinfo && $(LN_S) $(TOPOBJDIR)/wine icinfo
 
-install:: $(PROGRAMS:%=%.so)
+.PHONY: install_prog install_prog.so
+
+install_prog.so:: $(PROGRAMS:%=%.so)
 	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) aviinfo.so $(bindir)/aviinfo.so
-	$(INSTALL_PROGRAM) aviplay.so $(bindir)/aviplay.so
-	$(INSTALL_PROGRAM) icinfo.so $(bindir)/icinfo.so
+	$(INSTALL_PROGRAM) aviinfo.exe.so $(bindir)/aviinfo.exe.so
+	$(INSTALL_PROGRAM) aviplay.exe.so $(bindir)/aviplay.exe.so
+	$(INSTALL_PROGRAM) icinfo.exe.so $(bindir)/icinfo.exe.so
 	cd $(bindir) && $(LN_S) wine aviinfo && $(LN_S) wine aviplay && $(LN_S) wine icinfo
 
+install_prog:: $(PROGRAMS)
+	$(MKINSTALLDIRS) $(bindir)
+	$(INSTALL_PROGRAM) aviinfo.exe $(bindir)/aviinfo.exe
+	$(INSTALL_PROGRAM) aviplay.exe $(bindir)/aviplay.exe
+	$(INSTALL_PROGRAM) icinfo.exe $(bindir)/icinfo.exe
+
+install:: install_prog$(DLLEXT)
+
 uninstall::
-	$(RM) $(bindir)/aviinfo.so $(bindir)/aviplay.so $(bindir)/icinfo.so
-	$(RM) $(bindir)/aviinfo $(bindir)/aviplay $(bindir)/icinfo
+	$(RM) $(PROGRAMS:%=$(bindir)/%$(DLLEXT)) $(PROGRAMS:%.exe=$(bindir)/%)
 
 checklink:: $(PROGRAMS:%=%.so)
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviinfo.so && $(RM) checklink
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviplay.so && $(RM) checklink
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c icinfo.so && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviinfo.exe.so && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviplay.exe.so && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c icinfo.exe.so && $(RM) checklink
 
 ### Dependencies:

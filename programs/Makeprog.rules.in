@@ -14,12 +14,13 @@ LDDLLFLAGS  = @LDDLLFLAGS@
 ALL_OBJS    = $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 SYMBOLFILE  = $(MODULE).tmp.o
+BASEMODULE  = $(MODULE:.exe=)
 TESTIMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 RCOBJS      = $(RC_SRCS:.rc=.res.o)
 
 @MAKE_RULES@
 
-all: $(MODULE)$(EXEEXT)
+all: $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
 
 # Rule for main module spec file
 
@@ -31,12 +32,12 @@ $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
 $(MODULE).so: $(MODULE).spec.o $(ALL_OBJS) Makefile.in
 	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(ALL_OBJS) -o $@ $(ALL_LIBS)
 
-$(MODULE): $(MODULE).so
-	$(RM) $(MODULE) && $(LN_S) $(TOPOBJDIR)/wine $(MODULE)
+$(BASEMODULE): $(MODULE).so
+	$(RM) $(BASEMODULE) && $(LN_S) $(TOPOBJDIR)/wine $(BASEMODULE)
 
 # Rules for .exe main module
 
-$(MODULE).exe: $(ALL_OBJS) $(RCOBJS) Makefile.in
+$(MODULE): $(ALL_OBJS) $(RCOBJS) Makefile.in
 	$(CC) $(ALL_OBJS) $(RCOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for checking that no imports are missing
@@ -46,25 +47,25 @@ checklink:: $(MODULE).so
 
 # Rules for testing
 
-$(TESTRESULTS): $(MODULE).so
+$(TESTRESULTS): $(MODULE)$(DLLEXT)
 
 # Rules for installation
 
-.PHONY: install_prog$(EXEEXT)
+.PHONY: install_prog install_prog.so
 
-install_prog:: $(MODULE).so
+install_prog.so:: $(MODULE).so
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) $(MODULE).so $(bindir)/$(MODULE).so
-	cd $(bindir) && $(RM) $(MODULE) && $(LN_S) wine $(MODULE)
+	cd $(bindir) && $(RM) $(BASEMODULE) && $(LN_S) wine $(BASEMODULE)
 
-install_prog.exe:: $(MODULE).exe
+install_prog.exe:: $(MODULE)
 	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) $(MODULE).exe $(bindir)/$(MODULE).exe
+	$(INSTALL_PROGRAM) $(MODULE) $(bindir)/$(MODULE)
 
-install:: install_prog$(EXEEXT)
+install:: install_prog$(DLLEXT)
 
 uninstall::
-	$(RM) $(bindir)/$(MODULE)$(EXEEXT) $(bindir)/$(MODULE).so
+	$(RM) $(bindir)/$(BASEMODULE) $(bindir)/$(MODULE) $(bindir)/$(MODULE).so
 
 clean::
-	$(RM) $(MODULE)$(EXEEXT)
+	$(RM) $(BASEMODULE) $(MODULE)
