@@ -6106,32 +6106,21 @@ static LRESULT LISTVIEW_SetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, 
  *
  * PARAMETERS:
  * [I] infoPtr : valid pointer to the listview structure
- * [I] iCol : column index
+ * [I] nColumn : column index
  * [I] cx : column width
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
+static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
 {
-    HDITEMW hdi;
-    LRESULT lret;
-    LONG lStyle = infoPtr->dwStyle;
-    UINT uView = lStyle & LVS_TYPEMASK;
-    HDC hdc;
-    HFONT header_font;
-    HFONT old_font;
-    SIZE size;
-    WCHAR text_buffer[DISP_TEXT_SIZE];
-    INT header_item_count;
-    INT item_index;
-    INT nLabelWidth;
-    RECT rcHeader;
-    LVITEMW lvItem;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     WCHAR szDispText[DISP_TEXT_SIZE] = { 0 };
+    INT max_cx = 0;
+    HDITEMW hdi;
 
-    TRACE("(iCol=%d, cx=%d\n", iCol, cx);
+    TRACE("(nColumn=%d, cx=%d\n", nColumn, cx);
 
     /* set column width only if in report or list mode */
     if (uView != LVS_REPORT && uView != LVS_LIST) return FALSE;
@@ -6148,117 +6137,81 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
 	return TRUE;
     }
 
-    /* FIXME: update COLUMN_INFO */
+    if (nColumn < 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
+
+    if (cx == LVSCW_AUTOSIZE || (cx == LVSCW_AUTOSIZE_USEHEADER && nColumn < infoPtr->hdpaColumns->nItemCount -1))
+    {
+	INT nLabelWidth;
+	LVITEMW lvItem;
+
+	lvItem.mask = LVIF_TEXT;	
+	lvItem.iItem = 0;
+	lvItem.iSubItem = nColumn;
+	lvItem.pszText = szDispText;
+	lvItem.cchTextMax = DISP_TEXT_SIZE;
+	for (; lvItem.iItem < infoPtr->nItemCount; lvItem.iItem++)
+	{
+	    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) continue;
+	    nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
+	    if (max_cx < nLabelWidth) max_cx = nLabelWidth;
+	}
+	if (infoPtr->himlSmall && (nColumn == 0 || (LISTVIEW_GetColumnInfo(infoPtr, nColumn)->fmt & LVCFMT_IMAGE)))
+	    max_cx += infoPtr->iconSize.cx + IMAGE_PADDING;
+	max_cx += REPORT_MARGINX + TRAILING_PADDING;
+    }
 
     /* autosize based on listview items width */
     if(cx == LVSCW_AUTOSIZE)
-    {
-      /* set the width of the column to the width of the widest item */
-      if (iCol == 0 || uView == LVS_LIST)
-      {
-        cx = 0;
-        for(item_index = 0; item_index < infoPtr->nItemCount; item_index++)
-        {
-          nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, item_index);
-          cx = (nLabelWidth>cx)?nLabelWidth:cx;
-        }
-        if (infoPtr->himlSmall)
-          cx += infoPtr->iconSize.cx + IMAGE_PADDING;
-      }
-      else
-      {
-        lvItem.iSubItem = iCol;
-        lvItem.mask = LVIF_TEXT;
-        lvItem.pszText = szDispText;
-        lvItem.cchTextMax = DISP_TEXT_SIZE;
-        cx = 0;
-        for(item_index = 0; item_index < infoPtr->nItemCount; item_index++)
-        {
-          lvItem.iItem = item_index;
-          if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) continue;
-          nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
-          cx = (nLabelWidth>cx)?nLabelWidth:cx;
-        }
-      }
-      cx += TRAILING_PADDING;
-    } /* autosize based on listview header width */
+	cx = max_cx;
     else if(cx == LVSCW_AUTOSIZE_USEHEADER)
     {
-      header_item_count = infoPtr->hdpaColumns->nItemCount;
-
-      /* if iCol is the last column make it fill the remainder of the controls width */
-      if(iCol == (header_item_count - 1)) {
-        cx = 0;
-
-        for(item_index = 0; item_index < (header_item_count - 1); item_index++) 
+	/* if iCol is the last column make it fill the remainder of the controls width */
+        if(nColumn == infoPtr->hdpaColumns->nItemCount - 1) 
 	{
-	  LISTVIEW_GetHeaderRect(infoPtr, item_index, &rcHeader);
-	  cx += rcHeader.right - rcHeader.left;
-        }
+	    RECT rcHeader;
+	    POINT Origin;
 
-        /* retrieve the layout of the header */
-        GetWindowRect(infoPtr->hwndHeader, &rcHeader);
+	    LISTVIEW_GetOrigin(infoPtr, &Origin);
+	    LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcHeader);
 
-        cx = (rcHeader.right - rcHeader.left) - cx;
-      }
-      else
-      {
-        /* Despite what the MS docs say, if this is not the last
-           column, then MS resizes the column to the width of the
-           largest text string in the column, including headers
-           and items. This is different from LVSCW_AUTOSIZE in that
-           LVSCW_AUTOSIZE ignores the header string length.
-           */
+	    cx = infoPtr->rcList.right - Origin.x - rcHeader.left;
+	}
+	else
+	{
+            /* Despite what the MS docs say, if this is not the last
+               column, then MS resizes the column to the width of the
+               largest text string in the column, including headers
+               and items. This is different from LVSCW_AUTOSIZE in that
+	       LVSCW_AUTOSIZE ignores the header string length. */
+	    cx = 0;
 
-        /* retrieve header font */
-        header_font = SendMessageW(infoPtr->hwndHeader, WM_GETFONT, 0L, 0L);
+	    /* retrieve header text */
+	    hdi.mask = HDI_TEXT;
+	    hdi.cchTextMax = DISP_TEXT_SIZE;
+	    hdi.pszText = szDispText;
+	    if (Header_GetItemW(infoPtr->hwndHeader, nColumn, (LPARAM)&hdi))
+	    {
+		HDC hdc = GetDC(infoPtr->hwndSelf);
+		HFONT old_font = SelectObject(hdc, SendMessageW(infoPtr->hwndHeader, WM_GETFONT, 0, 0));
+		SIZE size;
 
-        /* retrieve header text */
-        hdi.mask = HDI_TEXT;
-        hdi.cchTextMax = sizeof(text_buffer)/sizeof(text_buffer[0]);
-        hdi.pszText = text_buffer;
+		if (GetTextExtentPoint32W(hdc, hdi.pszText, lstrlenW(hdi.pszText), &size))
+		    cx = size.cx;
+		/* FIXME: Take into account the header image, if one is present */
+		SelectObject(hdc, old_font);
+		ReleaseDC(infoPtr->hwndSelf, hdc);
+	    }
+	    cx = max (cx, max_cx);
+	}
+    }
 
-        Header_GetItemW(infoPtr->hwndHeader, iCol, (LPARAM)(&hdi));
+    if (cx < 0) return FALSE;
 
-        /* determine the width of the text in the header */
-        hdc = GetDC(infoPtr->hwndSelf);
-        old_font = SelectObject(hdc, header_font); /* select the font into hdc */
-
-        GetTextExtentPoint32W(hdc, text_buffer, lstrlenW(text_buffer), &size);
-
-        SelectObject(hdc, old_font); /* restore the old font */
-        ReleaseDC(infoPtr->hwndSelf, hdc);
-
-        lvItem.iSubItem = iCol;
-        lvItem.mask = LVIF_TEXT;
-        lvItem.pszText = szDispText;
-        lvItem.cchTextMax = DISP_TEXT_SIZE;
-        cx = size.cx;
-        for(item_index = 0; item_index < infoPtr->nItemCount; item_index++)
-        {
-          lvItem.iItem = item_index;
-          if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) continue;
-          nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
-          nLabelWidth += TRAILING_PADDING;
-          /* While it is possible for subitems to have icons, even MS messes
-             up the positioning, so I suspect no applications actually use
-             them. */
-          if (item_index == 0 && infoPtr->himlSmall)
-            nLabelWidth += infoPtr->iconSize.cx + IMAGE_PADDING;
-          cx = (nLabelWidth>cx)?nLabelWidth:cx;
-        }
-      }
-  }
-
-  /* call header to update the column change */
-  hdi.mask = HDI_WIDTH;
-
-  hdi.cxy = cx;
-  lret = Header_SetItemW(infoPtr->hwndHeader, (WPARAM)iCol, (LPARAM)&hdi);
-
-  LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
-
-  return lret;
+    /* call header to update the column change */
+    hdi.mask = HDI_WIDTH;
+    hdi.cxy = cx;
+    TRACE("hdi.cxy=%d\n", hdi.cxy);
+    return Header_SetItemW(infoPtr->hwndHeader, nColumn, (LPARAM)&hdi);
 }
 
 /***
@@ -6365,8 +6318,7 @@ static LRESULT LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
 {
     INT cy = HIWORD(spacing), cx = LOWORD(spacing);
     DWORD oldspacing = MAKELONG(infoPtr->iconSpacing.cx, infoPtr->iconSpacing.cy);
-    LONG lStyle = infoPtr->dwStyle;
-    UINT uView = lStyle & LVS_TYPEMASK;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 
     TRACE("requested=(%d,%d)\n", cx, cy);
     
