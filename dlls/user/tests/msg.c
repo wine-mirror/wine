@@ -567,7 +567,7 @@ static void test_WM_SETREDRAW(HWND hwnd)
     ok_sequence(WmSetRedrawTrueSeq, "SetRedraw:TRUE");
 
     ok(GetWindowLongA(hwnd, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
-    ok(IsWindowVisible(hwnd), "IsWindowVisible() should return TRUE");
+    ok(IsWindowVisible(hwnd), "IsWindowVisible() should return TRUE\n");
 
     /* restore original WS_VISIBLE state */
     SetWindowLongA(hwnd, GWL_STYLE, style);
@@ -706,15 +706,15 @@ static void test_messages(void)
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, hmenu, 0, NULL);
     ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped");
-    ok (SetMenu(hwnd, 0), "SetMenu");
+    ok (SetMenu(hwnd, 0), "SetMenu\n");
     ok_sequence(WmSetMenuNonVisibleSizeChangeSeq, "SetMenu:NonVisibleSizeChange");
-    ok (SetMenu(hwnd, 0), "SetMenu");
+    ok (SetMenu(hwnd, 0), "SetMenu\n");
     ok_sequence(WmSetMenuNonVisibleNoSizeChangeSeq, "SetMenu:NonVisibleNoSizeChange");
     ShowWindow(hwnd, SW_SHOW);
     flush_sequence();
-    ok (SetMenu(hwnd, 0), "SetMenu");
+    ok (SetMenu(hwnd, 0), "SetMenu\n");
     ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange");
-    ok (SetMenu(hwnd, hmenu), "SetMenu");
+    ok (SetMenu(hwnd, hmenu), "SetMenu\n");
     ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange");
 
     DestroyWindow(hwnd);
