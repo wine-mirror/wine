@@ -740,7 +740,7 @@ int WINAPI WTDataGet(HCTX hCtx, UINT wBegin, UINT wEnd,
            context->PacketQueue[end].pkSerialNumber != wEnd)
         end++;
 
-    if (bgn == end == context->PacketsQueued)
+    if ((bgn == end) && (end == context->PacketsQueued))
     {
         LeaveCriticalSection(&csTablet);
         return 0;
