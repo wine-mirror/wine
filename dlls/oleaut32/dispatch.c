@@ -220,7 +220,7 @@ HRESULT WINAPI CreateDispTypeInfo(
  *  Method, property and parameter names can be localised. The details required to
  *  map names to methods and parameters are collected in a type library, usually
  *  output by an IDL compiler using the objects IDL description. This information is
- *  accessable programatically through the ITypeLib interface (for a type library),
+ *  accessible programatically through the ITypeLib interface (for a type library),
  *  and the ITypeInfo interface (for an object within the type library). Type information
  *  can also be created at run-time using CreateDispTypeInfo().
  *

@@ -419,7 +419,7 @@ LPVOID DP_MSG_ExpectReply( IDirectPlay2AImpl* This, LPDPSP_SENDDATA lpData,
   return DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
 }
 
-/* Determine if there is a matching request for this incomming message and then copy
+/* Determine if there is a matching request for this incoming message and then copy
  * all important data. It is quite silly to have to copy the message, but the documents
  * indicate that a copy is taken. Silly really.
  */

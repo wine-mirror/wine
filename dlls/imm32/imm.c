@@ -1024,7 +1024,7 @@ BOOL WINAPI ImmUnregisterWordW(
 static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam)
 {
-    TRACE("Incomming Message 0x%x  (0x%08x, 0x%08x)\n", uMsg, (UINT)wParam,
+    TRACE("Incoming Message 0x%x  (0x%08x, 0x%08x)\n", uMsg, (UINT)wParam,
            (UINT)lParam);
 
     switch(uMsg)

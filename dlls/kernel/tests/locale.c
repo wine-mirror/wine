@@ -436,7 +436,7 @@ static void test_GetCurrencyFormatA()
   ret = GetCurrencyFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  format.NumDigits = 0; /* No decimal seperator */
+  format.NumDigits = 0; /* No decimal separator */
   format.LeadingZero = 0;
   format.Grouping = 0;  /* No grouping char */
   format.NegativeOrder = 0;
@@ -449,7 +449,7 @@ static void test_GetCurrencyFormatA()
   ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  format.NumDigits = 1; /* 1 DP --> Expect decimal seperator */
+  format.NumDigits = 1; /* 1 DP --> Expect decimal separator */
   STRINGSA("2353","$2353.0");
   ret = GetCurrencyFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
@@ -633,7 +633,7 @@ static void test_GetNumberFormatA()
   ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  format.NumDigits = 0; /* No decimal seperator */
+  format.NumDigits = 0; /* No decimal separator */
   format.LeadingZero = 0;
   format.Grouping = 0;  /* No grouping char */
   format.NegativeOrder = 0;
@@ -644,7 +644,7 @@ static void test_GetNumberFormatA()
   ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  format.NumDigits = 1; /* 1 DP --> Expect decimal seperator */
+  format.NumDigits = 1; /* 1 DP --> Expect decimal separator */
   STRINGSA("2353","2353.0");
   ret = GetNumberFormatA(lcid, 0, input, &format, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;

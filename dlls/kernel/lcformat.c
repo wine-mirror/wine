@@ -1053,7 +1053,7 @@ GetNumberFormatW_Error:
   {
     if (dwState & NF_ISREAL)
     {
-      while (*szSrc != '.') /* Don't write any decimals or a seperator */
+      while (*szSrc != '.') /* Don't write any decimals or a separator */
       {
         if (*szSrc >= '5' || (*szSrc == '4' && (dwState & NF_ROUND)))
           dwState |= NF_ROUND;
@@ -1110,7 +1110,7 @@ GetNumberFormatW_Error:
     }
 
     while (lpszDec >= lpFormat->lpDecimalSep)
-      *szOut-- = *lpszDec--; /* Write decimal seperator */
+      *szOut-- = *lpszDec--; /* Write decimal separator */
   }
 
   dwGroupCount = lpFormat->Grouping == 32 ? 3 : lpFormat->Grouping;
@@ -1437,7 +1437,7 @@ GetCurrencyFormatW_Error:
   {
     if (dwState & NF_ISREAL)
     {
-      while (*szSrc != '.') /* Don't write any decimals or a seperator */
+      while (*szSrc != '.') /* Don't write any decimals or a separator */
       {
         if (*szSrc >= '5' || (*szSrc == '4' && (dwState & NF_ROUND)))
           dwState |= NF_ROUND;
@@ -1493,7 +1493,7 @@ GetCurrencyFormatW_Error:
       szSrc--; /* Skip '.' */
     }
     while (lpszDec >= lpFormat->lpDecimalSep)
-      *szOut-- = *lpszDec--; /* Write decimal seperator */
+      *szOut-- = *lpszDec--; /* Write decimal separator */
   }
 
   dwGroupCount = lpFormat->Grouping;

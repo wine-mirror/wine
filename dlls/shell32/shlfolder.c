@@ -139,7 +139,7 @@ HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
  *	SHELL32_CoCreateInitSF
  *
  * Creates a shell folder and initializes it with a pidl via IPersistFolder.
- * This function is meant for virtual forders not backed by a file system
+ * This function is meant for virtual folders not backed by a file system
  * folder.
  */
 HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot,
@@ -173,7 +173,7 @@ HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot,
  *
  * Creates a shell folder and initializes it with a pidl and a root folder
  * via IPersistFolder3.
- * This function is meant for virtual forders backed by a file system
+ * This function is meant for virtual folders backed by a file system
  * folder.
  *
  * NOTES

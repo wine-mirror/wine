@@ -29,7 +29,7 @@ MESSAGE( "Could not create graphics driver '%s'\n", buffer );
         <para>
 	  A debugging class categorizes a message based on the severity
 	  of the reported problem. There is a fixed set of classes, and
-	  you must carefuly choose the appropriate one for your messages.
+	  you must carefully choose the appropriate one for your messages.
           There are five classes of messages:
         </para>
         <variablelist>

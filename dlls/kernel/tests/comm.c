@@ -447,7 +447,7 @@ static void check_dcb(char *function, TEST *ptest, int initial_value, DCB *pdcb1
 
 	if(ptest->result)
 	{
-		/* For the idsr=xxx paramater, NT sets fDsrSensitivity, 9x sets
+		/* For the idsr=xxx parameter, NT sets fDsrSensitivity, 9x sets
 		   fOutxDsrFlow. */
 		if(!ptest->old_style)
 		{

@@ -206,7 +206,7 @@ http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 7. DOCUMENTAZIONE
 
 Puoi trovare della documentazione (diverse guide per Wine etc.) nella directory
-documentation/ (a parte quelle disponibili su Winehq).
+documentation/ (a parte quelle disponibili su WineHQ).
 
 Se vuoi processare i file SGML, puoi eseguire "make doc" nella directory
 documentation/.
@@ -235,7 +235,7 @@ trovato prima di postare un rapporto su un bug. Puoi anche postare i rapporti
 sui bug a comp.emulators.ms-windows.wine. Per favore leggi il file
 documentation/bugs.sgml per verificare quali informazioni sono richieste.
 
-IRC: Aiuto online è disponibile nel canale #Winehq su irc.freenode.net.
+IRC: Aiuto online è disponibile nel canale #WineHQ su irc.freenode.net.
 
 CVS: Il tree di sviluppo corrente di wine e' disponibile in CVS. Visita
 http://www.winehq.com/cvs per altre informazioni.
