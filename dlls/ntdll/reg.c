@@ -459,7 +459,7 @@ NTSTATUS WINAPI NtQueryValueKey( HKEY handle, const UNICODE_STRING *name,
 {
     NTSTATUS ret;
     UCHAR *data_ptr;
-    int fixed_size = 0;
+    unsigned int fixed_size = 0;
 
     TRACE( "(%p,%s,%d,%p,%ld)\n", handle, debugstr_us(name), info_class, info, length );
 

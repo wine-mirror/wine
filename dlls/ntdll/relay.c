@@ -364,7 +364,7 @@ static BOOL check_from_module( const WCHAR **includelist, const WCHAR **excludel
 static const char *find_exported_name( HMODULE module,
                                        IMAGE_EXPORT_DIRECTORY *exp, int ordinal )
 {
-    int i;
+    unsigned int i;
     const char *ret = NULL;
 
     WORD *ordptr = (WORD *)((char *)module + exp->AddressOfNameOrdinals);
@@ -738,7 +738,7 @@ void RELAY_SetupDLL( HMODULE module )
     IMAGE_EXPORT_DIRECTORY *exports;
     DEBUG_ENTRY_POINT *debug;
     DWORD *funcs;
-    int i;
+    unsigned int i;
     const char *name;
     char *p, dllname[80];
     DWORD size;
@@ -862,7 +862,7 @@ FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *export
                               DWORD exp_size, FARPROC origfun, DWORD ordinal,
                               const WCHAR *user)
 {
-    int i;
+    unsigned int i;
     const char *ename;
     const WORD *ordinals;
     const DWORD *names;

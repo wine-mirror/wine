@@ -381,7 +381,7 @@ static DWORD VERSION_GetLinkedDllVersion(void)
     const WCHAR *name;
     PLIST_ENTRY mark, entry;
     PLDR_MODULE mod;
-    int i;
+    unsigned int i;
 
     /* First check the native dlls provided. These have to be
        from one windows version */

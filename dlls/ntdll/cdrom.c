@@ -283,7 +283,7 @@ static const struct iocodexs
 };
 static const char *iocodex(DWORD code)
 {
-   int i;
+   unsigned int i;
    static char buffer[25];
    for(i=0; i<sizeof(iocodextable)/sizeof(struct iocodexs); i++)
       if (code==iocodextable[i].code)

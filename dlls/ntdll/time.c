@@ -735,7 +735,7 @@ static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
 {
    char psTZName[7];
    struct tm *ptm = localtime(&utc);
-   int i;
+   unsigned int i;
 
    if (!strftime (psTZName, 7, "%Z", ptm))
       return (NULL);

@@ -793,7 +793,7 @@ BOOLEAN WINAPI RtlIsNameLegalDOS8Dot3( const UNICODE_STRING *unicode,
 {
     static const char* illegal = "*?<>|\"+=,;[]:/\\\345";
     int dot = -1;
-    unsigned int i;
+    int i;
     char buffer[12];
     OEM_STRING oem_str;
     BOOLEAN got_space = FALSE;

@@ -163,7 +163,8 @@ void server_protocol_perror( const char *err )
  */
 static void send_request( const struct __server_request_info *req )
 {
-    int i, ret;
+    unsigned int i;
+    int ret;
 
     if (!req->u.req.request_header.request_size)
     {

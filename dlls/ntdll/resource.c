@@ -371,7 +371,7 @@ NTSTATUS WINAPI RtlFindMessage( HMODULE hmod, ULONG type, ULONG lang,
     LDR_RESOURCE_INFO info;
     NTSTATUS status;
     void *ptr;
-    int i;
+    unsigned int i;
 
     info.Type     = type;
     info.Name     = 1;

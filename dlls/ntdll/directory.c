@@ -654,7 +654,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 {
     int cwd, fd;
     FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
-    static const int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
+    static const unsigned int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
 
     TRACE("(%p %p %p %p %p %p 0x%08lx 0x%08x 0x%08x %s 0x%08x\n",
           handle, event, apc_routine, apc_context, io, buffer,
@@ -966,7 +966,8 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
     const char *config_dir = wine_get_config_dir();
     struct stat st;
     char *unix_name, *new_name, *dev;
-    int i, unix_len;
+    unsigned int i;
+    int unix_len;
 
     /* make sure the device name is ASCII */
     for (i = 0; i < name_len; i++)
