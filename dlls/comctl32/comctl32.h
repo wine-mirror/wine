@@ -70,6 +70,16 @@ extern HMODULE COMCTL32_hModule;
 
 #define IDT_CHECK        401
 
+
+/* Header cursors */
+#define IDC_DIVIDER                     106
+#define IDC_DIVIDEROPEN                 107
+
+
+/* DragList icon */
+#define IDI_DRAGARROW                   150
+
+
 /* Internal function */
 HWND COMCTL32_CreateToolTip (HWND);
 

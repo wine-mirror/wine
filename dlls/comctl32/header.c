@@ -2,19 +2,17 @@
  *  Header control
  *
  *  Copyright 1998 Eric Kohl
+ *  Copyright 2000 Eric Kohl for CodeWeavers
  *
  *  TODO:
  *   - Imagelist support (partially).
  *   - Callback items (under construction).
- *   - Control specific cursors (over dividers).
  *   - Hottrack support (partially).
  *   - Custom draw support (including Notifications).
  *   - Drag and Drop support (including Notifications).
  *   - Unicode support.
  *
  *  FIXME:
- *   - Replace DrawText32A by DrawTextEx32A(...|DT_ENDELLIPSIS) in
- *     HEADER_DrawItem.(Is still needed? UB 001018)
  *   - Little flaw when drawing a bitmap on the right side of the text.
  */
 
@@ -24,6 +22,7 @@
 #include "wine/unicode.h"
 #include "wine/winestring.h"
 #include "commctrl.h"
+#include "comctl32.h"
 #include "imagelist.h"
 #include "debugtools.h"
 
@@ -66,7 +65,6 @@ typedef struct
     HIMAGELIST  himl;		/* handle to a image list (may be 0) */
     HEADER_ITEM *items;		/* pointer to array of HEADER_ITEM's */
     BOOL	bRectsValid;	/* validity flag for bounding rectangles */
-    /*LPINT     pOrder;          pointer to order array */
 } HEADER_INFO;
 
 
@@ -1103,7 +1101,9 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (phdi->pszText) {
 		INT len = strlen (phdi->pszText);
 		lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-		lstrcpyAtoW (lpItem->pszText, phdi->pszText);
+//		lstrcpyAtoW (lpItem->pszText, phdi->pszText);
+		MultiByteToWideChar (CP_ACP,0,phdi->pszText,-1,
+				     lpItem->pszText,0x7fffffff);
 	    }
 	}
 	else
@@ -1229,8 +1229,8 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->items = 0;
     infoPtr->bRectsValid = FALSE;
     infoPtr->hcurArrow = LoadCursorA (0, IDC_ARROWA);
-    infoPtr->hcurDivider = LoadCursorA (0, IDC_SIZEWEA);
-    infoPtr->hcurDivopen = LoadCursorA (0, IDC_SIZENSA);
+    infoPtr->hcurDivider = LoadCursorA (COMCTL32_hModule, MAKEINTRESOURCEA(IDC_DIVIDER));
+    infoPtr->hcurDivopen = LoadCursorA (COMCTL32_hModule, MAKEINTRESOURCEA(IDC_DIVIDEROPEN));
     infoPtr->bPressed  = FALSE;
     infoPtr->bTracking = FALSE;
     infoPtr->iMoveItem = 0;
