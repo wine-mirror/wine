@@ -2766,6 +2766,8 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     while (!fEndMenu)
     {
 	menu = MENU_GetMenu( mt.hCurrentMenu );
+	if (!menu) /* sometimes happens if I do a window manager close */
+	    break;
 	msg.hwnd = (wFlags & TPM_ENTERIDLEEX && menu->wFlags & MF_POPUP) ? menu->hWnd : 0;
 
 	/* we have to keep the message in the queue until it's
