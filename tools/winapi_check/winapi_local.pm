@@ -206,7 +206,7 @@ sub check_function {
 
     }
 
-    if($segmented && $options->shared_segmented && $winapi->is_shared_function($internal_name)) {
+    if($segmented && $options->shared_segmented && $winapi->is_shared_internal_function($internal_name)) {
 	$output->write("function using segmented pointers shared between Win16 och Win32\n");
     }
 }

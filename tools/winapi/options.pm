@@ -9,6 +9,8 @@ require Exporter;
 @EXPORT = qw(&parse_comma_list);
 @EXPORT_OK = qw();
 
+my $output = "output";
+
 sub parse_comma_list {
     my $prefix = shift;
     my $value = shift;
@@ -94,7 +96,7 @@ sub new {
 		$name = $1;
 		$prefix = "no";
 		if(defined($value)) {
-		    output->write("options with prefix 'no' can't take parameters\n");
+		    $output->write("options with prefix 'no' can't take parameters\n");
 
 		    return undef;
 		}
@@ -156,12 +158,12 @@ sub new {
 	}
 	
 	if(/^-(.*)$/) {
-	    output->write("unknown option: $_\n"); 
-	    output->write($$options_usage);
+	    $output->write("unknown option: $_\n"); 
+	    $output->write($$options_usage);
 	    exit 1;
 	} else {
 	    if(!-e $_) {
-		output->write("$_: no such file or directory\n");
+		$output->write("$_: no such file or directory\n");
 		exit 1;
 	    }
 
@@ -170,7 +172,7 @@ sub new {
     }
 
     if($self->help) {
-	output->write($$options_usage);
+	$output->write($$options_usage);
 	$self->show_help;
 	exit 0;
     }
@@ -300,25 +302,25 @@ sub show_help {
 	    }
 	}
 
-	output->write($command);
-	for (0..(($maxname - length($name) + 17) - (length($command) - length($name) + 1))) { output->write(" "); }
+	$output->write($command);
+	for (0..(($maxname - length($name) + 17) - (length($command) - length($name) + 1))) { $output->write(" "); }
 	if(ref($value) ne "HASH") {
 	    if($value) {
-		output->write("Disable ");
+		$output->write("Disable ");
 	    } else {
-		output->write("Enable ");
+		$output->write("Enable ");
 	    }    
 	} else {
 	    if($value->{active}) {
-		output->write("(Disable) ");
+		$output->write("(Disable) ");
 	    } else {
-	        output->write("Enable ");
+	        $output->write("Enable ");
 	    }
 	}
         if($default == $current) {
-	    output->write("$description (default)\n");
+	    $output->write("$description (default)\n");
 	} else {
-	    output->write("$description\n");
+	    $output->write("$description\n");
 	}    
     }
 }

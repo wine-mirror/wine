@@ -24,6 +24,8 @@ sub check_documentation {
     my $documentation_line = $function->documentation_line;
     my @argument_documentations = @{$function->argument_documentations};
 
+    my $documentation_error = 0;
+    my $documentation_warning = 0;
     if($options->documentation_name || 
        $options->documentation_ordinal ||
        $options->documentation_pedantic) 
@@ -74,17 +76,19 @@ sub check_documentation {
 		if(($options->documentation_name && !$found_name) || 
 		   ($options->documentation_ordinal && !$found_ordinal))
 		{
+		    $documentation_error = 1;
 		    $output->write("documentation: expected $external_name (\U$module\E.$ordinal): \\\n$documentation\n");
 		}
 		
 	    }
 	    if($options->documentation_pedantic && $pedantic_failed) {
+		$documentation_warning = 1;
 		$output->write("documentation: pedantic failed: \\\n$documentation\n");
 	    }
 	}
     }
 
-    if($options->documentation_wrong) {
+    if(!$documentation_error && $options->documentation_wrong) {
 	foreach (split(/\n/, $documentation)) {
 	    if(/^\s*\*\s*(\S+)\s*[\(\[]\s*(\w+)\s*\.\s*([^\s\)\]]*)\s*[\)\]].*?$/) {
 		my $external_name = $1;
@@ -110,24 +114,23 @@ sub check_documentation {
     }
 
     if($options->documentation_comment_indent) {
-	if($documentation =~ /^ \*(\s*)\w+(\s*)([\(\[])\s*\w+\.\s*(?:\@|\d+)\s*([\)\]])/m) {
-	    my $indent = $1;
-	    my $spacing = $2;
-	    my $left = $3;
-	    my $right = $4;
-
-	    $indent =~ s/\t/        /g;
-	    $indent = length($indent);
-
-	    $spacing =~ s/\t/        /g;
-	    $spacing = length($spacing);
-
-	    $comment_indent{$indent}++;
-	    if($indent >= 20) {
-		$output->write("documentation: comment indent is $indent\n");
+	foreach (split(/\n/, $documentation)) {
+	    if(/^\s*\*(\s*)\S+(\s*)[\(\[]\s*\w+\s*\.\s*[^\s\)\]]*\s*[\)\]].*?$/) {
+		my $indent = $1;
+		my $spacing = $2;
+		
+		$indent =~ s/\t/        /g;
+		$indent = length($indent);
+		
+		$spacing =~ s/\t/        /g;
+		$spacing = length($spacing);
+		
+		$comment_indent{$indent}++;
+		if($indent >= 20) {
+		    $output->write("documentation: comment indent is $indent\n");
+		}
+		$comment_spacing{$spacing}++;
 	    }
-
-	    $comment_spacing{$spacing}++;
 	}
     }
 

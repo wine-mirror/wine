@@ -6,7 +6,10 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 require Exporter;
 
 @ISA = qw(Exporter);
-@EXPORT = qw(append_file edit_file read_file replace_file);
+@EXPORT = qw(
+    &append_file &edit_file &read_file &replace_file
+    &normalize_set &is_subset
+);
 @EXPORT_OK = qw();
 %EXPORT_TAGS = ();
 
@@ -85,5 +88,45 @@ sub replace_file {
 
     return $result;
 }		   
+
+########################################################################
+# normalize_set
+
+sub normalize_set {
+    local $_ = shift;
+
+    if(!defined($_)) {
+	return undef;
+    }
+    
+    my %hash = ();
+    foreach my $key (split(/\s*&\s*/)) {
+	$hash{$key}++;
+    }
+
+    return join(" & ", sort(keys(%hash)));
+}
+
+########################################################################
+# is_subset
+
+sub is_subset {
+    my $subset = shift;
+    my $set = shift;
+
+    foreach my $subitem (split(/ & /, $subset)) {
+	my $match = 0;
+	foreach my $item (split(/ & /, $set)) {
+	    if($subitem eq $item) {
+		$match = 1;
+		last;
+	    }
+	}
+	if(!$match) {
+	    return 0;
+	}
+    }
+    return 1;
+}
 
 1;

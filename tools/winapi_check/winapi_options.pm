@@ -121,7 +121,6 @@ my %options = (
     "headers" => { default => 0, parent => "global", description => "headers checking" },
     "headers-duplicated" => { default => 0, parent => "headers", description => "duplicated function declarations checking" },
     "headers-misplaced" => { default => 0, parent => "headers", description => "misplaced function declarations checking" },
-    "stubs" => { default => 0, parent => "global", description => "stubs checking" }
 );
 
 my %short_options = (

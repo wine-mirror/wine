@@ -14,7 +14,6 @@ use config qw(
     &file_skip &files_skip
     &file_normalize 
     &get_spec_files
-    &translate_calling_convention16 &translate_calling_convention32
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
 use output;
@@ -24,7 +23,7 @@ use util;
 use winapi;
 use winapi_parser;
 
-my $output = output->new;
+my $output = 'output'->new;
 
 my %options_long = (
     "debug" => { default => 0, description => "debug mode" },
@@ -57,37 +56,22 @@ my %options_short = (
 
 my $options_usage = "usage: winapi_fixup [--help] [<files>]\n";
 
-my $options = options->new(\%options_long, \%options_short, $options_usage);
+my $options = 'options'->new(\%options_long, \%options_short, $options_usage);
 
-my $modules = modules->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
+my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
 
-my $win16api = winapi->new($options, $output, "win16", "$winapi_check_dir/win16");
-my $win32api = winapi->new($options, $output, "win32", "$winapi_check_dir/win32");
+my $win16api = 'winapi'->new($options, $output, "win16", "$winapi_check_dir/win16");
+my $win32api = 'winapi'->new($options, $output, "win32", "$winapi_check_dir/win32");
 my @winapis = ($win16api, $win32api);
 
 if($wine_dir eq ".") {
-    winapi->read_all_spec_files($modules, $wine_dir, $current_dir, \&file_type, $win16api, $win32api);
+    'winapi'->read_all_spec_files($modules, $wine_dir, $current_dir, \&file_type, $win16api, $win32api);
 } else {
     my @spec_files = $modules->allowed_spec_files($wine_dir, $current_dir);
-    winapi->read_spec_files($modules, $wine_dir, $current_dir, \@spec_files, $win16api, $win32api);
+    'winapi'->read_spec_files($modules, $wine_dir, $current_dir, \@spec_files, $win16api, $win32api);
 }
 
-sub normalize_set {
-    local $_ = shift;
-
-    if(!defined($_)) {
-	return undef;
-    }
-    
-    my %hash = ();
-    foreach my $key (split(/\s*&\s*/)) {
-	$hash{$key}++;
-    }
-
-    return join(" & ", sort(keys(%hash)));
-}
-
-my @c_files = options->c_files;
+my @c_files = $options->c_files;
 @c_files = files_skip(@c_files);
 @c_files = files_filter("winelib", @c_files);
 
@@ -103,68 +87,44 @@ foreach my $file (@c_files) {
     my %spec_file;
 
     $progress_current++;
-    if(options->progress) {
-	output->progress("$file: file $progress_current of $progress_max");
+    if($options->progress) {
+	$output->progress("$file: file $progress_current of $progress_max");
     }
 
     my $found_function = sub {
-	my $line = shift;
-	my $refdebug_channels = shift;
-	my @debug_channels = @$refdebug_channels;
-	my $documentation = shift;
-	my $linkage = shift;
-	my $return_type = shift;
-	my $calling_convention = shift;
-	my $internal_name = shift;
-	my $refargument_types = shift;
-	my @argument_types = @$refargument_types;
-	my $refargument_names = shift;
-	my @argument_names = @$refargument_names;
-	my $refargument_documentations = shift;
-	my @argument_documentations = @$refargument_documentations;
-	my $statements = shift;
+	my $function = shift;
+	
+	my $documentation_line = $function->documentation_line;
+	my $documentation = $function->documentation;
+	my $function_line = $function->function_line;
+	my $linkage = $function->linkage;
+	my $return_type = $function->return_type;
+	my $calling_convention = $function->calling_convention;
+	my $internal_name = $function->internal_name;
+	my @argument_types = @{$function->argument_types};
+	my @argument_names = @{$function->argument_names};
+	my @argument_documentations = @{$function->argument_documentations};
+	my $statements = $function->statements;
 
 	if($linkage eq "static" || $linkage eq "extern" || !defined($statements)) {
 	    return;
 	}
 
-	my @external_names = ();
-	foreach my $winapi (@winapis) {
-	    my $external_names = $winapi->function_external_name($internal_name);
-	    if(defined($external_names)) { 
-		push @external_names, split(/\s*&\s*/, $external_names);
-	    }
-	}
-
+	my @external_names = $function->external_names;
 	if($#external_names < 0) {
 	    return;
 	}
 
-	my $module16 = $win16api->function_internal_module($internal_name);
-	my $module32 = $win32api->function_internal_module($internal_name);
+	$output->prefix("$file: " . $function->prefix);
 
-	my $prefix = "";
-	$prefix .= "$file: ";
-	if(defined($module16) && !defined($module32)) {
-	    $prefix .= normalize_set($module16) . ": ";
-	} elsif(!defined($module16) && defined($module32)) {
-	    $prefix .= normalize_set($module32) . ": ";
-	} elsif(defined($module16) && defined($module32)) {
-	    $prefix .= normalize_set($module16) . " & " . normalize_set($module32) . ": ";
-	} else {
-	    $prefix .= "<>: ";
-	}
-	$prefix .= "$return_type ";
-	$prefix .= "$calling_convention " if $calling_convention;
-	$prefix .= "$internal_name(" . join(",", @argument_types) . "): ";
-	$output->prefix($prefix);
-
-	my $calling_convention16 = translate_calling_convention16($calling_convention);
-	my $calling_convention32 = translate_calling_convention32($calling_convention);
+	my @module_ordinal_entries = $function->get_all_module_ordinal;
 
 	my $spec_modified = 0;
 
-	if(options->stub && $documentation) {
+	if($options->stub && $documentation) {
+	    my $calling_convention16 = $function->calling_convention16;
+	    my $calling_convention32 = $function->calling_convention32;
+
 	    foreach my $winapi (@winapis) {
 		my @entries = ();
 		if($winapi->function_stub($internal_name)) {
@@ -206,7 +166,7 @@ foreach my $file (@c_files) {
 			my $type = $_;
 			my $kind;
 			if($type ne "..." && !defined($kind = $winapi->translate_argument($type))) {
-			    output->write("no translation defined: " . $type . "\n");
+			    $output->write("no translation defined: " . $type . "\n");
 			}
 
 			# FIXME: Kludge
@@ -260,8 +220,8 @@ foreach my $file (@c_files) {
 
 	if(!$spec_modified &&
 	   ($documentation && !$documentation_modified) &&
-	   (options->documentation_name || options->documentation_ordinal || 
-	    options->documentation_missing)) 
+	   ($options->documentation_name || $options->documentation_ordinal || 
+	    $options->documentation_missing)) 
 	{
 	    local $_;
 
@@ -270,7 +230,7 @@ foreach my $file (@c_files) {
 	    my $replace;
 
 	    my $count = 0;
-	    my $line2 = $line - 1;
+	    my $line2 = $documentation_line - 1;
 	    foreach (split(/\n/, $documentation)) {
 		$line2++;
 		if(/^(\s*\*\s*(\S+)\s*)((?:\s*[\(\[]\s*\w+(?:\s*\.\s*[^\s\)\]]*\s*)?[\)\]])+)(.*?)$/) {
@@ -304,10 +264,10 @@ foreach my $file (@c_files) {
 			my $part12 = $part1;
 			(my $part32, my $module, my $ordinal) = @$entry;
 
-			foreach my $entry2 (winapi::get_all_module_internal_ordinal($internal_name)) {
+			foreach my $entry2 (@module_ordinal_entries) {
 			    (my $external_name2, my $module2, my $ordinal2) = @$entry2;
 
-			    if(options->documentation_name && lc($module) eq $module2 && 
+			    if($options->documentation_name && lc($module) eq $module2 && 
 			       $external_name ne $external_name2) 
 			    {
 				if(!$found && $part12 =~ s/\b\Q$external_name\E\b/$external_name2/) {
@@ -316,7 +276,7 @@ foreach my $file (@c_files) {
 				}
 			    }
 
-			    if(options->documentation_ordinal &&
+			    if($options->documentation_ordinal &&
 			       $external_name eq $external_name2 &&
 			       lc($module) eq $module2 && 
 			       ($#entries > 0 || !defined($ordinal) || ($ordinal ne $ordinal2)))
@@ -348,7 +308,7 @@ foreach my $file (@c_files) {
 		    my $external_name = $2;
 
 		    if($internal_name =~ /^(?:\S+_)?\Q$external_name\E(?:16)?$/) {
-			foreach my $entry (winapi::get_all_module_internal_ordinal($internal_name)) {
+			foreach my $entry (@module_ordinal_entries) {
 			    (my $external_name2, my $module, my $ordinal) = @$entry;
 
 			    $line3 = $line2;
@@ -362,9 +322,9 @@ foreach my $file (@c_files) {
 
 	    if(defined($line3) && defined($search) && defined($replace)) {
 		if($count > 1 || $#external_names >= 1) {
-		    output->write("multiple entries (fixup not supported)\n");
-		    # output->write("s/$search/$replace/\n");
-		    # output->write("@external_names\n");
+		    $output->write("multiple entries (fixup not supported)\n");
+		    # $output->write("s/$search/$replace/\n");
+		    # $output->write("@external_names\n");
 		} else {
 		    $documentation_modified = 1;
 		    $substitute_line{$line3}{search} = $search;
@@ -375,7 +335,7 @@ foreach my $file (@c_files) {
 	}
 
 	if(!$spec_modified && !$documentation_modified &&
-	   options->documentation_missing && $documentation)
+	   $options->documentation_missing && $documentation)
 	{
 	    my $part1;
 	    my $part2;
@@ -383,7 +343,7 @@ foreach my $file (@c_files) {
 	    my $part4;
 	    my $line3 = 0;
 	    
-	    my $line2 = $line - 1;
+	    my $line2 = $documentation_line - 1;
 	    foreach (split(/\n/, $documentation)) {
 		$line2++;
 		if(/^(\s*\*\s*)(\S+\s*)([\(\[])\s*\w+\s*\.\s*[^\s\)\]]*\s*([\)\]]).*?$/) {
@@ -398,7 +358,7 @@ foreach my $file (@c_files) {
 		}
 	    }
 
-	    foreach my $entry2 (winapi::get_all_module_internal_ordinal($internal_name)) {
+	    foreach my $entry2 (@module_ordinal_entries) {
 		(my $external_name2, my $module2, my $ordinal2) = @$entry2;
 
 		my $found = 0;
@@ -418,16 +378,16 @@ foreach my $file (@c_files) {
 			$part2 = $external_name2 . " " x (length($part2) - length($external_name2));
 			$insert_line{$line3} = "$part1$part2$part3\U$module2\E.$ordinal2$part4\n";
 		    } else {
-			output->write("$external_name2 (\U$module2\E.$ordinal2) missing (fixup not supported)\n");
+			$output->write("$external_name2 (\U$module2\E.$ordinal2) missing (fixup not supported)\n");
 		    }
 		}
 	    }
 	}
 
 	if(!$documentation_modified && 
-	   options->documentation_wrong)
+	   $options->documentation_wrong)
 	{
-	    my $line2 = $line - 1;
+	    my $line2 = $documentation_line - 1;
 	    foreach (split(/\n/, $documentation)) {
 		$line2++;
 		if(/^\s*\*\s*(\S+)\s*[\(\[]\s*(\w+)\s*\.\s*([^\s\)\]]*)\s*[\)\]].*?$/) {
@@ -436,7 +396,7 @@ foreach my $file (@c_files) {
 		    my $ordinal = $3;
 
 		    my $found = 0;
-		    foreach my $entry2 (winapi::get_all_module_internal_ordinal($internal_name)) {
+		    foreach my $entry2 (@module_ordinal_entries) {
 			(my $external_name2, my $module2, my $ordinal2) = @$entry2;
 		    
 			if($external_name eq $external_name2 &&
@@ -450,7 +410,7 @@ foreach my $file (@c_files) {
 			if(1) {
 			    $delete_line{$line2} = "^\Q$_\E\$";
 			} else {
-			    output->write("$external_name (\U$module\E.$ordinal) wrong (fixup not supported)\n");
+			    $output->write("$external_name (\U$module\E.$ordinal) wrong (fixup not supported)\n");
 			};
 		    }
 		}
@@ -472,7 +432,7 @@ foreach my $file (@c_files) {
 	    }
 
 	    if(defined($external_name) && defined($module) && defined($ordinal)) {
-		$insert_line{$line} = 
+		$insert_line{$function_line} = 
 		    "/" . "*" x 71 . "\n" .
 		    " *\t\t$external_name (\U$module\E.$ordinal)\n" .
 		    " */\n";
@@ -501,19 +461,19 @@ foreach my $file (@c_files) {
 
 	    $line = $insert_line{$.};
 	    if(defined($line)) {
-		if(options->modify) {
+		if($options->modify) {
 		    $_ = "$line$_";
 		    $modified = 1;
 		} else {
 		    my $line2 = $line; chomp($line2);
 		    my @line2 = split(/\n/, $line2);
 		    if($#line2 > 0) {
-			output->write("$file: $.: insert: \\\n");
+			$output->write("$file: $.: insert: \\\n");
 			foreach my $line2 (@line2) {
-			    output->write("'$line2'\n");
+			    $output->write("'$line2'\n");
 			}
 		    } else {
-			output->write("$file: $.: insert: '$line2'\n");
+			$output->write("$file: $.: insert: '$line2'\n");
 		    }
 		}
 	    }
@@ -524,13 +484,13 @@ foreach my $file (@c_files) {
 	    if(defined($search) && defined($replace)) {
 		my $modified2 = 0;
 		if(s/$search/$replace/) {
-		    if(options->modify) {
+		    if($options->modify) {
 			$modified = 1;
 		    }
 		    $modified2 = 1;
 		}
 
-		if(!options->modify || !$modified2) {
+		if(!$options->modify || !$modified2) {
 		    my $search2;
 		    my $replace2;
 		    if(!$modified2) {
@@ -540,16 +500,16 @@ foreach my $file (@c_files) {
 			$search2 = "search"; 
 			$replace2 = "replace";
 		    }
-		    output->write("$file: $.: $search2 : '$search'\n");
+		    $output->write("$file: $.: $search2 : '$search'\n");
 		    
 		    my @replace2 = split(/\n/, $replace);
 		    if($#replace2 > 0) {
-			output->write("$file: $.: $replace2: \\\n");
+			$output->write("$file: $.: $replace2: \\\n");
 			foreach my $replace2 (@replace2) {
-			    output->write("'$replace2'\n");
+			    $output->write("'$replace2'\n");
 			}
 		    } else {
-			output->write("$file: $.: $replace2: '$replace'\n");
+			$output->write("$file: $.: $replace2: '$replace'\n");
 		    }
 		}
 	    }
@@ -557,14 +517,14 @@ foreach my $file (@c_files) {
 	    $line = $delete_line{$.};
 	    if(defined($line)) {
 		if(/$line/) {
-		    if(options->modify) {
+		    if($options->modify) {
 			$modified = 1;
 			next;
 		    } else {
-			output->write("$file: $.: delete: '$line'\n");
+			$output->write("$file: $.: delete: '$line'\n");
 		    }
 		} else {
-		    output->write("$file: $.: unmatched delete: '$line'\n");
+		    $output->write("$file: $.: unmatched delete: '$line'\n");
 		}
 	    }
 
@@ -608,11 +568,11 @@ foreach my $file (@c_files) {
 		    my $replace = $substitute->{replace};
 
 		    if(s/$search/$replace/) {
-			if(options->modify) {
+			if($options->modify) {
 			    $modified = 1;
 			} else {
-			    output->write("$file: search : '$search'\n");
-			    output->write("$file: replace: '$replace'\n");
+			    $output->write("$file: search : '$search'\n");
+			    $output->write("$file: replace: '$replace'\n");
 			}
 			next;
 		    } else {
@@ -630,7 +590,7 @@ foreach my $file (@c_files) {
 	if(defined($file)) {
 	    edit_file($file, $editor);
 	} else {
-	    output->write("$module: doesn't have any spec file\n");
+	    $output->write("$module: doesn't have any spec file\n");
 	}
 
 	if($#substitutes >= 0) {
@@ -638,14 +598,14 @@ foreach my $file (@c_files) {
 		my $search = $substitute->{search};
 		my $replace = $substitute->{replace};
 
-		output->write("$file: unmatched search : '$search'\n");
-		output->write("$file: unmatched replace: '$replace'\n");
+		$output->write("$file: unmatched search : '$search'\n");
+		$output->write("$file: unmatched replace: '$replace'\n");
 	    }
 	}
 
     }
 }
 
-output->hide_progress;
+$output->hide_progress;
 
 

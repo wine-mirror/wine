@@ -2,7 +2,14 @@ package winapi;
 
 use strict;
 
-my @winapis;
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+require Exporter;
+
+@ISA = qw(Exporter);
+@EXPORT = qw();
+@EXPORT_OK = qw($win16api $win32api @winapis);
+
+use vars qw($win16api $win32api @winapis);
 
 sub new {
     my $proto = shift;
@@ -30,9 +37,23 @@ sub new {
 	$self->parse_api_file($file,$module);
     }   
 
+    if($$name eq "win16") {
+	$win16api = $self;
+    } elsif($$name eq "win32") {
+	$win32api = $self;
+    }
+
     push @winapis, $self;
 
     return $self;
+}
+
+sub win16api {
+    return $win16api;
+}
+
+sub win32api {
+    return $win32api;
 }
 
 sub parse_api_file {
@@ -200,6 +221,17 @@ sub read_spec_files {
 	    if(defined($internal_name)) {
 		$$function_module{$internal_name} .= " & $from_module";
 	    }
+	}
+    }
+
+    for my $internal_name ($win32api->all_internal_functions) {
+	my $module16 = $win16api->function_internal_module($internal_name);
+	if(defined($module16) &&
+	   !$win16api->function_stub($internal_name) && 
+	   !$win32api->function_stub($internal_name))
+	{
+	    $win16api->found_shared_internal_function($internal_name);
+	    $win32api->found_shared_internal_function($internal_name);
 	}
     }
 }
@@ -733,7 +765,14 @@ sub is_function {
     return $$function_internal_calling_convention{$name};
 }
 
-sub is_shared_function {
+sub all_shared_internal_functions {
+    my $self = shift;
+    my $function_shared = \%{$self->{FUNCTION_SHARED}};
+
+    return sort(keys(%$function_shared));
+}
+
+sub is_shared_internal_function {
     my $self = shift;
     my $function_shared = \%{$self->{FUNCTION_SHARED}};
 
@@ -742,7 +781,7 @@ sub is_shared_function {
     return $$function_shared{$name};
 }
 
-sub found_shared_function {
+sub found_shared_internal_function {
     my $self = shift;
     my $function_shared = \%{$self->{FUNCTION_SHARED}};
 
@@ -818,77 +857,115 @@ sub internal_function_found {
 # class methods
 #
 
-sub get_all_module_internal_ordinal {
+sub _get_all_module_internal_ordinal {
+    my $winapi = shift;
     my $internal_name = shift;
 
     my @entries = ();
-    foreach my $winapi (@winapis) {
-	my @name = (); {
-	    my $name = $winapi->function_external_name($internal_name);
-	    if(defined($name)) {
-		@name = split(/ & /, $name);
-	    }
-	}
-	my @module = (); {
-	    my $module = $winapi->function_internal_module($internal_name);
-	    if(defined($module)) {
-		@module = split(/ & /, $module);
-	    }
-	}
-	my @ordinal = (); {
-	    my $ordinal = $winapi->function_internal_ordinal($internal_name);
-	    if(defined($ordinal)) {
-		@ordinal = split(/ & /, $ordinal);
-	    }
-	}
 
-	my $name;
-	my $module;
-	my $ordinal;
-	while(defined($name = shift @name) &&
-	      defined($module = shift @module) &&
-	      defined($ordinal = shift @ordinal)) 
-	{
-	    push @entries, [$name, $module, $ordinal];
+    my @name = (); {
+	my $name = $winapi->function_external_name($internal_name);
+	if(defined($name)) {
+	    @name = split(/ & /, $name);
 	}
+    }
+
+    my @module = (); {
+	my $module = $winapi->function_internal_module($internal_name);
+	if(defined($module)) {
+	    @module = split(/ & /, $module);
+	}
+    }
+
+    my @ordinal = (); {
+	my $ordinal = $winapi->function_internal_ordinal($internal_name);
+	if(defined($ordinal)) {
+	    @ordinal = split(/ & /, $ordinal);
+	}
+    }
+
+    my $name;
+    my $module;
+    my $ordinal;
+    while(defined($name = shift @name) &&
+	  defined($module = shift @module) &&
+	  defined($ordinal = shift @ordinal)) 
+    {
+	push @entries, [$name, $module, $ordinal];
     }
 
     return @entries;
 }
 
-sub get_all_module_external_ordinal {
+sub get_all_module_internal_ordinal16 {
+    return _get_all_module_internal_ordinal($win16api, @_);
+}
+
+sub get_all_module_internal_ordinal32 {
+    return _get_all_module_internal_ordinal($win32api, @_);
+}
+
+sub get_all_module_internal_ordinal {
+    my @entries = ();
+    foreach my $winapi (@winapis) {
+	push @entries, _get_all_module_internal_ordinal($winapi, @_);
+    }
+
+    return @entries;
+}
+
+sub _get_all_module_external_ordinal {
+    my $winapi = shift;
     my $external_name = shift;
 
     my @entries = ();
-    foreach my $winapi (@winapis) {
-	my @name = (); {
-	    my $name = $winapi->function_internal_name($external_name);
-	    if(defined($name)) {
-		@name = split(/ & /, $name);
-	    }
-	}
-	my @module = (); {
-	    my $module = $winapi->function_external_module($external_name);
-	    if(defined($module)) {
-		@module = split(/ & /, $module);
-	    }
-	}
-	my @ordinal = (); {
-	    my $ordinal = $winapi->function_external_ordinal($external_name);
-	    if(defined($ordinal)) {
-		@ordinal = split(/ & /, $ordinal);
-	    }
-	}
 
-	my $name;
-	my $module;
-	my $ordinal;
-	while(defined($name = shift @name) &&
-	      defined($module = shift @module) &&
-	      defined($ordinal = shift @ordinal)) 
-	{
-	    push @entries, [$name, $module, $ordinal];
+    my @name = (); {
+	my $name = $winapi->function_internal_name($external_name);
+	if(defined($name)) {
+	    @name = split(/ & /, $name);
 	}
+    }
+
+    my @module = (); {
+	my $module = $winapi->function_external_module($external_name);
+	if(defined($module)) {
+	    @module = split(/ & /, $module);
+	}
+    }
+
+    my @ordinal = (); {
+	my $ordinal = $winapi->function_external_ordinal($external_name);
+	if(defined($ordinal)) {
+	    @ordinal = split(/ & /, $ordinal);
+	}
+    }
+    
+    my $name;
+    my $module;
+    my $ordinal;
+    while(defined($name = shift @name) &&
+	  defined($module = shift @module) &&
+	  defined($ordinal = shift @ordinal)) 
+    {
+	push @entries, [$name, $module, $ordinal];
+    }
+ 
+    return @entries;
+}
+
+sub get_all_module_external_ordinal16 {
+    return _get_all_module_external_ordinal($win16api, @_);
+}
+
+sub get_all_module_external_ordinal32 {
+    return _get_all_module_external_ordinal($win32api, @_);
+}
+
+sub get_all_module_external_ordinal {
+    my @entries = ();
+    foreach my $winapi (@winapis) {
+	push @entries, _get_all_module_external_ordinal($winapi, @_);
     }
 
     return @entries;
