@@ -14,6 +14,17 @@
 
 DEFAULT_DEBUG_CHANNEL(int);
 
+static INTPROC INT_WineHandler[256] = {
+ 0, 0, 0, 0, 0, 0, 0, 0,
+ 0, INT_Int09Handler, 0, 0, 0, 0, 0, 0,
+ INT_Int10Handler, INT_Int11Handler, INT_Int12Handler, INT_Int13Handler,
+ 0, INT_Int15Handler, INT_Int16Handler, INT_Int17Handler,
+ 0, 0, INT_Int1aHandler, 0, 0, 0, 0, 0,
+ INT_Int20Handler, DOS3Call, 0, 0, 0, INT_Int25Handler, 0, 0,
+ 0, INT_Int29Handler, INT_Int2aHandler, 0, 0, 0, 0, INT_Int2fHandler,
+ 0, INT_Int31Handler, 0, INT_Int33Handler
+};
+
 static FARPROC16 INT_Vectors[256];
 
 /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
@@ -115,71 +126,41 @@ void INT_CtxSetHandler( CONTEXT86 *context, BYTE intnum, FARPROC16 handler )
 
 
 /**********************************************************************
+ *	    INT_GetWineHandler
+ *
+ * Return the Wine interrupt handler for a given interrupt.
+ */
+INTPROC INT_GetWineHandler( BYTE intnum )
+{
+    return INT_WineHandler[intnum];
+}
+
+
+/**********************************************************************
+ *	    INT_SetWineHandler
+ *
+ * Set the Wine interrupt handler for a given interrupt.
+ */
+void INT_SetWineHandler( BYTE intnum, INTPROC handler )
+{
+    TRACE("Set Wine interrupt vector %02x <- %p\n", intnum, handler );
+    INT_WineHandler[intnum] = handler;
+}
+
+
+/**********************************************************************
  *	    INT_RealModeInterrupt
  *
  * Handle real mode interrupts
  */
 int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
 {
-    /* we should really map to if1632/wprocs.spec, but not all
-     * interrupt handlers are adapted to support real mode yet */
-    switch (intnum) {
-        case 0x09:
-            INT_Int09Handler(context);
-            break;
-        case 0x10:
-            INT_Int10Handler(context);
-            break;
-        case 0x11:
-            INT_Int11Handler(context);
-            break;
-        case 0x12:
-            INT_Int12Handler(context);
-            break;
-	case 0x13:
-	    INT_Int13Handler(context);
-            break;
-        case 0x15:
-            INT_Int15Handler(context);
-            break;
-        case 0x16:
-            INT_Int16Handler(context);
-            break;
-        case 0x17:
-            INT_Int17Handler(context);
-            break;
-        case 0x1a:
-            INT_Int1aHandler(context);
-            break;
-        case 0x20:
-            INT_Int20Handler(context);
-            break;
-        case 0x21:
-            DOS3Call(context);
-            break;
-        case 0x25:
-            INT_Int25Handler(context);
-            break;
-        case 0x29:
-            INT_Int29Handler(context);
-            break;
-        case 0x2a:
-            INT_Int2aHandler(context);
-            break; 
-        case 0x2f:
-            INT_Int2fHandler(context);
-            break;
-        case 0x31:
-            INT_Int31Handler(context);
-            break;
-        case 0x33:
-            INT_Int33Handler(context);
-            break;
-        default:
-            FIXME("Unknown Interrupt in DOS mode: 0x%x\n", intnum);
-            return 1;
+    if (INT_WineHandler[intnum]) {
+        (*INT_WineHandler[intnum])(context);
+        return 0;
     }
-    return 0;
+    FIXME("Unknown Interrupt in DOS mode: 0x%x\n", intnum);
+    return 1;
 }
 
 

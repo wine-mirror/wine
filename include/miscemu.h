@@ -166,6 +166,7 @@ extern int DOSDEV_IoctlRead(DWORD dev, DWORD buf, int buflen);
 extern int DOSDEV_IoctlWrite(DWORD dev, DWORD buf, int buflen);
 
 /* msdos/interrupts.c */
+typedef void WINAPI (*INTPROC)(CONTEXT86*);
 extern FARPROC16 INT_GetPMHandler( BYTE intnum );
 extern void INT_SetPMHandler( BYTE intnum, FARPROC16 handler );
 extern FARPROC16 INT_GetRMHandler( BYTE intnum );
@@ -173,6 +174,8 @@ extern void INT_SetRMHandler( BYTE intnum, FARPROC16 handler );
 extern FARPROC16 INT_CtxGetHandler( CONTEXT86 *context, BYTE intnum );
 extern void INT_CtxSetHandler( CONTEXT86 *context, BYTE intnum, FARPROC16 handler );
 extern int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context );
+extern INTPROC INT_GetWineHandler( BYTE intnum );
+extern void INT_SetWineHandler( BYTE intnum, INTPROC proc );
 
 /* msdos/ioports.c */
 extern DWORD IO_inport( int port, int count );
