@@ -54,8 +54,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 WINE_DECLARE_DEBUG_CHANNEL(dinput);
 
-int min_keycode, max_keycode, keysyms_per_keycode;
-WORD keyc2vkey[256], keyc2scan[256];
+static int min_keycode, max_keycode, keysyms_per_keycode;
+static WORD keyc2vkey[256], keyc2scan[256];
 
 static LPBYTE pKeyStateTable;
 static int NumLockMask, AltGrMask; /* mask in the XKeyEvent state */
@@ -115,6 +115,25 @@ static const WORD main_key_vkey_qwerty[MAIN_LEN] =
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
 
+static const WORD main_key_vkey_qwertz[MAIN_LEN] =
+{
+/* NOTE: this layout must concur with the scan codes layout above */
+   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,
+   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Z,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
+   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_7,VK_OEM_5,
+   VK_Y,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
+   VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
+};
+
+static const WORD main_key_vkey_qwertz_105[MAIN_LEN] =
+{
+/* NOTE: this layout must concur with the scan codes layout above */
+   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,
+   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Z,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
+   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_7,VK_OEM_5,
+   VK_OEM_102,VK_Y,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2
+};
+
 static const WORD main_key_vkey_abnt_qwerty[MAIN_LEN] =
 {
 /* NOTE: this layout must concur with the scan codes layout above */
@@ -144,8 +163,6 @@ static const WORD main_key_vkey_dvorak[MAIN_LEN] =
    VK_OEM_1,VK_Q,VK_J,VK_K,VK_X,VK_B,VK_M,VK_W,VK_V,VK_Z,
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
-
-/* FIXME: add other layouts, such as German QWERTZ */
 
 /*** DEFINE YOUR NEW LANGUAGE-SPECIFIC MAPPINGS BELOW, SEE EXISTING TABLES */
 
@@ -219,14 +236,14 @@ static const char main_key_FR[MAIN_LEN][4] =
  "<>"
 };
 
-/*** Icelandic keyboard layout (contributed by Ríkharður Egilsson) */
+/*** Icelandic keyboard layout (setxkbmap is) */
 static const char main_key_IS[MAIN_LEN][4] =
 {
- "°","1!","2\"","3#","4$","5%","6&","7/{","8([","9)]","0=}","öÖ\\","-_",
- "qQ@","wW","eE","rR","tT","yY","uU","iI","oO","pP","ðÐ","'?~",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","æÆ","´^","+*`",
+ "°","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","öÖ","-_",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","ðÐ","'?",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","æÆ","´Ä","+*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","þÞ",
- "<>|"
+ "<>"
 };
 
 /*** German keyboard layout (contributed by Ulrich Weigand) */
@@ -288,24 +305,24 @@ static const char main_key_NO[MAIN_LEN][4] =
  "<>"
 };
 
-/*** Danish keyboard layout (contributed by Bertho Stultiens) */
+/*** Danish keyboard layout (setxkbmap dk) */
 static const char main_key_DA[MAIN_LEN][4] =
 {
- "½§","1!","2\"@","3#£","4¤$","5%","6&","7/{","8([","9)]","0=}","+?","´`|",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^~",
+ "½§","1!","2\"","3#","4¤","5%","6&","7/","8(","9)","0=","+?","´`",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","æÆ","øØ","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
- "<>\\"
+ "<>"
 };
 
-/*** Swedish keyboard layout (contributed by Peter Bortas) */
+/*** Swedish keyboard layout (setxkbmap se) */
 static const char main_key_SE[MAIN_LEN][4] =
 {
- "§½","1!","2\"@","3#£","4¤$","5%","6&","7/{","8([","9)]","0=}","+?\\","´`",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^~",
+ "§½","1!","2\"","3#","4¤","5%","6&","7/","8(","9)","0=","+?","´`",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
- "<>|"
+ "<>"
 };
 
 /*** Estonian keyboard layout (contributed by Raul Metsma zombi82@hot.ee) */
@@ -328,24 +345,24 @@ static const char main_key_CF[MAIN_LEN][4] =
  "«»°"
 };
 
-/*** Portuguese keyboard layout */
+/*** Portuguese keyboard layout (setxkbmap pt) */
 static const char main_key_PT[MAIN_LEN][4] =
 {
- "\\¦","1!","2\"@","3#£","4$§","5%","6&","7/{","8([","9)]","0=}","'?","«»",
- "qQ",  "wW","eE",  "rR", "tT", "yY", "uU", "iI", "oO", "pP", "+*\\¨","\\'\\`",
- "aA",  "sS","dD",  "fF", "gG", "hH", "jJ", "kK", "lL", "çÇ", "ºª", "\\~\\^",
- "zZ",  "xX","cC",  "vV", "bB", "nN", "mM", ",;", ".:", "-_",
+ "\\|","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","«»",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","+*","´`",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","çÇ","ºª","~^",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
 
-/*** Italian keyboard layout */
+/*** Italian keyboard layout (setxkbmap it) */
 static const char main_key_IT[MAIN_LEN][4] =
 {
- "\\|","1!¹","2\"²","3£³","4$¼","5%½","6&¾","7/{","8([","9)]","0=}","'?`","ì^~",
- "qQ@","wW","eE","rR","tT","yY","uU","iI","oOø","pPþ","èé[","+*]",
- "aA","sSß","dDð","fF","gG","hH","jJ","kK","lL","òç@","à°#","ù§",
- "zZ","xX","cC","vV","bB","nN","mMµ",",;",".:·","-_",
- "<>|"
+ "\\|","1!","2\"","3£","4$","5%","6&","7/","8(","9)","0=","'?","ì^",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","èé","+*",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","òç","à°","ù§",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>"
 };
 
 /*** Finnish keyboard layout (setxkbmap fi) */
@@ -418,6 +435,26 @@ static const char main_key_RU_koi8r[MAIN_LEN][4] =
  "<>" /* the phantom key */
 };
 
+/*** Russian keyboard layout cp1251 */
+static const char main_key_RU_cp1251[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQéÉ","wWöÖ","eEóÓ","rRêÊ","tTåÅ","yYíÍ","uUãÃ","iIøØ","oOùÙ","pPçÇ","[{õÕ","]}úÚ",
+ "aAôÔ","sSûÛ","dDâÂ","fFàÀ","gGïÏ","hHðÐ","jJîÎ","kKëË","lLäÄ",";:æÆ","'\"ýÝ","\\|",
+ "zZÿß","xX÷×","cCñÑ","vVìÌ","bBèÈ","nNòÒ","mMüÜ",",<áÁ",".>þÞ","/?",
+ "<>" /* the phantom key */
+};
+
+/*** Russian phonetic keyboard layout */
+static const char main_key_RU_phonetic[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQÑñ","wW×÷","eEÅå","rRÒò","tTÔô","yYÙù","uUÕõ","iIÉé","oOÏï","pPÐð","[{Ûû","]}Ýý",
+ "aAÁá","sSÓó","dDÄä","fFÆæ","gGÇç","hHÈè","jJÊê","kKËë","lLÌì",";:","'\"","\\|",
+ "zZÚú","xXØø","cCÃã","vVÖö","bBÂâ","nNÎî","mMÍí",",<",".>","/?",
+ "<>" /* the phantom key */
+};
+
 /*** Ukrainian keyboard layout KOI8-U */
 static const char main_key_UA[MAIN_LEN][4] =
 {
@@ -428,12 +465,12 @@ static const char main_key_UA[MAIN_LEN][4] =
  "<>" /* the phantom key */
 };
 
-/*** Spanish keyboard layout (contributed by José Marcos López) */
+/*** Spanish keyboard layout (setxkbmap es) */
 static const char main_key_ES[MAIN_LEN][4] =
 {
- "ºª\\","1!|","2\"@","3·#","4$~","5%","6&¬","7/","8(","9)","0=","'?","¡¿",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","`^[","+*]",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ñÑ","´¨{","çÇ}",
+ "ºª","1!","2\"","3·","4$","5%","6&","7/","8(","9)","0=","'?","¡¿",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","`^","+*",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ñÑ","´¨","çÇ",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -627,13 +664,34 @@ static const char main_key_TK[MAIN_LEN][4] =
 "zZ","xX","cC","vV","bB","nN","mM","öÖ","çÇ",".:"
 };
 
-/*** Israeli keyboard layout */
+/*** Israelian keyboard layout (setxkbmap us,il) */
 static const char main_key_IL[MAIN_LEN][4] =
 {
- "`~;","1!1","2@2","3#3","4$4","5%5","6^6","7&7","8*8","9(9","0)0","-_-","=+=",
- "qQ/","wW'","eE÷","rRø","tTà","yYè","uUå","iIï","oOí","pPô","[{[","]}]",
- "aAù","sSã","dDâ","fFë","gGò","hHé","jJç","kKì","lLê",";:ó","\'\",","\\|\\",
- "zZæ","xXñ","cCá","vVä","bBð","nNî","mMö",",<ú",".>õ","/?."
+ "`~;","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ/","wW'","eE÷","rRø","tTà","yYè","uUå","iIï","oOí","pPô","[{","]}",
+ "aAù","sSã","dDâ","fFë","gGò","hHé","jJç","kKì","lLê",";:ó","\'\",","\\|",
+ "zZæ","xXñ","cCá","vVä","bBð","nNî","mMö",",<ú",".>õ","/?.",
+ "<>"
+};
+
+/*** Israelian phonetic keyboard layout (setxkbmap us,il_phonetic) */
+static const char main_key_IL_phonetic[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ÷","wWå","eEà","rRø","tTú","yYò","uUå","iIé","oOñ","pPô","[{","]}",
+ "aAà","sSù","dDã","fFô","gGâ","hHä","jJé","kKë","lLì",";:","'\"","\\|",
+ "zZæ","xXç","cCö","vVå","bBá","nNð","mMî",",<",".>","/?",
+ "<>"
+};
+
+/*** Israelian Saharon keyboard layout (setxkbmap -symbols "us(pc105)+il_saharon") */
+static const char main_key_IL_saharon[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ÷","wWñ","eE","rRø","tTè","yYã","uU","iI","oO","pPô","[{","]}",
+ "aAà","sSå","dDì","fFú","gGâ","hHä","jJù","kKë","lLé",";:","'\"","\\|",
+ "zZæ","xXç","cCö","vVò","bBá","nNð","mMî",",<",".>","/?",
+ "<>"
 };
 
 /*** Greek keyboard layout (contributed by Kriton Kyrimis <kyrimis@cti.gr>)
@@ -689,11 +747,12 @@ static const struct {
  {"United States keyboard layout (phantom key version)", &main_key_US_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"United States keyboard layout (dvorak)", &main_key_US_dvorak, &main_key_scan_dvorak, &main_key_vkey_dvorak},
  {"British keyboard layout", &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"German keyboard layout", &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"German keyboard layout without dead keys", &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"German keyboard layout for logitech desktop pro", &main_key_DE_logitech,  &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"German keyboard layout without dead keys 105", &main_key_DE_nodead_105, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Swiss German keyboard layout", &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"German keyboard layout", &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {"German keyboard layout without dead keys", &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {"German keyboard layout for logitech desktop pro", &main_key_DE_logitech,  &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {"German keyboard layout without dead keys 105", &main_key_DE_nodead_105, &main_key_scan_qwerty, &main_key_vkey_qwertz_105},
+ {"Swiss German keyboard layout", &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {"Swiss French keyboard layout", &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {"Swedish keyboard layout", &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Estonian keyboard layout", &main_key_ET, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Norwegian keyboard layout", &main_key_NO, &main_key_scan_qwerty, &main_key_vkey_qwerty},
@@ -701,7 +760,6 @@ static const struct {
  {"French keyboard layout", &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_azerty},
  {"Canadian French keyboard layout", &main_key_CF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Belgian keyboard layout", &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_azerty},
- {"Swiss French keyboard layout", &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Portuguese keyboard layout", &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Brazilian ABNT-2 keyboard layout", &main_key_PT_br, &main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
  {"Brazilian ABNT-2 keyboard layout ALT GR", &main_key_PT_br_alt_gr,&main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
@@ -713,26 +771,30 @@ static const struct {
  {"Russian keyboard layout", &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout (phantom key version)", &main_key_RU_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout KOI8-R", &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Russian keyboard layout cp1251", &main_key_RU_cp1251, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Russian phonetic keyboard layout", &main_key_RU_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Ukrainian keyboard layout KOI8-U", &main_key_UA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Spanish keyboard layout", &main_key_ES, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Italian keyboard layout", &main_key_IT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Icelandic keyboard layout", &main_key_IS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Hungarian keyboard layout", &main_key_HU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Hungarian keyboard layout", &main_key_HU, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {"Polish (programmer's) keyboard layout", &main_key_PL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Slovenian keyboard layout", &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Croatian keyboard layout", &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Slovenian keyboard layout", &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {"Croatian keyboard layout", &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {"Croatian keyboard layout (specific)", &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Japanese 106 keyboard layout", &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Japanese pc98x1 keyboard layout", &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Slovak keyboard layout", &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Slovak and Czech keyboard layout without dead keys", &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Czech keyboard layout", &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Czech keyboard layout cz", &main_key_CZ, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Czech keyboard layout cz", &main_key_CZ, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {"Czech keyboard layout cz_qwerty", &main_key_CZ_qwerty, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Latin American keyboard layout", &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Lithuanian (Baltic) keyboard layout", &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Turkish keyboard layout", &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Israeli keyboard layout", &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Israelian keyboard layout", &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Israelian phonetic keyboard layout", &main_key_IL_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Israelian Saharon keyboard layout", &main_key_IL_saharon, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"VNC keyboard layout", &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
  {"Greek keyboard layout", &main_key_EL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Thai (Kedmanee)  keyboard layout", &main_key_th, &main_key_scan_qwerty, &main_key_vkey_qwerty},
@@ -862,6 +924,8 @@ static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
         /* Only the Keypad keys 0-9 and . send different keysyms
          * depending on the NumLock state */
         return nonchar_key_vkey[keysym & 0xFF];
+
+    TRACE_(key)("e->keycode = %x\n", e->keycode);
 
     return keyc2vkey[e->keycode];
 }
@@ -1001,10 +1065,14 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     int ascii_chars;
     XIC xic = X11DRV_get_ic( hwnd );
     DWORD event_time = event->time - X11DRV_server_startticks;
+    Status status = 0;
+
+    TRACE_(key)("type %d, window %lx, state 0x%04x, keycode 0x%04x\n",
+		event->type, event->window, event->state, event->keycode);
 
     wine_tsx11_lock();
     if (xic)
-        ascii_chars = XmbLookupString(xic, event, Str, sizeof(Str), &keysym, NULL);
+        ascii_chars = XmbLookupString(xic, event, Str, sizeof(Str), &keysym, &status);
     else
         ascii_chars = XLookupString(event, Str, sizeof(Str), &keysym, NULL);
     wine_tsx11_unlock();
@@ -1038,7 +1106,7 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
 	ksname = TSXKeysymToString(keysym);
 	if (!ksname)
 	  ksname = "No Name";
-	TRACE_(key)("%s : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n",
+	TRACE_(key)("%s : keysym=%lX (%s), # of chars=%d / 0x%02x / '%s'\n",
                     (event->type == KeyPress) ? "KeyPress" : "KeyRelease",
                     keysym, ksname, ascii_chars, Str[0] & 0xff, Str);
     }
@@ -1177,7 +1245,10 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	  if (key > pkey) seq++;
 	  pkey = key;
 	} else {
-	  TRACE_(key)("mismatch for keycode %d, character %c (%02x, %02x, %02x, %02x)\n", keyc, ckey[0], ckey[0], ckey[1], ckey[2], ckey[3]);
+          /* print spaces instead of \0's */
+          for (i = 0; i < sizeof(ckey); i++) if (!ckey[i]) ckey[i] = ' ';
+          TRACE_(key)("mismatch for keysym 0x%04lX, keycode %d, got %c%c%c%c\n",
+                      keysym, keyc, ckey[0], ckey[1], ckey[2], ckey[3]);
 	  mismatch++;
 	  score -= syms;
 	}
@@ -1820,7 +1891,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     TRACE("AltGrMask = %04x\n", AltGrMask);
     e.state |= AltGrMask;
 
-    TRACE_(key)("(%04X, %04X) : faked state = %X\n",
+    TRACE_(key)("(%04X, %04X) : faked state = 0x%04x\n",
 		virtKey, scanCode, e.state);
     wine_tsx11_lock();
     /* We exit on the first keycode found, to speed up the thing. */
@@ -1850,6 +1921,9 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
       }
     else TRACE("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
+    TRACE_(key)("type %d, window %lx, state 0x%04x, keycode 0x%04x\n",
+		e.type, e.window, e.state, e.keycode);
+
     if (xic)
         ret = XmbLookupString(xic, &e, lpChar, sizeof(lpChar), &keysym, NULL);
     else
@@ -1859,6 +1933,15 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     if (ret == 0)
 	{
 	BYTE dead_char;
+
+        /* An ugly hack for EuroSign: X can't translate it to a character
+           for some locales. */
+        if (keysym == XK_EuroSign)
+        {
+            bufW[0] = 0x20AC;
+            ret = 1;
+            goto found;
+        }
 
 	dead_char = KEYBOARD_MapDeadKeysym(keysym);
 	if (dead_char)
@@ -1927,8 +2010,9 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 	}
     }
 
+found:
     TRACE_(key)("ToUnicode about to return %d with char %x %s\n",
-		ret, bufW ? bufW[0] : 0, bufW ? "" : "(no buffer)");
+		ret, (ret && bufW) ? bufW[0] : 0, bufW ? "" : "(no buffer)");
     return ret;
 }
 
