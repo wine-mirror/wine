@@ -235,7 +235,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
  */
 void DECLSPEC_NORETURN SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg );
 #ifdef __i386__
-#ifdef __GNUC__
+#  ifdef __GNUC__
 __ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
                    "movl 4(%esp),%ecx\n\t"  /* func */
                    "movl 8(%esp),%edx\n\t"  /* arg */
@@ -244,7 +244,7 @@ __ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
                    "xorl %ebp,%ebp\n\t"
                    "call *%ecx\n\t"
                    "int $3" /* we never return here */ );
-#elif defined(_MSC_VER)
+#  elif defined(_MSC_VER)
 __declspec(naked) void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
 {
   __asm mov ecx, 4[esp];
@@ -255,13 +255,24 @@ __declspec(naked) void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
   __asm call [ecx];
   __asm int 3;
 }
-#endif /* defined(__GNUC__) || defined(_MSC_VER) */
-#else /* !defined(__i386__) */
+#  endif /* defined(__GNUC__) || defined(_MSC_VER) */
+#elif __sparc__
+#  ifdef __GNUC__
+__ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
+                   "mov %o0, %l0\n\t" /* store first argument */
+                   "call " __ASM_NAME("NtCurrentTeb") ", 0\n\t"
+                   "mov %o1, %l1\n\t" /* delay slot: store second argument */
+                   "ld [%o0+4], %sp\n\t" /* teb->stack_top */
+                   "call %l0, 0\n\t" /* call func */
+                   "mov %l1, %o0\n\t" /* delay slot:  arg for func */
+                   "ta 0x01\n\t"); /* breakpoint - we never get here */
+#  else /* !defined(__GNUC__) */
 void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
 {
     func( arg );
     while(1); /* avoid warning */
 }
+#  endif /* !defined(__GNUC__) */
 #endif /* !defined(__i386__) */
 
 
