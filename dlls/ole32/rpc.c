@@ -320,6 +320,7 @@ _invoke_onereq(wine_rpc_request *req) {
     msg.Buffer		= req->Buffer;
     msg.iMethod		= req->reqh.iMethod;
     msg.cbBuffer	= req->reqh.cbBuffer;
+    msg.dataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
     req->state		= REQSTATE_INVOKING;
     req->resph.retval	= IRpcStubBuffer_Invoke(stub,&msg,NULL);
     IUnknown_Release(stub);
