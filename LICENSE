@@ -2,29 +2,22 @@
 @c If you modify it or move it to another location, make sure that
 @c TeXinfo works (type `make' in directory documentation).
 
-@c This is the Wine copyright.
-@c The Wine warranty is part of the license agreement.
-@c READ THE FILE `WARRANTY' CAREFULLY FOR A STATEMENT ON THE WINE WARRANTY.
+Copyright (c) 1993-2000 the Wine project authors (see the file AUTHORS
+for a complete list)
 
-You may without charge, royalty or other payment, copy and
-distribute copies of this work and derivative works of this work
-in source or binary form provided that: (1) 
-you appropriately publish on each copy an appropriate copyright
-notice; (2) faithfully reproduce all prior copyright notices
-included in the original work (you may also add your own
-copyright notice); and (3) agree to indemnify and hold all prior
-authors, copyright holders and licensors of the work harmless
-from and against all damages arising from use of the work.
- 
-You may distribute sources of derivative works of the work
-provided that (1) (a) all source files of the original work that
-have been modified, (b) all source files of the derivative work
-that contain any party of the original work, and (c) all source
-files of the derivative work that are necessary to compile, link
-and run the derivative work without unresolved external calls and
-with the same functionality of the original work (``Necessary
-Sources'') carry a prominent notice explaining the nature and date
-of the modification and/or creation.  You are encouraged to make
-the Necessary Sources available under this license in order to
-further the development and acceptance of the work.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
