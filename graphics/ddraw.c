@@ -454,7 +454,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWPALETTE pal
 ) {
 	TRACE(ddraw,"(%p)->SetPalette(%p)\n",this,pal);
-
+#ifdef HAVE_LIBXXF86DGA
         /* According to spec, we are only supposed to 
          * AddRef if this is not the same palette.
          */
@@ -481,13 +481,18 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
         }
 
 	return 0;
+#else /* defined(HAVE_LIBXXF86DGA) */
+	return E_UNEXPECTED;
+#endif /* defined(HAVE_LIBXXF86DGA) */
+
+
 }
 
 static HRESULT WINAPI DGA_IDirectDrawSurface3_SetPalette(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWPALETTE pal
 ) {
 	TRACE(ddraw,"(%p)->SetPalette(%p)\n",this,pal);
-
+#ifdef HAVE_LIBXXF86DGA
         /* According to spec, we are only supposed to 
          * AddRef if this is not the same palette.
          */
@@ -509,6 +514,11 @@ static HRESULT WINAPI DGA_IDirectDrawSurface3_SetPalette(
 	  TSXF86DGAInstallColormap(display,DefaultScreen(display),this->s.palette->cm);
         }
 	return 0;
+#else /* defined(HAVE_LIBXXF86DGA) */
+	return E_UNEXPECTED;
+#endif /* defined(HAVE_LIBXXF86DGA) */
+
+
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_Blt(
