@@ -1305,15 +1305,9 @@ X11DRV_KEYBOARD_DetectLayout (void)
     }
   }
   /* we're done, report results if necessary */
-  if (!ismatch) {
-    FIXME(
-	   "Your keyboard layout was not found!\n"
-	   "Using closest match instead (%s) for scancode mapping.\n"
-	   "Please define your layout in dlls/x11drv/keyboard.c and submit them\n"
-	   "to us for inclusion into future Wine releases.\n"
-	   "See the Wine User Guide, chapter \"Keyboard\" for more information.\n",
-	   main_key_tab[kbd_layout].comment);
-  }
+  if (!ismatch)
+    WARN("Using closest match (%s) for scan/virtual codes mapping.\n",
+        main_key_tab[kbd_layout].comment);
 
   TRACE("detected layout is \"%s\"\n", main_key_tab[kbd_layout].comment);
 }
