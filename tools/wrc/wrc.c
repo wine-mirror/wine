@@ -42,7 +42,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <signal.h>
-#include <endian.h>
 
 #include "wrc.h"
 #include "utils.h"
@@ -54,15 +53,6 @@
 #include "preproc.h"
 #include "parser.h"
 
-#ifndef BYTE_ORDER
-# error BYTE_ORDER is not defined. Please report.
-#endif
-
-#if (!defined(BIG_ENDIAN) && !defined(LITTLE_ENDIAN)) || (BYTE_ORDER != BIG_ENDIAN && BYTE_ORDER != LITTLE_ENDIAN)
-# error Neither BIG_ENDIAN nor LITTLE_ENDIAN system. This system is not supported. Please report.
-#endif
-
-
 static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]]\n"
 	"   -a n        Alignment of resource (win16 only, default is 4)\n"
@@ -70,7 +60,7 @@ static char usage[] =
 	"   -b          Create an assembly array from a binary .res file\n"
 	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
 	"               (win32 only; default is n[ative] which equals "
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 	"big"
 #else
 	"little"

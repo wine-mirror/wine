@@ -199,7 +199,7 @@ static int convert_bitmap(char *data, int size)
 	BITMAPINFOHEADER *bih = (BITMAPINFOHEADER *)data;
 	BITMAPV4HEADER *b4h = (BITMAPV4HEADER *)data;
 	int type = 0;
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 	DWORD bisizel = BYTESWAP_DWORD(sizeof(BITMAPINFOHEADER));
 	DWORD b4sizel = BYTESWAP_DWORD(sizeof(BITMAPV4HEADER));
 	DWORD bisizeb = sizeof(BITMAPINFOHEADER);
@@ -262,7 +262,7 @@ static int convert_bitmap(char *data, int size)
 
 	switch(byteorder)
 	{
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 	default:
 #endif
 	case WRC_BO_BIG:
@@ -274,7 +274,7 @@ static int convert_bitmap(char *data, int size)
 				convert_bitmap_swap_v3(bih);
 		}
 		break;
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	default:
 #endif
 	case WRC_BO_LITTLE:
@@ -401,7 +401,7 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 			/* The bitmap is in destination byteorder. We want native for our structures */
 			switch(byteorder)
 			{
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 			case WRC_BO_LITTLE:
 #else
 			case WRC_BO_BIG:
@@ -420,7 +420,7 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 			/* The bitmap is in destination byteorder. We want native for our structures */
 			switch(byteorder)
 			{
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 			case WRC_BO_LITTLE:
 #else
 			case WRC_BO_BIG:
@@ -492,7 +492,7 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 		/* The bitmap is in destination byteorder. We want native for our structures */
 		switch(byteorder)
 		{
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 		case WRC_BO_LITTLE:
 #else
 		case WRC_BO_BIG:

@@ -17,7 +17,6 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
-#include <endian.h>
 
 #include "wrc.h"
 #include "genres.h"
@@ -76,7 +75,7 @@ void put_word(res_t *res, unsigned w)
 		grow_res(res, RES_BLOCKSIZE);
 	switch(byteorder)
 	{
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	case WRC_BO_BIG:
 #else
 	case WRC_BO_LITTLE:
@@ -96,7 +95,7 @@ void put_dword(res_t *res, unsigned d)
 		grow_res(res, RES_BLOCKSIZE);
 	switch(byteorder)
 	{
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	case WRC_BO_BIG:
 #else
 	case WRC_BO_LITTLE:
@@ -136,7 +135,7 @@ void set_word(res_t *res, int ofs, unsigned w)
 {
 	switch(byteorder)
 	{
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	case WRC_BO_BIG:
 #else
 	case WRC_BO_LITTLE:
@@ -153,7 +152,7 @@ void set_dword(res_t *res, int ofs, unsigned d)
 {
 	switch(byteorder)
 	{
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	case WRC_BO_BIG:
 #else
 	case WRC_BO_LITTLE:
@@ -185,7 +184,7 @@ WORD get_word(res_t *res, int ofs)
 {
 	switch(byteorder)
 	{
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	case WRC_BO_BIG:
 #else
 	case WRC_BO_LITTLE:
@@ -200,7 +199,7 @@ DWORD get_dword(res_t *res, int ofs)
 {
 	switch(byteorder)
 	{
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	case WRC_BO_BIG:
 #else
 	case WRC_BO_LITTLE:

@@ -105,7 +105,6 @@
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
-#include <endian.h>
 
 #include "wrc.h"
 #include "utils.h"
@@ -2117,7 +2116,7 @@ static raw_data_t *int2raw_data(int i)
 	rd->data = (char *)xmalloc(rd->size);
 	switch(byteorder)
 	{
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	case WRC_BO_BIG:
 #else
 	case WRC_BO_LITTLE:
@@ -2139,7 +2138,7 @@ static raw_data_t *long2raw_data(int i)
 	rd->data = (char *)xmalloc(rd->size);
 	switch(byteorder)
 	{
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	case WRC_BO_BIG:
 #else
 	case WRC_BO_LITTLE:
@@ -2166,7 +2165,7 @@ static raw_data_t *str2raw_data(string_t *str)
 		int i;
 		switch(byteorder)
 		{
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 		case WRC_BO_BIG:
 #else
 		case WRC_BO_LITTLE:
