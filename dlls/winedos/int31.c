@@ -592,6 +592,7 @@ static void StartPM( CONTEXT86 *context )
     pm_ctx.SegEs = es;
     pm_ctx.SegFs = 0;
     pm_ctx.SegGs = 0;
+    pm_ctx.EFlags &= ~V86_FLAG;
 
     TRACE("DOS program is now entering %d-bit protected mode\n", 
           DOSVM_IsDos32() ? 32 : 16);
