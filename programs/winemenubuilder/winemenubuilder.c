@@ -455,7 +455,16 @@ static char *extract_icon( const char *path, int index)
                 HeapFree(GetProcessHeap(), 0, iconsdir);
                 iconsdir=s;
             }
-        }
+        } else {
+		char	path[MAX_PATH];
+
+		if (GetTempPath(sizeof(path),path)) {
+		    s=get_unix_file_name(path);
+		    if (s) {
+			iconsdir=s;
+		    }
+		}
+	}
         RegCloseKey( hkey );
     }
     if (iconsdir==NULL || *iconsdir=='\0')
