@@ -869,7 +869,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 				pPoly->cpts * sizeof(POINT) );
 	DWORD i;
 	for(i = 0; i < pPoly->cpts; i++)
-	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	{
+	    pts[i].x = pPoly->apts[i].x;
+	    pts[i].y = pPoly->apts[i].y;
+	}
 	Polygon(hdc, pts, pPoly->cpts);
 	HeapFree( GetProcessHeap(), 0, pts );
 	break;
@@ -882,7 +885,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 				pPoly->cpts * sizeof(POINT) );
 	DWORD i;
 	for(i = 0; i < pPoly->cpts; i++)
-	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	{
+	    pts[i].x = pPoly->apts[i].x;
+	    pts[i].y = pPoly->apts[i].y;
+	}
 	Polyline(hdc, pts, pPoly->cpts);
 	HeapFree( GetProcessHeap(), 0, pts );
 	break;
@@ -895,7 +901,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 				pPoly->cpts * sizeof(POINT) );
 	DWORD i;
 	for(i = 0; i < pPoly->cpts; i++)
-	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	{
+	    pts[i].x = pPoly->apts[i].x;
+	    pts[i].y = pPoly->apts[i].y;
+	}
 	PolylineTo(hdc, pts, pPoly->cpts);
 	HeapFree( GetProcessHeap(), 0, pts );
 	break;
@@ -908,7 +917,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 				pPoly->cpts * sizeof(POINT) );
 	DWORD i;
 	for(i = 0; i < pPoly->cpts; i++)
-	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	{
+	    pts[i].x = pPoly->apts[i].x;
+	    pts[i].y = pPoly->apts[i].y;
+	}
 	PolyBezier(hdc, pts, pPoly->cpts);
 	HeapFree( GetProcessHeap(), 0, pts );
 	break;
@@ -921,7 +933,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 				pPoly->cpts * sizeof(POINT) );
 	DWORD i;
 	for(i = 0; i < pPoly->cpts; i++)
-	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	{
+	    pts[i].x = pPoly->apts[i].x;
+	    pts[i].y = pPoly->apts[i].y;
+	}
 	PolyBezierTo(hdc, pts, pPoly->cpts);
 	HeapFree( GetProcessHeap(), 0, pts );
 	break;

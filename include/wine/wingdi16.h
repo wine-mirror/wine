@@ -311,35 +311,6 @@ typedef struct
     HMETAFILE16  hMF;
 } METAFILEPICT16, *LPMETAFILEPICT16;
 
-typedef struct {
-    EMR    emr;
-    RECTL  rclBounds;
-    DWORD  cpts;
-    POINT16 apts[1];
-} EMRPOLYLINE16,     *PEMRPOLYLINE16,
-  EMRPOLYBEZIER16,   *PEMRPOLYBEZIER16,
-  EMRPOLYGON16,      *PEMRPOLYGON16,
-  EMRPOLYBEZIERTO16, *PEMRPOLYBEZIERTO16,
-  EMRPOLYLINETO16,   *PEMRPOLYLINETO16;
-
-typedef struct {
-    EMR    emr;
-    RECTL  rclBounds;
-    DWORD  cpts;
-    POINT16 apts[1];
-    BYTE   abTypes[1];
-} EMRPOLYDRAW16, *PEMRPOLYDRAW16;
-
-typedef struct {
-    EMR     emr;
-    RECTL   rclBounds;
-    DWORD   nPolys;
-    DWORD   cpts;
-    DWORD   aPolyCounts[1];
-    POINT16 apts[1];
-} EMRPOLYPOLYLINE16, *PEMRPOLYPOLYLINE16,
-  EMRPOLYPOLYGON16,  *PEMRPOLYPOLYGON16;
-
 typedef INT16 (CALLBACK *MFENUMPROC16)(HDC16,HANDLETABLE16*,METARECORD*,
                                        INT16,LPARAM);
 typedef struct
