@@ -211,6 +211,15 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define DC_COLLATE              22
 #define DC_MANUFACTURER         23
 #define DC_MODEL                24
+#define DC_PERSONALITY          25
+#define DC_PRINTRATE            26
+#define DC_PRINTRATEUNIT        27
+#define DC_PRINTERMEM           28
+#define DC_MEDIAREADY           29
+#define DC_STAPLE               30
+#define DC_PRINTRATEPPM         31
+#define DC_COLORDEVICE          32
+#define DC_NUP                  33
 
 #define DCTT_BITMAP             0x00000001L
 #define DCTT_DOWNLOAD           0x00000002L
@@ -225,6 +234,11 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define DCBA_FACEDOWNCENTER     0x0101
 #define DCBA_FACEDOWNLEFT       0x0102
 #define DCBA_FACEDOWNRIGHT      0x0103
+
+#define PRINTRATEUNIT_PPM       1
+#define PRINTRATEUNIT_CPS       2
+#define PRINTRATEUNIT_LPM       3
+#define PRINTRATEUNIT_IPM       4
 
 /* Flag returned from Escape QUERYDIBSUPPORT */
 #define	QDI_SETDIBITS		1
