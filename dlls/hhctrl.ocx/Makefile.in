@@ -3,9 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = hhctrl.ocx
-IMPORTS   = shell32 user32 kernel32
+IMPORTS   = advapi32 shell32 ole32 user32 kernel32
 
-C_SRCS = hhctrl.c
+C_SRCS = \
+	hhctrl.c \
+	regsvr.c
 
 @MAKE_DLL_RULES@
 
