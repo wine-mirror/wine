@@ -21,11 +21,11 @@
 
 #include "debug.h"
 #undef ERR /* Use ncurses's err() */
-#ifdef HAVE_CURSES_H
-# include <curses.h>
+#ifdef HAVE_NCURSES_H
+# include <ncurses.h>
 #else
-# ifdef HAVE_NCURSES_H
-#  include <ncurses.h>
+# ifdef HAVE_CURSES_H
+#  include <curses.h>
 # endif
 #endif
 
