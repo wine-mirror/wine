@@ -62,7 +62,39 @@ static const struct message WmCreateOverlappedSeq[] = {
     { WM_CREATE, sent },
     { 0 }
 };
-/* ShowWindow (for overlapped window) (16/32) */
+/* SetWindowPos(SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE)
+ * for a not visible overlapped window.
+ */
+static const struct message WmSWP_ShowOverlappedSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { HCBT_ACTIVATE, hook },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
+/* SetWindowPos(SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE)
+ * for a visible overlapped window.
+ */
+static const struct message WmSWP_HideOverlappedSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
+/* ShowWindow(SW_SHOW) for a not visible overlapped window */
 static const struct message WmShowOverlappedSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_NCPAINT, sent|wparam|optional, 1 },
@@ -87,11 +119,30 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_NCCALCSIZE, sent|optional },
     { WM_NCPAINT, sent|optional },
     { WM_ERASEBKGND, sent|optional },
+#if 0 /* CreateWindow/ShowWindow(SW_SHOW) also generates WM_SIZE/WM_MOVE
+       * messages. Does that mean that CreateWindow doesn't set initial
+       * window dimensions for overlapped windows?
+       */
     { WM_SIZE, sent },
     { WM_MOVE, sent },
+#endif
     { 0 }
 };
-/* DestroyWindow (for overlapped window) (32) */
+/* ShowWindow(SW_HIDE) for a visible overlapped window */
+static const struct message WmHideOverlappedSeq[] = {
+    { WM_SHOWWINDOW, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_ACTIVATE, sent|wparam, 0 },
+    { WM_ACTIVATEAPP, sent|wparam, 0 },
+    { WM_KILLFOCUS, sent|wparam, 0 },
+    { WM_IME_SETCONTEXT, sent|optional },
+    { 0 }
+};
+/* DestroyWindow for a visible overlapped window */
 static const struct message WmDestroyOverlappedSeq[] = {
     { HCBT_DESTROYWND, hook },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
@@ -185,7 +236,7 @@ static const struct message WmCreateMaximizedChildSeq[] = {
     { WM_PARENTNOTIFY, sent|parent|wparam, WM_CREATE },
     { 0 }
 };
-/* ShowWindow (for child window) */
+/* ShowWindow(SW_SHOW) for a not visible child window */
 static const struct message WmShowChildSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
@@ -193,7 +244,7 @@ static const struct message WmShowChildSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { 0 }
 };
-/* DestroyWindow (for child window) */
+/* DestroyWindow for a visible child window */
 static const struct message WmDestroyChildSeq[] = {
     { HCBT_DESTROYWND, hook },
     { WM_PARENTNOTIFY, sent|parent|wparam, WM_DESTROY },
@@ -545,6 +596,10 @@ static void ok_sequence(const struct message *expected, const char *context)
 	}
     }
 
+    /* skip all optional trailing messages */
+    while (expected->message && (expected->flags & optional))
+	expected++;
+
   todo_wine {
     if (expected->message || actual->message)
 	ok (FALSE, "%s: the msg sequence is not complete\n", context);
@@ -592,11 +647,27 @@ static void test_messages(void)
 
     /* test WM_SETREDRAW on a not visible top level window */
     test_WM_SETREDRAW(hwnd);
+
+    SetWindowPos(hwnd, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
+    ok_sequence(WmSWP_ShowOverlappedSeq, "SetWindowPos:SWP_SHOWWINDOW:overlapped");
+    ok(IsWindowVisible(hwnd), "window should be visible at this point\n");
+
+    ok(GetActiveWindow() == hwnd, "window should be active\n");
+    ok(GetFocus() == hwnd, "window should have input focus\n");
+    ShowWindow(hwnd, SW_HIDE);
+    ok_sequence(WmHideOverlappedSeq, "ShowWindow(SW_HIDE):overlapped");
     
     ShowWindow(hwnd, SW_SHOW);
-    ok_sequence(WmShowOverlappedSeq, "ShowWindow:overlapped");
+    ok_sequence(WmShowOverlappedSeq, "ShowWindow(SW_SHOW):overlapped");
+
+    ok(GetActiveWindow() == hwnd, "window should be active\n");
+    ok(GetFocus() == hwnd, "window should have input focus\n");
+    SetWindowPos(hwnd, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE);
+    ok_sequence(WmSWP_HideOverlappedSeq, "SetWindowPos:SWP_HIDEWINDOW:overlapped");
+    ok(!IsWindowVisible(hwnd), "window should not be visible at this point\n");
 
     /* test WM_SETREDRAW on a visible top level window */
+    ShowWindow(hwnd, SW_SHOW);
     test_WM_SETREDRAW(hwnd);
 
     DestroyWindow(hwnd);
