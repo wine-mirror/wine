@@ -43,3 +43,12 @@ DWORD WINAPI RasGetEntryDialParamsA( LPSTR lpszPhoneBook,
             lpRasDialParams,lpfPassword);
 	return 0;
 }
+
+/**************************************************************************
+ *                 RasHangUpA			[RASAPI32.556]
+ */
+DWORD WINAPI RasHangUpA( HRASCONN hrasconn)
+{
+	FIXME("(%x),stub!\n",hrasconn);
+	return 0;
+}

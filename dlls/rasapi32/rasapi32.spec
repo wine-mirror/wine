@@ -57,7 +57,7 @@ type	win32
 553 stub	RasGetErrorStringW
 554 stub	RasGetProjectionInfoA
 555 stub	RasGetProjectionInfoW
-556 stub	RasHangUpA
+556 stdcall	RasHangUpA(long) RasHangUpA
 557 stub	RasHangUpW
 558 stub	RasSetEntryDialParamsA
 559 stub	RasSetEntryDialParamsW
