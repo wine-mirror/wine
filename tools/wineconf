@@ -44,6 +44,7 @@ $RCS_ID = '$Id$ ';
 
 use Getopt::Long;
 use File::Basename;
+use strict;
 use Carp;
 
 GetOptions('windir=s', 'sysdir=s', 'thorough', 'debug:s') || &Usage;
@@ -68,33 +69,34 @@ sub Usage {
 }
 
 sub ReadFSTAB {
-    $opt_f = $opt_f ? $opt_f : '/etc/fstab';
-    open(FSTAB, $opt_f) || die "Cannot read $opt_f\n";
+    $::opt_f = $::opt_f ? $::opt_f : '/etc/fstab';
+    open(FSTAB, $::opt_f) || die "Cannot read $::opt_f\n";
     while(<FSTAB>) {
 	next if /^\s*\#/;
 	next if /^\s*$/;
-	($device, $mntpoint, $type, @rest) = split(' ', $_);
+
+	my ($device, $mntpoint, $type, @rest) = split(' ', $_);
 	if ($device !~ m"^/dev/fd") {
 	    if ($type eq "msdos" || $type eq "vfat") {
-		push(@FatDrives, [$device, $mntpoint]);
+		push(@::FatDrives, [$device, $mntpoint]);
 	    }
-	    elsif ($type eq "iso9660") {
-		push(@CdromDrives, [$device, $mntpoint]);
+	    elsif ($type eq "iso9660" || ($device eq '/dev/cdrom' && $type eq 'auto') ) {
+		push(@::CdromDrives, [$device, $mntpoint]);
 	    }
 	}
     }
-    if (!@FatDrives) {
+    if (!@::FatDrives) {
 	warn "ERROR ($0): Cannot find any MSDOS drives.\n";
 	warn "This does not mean you cannot run Wine, but $0\n";
 	warn "cannot help you (yet)\n";
 	exit(1);
     }
-    $MagicDrive = 'C';
-    @FatDrives = sort byDriveOrder @FatDrives;
-    @CdromDrives = sort byCdOrder @CdromDrives;
-    foreach $FatDrive (@FatDrives) {
+    my $MagicDrive = 'C';
+    @::FatDrives = sort byDriveOrder @::FatDrives;
+    @::CdromDrives = sort byCdOrder @::CdromDrives;
+    foreach my $FatDrive (@::FatDrives) {
 	print "[Drive $MagicDrive]\n";
-	$MntPoint = $FatDrive->[1];
+	my $MntPoint = $FatDrive->[1];
 	print "Path=$MntPoint\n";
 	print "Type=hd\n";
 	print "\n";
@@ -105,9 +107,9 @@ sub ReadFSTAB {
 	}
 	$MagicDrive++;
     }
-    foreach $CdromDrive (@CdromDrives) {
+    foreach my $CdromDrive (@::CdromDrives) {
 	print "[Drive $MagicDrive]\n";
-	$MntPoint = $CdromDrive->[1];
+	my $MntPoint = $CdromDrive->[1];
 	print "Path=$MntPoint\n";
 	print "Type=cdrom\n";
 	print "\n";
@@ -118,32 +120,34 @@ sub ReadFSTAB {
 
 sub FindWindowsDir {
     my($MagicDrive) = 'C';
-    my(@FATD)=@FatDrives;
+    my(@FATD)=@::FatDrives;
     my(@wininis) = ();
-    if (!$opt_windir && !$opt_fast && !$opt_thorough) {
-	$opt_thorough++;
+    my ($winini);
+
+    if (!$::opt_windir && !$::opt_fast && !$::opt_thorough) {
+	$::opt_thorough++;
     }
-    if ($opt_windir) {
-	$winini = &ToUnix($opt_windir);
+    if ($::opt_windir) {
+	$winini = &ToUnix($::opt_windir);
 	if (!-e $winini) {
 	    die "ERROR: Specified winini file does not exist\n";
 	}
     }
-    elsif ($opt_fast) {
+    elsif ($::opt_fast) {
 	die "-fast code can be implemented\n";
     }
-    elsif ($opt_thorough) {
-	if ($opt_debug) { print STDERR "DEBUG: Num FATD = ", $#FATD+1, "\n"; }
+    elsif ($::opt_thorough) {
+	if ($::opt_debug) { print STDERR "DEBUG: Num FATD = ", $#FATD+1, "\n"; }
 	foreach(@FATD) {
-	    $ThisDrive = shift(@FATD);
-	    $MntPoint = $ThisDrive->[1];
+	    my $ThisDrive = shift(@FATD);
+	    my $MntPoint = $ThisDrive->[1];
 	    push(@wininis, `find $MntPoint -name win.ini -print`);
 	}
 	foreach $winini (@wininis) {
 	    chomp $winini;
 	}
-	my($winini_cnt) = $#wininis+1;
-	if ($opt_debug) { 
+	my ($winini_cnt) = $#wininis+1;
+	if ($::opt_debug) { 
 	    print STDERR "DEBUG: Num wininis found: $winini_cnt\n";}
 	if ($winini_cnt > 1) {
 	    warn "$winini_cnt win.ini files found:\n";
@@ -162,14 +166,14 @@ sub FindWindowsDir {
     else {
 	die "ERROR: None of -windir, -fast, or -thorough set\n";
     }
-    $windir = &ToDos(dirname($winini));
+    $::windir = &ToDos(dirname($winini));
     print "[wine]\n";
-    print "windows=$windir\n";
-    if ($opt_sysdir) {
-	print "system=$opt_sysdir\n";
+    print "windows=$::windir\n";
+    if ($::opt_sysdir) {
+	print "system=$::opt_sysdir\n";
     }
     else {
-	print "system=$windir\\SYSTEM\n";
+	print "system=$::windir\\SYSTEM\n";
     }
 }
 
@@ -196,19 +200,19 @@ sub IsMounted {
 
 sub RegisterDrive {
     my($DOSdrive, $Drive) = @_;
-    $DOS2Unix{$DOSdrive} = $Drive;
-    $Device2DOS{$Drive->[0]} = $DOSdrive;
-    $MntPoint2DOS{$Drive->[1]} = $DOSdrive;
-    $DOS2MntPoint{$DOSdrive} = $Drive->[1];
-    $DOS2Device{$DOSdrive} = $Drive->[0];
+    $::DOS2Unix{$DOSdrive} = $Drive;
+    $::Device2DOS{$Drive->[0]} = $DOSdrive;
+    $::MntPoint2DOS{$Drive->[1]} = $DOSdrive;
+    $::DOS2MntPoint{$DOSdrive} = $Drive->[1];
+    $::DOS2Device{$DOSdrive} = $Drive->[0];
 }
 
 sub ReadAutoexecBat {
-    if (!%DOS2Unix) { &ReadFSTAB; }
-    my($DriveC) = $DOS2MntPoint{"C"};
+    if (!%::DOS2Unix) { &ReadFSTAB; }
+    my($DriveC) = $::DOS2MntPoint{"C"};
     $DriveC =~ s%/$%%;
     my($path);
-    if ($opt_debug) { 
+    if ($::opt_debug) { 
 	print STDERR "DEBUG: Looking for $DriveC/autoexec.bat\n"; }
     if (-e "$DriveC/autoexec.bat") {
 	# Tested 1.4
@@ -222,16 +226,17 @@ sub ReadAutoexecBat {
 		chomp($varvalue);
 		$varname =~ tr/A-Z/a-z/;
 		while ($varvalue =~ /%(\w+)%/) {
-		    $matchname = $subname = $1;
+		    my $matchname = $1;
+		    my $subname = $1;
 		    $subname =~ tr/A-Z/a-z/;
-		    if ($opt_debug =~ /path/i) {
+		    if ($::opt_debug =~ /path/i) {
 			print STDERR "DEBUG: Found $matchname as $subname\n";
 			print STDERR "DEBUG: Old varvalue:\n$varvalue\n";
 			print STDERR "DEBUG: Old subname value:\n" .
-			    $DOSenv{$subname} . "\n";
+			    $::DOSenv{$subname} . "\n";
 		    }
-		    if ($DOSenv{$subname}) {
-			$varvalue =~ s/\%$matchname\%/$DOSenv{$subname}/;
+		    if ($::DOSenv{$subname}) {
+			$varvalue =~ s/\%$matchname\%/$::DOSenv{$subname}/;
 		    }
 		    else {
 			warn "DOS environment variable $subname not\n"; 
@@ -239,14 +244,14 @@ sub ReadAutoexecBat {
 			warn "is not implemented.)  Using null value\n";
 			$varvalue =~ s/%$matchname%//;
 		    }
-		    if ($opt_debug =~ /path/i) {
+		    if ($::opt_debug =~ /path/i) {
 			print STDERR "DEBUG: New varvalue:\n$varvalue\n";
 		    }
 		}
-		if ($opt_debug) {
+		if ($::opt_debug) {
 		    print STDERR "DEBUG: $varname = $varvalue\n";
 		}
-		$DOSenv{$varname} = $varvalue;
+		$::DOSenv{$varname} = $varvalue;
             }
         }
 	close(AUTOEXEC);
@@ -256,21 +261,21 @@ sub ReadAutoexecBat {
 	warn "WARNING: C:\\AUTOEXEC.BAT was not found.\n";
     }
 
-    if ($DOSenv{"path"}) {
-	@pathdirs = split(/\s*;\s*/, $DOSenv{"path"});
-	if ($opt_debug =~ /path/i) {
+    if ($::DOSenv{"path"}) {
+	my @pathdirs = split(/\s*;\s*/, $::DOSenv{"path"});
+	if ($::opt_debug =~ /path/i) {
 	    print STDERR "DEBUG (path): @pathdirs\n";
 	}
-	foreach $pathdir (@pathdirs) {
+	foreach my $pathdir (@pathdirs) {
 	    if (-d &ToUnix($pathdir)) {
-		if ($DOSpathdir{$pathdir}++) {
+		if ($::DOSpathdir{$pathdir}++) {
 		    warn "Ignoring duplicate DOS path entry $pathdir\n";
 		}
 		else {
-		    if ($opt_debug =~ /path/i) {
+		    if ($::opt_debug =~ /path/i) {
 			print STDERR "DEBUG (path): Found $pathdir\n";
 		    }
-		    push(@DOSpathlist, $pathdir);
+		    push(@::DOSpathlist, $pathdir);
 		}
 	    }
 	    else {
@@ -278,46 +283,49 @@ sub ReadAutoexecBat {
 		warn "exist\n";
 	    }
 	}
-	print "path=" . join(";", @DOSpathlist) . "\n";
+	print "path=" . join(";", @::DOSpathlist) . "\n";
     }
     else {
 	# Code status: tested 1.4
 	warn "WARNING: Making assumptions for PATH\n";
 	warn "Will scan windows directory for executables and generate\n";
 	warn "path from that\n";
-	$shellcmd = 'find ' . &ToUnix($windir) . " -iregex '" .
+	my $shellcmd = 'find ' . &ToUnix($::windir) . " -iregex '" .
 	    '.*\.\(exe\|bat\|com\|dll\)' . "' -print";
-	if ($opt_debug) { 
+	if ($::opt_debug) { 
 	    print STDERR "DEBUG: autoexec.bat search command:\n $shellcmd\n";
 	}
-	push(@DOScommand, `$shellcmd`);
-	if ($opt_debug =~ /autoexec/i) { 
-	    print STDERR "DEBUG: autoexec.bat search results:\n@DOScommand\n";
+	push(@::DOScommand, `$shellcmd`);
+	if ($::opt_debug && $::opt_debug =~ /autoexec/i) { 
+	    print STDERR "DEBUG: autoexec.bat search results:\n\@DOS::command\n";
 	}
-	foreach $command (@DOScommand) {
+	foreach my $command (@::DOScommand) {
 	    $command =~ s%[^/]+$%%;
-	    $DOSexecdir{$command}++;
+	    $::DOSexecdir{$command}++;
 	}
 	print "path=" . 
 	    join(";", 
 		 grep(s%/$%%, 
-		      sort {$DOSexecdir{$b} <=> $DOSexecdir{$a}}
-		      (keys %DOSexecdir))) . "\n";
+		      sort {$::DOSexecdir{$b} <=> $::DOSexecdir{$a}}
+		      (keys %::DOSexecdir))) . "\n";
     }
 
-    if ($DOSenv{"temp"} && -d &ToUnix($DOSenv{"temp"})) {
-	print "temp=" . $DOSenv{"temp"} . "\n";
+    if ($::DOSenv{"temp"} && -d &ToUnix($::DOSenv{"temp"})) {
+	print "temp=" . $::DOSenv{"temp"} . "\n";
     }
     else {
+        my $TheTemp;
+
         warn "WARNING: Making assumptions for TEMP\n";
 	warn "Looking for \\TEMP and then \\TMP on every drive\n";
 	# Watch out .. might pick CDROM drive :-)
-	foreach $DOSdrive (keys %DOS2Unix) {
-	    $tmp = &ToUnix("$DOSdrive:\\temp");
+	foreach my $DOSdrive (keys %::DOS2Unix) {
+	    my $tmp = &ToUnix("$DOSdrive:\\temp");
 	    if (-d $tmp) { $TheTemp = "$DOSdrive:\\temp"; last; }
 	    $tmp = &ToUnix("$DOSdrive:\\tmp");
 	    if (-d $tmp) { $TheTemp = "$DOSdrive:\\tmp"; last; }
 	}
+	$TheTemp = '/tmp' if (!$TheTemp && -d '/tmp');
 	if ($TheTemp) {
 	    warn "Using $TheTemp\n";
 	    print "temp=$TheTemp\n";
@@ -338,14 +346,14 @@ sub ToUnix {
     my($FNunix);
 
     # Initialize tables if necessary.
-    if (!%DOS2Unix) { &ReadFSTAB; }
+    if (!%::DOS2Unix) { &ReadFSTAB; }
 
     # Determine which type of conversion is necessary
     if ($FNdos =~ /^([A-Z])\:(.*)$/) { # DOS drive specified
-	$FNunix = $DOS2MntPoint{$1} . "/$2";
+	$FNunix = $::DOS2MntPoint{$1} . "/$2";
     }
     elsif ($FNdos =~ m%\\%) { # DOS drive not specified, C: is default
-	$FNunix = $DOS2MntPoint{"C"} . "/$FNdos";
+	$FNunix = $::DOS2MntPoint{"C"} . "/$FNdos";
     }
     else { # Unix filename
 	$FNunix = $FNdos;
@@ -360,8 +368,10 @@ sub ToUnix {
 #   Converts Unix filenames to DOS filenames
 sub ToDos {
     my($FNunix) = @_;
-    my(@MntList) = keys %MntPoint2DOS;
-    foreach $MntPt (@MntList) { # Scan mount point list to see if path matches
+    my(@MntList) = keys %::MntPoint2DOS;
+    my ($TheMntPt, $FNdos);
+
+    foreach my $MntPt (@MntList) { # Scan mount point list to see if path matches
 	if ($FNunix =~ /^$MntPt/) {
 	    $TheMntPt = $MntPt;
 	    last;
@@ -373,22 +383,29 @@ sub ToDos {
     }
     $FNdos = $FNunix;
     $FNdos =~ s/^$TheMntPt//;
-    $FNdos = $MntPoint2DOS{$TheMntPt} . ":" . $FNdos;
+    $FNdos = $::MntPoint2DOS{$TheMntPt} . ":" . $FNdos;
     1 while($FNdos =~ s%/%\\%);
     return $FNdos;
 }
 
+sub InsertDefaultFile {
+    my ($fileName, $tag) = @_;
+    my $state = 0;
+
+    if (open(DEFFILE, "$fileName")) {
+       while (<DEFFILE>) {
+	  $state = 0 if ($state == 1 && $_ =~ /^[ \t]*\#/o && index($_, "</$tag>") >= 0);
+	  print $_ if ($state == 1);
+	  $state = 1 if ($state == 0 && $_ =~ /^[ \t]*\#/o && index($_, "<$tag>" ) >= 0);
+       }
+       close(DEFFILE);
+    } else {
+       print STDERR "Cannot read $fileName\n";
+    }
+}
 
 sub StandardStuff {
-    print "[serial]\n";
-    print "com1=/dev/cua0\n";
-    print "com2=/dev/cua1\n";
-    print "\n";
-    print "[spy]\n";
-    print ";File=CON\n";
-    print ";File=spy.log\n";
-    print "Exclude=WM_TIMER;WM_SETCURSOR;WM_MOUSEMOVE;WM_NCHITTEST;\n";
-    print "Include=WM_COMMAND;\n";
+   &InsertDefaultFile("./wine.ini", "wineconf");
 }
 
 sub byFileAge {
