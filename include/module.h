@@ -153,7 +153,7 @@ enum binary_type
 
 /* module.c */
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
-extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
+extern enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end );
 
 /* ne_module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );

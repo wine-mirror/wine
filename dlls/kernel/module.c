@@ -130,7 +130,7 @@ good:
 /***********************************************************************
  *           MODULE_GetBinaryType
  */
-enum binary_type MODULE_GetBinaryType( HANDLE hfile )
+enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
 {
     union
     {
@@ -150,7 +150,6 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
         IMAGE_DOS_HEADER mz;
     } header;
 
-    char magic[4];
     DWORD len;
 
     /* Seek to the start of the file and read the header information. */
@@ -184,6 +183,12 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
 
     if (header.mz.e_magic == IMAGE_DOS_SIGNATURE)
     {
+        union
+        {
+            IMAGE_OS2_HEADER os2;
+            IMAGE_NT_HEADERS nt;
+        } ext_header;
+
         /* We do have a DOS image so we will now try to seek into
          * the file by the amount indicated by the field
          * "Offset to extended header" and read in the
@@ -193,41 +198,41 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
          */
         if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) == -1)
             return BINARY_DOS;
-        if (!ReadFile( hfile, magic, sizeof(magic), &len, NULL ) || len != sizeof(magic))
+        if (!ReadFile( hfile, &ext_header, sizeof(ext_header), &len, NULL ) || len < 4)
             return BINARY_DOS;
 
         /* Reading the magic field succeeded so
          * we will try to determine what type it is.
          */
-        if (!memcmp( magic, "PE\0\0", 4 ))
+        if (!memcmp( &ext_header.nt.Signature, "PE\0\0", 4 ))
         {
-            IMAGE_FILE_HEADER FileHeader;
-
-            if (ReadFile( hfile, &FileHeader, sizeof(FileHeader), &len, NULL ) && len == sizeof(FileHeader))
+            if (len >= sizeof(ext_header.nt.FileHeader))
             {
-                if (FileHeader.Characteristics & IMAGE_FILE_DLL) return BINARY_PE_DLL;
+                if (len < sizeof(ext_header.nt))  /* clear remaining part of header if missing */
+                    memset( (char *)&ext_header.nt + len, 0, sizeof(ext_header.nt) - len );
+                if (res_start) *res_start = (void *)ext_header.nt.OptionalHeader.ImageBase;
+                if (res_end) *res_end = (void *)(ext_header.nt.OptionalHeader.ImageBase +
+                                                 ext_header.nt.OptionalHeader.SizeOfImage);
+                if (ext_header.nt.FileHeader.Characteristics & IMAGE_FILE_DLL) return BINARY_PE_DLL;
                 return BINARY_PE_EXE;
             }
             return BINARY_DOS;
         }
 
-        if (!memcmp( magic, "NE", 2 ))
+        if (!memcmp( &ext_header.os2.ne_magic, "NE", 2 ))
         {
             /* This is a Windows executable (NE) header.  This can
              * mean either a 16-bit OS/2 or a 16-bit Windows or even a
              * DOS program (running under a DOS extender).  To decide
              * which, we'll have to read the NE header.
              */
-            IMAGE_OS2_HEADER ne;
-            if (    SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) != -1
-                    && ReadFile( hfile, &ne, sizeof(ne), &len, NULL )
-                    && len == sizeof(ne) )
+            if (len >= sizeof(ext_header.os2))
             {
-                switch ( ne.ne_exetyp )
+                switch ( ext_header.os2.ne_exetyp )
                 {
                 case 2:  return BINARY_WIN16;
                 case 5:  return BINARY_DOS;
-                default: return MODULE_Decide_OS2_OldWin(hfile, &header.mz, &ne);
+                default: return MODULE_Decide_OS2_OldWin(hfile, &header.mz, &ext_header.os2);
                 }
             }
             /* Couldn't read header, so abort. */
@@ -295,7 +300,7 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 
     /* Check binary type
      */
-    switch(MODULE_GetBinaryType( hfile ))
+    switch(MODULE_GetBinaryType( hfile, NULL, NULL ))
     {
     case BINARY_UNKNOWN:
     {

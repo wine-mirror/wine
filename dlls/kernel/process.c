@@ -389,6 +389,7 @@ static BOOL build_initial_environment( char **environ )
         if (!strncmp( str, "WINE", 4 ))
         {
             if (is_special_env_var( str + 4 )) str += 4;
+            else if (!strncmp( str, "WINEPRELOADRESERVE=", 19 )) continue;  /* skip it */
         }
         else if (is_special_env_var( str )) continue;  /* skip it */
 
@@ -1051,7 +1052,7 @@ void __wine_kernel_init(void)
         ExitProcess(1);
     }
 
-    switch( MODULE_GetBinaryType( main_exe_file ))
+    switch( MODULE_GetBinaryType( main_exe_file, NULL, NULL ))
     {
     case BINARY_PE_EXE:
         TRACE( "starting Win32 binary %s\n", debugstr_w(main_exe_name) );
@@ -1257,26 +1258,28 @@ static char *alloc_env_string( const char *name, const char *value )
  *
  * Build the environment of a new child process.
  */
-static char **build_envp( const WCHAR *envW )
+static char **build_envp( const WCHAR *envW, char *extra_env )
 {
-    const WCHAR *p;
+    const WCHAR *end;
     char **envp;
-    char *env;
+    char *env, *p;
     int count = 0, length;
 
-    for (p = envW; *p; count++) p += strlenW(p) + 1;
-    p++;
-    length = WideCharToMultiByte( CP_UNIXCP, 0, envW, p - envW, NULL, 0, NULL, NULL );
+    for (end = envW; *end; count++) end += strlenW(end) + 1;
+    end++;
+    length = WideCharToMultiByte( CP_UNIXCP, 0, envW, end - envW, NULL, 0, NULL, NULL );
     if (!(env = malloc( length ))) return NULL;
-    WideCharToMultiByte( CP_UNIXCP, 0, envW, p - envW, env, length, NULL, NULL );
+    WideCharToMultiByte( CP_UNIXCP, 0, envW, end - envW, env, length, NULL, NULL );
 
+    if (extra_env) for (p = extra_env; *p; p += strlen(p) + 1) count++;
     count += 4;
 
     if ((envp = malloc( count * sizeof(*envp) )))
     {
         char **envptr = envp;
-        char *p;
 
+        /* first the extra strings */
+        for (p = extra_env; *p; p += strlen(p) + 1) *envptr++ = alloc_env_string( "", p );
         /* then put PATH, TEMP, TMP, HOME and WINEPREFIX from the unix env */
         if ((p = getenv("PATH"))) *envptr++ = alloc_env_string( "PATH=", p );
         if ((p = getenv("TEMP"))) *envptr++ = alloc_env_string( "TEMP=", p );
@@ -1289,6 +1292,7 @@ static char **build_envp( const WCHAR *envW )
             if (is_special_env_var( p ))  /* prefix it with "WINE" */
                 *envptr++ = alloc_env_string( "WINE", p );
             else if (strncmp( p, "HOME=", 5 ) &&
+                     strncmp( p, "WINEPRELOADRESERVE=", 19 ) &&
                      strncmp( p, "WINEPREFIX=", 11 )) *envptr++ = p;
         }
         *envptr = 0;
@@ -1319,7 +1323,7 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
     if (!(pid = fork()))  /* child */
     {
         char **argv = build_argv( cmdline, 0 );
-        char **envp = build_envp( env );
+        char **envp = build_envp( env, NULL );
         close( fd[0] );
 
         /* Reset signals that we previously set to SIG_IGN */
@@ -1405,7 +1409,8 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
 static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPWSTR env,
                             LPCWSTR cur_dir, LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
-                            LPPROCESS_INFORMATION info, LPCSTR unixdir )
+                            LPPROCESS_INFORMATION info, LPCSTR unixdir,
+                            void *res_start, void *res_end )
 {
     BOOL ret, success = FALSE;
     HANDLE process_info;
@@ -1415,11 +1420,15 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     pid_t pid;
     int err;
     char dummy = 0;
+    char preloader_reserve[64];
 
     if (!env) env = GetEnvironmentStringsW();
 
     if (!(params = create_user_params( filename, cmd_line, cur_dir, startup )))
         return FALSE;
+
+    sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx%c",
+             (unsigned long)res_start, (unsigned long)res_end, 0 );
 
     /* create the synchronization pipes */
 
@@ -1444,7 +1453,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     if (!(pid = fork()))  /* child */
     {
         char **argv = build_argv( cmd_line, 1 );
-        char **envp = build_envp( env );
+        char **envp = build_envp( env, preloader_reserve );
 
         close( startfd[1] );
         close( execfd[0] );
@@ -1604,7 +1613,7 @@ static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, L
     }
     sprintfW( new_cmd_line, argsW, winevdmW, filename, cmd_line );
     ret = create_process( 0, winevdmW, new_cmd_line, env, cur_dir, psa, tsa, inherit,
-                          flags, startup, info, unixdir );
+                          flags, startup, info, unixdir, NULL, NULL );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
     return ret;
 }
@@ -1784,6 +1793,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     char *unixdir = NULL;
     WCHAR name[MAX_PATH];
     WCHAR *tidy_cmdline, *p, *envW = env;
+    void *res_start, *res_end;
 
     /* Process the AppName and/or CmdLine to get module name and path */
 
@@ -1833,16 +1843,16 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     {
         TRACE( "starting %s as Winelib app\n", debugstr_w(name) );
         retv = create_process( 0, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                               inherit, flags, startup_info, info, unixdir );
+                               inherit, flags, startup_info, info, unixdir, NULL, NULL );
         goto done;
     }
 
-    switch( MODULE_GetBinaryType( hFile ))
+    switch( MODULE_GetBinaryType( hFile, &res_start, &res_end ))
     {
     case BINARY_PE_EXE:
-        TRACE( "starting %s as Win32 binary\n", debugstr_w(name) );
+        TRACE( "starting %s as Win32 binary (%p-%p)\n", debugstr_w(name), res_start, res_end );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                               inherit, flags, startup_info, info, unixdir );
+                               inherit, flags, startup_info, info, unixdir, res_start, res_end );
         break;
     case BINARY_WIN16:
     case BINARY_DOS:
@@ -1861,7 +1871,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     case BINARY_UNIX_LIB:
         TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                               inherit, flags, startup_info, info, unixdir );
+                               inherit, flags, startup_info, info, unixdir, NULL, NULL );
         break;
     case BINARY_UNKNOWN:
         /* check for .com or .bat extension */
