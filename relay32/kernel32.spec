@@ -189,7 +189,7 @@ init	MAIN_KernelInit
 173 stub CreateRemoteThread
 174 stdcall CreateSemaphoreA(ptr long long str) CreateSemaphoreA
 175 stdcall CreateSemaphoreW(ptr long long wstr) CreateSemaphoreW
-176 stub CreateSocketHandle
+176 stdcall CreateSocketHandle() CreateSocketHandle
 177 stub CreateTapePartition
 178 stdcall CreateThread(ptr long ptr long long ptr) CreateThread
 179 stdcall CreateToolhelp32Snapshot(long long) CreateToolhelp32Snapshot
@@ -350,7 +350,7 @@ init	MAIN_KernelInit
 332 stdcall GetFileType(long) GetFileType
 333 stdcall GetFullPathNameA(str long ptr ptr) GetFullPathNameA
 334 stdcall GetFullPathNameW(wstr long ptr ptr) GetFullPathNameW
-335 stub GetHandleContext
+335 stdcall GetHandleContext(long) GetHandleContext
 336 stdcall GetHandleInformation(long ptr) GetHandleInformation
 337 stub GetLSCallbackTarget
 338 stub GetLSCallbackTemplate
@@ -667,7 +667,7 @@ init	MAIN_KernelInit
 648 stdcall SetFileAttributesW(wstr long) SetFileAttributesW
 649 stdcall SetFilePointer(long long ptr long) SetFilePointer
 650 stdcall SetFileTime(long ptr ptr ptr) SetFileTime
-651 stub SetHandleContext
+651 stdcall SetHandleContext(long long) SetHandleContext
 652 stdcall SetHandleCount(long) SetHandleCount
 653 stdcall SetHandleInformation(long long long) SetHandleInformation
 654 stdcall SetLastError(long) SetLastError
