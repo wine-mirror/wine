@@ -59,6 +59,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(time);
 #define FILETIME2LL( pft, ll) \
     ll = (((LONGLONG)((pft)->dwHighDateTime))<<32) + (pft)-> dwLowDateTime ;
 
+
+static const int MonthLengths[2][12] =
+{
+	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
+	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+};
+
+static inline int IsLeapYear(int Year)
+{
+	return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0) ? 1 : 0;
+}
+
 /***********************************************************************
  *  TIME_DayLightCompareDate
  *
@@ -86,61 +98,18 @@ static int TIME_DayLightCompareDate(
 
     if (compareDate->wDayOfWeek <= 6)
     {
-       SYSTEMTIME tmp;
-       FILETIME tmp_ft;
-
-       /* compareDate->wDay is interpreted as number of the week in the month
-        * 5 means: the last week in the month */
-       int weekofmonth = compareDate->wDay;
-
-         /* calculate day of week for the first day in the month */
-        memcpy(&tmp, date, sizeof(SYSTEMTIME));
-        tmp.wDay = 1;
-        tmp.wDayOfWeek = -1;
-
-        if (weekofmonth == 5)
-        {
-             /* Go to the beginning of the next month. */
-            if (++tmp.wMonth > 12)
-            {
-                tmp.wMonth = 1;
-                ++tmp.wYear;
-            }
-        }
-
-        if (!SystemTimeToFileTime(&tmp, &tmp_ft))
-            return -2;
-
-        if (weekofmonth == 5)
-        {
-          LONGLONG t;
-          FILETIME2LL( &tmp_ft, t)
-          /* subtract one day */
-          t -= (LONGLONG) 24*60*60*10000000;
-          LL2FILETIME( t, &tmp_ft);
-        }
-
-        if (!FileTimeToSystemTime(&tmp_ft, &tmp))
-            return -2;
-
-       if (weekofmonth == 5)
-       {
-          /* calculate the last matching day of the week in this month */
-          int dif = tmp.wDayOfWeek - compareDate->wDayOfWeek;
-          if (dif < 0)
-             dif += 7;
-
-          limit_day = tmp.wDay - dif;
-       }
-       else
-       {
-          /* calculate the matching day of the week in the given week */
-          int dif = compareDate->wDayOfWeek - tmp.wDayOfWeek;
-          if (dif < 0)
-             dif += 7;
-
-          limit_day = tmp.wDay + 7*(weekofmonth-1) + dif;
-       }
+        WORD First;
+        /* compareDate->wDay is interpreted as number of the week in the month
+         * 5 means: the last week in the month */
+        int weekofmonth = compareDate->wDay;
+          /* calculate the day of the first DayOfWeek in the month */
+        First = ( 6 + compareDate->wDayOfWeek - date->wDayOfWeek + date->wDay 
+               ) % 7 + 1;
+        limit_day = First + 7 * (weekofmonth - 1);
+        /* check needed for the 5th weekday of the month */
+        if(limit_day > MonthLengths[date->wMonth==2 && IsLeapYear(date->wYear)]
+                [date->wMonth - 1])
+            limit_day -= 7;
     }
     else
     {

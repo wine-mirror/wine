@@ -273,7 +273,7 @@ void test_TzSpecificLocalTimeToSystemTime()
     fnSystemTimeToTzSpecificLocalTime pSystemTimeToTzSpecificLocalTime = NULL;
     TIME_ZONE_INFORMATION tzE, tzW, tzS;
     SYSTEMTIME result;
-    int i;
+    int i, j, year;
     pTzSpecificLocalTimeToSystemTime = (fnTzSpecificLocalTimeToSystemTime) GetProcAddress( hKernel, "TzSpecificLocalTimeToSystemTime");
     if(pTzSpecificLocalTimeToSystemTime)
         pSystemTimeToTzSpecificLocalTime = (fnTzSpecificLocalTimeToSystemTime) GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTime");
@@ -341,14 +341,45 @@ void test_TzSpecificLocalTimeToSystemTime()
             { 17, &tzS, {2004,10,-1,24,1,59,59,999}, 5},
             { 18, &tzS, {2004,10,-1,24,2,0,0,0}, 5},
             {0}
-       };
-        for (i=0; cases[i].nr; i++) {
-            pTzSpecificLocalTimeToSystemTime( cases[i].ptz, &(cases[i].slt), &result);
-            ok( result.wHour == cases[i].ehour,
-                    "Test TzSpecificLocalTimeToSystemTime #%d. wrong system time. Hour is %d expected %d\n", 
-                    cases[i].nr, result.wHour, cases[i].ehour);
+        };
+    /*  days of transitions to put into the cases array */
+        int yeardays[][6]=
+        {
+              {28,31,4,24,4,24}  /* 1999 */
+            , {26,29,2,22,2,22}  /* 2000 */
+            , {25,28,1,28,1,28}  /* 2001 */
+            , {31,27,7,27,7,27}  /* 2002 */
+            , {30,26,6,26,6,26}  /* 2003 */
+            , {28,31,4,24,4,24}  /* 2004 */
+            , {27,30,3,23,3,23}  /* 2005 */
+            , {26,29,2,22,2,22}  /* 2006 */
+            , {25,28,1,28,1,28}  /* 2007 */
+            , {30,26,6,26,6,26}  /* 2008 */
+            , {29,25,5,25,5,25}  /* 2009 */
+            , {28,31,4,24,4,24}  /* 2010 */
+            , {27,30,3,23,3,23}  /* 2011 */
+            , {25,28,1,28,1,28}  /* 2012 */
+            , {31,27,7,27,7,27}  /* 2013 */
+            , {30,26,6,26,6,26}  /* 2014 */
+            , {29,25,5,25,5,25}  /* 2015 */
+            , {27,30,3,23,3,23}  /* 2016 */
+            , {26,29,2,22,2,22}  /* 2017 */
+            , {25,28,1,28,1,28}  /* 2018 */
+            , {31,27,7,27,7,27}  /* 2019 */
+            ,{0}
+        };
+        for( j=0 , year = 1999; yeardays[j][0] ; j++, year++) {
+            for (i=0; cases[i].nr; i++) {
+                if(i) cases[i].nr += 18;
+                cases[i].slt.wYear = year;
+                cases[i].slt.wDay = yeardays[j][i/3];
+                pTzSpecificLocalTimeToSystemTime( cases[i].ptz, &(cases[i].slt), &result);
+                ok( result.wHour == cases[i].ehour,
+                        "Test TzSpecificLocalTimeToSystemTime #%d. Got %4d-%02d-%02d %02d:%02d. Expect hour =  %02d\n", 
+                        cases[i].nr, result.wYear, result.wMonth, result.wDay,
+                        result.wHour, result.wMinute, cases[i].ehour);
+            }
         }
-
     }
         /* SystemTimeToTzSpecificLocalTime */
     {   TZLT2ST_case cases[] = {
@@ -376,12 +407,43 @@ void test_TzSpecificLocalTimeToSystemTime()
             { 18, &tzS, {2004,10,-1,24,6,0,0,0}, 3},
 
             {0}
-       };
-        for (i=0; cases[i].nr; i++) {
-            pSystemTimeToTzSpecificLocalTime( cases[i].ptz, &(cases[i].slt), &result);
-            ok( result.wHour == cases[i].ehour,
-                    "Test SystemTimeToTzSpecificLocalTime #%d. wrong system time. Hour is %d expected %d\n", 
-                    cases[i].nr, result.wHour, cases[i].ehour);
+        }; 
+    /*  days of transitions to put into the cases array */
+        int yeardays[][6]=
+        {
+              {27,30,4,24,4,24}  /* 1999 */
+            , {25,28,2,22,2,22}  /* 2000 */
+            , {24,27,1,28,1,28}  /* 2001 */
+            , {30,26,7,27,7,27}  /* 2002 */
+            , {29,25,6,26,6,26}  /* 2003 */
+            , {27,30,4,24,4,24}  /* 2004 */
+            , {26,29,3,23,3,23}  /* 2005 */
+            , {25,28,2,22,2,22}  /* 2006 */
+            , {24,27,1,28,1,28}  /* 2007 */
+            , {29,25,6,26,6,26}  /* 2008 */
+            , {28,24,5,25,5,25}  /* 2009 */
+            , {27,30,4,24,4,24}  /* 2010 */
+            , {26,29,3,23,3,23}  /* 2011 */
+            , {24,27,1,28,1,28}  /* 2012 */
+            , {30,26,7,27,7,27}  /* 2013 */
+            , {29,25,6,26,6,26}  /* 2014 */
+            , {28,24,5,25,5,25}  /* 2015 */
+            , {26,29,3,23,3,23}  /* 2016 */
+            , {25,28,2,22,2,22}  /* 2017 */
+            , {24,27,1,28,1,28}  /* 2018 */
+            , {30,26,7,27,7,27}  /* 2019 */
+        };
+        for( j=0 , year = 1999; yeardays[j][0] ; j++, year++) {
+            for (i=0; cases[i].nr; i++) {
+                if(i) cases[i].nr += 18;
+                cases[i].slt.wYear = year;
+                cases[i].slt.wDay = yeardays[j][i/3];
+                pSystemTimeToTzSpecificLocalTime( cases[i].ptz, &(cases[i].slt), &result);
+                ok( result.wHour == cases[i].ehour,
+                        "Test SystemTimeToTzSpecificLocalTime #%d. Got %4d-%02d-%02d %02d:%02d. Expect hour = %02d\n", 
+                        cases[i].nr, result.wYear, result.wMonth, result.wDay,
+                        result.wHour, result.wMinute, cases[i].ehour);
+            }
         }
 
     }        
