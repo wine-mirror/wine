@@ -245,7 +245,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_XYZ;             break;
 	case D3DVSDT_FLOAT4:     fvf |= D3DFVF_XYZRHW;          break;
 	default: 
-	  /** errooooorr mismatched use of a register, invalid fvf computing */
+	  /** Mismatched use of a register, invalid for fixed function fvf computing (ok for VS) */
 	  invalid_fvf = TRUE;
 	  if (type >= MAX_VSHADER_DECL_TYPES) {
 	    TRACE("Mismatched use in VertexShader declaration of D3DVSDE_POSITION register: unsupported and unrecognized type %08lx\n", type);
@@ -262,7 +262,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_XYZB3;           break;
 	case D3DVSDT_FLOAT4:     fvf |= D3DFVF_XYZB4;           break;
 	default: 
-	  /** errooooorr mismatched use of a register, invalid fvf computing */
+	  /** Mismatched use of a register, invalid for fixed function fvf computing (ok for VS) */
 	  invalid_fvf = TRUE;
 	  TRACE("Mismatched use in VertexShader declaration of D3DVSDE_BLENDWEIGHT register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
 	}
@@ -272,7 +272,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	switch (type) {
 	case D3DVSDT_UBYTE4:     fvf |= D3DFVF_LASTBETA_UBYTE4;           break;
 	default: 
-	  /** errooooorr mismatched use of a register, invalid fvf computing */
+	  /** Mismatched use of a register, invalid for fixed function fvf computing (ok for VS) */
 	  invalid_fvf = TRUE;
 	  TRACE("Mismatched use in VertexShader declaration of D3DVSDE_BLENDINDINCES register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
 	}
@@ -282,7 +282,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	switch (type) {
 	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_NORMAL;          break;
 	default: 
-	  /** errooooorr mismatched use of a register, invalid fvf computing */
+	  /** Mismatched use of a register, invalid for fixed function fvf computing (ok for VS) */
 	  invalid_fvf = TRUE;
 	  TRACE("Mismatched use in VertexShader declaration of D3DVSDE_NORMAL register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
 	}
@@ -292,7 +292,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	switch (type) {
         case D3DVSDT_FLOAT1:     fvf |= D3DFVF_PSIZE;           break;
 	default: 
-	  /** errooooorr mismatched use of a register, invalid fvf computing */
+	  /** Mismatched use of a register, invalid for fixed function fvf computing (ok for VS) */
 	  invalid_fvf = TRUE;
 	  TRACE("Mismatched use in VertexShader declaration of D3DVSDE_PSIZE register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
 	}
@@ -302,7 +302,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	switch (type) {
 	case D3DVSDT_D3DCOLOR:   fvf |= D3DFVF_DIFFUSE;         break;
 	default: 
-	  /** errooooorr mismatched use of a register, invalid fvf computing */
+	  /** Mismatched use of a register, invalid for fixed function fvf computing (ok for VS) */
 	  invalid_fvf = TRUE;
 	  TRACE("Mismatched use in VertexShader declaration of D3DVSDE_DIFFUSE register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
 	}
@@ -312,7 +312,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 	switch (type) {
 	case D3DVSDT_D3DCOLOR:	 fvf |= D3DFVF_SPECULAR;        break;
 	default: 
-	  /** errooooorr mismatched use of a register, invalid fvf computing */
+	  /** Mismatched use of a register, invalid for fixed function fvf computing (ok for VS) */
 	  invalid_fvf = TRUE;
 	  TRACE("Mismatched use in VertexShader declaration of D3DVSDE_SPECULAR register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
 	}
@@ -336,7 +336,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
              case D3DVSDT_FLOAT3: fvf |= D3DFVF_TEXCOORDSIZE3(texNo); break;
              case D3DVSDT_FLOAT4: fvf |= D3DFVF_TEXCOORDSIZE4(texNo); break;
              default: 
-               /** errooooorr mismatched use of a register, invalid fvf computing */
+               /** Mismatched use of a register, invalid for fixed function fvf computing (ok for VS) */
                invalid_fvf = TRUE;
                TRACE("Mismatched use in VertexShader declaration of D3DVSDE_TEXCOORD? register: unsupported type %s\n", VertexShaderDeclDataTypes[type]);
              }
@@ -345,7 +345,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect3DDevic
 
       case D3DVSDE_POSITION2:   /* maybe D3DFVF_XYZRHW instead D3DFVF_XYZ (of D3DVDE_POSITION) ... to see */
       case D3DVSDE_NORMAL2:     /* FIXME i don't know what to do here ;( */
-	TRACE("[%lu] registers in VertexShader declaration not supported yet (token:0x%08lx)\n", reg, token);
+	FIXME("[%lu] registers in VertexShader declaration not supported yet (token:0x%08lx)\n", reg, token);
 	break;
       }
       TRACE("VertexShader declaration define %lx as current FVF\n", fvf);
@@ -442,6 +442,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* T
     } else if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 != (0x10000000 & tokentype)) {
       /** skip datas */
       DWORD skipCount = ((token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
+      TRACE(" skipping %ld dwords\n", skipCount);
       curPos = curPos + skipCount * sizeof(DWORD);
       ++pToken;
 
@@ -450,6 +451,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInput(IDirect3DDevice8Impl* T
       DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
       ++pToken;
 
+      TRACE(" type : %ld, reg = %ld\n", type, reg);
       switch (type) {
       case D3DVSDT_FLOAT1:
 	x = *(float*) curPos;

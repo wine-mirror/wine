@@ -214,21 +214,21 @@ void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
 /* Setup views - Transformed & lit if RHW, else untransformed.
        Only unlit if Normals are supplied                       
     Returns: Whether to restore lighting afterwards           */
-BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_lit) {
+BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_lit, BOOL useVS) {
 
     BOOL isLightingOn = FALSE;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     /* If no normals, DISABLE lighting otherwise, dont touch lighing as it is 
-       set by the appropriate render state                                    */
-    if (vtx_lit) {
+       set by the appropriate render state. Note Vertex Shader output is already lit */
+    if (vtx_lit || useVS) {
         isLightingOn = glIsEnabled(GL_LIGHTING);
         glDisable(GL_LIGHTING);
         checkGLcall("glDisable(GL_LIGHTING);");
         TRACE("Disabled lighting as no normals supplied, old state = %d\n", isLightingOn);
     }
 
-    if (vtx_transformed) {
+    if (!useVS && vtx_transformed) {
 
         /* If the last draw was transformed as well, no need to reapply all the matrixes */
         if (!This->last_was_rhw) {
@@ -270,7 +270,7 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
 
         /* Untransformed, so relies on the view and projection matrices */
 
-        if (This->last_was_rhw || !This->modelview_valid) {
+        if (!useVS && (This->last_was_rhw || !This->modelview_valid)) {
             /* Only reapply when have to */
             This->modelview_valid = TRUE;
             glMatrixMode(GL_MODELVIEW);
@@ -288,7 +288,7 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
             }
         }
 
-        if (This->last_was_rhw || !This->proj_valid) {
+        if (!useVS && (This->last_was_rhw || !This->proj_valid)) {
             /* Only reapply when have to */
             This->proj_valid = TRUE;
             glMatrixMode(GL_PROJECTION);
@@ -308,6 +308,24 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
             checkGLcall("glLoadMatrixf");
         }
 
+        /* Vertex Shader output is already transformed, so set up identity matrices */
+        /* FIXME: Actually, only true for software emulated ones, so when h/w ones  
+             come along this needs to take into account whether s/w ones were 
+             requested or not                                                       */
+        if (useVS) {
+            glMatrixMode(GL_MODELVIEW);
+            checkGLcall("glMatrixMode");
+            glLoadIdentity();
+            glMatrixMode(GL_PROJECTION);
+            checkGLcall("glMatrixMode");
+            glLoadIdentity();
+            /* Window Coord 0 is the middle of the first pixel, so translate by half
+               a pixel (See comment above glTranslate above)                         */
+            glTranslatef(1.0/This->StateBlock->viewport.Width, -1.0/This->StateBlock->viewport.Height, 0);
+            checkGLcall("glTranslatef (1.0/width, -1.0/height, 0)");
+            This->modelview_valid = FALSE;
+            This->proj_valid = FALSE;
+        } 
         This->last_was_rhw = FALSE;
     }
     return isLightingOn;
@@ -601,7 +619,7 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
 
     /* Position -------------------------------- */
     if (isXYZ == TRUE) {
-        if (1.0f == rhw || rhw < 0.01f) {
+        if (1.0f == rhw || rhw < 0.00001f) {
             VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
             glVertex3f(x, y, z);
         } else {
@@ -1166,7 +1184,7 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
         
         /* Position -------------------------------- */
         if (sd->u.s.position.lpData != NULL) {
-            if (1.0f == rhw || rhw < 0.01f) {
+            if (1.0f == rhw || rhw < 0.0001f) {
                 VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
                 glVertex3f(x, y, z);
             } else {
@@ -1302,7 +1320,7 @@ void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
         /* Draw using this information */
         draw_vertex(iface,
                     TRUE, x, y, z, rhw, 
-                    FALSE, 0.0f, 0.0f, 0.0f, 
+                    TRUE, 0.0f, 0.0f, 1.0f, 
                     TRUE, (float*) &vertex_shader->output.oD[0],  
                     TRUE, (float*) &vertex_shader->output.oD[1],  
                     FALSE, ptSize,         /* FIXME: Change back when supported */
@@ -1350,7 +1368,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
 
         /** init Constants */
         if (TRUE == This->UpdateStateBlock->Changed.vertexShaderConstant) {
-            TRACE_(d3d_shader)("vertex shader init Constant\n");
+            TRACE_(d3d_shader)("vertex shader initializing constants\n");
             IDirect3DVertexShaderImpl_SetConstantF(vertex_shader, 0, (CONST FLOAT*) &This->UpdateStateBlock->vertexShaderConstant[0], 96);
         }
     }
@@ -1361,7 +1379,8 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     /* Setup transform matrices and sort out */
     isLightingOn = primitiveInitState(iface, 
                                       fvf & D3DFVF_XYZRHW, 
-                                      !(fvf & D3DFVF_NORMAL));
+                                      !(fvf & D3DFVF_NORMAL),
+                                      useVertexShaderFunction);
 
     /* Initialize all values to null */
     if (useVertexShaderFunction == FALSE) {
@@ -1422,8 +1441,8 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
                         idxData, idxSize, minIndex, StartIdx);
     }
 
-    /* If no normals, restore previous lighting state */
-    if (!(fvf & D3DFVF_NORMAL)) {
+    /* If vertex shaders or no normals, restore previous lighting state */
+    if (useVertexShaderFunction || !(fvf & D3DFVF_NORMAL)) {
         if (isLightingOn) glEnable(GL_LIGHTING);
         else glDisable(GL_LIGHTING);
         TRACE("Restored lighting to original state\n");
