@@ -666,7 +666,7 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
     struct stat stat_buf;
 
     memset(buff, 0, DRIVE_SUPER);
-    	/* O_NONBLOCK in case we're opening FIFO; we'll be reset it later */
+       /* O_NONBLOCK in case we're opening FIFO; will be reset later */
     if ((fd = open(DOSDrives[drive].device, O_RDONLY|O_NOCTTY|O_NONBLOCK)) != -1) {
 	if (fstat(fd, &stat_buf) < 0) {	/* shouldn't happen since we just opened that file */
 	    ERR("fstat() failed for opened device '%s' (drive %c:) ! IT SHOULDN'T HAPPEN !!!\n",
