@@ -568,14 +568,12 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
     if ((hBitmap = (HBITMAP)GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
     {
         BITMAP bm;
-	SIZE sz;
 
         if(GetObjectType(hBitmap) != OBJ_BITMAP) return;
         if (!(hMemDC = CreateCompatibleDC( hdc ))) return;
 	GetObjectW(hBitmap, sizeof(bm), &bm);
-	GetBitmapDimensionEx(hBitmap, &sz);
 	oldbitmap = SelectObject(hMemDC, hBitmap);
-	BitBlt(hdc, sz.cx, sz.cy, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0,
+	BitBlt(hdc, 0, 0, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0,
 	       SRCCOPY);
 	SelectObject(hMemDC, oldbitmap);
 	DeleteDC(hMemDC);
