@@ -657,6 +657,20 @@ then
   AC_DEFINE(NEED_TYPE_IN_DEF, 1, [Define if .type asm directive must be inside a .def directive])
 fi
 
+dnl **** Check if @function is defined ****
+
+AC_CACHE_CHECK([whether @function is defined], ac_cv_at_function_is_defined,
+    WINE_TRY_ASM_LINK(
+[	.globl _ac_test
+	.type _ac_test,@function
+_ac_test:
+	.long 0],,,
+    ac_cv_at_function_is_defined="yes",ac_cv_at_function_is_defined="no"))
+if test "$ac_cv_at_function_is_defined" = "yes"
+then
+  AC_DEFINE(AT_FUNCTION_IS_DEFINED, 1, [Define if @function is defined])
+fi
+
 dnl **** Check for underscore on external symbols ****
 
 AC_CACHE_CHECK([whether external symbols need an underscore prefix], ac_cv_c_extern_prefix,
@@ -1210,6 +1224,40 @@ if test "$ac_cv_cpp_def_i386" = "yes"
 then
     CFLAGS="$CFLAGS -D__i386__"
     LINTFLAGS="$LINTFLAGS -D__i386__"
+fi
+
+dnl *** check for the need to define __sparc__
+
+case $host_cpu in
+  *sparc* )
+    AC_CACHE_CHECK([whether we need to define __sparc__],ac_cv_cpp_def_sparc,
+      AC_EGREP_CPP(yes,[#ifndef __sparc__
+yes
+#endif],
+ ac_cv_cpp_def_sparc="yes", ac_cv_cpp_def_sparc="no"))
+    ;;
+esac
+if test "$ac_cv_cpp_def_sparc" = "yes"
+then
+    CFLAGS="$CFLAGS -D__sparc__"
+    LINTFLAGS="$LINTFLAGS -D__sparc__"
+fi
+
+dnl *** check for the need to define __sun__
+
+case $host_vendor in
+  *sun* )
+    AC_CACHE_CHECK([whether we need to define __sun__],ac_cv_cpp_def_sun,
+      AC_EGREP_CPP(yes,[#ifndef __sun__
+yes
+#endif],
+ ac_cv_cpp_def_sun="yes", ac_cv_cpp_def_sun="no"))
+    ;;
+esac
+if test "$ac_cv_cpp_def_sun" = "yes"
+then
+    CFLAGS="$CFLAGS -D__sun__"
+    LINTFLAGS="$LINTFLAGS -D__sun__"
 fi
 
 dnl **** Generate output files ****

@@ -139,8 +139,10 @@ struct statfs;
 
 #ifdef NEED_TYPE_IN_DEF
 # define __ASM_FUNC(name) ".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"
-#else
+#elif defined(AT_FUNCTION_IS_DEFINED)
 # define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",@function"
+#else
+# define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",2"
 #endif
 
 #ifdef __GNUC__
