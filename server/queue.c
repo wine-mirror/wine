@@ -1369,3 +1369,22 @@ DECL_HANDLER(set_active_window)
         else set_error( STATUS_INVALID_HANDLE );
     }
 }
+
+
+/* set the current thread capture window */
+DECL_HANDLER(set_capture_window)
+{
+    struct msg_queue *queue = get_current_queue();
+
+    reply->previous = reply->full_handle = 0;
+    if (queue && check_queue_input_window( queue, req->handle ))
+    {
+        struct thread_input *input = queue->input;
+
+        reply->previous = input->capture;
+        input->capture = get_user_full_handle( req->handle );
+        input->menu_owner = (req->flags & CAPTURE_MENU) ? input->capture : 0;
+        input->move_size = (req->flags & CAPTURE_MOVESIZE) ? input->capture : 0;
+        reply->full_handle = input->capture;
+    }
+}

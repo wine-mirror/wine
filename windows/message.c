@@ -384,12 +384,14 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
     static MSG clk_msg;
 
     POINT pt;
-    INT ht, hittest;
+    INT hittest;
+    GUITHREADINFO info;
 
     /* find the window to dispatch this mouse message to */
 
     hittest = HTCLIENT;
-    if (!(msg->hwnd = PERQDATA_GetCaptureWnd( &ht )))
+    GetGUIThreadInfo( GetCurrentThreadId(), &info );
+    if (!(msg->hwnd = info.hwndCapture))
     {
         /* If no capture HWND, find window which contains the mouse position.
          * Also find the position of the cursor hot spot (hittest) */
@@ -398,7 +400,6 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
         if (!IsWindow(hWndScope)) hWndScope = 0;
         if (!(msg->hwnd = WINPOS_WindowFromPoint( hWndScope, msg->pt, &hittest )))
             msg->hwnd = GetDesktopWindow();
-        ht = hittest;
     }
 
     if (HOOK_IsHooked( WH_JOURNALRECORD ))
@@ -423,7 +424,9 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
 	 * note that ...MOUSEMOVEs can slip in between
 	 * ...BUTTONDOWN and ...BUTTONDBLCLK messages */
 
-        if (GetClassLongA( msg->hwnd, GCL_STYLE ) & CS_DBLCLKS || ht != HTCLIENT )
+        if ((info.flags & (GUI_INMENUMODE|GUI_INMOVESIZE)) ||
+            hittest != HTCLIENT ||
+            (GetClassLongA( msg->hwnd, GCL_STYLE ) & CS_DBLCLKS))
         {
            if ((msg->message == clk_msg.message) &&
                (msg->hwnd == clk_msg.hwnd) &&
@@ -447,7 +450,12 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
         msg->message += WM_NCMOUSEMOVE - WM_MOUSEMOVE;
         msg->wParam = hittest;
     }
-    else ScreenToClient( msg->hwnd, &pt );
+    else
+    {
+        /* coordinates don't get translated while tracking a menu */
+        /* FIXME: should differentiate popups and top-level menus */
+        if (!(info.flags & GUI_INMENUMODE)) ScreenToClient( msg->hwnd, &pt );
+    }
     msg->lParam = MAKELONG( pt.x, pt.y );
     return TRUE;
 }

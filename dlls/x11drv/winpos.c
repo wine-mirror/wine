@@ -41,6 +41,7 @@
 #include "nonclient.h"
 #include "message.h"
 
+#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
@@ -1829,6 +1830,29 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
 
 
 /***********************************************************************
+ *           set_movesize_capture
+ */
+static void set_movesize_capture( HWND hwnd )
+{
+    HWND previous = 0;
+
+    SERVER_START_REQ( set_capture_window )
+    {
+        req->handle = hwnd;
+        req->flags  = CAPTURE_MOVESIZE;
+        if (!wine_server_call_err( req ))
+        {
+            previous = reply->previous;
+            hwnd = reply->full_handle;
+        }
+    }
+    SERVER_END_REQ;
+    if (previous && previous != hwnd)
+        SendMessageW( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
+}
+
+
+/***********************************************************************
  *           SysCommandSizeMove   (X11DRV.@)
  *
  * Perform SC_MOVE and SC_SIZE commands.
@@ -1874,11 +1898,11 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         if ( hittest && hittest != HTSYSMENU ) hittest += 2;
         else
         {
-            SetCapture(hwnd);
+            set_movesize_capture( hwnd );
             hittest = start_size_move( hwnd, wParam, &capturePoint, style );
             if (!hittest)
             {
-                ReleaseCapture();
+                set_movesize_capture(0);
                 return;
             }
         }
@@ -1938,7 +1962,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 
     SendMessageA( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
-    SetCapture( hwnd );
+    set_movesize_capture( hwnd );
 
     /* grab the server only when moving top-level windows without desktop */
     grab = (!DragFullWindows && !parent && (root_window == DefaultRootWindow(gdi_display)));
@@ -2048,7 +2072,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         }
     }
 
-    ReleaseCapture();
+    set_movesize_capture(0);
     if( iconic )
     {
         if( moved ) /* restore cursors, show icon title later on */

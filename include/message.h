@@ -39,8 +39,4 @@ extern void TIMER_RemoveWindowTimers( HWND hwnd );
 extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
 extern BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc );
 
-/* input.c */
-
-extern HWND EVENT_Capture( HWND, INT16 );
-
 #endif  /* __WINE_MESSAGE_H */

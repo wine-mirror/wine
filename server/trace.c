@@ -2233,6 +2233,18 @@ static void dump_set_active_window_reply( const struct set_active_window_reply *
     fprintf( stderr, " previous=%08x", req->previous );
 }
 
+static void dump_set_capture_window_request( const struct set_capture_window_request *req )
+{
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " flags=%08x", req->flags );
+}
+
+static void dump_set_capture_window_reply( const struct set_capture_window_reply *req )
+{
+    fprintf( stderr, " previous=%08x,", req->previous );
+    fprintf( stderr, " full_handle=%08x", req->full_handle );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2395,6 +2407,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_foreground_window_request,
     (dump_func)dump_set_focus_window_request,
     (dump_func)dump_set_active_window_request,
+    (dump_func)dump_set_capture_window_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2559,6 +2572,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_foreground_window_reply,
     (dump_func)dump_set_focus_window_reply,
     (dump_func)dump_set_active_window_reply,
+    (dump_func)dump_set_capture_window_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -2723,6 +2737,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_foreground_window",
     "set_focus_window",
     "set_active_window",
+    "set_capture_window",
 };
 
 /* ### make_requests end ### */

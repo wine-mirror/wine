@@ -2802,6 +2802,22 @@ struct set_active_window_reply
 };
 
 
+struct set_capture_window_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    unsigned int   flags;
+};
+struct set_capture_window_reply
+{
+    struct reply_header __header;
+    user_handle_t  previous;
+    user_handle_t  full_handle;
+};
+#define CAPTURE_MENU     0x01
+#define CAPTURE_MOVESIZE 0x02
+
+
 enum request
 {
     REQ_new_process,
@@ -2965,6 +2981,7 @@ enum request
     REQ_set_foreground_window,
     REQ_set_focus_window,
     REQ_set_active_window,
+    REQ_set_capture_window,
     REQ_NB_REQUESTS
 };
 
@@ -3133,6 +3150,7 @@ union generic_request
     struct set_foreground_window_request set_foreground_window_request;
     struct set_focus_window_request set_focus_window_request;
     struct set_active_window_request set_active_window_request;
+    struct set_capture_window_request set_capture_window_request;
 };
 union generic_reply
 {
@@ -3299,8 +3317,9 @@ union generic_reply
     struct set_foreground_window_reply set_foreground_window_reply;
     struct set_focus_window_reply set_focus_window_reply;
     struct set_active_window_reply set_active_window_reply;
+    struct set_capture_window_reply set_capture_window_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 86
+#define SERVER_PROTOCOL_VERSION 87
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -513,83 +513,27 @@ BOOL WINAPI SetCursorPos( INT x, INT y )
 
 
 /**********************************************************************
- *              EVENT_Capture
- *
- * We need this to be able to generate double click messages
- * when menu code captures mouse in the window without CS_DBLCLK style.
- */
-HWND EVENT_Capture(HWND hwnd, INT16 ht)
-{
-    HWND capturePrev = 0, captureWnd = 0;
-    MESSAGEQUEUE *pMsgQ = 0, *pCurMsgQ = 0;
-    WND* wndPtr = 0;
-    INT16 captureHT = 0;
-
-    capturePrev = GetCapture();
-
-    if (!hwnd)
-    {
-        captureWnd = 0;
-        captureHT = 0;
-    }
-    else
-    {
-        wndPtr = WIN_FindWndPtr( hwnd );
-        if (wndPtr)
-        {
-            TRACE_(win)("(0x%04x)\n", hwnd );
-            captureWnd   = wndPtr->hwndSelf;
-            captureHT    = ht;
-        }
-    }
-
-    /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = QUEUE_Current()))
-    {
-        WARN_(win)("\tCurrent message queue not found. Exiting!\n" );
-        goto CLEANUP;
-    }
-
-    /* Update the perQ capture window and send messages */
-    if( capturePrev != captureWnd )
-    {
-        if (wndPtr)
-        {
-            /* Retrieve the message queue associated with this window */
-            pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
-            if ( !pMsgQ )
-            {
-                WARN_(win)("\tMessage queue not found. Exiting!\n" );
-                goto CLEANUP;
-            }
-
-            /* Make sure that message queue for the window we are setting capture to
-             * shares the same perQ data as the current threads message queue.
-             */
-            if ( pCurMsgQ->pQData != pMsgQ->pQData )
-                goto CLEANUP;
-        }
-
-        PERQDATA_SetCaptureWnd( captureWnd, captureHT );
-        if (capturePrev) SendMessageA( capturePrev, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
-    }
-
-CLEANUP:
-    /* Unlock the queues before returning */
-    if ( pMsgQ )
-        QUEUE_Unlock( pMsgQ );
-
-    WIN_ReleaseWndPtr(wndPtr);
-    return capturePrev;
-}
-
-
-/**********************************************************************
  *		SetCapture (USER32.@)
  */
 HWND WINAPI SetCapture( HWND hwnd )
 {
-    return EVENT_Capture( hwnd, HTCLIENT );
+    HWND previous = 0;
+
+    SERVER_START_REQ( set_capture_window )
+    {
+        req->handle = hwnd;
+        req->flags  = 0;
+        if (!wine_server_call_err( req ))
+        {
+            previous = reply->previous;
+            hwnd = reply->full_handle;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (previous && previous != hwnd)
+        SendMessageW( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
+    return previous;
 }
 
 
@@ -598,7 +542,7 @@ HWND WINAPI SetCapture( HWND hwnd )
  */
 BOOL WINAPI ReleaseCapture(void)
 {
-    return (EVENT_Capture( 0, 0 ) != 0);
+    return (SetCapture(0) != 0);
 }
 
 
@@ -607,9 +551,17 @@ BOOL WINAPI ReleaseCapture(void)
  */
 HWND WINAPI GetCapture(void)
 {
-    INT hittest;
-    return PERQDATA_GetCaptureWnd( &hittest );
+    HWND ret = 0;
+
+    SERVER_START_REQ( get_thread_input )
+    {
+        req->tid = GetCurrentThreadId();
+        if (!wine_server_call_err( req )) ret = reply->capture;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
+
 
 /**********************************************************************
  *		GetAsyncKeyState (USER32.@)

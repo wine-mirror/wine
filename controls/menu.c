@@ -39,13 +39,12 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/server.h"
 #include "wine/unicode.h"
 #include "win.h"
 #include "controls.h"
 #include "nonclient.h"
 #include "user.h"
-#include "message.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(menu);
@@ -2366,6 +2365,30 @@ static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 
 
 /***********************************************************************
+ *           MENU_SetCapture
+ */
+static void MENU_SetCapture( HWND hwnd )
+{
+    HWND previous = 0;
+
+    SERVER_START_REQ( set_capture_window )
+    {
+        req->handle = hwnd;
+        req->flags  = CAPTURE_MENU;
+        if (!wine_server_call_err( req ))
+        {
+            previous = reply->previous;
+            hwnd = reply->full_handle;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (previous && previous != hwnd)
+        SendMessageW( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
+}
+
+
+/***********************************************************************
  *           MENU_DoNextMenu
  *
  * NOTE: WM_NEXTMENU documented in Win32 is a bit different.
@@ -2450,9 +2473,8 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 
 	if( hNewWnd != pmt->hOwnerWnd )
 	{
-	    ReleaseCapture();
 	    pmt->hOwnerWnd = hNewWnd;
-	    EVENT_Capture( pmt->hOwnerWnd, HTMENU );
+	    MENU_SetCapture( pmt->hOwnerWnd );
 	}
 
 	pmt->hTopMenu = pmt->hCurrentMenu = hNewMenu; /* all subpopups are hidden */
@@ -2681,7 +2703,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	fEndMenu = !fRemove;
     }
 
-    EVENT_Capture( mt.hOwnerWnd, HTMENU );
+    MENU_SetCapture( mt.hOwnerWnd );
 
     while (!fEndMenu)
     {
@@ -2735,14 +2757,12 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	if ((msg.message >= WM_MOUSEFIRST) && (msg.message <= WM_MOUSELAST))
 	{
             /*
-             * use the mouse coordinates in lParam instead of those in the MSG
-             * struct to properly handle synthetic messages. lParam coords are
-             * relative to client area, so they must be converted; since they can
-             * be negative, we must use SLOWORD/SHIWORD instead of LOWORD/HIWORD.
+             * Use the mouse coordinates in lParam instead of those in the MSG
+             * struct to properly handle synthetic messages. They are already
+             * in screen coordinates.
              */
             mt.pt.x = SLOWORD(msg.lParam);
             mt.pt.y = SHIWORD(msg.lParam);
-            ClientToScreen(msg.hwnd,&mt.pt);
 
 	    /* Find a menu for this mouse event */
 	    hmenu = MENU_PtMenu( mt.hTopMenu, mt.pt );
@@ -2911,7 +2931,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	else mt.trackFlags &= ~TF_SKIPREMOVE;
     }
 
-    ReleaseCapture();
+    MENU_SetCapture(0);  /* release the capture */
 
     /* If dropdown is still painted and the close box is clicked on
        then the menu will be destroyed as part of the DispatchMessage above.
@@ -3967,7 +3987,7 @@ BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
     if (GetWindowLongA( hWnd, GWL_STYLE ) & WS_CHILD) return FALSE;
 
     hWnd = WIN_GetFullHandle( hWnd );
-    if (GetCapture() == hWnd) ReleaseCapture();
+    if (GetCapture() == hWnd) MENU_SetCapture(0);  /* release the capture */
 
     if (hMenu != 0)
     {

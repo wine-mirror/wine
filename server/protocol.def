@@ -1955,3 +1955,14 @@ enum message_type
 @REPLY
     user_handle_t  previous;      /* handle to the previous active window */
 @END
+
+/* Set the current thread capture window */
+@REQ(set_capture_window)
+    user_handle_t  handle;        /* handle to the capture window */
+    unsigned int   flags;         /* capture flags (see below) */
+@REPLY
+    user_handle_t  previous;      /* handle to the previous capture window */
+    user_handle_t  full_handle;   /* full 32-bit handle of new capture window */
+@END
+#define CAPTURE_MENU     0x01  /* capture is for a menu */
+#define CAPTURE_MOVESIZE 0x02  /* capture is for moving/resizing */
