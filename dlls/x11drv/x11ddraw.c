@@ -125,7 +125,7 @@ static DWORD PASCAL X11DRV_DDHAL_CreateSurface(LPDDHAL_CREATESURFACEDATA data)
     X11DRV_DD_Primary = *data->lplpSList;
     X11DRV_DD_PrimaryWnd = (HWND)X11DRV_DD_Primary->lpSurfMore->lpDDRAWReserved;
     X11DRV_DD_PrimaryGbl = X11DRV_DD_Primary->lpGbl;
-    SetPrimaryDIB(GET_LPDDRAWSURFACE_GBL_MORE(X11DRV_DD_PrimaryGbl)->hKernelSurface);
+    SetPrimaryDIB((HBITMAP)GET_LPDDRAWSURFACE_GBL_MORE(X11DRV_DD_PrimaryGbl)->hKernelSurface);
     X11DRV_DD_UserClass = GlobalFindAtomA("WINE_DDRAW");
     if (dxgrab) GrabPointer(TRUE);
   }

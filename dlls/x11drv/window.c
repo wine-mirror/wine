@@ -1045,7 +1045,7 @@ Window X11DRV_get_client_window( HWND hwnd )
     WND *win = WIN_GetPtr( hwnd );
 
     if (win == WND_OTHER_PROCESS)
-        return GetPropA( hwnd, client_window_atom );
+        return (Window)GetPropA( hwnd, client_window_atom );
 
     if (win)
     {
@@ -1068,7 +1068,7 @@ Window X11DRV_get_whole_window( HWND hwnd )
     WND *win = WIN_GetPtr( hwnd );
 
     if (win == WND_OTHER_PROCESS)
-        return GetPropA( hwnd, whole_window_atom );
+        return (Window)GetPropA( hwnd, whole_window_atom );
 
     if (win)
     {

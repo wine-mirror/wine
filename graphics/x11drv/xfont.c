@@ -3259,7 +3259,7 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 
     TRACE("dc=%p, hfont=%04x\n", dc, hfont);
 
-    if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return GDI_ERROR;
+    if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return HGDI_ERROR;
 
     TRACE("dc->gdiFont = %p\n", dc->gdiFont);
 
@@ -3334,7 +3334,7 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 
     LeaveCriticalSection( &crtsc_fonts_X11 );
 
-    return TRUE; /* Use a device font */
+    return (HFONT)1; /* Use a device font */
 }
 
 

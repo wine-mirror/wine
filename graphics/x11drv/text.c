@@ -29,6 +29,7 @@
 
 #include "windef.h"
 #include "winnls.h"
+#include "wownt32.h"
 #include "gdi.h"
 #include "x11font.h"
 #include "bitmap.h"
@@ -217,8 +218,8 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
     if (flags & ETO_CLIPPED)
     {
-        SaveVisRgn16( dc->hSelf );
-        IntersectVisRect16( dc->hSelf, lprect->left, lprect->top, lprect->right, lprect->bottom );
+        SaveVisRgn16( HDC_16(dc->hSelf) );
+        IntersectVisRect16( HDC_16(dc->hSelf), lprect->left, lprect->top, lprect->right, lprect->bottom );
     }
 
       /* Draw the text background if necessary */
@@ -404,7 +405,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
                      physDev->org.x + x + width, physDev->org.y + y - lineAscent );
     }
 
-    if (flags & ETO_CLIPPED) RestoreVisRgn16( dc->hSelf );
+    if (flags & ETO_CLIPPED) RestoreVisRgn16( HDC_16(dc->hSelf) );
     goto END;
 
 FAIL:

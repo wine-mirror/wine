@@ -947,8 +947,7 @@ void X11DRV_AcquireClipboard(void)
     if ( !(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)) )
     {
         Atom xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
-        owner = X11DRV_get_whole_window( GetAncestor( hWndClipWindow ? hWndClipWindow : AnyPopup(),
-                                                      GA_ROOT ) );
+        owner = X11DRV_get_whole_window( GetAncestor( hWndClipWindow, GA_ROOT ) );
 
         /* Grab PRIMARY selection if not owned */
         if ( !(selectionAcquired & S_PRIMARY) )

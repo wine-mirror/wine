@@ -226,7 +226,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 {
     LOGBRUSH logbrush;
-    HBITMAP16 hBitmap;
+    HBITMAP hBitmap;
     BITMAPINFO * bmpInfo;
 
     if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;

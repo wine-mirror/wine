@@ -31,6 +31,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "wownt32.h"
 
 #include "x11drv.h"
 #include "win.h"
@@ -506,7 +507,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     X11DRV_SetDrawable( hdc, drawable, mode, &org, &drawable_org );
 
     if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ||
-        SetHookFlags16( hdc, DCHF_VALIDATEVISRGN ))  /* DC was dirty */
+        SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
     {
         /* need to recompute the visible region */
         HRGN visRgn;
@@ -521,7 +522,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         }
         else visRgn = CreateRectRgn( 0, 0, 0, 0 );
 
-        SelectVisRgn16( hdc, visRgn );
+        SelectVisRgn16( HDC_16(hdc), HRGN_16(visRgn) );
         DeleteObject( visRgn );
     }
 

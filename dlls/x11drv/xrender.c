@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include "winnt.h"
+#include "wownt32.h"
 #include "x11drv.h"
 #include "bitmap.h"
 #include "wine/unicode.h"
@@ -742,8 +743,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     if (flags & ETO_CLIPPED)
     {
-        SaveVisRgn16( hdc );
-        IntersectVisRect16( dc->hSelf, lprect->left, lprect->top, lprect->right, lprect->bottom );
+        SaveVisRgn16( HDC_16(hdc) );
+        IntersectVisRect16( HDC_16(dc->hSelf), lprect->left, lprect->top, lprect->right, lprect->bottom );
     }
 
     if(!physDev->xrender->pict) {
@@ -881,7 +882,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     wine_tsx11_unlock();
 
     if (flags & ETO_CLIPPED)
-        RestoreVisRgn16( hdc );
+        RestoreVisRgn16( HDC_16(hdc) );
 
     retv = TRUE;
 
