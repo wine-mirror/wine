@@ -50,8 +50,10 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     switch (nEscape) {
     	/* Escape(hdc,QUERYESCSUPPORT,LPINT,NULL) */
         /* Escape(hdc,CLIP_TO_PATH,LPINT,NULL) */
+        /* Escape(hdc,EPSPRINTING,LPINT,NULL) */
     case QUERYESCSUPPORT:
     case CLIP_TO_PATH:
+    case EPSPRINTING:
       {
     	LPINT16 x = (LPINT16)SEGPTR_NEW(INT16);
 	*x = *(INT*)lpszInData;

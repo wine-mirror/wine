@@ -79,6 +79,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    case SETCHARSET:
 	    case EXT_DEVICE_CAPS:
 	    case SET_BOUNDS:
+            case EPSPRINTING:
             case PASSTHROUGH:
             case POSTSCRIPT_PASSTHROUGH:
 	        return TRUE;
@@ -314,17 +315,37 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    return 0;
 	}
 
+    case EPSPRINTING:
+	{
+	    UINT16	epsprint = *(UINT16*)MapSL(lpInData);
+	    /* FIXME: In this mode we do not need to send page intros and page
+	     * ends according to the doc. But I just ignore that detail
+	     * for now.
+	     */
+	    TRACE("EPS Printing support %sable.\n",epsprint?"en":"dis");
+	    return 1;
+        }
     case PASSTHROUGH:
     case POSTSCRIPT_PASSTHROUGH:
         {
             /* Write directly to spool file, bypassing normal PS driver
              * processing that is done along with writing PostScript code
              * to the spool.
+	     * (Usually we have a WORD before the data counting the size, but
+	     * cbInput is just this +2.)
              */
-            return WriteSpool16(physDev->job.hJob, ((char *)lpInData) + 2,
-                                cbInput);
+            return WriteSpool16(physDev->job.hJob,((char*)lpInData)+2,cbInput-2);
         }
 
+    case GETSETPRINTORIENT:
+	{
+	    /* If lpInData is present, it is a 20 byte structure, first 32
+	     * bit LONG value is the orientation. if lpInData is NULL, it
+	     * returns the current orientation.
+	     */
+	    FIXME("GETSETPRINTORIENT not implemented (lpInData %ld)!\n",lpInData);
+	    return 1;
+	}
     default:
         FIXME("Unimplemented code 0x%x\n", nEscape);
 	return 0;
