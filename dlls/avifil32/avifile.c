@@ -162,7 +162,7 @@ typedef struct _IAVIStreamImpl {
   DWORD             cbBuffer;       /* size of lpBuffer */
   DWORD             dwCurrentFrame; /* frame/block currently in lpBuffer */
 
-  DWORD             dwLastFrame;    /* last correct index in idxFrames */
+  LONG              lLastFrame;    /* last correct index in idxFrames */
   AVIINDEXENTRY    *idxFrames;
   DWORD             nIdxFrames;     /* upper index limit of idxFrames */
   AVIINDEXENTRY    *idxFmtChanges;
@@ -390,6 +390,8 @@ static HRESULT WINAPI IAVIFile_fnCreateStream(IAVIFile *iface,PAVISTREAM *avis,
   if (avis == NULL || asi == NULL)
     return AVIERR_BADPARAM;
 
+  *avis = NULL;
+
   /* Does the user have write permission? */
   if ((This->uMode & MMIO_RWMODE) == 0)
     return AVIERR_READONLY;
@@ -421,6 +423,10 @@ static HRESULT WINAPI IAVIFile_fnCreateStream(IAVIFile *iface,PAVISTREAM *avis,
 
   /* update our AVIFILEINFO structure */
   AVIFILE_UpdateInfo(This);
+
+  /* return it */
+  *avis = (PAVISTREAM)This->ppStreams[n];
+  IAVIStream_AddRef(*avis);
 
   return AVIERR_OK;
 }
@@ -757,7 +763,7 @@ static LONG WINAPI IAVIStream_fnFindSample(IAVIStream *iface, LONG pos,
 
   if (flags & FIND_TYPE) {
     if (flags & FIND_KEY) {
-      while (0 <= pos && pos <= This->dwLastFrame) {
+      while (0 <= pos && pos <= This->lLastFrame) {
 	if (This->idxFrames[pos].dwFlags & AVIIF_KEYFRAME)
 	  goto RETURN_FOUND;
 
@@ -767,7 +773,7 @@ static LONG WINAPI IAVIStream_fnFindSample(IAVIStream *iface, LONG pos,
 	  pos--;
       };
     } else if (flags & FIND_ANY) {
-      while (0 <= pos && pos <= This->dwLastFrame) {
+      while (0 <= pos && pos <= This->lLastFrame) {
 	if (This->idxFrames[pos].dwChunkLength > 0)
 	  goto RETURN_FOUND;
 
@@ -882,11 +888,11 @@ static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream *iface, LONG pos,
     return AVIERR_READONLY;
 
   /* can only set format before frame is written! */
-  if (This->dwLastFrame > pos)
+  if (This->lLastFrame > pos)
     return AVIERR_UNSUPPORTED;
 
   /* initial format or a formatchange? */
-  if (This->lpFormat != NULL) {
+  if (This->lpFormat == NULL) {
     /* initial format */
     if (This->paf->dwMoviChunkPos != 0)
       return AVIERR_ERROR; /* user has used API in wrong sequnece! */
@@ -1063,7 +1069,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
     if (samples > 1)
       samples = 1;
 
-    assert(start <= This->dwLastFrame);
+    assert(start <= This->lLastFrame);
     size = This->idxFrames[start].dwChunkLength;
     if (buffer != NULL && buffersize >= size) {
       hr = AVIFILE_ReadBlock(This, start, buffer, size);
@@ -1124,11 +1130,12 @@ static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream *iface, LONG start,
 
   /* append to end of stream? */
   if (start == -1) {
-    if (This->dwLastFrame == -1)
+    if (This->lLastFrame == -1)
       start = This->sInfo.dwStart;
     else
       start = This->sInfo.dwLength;
-  }
+  } else if (This->lLastFrame == -1)
+    This->sInfo.dwStart = start;
 
   if (This->sInfo.dwSampleSize != 0) {
     /* fixed sample size -- audio like */
@@ -1140,7 +1147,7 @@ static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream *iface, LONG start,
       return AVIERR_UNSUPPORTED;
 
     /* Convert position to frame/block */
-    start = This->dwLastFrame + 1;
+    start = This->lLastFrame + 1;
 
     if ((This->paf->fInfo.dwFlags & AVIFILEINFO_ISINTERLEAVED) == 0) {
       FIXME(": not interleaved, could collect audio data!\n");
@@ -1151,11 +1158,11 @@ static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream *iface, LONG start,
       return AVIERR_UNSUPPORTED;
 
     /* must we fill up with empty frames? */
-    if (This->dwLastFrame != -1) {
+    if (This->lLastFrame != -1) {
       FOURCC ckid2 = MAKEAVICKID(cktypeDIBcompressed, This->nStream);
 
-      while (start > This->dwLastFrame + 1) {
-	hr = AVIFILE_WriteBlock(This, This->dwLastFrame + 1, ckid2, 0, NULL, 0);
+      while (start > This->lLastFrame + 1) {
+	hr = AVIFILE_WriteBlock(This, This->lLastFrame + 1, ckid2, 0, NULL, 0);
 	if (FAILED(hr))
 	  return hr;
       }
@@ -1298,6 +1305,9 @@ static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream *iface,
 
 static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DWORD offset, DWORD flags)
 {
+  /* pre-conditions */
+  assert(This != NULL);
+
   switch (TWOCCFromFOURCC(ckid)) {
   case cktypeDIBbits:
     if (This->paf->fInfo.dwFlags & AVIFILEINFO_TRUSTCKTYPE)
@@ -1323,7 +1333,7 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
       if (This->idxFmtChanges == NULL)
 	return AVIERR_MEMORY;
 
-      This->idxFmtChanges[n].ckid          = This->dwLastFrame;
+      This->idxFmtChanges[n].ckid          = This->lLastFrame;
       This->idxFmtChanges[n].dwFlags       = 0;
       This->idxFmtChanges[n].dwChunkOffset = offset;
       This->idxFmtChanges[n].dwChunkLength = size;
@@ -1341,25 +1351,29 @@ static HRESULT AVIFILE_AddFrame(IAVIStreamImpl *This, DWORD ckid, DWORD size, DW
   };
 
   /* first frame is alwasy a keyframe */
-  if (This->dwLastFrame == -1)
+  if (This->lLastFrame == -1)
     flags |= AVIIF_KEYFRAME;
 
   if (This->sInfo.dwSuggestedBufferSize < size)
     This->sInfo.dwSuggestedBufferSize = size;
 
   /* get memory for index */
-  if (This->idxFrames == NULL || This->dwLastFrame + 1 >= This->nIdxFrames) {
+  if (This->idxFrames == NULL || This->lLastFrame + 1 >= This->nIdxFrames) {
     This->nIdxFrames += 512;
     This->idxFrames = GlobalReAllocPtr(This->idxFrames, This->nIdxFrames * sizeof(AVIINDEXENTRY), GHND);
     if (This->idxFrames == NULL)
       return AVIERR_MEMORY;
   }
 
-  This->dwLastFrame++;
-  This->idxFrames[This->dwLastFrame].ckid          = ckid;
-  This->idxFrames[This->dwLastFrame].dwFlags       = flags;
-  This->idxFrames[This->dwLastFrame].dwChunkOffset = offset;
-  This->idxFrames[This->dwLastFrame].dwChunkLength = size;
+  This->lLastFrame++;
+  This->idxFrames[This->lLastFrame].ckid          = ckid;
+  This->idxFrames[This->lLastFrame].dwFlags       = flags;
+  This->idxFrames[This->lLastFrame].dwChunkOffset = offset;
+  This->idxFrames[This->lLastFrame].dwChunkLength = size;
+
+  /* update AVISTREAMINFO structure if neccessary */
+  if (This->sInfo.dwLength < This->lLastFrame)
+    This->sInfo.dwLength = This->lLastFrame;
 
   return AVIERR_OK;
 }
@@ -1413,7 +1427,7 @@ static void    AVIFILE_ConstructAVIStream(IAVIFileImpl *paf, DWORD nr, LPAVISTRE
   pstream->paf            = paf;
   pstream->nStream        = nr;
   pstream->dwCurrentFrame = -1;
-  pstream->dwLastFrame    = -1;
+  pstream->lLastFrame    = -1;
 
   if (asi != NULL) {
     memcpy(&pstream->sInfo, asi, sizeof(pstream->sInfo));
@@ -1451,7 +1465,7 @@ static void    AVIFILE_DestructAVIStream(IAVIStreamImpl *This)
   assert(This != NULL);
 
   This->dwCurrentFrame = -1;
-  This->dwLastFrame    = -1;
+  This->lLastFrame    = -1;
   This->paf = NULL;
   if (This->idxFrames != NULL) {
     GlobalFreePtr(This->idxFrames);
@@ -1746,7 +1760,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
    * by parsing 'movi' chunk */
   if ((This->fInfo.dwFlags & AVIFILEINFO_HASINDEX) == 0) {
     for (nStream = 0; nStream < This->fInfo.dwStreams; nStream++)
-      This->ppStreams[nStream]->dwLastFrame = -1;
+      This->ppStreams[nStream]->lLastFrame = -1;
 
     if (mmioSeek(This->hmmio, ckLIST1.dwDataOffset + sizeof(DWORD), SEEK_SET) == -1) {
       ERR(": Oops, can't seek back to 'movi' chunk!\n");
@@ -1758,6 +1772,9 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
       if (ck.ckid != FOURCC_LIST) {
 	if (mmioAscend(This->hmmio, &ck, 0) == S_OK) {
 	  nStream = StreamFromFOURCC(ck.ckid);
+
+	  if (nStream > This->fInfo.dwStreams)
+	    return AVIERR_BADFORMAT;
 
 	  AVIFILE_AddFrame(This->ppStreams[nStream], ck.ckid, ck.cksize,
 			   ck.dwDataOffset - 2 * sizeof(DWORD), 0);
@@ -1802,7 +1819,7 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
   for (n = 0; n < This->fInfo.dwStreams; n++) {
     IAVIStreamImpl *pStream = This->ppStreams[n];
 
-    pStream->dwLastFrame = -1;
+    pStream->lLastFrame = -1;
 
     if (pStream->idxFrames != NULL) {
       GlobalFreePtr(pStream->idxFrames);
@@ -1822,7 +1839,7 @@ static HRESULT AVIFILE_LoadIndex(IAVIFileImpl *This, DWORD size, DWORD offset)
 
     pStream->idxFrames =
       (AVIINDEXENTRY*)GlobalAllocPtr(GHND, pStream->nIdxFrames * sizeof(AVIINDEXENTRY));
-    if (pStream->idxFrames == NULL) {
+    if (pStream->idxFrames == NULL && pStream->nIdxFrames > 0) {
       pStream->nIdxFrames = 0;
       return AVIERR_MEMORY;
     }
@@ -1889,7 +1906,7 @@ static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
   assert(This->paf != NULL);
   assert(This->paf->hmmio != (HMMIO)NULL);
   assert(This->sInfo.dwStart <= pos && pos < This->sInfo.dwLength);
-  assert(pos <= This->dwLastFrame);
+  assert(pos <= This->lLastFrame);
 
   /* should we read as much as block gives us? */
   if (size == 0 || size > This->idxFrames[pos].dwChunkLength)
@@ -1953,7 +1970,7 @@ static void    AVIFILE_SamplesToBlock(IAVIStreamImpl *This, LPLONG pos,
   (*offset) *= This->sInfo.dwSampleSize;
 
   /* convert bytes to block number */
-  for (block = 0; block <= This->dwLastFrame; block++) {
+  for (block = 0; block <= This->lLastFrame; block++) {
     if (This->idxFrames[block].dwChunkLength <= *offset)
       (*offset) -= This->idxFrames[block].dwChunkLength;
     else
@@ -2049,6 +2066,7 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
     strHdr.dwInitialFrames       = pStream->sInfo.dwInitialFrames;
     strHdr.dwScale               = pStream->sInfo.dwScale;
     strHdr.dwRate                = pStream->sInfo.dwRate;
+    strHdr.dwStart               = pStream->sInfo.dwStart;
     strHdr.dwLength              = pStream->sInfo.dwLength;
     strHdr.dwSuggestedBufferSize = pStream->sInfo.dwSuggestedBufferSize;
     strHdr.dwQuality             = pStream->sInfo.dwQuality;
@@ -2240,7 +2258,7 @@ static HRESULT AVIFILE_SaveIndex(IAVIFileImpl *This)
 	  nFrame -= (lInitialFrames - pStream->sInfo.dwInitialFrames);
 
 	/* reached end of this stream? */
-	if (pStream->dwLastFrame <= nFrame)
+	if (pStream->lLastFrame <= nFrame)
 	  continue;
 
 	if ((pStream->sInfo.dwFlags & AVISTREAMINFO_FORMATCHANGES) &&
@@ -2274,10 +2292,13 @@ static HRESULT AVIFILE_SaveIndex(IAVIFileImpl *This)
     }
   } else {
     /* not interleaved -- write index for each stream at once */
-    for (nStream = 0; nStream < This->fInfo.dwStreams; n++) {
+    for (nStream = 0; nStream < This->fInfo.dwStreams; nStream++) {
       pStream = This->ppStreams[nStream];
 
-      for (n = 0; n < pStream->dwLastFrame; n++) {
+      if (pStream->lLastFrame == -1)
+	pStream->lLastFrame = 0;
+
+      for (n = 0; n < pStream->lLastFrame; n++) {
 	if ((pStream->sInfo.dwFlags & AVISTREAMINFO_FORMATCHANGES) &&
 	    (pStream->sInfo.dwFormatChangeCount != 0)) {
 	  DWORD pos;
@@ -2431,7 +2452,7 @@ static HRESULT AVIFILE_WriteBlock(IAVIStreamImpl *This, DWORD block,
     return AVIERR_FILEWRITE;
 
   This->paf->fDirty         = TRUE;
-  This->paf->dwNextFramePos = ck.dwDataOffset + ck.cksize;
+  This->paf->dwNextFramePos = mmioSeek(This->paf->hmmio, 0, SEEK_CUR);
 
   return AVIFILE_AddFrame(This, ckid, size, ck.dwDataOffset, flags);
 }
