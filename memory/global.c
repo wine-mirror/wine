@@ -991,34 +991,6 @@ typedef struct __GLOBAL32_INTERN
    BYTE         LockCount;
 } GLOBAL32_INTERN, *PGLOBAL32_INTERN;
 
-/***********************************************************************
- *           GLOBAL_GetHeap
- *
- * Returns the appropriate heap to be used. If the object was created
- * With GMEM_DDESHARE we allocated it on the system heap.
- */
-static HANDLE GLOBAL_GetHeap( HGLOBAL hmem )
-{
-   HANDLE heap;
-    
-   TRACE("() hmem=%x\n", hmem);
-   
-   /* Get the appropriate heap to be used for this object */
-   if (ISPOINTER(hmem))
-      heap = GetProcessHeap();
-   else
-   {
-      PGLOBAL32_INTERN pintern;
-      pintern=HANDLE_TO_INTERN(hmem);
-      
-      /* If it was DDESHARE it was created on the shared system heap */
-      pintern=HANDLE_TO_INTERN(hmem);
-      heap = ( pintern->Flags & (GMEM_DDESHARE >> 8) )
-           ? SystemHeap : GetProcessHeap();
-   }
-
-   return heap;
-}
 
 /***********************************************************************
  *           GlobalAlloc   (KERNEL32.315)
@@ -1048,19 +1020,14 @@ HGLOBAL WINAPI GlobalAlloc(
    }
    else  /* HANDLE */
    {
-      HANDLE heap;
-       
-      /* If DDESHARE is set, create on the shared system heap */
-      heap = (flags & GMEM_DDESHARE) ? SystemHeap : GetProcessHeap();
-
       /* HeapLock(heap); */
 
-      pintern=HeapAlloc(heap, 0,  sizeof(GLOBAL32_INTERN));
+      pintern=HeapAlloc(GetProcessHeap(), 0,  sizeof(GLOBAL32_INTERN));
       if (!pintern) return 0;
       if(size)
       {
-	 if (!(palloc=HeapAlloc(heap, hpflags, size+sizeof(HGLOBAL)))) {
-	    HeapFree(heap, 0, pintern);
+	 if (!(palloc=HeapAlloc(GetProcessHeap(), hpflags, size+sizeof(HGLOBAL)))) {
+	    HeapFree(GetProcessHeap(), 0, pintern);
 	    return 0;
 	 }
 	 *(HGLOBAL *)palloc=INTERN_TO_HANDLE(pintern);
@@ -1163,7 +1130,6 @@ HGLOBAL WINAPI GlobalHandle(
                  LPCVOID pmem /* [in] Pointer to global memory block */
 ) {
     HGLOBAL handle;
-    HANDLE heap;
     PGLOBAL32_INTERN  maybe_intern;
     LPCVOID test;
 
@@ -1181,8 +1147,7 @@ HGLOBAL WINAPI GlobalHandle(
         /* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
         /* will fail.                                                      */
         if (ISPOINTER(pmem)) {
-            heap = GLOBAL_GetHeap( (HGLOBAL)pmem );
-            if (HeapValidate( heap, 0, pmem )) {
+            if (HeapValidate( GetProcessHeap(), 0, pmem )) {
                 handle = (HGLOBAL)pmem;  /* valid fixed block */
                 break;
             }
@@ -1191,12 +1156,11 @@ HGLOBAL WINAPI GlobalHandle(
             handle = (HGLOBAL)pmem;
 
         /* Now test handle either passed in or retrieved from pointer */
-        heap = GLOBAL_GetHeap( handle );
         maybe_intern = HANDLE_TO_INTERN( handle );
         if (maybe_intern->Magic == MAGIC_GLOBAL_USED) {
             test = maybe_intern->Pointer;
-            if (HeapValidate( heap, 0, ((HGLOBAL *)test)-1 ) && /* obj(-handle) valid arena? */
-                HeapValidate( heap, 0, maybe_intern ))  /* intern valid arena? */
+            if (HeapValidate( GetProcessHeap(), 0, ((HGLOBAL *)test)-1 ) && /* obj(-handle) valid arena? */
+                HeapValidate( GetProcessHeap(), 0, maybe_intern ))  /* intern valid arena? */
                 break;  /* valid moveable block */
         }
         handle = 0;
@@ -1227,7 +1191,6 @@ HGLOBAL WINAPI GlobalReAlloc(
    LPVOID               palloc;
    HGLOBAL            hnew;
    PGLOBAL32_INTERN     pintern;
-   HANDLE heap = GLOBAL_GetHeap( hmem );
    DWORD heap_flags = (flags & GMEM_ZEROINIT) ? HEAP_ZERO_MEMORY : 0;
 
    hnew = 0;
@@ -1245,7 +1208,7 @@ HGLOBAL WINAPI GlobalReAlloc(
              SetLastError( ERROR_NOACCESS );
     	     return 0;
          }
-	 size=HeapSize(heap, 0, (LPVOID) hmem);
+	 size=HeapSize(GetProcessHeap(), 0, (LPVOID) hmem);
 	 hnew=GlobalAlloc( flags, size);
 	 palloc=GlobalLock(hnew);
 	 memcpy(palloc, (LPVOID) hmem, size);
@@ -1270,7 +1233,7 @@ HGLOBAL WINAPI GlobalReAlloc(
       if(ISPOINTER(hmem))
       {
 	 /* reallocate fixed memory */
-	 hnew=(HGLOBAL)HeapReAlloc(heap, heap_flags, (LPVOID) hmem, size);
+	 hnew=(HGLOBAL)HeapReAlloc(GetProcessHeap(), heap_flags, (LPVOID) hmem, size);
       }
       else
       {
@@ -1290,7 +1253,7 @@ HGLOBAL WINAPI GlobalReAlloc(
 	    hnew=hmem;
 	    if(pintern->Pointer)
 	    {
-	       if((palloc = HeapReAlloc(heap, heap_flags,
+	       if((palloc = HeapReAlloc(GetProcessHeap(), heap_flags,
 				   (char *) pintern->Pointer-sizeof(HGLOBAL),
 				   size+sizeof(HGLOBAL))) == NULL)
 		   return 0; /* Block still valid */
@@ -1298,7 +1261,7 @@ HGLOBAL WINAPI GlobalReAlloc(
 	    }
 	    else
 	    {
-	        if((palloc=HeapAlloc(heap, heap_flags, size+sizeof(HGLOBAL)))
+	        if((palloc=HeapAlloc(GetProcessHeap(), heap_flags, size+sizeof(HGLOBAL)))
 		   == NULL)
 		    return 0;
 	       *(HGLOBAL *)palloc=hmem;
@@ -1309,7 +1272,7 @@ HGLOBAL WINAPI GlobalReAlloc(
 	 {
 	    if(pintern->Pointer)
 	    {
-	       HeapFree(heap, 0, (char *) pintern->Pointer-sizeof(HGLOBAL));
+	       HeapFree(GetProcessHeap(), 0, (char *) pintern->Pointer-sizeof(HGLOBAL));
 	       pintern->Pointer=NULL;
 	    }
 	 }
@@ -1331,11 +1294,10 @@ HGLOBAL WINAPI GlobalFree(
 ) {
    PGLOBAL32_INTERN pintern;
    HGLOBAL        hreturned = 0;
-   HANDLE heap = GLOBAL_GetHeap( hmem );
-   
+
    if(ISPOINTER(hmem)) /* POINTER */
    {
-      if(!HeapFree(heap, 0, (LPVOID) hmem)) hmem = 0;
+      if(!HeapFree(GetProcessHeap(), 0, (LPVOID) hmem)) hmem = 0;
    }
    else  /* HANDLE */
    {
@@ -1351,10 +1313,9 @@ HGLOBAL WINAPI GlobalFree(
       /*    SetLastError(ERROR_INVALID_HANDLE);  */
 
 	 if(pintern->Pointer)
-	    if(!HeapFree(heap, 0,
-	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL)))
+	    if(!HeapFree(GetProcessHeap(), 0, (char *)(pintern->Pointer)-sizeof(HGLOBAL)))
 	       hreturned=hmem;
-	 if(!HeapFree(heap, 0, pintern))
+	 if(!HeapFree(GetProcessHeap(), 0, pintern))
 	    hreturned=hmem;
       }      
       /* HeapUnlock(heap); */
@@ -1374,11 +1335,10 @@ DWORD WINAPI GlobalSize(
 ) {
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
-   HANDLE heap          = GLOBAL_GetHeap( hmem );
 
    if(ISPOINTER(hmem)) 
    {
-      retval=HeapSize(heap, 0,  (LPVOID) hmem);
+      retval=HeapSize(GetProcessHeap(), 0,  (LPVOID) hmem);
    }
    else
    {
@@ -1389,7 +1349,7 @@ DWORD WINAPI GlobalSize(
       {
         if (!pintern->Pointer) /* handle case of GlobalAlloc( ??,0) */
             return 0;
-	 retval=HeapSize(heap, 0,
+	 retval=HeapSize(GetProcessHeap(), 0,
 	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL))-4;
 	 if (retval == 0xffffffff-4) retval = 0;
       }

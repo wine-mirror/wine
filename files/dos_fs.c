@@ -2258,7 +2258,7 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO) )))
         return INVALID_HANDLE_VALUE16;
     info = (FIND_FIRST_INFO *)GlobalLock16( handle );
-    info->path = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
+    info->path = HEAP_strdupA( GetProcessHeap(), 0, full_name.long_name );
     info->long_mask = strrchr( info->path, '/' );
     if (info->long_mask )
         *(info->long_mask++) = '\0';
@@ -2302,7 +2302,7 @@ BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
     if (!DOSFS_FindNextEx( info, data ))
     {
         DOSFS_CloseDir( info->dir ); info->dir = NULL;
-        HeapFree( SystemHeap, 0, info->path );
+        HeapFree( GetProcessHeap(), 0, info->path );
         info->path = info->long_mask = NULL;
         SetLastError( ERROR_NO_MORE_FILES );
         return FALSE;
@@ -2324,7 +2324,7 @@ BOOL16 WINAPI FindClose16( HANDLE16 handle )
         return FALSE;
     }
     if (info->dir) DOSFS_CloseDir( info->dir );
-    if (info->path) HeapFree( SystemHeap, 0, info->path );
+    if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
     GlobalUnlock16( handle );
     GlobalFree16( handle );
     return TRUE;
