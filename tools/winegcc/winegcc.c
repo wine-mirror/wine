@@ -339,7 +339,7 @@ static const char* compile_to_object(struct options* opts, const char* file, con
     struct options copts;
     char* base_name;
 
-    /* make a copy we so don't change any of the initial stuff */
+    /* make a copy so we don't change any of the initial stuff */
     /* a shallow copy is exactly what we want in this case */
     base_name = get_basename(file);
     copts = *opts;
@@ -429,10 +429,8 @@ static void build(struct options* opts)
 	    {
 		case file_def:
 		case file_spec:
-		    if (!opts->shared) 
-		        error("Spec file %s not supported in non-shared mode", file);
 		    if (spec_file)
-			error("Only one spec file can be specified in shared mode");
+			error("Only one spec file can be specified.");
 		    spec_file = file;
 		    break;
 		case file_rc:
@@ -513,17 +511,19 @@ static void build(struct options* opts)
     strarray_add(spec_args, "--ld-cmd");
     strarray_add(spec_args, LD);
     strarray_addall(spec_args, strarray_fromstring(DLLFLAGS, " "));
+    strarray_add(spec_args, opts->shared ? "--dll" : "--exe");
     strarray_add(spec_args, "-o");
     strarray_add(spec_args, spec_c_name);
-    if (opts->shared)
+    if (spec_file)
     {
-        strarray_add(spec_args, "--dll");
+        strarray_add(spec_args, "-E");
         strarray_add(spec_args, spec_file);
     }
-    else
+
+    if (!opts->shared)
     {
-        strarray_add(spec_args, "--exe");
-        strarray_add(spec_args, output_name);
+        strarray_add(spec_args, "-F");
+        strarray_add(spec_args, strmake("%s.exe", output_name));
         strarray_add(spec_args, "--subsystem");
         strarray_add(spec_args, opts->gui_app ? "windows" : "console");
     }

@@ -131,10 +131,10 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(WINDRES) -i $< -o $@
 
 .spec.spec.c:
-	$(WINEBUILD) $(DEFS) -o $@ --main-module $(MODULE) --dll $<
+	$(WINEBUILD) $(DEFS) --dll -o $@ --main-module $(MODULE) --export $<
 
 .spec.spec.def:
-	$(WINEBUILD) -w $(DEFS) -o $@ --def $<
+	$(WINEBUILD) -w $(DEFS) --def -o $@ --export $<
 
 .idl.h:
 	$(WIDL) $(IDLFLAGS) -h -H $@ $<

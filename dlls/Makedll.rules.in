@@ -56,7 +56,7 @@ crosstest:: $(SUBDIRS:%=%/__crosstest__)
 # Rule to explicitly generate the .spec.c for debugging
 
 $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(IMPORTLIBS) $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --dll $(SRCDIR)/$(MAINSPEC) $(SUBSYSTEM:%=--subsystem %) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) --dll -o $@ --export $(SRCDIR)/$(MAINSPEC) $(SUBSYSTEM:%=--subsystem %) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 # Rules for auto documentation
 
