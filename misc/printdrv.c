@@ -253,6 +253,16 @@ BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
     return TRUE;
 }
 
+BOOL32  WINAPI EnumPrinters32W(DWORD dwType, LPWSTR lpszName,
+			       DWORD dwLevel, LPBYTE lpbPrinters,
+			       DWORD cbBuf, LPDWORD lpdwNeeded,
+			       LPDWORD lpdwReturned)
+{
+    FIXME(print,"Nearly empty stub\n");
+    *lpdwReturned=0;
+    return TRUE;
+}
+
 
 BOOL32 WINAPI AddMonitor32A(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
 {
