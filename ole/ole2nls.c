@@ -535,6 +535,10 @@ LANG_BEGIN (LANG_SWEDISH, SUBLANG_DEFAULT)	/*0x41d*/
 #include "nls/sve.nls"
 LANG_END
 
+LANG_BEGIN (LANG_SLOVAK, SUBLANG_DEFAULT)	/*0x41b*/
+#include "nls/sky.nls"
+LANG_END
+
 /*Insert other languages here*/
 
 	default:
