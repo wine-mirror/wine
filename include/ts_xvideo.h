@@ -18,6 +18,9 @@
 #include <X11/extensions/XShm.h>
 #include <X11/extensions/Xvlib.h>
 
+extern void (*wine_tsx11_lock)(void);
+extern void (*wine_tsx11_unlock)(void);
+
 extern int TSXvQueryExtension(Display*, unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned int*);
 extern int TSXvQueryAdaptors(Display*, Window, unsigned int*, XvAdaptorInfo**);
 extern int TSXvQueryEncodings(Display*, XvPortID, unsigned int*, XvEncodingInfo**);

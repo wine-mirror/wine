@@ -16,6 +16,9 @@
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 
+extern void (*wine_tsx11_lock)(void);
+extern void (*wine_tsx11_unlock)(void);
+
 extern XClassHint * TSXAllocClassHint(void);
 extern XSizeHints * TSXAllocSizeHints(void);
 extern XWMHints * TSXAllocWMHints(void);

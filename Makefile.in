@@ -33,7 +33,14 @@ LIBPROGRAMS = \
 # Libraries (not dlls) to build
 LIBRARIES = \
 	library/libwine.$(LIBEXT) \
+	tsx11/libwine_tsx11.$(LIBEXT) \
 	unicode/libwine_unicode.$(LIBEXT)
+
+# Libraries symlinks to create at the top level
+LIBSYMLINKS = \
+	libwine.$(LIBEXT) \
+	libwine_tsx11.$(LIBEXT) \
+	libwine_unicode.$(LIBEXT)
 
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
@@ -47,6 +54,7 @@ SUBDIRS = \
 	programs \
 	server \
 	tools \
+	tsx11 \
 	unicode
 
 # Sub-directories to run make install into
@@ -58,6 +66,7 @@ INSTALLSUBDIRS = \
 	library \
 	server \
 	tools \
+	tsx11 \
 	unicode
 
 EMUOBJS = \
@@ -65,7 +74,7 @@ EMUOBJS = \
 
 DLLOBJS = $(DLLS:%=dlls/lib%.@LIBEXT@)
 
-all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) wine
+all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) $(LIBSYMLINKS) wine
 	@echo "Wine build complete."
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
@@ -76,7 +85,7 @@ Make.rules: Make.rules.in configure
 	@echo $? is newer than 'Make.rules', please rerun ./configure!
 	@exit 1
 
-wine: libwine.$(LIBEXT) libwine_unicode.$(LIBEXT) dlls $(EMUOBJS)
+wine: dlls $(EMUOBJS)
 	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LIBS) $(LDFLAGS)
 
 install:: all $(INSTALLSUBDIRS:%=%/__install__)
@@ -94,6 +103,9 @@ $(EMUOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS) $(LIBRARIES): dummy
 libwine.$(LIBEXT): library/libwine.$(LIBEXT)
 	$(RM) $@ && $(LN_S) library/libwine.$(LIBEXT) $@
 
+libwine_tsx11.$(LIBEXT): tsx11/libwine_tsx11.$(LIBEXT)
+	$(RM) $@ && $(LN_S) tsx11/libwine_tsx11.$(LIBEXT) $@
+
 libwine_unicode.$(LIBEXT): unicode/libwine_unicode.$(LIBEXT)
 	$(RM) $@ && $(LN_S) unicode/libwine_unicode.$(LIBEXT) $@
 
@@ -103,14 +115,14 @@ $(DLLOBJS) $(PROGRAMS): tools
 
 $(EMUOBJS): tools dlls
 
-$(LIBPROGRAMS): tools dlls libwine.$(LIBEXT) libwine_unicode.$(LIBEXT)
+$(LIBPROGRAMS): tools dlls
 
-server tools: libwine_unicode.$(LIBEXT)
+server tools: unicode/libwine_unicode.$(LIBEXT)
 
-dlls: tools libwine.$(LIBEXT) libwine_unicode.$(LIBEXT)
+dlls: tools $(LIBRARIES)
 
 checklink::
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine -lwine_unicode $(LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(LIBWINE) $(LIBUNICODE) $(LIBS) && $(RM) checklink
 
 install_programs: dummy
 	@cd programs && $(MAKE) install
@@ -136,7 +148,7 @@ clean::
 	$(RM) wine
 
 distclean: clean
-	$(RM) config.* TAGS Make.rules dlls/Makedll.rules include/config.h documentation/wine.man documentation/wine.conf.man tools/winelauncher
+	$(RM) config.* TAGS Make.rules dlls/Makedll.rules programs/Makeprog.rules include/config.h documentation/wine.man documentation/wine.conf.man tools/winelauncher
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
 # We depend on configure above for checks, so we better don't use this rule.

@@ -16,6 +16,9 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XShm.h>
 
+extern void (*wine_tsx11_lock)(void);
+extern void (*wine_tsx11_unlock)(void);
+
 extern Bool TSXShmQueryExtension(Display *);
 extern Bool TSXShmQueryVersion(Display *, int *, int *, Bool *);
 extern int TSXShmPixmapFormat(Display *);

@@ -34,6 +34,8 @@
 DEFAULT_DEBUG_CHANNEL(x11drv);
 
 static XKeyboardState keyboard_state;
+static void (*old_tsx11_lock)(void);
+static void (*old_tsx11_unlock)(void);
 
 Display *display;
 Screen *screen;
@@ -54,6 +56,21 @@ static int error_handler(Display *display, XErrorEvent *error_evt)
     return 0;
 }
 
+/***********************************************************************
+ *		lock_tsx11
+ */
+static void lock_tsx11(void)
+{
+    RtlEnterCriticalSection( &X11DRV_CritSection );
+}
+
+/***********************************************************************
+ *		unlock_tsx11
+ */
+static void unlock_tsx11(void)
+{
+    RtlLeaveCriticalSection( &X11DRV_CritSection );
+}
 
 /***********************************************************************
  *		get_server_startup
@@ -256,6 +273,12 @@ static void process_attach(void)
     get_server_startup();
     setup_options();
 
+    /* setup TSX11 locking */
+    old_tsx11_lock    = wine_tsx11_lock;
+    old_tsx11_unlock  = wine_tsx11_unlock;
+    wine_tsx11_lock   = lock_tsx11;
+    wine_tsx11_unlock = unlock_tsx11;
+
     /* Open display */
 
     if (!(display = TSXOpenDisplay( Options.display )))
@@ -339,8 +362,11 @@ static void process_detach(void)
     /* cleanup GDI */
     X11DRV_GDI_Finalize();
 
-#if 0  /* FIXME */
+    /* restore TSX11 locking */
+    wine_tsx11_lock = old_tsx11_lock;
+    wine_tsx11_unlock = old_tsx11_unlock;
 
+#if 0  /* FIXME */
     /* close the display */
     XCloseDisplay( display );
     display = NULL;

@@ -112,6 +112,9 @@ foreach $name (@dolist) {
 $pre_file
 $x11_incl#include <X11/$extensions_dir$inc_name.h>
 
+extern void (*wine_tsx11_lock)(void);
+extern void (*wine_tsx11_unlock)(void);
+
 END
 
     print OUTC <<END;
@@ -126,11 +129,8 @@ END
 $pre_file
 $x11_incl#include <X11/$extensions_dir$inc_name.h>
 
-#include "debugtools.h"
 #include "ts_$lcname.h"
-#include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11);
 END
 
     if($name eq "xpm") {	# Handle as special case.
@@ -487,13 +487,11 @@ sub raw_output_fn {
 #    print OUTH "#define $fn_name TS$fn_name\n";
     print OUTC "{\n";
     print OUTC "  $resultdecl;\n" if $resultdecl;
-    print OUTC "  TRACE(\"Call $fn_name\\n\");\n";
-    print OUTC "  EnterCriticalSection( &X11DRV_CritSection );\n";
+    print OUTC "  wine_tsx11_lock();\n";
     print OUTC "  ";
     print OUTC "r = " if $resultdecl;
     print OUTC "$fn_name($actuals);\n";
-    print OUTC "  LeaveCriticalSection( &X11DRV_CritSection );\n";
-    print OUTC "  TRACE(\"Ret $fn_name\\n\");\n";
+    print OUTC "  wine_tsx11_unlock();\n";
     print OUTC "  return r;\n" if $resultdecl;
     print OUTC "}\n";
     $want{$fn_name} = 2;

@@ -16,6 +16,9 @@
 
 #include <X11/extensions/shape.h>
 
+extern void (*wine_tsx11_lock)(void);
+extern void (*wine_tsx11_unlock)(void);
+
 extern void  TSXShapeCombineRectangles(Display*, Window, int, int, int, XRectangle*, int, int, int);
 extern void  TSXShapeCombineMask(Display*, Window, int, int, int, Pixmap, int);
 

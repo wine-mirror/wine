@@ -15,6 +15,9 @@
 
 #include <X11/xpm.h>
 
+extern void (*wine_tsx11_lock)(void);
+extern void (*wine_tsx11_unlock)(void);
+
 extern int TSXpmCreatePixmapFromData(Display *, Drawable, char **, Pixmap *, Pixmap *, XpmAttributes *);
 extern int TSXpmAttributesSize(void);
 

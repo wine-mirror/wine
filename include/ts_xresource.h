@@ -15,6 +15,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 
+extern void (*wine_tsx11_lock)(void);
+extern void (*wine_tsx11_unlock)(void);
+
 extern XrmQuark  TSXrmUniqueQuark(void);
 extern int   TSXrmGetResource(XrmDatabase, const  char*, const  char*, char**, XrmValue*);
 extern XrmDatabase  TSXrmGetFileDatabase(const  char*);

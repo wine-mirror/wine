@@ -3,9 +3,14 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = tsx11
+LIBEXT    = @LIBEXT@
+MODULE    = none
+SOVERSION = 1.0
+SONAME    = libwine_tsx11.so
+EXTRALIBS = $(X_LIBS) $(XLIB)
 
 C_SRCS = \
+	locking.c \
 	ts_xf86dga.c \
 	ts_xf86dga2.c \
 	ts_xf86vmode.c \
@@ -17,11 +22,36 @@ C_SRCS = \
 	ts_shape.c \
 	ts_xpm.c
 
-all: $(MODULE).o
+all: libwine_tsx11.$(LIBEXT)
 
 @MAKE_RULES@
 
-$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDCOMBINE) $(OBJS) -o $@
+libwine_tsx11.so.$(SOVERSION): $(OBJS)
+	$(LDSHARED) $(OBJS) -o $@
+
+libwine_tsx11.so: libwine_tsx11.so.$(SOVERSION)
+	$(RM) $@ && $(LN_S) libwine_tsx11.so.$(SOVERSION) $@
+
+libwine_tsx11.a: $(OBJS)
+	$(RM) $@
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+install_so: libwine_tsx11.so.$(SOVERSION)
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_PROGRAM) libwine_tsx11.so.$(SOVERSION) $(libdir)/libwine_tsx11.so.$(SOVERSION)
+	cd $(libdir) && $(RM) libwine_tsx11.so && $(LN_S) libwine_tsx11.so.$(SOVERSION) libwine_tsx11.so
+
+install_a: libwine_tsx11.a
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_DATA) libwine_tsx11.a $(libdir)/libwine_tsx11.a
+
+install:: all $(LIBEXT:%=install_%)
+
+uninstall::
+	cd $(libdir) && $(RM) libwine_tsx11.a libwine_tsx11.so libwine_tsx11.so.$(SOVERSION)
+
+clean::
+	$(RM) libwine_tsx11.so.$(SOVERSION)
 
 ### Dependencies:

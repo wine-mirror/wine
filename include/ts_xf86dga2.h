@@ -16,6 +16,9 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86dga.h>
 
+extern void (*wine_tsx11_lock)(void);
+extern void (*wine_tsx11_unlock)(void);
+
 extern Bool TSXDGAQueryVersion(Display*, int*, int*);
 extern Bool TSXDGAQueryExtension(Display*, int*, int*);
 extern XDGAMode* TSXDGAQueryModes(Display*, int, int*);

@@ -60,8 +60,12 @@ WINEBUILD = $(TOPOBJDIR)/tools/winebuild/winebuild
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep
 WRC       = $(TOPOBJDIR)/tools/wrc/wrc
 WMC       = $(TOPOBJDIR)/tools/wmc/wmc
-LDPATH    = LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH"
+LDPATH    = LD_LIBRARY_PATH="$(TOPOBJDIR)/unicode:$$LD_LIBRARY_PATH"
 DLLDIR    = $(TOPOBJDIR)/dlls
+LIBWINE   = -L$(TOPOBJDIR)/library -lwine
+LIBTSX11  = -L$(TOPOBJDIR)/tsx11 -lwine_tsx11
+LIBUNICODE= -L$(TOPOBJDIR)/unicode -lwine_unicode
+
 @SET_MAKE@
 
 # Installation infos
@@ -175,7 +179,7 @@ DLLS = \
 	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
 
 .spec.spec.c:
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -o $@ -spec $<
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) -o $@ -spec $<
 
 .c.glue.c:
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -glue $<
@@ -198,7 +202,7 @@ $(MODULE).tmp.o: $(OBJS) Makefile.in
 # Rule for main module spec file
 
 $(MODULE).spec.c: $(MODULE).spec $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MODULE).spec
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MODULE).spec
 
 # Rule to rebuild the resource compiler
 

@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = x11drv
-SOVERSION = 1.0
-EXTRALIBS = $(X_LIBS) $(XLIB)
+EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
 IMPORTS   = user32 gdi32 kernel32
 
 C_SRCS = \
@@ -15,12 +14,10 @@ PROGRAMS = \
 
 EXTRA_OBJS = \
 	$(TOPOBJDIR)/graphics/x11drv/x11drv.o \
-	$(TOPOBJDIR)/tsx11/tsx11.o \
 	$(TOPOBJDIR)/windows/x11drv/x11drv.o
 
 SUBDIRS = \
 	$(TOPOBJDIR)/graphics/x11drv \
-	$(TOPOBJDIR)/tsx11 \
 	$(TOPOBJDIR)/windows/x11drv
 
 @MAKE_DLL_RULES@

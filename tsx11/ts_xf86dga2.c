@@ -11,188 +11,149 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86dga.h>
 
-#include "debugtools.h"
 #include "ts_xf86dga2.h"
-#include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11);
 
 Bool TSXDGAQueryVersion(Display* a0, int* a1, int* a2)
 {
   Bool r;
-  TRACE("Call XDGAQueryVersion\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XDGAQueryVersion( a0,  a1,  a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGAQueryVersion\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Bool TSXDGAQueryExtension(Display* a0, int* a1, int* a2)
 {
   Bool r;
-  TRACE("Call XDGAQueryExtension\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XDGAQueryExtension( a0,  a1,  a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGAQueryExtension\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 XDGAMode* TSXDGAQueryModes(Display* a0, int a1, int* a2)
 {
   XDGAMode* r;
-  TRACE("Call XDGAQueryModes\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XDGAQueryModes( a0,  a1,  a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGAQueryModes\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 XDGADevice* TSXDGASetMode(Display* a0, int a1, int a2)
 {
   XDGADevice* r;
-  TRACE("Call XDGASetMode\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XDGASetMode( a0,  a1,  a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGASetMode\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Bool TSXDGAOpenFramebuffer(Display* a0, int a1)
 {
   Bool r;
-  TRACE("Call XDGAOpenFramebuffer\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XDGAOpenFramebuffer( a0,  a1);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGAOpenFramebuffer\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 void TSXDGACloseFramebuffer(Display* a0, int a1)
 {
-  TRACE("Call XDGACloseFramebuffer\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGACloseFramebuffer( a0,  a1);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGACloseFramebuffer\n");
+  wine_tsx11_unlock();
 }
 
 void TSXDGASetViewport(Display* a0, int a1, int a2, int a3, int a4)
 {
-  TRACE("Call XDGASetViewport\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGASetViewport( a0,  a1,  a2,  a3,  a4);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGASetViewport\n");
+  wine_tsx11_unlock();
 }
 
 void TSXDGAInstallColormap(Display* a0, int a1, Colormap a2)
 {
-  TRACE("Call XDGAInstallColormap\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGAInstallColormap( a0,  a1,  a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGAInstallColormap\n");
+  wine_tsx11_unlock();
 }
 
 Colormap TSXDGACreateColormap(Display* a0, int a1, XDGADevice* a2, int a3)
 {
   Colormap r;
-  TRACE("Call XDGACreateColormap\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XDGACreateColormap( a0,  a1,  a2,  a3);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGACreateColormap\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 void TSXDGASelectInput(Display* a0, int a1, long a2)
 {
-  TRACE("Call XDGASelectInput\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGASelectInput( a0,  a1,  a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGASelectInput\n");
+  wine_tsx11_unlock();
 }
 
 void TSXDGAFillRectangle(Display* a0, int a1, int a2, int a3, unsigned int a4, unsigned int a5, unsigned long a6)
 {
-  TRACE("Call XDGAFillRectangle\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGAFillRectangle( a0,  a1,  a2,  a3,  a4,  a5,  a6);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGAFillRectangle\n");
+  wine_tsx11_unlock();
 }
 
 void TSXDGACopyArea(Display* a0, int a1, int a2, int a3, unsigned int a4, unsigned int a5, int a6, int a7)
 {
-  TRACE("Call XDGACopyArea\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGACopyArea( a0,  a1,  a2,  a3,  a4,  a5,  a6,  a7);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGACopyArea\n");
+  wine_tsx11_unlock();
 }
 
 void TSXDGACopyTransparentArea(Display* a0, int a1, int a2, int a3, unsigned int a4, unsigned int a5, int a6, int a7, unsigned long a8)
 {
-  TRACE("Call XDGACopyTransparentArea\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGACopyTransparentArea( a0,  a1,  a2,  a3,  a4,  a5,  a6,  a7,  a8);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGACopyTransparentArea\n");
+  wine_tsx11_unlock();
 }
 
 int TSXDGAGetViewportStatus(Display* a0, int a1)
 {
   int r;
-  TRACE("Call XDGAGetViewportStatus\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XDGAGetViewportStatus( a0,  a1);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGAGetViewportStatus\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 void TSXDGASync(Display* a0, int a1)
 {
-  TRACE("Call XDGASync\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGASync( a0,  a1);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGASync\n");
+  wine_tsx11_unlock();
 }
 
 Bool TSXDGASetClientVersion(Display* a0)
 {
   Bool r;
-  TRACE("Call XDGASetClientVersion\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XDGASetClientVersion( a0);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGASetClientVersion\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 void TSXDGAChangePixmapMode(Display* a0, int a1, int* a2, int* a3, int a4)
 {
-  TRACE("Call XDGAChangePixmapMode\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGAChangePixmapMode( a0,  a1,  a2,  a3,  a4);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGAChangePixmapMode\n");
+  wine_tsx11_unlock();
 }
 
 void TSXDGAKeyEventToXKeyEvent(XDGAKeyEvent* a0, XKeyEvent* a1)
 {
-  TRACE("Call XDGAKeyEventToXKeyEvent\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   XDGAKeyEventToXKeyEvent( a0,  a1);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDGAKeyEventToXKeyEvent\n");
+  wine_tsx11_unlock();
 }
 
 #endif /* defined(HAVE_LIBXXF86DGA2) */

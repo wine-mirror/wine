@@ -11,108 +11,87 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86dga.h>
 
-#include "debugtools.h"
 #include "ts_xf86dga.h"
-#include "x11drv.h"
 
-DEFAULT_DEBUG_CHANNEL(x11);
 
 Bool TSXF86DGAQueryVersion(Display*a0,int*a1,int*a2)
 {
   Bool r;
-  TRACE("Call XF86DGAQueryVersion\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XF86DGAQueryVersion(a0,a1,a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XF86DGAQueryVersion\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Bool TSXF86DGAQueryExtension(Display*a0,int*a1,int*a2)
 {
   Bool r;
-  TRACE("Call XF86DGAQueryExtension\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XF86DGAQueryExtension(a0,a1,a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XF86DGAQueryExtension\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Status TSXF86DGAGetVideo(Display*a0,int a1,char**a2,int*a3,int*a4,int*a5)
 {
   Status r;
-  TRACE("Call XF86DGAGetVideo\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XF86DGAGetVideo(a0,a1,a2,a3,a4,a5);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XF86DGAGetVideo\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Status TSXF86DGADirectVideo(Display*a0,int a1,int a2)
 {
   Status r;
-  TRACE("Call XF86DGADirectVideo\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XF86DGADirectVideo(a0,a1,a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XF86DGADirectVideo\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Status TSXF86DGAGetViewPortSize(Display*a0,int a1,int *a2,int *a3)
 {
   Status r;
-  TRACE("Call XF86DGAGetViewPortSize\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XF86DGAGetViewPortSize(a0,a1,a2,a3);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XF86DGAGetViewPortSize\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Status TSXF86DGASetViewPort(Display*a0,int a1,int a2,int a3)
 {
   Status r;
-  TRACE("Call XF86DGASetViewPort\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XF86DGASetViewPort(a0,a1,a2,a3);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XF86DGASetViewPort\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Status TSXF86DGAInstallColormap(Display*a0,int a1,Colormap a2)
 {
   Status r;
-  TRACE("Call XF86DGAInstallColormap\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XF86DGAInstallColormap(a0,a1,a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XF86DGAInstallColormap\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Status TSXF86DGAQueryDirectVideo(Display*a0,int a1,int *a2)
 {
   Status r;
-  TRACE("Call XF86DGAQueryDirectVideo\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XF86DGAQueryDirectVideo(a0,a1,a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XF86DGAQueryDirectVideo\n");
+  wine_tsx11_unlock();
   return r;
 }
 
 Status TSXF86DGAViewPortChanged(Display*a0,int a1,int a2)
 {
   Status r;
-  TRACE("Call XF86DGAViewPortChanged\n");
-  EnterCriticalSection( &X11DRV_CritSection );
+  wine_tsx11_lock();
   r = XF86DGAViewPortChanged(a0,a1,a2);
-  LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XF86DGAViewPortChanged\n");
+  wine_tsx11_unlock();
   return r;
 }
 

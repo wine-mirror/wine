@@ -16,6 +16,9 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86dga.h>
 
+extern void (*wine_tsx11_lock)(void);
+extern void (*wine_tsx11_unlock)(void);
+
 extern Bool TSXF86DGAQueryVersion(Display*,int*,int*);
 extern Bool TSXF86DGAQueryExtension(Display*,int*,int*);
 extern Status TSXF86DGAGetVideo(Display*,int,char**,int*,int*,int*);
