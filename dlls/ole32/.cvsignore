@@ -1,5 +1,6 @@
 Makefile
 compobj.spec.c
+dcom.h
 drag_copy.cur
 drag_link.cur
 drag_move.cur
