@@ -16,6 +16,7 @@
 #include "combo.h"
 #include "debugtools.h"
 #include "tweak.h"
+#include "winversion.h"
 
 DEFAULT_DEBUG_CHANNEL(listbox)
 DECLARE_DEBUG_CHANNEL(combo)
@@ -80,9 +81,15 @@ typedef struct
 #define HAS_STRINGS(descr) \
     (!IS_OWNERDRAW(descr) || ((descr)->style & LBS_HASSTRINGS))
 
+
+#define IS_MULTISELECT(descr) \
+    ((descr)->style & LBS_MULTIPLESEL || ((descr)->style & LBS_EXTENDEDSEL))
+
 #define SEND_NOTIFICATION(wnd,descr,code) \
     (SendMessageA( (descr)->owner, WM_COMMAND, \
      MAKEWPARAM((((descr)->lphc)?ID_CB_LISTBOX:(wnd)->wIDmenu), (code) ), (wnd)->hwndSelf ))
+
+#define ISWIN31 (LOWORD(GetVersion()) == 0x0a03)
 
 /* Current timer status */
 typedef enum
@@ -1250,7 +1257,7 @@ static LRESULT LISTBOX_SetSelection( WND *wnd, LB_DESCR *descr, INT index,
         descr->selected_item = index;
         if (oldsel != -1) LISTBOX_RepaintItem( wnd, descr, oldsel, ODA_SELECT);
         if (index != -1) LISTBOX_RepaintItem( wnd, descr, index, ODA_SELECT );
-        if (send_notify) SEND_NOTIFICATION( wnd, descr,
+        if (send_notify && descr->nb_items) SEND_NOTIFICATION( wnd, descr,
                                (index != -1) ? LBN_SELCHANGE : LBN_SELCANCEL );
 	else
 	    if( descr->lphc ) /* set selection change flag for parent combo */
@@ -1297,6 +1304,7 @@ static LRESULT LISTBOX_InsertItem( WND *wnd, LB_DESCR *descr, INT index,
 {
     LB_ITEMDATA *item;
     INT max_items;
+    INT oldfocus = descr->focus_item;
 
     if (index == -1) index = descr->nb_items;
     else if ((index < 0) || (index > descr->nb_items)) return LB_ERR;
@@ -1351,17 +1359,23 @@ static LRESULT LISTBOX_InsertItem( WND *wnd, LB_DESCR *descr, INT index,
     LISTBOX_InvalidateItems( wnd, descr, index );
 
     /* Move selection and focused item */
-
-    if (index <= descr->selected_item) descr->selected_item++;
-    if (index <= descr->focus_item)
-    {
-        descr->focus_item++;
-        LISTBOX_MoveCaret( wnd, descr, descr->focus_item, FALSE );
-    }
-
     /* If listbox was empty, set focus to the first item */
-
-    if (descr->nb_items == 1) LISTBOX_SetCaretIndex( wnd, descr, 0, FALSE );
+    if (descr->nb_items == 1)
+         LISTBOX_SetCaretIndex( wnd, descr, 0, FALSE );
+    /* single select don't change selection index in win31 */
+    else if ((ISWIN31) && !(IS_MULTISELECT(descr)))
+    {
+        descr->selected_item++;
+        LISTBOX_SetSelection( wnd, descr, descr->selected_item-1, TRUE, FALSE );     
+    }
+    else
+    {
+        if (index <= descr->selected_item)
+        {
+           descr->selected_item++;
+           descr->focus_item = oldfocus; /* focus not changed */
+        }
+    }
     return LB_OKAY;
 }
 
@@ -1378,6 +1392,7 @@ static LRESULT LISTBOX_InsertString( WND *wnd, LB_DESCR *descr, INT index,
 
     if (HAS_STRINGS(descr))
     {
+        if (!str) str="";
         if (!(new_str = HEAP_strdupA( descr->heap, 0, str )))
         {
             SEND_NOTIFICATION( wnd, descr, LBN_ERRSPACE );
@@ -1461,19 +1476,31 @@ static LRESULT LISTBOX_RemoveItem( WND *wnd, LB_DESCR *descr, INT index )
                             max_items * sizeof(LB_ITEMDATA) );
         if (item) descr->items = item;
     }
-
     /* Repaint the items */
 
     LISTBOX_UpdateScroll( wnd, descr );
-    LISTBOX_InvalidateItems( wnd, descr, index );
+    /* if we removed the scrollbar, reset the top of the list
+      (correct for owner-drawn ???) */
+    if (descr->nb_items == descr->page_size)
+        LISTBOX_SetTopItem( wnd, descr, 0, TRUE );
 
     /* Move selection and focused item */
-
-    if (index <= descr->selected_item) descr->selected_item--;
-    if (index <= descr->focus_item)
+    if (!IS_MULTISELECT(descr))
     {
-        descr->focus_item--;
-        LISTBOX_MoveCaret( wnd, descr, descr->focus_item, FALSE );
+        if (index == descr->selected_item)
+            descr->selected_item = -1;
+        else if (index < descr->selected_item)
+    {
+            descr->selected_item--;
+            if (ISWIN31) /* win 31 do not change the selected item number */
+               LISTBOX_SetSelection( wnd, descr, descr->selected_item + 1, TRUE, FALSE);
+    }
+    }
+    LISTBOX_InvalidateItems( wnd, descr, index );
+    if (descr->focus_item >= descr->nb_items)
+    {
+          descr->focus_item = descr->nb_items - 1;
+          if (descr->focus_item < 0) descr->focus_item = 0;
     }
     return LB_OKAY;
 }
@@ -1793,7 +1820,7 @@ static LRESULT LISTBOX_HandleLButtonUp( WND *wnd, LB_DESCR *descr )
     {
         descr->captured = FALSE;
         if (GetCapture() == wnd->hwndSelf) ReleaseCapture();
-        if (descr->style & LBS_NOTIFY)
+        if ((descr->style & LBS_NOTIFY) && descr->nb_items)
             SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
     }
     return 0;
@@ -1910,6 +1937,10 @@ static void LISTBOX_HandleMouseMove( WND *wnd, LB_DESCR *descr,
 static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr, WPARAM wParam )
 {
     INT caret = -1;
+    BOOL bForceSelection = TRUE; /* select item pointed to by focus_item */
+    if ((IS_MULTISELECT(descr)) || (descr->selected_item == descr->focus_item))
+       bForceSelection = FALSE; /* only for single select list */
+
     if (descr->style & LBS_WANTKEYBOARDINPUT)
     {
         caret = SendMessageA( descr->owner, WM_VKEYTOITEM,
@@ -1922,6 +1953,7 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr, WPARAM wParam )
     case VK_LEFT:
         if (descr->style & LBS_MULTICOLUMN)
         {
+            bForceSelection = FALSE;
             if (descr->focus_item >= descr->page_size)
                 caret = descr->focus_item - descr->page_size;
             break;
@@ -1934,6 +1966,7 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr, WPARAM wParam )
     case VK_RIGHT:
         if (descr->style & LBS_MULTICOLUMN)
         {
+            bForceSelection = FALSE;
             if (descr->focus_item + descr->page_size < descr->nb_items)
                 caret = descr->focus_item + descr->page_size;
             break;
@@ -1943,6 +1976,7 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr, WPARAM wParam )
         caret = descr->focus_item + 1;
         if (caret >= descr->nb_items) caret = descr->nb_items - 1;
         break;
+
     case VK_PRIOR:
         if (descr->style & LBS_MULTICOLUMN)
         {
@@ -1977,19 +2011,19 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr, WPARAM wParam )
                                   !descr->items[descr->focus_item].selected,
                                   (descr->style & LBS_NOTIFY) != 0 );
         }
-        else if (descr->selected_item == -1)
-        {
-            LISTBOX_SetSelection( wnd, descr, descr->focus_item, TRUE,
-                                  (descr->style & LBS_NOTIFY) != 0 );
-        }
         break;
+    default:
+        bForceSelection = FALSE;
     }
+    if (bForceSelection) /* focused item is used instead of key */
+        caret = descr->focus_item;
     if (caret >= 0)
     {
         if ((descr->style & LBS_EXTENDEDSEL) &&
             !(GetKeyState( VK_SHIFT ) & 0x8000))
             descr->anchor_item = caret;
         LISTBOX_MoveCaret( wnd, descr, caret, TRUE );
+        LISTBOX_SetSelection( wnd, descr, caret, TRUE, FALSE);
         if (descr->style & LBS_NOTIFY)
         {
 	    if( descr->lphc && CB_GETTYPE(descr->lphc) != CBS_SIMPLE )
@@ -1997,7 +2031,7 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr, WPARAM wParam )
 		/* make sure that combo parent doesn't hide us */
 		descr->lphc->wState |= CBF_NOROLLUP;
 	    }
-            SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
+            if (descr->nb_items) SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
         }
     }
     return 0;
@@ -2027,8 +2061,10 @@ static LRESULT LISTBOX_HandleChar( WND *wnd, LB_DESCR *descr,
         caret = LISTBOX_FindString( wnd, descr, descr->focus_item, str, FALSE);
     if (caret != -1)
     {
+        if ((!IS_MULTISELECT(descr)) && descr->selected_item == -1)
+           LISTBOX_SetSelection( wnd, descr, caret, TRUE, FALSE);
         LISTBOX_MoveCaret( wnd, descr, caret, TRUE );
-        if (descr->style & LBS_NOTIFY)
+        if ((descr->style & LBS_NOTIFY) && descr->nb_items)
             SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
     }
     return 0;
@@ -2187,7 +2223,10 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
 
     case LB_DELETESTRING16:
     case LB_DELETESTRING:
-        return LISTBOX_RemoveItem( wnd, descr, wParam );
+        if (LISTBOX_RemoveItem( wnd, descr, wParam) != LB_ERR)
+           return descr->nb_items;
+        else
+           return LB_ERR;	
 
     case LB_GETITEMDATA16:
     case LB_GETITEMDATA:
@@ -2224,6 +2263,8 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
     case LB_GETCURSEL:
         if (descr->nb_items==0)
 	  return LB_ERR;
+        if (!IS_MULTISELECT(descr))
+          return descr->selected_item;
 	/* else */
 	if (descr->selected_item!=-1)
 	  return descr->selected_item;
@@ -2263,7 +2304,13 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
 
     case LB_SETCARETINDEX16:
     case LB_SETCARETINDEX:
-        return LISTBOX_SetCaretIndex( wnd, descr, wParam, !lParam );
+        if ((!IS_MULTISELECT(descr)) && (descr->selected_item != -1)) return LB_ERR;
+        if (LISTBOX_SetCaretIndex( wnd, descr, wParam, !lParam ) == LB_ERR)
+            return LB_ERR;
+        else if (ISWIN31)
+             return wParam;
+        else
+             return LB_OKAY;
 
     case LB_GETCARETINDEX16:
     case LB_GETCARETINDEX:
@@ -2334,6 +2381,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         wParam = (INT)(INT16)wParam;
         /* fall through */
     case LB_SETCURSEL:
+        if (IS_MULTISELECT(descr)) return LB_ERR;
         LISTBOX_SetCaretIndex( wnd, descr, wParam, TRUE );  
         return LISTBOX_SetSelection( wnd, descr, wParam, TRUE, FALSE );
 
