@@ -282,8 +282,15 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
             for (needed = 0, ptr = paths; *ptr != 0 && *ptr++ != ';'; needed++);
             if (needed + filelen > allocated)
             {
-                name = (WCHAR*)RtlReAllocateHeap(ntdll_get_process_heap(), 0,
-                                                 name, (needed + filelen) * sizeof(WCHAR));
+                if (!name) name = RtlAllocateHeap(GetProcessHeap(), 0,
+                                                  (needed + filelen) * sizeof(WCHAR));
+                else
+                {
+                    WCHAR *newname = RtlReAllocateHeap(GetProcessHeap(), 0, name,
+                                                       (needed + filelen) * sizeof(WCHAR));
+                    if (!newname) RtlFreeHeap(GetProcessHeap(), 0, name);
+                    name = newname;
+                }
                 if (!name) return 0;
                 allocated = needed + filelen;
             }
