@@ -1231,7 +1231,7 @@ static BOOL COMBOEX_WM_DeleteItem (COMBOEX_INFO *infoPtr, DELETEITEMSTRUCT *dis)
 {
     CBE_ITEMDATA *item, *olditem;
     NMCOMBOBOXEXW nmcit;
-    INT i;
+    UINT i;
 
     TRACE("CtlType=%08x, CtlID=%08x, itemID=%08x, hwnd=%p, data=%08lx\n",
 	  dis->CtlType, dis->CtlID, dis->itemID, dis->hwndItem, dis->itemData);

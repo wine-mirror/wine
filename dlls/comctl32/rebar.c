@@ -1610,8 +1610,9 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
     /* assumes that the following variables contain:                 */
     /*   y/x     current height/width of all rows                    */
     if (lpRect) {
-        INT i, j, prev_rh, new_rh, adj_rh, prev_idx, current_idx;
+        INT i, prev_rh, new_rh, adj_rh, prev_idx, current_idx;
 	REBAR_BAND *prev, *current, *walk;
+	UINT j;
 
 /* FIXME:  problem # 2 */
 	if (((infoPtr->dwStyle & CCS_VERT) ?
@@ -1748,7 +1749,8 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 
     if (((infoPtr->dwStyle & CCS_VERT) ? clientcx > x : clientcy > y) &&
 	infoPtr->uNumBands) {
-	INT diff, i, iband, j;
+	INT diff, i, iband;
+	UINT j;
 
 	diff = (infoPtr->dwStyle & CCS_VERT) ? clientcx - x : clientcy - y;
 	for (i = infoPtr->uNumRows; i >= 1; i--) {
@@ -1893,7 +1895,7 @@ REBAR_ValidateBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 {
     UINT header=0;
     UINT textheight=0;
-    INT i, nonfixed;
+    UINT i, nonfixed;
     REBAR_BAND *tBand;
 
     lpBand->fStatus = 0;
@@ -2112,7 +2114,8 @@ REBAR_InternalEraseBkGnd (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, REC
      /*  separators are drawn on the first band of the next row.    */
 {
     REBAR_BAND *lpBand;
-    INT i, oldrow;
+    UINT i;
+    INT oldrow;
     HDC hdc = (HDC)wParam;
     RECT rect;
     COLORREF old = CLR_NONE, new;
@@ -2203,7 +2206,7 @@ REBAR_InternalHitTest (REBAR_INFO *infoPtr, LPPOINT lpPt, UINT *pFlags, INT *pBa
 {
     REBAR_BAND *lpBand;
     RECT rect;
-    INT  iCount;
+    UINT  iCount;
 
     GetClientRect (infoPtr->hwndSelf, &rect);
 
@@ -2881,8 +2884,8 @@ static LRESULT
 REBAR_GetRowHeight (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     INT iRow = (INT)wParam;
-    int ret = 0;
-    int i, j = 0;
+    int j = 0, ret = 0;
+    UINT i;
     REBAR_BAND *lpBand;
 
     for (i=0; i<infoPtr->uNumBands; i++) {
@@ -3662,7 +3665,7 @@ static LRESULT
 REBAR_Destroy (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     REBAR_BAND *lpBand;
-    INT i;
+    UINT i;
 
 
     /* free rebar bands */

@@ -38,6 +38,9 @@
  *   Scroll (instead of repaint) as much as possible.
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>

@@ -2382,7 +2382,7 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
   int bRet = 0;
   PropSheetInfo* psInfo = (PropSheetInfo*) GlobalAlloc(GPTR,
                                                        sizeof(PropSheetInfo));
-  int i, n;
+  UINT i, n;
   BYTE* pByte;
 
   TRACE("(%p)\n", lppsh);
@@ -2426,7 +2426,7 @@ INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
   int bRet = 0;
   PropSheetInfo* psInfo = (PropSheetInfo*) GlobalAlloc(GPTR,
                                                        sizeof(PropSheetInfo));
-  int i, n;
+  UINT i, n;
   BYTE* pByte;
 
   TRACE("(%p)\n", lppsh);

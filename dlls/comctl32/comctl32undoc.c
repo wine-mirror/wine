@@ -29,6 +29,8 @@
  *     - Add more functions.
  *     - Write some documentation.
  */
+#include "config.h"
+#include "wine/port.h"
 
 #include <string.h>
 #include <stdlib.h> /* atoi */
@@ -512,7 +514,7 @@ typedef struct tagWINEMRULIST
  */
 VOID MRU_SaveChanged( LPWINEMRULIST mp )
 {
-    INT i, err;
+    UINT i, err;
     HKEY newkey;
     WCHAR realname[2];
     LPWINEMRUITEM witem;
@@ -580,7 +582,7 @@ DWORD WINAPI
 FreeMRUList (HANDLE hMRUList)
 {
     LPWINEMRULIST mp = (LPWINEMRULIST)hMRUList;
-    INT i;
+    UINT i;
 
     TRACE("\n");
     if (mp->wineFlags & WMRUF_CHANGED) {
@@ -619,7 +621,7 @@ INT WINAPI
 FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
 {
     LPWINEMRULIST mp = (LPWINEMRULIST)hList;
-    INT i, ret;
+    UINT i, ret;
     LPSTR dataA = NULL;
 
     if (!mp->extview.lpfnCompare) {
@@ -838,7 +840,7 @@ FindMRUStringA (HANDLE hList, LPCSTR lpszString, LPINT lpRegNum)
  */
 HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
 {
-    INT i, err;
+    UINT i, err;
     HKEY newkey;
     DWORD datasize, dwdisp;
     WCHAR realname[2];

@@ -334,7 +334,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 
     case PBM_SETPOS:
     {
-	INT oldVal;
+        UINT oldVal;
         oldVal = infoPtr->CurVal;
         if(oldVal != wParam) {
 	    infoPtr->CurVal = (INT)wParam;
