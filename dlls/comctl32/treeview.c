@@ -3780,8 +3780,8 @@ TREEVIEW_TrackMouse(TREEVIEW_INFO *infoPtr, POINT pt)
 	{
 	    if (msg.message == WM_MOUSEMOVE)
 	    {
-		pt.x = SLOWORD(msg.lParam);
-		pt.y = SHIWORD(msg.lParam);
+		pt.x = (short)LOWORD(msg.lParam);
+		pt.y = (short)HIWORD(msg.lParam);
 		if (PtInRect(&r, pt))
 		    continue;
 		else
@@ -3825,8 +3825,8 @@ TREEVIEW_LButtonDoubleClick(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	KillTimer(infoPtr->hwnd, TV_EDIT_TIMER);
     }
 
-    hit.pt.x = SLOWORD(lParam);
-    hit.pt.y = SHIWORD(lParam);
+    hit.pt.x = (short)LOWORD(lParam);
+    hit.pt.y = (short)HIWORD(lParam);
 
     wineItem = (TREEVIEW_ITEM *)TREEVIEW_HitTest(infoPtr, &hit);
     if (!wineItem)
@@ -3896,8 +3896,8 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	return 0;
     }
 
-    ht.pt.x = SLOWORD(lParam);
-    ht.pt.y = SHIWORD(lParam);
+    ht.pt.x = (short)LOWORD(lParam);
+    ht.pt.y = (short)HIWORD(lParam);
 
     TREEVIEW_HitTest(infoPtr, &ht);
     TRACE("item %d\n", TREEVIEW_GetItemIndex(infoPtr, ht.hItem));
@@ -4043,8 +4043,8 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	return 0;
     }
 
-    ht.pt.x = SLOWORD(lParam);
-    ht.pt.y = SHIWORD(lParam);
+    ht.pt.x = (short)LOWORD(lParam);
+    ht.pt.y = (short)HIWORD(lParam);
 
     TREEVIEW_HitTest(infoPtr, &ht);
 
@@ -5103,8 +5103,8 @@ TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     if (wParam == SIZE_RESTORED)
     {
-	infoPtr->clientWidth  = SLOWORD(lParam);
-	infoPtr->clientHeight = SHIWORD(lParam);
+	infoPtr->clientWidth  = (short)LOWORD(lParam);
+	infoPtr->clientHeight = (short)HIWORD(lParam);
 
 	TREEVIEW_RecalculateVisibleOrder(infoPtr, NULL);
 	TREEVIEW_SetFirstVisible(infoPtr, infoPtr->firstVisible, TRUE);

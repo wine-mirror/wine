@@ -336,8 +336,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_NCHITTEST:
         {
             POINT pt;
-            pt.x = SLOWORD(lParam);
-            pt.y = SHIWORD(lParam);
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
             return NC_HandleNCHitTest( hwnd, pt );
         }
 
@@ -364,8 +364,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 /* release capture if we took it on WM_NCRBUTTONDOWN */
                 ReleaseCapture();
 
-	    pt.x = SLOWORD(lParam);
-	    pt.y = SHIWORD(lParam);
+	    pt.x = (short)LOWORD(lParam);
+	    pt.y = (short)HIWORD(lParam);
             ClientToScreen(hwnd, &pt);
             SendMessageW( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM(pt.x, pt.y) );
         }
@@ -391,8 +391,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             HMENU hMenu = wndPtr->hSysMenu;
             WIN_ReleasePtr( wndPtr );
             if (!hMenu) return 0;
-            pt.x = SLOWORD(lParam);
-            pt.y = SHIWORD(lParam);
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
             hitcode = NC_HandleNCHitTest(hwnd, pt);
 
             /* Track system popup if click was in the caption area. */

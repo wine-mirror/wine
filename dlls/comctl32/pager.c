@@ -1118,8 +1118,8 @@ PAGER_NCHitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     POINT pt;
 
-    pt.x = SLOWORD(lParam);
-    pt.y = SHIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
 
     ScreenToClient (hwnd, &pt);
     return PAGER_HitTest(hwnd, &pt);
@@ -1198,8 +1198,8 @@ PAGER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT hit;
     HDC hdc;
 
-    pt.x = SLOWORD(lParam);
-    pt.y = SHIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
 
     TRACE("[%p] to (%ld,%ld)\n", hwnd, pt.x, pt.y);
     ClientToScreen(hwnd, &pt);
@@ -1284,10 +1284,10 @@ PAGER_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     POINT pt;
     INT hit;
 
-    pt.x = SLOWORD(lParam);
-    pt.y = SHIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
 
-    TRACE("[%p] at (%d,%d)\n", hwnd, SLOWORD(lParam), SHIWORD(lParam));
+    TRACE("[%p] at (%d,%d)\n", hwnd, (short)LOWORD(lParam), (short)HIWORD(lParam));
 
     hit = PAGER_HitTest(hwnd, &pt);
 
@@ -1353,10 +1353,10 @@ PAGER_NCLButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     POINT pt;
 
-    pt.x = SLOWORD(lParam);
-    pt.y = SHIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
 
-    TRACE("[%p] at (%d,%d)\n", hwnd, SLOWORD(lParam), SHIWORD(lParam));
+    TRACE("[%p] at (%ld,%ld)\n", hwnd, pt.x, pt.y );
     MapWindowPoints(0, hwnd, &pt, 1);
     lParam = MAKELONG(pt.x, pt.y);
     return PAGER_LButtonDown (hwnd, wParam, lParam);
@@ -1454,12 +1454,12 @@ PAGER_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* note that WM_SIZE is sent whenever NCCalcSize resizes the client wnd */
 
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
-    TRACE("[%p] %dx%d\n", hwnd, SLOWORD(lParam), SHIWORD(lParam));
+    TRACE("[%p] %dx%d\n", hwnd, (short)LOWORD(lParam), (short)HIWORD(lParam));
 
     if (PAGER_IsHorizontal(hwnd))
-        infoPtr->nHeight = SHIWORD(lParam);
+        infoPtr->nHeight = (short)HIWORD(lParam);
     else
-        infoPtr->nWidth = SLOWORD(lParam);
+        infoPtr->nWidth = (short)LOWORD(lParam);
 
     return PAGER_RecalcSize(hwnd);
 }

@@ -2729,8 +2729,8 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
              * struct to properly handle synthetic messages. They are already
              * in screen coordinates.
              */
-            mt.pt.x = SLOWORD(msg.lParam);
-            mt.pt.y = SHIWORD(msg.lParam);
+            mt.pt.x = (short)LOWORD(msg.lParam);
+            mt.pt.y = (short)HIWORD(msg.lParam);
 
 	    /* Find a menu for this mouse event */
 	    hmenu = MENU_PtMenu( mt.hTopMenu, mt.pt );

@@ -1394,8 +1394,8 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT   nItem, nWidth;
     HDC   hdc;
 
-    pt.x = (INT)SLOWORD(lParam);
-    pt.y = (INT)SHIWORD(lParam);
+    pt.x = (INT)(SHORT)LOWORD(lParam);
+    pt.y = (INT)(SHORT)HIWORD(lParam);
     HEADER_InternalHitTest (hwnd, &pt, &flags, &nItem);
 
     if (infoPtr->bPressed) {
@@ -1505,8 +1505,8 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT   nItem, nWidth;
     HDC   hdc;
 
-    pt.x = (INT)SLOWORD(lParam);
-    pt.y = (INT)SHIWORD(lParam);
+    pt.x = (INT)(SHORT)LOWORD(lParam);
+    pt.y = (INT)(SHORT)HIWORD(lParam);
     HEADER_InternalHitTest (hwnd, &pt, &flags, &nItem);
 
     if ((dwStyle & HDS_BUTTONS) && (dwStyle & HDS_HOTTRACK)) {

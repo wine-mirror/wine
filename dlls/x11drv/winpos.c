@@ -1894,8 +1894,8 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
 
-    pt.x = SLOWORD(dwPoint);
-    pt.y = SHIWORD(dwPoint);
+    pt.x = (short)LOWORD(dwPoint);
+    pt.y = (short)HIWORD(dwPoint);
     capturePoint = pt;
 
     if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) || (exstyle & WS_EX_MANAGED)) return;

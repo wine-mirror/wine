@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 static INT_PTR CALLBACK ColorDlgProc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam );
 
-#define CONV_LPARAMTOPOINT(lp,p) do { (p)->x = SLOWORD(lp); (p)->y = SHIWORD(lp); } while(0)
+#define CONV_LPARAMTOPOINT(lp,p) do { (p)->x = (short)LOWORD(lp); (p)->y = (short)HIWORD(lp); } while(0)
 
 static const COLORREF predefcolors[6][8]=
 {

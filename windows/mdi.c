@@ -1369,8 +1369,8 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
         {
             HWND child;
             POINT pt;
-            pt.x = SLOWORD(lParam);
-            pt.y = SHIWORD(lParam);
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
             child = ChildWindowFromPoint(hwnd, pt);
 
 	    TRACE("notification from %p (%li,%li)\n",child,pt.x,pt.y);

@@ -1357,8 +1357,8 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case WM_LBUTTONDOWN:
         {
 	    POINT pt;
-	    pt.x = SLOWORD(lParam);
-	    pt.y = SHIWORD(lParam);
+	    pt.x = (short)LOWORD(lParam);
+	    pt.y = (short)HIWORD(lParam);
             SCROLL_TrackScrollBar( hwnd, SB_CTL, pt );
 	}
         break;
@@ -1367,8 +1367,8 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case WM_SYSTIMER:
         {
             POINT pt;
-            pt.x = SLOWORD(lParam);
-            pt.y = SHIWORD(lParam);
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
             SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, pt );
         }
         break;

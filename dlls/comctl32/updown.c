@@ -868,7 +868,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    return MAKELONG(infoPtr->CurVal, temp ? 0 : 1);
 
 	case UDM_SETPOS:
-	    temp = SLOWORD(lParam);
+	    temp = (short)LOWORD(lParam);
 	    TRACE("UpDown Ctrl new value(%d), hwnd=%p\n", temp, hwnd);
 	    if(!UPDOWN_InBounds(infoPtr, temp)) {
 		if(temp < infoPtr->MinVal) temp = infoPtr->MinVal;
@@ -883,10 +883,10 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    return MAKELONG(infoPtr->MaxVal, infoPtr->MinVal);
 
 	case UDM_SETRANGE:
-		                               /* we must have:     */
-	    infoPtr->MaxVal = SLOWORD(lParam); /* UD_MINVAL <= Max <= UD_MAXVAL */
-	    infoPtr->MinVal = SHIWORD(lParam); /* UD_MINVAL <= Min <= UD_MAXVAL */
-                	                       /* |Max-Min| <= UD_MAXVAL        */
+                                                     /* we must have:     */
+	    infoPtr->MaxVal = (short)(lParam);       /* UD_MINVAL <= Max <= UD_MAXVAL */
+	    infoPtr->MinVal = (short)HIWORD(lParam); /* UD_MINVAL <= Min <= UD_MAXVAL */
+                                                     /* |Max-Min| <= UD_MAXVAL        */
 	    TRACE("UpDown Ctrl new range(%d to %d), hwnd=%p\n",
 		  infoPtr->MinVal, infoPtr->MaxVal, hwnd);
 	    break;

@@ -2177,8 +2177,8 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case SC_HSCROLL:
         {
             POINT pt;
-            pt.x = SLOWORD(lParam);
-            pt.y = SHIWORD(lParam);
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
             NC_TrackScrollBar( hwnd, wParam, pt );
         }
 	break;
@@ -2186,8 +2186,8 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case SC_MOUSEMENU:
         {
             POINT pt;
-            pt.x = SLOWORD(lParam);
-            pt.y = SHIWORD(lParam);
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
             MENU_TrackMouseMenuBar( hwnd, wParam & 0x000F, pt );
         }
 	break;

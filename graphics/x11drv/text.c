@@ -304,7 +304,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 		{
 		    sum += lpDx[i];
 		    fSum = sum*ve_we+err;
-		    delta = SHIWORD(fSum)
+		    delta = (short)HIWORD(fSum)
 		      - X11DRV_cptable[pfo->fi->cptable].pTextWidth(
 		                                pfo, pitem->chars, pitem->nchars+1);
 		    pitem->nchars++;

@@ -2024,7 +2024,7 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return MONTHCAL_SetFocus(hwnd, wParam, lParam);
 
   case WM_SIZE:
-    return MONTHCAL_Size(hwnd, (int)SLOWORD(lParam), (int)SHIWORD(lParam));
+    return MONTHCAL_Size(hwnd, (short)LOWORD(lParam), (short)HIWORD(lParam));
 
   case WM_CREATE:
     return MONTHCAL_Create(hwnd, wParam, lParam);
