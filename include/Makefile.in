@@ -9,6 +9,7 @@ IDL_SRCS = \
 	wtypes.idl
 
 WINDOWS_INCLUDES = \
+	accctrl.h \
 	audevcod.h \
 	basetsd.h \
 	cderr.h \
