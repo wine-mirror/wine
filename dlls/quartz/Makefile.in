@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = quartz.dll
 IMPORTS   = ole32 oleaut32 advapi32 kernel32
-EXTRALIBS = $(LIBUUID)
+EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
@@ -13,6 +13,7 @@ C_SRCS = \
 	enummedia.c \
 	enummoniker.c \
 	enumpins.c \
+	filesource.c \
 	filtergraph.c \
 	filtermapper.c \
 	main.c \
