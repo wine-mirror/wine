@@ -360,6 +360,8 @@ HINSTANCE hinst;
 char filetorun[MAX_PATH];
 
   WCMD_parse (command, quals, param1, param2);	/* Quick way to get the filename */
+  if (!(*param1) && !(*param2))
+    return;
   if (strpbrk (param1, "\\:") == NULL) {	/* No explicit path given */
     if ((strchr (param1, '.') == NULL) || (strstr (param1, ".bat") != NULL)) {
       if (SearchPath (NULL, param1, ".bat", sizeof(filetorun), filetorun, NULL)) {
@@ -659,4 +661,3 @@ char temp_path[MAX_PATH], temp_file[MAX_PATH], temp_file2[MAX_PATH], temp_cmd[10
   WCMD_process_command (temp_cmd);
   DeleteFile (temp_file);
 }
-
