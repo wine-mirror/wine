@@ -78,6 +78,7 @@ static const char * const TypeNames[TYPE_NBTYPES] =
 };
 
 #define MAX_ORDINALS	2048
+#define MAX_IMPORTS       16
 
   /* Callback function used for stub functions */
 #define STUB_CALLBACK \
@@ -159,6 +160,8 @@ static char *SpecName;
 static FILE *SpecFp;
 static WORD Code_Selector, Data_Selector;
 static char DLLInitFunc[80];
+static char *DLLImports[MAX_IMPORTS];
+static int nb_imports = 0;
 
 char *ParseBuffer = NULL;
 char *ParseNext;
@@ -202,6 +205,16 @@ static void *xrealloc (void *ptr, size_t size)
     return res;
 }
 
+static char *xstrdup( const char *str )
+{
+    char *res = strdup( str );
+    if (!res)
+    {
+        fprintf (stderr, "Virtual memory exhausted.\n");
+        exit (1);
+    }
+    return res;
+}
 
 static int IsNumberString(char *s)
 {
@@ -737,6 +750,21 @@ static int ParseTopLevel(void)
             if (!DLLInitFunc[0])
                 fprintf(stderr, "%s:%d: Expected function name after init\n", SpecName, Line);
         }
+        else if (strcmp(token, "import") == 0)
+        {
+            if (nb_imports >= MAX_IMPORTS)
+            {
+                fprintf( stderr, "%s:%d: Too many imports (limit %d)\n",
+                         SpecName, Line, MAX_IMPORTS );
+                return -1;
+            }
+            if (SpecType != SPEC_WIN32)
+            {
+                fprintf( stderr, "%s:%d: Imports not supported for Win16\n", SpecName, Line );
+                return -1;
+            }
+            DLLImports[nb_imports++] = xstrdup(GetToken());
+        }
 	else if (IsNumberString(token))
 	{
 	    int ordinal;
@@ -1198,6 +1226,19 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     }
     fprintf( outfile, "\n};\n\n" );
 
+    /* Output the DLL imports */
+
+    if (nb_imports)
+    {
+        fprintf( outfile, "static const char * const Imports[%d] =\n{\n", nb_imports );
+        for (i = 0; i < nb_imports; i++)
+        {
+            fprintf( outfile, "    \"%s\"", DLLImports[i] );
+            if (i < nb_imports-1) fprintf( outfile, ",\n" );
+        }
+        fprintf( outfile, "\n};\n\n" );
+    }
+
     /* Output the DLL descriptor */
 
     fprintf( outfile, "const BUILTIN32_DESCRIPTOR %s_Descriptor =\n{\n",
@@ -1206,6 +1247,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     fprintf( outfile, "    %d,\n", Base );
     fprintf( outfile, "    %d,\n", Limit - Base + 1 );
     fprintf( outfile, "    %d,\n", nb_names );
+    fprintf( outfile, "    %d,\n", nb_imports );
     fprintf( outfile, "    %d,\n", (fwd_size + 3) & ~3 );
     fprintf( outfile,
              "    Functions,\n"
@@ -1213,6 +1255,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
              "    FuncOrdinals,\n"
              "    FuncArgs,\n"
              "    ArgTypes,\n");
+    fprintf( outfile, "    %s,\n", nb_imports ? "Imports" : "0" );
     fprintf( outfile, "    %s\n", DLLInitFunc[0] ? DLLInitFunc : "0" );
     fprintf( outfile, "};\n" );             
     return 0;

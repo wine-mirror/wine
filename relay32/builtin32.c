@@ -159,18 +159,22 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
     IMAGE_EXPORT_DIRECTORY *exp;
+    IMAGE_IMPORT_DESCRIPTOR *imp;
     LPVOID *funcs;
     LPSTR *names;
     LPSTR pfwd;
     DEBUG_ENTRY_POINT *debug;
-    INT i, size;
+    INT i, size, nb_sections;
     BYTE *addr;
 
     /* Allocate the module */
 
+    nb_sections = 2;  /* exports + code */
+    if (dll->descr->nb_imports) nb_sections++;
     size = (sizeof(IMAGE_DOS_HEADER)
             + sizeof(IMAGE_NT_HEADERS)
-            + 2 * sizeof(IMAGE_SECTION_HEADER)
+            + nb_sections * sizeof(IMAGE_SECTION_HEADER)
+            + (dll->descr->nb_imports+1) * sizeof(IMAGE_IMPORT_DESCRIPTOR)
             + sizeof(IMAGE_EXPORT_DIRECTORY)
             + dll->descr->nb_funcs * sizeof(LPVOID)
             + dll->descr->nb_names * sizeof(LPSTR)
@@ -184,7 +188,8 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     dos   = (IMAGE_DOS_HEADER *)addr;
     nt    = (IMAGE_NT_HEADERS *)(dos + 1);
     sec   = (IMAGE_SECTION_HEADER *)(nt + 1);
-    exp   = (IMAGE_EXPORT_DIRECTORY *)(sec + 2);
+    imp   = (IMAGE_IMPORT_DESCRIPTOR *)(sec + nb_sections);
+    exp   = (IMAGE_EXPORT_DIRECTORY *)(imp + dll->descr->nb_imports + 1);
     funcs = (LPVOID *)(exp + 1);
     names = (LPSTR *)(funcs + dll->descr->nb_funcs);
     pfwd  = (LPSTR)(names + dll->descr->nb_names);
@@ -197,7 +202,7 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 
     nt->Signature                       = IMAGE_NT_SIGNATURE;
     nt->FileHeader.Machine              = IMAGE_FILE_MACHINE_I386;
-    nt->FileHeader.NumberOfSections     = 2;  /* exports + code */
+    nt->FileHeader.NumberOfSections     = nb_sections;
     nt->FileHeader.SizeOfOptionalHeader = sizeof(nt->OptionalHeader);
     nt->FileHeader.Characteristics      = IMAGE_FILE_DLL;
 
@@ -218,6 +223,36 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     if (dll->descr->dllentrypoint) 
         nt->OptionalHeader.AddressOfEntryPoint = (DWORD)dll->descr->dllentrypoint - (DWORD)addr;
     
+    /* Build the import directory */
+
+    if (dll->descr->nb_imports)
+    {
+        dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
+        dir->VirtualAddress = (BYTE *)imp - addr;
+        dir->Size = sizeof(*imp) * (dll->descr->nb_imports + 1);
+
+        /* Build the imports section */
+        strcpy( sec->Name, ".idata" );
+        sec->Misc.VirtualSize = dir->Size;
+        sec->VirtualAddress   = (BYTE *)imp - addr;
+        sec->SizeOfRawData    = dir->Size;
+        sec->PointerToRawData = (BYTE *)imp - addr;
+        sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                 IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ |
+                                 IMAGE_SCN_MEM_WRITE);
+        sec++;
+
+        /* Build the imports */
+        for (i = 0; i < dll->descr->nb_imports; i++)
+        {
+            imp[i].u.Characteristics = 0;
+            imp[i].ForwarderChain = -1;
+            imp[i].Name = (BYTE *)dll->descr->imports[i] - addr;
+            /* hack: make first thunk point to some zero value */
+            imp[i].FirstThunk = (PIMAGE_THUNK_DATA)((BYTE *)&imp[i].u.Characteristics - addr);
+        }
+    }
+
     /* Build the export directory */
 
     dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];

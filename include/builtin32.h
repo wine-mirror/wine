@@ -15,12 +15,14 @@ typedef struct
     int                   base;         /* Ordinal base */
     int                   nb_funcs;     /* Number of functions */
     int                   nb_names;     /* Number of function names */
+    int                   nb_imports;   /* Number of imported DLLs */
     int                   fwd_size;     /* Total size of forward names */
     const ENTRYPOINT32   *functions;    /* Pointer to function table */
     const char * const   *names;        /* Pointer to names table */
     const unsigned short *ordinals;     /* Pointer to ordinals table */
     const unsigned char  *args;         /* Pointer to argument lengths */
     const unsigned int   *argtypes;     /* Pointer to argument types bitmask */
+    const char * const   *imports;      /* Pointer to imports */
     const ENTRYPOINT32    dllentrypoint;/* Pointer to LibMain function */
 } BUILTIN32_DESCRIPTOR;
 

@@ -3,6 +3,7 @@ type    win16|win32
 [file   WINFILENAME]
 [base   ORDINAL]
 [heap   SIZE]
+[import DLL]
 
 ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
 
@@ -26,13 +27,22 @@ General:
 
     "name" and "type" fields are mandatory.  Specific ordinal
 declarations are optional, but the default handler will print an error
-message.  "base" gives the offset of the first ordinal; default is 0.
+message.
+
+"base" gives the offset of the first ordinal; default is 0.
+
 "heap" is the size of the module local heap (only valid for Win16
-modules); default is no local heap. "file" gives the name of the
-Windows file that is replaced by the builtin. <name>.DLL is assumed if
-none is given. (This is important for kernel, which lives in the
-Windows file KRNL386.EXE).  Lines whose first character is a '#' will
-be ignored as comments.
+modules); default is no local heap.
+
+"file" gives the name of the Windows file that is replaced by the
+builtin. <name>.DLL is assumed if none is given. (This is important
+for kernel, which lives in the Windows file KRNL386.EXE).
+
+"import" names a module that this one depends on (only for Win32
+modules at the present). The import declaration can be present several
+times.
+
+Lines whose first character is a '#' will be ignored as comments.
 
 
 Variable ordinals:
