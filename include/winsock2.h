@@ -76,6 +76,21 @@ extern "C" {
 #define WS_SO_CONDITIONAL_ACCEPT   0x3002
 #endif
 
+/* protocol types */
+
+#ifndef USE_WS_PREFIX
+#define SOCK_STREAM                1
+#define SOCK_DGRAM                 2
+#define SOCK_RAW                   3
+#define SOCK_RDM                   4
+#define SOCK_SEQPACKET             5
+#else /* USE_WS_PREFIX */
+#define WS_SOCK_STREAM             1
+#define WS_SOCK_DGRAM              2
+#define WS_SOCK_RAW                3
+#define WS_SOCK_RDM                4
+#define WS_SOCK_SEQPACKET          5
+#endif /* USE_WS_PREFIX */
 
 /* option flags per socket */
 
