@@ -195,10 +195,17 @@ static void TIMER_RestartTimer( TIMER * pTimer, DWORD curTime )
  */
 LONG TIMER_GetNextExpiration(void)
 {
+    TIMER *pTimer;
     LONG retValue;
     
     EnterCriticalSection( &csTimer );
-    retValue = pNextTimer ? EXPIRE_TIME( pNextTimer, GetTickCount() ) : -1;
+
+    pTimer = pNextTimer;
+
+    while (pTimer && !pTimer->expires)  /* Skip already expired timers */
+        pTimer = pTimer->next;
+
+    retValue = pTimer ? EXPIRE_TIME( pTimer, GetTickCount() ) : -1;
     LeaveCriticalSection( &csTimer );
 
     return retValue;
