@@ -149,7 +149,7 @@ then {
   else LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD:$DLLPATH"
   fi
   export LD_LIBRARY_PATH
-  DEBUGGER=$PWD/$HDEBUGGER
+  DEBUGGER="$PWD/$HDEBUGGER"
   echo
   echo "NOTE! To run Wine without installing, you must set the environment variable"
   echo "LD_LIBRARY_PATH to $PWD:$DLLPATH"
@@ -302,13 +302,15 @@ then {
   [ -f "$CROOT/windows/system.ini" ] || cp "$SYSTEMINI" "$CROOT/windows/system.ini"
   if [ "$DOCONF" = 'yes' ]
   then {
-    sed "s/Path=\/c$/Path=${CROOT//\//\\/}/" $WINEINI > $CONF
+    sed "s|Path=/c\$|Path=${CROOT}|" $WINEINI > $CONF
     echo "Created $CONF using default Wine configuration."
     echo "You probably want to review the file, though."
   }
   fi
-  # now we really need to install the registry
-  DOREG=yes
+  # now we really should install the registry
+  if [ "$DOREG" = 'auto' ]
+  then DOREG=yes
+  fi
 }
 elif [ -z "$CROOT" ]
 then {
@@ -323,7 +325,7 @@ echo
 if [ "$DOCONF" = 'yes' ]
 then {
   echo "Setting EXTRA_LD_LIBRARY_PATH in .winerc to $DLLPATH..."
-  sed "s/EXTRA_LD_LIBRARY_PATH=.*/EXTRA_LD_LIBRARY_PATH=${DLLPATH//\//\\/}/" $CONF > $CONF.new
+  sed "s|EXTRA_LD_LIBRARY_PATH=.*|EXTRA_LD_LIBRARY_PATH=${DLLPATH}|" $CONF > $CONF.new
   mv -f $CONF.new $CONF
   echo
 }
@@ -366,7 +368,7 @@ then {
   sed "s/GraphicsDriver=.*/GraphicsDriver=ttydrv/" $CONF > $TMPCONF
 
   # create a temporary wineinstall.reg with fixed debugger path
-  sed "s/debugger\/winedbg/${DEBUGGER//\//\\/}/" $DEFREG > $TMPREG
+  sed "s|debugger/winedbg|${DEBUGGER}|" $DEFREG > $TMPREG
 
   echo "Installing default Wine registry entries..."
   echo
@@ -389,6 +391,7 @@ fi
 # make root's registry global, if desired
 if [ `whoami` = 'root' ] && [ "$SYSREG" = 'yes' ]
 then {
+  [ -d ~/.wine ] || mkdir ~/.wine
   if ! [ -f $sysconfdir/wine.userreg ]
   then {
     echo "Linking root's user registry hive to the global registry..."
