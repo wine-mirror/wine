@@ -12,6 +12,7 @@
 
 struct _NE_MODULE;
 struct _THREAD_ENTRY;
+struct _UTINFO;
 
 /* Current Process pseudo-handle - Returned by GetCurrentProcess*/
 #define CURRENT_PROCESS_PSEUDOHANDLE ((HANDLE)0x7fffffff)
@@ -85,7 +86,7 @@ typedef struct _PDB
     WORD             env_selector;     /* b4 Selector to process environment */
     WORD             error_mode;       /* b6 Error mode */
     HANDLE           load_done_evt;    /* b8 Event for process loading done */
-    DWORD            unknown7;         /* bc Unknown */
+    struct _UTINFO  *UTState;          /* bc Head of Univeral Thunk list */
     DWORD            unknown8;         /* c0 Unknown (NT) */
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
     /* The following are Wine-specific fields */

@@ -9,6 +9,7 @@
 #include "module.h"
 #include "selectors.h"
 #include "callback.h"
+#include "process.h"
 #include "debug.h"
 #include "debugstr.h"
 
@@ -38,9 +39,9 @@ typedef struct
 
 #pragma pack(4)
 
-typedef struct tagUTINFO
+typedef struct _UTINFO
 {
-    struct tagUTINFO  *next;
+    struct _UTINFO    *next;
     HMODULE            hModule;
     HMODULE16          hModule16;
     
@@ -48,8 +49,6 @@ typedef struct tagUTINFO
     UT32THUNK          ut32;
 
 } UTINFO;
-
-static UTINFO *utAnchor;
 
 BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL, 
                         LPSTR lpszInitName, LPSTR lpszProcName,
@@ -158,8 +157,8 @@ static UTINFO *UTAlloc( HMODULE hModule, HMODULE16 hModule16,
     ut->ut32.jmp       = 0xe9;
     ut->ut32.utglue32  = (DWORD)UTGlue32 - ((DWORD)&ut->ut32.utglue32 + sizeof(DWORD));
 
-    ut->next = utAnchor;
-    utAnchor = ut;
+    ut->next = PROCESS_Current()->UTState;
+    PROCESS_Current()->UTState = ut;
 
     return ut;
 }
@@ -171,7 +170,7 @@ static void UTFree( UTINFO *ut )
 {
     UTINFO **ptr;
 
-    for ( ptr = &utAnchor; *ptr; ptr = &(*ptr)->next )
+    for ( ptr = &PROCESS_Current()->UTState; *ptr; ptr = &(*ptr)->next )
         if ( *ptr == ut )
         {
             *ptr = ut->next;
@@ -188,7 +187,7 @@ static UTINFO *UTFind( HMODULE hModule )
 {
     UTINFO *ut;
 
-    for ( ut = utAnchor; ut; ut =ut->next )
+    for ( ut = PROCESS_Current()->UTState; ut; ut =ut->next )
         if ( ut->hModule == hModule )
             break;
 
@@ -216,12 +215,12 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
 
     /* Allocate UTINFO struct */
 
-    HeapLock( SegptrHeap );  /* FIXME: a bit overkill */
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
     if ( (ut = UTFind( hModule )) != NULL )
         ut = NULL;
     else
         ut = UTAlloc( hModule, hModule16, target16, pfnUT32CallBack );
-    HeapUnlock( SegptrHeap );
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
     if ( !ut )
     {
@@ -261,14 +260,14 @@ VOID WINAPI UTUnRegister( HMODULE hModule )
     UTINFO *ut;
     HMODULE16 hModule16 = 0;
 
-    HeapLock( SegptrHeap );  /* FIXME: a bit overkill */
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
     ut = UTFind( hModule );
     if ( !ut )
     {
         hModule16 = ut->hModule16;
         UTFree( ut );
     }
-    HeapUnlock( SegptrHeap );
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
     if ( hModule16 ) 
         FreeLibrary16( hModule16 );
