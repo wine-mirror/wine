@@ -15,33 +15,28 @@ SPEC_SRCS16 = \
 	wing.spec
 
 C_SRCS = \
-	$(TOPOBJDIR)/objects/bitmap.c \
-	$(TOPOBJDIR)/objects/brush.c \
-	$(TOPOBJDIR)/objects/clipping.c \
-	$(TOPOBJDIR)/objects/dc.c \
-	$(TOPOBJDIR)/objects/dcvalues.c \
-	$(TOPOBJDIR)/objects/dib.c \
-	$(TOPOBJDIR)/objects/enhmetafile.c \
-	$(TOPOBJDIR)/objects/font.c \
-	$(TOPOBJDIR)/objects/gdiobj.c \
-	$(TOPOBJDIR)/objects/metafile.c \
-	$(TOPOBJDIR)/objects/palette.c \
-	$(TOPOBJDIR)/objects/pen.c \
-	$(TOPOBJDIR)/objects/region.c \
-	$(TOPOBJDIR)/objects/text.c \
 	bidi.c \
 	bitblt.c \
+	bitmap.c \
+	brush.c \
+	clipping.c \
+	dc.c \
+	dib.c \
 	driver.c \
+	enhmetafile.c \
 	enhmfdrv/bitblt.c \
 	enhmfdrv/dc.c \
 	enhmfdrv/graphics.c \
 	enhmfdrv/init.c \
 	enhmfdrv/mapping.c \
 	enhmfdrv/objects.c \
+	font.c \
 	freetype.c \
 	gdi_main.c \
+	gdiobj.c \
 	icm.c \
 	mapping.c \
+	metafile.c \
 	mfdrv/bitblt.c \
 	mfdrv/dc.c \
 	mfdrv/graphics.c \
@@ -50,8 +45,11 @@ C_SRCS = \
 	mfdrv/objects.c \
 	mfdrv/text.c \
 	painting.c \
+	palette.c \
 	path.c \
-	printdrv.c
+	pen.c \
+	printdrv.c \
+	region.c
 
 C_SRCS16 = \
 	bidi16.c \
@@ -66,7 +64,6 @@ RC_SRCS16 = version16.rc
 SUBDIRS = tests
 
 EXTRASUBDIRS = \
-	$(TOPOBJDIR)/objects \
 	enhmfdrv \
 	mfdrv
 

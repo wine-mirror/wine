@@ -397,7 +397,4 @@ extern HPALETTE PALETTE_Init(void);
 /* region.c */
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
 
-/* text.c */
-extern LPWSTR FONT_mbtowc(HDC, LPCSTR, INT, INT*, UINT*);
-
 #endif /* __WINE_GDI_PRIVATE_H */

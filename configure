@@ -20173,8 +20173,6 @@ esac
 
           ac_config_commands="$ac_config_commands misc"
 
-          ac_config_commands="$ac_config_commands objects"
-
           ac_config_commands="$ac_config_commands programs/regedit/tests"
 
           ac_config_commands="$ac_config_commands windows"
@@ -20976,7 +20974,6 @@ do
   "dlls/wineps/data" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps/data" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
   "misc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS misc" ;;
-  "objects" ) CONFIG_COMMANDS="$CONFIG_COMMANDS objects" ;;
   "programs/regedit/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regedit/tests" ;;
   "windows" ) CONFIG_COMMANDS="$CONFIG_COMMANDS windows" ;;
   "include/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
@@ -21789,8 +21786,6 @@ echo "$as_me: creating dlls/wineps/data" >&6;} && mkdir "dlls/wineps/data") ;;
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
     misc ) test -d "misc" || ({ echo "$as_me:$LINENO: creating misc" >&5
 echo "$as_me: creating misc" >&6;} && mkdir "misc") ;;
-    objects ) test -d "objects" || ({ echo "$as_me:$LINENO: creating objects" >&5
-echo "$as_me: creating objects" >&6;} && mkdir "objects") ;;
     programs/regedit/tests ) test -d "programs/regedit/tests" || ({ echo "$as_me:$LINENO: creating programs/regedit/tests" >&5
 echo "$as_me: creating programs/regedit/tests" >&6;} && mkdir "programs/regedit/tests") ;;
     windows ) test -d "windows" || ({ echo "$as_me:$LINENO: creating windows" >&5
