@@ -1283,8 +1283,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetHelpContext(
         ICreateTypeInfo2* iface,
         DWORD dwHelpContext)
 {
-    FIXME("(%p,%ld), stub!\n", iface, dwHelpContext);
-    return E_OUTOFMEMORY;
+    ICOM_THIS(ICreateTypeInfo2Impl, iface);
+
+    TRACE("(%p,%ld)\n", iface, dwHelpContext);
+
+    This->typeinfo->helpcontext = dwHelpContext;
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -1742,8 +1747,10 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(
     if (offset == -1) return E_OUTOFMEMORY;
 
     namedata = This->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
-    *((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
-    namedata[9] = 0x10;
+    if (*((INT *)namedata) == -1) {
+	*((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
+	namedata[9] |= 0x10;
+    }
     if ((This->typeinfo->typekind & 15) == TKIND_ENUM) {
 	namedata[9] |= 0x20;
     }
@@ -1761,8 +1768,25 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeDescAlias(
         ICreateTypeInfo2* iface,
         TYPEDESC* pTDescAlias)
 {
-    FIXME("(%p,%p), stub!\n", iface, pTDescAlias);
-    return E_OUTOFMEMORY;
+    ICOM_THIS(ICreateTypeInfo2Impl, iface);
+
+    int encoded_typedesc;
+    int width;
+
+    if ((This->typeinfo->typekind & 15) != TKIND_ALIAS) {
+	return TYPE_E_WRONGTYPEKIND;
+    }
+
+    FIXME("(%p,%p), hack!\n", iface, pTDescAlias);
+
+    if (ctl2_encode_typedesc(This->typelib, pTDescAlias, &encoded_typedesc, &width, NULL, NULL) == -1) {
+	return E_OUTOFMEMORY;
+    }
+
+    This->typeinfo->size = width;
+    This->typeinfo->datatype1 = encoded_typedesc;
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -3440,11 +3464,11 @@ static ULONG WINAPI ITypeLib2_fnRelease(ITypeLib2 * iface)
 static UINT WINAPI ITypeLib2_fnGetTypeInfoCount(
         ITypeLib2 * iface)
 {
-/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+    ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface);
 
-    FIXME("(%p), stub!\n", iface);
+    TRACE("(%p)\n", iface);
 
-    return 0;
+    return This->typelib_header.nrtypeinfos;
 }
 
 /******************************************************************************
@@ -3478,11 +3502,17 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
         UINT index,
         TYPEKIND* pTKind)
 {
-/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+    ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface);
 
-    FIXME("(%p,%d,%p), stub!\n", iface, index, pTKind);
+    TRACE("(%p,%d,%p)\n", iface, index, pTKind);
 
-    return E_OUTOFMEMORY;
+    if ((index < 0) || (index >= This->typelib_header.nrtypeinfos)) {
+	return TYPE_E_ELEMENTNOTFOUND;
+    }
+
+    *pTKind = (This->typelib_segment_data[MSFT_SEG_TYPEINFO][This->typelib_typeinfo_offsets[index]]) & 15;
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -3574,11 +3604,29 @@ static HRESULT WINAPI ITypeLib2_fnIsName(
         ULONG lHashVal,
         BOOL* pfName)
 {
-/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+    ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface);
 
-    FIXME("(%p,%s,%lx,%p), stub!\n", iface, debugstr_w(szNameBuf), lHashVal, pfName);
+    char *encoded_name;
+    int nameoffset;
+    MSFT_NameIntro *nameintro;
 
-    return E_OUTOFMEMORY;
+    TRACE("(%p,%s,%lx,%p)\n", iface, debugstr_w(szNameBuf), lHashVal, pfName);
+
+    ctl2_encode_name(This, szNameBuf, &encoded_name);
+    nameoffset = ctl2_find_name(This, encoded_name);
+
+    *pfName = 0;
+
+    if (nameoffset == -1) return S_OK;
+
+    nameintro = (MSFT_NameIntro *)(&This->typelib_segment_data[MSFT_SEG_NAME][nameoffset]);
+    if (nameintro->hreftype == -1) return S_OK;
+
+    *pfName = 1;
+
+    FIXME("Should be decoding our copy of the name over szNameBuf.\n");
+
+    return S_OK;
 }
 
 /******************************************************************************
