@@ -24,7 +24,7 @@
 #include "multimedia.h"
 #include "heap.h"
 #include "ldt.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(wave)
 
@@ -37,46 +37,60 @@ DEFAULT_DEBUG_CHANNEL(wave)
 #define MAX_WAVEINDRV 	(1)
 
 /* state diagram for waveOut writing:
- * FIXME: I'm not 100% pleased with the handling of RESETTING and CLOSING which are 
- * temporary states.
- * Basically, they are events handled in waveOutXXXX functions (open, write, pause, restart), 
- * and the others (resetn close) which are handled by the player. We (I ?) use transient
- * states (RESETTING and CLOSING) to send the event from the waveOutXXX functions to 
- * the player. Not very good.
  *
- * 		open()		STOPPED
- * PAUSED	write()		PAUSED
- * STOPPED	write()		PLAYING
- * (other)	write()		<error>
- * (any)	pause()		PAUSED
- * PAUSED	restart()	PLAYING if hdr, STOPPED otherwise
- * 		reset()		RESETTING => STOPPED
- *		close()		CLOSING => CLOSED
+ * +---------+-------------+---------------+---------------------------------+
+ * |  state  |  function   |     event     |            new state	     |
+ * +---------+-------------+---------------+---------------------------------+
+ * |	     | open()	   |		   | STOPPED		       	     |
+ * | PAUSED  | write()	   | 		   | PAUSED		       	     |
+ * | STOPPED | write()	   | <thrd create> | PLAYING		  	     |
+ * | PLAYING | write()	   | HEADER        | PLAYING		  	     |
+ * | (other) | write()	   | <error>       |		       		     |
+ * | (any)   | pause()	   | PAUSING	   | PAUSED		       	     |
+ * | PAUSED  | restart()   | RESTARTING    | PLAYING (if no thrd => STOPPED) |
+ * | (any)   | reset()	   | RESETTING     | STOPPED		      	     |
+ * | (any)   | close()	   | CLOSING	   | CLOSED		      	     |
+ * +---------+-------------+---------------+---------------------------------+
  */
 
+/* states of the playing device */
 #define	WINE_WS_PLAYING		0
 #define	WINE_WS_PAUSED		1
 #define	WINE_WS_STOPPED		2
-#define	WINE_WS_RESETTING	3
-#define WINE_WS_CLOSING		4
-#define WINE_WS_CLOSED		5
+#define WINE_WS_CLOSED		3
+
+/* events to be send to device */
+#define WINE_WM_PAUSING		(WM_USER + 1)
+#define WINE_WM_RESTARTING	(WM_USER + 2)
+#define WINE_WM_RESETTING	(WM_USER + 3)
+#define WINE_WM_CLOSING		(WM_USER + 4)
+#define WINE_WM_HEADER		(WM_USER + 5)
 
 typedef struct {
     int				unixdev;
-    volatile int		state;	/* one of the WINE_WS_ manifest constants */
-    DWORD			dwFragmentSize;
+    volatile int		state;			/* one of the WINE_WS_ manifest constants */
+    DWORD			dwFragmentSize;		/* size of OSS buffer fragment */
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
     PCMWAVEFORMAT		format;
-    LPWAVEHDR			lpQueueHdr;
-    DWORD			dwTotalPlayed;
-    HANDLE			hThread;
-    CRITICAL_SECTION		critSect;
-    /* used only by wodPlayer */
+    LPWAVEHDR			lpQueueHdr;		/* pending buffers for playing */
+    LPWAVEHDR			lpNotifyHdr;		/* list of wavehdr for which write() has been called, pending for notification */
+
+    DWORD			dwPlayedTotal;		/* number of bytes played since opening */
+    DWORD			dwPlayed;		/* number of bytes played since last DSP_RESET */
+    DWORD			dwNotifiedBytes;	/* number of bytes for which wavehdr notification has been done */
+
+    /* info on current lpQueueHdr->lpWaveHdr */
     DWORD			dwOffCurrHdr;		/* offset in lpQueueHdr->lpWaveHdr->lpData for fragments */
     DWORD			dwRemain;		/* number of bytes to write to end the current fragment  */
-    DWORD			dwNotifiedBytes;	/* number of bytes for which wavehdr notification has been done */
-    WAVEHDR*			lpNotifyHdr;		/* list of wavehdr for which write() has been called, pending for notification */
+
+    /* synchronization stuff */
+    HANDLE			hThread;
+    DWORD			dwThreadID;
+    HANDLE			hEvent;
+
+    WORD			wMaxFragments;		/* max number of fragments that can be written to dsp */
+    WORD			wFragsUsedInQueue;	/* current number of used fragments inside dsp queue */
 } WINE_WAVEOUT;
 
 typedef struct {
@@ -103,7 +117,7 @@ static WINE_WAVEIN	WInDev    [MAX_WAVEOUTDRV];
 static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg, 
 			       DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE(wave, "wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
+    TRACE("wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
     
     switch (wMsg) {
     case WOM_OPEN:
@@ -119,7 +133,7 @@ static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg,
 			      WOutDev[wDevID].waveDesc.dwInstance, 
 			      dwParam1, 
 			      dwParam2)) {
-	    WARN(wave, "can't notify client !\n");
+	    WARN("can't notify client !\n");
 	    return MMSYSERR_NOERROR;
 	}
 	break;
@@ -137,12 +151,12 @@ static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg,
 			      WInDev[wDevID].waveDesc.dwInstance, 
 			      dwParam1, 
 			      dwParam2)) {
-	    WARN(wave, "can't notify client !\n");
+	    WARN("can't notify client !\n");
 	    return MMSYSERR_NOERROR;
 	}
 	break;
     default:
-	FIXME(wave, "Unknown CB message %u\n", wMsg);
+	FIXME("Unknown CB message %u\n", wMsg);
 	break;
     }
     return 0;
@@ -161,41 +175,30 @@ static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg,
 static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 {
     LPWAVEHDR		lpWaveHdr;
-    LPWAVEHDR		wh;
     LPBYTE		lpData;
     int			count;
-    audio_buf_info 	abinfo;
 
     for (;;) {
-	/* get number of writable fragments */
-	if (ioctl(wwo->unixdev, SNDCTL_DSP_GETOSPACE, &abinfo) == -1) {
-	    perror("ioctl SNDCTL_DSP_GETOSPACE");
-	    wwo->hThread = 0;
-	    LeaveCriticalSection(&wwo->critSect);
-	    ExitThread(-1);
-	}
-	TRACE(wave, "Can write %d fragments on fd %d\n", abinfo.fragments, wwo->unixdev);
-
-	if (abinfo.fragments == 0)	/* output queue is full, wait a bit */
+	TRACE("Fragments: %d used on fd %d\n", wwo->wFragsUsedInQueue, wwo->unixdev);
+	if (wwo->wFragsUsedInQueue == wwo->wMaxFragments) 	/* output queue is full, wait a bit */
 	    return FALSE;
 
 	lpWaveHdr = wwo->lpQueueHdr;
 	if (!lpWaveHdr) {
 	    if (wwo->dwRemain > 0 &&				/* still data to send to complete current fragment */
 		wwo->dwNotifiedBytes >= wwo->dwFragmentSize &&  /* first fragment has been played */
-		abinfo.fragstotal - abinfo.fragments < 2) {     /* done with all waveOutWrite()' fragments */
-		    
+		wwo->wFragsUsedInQueue < 2) {     		/* done with all waveOutWrite()' fragments */
 		/* FIXME: should do better handling here */
-		TRACE(wave, "Oooch, buffer underrun !\n");
+		TRACE("Oooch, buffer underrun !\n");
 		return TRUE; /* force resetting of waveOut device */
 	    }
 	    return FALSE;	/* wait a bit */
 	}
 	
 	if (wwo->dwOffCurrHdr == 0) {
-	    TRACE(wave, "Starting a new wavehdr %p of %ld bytes\n", lpWaveHdr, lpWaveHdr->dwBufferLength);
+	    TRACE("Starting a new wavehdr %p of %ld bytes\n", lpWaveHdr, lpWaveHdr->dwBufferLength);
 	    if (lpWaveHdr->dwFlags & WHDR_BEGINLOOP)
-		FIXME(wave, "NIY: loops (%lu) in wavehdr\n", lpWaveHdr->dwLoops);
+		FIXME("NIY: loops (%lu) in wavehdr\n", lpWaveHdr->dwLoops);
 	}
 	
 	lpData = ((DWORD)lpWaveHdr == lpWaveHdr->reserved) ?
@@ -207,28 +210,32 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 	    
 	    /* write end of current wave hdr */
 	    count = write(wwo->unixdev, lpData + wwo->dwOffCurrHdr, toWrite);
-	    TRACE(wave, "write(%p[%5lu], %5lu) => %d\n", lpData, wwo->dwOffCurrHdr, toWrite, count);
+	    TRACE("write(%p[%5lu], %5lu) => %d\n", lpData, wwo->dwOffCurrHdr, toWrite, count);
 	    
-	    /* move lpWaveHdr to notify list */
-	    if (wwo->lpNotifyHdr) {
-		for (wh = wwo->lpNotifyHdr; wh->lpNext != NULL; wh = wh->lpNext);
-		wh->lpNext = lpWaveHdr;
-	    } else {
-		wwo->lpNotifyHdr = lpWaveHdr;
+	    if (count > 0) {
+		LPWAVEHDR*	wh;
+		
+		/* move lpWaveHdr to the end of notify list */
+		for (wh = &(wwo->lpNotifyHdr); *wh; wh = &((*wh)->lpNext));
+		    *wh = lpWaveHdr;
+
+		wwo->lpQueueHdr = lpWaveHdr->lpNext;
+		lpWaveHdr->lpNext = 0;
+		
+		wwo->dwOffCurrHdr = 0;
+		if ((wwo->dwRemain -= count) == 0) {
+		    wwo->dwRemain = wwo->dwFragmentSize;
+		    wwo->wFragsUsedInQueue++;
+		}
 	    }
-	    wwo->lpQueueHdr = lpWaveHdr->lpNext;
-	    lpWaveHdr->lpNext = 0;
-	    
-	    wwo->dwOffCurrHdr = 0;
-	    if ((wwo->dwRemain -= toWrite) == 0)
-		wwo->dwRemain = wwo->dwFragmentSize;
 	    continue; /* try to go to use next wavehdr */
 	}  else	{
 	    count = write(wwo->unixdev, lpData + wwo->dwOffCurrHdr, wwo->dwRemain);
-	    TRACE(wave, "write(%p[%5lu], %5lu) => %d\n", lpData, wwo->dwOffCurrHdr, wwo->dwRemain, count);
+	    TRACE("write(%p[%5lu], %5lu) => %d\n", lpData, wwo->dwOffCurrHdr, wwo->dwRemain, count);
 	    if (count > 0) {
-		wwo->dwOffCurrHdr += wwo->dwRemain;
+		wwo->dwOffCurrHdr += count;
 		wwo->dwRemain = wwo->dwFragmentSize;
+		wwo->wFragsUsedInQueue++;
 	    }
 	}
     }
@@ -250,12 +257,12 @@ static	void	wodPlayer_Notify(WINE_WAVEOUT* wwo, WORD uDevID, BOOL force)
 	if (ioctl(wwo->unixdev, SNDCTL_DSP_GETOPTR, &cinfo) == -1) {
 	    perror("ioctl SNDCTL_DSP_GETOPTR");
 	    wwo->hThread = 0;
-	    LeaveCriticalSection(&wwo->critSect);
+	    wwo->state = WINE_WS_STOPPED;
 	    ExitThread(-1);
 	}
-	TRACE(wave, "Played %d bytes on fd %d\n", cinfo.bytes, wwo->unixdev);
-	/* FIXME: this will not work if a RESET or SYNC occurs somewhere */
-	wwo->dwTotalPlayed = cinfo.bytes;
+	TRACE("Played %d bytes (played=%ld) on fd %d\n", cinfo.bytes, wwo->dwPlayed, wwo->unixdev);
+	wwo->wFragsUsedInQueue -= cinfo.bytes / wwo->dwFragmentSize - wwo->dwPlayed / wwo->dwFragmentSize;
+	wwo->dwPlayed = cinfo.bytes;
     }
     if (force || cinfo.bytes > wwo->dwNotifiedBytes) {
 	/* remove all wavehdr which can be notified */
@@ -269,116 +276,164 @@ static	void	wodPlayer_Notify(WINE_WAVEOUT* wwo, WORD uDevID, BOOL force)
 		wwo->dwNotifiedBytes += lpWaveHdr->dwBufferLength;
 	    wwo->lpNotifyHdr = lpWaveHdr->lpNext;
 	    
-	    /* FIXME: should we keep the wwo->critsect locked during callback ? */
-	    /* normally yes, only a limited set of functions can be called...
-	     * the ones which can be called inside an i386 interruption
-	     * so this should be fine
-	     */
-	    LeaveCriticalSection(&wwo->critSect);
-	    TRACE(wave, "Notifying client with %p\n", lpWaveHdr);
+	    TRACE("Notifying client with %p\n", lpWaveHdr);
 	    if (WAVE_NotifyClient(uDevID, WOM_DONE, lpWaveHdr->reserved, 0) != MMSYSERR_NOERROR) {
-		WARN(wave, "can't notify client !\n");
+		WARN("can't notify client !\n");
 	    }
-	    EnterCriticalSection(&wwo->critSect);
 	}
     }
 }
 
 /**************************************************************************
+ * 				wodPlayer_Reset			[internal]
+ *
+ * wodPlayer helper. Resets current output stream.
+ */
+static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, WORD uDevID, BOOL reset)
+{
+    LPWAVEHDR		lpWaveHdr;
+
+    /* updates current notify list */
+    wodPlayer_Notify(wwo, uDevID, FALSE);
+
+    /* flush all possible output */
+    if (ioctl(wwo->unixdev, SNDCTL_DSP_RESET, 0) == -1) {
+	perror("ioctl SNDCTL_DSP_RESET");
+	wwo->hThread = 0;
+	wwo->state = WINE_WS_STOPPED;
+	ExitThread(-1);
+    }
+
+    wwo->dwOffCurrHdr = 0;
+    if (reset) {
+	/* empty notify list */
+	wodPlayer_Notify(wwo, uDevID, TRUE);
+	if (wwo->lpNotifyHdr) {
+	    ERR("out of sync\n");
+	}
+	/* get rid also of all the current queue */
+	for (lpWaveHdr = wwo->lpQueueHdr; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext) {
+	    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+	    lpWaveHdr->dwFlags |= WHDR_DONE;
+	    
+	    if (WAVE_NotifyClient(uDevID, WOM_DONE, lpWaveHdr->reserved, 0) != MMSYSERR_NOERROR) {
+		WARN("can't notify client !\n");
+	    }
+	}
+	wwo->lpQueueHdr = 0;
+	wwo->state = WINE_WS_STOPPED;
+	wwo->dwPlayedTotal = 0;
+    } else {
+	/* move notify list to begining of lpQueueHdr list */
+	while (wwo->lpNotifyHdr) {
+	    lpWaveHdr = wwo->lpNotifyHdr;
+	    wwo->lpNotifyHdr = lpWaveHdr->lpNext;
+	    lpWaveHdr->lpNext = wwo->lpQueueHdr;
+	    wwo->lpQueueHdr = lpWaveHdr;
+	}
+	wwo->state = WINE_WS_PAUSED;
+	wwo->dwPlayedTotal += wwo->dwPlayed;
+    }
+    wwo->dwNotifiedBytes = wwo->dwPlayed = 0;
+    wwo->wFragsUsedInQueue = 0;
+}
+
+/**************************************************************************
  * 				wodPlayer			[internal]
  */
-static	DWORD	WINAPI	wodPlayer(LPVOID pmt)
+static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 {
     WORD		uDevID = (DWORD)pmt;
     WINE_WAVEOUT*	wwo = (WINE_WAVEOUT*)&WOutDev[uDevID];
-    int			laststate = -1;
     WAVEHDR*		lpWaveHdr;
     DWORD		dwSleepTime;
+    MSG			msg;
+
+    PeekMessageA(&msg, 0, 0, 0, 0);
+    wwo->state = WINE_WS_STOPPED;
 
     wwo->dwNotifiedBytes = 0;
     wwo->dwOffCurrHdr = 0;
     wwo->dwRemain = wwo->dwFragmentSize;
+    wwo->lpQueueHdr = NULL;
     wwo->lpNotifyHdr = NULL;
+    wwo->wFragsUsedInQueue = 0;
+    wwo->dwPlayedTotal = 0;
+    wwo->dwPlayed = 0;
+
+    TRACE("imhere[0]\n");
+    SetEvent(wwo->hEvent);
 
     /* make sleep time to be # of ms to output a fragment */
     dwSleepTime = (wwo->dwFragmentSize * 1000) / wwo->format.wf.nAvgBytesPerSec;
 
     for (;;) {
-	
-	EnterCriticalSection(&wwo->critSect);
-	
-	switch (wwo->state) {
-	case WINE_WS_PAUSED:
-	    wodPlayer_Notify(wwo, uDevID, FALSE);
-	    if (laststate != WINE_WS_PAUSED) {
-		if (ioctl(wwo->unixdev, SNDCTL_DSP_POST, 0) == -1) {
-		    perror("ioctl SNDCTL_DSP_POST");
-		    wwo->hThread = 0;
-		    LeaveCriticalSection(&wwo->critSect);
-		    ExitThread(-1);
+	/* wait for dwSleepTime or an event in thread's queue */
+	/* FIXME: could improve wait time depending on queue state,
+	 * ie, number of queued fragments
+	 */
+	TRACE("imhere[1]\n");
+	MsgWaitForMultipleObjects(0, NULL, FALSE, 
+				  (wwo->state == WINE_WS_PLAYING) ? 
+				     (MAX(wwo->wFragsUsedInQueue, 4) - 2) * dwSleepTime : 
+				     /*INFINITE*/100, 
+				  QS_POSTMESSAGE);
+	TRACE("imhere[2]\n");
+	wodPlayer_Notify(wwo, uDevID, FALSE);
+	while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
+	    switch (msg.message) {
+	    case WINE_WM_PAUSING:
+		wodPlayer_Reset(wwo, uDevID, FALSE);
+		wwo->state = WINE_WS_PAUSED;
+		SetEvent(wwo->hEvent);
+		break;
+	    case WINE_WM_RESTARTING:
+		wwo->state = WINE_WS_PLAYING;
+		SetEvent(wwo->hEvent);
+		break;
+	    case WINE_WM_HEADER:
+		lpWaveHdr = (LPWAVEHDR)msg.lParam;
+		
+		lpWaveHdr->dwFlags &= ~WHDR_DONE;
+		lpWaveHdr->dwFlags |= WHDR_INQUEUE;
+		lpWaveHdr->lpNext = 0;
+		
+		/* insert buffer at the end of queue */
+		{
+		    LPWAVEHDR*	wh;
+		    for (wh = &(wwo->lpQueueHdr); *wh; wh = &((*wh)->lpNext));
+		    *wh = lpWaveHdr;
 		}
-	    }
-	    break;
-	case WINE_WS_STOPPED:
-	    /* should we kill the Thread here and to restart it later when needed ? */
-	    break;
-	case WINE_WS_PLAYING:
-	    if (!wodPlayer_WriteFragments(wwo)) {
-		wodPlayer_Notify(wwo, uDevID, FALSE);
+		if (wwo->state == WINE_WS_STOPPED)
+		    wwo->state = WINE_WS_PLAYING;
+		break;
+	    case WINE_WM_RESETTING:
+		wodPlayer_Reset(wwo, uDevID, TRUE);
+		SetEvent(wwo->hEvent);
+		break;
+	    case WINE_WM_CLOSING:
+		/* sanity check: this should not happen since the device must have been reset before */
+		if (wwo->lpNotifyHdr || wwo->lpQueueHdr) {
+		    ERR("out of sync\n");
+		}
+		wwo->hThread = 0;
+		wwo->state = WINE_WS_CLOSED;
+		SetEvent(wwo->hEvent);
+		ExitThread(0);
+		/* shouldn't go here */
+	    default:
+		FIXME("unknown message %d\n", msg.message);
 		break;
 	    }
-	    /* fall thru */
-	case WINE_WS_RESETTING:
-	    /* updates current notify list */
-	    wodPlayer_Notify(wwo, uDevID, FALSE);
-	    /* flush all possible output */
-	    if (ioctl(wwo->unixdev, SNDCTL_DSP_SYNC, 0) == -1) {
-		perror("ioctl SNDCTL_DSP_SYNC");
-		wwo->hThread = 0;
-		LeaveCriticalSection(&wwo->critSect);
-		ExitThread(-1);
-	    }
-	    /* DSP_SYNC resets the number of send bytes */
-	    wwo->dwNotifiedBytes = 0;
-	    /* empty notify list */
-	    wodPlayer_Notify(wwo, uDevID, TRUE);
-	    if (wwo->lpNotifyHdr) {
-		ERR(wave, "out of sync\n");
-	    }
-	    wwo->dwOffCurrHdr = 0;
-	    /* get rid also of all the current queue */
-	    for (lpWaveHdr = wwo->lpQueueHdr; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext) {
-		lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
-		lpWaveHdr->dwFlags |= WHDR_DONE;
-		
-		if (WAVE_NotifyClient((DWORD)pmt, WOM_DONE, lpWaveHdr->reserved, 0) != MMSYSERR_NOERROR) {
-		    WARN(wave, "can't notify client !\n");
-		}
-	    }
-	    wwo->lpQueueHdr = 0;
-	    wwo->state = WINE_WS_STOPPED;
-	    break;
-	case WINE_WS_CLOSING:
-	    /* this should not happen since the device must have been reset before */
-	    if (wwo->lpNotifyHdr || wwo->lpQueueHdr) {
-		ERR(wave, "out of sync\n");
-	    }
-	    wwo->hThread = 0;
-	    wwo->state = WINE_WS_CLOSED;
-	    LeaveCriticalSection(&wwo->critSect);
-	    DeleteCriticalSection(&wwo->critSect);
-	    ExitThread(0);
-	    /* shouldn't go here */
-	default:
-	    FIXME(wave, "unknown state %d\n", wwo->state);
-	    break;
 	}
-	laststate = wwo->state;
-	LeaveCriticalSection(&wwo->critSect);
-	/* sleep for one fragment to be sent */
-	Sleep(dwSleepTime);
+	if (wwo->state == WINE_WS_PLAYING) {
+	    wodPlayer_WriteFragments(wwo);
+	}
+	wodPlayer_Notify(wwo, uDevID, FALSE);
     }
     ExitThread(0);
+    /* just for not generating compilation warnings... should never be executed */
+    return 0; 
 }
 
 /**************************************************************************
@@ -392,14 +447,15 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS16 lpCaps, DWORD dwSize)
     int		dsp_stereo = 1;
     int		bytespersmpl;
     int 	caps;
+    int		mask;
     
-    TRACE(wave, "(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
     
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
     if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
     
     if (wDevID >= MAX_WAVEOUTDRV) {
-	TRACE(wave, "MAX_WAVOUTDRV reached !\n");
+	TRACE("MAX_WAVOUTDRV reached !\n");
 	return MMSYSERR_BADDEVICEID;
     }
     
@@ -428,6 +484,12 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS16 lpCaps, DWORD dwSize)
     lpCaps->dwFormats = 0x00000000;
     lpCaps->dwSupport = WAVECAPS_VOLUME;
     
+    IOCTL(audio, SNDCTL_DSP_GETFMTS, mask);
+    TRACE("OSS dsp mask=%08x\n", mask);
+    mask = AFMT_QUERY;
+    IOCTL(audio, SNDCTL_DSP_SETFMT, mask);
+    TRACE("OSS dsp current=%08x\n", mask);
+
     /* First bytespersampl, then stereo */
     bytespersmpl = (IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize) != 0) ? 1 : 2;
     
@@ -474,10 +536,9 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS16 lpCaps, DWORD dwSize)
     if (WOutDev[wDevID].unixdev == 0) {
 	close(audio);
     }
-    TRACE(wave, "dwFormats = %08lX\n", lpCaps->dwFormats);
+    TRACE("dwFormats = %08lX\n", lpCaps->dwFormats);
     return MMSYSERR_NOERROR;
 }
-
 
 /**************************************************************************
  * 				wodOpen				[internal]
@@ -490,21 +551,24 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int			dsp_stereo;
     int			audio_fragment;
     int			fragment_size;
-    
-    TRACE(wave, "(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    WAVEOUTCAPS16 	woc;
+
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
-	WARN(wave, "Invalid Parameter !\n");
+	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
     if (wDevID >= MAX_WAVEOUTDRV) {
-	TRACE(wave, "MAX_WAVOUTDRV reached !\n");
+	TRACE("MAX_WAVOUTDRV reached !\n");
 	return MMSYSERR_BADDEVICEID;
     }
+    wodGetDevCaps(wDevID, &woc, sizeof(woc));
+
     /* only PCM format is supported so far... */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
 	lpDesc->lpFormat->nChannels == 0 ||
 	lpDesc->lpFormat->nSamplesPerSec == 0) {
-	WARN(wave, "Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n", 
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n", 
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
@@ -518,7 +582,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOTENABLED;
     audio = open(SOUND_DEV, O_WRONLY, 0);
     if (audio == -1) {
-	WARN(wave, "can't open !\n");
+	WARN("can't open !\n");
 	return MMSYSERR_ALLOCATED ;
     }
 
@@ -552,26 +616,23 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* even if we set fragment size above, read it again, just in case */
     IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, fragment_size);
 
-    WOutDev[wDevID].lpQueueHdr = NULL;
     WOutDev[wDevID].unixdev = audio;
-    WOutDev[wDevID].dwTotalPlayed = 0;
     WOutDev[wDevID].dwFragmentSize = fragment_size;
-    WOutDev[wDevID].state = WINE_WS_STOPPED;
-    WOutDev[wDevID].hThread = 0;
+    WOutDev[wDevID].wMaxFragments = HIWORD(audio_fragment) + 1;
 
-    /* FIXME: do we need to make critsect global ? */
-    InitializeCriticalSection(&WOutDev[wDevID].critSect);
-    MakeCriticalSectionGlobal(&WOutDev[wDevID].critSect);
-    
-    TRACE(wave, "fd=%d fragmentSize=%ld\n", 
+    WOutDev[wDevID].hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    WOutDev[wDevID].hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(WOutDev[wDevID].dwThreadID));
+    WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
+
+    TRACE("fd=%d fragmentSize=%ld\n", 
 	  WOutDev[wDevID].unixdev, WOutDev[wDevID].dwFragmentSize);
 
-    TRACE(wave, "wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u !\n", 
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u !\n", 
 	  WOutDev[wDevID].format.wBitsPerSample, WOutDev[wDevID].format.wf.nAvgBytesPerSec, 
 	  WOutDev[wDevID].format.wf.nSamplesPerSec, WOutDev[wDevID].format.wf.nChannels);
     
     if (WAVE_NotifyClient(wDevID, WOM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
-	WARN(wave, "can't notify client !\n");
+	WARN("can't notify client !\n");
 	return MMSYSERR_INVALPARAM;
     }
     return MMSYSERR_NOERROR;
@@ -584,29 +645,27 @@ static DWORD wodClose(WORD wDevID)
 {
     DWORD	ret = MMSYSERR_NOERROR;
     
-    TRACE(wave, "(%u);\n", wDevID);
+    TRACE("(%u);\n", wDevID);
     
     if (wDevID > MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
-	WARN(wave, "bad device ID !\n");
+	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
     
     if (WOutDev[wDevID].lpQueueHdr != NULL || WOutDev[wDevID].lpNotifyHdr != NULL) {
-	WARN(wave, "buffers still playing !\n");
+	WARN("buffers still playing !\n");
 	ret = WAVERR_STILLPLAYING;
     } else {
-	EnterCriticalSection(&WOutDev[wDevID].critSect);
-	WOutDev[wDevID].state = WINE_WS_CLOSING;
-	LeaveCriticalSection(&WOutDev[wDevID].critSect);
-	
-	while (WOutDev[wDevID].state != WINE_WS_CLOSED)
-	    Sleep(10);
-	
+	TRACE("imhere[3-close]\n");
+	PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_CLOSING, 0, 0);
+	WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
+	CloseHandle(WOutDev[wDevID].hEvent);
+
 	close(WOutDev[wDevID].unixdev);
 	WOutDev[wDevID].unixdev = 0;
 	WOutDev[wDevID].dwFragmentSize = 0;
 	if (WAVE_NotifyClient(wDevID, WOM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
-	    WARN(wave, "can't notify client !\n");
+	    WARN("can't notify client !\n");
 	    ret = MMSYSERR_INVALPARAM;
 	}
     }
@@ -619,11 +678,11 @@ static DWORD wodClose(WORD wDevID)
  */
 static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE(wave, "(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
     
     /* first, do the sanity checks... */
     if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
-        WARN(wave, "bad dev ID !\n");
+        WARN("bad dev ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
     
@@ -632,37 +691,10 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     
     if (lpWaveHdr->dwFlags & WHDR_INQUEUE) 
 	return WAVERR_STILLPLAYING;
-    
-    lpWaveHdr->dwFlags &= ~WHDR_DONE;
-    lpWaveHdr->dwFlags |= WHDR_INQUEUE;
-    lpWaveHdr->lpNext = 0;
-    
-    EnterCriticalSection(&WOutDev[wDevID].critSect);
-    /* insert buffer in queue */
-    if (WOutDev[wDevID].lpQueueHdr) {
-	WAVEHDR*	wh;
-	for (wh = WOutDev[wDevID].lpQueueHdr; wh->lpNext; wh = wh->lpNext);
-	wh->lpNext = lpWaveHdr;
-    } else {
-	WOutDev[wDevID].lpQueueHdr = lpWaveHdr;
-    }
-    /* starts thread if wod is not paused */
-    switch (WOutDev[wDevID].state) {
-    case WINE_WS_PAUSED: 
-    case WINE_WS_PLAYING: 
-	/* nothing to do */ 
-	break;
-    case WINE_WS_STOPPED:
-	WOutDev[wDevID].state = WINE_WS_PLAYING;
-	if (WOutDev[wDevID].hThread == 0) {
-	    WOutDev[wDevID].hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, NULL);
-	}
-	break;
-    default:
-	FIXME(wave, "Unsupported state %d\n", WOutDev[wDevID].state);
-    }
-    LeaveCriticalSection(&WOutDev[wDevID].critSect);
-    
+
+    TRACE("imhere[3-HEADER]\n");
+    PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_HEADER, 0, (DWORD)lpWaveHdr);
+
     return MMSYSERR_NOERROR;
 }
 
@@ -671,10 +703,10 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
  */
 static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE(wave, "(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
     
     if (wDevID > MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
-	WARN(wave, "bad device ID !\n");
+	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
     
@@ -691,10 +723,10 @@ static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
  */
 static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE(wave, "(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
     
     if (wDevID > MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
-	WARN(wave, "bad device ID !\n");
+	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
     
@@ -712,31 +744,16 @@ static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
  */
 static DWORD wodPause(WORD wDevID)
 {
-    TRACE(wave, "(%u);!\n", wDevID);
+    TRACE("(%u);!\n", wDevID);
     
     if (wDevID > MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
-	WARN(wave, "bad device ID !\n");
+	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
     
-    EnterCriticalSection(&WOutDev[wDevID].critSect);
-    WOutDev[wDevID].state = WINE_WS_PAUSED;
-    LeaveCriticalSection(&WOutDev[wDevID].critSect);
-    
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 			wodStop					[internal]
- */
-static DWORD wodStop(WORD wDevID)
-{
-    FIXME(wave, "(%u); NIY!\n", wDevID);
-    
-    if (wDevID > MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
-	WARN(wave, "bad device ID !\n");
-	return MMSYSERR_BADDEVICEID;
-    }
+    TRACE("imhere[3-PAUSING]\n");
+    PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_PAUSING, 0, 0);
+    WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
     
     return MMSYSERR_NOERROR;
 }
@@ -746,29 +763,23 @@ static DWORD wodStop(WORD wDevID)
  */
 static DWORD wodRestart(WORD wDevID)
 {
-    TRACE(wave, "(%u);\n", wDevID);
+    TRACE("(%u);\n", wDevID);
     
     if (wDevID > MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
-	WARN(wave, "bad device ID !\n");
+	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
     
-    EnterCriticalSection(&WOutDev[wDevID].critSect);
     if (WOutDev[wDevID].state == WINE_WS_PAUSED) {
-	if (WOutDev[wDevID].lpQueueHdr != NULL) {
-	    WOutDev[wDevID].state = WINE_WS_PLAYING;
-	    if (WOutDev[wDevID].hThread == 0)
-		WOutDev[wDevID].hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, NULL);
-	} else {
-	    WOutDev[wDevID].state = WINE_WS_STOPPED;
-	}
+	TRACE("imhere[3-RESTARTING]\n");
+	PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_RESTARTING, 0, 0);
+	WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
     }
-    LeaveCriticalSection(&WOutDev[wDevID].critSect);
     
     /* FIXME: is NotifyClient with WOM_DONE right ? (Comet Busters 1.3.3 needs this notification) */
     /* FIXME: Myst crashes with this ... hmm -MM
        if (WAVE_NotifyClient(wDevID, WOM_DONE, 0L, 0L) != MMSYSERR_NOERROR) {
-       WARN(wave, "can't notify client !\n");
+       WARN("can't notify client !\n");
        return MMSYSERR_INVALPARAM;
        }
     */
@@ -781,23 +792,16 @@ static DWORD wodRestart(WORD wDevID)
  */
 static DWORD wodReset(WORD wDevID)
 {
-    TRACE(wave, "(%u);\n", wDevID);
+    TRACE("(%u);\n", wDevID);
     
     if (wDevID > MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
-	WARN(wave, "bad device ID !\n");
+	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
     
-    EnterCriticalSection(&WOutDev[wDevID].critSect);
-    if (WOutDev[wDevID].hThread == 0) {
-	WOutDev[wDevID].state = WINE_WS_STOPPED;
-    } else {
-	WOutDev[wDevID].state = WINE_WS_RESETTING;
-    }
-    LeaveCriticalSection(&WOutDev[wDevID].critSect);
-    
-    while (WOutDev[wDevID].state != WINE_WS_STOPPED)
-	Sleep(10);
+    TRACE("imhere[3-RESET]\n");
+    PostThreadMessageA(WOutDev[wDevID].dwThreadID, WINE_WM_RESETTING, 0, 0);
+    WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
     
     return MMSYSERR_NOERROR;
 }
@@ -809,34 +813,36 @@ static DWORD wodReset(WORD wDevID)
 static DWORD wodGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
 {
     int		time;
-    
-    TRACE(wave, "(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    DWORD	val;
+
+    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
     
     if (wDevID > MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == 0) {
-	WARN(wave, "bad device ID !\n");
+	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
     
     if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
-    TRACE(wave, "wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n", 
+
+    val = WOutDev[wDevID].dwPlayedTotal + WOutDev[wDevID].dwPlayed;
+
+    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n", 
 	  lpTime->wType, WOutDev[wDevID].format.wBitsPerSample, 
 	  WOutDev[wDevID].format.wf.nSamplesPerSec, WOutDev[wDevID].format.wf.nChannels, 
 	  WOutDev[wDevID].format.wf.nAvgBytesPerSec); 
-    TRACE(wave, "dwTotalPlayed=%lu\n", WOutDev[wDevID].dwTotalPlayed);
+    TRACE("dwTotalPlayed=%lu\n", val);
     
     switch (lpTime->wType) {
     case TIME_BYTES:
-	lpTime->u.cb = WOutDev[wDevID].dwTotalPlayed;
-	TRACE(wave, "TIME_BYTES=%lu\n", lpTime->u.cb);
+	lpTime->u.cb = val;
+	TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
 	break;
     case TIME_SAMPLES:
-	lpTime->u.sample = WOutDev[wDevID].dwTotalPlayed * 8 /
-	    WOutDev[wDevID].format.wBitsPerSample;
-	TRACE(wave, "TIME_SAMPLES=%lu\n", lpTime->u.sample);
+	lpTime->u.sample = val * 8 / WOutDev[wDevID].format.wBitsPerSample;
+	TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
 	break;
     case TIME_SMPTE:
-	time = WOutDev[wDevID].dwTotalPlayed /
-	    (WOutDev[wDevID].format.wf.nAvgBytesPerSec / 1000);
+	time = val / (WOutDev[wDevID].format.wf.nAvgBytesPerSec / 1000);
 	lpTime->u.smpte.hour = time / 108000;
 	time -= lpTime->u.smpte.hour * 108000;
 	lpTime->u.smpte.min = time / 1800;
@@ -845,17 +851,16 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
 	time -= lpTime->u.smpte.sec * 30;
 	lpTime->u.smpte.frame = time;
 	lpTime->u.smpte.fps = 30;
-	TRACE(wave, "TIME_SMPTE=%02u:%02u:%02u:%02u\n",
+	TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
 	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
 	      lpTime->u.smpte.sec, lpTime->u.smpte.frame);
 	break;
     default:
-	FIXME(wave, "Format %d not supported ! use TIME_MS !\n", lpTime->wType);
+	FIXME("Format %d not supported ! use TIME_MS !\n", lpTime->wType);
 	lpTime->wType = TIME_MS;
     case TIME_MS:
-	lpTime->u.ms = WOutDev[wDevID].dwTotalPlayed /
-	    (WOutDev[wDevID].format.wf.nAvgBytesPerSec / 1000);
-	TRACE(wave, "TIME_MS=%lu\n", lpTime->u.ms);
+	lpTime->u.ms = val / (WOutDev[wDevID].format.wf.nAvgBytesPerSec / 1000);
+	TRACE("TIME_MS=%lu\n", lpTime->u.ms);
 	break;
     }
     return MMSYSERR_NOERROR;
@@ -867,25 +872,26 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
 static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
     int 	mixer;
-    int		volume, left, right;
+    int		volume;
+    DWORD	left, right;
     
-    TRACE(wave, "(%u, %p);\n", wDevID, lpdwVol);
+    TRACE("(%u, %p);\n", wDevID, lpdwVol);
     
     if (lpdwVol == NULL) 
 	return MMSYSERR_NOTENABLED;
     if ((mixer = open(MIXER_DEV, O_RDONLY)) < 0) {
-	WARN(wave, "mixer device not available !\n");
+	WARN("mixer device not available !\n");
 	return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, SOUND_MIXER_READ_PCM, &volume) == -1) {
-	WARN(wave, "unable read mixer !\n");
+	WARN("unable read mixer !\n");
 	return MMSYSERR_NOTENABLED;
     }
     close(mixer);
-    left = volume & 0x7F;
-    right = (volume >> 8) & 0x7F;
-    TRACE(wave, "left=%d right=%d !\n", left, right);
-    *lpdwVol = MAKELONG(left << 9, right << 9);
+    left = LOBYTE(volume);
+    right = HIBYTE(volume);
+    TRACE("left=%ld right=%ld !\n", left, right);
+    *lpdwVol = ((left * 0xFFFFl) / 100) + (((right * 0xFFFFl) / 100) << 16);
     return MMSYSERR_NOERROR;
 }
 
@@ -897,15 +903,20 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
     int 	mixer;
     int		volume;
-    TRACE(wave, "(%u, %08lX);\n", wDevID, dwParam);
-    volume = (LOWORD(dwParam) >> 9 & 0x7F) + 
-	((HIWORD(dwParam) >> 9  & 0x7F) << 8);
+    DWORD	left, right;
+
+    TRACE("(%u, %08lX);\n", wDevID, dwParam);
+
+    left  = (LOWORD(dwParam) * 100) / 0xFFFFl;
+    right = (HIWORD(dwParam) * 100) / 0xFFFFl;
+    volume = left + (right << 8);
+    
     if ((mixer = open(MIXER_DEV, O_WRONLY)) < 0) {
-	WARN(wave, "mixer device not available !\n");
+	WARN("mixer device not available !\n");
 	return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, SOUND_MIXER_WRITE_PCM, &volume) == -1) {
-	WARN(wave, "unable set mixer !\n");
+	WARN("unable set mixer !\n");
 	return MMSYSERR_NOTENABLED;
     }
     close(mixer);
@@ -937,7 +948,7 @@ static	DWORD	wodGetNumDevs(void)
 DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE(wave, "(%u, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     
     switch (wMsg) {
@@ -945,7 +956,7 @@ DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WODM_CLOSE:	 	return wodClose		(wDevID);
     case WODM_WRITE:	 	return wodWrite		(wDevID, (LPWAVEHDR)dwParam1,		dwParam2);
     case WODM_PAUSE:	 	return wodPause		(wDevID);
-    case WODM_STOP:	 	return wodStop		(wDevID);
+	/*    case WODM_STOP:	 	*/
     case WODM_GETPOS:	 	return wodGetPosition	(wDevID, (LPMMTIME16)dwParam1, 		dwParam2);
     case WODM_BREAKLOOP: 	return MMSYSERR_NOTSUPPORTED;
     case WODM_PREPARE:	 	return wodPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
@@ -961,7 +972,7 @@ DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WODM_RESTART:		return wodRestart	(wDevID);
     case WODM_RESET:		return wodReset		(wDevID);
     default:
-	FIXME(wave, "unknown message %d!\n", wMsg);
+	FIXME("unknown message %d!\n", wMsg);
     }
     return MMSYSERR_NOTSUPPORTED;
 }
@@ -977,7 +988,7 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPS16 lpCaps, DWORD dwSize)
 {
     int 	audio,smplrate,samplesize=16,dsp_stereo=1,bytespersmpl;
     
-    TRACE(wave, "(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
     if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
     audio = open(SOUND_DEV, O_RDONLY, 0);
@@ -1028,7 +1039,7 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPS16 lpCaps, DWORD dwSize)
 	}
     }
     close(audio);
-    TRACE(wave, "dwFormats = %08lX\n", lpCaps->dwFormats);
+    TRACE("dwFormats = %08lX\n", lpCaps->dwFormats);
     return MMSYSERR_NOERROR;
 }
 
@@ -1040,28 +1051,28 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int 		audio,abuf_size,smplrate,samplesize,dsp_stereo;
     LPWAVEFORMAT	lpFormat;
     
-    TRACE(wave, "(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
-	WARN(wave, "Invalid Parameter !\n");
+	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
     if (wDevID >= MAX_WAVEINDRV) {
-	TRACE(wave, "MAX_WAVINDRV reached !\n");
+	TRACE("MAX_WAVINDRV reached !\n");
 	return MMSYSERR_ALLOCATED;
     }
     WInDev[wDevID].unixdev = 0;
     if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
     audio = open(SOUND_DEV, O_RDONLY, 0);
     if (audio == -1) {
-	WARN(wave, "can't open !\n");
+	WARN("can't open !\n");
 	return MMSYSERR_ALLOCATED;
     }
     IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, abuf_size);
     if (abuf_size < 1024 || abuf_size > 65536) {
 	if (abuf_size == -1)
-	    WARN(wave, "IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
+	    WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
 	else
-	    WARN(wave, "SNDCTL_DSP_GETBLKSIZE Invalid dwFragmentSize !\n");
+	    WARN("SNDCTL_DSP_GETBLKSIZE Invalid dwFragmentSize !\n");
 	return MMSYSERR_NOTENABLED;
     }
     WInDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
@@ -1076,7 +1087,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     memcpy(&WInDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
     lpFormat = (LPWAVEFORMAT) lpDesc->lpFormat; 
     if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
-	WARN(wave, "Bad format %04X !\n",
+	WARN("Bad format %04X !\n",
 	     lpFormat->wFormatTag);
 	return WAVERR_BADFORMAT;
     }
@@ -1096,12 +1107,12 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     IOCTL(audio, SNDCTL_DSP_SPEED, smplrate);
     IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize);
     IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
-    TRACE(wave, "wBitsPerSample=%u !\n", WInDev[wDevID].format.wBitsPerSample);
-    TRACE(wave, "nSamplesPerSec=%lu !\n", WInDev[wDevID].format.wf.nSamplesPerSec);
-    TRACE(wave, "nChannels=%u !\n", WInDev[wDevID].format.wf.nChannels);
-    TRACE(wave, "nAvgBytesPerSec=%lu\n", WInDev[wDevID].format.wf.nAvgBytesPerSec); 
+    TRACE("wBitsPerSample=%u !\n", WInDev[wDevID].format.wBitsPerSample);
+    TRACE("nSamplesPerSec=%lu !\n", WInDev[wDevID].format.wf.nSamplesPerSec);
+    TRACE("nChannels=%u !\n", WInDev[wDevID].format.wf.nChannels);
+    TRACE("nAvgBytesPerSec=%lu\n", WInDev[wDevID].format.wf.nAvgBytesPerSec); 
     if (WAVE_NotifyClient(wDevID, WIM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
-	WARN(wave, "can't notify client !\n");
+	WARN("can't notify client !\n");
 	return MMSYSERR_INVALPARAM;
     }
     return MMSYSERR_NOERROR;
@@ -1112,21 +1123,21 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
  */
 static DWORD widClose(WORD wDevID)
 {
-    TRACE(wave, "(%u);\n", wDevID);
+    TRACE("(%u);\n", wDevID);
     if (wDevID > MAX_WAVEINDRV) return MMSYSERR_INVALPARAM;
     if (WInDev[wDevID].unixdev == 0) {
-	WARN(wave, "can't close !\n");
+	WARN("can't close !\n");
 	return MMSYSERR_NOTENABLED;
     }
     if (WInDev[wDevID].lpQueueHdr != NULL) {
-	WARN(wave, "still buffers open !\n");
+	WARN("still buffers open !\n");
 	return WAVERR_STILLPLAYING;
     }
     close(WInDev[wDevID].unixdev);
     WInDev[wDevID].unixdev = 0;
     WInDev[wDevID].dwFragmentSize = 0;
     if (WAVE_NotifyClient(wDevID, WIM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
-	WARN(wave, "can't notify client !\n");
+	WARN("can't notify client !\n");
 	return MMSYSERR_INVALPARAM;
     }
     return MMSYSERR_NOERROR;
@@ -1140,17 +1151,17 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     int		count	= 1;
     LPWAVEHDR 	lpWIHdr;
     
-    TRACE(wave, "(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
     if (WInDev[wDevID].unixdev == 0) {
-	WARN(wave, "can't do it !\n");
+	WARN("can't do it !\n");
 	return MMSYSERR_NOTENABLED;
     }
     if (!(lpWaveHdr->dwFlags & WHDR_PREPARED)) {
-	TRACE(wave, "never been prepared !\n");
+	TRACE("never been prepared !\n");
 	return WAVERR_UNPREPARED;
     }
     if (lpWaveHdr->dwFlags & WHDR_INQUEUE) {
-	TRACE(wave,	"header already in use !\n");
+	TRACE("header already in use !\n");
 	return WAVERR_STILLPLAYING;
     }
     lpWaveHdr->dwFlags |= WHDR_PREPARED;
@@ -1169,7 +1180,7 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	lpWaveHdr->lpNext = NULL;
 	count++;
     }
-    TRACE(wave, "buffer added ! (now %u in queue)\n", count);
+    TRACE("buffer added ! (now %u in queue)\n", count);
     return MMSYSERR_NOERROR;
 }
 
@@ -1178,9 +1189,9 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
  */
 static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE(wave, "(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
     if (WInDev[wDevID].unixdev == 0) {
-	WARN(wave, "can't prepare !\n");
+	WARN("can't prepare !\n");
 	return MMSYSERR_NOTENABLED;
     }
     if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
@@ -1189,7 +1200,7 @@ static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
     lpWaveHdr->dwFlags &= ~WHDR_DONE;
     lpWaveHdr->dwBytesRecorded = 0;
-    TRACE(wave, "header prepared !\n");
+    TRACE("header prepared !\n");
     return MMSYSERR_NOERROR;
 }
 
@@ -1198,9 +1209,9 @@ static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
  */
 static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE(wave, "(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
     if (WInDev[wDevID].unixdev == 0) {
-	WARN(wave, "can't unprepare !\n");
+	WARN("can't unprepare !\n");
 	return MMSYSERR_NOTENABLED;
     }
     lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
@@ -1220,17 +1231,17 @@ static DWORD widStart(WORD wDevID)
     LPWAVEHDR	*lpWaveHdr;
     LPBYTE	lpData;
 
-    TRACE(wave, "(%u);\n", wDevID);
+    TRACE("(%u);\n", wDevID);
     if (WInDev[wDevID].unixdev == 0) {
-	WARN(wave, "can't start recording !\n");
+	WARN("can't start recording !\n");
 	return MMSYSERR_NOTENABLED;
     }
     
     lpWaveHdr = &(WInDev[wDevID].lpQueueHdr);
-    TRACE(wave, "lpWaveHdr = %08lx\n",(DWORD)lpWaveHdr);
+    TRACE("lpWaveHdr = %08lx\n",(DWORD)lpWaveHdr);
 
     if (!*lpWaveHdr || !(*lpWaveHdr)->lpData) {
-	TRACE(wave, "never been prepared !\n");
+	TRACE("never been prepared !\n");
 	return WAVERR_UNPREPARED;
     }
     
@@ -1239,7 +1250,7 @@ static DWORD widStart(WORD wDevID)
 	lpData = ((DWORD)*lpWaveHdr == (*lpWaveHdr)->reserved) ?
 	    (LPBYTE)(*lpWaveHdr)->lpData : (LPBYTE)PTR_SEG_TO_LIN((*lpWaveHdr)->lpData);
 
-	TRACE(wave, "recording buf#%u=%p size=%lu \n",
+	TRACE("recording buf#%u=%p size=%lu \n",
 	      count, lpData, (*lpWaveHdr)->dwBufferLength);
 
 	bytesRead = read(WInDev[wDevID].unixdev, lpData, (*lpWaveHdr)->dwBufferLength);
@@ -1247,21 +1258,21 @@ static DWORD widStart(WORD wDevID)
 	if (bytesRead == -1)
 	    perror("read from audio device");
 
-	TRACE(wave, "bytesread=%d (%ld)\n", bytesRead, (*lpWaveHdr)->dwBufferLength);
+	TRACE("bytesread=%d (%ld)\n", bytesRead, (*lpWaveHdr)->dwBufferLength);
 	(*lpWaveHdr)->dwBytesRecorded = bytesRead;
 	WInDev[wDevID].dwTotalRecorded += (*lpWaveHdr)->dwBytesRecorded;
 	(*lpWaveHdr)->dwFlags &= ~WHDR_INQUEUE;
 	(*lpWaveHdr)->dwFlags |= WHDR_DONE;
 	
 	if (WAVE_NotifyClient(wDevID, WIM_DATA, (*lpWaveHdr)->reserved, (*lpWaveHdr)->dwBytesRecorded) != MMSYSERR_NOERROR) {
-	    WARN(wave, "can't notify client !\n");
+	    WARN("can't notify client !\n");
 	    return MMSYSERR_INVALPARAM;
 	}
 	/* removes the current block from the queue */
 	*lpWaveHdr = (*lpWaveHdr)->lpNext;
 	count++;
     }
-    TRACE(wave, "end of recording !\n");
+    TRACE("end of recording !\n");
     return MMSYSERR_NOERROR;
 }
 
@@ -1270,9 +1281,9 @@ static DWORD widStart(WORD wDevID)
  */
 static DWORD widStop(WORD wDevID)
 {
-    TRACE(wave, "(%u);\n", wDevID);
+    TRACE("(%u);\n", wDevID);
     if (WInDev[wDevID].unixdev == 0) {
-	WARN(wave, "can't stop !\n");
+	WARN("can't stop !\n");
 	return MMSYSERR_NOTENABLED;
     }
     return MMSYSERR_NOERROR;
@@ -1283,9 +1294,9 @@ static DWORD widStop(WORD wDevID)
  */
 static DWORD widReset(WORD wDevID)
 {
-    TRACE(wave, "(%u);\n", wDevID);
+    TRACE("(%u);\n", wDevID);
     if (WInDev[wDevID].unixdev == 0) {
-	WARN(wave, "can't reset !\n");
+	WARN("can't reset !\n");
 	return MMSYSERR_NOTENABLED;
     }
     return MMSYSERR_NOERROR;
@@ -1298,26 +1309,26 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
 {
     int		time;
     
-    TRACE(wave, "(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
     if (WInDev[wDevID].unixdev == 0) {
-	WARN(wave, "can't get pos !\n");
+	WARN("can't get pos !\n");
 	return MMSYSERR_NOTENABLED;
     }
     if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
-    TRACE(wave, "wType=%04X !\n", lpTime->wType);
-    TRACE(wave, "wBitsPerSample=%u\n", WInDev[wDevID].format.wBitsPerSample); 
-    TRACE(wave, "nSamplesPerSec=%lu\n", WInDev[wDevID].format.wf.nSamplesPerSec); 
-    TRACE(wave, "nChannels=%u\n", WInDev[wDevID].format.wf.nChannels); 
-    TRACE(wave, "nAvgBytesPerSec=%lu\n", WInDev[wDevID].format.wf.nAvgBytesPerSec); 
+    TRACE("wType=%04X !\n", lpTime->wType);
+    TRACE("wBitsPerSample=%u\n", WInDev[wDevID].format.wBitsPerSample); 
+    TRACE("nSamplesPerSec=%lu\n", WInDev[wDevID].format.wf.nSamplesPerSec); 
+    TRACE("nChannels=%u\n", WInDev[wDevID].format.wf.nChannels); 
+    TRACE("nAvgBytesPerSec=%lu\n", WInDev[wDevID].format.wf.nAvgBytesPerSec); 
     switch (lpTime->wType) {
     case TIME_BYTES:
 	lpTime->u.cb = WInDev[wDevID].dwTotalRecorded;
-	TRACE(wave, "TIME_BYTES=%lu\n", lpTime->u.cb);
+	TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
 	break;
     case TIME_SAMPLES:
 	lpTime->u.sample = WInDev[wDevID].dwTotalRecorded * 8 /
 	    WInDev[wDevID].format.wBitsPerSample;
-	TRACE(wave, "TIME_SAMPLES=%lu\n", lpTime->u.sample);
+	TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
 	break;
     case TIME_SMPTE:
 	time = WInDev[wDevID].dwTotalRecorded /
@@ -1330,17 +1341,17 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
 	time -= lpTime->u.smpte.sec * 30;
 	lpTime->u.smpte.frame = time;
 	lpTime->u.smpte.fps = 30;
-	TRACE(wave, "TIME_SMPTE=%02u:%02u:%02u:%02u\n",
+	TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
 	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
 	      lpTime->u.smpte.sec, lpTime->u.smpte.frame);
 	break;
     case TIME_MS:
 	lpTime->u.ms = WInDev[wDevID].dwTotalRecorded /
 	    (WInDev[wDevID].format.wf.nAvgBytesPerSec / 1000);
-	TRACE(wave, "TIME_MS=%lu\n", lpTime->u.ms);
+	TRACE("TIME_MS=%lu\n", lpTime->u.ms);
 	break;
     default:
-	FIXME(wave, "format not supported (%u) ! use TIME_MS !\n", lpTime->wType);
+	FIXME("format not supported (%u) ! use TIME_MS !\n", lpTime->wType);
 	lpTime->wType = TIME_MS;
     }
     return MMSYSERR_NOERROR;
@@ -1352,7 +1363,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
 DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE(wave, "(%u, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -1369,7 +1380,7 @@ DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_PAUSE:		return widStop(wDevID);
     case WIDM_STOP:		return widStop(wDevID);
     default:
-	FIXME(wave, "unknown message %u!\n", wMsg);
+	FIXME("unknown message %u!\n", wMsg);
     }
     return MMSYSERR_NOTSUPPORTED;
 }
@@ -1381,10 +1392,10 @@ DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 /**************************************************************************
  * 				WAVE_DriverProc			[sample driver]
  */
-LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-		     DWORD dwParam1, DWORD dwParam2)
+LONG CALLBACK	WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+				DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE(wave, "(%08lX, %04X, %08lX, %08lX, %08lX)\n", dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+    TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n", dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     switch (wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
@@ -1397,7 +1408,7 @@ LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
     default:
-	FIXME(wave, "is probably wrong msg=0x%04lx\n", wMsg);
+	FIXME("is probably wrong msg=0x%04lx\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MMSYSERR_NOTENABLED;
@@ -1411,7 +1422,7 @@ LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
 DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME(wave, "(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -1421,15 +1432,15 @@ DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME(wave, "(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
 /**************************************************************************
  * 				WAVE_DriverProc			[sample driver]
  */
-LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-		     DWORD dwParam1, DWORD dwParam2)
+LONG CALLBACK	WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+				DWORD dwParam1, DWORD dwParam2)
 {
     return MMSYSERR_NOTENABLED;
 }
