@@ -522,7 +522,7 @@
 @ stdcall SetMenuItemBitmaps(long long long long long)
 @ stdcall SetMenuItemInfoA(long long long ptr)
 @ stdcall SetMenuItemInfoW(long long long ptr)
-@ stub SetMessageExtraInfo
+@ stdcall SetMessageExtraInfo(long)
 @ stdcall SetMessageQueue(long)
 @ stdcall SetParent(long long)
 @ stdcall SetProcessWindowStation(long)

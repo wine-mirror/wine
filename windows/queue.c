@@ -239,10 +239,25 @@ LONG WINAPI GetMessageTime(void)
  *		GetMessageExtraInfo (USER.288)
  *		GetMessageExtraInfo (USER32.@)
  */
-LONG WINAPI GetMessageExtraInfo(void)
+LPARAM WINAPI GetMessageExtraInfo(void)
 {
     MESSAGEQUEUE *queue;
 
     if (!(queue = QUEUE_Current())) return 0;
     return queue->GetMessageExtraInfoVal;
+}
+
+
+/***********************************************************************
+ *		SetMessageExtraInfo (USER32.@)
+ */
+LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
+{
+    MESSAGEQUEUE *queue;
+    LONG old_value;
+
+    if (!(queue = QUEUE_Current())) return 0;
+    old_value = queue->GetMessageExtraInfoVal;
+    queue->GetMessageExtraInfoVal = lParam;
+    return old_value;
 }
