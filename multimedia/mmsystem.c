@@ -410,7 +410,7 @@ UINT16 WINAPI mmsystemGetVersion16()
 }
 
 /**************************************************************************
- * 				DriverProc	[MMSYSTEM.6]
+ * 				DriverProc			[MMSYSTEM.6]
  */
 LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg, 
 			    DWORD dwParam1, DWORD dwParam2)
@@ -419,7 +419,7 @@ LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg,
 }
 
 /**************************************************************************
- * 				DriverCallback	[MMSYSTEM.31]
+ * 				DriverCallback			[MMSYSTEM.31]
  */
 BOOL16 WINAPI DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev, 
 			       WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
@@ -463,30 +463,23 @@ BOOL16 WINAPI DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 /**************************************************************************
  * 	Mixer devices. New to Win95
  */
+
 /**************************************************************************
  * find out the real mixer ID depending on hmix (depends on dwFlags)
  * FIXME: also fix dwInstance passing to mixMessage 
  */
-static UINT _get_mixerID_from_handle(HMIXEROBJ hmix, DWORD dwFlags) 
+static UINT MIXER_GetDevID(HMIXEROBJ hmix, DWORD dwFlags) 
 {
-    /* FIXME: Check dwFlags for MIXER_OBJECTF_xxxx entries and modify hmix 
+    /* FIXME: Check dwFlags for MIXER_OBJSECTF_xxxx entries and modify hmix 
      * accordingly. For now we always use mixerdevice 0. 
      */
     return 0;
 }
 
 /**************************************************************************
- * 				mixerGetNumDevs		[WINMM.108]
+ * 				mixerGetNumDevs			[WINMM.108]
  */
-UINT WINAPI mixerGetNumDevs() 
-{
-    return mixerGetNumDevs16();
-}
-
-/**************************************************************************
- * 				mixerGetNumDevs	
- */
-UINT16 WINAPI mixerGetNumDevs16() 
+UINT WINAPI mixerGetNumDevs(void) 
 {
     UINT16	count = mixMessage(0, MXDM_GETNUMDEVS, 0L, 0L, 0L);
     
@@ -495,53 +488,64 @@ UINT16 WINAPI mixerGetNumDevs16()
 }
 
 /**************************************************************************
- * 				mixerGetDevCapsW		[WINMM.102]
+ * 				mixerGetNumDevs			[MMSYSTEM.800]
  */
-UINT WINAPI mixerGetDevCapsW(UINT devid, LPMIXERCAPSW mixcaps, UINT size) 
+UINT16 WINAPI mixerGetNumDevs16() 
 {
-    MIXERCAPS16	mic16;
-    UINT	ret = mixerGetDevCaps16(devid, &mic16, sizeof(mic16));
-    
-    mixcaps->wMid = mic16.wMid;
-    mixcaps->wPid = mic16.wPid;
-    mixcaps->vDriverVersion = mic16.vDriverVersion;
-    lstrcpyAtoW(mixcaps->szPname, mic16.szPname);
-    mixcaps->fdwSupport = mic16.fdwSupport;
-    mixcaps->cDestinations = mic16.cDestinations;
-    return ret;
+    return mixerGetNumDevs();
 }
 
 /**************************************************************************
- * 				mixerGetDevCaps		[WINMM.101]
+ * 				mixerGetDevCapsA		[WINMM.101]
  */
 UINT WINAPI mixerGetDevCapsA(UINT devid, LPMIXERCAPSA mixcaps, UINT size) 
 {
-    MIXERCAPS16	mic16;
-    UINT	ret = mixerGetDevCaps16(devid, &mic16, sizeof(mic16));
-    
-    mixcaps->wMid = mic16.wMid;
-    mixcaps->wPid = mic16.wPid;
-    mixcaps->vDriverVersion = mic16.vDriverVersion;
-    strcpy(mixcaps->szPname, mic16.szPname);
-    mixcaps->fdwSupport = mic16.fdwSupport;
-    mixcaps->cDestinations = mic16.cDestinations;
-    return ret;
-}
-
-/**************************************************************************
- * 				mixerGetDevCaps	
- */
-UINT16 WINAPI mixerGetDevCaps16(UINT16 devid, LPMIXERCAPS16 mixcaps, UINT16 size) 
-{
-    FIXME(mmsys,"should this be a fixme?\n");
     return mixMessage(devid, MXDM_GETDEVCAPS, 0L, (DWORD)mixcaps, (DWORD)size);
 }
 
 /**************************************************************************
- * 				mixerOpen		[WINMM.110]
+ * 				mixerGetDevCapsW		[WINMM.102]
+ */
+UINT WINAPI mixerGetDevCapsW(UINT devid, LPMIXERCAPSW mixcaps, UINT size) 
+{
+    MIXERCAPSA	micA;
+    UINT	ret = mixerGetDevCapsA(devid, &micA, sizeof(micA));
+
+    if (ret == MMSYSERR_NOERROR) {
+	mixcaps->wMid           = micA.wMid;
+	mixcaps->wPid           = micA.wPid;
+	mixcaps->vDriverVersion = micA.vDriverVersion;
+	lstrcpyAtoW(mixcaps->szPname, micA.szPname);
+	mixcaps->fdwSupport     = micA.fdwSupport;
+	mixcaps->cDestinations  = micA.cDestinations;
+    }
+    return ret;
+}
+
+/**************************************************************************
+ * 				mixerGetDevCaps			[MMSYSTEM.801]
+ */
+UINT16 WINAPI mixerGetDevCaps16(UINT16 devid, LPMIXERCAPS16 mixcaps, UINT16 size) 
+{
+    MIXERCAPSA	micA;
+    UINT	ret = mixerGetDevCapsA(devid, &micA, sizeof(micA));
+    
+    if (ret == MMSYSERR_NOERROR) {
+	mixcaps->wMid           = micA.wMid;
+	mixcaps->wPid           = micA.wPid;
+	mixcaps->vDriverVersion = micA.vDriverVersion;
+	strcpy(PTR_SEG_TO_LIN(mixcaps->szPname), micA.szPname);
+	mixcaps->fdwSupport     = micA.fdwSupport;
+	mixcaps->cDestinations  = micA.cDestinations;
+    }
+    return ret;
+}
+
+/**************************************************************************
+ * 				mixerOpen			[WINMM.110]
  */
 UINT WINAPI mixerOpen(LPHMIXER lphmix, UINT uDeviceID, DWORD dwCallback,
-			  DWORD dwInstance, DWORD fdwOpen) 
+		      DWORD dwInstance, DWORD fdwOpen) 
 {
     HMIXER16	hmix16;
     UINT	ret;
@@ -554,7 +558,7 @@ UINT WINAPI mixerOpen(LPHMIXER lphmix, UINT uDeviceID, DWORD dwCallback,
 }
 
 /**************************************************************************
- * 				mixerOpen
+ * 				mixerOpen			[MMSYSTEM.803]
  */
 UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
 			  DWORD dwInstance, DWORD fdwOpen) 
@@ -575,7 +579,7 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
     if (uDeviceID >= MAXMIXERDRIVERS)
 	uDeviceID = 0;
     while (uDeviceID < MAXMIXERDRIVERS) {
-	dwRet=mixMessage(uDeviceID, MXDM_OPEN, dwInstance, (DWORD)lpmod, fdwOpen);
+	dwRet = mixMessage(uDeviceID, MXDM_OPEN, dwInstance, (DWORD)lpmod, fdwOpen);
 	if (dwRet == MMSYSERR_NOERROR) break;
 	if (!mapperflag) break;
 	uDeviceID++;
@@ -585,35 +589,37 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
 }
 
 /**************************************************************************
- * 				mixerClose		[WINMM.98]
+ * 				mixerClose			[WINMM.98]
  */
 UINT WINAPI mixerClose(HMIXER hmix) 
-{
-    return mixerClose16(hmix);
-}
-
-/**************************************************************************
- * 				mixerClose
- */
-UINT16 WINAPI mixerClose16(HMIXER16 hmix) 
 {
     LPMIXEROPENDESC	lpmod;
     
     FIXME(mmsys,"(%04x): semi-stub?\n", hmix);
+
     lpmod = (LPMIXEROPENDESC)USER_HEAP_LIN_ADDR(hmix);
     return mixMessage(lpmod->uDeviceID, MXDM_CLOSE, lpmod->dwInstance, 0L, 0L);
 }
 
 /**************************************************************************
- * 				mixerGetID		[WINMM.103]
+ * 				mixerClose			[MMSYSTEM.803]
+ */
+UINT16 WINAPI mixerClose16(HMIXER16 hmix) 
+{
+    return mixerClose(hmix);
+}
+
+/**************************************************************************
+ * 				mixerGetID			[WINMM.103]
  */
 UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID) 
 {
-    UINT16	xid;    
-    UINT	ret = mixerGetID16(hmix, &xid, fdwID);
+    FIXME(mmsys,"(%04x %p %08lx): semi-stub\n", hmix, lpid, fdwID);
 
-    if (lpid) *lpid = xid;
-    return ret;
+    if (lpid)
+      *lpid = MIXER_GetDevID(hmix, fdwID);
+
+    return MMSYSERR_NOERROR; /* FIXME: many error possibilities */
 }
 
 /**************************************************************************
@@ -621,10 +627,12 @@ UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID)
  */
 UINT16 WINAPI mixerGetID16(HMIXEROBJ16 hmix, LPUINT16 lpid, DWORD fdwID) 
 {
-    FIXME(mmsys,"(%04x): semi-stub\n",hmix);
-    if (lpid)
-      *lpid = _get_mixerID_from_handle(hmix,fdwID);
-    return MMSYSERR_NOERROR; /* FIXME: many error possibilities */
+    UINT	xid;    
+    UINT	ret = mixerGetID(hmix, &xid, fdwID);
+
+    if (lpid) 
+	*lpid = xid;
+    return ret;
 }
 
 /**************************************************************************
@@ -641,7 +649,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
  */
 UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd, DWORD fdwDetails) 
 {
-    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n",	hmix, lpmcd, fdwDetails);
+    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmcd, fdwDetails);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -659,12 +667,17 @@ UINT16 WINAPI mixerGetControlDetails16(HMIXEROBJ16 hmix, LPMIXERCONTROLDETAILS16
  */
 UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlc, DWORD fdwControls) 
 {
+    UINT	uDevID;
+
     FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmlc, fdwControls);
-    return MMSYSERR_NOTENABLED;
+
+    uDevID = MIXER_GetDevID(hmix, 0);
+
+    return mixMessage(uDevID, MXDM_GETLINECONTROLS, 0, (DWORD)lpmlc, fdwControls);
 }
 
 /**************************************************************************
- * 				mixerGetLineControlsW	[WINMM.105]
+ * 				mixerGetLineControlsW		[WINMM.105]
  */
 UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlc, DWORD fdwControls) 
 {
@@ -673,7 +686,7 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlc, DW
 }
 
 /**************************************************************************
- * 				mixerGetLineControls	[MMSYSTEM.807]
+ * 				mixerGetLineControls		[MMSYSTEM.807]
  */
 UINT16 WINAPI mixerGetLineControls16(HMIXEROBJ16 hmix, LPMIXERLINECONTROLS16 lpmlc, DWORD fdwControls) 
 {
@@ -682,55 +695,25 @@ UINT16 WINAPI mixerGetLineControls16(HMIXEROBJ16 hmix, LPMIXERLINECONTROLS16 lpm
 }
 
 /**************************************************************************
- * 				mixerGetLineInfoA	[WINMM.106]
+ * 				mixerGetLineInfoA		[WINMM.106]
  */
 UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpml, DWORD fdwInfo) 
 {
-    MIXERLINE16		ml16;
-    UINT		ret;
+    UINT16 devid;
     
-    TRACE(mmsys, "(%04x,%p,%08lx)\n", hmix, lpml, fdwInfo);
-
-    if (lpml == NULL || lpml->cbStruct != sizeof(*lpml)) 
-	return MMSYSERR_INVALPARAM;
-
-    ml16.cbStruct = sizeof(ml16);
-    ml16.dwDestination = lpml->dwDestination;
-    ml16.dwSource = lpml->dwSource; 
-    ml16.dwLineID = lpml->dwLineID; 
-    ml16.dwUser = lpml->dwUser; 
-    ml16.dwComponentType = lpml->dwComponentType; 
-    ml16.cChannels = lpml->cChannels; 
-    ml16.cConnections = lpml->cConnections; 
-    ml16.cControls = lpml->cControls; 
-
-    ret = mixerGetLineInfo16(hmix, &ml16, fdwInfo);
-
-    lpml->dwSource = ml16.dwSource;
-    lpml->dwLineID = ml16.dwLineID;
-    lpml->fdwLine = ml16.fdwLine;
-    lpml->dwUser = ml16.dwUser;
-    lpml->dwComponentType = ml16.dwComponentType;
-    lpml->cChannels = ml16.cChannels;
-    lpml->cConnections = ml16.cConnections;
-    lpml->cControls = ml16.cControls;
-    strcpy(lpml->szShortName, ml16.szShortName);
-    strcpy(lpml->szName, ml16.szName);
-    lpml->Target.dwType = ml16.Target.dwType;
-    lpml->Target.dwDeviceID = ml16.Target.dwDeviceID;
-    lpml->Target.wMid = ml16.Target.wMid;
-    lpml->Target.wPid = ml16.Target.wPid;
-    lpml->Target.vDriverVersion = ml16.Target.vDriverVersion;
-    strcpy(lpml->Target.szPname, ml16.Target.szPname);
-    return ret;
+    TRACE(mmsys, "(%04x, %p, %08lx)\n", hmix, lpml, fdwInfo);
+    
+    /* FIXME: I'm not sure of the flags */
+    devid = MIXER_GetDevID(hmix, fdwInfo);
+    return mixMessage(devid, MXDM_GETLINEINFO, 0, (DWORD)lpml, fdwInfo);
 }
 
 /**************************************************************************
- * 				mixerGetLineInfoW	[WINMM.107]
+ * 				mixerGetLineInfoW		[WINMM.107]
  */
 UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpml, DWORD fdwInfo) 
 {
-    MIXERLINE16		ml16;
+    MIXERLINEA		mlA;
     UINT		ret;
     
     TRACE(mmsys,"(%04x,%p,%08lx)\n", hmix, lpml, fdwInfo);
@@ -738,34 +721,36 @@ UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpml, DWORD fdwInfo)
     if (lpml == NULL || lpml->cbStruct != sizeof(*lpml)) 
 	return MMSYSERR_INVALPARAM;
 
-    ml16.cbStruct = sizeof(ml16);
-    ml16.dwDestination = lpml->dwDestination;
-    ml16.dwSource = lpml->dwSource; 
-    ml16.dwLineID = lpml->dwLineID; 
-    ml16.dwUser = lpml->dwUser; 
-    ml16.dwComponentType = lpml->dwComponentType; 
-    ml16.cChannels = lpml->cChannels; 
-    ml16.cConnections = lpml->cConnections; 
-    ml16.cControls = lpml->cControls; 
+    mlA.cbStruct = sizeof(mlA);
+    mlA.dwDestination = lpml->dwDestination;
+    mlA.dwSource = lpml->dwSource; 
+    mlA.dwLineID = lpml->dwLineID; 
+    mlA.dwUser = lpml->dwUser; 
+    mlA.dwComponentType = lpml->dwComponentType; 
+    mlA.cChannels = lpml->cChannels; 
+    mlA.cConnections = lpml->cConnections; 
+    mlA.cControls = lpml->cControls; 
 
-    ret = mixerGetLineInfo16(hmix, &ml16, fdwInfo);
+    ret = mixerGetLineInfoA(hmix, &mlA, fdwInfo);
 
-    lpml->dwSource = ml16.dwSource;
-    lpml->dwLineID = ml16.dwLineID;
-    lpml->fdwLine = ml16.fdwLine;
-    lpml->dwUser = ml16.dwUser;
-    lpml->dwComponentType = ml16.dwComponentType;
-    lpml->cChannels = ml16.cChannels;
-    lpml->cConnections = ml16.cConnections;
-    lpml->cControls = ml16.cControls;
-    lstrcpyAtoW(lpml->szShortName, ml16.szShortName);
-    lstrcpyAtoW(lpml->szName, ml16.szName);
-    lpml->Target.dwType = ml16.Target.dwType;
-    lpml->Target.dwDeviceID = ml16.Target.dwDeviceID;
-    lpml->Target.wMid = ml16.Target.wMid;
-    lpml->Target.wPid = ml16.Target.wPid;
-    lpml->Target.vDriverVersion = ml16.Target.vDriverVersion;
-    /*lstrcpyAtoW(lpml->Target.szPname, ml16.Target.szPname);*/
+    lpml->dwDestination = mlA.dwDestination;
+    lpml->dwSource = mlA.dwSource;
+    lpml->dwLineID = mlA.dwLineID;
+    lpml->fdwLine = mlA.fdwLine;
+    lpml->dwUser = mlA.dwUser;
+    lpml->dwComponentType = mlA.dwComponentType;
+    lpml->cChannels = mlA.cChannels;
+    lpml->cConnections = mlA.cConnections;
+    lpml->cControls = mlA.cControls;
+    lstrcpyAtoW(lpml->szShortName, mlA.szShortName);
+    lstrcpyAtoW(lpml->szName, mlA.szName);
+    lpml->Target.dwType = mlA.Target.dwType;
+    lpml->Target.dwDeviceID = mlA.Target.dwDeviceID;
+    lpml->Target.wMid = mlA.Target.wMid;
+    lpml->Target.wPid = mlA.Target.wPid;
+    lpml->Target.vDriverVersion = mlA.Target.vDriverVersion;
+    lstrcpyAtoW(lpml->Target.szPname, mlA.Target.szPname);
+
     return ret;
 }
 
@@ -774,11 +759,44 @@ UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpml, DWORD fdwInfo)
  */
 UINT16 WINAPI mixerGetLineInfo16(HMIXEROBJ16 hmix, LPMIXERLINE16 lpml, DWORD fdwInfo) 
 {
-    UINT16 devid = _get_mixerID_from_handle(hmix, fdwInfo);
+    MIXERLINEA		mlA;
+    UINT		ret;
     
-    FIXME(mmsys, "(%04x, %p[line %08lx], %08lx)\n",
-	  hmix, lpml, lpml->dwDestination, fdwInfo);
-    return mixMessage(devid, MXDM_GETLINEINFO, 0, (DWORD)lpml, fdwInfo);
+    TRACE(mmsys, "(%04x,%p,%08lx)\n", hmix, lpml, fdwInfo);
+
+    if (lpml == NULL || lpml->cbStruct != sizeof(*lpml)) 
+	return MMSYSERR_INVALPARAM;
+
+    mlA.cbStruct           	= sizeof(mlA);
+    mlA.dwDestination      	= lpml->dwDestination;
+    mlA.dwSource           	= lpml->dwSource; 
+    mlA.dwLineID           	= lpml->dwLineID; 
+    mlA.dwUser             	= lpml->dwUser; 
+    mlA.dwComponentType    	= lpml->dwComponentType; 
+    mlA.cChannels          	= lpml->cChannels; 
+    mlA.cConnections       	= lpml->cConnections; 
+    mlA.cControls          	= lpml->cControls; 
+
+    ret = mixerGetLineInfoA(hmix, &mlA, fdwInfo);
+
+    lpml->dwDestination     	= mlA.dwDestination;
+    lpml->dwSource          	= mlA.dwSource;
+    lpml->dwLineID          	= mlA.dwLineID;
+    lpml->fdwLine           	= mlA.fdwLine;
+    lpml->dwUser            	= mlA.dwUser;
+    lpml->dwComponentType   	= mlA.dwComponentType;
+    lpml->cChannels         	= mlA.cChannels;
+    lpml->cConnections      	= mlA.cConnections;
+    lpml->cControls         	= mlA.cControls;
+    strcpy(PTR_SEG_TO_LIN(lpml->szShortName), mlA.szShortName);
+    strcpy(PTR_SEG_TO_LIN(lpml->szName), mlA.szName);
+    lpml->Target.dwType     	= mlA.Target.dwType;
+    lpml->Target.dwDeviceID 	= mlA.Target.dwDeviceID;
+    lpml->Target.wMid       	= mlA.Target.wMid;
+    lpml->Target.wPid           = mlA.Target.wPid;
+    lpml->Target.vDriverVersion = mlA.Target.vDriverVersion;
+    strcpy(PTR_SEG_TO_LIN(lpml->Target.szPname), mlA.Target.szPname);
+    return ret;
 }
 
 /**************************************************************************
@@ -1006,11 +1024,13 @@ BOOL WINAPI mciGetErrorStringA(DWORD wError, LPSTR lpstrBuffer, UINT uLength)
 BOOL16 WINAPI mciGetErrorString16(DWORD wError, LPSTR lpstrBuffer, UINT16 uLength)
 {
     LPSTR	msgptr;
+    BOOL16	ret = TRUE;
 
     TRACE(mmsys, "(%08lX, %p, %d);\n", wError, lpstrBuffer, uLength);
 
     if ((lpstrBuffer == NULL) || (uLength < 1)) 
-	return(FALSE);
+	return FALSE;
+
     lpstrBuffer[0] = '\0';
 
     switch (wError) {
@@ -1275,11 +1295,12 @@ BOOL16 WINAPI mciGetErrorString16(DWORD wError, LPSTR lpstrBuffer, UINT16 uLengt
 	*/
     default:
 	msgptr = "Unknown MCI Error !\n";
+	ret = FALSE;
 	break;
     }
     lstrcpynA(lpstrBuffer, msgptr, uLength);
     TRACE(mmsys, "msg = %s;\n", msgptr);
-    return TRUE;
+    return ret;
 }
 
 /**************************************************************************
@@ -1317,45 +1338,45 @@ BOOL WINAPI mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
 /**************************************************************************
  * 			mciGetDriverData			[MMSYSTEM.708]
  */
-DWORD WINAPI mciGetDriverData16(HDRVR16 hDrv) 
+DWORD WINAPI mciGetDriverData16(UINT16 uDeviceID) 
 {
-    return mciGetDriverData(hDrv);
+    return mciGetDriverData(uDeviceID);
 }
 
 /**************************************************************************
  * 			mciGetDriverData			[WINMM.44]
  */
-DWORD WINAPI mciGetDriverData(HDRVR hDrv) 
+DWORD WINAPI mciGetDriverData(UINT uDeviceID) 
 {
-    TRACE(mmsys,"(%04x)\n", hDrv);
-    if (!MCI_DevIDValid(hDrv) || MCI_GetDrv(hDrv)->modp.wType == 0) {
-	WARN(mmsys, "Bad hDrv\n");
+    TRACE(mmsys,"(%04x)\n", uDeviceID);
+    if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
+	WARN(mmsys, "Bad uDeviceID\n");
 	return 0L;
     }
     
-    return MCI_GetDrv(hDrv)->dwPrivate;
+    return MCI_GetDrv(uDeviceID)->dwPrivate;
 }
 
 /**************************************************************************
  * 			mciSetDriverData			[MMSYSTEM.707]
  */
-BOOL16 WINAPI mciSetDriverData16(HDRVR16 hDrv, DWORD data) 
+BOOL16 WINAPI mciSetDriverData16(UINT16 uDeviceID, DWORD data) 
 {
-    return mciSetDriverData(hDrv, data);
+    return mciSetDriverData(uDeviceID, data);
 }
 
 /**************************************************************************
  * 			mciSetDriverData			[WINMM.53]
  */
-BOOL WINAPI mciSetDriverData(HDRVR hDrv, DWORD data) 
+BOOL WINAPI mciSetDriverData(UINT uDeviceID, DWORD data) 
 {
-    TRACE(mmsys,"(%04x,%08lx)\n", hDrv, data);
-    if (!MCI_DevIDValid(hDrv) || MCI_GetDrv(hDrv)->modp.wType == 0) {
-	WARN(mmsys, "Bad hDrv\n");
+    TRACE(mmsys, "(%04x,%08lx)\n", uDeviceID, data);
+    if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
+	WARN(mmsys, "Bad uDeviceID\n");
 	return FALSE;
     }
     
-    MCI_GetDrv(hDrv)->dwPrivate = data;
+    MCI_GetDrv(uDeviceID)->dwPrivate = data;
     return TRUE;
 }
 
@@ -1375,10 +1396,11 @@ UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hinst, LPCSTR resname, UINT16 ty
     static UINT16   mcidevtype = 0;
     
     FIXME(mmsys,"(%04x,%s,%d): stub!\n", hinst, resname, type);
-    if (!lstrcmpiA(resname,"core")) {
+    if (!lstrcmpiA(resname, "core")) {
 	FIXME(mmsys, "(...,\"core\",...), have to use internal tables... (not there yet)\n");
 	return 0;
     }
+    return ++mcidevtype;
     /* if file exists "resname.mci", then load resource "resname" from it
      * otherwise directly from driver
      */
@@ -1393,17 +1415,17 @@ UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hinst, LPCSTR resname, UINT16 ty
     hrsrc = FindResource16(hinst, SEGPTR_GET(segstr), type);
     SEGPTR_FREE(segstr);
     if (!hrsrc) {
-	WARN(mmsys,"no special commandlist found in resource\n");
+	WARN(mmsys, "no special commandlist found in resource\n");
 	return MCI_NO_COMMAND_TABLE;
     }
     hmem = LoadResource16(hinst, hrsrc);
     if (!hmem) {
-	WARN(mmsys,"couldn't load resource??\n");
+	WARN(mmsys, "couldn't load resource??\n");
 	return MCI_NO_COMMAND_TABLE;
     }
     xmem = WIN16_LockResource16(hmem);
     if (!xmem) {
-	WARN(mmsys,"couldn't lock resource??\n");
+	WARN(mmsys, "couldn't lock resource??\n");
 	FreeResource16(hmem);
 	return MCI_NO_COMMAND_TABLE;
     }
@@ -1616,21 +1638,37 @@ UINT WINAPI mciGetDeviceIDW(LPCWSTR lpwstrName)
 /**************************************************************************
  * 				mciSetYieldProc			[MMSYSTEM.714]
  */
-BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, 
-				YIELDPROC fpYieldProc, DWORD dwYieldData)
+BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC fpYieldProc, DWORD dwYieldData)
 {
-    FIXME(mci, "(%u, %p, %08lx) stub\n", uDeviceID, fpYieldProc, dwYieldData);
-    return FALSE;
+    TRACE(mmsys, "(%u, %p, %08lx)\n", uDeviceID, fpYieldProc, dwYieldData);
+    if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
+	WARN(mmsys, "Bad uDeviceID\n");
+	return FALSE;
+    }
+    
+    MCI_GetDrv(uDeviceID)->lpfnYieldProc = fpYieldProc;
+    MCI_GetDrv(uDeviceID)->dwYieldData   = dwYieldData;
+    MCI_GetDrv(uDeviceID)->bIs32         = FALSE;
+
+    return TRUE;
 }
 
 /**************************************************************************
  * 				mciSetYieldProc			[WINMM.54]
  */
-BOOL WINAPI mciSetYieldProc(UINT uDeviceID, 
-				YIELDPROC fpYieldProc, DWORD dwYieldData)
+BOOL WINAPI mciSetYieldProc(UINT uDeviceID, YIELDPROC fpYieldProc, DWORD dwYieldData)
 {
-    FIXME(mci, "(%u, %p, %08lx) stub\n", uDeviceID, fpYieldProc, dwYieldData);
-    return FALSE;
+    TRACE(mmsys, "(%u, %p, %08lx)\n", uDeviceID, fpYieldProc, dwYieldData);
+    if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
+	WARN(mmsys, "Bad uDeviceID\n");
+	return FALSE;
+    }
+    
+    MCI_GetDrv(uDeviceID)->lpfnYieldProc = fpYieldProc;
+    MCI_GetDrv(uDeviceID)->dwYieldData   = dwYieldData;
+    MCI_GetDrv(uDeviceID)->bIs32         = TRUE;
+
+    return TRUE;
 }
 
 /**************************************************************************
@@ -1659,8 +1697,20 @@ UINT WINAPI mciGetDeviceIDFromElementIDW(DWORD dwElementID, LPCWSTR lpstrType)
  */
 YIELDPROC WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
 {
-    FIXME(mci, "(%u, %p) stub\n", uDeviceID, lpdwYieldData);
-    return NULL;
+    TRACE(mmsys, "(%u, %p)\n", uDeviceID, lpdwYieldData);
+    if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
+	WARN(mmsys, "Bad uDeviceID\n");
+	return NULL;
+    }
+    if (!MCI_GetDrv(uDeviceID)->lpfnYieldProc) {
+	WARN(mmsys, "No proc set\n");
+	return NULL;
+    }
+    if (MCI_GetDrv(uDeviceID)->bIs32) {
+	WARN(mmsys, "Proc is 32 bit\n");
+	return NULL;
+    }
+    return MCI_GetDrv(uDeviceID)->lpfnYieldProc;
 }
     
 /**************************************************************************
@@ -1668,8 +1718,20 @@ YIELDPROC WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
  */
 YIELDPROC WINAPI mciGetYieldProc(UINT uDeviceID, DWORD* lpdwYieldData)
 {
-    FIXME(mci, "(%u, %p) stub\n", uDeviceID, lpdwYieldData);
-    return NULL;
+    TRACE(mmsys, "(%u, %p)\n", uDeviceID, lpdwYieldData);
+    if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
+	WARN(mmsys, "Bad uDeviceID\n");
+	return NULL;
+    }
+    if (!MCI_GetDrv(uDeviceID)->lpfnYieldProc) {
+	WARN(mmsys, "No proc set\n");
+	return NULL;
+    }
+    if (!MCI_GetDrv(uDeviceID)->bIs32) {
+	WARN(mmsys, "Proc is 32 bit\n");
+	return NULL;
+    }
+    return MCI_GetDrv(uDeviceID)->lpfnYieldProc;
 }
 
 /**************************************************************************
@@ -1693,19 +1755,37 @@ HTASK WINAPI mciGetCreatorTask(UINT uDeviceID)
 /**************************************************************************
  * 				mciDriverYield			[MMSYSTEM.710]
  */
-UINT16 WINAPI mciDriverYield16(HANDLE16 hnd) 
+UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID) 
 {
-    FIXME(mmsys,"(%04x): stub!\n", hnd);
-    return 0;
+    UINT16	ret = 0;
+
+    TRACE(mmsys,"(%04x)\n", uDeviceID);
+    if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0 ||
+	!MCI_GetDrv(uDeviceID)->lpfnYieldProc || MCI_GetDrv(uDeviceID)->bIs32) {
+	OldYield16();
+    } else {
+	ret = MCI_GetDrv(uDeviceID)->lpfnYieldProc(uDeviceID, MCI_GetDrv(uDeviceID)->dwYieldData);
+    }
+
+    return ret;
 }
 
 /**************************************************************************
  * 			mciDriverYield				[WINMM.37]
  */
-UINT WINAPI mciDriverYield(HANDLE hnd) 
+UINT WINAPI mciDriverYield(UINT uDeviceID) 
 {
-    FIXME(mmsys,"(%04x): stub!\n", hnd);
-    return 0;
+    UINT	ret = 0;
+
+    TRACE(mmsys,"(%04x)\n", uDeviceID);
+    if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0 ||
+	!MCI_GetDrv(uDeviceID)->lpfnYieldProc || !MCI_GetDrv(uDeviceID)->bIs32) {
+	OldYield16();
+    } else {
+	ret = MCI_GetDrv(uDeviceID)->lpfnYieldProc(uDeviceID, MCI_GetDrv(uDeviceID)->dwYieldData);
+    }
+
+    return ret;
 }
 
 /**************************************************************************
@@ -4193,13 +4273,13 @@ LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
 {
     switch (Msg) {
     case DRV_LOAD:
-    case DRV_DISABLE:
-    case DRV_INSTALL:
-        return 0;
-    case DRV_ENABLE:
     case DRV_FREE:
-    case DRV_REMOVE:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
         return 1;
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+        return DRV_SUCCESS;
     default:
         return 0;
     }
@@ -4210,45 +4290,75 @@ LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
  */
 LRESULT WINAPI mmThreadCreate16(LPVOID x1, LPWORD x2, DWORD x3, DWORD x4) 
 {
-    FIXME(mmsys,"(%p,%p,%08lx,%08lx): stub!\n",x1,x2,x3,x4);
+    FIXME(mmsys, "(%p,%p,%08lx,%08lx): stub!\n",x1,x2,x3,x4);
     *x2 = 0xbabe;
     return 0;
 }
 
 /**************************************************************************
+ * 				mmThreadSignal		[MMSYSTEM.1121]
+ */
+LRESULT WINAPI mmThreadSignal16(HANDLE16 hnd) 
+{
+    FIXME(mmsys,"(%04x): stub!\n", hnd);
+    return 0;
+}
+
+/**************************************************************************
+ * 				mmThreadBlock		[MMSYSTEM.1122]
+ */
+void	WINAPI mmThreadBlock16(HANDLE16 hnd) 
+{
+    FIXME(mmsys,"(%04x): stub!\n", hnd);
+}
+
+/**************************************************************************
+ * 				mmThreadIsCurrent	[MMSYSTEM.1123]
+ */
+BOOL16	WINAPI mmThreadIsCurrent16(HANDLE16 hnd) 
+{
+    FIXME(mmsys,"(%04x): stub!\n", hnd);
+    return FALSE;
+}
+
+/**************************************************************************
  * 				mmThreadGetTask		[MMSYSTEM.1125]
  */
-LRESULT WINAPI mmThreadGetTask16(WORD hnd) 
+LRESULT WINAPI mmThreadGetTask16(HANDLE16 hnd) 
 {
     FIXME(mmsys,"(%04x): stub!\n", hnd);
     return GetCurrentTask();
 }
 
 /**************************************************************************
- * 				mmThreadSignal		[MMSYSTEM.1121]
+ * 				mmThreadIsValid		[MMSYSTEM.1124]
  */
-LRESULT WINAPI mmThreadSignal16(WORD hnd) 
+BOOL16	WINAPI	mmThreadIsValid16(HANDLE16 handle)
 {
-    FIXME(mmsys,"(%04x): stub!\n", hnd);
+    FIXME(mmsys, "(%04x): stub!\n", handle);
     return 0;
 }
 
 /**************************************************************************
  * 				mmTaskCreate		[MMSYSTEM.900]
+ *
+ * Creates a 16 bit MM task. It's entry point is lpFunc, and it should be
+ * called upon creation with dwPmt as parameter.
  */
-HINSTANCE16 WINAPI mmTaskCreate16(LPWORD lphnd,HINSTANCE16 *hMmTask, DWORD x2)
+HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR lphnd, HINSTANCE16 *hMmTask, DWORD dwPmt)
 {
+#if 1
     DWORD showCmd = 0x40002;
     LPSTR cmdline;
     WORD sel1, sel2;
     LOADPARAMS16 *lp;
     HINSTANCE16 ret, handle;
     
-    TRACE(mmsys,"(%p,%p,%08lx);\n", lphnd, hMmTask,x2);
+    TRACE(mmsys, "(%08lx,%p,%08lx);\n", lphnd, hMmTask, dwPmt);
     cmdline = (LPSTR)HeapAlloc(GetProcessHeap(), 0, 0x0d);
     cmdline[0] = 0x0d;
     (DWORD)cmdline[1] = (DWORD)lphnd;
-    (DWORD)cmdline[5] = x2;
+    (DWORD)cmdline[5] = dwPmt;
     (DWORD)cmdline[9] = 0;
     
     sel1 = SELECTOR_AllocBlock(cmdline, 0x0d, SEGMENT_DATA, FALSE, FALSE);
@@ -4261,20 +4371,20 @@ HINSTANCE16 WINAPI mmTaskCreate16(LPWORD lphnd,HINSTANCE16 *hMmTask, DWORD x2)
     lp->showCmd = PTR_SEG_OFF_TO_SEGPTR(sel2, 0);
     lp->reserved = 0;
     
-    ret = LoadModule16("c:\\windows\\mmtask.tsk", lp);
+    ret = LoadModule16("c:\\windows\\system\\mmtask.tsk", lp);
+    TRACE(mmsys, "MMtask's handle = 0x%04x\n", ret);
     if (ret < 32) {
 	if (ret)
 	    ret = 1;
 	else
 	    ret = 2;
 	handle = 0;
-    }
-    else {
+    } else {
 	handle = ret;
 	ret = 0;
     }
     if (hMmTask)
-	*(HINSTANCE16 *)PTR_SEG_TO_LIN(hMmTask) = handle;
+	*hMmTask = handle;
     
     UnMapLS(PTR_SEG_OFF_TO_SEGPTR(sel2, 0));
     UnMapLS(PTR_SEG_OFF_TO_SEGPTR(sel1, 0));
@@ -4282,7 +4392,30 @@ HINSTANCE16 WINAPI mmTaskCreate16(LPWORD lphnd,HINSTANCE16 *hMmTask, DWORD x2)
     HeapFree(GetProcessHeap(), 0, lp);
     HeapFree(GetProcessHeap(), 0, cmdline);
     
+    TRACE(mmsys, "=> 0x%04x/%d %04x\n", handle, ret, *(LPWORD)PTR_SEG_TO_LIN(lphnd));
     return ret;
+#else
+    TRACE(mmsys, "(%p,%p,%08lx);\n", lphnd, hMmTask, x2);
+    if (hMmTask)
+	*hMmTask = 0xfade;
+    return 0;
+#endif
+}
+
+/**************************************************************************
+ * 				mmTaskBlock		[MMSYSTEM.902]
+ */
+void	WINAPI	mmTaskBlock16(HINSTANCE16 WINE_UNUSED hInst)
+{
+    MSG		msg;
+
+    do {
+	GetMessageA(&msg, 0, 0, 0);
+	if (msg.hwnd) {
+	    TranslateMessage(&msg);
+	    DispatchMessageA(&msg);
+	}
+    } while (msg.message < 0x3A0);
 }
 
 /**************************************************************************
@@ -4292,4 +4425,25 @@ LRESULT WINAPI mmTaskSignal16(HTASK16 ht)
 {
     TRACE(mmsys,"(%04x);\n", ht);
     return PostAppMessageA(ht, WM_USER, 0, 0);
+}
+
+/**************************************************************************
+ * 				mmTaskYield16		[MMSYSTEM.905]
+ */
+void	WINAPI	mmTaskYield16(void)
+{
+    MSG		msg;
+
+    if (PeekMessageA(&msg, 0, 0, 0, 0)) {
+	Yield16();
+    }
+}
+
+/**************************************************************************
+ * 			mmShowMMCPLPropertySheet	[MMSYSTEM.1150]
+ */
+BOOL16	WINAPI	mmShowMMCPLPropertySheet16(WORD w1, WORD w2, WORD w3, WORD w4, WORD w5, WORD w6, WORD w7)
+{
+    FIXME(mmsys, "%04x %04x %04x %04x %04x %04x %04x\n", w1, w2, w3, w4, w5, w6, w7);
+    return TRUE;
 }
