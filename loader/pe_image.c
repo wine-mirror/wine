@@ -546,12 +546,12 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
 {
 	PE_MODREF		*pem;
 	int			i, result;
-	DWORD			load_addr;
+	DWORD			load_addr,lowest_va,lowest_fa;
 	IMAGE_DATA_DIRECTORY	dir;
 	char			*modname;
 	int			vma_size;
 	HMODULE32		hModule = wm->module;
-
+	DWORD 			aoep = PE_HEADER(hModule)->OptionalHeader.AddressOfEntryPoint;
         IMAGE_SECTION_HEADER *pe_seg;
         IMAGE_DOS_HEADER *dos_header = (IMAGE_DOS_HEADER *)hModule;
         IMAGE_NT_HEADERS *nt_header = PE_HEADER(hModule);
@@ -593,12 +593,29 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
 	TRACE(segment, "Loading %s at %lx, range %x\n",
               ofs->szPathName, load_addr, vma_size );
 	
+	/* Find out where this executeable should start */
+	pe_seg = PE_SECTIONS(hModule);lowest_va = 0x10000;lowest_fa = 0x10000;
+	for (i=0;i<PE_HEADER(hModule)->FileHeader.NumberOfSections;i++) {
+	    if (lowest_va > pe_seg[i].VirtualAddress)
+		lowest_va = pe_seg[i].VirtualAddress;
+	    if (!(pe_seg[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) 
+	    	&& (pe_seg[i].PointerToRawData<lowest_fa)
+	    )
+		lowest_fa = pe_seg[i].PointerToRawData;
+	}
+	if (aoep && (aoep<lowest_va))
+	    FIXME(win32,"WARNING: '%s' has an invalid entrypoint (0x%08lx) below the first virtual address (0x%08lx) (possible Virus Infection or broken binary)!\n",ofs->szPathName,aoep,lowest_va);
+
         /* Store the NT header at the load addr
          * (FIXME: should really use mmap)
          */
         *(IMAGE_DOS_HEADER *)load_addr = *dos_header;
         *(IMAGE_NT_HEADERS *)(load_addr + dos_header->e_lfanew) = *nt_header;
 	memcpy(PE_SECTIONS(load_addr),PE_SECTIONS(hModule),sizeof(IMAGE_SECTION_HEADER)*nt_header->FileHeader.NumberOfSections);
+#if 0
+	/* Copies all stuff up to the first section. Including win32 viruses. */
+	memcpy(load_addr,hModule,lowest_fa);
+#endif
         pe_seg = PE_SECTIONS(hModule);
 	for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++, pe_seg++)
 	{
