@@ -160,6 +160,12 @@ static int dump_resume_thread_reply( struct resume_thread_reply *req, int len )
     return (int)sizeof(*req);
 }
 
+static int dump_debugger_request( struct debugger_request *req, int len )
+{
+    fprintf( stderr, " op=%d", req->op );
+    return (int)sizeof(*req);
+}
+
 static int dump_queue_apc_request( struct queue_apc_request *req, int len )
 {
     fprintf( stderr, " handle=%d,", req->handle );
@@ -663,6 +669,8 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())dump_suspend_thread_reply },
     { (int(*)(void *,int))dump_resume_thread_request,
       (void(*)())dump_resume_thread_reply },
+    { (int(*)(void *,int))dump_debugger_request,
+      (void(*)())0 },
     { (int(*)(void *,int))dump_queue_apc_request,
       (void(*)())0 },
     { (int(*)(void *,int))dump_close_handle_request,
@@ -762,6 +770,7 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "set_thread_info",
     "suspend_thread",
     "resume_thread",
+    "debugger",
     "queue_apc",
     "close_handle",
     "get_handle_info",

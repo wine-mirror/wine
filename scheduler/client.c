@@ -293,6 +293,9 @@ int CLIENT_InitServer(void)
         perror("fork");
         exit(1);
     case 0:  /* child */
+        close( fd[1] );
+        break;
+    default:  /* parent */
         close( fd[0] );
         sprintf( buffer, "%d", fd[1] );
 /*#define EXEC_SERVER*/
@@ -303,9 +306,6 @@ int CLIENT_InitServer(void)
 #endif
         create_initial_thread( fd[1] );
         exit(0);
-    default:  /* parent */
-        close( fd[1] );
-        break;
     }
     return fd[0];
 }
@@ -341,3 +341,17 @@ int CLIENT_SetDebug( int level )
     CLIENT_SendRequest( REQ_SET_DEBUG, -1, 1, &level, sizeof(level) );
     return CLIENT_WaitReply( NULL, NULL, 0 );
 }
+
+/***********************************************************************
+ *           CLIENT_DebuggerRequest
+ *
+ * Send a debugger support request. Return 0 if OK.
+ */
+int CLIENT_DebuggerRequest( int op )
+{
+    struct debugger_request req;
+    req.op = op;
+    CLIENT_SendRequest( REQ_DEBUGGER, -1, 1, &req, sizeof(req) );
+    return CLIENT_WaitReply( NULL, NULL, 0 );
+}
+

@@ -315,6 +315,23 @@ DECL_HANDLER(set_thread_info)
     send_reply( current, -1, 0 );
 }
 
+/* debugger support operations */
+DECL_HANDLER(debugger)
+{
+    switch ( req->op )
+    {
+    case DEBUGGER_FREEZE_ALL:
+        suspend_all_threads();
+        break;
+
+    case DEBUGGER_UNFREEZE_ALL:
+        resume_all_threads();
+        break;
+    }
+
+    send_reply( current, -1, 0 );
+}
+
 /* suspend a thread */
 DECL_HANDLER(suspend_thread)
 {

@@ -59,6 +59,8 @@ extern void set_thread_info( struct thread *thread,
                              struct set_thread_info_request *req );
 extern int suspend_thread( struct thread *thread );
 extern int resume_thread( struct thread *thread );
+extern void suspend_all_threads( void );
+extern void resume_all_threads( void );
 extern int send_reply( struct thread *thread, int pass_fd,
                        int n, ... /* arg_1, len_1, ..., arg_n, len_n */ );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );

@@ -102,6 +102,7 @@ void create_initial_thread( int fd )
     initial_thread.process = create_initial_process(); 
     add_process_thread( initial_thread.process, &initial_thread );
     add_client( fd, &initial_thread );
+    grab_object( &initial_thread ); /* so that we never free it */
     select_loop();
 }
 
@@ -240,6 +241,24 @@ int resume_thread( struct thread *thread )
         }
     }
     return old_count;
+}
+
+/* suspend all threads but the current */
+void suspend_all_threads( void )
+{
+    struct thread *thread;
+    for ( thread = first_thread; thread; thread = thread->next )
+        if ( thread != current )
+            suspend_thread( thread );
+}
+
+/* resume all threads but the current */
+void resume_all_threads( void )
+{
+    struct thread *thread;
+    for ( thread = first_thread; thread; thread = thread->next )
+        if ( thread != current )
+            resume_thread( thread );
 }
 
 /* send a reply to a thread */

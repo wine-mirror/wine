@@ -18,6 +18,7 @@ enum request
     REQ_SET_THREAD_INFO,
     REQ_SUSPEND_THREAD,
     REQ_RESUME_THREAD,
+    REQ_DEBUGGER,
     REQ_QUEUE_APC,
     REQ_CLOSE_HANDLE,
     REQ_GET_HANDLE_INFO,
@@ -80,6 +81,7 @@ DECL_HANDLER(get_thread_info);
 DECL_HANDLER(set_thread_info);
 DECL_HANDLER(suspend_thread);
 DECL_HANDLER(resume_thread);
+DECL_HANDLER(debugger);
 DECL_HANDLER(queue_apc);
 DECL_HANDLER(close_handle);
 DECL_HANDLER(get_handle_info);
@@ -139,6 +141,7 @@ static const struct handler {
     { (void(*)())req_set_thread_info, sizeof(struct set_thread_info_request) },
     { (void(*)())req_suspend_thread, sizeof(struct suspend_thread_request) },
     { (void(*)())req_resume_thread, sizeof(struct resume_thread_request) },
+    { (void(*)())req_debugger, sizeof(struct debugger_request) },
     { (void(*)())req_queue_apc, sizeof(struct queue_apc_request) },
     { (void(*)())req_close_handle, sizeof(struct close_handle_request) },
     { (void(*)())req_get_handle_info, sizeof(struct get_handle_info_request) },

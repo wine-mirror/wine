@@ -195,6 +195,15 @@ struct resume_thread_reply
 };
 
 
+/* Debugger support: freeze / unfreeze */
+struct debugger_request
+{
+    int          op;           /* operation type */
+};
+
+enum debugger_op { DEBUGGER_FREEZE_ALL, DEBUGGER_UNFREEZE_ALL };
+
+
 /* Queue an APC for a thread */
 struct queue_apc_request
 {
@@ -694,6 +703,7 @@ extern int CLIENT_InitServer(void);
 
 struct _THDB;
 extern int CLIENT_SetDebug( int level );
+extern int CLIENT_DebuggerRequest( int op );
 extern int CLIENT_InitThread(void);
 #endif  /* __WINE_SERVER__ */
 
