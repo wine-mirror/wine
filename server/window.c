@@ -463,6 +463,114 @@ user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *threa
 }
 
 
+/* clip all children of a given window out of the visible region */
+static struct region *clip_children( struct window *parent, struct window *last,
+                                     struct region *region, int offset_x, int offset_y )
+{
+    struct window *ptr;
+    struct region *tmp = create_empty_region();
+
+    if (!tmp) return NULL;
+    for (ptr = parent->first_child; ptr && ptr != last; ptr = ptr->next)
+    {
+        if (!(ptr->style & WS_VISIBLE)) continue;
+        if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
+        set_region_rect( tmp, &ptr->window_rect );
+        offset_region( tmp, offset_x, offset_y );
+        if (!(region = subtract_region( region, region, tmp ))) break;
+        if (is_region_empty( region )) break;
+    }
+    free_region( tmp );
+    return region;
+}
+
+
+/* compute the visible region of a window */
+static struct region *get_visible_region( struct window *win, struct window *top,
+                                          unsigned int flags )
+{
+    struct region *tmp, *region;
+    struct window *ptr;
+    rectangle_t rect;
+    int offset_x, offset_y;
+
+    if (!(region = create_empty_region())) return NULL;
+
+    /* first check if all ancestors are visible */
+
+    for (ptr = win; ptr != top_window; ptr = ptr->parent)
+        if (!(ptr->style & WS_VISIBLE)) return region;  /* empty region */
+
+    /* retrieve window rectangle in parent coordinates */
+
+    if ((flags & DCX_PARENTCLIP) && win->parent)
+    {
+        rect.left = rect.top = 0;
+        rect.right = win->parent->client_rect.right - win->parent->client_rect.left;
+        rect.bottom = win->parent->client_rect.bottom - win->parent->client_rect.top;
+        offset_x = win->client_rect.left;
+        offset_y = win->client_rect.top;
+    }
+    else if (flags & DCX_WINDOW)
+    {
+        rect = win->window_rect;
+        offset_x = win->window_rect.left;
+        offset_y = win->window_rect.top;
+    }
+    else
+    {
+        rect = win->client_rect;
+        offset_x = win->client_rect.left;
+        offset_y = win->client_rect.top;
+    }
+
+    /* create a region relative to the window itself */
+
+    set_region_rect( region, &rect );
+    offset_region( region, -offset_x, -offset_y );
+
+    /* clip children */
+
+    if (flags & DCX_CLIPCHILDREN)
+    {
+        if (!clip_children( win, NULL, region,
+                            offset_x - win->client_rect.left,
+                            offset_y - win->client_rect.top )) goto error;
+    }
+
+    /* clip siblings of ancestors */
+
+    if (top && top != win && (tmp = create_empty_region()) != NULL)
+    {
+        offset_region( region, offset_x, offset_y );  /* make it relative to parent */
+        while (win->parent)
+        {
+            if (win->style & WS_CLIPSIBLINGS)
+            {
+                if (!clip_children( win->parent, win, region, 0, 0 )) goto error;
+                if (is_region_empty( region )) break;
+            }
+            if (win == top) break;
+            /* clip to parent client area */
+            win = win->parent;
+            offset_x += win->client_rect.left;
+            offset_y += win->client_rect.top;
+            offset_region( region, win->client_rect.left, win->client_rect.top );
+            set_region_rect( tmp, &win->client_rect );
+            if (!intersect_region( region, region, tmp )) goto error;
+            if (is_region_empty( region )) break;
+        }
+        offset_region( region, -offset_x, -offset_y );  /* make it relative to target window again */
+        free_region( tmp );
+    }
+    return region;
+
+error:
+    free_region( region );
+    return NULL;
+}
+
+
 /* get the window class of a window */
 struct window_class* get_window_class( user_handle_t window )
 {
@@ -821,6 +929,24 @@ DECL_HANDLER(get_windows_offset)
             reply->y -= win->client_rect.top;
             win = win->parent;
         }
+    }
+}
+
+
+/* get the visible region of a window */
+DECL_HANDLER(get_visible_region)
+{
+    struct region *region;
+    struct window *win = get_window( req->window );
+    struct window *top = NULL;
+
+    if (!win) return;
+    if (req->top_win && !(top = get_window( req->top_win ))) return;
+
+    if ((region = get_visible_region( win, top, req->flags )))
+    {
+        rectangle_t *data = get_region_data_and_free( region, &reply->total_size );
+        set_reply_data_ptr( data, min(reply->total_size,get_reply_max_size()) );
     }
 }
 

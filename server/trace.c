@@ -375,6 +375,21 @@ static void dump_varargs_input_records( size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_rectangles( size_t size )
+{
+    const rectangle_t *rect = cur_data;
+    size_t len = size / sizeof(*rect);
+
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        dump_rectangle( rect++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    remove_data( size );
+}
+
 static void dump_varargs_properties( size_t size )
 {
     const property_data_t *prop = cur_data;
@@ -2161,6 +2176,20 @@ static void dump_get_windows_offset_reply( const struct get_windows_offset_reply
     fprintf( stderr, " y=%d", req->y );
 }
 
+static void dump_get_visible_region_request( const struct get_visible_region_request *req )
+{
+    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " top_win=%p,", req->top_win );
+    fprintf( stderr, " flags=%08x", req->flags );
+}
+
+static void dump_get_visible_region_reply( const struct get_visible_region_reply *req )
+{
+    fprintf( stderr, " total_size=%d,", req->total_size );
+    fprintf( stderr, " region=" );
+    dump_varargs_rectangles( cur_size );
+}
+
 static void dump_set_window_property_request( const struct set_window_property_request *req )
 {
     fprintf( stderr, " window=%p,", req->window );
@@ -2630,6 +2659,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_window_text_request,
     (dump_func)dump_inc_window_paint_count_request,
     (dump_func)dump_get_windows_offset_request,
+    (dump_func)dump_get_visible_region_request,
     (dump_func)dump_set_window_property_request,
     (dump_func)dump_remove_window_property_request,
     (dump_func)dump_get_window_property_request,
@@ -2806,6 +2836,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_windows_offset_reply,
+    (dump_func)dump_get_visible_region_reply,
     (dump_func)0,
     (dump_func)dump_remove_window_property_reply,
     (dump_func)dump_get_window_property_reply,
@@ -2982,6 +3013,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_window_text",
     "inc_window_paint_count",
     "get_windows_offset",
+    "get_visible_region",
     "set_window_property",
     "remove_window_property",
     "get_window_property",

@@ -1838,6 +1838,17 @@ enum message_type
 @END
 
 
+/* Get the visible region of a window */
+@REQ(get_visible_region)
+    user_handle_t  window;        /* handle to the window */
+    user_handle_t  top_win;       /* top window to clip against */
+    unsigned int   flags;         /* DCX flags */
+@REPLY
+    size_t         total_size;    /* total size of the resulting region */
+    VARARG(region,rectangles);    /* list of rectangles for the region */
+@END
+
+
 /* Set a window property */
 @REQ(set_window_property)
     user_handle_t  window;        /* handle to the window */

@@ -121,79 +121,46 @@ static int clip_children( HWND parent, HWND last, HRGN hrgn, int whole_window )
 
 
 /***********************************************************************
- *		get_visible_region
- *
- * Compute the visible region of a window
+ *		get_server_visible_region
  */
-static HRGN get_visible_region( WND *win, HWND top, UINT flags, int mode )
+static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
 {
-    HRGN rgn;
-    RECT rect;
-    int xoffset, yoffset;
-    X11DRV_WND_DATA *data = win->pDriverData;
+    RGNDATA *data;
+    HRGN ret = 0;
+    size_t size = 256;
+    BOOL retry = FALSE;
 
-    if (flags & DCX_WINDOW)
+    do
     {
-        xoffset = win->rectWindow.left;
-        yoffset = win->rectWindow.top;
-    }
-    else
-    {
-        xoffset = win->rectClient.left;
-        yoffset = win->rectClient.top;
-    }
-
-    if (flags & DCX_PARENTCLIP)
-        GetClientRect( win->parent, &rect );
-    else if (flags & DCX_WINDOW)
-        rect = data->whole_rect;
-    else
-        rect = win->rectClient;
-
-    /* vis region is relative to the start of the client/window area */
-    OffsetRect( &rect, -xoffset, -yoffset );
-
-    if (!(rgn = CreateRectRgn( rect.left, rect.top, rect.right, rect.bottom ))) return 0;
-
-    if ((flags & DCX_CLIPCHILDREN) && (mode != ClipByChildren))
-    {
-        /* we need to clip children by hand */
-        if (clip_children( win->hwndSelf, 0, rgn, (flags & DCX_WINDOW) ) == NULLREGION) return rgn;
-    }
-
-    if (top && top != win->hwndSelf)  /* need to clip siblings of ancestors */
-    {
-        WND *parent, *ptr = WIN_FindWndPtr( win->hwndSelf );
-        HRGN tmp = 0;
-
-        OffsetRgn( rgn, xoffset, yoffset );
-        for (;;)
+        if (!(data = HeapAlloc( GetProcessHeap(), 0, sizeof(*data) + size - 1 ))) return 0;
+        SERVER_START_REQ( get_visible_region )
         {
-            if (ptr->dwStyle & WS_CLIPSIBLINGS)
+            req->window  = hwnd;
+            req->top_win = top;
+            req->flags   = flags;
+            wine_server_set_reply( req, data->Buffer, size );
+            if (!wine_server_call_err( req ))
             {
-                if (clip_children( ptr->parent, ptr->hwndSelf, rgn, FALSE ) == NULLREGION) break;
+                if (reply->total_size <= size)
+                {
+                    size_t reply_size = wine_server_reply_size( reply );
+                    data->rdh.dwSize   = sizeof(data->rdh);
+                    data->rdh.iType    = RDH_RECTANGLES;
+                    data->rdh.nCount   = reply_size / sizeof(RECT);
+                    data->rdh.nRgnSize = reply_size;
+                    ret = ExtCreateRegion( NULL, size, data );
+                }
+                else
+                {
+                    size = reply->total_size;
+                    retry = TRUE;
+                }
             }
-            if (ptr->hwndSelf == top) break;
-            if (!(parent = WIN_FindWndPtr( ptr->parent ))) break;
-            WIN_ReleaseWndPtr( ptr );
-            ptr = parent;
-            /* clip to parent client area */
-            if (tmp) SetRectRgn( tmp, 0, 0, ptr->rectClient.right - ptr->rectClient.left,
-                                 ptr->rectClient.bottom - ptr->rectClient.top );
-            else tmp = CreateRectRgn( 0, 0, ptr->rectClient.right - ptr->rectClient.left,
-                                      ptr->rectClient.bottom - ptr->rectClient.top );
-            CombineRgn( rgn, rgn, tmp, RGN_AND );
-            OffsetRgn( rgn, ptr->rectClient.left, ptr->rectClient.top );
-            xoffset += ptr->rectClient.left;
-            yoffset += ptr->rectClient.top;
         }
-        WIN_ReleaseWndPtr( ptr );
-        /* make it relative to the target window again */
-        OffsetRgn( rgn, -xoffset, -yoffset );
-        if (tmp) DeleteObject( tmp );
-    }
-
-    return rgn;
+        SERVER_END_REQ;
+        HeapFree( GetProcessHeap(), 0, data );
+    } while (retry);
+    return ret;
 }
 
 
@@ -426,52 +393,24 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     HWND top = 0;
     X11DRV_WND_DATA *data = win->pDriverData;
     struct x11drv_escape_set_drawable escape;
-    BOOL visible;
 
     escape.mode = IncludeInferiors;
     /* don't clip siblings if using parent clip region */
     if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
 
-    /* find the top parent in the hierarchy that isn't clipping siblings */
-    visible = (win->dwStyle & WS_VISIBLE) != 0;
-
-    if (visible)
+    top = GetAncestor( hwnd, GA_ROOT );
+    if (top != hwnd)
     {
-        HWND *list = WIN_ListParents( hwnd );
-        if (list)
-        {
-            int i;
-            for (i = 0; list[i] != GetDesktopWindow(); i++)
-            {
-                LONG style = GetWindowLongW( list[i], GWL_STYLE );
-                if (!(style & WS_VISIBLE))
-                {
-                    visible = FALSE;
-                    top = 0;
-                    break;
-                }
-                if (!(style & WS_CLIPSIBLINGS)) top = list[i];
-            }
-            HeapFree( GetProcessHeap(), 0, list );
-        }
-        if (!top && visible && !(flags & DCX_CLIPSIBLINGS)) top = hwnd;
-    }
-
-    if (top)
-    {
-        HWND parent = GetAncestor( top, GA_PARENT );
         escape.org.x = escape.org.y = 0;
         if (flags & DCX_WINDOW)
         {
             escape.org.x = win->rectWindow.left - win->rectClient.left;
             escape.org.y = win->rectWindow.top - win->rectClient.top;
         }
-        MapWindowPoints( hwnd, parent, &escape.org, 1 );
+        MapWindowPoints( hwnd, top, &escape.org, 1 );
         escape.drawable_org.x = escape.drawable_org.y = 0;
-        MapWindowPoints( parent, 0, &escape.drawable_org, 1 );
-        /* have to use the parent so that we include siblings */
-        if (parent) escape.drawable = X11DRV_get_client_window( parent );
-        else escape.drawable = root_window;
+        MapWindowPoints( top, 0, &escape.drawable_org, 1 );
+        escape.drawable = X11DRV_get_client_window( top );
     }
     else
     {
@@ -482,23 +421,22 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
             escape.org.y = 0;
             escape.drawable_org = escape.org;
         }
-        else if (flags & DCX_WINDOW)
-        {
-            escape.drawable = data->whole_window;
-            escape.org.x = win->rectWindow.left - data->whole_rect.left;
-            escape.org.y = win->rectWindow.top - data->whole_rect.top;
-            escape.drawable_org.x = data->whole_rect.left - win->rectClient.left;
-            escape.drawable_org.y = data->whole_rect.top - win->rectClient.top;
-        }
         else
         {
-            escape.drawable = data->client_window;
-            escape.org.x = 0;
-            escape.org.y = 0;
-            escape.drawable_org = escape.org;
-            if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;  /* can use X11 clipping */
+            escape.drawable = data->whole_window;
+            escape.drawable_org.x = data->whole_rect.left;
+            escape.drawable_org.y = data->whole_rect.top;
+            if (flags & DCX_WINDOW)
+            {
+                escape.org.x = win->rectWindow.left - data->whole_rect.left;
+                escape.org.y = win->rectWindow.top - data->whole_rect.top;
+            }
+            else
+            {
+                escape.org.x = win->rectClient.left - data->whole_rect.left;
+                escape.org.y = win->rectClient.top - data->whole_rect.top;
+            }
         }
-        MapWindowPoints( hwnd, 0, &escape.drawable_org, 1 );
     }
 
     escape.code = X11DRV_SET_DRAWABLE;
@@ -508,17 +446,10 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
     {
         /* need to recompute the visible region */
-        HRGN visRgn;
+        HRGN visRgn = get_server_visible_region( hwnd, top, flags );
 
-        if (visible)
-        {
-            visRgn = get_visible_region( win, top, flags, escape.mode );
-
-            if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
-                CombineRgn( visRgn, visRgn, hrgn,
-                            (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-        }
-        else visRgn = CreateRectRgn( 0, 0, 0, 0 );
+        if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
+            CombineRgn( visRgn, visRgn, hrgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
         SelectVisRgn16( HDC_16(hdc), HRGN_16(visRgn) );
         DeleteObject( visRgn );

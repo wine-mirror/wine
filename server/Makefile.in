@@ -29,6 +29,7 @@ C_SRCS = \
 	process.c \
 	ptrace.c \
 	queue.c \
+	region.c \
 	registry.c \
 	request.c \
 	semaphore.c \

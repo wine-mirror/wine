@@ -24,6 +24,7 @@
 #include "wine/server_protocol.h"
 
 struct thread;
+struct region;
 struct window;
 struct msg_queue;
 struct hook_table;
@@ -63,6 +64,25 @@ extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );
 extern void post_message( user_handle_t win, unsigned int message,
                           unsigned int wparam, unsigned int lparam );
+
+/* region functions */
+
+extern struct region *create_region( const rectangle_t *rects, unsigned int nb_rects );
+extern void free_region( struct region *region );
+extern void set_region_rect( struct region *region, const rectangle_t *rect );
+extern rectangle_t *get_region_data( const struct region *region, size_t *total_size );
+extern rectangle_t *get_region_data_and_free( struct region *region, size_t *total_size );
+extern int is_region_empty( const struct region *region );
+extern void get_region_extents( const struct region *region, rectangle_t *rect );
+extern void offset_region( struct region *region, int x, int y );
+extern struct region *copy_region( struct region *dst, const struct region *src );
+extern struct region *intersect_region( struct region *dst, const struct region *src1,
+                                        const struct region *src2 );
+extern struct region *subtract_region( struct region *dst, const struct region *src1,
+                                       const struct region *src2 );
+extern struct region *union_region( struct region *dst, const struct region *src1,
+                                    const struct region *src2 );
+static inline struct region *create_empty_region(void) { return create_region( NULL, 0 ); }
 
 /* window functions */
 
