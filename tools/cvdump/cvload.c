@@ -318,7 +318,7 @@ int ReadCodeViewDirectory (FILE *debugfile, int entrynum, OMFDirEntry **entries)
 
 /*
  * Load in the data contents of all CodeView sstModule sub-sections in the file (likely a
- * large array, as there is one sub-section for every module... > 100 modules is normal).
+ * large array, as there is one sub-section for every code module... > 100 modules is normal).
  * 'entrynum' should hold the total number of CV sub-sections, not the number of sstModule
  * subsections.  The function will ignore anything that isn't a sstModule.
  *
@@ -408,7 +408,7 @@ int ReadModuleData (FILE *debugfile, int entrynum, OMFDirEntry *entries,
 	if (pad)
 	    namelen += (4 - pad);
 
-	module->Name = calloc (namelen, sizeof (char) + 1);
+	module->Name = calloc (namelen + 1, sizeof (char));
 	bytes_read = fread (module->Name, sizeof (char), namelen, debugfile);
 	if (bytes_read < namelen)
 	{

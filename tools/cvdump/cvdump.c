@@ -49,7 +49,7 @@ DWORD GetOffsetFromRVA (DWORD rva)
     /* Assumes all RVA's in the section headers are sorted in increasing
      * order (which should be the case).
      */
-    for (i = g_dbg_dircount - 1; i >= 0; i--)
+    for (i = g_numsects - 1; i >= 0; i--)
     {
 	sectbegin = g_secthdrs[i].VirtualAddress;
 #ifdef VERBOSE
@@ -330,8 +330,8 @@ int DumpDebugDir (FILE *debugfile)
 
     PrintFilePos (debugfile);
 
-    printf ("Found %d CodeView subsection%c...\n", g_dbg_dircount,
-	    (g_dbg_dircount == 1) ? '.' : 's');
+    printf ("Found %d Debug director%s...\n", g_dbg_dircount,
+	    (g_dbg_dircount == 1) ? "y" : "ies");
 
     if (g_dbg_dircount == 0)
 	return FALSE;
@@ -347,20 +347,11 @@ int DumpDebugDir (FILE *debugfile)
 	fseek (debugfile, filepos, SEEK_SET);
 	PrintFilePos (debugfile);
     }
-#if 0
     else
     {
-	int i;
-
-	/* Find the .rdata section.
-	 */
-	for (i = 0; i < g_numsects; i++)
-	    if (strcmp (g_secthdrs[i].Name, ".rdata") == 0)
-		break;
-
-	filepos = g_secthdrs[i].PointerToRawData;
+        fseek( debugfile, g_dbghdr.ExportedNamesSize, SEEK_CUR);
+        PrintFilePos (debugfile);
     }
-#endif
 
     if (!ReadDebugDir (debugfile, g_dbg_dircount, &g_debugdirs))
 	return FALSE;
@@ -387,6 +378,22 @@ int DumpDebugDir (FILE *debugfile)
 	printf ("  SizeOfData       = [0x%8lx]\n", g_debugdirs[i].SizeOfData);
 	printf ("  AddressOfRawData = [0x%8lx]\n", g_debugdirs[i].AddressOfRawData);
 	printf ("  PointerToRawData = [0x%8lx]\n", g_debugdirs[i].PointerToRawData);
+
+	if (g_debugdirs[i].Type == IMAGE_DEBUG_TYPE_MISC)
+	{
+            IMAGE_DEBUG_DIRECTORY_MISC misc;
+            int lastpos = ftell (debugfile);
+            size_t bytes_read;
+
+            /* FIXME: Not sure exactly what the contents are supposed to be. */
+            fseek (debugfile, g_debugdirs[i].PointerToRawData, SEEK_SET);
+            bytes_read = fread (&misc, 1, sizeof (IMAGE_DEBUG_DIRECTORY_MISC), debugfile);
+            printf ("\n    [0x%8lx]\n    [0x%8lx]\n    [0x%4x]\n    [0x%4x]\n    '%s'\n",
+                    misc.unknown1, misc.SizeOfData, misc.unknown2,
+                    misc.unknown3, misc.Name);
+
+            fseek (debugfile, lastpos, SEEK_SET);
+	}
     }
 
     free (g_debugdirs);
@@ -782,8 +789,8 @@ int DumpSrcModuleInfo (int index, FILE *debugfile)
     }
 
     /* Read in the entire sstSrcModule from the .DBG file.  We'll process it
-     * bit by bit, but passing memory pointers into the various functions in
-     * cvprint.c.
+     * bit by bit, by passing memory pointers into the various functions in
+     * cvcrunch.c.
      */
     if (!ReadChunk (debugfile, (void*)rawdata, g_cvEntries[index].cb, fileoffset))
 	return FALSE;
@@ -831,7 +838,7 @@ int DumpAlignSymInfo (int index, FILE *debugfile)
 
 /*
  * Print out the info of all related modules (e.g. sstAlignSym, sstSrcModule)
- * for the desired sub-section (i.e. sstModule).
+ * for the given sub-section index (i.e. sstModule).
  */
 int DumpRelatedSections (int index, FILE *debugfile)
 {
@@ -925,9 +932,15 @@ int DumpAllModules (FILE *debugfile)
 {
     int i;
 
-    if (g_cvHeader.cDir == 0 || g_cvEntries == NULL)
+    if (g_cvHeader.cDir == 0)
     {
-	printf ("ERROR: Bailing out of Module Data Dump\n");
+        printf ("\nStrange...found CodeView header, but no module entries\n\n");
+	return TRUE;
+    }
+
+    if (g_cvEntries == NULL)
+    {
+	printf ("ERROR: Invalid entry table, bailing out of Module Data Dump\n");
 	printf ("%ld %p\n", g_cvHeader.cDir, g_cvEntries);
 	return FALSE;
     }

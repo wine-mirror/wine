@@ -25,7 +25,7 @@
  * other structs.
  *
  * The contents of this section look like this (the first two fields are
- * already extracted and passed in as parameters):
+ * extracted and passed back out):
  *
  * unsigned short cFile
  * unsigned short cSeg
