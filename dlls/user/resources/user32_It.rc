@@ -1,5 +1,6 @@
 /*
  * Copyright 1996 Tristan Tarrant
+ * Copyright 2004 Ivan Leo Murray-Smith
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +32,8 @@ SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
  MENUITEM "C&ambia a ...\tCtrl-Esc", 61744
  MENUITEM SEPARATOR
  MENUITEM "&Informazioni su WINE ...", 61761
+ MENUITEM SEPARATOR
+ MENUITEM "Aggiungi mark nel log di debug", 61762
 }
 
 EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
@@ -61,3 +64,20 @@ BEGIN
         PUSHBUTTON "&Si", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&No", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
+
+MDI_MOREWINDOWS DIALOG FIXED IMPURE 20, 20, 232, 122
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Seleziona Finestra"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LISTBOX         MDI_IDC_LISTBOX, 5, 7, 222, 90, WS_VSCROLL | WS_HSCROLL /* defined in mdi.h */
+    DEFPUSHBUTTON   "OK", IDOK, 75, 100, 35, 14
+    PUSHBUTTON      "Annulla", IDCANCEL, 120, 100, 35, 14
+END
+
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_ERROR "Errore"
+    IDS_MDI_MOREWINDOWS "&Più Finestre..."
+}
