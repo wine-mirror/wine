@@ -11459,9 +11459,7 @@ fi
 
 
 
-
 for ac_func in \
-	__libc_fork \
 	_lwp_create \
 	_pclose \
 	_popen \

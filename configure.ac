@@ -909,7 +909,6 @@ dnl **** Check for functions ****
 
 AC_FUNC_ALLOCA()
 AC_CHECK_FUNCS(\
-	__libc_fork \
 	_lwp_create \
 	_pclose \
 	_popen \

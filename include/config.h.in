@@ -650,9 +650,6 @@
 /* Define to 1 if you have the `_strnicmp' function. */
 #undef HAVE__STRNICMP
 
-/* Define to 1 if you have the `__libc_fork' function. */
-#undef HAVE___LIBC_FORK
-
 /* Define if we have __va_copy */
 #undef HAVE___VA_COPY
 

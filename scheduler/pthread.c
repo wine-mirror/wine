@@ -38,13 +38,6 @@
 #include "thread.h"
 #include "winternl.h"
 
-static int init_done;
-
-void PTHREAD_init_done(void)
-{
-    init_done = 1;
-}
-
 /* Currently this probably works only for glibc2,
  * which checks for the presence of double-underscore-prepended
  * pthread primitives, and use them if available.
@@ -62,28 +55,18 @@ void PTHREAD_init_done(void)
  asm(".globl " PSTR(alias) "\n" \
      "\t.set " PSTR(alias) "," PSTR(orig))
 
-/* strong_alias does not work on external symbols (.o format limitation?),
- * so for those, we need to use the pogo stick */
-#if defined(__i386__) && !defined(__PIC__)
-/* FIXME: PIC */
-#define jump_alias(orig, alias) __ASM_GLOBAL_FUNC( alias, "jmp " PSTR(orig))
-#endif
+static int init_done;
 
-/* get necessary libc symbols */
-#if (__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1) && defined(HAVE___LIBC_FORK)
-#define LIBC_FORK __libc_fork
-#define PTHREAD_FORK __fork
-#define ALIAS_FORK
-#else
-#define LIBC_FORK __fork
-#define PTHREAD_FORK fork
-#endif
-extern pid_t LIBC_FORK(void);
+static pid_t (*libc_fork)(void);
+static int (*libc_sigaction)(int signum, const struct sigaction *act, struct sigaction *oldact);
 
-#define LIBC_SIGACTION __sigaction
-extern int LIBC_SIGACTION(int signum,
-                         const struct sigaction *act,
-                         struct sigaction *oldact);
+void PTHREAD_init_done(void)
+{
+    init_done = 1;
+    if (!libc_fork) libc_fork = dlsym( RTLD_NEXT, "fork" );
+    if (!libc_sigaction) libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
+}
+
 
 /* NOTE: This is a truly extremely incredibly ugly hack!
  * But it does seem to work... */
@@ -255,15 +238,20 @@ int __pthread_atfork(void (*prepare)(void),
 }
 strong_alias(__pthread_atfork, pthread_atfork);
 
-pid_t PTHREAD_FORK(void)
+pid_t __fork(void)
 {
     pid_t pid;
     int i;
 
+    if (!libc_fork)
+    {
+        libc_fork = dlsym( RTLD_NEXT, "fork" );
+        assert( libc_fork );
+    }
     EnterCriticalSection( &atfork_section );
     /* prepare handlers are called in reverse insertion order */
     for (i = atfork_count - 1; i >= 0; i--) if (atfork_prepare[i]) atfork_prepare[i]();
-    if (!(pid = LIBC_FORK()))
+    if (!(pid = libc_fork()))
     {
         InitializeCriticalSection( &atfork_section );
         for (i = 0; i < atfork_count; i++) if (atfork_child[i]) atfork_child[i]();
@@ -275,9 +263,7 @@ pid_t PTHREAD_FORK(void)
     }
     return pid;
 }
-#ifdef ALIAS_FORK
-strong_alias(PTHREAD_FORK, fork);
-#endif
+strong_alias(__fork, fork);
 
 /***** MUTEXES *****/
 
@@ -658,13 +644,20 @@ int pthread_setcanceltype(int type, int *oldtype)
 /***** ANTI-OVERRIDES *****/
 /* pthreads tries to override these, point them back to libc */
 
-#ifdef jump_alias
-jump_alias(LIBC_SIGACTION, sigaction);
-#else
 int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 {
-  return LIBC_SIGACTION(signum, act, oldact);
+    if (!libc_sigaction)
+    {
+        libc_sigaction = dlsym( RTLD_NEXT, "sigaction" );
+        assert( libc_sigaction );
+    }
+    return libc_sigaction(signum, act, oldact);
 }
-#endif
+
+#else /* __GLIBC__ */
+
+void PTHREAD_init_done(void)
+{
+}
 
 #endif /* __GLIBC__ */
