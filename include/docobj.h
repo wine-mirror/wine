@@ -204,14 +204,16 @@ typedef struct IPrint IPrint, *LPPRINT;
 ICOM_DEFINE(IOleDocument,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleDocument_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleDocument_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleDocument_Release(p)                 ICOM_CALL (Release,p)
+#define IOleDocument_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleDocument_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleDocument_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleDocument methods ***/
-#define IOleDocument_CreateView(p,a,b,c,d)      ICOM_CALL4(CreateView,p,a,b,c,d)
-#define IOleDocument_GetDocMiscStatus(p,a)      ICOM_CALL1(GetDocMiscStatus,p,a)
-#define IOleDocument_EnumViews(p,a,b)           ICOM_CALL2(EnumViews,p,a,b)
+#define IOleDocument_CreateView(p,a,b,c,d)      (p)->lpVtbl->CreateView(p,a,b,c,d)
+#define IOleDocument_GetDocMiscStatus(p,a)      (p)->lpVtbl->GetDocMiscStatus(p,a)
+#define IOleDocument_EnumViews(p,a,b)           (p)->lpVtbl->EnumViews(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -226,12 +228,14 @@ ICOM_DEFINE(IOleDocument,IUnknown)
 ICOM_DEFINE(IOleDocumentSite,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleDocumentSite_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleDocumentSite_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleDocumentSite_Release(p)                 ICOM_CALL (Release,p)
+#define IOleDocumentSite_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleDocumentSite_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleDocumentSite_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleDocumentSite methods ***/
-#define IOleDocumentSite_ActivateMe(p,a)            ICOM_CALL4(ActivateMe,p,a)
+#define IOleDocumentSite_ActivateMe(p,a)            (p)->lpVtbl->ActivateMe(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -258,24 +262,26 @@ ICOM_DEFINE(IOleDocumentSite,IUnknown)
 ICOM_DEFINE(IOleDocumentView,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleDocumentView_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleDocumentView_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleDocumentView_Release(p)                 ICOM_CALL (Release,p)
+#define IOleDocumentView_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleDocumentView_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleDocumentView_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleDocumentView methods ***/
-#define IOleDocumentView_SetInPlaceSite(p,a)        ICOM_CALL1(SetInPlaceSite,p,a)
-#define IOleDocumentView_GetInPlaceSite(p,a)        ICOM_CALL1(GetInPlaceSite,p,a)
-#define IOleDocumentView_GetDocument(p,a)           ICOM_CALL1(GetDocument,p,a)
-#define IOleDocumentView_SetRect(p,a)               ICOM_CALL1(SetRect,p,a)
-#define IOleDocumentView_GetRect(p,a)               ICOM_CALL1(GetRect,p,a)
-#define IOleDocumentView_GetRectComplex(p,a,b,c,d)  ICOM_CALL4(GetRectComplex,p,a,b,c,d)
-#define IOleDocumentView_Show(p,a)                  ICOM_CALL1(Show,p,a)
-#define IOleDocumentView_UIActivate(p,a)            ICOM_CALL1(UIActivate,p,a)
-#define IOleDocumentView_Open(p)                    ICOM_CALL (Open,p)
-#define IOleDocumentView_CloseView(p,a)             ICOM_CALL1(CloseView,p,a)
-#define IOleDocumentView_SaveViewState(p,a)         ICOM_CALL1(SaveViewState,p,a)
-#define IOleDocumentView_ApplyViewState(p,a)        ICOM_CALL1(ApplyViewState,p,a)
-#define IOleDocumentView_Clone(p,a,b)               ICOM_CALL2(Clone,p,a,b)
+#define IOleDocumentView_SetInPlaceSite(p,a)        (p)->lpVtbl->SetInPlaceSite(p,a)
+#define IOleDocumentView_GetInPlaceSite(p,a)        (p)->lpVtbl->GetInPlaceSite(p,a)
+#define IOleDocumentView_GetDocument(p,a)           (p)->lpVtbl->GetDocument(p,a)
+#define IOleDocumentView_SetRect(p,a)               (p)->lpVtbl->SetRect(p,a)
+#define IOleDocumentView_GetRect(p,a)               (p)->lpVtbl->GetRect(p,a)
+#define IOleDocumentView_GetRectComplex(p,a,b,c,d)  (p)->lpVtbl->GetRectComplex(p,a,b,c,d)
+#define IOleDocumentView_Show(p,a)                  (p)->lpVtbl->Show(p,a)
+#define IOleDocumentView_UIActivate(p,a)            (p)->lpVtbl->UIActivate(p,a)
+#define IOleDocumentView_Open(p)                    (p)->lpVtbl->Open(p)
+#define IOleDocumentView_CloseView(p,a)             (p)->lpVtbl->CloseView(p,a)
+#define IOleDocumentView_SaveViewState(p,a)         (p)->lpVtbl->SaveViewState(p,a)
+#define IOleDocumentView_ApplyViewState(p,a)        (p)->lpVtbl->ApplyViewState(p,a)
+#define IOleDocumentView_Clone(p,a,b)               (p)->lpVtbl->Clone(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -293,15 +299,17 @@ ICOM_DEFINE(IOleDocumentView,IUnknown)
 ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IEnumOleDocumentViews_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
-#define IEnumOleDocumentViews_AddRef(p)               ICOM_CALL (AddRef,p)
-#define IEnumOleDocumentViews_Release(p)              ICOM_CALL (Release,p)
+#define IEnumOleDocumentViews_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IEnumOleDocumentViews_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IEnumOleDocumentViews_Release(p)              (p)->lpVtbl->Release(p)
 /*** IEnumOleDocumentViews methods ***/
-#define IEnumOleDocumentViews_Next(p,a,b,c)           ICOM_CALL3(Next,p,a,b,c)
-#define IEnumOleDocumentViews_Skip(p,a)               ICOM_CALL1(Skip,p,a)
-#define IEnumOleDocumentViews_Reset(p)                ICOM_CALL (Reset,p)
-#define IEnumOleDocumentViews_Clone(p,a)              ICOM_CALL1(Clone,p,a)
+#define IEnumOleDocumentViews_Next(p,a,b,c)           (p)->lpVtbl->Next(p,a,b,c)
+#define IEnumOleDocumentViews_Skip(p,a)               (p)->lpVtbl->Skip(p,a)
+#define IEnumOleDocumentViews_Reset(p)                (p)->lpVtbl->Reset(p)
+#define IEnumOleDocumentViews_Clone(p,a)              (p)->lpVtbl->Clone(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -317,13 +325,15 @@ ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
 ICOM_DEFINE(IOleCommandTarget,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleCommandTarget_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleCommandTarget_AddRef(p)               ICOM_CALL (AddRef,p)
-#define IOleCommandTarget_Release(p)              ICOM_CALL (Release,p)
+#define IOleCommandTarget_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleCommandTarget_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IOleCommandTarget_Release(p)              (p)->lpVtbl->Release(p)
 /*** IOleCommandTarget methods ***/
-#define IOleCommandTarget_QueryStatus(p,a,b,c,d)  ICOM_CALL4(QueryStatus,p,a,b,c,d)
-#define IOleCommandTarget_Exec(p,a,b,c,d,e)       ICOM_CALL5(Exec,p,a,b,c,d,e)
+#define IOleCommandTarget_QueryStatus(p,a,b,c,d)  (p)->lpVtbl->QueryStatus(p,a,b,c,d)
+#define IOleCommandTarget_Exec(p,a,b,c,d,e)       (p)->lpVtbl->Exec(p,a,b,c,d,e)
+#endif
 
 
 /*****************************************************************************
@@ -339,13 +349,15 @@ ICOM_DEFINE(IOleCommandTarget,IUnknown)
 ICOM_DEFINE(IContinueCallback,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IContinueCallback_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
-#define IContinueCallback_AddRef(p)               ICOM_CALL (AddRef,p)
-#define IContinueCallback_Release(p)              ICOM_CALL (Release,p)
+#define IContinueCallback_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IContinueCallback_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IContinueCallback_Release(p)              (p)->lpVtbl->Release(p)
 /*** IContinueCallback methods ***/
-#define IContinueCallback_FContinue(p)               ICOM_CALL (FContinue,p)
-#define IContinueCallback_FContinuePrinting(p,a,b,c) ICOM_CALL3(FContinuePrinting,p,a,b,c)
+#define IContinueCallback_FContinue(p)               (p)->lpVtbl->FContinue(p)
+#define IContinueCallback_FContinuePrinting(p,a,b,c) (p)->lpVtbl->FContinuePrinting(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -362,14 +374,16 @@ ICOM_DEFINE(IContinueCallback,IUnknown)
 ICOM_DEFINE(IPrint,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPrint_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
-#define IPrint_AddRef(p)               ICOM_CALL (AddRef,p)
-#define IPrint_Release(p)              ICOM_CALL (Release,p)
+#define IPrint_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPrint_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IPrint_Release(p)              (p)->lpVtbl->Release(p)
 /*** Iprint methods ***/
-#define IPrint_SetInitialPageNum(p,a)  ICOM_CALL1(SetInitialPageNum,p,a)
-#define IPrint_GetPageInfo(p,a,b)      ICOM_CALL2(GetPageInfo,p,a,b)
-#define IPrint_Print(p,a,b,c,d,e,f,g)  ICOM_CALL7(Print,p,a,b,c,d,e,f,g)
+#define IPrint_SetInitialPageNum(p,a)  (p)->lpVtbl->SetInitialPageNum(p,a)
+#define IPrint_GetPageInfo(p,a,b)      (p)->lpVtbl->GetPageInfo(p,a,b)
+#define IPrint_Print(p,a,b,c,d,e,f,g)  (p)->lpVtbl->Print(p,a,b,c,d,e,f,g)
+#endif
 
 
 #define LPMSODOCUMENT                  LPOLEDOCUMENT

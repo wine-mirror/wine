@@ -121,32 +121,34 @@ typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
 ICOM_DEFINE(IOleObject,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleObject_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleObject_Release(p)                 ICOM_CALL (Release,p)
+#define IOleObject_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleObject_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleObject_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleObject methods ***/
-#define IOleObject_SetClientSite(p,a)       ICOM_CALL1(SetClientSite,p,a)
-#define IOleObject_GetClientSite(p,a,b)     ICOM_CALL1(GetClientSite,p,a)
-#define IOleObject_SetHostNames(p,a,b)      ICOM_CALL2(SetHostNames,p,a,b)
-#define IOleObject_Close(p,a,b)             ICOM_CALL1(Close,p,a)
-#define IOleObject_SetMoniker(p,a,b)        ICOM_CALL2(SetMoniker,p,a,b)
-#define IOleObject_GetMoniker(p,a,b)        ICOM_CALL3(GetMoniker,p,a,b,c)
-#define IOleObject_InitFromData(p,a,b)      ICOM_CALL3(InitFromData,p,a,b,c)
-#define IOleObject_GetClipboardData(p,a,b)  ICOM_CALL2(GetClipboardData,p,a,b)
-#define IOleObject_DoVerb(p,a,b)            ICOM_CALL6(DoVerb,p,a,b,c,d,e,f)
-#define IOleObject_EnumVerbs(p,a,b)         ICOM_CALL1(EnumVerbs,p,a)
-#define IOleObject_Update(p,a,b)            ICOM_CALL (Update,p)
-#define IOleObject_IsUpToDate(p,a,b)        ICOM_CALL (IsUpToDate,p)
-#define IOleObject_GetUserClassID(p,a,b)    ICOM_CALL1(GetUserClassID,p,a)
-#define IOleObject_GetUserType(p,a,b)       ICOM_CALL2(GetUserType,p,a,b)
-#define IOleObject_SetExtent(p,a,b)         ICOM_CALL2(SetExtent,p,a,b)
-#define IOleObject_GetExtent(p,a,b)         ICOM_CALL2(GetExtent,p,a,b)
-#define IOleObject_Advise(p,a,b)            ICOM_CALL2(Advise,p,a,b)
-#define IOleObject_Unadvise(p,a,b)          ICOM_CALL1(Unadvise,p,a)
-#define IOleObject_EnumAdvise(p,a,b)        ICOM_CALL1(EnumAdvise,p,a)
-#define IOleObject_GetMiscStatus(p,a,b)     ICOM_CALL2(GetMiscStatus,p,a,b)
-#define IOleObject_SetColorScheme(p,a,b)    ICOM_CALL1(SetColorScheme,p,a)
+#define IOleObject_SetClientSite(p,a)       (p)->lpVtbl->SetClientSite(p,a)
+#define IOleObject_GetClientSite(p,a,b)     (p)->lpVtbl->GetClientSite(p,a)
+#define IOleObject_SetHostNames(p,a,b)      (p)->lpVtbl->SetHostNames(p,a,b)
+#define IOleObject_Close(p,a,b)             (p)->lpVtbl->Close(p,a)
+#define IOleObject_SetMoniker(p,a,b)        (p)->lpVtbl->SetMoniker(p,a,b)
+#define IOleObject_GetMoniker(p,a,b)        (p)->lpVtbl->GetMoniker(p,a,b,c)
+#define IOleObject_InitFromData(p,a,b)      (p)->lpVtbl->InitFromData(p,a,b,c)
+#define IOleObject_GetClipboardData(p,a,b)  (p)->lpVtbl->GetClipboardData(p,a,b)
+#define IOleObject_DoVerb(p,a,b)            (p)->lpVtbl->DoVerb(p,a,b,c,d,e,f)
+#define IOleObject_EnumVerbs(p,a,b)         (p)->lpVtbl->EnumVerbs(p,a)
+#define IOleObject_Update(p,a,b)            (p)->lpVtbl->Update(p)
+#define IOleObject_IsUpToDate(p,a,b)        (p)->lpVtbl->IsUpToDate(p)
+#define IOleObject_GetUserClassID(p,a,b)    (p)->lpVtbl->GetUserClassID(p,a)
+#define IOleObject_GetUserType(p,a,b)       (p)->lpVtbl->GetUserType(p,a,b)
+#define IOleObject_SetExtent(p,a,b)         (p)->lpVtbl->SetExtent(p,a,b)
+#define IOleObject_GetExtent(p,a,b)         (p)->lpVtbl->GetExtent(p,a,b)
+#define IOleObject_Advise(p,a,b)            (p)->lpVtbl->Advise(p,a,b)
+#define IOleObject_Unadvise(p,a,b)          (p)->lpVtbl->Unadvise(p,a)
+#define IOleObject_EnumAdvise(p,a,b)        (p)->lpVtbl->EnumAdvise(p,a)
+#define IOleObject_GetMiscStatus(p,a,b)     (p)->lpVtbl->GetMiscStatus(p,a,b)
+#define IOleObject_SetColorScheme(p,a,b)    (p)->lpVtbl->SetColorScheme(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -166,17 +168,19 @@ ICOM_DEFINE(IOleObject,IUnknown)
 ICOM_DEFINE(IOleAdviseHolder,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleAdviseHolder_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleAdviseHolder_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleAdviseHolder_Release(p)                 ICOM_CALL (Release,p)
+#define IOleAdviseHolder_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleAdviseHolder_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleAdviseHolder_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleAdviseHolder methods ***/
-#define IOleAdviseHolder_Advise(p,a,b)              ICOM_CALL2(Advise,p,a,b)
-#define IOleAdviseHolder_Unadvise(p,a)              ICOM_CALL1(Unadvise,p,a)
-#define IOleAdviseHolder_EnumAdvise(p,a)            ICOM_CALL1(EnumAdvise,p,a)
-#define IOleAdviseHolder_SendOnRename(p,a)          ICOM_CALL1(SendOnRename,p,a)
-#define IOleAdviseHolder_SendOnSave(p)              ICOM_CALL (SendOnSave,p)
-#define IOleAdviseHolder_SendOnClose(p)             ICOM_CALL (SendOnClose,p)
+#define IOleAdviseHolder_Advise(p,a,b)              (p)->lpVtbl->Advise(p,a,b)
+#define IOleAdviseHolder_Unadvise(p,a)              (p)->lpVtbl->Unadvise(p,a)
+#define IOleAdviseHolder_EnumAdvise(p,a)            (p)->lpVtbl->EnumAdvise(p,a)
+#define IOleAdviseHolder_SendOnRename(p,a)          (p)->lpVtbl->SendOnRename(p,a)
+#define IOleAdviseHolder_SendOnSave(p)              (p)->lpVtbl->SendOnSave(p)
+#define IOleAdviseHolder_SendOnClose(p)             (p)->lpVtbl->SendOnClose(p)
+#endif
 
 
 /*****************************************************************************
@@ -194,15 +198,17 @@ ICOM_DEFINE(IOleAdviseHolder,IUnknown)
 ICOM_DEFINE(IEnumOLEVERB,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IEnumOLEVERB_QueryInterface(p,a,b)  ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IEnumOLEVERB_AddRef(p)              ICOM_ICALL (IUnknown,AddRef,p)
-#define IEnumOLEVERB_Release(p)             ICOM_ICALL (IUnknown,Release,p)
+#define IEnumOLEVERB_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IEnumOLEVERB_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IEnumOLEVERB_Release(p)             (p)->lpVtbl->Release(p)
 /*** IEnumOLEVERB methods ***/
-#define IEnumOLEVERB_Next(p,a,b,c)          ICOM_CALL3(Next,p,a,b,c)
-#define IEnumOLEVERB_Skip(p,a)              ICOM_CALL1(Skip,p,a)
-#define IEnumOLEVERB_Reset(p,a)             ICOM_CALL (Reset,p)
-#define IEnumOLEVERB_Clone(p,a)             ICOM_CALL1(Clone,p,a)
+#define IEnumOLEVERB_Next(p,a,b,c)          (p)->lpVtbl->Next(p,a,b,c)
+#define IEnumOLEVERB_Skip(p,a)              (p)->lpVtbl->Skip(p,a)
+#define IEnumOLEVERB_Reset(p,a)             (p)->lpVtbl->Reset(p)
+#define IEnumOLEVERB_Clone(p,a)             (p)->lpVtbl->Clone(p,a)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

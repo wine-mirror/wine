@@ -54,11 +54,13 @@ typedef struct IExtractIconW IExtractIconW,*LPEXTRACTICONW;
 ICOM_DEFINE(IExtractIconA,IUnknown)
 #undef INTERFACE
 
-#define IExtractIconA_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IExtractIconA_AddRef(p)			ICOM_CALL(AddRef,p)
-#define IExtractIconA_Release(p)		ICOM_CALL(Release,p)
-#define IExtractIconA_GetIconLocation(p,a,b,c,d,e)	ICOM_CALL5(GetIconLocation,p,a,b,c,d,e)
-#define IExtractIconA_Extract(p,a,b,c,d,e)	ICOM_CALL5(Extract,p,a,b,c,d,e)
+#ifdef COBJMACROS
+#define IExtractIconA_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IExtractIconA_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IExtractIconA_Release(p)                (p)->lpVtbl->Release(p)
+#define IExtractIconA_GetIconLocation(p,a,b,c,d,e)      (p)->lpVtbl->GetIconLocation(p,a,b,c,d,e)
+#define IExtractIconA_Extract(p,a,b,c,d,e)      (p)->lpVtbl->Extract(p,a,b,c,d,e)
+#endif
 
 
 #define INTERFACE IExtractIconW
@@ -71,11 +73,13 @@ ICOM_DEFINE(IExtractIconA,IUnknown)
 ICOM_DEFINE(IExtractIconW,IUnknown)
 #undef INTERFACE
 
-#define IExtractIconW_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IExtractIconW_AddRef(p)			ICOM_CALL(AddRef,p)
-#define IExtractIconW_Release(p)		ICOM_CALL(Release,p)
-#define IExtractIconW_GetIconLocation(p,a,b,c,d,e)	ICOM_CALL5(GetIconLocation,p,a,b,c,d,e)
-#define IExtractIconW_Extract(p,a,b,c,d,e)	ICOM_CALL5(Extract,p,a,b,c,d,e)
+#ifdef COBJMACROS
+#define IExtractIconW_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IExtractIconW_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IExtractIconW_Release(p)                (p)->lpVtbl->Release(p)
+#define IExtractIconW_GetIconLocation(p,a,b,c,d,e)      (p)->lpVtbl->GetIconLocation(p,a,b,c,d,e)
+#define IExtractIconW_Extract(p,a,b,c,d,e)      (p)->lpVtbl->Extract(p,a,b,c,d,e)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

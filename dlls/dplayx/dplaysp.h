@@ -77,23 +77,25 @@ ICOM_DEFINE(IDirectPlaySP,IUnknown)
 /* NOTE: The microsoft provided header file doesn't have these access
  * functions
  */
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectPlaySP_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectPlaySP_AddRef(p)                    ICOM_CALL (AddRef,p)
-#define IDirectPlaySP_Release(p)                   ICOM_CALL (Release,p)
+#define IDirectPlaySP_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectPlaySP_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IDirectPlaySP_Release(p)                   (p)->lpVtbl->Release(p)
 /*** IDirectPlaySP methods ***/
-#define IDirectPlaySP_AddMRUEntry(p,a,b,c,d,e)     ICOM_CALL5(AddMRUEntry,p,a,b,c,d,e)
-#define IDirectPlaySP_CreateAddress(p,a,b,c,d,e,f) ICOM_CALL6(CreateAddress,p,a,b,c,d,e,f)
-#define IDirectPlaySP_EnumAddress(p,a,b,c,d)       ICOM_CALL4(EnumAddress,p,a,b,c,d)
-#define IDirectPlaySP_EnumMRUEntries(p,a,b,c,d)    ICOM_CALL4(EnumMRUEntries,p,a,b,c,d)
-#define IDirectPlaySP_GetPlayerFlags(p,a,b)        ICOM_CALL2(GetPlayerFlags,p,a,b)
-#define IDirectPlaySP_GetSPPlayerData(p,a,b,c,d)   ICOM_CALL4(GetSPPlayerData,p,a,b,c,d)
-#define IDirectPlaySP_HandleMessage(p,a,b,c)       ICOM_CALL3(HandleMessage,p,a,b,c)
-#define IDirectPlaySP_SetSPPlayerData(p,a,b,c,d)   ICOM_CALL4(SetSPPlayerData,p,a,b,c,d)
-#define IDirectPlaySP_CreateCompoundAddress(p,a,b,c,d)  ICOM_CALL4(CreateCompoundAddress,p,a,b,c,d)
-#define IDirectPlaySP_GetSPData(p,a,b,c)           ICOM_CALL3(GetSPData,p,a,b,c)
-#define IDirectPlaySP_SetSPData(p,a,b,c)           ICOM_CALL3(SetSPData,p,a,b,c)
-#define IDirectPlaySP_SendComplete(p,a,b)          ICOM_CALL2(SendComplete,p,a,b)
+#define IDirectPlaySP_AddMRUEntry(p,a,b,c,d,e)     (p)->lpVtbl->AddMRUEntry(p,a,b,c,d,e)
+#define IDirectPlaySP_CreateAddress(p,a,b,c,d,e,f) (p)->lpVtbl->CreateAddress(p,a,b,c,d,e,f)
+#define IDirectPlaySP_EnumAddress(p,a,b,c,d)       (p)->lpVtbl->EnumAddress(p,a,b,c,d)
+#define IDirectPlaySP_EnumMRUEntries(p,a,b,c,d)    (p)->lpVtbl->EnumMRUEntries(p,a,b,c,d)
+#define IDirectPlaySP_GetPlayerFlags(p,a,b)        (p)->lpVtbl->GetPlayerFlags(p,a,b)
+#define IDirectPlaySP_GetSPPlayerData(p,a,b,c,d)   (p)->lpVtbl->GetSPPlayerData(p,a,b,c,d)
+#define IDirectPlaySP_HandleMessage(p,a,b,c)       (p)->lpVtbl->HandleMessage(p,a,b,c)
+#define IDirectPlaySP_SetSPPlayerData(p,a,b,c,d)   (p)->lpVtbl->SetSPPlayerData(p,a,b,c,d)
+#define IDirectPlaySP_CreateCompoundAddress(p,a,b,c,d)  (p)->lpVtbl->CreateCompoundAddress(p,a,b,c,d)
+#define IDirectPlaySP_GetSPData(p,a,b,c)           (p)->lpVtbl->GetSPData(p,a,b,c)
+#define IDirectPlaySP_SetSPData(p,a,b,c)           (p)->lpVtbl->SetSPData(p,a,b,c)
+#define IDirectPlaySP_SendComplete(p,a,b)          (p)->lpVtbl->SendComplete(p,a,b)
+#endif
 
 /* SP Callback stuff */
 

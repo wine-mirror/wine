@@ -44,15 +44,17 @@ typedef struct IEnumIDList IEnumIDList, *LPENUMIDLIST;
 ICOM_DEFINE(IEnumIDList,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IEnumIDList_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IEnumIDList_AddRef(p)			ICOM_CALL (AddRef,p)
-#define IEnumIDList_Release(p)			ICOM_CALL (Release,p)
+#define IEnumIDList_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
+#define IEnumIDList_AddRef(p)                   (p)->lpVtbl->AddRef(p)
+#define IEnumIDList_Release(p)                  (p)->lpVtbl->Release(p)
 /*** IEnumIDList methods ***/
-#define IEnumIDList_Next(p,a,b,c)		ICOM_CALL3(Next,p,a,b,c)
-#define IEnumIDList_Skip(p,a)			ICOM_CALL1(Skip,p,a)
-#define IEnumIDList_Reset(p)			ICOM_CALL(Reset,p)
-#define IEnumIDList_Clone(p,a)			ICOM_CALL1(Clone,p,a)
+#define IEnumIDList_Next(p,a,b,c)               (p)->lpVtbl->Next(p,a,b,c)
+#define IEnumIDList_Skip(p,a)                   (p)->lpVtbl->Skip(p,a)
+#define IEnumIDList_Reset(p)                    (p)->lpVtbl->Reset(p)
+#define IEnumIDList_Clone(p,a)                  (p)->lpVtbl->Clone(p,a)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -43,16 +43,18 @@ DEFINE_GUID (IID_IDockingWindowFrame,	0x47D2657AL, 0x7B27, 0x11D0, 0x8C, 0xA9, 0
 ICOM_DEFINE(IDockingWindowFrame,IOleWindow)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDockingWindowFrame_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IDockingWindowFrame_AddRef(p)	ICOM_CALL(AddRef,p)
-#define IDockingWindowFrame_Release(p)	ICOM_CALL(Release,p)
+#define IDockingWindowFrame_QueryInterface(p,a,b)	(p)->lpVtbl->QueryInterface(p,a,b)
+#define IDockingWindowFrame_AddRef(p)	(p)->lpVtbl->AddRef(p)
+#define IDockingWindowFrame_Release(p)	(p)->lpVtbl->Release(p)
 /*** IDockingWindowFrame methods ***/
-#define IDockingWindowFrame_GetWindow(p,a)	ICOM_CALL1(GetWindow,p,a)
-#define IDockingWindowFrame_ContextSensitiveHelp(p,a)	ICOM_CALL1(ContextSensitiveHelp,p,a)
-#define IDockingWindowFrame_AddToolbar(p,a,b,c)	ICOM_CALL3(AddToolbar,p,a,b,c)
-#define IDockingWindowFrame_RemoveToolbar(p,a,b)	ICOM_CALL2(RemoveToolbar,p,a,b)
-#define IDockingWindowFrame_FindToolbar(p,a,b,c)	ICOM_CALL3(FindToolbar,p,a,b,c)
+#define IDockingWindowFrame_GetWindow(p,a)	(p)->lpVtbl->GetWindow(p,a)
+#define IDockingWindowFrame_ContextSensitiveHelp(p,a)	(p)->lpVtbl->ContextSensitiveHelp(p,a)
+#define IDockingWindowFrame_AddToolbar(p,a,b,c)	(p)->lpVtbl->AddToolbar(p,a,b,c)
+#define IDockingWindowFrame_RemoveToolbar(p,a,b)	(p)->lpVtbl->RemoveToolbar(p,a,b)
+#define IDockingWindowFrame_FindToolbar(p,a,b,c)	(p)->lpVtbl->FindToolbar(p,a,b,c)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

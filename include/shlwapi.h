@@ -256,14 +256,16 @@ typedef struct IQueryAssociations IQueryAssociations,*LPQUERYASSOCIATIONS;
 ICOM_DEFINE(IQueryAssociations,IUnknown)
 #undef INTERFACE
 
-#define IQueryAssociations_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
-#define IQueryAssociations_AddRef(p)               ICOM_CALL(AddRef,p)
-#define IQueryAssociations_Release(p)              ICOM_CALL(Release,p)
-#define IQueryAssociations_Init(p,a,b,c,d)         ICOM_CALL4(Init,p,a,b,c,d)
-#define IQueryAssociations_GetString(p,a,b,c,d,e)  ICOM_CALL5(GetString,p,a,b,c,d,e)
-#define IQueryAssociations_GetKey(p,a,b,c,d)       ICOM_CALL4(GetKey,p,a,b,c,d)
-#define IQueryAssociations_GetData(p,a,b,c,d,e)    ICOM_CALL5(GetData,p,a,b,c,d,e)
-#define IQueryAssociations_GetEnum(p,a,b,c,d,e)    ICOM_CALL5(GetEnum,p,a,b,c,d,e)
+#ifdef COBJMACROS
+#define IQueryAssociations_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IQueryAssociations_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IQueryAssociations_Release(p)              (p)->lpVtbl->Release(p)
+#define IQueryAssociations_Init(p,a,b,c,d)         (p)->lpVtbl->Init(p,a,b,c,d)
+#define IQueryAssociations_GetString(p,a,b,c,d,e)  (p)->lpVtbl->GetString(p,a,b,c,d,e)
+#define IQueryAssociations_GetKey(p,a,b,c,d)       (p)->lpVtbl->GetKey(p,a,b,c,d)
+#define IQueryAssociations_GetData(p,a,b,c,d,e)    (p)->lpVtbl->GetData(p,a,b,c,d,e)
+#define IQueryAssociations_GetEnum(p,a,b,c,d,e)    (p)->lpVtbl->GetEnum(p,a,b,c,d,e)
+#endif
 
 HRESULT WINAPI AssocCreate(CLSID,REFIID,LPVOID*);
 

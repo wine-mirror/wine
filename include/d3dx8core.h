@@ -69,13 +69,15 @@ typedef struct ID3DXFont                ID3DXFont, *LPD3DXFONT;
 ICOM_DEFINE(ID3DXBuffer,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define ID3DXBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define ID3DXBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
-#define ID3DXBuffer_Release(p)            ICOM_CALL (Release,p)
+#define ID3DXBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define ID3DXBuffer_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define ID3DXBuffer_Release(p)            (p)->lpVtbl->Release(p)
 /*** ID3DXBuffer methods ***/
-#define ID3DXBuffer_GetBufferPointer(p)   ICOM_CALL (GetBufferPointer,p)
-#define ID3DXBuffer_GetBufferSize(p)      ICOM_CALL (GetBufferSize,p)
+#define ID3DXBuffer_GetBufferPointer(p)   (p)->lpVtbl->GetBufferPointer(p)
+#define ID3DXBuffer_GetBufferSize(p)      (p)->lpVtbl->GetBufferSize(p)
+#endif
 
 /*****************************************************************************
  * ID3DXFont interface
@@ -95,14 +97,16 @@ ICOM_DEFINE(ID3DXBuffer,IUnknown)
 ICOM_DEFINE(ID3DXFont,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define ID3DXFont_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define ID3DXFont_AddRef(p)             ICOM_CALL (AddRef,p)
-#define ID3DXFont_Release(p)            ICOM_CALL (Release,p)
+#define ID3DXFont_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define ID3DXFont_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define ID3DXFont_Release(p)            (p)->lpVtbl->Release(p)
 /*** ID3DXFont methods ***/
-#define ID3DXFont_Begin(p)              ICOM_CALL (Begin,p)
-#define ID3DXFont_DrawTextA(p,a,b,c,d,e)ICOM_CALL5(DrawText,p,a,b,c,d,e)
-#define ID3DXFont_End(p)                ICOM_CALL (End,p)
+#define ID3DXFont_Begin(p)              (p)->lpVtbl->Begin(p)
+#define ID3DXFont_DrawTextA(p,a,b,c,d,e)(p)->lpVtbl->DrawText(p,a,b,c,d,e)
+#define ID3DXFont_End(p)                (p)->lpVtbl->End(p)
+#endif
 
 /*************************************************************************************
  * Define entrypoints 

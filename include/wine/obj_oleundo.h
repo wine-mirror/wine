@@ -110,14 +110,16 @@ typedef struct tagQACONTAINER
 ICOM_DEFINE(IQuickActivate,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IQuickActivate_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IQuickActivate_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IQuickActivate_Release(p)            ICOM_CALL (Release,p)
+#define IQuickActivate_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IQuickActivate_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IQuickActivate_Release(p)            (p)->lpVtbl->Release(p)
 /*** IQuickActivate methods ***/
-#define IQuickActivate_QuickActivate(p,a,b)  ICOM_CALL2(QuickActivate,p,a,b)
-#define IQuickActivate_SetContentExtent(p,a) ICOM_CALL1(SetContentExtent,p,a)
-#define IQuickActivate_GetContentExtent(p,a) ICOM_CALL1(GetContentExtent,p,a)
+#define IQuickActivate_QuickActivate(p,a,b)  (p)->lpVtbl->QuickActivate(p,a,b)
+#define IQuickActivate_SetContentExtent(p,a) (p)->lpVtbl->SetContentExtent(p,a)
+#define IQuickActivate_GetContentExtent(p,a) (p)->lpVtbl->GetContentExtent(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -134,14 +136,16 @@ ICOM_DEFINE(IQuickActivate,IUnknown)
 ICOM_DEFINE(IPointerInactive,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPointerInactive_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IPointerInactive_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IPointerInactive_Release(p)            ICOM_CALL (Release,p)
+#define IPointerInactive_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPointerInactive_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IPointerInactive_Release(p)            (p)->lpVtbl->Release(p)
 /*** IPointerInactive methods ***/
-#define IPointerInactive_GetActivationPolicy(p,a)         ICOM_CALL1(GetActivationPolicy,p,a)
-#define IPointerInactive_OnInactiveMoveMouse(p,a,b,c,d)   ICOM_CALL4(OnInactiveMoveMouse,p,a,b,c,d)
-#define IPointerInactive_OnInactiveSetCursor(p,a,b,c,d,e) ICOM_CALL5(OnInactiveSetCursor,p,a,b,d,e)
+#define IPointerInactive_GetActivationPolicy(p,a)         (p)->lpVtbl->GetActivationPolicy(p,a)
+#define IPointerInactive_OnInactiveMoveMouse(p,a,b,c,d)   (p)->lpVtbl->OnInactiveMoveMouse(p,a,b,c,d)
+#define IPointerInactive_OnInactiveSetCursor(p,a,b,c,d,e) (p)->lpVtbl->OnInactiveSetCursor(p,a,b,d,e)
+#endif
 
 
 /*****************************************************************************
@@ -156,18 +160,20 @@ ICOM_DEFINE(IPointerInactive,IUnknown)
 ICOM_DEFINE(IAdviseSinkEx,IAdviseSink)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IAdviseSinkEx_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IAdviseSinkEx_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IAdviseSinkEx_Release(p)            ICOM_CALL (Release,p)
+#define IAdviseSinkEx_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IAdviseSinkEx_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IAdviseSinkEx_Release(p)            (p)->lpVtbl->Release(p)
 /*** IAdviseSink methods ***/
-#define IAdviseSinkEx_OnDataChange(p,a,b)   ICOM_CALL2(OnDataChange,p,a,b)
-#define IAdviseSinkEx_OnViewChange(p,a,b)   ICOM_CALL2(OnViewChange,p,a,b)
-#define IAdviseSinkEx_OnRename(p,a)         ICOM_CALL1(OnRename,p,a)
-#define IAdviseSinkEx_OnSave(p)             ICOM_CALL (OnSave,p)
-#define IAdviseSinkEx_OnClose(p)            ICOM_CALL (OnClose,p)
+#define IAdviseSinkEx_OnDataChange(p,a,b)   (p)->lpVtbl->OnDataChange(p,a,b)
+#define IAdviseSinkEx_OnViewChange(p,a,b)   (p)->lpVtbl->OnViewChange(p,a,b)
+#define IAdviseSinkEx_OnRename(p,a)         (p)->lpVtbl->OnRename(p,a)
+#define IAdviseSinkEx_OnSave(p)             (p)->lpVtbl->OnSave(p)
+#define IAdviseSinkEx_OnClose(p)            (p)->lpVtbl->OnClose(p)
 /*** IAdviseSinkEx methods ***/
-#define IAdviseSinkEx_OnViewStatusChange(p,a)  ICOM_CALL1(OnViewStatusChange,p,a)
+#define IAdviseSinkEx_OnViewStatusChange(p,a)  (p)->lpVtbl->OnViewStatusChange(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -193,23 +199,25 @@ ICOM_DEFINE(IAdviseSinkEx,IAdviseSink)
 ICOM_DEFINE(IOleUndoManager,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleUndoManager_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleUndoManager_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IOleUndoManager_Release(p)            ICOM_CALL (Release,p)
+#define IOleUndoManager_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleUndoManager_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IOleUndoManager_Release(p)            (p)->lpVtbl->Release(p)
 /*** IOleUndoManager methods ***/
-#define IOleUndoManager_Open(p,a)                   ICOM_CALL1(Open,p,a)
-#define IOleUndoManager_Close(p,a,b)                ICOM_CALL2(Close,p,a,b)
-#define IOleUndoManager_Add(p,a)                    ICOM_CALL1(Add,p,a)
-#define IOleUndoManager_GetOpenParentState(p,a)     ICOM_CALL1(GetOpenParentState,p,a)
-#define IOleUndoManager_DiscardFrom(p,a)            ICOM_CALL1(DiscardFrom,p,a)
-#define IOleUndoManager_UndoTo(p,a)                 ICOM_CALL1(UndoTo,p,a)
-#define IOleUndoManager_RedoTo(p,a)                 ICOM_CALL1(RedoTo,p,a)
-#define IOleUndoManager_EnumUndoable(p,a)           ICOM_CALL1(EnumUndoable,p,a)
-#define IOleUndoManager_EnumRedoable(p,a)           ICOM_CALL1(EnumRedoable,p,a)
-#define IOleUndoManager_GetLastUndoDescription(p,a) ICOM_CALL1(GetLastUndoDescription,p,a)
-#define IOleUndoManager_GetLastRedoDescription(p,a) ICOM_CALL1(GetLastRedoDescription,p,a)
-#define IOleUndoManager_Enable(p,a)                 ICOM_CALL1(Enable,p,a)
+#define IOleUndoManager_Open(p,a)                   (p)->lpVtbl->Open(p,a)
+#define IOleUndoManager_Close(p,a,b)                (p)->lpVtbl->Close(p,a,b)
+#define IOleUndoManager_Add(p,a)                    (p)->lpVtbl->Add(p,a)
+#define IOleUndoManager_GetOpenParentState(p,a)     (p)->lpVtbl->GetOpenParentState(p,a)
+#define IOleUndoManager_DiscardFrom(p,a)            (p)->lpVtbl->DiscardFrom(p,a)
+#define IOleUndoManager_UndoTo(p,a)                 (p)->lpVtbl->UndoTo(p,a)
+#define IOleUndoManager_RedoTo(p,a)                 (p)->lpVtbl->RedoTo(p,a)
+#define IOleUndoManager_EnumUndoable(p,a)           (p)->lpVtbl->EnumUndoable(p,a)
+#define IOleUndoManager_EnumRedoable(p,a)           (p)->lpVtbl->EnumRedoable(p,a)
+#define IOleUndoManager_GetLastUndoDescription(p,a) (p)->lpVtbl->GetLastUndoDescription(p,a)
+#define IOleUndoManager_GetLastRedoDescription(p,a) (p)->lpVtbl->GetLastRedoDescription(p,a)
+#define IOleUndoManager_Enable(p,a)                 (p)->lpVtbl->Enable(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -227,15 +235,17 @@ ICOM_DEFINE(IOleUndoManager,IUnknown)
 ICOM_DEFINE(IOleUndoUnit,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleUndoUnit_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleUndoUnit_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IOleUndoUnit_Release(p)            ICOM_CALL (Release,p)
+#define IOleUndoUnit_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleUndoUnit_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IOleUndoUnit_Release(p)            (p)->lpVtbl->Release(p)
 /*** IOleUndoUnit methods ***/
-#define IOleUndoUnit_Do(p,a)               ICOM_CALL1(Do,p,a)
-#define IOleUndoUnit_GetDescription(p,a)   ICOM_CALL1(GetDescription,p,a)
-#define IOleUndoUnit_GetUnitType(p,a,b)    ICOM_CALL2(GetUnitType,p,a,b)
-#define IOleUndoUnit_OnNextAdd(p)          ICOM_CALL (OnNextAdd,p)
+#define IOleUndoUnit_Do(p,a)               (p)->lpVtbl->Do(p,a)
+#define IOleUndoUnit_GetDescription(p,a)   (p)->lpVtbl->GetDescription(p,a)
+#define IOleUndoUnit_GetUnitType(p,a,b)    (p)->lpVtbl->GetUnitType(p,a,b)
+#define IOleUndoUnit_OnNextAdd(p)          (p)->lpVtbl->OnNextAdd(p)
+#endif
 
 
 
@@ -255,21 +265,23 @@ ICOM_DEFINE(IOleUndoUnit,IUnknown)
 ICOM_DEFINE(IOleParentUndoUnit,IOleUndoUnit)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleParentUndoUnit_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleParentUndoUnit_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IOleParentUndoUnit_Release(p)            ICOM_CALL (Release,p)
+#define IOleParentUndoUnit_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleParentUndoUnit_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IOleParentUndoUnit_Release(p)            (p)->lpVtbl->Release(p)
 /*** IOleUndoUnit methods ***/
-#define IOleParentUndoUnit_Do(p,a)               ICOM_CALL1(Do,p,a)
-#define IOleParentUndoUnit_GetDescription(p,a)   ICOM_CALL1(GetDescription,p,a)
-#define IOleParentUndoUnit_GetUnitType(p,a,b)    ICOM_CALL2(GetUnitType,p,a,b)
-#define IOleParentUndoUnit_OnNextAdd(p)          ICOM_CALL (OnNextAdd,p)
+#define IOleParentUndoUnit_Do(p,a)               (p)->lpVtbl->Do(p,a)
+#define IOleParentUndoUnit_GetDescription(p,a)   (p)->lpVtbl->GetDescription(p,a)
+#define IOleParentUndoUnit_GetUnitType(p,a,b)    (p)->lpVtbl->GetUnitType(p,a,b)
+#define IOleParentUndoUnit_OnNextAdd(p)          (p)->lpVtbl->OnNextAdd(p)
 /*** IOleParentUndoUnit methods ***/
-#define IOleParentUndoUnit_Open(p,a)             ICOM_CALL1(Open,p,a)
-#define IOleParentUndoUnit_Close(p,a,b)          ICOM_CALL2(Close,p,a,b)
-#define IOleParentUndoUnit_Add(p,a)              ICOM_CALL1(Add,p,a)
-#define IOleParentUndoUnit_FindUnit(p,a)         ICOM_CALL1(FindUnit,p,a)
-#define IOleParentUndoUnit_GetParentState(p,a,b) ICOM_CALL1(GetParentState,p,a)
+#define IOleParentUndoUnit_Open(p,a)             (p)->lpVtbl->Open(p,a)
+#define IOleParentUndoUnit_Close(p,a,b)          (p)->lpVtbl->Close(p,a,b)
+#define IOleParentUndoUnit_Add(p,a)              (p)->lpVtbl->Add(p,a)
+#define IOleParentUndoUnit_FindUnit(p,a)         (p)->lpVtbl->FindUnit(p,a)
+#define IOleParentUndoUnit_GetParentState(p,a,b) (p)->lpVtbl->GetParentState(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -287,15 +299,17 @@ ICOM_DEFINE(IOleParentUndoUnit,IOleUndoUnit)
 ICOM_DEFINE(IEnumOleUndoUnits,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IEnumOleUndoUnits_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IEnumOleUndoUnits_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IEnumOleUndoUnits_Release(p)            ICOM_CALL (Release,p)
+#define IEnumOleUndoUnits_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IEnumOleUndoUnits_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IEnumOleUndoUnits_Release(p)            (p)->lpVtbl->Release(p)
 /*** IEnumOleUndoUnits methods ***/
-#define IEnumOleUndoUnits_Next(p,a,b,c)         ICOM_CALL3(Next,p,a,b,c)
-#define IEnumOleUndoUnits_Skip(p,a)             ICOM_CALL1(Skip,p,a)
-#define IEnumOleUndoUnits_Reset(p,a)            ICOM_CALL (Reset,p,a)
-#define IEnumOleUndoUnits_Clone(p,a)            ICOM_CALL1(Clone,p,a)
+#define IEnumOleUndoUnits_Next(p,a,b,c)         (p)->lpVtbl->Next(p,a,b,c)
+#define IEnumOleUndoUnits_Skip(p,a)             (p)->lpVtbl->Skip(p,a)
+#define IEnumOleUndoUnits_Reset(p,a)            (p)->lpVtbl->Reset(p,a)
+#define IEnumOleUndoUnits_Clone(p,a)            (p)->lpVtbl->Clone(p,a)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

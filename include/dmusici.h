@@ -809,14 +809,16 @@ typedef struct _DMUS_VARIATIONS_PARAM
 ICOM_DEFINE(IDirectMusicBand,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicBand_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicBand_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicBand_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicBand_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicBand_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IDirectMusicBand_Release(p)             (p)->lpVtbl->Release(p)
 /*** IDirectMusicBand methods ***/
-#define IDirectMusicBand_CreateSegment(p,a)				ICOM_CALL1(CreateSegment,p,a)
-#define IDirectMusicBand_Download(p,a)					ICOM_CALL1(Download,p,a)
-#define IDirectMusicBand_Unload(p,a)					ICOM_CALL1(Unload,p,a)
+#define IDirectMusicBand_CreateSegment(p,a)     (p)->lpVtbl->CreateSegment(p,a)
+#define IDirectMusicBand_Download(p,a)          (p)->lpVtbl->Download(p,a)
+#define IDirectMusicBand_Unload(p,a)            (p)->lpVtbl->Unload(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -837,14 +839,16 @@ ICOM_DEFINE(IDirectMusicBand,IUnknown)
 ICOM_DEFINE(IDirectMusicObject,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicObject_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicObject_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicObject_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicObject_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicObject_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IDirectMusicObject_Release(p)              (p)->lpVtbl->Release(p)
 /*** IDirectMusicObject methods ***/
-#define IDirectMusicObject_GetDescriptor(p,a)				ICOM_CALL1(GetDescriptor,p,a)
-#define IDirectMusicObject_SetDescriptor(p,a)				ICOM_CALL1(SetDescriptor,p,a)
-#define IDirectMusicObject_ParseDescriptor(p,a,b)			ICOM_CALL2(ParseDescriptor,p,a,b)
+#define IDirectMusicObject_GetDescriptor(p,a)      (p)->lpVtbl->GetDescriptor(p,a)
+#define IDirectMusicObject_SetDescriptor(p,a)      (p)->lpVtbl->SetDescriptor(p,a)
+#define IDirectMusicObject_ParseDescriptor(p,a,b)  (p)->lpVtbl->ParseDescriptor(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -871,20 +875,22 @@ ICOM_DEFINE(IDirectMusicObject,IUnknown)
 ICOM_DEFINE(IDirectMusicLoader,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicLoader_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicLoader_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicLoader_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicLoader_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicLoader_AddRef(p)                   (p)->lpVtbl->AddRef(p)
+#define IDirectMusicLoader_Release(p)                  (p)->lpVtbl->Release(p)
 /*** IDirectMusicLoader methods ***/
-#define IDirectMusicLoader_GetObject(p,a,b,c)				ICOM_CALL3(_GetObject,p,a,b,c)
-#define IDirectMusicLoader_SetObject(p,a)					ICOM_CALL1(SetObject,p,a)
-#define IDirectMusicLoader_SetSearchDirectory(p,a,b,c)		ICOM_CALL3(SetSearchDirectory,p,a,b,c)
-#define IDirectMusicLoader_ScanDirectory(p,a,b,c)			ICOM_CALL3(ScanDirectory,p,a,b,c)
-#define IDirectMusicLoader_CacheObject(p,a)					ICOM_CALL1(CacheObject,p,a)
-#define IDirectMusicLoader_ReleaseObject(p,a)				ICOM_CALL1(ReleaseObject,p,a)
-#define IDirectMusicLoader_ClearCache(p,a)					ICOM_CALL1(ClearCache,p,a)
-#define IDirectMusicLoader_EnableCache(p,a,b)				ICOM_CALL2(EnableCache,p,a,b)
-#define IDirectMusicLoader_EnumObject(p,a,b,c)				ICOM_CALL3(EnumObject,p,a,b,c)
+#define IDirectMusicLoader_GetObject(p,a,b,c)          (p)->lpVtbl->_GetObject(p,a,b,c)
+#define IDirectMusicLoader_SetObject(p,a)              (p)->lpVtbl->SetObject(p,a)
+#define IDirectMusicLoader_SetSearchDirectory(p,a,b,c) (p)->lpVtbl->SetSearchDirectory(p,a,b,c)
+#define IDirectMusicLoader_ScanDirectory(p,a,b,c)      (p)->lpVtbl->ScanDirectory(p,a,b,c)
+#define IDirectMusicLoader_CacheObject(p,a)            (p)->lpVtbl->CacheObject(p,a)
+#define IDirectMusicLoader_ReleaseObject(p,a)          (p)->lpVtbl->ReleaseObject(p,a)
+#define IDirectMusicLoader_ClearCache(p,a)             (p)->lpVtbl->ClearCache(p,a)
+#define IDirectMusicLoader_EnableCache(p,a,b)          (p)->lpVtbl->EnableCache(p,a,b)
+#define IDirectMusicLoader_EnumObject(p,a,b,c)         (p)->lpVtbl->EnumObject(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -906,24 +912,26 @@ ICOM_DEFINE(IDirectMusicLoader,IUnknown)
 ICOM_DEFINE(IDirectMusicLoader8,IDirectMusicLoader)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicLoader8_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicLoader8_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicLoader8_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicLoader8_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicLoader8_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IDirectMusicLoader8_Release(p)                    (p)->lpVtbl->Release(p)
 /*** IDirectMusicLoader methods ***/
-#define IDirectMusicLoader8_GetObject(p,a,b,c)				ICOM_CALL3(_GetObject,p,a,b,c)
-#define IDirectMusicLoader8_SetObject(p,a)					ICOM_CALL1(SetObject,p,a)
-#define IDirectMusicLoader8_SetSearchDirectory(p,a,b,c)		ICOM_CALL3(SetSearchDirectory,p,a,b,c)
-#define IDirectMusicLoader8_ScanDirectory(p,a,b,c)			ICOM_CALL3(ScanDirectory,p,a,b,c)
-#define IDirectMusicLoader8_CacheObject(p,a)				ICOM_CALL1(CacheObject,p,a)
-#define IDirectMusicLoader8_ReleaseObject(p,a)				ICOM_CALL1(ReleaseObject,p,a)
-#define IDirectMusicLoader8_ClearCache(p,a)					ICOM_CALL1(ClearCache,p,a)
-#define IDirectMusicLoader8_EnableCache(p,a,b)				ICOM_CALL2(EnableCache,p,a,b)
-#define IDirectMusicLoader8_EnumObject(p,a,b,c)				ICOM_CALL3(EnumObject,p,a,b,c)
+#define IDirectMusicLoader8_GetObject(p,a,b,c)            (p)->lpVtbl->_GetObject(p,a,b,c)
+#define IDirectMusicLoader8_SetObject(p,a)                (p)->lpVtbl->SetObject(p,a)
+#define IDirectMusicLoader8_SetSearchDirectory(p,a,b,c)   (p)->lpVtbl->SetSearchDirectory(p,a,b,c)
+#define IDirectMusicLoader8_ScanDirectory(p,a,b,c)        (p)->lpVtbl->ScanDirectory(p,a,b,c)
+#define IDirectMusicLoader8_CacheObject(p,a)              (p)->lpVtbl->CacheObject(p,a)
+#define IDirectMusicLoader8_ReleaseObject(p,a)            (p)->lpVtbl->ReleaseObject(p,a)
+#define IDirectMusicLoader8_ClearCache(p,a)               (p)->lpVtbl->ClearCache(p,a)
+#define IDirectMusicLoader8_EnableCache(p,a,b)            (p)->lpVtbl->EnableCache(p,a,b)
+#define IDirectMusicLoader8_EnumObject(p,a,b,c)           (p)->lpVtbl->EnumObject(p,a,b,c)
 /*** IDirectMusicLoader8 methods ***/
-#define IDirectMusicLoader8_CollectGarbage(p)				ICOM_CALL (CollectGarbage,p)
-#define IDirectMusicLoader8_ReleaseObjectByUnknown(p,a)		ICOM_CALL1(ReleaseObjectByUnknown,p,a)
-#define IDirectMusicLoader8_LoadObjectFromFile(p,a,b,c,d)	ICOM_CALL4(LoadObjectFromFile,p,a,b,c,d)
+#define IDirectMusicLoader8_CollectGarbage(p)             (p)->lpVtbl->CollectGarbage(p)
+#define IDirectMusicLoader8_ReleaseObjectByUnknown(p,a)   (p)->lpVtbl->ReleaseObjectByUnknown(p,a)
+#define IDirectMusicLoader8_LoadObjectFromFile(p,a,b,c,d) (p)->lpVtbl->LoadObjectFromFile(p,a,b,c,d)
+#endif
 
 
 /*****************************************************************************
@@ -942,12 +950,14 @@ ICOM_DEFINE(IDirectMusicLoader8,IDirectMusicLoader)
 ICOM_DEFINE(IDirectMusicGetLoader,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicGetLoader_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicGetLoader_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicGetLoader_Release(p)					ICOM_CALL (Release,p)
+#define IDirectMusicGetLoader_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicGetLoader_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectMusicGetLoader_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectMusicGetLoader methods ***/
-#define IDirectMusicGetLoader_GetLoader(p,a)				ICOM_CALL1(GetLoader,p,a)
+#define IDirectMusicGetLoader_GetLoader(p,a)        (p)->lpVtbl->GetLoader(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -988,34 +998,36 @@ ICOM_DEFINE(IDirectMusicGetLoader,IUnknown)
 ICOM_DEFINE(IDirectMusicSegment,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicSegment_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicSegment_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicSegment_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicSegment_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicSegment_AddRef(p)                   (p)->lpVtbl->AddRef(p)
+#define IDirectMusicSegment_Release(p)                  (p)->lpVtbl->Release(p)
 /*** IDirectMusicSegment methods ***/
-#define IDirectMusicSegment_GetLength(p,a)					ICOM_CALL1(GetLength,p,a)
-#define IDirectMusicSegment_SetLength(p,a)					ICOM_CALL1(SetLength,p,a)
-#define IDirectMusicSegment_GetRepeats(p,a)					ICOM_CALL1(GetRepeats,p,a)
-#define IDirectMusicSegment_SetRepeats(p,a)					ICOM_CALL1(SetRepeats,p,a)
-#define IDirectMusicSegment_GetDefaultResolution(p,a)		ICOM_CALL1(GetDefaultResolution,p,a)
-#define IDirectMusicSegment_SetDefaultResolution(p,a)		ICOM_CALL1(SetDefaultResolution,p,a)
-#define IDirectMusicSegment_GetTrack(p,a,b,c,d)				ICOM_CALL4(GetTrack,p,a,b,c,d)
-#define IDirectMusicSegment_GetTrackGroup(p,a,b)			ICOM_CALL2(GetTrackGroup,p,a,b)
-#define IDirectMusicSegment_InsertTrack(p,a,b)				ICOM_CALL2(InsertTrack,p,a,b)
-#define IDirectMusicSegment_RemoveTrack(p,a)				ICOM_CALL1(RemoveTrack,p,a)
-#define IDirectMusicSegment_InitPlay(p,a,b,c)				ICOM_CALL3(InitPlay,p,a,b,c)
-#define IDirectMusicSegment_GetGraph(p,a)					ICOM_CALL1(GetGraph,p,a)
-#define IDirectMusicSegment_SetGraph(p,a)					ICOM_CALL1(SetGraph,p,a)
-#define IDirectMusicSegment_AddNotificationType(p,a)		ICOM_CALL1(AddNotificationType,p,a)
-#define IDirectMusicSegment_RemoveNotificationType(p,a)		ICOM_CALL1(RemoveNotificationType,p,a)
-#define IDirectMusicSegment_GetParam(p,a,b,c,d,e,f)			ICOM_CALL6(GetParam,p,a,b,c,d,e,f)
-#define IDirectMusicSegment_SetParam(p,a,b,c,d,e)			ICOM_CALL5(SetParam,p,a,b,c,d,e)
-#define IDirectMusicSegment_Clone(p,a,b,c)					ICOM_CALL3(Clone,p,a,b,c)
-#define IDirectMusicSegment_SetStartPoint(p,a)				ICOM_CALL1(SetStartPoint,p,a)
-#define IDirectMusicSegment_GetStartPoint(p,a)				ICOM_CALL1(GetStartPoint,p,a)
-#define IDirectMusicSegment_SetLoopPoints(p,a,b)			ICOM_CALL2(SetLoopPoints,p,a,b)
-#define IDirectMusicSegment_GetLoopPoints(p,a,b)			ICOM_CALL2(GetLoopPoints,p,a,b)
-#define IDirectMusicSegment_SetPChannelsUsed(p,a,b)			ICOM_CALL2(SetPChannelsUsed,p,a,b)
+#define IDirectMusicSegment_GetLength(p,a)              (p)->lpVtbl->GetLength(p,a)
+#define IDirectMusicSegment_SetLength(p,a)              (p)->lpVtbl->SetLength(p,a)
+#define IDirectMusicSegment_GetRepeats(p,a)             (p)->lpVtbl->GetRepeats(p,a)
+#define IDirectMusicSegment_SetRepeats(p,a)             (p)->lpVtbl->SetRepeats(p,a)
+#define IDirectMusicSegment_GetDefaultResolution(p,a)   (p)->lpVtbl->GetDefaultResolution(p,a)
+#define IDirectMusicSegment_SetDefaultResolution(p,a)   (p)->lpVtbl->SetDefaultResolution(p,a)
+#define IDirectMusicSegment_GetTrack(p,a,b,c,d)         (p)->lpVtbl->GetTrack(p,a,b,c,d)
+#define IDirectMusicSegment_GetTrackGroup(p,a,b)        (p)->lpVtbl->GetTrackGroup(p,a,b)
+#define IDirectMusicSegment_InsertTrack(p,a,b)          (p)->lpVtbl->InsertTrack(p,a,b)
+#define IDirectMusicSegment_RemoveTrack(p,a)            (p)->lpVtbl->RemoveTrack(p,a)
+#define IDirectMusicSegment_InitPlay(p,a,b,c)           (p)->lpVtbl->InitPlay(p,a,b,c)
+#define IDirectMusicSegment_GetGraph(p,a)               (p)->lpVtbl->GetGraph(p,a)
+#define IDirectMusicSegment_SetGraph(p,a)               (p)->lpVtbl->SetGraph(p,a)
+#define IDirectMusicSegment_AddNotificationType(p,a)    (p)->lpVtbl->AddNotificationType(p,a)
+#define IDirectMusicSegment_RemoveNotificationType(p,a) (p)->lpVtbl->RemoveNotificationType(p,a)
+#define IDirectMusicSegment_GetParam(p,a,b,c,d,e,f)     (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
+#define IDirectMusicSegment_SetParam(p,a,b,c,d,e)       (p)->lpVtbl->SetParam(p,a,b,c,d,e)
+#define IDirectMusicSegment_Clone(p,a,b,c)              (p)->lpVtbl->Clone(p,a,b,c)
+#define IDirectMusicSegment_SetStartPoint(p,a)          (p)->lpVtbl->SetStartPoint(p,a)
+#define IDirectMusicSegment_GetStartPoint(p,a)          (p)->lpVtbl->GetStartPoint(p,a)
+#define IDirectMusicSegment_SetLoopPoints(p,a,b)        (p)->lpVtbl->SetLoopPoints(p,a,b)
+#define IDirectMusicSegment_GetLoopPoints(p,a,b)        (p)->lpVtbl->GetLoopPoints(p,a,b)
+#define IDirectMusicSegment_SetPChannelsUsed(p,a,b)     (p)->lpVtbl->SetPChannelsUsed(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -1039,40 +1051,42 @@ ICOM_DEFINE(IDirectMusicSegment,IUnknown)
 ICOM_DEFINE(IDirectMusicSegment8,IDirectMusicSegment)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicSegment8_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicSegment8_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicSegment8_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicSegment8_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicSegment8_AddRef(p)                   (p)->lpVtbl->AddRef(p)
+#define IDirectMusicSegment8_Release(p)                  (p)->lpVtbl->Release(p)
 /*** IDirectMusicSegment methods ***/
-#define IDirectMusicSegment8_GetLength(p,a)					ICOM_CALL1(GetLength,p,a)
-#define IDirectMusicSegment8_SetLength(p,a)					ICOM_CALL1(SetLength,p,a)
-#define IDirectMusicSegment8_GetRepeats(p,a)				ICOM_CALL1(GetRepeats,p,a)
-#define IDirectMusicSegment8_SetRepeats(p,a)				ICOM_CALL1(SetRepeats,p,a)
-#define IDirectMusicSegment8_GetDefaultResolution(p,a)		ICOM_CALL1(GetDefaultResolution,p,a)
-#define IDirectMusicSegment8_SetDefaultResolution(p,a)		ICOM_CALL1(SetDefaultResolution,p,a)
-#define IDirectMusicSegment8_GetTrack(p,a,b,c,d)			ICOM_CALL4(GetTrack,p,a,b,c,d)
-#define IDirectMusicSegment8_GetTrackGroup(p,a,b)			ICOM_CALL2(GetTrackGroup,p,a,b)
-#define IDirectMusicSegment8_InsertTrack(p,a,b)				ICOM_CALL2(InsertTrack,p,a,b)
-#define IDirectMusicSegment8_RemoveTrack(p,a)				ICOM_CALL1(RemoveTrack,p,a)
-#define IDirectMusicSegment8_InitPlay(p,a,b,c)				ICOM_CALL3(InitPlay,p,a,b,c)
-#define IDirectMusicSegment8_GetGraph(p,a)					ICOM_CALL1(GetGraph,p,a)
-#define IDirectMusicSegment8_SetGraph(p,a)					ICOM_CALL1(SetGraph,p,a)
-#define IDirectMusicSegment8_AddNotificationType(p,a)		ICOM_CALL1(AddNotificationType,p,a)
-#define IDirectMusicSegment8_RemoveNotificationType(p,a)	ICOM_CALL1(RemoveNotificationType,p,a)
-#define IDirectMusicSegment8_GetParam(p,a,b,c,d,e,f)		ICOM_CALL6(GetParam,p,a,b,c,d,e,f)
-#define IDirectMusicSegment8_SetParam(p,a,b,c,d,e)			ICOM_CALL5(SetParam,p,a,b,c,d,e)
-#define IDirectMusicSegment8_Clone(p,a,b,c)					ICOM_CALL3(Clone,p,a,b,c)
-#define IDirectMusicSegment8_SetStartPoint(p,a)				ICOM_CALL1(SetStartPoint,p,a)
-#define IDirectMusicSegment8_GetStartPoint(p,a)				ICOM_CALL1(GetStartPoint,p,a)
-#define IDirectMusicSegment8_SetLoopPoints(p,a,b)			ICOM_CALL2(SetLoopPoints,p,a,b)
-#define IDirectMusicSegment8_GetLoopPoints(p,a,b)			ICOM_CALL2(GetLoopPoints,p,a,b)
-#define IDirectMusicSegment8_SetPChannelsUsed(p,a,b)		ICOM_CALL2(SetPChannelsUsed,p,a,b)
+#define IDirectMusicSegment8_GetLength(p,a)              (p)->lpVtbl->GetLength(p,a)
+#define IDirectMusicSegment8_SetLength(p,a)              (p)->lpVtbl->SetLength(p,a)
+#define IDirectMusicSegment8_GetRepeats(p,a)             (p)->lpVtbl->GetRepeats(p,a)
+#define IDirectMusicSegment8_SetRepeats(p,a)             (p)->lpVtbl->SetRepeats(p,a)
+#define IDirectMusicSegment8_GetDefaultResolution(p,a)   (p)->lpVtbl->GetDefaultResolution(p,a)
+#define IDirectMusicSegment8_SetDefaultResolution(p,a)   (p)->lpVtbl->SetDefaultResolution(p,a)
+#define IDirectMusicSegment8_GetTrack(p,a,b,c,d)         (p)->lpVtbl->GetTrack(p,a,b,c,d)
+#define IDirectMusicSegment8_GetTrackGroup(p,a,b)        (p)->lpVtbl->GetTrackGroup(p,a,b)
+#define IDirectMusicSegment8_InsertTrack(p,a,b)          (p)->lpVtbl->InsertTrack(p,a,b)
+#define IDirectMusicSegment8_RemoveTrack(p,a)            (p)->lpVtbl->RemoveTrack(p,a)
+#define IDirectMusicSegment8_InitPlay(p,a,b,c)           (p)->lpVtbl->InitPlay(p,a,b,c)
+#define IDirectMusicSegment8_GetGraph(p,a)               (p)->lpVtbl->GetGraph(p,a)
+#define IDirectMusicSegment8_SetGraph(p,a)               (p)->lpVtbl->SetGraph(p,a)
+#define IDirectMusicSegment8_AddNotificationType(p,a)    (p)->lpVtbl->AddNotificationType(p,a)
+#define IDirectMusicSegment8_RemoveNotificationType(p,a) (p)->lpVtbl->RemoveNotificationType(p,a)
+#define IDirectMusicSegment8_GetParam(p,a,b,c,d,e,f)     (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
+#define IDirectMusicSegment8_SetParam(p,a,b,c,d,e)       (p)->lpVtbl->SetParam(p,a,b,c,d,e)
+#define IDirectMusicSegment8_Clone(p,a,b,c)              (p)->lpVtbl->Clone(p,a,b,c)
+#define IDirectMusicSegment8_SetStartPoint(p,a)          (p)->lpVtbl->SetStartPoint(p,a)
+#define IDirectMusicSegment8_GetStartPoint(p,a)          (p)->lpVtbl->GetStartPoint(p,a)
+#define IDirectMusicSegment8_SetLoopPoints(p,a,b)        (p)->lpVtbl->SetLoopPoints(p,a,b)
+#define IDirectMusicSegment8_GetLoopPoints(p,a,b)        (p)->lpVtbl->GetLoopPoints(p,a,b)
+#define IDirectMusicSegment8_SetPChannelsUsed(p,a,b)     (p)->lpVtbl->SetPChannelsUsed(p,a,b)
 /*** IDirectMusicSegment8 methods ***/
-#define IDirectMusicSegment8_SetTrackConfig(p,a,b,c,d,e)	ICOM_CALL5(SetTrackConfig,p,a,b,c,d,e)
-#define IDirectMusicSegment8_GetAudioPathConfig(p,a)		ICOM_CALL1(GetAudioPathConfig,p,a)
-#define IDirectMusicSegment8_Compose(p,a,b,c,d)				ICOM_CALL4(Compose,p,a,b,c,d)
-#define IDirectMusicSegment8_Download(p,a)					ICOM_CALL1(Download,p,a)
-#define IDirectMusicSegment8_Unload(p,a)					ICOM_CALL1(Unload,p,a)
+#define IDirectMusicSegment8_SetTrackConfig(p,a,b,c,d,e) (p)->lpVtbl->SetTrackConfig(p,a,b,c,d,e)
+#define IDirectMusicSegment8_GetAudioPathConfig(p,a)     (p)->lpVtbl->GetAudioPathConfig(p,a)
+#define IDirectMusicSegment8_Compose(p,a,b,c,d)          (p)->lpVtbl->Compose(p,a,b,c,d)
+#define IDirectMusicSegment8_Download(p,a)               (p)->lpVtbl->Download(p,a)
+#define IDirectMusicSegment8_Unload(p,a)                 (p)->lpVtbl->Unload(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -1095,16 +1109,18 @@ ICOM_DEFINE(IDirectMusicSegment8,IDirectMusicSegment)
 ICOM_DEFINE(IDirectMusicSegmentState,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicSegmentState_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicSegmentState_AddRef(p)					ICOM_CALL (AddRef,p)
-#define IDirectMusicSegmentState_Release(p)					ICOM_CALL (Release,p)
+#define IDirectMusicSegmentState_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicSegmentState_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IDirectMusicSegmentState_Release(p)             (p)->lpVtbl->Release(p)
 /*** IDirectMusicSegmentState methods ***/
-#define IDirectMusicSegmentState_GetRepeats(p,a)			ICOM_CALL1(GetRepeats,p,a)
-#define IDirectMusicSegmentState_GetSegment(p,a)			ICOM_CALL1(GetSegment,p,a)
-#define IDirectMusicSegmentState_GetStartTime(p,a)			ICOM_CALL1(GetStartTime,p,a)
-#define IDirectMusicSegmentState_GetSeek(p,a)				ICOM_CALL1(GetSeek,p,a)
-#define IDirectMusicSegmentState_GetStartPoint(p,a)			ICOM_CALL1(GetStartPoint,p,a)
+#define IDirectMusicSegmentState_GetRepeats(p,a)        (p)->lpVtbl->GetRepeats(p,a)
+#define IDirectMusicSegmentState_GetSegment(p,a)        (p)->lpVtbl->GetSegment(p,a)
+#define IDirectMusicSegmentState_GetStartTime(p,a)      (p)->lpVtbl->GetStartTime(p,a)
+#define IDirectMusicSegmentState_GetSeek(p,a)           (p)->lpVtbl->GetSeek(p,a)
+#define IDirectMusicSegmentState_GetStartPoint(p,a)     (p)->lpVtbl->GetStartPoint(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -1125,19 +1141,21 @@ ICOM_DEFINE(IDirectMusicSegmentState,IUnknown)
 ICOM_DEFINE(IDirectMusicSegmentState8,IDirectMusicSegmentState)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicSegmentState8_QueryInterface(p,a,b)				ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicSegmentState8_AddRef(p)							ICOM_CALL (AddRef,p)
-#define IDirectMusicSegmentState8_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicSegmentState8_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicSegmentState8_AddRef(p)                        (p)->lpVtbl->AddRef(p)
+#define IDirectMusicSegmentState8_Release(p)                       (p)->lpVtbl->Release(p)
 /*** IDirectMusicSegmentState methods ***/
-#define IDirectMusicSegmentState8_GetRepeats(p,a)					ICOM_CALL1(GetRepeats,p,a)
-#define IDirectMusicSegmentState8_GetSegment(p,a)					ICOM_CALL1(GetSegment,p,a)
-#define IDirectMusicSegmentState8_GetStartTime(p,a)					ICOM_CALL1(GetStartTime,p,a)
-#define IDirectMusicSegmentState8_GetSeek(p,a)						ICOM_CALL1(GetSeek,p,a)
-#define IDirectMusicSegmentState8_GetStartPoint(p,a)				ICOM_CALL1(GetStartPoint,p,a)
+#define IDirectMusicSegmentState8_GetRepeats(p,a)                  (p)->lpVtbl->GetRepeats(p,a)
+#define IDirectMusicSegmentState8_GetSegment(p,a)                  (p)->lpVtbl->GetSegment(p,a)
+#define IDirectMusicSegmentState8_GetStartTime(p,a)                (p)->lpVtbl->GetStartTime(p,a)
+#define IDirectMusicSegmentState8_GetSeek(p,a)                     (p)->lpVtbl->GetSeek(p,a)
+#define IDirectMusicSegmentState8_GetStartPoint(p,a)               (p)->lpVtbl->GetStartPoint(p,a)
 /*** IDirectMusicSegmentState8 methods ***/
-#define IDirectMusicSegmentState8_SetTrackConfig(p,a,b,c,d,e)		ICOM_CALL5(SetTrackConfig,p,a,b,c,d,e)
-#define IDirectMusicSegmentState8_GetObjectInPath(p,a,b,c,d,e,f,g)	ICOM_CALL7(GetObjectInPath,p,a,b,c,d,e,f,g)
+#define IDirectMusicSegmentState8_SetTrackConfig(p,a,b,c,d,e)      (p)->lpVtbl->SetTrackConfig(p,a,b,c,d,e)
+#define IDirectMusicSegmentState8_GetObjectInPath(p,a,b,c,d,e,f,g) (p)->lpVtbl->GetObjectInPath(p,a,b,c,d,e,f,g)
+#endif
 
 
 /*****************************************************************************
@@ -1159,15 +1177,17 @@ ICOM_DEFINE(IDirectMusicSegmentState8,IDirectMusicSegmentState)
 ICOM_DEFINE(IDirectMusicAudioPath,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicAudioPath_QueryInterface(p,a,b)				ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicAudioPath_AddRef(p)							ICOM_CALL (AddRef,p)
-#define IDirectMusicAudioPath_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicAudioPath_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicAudioPath_AddRef(p)                         (p)->lpVtbl->AddRef(p)
+#define IDirectMusicAudioPath_Release(p)                        (p)->lpVtbl->Release(p)
 /*** IDirectMusicAudioPath methods ***/
-#define IDirectMusicAudioPath_GetObjectInPath(p,a,b,c,d,e,f,g)	ICOM_CALL7(GetObjectInPath,p,a,b,c,d,e,f,g)
-#define IDirectMusicAudioPath_Activate(p,a)						ICOM_CALL1(Activate,p,a)
-#define IDirectMusicAudioPath_SetVolume(p,a,b)					ICOM_CALL2(SetVolume,p,a,b)
-#define IDirectMusicAudioPath_ConvertPChannel(p,a,b)			ICOM_CALL2(ConvertPChannel,p,a,b)
+#define IDirectMusicAudioPath_GetObjectInPath(p,a,b,c,d,e,f,g)  (p)->lpVtbl->GetObjectInPath(p,a,b,c,d,e,f,g)
+#define IDirectMusicAudioPath_Activate(p,a)                     (p)->lpVtbl->Activate(p,a)
+#define IDirectMusicAudioPath_SetVolume(p,a,b)                  (p)->lpVtbl->SetVolume(p,a,b)
+#define IDirectMusicAudioPath_ConvertPChannel(p,a,b)            (p)->lpVtbl->ConvertPChannel(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -1226,52 +1246,54 @@ ICOM_DEFINE(IDirectMusicAudioPath,IUnknown)
 ICOM_DEFINE(IDirectMusicPerformance,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicPerformance_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicPerformance_AddRef(p)								ICOM_CALL (AddRef,p)
-#define IDirectMusicPerformance_Release(p)								ICOM_CALL (Release,p)
+#define IDirectMusicPerformance_QueryInterface(p,a,b)                   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicPerformance_AddRef(p)                               (p)->lpVtbl->AddRef(p)
+#define IDirectMusicPerformance_Release(p)                              (p)->lpVtbl->Release(p)
 /*** IDirectMusicPerformance methods ***/
-#define IDirectMusicPerformance_Init(p,a,b,c)							ICOM_CALL3(Init,p,a,b,c)
-#define IDirectMusicPerformance_PlaySegment(p,a,b,c,d)					ICOM_CALL4(PlaySegment,p,a,b,c,d)
-#define IDirectMusicPerformance_Stop(p,a,b,c,d)							ICOM_CALL4(Stop,p,a,b,c,d)
-#define IDirectMusicPerformance_GetSegmentState(p,a,b)					ICOM_CALL2(GetSegmentState,p,a,b)
-#define IDirectMusicPerformance_SetPrepareTime(p,a)						ICOM_CALL1(SetPrepareTime,p,a)
-#define IDirectMusicPerformance_GetPrepareTime(p,a)						ICOM_CALL1(GetPrepareTime,p,a)
-#define IDirectMusicPerformance_SetBumperLength(p,a)					ICOM_CALL1(SetBumperLength,p,a)
-#define IDirectMusicPerformance_GetBumperLength(p,a)					ICOM_CALL1(GetBumperLength,p,a)
-#define IDirectMusicPerformance_SendPMsg(p,a)							ICOM_CALL1(SendPMsg,p,a)
-#define IDirectMusicPerformance_MusicToReferenceTime(p,a,b)				ICOM_CALL2(MusicToReferenceTime,p,a,b)
-#define IDirectMusicPerformance_ReferenceToMusicTime(p,a,b)				ICOM_CALL2(ReferenceToMusicTime,p,a,b)
-#define IDirectMusicPerformance_IsPlaying(p,a,b)						ICOM_CALL2(IsPlaying,p,a,b)
-#define IDirectMusicPerformance_GetTime(p,a,b)							ICOM_CALL2(GetTime,p,a,b)
-#define IDirectMusicPerformance_AllocPMsg(p,a,b)						ICOM_CALL2(AllocPMsg,p,a,b)
-#define IDirectMusicPerformance_FreePMsg(p,a)							ICOM_CALL1(FreePMsg,p,a)
-#define IDirectMusicPerformance_GetGraph(p,a)							ICOM_CALL1(GetGraph,p,a)
-#define IDirectMusicPerformance_SetGraph(p,a)							ICOM_CALL1(SetGraph,p,a)
-#define IDirectMusicPerformance_SetNotificationHandle(p,a,b)			ICOM_CALL2(SetNotificationHandle,p,a,b)
-#define IDirectMusicPerformance_GetNotificationPMsg(p,a)				ICOM_CALL1(GetNotificationPMsg,p,a)
-#define IDirectMusicPerformance_AddNotificationType(p,a)				ICOM_CALL1(AddNotificationType,p,a)
-#define IDirectMusicPerformance_RemoveNotificationType(p,a)				ICOM_CALL1(RemoveNotificationType,p,a)
-#define IDirectMusicPerformance_AddPort(p,a)							ICOM_CALL1(AddPort,p,a)
-#define IDirectMusicPerformance_RemovePort(p,a)							ICOM_CALL1(RemovePort,p,a)
-#define IDirectMusicPerformance_AssignPChannelBlock(p,a,b,c)			ICOM_CALL3(AssignPChannelBlock,p,a,b,c)
-#define IDirectMusicPerformance_AssignPChannel(p,a,b,c,d)				ICOM_CALL4(AssignPChannel,p,a,b,c,d)
-#define IDirectMusicPerformance_PChannelInfo(p,a,b,c,d)					ICOM_CALL4(PChannelInfo,p,a,b,c,d)
-#define IDirectMusicPerformance_DownloadInstrument(p,a,b,c,d,e,f,g,h)	ICOM_CALL8(DownloadInstrument,p,a,b,c,d,e,f,g,h)
-#define IDirectMusicPerformance_Invalidate(p,a,b)						ICOM_CALL2(Invalidate,p,a,b)
-#define IDirectMusicPerformance_GetParam(p,a,b,c,d,e,f)					ICOM_CALL6(GetParam,p,a,b,c,d,e,f)
-#define IDirectMusicPerformance_SetParam(p,a,b,c,d,e)					ICOM_CALL5(SetParam,p,a,b,c,d,e)
-#define IDirectMusicPerformance_GetGlobalParam(p,a,b,c)					ICOM_CALL3(GetGlobalParam,p,a,b,c)
-#define IDirectMusicPerformance_SetGlobalParam(p,a,b,c)					ICOM_CALL3(SetGlobalParam,p,a,b,c)
-#define IDirectMusicPerformance_GetLatencyTime(p,a)						ICOM_CALL1(GetLatencyTime,p,a)
-#define IDirectMusicPerformance_GetQueueTime(p,a)						ICOM_CALL1(GetQueueTime,p,a)
-#define IDirectMusicPerformance_AdjustTime(p,a)							ICOM_CALL1(AdjustTime,p,a)
-#define IDirectMusicPerformance_CloseDown(p)							ICOM_CALL (CloseDown,p)
-#define IDirectMusicPerformance_GetResolvedTime(p,a,b,c)				ICOM_CALL3(GetResolvedTime,p,a,b,c)
-#define IDirectMusicPerformance_MIDIToMusic(p,a,b,c,d,e)				ICOM_CALL5(MIDIToMusic,p,a,b,c,d,e)
-#define IDirectMusicPerformance_MusicToMIDI(p,a,b,c,d,e)				ICOM_CALL5(MusicToMIDI,p,a,b,c,d,e)
-#define IDirectMusicPerformance_TimeToRhythm(p,a,b,c,d,e,f)				ICOM_CALL6(TimeToRhythm,p,a,b,c,d,e,f)
-#define IDirectMusicPerformance_RhythmToTime(p,a,b,c,d,e,f)				ICOM_CALL6(RhythmToTime,p,a,b,c,d,e,f)
+#define IDirectMusicPerformance_Init(p,a,b,c)                           (p)->lpVtbl->Init(p,a,b,c)
+#define IDirectMusicPerformance_PlaySegment(p,a,b,c,d)                  (p)->lpVtbl->PlaySegment(p,a,b,c,d)
+#define IDirectMusicPerformance_Stop(p,a,b,c,d)                         (p)->lpVtbl->Stop(p,a,b,c,d)
+#define IDirectMusicPerformance_GetSegmentState(p,a,b)                  (p)->lpVtbl->GetSegmentState(p,a,b)
+#define IDirectMusicPerformance_SetPrepareTime(p,a)                     (p)->lpVtbl->SetPrepareTime(p,a)
+#define IDirectMusicPerformance_GetPrepareTime(p,a)                     (p)->lpVtbl->GetPrepareTime(p,a)
+#define IDirectMusicPerformance_SetBumperLength(p,a)                    (p)->lpVtbl->SetBumperLength(p,a)
+#define IDirectMusicPerformance_GetBumperLength(p,a)                    (p)->lpVtbl->GetBumperLength(p,a)
+#define IDirectMusicPerformance_SendPMsg(p,a)                           (p)->lpVtbl->SendPMsg(p,a)
+#define IDirectMusicPerformance_MusicToReferenceTime(p,a,b)             (p)->lpVtbl->MusicToReferenceTime(p,a,b)
+#define IDirectMusicPerformance_ReferenceToMusicTime(p,a,b)             (p)->lpVtbl->ReferenceToMusicTime(p,a,b)
+#define IDirectMusicPerformance_IsPlaying(p,a,b)                        (p)->lpVtbl->IsPlaying(p,a,b)
+#define IDirectMusicPerformance_GetTime(p,a,b)                          (p)->lpVtbl->GetTime(p,a,b)
+#define IDirectMusicPerformance_AllocPMsg(p,a,b)                        (p)->lpVtbl->AllocPMsg(p,a,b)
+#define IDirectMusicPerformance_FreePMsg(p,a)                           (p)->lpVtbl->FreePMsg(p,a)
+#define IDirectMusicPerformance_GetGraph(p,a)                           (p)->lpVtbl->GetGraph(p,a)
+#define IDirectMusicPerformance_SetGraph(p,a)                           (p)->lpVtbl->SetGraph(p,a)
+#define IDirectMusicPerformance_SetNotificationHandle(p,a,b)            (p)->lpVtbl->SetNotificationHandle(p,a,b)
+#define IDirectMusicPerformance_GetNotificationPMsg(p,a)                (p)->lpVtbl->GetNotificationPMsg(p,a)
+#define IDirectMusicPerformance_AddNotificationType(p,a)                (p)->lpVtbl->AddNotificationType(p,a)
+#define IDirectMusicPerformance_RemoveNotificationType(p,a)             (p)->lpVtbl->RemoveNotificationType(p,a)
+#define IDirectMusicPerformance_AddPort(p,a)                            (p)->lpVtbl->AddPort(p,a)
+#define IDirectMusicPerformance_RemovePort(p,a)                         (p)->lpVtbl->RemovePort(p,a)
+#define IDirectMusicPerformance_AssignPChannelBlock(p,a,b,c)            (p)->lpVtbl->AssignPChannelBlock(p,a,b,c)
+#define IDirectMusicPerformance_AssignPChannel(p,a,b,c,d)               (p)->lpVtbl->AssignPChannel(p,a,b,c,d)
+#define IDirectMusicPerformance_PChannelInfo(p,a,b,c,d)                 (p)->lpVtbl->PChannelInfo(p,a,b,c,d)
+#define IDirectMusicPerformance_DownloadInstrument(p,a,b,c,d,e,f,g,h)   (p)->lpVtbl->DownloadInstrument(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicPerformance_Invalidate(p,a,b)                       (p)->lpVtbl->Invalidate(p,a,b)
+#define IDirectMusicPerformance_GetParam(p,a,b,c,d,e,f)                 (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance_SetParam(p,a,b,c,d,e)                   (p)->lpVtbl->SetParam(p,a,b,c,d,e)
+#define IDirectMusicPerformance_GetGlobalParam(p,a,b,c)                 (p)->lpVtbl->GetGlobalParam(p,a,b,c)
+#define IDirectMusicPerformance_SetGlobalParam(p,a,b,c)                 (p)->lpVtbl->SetGlobalParam(p,a,b,c)
+#define IDirectMusicPerformance_GetLatencyTime(p,a)                     (p)->lpVtbl->GetLatencyTime(p,a)
+#define IDirectMusicPerformance_GetQueueTime(p,a)                       (p)->lpVtbl->GetQueueTime(p,a)
+#define IDirectMusicPerformance_AdjustTime(p,a)                         (p)->lpVtbl->AdjustTime(p,a)
+#define IDirectMusicPerformance_CloseDown(p)                            (p)->lpVtbl->CloseDown(p)
+#define IDirectMusicPerformance_GetResolvedTime(p,a,b,c)                (p)->lpVtbl->GetResolvedTime(p,a,b,c)
+#define IDirectMusicPerformance_MIDIToMusic(p,a,b,c,d,e)                (p)->lpVtbl->MIDIToMusic(p,a,b,c,d,e)
+#define IDirectMusicPerformance_MusicToMIDI(p,a,b,c,d,e)                (p)->lpVtbl->MusicToMIDI(p,a,b,c,d,e)
+#define IDirectMusicPerformance_TimeToRhythm(p,a,b,c,d,e,f)             (p)->lpVtbl->TimeToRhythm(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance_RhythmToTime(p,a,b,c,d,e,f)             (p)->lpVtbl->RhythmToTime(p,a,b,c,d,e,f)
+#endif
 
 
 /*****************************************************************************
@@ -1299,62 +1321,64 @@ ICOM_DEFINE(IDirectMusicPerformance,IUnknown)
 ICOM_DEFINE(IDirectMusicPerformance8,IDirectMusicPerformance)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicPerformance8_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicPerformance8_AddRef(p)								ICOM_CALL (AddRef,p)
-#define IDirectMusicPerformance8_Release(p)								ICOM_CALL (Release,p)
+#define IDirectMusicPerformance8_QueryInterface(p,a,b)                  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicPerformance8_AddRef(p)                              (p)->lpVtbl->AddRef(p)
+#define IDirectMusicPerformance8_Release(p)                             (p)->lpVtbl->Release(p)
 /*** IDirectMusicPerformance methods ***/
-#define IDirectMusicPerformance8_Init(p,a,b,c)							ICOM_CALL3(Init,p,a,b,c)
-#define IDirectMusicPerformance8_PlaySegment(p,a,b,c,d)					ICOM_CALL4(PlaySegment,p,a,b,c,d)
-#define IDirectMusicPerformance8_Stop(p,a,b,c,d)						ICOM_CALL4(Stop,p,a,b,c,d)
-#define IDirectMusicPerformance8_GetSegmentState(p,a,b)					ICOM_CALL2(GetSegmentState,p,a,b)
-#define IDirectMusicPerformance8_SetPrepareTime(p,a)					ICOM_CALL1(SetPrepareTime,p,a)
-#define IDirectMusicPerformance8_GetPrepareTime(p,a)					ICOM_CALL1(GetPrepareTime,p,a)
-#define IDirectMusicPerformance8_SetBumperLength(p,a)					ICOM_CALL1(SetBumperLength,p,a)
-#define IDirectMusicPerformance8_GetBumperLength(p,a)					ICOM_CALL1(GetBumperLength,p,a)
-#define IDirectMusicPerformance8_SendPMsg(p,a)							ICOM_CALL1(SendPMsg,p,a)
-#define IDirectMusicPerformance8_MusicToReferenceTime(p,a,b)			ICOM_CALL2(MusicToReferenceTime,p,a,b)
-#define IDirectMusicPerformance8_ReferenceToMusicTime(p,a,b)			ICOM_CALL2(ReferenceToMusicTime,p,a,b)
-#define IDirectMusicPerformance8_IsPlaying(p,a,b)						ICOM_CALL2(IsPlaying,p,a,b)
-#define IDirectMusicPerformance8_GetTime(p,a,b)							ICOM_CALL2(GetTime,p,a,b)
-#define IDirectMusicPerformance8_AllocPMsg(p,a,b)						ICOM_CALL2(AllocPMsg,p,a,b)
-#define IDirectMusicPerformance8_FreePMsg(p,a)							ICOM_CALL1(FreePMsg,p,a)
-#define IDirectMusicPerformance8_GetGraph(p,a)							ICOM_CALL1(GetGraph,p,a)
-#define IDirectMusicPerformance8_SetGraph(p,a)							ICOM_CALL1(SetGraph,p,a)
-#define IDirectMusicPerformance8_SetNotificationHandle(p,a,b)			ICOM_CALL2(SetNotificationHandle,p,a,b)
-#define IDirectMusicPerformance8_GetNotificationPMsg(p,a)				ICOM_CALL1(GetNotificationPMsg,p,a)
-#define IDirectMusicPerformance8_AddNotificationType(p,a)				ICOM_CALL1(AddNotificationType,p,a)
-#define IDirectMusicPerformance8_RemoveNotificationType(p,a)			ICOM_CALL1(RemoveNotificationType,p,a)
-#define IDirectMusicPerformance8_AddPort(p,a)							ICOM_CALL1(AddPort,p,a)
-#define IDirectMusicPerformance8_RemovePort(p,a)						ICOM_CALL1(RemovePort,p,a)
-#define IDirectMusicPerformance8_AssignPChannelBlock(p,a,b,c)			ICOM_CALL3(AssignPChannelBlock,p,a,b,c)
-#define IDirectMusicPerformance8_AssignPChannel(p,a,b,c,d)				ICOM_CALL4(AssignPChannel,p,a,b,c,d)
-#define IDirectMusicPerformance8_PChannelInfo(p,a,b,c,d)				ICOM_CALL4(PChannelInfo,p,a,b,c,d)
-#define IDirectMusicPerformance8_DownloadInstrument(p,a,b,c,d,e,f,g,h)	ICOM_CALL8(DownloadInstrument,p,a,b,c,d,e,f,g,h)
-#define IDirectMusicPerformance8_Invalidate(p,a,b)						ICOM_CALL2(Invalidate,p,a,b)
-#define IDirectMusicPerformance8_GetParam(p,a,b,c,d,e,f)				ICOM_CALL6(GetParam,p,a,b,c,d,e,f)
-#define IDirectMusicPerformance8_SetParam(p,a,b,c,d,e)					ICOM_CALL5(SetParam,p,a,b,c,d,e)
-#define IDirectMusicPerformance8_GetGlobalParam(p,a,b,c)				ICOM_CALL3(GetGlobalParam,p,a,b,c)
-#define IDirectMusicPerformance8_SetGlobalParam(p,a,b,c)				ICOM_CALL3(SetGlobalParam,p,a,b,c)
-#define IDirectMusicPerformance8_GetLatencyTime(p,a)					ICOM_CALL1(GetLatencyTime,p,a)
-#define IDirectMusicPerformance8_GetQueueTime(p,a)						ICOM_CALL1(GetQueueTime,p,a)
-#define IDirectMusicPerformance8_AdjustTime(p,a)						ICOM_CALL1(AdjustTime,p,a)
-#define IDirectMusicPerformance8_CloseDown(p)							ICOM_CALL (CloseDown,p)
-#define IDirectMusicPerformance8_GetResolvedTime(p,a,b,c)				ICOM_CALL3(GetResolvedTime,p,a,b,c)
-#define IDirectMusicPerformance8_MIDIToMusic(p,a,b,c,d,e)				ICOM_CALL5(MIDIToMusic,p,a,b,c,d,e)
-#define IDirectMusicPerformance8_MusicToMIDI(p,a,b,c,d,e)				ICOM_CALL5(MusicToMIDI,p,a,b,c,d,e)
-#define IDirectMusicPerformance8_TimeToRhythm(p,a,b,c,d,e,f)			ICOM_CALL6(TimeToRhythm,p,a,b,c,d,e,f)
-#define IDirectMusicPerformance8_RhythmToTime(p,a,b,c,d,e,f)			ICOM_CALL6(RhythmToTime,p,a,b,c,d,e,f)
+#define IDirectMusicPerformance8_Init(p,a,b,c)                          (p)->lpVtbl->Init(p,a,b,c)
+#define IDirectMusicPerformance8_PlaySegment(p,a,b,c,d)                 (p)->lpVtbl->PlaySegment(p,a,b,c,d)
+#define IDirectMusicPerformance8_Stop(p,a,b,c,d)                        (p)->lpVtbl->Stop(p,a,b,c,d)
+#define IDirectMusicPerformance8_GetSegmentState(p,a,b)                 (p)->lpVtbl->GetSegmentState(p,a,b)
+#define IDirectMusicPerformance8_SetPrepareTime(p,a)                    (p)->lpVtbl->SetPrepareTime(p,a)
+#define IDirectMusicPerformance8_GetPrepareTime(p,a)                    (p)->lpVtbl->GetPrepareTime(p,a)
+#define IDirectMusicPerformance8_SetBumperLength(p,a)                   (p)->lpVtbl->SetBumperLength(p,a)
+#define IDirectMusicPerformance8_GetBumperLength(p,a)                   (p)->lpVtbl->GetBumperLength(p,a)
+#define IDirectMusicPerformance8_SendPMsg(p,a)                          (p)->lpVtbl->SendPMsg(p,a)
+#define IDirectMusicPerformance8_MusicToReferenceTime(p,a,b)            (p)->lpVtbl->MusicToReferenceTime(p,a,b)
+#define IDirectMusicPerformance8_ReferenceToMusicTime(p,a,b)            (p)->lpVtbl->ReferenceToMusicTime(p,a,b)
+#define IDirectMusicPerformance8_IsPlaying(p,a,b)                       (p)->lpVtbl->IsPlaying(p,a,b)
+#define IDirectMusicPerformance8_GetTime(p,a,b)                         (p)->lpVtbl->GetTime(p,a,b)
+#define IDirectMusicPerformance8_AllocPMsg(p,a,b)                       (p)->lpVtbl->AllocPMsg(p,a,b)
+#define IDirectMusicPerformance8_FreePMsg(p,a)                          (p)->lpVtbl->FreePMsg(p,a)
+#define IDirectMusicPerformance8_GetGraph(p,a)                          (p)->lpVtbl->GetGraph(p,a)
+#define IDirectMusicPerformance8_SetGraph(p,a)                          (p)->lpVtbl->SetGraph(p,a)
+#define IDirectMusicPerformance8_SetNotificationHandle(p,a,b)           (p)->lpVtbl->SetNotificationHandle(p,a,b)
+#define IDirectMusicPerformance8_GetNotificationPMsg(p,a)               (p)->lpVtbl->GetNotificationPMsg(p,a)
+#define IDirectMusicPerformance8_AddNotificationType(p,a)               (p)->lpVtbl->AddNotificationType(p,a)
+#define IDirectMusicPerformance8_RemoveNotificationType(p,a)            (p)->lpVtbl->RemoveNotificationType(p,a)
+#define IDirectMusicPerformance8_AddPort(p,a)                           (p)->lpVtbl->AddPort(p,a)
+#define IDirectMusicPerformance8_RemovePort(p,a)                        (p)->lpVtbl->RemovePort(p,a)
+#define IDirectMusicPerformance8_AssignPChannelBlock(p,a,b,c)           (p)->lpVtbl->AssignPChannelBlock(p,a,b,c)
+#define IDirectMusicPerformance8_AssignPChannel(p,a,b,c,d)              (p)->lpVtbl->AssignPChannel(p,a,b,c,d)
+#define IDirectMusicPerformance8_PChannelInfo(p,a,b,c,d)                (p)->lpVtbl->PChannelInfo(p,a,b,c,d)
+#define IDirectMusicPerformance8_DownloadInstrument(p,a,b,c,d,e,f,g,h)  (p)->lpVtbl->DownloadInstrument(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicPerformance8_Invalidate(p,a,b)                      (p)->lpVtbl->Invalidate(p,a,b)
+#define IDirectMusicPerformance8_GetParam(p,a,b,c,d,e,f)                (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance8_SetParam(p,a,b,c,d,e)                  (p)->lpVtbl->SetParam(p,a,b,c,d,e)
+#define IDirectMusicPerformance8_GetGlobalParam(p,a,b,c)                (p)->lpVtbl->GetGlobalParam(p,a,b,c)
+#define IDirectMusicPerformance8_SetGlobalParam(p,a,b,c)                (p)->lpVtbl->SetGlobalParam(p,a,b,c)
+#define IDirectMusicPerformance8_GetLatencyTime(p,a)                    (p)->lpVtbl->GetLatencyTime(p,a)
+#define IDirectMusicPerformance8_GetQueueTime(p,a)                      (p)->lpVtbl->GetQueueTime(p,a)
+#define IDirectMusicPerformance8_AdjustTime(p,a)                        (p)->lpVtbl->AdjustTime(p,a)
+#define IDirectMusicPerformance8_CloseDown(p)                           (p)->lpVtbl->CloseDown(p)
+#define IDirectMusicPerformance8_GetResolvedTime(p,a,b,c)               (p)->lpVtbl->GetResolvedTime(p,a,b,c)
+#define IDirectMusicPerformance8_MIDIToMusic(p,a,b,c,d,e)               (p)->lpVtbl->MIDIToMusic(p,a,b,c,d,e)
+#define IDirectMusicPerformance8_MusicToMIDI(p,a,b,c,d,e)               (p)->lpVtbl->MusicToMIDI(p,a,b,c,d,e)
+#define IDirectMusicPerformance8_TimeToRhythm(p,a,b,c,d,e,f)            (p)->lpVtbl->TimeToRhythm(p,a,b,c,d,e,f)
+#define IDirectMusicPerformance8_RhythmToTime(p,a,b,c,d,e,f)            (p)->lpVtbl->RhythmToTime(p,a,b,c,d,e,f)
     /*  IDirectMusicPerformance8 methods*/
-#define IDirectMusicPerformance8_InitAudio(p,a,b,c,d,e,f,g)				ICOM_CALL7(InitAudio,p,a,b,c,d,e,f,g)
-#define IDirectMusicPerformance8_PlaySegmentEx(p,a,b,c,d,e,f,g,h)		ICOM_CALL8(PlaySegmentEx,p,a,b,c,d,e,f,g,h)
-#define IDirectMusicPerformance8_StopEx(p,a,b,c)						ICOM_CALL3(StopEx,p,a,b,c)
-#define IDirectMusicPerformance8_ClonePMsg(p,a,b)						ICOM_CALL2(ClonePMsg,p,a,b)
-#define IDirectMusicPerformance8_CreateAudioPath(p,a,b,c)				ICOM_CALL3(CreateAudioPath,p,a,b,c)
-#define IDirectMusicPerformance8_CreateStandardAudioPath(p,a,b,c,d)		ICOM_CALL4(CreateStandardAudioPath,p,a,b,c,d)
-#define IDirectMusicPerformance8_SetDefaultAudioPath(p,a)				ICOM_CALL1(SetDefaultAudioPath,p,a)
-#define IDirectMusicPerformance8_GetDefaultAudioPath(p,a)				ICOM_CALL1(GetDefaultAudioPath,p,a)
-#define IDirectMusicPerformance8_GetParamEx(p,a,b,c,d,e,f,g)			ICOM_CALL7(GetParamEx,p,a,b,c,d,e,f,g)
+#define IDirectMusicPerformance8_InitAudio(p,a,b,c,d,e,f,g)             (p)->lpVtbl->InitAudio(p,a,b,c,d,e,f,g)
+#define IDirectMusicPerformance8_PlaySegmentEx(p,a,b,c,d,e,f,g,h)       (p)->lpVtbl->PlaySegmentEx(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicPerformance8_StopEx(p,a,b,c)                        (p)->lpVtbl->StopEx(p,a,b,c)
+#define IDirectMusicPerformance8_ClonePMsg(p,a,b)                       (p)->lpVtbl->ClonePMsg(p,a,b)
+#define IDirectMusicPerformance8_CreateAudioPath(p,a,b,c)               (p)->lpVtbl->CreateAudioPath(p,a,b,c)
+#define IDirectMusicPerformance8_CreateStandardAudioPath(p,a,b,c,d)     (p)->lpVtbl->CreateStandardAudioPath(p,a,b,c,d)
+#define IDirectMusicPerformance8_SetDefaultAudioPath(p,a)               (p)->lpVtbl->SetDefaultAudioPath(p,a)
+#define IDirectMusicPerformance8_GetDefaultAudioPath(p,a)               (p)->lpVtbl->GetDefaultAudioPath(p,a)
+#define IDirectMusicPerformance8_GetParamEx(p,a,b,c,d,e,f,g)            (p)->lpVtbl->GetParamEx(p,a,b,c,d,e,f,g)
+#endif
 
 
 /*****************************************************************************
@@ -1376,15 +1400,17 @@ ICOM_DEFINE(IDirectMusicPerformance8,IDirectMusicPerformance)
 ICOM_DEFINE(IDirectMusicGraph,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicGraph_QueryInterface(p,a,b)				ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicGraph_AddRef(p)							ICOM_CALL (AddRef,p)
-#define IDirectMusicGraph_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicGraph_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicGraph_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectMusicGraph_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectMusicGraph methods ***/
-#define IDirectMusicGraph_StampPMsg(p,a)					ICOM_CALL1(StampPMsg,p,a)
-#define IDirectMusicGraph_InsertTool(p,a,b,c,d)				ICOM_CALL4(InsertTool,p,a,b,c,d)
-#define IDirectMusicGraph_GetTool(p,a,b)					ICOM_CALL2(GetTool,p,a,b)
-#define IDirectMusicGraph_RemoveTool(p,a)					ICOM_CALL1(RemoveTool,p,a)
+#define IDirectMusicGraph_StampPMsg(p,a)        (p)->lpVtbl->StampPMsg(p,a)
+#define IDirectMusicGraph_InsertTool(p,a,b,c,d) (p)->lpVtbl->InsertTool(p,a,b,c,d)
+#define IDirectMusicGraph_GetTool(p,a,b)        (p)->lpVtbl->GetTool(p,a,b)
+#define IDirectMusicGraph_RemoveTool(p,a)       (p)->lpVtbl->RemoveTool(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -1413,22 +1439,24 @@ ICOM_DEFINE(IDirectMusicGraph,IUnknown)
 ICOM_DEFINE(IDirectMusicStyle,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicStyle_QueryInterface(p,a,b)				ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicStyle_AddRef(p)							ICOM_CALL (AddRef,p)
-#define IDirectMusicStyle_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicStyle_QueryInterface(p,a,b)                 (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicStyle_AddRef(p)                             (p)->lpVtbl->AddRef(p)
+#define IDirectMusicStyle_Release(p)                            (p)->lpVtbl->Release(p)
 /*** IDirectMusicStyle methods ***/
-#define IDirectMusicStyle_GetBand(p,a,b)					ICOM_CALL2(GetBand,p,a,b)
-#define IDirectMusicStyle_EnumBand(p,a,b)					ICOM_CALL2(EnumBand,p,a,b)
-#define IDirectMusicStyle_GetDefaultBand(p,a)				ICOM_CALL1(GetDefaultBand,p,a)
-#define IDirectMusicStyle_EnumMotif(p,a,b)					ICOM_CALL2(EnumMotif,p,a,b)
-#define IDirectMusicStyle_GetMotif(p,a,b)					ICOM_CALL2(GetMotif,p,a,b)
-#define IDirectMusicStyle_GetDefaultChordMap(p,a)			ICOM_CALL1(GetDefaultChordMap,p,a)
-#define IDirectMusicStyle_EnumChordMap(p,a,b)				ICOM_CALL2(EnumChordMap,p,a,b)
-#define IDirectMusicStyle_GetChordMap(p,a,b)				ICOM_CALL2(GetChordMap,p,a,b)
-#define IDirectMusicStyle_GetTimeSignature(p,a)				ICOM_CALL1(GetTimeSignature,p,a)
-#define IDirectMusicStyle_GetEmbellishmentLength(p,a,b,c,d)	ICOM_CALL4GetEmbellishmentLength(,p,a,b,c,d)
-#define IDirectMusicStyle_GetTempo(p,a)						ICOM_CALL1(GetTempo,p,a)
+#define IDirectMusicStyle_GetBand(p,a,b)                        (p)->lpVtbl->GetBand(p,a,b)
+#define IDirectMusicStyle_EnumBand(p,a,b)                       (p)->lpVtbl->EnumBand(p,a,b)
+#define IDirectMusicStyle_GetDefaultBand(p,a)                   (p)->lpVtbl->GetDefaultBand(p,a)
+#define IDirectMusicStyle_EnumMotif(p,a,b)                      (p)->lpVtbl->EnumMotif(p,a,b)
+#define IDirectMusicStyle_GetMotif(p,a,b)                       (p)->lpVtbl->GetMotif(p,a,b)
+#define IDirectMusicStyle_GetDefaultChordMap(p,a)               (p)->lpVtbl->GetDefaultChordMap(p,a)
+#define IDirectMusicStyle_EnumChordMap(p,a,b)                   (p)->lpVtbl->EnumChordMap(p,a,b)
+#define IDirectMusicStyle_GetChordMap(p,a,b)                    (p)->lpVtbl->GetChordMap(p,a,b)
+#define IDirectMusicStyle_GetTimeSignature(p,a)                 (p)->lpVtbl->GetTimeSignature(p,a)
+#define IDirectMusicStyle_GetEmbellishmentLength(p,a,b,c,d)     (p)->lpVtbl->GetEmbellishmentLength(p,a,b,c,d)
+#define IDirectMusicStyle_GetTempo(p,a)                         (p)->lpVtbl->GetTempo(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -1448,24 +1476,26 @@ ICOM_DEFINE(IDirectMusicStyle,IUnknown)
 ICOM_DEFINE(IDirectMusicStyle8,IDirectMusicStyle)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicStyle8_QueryInterface(p,a,b)				ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicStyle8_AddRef(p)							ICOM_CALL (AddRef,p)
-#define IDirectMusicStyle8_Release(p)							ICOM_CALL (Release,p)
+#define IDirectMusicStyle8_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicStyle8_AddRef(p)                            (p)->lpVtbl->AddRef(p)
+#define IDirectMusicStyle8_Release(p)                           (p)->lpVtbl->Release(p)
 /*** IDirectMusicStyle methods ***/
-#define IDirectMusicStyle8_GetBand(p,a,b)						ICOM_CALL2(GetBand,p,a,b)
-#define IDirectMusicStyle8_EnumBand(p,a,b)						ICOM_CALL2(EnumBand,p,a,b)
-#define IDirectMusicStyle8_GetDefaultBand(p,a)					ICOM_CALL1(GetDefaultBand,p,a)
-#define IDirectMusicStyle8_EnumMotif(p,a,b)						ICOM_CALL2(EnumMotif,p,a,b)
-#define IDirectMusicStyle8_GetMotif(p,a,b)						ICOM_CALL2(GetMotif,p,a,b)
-#define IDirectMusicStyle8_GetDefaultChordMap(p,a)				ICOM_CALL1(GetDefaultChordMap,p,a)
-#define IDirectMusicStyle8_EnumChordMap(p,a,b)					ICOM_CALL2(EnumChordMap,p,a,b)
-#define IDirectMusicStyle8_GetChordMap(p,a,b)					ICOM_CALL2(GetChordMap,p,a,b)
-#define IDirectMusicStyle8_GetTimeSignature(p,a)				ICOM_CALL1(GetTimeSignature,p,a)
-#define IDirectMusicStyle8_GetEmbellishmentLength(p,a,b,c,d)	ICOM_CALL4GetEmbellishmentLength(,p,a,b,c,d)
-#define IDirectMusicStyle8_GetTempo(p,a)						ICOM_CALL1(GetTempo,p,a)
+#define IDirectMusicStyle8_GetBand(p,a,b)                       (p)->lpVtbl->GetBand(p,a,b)
+#define IDirectMusicStyle8_EnumBand(p,a,b)                      (p)->lpVtbl->EnumBand(p,a,b)
+#define IDirectMusicStyle8_GetDefaultBand(p,a)                  (p)->lpVtbl->GetDefaultBand(p,a)
+#define IDirectMusicStyle8_EnumMotif(p,a,b)                     (p)->lpVtbl->EnumMotif(p,a,b)
+#define IDirectMusicStyle8_GetMotif(p,a,b)                      (p)->lpVtbl->GetMotif(p,a,b)
+#define IDirectMusicStyle8_GetDefaultChordMap(p,a)              (p)->lpVtbl->GetDefaultChordMap(p,a)
+#define IDirectMusicStyle8_EnumChordMap(p,a,b)                  (p)->lpVtbl->EnumChordMap(p,a,b)
+#define IDirectMusicStyle8_GetChordMap(p,a,b)                   (p)->lpVtbl->GetChordMap(p,a,b)
+#define IDirectMusicStyle8_GetTimeSignature(p,a)                (p)->lpVtbl->GetTimeSignature(p,a)
+#define IDirectMusicStyle8_GetEmbellishmentLength(p,a,b,c,d)    (p)->lpVtbl->GetEmbellishmentLength(p,a,b,c,d)
+#define IDirectMusicStyle8_GetTempo(p,a)                        (p)->lpVtbl->GetTempo(p,a)
 /*** IDirectMusicStyle8 methods ***/
-#define IDirectMusicStyle8_EnumPattern(p,a,b,c)					ICOM_CALL3(EnumPattern,p,a,b,c)
+#define IDirectMusicStyle8_EnumPattern(p,a,b,c)                 (p)->lpVtbl->EnumPattern(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -1484,12 +1514,14 @@ ICOM_DEFINE(IDirectMusicStyle8,IDirectMusicStyle)
 ICOM_DEFINE(IDirectMusicChordMap,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicChordMap_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicChordMap_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicChordMap_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicChordMap_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicChordMap_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectMusicChordMap_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectMusicChordMap methods ***/
-#define IDirectMusicChordMap_GetScale(p,a)					ICOM_CALL1(GetScale,p,a)
+#define IDirectMusicChordMap_GetScale(p,a)         (p)->lpVtbl->GetScale(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -1513,17 +1545,19 @@ ICOM_DEFINE(IDirectMusicChordMap,IUnknown)
 ICOM_DEFINE(IDirectMusicComposer,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicComposer_QueryInterface(p,a,b)						ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicComposer_AddRef(p)									ICOM_CALL (AddRef,p)
-#define IDirectMusicComposer_Release(p)									ICOM_CALL (Release,p)
+#define IDirectMusicComposer_QueryInterface(p,a,b)                      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicComposer_AddRef(p)                                  (p)->lpVtbl->AddRef(p)
+#define IDirectMusicComposer_Release(p)                                 (p)->lpVtbl->Release(p)
 /*** IDirectMusicComposer methods ***/
-#define IDirectMusicComposer_ComposeSegmentFromTemplate(p,a,b,c,d,e)	ICOM_CALL5(ComposeSegmentFromTemplate,p,a,b,c,d,e)
-#define IDirectMusicComposer_ComposeSegmentFromShape(p,a,b,c,d,e,f,g,h)	ICOM_CALL8(ComposeSegmentFromShape,p,a,b,c,d,e,f,g,h)
-#define IDirectMusicComposer_ComposeTransition(p,a,b,c,d,e,f,g)			ICOM_CALL7(ComposeTransition,p,a,b,c,d,e,f,g)
-#define IDirectMusicComposer_AutoTransition(p,a,b,c,d,e,f,g,h)			ICOM_CALL8(AutoTransition,p,a,b,c,d,e,f,g,h)
-#define IDirectMusicComposer_ComposeTemplateFromShape(p,a,b,c,d,e,f)	ICOM_CALL6(ComposeTemplateFromShape,p,a,b,c,d,e,f)
-#define IDirectMusicComposer_ChangeChordMap(p,a,b,c)					ICOM_CALL3(ChangeChordMap,p,a,b,c)
+#define IDirectMusicComposer_ComposeSegmentFromTemplate(p,a,b,c,d,e)    (p)->lpVtbl->ComposeSegmentFromTemplate(p,a,b,c,d,e)
+#define IDirectMusicComposer_ComposeSegmentFromShape(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->ComposeSegmentFromShape(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicComposer_ComposeTransition(p,a,b,c,d,e,f,g)         (p)->lpVtbl->ComposeTransition(p,a,b,c,d,e,f,g)
+#define IDirectMusicComposer_AutoTransition(p,a,b,c,d,e,f,g,h)          (p)->lpVtbl->AutoTransition(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicComposer_ComposeTemplateFromShape(p,a,b,c,d,e,f)    (p)->lpVtbl->ComposeTemplateFromShape(p,a,b,c,d,e,f)
+#define IDirectMusicComposer_ChangeChordMap(p,a,b,c)                    (p)->lpVtbl->ChangeChordMap(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -1544,14 +1578,16 @@ ICOM_DEFINE(IDirectMusicComposer,IUnknown)
 ICOM_DEFINE(IDirectMusicPatternTrack,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicPatternTrack_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicPatternTrack_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicPatternTrack_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicPatternTrack_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicPatternTrack_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IDirectMusicPatternTrack_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IDirectMusicPatternTrack methods ***/
-#define IDirectMusicPatternTrack_CreateSegment(p,a,b)			ICOM_CALL2(CreateSegment,p,a,b)
-#define IDirectMusicPatternTrack_SetVariation(p,a,b,c)			ICOM_CALL3(SetVariation,p,a,b,c)
-#define IDirectMusicPatternTrack_SetPatternByName(p,a,b,c,d,e)	ICOM_CALL5(SetPatternByName,p,a,b,c,d,e)
+#define IDirectMusicPatternTrack_CreateSegment(p,a,b)           (p)->lpVtbl->CreateSegment(p,a,b)
+#define IDirectMusicPatternTrack_SetVariation(p,a,b,c)          (p)->lpVtbl->SetVariation(p,a,b,c)
+#define IDirectMusicPatternTrack_SetPatternByName(p,a,b,c,d,e)  (p)->lpVtbl->SetPatternByName(p,a,b,c,d,e)
+#endif
 
 
 /*****************************************************************************
@@ -1579,21 +1615,23 @@ ICOM_DEFINE(IDirectMusicPatternTrack,IUnknown)
 ICOM_DEFINE(IDirectMusicScript,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicScript_QueryInterface(p,a,b)				ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicScript_AddRef(p)							ICOM_CALL (AddRef,p)
-#define IDirectMusicScript_Release(p)							ICOM_CALL (Release,p)
+#define IDirectMusicScript_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicScript_AddRef(p)                            (p)->lpVtbl->AddRef(p)
+#define IDirectMusicScript_Release(p)                           (p)->lpVtbl->Release(p)
 /*** IDirectMusicScript methods ***/
-#define IDirectMusicPatternTrack_Init(p,a,b)					ICOM_CALL2(Init,p,a,b)
-#define IDirectMusicPatternTrack_CallRoutine(p,a,b)				ICOM_CALL2(CallRoutine,p,a,b)
-#define IDirectMusicPatternTrack_SetVariableVariant(p,a,b,c,d)	ICOM_CALL4(SetVariableVariant,p,a,b,c,d)
-#define IDirectMusicPatternTrack_GetVariableVariant(p,a,b,c)	ICOM_CALL3(GetVariableVariant,p,a,b,c)
-#define IDirectMusicPatternTrack_SetVariableNumber(p,a,b,c)		ICOM_CALL3(SetVariableNumber,p,a,b,c)
-#define IDirectMusicPatternTrack_GetVariableNumber(p,a,b,c)		ICOM_CALL3(GetVariableNumber,p,a,b,c)
-#define IDirectMusicPatternTrack_SetVariableObject(p,a,b,c)		ICOM_CALL3(SetVariableObject,p,a,b,c)
-#define IDirectMusicPatternTrack_GetVariableObject(p,a,b,c,d)	ICOM_CALL4(GetVariableObject,p,a,b,c,d)
-#define IDirectMusicPatternTrack_EnumRoutine(p,a,b)				ICOM_CALL2(EnumRoutine,p,a,b)
-#define IDirectMusicPatternTrack_EnumVariable(p,a,b)			ICOM_CALL2(EnumVariable,p,a,b)
+#define IDirectMusicPatternTrack_Init(p,a,b)                    (p)->lpVtbl->Init(p,a,b)
+#define IDirectMusicPatternTrack_CallRoutine(p,a,b)             (p)->lpVtbl->CallRoutine(p,a,b)
+#define IDirectMusicPatternTrack_SetVariableVariant(p,a,b,c,d)  (p)->lpVtbl->SetVariableVariant(p,a,b,c,d)
+#define IDirectMusicPatternTrack_GetVariableVariant(p,a,b,c)    (p)->lpVtbl->GetVariableVariant(p,a,b,c)
+#define IDirectMusicPatternTrack_SetVariableNumber(p,a,b,c)     (p)->lpVtbl->SetVariableNumber(p,a,b,c)
+#define IDirectMusicPatternTrack_GetVariableNumber(p,a,b,c)     (p)->lpVtbl->GetVariableNumber(p,a,b,c)
+#define IDirectMusicPatternTrack_SetVariableObject(p,a,b,c)     (p)->lpVtbl->SetVariableObject(p,a,b,c)
+#define IDirectMusicPatternTrack_GetVariableObject(p,a,b,c,d)   (p)->lpVtbl->GetVariableObject(p,a,b,c,d)
+#define IDirectMusicPatternTrack_EnumRoutine(p,a,b)             (p)->lpVtbl->EnumRoutine(p,a,b)
+#define IDirectMusicPatternTrack_EnumVariable(p,a,b)            (p)->lpVtbl->EnumVariable(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -1612,12 +1650,14 @@ ICOM_DEFINE(IDirectMusicScript,IUnknown)
 ICOM_DEFINE(IDirectMusicContainer,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicContainer_QueryInterface(p,a,b)				ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicContainer_AddRef(p)							ICOM_CALL (AddRef,p)
-#define IDirectMusicContainer_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicContainer_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicContainer_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IDirectMusicContainer_Release(p)             (p)->lpVtbl->Release(p)
 /*** IDirectMusicContainer methods ***/
-#define IDirectMusicContainer_EnumObject(p,a,b,c,d)				ICOM_CALL4(EnumObject,p,a,b,c,d)
+#define IDirectMusicContainer_EnumObject(p,a,b,c,d)  (p)->lpVtbl->EnumObject(p,a,b,c,d)
+#endif
 
 
 /*****************************************************************************
@@ -1642,18 +1682,20 @@ ICOM_DEFINE(IDirectMusicContainer,IUnknown)
 ICOM_DEFINE(IDirectMusicSong,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicSong_QueryInterface(p,a,b)				ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicSong_AddRef(p)							ICOM_CALL (AddRef,p)
-#define IDirectMusicSong_Release(p)							ICOM_CALL (Release,p)
+#define IDirectMusicSong_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicSong_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IDirectMusicSong_Release(p)              (p)->lpVtbl->Release(p)
 /*** IDirectMusicSong methods ***/
-#define IDirectMusicSong_Compose(p)							ICOM_CALL (Compose,p)
-#define IDirectMusicSong_GetParam(p,a,b,c,d,e,f)			ICOM_CALL6(GetParam,p,a,b,c,d,e,f)
-#define IDirectMusicSong_GetSegment(p,a,b)					ICOM_CALL2(GetSegment,p,a,b)
-#define IDirectMusicSong_GetAudioPathConfig(p,a)			ICOM_CALL1(GetAudioPathConfig,p,a)
-#define IDirectMusicSong_Download(p,a)						ICOM_CALL1(Download,p,a)
-#define IDirectMusicSong_Unload(p,a)						ICOM_CALL1(Unload,p,a)
-#define IDirectMusicSong_EnumSegment(p,a,b)					ICOM_CALL2(EnumSegment,p,a,b)
+#define IDirectMusicSong_Compose(p)              (p)->lpVtbl->Compose(p)
+#define IDirectMusicSong_GetParam(p,a,b,c,d,e,f) (p)->lpVtbl->GetParam(p,a,b,c,d,e,f)
+#define IDirectMusicSong_GetSegment(p,a,b)       (p)->lpVtbl->GetSegment(p,a,b)
+#define IDirectMusicSong_GetAudioPathConfig(p,a) (p)->lpVtbl->GetAudioPathConfig(p,a)
+#define IDirectMusicSong_Download(p,a)           (p)->lpVtbl->Download(p,a)
+#define IDirectMusicSong_Unload(p,a)             (p)->lpVtbl->Unload(p,a)
+#define IDirectMusicSong_EnumSegment(p,a,b)      (p)->lpVtbl->EnumSegment(p,a,b)
+#endif
 
 #ifdef __cplusplus
 }

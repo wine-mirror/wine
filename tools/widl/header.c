@@ -484,19 +484,9 @@ static int write_method_macro(type_t *iface, char *name)
 	fprintf(header, ",%c", c+'a');
       fprintf(header, ") ");
 
-      if (use_icom) {
-	if (argc)
-	  fprintf(header, "ICOM_CALL%d(", argc);
-	else
-	  fprintf(header, "ICOM_CALL(");
-	write_name(header, def);
-	fprintf(header, ",p");
-      }
-      else {
-	fprintf(header, "(p)->lpVtbl->");
-	write_name(header, def);
-	fprintf(header, "(p");
-      }
+      fprintf(header, "(p)->lpVtbl->");
+      write_name(header, def);
+      fprintf(header, "(p");
       for (c=0; c<argc; c++)
 	fprintf(header, ",%c", c+'a');
       fprintf(header, ")\n");

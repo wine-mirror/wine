@@ -68,16 +68,18 @@ typedef struct IEnumConnectionPoints IEnumConnectionPoints, *LPENUMCONNECTIONPOI
 ICOM_DEFINE(IConnectionPoint,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IConnectionPoint_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IConnectionPoint_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IConnectionPoint_Release(p)                 ICOM_CALL (Release,p)
+#define IConnectionPoint_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IConnectionPoint_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IConnectionPoint_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IConnectionPointContainer methods ***/
-#define IConnectionPoint_GetConnectionInterface(p,a)      ICOM_CALL1(GetConnectionInterface,p,a)
-#define IConnectionPoint_GetConnectionPointContainer(p,a) ICOM_CALL1(GetConnectionPointContainer,p,a)
-#define IConnectionPoint_Advise(p,a,b)                    ICOM_CALL2(Advise,p,a,b)
-#define IConnectionPoint_Unadvise(p,a)                    ICOM_CALL1(Unadvise,p,a)
-#define IConnectionPoint_EnumConnections(p,a)             ICOM_CALL1(EnumConnections,p,a)
+#define IConnectionPoint_GetConnectionInterface(p,a)      (p)->lpVtbl->GetConnectionInterface(p,a)
+#define IConnectionPoint_GetConnectionPointContainer(p,a) (p)->lpVtbl->GetConnectionPointContainer(p,a)
+#define IConnectionPoint_Advise(p,a,b)                    (p)->lpVtbl->Advise(p,a,b)
+#define IConnectionPoint_Unadvise(p,a)                    (p)->lpVtbl->Unadvise(p,a)
+#define IConnectionPoint_EnumConnections(p,a)             (p)->lpVtbl->EnumConnections(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -93,13 +95,15 @@ ICOM_DEFINE(IConnectionPoint,IUnknown)
 ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IConnectionPointContainer_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IConnectionPointContainer_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IConnectionPointContainer_Release(p)                 ICOM_CALL (Release,p)
+#define IConnectionPointContainer_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IConnectionPointContainer_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IConnectionPointContainer_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IConnectionPointContainer methods ***/
-#define IConnectionPointContainer_EnumConnectionPoints(p,a)  ICOM_CALL1(EnumConnectionPoints,p,a)
-#define IConnectionPointContainer_FindConnectionPoint(p,a,b) ICOM_CALL2(FindConnectionPoint,p,a,b)
+#define IConnectionPointContainer_EnumConnectionPoints(p,a)  (p)->lpVtbl->EnumConnectionPoints(p,a)
+#define IConnectionPointContainer_FindConnectionPoint(p,a,b) (p)->lpVtbl->FindConnectionPoint(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -117,15 +121,17 @@ ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 ICOM_DEFINE(IEnumConnections,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IEnumConnections_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IEnumConnections_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IEnumConnections_Release(p)                 ICOM_CALL (Release,p)
+#define IEnumConnections_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IEnumConnections_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IEnumConnections_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IConnectionPointContainer methods ***/
-#define IEnumConnections_Next(p,a,b,c)              ICOM_CALL3(Next,p,a,b,c)
-#define IEnumConnections_Skip(p,a)                  ICOM_CALL1(Skip,p,a)
-#define IEnumConnections_Reset(p)                   ICOM_CALL (Reset,p)
-#define IEnumConnections_Clone(p,a)                 ICOM_CALL1(Clone,p,a)
+#define IEnumConnections_Next(p,a,b,c)              (p)->lpVtbl->Next(p,a,b,c)
+#define IEnumConnections_Skip(p,a)                  (p)->lpVtbl->Skip(p,a)
+#define IEnumConnections_Reset(p)                   (p)->lpVtbl->Reset(p)
+#define IEnumConnections_Clone(p,a)                 (p)->lpVtbl->Clone(p,a)
+#endif
 
 /*****************************************************************************
  * IEnumConnectionPoints interface
@@ -142,15 +148,17 @@ ICOM_DEFINE(IEnumConnections,IUnknown)
 ICOM_DEFINE(IEnumConnectionPoints,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IEnumConnectionPoints_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IEnumConnectionPoints_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IEnumConnectionPoints_Release(p)                 ICOM_CALL (Release,p)
+#define IEnumConnectionPoints_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IEnumConnectionPoints_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IEnumConnectionPoints_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IConnectionPointContainer methods ***/
-#define IEnumConnectionPoints_Next(p,a,b,c)              ICOM_CALL3(Next,p,a,b,c)
-#define IEnumConnectionPoints_Skip(p,a)                  ICOM_CALL1(Skip,p,a)
-#define IEnumConnectionPoints_Reset(p)                   ICOM_CALL (Reset,p)
-#define IEnumConnectionPoints_Clone(p,a)                 ICOM_CALL1(Clone,p,a)
+#define IEnumConnectionPoints_Next(p,a,b,c)              (p)->lpVtbl->Next(p,a,b,c)
+#define IEnumConnectionPoints_Skip(p,a)                  (p)->lpVtbl->Skip(p,a)
+#define IEnumConnectionPoints_Reset(p)                   (p)->lpVtbl->Reset(p)
+#define IEnumConnectionPoints_Clone(p,a)                 (p)->lpVtbl->Clone(p,a)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

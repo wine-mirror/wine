@@ -147,26 +147,28 @@ typedef enum
 ICOM_DEFINE(IShellView,IOleWindow)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IShellView_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IShellView_AddRef(p)			ICOM_CALL(AddRef,p)
-#define IShellView_Release(p)			ICOM_CALL(Release,p)
+#define IShellView_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IShellView_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IShellView_Release(p)                   (p)->lpVtbl->Release(p)
 /*** IShellView methods ***/
-#define IShellView_GetWindow(p,a)		ICOM_CALL1(GetWindow,p,a)
-#define IShellView_ContextSensitiveHelp(p,a)	ICOM_CALL1(ContextSensitiveHelp,p,a)
-#define IShellView_TranslateAccelerator(p,a)	ICOM_CALL1(TranslateAccelerator,p,a)
-#define IShellView_EnableModeless(p,a)		ICOM_CALL1(EnableModeless,p,a)
-#define IShellView_UIActivate(p,a)		ICOM_CALL1(UIActivate,p,a)
-#define IShellView_Refresh(p)			ICOM_CALL(Refresh,p)
-#define IShellView_CreateViewWindow(p,a,b,c,d,e)	ICOM_CALL5(CreateViewWindow,p,a,b,c,d,e)
-#define IShellView_DestroyViewWindow(p)		ICOM_CALL(DestroyViewWindow,p)
-#define IShellView_GetCurrentInfo(p,a)		ICOM_CALL1(GetCurrentInfo,p,a)
-#define IShellView_AddPropertySheetPages(p,a,b,c)	ICOM_CALL3(AddPropertySheetPages,p,a,b,c)
-#define IShellView_SaveViewState(p)		ICOM_CALL(SaveViewState,p)
-#define IShellView_SelectItem(p,a,b)		ICOM_CALL2(SelectItem,p,a,b)
-#define IShellView_GetItemObject(p,a,b,c)	ICOM_CALL3(GetItemObject,p,a,b,c)
+#define IShellView_GetWindow(p,a)               (p)->lpVtbl->GetWindow(p,a)
+#define IShellView_ContextSensitiveHelp(p,a)    (p)->lpVtbl->ContextSensitiveHelp(p,a)
+#define IShellView_TranslateAccelerator(p,a)    (p)->lpVtbl->TranslateAccelerator(p,a)
+#define IShellView_EnableModeless(p,a)          (p)->lpVtbl->EnableModeless(p,a)
+#define IShellView_UIActivate(p,a)              (p)->lpVtbl->UIActivate(p,a)
+#define IShellView_Refresh(p)                   (p)->lpVtbl->Refresh(p)
+#define IShellView_CreateViewWindow(p,a,b,c,d,e) (p)->lpVtbl->CreateViewWindow(p,a,b,c,d,e)
+#define IShellView_DestroyViewWindow(p)         (p)->lpVtbl->DestroyViewWindow(p)
+#define IShellView_GetCurrentInfo(p,a)          (p)->lpVtbl->GetCurrentInfo(p,a)
+#define IShellView_AddPropertySheetPages(p,a,b,c) (p)->lpVtbl->AddPropertySheetPages(p,a,b,c)
+#define IShellView_SaveViewState(p)             (p)->lpVtbl->SaveViewState(p)
+#define IShellView_SelectItem(p,a,b)            (p)->lpVtbl->SelectItem(p,a,b)
+#define IShellView_GetItemObject(p,a,b,c)       (p)->lpVtbl->GetItemObject(p,a,b,c)
 /* WINE specific */
-#define IShellView_EditItem(p,a)		ICOM_CALL1(EditItem,p,a)
+#define IShellView_EditItem(p,a)                (p)->lpVtbl->EditItem(p,a)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -131,12 +131,14 @@ typedef GUID SHELLVIEWID;
 ICOM_DEFINE(IShellIcon, IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IShellIcon_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IShellIcon_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IShellIcon_Release(p)                 ICOM_CALL (Release,p)
+#define IShellIcon_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IShellIcon_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IShellIcon_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IShellIcon methods ***/
-#define IShellIcon_GetIconOf(p,a,b,c)         ICOM_CALL3(GetIconOf,p,a,b,c)
+#define IShellIcon_GetIconOf(p,a,b,c)         (p)->lpVtbl->GetIconOf(p,a,b,c)
+#endif
 
 /****************************************************************************
 * SHAddToRecentDocs API

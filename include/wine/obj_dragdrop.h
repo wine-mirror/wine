@@ -62,13 +62,15 @@ typedef struct IDropTarget IDropTarget,*LPDROPTARGET;
 ICOM_DEFINE(IDropSource,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDropSource_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDropSource_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDropSource_Release(p)            ICOM_CALL (Release,p)
+#define IDropSource_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDropSource_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDropSource_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDropSource methods ***/
-#define IDropSource_QueryContinueDrag(p,a,b) ICOM_CALL2(QueryContinueDrag,p,a,b)
-#define IDropSource_GiveFeedback(p,a)        ICOM_CALL1(GiveFeedback,p,a)
+#define IDropSource_QueryContinueDrag(p,a,b) (p)->lpVtbl->QueryContinueDrag(p,a,b)
+#define IDropSource_GiveFeedback(p,a)        (p)->lpVtbl->GiveFeedback(p,a)
+#endif
 
 /*****************************************************************************
  * IDropTarget interface
@@ -85,15 +87,17 @@ ICOM_DEFINE(IDropSource,IUnknown)
 ICOM_DEFINE(IDropTarget,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDropTarget_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDropTarget_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDropTarget_Release(p)            ICOM_CALL (Release,p)
+#define IDropTarget_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDropTarget_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDropTarget_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDropTarget methods ***/
-#define IDropTarget_DragEnter(p,a,b,c,d)  ICOM_CALL4(DragEnter,p,a,b,c,d)
-#define IDropTarget_DragOver(p,a,b,c)     ICOM_CALL3(DragOver,p,a,b,c)
-#define IDropTarget_DragLeave(p)          ICOM_CALL(DragLeave,p)
-#define IDropTarget_Drop(p,a,b,c,d)       ICOM_CALL4(Drop,p,a,b,c,d)
+#define IDropTarget_DragEnter(p,a,b,c,d)  (p)->lpVtbl->DragEnter(p,a,b,c,d)
+#define IDropTarget_DragOver(p,a,b,c)     (p)->lpVtbl->DragOver(p,a,b,c)
+#define IDropTarget_DragLeave(p)          (p)->lpVtbl->DragLeave(p)
+#define IDropTarget_Drop(p,a,b,c,d)       (p)->lpVtbl->Drop(p,a,b,c,d)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

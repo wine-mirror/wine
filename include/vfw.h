@@ -1006,22 +1006,24 @@ DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
 ICOM_DEFINE(IAVIStream, IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IAVIStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IAVIStream_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IAVIStream_Release(p)            ICOM_CALL (Release,p)
+#define IAVIStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IAVIStream_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IAVIStream_Release(p)            (p)->lpVtbl->Release(p)
 /*** IAVIStream methods ***/
-#define IAVIStream_Create(p,a,b)          ICOM_CALL2(Create,p,a,b)
-#define IAVIStream_Info(p,a,b)            ICOM_CALL2(Info,p,a,b)
-#define IAVIStream_FindSample(p,a,b)      ICOM_CALL2(FindSample,p,a,b)
-#define IAVIStream_ReadFormat(p,a,b,c)    ICOM_CALL3(ReadFormat,p,a,b,c)
-#define IAVIStream_SetFormat(p,a,b,c)     ICOM_CALL3(SetFormat,p,a,b,c)
-#define IAVIStream_Read(p,a,b,c,d,e,f)    ICOM_CALL6(Read,p,a,b,c,d,e,f)
-#define IAVIStream_Write(p,a,b,c,d,e,f,g) ICOM_CALL7(Write,p,a,b,c,d,e,f,g)
-#define IAVIStream_Delete(p,a,b)          ICOM_CALL2(Delete,p,a,b)
-#define IAVIStream_ReadData(p,a,b,c)      ICOM_CALL3(ReadData,p,a,b,c)
-#define IAVIStream_WriteData(p,a,b,c)     ICOM_CALL3(WriteData,p,a,b,c)
-#define IAVIStream_SetInfo(p,a,b)         ICOM_CALL2(SetInfo,p,a,b)
+#define IAVIStream_Create(p,a,b)          (p)->lpVtbl->Create(p,a,b)
+#define IAVIStream_Info(p,a,b)            (p)->lpVtbl->Info(p,a,b)
+#define IAVIStream_FindSample(p,a,b)      (p)->lpVtbl->FindSample(p,a,b)
+#define IAVIStream_ReadFormat(p,a,b,c)    (p)->lpVtbl->ReadFormat(p,a,b,c)
+#define IAVIStream_SetFormat(p,a,b,c)     (p)->lpVtbl->SetFormat(p,a,b,c)
+#define IAVIStream_Read(p,a,b,c,d,e,f)    (p)->lpVtbl->Read(p,a,b,c,d,e,f)
+#define IAVIStream_Write(p,a,b,c,d,e,f,g) (p)->lpVtbl->Write(p,a,b,c,d,e,f,g)
+#define IAVIStream_Delete(p,a,b)          (p)->lpVtbl->Delete(p,a,b)
+#define IAVIStream_ReadData(p,a,b,c)      (p)->lpVtbl->ReadData(p,a,b,c)
+#define IAVIStream_WriteData(p,a,b,c)     (p)->lpVtbl->WriteData(p,a,b,c)
+#define IAVIStream_SetInfo(p,a,b)         (p)->lpVtbl->SetInfo(p,a,b)
+#endif
 
 ULONG WINAPI AVIStreamAddRef(PAVISTREAM iface);
 ULONG WINAPI AVIStreamRelease(PAVISTREAM iface);
@@ -1102,18 +1104,20 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
 ICOM_DEFINE(IAVIFile,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IAVIFile_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IAVIFile_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IAVIFile_Release(p)            ICOM_CALL (Release,p)
+#define IAVIFile_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IAVIFile_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IAVIFile_Release(p)            (p)->lpVtbl->Release(p)
 /*** IAVIFile methods ***/
-#define IAVIFile_Info(p,a,b)         ICOM_CALL2(Info,p,a,b)
-#define IAVIFile_GetStream(p,a,b,c)  ICOM_CALL3(GetStream,p,a,b,c)
-#define IAVIFile_CreateStream(p,a,b) ICOM_CALL2(CreateStream,p,a,b)
-#define IAVIFile_WriteData(p,a,b,c)  ICOM_CALL3(WriteData,p,a,b,c)
-#define IAVIFile_ReadData(p,a,b,c)   ICOM_CALL3(ReadData,p,a,b,c)
-#define IAVIFile_EndRecord(p)        ICOM_CALL (EndRecord,p)
-#define IAVIFile_DeleteStream(p,a,b) ICOM_CALL2(DeleteStream,p,a,b)
+#define IAVIFile_Info(p,a,b)         (p)->lpVtbl->Info(p,a,b)
+#define IAVIFile_GetStream(p,a,b,c)  (p)->lpVtbl->GetStream(p,a,b,c)
+#define IAVIFile_CreateStream(p,a,b) (p)->lpVtbl->CreateStream(p,a,b)
+#define IAVIFile_WriteData(p,a,b,c)  (p)->lpVtbl->WriteData(p,a,b,c)
+#define IAVIFile_ReadData(p,a,b,c)   (p)->lpVtbl->ReadData(p,a,b,c)
+#define IAVIFile_EndRecord(p)        (p)->lpVtbl->EndRecord(p)
+#define IAVIFile_DeleteStream(p,a,b) (p)->lpVtbl->DeleteStream(p,a,b)
+#endif
 
 void WINAPI AVIFileInit(void);
 void WINAPI AVIFileExit(void);
@@ -1150,15 +1154,17 @@ HRESULT WINAPI AVIFileEndRecord(PAVIFILE pfile);
 ICOM_DEFINE(IGetFrame,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IGetFrame_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IGetFrame_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IGetFrame_Release(p)            ICOM_CALL (Release,p)
+#define IGetFrame_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IGetFrame_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IGetFrame_Release(p)            (p)->lpVtbl->Release(p)
 /*** IGetFrame methods ***/
-#define IGetFrame_GetFrame(p,a)            ICOM_CALL1(GetFrame,p,a)
-#define IGetFrame_Begin(p,a,b,c)           ICOM_CALL3(Begin,p,a,b,c)
-#define IGetFrame_End(p)                   ICOM_CALL (End,p)
-#define IGetFrame_SetFormat(p,a,b,c,d,e,f) ICOM_CALL6(SetFormat,p,a,b,c,d,e,f)
+#define IGetFrame_GetFrame(p,a)            (p)->lpVtbl->GetFrame(p,a)
+#define IGetFrame_Begin(p,a,b,c)           (p)->lpVtbl->Begin(p,a,b,c)
+#define IGetFrame_End(p)                   (p)->lpVtbl->End(p)
+#define IGetFrame_SetFormat(p,a,b,c,d,e,f) (p)->lpVtbl->SetFormat(p,a,b,c,d,e,f)
+#endif
 
 #define AVIERR_OK		0
 #define MAKE_AVIERR(error)	MAKE_SCODE(SEVERITY_ERROR,FACILITY_ITF,0x4000+error)

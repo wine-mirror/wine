@@ -82,17 +82,19 @@ DEFINE_GUID(CLSID_DirectMusicWaveTrack,						0xeed36461,0x9ea5,0x11d3,0x9b,0xd1,
 ICOM_DEFINE(IDirectMusicTool,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicTool_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicTool_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicTool_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicTool_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicTool_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IDirectMusicTool_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IDirectMusicTool methods ***/
-#define IDirectMusicTool_Init(p,a)						ICOM_CALL1(Init,p,a)
-#define IDirectMusicTool_GetMsgDeliveryType(p,a)		ICOM_CALL1(GetMsgDeliveryType,p,a)
-#define IDirectMusicTool_GetMediaTypeArraySize(p,a)		ICOM_CALL1(GetMediaTypeArraySize,p,a)
-#define IDirectMusicTool_GetMediaTypes(p,a,b)			ICOM_CALL2(GetMediaTypes,p,a,b)
-#define IDirectMusicTool_ProcessPMsg(p,a,b)				ICOM_CALL2(ProcessPMsg,p,a,b)
-#define IDirectMusicTool_Flush(p,a,b,c)					ICOM_CALL3(Flush,p,a,b,c)
+#define IDirectMusicTool_Init(p,a)                      (p)->lpVtbl->Init(p,a)
+#define IDirectMusicTool_GetMsgDeliveryType(p,a)        (p)->lpVtbl->GetMsgDeliveryType(p,a)
+#define IDirectMusicTool_GetMediaTypeArraySize(p,a)     (p)->lpVtbl->GetMediaTypeArraySize(p,a)
+#define IDirectMusicTool_GetMediaTypes(p,a,b)           (p)->lpVtbl->GetMediaTypes(p,a,b)
+#define IDirectMusicTool_ProcessPMsg(p,a,b)             (p)->lpVtbl->ProcessPMsg(p,a,b)
+#define IDirectMusicTool_Flush(p,a,b,c)                 (p)->lpVtbl->Flush(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -112,19 +114,21 @@ ICOM_DEFINE(IDirectMusicTool,IUnknown)
 ICOM_DEFINE(IDirectMusicTool8,IDirectMusicTool)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicTool8_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicTool8_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicTool8_Release(p)					ICOM_CALL (Release,p)
+#define IDirectMusicTool8_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicTool8_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IDirectMusicTool8_Release(p)                    (p)->lpVtbl->Release(p)
 /*** IDirectMusicTool methods ***/
-#define IDirectMusicTool8_Init(p,a)						ICOM_CALL1(Init,p,a)
-#define IDirectMusicTool8_GetMsgDeliveryType(p,a)		ICOM_CALL1(GetMsgDeliveryType,p,a)
-#define IDirectMusicTool8_GetMediaTypeArraySize(p,a)	ICOM_CALL1(GetMediaTypeArraySize,p,a)
-#define IDirectMusicTool8_GetMediaTypes(p,a,b)			ICOM_CALL2(GetMediaTypes,p,a,b)
-#define IDirectMusicTool8_ProcessPMsg(p,a,b)			ICOM_CALL2(ProcessPMsg,p,a,b)
-#define IDirectMusicTool8_Flush(p,a,b)					ICOM_CALL2(Flush,p,a,b)
+#define IDirectMusicTool8_Init(p,a)                     (p)->lpVtbl->Init(p,a)
+#define IDirectMusicTool8_GetMsgDeliveryType(p,a)       (p)->lpVtbl->GetMsgDeliveryType(p,a)
+#define IDirectMusicTool8_GetMediaTypeArraySize(p,a)    (p)->lpVtbl->GetMediaTypeArraySize(p,a)
+#define IDirectMusicTool8_GetMediaTypes(p,a,b)          (p)->lpVtbl->GetMediaTypes(p,a,b)
+#define IDirectMusicTool8_ProcessPMsg(p,a,b)            (p)->lpVtbl->ProcessPMsg(p,a,b)
+#define IDirectMusicTool8_Flush(p,a,b)                  (p)->lpVtbl->Flush(p,a,b)
 /*** IDirectMusicTool8 methods ***/
-#define IDirectMusicTool8_Clone(p,a)					ICOM_CALL1(Clone,p,a)
+#define IDirectMusicTool8_Clone(p,a)                    (p)->lpVtbl->Clone(p,a)
+#endif
 
 
 typedef enum enumDMUS_TRACKF_FLAGS
@@ -171,21 +175,23 @@ typedef enum enumDMUS_TRACKF_FLAGS
 ICOM_DEFINE(IDirectMusicTrack,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicTrack_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicTrack_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicTrack_Release(p)					ICOM_CALL (Release,p)
+#define IDirectMusicTrack_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicTrack_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IDirectMusicTrack_Release(p)                    (p)->lpVtbl->Release(p)
 /*** IDirectMusicTrack methods ***/
-#define IDirectMusicTrack_Init(p,a)						ICOM_CALL1(Init,p,a)
-#define IDirectMusicTrack_InitPlay(p,a,b,c,d,e)			ICOM_CALL5(InitPlay,p,a,b,c,d,e)
-#define IDirectMusicTrack_EndPlay(p,a)					ICOM_CALL1(EndPlay,p,a)
-#define IDirectMusicTrack_Play(p,a,b,c,d,e,f,g,h)		ICOM_CALL8(Play,p,a,b,c,d,e,f,g,h)
-#define IDirectMusicTrack_GetParam(p,a,b,c,d)			ICOM_CALL4(GetParam,p,a,b,c,d)
-#define IDirectMusicTrack_SetParam(p,a,b,c)				ICOM_CALL3(SetParam,p,a,b,c)
-#define IDirectMusicTrack_IsParamSupported(p,a)			ICOM_CALL1(IsParamSupported,p,a)
-#define IDirectMusicTrack_AddNotificationType(p,a)		ICOM_CALL1(AddNotificationType,p,a)
-#define IDirectMusicTrack_RemoveNotificationType(p,a)	ICOM_CALL1(RemoveNotificationType,p,a)
-#define IDirectMusicTrack_Clone(p,a,b,c)				ICOM_CALL3(Clone,p,a,b,c)
+#define IDirectMusicTrack_Init(p,a)                     (p)->lpVtbl->Init(p,a)
+#define IDirectMusicTrack_InitPlay(p,a,b,c,d,e)         (p)->lpVtbl->InitPlay(p,a,b,c,d,e)
+#define IDirectMusicTrack_EndPlay(p,a)                  (p)->lpVtbl->EndPlay(p,a)
+#define IDirectMusicTrack_Play(p,a,b,c,d,e,f,g,h)       (p)->lpVtbl->Play(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicTrack_GetParam(p,a,b,c,d)           (p)->lpVtbl->GetParam(p,a,b,c,d)
+#define IDirectMusicTrack_SetParam(p,a,b,c)             (p)->lpVtbl->SetParam(p,a,b,c)
+#define IDirectMusicTrack_IsParamSupported(p,a)         (p)->lpVtbl->IsParamSupported(p,a)
+#define IDirectMusicTrack_AddNotificationType(p,a)      (p)->lpVtbl->AddNotificationType(p,a)
+#define IDirectMusicTrack_RemoveNotificationType(p,a)   (p)->lpVtbl->RemoveNotificationType(p,a)
+#define IDirectMusicTrack_Clone(p,a,b,c)                (p)->lpVtbl->Clone(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -210,27 +216,29 @@ ICOM_DEFINE(IDirectMusicTrack,IUnknown)
 ICOM_DEFINE(IDirectMusicTrack8,IDirectMusicTrack)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicTrack8_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicTrack8_AddRef(p)					ICOM_CALL (AddRef,p)
-#define IDirectMusicTrack8_Release(p)					ICOM_CALL (Release,p)
+#define IDirectMusicTrack8_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicTrack8_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IDirectMusicTrack8_Release(p)                   (p)->lpVtbl->Release(p)
 /*** IDirectMusicTrack methods ***/
-#define IDirectMusicTrack8_Init(p,a)					ICOM_CALL1(Init,p,a)
-#define IDirectMusicTrack8_InitPlay(p,a,b,c,d,e)		ICOM_CALL5(InitPlay,p,a,b,c,d,e)
-#define IDirectMusicTrack8_EndPlay(p,a)					ICOM_CALL1(EndPlay,p,a)
-#define IDirectMusicTrack8_Play(p,a,b,c,d,e,f,g,h)		ICOM_CALL8(Play,p,a,b,c,d,e,f,g,h)
-#define IDirectMusicTrack8_GetParam(p,a,b,c,d)			ICOM_CALL4(GetParam,p,a,b,c,d)
-#define IDirectMusicTrack8_SetParam(p,a,b,c)			ICOM_CALL3(SetParam,p,a,b,c)
-#define IDirectMusicTrack8_IsParamSupported(p,a)		ICOM_CALL1(IsParamSupported,p,a)
-#define IDirectMusicTrack8_AddNotificationType(p,a)		ICOM_CALL1(AddNotificationType,p,a)
-#define IDirectMusicTrack8_RemoveNotificationType(p,a)	ICOM_CALL1(RemoveNotificationType,p,a)
-#define IDirectMusicTrack8_Clone(p,a,b,c)				ICOM_CALL3(Clone,p,a,b,c)
+#define IDirectMusicTrack8_Init(p,a)                    (p)->lpVtbl->Init(p,a)
+#define IDirectMusicTrack8_InitPlay(p,a,b,c,d,e)        (p)->lpVtbl->InitPlay(p,a,b,c,d,e)
+#define IDirectMusicTrack8_EndPlay(p,a)                 (p)->lpVtbl->EndPlay(p,a)
+#define IDirectMusicTrack8_Play(p,a,b,c,d,e,f,g,h)      (p)->lpVtbl->Play(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicTrack8_GetParam(p,a,b,c,d)          (p)->lpVtbl->GetParam(p,a,b,c,d)
+#define IDirectMusicTrack8_SetParam(p,a,b,c)            (p)->lpVtbl->SetParam(p,a,b,c)
+#define IDirectMusicTrack8_IsParamSupported(p,a)        (p)->lpVtbl->IsParamSupported(p,a)
+#define IDirectMusicTrack8_AddNotificationType(p,a)     (p)->lpVtbl->AddNotificationType(p,a)
+#define IDirectMusicTrack8_RemoveNotificationType(p,a)  (p)->lpVtbl->RemoveNotificationType(p,a)
+#define IDirectMusicTrack8_Clone(p,a,b,c)               (p)->lpVtbl->Clone(p,a,b,c)
 /*** IDirectMusicTrack8 methods ***/
-#define IDirectMusicTrack8_PlayEx(p,a,b,c,d,e,f,g,h)	ICOM_CALL8(PlayEx,p,a,b,c,d,e,f,g,h)
-#define IDirectMusicTrack8_GetParamEx(p,a,b,c,d,e,f)	ICOM_CALL6(GetParamEx,p,a,b,c,d,e,f)
-#define IDirectMusicTrack8_SetParamEx(p,a,b,c,d,e)		ICOM_CALL5(SetParamEx,p,a,b,c,d,e)
-#define IDirectMusicTrack8_Compose(p,a,b,c)				ICOM_CALL3(Compose,p,a,b,c)
-#define IDirectMusicTrack8_Join(p,a,b,c,d,e)			ICOM_CALL5(Join,p,a,b,c,d,e)
+#define IDirectMusicTrack8_PlayEx(p,a,b,c,d,e,f,g,h)    (p)->lpVtbl->PlayEx(p,a,b,c,d,e,f,g,h)
+#define IDirectMusicTrack8_GetParamEx(p,a,b,c,d,e,f)    (p)->lpVtbl->GetParamEx(p,a,b,c,d,e,f)
+#define IDirectMusicTrack8_SetParamEx(p,a,b,c,d,e)      (p)->lpVtbl->SetParamEx(p,a,b,c,d,e)
+#define IDirectMusicTrack8_Compose(p,a,b,c)             (p)->lpVtbl->Compose(p,a,b,c)
+#define IDirectMusicTrack8_Join(p,a,b,c,d,e)            (p)->lpVtbl->Join(p,a,b,c,d,e)
+#endif
 
 
 #ifdef __cplusplus

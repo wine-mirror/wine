@@ -306,20 +306,22 @@ typedef struct _DMUS_CLOCKINFO8
 ICOM_DEFINE(IDirectMusic,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusic_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusic_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusic_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusic_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusic_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IDirectMusic_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IDirectMusic methods ***/
-#define IDirectMusic_EnumPort(p,a,b)				ICOM_CALL2(EnumPort,p,a,b)
-#define IDirectMusic_CreateMusicBuffer(p,a,b,c)		ICOM_CALL3(CreateMusicBuffer,p,a,b,c)
-#define IDirectMusic_CreatePort(p,a,b,c,d)			ICOM_CALL4(CreatePort,p,a,b,c,d)
-#define IDirectMusic_EnumMasterClock(p,a,b)			ICOM_CALL2(EnumMasterClock,p,a,b)
-#define IDirectMusic_GetMasterClock(p,a,b)			ICOM_CALL2(GetMasterClock,p,a,b)
-#define IDirectMusic_SetMasterClock(p,a)			ICOM_CALL1(SetMasterClock,p,a)
-#define IDirectMusic_Activate(p,a)					ICOM_CALL1(Activate,p,a)
-#define IDirectMusic_GetDefaultPort(p,a)			ICOM_CALL1(GetDefaultPort,p,a)
-#define IDirectMusic_SetDirectSound(p,a,b)			ICOM_CALL2(SetDirectSound,p,a,b)
+#define IDirectMusic_EnumPort(p,a,b)                (p)->lpVtbl->EnumPort(p,a,b)
+#define IDirectMusic_CreateMusicBuffer(p,a,b,c)     (p)->lpVtbl->CreateMusicBuffer(p,a,b,c)
+#define IDirectMusic_CreatePort(p,a,b,c,d)          (p)->lpVtbl->CreatePort(p,a,b,c,d)
+#define IDirectMusic_EnumMasterClock(p,a,b)         (p)->lpVtbl->EnumMasterClock(p,a,b)
+#define IDirectMusic_GetMasterClock(p,a,b)          (p)->lpVtbl->GetMasterClock(p,a,b)
+#define IDirectMusic_SetMasterClock(p,a)            (p)->lpVtbl->SetMasterClock(p,a)
+#define IDirectMusic_Activate(p,a)                  (p)->lpVtbl->Activate(p,a)
+#define IDirectMusic_GetDefaultPort(p,a)            (p)->lpVtbl->GetDefaultPort(p,a)
+#define IDirectMusic_SetDirectSound(p,a,b)          (p)->lpVtbl->SetDirectSound(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -339,22 +341,24 @@ ICOM_DEFINE(IDirectMusic,IUnknown)
 ICOM_DEFINE(IDirectMusic8,IDirectMusic)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusic8_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusic8_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusic8_Release(p)					ICOM_CALL (Release,p)
+#define IDirectMusic8_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusic8_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IDirectMusic8_Release(p)                    (p)->lpVtbl->Release(p)
 /*** IDirectMusic methods ***/
-#define IDirectMusic8_EnumPort(p,a,b)				ICOM_CALL2(EnumPort,p,a,b)
-#define IDirectMusic8_CreateMusicBuffer(p,a,b,c)	ICOM_CALL3(CreateMusicBuffer,p,a,b,c)
-#define IDirectMusic8_CreatePort(p,a,b,c,d)			ICOM_CALL4(CreatePort,p,a,b,c,d)
-#define IDirectMusic8_EnumMasterClock(p,a,b)		ICOM_CALL2(EnumMasterClock,p,a,b)
-#define IDirectMusic8_GetMasterClock(p,a,b)			ICOM_CALL2(GetMasterClock,p,a,b)
-#define IDirectMusic8_SetMasterClock(p,a)			ICOM_CALL1(SetMasterClock,p,a)
-#define IDirectMusic8_Activate(p,a)					ICOM_CALL1(Activate,p,a)
-#define IDirectMusic8_GetDefaultPort(p,a)			ICOM_CALL1(GetDefaultPort,p,a)
-#define IDirectMusic8_SetDirectSound(p,a,b)			ICOM_CALL2(SetDirectSound,p,a,b)
+#define IDirectMusic8_EnumPort(p,a,b)               (p)->lpVtbl->EnumPort(p,a,b)
+#define IDirectMusic8_CreateMusicBuffer(p,a,b,c)    (p)->lpVtbl->CreateMusicBuffer(p,a,b,c)
+#define IDirectMusic8_CreatePort(p,a,b,c,d)         (p)->lpVtbl->CreatePort(p,a,b,c,d)
+#define IDirectMusic8_EnumMasterClock(p,a,b)        (p)->lpVtbl->EnumMasterClock(p,a,b)
+#define IDirectMusic8_GetMasterClock(p,a,b)         (p)->lpVtbl->GetMasterClock(p,a,b)
+#define IDirectMusic8_SetMasterClock(p,a)           (p)->lpVtbl->SetMasterClock(p,a)
+#define IDirectMusic8_Activate(p,a)                 (p)->lpVtbl->Activate(p,a)
+#define IDirectMusic8_GetDefaultPort(p,a)           (p)->lpVtbl->GetDefaultPort(p,a)
+#define IDirectMusic8_SetDirectSound(p,a,b)         (p)->lpVtbl->SetDirectSound(p,a,b)
 /*** IDirectMusic8 methods ***/
-#define IDirectMusic8_SetExternalMasterClock(p,a)	ICOM_CALL1(SetExternalMasterClock,p,a)
+#define IDirectMusic8_SetExternalMasterClock(p,a)   (p)->lpVtbl->SetExternalMasterClock(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -385,25 +389,27 @@ ICOM_DEFINE(IDirectMusic8,IDirectMusic)
 ICOM_DEFINE(IDirectMusicBuffer,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicBuffer_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicBuffer_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicBuffer_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicBuffer_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicBuffer_AddRef(p)                        (p)->lpVtbl->AddRef(p)
+#define IDirectMusicBuffer_Release(p)                       (p)->lpVtbl->Release(p)
 /*** IDirectMusicBuffer methods ***/
-#define IDirectMusicBuffer_Flush(p)							ICOM_CALL (Flush,p)
-#define IDirectMusicBuffer_TotalTime(p,a)					ICOM_CALL1(TotalTime,p,a)
-#define IDirectMusicBuffer_PackStructured(p,a,b,c)			ICOM_CALL3(PackStructured,p,a,b,c)
-#define IDirectMusicBuffer_PackUnstructured(p,a,b,c,d)		ICOM_CALL4(PackUnstructured,p,a,b,c,d)
-#define IDirectMusicBuffer_ResetReadPtr(p)					ICOM_CALL (ResetReadPtr,p)
-#define IDirectMusicBuffer_GetNextEvent(p,a,b,c,d)			ICOM_CALL4(GetNextEvent,p,a,b,c,d)
-#define IDirectMusicBuffer_GetRawBufferPtr(p,a)				ICOM_CALL1(GetRawBufferPtr,p,a)
-#define IDirectMusicBuffer_GetStartTime(p,a)				ICOM_CALL1(GetStartTime,p,a)
-#define IDirectMusicBuffer_GetUsedBytes(p,a)				ICOM_CALL1(GetUsedBytes,p,a)
-#define IDirectMusicBuffer_GetMaxBytes(p,a)					ICOM_CALL1(GetMaxBytes,p,a)
-#define IDirectMusicBuffer_GetBufferFormat(p,a)				ICOM_CALL1(GetBufferFormat,p,a)
-#define IDirectMusicBuffer_SetStartTime(p,a)				ICOM_CALL1(SetStartTime,p,a)
-#define IDirectMusicBuffer_SetUsedBytes(p,a)				ICOM_CALL1(SetUsedBytes,p,a)
-    
+#define IDirectMusicBuffer_Flush(p)                         (p)->lpVtbl->Flush(p)
+#define IDirectMusicBuffer_TotalTime(p,a)                   (p)->lpVtbl->TotalTime(p,a)
+#define IDirectMusicBuffer_PackStructured(p,a,b,c)          (p)->lpVtbl->PackStructured(p,a,b,c)
+#define IDirectMusicBuffer_PackUnstructured(p,a,b,c,d)      (p)->lpVtbl->PackUnstructured(p,a,b,c,d)
+#define IDirectMusicBuffer_ResetReadPtr(p)                  (p)->lpVtbl->ResetReadPtr(p)
+#define IDirectMusicBuffer_GetNextEvent(p,a,b,c,d)          (p)->lpVtbl->GetNextEvent(p,a,b,c,d)
+#define IDirectMusicBuffer_GetRawBufferPtr(p,a)             (p)->lpVtbl->GetRawBufferPtr(p,a)
+#define IDirectMusicBuffer_GetStartTime(p,a)                (p)->lpVtbl->GetStartTime(p,a)
+#define IDirectMusicBuffer_GetUsedBytes(p,a)                (p)->lpVtbl->GetUsedBytes(p,a)
+#define IDirectMusicBuffer_GetMaxBytes(p,a)                 (p)->lpVtbl->GetMaxBytes(p,a)
+#define IDirectMusicBuffer_GetBufferFormat(p,a)             (p)->lpVtbl->GetBufferFormat(p,a)
+#define IDirectMusicBuffer_SetStartTime(p,a)                (p)->lpVtbl->SetStartTime(p,a)
+#define IDirectMusicBuffer_SetUsedBytes(p,a)                (p)->lpVtbl->SetUsedBytes(p,a)
+#endif
+
 /*****************************************************************************
  * IDirectMusicInstrument interface
  */
@@ -421,13 +427,15 @@ ICOM_DEFINE(IDirectMusicBuffer,IUnknown)
 ICOM_DEFINE(IDirectMusicInstrument,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicInstrument_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicInstrument_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicInstrument_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicInstrument_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicInstrument_AddRef(p)                        (p)->lpVtbl->AddRef(p)
+#define IDirectMusicInstrument_Release(p)                       (p)->lpVtbl->Release(p)
 /*** IDirectMusicInstrument methods ***/
-#define IDirectMusicInstrument_GetPatch(p,a)					ICOM_CALL1(GetPatch,p,a)
-#define IDirectMusicInstrument_SetPatch(p,a)					ICOM_CALL1(SetPatch,p,a)
+#define IDirectMusicInstrument_GetPatch(p,a)                    (p)->lpVtbl->GetPatch(p,a)
+#define IDirectMusicInstrument_SetPatch(p,a)                    (p)->lpVtbl->SetPatch(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -446,12 +454,14 @@ ICOM_DEFINE(IDirectMusicInstrument,IUnknown)
 ICOM_DEFINE(IDirectMusicDownloadedInstrument,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicDownloadedInstrument_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicDownloadedInstrument_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicDownloadedInstrument_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicDownloadedInstrument_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicDownloadedInstrument_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IDirectMusicDownloadedInstrument_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IDirectMusicDownloadedInstrument methods ***/
 /* none at this time */
+#endif
 
 
 /*****************************************************************************
@@ -471,13 +481,15 @@ ICOM_DEFINE(IDirectMusicDownloadedInstrument,IUnknown)
 ICOM_DEFINE(IDirectMusicCollection,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicCollection_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicCollection_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicCollection_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicCollection_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicCollection_AddRef(p)                        (p)->lpVtbl->AddRef(p)
+#define IDirectMusicCollection_Release(p)                       (p)->lpVtbl->Release(p)
 /*** IDirectMusicCollection methods ***/
-#define IDirectMusicCollection_GetInstrument(p,a,b)				ICOM_CALL2(GetInstrument,p,a,b)
-#define IDirectMusicCollection_EnumInstrument(p,a,b,c)			ICOM_CALL3(EnumInstrument,p,a,b,c)
+#define IDirectMusicCollection_GetInstrument(p,a,b)             (p)->lpVtbl->GetInstrument(p,a,b)
+#define IDirectMusicCollection_EnumInstrument(p,a,b,c)          (p)->lpVtbl->EnumInstrument(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -496,12 +508,14 @@ ICOM_DEFINE(IDirectMusicCollection,IUnknown)
 ICOM_DEFINE(IDirectMusicDownload,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicDownload_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicDownload_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicDownload_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicDownload_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicDownload_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IDirectMusicDownload_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IDirectMusicDownload methods ***/
-#define IDirectMusicDownload_GetBuffer(p,a,b)				ICOM_CALL2(GetBuffer,p,a,b)
+#define IDirectMusicDownload_GetBuffer(p,a,b)               (p)->lpVtbl->GetBuffer(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -518,24 +532,26 @@ ICOM_DEFINE(IDirectMusicDownload,IUnknown)
     STDMETHOD(Download)(THIS_ IDirectMusicDownload *pIDMDownload) PURE; \
     STDMETHOD(Unload)(THIS_ IDirectMusicDownload *pIDMDownload) PURE;
 
-	/*** IDirectMusicPortDownload methods ***/
+    /*** IDirectMusicPortDownload methods ***/
 #define IDirectMusicPortDownload_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicPortDownload_METHODS
 ICOM_DEFINE(IDirectMusicPortDownload,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicPortDownload_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicPortDownload_AddRef(p)						ICOM_CALL (AddRef,p)
-#define IDirectMusicPortDownload_Release(p)						ICOM_CALL (Release,p)
+#define IDirectMusicPortDownload_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicPortDownload_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IDirectMusicPortDownload_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IDirectMusicPortDownload methods ***/
-#define IDirectMusicPortDownload_GetBuffer(p,a,b)				ICOM_CALL2(GetBuffer,p,a,b)
-#define IDirectMusicPortDownload_AllocateBuffer(p,a,b)			ICOM_CALL2(AllocateBuffer,p,a,b)
-#define IDirectMusicPortDownload_GetDLId(p,a,b)					ICOM_CALL2(GetDLId,p,a,b)
-#define IDirectMusicPortDownload_GetAppend(p,a)					ICOM_CALL1(GetAppend,p,a)
-#define IDirectMusicPortDownload_Download(p,a)					ICOM_CALL1(Download,p,a)
-#define IDirectMusicPortDownload_Unload(p,a)					ICOM_CALL1(GetBuffer,p,a)
+#define IDirectMusicPortDownload_GetBuffer(p,a,b)               (p)->lpVtbl->GetBuffer(p,a,b)
+#define IDirectMusicPortDownload_AllocateBuffer(p,a,b)          (p)->lpVtbl->AllocateBuffer(p,a,b)
+#define IDirectMusicPortDownload_GetDLId(p,a,b)                 (p)->lpVtbl->GetDLId(p,a,b)
+#define IDirectMusicPortDownload_GetAppend(p,a)                 (p)->lpVtbl->GetAppend(p,a)
+#define IDirectMusicPortDownload_Download(p,a)                  (p)->lpVtbl->Download(p,a)
+#define IDirectMusicPortDownload_Unload(p,a)                    (p)->lpVtbl->GetBuffer(p,a)
+#endif
 
 
 #ifndef __WINE_DIRECTAUDIO_PRIORITIES_DEFINED
@@ -615,27 +631,29 @@ ICOM_DEFINE(IDirectMusicPortDownload,IUnknown)
 ICOM_DEFINE(IDirectMusicPort,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicPort_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicPort_AddRef(p)								ICOM_CALL (AddRef,p)
-#define IDirectMusicPort_Release(p)								ICOM_CALL (Release,p)
+#define IDirectMusicPort_QueryInterface(p,a,b)                  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicPort_AddRef(p)                              (p)->lpVtbl->AddRef(p)
+#define IDirectMusicPort_Release(p)                             (p)->lpVtbl->Release(p)
 /*** IDirectMusicPort methods ***/
-#define IDirectMusicPort_PlayBuffer(p,a)						ICOM_CALL1(PlayBuffer,p,a)
-#define IDirectMusicPort_SetReadNotificationHandle(p,a)			ICOM_CALL1(SetReadNotificationHandle,p,a)
-#define IDirectMusicPort_Read(p,a)								ICOM_CALL1(Read,p,a)
-#define IDirectMusicPort_DownloadInstrument(p,a,b,c,d)			ICOM_CALL4(DownloadInstrument,p,a,b,c,d)
-#define IDirectMusicPort_UnloadInstrument(p,a)					ICOM_CALL1(UnloadInstrument,p,a)
-#define IDirectMusicPort_GetLatencyClock(p,a)					ICOM_CALL1(GetLatencyClock,p,a)
-#define IDirectMusicPort_GetRunningStats(p,a)					ICOM_CALL1(GetRunningStats,p,a)
-#define IDirectMusicPort_GetCaps(p,a)							ICOM_CALL1(GetCaps,p,a)
-#define IDirectMusicPort_DeviceIoControl(p,a,b,c,d,e,f,g)		ICOM_CALL7(DeviceIoControl,p,a,b,c,d,e,f,g)
-#define IDirectMusicPort_SetNumChannelGroups(p,a)				ICOM_CALL1(SetNumChannelGroups,p,a)
-#define IDirectMusicPort_GetNumChannelGroups(p,a)				ICOM_CALL1(GetNumChannelGroups,p,a)
-#define IDirectMusicPort_Activate(p,a)							ICOM_CALL1(Activate,p,a)
-#define IDirectMusicPort_SetChannelPriority(p,a,b,c)			ICOM_CALL3(SetChannelPriority,p,a,b,c)
-#define IDirectMusicPort_GetChannelPriority(p,a,b,c)			ICOM_CALL3(GetChannelPriority,p,a,b,c)
-#define IDirectMusicPort_SetDirectSound(p,a,b)					ICOM_CALL2(SetDirectSound,p,a,b)
-#define IDirectMusicPort_GetFormat(p,a,b,c)						ICOM_CALL3(GetFormat,p,a,b,c)
+#define IDirectMusicPort_PlayBuffer(p,a)                        (p)->lpVtbl->PlayBuffer(p,a)
+#define IDirectMusicPort_SetReadNotificationHandle(p,a)         (p)->lpVtbl->SetReadNotificationHandle(p,a)
+#define IDirectMusicPort_Read(p,a)                              (p)->lpVtbl->Read(p,a)
+#define IDirectMusicPort_DownloadInstrument(p,a,b,c,d)          (p)->lpVtbl->DownloadInstrument(p,a,b,c,d)
+#define IDirectMusicPort_UnloadInstrument(p,a)                  (p)->lpVtbl->UnloadInstrument(p,a)
+#define IDirectMusicPort_GetLatencyClock(p,a)                   (p)->lpVtbl->GetLatencyClock(p,a)
+#define IDirectMusicPort_GetRunningStats(p,a)                   (p)->lpVtbl->GetRunningStats(p,a)
+#define IDirectMusicPort_GetCaps(p,a)                           (p)->lpVtbl->GetCaps(p,a)
+#define IDirectMusicPort_DeviceIoControl(p,a,b,c,d,e,f,g)       (p)->lpVtbl->DeviceIoControl(p,a,b,c,d,e,f,g)
+#define IDirectMusicPort_SetNumChannelGroups(p,a)               (p)->lpVtbl->SetNumChannelGroups(p,a)
+#define IDirectMusicPort_GetNumChannelGroups(p,a)               (p)->lpVtbl->GetNumChannelGroups(p,a)
+#define IDirectMusicPort_Activate(p,a)                          (p)->lpVtbl->Activate(p,a)
+#define IDirectMusicPort_SetChannelPriority(p,a,b,c)            (p)->lpVtbl->SetChannelPriority(p,a,b,c)
+#define IDirectMusicPort_GetChannelPriority(p,a,b,c)            (p)->lpVtbl->GetChannelPriority(p,a,b,c)
+#define IDirectMusicPort_SetDirectSound(p,a,b)                  (p)->lpVtbl->SetDirectSound(p,a,b)
+#define IDirectMusicPort_GetFormat(p,a,b,c)                     (p)->lpVtbl->GetFormat(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -654,12 +672,14 @@ ICOM_DEFINE(IDirectMusicPort,IUnknown)
 ICOM_DEFINE(IDirectMusicThru,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectMusicThru_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectMusicThru_AddRef(p)								ICOM_CALL (AddRef,p)
-#define IDirectMusicThru_Release(p)								ICOM_CALL (Release,p)
+#define IDirectMusicThru_QueryInterface(p,a,b)                  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectMusicThru_AddRef(p)                              (p)->lpVtbl->AddRef(p)
+#define IDirectMusicThru_Release(p)                             (p)->lpVtbl->Release(p)
 /*** IDirectMusicThru methods ***/
-#define IDirectMusicThru_ThruChannel(p,a,b,c,d,e)				ICOM_CALL5(ThruChannel,p,a,b,c,d,e)
+#define IDirectMusicThru_ThruChannel(p,a,b,c,d,e)               (p)->lpVtbl->ThruChannel(p,a,b,c,d,e)
+#endif
 
 
 /* this one should be defined in dsound.h too, but it's ok if it's here */
@@ -678,22 +698,24 @@ ICOM_DEFINE(IDirectMusicThru,IUnknown)
     STDMETHOD(AdvisePeriodic)(THIS_ REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD *pdwAdviseCookie) PURE; \
     STDMETHOD(Unadvise)(THIS_ DWORD dwAdviseCookie) PURE;
 
-	/*** IReferenceClock methods ***/
+    /*** IReferenceClock methods ***/
 #define IReferenceClock_IMETHODS \
     IUnknown_IMETHODS \
     IReferenceClock_METHODS
 ICOM_DEFINE(IReferenceClock,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IReferenceClock_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
-#define IReferenceClock_AddRef(p)								ICOM_CALL (AddRef,p)
-#define IReferenceClock_Release(p)								ICOM_CALL (Release,p)
+#define IReferenceClock_QueryInterface(p,a,b)                   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IReferenceClock_AddRef(p)                               (p)->lpVtbl->AddRef(p)
+#define IReferenceClock_Release(p)                              (p)->lpVtbl->Release(p)
 /*** IReferenceClock methods ***/
-#define IReferenceClock_GetTime(p,a)							ICOM_CALL1(GetTime,p,a)
-#define IReferenceClock_AdviseTime(p,a,b,c,d)					ICOM_CALL4(AdviseTime,p,a,b,c,d)
-#define IReferenceClock_AdvisePeriodic(p,a,b,c,d)				ICOM_CALL4(AdvisePeriodic,p,a,b,c,d)
-#define IReferenceClock_Unadvise(p,a)							ICOM_CALL1(Unadvise,p,a)
+#define IReferenceClock_GetTime(p,a)                            (p)->lpVtbl->GetTime(p,a)
+#define IReferenceClock_AdviseTime(p,a,b,c,d)                   (p)->lpVtbl->AdviseTime(p,a,b,c,d)
+#define IReferenceClock_AdvisePeriodic(p,a,b,c,d)               (p)->lpVtbl->AdvisePeriodic(p,a,b,c,d)
+#define IReferenceClock_Unadvise(p,a)                           (p)->lpVtbl->Unadvise(p,a)
+#endif
 
 #endif /* __IReferenceClock_INTERFACE_DEFINED__ */
 

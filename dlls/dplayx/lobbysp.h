@@ -482,27 +482,29 @@ HRESULT WINAPI DPLSPInit(LPSPDATA_INIT);
 ICOM_DEFINE(IDPLobbySP,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDPLobbySP_QueryInterface(p,a,b)         ICOM_CALL2(QueryInterface,p,a,b)
-#define IDPLobbySP_AddRef(p)                     ICOM_CALL (AddRef,p)
-#define IDPLobbySP_Release(p)                    ICOM_CALL (Release,p)
+#define IDPLobbySP_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDPLobbySP_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IDPLobbySP_Release(p)                    (p)->lpVtbl->Release(p)
 
 /*** IDPLobbySP methods ***/
-#define IDPLobbySP_AddGroupToGroup(p,a)          ICOM_CALL1(AddGroupToGroup,p,a)
-#define IDPLobbySP_AddPlayerToGroup(p,a)         ICOM_CALL1(AddPlayerToGroup,p,a)
-#define IDPLobbySP_CreateGroup(p,a)              ICOM_CALL1(CreateGroup,p,a)
-#define IDPLobbySP_CreateGroupInGroup(p,a)       ICOM_CALL1(CreateGroupInGroup,p,a)
-#define IDPLobbySP_DeleteGroupFromGroup(p,a)     ICOM_CALL1(DeleteGroupFromGroup,p,a)
-#define IDPLobbySP_DeletePlayerFromGroup(p,a)    ICOM_CALL1(DeletePlayerFromGroup,p,a)
-#define IDPLobbySP_DestroyGroup(p,a)             ICOM_CALL1(DestroyGroup,p,a)
-#define IDPLobbySP_EnumSessionsResponse(p,a)     ICOM_CALL1(EnumSessionsResponse,p,a)
-#define IDPLobbySP_GetSPDataPointer(p,a)         ICOM_CALL1(GetSPDataPointer,p,a)
-#define IDPLobbySP_HandleMessage(p,a)            ICOM_CALL1(HandleMessage,p,a)
-#define IDPLobbySP_SetGroupName(p,a)             ICOM_CALL1(SetGroupName,p,a)
-#define IDPLobbySP_SetPlayerName(p,a)            ICOM_CALL1(SetPlayerName,p,a)
-#define IDPLobbySP_SetSessionDesc(p,a)           ICOM_CALL1(SetSessionDesc,p,a)
-#define IDPLobbySP_StartSession(p,a)             ICOM_CALL1(StartSession,p,a)
-#define IDPLobbySP_SetSPDataPointer(p,a)         ICOM_CALL1(SetSPDataPointer,p,a)
+#define IDPLobbySP_AddGroupToGroup(p,a)          (p)->lpVtbl->AddGroupToGroup(p,a)
+#define IDPLobbySP_AddPlayerToGroup(p,a)         (p)->lpVtbl->AddPlayerToGroup(p,a)
+#define IDPLobbySP_CreateGroup(p,a)              (p)->lpVtbl->CreateGroup(p,a)
+#define IDPLobbySP_CreateGroupInGroup(p,a)       (p)->lpVtbl->CreateGroupInGroup(p,a)
+#define IDPLobbySP_DeleteGroupFromGroup(p,a)     (p)->lpVtbl->DeleteGroupFromGroup(p,a)
+#define IDPLobbySP_DeletePlayerFromGroup(p,a)    (p)->lpVtbl->DeletePlayerFromGroup(p,a)
+#define IDPLobbySP_DestroyGroup(p,a)             (p)->lpVtbl->DestroyGroup(p,a)
+#define IDPLobbySP_EnumSessionsResponse(p,a)     (p)->lpVtbl->EnumSessionsResponse(p,a)
+#define IDPLobbySP_GetSPDataPointer(p,a)         (p)->lpVtbl->GetSPDataPointer(p,a)
+#define IDPLobbySP_HandleMessage(p,a)            (p)->lpVtbl->HandleMessage(p,a)
+#define IDPLobbySP_SetGroupName(p,a)             (p)->lpVtbl->SetGroupName(p,a)
+#define IDPLobbySP_SetPlayerName(p,a)            (p)->lpVtbl->SetPlayerName(p,a)
+#define IDPLobbySP_SetSessionDesc(p,a)           (p)->lpVtbl->SetSessionDesc(p,a)
+#define IDPLobbySP_StartSession(p,a)             (p)->lpVtbl->StartSession(p,a)
+#define IDPLobbySP_SetSPDataPointer(p,a)         (p)->lpVtbl->SetSPDataPointer(p,a)
+#endif
 
 /* This variable is exported from the DLL at ordinal 6 to be accessed by the
  * SP directly. This is the same variable that the DP SP will use.

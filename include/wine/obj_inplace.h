@@ -173,13 +173,15 @@ typedef struct IOleLink IOleLink, *LPOLELINK;
 ICOM_DEFINE(IOleWindow,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleWindow_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleWindow_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleWindow_Release(p)                 ICOM_CALL (Release,p)
+#define IOleWindow_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleWindow_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleWindow_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleWindow methods ***/
-#define IOleWindow_GetWindow(p,a)             ICOM_CALL1(GetWindow,p,a)
-#define IOleWindow_ContextSensitiveHelp(p,a)  ICOM_CALL1(ContextSensitiveHelp,p,a)
+#define IOleWindow_GetWindow(p,a)             (p)->lpVtbl->GetWindow(p,a)
+#define IOleWindow_ContextSensitiveHelp(p,a)  (p)->lpVtbl->ContextSensitiveHelp(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -197,18 +199,20 @@ ICOM_DEFINE(IOleWindow,IUnknown)
 ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleInPlaceObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleInPlaceObject_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleInPlaceObject_Release(p)                 ICOM_CALL (Release,p)
+#define IOleInPlaceObject_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleInPlaceObject_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleInPlaceObject_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleWindow methods ***/
-#define IOleInPlaceObject_GetWindow(p,a)             ICOM_CALL1(GetWindow,p,a)
-#define IOleInPlaceObject_ContextSensitiveHelp(p,a)  ICOM_CALL1(ContextSensitiveHelp,p,a)
+#define IOleInPlaceObject_GetWindow(p,a)             (p)->lpVtbl->GetWindow(p,a)
+#define IOleInPlaceObject_ContextSensitiveHelp(p,a)  (p)->lpVtbl->ContextSensitiveHelp(p,a)
 /*** IOleInPlaceObject methods ***/
-#define IOleInPlaceObject_InPlaceDeactivate(p)       ICOM_CALL (InPlaceDeactivate,p)
-#define IOleInPlaceObject_UIDeactivate(p)            ICOM_CALL (UIDeactivate,p)
-#define IOleInPlaceObject_SetObjectRects(p,a,b)      ICOM_CALL2(SetObjectRects,p,a,b)
-#define IOleInPlaceObject_ReactivateAndUndo(p)       ICOM_CALL (ReactivateAndUndo,p)
+#define IOleInPlaceObject_InPlaceDeactivate(p)       (p)->lpVtbl->InPlaceDeactivate(p)
+#define IOleInPlaceObject_UIDeactivate(p)            (p)->lpVtbl->UIDeactivate(p)
+#define IOleInPlaceObject_SetObjectRects(p,a,b)      (p)->lpVtbl->SetObjectRects(p,a,b)
+#define IOleInPlaceObject_ReactivateAndUndo(p)       (p)->lpVtbl->ReactivateAndUndo(p)
+#endif
 
 /*****************************************************************************
  * IOleInPlaceActiveObject interface
@@ -226,19 +230,21 @@ ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
 ICOM_DEFINE(IOleInPlaceActiveObject,IOleWindow)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleInPlaceActiveObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleInPlaceActiveObject_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleInPlaceActiveObject_Release(p)                 ICOM_CALL (Release,p)
+#define IOleInPlaceActiveObject_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleInPlaceActiveObject_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleInPlaceActiveObject_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleWindow methods ***/
-#define IOleInPlaceActiveObject_GetWindow(p,a)             ICOM_CALL1(GetWindow,p,a)
-#define IOleInPlaceActiveObject_ContextSensitiveHelp(p,a)  ICOM_CALL1(ContextSensitiveHelp,p,a)
+#define IOleInPlaceActiveObject_GetWindow(p,a)             (p)->lpVtbl->GetWindow(p,a)
+#define IOleInPlaceActiveObject_ContextSensitiveHelp(p,a)  (p)->lpVtbl->ContextSensitiveHelp(p,a)
 /*** IOleInPlaceActiveObject methods ***/
-#define IOleInPlaceActiveObject_TranslateAccelerator(p,a)  ICOM_CALL1(TranslateAccelerator,p,a)
-#define IOleInPlaceActiveObject_OnFrameWindowActivate(p,a) ICOM_CALL1(OnFrameWindowActivate,p,a)
-#define IOleInPlaceActiveObject_OnDocWindowActivate(p,a)   ICOM_CALL1(OnDocWindowActivate,p,a)
-#define IOleInPlaceActiveObject_ResizeBorder(p,a,b,c)      ICOM_CALL3(ResizeBorder,p,a,b,c)
-#define IOleInPlaceActiveObject_EnableModeless(p,a)        ICOM_CALL1(EnableModeless,p,a)
+#define IOleInPlaceActiveObject_TranslateAccelerator(p,a)  (p)->lpVtbl->TranslateAccelerator(p,a)
+#define IOleInPlaceActiveObject_OnFrameWindowActivate(p,a) (p)->lpVtbl->OnFrameWindowActivate(p,a)
+#define IOleInPlaceActiveObject_OnDocWindowActivate(p,a)   (p)->lpVtbl->OnDocWindowActivate(p,a)
+#define IOleInPlaceActiveObject_ResizeBorder(p,a,b,c)      (p)->lpVtbl->ResizeBorder(p,a,b,c)
+#define IOleInPlaceActiveObject_EnableModeless(p,a)        (p)->lpVtbl->EnableModeless(p,a)
+#endif
 
 /*****************************************************************************
  * IOleInPlaceUIWindow interface
@@ -255,18 +261,20 @@ ICOM_DEFINE(IOleInPlaceActiveObject,IOleWindow)
 ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleInPlaceUIWindow_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleInPlaceUIWindow_AddRef(p)                 ICOM_CALL (AddRef,p)
-#define IOleInPlaceUIWindow_Release(p)                ICOM_CALL (Release,p)
+#define IOleInPlaceUIWindow_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleInPlaceUIWindow_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IOleInPlaceUIWindow_Release(p)                (p)->lpVtbl->Release(p)
 /*** IOleWindow methods ***/
-#define IOleInPlaceUIWindow_GetWindow(p,a)            ICOM_CALL1(GetWindow,p,a)
-#define IOleInPlaceUIWindow_ContextSensitiveHelp(p,a) ICOM_CALL1(ContextSensitiveHelp,p,a)
+#define IOleInPlaceUIWindow_GetWindow(p,a)            (p)->lpVtbl->GetWindow(p,a)
+#define IOleInPlaceUIWindow_ContextSensitiveHelp(p,a) (p)->lpVtbl->ContextSensitiveHelp(p,a)
 /*** IOleInPlaceUIWindow methods ***/
-#define IOleInPlaceUIWindow_GetBorder(p,a)            ICOM_CALL1(GetBorder,p,a)
-#define IOleInPlaceUIWindow_RequestBorderSpace(p,a)   ICOM_CALL1(RequestBorderSpace,p,a)
-#define IOleInPlaceUIWindow_SetBorderSpace(p,a)       ICOM_CALL1(SetBorderSpace,p,a)
-#define IOleInPlaceUIWindow_SetActiveObject(p,a,b)    ICOM_CALL2(SetActiveObject,p,a,b)
+#define IOleInPlaceUIWindow_GetBorder(p,a)            (p)->lpVtbl->GetBorder(p,a)
+#define IOleInPlaceUIWindow_RequestBorderSpace(p,a)   (p)->lpVtbl->RequestBorderSpace(p,a)
+#define IOleInPlaceUIWindow_SetBorderSpace(p,a)       (p)->lpVtbl->SetBorderSpace(p,a)
+#define IOleInPlaceUIWindow_SetActiveObject(p,a,b)    (p)->lpVtbl->SetActiveObject(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -286,25 +294,27 @@ ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleInPlaceFrame_QueryInterface(p,a,b)    ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleInPlaceFrame_AddRef(p)                ICOM_CALL (AddRef,p)
-#define IOleInPlaceFrame_Release(p)               ICOM_CALL (Release,p)
+#define IOleInPlaceFrame_QueryInterface(p,a,b)    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleInPlaceFrame_AddRef(p)                (p)->lpVtbl->AddRef(p)
+#define IOleInPlaceFrame_Release(p)               (p)->lpVtbl->Release(p)
 /*** IOleWindow methods ***/
-#define IOleInPlaceFrame_GetWindow                ICOM_CALL1(GetWindow,p,a)
-#define IOleInPlaceFrame_ContextSensitiveHelp     ICOM_CALL1(ContextSensitiveHelp,p,a)
+#define IOleInPlaceFrame_GetWindow(p,a)           (p)->lpVtbl->GetWindow(p,a)
+#define IOleInPlaceFrame_ContextSensitiveHelp(p,a) (p)->lpVtbl->ContextSensitiveHelp(p,a)
 /*** IOleInPlaceUIWindow methods ***/
-#define IOleInPlaceFrame_GetBorder                ICOM_CALL1(GetBorder,p,a)
-#define IOleInPlaceFrame_RequestBorderSpace       ICOM_CALL1(RequestBorderSpace,p,a)
-#define IOleInPlaceFrame_SetBorderSpace           ICOM_CALL1(SetBorderSpace,p,a)
-#define IOleInPlaceFrame_SetActiveObject          ICOM_CALL2(SetActiveObject,p,a,b)
+#define IOleInPlaceFrame_GetBorder(p,a)           (p)->lpVtbl->GetBorder(p,a)
+#define IOleInPlaceFrame_RequestBorderSpace(p,a)  (p)->lpVtbl->RequestBorderSpace(p,a)
+#define IOleInPlaceFrame_SetBorderSpace(p,a)      (p)->lpVtbl->SetBorderSpace(p,a)
+#define IOleInPlaceFrame_SetActiveObject(p,a,b)   (p)->lpVtbl->SetActiveObject(p,a,b)
 /*** IOleInPlaceFrame methods ***/
-#define IOleInPlaceFrame_InsertMenus              ICOM_CALL2(InsertMenus,p,a,b)
-#define IOleInPlaceFrame_SetMenu                  ICOM_CALL3(SetMenu,p,a,b,c)
-#define IOleInPlaceFrame_RemoveMenus              ICOM_CALL1(RemoveMenus,p,a)
-#define IOleInPlaceFrame_SetStatusText            ICOM_CALL1(SetStatusText,p,a)
-#define IOleInPlaceFrame_EnableModeless           ICOM_CALL1(EnableModeless,p,a)
-#define IOleInPlaceFrame_TranslateAccelerator     ICOM_CALL2(TranslateAccelerator,p,a,b)
+#define IOleInPlaceFrame_InsertMenus(p,a,b)       (p)->lpVtbl->InsertMenus(p,a,b)
+#define IOleInPlaceFrame_SetMenu(p,a,b,c)         (p)->lpVtbl->SetMenu(p,a,b,c)
+#define IOleInPlaceFrame_RemoveMenus(p,a)         (p)->lpVtbl->RemoveMenus(p,a)
+#define IOleInPlaceFrame_SetStatusText(p,a)       (p)->lpVtbl->SetStatusText(p,a)
+#define IOleInPlaceFrame_EnableModeless(p,a)      (p)->lpVtbl->EnableModeless(p,a)
+#define IOleInPlaceFrame_TranslateAccelerator(p,a,b) (p)->lpVtbl->TranslateAccelerator(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -328,24 +338,26 @@ ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 ICOM_DEFINE(IOleInPlaceSite,IOleWindow)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleInPlaceSite_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleInPlaceSite_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleInPlaceSite_Release(p)                 ICOM_CALL (Release,p)
+#define IOleInPlaceSite_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleInPlaceSite_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleInPlaceSite_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleWindow methods ***/
-#define IOleInPlaceSite_GetWindow(p,a)             ICOM_CALL1(GetWindow,p,a)
-#define IOleInPlaceSite_ContextSensitiveHelp(p,a)  ICOM_CALL1(ContextSensitiveHelp,p,a)
+#define IOleInPlaceSite_GetWindow(p,a)             (p)->lpVtbl->GetWindow(p,a)
+#define IOleInPlaceSite_ContextSensitiveHelp(p,a)  (p)->lpVtbl->ContextSensitiveHelp(p,a)
 /*** IOleInPlaceSite methods ***/
-#define IOleInPlaceSite_CanInPlaceActivate(p)      ICOM_CALL (CanInPlaceActivate,p)
-#define IOleInPlaceSite_OnInPlaceActivate(p)       ICOM_CALL (OnInPlaceActivate,p)
-#define IOleInPlaceSite_OnUIActivate(p)            ICOM_CALL (OnUIActivate,p)
-#define IOleInPlaceSite_GetWindowContext(p,a,b,c,d,e) ICOM_CALL5(GetWindowContext,p,a,b,c,d,e)
-#define IOleInPlaceSite_Scroll(p,a)                ICOM_CALL1(Scroll,p,a)
-#define IOleInPlaceSite_OnUIDeactivate(p,a)        ICOM_CALL1(OnUIDeactivate,p,a)
-#define IOleInPlaceSite_OnInPlaceDeactivate(p)     ICOM_CALL (OnInPlaceDeactivate,p)
-#define IOleInPlaceSite_DiscardUndoState(p)        ICOM_CALL (DiscardUndoState,p)
-#define IOleInPlaceSite_DeactivateAndUndo(p)       ICOM_CALL (DeactivateAndUndo,p)
-#define IOleInPlaceSite_OnPosRectChange(p,a)       ICOM_CALL1(OnPosRectChange,p,a)
+#define IOleInPlaceSite_CanInPlaceActivate(p)      (p)->lpVtbl->CanInPlaceActivate(p)
+#define IOleInPlaceSite_OnInPlaceActivate(p)       (p)->lpVtbl->OnInPlaceActivate(p)
+#define IOleInPlaceSite_OnUIActivate(p)            (p)->lpVtbl->OnUIActivate(p)
+#define IOleInPlaceSite_GetWindowContext(p,a,b,c,d,e) (p)->lpVtbl->GetWindowContext(p,a,b,c,d,e)
+#define IOleInPlaceSite_Scroll(p,a)                (p)->lpVtbl->Scroll(p,a)
+#define IOleInPlaceSite_OnUIDeactivate(p,a)        (p)->lpVtbl->OnUIDeactivate(p,a)
+#define IOleInPlaceSite_OnInPlaceDeactivate(p)     (p)->lpVtbl->OnInPlaceDeactivate(p)
+#define IOleInPlaceSite_DiscardUndoState(p)        (p)->lpVtbl->DiscardUndoState(p)
+#define IOleInPlaceSite_DeactivateAndUndo(p)       (p)->lpVtbl->DeactivateAndUndo(p)
+#define IOleInPlaceSite_OnPosRectChange(p,a)       (p)->lpVtbl->OnPosRectChange(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -365,17 +377,19 @@ ICOM_DEFINE(IOleInPlaceSite,IOleWindow)
 ICOM_DEFINE(IOleClientSite,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleClientSite_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleClientSite_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleClientSite_Release(p)                 ICOM_CALL (Release,p)
+#define IOleClientSite_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleClientSite_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleClientSite_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleClientSite methods ***/
-#define IOleClientSite_SaveObject(p)              ICOM_CALL (SaveObject,p)
-#define IOleClientSite_GetMoniker(p,a,b,c)        ICOM_CALL3(GetMoniker,p,a,b,c)
-#define IOleClientSite_GetContainer(p,a)          ICOM_CALL1(GetContainer,p,a)
-#define IOleClientSite_ShowObject(p)              ICOM_CALL (ShowObject,p)
-#define IOleClientSite_OnShowWindow(p,a)          ICOM_CALL1(OnShowWindow,p,a)
+#define IOleClientSite_SaveObject(p)              (p)->lpVtbl->SaveObject(p)
+#define IOleClientSite_GetMoniker(p,a,b,c)        (p)->lpVtbl->GetMoniker(p,a,b,c)
+#define IOleClientSite_GetContainer(p,a)          (p)->lpVtbl->GetContainer(p,a)
+#define IOleClientSite_ShowObject(p)              (p)->lpVtbl->ShowObject(p)
+#define IOleClientSite_OnShowWindow(p,a)          (p)->lpVtbl->OnShowWindow(p,a)
 #define IOleClientSite_RequestNewObjectLayout(p)  ICOM_CALL (RequestNewObjectLayout(p)
+#endif
 
 
 /*****************************************************************************
@@ -390,12 +404,14 @@ ICOM_DEFINE(IOleClientSite,IUnknown)
 ICOM_DEFINE(IParseDisplayName,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IParseDisplayName_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IParseDisplayName_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IParseDisplayName_Release(p)                 ICOM_CALL (Release,p)
+#define IParseDisplayName_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IParseDisplayName_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IParseDisplayName_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IParseDisplayName methods ***/
-#define IParseDisplayName_ParseDisplayName(p,a,b,c,d) ICOM_CALL4(ParseDisplayName,p,a,b,c,d)
+#define IParseDisplayName_ParseDisplayName(p,a,b,c,d) (p)->lpVtbl->ParseDisplayName(p,a,b,c,d)
+#endif
 
 
 /*****************************************************************************
@@ -411,15 +427,17 @@ ICOM_DEFINE(IParseDisplayName,IUnknown)
 ICOM_DEFINE(IOleContainer,IParseDisplayName)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleContainer_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleContainer_AddRef(p)                   ICOM_CALL (AddRef,p)
-#define IOleContainer_Release(p)                  ICOM_CALL (Release,p)
+#define IOleContainer_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleContainer_AddRef(p)                   (p)->lpVtbl->AddRef(p)
+#define IOleContainer_Release(p)                  (p)->lpVtbl->Release(p)
 /*** IParseDisplayName methods ***/
-#define IOleContainer_ParseDisplayName(p,a,b,c,d) ICOM_CALL4(ParseDisplayName,p,a,b,c,d)
+#define IOleContainer_ParseDisplayName(p,a,b,c,d) (p)->lpVtbl->ParseDisplayName(p,a,b,c,d)
 /*** IOleClientSite methods ***/
-#define IOleContainer_EnumObjects(p,a,b)          ICOM_CALL (EnumObjects,p,a,b)
-#define IOleContainer_LockContainer(p,a)          ICOM_CALL3(LockContainer,p,a)
+#define IOleContainer_EnumObjects(p,a,b)          (p)->lpVtbl->EnumObjects(p,a,b)
+#define IOleContainer_LockContainer(p,a)          (p)->lpVtbl->LockContainer(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -440,14 +458,16 @@ ICOM_DEFINE(IOleContainer,IParseDisplayName)
 ICOM_DEFINE(IOleItemContainer,IOleContainer)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleItemContainer_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleItemContainer_AddRef(p)                   ICOM_CALL (AddRef,p)
-#define IOleItemContainer_Release(p)                  ICOM_CALL (Release,p)
+#define IOleItemContainer_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleItemContainer_AddRef(p)                   (p)->lpVtbl->AddRef(p)
+#define IOleItemContainer_Release(p)                  (p)->lpVtbl->Release(p)
 /*** IParseDisplayName methods ***/
-#define IOleItemContainer_GetObject(p,a,b,c,d,e)      ICOM_CALL5(GetObject,p,a,b,c,d,e)
-#define IOleItemContainer_GetObjectStorage(p,a,b,c,d) ICOM_CALL4(GetObjectStorage,p,a,b,c,d)
-#define IOleItemContainer_IsRunning(p,a)              ICOM_CALL1(IsRunning,p,a)
+#define IOleItemContainer_GetObject(p,a,b,c,d,e)      (p)->lpVtbl->GetObject(p,a,b,c,d,e)
+#define IOleItemContainer_GetObjectStorage(p,a,b,c,d) (p)->lpVtbl->GetObjectStorage(p,a,b,c,d)
+#define IOleItemContainer_IsRunning(p,a)              (p)->lpVtbl->IsRunning(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -472,22 +492,24 @@ ICOM_DEFINE(IOleItemContainer,IOleContainer)
 ICOM_DEFINE(IOleLink,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleLink_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleLink_AddRef(p)                   ICOM_CALL (AddRef,p)
-#define IOleLink_Release(p)                  ICOM_CALL (Release,p)
+#define IOleLink_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleLink_AddRef(p)                   (p)->lpVtbl->AddRef(p)
+#define IOleLink_Release(p)                  (p)->lpVtbl->Release(p)
 /*** IOleLink methods ***/
-#define IOleLink_SetUpdateOptions(p,a)       ICOM_CALL1(SetUpdateOptions,p,a)
-#define IOleLink_GetUpdateOptions(p,a)       ICOM_CALL1(GetUpdateOptions,p,a)
-#define IOleLink_SetSourceMoniker(p,a,b)     ICOM_CALL2(SetSourceMoniker,p,a,b)
-#define IOleLink_GetSourceMoniker(p,a)       ICOM_CALL1(GetSourceMoniker,p,a)
-#define IOleLink_SetSourceDisplayName(p,a)   ICOM_CALL1(SetSourceDisplayName,p,a)
-#define IOleLink_GetSourceDisplayName(p,a)   ICOM_CALL1(GetSourceDisplayName,p,a)
-#define IOleLink_BindToSource(p,a,b)         ICOM_CALL2(BindToSource,p,a,b)
-#define IOleLink_BindIfRunning(p)            ICOM_CALL (BindIfRunning,p)
-#define IOleLink_GetBoundSource(p,a)         ICOM_CALL1(GetBoundSource,p,a)
-#define IOleLink_UnBindSource(p)             ICOM_CALL (UnBindSource,p)
-#define IOleLink_Update(p,a)                 ICOM_CALL1(Update,p,a)
+#define IOleLink_SetUpdateOptions(p,a)       (p)->lpVtbl->SetUpdateOptions(p,a)
+#define IOleLink_GetUpdateOptions(p,a)       (p)->lpVtbl->GetUpdateOptions(p,a)
+#define IOleLink_SetSourceMoniker(p,a,b)     (p)->lpVtbl->SetSourceMoniker(p,a,b)
+#define IOleLink_GetSourceMoniker(p,a)       (p)->lpVtbl->GetSourceMoniker(p,a)
+#define IOleLink_SetSourceDisplayName(p,a)   (p)->lpVtbl->SetSourceDisplayName(p,a)
+#define IOleLink_GetSourceDisplayName(p,a)   (p)->lpVtbl->GetSourceDisplayName(p,a)
+#define IOleLink_BindToSource(p,a,b)         (p)->lpVtbl->BindToSource(p,a,b)
+#define IOleLink_BindIfRunning(p)            (p)->lpVtbl->BindIfRunning(p)
+#define IOleLink_GetBoundSource(p,a)         (p)->lpVtbl->GetBoundSource(p,a)
+#define IOleLink_UnBindSource(p)             (p)->lpVtbl->UnBindSource(p)
+#define IOleLink_Update(p,a)                 (p)->lpVtbl->Update(p,a)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -68,41 +68,43 @@ typedef TEXTMETRICW TEXTMETRICOLE;
   STDMETHOD(ReleaseHfont)(THIS_ HFONT  hfont) PURE; \
   STDMETHOD(SetHdc)(THIS_ HDC  hdc) PURE;
 #define IFont_IMETHODS \
-	IUnknown_IMEHTODS \
+	IUnknown_IMETHODS \
 	IFont_METHODS
 ICOM_DEFINE(IFont,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IFont_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)
-#define IFont_AddRef(p)              ICOM_CALL (AddRef,p)
-#define IFont_Release(p)             ICOM_CALL (Release,p)
+#define IFont_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IFont_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IFont_Release(p)             (p)->lpVtbl->Release(p)
 /*** IFont methods ***/
-#define IFont_getName(p,a)           ICOM_CALL1(get_Name,p,a)
-#define IFont_putName(p,a)           ICOM_CALL1(put_Name,p,a)
-#define IFont_get_Size(p,a)          ICOM_CALL1(get_Size,p,a)
-#define IFont_put_Size(p,a)          ICOM_CALL1(put_Size,p,a)
-#define IFont_get_Bold(p,a)          ICOM_CALL1(get_Bold,p,a)
-#define IFont_put_Bold(p,a)          ICOM_CALL1(put_Bold,p,a)
-#define IFont_get_Italic(p,a)        ICOM_CALL1(get_Italic,p,a)
-#define IFont_put_Italic(p,a)        ICOM_CALL1(put_Italic,p,a)
-#define IFont_get_Underline(p,a)     ICOM_CALL1(get_Underline,p,a)
-#define IFont_put_Underline(p,a)     ICOM_CALL1(put_Underline,p,a)
-#define IFont_get_Strikethrough(p,a) ICOM_CALL1(get_Strikethrough,p,a)
-#define IFont_put_Strikethrough(p,a) ICOM_CALL1(put_Strikethrough,p,a)
-#define IFont_get_Weight(p,a)        ICOM_CALL1(get_Weight,p,a)
-#define IFont_put_Weight(p,a)        ICOM_CALL1(put_Weight,p,a)
-#define IFont_get_Charset(p,a)       ICOM_CALL1(get_Charset,p,a)
-#define IFont_put_Charset(p,a)       ICOM_CALL1(put_Charset,p,a)
-#define IFont_get_hFont(p,a)         ICOM_CALL1(get_hFont,p,a)
-#define IFont_put_hFont(p,a)         ICOM_CALL1(put_hFont,p,a)
-#define IFont_Clone(p,a)             ICOM_CALL1(Clone,p,a)
-#define IFont_IsEqual(p,a)           ICOM_CALL1(IsEqual,p,a)
-#define IFont_SetRatio(p,a,b)        ICOM_CALL2(SetRatio,p,a,b)
-#define IFont_QueryTextMetrics(p,a)  ICOM_CALL1(QueryTextMetrics,p,a)
-#define IFont_AddRefHfont(p,a)       ICOM_CALL1(AddRefHfont,p,a)
-#define IFont_ReleaseHfont(p,a)      ICOM_CALL1(ReleaseHfont,p,a)
-#define IFont_SetHdc(p,a)            ICOM_CALL1(SetHdc,p,a)
+#define IFont_getName(p,a)           (p)->lpVtbl->get_Name(p,a)
+#define IFont_putName(p,a)           (p)->lpVtbl->put_Name(p,a)
+#define IFont_get_Size(p,a)          (p)->lpVtbl->get_Size(p,a)
+#define IFont_put_Size(p,a)          (p)->lpVtbl->put_Size(p,a)
+#define IFont_get_Bold(p,a)          (p)->lpVtbl->get_Bold(p,a)
+#define IFont_put_Bold(p,a)          (p)->lpVtbl->put_Bold(p,a)
+#define IFont_get_Italic(p,a)        (p)->lpVtbl->get_Italic(p,a)
+#define IFont_put_Italic(p,a)        (p)->lpVtbl->put_Italic(p,a)
+#define IFont_get_Underline(p,a)     (p)->lpVtbl->get_Underline(p,a)
+#define IFont_put_Underline(p,a)     (p)->lpVtbl->put_Underline(p,a)
+#define IFont_get_Strikethrough(p,a) (p)->lpVtbl->get_Strikethrough(p,a)
+#define IFont_put_Strikethrough(p,a) (p)->lpVtbl->put_Strikethrough(p,a)
+#define IFont_get_Weight(p,a)        (p)->lpVtbl->get_Weight(p,a)
+#define IFont_put_Weight(p,a)        (p)->lpVtbl->put_Weight(p,a)
+#define IFont_get_Charset(p,a)       (p)->lpVtbl->get_Charset(p,a)
+#define IFont_put_Charset(p,a)       (p)->lpVtbl->put_Charset(p,a)
+#define IFont_get_hFont(p,a)         (p)->lpVtbl->get_hFont(p,a)
+#define IFont_put_hFont(p,a)         (p)->lpVtbl->put_hFont(p,a)
+#define IFont_Clone(p,a)             (p)->lpVtbl->Clone(p,a)
+#define IFont_IsEqual(p,a)           (p)->lpVtbl->IsEqual(p,a)
+#define IFont_SetRatio(p,a,b)        (p)->lpVtbl->SetRatio(p,a,b)
+#define IFont_QueryTextMetrics(p,a)  (p)->lpVtbl->QueryTextMetrics(p,a)
+#define IFont_AddRefHfont(p,a)       (p)->lpVtbl->AddRefHfont(p,a)
+#define IFont_ReleaseHfont(p,a)      (p)->lpVtbl->ReleaseHfont(p,a)
+#define IFont_SetHdc(p,a)            (p)->lpVtbl->SetHdc(p,a)
+#endif
 
 /*****************************************************************************
  * IFont interface
@@ -115,16 +117,18 @@ ICOM_DEFINE(IFont,IUnknown)
 ICOM_DEFINE(IFontDisp,IDispatch)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IFontDisp_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)
-#define IFontDisp_AddRef(p)              ICOM_CALL (AddRef,p)
-#define IFontDisp_Release(p)             ICOM_CALL (Release,p)
+#define IFontDisp_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IFontDisp_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IFontDisp_Release(p)             (p)->lpVtbl->Release(p)
 /*** IDispatch methods ***/
-#define IFontDisp_GetTypeInfoCount(p,a)      ICOM_CALL1 (GetTypeInfoCount,p,a)
-#define IFontDisp_GetTypeInfo(p,a,b,c)       ICOM_CALL3 (GetTypeInfo,p,a,b,c)
-#define IFontDisp_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
-#define IFontDisp_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
+#define IFontDisp_GetTypeInfoCount(p,a)      (p)->lpVtbl->GetTypeInfoCount(p,a)
+#define IFontDisp_GetTypeInfo(p,a,b,c)       (p)->lpVtbl->GetTypeInfo(p,a,b,c)
+#define IFontDisp_GetIDsOfNames(p,a,b,c,d,e) (p)->lpVtbl->GetIDsOfNames(p,a,b,c,d,e)
+#define IFontDisp_Invoke(p,a,b,c,d,e,f,g,h)  (p)->lpVtbl->Invoke(p,a,b,c,d,e,f,g,h)
 /*** IFontDisp methods ***/
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

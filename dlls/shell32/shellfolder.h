@@ -47,14 +47,16 @@ typedef struct ISFHelper ISFHelper, *LPISFHELPER;
 ICOM_DEFINE(ISFHelper, IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define ISFHelper_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define ISFHelper_AddRef(p)			ICOM_CALL (AddRef,p)
-#define ISFHelper_Release(p)			ICOM_CALL (Release,p)
+#define ISFHelper_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define ISFHelper_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define ISFHelper_Release(p)                    (p)->lpVtbl->Release(p)
 /*** ISFHelper methods ***/
-#define ISFHelper_GetUniqueName(p,a,b)		ICOM_CALL2(GetUniqueName,p,a,b)
-#define ISFHelper_AddFolder(p,a,b,c)		ICOM_CALL3(AddFolder,p,a,b,c)
-#define ISFHelper_DeleteItems(p,a,b)		ICOM_CALL2(DeleteItems,p,a,b)
-#define ISFHelper_CopyItems(p,a,b,c)		ICOM_CALL3(CopyItems,p,a,b,c)
+#define ISFHelper_GetUniqueName(p,a,b)          (p)->lpVtbl->GetUniqueName(p,a,b)
+#define ISFHelper_AddFolder(p,a,b,c)            (p)->lpVtbl->AddFolder(p,a,b,c)
+#define ISFHelper_DeleteItems(p,a,b)            (p)->lpVtbl->DeleteItems(p,a,b)
+#define ISFHelper_CopyItems(p,a,b,c)            (p)->lpVtbl->CopyItems(p,a,b,c)
+#endif
 
 #endif /* __WINE_SHELLFOLDER_HELP_H */

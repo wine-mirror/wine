@@ -136,13 +136,15 @@ typedef struct tagCMInvokeCommandInfoEx
 ICOM_DEFINE(IContextMenu,IUnknown)
 #undef INTERFACE
 
-#define IContextMenu_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define IContextMenu_AddRef(p)				ICOM_CALL(AddRef,p)
-#define IContextMenu_Release(p)				ICOM_CALL(Release,p)
-#define IContextMenu_QueryContextMenu(p,a,b,c,d,e)	ICOM_CALL5(QueryContextMenu,p,a,b,c,d,e)
-#define IContextMenu_InvokeCommand(p,a)			ICOM_CALL1(InvokeCommand,p,a)
-#define IContextMenu_GetCommandString(p,a,b,c,d,e)	ICOM_CALL5(GetCommandString,p,a,b,c,d,e)
-#define IContextMenu_HandleMenuMsg(p,a,b,c)		ICOM_CALL3(HandleMenuMsg,p,a,b,c)
+#ifdef COBJMACROS
+#define IContextMenu_QueryInterface(p,a,b)              (p)->lpVtbl->QueryInterface(p,a,b)
+#define IContextMenu_AddRef(p)                          (p)->lpVtbl->AddRef(p)
+#define IContextMenu_Release(p)                         (p)->lpVtbl->Release(p)
+#define IContextMenu_QueryContextMenu(p,a,b,c,d,e)      (p)->lpVtbl->QueryContextMenu(p,a,b,c,d,e)
+#define IContextMenu_InvokeCommand(p,a)                 (p)->lpVtbl->InvokeCommand(p,a)
+#define IContextMenu_GetCommandString(p,a,b,c,d,e)      (p)->lpVtbl->GetCommandString(p,a,b,c,d,e)
+#define IContextMenu_HandleMenuMsg(p,a,b,c)             (p)->lpVtbl->HandleMenuMsg(p,a,b,c)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

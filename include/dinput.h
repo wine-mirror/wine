@@ -1066,21 +1066,23 @@ DECL_WINELIB_TYPE_AW(LPCDIDEVICEIMAGEINFOHEADER)
 ICOM_DEFINE(IDirectInputEffect,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDirectInputEffect_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectInputEffect_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectInputEffect_Release(p)            ICOM_CALL (Release,p)
+#define IDirectInputEffect_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInputEffect_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInputEffect_Release(p)            (p)->lpVtbl->Release(p)
     /*** IDirectInputEffect methods ***/
-#define IDirectInputEffect_Initialize(p,a,b,c)    ICOM_CALL3(Initialize,p,a,b,c)
-#define IDirectInputEffect_GetEffectGuid(p,a)     ICOM_CALL1(GetEffectGuid,p,a)
-#define IDirectInputEffect_GetParameters(p,a,b)   ICOM_CALL2(GetParameters,p,a,b)
-#define IDirectInputEffect_SetParameters(p,a,b)   ICOM_CALL2(SetParameters,p,a,b)
-#define IDirectInputEffect_Start(p,a,b)           ICOM_CALL2(Start,p,a,b)
-#define IDirectInputEffect_Stop(p)                ICOM_CALL (Stop,p)
-#define IDirectInputEffect_GetEffectStatus(p,a,b) ICOM_CALL1(GetEffectStatus,p,a)
-#define IDirectInputEffect_Download(p)            ICOM_CALL (Download,p)
-#define IDirectInputEffect_Unload(p)              ICOM_CALL (Unload,p)
-#define IDirectInputEffect_Escape(p,a)            ICOM_CALL1(Escape,p,a)
+#define IDirectInputEffect_Initialize(p,a,b,c)    (p)->lpVtbl->Initialize(p,a,b,c)
+#define IDirectInputEffect_GetEffectGuid(p,a)     (p)->lpVtbl->GetEffectGuid(p,a)
+#define IDirectInputEffect_GetParameters(p,a,b)   (p)->lpVtbl->GetParameters(p,a,b)
+#define IDirectInputEffect_SetParameters(p,a,b)   (p)->lpVtbl->SetParameters(p,a,b)
+#define IDirectInputEffect_Start(p,a,b)           (p)->lpVtbl->Start(p,a,b)
+#define IDirectInputEffect_Stop(p)                (p)->lpVtbl->Stop(p)
+#define IDirectInputEffect_GetEffectStatus(p,a,b) (p)->lpVtbl->GetEffectStatus(p,a)
+#define IDirectInputEffect_Download(p)            (p)->lpVtbl->Download(p)
+#define IDirectInputEffect_Unload(p)              (p)->lpVtbl->Unload(p)
+#define IDirectInputEffect_Escape(p,a)            (p)->lpVtbl->Escape(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -1109,26 +1111,28 @@ ICOM_DEFINE(IDirectInputEffect,IUnknown)
 ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDirectInputDevice_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectInputDevice_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectInputDevice_Release(p)            ICOM_CALL (Release,p)
+#define IDirectInputDevice_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInputDevice_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInputDevice_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectInputDevice methods ***/
-#define IDirectInputDevice_GetCapabilities(p,a)       ICOM_CALL1(GetCapabilities,p,a)
-#define IDirectInputDevice_EnumObjects(p,a,b,c)       ICOM_CALL3(EnumObjects,p,a,b,c)
-#define IDirectInputDevice_GetProperty(p,a,b)         ICOM_CALL2(GetProperty,p,a,b)
-#define IDirectInputDevice_SetProperty(p,a,b)         ICOM_CALL2(SetProperty,p,a,b)
-#define IDirectInputDevice_Acquire(p)                 ICOM_CALL (Acquire,p)
-#define IDirectInputDevice_Unacquire(p)               ICOM_CALL (Unacquire,p)
-#define IDirectInputDevice_GetDeviceState(p,a,b)      ICOM_CALL2(GetDeviceState,p,a,b)
-#define IDirectInputDevice_GetDeviceData(p,a,b,c,d)   ICOM_CALL4(GetDeviceData,p,a,b,c,d)
-#define IDirectInputDevice_SetDataFormat(p,a)         ICOM_CALL1(SetDataFormat,p,a)
-#define IDirectInputDevice_SetEventNotification(p,a)  ICOM_CALL1(SetEventNotification,p,a)
-#define IDirectInputDevice_SetCooperativeLevel(p,a,b) ICOM_CALL2(SetCooperativeLevel,p,a,b)
-#define IDirectInputDevice_GetObjectInfo(p,a,b,c)     ICOM_CALL3(GetObjectInfo,p,a,b,c)
-#define IDirectInputDevice_GetDeviceInfo(p,a)         ICOM_CALL1(GetDeviceInfo,p,a)
-#define IDirectInputDevice_RunControlPanel(p,a,b)     ICOM_CALL2(RunControlPanel,p,a,b)
-#define IDirectInputDevice_Initialize(p,a,b,c)        ICOM_CALL3(Initialize,p,a,b,c)
+#define IDirectInputDevice_GetCapabilities(p,a)       (p)->lpVtbl->GetCapabilities(p,a)
+#define IDirectInputDevice_EnumObjects(p,a,b,c)       (p)->lpVtbl->EnumObjects(p,a,b,c)
+#define IDirectInputDevice_GetProperty(p,a,b)         (p)->lpVtbl->GetProperty(p,a,b)
+#define IDirectInputDevice_SetProperty(p,a,b)         (p)->lpVtbl->SetProperty(p,a,b)
+#define IDirectInputDevice_Acquire(p)                 (p)->lpVtbl->Acquire(p)
+#define IDirectInputDevice_Unacquire(p)               (p)->lpVtbl->Unacquire(p)
+#define IDirectInputDevice_GetDeviceState(p,a,b)      (p)->lpVtbl->GetDeviceState(p,a,b)
+#define IDirectInputDevice_GetDeviceData(p,a,b,c,d)   (p)->lpVtbl->GetDeviceData(p,a,b,c,d)
+#define IDirectInputDevice_SetDataFormat(p,a)         (p)->lpVtbl->SetDataFormat(p,a)
+#define IDirectInputDevice_SetEventNotification(p,a)  (p)->lpVtbl->SetEventNotification(p,a)
+#define IDirectInputDevice_SetCooperativeLevel(p,a,b) (p)->lpVtbl->SetCooperativeLevel(p,a,b)
+#define IDirectInputDevice_GetObjectInfo(p,a,b,c)     (p)->lpVtbl->GetObjectInfo(p,a,b,c)
+#define IDirectInputDevice_GetDeviceInfo(p,a)         (p)->lpVtbl->GetDeviceInfo(p,a)
+#define IDirectInputDevice_RunControlPanel(p,a,b)     (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInputDevice_Initialize(p,a,b,c)        (p)->lpVtbl->Initialize(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -1151,36 +1155,38 @@ ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
 ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInputDevice2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectInputDevice2_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectInputDevice2_Release(p)            ICOM_CALL (Release,p)
+#define IDirectInputDevice2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInputDevice2_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInputDevice2_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectInputDevice methods ***/
-#define IDirectInputDevice2_GetCapabilities(p,a)       ICOM_CALL1(GetCapabilities,p,a)
-#define IDirectInputDevice2_EnumObjects(p,a,b,c)       ICOM_CALL3(EnumObjects,p,a,b,c)
-#define IDirectInputDevice2_GetProperty(p,a,b)         ICOM_CALL2(GetProperty,p,a,b)
-#define IDirectInputDevice2_SetProperty(p,a,b)         ICOM_CALL2(SetProperty,p,a,b)
-#define IDirectInputDevice2_Acquire(p)                 ICOM_CALL (Acquire,p)
-#define IDirectInputDevice2_Unacquire(p)               ICOM_CALL (Unacquire,p)
-#define IDirectInputDevice2_GetDeviceState(p,a,b)      ICOM_CALL2(GetDeviceState,p,a,b)
-#define IDirectInputDevice2_GetDeviceData(p,a,b,c,d)   ICOM_CALL4(GetDeviceData,p,a,b,c,d)
-#define IDirectInputDevice2_SetDataFormat(p,a)         ICOM_CALL1(SetDataFormat,p,a)
-#define IDirectInputDevice2_SetEventNotification(p,a)  ICOM_CALL1(SetEventNotification,p,a)
-#define IDirectInputDevice2_SetCooperativeLevel(p,a,b) ICOM_CALL2(SetCooperativeLevel,p,a,b)
-#define IDirectInputDevice2_GetObjectInfo(p,a,b,c)     ICOM_CALL3(GetObjectInfo,p,a,b,c)
-#define IDirectInputDevice2_GetDeviceInfo(p,a)         ICOM_CALL1(GetDeviceInfo,p,a)
-#define IDirectInputDevice2_RunControlPanel(p,a,b)     ICOM_CALL2(RunControlPanel,p,a,b)
-#define IDirectInputDevice2_Initialize(p,a,b,c)        ICOM_CALL3(Initialize,p,a,b,c)
+#define IDirectInputDevice2_GetCapabilities(p,a)       (p)->lpVtbl->GetCapabilities(p,a)
+#define IDirectInputDevice2_EnumObjects(p,a,b,c)       (p)->lpVtbl->EnumObjects(p,a,b,c)
+#define IDirectInputDevice2_GetProperty(p,a,b)         (p)->lpVtbl->GetProperty(p,a,b)
+#define IDirectInputDevice2_SetProperty(p,a,b)         (p)->lpVtbl->SetProperty(p,a,b)
+#define IDirectInputDevice2_Acquire(p)                 (p)->lpVtbl->Acquire(p)
+#define IDirectInputDevice2_Unacquire(p)               (p)->lpVtbl->Unacquire(p)
+#define IDirectInputDevice2_GetDeviceState(p,a,b)      (p)->lpVtbl->GetDeviceState(p,a,b)
+#define IDirectInputDevice2_GetDeviceData(p,a,b,c,d)   (p)->lpVtbl->GetDeviceData(p,a,b,c,d)
+#define IDirectInputDevice2_SetDataFormat(p,a)         (p)->lpVtbl->SetDataFormat(p,a)
+#define IDirectInputDevice2_SetEventNotification(p,a)  (p)->lpVtbl->SetEventNotification(p,a)
+#define IDirectInputDevice2_SetCooperativeLevel(p,a,b) (p)->lpVtbl->SetCooperativeLevel(p,a,b)
+#define IDirectInputDevice2_GetObjectInfo(p,a,b,c)     (p)->lpVtbl->GetObjectInfo(p,a,b,c)
+#define IDirectInputDevice2_GetDeviceInfo(p,a)         (p)->lpVtbl->GetDeviceInfo(p,a)
+#define IDirectInputDevice2_RunControlPanel(p,a,b)     (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInputDevice2_Initialize(p,a,b,c)        (p)->lpVtbl->Initialize(p,a,b,c)
 /*** IDirectInputDevice2 methods ***/
-#define IDirectInputDevice2_CreateEffect(p,a,b,c,d)           ICOM_CALL4(CreateEffect,p,a,b,c,d)
-#define IDirectInputDevice2_EnumEffects(p,a,b,c)              ICOM_CALL3(EnumEffects,p,a,b,c)
-#define IDirectInputDevice2_GetEffectInfo(p,a,b)              ICOM_CALL2(GetEffectInfo,p,a,b)
-#define IDirectInputDevice2_GetForceFeedbackState(p,a)        ICOM_CALL1(GetForceFeedbackState,p,a)
-#define IDirectInputDevice2_SendForceFeedbackCommand(p,a)     ICOM_CALL1(SendForceFeedbackCommand,p,a)
-#define IDirectInputDevice2_EnumCreatedEffectObjects(p,a,b,c) ICOM_CALL3(EnumCreatedEffectObjects,p,a,b,c)
-#define IDirectInputDevice2_Escape(p,a)                       ICOM_CALL1(Escape,p,a)
-#define IDirectInputDevice2_Poll(p)                           ICOM_CALL (Poll,p)
-#define IDirectInputDevice2_SendDeviceData(p,a,b,c,d)         ICOM_CALL4(SendDeviceData,p,a,b,c,d)
+#define IDirectInputDevice2_CreateEffect(p,a,b,c,d)           (p)->lpVtbl->CreateEffect(p,a,b,c,d)
+#define IDirectInputDevice2_EnumEffects(p,a,b,c)              (p)->lpVtbl->EnumEffects(p,a,b,c)
+#define IDirectInputDevice2_GetEffectInfo(p,a,b)              (p)->lpVtbl->GetEffectInfo(p,a,b)
+#define IDirectInputDevice2_GetForceFeedbackState(p,a)        (p)->lpVtbl->GetForceFeedbackState(p,a)
+#define IDirectInputDevice2_SendForceFeedbackCommand(p,a)     (p)->lpVtbl->SendForceFeedbackCommand(p,a)
+#define IDirectInputDevice2_EnumCreatedEffectObjects(p,a,b,c) (p)->lpVtbl->EnumCreatedEffectObjects(p,a,b,c)
+#define IDirectInputDevice2_Escape(p,a)                       (p)->lpVtbl->Escape(p,a)
+#define IDirectInputDevice2_Poll(p)                           (p)->lpVtbl->Poll(p)
+#define IDirectInputDevice2_SendDeviceData(p,a,b,c,d)         (p)->lpVtbl->SendDeviceData(p,a,b,c,d)
+#endif
 
 #if DIRECTINPUT_VERSION >= 0x0700
 /*****************************************************************************
@@ -1196,39 +1202,42 @@ ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
 ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInputDevice7_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectInputDevice7_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectInputDevice7_Release(p)            ICOM_CALL (Release,p)
+#define IDirectInputDevice7_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInputDevice7_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInputDevice7_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectInputDevice methods ***/
-#define IDirectInputDevice7_GetCapabilities(p,a)       ICOM_CALL1(GetCapabilities,p,a)
-#define IDirectInputDevice7_EnumObjects(p,a,b,c)       ICOM_CALL3(EnumObjects,p,a,b,c)
-#define IDirectInputDevice7_GetProperty(p,a,b)         ICOM_CALL2(GetProperty,p,a,b)
-#define IDirectInputDevice7_SetProperty(p,a,b)         ICOM_CALL2(SetProperty,p,a,b)
-#define IDirectInputDevice7_Acquire(p)                 ICOM_CALL (Acquire,p)
-#define IDirectInputDevice7_Unacquire(p)               ICOM_CALL (Unacquire,p)
-#define IDirectInputDevice7_GetDeviceState(p,a,b)      ICOM_CALL2(GetDeviceState,p,a,b)
-#define IDirectInputDevice7_GetDeviceData(p,a,b,c,d)   ICOM_CALL4(GetDeviceData,p,a,b,c,d)
-#define IDirectInputDevice7_SetDataFormat(p,a)         ICOM_CALL1(SetDataFormat,p,a)
-#define IDirectInputDevice7_SetEventNotification(p,a)  ICOM_CALL1(SetEventNotification,p,a)
-#define IDirectInputDevice7_SetCooperativeLevel(p,a,b) ICOM_CALL2(SetCooperativeLevel,p,a,b)
-#define IDirectInputDevice7_GetObjectInfo(p,a,b,c)     ICOM_CALL3(GetObjectInfo,p,a,b,c)
-#define IDirectInputDevice7_GetDeviceInfo(p,a)         ICOM_CALL1(GetDeviceInfo,p,a)
-#define IDirectInputDevice7_RunControlPanel(p,a,b)     ICOM_CALL2(RunControlPanel,p,a,b)
-#define IDirectInputDevice7_Initialize(p,a,b,c)        ICOM_CALL3(Initialize,p,a,b,c)
+#define IDirectInputDevice7_GetCapabilities(p,a)       (p)->lpVtbl->GetCapabilities(p,a)
+#define IDirectInputDevice7_EnumObjects(p,a,b,c)       (p)->lpVtbl->EnumObjects(p,a,b,c)
+#define IDirectInputDevice7_GetProperty(p,a,b)         (p)->lpVtbl->GetProperty(p,a,b)
+#define IDirectInputDevice7_SetProperty(p,a,b)         (p)->lpVtbl->SetProperty(p,a,b)
+#define IDirectInputDevice7_Acquire(p)                 (p)->lpVtbl->Acquire(p)
+#define IDirectInputDevice7_Unacquire(p)               (p)->lpVtbl->Unacquire(p)
+#define IDirectInputDevice7_GetDeviceState(p,a,b)      (p)->lpVtbl->GetDeviceState(p,a,b)
+#define IDirectInputDevice7_GetDeviceData(p,a,b,c,d)   (p)->lpVtbl->GetDeviceData(p,a,b,c,d)
+#define IDirectInputDevice7_SetDataFormat(p,a)         (p)->lpVtbl->SetDataFormat(p,a)
+#define IDirectInputDevice7_SetEventNotification(p,a)  (p)->lpVtbl->SetEventNotification(p,a)
+#define IDirectInputDevice7_SetCooperativeLevel(p,a,b) (p)->lpVtbl->SetCooperativeLevel(p,a,b)
+#define IDirectInputDevice7_GetObjectInfo(p,a,b,c)     (p)->lpVtbl->GetObjectInfo(p,a,b,c)
+#define IDirectInputDevice7_GetDeviceInfo(p,a)         (p)->lpVtbl->GetDeviceInfo(p,a)
+#define IDirectInputDevice7_RunControlPanel(p,a,b)     (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInputDevice7_Initialize(p,a,b,c)        (p)->lpVtbl->Initialize(p,a,b,c)
 /*** IDirectInputDevice2 methods ***/
-#define IDirectInputDevice7_CreateEffect(p,a,b,c,d)           ICOM_CALL4(CreateEffect,p,a,b,c,d)
-#define IDirectInputDevice7_EnumEffects(p,a,b,c)              ICOM_CALL3(EnumEffects,p,a,b,c)
-#define IDirectInputDevice7_GetEffectInfo(p,a,b)              ICOM_CALL2(GetEffectInfo,p,a,b)
-#define IDirectInputDevice7_GetForceFeedbackState(p,a)        ICOM_CALL1(GetForceFeedbackState,p,a)
-#define IDirectInputDevice7_SendForceFeedbackCommand(p,a)     ICOM_CALL1(SendForceFeedbackCommand,p,a)
-#define IDirectInputDevice7_EnumCreatedEffectObjects(p,a,b,c) ICOM_CALL3(EnumCreatedEffectObjects,p,a,b,c)
-#define IDirectInputDevice7_Escape(p,a)                       ICOM_CALL1(Escape,p,a)
-#define IDirectInputDevice7_Poll(p)                           ICOM_CALL (Poll,p)
-#define IDirectInputDevice7_SendDeviceData(p,a,b,c,d)         ICOM_CALL4(SendDeviceData,p,a,b,c,d)
+#define IDirectInputDevice7_CreateEffect(p,a,b,c,d)           (p)->lpVtbl->CreateEffect(p,a,b,c,d)
+#define IDirectInputDevice7_EnumEffects(p,a,b,c)              (p)->lpVtbl->EnumEffects(p,a,b,c)
+#define IDirectInputDevice7_GetEffectInfo(p,a,b)              (p)->lpVtbl->GetEffectInfo(p,a,b)
+#define IDirectInputDevice7_GetForceFeedbackState(p,a)        (p)->lpVtbl->GetForceFeedbackState(p,a)
+#define IDirectInputDevice7_SendForceFeedbackCommand(p,a)     (p)->lpVtbl->SendForceFeedbackCommand(p,a)
+#define IDirectInputDevice7_EnumCreatedEffectObjects(p,a,b,c) (p)->lpVtbl->EnumCreatedEffectObjects(p,a,b,c)
+#define IDirectInputDevice7_Escape(p,a)                       (p)->lpVtbl->Escape(p,a)
+#define IDirectInputDevice7_Poll(p)                           (p)->lpVtbl->Poll(p)
+#define IDirectInputDevice7_SendDeviceData(p,a,b,c,d)         (p)->lpVtbl->SendDeviceData(p,a,b,c,d)
 /*** IDirectInputDevice7 methods ***/
-#define IDirectInputDevice7_EnumEffectsInFile(p,a,b,c,d) ICOM_CALL4(EnumEffectsInFile,p,a,b,c,d)
-#define IDirectInputDevice7_WriteEffectToFile(p,a,b,c,d) ICOM_CALL4(WriteEffectToFile,p,a,b,c,d)
+#define IDirectInputDevice7_EnumEffectsInFile(p,a,b,c,d) (p)->lpVtbl->EnumEffectsInFile(p,a,b,c,d)
+#define IDirectInputDevice7_WriteEffectToFile(p,a,b,c,d) (p)->lpVtbl->WriteEffectToFile(p,a,b,c,d)
+#endif
+
 #endif /* DI7 */
 
 #if DIRECTINPUT_VERSION >= 0x0800
@@ -1246,43 +1255,46 @@ ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
 ICOM_DEFINE(IDirectInputDevice8A,IDirectInputDevice7A)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInputDevice8_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectInputDevice8_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectInputDevice8_Release(p)            ICOM_CALL (Release,p)
+#define IDirectInputDevice8_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInputDevice8_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInputDevice8_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectInputDevice methods ***/
-#define IDirectInputDevice8_GetCapabilities(p,a)       ICOM_CALL1(GetCapabilities,p,a)
-#define IDirectInputDevice8_EnumObjects(p,a,b,c)       ICOM_CALL3(EnumObjects,p,a,b,c)
-#define IDirectInputDevice8_GetProperty(p,a,b)         ICOM_CALL2(GetProperty,p,a,b)
-#define IDirectInputDevice8_SetProperty(p,a,b)         ICOM_CALL2(SetProperty,p,a,b)
-#define IDirectInputDevice8_Acquire(p)                 ICOM_CALL (Acquire,p)
-#define IDirectInputDevice8_Unacquire(p)               ICOM_CALL (Unacquire,p)
-#define IDirectInputDevice8_GetDeviceState(p,a,b)      ICOM_CALL2(GetDeviceState,p,a,b)
-#define IDirectInputDevice8_GetDeviceData(p,a,b,c,d)   ICOM_CALL4(GetDeviceData,p,a,b,c,d)
-#define IDirectInputDevice8_SetDataFormat(p,a)         ICOM_CALL1(SetDataFormat,p,a)
-#define IDirectInputDevice8_SetEventNotification(p,a)  ICOM_CALL1(SetEventNotification,p,a)
-#define IDirectInputDevice8_SetCooperativeLevel(p,a,b) ICOM_CALL2(SetCooperativeLevel,p,a,b)
-#define IDirectInputDevice8_GetObjectInfo(p,a,b,c)     ICOM_CALL3(GetObjectInfo,p,a,b,c)
-#define IDirectInputDevice8_GetDeviceInfo(p,a)         ICOM_CALL1(GetDeviceInfo,p,a)
-#define IDirectInputDevice8_RunControlPanel(p,a,b)     ICOM_CALL2(RunControlPanel,p,a,b)
-#define IDirectInputDevice8_Initialize(p,a,b,c)        ICOM_CALL3(Initialize,p,a,b,c)
+#define IDirectInputDevice8_GetCapabilities(p,a)       (p)->lpVtbl->GetCapabilities(p,a)
+#define IDirectInputDevice8_EnumObjects(p,a,b,c)       (p)->lpVtbl->EnumObjects(p,a,b,c)
+#define IDirectInputDevice8_GetProperty(p,a,b)         (p)->lpVtbl->GetProperty(p,a,b)
+#define IDirectInputDevice8_SetProperty(p,a,b)         (p)->lpVtbl->SetProperty(p,a,b)
+#define IDirectInputDevice8_Acquire(p)                 (p)->lpVtbl->Acquire(p)
+#define IDirectInputDevice8_Unacquire(p)               (p)->lpVtbl->Unacquire(p)
+#define IDirectInputDevice8_GetDeviceState(p,a,b)      (p)->lpVtbl->GetDeviceState(p,a,b)
+#define IDirectInputDevice8_GetDeviceData(p,a,b,c,d)   (p)->lpVtbl->GetDeviceData(p,a,b,c,d)
+#define IDirectInputDevice8_SetDataFormat(p,a)         (p)->lpVtbl->SetDataFormat(p,a)
+#define IDirectInputDevice8_SetEventNotification(p,a)  (p)->lpVtbl->SetEventNotification(p,a)
+#define IDirectInputDevice8_SetCooperativeLevel(p,a,b) (p)->lpVtbl->SetCooperativeLevel(p,a,b)
+#define IDirectInputDevice8_GetObjectInfo(p,a,b,c)     (p)->lpVtbl->GetObjectInfo(p,a,b,c)
+#define IDirectInputDevice8_GetDeviceInfo(p,a)         (p)->lpVtbl->GetDeviceInfo(p,a)
+#define IDirectInputDevice8_RunControlPanel(p,a,b)     (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInputDevice8_Initialize(p,a,b,c)        (p)->lpVtbl->Initialize(p,a,b,c)
 /*** IDirectInputDevice2 methods ***/
-#define IDirectInputDevice8_CreateEffect(p,a,b,c,d)           ICOM_CALL4(CreateEffect,p,a,b,c,d)
-#define IDirectInputDevice8_EnumEffects(p,a,b,c)              ICOM_CALL3(EnumEffects,p,a,b,c)
-#define IDirectInputDevice8_GetEffectInfo(p,a,b)              ICOM_CALL2(GetEffectInfo,p,a,b)
-#define IDirectInputDevice8_GetForceFeedbackState(p,a)        ICOM_CALL1(GetForceFeedbackState,p,a)
-#define IDirectInputDevice8_SendForceFeedbackCommand(p,a)     ICOM_CALL1(SendForceFeedbackCommand,p,a)
-#define IDirectInputDevice8_EnumCreatedEffectObjects(p,a,b,c) ICOM_CALL3(EnumCreatedEffectObjects,p,a,b,c)
-#define IDirectInputDevice8_Escape(p,a)                       ICOM_CALL1(Escape,p,a)
-#define IDirectInputDevice8_Poll(p)                           ICOM_CALL (Poll,p)
-#define IDirectInputDevice8_SendDeviceData(p,a,b,c,d)         ICOM_CALL4(SendDeviceData,p,a,b,c,d)
+#define IDirectInputDevice8_CreateEffect(p,a,b,c,d)           (p)->lpVtbl->CreateEffect(p,a,b,c,d)
+#define IDirectInputDevice8_EnumEffects(p,a,b,c)              (p)->lpVtbl->EnumEffects(p,a,b,c)
+#define IDirectInputDevice8_GetEffectInfo(p,a,b)              (p)->lpVtbl->GetEffectInfo(p,a,b)
+#define IDirectInputDevice8_GetForceFeedbackState(p,a)        (p)->lpVtbl->GetForceFeedbackState(p,a)
+#define IDirectInputDevice8_SendForceFeedbackCommand(p,a)     (p)->lpVtbl->SendForceFeedbackCommand(p,a)
+#define IDirectInputDevice8_EnumCreatedEffectObjects(p,a,b,c) (p)->lpVtbl->EnumCreatedEffectObjects(p,a,b,c)
+#define IDirectInputDevice8_Escape(p,a)                       (p)->lpVtbl->Escape(p,a)
+#define IDirectInputDevice8_Poll(p)                           (p)->lpVtbl->Poll(p)
+#define IDirectInputDevice8_SendDeviceData(p,a,b,c,d)         (p)->lpVtbl->SendDeviceData(p,a,b,c,d)
 /*** IDirectInputDevice7 methods ***/
-#define IDirectInputDevice8_EnumEffectsInFile(p,a,b,c,d) ICOM_CALL4(EnumEffectsInFile,p,a,b,c,d)
-#define IDirectInputDevice8_WriteEffectToFile(p,a,b,c,d) ICOM_CALL4(WriteEffectToFile,p,a,b,c,d)
+#define IDirectInputDevice8_EnumEffectsInFile(p,a,b,c,d) (p)->lpVtbl->EnumEffectsInFile(p,a,b,c,d)
+#define IDirectInputDevice8_WriteEffectToFile(p,a,b,c,d) (p)->lpVtbl->WriteEffectToFile(p,a,b,c,d)
 /*** IDirectInputDevice8 methods ***/
-#define IDirectInputDevice8_BuildActionMap(p,a,b,c) ICOM_CALL3(BuildActionMap,p,a,b,c)
-#define IDirectInputDevice8_SetActionMap(p,a,b,c)   ICOM_CALL3(SetActionMap,p,a,b,c)
-#define IDirectInputDevice8_GetImageInfo(p,a)       ICOM_CALL1(GetImageInfo,p,a)
+#define IDirectInputDevice8_BuildActionMap(p,a,b,c) (p)->lpVtbl->BuildActionMap(p,a,b,c)
+#define IDirectInputDevice8_SetActionMap(p,a,b,c)   (p)->lpVtbl->SetActionMap(p,a,b,c)
+#define IDirectInputDevice8_GetImageInfo(p,a)       (p)->lpVtbl->GetImageInfo(p,a)
+#endif
+
 #endif /* DI8 */
 
 /* "Standard" Mouse report... */
@@ -1337,16 +1349,18 @@ extern const DIDATAFORMAT c_dfDIJoystick2;
 ICOM_DEFINE(IDirectInputA,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInputA_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectInputA_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectInputA_Release(p)            ICOM_CALL (Release,p)
+#define IDirectInputA_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInputA_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInputA_Release(p)            (p)->lpVtbl->Release(p)
 	/*** IDirectInputA methods ***/
-#define IDirectInputA_CreateDevice(p,a,b,c)  ICOM_CALL3(CreateDevice,p,a,b,c)
-#define IDirectInputA_EnumDevices(p,a,b,c,d) ICOM_CALL4(EnumDevices,p,a,b,c,d)
-#define IDirectInputA_GetDeviceStatus(p,a)   ICOM_CALL1(GetDeviceStatus,p,a)
-#define IDirectInputA_RunControlPanel(p,a,b) ICOM_CALL2(RunControlPanel,p,a,b)
-#define IDirectInputA_Initialize(p,a,b)      ICOM_CALL2(Initialize,p,a,b)
+#define IDirectInputA_CreateDevice(p,a,b,c)  (p)->lpVtbl->CreateDevice(p,a,b,c)
+#define IDirectInputA_EnumDevices(p,a,b,c,d) (p)->lpVtbl->EnumDevices(p,a,b,c,d)
+#define IDirectInputA_GetDeviceStatus(p,a)   (p)->lpVtbl->GetDeviceStatus(p,a)
+#define IDirectInputA_RunControlPanel(p,a,b) (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInputA_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
+#endif
 
 /*****************************************************************************
  * IDirectInput2A interface
@@ -1360,18 +1374,20 @@ ICOM_DEFINE(IDirectInputA,IUnknown)
 ICOM_DEFINE(IDirectInput2A,IDirectInputA)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInput2A_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectInput2A_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectInput2A_Release(p)            ICOM_CALL (Release,p)
+#define IDirectInput2A_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInput2A_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInput2A_Release(p)            (p)->lpVtbl->Release(p)
 	/*** IDirectInputA methods ***/
-#define IDirectInput2A_CreateDevice(p,a,b,c)  ICOM_CALL3(CreateDevice,p,a,b,c)
-#define IDirectInput2A_EnumDevices(p,a,b,c,d) ICOM_CALL4(EnumDevices,p,a,b,c,d)
-#define IDirectInput2A_GetDeviceStatus(p,a)   ICOM_CALL1(GetDeviceStatus,p,a)
-#define IDirectInput2A_RunControlPanel(p,a,b) ICOM_CALL2(RunControlPanel,p,a,b)
-#define IDirectInput2A_Initialize(p,a,b)      ICOM_CALL2(Initialize,p,a,b)
+#define IDirectInput2A_CreateDevice(p,a,b,c)  (p)->lpVtbl->CreateDevice(p,a,b,c)
+#define IDirectInput2A_EnumDevices(p,a,b,c,d) (p)->lpVtbl->EnumDevices(p,a,b,c,d)
+#define IDirectInput2A_GetDeviceStatus(p,a)   (p)->lpVtbl->GetDeviceStatus(p,a)
+#define IDirectInput2A_RunControlPanel(p,a,b) (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInput2A_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
 	/*** IDirectInput2A methods ***/
-#define IDirectInput2A_FindDevice(p,a,b,c)    ICOM_CALL3(FindDevice,p,a,b,c)
+#define IDirectInput2A_FindDevice(p,a,b,c)    (p)->lpVtbl->FindDevice(p,a,b,c)
+#endif
 
 #if DIRECTINPUT_VERSION >= 0x0700
 /*****************************************************************************
@@ -1386,20 +1402,23 @@ ICOM_DEFINE(IDirectInput2A,IDirectInputA)
 ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInput7A_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectInput7A_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectInput7A_Release(p)            ICOM_CALL (Release,p)
+#define IDirectInput7A_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInput7A_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInput7A_Release(p)            (p)->lpVtbl->Release(p)
 	/*** IDirectInputA methods ***/
-#define IDirectInput7A_CreateDevice(p,a,b,c)  ICOM_CALL3(CreateDevice,p,a,b,c)
-#define IDirectInput7A_EnumDevices(p,a,b,c,d) ICOM_CALL4(EnumDevices,p,a,b,c,d)
-#define IDirectInput7A_GetDeviceStatus(p,a)   ICOM_CALL1(GetDeviceStatus,p,a)
-#define IDirectInput7A_RunControlPanel(p,a,b) ICOM_CALL2(RunControlPanel,p,a,b)
-#define IDirectInput7A_Initialize(p,a,b)      ICOM_CALL2(Initialize,p,a,b)
+#define IDirectInput7A_CreateDevice(p,a,b,c)  (p)->lpVtbl->CreateDevice(p,a,b,c)
+#define IDirectInput7A_EnumDevices(p,a,b,c,d) (p)->lpVtbl->EnumDevices(p,a,b,c,d)
+#define IDirectInput7A_GetDeviceStatus(p,a)   (p)->lpVtbl->GetDeviceStatus(p,a)
+#define IDirectInput7A_RunControlPanel(p,a,b) (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInput7A_Initialize(p,a,b)      (p)->lpVtbl->Initialize(p,a,b)
 	/*** IDirectInput2A methods ***/
-#define IDirectInput7A_FindDevice(p,a,b,c)    ICOM_CALL3(FindDevice,p,a,b,c)
+#define IDirectInput7A_FindDevice(p,a,b,c)    (p)->lpVtbl->FindDevice(p,a,b,c)
 	/*** IDirectInput7A methods ***/
-#define IDirectInput7A_CreateDeviceEx(p,a,b,c,d) ICOM_CALL4(CreateDeviceEx,p,a,b,c,d)
+#define IDirectInput7A_CreateDeviceEx(p,a,b,c,d) (p)->lpVtbl->CreateDeviceEx(p,a,b,c,d)
+#endif
+
 #endif /* DI7 */
 
 #if DIRECTINPUT_VERSION >= 0x0800
@@ -1422,19 +1441,22 @@ ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
 ICOM_DEFINE(IDirectInput8A,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectInput8A_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectInput8A_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectInput8A_Release(p)            ICOM_CALL (Release,p)
+#define IDirectInput8A_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectInput8A_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectInput8A_Release(p)            (p)->lpVtbl->Release(p)
       /*** IDirectInput8A methods ***/
-#define IDirectInput8A_CreateDevice(p,a,b,c)       ICOM_CALL3(CreateDevice,p,a,b,c)
-#define IDirectInput8A_EnumDevices(p,a,b,c,d)      ICOM_CALL4(EnumDevices,p,a,b,c,d)
-#define IDirectInput8A_GetDeviceStatus(p,a)        ICOM_CALL1(GetDeviceStatus,p,a)
-#define IDirectInput8A_RunControlPanel(p,a,b)      ICOM_CALL2(RunControlPanel,p,a,b)
-#define IDirectInput8A_Initialize(p,a,b)           ICOM_CALL2(Initialize,p,a,b)
-#define IDirectInput8A_FindDevice(p,a,b,c)         ICOM_CALL3(FindDevice,p,a,b,c)
-#define IDirectInput8A_EnumDevicesBySemantics(p,a,b,c,d,e) ICOM_CALL5(EnumDevicesBySemantics,p,a,b,c,d,e)
-#define IDirectInput8A_ConfigureDevices(p,a,b,c,d) ICOM_CALL4(ConfigureDevices,p,a,b,c,d)
+#define IDirectInput8A_CreateDevice(p,a,b,c)       (p)->lpVtbl->CreateDevice(p,a,b,c)
+#define IDirectInput8A_EnumDevices(p,a,b,c,d)      (p)->lpVtbl->EnumDevices(p,a,b,c,d)
+#define IDirectInput8A_GetDeviceStatus(p,a)        (p)->lpVtbl->GetDeviceStatus(p,a)
+#define IDirectInput8A_RunControlPanel(p,a,b)      (p)->lpVtbl->RunControlPanel(p,a,b)
+#define IDirectInput8A_Initialize(p,a,b)           (p)->lpVtbl->Initialize(p,a,b)
+#define IDirectInput8A_FindDevice(p,a,b,c)         (p)->lpVtbl->FindDevice(p,a,b,c)
+#define IDirectInput8A_EnumDevicesBySemantics(p,a,b,c,d,e) (p)->lpVtbl->EnumDevicesBySemantics(p,a,b,c,d,e)
+#define IDirectInput8A_ConfigureDevices(p,a,b,c,d) (p)->lpVtbl->ConfigureDevices(p,a,b,c,d)
+#endif
+
 #endif /* DI8 */
 
 /* Export functions */

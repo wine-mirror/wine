@@ -682,20 +682,20 @@ DECL_WINELIB_TYPE_AW(IOleUILinkContainer)
 DECL_WINELIB_TYPE_AW(POLEUILINKCONTAINER)
 DECL_WINELIB_TYPE_AW(LPOLEUILINKCONTAINER)
 
-#if ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleUILinkContainer_QueryInterface(p,a,b)          ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleUILinkContainer_AddRef(p)                      ICOM_CALL (AddRef,p)
-#define IOleUILinkContainer_Release(p)                     ICOM_CALL (Release,p)
+#define IOleUILinkContainer_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleUILinkContainer_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IOleUILinkContainer_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IOleUILinkContainer methods ***/
-#define IOleUILinkContainer_GetNextLink(p,a)               ICOM_CALL1(GetNextLink,p,a)
-#define IOleUILinkContainer_SetLinkUpdateOptions(p,a,b)    ICOM_CALL2(SetLinkUpdateOptions,p,a,b)
-#define IOleUILinkContainer_GetLinkUpdateOptions(p,a,b)    ICOM_CALL2(GetLinkUpdateOptions,p,a,b)
-#define IOleUILinkContainer_SetLinkSource(p,a,b,c,d,e)     ICOM_CALL5(SetLinkSource,p,a,b,c,d,e)
-#define IOleUILinkContainer_GetLinkSource(p,a,b,c,d,e,f,g) ICOM_CALL7(GetLinkSource,p,a,b,c,d,e,f,g)
-#define IOleUILinkContainer_OpenLinkSource(p,a)            ICOM_CALL1(OpenLinkSource,p,a)
-#define IOleUILinkContainer_UpdateLink(p,a,b,c)            ICOM_CALL3(UpdateLink,p,a,b,c)
-#define IOleUILinkContainer_CancelLink(p,a)                ICOM_CALL1(CancelLink,p,a)
+#define IOleUILinkContainer_GetNextLink(p,a)               (p)->lpVtbl->GetNextLink(p,a)
+#define IOleUILinkContainer_SetLinkUpdateOptions(p,a,b)    (p)->lpVtbl->SetLinkUpdateOptions(p,a,b)
+#define IOleUILinkContainer_GetLinkUpdateOptions(p,a,b)    (p)->lpVtbl->GetLinkUpdateOptions(p,a,b)
+#define IOleUILinkContainer_SetLinkSource(p,a,b,c,d,e)     (p)->lpVtbl->SetLinkSource(p,a,b,c,d,e)
+#define IOleUILinkContainer_GetLinkSource(p,a,b,c,d,e,f,g) (p)->lpVtbl->GetLinkSource(p,a,b,c,d,e,f,g)
+#define IOleUILinkContainer_OpenLinkSource(p,a)            (p)->lpVtbl->OpenLinkSource(p,a)
+#define IOleUILinkContainer_UpdateLink(p,a,b,c)            (p)->lpVtbl->UpdateLink(p,a,b,c)
+#define IOleUILinkContainer_CancelLink(p,a)                (p)->lpVtbl->CancelLink(p,a)
 #endif
 
 
@@ -724,21 +724,23 @@ DECL_WINELIB_TYPE_AW(IOleUILinkInfo)
 DECL_WINELIB_TYPE_AW(POLEUILINKINFO)
 DECL_WINELIB_TYPE_AW(LPOLEUILINKINFO)
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleUILinkInfo_QueryInterface(p,a,b)          ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleUILinkInfo_AddRef(p)                      ICOM_CALL (AddRef,p)
-#define IOleUILinkInfo_Release(p)                     ICOM_CALL (Release,p)
+#define IOleUILinkInfo_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleUILinkInfo_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IOleUILinkInfo_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IOleUILinkContainer methods ***/
-#define IOleUILinkInfo_GetNextLink(p,a)               ICOM_CALL1(GetNextLink,p,a)
-#define IOleUILinkInfo_SetLinkUpdateOptions(p,a,b)    ICOM_CALL2(SetLinkUpdateOptions,p,a,b)
-#define IOleUILinkInfo_GetLinkUpdateOptions(p,a,b)    ICOM_CALL2(GetLinkUpdateOptions,p,a,b)
-#define IOleUILinkInfo_SetLinkSource(p,a,b,c,d,e)     ICOM_CALL5(SetLinkSource,p,a,b,c,d,e)
-#define IOleUILinkInfo_GetLinkSource(p,a,b,c,d,e,f,g) ICOM_CALL7(GetLinkSource,p,a,b,c,d,e,f,g)
-#define IOleUILinkInfo_OpenLinkSource(p,a)            ICOM_CALL1(OpenLinkSource,p,a)
-#define IOleUILinkInfo_UpdateLink(p,a,b,c)            ICOM_CALL3(UpdateLink,p,a,b,c)
-#define IOleUILinkInfo_CancelLink(p,a)                ICOM_CALL1(CancelLink,p,a)
+#define IOleUILinkInfo_GetNextLink(p,a)               (p)->lpVtbl->GetNextLink(p,a)
+#define IOleUILinkInfo_SetLinkUpdateOptions(p,a,b)    (p)->lpVtbl->SetLinkUpdateOptions(p,a,b)
+#define IOleUILinkInfo_GetLinkUpdateOptions(p,a,b)    (p)->lpVtbl->GetLinkUpdateOptions(p,a,b)
+#define IOleUILinkInfo_SetLinkSource(p,a,b,c,d,e)     (p)->lpVtbl->SetLinkSource(p,a,b,c,d,e)
+#define IOleUILinkInfo_GetLinkSource(p,a,b,c,d,e,f,g) (p)->lpVtbl->GetLinkSource(p,a,b,c,d,e,f,g)
+#define IOleUILinkInfo_OpenLinkSource(p,a)            (p)->lpVtbl->OpenLinkSource(p,a)
+#define IOleUILinkInfo_UpdateLink(p,a,b,c)            (p)->lpVtbl->UpdateLink(p,a,b,c)
+#define IOleUILinkInfo_CancelLink(p,a)                (p)->lpVtbl->CancelLink(p,a)
 /*** IOleUILinkInfo methods ***/
-#define IOleUILinkInfo_GetLastUpdate(p,a,b)           ICOM_CALL2(GetLastUpdate,p,a,b)
+#define IOleUILinkInfo_GetLastUpdate(p,a,b)           (p)->lpVtbl->GetLastUpdate(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -780,16 +782,18 @@ DECL_WINELIB_TYPE_AW(IOleUIObjInfo)
 DECL_WINELIB_TYPE_AW(POLEUIOBJINFO)
 DECL_WINELIB_TYPE_AW(LPOLEUIOBJINFO)
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleUIObjInfo_QueryInterface(p,a,b)            ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleUIObjInfo_AddRef(p)                        ICOM_CALL (AddRef,p)
-#define IOleUIObjInfo_Release(p)                       ICOM_CALL (Release,p)
+#define IOleUIObjInfo_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleUIObjInfo_AddRef(p)                        (p)->lpVtbl->AddRef(p)
+#define IOleUIObjInfo_Release(p)                       (p)->lpVtbl->Release(p)
 /*** IOleUIObjInfo methods ***/
-#define IOleUIObjInfo_GetObjectInfo(p,a,b,c,d,e,f)     ICOM_CALL6(GetObjectInfo,p,a,b,c,d,e,f)
-#define IOleUIObjInfo_GetConvertInfo(p,a,b,c,d,e,f)    ICOM_CALL6(GetConvertInfo,p,a,b,c,d,e,f)
-#define IOleUIObjInfo_ConvertObject(p,a,b)             ICOM_CALL2(ConvertObject,p,a,b)
-#define IOleUIObjInfo_GetViewInfo(p,a,b,c,d)           ICOM_CALL4(GetViewInfo,p,a,b,c,d)
-#define IOleUIObjInfo_SetViewInfo(p,a,b,c,d,e)         ICOM_CALL5(SetViewInfo,p,a,b,c,d,e)
+#define IOleUIObjInfo_GetObjectInfo(p,a,b,c,d,e,f)     (p)->lpVtbl->GetObjectInfo(p,a,b,c,d,e,f)
+#define IOleUIObjInfo_GetConvertInfo(p,a,b,c,d,e,f)    (p)->lpVtbl->GetConvertInfo(p,a,b,c,d,e,f)
+#define IOleUIObjInfo_ConvertObject(p,a,b)             (p)->lpVtbl->ConvertObject(p,a,b)
+#define IOleUIObjInfo_GetViewInfo(p,a,b,c,d)           (p)->lpVtbl->GetViewInfo(p,a,b,c,d)
+#define IOleUIObjInfo_SetViewInfo(p,a,b,c,d,e)         (p)->lpVtbl->SetViewInfo(p,a,b,c,d,e)
+#endif
 
 UINT WINAPI  OleUIInsertObjectW(LPOLEUIINSERTOBJECTW);
 UINT WINAPI  OleUIInsertObjectA(LPOLEUIINSERTOBJECTA);

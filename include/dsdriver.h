@@ -146,17 +146,19 @@ typedef struct _DSCDRIVERCAPS
 ICOM_DEFINE(IDsDriver,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDsDriver_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define IDsDriver_AddRef(p)			ICOM_CALL (AddRef,p)
-#define IDsDriver_Release(p)			ICOM_CALL (Release,p)
+#define IDsDriver_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDsDriver_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IDsDriver_Release(p)                    (p)->lpVtbl->Release(p)
     /*** IDsDriver methods ***/
-#define IDsDriver_GetDriverDesc(p,a)		ICOM_CALL1(GetDriverDesc,p,a)
-#define IDsDriver_Open(p)			ICOM_CALL (Open,p)
-#define IDsDriver_Close(p)			ICOM_CALL (Close,p)
-#define IDsDriver_GetCaps(p,a)			ICOM_CALL1(GetCaps,p,a)
-#define IDsDriver_CreateSoundBuffer(p,a,b,c,d,e,f) ICOM_CALL6(CreateSoundBuffer,p,a,b,c,d,e,f)
-#define IDsDriver_DuplicateSoundBuffer(p,a,b)	ICOM_CALL2(DuplicateSoundBuffer,p,a,b)
+#define IDsDriver_GetDriverDesc(p,a)            (p)->lpVtbl->GetDriverDesc(p,a)
+#define IDsDriver_Open(p)                       (p)->lpVtbl->Open(p)
+#define IDsDriver_Close(p)                      (p)->lpVtbl->Close(p)
+#define IDsDriver_GetCaps(p,a)                  (p)->lpVtbl->GetCaps(p,a)
+#define IDsDriver_CreateSoundBuffer(p,a,b,c,d,e,f) (p)->lpVtbl->CreateSoundBuffer(p,a,b,c,d,e,f)
+#define IDsDriver_DuplicateSoundBuffer(p,a,b)   (p)->lpVtbl->DuplicateSoundBuffer(p,a,b)
+#endif
 
 /*****************************************************************************
  * IDsDriverBuffer interface
@@ -178,20 +180,22 @@ ICOM_DEFINE(IDsDriver,IUnknown)
 ICOM_DEFINE(IDsDriverBuffer,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDsDriverBuffer_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IDsDriverBuffer_AddRef(p)		ICOM_CALL (AddRef,p)
-#define IDsDriverBuffer_Release(p)		ICOM_CALL (Release,p)
+#define IDsDriverBuffer_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDsDriverBuffer_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IDsDriverBuffer_Release(p)              (p)->lpVtbl->Release(p)
     /*** IDsDriverBuffer methods ***/
-#define IDsDriverBuffer_Lock(p,a,b,c,d,e,f,g)	ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
-#define IDsDriverBuffer_Unlock(p,a,b,c,d)	ICOM_CALL4(Unlock,p,a,b,c,d)
-#define IDsDriverBuffer_SetFormat(p,a)		ICOM_CALL1(SetFormat,p,a)
-#define IDsDriverBuffer_SetFrequency(p,a)	ICOM_CALL1(SetFrequency,p,a)
-#define IDsDriverBuffer_SetVolumePan(p,a)	ICOM_CALL1(SetVolumePan,p,a)
-#define IDsDriverBuffer_SetPosition(p,a)	ICOM_CALL1(SetPosition,p,a)
-#define IDsDriverBuffer_GetPosition(p,a,b)	ICOM_CALL2(GetPosition,p,a,b)
-#define IDsDriverBuffer_Play(p,a,b,c)		ICOM_CALL3(Play,p,a,b,c)
-#define IDsDriverBuffer_Stop(p)			ICOM_CALL (Stop,p)
+#define IDsDriverBuffer_Lock(p,a,b,c,d,e,f,g)   (p)->lpVtbl->Lock(p,a,b,c,d,e,f,g)
+#define IDsDriverBuffer_Unlock(p,a,b,c,d)       (p)->lpVtbl->Unlock(p,a,b,c,d)
+#define IDsDriverBuffer_SetFormat(p,a)          (p)->lpVtbl->SetFormat(p,a)
+#define IDsDriverBuffer_SetFrequency(p,a)       (p)->lpVtbl->SetFrequency(p,a)
+#define IDsDriverBuffer_SetVolumePan(p,a)       (p)->lpVtbl->SetVolumePan(p,a)
+#define IDsDriverBuffer_SetPosition(p,a)        (p)->lpVtbl->SetPosition(p,a)
+#define IDsDriverBuffer_GetPosition(p,a,b)      (p)->lpVtbl->GetPosition(p,a,b)
+#define IDsDriverBuffer_Play(p,a,b,c)           (p)->lpVtbl->Play(p,a,b,c)
+#define IDsDriverBuffer_Stop(p)                 (p)->lpVtbl->Stop(p)
+#endif
 
 /*****************************************************************************
  * IDsDriverPropertySet interface
@@ -207,14 +211,16 @@ ICOM_DEFINE(IDsDriverBuffer,IUnknown)
 ICOM_DEFINE(IDsDriverPropertySet,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDsDriverPropertySet_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IDsDriverPropertySet_AddRef(p)			ICOM_CALL (AddRef,p)
-#define IDsDriverPropertySet_Release(p)			ICOM_CALL (Release,p)
+#define IDsDriverPropertySet_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDsDriverPropertySet_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IDsDriverPropertySet_Release(p)                 (p)->lpVtbl->Release(p)
     /*** IDsDriverPropertySet methods ***/
-#define IDsDriverPropertySet_Get(p,a,b,c,d,e,f)		ICOM_CALL6(Get,p,a,b,c,d,e,f)
-#define IDsDriverPropertySet_Set(p,a,b,c,d,e)		ICOM_CALL5(Set,p,a,b,c,d,e)
-#define IDsDriverPropertySet_QuerySupport(p,a,b,c)	ICOM_CALL3(QuerySupport,p,a,b,c)
+#define IDsDriverPropertySet_Get(p,a,b,c,d,e,f)         (p)->lpVtbl->Get(p,a,b,c,d,e,f)
+#define IDsDriverPropertySet_Set(p,a,b,c,d,e)           (p)->lpVtbl->Set(p,a,b,c,d,e)
+#define IDsDriverPropertySet_QuerySupport(p,a,b,c)      (p)->lpVtbl->QuerySupport(p,a,b,c)
+#endif
 
 /* Defined property sets */
 DEFINE_GUID(DSPROPSETID_DirectSound3DListener,	  0x6D047B40, 0x7AF9, 0x11D0, 0x92, 0x94, 0x44, 0x45, 0x53, 0x54, 0x0, 0x0);
@@ -263,12 +269,14 @@ typedef enum
 ICOM_DEFINE(IDsDriverNotify,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDsDriverNotify_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define IDsDriverNotify_AddRef(p)			ICOM_CALL (AddRef,p)
-#define IDsDriverNotify_Release(p)			ICOM_CALL (Release,p)
+#define IDsDriverNotify_QueryInterface(p,a,b)           (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDsDriverNotify_AddRef(p)                       (p)->lpVtbl->AddRef(p)
+#define IDsDriverNotify_Release(p)                      (p)->lpVtbl->Release(p)
     /*** IDsDriverNotify methods ***/
-#define IDsDriverNotify_SetNotificationPositions(p,a,b)	ICOM_CALL2(SetNotificationPositions,p,a,b)
+#define IDsDriverNotify_SetNotificationPositions(p,a,b) (p)->lpVtbl->SetNotificationPositions(p,a,b)
+#endif
 
 /*****************************************************************************
  * IDsCaptureDriver interface
@@ -286,16 +294,18 @@ ICOM_DEFINE(IDsDriverNotify,IUnknown)
 ICOM_DEFINE(IDsCaptureDriver,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDsCaptureDriver_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define IDsCaptureDriver_AddRef(p)			ICOM_CALL (AddRef,p)
-#define IDsCaptureDriver_Release(p)			ICOM_CALL (Release,p)
+#define IDsCaptureDriver_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDsCaptureDriver_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IDsCaptureDriver_Release(p)                     (p)->lpVtbl->Release(p)
     /*** IDsCaptureDriver methods ***/
-#define IDsCaptureDriver_GetDriverDesc(p,a)		ICOM_CALL1(GetDriverDesc,p,a)
-#define IDsCaptureDriver_Open(p)			ICOM_CALL (Open,p)
-#define IDsCaptureDriver_Close(p)			ICOM_CALL (Close,p)
-#define IDsCaptureDriver_GetCaps(p,a)			ICOM_CALL1(GetCaps,p,a)
-#define IDsCaptureDriver_CreateCaptureBuffer(p,a,b,c,d,e,f) ICOM_CALL6(CreateCaptureBuffer,p,a,b,c,d,e,f)
+#define IDsCaptureDriver_GetDriverDesc(p,a)             (p)->lpVtbl->GetDriverDesc(p,a)
+#define IDsCaptureDriver_Open(p)                        (p)->lpVtbl->Open(p)
+#define IDsCaptureDriver_Close(p)                       (p)->lpVtbl->Close(p)
+#define IDsCaptureDriver_GetCaps(p,a)                   (p)->lpVtbl->GetCaps(p,a)
+#define IDsCaptureDriver_CreateCaptureBuffer(p,a,b,c,d,e,f) (p)->lpVtbl->CreateCaptureBuffer(p,a,b,c,d,e,f)
+#endif
 
 /*****************************************************************************
  * IDsCaptureDriverBuffer interface
@@ -315,18 +325,20 @@ ICOM_DEFINE(IDsCaptureDriver,IUnknown)
 ICOM_DEFINE(IDsCaptureDriverBuffer,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDsCaptureDriverBuffer_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IDsCaptureDriverBuffer_AddRef(p)		ICOM_CALL (AddRef,p)
-#define IDsCaptureDriverBuffer_Release(p)		ICOM_CALL (Release,p)
+#define IDsCaptureDriverBuffer_QueryInterface(p,a,b)    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDsCaptureDriverBuffer_AddRef(p)                (p)->lpVtbl->AddRef(p)
+#define IDsCaptureDriverBuffer_Release(p)               (p)->lpVtbl->Release(p)
     /*** IDsCaptureDriverBuffer methods ***/
-#define IDsCaptureDriverBuffer_Lock(p,a,b,c,d,e,f,g)	ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
-#define IDsCaptureDriverBuffer_Unlock(p,a,b,c,d)	ICOM_CALL4(Unlock,p,a,b,c,d)
-#define IDsCaptureDriverBuffer_SetFormat(p,a)		ICOM_CALL1(SetFormat,p,a)
-#define IDsCaptureDriverBuffer_GetPosition(p,a,b)	ICOM_CALL2(GetPosition,p,a,b)
-#define IDsCaptureDriverBuffer_GetStatus(p,a)		ICOM_CALL1(GetStatus,p,a)
-#define IDsCaptureDriverBuffer_Start(p,a)		ICOM_CALL1(Start,p,a)
-#define IDsCaptureDriverBuffer_Stop(p)			ICOM_CALL (Stop,p)
+#define IDsCaptureDriverBuffer_Lock(p,a,b,c,d,e,f,g)    (p)->lpVtbl->Lock(p,a,b,c,d,e,f,g)
+#define IDsCaptureDriverBuffer_Unlock(p,a,b,c,d)        (p)->lpVtbl->Unlock(p,a,b,c,d)
+#define IDsCaptureDriverBuffer_SetFormat(p,a)           (p)->lpVtbl->SetFormat(p,a)
+#define IDsCaptureDriverBuffer_GetPosition(p,a,b)       (p)->lpVtbl->GetPosition(p,a,b)
+#define IDsCaptureDriverBuffer_GetStatus(p,a)           (p)->lpVtbl->GetStatus(p,a)
+#define IDsCaptureDriverBuffer_Start(p,a)               (p)->lpVtbl->Start(p,a)
+#define IDsCaptureDriverBuffer_Stop(p)                  (p)->lpVtbl->Stop(p)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

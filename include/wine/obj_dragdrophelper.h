@@ -56,13 +56,15 @@ typedef struct {
 ICOM_DEFINE(IDragSourceHelper,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDragSourceHelper_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDragSourceHelper_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDragSourceHelper_Release(p)            ICOM_CALL (Release,p)
+#define IDragSourceHelper_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDragSourceHelper_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDragSourceHelper_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDropSource methods ***/
-#define IDragSourceHelper_InitializeFromBitmap(p,a,b)   ICOM_CALL2(InitializeFromBitmap,p,a,b)
-#define IDragSourceHelper_InitializeFromWindow(p,a,b,c) ICOM_CALL1(InitializeFromWindow,p,a,b,c)
+#define IDragSourceHelper_InitializeFromBitmap(p,a,b)   (p)->lpVtbl->InitializeFromBitmap(p,a,b)
+#define IDragSourceHelper_InitializeFromWindow(p,a,b,c) (p)->lpVtbl->InitializeFromWindow(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -81,16 +83,18 @@ ICOM_DEFINE(IDragSourceHelper,IUnknown)
 ICOM_DEFINE(IDropTargetHelper,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDropTargetHelper_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDropTargetHelper_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDropTargetHelper_Release(p)            ICOM_CALL (Release,p)
+#define IDropTargetHelper_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDropTargetHelper_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDropTargetHelper_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDropTargetHelper methods ***/
-#define IDropTargetHelper_DragEnter(p,a,b,c,d)  ICOM_CALL4(DragEnter,p,a,b,c,d)
-#define IDropTargetHelper_DragLeave(p)          ICOM_CALL (DragLeave,p)
-#define IDropTargetHelper_DragOver(p,a,b)       ICOM_CALL2(DragOver,p,a,b)
-#define IDropTargetHelper_Drop(p,a,b,c)         ICOM_CALL3(Drop,p,a,b,c)
-#define IDropTargetHelper_Show(p,a)             ICOM_CALL4(Show,p,a,b,c,d)
+#define IDropTargetHelper_DragEnter(p,a,b,c,d)  (p)->lpVtbl->DragEnter(p,a,b,c,d)
+#define IDropTargetHelper_DragLeave(p)          (p)->lpVtbl->DragLeave(p)
+#define IDropTargetHelper_DragOver(p,a,b)       (p)->lpVtbl->DragOver(p,a,b)
+#define IDropTargetHelper_Drop(p,a,b,c)         (p)->lpVtbl->Drop(p,a,b,c)
+#define IDropTargetHelper_Show(p,a)             (p)->lpVtbl->Show(p,a,b,c,d)
+#endif
 
 
 #ifdef __cplusplus

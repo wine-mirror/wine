@@ -61,17 +61,19 @@ typedef BOOL    (CALLBACK *IVO_ContCallback)(DWORD);
 ICOM_DEFINE(IViewObject,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IViewObject_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
-#define IViewObject_AddRef(p)                    ICOM_CALL (AddRef,p)
-#define IViewObject_Release(p)                   ICOM_CALL (Release,p)
+#define IViewObject_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IViewObject_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IViewObject_Release(p)                   (p)->lpVtbl->Release(p)
 /*** IViewObject methods ***/
-#define IViewObject_Draw(p,a,b,c,d,e,f,g,h,i,j)  ICOM_CALL10(Draw,p,a,b,c,d,e,f,g,h,i,j)
-#define IViewObject_GetColorSet(p,a,b,c,d,e,f)   ICOM_CALL6(GetColorSet,p,a,b,c,d,e,f)
-#define IViewObject_Freeze(p,a,b,c,d)            ICOM_CALL4(Freeze,p,a,b,c,d)
-#define IViewObject_Unfreeze(p,a)                ICOM_CALL1(Unfreeze,p,a)
-#define IViewObject_SetAdvise(p,a,b,c)           ICOM_CALL3(SetAdvise,p,a,b,c)
-#define IViewObject_GetAdvise(p,a,b,c)           ICOM_CALL3(GetAdvise,p,a,b,c)
+#define IViewObject_Draw(p,a,b,c,d,e,f,g,h,i,j)  (p)->lpVtbl->Draw(p,a,b,c,d,e,f,g,h,i,j)
+#define IViewObject_GetColorSet(p,a,b,c,d,e,f)   (p)->lpVtbl->GetColorSet(p,a,b,c,d,e,f)
+#define IViewObject_Freeze(p,a,b,c,d)            (p)->lpVtbl->Freeze(p,a,b,c,d)
+#define IViewObject_Unfreeze(p,a)                (p)->lpVtbl->Unfreeze(p,a)
+#define IViewObject_SetAdvise(p,a,b,c)           (p)->lpVtbl->SetAdvise(p,a,b,c)
+#define IViewObject_GetAdvise(p,a,b,c)           (p)->lpVtbl->GetAdvise(p,a,b,c)
+#endif
 
 
 
@@ -87,19 +89,21 @@ ICOM_DEFINE(IViewObject,IUnknown)
 ICOM_DEFINE(IViewObject2,IViewObject)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IViewObject2_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
-#define IViewObject2_AddRef(p)                    ICOM_CALL (AddRef,p)
-#define IViewObject2_Release(p)                   ICOM_CALL (Release,p)
+#define IViewObject2_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IViewObject2_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IViewObject2_Release(p)                   (p)->lpVtbl->Release(p)
 /*** IViewObject methods ***/
-#define IViewObject2_Draw(p,a,b,c,d,e,f,g,h,i,j)  ICOM_CALL10(Draw,p,a,b,c,d,e,f,g,h,i,j)
-#define IViewObject2_GetColorSet(p,a,b,c,d,e,f)   ICOM_CALL6(GetColorSet,p,a,b,c,d,e,f)
-#define IViewObject2_Freeze(p,a,b,c,d)            ICOM_CALL4(Freeze,p,a,b,c,d)
-#define IViewObject2_Unfreeze(p,a)                ICOM_CALL1(Unfreeze,p,a)
-#define IViewObject2_SetAdvise(p,a,b,c)           ICOM_CALL3(SetAdvise,p,a,b,c)
-#define IViewObject2_GetAdvise(p,a,b,c)           ICOM_CALL3(GetAdvise,p,a,b,c)
+#define IViewObject2_Draw(p,a,b,c,d,e,f,g,h,i,j)  (p)->lpVtbl->Draw(p,a,b,c,d,e,f,g,h,i,j)
+#define IViewObject2_GetColorSet(p,a,b,c,d,e,f)   (p)->lpVtbl->GetColorSet(p,a,b,c,d,e,f)
+#define IViewObject2_Freeze(p,a,b,c,d)            (p)->lpVtbl->Freeze(p,a,b,c,d)
+#define IViewObject2_Unfreeze(p,a)                (p)->lpVtbl->Unfreeze(p,a)
+#define IViewObject2_SetAdvise(p,a,b,c)           (p)->lpVtbl->SetAdvise(p,a,b,c)
+#define IViewObject2_GetAdvise(p,a,b,c)           (p)->lpVtbl->GetAdvise(p,a,b,c)
 /*** IViewObject2 methods ***/
-#define IViewObject2_GetExtent(p,a,b,c,d)         ICOM_CALL4(GetExtent,p,a,b,c,d)
+#define IViewObject2_GetExtent(p,a,b,c,d)         (p)->lpVtbl->GetExtent(p,a,b,c,d)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

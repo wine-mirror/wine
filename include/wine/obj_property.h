@@ -155,22 +155,24 @@ typedef struct IPerPropertyBrowsing IPerPropertyBrowsing,*LPPERPROPERTYBROWSING;
 ICOM_DEFINE(IPropertyPage,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPropertyPage_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
-#define IPropertyPage_AddRef(p)                 ICOM_CALL (AddRef,p)
-#define IPropertyPage_Release(p)                ICOM_CALL (Release,p)
+#define IPropertyPage_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPropertyPage_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IPropertyPage_Release(p)                (p)->lpVtbl->Release(p)
 /*** IPropertyPage methods ***/
-#define IPropertyPage_SetPageSite(p,a)          ICOM_CALL1(SetPageSite,p,a)
-#define IPropertyPage_Activate(p,a,b,c)         ICOM_CALL3(Activate,p,a,b,c)
-#define IPropertyPage_Deactivate(p)             ICOM_CALL (Deactivate,p)
-#define IPropertyPage_GetPageInfo(p,a)          ICOM_CALL1(GetPageInfo,p,a)
-#define IPropertyPage_SetObjects(p,a,b)         ICOM_CALL2(SetObjects,p,a,b)
-#define IPropertyPage_Show(p,a)                 ICOM_CALL1(Show,p,a)
-#define IPropertyPage_Move(p,a)                 ICOM_CALL1(Move,p,a)
-#define IPropertyPage_IsPageDirty(p)            ICOM_CALL (IsPageDirty,p)
-#define IPropertyPage_Apply(p)                  ICOM_CALL (Apply,p)
-#define IPropertyPage_Help(p,a)                 ICOM_CALL1(Help,p,a)
-#define IPropertyPage_TranslateAccelerator(p,a) ICOM_CALL1(TranslateAccelerator,p,a)
+#define IPropertyPage_SetPageSite(p,a)          (p)->lpVtbl->SetPageSite(p,a)
+#define IPropertyPage_Activate(p,a,b,c)         (p)->lpVtbl->Activate(p,a,b,c)
+#define IPropertyPage_Deactivate(p)             (p)->lpVtbl->Deactivate(p)
+#define IPropertyPage_GetPageInfo(p,a)          (p)->lpVtbl->GetPageInfo(p,a)
+#define IPropertyPage_SetObjects(p,a,b)         (p)->lpVtbl->SetObjects(p,a,b)
+#define IPropertyPage_Show(p,a)                 (p)->lpVtbl->Show(p,a)
+#define IPropertyPage_Move(p,a)                 (p)->lpVtbl->Move(p,a)
+#define IPropertyPage_IsPageDirty(p)            (p)->lpVtbl->IsPageDirty(p)
+#define IPropertyPage_Apply(p)                  (p)->lpVtbl->Apply(p)
+#define IPropertyPage_Help(p,a)                 (p)->lpVtbl->Help(p,a)
+#define IPropertyPage_TranslateAccelerator(p,a) (p)->lpVtbl->TranslateAccelerator(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -185,24 +187,26 @@ ICOM_DEFINE(IPropertyPage,IUnknown)
 ICOM_DEFINE(IPropertyPage2,IPropertyPage)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPropertyPage2_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
-#define IPropertyPage2_AddRef(p)                 ICOM_CALL (AddRef,p)
-#define IPropertyPage2_Release(p)                ICOM_CALL (Release,p)
+#define IPropertyPage2_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPropertyPage2_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IPropertyPage2_Release(p)                (p)->lpVtbl->Release(p)
 /*** IPropertyPage methods ***/
-#define IPropertyPage2_SetPageSite(p,a)          ICOM_CALL1(SetPageSite,p,a)
-#define IPropertyPage2_Activate(p,a,b,c)         ICOM_CALL3(Activate,p,a,b,c)
-#define IPropertyPage2_Deactivate(p)             ICOM_CALL (Deactivate,p)
-#define IPropertyPage2_GetPageInfo(p,a)          ICOM_CALL1(GetPageInfo,p,a)
-#define IPropertyPage2_SetObjects(p,a,b)         ICOM_CALL2(SetObjects,p,a,b)
-#define IPropertyPage2_Show(p,a)                 ICOM_CALL1(Show,p,a)
-#define IPropertyPage2_Move(p,a)                 ICOM_CALL1(Move,p,a)
-#define IPropertyPage2_IsPageDirty(p)            ICOM_CALL (IsPageDirty,p)
-#define IPropertyPage2_Apply(p)                  ICOM_CALL (Apply,p)
-#define IPropertyPage2_Help(p,a)                 ICOM_CALL1(Help,p,a)
-#define IPropertyPage2_TranslateAccelerator(p,a) ICOM_CALL1(TranslateAccelerator,p,a)
+#define IPropertyPage2_SetPageSite(p,a)          (p)->lpVtbl->SetPageSite(p,a)
+#define IPropertyPage2_Activate(p,a,b,c)         (p)->lpVtbl->Activate(p,a,b,c)
+#define IPropertyPage2_Deactivate(p)             (p)->lpVtbl->Deactivate(p)
+#define IPropertyPage2_GetPageInfo(p,a)          (p)->lpVtbl->GetPageInfo(p,a)
+#define IPropertyPage2_SetObjects(p,a,b)         (p)->lpVtbl->SetObjects(p,a,b)
+#define IPropertyPage2_Show(p,a)                 (p)->lpVtbl->Show(p,a)
+#define IPropertyPage2_Move(p,a)                 (p)->lpVtbl->Move(p,a)
+#define IPropertyPage2_IsPageDirty(p)            (p)->lpVtbl->IsPageDirty(p)
+#define IPropertyPage2_Apply(p)                  (p)->lpVtbl->Apply(p)
+#define IPropertyPage2_Help(p,a)                 (p)->lpVtbl->Help(p,a)
+#define IPropertyPage2_TranslateAccelerator(p,a) (p)->lpVtbl->TranslateAccelerator(p,a)
 /*** IPropertyPage2 methods ***/
-#define IPropertyPage2_EditProperty(p,a)         ICOM_CALL1(EditProperty,p,a)
+#define IPropertyPage2_EditProperty(p,a)         (p)->lpVtbl->EditProperty(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -220,15 +224,17 @@ ICOM_DEFINE(IPropertyPage2,IPropertyPage)
 ICOM_DEFINE(IPropertyPageSite,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPropertyPageSite_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
-#define IPropertyPageSite_AddRef(p)                 ICOM_CALL (AddRef,p)
-#define IPropertyPageSite_Release(p)                ICOM_CALL (Release,p)
+#define IPropertyPageSite_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPropertyPageSite_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IPropertyPageSite_Release(p)                (p)->lpVtbl->Release(p)
 /*** IPropertyPageSite methods ***/
-#define IPropertyPageSite_OnStatusChange(p,a)       ICOM_CALL1(OnStatusChange,p,a)
-#define IPropertyPageSite_GetLocaleID(p,a)          ICOM_CALL1(GetLocaleID,p,a)
-#define IPropertyPageSite_GetPageContainer(p,a)     ICOM_CALL1(GetPageContainer,p,a)
-#define IPropertyPageSite_TranslateAccelerator(p,a) ICOM_CALL1(TranslateAccelerator,p,a)
+#define IPropertyPageSite_OnStatusChange(p,a)       (p)->lpVtbl->OnStatusChange(p,a)
+#define IPropertyPageSite_GetLocaleID(p,a)          (p)->lpVtbl->GetLocaleID(p,a)
+#define IPropertyPageSite_GetPageContainer(p,a)     (p)->lpVtbl->GetPageContainer(p,a)
+#define IPropertyPageSite_TranslateAccelerator(p,a) (p)->lpVtbl->TranslateAccelerator(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -244,13 +250,15 @@ ICOM_DEFINE(IPropertyPageSite,IUnknown)
 ICOM_DEFINE(IPropertyNotifySink,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPropertyNotifySink_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
-#define IPropertyNotifySink_AddRef(p)                 ICOM_CALL (AddRef,p)
-#define IPropertyNotifySink_Release(p)                ICOM_CALL (Release,p)
+#define IPropertyNotifySink_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPropertyNotifySink_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IPropertyNotifySink_Release(p)                (p)->lpVtbl->Release(p)
 /*** IPropertyNotifySink methods ***/
-#define IPropertyNotifySink_OnChanged(p,a)            ICOM_CALL1(OnChanged,p,a)
-#define IPropertyNotifySink_OnRequestEdit(p,a)        ICOM_CALL1(OnRequestEdit,p,a)
+#define IPropertyNotifySink_OnChanged(p,a)            (p)->lpVtbl->OnChanged(p,a)
+#define IPropertyNotifySink_OnRequestEdit(p,a)        (p)->lpVtbl->OnRequestEdit(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -266,13 +274,15 @@ ICOM_DEFINE(IPropertyNotifySink,IUnknown)
 ICOM_DEFINE(ISimpleFrameSite,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define ISimpleFrameSite_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
-#define ISimpleFrameSite_AddRef(p)                 ICOM_CALL (AddRef,p)
-#define ISimpleFrameSite_Release(p)                ICOM_CALL (Release,p)
+#define ISimpleFrameSite_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define ISimpleFrameSite_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define ISimpleFrameSite_Release(p)                (p)->lpVtbl->Release(p)
 /*** IPropertyNotifySink methods ***/
-#define ISimpleFrameSite_PreMessageFilter(p,a,b,c,d,e,f) ICOM_CALL1(PreMessageFilter,p,a,b,c,d,e,f)
-#define ISimpleFrameSite_PostMessageFilter(p,a,b,c,d,e,f) ICOM_CALL1(PostMessageFilter,p,a,b,c,d,e,f)
+#define ISimpleFrameSite_PreMessageFilter(p,a,b,c,d,e,f) (p)->lpVtbl->PreMessageFilter(p,a,b,c,d,e,f)
+#define ISimpleFrameSite_PostMessageFilter(p,a,b,c,d,e,f) (p)->lpVtbl->PostMessageFilter(p,a,b,c,d,e,f)
+#endif
 
 
 /*****************************************************************************
@@ -291,18 +301,20 @@ ICOM_DEFINE(ISimpleFrameSite,IUnknown)
 ICOM_DEFINE(IPersistStreamInit,IPersist)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPersistStreamInit_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IPersistStreamInit_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IPersistStreamInit_Release(p)            ICOM_CALL (Release,p)
+#define IPersistStreamInit_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPersistStreamInit_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IPersistStreamInit_Release(p)            (p)->lpVtbl->Release(p)
 /*** IPersist methods ***/
-#define IPersistStreamInit_GetClassID(p,a) ICOM_CALL1(GetClassID,p,a)
+#define IPersistStreamInit_GetClassID(p,a) (p)->lpVtbl->GetClassID(p,a)
 /*** IPersistStreamInit methods ***/
-#define IPersistStreamInit_IsDirty(p)      ICOM_CALL (IsDirty,p)
-#define IPersistStreamInit_Load(p,a)       ICOM_CALL1(Load,p,a)
-#define IPersistStreamInit_Save(p,a,b)     ICOM_CALL2(Save,p,a,b)
-#define IPersistStreamInit_GetSizeMax(p,a) ICOM_CALL1(GetSizeMax,p,a)
-#define IPersistStreamInit_InitNew(p)      ICOM_CALL (InitNew,p)
+#define IPersistStreamInit_IsDirty(p)      (p)->lpVtbl->IsDirty(p)
+#define IPersistStreamInit_Load(p,a)       (p)->lpVtbl->Load(p,a)
+#define IPersistStreamInit_Save(p,a,b)     (p)->lpVtbl->Save(p,a,b)
+#define IPersistStreamInit_GetSizeMax(p,a) (p)->lpVtbl->GetSizeMax(p,a)
+#define IPersistStreamInit_InitNew(p)      (p)->lpVtbl->InitNew(p)
+#endif
 
 
 /*****************************************************************************
@@ -321,18 +333,20 @@ ICOM_DEFINE(IPersistStreamInit,IPersist)
 ICOM_DEFINE(IPersistMemory,IPersist)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPersistMemory_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IPersistMemory_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IPersistMemory_Release(p)            ICOM_CALL (Release,p)
+#define IPersistMemory_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPersistMemory_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IPersistMemory_Release(p)            (p)->lpVtbl->Release(p)
 /*** IPersist methods ***/
-#define IPersistMemory_GetClassID(p,a)       ICOM_CALL1(GetClassID,p,a)
+#define IPersistMemory_GetClassID(p,a)       (p)->lpVtbl->GetClassID(p,a)
 /*** IPersistMemory methods ***/
-#define IPersistMemory_IsDirty(p)            ICOM_CALL (IsDirty,p)
-#define IPersistMemory_Load(p,a,b)           ICOM_CALL2(Load,p,a,b)
-#define IPersistMemory_Save(p,a,b,c)         ICOM_CALL3(Save,p,a,b,c)
-#define IPersistMemory_GetSizeMax(p,a)       ICOM_CALL1(GetSizeMax,p,a)
-#define IPersistMemory_InitNew(p)            ICOM_CALL (InitNew,p)
+#define IPersistMemory_IsDirty(p)            (p)->lpVtbl->IsDirty(p)
+#define IPersistMemory_Load(p,a,b)           (p)->lpVtbl->Load(p,a,b)
+#define IPersistMemory_Save(p,a,b,c)         (p)->lpVtbl->Save(p,a,b,c)
+#define IPersistMemory_GetSizeMax(p,a)       (p)->lpVtbl->GetSizeMax(p,a)
+#define IPersistMemory_InitNew(p)            (p)->lpVtbl->InitNew(p)
+#endif
 
 
 /*****************************************************************************
@@ -349,16 +363,18 @@ ICOM_DEFINE(IPersistMemory,IPersist)
 ICOM_DEFINE(IPersistPropertyBag,IPersist)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPersistPropertyBag_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IPersistPropertyBag_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IPersistPropertyBag_Release(p)            ICOM_CALL (Release,p)
+#define IPersistPropertyBag_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPersistPropertyBag_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IPersistPropertyBag_Release(p)            (p)->lpVtbl->Release(p)
 /*** IPersist methods ***/
-#define IPersistPropertyBag_GetClassID(p,a)       ICOM_CALL1(GetClassID,p,a)
+#define IPersistPropertyBag_GetClassID(p,a)       (p)->lpVtbl->GetClassID(p,a)
 /*** IPersistPropertyBag methods ***/
-#define IPersistPropertyBag_InitNew(p)            ICOM_CALL (InitNew,p)
-#define IPersistPropertyBag_Load(p,a,b)           ICOM_CALL2(Load,p,a,b)
-#define IPersistPropertyBag_Save(p,a,b,c)         ICOM_CALL3(Save,p,a,b,c)
+#define IPersistPropertyBag_InitNew(p)            (p)->lpVtbl->InitNew(p)
+#define IPersistPropertyBag_Load(p,a,b)           (p)->lpVtbl->Load(p,a,b)
+#define IPersistPropertyBag_Save(p,a,b,c)         (p)->lpVtbl->Save(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -376,17 +392,19 @@ ICOM_DEFINE(IPersistPropertyBag,IPersist)
 ICOM_DEFINE(IPersistPropertyBag2,IPersist)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPersistPropertyBag2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IPersistPropertyBag2_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IPersistPropertyBag2_Release(p)            ICOM_CALL (Release,p)
+#define IPersistPropertyBag2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPersistPropertyBag2_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IPersistPropertyBag2_Release(p)            (p)->lpVtbl->Release(p)
 /*** IPersist methods ***/
-#define IPersistPropertyBag2_GetClassID(p,a)       ICOM_CALL1(GetClassID,p,a)
+#define IPersistPropertyBag2_GetClassID(p,a)       (p)->lpVtbl->GetClassID(p,a)
 /*** IPersistPropertyBag methods ***/
-#define IPersistPropertyBag2_InitNew(p)            ICOM_CALL (InitNew,p)
-#define IPersistPropertyBag2_Load(p,a,b)           ICOM_CALL2(Load,p,a,b)
-#define IPersistPropertyBag2_Save(p,a,b,c)         ICOM_CALL3(Save,p,a,b,c)
-#define IPersistPropertyBag2_IsDirty(p)            ICON_CALL (IsDirty,p)
+#define IPersistPropertyBag2_InitNew(p)            (p)->lpVtbl->InitNew(p)
+#define IPersistPropertyBag2_Load(p,a,b)           (p)->lpVtbl->Load(p,a,b)
+#define IPersistPropertyBag2_Save(p,a,b,c)         (p)->lpVtbl->Save(p,a,b,c)
+#define IPersistPropertyBag2_IsDirty(p)            (p)->lpVtbl->IsDirty(p)
+#endif
 
 
 /*****************************************************************************
@@ -401,12 +419,14 @@ ICOM_DEFINE(IPersistPropertyBag2,IPersist)
 ICOM_DEFINE(IErrorLog,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IErrorLog_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IErrorLog_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IErrorLog_Release(p)            ICOM_CALL (Release,p)
+#define IErrorLog_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IErrorLog_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IErrorLog_Release(p)            (p)->lpVtbl->Release(p)
 /*** IErrorLog methods ***/
-#define IErrorLog_AddError(p,a,b)       ICOM_CALL2(GetClassID,p,a,b)
+#define IErrorLog_AddError(p,a,b)       (p)->lpVtbl->GetClassID(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -422,13 +442,15 @@ ICOM_DEFINE(IErrorLog,IUnknown)
 ICOM_DEFINE(IPropertyBag,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPropertyBag_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IPropertyBag_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IPropertyBag_Release(p)            ICOM_CALL (Release,p)
+#define IPropertyBag_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPropertyBag_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IPropertyBag_Release(p)            (p)->lpVtbl->Release(p)
 /*** IPropertyBag methods ***/
-#define IPropertyBag_Read(p,a,b,c)         ICOM_CALL3(Read,p,a,b,c)
-#define IPropertyBag_Write(p,a,b)          ICOM_CALL2(Write,p,a,b)
+#define IPropertyBag_Read(p,a,b,c)         (p)->lpVtbl->Read(p,a,b,c)
+#define IPropertyBag_Write(p,a,b)          (p)->lpVtbl->Write(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -447,16 +469,18 @@ ICOM_DEFINE(IPropertyBag,IUnknown)
 ICOM_DEFINE(IPropertyBag2,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPropertyBag2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IPropertyBag2_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IPropertyBag2_Release(p)            ICOM_CALL (Release,p)
+#define IPropertyBag2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPropertyBag2_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IPropertyBag2_Release(p)            (p)->lpVtbl->Release(p)
 /*** IPropertyBag methods ***/
-#define IPropertyBag2_Read(p,a,b,c,d,e)     ICOM_CALL5(Read,p,a,b,c,d,e)
-#define IPropertyBag2_Write(p,a,b,c)        ICOM_CALL3(Write,p,a,b,c)
-#define IPropertyBag2_CountProperties(p,a)  ICOM_CALL1(CountProperties,p,a)
-#define IPropertyBag2_GetPropertyInfo(p,a,b,c,d) ICOM_CALL4(GetPropertyInfo,p,a,b,c,d)
-#define IPropertyBag2_LoadObject(p,a,b,c,d) ICOM_CALL4(LoadObject,p,a,b,c,d)
+#define IPropertyBag2_Read(p,a,b,c,d,e)     (p)->lpVtbl->Read(p,a,b,c,d,e)
+#define IPropertyBag2_Write(p,a,b,c)        (p)->lpVtbl->Write(p,a,b,c)
+#define IPropertyBag2_CountProperties(p,a)  (p)->lpVtbl->CountProperties(p,a)
+#define IPropertyBag2_GetPropertyInfo(p,a,b,c,d) (p)->lpVtbl->GetPropertyInfo(p,a,b,c,d)
+#define IPropertyBag2_LoadObject(p,a,b,c,d) (p)->lpVtbl->LoadObject(p,a,b,c,d)
+#endif
 
 
 /*****************************************************************************
@@ -471,12 +495,14 @@ ICOM_DEFINE(IPropertyBag2,IUnknown)
 ICOM_DEFINE(ISpecifyPropertyPages,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define ISpecifyPropertyPages_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define ISpecifyPropertyPages_AddRef(p)             ICOM_CALL (AddRef,p)
-#define ISpecifyPropertyPages_Release(p)            ICOM_CALL (Release,p)
+#define ISpecifyPropertyPages_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define ISpecifyPropertyPages_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define ISpecifyPropertyPages_Release(p)            (p)->lpVtbl->Release(p)
 /*** ISpecifyPropertyPages methods ***/
-#define ISpecifyPropertyPages_GetPages(p,a)         ICOM_CALL1(GetPages,p,a)
+#define ISpecifyPropertyPages_GetPages(p,a)         (p)->lpVtbl->GetPages(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -494,15 +520,17 @@ ICOM_DEFINE(ISpecifyPropertyPages,IUnknown)
 ICOM_DEFINE(IPerPropertyBrowsing,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPerPropertyBrowsing_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IPerPropertyBrowsing_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IPerPropertyBrowsing_Release(p)            ICOM_CALL (Release,p)
+#define IPerPropertyBrowsing_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPerPropertyBrowsing_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IPerPropertyBrowsing_Release(p)            (p)->lpVtbl->Release(p)
 /*** IPerPropertyBrowsing methods ***/
-#define IPerPropertyBrowsing_GetDisplayString(p,a,b)       ICOM_CALL2(GetDisplayString,p,a,b)
-#define IPerPropertyBrowsing_MapPropertyToPage(p,a,b)      ICOM_CALL2(MapPropertyToPage,p,a,b)
-#define IPerPropertyBrowsing_GetPredefinedStrings(p,a,b,c) ICOM_CALL3(GetPredefinedStrings,p,a,b,c)
-#define IPerPropertyBrowsing_GetPredefinedValue(p,a,b,c)   ICOM_CALL3(GetPredefinedValue,p,a,b,c)
+#define IPerPropertyBrowsing_GetDisplayString(p,a,b)       (p)->lpVtbl->GetDisplayString(p,a,b)
+#define IPerPropertyBrowsing_MapPropertyToPage(p,a,b)      (p)->lpVtbl->MapPropertyToPage(p,a,b)
+#define IPerPropertyBrowsing_GetPredefinedStrings(p,a,b,c) (p)->lpVtbl->GetPredefinedStrings(p,a,b,c)
+#define IPerPropertyBrowsing_GetPredefinedValue(p,a,b,c)   (p)->lpVtbl->GetPredefinedValue(p,a,b,c)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

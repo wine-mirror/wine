@@ -61,16 +61,18 @@ typedef struct IOleCacheControl IOleCacheControl, *LPOLECACHECONTROL;
 ICOM_DEFINE(IOleCache,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleCache_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleCache_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleCache_Release(p)                 ICOM_CALL (Release,p)
+#define IOleCache_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleCache_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleCache_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleCache methods ***/
-#define IOleCache_Cache(p,a,b,c)             ICOM_CALL3(Cache,p,a,b,c)
-#define IOleCache_Uncache(p,a)               ICOM_CALL1(Uncache,p,a)
-#define IOleCache_EnumCache(p,a)             ICOM_CALL1(EnumCache,p,a)
-#define IOleCache_InitCache(p,a)             ICOM_CALL1(InitCache,p,a)
-#define IOleCache_SetData(p,a,b,c)           ICOM_CALL3(SetData,p,a,b,c)
+#define IOleCache_Cache(p,a,b,c)             (p)->lpVtbl->Cache(p,a,b,c)
+#define IOleCache_Uncache(p,a)               (p)->lpVtbl->Uncache(p,a)
+#define IOleCache_EnumCache(p,a)             (p)->lpVtbl->EnumCache(p,a)
+#define IOleCache_InitCache(p,a)             (p)->lpVtbl->InitCache(p,a)
+#define IOleCache_SetData(p,a,b,c)           (p)->lpVtbl->SetData(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -86,19 +88,21 @@ ICOM_DEFINE(IOleCache,IUnknown)
 ICOM_DEFINE(IOleCache2,IOleCache)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleCache2_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleCache2_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleCache2_Release(p)                 ICOM_CALL (Release,p)
+#define IOleCache2_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleCache2_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleCache2_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleCache methods ***/
-#define IOleCache2_Cache(p,a,b,c)             ICOM_CALL3(Cache,p,a,b,c)
-#define IOleCache2_Uncache(p,a)               ICOM_CALL1(Uncache,p,a)
-#define IOleCache2_EnumCache(p,a)             ICOM_CALL1(EnumCache,p,a)
-#define IOleCache2_InitCache(p,a)             ICOM_CALL1(InitCache,p,a)
-#define IOleCache2_SetData(p,a,b,c)           ICOM_CALL3(SetData,p,a,b,c)
+#define IOleCache2_Cache(p,a,b,c)             (p)->lpVtbl->Cache(p,a,b,c)
+#define IOleCache2_Uncache(p,a)               (p)->lpVtbl->Uncache(p,a)
+#define IOleCache2_EnumCache(p,a)             (p)->lpVtbl->EnumCache(p,a)
+#define IOleCache2_InitCache(p,a)             (p)->lpVtbl->InitCache(p,a)
+#define IOleCache2_SetData(p,a,b,c)           (p)->lpVtbl->SetData(p,a,b,c)
 /*** IOleCache2 methods ***/
-#define IOleCache2_UpdateCache(p,a,b,c)       ICOM_CALL3(UpdateCache,p,a,b,c)
-#define IOleCache2_DiscardCache(p,a)          ICOM_CALL1(DiscardCache,p,a)
+#define IOleCache2_UpdateCache(p,a,b,c)       (p)->lpVtbl->UpdateCache(p,a,b,c)
+#define IOleCache2_DiscardCache(p,a)          (p)->lpVtbl->DiscardCache(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -114,13 +118,15 @@ ICOM_DEFINE(IOleCache2,IOleCache)
 ICOM_DEFINE(IOleCacheControl,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IOleCacheControl_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IOleCacheControl_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IOleCacheControl_Release(p)                 ICOM_CALL (Release,p)
+#define IOleCacheControl_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IOleCacheControl_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IOleCacheControl_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IOleCacheControl methods ***/
-#define IOleCacheControl_OnRun(p,a)                 ICOM_CALL1(UpdateCache,p,a)
-#define IOleCacheControl_OnStop(p)                  ICOM_CALL (OnStop,p)
+#define IOleCacheControl_OnRun(p,a)                 (p)->lpVtbl->UpdateCache(p,a)
+#define IOleCacheControl_OnStop(p)                  (p)->lpVtbl->OnStop(p)
+#endif
 
 
 #ifdef __cplusplus

@@ -49,12 +49,14 @@ typedef struct IServiceProvider IServiceProvider, *LPSERVICEPROVIDER;
 ICOM_DEFINE(IServiceProvider,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IServiceProvider_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define IServiceProvider_AddRef(p)			ICOM_CALL (AddRef,p)
-#define IServiceProvider_Release(p)			ICOM_CALL (Release,p)
+#define IServiceProvider_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IServiceProvider_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IServiceProvider_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IServiceProvider methods ***/
-#define IServiceProvider_QueryService(p,a,b,c)		ICOM_CALL3(QueryService,p,a,b,c)
+#define IServiceProvider_QueryService(p,a,b,c)          (p)->lpVtbl->QueryService(p,a,b,c)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

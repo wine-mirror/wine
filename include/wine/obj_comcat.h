@@ -105,18 +105,18 @@ DEFINE_OLEGUID(CLSID_StdComponentCategoriesMgr, 0x0002E005L, 0, 0);
 ICOM_DEFINE(ICatInformation,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define ICatInformation_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define ICatInformation_AddRef(p)             ICOM_CALL (AddRef,p)
-#define ICatInformation_Release(p)            ICOM_CALL (Release,p)
+#define ICatInformation_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define ICatInformation_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define ICatInformation_Release(p)            (p)->lpVtbl->Release(p)
 /*** ICatInformation methods ***/
-#define ICatInformation_EnumCategories(p,a,b) ICOM_CALL2(EnumCategories,p,a,b)
-#define ICatInformation_GetCategoryDesc(p,a,b,c) ICOM_CALL3(GetCategoryDesc,p,a,b,c)
-#define ICatInformation_EnumClassesOfCategories(p,a,b,c,d,e) ICOM_CALL5(EnumClassesOfCategories,p,a,b,c,d,e)
-#define ICatInformation_IsClassOfCategories(p,a,b,c,d,e) ICOM_CALL5(IsClassOfCategories,p,a,b,c,d,e)
-#define ICatInformation_EnumImplCategoriesOfClass(p,a,b) ICOM_CALL2(EnumImplCategoriesOfClass,p,a,b)
-#define ICatInformation_EnumReqCategoriesOfClass(p,a,b) ICOM_CALL2(EnumReqCategoriesOfClass,p,a,b)
+#define ICatInformation_EnumCategories(p,a,b) (p)->lpVtbl->EnumCategories(p,a,b)
+#define ICatInformation_GetCategoryDesc(p,a,b,c) (p)->lpVtbl->GetCategoryDesc(p,a,b,c)
+#define ICatInformation_EnumClassesOfCategories(p,a,b,c,d,e) (p)->lpVtbl->EnumClassesOfCategories(p,a,b,c,d,e)
+#define ICatInformation_IsClassOfCategories(p,a,b,c,d,e) (p)->lpVtbl->IsClassOfCategories(p,a,b,c,d,e)
+#define ICatInformation_EnumImplCategoriesOfClass(p,a,b) (p)->lpVtbl->EnumImplCategoriesOfClass(p,a,b)
+#define ICatInformation_EnumReqCategoriesOfClass(p,a,b) (p)->lpVtbl->EnumReqCategoriesOfClass(p,a,b)
 #endif
 
 /*****************************************************************************
@@ -136,18 +136,18 @@ ICOM_DEFINE(ICatInformation,IUnknown)
 ICOM_DEFINE(ICatRegister,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define ICatRegister_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define ICatRegister_AddRef(p)             ICOM_CALL (AddRef,p)
-#define ICatRegister_Release(p)            ICOM_CALL (Release,p)
+#define ICatRegister_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define ICatRegister_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define ICatRegister_Release(p)            (p)->lpVtbl->Release(p)
 /*** ICatRegister methods ***/
-#define ICatRegister_RegisterCategories(p,a,b) ICOM_CALL2(RegisterCategories,p,a,b)
-#define ICatRegister_UnRegisterCategories(p,a,b) ICOM_CALL2(UnRegisterCategories,p,a,b)
-#define ICatRegister_RegisterClassImplCategories(p,a,b,c) ICOM_CALL3(RegisterClassImplCategories,p,a,b,c)
-#define ICatRegister_UnRegisterClassImplCategories(p,a,b,c) ICOM_CALL3(UnRegisterClassImplCategories,p,a,b,c)
-#define ICatRegister_RegisterClassReqCategories(p,a,b,c) ICOM_CALL3(RegisterClassReqCategories,p,a,b,c)
-#define ICatRegister_UnRegisterClassReqCategories(p,a,b,c) ICOM_CALL3(UnRegisterClassReqCategories,p,a,b,c)
+#define ICatRegister_RegisterCategories(p,a,b) (p)->lpVtbl->RegisterCategories(p,a,b)
+#define ICatRegister_UnRegisterCategories(p,a,b) (p)->lpVtbl->UnRegisterCategories(p,a,b)
+#define ICatRegister_RegisterClassImplCategories(p,a,b,c) (p)->lpVtbl->RegisterClassImplCategories(p,a,b,c)
+#define ICatRegister_UnRegisterClassImplCategories(p,a,b,c) (p)->lpVtbl->UnRegisterClassImplCategories(p,a,b,c)
+#define ICatRegister_RegisterClassReqCategories(p,a,b,c) (p)->lpVtbl->RegisterClassReqCategories(p,a,b,c)
+#define ICatRegister_UnRegisterClassReqCategories(p,a,b,c) (p)->lpVtbl->UnRegisterClassReqCategories(p,a,b,c)
 #endif
 
 /*****************************************************************************
@@ -165,16 +165,16 @@ ICOM_DEFINE(ICatRegister,IUnknown)
 ICOM_DEFINE(IEnumCATEGORYINFO,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IEnumCATEGORYINFO_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IEnumCATEGORYINFO_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IEnumCATEGORYINFO_Release(p)            ICOM_CALL (Release,p)
+#define IEnumCATEGORYINFO_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IEnumCATEGORYINFO_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IEnumCATEGORYINFO_Release(p)            (p)->lpVtbl->Release(p)
 /*** IEnumCATEGORYINFO methods ***/
-#define IEnumCATEGORYINFO_Next(p,a,b,c)         ICOM_CALL3(Next,p,a,b,c)
-#define IEnumCATEGORYINFO_Skip(p,a)             ICOM_CALL1(Skip,p,a)
-#define IEnumCATEGORYINFO_Reset(p)              ICOM_CALL(Reset,p)
-#define IEnumCATEGORYINFO_Clone(p,a)            ICOM_CALL1(Clone,p,a)
+#define IEnumCATEGORYINFO_Next(p,a,b,c)         (p)->lpVtbl->Next(p,a,b,c)
+#define IEnumCATEGORYINFO_Skip(p,a)             (p)->lpVtbl->Skip(p,a)
+#define IEnumCATEGORYINFO_Reset(p)              (p)->lpVtbl->Reset(p)
+#define IEnumCATEGORYINFO_Clone(p,a)            (p)->lpVtbl->Clone(p,a)
 #endif
 
 #ifdef __cplusplus

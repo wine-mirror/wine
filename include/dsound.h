@@ -346,19 +346,21 @@ extern HRESULT WINAPI GetDeviceID(LPCGUID lpGuidSrc, LPGUID lpGuidDest);
 ICOM_DEFINE(IDirectSound,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDirectSound_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSound_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectSound_Release(p)            ICOM_CALL (Release,p)
+#define IDirectSound_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSound_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSound_Release(p)            (p)->lpVtbl->Release(p)
     /*** IDirectSound methods ***/
-#define IDirectSound_CreateSoundBuffer(p,a,b,c)  ICOM_CALL3(CreateSoundBuffer,p,a,b,c)
-#define IDirectSound_GetCaps(p,a)                ICOM_CALL1(GetCaps,p,a)
-#define IDirectSound_DuplicateSoundBuffer(p,a,b) ICOM_CALL2(DuplicateSoundBuffer,p,a,b)
-#define IDirectSound_SetCooperativeLevel(p,a,b)  ICOM_CALL2(SetCooperativeLevel,p,a,b)
-#define IDirectSound_Compact(p)                  ICOM_CALL (Compact,p)
-#define IDirectSound_GetSpeakerConfig(p,a)       ICOM_CALL1(GetSpeakerConfig,p,a)
-#define IDirectSound_SetSpeakerConfig(p,a)       ICOM_CALL1(SetSpeakerConfig,p,a)
-#define IDirectSound_Initialize(p,a)             ICOM_CALL1(Initialize,p,a)
+#define IDirectSound_CreateSoundBuffer(p,a,b,c)  (p)->lpVtbl->CreateSoundBuffer(p,a,b,c)
+#define IDirectSound_GetCaps(p,a)                (p)->lpVtbl->GetCaps(p,a)
+#define IDirectSound_DuplicateSoundBuffer(p,a,b) (p)->lpVtbl->DuplicateSoundBuffer(p,a,b)
+#define IDirectSound_SetCooperativeLevel(p,a,b)  (p)->lpVtbl->SetCooperativeLevel(p,a,b)
+#define IDirectSound_Compact(p)                  (p)->lpVtbl->Compact(p)
+#define IDirectSound_GetSpeakerConfig(p,a)       (p)->lpVtbl->GetSpeakerConfig(p,a)
+#define IDirectSound_SetSpeakerConfig(p,a)       (p)->lpVtbl->SetSpeakerConfig(p,a)
+#define IDirectSound_Initialize(p,a)             (p)->lpVtbl->Initialize(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -381,21 +383,23 @@ ICOM_DEFINE(IDirectSound,IUnknown)
 ICOM_DEFINE(IDirectSound8,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDirectSound8_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSound8_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectSound8_Release(p)            ICOM_CALL (Release,p)
+#define IDirectSound8_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSound8_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSound8_Release(p)            (p)->lpVtbl->Release(p)
     /*** IDirectSound methods ***/
-#define IDirectSound8_CreateSoundBuffer(p,a,b,c)  ICOM_CALL3(CreateSoundBuffer,p,a,b,c)
-#define IDirectSound8_GetCaps(p,a)                ICOM_CALL1(GetCaps,p,a)
-#define IDirectSound8_DuplicateSoundBuffer(p,a,b) ICOM_CALL2(DuplicateSoundBuffer,p,a,b)
-#define IDirectSound8_SetCooperativeLevel(p,a,b)  ICOM_CALL2(SetCooperativeLevel,p,a,b)
-#define IDirectSound8_Compact(p)                  ICOM_CALL (Compact,p)
-#define IDirectSound8_GetSpeakerConfig(p,a)       ICOM_CALL1(GetSpeakerConfig,p,a)
-#define IDirectSound8_SetSpeakerConfig(p,a)       ICOM_CALL1(SetSpeakerConfig,p,a)
-#define IDirectSound8_Initialize(p,a)             ICOM_CALL1(Initialize,p,a)
+#define IDirectSound8_CreateSoundBuffer(p,a,b,c)  (p)->lpVtbl->CreateSoundBuffer(p,a,b,c)
+#define IDirectSound8_GetCaps(p,a)                (p)->lpVtbl->GetCaps(p,a)
+#define IDirectSound8_DuplicateSoundBuffer(p,a,b) (p)->lpVtbl->DuplicateSoundBuffer(p,a,b)
+#define IDirectSound8_SetCooperativeLevel(p,a,b)  (p)->lpVtbl->SetCooperativeLevel(p,a,b)
+#define IDirectSound8_Compact(p)                  (p)->lpVtbl->Compact(p)
+#define IDirectSound8_GetSpeakerConfig(p,a)       (p)->lpVtbl->GetSpeakerConfig(p,a)
+#define IDirectSound8_SetSpeakerConfig(p,a)       (p)->lpVtbl->SetSpeakerConfig(p,a)
+#define IDirectSound8_Initialize(p,a)             (p)->lpVtbl->Initialize(p,a)
     /*** IDirectSound8 methods ***/
-#define IDirectSound8_VerifyCertification(p,a)    ICOM_CALL1(VerifyCertification,p,a)
+#define IDirectSound8_VerifyCertification(p,a)    (p)->lpVtbl->VerifyCertification(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -427,29 +431,31 @@ ICOM_DEFINE(IDirectSound8,IUnknown)
 ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDirectSoundBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSoundBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectSoundBuffer_Release(p)            ICOM_CALL (Release,p)
+#define IDirectSoundBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundBuffer_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundBuffer_Release(p)            (p)->lpVtbl->Release(p)
     /*** IDirectSoundBuffer methods ***/
-#define IDirectSoundBuffer_GetCaps(p,a)                ICOM_CALL1(GetCaps,p,a)
-#define IDirectSoundBuffer_GetCurrentPosition(p,a,b)   ICOM_CALL2(GetCurrentPosition,p,a,b)
-#define IDirectSoundBuffer_GetFormat(p,a,b,c)          ICOM_CALL3(GetFormat,p,a,b,c)
-#define IDirectSoundBuffer_GetVolume(p,a)              ICOM_CALL1(GetVolume,p,a)
-#define IDirectSoundBuffer_GetPan(p,a)                 ICOM_CALL1(GetPan,p,a)
-#define IDirectSoundBuffer_GetFrequency(p,a)           ICOM_CALL1(GetFrequency,p,a)
-#define IDirectSoundBuffer_GetStatus(p,a)              ICOM_CALL1(GetStatus,p,a)
-#define IDirectSoundBuffer_Initialize(p,a,b)           ICOM_CALL2(Initialize,p,a,b)
-#define IDirectSoundBuffer_Lock(p,a,b,c,d,e,f,g)       ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
-#define IDirectSoundBuffer_Play(p,a,b,c)               ICOM_CALL3(Play,p,a,b,c)
-#define IDirectSoundBuffer_SetCurrentPosition(p,a)     ICOM_CALL1(SetCurrentPosition,p,a)
-#define IDirectSoundBuffer_SetFormat(p,a)              ICOM_CALL1(SetFormat,p,a)
-#define IDirectSoundBuffer_SetVolume(p,a)              ICOM_CALL1(SetVolume,p,a)
-#define IDirectSoundBuffer_SetPan(p,a)                 ICOM_CALL1(SetPan,p,a)
-#define IDirectSoundBuffer_SetFrequency(p,a)           ICOM_CALL1(SetFrequency,p,a)
-#define IDirectSoundBuffer_Stop(p)                     ICOM_CALL (Stop,p)
-#define IDirectSoundBuffer_Unlock(p,a,b,c,d)           ICOM_CALL4(Unlock,p,a,b,c,d)
-#define IDirectSoundBuffer_Restore(p)                  ICOM_CALL (Restore,p)
+#define IDirectSoundBuffer_GetCaps(p,a)                (p)->lpVtbl->GetCaps(p,a)
+#define IDirectSoundBuffer_GetCurrentPosition(p,a,b)   (p)->lpVtbl->GetCurrentPosition(p,a,b)
+#define IDirectSoundBuffer_GetFormat(p,a,b,c)          (p)->lpVtbl->GetFormat(p,a,b,c)
+#define IDirectSoundBuffer_GetVolume(p,a)              (p)->lpVtbl->GetVolume(p,a)
+#define IDirectSoundBuffer_GetPan(p,a)                 (p)->lpVtbl->GetPan(p,a)
+#define IDirectSoundBuffer_GetFrequency(p,a)           (p)->lpVtbl->GetFrequency(p,a)
+#define IDirectSoundBuffer_GetStatus(p,a)              (p)->lpVtbl->GetStatus(p,a)
+#define IDirectSoundBuffer_Initialize(p,a,b)           (p)->lpVtbl->Initialize(p,a,b)
+#define IDirectSoundBuffer_Lock(p,a,b,c,d,e,f,g)       (p)->lpVtbl->Lock(p,a,b,c,d,e,f,g)
+#define IDirectSoundBuffer_Play(p,a,b,c)               (p)->lpVtbl->Play(p,a,b,c)
+#define IDirectSoundBuffer_SetCurrentPosition(p,a)     (p)->lpVtbl->SetCurrentPosition(p,a)
+#define IDirectSoundBuffer_SetFormat(p,a)              (p)->lpVtbl->SetFormat(p,a)
+#define IDirectSoundBuffer_SetVolume(p,a)              (p)->lpVtbl->SetVolume(p,a)
+#define IDirectSoundBuffer_SetPan(p,a)                 (p)->lpVtbl->SetPan(p,a)
+#define IDirectSoundBuffer_SetFrequency(p,a)           (p)->lpVtbl->SetFrequency(p,a)
+#define IDirectSoundBuffer_Stop(p)                     (p)->lpVtbl->Stop(p)
+#define IDirectSoundBuffer_Unlock(p,a,b,c,d)           (p)->lpVtbl->Unlock(p,a,b,c,d)
+#define IDirectSoundBuffer_Restore(p)                  (p)->lpVtbl->Restore(p)
+#endif
 
 
 /*****************************************************************************
@@ -484,33 +490,35 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 ICOM_DEFINE(IDirectSoundBuffer8,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
     /*** IUnknown methods ***/
-#define IDirectSoundBuffer8_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSoundBuffer8_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectSoundBuffer8_Release(p)            ICOM_CALL (Release,p)
+#define IDirectSoundBuffer8_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundBuffer8_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundBuffer8_Release(p)            (p)->lpVtbl->Release(p)
     /*** IDirectSoundBuffer methods ***/
-#define IDirectSoundBuffer8_GetCaps(p,a)                ICOM_CALL1(GetCaps,p,a)
-#define IDirectSoundBuffer8_GetCurrentPosition(p,a,b)   ICOM_CALL2(GetCurrentPosition,p,a,b)
-#define IDirectSoundBuffer8_GetFormat(p,a,b,c)          ICOM_CALL3(GetFormat,p,a,b,c)
-#define IDirectSoundBuffer8_GetVolume(p,a)              ICOM_CALL1(GetVolume,p,a)
-#define IDirectSoundBuffer8_GetPan(p,a)                 ICOM_CALL1(GetPan,p,a)
-#define IDirectSoundBuffer8_GetFrequency(p,a)           ICOM_CALL1(GetFrequency,p,a)
-#define IDirectSoundBuffer8_GetStatus(p,a)              ICOM_CALL1(GetStatus,p,a)
-#define IDirectSoundBuffer8_Initialize(p,a,b)           ICOM_CALL2(Initialize,p,a,b)
-#define IDirectSoundBuffer8_Lock(p,a,b,c,d,e,f,g)       ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
-#define IDirectSoundBuffer8_Play(p,a,b,c)               ICOM_CALL3(Play,p,a,b,c)
-#define IDirectSoundBuffer8_SetCurrentPosition(p,a)     ICOM_CALL1(SetCurrentPosition,p,a)
-#define IDirectSoundBuffer8_SetFormat(p,a)              ICOM_CALL1(SetFormat,p,a)
-#define IDirectSoundBuffer8_SetVolume(p,a)              ICOM_CALL1(SetVolume,p,a)
-#define IDirectSoundBuffer8_SetPan(p,a)                 ICOM_CALL1(SetPan,p,a)
-#define IDirectSoundBuffer8_SetFrequency(p,a)           ICOM_CALL1(SetFrequency,p,a)
-#define IDirectSoundBuffer8_Stop(p)                     ICOM_CALL (Stop,p)
-#define IDirectSoundBuffer8_Unlock(p,a,b,c,d)           ICOM_CALL4(Unlock,p,a,b,c,d)
-#define IDirectSoundBuffer8_Restore(p)                  ICOM_CALL (Restore,p)
+#define IDirectSoundBuffer8_GetCaps(p,a)                (p)->lpVtbl->GetCaps(p,a)
+#define IDirectSoundBuffer8_GetCurrentPosition(p,a,b)   (p)->lpVtbl->GetCurrentPosition(p,a,b)
+#define IDirectSoundBuffer8_GetFormat(p,a,b,c)          (p)->lpVtbl->GetFormat(p,a,b,c)
+#define IDirectSoundBuffer8_GetVolume(p,a)              (p)->lpVtbl->GetVolume(p,a)
+#define IDirectSoundBuffer8_GetPan(p,a)                 (p)->lpVtbl->GetPan(p,a)
+#define IDirectSoundBuffer8_GetFrequency(p,a)           (p)->lpVtbl->GetFrequency(p,a)
+#define IDirectSoundBuffer8_GetStatus(p,a)              (p)->lpVtbl->GetStatus(p,a)
+#define IDirectSoundBuffer8_Initialize(p,a,b)           (p)->lpVtbl->Initialize(p,a,b)
+#define IDirectSoundBuffer8_Lock(p,a,b,c,d,e,f,g)       (p)->lpVtbl->Lock(p,a,b,c,d,e,f,g)
+#define IDirectSoundBuffer8_Play(p,a,b,c)               (p)->lpVtbl->Play(p,a,b,c)
+#define IDirectSoundBuffer8_SetCurrentPosition(p,a)     (p)->lpVtbl->SetCurrentPosition(p,a)
+#define IDirectSoundBuffer8_SetFormat(p,a)              (p)->lpVtbl->SetFormat(p,a)
+#define IDirectSoundBuffer8_SetVolume(p,a)              (p)->lpVtbl->SetVolume(p,a)
+#define IDirectSoundBuffer8_SetPan(p,a)                 (p)->lpVtbl->SetPan(p,a)
+#define IDirectSoundBuffer8_SetFrequency(p,a)           (p)->lpVtbl->SetFrequency(p,a)
+#define IDirectSoundBuffer8_Stop(p)                     (p)->lpVtbl->Stop(p)
+#define IDirectSoundBuffer8_Unlock(p,a,b,c,d)           (p)->lpVtbl->Unlock(p,a,b,c,d)
+#define IDirectSoundBuffer8_Restore(p)                  (p)->lpVtbl->Restore(p)
     /*** IDirectSoundBuffer8 methods ***/
-#define IDirectSoundBuffer8_SetFX(p,a,b,c)              ICOM_CALL3(SetFX,p,a,b,c)
-#define IDirectSoundBuffer8_AcquireResources(p,a,b,c)   ICOM_CALL3(AcquireResources,p,a,b,c)
-#define IDirectSoundBuffer8_GetObjectInPath(p,a,b,c)    ICOM_CALL3(GetObjectInPath,p,a,b,c)
+#define IDirectSoundBuffer8_SetFX(p,a,b,c)              (p)->lpVtbl->SetFX(p,a,b,c)
+#define IDirectSoundBuffer8_AcquireResources(p,a,b,c)   (p)->lpVtbl->AcquireResources(p,a,b,c)
+#define IDirectSoundBuffer8_GetObjectInPath(p,a,b,c)    (p)->lpVtbl->GetObjectInPath(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -528,12 +536,14 @@ ICOM_DEFINE(IDirectSoundBuffer8,IUnknown)
 ICOM_DEFINE(IDirectSoundCapture,IUnknown)
 #undef INTERFACE
 
-#define IDirectSoundCapture_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSoundCapture_AddRef(p)                    ICOM_CALL (AddRef,p)
-#define IDirectSoundCapture_Release(p)                   ICOM_CALL (Release,p)
-#define IDirectSoundCapture_CreateCaptureBuffer(p,a,b,c) ICOM_CALL3(CreateCaptureBuffer,p,a,b,c)
-#define IDirectSoundCapture_GetCaps(p,a)                 ICOM_CALL1(GetCaps,p,a)
-#define IDirectSoundCapture_Initialize(p,a)              ICOM_CALL1(Initialize,p,a)
+#ifdef COBJMACROS
+#define IDirectSoundCapture_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundCapture_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IDirectSoundCapture_Release(p)                   (p)->lpVtbl->Release(p)
+#define IDirectSoundCapture_CreateCaptureBuffer(p,a,b,c) (p)->lpVtbl->CreateCaptureBuffer(p,a,b,c)
+#define IDirectSoundCapture_GetCaps(p,a)                 (p)->lpVtbl->GetCaps(p,a)
+#define IDirectSoundCapture_Initialize(p,a)              (p)->lpVtbl->Initialize(p,a)
+#endif
 
 /*****************************************************************************
  * IDirectSoundCaptureBuffer interface
@@ -556,18 +566,20 @@ ICOM_DEFINE(IDirectSoundCapture,IUnknown)
 ICOM_DEFINE(IDirectSoundCaptureBuffer,IUnknown)
 #undef INTERFACE
 
-#define IDirectSoundCaptureBuffer_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSoundCaptureBuffer_AddRef(p)                 ICOM_CALL (AddRef,p)
-#define IDirectSoundCaptureBuffer_Release(p)                ICOM_CALL (Release,p)
-#define IDirectSoundCaptureBuffer_GetCaps(p,a)              ICOM_CALL1(GetCaps,p,a)
-#define IDirectSoundCaptureBuffer_GetCurrentPosition(p,a,b) ICOM_CALL2(GetCurrentPosition,p,a,b)
-#define IDirectSoundCaptureBuffer_GetFormat(p,a,b,c)        ICOM_CALL3(GetFormat,p,a,b,c)
-#define IDirectSoundCaptureBuffer_GetStatus(p,a)            ICOM_CALL1(GetStatus,p,a)
-#define IDirectSoundCaptureBuffer_Initialize(p,a,b)         ICOM_CALL2(Initialize,p,a,b)
-#define IDirectSoundCaptureBuffer_Lock(p,a,b,c,d,e,f,g)     ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
-#define IDirectSoundCaptureBuffer_Start(p,a)                ICOM_CALL1(Start,p,a)
-#define IDirectSoundCaptureBuffer_Stop(p)                   ICOM_CALL (Stop,p)
-#define IDirectSoundCaptureBuffer_Unlock(p,a,b,c,d)         ICOM_CALL4(Unlock,p,a,b,c,d)
+#ifdef COBJMACROS
+#define IDirectSoundCaptureBuffer_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundCaptureBuffer_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IDirectSoundCaptureBuffer_Release(p)                (p)->lpVtbl->Release(p)
+#define IDirectSoundCaptureBuffer_GetCaps(p,a)              (p)->lpVtbl->GetCaps(p,a)
+#define IDirectSoundCaptureBuffer_GetCurrentPosition(p,a,b) (p)->lpVtbl->GetCurrentPosition(p,a,b)
+#define IDirectSoundCaptureBuffer_GetFormat(p,a,b,c)        (p)->lpVtbl->GetFormat(p,a,b,c)
+#define IDirectSoundCaptureBuffer_GetStatus(p,a)            (p)->lpVtbl->GetStatus(p,a)
+#define IDirectSoundCaptureBuffer_Initialize(p,a,b)         (p)->lpVtbl->Initialize(p,a,b)
+#define IDirectSoundCaptureBuffer_Lock(p,a,b,c,d,e,f,g)     (p)->lpVtbl->Lock(p,a,b,c,d,e,f,g)
+#define IDirectSoundCaptureBuffer_Start(p,a)                (p)->lpVtbl->Start(p,a)
+#define IDirectSoundCaptureBuffer_Stop(p)                   (p)->lpVtbl->Stop(p)
+#define IDirectSoundCaptureBuffer_Unlock(p,a,b,c,d)         (p)->lpVtbl->Unlock(p,a,b,c,d)
+#endif
 
 /*****************************************************************************
  * IDirectSoundCaptureBuffer8 interface
@@ -583,20 +595,22 @@ ICOM_DEFINE(IDirectSoundCaptureBuffer,IUnknown)
 ICOM_DEFINE(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer)
 #undef INTERFACE
 
-#define IDirectSoundCaptureBuffer8_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSoundCaptureBuffer8_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IDirectSoundCaptureBuffer8_Release(p)                 ICOM_CALL (Release,p)
-#define IDirectSoundCaptureBuffer8_GetCaps(p,a)               ICOM_CALL1(GetCaps,p,a)
-#define IDirectSoundCaptureBuffer8_GetCurrentPosition(p,a,b)  ICOM_CALL2(GetCurrentPosition,p,a,b)
-#define IDirectSoundCaptureBuffer8_GetFormat(p,a,b,c)         ICOM_CALL3(GetFormat,p,a,b,c)
-#define IDirectSoundCaptureBuffer8_GetStatus(p,a)             ICOM_CALL1(GetStatus,p,a)
-#define IDirectSoundCaptureBuffer8_Initialize(p,a,b)          ICOM_CALL2(Initialize,p,a,b)
-#define IDirectSoundCaptureBuffer8_Lock(p,a,b,c,d,e,f,g)      ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
-#define IDirectSoundCaptureBuffer8_Start(p,a)                 ICOM_CALL1(Start,p,a)
-#define IDirectSoundCaptureBuffer8_Stop(p)                    ICOM_CALL (Stop,p)
-#define IDirectSoundCaptureBuffer8_Unlock(p,a,b,c,d)          ICOM_CALL4(Unlock,p,a,b,c,d)
-#define IDirectSoundCaptureBuffer8_GetObjectInPath(p,a,b,c,d) ICOM_CALL4(GetObjectInPath,p,a,b,c,d)
-#define IDirectSoundCaptureBuffer8_GetFXStatus(p,a,b)         ICOM_CALL2(GetFXStatus,p,a,b)
+#ifdef COBJMACROS
+#define IDirectSoundCaptureBuffer8_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundCaptureBuffer8_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IDirectSoundCaptureBuffer8_Release(p)                 (p)->lpVtbl->Release(p)
+#define IDirectSoundCaptureBuffer8_GetCaps(p,a)               (p)->lpVtbl->GetCaps(p,a)
+#define IDirectSoundCaptureBuffer8_GetCurrentPosition(p,a,b)  (p)->lpVtbl->GetCurrentPosition(p,a,b)
+#define IDirectSoundCaptureBuffer8_GetFormat(p,a,b,c)         (p)->lpVtbl->GetFormat(p,a,b,c)
+#define IDirectSoundCaptureBuffer8_GetStatus(p,a)             (p)->lpVtbl->GetStatus(p,a)
+#define IDirectSoundCaptureBuffer8_Initialize(p,a,b)          (p)->lpVtbl->Initialize(p,a,b)
+#define IDirectSoundCaptureBuffer8_Lock(p,a,b,c,d,e,f,g)      (p)->lpVtbl->Lock(p,a,b,c,d,e,f,g)
+#define IDirectSoundCaptureBuffer8_Start(p,a)                 (p)->lpVtbl->Start(p,a)
+#define IDirectSoundCaptureBuffer8_Stop(p)                    (p)->lpVtbl->Stop(p)
+#define IDirectSoundCaptureBuffer8_Unlock(p,a,b,c,d)          (p)->lpVtbl->Unlock(p,a,b,c,d)
+#define IDirectSoundCaptureBuffer8_GetObjectInPath(p,a,b,c,d) (p)->lpVtbl->GetObjectInPath(p,a,b,c,d)
+#define IDirectSoundCaptureBuffer8_GetFXStatus(p,a,b)         (p)->lpVtbl->GetFXStatus(p,a,b)
+#endif
 
 /*****************************************************************************
  * IDirectSoundNotify interface
@@ -614,12 +628,14 @@ ICOM_DEFINE(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer)
 ICOM_DEFINE(IDirectSoundNotify,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectSoundNotify_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSoundNotify_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectSoundNotify_Release(p)            ICOM_CALL (Release,p)
+#define IDirectSoundNotify_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundNotify_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundNotify_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectSoundNotify methods ***/
-#define IDirectSoundNotify_SetNotificationPositions(p,a,b) ICOM_CALL2(SetNotificationPositions,p,a,b)
+#define IDirectSoundNotify_SetNotificationPositions(p,a,b) (p)->lpVtbl->SetNotificationPositions(p,a,b)
+#endif
 
 
 /*****************************************************************************
@@ -689,26 +705,28 @@ typedef const DS3DLISTENER *LPCDS3DLISTENER;
 ICOM_DEFINE(IDirectSound3DListener,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectSound3DListener_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSound3DListener_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectSound3DListener_Release(p)            ICOM_CALL (Release,p)
+#define IDirectSound3DListener_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSound3DListener_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSound3DListener_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectSound3DListener methods ***/
-#define IDirectSound3DListener_GetAllParameters(p,a)           ICOM_CALL1(GetAllParameters,p,a)
-#define IDirectSound3DListener_GetDistanceFactor(p,a)          ICOM_CALL1(GetDistanceFactor,p,a)
-#define IDirectSound3DListener_GetDopplerFactor(p,a)           ICOM_CALL1(GetDopplerFactor,p,a)
-#define IDirectSound3DListener_GetOrientation(p,a,b)           ICOM_CALL2(GetOrientation,p,a,b)
-#define IDirectSound3DListener_GetPosition(p,a)                ICOM_CALL1(GetPosition,p,a)
-#define IDirectSound3DListener_GetRolloffFactor(p,a)           ICOM_CALL1(GetRolloffFactor,p,a)
-#define IDirectSound3DListener_GetVelocity(p,a)                ICOM_CALL1(GetVelocity,p,a)
-#define IDirectSound3DListener_SetAllParameters(p,a,b)         ICOM_CALL2(SetAllParameters,p,a,b)
-#define IDirectSound3DListener_SetDistanceFactor(p,a,b)        ICOM_CALL2(SetDistanceFactor,p,a,b)
-#define IDirectSound3DListener_SetDopplerFactor(p,a,b)         ICOM_CALL2(SetDopplerFactor,p,a,b)
-#define IDirectSound3DListener_SetOrientation(p,a,b,c,d,e,f,g) ICOM_CALL7(SetOrientation,p,a,b,c,d,e,f,g)
-#define IDirectSound3DListener_SetPosition(p,a,b,c,d)          ICOM_CALL4(SetPosition,p,a,b,c,d)
-#define IDirectSound3DListener_SetRolloffFactor(p,a,b)         ICOM_CALL2(SetRolloffFactor,p,a,b)
-#define IDirectSound3DListener_SetVelocity(p,a,b,c,d)          ICOM_CALL4(SetVelocity,p,a,b,c,d)
-#define IDirectSound3DListener_CommitDeferredSettings(p)       ICOM_CALL (CommitDeferredSettings,p)
+#define IDirectSound3DListener_GetAllParameters(p,a)           (p)->lpVtbl->GetAllParameters(p,a)
+#define IDirectSound3DListener_GetDistanceFactor(p,a)          (p)->lpVtbl->GetDistanceFactor(p,a)
+#define IDirectSound3DListener_GetDopplerFactor(p,a)           (p)->lpVtbl->GetDopplerFactor(p,a)
+#define IDirectSound3DListener_GetOrientation(p,a,b)           (p)->lpVtbl->GetOrientation(p,a,b)
+#define IDirectSound3DListener_GetPosition(p,a)                (p)->lpVtbl->GetPosition(p,a)
+#define IDirectSound3DListener_GetRolloffFactor(p,a)           (p)->lpVtbl->GetRolloffFactor(p,a)
+#define IDirectSound3DListener_GetVelocity(p,a)                (p)->lpVtbl->GetVelocity(p,a)
+#define IDirectSound3DListener_SetAllParameters(p,a,b)         (p)->lpVtbl->SetAllParameters(p,a,b)
+#define IDirectSound3DListener_SetDistanceFactor(p,a,b)        (p)->lpVtbl->SetDistanceFactor(p,a,b)
+#define IDirectSound3DListener_SetDopplerFactor(p,a,b)         (p)->lpVtbl->SetDopplerFactor(p,a,b)
+#define IDirectSound3DListener_SetOrientation(p,a,b,c,d,e,f,g) (p)->lpVtbl->SetOrientation(p,a,b,c,d,e,f,g)
+#define IDirectSound3DListener_SetPosition(p,a,b,c,d)          (p)->lpVtbl->SetPosition(p,a,b,c,d)
+#define IDirectSound3DListener_SetRolloffFactor(p,a,b)         (p)->lpVtbl->SetRolloffFactor(p,a,b)
+#define IDirectSound3DListener_SetVelocity(p,a,b,c,d)          (p)->lpVtbl->SetVelocity(p,a,b,c,d)
+#define IDirectSound3DListener_CommitDeferredSettings(p)       (p)->lpVtbl->CommitDeferredSettings(p)
+#endif
 
 
 /*****************************************************************************
@@ -755,29 +773,31 @@ typedef const DS3DBUFFER *LPCDS3DBUFFER;
 ICOM_DEFINE(IDirectSound3DBuffer,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IDirectSound3DBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSound3DBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectSound3DBuffer_Release(p)            ICOM_CALL (Release,p)
+#define IDirectSound3DBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSound3DBuffer_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSound3DBuffer_Release(p)            (p)->lpVtbl->Release(p)
 /*** IDirectSound3DBuffer methods ***/
-#define IDirectSound3DBuffer_GetAllParameters(p,a)         ICOM_CALL1(GetAllParameters,p,a)
-#define IDirectSound3DBuffer_GetConeAngles(p,a,b)          ICOM_CALL2(GetConeAngles,p,a,b)
-#define IDirectSound3DBuffer_GetConeOrientation(p,a)       ICOM_CALL1(GetConeOrientation,p,a)
-#define IDirectSound3DBuffer_GetConeOutsideVolume(p,a)     ICOM_CALL1(GetConeOutsideVolume,p,a)
-#define IDirectSound3DBuffer_GetMaxDistance(p,a)           ICOM_CALL1(GetMaxDistance,p,a)
-#define IDirectSound3DBuffer_GetMinDistance(p,a)           ICOM_CALL1(GetMinDistance,p,a)
-#define IDirectSound3DBuffer_GetMode(p,a)                  ICOM_CALL1(GetMode,p,a)
-#define IDirectSound3DBuffer_GetPosition(p,a)              ICOM_CALL1(GetPosition,p,a)
-#define IDirectSound3DBuffer_GetVelocity(p,a)              ICOM_CALL1(GetVelocity,p,a)
-#define IDirectSound3DBuffer_SetAllParameters(p,a,b)       ICOM_CALL2(SetAllParameters,p,a,b)
-#define IDirectSound3DBuffer_SetConeAngles(p,a,b)          ICOM_CALL3(SetConeAngles,p,a,b)
-#define IDirectSound3DBuffer_SetConeOrientation(p,a,b,c,d) ICOM_CALL4(SetConeOrientation,p,a,b,c,d)
-#define IDirectSound3DBuffer_SetConeOutsideVolume(p,a,b)   ICOM_CALL2(SetConeOutsideVolume,p,a,b)
-#define IDirectSound3DBuffer_SetMaxDistance(p,a,b)         ICOM_CALL2(SetMaxDistance,p,a,b)
-#define IDirectSound3DBuffer_SetMinDistance(p,a,b)         ICOM_CALL2(SetMinDistance,p,a,b)
-#define IDirectSound3DBuffer_SetMode(p,a,b)                ICOM_CALL2(SetMode,p,a,b)
-#define IDirectSound3DBuffer_SetPosition(p,a,b,c,d)        ICOM_CALL4(SetPosition,p,a,b,c,d)
-#define IDirectSound3DBuffer_SetVelocity(p,a,b,c,d)        ICOM_CALL4(SetVelocity,p,a,b,c,d)
+#define IDirectSound3DBuffer_GetAllParameters(p,a)         (p)->lpVtbl->GetAllParameters(p,a)
+#define IDirectSound3DBuffer_GetConeAngles(p,a,b)          (p)->lpVtbl->GetConeAngles(p,a,b)
+#define IDirectSound3DBuffer_GetConeOrientation(p,a)       (p)->lpVtbl->GetConeOrientation(p,a)
+#define IDirectSound3DBuffer_GetConeOutsideVolume(p,a)     (p)->lpVtbl->GetConeOutsideVolume(p,a)
+#define IDirectSound3DBuffer_GetMaxDistance(p,a)           (p)->lpVtbl->GetMaxDistance(p,a)
+#define IDirectSound3DBuffer_GetMinDistance(p,a)           (p)->lpVtbl->GetMinDistance(p,a)
+#define IDirectSound3DBuffer_GetMode(p,a)                  (p)->lpVtbl->GetMode(p,a)
+#define IDirectSound3DBuffer_GetPosition(p,a)              (p)->lpVtbl->GetPosition(p,a)
+#define IDirectSound3DBuffer_GetVelocity(p,a)              (p)->lpVtbl->GetVelocity(p,a)
+#define IDirectSound3DBuffer_SetAllParameters(p,a,b)       (p)->lpVtbl->SetAllParameters(p,a,b)
+#define IDirectSound3DBuffer_SetConeAngles(p,a,b)          (p)->lpVtbl->SetConeAngles(p,a,b)
+#define IDirectSound3DBuffer_SetConeOrientation(p,a,b,c,d) (p)->lpVtbl->SetConeOrientation(p,a,b,c,d)
+#define IDirectSound3DBuffer_SetConeOutsideVolume(p,a,b)   (p)->lpVtbl->SetConeOutsideVolume(p,a,b)
+#define IDirectSound3DBuffer_SetMaxDistance(p,a,b)         (p)->lpVtbl->SetMaxDistance(p,a,b)
+#define IDirectSound3DBuffer_SetMinDistance(p,a,b)         (p)->lpVtbl->SetMinDistance(p,a,b)
+#define IDirectSound3DBuffer_SetMode(p,a,b)                (p)->lpVtbl->SetMode(p,a,b)
+#define IDirectSound3DBuffer_SetPosition(p,a,b,c,d)        (p)->lpVtbl->SetPosition(p,a,b,c,d)
+#define IDirectSound3DBuffer_SetVelocity(p,a,b,c,d)        (p)->lpVtbl->SetVelocity(p,a,b,c,d)
+#endif
 
 /*****************************************************************************
  * IKsPropertySet interface
@@ -796,12 +816,14 @@ ICOM_DEFINE(IDirectSound3DBuffer,IUnknown)
 ICOM_DEFINE(IKsPropertySet,IUnknown)
 #undef INTERFACE
 
-#define IKsPropertySet_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IKsPropertySet_AddRef(p)		ICOM_CALL (AddRef,p)
-#define IKsPropertySet_Release(p)		ICOM_CALL (Release,p)
-#define IKsPropertySet_Get(p,a,b,c,d,e,f,g)	ICOM_CALL7(Get,p,a,b,c,d,e,f,g)
-#define IKsPropertySet_Set(p,a,b,c,d,e,f)	ICOM_CALL6(Set,p,a,b,c,d,e,f)
-#define IKsPropertySet_QuerySupport(p,a,b,c)	ICOM_CALL3(QuerySupport,p,a,b,c)
+#ifdef COBJMACROS
+#define IKsPropertySet_QueryInterface(p,a,b)    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IKsPropertySet_AddRef(p)                (p)->lpVtbl->AddRef(p)
+#define IKsPropertySet_Release(p)               (p)->lpVtbl->Release(p)
+#define IKsPropertySet_Get(p,a,b,c,d,e,f,g)     (p)->lpVtbl->Get(p,a,b,c,d,e,f,g)
+#define IKsPropertySet_Set(p,a,b,c,d,e,f)       (p)->lpVtbl->Set(p,a,b,c,d,e,f)
+#define IKsPropertySet_QuerySupport(p,a,b,c)    (p)->lpVtbl->QuerySupport(p,a,b,c)
+#endif
 
 
 /*****************************************************************************
@@ -816,10 +838,12 @@ ICOM_DEFINE(IKsPropertySet,IUnknown)
 ICOM_DEFINE(IDirectSoundFullDuplex,IUnknown)
 #undef INTERFACE
 
-#define IDirectSoundFullDuplex_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSoundFullDuplex_AddRef(p)		ICOM_CALL (AddRef,p)
-#define IDirectSoundFullDuplex_Release(p)		ICOM_CALL (Release,p)
-#define IDirectSoundFullDuplex_Initialize(p,a,b,c,d,e,f,g,h)	ICOM_CALL8(Initialize,p,a,b,c,d,e,f,g,h)
+#ifdef COBJMACROS
+#define IDirectSoundFullDuplex_QueryInterface(p,a,b)    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFullDuplex_AddRef(p)                (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFullDuplex_Release(p)               (p)->lpVtbl->Release(p)
+#define IDirectSoundFullDuplex_Initialize(p,a,b,c,d,e,f,g,h)    (p)->lpVtbl->Initialize(p,a,b,c,d,e,f,g,h)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -48,16 +48,16 @@ typedef struct IEnumGUID IEnumGUID, *LPENUMGUID;
 ICOM_DEFINE(IEnumGUID,IUnknown)
 #undef INTERFACE
 
-#ifdef ICOM_CINTERFACE
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IEnumGUID_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IEnumGUID_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IEnumGUID_Release(p)            ICOM_CALL (Release,p)
+#define IEnumGUID_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IEnumGUID_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IEnumGUID_Release(p)            (p)->lpVtbl->Release(p)
 /*** IEnumGUID methods ***/
-#define IEnumGUID_Next(p,a,b,c)         ICOM_CALL3(Next,p,a,b,c)
-#define IEnumGUID_Skip(p,a)             ICOM_CALL1(Skip,p,a)
-#define IEnumGUID_Reset(p)              ICOM_CALL(Reset,p)
-#define IEnumGUID_Clone(p,a)            ICOM_CALL1(Clone,p,a)
+#define IEnumGUID_Next(p,a,b,c)         (p)->lpVtbl->Next(p,a,b,c)
+#define IEnumGUID_Skip(p,a)             (p)->lpVtbl->Skip(p,a)
+#define IEnumGUID_Reset(p)              (p)->lpVtbl->Reset(p)
+#define IEnumGUID_Clone(p,a)            (p)->lpVtbl->Clone(p,a)
 #endif
 
 #ifdef __cplusplus

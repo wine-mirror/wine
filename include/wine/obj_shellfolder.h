@@ -90,15 +90,17 @@ typedef struct
 ICOM_DEFINE(IEnumExtraSearch,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IEnumIDList_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IEnumIDList_AddRef(p)			ICOM_CALL (AddRef,p)
-#define IEnumIDList_Release(p)			ICOM_CALL (Release,p)
+#define IEnumIDList_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
+#define IEnumIDList_AddRef(p)                   (p)->lpVtbl->AddRef(p)
+#define IEnumIDList_Release(p)                  (p)->lpVtbl->Release(p)
 /*** IEnumIDList methods ***/
-#define IEnumIDList_Next(p,a,b,c)		ICOM_CALL3(Next,p,a,b,c)
-#define IEnumIDList_Skip(p,a)			ICOM_CALL1(Skip,p,a)
-#define IEnumIDList_Reset(p)			ICOM_CALL(Reset,p)
-#define IEnumIDList_Clone(p,a)			ICOM_CALL1(Clone,p,a)
+#define IEnumIDList_Next(p,a,b,c)               (p)->lpVtbl->Next(p,a,b,c)
+#define IEnumIDList_Skip(p,a)                   (p)->lpVtbl->Skip(p,a)
+#define IEnumIDList_Reset(p)                    (p)->lpVtbl->Reset(p)
+#define IEnumIDList_Clone(p,a)                  (p)->lpVtbl->Clone(p,a)
+#endif
 
 /*****************************************************************************
  * IShellFolder::GetDisplayNameOf/SetNameOf uFlags
@@ -214,21 +216,23 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder * *);
 ICOM_DEFINE(IShellFolder,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IShellFolder_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define IShellFolder_AddRef(p)				ICOM_CALL (AddRef,p)
-#define IShellFolder_Release(p)				ICOM_CALL (Release,p)
+#define IShellFolder_QueryInterface(p,a,b)              (p)->lpVtbl->QueryInterface(p,a,b)
+#define IShellFolder_AddRef(p)                          (p)->lpVtbl->AddRef(p)
+#define IShellFolder_Release(p)                         (p)->lpVtbl->Release(p)
 /*** IShellFolder methods ***/
-#define IShellFolder_ParseDisplayName(p,a,b,c,d,e,f)	ICOM_CALL6(ParseDisplayName,p,a,b,c,d,e,f)
-#define IShellFolder_EnumObjects(p,a,b,c)		ICOM_CALL3(EnumObjects,p,a,b,c)
-#define IShellFolder_BindToObject(p,a,b,c,d)		ICOM_CALL4(BindToObject,p,a,b,c,d)
-#define IShellFolder_BindToStorage(p,a,b,c,d)		ICOM_CALL4(BindToStorage,p,a,b,c,d)
-#define IShellFolder_CompareIDs(p,a,b,c)		ICOM_CALL3(CompareIDs,p,a,b,c)
-#define IShellFolder_CreateViewObject(p,a,b,c)		ICOM_CALL3(CreateViewObject,p,a,b,c)
-#define IShellFolder_GetAttributesOf(p,a,b,c)		ICOM_CALL3(GetAttributesOf,p,a,b,c)
-#define IShellFolder_GetUIObjectOf(p,a,b,c,d,e,f)	ICOM_CALL6(GetUIObjectOf,p,a,b,c,d,e,f)
-#define IShellFolder_GetDisplayNameOf(p,a,b,c)		ICOM_CALL3(GetDisplayNameOf,p,a,b,c)
-#define IShellFolder_SetNameOf(p,a,b,c,d,e)		ICOM_CALL5(SetNameOf,p,a,b,c,d,e)
+#define IShellFolder_ParseDisplayName(p,a,b,c,d,e,f)    (p)->lpVtbl->ParseDisplayName(p,a,b,c,d,e,f)
+#define IShellFolder_EnumObjects(p,a,b,c)               (p)->lpVtbl->EnumObjects(p,a,b,c)
+#define IShellFolder_BindToObject(p,a,b,c,d)            (p)->lpVtbl->BindToObject(p,a,b,c,d)
+#define IShellFolder_BindToStorage(p,a,b,c,d)           (p)->lpVtbl->BindToStorage(p,a,b,c,d)
+#define IShellFolder_CompareIDs(p,a,b,c)                (p)->lpVtbl->CompareIDs(p,a,b,c)
+#define IShellFolder_CreateViewObject(p,a,b,c)          (p)->lpVtbl->CreateViewObject(p,a,b,c)
+#define IShellFolder_GetAttributesOf(p,a,b,c)           (p)->lpVtbl->GetAttributesOf(p,a,b,c)
+#define IShellFolder_GetUIObjectOf(p,a,b,c,d,e,f)       (p)->lpVtbl->GetUIObjectOf(p,a,b,c,d,e,f)
+#define IShellFolder_GetDisplayNameOf(p,a,b,c)          (p)->lpVtbl->GetDisplayNameOf(p,a,b,c)
+#define IShellFolder_SetNameOf(p,a,b,c,d,e)             (p)->lpVtbl->SetNameOf(p,a,b,c,d,e)
+#endif
 
 /*****************************************************************************
  * IShellFolder2 interface
@@ -283,29 +287,31 @@ typedef struct
 ICOM_DEFINE(IShellFolder2, IShellFolder)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IShellFolder2_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
-#define IShellFolder2_AddRef(p)				ICOM_CALL (AddRef,p)
-#define IShellFolder2_Release(p)			ICOM_CALL (Release,p)
+#define IShellFolder2_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
+#define IShellFolder2_AddRef(p)                         (p)->lpVtbl->AddRef(p)
+#define IShellFolder2_Release(p)                        (p)->lpVtbl->Release(p)
 /*** IShellFolder methods ***/
-#define IShellFolder2_ParseDisplayName(p,a,b,c,d,e,f)	ICOM_CALL6(ParseDisplayName,p,a,b,c,d,e,f)
-#define IShellFolder2_EnumObjects(p,a,b,c)		ICOM_CALL3(EnumObjects,p,a,b,c)
-#define IShellFolder2_BindToObject(p,a,b,c,d)		ICOM_CALL4(BindToObject,p,a,b,c,d)
-#define IShellFolder2_BindToStorage(p,a,b,c,d)		ICOM_CALL4(BindToStorage,p,a,b,c,d)
-#define IShellFolder2_CompareIDs(p,a,b,c)		ICOM_CALL3(CompareIDs,p,a,b,c)
-#define IShellFolder2_CreateViewObject(p,a,b,c)		ICOM_CALL3(CreateViewObject,p,a,b,c)
-#define IShellFolder2_GetAttributesOf(p,a,b,c)		ICOM_CALL3(GetAttributesOf,p,a,b,c)
-#define IShellFolder2_GetUIObjectOf(p,a,b,c,d,e,f)	ICOM_CALL6(GetUIObjectOf,p,a,b,c,d,e,f)
-#define IShellFolder2_GetDisplayNameOf(p,a,b,c)		ICOM_CALL3(GetDisplayNameOf,p,a,b,c)
-#define IShellFolder2_SetNameOf(p,a,b,c,d,e)		ICOM_CALL5(SetNameOf,p,a,b,c,d,e)
+#define IShellFolder2_ParseDisplayName(p,a,b,c,d,e,f)   (p)->lpVtbl->ParseDisplayName(p,a,b,c,d,e,f)
+#define IShellFolder2_EnumObjects(p,a,b,c)              (p)->lpVtbl->EnumObjects(p,a,b,c)
+#define IShellFolder2_BindToObject(p,a,b,c,d)           (p)->lpVtbl->BindToObject(p,a,b,c,d)
+#define IShellFolder2_BindToStorage(p,a,b,c,d)          (p)->lpVtbl->BindToStorage(p,a,b,c,d)
+#define IShellFolder2_CompareIDs(p,a,b,c)               (p)->lpVtbl->CompareIDs(p,a,b,c)
+#define IShellFolder2_CreateViewObject(p,a,b,c)         (p)->lpVtbl->CreateViewObject(p,a,b,c)
+#define IShellFolder2_GetAttributesOf(p,a,b,c)          (p)->lpVtbl->GetAttributesOf(p,a,b,c)
+#define IShellFolder2_GetUIObjectOf(p,a,b,c,d,e,f)      (p)->lpVtbl->GetUIObjectOf(p,a,b,c,d,e,f)
+#define IShellFolder2_GetDisplayNameOf(p,a,b,c)         (p)->lpVtbl->GetDisplayNameOf(p,a,b,c)
+#define IShellFolder2_SetNameOf(p,a,b,c,d,e)            (p)->lpVtbl->SetNameOf(p,a,b,c,d,e)
 /*** IShellFolder2 methods ***/
-#define IShellFolder2_GetDefaultSearchGUID(p,a)		ICOM_CALL1(GetDefaultSearchGUID,p,a)
-#define IShellFolder2_EnumSearches(p,a)			ICOM_CALL1(EnumSearches,p,a)
-#define IShellFolder2_GetDefaultColumn(p,a,b,c)		ICOM_CALL3(GetDefaultColumn,p,a,b,c)
-#define IShellFolder2_GetDefaultColumnState(p,a,b)	ICOM_CALL2(GetDefaultColumnState,p,a,b)
-#define IShellFolder2_GetDetailsEx(p,a,b,c)		ICOM_CALL3(GetDetailsEx,p,a,b,c)
-#define IShellFolder2_GetDetailsOf(p,a,b,c)		ICOM_CALL3(GetDetailsOf,p,a,b,c)
-#define IShellFolder2_MapNameToSCID(p,a,b)		ICOM_CALL2(MapNameToSCID,p,a,b)
+#define IShellFolder2_GetDefaultSearchGUID(p,a)         (p)->lpVtbl->GetDefaultSearchGUID(p,a)
+#define IShellFolder2_EnumSearches(p,a)                 (p)->lpVtbl->EnumSearches(p,a)
+#define IShellFolder2_GetDefaultColumn(p,a,b,c)         (p)->lpVtbl->GetDefaultColumn(p,a,b,c)
+#define IShellFolder2_GetDefaultColumnState(p,a,b)      (p)->lpVtbl->GetDefaultColumnState(p,a,b)
+#define IShellFolder2_GetDetailsEx(p,a,b,c)             (p)->lpVtbl->GetDetailsEx(p,a,b,c)
+#define IShellFolder2_GetDetailsOf(p,a,b,c)             (p)->lpVtbl->GetDetailsOf(p,a,b,c)
+#define IShellFolder2_MapNameToSCID(p,a,b)              (p)->lpVtbl->MapNameToSCID(p,a,b)
+#endif
 
 /*****************************************************************************
  * IPersistFolder interface
@@ -320,14 +326,16 @@ ICOM_DEFINE(IShellFolder2, IShellFolder)
 ICOM_DEFINE(IPersistFolder, IPersist)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPersistFolder_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IPersistFolder_AddRef(p)		ICOM_CALL (AddRef,p)
-#define IPersistFolder_Release(p)		ICOM_CALL (Release,p)
+#define IPersistFolder_QueryInterface(p,a,b)    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPersistFolder_AddRef(p)                (p)->lpVtbl->AddRef(p)
+#define IPersistFolder_Release(p)               (p)->lpVtbl->Release(p)
 /*** IPersist methods ***/
-#define IPersistFolder_GetClassID(p,a)		ICOM_CALL1(GetClassID,p,a)
+#define IPersistFolder_GetClassID(p,a)          (p)->lpVtbl->GetClassID(p,a)
 /*** IPersistFolder methods ***/
-#define IPersistFolder_Initialize(p,a)		ICOM_CALL1(Initialize,p,a)
+#define IPersistFolder_Initialize(p,a)          (p)->lpVtbl->Initialize(p,a)
+#endif
 
 /*****************************************************************************
  * IPersistFolder2 interface
@@ -343,16 +351,18 @@ ICOM_DEFINE(IPersistFolder, IPersist)
 ICOM_DEFINE(IPersistFolder2, IPersistFolder)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPersistFolder2_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IPersistFolder2_AddRef(p)		ICOM_CALL (AddRef,p)
-#define IPersistFolder2_Release(p)		ICOM_CALL (Release,p)
+#define IPersistFolder2_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPersistFolder2_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IPersistFolder2_Release(p)              (p)->lpVtbl->Release(p)
 /*** IPersist methods ***/
-#define IPersistFolder2_GetClassID(p,a)		ICOM_CALL1(GetClassID,p,a)
+#define IPersistFolder2_GetClassID(p,a)         (p)->lpVtbl->GetClassID(p,a)
 /*** IPersistFolder methods ***/
-#define IPersistFolder2_Initialize(p,a)		ICOM_CALL1(Initialize,p,a)
+#define IPersistFolder2_Initialize(p,a)         (p)->lpVtbl->Initialize(p,a)
 /*** IPersistFolder2 methods ***/
-#define IPersistFolder2_GetCurFolder(p,a)	ICOM_CALL1(GetCurFolder,p,a)
+#define IPersistFolder2_GetCurFolder(p,a)       (p)->lpVtbl->GetCurFolder(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -379,19 +389,21 @@ typedef struct {
 ICOM_DEFINE(IPersistFolder3, IPersistFolder2)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPersistFolder3_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IPersistFolder3_AddRef(p)		ICOM_CALL (AddRef,p)
-#define IPersistFolder3_Release(p)		ICOM_CALL (Release,p)
+#define IPersistFolder3_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPersistFolder3_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define IPersistFolder3_Release(p)              (p)->lpVtbl->Release(p)
 /*** IPersist methods ***/
-#define IPersistFolder3_GetClassID(p,a)		ICOM_CALL1(GetClassID,p,a)
+#define IPersistFolder3_GetClassID(p,a)         (p)->lpVtbl->GetClassID(p,a)
 /*** IPersistFolder methods ***/
-#define IPersistFolder3_Initialize(p,a)		ICOM_CALL1(Initialize,p,a)
+#define IPersistFolder3_Initialize(p,a)         (p)->lpVtbl->Initialize(p,a)
 /*** IPersistFolder2 methods ***/
-#define IPersistFolder3_GetCurFolder(p,a)	ICOM_CALL1(GetCurFolder,p,a)
+#define IPersistFolder3_GetCurFolder(p,a)       (p)->lpVtbl->GetCurFolder(p,a)
 /*** IPersistFolder3 methods ***/
-#define IPersistFolder3_InitializeEx(p,a,b,c)	ICOM_CALL3(InitializeEx,p,a,b,c)
-#define IPersistFolder3_GetFolderTargetInfo(p,a) ICOM_CALL1(InitializeEx,p,a)
+#define IPersistFolder3_InitializeEx(p,a,b,c)   (p)->lpVtbl->InitializeEx(p,a,b,c)
+#define IPersistFolder3_GetFolderTargetInfo(p,a) (p)->lpVtbl->InitializeEx(p,a)
+#endif
 
 
 #ifdef __cplusplus

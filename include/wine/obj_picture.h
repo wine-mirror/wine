@@ -75,25 +75,27 @@ typedef struct IPictureDisp IPictureDisp, *LPPICTUREDISP;
 ICOM_DEFINE(IPicture,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPicture_QueryInterface(p,a,b)         ICOM_CALL2(QueryInterface,p,a,b)
-#define IPicture_AddRef(p)                     ICOM_CALL (AddRef,p)
-#define IPicture_Release(p)                    ICOM_CALL (Release,p)
+#define IPicture_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPicture_AddRef(p)                     (p)->lpVtbl->AddRef(p)
+#define IPicture_Release(p)                    (p)->lpVtbl->Release(p)
 /*** IPicture methods ***/
-#define IPicture_get_Handle(p,a)               ICOM_CALL1(get_Handle,p,a)
-#define IPicture_get_hPal(p,a)                 ICOM_CALL1(get_hPal,p,a)
-#define IPicture_get_Type(p,a)                 ICOM_CALL1(get_Type,p,a)
-#define IPicture_get_Width(p,a)                ICOM_CALL1(get_Width,p,a)
-#define IPicture_get_Height(p,a)               ICOM_CALL1(get_Height,p,a)
-#define IPicture_Render(p,a,b,c,d,e,f,g,h,i,j) ICOM_CALL10(Render,p,a,b,c,d,e,f,g,h,i,j)
-#define IPicture_set_hPal(p,a)                 ICOM_CALL1(set_hPal,p,a)
-#define IPicture_get_CurDC(p,a)                ICOM_CALL1(get_CurDC,p,a)
-#define IPicture_SelectPicture(p,a,b,c)        ICOM_CALL3(SelectPicture,p,a,b,c)
-#define IPicture_get_KeepOriginalFormat(p,a)   ICOM_CALL1(get_KeepOriginalFormat,p,a)
-#define IPicture_put_KeepOriginalFormat(p,a)   ICOM_CALL1(put_KeepOriginalFormat,p,a)
-#define IPicture_PictureChanged(p)             ICOM_CALL (PictureChanged,p)
-#define IPicture_SaveAsFile(p,a,b,c)           ICOM_CALL3(SaveAsFile,p,a,b,c)
-#define IPicture_get_Attributes(p,a)           ICOM_CALL1(get_Attributes,p,a)
+#define IPicture_get_Handle(p,a)               (p)->lpVtbl->get_Handle(p,a)
+#define IPicture_get_hPal(p,a)                 (p)->lpVtbl->get_hPal(p,a)
+#define IPicture_get_Type(p,a)                 (p)->lpVtbl->get_Type(p,a)
+#define IPicture_get_Width(p,a)                (p)->lpVtbl->get_Width(p,a)
+#define IPicture_get_Height(p,a)               (p)->lpVtbl->get_Height(p,a)
+#define IPicture_Render(p,a,b,c,d,e,f,g,h,i,j) (p)->lpVtbl->Render(p,a,b,c,d,e,f,g,h,i,j)
+#define IPicture_set_hPal(p,a)                 (p)->lpVtbl->set_hPal(p,a)
+#define IPicture_get_CurDC(p,a)                (p)->lpVtbl->get_CurDC(p,a)
+#define IPicture_SelectPicture(p,a,b,c)        (p)->lpVtbl->SelectPicture(p,a,b,c)
+#define IPicture_get_KeepOriginalFormat(p,a)   (p)->lpVtbl->get_KeepOriginalFormat(p,a)
+#define IPicture_put_KeepOriginalFormat(p,a)   (p)->lpVtbl->put_KeepOriginalFormat(p,a)
+#define IPicture_PictureChanged(p)             (p)->lpVtbl->PictureChanged(p)
+#define IPicture_SaveAsFile(p,a,b,c)           (p)->lpVtbl->SaveAsFile(p,a,b,c)
+#define IPicture_get_Attributes(p,a)           (p)->lpVtbl->get_Attributes(p,a)
+#endif
 
 
 /*****************************************************************************
@@ -107,16 +109,18 @@ ICOM_DEFINE(IPicture,IUnknown)
 ICOM_DEFINE(IPictureDisp,IDispatch)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IPictureDisp_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IPictureDisp_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IPictureDisp_Release(p)                 ICOM_CALL (Release,p)
+#define IPictureDisp_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPictureDisp_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IPictureDisp_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IDispatch methods ***/
-#define IPictureDisp_GetTypeInfoCount(p,a)      ICOM_CALL1 (GetTypeInfoCount,p,a)
-#define IPictureDisp_GetTypeInfo(p,a,b,c)       ICOM_CALL3 (GetTypeInfo,p,b,c)
-#define IPictureDisp_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
-#define IPictureDisp_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
+#define IPictureDisp_GetTypeInfoCount(p,a)      (p)->lpVtbl->GetTypeInfoCount(p,a)
+#define IPictureDisp_GetTypeInfo(p,a,b,c)       (p)->lpVtbl->GetTypeInfo(p,b,c)
+#define IPictureDisp_GetIDsOfNames(p,a,b,c,d,e) (p)->lpVtbl->GetIDsOfNames(p,a,b,c,d,e)
+#define IPictureDisp_Invoke(p,a,b,c,d,e,f,g,h)  (p)->lpVtbl->Invoke(p,a,b,c,d,e,f,g,h)
 /*** IPictureDisp methods ***/
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

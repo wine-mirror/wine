@@ -45,12 +45,14 @@ typedef struct 	ICommDlgBrowser ICommDlgBrowser, *LPCOMMDLGBROWSER;
 ICOM_DEFINE(ICommDlgBrowser,IUnknown)
 #undef INTERFACE
 
-#define ICommDlgBrowser_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define ICommDlgBrowser_AddRef(p)		ICOM_CALL(AddRef,p)
-#define ICommDlgBrowser_Release(p)		ICOM_CALL(Release,p)
-#define ICommDlgBrowser_OnDefaultCommand(p,a)	ICOM_CALL1(OnDefaultCommand,p,a)
-#define ICommDlgBrowser_OnStateChange(p,a,b)	ICOM_CALL2(OnStateChange,p,a,b)
-#define ICommDlgBrowser_IncludeObject(p,a,b)	ICOM_CALL2(IncludeObject,p,a,b)
+#ifdef COBJMACROS
+#define ICommDlgBrowser_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
+#define ICommDlgBrowser_AddRef(p)               (p)->lpVtbl->AddRef(p)
+#define ICommDlgBrowser_Release(p)              (p)->lpVtbl->Release(p)
+#define ICommDlgBrowser_OnDefaultCommand(p,a)   (p)->lpVtbl->OnDefaultCommand(p,a)
+#define ICommDlgBrowser_OnStateChange(p,a,b)    (p)->lpVtbl->OnStateChange(p,a,b)
+#define ICommDlgBrowser_IncludeObject(p,a,b)    (p)->lpVtbl->IncludeObject(p,a,b)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -36,12 +36,14 @@ typedef struct 	IShellExtInit IShellExtInit, *LPSHELLEXTINIT;
 ICOM_DEFINE(IShellExtInit,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IShellExtInit_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
-#define IShellExtInit_AddRef(p)			ICOM_CALL(AddRef,p)
-#define IShellExtInit_Release(p)		ICOM_CALL(Release,p)
+#define IShellExtInit_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IShellExtInit_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IShellExtInit_Release(p)                (p)->lpVtbl->Release(p)
 /*** IShellExtInit methods ***/
-#define IShellExtInit_Initialize(p,a,b,c)	ICOM_CALL3(Initialize,p,a,b,c)
+#define IShellExtInit_Initialize(p,a,b,c)       (p)->lpVtbl->Initialize(p,a,b,c)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

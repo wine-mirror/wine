@@ -184,17 +184,19 @@ typedef enum BINDSTATUS {
 ICOM_DEFINE(IBinding,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IBinding_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IBinding_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IBinding_Release(p)                 ICOM_CALL (Release,p)
+#define IBinding_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IBinding_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IBinding_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IBinding methods ***/
-#define IBinding_Abort(p)                   ICOM_CALL (Abort,p)
-#define IBinding_Suspend(p)                 ICOM_CALL (Suspend,p)
-#define IBinding_Resume(p)                  ICOM_CALL (Resume,p)
-#define IBinding_SetPriority(p,a)           ICOM_CALL2(SetPriority,p,a)
-#define IBinding_GetPriority(p,a)           ICOM_CALL2(GetPriority,p,a)
-#define IBinding_GetBindResult(p,a,b,c,d)   ICOM_CALL4(GetBindResult,p,a,b,c,d)
+#define IBinding_Abort(p)                   (p)->lpVtbl->Abort(p)
+#define IBinding_Suspend(p)                 (p)->lpVtbl->Suspend(p)
+#define IBinding_Resume(p)                  (p)->lpVtbl->Resume(p)
+#define IBinding_SetPriority(p,a)           (p)->lpVtbl->SetPriority(p,a)
+#define IBinding_GetPriority(p,a)           (p)->lpVtbl->GetPriority(p,a)
+#define IBinding_GetBindResult(p,a,b,c,d)   (p)->lpVtbl->GetBindResult(p,a,b,c,d)
+#endif
 
 /*****************************************************************************
  * IBindStatusCallback interface
@@ -215,19 +217,21 @@ ICOM_DEFINE(IBinding,IUnknown)
 ICOM_DEFINE(IBindStatusCallback,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IBindStatusCallback_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IBindStatusCallback_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IBindStatusCallback_Release(p)                 ICOM_CALL (Release,p)
+#define IBindStatusCallback_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IBindStatusCallback_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IBindStatusCallback_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IBindStatusCallback methods ***/
-#define IBindStatusCallback_OnStartBinding(p,a,b)      ICOM_CALL2(OnStartBinding,p,a,b)
-#define IBindStatusCallback_GetPriority(p,a)           ICOM_CALL1(GetPriority,p,a)
-#define IBindStatusCallback_OnLowResource(p)           ICOM_CALL (OnLowResource,p)
-#define IBindStatusCallback_OnProgress(p,a,b,c,d)      ICOM_CALL4(OnProgress,p,a,b,c,d)
-#define IBindStatusCallback_OnStopBinding(p,a,b)       ICOM_CALL2(OnStopBinding,p,a,b)
-#define IBindStatusCallback_GetBindInfo(p,a,b)         ICOM_CALL2(GetBindInfo,p,a,b)
-#define IBindStatusCallback_OnDataAvailable(p,a,b,c,d) ICOM_CALL4(OnDataAvailable,p,a,b,c,d)
-#define IBindStatusCallback_OnObjectAvailable(p,a,b)   ICOM_CALL2(OnObjectAvailable,p,a,b)
+#define IBindStatusCallback_OnStartBinding(p,a,b)      (p)->lpVtbl->OnStartBinding(p,a,b)
+#define IBindStatusCallback_GetPriority(p,a)           (p)->lpVtbl->GetPriority(p,a)
+#define IBindStatusCallback_OnLowResource(p)           (p)->lpVtbl->OnLowResource(p)
+#define IBindStatusCallback_OnProgress(p,a,b,c,d)      (p)->lpVtbl->OnProgress(p,a,b,c,d)
+#define IBindStatusCallback_OnStopBinding(p,a,b)       (p)->lpVtbl->OnStopBinding(p,a,b)
+#define IBindStatusCallback_GetBindInfo(p,a,b)         (p)->lpVtbl->GetBindInfo(p,a,b)
+#define IBindStatusCallback_OnDataAvailable(p,a,b,c,d) (p)->lpVtbl->OnDataAvailable(p,a,b,c,d)
+#define IBindStatusCallback_OnObjectAvailable(p,a,b)   (p)->lpVtbl->OnObjectAvailable(p,a,b)
+#endif
 
 /*****************************************************************************
  * IBindHost interface
@@ -243,14 +247,16 @@ ICOM_DEFINE(IBindStatusCallback,IUnknown)
 ICOM_DEFINE(IBindHost,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IBindHost_QueryInterface(p,a,b)                   ICOM_CALL2(QueryInterface,p,a,b)
-#define IBindHost_AddRef(p)                               ICOM_CALL (AddRef,p)
-#define IBindHost_Release(p)                              ICOM_CALL (Release,p)
+#define IBindHost_QueryInterface(p,a,b)                   (p)->lpVtbl->QueryInterface(p,a,b)
+#define IBindHost_AddRef(p)                               (p)->lpVtbl->AddRef(p)
+#define IBindHost_Release(p)                              (p)->lpVtbl->Release(p)
 /*** IBindHost methods ***/
-#define IBindHost_CreateMoniker(p,a,b,c,d)                ICOM_CALL4(CreateMoniker,p,a,b,c,d)
-#define IBindHost_MonikerBindToStorage(p,a,b,c,d,e)       ICOM_CALL5(MonikerBindToStorage,p,a,b,c,d,e)
-#define IBindHost_MonikerBindToObject(p,a,b,c,d,e)        ICOM_CALL5(MonikerBindToObject,p,a,b,c,d,e)
+#define IBindHost_CreateMoniker(p,a,b,c,d)                (p)->lpVtbl->CreateMoniker(p,a,b,c,d)
+#define IBindHost_MonikerBindToStorage(p,a,b,c,d,e)       (p)->lpVtbl->MonikerBindToStorage(p,a,b,c,d,e)
+#define IBindHost_MonikerBindToObject(p,a,b,c,d,e)        (p)->lpVtbl->MonikerBindToObject(p,a,b,c,d,e)
+#endif
 
 /*** IUnknown methods ***/
 typedef enum _tagQUERYOPTION {
@@ -282,12 +288,14 @@ typedef enum _tagQUERYOPTION {
 ICOM_DEFINE(IWinInetInfo,IUnknown)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IWinInetInfo_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
-#define IWinInetInfo_AddRef(p)                  ICOM_CALL (AddRef,p)
-#define IWinInetInfo_Release(p)                 ICOM_CALL (Release,p)
+#define IWinInetInfo_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWinInetInfo_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IWinInetInfo_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IWinInetInfo methods ***/
-#define IWinInetInfo_QueryOption(p,a,b,c)       ICOM_CALL3(QueryOption,p,a,b,c)
+#define IWinInetInfo_QueryOption(p,a,b,c)       (p)->lpVtbl->QueryOption(p,a,b,c)
+#endif
 
 /*****************************************************************************
  * IWinInetHttpInfo interface
@@ -301,12 +309,14 @@ ICOM_DEFINE(IWinInetInfo,IUnknown)
 ICOM_DEFINE(IWinInetHttpInfo,IWinInetInfo)
 #undef INTERFACE
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
-#define IWinInetHttpInfo_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)
-#define IWinInetHttpInfo_AddRef(p)              ICOM_CALL (AddRef,p)
-#define IWinInetHttpInfo_Release(p)             ICOM_CALL (Release,p)
+#define IWinInetHttpInfo_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWinInetHttpInfo_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IWinInetHttpInfo_Release(p)             (p)->lpVtbl->Release(p)
 /*** IWinInetHttpInfo methods ***/
-#define IWinInetHttpInfo_QueryInfo(p,a,b,c,d,e) ICOM_CALL5(QueryInfo,p,a,b,c,d,e)
+#define IWinInetHttpInfo_QueryInfo(p,a,b,c,d,e) (p)->lpVtbl->QueryInfo(p,a,b,c,d,e)
+#endif
 
 HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk);
 HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pbsc, IBindStatusCallback **ppbsc, DWORD dwReserved);
