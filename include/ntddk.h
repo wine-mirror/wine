@@ -812,25 +812,11 @@ NtSetSecurityObject(
 
 /*	registry functions */
 
-NTSTATUS WINAPI NtCreateKey(
-	PHANDLE KeyHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes,
-	ULONG TitleIndex,
-	PUNICODE_STRING Class,
-	ULONG CreateOptions,
-	PULONG Disposition);
-
-NTSTATUS WINAPI NtOpenKey(
-	PHANDLE KeyHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes);
-
-NTSTATUS WINAPI NtDeleteKey(HANDLE KeyHandle);
-
-NTSTATUS WINAPI NtDeleteValueKey(
-	IN HANDLE KeyHandle,
-	IN PUNICODE_STRING ValueName);
+NTSTATUS    WINAPI NtCreateKey(PHANDLE,ACCESS_MASK,const OBJECT_ATTRIBUTES*,ULONG,
+                               const UNICODE_STRING*,ULONG,PULONG);
+NTSTATUS    WINAPI NtDeleteKey(HANDLE);
+NTSTATUS    WINAPI NtDeleteValueKey(HANDLE,const UNICODE_STRING*);
+NTSTATUS    WINAPI NtOpenKey(PHANDLE,ACCESS_MASK,const OBJECT_ATTRIBUTES*);
 
 NTSTATUS WINAPI NtEnumerateKey(
 	HANDLE KeyHandle,

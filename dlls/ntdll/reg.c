@@ -18,194 +18,137 @@
 
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
+static const WCHAR root_name[] = { '\\','R','e','g','i','s','t','r','y','\\',0 };
+static const UNICODE_STRING root_path =
+{
+    sizeof(root_name)-sizeof(WCHAR),  /* Length */
+    sizeof(root_name),                /* MaximumLength */
+    (LPWSTR)root_name                 /* Buffer */
+};
+
 /* copy a key name into the request buffer */
-static inline NTSTATUS copy_nameU( LPWSTR Dest, PUNICODE_STRING Name, UINT Offset )
+static NTSTATUS copy_key_name( LPWSTR dest, const UNICODE_STRING *name )
 {
-	if (Name->Buffer) 
-	{
-	  if ((Name->Length-Offset) > MAX_PATH) return STATUS_BUFFER_OVERFLOW;
-	  strcpyW( Dest, Name->Buffer+Offset );
-	}
-	else Dest[0] = 0;
-	return STATUS_SUCCESS;
+    int len = name->Length, pos = 0;
+
+    if (len >= MAX_PATH) return STATUS_BUFFER_OVERFLOW;
+    if (RtlPrefixUnicodeString( &root_path, name, TRUE ))
+    {
+        pos += root_path.Length / sizeof(WCHAR);
+        len -= root_path.Length;
+    }
+    if (len) memcpy( dest, name->Buffer + pos, len );
+    dest[len / sizeof(WCHAR)] = 0;
+    return STATUS_SUCCESS;
 }
 
-/* translates predefined paths to HKEY_ constants */
-static BOOLEAN _NtKeyToWinKey(
-	IN POBJECT_ATTRIBUTES ObjectAttributes,
-	OUT UINT * Offset,	/* offset within ObjectName */
-	OUT HKEY * KeyHandle)	/* translated handle */
+
+/* copy a key name into the request buffer */
+static inline NTSTATUS copy_nameU( LPWSTR Dest, const UNICODE_STRING *name, UINT max )
 {
-	static const WCHAR KeyPath_HKLM[] = {
-		'\\','R','E','G','I','S','T','R','Y',
-		'\\','M','A','C','H','I','N','E',0};
-	static const WCHAR KeyPath_HKU [] = {
-		'\\','R','E','G','I','S','T','R','Y',
-		'\\','U','S','E','R',0};
-	static const WCHAR KeyPath_HCC [] = {
-		'\\','R','E','G','I','S','T','R','Y',
-		'\\','M','A','C','H','I','N','E',
-		'\\','S','Y','S','T','E','M',
-		'\\','C','U','R','R','E','N','T','C','O','N','T','R','O','L','S','E','T',
-		'\\','H','A','R','D','W','A','R','E','P','R','O','F','I','L','E','S',
-		'\\','C','U','R','R','E','N','T',0};
-	static const WCHAR KeyPath_HCR [] = {
-		'\\','R','E','G','I','S','T','R','Y',
-		'\\','M','A','C','H','I','N','E',
-		'\\','S','O','F','T','W','A','R','E',
-		'\\','C','L','A','S','S','E','S',0};
-	int len;
-	PUNICODE_STRING ObjectName = ObjectAttributes->ObjectName;
-
-	if(ObjectAttributes->RootDirectory)
-	{
-	  len = 0;
-	  *KeyHandle = ObjectAttributes->RootDirectory;
-	}
-	else if((ObjectName->Length > (len=strlenW(KeyPath_HKLM)))
-	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HKLM,len)))
-	{  *KeyHandle = HKEY_LOCAL_MACHINE;
-	}
-	else if((ObjectName->Length > (len=strlenW(KeyPath_HKU)))
-	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HKU,len)))
-	{  *KeyHandle = HKEY_USERS;
-	}
-	else if((ObjectName->Length > (len=strlenW(KeyPath_HCR)))
-	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HCR,len)))
-	{  *KeyHandle = HKEY_CLASSES_ROOT;
-	}
-	else if((ObjectName->Length > (len=strlenW(KeyPath_HCC)))
-	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HCC,len)))
-	{  *KeyHandle = HKEY_CURRENT_CONFIG;
-	}
-	else
-	{
-	  *KeyHandle = 0;
-	  *Offset = 0;
-	  return FALSE;
-	}
-
-	if (len > 0 && ObjectName->Buffer[len] == (WCHAR)'\\') len++;
-	*Offset = len;
-
-	TRACE("off=%u hkey=0x%08x\n", *Offset, *KeyHandle);
-	return TRUE;
+    if (name->Length >= max) return STATUS_BUFFER_OVERFLOW;
+    if (name->Length) memcpy( Dest, name->Buffer, name->Length );
+    Dest[name->Length / sizeof(WCHAR)] = 0;
+    return STATUS_SUCCESS;
 }
+
 
 /******************************************************************************
  * NtCreateKey [NTDLL]
  * ZwCreateKey
  */
-NTSTATUS WINAPI NtCreateKey(
-	PHANDLE KeyHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes,
-	ULONG TitleIndex,
-	PUNICODE_STRING Class,
-	ULONG CreateOptions,
-	PULONG Disposition)
+NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                             ULONG TitleIndex, const UNICODE_STRING *class, ULONG options,
+                             PULONG dispos )
 {
-	struct create_key_request *req = get_req_buffer();
-	UINT ObjectNameOffset;
-	HKEY RootDirectory;
-	NTSTATUS ret;
+    struct create_key_request *req = get_req_buffer();
+    NTSTATUS ret;
 
-	TRACE("(%p,0x%08lx,0x%08lx,%p(%s),0x%08lx,%p)\n",
-	KeyHandle, DesiredAccess, TitleIndex, Class, debugstr_us(Class), CreateOptions, Disposition);
-	dump_ObjectAttributes(ObjectAttributes);
+    TRACE( "(0x%x,%s,%s,%lx,%lx,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
+           debugstr_us(class), options, access, retkey );
 
-	if (!KeyHandle)
-	  return STATUS_INVALID_PARAMETER;
+    if (!retkey) return STATUS_INVALID_PARAMETER;
 
-	_NtKeyToWinKey(ObjectAttributes, &ObjectNameOffset, &RootDirectory);
+    req->parent  = attr->RootDirectory;
+    req->access  = access;
+    req->options = options;
+    req->modif   = 0;
 
-	req->parent  = RootDirectory;
-	req->access  = DesiredAccess;
-	req->options = CreateOptions;
-	req->modif   = time(NULL);
+    if ((ret = copy_key_name( req->name, attr->ObjectName ))) return ret;
+    req->class[0] = 0;
+    if (class)
+    {
+        if ((ret = copy_nameU( req->class, class, server_remaining(req->class) ))) return ret;
+    }
 
-	if (copy_nameU( req->name, ObjectAttributes->ObjectName, ObjectNameOffset ) != STATUS_SUCCESS) 
-	  return STATUS_INVALID_PARAMETER;
-
-	if (Class)
-	{
-	  int ClassLen = Class->Length+1;
-	  if ( ClassLen*sizeof(WCHAR) > server_remaining(req->class)) return STATUS_BUFFER_OVERFLOW;
-	  memcpy( req->class, Class->Buffer, ClassLen );
-          req->class[ClassLen] = 0;
-	}
-	else
-	  req->class[0] = 0x0000;
-
-	if (!(ret = server_call_noerr(REQ_CREATE_KEY)))
-	{
-	  *KeyHandle = req->hkey;
-	  if (Disposition) *Disposition = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
-	}
-	return ret;
+    if (!(ret = server_call_noerr( REQ_CREATE_KEY )))
+    {
+        *retkey = req->hkey;
+        if (dispos) *dispos = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
+    }
+    return ret;
 }
+
 
 /******************************************************************************
  * NtOpenKey [NTDLL.129]
  * ZwOpenKey
- *   OUT	PHANDLE			KeyHandle (returns 0 when failure)
- *   IN		ACCESS_MASK		DesiredAccess
- *   IN		POBJECT_ATTRIBUTES 	ObjectAttributes 
+ *   OUT	PHANDLE			retkey (returns 0 when failure)
+ *   IN		ACCESS_MASK		access
+ *   IN		POBJECT_ATTRIBUTES 	attr 
  */
-NTSTATUS WINAPI NtOpenKey(
-	PHANDLE KeyHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes) 
+NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-	struct open_key_request *req = get_req_buffer();
-	UINT ObjectNameOffset;
-	HKEY RootDirectory;
-	NTSTATUS ret;
+    struct open_key_request *req = get_req_buffer();
+    NTSTATUS ret;
 
-	TRACE("(%p,0x%08lx)\n", KeyHandle, DesiredAccess);
-	dump_ObjectAttributes(ObjectAttributes);
+    TRACE( "(0x%x,%s,%lx,%p)\n", attr->RootDirectory,
+           debugstr_us(attr->ObjectName), access, retkey );
 
-	if (!KeyHandle) return STATUS_INVALID_PARAMETER;
-	*KeyHandle = 0;
+    if (!retkey) return STATUS_INVALID_PARAMETER;
+    *retkey = 0;
 
-	_NtKeyToWinKey(ObjectAttributes, &ObjectNameOffset, &RootDirectory);
+    req->parent = attr->RootDirectory;
+    req->access = access;
 
-	req->parent = RootDirectory;
-	req->access = DesiredAccess;
-
-	if (copy_nameU( req->name, ObjectAttributes->ObjectName, ObjectNameOffset ) != STATUS_SUCCESS) 
-	  return STATUS_INVALID_PARAMETER;
-
-	if (!(ret = server_call_noerr(REQ_OPEN_KEY)))
-	{
-	  *KeyHandle = req->hkey;
-	}
-	return ret;
+    if ((ret = copy_key_name( req->name, attr->ObjectName ))) return ret;
+    if (!(ret = server_call_noerr( REQ_OPEN_KEY ))) *retkey = req->hkey;
+    return ret;
 }
+
 
 /******************************************************************************
  * NtDeleteKey [NTDLL]
  * ZwDeleteKey
  */
-NTSTATUS WINAPI NtDeleteKey(HANDLE KeyHandle)
+NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
 {
-	FIXME("(0x%08x) stub!\n",
-	KeyHandle);
-	return STATUS_SUCCESS;
+    struct delete_key_request *req = get_req_buffer();
+
+    TRACE( "(%x)\n", hkey );
+    req->hkey = hkey;
+    req->name[0] = 0;
+    return server_call_noerr( REQ_DELETE_KEY );
 }
+
 
 /******************************************************************************
  * NtDeleteValueKey [NTDLL]
  * ZwDeleteValueKey
  */
-NTSTATUS WINAPI NtDeleteValueKey(
-	IN HANDLE KeyHandle,
-	IN PUNICODE_STRING ValueName)
+NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
 {
-	FIXME("(0x%08x,%p(%s)) stub!\n",
-	KeyHandle, ValueName,debugstr_us(ValueName));
-	return STATUS_SUCCESS;
+    NTSTATUS ret;
+    struct delete_key_value_request *req = get_req_buffer();
+
+    TRACE( "(0x%x,%s)\n", hkey, debugstr_us(name) );
+
+    req->hkey = hkey;
+    if (!(ret = copy_nameU( req->name, name, MAX_PATH )))
+        ret = server_call_noerr( REQ_DELETE_KEY_VALUE );
+    return ret;
 }
+
 
 /******************************************************************************
  * NtEnumerateKey [NTDLL]
@@ -540,7 +483,7 @@ NTSTATUS WINAPI NtQueryValueKey(
 	KeyHandle, debugstr_us(ValueName), KeyValueInformationClass, KeyValueInformation, Length, ResultLength);
 
 	req->hkey = KeyHandle;
-	if (copy_nameU(req->name, ValueName, 0) != STATUS_SUCCESS) return STATUS_BUFFER_OVERFLOW;
+	if (copy_nameU(req->name, ValueName, MAX_PATH) != STATUS_SUCCESS) return STATUS_BUFFER_OVERFLOW;
 	if ((ret = server_call_noerr(REQ_GET_KEY_VALUE)) != STATUS_SUCCESS) return ret;
 
 	switch(KeyValueInformationClass)
