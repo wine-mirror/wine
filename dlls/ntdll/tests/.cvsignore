@@ -1,5 +1,6 @@
 Makefile
 error.ok
+generated.ok
 ntdll_test.exe.spec.c
 rtlbitmap.ok
 testlist.c

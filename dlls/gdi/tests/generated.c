@@ -8,1560 +8,1303 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "basetsd.h"
+#include "winnt.h"
+#include "windef.h"
 #include "wingdi.h"
+
+/***********************************************************************
+ * Windows API extension
+ */
+
+#if (_MSC_VER >= 1300) && defined(__cplusplus)
+# define FIELD_ALIGNMENT(type, field) __alignof(((type*)0)->field)
+#elif defined(__GNUC__)
+# define FIELD_ALIGNMENT(type, field) __alignof__(((type*)0)->field)
+#else
+/* FIXME: Not sure if is possible to do without compiler extension */
+#endif
+
+/***********************************************************************
+ * Test helper macros
+ */
+
+#ifdef FIELD_ALIGNMENT
+# define TEST_FIELD_ALIGNMENT(type, field, align) \
+   ok(FIELD_ALIGNMENT(type, field) == align, \
+       "FIELD_ALIGNMENT(" #type ", " #field ") == %d (expected " #align ")", \
+           FIELD_ALIGNMENT(type, field))
+#else
+# define TEST_FIELD_ALIGNMENT(type, field, align) do { } while (0)
+#endif
+
+#define TEST_FIELD_OFFSET(type, field, offset) \
+    ok(FIELD_OFFSET(type, field) == offset, \
+        "FIELD_OFFSET(" #type ", " #field ") == %ld (expected " #offset ")", \
+             FIELD_OFFSET(type, field))
+
+#define TEST_TYPE_ALIGNMENT(type, align) \
+    ok(TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")", TYPE_ALIGNMENT(type))
+
+#define TEST_TYPE_SIZE(type, size) \
+    ok(sizeof(type) == size, "sizeof(" #type ") == %d (expected " #size ")", sizeof(type))
+
+/***********************************************************************
+ * Test macros
+ */
+
+#define TEST_FIELD(type, field_type, field_name, field_offset, field_size, field_align) \
+  TEST_TYPE_SIZE(field_type, field_size); \
+  TEST_FIELD_ALIGNMENT(type, field_name, field_align); \
+  TEST_FIELD_OFFSET(type, field_name, field_offset); \
+
+#define TEST_TYPE(type, size, align) \
+  TEST_TYPE_ALIGNMENT(type, align); \
+  TEST_TYPE_SIZE(type, size)
 
 void test_pack(void)
 {
-    /* ABC */
-    ok(FIELD_OFFSET(ABC, abcA) == 0,
-       "FIELD_OFFSET(ABC, abcA) == %ld (expected 0)",
-       FIELD_OFFSET(ABC, abcA)); /* INT */
-    ok(FIELD_OFFSET(ABC, abcB) == 4,
-       "FIELD_OFFSET(ABC, abcB) == %ld (expected 4)",
-       FIELD_OFFSET(ABC, abcB)); /* UINT */
-    ok(FIELD_OFFSET(ABC, abcC) == 8,
-       "FIELD_OFFSET(ABC, abcC) == %ld (expected 8)",
-       FIELD_OFFSET(ABC, abcC)); /* INT */
-    ok(sizeof(ABC) == 12, "sizeof(ABC) == %d (expected 12)", sizeof(ABC));
-
-    /* ABCFLOAT */
-    ok(FIELD_OFFSET(ABCFLOAT, abcfA) == 0,
-       "FIELD_OFFSET(ABCFLOAT, abcfA) == %ld (expected 0)",
-       FIELD_OFFSET(ABCFLOAT, abcfA)); /* FLOAT */
-    ok(FIELD_OFFSET(ABCFLOAT, abcfB) == 4,
-       "FIELD_OFFSET(ABCFLOAT, abcfB) == %ld (expected 4)",
-       FIELD_OFFSET(ABCFLOAT, abcfB)); /* FLOAT */
-    ok(FIELD_OFFSET(ABCFLOAT, abcfC) == 8,
-       "FIELD_OFFSET(ABCFLOAT, abcfC) == %ld (expected 8)",
-       FIELD_OFFSET(ABCFLOAT, abcfC)); /* FLOAT */
-    ok(sizeof(ABCFLOAT) == 12, "sizeof(ABCFLOAT) == %d (expected 12)", sizeof(ABCFLOAT));
-
-    /* BITMAP */
-    ok(FIELD_OFFSET(BITMAP, bmType) == 0,
-       "FIELD_OFFSET(BITMAP, bmType) == %ld (expected 0)",
-       FIELD_OFFSET(BITMAP, bmType)); /* INT */
-    ok(FIELD_OFFSET(BITMAP, bmWidth) == 4,
-       "FIELD_OFFSET(BITMAP, bmWidth) == %ld (expected 4)",
-       FIELD_OFFSET(BITMAP, bmWidth)); /* INT */
-    ok(FIELD_OFFSET(BITMAP, bmHeight) == 8,
-       "FIELD_OFFSET(BITMAP, bmHeight) == %ld (expected 8)",
-       FIELD_OFFSET(BITMAP, bmHeight)); /* INT */
-    ok(FIELD_OFFSET(BITMAP, bmWidthBytes) == 12,
-       "FIELD_OFFSET(BITMAP, bmWidthBytes) == %ld (expected 12)",
-       FIELD_OFFSET(BITMAP, bmWidthBytes)); /* INT */
-    ok(FIELD_OFFSET(BITMAP, bmPlanes) == 16,
-       "FIELD_OFFSET(BITMAP, bmPlanes) == %ld (expected 16)",
-       FIELD_OFFSET(BITMAP, bmPlanes)); /* WORD */
-    ok(FIELD_OFFSET(BITMAP, bmBitsPixel) == 18,
-       "FIELD_OFFSET(BITMAP, bmBitsPixel) == %ld (expected 18)",
-       FIELD_OFFSET(BITMAP, bmBitsPixel)); /* WORD */
-    ok(FIELD_OFFSET(BITMAP, bmBits) == 20,
-       "FIELD_OFFSET(BITMAP, bmBits) == %ld (expected 20)",
-       FIELD_OFFSET(BITMAP, bmBits)); /* LPVOID */
-    ok(sizeof(BITMAP) == 24, "sizeof(BITMAP) == %d (expected 24)", sizeof(BITMAP));
-
-    /* BITMAPCOREHEADER */
-    ok(FIELD_OFFSET(BITMAPCOREHEADER, bcSize) == 0,
-       "FIELD_OFFSET(BITMAPCOREHEADER, bcSize) == %ld (expected 0)",
-       FIELD_OFFSET(BITMAPCOREHEADER, bcSize)); /* DWORD */
-    ok(FIELD_OFFSET(BITMAPCOREHEADER, bcWidth) == 4,
-       "FIELD_OFFSET(BITMAPCOREHEADER, bcWidth) == %ld (expected 4)",
-       FIELD_OFFSET(BITMAPCOREHEADER, bcWidth)); /* WORD */
-    ok(FIELD_OFFSET(BITMAPCOREHEADER, bcHeight) == 6,
-       "FIELD_OFFSET(BITMAPCOREHEADER, bcHeight) == %ld (expected 6)",
-       FIELD_OFFSET(BITMAPCOREHEADER, bcHeight)); /* WORD */
-    ok(FIELD_OFFSET(BITMAPCOREHEADER, bcPlanes) == 8,
-       "FIELD_OFFSET(BITMAPCOREHEADER, bcPlanes) == %ld (expected 8)",
-       FIELD_OFFSET(BITMAPCOREHEADER, bcPlanes)); /* WORD */
-    ok(FIELD_OFFSET(BITMAPCOREHEADER, bcBitCount) == 10,
-       "FIELD_OFFSET(BITMAPCOREHEADER, bcBitCount) == %ld (expected 10)",
-       FIELD_OFFSET(BITMAPCOREHEADER, bcBitCount)); /* WORD */
-    ok(sizeof(BITMAPCOREHEADER) == 12, "sizeof(BITMAPCOREHEADER) == %d (expected 12)", sizeof(BITMAPCOREHEADER));
-
-    /* BITMAPFILEHEADER */
-    ok(FIELD_OFFSET(BITMAPFILEHEADER, bfType) == 0,
-       "FIELD_OFFSET(BITMAPFILEHEADER, bfType) == %ld (expected 0)",
-       FIELD_OFFSET(BITMAPFILEHEADER, bfType)); /* WORD */
-    ok(FIELD_OFFSET(BITMAPFILEHEADER, bfSize) == 2,
-       "FIELD_OFFSET(BITMAPFILEHEADER, bfSize) == %ld (expected 2)",
-       FIELD_OFFSET(BITMAPFILEHEADER, bfSize)); /* DWORD */
-    ok(FIELD_OFFSET(BITMAPFILEHEADER, bfReserved1) == 6,
-       "FIELD_OFFSET(BITMAPFILEHEADER, bfReserved1) == %ld (expected 6)",
-       FIELD_OFFSET(BITMAPFILEHEADER, bfReserved1)); /* WORD */
-    ok(FIELD_OFFSET(BITMAPFILEHEADER, bfReserved2) == 8,
-       "FIELD_OFFSET(BITMAPFILEHEADER, bfReserved2) == %ld (expected 8)",
-       FIELD_OFFSET(BITMAPFILEHEADER, bfReserved2)); /* WORD */
-    ok(FIELD_OFFSET(BITMAPFILEHEADER, bfOffBits) == 10,
-       "FIELD_OFFSET(BITMAPFILEHEADER, bfOffBits) == %ld (expected 10)",
-       FIELD_OFFSET(BITMAPFILEHEADER, bfOffBits)); /* DWORD */
-    ok(sizeof(BITMAPFILEHEADER) == 14, "sizeof(BITMAPFILEHEADER) == %d (expected 14)", sizeof(BITMAPFILEHEADER));
-
-    /* BITMAPINFOHEADER */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biSize) == 0,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biSize) == %ld (expected 0)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biSize)); /* DWORD */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biWidth) == 4,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biWidth) == %ld (expected 4)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biWidth)); /* LONG */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biHeight) == 8,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biHeight) == %ld (expected 8)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biHeight)); /* LONG */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biPlanes) == 12,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biPlanes) == %ld (expected 12)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biPlanes)); /* WORD */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biBitCount) == 14,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biBitCount) == %ld (expected 14)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biBitCount)); /* WORD */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biCompression) == 16,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biCompression) == %ld (expected 16)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biCompression)); /* DWORD */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biSizeImage) == 20,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biSizeImage) == %ld (expected 20)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biSizeImage)); /* DWORD */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biXPelsPerMeter) == 24,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biXPelsPerMeter) == %ld (expected 24)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biXPelsPerMeter)); /* LONG */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biYPelsPerMeter) == 28,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biYPelsPerMeter) == %ld (expected 28)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biYPelsPerMeter)); /* LONG */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biClrUsed) == 32,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biClrUsed) == %ld (expected 32)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biClrUsed)); /* DWORD */
-    ok(FIELD_OFFSET(BITMAPINFOHEADER, biClrImportant) == 36,
-       "FIELD_OFFSET(BITMAPINFOHEADER, biClrImportant) == %ld (expected 36)",
-       FIELD_OFFSET(BITMAPINFOHEADER, biClrImportant)); /* DWORD */
-    ok(sizeof(BITMAPINFOHEADER) == 40, "sizeof(BITMAPINFOHEADER) == %d (expected 40)", sizeof(BITMAPINFOHEADER));
-
-    /* BLENDFUNCTION */
-    ok(FIELD_OFFSET(BLENDFUNCTION, BlendOp) == 0,
-       "FIELD_OFFSET(BLENDFUNCTION, BlendOp) == %ld (expected 0)",
-       FIELD_OFFSET(BLENDFUNCTION, BlendOp)); /* BYTE */
-    ok(FIELD_OFFSET(BLENDFUNCTION, BlendFlags) == 1,
-       "FIELD_OFFSET(BLENDFUNCTION, BlendFlags) == %ld (expected 1)",
-       FIELD_OFFSET(BLENDFUNCTION, BlendFlags)); /* BYTE */
-    ok(FIELD_OFFSET(BLENDFUNCTION, SourceConstantAlpha) == 2,
-       "FIELD_OFFSET(BLENDFUNCTION, SourceConstantAlpha) == %ld (expected 2)",
-       FIELD_OFFSET(BLENDFUNCTION, SourceConstantAlpha)); /* BYTE */
-    ok(FIELD_OFFSET(BLENDFUNCTION, AlphaFormat) == 3,
-       "FIELD_OFFSET(BLENDFUNCTION, AlphaFormat) == %ld (expected 3)",
-       FIELD_OFFSET(BLENDFUNCTION, AlphaFormat)); /* BYTE */
-    ok(sizeof(BLENDFUNCTION) == 4, "sizeof(BLENDFUNCTION) == %d (expected 4)", sizeof(BLENDFUNCTION));
-
-    /* CIEXYZ */
-    ok(FIELD_OFFSET(CIEXYZ, ciexyzX) == 0,
-       "FIELD_OFFSET(CIEXYZ, ciexyzX) == %ld (expected 0)",
-       FIELD_OFFSET(CIEXYZ, ciexyzX)); /* FXPT2DOT30 */
-    ok(FIELD_OFFSET(CIEXYZ, ciexyzY) == 4,
-       "FIELD_OFFSET(CIEXYZ, ciexyzY) == %ld (expected 4)",
-       FIELD_OFFSET(CIEXYZ, ciexyzY)); /* FXPT2DOT30 */
-    ok(FIELD_OFFSET(CIEXYZ, ciexyzZ) == 8,
-       "FIELD_OFFSET(CIEXYZ, ciexyzZ) == %ld (expected 8)",
-       FIELD_OFFSET(CIEXYZ, ciexyzZ)); /* FXPT2DOT30 */
-    ok(sizeof(CIEXYZ) == 12, "sizeof(CIEXYZ) == %d (expected 12)", sizeof(CIEXYZ));
-
-    /* DISPLAY_DEVICEA */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEA, cb) == 0,
-       "FIELD_OFFSET(DISPLAY_DEVICEA, cb) == %ld (expected 0)",
-       FIELD_OFFSET(DISPLAY_DEVICEA, cb)); /* DWORD */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEA, DeviceName) == 4,
-       "FIELD_OFFSET(DISPLAY_DEVICEA, DeviceName) == %ld (expected 4)",
-       FIELD_OFFSET(DISPLAY_DEVICEA, DeviceName)); /* CHAR[32] */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEA, DeviceString) == 36,
-       "FIELD_OFFSET(DISPLAY_DEVICEA, DeviceString) == %ld (expected 36)",
-       FIELD_OFFSET(DISPLAY_DEVICEA, DeviceString)); /* CHAR[128] */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEA, StateFlags) == 164,
-       "FIELD_OFFSET(DISPLAY_DEVICEA, StateFlags) == %ld (expected 164)",
-       FIELD_OFFSET(DISPLAY_DEVICEA, StateFlags)); /* DWORD */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEA, DeviceID) == 168,
-       "FIELD_OFFSET(DISPLAY_DEVICEA, DeviceID) == %ld (expected 168)",
-       FIELD_OFFSET(DISPLAY_DEVICEA, DeviceID)); /* CHAR[128] */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEA, DeviceKey) == 296,
-       "FIELD_OFFSET(DISPLAY_DEVICEA, DeviceKey) == %ld (expected 296)",
-       FIELD_OFFSET(DISPLAY_DEVICEA, DeviceKey)); /* CHAR[128] */
-    ok(sizeof(DISPLAY_DEVICEA) == 424, "sizeof(DISPLAY_DEVICEA) == %d (expected 424)", sizeof(DISPLAY_DEVICEA));
-
-    /* DISPLAY_DEVICEW */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEW, cb) == 0,
-       "FIELD_OFFSET(DISPLAY_DEVICEW, cb) == %ld (expected 0)",
-       FIELD_OFFSET(DISPLAY_DEVICEW, cb)); /* DWORD */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEW, DeviceName) == 4,
-       "FIELD_OFFSET(DISPLAY_DEVICEW, DeviceName) == %ld (expected 4)",
-       FIELD_OFFSET(DISPLAY_DEVICEW, DeviceName)); /* WCHAR[32] */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEW, DeviceString) == 68,
-       "FIELD_OFFSET(DISPLAY_DEVICEW, DeviceString) == %ld (expected 68)",
-       FIELD_OFFSET(DISPLAY_DEVICEW, DeviceString)); /* WCHAR[128] */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEW, StateFlags) == 324,
-       "FIELD_OFFSET(DISPLAY_DEVICEW, StateFlags) == %ld (expected 324)",
-       FIELD_OFFSET(DISPLAY_DEVICEW, StateFlags)); /* DWORD */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEW, DeviceID) == 328,
-       "FIELD_OFFSET(DISPLAY_DEVICEW, DeviceID) == %ld (expected 328)",
-       FIELD_OFFSET(DISPLAY_DEVICEW, DeviceID)); /* WCHAR[128] */
-    ok(FIELD_OFFSET(DISPLAY_DEVICEW, DeviceKey) == 584,
-       "FIELD_OFFSET(DISPLAY_DEVICEW, DeviceKey) == %ld (expected 584)",
-       FIELD_OFFSET(DISPLAY_DEVICEW, DeviceKey)); /* WCHAR[128] */
-    ok(sizeof(DISPLAY_DEVICEW) == 840, "sizeof(DISPLAY_DEVICEW) == %d (expected 840)", sizeof(DISPLAY_DEVICEW));
-
-    /* DOCINFOA */
-    ok(FIELD_OFFSET(DOCINFOA, cbSize) == 0,
-       "FIELD_OFFSET(DOCINFOA, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(DOCINFOA, cbSize)); /* INT */
-    ok(FIELD_OFFSET(DOCINFOA, lpszDocName) == 4,
-       "FIELD_OFFSET(DOCINFOA, lpszDocName) == %ld (expected 4)",
-       FIELD_OFFSET(DOCINFOA, lpszDocName)); /* LPCSTR */
-    ok(FIELD_OFFSET(DOCINFOA, lpszOutput) == 8,
-       "FIELD_OFFSET(DOCINFOA, lpszOutput) == %ld (expected 8)",
-       FIELD_OFFSET(DOCINFOA, lpszOutput)); /* LPCSTR */
-    ok(FIELD_OFFSET(DOCINFOA, lpszDatatype) == 12,
-       "FIELD_OFFSET(DOCINFOA, lpszDatatype) == %ld (expected 12)",
-       FIELD_OFFSET(DOCINFOA, lpszDatatype)); /* LPCSTR */
-    ok(FIELD_OFFSET(DOCINFOA, fwType) == 16,
-       "FIELD_OFFSET(DOCINFOA, fwType) == %ld (expected 16)",
-       FIELD_OFFSET(DOCINFOA, fwType)); /* DWORD */
-    ok(sizeof(DOCINFOA) == 20, "sizeof(DOCINFOA) == %d (expected 20)", sizeof(DOCINFOA));
-
-    /* DOCINFOW */
-    ok(FIELD_OFFSET(DOCINFOW, cbSize) == 0,
-       "FIELD_OFFSET(DOCINFOW, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(DOCINFOW, cbSize)); /* INT */
-    ok(FIELD_OFFSET(DOCINFOW, lpszDocName) == 4,
-       "FIELD_OFFSET(DOCINFOW, lpszDocName) == %ld (expected 4)",
-       FIELD_OFFSET(DOCINFOW, lpszDocName)); /* LPCWSTR */
-    ok(FIELD_OFFSET(DOCINFOW, lpszOutput) == 8,
-       "FIELD_OFFSET(DOCINFOW, lpszOutput) == %ld (expected 8)",
-       FIELD_OFFSET(DOCINFOW, lpszOutput)); /* LPCWSTR */
-    ok(FIELD_OFFSET(DOCINFOW, lpszDatatype) == 12,
-       "FIELD_OFFSET(DOCINFOW, lpszDatatype) == %ld (expected 12)",
-       FIELD_OFFSET(DOCINFOW, lpszDatatype)); /* LPCWSTR */
-    ok(FIELD_OFFSET(DOCINFOW, fwType) == 16,
-       "FIELD_OFFSET(DOCINFOW, fwType) == %ld (expected 16)",
-       FIELD_OFFSET(DOCINFOW, fwType)); /* DWORD */
-    ok(sizeof(DOCINFOW) == 20, "sizeof(DOCINFOW) == %d (expected 20)", sizeof(DOCINFOW));
-
-    /* EMR */
-    ok(FIELD_OFFSET(EMR, iType) == 0,
-       "FIELD_OFFSET(EMR, iType) == %ld (expected 0)",
-       FIELD_OFFSET(EMR, iType)); /* DWORD */
-    ok(FIELD_OFFSET(EMR, nSize) == 4,
-       "FIELD_OFFSET(EMR, nSize) == %ld (expected 4)",
-       FIELD_OFFSET(EMR, nSize)); /* DWORD */
-    ok(sizeof(EMR) == 8, "sizeof(EMR) == %d (expected 8)", sizeof(EMR));
-
-    /* EMRABORTPATH */
-    ok(FIELD_OFFSET(EMRABORTPATH, emr) == 0,
-       "FIELD_OFFSET(EMRABORTPATH, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRABORTPATH, emr)); /* EMR */
-    ok(sizeof(EMRABORTPATH) == 8, "sizeof(EMRABORTPATH) == %d (expected 8)", sizeof(EMRABORTPATH));
-
-    /* EMRANGLEARC */
-    ok(FIELD_OFFSET(EMRANGLEARC, emr) == 0,
-       "FIELD_OFFSET(EMRANGLEARC, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRANGLEARC, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRANGLEARC, ptlCenter) == 8,
-       "FIELD_OFFSET(EMRANGLEARC, ptlCenter) == %ld (expected 8)",
-       FIELD_OFFSET(EMRANGLEARC, ptlCenter)); /* POINTL */
-    ok(FIELD_OFFSET(EMRANGLEARC, nRadius) == 16,
-       "FIELD_OFFSET(EMRANGLEARC, nRadius) == %ld (expected 16)",
-       FIELD_OFFSET(EMRANGLEARC, nRadius)); /* DWORD */
-    ok(FIELD_OFFSET(EMRANGLEARC, eStartAngle) == 20,
-       "FIELD_OFFSET(EMRANGLEARC, eStartAngle) == %ld (expected 20)",
-       FIELD_OFFSET(EMRANGLEARC, eStartAngle)); /* FLOAT */
-    ok(FIELD_OFFSET(EMRANGLEARC, eSweepAngle) == 24,
-       "FIELD_OFFSET(EMRANGLEARC, eSweepAngle) == %ld (expected 24)",
-       FIELD_OFFSET(EMRANGLEARC, eSweepAngle)); /* FLOAT */
-    ok(sizeof(EMRANGLEARC) == 28, "sizeof(EMRANGLEARC) == %d (expected 28)", sizeof(EMRANGLEARC));
-
-    /* EMRARC */
-    ok(FIELD_OFFSET(EMRARC, emr) == 0,
-       "FIELD_OFFSET(EMRARC, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRARC, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRARC, rclBox) == 8,
-       "FIELD_OFFSET(EMRARC, rclBox) == %ld (expected 8)",
-       FIELD_OFFSET(EMRARC, rclBox)); /* RECTL */
-    ok(FIELD_OFFSET(EMRARC, ptlStart) == 24,
-       "FIELD_OFFSET(EMRARC, ptlStart) == %ld (expected 24)",
-       FIELD_OFFSET(EMRARC, ptlStart)); /* POINTL */
-    ok(FIELD_OFFSET(EMRARC, ptlEnd) == 32,
-       "FIELD_OFFSET(EMRARC, ptlEnd) == %ld (expected 32)",
-       FIELD_OFFSET(EMRARC, ptlEnd)); /* POINTL */
-    ok(sizeof(EMRARC) == 40, "sizeof(EMRARC) == %d (expected 40)", sizeof(EMRARC));
-
-    /* EMRBITBLT */
-    ok(FIELD_OFFSET(EMRBITBLT, emr) == 0,
-       "FIELD_OFFSET(EMRBITBLT, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRBITBLT, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRBITBLT, rclBounds) == 8,
-       "FIELD_OFFSET(EMRBITBLT, rclBounds) == %ld (expected 8)",
-       FIELD_OFFSET(EMRBITBLT, rclBounds)); /* RECTL */
-    ok(FIELD_OFFSET(EMRBITBLT, xDest) == 24,
-       "FIELD_OFFSET(EMRBITBLT, xDest) == %ld (expected 24)",
-       FIELD_OFFSET(EMRBITBLT, xDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRBITBLT, yDest) == 28,
-       "FIELD_OFFSET(EMRBITBLT, yDest) == %ld (expected 28)",
-       FIELD_OFFSET(EMRBITBLT, yDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRBITBLT, cxDest) == 32,
-       "FIELD_OFFSET(EMRBITBLT, cxDest) == %ld (expected 32)",
-       FIELD_OFFSET(EMRBITBLT, cxDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRBITBLT, cyDest) == 36,
-       "FIELD_OFFSET(EMRBITBLT, cyDest) == %ld (expected 36)",
-       FIELD_OFFSET(EMRBITBLT, cyDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRBITBLT, dwRop) == 40,
-       "FIELD_OFFSET(EMRBITBLT, dwRop) == %ld (expected 40)",
-       FIELD_OFFSET(EMRBITBLT, dwRop)); /* DWORD */
-    ok(FIELD_OFFSET(EMRBITBLT, xSrc) == 44,
-       "FIELD_OFFSET(EMRBITBLT, xSrc) == %ld (expected 44)",
-       FIELD_OFFSET(EMRBITBLT, xSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRBITBLT, ySrc) == 48,
-       "FIELD_OFFSET(EMRBITBLT, ySrc) == %ld (expected 48)",
-       FIELD_OFFSET(EMRBITBLT, ySrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRBITBLT, xformSrc) == 52,
-       "FIELD_OFFSET(EMRBITBLT, xformSrc) == %ld (expected 52)",
-       FIELD_OFFSET(EMRBITBLT, xformSrc)); /* XFORM */
-    ok(FIELD_OFFSET(EMRBITBLT, crBkColorSrc) == 76,
-       "FIELD_OFFSET(EMRBITBLT, crBkColorSrc) == %ld (expected 76)",
-       FIELD_OFFSET(EMRBITBLT, crBkColorSrc)); /* COLORREF */
-    ok(FIELD_OFFSET(EMRBITBLT, iUsageSrc) == 80,
-       "FIELD_OFFSET(EMRBITBLT, iUsageSrc) == %ld (expected 80)",
-       FIELD_OFFSET(EMRBITBLT, iUsageSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRBITBLT, offBmiSrc) == 84,
-       "FIELD_OFFSET(EMRBITBLT, offBmiSrc) == %ld (expected 84)",
-       FIELD_OFFSET(EMRBITBLT, offBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRBITBLT, cbBmiSrc) == 88,
-       "FIELD_OFFSET(EMRBITBLT, cbBmiSrc) == %ld (expected 88)",
-       FIELD_OFFSET(EMRBITBLT, cbBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRBITBLT, offBitsSrc) == 92,
-       "FIELD_OFFSET(EMRBITBLT, offBitsSrc) == %ld (expected 92)",
-       FIELD_OFFSET(EMRBITBLT, offBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRBITBLT, cbBitsSrc) == 96,
-       "FIELD_OFFSET(EMRBITBLT, cbBitsSrc) == %ld (expected 96)",
-       FIELD_OFFSET(EMRBITBLT, cbBitsSrc)); /* DWORD */
-    ok(sizeof(EMRBITBLT) == 100, "sizeof(EMRBITBLT) == %d (expected 100)", sizeof(EMRBITBLT));
-
-    /* EMRCREATEDIBPATTERNBRUSHPT */
-    ok(FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, emr) == 0,
-       "FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, ihBrush) == 8,
-       "FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, ihBrush) == %ld (expected 8)",
-       FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, ihBrush)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, iUsage) == 12,
-       "FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, iUsage) == %ld (expected 12)",
-       FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, iUsage)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, offBmi) == 16,
-       "FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, offBmi) == %ld (expected 16)",
-       FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, offBmi)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, cbBmi) == 20,
-       "FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, cbBmi) == %ld (expected 20)",
-       FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, cbBmi)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, offBits) == 24,
-       "FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, offBits) == %ld (expected 24)",
-       FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, offBits)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, cbBits) == 28,
-       "FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, cbBits) == %ld (expected 28)",
-       FIELD_OFFSET(EMRCREATEDIBPATTERNBRUSHPT, cbBits)); /* DWORD */
-    ok(sizeof(EMRCREATEDIBPATTERNBRUSHPT) == 32, "sizeof(EMRCREATEDIBPATTERNBRUSHPT) == %d (expected 32)", sizeof(EMRCREATEDIBPATTERNBRUSHPT));
-
-    /* EMRCREATEMONOBRUSH */
-    ok(FIELD_OFFSET(EMRCREATEMONOBRUSH, emr) == 0,
-       "FIELD_OFFSET(EMRCREATEMONOBRUSH, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRCREATEMONOBRUSH, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRCREATEMONOBRUSH, ihBrush) == 8,
-       "FIELD_OFFSET(EMRCREATEMONOBRUSH, ihBrush) == %ld (expected 8)",
-       FIELD_OFFSET(EMRCREATEMONOBRUSH, ihBrush)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEMONOBRUSH, iUsage) == 12,
-       "FIELD_OFFSET(EMRCREATEMONOBRUSH, iUsage) == %ld (expected 12)",
-       FIELD_OFFSET(EMRCREATEMONOBRUSH, iUsage)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEMONOBRUSH, offBmi) == 16,
-       "FIELD_OFFSET(EMRCREATEMONOBRUSH, offBmi) == %ld (expected 16)",
-       FIELD_OFFSET(EMRCREATEMONOBRUSH, offBmi)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEMONOBRUSH, cbBmi) == 20,
-       "FIELD_OFFSET(EMRCREATEMONOBRUSH, cbBmi) == %ld (expected 20)",
-       FIELD_OFFSET(EMRCREATEMONOBRUSH, cbBmi)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEMONOBRUSH, offBits) == 24,
-       "FIELD_OFFSET(EMRCREATEMONOBRUSH, offBits) == %ld (expected 24)",
-       FIELD_OFFSET(EMRCREATEMONOBRUSH, offBits)); /* DWORD */
-    ok(FIELD_OFFSET(EMRCREATEMONOBRUSH, cbBits) == 28,
-       "FIELD_OFFSET(EMRCREATEMONOBRUSH, cbBits) == %ld (expected 28)",
-       FIELD_OFFSET(EMRCREATEMONOBRUSH, cbBits)); /* DWORD */
-    ok(sizeof(EMRCREATEMONOBRUSH) == 32, "sizeof(EMRCREATEMONOBRUSH) == %d (expected 32)", sizeof(EMRCREATEMONOBRUSH));
-
-    /* EMRDELETECOLORSPACE */
-    ok(FIELD_OFFSET(EMRDELETECOLORSPACE, emr) == 0,
-       "FIELD_OFFSET(EMRDELETECOLORSPACE, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRDELETECOLORSPACE, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRDELETECOLORSPACE, ihCS) == 8,
-       "FIELD_OFFSET(EMRDELETECOLORSPACE, ihCS) == %ld (expected 8)",
-       FIELD_OFFSET(EMRDELETECOLORSPACE, ihCS)); /* DWORD */
-    ok(sizeof(EMRDELETECOLORSPACE) == 12, "sizeof(EMRDELETECOLORSPACE) == %d (expected 12)", sizeof(EMRDELETECOLORSPACE));
-
-    /* EMRDELETEOBJECT */
-    ok(FIELD_OFFSET(EMRDELETEOBJECT, emr) == 0,
-       "FIELD_OFFSET(EMRDELETEOBJECT, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRDELETEOBJECT, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRDELETEOBJECT, ihObject) == 8,
-       "FIELD_OFFSET(EMRDELETEOBJECT, ihObject) == %ld (expected 8)",
-       FIELD_OFFSET(EMRDELETEOBJECT, ihObject)); /* DWORD */
-    ok(sizeof(EMRDELETEOBJECT) == 12, "sizeof(EMRDELETEOBJECT) == %d (expected 12)", sizeof(EMRDELETEOBJECT));
-
-    /* EMRELLIPSE */
-    ok(FIELD_OFFSET(EMRELLIPSE, emr) == 0,
-       "FIELD_OFFSET(EMRELLIPSE, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRELLIPSE, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRELLIPSE, rclBox) == 8,
-       "FIELD_OFFSET(EMRELLIPSE, rclBox) == %ld (expected 8)",
-       FIELD_OFFSET(EMRELLIPSE, rclBox)); /* RECTL */
-    ok(sizeof(EMRELLIPSE) == 24, "sizeof(EMRELLIPSE) == %d (expected 24)", sizeof(EMRELLIPSE));
-
-    /* EMREOF */
-    ok(FIELD_OFFSET(EMREOF, emr) == 0,
-       "FIELD_OFFSET(EMREOF, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMREOF, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMREOF, nPalEntries) == 8,
-       "FIELD_OFFSET(EMREOF, nPalEntries) == %ld (expected 8)",
-       FIELD_OFFSET(EMREOF, nPalEntries)); /* DWORD */
-    ok(FIELD_OFFSET(EMREOF, offPalEntries) == 12,
-       "FIELD_OFFSET(EMREOF, offPalEntries) == %ld (expected 12)",
-       FIELD_OFFSET(EMREOF, offPalEntries)); /* DWORD */
-    ok(FIELD_OFFSET(EMREOF, nSizeLast) == 16,
-       "FIELD_OFFSET(EMREOF, nSizeLast) == %ld (expected 16)",
-       FIELD_OFFSET(EMREOF, nSizeLast)); /* DWORD */
-    ok(sizeof(EMREOF) == 20, "sizeof(EMREOF) == %d (expected 20)", sizeof(EMREOF));
-
-    /* EMREXCLUDECLIPRECT */
-    ok(FIELD_OFFSET(EMREXCLUDECLIPRECT, emr) == 0,
-       "FIELD_OFFSET(EMREXCLUDECLIPRECT, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMREXCLUDECLIPRECT, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMREXCLUDECLIPRECT, rclClip) == 8,
-       "FIELD_OFFSET(EMREXCLUDECLIPRECT, rclClip) == %ld (expected 8)",
-       FIELD_OFFSET(EMREXCLUDECLIPRECT, rclClip)); /* RECTL */
-    ok(sizeof(EMREXCLUDECLIPRECT) == 24, "sizeof(EMREXCLUDECLIPRECT) == %d (expected 24)", sizeof(EMREXCLUDECLIPRECT));
-
-    /* EMREXTFLOODFILL */
-    ok(FIELD_OFFSET(EMREXTFLOODFILL, emr) == 0,
-       "FIELD_OFFSET(EMREXTFLOODFILL, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMREXTFLOODFILL, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMREXTFLOODFILL, ptlStart) == 8,
-       "FIELD_OFFSET(EMREXTFLOODFILL, ptlStart) == %ld (expected 8)",
-       FIELD_OFFSET(EMREXTFLOODFILL, ptlStart)); /* POINTL */
-    ok(FIELD_OFFSET(EMREXTFLOODFILL, crColor) == 16,
-       "FIELD_OFFSET(EMREXTFLOODFILL, crColor) == %ld (expected 16)",
-       FIELD_OFFSET(EMREXTFLOODFILL, crColor)); /* COLORREF */
-    ok(FIELD_OFFSET(EMREXTFLOODFILL, iMode) == 20,
-       "FIELD_OFFSET(EMREXTFLOODFILL, iMode) == %ld (expected 20)",
-       FIELD_OFFSET(EMREXTFLOODFILL, iMode)); /* DWORD */
-    ok(sizeof(EMREXTFLOODFILL) == 24, "sizeof(EMREXTFLOODFILL) == %d (expected 24)", sizeof(EMREXTFLOODFILL));
-
-    /* EMRFILLPATH */
-    ok(FIELD_OFFSET(EMRFILLPATH, emr) == 0,
-       "FIELD_OFFSET(EMRFILLPATH, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRFILLPATH, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRFILLPATH, rclBounds) == 8,
-       "FIELD_OFFSET(EMRFILLPATH, rclBounds) == %ld (expected 8)",
-       FIELD_OFFSET(EMRFILLPATH, rclBounds)); /* RECTL */
-    ok(sizeof(EMRFILLPATH) == 24, "sizeof(EMRFILLPATH) == %d (expected 24)", sizeof(EMRFILLPATH));
-
-    /* EMRFORMAT */
-    ok(FIELD_OFFSET(EMRFORMAT, signature) == 0,
-       "FIELD_OFFSET(EMRFORMAT, signature) == %ld (expected 0)",
-       FIELD_OFFSET(EMRFORMAT, signature)); /* DWORD */
-    ok(FIELD_OFFSET(EMRFORMAT, nVersion) == 4,
-       "FIELD_OFFSET(EMRFORMAT, nVersion) == %ld (expected 4)",
-       FIELD_OFFSET(EMRFORMAT, nVersion)); /* DWORD */
-    ok(FIELD_OFFSET(EMRFORMAT, cbData) == 8,
-       "FIELD_OFFSET(EMRFORMAT, cbData) == %ld (expected 8)",
-       FIELD_OFFSET(EMRFORMAT, cbData)); /* DWORD */
-    ok(FIELD_OFFSET(EMRFORMAT, offData) == 12,
-       "FIELD_OFFSET(EMRFORMAT, offData) == %ld (expected 12)",
-       FIELD_OFFSET(EMRFORMAT, offData)); /* DWORD */
-    ok(sizeof(EMRFORMAT) == 16, "sizeof(EMRFORMAT) == %d (expected 16)", sizeof(EMRFORMAT));
-
-    /* EMRLINETO */
-    ok(FIELD_OFFSET(EMRLINETO, emr) == 0,
-       "FIELD_OFFSET(EMRLINETO, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRLINETO, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRLINETO, ptl) == 8,
-       "FIELD_OFFSET(EMRLINETO, ptl) == %ld (expected 8)",
-       FIELD_OFFSET(EMRLINETO, ptl)); /* POINTL */
-    ok(sizeof(EMRLINETO) == 16, "sizeof(EMRLINETO) == %d (expected 16)", sizeof(EMRLINETO));
-
-    /* EMRMASKBLT */
-    ok(FIELD_OFFSET(EMRMASKBLT, emr) == 0,
-       "FIELD_OFFSET(EMRMASKBLT, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRMASKBLT, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRMASKBLT, rclBounds) == 8,
-       "FIELD_OFFSET(EMRMASKBLT, rclBounds) == %ld (expected 8)",
-       FIELD_OFFSET(EMRMASKBLT, rclBounds)); /* RECTL */
-    ok(FIELD_OFFSET(EMRMASKBLT, xDest) == 24,
-       "FIELD_OFFSET(EMRMASKBLT, xDest) == %ld (expected 24)",
-       FIELD_OFFSET(EMRMASKBLT, xDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRMASKBLT, yDest) == 28,
-       "FIELD_OFFSET(EMRMASKBLT, yDest) == %ld (expected 28)",
-       FIELD_OFFSET(EMRMASKBLT, yDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRMASKBLT, cxDest) == 32,
-       "FIELD_OFFSET(EMRMASKBLT, cxDest) == %ld (expected 32)",
-       FIELD_OFFSET(EMRMASKBLT, cxDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRMASKBLT, cyDest) == 36,
-       "FIELD_OFFSET(EMRMASKBLT, cyDest) == %ld (expected 36)",
-       FIELD_OFFSET(EMRMASKBLT, cyDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRMASKBLT, dwRop) == 40,
-       "FIELD_OFFSET(EMRMASKBLT, dwRop) == %ld (expected 40)",
-       FIELD_OFFSET(EMRMASKBLT, dwRop)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, xSrc) == 44,
-       "FIELD_OFFSET(EMRMASKBLT, xSrc) == %ld (expected 44)",
-       FIELD_OFFSET(EMRMASKBLT, xSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRMASKBLT, ySrc) == 48,
-       "FIELD_OFFSET(EMRMASKBLT, ySrc) == %ld (expected 48)",
-       FIELD_OFFSET(EMRMASKBLT, ySrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRMASKBLT, xformSrc) == 52,
-       "FIELD_OFFSET(EMRMASKBLT, xformSrc) == %ld (expected 52)",
-       FIELD_OFFSET(EMRMASKBLT, xformSrc)); /* XFORM */
-    ok(FIELD_OFFSET(EMRMASKBLT, crBkColorSrc) == 76,
-       "FIELD_OFFSET(EMRMASKBLT, crBkColorSrc) == %ld (expected 76)",
-       FIELD_OFFSET(EMRMASKBLT, crBkColorSrc)); /* COLORREF */
-    ok(FIELD_OFFSET(EMRMASKBLT, iUsageSrc) == 80,
-       "FIELD_OFFSET(EMRMASKBLT, iUsageSrc) == %ld (expected 80)",
-       FIELD_OFFSET(EMRMASKBLT, iUsageSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, offBmiSrc) == 84,
-       "FIELD_OFFSET(EMRMASKBLT, offBmiSrc) == %ld (expected 84)",
-       FIELD_OFFSET(EMRMASKBLT, offBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, cbBmiSrc) == 88,
-       "FIELD_OFFSET(EMRMASKBLT, cbBmiSrc) == %ld (expected 88)",
-       FIELD_OFFSET(EMRMASKBLT, cbBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, offBitsSrc) == 92,
-       "FIELD_OFFSET(EMRMASKBLT, offBitsSrc) == %ld (expected 92)",
-       FIELD_OFFSET(EMRMASKBLT, offBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, cbBitsSrc) == 96,
-       "FIELD_OFFSET(EMRMASKBLT, cbBitsSrc) == %ld (expected 96)",
-       FIELD_OFFSET(EMRMASKBLT, cbBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, xMask) == 100,
-       "FIELD_OFFSET(EMRMASKBLT, xMask) == %ld (expected 100)",
-       FIELD_OFFSET(EMRMASKBLT, xMask)); /* LONG */
-    ok(FIELD_OFFSET(EMRMASKBLT, yMask) == 104,
-       "FIELD_OFFSET(EMRMASKBLT, yMask) == %ld (expected 104)",
-       FIELD_OFFSET(EMRMASKBLT, yMask)); /* LONG */
-    ok(FIELD_OFFSET(EMRMASKBLT, iUsageMask) == 108,
-       "FIELD_OFFSET(EMRMASKBLT, iUsageMask) == %ld (expected 108)",
-       FIELD_OFFSET(EMRMASKBLT, iUsageMask)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, offBmiMask) == 112,
-       "FIELD_OFFSET(EMRMASKBLT, offBmiMask) == %ld (expected 112)",
-       FIELD_OFFSET(EMRMASKBLT, offBmiMask)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, cbBmiMask) == 116,
-       "FIELD_OFFSET(EMRMASKBLT, cbBmiMask) == %ld (expected 116)",
-       FIELD_OFFSET(EMRMASKBLT, cbBmiMask)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, offBitsMask) == 120,
-       "FIELD_OFFSET(EMRMASKBLT, offBitsMask) == %ld (expected 120)",
-       FIELD_OFFSET(EMRMASKBLT, offBitsMask)); /* DWORD */
-    ok(FIELD_OFFSET(EMRMASKBLT, cbBitsMask) == 124,
-       "FIELD_OFFSET(EMRMASKBLT, cbBitsMask) == %ld (expected 124)",
-       FIELD_OFFSET(EMRMASKBLT, cbBitsMask)); /* DWORD */
-    ok(sizeof(EMRMASKBLT) == 128, "sizeof(EMRMASKBLT) == %d (expected 128)", sizeof(EMRMASKBLT));
-
-    /* EMRMODIFYWORLDTRANSFORM */
-    ok(FIELD_OFFSET(EMRMODIFYWORLDTRANSFORM, emr) == 0,
-       "FIELD_OFFSET(EMRMODIFYWORLDTRANSFORM, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRMODIFYWORLDTRANSFORM, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRMODIFYWORLDTRANSFORM, xform) == 8,
-       "FIELD_OFFSET(EMRMODIFYWORLDTRANSFORM, xform) == %ld (expected 8)",
-       FIELD_OFFSET(EMRMODIFYWORLDTRANSFORM, xform)); /* XFORM */
-    ok(FIELD_OFFSET(EMRMODIFYWORLDTRANSFORM, iMode) == 32,
-       "FIELD_OFFSET(EMRMODIFYWORLDTRANSFORM, iMode) == %ld (expected 32)",
-       FIELD_OFFSET(EMRMODIFYWORLDTRANSFORM, iMode)); /* DWORD */
-    ok(sizeof(EMRMODIFYWORLDTRANSFORM) == 36, "sizeof(EMRMODIFYWORLDTRANSFORM) == %d (expected 36)", sizeof(EMRMODIFYWORLDTRANSFORM));
-
-    /* EMROFFSETCLIPRGN */
-    ok(FIELD_OFFSET(EMROFFSETCLIPRGN, emr) == 0,
-       "FIELD_OFFSET(EMROFFSETCLIPRGN, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMROFFSETCLIPRGN, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMROFFSETCLIPRGN, ptlOffset) == 8,
-       "FIELD_OFFSET(EMROFFSETCLIPRGN, ptlOffset) == %ld (expected 8)",
-       FIELD_OFFSET(EMROFFSETCLIPRGN, ptlOffset)); /* POINTL */
-    ok(sizeof(EMROFFSETCLIPRGN) == 16, "sizeof(EMROFFSETCLIPRGN) == %d (expected 16)", sizeof(EMROFFSETCLIPRGN));
-
-    /* EMRPLGBLT */
-    ok(FIELD_OFFSET(EMRPLGBLT, emr) == 0,
-       "FIELD_OFFSET(EMRPLGBLT, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRPLGBLT, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRPLGBLT, rclBounds) == 8,
-       "FIELD_OFFSET(EMRPLGBLT, rclBounds) == %ld (expected 8)",
-       FIELD_OFFSET(EMRPLGBLT, rclBounds)); /* RECTL */
-    ok(FIELD_OFFSET(EMRPLGBLT, aptlDst) == 24,
-       "FIELD_OFFSET(EMRPLGBLT, aptlDst) == %ld (expected 24)",
-       FIELD_OFFSET(EMRPLGBLT, aptlDst)); /* POINTL[3] */
-    ok(FIELD_OFFSET(EMRPLGBLT, xSrc) == 48,
-       "FIELD_OFFSET(EMRPLGBLT, xSrc) == %ld (expected 48)",
-       FIELD_OFFSET(EMRPLGBLT, xSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRPLGBLT, ySrc) == 52,
-       "FIELD_OFFSET(EMRPLGBLT, ySrc) == %ld (expected 52)",
-       FIELD_OFFSET(EMRPLGBLT, ySrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRPLGBLT, cxSrc) == 56,
-       "FIELD_OFFSET(EMRPLGBLT, cxSrc) == %ld (expected 56)",
-       FIELD_OFFSET(EMRPLGBLT, cxSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRPLGBLT, cySrc) == 60,
-       "FIELD_OFFSET(EMRPLGBLT, cySrc) == %ld (expected 60)",
-       FIELD_OFFSET(EMRPLGBLT, cySrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRPLGBLT, xformSrc) == 64,
-       "FIELD_OFFSET(EMRPLGBLT, xformSrc) == %ld (expected 64)",
-       FIELD_OFFSET(EMRPLGBLT, xformSrc)); /* XFORM */
-    ok(FIELD_OFFSET(EMRPLGBLT, crBkColorSrc) == 88,
-       "FIELD_OFFSET(EMRPLGBLT, crBkColorSrc) == %ld (expected 88)",
-       FIELD_OFFSET(EMRPLGBLT, crBkColorSrc)); /* COLORREF */
-    ok(FIELD_OFFSET(EMRPLGBLT, iUsageSrc) == 92,
-       "FIELD_OFFSET(EMRPLGBLT, iUsageSrc) == %ld (expected 92)",
-       FIELD_OFFSET(EMRPLGBLT, iUsageSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPLGBLT, offBmiSrc) == 96,
-       "FIELD_OFFSET(EMRPLGBLT, offBmiSrc) == %ld (expected 96)",
-       FIELD_OFFSET(EMRPLGBLT, offBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPLGBLT, cbBmiSrc) == 100,
-       "FIELD_OFFSET(EMRPLGBLT, cbBmiSrc) == %ld (expected 100)",
-       FIELD_OFFSET(EMRPLGBLT, cbBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPLGBLT, offBitsSrc) == 104,
-       "FIELD_OFFSET(EMRPLGBLT, offBitsSrc) == %ld (expected 104)",
-       FIELD_OFFSET(EMRPLGBLT, offBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPLGBLT, cbBitsSrc) == 108,
-       "FIELD_OFFSET(EMRPLGBLT, cbBitsSrc) == %ld (expected 108)",
-       FIELD_OFFSET(EMRPLGBLT, cbBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPLGBLT, xMask) == 112,
-       "FIELD_OFFSET(EMRPLGBLT, xMask) == %ld (expected 112)",
-       FIELD_OFFSET(EMRPLGBLT, xMask)); /* LONG */
-    ok(FIELD_OFFSET(EMRPLGBLT, yMask) == 116,
-       "FIELD_OFFSET(EMRPLGBLT, yMask) == %ld (expected 116)",
-       FIELD_OFFSET(EMRPLGBLT, yMask)); /* LONG */
-    ok(FIELD_OFFSET(EMRPLGBLT, iUsageMask) == 120,
-       "FIELD_OFFSET(EMRPLGBLT, iUsageMask) == %ld (expected 120)",
-       FIELD_OFFSET(EMRPLGBLT, iUsageMask)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPLGBLT, offBmiMask) == 124,
-       "FIELD_OFFSET(EMRPLGBLT, offBmiMask) == %ld (expected 124)",
-       FIELD_OFFSET(EMRPLGBLT, offBmiMask)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPLGBLT, cbBmiMask) == 128,
-       "FIELD_OFFSET(EMRPLGBLT, cbBmiMask) == %ld (expected 128)",
-       FIELD_OFFSET(EMRPLGBLT, cbBmiMask)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPLGBLT, offBitsMask) == 132,
-       "FIELD_OFFSET(EMRPLGBLT, offBitsMask) == %ld (expected 132)",
-       FIELD_OFFSET(EMRPLGBLT, offBitsMask)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPLGBLT, cbBitsMask) == 136,
-       "FIELD_OFFSET(EMRPLGBLT, cbBitsMask) == %ld (expected 136)",
-       FIELD_OFFSET(EMRPLGBLT, cbBitsMask)); /* DWORD */
-    ok(sizeof(EMRPLGBLT) == 140, "sizeof(EMRPLGBLT) == %d (expected 140)", sizeof(EMRPLGBLT));
-
-    /* EMRPOLYLINE */
-    ok(FIELD_OFFSET(EMRPOLYLINE, emr) == 0,
-       "FIELD_OFFSET(EMRPOLYLINE, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRPOLYLINE, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRPOLYLINE, rclBounds) == 8,
-       "FIELD_OFFSET(EMRPOLYLINE, rclBounds) == %ld (expected 8)",
-       FIELD_OFFSET(EMRPOLYLINE, rclBounds)); /* RECTL */
-    ok(FIELD_OFFSET(EMRPOLYLINE, cptl) == 24,
-       "FIELD_OFFSET(EMRPOLYLINE, cptl) == %ld (expected 24)",
-       FIELD_OFFSET(EMRPOLYLINE, cptl)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPOLYLINE, aptl) == 28,
-       "FIELD_OFFSET(EMRPOLYLINE, aptl) == %ld (expected 28)",
-       FIELD_OFFSET(EMRPOLYLINE, aptl)); /* POINTL[1] */
-    ok(sizeof(EMRPOLYLINE) == 36, "sizeof(EMRPOLYLINE) == %d (expected 36)", sizeof(EMRPOLYLINE));
-
-    /* EMRPOLYPOLYLINE */
-    ok(FIELD_OFFSET(EMRPOLYPOLYLINE, emr) == 0,
-       "FIELD_OFFSET(EMRPOLYPOLYLINE, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRPOLYPOLYLINE, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRPOLYPOLYLINE, rclBounds) == 8,
-       "FIELD_OFFSET(EMRPOLYPOLYLINE, rclBounds) == %ld (expected 8)",
-       FIELD_OFFSET(EMRPOLYPOLYLINE, rclBounds)); /* RECTL */
-    ok(FIELD_OFFSET(EMRPOLYPOLYLINE, nPolys) == 24,
-       "FIELD_OFFSET(EMRPOLYPOLYLINE, nPolys) == %ld (expected 24)",
-       FIELD_OFFSET(EMRPOLYPOLYLINE, nPolys)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPOLYPOLYLINE, cptl) == 28,
-       "FIELD_OFFSET(EMRPOLYPOLYLINE, cptl) == %ld (expected 28)",
-       FIELD_OFFSET(EMRPOLYPOLYLINE, cptl)); /* DWORD */
-    ok(FIELD_OFFSET(EMRPOLYPOLYLINE, aPolyCounts) == 32,
-       "FIELD_OFFSET(EMRPOLYPOLYLINE, aPolyCounts) == %ld (expected 32)",
-       FIELD_OFFSET(EMRPOLYPOLYLINE, aPolyCounts)); /* DWORD[1] */
-    ok(FIELD_OFFSET(EMRPOLYPOLYLINE, aptl) == 36,
-       "FIELD_OFFSET(EMRPOLYPOLYLINE, aptl) == %ld (expected 36)",
-       FIELD_OFFSET(EMRPOLYPOLYLINE, aptl)); /* POINTL[1] */
-    ok(sizeof(EMRPOLYPOLYLINE) == 44, "sizeof(EMRPOLYPOLYLINE) == %d (expected 44)", sizeof(EMRPOLYPOLYLINE));
-
-    /* EMRRESIZEPALETTE */
-    ok(FIELD_OFFSET(EMRRESIZEPALETTE, emr) == 0,
-       "FIELD_OFFSET(EMRRESIZEPALETTE, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRRESIZEPALETTE, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRRESIZEPALETTE, ihPal) == 8,
-       "FIELD_OFFSET(EMRRESIZEPALETTE, ihPal) == %ld (expected 8)",
-       FIELD_OFFSET(EMRRESIZEPALETTE, ihPal)); /* DWORD */
-    ok(FIELD_OFFSET(EMRRESIZEPALETTE, cEntries) == 12,
-       "FIELD_OFFSET(EMRRESIZEPALETTE, cEntries) == %ld (expected 12)",
-       FIELD_OFFSET(EMRRESIZEPALETTE, cEntries)); /* DWORD */
-    ok(sizeof(EMRRESIZEPALETTE) == 16, "sizeof(EMRRESIZEPALETTE) == %d (expected 16)", sizeof(EMRRESIZEPALETTE));
-
-    /* EMRRESTOREDC */
-    ok(FIELD_OFFSET(EMRRESTOREDC, emr) == 0,
-       "FIELD_OFFSET(EMRRESTOREDC, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRRESTOREDC, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRRESTOREDC, iRelative) == 8,
-       "FIELD_OFFSET(EMRRESTOREDC, iRelative) == %ld (expected 8)",
-       FIELD_OFFSET(EMRRESTOREDC, iRelative)); /* LONG */
-    ok(sizeof(EMRRESTOREDC) == 12, "sizeof(EMRRESTOREDC) == %d (expected 12)", sizeof(EMRRESTOREDC));
-
-    /* EMRROUNDRECT */
-    ok(FIELD_OFFSET(EMRROUNDRECT, emr) == 0,
-       "FIELD_OFFSET(EMRROUNDRECT, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRROUNDRECT, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRROUNDRECT, rclBox) == 8,
-       "FIELD_OFFSET(EMRROUNDRECT, rclBox) == %ld (expected 8)",
-       FIELD_OFFSET(EMRROUNDRECT, rclBox)); /* RECTL */
-    ok(FIELD_OFFSET(EMRROUNDRECT, szlCorner) == 24,
-       "FIELD_OFFSET(EMRROUNDRECT, szlCorner) == %ld (expected 24)",
-       FIELD_OFFSET(EMRROUNDRECT, szlCorner)); /* SIZEL */
-    ok(sizeof(EMRROUNDRECT) == 32, "sizeof(EMRROUNDRECT) == %d (expected 32)", sizeof(EMRROUNDRECT));
-
-    /* EMRSCALEVIEWPORTEXTEX */
-    ok(FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, emr) == 0,
-       "FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, xNum) == 8,
-       "FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, xNum) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, xNum)); /* LONG */
-    ok(FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, xDenom) == 12,
-       "FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, xDenom) == %ld (expected 12)",
-       FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, xDenom)); /* LONG */
-    ok(FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, yNum) == 16,
-       "FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, yNum) == %ld (expected 16)",
-       FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, yNum)); /* LONG */
-    ok(FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, yDenom) == 20,
-       "FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, yDenom) == %ld (expected 20)",
-       FIELD_OFFSET(EMRSCALEVIEWPORTEXTEX, yDenom)); /* LONG */
-    ok(sizeof(EMRSCALEVIEWPORTEXTEX) == 24, "sizeof(EMRSCALEVIEWPORTEXTEX) == %d (expected 24)", sizeof(EMRSCALEVIEWPORTEXTEX));
-
-    /* EMRSELECTCLIPPATH */
-    ok(FIELD_OFFSET(EMRSELECTCLIPPATH, emr) == 0,
-       "FIELD_OFFSET(EMRSELECTCLIPPATH, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSELECTCLIPPATH, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSELECTCLIPPATH, iMode) == 8,
-       "FIELD_OFFSET(EMRSELECTCLIPPATH, iMode) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSELECTCLIPPATH, iMode)); /* DWORD */
-    ok(sizeof(EMRSELECTCLIPPATH) == 12, "sizeof(EMRSELECTCLIPPATH) == %d (expected 12)", sizeof(EMRSELECTCLIPPATH));
-
-    /* EMRSELECTPALETTE */
-    ok(FIELD_OFFSET(EMRSELECTPALETTE, emr) == 0,
-       "FIELD_OFFSET(EMRSELECTPALETTE, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSELECTPALETTE, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSELECTPALETTE, ihPal) == 8,
-       "FIELD_OFFSET(EMRSELECTPALETTE, ihPal) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSELECTPALETTE, ihPal)); /* DWORD */
-    ok(sizeof(EMRSELECTPALETTE) == 12, "sizeof(EMRSELECTPALETTE) == %d (expected 12)", sizeof(EMRSELECTPALETTE));
-
-    /* EMRSETARCDIRECTION */
-    ok(FIELD_OFFSET(EMRSETARCDIRECTION, emr) == 0,
-       "FIELD_OFFSET(EMRSETARCDIRECTION, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETARCDIRECTION, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETARCDIRECTION, iArcDirection) == 8,
-       "FIELD_OFFSET(EMRSETARCDIRECTION, iArcDirection) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETARCDIRECTION, iArcDirection)); /* DWORD */
-    ok(sizeof(EMRSETARCDIRECTION) == 12, "sizeof(EMRSETARCDIRECTION) == %d (expected 12)", sizeof(EMRSETARCDIRECTION));
-
-    /* EMRSETBKCOLOR */
-    ok(FIELD_OFFSET(EMRSETBKCOLOR, emr) == 0,
-       "FIELD_OFFSET(EMRSETBKCOLOR, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETBKCOLOR, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETBKCOLOR, crColor) == 8,
-       "FIELD_OFFSET(EMRSETBKCOLOR, crColor) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETBKCOLOR, crColor)); /* COLORREF */
-    ok(sizeof(EMRSETBKCOLOR) == 12, "sizeof(EMRSETBKCOLOR) == %d (expected 12)", sizeof(EMRSETBKCOLOR));
-
-    /* EMRSETBRUSHORGEX */
-    ok(FIELD_OFFSET(EMRSETBRUSHORGEX, emr) == 0,
-       "FIELD_OFFSET(EMRSETBRUSHORGEX, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETBRUSHORGEX, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETBRUSHORGEX, ptlOrigin) == 8,
-       "FIELD_OFFSET(EMRSETBRUSHORGEX, ptlOrigin) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETBRUSHORGEX, ptlOrigin)); /* POINTL */
-    ok(sizeof(EMRSETBRUSHORGEX) == 16, "sizeof(EMRSETBRUSHORGEX) == %d (expected 16)", sizeof(EMRSETBRUSHORGEX));
-
-    /* EMRSETDIBITSTODEIVCE */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, emr) == 0,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, rclBounds) == 8,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, rclBounds) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, rclBounds)); /* RECTL */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, xDest) == 24,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, xDest) == %ld (expected 24)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, xDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, yDest) == 28,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, yDest) == %ld (expected 28)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, yDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, xSrc) == 32,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, xSrc) == %ld (expected 32)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, xSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, ySrc) == 36,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, ySrc) == %ld (expected 36)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, ySrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cxSrc) == 40,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cxSrc) == %ld (expected 40)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cxSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cySrc) == 44,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cySrc) == %ld (expected 44)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cySrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, offBmiSrc) == 48,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, offBmiSrc) == %ld (expected 48)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, offBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cbBmiSrc) == 52,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cbBmiSrc) == %ld (expected 52)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cbBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, offBitsSrc) == 56,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, offBitsSrc) == %ld (expected 56)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, offBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cbBitsSrc) == 60,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cbBitsSrc) == %ld (expected 60)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cbBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, iUsageSrc) == 64,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, iUsageSrc) == %ld (expected 64)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, iUsageSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, iStartScan) == 68,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, iStartScan) == %ld (expected 68)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, iStartScan)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cScans) == 72,
-       "FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cScans) == %ld (expected 72)",
-       FIELD_OFFSET(EMRSETDIBITSTODEIVCE, cScans)); /* DWORD */
-    ok(sizeof(EMRSETDIBITSTODEIVCE) == 76, "sizeof(EMRSETDIBITSTODEIVCE) == %d (expected 76)", sizeof(EMRSETDIBITSTODEIVCE));
-
-    /* EMRSETMAPPERFLAGS */
-    ok(FIELD_OFFSET(EMRSETMAPPERFLAGS, emr) == 0,
-       "FIELD_OFFSET(EMRSETMAPPERFLAGS, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETMAPPERFLAGS, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETMAPPERFLAGS, dwFlags) == 8,
-       "FIELD_OFFSET(EMRSETMAPPERFLAGS, dwFlags) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETMAPPERFLAGS, dwFlags)); /* DWORD */
-    ok(sizeof(EMRSETMAPPERFLAGS) == 12, "sizeof(EMRSETMAPPERFLAGS) == %d (expected 12)", sizeof(EMRSETMAPPERFLAGS));
-
-    /* EMRSETMITERLIMIT */
-    ok(FIELD_OFFSET(EMRSETMITERLIMIT, emr) == 0,
-       "FIELD_OFFSET(EMRSETMITERLIMIT, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETMITERLIMIT, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETMITERLIMIT, eMiterLimit) == 8,
-       "FIELD_OFFSET(EMRSETMITERLIMIT, eMiterLimit) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETMITERLIMIT, eMiterLimit)); /* FLOAT */
-    ok(sizeof(EMRSETMITERLIMIT) == 12, "sizeof(EMRSETMITERLIMIT) == %d (expected 12)", sizeof(EMRSETMITERLIMIT));
-
-    /* EMRSETPALETTEENTRIES */
-    ok(FIELD_OFFSET(EMRSETPALETTEENTRIES, emr) == 0,
-       "FIELD_OFFSET(EMRSETPALETTEENTRIES, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETPALETTEENTRIES, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETPALETTEENTRIES, ihPal) == 8,
-       "FIELD_OFFSET(EMRSETPALETTEENTRIES, ihPal) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETPALETTEENTRIES, ihPal)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSETPALETTEENTRIES, iStart) == 12,
-       "FIELD_OFFSET(EMRSETPALETTEENTRIES, iStart) == %ld (expected 12)",
-       FIELD_OFFSET(EMRSETPALETTEENTRIES, iStart)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSETPALETTEENTRIES, cEntries) == 16,
-       "FIELD_OFFSET(EMRSETPALETTEENTRIES, cEntries) == %ld (expected 16)",
-       FIELD_OFFSET(EMRSETPALETTEENTRIES, cEntries)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSETPALETTEENTRIES, aPalEntries) == 20,
-       "FIELD_OFFSET(EMRSETPALETTEENTRIES, aPalEntries) == %ld (expected 20)",
-       FIELD_OFFSET(EMRSETPALETTEENTRIES, aPalEntries)); /* PALETTEENTRY[1] */
-    ok(sizeof(EMRSETPALETTEENTRIES) == 24, "sizeof(EMRSETPALETTEENTRIES) == %d (expected 24)", sizeof(EMRSETPALETTEENTRIES));
-
-    /* EMRSETPIXELV */
-    ok(FIELD_OFFSET(EMRSETPIXELV, emr) == 0,
-       "FIELD_OFFSET(EMRSETPIXELV, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETPIXELV, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETPIXELV, ptlPixel) == 8,
-       "FIELD_OFFSET(EMRSETPIXELV, ptlPixel) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETPIXELV, ptlPixel)); /* POINTL */
-    ok(FIELD_OFFSET(EMRSETPIXELV, crColor) == 16,
-       "FIELD_OFFSET(EMRSETPIXELV, crColor) == %ld (expected 16)",
-       FIELD_OFFSET(EMRSETPIXELV, crColor)); /* COLORREF */
-    ok(sizeof(EMRSETPIXELV) == 20, "sizeof(EMRSETPIXELV) == %d (expected 20)", sizeof(EMRSETPIXELV));
-
-    /* EMRSETTEXTJUSTIFICATION */
-    ok(FIELD_OFFSET(EMRSETTEXTJUSTIFICATION, emr) == 0,
-       "FIELD_OFFSET(EMRSETTEXTJUSTIFICATION, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETTEXTJUSTIFICATION, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETTEXTJUSTIFICATION, nBreakExtra) == 8,
-       "FIELD_OFFSET(EMRSETTEXTJUSTIFICATION, nBreakExtra) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETTEXTJUSTIFICATION, nBreakExtra)); /* INT */
-    ok(FIELD_OFFSET(EMRSETTEXTJUSTIFICATION, nBreakCount) == 12,
-       "FIELD_OFFSET(EMRSETTEXTJUSTIFICATION, nBreakCount) == %ld (expected 12)",
-       FIELD_OFFSET(EMRSETTEXTJUSTIFICATION, nBreakCount)); /* INT */
-    ok(sizeof(EMRSETTEXTJUSTIFICATION) == 16, "sizeof(EMRSETTEXTJUSTIFICATION) == %d (expected 16)", sizeof(EMRSETTEXTJUSTIFICATION));
-
-    /* EMRSETVIEWPORTEXTEX */
-    ok(FIELD_OFFSET(EMRSETVIEWPORTEXTEX, emr) == 0,
-       "FIELD_OFFSET(EMRSETVIEWPORTEXTEX, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETVIEWPORTEXTEX, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETVIEWPORTEXTEX, szlExtent) == 8,
-       "FIELD_OFFSET(EMRSETVIEWPORTEXTEX, szlExtent) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETVIEWPORTEXTEX, szlExtent)); /* SIZEL */
-    ok(sizeof(EMRSETVIEWPORTEXTEX) == 16, "sizeof(EMRSETVIEWPORTEXTEX) == %d (expected 16)", sizeof(EMRSETVIEWPORTEXTEX));
-
-    /* EMRSETWORLDTRANSFORM */
-    ok(FIELD_OFFSET(EMRSETWORLDTRANSFORM, emr) == 0,
-       "FIELD_OFFSET(EMRSETWORLDTRANSFORM, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSETWORLDTRANSFORM, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSETWORLDTRANSFORM, xform) == 8,
-       "FIELD_OFFSET(EMRSETWORLDTRANSFORM, xform) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSETWORLDTRANSFORM, xform)); /* XFORM */
-    ok(sizeof(EMRSETWORLDTRANSFORM) == 32, "sizeof(EMRSETWORLDTRANSFORM) == %d (expected 32)", sizeof(EMRSETWORLDTRANSFORM));
-
-    /* EMRSTRETCHBLT */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, emr) == 0,
-       "FIELD_OFFSET(EMRSTRETCHBLT, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSTRETCHBLT, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, rclBounds) == 8,
-       "FIELD_OFFSET(EMRSTRETCHBLT, rclBounds) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSTRETCHBLT, rclBounds)); /* RECTL */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, xDest) == 24,
-       "FIELD_OFFSET(EMRSTRETCHBLT, xDest) == %ld (expected 24)",
-       FIELD_OFFSET(EMRSTRETCHBLT, xDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, yDest) == 28,
-       "FIELD_OFFSET(EMRSTRETCHBLT, yDest) == %ld (expected 28)",
-       FIELD_OFFSET(EMRSTRETCHBLT, yDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, cxDest) == 32,
-       "FIELD_OFFSET(EMRSTRETCHBLT, cxDest) == %ld (expected 32)",
-       FIELD_OFFSET(EMRSTRETCHBLT, cxDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, cyDest) == 36,
-       "FIELD_OFFSET(EMRSTRETCHBLT, cyDest) == %ld (expected 36)",
-       FIELD_OFFSET(EMRSTRETCHBLT, cyDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, dwRop) == 40,
-       "FIELD_OFFSET(EMRSTRETCHBLT, dwRop) == %ld (expected 40)",
-       FIELD_OFFSET(EMRSTRETCHBLT, dwRop)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, xSrc) == 44,
-       "FIELD_OFFSET(EMRSTRETCHBLT, xSrc) == %ld (expected 44)",
-       FIELD_OFFSET(EMRSTRETCHBLT, xSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, ySrc) == 48,
-       "FIELD_OFFSET(EMRSTRETCHBLT, ySrc) == %ld (expected 48)",
-       FIELD_OFFSET(EMRSTRETCHBLT, ySrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, xformSrc) == 52,
-       "FIELD_OFFSET(EMRSTRETCHBLT, xformSrc) == %ld (expected 52)",
-       FIELD_OFFSET(EMRSTRETCHBLT, xformSrc)); /* XFORM */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, crBkColorSrc) == 76,
-       "FIELD_OFFSET(EMRSTRETCHBLT, crBkColorSrc) == %ld (expected 76)",
-       FIELD_OFFSET(EMRSTRETCHBLT, crBkColorSrc)); /* COLORREF */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, iUsageSrc) == 80,
-       "FIELD_OFFSET(EMRSTRETCHBLT, iUsageSrc) == %ld (expected 80)",
-       FIELD_OFFSET(EMRSTRETCHBLT, iUsageSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, offBmiSrc) == 84,
-       "FIELD_OFFSET(EMRSTRETCHBLT, offBmiSrc) == %ld (expected 84)",
-       FIELD_OFFSET(EMRSTRETCHBLT, offBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, cbBmiSrc) == 88,
-       "FIELD_OFFSET(EMRSTRETCHBLT, cbBmiSrc) == %ld (expected 88)",
-       FIELD_OFFSET(EMRSTRETCHBLT, cbBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, offBitsSrc) == 92,
-       "FIELD_OFFSET(EMRSTRETCHBLT, offBitsSrc) == %ld (expected 92)",
-       FIELD_OFFSET(EMRSTRETCHBLT, offBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, cbBitsSrc) == 96,
-       "FIELD_OFFSET(EMRSTRETCHBLT, cbBitsSrc) == %ld (expected 96)",
-       FIELD_OFFSET(EMRSTRETCHBLT, cbBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, cxSrc) == 100,
-       "FIELD_OFFSET(EMRSTRETCHBLT, cxSrc) == %ld (expected 100)",
-       FIELD_OFFSET(EMRSTRETCHBLT, cxSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHBLT, cySrc) == 104,
-       "FIELD_OFFSET(EMRSTRETCHBLT, cySrc) == %ld (expected 104)",
-       FIELD_OFFSET(EMRSTRETCHBLT, cySrc)); /* LONG */
-    ok(sizeof(EMRSTRETCHBLT) == 108, "sizeof(EMRSTRETCHBLT) == %d (expected 108)", sizeof(EMRSTRETCHBLT));
-
-    /* EMRSTRETCHDIBITS */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, emr) == 0,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, emr) == %ld (expected 0)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, emr)); /* EMR */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, rclBounds) == 8,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, rclBounds) == %ld (expected 8)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, rclBounds)); /* RECTL */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, xDest) == 24,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, xDest) == %ld (expected 24)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, xDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, yDest) == 28,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, yDest) == %ld (expected 28)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, yDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, xSrc) == 32,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, xSrc) == %ld (expected 32)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, xSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, ySrc) == 36,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, ySrc) == %ld (expected 36)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, ySrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, cxSrc) == 40,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, cxSrc) == %ld (expected 40)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, cxSrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, cySrc) == 44,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, cySrc) == %ld (expected 44)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, cySrc)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, offBmiSrc) == 48,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, offBmiSrc) == %ld (expected 48)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, offBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, cbBmiSrc) == 52,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, cbBmiSrc) == %ld (expected 52)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, cbBmiSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, offBitsSrc) == 56,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, offBitsSrc) == %ld (expected 56)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, offBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, cbBitsSrc) == 60,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, cbBitsSrc) == %ld (expected 60)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, cbBitsSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, iUsageSrc) == 64,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, iUsageSrc) == %ld (expected 64)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, iUsageSrc)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, dwRop) == 68,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, dwRop) == %ld (expected 68)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, dwRop)); /* DWORD */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, cxDest) == 72,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, cxDest) == %ld (expected 72)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, cxDest)); /* LONG */
-    ok(FIELD_OFFSET(EMRSTRETCHDIBITS, cyDest) == 76,
-       "FIELD_OFFSET(EMRSTRETCHDIBITS, cyDest) == %ld (expected 76)",
-       FIELD_OFFSET(EMRSTRETCHDIBITS, cyDest)); /* LONG */
-    ok(sizeof(EMRSTRETCHDIBITS) == 80, "sizeof(EMRSTRETCHDIBITS) == %d (expected 80)", sizeof(EMRSTRETCHDIBITS));
-
-    /* EMRTEXT */
-    ok(FIELD_OFFSET(EMRTEXT, ptlReference) == 0,
-       "FIELD_OFFSET(EMRTEXT, ptlReference) == %ld (expected 0)",
-       FIELD_OFFSET(EMRTEXT, ptlReference)); /* POINTL */
-    ok(FIELD_OFFSET(EMRTEXT, nChars) == 8,
-       "FIELD_OFFSET(EMRTEXT, nChars) == %ld (expected 8)",
-       FIELD_OFFSET(EMRTEXT, nChars)); /* DWORD */
-    ok(FIELD_OFFSET(EMRTEXT, offString) == 12,
-       "FIELD_OFFSET(EMRTEXT, offString) == %ld (expected 12)",
-       FIELD_OFFSET(EMRTEXT, offString)); /* DWORD */
-    ok(FIELD_OFFSET(EMRTEXT, fOptions) == 16,
-       "FIELD_OFFSET(EMRTEXT, fOptions) == %ld (expected 16)",
-       FIELD_OFFSET(EMRTEXT, fOptions)); /* DWORD */
-    ok(FIELD_OFFSET(EMRTEXT, rcl) == 20,
-       "FIELD_OFFSET(EMRTEXT, rcl) == %ld (expected 20)",
-       FIELD_OFFSET(EMRTEXT, rcl)); /* RECTL */
-    ok(FIELD_OFFSET(EMRTEXT, offDx) == 36,
-       "FIELD_OFFSET(EMRTEXT, offDx) == %ld (expected 36)",
-       FIELD_OFFSET(EMRTEXT, offDx)); /* DWORD */
-    ok(sizeof(EMRTEXT) == 40, "sizeof(EMRTEXT) == %d (expected 40)", sizeof(EMRTEXT));
-
-    /* ENHMETARECORD */
-    ok(FIELD_OFFSET(ENHMETARECORD, iType) == 0,
-       "FIELD_OFFSET(ENHMETARECORD, iType) == %ld (expected 0)",
-       FIELD_OFFSET(ENHMETARECORD, iType)); /* DWORD */
-    ok(FIELD_OFFSET(ENHMETARECORD, nSize) == 4,
-       "FIELD_OFFSET(ENHMETARECORD, nSize) == %ld (expected 4)",
-       FIELD_OFFSET(ENHMETARECORD, nSize)); /* DWORD */
-    ok(FIELD_OFFSET(ENHMETARECORD, dParm) == 8,
-       "FIELD_OFFSET(ENHMETARECORD, dParm) == %ld (expected 8)",
-       FIELD_OFFSET(ENHMETARECORD, dParm)); /* DWORD[1] */
-    ok(sizeof(ENHMETARECORD) == 12, "sizeof(ENHMETARECORD) == %d (expected 12)", sizeof(ENHMETARECORD));
-
-    /* EXTLOGPEN */
-    ok(FIELD_OFFSET(EXTLOGPEN, elpPenStyle) == 0,
-       "FIELD_OFFSET(EXTLOGPEN, elpPenStyle) == %ld (expected 0)",
-       FIELD_OFFSET(EXTLOGPEN, elpPenStyle)); /* DWORD */
-    ok(FIELD_OFFSET(EXTLOGPEN, elpWidth) == 4,
-       "FIELD_OFFSET(EXTLOGPEN, elpWidth) == %ld (expected 4)",
-       FIELD_OFFSET(EXTLOGPEN, elpWidth)); /* DWORD */
-    ok(FIELD_OFFSET(EXTLOGPEN, elpBrushStyle) == 8,
-       "FIELD_OFFSET(EXTLOGPEN, elpBrushStyle) == %ld (expected 8)",
-       FIELD_OFFSET(EXTLOGPEN, elpBrushStyle)); /* UINT */
-    ok(FIELD_OFFSET(EXTLOGPEN, elpColor) == 12,
-       "FIELD_OFFSET(EXTLOGPEN, elpColor) == %ld (expected 12)",
-       FIELD_OFFSET(EXTLOGPEN, elpColor)); /* COLORREF */
-    ok(FIELD_OFFSET(EXTLOGPEN, elpHatch) == 16,
-       "FIELD_OFFSET(EXTLOGPEN, elpHatch) == %ld (expected 16)",
-       FIELD_OFFSET(EXTLOGPEN, elpHatch)); /* LONG */
-    ok(FIELD_OFFSET(EXTLOGPEN, elpNumEntries) == 20,
-       "FIELD_OFFSET(EXTLOGPEN, elpNumEntries) == %ld (expected 20)",
-       FIELD_OFFSET(EXTLOGPEN, elpNumEntries)); /* DWORD */
-    ok(FIELD_OFFSET(EXTLOGPEN, elpStyleEntry) == 24,
-       "FIELD_OFFSET(EXTLOGPEN, elpStyleEntry) == %ld (expected 24)",
-       FIELD_OFFSET(EXTLOGPEN, elpStyleEntry)); /* DWORD[1] */
-    ok(sizeof(EXTLOGPEN) == 28, "sizeof(EXTLOGPEN) == %d (expected 28)", sizeof(EXTLOGPEN));
-
-    /* FONTSIGNATURE */
-    ok(FIELD_OFFSET(FONTSIGNATURE, fsUsb) == 0,
-       "FIELD_OFFSET(FONTSIGNATURE, fsUsb) == %ld (expected 0)",
-       FIELD_OFFSET(FONTSIGNATURE, fsUsb)); /* DWORD[4] */
-    ok(FIELD_OFFSET(FONTSIGNATURE, fsCsb) == 16,
-       "FIELD_OFFSET(FONTSIGNATURE, fsCsb) == %ld (expected 16)",
-       FIELD_OFFSET(FONTSIGNATURE, fsCsb)); /* DWORD[2] */
-    ok(sizeof(FONTSIGNATURE) == 24, "sizeof(FONTSIGNATURE) == %d (expected 24)", sizeof(FONTSIGNATURE));
-
-    /* GCP_RESULTSA */
-    ok(FIELD_OFFSET(GCP_RESULTSA, lStructSize) == 0,
-       "FIELD_OFFSET(GCP_RESULTSA, lStructSize) == %ld (expected 0)",
-       FIELD_OFFSET(GCP_RESULTSA, lStructSize)); /* DWORD */
-    ok(FIELD_OFFSET(GCP_RESULTSA, lpOutString) == 4,
-       "FIELD_OFFSET(GCP_RESULTSA, lpOutString) == %ld (expected 4)",
-       FIELD_OFFSET(GCP_RESULTSA, lpOutString)); /* LPSTR */
-    ok(FIELD_OFFSET(GCP_RESULTSA, lpOrder) == 8,
-       "FIELD_OFFSET(GCP_RESULTSA, lpOrder) == %ld (expected 8)",
-       FIELD_OFFSET(GCP_RESULTSA, lpOrder)); /* UINT * */
-    ok(FIELD_OFFSET(GCP_RESULTSA, lpDx) == 12,
-       "FIELD_OFFSET(GCP_RESULTSA, lpDx) == %ld (expected 12)",
-       FIELD_OFFSET(GCP_RESULTSA, lpDx)); /* INT * */
-    ok(FIELD_OFFSET(GCP_RESULTSA, lpCaretPos) == 16,
-       "FIELD_OFFSET(GCP_RESULTSA, lpCaretPos) == %ld (expected 16)",
-       FIELD_OFFSET(GCP_RESULTSA, lpCaretPos)); /* INT * */
-    ok(FIELD_OFFSET(GCP_RESULTSA, lpClass) == 20,
-       "FIELD_OFFSET(GCP_RESULTSA, lpClass) == %ld (expected 20)",
-       FIELD_OFFSET(GCP_RESULTSA, lpClass)); /* LPSTR */
-    ok(FIELD_OFFSET(GCP_RESULTSA, lpGlyphs) == 24,
-       "FIELD_OFFSET(GCP_RESULTSA, lpGlyphs) == %ld (expected 24)",
-       FIELD_OFFSET(GCP_RESULTSA, lpGlyphs)); /* LPWSTR */
-    ok(FIELD_OFFSET(GCP_RESULTSA, nGlyphs) == 28,
-       "FIELD_OFFSET(GCP_RESULTSA, nGlyphs) == %ld (expected 28)",
-       FIELD_OFFSET(GCP_RESULTSA, nGlyphs)); /* UINT */
-    ok(FIELD_OFFSET(GCP_RESULTSA, nMaxFit) == 32,
-       "FIELD_OFFSET(GCP_RESULTSA, nMaxFit) == %ld (expected 32)",
-       FIELD_OFFSET(GCP_RESULTSA, nMaxFit)); /* UINT */
-    ok(sizeof(GCP_RESULTSA) == 36, "sizeof(GCP_RESULTSA) == %d (expected 36)", sizeof(GCP_RESULTSA));
-
-    /* GCP_RESULTSW */
-    ok(FIELD_OFFSET(GCP_RESULTSW, lStructSize) == 0,
-       "FIELD_OFFSET(GCP_RESULTSW, lStructSize) == %ld (expected 0)",
-       FIELD_OFFSET(GCP_RESULTSW, lStructSize)); /* DWORD */
-    ok(FIELD_OFFSET(GCP_RESULTSW, lpOutString) == 4,
-       "FIELD_OFFSET(GCP_RESULTSW, lpOutString) == %ld (expected 4)",
-       FIELD_OFFSET(GCP_RESULTSW, lpOutString)); /* LPWSTR */
-    ok(FIELD_OFFSET(GCP_RESULTSW, lpOrder) == 8,
-       "FIELD_OFFSET(GCP_RESULTSW, lpOrder) == %ld (expected 8)",
-       FIELD_OFFSET(GCP_RESULTSW, lpOrder)); /* UINT * */
-    ok(FIELD_OFFSET(GCP_RESULTSW, lpDx) == 12,
-       "FIELD_OFFSET(GCP_RESULTSW, lpDx) == %ld (expected 12)",
-       FIELD_OFFSET(GCP_RESULTSW, lpDx)); /* INT * */
-    ok(FIELD_OFFSET(GCP_RESULTSW, lpCaretPos) == 16,
-       "FIELD_OFFSET(GCP_RESULTSW, lpCaretPos) == %ld (expected 16)",
-       FIELD_OFFSET(GCP_RESULTSW, lpCaretPos)); /* INT * */
-    ok(FIELD_OFFSET(GCP_RESULTSW, lpClass) == 20,
-       "FIELD_OFFSET(GCP_RESULTSW, lpClass) == %ld (expected 20)",
-       FIELD_OFFSET(GCP_RESULTSW, lpClass)); /* LPSTR */
-    ok(FIELD_OFFSET(GCP_RESULTSW, lpGlyphs) == 24,
-       "FIELD_OFFSET(GCP_RESULTSW, lpGlyphs) == %ld (expected 24)",
-       FIELD_OFFSET(GCP_RESULTSW, lpGlyphs)); /* LPWSTR */
-    ok(FIELD_OFFSET(GCP_RESULTSW, nGlyphs) == 28,
-       "FIELD_OFFSET(GCP_RESULTSW, nGlyphs) == %ld (expected 28)",
-       FIELD_OFFSET(GCP_RESULTSW, nGlyphs)); /* UINT */
-    ok(FIELD_OFFSET(GCP_RESULTSW, nMaxFit) == 32,
-       "FIELD_OFFSET(GCP_RESULTSW, nMaxFit) == %ld (expected 32)",
-       FIELD_OFFSET(GCP_RESULTSW, nMaxFit)); /* UINT */
-    ok(sizeof(GCP_RESULTSW) == 36, "sizeof(GCP_RESULTSW) == %d (expected 36)", sizeof(GCP_RESULTSW));
-
-    /* GRADIENT_RECT */
-    ok(FIELD_OFFSET(GRADIENT_RECT, UpperLeft) == 0,
-       "FIELD_OFFSET(GRADIENT_RECT, UpperLeft) == %ld (expected 0)",
-       FIELD_OFFSET(GRADIENT_RECT, UpperLeft)); /* ULONG */
-    ok(FIELD_OFFSET(GRADIENT_RECT, LowerRight) == 4,
-       "FIELD_OFFSET(GRADIENT_RECT, LowerRight) == %ld (expected 4)",
-       FIELD_OFFSET(GRADIENT_RECT, LowerRight)); /* ULONG */
-    ok(sizeof(GRADIENT_RECT) == 8, "sizeof(GRADIENT_RECT) == %d (expected 8)", sizeof(GRADIENT_RECT));
-
-    /* GRADIENT_TRIANGLE */
-    ok(FIELD_OFFSET(GRADIENT_TRIANGLE, Vertex1) == 0,
-       "FIELD_OFFSET(GRADIENT_TRIANGLE, Vertex1) == %ld (expected 0)",
-       FIELD_OFFSET(GRADIENT_TRIANGLE, Vertex1)); /* ULONG */
-    ok(FIELD_OFFSET(GRADIENT_TRIANGLE, Vertex2) == 4,
-       "FIELD_OFFSET(GRADIENT_TRIANGLE, Vertex2) == %ld (expected 4)",
-       FIELD_OFFSET(GRADIENT_TRIANGLE, Vertex2)); /* ULONG */
-    ok(FIELD_OFFSET(GRADIENT_TRIANGLE, Vertex3) == 8,
-       "FIELD_OFFSET(GRADIENT_TRIANGLE, Vertex3) == %ld (expected 8)",
-       FIELD_OFFSET(GRADIENT_TRIANGLE, Vertex3)); /* ULONG */
-    ok(sizeof(GRADIENT_TRIANGLE) == 12, "sizeof(GRADIENT_TRIANGLE) == %d (expected 12)", sizeof(GRADIENT_TRIANGLE));
-
-    /* HANDLETABLE */
-    ok(FIELD_OFFSET(HANDLETABLE, objectHandle) == 0,
-       "FIELD_OFFSET(HANDLETABLE, objectHandle) == %ld (expected 0)",
-       FIELD_OFFSET(HANDLETABLE, objectHandle)); /* HGDIOBJ[1] */
-    ok(sizeof(HANDLETABLE) == 4, "sizeof(HANDLETABLE) == %d (expected 4)", sizeof(HANDLETABLE));
-
-    /* KERNINGPAIR */
-    ok(FIELD_OFFSET(KERNINGPAIR, wFirst) == 0,
-       "FIELD_OFFSET(KERNINGPAIR, wFirst) == %ld (expected 0)",
-       FIELD_OFFSET(KERNINGPAIR, wFirst)); /* WORD */
-    ok(FIELD_OFFSET(KERNINGPAIR, wSecond) == 2,
-       "FIELD_OFFSET(KERNINGPAIR, wSecond) == %ld (expected 2)",
-       FIELD_OFFSET(KERNINGPAIR, wSecond)); /* WORD */
-    ok(FIELD_OFFSET(KERNINGPAIR, iKernAmount) == 4,
-       "FIELD_OFFSET(KERNINGPAIR, iKernAmount) == %ld (expected 4)",
-       FIELD_OFFSET(KERNINGPAIR, iKernAmount)); /* INT */
-    ok(sizeof(KERNINGPAIR) == 8, "sizeof(KERNINGPAIR) == %d (expected 8)", sizeof(KERNINGPAIR));
-
-    /* LOCALESIGNATURE */
-    ok(FIELD_OFFSET(LOCALESIGNATURE, lsUsb) == 0,
-       "FIELD_OFFSET(LOCALESIGNATURE, lsUsb) == %ld (expected 0)",
-       FIELD_OFFSET(LOCALESIGNATURE, lsUsb)); /* DWORD[4] */
-    ok(FIELD_OFFSET(LOCALESIGNATURE, lsCsbDefault) == 16,
-       "FIELD_OFFSET(LOCALESIGNATURE, lsCsbDefault) == %ld (expected 16)",
-       FIELD_OFFSET(LOCALESIGNATURE, lsCsbDefault)); /* DWORD[2] */
-    ok(FIELD_OFFSET(LOCALESIGNATURE, lsCsbSupported) == 24,
-       "FIELD_OFFSET(LOCALESIGNATURE, lsCsbSupported) == %ld (expected 24)",
-       FIELD_OFFSET(LOCALESIGNATURE, lsCsbSupported)); /* DWORD[2] */
-    ok(sizeof(LOCALESIGNATURE) == 32, "sizeof(LOCALESIGNATURE) == %d (expected 32)", sizeof(LOCALESIGNATURE));
-
-    /* LOGBRUSH */
-    ok(FIELD_OFFSET(LOGBRUSH, lbStyle) == 0,
-       "FIELD_OFFSET(LOGBRUSH, lbStyle) == %ld (expected 0)",
-       FIELD_OFFSET(LOGBRUSH, lbStyle)); /* UINT */
-    ok(FIELD_OFFSET(LOGBRUSH, lbColor) == 4,
-       "FIELD_OFFSET(LOGBRUSH, lbColor) == %ld (expected 4)",
-       FIELD_OFFSET(LOGBRUSH, lbColor)); /* COLORREF */
-    ok(FIELD_OFFSET(LOGBRUSH, lbHatch) == 8,
-       "FIELD_OFFSET(LOGBRUSH, lbHatch) == %ld (expected 8)",
-       FIELD_OFFSET(LOGBRUSH, lbHatch)); /* INT */
-    ok(sizeof(LOGBRUSH) == 12, "sizeof(LOGBRUSH) == %d (expected 12)", sizeof(LOGBRUSH));
-
-    /* LOGPALETTE */
-    ok(FIELD_OFFSET(LOGPALETTE, palVersion) == 0,
-       "FIELD_OFFSET(LOGPALETTE, palVersion) == %ld (expected 0)",
-       FIELD_OFFSET(LOGPALETTE, palVersion)); /* WORD */
-    ok(FIELD_OFFSET(LOGPALETTE, palNumEntries) == 2,
-       "FIELD_OFFSET(LOGPALETTE, palNumEntries) == %ld (expected 2)",
-       FIELD_OFFSET(LOGPALETTE, palNumEntries)); /* WORD */
-    ok(FIELD_OFFSET(LOGPALETTE, palPalEntry) == 4,
-       "FIELD_OFFSET(LOGPALETTE, palPalEntry) == %ld (expected 4)",
-       FIELD_OFFSET(LOGPALETTE, palPalEntry)); /* PALETTEENTRY[1] */
-    ok(sizeof(LOGPALETTE) == 8, "sizeof(LOGPALETTE) == %d (expected 8)", sizeof(LOGPALETTE));
-
-    /* LOGPEN */
-    ok(FIELD_OFFSET(LOGPEN, lopnStyle) == 0,
-       "FIELD_OFFSET(LOGPEN, lopnStyle) == %ld (expected 0)",
-       FIELD_OFFSET(LOGPEN, lopnStyle)); /* UINT */
-    ok(FIELD_OFFSET(LOGPEN, lopnWidth) == 4,
-       "FIELD_OFFSET(LOGPEN, lopnWidth) == %ld (expected 4)",
-       FIELD_OFFSET(LOGPEN, lopnWidth)); /* POINT */
-    ok(FIELD_OFFSET(LOGPEN, lopnColor) == 12,
-       "FIELD_OFFSET(LOGPEN, lopnColor) == %ld (expected 12)",
-       FIELD_OFFSET(LOGPEN, lopnColor)); /* COLORREF */
-    ok(sizeof(LOGPEN) == 16, "sizeof(LOGPEN) == %d (expected 16)", sizeof(LOGPEN));
-
-    /* MAT2 */
-    ok(FIELD_OFFSET(MAT2, eM11) == 0,
-       "FIELD_OFFSET(MAT2, eM11) == %ld (expected 0)",
-       FIELD_OFFSET(MAT2, eM11)); /* FIXED */
-    ok(FIELD_OFFSET(MAT2, eM12) == 4,
-       "FIELD_OFFSET(MAT2, eM12) == %ld (expected 4)",
-       FIELD_OFFSET(MAT2, eM12)); /* FIXED */
-    ok(FIELD_OFFSET(MAT2, eM21) == 8,
-       "FIELD_OFFSET(MAT2, eM21) == %ld (expected 8)",
-       FIELD_OFFSET(MAT2, eM21)); /* FIXED */
-    ok(FIELD_OFFSET(MAT2, eM22) == 12,
-       "FIELD_OFFSET(MAT2, eM22) == %ld (expected 12)",
-       FIELD_OFFSET(MAT2, eM22)); /* FIXED */
-    ok(sizeof(MAT2) == 16, "sizeof(MAT2) == %d (expected 16)", sizeof(MAT2));
-
-    /* METAFILEPICT */
-    ok(FIELD_OFFSET(METAFILEPICT, mm) == 0,
-       "FIELD_OFFSET(METAFILEPICT, mm) == %ld (expected 0)",
-       FIELD_OFFSET(METAFILEPICT, mm)); /* LONG */
-    ok(FIELD_OFFSET(METAFILEPICT, xExt) == 4,
-       "FIELD_OFFSET(METAFILEPICT, xExt) == %ld (expected 4)",
-       FIELD_OFFSET(METAFILEPICT, xExt)); /* LONG */
-    ok(FIELD_OFFSET(METAFILEPICT, yExt) == 8,
-       "FIELD_OFFSET(METAFILEPICT, yExt) == %ld (expected 8)",
-       FIELD_OFFSET(METAFILEPICT, yExt)); /* LONG */
-    ok(FIELD_OFFSET(METAFILEPICT, hMF) == 12,
-       "FIELD_OFFSET(METAFILEPICT, hMF) == %ld (expected 12)",
-       FIELD_OFFSET(METAFILEPICT, hMF)); /* HMETAFILE */
-    ok(sizeof(METAFILEPICT) == 16, "sizeof(METAFILEPICT) == %d (expected 16)", sizeof(METAFILEPICT));
-
-    /* METAHEADER */
-    ok(FIELD_OFFSET(METAHEADER, mtType) == 0,
-       "FIELD_OFFSET(METAHEADER, mtType) == %ld (expected 0)",
-       FIELD_OFFSET(METAHEADER, mtType)); /* WORD */
-    ok(FIELD_OFFSET(METAHEADER, mtHeaderSize) == 2,
-       "FIELD_OFFSET(METAHEADER, mtHeaderSize) == %ld (expected 2)",
-       FIELD_OFFSET(METAHEADER, mtHeaderSize)); /* WORD */
-    ok(FIELD_OFFSET(METAHEADER, mtVersion) == 4,
-       "FIELD_OFFSET(METAHEADER, mtVersion) == %ld (expected 4)",
-       FIELD_OFFSET(METAHEADER, mtVersion)); /* WORD */
-    ok(FIELD_OFFSET(METAHEADER, mtSize) == 6,
-       "FIELD_OFFSET(METAHEADER, mtSize) == %ld (expected 6)",
-       FIELD_OFFSET(METAHEADER, mtSize)); /* DWORD */
-    ok(FIELD_OFFSET(METAHEADER, mtNoObjects) == 10,
-       "FIELD_OFFSET(METAHEADER, mtNoObjects) == %ld (expected 10)",
-       FIELD_OFFSET(METAHEADER, mtNoObjects)); /* WORD */
-    ok(FIELD_OFFSET(METAHEADER, mtMaxRecord) == 12,
-       "FIELD_OFFSET(METAHEADER, mtMaxRecord) == %ld (expected 12)",
-       FIELD_OFFSET(METAHEADER, mtMaxRecord)); /* DWORD */
-    ok(FIELD_OFFSET(METAHEADER, mtNoParameters) == 16,
-       "FIELD_OFFSET(METAHEADER, mtNoParameters) == %ld (expected 16)",
-       FIELD_OFFSET(METAHEADER, mtNoParameters)); /* WORD */
-    ok(sizeof(METAHEADER) == 18, "sizeof(METAHEADER) == %d (expected 18)", sizeof(METAHEADER));
-
-    /* METARECORD */
-    ok(FIELD_OFFSET(METARECORD, rdSize) == 0,
-       "FIELD_OFFSET(METARECORD, rdSize) == %ld (expected 0)",
-       FIELD_OFFSET(METARECORD, rdSize)); /* DWORD */
-    ok(FIELD_OFFSET(METARECORD, rdFunction) == 4,
-       "FIELD_OFFSET(METARECORD, rdFunction) == %ld (expected 4)",
-       FIELD_OFFSET(METARECORD, rdFunction)); /* WORD */
-    ok(FIELD_OFFSET(METARECORD, rdParm) == 6,
-       "FIELD_OFFSET(METARECORD, rdParm) == %ld (expected 6)",
-       FIELD_OFFSET(METARECORD, rdParm)); /* WORD[1] */
-    ok(sizeof(METARECORD) == 8, "sizeof(METARECORD) == %d (expected 8)", sizeof(METARECORD));
-
-    /* PALETTEENTRY */
-    ok(FIELD_OFFSET(PALETTEENTRY, peRed) == 0,
-       "FIELD_OFFSET(PALETTEENTRY, peRed) == %ld (expected 0)",
-       FIELD_OFFSET(PALETTEENTRY, peRed)); /* BYTE */
-    ok(sizeof(PALETTEENTRY) == 4, "sizeof(PALETTEENTRY) == %d (expected 4)", sizeof(PALETTEENTRY));
-
-    /* PELARRAY */
-    ok(FIELD_OFFSET(PELARRAY, paXCount) == 0,
-       "FIELD_OFFSET(PELARRAY, paXCount) == %ld (expected 0)",
-       FIELD_OFFSET(PELARRAY, paXCount)); /* LONG */
-    ok(FIELD_OFFSET(PELARRAY, paYCount) == 4,
-       "FIELD_OFFSET(PELARRAY, paYCount) == %ld (expected 4)",
-       FIELD_OFFSET(PELARRAY, paYCount)); /* LONG */
-    ok(FIELD_OFFSET(PELARRAY, paXExt) == 8,
-       "FIELD_OFFSET(PELARRAY, paXExt) == %ld (expected 8)",
-       FIELD_OFFSET(PELARRAY, paXExt)); /* LONG */
-    ok(FIELD_OFFSET(PELARRAY, paYExt) == 12,
-       "FIELD_OFFSET(PELARRAY, paYExt) == %ld (expected 12)",
-       FIELD_OFFSET(PELARRAY, paYExt)); /* LONG */
-    ok(FIELD_OFFSET(PELARRAY, paRGBs) == 16,
-       "FIELD_OFFSET(PELARRAY, paRGBs) == %ld (expected 16)",
-       FIELD_OFFSET(PELARRAY, paRGBs)); /* BYTE */
-    ok(sizeof(PELARRAY) == 20, "sizeof(PELARRAY) == %d (expected 20)", sizeof(PELARRAY));
-
-    /* PIXELFORMATDESCRIPTOR */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, nSize) == 0,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, nSize) == %ld (expected 0)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, nSize)); /* WORD */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, nVersion) == 2,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, nVersion) == %ld (expected 2)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, nVersion)); /* WORD */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwFlags) == 4,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, iPixelType) == 8,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, iPixelType) == %ld (expected 8)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, iPixelType)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cColorBits) == 9,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cColorBits) == %ld (expected 9)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cColorBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cRedBits) == 10,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cRedBits) == %ld (expected 10)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cRedBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cRedShift) == 11,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cRedShift) == %ld (expected 11)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cRedShift)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cGreenBits) == 12,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cGreenBits) == %ld (expected 12)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cGreenBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cGreenShift) == 13,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cGreenShift) == %ld (expected 13)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cGreenShift)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cBlueBits) == 14,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cBlueBits) == %ld (expected 14)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cBlueBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cBlueShift) == 15,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cBlueShift) == %ld (expected 15)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cBlueShift)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAlphaBits) == 16,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAlphaBits) == %ld (expected 16)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAlphaBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAlphaShift) == 17,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAlphaShift) == %ld (expected 17)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAlphaShift)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumBits) == 18,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumBits) == %ld (expected 18)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumRedBits) == 19,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumRedBits) == %ld (expected 19)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumRedBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumGreenBits) == 20,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumGreenBits) == %ld (expected 20)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumGreenBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumBlueBits) == 21,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumBlueBits) == %ld (expected 21)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumBlueBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumAlphaBits) == 22,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumAlphaBits) == %ld (expected 22)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAccumAlphaBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cDepthBits) == 23,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cDepthBits) == %ld (expected 23)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cDepthBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cStencilBits) == 24,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cStencilBits) == %ld (expected 24)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cStencilBits)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAuxBuffers) == 25,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAuxBuffers) == %ld (expected 25)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, cAuxBuffers)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, iLayerType) == 26,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, iLayerType) == %ld (expected 26)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, iLayerType)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, bReserved) == 27,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, bReserved) == %ld (expected 27)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, bReserved)); /* BYTE */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwLayerMask) == 28,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwLayerMask) == %ld (expected 28)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwLayerMask)); /* DWORD */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwVisibleMask) == 32,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwVisibleMask) == %ld (expected 32)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwVisibleMask)); /* DWORD */
-    ok(FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwDamageMask) == 36,
-       "FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwDamageMask) == %ld (expected 36)",
-       FIELD_OFFSET(PIXELFORMATDESCRIPTOR, dwDamageMask)); /* DWORD */
-    ok(sizeof(PIXELFORMATDESCRIPTOR) == 40, "sizeof(PIXELFORMATDESCRIPTOR) == %d (expected 40)", sizeof(PIXELFORMATDESCRIPTOR));
-
-    /* POINTFX */
-    ok(FIELD_OFFSET(POINTFX, x) == 0,
-       "FIELD_OFFSET(POINTFX, x) == %ld (expected 0)",
-       FIELD_OFFSET(POINTFX, x)); /* FIXED */
-    ok(FIELD_OFFSET(POINTFX, y) == 4,
-       "FIELD_OFFSET(POINTFX, y) == %ld (expected 4)",
-       FIELD_OFFSET(POINTFX, y)); /* FIXED */
-    ok(sizeof(POINTFX) == 8, "sizeof(POINTFX) == %d (expected 8)", sizeof(POINTFX));
-
-    /* RGBQUAD */
-    ok(FIELD_OFFSET(RGBQUAD, rgbBlue) == 0,
-       "FIELD_OFFSET(RGBQUAD, rgbBlue) == %ld (expected 0)",
-       FIELD_OFFSET(RGBQUAD, rgbBlue)); /* BYTE */
-    ok(FIELD_OFFSET(RGBQUAD, rgbGreen) == 1,
-       "FIELD_OFFSET(RGBQUAD, rgbGreen) == %ld (expected 1)",
-       FIELD_OFFSET(RGBQUAD, rgbGreen)); /* BYTE */
-    ok(FIELD_OFFSET(RGBQUAD, rgbRed) == 2,
-       "FIELD_OFFSET(RGBQUAD, rgbRed) == %ld (expected 2)",
-       FIELD_OFFSET(RGBQUAD, rgbRed)); /* BYTE */
-    ok(FIELD_OFFSET(RGBQUAD, rgbReserved) == 3,
-       "FIELD_OFFSET(RGBQUAD, rgbReserved) == %ld (expected 3)",
-       FIELD_OFFSET(RGBQUAD, rgbReserved)); /* BYTE */
-    ok(sizeof(RGBQUAD) == 4, "sizeof(RGBQUAD) == %d (expected 4)", sizeof(RGBQUAD));
-
-    /* TEXTMETRICA */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmHeight) == 0,
-       "FIELD_OFFSET(TEXTMETRICA, tmHeight) == %ld (expected 0)",
-       FIELD_OFFSET(TEXTMETRICA, tmHeight)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmAscent) == 4,
-       "FIELD_OFFSET(TEXTMETRICA, tmAscent) == %ld (expected 4)",
-       FIELD_OFFSET(TEXTMETRICA, tmAscent)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmDescent) == 8,
-       "FIELD_OFFSET(TEXTMETRICA, tmDescent) == %ld (expected 8)",
-       FIELD_OFFSET(TEXTMETRICA, tmDescent)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmInternalLeading) == 12,
-       "FIELD_OFFSET(TEXTMETRICA, tmInternalLeading) == %ld (expected 12)",
-       FIELD_OFFSET(TEXTMETRICA, tmInternalLeading)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmExternalLeading) == 16,
-       "FIELD_OFFSET(TEXTMETRICA, tmExternalLeading) == %ld (expected 16)",
-       FIELD_OFFSET(TEXTMETRICA, tmExternalLeading)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmAveCharWidth) == 20,
-       "FIELD_OFFSET(TEXTMETRICA, tmAveCharWidth) == %ld (expected 20)",
-       FIELD_OFFSET(TEXTMETRICA, tmAveCharWidth)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmMaxCharWidth) == 24,
-       "FIELD_OFFSET(TEXTMETRICA, tmMaxCharWidth) == %ld (expected 24)",
-       FIELD_OFFSET(TEXTMETRICA, tmMaxCharWidth)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmWeight) == 28,
-       "FIELD_OFFSET(TEXTMETRICA, tmWeight) == %ld (expected 28)",
-       FIELD_OFFSET(TEXTMETRICA, tmWeight)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmOverhang) == 32,
-       "FIELD_OFFSET(TEXTMETRICA, tmOverhang) == %ld (expected 32)",
-       FIELD_OFFSET(TEXTMETRICA, tmOverhang)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmDigitizedAspectX) == 36,
-       "FIELD_OFFSET(TEXTMETRICA, tmDigitizedAspectX) == %ld (expected 36)",
-       FIELD_OFFSET(TEXTMETRICA, tmDigitizedAspectX)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmDigitizedAspectY) == 40,
-       "FIELD_OFFSET(TEXTMETRICA, tmDigitizedAspectY) == %ld (expected 40)",
-       FIELD_OFFSET(TEXTMETRICA, tmDigitizedAspectY)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmFirstChar) == 44,
-       "FIELD_OFFSET(TEXTMETRICA, tmFirstChar) == %ld (expected 44)",
-       FIELD_OFFSET(TEXTMETRICA, tmFirstChar)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmLastChar) == 45,
-       "FIELD_OFFSET(TEXTMETRICA, tmLastChar) == %ld (expected 45)",
-       FIELD_OFFSET(TEXTMETRICA, tmLastChar)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmDefaultChar) == 46,
-       "FIELD_OFFSET(TEXTMETRICA, tmDefaultChar) == %ld (expected 46)",
-       FIELD_OFFSET(TEXTMETRICA, tmDefaultChar)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmBreakChar) == 47,
-       "FIELD_OFFSET(TEXTMETRICA, tmBreakChar) == %ld (expected 47)",
-       FIELD_OFFSET(TEXTMETRICA, tmBreakChar)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmItalic) == 48,
-       "FIELD_OFFSET(TEXTMETRICA, tmItalic) == %ld (expected 48)",
-       FIELD_OFFSET(TEXTMETRICA, tmItalic)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmUnderlined) == 49,
-       "FIELD_OFFSET(TEXTMETRICA, tmUnderlined) == %ld (expected 49)",
-       FIELD_OFFSET(TEXTMETRICA, tmUnderlined)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmStruckOut) == 50,
-       "FIELD_OFFSET(TEXTMETRICA, tmStruckOut) == %ld (expected 50)",
-       FIELD_OFFSET(TEXTMETRICA, tmStruckOut)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmPitchAndFamily) == 51,
-       "FIELD_OFFSET(TEXTMETRICA, tmPitchAndFamily) == %ld (expected 51)",
-       FIELD_OFFSET(TEXTMETRICA, tmPitchAndFamily)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICA, tmCharSet) == 52,
-       "FIELD_OFFSET(TEXTMETRICA, tmCharSet) == %ld (expected 52)",
-       FIELD_OFFSET(TEXTMETRICA, tmCharSet)); /* BYTE */
-    ok(sizeof(TEXTMETRICA) == 56, "sizeof(TEXTMETRICA) == %d (expected 56)", sizeof(TEXTMETRICA));
-
-    /* TEXTMETRICW */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmHeight) == 0,
-       "FIELD_OFFSET(TEXTMETRICW, tmHeight) == %ld (expected 0)",
-       FIELD_OFFSET(TEXTMETRICW, tmHeight)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmAscent) == 4,
-       "FIELD_OFFSET(TEXTMETRICW, tmAscent) == %ld (expected 4)",
-       FIELD_OFFSET(TEXTMETRICW, tmAscent)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmDescent) == 8,
-       "FIELD_OFFSET(TEXTMETRICW, tmDescent) == %ld (expected 8)",
-       FIELD_OFFSET(TEXTMETRICW, tmDescent)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmInternalLeading) == 12,
-       "FIELD_OFFSET(TEXTMETRICW, tmInternalLeading) == %ld (expected 12)",
-       FIELD_OFFSET(TEXTMETRICW, tmInternalLeading)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmExternalLeading) == 16,
-       "FIELD_OFFSET(TEXTMETRICW, tmExternalLeading) == %ld (expected 16)",
-       FIELD_OFFSET(TEXTMETRICW, tmExternalLeading)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmAveCharWidth) == 20,
-       "FIELD_OFFSET(TEXTMETRICW, tmAveCharWidth) == %ld (expected 20)",
-       FIELD_OFFSET(TEXTMETRICW, tmAveCharWidth)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmMaxCharWidth) == 24,
-       "FIELD_OFFSET(TEXTMETRICW, tmMaxCharWidth) == %ld (expected 24)",
-       FIELD_OFFSET(TEXTMETRICW, tmMaxCharWidth)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmWeight) == 28,
-       "FIELD_OFFSET(TEXTMETRICW, tmWeight) == %ld (expected 28)",
-       FIELD_OFFSET(TEXTMETRICW, tmWeight)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmOverhang) == 32,
-       "FIELD_OFFSET(TEXTMETRICW, tmOverhang) == %ld (expected 32)",
-       FIELD_OFFSET(TEXTMETRICW, tmOverhang)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmDigitizedAspectX) == 36,
-       "FIELD_OFFSET(TEXTMETRICW, tmDigitizedAspectX) == %ld (expected 36)",
-       FIELD_OFFSET(TEXTMETRICW, tmDigitizedAspectX)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmDigitizedAspectY) == 40,
-       "FIELD_OFFSET(TEXTMETRICW, tmDigitizedAspectY) == %ld (expected 40)",
-       FIELD_OFFSET(TEXTMETRICW, tmDigitizedAspectY)); /* LONG */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmFirstChar) == 44,
-       "FIELD_OFFSET(TEXTMETRICW, tmFirstChar) == %ld (expected 44)",
-       FIELD_OFFSET(TEXTMETRICW, tmFirstChar)); /* WCHAR */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmLastChar) == 46,
-       "FIELD_OFFSET(TEXTMETRICW, tmLastChar) == %ld (expected 46)",
-       FIELD_OFFSET(TEXTMETRICW, tmLastChar)); /* WCHAR */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmDefaultChar) == 48,
-       "FIELD_OFFSET(TEXTMETRICW, tmDefaultChar) == %ld (expected 48)",
-       FIELD_OFFSET(TEXTMETRICW, tmDefaultChar)); /* WCHAR */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmBreakChar) == 50,
-       "FIELD_OFFSET(TEXTMETRICW, tmBreakChar) == %ld (expected 50)",
-       FIELD_OFFSET(TEXTMETRICW, tmBreakChar)); /* WCHAR */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmItalic) == 52,
-       "FIELD_OFFSET(TEXTMETRICW, tmItalic) == %ld (expected 52)",
-       FIELD_OFFSET(TEXTMETRICW, tmItalic)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmUnderlined) == 53,
-       "FIELD_OFFSET(TEXTMETRICW, tmUnderlined) == %ld (expected 53)",
-       FIELD_OFFSET(TEXTMETRICW, tmUnderlined)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmStruckOut) == 54,
-       "FIELD_OFFSET(TEXTMETRICW, tmStruckOut) == %ld (expected 54)",
-       FIELD_OFFSET(TEXTMETRICW, tmStruckOut)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmPitchAndFamily) == 55,
-       "FIELD_OFFSET(TEXTMETRICW, tmPitchAndFamily) == %ld (expected 55)",
-       FIELD_OFFSET(TEXTMETRICW, tmPitchAndFamily)); /* BYTE */
-    ok(FIELD_OFFSET(TEXTMETRICW, tmCharSet) == 56,
-       "FIELD_OFFSET(TEXTMETRICW, tmCharSet) == %ld (expected 56)",
-       FIELD_OFFSET(TEXTMETRICW, tmCharSet)); /* BYTE */
-    ok(sizeof(TEXTMETRICW) == 60, "sizeof(TEXTMETRICW) == %d (expected 60)", sizeof(TEXTMETRICW));
-
-    /* XFORM */
-    ok(FIELD_OFFSET(XFORM, eM11) == 0,
-       "FIELD_OFFSET(XFORM, eM11) == %ld (expected 0)",
-       FIELD_OFFSET(XFORM, eM11)); /* FLOAT */
-    ok(FIELD_OFFSET(XFORM, eM12) == 4,
-       "FIELD_OFFSET(XFORM, eM12) == %ld (expected 4)",
-       FIELD_OFFSET(XFORM, eM12)); /* FLOAT */
-    ok(FIELD_OFFSET(XFORM, eM21) == 8,
-       "FIELD_OFFSET(XFORM, eM21) == %ld (expected 8)",
-       FIELD_OFFSET(XFORM, eM21)); /* FLOAT */
-    ok(FIELD_OFFSET(XFORM, eM22) == 12,
-       "FIELD_OFFSET(XFORM, eM22) == %ld (expected 12)",
-       FIELD_OFFSET(XFORM, eM22)); /* FLOAT */
-    ok(FIELD_OFFSET(XFORM, eDx) == 16,
-       "FIELD_OFFSET(XFORM, eDx) == %ld (expected 16)",
-       FIELD_OFFSET(XFORM, eDx)); /* FLOAT */
-    ok(FIELD_OFFSET(XFORM, eDy) == 20,
-       "FIELD_OFFSET(XFORM, eDy) == %ld (expected 20)",
-       FIELD_OFFSET(XFORM, eDy)); /* FLOAT */
-    ok(sizeof(XFORM) == 24, "sizeof(XFORM) == %d (expected 24)", sizeof(XFORM));
+    /* ABC (pack 4) */
+    TEST_TYPE(ABC, 12, 4);
+    TEST_FIELD(ABC, INT, abcA, 0, 4, 4);
+    TEST_FIELD(ABC, UINT, abcB, 4, 4, 4);
+    TEST_FIELD(ABC, INT, abcC, 8, 4, 4);
+
+    /* ABCFLOAT (pack 4) */
+    TEST_TYPE(ABCFLOAT, 12, 4);
+    TEST_FIELD(ABCFLOAT, FLOAT, abcfA, 0, 4, 4);
+    TEST_FIELD(ABCFLOAT, FLOAT, abcfB, 4, 4, 4);
+    TEST_FIELD(ABCFLOAT, FLOAT, abcfC, 8, 4, 4);
+
+    /* BITMAP (pack 4) */
+    TEST_TYPE(BITMAP, 24, 4);
+    TEST_FIELD(BITMAP, INT, bmType, 0, 4, 4);
+    TEST_FIELD(BITMAP, INT, bmWidth, 4, 4, 4);
+    TEST_FIELD(BITMAP, INT, bmHeight, 8, 4, 4);
+    TEST_FIELD(BITMAP, INT, bmWidthBytes, 12, 4, 4);
+    TEST_FIELD(BITMAP, WORD, bmPlanes, 16, 2, 2);
+    TEST_FIELD(BITMAP, WORD, bmBitsPixel, 18, 2, 2);
+    TEST_FIELD(BITMAP, LPVOID, bmBits, 20, 4, 4);
+
+    /* BITMAPCOREHEADER (pack 4) */
+    TEST_TYPE(BITMAPCOREHEADER, 12, 4);
+    TEST_FIELD(BITMAPCOREHEADER, DWORD, bcSize, 0, 4, 4);
+    TEST_FIELD(BITMAPCOREHEADER, WORD, bcWidth, 4, 2, 2);
+    TEST_FIELD(BITMAPCOREHEADER, WORD, bcHeight, 6, 2, 2);
+    TEST_FIELD(BITMAPCOREHEADER, WORD, bcPlanes, 8, 2, 2);
+    TEST_FIELD(BITMAPCOREHEADER, WORD, bcBitCount, 10, 2, 2);
+
+    /* BITMAPCOREINFO (pack 4) */
+    TEST_TYPE(BITMAPCOREINFO, 16, 4);
+    TEST_FIELD(BITMAPCOREINFO, BITMAPCOREHEADER, bmciHeader, 0, 12, 4);
+    TEST_FIELD(BITMAPCOREINFO, RGBTRIPLE[1], bmciColors, 12, 3, 1);
+
+    /* BITMAPFILEHEADER (pack 2) */
+    TEST_TYPE(BITMAPFILEHEADER, 14, 2);
+    TEST_FIELD(BITMAPFILEHEADER, WORD, bfType, 0, 2, 2);
+    TEST_FIELD(BITMAPFILEHEADER, DWORD, bfSize, 2, 4, 2);
+    TEST_FIELD(BITMAPFILEHEADER, WORD, bfReserved1, 6, 2, 2);
+    TEST_FIELD(BITMAPFILEHEADER, WORD, bfReserved2, 8, 2, 2);
+    TEST_FIELD(BITMAPFILEHEADER, DWORD, bfOffBits, 10, 4, 2);
+
+    /* BITMAPINFO (pack 4) */
+    TEST_TYPE(BITMAPINFO, 44, 4);
+    TEST_FIELD(BITMAPINFO, BITMAPINFOHEADER, bmiHeader, 0, 40, 4);
+    TEST_FIELD(BITMAPINFO, RGBQUAD[1], bmiColors, 40, 4, 1);
+
+    /* BITMAPINFOHEADER (pack 4) */
+    TEST_TYPE(BITMAPINFOHEADER, 40, 4);
+    TEST_FIELD(BITMAPINFOHEADER, DWORD, biSize, 0, 4, 4);
+    TEST_FIELD(BITMAPINFOHEADER, LONG, biWidth, 4, 4, 4);
+    TEST_FIELD(BITMAPINFOHEADER, LONG, biHeight, 8, 4, 4);
+    TEST_FIELD(BITMAPINFOHEADER, WORD, biPlanes, 12, 2, 2);
+    TEST_FIELD(BITMAPINFOHEADER, WORD, biBitCount, 14, 2, 2);
+    TEST_FIELD(BITMAPINFOHEADER, DWORD, biCompression, 16, 4, 4);
+    TEST_FIELD(BITMAPINFOHEADER, DWORD, biSizeImage, 20, 4, 4);
+    TEST_FIELD(BITMAPINFOHEADER, LONG, biXPelsPerMeter, 24, 4, 4);
+    TEST_FIELD(BITMAPINFOHEADER, LONG, biYPelsPerMeter, 28, 4, 4);
+    TEST_FIELD(BITMAPINFOHEADER, DWORD, biClrUsed, 32, 4, 4);
+    TEST_FIELD(BITMAPINFOHEADER, DWORD, biClrImportant, 36, 4, 4);
+
+    /* BITMAPV4HEADER (pack 4) */
+    TEST_TYPE(BITMAPV4HEADER, 108, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4Size, 0, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, LONG, bV4Width, 4, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, LONG, bV4Height, 8, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, WORD, bV4Planes, 12, 2, 2);
+    TEST_FIELD(BITMAPV4HEADER, WORD, bV4BitCount, 14, 2, 2);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4Compression, 16, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4SizeImage, 20, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, LONG, bV4XPelsPerMeter, 24, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, LONG, bV4YPelsPerMeter, 28, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4ClrUsed, 32, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4ClrImportant, 36, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4RedMask, 40, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4GreenMask, 44, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4BlueMask, 48, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4AlphaMask, 52, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4CSType, 56, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, CIEXYZTRIPLE, bV4Endpoints, 60, 36, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4GammaRed, 96, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4GammaGreen, 100, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4GammaBlue, 104, 4, 4);
+
+    /* BITMAPV5HEADER (pack 4) */
+    TEST_TYPE(BITMAPV5HEADER, 124, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5Size, 0, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, LONG, bV5Width, 4, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, LONG, bV5Height, 8, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, WORD, bV5Planes, 12, 2, 2);
+    TEST_FIELD(BITMAPV5HEADER, WORD, bV5BitCount, 14, 2, 2);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5Compression, 16, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5SizeImage, 20, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, LONG, bV5XPelsPerMeter, 24, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, LONG, bV5YPelsPerMeter, 28, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5ClrUsed, 32, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5ClrImportant, 36, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5RedMask, 40, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5GreenMask, 44, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5BlueMask, 48, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5AlphaMask, 52, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5CSType, 56, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, CIEXYZTRIPLE, bV5Endpoints, 60, 36, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5GammaRed, 96, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5GammaGreen, 100, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5GammaBlue, 104, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5Intent, 108, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5ProfileData, 112, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5ProfileSize, 116, 4, 4);
+    TEST_FIELD(BITMAPV5HEADER, DWORD, bV5Reserved, 120, 4, 4);
+
+    /* BLENDFUNCTION (pack 4) */
+    TEST_TYPE(BLENDFUNCTION, 4, 1);
+    TEST_FIELD(BLENDFUNCTION, BYTE, BlendOp, 0, 1, 1);
+    TEST_FIELD(BLENDFUNCTION, BYTE, BlendFlags, 1, 1, 1);
+    TEST_FIELD(BLENDFUNCTION, BYTE, SourceConstantAlpha, 2, 1, 1);
+    TEST_FIELD(BLENDFUNCTION, BYTE, AlphaFormat, 3, 1, 1);
+
+    /* CHARSETINFO (pack 4) */
+    TEST_TYPE(CHARSETINFO, 32, 4);
+    TEST_FIELD(CHARSETINFO, UINT, ciCharset, 0, 4, 4);
+    TEST_FIELD(CHARSETINFO, UINT, ciACP, 4, 4, 4);
+    TEST_FIELD(CHARSETINFO, FONTSIGNATURE, fs, 8, 24, 4);
+
+    /* CIEXYZ (pack 4) */
+    TEST_TYPE(CIEXYZ, 12, 4);
+    TEST_FIELD(CIEXYZ, FXPT2DOT30, ciexyzX, 0, 4, 4);
+    TEST_FIELD(CIEXYZ, FXPT2DOT30, ciexyzY, 4, 4, 4);
+    TEST_FIELD(CIEXYZ, FXPT2DOT30, ciexyzZ, 8, 4, 4);
+
+    /* CIEXYZTRIPLE (pack 4) */
+    TEST_TYPE(CIEXYZTRIPLE, 36, 4);
+    TEST_FIELD(CIEXYZTRIPLE, CIEXYZ, ciexyzRed, 0, 12, 4);
+    TEST_FIELD(CIEXYZTRIPLE, CIEXYZ, ciexyzGreen, 12, 12, 4);
+    TEST_FIELD(CIEXYZTRIPLE, CIEXYZ, ciexyzBlue, 24, 12, 4);
+
+    /* COLORADJUSTMENT (pack 4) */
+    TEST_TYPE(COLORADJUSTMENT, 24, 2);
+    TEST_FIELD(COLORADJUSTMENT, WORD, caSize, 0, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, WORD, caFlags, 2, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, WORD, caIlluminantIndex, 4, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, WORD, caRedGamma, 6, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, WORD, caGreenGamma, 8, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, WORD, caBlueGamma, 10, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, WORD, caReferenceBlack, 12, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, WORD, caReferenceWhite, 14, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, SHORT, caContrast, 16, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, SHORT, caBrightness, 18, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, SHORT, caColorfulness, 20, 2, 2);
+    TEST_FIELD(COLORADJUSTMENT, SHORT, caRedGreenTint, 22, 2, 2);
+
+    /* DIBSECTION (pack 4) */
+    TEST_TYPE(DIBSECTION, 84, 4);
+    TEST_FIELD(DIBSECTION, BITMAP, dsBm, 0, 24, 4);
+    TEST_FIELD(DIBSECTION, BITMAPINFOHEADER, dsBmih, 24, 40, 4);
+    TEST_FIELD(DIBSECTION, DWORD[3], dsBitfields, 64, 12, 4);
+    TEST_FIELD(DIBSECTION, HANDLE, dshSection, 76, 4, 4);
+    TEST_FIELD(DIBSECTION, DWORD, dsOffset, 80, 4, 4);
+
+    /* DISPLAY_DEVICEA (pack 4) */
+    TEST_TYPE(DISPLAY_DEVICEA, 424, 4);
+    TEST_FIELD(DISPLAY_DEVICEA, DWORD, cb, 0, 4, 4);
+    TEST_FIELD(DISPLAY_DEVICEA, CHAR[32], DeviceName, 4, 32, 1);
+    TEST_FIELD(DISPLAY_DEVICEA, CHAR[128], DeviceString, 36, 128, 1);
+    TEST_FIELD(DISPLAY_DEVICEA, DWORD, StateFlags, 164, 4, 4);
+    TEST_FIELD(DISPLAY_DEVICEA, CHAR[128], DeviceID, 168, 128, 1);
+    TEST_FIELD(DISPLAY_DEVICEA, CHAR[128], DeviceKey, 296, 128, 1);
+
+    /* DISPLAY_DEVICEW (pack 4) */
+    TEST_TYPE(DISPLAY_DEVICEW, 840, 4);
+    TEST_FIELD(DISPLAY_DEVICEW, DWORD, cb, 0, 4, 4);
+    TEST_FIELD(DISPLAY_DEVICEW, WCHAR[32], DeviceName, 4, 64, 2);
+    TEST_FIELD(DISPLAY_DEVICEW, WCHAR[128], DeviceString, 68, 256, 2);
+    TEST_FIELD(DISPLAY_DEVICEW, DWORD, StateFlags, 324, 4, 4);
+    TEST_FIELD(DISPLAY_DEVICEW, WCHAR[128], DeviceID, 328, 256, 2);
+    TEST_FIELD(DISPLAY_DEVICEW, WCHAR[128], DeviceKey, 584, 256, 2);
+
+    /* DOCINFOA (pack 4) */
+    TEST_TYPE(DOCINFOA, 20, 4);
+    TEST_FIELD(DOCINFOA, INT, cbSize, 0, 4, 4);
+    TEST_FIELD(DOCINFOA, LPCSTR, lpszDocName, 4, 4, 4);
+    TEST_FIELD(DOCINFOA, LPCSTR, lpszOutput, 8, 4, 4);
+    TEST_FIELD(DOCINFOA, LPCSTR, lpszDatatype, 12, 4, 4);
+    TEST_FIELD(DOCINFOA, DWORD, fwType, 16, 4, 4);
+
+    /* DOCINFOW (pack 4) */
+    TEST_TYPE(DOCINFOW, 20, 4);
+    TEST_FIELD(DOCINFOW, INT, cbSize, 0, 4, 4);
+    TEST_FIELD(DOCINFOW, LPCWSTR, lpszDocName, 4, 4, 4);
+    TEST_FIELD(DOCINFOW, LPCWSTR, lpszOutput, 8, 4, 4);
+    TEST_FIELD(DOCINFOW, LPCWSTR, lpszDatatype, 12, 4, 4);
+    TEST_FIELD(DOCINFOW, DWORD, fwType, 16, 4, 4);
+
+    /* EMR (pack 4) */
+    TEST_TYPE(EMR, 8, 4);
+    TEST_FIELD(EMR, DWORD, iType, 0, 4, 4);
+    TEST_FIELD(EMR, DWORD, nSize, 4, 4, 4);
+
+    /* EMRABORTPATH (pack 4) */
+    TEST_TYPE(EMRABORTPATH, 8, 4);
+    TEST_FIELD(EMRABORTPATH, EMR, emr, 0, 8, 4);
+
+    /* EMRANGLEARC (pack 4) */
+    TEST_TYPE(EMRANGLEARC, 28, 4);
+    TEST_FIELD(EMRANGLEARC, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRANGLEARC, POINTL, ptlCenter, 8, 8, 4);
+    TEST_FIELD(EMRANGLEARC, DWORD, nRadius, 16, 4, 4);
+    TEST_FIELD(EMRANGLEARC, FLOAT, eStartAngle, 20, 4, 4);
+    TEST_FIELD(EMRANGLEARC, FLOAT, eSweepAngle, 24, 4, 4);
+
+    /* EMRARC (pack 4) */
+    TEST_TYPE(EMRARC, 40, 4);
+    TEST_FIELD(EMRARC, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRARC, RECTL, rclBox, 8, 16, 4);
+    TEST_FIELD(EMRARC, POINTL, ptlStart, 24, 8, 4);
+    TEST_FIELD(EMRARC, POINTL, ptlEnd, 32, 8, 4);
+
+    /* EMRBITBLT (pack 4) */
+    TEST_TYPE(EMRBITBLT, 100, 4);
+    TEST_FIELD(EMRBITBLT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRBITBLT, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRBITBLT, LONG, xDest, 24, 4, 4);
+    TEST_FIELD(EMRBITBLT, LONG, yDest, 28, 4, 4);
+    TEST_FIELD(EMRBITBLT, LONG, cxDest, 32, 4, 4);
+    TEST_FIELD(EMRBITBLT, LONG, cyDest, 36, 4, 4);
+    TEST_FIELD(EMRBITBLT, DWORD, dwRop, 40, 4, 4);
+    TEST_FIELD(EMRBITBLT, LONG, xSrc, 44, 4, 4);
+    TEST_FIELD(EMRBITBLT, LONG, ySrc, 48, 4, 4);
+    TEST_FIELD(EMRBITBLT, XFORM, xformSrc, 52, 24, 4);
+    TEST_FIELD(EMRBITBLT, COLORREF, crBkColorSrc, 76, 4, 4);
+    TEST_FIELD(EMRBITBLT, DWORD, iUsageSrc, 80, 4, 4);
+    TEST_FIELD(EMRBITBLT, DWORD, offBmiSrc, 84, 4, 4);
+    TEST_FIELD(EMRBITBLT, DWORD, cbBmiSrc, 88, 4, 4);
+    TEST_FIELD(EMRBITBLT, DWORD, offBitsSrc, 92, 4, 4);
+    TEST_FIELD(EMRBITBLT, DWORD, cbBitsSrc, 96, 4, 4);
+
+    /* EMRCREATEBRUSHINDIRECT (pack 4) */
+    TEST_TYPE(EMRCREATEBRUSHINDIRECT, 24, 4);
+    TEST_FIELD(EMRCREATEBRUSHINDIRECT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRCREATEBRUSHINDIRECT, DWORD, ihBrush, 8, 4, 4);
+    TEST_FIELD(EMRCREATEBRUSHINDIRECT, LOGBRUSH, lb, 12, 12, 4);
+
+    /* EMRCREATECOLORSPACE (pack 4) */
+    TEST_TYPE(EMRCREATECOLORSPACE, 340, 4);
+    TEST_FIELD(EMRCREATECOLORSPACE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRCREATECOLORSPACE, DWORD, ihCS, 8, 4, 4);
+    TEST_FIELD(EMRCREATECOLORSPACE, LOGCOLORSPACEA, lcs, 12, 328, 4);
+
+    /* EMRCREATECOLORSPACEW (pack 4) */
+    TEST_TYPE(EMRCREATECOLORSPACEW, 612, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, DWORD, ihCS, 8, 4, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, LOGCOLORSPACEW, lcs, 12, 588, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, DWORD, dwFlags, 600, 4, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, DWORD, cbData, 604, 4, 4);
+    TEST_FIELD(EMRCREATECOLORSPACEW, BYTE[1], Data, 608, 1, 1);
+
+    /* EMRCREATEDIBPATTERNBRUSHPT (pack 4) */
+    TEST_TYPE(EMRCREATEDIBPATTERNBRUSHPT, 32, 4);
+    TEST_FIELD(EMRCREATEDIBPATTERNBRUSHPT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRCREATEDIBPATTERNBRUSHPT, DWORD, ihBrush, 8, 4, 4);
+    TEST_FIELD(EMRCREATEDIBPATTERNBRUSHPT, DWORD, iUsage, 12, 4, 4);
+    TEST_FIELD(EMRCREATEDIBPATTERNBRUSHPT, DWORD, offBmi, 16, 4, 4);
+    TEST_FIELD(EMRCREATEDIBPATTERNBRUSHPT, DWORD, cbBmi, 20, 4, 4);
+    TEST_FIELD(EMRCREATEDIBPATTERNBRUSHPT, DWORD, offBits, 24, 4, 4);
+    TEST_FIELD(EMRCREATEDIBPATTERNBRUSHPT, DWORD, cbBits, 28, 4, 4);
+
+    /* EMRCREATEMONOBRUSH (pack 4) */
+    TEST_TYPE(EMRCREATEMONOBRUSH, 32, 4);
+    TEST_FIELD(EMRCREATEMONOBRUSH, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRCREATEMONOBRUSH, DWORD, ihBrush, 8, 4, 4);
+    TEST_FIELD(EMRCREATEMONOBRUSH, DWORD, iUsage, 12, 4, 4);
+    TEST_FIELD(EMRCREATEMONOBRUSH, DWORD, offBmi, 16, 4, 4);
+    TEST_FIELD(EMRCREATEMONOBRUSH, DWORD, cbBmi, 20, 4, 4);
+    TEST_FIELD(EMRCREATEMONOBRUSH, DWORD, offBits, 24, 4, 4);
+    TEST_FIELD(EMRCREATEMONOBRUSH, DWORD, cbBits, 28, 4, 4);
+
+    /* EMRCREATEPEN (pack 4) */
+    TEST_TYPE(EMRCREATEPEN, 28, 4);
+    TEST_FIELD(EMRCREATEPEN, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRCREATEPEN, DWORD, ihPen, 8, 4, 4);
+    TEST_FIELD(EMRCREATEPEN, LOGPEN, lopn, 12, 16, 4);
+
+    /* EMRDELETECOLORSPACE (pack 4) */
+    TEST_TYPE(EMRDELETECOLORSPACE, 12, 4);
+    TEST_FIELD(EMRDELETECOLORSPACE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRDELETECOLORSPACE, DWORD, ihCS, 8, 4, 4);
+
+    /* EMRDELETEOBJECT (pack 4) */
+    TEST_TYPE(EMRDELETEOBJECT, 12, 4);
+    TEST_FIELD(EMRDELETEOBJECT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRDELETEOBJECT, DWORD, ihObject, 8, 4, 4);
+
+    /* EMRELLIPSE (pack 4) */
+    TEST_TYPE(EMRELLIPSE, 24, 4);
+    TEST_FIELD(EMRELLIPSE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRELLIPSE, RECTL, rclBox, 8, 16, 4);
+
+    /* EMREOF (pack 4) */
+    TEST_TYPE(EMREOF, 20, 4);
+    TEST_FIELD(EMREOF, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMREOF, DWORD, nPalEntries, 8, 4, 4);
+    TEST_FIELD(EMREOF, DWORD, offPalEntries, 12, 4, 4);
+    TEST_FIELD(EMREOF, DWORD, nSizeLast, 16, 4, 4);
+
+    /* EMREXCLUDECLIPRECT (pack 4) */
+    TEST_TYPE(EMREXCLUDECLIPRECT, 24, 4);
+    TEST_FIELD(EMREXCLUDECLIPRECT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMREXCLUDECLIPRECT, RECTL, rclClip, 8, 16, 4);
+
+    /* EMREXTCREATEFONTINDIRECTW (pack 4) */
+    TEST_TYPE(EMREXTCREATEFONTINDIRECTW, 332, 4);
+    TEST_FIELD(EMREXTCREATEFONTINDIRECTW, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMREXTCREATEFONTINDIRECTW, DWORD, ihFont, 8, 4, 4);
+    TEST_FIELD(EMREXTCREATEFONTINDIRECTW, EXTLOGFONTW, elfw, 12, 320, 4);
+
+    /* EMREXTCREATEPEN (pack 4) */
+    TEST_TYPE(EMREXTCREATEPEN, 56, 4);
+    TEST_FIELD(EMREXTCREATEPEN, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMREXTCREATEPEN, DWORD, ihPen, 8, 4, 4);
+    TEST_FIELD(EMREXTCREATEPEN, DWORD, offBmi, 12, 4, 4);
+    TEST_FIELD(EMREXTCREATEPEN, DWORD, cbBmi, 16, 4, 4);
+    TEST_FIELD(EMREXTCREATEPEN, DWORD, offBits, 20, 4, 4);
+    TEST_FIELD(EMREXTCREATEPEN, DWORD, cbBits, 24, 4, 4);
+    TEST_FIELD(EMREXTCREATEPEN, EXTLOGPEN, elp, 28, 28, 4);
+
+    /* EMREXTFLOODFILL (pack 4) */
+    TEST_TYPE(EMREXTFLOODFILL, 24, 4);
+    TEST_FIELD(EMREXTFLOODFILL, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMREXTFLOODFILL, POINTL, ptlStart, 8, 8, 4);
+    TEST_FIELD(EMREXTFLOODFILL, COLORREF, crColor, 16, 4, 4);
+    TEST_FIELD(EMREXTFLOODFILL, DWORD, iMode, 20, 4, 4);
+
+    /* EMREXTSELECTCLIPRGN (pack 4) */
+    TEST_TYPE(EMREXTSELECTCLIPRGN, 20, 4);
+    TEST_FIELD(EMREXTSELECTCLIPRGN, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMREXTSELECTCLIPRGN, DWORD, cbRgnData, 8, 4, 4);
+    TEST_FIELD(EMREXTSELECTCLIPRGN, DWORD, iMode, 12, 4, 4);
+    TEST_FIELD(EMREXTSELECTCLIPRGN, BYTE[1], RgnData, 16, 1, 1);
+
+    /* EMREXTTEXTOUTA (pack 4) */
+    TEST_TYPE(EMREXTTEXTOUTA, 76, 4);
+    TEST_FIELD(EMREXTTEXTOUTA, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMREXTTEXTOUTA, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMREXTTEXTOUTA, DWORD, iGraphicsMode, 24, 4, 4);
+    TEST_FIELD(EMREXTTEXTOUTA, FLOAT, exScale, 28, 4, 4);
+    TEST_FIELD(EMREXTTEXTOUTA, FLOAT, eyScale, 32, 4, 4);
+    TEST_FIELD(EMREXTTEXTOUTA, EMRTEXT, emrtext, 36, 40, 4);
+
+    /* EMRFILLPATH (pack 4) */
+    TEST_TYPE(EMRFILLPATH, 24, 4);
+    TEST_FIELD(EMRFILLPATH, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRFILLPATH, RECTL, rclBounds, 8, 16, 4);
+
+    /* EMRFILLRGN (pack 4) */
+    TEST_TYPE(EMRFILLRGN, 36, 4);
+    TEST_FIELD(EMRFILLRGN, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRFILLRGN, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRFILLRGN, DWORD, cbRgnData, 24, 4, 4);
+    TEST_FIELD(EMRFILLRGN, DWORD, ihBrush, 28, 4, 4);
+    TEST_FIELD(EMRFILLRGN, BYTE[1], RgnData, 32, 1, 1);
+
+    /* EMRFORMAT (pack 4) */
+    TEST_TYPE(EMRFORMAT, 16, 4);
+    TEST_FIELD(EMRFORMAT, DWORD, signature, 0, 4, 4);
+    TEST_FIELD(EMRFORMAT, DWORD, nVersion, 4, 4, 4);
+    TEST_FIELD(EMRFORMAT, DWORD, cbData, 8, 4, 4);
+    TEST_FIELD(EMRFORMAT, DWORD, offData, 12, 4, 4);
+
+    /* EMRFRAMERGN (pack 4) */
+    TEST_TYPE(EMRFRAMERGN, 44, 4);
+    TEST_FIELD(EMRFRAMERGN, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRFRAMERGN, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRFRAMERGN, DWORD, cbRgnData, 24, 4, 4);
+    TEST_FIELD(EMRFRAMERGN, DWORD, ihBrush, 28, 4, 4);
+    TEST_FIELD(EMRFRAMERGN, SIZEL, szlStroke, 32, 8, 4);
+    TEST_FIELD(EMRFRAMERGN, BYTE[1], RgnData, 40, 1, 1);
+
+    /* EMRGDICOMMENT (pack 4) */
+    TEST_TYPE(EMRGDICOMMENT, 16, 4);
+    TEST_FIELD(EMRGDICOMMENT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRGDICOMMENT, DWORD, cbData, 8, 4, 4);
+    TEST_FIELD(EMRGDICOMMENT, BYTE[1], Data, 12, 1, 1);
+
+    /* EMRGLSBOUNDEDRECORD (pack 4) */
+    TEST_TYPE(EMRGLSBOUNDEDRECORD, 32, 4);
+    TEST_FIELD(EMRGLSBOUNDEDRECORD, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRGLSBOUNDEDRECORD, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRGLSBOUNDEDRECORD, DWORD, cbData, 24, 4, 4);
+    TEST_FIELD(EMRGLSBOUNDEDRECORD, BYTE[1], Data, 28, 1, 1);
+
+    /* EMRGLSRECORD (pack 4) */
+    TEST_TYPE(EMRGLSRECORD, 16, 4);
+    TEST_FIELD(EMRGLSRECORD, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRGLSRECORD, DWORD, cbData, 8, 4, 4);
+    TEST_FIELD(EMRGLSRECORD, BYTE[1], Data, 12, 1, 1);
+
+    /* EMRINVERTRGN (pack 4) */
+    TEST_TYPE(EMRINVERTRGN, 32, 4);
+    TEST_FIELD(EMRINVERTRGN, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRINVERTRGN, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRINVERTRGN, DWORD, cbRgnData, 24, 4, 4);
+    TEST_FIELD(EMRINVERTRGN, BYTE[1], RgnData, 28, 1, 1);
+
+    /* EMRLINETO (pack 4) */
+    TEST_TYPE(EMRLINETO, 16, 4);
+    TEST_FIELD(EMRLINETO, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRLINETO, POINTL, ptl, 8, 8, 4);
+
+    /* EMRMASKBLT (pack 4) */
+    TEST_TYPE(EMRMASKBLT, 128, 4);
+    TEST_FIELD(EMRMASKBLT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRMASKBLT, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRMASKBLT, LONG, xDest, 24, 4, 4);
+    TEST_FIELD(EMRMASKBLT, LONG, yDest, 28, 4, 4);
+    TEST_FIELD(EMRMASKBLT, LONG, cxDest, 32, 4, 4);
+    TEST_FIELD(EMRMASKBLT, LONG, cyDest, 36, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, dwRop, 40, 4, 4);
+    TEST_FIELD(EMRMASKBLT, LONG, xSrc, 44, 4, 4);
+    TEST_FIELD(EMRMASKBLT, LONG, ySrc, 48, 4, 4);
+    TEST_FIELD(EMRMASKBLT, XFORM, xformSrc, 52, 24, 4);
+    TEST_FIELD(EMRMASKBLT, COLORREF, crBkColorSrc, 76, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, iUsageSrc, 80, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, offBmiSrc, 84, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, cbBmiSrc, 88, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, offBitsSrc, 92, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, cbBitsSrc, 96, 4, 4);
+    TEST_FIELD(EMRMASKBLT, LONG, xMask, 100, 4, 4);
+    TEST_FIELD(EMRMASKBLT, LONG, yMask, 104, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, iUsageMask, 108, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, offBmiMask, 112, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, cbBmiMask, 116, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, offBitsMask, 120, 4, 4);
+    TEST_FIELD(EMRMASKBLT, DWORD, cbBitsMask, 124, 4, 4);
+
+    /* EMRMODIFYWORLDTRANSFORM (pack 4) */
+    TEST_TYPE(EMRMODIFYWORLDTRANSFORM, 36, 4);
+    TEST_FIELD(EMRMODIFYWORLDTRANSFORM, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRMODIFYWORLDTRANSFORM, XFORM, xform, 8, 24, 4);
+    TEST_FIELD(EMRMODIFYWORLDTRANSFORM, DWORD, iMode, 32, 4, 4);
+
+    /* EMROFFSETCLIPRGN (pack 4) */
+    TEST_TYPE(EMROFFSETCLIPRGN, 16, 4);
+    TEST_FIELD(EMROFFSETCLIPRGN, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMROFFSETCLIPRGN, POINTL, ptlOffset, 8, 8, 4);
+
+    /* EMRPIXELFORMAT (pack 4) */
+    TEST_TYPE(EMRPIXELFORMAT, 48, 4);
+    TEST_FIELD(EMRPIXELFORMAT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPIXELFORMAT, PIXELFORMATDESCRIPTOR, pfd, 8, 40, 4);
+
+    /* EMRPLGBLT (pack 4) */
+    TEST_TYPE(EMRPLGBLT, 140, 4);
+    TEST_FIELD(EMRPLGBLT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPLGBLT, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPLGBLT, POINTL[3], aptlDst, 24, 24, 4);
+    TEST_FIELD(EMRPLGBLT, LONG, xSrc, 48, 4, 4);
+    TEST_FIELD(EMRPLGBLT, LONG, ySrc, 52, 4, 4);
+    TEST_FIELD(EMRPLGBLT, LONG, cxSrc, 56, 4, 4);
+    TEST_FIELD(EMRPLGBLT, LONG, cySrc, 60, 4, 4);
+    TEST_FIELD(EMRPLGBLT, XFORM, xformSrc, 64, 24, 4);
+    TEST_FIELD(EMRPLGBLT, COLORREF, crBkColorSrc, 88, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, iUsageSrc, 92, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, offBmiSrc, 96, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, cbBmiSrc, 100, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, offBitsSrc, 104, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, cbBitsSrc, 108, 4, 4);
+    TEST_FIELD(EMRPLGBLT, LONG, xMask, 112, 4, 4);
+    TEST_FIELD(EMRPLGBLT, LONG, yMask, 116, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, iUsageMask, 120, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, offBmiMask, 124, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, cbBmiMask, 128, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, offBitsMask, 132, 4, 4);
+    TEST_FIELD(EMRPLGBLT, DWORD, cbBitsMask, 136, 4, 4);
+
+    /* EMRPOLYDRAW (pack 4) */
+    TEST_TYPE(EMRPOLYDRAW, 40, 4);
+    TEST_FIELD(EMRPOLYDRAW, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYDRAW, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYDRAW, DWORD, cptl, 24, 4, 4);
+    TEST_FIELD(EMRPOLYDRAW, POINTL[1], aptl, 28, 8, 4);
+    TEST_FIELD(EMRPOLYDRAW, BYTE[1], abTypes, 36, 1, 1);
+
+    /* EMRPOLYLINE (pack 4) */
+    TEST_TYPE(EMRPOLYLINE, 36, 4);
+    TEST_FIELD(EMRPOLYLINE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYLINE, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYLINE, DWORD, cptl, 24, 4, 4);
+    TEST_FIELD(EMRPOLYLINE, POINTL[1], aptl, 28, 8, 4);
+
+    /* EMRPOLYPOLYLINE (pack 4) */
+    TEST_TYPE(EMRPOLYPOLYLINE, 44, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE, DWORD, nPolys, 24, 4, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE, DWORD, cptl, 28, 4, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE, DWORD[1], aPolyCounts, 32, 4, 4);
+    TEST_FIELD(EMRPOLYPOLYLINE, POINTL[1], aptl, 36, 8, 4);
+
+    /* EMRPOLYTEXTOUTA (pack 4) */
+    TEST_TYPE(EMRPOLYTEXTOUTA, 80, 4);
+    TEST_FIELD(EMRPOLYTEXTOUTA, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRPOLYTEXTOUTA, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRPOLYTEXTOUTA, DWORD, iGraphicsMode, 24, 4, 4);
+    TEST_FIELD(EMRPOLYTEXTOUTA, FLOAT, exScale, 28, 4, 4);
+    TEST_FIELD(EMRPOLYTEXTOUTA, FLOAT, eyScale, 32, 4, 4);
+    TEST_FIELD(EMRPOLYTEXTOUTA, LONG, cStrings, 36, 4, 4);
+    TEST_FIELD(EMRPOLYTEXTOUTA, EMRTEXT[1], aemrtext, 40, 40, 4);
+
+    /* EMRRESIZEPALETTE (pack 4) */
+    TEST_TYPE(EMRRESIZEPALETTE, 16, 4);
+    TEST_FIELD(EMRRESIZEPALETTE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRRESIZEPALETTE, DWORD, ihPal, 8, 4, 4);
+    TEST_FIELD(EMRRESIZEPALETTE, DWORD, cEntries, 12, 4, 4);
+
+    /* EMRRESTOREDC (pack 4) */
+    TEST_TYPE(EMRRESTOREDC, 12, 4);
+    TEST_FIELD(EMRRESTOREDC, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRRESTOREDC, LONG, iRelative, 8, 4, 4);
+
+    /* EMRROUNDRECT (pack 4) */
+    TEST_TYPE(EMRROUNDRECT, 32, 4);
+    TEST_FIELD(EMRROUNDRECT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRROUNDRECT, RECTL, rclBox, 8, 16, 4);
+    TEST_FIELD(EMRROUNDRECT, SIZEL, szlCorner, 24, 8, 4);
+
+    /* EMRSCALEVIEWPORTEXTEX (pack 4) */
+    TEST_TYPE(EMRSCALEVIEWPORTEXTEX, 24, 4);
+    TEST_FIELD(EMRSCALEVIEWPORTEXTEX, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSCALEVIEWPORTEXTEX, LONG, xNum, 8, 4, 4);
+    TEST_FIELD(EMRSCALEVIEWPORTEXTEX, LONG, xDenom, 12, 4, 4);
+    TEST_FIELD(EMRSCALEVIEWPORTEXTEX, LONG, yNum, 16, 4, 4);
+    TEST_FIELD(EMRSCALEVIEWPORTEXTEX, LONG, yDenom, 20, 4, 4);
+
+    /* EMRSELECTCLIPPATH (pack 4) */
+    TEST_TYPE(EMRSELECTCLIPPATH, 12, 4);
+    TEST_FIELD(EMRSELECTCLIPPATH, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSELECTCLIPPATH, DWORD, iMode, 8, 4, 4);
+
+    /* EMRSELECTPALETTE (pack 4) */
+    TEST_TYPE(EMRSELECTPALETTE, 12, 4);
+    TEST_FIELD(EMRSELECTPALETTE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSELECTPALETTE, DWORD, ihPal, 8, 4, 4);
+
+    /* EMRSETARCDIRECTION (pack 4) */
+    TEST_TYPE(EMRSETARCDIRECTION, 12, 4);
+    TEST_FIELD(EMRSETARCDIRECTION, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETARCDIRECTION, DWORD, iArcDirection, 8, 4, 4);
+
+    /* EMRSETBKCOLOR (pack 4) */
+    TEST_TYPE(EMRSETBKCOLOR, 12, 4);
+    TEST_FIELD(EMRSETBKCOLOR, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETBKCOLOR, COLORREF, crColor, 8, 4, 4);
+
+    /* EMRSETBRUSHORGEX (pack 4) */
+    TEST_TYPE(EMRSETBRUSHORGEX, 16, 4);
+    TEST_FIELD(EMRSETBRUSHORGEX, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETBRUSHORGEX, POINTL, ptlOrigin, 8, 8, 4);
+
+    /* EMRSETCOLORADJUSTMENT (pack 4) */
+    TEST_TYPE(EMRSETCOLORADJUSTMENT, 32, 4);
+    TEST_FIELD(EMRSETCOLORADJUSTMENT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETCOLORADJUSTMENT, COLORADJUSTMENT, ColorAdjustment, 8, 24, 2);
+
+    /* EMRSETDIBITSTODEIVCE (pack 4) */
+    TEST_TYPE(EMRSETDIBITSTODEIVCE, 76, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, LONG, xDest, 24, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, LONG, yDest, 28, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, LONG, xSrc, 32, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, LONG, ySrc, 36, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, LONG, cxSrc, 40, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, LONG, cySrc, 44, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, DWORD, offBmiSrc, 48, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, DWORD, cbBmiSrc, 52, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, DWORD, offBitsSrc, 56, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, DWORD, cbBitsSrc, 60, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, DWORD, iUsageSrc, 64, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, DWORD, iStartScan, 68, 4, 4);
+    TEST_FIELD(EMRSETDIBITSTODEIVCE, DWORD, cScans, 72, 4, 4);
+
+    /* EMRSETMAPPERFLAGS (pack 4) */
+    TEST_TYPE(EMRSETMAPPERFLAGS, 12, 4);
+    TEST_FIELD(EMRSETMAPPERFLAGS, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETMAPPERFLAGS, DWORD, dwFlags, 8, 4, 4);
+
+    /* EMRSETMITERLIMIT (pack 4) */
+    TEST_TYPE(EMRSETMITERLIMIT, 12, 4);
+    TEST_FIELD(EMRSETMITERLIMIT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETMITERLIMIT, FLOAT, eMiterLimit, 8, 4, 4);
+
+    /* EMRSETPIXELV (pack 4) */
+    TEST_TYPE(EMRSETPIXELV, 20, 4);
+    TEST_FIELD(EMRSETPIXELV, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETPIXELV, POINTL, ptlPixel, 8, 8, 4);
+    TEST_FIELD(EMRSETPIXELV, COLORREF, crColor, 16, 4, 4);
+
+    /* EMRSETTEXTJUSTIFICATION (pack 4) */
+    TEST_TYPE(EMRSETTEXTJUSTIFICATION, 16, 4);
+    TEST_FIELD(EMRSETTEXTJUSTIFICATION, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETTEXTJUSTIFICATION, INT, nBreakExtra, 8, 4, 4);
+    TEST_FIELD(EMRSETTEXTJUSTIFICATION, INT, nBreakCount, 12, 4, 4);
+
+    /* EMRSETVIEWPORTEXTEX (pack 4) */
+    TEST_TYPE(EMRSETVIEWPORTEXTEX, 16, 4);
+    TEST_FIELD(EMRSETVIEWPORTEXTEX, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETVIEWPORTEXTEX, SIZEL, szlExtent, 8, 8, 4);
+
+    /* EMRSETWORLDTRANSFORM (pack 4) */
+    TEST_TYPE(EMRSETWORLDTRANSFORM, 32, 4);
+    TEST_FIELD(EMRSETWORLDTRANSFORM, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSETWORLDTRANSFORM, XFORM, xform, 8, 24, 4);
+
+    /* EMRSTRETCHBLT (pack 4) */
+    TEST_TYPE(EMRSTRETCHBLT, 108, 4);
+    TEST_FIELD(EMRSTRETCHBLT, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSTRETCHBLT, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRSTRETCHBLT, LONG, xDest, 24, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, LONG, yDest, 28, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, LONG, cxDest, 32, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, LONG, cyDest, 36, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, DWORD, dwRop, 40, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, LONG, xSrc, 44, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, LONG, ySrc, 48, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, XFORM, xformSrc, 52, 24, 4);
+    TEST_FIELD(EMRSTRETCHBLT, COLORREF, crBkColorSrc, 76, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, DWORD, iUsageSrc, 80, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, DWORD, offBmiSrc, 84, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, DWORD, cbBmiSrc, 88, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, DWORD, offBitsSrc, 92, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, DWORD, cbBitsSrc, 96, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, LONG, cxSrc, 100, 4, 4);
+    TEST_FIELD(EMRSTRETCHBLT, LONG, cySrc, 104, 4, 4);
+
+    /* EMRSTRETCHDIBITS (pack 4) */
+    TEST_TYPE(EMRSTRETCHDIBITS, 80, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, EMR, emr, 0, 8, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, LONG, xDest, 24, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, LONG, yDest, 28, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, LONG, xSrc, 32, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, LONG, ySrc, 36, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, LONG, cxSrc, 40, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, LONG, cySrc, 44, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, DWORD, offBmiSrc, 48, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, DWORD, cbBmiSrc, 52, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, DWORD, offBitsSrc, 56, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, DWORD, cbBitsSrc, 60, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, DWORD, iUsageSrc, 64, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, DWORD, dwRop, 68, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, LONG, cxDest, 72, 4, 4);
+    TEST_FIELD(EMRSTRETCHDIBITS, LONG, cyDest, 76, 4, 4);
+
+    /* EMRTEXT (pack 4) */
+    TEST_TYPE(EMRTEXT, 40, 4);
+    TEST_FIELD(EMRTEXT, POINTL, ptlReference, 0, 8, 4);
+    TEST_FIELD(EMRTEXT, DWORD, nChars, 8, 4, 4);
+    TEST_FIELD(EMRTEXT, DWORD, offString, 12, 4, 4);
+    TEST_FIELD(EMRTEXT, DWORD, fOptions, 16, 4, 4);
+    TEST_FIELD(EMRTEXT, RECTL, rcl, 20, 16, 4);
+    TEST_FIELD(EMRTEXT, DWORD, offDx, 36, 4, 4);
+
+    /* ENHMETAHEADER (pack 4) */
+    TEST_TYPE(ENHMETAHEADER, 108, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, iType, 0, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, nSize, 4, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, RECTL, rclBounds, 8, 16, 4);
+    TEST_FIELD(ENHMETAHEADER, RECTL, rclFrame, 24, 16, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, dSignature, 40, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, nVersion, 44, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, nBytes, 48, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, nRecords, 52, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, WORD, nHandles, 56, 2, 2);
+    TEST_FIELD(ENHMETAHEADER, WORD, sReserved, 58, 2, 2);
+    TEST_FIELD(ENHMETAHEADER, DWORD, nDescription, 60, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, offDescription, 64, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, nPalEntries, 68, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, SIZEL, szlDevice, 72, 8, 4);
+    TEST_FIELD(ENHMETAHEADER, SIZEL, szlMillimeters, 80, 8, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, cbPixelFormat, 88, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, offPixelFormat, 92, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, DWORD, bOpenGL, 96, 4, 4);
+    TEST_FIELD(ENHMETAHEADER, SIZEL, szlMicrometers, 100, 8, 4);
+
+    /* ENHMETARECORD (pack 4) */
+    TEST_TYPE(ENHMETARECORD, 12, 4);
+    TEST_FIELD(ENHMETARECORD, DWORD, iType, 0, 4, 4);
+    TEST_FIELD(ENHMETARECORD, DWORD, nSize, 4, 4, 4);
+    TEST_FIELD(ENHMETARECORD, DWORD[1], dParm, 8, 4, 4);
+
+    /* ENUMLOGFONTA (pack 4) */
+    TEST_TYPE(ENUMLOGFONTA, 156, 4);
+    TEST_FIELD(ENUMLOGFONTA, LOGFONTA, elfLogFont, 0, 60, 4);
+    TEST_FIELD(ENUMLOGFONTA, BYTE[LF_FULLFACESIZE], elfFullName, 60, 64, 1);
+    TEST_FIELD(ENUMLOGFONTA, BYTE[LF_FACESIZE], elfStyle, 124, 32, 1);
+
+    /* ENUMLOGFONTEXA (pack 4) */
+    TEST_TYPE(ENUMLOGFONTEXA, 188, 4);
+    TEST_FIELD(ENUMLOGFONTEXA, LOGFONTA, elfLogFont, 0, 60, 4);
+    TEST_FIELD(ENUMLOGFONTEXA, BYTE[LF_FULLFACESIZE], elfFullName, 60, 64, 1);
+    TEST_FIELD(ENUMLOGFONTEXA, BYTE[LF_FACESIZE], elfStyle, 124, 32, 1);
+    TEST_FIELD(ENUMLOGFONTEXA, BYTE[LF_FACESIZE], elfScript, 156, 32, 1);
+
+    /* ENUMLOGFONTEXW (pack 4) */
+    TEST_TYPE(ENUMLOGFONTEXW, 348, 4);
+    TEST_FIELD(ENUMLOGFONTEXW, LOGFONTW, elfLogFont, 0, 92, 4);
+    TEST_FIELD(ENUMLOGFONTEXW, WCHAR[LF_FULLFACESIZE], elfFullName, 92, 128, 2);
+    TEST_FIELD(ENUMLOGFONTEXW, WCHAR[LF_FACESIZE], elfStyle, 220, 64, 2);
+    TEST_FIELD(ENUMLOGFONTEXW, WCHAR[LF_FACESIZE], elfScript, 284, 64, 2);
+
+    /* ENUMLOGFONTW (pack 4) */
+    TEST_TYPE(ENUMLOGFONTW, 284, 4);
+    TEST_FIELD(ENUMLOGFONTW, LOGFONTW, elfLogFont, 0, 92, 4);
+    TEST_FIELD(ENUMLOGFONTW, WCHAR[LF_FULLFACESIZE], elfFullName, 92, 128, 2);
+    TEST_FIELD(ENUMLOGFONTW, WCHAR[LF_FACESIZE], elfStyle, 220, 64, 2);
+
+    /* EXTLOGFONTA (pack 4) */
+    TEST_TYPE(EXTLOGFONTA, 192, 4);
+    TEST_FIELD(EXTLOGFONTA, LOGFONTA, elfLogFont, 0, 60, 4);
+    TEST_FIELD(EXTLOGFONTA, BYTE[LF_FULLFACESIZE], elfFullName, 60, 64, 1);
+    TEST_FIELD(EXTLOGFONTA, BYTE[LF_FACESIZE], elfStyle, 124, 32, 1);
+    TEST_FIELD(EXTLOGFONTA, DWORD, elfVersion, 156, 4, 4);
+    TEST_FIELD(EXTLOGFONTA, DWORD, elfStyleSize, 160, 4, 4);
+    TEST_FIELD(EXTLOGFONTA, DWORD, elfMatch, 164, 4, 4);
+    TEST_FIELD(EXTLOGFONTA, DWORD, elfReserved, 168, 4, 4);
+    TEST_FIELD(EXTLOGFONTA, BYTE[ELF_VENDOR_SIZE], elfVendorId, 172, 4, 1);
+    TEST_FIELD(EXTLOGFONTA, DWORD, elfCulture, 176, 4, 4);
+    TEST_FIELD(EXTLOGFONTA, PANOSE, elfPanose, 180, 10, 1);
+
+    /* EXTLOGFONTW (pack 4) */
+    TEST_TYPE(EXTLOGFONTW, 320, 4);
+    TEST_FIELD(EXTLOGFONTW, LOGFONTW, elfLogFont, 0, 92, 4);
+    TEST_FIELD(EXTLOGFONTW, WCHAR[LF_FULLFACESIZE], elfFullName, 92, 128, 2);
+    TEST_FIELD(EXTLOGFONTW, WCHAR[LF_FACESIZE], elfStyle, 220, 64, 2);
+    TEST_FIELD(EXTLOGFONTW, DWORD, elfVersion, 284, 4, 4);
+    TEST_FIELD(EXTLOGFONTW, DWORD, elfStyleSize, 288, 4, 4);
+    TEST_FIELD(EXTLOGFONTW, DWORD, elfMatch, 292, 4, 4);
+    TEST_FIELD(EXTLOGFONTW, DWORD, elfReserved, 296, 4, 4);
+    TEST_FIELD(EXTLOGFONTW, BYTE[ELF_VENDOR_SIZE], elfVendorId, 300, 4, 1);
+    TEST_FIELD(EXTLOGFONTW, DWORD, elfCulture, 304, 4, 4);
+    TEST_FIELD(EXTLOGFONTW, PANOSE, elfPanose, 308, 10, 1);
+
+    /* EXTLOGPEN (pack 4) */
+    TEST_TYPE(EXTLOGPEN, 28, 4);
+    TEST_FIELD(EXTLOGPEN, DWORD, elpPenStyle, 0, 4, 4);
+    TEST_FIELD(EXTLOGPEN, DWORD, elpWidth, 4, 4, 4);
+    TEST_FIELD(EXTLOGPEN, UINT, elpBrushStyle, 8, 4, 4);
+    TEST_FIELD(EXTLOGPEN, COLORREF, elpColor, 12, 4, 4);
+    TEST_FIELD(EXTLOGPEN, LONG, elpHatch, 16, 4, 4);
+    TEST_FIELD(EXTLOGPEN, DWORD, elpNumEntries, 20, 4, 4);
+    TEST_FIELD(EXTLOGPEN, DWORD[1], elpStyleEntry, 24, 4, 4);
+
+    /* FIXED (pack 4) */
+    TEST_TYPE(FIXED, 4, 2);
+    TEST_FIELD(FIXED, WORD, fract, 0, 2, 2);
+    TEST_FIELD(FIXED, SHORT, value, 2, 2, 2);
+
+    /* FONTSIGNATURE (pack 4) */
+    TEST_TYPE(FONTSIGNATURE, 24, 4);
+    TEST_FIELD(FONTSIGNATURE, DWORD[4], fsUsb, 0, 16, 4);
+    TEST_FIELD(FONTSIGNATURE, DWORD[2], fsCsb, 16, 8, 4);
+
+    /* GCP_RESULTSA (pack 4) */
+    TEST_TYPE(GCP_RESULTSA, 36, 4);
+    TEST_FIELD(GCP_RESULTSA, DWORD, lStructSize, 0, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, LPSTR, lpOutString, 4, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, UINT *, lpOrder, 8, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, INT *, lpDx, 12, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, INT *, lpCaretPos, 16, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, LPSTR, lpClass, 20, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, LPWSTR, lpGlyphs, 24, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, UINT, nGlyphs, 28, 4, 4);
+    TEST_FIELD(GCP_RESULTSA, UINT, nMaxFit, 32, 4, 4);
+
+    /* GCP_RESULTSW (pack 4) */
+    TEST_TYPE(GCP_RESULTSW, 36, 4);
+    TEST_FIELD(GCP_RESULTSW, DWORD, lStructSize, 0, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, LPWSTR, lpOutString, 4, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, UINT *, lpOrder, 8, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, INT *, lpDx, 12, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, INT *, lpCaretPos, 16, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, LPSTR, lpClass, 20, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, LPWSTR, lpGlyphs, 24, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, UINT, nGlyphs, 28, 4, 4);
+    TEST_FIELD(GCP_RESULTSW, UINT, nMaxFit, 32, 4, 4);
+
+    /* GLYPHMETRICS (pack 4) */
+    TEST_TYPE(GLYPHMETRICS, 20, 4);
+    TEST_FIELD(GLYPHMETRICS, UINT, gmBlackBoxX, 0, 4, 4);
+    TEST_FIELD(GLYPHMETRICS, UINT, gmBlackBoxY, 4, 4, 4);
+    TEST_FIELD(GLYPHMETRICS, POINT, gmptGlyphOrigin, 8, 8, 4);
+    TEST_FIELD(GLYPHMETRICS, SHORT, gmCellIncX, 16, 2, 2);
+    TEST_FIELD(GLYPHMETRICS, SHORT, gmCellIncY, 18, 2, 2);
+
+    /* GRADIENT_RECT (pack 4) */
+    TEST_TYPE(GRADIENT_RECT, 8, 4);
+    TEST_FIELD(GRADIENT_RECT, ULONG, UpperLeft, 0, 4, 4);
+    TEST_FIELD(GRADIENT_RECT, ULONG, LowerRight, 4, 4, 4);
+
+    /* GRADIENT_TRIANGLE (pack 4) */
+    TEST_TYPE(GRADIENT_TRIANGLE, 12, 4);
+    TEST_FIELD(GRADIENT_TRIANGLE, ULONG, Vertex1, 0, 4, 4);
+    TEST_FIELD(GRADIENT_TRIANGLE, ULONG, Vertex2, 4, 4, 4);
+    TEST_FIELD(GRADIENT_TRIANGLE, ULONG, Vertex3, 8, 4, 4);
+
+    /* HANDLETABLE (pack 4) */
+    TEST_TYPE(HANDLETABLE, 4, 4);
+    TEST_FIELD(HANDLETABLE, HGDIOBJ[1], objectHandle, 0, 4, 4);
+
+    /* KERNINGPAIR (pack 4) */
+    TEST_TYPE(KERNINGPAIR, 8, 4);
+    TEST_FIELD(KERNINGPAIR, WORD, wFirst, 0, 2, 2);
+    TEST_FIELD(KERNINGPAIR, WORD, wSecond, 2, 2, 2);
+    TEST_FIELD(KERNINGPAIR, INT, iKernAmount, 4, 4, 4);
+
+    /* LOCALESIGNATURE (pack 4) */
+    TEST_TYPE(LOCALESIGNATURE, 32, 4);
+    TEST_FIELD(LOCALESIGNATURE, DWORD[4], lsUsb, 0, 16, 4);
+    TEST_FIELD(LOCALESIGNATURE, DWORD[2], lsCsbDefault, 16, 8, 4);
+    TEST_FIELD(LOCALESIGNATURE, DWORD[2], lsCsbSupported, 24, 8, 4);
+
+    /* LOGBRUSH (pack 4) */
+    TEST_TYPE(LOGBRUSH, 12, 4);
+    TEST_FIELD(LOGBRUSH, UINT, lbStyle, 0, 4, 4);
+    TEST_FIELD(LOGBRUSH, COLORREF, lbColor, 4, 4, 4);
+    TEST_FIELD(LOGBRUSH, INT, lbHatch, 8, 4, 4);
+
+    /* LOGCOLORSPACEA (pack 4) */
+    TEST_TYPE(LOGCOLORSPACEA, 328, 4);
+    TEST_FIELD(LOGCOLORSPACEA, DWORD, lcsSignature, 0, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEA, DWORD, lcsVersion, 4, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEA, DWORD, lcsSize, 8, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEA, LCSCSTYPE, lcsCSType, 12, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEA, LCSGAMUTMATCH, lcsIntent, 16, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEA, CIEXYZTRIPLE, lcsEndpoints, 20, 36, 4);
+    TEST_FIELD(LOGCOLORSPACEA, DWORD, lcsGammaRed, 56, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEA, DWORD, lcsGammaGreen, 60, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEA, DWORD, lcsGammaBlue, 64, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEA, CHAR[MAX_PATH], lcsFilename, 68, 260, 1);
+
+    /* LOGCOLORSPACEW (pack 4) */
+    TEST_TYPE(LOGCOLORSPACEW, 588, 4);
+    TEST_FIELD(LOGCOLORSPACEW, DWORD, lcsSignature, 0, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEW, DWORD, lcsVersion, 4, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEW, DWORD, lcsSize, 8, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEW, LCSCSTYPE, lcsCSType, 12, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEW, LCSGAMUTMATCH, lcsIntent, 16, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEW, CIEXYZTRIPLE, lcsEndpoints, 20, 36, 4);
+    TEST_FIELD(LOGCOLORSPACEW, DWORD, lcsGammaRed, 56, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEW, DWORD, lcsGammaGreen, 60, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEW, DWORD, lcsGammaBlue, 64, 4, 4);
+    TEST_FIELD(LOGCOLORSPACEW, WCHAR[MAX_PATH], lcsFilename, 68, 520, 2);
+
+    /* LOGFONTA (pack 4) */
+    TEST_TYPE(LOGFONTA, 60, 4);
+    TEST_FIELD(LOGFONTA, LONG, lfHeight, 0, 4, 4);
+    TEST_FIELD(LOGFONTA, LONG, lfWidth, 4, 4, 4);
+    TEST_FIELD(LOGFONTA, LONG, lfEscapement, 8, 4, 4);
+    TEST_FIELD(LOGFONTA, LONG, lfOrientation, 12, 4, 4);
+    TEST_FIELD(LOGFONTA, LONG, lfWeight, 16, 4, 4);
+    TEST_FIELD(LOGFONTA, BYTE, lfItalic, 20, 1, 1);
+    TEST_FIELD(LOGFONTA, BYTE, lfUnderline, 21, 1, 1);
+    TEST_FIELD(LOGFONTA, BYTE, lfStrikeOut, 22, 1, 1);
+    TEST_FIELD(LOGFONTA, BYTE, lfCharSet, 23, 1, 1);
+    TEST_FIELD(LOGFONTA, BYTE, lfOutPrecision, 24, 1, 1);
+    TEST_FIELD(LOGFONTA, BYTE, lfClipPrecision, 25, 1, 1);
+    TEST_FIELD(LOGFONTA, BYTE, lfQuality, 26, 1, 1);
+    TEST_FIELD(LOGFONTA, BYTE, lfPitchAndFamily, 27, 1, 1);
+    TEST_FIELD(LOGFONTA, CHAR[LF_FACESIZE], lfFaceName, 28, 32, 1);
+
+    /* LOGFONTW (pack 4) */
+    TEST_TYPE(LOGFONTW, 92, 4);
+    TEST_FIELD(LOGFONTW, LONG, lfHeight, 0, 4, 4);
+    TEST_FIELD(LOGFONTW, LONG, lfWidth, 4, 4, 4);
+    TEST_FIELD(LOGFONTW, LONG, lfEscapement, 8, 4, 4);
+    TEST_FIELD(LOGFONTW, LONG, lfOrientation, 12, 4, 4);
+    TEST_FIELD(LOGFONTW, LONG, lfWeight, 16, 4, 4);
+    TEST_FIELD(LOGFONTW, BYTE, lfItalic, 20, 1, 1);
+    TEST_FIELD(LOGFONTW, BYTE, lfUnderline, 21, 1, 1);
+    TEST_FIELD(LOGFONTW, BYTE, lfStrikeOut, 22, 1, 1);
+    TEST_FIELD(LOGFONTW, BYTE, lfCharSet, 23, 1, 1);
+    TEST_FIELD(LOGFONTW, BYTE, lfOutPrecision, 24, 1, 1);
+    TEST_FIELD(LOGFONTW, BYTE, lfClipPrecision, 25, 1, 1);
+    TEST_FIELD(LOGFONTW, BYTE, lfQuality, 26, 1, 1);
+    TEST_FIELD(LOGFONTW, BYTE, lfPitchAndFamily, 27, 1, 1);
+    TEST_FIELD(LOGFONTW, WCHAR[LF_FACESIZE], lfFaceName, 28, 64, 2);
+
+    /* LOGPEN (pack 4) */
+    TEST_TYPE(LOGPEN, 16, 4);
+    TEST_FIELD(LOGPEN, UINT, lopnStyle, 0, 4, 4);
+    TEST_FIELD(LOGPEN, POINT, lopnWidth, 4, 8, 4);
+    TEST_FIELD(LOGPEN, COLORREF, lopnColor, 12, 4, 4);
+
+    /* MAT2 (pack 4) */
+    TEST_TYPE(MAT2, 16, 2);
+    TEST_FIELD(MAT2, FIXED, eM11, 0, 4, 2);
+    TEST_FIELD(MAT2, FIXED, eM12, 4, 4, 2);
+    TEST_FIELD(MAT2, FIXED, eM21, 8, 4, 2);
+    TEST_FIELD(MAT2, FIXED, eM22, 12, 4, 2);
+
+    /* METAFILEPICT (pack 4) */
+    TEST_TYPE(METAFILEPICT, 16, 4);
+    TEST_FIELD(METAFILEPICT, LONG, mm, 0, 4, 4);
+    TEST_FIELD(METAFILEPICT, LONG, xExt, 4, 4, 4);
+    TEST_FIELD(METAFILEPICT, LONG, yExt, 8, 4, 4);
+    TEST_FIELD(METAFILEPICT, HMETAFILE, hMF, 12, 4, 4);
+
+    /* METAHEADER (pack 2) */
+    TEST_TYPE(METAHEADER, 18, 2);
+    TEST_FIELD(METAHEADER, WORD, mtType, 0, 2, 2);
+    TEST_FIELD(METAHEADER, WORD, mtHeaderSize, 2, 2, 2);
+    TEST_FIELD(METAHEADER, WORD, mtVersion, 4, 2, 2);
+    TEST_FIELD(METAHEADER, DWORD, mtSize, 6, 4, 2);
+    TEST_FIELD(METAHEADER, WORD, mtNoObjects, 10, 2, 2);
+    TEST_FIELD(METAHEADER, DWORD, mtMaxRecord, 12, 4, 2);
+    TEST_FIELD(METAHEADER, WORD, mtNoParameters, 16, 2, 2);
+
+    /* METARECORD (pack 4) */
+    TEST_TYPE(METARECORD, 8, 4);
+    TEST_FIELD(METARECORD, DWORD, rdSize, 0, 4, 4);
+    TEST_FIELD(METARECORD, WORD, rdFunction, 4, 2, 2);
+    TEST_FIELD(METARECORD, WORD[1], rdParm, 6, 2, 2);
+
+    /* NEWTEXTMETRICA (pack 4) */
+    TEST_TYPE(NEWTEXTMETRICA, 72, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmHeight, 0, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmAscent, 4, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmDescent, 8, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmInternalLeading, 12, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmExternalLeading, 16, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmAveCharWidth, 20, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmMaxCharWidth, 24, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmWeight, 28, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmOverhang, 32, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmDigitizedAspectX, 36, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, LONG, tmDigitizedAspectY, 40, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, BYTE, tmFirstChar, 44, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICA, BYTE, tmLastChar, 45, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICA, BYTE, tmDefaultChar, 46, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICA, BYTE, tmBreakChar, 47, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICA, BYTE, tmItalic, 48, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICA, BYTE, tmUnderlined, 49, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICA, BYTE, tmStruckOut, 50, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICA, BYTE, tmPitchAndFamily, 51, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICA, BYTE, tmCharSet, 52, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICA, DWORD, ntmFlags, 56, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, UINT, ntmSizeEM, 60, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, UINT, ntmCellHeight, 64, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICA, UINT, ntmAvgWidth, 68, 4, 4);
+
+    /* NEWTEXTMETRICEXA (pack 4) */
+    TEST_TYPE(NEWTEXTMETRICEXA, 96, 4);
+    TEST_FIELD(NEWTEXTMETRICEXA, NEWTEXTMETRICA, ntmTm, 0, 72, 4);
+    TEST_FIELD(NEWTEXTMETRICEXA, FONTSIGNATURE, ntmFontSig, 72, 24, 4);
+
+    /* NEWTEXTMETRICEXW (pack 4) */
+    TEST_TYPE(NEWTEXTMETRICEXW, 100, 4);
+    TEST_FIELD(NEWTEXTMETRICEXW, NEWTEXTMETRICW, ntmTm, 0, 76, 4);
+    TEST_FIELD(NEWTEXTMETRICEXW, FONTSIGNATURE, ntmFontSig, 76, 24, 4);
+
+    /* NEWTEXTMETRICW (pack 4) */
+    TEST_TYPE(NEWTEXTMETRICW, 76, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmHeight, 0, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmAscent, 4, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmDescent, 8, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmInternalLeading, 12, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmExternalLeading, 16, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmAveCharWidth, 20, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmMaxCharWidth, 24, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmWeight, 28, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmOverhang, 32, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmDigitizedAspectX, 36, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, LONG, tmDigitizedAspectY, 40, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, WCHAR, tmFirstChar, 44, 2, 2);
+    TEST_FIELD(NEWTEXTMETRICW, WCHAR, tmLastChar, 46, 2, 2);
+    TEST_FIELD(NEWTEXTMETRICW, WCHAR, tmDefaultChar, 48, 2, 2);
+    TEST_FIELD(NEWTEXTMETRICW, WCHAR, tmBreakChar, 50, 2, 2);
+    TEST_FIELD(NEWTEXTMETRICW, BYTE, tmItalic, 52, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICW, BYTE, tmUnderlined, 53, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICW, BYTE, tmStruckOut, 54, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICW, BYTE, tmPitchAndFamily, 55, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICW, BYTE, tmCharSet, 56, 1, 1);
+    TEST_FIELD(NEWTEXTMETRICW, DWORD, ntmFlags, 60, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, UINT, ntmSizeEM, 64, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, UINT, ntmCellHeight, 68, 4, 4);
+    TEST_FIELD(NEWTEXTMETRICW, UINT, ntmAvgWidth, 72, 4, 4);
+
+    /* OUTLINETEXTMETRICA (pack 4) */
+    TEST_TYPE(OUTLINETEXTMETRICA, 212, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmSize, 0, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, TEXTMETRICA, otmTextMetrics, 4, 56, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, BYTE, otmFiller, 60, 1, 1);
+    TEST_FIELD(OUTLINETEXTMETRICA, PANOSE, otmPanoseNumber, 61, 10, 1);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmfsSelection, 72, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmfsType, 76, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmsCharSlopeRise, 80, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmsCharSlopeRun, 84, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmItalicAngle, 88, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmEMSquare, 92, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmAscent, 96, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmDescent, 100, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmLineGap, 104, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmsCapEmHeight, 108, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmsXHeight, 112, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, RECT, otmrcFontBox, 116, 16, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmMacAscent, 132, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmMacDescent, 136, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmMacLineGap, 140, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmusMinimumPPEM, 144, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, POINT, otmptSubscriptSize, 148, 8, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, POINT, otmptSubscriptOffset, 156, 8, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, POINT, otmptSuperscriptSize, 164, 8, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, POINT, otmptSuperscriptOffset, 172, 8, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, UINT, otmsStrikeoutSize, 180, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmsStrikeoutPosition, 184, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmsUnderscoreSize, 188, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, INT, otmsUnderscorePosition, 192, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, LPSTR, otmpFamilyName, 196, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, LPSTR, otmpFaceName, 200, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, LPSTR, otmpStyleName, 204, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICA, LPSTR, otmpFullName, 208, 4, 4);
+
+    /* OUTLINETEXTMETRICW (pack 4) */
+    TEST_TYPE(OUTLINETEXTMETRICW, 216, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmSize, 0, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, TEXTMETRICW, otmTextMetrics, 4, 60, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, BYTE, otmFiller, 64, 1, 1);
+    TEST_FIELD(OUTLINETEXTMETRICW, PANOSE, otmPanoseNumber, 65, 10, 1);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmfsSelection, 76, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmfsType, 80, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmsCharSlopeRise, 84, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmsCharSlopeRun, 88, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmItalicAngle, 92, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmEMSquare, 96, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmAscent, 100, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmDescent, 104, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmLineGap, 108, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmsCapEmHeight, 112, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmsXHeight, 116, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, RECT, otmrcFontBox, 120, 16, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmMacAscent, 136, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmMacDescent, 140, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmMacLineGap, 144, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmusMinimumPPEM, 148, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, POINT, otmptSubscriptSize, 152, 8, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, POINT, otmptSubscriptOffset, 160, 8, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, POINT, otmptSuperscriptSize, 168, 8, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, POINT, otmptSuperscriptOffset, 176, 8, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, UINT, otmsStrikeoutSize, 184, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmsStrikeoutPosition, 188, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmsUnderscoreSize, 192, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, INT, otmsUnderscorePosition, 196, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, LPSTR, otmpFamilyName, 200, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, LPSTR, otmpFaceName, 204, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, LPSTR, otmpStyleName, 208, 4, 4);
+    TEST_FIELD(OUTLINETEXTMETRICW, LPSTR, otmpFullName, 212, 4, 4);
+
+    /* PANOSE (pack 4) */
+    TEST_TYPE(PANOSE, 10, 1);
+    TEST_FIELD(PANOSE, BYTE, bFamilyType, 0, 1, 1);
+    TEST_FIELD(PANOSE, BYTE, bSerifStyle, 1, 1, 1);
+    TEST_FIELD(PANOSE, BYTE, bWeight, 2, 1, 1);
+    TEST_FIELD(PANOSE, BYTE, bProportion, 3, 1, 1);
+    TEST_FIELD(PANOSE, BYTE, bContrast, 4, 1, 1);
+    TEST_FIELD(PANOSE, BYTE, bStrokeVariation, 5, 1, 1);
+    TEST_FIELD(PANOSE, BYTE, bArmStyle, 6, 1, 1);
+    TEST_FIELD(PANOSE, BYTE, bLetterform, 7, 1, 1);
+    TEST_FIELD(PANOSE, BYTE, bMidline, 8, 1, 1);
+    TEST_FIELD(PANOSE, BYTE, bXHeight, 9, 1, 1);
+
+    /* PELARRAY (pack 4) */
+    TEST_TYPE(PELARRAY, 20, 4);
+    TEST_FIELD(PELARRAY, LONG, paXCount, 0, 4, 4);
+    TEST_FIELD(PELARRAY, LONG, paYCount, 4, 4, 4);
+    TEST_FIELD(PELARRAY, LONG, paXExt, 8, 4, 4);
+    TEST_FIELD(PELARRAY, LONG, paYExt, 12, 4, 4);
+    TEST_FIELD(PELARRAY, BYTE, paRGBs, 16, 1, 1);
+
+    /* PIXELFORMATDESCRIPTOR (pack 4) */
+    TEST_TYPE(PIXELFORMATDESCRIPTOR, 40, 4);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, WORD, nSize, 0, 2, 2);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, WORD, nVersion, 2, 2, 2);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, iPixelType, 8, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cColorBits, 9, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cRedBits, 10, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cRedShift, 11, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cGreenBits, 12, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cGreenShift, 13, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cBlueBits, 14, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cBlueShift, 15, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cAlphaBits, 16, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cAlphaShift, 17, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cAccumBits, 18, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cAccumRedBits, 19, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cAccumGreenBits, 20, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cAccumBlueBits, 21, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cAccumAlphaBits, 22, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cDepthBits, 23, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cStencilBits, 24, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, cAuxBuffers, 25, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, iLayerType, 26, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, BYTE, bReserved, 27, 1, 1);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, DWORD, dwLayerMask, 28, 4, 4);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, DWORD, dwVisibleMask, 32, 4, 4);
+    TEST_FIELD(PIXELFORMATDESCRIPTOR, DWORD, dwDamageMask, 36, 4, 4);
+
+    /* POINTFX (pack 4) */
+    TEST_TYPE(POINTFX, 8, 2);
+    TEST_FIELD(POINTFX, FIXED, x, 0, 4, 2);
+    TEST_FIELD(POINTFX, FIXED, y, 4, 4, 2);
+
+    /* POLYTEXTA (pack 4) */
+    TEST_TYPE(POLYTEXTA, 40, 4);
+    TEST_FIELD(POLYTEXTA, INT, x, 0, 4, 4);
+    TEST_FIELD(POLYTEXTA, INT, y, 4, 4, 4);
+    TEST_FIELD(POLYTEXTA, UINT, n, 8, 4, 4);
+    TEST_FIELD(POLYTEXTA, LPCSTR, lpstr, 12, 4, 4);
+    TEST_FIELD(POLYTEXTA, UINT, uiFlags, 16, 4, 4);
+    TEST_FIELD(POLYTEXTA, RECT, rcl, 20, 16, 4);
+    TEST_FIELD(POLYTEXTA, INT *, pdx, 36, 4, 4);
+
+    /* POLYTEXTW (pack 4) */
+    TEST_TYPE(POLYTEXTW, 40, 4);
+    TEST_FIELD(POLYTEXTW, INT, x, 0, 4, 4);
+    TEST_FIELD(POLYTEXTW, INT, y, 4, 4, 4);
+    TEST_FIELD(POLYTEXTW, UINT, n, 8, 4, 4);
+    TEST_FIELD(POLYTEXTW, LPCWSTR, lpstr, 12, 4, 4);
+    TEST_FIELD(POLYTEXTW, UINT, uiFlags, 16, 4, 4);
+    TEST_FIELD(POLYTEXTW, RECT, rcl, 20, 16, 4);
+    TEST_FIELD(POLYTEXTW, INT *, pdx, 36, 4, 4);
+
+    /* RASTERIZER_STATUS (pack 4) */
+    TEST_TYPE(RASTERIZER_STATUS, 6, 2);
+    TEST_FIELD(RASTERIZER_STATUS, SHORT, nSize, 0, 2, 2);
+    TEST_FIELD(RASTERIZER_STATUS, SHORT, wFlags, 2, 2, 2);
+    TEST_FIELD(RASTERIZER_STATUS, SHORT, nLanguageID, 4, 2, 2);
+
+    /* RGBQUAD (pack 4) */
+    TEST_TYPE(RGBQUAD, 4, 1);
+    TEST_FIELD(RGBQUAD, BYTE, rgbBlue, 0, 1, 1);
+    TEST_FIELD(RGBQUAD, BYTE, rgbGreen, 1, 1, 1);
+    TEST_FIELD(RGBQUAD, BYTE, rgbRed, 2, 1, 1);
+    TEST_FIELD(RGBQUAD, BYTE, rgbReserved, 3, 1, 1);
+
+    /* RGBTRIPLE (pack 4) */
+    TEST_TYPE(RGBTRIPLE, 3, 1);
+    TEST_FIELD(RGBTRIPLE, BYTE, rgbtBlue, 0, 1, 1);
+    TEST_FIELD(RGBTRIPLE, BYTE, rgbtGreen, 1, 1, 1);
+    TEST_FIELD(RGBTRIPLE, BYTE, rgbtRed, 2, 1, 1);
+
+    /* RGNDATA (pack 4) */
+    TEST_TYPE(RGNDATA, 36, 4);
+    TEST_FIELD(RGNDATA, RGNDATAHEADER, rdh, 0, 32, 4);
+    TEST_FIELD(RGNDATA, char[1], Buffer, 32, 1, 1);
+
+    /* RGNDATAHEADER (pack 4) */
+    TEST_TYPE(RGNDATAHEADER, 32, 4);
+    TEST_FIELD(RGNDATAHEADER, DWORD, dwSize, 0, 4, 4);
+    TEST_FIELD(RGNDATAHEADER, DWORD, iType, 4, 4, 4);
+    TEST_FIELD(RGNDATAHEADER, DWORD, nCount, 8, 4, 4);
+    TEST_FIELD(RGNDATAHEADER, DWORD, nRgnSize, 12, 4, 4);
+    TEST_FIELD(RGNDATAHEADER, RECT, rcBound, 16, 16, 4);
+
+    /* TEXTMETRICA (pack 4) */
+    TEST_TYPE(TEXTMETRICA, 56, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmHeight, 0, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmAscent, 4, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmDescent, 8, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmInternalLeading, 12, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmExternalLeading, 16, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmAveCharWidth, 20, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmMaxCharWidth, 24, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmWeight, 28, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmOverhang, 32, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmDigitizedAspectX, 36, 4, 4);
+    TEST_FIELD(TEXTMETRICA, LONG, tmDigitizedAspectY, 40, 4, 4);
+    TEST_FIELD(TEXTMETRICA, BYTE, tmFirstChar, 44, 1, 1);
+    TEST_FIELD(TEXTMETRICA, BYTE, tmLastChar, 45, 1, 1);
+    TEST_FIELD(TEXTMETRICA, BYTE, tmDefaultChar, 46, 1, 1);
+    TEST_FIELD(TEXTMETRICA, BYTE, tmBreakChar, 47, 1, 1);
+    TEST_FIELD(TEXTMETRICA, BYTE, tmItalic, 48, 1, 1);
+    TEST_FIELD(TEXTMETRICA, BYTE, tmUnderlined, 49, 1, 1);
+    TEST_FIELD(TEXTMETRICA, BYTE, tmStruckOut, 50, 1, 1);
+    TEST_FIELD(TEXTMETRICA, BYTE, tmPitchAndFamily, 51, 1, 1);
+    TEST_FIELD(TEXTMETRICA, BYTE, tmCharSet, 52, 1, 1);
+
+    /* TEXTMETRICW (pack 4) */
+    TEST_TYPE(TEXTMETRICW, 60, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmHeight, 0, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmAscent, 4, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmDescent, 8, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmInternalLeading, 12, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmExternalLeading, 16, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmAveCharWidth, 20, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmMaxCharWidth, 24, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmWeight, 28, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmOverhang, 32, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmDigitizedAspectX, 36, 4, 4);
+    TEST_FIELD(TEXTMETRICW, LONG, tmDigitizedAspectY, 40, 4, 4);
+    TEST_FIELD(TEXTMETRICW, WCHAR, tmFirstChar, 44, 2, 2);
+    TEST_FIELD(TEXTMETRICW, WCHAR, tmLastChar, 46, 2, 2);
+    TEST_FIELD(TEXTMETRICW, WCHAR, tmDefaultChar, 48, 2, 2);
+    TEST_FIELD(TEXTMETRICW, WCHAR, tmBreakChar, 50, 2, 2);
+    TEST_FIELD(TEXTMETRICW, BYTE, tmItalic, 52, 1, 1);
+    TEST_FIELD(TEXTMETRICW, BYTE, tmUnderlined, 53, 1, 1);
+    TEST_FIELD(TEXTMETRICW, BYTE, tmStruckOut, 54, 1, 1);
+    TEST_FIELD(TEXTMETRICW, BYTE, tmPitchAndFamily, 55, 1, 1);
+    TEST_FIELD(TEXTMETRICW, BYTE, tmCharSet, 56, 1, 1);
+
+    /* TRIVERTEX (pack 4) */
+    TEST_TYPE(TRIVERTEX, 16, 4);
+    TEST_FIELD(TRIVERTEX, LONG, x, 0, 4, 4);
+    TEST_FIELD(TRIVERTEX, LONG, y, 4, 4, 4);
+    TEST_FIELD(TRIVERTEX, COLOR16, Red, 8, 2, 2);
+    TEST_FIELD(TRIVERTEX, COLOR16, Green, 10, 2, 2);
+    TEST_FIELD(TRIVERTEX, COLOR16, Blue, 12, 2, 2);
+    TEST_FIELD(TRIVERTEX, COLOR16, Alpha, 14, 2, 2);
+
+    /* TTPOLYCURVE (pack 4) */
+    TEST_TYPE(TTPOLYCURVE, 12, 2);
+    TEST_FIELD(TTPOLYCURVE, WORD, wType, 0, 2, 2);
+    TEST_FIELD(TTPOLYCURVE, WORD, cpfx, 2, 2, 2);
+    TEST_FIELD(TTPOLYCURVE, POINTFX[1], apfx, 4, 8, 2);
+
+    /* TTPOLYGONHEADER (pack 4) */
+    TEST_TYPE(TTPOLYGONHEADER, 16, 4);
+    TEST_FIELD(TTPOLYGONHEADER, DWORD, cb, 0, 4, 4);
+    TEST_FIELD(TTPOLYGONHEADER, DWORD, dwType, 4, 4, 4);
+    TEST_FIELD(TTPOLYGONHEADER, POINTFX, pfxStart, 8, 8, 2);
+
+    /* XFORM (pack 4) */
+    TEST_TYPE(XFORM, 24, 4);
+    TEST_FIELD(XFORM, FLOAT, eM11, 0, 4, 4);
+    TEST_FIELD(XFORM, FLOAT, eM12, 4, 4, 4);
+    TEST_FIELD(XFORM, FLOAT, eM21, 8, 4, 4);
+    TEST_FIELD(XFORM, FLOAT, eM22, 12, 4, 4);
+    TEST_FIELD(XFORM, FLOAT, eDx, 16, 4, 4);
+    TEST_FIELD(XFORM, FLOAT, eDy, 20, 4, 4);
 
 }
 

@@ -8,1486 +8,754 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "basetsd.h"
+#include "winnt.h"
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
+
+/***********************************************************************
+ * Windows API extension
+ */
+
+#if (_MSC_VER >= 1300) && defined(__cplusplus)
+# define FIELD_ALIGNMENT(type, field) __alignof(((type*)0)->field)
+#elif defined(__GNUC__)
+# define FIELD_ALIGNMENT(type, field) __alignof__(((type*)0)->field)
+#else
+/* FIXME: Not sure if is possible to do without compiler extension */
+#endif
+
+/***********************************************************************
+ * Test helper macros
+ */
+
+#ifdef FIELD_ALIGNMENT
+# define TEST_FIELD_ALIGNMENT(type, field, align) \
+   ok(FIELD_ALIGNMENT(type, field) == align, \
+       "FIELD_ALIGNMENT(" #type ", " #field ") == %d (expected " #align ")", \
+           FIELD_ALIGNMENT(type, field))
+#else
+# define TEST_FIELD_ALIGNMENT(type, field, align) do { } while (0)
+#endif
+
+#define TEST_FIELD_OFFSET(type, field, offset) \
+    ok(FIELD_OFFSET(type, field) == offset, \
+        "FIELD_OFFSET(" #type ", " #field ") == %ld (expected " #offset ")", \
+             FIELD_OFFSET(type, field))
+
+#define TEST_TYPE_ALIGNMENT(type, align) \
+    ok(TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")", TYPE_ALIGNMENT(type))
+
+#define TEST_TYPE_SIZE(type, size) \
+    ok(sizeof(type) == size, "sizeof(" #type ") == %d (expected " #size ")", sizeof(type))
+
+/***********************************************************************
+ * Test macros
+ */
+
+#define TEST_FIELD(type, field_type, field_name, field_offset, field_size, field_align) \
+  TEST_TYPE_SIZE(field_type, field_size); \
+  TEST_FIELD_ALIGNMENT(type, field_name, field_align); \
+  TEST_FIELD_OFFSET(type, field_name, field_offset); \
+
+#define TEST_TYPE(type, size, align) \
+  TEST_TYPE_ALIGNMENT(type, align); \
+  TEST_TYPE_SIZE(type, size)
 
 void test_pack(void)
 {
-    /* ACCESSTIMEOUT */
-    ok(FIELD_OFFSET(ACCESSTIMEOUT, cbSize) == 0,
-       "FIELD_OFFSET(ACCESSTIMEOUT, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(ACCESSTIMEOUT, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(ACCESSTIMEOUT, dwFlags) == 4,
-       "FIELD_OFFSET(ACCESSTIMEOUT, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(ACCESSTIMEOUT, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(ACCESSTIMEOUT, iTimeOutMSec) == 8,
-       "FIELD_OFFSET(ACCESSTIMEOUT, iTimeOutMSec) == %ld (expected 8)",
-       FIELD_OFFSET(ACCESSTIMEOUT, iTimeOutMSec)); /* DWORD */
-    ok(sizeof(ACCESSTIMEOUT) == 12, "sizeof(ACCESSTIMEOUT) == %d (expected 12)", sizeof(ACCESSTIMEOUT));
-
-    /* ANIMATIONINFO */
-    ok(FIELD_OFFSET(ANIMATIONINFO, cbSize) == 0,
-       "FIELD_OFFSET(ANIMATIONINFO, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(ANIMATIONINFO, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(ANIMATIONINFO, iMinAnimate) == 4,
-       "FIELD_OFFSET(ANIMATIONINFO, iMinAnimate) == %ld (expected 4)",
-       FIELD_OFFSET(ANIMATIONINFO, iMinAnimate)); /* INT */
-    ok(sizeof(ANIMATIONINFO) == 8, "sizeof(ANIMATIONINFO) == %d (expected 8)", sizeof(ANIMATIONINFO));
-
-    /* CBTACTIVATESTRUCT */
-    ok(FIELD_OFFSET(CBTACTIVATESTRUCT, fMouse) == 0,
-       "FIELD_OFFSET(CBTACTIVATESTRUCT, fMouse) == %ld (expected 0)",
-       FIELD_OFFSET(CBTACTIVATESTRUCT, fMouse)); /* BOOL */
-    ok(FIELD_OFFSET(CBTACTIVATESTRUCT, hWndActive) == 4,
-       "FIELD_OFFSET(CBTACTIVATESTRUCT, hWndActive) == %ld (expected 4)",
-       FIELD_OFFSET(CBTACTIVATESTRUCT, hWndActive)); /* HWND */
-    ok(sizeof(CBTACTIVATESTRUCT) == 8, "sizeof(CBTACTIVATESTRUCT) == %d (expected 8)", sizeof(CBTACTIVATESTRUCT));
-
-    /* CBT_CREATEWNDA */
-    ok(FIELD_OFFSET(CBT_CREATEWNDA, lpcs) == 0,
-       "FIELD_OFFSET(CBT_CREATEWNDA, lpcs) == %ld (expected 0)",
-       FIELD_OFFSET(CBT_CREATEWNDA, lpcs)); /* CREATESTRUCTA * */
-    ok(FIELD_OFFSET(CBT_CREATEWNDA, hwndInsertAfter) == 4,
-       "FIELD_OFFSET(CBT_CREATEWNDA, hwndInsertAfter) == %ld (expected 4)",
-       FIELD_OFFSET(CBT_CREATEWNDA, hwndInsertAfter)); /* HWND */
-    ok(sizeof(CBT_CREATEWNDA) == 8, "sizeof(CBT_CREATEWNDA) == %d (expected 8)", sizeof(CBT_CREATEWNDA));
-
-    /* CBT_CREATEWNDW */
-    ok(FIELD_OFFSET(CBT_CREATEWNDW, lpcs) == 0,
-       "FIELD_OFFSET(CBT_CREATEWNDW, lpcs) == %ld (expected 0)",
-       FIELD_OFFSET(CBT_CREATEWNDW, lpcs)); /* CREATESTRUCTW * */
-    ok(FIELD_OFFSET(CBT_CREATEWNDW, hwndInsertAfter) == 4,
-       "FIELD_OFFSET(CBT_CREATEWNDW, hwndInsertAfter) == %ld (expected 4)",
-       FIELD_OFFSET(CBT_CREATEWNDW, hwndInsertAfter)); /* HWND */
-    ok(sizeof(CBT_CREATEWNDW) == 8, "sizeof(CBT_CREATEWNDW) == %d (expected 8)", sizeof(CBT_CREATEWNDW));
-
-    /* CLIENTCREATESTRUCT */
-    ok(FIELD_OFFSET(CLIENTCREATESTRUCT, hWindowMenu) == 0,
-       "FIELD_OFFSET(CLIENTCREATESTRUCT, hWindowMenu) == %ld (expected 0)",
-       FIELD_OFFSET(CLIENTCREATESTRUCT, hWindowMenu)); /* HMENU */
-    ok(FIELD_OFFSET(CLIENTCREATESTRUCT, idFirstChild) == 4,
-       "FIELD_OFFSET(CLIENTCREATESTRUCT, idFirstChild) == %ld (expected 4)",
-       FIELD_OFFSET(CLIENTCREATESTRUCT, idFirstChild)); /* UINT */
-    ok(sizeof(CLIENTCREATESTRUCT) == 8, "sizeof(CLIENTCREATESTRUCT) == %d (expected 8)", sizeof(CLIENTCREATESTRUCT));
-
-    /* COMPAREITEMSTRUCT */
-    ok(FIELD_OFFSET(COMPAREITEMSTRUCT, CtlType) == 0,
-       "FIELD_OFFSET(COMPAREITEMSTRUCT, CtlType) == %ld (expected 0)",
-       FIELD_OFFSET(COMPAREITEMSTRUCT, CtlType)); /* UINT */
-    ok(FIELD_OFFSET(COMPAREITEMSTRUCT, CtlID) == 4,
-       "FIELD_OFFSET(COMPAREITEMSTRUCT, CtlID) == %ld (expected 4)",
-       FIELD_OFFSET(COMPAREITEMSTRUCT, CtlID)); /* UINT */
-    ok(FIELD_OFFSET(COMPAREITEMSTRUCT, hwndItem) == 8,
-       "FIELD_OFFSET(COMPAREITEMSTRUCT, hwndItem) == %ld (expected 8)",
-       FIELD_OFFSET(COMPAREITEMSTRUCT, hwndItem)); /* HWND */
-    ok(FIELD_OFFSET(COMPAREITEMSTRUCT, itemID1) == 12,
-       "FIELD_OFFSET(COMPAREITEMSTRUCT, itemID1) == %ld (expected 12)",
-       FIELD_OFFSET(COMPAREITEMSTRUCT, itemID1)); /* UINT */
-    ok(FIELD_OFFSET(COMPAREITEMSTRUCT, itemData1) == 16,
-       "FIELD_OFFSET(COMPAREITEMSTRUCT, itemData1) == %ld (expected 16)",
-       FIELD_OFFSET(COMPAREITEMSTRUCT, itemData1)); /* DWORD */
-    ok(FIELD_OFFSET(COMPAREITEMSTRUCT, itemID2) == 20,
-       "FIELD_OFFSET(COMPAREITEMSTRUCT, itemID2) == %ld (expected 20)",
-       FIELD_OFFSET(COMPAREITEMSTRUCT, itemID2)); /* UINT */
-    ok(FIELD_OFFSET(COMPAREITEMSTRUCT, itemData2) == 24,
-       "FIELD_OFFSET(COMPAREITEMSTRUCT, itemData2) == %ld (expected 24)",
-       FIELD_OFFSET(COMPAREITEMSTRUCT, itemData2)); /* DWORD */
-    ok(FIELD_OFFSET(COMPAREITEMSTRUCT, dwLocaleId) == 28,
-       "FIELD_OFFSET(COMPAREITEMSTRUCT, dwLocaleId) == %ld (expected 28)",
-       FIELD_OFFSET(COMPAREITEMSTRUCT, dwLocaleId)); /* DWORD */
-    ok(sizeof(COMPAREITEMSTRUCT) == 32, "sizeof(COMPAREITEMSTRUCT) == %d (expected 32)", sizeof(COMPAREITEMSTRUCT));
-
-    /* COPYDATASTRUCT */
-    ok(FIELD_OFFSET(COPYDATASTRUCT, dwData) == 0,
-       "FIELD_OFFSET(COPYDATASTRUCT, dwData) == %ld (expected 0)",
-       FIELD_OFFSET(COPYDATASTRUCT, dwData)); /* DWORD */
-    ok(FIELD_OFFSET(COPYDATASTRUCT, cbData) == 4,
-       "FIELD_OFFSET(COPYDATASTRUCT, cbData) == %ld (expected 4)",
-       FIELD_OFFSET(COPYDATASTRUCT, cbData)); /* DWORD */
-    ok(FIELD_OFFSET(COPYDATASTRUCT, lpData) == 8,
-       "FIELD_OFFSET(COPYDATASTRUCT, lpData) == %ld (expected 8)",
-       FIELD_OFFSET(COPYDATASTRUCT, lpData)); /* LPVOID */
-    ok(sizeof(COPYDATASTRUCT) == 12, "sizeof(COPYDATASTRUCT) == %d (expected 12)", sizeof(COPYDATASTRUCT));
-
-    /* CREATESTRUCTA */
-    ok(FIELD_OFFSET(CREATESTRUCTA, lpCreateParams) == 0,
-       "FIELD_OFFSET(CREATESTRUCTA, lpCreateParams) == %ld (expected 0)",
-       FIELD_OFFSET(CREATESTRUCTA, lpCreateParams)); /* LPVOID */
-    ok(FIELD_OFFSET(CREATESTRUCTA, hInstance) == 4,
-       "FIELD_OFFSET(CREATESTRUCTA, hInstance) == %ld (expected 4)",
-       FIELD_OFFSET(CREATESTRUCTA, hInstance)); /* HINSTANCE */
-    ok(FIELD_OFFSET(CREATESTRUCTA, hMenu) == 8,
-       "FIELD_OFFSET(CREATESTRUCTA, hMenu) == %ld (expected 8)",
-       FIELD_OFFSET(CREATESTRUCTA, hMenu)); /* HMENU */
-    ok(FIELD_OFFSET(CREATESTRUCTA, hwndParent) == 12,
-       "FIELD_OFFSET(CREATESTRUCTA, hwndParent) == %ld (expected 12)",
-       FIELD_OFFSET(CREATESTRUCTA, hwndParent)); /* HWND */
-    ok(FIELD_OFFSET(CREATESTRUCTA, cy) == 16,
-       "FIELD_OFFSET(CREATESTRUCTA, cy) == %ld (expected 16)",
-       FIELD_OFFSET(CREATESTRUCTA, cy)); /* INT */
-    ok(FIELD_OFFSET(CREATESTRUCTA, cx) == 20,
-       "FIELD_OFFSET(CREATESTRUCTA, cx) == %ld (expected 20)",
-       FIELD_OFFSET(CREATESTRUCTA, cx)); /* INT */
-    ok(FIELD_OFFSET(CREATESTRUCTA, y) == 24,
-       "FIELD_OFFSET(CREATESTRUCTA, y) == %ld (expected 24)",
-       FIELD_OFFSET(CREATESTRUCTA, y)); /* INT */
-    ok(FIELD_OFFSET(CREATESTRUCTA, x) == 28,
-       "FIELD_OFFSET(CREATESTRUCTA, x) == %ld (expected 28)",
-       FIELD_OFFSET(CREATESTRUCTA, x)); /* INT */
-    ok(FIELD_OFFSET(CREATESTRUCTA, style) == 32,
-       "FIELD_OFFSET(CREATESTRUCTA, style) == %ld (expected 32)",
-       FIELD_OFFSET(CREATESTRUCTA, style)); /* LONG */
-    ok(FIELD_OFFSET(CREATESTRUCTA, lpszName) == 36,
-       "FIELD_OFFSET(CREATESTRUCTA, lpszName) == %ld (expected 36)",
-       FIELD_OFFSET(CREATESTRUCTA, lpszName)); /* LPCSTR */
-    ok(FIELD_OFFSET(CREATESTRUCTA, lpszClass) == 40,
-       "FIELD_OFFSET(CREATESTRUCTA, lpszClass) == %ld (expected 40)",
-       FIELD_OFFSET(CREATESTRUCTA, lpszClass)); /* LPCSTR */
-    ok(FIELD_OFFSET(CREATESTRUCTA, dwExStyle) == 44,
-       "FIELD_OFFSET(CREATESTRUCTA, dwExStyle) == %ld (expected 44)",
-       FIELD_OFFSET(CREATESTRUCTA, dwExStyle)); /* DWORD */
-    ok(sizeof(CREATESTRUCTA) == 48, "sizeof(CREATESTRUCTA) == %d (expected 48)", sizeof(CREATESTRUCTA));
-
-    /* CREATESTRUCTW */
-    ok(FIELD_OFFSET(CREATESTRUCTW, lpCreateParams) == 0,
-       "FIELD_OFFSET(CREATESTRUCTW, lpCreateParams) == %ld (expected 0)",
-       FIELD_OFFSET(CREATESTRUCTW, lpCreateParams)); /* LPVOID */
-    ok(FIELD_OFFSET(CREATESTRUCTW, hInstance) == 4,
-       "FIELD_OFFSET(CREATESTRUCTW, hInstance) == %ld (expected 4)",
-       FIELD_OFFSET(CREATESTRUCTW, hInstance)); /* HINSTANCE */
-    ok(FIELD_OFFSET(CREATESTRUCTW, hMenu) == 8,
-       "FIELD_OFFSET(CREATESTRUCTW, hMenu) == %ld (expected 8)",
-       FIELD_OFFSET(CREATESTRUCTW, hMenu)); /* HMENU */
-    ok(FIELD_OFFSET(CREATESTRUCTW, hwndParent) == 12,
-       "FIELD_OFFSET(CREATESTRUCTW, hwndParent) == %ld (expected 12)",
-       FIELD_OFFSET(CREATESTRUCTW, hwndParent)); /* HWND */
-    ok(FIELD_OFFSET(CREATESTRUCTW, cy) == 16,
-       "FIELD_OFFSET(CREATESTRUCTW, cy) == %ld (expected 16)",
-       FIELD_OFFSET(CREATESTRUCTW, cy)); /* INT */
-    ok(FIELD_OFFSET(CREATESTRUCTW, cx) == 20,
-       "FIELD_OFFSET(CREATESTRUCTW, cx) == %ld (expected 20)",
-       FIELD_OFFSET(CREATESTRUCTW, cx)); /* INT */
-    ok(FIELD_OFFSET(CREATESTRUCTW, y) == 24,
-       "FIELD_OFFSET(CREATESTRUCTW, y) == %ld (expected 24)",
-       FIELD_OFFSET(CREATESTRUCTW, y)); /* INT */
-    ok(FIELD_OFFSET(CREATESTRUCTW, x) == 28,
-       "FIELD_OFFSET(CREATESTRUCTW, x) == %ld (expected 28)",
-       FIELD_OFFSET(CREATESTRUCTW, x)); /* INT */
-    ok(FIELD_OFFSET(CREATESTRUCTW, style) == 32,
-       "FIELD_OFFSET(CREATESTRUCTW, style) == %ld (expected 32)",
-       FIELD_OFFSET(CREATESTRUCTW, style)); /* LONG */
-    ok(FIELD_OFFSET(CREATESTRUCTW, lpszName) == 36,
-       "FIELD_OFFSET(CREATESTRUCTW, lpszName) == %ld (expected 36)",
-       FIELD_OFFSET(CREATESTRUCTW, lpszName)); /* LPCWSTR */
-    ok(FIELD_OFFSET(CREATESTRUCTW, lpszClass) == 40,
-       "FIELD_OFFSET(CREATESTRUCTW, lpszClass) == %ld (expected 40)",
-       FIELD_OFFSET(CREATESTRUCTW, lpszClass)); /* LPCWSTR */
-    ok(FIELD_OFFSET(CREATESTRUCTW, dwExStyle) == 44,
-       "FIELD_OFFSET(CREATESTRUCTW, dwExStyle) == %ld (expected 44)",
-       FIELD_OFFSET(CREATESTRUCTW, dwExStyle)); /* DWORD */
-    ok(sizeof(CREATESTRUCTW) == 48, "sizeof(CREATESTRUCTW) == %d (expected 48)", sizeof(CREATESTRUCTW));
-
-    /* CURSORINFO */
-    ok(FIELD_OFFSET(CURSORINFO, cbSize) == 0,
-       "FIELD_OFFSET(CURSORINFO, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(CURSORINFO, cbSize)); /* DWORD */
-    ok(FIELD_OFFSET(CURSORINFO, flags) == 4,
-       "FIELD_OFFSET(CURSORINFO, flags) == %ld (expected 4)",
-       FIELD_OFFSET(CURSORINFO, flags)); /* DWORD */
-    ok(FIELD_OFFSET(CURSORINFO, hCursor) == 8,
-       "FIELD_OFFSET(CURSORINFO, hCursor) == %ld (expected 8)",
-       FIELD_OFFSET(CURSORINFO, hCursor)); /* HCURSOR */
-    ok(FIELD_OFFSET(CURSORINFO, ptScreenPos) == 12,
-       "FIELD_OFFSET(CURSORINFO, ptScreenPos) == %ld (expected 12)",
-       FIELD_OFFSET(CURSORINFO, ptScreenPos)); /* POINT */
-    ok(sizeof(CURSORINFO) == 20, "sizeof(CURSORINFO) == %d (expected 20)", sizeof(CURSORINFO));
-
-    /* CWPRETSTRUCT */
-    ok(FIELD_OFFSET(CWPRETSTRUCT, lResult) == 0,
-       "FIELD_OFFSET(CWPRETSTRUCT, lResult) == %ld (expected 0)",
-       FIELD_OFFSET(CWPRETSTRUCT, lResult)); /* LRESULT */
-    ok(FIELD_OFFSET(CWPRETSTRUCT, lParam) == 4,
-       "FIELD_OFFSET(CWPRETSTRUCT, lParam) == %ld (expected 4)",
-       FIELD_OFFSET(CWPRETSTRUCT, lParam)); /* LPARAM */
-    ok(FIELD_OFFSET(CWPRETSTRUCT, wParam) == 8,
-       "FIELD_OFFSET(CWPRETSTRUCT, wParam) == %ld (expected 8)",
-       FIELD_OFFSET(CWPRETSTRUCT, wParam)); /* WPARAM */
-    ok(FIELD_OFFSET(CWPRETSTRUCT, message) == 12,
-       "FIELD_OFFSET(CWPRETSTRUCT, message) == %ld (expected 12)",
-       FIELD_OFFSET(CWPRETSTRUCT, message)); /* DWORD */
-    ok(FIELD_OFFSET(CWPRETSTRUCT, hwnd) == 16,
-       "FIELD_OFFSET(CWPRETSTRUCT, hwnd) == %ld (expected 16)",
-       FIELD_OFFSET(CWPRETSTRUCT, hwnd)); /* HWND */
-    ok(sizeof(CWPRETSTRUCT) == 20, "sizeof(CWPRETSTRUCT) == %d (expected 20)", sizeof(CWPRETSTRUCT));
-
-    /* CWPSTRUCT */
-    ok(FIELD_OFFSET(CWPSTRUCT, lParam) == 0,
-       "FIELD_OFFSET(CWPSTRUCT, lParam) == %ld (expected 0)",
-       FIELD_OFFSET(CWPSTRUCT, lParam)); /* LPARAM */
-    ok(FIELD_OFFSET(CWPSTRUCT, wParam) == 4,
-       "FIELD_OFFSET(CWPSTRUCT, wParam) == %ld (expected 4)",
-       FIELD_OFFSET(CWPSTRUCT, wParam)); /* WPARAM */
-    ok(FIELD_OFFSET(CWPSTRUCT, message) == 8,
-       "FIELD_OFFSET(CWPSTRUCT, message) == %ld (expected 8)",
-       FIELD_OFFSET(CWPSTRUCT, message)); /* UINT */
-    ok(FIELD_OFFSET(CWPSTRUCT, hwnd) == 12,
-       "FIELD_OFFSET(CWPSTRUCT, hwnd) == %ld (expected 12)",
-       FIELD_OFFSET(CWPSTRUCT, hwnd)); /* HWND */
-    ok(sizeof(CWPSTRUCT) == 16, "sizeof(CWPSTRUCT) == %d (expected 16)", sizeof(CWPSTRUCT));
-
-    /* DEBUGHOOKINFO */
-    ok(FIELD_OFFSET(DEBUGHOOKINFO, idThread) == 0,
-       "FIELD_OFFSET(DEBUGHOOKINFO, idThread) == %ld (expected 0)",
-       FIELD_OFFSET(DEBUGHOOKINFO, idThread)); /* DWORD */
-    ok(FIELD_OFFSET(DEBUGHOOKINFO, idThreadInstaller) == 4,
-       "FIELD_OFFSET(DEBUGHOOKINFO, idThreadInstaller) == %ld (expected 4)",
-       FIELD_OFFSET(DEBUGHOOKINFO, idThreadInstaller)); /* DWORD */
-    ok(FIELD_OFFSET(DEBUGHOOKINFO, lParam) == 8,
-       "FIELD_OFFSET(DEBUGHOOKINFO, lParam) == %ld (expected 8)",
-       FIELD_OFFSET(DEBUGHOOKINFO, lParam)); /* LPARAM */
-    ok(FIELD_OFFSET(DEBUGHOOKINFO, wParam) == 12,
-       "FIELD_OFFSET(DEBUGHOOKINFO, wParam) == %ld (expected 12)",
-       FIELD_OFFSET(DEBUGHOOKINFO, wParam)); /* WPARAM */
-    ok(FIELD_OFFSET(DEBUGHOOKINFO, code) == 16,
-       "FIELD_OFFSET(DEBUGHOOKINFO, code) == %ld (expected 16)",
-       FIELD_OFFSET(DEBUGHOOKINFO, code)); /* INT */
-    ok(sizeof(DEBUGHOOKINFO) == 20, "sizeof(DEBUGHOOKINFO) == %d (expected 20)", sizeof(DEBUGHOOKINFO));
-
-    /* DELETEITEMSTRUCT */
-    ok(FIELD_OFFSET(DELETEITEMSTRUCT, CtlType) == 0,
-       "FIELD_OFFSET(DELETEITEMSTRUCT, CtlType) == %ld (expected 0)",
-       FIELD_OFFSET(DELETEITEMSTRUCT, CtlType)); /* UINT */
-    ok(FIELD_OFFSET(DELETEITEMSTRUCT, CtlID) == 4,
-       "FIELD_OFFSET(DELETEITEMSTRUCT, CtlID) == %ld (expected 4)",
-       FIELD_OFFSET(DELETEITEMSTRUCT, CtlID)); /* UINT */
-    ok(FIELD_OFFSET(DELETEITEMSTRUCT, itemID) == 8,
-       "FIELD_OFFSET(DELETEITEMSTRUCT, itemID) == %ld (expected 8)",
-       FIELD_OFFSET(DELETEITEMSTRUCT, itemID)); /* UINT */
-    ok(FIELD_OFFSET(DELETEITEMSTRUCT, hwndItem) == 12,
-       "FIELD_OFFSET(DELETEITEMSTRUCT, hwndItem) == %ld (expected 12)",
-       FIELD_OFFSET(DELETEITEMSTRUCT, hwndItem)); /* HWND */
-    ok(FIELD_OFFSET(DELETEITEMSTRUCT, itemData) == 16,
-       "FIELD_OFFSET(DELETEITEMSTRUCT, itemData) == %ld (expected 16)",
-       FIELD_OFFSET(DELETEITEMSTRUCT, itemData)); /* DWORD */
-    ok(sizeof(DELETEITEMSTRUCT) == 20, "sizeof(DELETEITEMSTRUCT) == %d (expected 20)", sizeof(DELETEITEMSTRUCT));
-
-    /* DLGITEMTEMPLATE */
-    ok(FIELD_OFFSET(DLGITEMTEMPLATE, style) == 0,
-       "FIELD_OFFSET(DLGITEMTEMPLATE, style) == %ld (expected 0)",
-       FIELD_OFFSET(DLGITEMTEMPLATE, style)); /* DWORD */
-    ok(FIELD_OFFSET(DLGITEMTEMPLATE, dwExtendedStyle) == 4,
-       "FIELD_OFFSET(DLGITEMTEMPLATE, dwExtendedStyle) == %ld (expected 4)",
-       FIELD_OFFSET(DLGITEMTEMPLATE, dwExtendedStyle)); /* DWORD */
-    ok(FIELD_OFFSET(DLGITEMTEMPLATE, x) == 8,
-       "FIELD_OFFSET(DLGITEMTEMPLATE, x) == %ld (expected 8)",
-       FIELD_OFFSET(DLGITEMTEMPLATE, x)); /* short */
-    ok(FIELD_OFFSET(DLGITEMTEMPLATE, y) == 10,
-       "FIELD_OFFSET(DLGITEMTEMPLATE, y) == %ld (expected 10)",
-       FIELD_OFFSET(DLGITEMTEMPLATE, y)); /* short */
-    ok(FIELD_OFFSET(DLGITEMTEMPLATE, cx) == 12,
-       "FIELD_OFFSET(DLGITEMTEMPLATE, cx) == %ld (expected 12)",
-       FIELD_OFFSET(DLGITEMTEMPLATE, cx)); /* short */
-    ok(FIELD_OFFSET(DLGITEMTEMPLATE, cy) == 14,
-       "FIELD_OFFSET(DLGITEMTEMPLATE, cy) == %ld (expected 14)",
-       FIELD_OFFSET(DLGITEMTEMPLATE, cy)); /* short */
-    ok(FIELD_OFFSET(DLGITEMTEMPLATE, id) == 16,
-       "FIELD_OFFSET(DLGITEMTEMPLATE, id) == %ld (expected 16)",
-       FIELD_OFFSET(DLGITEMTEMPLATE, id)); /* WORD */
-    ok(sizeof(DLGITEMTEMPLATE) == 18, "sizeof(DLGITEMTEMPLATE) == %d (expected 18)", sizeof(DLGITEMTEMPLATE));
-
-    /* DLGTEMPLATE */
-    ok(FIELD_OFFSET(DLGTEMPLATE, style) == 0,
-       "FIELD_OFFSET(DLGTEMPLATE, style) == %ld (expected 0)",
-       FIELD_OFFSET(DLGTEMPLATE, style)); /* DWORD */
-    ok(FIELD_OFFSET(DLGTEMPLATE, dwExtendedStyle) == 4,
-       "FIELD_OFFSET(DLGTEMPLATE, dwExtendedStyle) == %ld (expected 4)",
-       FIELD_OFFSET(DLGTEMPLATE, dwExtendedStyle)); /* DWORD */
-    ok(FIELD_OFFSET(DLGTEMPLATE, cdit) == 8,
-       "FIELD_OFFSET(DLGTEMPLATE, cdit) == %ld (expected 8)",
-       FIELD_OFFSET(DLGTEMPLATE, cdit)); /* WORD */
-    ok(FIELD_OFFSET(DLGTEMPLATE, x) == 10,
-       "FIELD_OFFSET(DLGTEMPLATE, x) == %ld (expected 10)",
-       FIELD_OFFSET(DLGTEMPLATE, x)); /* short */
-    ok(FIELD_OFFSET(DLGTEMPLATE, y) == 12,
-       "FIELD_OFFSET(DLGTEMPLATE, y) == %ld (expected 12)",
-       FIELD_OFFSET(DLGTEMPLATE, y)); /* short */
-    ok(FIELD_OFFSET(DLGTEMPLATE, cx) == 14,
-       "FIELD_OFFSET(DLGTEMPLATE, cx) == %ld (expected 14)",
-       FIELD_OFFSET(DLGTEMPLATE, cx)); /* short */
-    ok(FIELD_OFFSET(DLGTEMPLATE, cy) == 16,
-       "FIELD_OFFSET(DLGTEMPLATE, cy) == %ld (expected 16)",
-       FIELD_OFFSET(DLGTEMPLATE, cy)); /* short */
-    ok(sizeof(DLGTEMPLATE) == 18, "sizeof(DLGTEMPLATE) == %d (expected 18)", sizeof(DLGTEMPLATE));
-
-    /* DRAWITEMSTRUCT */
-    ok(FIELD_OFFSET(DRAWITEMSTRUCT, CtlType) == 0,
-       "FIELD_OFFSET(DRAWITEMSTRUCT, CtlType) == %ld (expected 0)",
-       FIELD_OFFSET(DRAWITEMSTRUCT, CtlType)); /* UINT */
-    ok(FIELD_OFFSET(DRAWITEMSTRUCT, CtlID) == 4,
-       "FIELD_OFFSET(DRAWITEMSTRUCT, CtlID) == %ld (expected 4)",
-       FIELD_OFFSET(DRAWITEMSTRUCT, CtlID)); /* UINT */
-    ok(FIELD_OFFSET(DRAWITEMSTRUCT, itemID) == 8,
-       "FIELD_OFFSET(DRAWITEMSTRUCT, itemID) == %ld (expected 8)",
-       FIELD_OFFSET(DRAWITEMSTRUCT, itemID)); /* UINT */
-    ok(FIELD_OFFSET(DRAWITEMSTRUCT, itemAction) == 12,
-       "FIELD_OFFSET(DRAWITEMSTRUCT, itemAction) == %ld (expected 12)",
-       FIELD_OFFSET(DRAWITEMSTRUCT, itemAction)); /* UINT */
-    ok(FIELD_OFFSET(DRAWITEMSTRUCT, itemState) == 16,
-       "FIELD_OFFSET(DRAWITEMSTRUCT, itemState) == %ld (expected 16)",
-       FIELD_OFFSET(DRAWITEMSTRUCT, itemState)); /* UINT */
-    ok(FIELD_OFFSET(DRAWITEMSTRUCT, hwndItem) == 20,
-       "FIELD_OFFSET(DRAWITEMSTRUCT, hwndItem) == %ld (expected 20)",
-       FIELD_OFFSET(DRAWITEMSTRUCT, hwndItem)); /* HWND */
-    ok(FIELD_OFFSET(DRAWITEMSTRUCT, hDC) == 24,
-       "FIELD_OFFSET(DRAWITEMSTRUCT, hDC) == %ld (expected 24)",
-       FIELD_OFFSET(DRAWITEMSTRUCT, hDC)); /* HDC */
-    ok(FIELD_OFFSET(DRAWITEMSTRUCT, rcItem) == 28,
-       "FIELD_OFFSET(DRAWITEMSTRUCT, rcItem) == %ld (expected 28)",
-       FIELD_OFFSET(DRAWITEMSTRUCT, rcItem)); /* RECT */
-    ok(FIELD_OFFSET(DRAWITEMSTRUCT, itemData) == 44,
-       "FIELD_OFFSET(DRAWITEMSTRUCT, itemData) == %ld (expected 44)",
-       FIELD_OFFSET(DRAWITEMSTRUCT, itemData)); /* DWORD */
-    ok(sizeof(DRAWITEMSTRUCT) == 48, "sizeof(DRAWITEMSTRUCT) == %d (expected 48)", sizeof(DRAWITEMSTRUCT));
-
-    /* DRAWTEXTPARAMS */
-    ok(FIELD_OFFSET(DRAWTEXTPARAMS, cbSize) == 0,
-       "FIELD_OFFSET(DRAWTEXTPARAMS, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(DRAWTEXTPARAMS, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(DRAWTEXTPARAMS, iTabLength) == 4,
-       "FIELD_OFFSET(DRAWTEXTPARAMS, iTabLength) == %ld (expected 4)",
-       FIELD_OFFSET(DRAWTEXTPARAMS, iTabLength)); /* INT */
-    ok(FIELD_OFFSET(DRAWTEXTPARAMS, iLeftMargin) == 8,
-       "FIELD_OFFSET(DRAWTEXTPARAMS, iLeftMargin) == %ld (expected 8)",
-       FIELD_OFFSET(DRAWTEXTPARAMS, iLeftMargin)); /* INT */
-    ok(FIELD_OFFSET(DRAWTEXTPARAMS, iRightMargin) == 12,
-       "FIELD_OFFSET(DRAWTEXTPARAMS, iRightMargin) == %ld (expected 12)",
-       FIELD_OFFSET(DRAWTEXTPARAMS, iRightMargin)); /* INT */
-    ok(FIELD_OFFSET(DRAWTEXTPARAMS, uiLengthDrawn) == 16,
-       "FIELD_OFFSET(DRAWTEXTPARAMS, uiLengthDrawn) == %ld (expected 16)",
-       FIELD_OFFSET(DRAWTEXTPARAMS, uiLengthDrawn)); /* UINT */
-    ok(sizeof(DRAWTEXTPARAMS) == 20, "sizeof(DRAWTEXTPARAMS) == %d (expected 20)", sizeof(DRAWTEXTPARAMS));
-
-    /* EVENTMSG */
-    ok(FIELD_OFFSET(EVENTMSG, message) == 0,
-       "FIELD_OFFSET(EVENTMSG, message) == %ld (expected 0)",
-       FIELD_OFFSET(EVENTMSG, message)); /* UINT */
-    ok(FIELD_OFFSET(EVENTMSG, paramL) == 4,
-       "FIELD_OFFSET(EVENTMSG, paramL) == %ld (expected 4)",
-       FIELD_OFFSET(EVENTMSG, paramL)); /* UINT */
-    ok(FIELD_OFFSET(EVENTMSG, paramH) == 8,
-       "FIELD_OFFSET(EVENTMSG, paramH) == %ld (expected 8)",
-       FIELD_OFFSET(EVENTMSG, paramH)); /* UINT */
-    ok(FIELD_OFFSET(EVENTMSG, time) == 12,
-       "FIELD_OFFSET(EVENTMSG, time) == %ld (expected 12)",
-       FIELD_OFFSET(EVENTMSG, time)); /* DWORD */
-    ok(FIELD_OFFSET(EVENTMSG, hwnd) == 16,
-       "FIELD_OFFSET(EVENTMSG, hwnd) == %ld (expected 16)",
-       FIELD_OFFSET(EVENTMSG, hwnd)); /* HWND */
-    ok(sizeof(EVENTMSG) == 20, "sizeof(EVENTMSG) == %d (expected 20)", sizeof(EVENTMSG));
-
-    /* FILTERKEYS */
-    ok(FIELD_OFFSET(FILTERKEYS, cbSize) == 0,
-       "FIELD_OFFSET(FILTERKEYS, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(FILTERKEYS, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(FILTERKEYS, dwFlags) == 4,
-       "FIELD_OFFSET(FILTERKEYS, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(FILTERKEYS, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(FILTERKEYS, iWaitMSec) == 8,
-       "FIELD_OFFSET(FILTERKEYS, iWaitMSec) == %ld (expected 8)",
-       FIELD_OFFSET(FILTERKEYS, iWaitMSec)); /* DWORD */
-    ok(FIELD_OFFSET(FILTERKEYS, iDelayMSec) == 12,
-       "FIELD_OFFSET(FILTERKEYS, iDelayMSec) == %ld (expected 12)",
-       FIELD_OFFSET(FILTERKEYS, iDelayMSec)); /* DWORD */
-    ok(FIELD_OFFSET(FILTERKEYS, iRepeatMSec) == 16,
-       "FIELD_OFFSET(FILTERKEYS, iRepeatMSec) == %ld (expected 16)",
-       FIELD_OFFSET(FILTERKEYS, iRepeatMSec)); /* DWORD */
-    ok(FIELD_OFFSET(FILTERKEYS, iBounceMSec) == 20,
-       "FIELD_OFFSET(FILTERKEYS, iBounceMSec) == %ld (expected 20)",
-       FIELD_OFFSET(FILTERKEYS, iBounceMSec)); /* DWORD */
-    ok(sizeof(FILTERKEYS) == 24, "sizeof(FILTERKEYS) == %d (expected 24)", sizeof(FILTERKEYS));
-
-    /* HARDWAREHOOKSTRUCT */
-    ok(FIELD_OFFSET(HARDWAREHOOKSTRUCT, hWnd) == 0,
-       "FIELD_OFFSET(HARDWAREHOOKSTRUCT, hWnd) == %ld (expected 0)",
-       FIELD_OFFSET(HARDWAREHOOKSTRUCT, hWnd)); /* HWND */
-    ok(FIELD_OFFSET(HARDWAREHOOKSTRUCT, wMessage) == 4,
-       "FIELD_OFFSET(HARDWAREHOOKSTRUCT, wMessage) == %ld (expected 4)",
-       FIELD_OFFSET(HARDWAREHOOKSTRUCT, wMessage)); /* UINT */
-    ok(FIELD_OFFSET(HARDWAREHOOKSTRUCT, wParam) == 8,
-       "FIELD_OFFSET(HARDWAREHOOKSTRUCT, wParam) == %ld (expected 8)",
-       FIELD_OFFSET(HARDWAREHOOKSTRUCT, wParam)); /* WPARAM */
-    ok(FIELD_OFFSET(HARDWAREHOOKSTRUCT, lParam) == 12,
-       "FIELD_OFFSET(HARDWAREHOOKSTRUCT, lParam) == %ld (expected 12)",
-       FIELD_OFFSET(HARDWAREHOOKSTRUCT, lParam)); /* LPARAM */
-    ok(sizeof(HARDWAREHOOKSTRUCT) == 16, "sizeof(HARDWAREHOOKSTRUCT) == %d (expected 16)", sizeof(HARDWAREHOOKSTRUCT));
-
-    /* HARDWAREINPUT */
-    ok(FIELD_OFFSET(HARDWAREINPUT, uMsg) == 0,
-       "FIELD_OFFSET(HARDWAREINPUT, uMsg) == %ld (expected 0)",
-       FIELD_OFFSET(HARDWAREINPUT, uMsg)); /* DWORD */
-    ok(FIELD_OFFSET(HARDWAREINPUT, wParamL) == 4,
-       "FIELD_OFFSET(HARDWAREINPUT, wParamL) == %ld (expected 4)",
-       FIELD_OFFSET(HARDWAREINPUT, wParamL)); /* WORD */
-    ok(FIELD_OFFSET(HARDWAREINPUT, wParamH) == 6,
-       "FIELD_OFFSET(HARDWAREINPUT, wParamH) == %ld (expected 6)",
-       FIELD_OFFSET(HARDWAREINPUT, wParamH)); /* WORD */
-    ok(sizeof(HARDWAREINPUT) == 8, "sizeof(HARDWAREINPUT) == %d (expected 8)", sizeof(HARDWAREINPUT));
-
-    /* HELPINFO */
-    ok(FIELD_OFFSET(HELPINFO, cbSize) == 0,
-       "FIELD_OFFSET(HELPINFO, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(HELPINFO, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(HELPINFO, iContextType) == 4,
-       "FIELD_OFFSET(HELPINFO, iContextType) == %ld (expected 4)",
-       FIELD_OFFSET(HELPINFO, iContextType)); /* INT */
-    ok(FIELD_OFFSET(HELPINFO, iCtrlId) == 8,
-       "FIELD_OFFSET(HELPINFO, iCtrlId) == %ld (expected 8)",
-       FIELD_OFFSET(HELPINFO, iCtrlId)); /* INT */
-    ok(FIELD_OFFSET(HELPINFO, hItemHandle) == 12,
-       "FIELD_OFFSET(HELPINFO, hItemHandle) == %ld (expected 12)",
-       FIELD_OFFSET(HELPINFO, hItemHandle)); /* HANDLE */
-    ok(FIELD_OFFSET(HELPINFO, dwContextId) == 16,
-       "FIELD_OFFSET(HELPINFO, dwContextId) == %ld (expected 16)",
-       FIELD_OFFSET(HELPINFO, dwContextId)); /* DWORD */
-    ok(FIELD_OFFSET(HELPINFO, MousePos) == 20,
-       "FIELD_OFFSET(HELPINFO, MousePos) == %ld (expected 20)",
-       FIELD_OFFSET(HELPINFO, MousePos)); /* POINT */
-    ok(sizeof(HELPINFO) == 28, "sizeof(HELPINFO) == %d (expected 28)", sizeof(HELPINFO));
-
-    /* HELPWININFOA */
-    ok(FIELD_OFFSET(HELPWININFOA, wStructSize) == 0,
-       "FIELD_OFFSET(HELPWININFOA, wStructSize) == %ld (expected 0)",
-       FIELD_OFFSET(HELPWININFOA, wStructSize)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOA, x) == 4,
-       "FIELD_OFFSET(HELPWININFOA, x) == %ld (expected 4)",
-       FIELD_OFFSET(HELPWININFOA, x)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOA, y) == 8,
-       "FIELD_OFFSET(HELPWININFOA, y) == %ld (expected 8)",
-       FIELD_OFFSET(HELPWININFOA, y)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOA, dx) == 12,
-       "FIELD_OFFSET(HELPWININFOA, dx) == %ld (expected 12)",
-       FIELD_OFFSET(HELPWININFOA, dx)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOA, dy) == 16,
-       "FIELD_OFFSET(HELPWININFOA, dy) == %ld (expected 16)",
-       FIELD_OFFSET(HELPWININFOA, dy)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOA, wMax) == 20,
-       "FIELD_OFFSET(HELPWININFOA, wMax) == %ld (expected 20)",
-       FIELD_OFFSET(HELPWININFOA, wMax)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOA, rgchMember) == 24,
-       "FIELD_OFFSET(HELPWININFOA, rgchMember) == %ld (expected 24)",
-       FIELD_OFFSET(HELPWININFOA, rgchMember)); /* CHAR[2] */
-    ok(sizeof(HELPWININFOA) == 28, "sizeof(HELPWININFOA) == %d (expected 28)", sizeof(HELPWININFOA));
-
-    /* HELPWININFOW */
-    ok(FIELD_OFFSET(HELPWININFOW, wStructSize) == 0,
-       "FIELD_OFFSET(HELPWININFOW, wStructSize) == %ld (expected 0)",
-       FIELD_OFFSET(HELPWININFOW, wStructSize)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOW, x) == 4,
-       "FIELD_OFFSET(HELPWININFOW, x) == %ld (expected 4)",
-       FIELD_OFFSET(HELPWININFOW, x)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOW, y) == 8,
-       "FIELD_OFFSET(HELPWININFOW, y) == %ld (expected 8)",
-       FIELD_OFFSET(HELPWININFOW, y)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOW, dx) == 12,
-       "FIELD_OFFSET(HELPWININFOW, dx) == %ld (expected 12)",
-       FIELD_OFFSET(HELPWININFOW, dx)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOW, dy) == 16,
-       "FIELD_OFFSET(HELPWININFOW, dy) == %ld (expected 16)",
-       FIELD_OFFSET(HELPWININFOW, dy)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOW, wMax) == 20,
-       "FIELD_OFFSET(HELPWININFOW, wMax) == %ld (expected 20)",
-       FIELD_OFFSET(HELPWININFOW, wMax)); /* int */
-    ok(FIELD_OFFSET(HELPWININFOW, rgchMember) == 24,
-       "FIELD_OFFSET(HELPWININFOW, rgchMember) == %ld (expected 24)",
-       FIELD_OFFSET(HELPWININFOW, rgchMember)); /* WCHAR[2] */
-    ok(sizeof(HELPWININFOW) == 28, "sizeof(HELPWININFOW) == %d (expected 28)", sizeof(HELPWININFOW));
-
-    /* HIGHCONTRASTA */
-    ok(FIELD_OFFSET(HIGHCONTRASTA, cbSize) == 0,
-       "FIELD_OFFSET(HIGHCONTRASTA, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(HIGHCONTRASTA, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(HIGHCONTRASTA, dwFlags) == 4,
-       "FIELD_OFFSET(HIGHCONTRASTA, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(HIGHCONTRASTA, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(HIGHCONTRASTA, lpszDefaultScheme) == 8,
-       "FIELD_OFFSET(HIGHCONTRASTA, lpszDefaultScheme) == %ld (expected 8)",
-       FIELD_OFFSET(HIGHCONTRASTA, lpszDefaultScheme)); /* LPSTR */
-    ok(sizeof(HIGHCONTRASTA) == 12, "sizeof(HIGHCONTRASTA) == %d (expected 12)", sizeof(HIGHCONTRASTA));
-
-    /* HIGHCONTRASTW */
-    ok(FIELD_OFFSET(HIGHCONTRASTW, cbSize) == 0,
-       "FIELD_OFFSET(HIGHCONTRASTW, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(HIGHCONTRASTW, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(HIGHCONTRASTW, dwFlags) == 4,
-       "FIELD_OFFSET(HIGHCONTRASTW, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(HIGHCONTRASTW, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(HIGHCONTRASTW, lpszDefaultScheme) == 8,
-       "FIELD_OFFSET(HIGHCONTRASTW, lpszDefaultScheme) == %ld (expected 8)",
-       FIELD_OFFSET(HIGHCONTRASTW, lpszDefaultScheme)); /* LPWSTR */
-    ok(sizeof(HIGHCONTRASTW) == 12, "sizeof(HIGHCONTRASTW) == %d (expected 12)", sizeof(HIGHCONTRASTW));
-
-    /* ICONINFO */
-    ok(FIELD_OFFSET(ICONINFO, fIcon) == 0,
-       "FIELD_OFFSET(ICONINFO, fIcon) == %ld (expected 0)",
-       FIELD_OFFSET(ICONINFO, fIcon)); /* BOOL */
-    ok(FIELD_OFFSET(ICONINFO, xHotspot) == 4,
-       "FIELD_OFFSET(ICONINFO, xHotspot) == %ld (expected 4)",
-       FIELD_OFFSET(ICONINFO, xHotspot)); /* DWORD */
-    ok(FIELD_OFFSET(ICONINFO, yHotspot) == 8,
-       "FIELD_OFFSET(ICONINFO, yHotspot) == %ld (expected 8)",
-       FIELD_OFFSET(ICONINFO, yHotspot)); /* DWORD */
-    ok(FIELD_OFFSET(ICONINFO, hbmMask) == 12,
-       "FIELD_OFFSET(ICONINFO, hbmMask) == %ld (expected 12)",
-       FIELD_OFFSET(ICONINFO, hbmMask)); /* HBITMAP */
-    ok(FIELD_OFFSET(ICONINFO, hbmColor) == 16,
-       "FIELD_OFFSET(ICONINFO, hbmColor) == %ld (expected 16)",
-       FIELD_OFFSET(ICONINFO, hbmColor)); /* HBITMAP */
-    ok(sizeof(ICONINFO) == 20, "sizeof(ICONINFO) == %d (expected 20)", sizeof(ICONINFO));
-
-    /* KBDLLHOOKSTRUCT */
-    ok(FIELD_OFFSET(KBDLLHOOKSTRUCT, vkCode) == 0,
-       "FIELD_OFFSET(KBDLLHOOKSTRUCT, vkCode) == %ld (expected 0)",
-       FIELD_OFFSET(KBDLLHOOKSTRUCT, vkCode)); /* DWORD */
-    ok(FIELD_OFFSET(KBDLLHOOKSTRUCT, scanCode) == 4,
-       "FIELD_OFFSET(KBDLLHOOKSTRUCT, scanCode) == %ld (expected 4)",
-       FIELD_OFFSET(KBDLLHOOKSTRUCT, scanCode)); /* DWORD */
-    ok(FIELD_OFFSET(KBDLLHOOKSTRUCT, flags) == 8,
-       "FIELD_OFFSET(KBDLLHOOKSTRUCT, flags) == %ld (expected 8)",
-       FIELD_OFFSET(KBDLLHOOKSTRUCT, flags)); /* DWORD */
-    ok(FIELD_OFFSET(KBDLLHOOKSTRUCT, time) == 12,
-       "FIELD_OFFSET(KBDLLHOOKSTRUCT, time) == %ld (expected 12)",
-       FIELD_OFFSET(KBDLLHOOKSTRUCT, time)); /* DWORD */
-    ok(FIELD_OFFSET(KBDLLHOOKSTRUCT, dwExtraInfo) == 16,
-       "FIELD_OFFSET(KBDLLHOOKSTRUCT, dwExtraInfo) == %ld (expected 16)",
-       FIELD_OFFSET(KBDLLHOOKSTRUCT, dwExtraInfo)); /* ULONG_PTR */
-    ok(sizeof(KBDLLHOOKSTRUCT) == 20, "sizeof(KBDLLHOOKSTRUCT) == %d (expected 20)", sizeof(KBDLLHOOKSTRUCT));
-
-    /* KEYBDINPUT */
-    ok(FIELD_OFFSET(KEYBDINPUT, wVk) == 0,
-       "FIELD_OFFSET(KEYBDINPUT, wVk) == %ld (expected 0)",
-       FIELD_OFFSET(KEYBDINPUT, wVk)); /* WORD */
-    ok(FIELD_OFFSET(KEYBDINPUT, wScan) == 2,
-       "FIELD_OFFSET(KEYBDINPUT, wScan) == %ld (expected 2)",
-       FIELD_OFFSET(KEYBDINPUT, wScan)); /* WORD */
-    ok(FIELD_OFFSET(KEYBDINPUT, dwFlags) == 4,
-       "FIELD_OFFSET(KEYBDINPUT, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(KEYBDINPUT, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(KEYBDINPUT, time) == 8,
-       "FIELD_OFFSET(KEYBDINPUT, time) == %ld (expected 8)",
-       FIELD_OFFSET(KEYBDINPUT, time)); /* DWORD */
-    ok(FIELD_OFFSET(KEYBDINPUT, dwExtraInfo) == 12,
-       "FIELD_OFFSET(KEYBDINPUT, dwExtraInfo) == %ld (expected 12)",
-       FIELD_OFFSET(KEYBDINPUT, dwExtraInfo)); /* ULONG_PTR */
-    ok(sizeof(KEYBDINPUT) == 16, "sizeof(KEYBDINPUT) == %d (expected 16)", sizeof(KEYBDINPUT));
-
-    /* MDICREATESTRUCTA */
-    ok(FIELD_OFFSET(MDICREATESTRUCTA, szClass) == 0,
-       "FIELD_OFFSET(MDICREATESTRUCTA, szClass) == %ld (expected 0)",
-       FIELD_OFFSET(MDICREATESTRUCTA, szClass)); /* LPCSTR */
-    ok(FIELD_OFFSET(MDICREATESTRUCTA, szTitle) == 4,
-       "FIELD_OFFSET(MDICREATESTRUCTA, szTitle) == %ld (expected 4)",
-       FIELD_OFFSET(MDICREATESTRUCTA, szTitle)); /* LPCSTR */
-    ok(FIELD_OFFSET(MDICREATESTRUCTA, hOwner) == 8,
-       "FIELD_OFFSET(MDICREATESTRUCTA, hOwner) == %ld (expected 8)",
-       FIELD_OFFSET(MDICREATESTRUCTA, hOwner)); /* HINSTANCE */
-    ok(FIELD_OFFSET(MDICREATESTRUCTA, x) == 12,
-       "FIELD_OFFSET(MDICREATESTRUCTA, x) == %ld (expected 12)",
-       FIELD_OFFSET(MDICREATESTRUCTA, x)); /* INT */
-    ok(FIELD_OFFSET(MDICREATESTRUCTA, y) == 16,
-       "FIELD_OFFSET(MDICREATESTRUCTA, y) == %ld (expected 16)",
-       FIELD_OFFSET(MDICREATESTRUCTA, y)); /* INT */
-    ok(FIELD_OFFSET(MDICREATESTRUCTA, cx) == 20,
-       "FIELD_OFFSET(MDICREATESTRUCTA, cx) == %ld (expected 20)",
-       FIELD_OFFSET(MDICREATESTRUCTA, cx)); /* INT */
-    ok(FIELD_OFFSET(MDICREATESTRUCTA, cy) == 24,
-       "FIELD_OFFSET(MDICREATESTRUCTA, cy) == %ld (expected 24)",
-       FIELD_OFFSET(MDICREATESTRUCTA, cy)); /* INT */
-    ok(FIELD_OFFSET(MDICREATESTRUCTA, style) == 28,
-       "FIELD_OFFSET(MDICREATESTRUCTA, style) == %ld (expected 28)",
-       FIELD_OFFSET(MDICREATESTRUCTA, style)); /* DWORD */
-    ok(FIELD_OFFSET(MDICREATESTRUCTA, lParam) == 32,
-       "FIELD_OFFSET(MDICREATESTRUCTA, lParam) == %ld (expected 32)",
-       FIELD_OFFSET(MDICREATESTRUCTA, lParam)); /* LPARAM */
-    ok(sizeof(MDICREATESTRUCTA) == 36, "sizeof(MDICREATESTRUCTA) == %d (expected 36)", sizeof(MDICREATESTRUCTA));
-
-    /* MDICREATESTRUCTW */
-    ok(FIELD_OFFSET(MDICREATESTRUCTW, szClass) == 0,
-       "FIELD_OFFSET(MDICREATESTRUCTW, szClass) == %ld (expected 0)",
-       FIELD_OFFSET(MDICREATESTRUCTW, szClass)); /* LPCWSTR */
-    ok(FIELD_OFFSET(MDICREATESTRUCTW, szTitle) == 4,
-       "FIELD_OFFSET(MDICREATESTRUCTW, szTitle) == %ld (expected 4)",
-       FIELD_OFFSET(MDICREATESTRUCTW, szTitle)); /* LPCWSTR */
-    ok(FIELD_OFFSET(MDICREATESTRUCTW, hOwner) == 8,
-       "FIELD_OFFSET(MDICREATESTRUCTW, hOwner) == %ld (expected 8)",
-       FIELD_OFFSET(MDICREATESTRUCTW, hOwner)); /* HINSTANCE */
-    ok(FIELD_OFFSET(MDICREATESTRUCTW, x) == 12,
-       "FIELD_OFFSET(MDICREATESTRUCTW, x) == %ld (expected 12)",
-       FIELD_OFFSET(MDICREATESTRUCTW, x)); /* INT */
-    ok(FIELD_OFFSET(MDICREATESTRUCTW, y) == 16,
-       "FIELD_OFFSET(MDICREATESTRUCTW, y) == %ld (expected 16)",
-       FIELD_OFFSET(MDICREATESTRUCTW, y)); /* INT */
-    ok(FIELD_OFFSET(MDICREATESTRUCTW, cx) == 20,
-       "FIELD_OFFSET(MDICREATESTRUCTW, cx) == %ld (expected 20)",
-       FIELD_OFFSET(MDICREATESTRUCTW, cx)); /* INT */
-    ok(FIELD_OFFSET(MDICREATESTRUCTW, cy) == 24,
-       "FIELD_OFFSET(MDICREATESTRUCTW, cy) == %ld (expected 24)",
-       FIELD_OFFSET(MDICREATESTRUCTW, cy)); /* INT */
-    ok(FIELD_OFFSET(MDICREATESTRUCTW, style) == 28,
-       "FIELD_OFFSET(MDICREATESTRUCTW, style) == %ld (expected 28)",
-       FIELD_OFFSET(MDICREATESTRUCTW, style)); /* DWORD */
-    ok(FIELD_OFFSET(MDICREATESTRUCTW, lParam) == 32,
-       "FIELD_OFFSET(MDICREATESTRUCTW, lParam) == %ld (expected 32)",
-       FIELD_OFFSET(MDICREATESTRUCTW, lParam)); /* LPARAM */
-    ok(sizeof(MDICREATESTRUCTW) == 36, "sizeof(MDICREATESTRUCTW) == %d (expected 36)", sizeof(MDICREATESTRUCTW));
-
-    /* MDINEXTMENU */
-    ok(FIELD_OFFSET(MDINEXTMENU, hmenuIn) == 0,
-       "FIELD_OFFSET(MDINEXTMENU, hmenuIn) == %ld (expected 0)",
-       FIELD_OFFSET(MDINEXTMENU, hmenuIn)); /* HMENU */
-    ok(FIELD_OFFSET(MDINEXTMENU, hmenuNext) == 4,
-       "FIELD_OFFSET(MDINEXTMENU, hmenuNext) == %ld (expected 4)",
-       FIELD_OFFSET(MDINEXTMENU, hmenuNext)); /* HMENU */
-    ok(FIELD_OFFSET(MDINEXTMENU, hwndNext) == 8,
-       "FIELD_OFFSET(MDINEXTMENU, hwndNext) == %ld (expected 8)",
-       FIELD_OFFSET(MDINEXTMENU, hwndNext)); /* HWND */
-    ok(sizeof(MDINEXTMENU) == 12, "sizeof(MDINEXTMENU) == %d (expected 12)", sizeof(MDINEXTMENU));
-
-    /* MEASUREITEMSTRUCT */
-    ok(FIELD_OFFSET(MEASUREITEMSTRUCT, CtlType) == 0,
-       "FIELD_OFFSET(MEASUREITEMSTRUCT, CtlType) == %ld (expected 0)",
-       FIELD_OFFSET(MEASUREITEMSTRUCT, CtlType)); /* UINT */
-    ok(FIELD_OFFSET(MEASUREITEMSTRUCT, CtlID) == 4,
-       "FIELD_OFFSET(MEASUREITEMSTRUCT, CtlID) == %ld (expected 4)",
-       FIELD_OFFSET(MEASUREITEMSTRUCT, CtlID)); /* UINT */
-    ok(FIELD_OFFSET(MEASUREITEMSTRUCT, itemID) == 8,
-       "FIELD_OFFSET(MEASUREITEMSTRUCT, itemID) == %ld (expected 8)",
-       FIELD_OFFSET(MEASUREITEMSTRUCT, itemID)); /* UINT */
-    ok(FIELD_OFFSET(MEASUREITEMSTRUCT, itemWidth) == 12,
-       "FIELD_OFFSET(MEASUREITEMSTRUCT, itemWidth) == %ld (expected 12)",
-       FIELD_OFFSET(MEASUREITEMSTRUCT, itemWidth)); /* UINT */
-    ok(FIELD_OFFSET(MEASUREITEMSTRUCT, itemHeight) == 16,
-       "FIELD_OFFSET(MEASUREITEMSTRUCT, itemHeight) == %ld (expected 16)",
-       FIELD_OFFSET(MEASUREITEMSTRUCT, itemHeight)); /* UINT */
-    ok(FIELD_OFFSET(MEASUREITEMSTRUCT, itemData) == 20,
-       "FIELD_OFFSET(MEASUREITEMSTRUCT, itemData) == %ld (expected 20)",
-       FIELD_OFFSET(MEASUREITEMSTRUCT, itemData)); /* DWORD */
-    ok(sizeof(MEASUREITEMSTRUCT) == 24, "sizeof(MEASUREITEMSTRUCT) == %d (expected 24)", sizeof(MEASUREITEMSTRUCT));
-
-    /* MENUINFO */
-    ok(FIELD_OFFSET(MENUINFO, cbSize) == 0,
-       "FIELD_OFFSET(MENUINFO, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(MENUINFO, cbSize)); /* DWORD */
-    ok(FIELD_OFFSET(MENUINFO, fMask) == 4,
-       "FIELD_OFFSET(MENUINFO, fMask) == %ld (expected 4)",
-       FIELD_OFFSET(MENUINFO, fMask)); /* DWORD */
-    ok(FIELD_OFFSET(MENUINFO, dwStyle) == 8,
-       "FIELD_OFFSET(MENUINFO, dwStyle) == %ld (expected 8)",
-       FIELD_OFFSET(MENUINFO, dwStyle)); /* DWORD */
-    ok(FIELD_OFFSET(MENUINFO, cyMax) == 12,
-       "FIELD_OFFSET(MENUINFO, cyMax) == %ld (expected 12)",
-       FIELD_OFFSET(MENUINFO, cyMax)); /* UINT */
-    ok(FIELD_OFFSET(MENUINFO, hbrBack) == 16,
-       "FIELD_OFFSET(MENUINFO, hbrBack) == %ld (expected 16)",
-       FIELD_OFFSET(MENUINFO, hbrBack)); /* HBRUSH */
-    ok(FIELD_OFFSET(MENUINFO, dwContextHelpID) == 20,
-       "FIELD_OFFSET(MENUINFO, dwContextHelpID) == %ld (expected 20)",
-       FIELD_OFFSET(MENUINFO, dwContextHelpID)); /* DWORD */
-    ok(FIELD_OFFSET(MENUINFO, dwMenuData) == 24,
-       "FIELD_OFFSET(MENUINFO, dwMenuData) == %ld (expected 24)",
-       FIELD_OFFSET(MENUINFO, dwMenuData)); /* DWORD */
-    ok(sizeof(MENUINFO) == 28, "sizeof(MENUINFO) == %d (expected 28)", sizeof(MENUINFO));
-
-    /* MENUITEMINFOA */
-    ok(FIELD_OFFSET(MENUITEMINFOA, cbSize) == 0,
-       "FIELD_OFFSET(MENUITEMINFOA, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(MENUITEMINFOA, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOA, fMask) == 4,
-       "FIELD_OFFSET(MENUITEMINFOA, fMask) == %ld (expected 4)",
-       FIELD_OFFSET(MENUITEMINFOA, fMask)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOA, fType) == 8,
-       "FIELD_OFFSET(MENUITEMINFOA, fType) == %ld (expected 8)",
-       FIELD_OFFSET(MENUITEMINFOA, fType)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOA, fState) == 12,
-       "FIELD_OFFSET(MENUITEMINFOA, fState) == %ld (expected 12)",
-       FIELD_OFFSET(MENUITEMINFOA, fState)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOA, wID) == 16,
-       "FIELD_OFFSET(MENUITEMINFOA, wID) == %ld (expected 16)",
-       FIELD_OFFSET(MENUITEMINFOA, wID)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOA, hSubMenu) == 20,
-       "FIELD_OFFSET(MENUITEMINFOA, hSubMenu) == %ld (expected 20)",
-       FIELD_OFFSET(MENUITEMINFOA, hSubMenu)); /* HMENU */
-    ok(FIELD_OFFSET(MENUITEMINFOA, hbmpChecked) == 24,
-       "FIELD_OFFSET(MENUITEMINFOA, hbmpChecked) == %ld (expected 24)",
-       FIELD_OFFSET(MENUITEMINFOA, hbmpChecked)); /* HBITMAP */
-    ok(FIELD_OFFSET(MENUITEMINFOA, hbmpUnchecked) == 28,
-       "FIELD_OFFSET(MENUITEMINFOA, hbmpUnchecked) == %ld (expected 28)",
-       FIELD_OFFSET(MENUITEMINFOA, hbmpUnchecked)); /* HBITMAP */
-    ok(FIELD_OFFSET(MENUITEMINFOA, dwItemData) == 32,
-       "FIELD_OFFSET(MENUITEMINFOA, dwItemData) == %ld (expected 32)",
-       FIELD_OFFSET(MENUITEMINFOA, dwItemData)); /* DWORD */
-    ok(FIELD_OFFSET(MENUITEMINFOA, dwTypeData) == 36,
-       "FIELD_OFFSET(MENUITEMINFOA, dwTypeData) == %ld (expected 36)",
-       FIELD_OFFSET(MENUITEMINFOA, dwTypeData)); /* LPSTR */
-    ok(FIELD_OFFSET(MENUITEMINFOA, cch) == 40,
-       "FIELD_OFFSET(MENUITEMINFOA, cch) == %ld (expected 40)",
-       FIELD_OFFSET(MENUITEMINFOA, cch)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOA, hbmpItem) == 44,
-       "FIELD_OFFSET(MENUITEMINFOA, hbmpItem) == %ld (expected 44)",
-       FIELD_OFFSET(MENUITEMINFOA, hbmpItem)); /* HBITMAP */
-    ok(sizeof(MENUITEMINFOA) == 48, "sizeof(MENUITEMINFOA) == %d (expected 48)", sizeof(MENUITEMINFOA));
-
-    /* MENUITEMINFOW */
-    ok(FIELD_OFFSET(MENUITEMINFOW, cbSize) == 0,
-       "FIELD_OFFSET(MENUITEMINFOW, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(MENUITEMINFOW, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOW, fMask) == 4,
-       "FIELD_OFFSET(MENUITEMINFOW, fMask) == %ld (expected 4)",
-       FIELD_OFFSET(MENUITEMINFOW, fMask)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOW, fType) == 8,
-       "FIELD_OFFSET(MENUITEMINFOW, fType) == %ld (expected 8)",
-       FIELD_OFFSET(MENUITEMINFOW, fType)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOW, fState) == 12,
-       "FIELD_OFFSET(MENUITEMINFOW, fState) == %ld (expected 12)",
-       FIELD_OFFSET(MENUITEMINFOW, fState)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOW, wID) == 16,
-       "FIELD_OFFSET(MENUITEMINFOW, wID) == %ld (expected 16)",
-       FIELD_OFFSET(MENUITEMINFOW, wID)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOW, hSubMenu) == 20,
-       "FIELD_OFFSET(MENUITEMINFOW, hSubMenu) == %ld (expected 20)",
-       FIELD_OFFSET(MENUITEMINFOW, hSubMenu)); /* HMENU */
-    ok(FIELD_OFFSET(MENUITEMINFOW, hbmpChecked) == 24,
-       "FIELD_OFFSET(MENUITEMINFOW, hbmpChecked) == %ld (expected 24)",
-       FIELD_OFFSET(MENUITEMINFOW, hbmpChecked)); /* HBITMAP */
-    ok(FIELD_OFFSET(MENUITEMINFOW, hbmpUnchecked) == 28,
-       "FIELD_OFFSET(MENUITEMINFOW, hbmpUnchecked) == %ld (expected 28)",
-       FIELD_OFFSET(MENUITEMINFOW, hbmpUnchecked)); /* HBITMAP */
-    ok(FIELD_OFFSET(MENUITEMINFOW, dwItemData) == 32,
-       "FIELD_OFFSET(MENUITEMINFOW, dwItemData) == %ld (expected 32)",
-       FIELD_OFFSET(MENUITEMINFOW, dwItemData)); /* DWORD */
-    ok(FIELD_OFFSET(MENUITEMINFOW, dwTypeData) == 36,
-       "FIELD_OFFSET(MENUITEMINFOW, dwTypeData) == %ld (expected 36)",
-       FIELD_OFFSET(MENUITEMINFOW, dwTypeData)); /* LPWSTR */
-    ok(FIELD_OFFSET(MENUITEMINFOW, cch) == 40,
-       "FIELD_OFFSET(MENUITEMINFOW, cch) == %ld (expected 40)",
-       FIELD_OFFSET(MENUITEMINFOW, cch)); /* UINT */
-    ok(FIELD_OFFSET(MENUITEMINFOW, hbmpItem) == 44,
-       "FIELD_OFFSET(MENUITEMINFOW, hbmpItem) == %ld (expected 44)",
-       FIELD_OFFSET(MENUITEMINFOW, hbmpItem)); /* HBITMAP */
-    ok(sizeof(MENUITEMINFOW) == 48, "sizeof(MENUITEMINFOW) == %d (expected 48)", sizeof(MENUITEMINFOW));
-
-    /* MENUITEMTEMPLATEHEADER */
-    ok(FIELD_OFFSET(MENUITEMTEMPLATEHEADER, versionNumber) == 0,
-       "FIELD_OFFSET(MENUITEMTEMPLATEHEADER, versionNumber) == %ld (expected 0)",
-       FIELD_OFFSET(MENUITEMTEMPLATEHEADER, versionNumber)); /* WORD */
-    ok(FIELD_OFFSET(MENUITEMTEMPLATEHEADER, offset) == 2,
-       "FIELD_OFFSET(MENUITEMTEMPLATEHEADER, offset) == %ld (expected 2)",
-       FIELD_OFFSET(MENUITEMTEMPLATEHEADER, offset)); /* WORD */
-    ok(sizeof(MENUITEMTEMPLATEHEADER) == 4, "sizeof(MENUITEMTEMPLATEHEADER) == %d (expected 4)", sizeof(MENUITEMTEMPLATEHEADER));
-
-    /* MINIMIZEDMETRICS */
-    ok(FIELD_OFFSET(MINIMIZEDMETRICS, cbSize) == 0,
-       "FIELD_OFFSET(MINIMIZEDMETRICS, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(MINIMIZEDMETRICS, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(MINIMIZEDMETRICS, iWidth) == 4,
-       "FIELD_OFFSET(MINIMIZEDMETRICS, iWidth) == %ld (expected 4)",
-       FIELD_OFFSET(MINIMIZEDMETRICS, iWidth)); /* int */
-    ok(FIELD_OFFSET(MINIMIZEDMETRICS, iHorzGap) == 8,
-       "FIELD_OFFSET(MINIMIZEDMETRICS, iHorzGap) == %ld (expected 8)",
-       FIELD_OFFSET(MINIMIZEDMETRICS, iHorzGap)); /* int */
-    ok(FIELD_OFFSET(MINIMIZEDMETRICS, iVertGap) == 12,
-       "FIELD_OFFSET(MINIMIZEDMETRICS, iVertGap) == %ld (expected 12)",
-       FIELD_OFFSET(MINIMIZEDMETRICS, iVertGap)); /* int */
-    ok(FIELD_OFFSET(MINIMIZEDMETRICS, iArrange) == 16,
-       "FIELD_OFFSET(MINIMIZEDMETRICS, iArrange) == %ld (expected 16)",
-       FIELD_OFFSET(MINIMIZEDMETRICS, iArrange)); /* int */
-    ok(sizeof(MINIMIZEDMETRICS) == 20, "sizeof(MINIMIZEDMETRICS) == %d (expected 20)", sizeof(MINIMIZEDMETRICS));
-
-    /* MINMAXINFO */
-    ok(FIELD_OFFSET(MINMAXINFO, ptReserved) == 0,
-       "FIELD_OFFSET(MINMAXINFO, ptReserved) == %ld (expected 0)",
-       FIELD_OFFSET(MINMAXINFO, ptReserved)); /* POINT */
-    ok(FIELD_OFFSET(MINMAXINFO, ptMaxSize) == 8,
-       "FIELD_OFFSET(MINMAXINFO, ptMaxSize) == %ld (expected 8)",
-       FIELD_OFFSET(MINMAXINFO, ptMaxSize)); /* POINT */
-    ok(FIELD_OFFSET(MINMAXINFO, ptMaxPosition) == 16,
-       "FIELD_OFFSET(MINMAXINFO, ptMaxPosition) == %ld (expected 16)",
-       FIELD_OFFSET(MINMAXINFO, ptMaxPosition)); /* POINT */
-    ok(FIELD_OFFSET(MINMAXINFO, ptMinTrackSize) == 24,
-       "FIELD_OFFSET(MINMAXINFO, ptMinTrackSize) == %ld (expected 24)",
-       FIELD_OFFSET(MINMAXINFO, ptMinTrackSize)); /* POINT */
-    ok(FIELD_OFFSET(MINMAXINFO, ptMaxTrackSize) == 32,
-       "FIELD_OFFSET(MINMAXINFO, ptMaxTrackSize) == %ld (expected 32)",
-       FIELD_OFFSET(MINMAXINFO, ptMaxTrackSize)); /* POINT */
-    ok(sizeof(MINMAXINFO) == 40, "sizeof(MINMAXINFO) == %d (expected 40)", sizeof(MINMAXINFO));
-
-    /* MONITORINFO */
-    ok(FIELD_OFFSET(MONITORINFO, cbSize) == 0,
-       "FIELD_OFFSET(MONITORINFO, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(MONITORINFO, cbSize)); /* DWORD */
-    ok(FIELD_OFFSET(MONITORINFO, rcMonitor) == 4,
-       "FIELD_OFFSET(MONITORINFO, rcMonitor) == %ld (expected 4)",
-       FIELD_OFFSET(MONITORINFO, rcMonitor)); /* RECT */
-    ok(FIELD_OFFSET(MONITORINFO, rcWork) == 20,
-       "FIELD_OFFSET(MONITORINFO, rcWork) == %ld (expected 20)",
-       FIELD_OFFSET(MONITORINFO, rcWork)); /* RECT */
-    ok(FIELD_OFFSET(MONITORINFO, dwFlags) == 36,
-       "FIELD_OFFSET(MONITORINFO, dwFlags) == %ld (expected 36)",
-       FIELD_OFFSET(MONITORINFO, dwFlags)); /* DWORD */
-    ok(sizeof(MONITORINFO) == 40, "sizeof(MONITORINFO) == %d (expected 40)", sizeof(MONITORINFO));
-
-    /* MOUSEHOOKSTRUCT */
-    ok(FIELD_OFFSET(MOUSEHOOKSTRUCT, pt) == 0,
-       "FIELD_OFFSET(MOUSEHOOKSTRUCT, pt) == %ld (expected 0)",
-       FIELD_OFFSET(MOUSEHOOKSTRUCT, pt)); /* POINT */
-    ok(FIELD_OFFSET(MOUSEHOOKSTRUCT, hwnd) == 8,
-       "FIELD_OFFSET(MOUSEHOOKSTRUCT, hwnd) == %ld (expected 8)",
-       FIELD_OFFSET(MOUSEHOOKSTRUCT, hwnd)); /* HWND */
-    ok(FIELD_OFFSET(MOUSEHOOKSTRUCT, wHitTestCode) == 12,
-       "FIELD_OFFSET(MOUSEHOOKSTRUCT, wHitTestCode) == %ld (expected 12)",
-       FIELD_OFFSET(MOUSEHOOKSTRUCT, wHitTestCode)); /* UINT */
-    ok(FIELD_OFFSET(MOUSEHOOKSTRUCT, dwExtraInfo) == 16,
-       "FIELD_OFFSET(MOUSEHOOKSTRUCT, dwExtraInfo) == %ld (expected 16)",
-       FIELD_OFFSET(MOUSEHOOKSTRUCT, dwExtraInfo)); /* DWORD */
-    ok(sizeof(MOUSEHOOKSTRUCT) == 20, "sizeof(MOUSEHOOKSTRUCT) == %d (expected 20)", sizeof(MOUSEHOOKSTRUCT));
-
-    /* MOUSEINPUT */
-    ok(FIELD_OFFSET(MOUSEINPUT, dx) == 0,
-       "FIELD_OFFSET(MOUSEINPUT, dx) == %ld (expected 0)",
-       FIELD_OFFSET(MOUSEINPUT, dx)); /* LONG */
-    ok(FIELD_OFFSET(MOUSEINPUT, dy) == 4,
-       "FIELD_OFFSET(MOUSEINPUT, dy) == %ld (expected 4)",
-       FIELD_OFFSET(MOUSEINPUT, dy)); /* LONG */
-    ok(FIELD_OFFSET(MOUSEINPUT, mouseData) == 8,
-       "FIELD_OFFSET(MOUSEINPUT, mouseData) == %ld (expected 8)",
-       FIELD_OFFSET(MOUSEINPUT, mouseData)); /* DWORD */
-    ok(FIELD_OFFSET(MOUSEINPUT, dwFlags) == 12,
-       "FIELD_OFFSET(MOUSEINPUT, dwFlags) == %ld (expected 12)",
-       FIELD_OFFSET(MOUSEINPUT, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(MOUSEINPUT, time) == 16,
-       "FIELD_OFFSET(MOUSEINPUT, time) == %ld (expected 16)",
-       FIELD_OFFSET(MOUSEINPUT, time)); /* DWORD */
-    ok(FIELD_OFFSET(MOUSEINPUT, dwExtraInfo) == 20,
-       "FIELD_OFFSET(MOUSEINPUT, dwExtraInfo) == %ld (expected 20)",
-       FIELD_OFFSET(MOUSEINPUT, dwExtraInfo)); /* ULONG_PTR */
-    ok(sizeof(MOUSEINPUT) == 24, "sizeof(MOUSEINPUT) == %d (expected 24)", sizeof(MOUSEINPUT));
-
-    /* MOUSEKEYS */
-    ok(FIELD_OFFSET(MOUSEKEYS, cbSize) == 0,
-       "FIELD_OFFSET(MOUSEKEYS, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(MOUSEKEYS, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(MOUSEKEYS, dwFlags) == 4,
-       "FIELD_OFFSET(MOUSEKEYS, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(MOUSEKEYS, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(MOUSEKEYS, iMaxSpeed) == 8,
-       "FIELD_OFFSET(MOUSEKEYS, iMaxSpeed) == %ld (expected 8)",
-       FIELD_OFFSET(MOUSEKEYS, iMaxSpeed)); /* DWORD */
-    ok(FIELD_OFFSET(MOUSEKEYS, iTimeToMaxSpeed) == 12,
-       "FIELD_OFFSET(MOUSEKEYS, iTimeToMaxSpeed) == %ld (expected 12)",
-       FIELD_OFFSET(MOUSEKEYS, iTimeToMaxSpeed)); /* DWORD */
-    ok(FIELD_OFFSET(MOUSEKEYS, iCtrlSpeed) == 16,
-       "FIELD_OFFSET(MOUSEKEYS, iCtrlSpeed) == %ld (expected 16)",
-       FIELD_OFFSET(MOUSEKEYS, iCtrlSpeed)); /* DWORD */
-    ok(FIELD_OFFSET(MOUSEKEYS, dwReserved1) == 20,
-       "FIELD_OFFSET(MOUSEKEYS, dwReserved1) == %ld (expected 20)",
-       FIELD_OFFSET(MOUSEKEYS, dwReserved1)); /* DWORD */
-    ok(FIELD_OFFSET(MOUSEKEYS, dwReserved2) == 24,
-       "FIELD_OFFSET(MOUSEKEYS, dwReserved2) == %ld (expected 24)",
-       FIELD_OFFSET(MOUSEKEYS, dwReserved2)); /* DWORD */
-    ok(sizeof(MOUSEKEYS) == 28, "sizeof(MOUSEKEYS) == %d (expected 28)", sizeof(MOUSEKEYS));
-
-    /* MSG */
-    ok(FIELD_OFFSET(MSG, hwnd) == 0,
-       "FIELD_OFFSET(MSG, hwnd) == %ld (expected 0)",
-       FIELD_OFFSET(MSG, hwnd)); /* HWND */
-    ok(FIELD_OFFSET(MSG, message) == 4,
-       "FIELD_OFFSET(MSG, message) == %ld (expected 4)",
-       FIELD_OFFSET(MSG, message)); /* UINT */
-    ok(FIELD_OFFSET(MSG, wParam) == 8,
-       "FIELD_OFFSET(MSG, wParam) == %ld (expected 8)",
-       FIELD_OFFSET(MSG, wParam)); /* WPARAM */
-    ok(FIELD_OFFSET(MSG, lParam) == 12,
-       "FIELD_OFFSET(MSG, lParam) == %ld (expected 12)",
-       FIELD_OFFSET(MSG, lParam)); /* LPARAM */
-    ok(FIELD_OFFSET(MSG, time) == 16,
-       "FIELD_OFFSET(MSG, time) == %ld (expected 16)",
-       FIELD_OFFSET(MSG, time)); /* DWORD */
-    ok(FIELD_OFFSET(MSG, pt) == 20,
-       "FIELD_OFFSET(MSG, pt) == %ld (expected 20)",
-       FIELD_OFFSET(MSG, pt)); /* POINT */
-    ok(sizeof(MSG) == 28, "sizeof(MSG) == %d (expected 28)", sizeof(MSG));
-
-    /* MSGBOXPARAMSA */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, cbSize) == 0,
-       "FIELD_OFFSET(MSGBOXPARAMSA, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(MSGBOXPARAMSA, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, hwndOwner) == 4,
-       "FIELD_OFFSET(MSGBOXPARAMSA, hwndOwner) == %ld (expected 4)",
-       FIELD_OFFSET(MSGBOXPARAMSA, hwndOwner)); /* HWND */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, hInstance) == 8,
-       "FIELD_OFFSET(MSGBOXPARAMSA, hInstance) == %ld (expected 8)",
-       FIELD_OFFSET(MSGBOXPARAMSA, hInstance)); /* HINSTANCE */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, lpszText) == 12,
-       "FIELD_OFFSET(MSGBOXPARAMSA, lpszText) == %ld (expected 12)",
-       FIELD_OFFSET(MSGBOXPARAMSA, lpszText)); /* LPCSTR */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, lpszCaption) == 16,
-       "FIELD_OFFSET(MSGBOXPARAMSA, lpszCaption) == %ld (expected 16)",
-       FIELD_OFFSET(MSGBOXPARAMSA, lpszCaption)); /* LPCSTR */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, dwStyle) == 20,
-       "FIELD_OFFSET(MSGBOXPARAMSA, dwStyle) == %ld (expected 20)",
-       FIELD_OFFSET(MSGBOXPARAMSA, dwStyle)); /* DWORD */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, lpszIcon) == 24,
-       "FIELD_OFFSET(MSGBOXPARAMSA, lpszIcon) == %ld (expected 24)",
-       FIELD_OFFSET(MSGBOXPARAMSA, lpszIcon)); /* LPCSTR */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, dwContextHelpId) == 28,
-       "FIELD_OFFSET(MSGBOXPARAMSA, dwContextHelpId) == %ld (expected 28)",
-       FIELD_OFFSET(MSGBOXPARAMSA, dwContextHelpId)); /* DWORD */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, lpfnMsgBoxCallback) == 32,
-       "FIELD_OFFSET(MSGBOXPARAMSA, lpfnMsgBoxCallback) == %ld (expected 32)",
-       FIELD_OFFSET(MSGBOXPARAMSA, lpfnMsgBoxCallback)); /* MSGBOXCALLBACK */
-    ok(FIELD_OFFSET(MSGBOXPARAMSA, dwLanguageId) == 36,
-       "FIELD_OFFSET(MSGBOXPARAMSA, dwLanguageId) == %ld (expected 36)",
-       FIELD_OFFSET(MSGBOXPARAMSA, dwLanguageId)); /* DWORD */
-    ok(sizeof(MSGBOXPARAMSA) == 40, "sizeof(MSGBOXPARAMSA) == %d (expected 40)", sizeof(MSGBOXPARAMSA));
-
-    /* MSGBOXPARAMSW */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, cbSize) == 0,
-       "FIELD_OFFSET(MSGBOXPARAMSW, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(MSGBOXPARAMSW, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, hwndOwner) == 4,
-       "FIELD_OFFSET(MSGBOXPARAMSW, hwndOwner) == %ld (expected 4)",
-       FIELD_OFFSET(MSGBOXPARAMSW, hwndOwner)); /* HWND */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, hInstance) == 8,
-       "FIELD_OFFSET(MSGBOXPARAMSW, hInstance) == %ld (expected 8)",
-       FIELD_OFFSET(MSGBOXPARAMSW, hInstance)); /* HINSTANCE */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, lpszText) == 12,
-       "FIELD_OFFSET(MSGBOXPARAMSW, lpszText) == %ld (expected 12)",
-       FIELD_OFFSET(MSGBOXPARAMSW, lpszText)); /* LPCWSTR */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, lpszCaption) == 16,
-       "FIELD_OFFSET(MSGBOXPARAMSW, lpszCaption) == %ld (expected 16)",
-       FIELD_OFFSET(MSGBOXPARAMSW, lpszCaption)); /* LPCWSTR */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, dwStyle) == 20,
-       "FIELD_OFFSET(MSGBOXPARAMSW, dwStyle) == %ld (expected 20)",
-       FIELD_OFFSET(MSGBOXPARAMSW, dwStyle)); /* DWORD */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, lpszIcon) == 24,
-       "FIELD_OFFSET(MSGBOXPARAMSW, lpszIcon) == %ld (expected 24)",
-       FIELD_OFFSET(MSGBOXPARAMSW, lpszIcon)); /* LPCWSTR */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, dwContextHelpId) == 28,
-       "FIELD_OFFSET(MSGBOXPARAMSW, dwContextHelpId) == %ld (expected 28)",
-       FIELD_OFFSET(MSGBOXPARAMSW, dwContextHelpId)); /* DWORD */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, lpfnMsgBoxCallback) == 32,
-       "FIELD_OFFSET(MSGBOXPARAMSW, lpfnMsgBoxCallback) == %ld (expected 32)",
-       FIELD_OFFSET(MSGBOXPARAMSW, lpfnMsgBoxCallback)); /* MSGBOXCALLBACK */
-    ok(FIELD_OFFSET(MSGBOXPARAMSW, dwLanguageId) == 36,
-       "FIELD_OFFSET(MSGBOXPARAMSW, dwLanguageId) == %ld (expected 36)",
-       FIELD_OFFSET(MSGBOXPARAMSW, dwLanguageId)); /* DWORD */
-    ok(sizeof(MSGBOXPARAMSW) == 40, "sizeof(MSGBOXPARAMSW) == %d (expected 40)", sizeof(MSGBOXPARAMSW));
-
-    /* MSLLHOOKSTRUCT */
-    ok(FIELD_OFFSET(MSLLHOOKSTRUCT, pt) == 0,
-       "FIELD_OFFSET(MSLLHOOKSTRUCT, pt) == %ld (expected 0)",
-       FIELD_OFFSET(MSLLHOOKSTRUCT, pt)); /* POINT */
-    ok(FIELD_OFFSET(MSLLHOOKSTRUCT, mouseData) == 8,
-       "FIELD_OFFSET(MSLLHOOKSTRUCT, mouseData) == %ld (expected 8)",
-       FIELD_OFFSET(MSLLHOOKSTRUCT, mouseData)); /* DWORD */
-    ok(FIELD_OFFSET(MSLLHOOKSTRUCT, flags) == 12,
-       "FIELD_OFFSET(MSLLHOOKSTRUCT, flags) == %ld (expected 12)",
-       FIELD_OFFSET(MSLLHOOKSTRUCT, flags)); /* DWORD */
-    ok(FIELD_OFFSET(MSLLHOOKSTRUCT, time) == 16,
-       "FIELD_OFFSET(MSLLHOOKSTRUCT, time) == %ld (expected 16)",
-       FIELD_OFFSET(MSLLHOOKSTRUCT, time)); /* DWORD */
-    ok(FIELD_OFFSET(MSLLHOOKSTRUCT, dwExtraInfo) == 20,
-       "FIELD_OFFSET(MSLLHOOKSTRUCT, dwExtraInfo) == %ld (expected 20)",
-       FIELD_OFFSET(MSLLHOOKSTRUCT, dwExtraInfo)); /* ULONG_PTR */
-    ok(sizeof(MSLLHOOKSTRUCT) == 24, "sizeof(MSLLHOOKSTRUCT) == %d (expected 24)", sizeof(MSLLHOOKSTRUCT));
-
-    /* MULTIKEYHELPA */
-    ok(FIELD_OFFSET(MULTIKEYHELPA, mkSize) == 0,
-       "FIELD_OFFSET(MULTIKEYHELPA, mkSize) == %ld (expected 0)",
-       FIELD_OFFSET(MULTIKEYHELPA, mkSize)); /* DWORD */
-    ok(FIELD_OFFSET(MULTIKEYHELPA, mkKeyList) == 4,
-       "FIELD_OFFSET(MULTIKEYHELPA, mkKeyList) == %ld (expected 4)",
-       FIELD_OFFSET(MULTIKEYHELPA, mkKeyList)); /* CHAR */
-    ok(FIELD_OFFSET(MULTIKEYHELPA, szKeyphrase) == 5,
-       "FIELD_OFFSET(MULTIKEYHELPA, szKeyphrase) == %ld (expected 5)",
-       FIELD_OFFSET(MULTIKEYHELPA, szKeyphrase)); /* CHAR[1] */
-    ok(sizeof(MULTIKEYHELPA) == 8, "sizeof(MULTIKEYHELPA) == %d (expected 8)", sizeof(MULTIKEYHELPA));
-
-    /* MULTIKEYHELPW */
-    ok(FIELD_OFFSET(MULTIKEYHELPW, mkSize) == 0,
-       "FIELD_OFFSET(MULTIKEYHELPW, mkSize) == %ld (expected 0)",
-       FIELD_OFFSET(MULTIKEYHELPW, mkSize)); /* DWORD */
-    ok(FIELD_OFFSET(MULTIKEYHELPW, mkKeyList) == 4,
-       "FIELD_OFFSET(MULTIKEYHELPW, mkKeyList) == %ld (expected 4)",
-       FIELD_OFFSET(MULTIKEYHELPW, mkKeyList)); /* WCHAR */
-    ok(FIELD_OFFSET(MULTIKEYHELPW, szKeyphrase) == 6,
-       "FIELD_OFFSET(MULTIKEYHELPW, szKeyphrase) == %ld (expected 6)",
-       FIELD_OFFSET(MULTIKEYHELPW, szKeyphrase)); /* WCHAR[1] */
-    ok(sizeof(MULTIKEYHELPW) == 8, "sizeof(MULTIKEYHELPW) == %d (expected 8)", sizeof(MULTIKEYHELPW));
-
-    /* NCCALCSIZE_PARAMS */
-    ok(FIELD_OFFSET(NCCALCSIZE_PARAMS, rgrc) == 0,
-       "FIELD_OFFSET(NCCALCSIZE_PARAMS, rgrc) == %ld (expected 0)",
-       FIELD_OFFSET(NCCALCSIZE_PARAMS, rgrc)); /* RECT[3] */
-    ok(FIELD_OFFSET(NCCALCSIZE_PARAMS, lppos) == 48,
-       "FIELD_OFFSET(NCCALCSIZE_PARAMS, lppos) == %ld (expected 48)",
-       FIELD_OFFSET(NCCALCSIZE_PARAMS, lppos)); /* WINDOWPOS * */
-    ok(sizeof(NCCALCSIZE_PARAMS) == 52, "sizeof(NCCALCSIZE_PARAMS) == %d (expected 52)", sizeof(NCCALCSIZE_PARAMS));
-
-    /* NMHDR */
-    ok(FIELD_OFFSET(NMHDR, hwndFrom) == 0,
-       "FIELD_OFFSET(NMHDR, hwndFrom) == %ld (expected 0)",
-       FIELD_OFFSET(NMHDR, hwndFrom)); /* HWND */
-    ok(FIELD_OFFSET(NMHDR, idFrom) == 4,
-       "FIELD_OFFSET(NMHDR, idFrom) == %ld (expected 4)",
-       FIELD_OFFSET(NMHDR, idFrom)); /* UINT */
-    ok(FIELD_OFFSET(NMHDR, code) == 8,
-       "FIELD_OFFSET(NMHDR, code) == %ld (expected 8)",
-       FIELD_OFFSET(NMHDR, code)); /* UINT */
-    ok(sizeof(NMHDR) == 12, "sizeof(NMHDR) == %d (expected 12)", sizeof(NMHDR));
-
-    /* PAINTSTRUCT */
-    ok(FIELD_OFFSET(PAINTSTRUCT, hdc) == 0,
-       "FIELD_OFFSET(PAINTSTRUCT, hdc) == %ld (expected 0)",
-       FIELD_OFFSET(PAINTSTRUCT, hdc)); /* HDC */
-    ok(FIELD_OFFSET(PAINTSTRUCT, fErase) == 4,
-       "FIELD_OFFSET(PAINTSTRUCT, fErase) == %ld (expected 4)",
-       FIELD_OFFSET(PAINTSTRUCT, fErase)); /* BOOL */
-    ok(FIELD_OFFSET(PAINTSTRUCT, rcPaint) == 8,
-       "FIELD_OFFSET(PAINTSTRUCT, rcPaint) == %ld (expected 8)",
-       FIELD_OFFSET(PAINTSTRUCT, rcPaint)); /* RECT */
-    ok(FIELD_OFFSET(PAINTSTRUCT, fRestore) == 24,
-       "FIELD_OFFSET(PAINTSTRUCT, fRestore) == %ld (expected 24)",
-       FIELD_OFFSET(PAINTSTRUCT, fRestore)); /* BOOL */
-    ok(FIELD_OFFSET(PAINTSTRUCT, fIncUpdate) == 28,
-       "FIELD_OFFSET(PAINTSTRUCT, fIncUpdate) == %ld (expected 28)",
-       FIELD_OFFSET(PAINTSTRUCT, fIncUpdate)); /* BOOL */
-    ok(FIELD_OFFSET(PAINTSTRUCT, rgbReserved) == 32,
-       "FIELD_OFFSET(PAINTSTRUCT, rgbReserved) == %ld (expected 32)",
-       FIELD_OFFSET(PAINTSTRUCT, rgbReserved)); /* BYTE[32] */
-    ok(sizeof(PAINTSTRUCT) == 64, "sizeof(PAINTSTRUCT) == %d (expected 64)", sizeof(PAINTSTRUCT));
-
-    /* SCROLLINFO */
-    ok(FIELD_OFFSET(SCROLLINFO, cbSize) == 0,
-       "FIELD_OFFSET(SCROLLINFO, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(SCROLLINFO, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(SCROLLINFO, fMask) == 4,
-       "FIELD_OFFSET(SCROLLINFO, fMask) == %ld (expected 4)",
-       FIELD_OFFSET(SCROLLINFO, fMask)); /* UINT */
-    ok(FIELD_OFFSET(SCROLLINFO, nMin) == 8,
-       "FIELD_OFFSET(SCROLLINFO, nMin) == %ld (expected 8)",
-       FIELD_OFFSET(SCROLLINFO, nMin)); /* INT */
-    ok(FIELD_OFFSET(SCROLLINFO, nMax) == 12,
-       "FIELD_OFFSET(SCROLLINFO, nMax) == %ld (expected 12)",
-       FIELD_OFFSET(SCROLLINFO, nMax)); /* INT */
-    ok(FIELD_OFFSET(SCROLLINFO, nPage) == 16,
-       "FIELD_OFFSET(SCROLLINFO, nPage) == %ld (expected 16)",
-       FIELD_OFFSET(SCROLLINFO, nPage)); /* UINT */
-    ok(FIELD_OFFSET(SCROLLINFO, nPos) == 20,
-       "FIELD_OFFSET(SCROLLINFO, nPos) == %ld (expected 20)",
-       FIELD_OFFSET(SCROLLINFO, nPos)); /* INT */
-    ok(FIELD_OFFSET(SCROLLINFO, nTrackPos) == 24,
-       "FIELD_OFFSET(SCROLLINFO, nTrackPos) == %ld (expected 24)",
-       FIELD_OFFSET(SCROLLINFO, nTrackPos)); /* INT */
-    ok(sizeof(SCROLLINFO) == 28, "sizeof(SCROLLINFO) == %d (expected 28)", sizeof(SCROLLINFO));
-
-    /* SERIALKEYSA */
-    ok(FIELD_OFFSET(SERIALKEYSA, cbSize) == 0,
-       "FIELD_OFFSET(SERIALKEYSA, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(SERIALKEYSA, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(SERIALKEYSA, dwFlags) == 4,
-       "FIELD_OFFSET(SERIALKEYSA, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(SERIALKEYSA, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(SERIALKEYSA, lpszActivePort) == 8,
-       "FIELD_OFFSET(SERIALKEYSA, lpszActivePort) == %ld (expected 8)",
-       FIELD_OFFSET(SERIALKEYSA, lpszActivePort)); /* LPSTR */
-    ok(FIELD_OFFSET(SERIALKEYSA, lpszPort) == 12,
-       "FIELD_OFFSET(SERIALKEYSA, lpszPort) == %ld (expected 12)",
-       FIELD_OFFSET(SERIALKEYSA, lpszPort)); /* LPSTR */
-    ok(FIELD_OFFSET(SERIALKEYSA, iBaudRate) == 16,
-       "FIELD_OFFSET(SERIALKEYSA, iBaudRate) == %ld (expected 16)",
-       FIELD_OFFSET(SERIALKEYSA, iBaudRate)); /* UINT */
-    ok(FIELD_OFFSET(SERIALKEYSA, iPortState) == 20,
-       "FIELD_OFFSET(SERIALKEYSA, iPortState) == %ld (expected 20)",
-       FIELD_OFFSET(SERIALKEYSA, iPortState)); /* UINT */
-    ok(FIELD_OFFSET(SERIALKEYSA, iActive) == 24,
-       "FIELD_OFFSET(SERIALKEYSA, iActive) == %ld (expected 24)",
-       FIELD_OFFSET(SERIALKEYSA, iActive)); /* UINT */
-    ok(sizeof(SERIALKEYSA) == 28, "sizeof(SERIALKEYSA) == %d (expected 28)", sizeof(SERIALKEYSA));
-
-    /* SERIALKEYSW */
-    ok(FIELD_OFFSET(SERIALKEYSW, cbSize) == 0,
-       "FIELD_OFFSET(SERIALKEYSW, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(SERIALKEYSW, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(SERIALKEYSW, dwFlags) == 4,
-       "FIELD_OFFSET(SERIALKEYSW, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(SERIALKEYSW, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(SERIALKEYSW, lpszActivePort) == 8,
-       "FIELD_OFFSET(SERIALKEYSW, lpszActivePort) == %ld (expected 8)",
-       FIELD_OFFSET(SERIALKEYSW, lpszActivePort)); /* LPWSTR */
-    ok(FIELD_OFFSET(SERIALKEYSW, lpszPort) == 12,
-       "FIELD_OFFSET(SERIALKEYSW, lpszPort) == %ld (expected 12)",
-       FIELD_OFFSET(SERIALKEYSW, lpszPort)); /* LPWSTR */
-    ok(FIELD_OFFSET(SERIALKEYSW, iBaudRate) == 16,
-       "FIELD_OFFSET(SERIALKEYSW, iBaudRate) == %ld (expected 16)",
-       FIELD_OFFSET(SERIALKEYSW, iBaudRate)); /* UINT */
-    ok(FIELD_OFFSET(SERIALKEYSW, iPortState) == 20,
-       "FIELD_OFFSET(SERIALKEYSW, iPortState) == %ld (expected 20)",
-       FIELD_OFFSET(SERIALKEYSW, iPortState)); /* UINT */
-    ok(FIELD_OFFSET(SERIALKEYSW, iActive) == 24,
-       "FIELD_OFFSET(SERIALKEYSW, iActive) == %ld (expected 24)",
-       FIELD_OFFSET(SERIALKEYSW, iActive)); /* UINT */
-    ok(sizeof(SERIALKEYSW) == 28, "sizeof(SERIALKEYSW) == %d (expected 28)", sizeof(SERIALKEYSW));
-
-    /* SOUNDSENTRYA */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, cbSize) == 0,
-       "FIELD_OFFSET(SOUNDSENTRYA, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(SOUNDSENTRYA, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, dwFlags) == 4,
-       "FIELD_OFFSET(SOUNDSENTRYA, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(SOUNDSENTRYA, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, iFSTextEffect) == 8,
-       "FIELD_OFFSET(SOUNDSENTRYA, iFSTextEffect) == %ld (expected 8)",
-       FIELD_OFFSET(SOUNDSENTRYA, iFSTextEffect)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, iFSTextEffectMSec) == 12,
-       "FIELD_OFFSET(SOUNDSENTRYA, iFSTextEffectMSec) == %ld (expected 12)",
-       FIELD_OFFSET(SOUNDSENTRYA, iFSTextEffectMSec)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, iFSTextEffectColorBits) == 16,
-       "FIELD_OFFSET(SOUNDSENTRYA, iFSTextEffectColorBits) == %ld (expected 16)",
-       FIELD_OFFSET(SOUNDSENTRYA, iFSTextEffectColorBits)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, iFSGrafEffect) == 20,
-       "FIELD_OFFSET(SOUNDSENTRYA, iFSGrafEffect) == %ld (expected 20)",
-       FIELD_OFFSET(SOUNDSENTRYA, iFSGrafEffect)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, iFSGrafEffectMSec) == 24,
-       "FIELD_OFFSET(SOUNDSENTRYA, iFSGrafEffectMSec) == %ld (expected 24)",
-       FIELD_OFFSET(SOUNDSENTRYA, iFSGrafEffectMSec)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, iFSGrafEffectColor) == 28,
-       "FIELD_OFFSET(SOUNDSENTRYA, iFSGrafEffectColor) == %ld (expected 28)",
-       FIELD_OFFSET(SOUNDSENTRYA, iFSGrafEffectColor)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, iWindowsEffect) == 32,
-       "FIELD_OFFSET(SOUNDSENTRYA, iWindowsEffect) == %ld (expected 32)",
-       FIELD_OFFSET(SOUNDSENTRYA, iWindowsEffect)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, iWindowsEffectMSec) == 36,
-       "FIELD_OFFSET(SOUNDSENTRYA, iWindowsEffectMSec) == %ld (expected 36)",
-       FIELD_OFFSET(SOUNDSENTRYA, iWindowsEffectMSec)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, lpszWindowsEffectDLL) == 40,
-       "FIELD_OFFSET(SOUNDSENTRYA, lpszWindowsEffectDLL) == %ld (expected 40)",
-       FIELD_OFFSET(SOUNDSENTRYA, lpszWindowsEffectDLL)); /* LPSTR */
-    ok(FIELD_OFFSET(SOUNDSENTRYA, iWindowsEffectOrdinal) == 44,
-       "FIELD_OFFSET(SOUNDSENTRYA, iWindowsEffectOrdinal) == %ld (expected 44)",
-       FIELD_OFFSET(SOUNDSENTRYA, iWindowsEffectOrdinal)); /* DWORD */
-    ok(sizeof(SOUNDSENTRYA) == 48, "sizeof(SOUNDSENTRYA) == %d (expected 48)", sizeof(SOUNDSENTRYA));
-
-    /* SOUNDSENTRYW */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, cbSize) == 0,
-       "FIELD_OFFSET(SOUNDSENTRYW, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(SOUNDSENTRYW, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, dwFlags) == 4,
-       "FIELD_OFFSET(SOUNDSENTRYW, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(SOUNDSENTRYW, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, iFSTextEffect) == 8,
-       "FIELD_OFFSET(SOUNDSENTRYW, iFSTextEffect) == %ld (expected 8)",
-       FIELD_OFFSET(SOUNDSENTRYW, iFSTextEffect)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, iFSTextEffectMSec) == 12,
-       "FIELD_OFFSET(SOUNDSENTRYW, iFSTextEffectMSec) == %ld (expected 12)",
-       FIELD_OFFSET(SOUNDSENTRYW, iFSTextEffectMSec)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, iFSTextEffectColorBits) == 16,
-       "FIELD_OFFSET(SOUNDSENTRYW, iFSTextEffectColorBits) == %ld (expected 16)",
-       FIELD_OFFSET(SOUNDSENTRYW, iFSTextEffectColorBits)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, iFSGrafEffect) == 20,
-       "FIELD_OFFSET(SOUNDSENTRYW, iFSGrafEffect) == %ld (expected 20)",
-       FIELD_OFFSET(SOUNDSENTRYW, iFSGrafEffect)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, iFSGrafEffectMSec) == 24,
-       "FIELD_OFFSET(SOUNDSENTRYW, iFSGrafEffectMSec) == %ld (expected 24)",
-       FIELD_OFFSET(SOUNDSENTRYW, iFSGrafEffectMSec)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, iFSGrafEffectColor) == 28,
-       "FIELD_OFFSET(SOUNDSENTRYW, iFSGrafEffectColor) == %ld (expected 28)",
-       FIELD_OFFSET(SOUNDSENTRYW, iFSGrafEffectColor)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, iWindowsEffect) == 32,
-       "FIELD_OFFSET(SOUNDSENTRYW, iWindowsEffect) == %ld (expected 32)",
-       FIELD_OFFSET(SOUNDSENTRYW, iWindowsEffect)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, iWindowsEffectMSec) == 36,
-       "FIELD_OFFSET(SOUNDSENTRYW, iWindowsEffectMSec) == %ld (expected 36)",
-       FIELD_OFFSET(SOUNDSENTRYW, iWindowsEffectMSec)); /* DWORD */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, lpszWindowsEffectDLL) == 40,
-       "FIELD_OFFSET(SOUNDSENTRYW, lpszWindowsEffectDLL) == %ld (expected 40)",
-       FIELD_OFFSET(SOUNDSENTRYW, lpszWindowsEffectDLL)); /* LPWSTR */
-    ok(FIELD_OFFSET(SOUNDSENTRYW, iWindowsEffectOrdinal) == 44,
-       "FIELD_OFFSET(SOUNDSENTRYW, iWindowsEffectOrdinal) == %ld (expected 44)",
-       FIELD_OFFSET(SOUNDSENTRYW, iWindowsEffectOrdinal)); /* DWORD */
-    ok(sizeof(SOUNDSENTRYW) == 48, "sizeof(SOUNDSENTRYW) == %d (expected 48)", sizeof(SOUNDSENTRYW));
-
-    /* STICKYKEYS */
-    ok(FIELD_OFFSET(STICKYKEYS, cbSize) == 0,
-       "FIELD_OFFSET(STICKYKEYS, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(STICKYKEYS, cbSize)); /* DWORD */
-    ok(FIELD_OFFSET(STICKYKEYS, dwFlags) == 4,
-       "FIELD_OFFSET(STICKYKEYS, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(STICKYKEYS, dwFlags)); /* DWORD */
-    ok(sizeof(STICKYKEYS) == 8, "sizeof(STICKYKEYS) == %d (expected 8)", sizeof(STICKYKEYS));
-
-    /* STYLESTRUCT */
-    ok(FIELD_OFFSET(STYLESTRUCT, styleOld) == 0,
-       "FIELD_OFFSET(STYLESTRUCT, styleOld) == %ld (expected 0)",
-       FIELD_OFFSET(STYLESTRUCT, styleOld)); /* DWORD */
-    ok(FIELD_OFFSET(STYLESTRUCT, styleNew) == 4,
-       "FIELD_OFFSET(STYLESTRUCT, styleNew) == %ld (expected 4)",
-       FIELD_OFFSET(STYLESTRUCT, styleNew)); /* DWORD */
-    ok(sizeof(STYLESTRUCT) == 8, "sizeof(STYLESTRUCT) == %d (expected 8)", sizeof(STYLESTRUCT));
-
-    /* TOGGLEKEYS */
-    ok(FIELD_OFFSET(TOGGLEKEYS, cbSize) == 0,
-       "FIELD_OFFSET(TOGGLEKEYS, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(TOGGLEKEYS, cbSize)); /* DWORD */
-    ok(FIELD_OFFSET(TOGGLEKEYS, dwFlags) == 4,
-       "FIELD_OFFSET(TOGGLEKEYS, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(TOGGLEKEYS, dwFlags)); /* DWORD */
-    ok(sizeof(TOGGLEKEYS) == 8, "sizeof(TOGGLEKEYS) == %d (expected 8)", sizeof(TOGGLEKEYS));
-
-    /* TPMPARAMS */
-    ok(FIELD_OFFSET(TPMPARAMS, cbSize) == 0,
-       "FIELD_OFFSET(TPMPARAMS, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(TPMPARAMS, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(TPMPARAMS, rcExclude) == 4,
-       "FIELD_OFFSET(TPMPARAMS, rcExclude) == %ld (expected 4)",
-       FIELD_OFFSET(TPMPARAMS, rcExclude)); /* RECT */
-    ok(sizeof(TPMPARAMS) == 20, "sizeof(TPMPARAMS) == %d (expected 20)", sizeof(TPMPARAMS));
-
-    /* TRACKMOUSEEVENT */
-    ok(FIELD_OFFSET(TRACKMOUSEEVENT, cbSize) == 0,
-       "FIELD_OFFSET(TRACKMOUSEEVENT, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(TRACKMOUSEEVENT, cbSize)); /* DWORD */
-    ok(FIELD_OFFSET(TRACKMOUSEEVENT, dwFlags) == 4,
-       "FIELD_OFFSET(TRACKMOUSEEVENT, dwFlags) == %ld (expected 4)",
-       FIELD_OFFSET(TRACKMOUSEEVENT, dwFlags)); /* DWORD */
-    ok(FIELD_OFFSET(TRACKMOUSEEVENT, hwndTrack) == 8,
-       "FIELD_OFFSET(TRACKMOUSEEVENT, hwndTrack) == %ld (expected 8)",
-       FIELD_OFFSET(TRACKMOUSEEVENT, hwndTrack)); /* HWND */
-    ok(FIELD_OFFSET(TRACKMOUSEEVENT, dwHoverTime) == 12,
-       "FIELD_OFFSET(TRACKMOUSEEVENT, dwHoverTime) == %ld (expected 12)",
-       FIELD_OFFSET(TRACKMOUSEEVENT, dwHoverTime)); /* DWORD */
-    ok(sizeof(TRACKMOUSEEVENT) == 16, "sizeof(TRACKMOUSEEVENT) == %d (expected 16)", sizeof(TRACKMOUSEEVENT));
-
-    /* WINDOWINFO */
-    ok(FIELD_OFFSET(WINDOWINFO, cbSize) == 0,
-       "FIELD_OFFSET(WINDOWINFO, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(WINDOWINFO, cbSize)); /* DWORD */
-    ok(FIELD_OFFSET(WINDOWINFO, rcWindow) == 4,
-       "FIELD_OFFSET(WINDOWINFO, rcWindow) == %ld (expected 4)",
-       FIELD_OFFSET(WINDOWINFO, rcWindow)); /* RECT */
-    ok(FIELD_OFFSET(WINDOWINFO, rcClient) == 20,
-       "FIELD_OFFSET(WINDOWINFO, rcClient) == %ld (expected 20)",
-       FIELD_OFFSET(WINDOWINFO, rcClient)); /* RECT */
-    ok(FIELD_OFFSET(WINDOWINFO, dwStyle) == 36,
-       "FIELD_OFFSET(WINDOWINFO, dwStyle) == %ld (expected 36)",
-       FIELD_OFFSET(WINDOWINFO, dwStyle)); /* DWORD */
-    ok(FIELD_OFFSET(WINDOWINFO, dwExStyle) == 40,
-       "FIELD_OFFSET(WINDOWINFO, dwExStyle) == %ld (expected 40)",
-       FIELD_OFFSET(WINDOWINFO, dwExStyle)); /* DWORD */
-    ok(FIELD_OFFSET(WINDOWINFO, dwWindowStatus) == 44,
-       "FIELD_OFFSET(WINDOWINFO, dwWindowStatus) == %ld (expected 44)",
-       FIELD_OFFSET(WINDOWINFO, dwWindowStatus)); /* DWORD */
-    ok(FIELD_OFFSET(WINDOWINFO, cxWindowBorders) == 48,
-       "FIELD_OFFSET(WINDOWINFO, cxWindowBorders) == %ld (expected 48)",
-       FIELD_OFFSET(WINDOWINFO, cxWindowBorders)); /* UINT */
-    ok(FIELD_OFFSET(WINDOWINFO, cyWindowBorders) == 52,
-       "FIELD_OFFSET(WINDOWINFO, cyWindowBorders) == %ld (expected 52)",
-       FIELD_OFFSET(WINDOWINFO, cyWindowBorders)); /* UINT */
-    ok(FIELD_OFFSET(WINDOWINFO, atomWindowType) == 56,
-       "FIELD_OFFSET(WINDOWINFO, atomWindowType) == %ld (expected 56)",
-       FIELD_OFFSET(WINDOWINFO, atomWindowType)); /* ATOM */
-    ok(FIELD_OFFSET(WINDOWINFO, wCreatorVersion) == 58,
-       "FIELD_OFFSET(WINDOWINFO, wCreatorVersion) == %ld (expected 58)",
-       FIELD_OFFSET(WINDOWINFO, wCreatorVersion)); /* WORD */
-    ok(sizeof(WINDOWINFO) == 60, "sizeof(WINDOWINFO) == %d (expected 60)", sizeof(WINDOWINFO));
-
-    /* WINDOWPLACEMENT */
-    ok(FIELD_OFFSET(WINDOWPLACEMENT, length) == 0,
-       "FIELD_OFFSET(WINDOWPLACEMENT, length) == %ld (expected 0)",
-       FIELD_OFFSET(WINDOWPLACEMENT, length)); /* UINT */
-    ok(FIELD_OFFSET(WINDOWPLACEMENT, flags) == 4,
-       "FIELD_OFFSET(WINDOWPLACEMENT, flags) == %ld (expected 4)",
-       FIELD_OFFSET(WINDOWPLACEMENT, flags)); /* UINT */
-    ok(FIELD_OFFSET(WINDOWPLACEMENT, showCmd) == 8,
-       "FIELD_OFFSET(WINDOWPLACEMENT, showCmd) == %ld (expected 8)",
-       FIELD_OFFSET(WINDOWPLACEMENT, showCmd)); /* UINT */
-    ok(FIELD_OFFSET(WINDOWPLACEMENT, ptMinPosition) == 12,
-       "FIELD_OFFSET(WINDOWPLACEMENT, ptMinPosition) == %ld (expected 12)",
-       FIELD_OFFSET(WINDOWPLACEMENT, ptMinPosition)); /* POINT */
-    ok(FIELD_OFFSET(WINDOWPLACEMENT, ptMaxPosition) == 20,
-       "FIELD_OFFSET(WINDOWPLACEMENT, ptMaxPosition) == %ld (expected 20)",
-       FIELD_OFFSET(WINDOWPLACEMENT, ptMaxPosition)); /* POINT */
-    ok(FIELD_OFFSET(WINDOWPLACEMENT, rcNormalPosition) == 28,
-       "FIELD_OFFSET(WINDOWPLACEMENT, rcNormalPosition) == %ld (expected 28)",
-       FIELD_OFFSET(WINDOWPLACEMENT, rcNormalPosition)); /* RECT */
-    ok(sizeof(WINDOWPLACEMENT) == 44, "sizeof(WINDOWPLACEMENT) == %d (expected 44)", sizeof(WINDOWPLACEMENT));
-
-    /* WINDOWPOS */
-    ok(FIELD_OFFSET(WINDOWPOS, hwnd) == 0,
-       "FIELD_OFFSET(WINDOWPOS, hwnd) == %ld (expected 0)",
-       FIELD_OFFSET(WINDOWPOS, hwnd)); /* HWND */
-    ok(FIELD_OFFSET(WINDOWPOS, hwndInsertAfter) == 4,
-       "FIELD_OFFSET(WINDOWPOS, hwndInsertAfter) == %ld (expected 4)",
-       FIELD_OFFSET(WINDOWPOS, hwndInsertAfter)); /* HWND */
-    ok(FIELD_OFFSET(WINDOWPOS, x) == 8,
-       "FIELD_OFFSET(WINDOWPOS, x) == %ld (expected 8)",
-       FIELD_OFFSET(WINDOWPOS, x)); /* INT */
-    ok(FIELD_OFFSET(WINDOWPOS, y) == 12,
-       "FIELD_OFFSET(WINDOWPOS, y) == %ld (expected 12)",
-       FIELD_OFFSET(WINDOWPOS, y)); /* INT */
-    ok(FIELD_OFFSET(WINDOWPOS, cx) == 16,
-       "FIELD_OFFSET(WINDOWPOS, cx) == %ld (expected 16)",
-       FIELD_OFFSET(WINDOWPOS, cx)); /* INT */
-    ok(FIELD_OFFSET(WINDOWPOS, cy) == 20,
-       "FIELD_OFFSET(WINDOWPOS, cy) == %ld (expected 20)",
-       FIELD_OFFSET(WINDOWPOS, cy)); /* INT */
-    ok(FIELD_OFFSET(WINDOWPOS, flags) == 24,
-       "FIELD_OFFSET(WINDOWPOS, flags) == %ld (expected 24)",
-       FIELD_OFFSET(WINDOWPOS, flags)); /* UINT */
-    ok(sizeof(WINDOWPOS) == 28, "sizeof(WINDOWPOS) == %d (expected 28)", sizeof(WINDOWPOS));
-
-    /* WNDCLASSA */
-    ok(FIELD_OFFSET(WNDCLASSA, style) == 0,
-       "FIELD_OFFSET(WNDCLASSA, style) == %ld (expected 0)",
-       FIELD_OFFSET(WNDCLASSA, style)); /* UINT */
-    ok(FIELD_OFFSET(WNDCLASSA, lpfnWndProc) == 4,
-       "FIELD_OFFSET(WNDCLASSA, lpfnWndProc) == %ld (expected 4)",
-       FIELD_OFFSET(WNDCLASSA, lpfnWndProc)); /* WNDPROC */
-    ok(FIELD_OFFSET(WNDCLASSA, cbClsExtra) == 8,
-       "FIELD_OFFSET(WNDCLASSA, cbClsExtra) == %ld (expected 8)",
-       FIELD_OFFSET(WNDCLASSA, cbClsExtra)); /* INT */
-    ok(FIELD_OFFSET(WNDCLASSA, cbWndExtra) == 12,
-       "FIELD_OFFSET(WNDCLASSA, cbWndExtra) == %ld (expected 12)",
-       FIELD_OFFSET(WNDCLASSA, cbWndExtra)); /* INT */
-    ok(FIELD_OFFSET(WNDCLASSA, hInstance) == 16,
-       "FIELD_OFFSET(WNDCLASSA, hInstance) == %ld (expected 16)",
-       FIELD_OFFSET(WNDCLASSA, hInstance)); /* HINSTANCE */
-    ok(FIELD_OFFSET(WNDCLASSA, hIcon) == 20,
-       "FIELD_OFFSET(WNDCLASSA, hIcon) == %ld (expected 20)",
-       FIELD_OFFSET(WNDCLASSA, hIcon)); /* HICON */
-    ok(FIELD_OFFSET(WNDCLASSA, hCursor) == 24,
-       "FIELD_OFFSET(WNDCLASSA, hCursor) == %ld (expected 24)",
-       FIELD_OFFSET(WNDCLASSA, hCursor)); /* HCURSOR */
-    ok(FIELD_OFFSET(WNDCLASSA, hbrBackground) == 28,
-       "FIELD_OFFSET(WNDCLASSA, hbrBackground) == %ld (expected 28)",
-       FIELD_OFFSET(WNDCLASSA, hbrBackground)); /* HBRUSH */
-    ok(FIELD_OFFSET(WNDCLASSA, lpszMenuName) == 32,
-       "FIELD_OFFSET(WNDCLASSA, lpszMenuName) == %ld (expected 32)",
-       FIELD_OFFSET(WNDCLASSA, lpszMenuName)); /* LPCSTR */
-    ok(FIELD_OFFSET(WNDCLASSA, lpszClassName) == 36,
-       "FIELD_OFFSET(WNDCLASSA, lpszClassName) == %ld (expected 36)",
-       FIELD_OFFSET(WNDCLASSA, lpszClassName)); /* LPCSTR */
-    ok(sizeof(WNDCLASSA) == 40, "sizeof(WNDCLASSA) == %d (expected 40)", sizeof(WNDCLASSA));
-
-    /* WNDCLASSEXA */
-    ok(FIELD_OFFSET(WNDCLASSEXA, cbSize) == 0,
-       "FIELD_OFFSET(WNDCLASSEXA, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(WNDCLASSEXA, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(WNDCLASSEXA, style) == 4,
-       "FIELD_OFFSET(WNDCLASSEXA, style) == %ld (expected 4)",
-       FIELD_OFFSET(WNDCLASSEXA, style)); /* UINT */
-    ok(FIELD_OFFSET(WNDCLASSEXA, lpfnWndProc) == 8,
-       "FIELD_OFFSET(WNDCLASSEXA, lpfnWndProc) == %ld (expected 8)",
-       FIELD_OFFSET(WNDCLASSEXA, lpfnWndProc)); /* WNDPROC */
-    ok(FIELD_OFFSET(WNDCLASSEXA, cbClsExtra) == 12,
-       "FIELD_OFFSET(WNDCLASSEXA, cbClsExtra) == %ld (expected 12)",
-       FIELD_OFFSET(WNDCLASSEXA, cbClsExtra)); /* INT */
-    ok(FIELD_OFFSET(WNDCLASSEXA, cbWndExtra) == 16,
-       "FIELD_OFFSET(WNDCLASSEXA, cbWndExtra) == %ld (expected 16)",
-       FIELD_OFFSET(WNDCLASSEXA, cbWndExtra)); /* INT */
-    ok(FIELD_OFFSET(WNDCLASSEXA, hInstance) == 20,
-       "FIELD_OFFSET(WNDCLASSEXA, hInstance) == %ld (expected 20)",
-       FIELD_OFFSET(WNDCLASSEXA, hInstance)); /* HINSTANCE */
-    ok(FIELD_OFFSET(WNDCLASSEXA, hIcon) == 24,
-       "FIELD_OFFSET(WNDCLASSEXA, hIcon) == %ld (expected 24)",
-       FIELD_OFFSET(WNDCLASSEXA, hIcon)); /* HICON */
-    ok(FIELD_OFFSET(WNDCLASSEXA, hCursor) == 28,
-       "FIELD_OFFSET(WNDCLASSEXA, hCursor) == %ld (expected 28)",
-       FIELD_OFFSET(WNDCLASSEXA, hCursor)); /* HCURSOR */
-    ok(FIELD_OFFSET(WNDCLASSEXA, hbrBackground) == 32,
-       "FIELD_OFFSET(WNDCLASSEXA, hbrBackground) == %ld (expected 32)",
-       FIELD_OFFSET(WNDCLASSEXA, hbrBackground)); /* HBRUSH */
-    ok(FIELD_OFFSET(WNDCLASSEXA, lpszMenuName) == 36,
-       "FIELD_OFFSET(WNDCLASSEXA, lpszMenuName) == %ld (expected 36)",
-       FIELD_OFFSET(WNDCLASSEXA, lpszMenuName)); /* LPCSTR */
-    ok(FIELD_OFFSET(WNDCLASSEXA, lpszClassName) == 40,
-       "FIELD_OFFSET(WNDCLASSEXA, lpszClassName) == %ld (expected 40)",
-       FIELD_OFFSET(WNDCLASSEXA, lpszClassName)); /* LPCSTR */
-    ok(FIELD_OFFSET(WNDCLASSEXA, hIconSm) == 44,
-       "FIELD_OFFSET(WNDCLASSEXA, hIconSm) == %ld (expected 44)",
-       FIELD_OFFSET(WNDCLASSEXA, hIconSm)); /* HICON */
-    ok(sizeof(WNDCLASSEXA) == 48, "sizeof(WNDCLASSEXA) == %d (expected 48)", sizeof(WNDCLASSEXA));
-
-    /* WNDCLASSEXW */
-    ok(FIELD_OFFSET(WNDCLASSEXW, cbSize) == 0,
-       "FIELD_OFFSET(WNDCLASSEXW, cbSize) == %ld (expected 0)",
-       FIELD_OFFSET(WNDCLASSEXW, cbSize)); /* UINT */
-    ok(FIELD_OFFSET(WNDCLASSEXW, style) == 4,
-       "FIELD_OFFSET(WNDCLASSEXW, style) == %ld (expected 4)",
-       FIELD_OFFSET(WNDCLASSEXW, style)); /* UINT */
-    ok(FIELD_OFFSET(WNDCLASSEXW, lpfnWndProc) == 8,
-       "FIELD_OFFSET(WNDCLASSEXW, lpfnWndProc) == %ld (expected 8)",
-       FIELD_OFFSET(WNDCLASSEXW, lpfnWndProc)); /* WNDPROC */
-    ok(FIELD_OFFSET(WNDCLASSEXW, cbClsExtra) == 12,
-       "FIELD_OFFSET(WNDCLASSEXW, cbClsExtra) == %ld (expected 12)",
-       FIELD_OFFSET(WNDCLASSEXW, cbClsExtra)); /* INT */
-    ok(FIELD_OFFSET(WNDCLASSEXW, cbWndExtra) == 16,
-       "FIELD_OFFSET(WNDCLASSEXW, cbWndExtra) == %ld (expected 16)",
-       FIELD_OFFSET(WNDCLASSEXW, cbWndExtra)); /* INT */
-    ok(FIELD_OFFSET(WNDCLASSEXW, hInstance) == 20,
-       "FIELD_OFFSET(WNDCLASSEXW, hInstance) == %ld (expected 20)",
-       FIELD_OFFSET(WNDCLASSEXW, hInstance)); /* HINSTANCE */
-    ok(FIELD_OFFSET(WNDCLASSEXW, hIcon) == 24,
-       "FIELD_OFFSET(WNDCLASSEXW, hIcon) == %ld (expected 24)",
-       FIELD_OFFSET(WNDCLASSEXW, hIcon)); /* HICON */
-    ok(FIELD_OFFSET(WNDCLASSEXW, hCursor) == 28,
-       "FIELD_OFFSET(WNDCLASSEXW, hCursor) == %ld (expected 28)",
-       FIELD_OFFSET(WNDCLASSEXW, hCursor)); /* HCURSOR */
-    ok(FIELD_OFFSET(WNDCLASSEXW, hbrBackground) == 32,
-       "FIELD_OFFSET(WNDCLASSEXW, hbrBackground) == %ld (expected 32)",
-       FIELD_OFFSET(WNDCLASSEXW, hbrBackground)); /* HBRUSH */
-    ok(FIELD_OFFSET(WNDCLASSEXW, lpszMenuName) == 36,
-       "FIELD_OFFSET(WNDCLASSEXW, lpszMenuName) == %ld (expected 36)",
-       FIELD_OFFSET(WNDCLASSEXW, lpszMenuName)); /* LPCWSTR */
-    ok(FIELD_OFFSET(WNDCLASSEXW, lpszClassName) == 40,
-       "FIELD_OFFSET(WNDCLASSEXW, lpszClassName) == %ld (expected 40)",
-       FIELD_OFFSET(WNDCLASSEXW, lpszClassName)); /* LPCWSTR */
-    ok(FIELD_OFFSET(WNDCLASSEXW, hIconSm) == 44,
-       "FIELD_OFFSET(WNDCLASSEXW, hIconSm) == %ld (expected 44)",
-       FIELD_OFFSET(WNDCLASSEXW, hIconSm)); /* HICON */
-    ok(sizeof(WNDCLASSEXW) == 48, "sizeof(WNDCLASSEXW) == %d (expected 48)", sizeof(WNDCLASSEXW));
-
-    /* WNDCLASSW */
-    ok(FIELD_OFFSET(WNDCLASSW, style) == 0,
-       "FIELD_OFFSET(WNDCLASSW, style) == %ld (expected 0)",
-       FIELD_OFFSET(WNDCLASSW, style)); /* UINT */
-    ok(FIELD_OFFSET(WNDCLASSW, lpfnWndProc) == 4,
-       "FIELD_OFFSET(WNDCLASSW, lpfnWndProc) == %ld (expected 4)",
-       FIELD_OFFSET(WNDCLASSW, lpfnWndProc)); /* WNDPROC */
-    ok(FIELD_OFFSET(WNDCLASSW, cbClsExtra) == 8,
-       "FIELD_OFFSET(WNDCLASSW, cbClsExtra) == %ld (expected 8)",
-       FIELD_OFFSET(WNDCLASSW, cbClsExtra)); /* INT */
-    ok(FIELD_OFFSET(WNDCLASSW, cbWndExtra) == 12,
-       "FIELD_OFFSET(WNDCLASSW, cbWndExtra) == %ld (expected 12)",
-       FIELD_OFFSET(WNDCLASSW, cbWndExtra)); /* INT */
-    ok(FIELD_OFFSET(WNDCLASSW, hInstance) == 16,
-       "FIELD_OFFSET(WNDCLASSW, hInstance) == %ld (expected 16)",
-       FIELD_OFFSET(WNDCLASSW, hInstance)); /* HINSTANCE */
-    ok(FIELD_OFFSET(WNDCLASSW, hIcon) == 20,
-       "FIELD_OFFSET(WNDCLASSW, hIcon) == %ld (expected 20)",
-       FIELD_OFFSET(WNDCLASSW, hIcon)); /* HICON */
-    ok(FIELD_OFFSET(WNDCLASSW, hCursor) == 24,
-       "FIELD_OFFSET(WNDCLASSW, hCursor) == %ld (expected 24)",
-       FIELD_OFFSET(WNDCLASSW, hCursor)); /* HCURSOR */
-    ok(FIELD_OFFSET(WNDCLASSW, hbrBackground) == 28,
-       "FIELD_OFFSET(WNDCLASSW, hbrBackground) == %ld (expected 28)",
-       FIELD_OFFSET(WNDCLASSW, hbrBackground)); /* HBRUSH */
-    ok(FIELD_OFFSET(WNDCLASSW, lpszMenuName) == 32,
-       "FIELD_OFFSET(WNDCLASSW, lpszMenuName) == %ld (expected 32)",
-       FIELD_OFFSET(WNDCLASSW, lpszMenuName)); /* LPCWSTR */
-    ok(FIELD_OFFSET(WNDCLASSW, lpszClassName) == 36,
-       "FIELD_OFFSET(WNDCLASSW, lpszClassName) == %ld (expected 36)",
-       FIELD_OFFSET(WNDCLASSW, lpszClassName)); /* LPCWSTR */
-    ok(sizeof(WNDCLASSW) == 40, "sizeof(WNDCLASSW) == %d (expected 40)", sizeof(WNDCLASSW));
+    /* ACCEL (pack 4) */
+    TEST_TYPE(ACCEL, 6, 2);
+    TEST_FIELD(ACCEL, BYTE, fVirt, 0, 1, 1);
+    TEST_FIELD(ACCEL, BYTE, pad0, 1, 1, 1);
+    TEST_FIELD(ACCEL, WORD, key, 2, 2, 2);
+    TEST_FIELD(ACCEL, WORD, cmd, 4, 2, 2);
+
+    /* ACCESSTIMEOUT (pack 4) */
+    TEST_TYPE(ACCESSTIMEOUT, 12, 4);
+    TEST_FIELD(ACCESSTIMEOUT, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(ACCESSTIMEOUT, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(ACCESSTIMEOUT, DWORD, iTimeOutMSec, 8, 4, 4);
+
+    /* ANIMATIONINFO (pack 4) */
+    TEST_TYPE(ANIMATIONINFO, 8, 4);
+    TEST_FIELD(ANIMATIONINFO, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(ANIMATIONINFO, INT, iMinAnimate, 4, 4, 4);
+
+    /* CBTACTIVATESTRUCT (pack 4) */
+    TEST_TYPE(CBTACTIVATESTRUCT, 8, 4);
+    TEST_FIELD(CBTACTIVATESTRUCT, BOOL, fMouse, 0, 4, 4);
+    TEST_FIELD(CBTACTIVATESTRUCT, HWND, hWndActive, 4, 4, 4);
+
+    /* CBT_CREATEWNDA (pack 4) */
+    TEST_TYPE(CBT_CREATEWNDA, 8, 4);
+    TEST_FIELD(CBT_CREATEWNDA, CREATESTRUCTA *, lpcs, 0, 4, 4);
+    TEST_FIELD(CBT_CREATEWNDA, HWND, hwndInsertAfter, 4, 4, 4);
+
+    /* CBT_CREATEWNDW (pack 4) */
+    TEST_TYPE(CBT_CREATEWNDW, 8, 4);
+    TEST_FIELD(CBT_CREATEWNDW, CREATESTRUCTW *, lpcs, 0, 4, 4);
+    TEST_FIELD(CBT_CREATEWNDW, HWND, hwndInsertAfter, 4, 4, 4);
+
+    /* CLIENTCREATESTRUCT (pack 4) */
+    TEST_TYPE(CLIENTCREATESTRUCT, 8, 4);
+    TEST_FIELD(CLIENTCREATESTRUCT, HMENU, hWindowMenu, 0, 4, 4);
+    TEST_FIELD(CLIENTCREATESTRUCT, UINT, idFirstChild, 4, 4, 4);
+
+    /* COMPAREITEMSTRUCT (pack 4) */
+    TEST_TYPE(COMPAREITEMSTRUCT, 32, 4);
+    TEST_FIELD(COMPAREITEMSTRUCT, UINT, CtlType, 0, 4, 4);
+    TEST_FIELD(COMPAREITEMSTRUCT, UINT, CtlID, 4, 4, 4);
+    TEST_FIELD(COMPAREITEMSTRUCT, HWND, hwndItem, 8, 4, 4);
+    TEST_FIELD(COMPAREITEMSTRUCT, UINT, itemID1, 12, 4, 4);
+    TEST_FIELD(COMPAREITEMSTRUCT, DWORD, itemData1, 16, 4, 4);
+    TEST_FIELD(COMPAREITEMSTRUCT, UINT, itemID2, 20, 4, 4);
+    TEST_FIELD(COMPAREITEMSTRUCT, DWORD, itemData2, 24, 4, 4);
+    TEST_FIELD(COMPAREITEMSTRUCT, DWORD, dwLocaleId, 28, 4, 4);
+
+    /* COPYDATASTRUCT (pack 4) */
+    TEST_TYPE(COPYDATASTRUCT, 12, 4);
+    TEST_FIELD(COPYDATASTRUCT, DWORD, dwData, 0, 4, 4);
+    TEST_FIELD(COPYDATASTRUCT, DWORD, cbData, 4, 4, 4);
+    TEST_FIELD(COPYDATASTRUCT, LPVOID, lpData, 8, 4, 4);
+
+    /* CREATESTRUCTA (pack 4) */
+    TEST_TYPE(CREATESTRUCTA, 48, 4);
+    TEST_FIELD(CREATESTRUCTA, LPVOID, lpCreateParams, 0, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, HINSTANCE, hInstance, 4, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, HMENU, hMenu, 8, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, HWND, hwndParent, 12, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, INT, cy, 16, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, INT, cx, 20, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, INT, y, 24, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, INT, x, 28, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, LONG, style, 32, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, LPCSTR, lpszName, 36, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, LPCSTR, lpszClass, 40, 4, 4);
+    TEST_FIELD(CREATESTRUCTA, DWORD, dwExStyle, 44, 4, 4);
+
+    /* CREATESTRUCTW (pack 4) */
+    TEST_TYPE(CREATESTRUCTW, 48, 4);
+    TEST_FIELD(CREATESTRUCTW, LPVOID, lpCreateParams, 0, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, HINSTANCE, hInstance, 4, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, HMENU, hMenu, 8, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, HWND, hwndParent, 12, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, INT, cy, 16, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, INT, cx, 20, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, INT, y, 24, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, INT, x, 28, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, LONG, style, 32, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, LPCWSTR, lpszName, 36, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, LPCWSTR, lpszClass, 40, 4, 4);
+    TEST_FIELD(CREATESTRUCTW, DWORD, dwExStyle, 44, 4, 4);
+
+    /* CURSORINFO (pack 4) */
+    TEST_TYPE(CURSORINFO, 20, 4);
+    TEST_FIELD(CURSORINFO, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(CURSORINFO, DWORD, flags, 4, 4, 4);
+    TEST_FIELD(CURSORINFO, HCURSOR, hCursor, 8, 4, 4);
+    TEST_FIELD(CURSORINFO, POINT, ptScreenPos, 12, 8, 4);
+
+    /* CWPRETSTRUCT (pack 4) */
+    TEST_TYPE(CWPRETSTRUCT, 20, 4);
+    TEST_FIELD(CWPRETSTRUCT, LRESULT, lResult, 0, 4, 4);
+    TEST_FIELD(CWPRETSTRUCT, LPARAM, lParam, 4, 4, 4);
+    TEST_FIELD(CWPRETSTRUCT, WPARAM, wParam, 8, 4, 4);
+    TEST_FIELD(CWPRETSTRUCT, DWORD, message, 12, 4, 4);
+    TEST_FIELD(CWPRETSTRUCT, HWND, hwnd, 16, 4, 4);
+
+    /* CWPSTRUCT (pack 4) */
+    TEST_TYPE(CWPSTRUCT, 16, 4);
+    TEST_FIELD(CWPSTRUCT, LPARAM, lParam, 0, 4, 4);
+    TEST_FIELD(CWPSTRUCT, WPARAM, wParam, 4, 4, 4);
+    TEST_FIELD(CWPSTRUCT, UINT, message, 8, 4, 4);
+    TEST_FIELD(CWPSTRUCT, HWND, hwnd, 12, 4, 4);
+
+    /* DEBUGHOOKINFO (pack 4) */
+    TEST_TYPE(DEBUGHOOKINFO, 20, 4);
+    TEST_FIELD(DEBUGHOOKINFO, DWORD, idThread, 0, 4, 4);
+    TEST_FIELD(DEBUGHOOKINFO, DWORD, idThreadInstaller, 4, 4, 4);
+    TEST_FIELD(DEBUGHOOKINFO, LPARAM, lParam, 8, 4, 4);
+    TEST_FIELD(DEBUGHOOKINFO, WPARAM, wParam, 12, 4, 4);
+    TEST_FIELD(DEBUGHOOKINFO, INT, code, 16, 4, 4);
+
+    /* DELETEITEMSTRUCT (pack 4) */
+    TEST_TYPE(DELETEITEMSTRUCT, 20, 4);
+    TEST_FIELD(DELETEITEMSTRUCT, UINT, CtlType, 0, 4, 4);
+    TEST_FIELD(DELETEITEMSTRUCT, UINT, CtlID, 4, 4, 4);
+    TEST_FIELD(DELETEITEMSTRUCT, UINT, itemID, 8, 4, 4);
+    TEST_FIELD(DELETEITEMSTRUCT, HWND, hwndItem, 12, 4, 4);
+    TEST_FIELD(DELETEITEMSTRUCT, DWORD, itemData, 16, 4, 4);
+
+    /* DLGITEMTEMPLATE (pack 2) */
+    TEST_TYPE(DLGITEMTEMPLATE, 18, 2);
+    TEST_FIELD(DLGITEMTEMPLATE, DWORD, style, 0, 4, 2);
+    TEST_FIELD(DLGITEMTEMPLATE, DWORD, dwExtendedStyle, 4, 4, 2);
+    TEST_FIELD(DLGITEMTEMPLATE, short, x, 8, 2, 2);
+    TEST_FIELD(DLGITEMTEMPLATE, short, y, 10, 2, 2);
+    TEST_FIELD(DLGITEMTEMPLATE, short, cx, 12, 2, 2);
+    TEST_FIELD(DLGITEMTEMPLATE, short, cy, 14, 2, 2);
+    TEST_FIELD(DLGITEMTEMPLATE, WORD, id, 16, 2, 2);
+
+    /* DLGTEMPLATE (pack 2) */
+    TEST_TYPE(DLGTEMPLATE, 18, 2);
+    TEST_FIELD(DLGTEMPLATE, DWORD, style, 0, 4, 2);
+    TEST_FIELD(DLGTEMPLATE, DWORD, dwExtendedStyle, 4, 4, 2);
+    TEST_FIELD(DLGTEMPLATE, WORD, cdit, 8, 2, 2);
+    TEST_FIELD(DLGTEMPLATE, short, x, 10, 2, 2);
+    TEST_FIELD(DLGTEMPLATE, short, y, 12, 2, 2);
+    TEST_FIELD(DLGTEMPLATE, short, cx, 14, 2, 2);
+    TEST_FIELD(DLGTEMPLATE, short, cy, 16, 2, 2);
+
+    /* DRAWTEXTPARAMS (pack 4) */
+    TEST_TYPE(DRAWTEXTPARAMS, 20, 4);
+    TEST_FIELD(DRAWTEXTPARAMS, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(DRAWTEXTPARAMS, INT, iTabLength, 4, 4, 4);
+    TEST_FIELD(DRAWTEXTPARAMS, INT, iLeftMargin, 8, 4, 4);
+    TEST_FIELD(DRAWTEXTPARAMS, INT, iRightMargin, 12, 4, 4);
+    TEST_FIELD(DRAWTEXTPARAMS, UINT, uiLengthDrawn, 16, 4, 4);
+
+    /* EVENTMSG (pack 4) */
+    TEST_TYPE(EVENTMSG, 20, 4);
+    TEST_FIELD(EVENTMSG, UINT, message, 0, 4, 4);
+    TEST_FIELD(EVENTMSG, UINT, paramL, 4, 4, 4);
+    TEST_FIELD(EVENTMSG, UINT, paramH, 8, 4, 4);
+    TEST_FIELD(EVENTMSG, DWORD, time, 12, 4, 4);
+    TEST_FIELD(EVENTMSG, HWND, hwnd, 16, 4, 4);
+
+    /* FILTERKEYS (pack 4) */
+    TEST_TYPE(FILTERKEYS, 24, 4);
+    TEST_FIELD(FILTERKEYS, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(FILTERKEYS, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(FILTERKEYS, DWORD, iWaitMSec, 8, 4, 4);
+    TEST_FIELD(FILTERKEYS, DWORD, iDelayMSec, 12, 4, 4);
+    TEST_FIELD(FILTERKEYS, DWORD, iRepeatMSec, 16, 4, 4);
+    TEST_FIELD(FILTERKEYS, DWORD, iBounceMSec, 20, 4, 4);
+
+    /* HARDWAREHOOKSTRUCT (pack 4) */
+    TEST_TYPE(HARDWAREHOOKSTRUCT, 16, 4);
+    TEST_FIELD(HARDWAREHOOKSTRUCT, HWND, hWnd, 0, 4, 4);
+    TEST_FIELD(HARDWAREHOOKSTRUCT, UINT, wMessage, 4, 4, 4);
+    TEST_FIELD(HARDWAREHOOKSTRUCT, WPARAM, wParam, 8, 4, 4);
+    TEST_FIELD(HARDWAREHOOKSTRUCT, LPARAM, lParam, 12, 4, 4);
+
+    /* HARDWAREINPUT (pack 4) */
+    TEST_TYPE(HARDWAREINPUT, 8, 4);
+    TEST_FIELD(HARDWAREINPUT, DWORD, uMsg, 0, 4, 4);
+    TEST_FIELD(HARDWAREINPUT, WORD, wParamL, 4, 2, 2);
+    TEST_FIELD(HARDWAREINPUT, WORD, wParamH, 6, 2, 2);
+
+    /* HELPINFO (pack 4) */
+    TEST_TYPE(HELPINFO, 28, 4);
+    TEST_FIELD(HELPINFO, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(HELPINFO, INT, iContextType, 4, 4, 4);
+    TEST_FIELD(HELPINFO, INT, iCtrlId, 8, 4, 4);
+    TEST_FIELD(HELPINFO, HANDLE, hItemHandle, 12, 4, 4);
+    TEST_FIELD(HELPINFO, DWORD, dwContextId, 16, 4, 4);
+    TEST_FIELD(HELPINFO, POINT, MousePos, 20, 8, 4);
+
+    /* HELPWININFOA (pack 4) */
+    TEST_TYPE(HELPWININFOA, 28, 4);
+    TEST_FIELD(HELPWININFOA, int, wStructSize, 0, 4, 4);
+    TEST_FIELD(HELPWININFOA, int, x, 4, 4, 4);
+    TEST_FIELD(HELPWININFOA, int, y, 8, 4, 4);
+    TEST_FIELD(HELPWININFOA, int, dx, 12, 4, 4);
+    TEST_FIELD(HELPWININFOA, int, dy, 16, 4, 4);
+    TEST_FIELD(HELPWININFOA, int, wMax, 20, 4, 4);
+    TEST_FIELD(HELPWININFOA, CHAR[2], rgchMember, 24, 2, 1);
+
+    /* HELPWININFOW (pack 4) */
+    TEST_TYPE(HELPWININFOW, 28, 4);
+    TEST_FIELD(HELPWININFOW, int, wStructSize, 0, 4, 4);
+    TEST_FIELD(HELPWININFOW, int, x, 4, 4, 4);
+    TEST_FIELD(HELPWININFOW, int, y, 8, 4, 4);
+    TEST_FIELD(HELPWININFOW, int, dx, 12, 4, 4);
+    TEST_FIELD(HELPWININFOW, int, dy, 16, 4, 4);
+    TEST_FIELD(HELPWININFOW, int, wMax, 20, 4, 4);
+    TEST_FIELD(HELPWININFOW, WCHAR[2], rgchMember, 24, 4, 2);
+
+    /* HIGHCONTRASTA (pack 4) */
+    TEST_TYPE(HIGHCONTRASTA, 12, 4);
+    TEST_FIELD(HIGHCONTRASTA, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(HIGHCONTRASTA, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(HIGHCONTRASTA, LPSTR, lpszDefaultScheme, 8, 4, 4);
+
+    /* HIGHCONTRASTW (pack 4) */
+    TEST_TYPE(HIGHCONTRASTW, 12, 4);
+    TEST_FIELD(HIGHCONTRASTW, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(HIGHCONTRASTW, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(HIGHCONTRASTW, LPWSTR, lpszDefaultScheme, 8, 4, 4);
+
+    /* ICONINFO (pack 4) */
+    TEST_TYPE(ICONINFO, 20, 4);
+    TEST_FIELD(ICONINFO, BOOL, fIcon, 0, 4, 4);
+    TEST_FIELD(ICONINFO, DWORD, xHotspot, 4, 4, 4);
+    TEST_FIELD(ICONINFO, DWORD, yHotspot, 8, 4, 4);
+    TEST_FIELD(ICONINFO, HBITMAP, hbmMask, 12, 4, 4);
+    TEST_FIELD(ICONINFO, HBITMAP, hbmColor, 16, 4, 4);
+
+    /* ICONMETRICSA (pack 4) */
+    TEST_TYPE(ICONMETRICSA, 76, 4);
+    TEST_FIELD(ICONMETRICSA, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(ICONMETRICSA, int, iHorzSpacing, 4, 4, 4);
+    TEST_FIELD(ICONMETRICSA, int, iVertSpacing, 8, 4, 4);
+    TEST_FIELD(ICONMETRICSA, int, iTitleWrap, 12, 4, 4);
+    TEST_FIELD(ICONMETRICSA, LOGFONTA, lfFont, 16, 60, 4);
+
+    /* ICONMETRICSW (pack 4) */
+    TEST_TYPE(ICONMETRICSW, 108, 4);
+    TEST_FIELD(ICONMETRICSW, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(ICONMETRICSW, int, iHorzSpacing, 4, 4, 4);
+    TEST_FIELD(ICONMETRICSW, int, iVertSpacing, 8, 4, 4);
+    TEST_FIELD(ICONMETRICSW, int, iTitleWrap, 12, 4, 4);
+    TEST_FIELD(ICONMETRICSW, LOGFONTW, lfFont, 16, 92, 4);
+
+    /* INPUT (pack 4) */
+    TEST_FIELD(INPUT, DWORD, type, 0, 4, 4);
+
+    /* KBDLLHOOKSTRUCT (pack 4) */
+    TEST_TYPE(KBDLLHOOKSTRUCT, 20, 4);
+    TEST_FIELD(KBDLLHOOKSTRUCT, DWORD, vkCode, 0, 4, 4);
+    TEST_FIELD(KBDLLHOOKSTRUCT, DWORD, scanCode, 4, 4, 4);
+    TEST_FIELD(KBDLLHOOKSTRUCT, DWORD, flags, 8, 4, 4);
+    TEST_FIELD(KBDLLHOOKSTRUCT, DWORD, time, 12, 4, 4);
+    TEST_FIELD(KBDLLHOOKSTRUCT, ULONG_PTR, dwExtraInfo, 16, 4, 4);
+
+    /* KEYBDINPUT (pack 4) */
+    TEST_TYPE(KEYBDINPUT, 16, 4);
+    TEST_FIELD(KEYBDINPUT, WORD, wVk, 0, 2, 2);
+    TEST_FIELD(KEYBDINPUT, WORD, wScan, 2, 2, 2);
+    TEST_FIELD(KEYBDINPUT, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(KEYBDINPUT, DWORD, time, 8, 4, 4);
+    TEST_FIELD(KEYBDINPUT, ULONG_PTR, dwExtraInfo, 12, 4, 4);
+
+    /* MDICREATESTRUCTA (pack 4) */
+    TEST_TYPE(MDICREATESTRUCTA, 36, 4);
+    TEST_FIELD(MDICREATESTRUCTA, LPCSTR, szClass, 0, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTA, LPCSTR, szTitle, 4, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTA, HINSTANCE, hOwner, 8, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTA, INT, x, 12, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTA, INT, y, 16, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTA, INT, cx, 20, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTA, INT, cy, 24, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTA, DWORD, style, 28, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTA, LPARAM, lParam, 32, 4, 4);
+
+    /* MDICREATESTRUCTW (pack 4) */
+    TEST_TYPE(MDICREATESTRUCTW, 36, 4);
+    TEST_FIELD(MDICREATESTRUCTW, LPCWSTR, szClass, 0, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTW, LPCWSTR, szTitle, 4, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTW, HINSTANCE, hOwner, 8, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTW, INT, x, 12, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTW, INT, y, 16, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTW, INT, cx, 20, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTW, INT, cy, 24, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTW, DWORD, style, 28, 4, 4);
+    TEST_FIELD(MDICREATESTRUCTW, LPARAM, lParam, 32, 4, 4);
+
+    /* MDINEXTMENU (pack 4) */
+    TEST_TYPE(MDINEXTMENU, 12, 4);
+    TEST_FIELD(MDINEXTMENU, HMENU, hmenuIn, 0, 4, 4);
+    TEST_FIELD(MDINEXTMENU, HMENU, hmenuNext, 4, 4, 4);
+    TEST_FIELD(MDINEXTMENU, HWND, hwndNext, 8, 4, 4);
+
+    /* MEASUREITEMSTRUCT (pack 4) */
+    TEST_TYPE(MEASUREITEMSTRUCT, 24, 4);
+    TEST_FIELD(MEASUREITEMSTRUCT, UINT, CtlType, 0, 4, 4);
+    TEST_FIELD(MEASUREITEMSTRUCT, UINT, CtlID, 4, 4, 4);
+    TEST_FIELD(MEASUREITEMSTRUCT, UINT, itemID, 8, 4, 4);
+    TEST_FIELD(MEASUREITEMSTRUCT, UINT, itemWidth, 12, 4, 4);
+    TEST_FIELD(MEASUREITEMSTRUCT, UINT, itemHeight, 16, 4, 4);
+    TEST_FIELD(MEASUREITEMSTRUCT, DWORD, itemData, 20, 4, 4);
+
+    /* MENUINFO (pack 4) */
+    TEST_TYPE(MENUINFO, 28, 4);
+    TEST_FIELD(MENUINFO, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(MENUINFO, DWORD, fMask, 4, 4, 4);
+    TEST_FIELD(MENUINFO, DWORD, dwStyle, 8, 4, 4);
+    TEST_FIELD(MENUINFO, UINT, cyMax, 12, 4, 4);
+    TEST_FIELD(MENUINFO, HBRUSH, hbrBack, 16, 4, 4);
+    TEST_FIELD(MENUINFO, DWORD, dwContextHelpID, 20, 4, 4);
+    TEST_FIELD(MENUINFO, DWORD, dwMenuData, 24, 4, 4);
+
+    /* MENUITEMINFOA (pack 4) */
+    TEST_TYPE(MENUITEMINFOA, 48, 4);
+    TEST_FIELD(MENUITEMINFOA, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, UINT, fMask, 4, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, UINT, fType, 8, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, UINT, fState, 12, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, UINT, wID, 16, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, HMENU, hSubMenu, 20, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, HBITMAP, hbmpChecked, 24, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, HBITMAP, hbmpUnchecked, 28, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, DWORD, dwItemData, 32, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, LPSTR, dwTypeData, 36, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, UINT, cch, 40, 4, 4);
+    TEST_FIELD(MENUITEMINFOA, HBITMAP, hbmpItem, 44, 4, 4);
+
+    /* MENUITEMINFOW (pack 4) */
+    TEST_TYPE(MENUITEMINFOW, 48, 4);
+    TEST_FIELD(MENUITEMINFOW, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, UINT, fMask, 4, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, UINT, fType, 8, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, UINT, fState, 12, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, UINT, wID, 16, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, HMENU, hSubMenu, 20, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, HBITMAP, hbmpChecked, 24, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, HBITMAP, hbmpUnchecked, 28, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, DWORD, dwItemData, 32, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, LPWSTR, dwTypeData, 36, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, UINT, cch, 40, 4, 4);
+    TEST_FIELD(MENUITEMINFOW, HBITMAP, hbmpItem, 44, 4, 4);
+
+    /* MENUITEMTEMPLATE (pack 4) */
+    TEST_TYPE(MENUITEMTEMPLATE, 6, 2);
+    TEST_FIELD(MENUITEMTEMPLATE, WORD, mtOption, 0, 2, 2);
+    TEST_FIELD(MENUITEMTEMPLATE, WORD, mtID, 2, 2, 2);
+    TEST_FIELD(MENUITEMTEMPLATE, WCHAR[1], mtString, 4, 2, 2);
+
+    /* MENUITEMTEMPLATEHEADER (pack 4) */
+    TEST_TYPE(MENUITEMTEMPLATEHEADER, 4, 2);
+    TEST_FIELD(MENUITEMTEMPLATEHEADER, WORD, versionNumber, 0, 2, 2);
+    TEST_FIELD(MENUITEMTEMPLATEHEADER, WORD, offset, 2, 2, 2);
+
+    /* MINIMIZEDMETRICS (pack 4) */
+    TEST_TYPE(MINIMIZEDMETRICS, 20, 4);
+    TEST_FIELD(MINIMIZEDMETRICS, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(MINIMIZEDMETRICS, int, iWidth, 4, 4, 4);
+    TEST_FIELD(MINIMIZEDMETRICS, int, iHorzGap, 8, 4, 4);
+    TEST_FIELD(MINIMIZEDMETRICS, int, iVertGap, 12, 4, 4);
+    TEST_FIELD(MINIMIZEDMETRICS, int, iArrange, 16, 4, 4);
+
+    /* MINMAXINFO (pack 4) */
+    TEST_TYPE(MINMAXINFO, 40, 4);
+    TEST_FIELD(MINMAXINFO, POINT, ptReserved, 0, 8, 4);
+    TEST_FIELD(MINMAXINFO, POINT, ptMaxSize, 8, 8, 4);
+    TEST_FIELD(MINMAXINFO, POINT, ptMaxPosition, 16, 8, 4);
+    TEST_FIELD(MINMAXINFO, POINT, ptMinTrackSize, 24, 8, 4);
+    TEST_FIELD(MINMAXINFO, POINT, ptMaxTrackSize, 32, 8, 4);
+
+    /* MONITORINFO (pack 4) */
+    TEST_TYPE(MONITORINFO, 40, 4);
+    TEST_FIELD(MONITORINFO, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(MONITORINFO, RECT, rcMonitor, 4, 16, 4);
+    TEST_FIELD(MONITORINFO, RECT, rcWork, 20, 16, 4);
+    TEST_FIELD(MONITORINFO, DWORD, dwFlags, 36, 4, 4);
+
+    /* MONITORINFOEXA (pack 4) */
+    TEST_TYPE(MONITORINFOEXA, 72, 4);
+    TEST_FIELD(MONITORINFOEXA, MONITORINFO, dummy, 0, 40, 4);
+    TEST_FIELD(MONITORINFOEXA, CHAR[CCHDEVICENAME], szDevice, 40, 32, 1);
+
+    /* MONITORINFOEXW (pack 4) */
+    TEST_TYPE(MONITORINFOEXW, 104, 4);
+    TEST_FIELD(MONITORINFOEXW, MONITORINFO, dummy, 0, 40, 4);
+    TEST_FIELD(MONITORINFOEXW, WCHAR[CCHDEVICENAME], szDevice, 40, 64, 2);
+
+    /* MOUSEHOOKSTRUCT (pack 4) */
+    TEST_TYPE(MOUSEHOOKSTRUCT, 20, 4);
+    TEST_FIELD(MOUSEHOOKSTRUCT, POINT, pt, 0, 8, 4);
+    TEST_FIELD(MOUSEHOOKSTRUCT, HWND, hwnd, 8, 4, 4);
+    TEST_FIELD(MOUSEHOOKSTRUCT, UINT, wHitTestCode, 12, 4, 4);
+    TEST_FIELD(MOUSEHOOKSTRUCT, DWORD, dwExtraInfo, 16, 4, 4);
+
+    /* MOUSEINPUT (pack 4) */
+    TEST_TYPE(MOUSEINPUT, 24, 4);
+    TEST_FIELD(MOUSEINPUT, LONG, dx, 0, 4, 4);
+    TEST_FIELD(MOUSEINPUT, LONG, dy, 4, 4, 4);
+    TEST_FIELD(MOUSEINPUT, DWORD, mouseData, 8, 4, 4);
+    TEST_FIELD(MOUSEINPUT, DWORD, dwFlags, 12, 4, 4);
+    TEST_FIELD(MOUSEINPUT, DWORD, time, 16, 4, 4);
+    TEST_FIELD(MOUSEINPUT, ULONG_PTR, dwExtraInfo, 20, 4, 4);
+
+    /* MOUSEKEYS (pack 4) */
+    TEST_TYPE(MOUSEKEYS, 28, 4);
+    TEST_FIELD(MOUSEKEYS, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(MOUSEKEYS, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(MOUSEKEYS, DWORD, iMaxSpeed, 8, 4, 4);
+    TEST_FIELD(MOUSEKEYS, DWORD, iTimeToMaxSpeed, 12, 4, 4);
+    TEST_FIELD(MOUSEKEYS, DWORD, iCtrlSpeed, 16, 4, 4);
+    TEST_FIELD(MOUSEKEYS, DWORD, dwReserved1, 20, 4, 4);
+    TEST_FIELD(MOUSEKEYS, DWORD, dwReserved2, 24, 4, 4);
+
+    /* MSG (pack 4) */
+    TEST_TYPE(MSG, 28, 4);
+    TEST_FIELD(MSG, HWND, hwnd, 0, 4, 4);
+    TEST_FIELD(MSG, UINT, message, 4, 4, 4);
+    TEST_FIELD(MSG, WPARAM, wParam, 8, 4, 4);
+    TEST_FIELD(MSG, LPARAM, lParam, 12, 4, 4);
+    TEST_FIELD(MSG, DWORD, time, 16, 4, 4);
+    TEST_FIELD(MSG, POINT, pt, 20, 8, 4);
+
+    /* MSGBOXPARAMSA (pack 4) */
+    TEST_TYPE(MSGBOXPARAMSA, 40, 4);
+    TEST_FIELD(MSGBOXPARAMSA, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, HWND, hwndOwner, 4, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, HINSTANCE, hInstance, 8, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, LPCSTR, lpszText, 12, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, LPCSTR, lpszCaption, 16, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, DWORD, dwStyle, 20, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, LPCSTR, lpszIcon, 24, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, DWORD, dwContextHelpId, 28, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, MSGBOXCALLBACK, lpfnMsgBoxCallback, 32, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, DWORD, dwLanguageId, 36, 4, 4);
+
+    /* MSGBOXPARAMSW (pack 4) */
+    TEST_TYPE(MSGBOXPARAMSW, 40, 4);
+    TEST_FIELD(MSGBOXPARAMSW, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, HWND, hwndOwner, 4, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, HINSTANCE, hInstance, 8, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, LPCWSTR, lpszText, 12, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, LPCWSTR, lpszCaption, 16, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, DWORD, dwStyle, 20, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, LPCWSTR, lpszIcon, 24, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, DWORD, dwContextHelpId, 28, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, MSGBOXCALLBACK, lpfnMsgBoxCallback, 32, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, DWORD, dwLanguageId, 36, 4, 4);
+
+    /* MSLLHOOKSTRUCT (pack 4) */
+    TEST_TYPE(MSLLHOOKSTRUCT, 24, 4);
+    TEST_FIELD(MSLLHOOKSTRUCT, POINT, pt, 0, 8, 4);
+    TEST_FIELD(MSLLHOOKSTRUCT, DWORD, mouseData, 8, 4, 4);
+    TEST_FIELD(MSLLHOOKSTRUCT, DWORD, flags, 12, 4, 4);
+    TEST_FIELD(MSLLHOOKSTRUCT, DWORD, time, 16, 4, 4);
+    TEST_FIELD(MSLLHOOKSTRUCT, ULONG_PTR, dwExtraInfo, 20, 4, 4);
+
+    /* MULTIKEYHELPA (pack 4) */
+    TEST_TYPE(MULTIKEYHELPA, 8, 4);
+    TEST_FIELD(MULTIKEYHELPA, DWORD, mkSize, 0, 4, 4);
+    TEST_FIELD(MULTIKEYHELPA, CHAR, mkKeyList, 4, 1, 1);
+    TEST_FIELD(MULTIKEYHELPA, CHAR[1], szKeyphrase, 5, 1, 1);
+
+    /* MULTIKEYHELPW (pack 4) */
+    TEST_TYPE(MULTIKEYHELPW, 8, 4);
+    TEST_FIELD(MULTIKEYHELPW, DWORD, mkSize, 0, 4, 4);
+    TEST_FIELD(MULTIKEYHELPW, WCHAR, mkKeyList, 4, 2, 2);
+    TEST_FIELD(MULTIKEYHELPW, WCHAR[1], szKeyphrase, 6, 2, 2);
+
+    /* NCCALCSIZE_PARAMS (pack 4) */
+    TEST_TYPE(NCCALCSIZE_PARAMS, 52, 4);
+    TEST_FIELD(NCCALCSIZE_PARAMS, RECT[3], rgrc, 0, 48, 4);
+    TEST_FIELD(NCCALCSIZE_PARAMS, WINDOWPOS *, lppos, 48, 4, 4);
+
+    /* NMHDR (pack 4) */
+    TEST_TYPE(NMHDR, 12, 4);
+    TEST_FIELD(NMHDR, HWND, hwndFrom, 0, 4, 4);
+    TEST_FIELD(NMHDR, UINT, idFrom, 4, 4, 4);
+    TEST_FIELD(NMHDR, UINT, code, 8, 4, 4);
+
+    /* NONCLIENTMETRICSA (pack 4) */
+    TEST_TYPE(NONCLIENTMETRICSA, 340, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, INT, iBorderWidth, 4, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, INT, iScrollWidth, 8, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, INT, iScrollHeight, 12, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, INT, iCaptionWidth, 16, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, INT, iCaptionHeight, 20, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, LOGFONTA, lfCaptionFont, 24, 60, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, INT, iSmCaptionWidth, 84, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, INT, iSmCaptionHeight, 88, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, LOGFONTA, lfSmCaptionFont, 92, 60, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, INT, iMenuWidth, 152, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, INT, iMenuHeight, 156, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, LOGFONTA, lfMenuFont, 160, 60, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, LOGFONTA, lfStatusFont, 220, 60, 4);
+    TEST_FIELD(NONCLIENTMETRICSA, LOGFONTA, lfMessageFont, 280, 60, 4);
+
+    /* NONCLIENTMETRICSW (pack 4) */
+    TEST_TYPE(NONCLIENTMETRICSW, 500, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, INT, iBorderWidth, 4, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, INT, iScrollWidth, 8, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, INT, iScrollHeight, 12, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, INT, iCaptionWidth, 16, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, INT, iCaptionHeight, 20, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, LOGFONTW, lfCaptionFont, 24, 92, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, INT, iSmCaptionWidth, 116, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, INT, iSmCaptionHeight, 120, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, LOGFONTW, lfSmCaptionFont, 124, 92, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, INT, iMenuWidth, 216, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, INT, iMenuHeight, 220, 4, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, LOGFONTW, lfMenuFont, 224, 92, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, LOGFONTW, lfStatusFont, 316, 92, 4);
+    TEST_FIELD(NONCLIENTMETRICSW, LOGFONTW, lfMessageFont, 408, 92, 4);
+
+    /* PAINTSTRUCT (pack 4) */
+    TEST_TYPE(PAINTSTRUCT, 64, 4);
+    TEST_FIELD(PAINTSTRUCT, HDC, hdc, 0, 4, 4);
+    TEST_FIELD(PAINTSTRUCT, BOOL, fErase, 4, 4, 4);
+    TEST_FIELD(PAINTSTRUCT, RECT, rcPaint, 8, 16, 4);
+    TEST_FIELD(PAINTSTRUCT, BOOL, fRestore, 24, 4, 4);
+    TEST_FIELD(PAINTSTRUCT, BOOL, fIncUpdate, 28, 4, 4);
+    TEST_FIELD(PAINTSTRUCT, BYTE[32], rgbReserved, 32, 32, 1);
+
+    /* SCROLLINFO (pack 4) */
+    TEST_TYPE(SCROLLINFO, 28, 4);
+    TEST_FIELD(SCROLLINFO, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(SCROLLINFO, UINT, fMask, 4, 4, 4);
+    TEST_FIELD(SCROLLINFO, INT, nMin, 8, 4, 4);
+    TEST_FIELD(SCROLLINFO, INT, nMax, 12, 4, 4);
+    TEST_FIELD(SCROLLINFO, UINT, nPage, 16, 4, 4);
+    TEST_FIELD(SCROLLINFO, INT, nPos, 20, 4, 4);
+    TEST_FIELD(SCROLLINFO, INT, nTrackPos, 24, 4, 4);
+
+    /* SERIALKEYSA (pack 4) */
+    TEST_TYPE(SERIALKEYSA, 28, 4);
+    TEST_FIELD(SERIALKEYSA, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(SERIALKEYSA, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(SERIALKEYSA, LPSTR, lpszActivePort, 8, 4, 4);
+    TEST_FIELD(SERIALKEYSA, LPSTR, lpszPort, 12, 4, 4);
+    TEST_FIELD(SERIALKEYSA, UINT, iBaudRate, 16, 4, 4);
+    TEST_FIELD(SERIALKEYSA, UINT, iPortState, 20, 4, 4);
+    TEST_FIELD(SERIALKEYSA, UINT, iActive, 24, 4, 4);
+
+    /* SERIALKEYSW (pack 4) */
+    TEST_TYPE(SERIALKEYSW, 28, 4);
+    TEST_FIELD(SERIALKEYSW, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(SERIALKEYSW, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(SERIALKEYSW, LPWSTR, lpszActivePort, 8, 4, 4);
+    TEST_FIELD(SERIALKEYSW, LPWSTR, lpszPort, 12, 4, 4);
+    TEST_FIELD(SERIALKEYSW, UINT, iBaudRate, 16, 4, 4);
+    TEST_FIELD(SERIALKEYSW, UINT, iPortState, 20, 4, 4);
+    TEST_FIELD(SERIALKEYSW, UINT, iActive, 24, 4, 4);
+
+    /* SOUNDSENTRYA (pack 4) */
+    TEST_TYPE(SOUNDSENTRYA, 48, 4);
+    TEST_FIELD(SOUNDSENTRYA, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iFSTextEffect, 8, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iFSTextEffectMSec, 12, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iFSTextEffectColorBits, 16, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iFSGrafEffect, 20, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iFSGrafEffectMSec, 24, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iFSGrafEffectColor, 28, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iWindowsEffect, 32, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iWindowsEffectMSec, 36, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, LPSTR, lpszWindowsEffectDLL, 40, 4, 4);
+    TEST_FIELD(SOUNDSENTRYA, DWORD, iWindowsEffectOrdinal, 44, 4, 4);
+
+    /* SOUNDSENTRYW (pack 4) */
+    TEST_TYPE(SOUNDSENTRYW, 48, 4);
+    TEST_FIELD(SOUNDSENTRYW, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, iFSTextEffect, 8, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, iFSTextEffectMSec, 12, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, iFSTextEffectColorBits, 16, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, iFSGrafEffect, 20, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, iFSGrafEffectMSec, 24, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, iFSGrafEffectColor, 28, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, iWindowsEffect, 32, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, iWindowsEffectMSec, 36, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, LPWSTR, lpszWindowsEffectDLL, 40, 4, 4);
+    TEST_FIELD(SOUNDSENTRYW, DWORD, iWindowsEffectOrdinal, 44, 4, 4);
+
+    /* STICKYKEYS (pack 4) */
+    TEST_TYPE(STICKYKEYS, 8, 4);
+    TEST_FIELD(STICKYKEYS, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(STICKYKEYS, DWORD, dwFlags, 4, 4, 4);
+
+    /* STYLESTRUCT (pack 4) */
+    TEST_TYPE(STYLESTRUCT, 8, 4);
+    TEST_FIELD(STYLESTRUCT, DWORD, styleOld, 0, 4, 4);
+    TEST_FIELD(STYLESTRUCT, DWORD, styleNew, 4, 4, 4);
+
+    /* TOGGLEKEYS (pack 4) */
+    TEST_TYPE(TOGGLEKEYS, 8, 4);
+    TEST_FIELD(TOGGLEKEYS, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(TOGGLEKEYS, DWORD, dwFlags, 4, 4, 4);
+
+    /* TPMPARAMS (pack 4) */
+    TEST_TYPE(TPMPARAMS, 20, 4);
+    TEST_FIELD(TPMPARAMS, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(TPMPARAMS, RECT, rcExclude, 4, 16, 4);
+
+    /* TRACKMOUSEEVENT (pack 4) */
+    TEST_TYPE(TRACKMOUSEEVENT, 16, 4);
+    TEST_FIELD(TRACKMOUSEEVENT, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(TRACKMOUSEEVENT, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(TRACKMOUSEEVENT, HWND, hwndTrack, 8, 4, 4);
+    TEST_FIELD(TRACKMOUSEEVENT, DWORD, dwHoverTime, 12, 4, 4);
+
+    /* WINDOWINFO (pack 4) */
+    TEST_TYPE(WINDOWINFO, 60, 4);
+    TEST_FIELD(WINDOWINFO, DWORD, cbSize, 0, 4, 4);
+    TEST_FIELD(WINDOWINFO, RECT, rcWindow, 4, 16, 4);
+    TEST_FIELD(WINDOWINFO, RECT, rcClient, 20, 16, 4);
+    TEST_FIELD(WINDOWINFO, DWORD, dwStyle, 36, 4, 4);
+    TEST_FIELD(WINDOWINFO, DWORD, dwExStyle, 40, 4, 4);
+    TEST_FIELD(WINDOWINFO, DWORD, dwWindowStatus, 44, 4, 4);
+    TEST_FIELD(WINDOWINFO, UINT, cxWindowBorders, 48, 4, 4);
+    TEST_FIELD(WINDOWINFO, UINT, cyWindowBorders, 52, 4, 4);
+    TEST_FIELD(WINDOWINFO, ATOM, atomWindowType, 56, 2, 2);
+    TEST_FIELD(WINDOWINFO, WORD, wCreatorVersion, 58, 2, 2);
+
+    /* WINDOWPOS (pack 4) */
+    TEST_TYPE(WINDOWPOS, 28, 4);
+    TEST_FIELD(WINDOWPOS, HWND, hwnd, 0, 4, 4);
+    TEST_FIELD(WINDOWPOS, HWND, hwndInsertAfter, 4, 4, 4);
+    TEST_FIELD(WINDOWPOS, INT, x, 8, 4, 4);
+    TEST_FIELD(WINDOWPOS, INT, y, 12, 4, 4);
+    TEST_FIELD(WINDOWPOS, INT, cx, 16, 4, 4);
+    TEST_FIELD(WINDOWPOS, INT, cy, 20, 4, 4);
+    TEST_FIELD(WINDOWPOS, UINT, flags, 24, 4, 4);
+
+    /* WNDCLASSA (pack 4) */
+    TEST_TYPE(WNDCLASSA, 40, 4);
+    TEST_FIELD(WNDCLASSA, UINT, style, 0, 4, 4);
+    TEST_FIELD(WNDCLASSA, WNDPROC, lpfnWndProc, 4, 4, 4);
+    TEST_FIELD(WNDCLASSA, INT, cbClsExtra, 8, 4, 4);
+    TEST_FIELD(WNDCLASSA, INT, cbWndExtra, 12, 4, 4);
+    TEST_FIELD(WNDCLASSA, HINSTANCE, hInstance, 16, 4, 4);
+    TEST_FIELD(WNDCLASSA, HICON, hIcon, 20, 4, 4);
+    TEST_FIELD(WNDCLASSA, HCURSOR, hCursor, 24, 4, 4);
+    TEST_FIELD(WNDCLASSA, HBRUSH, hbrBackground, 28, 4, 4);
+    TEST_FIELD(WNDCLASSA, LPCSTR, lpszMenuName, 32, 4, 4);
+    TEST_FIELD(WNDCLASSA, LPCSTR, lpszClassName, 36, 4, 4);
+
+    /* WNDCLASSEXA (pack 4) */
+    TEST_TYPE(WNDCLASSEXA, 48, 4);
+    TEST_FIELD(WNDCLASSEXA, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, UINT, style, 4, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, WNDPROC, lpfnWndProc, 8, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, INT, cbClsExtra, 12, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, INT, cbWndExtra, 16, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, HINSTANCE, hInstance, 20, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, HICON, hIcon, 24, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, HCURSOR, hCursor, 28, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, HBRUSH, hbrBackground, 32, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, LPCSTR, lpszMenuName, 36, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, LPCSTR, lpszClassName, 40, 4, 4);
+    TEST_FIELD(WNDCLASSEXA, HICON, hIconSm, 44, 4, 4);
+
+    /* WNDCLASSEXW (pack 4) */
+    TEST_TYPE(WNDCLASSEXW, 48, 4);
+    TEST_FIELD(WNDCLASSEXW, UINT, cbSize, 0, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, UINT, style, 4, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, WNDPROC, lpfnWndProc, 8, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, INT, cbClsExtra, 12, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, INT, cbWndExtra, 16, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, HINSTANCE, hInstance, 20, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, HICON, hIcon, 24, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, HCURSOR, hCursor, 28, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, HBRUSH, hbrBackground, 32, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, LPCWSTR, lpszMenuName, 36, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, LPCWSTR, lpszClassName, 40, 4, 4);
+    TEST_FIELD(WNDCLASSEXW, HICON, hIconSm, 44, 4, 4);
+
+    /* WNDCLASSW (pack 4) */
+    TEST_TYPE(WNDCLASSW, 40, 4);
+    TEST_FIELD(WNDCLASSW, UINT, style, 0, 4, 4);
+    TEST_FIELD(WNDCLASSW, WNDPROC, lpfnWndProc, 4, 4, 4);
+    TEST_FIELD(WNDCLASSW, INT, cbClsExtra, 8, 4, 4);
+    TEST_FIELD(WNDCLASSW, INT, cbWndExtra, 12, 4, 4);
+    TEST_FIELD(WNDCLASSW, HINSTANCE, hInstance, 16, 4, 4);
+    TEST_FIELD(WNDCLASSW, HICON, hIcon, 20, 4, 4);
+    TEST_FIELD(WNDCLASSW, HCURSOR, hCursor, 24, 4, 4);
+    TEST_FIELD(WNDCLASSW, HBRUSH, hbrBackground, 28, 4, 4);
+    TEST_FIELD(WNDCLASSW, LPCWSTR, lpszMenuName, 32, 4, 4);
+    TEST_FIELD(WNDCLASSW, LPCWSTR, lpszClassName, 36, 4, 4);
 
 }
 
