@@ -39,6 +39,9 @@
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -93,8 +96,19 @@ static	int 		MIDM_NumDevs = 0;
 
 static	int		midiSeqFD = -1;
 static	int		numOpenMidiSeq = 0;
-static	UINT		midiInTimerID = 0;
 static	int		numStartedMidiIn = 0;
+
+static CRITICAL_SECTION crit_sect;   /* protects all MidiIn buffers queues */
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &crit_sect,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": crit_sect") }
+};
+static CRITICAL_SECTION crit_sect = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static int end_thread;
+static HANDLE hThread;
 
 /*======================================================================*
  *                  Low level MIDI implementation			*
@@ -407,12 +421,14 @@ static int midiOpenSeq(void)
 	    midi_warn = 0;
 	    return -1;
 	}
+#if 0
 	if (fcntl(midiSeqFD, F_SETFL, O_NONBLOCK) < 0) {
 	    WARN("can't set sequencer fd to non-blocking, errno %d (%s)\n", errno, strerror(errno));
 	    close(midiSeqFD);
 	    midiSeqFD = -1;
 	    return -1;
 	}
+#endif
 	fcntl(midiSeqFD, F_SETFD, 1); /* set close on exec flag */
 	ioctl(midiSeqFD, SNDCTL_SEQ_RESET);
     }
@@ -478,10 +494,11 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
     }
 
     if (MidiInDev[wDevID].state & 2) { /* system exclusive */
-	LPMIDIHDR	lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
+	LPMIDIHDR	lpMidiHdr;
 	WORD 		sbfb = FALSE;
 
-	if (lpMidiHdr) {
+	EnterCriticalSection(&crit_sect);
+	if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
 	    LPBYTE	lpData = lpMidiHdr->lpData;
 
 	    lpData[lpMidiHdr->dwBytesRecorded++] = value;
@@ -502,6 +519,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 		WARN("Couldn't notify client\n");
 	    }
 	}
+	LeaveCriticalSection(&crit_sect);
 	return;
     }
 
@@ -571,45 +589,62 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
     }
 }
 
-static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
+static DWORD WINAPI midRecThread(LPVOID arg)
 {
     unsigned char buffer[256];
     int len, idx;
+    DWORD dwTime;
+    struct pollfd pfd;
+
+    TRACE("Thread startup\n");
+
+    pfd.fd = midiSeqFD;
+    pfd.fd = POLLIN;
     
-    TRACE("(%p, %d, %d, %lu)\n", hwnd, msg, id, dwTime);
+    while(!end_thread) {
+	TRACE("Thread loop\n");
 
-    len = read(midiSeqFD, buffer, sizeof(buffer));
+	/* Check if a event is present */
+	if (poll(&pfd, 1, 250) <= 0)
+	    continue;
+	
+	len = read(midiSeqFD, buffer, sizeof(buffer));
+	TRACE("Reveived %d bytes\n", len);
 
-    if (len < 0) return;
-    if ((len % 4) != 0) {
-	WARN("Bad length %d, errno %d (%s)\n", len, errno, strerror(errno));
-	return;
-    }
+	if (len < 0) continue;
+	if ((len % 4) != 0) {
+	    WARN("Bad length %d, errno %d (%s)\n", len, errno, strerror(errno));
+	    continue;
+	}
 
-    for (idx = 0; idx < len; ) {
-	if (buffer[idx] & 0x80) {
-	    TRACE(
-		  "Reading<8> %02x %02x %02x %02x %02x %02x %02x %02x\n",
-		  buffer[idx + 0], buffer[idx + 1],
-		  buffer[idx + 2], buffer[idx + 3],
-		  buffer[idx + 4], buffer[idx + 5],
-		  buffer[idx + 6], buffer[idx + 7]);
-	    idx += 8;
-	} else {
-	    switch (buffer[idx + 0]) {
-	    case SEQ_WAIT:
-	    case SEQ_ECHO:
-		break;
-	    case SEQ_MIDIPUTC:
-		midReceiveChar(buffer[idx + 2], buffer[idx + 1], dwTime);
-		break;
-	    default:
-		TRACE("Unsupported event %d\n", buffer[idx + 0]);
-		break;
+	dwTime = GetTickCount();
+	
+	for (idx = 0; idx < len; ) {
+	    if (buffer[idx] & 0x80) {
+		TRACE(
+		      "Reading<8> %02x %02x %02x %02x %02x %02x %02x %02x\n",
+		      buffer[idx + 0], buffer[idx + 1],
+		      buffer[idx + 2], buffer[idx + 3],
+		      buffer[idx + 4], buffer[idx + 5],
+		      buffer[idx + 6], buffer[idx + 7]);
+		      idx += 8;
+	    } else {
+		switch (buffer[idx + 0]) {
+		case SEQ_WAIT:
+		case SEQ_ECHO:
+		    break;
+		case SEQ_MIDIPUTC:
+		    midReceiveChar(buffer[idx + 2], buffer[idx + 1], dwTime);
+		    break;
+		default:
+		    TRACE("Unsupported event %d\n", buffer[idx + 0]);
+		    break;
+		}
+		idx += 4;
 	    }
-	    idx += 4;
 	}
     }
+    return 0;
 }
 
 /**************************************************************************
@@ -668,14 +703,15 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     }
 
     if (numStartedMidiIn++ == 0) {
-	midiInTimerID = SetTimer(0, 0, 250, midTimeCallback);
-	if (!midiInTimerID) {
+	end_thread = 0;
+	hThread = CreateThread(NULL, 0, midRecThread, NULL, 0, NULL);
+	if (!hThread) {
 	    numStartedMidiIn = 0;
-	    WARN("Couldn't start timer for midi-in\n");
+	    WARN("Couldn't create thread for midi-in\n");
 	    midiCloseSeq();
 	    return MMSYSERR_ERROR;
 	}
-	TRACE("Starting timer (%u) for midi-in\n", midiInTimerID);
+	TRACE("Created thread for midi-in\n");
     }
 
     MidiInDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
@@ -721,11 +757,13 @@ static DWORD midClose(WORD wDevID)
 	return MMSYSERR_ERROR;
     }
     if (--numStartedMidiIn == 0) {
-	TRACE("Stopping timer for midi-in\n");
-	if (!KillTimer(0, midiInTimerID)) {
-	    WARN("Couldn't stop timer for midi-in\n");
+	TRACE("Stopping thread for midi-in\n");
+	end_thread = 1;
+	if (WaitForSingleObject(hThread, 5000) != WAIT_OBJECT_0) {
+	    WARN("Thread end not signaled, force termination\n");
+	    TerminateThread(hThread, 0);
 	}
-	midiInTimerID = 0;
+    	TRACE("Stopped thread for midi-in\n");
     }
     midiCloseSeq();
 
@@ -754,6 +792,7 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) return MIDIERR_UNPREPARED;
 
+    EnterCriticalSection(&crit_sect);
     if (MidiInDev[wDevID].lpQueueHdr == 0) {
 	MidiInDev[wDevID].lpQueueHdr = lpMidiHdr;
     } else {
@@ -764,6 +803,8 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	     ptr = (LPMIDIHDR)ptr->lpNext);
 	ptr->lpNext = (struct midihdr_tag*)lpMidiHdr;
     }
+    LeaveCriticalSection(&crit_sect);
+
     return MMSYSERR_NOERROR;
 }
 
@@ -820,6 +861,7 @@ static DWORD midReset(WORD wDevID)
     if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
 
+    EnterCriticalSection(&crit_sect);
     while (MidiInDev[wDevID].lpQueueHdr) {
 	MidiInDev[wDevID].lpQueueHdr->dwFlags &= ~MHDR_INQUEUE;
 	MidiInDev[wDevID].lpQueueHdr->dwFlags |= MHDR_DONE;
@@ -830,6 +872,7 @@ static DWORD midReset(WORD wDevID)
 	}
 	MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)MidiInDev[wDevID].lpQueueHdr->lpNext;
     }
+    LeaveCriticalSection(&crit_sect);
 
     return MMSYSERR_NOERROR;
 }
@@ -1597,6 +1640,7 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     switch (wMsg) {
 #ifdef HAVE_OSS_MIDI
     case DRVM_INIT:
+    case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */
