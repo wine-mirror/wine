@@ -407,19 +407,19 @@ init    CRTDLL_Init
 @ cdecl ispunct(long) ispunct
 @ cdecl isspace(long) isspace
 @ cdecl isupper(long) isupper
-@ stub iswalnum
-@ stub iswalpha
+@ cdecl iswalnum(long) CRTDLL_iswalnum
+@ cdecl iswalpha(long) CRTDLL_iswalpha
 @ stub iswascii
-@ stub iswcntrl
-@ stub iswctype
-@ stub iswdigit
-@ stub iswgraph
-@ stub iswlower
-@ stub iswprint
-@ stub iswpunct
-@ stub iswspace
-@ stub iswupper
-@ stub iswxdigit
+@ cdecl iswcntrl(long) CRTDLL_iswcntrl
+@ cdecl iswctype(long long) CRTDLL_iswctype
+@ cdecl iswdigit(long) CRTDLL_iswdigit
+@ cdecl iswgraph(long) CRTDLL_iswgraph
+@ cdecl iswlower(long) CRTDLL_iswlower
+@ cdecl iswprint(long) CRTDLL_iswprint
+@ cdecl iswpunct(long) CRTDLL_iswpunct
+@ cdecl iswspace(long) CRTDLL_iswspace
+@ cdecl iswupper(long) CRTDLL_iswupper
+@ cdecl iswxdigit(long) CRTDLL_iswxdigit
 @ cdecl isxdigit(long) isxdigit
 @ cdecl labs(long) labs
 @ cdecl ldexp(double long) ldexp

@@ -901,8 +901,8 @@ type	win32
 @ cdecl isprint(long) isprint
 @ cdecl isspace(long) isspace
 @ cdecl isupper(long) isupper
-@ stub iswalpha
-@ stub iswctype
+@ cdecl iswalpha(long) CRTDLL_iswalpha
+@ cdecl iswctype(long long) CRTDLL_iswctype
 @ cdecl isxdigit(long) isxdigit
 @ stub labs
 @ stub log
