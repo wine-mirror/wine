@@ -1140,10 +1140,11 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
     NTSTATUS status;
     WCHAR buffer[MAX_PATH];
 
-    if (GetLongPathNameW( filename, buffer, MAX_PATH ))
-        RtlInitUnicodeString( &image_str, buffer );
-    else
-        RtlInitUnicodeString( &image_str, filename );
+    if(!GetLongPathNameW( filename, buffer, MAX_PATH ))
+        lstrcpynW( buffer, filename, MAX_PATH );
+    if(!GetFullPathNameW( buffer, MAX_PATH, buffer, NULL ))
+        lstrcpynW( buffer, filename, MAX_PATH );
+    RtlInitUnicodeString( &image_str, buffer );
 
     RtlInitUnicodeString( &cmdline_str, cmdline );
     if (startup->lpDesktop) RtlInitUnicodeString( &desktop, startup->lpDesktop );
