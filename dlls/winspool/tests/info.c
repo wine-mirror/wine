@@ -50,7 +50,8 @@ static void test_default_printer(void)
     retval = func( buffer, &exact);
     if (!retval || !exact || !strlen(buffer) ||
 	(ERROR_SUCCESS != GetLastError())) {
-	if (ERROR_FILE_NOT_FOUND == GetLastError())
+	if ((ERROR_FILE_NOT_FOUND == GetLastError()) ||
+	    (ERROR_INVALID_NAME == GetLastError()))
 	    trace("this test requires a default printer to be set\n");
 	else {
 		ok( 0, "function call GetDefaultPrinterA failed unexpected!\n"
