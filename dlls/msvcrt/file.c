@@ -1195,7 +1195,9 @@ void MSVCRT_clearerr(MSVCRT_FILE* file)
  */
 int MSVCRT_fclose(MSVCRT_FILE* file)
 {
-  return _close(file->_file);
+  int r;
+  r=_close(file->_file);
+  return ((r==MSVCRT_EOF) || (file->_flag & _IOERR) ? MSVCRT_EOF : 0);
 }
 
 /*********************************************************************
