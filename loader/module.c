@@ -145,6 +145,13 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
             unsigned char ignored[12];
             unsigned short type;
         } elf;
+        struct
+        {
+            unsigned long magic;
+            unsigned long cputype;
+            unsigned long cpusubtype;
+            unsigned long filetype;
+        } macho;
         IMAGE_DOS_HEADER mz;
     } header;
 
@@ -164,6 +171,16 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
         {
         case 2: return BINARY_UNIX_EXE;
         case 3: return BINARY_UNIX_LIB;
+        }
+        return BINARY_UNKNOWN;
+    }
+
+    /* Mach-o File with Endian set to Big Endian  or Little Endian*/
+    if (header.macho.magic == 0xfeedface || header.macho.magic == 0xecafdeef)
+    {
+        switch(header.macho.filetype)
+        {
+            case 0x8: /* MH_BUNDLE */ return BINARY_UNIX_LIB;
         }
         return BINARY_UNKNOWN;
     }
