@@ -13,7 +13,17 @@
 142 pascal -interrupt INT_Int2aHandler() INT_Int2aHandler
 147 pascal -interrupt INT_Int2fHandler() INT_Int2fHandler
 149 pascal -interrupt INT_Int31Handler() INT_Int31Handler
+152 pascal -interrupt INT_Int34Handler() INT_Int34Handler
+153 pascal -interrupt INT_Int35Handler() INT_Int35Handler
+154 pascal -interrupt INT_Int36Handler() INT_Int36Handler
+155 pascal -interrupt INT_Int37Handler() INT_Int37Handler
+156 pascal -interrupt INT_Int38Handler() INT_Int38Handler
+157 pascal -interrupt INT_Int39Handler() INT_Int39Handler
+158 pascal -interrupt INT_Int3aHandler() INT_Int3aHandler
+159 pascal -interrupt INT_Int3bHandler() INT_Int3bHandler
+160 pascal -interrupt INT_Int3cHandler() INT_Int3cHandler
 161 pascal -interrupt INT_Int3dHandler() INT_Int3dHandler
+162 pascal -interrupt INT_Int3eHandler() INT_Int3eHandler
 165 pascal -interrupt INT_Int41Handler() INT_Int41Handler
 175 pascal -interrupt INT_Int4bHandler() INT_Int4bHandler
 192 pascal -interrupt INT_Int5cHandler() NetBIOSCall16
