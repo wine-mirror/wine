@@ -227,7 +227,7 @@ static BOOL AddFontFileToList(char *file)
     do {
         TRACE("Loading font file %s index %ld\n", debugstr_a(file), face_index);
 	if((err = pFT_New_Face(library, file, face_index, &ft_face)) != 0) {
-	    ERR("Unable to load font file %s err = %x\n", debugstr_a(file), err);
+	    WARN("Unable to load font file %s err = %x\n", debugstr_a(file), err);
 	    return FALSE;
 	}
 
