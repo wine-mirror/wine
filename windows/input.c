@@ -687,25 +687,28 @@ static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
 INT WINAPI TranslateAccelerator(HWND hWnd, HACCEL hAccel, LPMSG msg)
 {
     /* YES, Accel16! */
-    LPACCEL16	lpAccelTbl = (LPACCEL16)LockResource16(hAccel);
+    LPACCEL16	lpAccelTbl;
     int 	i;
 
-    TRACE_(accel)("hwnd=0x%x hacc=0x%x msg=0x%x wp=0x%x lp=0x%lx\n", hWnd, hAccel, msg->message, msg->wParam, msg->lParam);
-    
-    if (hAccel == 0 || msg == NULL ||
-	(msg->message != WM_KEYDOWN &&
+    if (msg == NULL)
+       {
+          WARN_(accel)("msg null; should hang here to be win compatible\n");
+          return 0;
+       }
+    if (!hAccel || !(lpAccelTbl = (LPACCEL16) LockResource16(hAccel)))
+       {
+          WARN_(accel)("invalid accel handle=%x\n", hAccel);
+          return 0;
+       }
+    if ((msg->message != WM_KEYDOWN &&
 	 msg->message != WM_KEYUP &&
 	 msg->message != WM_SYSKEYDOWN &&
 	 msg->message != WM_SYSKEYUP &&
-	 msg->message != WM_CHAR)) {
-      WARN_(accel)("erraneous input parameters\n");
-      SetLastError(ERROR_INVALID_PARAMETER);
-      return 0;
-    }
+	 msg->message != WM_CHAR)) return 0;
 
     TRACE_(accel)("TranslateAccelerators hAccel=%04x, hWnd=%04x,"
-	  "msg->hwnd=%04x, msg->message=%04x\n",
-	  hAccel,hWnd,msg->hwnd,msg->message);
+	  "msg->hwnd=%04x, msg->message=%04x, wParam=%08x, lParam=%lx\n",
+	  hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
 
     i = 0;
     do
@@ -723,25 +726,30 @@ INT WINAPI TranslateAccelerator(HWND hWnd, HACCEL hAccel, LPMSG msg)
  */	
 INT16 WINAPI TranslateAccelerator16(HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg)
 {
-    LPACCEL16	lpAccelTbl = (LPACCEL16)LockResource16(hAccel);
+    LPACCEL16	lpAccelTbl;
     int 	i;
     MSG	msg32;
     
-    if (hAccel == 0 || msg == NULL ||
-	(msg->message != WM_KEYDOWN &&
+    if (msg == NULL)
+       {
+          WARN_(accel)("msg null; should hang here to be win compatible\n");
+          return 0;
+       }
+    if (!hAccel || !(lpAccelTbl = (LPACCEL16) LockResource16(hAccel)))
+       {
+          WARN_(accel)("invalid accel handle=%x\n", hAccel);
+          return 0;
+       }
+    if ((msg->message != WM_KEYDOWN &&
 	 msg->message != WM_KEYUP &&
 	 msg->message != WM_SYSKEYDOWN &&
 	 msg->message != WM_SYSKEYUP &&
-	 msg->message != WM_CHAR)) {
-      WARN_(accel)("erraneous input parameters\n");
-      SetLastError(ERROR_INVALID_PARAMETER);
-      return 0;
-    }
+	 msg->message != WM_CHAR)) return 0;
 
     TRACE_(accel)("TranslateAccelerators hAccel=%04x, hWnd=%04x,\
-msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
-    STRUCT32_MSG16to32(msg,&msg32);
+msg->hwnd=%04x, msg->message=%04x, wParam=%04x, lParam=%lx\n", hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
 
+    STRUCT32_MSG16to32(msg,&msg32);
 
     i = 0;
     do
