@@ -4672,3 +4672,23 @@ HRESULT WINAPI VarBstrCmp(BSTR left, BSTR right, LCID lcid, DWORD flags)
     return VARCMP_EQ;
 }
 
+/**********************************************************************
+ *              VarBstrCat [OLEAUT32.439]
+ */
+HRESULT WINAPI VarBstrCat(BSTR left, BSTR right, BSTR *out)
+{
+    BSTR result;
+
+    TRACE("( %s %s %p )\n", debugstr_w(left), debugstr_w(right), out);
+
+    if( (!left) || (!right) || (!out) )
+        return 0;
+
+    result = SysAllocStringLen(left, lstrlenW(left)+lstrlenW(right));
+    lstrcatW(result,right);
+
+    *out = result;
+
+    return 1;
+}
+

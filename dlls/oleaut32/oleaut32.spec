@@ -317,7 +317,7 @@ debug_channels (ole typelib)
 436 stub VarAbs # stdcall (ptr ptr)
 437 stub VarAdd # stdcall (ptr ptr ptr)
 438 stub VarAnd # stdcall (ptr ptr ptr)
-439 stub VarBstrCat # stdcall (ptr ptr ptr)
+439 stdcall VarBstrCat(ptr ptr ptr) VarBstrCat
 440 stdcall VarBstrCmp(ptr ptr long long) VarBstrCmp
 441 stub VarCat # stdcall (ptr ptr ptr)
 442 stub VarCmp # stdcall (ptr ptr long long)
