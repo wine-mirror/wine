@@ -10,6 +10,7 @@
  *
  */
 
+#include "config.h"
 #include "wine/port.h"
 
 #include <assert.h>

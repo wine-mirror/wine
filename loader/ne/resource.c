@@ -6,6 +6,7 @@
  * Copyright 1997 Alex Korobka
  */
 
+#include "config.h"
 #include "wine/port.h" 
 
 #include <stdio.h>

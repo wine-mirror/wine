@@ -12,6 +12,7 @@
  * This is probably not the meaning this style has in MS-Windows.
  */
 
+#include "config.h"
 #include "wine/port.h"
 
 #include <assert.h>

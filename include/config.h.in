@@ -538,3 +538,6 @@
 /* Define if struct sockaddr_un contains sun_len */
 #undef HAVE_SOCKADDR_SUN_LEN
 
+/* This must always be defined to allow checking for config.h inclusion */
+#undef __WINE_CONFIG_H
+

@@ -3,6 +3,8 @@
    
    This file contains all MESA common code */
 
+#include "config.h"
+
 #include "windef.h"
 #include "wine/obj_base.h"
 #include "ddraw.h"

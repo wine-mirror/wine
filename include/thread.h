@@ -7,8 +7,6 @@
 #ifndef __WINE_THREAD_H
 #define __WINE_THREAD_H
 
-#include "config.h"
-
 #include "ntdef.h" /* UNICODE_STRING */
 #include "wine/windef16.h"
 

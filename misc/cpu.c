@@ -5,6 +5,7 @@
  * Copyright 1997-1998 Marcus Meissner
  */
 
+#include "config.h"
 #include "wine/port.h"
 
 #include <ctype.h>

@@ -8,8 +8,11 @@
 #ifndef __WINE_CONSOLE_H
 #define __WINE_CONSOLE_H
 
+#ifndef __WINE_CONFIG_H 
+# error You must include config.h to use this header 
+#endif 
+
 #include <stdio.h>
-#include "config.h"
 
 /* Can we compile with curses/ncurses? */
 #if (	(defined(HAVE_LIBNCURSES) || defined(HAVE_LIBCURSES)) &&	\

@@ -5,6 +5,7 @@
  */
 /* 0xffff sometimes seems to mean: CURRENT_DS */
 
+#include "config.h"
 #include "wine/port.h"
 
 #include <sys/types.h>

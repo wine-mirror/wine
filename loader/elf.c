@@ -9,6 +9,7 @@
  * IDEA(s):	could be used to split up shell32,comctl32... 
  */
 
+#include "config.h"
 #include "wine/port.h" 
 
 #include <assert.h>

@@ -1182,6 +1182,9 @@ AC_SUBST(GCC_NO_BUILTIN)
 
 dnl **** Generate output files ****
 
+AC_DEFINE(__WINE_CONFIG_H, 1,
+          [This must always be defined to allow checking for config.h inclusion])
+
 AC_OUTPUT_COMMANDS([
 extra_subdirs="\
 dlls/ddraw/d3ddevice \

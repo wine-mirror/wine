@@ -1,15 +1,15 @@
 #ifndef __WINE_MSVCRT_H
 #define __WINE_MSVCRT_H
 
-#include "config.h"
+#include <stdarg.h>
+#include <ctype.h>
+#include <string.h>
+
 #include "windef.h"
 #include "debugtools.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
-#include <stdarg.h>
-#include <ctype.h>
-#include <string.h>
 
 /* TLS data */
 extern DWORD MSVCRT_tls_index;

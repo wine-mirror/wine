@@ -2,14 +2,15 @@
  * Thread safe wrappers around Xutil calls.
  * Always include this file instead of <X11/Xutil.h>.
  * This file was generated automatically by tools/make_X11wrappers
- *
- * Copyright 1998 Kristian Nielsen
+ * DO NOT EDIT!
  */
 
 #ifndef __WINE_TS_XUTIL_H
 #define __WINE_TS_XUTIL_H
 
-#include "config.h"
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 
 #include <X11/Xlib.h>
@@ -24,7 +25,6 @@ extern XSizeHints * TSXAllocSizeHints(void);
 extern XWMHints * TSXAllocWMHints(void);
 extern int  TSXClipBox(Region, XRectangle*);
 extern Region  TSXCreateRegion(void);
-extern int  TSXDeleteContext(Display*, XID, XContext);
 extern int  TSXDestroyRegion(Region);
 extern int  TSXEmptyRegion(Region);
 extern int  TSXEqualRegion(Region, Region);
@@ -54,6 +54,7 @@ extern int TSXDestroyImage(struct _XImage *);
 extern struct _XImage * TSXSubImage(struct _XImage *, int, int, unsigned int, unsigned int);
 extern int TSXAddPixel(struct _XImage *, long);
 extern XContext TSXUniqueContext(void);
+extern int TSXDeleteContext(Display*,XID,XContext);
 
 
 #endif /* __WINE_TS_XUTIL_H */

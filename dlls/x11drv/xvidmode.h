@@ -5,7 +5,11 @@
  */
 #ifndef __WINE_XVIDMODE_H
 #define __WINE_XVIDMODE_H
-#include "config.h"
+
+#ifndef __WINE_CONFIG_H 
+# error You must include config.h to use this header 
+#endif 
+
 #ifdef HAVE_LIBXXF86VM
 #include "ddrawi.h"
 

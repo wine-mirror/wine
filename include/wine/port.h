@@ -6,7 +6,9 @@
 #ifndef __WINE_WINE_PORT_H
 #define __WINE_WINE_PORT_H
 
-#include "config.h"
+#ifndef __WINE_CONFIG_H  
+# error You must include config.h to use this header  
+#endif  
 
 #include <fcntl.h>
 #include <sys/types.h>

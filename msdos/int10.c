@@ -2,7 +2,10 @@
  * BIOS interrupt 10h handler
  */
 
+#include "config.h"
+
 #include <stdlib.h>
+
 #include "miscemu.h"
 #include "vga.h"
 #include "debugtools.h"

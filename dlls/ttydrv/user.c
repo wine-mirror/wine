@@ -4,6 +4,8 @@
  * Copyright 1998 Patrik Stridvall
  */
 
+#include "config.h"
+
 #include "dinput.h"
 #include "gdi.h"
 #include "ttydrv.h"

@@ -7,9 +7,8 @@
 #ifndef __WINE_HEAP_H
 #define __WINE_HEAP_H
 
-#include "config.h"
-
 #include <string.h>
+
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/unicode.h"

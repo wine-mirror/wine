@@ -1,6 +1,8 @@
 /* Definition for OSS drivers : wine multimedia system */
 
-#include "config.h"
+#ifndef __WINE_CONFIG_H 
+# error You must include config.h to use this header 
+#endif 
 
 #if defined(HAVE_SYS_SOUNDCARD_H)
 # include <sys/soundcard.h>

@@ -1,5 +1,7 @@
 /* small utility functions for winebuild */
 
+#include "config.h"
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>

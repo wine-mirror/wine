@@ -6925,6 +6925,11 @@ fi
 
 
 
+cat >> confdefs.h <<\EOF
+#define __WINE_CONFIG_H 1
+EOF
+
+
 
 
 MAKE_RULES=Make.rules

@@ -45,7 +45,7 @@
  *
  */
 
-#include "ts_xlib.h"
+#include "config.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -53,6 +53,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "ts_xlib.h"
 #include "winreg.h"
 #include "clipboard.h"
 #include "win.h"

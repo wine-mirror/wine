@@ -5,6 +5,7 @@
  * Copyright 1996 Marcus Meissner
  */
 
+#include "config.h"
 #include "wine/port.h"
 
 #include <signal.h>
@@ -820,7 +821,7 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
    LPVOID       lin;
 
    lin=DOSMEM_dosmem+(x&0xffff)+(((x&0xffff0000)>>16)*16);
-   TRACE_(selector)("(0x%08lx) returns 0x%p.\n", x, lin );
+   TRACE_(selector)("(0x%08lx) returns %p.\n", x, lin );
    return lin;
 }
 

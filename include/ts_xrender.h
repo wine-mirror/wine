@@ -2,14 +2,15 @@
  * Thread safe wrappers around Xrender calls.
  * Always include this file instead of <X11/Xrender.h>.
  * This file was generated automatically by tools/make_X11wrappers
- *
- * Copyright 1998 Kristian Nielsen
+ * DO NOT EDIT!
  */
 
 #ifndef __WINE_TS_XRENDER_H
 #define __WINE_TS_XRENDER_H
 
-#include "config.h"
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 #ifdef HAVE_LIBXRENDER
 

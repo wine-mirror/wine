@@ -4,6 +4,7 @@
  * Copyright 1993, 1994, 1996 Alexandre Julliard
  */
 
+#include "config.h"
 #include "wine/port.h" 
 
 #include <ctype.h>

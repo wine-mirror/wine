@@ -8,6 +8,8 @@
    It does not currently support changing the title bar.
 */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>

@@ -4,6 +4,7 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include "config.h"
 #include "wine/port.h"
 
 #include <unistd.h>

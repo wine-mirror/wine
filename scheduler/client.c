@@ -4,6 +4,7 @@
  * Copyright (C) 1998 Alexandre Julliard
  */
 
+#include "config.h"
 #include "wine/port.h"
 
 #include <assert.h>

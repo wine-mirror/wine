@@ -15,6 +15,7 @@
  * ws_XXXXent32 (winsock2.h) and 1-byte forced ws_XXXXent16 (winsock16.h).
  */
  
+#include "config.h"
 #include "wine/port.h"
 
 #include <stdio.h>

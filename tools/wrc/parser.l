@@ -79,8 +79,6 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 
 /*#define LEX_DEBUG*/
 
-#include "config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

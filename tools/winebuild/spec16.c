@@ -8,6 +8,7 @@
  * Copyright 1999 Ulrich Weigand
  */
 
+#include "config.h"
 #include "wine/port.h"
 
 #include <assert.h>

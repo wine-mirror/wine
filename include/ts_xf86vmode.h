@@ -2,14 +2,15 @@
  * Thread safe wrappers around xf86vmode calls.
  * Always include this file instead of <X11/xf86vmode.h>.
  * This file was generated automatically by tools/make_X11wrappers
- *
- * Copyright 1998 Kristian Nielsen
+ * DO NOT EDIT!
  */
 
 #ifndef __WINE_TS_XF86VMODE_H
 #define __WINE_TS_XF86VMODE_H
 
-#include "config.h"
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 #include "windef.h"
 #ifdef HAVE_LIBXXF86VM

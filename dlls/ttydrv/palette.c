@@ -4,6 +4,8 @@
  * Copyright 1999 Patrik Stridvall
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 
 #include "color.h"

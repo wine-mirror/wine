@@ -19,6 +19,7 @@
  *	  whole stuff did not work anyway to other changes).
  */
  
+#include "config.h"
 #include "wine/port.h"
 
 #include <string.h>
