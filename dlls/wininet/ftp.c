@@ -326,12 +326,13 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
     INT len;
     BOOL rc;
 
-    len = lstrlenW(lpszDirectory)+1;
-    if (!(szDir = (CHAR *)malloc(len*sizeof(CHAR))))
+    len = WideCharToMultiByte(CP_ACP, 0, lpszDirectory, -1, NULL, 0, NULL, NULL);
+    szDir = HeapAlloc(GetProcessHeap(), 0, len);
+    if(!szDir)
         return FALSE;
-    WideCharToMultiByte(CP_ACP, -1, lpszDirectory, -1, szDir, len, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, lpszDirectory, -1, szDir, len, NULL, NULL);
     rc = FtpSetCurrentDirectoryA(hConnect, szDir);
-    free(szDir);
+    HeapFree(GetProcessHeap(), 0, szDir);
 
     return rc;
 }
@@ -450,12 +451,13 @@ BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
     INT len;
     BOOL rc;
 
-    len = lstrlenW(lpszDirectory)+1;
-    if (!(szDir = (CHAR *)malloc(len*sizeof(CHAR))))
+    len = WideCharToMultiByte(CP_ACP, 0, lpszDirectory, -1, NULL, 0, NULL, NULL);
+    szDir = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!szDir)
         return FALSE;
-    WideCharToMultiByte(CP_ACP, -1, lpszDirectory, -1, szDir, len, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, lpszDirectory, -1, szDir, len, NULL, NULL);
     rc = FtpCreateDirectoryA(hConnect, szDir);
-    free(szDir);
+    HeapFree(GetProcessHeap(), 0, szDir);
 
     return rc;
 }
