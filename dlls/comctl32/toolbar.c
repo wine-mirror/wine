@@ -6675,6 +6675,8 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 
         TRACE("new style 0x%08lx\n", lpStyle->styleNew);
 
+        infoPtr->dwStyle = lpStyle->styleNew;
+
         /* only resize if one of the CCS_* styles was changed */
         if ((infoPtr->dwStyle ^ lpStyle->styleNew) & COMMON_STYLES)
         {
@@ -6682,8 +6684,6 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
     
             InvalidateRect(hwnd, NULL, TRUE);
         }
-
-        infoPtr->dwStyle = lpStyle->styleNew;
     }
 
     return 0;
