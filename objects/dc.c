@@ -660,10 +660,13 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     {
         if (!dc->w.hClipRgn) dc->w.hClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
         CombineRgn32( dc->w.hClipRgn, dcs->w.hClipRgn, 0, RGN_COPY );
-        CLIPPING_UpdateGCRegion( dc );
     }
     else
+    {
+        if (dc->w.hClipRgn) DeleteObject16( dc->w.hClipRgn );
         dc->w.hClipRgn = 0;
+    }
+    CLIPPING_UpdateGCRegion( dc );
 
     SelectObject32( hdc, dcs->w.hBitmap );
     SelectObject32( hdc, dcs->w.hBrush );
