@@ -11,7 +11,7 @@
 #include "shlwapi.h"
 #include "shellapi.h"
 #include "shell32_main.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "wine/unicode.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);

@@ -66,7 +66,8 @@ BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr);
 BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len);
 BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest);
 
-DWORD 	WINAPI ParseFieldA(LPCSTR src,DWORD field,LPSTR dst,DWORD len);
+BOOL  WINAPI AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
+DWORD WINAPI ParseFieldA(LPCSTR src,DWORD field,LPSTR dst,DWORD len);
 
 /****************************************************************************
  * Class constructors
@@ -171,6 +172,7 @@ HICON16     WINAPI ExtractIconEx16 ( LPCSTR, INT16, HICON16 *, HICON16 *, UINT16
 HINSTANCE16 WINAPI FindExecutable16(LPCSTR,LPCSTR,LPSTR);
 HGLOBAL16   WINAPI InternalExtractIcon16(HINSTANCE16,LPCSTR,UINT16,WORD);
 BOOL16      WINAPI ShellAbout16(HWND16,LPCSTR,LPCSTR,HICON16);
+BOOL16      WINAPI AboutDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
 
 inline static BOOL SHELL_OsIsUnicode(void)
 {

@@ -21,7 +21,7 @@
 #include "winreg.h"
 
 #include "shlobj.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "bitmaps/wine.xpm"
 
 #include "heap.h"

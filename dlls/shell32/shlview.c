@@ -31,7 +31,7 @@
 #include "servprov.h"
 #include "shlguid.h"
 #include "shlobj.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "shresdef.h"
 #include "debugtools.h"
 

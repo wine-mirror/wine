@@ -20,8 +20,7 @@
 #include "winerror.h"
 #include "winreg.h"
 
-#include "wine/shell16.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "wine/winuser16.h"
 #include "authors.h"
 #include "heap.h"

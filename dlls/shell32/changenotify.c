@@ -10,7 +10,7 @@
 #include "debugtools.h"
 #include "pidl.h"
 #include "shell32_main.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

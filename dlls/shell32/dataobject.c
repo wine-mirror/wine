@@ -11,7 +11,7 @@
 #include "winerror.h"
 #include "shell32_main.h"
 #include "debugtools.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "wine/obj_dataobject.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);

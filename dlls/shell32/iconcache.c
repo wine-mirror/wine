@@ -18,7 +18,7 @@
 #include "shlguid.h"
 #include "pidl.h"
 #include "shell32_main.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "shlwapi.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);

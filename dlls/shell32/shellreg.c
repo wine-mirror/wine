@@ -13,7 +13,7 @@
 #include "winreg.h"
 #include "winnls.h"
 
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "wine/winbase16.h"
 #include "shell32_main.h"
 

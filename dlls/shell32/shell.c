@@ -19,7 +19,6 @@
 #include "winerror.h"
 #include "winreg.h"
 
-#include "wine/shell16.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "shell32_main.h"

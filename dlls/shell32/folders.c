@@ -11,7 +11,7 @@
 #include "windef.h"
 #include "wine/obj_base.h"
 #include "wine/obj_extracticon.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "shlguid.h"
 
 #include "debugtools.h"

@@ -16,7 +16,7 @@
 #include "shlguid.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "shell32_main.h"
 #include "shellapi.h"
 #include "shlwapi.h"

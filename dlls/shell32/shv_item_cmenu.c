@@ -14,7 +14,7 @@
 #include "wine/obj_contextmenu.h"
 #include "wine/obj_shellbrowser.h"
 #include "wine/obj_shellextinit.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 
 #include "shell32_main.h"
 #include "shellfolder.h"

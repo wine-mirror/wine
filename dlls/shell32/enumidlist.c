@@ -8,7 +8,7 @@
 #include <string.h>
 #include "debugtools.h"
 #include "winreg.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "shlwapi.h"
 #include "winerror.h"
 #include "wine/obj_base.h"

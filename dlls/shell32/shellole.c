@@ -17,7 +17,7 @@
 #include "winreg.h"
 #include "winerror.h"
 
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "wine/unicode.h"
 #include "shell32_main.h"
 

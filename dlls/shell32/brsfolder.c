@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "debugtools.h"
-#include "wine/undocshell.h"
+#include "undocshell.h"
 #include "shlguid.h"
 #include "pidl.h"
 #include "shell32_main.h"
