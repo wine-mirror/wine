@@ -5,37 +5,37 @@
       <title>What is Winelib?</title>
 
       <para>
-        Winelib is a development toolkit which allows you to compile your 
+        Winelib is a development toolkit which allows you to compile your
         Windows applications on Unix.
       </para>
       <para>
-        Most of Winelib's code consists of the Win32 API implementation. 
-        Fortunately this part is 100 percent shared with Wine. The remainder 
-        consists of Windows compatible headers and tools like the resource 
+        Most of Winelib's code consists of the Win32 API implementation.
+        Fortunately this part is 100 percent shared with Wine. The remainder
+        consists of Windows compatible headers and tools like the resource
         compiler (and even these are used when compiling Wine).
       </para>
       <para>
-        Thanks to the above, Winelib supports most C and C++ 32bit source code, 
-        resource and message files, and can generate graphical or console 
+        Thanks to the above, Winelib supports most C and C++ 32bit source code,
+        resource and message files, and can generate graphical or console
         applications as well as dynamic libraries.
       </para>
       <para>
-        What is not supported is 16bit source code as the types it depends on 
-        (especially segmented pointers) are not supported by Unix compilers. 
-        Also missing are some of the more exotic features of Microsoft's 
-        compiler like native COM support and structured exception handling. 
-        So you may need to perform some modifications in your code when 
-        recompiling your application with Winelib. This guide is here to help 
+        What is not supported is 16bit source code as the types it depends on
+        (especially segmented pointers) are not supported by Unix compilers.
+        Also missing are some of the more exotic features of Microsoft's
+        compiler like native COM support and structured exception handling.
+        So you may need to perform some modifications in your code when
+        recompiling your application with Winelib. This guide is here to help
         you in this task.
       </para>
       <para>
-        What you gain by recompiling your application with Winelib is the 
-        ability to make calls to Unix APIs, directly from your 
-        Windows source code. This allows for a better integration with the 
-        Unix environment than is allowed by runnning an unmodified Windows 
-        application running in Wine. Another benefit is that a Winelib 
-        application can relatively easily be recompiled on a non-Intel 
-        architecture and run there without the need for a slow software 
+        What you gain by recompiling your application with Winelib is the
+        ability to make calls to Unix APIs, directly from your
+        Windows source code. This allows for a better integration with the
+        Unix environment than is allowed by runnning an unmodified Windows
+        application running in Wine. Another benefit is that a Winelib
+        application can relatively easily be recompiled on a non-Intel
+        architecture and run there without the need for a slow software
         emulation of the processor.
       </para>
     </sect1>
@@ -46,22 +46,22 @@
         The requirements for Winelib are similar to those for Wine.
       </para>
       <para>
-        Basically if you can run Wine on your computer then you can run 
-        Winelib. But the converse is not true. You can also build Winelib 
-        and Winelib applications on platforms not supported by Wine, 
-        typically platforms with a non i386 processor. But this is still 
-        pretty much an uncharted territory. It would be more reasonable to 
+        Basically if you can run Wine on your computer then you can run
+        Winelib. But the converse is not true. You can also build Winelib
+        and Winelib applications on platforms not supported by Wine,
+        typically platforms with a non i386 processor. But this is still
+        pretty much an uncharted territory. It would be more reasonable to
         first target one of the more mundane i386-based platforms first.
       </para>
       <para>
-        The main difference is that the compiler becomes much more important. 
-        It is highly recommended that you use gcc, g++, 
-        and the GNU binutils. The more recent your gcc compiler the better. 
-        For any serious amount of code you should not consider anything older 
-        than gcc 2.95.2. The latest gcc snapshots contain some useful bug 
-        fixes and much better support for anonymous structs and unions. This 
-        can help reduce the number of changes you have to do in your code but 
-        these are not stable releases of the compiler so you may not want to 
+        The main difference is that the compiler becomes much more important.
+        It is highly recommended that you use gcc, g++,
+        and the GNU binutils. The more recent your gcc compiler the better.
+        For any serious amount of code you should not consider anything older
+        than gcc 2.95.2. The latest gcc snapshots contain some useful bug
+        fixes and much better support for anonymous structs and unions. This
+        can help reduce the number of changes you have to do in your code but
+        these are not stable releases of the compiler so you may not want to
         use them in production.
       </para>
     </sect1>
@@ -73,35 +73,35 @@
         <title id="winemaker-introduction.title">Winemaker introduction</title>
         <para>
           So what is needed to compile a Windows application with Winelib?
-          Well, it really depends on the complexity of your application but 
+          Well, it really depends on the complexity of your application but
           here are some issues that are shared by all applications:
         </para>
         <itemizedlist>
           <listitem>
             <para>
-              the case of your files may be bad. For example they could be 
-              in all caps: <filename>HELLO.C</filename>. It's not very nice to 
+              the case of your files may be bad. For example they could be
+              in all caps: <filename>HELLO.C</filename>. It's not very nice to
               work with and probably not what you intended.
             </para>
           </listitem>
           <listitem>
             <para>
-              then the case of the filenames in your include statements may be 
+              then the case of the filenames in your include statements may be
               wrong: maybe they include 'Windows.h' instead of 'windows.h'.
             </para>
           </listitem>
           <listitem>
             <para>
-              your include statements may use '\' instead of '/'. '\' is not 
-              recognized by Unix compilers while '/' is recognized in both 
+              your include statements may use '\' instead of '/'. '\' is not
+              recognized by Unix compilers while '/' is recognized in both
               environments.
             </para>
           </listitem>
           <listitem>
             <para>
               you will need to perform the usual Dos to Unix text file conversion
-              otherwise you'll get in trouble when the compiler considers that 
-              your '\' is not at the end of the line since it is followed by a 
+              otherwise you'll get in trouble when the compiler considers that
+              your '\' is not at the end of the line since it is followed by a
               pesky carriage return.
             </para>
           </listitem>
@@ -116,17 +116,18 @@
           The best way to take care of all these issues is to use winemaker.
         </para>
         <para>
-          Winemaker is a perl script which is designed to help you bootstrap 
-          the conversion of your Windows projects to Winelib. In order to do 
-          this it will go analyze your code, fixing the issues listed above  
+          Winemaker is a perl script which is designed to help you bootstrap
+          the conversion of your Windows projects to Winelib. In order to do
+          this it will go analyze your code, fixing the issues listed above
           and generate autoconf-based Makefiles.
         </para>
         <para>
-          Let's suppose that Wine/Winelib has been installed in the 
+          Let's suppose that Wine/Winelib has been installed in the
           <filename class="Directory">/usr/local/wine</filename>
-          directory, and that you are already in the top directory of your 
-          sources. Then converting your project to Winelib may be as simple 
-          as just running the three commands below:
+          directory, and that you are already in the top directory of your
+          sources. Then converting your project to Winelib may be as simple
+          as just running the three commands below (note the dot indicating
+          current directory at the end of the first command):
         </para>
         <programlisting>
           $ winemaker --lower-uppercase .
@@ -135,7 +136,7 @@
         </programlisting>
 
         <para>
-          But of course things are not always that simple which is why we have 
+          But of course things are not always that simple which is why we have
           this guide at all.
         </para>
       </sect2>
@@ -151,19 +152,19 @@
             <term><option>Getting the source</option></term>
             <listitem>
               <para>
-                First if you can try to get the sources together with the 
-                executables/libraries that they build. In the current state of 
-                winemaker having these around can help it guess what it is that 
-                your project is trying to build. Later, when it is able to 
-                understand Visual C++ projects, and if you use them, this will 
-                no longer be necessary. Usually the executables and libraries 
-                are in a <filename class="Directory">Release</filename> or 
-                <filename class="Directory">Debug</filename> subdirectory of the 
-                directory where the sources are. So it's best if you can 
-                transfer the source files and either of these directories to 
-                Linux. Note that you don't need to transfer the 
-                <filename>.obj</filename>, <filename>.pch</filename>, 
-                <filename>.sbr</filename> and other files that also reside in 
+                First if you can try to get the sources together with the
+                executables/libraries that they build. In the current state of
+                winemaker having these around can help it guess what it is that
+                your project is trying to build. Later, when it is able to
+                understand Visual C++ projects, and if you use them, this will
+                no longer be necessary. Usually the executables and libraries
+                are in a <filename class="Directory">Release</filename> or
+                <filename class="Directory">Debug</filename> subdirectory of the
+                directory where the sources are. So it's best if you can
+                transfer the source files and either of these directories to
+                Linux. Note that you don't need to transfer the
+                <filename>.obj</filename>, <filename>.pch</filename>,
+                <filename>.sbr</filename> and other files that also reside in
                 these directories; especially as they tend to be quite big.
               </para>
             </listitem>
@@ -172,12 +173,12 @@
             <term><option>cd &lt;root_dir&gt;</option></term>
             <listitem>
               <para>
-                Then go to the root directory where are your source files. 
-                Winemaker can deal with a whole directory hierarchy at once so 
-                you don't need to go into a leaf directory, quite the contrary. 
-                Winemaker will automatically generate makefiles in each 
-                directory where one is required, and will generate a global 
-                makefile so that you can rebuild all your executables and 
+                Then go to the root directory where are your source files.
+                Winemaker can deal with a whole directory hierarchy at once so
+                you don't need to go into a leaf directory, quite the contrary.
+                Winemaker will automatically generate makefiles in each
+                directory where one is required, and will generate a global
+                makefile so that you can rebuild all your executables and
                 libraries with a single <command>make</command> command.
               </para>
             </listitem>
@@ -186,21 +187,21 @@
             <term><option>Making the source writable</option></term>
             <listitem>
               <para>
-                Then make sure you have write access to your sources. It may 
-                sound obvious, but if you copied your source files from a 
-                CD-ROM or if they are in Source Safe on Windows, chances are 
-                that they will be read-only. 
-                But Winemaker needs write access so that it can fix them. You 
-                can arrange that by running <command>chmod -R u+w .</command>. 
-                Also you will want to make sure that you have a backup copy of 
-                your sources in case something went horribly wrong, or more 
-                likely, just for reference at a later point. If you use a 
+                Then make sure you have write access to your sources. It may
+                sound obvious, but if you copied your source files from a
+                CD-ROM or if they are in Source Safe on Windows, chances are
+                that they will be read-only.
+                But Winemaker needs write access so that it can fix them. You
+                can arrange that by running <command>chmod -R u+w .</command>.
+                Also you will want to make sure that you have a backup copy of
+                your sources in case something went horribly wrong, or more
+                likely, just for reference at a later point. If you use a
                 version control system you're already covered.
               </para>
               <para>
                 If you have already modified your source files and you want
                 to make sure that winemaker will not make further changes to
-                them then you can use the --nosource-fix option to protect 
+                them then you can use the --nosource-fix option to protect
                 them.
               </para>
             </listitem>
@@ -209,8 +210,9 @@
             <term><option>Running winemaker</option></term>
             <listitem>
               <para>
-                Then you'll run winemaker. Here are the options you will most 
-                likely want to use.
+                Then you'll run winemaker. Here are the options you will most
+                likely want to use. For complete list of options see
+                the winemaker man page.
               </para>
               <variablelist>
                 <varlistentry>
@@ -218,15 +220,15 @@
                   <term><option>--lower-all</option></term>
                   <listitem>
                     <para>
-                      These options specify how to deal with files, and 
-                      directories, that have an 'incorrect' case. 
-                      <option>--lower-uppercase</option> specifies they should 
-                      only be renamed if their name is all uppercase. So files 
-                      that have a mixed case, like 'Hello.c' would not be 
-                      renamed. <option>--lower-all</option> will rename any 
-                      file. If neither is specified then no file or directory 
-                      will be renamed, almost. As you will see 
-                      <link linkend="renaming">later</link> winemaker may 
+                      These options specify how to deal with files, and
+                      directories, that have an 'incorrect' case.
+                      <option>--lower-uppercase</option> specifies they should
+                      only be renamed if their name is all uppercase. So files
+                      that have a mixed case, like 'Hello.c' would not be
+                      renamed. <option>--lower-all</option> will rename any
+                      file. If neither is specified then no file or directory
+                      will be renamed, almost. As you will see
+                      <link linkend="renaming">later</link> winemaker may
                       still have to rename some files.
                     </para>
                   </listitem>
@@ -235,10 +237,10 @@
                   <term><option>--nobackup</option></term>
                   <listitem>
                     <para>
-                      Winemaker normally makes a backup of all the files in which 
-                      it does more than the standard Dos to Unix conversion. 
-                      But if you already have (handy) copies of these files 
-                      elsewhere you may not need these so you should use this 
+                      Winemaker normally makes a backup of all the files in which
+                      it does more than the standard Dos to Unix conversion.
+                      But if you already have (handy) copies of these files
+                      elsewhere you may not need these so you should use this
                       option.
                     </para>
                   </listitem>
@@ -248,10 +250,10 @@
                   <term><option>--console</option></term>
                   <listitem>
                     <para>
-                      These option lets winemaker know what kind of target you are 
-                      building. If you have the windows library in your source 
-                      hierarchy then you should not need to specify 
-                      <option>--dll</option>. But if you have console executables 
+                      These option lets winemaker know what kind of target you are
+                      building. If you have the windows library in your source
+                      hierarchy then you should not need to specify
+                      <option>--dll</option>. But if you have console executables
                       then you will need to use the corresponding option.
                     </para>
                   </listitem>
@@ -260,7 +262,7 @@
                   <term><option>--mfc</option></term>
                   <listitem>
                     <para>
-                      This option tells winemaker that you are building an MFC 
+                      This option tells winemaker that you are building an MFC
                       application/library.
                     </para>
                   </listitem>
@@ -273,19 +275,19 @@
                   <term><option>-llibrary</option></term>
                   <listitem>
                     <para>
-                      The <option>-i</option> specifies a Winelib library to 
-                      import via the <link linkend="spec-file">spec file</> 
-                      mechanism. Contrast this with the <option>-l</option> 
-                      which specifies a Unix library to link with. The other 
-                      options work the same way they would with a C 
-                      compiler. All are applied to all the targets found. 
-                      When specifying a directory with either 
-                      <option>-I</option> or <option>-L</option>, winemaker 
-                      will prefix a relative path with 
-                      <literal>$(TOPDIRECTORY)/</literal> so that it is valid 
-                      from any of the source directories. You can also use a 
-                      variable in the path yourself if you wish (but don't 
-                      forget to escape the '$'). For instance you could specify 
+                      The <option>-i</option> specifies a Winelib library to
+                      import via the <link linkend="spec-file">spec file</>
+                      mechanism. Contrast this with the <option>-l</option>
+                      which specifies a Unix library to link with. The other
+                      options work the same way they would with a C
+                      compiler. All are applied to all the targets found.
+                      When specifying a directory with either
+                      <option>-I</option> or <option>-L</option>, winemaker
+                      will prefix a relative path with
+                      <literal>$(TOPDIRECTORY)/</literal> so that it is valid
+                      from any of the source directories. You can also use a
+                      variable in the path yourself if you wish (but don't
+                      forget to escape the '$'). For instance you could specify
                       <literal>-I\$(WINELIB_INCLUDE_ROOT)/msvcrt</literal>.
                     </para>
                   </listitem>
@@ -301,16 +303,16 @@
             <term id="renaming"><option>File renaming</option></term>
             <listitem>
               <para>
-                When you execute winemaker it will first rename files to bring 
-                their character case in line with your expectations and so that they can 
-                be processed by the makefiles. This later category implies that 
-                files with a non lowercase extension will be renamed so that the 
-                extension is in lowercase. So, for instance, 
-                <filename>HELLO.C</filename> will be renamed to 
-                <filename>HELLO.c</filename>. Also if a file or directory name 
-                contains a space or a dollar, then this 
-                character will be replaced with an underscore. This is because 
-                these characters cause problems with current versions of autoconf 
+                When you execute winemaker it will first rename files to bring
+                their character case in line with your expectations and so that they can
+                be processed by the makefiles. This later category implies that
+                files with a non lowercase extension will be renamed so that the
+                extension is in lowercase. So, for instance,
+                <filename>HELLO.C</filename> will be renamed to
+                <filename>HELLO.c</filename>. Also if a file or directory name
+                contains a space or a dollar, then this
+                character will be replaced with an underscore. This is because
+                these characters cause problems with current versions of autoconf
                 (2.13) and make (3.79).
               </para>
             </listitem>
@@ -319,13 +321,13 @@
             <term><option>Source modifications and makefile generation</option></term>
             <listitem>
               <para>
-                winemaker will then proceed to modify the source files so that 
-                they will compile more readily with Winelib. As it does so it 
-                may print warnings when it has to make a guess or identifies a 
-                construct that it cannot correct. Finally it will generate the 
-                autoconf-based makefiles. Once all this is done you can review 
-                the changes that winemaker did to your files by using 
-                <command>diff -uw</command>. For instance: 
+                winemaker will then proceed to modify the source files so that
+                they will compile more readily with Winelib. As it does so it
+                may print warnings when it has to make a guess or identifies a
+                construct that it cannot correct. Finally it will generate the
+                autoconf-based makefiles. Once all this is done you can review
+                the changes that winemaker did to your files by using
+                <command>diff -uw</command>. For instance:
                 <command>diff -uw hello.c.bak hello.c</command>
               </para>
             </listitem>
@@ -334,15 +336,15 @@
             <term><option>Running the configure script</option></term>
             <listitem>
               <para>
-                Before you run <command>make</command> you must run the 
-                autoconf <command>configure</command> script. The goal of this 
-                step is to analyze your system and generate customized 
-                makefiles from the <filename>Makefile.in</filename> files. This 
-                is also when you have to tell where Winelib resides on your 
-                system. If wine is installed in a single directory or you have 
-                the Wine sources compiled somewhere then you can just run 
-                <command>./configure --with-wine=/usr/local/bin</command> 
-                or <command>./configure --with-wine=~/wine</command> 
+                Before you run <command>make</command> you must run the
+                autoconf <command>configure</command> script. The goal of this
+                step is to analyze your system and generate customized
+                makefiles from the <filename>Makefile.in</filename> files. This
+                is also when you have to tell where Winelib resides on your
+                system. If wine is installed in a single directory or you have
+                the Wine sources compiled somewhere then you can just run
+                <command>./configure --with-wine=/usr/local/bin</command>
+                or <command>./configure --with-wine=~/wine</command>
                 respectively.
               </para>
             </listitem>
@@ -351,23 +353,23 @@
             <term><option>Running make</option></term>
             <listitem>
               <para>
-                This is a pretty simple step: just type <command>make</command> 
-                and voila, you should have all your executables and libraries. 
-                If this did not work out, then it means that you will have to 
+                This is a pretty simple step: just type <command>make</command>
+                and voila, you should have all your executables and libraries.
+                If this did not work out, then it means that you will have to
                 read this guide further to:
                 <itemizedlist>
                   <listitem>
                     <para>
-                      review the <filename>Makefile.in</filename> files to 
-                      adjust the default compilation and link options set by 
-                      winemaker. See the <xref linkend="source-analysis" 
+                      review the <filename>Makefile.in</filename> files to
+                      adjust the default compilation and link options set by
+                      winemaker. See the <xref linkend="source-analysis"
                                                endterm="source-analysis.title"> section for some hints.
                     </para>
                   </listitem>
                   <listitem>
                     <para>
-                      fix the portability issues in your sources. See 
-                      <xref linkend="portability-issues" 
+                      fix the portability issues in your sources. See
+                      <xref linkend="portability-issues"
                             endterm="portability-issues.title"> for more details.
                     </para>
                   </listitem>
