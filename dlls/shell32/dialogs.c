@@ -234,8 +234,6 @@ BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             return TRUE ;
             }
         }
-        
-    /* This should be DefDlgProcA, but that doesn't work */
     return FALSE ;
     }
 
@@ -255,8 +253,8 @@ void FillList (HWND hCb, char *pszLatest)
         0, "", REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL))
         MessageBoxA (hCb, "Unable to open registry key !", "Nix", MB_OK) ;
         
-    if (ERROR_SUCCESS != RegQueryValueExA (hkey, "MRUList", NULL, NULL, NULL, &icList))
-        MessageBoxA (hCb, "Unable to grab size for MRUList !", "Nix", MB_OK) ;
+    RegQueryValueExA (hkey, "MRUList", NULL, NULL, NULL, &icList) ;
+
     if (icList > 0)
         {
         pszList = malloc (icList) ;
