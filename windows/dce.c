@@ -17,6 +17,7 @@
  * DCX_WINDOWPAINT - BeginPaint() is in effect
  */
 
+#include <assert.h>
 #include "desktop.h"
 #include "options.h"
 #include "dce.h"
@@ -627,34 +628,6 @@ INT16 DCE_ExcludeRgn( HDC hDC, WND* wnd, HRGN hRgn )
   return ExtSelectClipRgn( hDC, hRgn, RGN_DIFF );
 }
 
-/***********************************************************************
- *           DCE_IsDCBusy
- * 
- *  Utility function to determine if a particular DC is currently
- *  in a busy state..
- */
-BOOL DCE_IsDCBusy(HDC hdc)
-{
-    DCE* dce;
-    BOOL isBusy = FALSE;
-
-    WIN_LockWnds();
-    dce = firstDCE;
-            
-    while (dce && (dce->hDC != hdc)) dce = dce->next;
-
-    if ( dce ) 
-    {
-      if ( dce->DCXflags & DCX_DCEBUSY )
-      {
-	isBusy = TRUE;
-      }
-    }
-
-    WIN_UnlockWnds();
-
-    return isBusy;
-}
 
 /***********************************************************************
  *           GetDCEx16    (USER.359)
@@ -988,21 +961,19 @@ INT WINAPI ReleaseDC(
  */
 BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 {
+    BOOL retv = TRUE;
     HRGN hVisRgn;
-    DCE *dce;
+    DCE *dce = (DCE *)data;
     DC  *dc;
     WND *wndPtr;
 
-    /* Grab the windows lock before doing anything else  */
-    WIN_LockWnds();
-
-    dce = firstDCE;
-
     TRACE(dc,"hDC = %04x, %i\n", hDC, code);
 
-    while (dce && (dce->hDC != hDC)) dce = dce->next;
+    if (!dce) return 0;
+    assert(dce->hDC == hDC);
 
-    if (!dce) goto END;
+    /* Grab the windows lock before doing anything else  */
+    WIN_LockWnds();
 
     switch( code )
     {
@@ -1050,16 +1021,25 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 	     WARN(dc, "DC is not in use!\n");
 	   break;
 
-      case DCHC_DELETEDC: /* FIXME: ?? */
+      case DCHC_DELETEDC:
+           /*
+            * Windows will not let you delete a DC that is busy
+            * (between GetDC and ReleaseDC)
+            */
+
+           if ( dce->DCXflags & DCX_DCEBUSY )
+           {
+               WARN(dc, "Application trying to delete a busy DC\n");
+               retv = FALSE;
+           }
 	   break;
 
       default:
 	   FIXME(dc,"unknown code\n");
     }
 
-END:
   WIN_UnlockWnds();  /* Release the wnd lock */
-  return 0;
+  return retv;
 }
 
 
