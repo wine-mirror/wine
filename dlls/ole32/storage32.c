@@ -5425,6 +5425,8 @@ HRESULT WINAPI StgCreateDocfile(
    */
   if (ppstgOpen == 0)
     return STG_E_INVALIDPOINTER;
+  if (reserved != 0)
+    return STG_E_INVALIDPARAMETER;
 
   /*
    * Validate the STGM flags
@@ -5432,6 +5434,14 @@ HRESULT WINAPI StgCreateDocfile(
   if ( FAILED( validateSTGM(grfMode) ))
     return STG_E_INVALIDFLAG;
 
+  /* StgCreateDocFile always opens for write */
+  if (!(grfMode & (STGM_WRITE|STGM_READWRITE)))
+    return STG_E_INVALIDFLAG;
+
+  /* always opens non-shared */
+  if (!(grfMode & STGM_SHARE_EXCLUSIVE))
+    return STG_E_INVALIDFLAG;
+      
   /*
    * Generate a unique name.
    */
@@ -5492,6 +5502,8 @@ HRESULT WINAPI StgCreateDocfile(
 
   if (hFile == INVALID_HANDLE_VALUE)
   {
+    if(GetLastError() == ERROR_FILE_EXISTS)
+      return STG_E_FILEALREADYEXISTS;
     return E_FAIL;
   }
 

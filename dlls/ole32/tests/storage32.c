@@ -66,7 +66,92 @@ void test_hglobal_storage_stat(void)
     ok( refcount == 0, "ILockBytes refcount is wrong\n");
 }
 
+void test_create_storage_modes(void)
+{
+   static const WCHAR szPrefix[] = { 's','t','g',0 };
+   static const WCHAR szDot[] = { '.',0 };
+   WCHAR filename[MAX_PATH];
+   IStorage *stg = NULL;
+   HRESULT r;
+
+   if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
+      return;
+
+   DeleteFileW(filename);
+
+   /* test with some invalid parameters */
+   r = StgCreateDocfile( NULL, 0, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, 0, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_CREATE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_READWRITE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                                   STGM_READWRITE, 0, NULL);
+   ok(r==STG_E_INVALIDPOINTER, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                                   STGM_READWRITE, 1, &stg);
+   ok(r==STG_E_INVALIDPARAMETER, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READ, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_PRIORITY, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   ok(stg == NULL, "stg was set\n");
+
+   /* check what happens if the file already exists */
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
+   ok(r==S_OK, "StgCreateDocfile failed\n");
+   r = IStorage_Release(stg);
+   ok(r == 0, "storage not released\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |
+                                   STGM_TRANSACTED, 0, &stg);
+   ok(r==STG_E_FILEALREADYEXISTS, "StgCreateDocfile wrong error\n");
+   r = StgCreateDocfile( filename, STGM_READ, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_DENY_WRITE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile succeeded\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_DENY_NONE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile failed\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_DENY_NONE | STGM_TRANSACTED, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile failed\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_DENY_NONE | STGM_READWRITE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile failed\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_DENY_NONE | STGM_WRITE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile failed\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_DENY_WRITE | STGM_WRITE, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile failed\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_DENY_WRITE | STGM_READ, 0, &stg);
+   ok(r==STG_E_INVALIDFLAG, "StgCreateDocfile wrong error\n");
+   ok(DeleteFileW(filename), "failed to delete file\n");
+
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |
+                                   STGM_TRANSACTED, 0, &stg);
+   ok(r==S_OK, "StgCreateDocfile failed\n");
+   r = IStorage_Release(stg);
+   ok(r == 0, "storage not released\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_READWRITE |
+                                   STGM_TRANSACTED |STGM_FAILIFTHERE, 0, &stg);
+   ok(r==STG_E_FILEALREADYEXISTS, "StgCreateDocfile wrong error\n");
+   r = StgCreateDocfile( filename, STGM_SHARE_EXCLUSIVE | STGM_WRITE, 0, &stg);
+   ok(r==STG_E_FILEALREADYEXISTS, "StgCreateDocfile wrong error\n");
+
+   r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
+                                   STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+   ok(r==S_OK, "StgCreateDocfile failed\n");
+   r = IStorage_Release(stg);
+   ok(r == 0, "storage not released\n");
+
+   ok(DeleteFileW(filename), "failed to delete file\n");
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
+    test_create_storage_modes();
 }
