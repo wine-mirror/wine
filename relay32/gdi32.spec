@@ -78,7 +78,7 @@ init	MAIN_GdiInit
  73 stub DeviceCapabilitiesExW
  74 stub DrawEscape
  75 stdcall Ellipse(long long long long long) Ellipse32
- 76 stub EndDoc
+ 76 stdcall EndDoc(long) EndDoc32
  77 stub EndPage
  78 stdcall EndPath(long) EndPath32
  79 stdcall EnumEnhMetaFile(long long ptr ptr ptr) EnumEnhMetaFile32
@@ -349,7 +349,7 @@ init	MAIN_GdiInit
 344 stdcall SetWindowExtEx(long long long ptr) SetWindowExtEx32
 345 stdcall SetWindowOrgEx(long long long ptr) SetWindowOrgEx32
 346 stdcall SetWorldTransform(long ptr) SetWorldTransform
-347 stub StartDocA
+347 stdcall StartDocA(long ptr) StartDoc32A
 348 stub StartDocW
 349 stub StartPage
 350 stdcall StretchBlt(long long long long long long long long long long long) StretchBlt32

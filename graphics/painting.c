@@ -25,6 +25,7 @@
 #include "region.h"
 #include "path.h"
 #include "debug.h"
+#include "winerror.h"
 
 /***********************************************************************
  *           LineTo16    (GDI.19)
@@ -1141,4 +1142,18 @@ BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, const POINT32* lppt, DWORD cPoints )
     if( dc->funcs->pMoveToEx)
     	   dc->funcs->pMoveToEx(dc,lppt[cPoints].x,lppt[cPoints].y,&pt);
     return ret;
+}
+
+INT32 WINAPI EndDoc32(HDC32 a)
+{
+FIXME(gdi,"stub\n");
+SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+return 0; /* failure*/
+}
+
+INT32       WINAPI StartDoc32A(HDC32 hdc ,const DOCINFO32A* doc)
+{
+FIXME(gdi,"stub\n");
+SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+return 0; /* failure*/
 }
