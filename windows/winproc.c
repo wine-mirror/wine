@@ -577,6 +577,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
     case EM_REPLACESEL:
+        if(!*plparam) return 0;
         *plparam = (LPARAM)HEAP_strdupAtoW( GetProcessHeap(), 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
 
@@ -620,6 +621,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 /* Listbox */
     case LB_ADDSTRING:
     case LB_INSERTSTRING:
+        if(!*plparam) return 0;
 	if ( WINPROC_TestLBForStr( hwnd ))
           *plparam = (LPARAM)HEAP_strdupAtoW( GetProcessHeap(), 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
@@ -637,6 +639,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 /* Combobox */
     case CB_ADDSTRING:
     case CB_INSERTSTRING:
+        if(!*plparam) return 0;
 	if ( WINPROC_TestCBForStr( hwnd ))
           *plparam = (LPARAM)HEAP_strdupAtoW( GetProcessHeap(), 0, (LPCSTR)*plparam );
         return (*plparam ? 1 : -1);
@@ -825,6 +828,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
     case EM_REPLACESEL:
+        if(!*plparam) return 0;
         *plparam = (LPARAM)HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
 
@@ -863,6 +867,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 /* Listbox */
     case LB_ADDSTRING:
     case LB_INSERTSTRING:
+        if(!*plparam) return 0;
 	if ( WINPROC_TestLBForStr( hwnd ))
           *plparam = (LPARAM)HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
@@ -880,6 +885,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 /* Combobox */
     case CB_ADDSTRING:
     case CB_INSERTSTRING:
+        if(!*plparam) return 0;
 	if ( WINPROC_TestCBForStr( hwnd ))
           *plparam = (LPARAM)HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)*plparam );
         return (*plparam ? 1 : -1);
@@ -2354,10 +2360,15 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
                                          LPARAM lParam )
 {
     LRESULT result;
+    int unmap;
 
-    if (WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam ) == -1) return 0;
+    if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
+        ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
+                       SPY_GetMsgName(msg), wParam, lParam );
+        return 0;
+    }
     result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-    WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam );
+    if( unmap ) WINPROC_UnmapMsg32ATo32W( hwnd, msg, wParam, lParam );
     return result;
 }
 
@@ -2372,10 +2383,15 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
                                          LPARAM lParam )
 {
     LRESULT result;
+    int unmap;
 
-    if (WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam ) == -1) return 0;
+    if ((unmap = WINPROC_MapMsg32WTo32A( hwnd, msg, &wParam, &lParam )) == -1) {
+        ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
+                       SPY_GetMsgName(msg), wParam, lParam );
+        return 0;
+    }
     result = WINPROC_CallWndProc( func, hwnd, msg, wParam, lParam );
-    WINPROC_UnmapMsg32WTo32A( hwnd, msg, wParam, lParam );
+    if( unmap ) WINPROC_UnmapMsg32WTo32A( hwnd, msg, wParam, lParam );
     return result;
 }
 
