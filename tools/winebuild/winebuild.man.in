@@ -196,14 +196,14 @@ syntax is the following:
 .IB ordinal\  variable
 .RI [ flags ]\  exportname \ \fB(\fR\ [ data... ] \ \fB)
 .br
+.IB ordinal\  extern
+.RI [ flags ]\  exportname\ symbolname
+.br
 .IB ordinal\  stub
 .RI [ flags ]\  exportname
 .br
 .IB ordinal\  equate
 .RI [ flags ]\  exportname\ data
-.br
-.IB ordinal\  extern
-.RI [ flags ]\  exportname\ symbolname
 .br
 .IB ordinal\  forward
 .RI [ flags ]\  exportname\ forwardname
@@ -351,6 +351,28 @@ following example defines the variable VariableA at ordinal 2 and
 containing 4 ints:
 .IP
 2 variable VariableA(-1 0xff 0 0)
+.PP
+This declaration only works in Win16 spec files. In Win32 you should
+use
+.B extern
+instead (see below).
+.SS "Extern ordinals"
+Syntax:
+.br
+.IB ordinal\  extern
+.RI [ flags ]\  exportname\ symbolname
+.PP
+This declaration defines an entry that simply maps to a C symbol
+(variable or function). It only works in Win32 spec files.
+.I exportname
+will point to the symbol
+.I symbolname
+that must be defined in the C code. Alternatively, it can be of the
+form
+.IB dllname . symbolname
+to define a forwarded symbol (one whose implementation is in another
+dll).
+
 .SS "Stub ordinals"
 Syntax:
 .br
@@ -371,19 +393,6 @@ This declaration defines an ordinal as an absolute value.
 will be the name available for dynamic linking.
 .I data
 can be a decimal number or a hex number preceeded by "0x".
-.SS "Extern ordinals"
-Syntax:
-.br
-.IB ordinal\  extern
-.RI [ flags ]\  exportname\ symbolname
-.PP
-This declaration defines an entry that simply maps to a C symbol
-(variable or function).
-.I exportname
-will point to the symbol
-.I symbolname
-that must be defined in C code. This declaration only works in Win32
-spec files.
 .SS "Forwarded ordinals"
 Syntax:
 .br

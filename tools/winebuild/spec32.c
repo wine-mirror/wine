@@ -168,8 +168,12 @@ static int output_exports( FILE *outfile, int nr_exports )
         else switch(odp->type)
         {
         case TYPE_EXTERN:
-            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", odp->link_name );
-            break;
+            if (!(odp->flags & FLAG_FORWARD))
+            {
+                fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", odp->link_name );
+                break;
+            }
+            /* else fall through */
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
@@ -186,9 +190,6 @@ static int output_exports( FILE *outfile, int nr_exports )
             break;
         case TYPE_STUB:
             fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", make_internal_name( odp, "stub" ) );
-            break;
-        case TYPE_VARIABLE:
-            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", make_internal_name( odp, "var" ) );
             break;
         default:
             assert(0);
@@ -296,25 +297,6 @@ static int output_exports( FILE *outfile, int nr_exports )
 
         ignore:
             fprintf( outfile, "    \"\\t.long 0,0,0,0\\n\"\n" );
-        }
-    }
-
-    /* output variables */
-
-    for (i = 0; i < nb_entry_points; i++)
-    {
-        ORDDEF *odp = EntryPoints[i];
-        if (odp->type == TYPE_VARIABLE)
-        {
-            int j;
-            fprintf( outfile, "    \"%s:\\n\"\n", make_internal_name( odp, "var" ) );
-            fprintf( outfile, "    \"\\t.long " );
-            for (j = 0; j < odp->u.var.n_values; j++)
-            {
-                fprintf( outfile, "0x%08x", odp->u.var.values[j] );
-                if (j < odp->u.var.n_values-1) fputc( ',', outfile );
-            }
-            fprintf( outfile, "\\n\"\n" );
         }
     }
 
@@ -850,7 +832,6 @@ void BuildDef32File(FILE *outfile)
         switch(odp->type)
         {
         case TYPE_EXTERN:
-        case TYPE_VARIABLE:
             is_data = 1;
             /* fall through */
         case TYPE_VARARGS:

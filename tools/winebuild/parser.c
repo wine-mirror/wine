@@ -136,8 +136,12 @@ static void ParseVariable( ORDDEF *odp )
     int *value_array;
     int n_values;
     int value_array_size;
+    const char *token;
 
-    const char *token = GetToken(0);
+    if (SpecType == SPEC_WIN32)
+        fatal_error( "'variable' not supported in Win32, use 'extern' instead\n" );
+
+    token = GetToken(0);
     if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
 
     n_values = 0;
@@ -290,8 +294,10 @@ static void ParseStub( ORDDEF *odp )
  */
 static void ParseExtern( ORDDEF *odp )
 {
-    if (SpecType == SPEC_WIN16) fatal_error( "'extern' not supported for Win16\n" );
+    if (SpecType == SPEC_WIN16)
+        fatal_error( "'extern' not supported for Win16, use 'variable' instead\n" );
     odp->link_name = xstrdup( GetToken(0) );
+    if (strchr( odp->link_name, '.' )) odp->flags |= FLAG_FORWARD;
 }
 
 
