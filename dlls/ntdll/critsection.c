@@ -157,7 +157,7 @@ NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *crit, DWORD spincount )
 {
-    if(spincount) FIXME("critsection=%p: spincount=%ld not supported\n", crit, spincount);
+    if(spincount) TRACE("critsection=%p: spincount=%ld not supported\n", crit, spincount);
     crit->SpinCount = spincount;
     return RtlInitializeCriticalSection( crit );
 }
