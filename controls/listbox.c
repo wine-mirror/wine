@@ -1837,6 +1837,14 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
     TRACE("[%04x]: lbuttondown %d,%d item %d\n",
 		 wnd->hwndSelf, x, y, index );
     if (!descr->caret_on && (descr->in_focus)) return 0;
+
+    if (!descr->in_focus)
+    {
+	if( !descr->lphc ) SetFocus( wnd->hwndSelf );
+	else SetFocus( (descr->lphc->hWndEdit) ? descr->lphc->hWndEdit
+                                             : descr->lphc->self->hwndSelf );
+    }
+
     if (index != -1)
     {
         if (descr->style & LBS_EXTENDEDSEL)
@@ -1859,13 +1867,6 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
                                    !descr->items[index].selected),
                                   (descr->style & LBS_NOTIFY) != 0 );
         }
-    }
-
-    if(!descr->in_focus)
-    {
-	if( !descr->lphc ) SetFocus( wnd->hwndSelf );
-	else SetFocus( (descr->lphc->hWndEdit) ? descr->lphc->hWndEdit
-                                             : descr->lphc->self->hwndSelf );
     }
 
     descr->captured = TRUE;
