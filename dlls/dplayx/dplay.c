@@ -41,7 +41,7 @@ typedef struct IDirectPlay4Impl IDirectPlay4Impl;
 /*****************************************************************************
  * IDirectPlay implementation structure
  *
- * The philosophy behind this extra pointer derefernce is that I wanted to
+ * The philosophy behind this extra pointer dereference is that I wanted to
  * have the same structure for all types of objects without having to do
  * alot of casting. I also only wanted to implement an interface in the
  * object it was "released" with IUnknown interface being implemented in the 1 version.

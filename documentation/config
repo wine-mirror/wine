@@ -90,11 +90,10 @@ Device=/dev/xx
 
 Use this ONLY for floppy and cdrom devices. Using it on Extended2 partitions can
 have dire results (When a windows app tries to do a lowlevel write, they do it
-in a FAT way -- FAT does not mix with Extended2). Currently, it is useless when
-used on cdrom's, however functionality could be implemented later to allow wine
-to automatically find the cdrom label.
-NOTE: This setting is not terribly important, almost all apps will have no
-problem if it remains unspecified. If you are unsure about specifying device
+in a FAT way -- FAT does not mix with Extended2).
+NOTE: This setting is not really important, almost all apps will have no
+problem if it remains unspecified. For CD-ROMs you might want to add it to get
+automatic label detection, though. If you are unsure about specifying device
 names, just leave out this setting for your drives.
 
 Here is a setup for Drive X, a generic hard drive:

@@ -493,14 +493,14 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
       return DDERR_UNSUPPORTEDMODE;
 
     case -1:
-      /* No convertion */
+      /* No conversion */
       This->d.pixel_convert = NULL;
       This->d.palette_convert = NULL;
       break;
 
     default:
-      DPRINTF("DirectDraw warning: running in depth-convertion mode. Should run using a %ld depth for optimal performances.\n", depth);
-      /* Set the depth convertion routines */
+      DPRINTF("DirectDraw warning: running in depth-conversion mode. Should run using a %ld depth for optimal performances.\n", depth);
+      /* Set the depth conversion routines */
       This->d.pixel_convert = ModeEmulations[c].funcs.pixel_convert;
       This->d.palette_convert = ModeEmulations[c].funcs.palette_convert;
     }

@@ -128,7 +128,7 @@ static void REGISTRY_Init(void) {
 	RegSetValueExA(hkey,"Identifier",0,REG_SZ,"SystemType WINE",strlen("SystemType WINE"));
 	RegCloseKey(hkey);
 
-	/* \\SOFTWARE\\Microsoft\\Window NT\\CurrentVersion
+	/* \\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
 	 *						CurrentVersion
 	 *						CurrentBuildNumber
 	 *						CurrentType
@@ -248,7 +248,7 @@ static char* _wine_read_USTRING( char *buf, LPWSTR *str )
 			s++;
 			if (!*s) {
 				/* Dangling \ ... may only happen if a registry
-				 * write was short. FIXME: What do to?
+				 * write was short. FIXME: What to do?
 				 */
 				 break;
 			}
@@ -1435,7 +1435,8 @@ void SHELL_LoadRegistry( void )
   REGISTRY_Init();
   SetLoadLevel(0);
 
-  if (RegCreateKeyA(HKEY_USERS, ".Default", &hkey_users_default)) hkey_users_default = 0;
+  if (RegCreateKeyA(HKEY_USERS, ".Default", &hkey_users_default))
+	  hkey_users_default = 0;
 
   GetWindowsDirectoryA( windir, MAX_PATHNAME_LEN );
 
@@ -1577,7 +1578,7 @@ void SHELL_LoadRegistry( void )
       _wine_loadreg( HKEY_USERS, SAVE_USERS_DEFAULT );
 
       /* 
-       * Load the global machine defaults directly form sysconfdir
+       * Load the global machine defaults directly from sysconfdir
        */
       _wine_loadreg( HKEY_LOCAL_MACHINE, SAVE_LOCAL_MACHINE_DEFAULT );
   }

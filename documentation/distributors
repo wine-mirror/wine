@@ -1,9 +1,10 @@
 		A small WINE distribution guide.
 
 While packaging WINE for one of the Linux distributions I came across
-several points which have been clarified yet. Particular a how-to for WINE
-packaging distributors is missing. This document tries to give a brief
-overview over the rationales I thought up and how I tried to implement it.
+several points which have not been clarified yet. Particularly a how-to
+for WINE packaging distributors is missing. This document tries to give
+a brief overview over the rationales I thought up and how I tried to
+implement it.
 (While the examples use "rpm" most of this stuff can be applied to other
 packagers too.)
 
@@ -16,11 +17,11 @@ environment !
 
 A WINE install should:
 a. Not have a world writeable directory (-tree).
-b. Require only as much user input as possible. It would be very good if it
+b. Require only as much user input as needed. It would be very good if it
    would not require any at all. Just let the system administrator do "rpm
    -i wine.rpm" and let any user be able to run "wine sol.exe" instantly.
-c. Give the user as much flexibility to install his own applications, do
-   his own configuring etc.
+c. Give the user as much flexibility as possible to install his own
+   applications, do his own configuring etc.
 d. Come as preconfigured as possible, so the user does not need to change
    any configuration files.
 e. Use only as much diskspace as needed per user.
@@ -68,7 +69,7 @@ Example (split this into %build and %install section for rpm):
 
 Here we unfortunately do need to create wineuser.reg and winesystem.reg
 from the WINE distributed winedefault.reg. This can be done using
-./regapi once for one example user and the reusing his .wine/user.reg
+./regapi once for one example user and then reusing his .wine/user.reg
 and .wine/system.reg files. [FIXME: this needs to be done better]
 
 	install -m 644 wine.sytemreg $BR/etc/wine/
@@ -175,7 +176,7 @@ WINE. This script should:
 
 - Symlink all .dll and .exe files from the original windows installation to
   the windows directory. Why? Some program reference "%windowsdir%/file.dll"
-  or "%systemdir%/file.dll" directly and fail if there are not present.
+  or "%systemdir%/file.dll" directly and fail if they are not present.
 
   This will give a huge number of symlinks, yes. However, if an installer
   later overwrites on of those files, it will overwrite the symlink (so

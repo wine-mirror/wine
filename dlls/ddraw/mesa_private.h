@@ -1,7 +1,7 @@
 /* MESA private include file
    (c) 1998 Lionel ULMER
    
-   This files contains all the structure that are not exported
+   This file contains all structures that are not exported
    through d3d.h and all common macros. */
 
 #ifndef __GRAPHICS_WINE_MESA_PRIVATE_H

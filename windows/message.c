@@ -1971,7 +1971,7 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
       /*
        * This is a temporary solution to a big problem.
        * You see, the main thread of all Win32 programs is created as a 16 bit
-       * task. This means that if you want on an event using Win32 synchronization
+       * task. This means that if you wait on an event using Win32 synchronization
        * methods, the 16 bit scheduler is stopped and things might just stop happening.
        * This implements a semi-busy loop that checks the handles to wait on and
        * also the message queue. When either one is ready, the wait function returns.

@@ -2238,7 +2238,7 @@ static HMENU MENU_PtMenu( HMENU hMenu, POINT16 pt )
  *
  * Execute a menu item (for instance when user pressed Enter).
  * Return the wID of the executed item. Otherwise, -1 indicating
- * that no menu item wase executed;
+ * that no menu item was executed;
  * Have to receive the flags for the TrackPopupMenu options to avoid
  * sending unwanted message.
  *

@@ -253,7 +253,7 @@ static	BOOL OSS_MidiInit(void)
 	minfo.device = i;
 	status = ioctl(midiSeqFD, SNDCTL_MIDI_INFO, &minfo);
 	if (status == -1) {
-	    ERR("ioctl on midi info failed.\n");
+	    ERR("ioctl on midi info for device %d failed.\n", i);
 	    midiCloseSeq();
 	    return TRUE;
 	}

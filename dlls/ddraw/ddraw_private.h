@@ -198,7 +198,7 @@ struct IDirectDrawPaletteImpl
     DWORD		ref;
 
     /* IDirectDrawPalette fields */
-    IDirectDrawImpl*		ddraw;	/* direct draw, no referencecount */
+    IDirectDrawImpl*		ddraw;	/* direct draw, no reference count */
     PALETTEENTRY	palents[256];
 
     /* This is to store the palette in 'screen format' */

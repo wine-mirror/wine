@@ -144,8 +144,8 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
     if (   !(ordinal = NE_GetOrdinal(hmod, func))
         || !(TD16 = PTR_SEG_TO_LIN(NE_GetEntryPointEx(hmod, ordinal, FALSE))))
     {
-        ERR("(%s, %s, %s): Unable to find '%s'\n",
-                   module, func, module32, func);
+        ERR("Unable to find thunk data '%s' in %s, required by %s (conflicting/incorrect DLL versions !?).\n",
+                   func, module, module32);
         return 0;
     }
 
@@ -552,7 +552,7 @@ void WINAPI FT_Exit56(CONTEXT86 *context) { FT_Exit(context, 56); }
  *	00: DWORD	length		? don't know exactly
  *	04: SEGPTR	ptr		? where does it point to?
  * The pointer ptr is written into the first DWORD of 'thunk'.
- * (probably correct implemented)
+ * (probably correctly implemented)
  * [ok probably]
  * RETURNS
  *	segmented pointer to thunk?

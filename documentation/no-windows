@@ -35,9 +35,10 @@ designed to make this possible. Here are some tips by Juergen Schmied
 (and others) on how to proceed. This assumes that your C:\windows
 directory in the configuration file does not point to a native Windows
 installation but is in a separate Unix file system. (For instance,
-C:\windows is really /home/ego/wine/drives/c).
+"C:\windows" is really subdirectory "windows" located in
+"/home/ego/wine/drives/c").
 
-- Run the application with   -debugmsg +module,+file   to find out
+- Run the application with   --debugmsg +module,+file   to find out
   which files are needed. Copy the required DLL's one by one to the
   C:\windows\system directory. Do not copy KERNEL/KERNEL32, GDI/GDI32,
   or USER/USER32. These implement the core functionality of the

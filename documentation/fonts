@@ -12,11 +12,11 @@ How To Convert Windows Fonts
 If you have access to a Windows installation you should use 
 fnt2bdf utility (found in the 'tools)' directory to convert
 bitmap fonts (VGASYS.FON, SSERIFE.FON, and SERIFE.FON) into 
-the format that X Window System can recognize. 
+the format that the X Window System can recognize. 
 
 Step 1. Extract bitmap fonts with 'fnt2bdf'.
 
-Step 2. Convert .bdf files produced by the Step 1 into
+Step 2. Convert .bdf files produced by Step 1 into
 	.pcf files with 'bdftopcf'.
 
 Step 3. Copy .pcf files to the font server directory which

@@ -814,7 +814,7 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
 	hDriver = DRIVER_TryOpenDriver16(drvName, lParam, FALSE);
     }
     if (!hDriver)
-	ERR("Failed to open driver %s from section %s\n", lpDriverName, lpSectionName);
+	ERR("Failed to open driver %s from system.ini file, section %s\n", lpDriverName, lpSectionName);
     else 
 	TRACE("=> %08x\n", hDriver);
     return hDriver;

@@ -680,7 +680,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0);
     if (audio == -1) {
 	WARN("can't open (%d)!\n", errno);
-	return MMSYSERR_ALLOCATED ;
+	return MMSYSERR_ALLOCATED;
     }
 
     WOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
