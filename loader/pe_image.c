@@ -421,10 +421,13 @@ static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *f
     if ((nt->OptionalHeader.ImageBase & 0x80000000) && !((DWORD)base & 0x80000000))
         ERR( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
 
-    while (rel->VirtualAddress)
+    for ( ; ((char *)rel < base + dir->VirtualAddress + dir->Size) && rel->VirtualAddress;
+          rel = (IMAGE_BASE_RELOCATION*)((char*)rel + rel->SizeOfBlock))
     {
         char *page = base + rel->VirtualAddress;
         int i, count = (rel->SizeOfBlock - 8) / sizeof(rel->TypeOffset);
+
+        if (!count) continue;
 
         /* sanity checks */
         if ((char *)rel + rel->SizeOfBlock > base + dir->VirtualAddress + dir->Size ||
@@ -462,7 +465,6 @@ static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *f
                 break;
             }
         }
-        rel = (IMAGE_BASE_RELOCATION*)((char*)rel + rel->SizeOfBlock);
     }
     return 1;
 }
