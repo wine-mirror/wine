@@ -1,3 +1,2 @@
 *.spec.c
 Makefile
-libmsnet32.so.1.0

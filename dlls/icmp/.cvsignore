@@ -1,3 +1,2 @@
 *.spec.c
 Makefile
-libicmp.so.1.0

@@ -1,3 +1,2 @@
 Makefile
-libntdll.so.1.0
 ntdll.spec.c

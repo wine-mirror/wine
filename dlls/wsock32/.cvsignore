@@ -1,3 +1,2 @@
 Makefile
-libwsock32.so.1.0
 wsock32.spec.c

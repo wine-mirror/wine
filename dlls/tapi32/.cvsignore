@@ -1,3 +1,2 @@
 *.spec.c
 Makefile
-libtapi32.so.1.0

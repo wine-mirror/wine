@@ -1,4 +1,3 @@
 Makefile
-libserialui.so.1.0
 serialui.spec.c
 serialui_rc.res

@@ -1,3 +1,2 @@
 Makefile
-libwininet.so.1.0
 wininet.spec.c

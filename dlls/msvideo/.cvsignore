@@ -2,4 +2,3 @@
 *.spec.c
 *.spec.glue.s
 Makefile
-libmsvfw32.so.1.0

@@ -1,3 +1,2 @@
 Makefile
-librpcrt4.so.1.0
 rpcrt4.spec.c

@@ -1,3 +1,2 @@
 *.spec.c
 Makefile
-libodbc32.so.1.0

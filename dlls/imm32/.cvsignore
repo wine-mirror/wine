@@ -1,3 +1,2 @@
 *.spec.c
 Makefile
-libimm32.so.1.0

@@ -1,3 +1,2 @@
 *.spec.c
 Makefile
-libdsound.so.1.0

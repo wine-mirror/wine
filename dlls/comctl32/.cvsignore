@@ -1,5 +1,4 @@
 *.spec.c
 *.spec.glue.s
 Makefile
-libcomctl32.so.1.0
 rsrc.res

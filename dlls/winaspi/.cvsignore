@@ -1,5 +1,4 @@
 *.spec.c
 *.spec.glue.s
 Makefile
-libwnaspi32.so.1.0
 winaspi16.glue.c

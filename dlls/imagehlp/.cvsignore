@@ -1,3 +1,2 @@
 *.spec.c
 Makefile
-libimagehlp.so.1.0
