@@ -399,7 +399,6 @@ typedef struct WS(linger)
 #endif /* !USE_WS_PREFIX && !__WINE_USE_MSVCRT */
 
 #ifdef WS_DEFINE_SELECT
-# undef WS_DEFINE_SELECT
 /* Define our own version of select and the associated types and macros */
 
 # ifndef USE_WS_PREFIX
@@ -456,7 +455,7 @@ typedef struct WS(timeval)
     u_int __i; \
     for (__i = 0; __i < ((cast*)(set))->fd_count ; __i++) \
     { \
-        if ((cast*)(set))->fd_array[__i]=(fd) \
+        if (((cast*)(set))->fd_array[__i]==(fd)) \
             break; \
     } \
     if (__i == ((cast*)(set))->fd_count && ((cast*)(set))->fd_count < FD_SETSIZE) \
@@ -467,21 +466,21 @@ typedef struct WS(timeval)
 } while(0)
 
 #ifndef __WINE_WINSOCK2__
-#define __WS_FD_SET(fd, set, cast) __WS_FD_SET1((fd),(set), (cast))
+#define __WS_FD_SET(fd, set, cast) __WS_FD_SET1((fd),(set), cast)
 #else
-#define __WS_FD_SET(fd, set, cast) __WS_FD_SET2((fd),(set), (cast))
+#define __WS_FD_SET(fd, set, cast) __WS_FD_SET2((fd),(set), cast)
 #endif
 
 #ifndef USE_WS_PREFIX
-#define FD_CLR(fd, set)      __WS_FD_CLR((fd),(set), WS(fd_set))
-#define FD_SET(fd, set)      __WS_FD_SET((fd),(set), WS(fd_set))
-#define FD_ZERO(set)         (((WS(fd_set)*)(set))->fd_count=0)
-#define FD_ISSET(fd, set)    __WSAFDIsSet((SOCKET)(fd), (WS(fd_set)*)(set))
+#define FD_CLR(fd, set)      __WS_FD_CLR((fd),(set), fd_set)
+#define FD_SET(fd, set)      __WS_FD_SET((fd),(set), fd_set)
+#define FD_ZERO(set)         (((fd_set*)(set))->fd_count=0)
+#define FD_ISSET(fd, set)    __WSAFDIsSet((SOCKET)(fd), (fd_set*)(set))
 #else
-#define WS_FD_CLR(fd, set)   WINE_FD_CLR((fd),(set), WS(fd_set))
-#define WS_FD_SET(fd, set)   WINE_FD_SET((fd),(set), WS(fd_set))
-#define WS_FD_ZERO(set)      (((WS(fd_set)*)(set))->fd_count=0)
-#define WS_FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (WS(fd_set)*)(set))
+#define WS_FD_CLR(fd, set)   WINE_FD_CLR((fd),(set), WS_fd_set)
+#define WS_FD_SET(fd, set)   WINE_FD_SET((fd),(set), WS_fd_set)
+#define WS_FD_ZERO(set)      ((WS_fd_set*)(set))->fd_count=0)
+#define WS_FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (WS_fd_set*)(set))
 #endif
 #endif /* WS_DEFINE_SELECT */
 
@@ -911,7 +910,7 @@ int WINAPI WS(getpeername)(SOCKET,struct WS(sockaddr)*,int*);
 struct WS(protoent)* WINAPI WS(getprotobyname)(const char*);
 struct WS(protoent)* WINAPI WS(getprotobynumber)(int);
 #ifdef WS_DEFINE_SELECT
-int WS(select)(int,WS(fd_set)*,WS(fd_set)*,WS(fd_set)*,const struct WS(timeval)*);
+int WINAPI WS(select)(int,WS(fd_set)*,WS(fd_set)*,WS(fd_set)*,const struct WS(timeval)*);
 #endif
 struct WS(servent)* WINAPI WS(getservbyname)(const char*,const char*);
 struct WS(servent)* WINAPI WS(getservbyport)(int,const char*);
