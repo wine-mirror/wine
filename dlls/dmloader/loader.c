@@ -318,8 +318,25 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 	ObjDesc.dwSize = sizeof(DMUS_OBJECTDESC);
 	ObjDesc.dwValidData = DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_CLASS; /* I believe I've read somewhere in MSDN that this function requires either full path or relative path */
 	ObjDesc.guidClass = *rguidClassID;
-	strncpyW (ObjDesc.wszFileName, pwzFilePath, MAX_PATH);
-
+	/* OK, MSDN says that search order is the following:
+	    - current directory (DONE)
+	    - windows search path (FIXME: how do I get that?)
+	    - loader's search path (DONE)
+	*/
+        /* search in current directory */
+        if (!SearchPathW (NULL, pwzFilePath, NULL,
+                          sizeof(ObjDesc.wszFileName)/sizeof(WCHAR), ObjDesc.wszFileName, NULL) &&
+            /* search in loader's search path */
+            !SearchPathW (This->wzSearchPath, pwzFilePath, NULL,
+                          sizeof(ObjDesc.wszFileName)/sizeof(WCHAR), ObjDesc.wszFileName, NULL))
+        {
+		/* cannot find file */
+		TRACE("cannot find file\n");
+		return DMUS_E_LOADER_FAILEDOPEN;
+	}
+	
+	TRACE("full file path = %s\n", debugstr_w (ObjDesc.wszFileName));
+	
 	return IDirectMusicLoader8Impl_GetObject (iface, &ObjDesc, iidInterfaceID, ppObject);
 }
 
@@ -358,6 +375,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoader (LPCGUID lpcGUID, LPDIRECTMUSICLOA
 		}
 		dmloader->lpVtbl = &DirectMusicLoader8_Vtbl;
 		dmloader->ref = 1;
+		MultiByteToWideChar (CP_ACP, 0, ".\\", -1, dmloader->wzSearchPath, MAX_PATH);
 		list_init (&dmloader->CacheList);
 		*ppDMLoad = (LPDIRECTMUSICLOADER8)dmloader;
 		return S_OK;
