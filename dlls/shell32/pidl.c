@@ -1026,7 +1026,10 @@ BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath)
 	{
 	  if (SHGetDesktopFolder(&shellfolder)==S_OK)
 	  {
-	    IShellFolder_GetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&str);
+	    if(!SUCCEEDED(IShellFolder_GetDisplayNameOf(shellfolder,pidl,SHGDN_FORPARSING,&str))) {
+	      IShellFolder_Release(shellfolder);
+	      return FALSE;
+	    }
 	    StrRetToStrNA (pszPath, MAX_PATH, &str, pidl);
 	    IShellFolder_Release(shellfolder);
 	  }
