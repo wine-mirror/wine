@@ -1623,7 +1623,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     Picture dst_pict, src_pict;
     Pixmap xpm;
     HBITMAP hBitmap;
-    BITMAPOBJ *bmp;
+    DIBSECTION dib;
     XImage *image;
     GC gc;
     XGCValues gcv;
@@ -1667,26 +1667,24 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     }
 
     hBitmap = GetCurrentObject( devSrc->hdc, OBJ_BITMAP );
-    bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBitmap, BITMAP_MAGIC );
-    if(!bmp || !bmp->dib) {
+    if (GetObjectW( hBitmap, sizeof(dib), &dib ) != sizeof(dib))
+    {
         FIXME("not a dibsection\n");
-        GDI_ReleaseObj( hBitmap );
         return FALSE;
     }
 
-    if(bmp->dib->dsBm.bmBitsPixel != 32) {
+    if(dib.dsBm.bmBitsPixel != 32) {
         FIXME("not a 32 bpp dibsection\n");
-        GDI_ReleaseObj( hBitmap );
         return FALSE;
     }
     dstbits = data = HeapAlloc(GetProcessHeap(), 0, heightSrc * widthSrc * 4);
 
-    if(bmp->dib->dsBmih.biHeight < 0) { /* top-down dib */
+    if(dib.dsBmih.biHeight < 0) { /* top-down dib */
         top_down = TRUE;
         dstbits += widthSrc * (heightSrc - 1) * 4;
     }
     for(y = ySrc + heightSrc - 1; y >= ySrc; y--) {
-        memcpy(dstbits, (char *)bmp->dib->dsBm.bmBits + y * bmp->dib->dsBm.bmWidthBytes + xSrc * 4,
+        memcpy(dstbits, (char *)dib.dsBm.bmBits + y * dib.dsBm.bmWidthBytes + xSrc * 4,
                widthSrc * 4);
         dstbits += (top_down ? -1 : 1) * widthSrc * 4;
     }
@@ -1749,7 +1747,6 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 
     wine_tsx11_unlock();
     HeapFree(GetProcessHeap(), 0, data);
-    GDI_ReleaseObj( hBitmap );
     return TRUE;
 }
 
