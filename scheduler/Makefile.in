@@ -8,14 +8,10 @@ MODULE    = scheduler
 C_SRCS = \
 	client.c \
 	critsection.c \
-	debugger.c \
-	event.c \
 	handle.c \
-	mutex.c \
 	pipe.c \
 	process.c \
 	pthread.c \
-	semaphore.c \
 	services.c \
 	synchro.c \
 	sysdeps.c \

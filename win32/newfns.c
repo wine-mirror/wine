@@ -51,59 +51,6 @@ BOOL WINAPI FlushInstructionCache(DWORD x,DWORD y,DWORD z) {
 }
 
 /***********************************************************************
- *           CreateNamedPipeA   (KERNEL32.168)
- */
-HANDLE WINAPI CreateNamedPipeA (LPCSTR lpName, DWORD dwOpenMode,
-				  DWORD dwPipeMode, DWORD nMaxInstances,
-				  DWORD nOutBufferSize, DWORD nInBufferSize,
-				  DWORD nDefaultTimeOut,
-				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
-{
-  FIXME("(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
-        debugstr_a(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
-        nOutBufferSize, nInBufferSize, nDefaultTimeOut, lpSecurityAttributes);
-  /* if (nMaxInstances > PIPE_UNLIMITED_INSTANCES) {
-    SetLastError (ERROR_INVALID_PARAMETER);
-    return INVALID_HANDLE_VALUE;
-  } */
-
-  SetLastError (ERROR_UNKNOWN);
-  return INVALID_HANDLE_VALUE;
-}
-
-/***********************************************************************
- *           CreateNamedPipeW   (KERNEL32.169)
- */
-HANDLE WINAPI CreateNamedPipeW (LPCWSTR lpName, DWORD dwOpenMode,
-				  DWORD dwPipeMode, DWORD nMaxInstances,
-				  DWORD nOutBufferSize, DWORD nInBufferSize,
-				  DWORD nDefaultTimeOut,
-				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
-{
-  FIXME("(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
-        debugstr_w(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
-        nOutBufferSize, nInBufferSize, nDefaultTimeOut, lpSecurityAttributes);
-
-  SetLastError (ERROR_UNKNOWN);
-  return INVALID_HANDLE_VALUE;
-}
-
-/***********************************************************************
- *           PeekNamedPipe   (KERNEL32.552)
- */
-BOOL WINAPI PeekNamedPipe (HANDLE hPipe,
-		LPVOID lpvBuffer, DWORD cbBuffer,
-		LPDWORD lpcbRead, LPDWORD lpcbAvail, LPDWORD lpcbMessage)
-{
-  FIXME("(%08x, %p, %08lx, %p, %p, %p): stub\n",
-	hPipe, lpvBuffer, cbBuffer, lpcbRead, lpcbAvail, lpcbMessage);
-
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
-}
-
-
-/***********************************************************************
  *           GetSystemPowerStatus      (KERNEL32.621)
  */
 BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)

@@ -49,21 +49,3 @@ BOOL WINAPI UpdateResourceW(
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
-
-
-/***********************************************************************
- *           WaitNamedPipeA                 [KERNEL32.725]
- */
-BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
-{	FIXME("%s 0x%08lx\n",lpNamedPipeName,nTimeOut);
-	SetLastError(ERROR_PIPE_NOT_CONNECTED);
-	return FALSE;
-}
-/***********************************************************************
- *           WaitNamedPipeW                 [KERNEL32.726]
- */
-BOOL WINAPI WaitNamedPipeW (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
-{	FIXME("%s 0x%08lx\n",debugstr_w(lpNamedPipeName),nTimeOut);
-	SetLastError(ERROR_PIPE_NOT_CONNECTED);
-	return FALSE;
-}

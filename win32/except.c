@@ -154,7 +154,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
        attr.bInheritHandle       = TRUE;
 
        TRACE("Starting debugger (fmt=%s)\n", format);
-       hEvent = CreateEventA(&attr, FALSE, FALSE, NULL);
+       NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, NULL, FALSE, FALSE );
        sprintf(buffer, format, GetCurrentProcessId(), hEvent);
        memset(&startup, 0, sizeof(startup));
        startup.cb = sizeof(startup);

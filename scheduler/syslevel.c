@@ -6,13 +6,14 @@
 
 #include <unistd.h>
 #include <sys/types.h>
+#include "ntddk.h"
 #include "syslevel.h"
 #include "heap.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(win32)
+DEFAULT_DEBUG_CHANNEL(win32);
 
 static SYSLEVEL Win16Mutex;
 static SEGPTR segpWin16Mutex;
@@ -230,7 +231,7 @@ VOID SYSLEVEL_CheckNotLevel( INT level )
         {
             ERR("(%d): Holding lock of level %d!\n", 
                        level, i );
-            DebugBreak();
+            DbgBreakPoint();
             break;
         }
 }

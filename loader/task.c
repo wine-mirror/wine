@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "wine/winbase16.h"
+#include "ntddk.h"
 #include "callback.h"
 #include "drive.h"
 #include "file.h"
@@ -327,7 +328,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
     /* Create scheduler event for 16-bit tasks */
 
     if ( !(pTask->flags & TDBF_WIN32) )
-        pTask->hEvent = CreateEventA( NULL, TRUE, FALSE, NULL );
+        NtCreateEvent( &pTask->hEvent, EVENT_ALL_ACCESS, NULL, TRUE, FALSE );
 
     /* Enter task handle into thread and process */
 
@@ -600,7 +601,7 @@ void TASK_Reschedule(void)
         pNewTask->priority--;
 
         hCurrentTask = hNewTask;
-        SetEvent( pNewTask->hEvent );
+        NtSetEvent( pNewTask->hEvent, NULL );
 
         /* This is set just in case some app reads it ... */
         pNewTask->ss_sp = pNewTask->teb->cur_stack;
@@ -609,7 +610,7 @@ void TASK_Reschedule(void)
     /* If we need to put the current task to sleep, do it ... */
     if ( (mode == MODE_YIELD || mode == MODE_SLEEP) && hOldTask != hCurrentTask )
     {
-        ResetEvent( pOldTask->hEvent );
+        NtResetEvent( pOldTask->hEvent, NULL );
 
         ReleaseThunkLock( &lockCount );
         SYSLEVEL_CheckNotLevel( 1 );

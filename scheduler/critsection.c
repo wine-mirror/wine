@@ -34,7 +34,7 @@ void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
 {
     /* let's assume that only one thread at a time will try to do this */
     HANDLE sem = crit->LockSemaphore;
-    if (!sem) sem = CreateSemaphoreA( NULL, 0, 1, NULL );
+    if (!sem) NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 );
     crit->LockSemaphore = ConvertToGlobalHandle( sem );
 }
 

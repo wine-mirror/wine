@@ -177,7 +177,9 @@ NTSTATUS WINAPI NtOpenEvent(
 NTSTATUS WINAPI NtSetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
 {
     NTSTATUS ret;
-    FIXME("(0x%08x,%p)\n", handle, NumberOfThreadsReleased);
+
+    /* FIXME: set NumberOfThreadsReleased */
+
     SERVER_START_REQ
     {
         struct event_op_request *req = server_alloc_req( sizeof(*req), 0 );
