@@ -1,6 +1,7 @@
 alloc.ok
 atom.ok
 directory.ok
-thread.ok
 kernel32_test.spec.c
+path.ok
 testlist.c
+thread.ok

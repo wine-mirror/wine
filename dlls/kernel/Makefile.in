@@ -42,6 +42,7 @@ EXTRASUBDIRS = \
 CTESTS = \
 	tests/alloc.c \
 	tests/directory.c \
+	tests/path.c \
 	tests/thread.c
 
 PLTESTS = \
