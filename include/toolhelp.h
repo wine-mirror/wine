@@ -2,10 +2,13 @@
 #define __WINE_TOOLHELP_H
 
 #include "windows.h"
+#include "tlhelp32.h"
 
 #define MAX_DATA	11
 #define MAX_MODULE_NAME	9
+#ifndef MAX_PATH
 #define MAX_PATH	255
+#endif
 #define MAX_CLASSNAME	255
 
 #pragma pack(1)

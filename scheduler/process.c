@@ -22,7 +22,6 @@
 #include "task.h"
 #include "server.h"
 #include "debug.h"
-#include "toolhelp.h"
 
 static BOOL32 PROCESS_Signaled( K32OBJ *obj, DWORD thread_id );
 static BOOL32 PROCESS_Satisfied( K32OBJ *obj, DWORD thread_id );
@@ -42,7 +41,8 @@ const K32OBJ_OPS PROCESS_Ops =
 };
 
 static DWORD PROCESS_InitialProcessID = 0;
-
+static PDB32 *PROCESS_PDBList = NULL;
+static DWORD PROCESS_PDBList_Size = 0;
 
 /***********************************************************************
  *           PROCESS_Current
@@ -177,6 +177,105 @@ static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env,
     return TRUE;
 }
 
+/***********************************************************************
+ *	     PROCESS_PDBList_Insert
+ * Insert this PDB into the global PDB list
+ */
+
+static void PROCESS_PDBList_Insert (PDB32 *pdb)
+{
+  TRACE (process, "Inserting PDB 0x%0lx, #%ld current\n", 
+	 PDB_TO_PROCESS_ID (pdb), PROCESS_PDBList_Size);
+
+  SYSTEM_LOCK (); 	/* FIXME: Do I need to worry about this ?
+			 * I.e., could more than one process be
+			 * created at once ?
+			 */
+  if (PROCESS_PDBList == NULL)
+    {
+      PROCESS_PDBList = pdb;
+      pdb->list_next = NULL;
+      pdb->list_prev = NULL;
+    }
+  else
+    {
+      PDB32 *first = PROCESS_PDBList, *last = PROCESS_PDBList;
+      if (first->list_prev) last = first->list_prev;
+
+      PROCESS_PDBList = pdb;
+      pdb->list_next = first;
+      pdb->list_prev = last;
+      last->list_next = pdb;
+      first->list_prev = pdb;
+    }
+  PROCESS_PDBList_Size ++;
+  SYSTEM_UNLOCK ();
+}
+
+/***********************************************************************
+ *	     PROCESS_PDBList_Remove
+ * Remove this PDB from the global PDB list
+ */
+
+static void PROCESS_PDBList_Remove (PDB32 *pdb)
+{
+  PDB32 *next = pdb->list_next, *prev = pdb->list_prev;
+  
+  TRACE (process, "Removing PDB 0x%0lx, #%ld current\n", 
+	 PDB_TO_PROCESS_ID (pdb), PROCESS_PDBList_Size);
+
+  SYSTEM_LOCK ();
+
+  if (prev == next)
+    {
+      next->list_prev = NULL;
+      next->list_next = NULL;
+    }
+  else
+    {
+      if (next) next->list_prev = prev;
+      if (prev) prev->list_next = next;
+    }
+  
+  if (pdb == PROCESS_PDBList)
+    {
+      PROCESS_PDBList = next ? next : prev;
+    }
+  PROCESS_PDBList_Size --;
+
+  SYSTEM_UNLOCK ();
+}
+
+/***********************************************************************
+ *	     PROCESS_PDBList_Getsize
+ * Return the number of items in the global PDB list
+ */
+
+int	PROCESS_PDBList_Getsize ()
+{
+  return PROCESS_PDBList_Size;
+}
+
+/***********************************************************************
+ * 	     PROCESS_PDBList_Getfirst
+ * Return the head of the PDB list
+ */
+
+PDB32*	PROCESS_PDBList_Getfirst ()
+{
+  return PROCESS_PDBList;
+}
+
+/***********************************************************************
+ * 	     PROCESS_PDBList_Getnext
+ * Return the "next" pdb as referenced from the argument.
+ * If at the end of the list, return NULL.
+ */
+
+PDB32*	PROCESS_PDBList_Getnext (PDB32 *pdb)
+{
+  return (pdb->list_next != PROCESS_PDBList) ? pdb->list_next : NULL;
+}
 
 /***********************************************************************
  *           PROCESS_FreePDB
@@ -185,6 +284,13 @@ static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env,
  */
 static void PROCESS_FreePDB( PDB32 *pdb )
 {
+    /*
+     * FIXME: 
+     * If this routine is called because PROCESS_CreatePDB fails, the
+     * following call to PROCESS_PDBList_Remove will probably screw
+     * up.  
+     */
+    PROCESS_PDBList_Remove (pdb);
     pdb->header.type = K32OBJ_UNKNOWN;
     if (pdb->handle_table) HANDLE_CloseAll( pdb, NULL );
     ENV_FreeEnvironment( pdb );
@@ -229,6 +335,8 @@ static PDB32 *PROCESS_CreatePDB( PDB32 *parent )
     /* Create the handle table */
 
     if (!HANDLE_CreateTable( pdb, TRUE )) goto error;
+
+    PROCESS_PDBList_Insert (pdb);
 
     return pdb;
 
@@ -934,17 +1042,3 @@ void PROCESS_ResumeOtherThreads(void)
     SYSTEM_UNLOCK();
 }
 
-BOOL32 WINAPI Process32First(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
-{
-  FIXME (process, "(0x%08x,%p), stub!\n", hSnapshot, lppe);
-  SetLastError (ERROR_NO_MORE_FILES);
-  return FALSE;
-}
-
-BOOL32 WINAPI Process32Next(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
-{
-  FIXME (process, "(0x%08x,%p), stub!\n", hSnapshot, lppe);
-  SetLastError (ERROR_NO_MORE_FILES);
-  return FALSE;
-}
- 

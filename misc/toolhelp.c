@@ -8,11 +8,54 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <assert.h>
 #include "windows.h"
 #include "win.h"
+#include "winerror.h"
+#include "tlhelp32.h"
 #include "toolhelp.h"
 #include "debug.h"
 #include "heap.h"
+#include "process.h"
+#include "k32obj.h"
+
+/*
+ * Support for toolhelp's snapshots.  They
+ * are supposed to be Kernel32 Objects.
+ * Only the Destroy() method is implemented
+ */
+
+static void SNAPSHOT_Destroy( K32OBJ *obj );
+
+const K32OBJ_OPS SNAPSHOT_Ops =
+{
+  NULL,    		/* signaled */
+  NULL,   		/* satisfied */
+  NULL,     		/* add_wait */
+  NULL,  		/* remove_wait */
+  NULL,			/* read */
+  NULL,			/* write */
+  SNAPSHOT_Destroy	/* destroy */
+};
+
+/* The K32 snapshot object object */
+/* Process snapshot kernel32 object */
+typedef struct _Process32Snapshot
+{
+  K32OBJ		header;
+
+  DWORD			numProcs;
+  DWORD			arrayCounter;
+  /*
+   * Store a reference to the PDB list.  
+   * Insuure in the alloc and dealloc routines for this structure that
+   * I increment and decrement the pdb->head.refcount, so that the
+   * original pdb will stay around for as long as I use it, but it's
+   * not locked forver into memory.
+   */
+  PDB32		**processArray;
+}
+SNAPSHOT_OBJECT;
 
 /* FIXME: to make this working, we have to callback all these registered 
  * functions from all over the WINE code. Someone with more knowledge than
@@ -103,10 +146,298 @@ FARPROC16 tmp;
 }
 
 /***********************************************************************
+ *	     SNAPSHOT_Destroy
+ *
+ * Deallocate K32 snapshot objects
+ */
+static void SNAPSHOT_Destroy (K32OBJ *obj)
+{
+  int	i;
+  SNAPSHOT_OBJECT *snapshot = (SNAPSHOT_OBJECT *) obj;
+  assert (obj->type == K32OBJ_CHANGE);
+
+  if (snapshot->processArray)
+    {	
+      for (i = 0; snapshot->processArray[i] && i <snapshot->numProcs; i++)
+	{
+	  K32OBJ_DecCount (&snapshot->processArray[i]->header);
+	}
+      HeapFree (GetProcessHeap (), 0, snapshot->processArray);
+      snapshot->processArray = NULL;      
+    }	
+
+  obj->type = K32OBJ_UNKNOWN;
+  HeapFree (GetProcessHeap (), 0, snapshot);
+}
+
+/***********************************************************************
  *           CreateToolHelp32Snapshot			(KERNEL32.179)
  *	see "Undocumented Windows"
  */
-HANDLE32 WINAPI CreateToolhelp32Snapshot(DWORD dwFlags, DWORD th32ProcessID) {
-	FIXME(toolhelp,"(0x%08lx,0x%08lx), stub!\n",dwFlags,th32ProcessID);
-	return INVALID_HANDLE_VALUE32;
+HANDLE32 WINAPI CreateToolhelp32Snapshot(DWORD dwFlags, DWORD
+					 th32ProcessID) 
+{
+  HANDLE32		ssHandle;
+  SNAPSHOT_OBJECT	*snapshot;
+  int			numProcesses;
+  int			i;
+  PDB32*		pdb;
+
+  printf ("%x & TH32CS_INHERIT (%x) = %x %s\n", dwFlags, 
+	  TH32CS_INHERIT, TH32CS_INHERIT, 
+	  dwFlags & TH32CS_INHERIT, 
+	  dwFlags & TH32CS_INHERIT ? "TRUE" : "FALSE");  
+  printf ("%x & TH32CS_SNAPHEAPLIST (%x) = %x %s\n", dwFlags, 
+	  TH32CS_SNAPHEAPLIST, TH32CS_SNAPHEAPLIST, 
+	  dwFlags & TH32CS_SNAPHEAPLIST, 
+	  dwFlags & TH32CS_SNAPHEAPLIST ? "TRUE" : "FALSE");  
+  printf ("%x & TH32CS_SNAPMODULE (%x) = %x %s\n", dwFlags, 
+	  TH32CS_SNAPMODULE, TH32CS_SNAPMODULE, 
+	  dwFlags & TH32CS_SNAPMODULE, 
+	  dwFlags & TH32CS_SNAPMODULE ? "TRUE" : "FALSE");  
+  printf ("%x & TH32CS_SNAPPROCESS (%x) = %x %s\n", dwFlags, 
+	  TH32CS_SNAPPROCESS, TH32CS_SNAPPROCESS, 
+	  dwFlags & TH32CS_SNAPPROCESS, 
+	  dwFlags & TH32CS_SNAPPROCESS ? "TRUE" : "FALSE");  
+  printf ("%x & TH32CS_SNAPTHREAD (%x) = %x %s\n", dwFlags, 
+	  TH32CS_SNAPTHREAD, TH32CS_SNAPTHREAD, 
+	  dwFlags & TH32CS_SNAPTHREAD, 
+	  dwFlags & TH32CS_SNAPTHREAD ? "TRUE" : "FALSE");  
+
+  /**** FIXME: Not implmented ***/
+  if (dwFlags & TH32CS_INHERIT)
+    {
+      FIXME(toolhelp,"(0x%08lx (TH32CS_INHERIT),0x%08lx), stub!\n",
+	    dwFlags,th32ProcessID);
+
+      return INVALID_HANDLE_VALUE32;
+    }
+  if (dwFlags & TH32CS_SNAPHEAPLIST)
+    {
+      FIXME(toolhelp,"(0x%08lx (TH32CS_SNAPHEAPLIST),0x%08lx), stub!\n",
+	    dwFlags,th32ProcessID);
+      return INVALID_HANDLE_VALUE32;
+    }
+  if (dwFlags & TH32CS_SNAPMODULE)
+    {
+      FIXME(toolhelp,"(0x%08lx (TH32CS_SNAPMODULE),0x%08lx), stub!\n",
+	    dwFlags,th32ProcessID);
+      return INVALID_HANDLE_VALUE32;
+    }
+
+  if (dwFlags & TH32CS_SNAPPROCESS)
+    {
+      TRACE (toolhelp, "(0x%08lx (TH32CS_SNAPMODULE),0x%08lx)\n",
+	    dwFlags,th32ProcessID);
+      snapshot = HeapAlloc (GetProcessHeap (), 0, sizeof
+			    (SNAPSHOT_OBJECT)); 
+      if (!snapshot)
+	{
+	  return INVALID_HANDLE_VALUE32;
+	}
+
+      snapshot->header.type = K32OBJ_TOOLHELP_SNAPSHOT;
+      snapshot->header.refcount = 1;
+      snapshot->arrayCounter = 0;
+  
+      /*
+       * Lock here, to prevent processes from being created or
+       * destroyed while the snapshot is gathered
+       */
+
+      SYSTEM_LOCK ();
+      numProcesses = PROCESS_PDBList_Getsize ();
+
+      snapshot->processArray = (PDB32**) 
+	HeapAlloc (GetProcessHeap (), 0, sizeof (PDB32*) * numProcesses); 
+
+      if (!snapshot->processArray)
+        {
+          HeapFree (GetProcessHeap (), 0, snapshot->processArray);
+	  SetLastError (INVALID_HANDLE_VALUE32);
+	  ERR (toolhelp, "Error allocating %d bytes for snapshot\n", 
+	       sizeof (PDB32*) * numProcesses); 	       
+          return INVALID_HANDLE_VALUE32;
+        }
+
+      snapshot->numProcs = numProcesses;
+
+      pdb = PROCESS_PDBList_Getfirst ();
+      for (i = 0; pdb && i < numProcesses; i++)
+	{
+	  TRACE (toolhelp, "Saving ref to pdb %ld\n", PDB_TO_PROCESS_ID(pdb));
+	  snapshot->processArray[i] = pdb;
+	  K32OBJ_IncCount (&pdb->header);
+	  pdb = PROCESS_PDBList_Getnext (pdb);
+	}
+      SYSTEM_UNLOCK ();
+
+      ssHandle = HANDLE_Alloc (PROCESS_Current (), &snapshot->header,
+			       FILE_ALL_ACCESS, TRUE, -1);
+      if (ssHandle == INVALID_HANDLE_VALUE32) 
+	{
+	  /*  HANDLE_Alloc is supposed to deallocate the 
+	   *  heap memory if it fails.  This code doesn't need to.
+	   */
+	  SetLastError (INVALID_HANDLE_VALUE32);
+	  ERR (toolhelp, "Error allocating handle\n");
+	  return INVALID_HANDLE_VALUE32;
+	}
+      
+      TRACE (toolhelp, "snapshotted %d processes, expected %d\n",
+	    i, numProcesses);
+      return ssHandle;
+    }
+
+  if (dwFlags & TH32CS_SNAPTHREAD)
+    {
+      FIXME(toolhelp,"(0x%08lx (TH32CS_SNAPMODULE),0x%08lx), stub!\n",
+	    dwFlags,th32ProcessID);
+      return INVALID_HANDLE_VALUE32;
+    }
+
+  return INVALID_HANDLE_VALUE32;
+}
+
+/***********************************************************************
+ *		Process32First
+ * Return info about the first process in a toolhelp32 snapshot
+ */
+BOOL32 WINAPI Process32First(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
+{
+  PDB32           *pdb; 
+  SNAPSHOT_OBJECT *snapshot;
+  int             i;
+
+  TRACE (toolhelp, "(0x%08lx,0x%08lx)\n", (DWORD) hSnapshot,
+	 (DWORD) lppe);
+
+  if (lppe->dwSize < sizeof (PROCESSENTRY32))
+    {
+      SetLastError (ERROR_INSUFFICIENT_BUFFER);
+      ERR (toolhelp, "Result buffer too small\n");
+      return FALSE;
+    }
+
+  SYSTEM_LOCK ();
+  snapshot = (SNAPSHOT_OBJECT*) HANDLE_GetObjPtr (PROCESS_Current (),
+						  hSnapshot,
+						  K32OBJ_UNKNOWN,
+						  FILE_ALL_ACCESS,
+						  NULL); 
+  if (!snapshot)
+    {
+      SYSTEM_UNLOCK ();
+      SetLastError (ERROR_INVALID_HANDLE);
+      ERR (toolhelp, "Error retreiving snapshot\n");
+      return FALSE;
+    }
+
+  snapshot->arrayCounter = i = 0;
+  pdb = snapshot->processArray[i];
+
+  if (!pdb)
+    {
+      SetLastError (ERROR_NO_MORE_FILES);
+      ERR (toolhelp, "End of snapshot array\n");
+      return FALSE;
+    }
+
+  TRACE (toolhelp, "Returning info on process %d, id %ld\n", 
+	 i, PDB_TO_PROCESS_ID (pdb));
+
+  lppe->cntUsage = 1;
+  lppe->th32ProcessID = PDB_TO_PROCESS_ID (pdb);
+  lppe->th32DefaultHeapID = (DWORD) pdb->heap; 
+  lppe->cntThreads = pdb->threads; 
+  lppe->th32ParentProcessID = PDB_TO_PROCESS_ID (pdb->parent); 
+  lppe->pcPriClassBase = 6; /* FIXME: this is a made-up value */
+  lppe->dwFlags = -1;       /* FIXME: RESERVED by Microsoft :-) */
+  if (pdb->exe_modref) 
+    {
+      lppe->th32ModuleID = (DWORD) pdb->exe_modref->module;
+      strncpy (lppe->szExeFile, pdb->exe_modref->longname, 
+	       sizeof (lppe->szExeFile)); 
+    }
+  else
+    {
+      lppe->th32ModuleID = (DWORD) 0;
+      strcpy (lppe->szExeFile, "");
+    }
+
+  SYSTEM_UNLOCK ();
+
+  return TRUE;
+}
+
+/***********************************************************************
+ *		Process32Next
+ * Return info about the "next" process in a toolhelp32 snapshot
+ */
+BOOL32 WINAPI Process32Next(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
+{
+  PDB32           *pdb; 
+  SNAPSHOT_OBJECT *snapshot;
+  int             i;
+
+  TRACE (toolhelp, "(0x%08lx,0x%08lx)\n", (DWORD) hSnapshot,
+	 (DWORD) lppe);
+
+  if (lppe->dwSize < sizeof (PROCESSENTRY32))
+    {
+      SetLastError (ERROR_INSUFFICIENT_BUFFER);
+      ERR (toolhelp, "Result buffer too small\n");
+      return FALSE;
+    }
+
+  SYSTEM_LOCK ();
+  snapshot = (SNAPSHOT_OBJECT*) HANDLE_GetObjPtr (PROCESS_Current (),
+						  hSnapshot,
+						  K32OBJ_UNKNOWN,
+						  FILE_ALL_ACCESS,
+						  NULL); 
+  if (!snapshot)
+    {
+      SYSTEM_UNLOCK ();
+      SetLastError (ERROR_INVALID_HANDLE);
+      ERR (toolhelp, "Error retreiving snapshot\n");
+      return FALSE;
+    }
+
+  snapshot->arrayCounter ++;
+  i = snapshot->arrayCounter;
+  pdb = snapshot->processArray[i];
+
+  if (!pdb || snapshot->arrayCounter >= snapshot->numProcs)
+    {
+      SetLastError (ERROR_NO_MORE_FILES);
+      ERR (toolhelp, "End of snapshot array\n");
+      return FALSE;
+    }
+
+  TRACE (toolhelp, "Returning info on process %d, id %ld\n", 
+	 i, PDB_TO_PROCESS_ID (pdb));
+
+  lppe->cntUsage = 1;
+  lppe->th32ProcessID = PDB_TO_PROCESS_ID (pdb);
+  lppe->th32DefaultHeapID = (DWORD) pdb->heap; 
+  lppe->cntThreads = pdb->threads; 
+  lppe->th32ParentProcessID = PDB_TO_PROCESS_ID (pdb->parent); 
+  lppe->pcPriClassBase = 6; /* FIXME: this is a made-up value */
+  lppe->dwFlags = -1;       /* FIXME: RESERVED by Microsoft :-) */
+  if (pdb->exe_modref) 
+    {
+      lppe->th32ModuleID = (DWORD) pdb->exe_modref->module;
+      strncpy (lppe->szExeFile, pdb->exe_modref->longname, 
+	       sizeof (lppe->szExeFile)); 
+    }
+  else
+    {
+      lppe->th32ModuleID = (DWORD) 0;
+      strcpy (lppe->szExeFile, "");
+    }
+
+  SYSTEM_UNLOCK ();
+
+  return TRUE;
 }

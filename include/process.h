@@ -108,6 +108,8 @@ typedef struct _PDB32
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
     /* The following are Wine-specific fields */
     void            *server_pid;       /*    Server id for this process */
+    struct _PDB32   *list_next;        /*    List reference - list of PDB's */
+    struct _PDB32   *list_prev;        /*    List reference - list of PDB's */
 } PDB32;
 
 /* Process flags */
@@ -157,5 +159,9 @@ extern PDB32 *PROCESS_Create( struct _NE_MODULE *pModule, LPCSTR cmd_line,
                               PROCESS_INFORMATION *info );
 extern void PROCESS_SuspendOtherThreads(void);
 extern void PROCESS_ResumeOtherThreads(void);
+extern int  	PROCESS_PDBList_Getsize (void);
+extern PDB32*  	PROCESS_PDBList_Getfirst (void);
+extern PDB32*  	PROCESS_PDBList_Getnext (PDB32*);
 
 #endif  /* __WINE_PROCESS_H */
+

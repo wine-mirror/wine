@@ -23,6 +23,7 @@ extern const K32OBJ_OPS CHANGE_Ops;
 extern const K32OBJ_OPS MEM_MAPPED_FILE_Ops;
 extern const K32OBJ_OPS DEVICE_Ops;
 extern const K32OBJ_OPS CONSOLE_Ops;
+extern const K32OBJ_OPS SNAPSHOT_Ops;
 
 static const K32OBJ_OPS K32OBJ_NullOps =
 {
