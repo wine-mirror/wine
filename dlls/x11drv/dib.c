@@ -4647,7 +4647,9 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   /* Create Device Dependent Bitmap and add DIB pointer */
   if (dib)
     {
-      res = CreateDIBitmap(physDev->hdc, bi, 0, NULL, bmi, usage);
+      int depth = (bi->biBitCount == 1) ? 1 : GetDeviceCaps(physDev->hdc, BITSPIXEL);
+      res = CreateBitmap(bi->biWidth, effHeight, 1, depth, NULL);
+
       if (res)
 	{
 	  bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
