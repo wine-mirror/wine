@@ -871,6 +871,17 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     RECT rect;
     BOOL ret = FALSE;
 
+    if (cs->cx > 65535)
+    {
+        ERR( "invalid window width %d\n", cs->cx );
+        cs->cx = 65535;
+    }
+    if (cs->cy > 65535)
+    {
+        ERR( "invalid window height %d\n", cs->cx );
+        cs->cy = 65535;
+    }
+
     if (!(data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data)))) return FALSE;
     data->whole_window  = 0;
     data->client_window = 0;
