@@ -61,8 +61,8 @@ static HICON16 hFloppy = 0;
 static HICON16 hHDisk = 0;
 static HICON16 hCDRom = 0;
 static HICON16 hNet = 0;
-static int fldrHeight = 0;
-static int fldrWidth = 0;
+static const int fldrHeight = 16;
+static const int fldrWidth = 20;
 
 #define OFN_PROP "FILEDLG_OFN"
 
@@ -90,8 +90,7 @@ static LRESULT WINAPI FileOpenDlgProc(HWND hDlg, UINT msg,
 static BOOL FileDlg_Init(void)
 {
     static BOOL initialized = 0;
-    CURSORICONINFO *fldrInfo;
-    
+
     if (!initialized) {
         HINSTANCE inst = GetModuleHandleA( "comdlg32.dll" );
         if (!inst)
@@ -99,27 +98,18 @@ static BOOL FileDlg_Init(void)
             ERR( "cannot get comdlg32.dll instance\n" );
             return FALSE;
         }
-	if (!hFolder) hFolder = LoadIconA( inst, "FOLDER" );
-	if (!hFolder2) hFolder2 = LoadIconA( inst, "FOLDER2" );
-	if (!hFloppy) hFloppy = LoadIconA( inst, "FLOPPY" );
-	if (!hHDisk) hHDisk = LoadIconA( inst, "HDISK" );
-	if (!hCDRom) hCDRom = LoadIconA( inst, "CDROM" );
-	if (!hNet) hNet = LoadIconA( inst, "NETWORK" );
+        hFolder  = LoadImageA( inst, "FOLDER", IMAGE_ICON, 16, 16, LR_SHARED );
+        hFolder2 = LoadImageA( inst, "FOLDER2", IMAGE_ICON, 16, 16, LR_SHARED );
+        hFloppy  = LoadImageA( inst, "FLOPPY", IMAGE_ICON, 16, 16, LR_SHARED );
+        hHDisk   = LoadImageA( inst, "HDISK", IMAGE_ICON, 16, 16, LR_SHARED );
+        hCDRom   = LoadImageA( inst, "CDROM", IMAGE_ICON, 16, 16, LR_SHARED );
+        hNet     = LoadImageA( inst, "NETWORK", IMAGE_ICON, 16, 16, LR_SHARED );
 	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
 	    hHDisk == 0 || hCDRom == 0 || hNet == 0)
 	{
 	    ERR("Error loading icons !\n");
 	    return FALSE;
 	}
-	fldrInfo = (CURSORICONINFO *) GlobalLock16( hFolder2 );
-	if (!fldrInfo)
-	{	
-	    ERR("Error measuring icons !\n");
-	    return FALSE;
-	}
-	fldrHeight = fldrInfo -> nHeight;
-	fldrWidth = fldrInfo -> nWidth;
-	GlobalUnlock16( hFolder2 );
 	initialized = TRUE;
     }
     return TRUE;
