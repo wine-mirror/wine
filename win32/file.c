@@ -249,26 +249,3 @@ BOOL32 AreFileApisANSI()
 }
 
 
-BOOL32
-LockFile(
-	HFILE32 hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
-	DWORD nNumberOfBytesToLockLow,DWORD nNumberOfBytesToLockHigh )
-{
-	fprintf(stdnimp,"LockFile(%d,0x%08lx%08lx,0x%08lx%08lx),stub!\n",
-		hFile,dwFileOffsetHigh,dwFileOffsetLow,
-		nNumberOfBytesToLockHigh,nNumberOfBytesToLockLow
-	);
-	return TRUE;
-}
-
-BOOL32
-UnlockFile(
-	HFILE32 hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
-	DWORD nNumberOfBytesToUnlockLow,DWORD nNumberOfBytesToUnlockHigh )
-{
-	fprintf(stdnimp,"UnlockFile(%d,0x%08lx%08lx,0x%08lx%08lx),stub!\n",
-		hFile,dwFileOffsetHigh,dwFileOffsetLow,
-		nNumberOfBytesToUnlockHigh,nNumberOfBytesToUnlockLow
-	);
-	return TRUE;
-}

@@ -39,8 +39,10 @@ static void shm_main_refresh();
 static void print_perm(struct ipc_perm *perm)
 {
   printf("Permission:\n");
+/* FIXME: not portable
   printf("\tKey=%d,   mode=%03o,   sequence #=%d\n",
 	 (int)perm->key,perm->mode, perm->seq);
+*/
   printf("\towner: uid=%d, gid=%d ;"  ,perm->uid, perm->gid);
   printf("  creator: uid=%d, gid=%d\n",perm->cuid,perm->cgid);
 }

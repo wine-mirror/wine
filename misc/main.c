@@ -932,7 +932,117 @@ LONG GetTimerResolution(void)
 BOOL32 SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
                                 LPVOID lpvParam, UINT32 fuWinIni )
 {
-    return SystemParametersInfo16(uAction,uParam,lpvParam,fuWinIni);
+	int timeout, temp;
+	XKeyboardState		keyboard_state;
+
+	switch (uAction) {
+	case SPI_GETBEEP:
+		XGetKeyboardControl(display, &keyboard_state);
+		if (keyboard_state.bell_percent == 0)
+			*(BOOL32 *) lpvParam = FALSE;
+		else
+			*(BOOL32 *) lpvParam = TRUE;
+		break;
+
+	case SPI_GETBORDER:
+		*(INT32 *)lpvParam = GetSystemMetrics32( SM_CXFRAME );
+		break;
+
+	case SPI_GETFASTTASKSWITCH:
+		if ( GetProfileInt32A( "windows", "CoolSwitch", 1 ) == 1 )
+			*(BOOL32 *) lpvParam = TRUE;
+		else
+			*(BOOL32 *) lpvParam = FALSE;
+		break;
+
+	case SPI_GETGRIDGRANULARITY:
+		*(INT32*)lpvParam=GetProfileInt32A("desktop","GridGranularity",1);
+		break;
+
+	case SPI_GETICONTITLEWRAP:
+		*(BOOL32*)lpvParam=GetProfileInt32A("desktop","IconTitleWrap",TRUE);
+		break;
+
+	case SPI_GETKEYBOARDDELAY:
+		*(INT32*)lpvParam=GetProfileInt32A("keyboard","KeyboardDelay",1);
+		break;
+
+	case SPI_GETKEYBOARDSPEED:
+		*(DWORD*)lpvParam=GetProfileInt32A("keyboard","KeyboardSpeed",30);
+		break;
+
+	case SPI_GETMENUDROPALIGNMENT:
+		*(BOOL32*)lpvParam=GetSystemMetrics32(SM_MENUDROPALIGNMENT); /* XXX check this */
+		break;
+
+	case SPI_GETSCREENSAVEACTIVE:
+		if ( GetProfileInt32A( "windows", "ScreenSaveActive", 1 ) == 1 )
+			*(BOOL32*)lpvParam = TRUE;
+		else
+			*(BOOL32*)lpvParam = FALSE;
+		break;
+
+	case SPI_GETSCREENSAVETIMEOUT:
+	/* FIXME GetProfileInt( "windows", "ScreenSaveTimeout", 300 ); */
+		XGetScreenSaver(display, &timeout, &temp,&temp,&temp);
+		*(INT32 *) lpvParam = timeout * 1000;
+		break;
+
+	case SPI_ICONHORIZONTALSPACING:
+		/* FIXME Get/SetProfileInt */
+		if (lpvParam == NULL)
+			/*SetSystemMetrics( SM_CXICONSPACING, uParam )*/ ;
+		else
+			*(INT32*)lpvParam=GetSystemMetrics32(SM_CXICONSPACING);
+		break;
+
+	case SPI_ICONVERTICALSPACING:
+		/* FIXME Get/SetProfileInt */
+		if (lpvParam == NULL)
+			/*SetSystemMetrics( SM_CYICONSPACING, uParam )*/ ;
+		else
+			*(INT32*)lpvParam=GetSystemMetrics32(SM_CYICONSPACING);
+		break;
+
+	case SPI_GETICONTITLELOGFONT: {
+		LPLOGFONT32A lpLogFont = (LPLOGFONT32A)lpvParam;
+
+		GetProfileString32A("Desktop", "IconTitleFaceName", "Helvetica", 
+			lpLogFont->lfFaceName, LF_FACESIZE );
+		lpLogFont->lfHeight = -GetProfileInt32A("Desktop","IconTitleSize", 8);
+
+		lpLogFont->lfWidth = 0;
+		lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
+		lpLogFont->lfWeight = FW_NORMAL;
+		lpLogFont->lfItalic = FALSE;
+		lpLogFont->lfStrikeOut = FALSE;
+		lpLogFont->lfUnderline = FALSE;
+		lpLogFont->lfCharSet = ANSI_CHARSET;
+		lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+		lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+		lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+		break;
+	}
+	case SPI_GETWORKAREA:
+		SetRect32( (RECT32 *)lpvParam, 0, 0,
+			GetSystemMetrics32( SM_CXSCREEN ),
+			GetSystemMetrics32( SM_CYSCREEN )
+		);
+		break;
+	case SPI_GETNONCLIENTMETRICS: {
+		/* FIXME: implement correctly */
+		LPNONCLIENTMETRICS32A	lpnm=(LPNONCLIENTMETRICS32A)lpvParam;
+
+		SystemParametersInfo32A(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
+		SystemParametersInfo32A(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMenuFont),0);
+		SystemParametersInfo32A(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
+		SystemParametersInfo32A(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);
+		break;
+	}
+	default:
+		return SystemParametersInfo16(uAction,uParam,lpvParam,fuWinIni);
+	}
+	return TRUE;
 }
 
 
@@ -1080,6 +1190,16 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
                     break;
                 }
+		case SPI_GETNONCLIENTMETRICS: {
+		/* FIXME: implement correctly */
+			LPNONCLIENTMETRICS16	lpnm=(LPNONCLIENTMETRICS16)lpvParam;
+
+			SystemParametersInfo16(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
+			SystemParametersInfo16(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMenuFont),0);
+			SystemParametersInfo16(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
+			SystemParametersInfo16(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);
+			break;
+		}
 
 		case SPI_LANGDRIVER:
 		case SPI_SETBORDER:
@@ -1153,6 +1273,16 @@ BOOL32 SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
             lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
         }
         break;
+    case SPI_GETNONCLIENTMETRICS: {
+	/* FIXME: implement correctly */
+	LPNONCLIENTMETRICS32W	lpnm=(LPNONCLIENTMETRICS32W)lpvParam;
+
+	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
+	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMenuFont),0);
+	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
+	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);
+	break;
+    }
 
     default:
         return SystemParametersInfo32A(uAction,uParam,lpvParam,fuWinIni);

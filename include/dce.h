@@ -49,5 +49,7 @@ extern void  DCE_Init(void);
 extern DCE*  DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type );
 extern void  DCE_FreeDCE( DCE *dce );
 extern INT16 DCE_ExcludeRgn( HDC32, WND*, HRGN32 );
+extern HRGN32 DCE_GetVisRgn( HWND32, WORD );
+extern BOOL32 DCE_InvalidateDCE( WND*, RECT32* );
 
 #endif  /* __WINE_DCE_H */

@@ -27,7 +27,7 @@
 
 /******************************************************************************
  *
- *   void  dprintf_ver_string(
+ *   void  ver_dstring(
  *      char const * prologue,
  *      char const * teststring,
  *      char const * epilogue )
@@ -39,11 +39,14 @@
  *
  *   Revision history
  *      30-May-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *         Original implementation
+ *         Original implementation as dprintf[_]ver_string
+ *      05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *         Fixed problem that caused bug with tools/make_debug -- renaming
+ *         this function should fix the problem.
  *
  *****************************************************************************/
 
-static void  dprintf_ver_string(
+static void  ver_dstring(
     char const * prologue,
     char const * teststring,
     char const * epilogue )
@@ -557,9 +560,9 @@ DWORD VerFindFile16(
     else
 	dprintf_ver(stddeb, "\n");
 
-    dprintf_ver_string("\tlpszFilename = ", lpszFilename, "\n");
-    dprintf_ver_string("\tlpszWinDir = ", lpszWinDir, "\n");
-    dprintf_ver_string("\tlpszAppDir = ", lpszAppDir, "\n");
+    ver_dstring("\tlpszFilename = ", lpszFilename, "\n");
+    ver_dstring("\tlpszWinDir = ", lpszWinDir, "\n");
+    ver_dstring("\tlpszAppDir = ", lpszAppDir, "\n");
 
     dprintf_ver(stddeb, "\tlpszCurDir = %p\n", lpszCurDir);
     if(lpuCurDirLen)
@@ -674,14 +677,14 @@ DWORD VerFindFile16(
 	dprintf_ver(stddeb, ")");
     }
 
-    dprintf_ver_string("\n\t(Exit) lpszCurDir = ", lpszCurDir, "\n");
+    ver_dstring("\n\t(Exit) lpszCurDir = ", lpszCurDir, "\n");
     if(lpuCurDirLen)
 	dprintf_ver(stddeb, "\t(Exit) lpuCurDirLen = %p (%u)\n",
 		    lpuCurDirLen, *lpuCurDirLen);
     else
 	dprintf_ver(stddeb, "\t(Exit) lpuCurDirLen = (null)\n");
 
-    dprintf_ver_string("\t(Exit) lpszDestDir = ", lpszDestDir, "\n");
+    ver_dstring("\t(Exit) lpszDestDir = ", lpszDestDir, "\n");
     if(lpuDestDirLen)
 	dprintf_ver(stddeb, "\t(Exit) lpuDestDirLen = %p (%u)\n",
 		    lpuDestDirLen, *lpuDestDirLen);
@@ -972,114 +975,6 @@ VerInstallFile32W(
     return ret;
 }
 
-/* FIXME: This table should, of course, be language dependend */
-static const struct map_id2str {
-	UINT16	langid;
-	const char *langname;
-} languages[]={
-	{0x0401,"Arabisch"},
-	{0x0402,"Bulgarisch"},
-	{0x0403,"Katalanisch"},
-	{0x0404,"Traditionales Chinesisch"},
-	{0x0405,"Tschecisch"},
-	{0x0406,"Dänisch"},
-	{0x0407,"Deutsch"},
-	{0x0408,"Griechisch"},
-	{0x0409,"Amerikanisches Englisch"},
-	{0x040A,"Kastilisches Spanisch"},
-	{0x040B,"Finnisch"},
-	{0x040C,"Französisch"},
-	{0x040D,"Hebräisch"},
-	{0x040E,"Ungarisch"},
-	{0x040F,"Isländisch"},
-	{0x0410,"Italienisch"},
-	{0x0411,"Japanisch"},
-	{0x0412,"Koreanisch"},
-	{0x0413,"Niederländisch"},
-	{0x0414,"Norwegisch-Bokmal"},
-	{0x0415,"Polnisch"},
-	{0x0416,"Brasilianisches Portugiesisch"},
-	{0x0417,"Rätoromanisch"},
-	{0x0418,"Rumänisch"},
-	{0x0419,"Russisch"},
-	{0x041A,"Kroatoserbisch (lateinisch)"},
-	{0x041B,"Slowenisch"},
-	{0x041C,"Albanisch"},
-	{0x041D,"Schwedisch"},
-	{0x041E,"Thai"},
-	{0x041F,"Türkisch"},
-	{0x0420,"Urdu"},
-	{0x0421,"Bahasa"},
-	{0x0804,"Vereinfachtes Chinesisch"},
-	{0x0807,"Schweizerdeutsch"},
-	{0x0809,"Britisches Englisch"},
-	{0x080A,"Mexikanisches Spanisch"},
-	{0x080C,"Belgisches Französisch"},
-	{0x0810,"Schweizerisches Italienisch"},
-	{0x0813,"Belgisches Niederländisch"},
-	{0x0814,"Norgwegisch-Nynorsk"},
-	{0x0816,"Portugiesisch"},
-	{0x081A,"Serbokratisch (kyrillisch)"},
-	{0x0C1C,"Kanadisches Französisch"},
-	{0x100C,"Schweizerisches Französisch"},
-	{0x0000,"Unbekannt"},
-};
-
-/* VerLanguageName				[VER.10] */
-DWORD
-VerLanguageName16(UINT16 langid,LPSTR langname,UINT16 langnamelen) {
-	int	i;
-	char	*buf;
-
-	dprintf_ver(stddeb,"VerLanguageName(%d,%p,%d)\n",langid,langname,langnamelen);
-	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
-	 * from the registry. 
-	 */
-	buf=(char*)malloc(strlen("\\System\\CurrentControlSet\\control\\Nls\\Locale\\")+9);
-	sprintf(buf,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
-	if (ERROR_SUCCESS==RegQueryValue16(HKEY_LOCAL_MACHINE,buf,langname,(LPDWORD)&langnamelen)) {
-		langname[langnamelen-1]='\0';
-		return langnamelen;
-	}
-	/* if that fails, use the interal table */
-	for (i=0;languages[i].langid!=0;i++)
-		if (langid==languages[i].langid)
-			break;
-	strncpy(langname,languages[i].langname,langnamelen);
-	langname[langnamelen-1]='\0';
-	return strlen(languages[i].langname);
-}
-
-/* VerLanguageNameA				[VERSION.9] */
-DWORD
-VerLanguageName32A(UINT32 langid,LPSTR langname,UINT32 langnamelen) {
-	return VerLanguageName16(langid,langname,langnamelen);
-}
-
-/* VerLanguageNameW				[VERSION.10] */
-DWORD
-VerLanguageName32W(UINT32 langid,LPWSTR langname,UINT32 langnamelen) {
-	int	i;
-	char	buffer[80];
-	LPWSTR	keyname;
-
-	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
-	 * from the registry. 
-	 */
-	sprintf(buffer,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
-	keyname = HEAP_strdupAtoW( GetProcessHeap(), 0, buffer );
-	if (ERROR_SUCCESS==RegQueryValue32W(HKEY_LOCAL_MACHINE,keyname,langname,(LPDWORD)&langnamelen)) {
-		HeapFree( GetProcessHeap(), 0, keyname );
-		return langnamelen;
-	}
-        HeapFree( GetProcessHeap(), 0, keyname );
-	/* if that fails, use the interal table */
-	for (i=0;languages[i].langid!=0;i++)
-		if (langid==languages[i].langid)
-			break;
-        lstrcpyAtoW( langname, languages[i].langname );
-	return strlen(languages[i].langname); /* same as strlenW(langname); */
-}
 
 /* FIXME: UNICODE? */
 struct db {

@@ -1,4 +1,130 @@
 ----------------------------------------------------------------------
+Sat Jul 19 13:03:01 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [tools/build.c] [include/stackframe.h]
+	Save the complete %ebp register in CallFrom16; fixes a crash with
+	LabView reported by Andreas Mohr.
+
+	* [loader/main.c]
+	Avoid executing a built-in DLL.
+
+	* [controls/static.c]
+	Converted static window procedure to Win32.
+
+	* [windows/message.c] [windows/queue.c] [include/queue.h]
+	Hacked SendMessage functions to support inter-task messages with
+	SendMessage32A/W.
+
+Sun Jul 13 16:55:35 1997  Bernhard Rosenkraenzer <bero@bero-online.ml.org>
+
+	* [ipc/bit_array.c]
+	Don't use bitops.h in Linux 2.1.x (these versions do not return
+	the previous state for clear_bit and set_bit)
+
+	* [ipc/shm_main_blk.c]
+	Adapt to GLIBC's ipc_perm structure.
+
+	* [memory/ldt.c]
+	Include <asm/unistd.h> on Linux/GLIBC systems (required for
+	_syscall3).
+
+Wed Jul 9 23:53:19 1997  David A. Cuthbert  <dacut@henry.ece.cmu.edu>
+
+	* [include/options.h] [files/profile.c]
+	Added PROFILE_GetWineIniBool and PROFILE_EnumerateWineIniSection.
+
+	* [include/sysmetrics.h] [include/windows.h] [windows/sysmetrics.c]
+	All sysmetrics moved to array (no more constant macros).  Added
+	MOUSEWHEELPRESENT metric.
+
+	* [include/bitmap.h] [objects/oembitmap.c]
+	Added OBM_Init() (see also loader/main.c) and more support for Win95
+	bitmaps; added size info to OEM bitmaps.
+
+	* [include/graphics.h] [windows/graphics.h]
+	Added GRAPH_DrawGenericReliefRect.
+
+	* [loader/main.c]
+	Added TWEAK_Init() and TWEAK_CheckConfiguration() calls (the
+	latter checks for invalid entries in wine.conf).
+
+	* [include/debug.h] [include/stddebug.h] [include/nonclient.h]
+	  [include/tweak.h] [controls/menu.c] [misc/tweak.c]
+	  [objects/gdiobj.c] [windows/syscolor.c] [windows/nonclient.c]
+	  [BUGS] [documentation/win95look]
+	Added tweaks for Windows 95 interface support.  See
+ 	documentation/win95look for more information.
+
+	* [controls/edit.c]
+	Fixed EDIT_MoveHome bug.
+
+	* [misc/ver.c]
+	Changed name of dprintf_ver_string to ver_dstring to fix
+	problem with tools/make_debug utility.
+
+Wed Jul 9 21:31:54 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [objects/dib.c]
+	Don't use palettes with dibs with biBitCount > 8.
+
+	* [misc/ole2nls.c][misc/ver.c]
+	IsValidLocale, EnumSystemLocales fixed (winhlp32.exe works)
+	Some VerLanguage coded moved to ole2nls.c, some cleanups.
+
+	* [multimedia/mcistring.c]
+	Fixed "capabilities <dev> device type" crash (cool.exe).
+
+	* [misc/main.c]
+	SystemParametersInfo*: added stub option 41
+	(GETNONCLIENTMETRICS), duplicated some stuff away from SPI16
+	that writes 32bit vars.(one COMCTL32.DLL crash, freecell.exe)
+
+Tue Jul  8 22:40:53 1997  Morten Welinder  <terra@diku.dk>
+
+	* [if1632/shell32.spec]
+	Use Windows 95's ordinals. Help wanted, inquire within.
+
+Mon Jul  7 11:20:36 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [if1632/relay.c] [if1632/user.spec] [if1632/kernel.spec]
+	  [tools/build-spec.txt] [tools/build.c]
+	Added type 'segstr' (segmented pointer to null-terminated string)
+	to .spec files.
+
+	* [windows/user.c] [if1632/user.spec]
+	ExitWindowsExec stub function added.
+
+Mon Jul  7 01:18:25 1997  U. Bonnes <bon@elektron.ikp.physik.th-darmstadt.de>
+
+	* [files/file.c] [include/winbase.h] [if1632/kernel32.spec]
+	Implement MoveFileEx32, some enhancement for Movefile32.
+
+Sat Jul  5 18:13:48 1997  Bruce Milner <Bruce.Milner@genetics.utah.edu.
+
+	* [files/file.c] [if1632/kernel32.spec] [include/winerror.h]
+          [msdos/int21.c] [win32/file.c]
+	Add LockFile/UnlockFile implementation.
+	Add back in int21 func(0x5c) Record locking functions.
+
+	* [files/file.c]
+	Fixed bug with OF_REOPEN in FILE_DoOpenFile.
+
+Fri Jul 4 12:00:00 1997  Henrik Olsen <Henrik.Olsen@iaeste.dk>
+
+	* [misc/ole2nls.c] [programs/progman/Da.rc] [programs/winhelp/Da.rc]
+	  [resources/sysres_Da.rc]
+	Added/updated Danish language support.
+
+Thu Jul  3 13:04:20 1997  Claus Fischer  <fischer@iue.tuwien.ac.at>
+
+	* [files/dos_fs.c]
+	Properly implemented DOSFS_UnixTimeToFileTime and
+	DOSFS_FileTimeToUnixTime.
+
+	* [documentation/wine.texinfo]
+	First version of texinfo documentation.
+
+----------------------------------------------------------------------
 Thu Jun 26 02:14:03 1997  Slaven Rezic  <eserte@cs.tu-berlin.de>
 
 	* [Makefile.in]

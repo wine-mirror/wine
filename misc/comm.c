@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <sys/stat.h>
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/filio.h>
 #endif
 #include <sys/ioctl.h>

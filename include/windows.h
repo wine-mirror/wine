@@ -1802,8 +1802,9 @@ DECL_WINELIB_TYPE(LPLOGPEN);
 #define SM_CYMENUCHECK	      72
 #define SM_SLOWMACHINE	      73
 #define SM_MIDEASTENABLED     74
+#define SM_MOUSEWHEELPRESENT  75
 
-#define SM_CMETRICS           75
+#define SM_CMETRICS           76
 
   /* Device-independent bitmaps */
 
@@ -1959,9 +1960,6 @@ typedef struct
 } SECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
 
 /* 64 bit number of 100 nanoseconds intervals since January 1, 1601 */
-/* FIXME: currently dwLowDateTime is equivalent to the UNIX time(),
- * and dwHighDateTime 0
- */
 typedef struct
 {
   INT32  dwLowDateTime;
@@ -5002,6 +5000,63 @@ typedef struct {
 	DWORD	dwOptDataSize;
 } NETCONNECTINFOSTRUCT,*LPNETCONNECTINFOSTRUCT;
 
+typedef struct {
+	UINT16		cbSize;
+	INT16		iBorderWidth;
+	INT16		iScrollWidth;
+	INT16		iScrollHeight;
+	INT16		iCaptionWidth;
+	INT16		iCaptionHeight;
+	LOGFONT16	lfCaptionFont;
+	INT16		iSmCaptionWidth;
+	INT16		iSmCaptionHeight;
+	LOGFONT16	lfSmCaptionFont;
+	INT16		iMenuWidth;
+	INT16		iMenuHeight;
+	LOGFONT16	lfMenuFont;
+	LOGFONT16	lfStatusFont;
+	LOGFONT16	lfMessageFont;
+} NONCLIENTMETRICS16,*LPNONCLIENTMETRICS16;
+
+typedef struct {
+	UINT32		cbSize;
+	INT32		iBorderWidth;
+	INT32		iScrollWidth;
+	INT32		iScrollHeight;
+	INT32		iCaptionWidth;
+	INT32		iCaptionHeight;
+	LOGFONT32A	lfCaptionFont;
+	INT32		iSmCaptionWidth;
+	INT32		iSmCaptionHeight;
+	LOGFONT32A	lfSmCaptionFont;
+	INT32		iMenuWidth;
+	INT32		iMenuHeight;
+	LOGFONT32A	lfMenuFont;
+	LOGFONT32A	lfStatusFont;
+	LOGFONT32A	lfMessageFont;
+} NONCLIENTMETRICS32A,*LPNONCLIENTMETRICS32A;
+
+typedef struct {
+	UINT32		cbSize;
+	INT32		iBorderWidth;
+	INT32		iScrollWidth;
+	INT32		iScrollHeight;
+	INT32		iCaptionWidth;
+	INT32		iCaptionHeight;
+	LOGFONT32W	lfCaptionFont;
+	INT32		iSmCaptionWidth;
+	INT32		iSmCaptionHeight;
+	LOGFONT32W	lfSmCaptionFont;
+	INT32		iMenuWidth;
+	INT32		iMenuHeight;
+	LOGFONT32W	lfMenuFont;
+	LOGFONT32W	lfStatusFont;
+	LOGFONT32W	lfMessageFont;
+} NONCLIENTMETRICS32W,*LPNONCLIENTMETRICS32W;
+
+DECL_WINELIB_TYPE_AW(NONCLIENTMETRICS);
+DECL_WINELIB_TYPE_AW(LPNONCLIENTMETRICS);
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -5259,6 +5314,7 @@ BOOL32     IsDBCSLeadByteEx(UINT32,BYTE);
 BOOL32     IsWindowUnicode(HWND32);
 BOOL32     IsValidLocale(DWORD,DWORD);
 BOOL32     LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
+BOOL32     LockFile(HFILE32,DWORD,DWORD,DWORD,DWORD);
 SEGPTR     MapLS(LPVOID);
 LPVOID     MapSL(SEGPTR);
 LPVOID     MapViewOfFile(HANDLE32,DWORD,DWORD,DWORD,DWORD);
@@ -5339,6 +5395,7 @@ BOOL32     TlsFree(DWORD);
 LPVOID     TlsGetValue(DWORD);
 BOOL32     TlsSetValue(DWORD,LPVOID);
 VOID       UnMapLS(SEGPTR);
+BOOL32     UnlockFile(HFILE32,DWORD,DWORD,DWORD,DWORD);
 BOOL32     UnmapViewOfFile(LPVOID);
 LPVOID     VirtualAlloc(LPVOID,DWORD,DWORD,DWORD);
 BOOL32     VirtualFree(LPVOID,DWORD,DWORD);
@@ -6206,6 +6263,10 @@ HWND32     GetLastActivePopup32(HWND32);
 UINT32     GetLogicalDriveStrings32A(UINT32,LPSTR);
 UINT32     GetLogicalDriveStrings32W(UINT32,LPWSTR);
 #define    GetLogicalDriveStrings WINELIB_NAME_AW(GetLogicalDriveStrings)
+INT16      GetLocaleInfo16(LCID,LCTYPE,LPSTR,INT16);
+INT32      GetLocaleInfo32A(LCID,LCTYPE,LPSTR,INT32);
+INT32      GetLocaleInfo32W(LCID,LCTYPE,LPWSTR,INT32);
+#define    GetLocaleInfo WINELIB_NAME_AW(GetLocaleInfo)
 INT16      GetMapMode16(HDC16);
 INT32      GetMapMode32(HDC32);
 #define    GetMapMode WINELIB_NAME(GetMapMode)

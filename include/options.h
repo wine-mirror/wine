@@ -72,6 +72,12 @@ extern int PROFILE_GetWineIniString( const char *section, const char *key_name,
                                      const char *def, char *buffer, int len );
 extern int PROFILE_GetWineIniInt( const char *section, const char *key_name,
                                   int def );
+extern int PROFILE_EnumerateWineIniSection(
+    char const *section,
+    void (*callback)(char const *key, char const *name, void *user),
+    void *userptr );		     
+extern int PROFILE_GetWineIniBool( char const *section, char const *key_name,
+				   int def );
 extern char* PROFILE_GetStringItem( char* );
 
 #endif  /* __WINE_OPTIONS_H */

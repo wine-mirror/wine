@@ -13,6 +13,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "windows.h"
 #include "module.h"
 #include "selectors.h"
+#include "bitmap.h"
 #include "comm.h"
 #include "win.h"
 #include "menu.h"
@@ -31,6 +32,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "options.h"
 #include "spy.h"
 #include "task.h"
+#include "tweak.h"
 #include "user.h"
 #include "dce.h"
 #include "shell.h"
@@ -98,35 +100,41 @@ int MAIN_Init(void)
     if (!WIN16DRV_Init()) return 0;
 #endif  /* WINELIB */
 
+    /* Initialize Wine tweaks */
+    if (!TWEAK_Init()) return 0;
+
+    /* Initialize OEM Bitmaps */
+    if (!OBM_Init()) return 0;
+
     /* Initialise DOS drives */
     if (!DRIVE_Init()) return 0;
 
     /* Initialise DOS directories */
     if (!DIR_Init()) return 0;
 
-      /* Initialize tasks */
+    /* Initialize tasks */
     if (!TASK_Init()) return 0;
 
-      /* Initialize communications */
+    /* Initialize communications */
     COMM_Init();
 
-      /* Initialize IO-port permissions */
+    /* Initialize IO-port permissions */
     IO_port_init();
 
-      /* registry initialisation */
+    /* registry initialisation */
     SHELL_LoadRegistry();
     
-      /* Global atom table initialisation */
+    /* Global atom table initialisation */
     if (!ATOM_Init()) return 0;
 
-      /* GDI initialisation */
+    /* GDI initialisation */
     if (!GDI_Init()) return 0;
 
-      /* Initialize system colors and metrics*/
+    /* Initialize system colors and metrics*/
     SYSMETRICS_Init();
     SYSCOLOR_Init();
 
-      /* Create the DCEs */
+    /* Create the DCEs */
     DCE_Init();
 
     /* Initialize keyboard */
@@ -138,10 +146,10 @@ int MAIN_Init(void)
     /* Initialize built-in window classes */
     if (!WIDGETS_Init()) return 0;
 
-      /* Initialize dialog manager */
+    /* Initialize dialog manager */
     if (!DIALOG_Init()) return 0;
 
-      /* Initialize menus */
+    /* Initialize menus */
     if (!MENU_Init()) return 0;
 
     /* Create desktop window */
@@ -150,7 +158,10 @@ int MAIN_Init(void)
     /* Initialize message spying */
     if (!SPY_Init()) return 0;
 
-      /* Create system message queue */
+    /* Check wine.conf for old/bad entries */
+    if (!TWEAK_CheckConfiguration()) return 0;
+
+    /* Create system message queue */
     queueSize = GetProfileInt32A( "windows", "TypeAhead", 120 );
     if (!QUEUE_CreateSysMsgQueue( queueSize )) return 0;
 
@@ -204,6 +215,12 @@ int main(int argc, char *argv[] )
     	extern void MAIN_Usage(char*);
     	MAIN_Usage(argv[0]);
 	return 1;
+    }
+
+    if (!GetNumTasks())
+    {
+        fprintf( stderr, "wine: no executable file found.\n" );
+        return 0;
     }
 
     if (Options.debug) DEBUG_SetBreakpoints( TRUE );  /* Setup breakpoints */

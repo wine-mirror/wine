@@ -325,7 +325,7 @@ base	1
 338   stdcall GetLargestConsoleWindowSize(long) GetLargestConsoleWindowSize
 339   stdcall GetLastError() GetLastError
 340   stdcall GetLocalTime(ptr) GetLocalTime
-341   stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfoA
+341   stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfo32A
 342   stdcall GetLocaleInfoW(long long ptr long) GetLocaleInfo32W
 343   stdcall GetLogicalDriveStringsA(long ptr) GetLogicalDriveStrings32A
 344   stdcall GetLogicalDriveStringsW(long ptr) GetLogicalDriveStrings32W
@@ -513,8 +513,8 @@ base	1
 526   stub Module32First
 527   stub Module32Next
 528   stdcall MoveFileA(ptr ptr) MoveFile32A
-529   stub MoveFileExA
-530   stub MoveFileExW
+529   stdcall MoveFileExA(ptr ptr long) MoveFileEx32A
+530   stdcall MoveFileExW(ptr ptr long) MoveFileEx32W
 531   stdcall MoveFileW(ptr ptr) MoveFile32W
 532   stdcall MulDiv(long long long) MulDiv32
 533   stdcall MultiByteToWideChar(long long ptr long ptr long) MultiByteToWideChar

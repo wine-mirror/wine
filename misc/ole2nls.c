@@ -12,6 +12,8 @@
 #include "ole.h"
 #include "options.h"
 #include "winnls.h"
+#include "winreg.h"
+#include "winerror.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -126,6 +128,58 @@ static struct tagLOCALE_NAME2ID {
 	{NULL,0},
 };
 
+const struct map_lcid2str {
+	LCID		langid;
+	const char	*langname;
+} languages[]={
+	{0x0401,"Arabisch"},
+	{0x0402,"Bulgarisch"},
+	{0x0403,"Katalanisch"},
+	{0x0404,"Traditionales Chinesisch"},
+	{0x0405,"Tschecisch"},
+	{0x0406,"Ddnisch"},
+	{0x0407,"Deutsch"},
+	{0x0408,"Griechisch"},
+	{0x0409,"Amerikanisches Englisch"},
+	{0x040A,"Kastilisches Spanisch"},
+	{0x040B,"Finnisch"},
+	{0x040C,"Franzvsisch"},
+	{0x040D,"Hebrdisch"},
+	{0x040E,"Ungarisch"},
+	{0x040F,"Isldndisch"},
+	{0x0410,"Italienisch"},
+	{0x0411,"Japanisch"},
+	{0x0412,"Koreanisch"},
+	{0x0413,"Niederldndisch"},
+	{0x0414,"Norwegisch-Bokmal"},
+	{0x0415,"Polnisch"},
+	{0x0416,"Brasilianisches Portugiesisch"},
+	{0x0417,"Rdtoromanisch"},
+	{0x0418,"Rumdnisch"},
+	{0x0419,"Russisch"},
+	{0x041A,"Kroatoserbisch (lateinisch)"},
+	{0x041B,"Slowenisch"},
+	{0x041C,"Albanisch"},
+	{0x041D,"Schwedisch"},
+	{0x041E,"Thai"},
+	{0x041F,"T|rkisch"},
+	{0x0420,"Urdu"},
+	{0x0421,"Bahasa"},
+	{0x0804,"Vereinfachtes Chinesisch"},
+	{0x0807,"Schweizerdeutsch"},
+	{0x0809,"Britisches Englisch"},
+	{0x080A,"Mexikanisches Spanisch"},
+	{0x080C,"Belgisches Franzvsisch"},
+	{0x0810,"Schweizerisches Italienisch"},
+	{0x0813,"Belgisches Niederldndisch"},
+	{0x0814,"Norgwegisch-Nynorsk"},
+	{0x0816,"Portugiesisch"},
+	{0x081A,"Serbokratisch (kyrillisch)"},
+	{0x0C1C,"Kanadisches Franzvsisch"},
+	{0x100C,"Schweizerisches Franzvsisch"},
+	{0x0000,"Unbekannt"},
+};
+
 /***********************************************************************
  *           GetUserDefaultLCID       (OLE2NLS.1)
  */
@@ -195,12 +249,17 @@ WORD GetSystemDefaultLangID()
  *         GetLocaleInfoA             (OLE2NLS.5)
  * Is the last parameter really WORD for Win16?
  */
-int GetLocaleInfoA(DWORD lcid,DWORD LCType,LPSTR buf,WORD len)
+INT16 GetLocaleInfo16(LCID lcid,LCTYPE LCType,LPSTR buf,INT16 len)
+{
+	return GetLocaleInfo32A(lcid,LCType,buf,len);
+}
+
+INT32 GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 {
 	char	*retString;
 	int	found,i;
 
-	dprintf_ole(stddeb,"GetLocaleInfoA(%8lX,%8lX,%p,%4X)\n",
+	dprintf_ole(stddeb,"GetLocaleInfo32A(%8lX,%8lX,%p,%4X)\n",
 			lcid,LCType,buf,len);
 	/* As an option, we could obtain the value from win.ini.
 	   This would not match the Wine compile-time option.
@@ -358,7 +417,7 @@ LOCVAL(LOCALE_INEGSEPBYSPACE)
 
     case LANG_Da:
     	switch (LCType) {
-/* LOCVAL(LOCALE_ILANGUAGE,"9") */
+LOCVAL(LOCALE_ILANGUAGE,"6")
 LOCVAL(LOCALE_SLANGUAGE,"Dansk")
 LOCVAL(LOCALE_SENGLANGUAGE,"Danish")
 LOCVAL(LOCALE_SABBREVLANGNAME,"dan")
@@ -366,9 +425,9 @@ LOCVAL(LOCALE_SNATIVELANGNAME,"Dansk")
 LOCVAL(LOCALE_ICOUNTRY,"45")
 LOCVAL(LOCALE_SCOUNTRY,"Danmark")
 LOCVAL(LOCALE_SENGCOUNTRY,"Denmark")
-LOCVAL(LOCALE_SABBREVCTRYNAME,"Da")
+LOCVAL(LOCALE_SABBREVCTRYNAME,"DK")
 LOCVAL(LOCALE_SNATIVECTRYNAME,"Danmark")
-/* LOCVAL(LOCALE_IDEFAULTLANGUAGE,"9") */
+LOCVAL(LOCALE_IDEFAULTLANGUAGE,"6")
 LOCVAL(LOCALE_IDEFAULTCOUNTRY,"45")
 /* LOCVAL(LOCALE_IDEFAULTCODEPAGE) */
 /* LOCVAL(LOCALE_IDEFAULTANSICODEPAGE) */
@@ -403,8 +462,8 @@ LOCVAL(LOCALE_ITIME,"1")
 LOCVAL(LOCALE_ITLZERO,"1")
 /* LOCVAL(LOCALE_IDAYLZERO) */
 /* LOCVAL(LOCALE_IMONLZERO) */
-/* LOCVAL(LOCALE_S1159) */
-/* LOCVAL(LOCALE_S2359) */
+LOCVAL(LOCALE_S1159, "")
+LOCVAL(LOCALE_S2359, "")
 /* LOCVAL(LOCALE_ICALENDARTYPE) */
 /* LOCVAL(LOCALE_IOPTIONALCALENDAR) */
 /* LOCVAL(LOCALE_IFIRSTDAYOFWEEK) */
@@ -449,14 +508,14 @@ LOCVAL(LOCALE_SABBREVMONTHNAME10,"Okt")
 LOCVAL(LOCALE_SABBREVMONTHNAME11,"Nov")
 LOCVAL(LOCALE_SABBREVMONTHNAME12,"Dec")
 LOCVAL(LOCALE_SABBREVMONTHNAME13,"")
-/* LOCVAL(LOCALE_SPOSITIVESIGN) */
-/* LOCVAL(LOCALE_SNEGATIVESIGN) */
-/* LOCVAL(LOCALE_IPOSSIGNPOSN) */
-/* LOCVAL(LOCALE_INEGSIGNPOSN) */
-/* LOCVAL(LOCALE_IPOSSYMPRECEDES) */
-/* LOCVAL(LOCALE_IPOSSEPBYSPACE) */
-/* LOCVAL(LOCALE_INEGSYMPRECEDES) */
-/* LOCVAL(LOCALE_INEGSEPBYSPACE) */
+LOCVAL(LOCALE_SPOSITIVESIGN, "")
+LOCVAL(LOCALE_SNEGATIVESIGN, "-")
+LOCVAL(LOCALE_IPOSSIGNPOSN, "3")
+LOCVAL(LOCALE_INEGSIGNPOSN, "3")
+LOCVAL(LOCALE_IPOSSYMPRECEDES, "1")
+LOCVAL(LOCALE_IPOSSEPBYSPACE, "0")
+LOCVAL(LOCALE_INEGSYMPRECEDES, "1")
+LOCVAL(LOCALE_INEGSEPBYSPACE, "0")
 	default: found=0;break;
 	}
     break; /* LANG(Da) */
@@ -1639,12 +1698,12 @@ LOCVAL(LOCALE_INEGSEPBYSPACE, "0")
  */
 INT32 GetLocaleInfo32W(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT32 len)
 {
-	int i;
-	LPSTR abuf = (LPSTR) wbuf;
-	INT32 n = GetLocaleInfoA(lcid, LCType, abuf, len);
+	LPSTR abuf = (LPSTR)HeapAlloc(GetProcessHeap(),0,len);
+
+	INT32 n = GetLocaleInfo32A(lcid, LCType, abuf, len);
 	if (wbuf)
-		for (i = n; i > 0; --i)
-			wbuf[i] = abuf[i];
+		lstrcpynAtoW(wbuf,abuf,len);
+	HeapFree(GetProcessHeap(),0,abuf);
 	return n;
 }
 
@@ -1728,14 +1787,9 @@ BOOL16 SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
 /***********************************************************************
  *           IsValidLocale       (KERNEL32.361)
  */
-BOOL32 IsValidLocale(DWORD lcid,DWORD flags) {
-	int	i;
-
-	i=0;
-	while (locale_name2id[i].name!=NULL)
-		if (locale_name2id[i].id == lcid)
-			return TRUE;
-	return FALSE;
+BOOL32 IsValidLocale(LCID lcid,DWORD flags) {
+	/* we support ANY language. Well, at least say that...*/
+	return TRUE;
 }
 
 /***********************************************************************
@@ -1745,14 +1799,34 @@ BOOL32 EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum, DWORD flags )
 {
 	int	i;
 	BOOL32	ret;
+	WCHAR	buffer[200];
+	HKEY	xhkey;
 
 	dprintf_win32(stddeb,"EnumSystemLocales32W(%p,%08lx)\n",
                       lpfnLocaleEnum,flags );
+	/* see if we can reuse the Win95 registry entries.... */
+	if (ERROR_SUCCESS==RegOpenKey32A(HKEY_LOCAL_MACHINE,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
+		i=0;
+		while (1) {
+			if (ERROR_SUCCESS!=RegEnumKey32W(xhkey,i,buffer,sizeof(buffer)))
+				break;
+            		if (!lpfnLocaleEnum(buffer))
+				break;
+			i++;
+		}
+		RegCloseKey(xhkey);
+		return TRUE;
+	}
+
 	i=0;
-	while (locale_name2id[i].name!=NULL)
+	while (languages[i].langname!=NULL)
         {
-            LPWSTR cp = HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                         locale_name2id[i].name );
+            LPWSTR cp;
+	    char   xbuffer[10];
+  	
+	    sprintf(xbuffer,"%08lx",(DWORD)languages[i].langid);
+
+	    cp = HEAP_strdupAtoW( GetProcessHeap(), 0, xbuffer );
             ret = lpfnLocaleEnum(cp);
             HeapFree( GetProcessHeap(), 0, cp );
             if (!ret) break;
@@ -1767,13 +1841,28 @@ BOOL32 EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum, DWORD flags )
 BOOL32
 EnumSystemLocales32A(LOCALE_ENUMPROC32A lpfnLocaleEnum,DWORD flags) {
 	int	i;
+	CHAR	buffer[200];
+	HKEY	xhkey;
 
 	dprintf_win32(stddeb,"EnumSystemLocales32A(%p,%08lx)\n",
 		lpfnLocaleEnum,flags
 	);
+	if (ERROR_SUCCESS==RegOpenKey32A(HKEY_LOCAL_MACHINE,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
+		i=0;
+		while (1) {
+			if (ERROR_SUCCESS!=RegEnumKey32A(xhkey,i,buffer,sizeof(buffer)))
+				break;
+            		if (!lpfnLocaleEnum(buffer))
+				break;
+			i++;
+		}
+		RegCloseKey(xhkey);
+		return TRUE;
+	}
 	i=0;
-	while (locale_name2id[i].name!=NULL) {
-		if (!lpfnLocaleEnum(locale_name2id[i].name))
+	while (languages[i].langname!=NULL) {
+		sprintf(buffer,"%08lx",(DWORD)languages[i].langid);
+		if (!lpfnLocaleEnum(buffer))
 			break;
 		i++;
 	}
@@ -1821,7 +1910,9 @@ GetStringTypeEx32A(LCID locale,DWORD dwInfoType,LPCSTR src,INT32 cchSrc,LPWORD c
 		if (isspace(src[i])) chartype[i]|=C1_SPACE;
 		if (ispunct(src[i])) chartype[i]|=C1_PUNCT;
 		if (iscntrl(src[i])) chartype[i]|=C1_CNTRL;
-		if (isblank(src[i])) chartype[i]|=C1_BLANK;
+/* FIXME: isblank() is a GNU extension */
+/*		if (isblank(src[i])) chartype[i]|=C1_BLANK; */
+                if ((src[i] == ' ') || (src[i] == '\t')) chartype[i]|=C1_BLANK;
 		/* C1_XDIGIT */
 	}
 	return TRUE;
@@ -1869,3 +1960,60 @@ GetStringTypeEx32W(LCID locale,DWORD dwInfoType,LPCWSTR src,INT32 cchSrc,LPWORD 
 	}
 	return TRUE;
 }
+
+/* VerLanguageName				[VER.10] */
+DWORD
+VerLanguageName16(UINT16 langid,LPSTR langname,UINT16 langnamelen) {
+	int	i;
+	char	*buf;
+
+	dprintf_ver(stddeb,"VerLanguageName(%d,%p,%d)\n",langid,langname,langnamelen);
+	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
+	 * from the registry. 
+	 */
+	buf=(char*)malloc(strlen("\\System\\CurrentControlSet\\control\\Nls\\Locale\\")+9);
+	sprintf(buf,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
+	if (ERROR_SUCCESS==RegQueryValue16(HKEY_LOCAL_MACHINE,buf,langname,(LPDWORD)&langnamelen)) {
+		langname[langnamelen-1]='\0';
+		return langnamelen;
+	}
+	/* if that fails, use the interal table */
+	for (i=0;languages[i].langid!=0;i++)
+		if (langid==languages[i].langid)
+			break;
+	strncpy(langname,languages[i].langname,langnamelen);
+	langname[langnamelen-1]='\0';
+	return strlen(languages[i].langname);
+}
+
+/* VerLanguageNameA				[VERSION.9] */
+DWORD
+VerLanguageName32A(UINT32 langid,LPSTR langname,UINT32 langnamelen) {
+	return VerLanguageName16(langid,langname,langnamelen);
+}
+
+/* VerLanguageNameW				[VERSION.10] */
+DWORD
+VerLanguageName32W(UINT32 langid,LPWSTR langname,UINT32 langnamelen) {
+	int	i;
+	char	buffer[80];
+	LPWSTR	keyname;
+
+	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
+	 * from the registry. 
+	 */
+	sprintf(buffer,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
+	keyname = HEAP_strdupAtoW( GetProcessHeap(), 0, buffer );
+	if (ERROR_SUCCESS==RegQueryValue32W(HKEY_LOCAL_MACHINE,keyname,langname,(LPDWORD)&langnamelen)) {
+		HeapFree( GetProcessHeap(), 0, keyname );
+		return langnamelen;
+	}
+        HeapFree( GetProcessHeap(), 0, keyname );
+	/* if that fails, use the interal table */
+	for (i=0;languages[i].langid!=0;i++)
+		if (langid==languages[i].langid)
+			break;
+        lstrcpyAtoW( langname, languages[i].langname );
+	return strlen(languages[i].langname); /* same as strlenW(langname); */
+}
+

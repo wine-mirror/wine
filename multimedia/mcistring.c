@@ -2149,7 +2149,8 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	}
 	dwFlags = 0; /* default flags */
 	for (i=0;i<nrofkeywords;) {
-		if (!STRCMP(keywords[i],"type")) {
+		/* take care, there is also a "device type" capability */
+		if ((!STRCMP(keywords[i],"type")) && (i<nrofkeywords-1)) {
 			filename = dev;
 			dev = keywords[i+1];
 			memcpy(keywords+i,keywords+(i+2),(nrofkeywords-i-2)*sizeof(char *));

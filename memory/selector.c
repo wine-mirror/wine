@@ -151,7 +151,7 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
     {
         if ((frame->ds >= sel) && (frame->ds < nextsel)) frame->ds = 0;
         if ((frame->es >= sel) && (frame->es < nextsel)) frame->es = 0;
-	frame = PTR_SEG_OFF_TO_LIN(frame->saved_ss, frame->saved_sp);
+	frame = PTR_SEG_TO_LIN( frame->saved_ss_sp );
     }
 }
 

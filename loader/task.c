@@ -44,8 +44,7 @@ extern void USER_AppExit( HTASK16, HINSTANCE16, HQUEUE16 );
 extern void PE_InitTls( PE_MODULE *module );
 
   /* Saved 16-bit stack for current process (Win16 only) */
-WORD IF1632_Saved16_ss = 0;
-WORD IF1632_Saved16_sp = 0;
+DWORD IF1632_Saved16_ss_sp = 0;
 
   /* Saved 32-bit stack for current process (Win16 only) */
 DWORD IF1632_Saved32_esp = 0;
@@ -360,9 +359,7 @@ static void TASK_CallToStart(void)
     NE_MODULE *pModule = MODULE_GetPtr( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
-    IF1632_Saved16_ss = pTask->ss;
-    IF1632_Saved16_sp = pTask->sp;
-
+    IF1632_Saved16_ss_sp = pTask->ss_sp;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         /* FIXME: all this is an ugly hack */
@@ -404,7 +401,8 @@ static void TASK_CallToStart(void)
 
         dprintf_task( stddeb, "Starting main program: cs:ip=%04lx:%04x ds=%04lx ss:sp=%04x:%04x\n",
                       CS_reg(&context), IP_reg(&context), DS_reg(&context),
-                      IF1632_Saved16_ss, IF1632_Saved16_sp );
+                      SELECTOROF(IF1632_Saved16_ss_sp),
+                      OFFSETOF(IF1632_Saved16_ss_sp) );
 
         CallTo16_regs_( &context );
         /* This should never return */
@@ -580,13 +578,13 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
       /* Create the 16-bit stack frame */
 
-    pTask->ss = hInstance;
-    pTask->sp = ((pModule->sp != 0) ? pModule->sp :
-                 pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1;
-    stack16Top = (char *)PTR_SEG_OFF_TO_LIN( pTask->ss, pTask->sp );
+    pTask->ss_sp = MAKELONG( ((pModule->sp != 0) ? pModule->sp :
+                 pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1,
+                             hInstance );
+    stack16Top = (char *)PTR_SEG_TO_LIN( pTask->ss_sp );
     frame16 = (STACK16FRAME *)stack16Top - 1;
-    frame16->saved_ss = 0;
-    frame16->saved_sp = 0;
+    frame16->saved_ss_sp = 0;
+    frame16->ebp = 0;
     frame16->ds = frame16->es = pTask->hInstance;
     frame16->entry_point = 0;
     frame16->entry_ip = OFFSETOF(TASK_RescheduleProc) + 14;
@@ -596,17 +594,13 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     frame16->ip = LOWORD( CALLTO16_RetAddr_word );
     frame16->cs = HIWORD( CALLTO16_RetAddr_word );
 #endif  /* WINELIB */
-    pTask->sp -= sizeof(STACK16FRAME);
+    pTask->ss_sp -= sizeof(STACK16FRAME);
 
       /* If there's no 16-bit stack yet, use a part of the new task stack */
       /* This is only needed to have a stack to switch from on the first  */
       /* call to DirectedYield(). */
 
-    if (!IF1632_Saved16_ss)
-    {
-        IF1632_Saved16_ss = pTask->ss;
-        IF1632_Saved16_sp = pTask->sp;
-    }
+    if (!IF1632_Saved16_ss_sp) IF1632_Saved16_ss_sp = pTask->ss_sp;
 
       /* Add a breakpoint at the start of the task */
 
@@ -810,9 +804,8 @@ void TASK_Reschedule(void)
 
     if (pOldTask)
     {
-        pOldTask->ss  = IF1632_Saved16_ss;
-        pOldTask->sp  = IF1632_Saved16_sp;
-        pOldTask->esp = IF1632_Saved32_esp;
+        pOldTask->ss_sp = IF1632_Saved16_ss_sp;
+        pOldTask->esp   = IF1632_Saved32_esp;
     }
     else IF1632_Original32_esp = IF1632_Saved32_esp;
 
@@ -828,9 +821,8 @@ void TASK_Reschedule(void)
     hCurrentTask = hTask;
     pCurrentThread = pNewTask->thdb;
     pCurrentProcess = pCurrentThread->process;
-    IF1632_Saved16_ss   = pNewTask->ss;
-    IF1632_Saved16_sp   = pNewTask->sp;
-    IF1632_Saved32_esp  = pNewTask->esp;
+    IF1632_Saved16_ss_sp = pNewTask->ss_sp;
+    IF1632_Saved32_esp   = pNewTask->esp;
 }
 
 
@@ -912,7 +904,7 @@ void InitTask( CONTEXT *context )
     pinstance->stackbottom = stackhi; /* yup, that's right. Confused me too. */
     pinstance->stacktop    = stacklow; 
 #ifndef WINELIB
-    pinstance->stackmin    = IF1632_Saved16_sp;
+    pinstance->stackmin    = OFFSETOF(IF1632_Saved16_ss_sp);
 #endif
 }
 
@@ -1154,26 +1146,26 @@ void SwitchStackTo( WORD seg, WORD ptr, WORD top )
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
     if (!(pData = (INSTANCEDATA *)GlobalLock16( seg ))) return;
     dprintf_task( stddeb, "SwitchStackTo: old=%04x:%04x new=%04x:%04x\n",
-                  IF1632_Saved16_ss, IF1632_Saved16_sp, seg, ptr );
+                  SELECTOROF(IF1632_Saved16_ss_sp),
+                  OFFSETOF(IF1632_Saved16_ss_sp), seg, ptr );
 
     /* Save the old stack */
 
     oldFrame           = CURRENT_STACK16;
-    pData->old_sp      = IF1632_Saved16_sp;
-    pData->old_ss      = IF1632_Saved16_ss;
+    pData->old_ss_sp   = IF1632_Saved16_ss_sp;
     pData->stacktop    = top;
     pData->stackmin    = ptr;
     pData->stackbottom = ptr;
 
     /* Switch to the new stack */
 
-    IF1632_Saved16_ss = pTask->ss = seg;
-    IF1632_Saved16_sp = pTask->sp = ptr - sizeof(STACK16FRAME);
+    IF1632_Saved16_ss_sp = pTask->ss_sp = MAKELONG( ptr - sizeof(STACK16FRAME),
+                                                    seg );
     newFrame = CURRENT_STACK16;
 
     /* Copy the stack frame and the local variables to the new stack */
 
-    copySize = oldFrame->bp - pData->old_sp;
+    copySize = oldFrame->bp - OFFSETOF(pData->old_ss_sp);
     memcpy( newFrame, oldFrame, MAX( copySize, sizeof(STACK16FRAME) ));
 }
 
@@ -1192,33 +1184,32 @@ void SwitchStackBack(void)
     INSTANCEDATA *pData;
 
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
-    if (!(pData = (INSTANCEDATA *)GlobalLock16( IF1632_Saved16_ss ))) return;
-    if (!pData->old_ss)
+    if (!(pData = (INSTANCEDATA *)GlobalLock16(SELECTOROF(IF1632_Saved16_ss_sp))))
+        return;
+    if (!pData->old_ss_sp)
     {
         fprintf( stderr, "SwitchStackBack: no previous SwitchStackTo\n" );
         return;
     }
     dprintf_task( stddeb, "SwitchStackBack: restoring stack %04x:%04x\n",
-                  pData->old_ss, pData->old_sp );
+                  SELECTOROF(pData->old_ss_sp), OFFSETOF(pData->old_ss_sp) );
 
     oldFrame = CURRENT_STACK16;
 
     /* Switch back to the old stack */
 
-    IF1632_Saved16_ss = pTask->ss = pData->old_ss;
-    IF1632_Saved16_sp = pTask->sp = pData->old_sp;
-    pData->old_ss = pData->old_sp = 0;
+    IF1632_Saved16_ss_sp = pTask->ss_sp = pData->old_ss_sp;
+    pData->old_ss_sp = 0;
 
     /* Build a stack frame for the return */
 
     newFrame = CURRENT_STACK16;
-    newFrame->saved_ss = oldFrame->saved_ss;
-    newFrame->saved_sp = oldFrame->saved_sp;
-    newFrame->entry_ip = oldFrame->entry_ip;
-    newFrame->entry_cs = oldFrame->entry_cs;
-    newFrame->bp       = oldFrame->bp;
-    newFrame->ip       = oldFrame->ip;
-    newFrame->cs       = oldFrame->cs;
+    newFrame->saved_ss_sp = oldFrame->saved_ss_sp;
+    newFrame->entry_ip    = oldFrame->entry_ip;
+    newFrame->entry_cs    = oldFrame->entry_cs;
+    newFrame->bp          = oldFrame->bp;
+    newFrame->ip          = oldFrame->ip;
+    newFrame->cs          = oldFrame->cs;
 }
 
 
@@ -1491,8 +1482,8 @@ BOOL16 TaskNext( TASKENTRY *lpte )
     lpte->hTaskParent   = pTask->hParent;
     lpte->hInst         = pTask->hInstance;
     lpte->hModule       = pTask->hModule;
-    lpte->wSS           = pTask->ss;
-    lpte->wSP           = pTask->sp;
+    lpte->wSS           = SELECTOROF( pTask->ss_sp );
+    lpte->wSP           = OFFSETOF( pTask->ss_sp );
     lpte->wStackTop     = pInstData->stacktop;
     lpte->wStackMinimum = pInstData->stackmin;
     lpte->wStackBottom  = pInstData->stackbottom;

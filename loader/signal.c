@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__svr4__) || defined(_SCO_DS) || defined(__EMX__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__svr4__) || defined(_SCO_DS) || defined(__EMX__)
 #if !defined(_SCO_DS) && !defined(__EMX__)
 #include <sys/syscall.h>
 #endif
@@ -184,7 +184,7 @@ static void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
     ret = wine_sigaction( sig, &sig_act, NULL );
 #endif  /* linux */
 
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     struct sigaction sig_act;
     sigset_t sig_mask;
     sigemptyset(&sig_mask);
@@ -192,7 +192,7 @@ static void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
     sig_act.sa_flags = SA_ONSTACK;
     sig_act.sa_mask = sig_mask;
     ret = sigaction( sig, &sig_act, NULL );
-#endif  /* __FreeBSD__ || __NetBSD__ */
+#endif  /* __FreeBSD__ || __NetBSD__ || __OpenBSD__ */
 
 #if defined (__svr4__) || defined(_SCO_DS)
     struct sigaction sig_act;
@@ -230,7 +230,7 @@ extern void WINSOCK_sigio(int a);
  */
 BOOL32 SIGNAL_Init(void)
 {
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     struct sigaltstack ss;
         
     if ((ss.ss_sp = malloc(MINSIGSTKSZ)) == NULL) {
@@ -244,7 +244,7 @@ BOOL32 SIGNAL_Init(void)
         perror("sigstack");
         return FALSE;
     }
-#endif  /* __FreeBSD__ || __NetBSD__ */
+#endif  /* __FreeBSD__ || __NetBSD__ || __OpenBSD__ */
 
 #if defined (__svr4__) || defined(_SCO_DS)
     struct sigaltstack ss;

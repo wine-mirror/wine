@@ -33,7 +33,7 @@ to compile
 At present, 
 .B wine
 will run under any Linux kernel more recent than 0.99.13, or
-under recent releases of NetBSD and FreeBSD.
+under recent releases of NetBSD/i386, FreeBSD and OpenBSD/i386.
 .PP
 .B X
 must be installed.

@@ -4,6 +4,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "windows.h"
 #include "winnt.h"
 #include "global.h"
@@ -83,6 +84,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
         case 'l':
         case 'p':
         case 't':
+        case 'T':
             args16 += 4;
             break;
         }
@@ -103,15 +105,19 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
             break;
         case 't':
             args16 -= 4;
+	    printf( "0x%08x", *(int *)args16 );
             if (HIWORD(*(int *)args16))
-                printf( "0x%08x \"%s\"", *(int *)args16,
-                        (char *)PTR_SEG_TO_LIN(*(int *)args16) );
-            else
-                printf( "0x%08x", *(int *)args16 );
+                printf( " \"%s\"", (char *)PTR_SEG_TO_LIN(*(int *)args16) );
             break;
         case 'p':
             args16 -= 4;
             printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+            break;
+        case 'T':
+            args16 -= 4;
+            printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+            if (HIWORD(*(int *)args16))
+                printf( " \"%s\"", (char *)PTR_SEG_TO_LIN(*(int *)args16) );
             break;
         }
         args++;
@@ -341,11 +347,11 @@ INT16 Catch( LPCATCHBUF lpbuf )
      */
     /* FIXME: we need to save %si and %di */
 
-    lpbuf[0] = IF1632_Saved16_sp;
+    lpbuf[0] = OFFSETOF(IF1632_Saved16_ss_sp);
     lpbuf[1] = LOWORD(IF1632_Saved32_esp);
     lpbuf[2] = HIWORD(IF1632_Saved32_esp);
-    lpbuf[3] = pFrame->saved_ss;
-    lpbuf[4] = pFrame->saved_sp;
+    lpbuf[3] = LOWORD(pFrame->saved_ss_sp);
+    lpbuf[4] = HIWORD(pFrame->saved_ss_sp);
     lpbuf[5] = pFrame->ds;
     lpbuf[6] = pFrame->bp;
     lpbuf[7] = pFrame->ip;
@@ -362,16 +368,16 @@ INT16 Throw( LPCATCHBUF lpbuf, INT16 retval )
     STACK16FRAME *pFrame;
     WORD es = CURRENT_STACK16->es;
 
-    IF1632_Saved16_sp  = lpbuf[0] - sizeof(WORD);
+    IF1632_Saved16_ss_sp = MAKELONG( lpbuf[0] - sizeof(WORD),
+                                     HIWORD(IF1632_Saved16_ss_sp) );
     IF1632_Saved32_esp = MAKELONG( lpbuf[1], lpbuf[2] );
     pFrame = CURRENT_STACK16;
-    pFrame->saved_ss   = lpbuf[3];
-    pFrame->saved_sp   = lpbuf[4];
-    pFrame->ds         = lpbuf[5];
-    pFrame->bp         = lpbuf[6];
-    pFrame->ip         = lpbuf[7];
-    pFrame->cs         = lpbuf[8];
-    pFrame->es         = es;
+    pFrame->saved_ss_sp = MAKELONG( lpbuf[3], lpbuf[4] );
+    pFrame->ds          = lpbuf[5];
+    pFrame->bp          = lpbuf[6];
+    pFrame->ip          = lpbuf[7];
+    pFrame->cs          = lpbuf[8];
+    pFrame->es          = es;
     if (debugging_relay)  /* Make sure we have a valid entry point address */
     {
         static FARPROC16 entryPoint = NULL;
@@ -402,10 +408,10 @@ WIN16_CallProc32W() {
 	args = (DWORD*)xmalloc(sizeof(DWORD)*nrofargs);
 	for (i=nrofargs;i--;) {
 		if (argconvmask & (1<<i)) {
-			args[nrofargs-i] = (DWORD)PTR_SEG_TO_LIN(win_stack[3+i]);
+			args[nrofargs-i-1] = (DWORD)PTR_SEG_TO_LIN(win_stack[3+i]);
 			fprintf(stderr,"%08lx(%p),",win_stack[3+i],PTR_SEG_TO_LIN(win_stack[3+i]));
 		} else {
-			args[nrofargs-i] = win_stack[3+i];
+			args[nrofargs-i-1] = win_stack[3+i];
 			fprintf(stderr,"%ld,",win_stack[3+i]);
 		}
 	}
@@ -436,7 +442,7 @@ WIN16_CallProc32W() {
 	 * overwrite the top WORD on the return stack)
 	 */
 	memcpy(&stf16,CURRENT_STACK16,sizeof(stf16)-2);
-	IF1632_Saved16_sp += (3+nrofargs)*sizeof(DWORD);
+	IF1632_Saved16_ss_sp += (3+nrofargs)*sizeof(DWORD);
 	memcpy(CURRENT_STACK16,&stf16,sizeof(stf16)-2);
 
 	fprintf(stderr,"returns %08lx\n",ret);

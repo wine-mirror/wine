@@ -1,0 +1,48 @@
+/*
+ * Help Viewer
+ *
+ * Copyright 1997 Henrik Olsen
+ */
+
+/* This file is not yet complete !! */
+
+#define LANGUAGE_ID                  Da
+#define LANGUAGE_NUMBER              6
+
+/* Menu */
+
+#define MENU_FILE                    "&Filer"
+#define MENU_FILE_OPEN               "Å&bn..."
+#define MENU_FILE_PRINT              "&Udskriv emne"
+#define MENU_FILE_PRINTER_SETUP      "&Indstil printer"
+#define MENU_FILE_EXIT               "&Afslut"
+
+#define MENU_EDIT                    "&Rediger"
+#define MENU_EDIT_COPY_DIALOG        "K&opier..."
+#define MENU_EDIT_ANNOTATE           "&Anmærk..."
+
+#define MENU_BOOKMARK                "Bog&mærke"
+#define MENU_BOOKMARK_DEFINE         "&Definer..."
+
+#define MENU_HELP                    "&Hjælp"
+#define MENU_HELP_ON_HELP            "&Brug af Hjælp"
+#define MENU_HELP_ON_TOP             "Altid &øverst"
+#define MENU_HELP_INFO               "&Info..."
+#define MENU_HELP_ABOUT_WINE         "Om &WINE"
+
+/* Strings */
+
+#define STRING_WINE_HELP             "WINE Hjælp"
+#define STRING_ERROR                 "FEJL"
+#define STRING_WARNING               "ADVARSEL"
+#define STRING_INFO                  "Information"
+#define STRING_NOT_IMPLEMENTED       "Ikke implementeret"
+#define STRING_HLPFILE_ERROR_s       "Fejl ved læsning af filen `%s'"
+#define STRING_CONTENTS              "&Indhold"
+#define STRING_SEARCH                "&Søg"
+#define STRING_BACK                  "&Tilbage"
+#define STRING_HISTORY               "&Oversigt"
+#define STRING_ALL_FILES             "Alle filer (*.*)"
+#define STRING_HELP_FILES_HLP        "Hjælpe filer (*.hlp)"
+
+#include "Xx.rc"

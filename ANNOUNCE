@@ -1,13 +1,13 @@
-This is release 970629 of Wine, the MS Windows emulator.  This is still a
+This is release 970720 of Wine, the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work correctly.
 
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-970629: (see ChangeLog for details)
-	- Start of COMDLG32 implementation.
-	- Relay debugging knows about strings.
+WHAT'S NEW with Wine-970720: (see ChangeLog for details)
+	- Preliminary Win95 look&feel implementation.
+	- Start of texinfo documentation.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -16,10 +16,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-970629.tar.gz
-  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-970629.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/wine/development/Wine-970629.tar.gz
-  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-970629.tar.gz
+  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-970720.tar.gz
+  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-970720.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/wine/development/Wine-970720.tar.gz
+  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-970720.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 
@@ -30,30 +30,8 @@ If you want to get the new releases faster, you can subscribe to the
 wine-patches mailing list by sending a mail containing 'subscribe
 wine-patches your_address' to majordomo@tiger.informatik.hu-berlin.de.
 
-Wine is available thanks to the work of Bob Amstadt, Dag Asheim,
-Martin Ayotte, Peter Bajusz, Ross Biro, Uwe Bonnes, Erik Bos, Fons Botman,
-John Brezak, Andrew Bulhak, John Burton, Niels de Carpentier, Jimen Ching,
-Huw D. M. Davies, Roman Dolejsi, Frans van Dorsselaer, Paul Falstad,
-David Faure, Olaf Flebbe, Peter Galbavy, Ramon Garcia, Matthew Ghio,
-Hans de Graaff, Charles M. Hannum, John Harvey, Cameron Heide,
-Jochen Hoenicke, Onno Hovers, Jeffrey Hsu, Miguel de Icaza, Jukka Iivonen,
-Lee Jaekil, Alexandre Julliard, Bang Jun-Young, Pavel Kankovsky,
-Jochen Karrer, Andreas Kirschbaum, Albrecht Kleine, Jon Konrath,
-Alex Korobka, Greg Kreider, Anand Kumria, Scott A. Laird, Andrew Lewycky,
-Martin von Loewis, Kenneth MacDonald, Peter MacDonald, William Magro,
-Juergen Marquardt, Ricardo Massaro, Marcus Meissner, Graham Menhennitt,
-David Metcalfe, Bruce Milner, Steffen Moeller, Andreas Mohr,
-Philippe De Muyter, Itai Nahshon, Michael Patra, Jim Peterson,
-Robert Pouliot, Keith Reynolds, Slaven Rezic, John Richardson,
-Johannes Ruscheinski, Thomas Sandford, Constantine Sapuntzakis,
-Pablo Saratxaga, Daniel Schepler, Ulrich Schmid, Bernd Schmidt,
-Yngvi Sigurjonsson, Stephen Simmons, Rick Sladkey, William Smith,
-Dominik Strasser, Vadim Strizhevsky, Erik Svendsen, Tristan Tarrant,
-Andrew Taylor, Duncan C Thomson, Goran Thyni, Jimmy Tirtawangsa, Jon Tombs,
-Linus Torvalds, Gregory Trubetskoy, Petri Tuomola, Michael Veksler,
-Sven Verdoolaege, Ronan Waide, Eric Warnke, Manfred Weichel,
-Morten Welinder, Jan Willamowius, Carl Williams, Karl Guenter Wuensch,
-Eric Youngdale, James Youngman, Mikolaj Zalewski, and John Zero.
+Wine is available thanks to the work of many people. See the file
+AUTHORS in the distribution for the complete list.
 
 --
 Alexandre Julliard

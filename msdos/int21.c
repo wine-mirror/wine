@@ -843,52 +843,31 @@ static void RenameFileFCB( CONTEXT *context )
 
 static void fLock( CONTEXT * context )
 {
-#if 0
-    struct flock f;
-    int result,retries=sharing_retries;
-
-    f.l_start = MAKELONG(DX_reg(context),CX_reg(context));
-    f.l_len   = MAKELONG(DI_reg(context),SI_reg(context));
-    f.l_whence = 0;
-    f.l_pid = 0;
 
     switch ( AX_reg(context) & 0xff )
     {
         case 0x00: /* LOCK */
-	  f.l_type = F_WRLCK;
+	  if (!LockFile(BX_reg(context),
+                        MAKELONG(DX_reg(context),CX_reg(context)), 0,
+                        MAKELONG(DI_reg(context),SI_reg(context)), 0)) {
+	    AX_reg(context) = DOS_ExtendedError;
+	    SET_CFLAG(context);
+	  }
           break;
 
 	case 0x01: /* UNLOCK */
-          f.l_type = F_UNLCK;
-	  break;
-
+	  if (!UnlockFile(BX_reg(context),
+                          MAKELONG(DX_reg(context),CX_reg(context)), 0,
+                          MAKELONG(DI_reg(context),SI_reg(context)), 0)) {
+	    AX_reg(context) = DOS_ExtendedError;
+	    SET_CFLAG(context);
+	  }
+	  return;
 	default:
 	  AX_reg(context) = 0x0001;
 	  SET_CFLAG(context);
 	  return;
      }
- 
-     {
-          result = fcntl(BX_reg(context),F_SETLK,&f); 
-          if ( retries && (!result) )
-          {
-              int i;
-              for(i=0;i<32768*((int)sharing_pause);i++)
-                  result++;                          /* stop the optimizer */
-              for(i=0;i<32768*((int)sharing_pause);i++)
-                  result--;
-          }
-      }
-      while( (!result) && (!(retries--)) );
-
-      if(result)  
-      {
-          FILE_SetDosError();
-          AX_reg(context) = DOS_ExtendedError;
-          SET_CFLAG(context);
-          return;
-      }
-#endif
 } 
 
 

@@ -1,0 +1,780 @@
+\input texinfo   @c -*-texinfo-*-
+@c %**start of header
+@setfilename wine.info
+@settitle Wine Reference Manual
+@iftex
+@afourpaper
+@end iftex
+@c %**end of header
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* wine: (wine.info).             The Windows Emulator.
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
+
+@iftex
+@c @finalout
+@end iftex
+
+@ifinfo
+This file documents Wine, the Windows Emulator.
+
+@c 
+Copyright @copyright{} 1997 The Wine authors. @*
+@xref{Authors}, for a list of the copyright holders.
+
+Permission is granted to make and distribute verbatim
+copies of this manual provided the copyright notice and
+this permission notice are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX
+and print the results, provided the printed document
+carries a copying permission notice identical to this
+one except for the removal of this paragraph (this
+paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified
+versions of this manual under the conditions stated in
+the section entitled ``License, Warranty, and Authors of Wine''.
+
+@sp 4
+FIXME: UNIX and POSIX trademarks. @*
+MS-Windows, Windows-NT, Windows 95 are registered trademarks of
+Microsoft Corp. Postscript is a registered trademark of Adobe Systems
+Inc. All other product names mentioned herein are the trademarks of
+their respective owners.
+@end ifinfo
+
+@c begin chapters on right pages
+@setchapternewpage odd
+
+@titlepage
+@sp 10
+
+@center @titlefont{The Wine Reference Manual}
+@center Edition 0.0.1, 6 July 1997
+
+
+@c The following two commands start the copyright page.
+@page
+@vskip 0pt plus 1filll
+
+Copyright @copyright{} 1997 The Wine authors. @*
+@xref{Authors}, for a list of the copyright holders.
+
+Permission is granted to make and distribute verbatim
+copies of this manual provided the copyright notice and
+this permission notice are preserved on all copies.
+
+Permission is granted to copy and distribute modified
+versions of this manual under the conditions stated in
+the section entitled ``License, Warranty, and Authors of Wine''.
+
+@sp 4
+FIXME: UNIX and POSIX trademarks. @*
+MS-Windows, Windows-NT, Windows 95 are registered trademarks of
+Microsoft Corp. Postscript is a registered trademark of Adobe Systems
+Inc. All other product names mentioned herein are the trademarks of
+their respective owners.
+@end titlepage
+
+
+
+@c
+@c SETTINGS, DEFINES, MACROS
+@c
+
+@c Edit this macro manually in the above parts of the document
+@macro winemanualversion
+0.0.1
+@end macro
+
+@c Edit this macro manually in the above parts of the document
+@macro winemanualdate
+6 July 1997
+@end macro
+
+@c Edit this macro manually into the TeX titlepage
+@macro winemanualtitle {}
+The Wine Reference Manual
+@end macro
+
+@c
+@c MICROSOFT
+@c
+
+@c FIXME: automatical trademark reference
+@macro mswindows
+MS-Windows
+@end macro
+
+@c FIXME: automatical trademark reference
+@c spell it always the same
+@macro WIN32
+WIN32
+@end macro
+
+@c FIXME: automatical trademark reference
+@macro WINNT
+Windows NT
+@end macro
+
+@c FIXME: automatical trademark reference
+@macro WIN95
+Windows 95
+@end macro
+
+
+@c
+@c THE OTHERS
+@c
+@c FIXME: automatical trademark reference
+@macro unix
+UNIX
+@end macro
+
+@c FIXME: automatical trademark reference
+@macro posix
+POSIX
+@end macro
+@c
+@c THIS MANUAL
+@c
+
+@c flag out differences to MS-Windows
+@macro windiff
+@emph{Differences to @mswindows{}:} @*
+@end macro
+
+@macro windiffnone
+@windiff{}
+No differences known.
+@end macro
+
+@c tell whether function is present in Windows 95 and/or NT
+@macro winconf
+@emph{Conformance to @mswindows{}:} @*
+@end macro
+
+@macro winconfall
+@winconf{}
+Present in @WIN95{} and @WINNT{}.
+@end macro
+
+@c give information about completion
+@macro completion
+@emph{Completion status:} @*
+@end macro
+
+@macro completionnone
+@completion{}
+Not yet implemented.
+@end macro
+
+
+
+
+
+
+
+@c
+@c TOP NODE
+@c
+@ifinfo
+@node Top, Copying, (dir), (dir)
+@top Wine
+
+This is edition @winemanualversion{}, last updated @winemanualdate{},
+of @winemanualtitle{}.
+
+Wine (Wine Is Not an Emulator, or the WINdows Emulator)
+is both an emulator that runs @mswindows{} executables and a library
+that can be used to compile @mswindows{} source code.
+
+Wine is free software. Wine is still in development-only state.
+@end ifinfo
+
+@menu
+* Copying::                     License, Warranty, and Authors of Wine.
+* Introduction::                A short overview.
+* Reference Manual::            The Wine reference manual.
+* Installation::                Installing Wine.
+* The Wine Project::            How to contribute to Wine.
+* Concept Index::               Index of concepts and names.
+* Type Index::                  Index of types and type qualifiers.
+* Function Index::              Index of functions and function-like
+                                macros.
+* Variable Index::              Index of variables and variable-like
+                                macros.
+* File Index::                  Index of programs and files.
+@end menu
+
+@node Copying, Introduction, Top, Top
+
+@unnumbered License, Warranty, and Authors of Wine.
+@cindex copying conditions for Wine
+@cindex conditions for copying Wine
+@cindex Wine copying conditions
+
+The Wine license, warranty, and list of authors together form the
+copyright for Wine. Read these sections carefully.
+
+@menu
+* License::                     The Wine license.
+* Warranty::                    Wine comes with no warranty.
+* Authors::                     The persons that contributed to Wine.
+@end menu
+
+@node License, Warranty, , Copying
+@cindex Wine license
+@cindex license of Wine
+
+@unnumberedsec The Wine License
+Wine is distributed under the following copyright.
+
+@quotation
+@include LICENSE
+@end quotation
+
+@node Warranty, Authors, License, Copying
+@cindex Wine warranty
+@cindex warranty of Wine
+
+@unnumberedsec The Wine Warranty
+
+@quotation
+@include WARRANTY
+@end quotation
+
+@node Authors, , Warranty, Copying
+@cindex Wine authors
+@cindex authors of Wine
+@cindex copyright holders of Wine
+@cindex Wine copyright holders
+
+@unnumberedsec The Wine Authors
+
+@quotation
+@include AUTHORS
+@end quotation
+
+These persons also hold the copyright on Wine.
+
+The overall coordination is done by @*
+Alexandre Julliard @*
+@email{julliard@@lrc.epfl.ch}
+
+
+
+@node Introduction, Reference Manual, Copying, Top
+@chapter Introduction
+
+FIXME: Somebody should say some solemn words.
+
+@xref{The Wine Project}, if you consider contributing some work.
+
+
+@node Reference Manual, Installation, Introduction, Top
+
+@menu
+* @WIN32{} Reference Manual::      The @WIN32{} function calls and data types.
+* Resources and INI files::     How to determine the appearance and
+                                behaviour of Wine programs.
+* Metafiles--Icons--Bitmaps::     FIXME missing.
+* Debugging::                   Debugging Wine.
+* Programs::                    Programs written to run in/with Wine.
+* Tools::                       Programs to support Wine.
+@end menu
+
+@node @WIN32{} Reference Manual, Resources and INI files, , Reference Manual
+@chapter The @WIN32{} Reference Manual
+
+@menu
+* Kernel Objects::              How the Wine kernel keeps information.
+* Processes and Threads::       Job control and management in Wine.
+* Users and Groups::            Security in Wine.
+* Date and Time::               Functions for getting the date and time
+                                and for conversion between formats.
+* System Information::          Getting information about the hardware
+                                and software the system runs on.
+* Memory Management::           How your programs get memory from
+                                Wine.
+* I/O Facilities::              Input/Output in Wine.
+                                .everything except communication and windows
+* Communication::               How processes can communicate.
+* Windows and Graphics::        GUI functions of @WIN32{}.
+* Errors and Exceptions::       How your program can report errors.
+                                . messaging
+* Resources::                   Functions for dealing with resources.
+* The Registry::                FIXME missing.
+* Dynamic Link Libraries::      Functions for dealing with DLL's.
+@end menu
+
+@node Kernel Objects, Processes and Threads, , @WIN32{} Reference Manual
+@section Kernel Objects
+
+
+@node Processes and Threads, Users and Groups, Kernel Objects, @WIN32{} Reference Manual
+@section Processes and Threads
+
+@node Users and Groups, Date and Time, Processes and Threads, @WIN32{} Reference Manual
+@section Users and Groups
+
+@node Date and Time, System Information, Users and Groups, @WIN32{} Reference Manual
+@section Date and Time
+
+This section describes functions for manipulating dates and times. This
+includes the current time, the creation or manipulation times of files
+and other objects, and conversion between different time
+representations.
+
+@menu
+* File Times::                  Creation and manipulation times of files.
+@end menu
+
+@node File Times, , , Date and Time
+@subsection File Times
+
+@menu
+* Type FILETIME::               The data structure used for specifying
+                                file times.
+* Compare File Times::          Compare two file times.
+* Get File Times::              Get the time attributes of a file.
+@end menu
+
+@c
+@c *** struct FILETIME ***
+@c
+@node Type FILETIME, Compare File Times, , File Times
+
+@noindent
+File times in Wine are specified by the data type @code{FILETIME},
+defined in @file{windows.h}.
+
+@deftp {Data type} FILETIME
+This is the data type for specifying file times. The file times are
+stored with 64 bit precision. The actual data type is a structure with
+two 32 bit values which are interpreted as the low and high parts of a
+64-bit value. This value gives a time measured in a granularity of 100
+nanoseconds, so 1.5 seconds are specified by a value of 15,000,000.  In
+Wine, this 64-bit value is signed, with the sign taken from the high
+part. The lower part is used as unsigned.
+
+The definition of @code{FILETIME} reads:
+@example
+typedef struct _FILETIME
+@{
+    INT32 dwLowDateTime;
+    INT32 dwHighDateTime;
+@} FILETIME;
+@end example
+
+@cindex epoch in file time
+The @code{FILETIME} structure may be used to hold absolute or relative
+times. Absolute times are given as the number of 100 nanoseconds
+intervals elapsed since 1 January 1601, 00:00:00 UTC (Coordinated
+Universal Time, which is GMT, Greenwich Mean Time). This might be
+called the @dfn{epoch} for file times. With a signed 64-bit value, this
+representation covers absolute times of 29247 years around the epoch.
+
+@windiff{}
+In @mswindows{}, the elements of the structure are apparently of type
+@code{DWORD}. Whether the full 64 bit value is interpreted as signed or
+unsigned I do not know.
+@end deftp
+
+@c
+@c *** CompareFileTime ***
+@c
+@node Compare File Times, Get File Times, Type FILETIME, File Times
+
+@noindent
+The Wine function @code{CompareFileTime} compares two file times, and
+returns whether the first time is less than, equal to, or greater than
+the second file time. It is defined in @file{windows.h}.
+
+@deftypefn {WIN32 function} LONG CompareFileTime (@w{CONST FILETIME* @var{time_1},} @w{CONST FILETIME* @var{time_2})}
+This function returns @code{1}, if @var{time_1} is greater than
+@var{time_2}, @code{-1} if it is less, and @code{0} if both times are
+equal. 
+
+@winconfall{}
+
+@windiffnone{}
+
+@completionnone{}
+@end deftypefn
+
+@c
+@c ***GetFileTime ***
+@c
+@node Get File Times, , Compare File Times, File Times
+@noindent
+FIXME: move this function to the file IO section. @*
+The Wine function @code{GetFileTime} returns the creation time and
+the times of last the read and modification access to a file. It is
+defined in @file{windows.h}.
+
+@deftypefn {WIN32 function} BOOL GetFileTime (@w{HANDLE @var{file},} @w{LPFILETIME @var{ctime},} @w{LPFILETIME @var{atime},} @w{LPFILETIME @var{mtime})}
+This function obtains for the specified @var{file} the creation time
+@var{ctime}, the time of the last access to the file @var{atime}, and
+the time of the last modification (write) to the file, @var{mtime}.
+The @var{file} handle must have been obtained by opening the file with
+@code{GENERIC_READ} access. The file time arguments of this function are
+pointers to @code{FILETIME} variables, which are filled with a value that
+indicates an absolute time in UTC. To convert these values to local
+times, use the function @code{FileTimeToLocalFileTime}. If you do not
+need some of the times, you can pass a @code{NULL} pointer.
+The function returns @code{TRUE} on success, @code{FALSE} on failure.
+
+@winconfall{}
+
+@windiffnone{}
+@end deftypefn
+
+
+@node System Information, Memory Management, Date and Time, @WIN32{} Reference Manual
+@section System Information
+
+@node Memory Management, I/O Facilities, System Information, @WIN32{} Reference Manual
+@section Memory Management
+
+@node I/O Facilities, Communication, Memory Management, @WIN32{} Reference Manual
+@section I/O Facilities
+
+@node Communication, Windows and Graphics, I/O Facilities, @WIN32{} Reference Manual
+@section Communication
+
+@node Windows and Graphics, Errors and Exceptions, Communication, @WIN32{} Reference Manual
+@section Windows and Graphics
+
+@node Errors and Exceptions, Resources, Windows and Graphics, @WIN32{} Reference Manual
+@section Errors and Exceptions
+
+@node Resources, The Registry, Errors and Exceptions, @WIN32{} Reference Manual
+@section Resources
+
+@node The Registry, Dynamic Link Libraries, Resources, @WIN32{} Reference Manual
+@section The Registry
+
+@node Dynamic Link Libraries, , The Registry, @WIN32{} Reference Manual
+@section Dynamic Link Libraries (DLL's)
+
+
+
+
+@node Resources and INI files, Metafiles--Icons--Bitmaps, @WIN32{} Reference Manual, Reference Manual
+@chapter Resources and @file{INI} Files
+
+@node Metafiles--Icons--Bitmaps, Debugging, Resources and INI files, Reference Manual
+@chapter Metafiles --- Icons --- Bitmaps
+
+@node Debugging, Programs, Metafiles--Icons--Bitmaps, Reference Manual
+@chapter Debugging
+
+@node Programs, Tools, Debugging, Reference Manual
+@chapter Programs
+
+@node Tools, , Programs, Reference Manual
+@chapter Tools
+
+@node Installation, The Wine Project, Reference Manual, Top
+@chapter Wine Installation
+FIXME: write installation guide
+
+@menu
+* Applying patches::            How to update Wine to a newer version.
+@end menu
+
+@node Applying patches, , , Installation
+@section Applying patches
+@xref{Creating patches}, for instructions on creating patches.
+
+FIXME: write patch instructions
+
+
+@node The Wine Project, , Installation, Top
+@chapter The Wine project
+@cindex Wine project contributions
+@cindex project contributions to Wine
+
+If you are new to Wine and want to support this project, here are
+some suggestions. 
+
+@menu
+* Creating patches::            How to create patches for Wine.
+* Adding Documentation::        Templates for the documentation.
+@end menu
+
+@xref{Debugging}, for advice on how to debug Wine.
+@xref{Applying patches}, for instructions on applying patches.
+
+FIXME: what is most urgently needed
+
+@node Creating patches, Adding Documentation, , The Wine Project
+@section Creating patches
+@xref{Applying patches}, for instructions on applying patches.
+
+FIXME: how to create patches
+
+@node Adding Documentation, , Creating patches, The Wine Project
+@section Adding Documentation
+
+@ifinfo
+Here are some templates which should help you collaborate on this
+documentation. Read the text below before examining them.
+@end ifinfo
+
+FIXME they are not here in dvi
+
+@menu
+* Type Template::               How to document data types in Wine's
+                                include files.
+* Function Template::           How to document an (API) function of
+                                Wine. 
+@end menu
+
+
+These are my tips for adding documentation.
+
+Do not simply copy documentation from @mswindows{} related
+material. Except from risking copyright violations, which you would not
+want to do, there is another aspect to that:
+As Wine is a product to run on @unix{} and @unix{}-like workstations,
+it seems a good idea to me to organize this documentation primarily for
+the well-trained @unix{} reader. Please keep that in mind when you add
+some documentation.
+
+Finally, read the info pages for @code{texinfo}.
+
+@subsection Template introduction
+@iftex
+On the following pages you will find some @code{texinfo} templates, which
+should help you collaborate on this documentation.
+@end iftex
+
+These templates give hints on how to document data types, functions,
+variables, constants etc. in Wine.
+As documentation evolves, you will find common features of data types
+that should be described in a unified fashion. In such a case, please
+add a corresponding style guide-line here, in this very place, to help
+keeping documentation of data types unified.
+
+
+Start out the type or function with a new node. Write a comment before
+the node, listing all data types (and functions) described in the node,
+like this:
+@example
+@@c
+@@c *** struct FILETIME ***
+@@c
+@@node Type FILETIME, NextNodeName, PreviousNodeName, ParentNodeName
+@end example
+
+The node command describes the node name and the names of the next node,
+the previous node, and the parent node. The parent node should contain
+a menu entry for this node. The previous node is the node that appears
+before this node in the parent node menu. The next node is the node
+succeeding this one in the parent node menu. If there is no previous or
+next node, omit the name (putting just a single space between the two
+commata).
+
+The node name must be a unique sequence of words. Case is important, so
+@emph{Type} and @emph{type} are distinct. The node name must not contain
+special characters like @samp{@@, @{, @}} or the comma. If you need to
+give a node the same name as a function, data type, etc., use the words
+@samp{Type}, @samp{Function}, etc. before the identifier.
+
+Always put the names of the node and its links on the same line, even if
+it gets rather long.
+
+If there are two or more data types or functions described in the node,
+adapt the comment like this:
+@example
+@@c
+@@c *** int  X   ***
+@@c *** long Y() ***
+@@c
+@@node Ints and Longs, NextNodeName, PreviousNodeName, ParentNodeName
+@end example
+
+Start the description of the type(s) or function(s) with a single
+non-indented paragraph that gives a one-line description of the type(s)
+or function(s) and states the include files that are required.
+@example
+@@noindent
+File times in Wine are specified by the data type @@code@{FILETIME@},
+defined in @@file@{windows.h@}.
+@end example
+If several types or functions are closely connected, use one paragraph
+as a common description. If more paragraphs are required for a proper
+description, indent all but the first of them.
+
+Then start the definition of the data type or function. Use the proper
+macro and specify a category and the  formal definition on the same
+line. For proper categories, take a look at the specialized templates.
+Again, put everything that belongs to the header into a single line.
+@example
+@@deftp @{Data type@} FILETIME
+@end example
+
+In the definition, give a verbal explanation of the data type or
+function. The explanation should be rather complete, exact, and
+comprehensible, than well-structured. This is the point where you can
+tell everything you want. Do not be afraid of wasting space.
+Do not describe the @mswindows{} situation but only say what Wine
+does. That is important. (Sometimes they might even do the same.)
+@example
+This is the data type for specifying file times. The file times are
+stored with 64 bit precision. The actual data type is a structure with
+two 32 bit values which are interpreted as the low and high parts of a
+64-bit value. This value gives a time measured in a granularity of 100
+nanoseconds, so 1.5 seconds are specified by a value of 15,000,000.  In
+Wine, this 64-bit value is signed, with the sign taken from the high
+part. The lower part is used as unsigned.
+@end example
+
+For data types, it is recommended to quote the definition from the
+header file. For a function, you might give a short example of its
+usage. You may also put one example in the end of a node that explains
+several of the functions in the node. Remember that cut-and-paste from a
+well prepared example will help the readers write their code.
+@example
+The definition of @@code@{FILETIME@} reads:
+@@example
+typedef struct _FILETIME
+@@@{
+    INT32 dwLowDateTime;
+    INT32 dwHighDateTime;
+@@@} FILETIME;
+@@end example
+@end example
+
+You could also use the @code{cindex} command which creates an entry in
+the concept index. The @code{texinfo} manual recommends to keep concept
+entries distinct, so that a single concept index entry puts to one
+well-defined place in the document. Use lower case letters for index
+entries, unless they are proper names or quotes from actual code.
+@example
+@@cindex epoch in file time
+The @@code@{FILETIME@} structure may be used to hold absolute or relative
+times. Absolute times are given as the number of 100 nanoseconds
+intervals elapsed since 1 January 1601, 00:00:00 UTC (Coordinated
+Universal Time, which is GMT, Greenwich Mean Time). This might be
+called the @@dfn@{epoch@} for file times. With a signed 64-bit value, this
+representation covers absolute times of 29247 years around the epoch.
+@end example
+
+After the verbal documentation, you can add some special fields
+describing bugs, implementation dependencies etc. Two of these are
+recommended to attach to all descriptions. One describes the
+conformance of the data type or function to @mswindows{} products,
+i.e. whether the item is also present in @WINNT{} and @WIN95{}. The
+other one describes known differences of the Wine item to its
+@mswindows{} counterpart. Both will greatly help in porting software
+from @mswindows{} to Wine and vice versa.
+@example
+@@winconfall@{@}
+
+@@windiff@{@}
+In @@mswindows@{@}, the elements of the structure are apparently of type
+@@code@{DWORD@}. Whether the full 64 bit value is interpreted as signed or
+unsigned I do not know.
+@end example
+
+If you find that more of these property attributes are necessary, feel
+free to create your own ones. But keep in mind that they should be
+applicable more or less to all described items. Very special properties
+will better be put into the verbal text.
+
+Finally end the definition of the data type or function:
+@example
+@@end deftp
+@end example
+
+Do not forget to enter the node in the menu of its top node, and do
+properly link the node to its successor and predecessor.
+
+
+
+
+
+
+@node Type Template, Function Template, , Adding Documentation
+@subsection Data type template
+
+Category: Data type
+
+@node Function Template, , Type Template, Adding Documentation
+@subsection API function template
+
+Functions should be given category names, to indicate which API they
+belong to. Please add items to the list of categories possible.
+
+Category: WIN32 function
+
+@example
+@@c
+@@c ***GetFileTime() ***
+@@c
+@@node Get File Times, , Compare File Times, File Times
+@@noindent
+The Wine function @@code@{GetFileTime@} returns the creation time and
+the times of last the read and modification access to a file. It is
+defined in @@file@{windows.h@}.
+
+@@deftypefn @{WIN32 function@} BOOL GetFileTime (@@w@{HANDLE @@var@{file@},@} @@w@{LPFILETIME @@var@{ctime@},@} @@w@{LPFILETIME @@var@{atime@},@} @@w@{LPFILETIME @@var@{mtime@})@}
+This function obtains for the specified @@var@{file@} the creation time
+@@var@{ctime@}, the time of the last access to the file @@var@{atime@}, and
+the time of the last modification (write) to the file, @@var@{mtime@}.
+The @@var@{file@} handle must have been obtained by opening the file with
+@@code@{GENERIC_READ@} access. The file time arguments of this function are
+pointers to @@code@{FILETIME@} variables, which are filled with a value that
+indicates an absolute time in UTC. To convert these values to local
+times, use the function @@code@{FileTimeToLocalFileTime@}. If you do not
+need some of the times, you can pass a @@code@{NULL@} pointer.
+The function returns @@code@{TRUE@} on success, @@code@{FALSE@} on failure.
+
+@@winconfall@{@}
+
+@@windiffnone@{@}
+@@end deftypefn
+@end example
+
+
+
+
+
+@node Concept Index, , , Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Concept Index
+@printindex cp
+
+@node Type Index, , , Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Type Index
+@printindex tp
+
+@node Function Index, , , Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Function Index
+@printindex fn
+
+@node Variable Index, , , Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Variable Index
+@printindex vr
+
+@node File Index, , , Top
+@comment  node-name,  next,  previous,  up
+@unnumbered File and Program Index
+@printindex pg
+
+
+@contents
+@bye

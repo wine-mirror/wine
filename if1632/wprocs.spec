@@ -2,8 +2,6 @@ name	wprocs
 type	win16
 
 1  pascal WINPROC_CallProc16To32A(word word word long long) WINPROC_CallProc16To32A
-2  pascal StaticWndProc(word word word long) StaticWndProc
-3  pascal ScrollBarWndProc(word word word long) ScrollBarWndProc
 10 pascal MDIClientWndProc(word word word long) MDIClientWndProc
 14 pascal FileOpenDlgProc(word word word long) FileOpenDlgProc
 15 pascal FileSaveDlgProc(word word word long) FileSaveDlgProc

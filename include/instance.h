@@ -14,8 +14,7 @@
 typedef struct
 {
     WORD null;        /* Always 0 */
-    WORD old_sp;      /* Stack pointer; used by SwitchTaskTo() */
-    WORD old_ss;      /* Stack segment; used by SwitchTaskTo() */
+    DWORD old_ss_sp WINE_PACKED;  /* Stack pointer; used by SwitchTaskTo() */
     WORD heap;        /* Pointer to the local heap information (if any) */
     WORD atomtable;   /* Pointer to the local atom table (if any) */ 
     WORD stacktop;    /* Top of the stack */

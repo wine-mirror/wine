@@ -1,0 +1,31 @@
+@c This file is processed by GNU's TeXinfo
+@c If you modify it or move it to another location, make sure that
+@c TeXinfo works (type `make' in directory documentation).
+
+@c This is a list of the Wine authors and copyright holders.
+
+Wine is available thanks to the work of Bob Amstadt, Dag Asheim,
+Martin Ayotte, Peter Bajusz, Ross Biro, Uwe Bonnes, Erik Bos, Fons
+Botman, John Brezak, Andrew Bulhak, John Burton, Niels de Carpentier,
+Jimen Ching, Huw D. M. Davies, Roman Dolejsi, Frans van Dorsselaer,
+Paul Falstad, David Faure, Claus Fischer, Olaf Flebbe, Peter Galbavy,
+Ramon Garcia, Matthew Ghio, Hans de Graaff, Charles M. Hannum, John
+Harvey, Cameron Heide, Jochen Hoenicke, Onno Hovers, Jeffrey Hsu,
+Miguel de Icaza, Jukka Iivonen, Lee Jaekil, Alexandre Julliard, Bang
+Jun-Young, Pavel Kankovsky, Jochen Karrer, Andreas Kirschbaum,
+Albrecht Kleine, Jon Konrath, Alex Korobka, Greg Kreider, Anand
+Kumria, Scott A. Laird, Andrew Lewycky, Martin von Loewis, Kenneth
+MacDonald, Peter MacDonald, William Magro, Juergen Marquardt, Ricardo
+Massaro, Marcus Meissner, Graham Menhennitt, David Metcalfe, Bruce
+Milner, Steffen Moeller, Andreas Mohr, Philippe De Muyter, Itai
+Nahshon, Michael Patra, Jim Peterson, Robert Pouliot, Keith Reynolds,
+Slaven Rezic, John Richardson, Johannes Ruscheinski, Thomas Sandford,
+Constantine Sapuntzakis, Pablo Saratxaga, Daniel Schepler, Ulrich
+Schmid, Bernd Schmidt, Yngvi Sigurjonsson, Stephen Simmons, Rick
+Sladkey, William Smith, Dominik Strasser, Vadim Strizhevsky, Erik
+Svendsen, Tristan Tarrant, Andrew Taylor, Duncan C Thomson, Goran
+Thyni, Jimmy Tirtawangsa, Jon Tombs, Linus Torvalds, Gregory
+Trubetskoy, Petri Tuomola, Michael Veksler, Sven Verdoolaege, Ronan
+Waide, Eric Warnke, Manfred Weichel, Morten Welinder, Jan Willamowius,
+Carl Williams, Karl Guenter Wuensch, Eric Youngdale, James Youngman,
+Mikolaj Zalewski, and John Zero.

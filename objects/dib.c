@@ -822,17 +822,19 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 
       /* Transfer color info */
     
-    palEntry = palette->logpalette.palPalEntry;
-    for (i = 0; i < info->bmiHeader.biClrUsed; i++, palEntry++)
-    {
-	if (coloruse == DIB_RGB_COLORS)
+    if (info->bmiHeader.biBitCount<=8) {
+	palEntry = palette->logpalette.palPalEntry;
+	for (i = 0; i < info->bmiHeader.biClrUsed; i++, palEntry++)
 	{
-	    info->bmiColors[i].rgbRed      = palEntry->peRed;
-	    info->bmiColors[i].rgbGreen    = palEntry->peGreen;
-	    info->bmiColors[i].rgbBlue     = palEntry->peBlue;
-	    info->bmiColors[i].rgbReserved = 0;
+	    if (coloruse == DIB_RGB_COLORS)
+	    {
+		info->bmiColors[i].rgbRed      = palEntry->peRed;
+		info->bmiColors[i].rgbGreen    = palEntry->peGreen;
+		info->bmiColors[i].rgbBlue     = palEntry->peBlue;
+		info->bmiColors[i].rgbReserved = 0;
+	    }
+	    else ((WORD *)info->bmiColors)[i] = (WORD)i;
 	}
-	else ((WORD *)info->bmiColors)[i] = (WORD)i;
     }
     
     if (bits)

@@ -9,7 +9,7 @@
  */
 #ifdef CONFIG_IPC
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define msgbuf mymsg
 #endif
 

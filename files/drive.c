@@ -14,7 +14,7 @@
 #if defined(__linux__) || defined(sun) || defined(hpux)
 #include <sys/vfs.h>
 #endif
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/errno.h>

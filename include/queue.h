@@ -37,7 +37,7 @@ typedef struct tagMESSAGEQUEUE
   DWORD     GetMessagePosVal WINE_PACKED;   /* 12 Value for GetMessagePos */
   HQUEUE16  self;                   /* 16 Handle to self (was: reserved) */
   DWORD     GetMessageExtraInfoVal; /* 18 Value for GetMessageExtraInfo */
-  WORD      reserved2;              /* 1c Unknown */
+  WORD      wParamHigh;             /* 1c High word of wParam (was: reserved)*/
   LPARAM    lParam WINE_PACKED;     /* 1e Next 4 values set by SendMessage */
   WPARAM16  wParam;                 /* 22 */
   UINT16    msg;                    /* 24 */
@@ -72,6 +72,8 @@ typedef struct tagMESSAGEQUEUE
 
 /* Queue flags */
 #define QUEUE_FLAG_XEVENT  0x0001
+#define QUEUE_SM_WIN32     0x0002  /* Currently sent message is Win32 */
+#define QUEUE_SM_UNICODE   0x0004  /* Currently sent message is Unicode */
 
 extern void QUEUE_DumpQueue( HQUEUE16 hQueue );
 extern void QUEUE_WalkQueues(void);

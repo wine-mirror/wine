@@ -43,10 +43,10 @@ type	win16
 42  return DisableDos 0 0
 45  pascal16 LoadModule(str ptr) LoadModule16
 46  pascal16 FreeModule(word) FreeModule16
-47  pascal16 GetModuleHandle(segptr) WIN16_GetModuleHandle
+47  pascal16 GetModuleHandle(segstr) WIN16_GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
 49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName16
-50  pascal GetProcAddress(word segptr) GetProcAddress16
+50  pascal GetProcAddress(word segstr) GetProcAddress16
 51  pascal MakeProcInstance(segptr word) MakeProcInstance16
 52  pascal16 FreeProcInstance(segptr) FreeProcInstance16
 53  stub CallProcInstance
@@ -56,17 +56,17 @@ type	win16
 57  pascal16 GetProfileInt(str str s_word) GetProfileInt16
 58  pascal16 GetProfileString(str str str ptr word) GetProfileString16
 59  pascal16 WriteProfileString(str str str) WriteProfileString16
-60  pascal16 FindResource(word segptr segptr) FindResource16
+60  pascal16 FindResource(word segstr segstr) FindResource16
 61  pascal16 LoadResource(word word) LoadResource16
 62  pascal LockResource(word) WIN16_LockResource16
 63  pascal16 FreeResource(word) FreeResource16
 64  pascal16 AccessResource(word word) AccessResource16
 65  pascal SizeofResource(word word) SizeofResource16
 66  pascal16 AllocResource(word word long) AllocResource16
-67  pascal SetResourceHandler(word segptr ptr) SetResourceHandler
+67  pascal SetResourceHandler(word segstr ptr) SetResourceHandler
 68  pascal16 InitAtomTable(word) InitAtomTable16
-69  pascal16 FindAtom(segptr) FindAtom16
-70  pascal16 AddAtom(segptr) AddAtom16
+69  pascal16 FindAtom(segstr) FindAtom16
+70  pascal16 AddAtom(segstr) AddAtom16
 71  pascal16 DeleteAtom(word) DeleteAtom16
 72  pascal16 GetAtomName(word ptr word) GetAtomName16
 73  pascal16 GetAtomHandle(word) GetAtomHandle
@@ -85,7 +85,7 @@ type	win16
 86  pascal16 _lwrite(word ptr word) _lwrite16
 87  pascal16 RESERVED5(str str) lstrcmp16
 88  pascal   lstrcpy(segptr str) lstrcpy16
-89  pascal   lstrcat(segptr str) lstrcat16
+89  pascal   lstrcat(segstr str) lstrcat16
 90  pascal16 lstrlen(str) lstrlen16
 91  register InitTask() InitTask
 92  pascal   GetTempDrive(byte) WIN16_GetTempDrive
@@ -268,7 +268,7 @@ type	win16
 349 pascal   _hread(word segptr long) WIN16_hread
 350 pascal   _hwrite(word ptr long) _hwrite16
 #351 BUNNY_351
-352 pascal   lstrcatn(segptr str word) lstrcatn16
+352 pascal   lstrcatn(segstr str word) lstrcatn16
 353 pascal   lstrcpyn(segptr str word) lstrcpyn16
 354 pascal   GetAppCompatFlags(word) GetAppCompatFlags16
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo

@@ -95,7 +95,7 @@ type	win16
 606    pascal  timeEndPeriod(word) timeEndPeriod
 607    pascal  timeGetTime() timeGetTime
 701    pascal  MCISENDCOMMAND(word word long long) mciSendCommand
-702    pascal  MCISENDSTRING(ptr ptr word word) mciSendString
+702    pascal  MCISENDSTRING(str ptr word word) mciSendString
 703    pascal  MCIGETDEVICEID(ptr) mciGetDeviceID
 706    pascal  MCIGETERRORSTRING(long ptr word) mciGetErrorString
 #900   pascal  MMTASKCREATE
@@ -103,7 +103,7 @@ type	win16
 #903   pascal  MMTASKSIGNAL
 #904   pascal  MMGETCURRENTTASK
 #905   pascal  MMTASKYIELD
-1100   pascal  DRVOPEN(ptr ptr long) DrvOpen
+1100   pascal  DRVOPEN(str str long) DrvOpen
 1101   pascal  DRVCLOSE(word long long) DrvClose
 1102   pascal  DRVSENDMESSAGE(word word long long) DrvSendMessage
 1103   pascal  DRVGETMODULEHANDLE(word) DrvGetModuleHandle

@@ -33,7 +33,18 @@
 #include "graphics.h"
 #include "resource.h"
 #include "stddebug.h"
+#include "tweak.h"
 #include "debug.h"
+
+
+UINT32  MENU_BarItemTopNudge;
+UINT32  MENU_BarItemLeftNudge;
+UINT32  MENU_ItemTopNudge;
+UINT32  MENU_ItemLeftNudge;
+UINT32  MENU_HighlightTopNudge;
+UINT32  MENU_HighlightLeftNudge;
+UINT32  MENU_HighlightBottomNudge;
+UINT32  MENU_HighlightRightNudge;
 
 /* internal popup menu window messages */
 
@@ -101,13 +112,13 @@ typedef struct
 #define POPUP_YSHADE		4
 
   /* Space between 2 menu bar items */
-#define MENU_BAR_ITEMS_SPACE  16
+int MENU_BAR_ITEMS_SPACE = 12;
 
   /* Minimum width of a tab character */
-#define MENU_TAB_SPACE        8
+int MENU_TAB_SPACE = 8;
 
   /* Height of a separator item */
-#define SEPARATOR_HEIGHT      5
+int SEPARATOR_HEIGHT = 5;
 
   /* (other menu->FocusedItem values give the position of the focused item) */
 #define NO_SELECTED_ITEM  0xffff
@@ -147,14 +158,18 @@ static HMENU32 MENU_CopySysPopup(void)
 {
     HMENU32 hMenu = LoadMenuIndirect32A(SYSRES_GetResPtr(SYSRES_MENU_SYSMENU));
 
-    if( hMenu )
-    {
+    if( hMenu ) {
         POPUPMENU* menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hMenu);
         menu->wFlags |= MF_SYSMENU | MF_POPUP;
-	return hMenu;
     }
-    else fprintf( stderr, "Unable to load default system menu\n" );
-    return FALSE;
+    else {
+	hMenu = 0;
+	fprintf( stderr, "Unable to load default system menu\n" );
+    }
+
+    dprintf_menu( stddeb, "MENU_CopySysPopup: returning %ld.\n", hMenu );
+
+    return hMenu;
 }
 
 
@@ -409,6 +424,10 @@ static void MENU_CalcItemSize( HDC32 hdc, MENUITEM *lpitem, HWND32 hwndOwner,
     DWORD dwSize;
     char *p;
 
+    dprintf_menu( stddeb, "MENU_CalcItemSize: HDC 0x%lx, item '%s', at "
+		  "(%d, %d) %s\n", hdc, lpitem->text, orgX, orgY,
+		  menuBar ? "(MenuBar)" : "" );
+
     SetRect32( &lpitem->rect, orgX, orgY, orgX, orgY );
 
     if (lpitem->item_flags & MF_OWNERDRAW)
@@ -509,6 +528,13 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND32 hwndOwner )
 	{
 	    if ((i != start) &&
 		(lpitem->item_flags & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
+
+	    dprintf_menu( stddeb, "MENU_PopupMenuCalcSize: calling "
+			  "MENU_CalcItemSize on '%s', org=(%d, %d)\n",
+			  lpitem->text, orgX, orgY );
+	    if(TWEAK_Win95Look)
+		++orgY;
+
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, FALSE );
             if (lpitem->item_flags & MF_MENUBARBREAK) orgX++;
 	    maxX = MAX( maxX, lpitem->rect.right );
@@ -572,6 +598,11 @@ static void MENU_MenuBarCalcSize( HDC32 hdc, LPRECT32 lprect,
 	    if ((helpPos == -1) && (lpitem->item_flags & MF_HELP)) helpPos = i;
 	    if ((i != start) &&
 		(lpitem->item_flags & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
+
+
+	    dprintf_menu( stddeb, "MENU_MenuBarCalcSize: calling "
+			  "MENU_CalcItemSize on item '%s', org=(%d, %d)\n",
+			  lpitem->text, orgX, orgY );
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, TRUE );
 	    if (lpitem->rect.right > lprect->right)
 	    {
@@ -619,8 +650,17 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 
     if (lpitem->item_flags & MF_SYSMENU)
     {
-	if( !IsIconic32(hwnd) ) NC_DrawSysButton( hwnd, hdc, 
-				lpitem->item_flags & (MF_HILITE | MF_MOUSESELECT));
+	if( !IsIconic32(hwnd) ) {
+	    if(TWEAK_Win95Look)
+		NC_DrawSysButton95( hwnd, hdc,
+				    lpitem->item_flags &
+				    (MF_HILITE | MF_MOUSESELECT) );
+	    else
+		NC_DrawSysButton( hwnd, hdc, 
+				  lpitem->item_flags &
+				  (MF_HILITE | MF_MOUSESELECT) );
+	}
+
 	return;
     }
 
@@ -647,11 +687,33 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
     if (menuBar && (lpitem->item_flags & MF_SEPARATOR)) return;
     rect = lpitem->rect;
 
-      /* Draw the background */
+    /* Draw the background */
+    if(TWEAK_Win95Look) {
+	if(menuBar) {
+	    --rect.left;
+	    ++rect.bottom;
+	    --rect.top;
+	}
+	InflateRect32( &rect, -1, -1 );
+    }
 
-    if (lpitem->item_flags & MF_HILITE)
-	FillRect32( hdc, &rect, sysColorObjects.hbrushHighlight );
-    else FillRect32( hdc, &rect, sysColorObjects.hbrushMenu );
+    if (lpitem->item_flags & MF_HILITE) {
+	RECT32  r = rect;
+	r.top += MENU_HighlightTopNudge;
+	r.bottom += MENU_HighlightBottomNudge;
+	r.left += MENU_HighlightLeftNudge;
+	r.right += MENU_HighlightRightNudge;
+	FillRect32( hdc, &r, sysColorObjects.hbrushHighlight );
+    }
+    else {
+	RECT32  r = rect;
+	r.top += MENU_HighlightTopNudge;
+	r.bottom += MENU_HighlightBottomNudge;
+	r.left += MENU_HighlightLeftNudge;
+	r.right += MENU_HighlightRightNudge;
+	FillRect32( hdc, &r, sysColorObjects.hbrushMenu );
+    }
+
     SetBkMode32( hdc, TRANSPARENT );
 
       /* Draw the separator bar (if any) */
@@ -664,9 +726,16 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
     }
     if (lpitem->item_flags & MF_SEPARATOR)
     {
-	SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
-	MoveTo( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2 );
-	LineTo32( hdc, rect.right, rect.top + SEPARATOR_HEIGHT/2 );
+	if(TWEAK_Win95Look)
+	    TWEAK_DrawMenuSeparator95(hdc, rect.left + 1,
+				      rect.top + SEPARATOR_HEIGHT / 2 + 1,
+				      rect.right - 1);
+	else {
+	    SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
+	    MoveTo( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2 );
+	    LineTo32( hdc, rect.right, rect.top + SEPARATOR_HEIGHT/2 );
+	}
+
 	return;
     }
 
@@ -742,16 +811,40 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 	    rect.left += MENU_BAR_ITEMS_SPACE / 2;
 	    rect.right -= MENU_BAR_ITEMS_SPACE / 2;
 	    i = strlen( lpitem->text );
+
+	    rect.top += MENU_BarItemTopNudge;
+	    rect.left += MENU_BarItemLeftNudge;
 	}
 	else
 	{
 	    for (i = 0; lpitem->text[i]; i++)
                 if ((lpitem->text[i] == '\t') || (lpitem->text[i] == '\b'))
                     break;
+
+	    rect.top += MENU_ItemTopNudge;
+	    rect.left += MENU_ItemLeftNudge;
 	}
-	
-	DrawText32A( hdc, lpitem->text, i, &rect,
-                     DT_LEFT | DT_VCENTER | DT_SINGLELINE );
+
+	if(!TWEAK_Win95Look || !(lpitem->item_flags & MF_GRAYED)) {
+	    DrawText32A( hdc, lpitem->text, i, &rect,
+			 DT_LEFT | DT_VCENTER | DT_SINGLELINE );
+	}
+	else {
+	    ++rect.left;
+	    ++rect.top;
+	    ++rect.right;
+	    ++rect.bottom;
+	    SetTextColor32(hdc, RGB(0xff, 0xff, 0xff));
+	    DrawText32A( hdc, lpitem->text, i, &rect,
+			 DT_LEFT | DT_VCENTER | DT_SINGLELINE );
+	    --rect.left;
+	    --rect.top;
+	    --rect.right;
+	    --rect.bottom;
+	    SetTextColor32(hdc, RGB(0x80, 0x80, 0x80));
+	    DrawText32A( hdc, lpitem->text, i, &rect,
+			 DT_LEFT | DT_VCENTER | DT_SINGLELINE );
+	}
 
 	if (lpitem->text[i])  /* There's a tab or flush-right char */
 	{
@@ -787,6 +880,7 @@ static void MENU_DrawPopupMenu( HWND32 hwnd, HDC32 hdc, HMENU32 hmenu )
 	HPEN32 hPrevPen;
 
 	Rectangle32( hdc, rect.left, rect.top, rect.right, rect.bottom );
+
 	hPrevPen = SelectObject32( hdc, GetStockObject32( NULL_PEN ) );
 	if( hPrevPen )
 	{
@@ -794,20 +888,26 @@ static void MENU_DrawPopupMenu( HWND32 hwnd, HDC32 hdc, HMENU32 hmenu )
 	    POPUPMENU *menu;
 
 	    /* draw 3-d shade */
+	    if(!TWEAK_Win95Look) {
+		SelectObject32( hdc, hShadeBrush );
+		SetBkMode32( hdc, TRANSPARENT );
+		ropPrev = SetROP232( hdc, R2_MASKPEN );
 
-	    SelectObject32( hdc, hShadeBrush );
-	    SetBkMode32( hdc, TRANSPARENT );
-	    ropPrev = SetROP232( hdc, R2_MASKPEN );
-
-	    i = rect.right;		/* why SetBrushOrg() doesn't? */
-	    PatBlt32( hdc, i & 0xfffffffe, rect.top + POPUP_YSHADE*SYSMETRICS_CYBORDER, 
-		      i%2 + POPUP_XSHADE*SYSMETRICS_CXBORDER, rect.bottom - rect.top, 0x00a000c9 );
-	    i = rect.bottom;
-	    PatBlt32( hdc, rect.left + POPUP_XSHADE*SYSMETRICS_CXBORDER, i & 0xfffffffe, 
-		      rect.right - rect.left, i%2 + POPUP_YSHADE*SYSMETRICS_CYBORDER, 0x00a000c9 );
-	    SelectObject32( hdc, hPrevPen );
-	    SelectObject32( hdc, hPrevBrush );
-	    SetROP232( hdc, ropPrev );
+		i = rect.right;		/* why SetBrushOrg() doesn't? */
+		PatBlt32( hdc, i & 0xfffffffe,
+			  rect.top + POPUP_YSHADE*SYSMETRICS_CYBORDER, 
+			  i%2 + POPUP_XSHADE*SYSMETRICS_CXBORDER,
+			  rect.bottom - rect.top, 0x00a000c9 );
+		i = rect.bottom;
+		PatBlt32( hdc, rect.left + POPUP_XSHADE*SYSMETRICS_CXBORDER,
+			  i & 0xfffffffe,rect.right - rect.left,
+			  i%2 + POPUP_YSHADE*SYSMETRICS_CYBORDER, 0x00a000c9 );
+		SelectObject32( hdc, hPrevPen );
+		SelectObject32( hdc, hPrevBrush );
+		SetROP232( hdc, ropPrev );
+	    }
+	    else
+		TWEAK_DrawReliefRect95(hdc, &rect);
 
 	    /* draw menu items */
 
@@ -846,10 +946,16 @@ UINT32 MENU_DrawMenuBar( HDC32 hDC, LPRECT32 lprect, HWND32 hwnd,
     lprect->bottom = lprect->top + lppop->Height;
     if (suppress_draw) return lppop->Height;
     
+    if(TWEAK_Win95Look)
+	++lprect->bottom;
+
     FillRect32(hDC, lprect, sysColorObjects.hbrushMenu );
-    SelectObject32( hDC, sysColorObjects.hpenWindowFrame );
-    MoveTo( hDC, lprect->left, lprect->bottom );
-    LineTo32( hDC, lprect->right, lprect->bottom );
+
+    if(!TWEAK_Win95Look) {
+	SelectObject32( hDC, sysColorObjects.hpenWindowFrame );
+	MoveTo( hDC, lprect->left, lprect->bottom );
+	LineTo32( hDC, lprect->right, lprect->bottom );
+    }
 
     if (lppop->nItems == 0) return SYSMETRICS_CYMENU;
     for (i = 0; i < lppop->nItems; i++)
@@ -1116,8 +1222,8 @@ static BOOL32 MENU_SetItemData( MENUITEM *item, UINT32 flags, UINT32 id,
     LPSTR prevText = IS_STRING_ITEM(item->item_flags) ? item->text : NULL;
 
     dprintf_menu(stddeb,"SetItemData: %04x [%08x] '%s'  -> %04x [%08x] '%s'\n",
-		 item->item_flags, item->item_id, item->text ? item->text : "",
-		 flags, id, str ? str : "" );
+		 item->item_flags, item->item_id, prevText ? prevText : "",
+		 flags, id, (IS_STRING_ITEM(flags) && str) ? str : "" );
 
     if (IS_STRING_ITEM(flags))
     {
@@ -2241,6 +2347,9 @@ UINT32 MENU_GetMenuBarHeight( HWND32 hwnd, UINT32 menubarWidth,
     WND *wndPtr;
     LPPOPUPMENU lppop;
 
+    dprintf_menu( stddeb, "MENU_GetMenuBarHeight: HWND 0x%lx, width %d, "
+		  "at (%d, %d).\n", hwnd, menubarWidth, orgX, orgY );
+    
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     if (!(lppop = (LPPOPUPMENU)USER_HEAP_LIN_ADDR((HMENU16)wndPtr->wIDmenu)))
       return 0;
@@ -2578,9 +2687,11 @@ BOOL32 InsertMenu32A( HMENU32 hMenu, UINT32 pos, UINT32 flags,
     MENUITEM *item;
 
     if (IS_STRING_ITEM(flags) && str)
-        dprintf_menu( stddeb, "InsertMenu: %04x %d %04x %04x '%s'\n",
+        dprintf_menu( stddeb, "InsertMenu: hMenu %04x, pos %d, flags %04x, "
+		      "id %04x, str '%s'\n",
                       hMenu, pos, flags, id, str );
-    else dprintf_menu( stddeb, "InsertMenu: %04x %d %04x %04x %08lx\n",
+    else dprintf_menu( stddeb, "InsertMenu: hMenu %04x, pos %d, flags %04x, "
+		       "id %04x, str %08lx (not a string)\n",
                        hMenu, pos, flags, id, (DWORD)str );
 
     if (!(item = MENU_InsertItem( hMenu, pos, flags ))) return FALSE;

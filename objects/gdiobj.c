@@ -12,6 +12,7 @@
 #include "dc.h"
 #include "font.h"
 #include "heap.h"
+#include "options.h"
 #include "palette.h"
 #include "pen.h"
 #include "region.h"
@@ -150,6 +151,60 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
     (GDIOBJHDR *) &SystemFixedFont
 };
 
+/******************************************************************************
+ *
+ *   void  ReadFontInformation(
+ *      char const  *fontName,
+ *      FONTOBJ  *font,
+ *      int  defHeight,
+ *      int  defBold,
+ *      int  defItalic,
+ *      int  defUnderline,
+ *      int  defStrikeOut )
+ *
+ *   ReadFontInformation() checks the Wine configuration file's Tweak.Fonts
+ *   section for entries containing fontName.Height, fontName.Bold, etc.,
+ *   where fontName is the name specified in the call (e.g., "System").  It
+ *   attempts to be user friendly by accepting 'n', 'N', 'f', 'F', or '0' as
+ *   the first character in the boolean attributes (bold, italic, and
+ *   underline).
+ *****************************************************************************/
+
+static void  ReadFontInformation(
+    char const *fontName,
+    FONTOBJ *font,
+    int  defHeight,
+    int  defBold,
+    int  defItalic,
+    int  defUnderline,
+    int  defStrikeOut )
+{
+    char  key[256];
+
+    sprintf(key, "%s.Height", fontName);
+    font->logfont.lfHeight =
+	PROFILE_GetWineIniInt("Tweak.Fonts", key, defHeight);
+
+    sprintf(key, "%s.Bold", fontName);
+    font->logfont.lfWeight =
+	(PROFILE_GetWineIniBool("Tweak.Fonts", key, defBold)) ?
+	FW_BOLD : FW_NORMAL;
+
+    sprintf(key, "%s.Italic", fontName);
+    font->logfont.lfItalic =
+	PROFILE_GetWineIniBool("Tweak.Fonts", key, defItalic);
+
+    sprintf(key, "%s.Underline", fontName);
+    font->logfont.lfUnderline =
+	PROFILE_GetWineIniBool("Tweak.Fonts", key, defUnderline);
+
+    sprintf(key, "%s.StrikeOut", fontName);
+    font->logfont.lfStrikeOut =
+	PROFILE_GetWineIniBool("Tweak.Fonts", key, defStrikeOut);
+
+    return;
+}
+
 
 /***********************************************************************
  *           GDI_Init
@@ -160,6 +215,13 @@ BOOL32 GDI_Init(void)
 {
     extern BOOL32 X11DRV_Init(void);
     extern BOOL32 DIB_Init(void);
+
+    /* TWEAK: Initialize font hints */
+    ReadFontInformation("OEMFixed", &OEMFixedFont, 12, 0, 0, 0, 0);
+    ReadFontInformation("AnsiFixed", &AnsiFixedFont, 12, 0, 0, 0, 0);
+    ReadFontInformation("AnsiVar", &AnsiVarFont, 12, 0, 0, 0, 0);
+    ReadFontInformation("System", &SystemFont, 16, 1, 0, 0, 0);
+    ReadFontInformation("SystemFixed", &SystemFixedFont, 12, 1, 0, 0, 0);
 
     /* Initialize drivers */
 

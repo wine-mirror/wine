@@ -464,7 +464,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     CLASS *classPtr;
     WND *wndPtr;
     HWND16 hwnd, hwndLinkAfter;
-    POINT16 maxSize, maxPos, minTrack, maxTrack;
+    POINT32 maxSize, maxPos, minTrack, maxTrack;
     LRESULT (*localSend32)(HWND32, UINT32, WPARAM32, LPARAM);
 
     dprintf_win( stddeb, "CreateWindowEx: " );
@@ -615,7 +615,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
     {
-        WINPOS_GetMinMaxInfo( wndPtr, &maxSize, &maxPos, &minTrack, &maxTrack );
+        WINPOS_GetMinMaxInfo( wndPtr, &maxSize, &maxPos, &minTrack, &maxTrack);
         if (maxSize.x < cs->cx) cs->cx = maxSize.x;
         if (maxSize.y < cs->cy) cs->cy = maxSize.y;
         if (cs->cx < minTrack.x ) cs->cx = minTrack.x;
@@ -723,8 +723,8 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     {
         WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
                                NULL, NULL, 0, &wndPtr->rectClient );
-        OffsetRect16(&wndPtr->rectWindow, maxPos.x - wndPtr->rectWindow.left,
-                                            maxPos.y - wndPtr->rectWindow.top);
+        OffsetRect32(&wndPtr->rectWindow, maxPos.x - wndPtr->rectWindow.left,
+                                          maxPos.y - wndPtr->rectWindow.top);
         if( ((*localSend32)( hwnd, WM_CREATE, 0, (LPARAM)cs )) != -1 )
         {
             /* Send the size messages */
@@ -732,11 +732,12 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             if (!(wndPtr->flags & WIN_NEED_SIZE))
             {
                 /* send it anyway */
-                SendMessage16( hwnd, WM_SIZE, SIZE_RESTORED,
-                        MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-                        wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-                SendMessage16( hwnd, WM_MOVE, 0, MAKELONG( wndPtr->rectClient.left,
-                                                   wndPtr->rectClient.top ));
+                SendMessage32A( hwnd, WM_SIZE, SIZE_RESTORED,
+                                MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
+                                         wndPtr->rectClient.bottom-wndPtr->rectClient.top));
+                SendMessage32A( hwnd, WM_MOVE, 0,
+                                MAKELONG( wndPtr->rectClient.left,
+                                          wndPtr->rectClient.top ) );
             }
 
             WIN_SendParentNotify( hwnd, WM_CREATE, wndPtr->wIDmenu, (LPARAM)hwnd );
@@ -2236,18 +2237,18 @@ HWND16 GetSysModalWindow16(void)
 BOOL16 DRAG_QueryUpdate( HWND32 hQueryWnd, SEGPTR spDragInfo, BOOL32 bNoSend )
 {
  BOOL16		wParam,bResult = 0;
- POINT16        pt;
+ POINT32        pt;
  LPDRAGINFO	ptrDragInfo = (LPDRAGINFO) PTR_SEG_TO_LIN(spDragInfo);
  WND 	       *ptrQueryWnd = WIN_FindWndPtr(hQueryWnd),*ptrWnd;
- RECT16		tempRect;
+ RECT32		tempRect;
 
  if( !ptrQueryWnd || !ptrDragInfo ) return 0;
 
- pt 		= ptrDragInfo->pt;
+ CONV_POINT16TO32( &ptrDragInfo->pt, &pt );
 
- GetWindowRect16(hQueryWnd,&tempRect); 
+ GetWindowRect32(hQueryWnd,&tempRect); 
 
- if( !PtInRect16(&tempRect,pt) ||
+ if( !PtInRect32(&tempRect,pt) ||
      (ptrQueryWnd->dwStyle & WS_DISABLED) )
 	return 0;
 
@@ -2255,19 +2256,18 @@ BOOL16 DRAG_QueryUpdate( HWND32 hQueryWnd, SEGPTR spDragInfo, BOOL32 bNoSend )
    {
      tempRect = ptrQueryWnd->rectClient;
      if(ptrQueryWnd->dwStyle & WS_CHILD)
-        MapWindowPoints16(ptrQueryWnd->parent->hwndSelf,0,(LPPOINT16)&tempRect,2);
+        MapWindowPoints32( ptrQueryWnd->parent->hwndSelf, 0,
+                           (LPPOINT32)&tempRect, 2 );
 
-     if( PtInRect16(&tempRect,pt) )
+     if (PtInRect32( &tempRect, pt))
 	{
 	 wParam = 0;
          
 	 for (ptrWnd = ptrQueryWnd->child; ptrWnd ;ptrWnd = ptrWnd->next)
              if( ptrWnd->dwStyle & WS_VISIBLE )
 	     {
-                 GetWindowRect16(ptrWnd->hwndSelf,&tempRect);
-
-                 if( PtInRect16(&tempRect,pt) ) 
-                     break;
+                 GetWindowRect32( ptrWnd->hwndSelf, &tempRect );
+                 if (PtInRect32( &tempRect, pt )) break;
 	     }
 
 	 if(ptrWnd)
@@ -2294,7 +2294,7 @@ BOOL16 DRAG_QueryUpdate( HWND32 hQueryWnd, SEGPTR spDragInfo, BOOL32 bNoSend )
 	   : SendMessage16( hQueryWnd ,WM_QUERYDROPOBJECT ,
                           (WPARAM16)wParam ,(LPARAM) spDragInfo );
  if( !bResult ) 
-      ptrDragInfo->pt = pt;
+     CONV_POINT32TO16( &pt, &ptrDragInfo->pt );
 
  return bResult;
 }

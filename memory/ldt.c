@@ -14,7 +14,7 @@
 #include "debug.h"
 
 #ifdef linux
-#include <syscall.h>
+#include <asm/unistd.h>
 
 struct modify_ldt_s 
 {
@@ -37,12 +37,12 @@ static __inline__ _syscall3(int, modify_ldt, int, func, void *, ptr,
 #include <sys/seg.h>
 #endif
 
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <machine/segments.h>
 
 extern int i386_get_ldt(int, union descriptor *, int);
 extern int i386_set_ldt(int, union descriptor *, int);
-#endif  /* __NetBSD__ || __FreeBSD__ */
+#endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
 
 
 ldt_copy_entry ldt_copy[LDT_SIZE];
@@ -173,7 +173,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
     }
 #endif  /* linux */
 
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     if (!__winelib)
     {
         long d[2];
@@ -188,7 +188,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
     	    exit(1);
         }
     }
-#endif  /* __NetBSD__ || __FreeBSD__ */
+#endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
 #if defined(__svr4__) || defined(_SCO_DS)
     if (!__winelib)
     {

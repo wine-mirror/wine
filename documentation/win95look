@@ -1,0 +1,50 @@
+Win95 interface code is being introduced.
+
+Instead of compiling Wine for Win3.1 vs. Win95 using #define switches,
+the code now looks in a special [Tweaks.Layout] section of wine.conf
+for a "Win95Look=true" entry.
+
+A few new sections and a number of entries have been added to the
+wine.conf file -- these are for debugging the Win95 tweaks only and may
+be removed in a future release!  These entries/sections are:
+
+[Tweak.Fonts]
+System.Height=<point size>    # Sets the height of the system typeface
+System.Bold=[true|false]      # Whether the system font should be boldfaced
+System.Italic=[true|false]    # Whether the system font should be italicized
+System.Underline=[true|false] # Whether the system font should be underlined
+System.StrikeOut=[true|false] # Whether the system font should be struck out
+OEMFixed.xxx                  # Same parameters for the OEM fixed typeface
+AnsiFixed.xxx                 # Same parameters for the Ansi fixed typeface
+AnsiVar.xxx                   # Same parameters for the Ansi variable typeface
+SystemFixed.xxx               # Same parameters for the System fixed typeface
+
+[Tweak.Layout]
+Win95Look=[true|false]        # Enables/disables the Win95 look and feel
+MenuHeight=<pixels>           # Sets the height of the menu bar
+MenuBarItemTopNudge=<pixels>  # Nudges the menu bar items down/up
+MenuBarItemLeftNudge=<pixels> # Nudges the menu bar items left/right
+MenuItemTopNudge=<pixels>     # Nudges the menu items down/up
+MenuItemLeftNudge=<pixels>    # Nudges the menu items left/right
+MenuHighlightTopNudge=<pixels> # Nudges the top of the highlight bar
+MenuHighlightLeftNudge=<pixels> # Nudges the left side of the highlight bar
+MenuHighlightRightNudge=<pixels> # Nudges the right side of the highlight bar
+MenuHighlightBottomNudge=<pixels> # Nudges the bottom of the highlight bar
+CaptionHeight=<pixels>        # Sets the height of window captions
+CaptionLeftNudge=<pixels>     # Nudges the caption text of windows down/up
+CaptionTopNudge=<pixels>      # Nudges the caption text of windows left/right
+CaptionAlignment=[left|right|center] # Sets the alignment of caption text
+SysControlNudge=<pixels>      # Nudges the system menu left/right
+MaxControlNudge=<pixels>      # Nudges the maximize control left/right
+MinControlNudge=<pixels>      # Nudges the minimize control left/right
+ScrollBarWidth=<pixels>       # Sets scroll bar sizes
+DialogFrameWidth=<pixels>     # Sets the frame width of dialog boxes
+
+[Tweak.Colors]
+PenFF95.Red=<0-255>           # Sets the red value of the Win95 white pen
+PenFF95.Grn=<0-255>           # Sets the green value of the Win95 white pen
+PenFF95.Blu=<0-255>           # Sets the blue value of the Win95 white pen
+PenE095.xxx                   # Sets the RGB values of the Win95 grey-88 pen
+PenC095.xxx                   # Sets the RGB values of the Win95 grey-75 pen
+Pen8095.xxx                   # Sets the RGB values of the Win95 grey-50 pen
+Pen0095.xxx                   # Sets the RGB values of the Win95 black pen

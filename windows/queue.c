@@ -325,16 +325,33 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
 				(unsigned)queue->smResultCurrent, (unsigned)prevCtrlPtr );
     QUEUE_SetWakeBit( senderQ, QS_SMPARAMSFREE );
 
-    dprintf_msg(stddeb, "\trcm: calling wndproc - %04x %04x %04x %08x\n",
-            senderQ->hWnd, senderQ->msg, senderQ->wParam, (unsigned)senderQ->lParam );
+    dprintf_msg(stddeb, "\trcm: calling wndproc - %04x %04x %04x%04x %08x\n",
+                senderQ->hWnd, senderQ->msg, senderQ->wParamHigh,
+                senderQ->wParam, (unsigned)senderQ->lParam );
 
     if (IsWindow32( senderQ->hWnd ))
     {
+        WND *wndPtr = WIN_FindWndPtr( senderQ->hWnd );
         DWORD extraInfo = queue->GetMessageExtraInfoVal;
         queue->GetMessageExtraInfoVal = senderQ->GetMessageExtraInfoVal;
 
-        result = CallWindowProc16( (WNDPROC16)GetWindowLong16(senderQ->hWnd, GWL_WNDPROC),
-				   senderQ->hWnd, senderQ->msg, senderQ->wParam, senderQ->lParam );
+        if (senderQ->flags & QUEUE_SM_WIN32)
+        {
+            WPARAM32 wParam = MAKELONG( senderQ->wParam, senderQ->wParamHigh );
+            dprintf_msg(stddeb, "\trcm: msg is Win32\n" );
+            if (senderQ->flags & QUEUE_SM_UNICODE)
+                result = CallWindowProc32W( wndPtr->winproc,
+                                            senderQ->hWnd, senderQ->msg,
+                                            wParam, senderQ->lParam );
+            else
+                result = CallWindowProc32A( wndPtr->winproc,
+                                            senderQ->hWnd, senderQ->msg,
+                                            wParam, senderQ->lParam );
+        }
+        else  /* Win16 message */
+            result = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
+                                       senderQ->hWnd, senderQ->msg,
+                                       senderQ->wParam, senderQ->lParam );
 
         queue->GetMessageExtraInfoVal = extraInfo;  /* Restore extra info */
 	dprintf_msg(stddeb,"\trcm: result =  %08x\n", (unsigned)result );
@@ -740,8 +757,8 @@ BOOL32 SetMessageQueue32( INT32 size )
     if ((hQueue = GetTaskQueue(0)) != 0) 
     {
        MESSAGEQUEUE *oldQ = (MESSAGEQUEUE *)GlobalLock16( hQueue );
-       memcpy( &queuePtr->reserved2, &oldQ->reserved2, 
-			(int)oldQ->messages - (int)(&oldQ->reserved2) );
+       memcpy( &queuePtr->wParamHigh, &oldQ->wParamHigh,
+			(int)oldQ->messages - (int)(&oldQ->wParamHigh) );
        HOOK_ResetQueueHooks( hNewQueue );
        if( WIN_GetDesktop()->hmemTaskQ == hQueue )
 	   WIN_GetDesktop()->hmemTaskQ = hNewQueue;

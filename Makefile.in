@@ -74,7 +74,14 @@ LIBSUBDIRS = library
 
 PROGSUBDIRS = libtest programs
 
-ALLSUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS) $(LIBSUBDIRS) $(PROGSUBDIRS)
+DOCSUBDIRS = documentation
+
+ALLSUBDIRS = \
+	$(COMMONSUBDIRS) \
+	$(EMUSUBDIRS) \
+	$(LIBSUBDIRS) \
+	$(PROGSUBDIRS) \
+	$(DOCSUBDIRS)
 
 COMMONOBJS = \
 	controls/controls.o \
@@ -140,7 +147,7 @@ install_programs: dummy
 	@cd programs; $(SUBMAKE) install
 
 depend: dummy
-	for i in $(COMMONSUBDIRS) $(LIBSUBDIRS) $(EMUSUBDIRS); do \
+	for i in $(COMMONSUBDIRS) $(LIBSUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS); do \
 	  (cd $$i; $(MAKE) depend) || exit 1; \
 	done
 
@@ -149,7 +156,7 @@ etags:
 
 clean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
-	for i in . include documentation; do (cd $$i; $(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc); done
+	for i in . include; do (cd $$i; $(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc); done
 	$(RM) wine wine.sym libwine.a libwine.so.1.0 TAGS
 
 distclean: clean

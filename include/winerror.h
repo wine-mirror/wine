@@ -21,6 +21,7 @@ extern int WIN32_LastError;
 #define ERROR_OUTOFMEMORY           14
 #define ERROR_NO_MORE_FILES         18
 #define ERROR_SHARING_VIOLATION     32
+#define ERROR_LOCK_VIOLATION        33
 #define ERROR_DUP_NAME              52
 #define ERROR_FILE_EXISTS           80
 #define ERROR_INVALID_PARAMETER     87

@@ -32,6 +32,7 @@ C_SRCS = \
 	stress.c \
 	system.c \
 	toolhelp.c \
+	tweak.c \
 	ver.c \
 	w32sys.c \
 	winsock.c \
@@ -44,3 +45,4 @@ all: $(MODULE).o
 @MAKE_RULES@
 
 ### Dependencies:
+

@@ -122,6 +122,33 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
 void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
                            INT32 shadow_size, BOOL32 pressed )
 {
+    if(pressed)
+	GRAPH_DrawGenericReliefRect(hdc, rect, highlight_size, shadow_size,
+				    sysColorObjects.hbrushBtnShadow,
+				    sysColorObjects.hbrushBtnHighlight);
+    else
+	GRAPH_DrawGenericReliefRect(hdc, rect, highlight_size, shadow_size,
+				    sysColorObjects.hbrushBtnHighlight,
+				    sysColorObjects.hbrushBtnShadow);
+
+    return;
+}
+
+
+/******************************************************************************
+ *             GRAPH_DrawGenericReliefRect
+ *
+ *   Creates a rectangle with the specified highlight and shadow colors.
+ *   Adapted from DrawReliefRect (which is somewhat misnamed).
+ */
+void  GRAPH_DrawGenericReliefRect(
+    HDC32  hdc,
+    const  RECT32 *rect,
+    INT32  highlight_size,
+    INT32  shadow_size,
+    HBRUSH32  highlight,
+    HBRUSH32  shadow )
+{
     DC*		dc;
     HBRUSH32 	hPrevBrush;
     INT32 	w, h;
@@ -132,8 +159,8 @@ void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
     OffsetRect32( &r, dc->w.DCOrgX, dc->w.DCOrgY);
     h = rect->bottom - rect->top;  w = rect->right - rect->left;
 
-    hPrevBrush = SelectObject32(hdc, pressed ? sysColorObjects.hbrushBtnShadow :
-                                               sysColorObjects.hbrushBtnHighlight );
+    hPrevBrush = SelectObject32(hdc, highlight);
+
     if ( DC_SetupGCForBrush( dc ) )
     {
          INT32	i;
@@ -148,8 +175,7 @@ void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
          }
     }
 
-    SelectObject32( hdc, pressed ? sysColorObjects.hbrushBtnHighlight :
-                                   sysColorObjects.hbrushBtnShadow );
+    SelectObject32( hdc, shadow );
     if ( DC_SetupGCForBrush( dc ) )
     {
 	 INT32	i;
@@ -166,6 +192,8 @@ void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
 
     SelectObject32( hdc, hPrevBrush );
 }
+
+
 
 /**********************************************************************
  *          GRAPH_DrawRectangle

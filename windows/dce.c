@@ -118,7 +118,7 @@ HWND32 WindowFromDC32( HDC32 hDC )
  * It is called from SetWindowPos - we have to invalidate all busy
  * DCE's for windows whose client rect intersects with update rectangle 
  */
-BOOL32 DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
+BOOL32 DCE_InvalidateDCE(WND* wndScope, RECT32* pRectUpdate)
 {
     BOOL32 bRet = FALSE;
     DCE *dce;
@@ -147,13 +147,14 @@ BOOL32 DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
 	for( ; wnd ; wnd = wnd->parent )
 	    if( wnd == wndScope )
 	      { 
-	        RECT16 wndRect = wndCurrent->rectWindow;
+	        RECT32 wndRect = wndCurrent->rectWindow;
 
 	        dprintf_dc(stddeb,"\tgot hwnd %04x\n", wndCurrent->hwndSelf);
   
-	        MapWindowPoints16(wndCurrent->parent->hwndSelf, wndScope->hwndSelf,
-			 				       (LPPOINT16)&wndRect, 2);
-	        if( IntersectRect16(&wndRect,&wndRect,pRectUpdate) )
+	        MapWindowPoints32( wndCurrent->parent->hwndSelf,
+                                   wndScope->hwndSelf,
+                                   (LPPOINT32)&wndRect, 2 );
+	        if (IntersectRect32( &wndRect, &wndRect, pRectUpdate ))
 	        {    
 		   SetHookFlags(dce->hDC, DCHF_INVALIDATEVISRGN);
 		   bRet = TRUE;
@@ -188,7 +189,7 @@ void DCE_Init()
  * window area clipped by the client area of all ancestors.
  * Return FALSE if the visible region is empty.
  */
-static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT16 *lprect )
+static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT32 *lprect )
 {
     int xoffset, yoffset;
 
@@ -198,7 +199,7 @@ static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT16 *lprect )
 
     if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
     {
-        SetRectEmpty16( lprect );  /* Clip everything */
+        SetRectEmpty32( lprect );  /* Clip everything */
         return FALSE;
     }
 
@@ -209,20 +210,20 @@ static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT16 *lprect )
             (wndPtr->flags & WIN_NO_REDRAW) ||
             (wndPtr->dwStyle & WS_ICONIC))
         {
-            SetRectEmpty16( lprect );  /* Clip everything */
+            SetRectEmpty32( lprect );  /* Clip everything */
             return FALSE;
         }
 	xoffset += wndPtr->rectClient.left;
 	yoffset += wndPtr->rectClient.top;
-	OffsetRect16( lprect, wndPtr->rectClient.left,
+	OffsetRect32( lprect, wndPtr->rectClient.left,
                       wndPtr->rectClient.top );
 
 	  /* Warning!! we assume that IntersectRect() handles the case */
 	  /* where the destination is the same as one of the sources.  */
-	if (!IntersectRect16( lprect, lprect, &wndPtr->rectClient ))
+	if (!IntersectRect32( lprect, lprect, &wndPtr->rectClient ))
             return FALSE;  /* Visible rectangle is empty */
     }
-    OffsetRect16( lprect, -xoffset, -yoffset );
+    OffsetRect32( lprect, -xoffset, -yoffset );
     return TRUE;
 }
 
@@ -277,7 +278,7 @@ static HRGN32 DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
  */
 HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags )
 {
-    RECT16 rect;
+    RECT32 rect;
     HRGN32 hrgn;
     int xoffset, yoffset;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -289,7 +290,7 @@ HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags )
     {
         return CreateRectRgn32( 0, 0, 0, 0 );  /* Visible region is empty */
     }
-    if (!(hrgn = CreateRectRgnIndirect16( &rect ))) return 0;
+    if (!(hrgn = CreateRectRgnIndirect32( &rect ))) return 0;
 
       /* Clip all children from the visible region */
 
@@ -545,12 +546,12 @@ HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
       if( wndPtr->parent && wndPtr->window )
       {
         WND* 	wnd = wndPtr->parent->child;
-	RECT16  rect;
+	RECT32  rect;
 	
         for( ; wnd != wndPtr; wnd = wnd->next )
            if( wnd->class->style & CS_SAVEBITS &&
                wnd->dwStyle & WS_VISIBLE &&
-	       IntersectRect16(&rect, &wndPtr->rectClient, &wnd->rectClient) )
+	       IntersectRect32(&rect, &wndPtr->rectClient, &wnd->rectClient) )
                wnd->flags |= WIN_SAVEUNDER_OVERRIDE;
       }
 

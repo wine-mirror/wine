@@ -1143,7 +1143,8 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first )
 		SELFLOADHEADER *selfloadheader;
                 STACK16FRAME *stack16Top;
 		HMODULE16 hselfload = GetModuleHandle16("WPROCS");
-		WORD oldss, oldsp, saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
+                DWORD oldstack;
+		WORD saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
 		fprintf (stderr, "Warning:  %*.*s is a self-loading module\n"
                                 "Support for self-loading modules is very experimental\n",
                 *((BYTE*)pModule + pModule->name_table),
@@ -1160,13 +1161,12 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first )
 					GLOBAL_Alloc (GMEM_ZEROINIT,
 					0xFF00, hModule, FALSE, FALSE, FALSE)
 					);
-		oldss = IF1632_Saved16_ss;
-		oldsp = IF1632_Saved16_sp;
-		IF1632_Saved16_ss = pModule->self_loading_sel;
-		IF1632_Saved16_sp = 0xFF00 - sizeof(*stack16Top);
+		oldstack = IF1632_Saved16_ss_sp;
+		IF1632_Saved16_ss_sp = MAKELONG( 0xFF00 - sizeof(*stack16Top),
+                                                 pModule->self_loading_sel );
                 stack16Top = CURRENT_STACK16;
-                stack16Top->saved_ss = 0;
-                stack16Top->saved_sp = 0;
+                stack16Top->saved_ss_sp = 0;
+                stack16Top->ebp = 0;
                 stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
                 stack16Top->entry_point = 0;
                 stack16Top->entry_ip = 0;
@@ -1205,8 +1205,7 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first )
                 _lclose32(hf);
 		/* some BootApp procs overwrite the selector of dgroup */
 		pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
-		IF1632_Saved16_ss = oldss;
-		IF1632_Saved16_sp = oldsp;
+		IF1632_Saved16_ss_sp = oldstack;
 		for (i = 2; i <= pModule->seg_count; i++) NE_LoadSegment( hModule, i );
 		if (hInitialStack32)
                 {

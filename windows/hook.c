@@ -979,7 +979,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
 
     /* Set DS = SS to call hook procedure */
     old_ds = CURRENT_DS;
-    CURRENT_DS = IF1632_Saved16_ss;
+    CURRENT_DS = SELECTOROF(IF1632_Saved16_ss_sp);
     ret = data->proc(code, wParam, lParam);
     CURRENT_DS = old_ds;
 

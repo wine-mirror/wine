@@ -69,19 +69,18 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
  	/* Implement self loading segments */
  	SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
- 	WORD oldss, oldsp, oldselector, newselector;
+        DWORD oldstack;
+ 	WORD oldselector, newselector;
         HFILE32 hf = FILE_DupUnixHandle( fd );
 
  	selfloadheader = (SELFLOADHEADER *)
  		PTR_SEG_OFF_TO_LIN(pSegTable->selector,0);
- 	oldss = IF1632_Saved16_ss;
- 	oldsp = IF1632_Saved16_sp;
+ 	oldstack = IF1632_Saved16_ss_sp;
  	oldselector = pSeg->selector;
- 	IF1632_Saved16_ss = pModule->self_loading_sel;
- 	IF1632_Saved16_sp = 0xFF00 - sizeof(*stack16Top);
+ 	IF1632_Saved16_ss_sp = MAKELONG( 0xFF00 - sizeof(*stack16Top),
+                                         pModule->self_loading_sel );
         stack16Top = CURRENT_STACK16;
-        stack16Top->saved_ss = 0;
-        stack16Top->saved_sp = 0;
+        stack16Top->saved_ss_sp = 0;
         stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
         stack16Top->entry_point = 0;
         stack16Top->entry_ip = 0;
@@ -110,8 +109,7 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
  	  }
  	} 
  	
- 	IF1632_Saved16_ss = oldss;
- 	IF1632_Saved16_sp = oldsp;
+ 	IF1632_Saved16_ss_sp = oldstack;
     }
     else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
       read(fd, mem, size);
@@ -501,7 +499,8 @@ static BOOL32 NE_InitDLL( HMODULE16 hModule )
 
     CS_reg(&context)  = pSegTable[pModule->cs-1].selector;
     EIP_reg(&context) = pModule->ip;
-    EBP_reg(&context) = IF1632_Saved16_sp + (WORD)&((STACK16FRAME*)0)->bp;
+    EBP_reg(&context) = OFFSETOF(IF1632_Saved16_ss_sp)
+                          + (WORD)&((STACK16FRAME*)0)->bp;
     EDI_reg(&context) = DS_reg(&context) ? DS_reg(&context) : hModule;
 
 

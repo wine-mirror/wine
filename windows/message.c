@@ -550,7 +550,7 @@ UINT32 GetDoubleClickTime32(void)
  * Implementation of an inter-task SendMessage.
  */
 static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
-                                WPARAM16 wParam, LPARAM lParam )
+                                WPARAM32 wParam, LPARAM lParam, WORD flags )
 {
     INT32	  prevSMRL = debugSMRL;
     QSMCTRL 	  qCtrl = { 0, 1};
@@ -574,14 +574,16 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
 
     /* resume sending */ 
 
-    queue->hWnd   = hwnd;
-    queue->msg    = msg;
-    queue->wParam = wParam;
-    queue->lParam = lParam;
+    queue->hWnd       = hwnd;
+    queue->msg        = msg;
+    queue->wParam     = LOWORD(wParam);
+    queue->wParamHigh = HIWORD(wParam);
+    queue->lParam     = lParam;
     queue->hPrevSendingTask = destQ->hSendingTask;
     destQ->hSendingTask = GetTaskQueue(0);
 
     queue->wakeBits &= ~QS_SMPARAMSFREE;
+    queue->flags = (queue->flags & ~(QUEUE_SM_WIN32|QUEUE_SM_UNICODE)) | flags;
 
     dprintf_sendmsg(stddeb,"%*ssm: smResultInit = %08x\n", prevSMRL, "", (unsigned)&qCtrl);
 
@@ -1058,12 +1060,16 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
     }
     if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
         return 0;  /* Don't send anything if the task is dying */
-    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
-        return MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam );
 
     SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
-    ret = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
-                            hwnd, msg, wParam, lParam );
+
+    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
+        ret = MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg,
+                               wParam, lParam, 0 );
+    else
+        ret = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
+                                hwnd, msg, wParam, lParam );
+
     SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, ret );
     return ret;
 }
@@ -1125,15 +1131,15 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
     if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
         return 0;  /* Don't send anything if the task is dying */
 
-    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
-    {
-        fprintf( stderr, "SendMessage32A: intertask message [%04x] not supported\n", msg );
-        return 0;
-    }
-
     SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
-    ret = CallWindowProc32A( (WNDPROC32)wndPtr->winproc,
-                             hwnd, msg, wParam, lParam );
+
+    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
+        ret = MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam,
+                               QUEUE_SM_WIN32 );
+    else
+        ret = CallWindowProc32A( (WNDPROC32)wndPtr->winproc,
+                                 hwnd, msg, wParam, lParam );
+
     SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, ret );
     return ret;
 }
@@ -1173,15 +1179,16 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
     }
     if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
         return 0;  /* Don't send anything if the task is dying */
-    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
-    {
-        fprintf( stderr, "SendMessage32W: intertask message not supported\n" );
-        return 0;
-    }
 
     SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
-    ret = CallWindowProc32W( (WNDPROC32)wndPtr->winproc,
-                             hwnd, msg, wParam, lParam );
+
+    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
+        ret = MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam,
+                                QUEUE_SM_WIN32 | QUEUE_SM_UNICODE );
+    else
+        ret = CallWindowProc32W( (WNDPROC32)wndPtr->winproc,
+                                 hwnd, msg, wParam, lParam );
+
     SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, ret );
     return ret;
 }

@@ -359,7 +359,7 @@ static void do_relocations(struct pe_data *pe)
  *			PE_LoadImage
  * Load one PE format executable into memory
  */
-static void PE_LoadImage( struct pr_data **ret_pe, int fd, HMODULE16 hModule, WORD offset, OFSTRUCT *ofs )
+static void PE_LoadImage( struct pe_data **ret_pe, int fd, HMODULE16 hModule, WORD offset, OFSTRUCT *ofs )
 {
 	struct pe_data		*pe;
 	int			i, result;
@@ -577,7 +577,7 @@ problem needs to be fixed properly at some stage */
 	else {
 		char *s;
 		modname = s = ofs->szPathName;
-		while (s=strchr(modname,'\\'))
+		while ((s=strchr(modname,'\\')))
 			modname = s+1;
 		if ((s=strchr(modname,'.')))
 			*s='\0';

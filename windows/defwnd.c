@@ -380,7 +380,12 @@ LRESULT DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
         break;
 
     case WM_NCCALCSIZE:
-	result = NC_HandleNCCalcSize(wndPtr, (RECT16 *)PTR_SEG_TO_LIN(lParam));
+        {
+            RECT32 rect32;
+            CONV_RECT16TO32( (RECT16 *)PTR_SEG_TO_LIN(lParam), &rect32 );
+            result = NC_HandleNCCalcSize( wndPtr, &rect32 );
+            CONV_RECT32TO16( &rect32, (RECT16 *)PTR_SEG_TO_LIN(lParam) );
+        }
         break;
 
     case WM_WINDOWPOSCHANGING:
@@ -441,12 +446,7 @@ LRESULT DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
         break;
 
     case WM_NCCALCSIZE:
-        {
-            RECT16 rect16;
-            CONV_RECT32TO16( (RECT32 *)lParam, &rect16 );
-            result = NC_HandleNCCalcSize( wndPtr, &rect16 );
-            CONV_RECT16TO32( &rect16, (RECT32 *)lParam );
-        }
+        result = NC_HandleNCCalcSize( wndPtr, (RECT32 *)lParam );
         break;
 
     case WM_WINDOWPOSCHANGING:

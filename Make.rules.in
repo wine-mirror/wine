@@ -5,7 +5,7 @@
 # TOPOBJDIR    : top-level object directory
 # SRCDIR       : source directory for this module
 # MODULE       : name of the module being built
-# C_SRCS       : C sources for the module
+# C_SRCS       : C sources for the module (optional)
 # GEN_C_SRCS   : generated C sources (optional)
 # ASM_SRCS     : assembly sources (optional)
 # GEN_ASM_SRCS : generated assembly sources (optional)

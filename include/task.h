@@ -54,8 +54,7 @@ struct _THDB;
 typedef struct
 {
     HTASK16   hNext;                      /* 00 Selector of next TDB */
-    WORD      sp;                         /* 02 Stack pointer of task */
-    WORD      ss;                         /* 04 Stack segment of task */
+    DWORD     ss_sp WINE_PACKED;          /* 02 Stack pointer of task */
     WORD      nEvents;                    /* 06 Events for this task */
     INT16     priority;                   /* 08 Task priority, -32..15 */
     WORD      unused1;                    /* 0a */

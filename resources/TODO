@@ -45,6 +45,7 @@ Today it works well for:
 * Italian
 * Korean
 * Finnish
+* Danish
 ...to be continued......
 
 Thank you.
@@ -65,6 +66,7 @@ and translate it to your language. It's okay for:
 * Finnish
 * Italian
 * French
+* Danish
 .....
 
 Thank you.
@@ -83,6 +85,7 @@ version in all sysres_??.rc files, which needs translation in your language.
 This has now been done for:
 
 * English
+* Danish
 .....
 
 Note: I picked the IDs of the menuitems "at random".  When someone wants to

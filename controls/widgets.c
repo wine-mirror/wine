@@ -48,8 +48,6 @@ typedef struct
 
 static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
 {
-    { CS_GLOBALCLASS | CS_PARENTDC,
-       sizeof(STATICINFO), 0, "StaticWndProc", "Static" },
     { CS_GLOBALCLASS, sizeof(MDICLIENTINFO),
       STOCK_LTGRAY_BRUSH, "MDIClientWndProc", "MDIClient" }
 };
@@ -77,8 +75,11 @@ static WNDCLASS32A WIDGETS_BuiltinClasses32[BIC32_NB_CLASSES] =
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS,
       ComboLBWndProc, 0, sizeof(void *), 0, 0, IDC_ARROW, 0, 0, "ComboLBox" },
     /* BIC32_POPUPMENU */
-    { CS_GLOBALCLASS | CS_SAVEBITS, PopupMenuWndProc,
-      0, sizeof(HMENU32), 0, 0, IDC_ARROW, NULL_BRUSH, 0, POPUPMENU_CLASS_NAME },
+    { CS_GLOBALCLASS | CS_SAVEBITS, PopupMenuWndProc, 0,
+      sizeof(HMENU32), 0, 0, IDC_ARROW, NULL_BRUSH, 0, POPUPMENU_CLASS_NAME },
+    /* BIC32_STATIC */
+    { CS_GLOBALCLASS | CS_PARENTDC, StaticWndProc,
+      0, sizeof(STATICINFO), 0, 0, IDC_ARROW, 0, 0, "Static" },
     /* BIC32_SCROLL */
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
       ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, IDC_ARROW, 0, 0, "ScrollBar"},

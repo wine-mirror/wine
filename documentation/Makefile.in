@@ -1,0 +1,27 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+
+SOURCES = \
+	wine.texinfo \
+	$(TOPSRCDIR)/AUTHORS \
+	$(TOPSRCDIR)/LICENSE \
+	$(TOPSRCDIR)/WARRANTY
+
+all: wine.info
+
+@MAKE_RULES@
+
+wine.info: $(SOURCES)
+	makeinfo -I$(TOPSRCDIR) $(SRCDIR)/wine.texinfo
+
+wine.dvi: $(SOURCES)
+	texi2dvi $(SRCDIR)/wine.texinfo
+
+clean::
+	$(RM) wine.aux wine.cp wine.cps wine.dvi wine.fn wine.fns wine.info \
+		wine.ky wine.log wine.pg wine.toc wine.tp wine.tps wine.vr
+
+### Dependencies:

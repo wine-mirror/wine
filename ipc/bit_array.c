@@ -23,7 +23,10 @@
 /* #define NDEBUG */
 
 #if defined(linux) && !defined(NO_ASM)
+#include <linux/version.h>
+#if LINUX_VERSION_CODE <= 131328 /* Linux 2.1.x doesn't return values with clear_bit and set_bit */
 #define HAS_BITOPS
+#endif
 #endif
 
 #include <stdio.h>

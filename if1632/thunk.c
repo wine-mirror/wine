@@ -125,8 +125,7 @@ static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
                          MAKELONG( cs->y, cs->x ), MAKELONG( cs->cy, cs->cx ),
                          MAKELONG( cs->hMenu, cs->hwndParent ), cs->hInstance,
                          (LONG)cs->lpCreateParams, hwnd, msg, wParam,
-                         MAKELONG( IF1632_Saved16_sp-sizeof(CREATESTRUCT16),
-                                   IF1632_Saved16_ss ) );
+                         IF1632_Saved16_ss_sp - sizeof(CREATESTRUCT16) );
     }
     return CallTo16_long_wwwl( (FARPROC16)proc, hwnd, msg, wParam, lParam );
 }

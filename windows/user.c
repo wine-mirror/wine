@@ -169,6 +169,17 @@ BOOL16 ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
 
 
 /***********************************************************************
+ *           ExitWindowsExec16   (USER.246)
+ */
+BOOL16 ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
+{
+fprintf(stdnimp, "ExitWindowsExec() : Should run the following in DOS-mode :\n\t\"%s %s\"\n",
+	lpszExe, lpszParams);
+    return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
+}
+
+
+/***********************************************************************
  *           ExitWindowsEx   (USER32.195)
  */
 BOOL32 ExitWindowsEx( UINT32 flags, DWORD reserved )

@@ -2,12 +2,12 @@ name	wsock32
 type	win32
 base	0
 
-001 stub accept
-002 stub bind
-003 stub closesocket
-004 stub connect
+001 stdcall accept(long ptr ptr) WINSOCK_accept
+002 stdcall bind(long ptr long) WINSOCK_bind
+003 stdcall closesocket(long) WINSOCK_closesocket
+004 stdcall connect(long ptr long) WINSOCK_connect
 005 stub getpeername
-006 stub getsockname
+006 stdcall getsockname(long ptr ptr) WINSOCK_getsockname
 007 stub getsockopt
 008 stdcall htonl(long) WINSOCK_htonl
 009 stdcall htons(long) WINSOCK_htons
@@ -25,7 +25,7 @@ base	0
 021 stub setsockopt
 022 stub shutdown
 023 stdcall socket(long long long) WINSOCK_socket
-051 stdcall gethostbyaddr(ptr long long) gethostbyaddr
+051 stdcall gethostbyaddr(ptr long long) WINSOCK_gethostbyaddr
 052 stdcall gethostbyname(ptr) gethostbyname
 053 stub getprotobyname
 054 stub getprotobynumber

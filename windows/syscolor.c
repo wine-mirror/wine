@@ -11,6 +11,7 @@
 #include "gdi.h"
 #include "syscolor.h"
 #include "stddebug.h"
+#include "tweak.h"
 /* #define DEBUG_SYSCOLOR */
 #include "debug.h"
 
@@ -22,7 +23,7 @@ static const char * const DefSysColors[] =
     "Background", "192 192 192",     /* COLOR_BACKGROUND          */
     "ActiveTitle", "0 64 128",       /* COLOR_ACTIVECAPTION       */
     "InactiveTitle", "255 255 255",  /* COLOR_INACTIVECAPTION     */
-    "Menu", "0 255 255",             /* COLOR_MENU                */
+    "Menu", "255 255 255",             /* COLOR_MENU                */
     "Window", "255 255 255",         /* COLOR_WINDOW              */
     "WindowFrame", "0 0 0",          /* COLOR_WINDOWFRAME         */
     "MenuText", "0 0 0",             /* COLOR_MENUTEXT            */
@@ -40,6 +41,32 @@ static const char * const DefSysColors[] =
     "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
     "ButtonHilight", "255 255 255"   /* COLOR_BTNHIGHLIGHT        */
 };
+
+static const char * const DefSysColors95[] =
+{
+    "Scrollbar", "224 224 224",      /* COLOR_SCROLLBAR           */
+    "Background", "192 192 192",     /* COLOR_BACKGROUND          */
+    "ActiveTitle", "0 64 128",       /* COLOR_ACTIVECAPTION       */
+    "InactiveTitle", "255 255 255",  /* COLOR_INACTIVECAPTION     */
+    "Menu", "192 192 192",           /* COLOR_MENU                */
+    "Window", "255 255 255",         /* COLOR_WINDOW              */
+    "WindowFrame", "0 0 0",          /* COLOR_WINDOWFRAME         */
+    "MenuText", "0 0 0",             /* COLOR_MENUTEXT            */
+    "WindowText", "0 0 0",           /* COLOR_WINDOWTEXT          */
+    "TitleText", "255 255 255",      /* COLOR_CAPTIONTEXT         */
+    "ActiveBorder", "128 128 128",   /* COLOR_ACTIVEBORDER        */
+    "InactiveBorder", "255 255 255", /* COLOR_INACTIVEBORDER      */
+    "AppWorkspace", "255 255 232",   /* COLOR_APPWORKSPACE        */
+    "Hilight", "166 202 240",        /* COLOR_HIGHLIGHT           */
+    "HilightText", "0 0 0",          /* COLOR_HIGHLIGHTTEXT       */
+    "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */
+    "ButtonShadow", "128 128 128",   /* COLOR_BTNSHADOW           */
+    "GrayText", "192 192 192",       /* COLOR_GRAYTEXT            */
+    "ButtonText", "0 0 0",           /* COLOR_BTNTEXT             */
+    "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
+    "ButtonHilight", "255 255 255"   /* COLOR_BTNHIGHLIGHT        */
+};
+
 
 #define NUM_SYS_COLORS     (COLOR_BTNHIGHLIGHT+1)
 
@@ -135,7 +162,8 @@ void SYSCOLOR_Init(void)
     const char * const *p;
     char buffer[100];
 
-    for (i = 0, p = DefSysColors; i < NUM_SYS_COLORS; i++, p += 2)
+    for (i = 0, p = TWEAK_Win95Look ? DefSysColors95 : DefSysColors;
+	 i < NUM_SYS_COLORS; i++, p += 2)
     {
 	GetProfileString32A( "colors", p[0], p[1], buffer, 100 );
 	if (!sscanf( buffer, " %d %d %d", &r, &g, &b )) r = g = b = 0;

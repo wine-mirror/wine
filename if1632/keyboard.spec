@@ -5,8 +5,8 @@ type	win16
 #2	pascal	Enable
 #3	pascal	Disable
 4   pascal16 ToAscii(word word ptr ptr word) ToAscii16
-5   pascal16 AnsiToOem(ptr ptr) AnsiToOem16
-6   pascal16 OemToAnsi(ptr ptr) OemToAnsi16
+5   pascal16 AnsiToOem(str ptr) AnsiToOem16
+6   pascal16 OemToAnsi(str ptr) OemToAnsi16
 7   return   SetSpeed 2 65535
 #100	pascal	ScreenSwitchEnable
 #126	pascal	GetTableSeg

@@ -62,11 +62,12 @@ by the ordinal number corresponding to the function.
 - "word"
 - "long"
 - "ptr" (linear pointer)
-- "str" (linear pointer to a string)
+- "str" (linear pointer to a null-terminated string)
 - "s_byte" (signed byte)
 - "s_word" (signed word)
 - "s_long" (signed long)
 - "segptr" (segmented pointer).
+- "segstr" (segmented pointer to a null-terminated string)
 
 Only "ptr", "str" and "long" are valid for Win32 functions.
 

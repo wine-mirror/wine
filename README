@@ -16,6 +16,7 @@ You must have one of:
 	Linux version 0.99.13 or above
 	NetBSD-current
 	FreeBSD-current or FreeBSD 1.1
+	OpenBSD/i386 2.1 or later
 
 You also need to have libXpm installed on your system. The sources for
 it are probably available on the ftp site where you got Wine. They can

@@ -267,6 +267,8 @@ INT16 WSAStartup(UINT16 wVersionRequested, LPWSADATA lpWSAData)
                                 "SunOS",
                         #elif defined(__FreeBSD__)
                                 "FreeBSD",
+                        #elif defined(__OpenBSD__)
+                                "OpenBSD/i386",
                         #else
                                 "Unknown",
                         #endif

@@ -15,8 +15,8 @@
   /* 16-bit stack layout after CallFrom16() */
 typedef struct
 {
-    WORD    saved_ss;                /* saved previous 16-bit stack */
-    WORD    saved_sp;
+    DWORD   saved_ss_sp;             /* saved previous 16-bit stack */
+    DWORD   ebp;                     /* full 32-bit content of ebp */
     WORD    entry_ip;                /* ip of entry point */
     WORD    ds;                      /* ds */
     WORD    entry_cs;                /* cs of entry point */
@@ -46,8 +46,7 @@ typedef struct
 #pragma pack(4)
 
   /* Saved 16-bit stack for current process (Win16 only) */
-extern WORD IF1632_Saved16_ss;
-extern WORD IF1632_Saved16_sp;
+extern DWORD IF1632_Saved16_ss_sp;
 
   /* Saved 32-bit stack for current process (Win16 only) */
 extern DWORD IF1632_Saved32_esp;
@@ -55,8 +54,7 @@ extern DWORD IF1632_Saved32_esp;
   /* Original Unix stack */
 extern DWORD IF1632_Original32_esp;
 
-#define CURRENT_STACK16 \
-    ((STACK16FRAME *)PTR_SEG_OFF_TO_LIN(IF1632_Saved16_ss,IF1632_Saved16_sp))
+#define CURRENT_STACK16  ((STACK16FRAME *)PTR_SEG_TO_LIN(IF1632_Saved16_ss_sp))
 
 #define CURRENT_DS   (CURRENT_STACK16->ds)
 

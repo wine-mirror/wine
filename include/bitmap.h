@@ -60,6 +60,7 @@ extern int DIB_GetXImageWidthBytes( int width, int depth );
 extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
 
   /* objects/oembitmap.c */
+extern BOOL32 OBM_Init(void);
 extern HBITMAP16 OBM_LoadBitmap( WORD id );
 extern HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor );
 

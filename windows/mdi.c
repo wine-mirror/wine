@@ -197,7 +197,7 @@ static HWND16 MDI_GetWindow(WND  *clientWnd, HWND16 hWnd, WORD wTo )
 static void MDI_CalcDefaultChildPos( WND* w, WORD n, LPPOINT16 lpPos,
                                      INT32 delta)
 {
- RECT16 rect = w->rectClient;
+ RECT32 rect = w->rectClient;
  INT32  spacing = GetSystemMetrics32(SM_CYCAPTION) +
                   GetSystemMetrics32(SM_CYFRAME) - 1; 
  INT32  nstagger;
@@ -398,11 +398,12 @@ static void MDI_ChildGetMinMaxInfo( WND* clientWnd, HWND16 hwnd,
                                     MINMAXINFO16* lpMinMax )
 {
  WND*	childWnd = WIN_FindWndPtr(hwnd);
- RECT16	rect 	 = clientWnd->rectClient;
+ RECT32	rect 	 = clientWnd->rectClient;
 
- MapWindowPoints16(clientWnd->parent->hwndSelf, 
-	       ((MDICLIENTINFO*)clientWnd->wExtra)->self, (LPPOINT16)&rect, 2);
- AdjustWindowRectEx16( &rect, childWnd->dwStyle, 0, childWnd->dwExStyle );
+ MapWindowPoints32(clientWnd->parent->hwndSelf, 
+                   ((MDICLIENTINFO*)clientWnd->wExtra)->self,
+                   (LPPOINT32)&rect, 2);
+ AdjustWindowRectEx32( &rect, childWnd->dwStyle, 0, childWnd->dwExStyle );
 
  lpMinMax->ptMaxSize.x = rect.right -= rect.left;
  lpMinMax->ptMaxSize.y = rect.bottom -= rect.top;
@@ -701,7 +702,7 @@ static LONG MDITile(WND* wndClient, MDICLIENTINFO *ci,WORD wParam)
 
 	if( total )
 	{
-	    RECT16	rect;
+	    RECT32	rect;
 	    int		x, y, xsize, ysize;
 	    int		rows, columns, r, c, i;
 
@@ -900,7 +901,7 @@ LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lP
 {
     LPCREATESTRUCT16     cs;
     MDICLIENTINFO       *ci;
-    RECT16		 rect;
+    RECT32		 rect;
     WND                 *w 	  = WIN_FindWndPtr(hwnd);
     WND			*frameWnd = w->parent;
     INT32 nItems;
@@ -948,7 +949,7 @@ LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lP
 
 	AppendMenu32A( ci->hWindowMenu, MF_SEPARATOR, 0, NULL );
 
-	GetClientRect16(frameWnd->hwndSelf, &rect);
+	GetClientRect32(frameWnd->hwndSelf, &rect);
 	NC_HandleNCCalcSize( w, &rect );
 	w->rectClient = rect;
 
@@ -1571,22 +1572,22 @@ BOOL16 TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
  */
 void CalcChildScroll( HWND16 hwnd, WORD scroll )
 {
-    RECT16 childRect, clientRect;
+    RECT32 childRect, clientRect;
     INT32  vmin, vmax, hmin, hmax, vpos, hpos;
     BOOL32 noscroll = FALSE;
     WND *pWnd, *Wnd;
 
     if (!(Wnd = pWnd = WIN_FindWndPtr( hwnd ))) return;
-    GetClientRect16( hwnd, &clientRect );
-    SetRectEmpty16( &childRect );
+    GetClientRect32( hwnd, &clientRect );
+    SetRectEmpty32( &childRect );
 
     for ( pWnd = pWnd->child; pWnd; pWnd = pWnd->next )
 	{
-          UnionRect16( &childRect, &pWnd->rectWindow, &childRect );
+          UnionRect32( &childRect, &pWnd->rectWindow, &childRect );
 	  if( pWnd->dwStyle & WS_MAXIMIZE )
 	      noscroll = TRUE;
 	} 
-    UnionRect16( &childRect, &clientRect, &childRect );
+    UnionRect32( &childRect, &clientRect, &childRect );
 
     /* jump through the hoops to prevent excessive flashing 
      */

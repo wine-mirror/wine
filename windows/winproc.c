@@ -1848,11 +1848,12 @@ LRESULT CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
 {
     LRESULT result;
     WND *wndPtr;
+    WORD ds;
     WINDOWPROC *proc = WINPROC_GetPtr( func );
-    WORD ds = CURRENT_DS;
 
     if (!proc)
     {
+        ds = CURRENT_DS;
         wndPtr = WIN_FindWndPtr( hwnd );
         if (wndPtr) CURRENT_DS = wndPtr->hInstance;
         result = WINPROC_CallWndProc16Ptr( func, hwnd, msg, wParam, lParam );
@@ -1872,6 +1873,7 @@ LRESULT CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     {
     case WIN_PROC_16:
         if (!proc->thunk.t_from32.proc) return 0;
+        ds = CURRENT_DS;
         wndPtr = WIN_FindWndPtr( hwnd );
         if (wndPtr) CURRENT_DS = wndPtr->hInstance;
         result = WINPROC_CallWndProc16Ptr( proc->thunk.t_from32.proc,

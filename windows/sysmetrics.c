@@ -7,6 +7,8 @@
 
 #include <stdio.h>
 #include "gdi.h"
+#include "options.h"
+#include "tweak.h"
 #include "sysmetrics.h"
 
 short sysMetrics[SM_CMETRICS+1];
@@ -20,89 +22,114 @@ void SYSMETRICS_Init(void)
 {
     sysMetrics[SM_CXSCREEN] = screenWidth;
     sysMetrics[SM_CYSCREEN] = screenHeight;
-    sysMetrics[SM_CXVSCROLL] = SYSMETRICS_CXVSCROLL;
-    sysMetrics[SM_CYHSCROLL] = SYSMETRICS_CYHSCROLL;
-    sysMetrics[SM_CYCAPTION] = SYSMETRICS_CYCAPTION;
-    sysMetrics[SM_CXBORDER] = SYSMETRICS_CXBORDER;
-    sysMetrics[SM_CYBORDER] = SYSMETRICS_CYBORDER;
-    sysMetrics[SM_CXDLGFRAME] = SYSMETRICS_CXDLGFRAME;
-    sysMetrics[SM_CYDLGFRAME] = SYSMETRICS_CYDLGFRAME;
-    sysMetrics[SM_CYVTHUMB] = SYSMETRICS_CYVTHUMB;
-    sysMetrics[SM_CXHTHUMB] = SYSMETRICS_CXHTHUMB;
-    sysMetrics[SM_CXICON] = SYSMETRICS_CXICON;
-    sysMetrics[SM_CYICON] = SYSMETRICS_CYICON;
-    sysMetrics[SM_CXCURSOR] = SYSMETRICS_CXCURSOR;
-    sysMetrics[SM_CYCURSOR] = SYSMETRICS_CYCURSOR;
-    sysMetrics[SM_CYMENU] = SYSMETRICS_CYMENU;
+    sysMetrics[SM_CXVSCROLL] =
+	PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 16) + 1;
+    sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
+    sysMetrics[SM_CYCAPTION] = 2 +
+	PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 18);
+    sysMetrics[SM_CXBORDER] = 1;
+    sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
+    sysMetrics[SM_CXDLGFRAME] =
+	PROFILE_GetWineIniInt("Tweak.Layout", "DialogFrameWidth",
+			      TWEAK_Win95Look ? 2 : 4);
+    sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
+    sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL] - 1;
+    sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
+    sysMetrics[SM_CXICON] = 32;
+    sysMetrics[SM_CYICON] = 32;
+    sysMetrics[SM_CYMENU] =
+	PROFILE_GetWineIniInt("Tweak.Layout", "MenuHeight", 18);
     sysMetrics[SM_CXFULLSCREEN] = sysMetrics[SM_CXSCREEN];
-    sysMetrics[SM_CYFULLSCREEN] = sysMetrics[SM_CYSCREEN] - sysMetrics[SM_CYCAPTION];
+    sysMetrics[SM_CYFULLSCREEN] =
+	sysMetrics[SM_CYSCREEN] - sysMetrics[SM_CYCAPTION];
     sysMetrics[SM_CYKANJIWINDOW] = 0;
     sysMetrics[SM_MOUSEPRESENT] = 1;
-    sysMetrics[SM_CYVSCROLL] = SYSMETRICS_CYVSCROLL;
-    sysMetrics[SM_CXHSCROLL] = SYSMETRICS_CXHSCROLL;
+    sysMetrics[SM_CYVSCROLL] = sysMetrics[SM_CYVTHUMB];
+    sysMetrics[SM_CXHSCROLL] = sysMetrics[SM_CXHTHUMB];
     sysMetrics[SM_DEBUG] = 0;
+
+    /* FIXME: The following should look for the registry key to see if the
+       buttons should be swapped. */
     sysMetrics[SM_SWAPBUTTON] = 0;
+
     sysMetrics[SM_RESERVED1] = 0;
     sysMetrics[SM_RESERVED2] = 0;
     sysMetrics[SM_RESERVED3] = 0;
     sysMetrics[SM_RESERVED4] = 0;
-    sysMetrics[SM_CXMIN] = SYSMETRICS_CXMIN;
-    sysMetrics[SM_CYMIN] = SYSMETRICS_CYMIN;
-    sysMetrics[SM_CXSIZE] = SYSMETRICS_CXSIZE;
-    sysMetrics[SM_CYSIZE] = SYSMETRICS_CYSIZE;
-    sysMetrics[SM_CXFRAME] = GetProfileInt32A( "windows", "BorderWidth", 4 );
+
+    /* FIXME: The following two are calculated, but how? */
+    sysMetrics[SM_CXMIN] = TWEAK_Win95Look ? 112 : 100;
+    sysMetrics[SM_CYMIN] = TWEAK_Win95Look ? 27 : 28;
+
+    sysMetrics[SM_CXSIZE] = sysMetrics[SM_CYCAPTION] - 2;
+    sysMetrics[SM_CYSIZE] = sysMetrics[SM_CXSIZE];
+    sysMetrics[SM_CXFRAME] = GetProfileInt32A("Windows", "BorderWidth", 4);
     sysMetrics[SM_CYFRAME] = sysMetrics[SM_CXFRAME];
-    sysMetrics[SM_CXMINTRACK] = SYSMETRICS_CXMINTRACK;
-    sysMetrics[SM_CYMINTRACK] = SYSMETRICS_CYMINTRACK;
-    sysMetrics[SM_CXDOUBLECLK] = (GetProfileInt32A( "windows","DoubleClickWidth", 4) + 1) & ~1;
-    sysMetrics[SM_CYDOUBLECLK] = (GetProfileInt32A( "windows","DoubleClickHeight", 4) + 1) & ~1;
-    sysMetrics[SM_CXICONSPACING] = GetProfileInt32A( "desktop","IconSpacing", 75);
-    sysMetrics[SM_CYICONSPACING] = GetProfileInt32A( "desktop","IconVerticalSpacing", 72);
-    sysMetrics[SM_MENUDROPALIGNMENT] = GetProfileInt32A( "windows","MenuDropAlignment", 0 );
+    sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
+    sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
+    sysMetrics[SM_CXDOUBLECLK] =
+	(GetProfileInt32A("Windows", "DoubleClickWidth", 4) + 1) & ~1;
+    sysMetrics[SM_CYDOUBLECLK] =
+	(GetProfileInt32A("Windows","DoubleClickHeight", 4) + 1) & ~1;
+    sysMetrics[SM_CXICONSPACING] =
+	GetProfileInt32A("Desktop","IconSpacing", 75);
+    sysMetrics[SM_CYICONSPACING] =
+	GetProfileInt32A("Desktop", "IconVerticalSpacing", 75);
+    sysMetrics[SM_MENUDROPALIGNMENT] =
+	GetProfileInt32A("Windows", "MenuDropAlignment", 0);
     sysMetrics[SM_PENWINDOWS] = 0;
     sysMetrics[SM_DBCSENABLED] = 0;
-    /* Win32 additions */
-    sysMetrics[SM_CMOUSEBUTTONS] = 3; /* FIXME: query X on that one */
+
+    /* FIXME: Need to query X for the following */
+    sysMetrics[SM_CMOUSEBUTTONS] = 3;
+
     sysMetrics[SM_SECURE] = 0;
-    sysMetrics[SM_CXEDGE] = SYSMETRICS_CXBORDER;
-    sysMetrics[SM_CYEDGE] = SYSMETRICS_CYBORDER;
-    sysMetrics[SM_CXMINSPACING] = SYSMETRICS_CYBORDER;
+    sysMetrics[SM_CXEDGE] = sysMetrics[SM_CXBORDER] + 1;
+    sysMetrics[SM_CYEDGE] = sysMetrics[SM_CXEDGE];
+    sysMetrics[SM_CXMINSPACING] = 160;
+    sysMetrics[SM_CYMINSPACING] = 24;
+    sysMetrics[SM_CXSMICON] =
+	sysMetrics[SM_CYSIZE] - (sysMetrics[SM_CYSIZE] % 2) - 2;
+    sysMetrics[SM_CYSMICON] = sysMetrics[SM_CXSMICON];
+    sysMetrics[SM_CYSMCAPTION] = 16;
+    sysMetrics[SM_CXSMSIZE] = 15;
+    sysMetrics[SM_CYSMSIZE] = sysMetrics[SM_CXSMSIZE];
+    sysMetrics[SM_CXMENUSIZE] = sysMetrics[SM_CYMENU];
+    sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CXMENUSIZE];
 
-/*
-SM_CXEDGE               45
-SM_CYEDGE               46
-SM_CXMINSPACING         47
-SM_CYMINSPACING         48
-SM_CXSMICON             49
-SM_CYSMICON             50
-SM_CYSMCAPTION          51
-SM_CXSMSIZE             52
-SM_CYSMSIZE             53
-SM_CXMENUSIZE           54
-SM_CYMENUSIZE           55
-SM_ARRANGE              56
-SM_CXMINIMIZED          57
-SM_CYMINIMIZED          58
-SM_CXMAXTRACK           59
-SM_CYMAXTRACK           60
-SM_CXMAXIMIZED          61
-SM_CYMAXIMIZED          62
- */
-    sysMetrics[SM_NETWORK] = 1;
-    sysMetrics[SM_CLEANBOOT] = 0; /* 0 - ok, 1 - failsafe, 2 - failsafe & net */
- /*
-SM_CXDRAG               68
-SM_CYDRAG               69
-  */
-    sysMetrics[SM_SHOWSOUNDS] = 1;
- /*
-SM_CXMENUCHECK          71
-SM_CYMENUCHECK          72
-  */
-    sysMetrics[SM_SLOWMACHINE] = 0; /* FIXME: perhaps decide on type of proc */
-    sysMetrics[SM_MIDEASTENABLED] = 0; /* FIXME: 1 if enabled */
+    /* FIXME: What do these mean? */
+    sysMetrics[SM_ARRANGE] = 8;
+    sysMetrics[SM_CXMINIMIZED] = 160;
+    sysMetrics[SM_CYMINIMIZED] = 24;
+
+    /* FIXME: How do I calculate these? */
+    sysMetrics[SM_CXMAXTRACK] = 
+	sysMetrics[SM_CXSCREEN] + 4 + 2 * sysMetrics[SM_CXFRAME];
+    sysMetrics[SM_CYMAXTRACK] =
+	sysMetrics[SM_CYSCREEN] + 4 + 2 * sysMetrics[SM_CYFRAME];
+    sysMetrics[SM_CXMAXIMIZED] =
+	sysMetrics[SM_CXSCREEN] + 2 * sysMetrics[SM_CXFRAME];
+    sysMetrics[SM_CYMAXIMIZED] =
+	sysMetrics[SM_CYSCREEN] - 45;
+    sysMetrics[SM_NETWORK] = 3;
+
+    /* For the following: 0 = ok, 1 = failsafe, 2 = failsafe + network */
+    sysMetrics[SM_CLEANBOOT] = 0;
+
+    sysMetrics[SM_CXDRAG] = 0;
+    sysMetrics[SM_CYDRAG] = 0;
+    sysMetrics[SM_SHOWSOUNDS] = 0;
+    sysMetrics[SM_CXMENUCHECK] = 2;
+    sysMetrics[SM_CYMENUCHECK] = 2;
+
+    /* FIXME: Should check the type of processor for the following */
+    sysMetrics[SM_SLOWMACHINE] = 0;
+
+    /* FIXME: Should perform a check */
+    sysMetrics[SM_MIDEASTENABLED] = 0;
+
+    sysMetrics[SM_MOUSEWHEELPRESENT] = 0;
     sysMetrics[SM_CMETRICS] = SM_CMETRICS;
-
 }
 
 

@@ -91,7 +91,8 @@ typedef struct _CONTEXT		/* Note 1 */
 #endif  /* __EMX__ */
 
 
-#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) \
+ || defined(__OpenBSD__)
 
 #define EAX_sig(context)     ((context)->sc_eax)
 #define EBX_sig(context)     ((context)->sc_ebx)
@@ -121,7 +122,7 @@ typedef struct _CONTEXT		/* Note 1 */
 #define EIP_sig(context)     (*((unsigned long*)&(context)->sc_eip))
 #define ESP_sig(context)     (*((unsigned long*)&(context)->sc_esp))
 
-#endif  /* linux || __NetBSD__ || __FreeBSD__ */
+#endif  /* linux || __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
 
 #if defined(__svr4__) || defined(_SCO_DS)
 

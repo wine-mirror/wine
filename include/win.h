@@ -37,6 +37,7 @@ typedef enum
     BIC32_COMBO,
     BIC32_COMBOLB,
     BIC32_POPUPMENU,
+    BIC32_STATIC,
     BIC32_SCROLL,
     BIC32_DESKTOP,
     BIC32_DIALOG,
@@ -61,8 +62,8 @@ typedef struct tagWND
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     HWND32         hwndSelf;      /* Handle of this window */
     HINSTANCE16    hInstance;     /* Window hInstance (from CreateWindow) */
-    RECT16         rectClient;    /* Client area rel. to parent client area */
-    RECT16         rectWindow;    /* Whole window rel. to parent client area */
+    RECT32         rectClient;    /* Client area rel. to parent client area */
+    RECT32         rectWindow;    /* Whole window rel. to parent client area */
     LPSTR          text;          /* Window text */
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */

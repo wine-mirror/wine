@@ -38,6 +38,19 @@
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
+struct DOS_FILE_LOCK {
+  struct DOS_FILE_LOCK *	next;
+  DWORD				base;
+  DWORD				len;
+  DWORD				processId;
+  FILE_OBJECT *			dos_file;
+  char *			unix_name;
+};
+
+typedef struct DOS_FILE_LOCK DOS_FILE_LOCK;
+
+static DOS_FILE_LOCK *locks = NULL;
+static void DOS_RemoveFileLocks(FILE_OBJECT *file);
 
 /***********************************************************************
  *           FILE_Alloc
@@ -74,6 +87,8 @@ void FILE_Destroy( K32OBJ *ptr )
 {
     FILE_OBJECT *file = (FILE_OBJECT *)ptr;
     assert( ptr->type == K32OBJ_FILE );
+
+    DOS_RemoveFileLocks(file);
 
     if (file->unix_handle != -1) close( file->unix_handle );
     if (file->unix_name) HeapFree( SystemHeap, 0, file->unix_name );
@@ -621,16 +636,19 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     char *p;
     int unixMode;
 
-    if (!name || !ofs) return HFILE_ERROR32;
+    if (!ofs) return HFILE_ERROR32;
+
+
+    ofs->cBytes = sizeof(OFSTRUCT);
+    ofs->nErrCode = 0;
+    if (mode & OF_REOPEN) name = ofs->szPathName;
 
     if (!name) {
 	fprintf(stderr, "ERROR: FILE_DoOpenFile() called with `name' set to NULL ! Please debug.\n");
  
 	return HFILE_ERROR32;
     }
-    ofs->cBytes = sizeof(OFSTRUCT);
-    ofs->nErrCode = 0;
-    if (mode & OF_REOPEN) name = ofs->szPathName;
+
     dprintf_file( stddeb, "OpenFile: %s %04x\n", name, mode );
 
     /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
@@ -1201,8 +1219,12 @@ LPVOID FILE_mmap( FILE_OBJECT *file, LPVOID start,
     if (!file)
     {
 	/* Linux EINVAL's on us if we don't pass MAP_PRIVATE to an anon mmap */
+#ifdef MAP_SHARED
 	flags &= ~MAP_SHARED;
+#endif
+#ifdef MAP_PRIVATE
 	flags |= MAP_PRIVATE;
+#endif
 #ifdef MAP_ANON
         flags |= MAP_ANON;
 #else
@@ -1238,24 +1260,148 @@ DWORD GetFileType( HFILE32 hFile )
 
 
 /**************************************************************************
+ *           MoveFileEx32A   (KERNEL32.???)
+ *
+ * 
+ */
+BOOL32 MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
+{
+    DOS_FULL_NAME full_name1, full_name2;
+    int mode=0; /* mode == 1: use copy */
+
+    dprintf_file( stddeb, "MoveFileEx32A(%s,%s,%04lx)\n", fn1, fn2, flag);
+
+    if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
+    if (fn2) { /* !fn2 means delete fn1 */
+      if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
+      /* Source name and target path are valid */
+      if ( full_name1.drive != full_name2.drive)
+	/* use copy, if allowed */
+	if (!(flag & MOVEFILE_COPY_ALLOWED)) {
+	  /* FIXME: Use right error code */
+	  DOS_ERROR( ER_FileExists, EC_Exists, SA_Abort, EL_Disk );
+	  return FALSE;
+	}
+	else mode =1;
+      if (DOSFS_GetFullName( fn2, TRUE, &full_name2 )) 
+	/* target exists, check if we may overwrite */
+	if (!(flag & MOVEFILE_REPLACE_EXISTING)) {
+	  /* FIXME: Use right error code */
+	  DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+	  return FALSE;
+	}
+    }
+    else /* fn2 == NULL means delete source */
+      if (flag & MOVEFILE_DELAY_UNTIL_REBOOT) {
+	if (flag & MOVEFILE_COPY_ALLOWED) {  
+	  fprintf( stderr,
+		   "MoveFileEx32A: Illegal flag\n");
+	  DOS_ERROR( ER_GeneralFailure, EC_SystemFailure, SA_Abort,
+		     EL_Unknown );
+	  return FALSE;
+	}
+	/* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
+	   Perhaps we should queue these command and execute it 
+	   when exiting... What about using on_exit(2)
+	   */
+	fprintf( stderr,"MoveFileEx32A: Please delete file %s\n",
+		 full_name1.long_name);
+	fprintf( stderr,"               when Wine has finished\n");
+	fprintf( stderr,"               like \"rm %s\"\n",
+		 full_name1.long_name);
+	return TRUE;
+      }
+      else if (unlink( full_name1.long_name ) == -1)
+      {
+        FILE_SetDosError();
+        return FALSE;
+      }
+      else  return TRUE; /* successfully deleted */
+
+    if (flag & MOVEFILE_DELAY_UNTIL_REBOOT) {
+	/* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
+	   Perhaps we should queue these command and execute it 
+	   when exiting... What about using on_exit(2)
+	   */
+	fprintf( stderr,"MoveFileEx32A: Please move existing file %s\n"
+		 ,full_name1.long_name);
+	fprintf( stderr,"               to file %s\n"
+		 ,full_name2.long_name);
+	fprintf( stderr,"               when Wine has finished\n");
+	fprintf( stderr,"               like \" mv %s %s\"\n",
+		 full_name1.long_name,full_name2.long_name);
+	return TRUE;
+    }
+
+    if (!mode) /* move the file */
+      if (rename( full_name1.long_name, full_name2.long_name ) == -1)
+	{
+	  FILE_SetDosError();
+	  return FALSE;
+	}
+      else return TRUE;
+    else /* copy File */
+      return CopyFile32A(fn1, fn2, (!(flag & MOVEFILE_REPLACE_EXISTING))); 
+    
+}
+
+/**************************************************************************
+ *           MoveFileEx32W   (KERNEL32.???)
+ */
+BOOL32 MoveFileEx32W( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
+{
+    LPSTR afn1 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn1 );
+    LPSTR afn2 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn2 );
+    BOOL32 res = MoveFileEx32A( afn1, afn2, flag );
+    HeapFree( GetProcessHeap(), 0, afn1 );
+    HeapFree( GetProcessHeap(), 0, afn2 );
+    return res;
+}
+
+
+/**************************************************************************
  *           MoveFile32A   (KERNEL32.387)
+ *
+ *  Move file or directory
  */
 BOOL32 MoveFile32A( LPCSTR fn1, LPCSTR fn2 )
 {
     DOS_FULL_NAME full_name1, full_name2;
+    struct stat fstat;
 
     dprintf_file( stddeb, "MoveFile32A(%s,%s)\n", fn1, fn2 );
 
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
+    if (DOSFS_GetFullName( fn2, TRUE, &full_name2 )) 
+      /* The new name must not already exist */ 
+      return FALSE;
     if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
-    /* FIXME: should not replace an existing file */
-    /* FIXME: should handle renaming across devices */
+
+    if (full_name1.drive == full_name2.drive) /* move */
     if (rename( full_name1.long_name, full_name2.long_name ) == -1)
     {
         FILE_SetDosError();
         return FALSE;
     }
-    return TRUE;
+      else return TRUE;
+    else /*copy */ {
+      if (stat(  full_name1.long_name, &fstat ))
+	{
+	  dprintf_file( stddeb, "Invalid source file %s\n",
+			full_name1.long_name);
+	  FILE_SetDosError();
+	  return FALSE;
+	}
+      if (S_ISDIR(fstat.st_mode)) {
+	/* No Move for directories across file systems */
+	/* FIXME: Use right error code */
+	DOS_ERROR( ER_GeneralFailure, EC_SystemFailure, SA_Abort,
+		   EL_Unknown );
+	return FALSE;
+      }
+      else
+	return CopyFile32A(fn1, fn2, TRUE); /*fail, if exist */ 
+    }
 }
 
 
@@ -1365,3 +1511,175 @@ BOOL32 SetFileTime( HFILE32 hFile,
     FILE_ReleaseFile( file );
     return TRUE;
 }
+
+/* Locks need to be mirrored because unix file locking is based
+ * on the pid. Inside of wine there can be multiple WINE processes
+ * that share the same unix pid.
+ * Read's and writes should check these locks also - not sure
+ * how critical that is at this point (FIXME).
+ */
+
+static BOOL32 DOS_AddLock(FILE_OBJECT *file, struct flock *f)
+{
+  DOS_FILE_LOCK *curr;
+  DWORD		processId;
+
+  processId = GetCurrentProcessId();
+
+  /* check if lock overlaps a current lock for the same file */
+  for (curr = locks; curr; curr = curr->next) {
+    if (strcmp(curr->unix_name, file->unix_name) == 0) {
+      if ((f->l_start < (curr->base + curr->len)) &&
+	  ((f->l_start + f->l_len) > curr->base)) {
+	/* region overlaps */
+	return FALSE;
+      }
+    }
+  }
+
+  curr = HeapAlloc( SystemHeap, 0, sizeof(DOS_FILE_LOCK) );
+  curr->processId = GetCurrentProcessId();
+  curr->base = f->l_start;
+  curr->len = f->l_len;
+  curr->unix_name = HEAP_strdupA( SystemHeap, 0, file->unix_name);
+  curr->next = locks;
+  curr->dos_file = file;
+  locks = curr;
+  return TRUE;
+}
+
+static void DOS_RemoveFileLocks(FILE_OBJECT *file)
+{
+  DWORD		processId;
+  DOS_FILE_LOCK **curr;
+  DOS_FILE_LOCK *rem;
+
+  processId = GetCurrentProcessId();
+  curr = &locks;
+  while (*curr) {
+    if ((*curr)->dos_file == file) {
+      rem = *curr;
+      *curr = (*curr)->next;
+      HeapFree( SystemHeap, 0, rem->unix_name );
+      HeapFree( SystemHeap, 0, rem );
+    }
+    else
+      curr = &(*curr)->next;
+  }
+}
+
+static BOOL32 DOS_RemoveLock(FILE_OBJECT *file, struct flock *f)
+{
+  DWORD		processId;
+  DOS_FILE_LOCK **curr;
+  DOS_FILE_LOCK *rem;
+
+  processId = GetCurrentProcessId();
+  for (curr = &locks; *curr; curr = &(*curr)->next) {
+    if ((*curr)->processId == processId &&
+	(*curr)->dos_file == file &&
+	(*curr)->base == f->l_start &&
+	(*curr)->len == f->l_len) {
+      /* this is the same lock */
+      rem = *curr;
+      *curr = (*curr)->next;
+      HeapFree( SystemHeap, 0, rem->unix_name );
+      HeapFree( SystemHeap, 0, rem );
+      return TRUE;
+    }
+  }
+  /* no matching lock found */
+  return FALSE;
+}
+
+
+/**************************************************************************
+ *           LockFile   (KERNEL32.511)
+ */
+BOOL32 LockFile(
+	HFILE32 hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
+	DWORD nNumberOfBytesToLockLow,DWORD nNumberOfBytesToLockHigh )
+{
+  struct flock f;
+  FILE_OBJECT *file;
+
+  dprintf_file(stddeb, "LockFile32: handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
+	       hFile, dwFileOffsetLow, dwFileOffsetHigh,
+	       nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh);
+
+  if (dwFileOffsetHigh || nNumberOfBytesToLockHigh) {
+    dprintf_file(stddeb, "LockFile32: Unimplemented bytes > 32bits\n");
+    return FALSE;
+  }
+
+  f.l_start = dwFileOffsetLow;
+  f.l_len = nNumberOfBytesToLockLow;
+  f.l_whence = SEEK_SET;
+  f.l_pid = 0;
+  f.l_type = F_WRLCK;
+
+  if (!(file = FILE_GetFile(hFile))) return FALSE;
+
+  /* shadow locks internally */
+  if (!DOS_AddLock(file, &f)) {
+    DOS_ERROR( ER_LockViolation, EC_AccessDenied, SA_Ignore, EL_Disk );
+    return FALSE;
+  }
+
+  /* FIXME: Unix locking commented out for now, doesn't work with Excel */
+#ifdef USE_UNIX_LOCKS
+  if (fcntl(file->unix_handle, F_SETLK, &f) == -1) {
+    if (errno == EACCES || errno == EAGAIN) {
+      DOS_ERROR( ER_LockViolation, EC_AccessDenied, SA_Ignore, EL_Disk );
+    }
+    else {
+      FILE_SetDosError();
+    }
+    /* remove our internal copy of the lock */
+    DOS_RemoveLock(file, &f);
+    return FALSE;
+  }
+#endif
+  return TRUE;
+}
+
+
+/**************************************************************************
+ *           UnlockFile   (KERNEL32.703)
+ */
+BOOL32 UnlockFile(
+	HFILE32 hFile,DWORD dwFileOffsetLow,DWORD dwFileOffsetHigh,
+	DWORD nNumberOfBytesToUnlockLow,DWORD nNumberOfBytesToUnlockHigh )
+{
+  FILE_OBJECT *file;
+  struct flock f;
+
+  dprintf_file(stddeb, "UnlockFile32: handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
+	       hFile, dwFileOffsetLow, dwFileOffsetHigh,
+	       nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh);
+
+  if (dwFileOffsetHigh || nNumberOfBytesToUnlockHigh) {
+    dprintf_file(stddeb, "UnlockFile32: Unimplemented bytes > 32bits\n");
+    return FALSE;
+  }
+
+  f.l_start = dwFileOffsetLow;
+  f.l_len = nNumberOfBytesToUnlockLow;
+  f.l_whence = SEEK_SET;
+  f.l_pid = 0;
+  f.l_type = F_UNLCK;
+
+  if (!(file = FILE_GetFile(hFile))) return FALSE;
+
+  DOS_RemoveLock(file, &f);	/* ok if fails - may be another wine */
+
+  /* FIXME: Unix locking commented out for now, doesn't work with Excel */
+#ifdef USE_UNIX_LOCKS
+  if (fcntl(file->unix_handle, F_SETLK, &f) == -1) {
+    FILE_SetDosError();
+    return FALSE;
+  }
+#endif
+  return TRUE;
+}
+

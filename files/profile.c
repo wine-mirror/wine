@@ -604,6 +604,118 @@ int PROFILE_GetWineIniInt( const char *section, const char *key_name, int def )
 }
 
 
+/******************************************************************************
+ *
+ *   int  PROFILE_EnumerateWineIniSection(
+ *     char const  *section,  // Name of the section to enumerate
+ *     void  (*cbfn)(char const *key, char const *value, void *user),
+                              // Address of the callback function
+ *     void  *user )          // User-specified pointer.
+ *
+ *   For each entry in a section in the wine.conf file, this function will
+ *   call the specified callback function, informing it of each key and
+ *   value.  An optional user pointer may be passed to it (if this is not
+ *   needed, pass NULL through it and ignore the value in the callback
+ *   function).
+ *
+ *   The callback function must accept three parameters:
+ *      The name of the key (char const *)
+ *      The value of the key (char const *)
+ *      A user-specified parameter (void *)
+ *   Note that the first two are char CONST *'s, not char *'s!  The callback
+ *   MUST not modify these strings!
+ *
+ *   The return value indicates the number of times the callback function
+ *   was called.
+ */
+int  PROFILE_EnumerateWineIniSection(
+    char const  *section,
+    void  (*cbfn)(char const *, char const *, void *),
+    void  *userptr )
+{
+    PROFILESECTION  *scansect;
+    PROFILEKEY  *scankey;
+    int  calls = 0;
+
+    /* Search for the correct section */
+    for(scansect = WineProfile; scansect; scansect = scansect->next) {
+	if(scansect->name && !lstrcmpi32A(scansect->name, section)) {
+
+	    /* Enumerate each key with the callback */
+	    for(scankey = scansect->key; scankey; scankey = scankey->next) {
+
+		/* Ignore blank entries -- these shouldn't exist, but let's
+		   be extra careful */
+		if(scankey->name[0]) {
+		    cbfn(scankey->name, scankey->value, userptr);
+		    ++calls;
+		}
+	    }
+	
+	    break;
+	}
+    }
+
+    return calls;
+}
+
+
+/******************************************************************************
+ *
+ *   int  PROFILE_GetWineIniBool(
+ *      char const  *section,
+ *      char const  *key_name,
+ *      int  def )
+ *
+ *   Reads a boolean value from the wine.ini file.  This function attempts to
+ *   be user-friendly by accepting 'n', 'N' (no), 'f', 'F' (false), or '0'
+ *   (zero) for false, 'y', 'Y' (yes), 't', 'T' (true), or '1' (one) for
+ *   true.  Anything else results in the return of the default value.
+ *
+ *   This function uses 1 to indicate true, and 0 for false.  You can check
+ *   for existence by setting def to something other than 0 or 1 and
+ *   examining the return value.
+ */
+int  PROFILE_GetWineIniBool(
+    char const  *section,
+    char const  *key_name,
+    int  def )
+{
+    char  key_value[2];
+    int  retval;
+
+    PROFILE_GetWineIniString(section, key_name, "~", key_value, 2);
+
+    switch(key_value[0]) {
+    case 'n':
+    case 'N':
+    case 'f':
+    case 'F':
+    case '0':
+	retval = 0;
+	break;
+
+    case 'y':
+    case 'Y':
+    case 't':
+    case 'T':
+    case '1':
+	retval = 1;
+	break;
+
+    default:
+	retval = def;
+    }
+
+    dprintf_profile(stddeb, "PROFILE_GetWineIniBool(\"%s\", \"%s\", %s), "
+		    "[%c], ret %s.\n", section, key_name,
+		    def ? "TRUE" : "FALSE", key_value[0],
+		    retval ? "TRUE" : "FALSE");
+
+    return retval;
+}
+
+
 /***********************************************************************
  *           PROFILE_LoadWineIni
  *

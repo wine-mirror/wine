@@ -197,7 +197,7 @@ DWORD IO_inport( int port, int count )
 #ifdef linux
     if (do_direct_port_access) iopl(0);
 #endif
-    dprintf_int(stddeb, "( 0x%x )\n", res );
+    dprintf_int(stddeb, "( 0x%lx )\n", res );
     return res;
 }
 

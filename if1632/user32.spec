@@ -103,7 +103,7 @@ base	1
 0096 return DdeDisconnect 4 0
 0097 stub DdeDisconnectList
 0098 stub DdeEnableCallback
-0099 stub DdeFreeDataHandle
+0099 return DdeFreeDataHandle 4 1
 0100 return DdeFreeStringHandle 8 0
 0101 stub DdeGetData
 0102 return DdeGetLastError 4 0

@@ -21,7 +21,7 @@ extern void SELECTOR_FreeBlock( WORD sel, WORD count );
 #if defined(linux)
 # define WINE_DATA_SELECTOR 0x2b
 # define WINE_CODE_SELECTOR 0x23
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 # define WINE_DATA_SELECTOR 0x1f
 # define WINE_CODE_SELECTOR 0x17
 #elif defined(__FreeBSD__)

@@ -697,32 +697,31 @@ static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event )
     else
     {
         WND *wndPtr = WIN_FindWndPtr( hwnd );
-	WINDOWPOS16 *winpos;
-	RECT16 newWindowRect, newClientRect;
+	WINDOWPOS32 winpos;
+	RECT32 newWindowRect, newClientRect;
 	HRGN32 hrgnOldPos, hrgnNewPos;
 	Window above = event->above;
 
-	if (!wndPtr || !(wndPtr->flags & WIN_MANAGED) ||
-            !(winpos = SEGPTR_NEW(WINDOWPOS16))) return;
+	if (!wndPtr || !(wndPtr->flags & WIN_MANAGED)) return;
 
 	/* Fill WINDOWPOS struct */
-	winpos->flags = SWP_NOACTIVATE | SWP_NOZORDER;
-	winpos->hwnd = hwnd;
-	winpos->x = event->x;
-	winpos->y = event->y;
-	winpos->cx = event->width;
-	winpos->cy = event->height;
+	winpos.flags = SWP_NOACTIVATE | SWP_NOZORDER;
+	winpos.hwnd = hwnd;
+	winpos.x = event->x;
+	winpos.y = event->y;
+	winpos.cx = event->width;
+	winpos.cy = event->height;
 
 	/* Check for unchanged attributes */
-	if(winpos->x == wndPtr->rectWindow.left &&
-	   winpos->y == wndPtr->rectWindow.top)
-	    winpos->flags |= SWP_NOMOVE;
-	if(winpos->cx == wndPtr->rectWindow.right - wndPtr->rectWindow.left &&
-	   winpos->cy == wndPtr->rectWindow.bottom - wndPtr->rectWindow.top)
-	    winpos->flags |= SWP_NOSIZE;
+	if(winpos.x == wndPtr->rectWindow.left &&
+	   winpos.y == wndPtr->rectWindow.top)
+	    winpos.flags |= SWP_NOMOVE;
+	if(winpos.cx == wndPtr->rectWindow.right - wndPtr->rectWindow.left &&
+	   winpos.cy == wndPtr->rectWindow.bottom - wndPtr->rectWindow.top)
+	    winpos.flags |= SWP_NOSIZE;
 
 	/* Send WM_WINDOWPOSCHANGING */
-	SendMessage16(hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)SEGPTR_GET(winpos));
+	SendMessage32A( hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&winpos );
 
 	/* Calculate new position and size */
 	newWindowRect.left = event->x;
@@ -730,20 +729,18 @@ static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event )
 	newWindowRect.top = event->y;
 	newWindowRect.bottom = event->y + event->height;
 
-	WINPOS_SendNCCalcSize( winpos->hwnd, TRUE, &newWindowRect,
-			       &wndPtr->rectWindow, &wndPtr->rectClient,
-			       SEGPTR_GET(winpos), &newClientRect );
+	WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
+                               &wndPtr->rectWindow, &wndPtr->rectClient,
+                               &winpos, &newClientRect );
 
-        hrgnOldPos = CreateRectRgnIndirect16( &wndPtr->rectWindow );
-        hrgnNewPos = CreateRectRgnIndirect16( &newWindowRect );
+        hrgnOldPos = CreateRectRgnIndirect32( &wndPtr->rectWindow );
+        hrgnNewPos = CreateRectRgnIndirect32( &newWindowRect );
         CombineRgn32( hrgnOldPos, hrgnOldPos, hrgnNewPos, RGN_DIFF );
  
 	/* Set new size and position */
 	wndPtr->rectWindow = newWindowRect;
 	wndPtr->rectClient = newClientRect;
-	SendMessage16( hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)SEGPTR_GET(winpos));
-
-        SEGPTR_FREE(winpos);
+	SendMessage32A( hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
 
 	if( IsWindow32( hwnd ) )
 	    if( above == None )			/* absolute bottom */

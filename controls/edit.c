@@ -1462,8 +1462,8 @@ static void EDIT_MoveHome(WND *wnd, EDITSTATE *es, BOOL32 extend)
 		e = EDIT_CharFromPos(wnd, es, 0x80000000,
 			HIWORD(EDIT_EM_PosFromChar(wnd, es, es->selection_end, es->flags & EF_AFTER_WRAP)), NULL);
 	else
-		e = lstrlen32A(es->text);
-	EDIT_EM_SetSel(wnd, es, extend ? es->selection_start : e, e, FALSE);
+		e = 0;
+	EDIT_EM_SetSel(wnd, es, e, extend ? es->selection_start : e, FALSE);
 	EDIT_EM_ScrollCaret(wnd, es);
 }
 

@@ -57,8 +57,6 @@ extern LRESULT MDIClientWndProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT PrintDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT PrintSetupDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT ReplaceTextDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
-extern LRESULT ScrollBarWndProc(HWND16,UINT16,WPARAM16,LPARAM);
-extern LRESULT StaticWndProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT TASK_Reschedule(void);
 
 /***********************************************************************
@@ -77,8 +75,6 @@ FARPROC16 MODULE_GetWndProcEntry16( char *name )
   MAP_STR_TO_PROC("PrintDlgProc",PrintDlgProc);
   MAP_STR_TO_PROC("PrintSetupDlgProc",PrintSetupDlgProc);
   MAP_STR_TO_PROC("ReplaceTextDlgProc",ReplaceTextDlgProc);
-  MAP_STR_TO_PROC("ScrollBarWndProc",ScrollBarWndProc);
-  MAP_STR_TO_PROC("StaticWndProc",StaticWndProc);
   MAP_STR_TO_PROC("TASK_Reschedule",TASK_Reschedule);
   fprintf(stderr,"warning: No mapping for %s(), add one in library/miscstubs.c\n",name);
   return NULL;

@@ -9,7 +9,7 @@
  *            without (with the argument is the server).
  ***************************************************************************
  */
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/syscall.h>
 #include <sys/param.h>
 #else
@@ -59,7 +59,7 @@ void init_signals()
     (void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
   wine_sigaction(SIGUSR2,&usr2_act,NULL);
 #endif
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
   usr2_act.sa_hadnler = (void (*)) stop_wait;
   usr2_act.sa_flags = SA_ONSTACK;
   usr2_act.sa_mask = sig_mask;

@@ -2477,6 +2477,7 @@ Make.rules
 Makefile
 controls/Makefile
 debugger/Makefile
+documentation/Makefile
 files/Makefile
 graphics/Makefile
 graphics/metafiledrv/Makefile
@@ -2595,6 +2596,7 @@ CONFIG_FILES=\${CONFIG_FILES-"Make.rules
 Makefile
 controls/Makefile
 debugger/Makefile
+documentation/Makefile
 files/Makefile
 graphics/Makefile
 graphics/metafiledrv/Makefile
