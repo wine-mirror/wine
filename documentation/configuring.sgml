@@ -929,7 +929,9 @@ OPTIONAL:
         <title>What If It Doesn't Work?</title>
         <para>
           There is always a chance that things will go wrong. If the
-          unthinkable happens,  try the newsgroup,
+          unthinkable happens report the problem to
+	  <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>,
+	  try the newsgroup
           <systemitem>comp.emulators.ms-windows.wine</systemitem>,
 	  or the IRCnet channel <systemitem>#WineHQ</systemitem> found on
           irc.stealth.net:6668,	 or connected servers.

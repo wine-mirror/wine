@@ -300,7 +300,7 @@ of the authors, please see the file
 in the top-level directory of the source distribution.
 .SH COPYRIGHT
 .B wine
-can be distributed under the terms of the X11 license. A copy of the
+can be distributed under the terms of the LGPL license. A copy of the
 license is in the file
 .B LICENSE
 in the top-level directory of the source distribution.
@@ -310,16 +310,16 @@ A status report on many applications is available from
 .I http://www.winehq.com/Apps.
 Please add entries to this list for applications you currently run.
 .PP
-Bug reports and successes may be posted to 
-.I comp.emulators.ms-windows.wine.
+Bug reports may be posted to Wine Bugzilla
+.I http://bugs.winehq.com
 If you want to post a bug report, please read the file
 .I documentation/bugs.sgml
 in the 
 .B wine 
-source to see what information is necessary (FIXME: outdated).
+source to see what information is necessary
 .PP
-For problems and suggestions with this manpage, please send a note to
-James Juran <jrj120@psu.edu>.
+Problems and suggestions with this manpage please also report to
+.I http://bugs.winehq.com
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
@@ -353,8 +353,8 @@ For further information about
 .B wine
 development, you might want to subscribe to the 
 .B wine 
-"cvs", "devel" and "patches" mailing lists at
-.I http://www.winehq.com/dev.html#ml.
+mailing lists at
+.I http://www.winehq.com/development/#ml
 .SH FILES
 .PD 0
 .TP

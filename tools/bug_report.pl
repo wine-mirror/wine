@@ -74,8 +74,10 @@ if ($debuglevel < 3) {
 	two files. The first one has everything asked for by the bugreports guide;
 	the second has *all* of the debug output, which can go to thousands of
 	lines.
-	To (hopefully) get the bug fixed, attach the first file to a messsage
-	sent to the comp.emulators.ms-windows.wine newsgroup. The developers
+	To (hopefully) get the bug fixed, report it to the project
+	bug tracking system at http://bugs.winehq.com.
+	Attach the first file to the bug description.
+	Also include detailed description of the problem. The developers
 	might ask you for "the last X lines from the report". If so, just
 	provide the output of the following command:
 	    gzip -d (output file) | tail -n (X) > outfile
@@ -564,8 +566,9 @@ $dbgoutfile.gz
 Note that it is $dbgoutfile.gz, since I compressed it with gzip for you.
 };
 $var30 = qq{
-Having problems with the script? Tell the wine newsgroup
-(comp.emulators.ms-windows.wine).
+Having problems with the script?
+Submit a bug report to Wine bugtracking system at http://bugs.winehq.com or
+tell the wine newsgroup (comp.emulators.ms-windows.wine).
 };
 print do_var($var22);
 print do_var($var28) if $outfile ne "no file";
