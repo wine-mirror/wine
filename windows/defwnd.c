@@ -859,6 +859,14 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 	}
 	break;
 
+    case WM_INPUTLANGCHANGEREQUEST:
+        /* notify about the switch only if it's really our current layout */
+        if ((HKL)lParam == GetKeyboardLayout(0))
+            result = SendMessageA( hwnd, WM_INPUTLANGCHANGE, wParam, lParam );
+        else
+            result = 0;
+        break;
+
     default:
         result = DEFWND_DefWinProc( hwnd, msg, wParam, lParam );
         break;
@@ -969,6 +977,14 @@ LRESULT WINAPI DefWindowProcW(
 		result = DEFWND_ImmIsUIMessageW( hwndIME, msg, wParam, lParam );
 	}
 	break;
+
+    case WM_INPUTLANGCHANGEREQUEST:
+        /* notify about the switch only if it's really our current layout */
+        if ((HKL)lParam == GetKeyboardLayout(0))
+            result = SendMessageW( hwnd, WM_INPUTLANGCHANGE, wParam, lParam );
+        else
+            result = 0;
+        break;
 
     default:
         result = DEFWND_DefWinProc( hwnd, msg, wParam, lParam );

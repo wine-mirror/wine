@@ -3714,7 +3714,7 @@ BOOL      WINAPI EnumThreadWindows(DWORD,WNDENUMPROC,LPARAM);
 BOOL      WINAPI ExitWindowsEx(UINT,DWORD);
 BOOL      WINAPI GetIconInfo(HICON,PICONINFO);
 HKL       WINAPI GetKeyboardLayout(DWORD);
-INT       WINAPI GetKeyboardLayoutList(INT,HKL *);
+UINT      WINAPI GetKeyboardLayoutList(INT,HKL *);
 BOOL      WINAPI GetComboBoxInfo(HWND,PCOMBOBOXINFO);
 DWORD     WINAPI GetMenuContextHelpId(HMENU);
 UINT      WINAPI GetMenuDefaultItem(HMENU,UINT,UINT);
@@ -3767,9 +3767,11 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD,DWORD,HMODULE,WINEVENTPROC,DWORD,DWOR
 WORD        WINAPI TileWindows (HWND, UINT, const LPRECT,
                                 UINT, const HWND *);
 INT         WINAPI ToUnicode(UINT,UINT,PBYTE,LPWSTR,int,UINT);
+INT         WINAPI ToUnicodeEx(UINT,UINT,LPBYTE,LPWSTR,int,UINT,HKL);
 BOOL      WINAPI TrackPopupMenuEx(HMENU,UINT,INT,INT,HWND,
                                     LPTPMPARAMS);
 BOOL        WINAPI UnhookWinEvent(HWINEVENTHOOK);
+BOOL        WINAPI UnloadKeyboardLayout(HKL);
 BOOL        WINAPI UnregisterDeviceNotification(HDEVNOTIFY);
 BOOL        WINAPI UnregisterHotKey(HWND,INT);
 DWORD       WINAPI WaitForInputIdle(HANDLE,DWORD);
@@ -4077,8 +4079,8 @@ INT         WINAPI GetKeyboardType(INT);
 INT         WINAPI GetKeyNameTextA(LONG,LPSTR,INT);
 INT         WINAPI GetKeyNameTextW(LONG,LPWSTR,INT);
 #define     GetKeyNameText WINELIB_NAME_AW(GetKeyNameText)
-INT       WINAPI GetKeyboardLayoutNameA(LPSTR);
-INT       WINAPI GetKeyboardLayoutNameW(LPWSTR);
+BOOL        WINAPI GetKeyboardLayoutNameA(LPSTR);
+BOOL        WINAPI GetKeyboardLayoutNameW(LPWSTR);
 #define     GetKeyboardLayoutName WINELIB_NAME_AW(GetKeyboardLayoutName)
 SHORT       WINAPI GetKeyState(INT);
 HWND      WINAPI GetLastActivePopup(HWND);
@@ -4399,8 +4401,8 @@ BOOL        WINAPI UpdateWindow(HWND);
 UINT        WINAPI UserRealizePalette(HDC);
 BOOL        WINAPI ValidateRect(HWND,const RECT*);
 BOOL        WINAPI ValidateRgn(HWND,HRGN);
-WORD        WINAPI VkKeyScanA(CHAR);
-WORD        WINAPI VkKeyScanW(WCHAR);
+SHORT       WINAPI VkKeyScanA(CHAR);
+SHORT       WINAPI VkKeyScanW(WCHAR);
 #define     VkKeyScan WINELIB_NAME_AW(VkKeyScan)
 WORD        WINAPI VkKeyScanExA(CHAR, HKL);
 WORD        WINAPI VkKeyScanExW(WCHAR, HKL);

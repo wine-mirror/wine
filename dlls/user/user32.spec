@@ -591,7 +591,7 @@
 @ stdcall UnhookWindowsHook(long ptr)
 @ stdcall UnhookWindowsHookEx(long)
 @ stdcall UnionRect(ptr ptr ptr)
-@ stub UnloadKeyboardLayout
+@ stdcall UnloadKeyboardLayout(long)
 @ stub UnlockWindowStation
 @ stdcall UnpackDDElParam(long long ptr ptr)
 @ stdcall UnregisterClassA(str long)

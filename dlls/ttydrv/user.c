@@ -34,17 +34,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 struct tagCURSORICONINFO;
 
 /***********************************************************************
- *		VkKeyScan (TTYDRV.@)
+ *		VkKeyScanEx (TTYDRV.@)
  */
-WORD TTYDRV_VkKeyScan(CHAR cChar)
+SHORT TTYDRV_VkKeyScanEx(WCHAR cChar, HKL hkl)
 {
   return 0;
 }
 
 /***********************************************************************
- *		MapVirtualKey (TTYDRV.@)
+ *		MapVirtualKeyEx (TTYDRV.@)
  */
-UINT16 TTYDRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
+UINT TTYDRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 {
   return 0;
 }
@@ -52,7 +52,7 @@ UINT16 TTYDRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 /***********************************************************************
  *		GetKeyNameText (TTYDRV.@)
  */
-INT16 TTYDRV_GetKeyNameText( LONG lParam, LPSTR lpBuffer, INT16 nSize )
+INT TTYDRV_GetKeyNameText( LONG lParam, LPWSTR lpBuffer, INT nSize )
 {
   if(lpBuffer && nSize)
     {
@@ -62,10 +62,10 @@ INT16 TTYDRV_GetKeyNameText( LONG lParam, LPSTR lpBuffer, INT16 nSize )
 }
 
 /***********************************************************************
- *		ToUnicode (TTYDRV.@)
+ *		ToUnicodeEx (TTYDRV.@)
  */
-INT TTYDRV_ToUnicode( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
-		      LPWSTR pwszBuff, int cchBuff, UINT flags )
+INT TTYDRV_ToUnicodeEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+		      LPWSTR pwszBuff, int cchBuff, UINT flags, HKL hkl )
 {
   return 0;
 }

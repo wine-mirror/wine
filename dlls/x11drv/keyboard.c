@@ -44,10 +44,12 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "wine/winuser16.h"
 #include "winnls.h"
 #include "win.h"
 #include "x11drv.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
@@ -112,6 +114,16 @@ static const WORD main_key_vkey_qwerty[MAIN_LEN] =
    VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
    VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_7,VK_OEM_5,
    VK_Z,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
+   VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
+};
+
+static const WORD main_key_vkey_qwerty_v2[MAIN_LEN] =
+{
+/* NOTE: this layout must concur with the scan codes layout above */
+   VK_OEM_5,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_PLUS,VK_OEM_4,
+   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_6,VK_OEM_1,
+   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_3,VK_OEM_7,VK_OEM_2,
+   VK_Z,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_MINUS,
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
 
@@ -738,68 +750,70 @@ static const char main_key_vnc[MAIN_LEN][4] =
 
 /*** Layout table. Add your keyboard mappings to this list */
 static const struct {
+    LCID lcid; /* input locale identifier, look for LOCALE_ILANGUAGE
+                 in the appropriate dlls/kernel/nls/.nls file */
     const char *comment;
     const char (*key)[MAIN_LEN][4];
     const WORD (*scan)[MAIN_LEN]; /* scan codes mapping */
     const WORD (*vkey)[MAIN_LEN]; /* virtual key codes mapping */
 } main_key_tab[]={
- {"United States keyboard layout", &main_key_US, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"United States keyboard layout (phantom key version)", &main_key_US_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"United States keyboard layout (dvorak)", &main_key_US_dvorak, &main_key_scan_dvorak, &main_key_vkey_dvorak},
- {"British keyboard layout", &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"German keyboard layout", &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {"German keyboard layout without dead keys", &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {"German keyboard layout for logitech desktop pro", &main_key_DE_logitech,  &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {"German keyboard layout without dead keys 105", &main_key_DE_nodead_105, &main_key_scan_qwerty, &main_key_vkey_qwertz_105},
- {"Swiss German keyboard layout", &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {"Swiss French keyboard layout", &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {"Swedish keyboard layout", &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Estonian keyboard layout", &main_key_ET, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Norwegian keyboard layout", &main_key_NO, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Danish keyboard layout", &main_key_DA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"French keyboard layout", &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_azerty},
- {"Canadian French keyboard layout", &main_key_CF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Belgian keyboard layout", &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_azerty},
- {"Portuguese keyboard layout", &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Brazilian ABNT-2 keyboard layout", &main_key_PT_br, &main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
- {"Brazilian ABNT-2 keyboard layout ALT GR", &main_key_PT_br_alt_gr,&main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
- {"United States International keyboard layout", &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Finnish keyboard layout", &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Bulgarian bds keyboard layout", &main_key_BG_bds, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Bulgarian phonetic keyboard layout", &main_key_BG_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Belarusian keyboard layout", &main_key_BY, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Russian keyboard layout", &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Russian keyboard layout (phantom key version)", &main_key_RU_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Russian keyboard layout KOI8-R", &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Russian keyboard layout cp1251", &main_key_RU_cp1251, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Russian phonetic keyboard layout", &main_key_RU_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Ukrainian keyboard layout KOI8-U", &main_key_UA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Spanish keyboard layout", &main_key_ES, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Italian keyboard layout", &main_key_IT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Icelandic keyboard layout", &main_key_IS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Hungarian keyboard layout", &main_key_HU, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {"Polish (programmer's) keyboard layout", &main_key_PL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Slovenian keyboard layout", &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {"Croatian keyboard layout", &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {"Croatian keyboard layout (specific)", &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Japanese 106 keyboard layout", &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Japanese pc98x1 keyboard layout", &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Slovak keyboard layout", &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Slovak and Czech keyboard layout without dead keys", &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Czech keyboard layout", &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Czech keyboard layout cz", &main_key_CZ, &main_key_scan_qwerty, &main_key_vkey_qwertz},
- {"Czech keyboard layout cz_qwerty", &main_key_CZ_qwerty, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Latin American keyboard layout", &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Lithuanian (Baltic) keyboard layout", &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Turkish keyboard layout", &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Israelian keyboard layout", &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Israelian phonetic keyboard layout", &main_key_IL_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Israelian Saharon keyboard layout", &main_key_IL_saharon, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"VNC keyboard layout", &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
- {"Greek keyboard layout", &main_key_EL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Thai (Kedmanee)  keyboard layout", &main_key_th, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0409, "United States keyboard layout", &main_key_US, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0409, "United States keyboard layout (phantom key version)", &main_key_US_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0409, "United States keyboard layout (dvorak)", &main_key_US_dvorak, &main_key_scan_dvorak, &main_key_vkey_dvorak},
+ {0x0409, "United States International keyboard layout", &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0809, "British keyboard layout", &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0407, "German keyboard layout", &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x0407, "German keyboard layout without dead keys", &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x0407, "German keyboard layout for logitech desktop pro", &main_key_DE_logitech,  &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x0407, "German keyboard layout without dead keys 105", &main_key_DE_nodead_105, &main_key_scan_qwerty, &main_key_vkey_qwertz_105},
+ {0x0807, "Swiss German keyboard layout", &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x100c, "Swiss French keyboard layout", &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x041d, "Swedish keyboard layout", &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty_v2},
+ {0x0425, "Estonian keyboard layout", &main_key_ET, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0414, "Norwegian keyboard layout", &main_key_NO, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0406, "Danish keyboard layout", &main_key_DA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x040c, "French keyboard layout", &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_azerty},
+ {0x0c0c, "Canadian French keyboard layout", &main_key_CF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x080c, "Belgian keyboard layout", &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_azerty},
+ {0x0816, "Portuguese keyboard layout", &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0416, "Brazilian ABNT-2 keyboard layout", &main_key_PT_br, &main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
+ {0x0416, "Brazilian ABNT-2 keyboard layout ALT GR", &main_key_PT_br_alt_gr,&main_key_scan_abnt_qwerty, &main_key_vkey_abnt_qwerty},
+ {0x040b, "Finnish keyboard layout", &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0402, "Bulgarian bds keyboard layout", &main_key_BG_bds, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0402, "Bulgarian phonetic keyboard layout", &main_key_BG_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0423, "Belarusian keyboard layout", &main_key_BY, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0419, "Russian keyboard layout", &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0419, "Russian keyboard layout (phantom key version)", &main_key_RU_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0419, "Russian keyboard layout KOI8-R", &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0419, "Russian keyboard layout cp1251", &main_key_RU_cp1251, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0419, "Russian phonetic keyboard layout", &main_key_RU_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0422, "Ukrainian keyboard layout KOI8-U", &main_key_UA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x040a, "Spanish keyboard layout", &main_key_ES, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0410, "Italian keyboard layout", &main_key_IT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x040f, "Icelandic keyboard layout", &main_key_IS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x040e, "Hungarian keyboard layout", &main_key_HU, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x0415, "Polish (programmer's) keyboard layout", &main_key_PL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0424, "Slovenian keyboard layout", &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x041a, "Croatian keyboard layout", &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x041a, "Croatian keyboard layout (specific)", &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0411, "Japanese 106 keyboard layout", &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0411, "Japanese pc98x1 keyboard layout", &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x041b, "Slovak keyboard layout", &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x041b, "Slovak and Czech keyboard layout without dead keys", &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0405, "Czech keyboard layout", &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0405, "Czech keyboard layout cz", &main_key_CZ, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x0405, "Czech keyboard layout cz_qwerty", &main_key_CZ_qwerty, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x040a, "Latin American keyboard layout", &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0427, "Lithuanian (Baltic) keyboard layout", &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x041f, "Turkish keyboard layout", &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x040d, "Israelian keyboard layout", &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x040d, "Israelian phonetic keyboard layout", &main_key_IL_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x040d, "Israelian Saharon keyboard layout", &main_key_IL_saharon, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0409, "VNC keyboard layout", &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
+ {0x0408, "Greek keyboard layout", &main_key_EL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x041e, "Thai (Kedmanee)  keyboard layout", &main_key_th, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
- {NULL, NULL, NULL, NULL} /* sentinel */
+ {0, NULL, NULL, NULL, NULL} /* sentinel */
 };
 static unsigned kbd_layout=0; /* index into above table of layouts */
 
@@ -1487,25 +1501,147 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 
 
 /***********************************************************************
- *           X11DRV_MappingNotify
+ *		GetKeyboardLayoutList (X11DRV.@)
  */
-void X11DRV_MappingNotify( XMappingEvent *event )
+UINT X11DRV_GetKeyboardLayoutList(INT size, HKL *hkl)
 {
-    TSXRefreshKeyboardMapping(event);
-    X11DRV_InitKeyboard( pKeyStateTable );
+    INT i;
+
+    TRACE("%d, %p\n", size, hkl);
+
+    if (!size)
+    {
+        size = 4096; /* hope we will never have that many */
+        hkl = NULL;
+    }
+
+    for (i = 0; main_key_tab[i].comment && (i < size); i++)
+    {
+        if (hkl)
+            hkl[i] = (HKL)main_key_tab[i].lcid;
+    }
+    return i;
 }
 
 
 /***********************************************************************
- *		VkKeyScan (X11DRV.@)
+ *		GetKeyboardLayout (X11DRV.@)
  */
-WORD X11DRV_VkKeyScan(CHAR cChar)
+HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
+{
+    DWORD layout;
+    LANGID langid;
+
+    if (dwThreadid)
+        FIXME("couldn't return keyboard layout for thread %04lx\n", dwThreadid);
+
+    layout = main_key_tab[kbd_layout].lcid;
+    /* 
+     * Microsoft Office expects this value to be something specific
+     * for Japanese and Korean Windows with an IME the value is 0xe001
+     * We should probibly check to see if an IME exists and if so then
+     * set this word properly.
+     */
+    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        layout |= 0xe001 << 16; /* FIXME */
+
+    return (HKL)layout;
+}
+
+
+/***********************************************************************
+ *		GetKeyboardLayoutName (X11DRV.@)
+ */
+BOOL X11DRV_GetKeyboardLayoutName(LPWSTR name)
+{
+    static const WCHAR formatW[] = {'%','0','8','l','x',0};
+    DWORD layout;
+    LANGID langid;
+
+    layout = main_key_tab[kbd_layout].lcid;
+    /* see comment above */
+    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        layout |= 0xe001 << 16; /* FIXME */
+
+    sprintfW(name, formatW, layout);
+    TRACE("returning %s\n", debugstr_w(name));
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		LoadKeyboardLayout (X11DRV.@)
+ */
+HKL X11DRV_LoadKeyboardLayout(LPCWSTR name, UINT flags)
+{
+    FIXME("%s, %04x: stub!\n", debugstr_w(name), flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+
+/***********************************************************************
+ *		UnloadKeyboardLayout (X11DRV.@)
+ */
+BOOL X11DRV_UnloadKeyboardLayout(HKL hkl)
+{
+    FIXME("%p: stub!\n", hkl);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *		ActivateKeyboardLayout (X11DRV.@)
+ */
+HKL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
+{
+    FIXME("%p, %04x: stub!\n", hkl, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+
+/***********************************************************************
+ *           X11DRV_MappingNotify
+ */
+void X11DRV_MappingNotify( XMappingEvent *event )
+{
+    HWND hwnd;
+
+    TSXRefreshKeyboardMapping(event);
+    X11DRV_InitKeyboard( pKeyStateTable );
+
+    hwnd = GetFocus();
+    if (!hwnd) hwnd = GetActiveWindow();
+    PostMessageW(hwnd, WM_INPUTLANGCHANGEREQUEST,
+                 0 /*FIXME*/, (LPARAM)X11DRV_GetKeyboardLayout(0));
+}
+
+
+/***********************************************************************
+ *		VkKeyScanEx (X11DRV.@)
+ *
+ * Note: Windows ignores HKL parameter and uses current active layout instead
+ */
+SHORT X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
 {
     Display *display = thread_display();
     KeyCode keycode;
     KeySym keysym;
     int i, index;
+    CHAR cChar;
     SHORT ret;
+
+    if (!WideCharToMultiByte(CP_UNIXCP, 0, &wChar, 1, &cChar, 1, NULL, NULL))
+    {
+        WARN("no translation from unicode to CP_UNIXCP for 0x%02x\n", wChar);
+        return -1;
+    }
+
+    TRACE("wChar 0x%02x -> cChar '%c'\n", wChar, cChar);
 
     /* char->keysym (same for ANSI chars) */
     keysym = (unsigned char)cChar; /* (!) cChar is signed */
@@ -1565,15 +1701,18 @@ WORD X11DRV_VkKeyScan(CHAR cChar)
 }
 
 /***********************************************************************
- *		MapVirtualKey (X11DRV.@)
+ *		MapVirtualKeyEx (X11DRV.@)
  */
-UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
+UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 {
     Display *display = thread_display();
 
 #define returnMVK(value) { TRACE("returning 0x%x.\n",value); return value; }
 
-	TRACE("wCode=0x%x wMapType=%d ...\n", wCode,wMapType);
+    TRACE("wCode=0x%x, wMapType=%d, hkl %p\n", wCode, wMapType, hkl);
+    if (hkl != X11DRV_GetKeyboardLayout(0))
+        FIXME("keyboard layout %p is not supported\n", hkl);
+
 	switch(wMapType) {
 		case 0:	{ /* vkey-code to scan-code */
 			/* let's do vkey -> keycode -> scan */
@@ -1667,7 +1806,7 @@ UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
 /***********************************************************************
  *		GetKeyNameText (X11DRV.@)
  */
-INT X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT nSize)
+INT X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
 {
   int vkey, ansi, scanCode;
   KeyCode keyc;
@@ -1679,7 +1818,7 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT nSize)
   scanCode &= 0x1ff;  /* keep "extended-key" flag with code */
 
   /* FIXME: should use MVK type 3 (NT version that distinguishes right and left */
-  vkey = X11DRV_MapVirtualKey(scanCode, 1);
+  vkey = X11DRV_MapVirtualKeyEx(scanCode, 1, X11DRV_GetKeyboardLayout(0));
 
   /*  handle "don't care" bit (0x02000000) */
   if (!(lParam & 0x02000000)) {
@@ -1701,7 +1840,7 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT nSize)
     }
   }
 
-  ansi = X11DRV_MapVirtualKey(vkey, 2);
+  ansi = X11DRV_MapVirtualKeyEx(vkey, 2, X11DRV_GetKeyboardLayout(0));
   TRACE("scan 0x%04x, vkey 0x%04x, ANSI 0x%04x\n", scanCode, vkey, ansi);
 
   /* first get the name of the "regular" keys which is the Upper case
@@ -1715,7 +1854,7 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT nSize)
       {
         if ((nSize >= 2) && lpBuffer)
 	{
-        *lpBuffer = toupper((char)ansi);
+          *lpBuffer = toupperW((WCHAR)ansi);
           *(lpBuffer+1) = 0;
           return 1;
         }
@@ -1747,7 +1886,8 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT nSize)
             scanCode, keyc, (int)keys, name);
       if (lpBuffer && nSize && name)
       {
-          lstrcpynA(lpBuffer, name, nSize);
+          MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpBuffer, nSize);
+          lpBuffer[nSize - 1] = 0;
           return 1;
       }
   }
@@ -1839,7 +1979,7 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
 }
 
 /***********************************************************************
- *		ToUnicode (X11DRV.@)
+ *		ToUnicodeEx (X11DRV.@)
  *
  * The ToUnicode function translates the specified virtual-key code and keyboard
  * state to the corresponding Windows character or characters.
@@ -1856,8 +1996,8 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
  * FIXME : should do the above (return 2 for non matching deadchar+char combinations)
  *
  */
-INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
-		     LPWSTR bufW, int bufW_size, UINT flags)
+INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+		     LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
 {
     Display *display = thread_display();
     XKeyEvent e;
@@ -1873,6 +2013,9 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
         TRACE("Key UP, doing nothing\n" );
         return 0;
     }
+
+    if (hkl != X11DRV_GetKeyboardLayout(0))
+        FIXME("keyboard layout %p is not supported\n", hkl);
 
     e.display = display;
     e.keycode = 0;

@@ -76,10 +76,16 @@ static BOOL load_driver(void)
     }
 
     GET_USER_FUNC(InitKeyboard);
-    GET_USER_FUNC(VkKeyScan);
-    GET_USER_FUNC(MapVirtualKey);
+    GET_USER_FUNC(VkKeyScanEx);
+    GET_USER_FUNC(MapVirtualKeyEx);
     GET_USER_FUNC(GetKeyNameText);
-    GET_USER_FUNC(ToUnicode);
+    GET_USER_FUNC(ToUnicodeEx);
+    GET_USER_FUNC(GetKeyboardLayoutList);
+    GET_USER_FUNC(GetKeyboardLayout);
+    GET_USER_FUNC(GetKeyboardLayoutName);
+    GET_USER_FUNC(LoadKeyboardLayout);
+    GET_USER_FUNC(ActivateKeyboardLayout);
+    GET_USER_FUNC(UnloadKeyboardLayout);
     GET_USER_FUNC(Beep);
     GET_USER_FUNC(InitMouse);
     GET_USER_FUNC(SetCursor);

@@ -63,10 +63,16 @@
 # USER driver
 
 @ cdecl InitKeyboard(ptr) X11DRV_InitKeyboard
-@ cdecl VkKeyScan(long) X11DRV_VkKeyScan
-@ cdecl MapVirtualKey(long long) X11DRV_MapVirtualKey
-@ cdecl GetKeyNameText(long str long) X11DRV_GetKeyNameText
-@ cdecl ToUnicode(long long ptr ptr long long) X11DRV_ToUnicode
+@ cdecl VkKeyScanEx(long long) X11DRV_VkKeyScanEx
+@ cdecl MapVirtualKeyEx(long long long) X11DRV_MapVirtualKeyEx
+@ cdecl GetKeyNameText(long ptr long) X11DRV_GetKeyNameText
+@ cdecl ToUnicodeEx(long long ptr ptr long long long) X11DRV_ToUnicodeEx
+@ cdecl GetKeyboardLayoutList(long ptr) X11DRV_GetKeyboardLayoutList
+@ cdecl GetKeyboardLayout(long) X11DRV_GetKeyboardLayout
+@ cdecl GetKeyboardLayoutName(ptr) X11DRV_GetKeyboardLayoutName
+@ cdecl LoadKeyboardLayout(wstr long) X11DRV_LoadKeyboardLayout
+@ cdecl ActivateKeyboardLayout(long long) X11DRV_ActivateKeyboardLayout
+@ cdecl UnloadKeyboardLayout(long) X11DRV_UnloadKeyboardLayout
 @ cdecl Beep() X11DRV_Beep
 @ cdecl InitMouse(ptr) X11DRV_InitMouse
 @ cdecl SetCursor(ptr) X11DRV_SetCursor

@@ -35,10 +35,10 @@
 
 # USER driver
 
-@ cdecl VkKeyScan(long) TTYDRV_VkKeyScan
-@ cdecl MapVirtualKey(long long) TTYDRV_MapVirtualKey
-@ cdecl GetKeyNameText(long str long) TTYDRV_GetKeyNameText
-@ cdecl ToUnicode(long long ptr ptr long long) TTYDRV_ToUnicode
+@ cdecl VkKeyScanEx(long long) TTYDRV_VkKeyScanEx
+@ cdecl MapVirtualKeyEx(long long long) TTYDRV_MapVirtualKeyEx
+@ cdecl GetKeyNameText(long ptr long) TTYDRV_GetKeyNameText
+@ cdecl ToUnicodeEx(long long ptr ptr long long long) TTYDRV_ToUnicodeEx
 @ cdecl Beep() TTYDRV_Beep
 @ cdecl SetCursor(ptr) TTYDRV_SetCursor
 @ cdecl GetScreenSaveActive() TTYDRV_GetScreenSaveActive

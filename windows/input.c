@@ -645,17 +645,22 @@ BOOL16 WINAPI IsUserIdle16(void)
  * VkKeyScan '^'(0x5e, 94) ... got keycode 00 ... returning 00
  * VkKeyScan '`'(0x60, 96) ... got keycode 00 ... returning 00
  */
-WORD WINAPI VkKeyScanA(CHAR cChar)
+SHORT WINAPI VkKeyScanA(CHAR cChar)
 {
-    return USER_Driver.pVkKeyScan( cChar );
+    WCHAR wChar;
+
+    if (IsDBCSLeadByte(cChar)) return -1;
+
+    MultiByteToWideChar(CP_ACP, 0, &cChar, 1, &wChar, 1);
+    return VkKeyScanW(wChar);
 }
 
 /******************************************************************************
  *		VkKeyScanW (USER32.@)
  */
-WORD WINAPI VkKeyScanW(WCHAR cChar)
+SHORT WINAPI VkKeyScanW(WCHAR cChar)
 {
-	return VkKeyScanA((CHAR)cChar); /* FIXME: check unicode */
+    return VkKeyScanExW(cChar, GetKeyboardLayout(0));
 }
 
 /**********************************************************************
@@ -663,8 +668,12 @@ WORD WINAPI VkKeyScanW(WCHAR cChar)
  */
 WORD WINAPI VkKeyScanExA(CHAR cChar, HKL dwhkl)
 {
-    /* FIXME: complete workaround this is */
-    return VkKeyScanA(cChar);
+    WCHAR wChar;
+
+    if (IsDBCSLeadByte(cChar)) return -1;
+
+    MultiByteToWideChar(CP_ACP, 0, &cChar, 1, &wChar, 1);
+    return VkKeyScanExW(wChar, dwhkl);
 }
 
 /******************************************************************************
@@ -672,8 +681,9 @@ WORD WINAPI VkKeyScanExA(CHAR cChar, HKL dwhkl)
  */
 WORD WINAPI VkKeyScanExW(WCHAR cChar, HKL dwhkl)
 {
-    /* FIXME: complete workaround this is */
-    return VkKeyScanA((CHAR)cChar); /* FIXME: check unicode */
+    if (USER_Driver.pVkKeyScanEx)
+        return USER_Driver.pVkKeyScanEx(cChar, dwhkl);
+    return -1;
 }
 
 /******************************************************************************
@@ -701,7 +711,7 @@ INT WINAPI GetKeyboardType(INT nTypeFlag)
  */
 UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
 {
-    return USER_Driver.pMapVirtualKey( code, maptype );
+    return MapVirtualKeyExA( code, maptype, GetKeyboardLayout(0) );
 }
 
 /******************************************************************************
@@ -709,7 +719,7 @@ UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
  */
 UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
 {
-    return MapVirtualKeyA(code,maptype);
+    return MapVirtualKeyExW(code, maptype, GetKeyboardLayout(0));
 }
 
 /******************************************************************************
@@ -717,9 +727,7 @@ UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
  */
 UINT WINAPI MapVirtualKeyExA(UINT code, UINT maptype, HKL hkl)
 {
-    if (hkl)
-    	FIXME_(keyboard)("(%d,%d,0x%08lx), hkl unhandled!\n",code,maptype,(DWORD)hkl);
-    return MapVirtualKeyA(code,maptype);
+    return MapVirtualKeyExW(code, maptype, hkl);
 }
 
 /******************************************************************************
@@ -727,9 +735,11 @@ UINT WINAPI MapVirtualKeyExA(UINT code, UINT maptype, HKL hkl)
  */
 UINT WINAPI MapVirtualKeyExW(UINT code, UINT maptype, HKL hkl)
 {
-    if (hkl)
-    	FIXME_(keyboard)("(%d,%d,0x%08lx), hkl unhandled!\n",code,maptype,(DWORD)hkl);
-    return MapVirtualKeyA(code,maptype);
+    TRACE_(keyboard)("(%d, %d, %p)\n", code, maptype, hkl);
+
+    if (USER_Driver.pMapVirtualKeyEx)
+        return USER_Driver.pMapVirtualKeyEx(code, maptype, hkl);
+    return 0;
 }
 
 /****************************************************************************
@@ -751,37 +761,37 @@ INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
 /***********************************************************************
  *		GetKeyboardLayout (USER32.@)
  *
- * FIXME: - device handle for keyboard layout defaulted to
+ *        - device handle for keyboard layout defaulted to
  *          the language id. This is the way Windows default works.
  *        - the thread identifier (dwLayout) is also ignored.
  */
 HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
 {
-        UINT layout;
-        layout = GetSystemDefaultLCID(); /* FIXME */
-        layout |= (layout<<16);          /* FIXME */
-        TRACE_(keyboard)("returning %08x\n",layout);
-        return (HKL)layout;
+    if (USER_Driver.pGetKeyboardLayout)
+        return USER_Driver.pGetKeyboardLayout(dwLayout);
+    return 0;
 }
 
 /****************************************************************************
  *		GetKeyboardLayoutNameA (USER32.@)
  */
-INT WINAPI GetKeyboardLayoutNameA(LPSTR pwszKLID)
+BOOL WINAPI GetKeyboardLayoutNameA(LPSTR pszKLID)
 {
-        sprintf(pwszKLID, "%p",GetKeyboardLayout(0));
-        return 1;
+    WCHAR buf[KL_NAMELENGTH];
+
+    if (GetKeyboardLayoutNameW(buf))
+        return WideCharToMultiByte( CP_ACP, 0, buf, -1, pszKLID, KL_NAMELENGTH, NULL, NULL ) != 0;
+    return FALSE;
 }
 
 /****************************************************************************
  *		GetKeyboardLayoutNameW (USER32.@)
  */
-INT WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
+BOOL WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
 {
-        char buf[KL_NAMELENGTH];
-	int res = GetKeyboardLayoutNameA(buf);
-        MultiByteToWideChar( CP_ACP, 0, buf, -1, pwszKLID, KL_NAMELENGTH );
-	return res;
+    if (USER_Driver.pGetKeyboardLayoutName)
+        return USER_Driver.pGetKeyboardLayoutName(pwszKLID);
+    return FALSE;
 }
 
 /****************************************************************************
@@ -789,7 +799,18 @@ INT WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
  */
 INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
 {
-    return USER_Driver.pGetKeyNameText( lParam, lpBuffer, nSize );
+    WCHAR buf[256];
+    INT ret;
+
+    if (!GetKeyNameTextW(lParam, buf, 256))
+        return 0;
+    ret = WideCharToMultiByte(CP_ACP, 0, buf, -1, lpBuffer, nSize, NULL, NULL);
+    if (!ret && nSize)
+    {
+        ret = nSize - 1;
+        lpBuffer[ret] = 0;
+    }
+    return ret;
 }
 
 /****************************************************************************
@@ -797,15 +818,9 @@ INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
  */
 INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 {
-	int res;
-	LPSTR buf = HeapAlloc( GetProcessHeap(), 0, nSize );
-	if(buf == NULL) return 0; /* FIXME: is this the correct failure value?*/
-	res = GetKeyNameTextA(lParam,buf,nSize);
-
-        if (nSize > 0 && !MultiByteToWideChar( CP_ACP, 0, buf, -1, lpBuffer, nSize ))
-            lpBuffer[nSize-1] = 0;
-	HeapFree( GetProcessHeap(), 0, buf );
-	return res;
+    if (USER_Driver.pGetKeyNameText)
+        return USER_Driver.pGetKeyNameText( lParam, lpBuffer, nSize );
+    return 0;
 }
 
 /****************************************************************************
@@ -814,7 +829,7 @@ INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 		     LPWSTR lpwStr, int size, UINT flags)
 {
-    return USER_Driver.pToUnicode(virtKey, scanCode, lpKeyState, lpwStr, size, flags);
+    return ToUnicodeEx(virtKey, scanCode, lpKeyState, lpwStr, size, flags, GetKeyboardLayout(0));
 }
 
 /****************************************************************************
@@ -823,24 +838,18 @@ INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 INT WINAPI ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 		       LPWSTR lpwStr, int size, UINT flags, HKL hkl)
 {
-    /* FIXME: need true implementation */
-    return ToUnicode(virtKey, scanCode, lpKeyState, lpwStr, size, flags);
+    if (USER_Driver.pToUnicodeEx)
+        return USER_Driver.pToUnicodeEx(virtKey, scanCode, lpKeyState, lpwStr, size, flags, hkl);
+    return 0;
 }
 
 /****************************************************************************
  *		ToAscii (USER32.@)
  */
-INT WINAPI ToAscii( UINT virtKey,UINT scanCode,LPBYTE lpKeyState,
-                        LPWORD lpChar,UINT flags )
+INT WINAPI ToAscii( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+                    LPWORD lpChar, UINT flags )
 {
-    WCHAR uni_chars[2];
-    INT ret, n_ret;
-
-    ret = ToUnicode(virtKey, scanCode, lpKeyState, uni_chars, 2, flags);
-    if(ret < 0) n_ret = 1; /* FIXME: make ToUnicode return 2 for dead chars */
-    else n_ret = ret;
-    WideCharToMultiByte(CP_ACP, 0, uni_chars, n_ret, (LPSTR)lpChar, 2, NULL, NULL);
-    return ret;
+    return ToAsciiEx(virtKey, scanCode, lpKeyState, lpChar, flags, GetKeyboardLayout(0));
 }
 
 /****************************************************************************
@@ -849,19 +858,25 @@ INT WINAPI ToAscii( UINT virtKey,UINT scanCode,LPBYTE lpKeyState,
 INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
                       LPWORD lpChar, UINT flags, HKL dwhkl )
 {
-    /* FIXME: need true implementation */
-    return ToAscii(virtKey, scanCode, lpKeyState, lpChar, flags);
+    WCHAR uni_chars[2];
+    INT ret, n_ret;
+
+    ret = ToUnicodeEx(virtKey, scanCode, lpKeyState, uni_chars, 2, flags, dwhkl);
+    if (ret < 0) n_ret = 1; /* FIXME: make ToUnicode return 2 for dead chars */
+    else n_ret = ret;
+    WideCharToMultiByte(CP_ACP, 0, uni_chars, n_ret, (LPSTR)lpChar, 2, NULL, NULL);
+    return ret;
 }
 
 /**********************************************************************
  *		ActivateKeyboardLayout (USER32.@)
- *
- * Call ignored. WINE supports only system default keyboard layout.
  */
 HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
 {
     TRACE_(keyboard)("(%p, %d)\n", hLayout, flags);
-    ERR_(keyboard)("Only default system keyboard layout supported. Call ignored.\n");
+
+    if (USER_Driver.pActivateKeyboardLayout)
+        return USER_Driver.pActivateKeyboardLayout(hLayout, flags);
     return 0;
 }
 
@@ -869,21 +884,16 @@ HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
 /***********************************************************************
  *		GetKeyboardLayoutList (USER32.@)
  *
- * FIXME: Supports only the system default language and layout and
- *          returns only 1 value.
- *
  * Return number of values available if either input parm is
  *  0, per MS documentation.
- *
  */
-INT WINAPI GetKeyboardLayoutList(INT nBuff,HKL *layouts)
+UINT WINAPI GetKeyboardLayoutList(INT nBuff, HKL *layouts)
 {
-        TRACE_(keyboard)("(%d,%p)\n",nBuff,layouts);
-        if (!nBuff || !layouts)
-            return 1;
-	if (layouts)
-		layouts[0] = GetKeyboardLayout(0);
-	return 1;
+    TRACE_(keyboard)("(%d,%p)\n",nBuff,layouts);
+
+    if (USER_Driver.pGetKeyboardLayoutList)
+        return USER_Driver.pGetKeyboardLayoutList(nBuff, layouts);
+    return 0;
 }
 
 
@@ -905,13 +915,14 @@ BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id) {
 
 /***********************************************************************
  *		LoadKeyboardLayoutW (USER32.@)
- * Call ignored. WINE supports only system default keyboard layout.
  */
 HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
 {
     TRACE_(keyboard)("(%s, %d)\n", debugstr_w(pwszKLID), Flags);
-    ERR_(keyboard)("Only default system keyboard layout supported. Call ignored.\n");
-  return 0;
+
+    if (USER_Driver.pLoadKeyboardLayout)
+        return USER_Driver.pLoadKeyboardLayout(pwszKLID, Flags);
+    return 0;
 }
 
 /***********************************************************************
@@ -930,6 +941,18 @@ HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
     return ret;
 }
 
+
+/***********************************************************************
+ *		UnloadKeyboardLayout (USER32.@)
+ */
+BOOL WINAPI UnloadKeyboardLayout(HKL hkl)
+{
+    TRACE_(keyboard)("(%p)\n", hkl);
+
+    if (USER_Driver.pUnloadKeyboardLayout)
+        return USER_Driver.pUnloadKeyboardLayout(hkl);
+    return 0;
+}
 
 typedef struct __TRACKINGLIST {
     TRACKMOUSEEVENT tme;
