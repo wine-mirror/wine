@@ -69,6 +69,17 @@ sub name {
     }
 }
 
+sub pack {
+    my $self = shift;
+    my $pack = \${$self->{PACK}};
+    
+    local $_ = shift;
+
+    if(defined($_)) { $$pack = $_; }
+
+    return $$pack;
+}
+
 sub fields {
     my $self = shift;
 

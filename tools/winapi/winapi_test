@@ -91,6 +91,7 @@ foreach my $file (@files) {
 
     my $line;
     my $type;
+    my @packs = (4);
 
     my $update_output = sub {
 	my $progress = "";
@@ -116,8 +117,27 @@ foreach my $file (@files) {
     };
     $parser->set_found_line_callback($found_line);
 
+    my $found_preprocessor = sub {
+	my $begin_line = shift;
+	my $begin_column = shift;
+	my $preprocessor = shift;
+
+	local $_ = $preprocessor;
+	if (/^\#\s*include\s+\"pshpack(\d+)\.h\"$/) {
+	    push @packs, $1;
+	} elsif(/^\#\s*include\s+\"poppack\.h\"$/) {
+	    unshift @packs;
+	}
+
+	return 1;
+    };
+    $parser->set_found_preprocessor_callback($found_preprocessor);
+
     my $found_type = sub {
 	$type = shift;
+
+	my $pack = $packs[$#packs];
+	$type->pack($pack);
 
 	my $name = $type->name;
 	$file2types{$file}{$name} = $type;
@@ -139,20 +159,25 @@ foreach my $file (@files) {
     $output->prefix("");
 }
 
+########################################################################
+# output_header
+
 sub output_header {
     local *OUT = shift; 
 
     my $test_dir = shift;
-    my $test = shift;
+    my @tests = @{(shift)};
 
-    print OUT "/* File generated automatically from $wine_dir/tools/winapi/test.dat; do not edit! */\n";
+    print OUT "/* File generated automatically from tools/winapi/test.dat; do not edit! */\n";
     print OUT "/* This file can be copied, modified and distributed without restriction. */\n";
     print OUT "\n";
 
     print OUT "/*\n";
-    my @description = $tests->get_section($test_dir, $test, "description");
-    foreach my $description (@description) {
-	print OUT " * $description\n";
+    foreach my $test (@tests) {
+	my @description = $tests->get_section($test_dir, $test, "description");
+	foreach my $description (@description) {
+	    print OUT " * $description\n";
+	}
     }
     print OUT " */\n";
 
@@ -160,24 +185,36 @@ sub output_header {
     print OUT "#include <stdio.h>\n";
     print OUT "\n";
     print OUT "#include \"wine/test.h\"\n";
-    my @includes = $tests->get_section($test_dir, $test, "include");
-    foreach my $include (@includes) {
-	print OUT "#include \"$include\"\n";
+    foreach my $test (@tests) {
+	my @includes = $tests->get_section($test_dir, $test, "include");
+	foreach my $include (@includes) {
+	    print OUT "#include \"$include\"\n";
+	}
     }
     print OUT "\n";
-
-    print OUT "START_TEST(generated_$test)\n";
-    print OUT "{\n";
 }
+
+########################################################################
+# output_footer
 
 sub output_footer {
     local *OUT = shift; 
 
     my $test_dir = shift;
-    my $test = shift;
+    my @tests = @{(shift)};
 
+    print OUT "START_TEST(generated)\n";
+    print OUT "{\n";
+    foreach my $test (@tests) {
+	print OUT "    test_$test();\n";
+    }
     print OUT "}\n";
 }
+
+########################################################################
+# output_field_size
+
+my %type_name2size;
 
 sub field_size {
     my $name = shift;
@@ -194,15 +231,19 @@ sub field_size {
     }
 
     my $size;
-    if(/^(?:(?:signed\s+|unsigned\s+)?char|CHAR|BYTE|UCHAR)$/) {
+    if (defined($size = $type_name2size{$field_type})) {
+	# Nothing
+    } elsif(/^(?:(?:signed\s+|unsigned\s+)?char|CHAR|BYTE|UCHAR)$/) {
 	$size = 1;
-    } elsif (/^(?:(?:signed\s+|unsigned\s+)?short|UWORD|WCHAR|WORD)$/) {
+    } elsif (/^(?:(?:signed\s+|unsigned\s+)?short|ATOM|UWORD|WCHAR|WORD)$/) {
 	$size = 2;
     } elsif (/^(?:FILETIME|LARGE_INTEGER|LONGLONG|ULONGLONG)$/) {
 	$size = 8;
-    } elsif (/^(?:SYSTEMTIME)$/) {
+    } elsif (/^(?:EMR|POINTL?|SIZEL)$/) {
+	$size = 8;
+    } elsif (/^(?:RECTL?|SYSTEMTIME)$/) {
 	$size = 16;
-    } elsif (/^(?:CRITICAL_SECTION)$/) {
+    } elsif (/^(?:CRITICAL_SECTION|XFORM)$/) {
 	$size = 24;
     } elsif (/^(?:DCB)$/) {
 	$size = 28;
@@ -232,27 +273,37 @@ sub field_size {
 }
 
 ########################################################################
-# output_file
+# output_test_pack
 
-sub output_file {
+sub output_test_pack {
     local *OUT = shift;
 
     my $test_dir = shift;
     my $test = shift;
 
-    output_header(\*OUT, $test_dir, $test);
-    
     my @includes = $tests->get_section($test_dir, $test, "include");
     my @type_names = $tests->get_section($test_dir, $test, "struct");
-    
+
+    my %type_name_not_used;
+
+    foreach my $type_name (@type_names) {
+	$type_name_not_used{$type_name} = 1;
+    }
+
+    # FIXME: Topological sort of @type_names
+
     foreach my $include (@includes) {
 	my $types = $file2types{"include/$include"};
 	
-	foreach my $type_name (@type_names) {
-	    my $pack = 4; # FIXME: Not always correct
-	    
+	foreach my $type_name (@type_names) {	    
 	    my $type = $$types{$type_name};
-	    
+	    if (!defined($type)) {
+		next;
+	    }
+	    $type_name_not_used{$type_name} = 0;
+
+	    my $pack = $type->pack;
+
 	    my $offset = 0;
 	    my $offset_bits = 0;
 	    
@@ -284,7 +335,8 @@ sub output_file {
 	    if ($type_size % $pack != 0) {
 		$type_size = (int($type_size / $pack) + 1) * $pack;
 	    }
-	    
+	    $type_name2size{$type_name} = $type_size;
+
 	    print OUT "    ok(sizeof($type_name) == $type_size, ";
 	    print OUT "\"sizeof($type_name) == %d (expected $type_size)\", ";
 	    print OUT "sizeof($type_name));\n";
@@ -292,13 +344,47 @@ sub output_file {
 	}
     }
 
-    output_footer(\*OUT, $test_dir, $test);
+    foreach my $type_name (@type_names) {
+	if ($type_name_not_used{$type_name}) {
+	    $output->write("$test_dir: $test: $type_name: type not found (ignored)\n");
+	}
+    }
 }
 
-foreach my $test (@tests) {
-    my @test_dirs = $tests->get_test_dirs($test);
-    foreach my $test_dir (@test_dirs) {
-	my $file = "$wine_dir/$test_dir/generated_$test.c";
-	replace_file($file, \&output_file, $test_dir, $test);
+
+########################################################################
+# output_file
+
+sub output_file {
+    local *OUT = shift;
+
+    my $test_dir = shift;
+    my @tests = @{(shift)};
+
+    output_header(\*OUT, $test_dir, \@tests);
+
+    foreach my $test (@tests) {
+	print OUT "void test_$test(void)\n";
+	print OUT "{\n";
+	
+	if ($test eq "pack") {
+	    output_test_pack(\*OUT, $test_dir, $test);
+	} else {
+	    die "no such test ($test)\n";
+	}
+
+	print OUT "}\n";
+	print OUT "\n";
     }
+
+    output_footer(\*OUT, $test_dir, \@tests);
+}
+
+########################################################################
+# main
+
+my @test_dirs = $tests->get_test_dirs();
+foreach my $test_dir (@test_dirs) {
+    my $file = "$wine_dir/$test_dir/generated.c";
+    replace_file($file, \&output_file, $test_dir, \@tests);
 }
