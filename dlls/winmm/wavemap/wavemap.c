@@ -111,7 +111,7 @@ static	DWORD	wodOpenHelper(WAVEMAPDATA* wom, UINT idx,
 
 static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    UINT 		nd = waveOutGetNumDevs();
+    UINT 		ndlo, ndhi;
     UINT		i;
     WAVEMAPDATA*	wom = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEMAPDATA));
     WAVEFORMATEX	wfx;
@@ -121,13 +121,22 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (!wom)
 	return MMSYSERR_NOMEM;
 
+    ndhi = waveOutGetNumDevs();
+    if (dwFlags & WAVE_MAPPED) {
+	if (lpDesc->uMappedDeviceID >= ndhi) return MMSYSERR_INVALPARAM;
+	ndlo = lpDesc->uMappedDeviceID;
+	ndhi = ndlo + 1;
+	dwFlags &= ~WAVE_MAPPED;
+    } else {
+	ndlo = 0;
+    }
     wom->self = wom;
     wom->dwCallback = lpDesc->dwCallback;
     wom->dwFlags = dwFlags;
     wom->dwClientInstance = lpDesc->dwInstance;
     wom->hOuterWave = lpDesc->hWave;
 
-    for (i = 0; i < nd; i++) {
+    for (i = ndlo; i < ndhi; i++) {
 	/* if no ACM stuff is involved, no need to handle callbacks at this
 	 * level, this will be done transparently
 	 */
@@ -145,7 +154,7 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
                         if (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags) == MMSYSERR_NOERROR) goto found;
 
-    for (i = 0; i < nd; i++) {
+    for (i = ndlo; i < ndhi; i++) {
 	/* first try with same stereo/mono option as source */
 	wfx.nChannels = lpDesc->lpFormat->nChannels;
 	TRY(44100, 16);
@@ -435,7 +444,7 @@ static void	CALLBACK widCallback(HWAVE hWave, UINT uMsg, DWORD dwInstance,
     TRACE("(0x%x %u %ld %lx %lx);\n", hWave, uMsg, dwInstance, dwParam1, dwParam2);
 
     if (!WAVEMAP_IsData(wim)) {
-	ERR("Bad date\n");
+	ERR("Bad data\n");
 	return;
     }
 
@@ -502,7 +511,7 @@ static	DWORD	widOpenHelper(WAVEMAPDATA* wim, UINT idx,
 
 static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    UINT 		nd = waveInGetNumDevs();
+    UINT 		ndlo, ndhi;
     UINT		i;
     WAVEMAPDATA*	wim = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEMAPDATA));
     WAVEFORMATEX	wfx;
@@ -518,7 +527,17 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wim->dwClientInstance = lpDesc->dwInstance;
     wim->hOuterWave = lpDesc->hWave;
     
-    for (i = 0; i < nd; i++) {
+    ndhi = waveOutGetNumDevs();
+    if (dwFlags & WAVE_MAPPED) {
+	if (lpDesc->uMappedDeviceID >= ndhi) return MMSYSERR_INVALPARAM;
+	ndlo = lpDesc->uMappedDeviceID;
+	ndhi = ndlo + 1;
+	dwFlags &= ~WAVE_MAPPED;
+    } else {
+	ndlo = 0;
+    }
+
+    for (i = ndlo; i < ndhi; i++) {
 	if (waveInOpen(&wim->hInnerWave, i, lpDesc->lpFormat, (DWORD)widCallback, 
 			(DWORD)wim, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION) == MMSYSERR_NOERROR) {
 	    wim->hAcmStream = 0;
@@ -532,7 +551,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
                         if (widOpenHelper(wim, i, lpDesc, &wfx, dwFlags) == MMSYSERR_NOERROR) goto found;
 
-    for (i = 0; i < nd; i++) {
+    for (i = ndlo; i < ndhi; i++) {
 	/* first try with same stereo/mono option as source */
 	wfx.nChannels = lpDesc->lpFormat->nChannels;
 	TRY(44100, 8);

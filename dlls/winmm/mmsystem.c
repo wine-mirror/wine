@@ -619,18 +619,18 @@ BOOL16 WINAPI sndPlaySound16(LPCSTR lpszSoundName, UINT16 uFlags)
 
 
 /**************************************************************************
- * 				mmsystemGetVersion	[WINMM.@]
- */
-UINT WINAPI mmsystemGetVersion(void)
-{
-    return mmsystemGetVersion16();
-}
-
-/**************************************************************************
  * 				mmsystemGetVersion	[MMSYSTEM.5]
  * return value borrowed from Win95 winmm.dll ;)
  */
 UINT16 WINAPI mmsystemGetVersion16(void)
+{
+    return mmsystemGetVersion();
+}
+
+/**************************************************************************
+ * 				mmsystemGetVersion	[WINMM.@]
+ */
+UINT WINAPI mmsystemGetVersion(void)
 {
     TRACE("3.10 (Win95?)\n");
     return 0x030a;
@@ -1538,17 +1538,17 @@ BOOL WINAPI mciGetErrorStringW(DWORD wError, LPWSTR lpstrBuffer, UINT uLength)
 }
 
 /**************************************************************************
- * 				mciGetErrorStringA		[WINMM.@]
+ * 				mciGetErrorString		[MMSYSTEM.706]
  */
-BOOL WINAPI mciGetErrorStringA(DWORD wError, LPSTR lpstrBuffer, UINT uLength)
+BOOL16 WINAPI mciGetErrorString16(DWORD wError, LPSTR lpstrBuffer, UINT16 uLength)
 {
-    return mciGetErrorString16(wError, lpstrBuffer, uLength);
+    return mciGetErrorStringA(wError, lpstrBuffer, uLength);
 }
 
 /**************************************************************************
- * 				mciGetErrorString		[MMSYSTEM.706]
+ * 				mciGetErrorStringA		[WINMM.@]
  */
-BOOL16 WINAPI mciGetErrorString16(DWORD dwError, LPSTR lpstrBuffer, UINT16 uLength)
+BOOL WINAPI mciGetErrorStringA(DWORD dwError, LPSTR lpstrBuffer, UINT uLength)
 {
     BOOL16		ret = FALSE;
 
@@ -3650,6 +3650,8 @@ static	UINT WINAPI MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     if (dwFlags & WAVE_FORMAT_QUERY)	TRACE("WAVE_FORMAT_QUERY requested !\n");
 
     if (lpFormat == NULL) return WAVERR_BADFORMAT;
+    if ((dwFlags & WAVE_MAPPED) && (uDeviceID == (UINT)-1))
+	return MMSYSERR_INVALPARAM;
 
     TRACE("wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u\n", 
 	  lpFormat->wFormatTag, lpFormat->nChannels, lpFormat->nSamplesPerSec, 
@@ -3663,19 +3665,22 @@ static	UINT WINAPI MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     wod.lpFormat = lpFormat;  /* should the struct be copied iso pointer? */
     wod.dwCallback = dwCallback;
     wod.dwInstance = dwInstance;
-    wod.uMappedDeviceID = 0;
     wod.dnDevNode = 0L;
 
-    /* when called from 16 bit code, mapper will be 0x0000FFFF instead of 0xFFFFFFFF */
-    /* this should fix it */
-    wmld->uDeviceID = (uDeviceID == (UINT16)-1 && !bFrom32) ? (UINT)-1 : uDeviceID;
+    if (dwFlags & WAVE_MAPPED) {
+	wod.uMappedDeviceID = uDeviceID;
+	uDeviceID = WAVE_MAPPER;
+    } else {
+	wod.uMappedDeviceID = -1;
+    }
+    wmld->uDeviceID = uDeviceID;
 
-    dwRet = MMDRV_Open(wmld, (uType==MMDRV_WAVEOUT)?WODM_OPEN:WIDM_OPEN, (DWORD)&wod, dwFlags);
+    dwRet = MMDRV_Open(wmld, (uType == MMDRV_WAVEOUT) ? WODM_OPEN : WIDM_OPEN, (DWORD)&wod, dwFlags);
 
     if ((dwFlags & WAVE_FORMAT_QUERY) || dwRet != MMSYSERR_NOERROR) {
 	MMDRV_Free(handle, wmld);
 	handle = 0;
-    } 
+    }
 
     if (lphndl != NULL) *lphndl = handle;
     TRACE("=> %ld hWave=%04x\n", dwRet, handle);
@@ -3848,9 +3853,11 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
 
     /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
      * call the 32 bit version
+     * however, we need to promote correctly the wave mapper id 
+     * (0xFFFFFFFF and not 0x0000FFFF)
      */
-    ret = MMSYSTEM_waveOpen(&hWaveOut, uDeviceID, MMDRV_WAVEOUT, lpFormat, 
-			    dwCallback, dwInstance, dwFlags, FALSE);
+    ret = MMSYSTEM_waveOpen(&hWaveOut, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID, 
+			    MMDRV_WAVEOUT, lpFormat, dwCallback, dwInstance, dwFlags, FALSE);
 
     if (lphWaveOut != NULL) *lphWaveOut = hWaveOut;
     return ret;
@@ -4489,9 +4496,11 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
 
     /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
      * call the 32 bit version
+     * however, we need to promote correctly the wave mapper id 
+     * (0xFFFFFFFF and not 0x0000FFFF)
      */
-    ret = MMSYSTEM_waveOpen(&hWaveIn, uDeviceID, MMDRV_WAVEIN, lpFormat, 
-			    dwCallback, dwInstance, dwFlags, FALSE);
+    ret = MMSYSTEM_waveOpen(&hWaveIn, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID, 
+			    MMDRV_WAVEIN, lpFormat, dwCallback, dwInstance, dwFlags, FALSE);
 
     if (lphWaveIn != NULL) *lphWaveIn = hWaveIn;
     return ret;
