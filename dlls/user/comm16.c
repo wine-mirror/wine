@@ -362,13 +362,25 @@ static VOID WINAPI COMM16_WriteComplete(DWORD status, DWORD len, LPOVERLAPPED ov
 static void comm_waitread(struct DosDeviceStruct *ptr)
 {
 	int bleft;
+        COMSTAT stat;
 
+	/* FIXME: get timeouts working properly so we can read bleft bytes */
 	bleft = ((ptr->ibuf_tail > ptr->ibuf_head) ? 
 		(ptr->ibuf_tail-1) : ptr->ibuf_size) - ptr->ibuf_head;
-	/* FIXME: get timeouts working properly so we can read bleft bytes */
+
+	/* find out how many bytes are left in the buffer */
+	if(ClearCommError(ptr->handle,NULL,&stat))
+		bleft = (bleft<stat.cbInQue) ? bleft : stat.cbInQue;
+	else
+		bleft = 1;
+
+	/* always read at least one byte */
+	if(bleft==0)
+		bleft++;
+
 	ReadFileEx(ptr->handle,
 		ptr->inbuf + ptr->ibuf_head,
-		1,
+		bleft,
 		&ptr->read_ov,
 		COMM16_ReadComplete);
 }
