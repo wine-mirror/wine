@@ -220,7 +220,7 @@ void WINAPI LZDone(void)
  * "FILE.BL_" (with lastchar 'a') is being translated to "FILE.BLA"
  */
 
-INT WINAPI GetExpandedNameA( LPCSTR in, LPSTR out )
+INT WINAPI GetExpandedNameA( LPSTR in, LPSTR out )
 {
 	struct lzfileheader	head;
 	HFILE		fd;
@@ -290,7 +290,7 @@ INT WINAPI GetExpandedNameA( LPCSTR in, LPSTR out )
 /***********************************************************************
  *           GetExpandedNameW   (LZ32.@)
  */
-INT WINAPI GetExpandedNameW( LPCWSTR in, LPWSTR out )
+INT WINAPI GetExpandedNameW( LPWSTR in, LPWSTR out )
 {
     INT ret;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, in, -1, NULL, 0, NULL, NULL );
@@ -308,7 +308,7 @@ INT WINAPI GetExpandedNameW( LPCWSTR in, LPWSTR out )
 /***********************************************************************
  *           LZRead   (LZ32.@)
  */
-INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
+INT WINAPI LZRead( HFILE fd, LPSTR vbuf, INT toread )
 {
 	int	howmuch;
 	BYTE	b,*buf;
@@ -507,7 +507,7 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
  *
  * Opens a file. If not compressed, open it as a normal file.
  */
-HFILE WINAPI LZOpenFileA( LPCSTR fn, LPOFSTRUCT ofs, UINT mode )
+HFILE WINAPI LZOpenFileA( LPSTR fn, LPOFSTRUCT ofs, WORD mode )
 {
 	HFILE	fd,cfd;
 
@@ -533,7 +533,7 @@ HFILE WINAPI LZOpenFileA( LPCSTR fn, LPOFSTRUCT ofs, UINT mode )
 /***********************************************************************
  *           LZOpenFileW   (LZ32.@)
  */
-HFILE WINAPI LZOpenFileW( LPCWSTR fn, LPOFSTRUCT ofs, UINT mode )
+HFILE WINAPI LZOpenFileW( LPWSTR fn, LPOFSTRUCT ofs, WORD mode )
 {
     HFILE ret;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, fn, -1, NULL, 0, NULL, NULL );

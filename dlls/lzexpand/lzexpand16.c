@@ -57,7 +57,7 @@ HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 /***********************************************************************
  *           GetExpandedName   (LZEXPAND.10)
  */
-INT16 WINAPI GetExpandedName16( LPCSTR in, LPSTR out )
+INT16 WINAPI GetExpandedName16( LPSTR in, LPSTR out )
 {
     return (INT16)GetExpandedNameA( in, out );
 }
@@ -109,7 +109,7 @@ LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
 /***********************************************************************
  *           LZOpenFile   (LZEXPAND.2)
  */
-HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
+HFILE16 WINAPI LZOpenFile16( LPSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 {
     HFILE hfret = LZOpenFileA( fn, ofs, mode );
     /* return errors and LZ handles unmodified */

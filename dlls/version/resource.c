@@ -146,7 +146,7 @@ static int read_xx_header( HFILE lzfd )
     char magic[3];
 
     LZSeek( lzfd, 0, SEEK_SET );
-    if ( sizeof(mzh) != LZRead( lzfd, &mzh, sizeof(mzh) ) )
+    if ( sizeof(mzh) != LZRead( lzfd, (LPSTR)&mzh, sizeof(mzh) ) )
         return 0;
     if ( mzh.e_magic != IMAGE_DOS_SIGNATURE )
         return 0;
@@ -183,7 +183,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
 
     /* Read in NE header */
     nehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
-    if ( sizeof(nehd) != LZRead( lzfd, &nehd, sizeof(nehd) ) ) return 0;
+    if ( sizeof(nehd) != LZRead( lzfd, (LPSTR)&nehd, sizeof(nehd) ) ) return 0;
 
     resTabSize = nehd.ne_restab - nehd.ne_rsrctab;
     if ( !resTabSize )
@@ -286,7 +286,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
 
     /* Read in PE header */
     pehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
-    if ( sizeof(pehd) != LZRead( lzfd, &pehd, sizeof(pehd) ) ) return 0;
+    if ( sizeof(pehd) != LZRead( lzfd, (LPSTR)&pehd, sizeof(pehd) ) ) return 0;
 
     resDataDir = pehd.OptionalHeader.DataDirectory+IMAGE_FILE_RESOURCE_DIRECTORY;
     if ( !resDataDir->Size )
@@ -307,7 +307,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
                     pehd.FileHeader.SizeOfOptionalHeader, SEEK_SET );
 
     if ( nSections * sizeof(IMAGE_SECTION_HEADER) !=
-         LZRead( lzfd, sections, nSections * sizeof(IMAGE_SECTION_HEADER) ) )
+         LZRead( lzfd, (LPSTR)sections, nSections * sizeof(IMAGE_SECTION_HEADER) ) )
     {
         HeapFree( GetProcessHeap(), 0, sections );
         return FALSE;
@@ -404,7 +404,7 @@ DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
                 debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId,
                 lpszResId );
 
-    lzfd = LZOpenFileA( lpszFileName, &ofs, OF_READ );
+    lzfd = LZOpenFileA( (LPSTR)lpszFileName, &ofs, OF_READ );
     if ( lzfd < 0 ) return 0;
 
     switch ( read_xx_header( lzfd ) )
@@ -441,7 +441,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
 		debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId,
                 dwFileOffset, dwResLen, lpvData );
 
-    lzfd = LZOpenFileA( lpszFileName, &ofs, OF_READ );
+    lzfd = LZOpenFileA( (LPSTR)lpszFileName, &ofs, OF_READ );
     if ( lzfd < 0 ) return 0;
 
     if ( !dwFileOffset )
