@@ -1210,7 +1210,7 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
       bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
 
       if ( !Options.managed || !bIsDisabled )
-      SendMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+          PostMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     }
     else if ( event->message_type == dndProtocol &&
 	      (event->data.l[0] == DndFile || event->data.l[0] == DndFiles) )
