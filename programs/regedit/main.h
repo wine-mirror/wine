@@ -103,6 +103,7 @@ extern BOOL IsDefaultValue(HWND hwndLV, int i);
 extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id);
 extern BOOL RefreshTreeView(HWND hWndTV);
 extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
+extern void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BOOL bRefreshLV);
 extern LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
 extern BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem);
 extern HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPTSTR name);

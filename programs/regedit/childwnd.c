@@ -83,6 +83,35 @@ static void OnPaint(HWND hWnd)
     EndPaint(hWnd, &ps);
 }
 
+void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BOOL bRefreshLV)
+{
+    LPCTSTR keyPath, rootName;
+    LPTSTR fullPath;
+    HKEY hRootKey;
+
+    keyPath = GetItemPath(hwndTV, hItem, &hRootKey);
+    if (keyPath) {
+        if (bRefreshLV)
+            RefreshListView(hwndLV, hRootKey, keyPath, NULL);
+        rootName = get_root_key_name(hRootKey);
+        fullPath = HeapAlloc(GetProcessHeap(), 0, (lstrlen(rootName) + 1 + lstrlen(keyPath) + 1) * sizeof(TCHAR));
+        if (fullPath) {
+            _stprintf(fullPath, "%s\\%s", rootName, keyPath);
+            SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)fullPath);
+            HeapFree(GetProcessHeap(), 0, fullPath);
+        }
+    }
+    else {
+        /* else the computer icon is being selected, so display computer name */
+        TCHAR text[260];
+        DWORD size;
+    
+        size = sizeof(text)/sizeof(TCHAR);
+        GetComputerName(text, &size);
+        SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)text);
+    }
+}
+
 /*******************************************************************************
  *
  *  FUNCTION: _CmdWndProc(HWND, unsigned, WORD, LONG)
@@ -238,23 +267,9 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             switch (((LPNMHDR)lParam)->code) {
             case TVN_ITEMEXPANDING:
                 return !OnTreeExpanding(pChildWnd->hTreeWnd, (NMTREEVIEW*)lParam);
-            case TVN_SELCHANGED: {
-                    LPCTSTR keyPath, rootName;
-		    LPTSTR fullPath;
-                    HKEY hRootKey;
-
-		    keyPath = GetItemPath(pChildWnd->hTreeWnd, ((NMTREEVIEW*)lParam)->itemNew.hItem, &hRootKey);
-		    if (keyPath) {
-                        RefreshListView(pChildWnd->hListWnd, hRootKey, keyPath, NULL);
-			rootName = get_root_key_name(hRootKey);
-			fullPath = HeapAlloc(GetProcessHeap(), 0, (lstrlen(rootName) + 1 + lstrlen(keyPath) + 1) * sizeof(TCHAR));
-			if (fullPath) {
-			    _stprintf(fullPath, "%s\\%s", rootName, keyPath);
-			    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)fullPath);
-			    HeapFree(GetProcessHeap(), 0, fullPath);
-			}
-		    }
-                }
+            case TVN_SELCHANGED:
+                OnTreeSelectionChanged(pChildWnd->hTreeWnd, pChildWnd->hListWnd,
+                    ((NMTREEVIEW *)lParam)->itemNew.hItem, TRUE);
                 break;
 	    case NM_SETFOCUS:
 		pChildWnd->nFocusPanel = 0;

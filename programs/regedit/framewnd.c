@@ -121,16 +121,16 @@ void SetupStatusBar(HWND hWnd, BOOL bResize)
     if (bResize)
         SendMessage(hStatusBar, WM_SIZE, 0, 0);
     SendMessage(hStatusBar, SB_SETPARTS, 1, (LPARAM)&nParts);
+    UpdateStatusBar();
 }
 
 void UpdateStatusBar(void)
 {
-    TCHAR text[260];
-    DWORD size;
-
-    size = sizeof(text)/sizeof(TCHAR);
-    GetComputerName(text, &size);
-    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)text);
+    /* real updating of status bar happens in the treeview selection
+     * change handler, so fake a selection change to it, but don't
+     * refresh the listview or the current selection will change */
+    OnTreeSelectionChanged(g_pChildWnd->hTreeWnd, g_pChildWnd->hListWnd,
+        TreeView_GetSelection(g_pChildWnd->hTreeWnd), FALSE);
 }
 
 static void toggle_child(HWND hWnd, UINT cmd, HWND hchild)
