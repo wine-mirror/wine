@@ -232,13 +232,13 @@ static int DSOUND_setformat(LPWAVEFORMATEX wfex);
 static void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len);
 static void DSOUND_CloseAudio(void);
 
+#endif
+
 static HRESULT DSOUND_CreateDirectSoundCapture( LPVOID* ppobj );
 static HRESULT DSOUND_CreateDirectSoundCaptureBuffer( LPCDSCBUFFERDESC lpcDSCBufferDesc, LPVOID* ppobj );
 
 static ICOM_VTABLE(IDirectSoundCapture) dscvt;
 static ICOM_VTABLE(IDirectSoundCaptureBuffer) dscbvt;
-
-#endif
 
 /***************************************************************************
  * DirectSoundEnumerateA [DSOUND.2]  
