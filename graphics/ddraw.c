@@ -75,18 +75,6 @@ static struct IDirectDrawPalette_VTable dga_ddpalvt, xlib_ddpalvt;
 static struct IDirect3D_VTable			d3dvt;
 static struct IDirect3D2_VTable			d3d2vt;
 
-void Xlib_MessagePump(HWND32 hwnd) {
-	MSG32	msg32;
-
-	while (EVENT_WaitNetEvent(FALSE,FALSE)) {
-		while (PeekMessage32A(&msg32,0,0,0,0)) {
-			GetMessage32A(&msg32,0,0,0);
-			TranslateMessage32(&msg32);
-			DispatchMessage32A(&msg32);
-		}
-	}
-}
-
 BOOL32
 DDRAW_DGA_Available()
 {
@@ -351,8 +339,6 @@ static HRESULT WINAPI DGA_IDirectDrawSurface3_Unlock(
 static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 	LPDIRECTDRAWSURFACE3 this,LPVOID surface
 ) {
-	/* Xlib_MessagePump(this->s.ddraw->e.xlib.window); */
-
 	TRACE(ddraw,"(%p)->Unlock(%p)\n",this,surface);
 
 	if (!this->s.ddraw->e.xlib.paintable)
@@ -414,7 +400,6 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWSURFACE3 flipto,DWORD dwFlags
 ) {
 	TRACE(ddraw,"(%p)->Flip(%p,%08lx)\n",this,flipto,dwFlags);
-	/* Xlib_MessagePump(this->s.ddraw->e.xlib.window); */
 	if (!this->s.ddraw->e.xlib.paintable)
 		return 0;
 
@@ -613,7 +598,7 @@ static HRESULT WINAPI IDirectDrawSurface3_BltFast(
 static HRESULT WINAPI IDirectDrawSurface3_BltBatch(
 	LPDIRECTDRAWSURFACE3 this,LPDDBLTBATCH ddbltbatch,DWORD x,DWORD y
 ) {
-	TRACE(ddraw,"(%p)->BltBatch(%p,%08lx,%08lx),stub!\n",
+	FIXME(ddraw,"(%p)->BltBatch(%p,%08lx,%08lx),stub!\n",
 		this,ddbltbatch,x,y
 	);
 	return 0;
@@ -738,6 +723,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Initialize(
 static HRESULT WINAPI IDirectDrawSurface3_GetPixelFormat(
 	LPDIRECTDRAWSURFACE3 this,LPDDPIXELFORMAT pf
 ) {
+	TRACE(ddraw,"(%p)->(%p)\n",this,pf);
 	return _getpixelformat(this->s.ddraw,pf);
 }
 
@@ -824,15 +810,9 @@ static HRESULT WINAPI IDirectDrawSurface3_SetColorKey(
 	FIXME(ddraw,"(%p)->(0x%08lx,%p),stub!\n",this,dwFlags,ckey);
 
         if( dwFlags & DDCKEY_SRCBLT )
-        {
            dwFlags &= ~DDCKEY_SRCBLT;
-        } 
-
         if( dwFlags )
-        {
           TRACE( ddraw, "unhandled dwFlags: %08lx\n", dwFlags );
-        }
-
 	return DD_OK;
 }
 
@@ -1123,7 +1103,6 @@ static struct IDirectDrawClipper_VTable ddclipvt = {
 static HRESULT WINAPI IDirectDrawPalette_GetEntries(
 	LPDIRECTDRAWPALETTE this,DWORD x,DWORD start,DWORD count,LPPALETTEENTRY palent
 ) {
-	XColor xc;
 	int	i;
 
 	if (!this->cm) /* should not happen */ {
@@ -1131,15 +1110,6 @@ static HRESULT WINAPI IDirectDrawPalette_GetEntries(
 		return DDERR_GENERIC;
 	}
 	for (i=0;i<count;i++) {
-#if 0
-PH
-		xc.pixel = i+start;
-		TSXQueryColor(display,this->cm,&xc);
-		palent[i].peRed = xc.red>>8;
-		palent[i].peGreen = xc.green>>8;
-		palent[i].peBlue = xc.blue>>8;
-#endif
-
                 palent[i].peRed   = this->palents[start+i].peRed;
                 palent[i].peBlue  = this->palents[start+i].peBlue;
                 palent[i].peGreen = this->palents[start+i].peGreen;
@@ -1626,7 +1596,7 @@ static HRESULT WINAPI IDirectDraw2_SetCooperativeLevel(
 		FE(DDSCL_CREATEDEVICEWINDOW)
 	};
 
-	TRACE(ddraw,"(%p)->(%08lx,%08lx)\n",this,(DWORD)hwnd,cooplevel);
+	FIXME(ddraw,"(%p)->(%08lx,%08lx)\n",this,(DWORD)hwnd,cooplevel);
 	if(TRACE_ON(ddraw)){
 	  dbg_decl_str(ddraw, 512);
 	  for (i=0;i<sizeof(flagmap)/sizeof(flagmap[0]);i++)
@@ -1711,6 +1681,8 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 		return DDERR_UNSUPPORTEDMODE;
 	}
 	*/
+	if (this->e.xlib.window)
+		DestroyWindow32(this->e.xlib.window);
 	this->e.xlib.window = CreateWindowEx32A(
 		0,
 		"WINE_DirectDraw",
@@ -1844,10 +1816,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreatePalette(
 
 	if (this->d.depth<=8) {
 		(*lpddpal)->cm = TSXCreateColormap(display,this->e.xlib.drawable,DefaultVisualOfScreen(screen),AllocAll);
-		/* later installed ... 
-		 * TSXInstallColormap(display,(*lpddpal)->cm);
-		 * TSXSetWindowColormap(display,this->e.xlib.drawable,(*lpddpal)->cm);
-		 */
+		/* FIXME: this is not correct, when using -managed */
 		TSXInstallColormap(display,(*lpddpal)->cm);
 	} 
         else
@@ -2032,10 +2001,19 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 	LPDIRECTDRAW2 this,DWORD dwFlags,LPDDSURFACEDESC lpddsfd,LPVOID context,LPDDENUMMODESCALLBACK modescb
 ) {
 	DDSURFACEDESC	ddsfd;
+	static struct {
+		int w,h;
+	} modes[5] = { /* some of the usual modes */
+		{512,384},
+		{640,400},
+		{640,480},
+		{800,600},
+		{1024,768},
+	};
+	static int depths[4] = {8,16,24,32};
+	int	i,j;
 
 	TRACE(ddraw,"(%p)->(0x%08lx,%p,%p,%p)\n",this,dwFlags,lpddsfd,context,modescb);
-
-	_getpixelformat(this,&(ddsfd.ddpfPixelFormat));
 	ddsfd.dwSize = sizeof(ddsfd);
 	ddsfd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
 	if (dwFlags & DDEDM_REFRESHRATES) {
@@ -2043,23 +2021,37 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 		ddsfd.x.dwRefreshRate = 60;
 	}
 
-	ddsfd.dwWidth = 640;
-	ddsfd.dwHeight = 480;
-	ddsfd.dwBackBufferCount = 1;
-	ddsfd.ddsCaps.dwCaps = DDSCAPS_PALETTE;
-
-	if (!modescb(&ddsfd,context)) return 0;
-
-	ddsfd.dwWidth = 800;
-	ddsfd.dwHeight = 600;
-	if (!modescb(&ddsfd,context)) return 0;
-
-	if (!(dwFlags & DDEDM_STANDARDVGAMODES)) {
-		/* modeX is not standard VGA */
-
-		ddsfd.dwHeight = 200;
-		ddsfd.dwWidth = 320;
+	for (i=0;i<sizeof(depths)/sizeof(depths[0]);i++) {
+		ddsfd.dwBackBufferCount = 1;
+		ddsfd.ddpfPixelFormat.dwFourCC	= 0;
+		ddsfd.ddpfPixelFormat.dwFlags 	= DDPF_RGB;
+		ddsfd.ddpfPixelFormat.x.dwRGBBitCount	= depths[i];
+		/* FIXME: those masks would have to be set in depth > 8 */
+		ddsfd.ddpfPixelFormat.y.dwRBitMask  	= 0;
+		ddsfd.ddpfPixelFormat.z.dwGBitMask  	= 0;
+		ddsfd.ddpfPixelFormat.xx.dwBBitMask 	= 0;
+		ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+		if (depths[i]==8) {
+			ddsfd.ddsCaps.dwCaps=DDSCAPS_PALETTE;
+			ddsfd.ddpfPixelFormat.dwFlags|=DDPF_PALETTEINDEXED8;
+		}
+		ddsfd.dwWidth = screenWidth;
+		ddsfd.dwHeight = screenHeight;
 		if (!modescb(&ddsfd,context)) return 0;
+
+		for (j=0;j<sizeof(modes)/sizeof(modes[0]);j++) {
+			ddsfd.dwWidth	= modes[i].w;
+			ddsfd.dwHeight	= modes[i].h;
+			if (!modescb(&ddsfd,context)) return 0;
+		}
+
+		if (!(dwFlags & DDEDM_STANDARDVGAMODES)) {
+			/* modeX is not standard VGA */
+
+			ddsfd.dwHeight = 200;
+			ddsfd.dwWidth = 320;
+			if (!modescb(&ddsfd,context)) return 0;
+		}
 	}
 	return DD_OK;
 }
@@ -2367,9 +2359,7 @@ LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lPar
    {
       /* Perform any special direct draw functions */
       if (msg==WM_PAINT)
-      {
         ddraw->e.xlib.paintable = 1;
-      } 
 
       /* Now let the application deal with the rest of this */
       if( ddraw->d.mainWindow )
