@@ -76,7 +76,7 @@ static void cleanup(void)
  *         command-line option handling
  */
 
-struct option
+struct option_descr
 {
     const char *name;
     int         has_arg;
@@ -93,7 +93,7 @@ static void do_relay(void);
 static void do_sym( const char *arg );
 static void do_lib( const char *arg );
 
-static const struct option option_table[] =
+static const struct option_descr option_table[] =
 {
     { "-fPIC",  0, do_pic,    "-fPIC            Generate PIC code" },
     { "-h",     0, do_usage,  "-h               Display this help message" },
@@ -129,7 +129,7 @@ static void do_output( const char *arg )
 
 static void do_usage(void)
 {
-    const struct option *opt;
+    const struct option_descr *opt;
     fprintf( stderr, "Usage: winebuild [options]\n\n" );
     fprintf( stderr, "Options:\n" );
     for (opt = option_table; opt->name; opt++) fprintf( stderr, "   %s\n", opt->usage );
@@ -172,7 +172,7 @@ static void do_lib( const char *arg )
 /* parse options from the argv array and remove all the recognized ones */
 static void parse_options( char *argv[] )
 {
-    const struct option *opt;
+    const struct option_descr *opt;
     char * const * ptr;
     const char* arg=NULL;
 
