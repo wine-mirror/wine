@@ -49,7 +49,7 @@ static int indent = 0;
 
 /* FIXME: support generation of stubless proxies */
 
-int print_proxy( char *format, ... )
+static int print_proxy( const char *format, ... )
 {
   va_list va;
   int i, r;
@@ -89,7 +89,7 @@ static void write_stubdesc(void)
   print_proxy( "\n");
 }
 
-static void write_formatdesc( char *str )
+static void write_formatdesc( const char *str )
 {
   print_proxy( "typedef struct _MIDL_%s_FORMAT_STRING\n", str );
   indent++;
