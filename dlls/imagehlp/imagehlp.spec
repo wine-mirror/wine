@@ -79,9 +79,9 @@
 @ stub SymGetSymFromAddr64
 @ stdcall SymGetSymFromName(long str ptr) dbghelp.SymGetSymFromName
 @ stub SymGetSymFromName64
-@ stdcall SymGetSymNext(long ptr) dbgelp.SymGetSymNext
+@ stdcall SymGetSymNext(long ptr) dbghelp.SymGetSymNext
 @ stub SymGetSymNext64
-@ stdcall SymGetSymPrev(long ptr) dbgelp.SymGetSymPrev
+@ stdcall SymGetSymPrev(long ptr) dbghelp.SymGetSymPrev
 @ stub SymGetSymPrev64
 @ stdcall SymGetTypeFromName(long long str ptr) dbghelp.SymGetTypeFromName
 @ stdcall SymGetTypeInfo(long long long long ptr) dbghelp.SymGetTypeInfo
