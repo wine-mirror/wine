@@ -20,8 +20,8 @@
 @ stdcall ImagehlpApiVersionEx(ptr)
 @ stdcall MakeSureDirectoryPathExists(str)
 @ stdcall MapDebugInformation(long str str long)
-@ stub MiniDumpReadDumpStream
-@ stub MiniDumpWriteDump
+@ stdcall MiniDumpReadDumpStream(ptr long ptr ptr ptr)
+@ stdcall MiniDumpWriteDump(ptr long ptr long long long long)
 @ stdcall SearchTreeForFile(str str str)
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stub StackWalk64

@@ -24,74 +24,415 @@
 #define NONAMELESSSTRUCT
 
 #include "dbghelp_private.h"
+#include "ntstatus.h"
+#include "winnls.h"
+#include "winreg.h"
+#include "winternl.h"
+#include "psapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
-#if 0
-/* hard to see how we can generate this very easily (how to grab latest exception
- * in a process ?)
+struct dump_memory
+{
+    ULONG                               base;
+    ULONG                               size;
+    ULONG                               rva;
+};
+
+struct dump_module
+{
+    unsigned                            is_elf;
+    ULONG                               base;
+    ULONG                               size;
+    char                                name[MAX_PATH];
+};
+
+struct dump_context
+{
+    /* process & thread information */
+    HANDLE                              hProcess;
+    DWORD                               pid;
+    void*                               pcs_buffer;
+    SYSTEM_PROCESS_INFORMATION*         spi;
+    /* module information */
+    struct dump_module*                 module;
+    unsigned                            num_module;
+    /* exception information */
+    /* output information */
+    MINIDUMP_TYPE                       type;
+    HANDLE                              hFile;
+    RVA                                 rva;
+    struct dump_memory*                 mem;
+    unsigned                            num_mem;
+    /* callback information */
+    MINIDUMP_CALLBACK_INFORMATION*      cb;
+};
+
+/******************************************************************
+ *		fetch_process_info
+ *
+ * reads system wide process information, and make spi point to the record
+ * for process of id 'pid'
  */
-static  void    DumpException(struct process* pcs, HANDLE hFile, RVA* rva)
+static BOOL fetch_process_info(struct dump_context* dc)
+{
+    ULONG       buf_size = 0x1000;
+    NTSTATUS    nts;
+
+    dc->pcs_buffer = NULL;
+    if (!(dc->pcs_buffer = HeapAlloc(GetProcessHeap(), 0, buf_size))) return FALSE;
+    for (;;)
+    {
+        nts = NtQuerySystemInformation(SystemProcessInformation, 
+                                       dc->pcs_buffer, buf_size, NULL);
+        if (nts != STATUS_INFO_LENGTH_MISMATCH) break;
+        dc->pcs_buffer = HeapReAlloc(GetProcessHeap(), 0, dc->pcs_buffer, 
+                                     buf_size *= 2);
+        if (!dc->pcs_buffer) return FALSE;
+    }
+
+    if (nts == STATUS_SUCCESS)
+    {
+        dc->spi = dc->pcs_buffer;
+        for (;;)
+        {
+            if (dc->spi->dwProcessID == dc->pid) return TRUE;
+            if (!dc->spi->dwOffset) break;
+            dc->spi = (SYSTEM_PROCESS_INFORMATION*)     
+                ((char*)dc->spi + dc->spi->dwOffset);
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, dc->pcs_buffer);
+    dc->pcs_buffer = NULL;
+    dc->spi = NULL;
+    return FALSE;
+}
+
+/******************************************************************
+ *		fetch_thread_info
+ *
+ * fetches some information about thread of id 'tid'
+ */
+static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
+                              MINIDUMP_THREAD* mdThd, CONTEXT* ctx)
+{
+    NT_TIB                      tib;
+    DWORD                       tid = dc->spi->ti[thd_idx].dwThreadID;
+    HANDLE                      hThread;
+    THREAD_BASIC_INFORMATION    tbi;
+
+    memset(ctx, 0, sizeof(*ctx));
+
+    mdThd->ThreadId = dc->spi->ti[thd_idx].dwThreadID;
+    mdThd->SuspendCount = 0;
+    mdThd->Teb = 0;
+    mdThd->Stack.StartOfMemoryRange = 0;
+    mdThd->Stack.Memory.DataSize = 0;
+    mdThd->Stack.Memory.Rva = 0;
+    mdThd->ThreadContext.DataSize = 0;
+    mdThd->ThreadContext.Rva = 0;
+    mdThd->PriorityClass = dc->spi->ti[thd_idx].dwBasePriority; /* FIXME */
+    mdThd->Priority = dc->spi->ti[thd_idx].dwCurrentPriority;
+
+    if ((hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, tid)) == NULL)
+    {
+        FIXME("Couldn't open thread %lu (%lu)\n", 
+              dc->spi->ti[thd_idx].dwThreadID, GetLastError());
+        return FALSE;
+    }
+    
+    if (NtQueryInformationThread(hThread, ThreadBasicInformation,
+                                 &tbi, sizeof(tbi), NULL) == STATUS_SUCCESS)
+    {
+        mdThd->Teb = (ULONG_PTR)tbi.TebBaseAddress;
+        if (tbi.ExitStatus == STILL_ACTIVE && tid != GetCurrentThreadId() &&
+            (mdThd->SuspendCount = SuspendThread(hThread)) != (DWORD)-1)
+        {
+            mdThd->SuspendCount--;
+            ctx->ContextFlags = CONTEXT_FULL;
+            if (!GetThreadContext(hThread, ctx))
+                memset(ctx, 0, sizeof(*ctx));
+
+            if (ReadProcessMemory(dc->hProcess, tbi.TebBaseAddress, 
+                                  &tib, sizeof(tib), NULL))
+            {
+#ifdef __i386__
+                /* limiting the stack dumping to the size actually used */
+                if (ctx->Esp)
+                    mdThd->Stack.StartOfMemoryRange = (ctx->Esp - 4);
+                else
+                    mdThd->Stack.StartOfMemoryRange = (ULONG_PTR)tib.StackLimit;
+                mdThd->Stack.Memory.DataSize = (ULONG_PTR)tib.StackBase - 
+                    mdThd->Stack.StartOfMemoryRange;
+#else
+#error unsupported CPU                            
+#endif
+            }
+            ResumeThread(hThread);
+        }
+    }
+    CloseHandle(hThread);
+    return TRUE;
+}
+
+/******************************************************************
+ *		add_module
+ *
+ * Add a module to a dump context
+ */
+static BOOL add_module(struct dump_context* dc, const char* name,
+                       DWORD base, DWORD size, BOOL is_elf)
+{
+    if (!dc->module)
+        dc->module = HeapAlloc(GetProcessHeap(), 0, ++dc->num_module * sizeof(*dc->module));
+    else
+        dc->module = HeapReAlloc(GetProcessHeap(), 0, dc->module, ++dc->num_module * sizeof(*dc->module));
+    if (!dc->module) return FALSE;
+    if (is_elf ||
+        !GetModuleFileNameExA(dc->hProcess, (HMODULE)base, 
+                              dc->module[dc->num_module - 1].name,
+                              sizeof(dc->module[dc->num_module - 1].name)))
+        lstrcpynA(dc->module[dc->num_module - 1].name, name,
+                  sizeof(dc->module[dc->num_module - 1].name));
+    dc->module[dc->num_module - 1].base = base;
+    dc->module[dc->num_module - 1].size = size;
+    dc->module[dc->num_module - 1].is_elf = is_elf;
+
+    return TRUE;
+}
+
+/******************************************************************
+ *		fetch_pe_module_info_cb
+ *
+ * Callback for accumulating in dump_context a PE modules set
+ */
+static BOOL WINAPI fetch_pe_module_info_cb(char* name, DWORD base, DWORD size,
+                                           void* user)
+{
+    return add_module((struct dump_context*)user, name, base, size, FALSE);
+}
+
+/******************************************************************
+ *		fetch_elf_module_info_cb
+ *
+ * Callback for accumulating in dump_context a ELF modules set
+ */
+static BOOL fetch_elf_module_info_cb(const char* name, unsigned long base, 
+                                     void* user)
+{
+    return add_module((struct dump_context*)user, name, 
+                      base, 0 /* FIXME */, TRUE);
+}
+
+static void fetch_module_info(struct dump_context* dc)
+{
+    WINE_FIXME("--> %p\n", dc->hProcess);
+    EnumerateLoadedModules(dc->hProcess, fetch_pe_module_info_cb, dc);
+    /* Since we include ELF modules in a separate stream from the regular PE ones,
+     * we can always include those ELF modules (they don't eat lots of space)
+     * And it's always a good idea to have a trace of the loaded ELF modules for
+     * a given application in a post mortem debugging condition.
+     */
+    elf_enum_modules(dc->hProcess, fetch_elf_module_info_cb, dc);
+}
+
+/******************************************************************
+ *		add_memory_block
+ *
+ * Add a memory block to be dumped in a minidump
+ * If rva is non 0, it's the rva in the minidump where has to be stored
+ * also the rva of the memory block when written (this allows to reference
+ * a memory block from outside the list of memory blocks).
+ */
+static void add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, ULONG rva)
+{
+    if (dc->mem)
+        dc->mem = HeapReAlloc(GetProcessHeap(), 0, dc->mem, 
+                              ++dc->num_mem * sizeof(*dc->mem));
+    else
+        dc->mem = HeapAlloc(GetProcessHeap(), 0, ++dc->num_mem * sizeof(*dc->mem));
+    if (dc->mem)
+    {
+        dc->mem[dc->num_mem - 1].base = base;
+        dc->mem[dc->num_mem - 1].size = size;
+        dc->mem[dc->num_mem - 1].rva  = rva;
+    }
+    else dc->num_mem = 0;
+}
+
+/******************************************************************
+ *		writeat
+ *
+ * Writes a chunk of data at a given position in the minidump
+ */
+static void writeat(struct dump_context* dc, RVA rva, void* data, unsigned size)
+{
+    DWORD       written;
+
+    SetFilePointer(dc->hFile, rva, NULL, FILE_BEGIN);
+    WriteFile(dc->hFile, data, size, &written, NULL);
+}
+
+/******************************************************************
+ *		append
+ *
+ * writes a new chunk of data to the minidump, increasing the current
+ * rva in dc
+ */
+static void append(struct dump_context* dc, void* data, unsigned size)
+{
+    writeat(dc, dc->rva, data, size);
+    dc->rva += size;
+}
+
+/******************************************************************
+ *		dump_exception_info
+ *
+ * Write in File the exception information from pcs
+ */
+static  void    dump_exception_info(struct dump_context* dc,
+                                    const MINIDUMP_EXCEPTION_INFORMATION* except)
 {
     MINIDUMP_EXCEPTION_STREAM   mdExcpt;
+    EXCEPTION_RECORD            rec, *prec;
+    CONTEXT                     ctx, *pctx;
+    int                         i;
 
-    mdExcpt.ThreadId = DEBUG_CurrThread->tid;
+    mdExcpt.ThreadId = except->ThreadId;
     mdExcpt.__alignment = 0;
-    mdExcpt.ExceptionRecord.
+    if (except->ClientPointers)
+    {
+        EXCEPTION_POINTERS      ep;
 
-    ULONG                       ExceptionCode;
-    ULONG                       ExceptionFlags;
-    ULONGLONG                   ExceptionRecord;
-    ULONGLONG                   ExceptionAddress;
-    ULONG                       NumberParameters;
-    ULONG                        __unusedAlignment;
-    ULONGLONG                   ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+        ReadProcessMemory(dc->hProcess, 
+                          except->ExceptionPointers, &ep, sizeof(ep), NULL);
+        ReadProcessMemory(dc->hProcess, 
+                          ep.ExceptionRecord, &rec, sizeof(rec), NULL);
+        ReadProcessMemory(dc->hProcess, 
+                          ep.ContextRecord, &ctx, sizeof(ctx), NULL);
+        prec = &rec;
+        pctx = &ctx;
+        
+    }
+    else
+    {
+        prec = except->ExceptionPointers->ExceptionRecord;
+        pctx = except->ExceptionPointers->ContextRecord;
+    }
+    mdExcpt.ExceptionRecord.ExceptionCode = prec->ExceptionCode;
+    mdExcpt.ExceptionRecord.ExceptionFlags = prec->ExceptionFlags;
+    mdExcpt.ExceptionRecord.ExceptionRecord = (DWORD_PTR)prec->ExceptionRecord;
+    mdExcpt.ExceptionRecord.ExceptionAddress = (DWORD_PTR)prec->ExceptionAddress;
+    mdExcpt.ExceptionRecord.NumberParameters = prec->NumberParameters;
+    mdExcpt.ExceptionRecord.__unusedAlignment = 0;
+    for (i = 0; i < mdExcpt.ExceptionRecord.NumberParameters; i++)
+        mdExcpt.ExceptionRecord.ExceptionInformation[i] = (DWORD_PTR)prec->ExceptionInformation[i];
+    mdExcpt.ThreadContext.DataSize = sizeof(*pctx);
+    mdExcpt.ThreadContext.Rva = dc->rva + sizeof(mdExcpt);
+
+    append(dc, &mdExcpt, sizeof(mdExcpt));
+    append(dc, pctx, sizeof(*pctx));
 }
-#endif
 
 /******************************************************************
  *		dump_modules
  *
  * Write in File the modules from pcs
  */
-static  void    dump_modules(struct process* pcs, HANDLE hFile, RVA* rva)
+static  void    dump_modules(struct dump_context* dc, BOOL dump_elf)
 {
     MINIDUMP_MODULE             mdModule;
     MINIDUMP_MODULE_LIST        mdModuleList;
-    DWORD                       written;
-    struct module*              module = NULL;
+    char                        tmp[1024];
+    MINIDUMP_STRING*            ms = (MINIDUMP_STRING*)tmp;
+    ULONG                       i, nmod;
+    RVA                         rva_base;
+    DWORD                       flags_out;
+
+    for (i = nmod = 0; i < dc->num_module; i++)
+    {
+        if ((dc->module[i].is_elf && dump_elf) || (!dc->module[i].is_elf && !dump_elf))
+            nmod++;
+    }
 
     mdModuleList.NumberOfModules = 0;
-    for (module = pcs->lmodules; module; module = module->next)
-        mdModuleList.NumberOfModules++;
-    WriteFile(hFile, &mdModuleList.NumberOfModules, 
-              sizeof(mdModuleList.NumberOfModules), &written, NULL);
-    *rva += sizeof(mdModuleList.NumberOfModules) +      
-        sizeof(mdModule) * mdModuleList.NumberOfModules;
-    for (module = pcs->lmodules; module; module = module->next)
+    /* reserve space for mdModuleList
+     * FIXME: since we don't support 0 length arrays, we cannot use the
+     * size of mdModuleList
+     * FIXME: if we don't ask for all modules in cb, we'll get a hole in the file
+     */
+    rva_base = dc->rva;
+    dc->rva += sizeof(mdModuleList.NumberOfModules) + sizeof(mdModule) * nmod;
+    for (i = 0; i < dc->num_module; i++)
     {
-        mdModule.BaseOfImage = (DWORD)module->module.BaseOfImage;
-        mdModule.SizeOfImage = module->module.ImageSize;
-        mdModule.CheckSum = module->module.CheckSum;
-        mdModule.TimeDateStamp = module->module.TimeDateStamp;
-        mdModule.ModuleNameRva = *rva;
-        *rva += strlen(module->module.ModuleName) + 1;
-        memset(&mdModule.VersionInfo, 0, sizeof(mdModule.VersionInfo)); /* FIXME */
-        mdModule.CvRecord.DataSize = 0; /* FIXME */
-        mdModule.CvRecord.Rva = 0; /* FIXME */
-        mdModule.MiscRecord.DataSize = 0; /* FIXME */
-        mdModule.MiscRecord.Rva = 0; /* FIXME */
-        mdModule.Reserved0 = 0;
-        mdModule.Reserved1 = 0;
-        WriteFile(hFile, &mdModule, sizeof(mdModule), &written, NULL);
+        if ((dc->module[i].is_elf && !dump_elf) || (!dc->module[i].is_elf && dump_elf))
+            continue;
+
+        flags_out = ModuleWriteModule | ModuleWriteMiscRecord | ModuleWriteCvRecord;
+        if (dc->type & MiniDumpWithDataSegs)
+            flags_out |= ModuleWriteDataSeg;
+        if (dc->type & MiniDumpWithProcessThreadData)
+            flags_out |= ModuleWriteTlsData;
+        if (dc->type & MiniDumpWithCodeSegs)
+            flags_out |= ModuleWriteCodeSegs;
+        ms->Length = MultiByteToWideChar(CP_ACP, 0, 
+                                         dc->module[i].name, -1,
+                                         NULL, 0) * sizeof(WCHAR);
+        if (sizeof(ULONG) + ms->Length > sizeof(tmp))
+            FIXME("Buffer overflow!!!\n");
+        MultiByteToWideChar(CP_ACP, 0, dc->module[i].name, -1,
+                            ms->Buffer, ms->Length);
+
+        if (dc->cb)
+        {
+            MINIDUMP_CALLBACK_INPUT     cbin;
+            MINIDUMP_CALLBACK_OUTPUT    cbout;
+
+            cbin.ProcessId = dc->pid;
+            cbin.ProcessHandle = dc->hProcess;
+            cbin.CallbackType = ModuleCallback;
+
+            cbin.u.Module.FullPath = ms->Buffer;
+            cbin.u.Module.BaseOfImage = dc->module[i].base;
+            cbin.u.Module.SizeOfImage = dc->module[i].size;
+            cbin.u.Module.CheckSum = 0; /* FIXME */
+            cbin.u.Module.TimeDateStamp = 0; /* FIXME */
+            memset(&cbin.u.Module.VersionInfo, 0, sizeof(cbin.u.Module.VersionInfo));
+            cbin.u.Module.CvRecord = NULL;
+            cbin.u.Module.SizeOfCvRecord = 0;
+            cbin.u.Module.MiscRecord = NULL;
+            cbin.u.Module.SizeOfMiscRecord = 0;
+
+            cbout.u.ModuleWriteFlags = flags_out;
+            if (!dc->cb->CallbackRoutine(dc->cb->CallbackParam, &cbin, &cbout))
+                continue;
+            flags_out &= cbout.u.ModuleWriteFlags;
+        }
+        if (flags_out & ModuleWriteModule)
+        {
+            mdModule.BaseOfImage = dc->module[i].base;
+            mdModule.SizeOfImage = dc->module[i].size;
+            mdModule.CheckSum = 0; /* FIXME */
+            mdModule.TimeDateStamp = 0; /* FIXME */
+            mdModule.ModuleNameRva = dc->rva;
+            ms->Length -= sizeof(WCHAR);
+            append(dc, ms, sizeof(ULONG) + ms->Length);
+            memset(&mdModule.VersionInfo, 0, sizeof(mdModule.VersionInfo)); /* FIXME */
+            mdModule.CvRecord.DataSize = 0; /* FIXME */
+            mdModule.CvRecord.Rva = 0; /* FIXME */
+            mdModule.MiscRecord.DataSize = 0; /* FIXME */
+            mdModule.MiscRecord.Rva = 0; /* FIXME */
+            mdModule.Reserved0 = 0; /* FIXME */
+            mdModule.Reserved1 = 0; /* FIXME */
+            writeat(dc,
+                    rva_base + sizeof(mdModuleList.NumberOfModules) + 
+                        mdModuleList.NumberOfModules++ * sizeof(mdModule), 
+                    &mdModule, sizeof(mdModule));
+        }
     }
-    for (module = pcs->lmodules; module; module = module->next)
-    {
-        WriteFile(hFile, module->module.ModuleName, 
-                  strlen(module->module.ModuleName) + 1, &written, NULL);
-        FIXME("CV and misc records not written\n");
-    }
+    writeat(dc, rva_base, &mdModuleList.NumberOfModules, 
+            sizeof(mdModuleList.NumberOfModules));
 }
 
 /******************************************************************
@@ -99,34 +440,39 @@ static  void    dump_modules(struct process* pcs, HANDLE hFile, RVA* rva)
  *
  * Dumps into File the information about the system
  */
-static  void    dump_system_info(struct process* pcs, HANDLE hFile, RVA* rva)
+static  void    dump_system_info(struct dump_context* dc)
 {
     MINIDUMP_SYSTEM_INFO        mdSysInfo;
     SYSTEM_INFO                 sysInfo;
-    OSVERSIONINFOA              osInfo;
+    OSVERSIONINFOW              osInfo;
     DWORD                       written;
+    ULONG                       slen;
 
     GetSystemInfo(&sysInfo);
-    GetVersionExA(&osInfo);
+    osInfo.dwOSVersionInfoSize = sizeof(osInfo);
+    GetVersionExW(&osInfo);
 
     mdSysInfo.ProcessorArchitecture = sysInfo.u.s.wProcessorArchitecture;
     mdSysInfo.ProcessorLevel = sysInfo.wProcessorLevel;
     mdSysInfo.ProcessorRevision = sysInfo.wProcessorRevision;
-    mdSysInfo.Reserved0 = 0;
-
+    mdSysInfo.u.s.NumberOfProcessors = sysInfo.dwNumberOfProcessors;
+    mdSysInfo.u.s.ProductType = VER_NT_WORKSTATION; /* FIXME */
     mdSysInfo.MajorVersion = osInfo.dwMajorVersion;
     mdSysInfo.MinorVersion = osInfo.dwMinorVersion;
     mdSysInfo.BuildNumber = osInfo.dwBuildNumber;
     mdSysInfo.PlatformId = osInfo.dwPlatformId;
 
-    mdSysInfo.CSDVersionRva = *rva + sizeof(mdSysInfo);
-    mdSysInfo.Reserved1 = 0;
+    mdSysInfo.CSDVersionRva = dc->rva + sizeof(mdSysInfo);
+    mdSysInfo.u1.Reserved1 = 0;
 
-    WriteFile(hFile, &mdSysInfo, sizeof(mdSysInfo), &written, NULL);
-    *rva += sizeof(mdSysInfo);
-    WriteFile(hFile, osInfo.szCSDVersion, strlen(osInfo.szCSDVersion) + 1, 
-              &written, NULL);
-    *rva += strlen(osInfo.szCSDVersion) + 1;
+    memset(&mdSysInfo.Cpu, 0, sizeof(mdSysInfo.Cpu));
+
+    append(dc, &mdSysInfo, sizeof(mdSysInfo));
+
+    slen = lstrlenW(osInfo.szCSDVersion) * sizeof(WCHAR);
+    WriteFile(dc->hFile, &slen, sizeof(slen), &written, NULL);
+    WriteFile(dc->hFile, osInfo.szCSDVersion, slen, &written, NULL);
+    dc->rva += sizeof(ULONG) + slen;
 }
 
 /******************************************************************
@@ -134,36 +480,140 @@ static  void    dump_system_info(struct process* pcs, HANDLE hFile, RVA* rva)
  *
  * Dumps into File the information about running threads
  */
-static  void    dump_threads(struct process* pcs, HANDLE hFile, RVA* rva)
+static  void    dump_threads(struct dump_context* dc)
 {
-#if 0
     MINIDUMP_THREAD             mdThd;
     MINIDUMP_THREAD_LIST        mdThdList;
-    DWORD                       written;
-    DBG_THREAD*                 thd;
+    unsigned                    i;
+    RVA                         rva_base;
+    DWORD                       flags_out;
+    CONTEXT                     ctx;
 
-    mdThdList.NumberOfThreads = pcs->num_threads;
-    WriteFile(hFile, &mdThdList.NumberOfThreads, sizeof(mdThdList.NumberOfThreads), 
-              &written, NULL);
-    *rva += sizeof(mdThdList.NumberOfThreads) + 
-        mdThdList.NumberOfThreads * sizeof(mdThd);
-    for (thd = pcs->threads; thd; thd = thd->next)
+    mdThdList.NumberOfThreads = 0;
+
+    rva_base = dc->rva;
+    dc->rva += sizeof(mdThdList.NumberOfThreads) +
+        dc->spi->dwThreadCount * sizeof(mdThd);
+
+    for (i = 0; i < dc->spi->dwThreadCount; i++)
     {
-        mdThd.ThreadId = thd->tid;
-        mdThd.SuspendCount = 0; /* FIXME */
-        mdThd.PriorityClass = 0; /* FIXME */
-        mdThd.Priority = 0; /* FIXME */
-        mdThd.Teb = 0; /* FIXME */
-        mdThd.Stack.StartOfMemoryRange = 0; /* FIXME */
-        mdThd.Stack.Memory.DataSize = 0; /* FIXME */
-        mdThd.Stack.Memory.Rva = 0; /* FIXME */
-        mdThd.ThreadContext.DataSize = 0;/* FIXME */
-        mdThd.ThreadContext.Rva = 0; /* FIXME */
+        fetch_thread_info(dc, i, &mdThd, &ctx);
 
-        WriteFile(hFile, &mdThd, sizeof(mdThd), &written, NULL);
-        FIXME("Stack & thread context not written\n");
+        flags_out = ThreadWriteThread | ThreadWriteStack | ThreadWriteContext |
+            ThreadWriteInstructionWindow;
+        if (dc->type & MiniDumpWithProcessThreadData)
+            flags_out |= ThreadWriteThreadData;
+        if (dc->type & MiniDumpWithThreadInfo)
+            flags_out |= ThreadWriteThreadInfo;
+
+        if (dc->cb)
+        {
+            MINIDUMP_CALLBACK_INPUT     cbin;
+            MINIDUMP_CALLBACK_OUTPUT    cbout;
+
+            cbin.ProcessId = dc->pid;
+            cbin.ProcessHandle = dc->hProcess;
+            cbin.CallbackType = ThreadCallback;
+            cbin.u.Thread.ThreadId = dc->spi->ti[i].dwThreadID;
+            cbin.u.Thread.ThreadHandle = 0; /* FIXME */
+            memcpy(&cbin.u.Thread.Context, &ctx, sizeof(CONTEXT));
+            cbin.u.Thread.SizeOfContext = sizeof(CONTEXT);
+            cbin.u.Thread.StackBase = mdThd.Stack.StartOfMemoryRange;
+            cbin.u.Thread.StackEnd = mdThd.Stack.StartOfMemoryRange +
+                mdThd.Stack.Memory.DataSize;
+
+            cbout.u.ThreadWriteFlags = flags_out;
+            if (!dc->cb->CallbackRoutine(dc->cb->CallbackParam, &cbin, &cbout))
+                continue;
+            flags_out &= cbout.u.ThreadWriteFlags;
+        }
+        if (flags_out & ThreadWriteThread)
+        {
+            if (ctx.ContextFlags && (flags_out & ThreadWriteContext))
+            {
+                mdThd.ThreadContext.Rva = dc->rva;
+                mdThd.ThreadContext.DataSize = sizeof(CONTEXT);
+                append(dc, &ctx, sizeof(CONTEXT));
+            }
+            if (mdThd.Stack.Memory.DataSize && (flags_out & ThreadWriteStack))
+            {
+                add_memory_block(dc, mdThd.Stack.StartOfMemoryRange,
+                                 mdThd.Stack.Memory.DataSize,
+                                 rva_base + sizeof(mdThdList.NumberOfThreads) +
+                                     mdThdList.NumberOfThreads * sizeof(mdThd) +
+                                     FIELD_OFFSET(MINIDUMP_THREAD, Stack.Memory.Rva));
+            }
+            writeat(dc, 
+                    rva_base + sizeof(mdThdList.NumberOfThreads) +
+                        mdThdList.NumberOfThreads * sizeof(mdThd),
+                    &mdThd, sizeof(mdThd));
+            mdThdList.NumberOfThreads++;
+        }
+        if (ctx.ContextFlags && (flags_out & ThreadWriteInstructionWindow))
+        {
+            /* FIXME: - Native dbghelp also dumps 0x80 bytes around EIP
+             *        - also crop values across module boundaries, 
+             *        - and don't make it i386 dependent 
+             */
+            /* add_memory_block(dc, ctx.Eip - 0x80, ctx.Eip + 0x80, 0); */
+        }
     }
-#endif
+    writeat(dc, rva_base,
+            &mdThdList.NumberOfThreads, sizeof(mdThdList.NumberOfThreads));
+}
+
+/******************************************************************
+ *		dump_memory_info
+ *
+ * dumps information about the memory of the process (stack of the threads)
+ */
+static void dump_memory_info(struct dump_context* dc)
+{
+    MINIDUMP_MEMORY_LIST        mdMemList;
+    MINIDUMP_MEMORY_DESCRIPTOR  mdMem;
+    DWORD                       written;
+    unsigned                    i, pos, len;
+    RVA                         rva_base;
+    char                        tmp[1024];
+
+    mdMemList.NumberOfMemoryRanges = dc->num_mem;
+    append(dc, &mdMemList.NumberOfMemoryRanges,
+           sizeof(mdMemList.NumberOfMemoryRanges));
+    rva_base = dc->rva;
+    dc->rva += mdMemList.NumberOfMemoryRanges * sizeof(mdMem);
+
+    for (i = 0; i < dc->num_mem; i++)
+    {
+        mdMem.StartOfMemoryRange = dc->mem[i].base;
+        mdMem.Memory.Rva = dc->rva;
+        mdMem.Memory.DataSize = dc->mem[i].size;
+        SetFilePointer(dc->hFile, dc->rva, NULL, FILE_BEGIN);
+        for (pos = 0; pos < dc->mem[i].size; pos += sizeof(tmp))
+        {
+            len = min(dc->mem[i].size - pos, sizeof(tmp));
+            if (ReadProcessMemory(dc->hProcess, 
+                                  (void*)(ULONG)(dc->mem[i].base + pos), 
+                                  tmp, len, NULL))
+                WriteFile(dc->hFile, tmp, len, &written, NULL);
+        }
+        dc->rva += mdMem.Memory.DataSize;
+        writeat(dc, rva_base + i * sizeof(mdMem), &mdMem, sizeof(mdMem));
+        if (dc->mem[i].rva)
+        {
+            writeat(dc, dc->mem[i].rva, &mdMem.Memory.Rva, sizeof(mdMem.Memory.Rva));
+        }
+    }
+}
+
+static void dump_misc_info(struct dump_context* dc)
+{
+    MINIDUMP_MISC_INFO  mmi;
+
+    mmi.SizeOfInfo = sizeof(mmi);
+    mmi.Flags1 = MINIDUMP_MISC1_PROCESS_ID;
+    mmi.ProcessId = dc->pid;
+    /* FIXME: create/user/kernel time */
+    append(dc, &mmi, sizeof(mmi));
 }
 
 /******************************************************************
@@ -171,28 +621,34 @@ static  void    dump_threads(struct process* pcs, HANDLE hFile, RVA* rva)
  *
  *
  */
-BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD ProcessId, HANDLE hFile,
+BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
                               MINIDUMP_TYPE DumpType,
                               PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
                               PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
                               PMINIDUMP_CALLBACK_INFORMATION CallbackParam)
 {
-    struct process*     pcs;
     MINIDUMP_HEADER     mdHead;
     MINIDUMP_DIRECTORY  mdDir;
-    DWORD               currRva, written;
-    DWORD               i, nStream, addStream;
-    RVA                 rva;
+    DWORD               i, nStreams, idx_stream;
+    struct dump_context dc;
 
-    pcs = process_find_by_handle(hProcess);
-    if (!pcs) return FALSE; /* FIXME: should try to load it ??? */
+    dc.hProcess = hProcess;
+    dc.hFile = hFile;
+    dc.pid = pid;
+    dc.module = NULL;
+    dc.num_module = 0;
+    dc.cb = CallbackParam;
+    dc.type = DumpType;
+    dc.mem = NULL;
+    dc.num_mem = 0;
+    dc.rva = 0;
+
+    if (!fetch_process_info(&dc)) return FALSE;
+    fetch_module_info(&dc);
 
     /* 1) init */
-
-    nStream = UserStreamParam ? UserStreamParam->UserStreamCount : 0;
-    addStream = 0;
-    if (DumpType & MiniDumpNormal)
-        addStream += 3; /* sure ? thread stack back trace */
+    nStreams = 6 + (ExceptionParam ? 1 : 0) +
+        (UserStreamParam ? UserStreamParam->UserStreamCount : 0);
 
     if (DumpType & MiniDumpWithDataSegs)
         FIXME("NIY MiniDumpWithDataSegs\n");
@@ -206,61 +662,123 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD ProcessId, HANDLE hFile,
         FIXME("NIY MiniDumpScanMemory\n");
 
     /* 2) write header */
-    rva = sizeof(mdHead);
     mdHead.Signature = MINIDUMP_SIGNATURE;
     mdHead.Version = MINIDUMP_VERSION;
-    mdHead.NumberOfStreams = nStream + addStream;
-    mdHead.StreamDirectoryRva = rva;
+    mdHead.NumberOfStreams = nStreams;
+    mdHead.StreamDirectoryRva = sizeof(mdHead);
     mdHead.u.TimeDateStamp = time(NULL);
     mdHead.Flags = DumpType;
-    WriteFile(hFile, &mdHead, sizeof(mdHead), &written, NULL);
-    
+    append(&dc, &mdHead, sizeof(mdHead));
+
     /* 3) write stream directories */
-    rva += (nStream + addStream) * sizeof(mdDir);
+    dc.rva += nStreams * sizeof(mdDir);
+    idx_stream = 0;
+
     /* 3.1) write data stream directories */
-    currRva = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
-    SetFilePointer(hFile, rva, NULL, FILE_BEGIN);
-    mdDir.StreamType = ModuleListStream;
-    mdDir.Location.Rva = rva;
-    dump_modules(pcs, hFile, &rva);
-    mdDir.Location.DataSize = SetFilePointer(hFile, 0, NULL, FILE_CURRENT) - mdDir.Location.Rva;
-    SetFilePointer(hFile, currRva, NULL, FILE_BEGIN);
-    WriteFile(hFile, &mdDir, sizeof(mdDir), &written, NULL);
 
-    currRva = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
-    SetFilePointer(hFile, rva, NULL, FILE_BEGIN);
     mdDir.StreamType = ThreadListStream;
-    mdDir.Location.Rva = rva;
-    dump_threads(pcs, hFile, &rva);
-    mdDir.Location.DataSize = SetFilePointer(hFile, 0, NULL, FILE_CURRENT) - mdDir.Location.Rva;
-    SetFilePointer(hFile, currRva, NULL, FILE_BEGIN);
-    WriteFile(hFile, &mdDir, sizeof(mdDir), &written, NULL);
+    mdDir.Location.Rva = dc.rva;
+    dump_threads(&dc);
+    mdDir.Location.DataSize = dc.rva - mdDir.Location.Rva;
+    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir), 
+            &mdDir, sizeof(mdDir));
 
-    currRva = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
-    SetFilePointer(hFile, rva, NULL, FILE_BEGIN);
+    mdDir.StreamType = ModuleListStream;
+    mdDir.Location.Rva = dc.rva;
+    dump_modules(&dc, FALSE);
+    mdDir.Location.DataSize = dc.rva - mdDir.Location.Rva;
+    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
+
+    mdDir.StreamType = 0xfff0; /* FIXME: this is part of MS reserved streams */
+    mdDir.Location.Rva = dc.rva;
+    dump_modules(&dc, TRUE);
+    mdDir.Location.DataSize = dc.rva - mdDir.Location.Rva;
+    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
+
+    mdDir.StreamType = MemoryListStream;
+    mdDir.Location.Rva = dc.rva;
+    dump_memory_info(&dc);
+    mdDir.Location.DataSize = dc.rva - mdDir.Location.Rva;
+    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
+
     mdDir.StreamType = SystemInfoStream;
-    mdDir.Location.Rva = rva;
-    dump_system_info(pcs, hFile, &rva);
-    mdDir.Location.DataSize = SetFilePointer(hFile, 0, NULL, FILE_CURRENT) - mdDir.Location.Rva;
-    SetFilePointer(hFile, currRva, NULL, FILE_BEGIN);
-    WriteFile(hFile, &mdDir, sizeof(mdDir), &written, NULL);
+    mdDir.Location.Rva = dc.rva;
+    dump_system_info(&dc);
+    mdDir.Location.DataSize = dc.rva - mdDir.Location.Rva;
+    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
 
-    /* 3.2) write user define stream */
-    for (i = 0; i < nStream; i++)
+    mdDir.StreamType = MiscInfoStream;
+    mdDir.Location.Rva = dc.rva;
+    dump_misc_info(&dc);
+    mdDir.Location.DataSize = dc.rva - mdDir.Location.Rva;
+    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
+
+    /* 3.2) write exception information (if any) */
+    if (ExceptionParam)
     {
-        mdDir.StreamType = UserStreamParam->UserStreamArray[i].Type;
-        mdDir.Location.DataSize = UserStreamParam->UserStreamArray[i].BufferSize;
-        mdDir.Location.Rva = rva;
-        WriteFile(hFile, &mdDir, sizeof(mdDir), &written, NULL);
-        currRva = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
-        SetFilePointer(hFile, rva, NULL, FILE_BEGIN);
-        WriteFile(hFile, 
-                  UserStreamParam->UserStreamArray[i].Buffer, 
-                  UserStreamParam->UserStreamArray[i].BufferSize, 
-                  &written, NULL);
-        rva += UserStreamParam->UserStreamArray[i].BufferSize;
-        SetFilePointer(hFile, currRva, NULL, FILE_BEGIN);
+        mdDir.StreamType = ExceptionStream;
+        mdDir.Location.Rva = dc.rva;
+        dump_exception_info(&dc, ExceptionParam);
+        mdDir.Location.DataSize = dc.rva - mdDir.Location.Rva;
+        writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+                &mdDir, sizeof(mdDir));
     }
 
+    /* 3.3) write user defined streams (if any) */
+    if (UserStreamParam)
+    {
+        for (i = 0; i < UserStreamParam->UserStreamCount; i++)
+        {
+            mdDir.StreamType = UserStreamParam->UserStreamArray[i].Type;
+            mdDir.Location.DataSize = UserStreamParam->UserStreamArray[i].BufferSize;
+            mdDir.Location.Rva = dc.rva;
+            writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+                    &mdDir, sizeof(mdDir));
+            append(&dc, UserStreamParam->UserStreamArray[i].Buffer, 
+                   UserStreamParam->UserStreamArray[i].BufferSize);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, dc.pcs_buffer);
+    HeapFree(GetProcessHeap(), 0, dc.mem);
+    HeapFree(GetProcessHeap(), 0, dc.module);
+
     return TRUE;
+}
+
+/******************************************************************
+ *		MiniDumpReadDumpStream (DEBUGHLP.@)
+ *
+ *
+ */
+BOOL WINAPI MiniDumpReadDumpStream(void* base, ULONG str_idx,
+                                   PMINIDUMP_DIRECTORY* pdir,
+                                   void** stream, ULONG* size)
+{
+    MINIDUMP_HEADER*    mdHead = (MINIDUMP_HEADER*)base;
+
+    if (mdHead->Signature == MINIDUMP_SIGNATURE)
+    {
+        MINIDUMP_DIRECTORY* dir;
+        int                 i;
+
+        dir = (MINIDUMP_DIRECTORY*)((char*)base + mdHead->StreamDirectoryRva);
+        for (i = 0; i < mdHead->NumberOfStreams; i++, dir++)
+        {
+            if (dir->StreamType == str_idx)
+            {
+                *pdir = dir;
+                *stream = (char*)base + dir->Location.Rva;
+                *size = dir->Location.DataSize;
+                return TRUE;
+            }
+        }
+    }
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
 }

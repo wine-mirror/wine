@@ -1278,9 +1278,11 @@ BOOL elf_enum_modules(HANDLE hProc, elf_enum_modules_cb cb, void* user)
     struct process      pcs;
     struct elf_info     elf_info;
 
+    memset(&pcs, 0, sizeof(pcs));
     pcs.handle = hProc;
     elf_info.flags = ELF_INFO_DEBUG_HEADER;
     if (!elf_search_loader(&pcs, &elf_info)) return FALSE;
+    pcs.dbg_hdr_addr = elf_info.dbg_hdr_addr;
     return elf_enum_modules_internal(&pcs, cb, user);
 }
 

@@ -250,7 +250,7 @@ typedef struct _DBGHELP_MODLOAD_DATA
 
 /* DebugHelp */
 
-#define MINIDUMP_SIGNATURE 0x4D444D50 /* 'PMDM' */
+#define MINIDUMP_SIGNATURE 0x504D444D /* 'MDMP' */
 #define MINIDUMP_VERSION   (42899)
 
 typedef DWORD   RVA;
@@ -258,12 +258,21 @@ typedef ULONG64 RVA64;
 
 typedef enum _MINIDUMP_TYPE 
 {
-    MiniDumpNormal         = 0x0000,
-    MiniDumpWithDataSegs   = 0x0001,
-    MiniDumpWithFullMemory = 0x0002,
-    MiniDumpWithHandleData = 0x0004,
-    MiniDumpFilterMemory   = 0x0008,
-    MiniDumpScanMemory     = 0x0010
+    MiniDumpNormal                              = 0x0000,
+    MiniDumpWithDataSegs                        = 0x0001,
+    MiniDumpWithFullMemory                      = 0x0002,
+    MiniDumpWithHandleData                      = 0x0004,
+    MiniDumpFilterMemory                        = 0x0008,
+    MiniDumpScanMemory                          = 0x0010,
+    MiniDumpWithUnloadedModules                 = 0x0020,
+    MiniDumpWithIndirectlyReferencedMemory      = 0x0040,
+    MiniDumpFilterModulePaths                   = 0x0080,
+    MiniDumpWithProcessThreadData               = 0x0100,
+    MiniDumpWithPrivateReadWriteMemory          = 0x0200,
+    MiniDumpWithoutOptionalData                 = 0x0400,
+    MiniDumpWithFullMemoryInfo                  = 0x0800,
+    MiniDumpWithThreadInfo                      = 0x1000,
+    MiniDumpWithCodeSegs                        = 0x2000
 } MINIDUMP_TYPE;
 
 typedef enum _MINIDUMP_CALLBACK_TYPE
@@ -273,6 +282,7 @@ typedef enum _MINIDUMP_CALLBACK_TYPE
     ThreadExCallback,
     IncludeThreadCallback,
     IncludeModuleCallback,
+    MemoryCallback,
 } MINIDUMP_CALLBACK_TYPE;
 
 typedef struct _MINIDUMP_THREAD_CALLBACK
@@ -281,7 +291,7 @@ typedef struct _MINIDUMP_THREAD_CALLBACK
     HANDLE                      ThreadHandle;
     CONTEXT                     Context;
     ULONG                       SizeOfContext;
-    ULONGLONG                   StackBase;
+    ULONG64                     StackBase;
     ULONG64                     StackEnd;
 } MINIDUMP_THREAD_CALLBACK, *PMINIDUMP_THREAD_CALLBACK;
 
@@ -291,10 +301,10 @@ typedef struct _MINIDUMP_THREAD_EX_CALLBACK
     HANDLE                      ThreadHandle;
     CONTEXT                     Context;
     ULONG                       SizeOfContext;
-    ULONGLONG                   StackBase;
-    ULONGLONG                   StackEnd;
-    ULONGLONG                   BackingStoreBase;
-    ULONGLONG                   BackingStoreEnd;
+    ULONG64                     StackBase;
+    ULONG64                     StackEnd;
+    ULONG64                     BackingStoreBase;
+    ULONG64                     BackingStoreEnd;
 } MINIDUMP_THREAD_EX_CALLBACK, *PMINIDUMP_THREAD_EX_CALLBACK;
 
 typedef struct _MINIDUMP_INCLUDE_THREAD_CALLBACK
@@ -308,13 +318,15 @@ typedef enum _THREAD_WRITE_FLAGS
     ThreadWriteStack             = 0x0002,
     ThreadWriteContext           = 0x0004,
     ThreadWriteBackingStore      = 0x0008,
-    ThreadWriteInstructionWindow = 0x0010
+    ThreadWriteInstructionWindow = 0x0010,
+    ThreadWriteThreadData        = 0x0020,
+    ThreadWriteThreadInfo        = 0x0040
 } THREAD_WRITE_FLAGS;
 
 typedef struct _MINIDUMP_MODULE_CALLBACK 
 {
     PWCHAR                      FullPath;
-    ULONGLONG                   BaseOfImage;
+    ULONG64                     BaseOfImage;
     ULONG                       SizeOfImage;
     ULONG                       CheckSum;
     ULONG                       TimeDateStamp;
@@ -336,7 +348,9 @@ typedef enum _MODULE_WRITE_FLAGS
     ModuleWriteDataSeg       = 0x0002,
     ModuleWriteMiscRecord    = 0x0004,
     ModuleWriteCvRecord      = 0x0008,
-    ModuleReferencedByMemory = 0x0010
+    ModuleReferencedByMemory = 0x0010,
+    ModuleWriteTlsData       = 0x0020,
+    ModuleWriteCodeSegs      = 0x0040,
 } MODULE_WRITE_FLAGS;
 
 typedef struct _MINIDUMP_CALLBACK_INPUT 
@@ -351,7 +365,7 @@ typedef struct _MINIDUMP_CALLBACK_INPUT
         MINIDUMP_MODULE_CALLBACK        Module;
         MINIDUMP_INCLUDE_THREAD_CALLBACK IncludeThread;
         MINIDUMP_INCLUDE_MODULE_CALLBACK IncludeModule;
-    } u;
+    } DUMMYUNIONNAME;
 } MINIDUMP_CALLBACK_INPUT, *PMINIDUMP_CALLBACK_INPUT;
 
 typedef struct _MINIDUMP_CALLBACK_OUTPUT
@@ -360,12 +374,15 @@ typedef struct _MINIDUMP_CALLBACK_OUTPUT
     {
         ULONG                           ModuleWriteFlags;
         ULONG                           ThreadWriteFlags;
-    } u;
+        struct
+        {
+            ULONG64                     MemoryBase;
+            ULONG                       MemorySize;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
 } MINIDUMP_CALLBACK_OUTPUT, *PMINIDUMP_CALLBACK_OUTPUT;
 
-typedef BOOL (WINAPI* MINIDUMP_CALLBACK_ROUTINE)(PVOID CallbackParam,
-                                                 const PMINIDUMP_CALLBACK_INPUT CallbackInput,
-                                                 PMINIDUMP_CALLBACK_OUTPUT CallbackOutput);
+typedef BOOL (WINAPI* MINIDUMP_CALLBACK_ROUTINE)(PVOID, const PMINIDUMP_CALLBACK_INPUT, PMINIDUMP_CALLBACK_OUTPUT);
 
 typedef struct _MINIDUMP_CALLBACK_INFORMATION 
 {
@@ -389,11 +406,11 @@ typedef struct _MINIDUMP_EXCEPTION
 {
     ULONG                       ExceptionCode;
     ULONG                       ExceptionFlags;
-    ULONGLONG                   ExceptionRecord;
-    ULONGLONG                   ExceptionAddress;
+    ULONG64                     ExceptionRecord;
+    ULONG64                     ExceptionAddress;
     ULONG                       NumberParameters;
     ULONG                        __unusedAlignment;
-    ULONGLONG                   ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+    ULONG64                     ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
 } MINIDUMP_EXCEPTION, *PMINIDUMP_EXCEPTION;
 
 typedef struct _MINIDUMP_EXCEPTION_INFORMATION
@@ -422,19 +439,38 @@ typedef struct _MINIDUMP_HEADER
     {
         DWORD                           Reserved;
         DWORD                           TimeDateStamp;
-    } u;
-    ULONGLONG                   Flags;
+    } DUMMYUNIONNAME;
+    ULONG64                     Flags;
 } MINIDUMP_HEADER, *PMINIDUMP_HEADER;
 
 typedef struct _MINIDUMP_MEMORY_DESCRIPTOR 
 {
-    ULONGLONG                   StartOfMemoryRange;
+    ULONG64                     StartOfMemoryRange;
     MINIDUMP_LOCATION_DESCRIPTOR Memory;
 } MINIDUMP_MEMORY_DESCRIPTOR, *PMINIDUMP_MEMORY_DESCRIPTOR;
 
+typedef struct _MINIDUMP_MEMORY_LIST
+{
+    ULONG                       NumberOfMemoryRanges;
+    MINIDUMP_MEMORY_DESCRIPTOR  MemoryRanges[1]; /* FIXME: 0-sized array not supported */
+} MINIDUMP_MEMORY_LIST, *PMINIDUMP_MEMORY_LIST;
+
+#define MINIDUMP_MISC1_PROCESS_ID       0x00000001
+#define MINIDUMP_MISC1_PROCESS_TIMES    0x00000002
+
+typedef struct _MINIDUMP_MISC_INFO
+{
+    ULONG                       SizeOfInfo;
+    ULONG                       Flags1;
+    ULONG                       ProcessId;
+    ULONG                       ProcessCreateTime;
+    ULONG                       ProcessUserTime;
+    ULONG                       ProcessKernelTime;
+} MINIDUMP_MISC_INFO, *PMINIDUMP_MISC_INFO;
+
 typedef struct _MINIDUMP_MODULE
 {
-    ULONGLONG                   BaseOfImage;
+    ULONG64                     BaseOfImage;
     ULONG                       SizeOfImage;
     ULONG                       CheckSum;
     ULONG                       TimeDateStamp;
@@ -442,8 +478,8 @@ typedef struct _MINIDUMP_MODULE
     VS_FIXEDFILEINFO            VersionInfo;
     MINIDUMP_LOCATION_DESCRIPTOR CvRecord;
     MINIDUMP_LOCATION_DESCRIPTOR MiscRecord;
-    ULONGLONG                   Reserved0;
-    ULONGLONG                   Reserved1;
+    ULONG64                     Reserved0;
+    ULONG64                     Reserved1;
 } MINIDUMP_MODULE, *PMINIDUMP_MODULE;
 
 typedef struct _MINIDUMP_MODULE_LIST 
@@ -451,6 +487,76 @@ typedef struct _MINIDUMP_MODULE_LIST
     ULONG                       NumberOfModules;
     MINIDUMP_MODULE             Modules[1]; /* FIXME: 0-sized array not supported */
 } MINIDUMP_MODULE_LIST, *PMINIDUMP_MODULE_LIST;
+
+typedef struct _MINIDUMP_STRING
+{
+    ULONG                       Length;
+    WCHAR                       Buffer[1]; /* FIXME: O-sized array not supported */
+} MINIDUMP_STRING, *PMINIDUMP_STRING;
+
+typedef struct _MINIDUMP_SYSTEM_INFO
+{
+    USHORT                      ProcessorArchitecture;
+    USHORT                      ProcessorLevel;
+    USHORT                      ProcessorRevision;
+    union
+    {
+        USHORT                          Reserved0;
+        struct
+        {
+            UCHAR                       NumberOfProcessors;
+            UCHAR                       ProductType;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+
+    ULONG                       MajorVersion;
+    ULONG                       MinorVersion;
+    ULONG                       BuildNumber;
+    ULONG                       PlatformId;
+
+    RVA                         CSDVersionRva;
+    union
+    {
+        ULONG                           Reserved1;
+        struct
+        {
+            USHORT                      SuiteMask;
+            USHORT                      Reserved2;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME1;
+    union _CPU_INFORMATION 
+    {
+        struct 
+        {
+            ULONG                       VendorId[3];
+            ULONG                       VersionInformation;
+            ULONG                       FeatureInformation;
+            ULONG                       AMDExtendedCpuFeatures;
+        } X86CpuInfo;
+        struct 
+        {
+            ULONG64                     ProcessorFeatures[2];
+        } OtherCpuInfo;
+    } Cpu;
+
+} MINIDUMP_SYSTEM_INFO, *PMINIDUMP_SYSTEM_INFO;
+
+typedef struct _MINIDUMP_THREAD
+{
+    ULONG                       ThreadId;
+    ULONG                       SuspendCount;
+    ULONG                       PriorityClass;
+    ULONG                       Priority;
+    ULONG64                     Teb;
+    MINIDUMP_MEMORY_DESCRIPTOR  Stack;
+    MINIDUMP_LOCATION_DESCRIPTOR ThreadContext;
+} MINIDUMP_THREAD, *PMINIDUMP_THREAD;
+
+typedef struct _MINIDUMP_THREAD_LIST
+{
+    ULONG                       NumberOfThreads;
+    MINIDUMP_THREAD             Threads[1]; /* FIXME: no support of 0 sized array */
+} MINIDUMP_THREAD_LIST, *PMINIDUMP_THREAD_LIST;
 
 typedef struct _MINIDUMP_USER_STREAM
 {
@@ -481,61 +587,20 @@ typedef enum _MINIDUMP_STREAM_TYPE
     CommentStreamW              = 11,
     HandleDataStream            = 12,
     FunctionTableStream         = 13,
+    UnloadedModuleListStream    = 14,
+    MiscInfoStream              = 15,
+    MemoryInfoListStream        = 16,
+    ThreadInfoListStream        = 17,
 
     LastReservedStream          = 0xffff
 } MINIDUMP_STREAM_TYPE;
 
-typedef struct _MINIDUMP_SYSTEM_INFO
-{
-    USHORT                      ProcessorArchitecture;
-    USHORT                      ProcessorLevel;
-    USHORT                      ProcessorRevision;
-    USHORT                      Reserved0;
-
-    ULONG                       MajorVersion;
-    ULONG                       MinorVersion;
-    ULONG                       BuildNumber;
-    ULONG                       PlatformId;
-
-    RVA                         CSDVersionRva;
-    ULONG                       Reserved1;
-    union _CPU_INFORMATION 
-    {
-        struct 
-        {
-            ULONG                       VendorId[3];
-            ULONG                       VersionInformation;
-            ULONG                       FeatureInformation;
-            ULONG                       AMDExtendedCpuFeatures;
-        } X86CpuInfo;
-        struct 
-        {
-            ULONGLONG                   ProcessorFeatures[2];
-        } OtherCpuInfo;
-    } Cpu;
-
-} MINIDUMP_SYSTEM_INFO, *PMINIDUMP_SYSTEM_INFO;
-
-typedef struct _MINIDUMP_THREAD
-{
-    ULONG                       ThreadId;
-    ULONG                       SuspendCount;
-    ULONG                       PriorityClass;
-    ULONG                       Priority;
-    ULONGLONG                   Teb;
-    MINIDUMP_MEMORY_DESCRIPTOR  Stack;
-    MINIDUMP_LOCATION_DESCRIPTOR ThreadContext;
-} MINIDUMP_THREAD, *PMINIDUMP_THREAD;
-
-typedef struct _MINIDUMP_THREAD_LIST
-{
-    ULONG                       NumberOfThreads;
-    MINIDUMP_THREAD             Threads[1]; /* FIXME: no support of 0 sized array */
-} MINIDUMP_THREAD_LIST, *PMINIDUMP_THREAD_LIST;
-
-BOOL WINAPI MiniDumpWriteDump(HANDLE,DWORD,HANDLE,MINIDUMP_TYPE,const PMINIDUMP_EXCEPTION_INFORMATION,
-                              const PMINIDUMP_USER_STREAM_INFORMATION,const PMINIDUMP_CALLBACK_INFORMATION);
-BOOL WINAPI MiniDumpReadDumpStream(PVOID,ULONG,PMINIDUMP_DIRECTORY*,PVOID*,ULONG*);
+BOOL WINAPI MiniDumpWriteDump(HANDLE, DWORD, HANDLE, MINIDUMP_TYPE,
+                              const PMINIDUMP_EXCEPTION_INFORMATION,
+                              const PMINIDUMP_USER_STREAM_INFORMATION,
+                              const PMINIDUMP_CALLBACK_INFORMATION);
+BOOL WINAPI MiniDumpReadDumpStream(PVOID, ULONG, PMINIDUMP_DIRECTORY*, PVOID*,
+                                   ULONG*);
 
 
 /*************************
