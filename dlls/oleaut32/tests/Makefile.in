@@ -9,7 +9,8 @@ EXTRALIBS = $(LIBUUID)
 CTESTS = \
 	olefont.c \
 	safearray.c \
-	vartest.c
+	vartest.c \
+	vartype.c
 
 @MAKE_TEST_RULES@
 
