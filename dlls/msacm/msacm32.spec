@@ -51,3 +51,6 @@ import kernel32.dll
 42 stdcall acmStreamReset(long long) acmStreamReset
 43 stdcall acmStreamSize(long long ptr long) acmStreamSize
 44 stdcall acmStreamUnprepareHeader(long ptr long) acmStreamUnprepareHeader
+
+# this is wine only
+@ stdcall DriverProc(long long long long long) PCM_DriverProc

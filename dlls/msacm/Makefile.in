@@ -14,6 +14,7 @@ C_SRCS = \
 	internal.c \
 	msacm32_main.c \
 	msacm_main.c \
+	pcmconverter.c \
 	stream.c
 
 RC_SRCS = \

@@ -285,7 +285,6 @@ typedef struct _WINE_ACMDRIVER
 {
     WINE_ACMOBJ		obj;
     HDRVR      		hDrvr;
-    DRIVERPROC		pfnDriverProc;
     PWINE_ACMDRIVER	pNextACMDriver;
 } WINE_ACMDRIVER;
 
@@ -327,6 +326,10 @@ extern MMRESULT MSACM_Message(HACMDRIVER, UINT, LPARAM, LPARAM);
 
 /* From msacm32.c */
 extern HINSTANCE MSACM_hInstance32;
+
+/* From pcmcnvtr.c */
+LRESULT CALLBACK	PCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg, 
+				       LPARAM dwParam1, LPARAM dwParam2);
 
 /* Dialog box templates */
 #define DLG_ACMFORMATCHOOSE_ID              70

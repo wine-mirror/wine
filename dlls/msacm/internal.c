@@ -42,8 +42,8 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
     padid = (PWINE_ACMDRIVERID) HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVERID));
     padid->obj.dwType = WINE_ACMOBJ_DRIVERID;
     padid->obj.pACMDriverID = padid;
-    padid->pszDriverAlias = HEAP_strdupA(MSACM_hHeap, 0, pszDriverAlias);
-    padid->pszFileName = HEAP_strdupA(MSACM_hHeap, 0, pszFileName);
+    padid->pszDriverAlias = pszDriverAlias ? HEAP_strdupA(MSACM_hHeap, 0, pszDriverAlias) : NULL;
+    padid->pszFileName = pszFileName ? HEAP_strdupA(MSACM_hHeap, 0, pszFileName) : NULL;
     padid->hInstModule = hinstModule;
     padid->bEnabled = TRUE;
     padid->pACMDriverList = NULL;
@@ -65,7 +65,7 @@ void MSACM_RegisterAllDrivers(void)
 {
     LPSTR pszBuffer;
     DWORD dwBufferLength;
-    
+
     /* FIXME 
      *  What if the user edits system.ini while the program is running?
      *  Does Windows handle that?
@@ -85,8 +85,9 @@ void MSACM_RegisterAllDrivers(void)
 		char *s2 = s;
 		while (*s2 != '\0' && *s2 != '=') s2++;
 		if (*s2) {
-		    *s2++ = '\0';
-		    MSACM_RegisterDriver(s, s2, 0);
+		    *s2 = '\0';
+		    MSACM_RegisterDriver(s, s2 + 1, 0);
+		    *s2 = '=';
 		}
 	    }  
 	    s += strlen(s) + 1; /* Either next char or \0 */
@@ -94,6 +95,8 @@ void MSACM_RegisterAllDrivers(void)
     }
     
     HeapFree(MSACM_hHeap, 0, pszBuffer);
+
+    MSACM_RegisterDriver("msacm32.dll", "msacm32.dll", 0);
 }
 
 /***********************************************************************

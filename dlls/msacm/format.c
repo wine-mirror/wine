@@ -484,7 +484,7 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
 
     if (fdwEnum & (ACM_FORMATENUMF_CONVERT|ACM_FORMATENUMF_SUGGEST|
 		   ACM_FORMATENUMF_INPUT|ACM_FORMATENUMF_OUTPUT))
-	FIXME("Unsupported fdwEnum values\n");
+	FIXME("Unsupported fdwEnum values %08lx\n", fdwEnum);
 
     if (had) {
 	HACMDRIVERID	hadid;

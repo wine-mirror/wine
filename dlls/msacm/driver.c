@@ -76,27 +76,32 @@ MMRESULT WINAPI acmDriverAddW(PHACMDRIVERID phadid, HINSTANCE hinstModule,
  */
 MMRESULT WINAPI acmDriverClose(HACMDRIVER had, DWORD fdwClose)
 {
-    PWINE_ACMDRIVER  p;
-    PWINE_ACMDRIVER* tp;
-    
+    PWINE_ACMDRIVER	pad;
+    PWINE_ACMDRIVERID	padid;
+    PWINE_ACMDRIVER*	tpad;
+
     if (fdwClose)
 	return MMSYSERR_INVALFLAG;
     
-    p = MSACM_GetDriver(had);
-    if (!p)
+    pad = MSACM_GetDriver(had);
+    if (!pad)
 	return MMSYSERR_INVALHANDLE;
 
-    for (tp = &(p->obj.pACMDriverID->pACMDriverList); *tp; *tp = (*tp)->pNextACMDriver) {
-	if (*tp == p) {
-	    *tp = (*tp)->pNextACMDriver;
+    padid = pad->obj.pACMDriverID;
+
+    /* remove driver from list */
+    for (tpad = &(padid->pACMDriverList); *tpad; *tpad = (*tpad)->pNextACMDriver) {
+	if (*tpad == pad) {
+	    *tpad = (*tpad)->pNextACMDriver;
 	    break;
 	}
     }
     
-    if (p->hDrvr && !p->obj.pACMDriverID->pACMDriverList)
-	CloseDriver(p->hDrvr, 0, 0);
+    /* close driver if it has been opened */
+    if (pad->hDrvr && !padid->hInstModule)
+	CloseDriver(pad->hDrvr, 0, 0);
     
-    HeapFree(MSACM_hHeap, 0, p);
+    HeapFree(MSACM_hHeap, 0, pad);
     
     return MMSYSERR_NOERROR;
 }
@@ -232,12 +237,12 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     if (!phad)
 	return MMSYSERR_INVALPARAM;
     
+    if (fdwOpen)
+	return MMSYSERR_INVALFLAG;
+    
     padid = MSACM_GetDriverID(hadid); 
     if (!padid)
 	return MMSYSERR_INVALHANDLE;
-    
-    if (fdwOpen)
-	return MMSYSERR_INVALFLAG;
     
     pad = HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVER));
     if (!pad) return MMSYSERR_NOMEM;
@@ -245,17 +250,12 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     pad->obj.dwType = WINE_ACMOBJ_DRIVER;
     pad->obj.pACMDriverID = padid;
     
-    if (!padid->hInstModule)
-	pad->hDrvr = OpenDriverA(padid->pszDriverAlias, "drivers32", 0);
-    else
-	pad->hDrvr = padid->hInstModule;
-    
+    if (!(pad->hDrvr = padid->hInstModule) && padid->pszDriverAlias)
+	pad->hDrvr = OpenDriverA(padid->pszDriverAlias, NULL, 0);
     if (!pad->hDrvr) {
 	HeapFree(MSACM_hHeap, 0, pad);
 	return MMSYSERR_ERROR;
     }
-    
-    pad->pfnDriverProc = GetProcAddress(pad->hDrvr, "DriverProc");
 
     /* insert new pad at beg of list */
     pad->pNextACMDriver = padid->pACMDriverList;
@@ -263,7 +263,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 
     /* FIXME: Create a WINE_ACMDRIVER32 */
     *phad = (HACMDRIVER)pad;
-    
+    TRACE("'%s' => %08lx\n", padid->pszDriverAlias, (DWORD)pad);
     return MMSYSERR_NOERROR;
 }
 
