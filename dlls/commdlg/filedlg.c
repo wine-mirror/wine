@@ -3667,7 +3667,7 @@ static BOOL GetFileName31W(LPOPENFILENAMEW lpofn, /* addess of structure with da
     if (!lpofn || !FD31_Init()) return FALSE;
 
     FD32_SetupCallbacks(&callbacks);
-    lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, &callbacks, (DWORD) FALSE);
+    lfs = FD31_AllocPrivate((LPARAM) lpofn, dlgType, &callbacks, (DWORD) TRUE);
     if (lfs)
     {
         hInst = (HINSTANCE)GetWindowLongPtrW( lpofn->hwndOwner, GWLP_HINSTANCE );
