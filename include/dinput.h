@@ -16,10 +16,14 @@ DEFINE_GUID(IID_IDirectInputA,		0x89521360,0xAA8A,0x11CF,0xBF,0xC7,0x44,0x45,0x5
 DEFINE_GUID(IID_IDirectInputW,		0x89521361,0xAA8A,0x11CF,0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00);
 DEFINE_GUID(IID_IDirectInput2A,		0x5944E662,0xAA8A,0x11CF,0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00);
 DEFINE_GUID(IID_IDirectInput2W,		0x5944E663,0xAA8A,0x11CF,0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00);
+DEFINE_GUID(IID_IDirectInput7A,		0x9A4CB684,0x236D,0x11D3,0x8E,0x9D,0x00,0xC0,0x4F,0x68,0x44,0xAE);
+DEFINE_GUID(IID_IDirectInput7W,		0x9A4CB685,0x236D,0x11D3,0x8E,0x9D,0x00,0xC0,0x4F,0x68,0x44,0xAE);
 DEFINE_GUID(IID_IDirectInputDeviceA,	0x5944E680,0xC92E,0x11CF,0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00);
 DEFINE_GUID(IID_IDirectInputDeviceW,	0x5944E681,0xC92E,0x11CF,0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00);
 DEFINE_GUID(IID_IDirectInputDevice2A,	0x5944E682,0xC92E,0x11CF,0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00);
 DEFINE_GUID(IID_IDirectInputDevice2W,	0x5944E683,0xC92E,0x11CF,0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00);
+DEFINE_GUID(IID_IDirectInputDevice7A,	0x57D7C6BC,0x2356,0x11D3,0x8E,0x9D,0x00,0xC0,0x4F,0x68,0x44,0xAE);
+DEFINE_GUID(IID_IDirectInputDevice7W,	0x57D7C6BD,0x2356,0x11D3,0x8E,0x9D,0x00,0xC0,0x4F,0x68,0x44,0xAE);
 DEFINE_GUID(IID_IDirectInputEffect,	0xE7E1F7C0,0x88D2,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,0xA0,0x6E,0x35);
 
 /* Predefined object types */
@@ -55,11 +59,22 @@ DEFINE_GUID(GUID_Friction,	0x13541C2A,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,0xA
 DEFINE_GUID(GUID_CustomForce,	0x13541C2B,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,0xA0,0x6E,0x35);
 
 typedef struct IDirectInputA IDirectInputA,*LPDIRECTINPUTA;
+typedef struct IDirectInput2A IDirectInput2A,*LPDIRECTINPUT2A;
+typedef struct IDirectInput7A IDirectInput7A,*LPDIRECTINPUT7A;
 typedef struct IDirectInputDeviceA IDirectInputDeviceA,*LPDIRECTINPUTDEVICEA;
 typedef struct IDirectInputDevice2A IDirectInputDevice2A,*LPDIRECTINPUTDEVICE2A;
 typedef struct IDirectInputEffect IDirectInputEffect,*LPDIRECTINPUTEFFECT;
 typedef struct SysKeyboardA SysKeyboardA,*LPSYSKEYBOARDA;
 typedef struct SysMouseA SysMouseA,*LPSYSMOUSEA;
+
+#define IID_IDirectInput WINELIB_NAME_AW(IID_IDirectInput)
+DECL_WINELIB_TYPE_AW(LPDIRECTINPUT)
+#define IID_IDirectInput7 WINELIB_NAME_AW(IID_IDirectInput7)
+DECL_WINELIB_TYPE_AW(LPDIRECTINPUT7)
+#define IID_IDirectInputDevice WINELIB_NAME_AW(IID_IDirectInputDevice)
+DECL_WINELIB_TYPE_AW(LPDIRECTINPUTDEVICE)
+#define IID_IDirectInputDevice2 WINELIB_NAME_AW(IID_IDirectInputDevice2)
+DECL_WINELIB_TYPE_AW(LPDIRECTINPUTDEVICE2)
 
 #define DI_OK                           S_OK
 #define DI_NOTATTACHED                  S_FALSE
@@ -119,6 +134,12 @@ typedef struct SysMouseA SysMouseA,*LPSYSMOUSEA;
 
 #define DIENUM_STOP                     0
 #define DIENUM_CONTINUE                 1
+
+#define DIEDFL_ALLDEVICES               0x00000000
+#define DIEDFL_ATTACHEDONLY             0x00000000
+#define DIEDFL_FORCEFEEDBACK            0x00000100
+#define DIEDFL_INCLUDEALIASES           0x00010000
+#define DIEDFL_INCLUDEPHANTOMS          0x00020000
 
 #define DIDEVTYPE_DEVICE                1
 #define DIDEVTYPE_MOUSE                 2
@@ -423,14 +444,16 @@ typedef struct {
     DWORD			dwDataSize;
     DWORD			dwNumObjs;
     LPDIOBJECTDATAFORMAT	rgodf;
-} DIDATAFORMAT, *LPDIDATAFORMAT,*LPCDIDATAFORMAT;
+} DIDATAFORMAT, *LPDIDATAFORMAT;
+typedef const DIDATAFORMAT *LPCDIDATAFORMAT;
 
 typedef struct {
     DWORD	dwSize;
     DWORD	dwHeaderSize;
     DWORD	dwObj;
     DWORD	dwHow;
-} DIPROPHEADER,*LPDIPROPHEADER,*LPCDIPROPHEADER;
+} DIPROPHEADER,*LPDIPROPHEADER;
+typedef const DIPROPHEADER *LPCDIPROPHEADER;
 
 #define DIPH_DEVICE	0
 #define DIPH_BYOFFSET	1
@@ -470,7 +493,11 @@ typedef struct DIPROPGUIDANDPATH {
 } DIPROPGUIDANDPATH, *LPDIPROPGUIDANDPATH,*LPCDIPROPGUIDANDPATH;
 
 /* special property GUIDs */
+#ifdef __cplusplus
+#define MAKEDIPROP(prop)	(*(const GUID *)(prop))
+#else
 #define MAKEDIPROP(prop)	((REFGUID)(prop))
+#endif
 #define DIPROP_BUFFERSIZE	MAKEDIPROP(1)
 #define DIPROP_AXISMODE		MAKEDIPROP(2)
 
@@ -893,6 +920,17 @@ typedef struct DIMOUSESTATE2 {
 #define DIMOFS_BUTTON2 (FIELD_OFFSET(DIMOUSESTATE, rgbButtons) + 2)
 #define DIMOFS_BUTTON3 (FIELD_OFFSET(DIMOUSESTATE, rgbButtons) + 3)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern const DIDATAFORMAT c_dfDIMouse;
+extern const DIDATAFORMAT c_dfDIMouse2; /* DX 7 */
+extern const DIDATAFORMAT c_dfDIKeyboard;
+extern const DIDATAFORMAT c_dfDIJoystick;
+extern const DIDATAFORMAT c_dfDIJoystick2;
+#ifdef __cplusplus
+};
+#endif
 
 /*****************************************************************************
  * IDirectInputA interface
@@ -921,10 +959,72 @@ ICOM_DEFINE(IDirectInputA,IUnknown)
 #define IDirectInputA_RunControlPanel(p,a,b) ICOM_CALL2(RunControlPanel,p,a,b)
 #define IDirectInputA_Initialize(p,a,b)      ICOM_CALL2(Initialize,p,a,b)
 
+/*****************************************************************************
+ * IDirectInput2A interface
+ */
+#define ICOM_INTERFACE IDirectInput2A
+#define IDirectInput2A_METHODS \
+    ICOM_METHOD3(HRESULT,FindDevice,      REFGUID,rguid, LPCSTR,pszName, LPGUID,pguidInstance)
+#define IDirectInput2A_IMETHODS \
+    IDirectInputA_IMETHODS \
+    IDirectInput2A_METHODS
+ICOM_DEFINE(IDirectInput2A,IDirectInputA)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectInput2A_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectInput2A_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectInput2A_Release(p)            ICOM_CALL (Release,p)
+	/*** IDirectInputA methods ***/
+#define IDirectInput2A_CreateDevice(p,a,b,c)  ICOM_CALL3(CreateDevice,p,a,b,c)
+#define IDirectInput2A_EnumDevices(p,a,b,c,d) ICOM_CALL4(EnumDevices,p,a,b,c,d)
+#define IDirectInput2A_GetDeviceStatus(p,a)   ICOM_CALL1(GetDeviceStatus,p,a)
+#define IDirectInput2A_RunControlPanel(p,a,b) ICOM_CALL2(RunControlPanel,p,a,b)
+#define IDirectInput2A_Initialize(p,a,b)      ICOM_CALL2(Initialize,p,a,b)
+	/*** IDirectInput2A methods ***/
+#define IDirectInput2A_FindDevice(p,a,b,c)    ICOM_CALL3(FindDevice,p,a,b,c)
+
+/*****************************************************************************
+ * IDirectInput7A interface
+ */
+#define ICOM_INTERFACE IDirectInput7A
+#define IDirectInput7A_METHODS \
+    ICOM_METHOD4(HRESULT,CreateDeviceEx,  REFGUID,rguid, REFIID,riid, LPVOID*,pvOut, LPUNKNOWN,lpUnknownOuter)
+#define IDirectInput7A_IMETHODS \
+    IDirectInput2A_IMETHODS \
+    IDirectInput7A_METHODS
+ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectInput7A_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectInput7A_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectInput7A_Release(p)            ICOM_CALL (Release,p)
+	/*** IDirectInputA methods ***/
+#define IDirectInput7A_CreateDevice(p,a,b,c)  ICOM_CALL3(CreateDevice,p,a,b,c)
+#define IDirectInput7A_EnumDevices(p,a,b,c,d) ICOM_CALL4(EnumDevices,p,a,b,c,d)
+#define IDirectInput7A_GetDeviceStatus(p,a)   ICOM_CALL1(GetDeviceStatus,p,a)
+#define IDirectInput7A_RunControlPanel(p,a,b) ICOM_CALL2(RunControlPanel,p,a,b)
+#define IDirectInput7A_Initialize(p,a,b)      ICOM_CALL2(Initialize,p,a,b)
+	/*** IDirectInput2A methods ***/
+#define IDirectInput7A_FindDevice(p,a,b,c)    ICOM_CALL3(FindDevice,p,a,b,c)
+	/*** IDirectInput7A methods ***/
+#define IDirectInput7A_CreateDeviceEx(p,a,b,c,d) ICOM_CALL4(CreateDeviceEx,p,a,b,c,d)
+
 /* Export functions */ 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 HRESULT WINAPI DirectInputCreateA(HINSTANCE,DWORD,LPDIRECTINPUTA *,LPUNKNOWN);
 HRESULT WINAPI DirectInputCreateW(HINSTANCE,DWORD,LPDIRECTINPUTA *,LPUNKNOWN);
 #define DirectInputCreate WINELIB_NAME_AW(DirectInputCreate)
+
+HRESULT WINAPI DirectInputCreateEx(HINSTANCE,DWORD,REFIID,LPVOID *,LPUNKNOWN);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* __WINE_DINPUT_H */
