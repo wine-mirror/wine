@@ -472,7 +472,6 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     HPEN hPen;
     HBRUSH hBrush;
     HFONT hFont;
-    DC *dc;
     BOOL loaded = FALSE;
 
     if (!mh) return FALSE;
@@ -483,11 +482,10 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     }
 
     /* save the current pen, brush and font */
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
-    hPen = dc->w.hPen;
-    hBrush = dc->w.hBrush;
-    hFont = dc->w.hFont;
-    GDI_HEAP_UNLOCK(hdc);
+    hPen = GetCurrentObject(hdc, OBJ_PEN);
+    hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
+    hFont = GetCurrentObject(hdc, OBJ_FONT);
+
     /* create the handle table */
     ht = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY,
 		    sizeof(HANDLETABLE16) * mh->mtNoObjects);
@@ -575,7 +573,6 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     HPEN hPen;
     HBRUSH hBrush;
     HFONT hFont;
-    DC *dc;
     BOOL16 result = TRUE, loaded = FALSE;
 
     TRACE("(%04x, %04x, %08lx, %08lx)\n",
@@ -589,11 +586,10 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
 	loaded = TRUE;
     }
 
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
-    hPen = dc->w.hPen;
-    hBrush = dc->w.hBrush;
-    hFont = dc->w.hFont;
-    GDI_HEAP_UNLOCK(hdc);
+    /* save the current pen, brush and font */
+    hPen = GetCurrentObject(hdc, OBJ_PEN);
+    hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
+    hFont = GetCurrentObject(hdc, OBJ_FONT);
 
     /* create the handle table */
     
@@ -665,7 +661,6 @@ BOOL WINAPI EnumMetaFile(
     HANDLETABLE *ht;
     BOOL result = TRUE, loaded = FALSE;
     int i, offset = 0;
-    DC *dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     HPEN hPen;
     HBRUSH hBrush;
     HFONT hFont;
@@ -680,12 +675,9 @@ BOOL WINAPI EnumMetaFile(
     }
     
     /* save the current pen, brush and font */
-    if (!dc) return 0;
-    hPen = dc->w.hPen;
-    hBrush = dc->w.hBrush;
-    hFont = dc->w.hFont;
-    GDI_HEAP_UNLOCK(hdc);
-
+    hPen = GetCurrentObject(hdc, OBJ_PEN);
+    hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
+    hFont = GetCurrentObject(hdc, OBJ_FONT);
 
     ht = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, 
 			    sizeof(HANDLETABLE) * mh->mtNoObjects);
