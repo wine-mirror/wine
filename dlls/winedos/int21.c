@@ -795,8 +795,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         {
             SYSTEMTIME systime;
             GetLocalTime( &systime );
-            SET_CL( context, systime.wHour );
-            SET_CH( context, systime.wMinute );
+            SET_CH( context, systime.wHour );
+            SET_CL( context, systime.wMinute );
             SET_DH( context, systime.wSecond );
             SET_DL( context, systime.wMilliseconds / 10 );
         }
