@@ -14,14 +14,9 @@ HRESULT DPLAYX_SetConnectionSettingsA ( DWORD dwFlags, DWORD dwAppID, LPDPLCONNE
 HRESULT DPLAYX_SetConnectionSettingsW ( DWORD dwFlags, DWORD dwAppID, LPDPLCONNECTION lpConn );
 
 BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID, HANDLE hReceiveEvent );
+BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID );
 
-/* This is a hack to ensure synchronization during application spawn */
-#if !defined( WORKING_PROCESS_SUSPEND )
-
-DWORD DPLAYX_AquireSemaphoreHack( void );
-DWORD DPLAYX_ReleaseSemaphoreHack( void );
-
-#endif
-
+/* Convert a DP or DPL HRESULT code into a string for human consumption */
+LPCSTR DPLAYX_HresultToString( HRESULT hr );
 
 #endif /* __WINE_DPLAYX_GLOBAL */

@@ -15,6 +15,12 @@
 #include "debugtools.h"
 
 #include "dpinit.h"
+#include "dplayx_global.h"
+
+/* FIXME: This stuff shouldn't really be here. It indicates a poor architectural coupling */
+#include "dplobby.h"
+extern HRESULT DPL_CreateCompoundAddress ( LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount,
+                                           LPVOID lpAddress, LPDWORD lpdwAddressSize, BOOL bAnsiInterface );
 
 DEFAULT_DEBUG_CHANNEL(dplay)
 
@@ -22,12 +28,71 @@ DEFAULT_DEBUG_CHANNEL(dplay)
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-typedef struct IDirectPlayImpl IDirectPlay2AImpl;
-typedef struct IDirectPlayImpl IDirectPlay2Impl;
-typedef struct IDirectPlayImpl IDirectPlay3AImpl;
-typedef struct IDirectPlayImpl IDirectPlay3Impl;
-typedef struct IDirectPlayImpl IDirectPlay4AImpl;
-typedef struct IDirectPlayImpl IDirectPlay4Impl;
+typedef struct IDirectPlay2Impl IDirectPlay2AImpl;
+typedef struct IDirectPlay2Impl IDirectPlay2Impl;
+typedef struct IDirectPlay3Impl IDirectPlay3AImpl;
+typedef struct IDirectPlay3Impl IDirectPlay3Impl;
+typedef struct IDirectPlay4Impl IDirectPlay4AImpl;
+typedef struct IDirectPlay4Impl IDirectPlay4Impl;
+
+/*****************************************************************************
+ * IDirectPlay implementation structure
+ *
+ * The philosophy behind this extra pointer derefernce is that I wanted to
+ * have the same structure for all types of objects without having to do
+ * alot of casting. I also only wanted to implement an interface in the
+ * object it was "released" with IUnknown interface being implemented in the 1 version.
+ * Of course, with these new interfaces comes the data required to keep the state required
+ * by these interfaces. So, basically, the pointers contain the data associated with
+ * a release. If you use the data associated with release 3 in a release 2 object, you'll
+ * get a run time trap, as that won't have any data.
+ * 
+ */
+typedef struct tagDirectPlayIUnknownData
+{
+  DWORD             ref;
+  CRITICAL_SECTION  DP_lock;
+} DirectPlayIUnknownData;
+
+/* Contains all dp1 and dp2 data members */
+typedef struct tagDirectPlay2Data
+{
+  BOOL dummy;
+} DirectPlay2Data;
+
+typedef struct tagDirectPlay3Data
+{
+  BOOL connectionInitialized;
+} DirectPlay3Data;
+
+typedef struct tagDirectPlay4Data
+{
+  BOOL dummy;
+} DirectPlay4Data;
+
+#define DP_IMPL_FIELDS \
+  DirectPlayIUnknownData*  unk; \
+  DirectPlay2Data*         dp2; \
+  DirectPlay3Data*         dp3; \
+  DirectPlay4Data*         dp4;
+
+struct IDirectPlay2Impl
+{
+  ICOM_VFIELD(IDirectPlay2); 
+  DP_IMPL_FIELDS
+};
+
+struct IDirectPlay3Impl
+{
+  ICOM_VFIELD(IDirectPlay3);
+  DP_IMPL_FIELDS
+};
+
+struct IDirectPlay4Impl
+{
+  ICOM_VFIELD(IDirectPlay4);
+  DP_IMPL_FIELDS
+};
 
 /* Forward declarations of virtual tables */
 static ICOM_VTABLE(IDirectPlay2) directPlay2AVT;
@@ -38,21 +103,107 @@ static ICOM_VTABLE(IDirectPlay2) directPlay2WVT;
 static ICOM_VTABLE(IDirectPlay3) directPlay3WVT;
 static ICOM_VTABLE(IDirectPlay4) directPlay4WVT;
 
-/*****************************************************************************
- * IDirectPlay implementation structure
- */
-struct IDirectPlayImpl
+BOOL DP_CreateIUnknown( LPVOID lpDP )
 {
-    /* IUnknown fields */
-    ICOM_VFIELD(IDirectPlay4);
-    DWORD                      ref;
-    CRITICAL_SECTION           DP_lock;
-    /* IDirectPlay3Impl fields */
-    /* none so far */
-    /* IDirectPlay4Impl fields */
-    /* none so far */
-};
+  ICOM_THIS(IDirectPlay2AImpl,lpDP);
 
+  This->unk = (DirectPlayIUnknownData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                  sizeof( *(This->unk) ) );
+  if ( This->unk == NULL )
+  {
+    return FALSE;
+  }
+
+  InitializeCriticalSection( &This->unk->DP_lock );
+
+  IDirectPlay_AddRef( (LPDIRECTPLAY2A)lpDP );
+
+  return TRUE;
+}
+
+BOOL DP_DestroyIUnknown( LPVOID lpDP )
+{
+  ICOM_THIS(IDirectPlay2AImpl,lpDP);
+
+  DeleteCriticalSection( &This->unk->DP_lock );
+  HeapFree( GetProcessHeap(), 0, This->unk );
+
+  return TRUE;
+}
+
+BOOL DP_CreateDirectPlay2( LPVOID lpDP )
+{
+  ICOM_THIS(IDirectPlay2AImpl,lpDP);
+
+  This->dp2 = (DirectPlay2Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                           sizeof( *(This->dp2) ) );
+  if ( This->dp2 == NULL )
+  {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
+{
+  ICOM_THIS(IDirectPlay2AImpl,lpDP);
+
+  /* Delete the contents */
+  HeapFree( GetProcessHeap(), 0, This->dp2 );
+
+  return TRUE;
+}
+
+BOOL DP_CreateDirectPlay3( LPVOID lpDP )
+{
+  ICOM_THIS(IDirectPlay3AImpl,lpDP);
+
+  This->dp3 = (DirectPlay3Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                           sizeof( *(This->dp3) ) );
+  if ( This->dp3 == NULL )
+  {
+    return FALSE;
+  }
+
+  This->dp3->connectionInitialized = FALSE;
+
+  return TRUE;
+}
+
+BOOL DP_DestroyDirectPlay3( LPVOID lpDP )
+{
+  ICOM_THIS(IDirectPlay3AImpl,lpDP);
+
+  /* Delete the contents */
+  HeapFree( GetProcessHeap(), 0, This->dp3 );
+
+  return TRUE;
+}
+
+BOOL DP_CreateDirectPlay4( LPVOID lpDP )
+{
+  ICOM_THIS(IDirectPlay4AImpl,lpDP);
+
+  This->dp4 = (DirectPlay4Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                           sizeof( *(This->dp4) ) );
+  if ( This->dp4 == NULL )
+  {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+BOOL DP_DestroyDirectPlay4( LPVOID lpDP )
+{
+  ICOM_THIS(IDirectPlay3AImpl,lpDP);
+
+  /* Delete the contents */
+  HeapFree( GetProcessHeap(), 0, This->dp4 );
+
+  return TRUE;
+}
 
 
 /* Get a new interface. To be used by QueryInterface. */ 
@@ -63,134 +214,188 @@ HRESULT directPlay_QueryInterface
 
   if( IsEqualGUID( &IID_IDirectPlay2, riid ) )
   {
-    IDirectPlay2Impl* lpDP;
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlay2Impl ) );
 
-    lpDP = (IDirectPlay2Impl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                         sizeof( *lpDP ) );
-
-    if( !lpDP ) 
+    if( *ppvObj == NULL )
     {
        return DPERR_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDP) = &directPlay2WVT;
+    /* new scope for variable declaration */
+    {
+      ICOM_THIS(IDirectPlay2Impl,*ppvObj);
 
-    InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
+      ICOM_VTBL(This) = &directPlay2WVT;
 
-    *ppvObj = lpDP;
+      if ( DP_CreateIUnknown( (LPVOID)This ) &&
+           DP_CreateDirectPlay2( (LPVOID)This )
+         )
+      {
+        return S_OK;
+      }
 
-    return S_OK;
+    }
+
+    goto error; 
   } 
   else if( IsEqualGUID( &IID_IDirectPlay2A, riid ) )
   {
-    IDirectPlay2AImpl* lpDP;
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlay2AImpl ) );
 
-    lpDP = (IDirectPlay2AImpl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                          sizeof( *lpDP ) );
-
-    if( !lpDP )
+    if( *ppvObj == NULL )
     {
        return DPERR_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDP) = &directPlay2AVT;
+    /* new scope for variable declaration */
+    {
+      ICOM_THIS(IDirectPlay2AImpl,*ppvObj);
 
-    InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
+      ICOM_VTBL(This) = &directPlay2AVT;
 
-    *ppvObj = lpDP;
+      if ( DP_CreateIUnknown( (LPVOID)This ) &&
+           DP_CreateDirectPlay2( (LPVOID)This )
+         )
+      {
+        return S_OK;
+      }
 
-    return S_OK;
+    }
+
+    goto error;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3, riid ) )
   {
-    IDirectPlay3Impl* lpDP;
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlay3Impl ) );
 
-    lpDP = (IDirectPlay3Impl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                         sizeof( *lpDP ) );
-
-    if( !lpDP )
+    if( *ppvObj == NULL )
     {
        return DPERR_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDP) = &directPlay3WVT;
+    /* new scope for variable declaration */
+    {
+      ICOM_THIS(IDirectPlay3Impl,*ppvObj);
 
-    InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
+      ICOM_VTBL(This) = &directPlay3WVT;
 
-    *ppvObj = lpDP;
+      if ( DP_CreateIUnknown( (LPVOID)This ) &&
+           DP_CreateDirectPlay2( (LPVOID)This ) &&
+           DP_CreateDirectPlay3( (LPVOID)This )
+         )
+      {
+        return S_OK;
+      }
 
-    return S_OK;
+    }
+
+    goto error;
   }
   else if( IsEqualGUID( &IID_IDirectPlay3A, riid ) )
   {
-    IDirectPlay3AImpl* lpDP;
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlay3AImpl ) );
 
-    lpDP = (IDirectPlay3AImpl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                          sizeof( *lpDP ) );
-
-    if( !lpDP )
+    if( *ppvObj == NULL )
     {
        return DPERR_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDP) = &directPlay3AVT;
+    /* new scope for variable declaration */
+    {
+      ICOM_THIS(IDirectPlay3AImpl,*ppvObj);
 
-    InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
+      ICOM_VTBL(This) = &directPlay3AVT;
 
-    *ppvObj = lpDP;
+      if ( DP_CreateIUnknown( (LPVOID)This ) &&
+           DP_CreateDirectPlay2( (LPVOID)This ) &&
+           DP_CreateDirectPlay3( (LPVOID)This )
+         )
+      {
+        return S_OK;
+      }
 
-    return S_OK;
+    }
+
+    goto error;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4, riid ) )
   {
-    IDirectPlay4Impl* lpDP;
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlay4Impl ) );
 
-    lpDP = (IDirectPlay4Impl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                         sizeof( *lpDP ) );
-
-    if( !lpDP )
+    if( *ppvObj == NULL )
     {
        return DPERR_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDP) = &directPlay4WVT;
+    /* new scope for variable declaration */
+    {
+      ICOM_THIS(IDirectPlay4Impl,*ppvObj);
 
-    InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
+      ICOM_VTBL(This) = &directPlay4WVT;
 
-    *ppvObj = lpDP;
+      if ( DP_CreateIUnknown( (LPVOID)This ) &&
+           DP_CreateDirectPlay2( (LPVOID)This ) &&
+           DP_CreateDirectPlay3( (LPVOID)This ) &&
+           DP_CreateDirectPlay4( (LPVOID)This )
+         )
+      {
+        return S_OK;
+      }
 
-    return S_OK;
+    }
+
+    goto error;
   }
   else if( IsEqualGUID( &IID_IDirectPlay4A, riid ) )
   {
-    IDirectPlay4AImpl* lpDP;
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlay4AImpl ) );
 
-    lpDP = (IDirectPlay4AImpl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                          sizeof( *lpDP ) );
-
-    if( !lpDP )
+    if( *ppvObj == NULL )
     {
        return DPERR_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDP) = &directPlay4AVT;
+    /* new scope for variable declaration */
+    {
+      ICOM_THIS(IDirectPlay4AImpl,*ppvObj);
 
-    InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
+      ICOM_VTBL(This) = &directPlay4AVT;
 
-    *ppvObj = lpDP;
+      if ( DP_CreateIUnknown( (LPVOID)This ) &&
+           DP_CreateDirectPlay2( (LPVOID)This ) &&
+           DP_CreateDirectPlay3( (LPVOID)This ) &&
+           DP_CreateDirectPlay4( (LPVOID)This )
+         )
+      {
+        return S_OK;
+      }
 
-    return S_OK;
+    }
+
+    goto error;
   }
 
   /* Unsupported interface */
   *ppvObj = NULL;
   return E_NOINTERFACE;
+
+error:
+
+    DP_DestroyDirectPlay4( *ppvObj );
+    DP_DestroyDirectPlay3( *ppvObj );
+    DP_DestroyDirectPlay2( *ppvObj );
+    DP_DestroyIUnknown( *ppvObj );
+    HeapFree( GetProcessHeap(), 0, *ppvObj );
+
+    *ppvObj = NULL;
+    return DPERR_NOMEMORY;
+
 }
 
 
@@ -311,15 +516,15 @@ static ULONG WINAPI DirectPlay2AImpl_AddRef
   ULONG refCount;
   ICOM_THIS(IDirectPlay3Impl,iface);
 
-  EnterCriticalSection( &This->DP_lock ); 
+  EnterCriticalSection( &This->unk->DP_lock ); 
   {
-    refCount = ++(This->ref);
+    refCount = ++(This->unk->ref);
   }  
-  LeaveCriticalSection( &This->DP_lock );
+  LeaveCriticalSection( &This->unk->DP_lock );
 
   TRACE("ref count incremented to %lu for %p\n", refCount, This );
 
-  return (This->ref);
+  return refCount;
 }
 
 static ULONG WINAPI DirectPlay2AImpl_Release
@@ -329,21 +534,22 @@ static ULONG WINAPI DirectPlay2AImpl_Release
 
   ICOM_THIS(IDirectPlay3Impl,iface);
 
-  EnterCriticalSection( &This->DP_lock );
+  EnterCriticalSection( &This->unk->DP_lock );
   {
-    refCount = --(This->ref);
+    refCount = --(This->unk->ref);
   }
-  LeaveCriticalSection( &This->DP_lock );
+  LeaveCriticalSection( &This->unk->DP_lock );
 
   TRACE("ref count decremeneted to %lu for %p\n", refCount, This );
 
   /* Deallocate if this is the last reference to the object */
   if( refCount == 0 )
   {
-    FIXME("memory leak\n" );
-    /* Implement memory deallocation */
-
-    HeapFree( GetProcessHeap(), 0, This );
+     DP_DestroyDirectPlay4( This );
+     DP_DestroyDirectPlay3( This );
+     DP_DestroyDirectPlay2( This );
+     DP_DestroyIUnknown( This );
+     HeapFree( GetProcessHeap(), 0, This );
   }
 
   return refCount;
@@ -924,6 +1130,11 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       char     returnBuffer[51];
       LPWSTR   lpWGUIDString;
       DPNAME   dpName;
+      HRESULT  hr;
+
+      DPCOMPOUNDADDRESSELEMENT dpCompoundAddress;
+      LPVOID                   lpAddressBuffer = NULL;
+      DWORD                    dwAddressBufferSize = 0;
 
       TRACE(" this time through: %s\n", subKeyName );
 
@@ -949,16 +1160,46 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       HeapFree( GetProcessHeap(), 0, lpWGUIDString );
       /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
 
+      /* Fill in the DPNAME struct for the service provider */
       dpName.dwSize             = sizeof( dpName );
       dpName.dwFlags            = 0;
-      dpName.psn.lpszShortNameA = subKeyName; /* FIXME: Is this right? */
-      dpName.pln.lpszLongNameA  = subKeyName; /* FIXME: Is this right? */
+      dpName.psn.lpszShortNameA = subKeyName;
+      dpName.pln.lpszLongNameA  = NULL;
+
+      /* Create the compound address for the service provider. 
+         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP
+               nast stuff. This may be why the native dll just gets around this little bit by
+               allocating an 80 byte buffer which isn't even a filled with a valid compound 
+               address. Oh well. Creating a proper compound address is the way to go anyways 
+               despite this method taking slightly more heap space and realtime :) */
+      dpCompoundAddress.guidDataType = DPAID_ServiceProvider;
+      dpCompoundAddress.dwDataSize   = sizeof( GUID );
+      dpCompoundAddress.lpData       = &serviceProviderGUID; 
+
+      if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer, 
+                                     &dwAddressBufferSize, TRUE ) ) != DPERR_BUFFERTOOSMALL )
+      {
+        ERR( "can't get buffer size: %s\n", DPLAYX_HresultToString( hr ) );
+        return hr;
+      }
+
+      /* Now allocate the buffer */
+      lpAddressBuffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwAddressBufferSize );
+
+      if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer,
+                                     &dwAddressBufferSize, TRUE ) ) != DP_OK )
+      {
+        ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
+        return hr;
+      }
 
       /* The enumeration will return FALSE if we are not to continue */
-      if( !lpEnumCallback( &serviceProviderGUID, NULL,0, &dpName, 0, lpContext ) )
+      if( !lpEnumCallback( &serviceProviderGUID, lpAddressBuffer, dwAddressBufferSize, 
+                           &dpName, DPCONNECTION_DIRECTPLAY, lpContext ) )
       {
          WARN("lpEnumCallback returning FALSE\n" );
-         break;
+
+         return DP_OK;
       }
     }
   }
@@ -1015,13 +1256,55 @@ static HRESULT WINAPI DirectPlay3WImpl_GetGroupConnectionSettings
 static HRESULT WINAPI DirectPlay3AImpl_InitializeConnection
           ( LPDIRECTPLAY3A iface, LPVOID lpConnection, DWORD dwFlags )
 {
+  HMODULE hServiceProvider;
+  typedef DWORD (WINAPI *SP_SPInit)(LPVOID lpCompoundAddress, ...); /* FIXME: How many arguments? */
+  SP_SPInit SPInit;
+  DWORD dwReturnValue = 0;
+
   ICOM_THIS(IDirectPlay3Impl,iface);
+
   FIXME("(%p)->(%p,0x%08lx): stub\n", This, lpConnection, dwFlags );
 
   if( dwFlags != 0 )
   {
     return DPERR_INVALIDFLAGS;
   }
+
+  if( This->dp3->connectionInitialized == TRUE )
+  {
+    return DPERR_ALREADYINITIALIZED;
+  }
+
+  /* Parse lpConnection as a compound address for the service provider */
+  /* Take service provider GUID and find the path to it */
+
+  /* FIXME: Hard coded to only load the tcp/ip service provider for now... */
+  hServiceProvider = LoadLibraryA( "dpwsockx.dll" );
+
+  if( hServiceProvider == 0 )
+  {
+    ERR( "Unable to load service provider\n" );
+    return DPERR_UNAVAILABLE; 
+  }
+  
+  /* Initialize the service provider by calling SPInit */
+  SPInit = (SP_SPInit)GetProcAddress( hServiceProvider, "SPInit" );
+
+  if( SPInit == NULL )
+  {
+    ERR( "Service provider doesn't provide SPInit interface?\n" );
+  }  
+
+#if 0
+  /* NOTE: This will crash until I know what parameters/interface this has */
+  /* FIXME: Take a guess that we just pass the compound address to the SP */
+  /* Hmmm...how to say which parameters need to be gotten from the SP. They must
+     come from the compound address, but how do we communicate what's required? */
+  dwReturnValue = (*SPInit)( lpConnection );
+#endif
+
+  /* This interface is now initialized */
+  This->dp3->connectionInitialized = TRUE;
 
   return DP_OK;
 }

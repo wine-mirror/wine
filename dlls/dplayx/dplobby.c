@@ -20,12 +20,14 @@
 DEFAULT_DEBUG_CHANNEL(dplay)
 
 
-/* FIXME: All the data structures are presently not needed except for unk */
-/* FIXME: Move lock from unk to dpl */
-
 /* Forward declarations for this module helper methods */
-static HRESULT DPL_CreateCompoundAddress ( LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount,
-                                           LPVOID lpAddress, LPDWORD lpdwAddressSize, BOOL bAnsiInterface );
+HRESULT DPL_CreateCompoundAddress ( LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount,
+                                    LPVOID lpAddress, LPDWORD lpdwAddressSize, BOOL bAnsiInterface );
+
+HRESULT DPL_CreateAddress( REFGUID guidSP, REFGUID guidDataType, LPCVOID lpData, DWORD dwDataSize, 
+                           LPVOID lpAddress, LPDWORD lpdwAddressSize, BOOL bAnsiInterface );
+
+
 
 static HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress,
                                 DWORD dwAddressSize, LPVOID lpContext );
@@ -76,27 +78,28 @@ typedef struct tagDirectPlayLobby3Data
   BOOL dummy;
 } DirectPlayLobby3Data;
 
-#define LOBBY_IMPL_FIELDS DirectPlayLobbyIUnknownData*  unk; \
-                          DirectPlayLobbyData*          dpl; \
-                          DirectPlayLobby2Data*         dpl2; \
-                          DirectPlayLobby3Data*         dpl3;
+#define DPL_IMPL_FIELDS \
+ DirectPlayLobbyIUnknownData*  unk; \
+ DirectPlayLobbyData*          dpl; \
+ DirectPlayLobby2Data*         dpl2; \
+ DirectPlayLobby3Data*         dpl3;
 
 struct IDirectPlayLobbyImpl
 {
     ICOM_VFIELD(IDirectPlayLobby);
-    LOBBY_IMPL_FIELDS 
+    DPL_IMPL_FIELDS
 };
 
 struct IDirectPlayLobby2Impl
 {
     ICOM_VFIELD(IDirectPlayLobby2);
-    LOBBY_IMPL_FIELDS
+    DPL_IMPL_FIELDS
 };
 
 struct IDirectPlayLobby3Impl
 {
     ICOM_VFIELD(IDirectPlayLobby3);
-    LOBBY_IMPL_FIELDS
+    DPL_IMPL_FIELDS
 };
 
 
@@ -146,16 +149,16 @@ BOOL DPL_CreateIUnknown( LPVOID lpDPL )
 
   This->unk = (DirectPlayLobbyIUnknownData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
                                                        sizeof( *(This->unk) ) ); 
-  if ( This->unk != NULL )
+  if ( This->unk == NULL )
   {
-    InitializeCriticalSection( &This->unk->DPL_lock );
-
-    IDirectPlayLobby_AddRef( (LPDIRECTPLAYLOBBYA)lpDPL );
-
-    return TRUE; 
+    return FALSE; 
   }
 
-  return FALSE;
+  InitializeCriticalSection( &This->unk->DPL_lock );
+
+  IDirectPlayLobby_AddRef( (LPDIRECTPLAYLOBBYA)lpDPL );
+
+  return TRUE;
 }
 
 BOOL DPL_DestroyIUnknown( LPVOID lpDPL )
@@ -710,27 +713,8 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_CreateAddress
   LPVOID lpAddress, 
   LPDWORD lpdwAddressSize )
 {
-  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
-
-  const DWORD dwNumAddElements = 2; /* Service Provide & address data type */
-  DPCOMPOUNDADDRESSELEMENT addressElements[ dwNumAddElements ];
-
-  TRACE( "(%p)->(%p,%p,%p,0x%08lx,%p,%p)\n", This, guidSP, guidDataType, lpData, 
-                                             dwDataSize, lpAddress, lpdwAddressSize );
-
-  addressElements[ 0 ].guidDataType = DPAID_ServiceProvider;
-  addressElements[ 0 ].dwDataSize = sizeof( GUID );
-  addressElements[ 0 ].lpData = (LPVOID)guidSP;
-
-  addressElements[ 1 ].guidDataType = *guidDataType;
-  addressElements[ 1 ].dwDataSize = dwDataSize;
-  addressElements[ 1 ].lpData = (LPVOID)lpData;
-
-  /* Call CreateCompoundAddress to cut down on code.
-     NOTE: We can do this because we don't support DPL 1 interfaces! */
-  return IDirectPlayLobby_CreateCompoundAddress( (LPDIRECTPLAYLOBBY2A)iface,
-                                                 addressElements, dwNumAddElements,
-                                                 lpAddress, lpdwAddressSize ); 
+  return DPL_CreateAddress( guidSP, guidDataType, lpData, dwDataSize, 
+                            lpAddress, lpdwAddressSize, TRUE ); 
 }
 
 static HRESULT WINAPI IDirectPlayLobbyWImpl_CreateAddress
@@ -742,12 +726,24 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_CreateAddress
   LPVOID lpAddress,
   LPDWORD lpdwAddressSize )
 {
-  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
+  return DPL_CreateAddress( guidSP, guidDataType, lpData, dwDataSize,
+                            lpAddress, lpdwAddressSize, FALSE );
+}
+
+HRESULT DPL_CreateAddress(
+  REFGUID guidSP,
+  REFGUID guidDataType,
+  LPCVOID lpData,
+  DWORD dwDataSize,
+  LPVOID lpAddress,
+  LPDWORD lpdwAddressSize,
+  BOOL bAnsiInterface )
+{
   const DWORD dwNumAddElements = 2; /* Service Provide & address data type */
   DPCOMPOUNDADDRESSELEMENT addressElements[ dwNumAddElements ];
 
-  TRACE( "(%p)->(%p,%p,%p,0x%08lx,%p,%p)\n", This, guidSP, guidDataType, lpData,
-                                             dwDataSize, lpAddress, lpdwAddressSize );
+  TRACE( "(%p)->(%p,%p,0x%08lx,%p,%p,%d)\n", guidSP, guidDataType, lpData, dwDataSize, 
+                                             lpAddress, lpdwAddressSize, bAnsiInterface );
 
   addressElements[ 0 ].guidDataType = DPAID_ServiceProvider;
   addressElements[ 0 ].dwDataSize = sizeof( GUID );
@@ -759,10 +755,10 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_CreateAddress
 
   /* Call CreateCompoundAddress to cut down on code.
      NOTE: We can do this because we don't support DPL 1 interfaces! */
-  return IDirectPlayLobby_CreateCompoundAddress( (LPDIRECTPLAYLOBBY2)iface,
-                                                 addressElements, dwNumAddElements,
-                                                 lpAddress, lpdwAddressSize );
+  return DPL_CreateCompoundAddress( addressElements, dwNumAddElements,
+                                    lpAddress, lpdwAddressSize, bAnsiInterface );
 }
+
 
 
 /********************************************************************
@@ -1274,7 +1270,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
   PROCESS_INFORMATION newProcessInfo;
   LPSTR appName;
 
-  FIXME( "(%p)->(0x%08lx,%p,%p,%p):semi stub\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
+  TRACE( "(%p)->(0x%08lx,%p,%p,%p)\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
 
   if( dwFlags != 0 )
   {
@@ -1312,10 +1308,6 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
 
   ZeroMemory( &newProcessInfo, sizeof( newProcessInfo ) );
 
-#if !defined( WORKING_PROCESS_SUSPEND )
-  DPLAYX_AquireSemaphoreHack(); 
-#endif
-
   if( !CreateProcessA( appName,
                        enumData.lpszCommandLine,
                        NULL,
@@ -1330,6 +1322,12 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
     )
   {
     FIXME( "Failed to create process for app %s\n", appName );
+
+    HeapFree( GetProcessHeap(), 0, appName );
+    HeapFree( GetProcessHeap(), 0, enumData.lpszCommandLine );
+    HeapFree( GetProcessHeap(), 0, enumData.lpszCurrentDirectory );
+
+    return DPERR_CANTCREATEPROCESS; 
   } 
 
   HeapFree( GetProcessHeap(), 0, appName );
@@ -1346,19 +1344,15 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
  
   if( hr != DP_OK )
   {
-    FIXME( "SetConnectionSettings failure 0x%08lx\n", hr );
+    FIXME( "SetConnectionSettings failure %s\n", DPLAYX_HresultToString( hr ) );
     return hr;
   }
 
   /* Everything seems to have been set correctly, update the dwAppID */
   *lpdwAppID = newProcessInfo.dwProcessId;
 
-#if !defined( WORKING_PROCESS_SUSPEND )
-  FIXME( ": It would be at this point that we would allow the process to resume\n" ); 
-  DPLAYX_ReleaseSemaphoreHack();
-#else
+  /* Unsuspend the process */ 
   ResumeThread( newProcessInfo.dwThreadId );
-#endif
 
   LeaveCriticalSection( &This->unk->DPL_lock );
 
@@ -1504,7 +1498,7 @@ static HRESULT WINAPI IDirectPlayLobby2AImpl_CreateCompoundAddress
   return DPL_CreateCompoundAddress( lpElements, dwElementCount, lpAddress, lpdwAddressSize, TRUE );
 }
 
-static HRESULT DPL_CreateCompoundAddress
+HRESULT DPL_CreateCompoundAddress
 ( LPCDPCOMPOUNDADDRESSELEMENT lpElements,
   DWORD dwElementCount,
   LPVOID lpAddress,
