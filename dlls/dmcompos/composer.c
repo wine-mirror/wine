@@ -39,6 +39,9 @@ HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMPOSER if
 ULONG WINAPI IDirectMusicComposerImpl_AddRef (LPDIRECTMUSICCOMPOSER iface) {
 	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->ref);
+	
+	DMCOMPOS_LockModule();
+	
 	return ++(This->ref);
 }
 
@@ -46,9 +49,13 @@ ULONG WINAPI IDirectMusicComposerImpl_Release (LPDIRECTMUSICCOMPOSER iface) {
 	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
+	
+	DMCOMPOS_UnlockModule();
+	
 	return ref;
 }
 

@@ -237,6 +237,12 @@ extern HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_Load (LPPERSISTST
 extern HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
 extern HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
+/**********************************************************************
+ * Dll lifetime tracking declaration for dmcompos.dll
+ */
+extern LONG DMCOMPOS_refCount;
+static inline void DMCOMPOS_LockModule() { InterlockedIncrement( &DMCOMPOS_refCount ); }
+static inline void DMCOMPOS_UnlockModule() { InterlockedDecrement( &DMCOMPOS_refCount ); }
 
 /*****************************************************************************
  * Misc.

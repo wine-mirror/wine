@@ -55,6 +55,9 @@ HRESULT WINAPI IDirectMusicChordMapImpl_IUnknown_QueryInterface (LPUNKNOWN iface
 ULONG WINAPI IDirectMusicChordMapImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, UnknownVtbl, iface);
 	TRACE("(%p): AddRef from %ld\n", This, This->ref);
+	
+	DMCOMPOS_LockModule();
+	
 	return ++(This->ref);
 }
 
@@ -62,9 +65,13 @@ ULONG WINAPI IDirectMusicChordMapImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, UnknownVtbl, iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+	
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
+	
+	DMCOMPOS_UnlockModule();
+	
 	return ref;
 }
 
