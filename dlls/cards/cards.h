@@ -51,6 +51,15 @@
 
 #define CARD_MAX              68
 
+/* Drawing modes */
+#define MODE_FACEUP             0
+#define MODE_FACEDOWN           1
+#define MODE_HILITE             2
+#define MODE_GHOST              3
+#define MODE_REMOVE             4
+#define MODE_INVISIBLEGHOST     5
+#define MODE_DECKX              6
+#define MODE_DECKO              7
 
 /* As defined by CARD_SUIT_* */
 #define SUIT_FROM_CARD(card) (card & 3)

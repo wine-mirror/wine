@@ -76,46 +76,79 @@ BOOL WINAPI cdtInit(int *width, int *height)
 /***********************************************************************
  * Draw a card. Unlike cdtDrawCard, this version allows you to stretch
  * card bitmaps to the size you specify (dx, dy). See cdtDraw for info
- * on card, type and color parameters.
+ * on card, mode and color parameters.
  */
-BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int type, DWORD color)
+BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode, DWORD color)
 {
 	HDC hMemoryDC;
 	HBITMAP hCardBitmap;
 	HGDIOBJ result;
+	DWORD rasterOp = SRCCOPY;
 
-	TRACE("(%p, %d, %d, %d, %d, %d, %d, %ld)\n", hdc, x, y, dx, dy, card, type, color);
+	TRACE("(%p, %d, %d, %d, %d, %d, %d, %ld)\n", hdc, x, y, dx, dy, card, mode, color);
 
 	if((card < 0) || (card > CARD_MAX))
 	{
 		FIXME("Unexpected card: %d\n", card);
-		return 0;
+		return FALSE;
 	}
 
-	if((type < 0) || (type > 2))
-		FIXME("Unexpected type: %d\n", type);
-
-	hCardBitmap = cardBitmaps[card];
-	if(hCardBitmap == 0)
+	if((mode < MODE_FACEUP) || (mode > MODE_DECKO))
+	{
+		FIXME("Unexpected mode: %d\n", mode);
 		return FALSE;
+	}
+
+	if(mode == MODE_INVISIBLEGHOST || mode == MODE_DECKX || mode == MODE_DECKO)
+	{
+		FIXME("Mode %d not implemented.\n", mode);
+		return FALSE;
+	}
 
 	hMemoryDC = CreateCompatibleDC(hdc);
 	if(hMemoryDC == 0)
 		return FALSE;
 
-	result = SelectObject(hMemoryDC, hCardBitmap);
-	if((result == 0) || (result == HGDI_ERROR))
+	if((mode == MODE_REMOVE) || (mode == MODE_GHOST))
 	{
-		DeleteDC(hMemoryDC);
-		return FALSE;
+		HBRUSH hBrush;
+		RECT rect;
+		hBrush = CreateSolidBrush(color);
+		rect.left = x;
+		rect.top = y;
+		rect.right = x + cardWidth - 1;
+		rect.bottom = y + cardHeight - 1;
+		FillRect(hdc, &rect, hBrush);
+
+		if(mode == MODE_GHOST)
+		{
+			hBrush = CreateSolidBrush(RGB(255, 255, 255));
+			FrameRect(hdc, &rect, hBrush);
+		}
 	}
+	else	/* MODE_FACEUP, MODE_FACEDOWN, MODE_HILITE */
+	{
+		if(mode == MODE_HILITE)
+			rasterOp = NOTSRCCOPY;
 
-	SetBkColor(hdc, color);
+		hCardBitmap = cardBitmaps[card];
+		if(hCardBitmap == 0)
+			return FALSE;
 
-	if((cardWidth == dx) && (cardHeight == dy))
-		BitBlt(hdc, x, y, cardWidth, cardHeight, hMemoryDC, 0, 0, SRCCOPY);
-	else
-		StretchBlt(hdc, x, y, dx, dy, hMemoryDC, 0, 0, cardWidth, cardHeight, SRCCOPY);
+		result = SelectObject(hMemoryDC, hCardBitmap);
+		if((result == 0) || (result == HGDI_ERROR))
+		{
+			DeleteDC(hMemoryDC);
+			return FALSE;
+		}
+
+		SetBkColor(hdc, color);
+
+		if((cardWidth == dx) && (cardHeight == dy))
+			BitBlt(hdc, x, y, cardWidth, cardHeight, hMemoryDC, 0, 0, rasterOp);
+		else
+			StretchBlt(hdc, x, y, dx, dy, hMemoryDC, 0, 0, cardWidth, cardHeight, rasterOp);
+	}
 
 	DeleteDC(hMemoryDC);
 
@@ -127,8 +160,15 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int type
  * Draws a card at position x, y in its default size (as returned by
  * cdtInit.
  *
- * Type parameter controls whether the front (0), back (1), or inverted
- * front (2) of the card is to be drawn.
+ * Mode controls how the card gets drawn:
+ *   MODE_FACEUP                ; draw card facing up
+ *   MODE_FACEDOWN              ; draw card facing down
+ *   MODE_HILITE                ; draw face up, with NOTSRCCOPY
+ *   MODE_GHOST                 ; draw 'ghost' card
+ *   MODE_REMOVE                ; draw with background color
+ *   MODE_INVISIBLEGHOST        ; ?
+ *   MODE_DECKX                 ; draw X
+ *   MODE_DECKO                 ; draw O
  *
  * The card parameter defines the card graphic to be drawn. If we are
  * drawing fronts of cards, card should have a value from 0 through 51
@@ -143,11 +183,11 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int type
  * Color parameter defines the background color, used when drawing some
  * card backs.
  */
-BOOL WINAPI cdtDraw(HDC hdc, int x, int y, int card, int type, DWORD color)
+BOOL WINAPI cdtDraw(HDC hdc, int x, int y, int card, int mode, DWORD color)
 {
-	TRACE("(%p, %d, %d, %d, %d, %ld)\n", hdc, x, y, card, type, color);
+	TRACE("(%p, %d, %d, %d, %d, %ld)\n", hdc, x, y, card, mode, color);
 
-	return cdtDrawExt(hdc, x, y, cardWidth, cardHeight, card, type, color);
+	return cdtDrawExt(hdc, x, y, cardWidth, cardHeight, card, mode, color);
 }
 
 
