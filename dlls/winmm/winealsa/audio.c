@@ -159,10 +159,7 @@ typedef struct {
     snd_pcm_t*                  handle;                 /* handle to ALSA playback device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
 
-    snd_ctl_t *                 ctl;                    /* control handle for the playback volume */
-    snd_ctl_elem_id_t *         playback_eid;		/* element id of the playback volume control */
-    snd_ctl_elem_value_t *      playback_evalue;	/* element value of the playback volume control */
-    snd_ctl_elem_info_t *       playback_einfo;         /* element info of the playback volume control */
+    snd_hctl_t *                hctl;                    /* control handle for the playback volume */
 
     snd_pcm_sframes_t           (*write)(snd_pcm_t *, const void *, snd_pcm_uframes_t );
 
@@ -205,11 +202,6 @@ typedef struct {
     char                        interface_name[64];
     snd_pcm_t*                  handle;                 /* handle to ALSA capture device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
-
-    snd_ctl_t *                 ctl;                    /* control handle for the playback volume */
-    snd_ctl_elem_id_t *         playback_eid;		/* element id of the playback volume control */
-    snd_ctl_elem_value_t *      playback_evalue;	/* element value of the playback volume control */
-    snd_ctl_elem_info_t *       playback_einfo;         /* element info of the playback volume control */
 
     snd_pcm_sframes_t           (*read)(snd_pcm_t *, void *, snd_pcm_uframes_t );
 
@@ -423,106 +415,144 @@ static void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
  *======================================================================*/
 
 /**************************************************************************
- * 			ALSA_InitializeVolumeCtl		[internal]
+ * 			ALSA_CheckSetVolume		[internal]
  *
- * used to initialize the PCM Volume Control
+ *  Helper function for Alsa volume queries.  This tries to simplify 
+ * the process of managing the volume.  All parameters are optional
+ * (pass NULL to ignore or not use).
+ *  Return values are MMSYSERR_NOERROR on success, or !0 on failure;
+ * error codes are normalized into the possible documented return
+ * values from waveOutGetVolume.
  */
-static int ALSA_InitializeVolumeCtl(WINE_WAVEOUT * wwo)
+static int ALSA_CheckSetVolume(snd_hctl_t *hctl, int *out_left, int *out_right, 
+            int *out_min, int *out_max, int *out_step,
+            int *new_left, int *new_right)
 {
-    snd_ctl_t *                 ctl = NULL;
-    snd_ctl_card_info_t *	cardinfo;
-    snd_ctl_elem_list_t *       elemlist;
-    snd_ctl_elem_id_t *         e_id;
-    snd_ctl_elem_info_t *       einfo;
-    snd_hctl_t *                hctl = NULL;
-    snd_hctl_elem_t *           elem;
-    int                         nCtrls;
-    int                         i;
-    char                        device[8];
+    int rc = MMSYSERR_NOERROR;
+    int value_count = 0;
+    snd_hctl_elem_t *           elem = NULL;
+    snd_ctl_elem_info_t *       eleminfop = NULL;
+    snd_ctl_elem_value_t *      elemvaluep = NULL;
+    snd_ctl_elem_id_t *         elemidp = NULL;
 
-    snd_ctl_card_info_alloca(&cardinfo);
-    memset(cardinfo,0,snd_ctl_card_info_sizeof());
 
-    snd_ctl_elem_list_alloca(&elemlist);
-    memset(elemlist,0,snd_ctl_elem_list_sizeof());
-
-    snd_ctl_elem_id_alloca(&e_id);
-    memset(e_id,0,snd_ctl_elem_id_sizeof());
-
-    snd_ctl_elem_info_alloca(&einfo);
-    memset(einfo,0,snd_ctl_elem_info_sizeof());
-
-#define EXIT_ON_ERROR(f,txt) do \
+#define EXIT_ON_ERROR(f,txt,exitcode) do \
 { \
     int err; \
     if ( (err = (f) ) < 0) \
     { \
-	ERR(txt ": %s\n", snd_strerror(err)); \
-	if (hctl) \
-	    snd_hctl_close(hctl); \
-	if (ctl) \
-	    snd_ctl_close(ctl); \
-	return -1; \
+	ERR(txt " failed: %s\n", snd_strerror(err)); \
+        rc = exitcode; \
+        goto out; \
     } \
 } while(0)
 
-    sprintf(device, "hw:%ld", ALSA_WodNumDevs);
+    if (! hctl)
+        return MMSYSERR_NOTSUPPORTED;
 
-    EXIT_ON_ERROR( snd_ctl_open(&ctl, device, 0) , "ctl open failed" );
-    EXIT_ON_ERROR( snd_ctl_card_info(ctl, cardinfo), "card info failed");
-    EXIT_ON_ERROR( snd_ctl_elem_list(ctl, elemlist), "elem list failed");
+    /* Allocate areas to return information about the volume */
+    EXIT_ON_ERROR(snd_ctl_elem_id_malloc(&elemidp), "snd_ctl_elem_id_malloc", MMSYSERR_NOMEM);
+    EXIT_ON_ERROR(snd_ctl_elem_value_malloc (&elemvaluep), "snd_ctl_elem_value_malloc", MMSYSERR_NOMEM);
+    EXIT_ON_ERROR(snd_ctl_elem_info_malloc (&eleminfop), "snd_ctl_elem_info_malloc", MMSYSERR_NOMEM);
+    snd_ctl_elem_id_clear(elemidp);
+    snd_ctl_elem_value_clear(elemvaluep);
+    snd_ctl_elem_info_clear(eleminfop);
 
-    nCtrls = snd_ctl_elem_list_get_count(elemlist);
+    /* Setup and find an element id that exactly matches the characteristic we want
+    ** FIXME:  It is probably short sighted to hard code and fixate on PCM Playback Volume */
+    snd_ctl_elem_id_set_name(elemidp, "PCM Playback Volume");
+    snd_ctl_elem_id_set_interface(elemidp, SND_CTL_ELEM_IFACE_MIXER);
+    elem = snd_hctl_find_elem(hctl, elemidp);
+    if (elem)
+    {
+        /* Read and return volume information */
+        EXIT_ON_ERROR(snd_hctl_elem_info(elem, eleminfop), "snd_hctl_elem_info", MMSYSERR_NOTSUPPORTED);
+        value_count = snd_ctl_elem_info_get_count(eleminfop);
+        if (out_min || out_max || out_step)
+        {
+	    if (!snd_ctl_elem_info_is_readable(eleminfop))
+            {
+                ERR("snd_ctl_elem_info_is_readable returned false; cannot return info\n");
+                rc = MMSYSERR_NOTSUPPORTED;
+                goto out;
+            }
 
-    EXIT_ON_ERROR( snd_hctl_open(&hctl, device, 0), "hctl open failed");
-    EXIT_ON_ERROR( snd_hctl_load(hctl), "hctl load failed" );
+            if (out_min)
+                *out_min = snd_ctl_elem_info_get_min(eleminfop);
 
-    elem=snd_hctl_first_elem(hctl);
-    for ( i= 0; i<nCtrls; i++) {
+            if (out_max)
+                *out_max = snd_ctl_elem_info_get_max(eleminfop);
 
-	memset(e_id,0,snd_ctl_elem_id_sizeof());
+            if (out_step)
+                *out_step = snd_ctl_elem_info_get_step(eleminfop);
+        }
 
-	snd_hctl_elem_get_id(elem,e_id);
-/*
-	TRACE("ctl: #%d '%s'%d\n",
-				   snd_ctl_elem_id_get_numid(e_id),
-				   snd_ctl_elem_id_get_name(e_id),
-				   snd_ctl_elem_id_get_index(e_id));
-*/
-	if ( !strcmp("PCM Playback Volume", snd_ctl_elem_id_get_name(e_id)) )
-	{
-	    EXIT_ON_ERROR( snd_hctl_elem_info(elem,einfo), "hctl elem info failed" );
+        if (out_left || out_right)
+        {
+            EXIT_ON_ERROR(snd_hctl_elem_read(elem, elemvaluep), "snd_hctl_elem_read", MMSYSERR_NOTSUPPORTED);
 
-	    /* few sanity checks... you'll never know... */
-	    if ( snd_ctl_elem_info_get_type(einfo) != SND_CTL_ELEM_TYPE_INTEGER )
-	    	WARN("playback volume control is not an integer\n");
-	    if ( !snd_ctl_elem_info_is_readable(einfo) )
-	    	WARN("playback volume control is readable\n");
-	    if ( !snd_ctl_elem_info_is_writable(einfo) )
-	    	WARN("playback volume control is readable\n");
+            if (out_left)
+                *out_left = snd_ctl_elem_value_get_integer(elemvaluep, 0);
 
-	    TRACE("   ctrl range: min=%ld  max=%ld  step=%ld\n",
-	         snd_ctl_elem_info_get_min(einfo),
-	         snd_ctl_elem_info_get_max(einfo),
-	         snd_ctl_elem_info_get_step(einfo));
+            if (out_right)
+            {
+                if (value_count == 1)
+                    *out_right = snd_ctl_elem_value_get_integer(elemvaluep, 0);
+                else if (value_count == 2)
+                    *out_right = snd_ctl_elem_value_get_integer(elemvaluep, 1);
+                else
+                {
+                    ERR("Unexpected value count %d from snd_ctl_elem_info_get_count while getting volume info\n", value_count);
+                    rc = -1;
+                    goto out;
+                }
+            }
+        }
 
-	    EXIT_ON_ERROR( snd_ctl_elem_id_malloc(&wwo->playback_eid), "elem id malloc failed" );
-	    EXIT_ON_ERROR( snd_ctl_elem_info_malloc(&wwo->playback_einfo), "elem info malloc failed" );
-	    EXIT_ON_ERROR( snd_ctl_elem_value_malloc(&wwo->playback_evalue), "elem value malloc failed" );
+        /* Set the volume */
+        if (new_left || new_right)
+        {
+            EXIT_ON_ERROR(snd_hctl_elem_read(elem, elemvaluep), "snd_hctl_elem_read", MMSYSERR_NOTSUPPORTED);
+            if (new_left)
+	        snd_ctl_elem_value_set_integer(elemvaluep, 0, *new_left);
+            if (new_right)
+            {
+                if (value_count == 1)
+	            snd_ctl_elem_value_set_integer(elemvaluep, 0, *new_right);
+                else if (value_count == 2)
+	            snd_ctl_elem_value_set_integer(elemvaluep, 1, *new_right);
+                else
+                {
+                    ERR("Unexpected value count %d from snd_ctl_elem_info_get_count while setting volume info\n", value_count);
+                    rc = -1;
+                    goto out;
+                }
+            }
 
-	    /* ok, now we can safely save these objects for later */
-	    snd_ctl_elem_id_copy(wwo->playback_eid, e_id);
-	    snd_ctl_elem_info_copy(wwo->playback_einfo, einfo);
-	    snd_ctl_elem_value_set_id(wwo->playback_evalue, wwo->playback_eid);
-	    wwo->ctl = ctl;
-	}
-
-	elem=snd_hctl_elem_next(elem);
+            EXIT_ON_ERROR(snd_hctl_elem_write(elem, elemvaluep), "snd_hctl_elem_write", MMSYSERR_NOTSUPPORTED);
+        }
     }
-    snd_hctl_close(hctl);
+    else
+    {
+        ERR("Could not find 'PCM Playback Volume' element\n");
+        rc = MMSYSERR_NOTSUPPORTED;
+    }
+
+
 #undef EXIT_ON_ERROR
-    return 0;
+
+out:
+
+    if (elemvaluep)
+        snd_ctl_elem_value_free(elemvaluep);
+    if (eleminfop)
+        snd_ctl_elem_info_free(eleminfop);
+    if (elemidp)
+        snd_ctl_elem_id_free(elemidp);
+
+    return rc;
 }
+
 
 /**************************************************************************
  * 			ALSA_XRUNRecovery		[internal]
@@ -860,10 +890,15 @@ LONG ALSA_WaveInit(void)
 
         snd_pcm_close(h);
 
-        ALSA_InitializeVolumeCtl(wwo);
+        /* Get a high level control handle for volume operations */
+        /* FIXME:  This is never freed! (there are other things done in this function similarly not freed) */
+        if (snd_hctl_open(&wwo->hctl, wwo->device, 0) >= 0)
+            snd_hctl_load(wwo->hctl);
+        else
+            wwo->hctl = NULL;
 
         /* check for volume control support */
-        if (wwo->ctl) {
+        if (wwo->hctl) {
             wwo->caps.dwSupport |= WAVECAPS_VOLUME;
 
             if (chmin <= 2 && 2 <= chmax)
@@ -2080,10 +2115,11 @@ static DWORD wodBreakLoop(WORD wDevID)
  */
 static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
-    WORD	       left, right;
+    WORD	       wleft, wright;
     WINE_WAVEOUT*      wwo;
-    int                count;
-    long               min, max;
+    int                min, max;
+    int                left, right;
+    DWORD              rc;
 
     TRACE("(%u, %p);\n", wDevID, lpdwVol);
     if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
@@ -2096,33 +2132,23 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 
     wwo = &WOutDev[wDevID];
 
-    if (!wwo->ctl)
-        return MMSYSERR_NOTSUPPORTED;
+    if (lpdwVol == NULL)
+	return MMSYSERR_NOTENABLED;
 
-    count = snd_ctl_elem_info_get_count(wwo->playback_einfo);
-    min = snd_ctl_elem_info_get_min(wwo->playback_einfo);
-    max = snd_ctl_elem_info_get_max(wwo->playback_einfo);
-
-#define VOLUME_ALSA_TO_WIN(x) (((x)-min) * 65536 /(max-min))
-
-    switch (count)
+    rc = ALSA_CheckSetVolume(wwo->hctl, &left, &right, &min, &max, NULL, NULL, NULL);
+    if (rc == MMSYSERR_NOERROR)
     {
-   	case 2:
-	    left = VOLUME_ALSA_TO_WIN(snd_ctl_elem_value_get_integer(wwo->playback_evalue, 0));
-	    right = VOLUME_ALSA_TO_WIN(snd_ctl_elem_value_get_integer(wwo->playback_evalue, 1));
-	    break;
-	case 1:
-	    left = right = VOLUME_ALSA_TO_WIN(snd_ctl_elem_value_get_integer(wwo->playback_evalue, 0));
-	    break;
-	default:
-	    WARN("%d channels mixer not supported\n", count);
-	    return MMSYSERR_NOERROR;
-     }
+#define VOLUME_ALSA_TO_WIN(x) (  ( (((x)-min) * 65535) + (max-min)/2 ) /(max-min))
+        wleft = VOLUME_ALSA_TO_WIN(left);
+        wright = VOLUME_ALSA_TO_WIN(right);
 #undef VOLUME_ALSA_TO_WIN
+        TRACE("left=%d,right=%d,converted to windows left %d, right %d\n", left, right, wleft, wright);
+        *lpdwVol = MAKELONG( wleft, wright );
+    }
+    else
+        TRACE("CheckSetVolume failed; rc %ld\n", rc);
 
-    TRACE("left=%d right=%d !\n", left, right);
-    *lpdwVol = MAKELONG( left, right );
-    return MMSYSERR_NOERROR;
+    return rc;
 }
 
 /**************************************************************************
@@ -2130,10 +2156,11 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
  */
 static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
-    WORD	       left, right;
+    WORD	       wleft, wright;
     WINE_WAVEOUT*      wwo;
-    int                count, err;
-    long               min, max;
+    int                min, max;
+    int                left, right;
+    DWORD              rc;
 
     TRACE("(%u, %08lX);\n", wDevID, dwParam);
     if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
@@ -2141,35 +2168,24 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 	return MMSYSERR_BADDEVICEID;
     }
     wwo = &WOutDev[wDevID];
-    if (!wwo->ctl)
-        return MMSYSERR_NOTSUPPORTED;
 
-    count=snd_ctl_elem_info_get_count(wwo->playback_einfo);
-    min = snd_ctl_elem_info_get_min(wwo->playback_einfo);
-    max = snd_ctl_elem_info_get_max(wwo->playback_einfo);
-
-    left  = LOWORD(dwParam);
-    right = HIWORD(dwParam);
-
-#define VOLUME_WIN_TO_ALSA(x) ( (((x) * (max-min)) / 65536) + min )
-    switch (count)
+    rc = ALSA_CheckSetVolume(wwo->hctl, NULL, NULL, &min, &max, NULL, NULL, NULL);
+    if (rc == MMSYSERR_NOERROR)
     {
-   	case 2:
-	    snd_ctl_elem_value_set_integer(wwo->playback_evalue, 0, VOLUME_WIN_TO_ALSA(left));
-	    snd_ctl_elem_value_set_integer(wwo->playback_evalue, 1, VOLUME_WIN_TO_ALSA(right));
-	    break;
-	case 1:
-	    snd_ctl_elem_value_set_integer(wwo->playback_evalue, 0, VOLUME_WIN_TO_ALSA(left));
-	    break;
-	default:
-	    WARN("%d channels mixer not supported\n", count);
-     }
+        wleft  = LOWORD(dwParam);
+        wright = HIWORD(dwParam);
+#define VOLUME_WIN_TO_ALSA(x) ( (  ( ((x) * (max-min)) + 32767) / 65535) + min )
+        left = VOLUME_WIN_TO_ALSA(wleft);
+        right = VOLUME_WIN_TO_ALSA(wright);
 #undef VOLUME_WIN_TO_ALSA
-    if ( (err = snd_ctl_elem_write(wwo->ctl, wwo->playback_evalue)) < 0)
-    {
-	ERR("error writing snd_ctl_elem_value: %s\n", snd_strerror(err));
+        rc = ALSA_CheckSetVolume(wwo->hctl, NULL, NULL, NULL, NULL, NULL, &left, &right);
+        if (rc == MMSYSERR_NOERROR)
+            TRACE("set volume:  wleft=%d, wright=%d, converted to alsa left %d, right %d\n", wleft, wright, left, right);
+        else
+            TRACE("SetVolume failed; rc %ld\n", rc);
     }
-    return MMSYSERR_NOERROR;
+
+    return rc;
 }
 
 /**************************************************************************
