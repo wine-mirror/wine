@@ -228,7 +228,8 @@ int	WINECON_GrabChanges(struct inner_data* data)
     {
         if (evts[i].event == CONSOLE_RENDERER_CURSOR_POS_EVENT)
         {
-            if (ev_found != -1) evts[ev_found].event = CONSOLE_RENDERER_NONE_EVENT;
+            if (ev_found != -1)
+		evts[i].event = CONSOLE_RENDERER_NONE_EVENT;
 	    ev_found = i;
         }
     }
