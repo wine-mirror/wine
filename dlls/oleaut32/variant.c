@@ -2434,7 +2434,7 @@ HRESULT WINAPI VarUI1FromBool(VARIANT_BOOL boolIn, BYTE* pbOut)
 /******************************************************************************
  *		VarUI1FromI1		[OLEAUT32.237]
  */
-HRESULT WINAPI VarUI1FromI1(CHAR cIn, BYTE* pbOut)
+HRESULT WINAPI VarUI1FromI1(signed char cIn, BYTE* pbOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, pbOut );
 
@@ -2641,7 +2641,7 @@ HRESULT WINAPI VarI2FromBool(VARIANT_BOOL boolIn, short* psOut)
 /******************************************************************************
  *		VarI2FromI1		[OLEAUT32.205]
  */
-HRESULT WINAPI VarI2FromI1(CHAR cIn, short* psOut)
+HRESULT WINAPI VarI2FromI1(signed char cIn, short* psOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, psOut );
 
@@ -2829,7 +2829,7 @@ HRESULT WINAPI VarI4FromBool(VARIANT_BOOL boolIn, LONG* plOut)
 /******************************************************************************
  *		VarI4FromI1		[OLEAUT32.209]
  */
-HRESULT WINAPI VarI4FromI1(CHAR cIn, LONG* plOut)
+HRESULT WINAPI VarI4FromI1(signed char cIn, LONG* plOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, plOut );
 
@@ -3023,7 +3023,7 @@ HRESULT WINAPI VarR4FromBool(VARIANT_BOOL boolIn, FLOAT* pfltOut)
 /******************************************************************************
  *		VarR4FromI1		[OLEAUT32.213]
  */
-HRESULT WINAPI VarR4FromI1(CHAR cIn, FLOAT* pfltOut)
+HRESULT WINAPI VarR4FromI1(signed char cIn, FLOAT* pfltOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, pfltOut );
 
@@ -3180,7 +3180,7 @@ HRESULT WINAPI VarR8FromBool(VARIANT_BOOL boolIn, double* pdblOut)
 /******************************************************************************
  *		VarR8FromI1		[OLEAUT32.217]
  */
-HRESULT WINAPI VarR8FromI1(CHAR cIn, double* pdblOut)
+HRESULT WINAPI VarR8FromI1(signed char cIn, double* pdblOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, pdblOut );
 
@@ -3382,7 +3382,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
 /******************************************************************************
  *		VarDateFromI1		[OLEAUT32.221]
  */
-HRESULT WINAPI VarDateFromI1(CHAR cIn, DATE* pdateOut)
+HRESULT WINAPI VarDateFromI1(signed char cIn, DATE* pdateOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, pdateOut );
 
@@ -3601,7 +3601,7 @@ HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BS
 /******************************************************************************
  *		VarBstrFromI1		[OLEAUT32.229]
  */
-HRESULT WINAPI VarBstrFromI1(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
+HRESULT WINAPI VarBstrFromI1(signed char cIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
 	TRACE("( %c, %ld, %ld, %p ), stub\n", cIn, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%d", cIn );
@@ -3780,7 +3780,7 @@ HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_
 /******************************************************************************
  *		VarBoolFromI1		[OLEAUT32.233]
  */
-HRESULT WINAPI VarBoolFromI1(CHAR cIn, VARIANT_BOOL* pboolOut)
+HRESULT WINAPI VarBoolFromI1(signed char cIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, pboolOut );
 
@@ -3827,7 +3827,7 @@ HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL* pboolOut) {
 /******************************************************************************
  *		VarI1FromUI1		[OLEAUT32.244]
  */
-HRESULT WINAPI VarI1FromUI1(BYTE bIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromUI1(BYTE bIn, signed char *pcOut)
 {
 	TRACE("( %d, %p ), stub\n", bIn, pcOut );
 
@@ -3846,7 +3846,7 @@ HRESULT WINAPI VarI1FromUI1(BYTE bIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromI2		[OLEAUT32.245]
  */
-HRESULT WINAPI VarI1FromI2(short uiIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromI2(short uiIn, signed char *pcOut)
 {
 	TRACE("( %d, %p ), stub\n", uiIn, pcOut );
 
@@ -3863,7 +3863,7 @@ HRESULT WINAPI VarI1FromI2(short uiIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromI4		[OLEAUT32.246]
  */
-HRESULT WINAPI VarI1FromI4(LONG lIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromI4(LONG lIn, signed char *pcOut)
 {
 	TRACE("( %ld, %p ), stub\n", lIn, pcOut );
 
@@ -3880,7 +3880,7 @@ HRESULT WINAPI VarI1FromI4(LONG lIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromR4		[OLEAUT32.247]
  */
-HRESULT WINAPI VarI1FromR4(FLOAT fltIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromR4(FLOAT fltIn, signed char *pcOut)
 {
 	TRACE("( %f, %p ), stub\n", fltIn, pcOut );
 
@@ -3898,7 +3898,7 @@ HRESULT WINAPI VarI1FromR4(FLOAT fltIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromR8		[OLEAUT32.248]
  */
-HRESULT WINAPI VarI1FromR8(double dblIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromR8(double dblIn, signed char *pcOut)
 {
 	TRACE("( %f, %p ), stub\n", dblIn, pcOut );
 
@@ -3916,7 +3916,7 @@ HRESULT WINAPI VarI1FromR8(double dblIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromDate		[OLEAUT32.249]
  */
-HRESULT WINAPI VarI1FromDate(DATE dateIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromDate(DATE dateIn, signed char *pcOut)
 {
 	TRACE("( %f, %p ), stub\n", dateIn, pcOut );
 
@@ -3934,7 +3934,7 @@ HRESULT WINAPI VarI1FromDate(DATE dateIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromStr		[OLEAUT32.251]
  */
-HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOut)
+HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, signed char *pcOut)
 {
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
@@ -3974,7 +3974,7 @@ HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOu
 /******************************************************************************
  *		VarI1FromBool		[OLEAUT32.253]
  */
-HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, signed char *pcOut)
 {
 	TRACE("( %d, %p ), stub\n", boolIn, pcOut );
 
@@ -3986,7 +3986,7 @@ HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromUI2		[OLEAUT32.254]
  */
-HRESULT WINAPI VarI1FromUI2(USHORT uiIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromUI2(USHORT uiIn, signed char *pcOut)
 {
 	TRACE("( %d, %p ), stub\n", uiIn, pcOut );
 
@@ -4003,7 +4003,7 @@ HRESULT WINAPI VarI1FromUI2(USHORT uiIn, CHAR* pcOut)
 /******************************************************************************
  *		VarI1FromUI4		[OLEAUT32.255]
  */
-HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR* pcOut)
+HRESULT WINAPI VarI1FromUI4(ULONG ulIn, signed char *pcOut)
 {
 	TRACE("( %ld, %p ), stub\n", ulIn, pcOut );
 
@@ -4021,7 +4021,7 @@ HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR* pcOut)
  *              VarI1FromCy [OLEAUT32.250]
  * Convert currency to signed char
  */
-HRESULT WINAPI VarI1FromCy(CY cyIn, CHAR* pcOut) {
+HRESULT WINAPI VarI1FromCy(CY cyIn, signed char *pcOut) {
    double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
 
    if (t > CHAR_MAX || t < CHAR_MIN) return DISP_E_OVERFLOW;
@@ -4185,7 +4185,7 @@ HRESULT WINAPI VarUI2FromBool(VARIANT_BOOL boolIn, USHORT* puiOut)
 /******************************************************************************
  *		VarUI2FromI1		[OLEAUT32.267]
  */
-HRESULT WINAPI VarUI2FromI1(CHAR cIn, USHORT* puiOut)
+HRESULT WINAPI VarUI2FromI1(signed char cIn, USHORT* puiOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, puiOut );
 
@@ -4378,7 +4378,7 @@ HRESULT WINAPI VarUI4FromBool(VARIANT_BOOL boolIn, ULONG* pulOut)
 /******************************************************************************
  *		VarUI4FromI1		[OLEAUT32.280]
  */
-HRESULT WINAPI VarUI4FromI1(CHAR cIn, ULONG* pulOut)
+HRESULT WINAPI VarUI4FromI1(signed char cIn, ULONG* pulOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, pulOut );
 

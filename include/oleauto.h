@@ -30,10 +30,6 @@ extern "C" {
 
 DEFINE_OLEGUID(IID_StdOle, 0x00020430,0,0);
 
-struct tagSAFEARRAY;
-struct tagSAFEARRAYBOUND;
-struct tagVARIANT;
-
 /*
  * BSTR API
  */
@@ -52,95 +48,44 @@ int  WINAPI SysStringLen(BSTR);
  *  ErrorInfo API
  */
 
-HRESULT WINAPI SetErrorInfo(ULONG dwReserved, IErrorInfo *perrinfo);
-HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo);
-HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo);
+HRESULT WINAPI SetErrorInfo(ULONG,IErrorInfo*);
+HRESULT WINAPI GetErrorInfo(ULONG,IErrorInfo**);
+HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo**);
 
 /*****************************************************************
  *  SafeArray API
  */
 
-HRESULT WINAPI
-SafeArrayAllocDescriptor(UINT cDims, struct tagSAFEARRAY **ppsaOut);
+SAFEARRAY* WINAPI SafeArrayCreate(VARTYPE,UINT,SAFEARRAYBOUND*);
+SAFEARRAY* WINAPI SafeArrayCreateEx(VARTYPE,UINT,SAFEARRAYBOUND*,LPVOID);
+SAFEARRAY* WINAPI SafeArrayCreateVector(VARTYPE,LONG,ULONG);
+SAFEARRAY* WINAPI SafeArrayCreateVectorEx(VARTYPE,LONG,ULONG,LPVOID);
 
-HRESULT WINAPI
-SafeArrayAllocDescriptorEx(VARTYPE vt,UINT cDims,struct tagSAFEARRAY **ppsaOut);
-
-HRESULT WINAPI
-SafeArrayAllocData(struct tagSAFEARRAY *psa);
-
-struct tagSAFEARRAY * WINAPI
-SafeArrayCreate(VARTYPE vt, UINT cDims, struct tagSAFEARRAYBOUND *rgsabound);
-
-HRESULT WINAPI
-SafeArrayDestroyDescriptor(struct tagSAFEARRAY *psa);
-
-HRESULT WINAPI
-SafeArrayPutElement(struct tagSAFEARRAY *psa, LONG *rgIndices, void *pv);
-
-HRESULT WINAPI
-SafeArrayGetElement(struct tagSAFEARRAY *psa, LONG *rgIndices, void *pv);
-
-HRESULT WINAPI
-SafeArrayLock(struct tagSAFEARRAY *psa);
-
-HRESULT WINAPI
-SafeArrayUnlock(struct tagSAFEARRAY *psa);
-
-HRESULT WINAPI
-SafeArrayGetUBound(struct tagSAFEARRAY *psa, UINT nDim, LONG *plUbound);
-
-HRESULT WINAPI
-SafeArrayGetLBound(struct tagSAFEARRAY *psa, UINT nDim, LONG *plLbound);
-
-UINT  WINAPI
-SafeArrayGetDim(struct tagSAFEARRAY *psa);
-
-UINT  WINAPI
-SafeArrayGetElemsize(struct tagSAFEARRAY *psa);
-
-HRESULT WINAPI
-SafeArrayAccessData(struct tagSAFEARRAY *psa, void **ppvData);
-
-HRESULT WINAPI
-SafeArrayUnaccessData(struct tagSAFEARRAY *psa);
-
-HRESULT WINAPI
-SafeArrayPtrOfIndex(struct tagSAFEARRAY *psa, LONG *rgIndices, void **ppvData);
-
-HRESULT WINAPI
-SafeArrayCopyData(struct tagSAFEARRAY *psaSource, struct tagSAFEARRAY *psaTarget);
-
-HRESULT WINAPI
-SafeArrayDestroyData(struct tagSAFEARRAY *psa);
-
-HRESULT WINAPI
-SafeArrayDestroy(struct tagSAFEARRAY *psa);
-
-HRESULT WINAPI
-SafeArrayCopy(struct tagSAFEARRAY *psa, struct tagSAFEARRAY **ppsaOut);
-
-struct tagSAFEARRAY * WINAPI
-SafeArrayCreateVector(VARTYPE vt, LONG lLbound, ULONG cElements);
-
-HRESULT WINAPI
-SafeArrayRedim(struct tagSAFEARRAY *psa, struct tagSAFEARRAYBOUND *psaboundNew);
-
-HRESULT WINAPI
-SafeArraySetIID(struct tagSAFEARRAY *psa, REFGUID riid);
-
-HRESULT WINAPI
-SafeArrayGetIID(struct tagSAFEARRAY *psa, GUID *riid);
-
-HRESULT WINAPI
-SafeArrayGetVartype(struct tagSAFEARRAY *psa, VARTYPE *vt);
-
-HRESULT WINAPI
-SafeArrayGetRecordInfo(struct tagSAFEARRAY *psa, IRecordInfo **recordinfo);
-
-HRESULT WINAPI
-SafeArraySetRecordInfo(struct tagSAFEARRAY *psa, IRecordInfo *recordinfo);
-
+HRESULT WINAPI SafeArrayAllocDescriptor(UINT,SAFEARRAY**);
+HRESULT WINAPI SafeArrayAllocDescriptorEx(VARTYPE,UINT,SAFEARRAY**);
+HRESULT WINAPI SafeArrayAllocData(SAFEARRAY*);
+HRESULT WINAPI SafeArrayDestroyDescriptor(SAFEARRAY*);
+HRESULT WINAPI SafeArrayPutElement(SAFEARRAY*,LONG*,void*);
+HRESULT WINAPI SafeArrayGetElement(SAFEARRAY*,LONG*,void*);
+HRESULT WINAPI SafeArrayLock(SAFEARRAY*);
+HRESULT WINAPI SafeArrayUnlock(SAFEARRAY*);
+HRESULT WINAPI SafeArrayGetUBound(SAFEARRAY*,UINT,LONG*);
+HRESULT WINAPI SafeArrayGetLBound(SAFEARRAY*,UINT,LONG*);
+UINT    WINAPI SafeArrayGetDim(SAFEARRAY*);
+UINT    WINAPI SafeArrayGetElemsize(SAFEARRAY*);
+HRESULT WINAPI SafeArrayGetVartype(SAFEARRAY*,VARTYPE*);
+HRESULT WINAPI SafeArrayAccessData(SAFEARRAY*,void**);
+HRESULT WINAPI SafeArrayUnaccessData(SAFEARRAY*);
+HRESULT WINAPI SafeArrayPtrOfIndex(SAFEARRAY*,LONG*,void **);
+HRESULT WINAPI SafeArrayCopyData(SAFEARRAY*,SAFEARRAY*);
+HRESULT WINAPI SafeArrayDestroyData(SAFEARRAY*);
+HRESULT WINAPI SafeArrayDestroy(SAFEARRAY*);
+HRESULT WINAPI SafeArrayCopy(SAFEARRAY*,SAFEARRAY**);
+HRESULT WINAPI SafeArrayRedim(SAFEARRAY*,SAFEARRAYBOUND*);
+HRESULT WINAPI SafeArraySetRecordInfo(SAFEARRAY*,IRecordInfo*);
+HRESULT WINAPI SafeArrayGetRecordInfo(SAFEARRAY*,IRecordInfo**);
+HRESULT WINAPI SafeArraySetIID(SAFEARRAY*,REFGUID);
+HRESULT WINAPI SafeArrayGetIID(SAFEARRAY*,GUID*);
 
 /* These are macros that help accessing the VARIANT date type.
  */
@@ -177,6 +122,10 @@ SafeArraySetRecordInfo(struct tagSAFEARRAY *psa, IRecordInfo *recordinfo);
 #define V_INTREF(A) 	 V_UNION(A, pintVal)
 #define V_UINT(A)		 V_UNION(A, uintVal)
 #define V_UINTREF(A)	 V_UNION(A, puintVal)
+#define V_I8(A)		 V_UNION(A, llVal)
+#define V_I8REF(A) 	 V_UNION(A, pllVal)
+#define V_UI8(A)		 V_UNION(A, ullVal)
+#define V_UI8REF(A)	 V_UNION(A, pullVal)
 #define V_CY(A) 		 V_UNION(A, cyVal)
 #define V_CYREF(A)		 V_UNION(A, pcyVal)
 #define V_DATE(A)		 V_UNION(A, date)
@@ -206,14 +155,12 @@ SafeArraySetRecordInfo(struct tagSAFEARRAY *psa, IRecordInfo *recordinfo);
  * VARIANT API
  */
 
-void WINAPI VariantInit(struct tagVARIANT* pvarg);
-HRESULT WINAPI VariantClear(struct tagVARIANT* pvarg);
-HRESULT WINAPI VariantCopy(struct tagVARIANT* pvargDest, struct tagVARIANT* pvargSrc);
-HRESULT WINAPI VariantCopyInd(struct tagVARIANT* pvargDest, struct tagVARIANT* pvargSrc);
-HRESULT WINAPI VariantChangeType(struct tagVARIANT* pvargDest, struct tagVARIANT* pvargSrc,
-						  USHORT wFlags, VARTYPE vt);
-HRESULT WINAPI VariantChangeTypeEx(struct tagVARIANT* pvargDest, struct tagVARIANT* pvargSrc,
-							LCID lcid, USHORT wFlags, VARTYPE vt);
+void    WINAPI VariantInit(VARIANT*);
+HRESULT WINAPI VariantClear(VARIANT*);
+HRESULT WINAPI VariantCopy(VARIANT*,VARIANT*);
+HRESULT WINAPI VariantCopyInd(VARIANT*,VARIANT*);
+HRESULT WINAPI VariantChangeType(VARIANT*,VARIANT*,USHORT,VARTYPE);
+HRESULT WINAPI VariantChangeTypeEx(VARIANT*,VARIANT*,LCID,USHORT,VARTYPE);
 
 /*
  * These flags are used for the VariantChangeType and VariantChangeTypeEx APIs.
@@ -227,7 +174,7 @@ HRESULT WINAPI VariantChangeTypeEx(struct tagVARIANT* pvargDest, struct tagVARIA
  * This one is used for conversions of VT_BOOL to VT_BSTR,
  * the API will convert to "True"|"False" instead of "-1"|"0".
  */
-#define VARIANT_ALPHABOOL	   0x2
+#define VARIANT_ALPHABOOL      0x2
 /*
  * This one is used for conversions to or from a VT_BSTR string,
  * it passes LOCALE_NOUSEROVERRIDE to the core (low-level) coercion routines.
@@ -236,6 +183,29 @@ HRESULT WINAPI VariantChangeTypeEx(struct tagVARIANT* pvargDest, struct tagVARIA
  */
 #define VARIANT_NOUSEROVERRIDE 0x4
 
+/*
+ * This one is used for conversions of VT_BOOL to VT_BSTR,
+ * Convert to the localised text of "True"|"False" instead of "-1"|"0".
+ */
+#define VARIANT_LOCALBOOL      0x10
+
+/*
+ * Alternate calendar support.
+ */
+#define VARIANT_CALENDAR_HIJRI 0x08
+#define VARIANT_CALENDAR_THAI  0x20
+#define VARIANT_CALENDAR_GREGORIAN 0x40
+
+/*
+ * Use NLS calls in conversion
+ */
+#define VARIANT_USE_NLS        0x80
+
+/*
+ * Convert between SafeArray vectors and BSTR's
+ */
+HRESULT WINAPI VectorFromBstr(BSTR,SAFEARRAY**);
+HRESULT WINAPI BstrFromVector(SAFEARRAY*,BSTR*);
 
 /*
  * VARTYPE Coercion API
@@ -249,193 +219,251 @@ HRESULT WINAPI VariantChangeTypeEx(struct tagVARIANT* pvargDest, struct tagVARIA
 #define VAR_DATEVALUEONLY	((DWORD)0x00000002)
 
 
-HRESULT WINAPI VarUI1FromI2(short sIn, BYTE* pbOut);
-HRESULT WINAPI VarUI1FromI4(LONG lIn, BYTE* pbOut);
-HRESULT WINAPI VarUI1FromR4(FLOAT fltIn, BYTE* pbOut);
-HRESULT WINAPI VarUI1FromR8(double dblIn, BYTE* pbOut);
-HRESULT WINAPI VarUI1FromDate(DATE dateIn, BYTE* pbOut);
-HRESULT WINAPI VarUI1FromBool(VARIANT_BOOL boolIn, BYTE* pbOut);
-HRESULT WINAPI VarUI1FromI1(CHAR cIn, BYTE*pbOut);
-HRESULT WINAPI VarUI1FromUI2(USHORT uiIn, BYTE*pbOut);
-HRESULT WINAPI VarUI1FromUI4(ULONG ulIn, BYTE*pbOut);
-HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut);
-HRESULT WINAPI VarUI1FromCy(CY cyIn, BYTE* pbOut);
-HRESULT WINAPI VarUI1FromDec(DECIMAL* pdecIn, BYTE* pbOut);
-HRESULT WINAPI VarUI1FromDisp(IDispatch* pdispIn, LCID lcid, BYTE* pbOut);
+HRESULT WINAPI VarUI1FromI2(SHORT,BYTE*);
+HRESULT WINAPI VarUI1FromI4(LONG,BYTE*);
+HRESULT WINAPI VarUI1FromI8(LONG64,BYTE*);
+HRESULT WINAPI VarUI1FromR4(FLOAT,BYTE*);
+HRESULT WINAPI VarUI1FromR8(DOUBLE,BYTE*);
+HRESULT WINAPI VarUI1FromDate(DATE,BYTE*);
+HRESULT WINAPI VarUI1FromBool(VARIANT_BOOL,BYTE*);
+HRESULT WINAPI VarUI1FromI1(signed char,BYTE*);
+HRESULT WINAPI VarUI1FromUI2(USHORT,BYTE*);
+HRESULT WINAPI VarUI1FromUI4(ULONG,BYTE*);
+HRESULT WINAPI VarUI1FromUI8(ULONG64,BYTE*);
+HRESULT WINAPI VarUI1FromStr(OLECHAR*,LCID,ULONG,BYTE*);
+HRESULT WINAPI VarUI1FromCy(CY,BYTE*);
+HRESULT WINAPI VarUI1FromDec(DECIMAL*,BYTE*);
+HRESULT WINAPI VarUI1FromDisp(IDispatch*,LCID,BYTE*);
 
-HRESULT WINAPI VarI2FromUI1(BYTE bIn, short* psOut);
-HRESULT WINAPI VarI2FromI4(LONG lIn, short* psOut);
-HRESULT WINAPI VarI2FromR4(FLOAT fltIn, short* psOut);
-HRESULT WINAPI VarI2FromR8(double dblIn, short* psOut);
-HRESULT WINAPI VarI2FromDate(DATE dateIn, short* psOut);
-HRESULT WINAPI VarI2FromBool(VARIANT_BOOL boolIn, short* psOut);
-HRESULT WINAPI VarI2FromI1(CHAR cIn, short*psOut);
-HRESULT WINAPI VarI2FromUI2(USHORT uiIn, short*psOut);
-HRESULT WINAPI VarI2FromUI4(ULONG ulIn, short*psOut);
-HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psOut);
-HRESULT WINAPI VarI2FromCy(CY cyIn, short* psOut);
-HRESULT WINAPI VarI2FromDec(DECIMAL* pdecIn, short* psOut);
-HRESULT WINAPI VarI2FromDisp(IDispatch* pdispIn, LCID lcid, short* psOut);
+HRESULT WINAPI VarI2FromUI1(BYTE,SHORT*);
+HRESULT WINAPI VarI2FromI4(LONG,SHORT*);
+HRESULT WINAPI VarI2FromI8(LONG64,SHORT*);
+HRESULT WINAPI VarI2FromR4(FLOAT,SHORT*);
+HRESULT WINAPI VarI2FromR8(DOUBLE,SHORT*);
+HRESULT WINAPI VarI2FromDate(DATE,SHORT*);
+HRESULT WINAPI VarI2FromBool(VARIANT_BOOL,SHORT*);
+HRESULT WINAPI VarI2FromI1(signed char,SHORT*);
+HRESULT WINAPI VarI2FromUI2(USHORT,SHORT*);
+HRESULT WINAPI VarI2FromUI4(ULONG,SHORT*);
+HRESULT WINAPI VarI2FromUI8(ULONG64,SHORT*);
+HRESULT WINAPI VarI2FromStr(OLECHAR*,LCID,ULONG,SHORT*);
+HRESULT WINAPI VarI2FromCy(CY,SHORT*);
+HRESULT WINAPI VarI2FromDec(DECIMAL*,SHORT*);
+HRESULT WINAPI VarI2FromDisp(IDispatch*,LCID,SHORT*);
 
-HRESULT WINAPI VarI4FromUI1(BYTE bIn, LONG* plOut);
-HRESULT WINAPI VarI4FromI2(short sIn, LONG* plOut);
-HRESULT WINAPI VarI4FromR4(FLOAT fltIn, LONG* plOut);
-HRESULT WINAPI VarI4FromR8(double dblIn, LONG* plOut);
-HRESULT WINAPI VarI4FromDate(DATE dateIn, LONG* plOut);
-HRESULT WINAPI VarI4FromBool(VARIANT_BOOL boolIn, LONG* plOut);
-HRESULT WINAPI VarI4FromI1(CHAR cIn, LONG* plOut);
-HRESULT WINAPI VarI4FromUI2(USHORT uiIn, LONG*plOut);
-HRESULT WINAPI VarI4FromUI4(ULONG ulIn, LONG*plOut);
-HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOut);
-HRESULT WINAPI VarI4FromCy(CY cyIn, LONG* plOut);
-HRESULT WINAPI VarI4FromDec(DECIMAL* pdecIn, LONG* plOut);
-HRESULT WINAPI VarI4FromDisp(IDispatch* pdispIn, LCID lcid, LONG* plOut);
+HRESULT WINAPI VarI4FromUI1(BYTE,LONG*);
+HRESULT WINAPI VarI4FromI2(SHORT,LONG*);
+HRESULT WINAPI VarI4FromI8(LONG64,LONG*);
+HRESULT WINAPI VarI4FromR4(FLOAT,LONG*);
+HRESULT WINAPI VarI4FromR8(DOUBLE,LONG*);
+HRESULT WINAPI VarI4FromDate(DATE,LONG*);
+HRESULT WINAPI VarI4FromBool(VARIANT_BOOL,LONG*);
+HRESULT WINAPI VarI4FromI1(signed char,LONG*);
+HRESULT WINAPI VarI4FromUI2(USHORT,LONG*);
+HRESULT WINAPI VarI4FromUI4(ULONG,LONG*);
+HRESULT WINAPI VarI4FromUI8(ULONG64,LONG*);
+HRESULT WINAPI VarI4FromStr(OLECHAR*,LCID,ULONG,LONG*);
+HRESULT WINAPI VarI4FromCy(CY,LONG*);
+HRESULT WINAPI VarI4FromDec(DECIMAL*,LONG*);
+HRESULT WINAPI VarI4FromDisp(IDispatch*,LCID,LONG*);
 
-HRESULT WINAPI VarR4FromUI1(BYTE bIn, FLOAT* pfltOut);
-HRESULT WINAPI VarR4FromI2(short sIn, FLOAT* pfltOut);
-HRESULT WINAPI VarR4FromI4(LONG lIn, FLOAT* pfltOut);
-HRESULT WINAPI VarR4FromR8(double dblIn, FLOAT* pfltOut);
-HRESULT WINAPI VarR4FromDate(DATE dateIn, FLOAT* pfltOut);
-HRESULT WINAPI VarR4FromBool(VARIANT_BOOL boolIn, FLOAT* pfltOut);
-HRESULT WINAPI VarR4FromI1(CHAR cIn, FLOAT*pfltOut);
-HRESULT WINAPI VarR4FromUI2(USHORT uiIn, FLOAT*pfltOut);
-HRESULT WINAPI VarR4FromUI4(ULONG ulIn, FLOAT*pfltOut);
-HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT*pfltOut);
-HRESULT WINAPI VarR4FromCy(CY cyIn, FLOAT* pfltOut);
-HRESULT WINAPI VarR4FromDec(DECIMAL* pdecIn, FLOAT* pfltOut);
-HRESULT WINAPI VarR4FromDisp(IDispatch* pdispIn, LCID lcid, FLOAT* pfltOut);
+HRESULT WINAPI VarI8FromUI1(BYTE,LONG64*);
+HRESULT WINAPI VarI8FromI2(SHORT,LONG64*);
+HRESULT WINAPI VarI8FromI4(LONG,LONG64*);
+HRESULT WINAPI VarI8FromR4(FLOAT,LONG64*);
+HRESULT WINAPI VarI8FromR8(DOUBLE,LONG64*);
+HRESULT WINAPI VarI8FromDate(DATE,LONG64*);
+HRESULT WINAPI VarI8FromStr(OLECHAR*,LCID,ULONG,LONG64*);
+HRESULT WINAPI VarI8FromBool(VARIANT_BOOL,LONG64*);
+HRESULT WINAPI VarI8FromI1(signed char,LONG64*);
+HRESULT WINAPI VarI8FromUI2(USHORT,LONG64*);
+HRESULT WINAPI VarI8FromUI4(ULONG,LONG64*);
+HRESULT WINAPI VarI8FromUI8(ULONG64,LONG64*);
+HRESULT WINAPI VarI8FromDec(DECIMAL *pdecIn,LONG64*);
+HRESULT WINAPI VarI8FromInt(INT intIn,LONG64*);
+HRESULT WINAPI VarI8FromCy(CY,LONG64*);
+HRESULT WINAPI VarI8FromDisp(IDispatch*,LCID,LONG64*);
 
-HRESULT WINAPI VarR8FromUI1(BYTE bIn, double* pdblOut);
-HRESULT WINAPI VarR8FromI2(short sIn, double* pdblOut);
-HRESULT WINAPI VarR8FromI4(LONG lIn, double* pdblOut);
-HRESULT WINAPI VarR8FromR4(FLOAT fltIn, double* pdblOut);
-HRESULT WINAPI VarR8FromDate(DATE dateIn, double* pdblOut);
-HRESULT WINAPI VarR8FromBool(VARIANT_BOOL boolIn, double* pdblOut);
-HRESULT WINAPI VarR8FromI1(CHAR cIn, double*pdblOut);
-HRESULT WINAPI VarR8FromUI2(USHORT uiIn, double*pdblOut);
-HRESULT WINAPI VarR8FromUI4(ULONG ulIn, double*pdblOut);
-HRESULT WINAPI VarR8FromStr(OLECHAR*strIn, LCID lcid, ULONG dwFlags, double*pdblOut);
-HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut);
-HRESULT WINAPI VarR8FromDec(DECIMAL* pdecIn, double* pdblOut);
-HRESULT WINAPI VarR8FromDisp(IDispatch* pdispIn, LCID lcid, double* pdblOut);
+HRESULT WINAPI VarR4FromUI1(BYTE,FLOAT*);
+HRESULT WINAPI VarR4FromI2(SHORT,FLOAT*);
+HRESULT WINAPI VarR4FromI4(LONG,FLOAT*);
+HRESULT WINAPI VarR4FromI8(LONG64,FLOAT*);
+HRESULT WINAPI VarR4FromR8(DOUBLE,FLOAT*);
+HRESULT WINAPI VarR4FromDate(DATE,FLOAT*);
+HRESULT WINAPI VarR4FromBool(VARIANT_BOOL,FLOAT*);
+HRESULT WINAPI VarR4FromI1(signed char,FLOAT*);
+HRESULT WINAPI VarR4FromUI2(USHORT,FLOAT*);
+HRESULT WINAPI VarR4FromUI4(ULONG,FLOAT*);
+HRESULT WINAPI VarR4FromUI8(ULONG64,FLOAT*);
+HRESULT WINAPI VarR4FromStr(OLECHAR*,LCID,ULONG,FLOAT*);
+HRESULT WINAPI VarR4FromCy(CY,FLOAT*);
+HRESULT WINAPI VarR4FromDec(DECIMAL*,FLOAT*);
+HRESULT WINAPI VarR4FromDisp(IDispatch*,LCID,FLOAT*);
 
-HRESULT WINAPI VarDateFromUI1(BYTE bIn, DATE* pdateOut);
-HRESULT WINAPI VarDateFromI2(short sIn, DATE* pdateOut);
-HRESULT WINAPI VarDateFromI4(LONG lIn, DATE* pdateOut);
-HRESULT WINAPI VarDateFromR4(FLOAT fltIn, DATE* pdateOut);
-HRESULT WINAPI VarDateFromR8(double dblIn, DATE* pdateOut);
-HRESULT WINAPI VarDateFromStr(OLECHAR*strIn, LCID lcid, ULONG dwFlags, DATE*pdateOut);
-HRESULT WINAPI VarDateFromI1(CHAR cIn, DATE*pdateOut);
-HRESULT WINAPI VarDateFromUI2(USHORT uiIn, DATE*pdateOut);
-HRESULT WINAPI VarDateFromUI4(ULONG ulIn, DATE*pdateOut);
-HRESULT WINAPI VarDateFromBool(VARIANT_BOOL boolIn, DATE* pdateOut);
-HRESULT WINAPI VarDateFromCy(CY cyIn, DATE* pdateOut);
-HRESULT WINAPI VarDateFromDec(DECIMAL* pdecIn, DATE* pdateOut);
-HRESULT WINAPI VarDateFromDisp(IDispatch* pdispIn, LCID lcid, DATE* pdateOut);
+HRESULT WINAPI VarR8FromUI1(BYTE,double*);
+HRESULT WINAPI VarR8FromI2(SHORT,double*);
+HRESULT WINAPI VarR8FromI4(LONG,double*);
+HRESULT WINAPI VarR8FromI8(LONG64,double*);
+HRESULT WINAPI VarR8FromR4(FLOAT,double*);
+HRESULT WINAPI VarR8FromDate(DATE,double*);
+HRESULT WINAPI VarR8FromBool(VARIANT_BOOL,double*);
+HRESULT WINAPI VarR8FromI1(signed char,double*);
+HRESULT WINAPI VarR8FromUI2(USHORT,double*);
+HRESULT WINAPI VarR8FromUI4(ULONG,double*);
+HRESULT WINAPI VarR8FromUI8(ULONG64,double*);
+HRESULT WINAPI VarR8FromStr(OLECHAR*,LCID,ULONG,double*);
+HRESULT WINAPI VarR8FromCy(CY,double*);
+HRESULT WINAPI VarR8FromDec(DECIMAL*,double*);
+HRESULT WINAPI VarR8FromDisp(IDispatch*,LCID,double*);
 
-HRESULT WINAPI VarCyFromUI1(BYTE bIn, CY* pcyOut);
-HRESULT WINAPI VarCyFromI2(short sIn, CY* pcyOut);
-HRESULT WINAPI VarCyFromI4(LONG lIn, CY* pcyOut);
-HRESULT WINAPI VarCyFromR4(FLOAT fltIn, CY* pcyOut);
-HRESULT WINAPI VarCyFromR8(double dblIn, CY* pcyOut);
-HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut);
-HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut);
-HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut);
-HRESULT WINAPI VarCyFromI1(signed char cIn, CY*pcyOut);
-HRESULT WINAPI VarCyFromUI2(USHORT uiIn, CY*pcyOut);
-HRESULT WINAPI VarCyFromUI4(ULONG ulIn, CY*pcyOut);
-HRESULT WINAPI VarCyFromDec(DECIMAL*pdecIn, CY*pcyOut);
-HRESULT WINAPI VarCyFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CY* pcyOut);
-HRESULT WINAPI VarCyFromDisp(IDispatch* pdispIn, LCID lcid, CY* pcyOut);
+HRESULT WINAPI VarDateFromUI1(BYTE,DATE*);
+HRESULT WINAPI VarDateFromI2(SHORT,DATE*);
+HRESULT WINAPI VarDateFromI4(LONG,DATE*);
+HRESULT WINAPI VarDateFromI8(LONG64,DATE*);
+HRESULT WINAPI VarDateFromR4(FLOAT,DATE*);
+HRESULT WINAPI VarDateFromR8(DOUBLE,DATE*);
+HRESULT WINAPI VarDateFromStr(OLECHAR*,LCID,ULONG,DATE*);
+HRESULT WINAPI VarDateFromI1(signed char,DATE*);
+HRESULT WINAPI VarDateFromUI2(USHORT,DATE*);
+HRESULT WINAPI VarDateFromUI4(ULONG,DATE*);
+HRESULT WINAPI VarDateFromUI8(ULONG64,DATE*);
+HRESULT WINAPI VarDateFromBool(VARIANT_BOOL,DATE*);
+HRESULT WINAPI VarDateFromCy(CY,DATE*);
+HRESULT WINAPI VarDateFromDec(DECIMAL*,DATE*);
+HRESULT WINAPI VarDateFromDisp(IDispatch*,LCID,DATE*);
 
-HRESULT WINAPI VarBstrFromUI1(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-HRESULT WINAPI VarBstrFromI2(short iVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-HRESULT WINAPI VarBstrFromI1(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR*pbstrOut);
-HRESULT WINAPI VarBstrFromUI2(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR*pbstrOut);
-HRESULT WINAPI VarBstrFromUI4(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR*pbstrOut);
-HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-HRESULT WINAPI VarBstrFromDec(DECIMAL* pdecIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
-HRESULT WINAPI VarBstrFromDisp(IDispatch* pdispIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
+HRESULT WINAPI VarCyFromUI1(BYTE,CY*);
+HRESULT WINAPI VarCyFromI2(SHORT sIn,CY*);
+HRESULT WINAPI VarCyFromI4(LONG,CY*);
+HRESULT WINAPI VarCyFromI8(LONG64,CY*);
+HRESULT WINAPI VarCyFromR4(FLOAT,CY*);
+HRESULT WINAPI VarCyFromR8(DOUBLE,CY*);
+HRESULT WINAPI VarCyFromDate(DATE,CY*);
+HRESULT WINAPI VarCyFromStr(OLECHAR*,LCID,ULONG,CY*);
+HRESULT WINAPI VarCyFromBool(VARIANT_BOOL,CY*);
+HRESULT WINAPI VarCyFromI1(signed char,CY*);
+HRESULT WINAPI VarCyFromUI2(USHORT,CY*);
+HRESULT WINAPI VarCyFromUI4(ULONG,CY*);
+HRESULT WINAPI VarCyFromUI8(ULONG64,CY*);
+HRESULT WINAPI VarCyFromDec(DECIMAL*,CY*);
+HRESULT WINAPI VarCyFromStr(OLECHAR*,LCID,ULONG,CY*);
+HRESULT WINAPI VarCyFromDisp(IDispatch*,LCID,CY*);
 
-HRESULT WINAPI VarBoolFromUI1(BYTE bIn, VARIANT_BOOL* pboolOut);
-HRESULT WINAPI VarBoolFromI2(short sIn, VARIANT_BOOL* pboolOut);
-HRESULT WINAPI VarBoolFromI4(LONG lIn, VARIANT_BOOL* pboolOut);
-HRESULT WINAPI VarBoolFromR4(FLOAT fltIn, VARIANT_BOOL* pboolOut);
-HRESULT WINAPI VarBoolFromR8(double dblIn, VARIANT_BOOL* pboolOut);
-HRESULT WINAPI VarBoolFromDate(DATE dateIn, VARIANT_BOOL* pboolOut);
-HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_BOOL* pboolOut);
-HRESULT WINAPI VarBoolFromI1(CHAR cIn, VARIANT_BOOL*pboolOut);
-HRESULT WINAPI VarBoolFromUI2(USHORT uiIn, VARIANT_BOOL*pboolOut);
-HRESULT WINAPI VarBoolFromUI4(ULONG ulIn, VARIANT_BOOL*pboolOut);
-HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL* pboolOut);
-HRESULT WINAPI VarBoolFromDec(DECIMAL* pdecIn, VARIANT_BOOL* pboolOut);
-HRESULT WINAPI VarBoolFromDisp(IDispatch* pdispIn, LCID lcid, VARIANT_BOOL* pboolOut);
+HRESULT WINAPI VarBstrFromUI1(BYTE,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromI2(SHORT,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromI4(LONG,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromI8(LONG64,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromR4(FLOAT,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromR8(DOUBLE,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromDate(DATE,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromI1(signed char,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromUI2(USHORT,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromUI8(ULONG64,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromUI4(ULONG,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromCy(CY,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromDec(DECIMAL*,LCID,ULONG,BSTR*);
+HRESULT WINAPI VarBstrFromDisp(IDispatch*,LCID,ULONG,BSTR*);
 
-HRESULT WINAPI VarI1FromUI1(BYTE bIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromI2(short uiIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromI4(LONG lIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromR4(FLOAT fltIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromR8(double dblIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromDate(DATE dateIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromStr(OLECHAR*strIn, LCID lcid, ULONG dwFlags, CHAR*pcOut);
-HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromUI2(USHORT uiIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromCy(CY cyIn, CHAR*pcOut);
-HRESULT WINAPI VarI1FromDec(DECIMAL* pdecIn, CHAR* pcOut);
-HRESULT WINAPI VarI1FromDisp(IDispatch* pdispIn, LCID lcid, CHAR* pcOut);
+HRESULT WINAPI VarBoolFromUI1(BYTE,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromI2(SHORT,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromI4(LONG,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromI8(LONG64,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromR4(FLOAT,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromR8(DOUBLE,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromDate(DATE,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromStr(OLECHAR*,LCID,ULONG,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromI1(signed char,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromUI2(USHORT,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromUI4(ULONG,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromUI8(ULONG64,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromCy(CY,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromDec(DECIMAL*,VARIANT_BOOL*);
+HRESULT WINAPI VarBoolFromDisp(IDispatch*,LCID,VARIANT_BOOL*);
 
-HRESULT WINAPI VarUI2FromUI1(BYTE bIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromI2(short uiIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromI4(LONG lIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromR4(FLOAT fltIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromR8(double dblIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromDate(DATE dateIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromStr(OLECHAR*strIn, LCID lcid, ULONG dwFlags, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromBool(VARIANT_BOOL boolIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromI1(CHAR cIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromUI4(ULONG ulIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromCy(CY cyIn, USHORT*puiOut);
-HRESULT WINAPI VarUI2FromDec(DECIMAL* pdecIn, USHORT* puiOut);
-HRESULT WINAPI VarUI2FromDisp(IDispatch* pdispIn, LCID lcid, USHORT* puiOut);
+HRESULT WINAPI VarI1FromUI1(BYTE,signed char*);
+HRESULT WINAPI VarI1FromI2(SHORT,signed char*);
+HRESULT WINAPI VarI1FromI4(LONG,signed char*);
+HRESULT WINAPI VarI1FromI8(LONG64,signed char*);
+HRESULT WINAPI VarI1FromR4(FLOAT,signed char*);
+HRESULT WINAPI VarI1FromR8(DOUBLE,signed char*);
+HRESULT WINAPI VarI1FromDate(DATE,signed char*);
+HRESULT WINAPI VarI1FromStr(OLECHAR*,LCID,ULONG,signed char*);
+HRESULT WINAPI VarI1FromBool(VARIANT_BOOL,signed char*);
+HRESULT WINAPI VarI1FromUI2(USHORT,signed char*);
+HRESULT WINAPI VarI1FromUI4(ULONG,signed char*);
+HRESULT WINAPI VarI1FromUI8(ULONG64,signed char*);
+HRESULT WINAPI VarI1FromCy(CY,signed char*);
+HRESULT WINAPI VarI1FromDec(DECIMAL*,signed char*);
+HRESULT WINAPI VarI1FromDisp(IDispatch*,LCID,signed char*);
 
-HRESULT WINAPI VarUI4FromStr(OLECHAR*strIn, LCID lcid, ULONG dwFlags, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromUI1(BYTE bIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromI2(short uiIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromI4(LONG lIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromR4(FLOAT fltIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromR8(double dblIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromDate(DATE dateIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromBool(VARIANT_BOOL boolIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromI1(CHAR cIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromUI2(USHORT uiIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG*pulOut);
-HRESULT WINAPI VarUI4FromDec(DECIMAL* pdecIn, ULONG* pulOut);
-HRESULT WINAPI VarUI4FromDisp(IDispatch* pdispIn, LCID lcid, ULONG* pulOut);
+HRESULT WINAPI VarUI2FromUI1(BYTE,USHORT*);
+HRESULT WINAPI VarUI2FromI2(SHORT,USHORT*);
+HRESULT WINAPI VarUI2FromI4(LONG,USHORT*);
+HRESULT WINAPI VarUI2FromI8(LONG64,USHORT*);
+HRESULT WINAPI VarUI2FromR4(FLOAT,USHORT*);
+HRESULT WINAPI VarUI2FromR8(DOUBLE,USHORT*);
+HRESULT WINAPI VarUI2FromDate(DATE,USHORT*);
+HRESULT WINAPI VarUI2FromStr(OLECHAR*,LCID,ULONG,USHORT*);
+HRESULT WINAPI VarUI2FromBool(VARIANT_BOOL,USHORT*);
+HRESULT WINAPI VarUI2FromI1(signed char,USHORT*);
+HRESULT WINAPI VarUI2FromUI4(ULONG,USHORT*);
+HRESULT WINAPI VarUI2FromUI8(ULONG64,USHORT*);
+HRESULT WINAPI VarUI2FromCy(CY,USHORT*);
+HRESULT WINAPI VarUI2FromDec(DECIMAL*,USHORT*);
+HRESULT WINAPI VarUI2FromDisp(IDispatch*,LCID,USHORT*);
 
-HRESULT WINAPI VarDecFromUI1(BYTE bIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromI2(short uiIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromI4(LONG lIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromR4(FLOAT fltIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromR8(double dblIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromDate(DATE dateIn, DECIMAL*pdecOut);
-HRESULT WINAPI VarDecFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DECIMAL* pdecOut);
-HRESULT WINAPI VarDecFromBool(VARIANT_BOOL boolIn, DECIMAL* pdecOut);
-HRESULT WINAPI VarDecFromI1(CHAR cIn, DECIMAL* pdecOut);
-HRESULT WINAPI VarDecFromUI2(USHORT uiIn, DECIMAL* pdecOut);
-HRESULT WINAPI VarDecFromUI4(ULONG ulIn, DECIMAL* pdecOut);
-HRESULT WINAPI VarDecFromCy(CY cyIn, DECIMAL* pdecOut);
-HRESULT WINAPI VarDecFromDisp(IDispatch* pdispIn, LCID lcid, DECIMAL* pdecOut);
+HRESULT WINAPI VarUI4FromStr(OLECHAR*,LCID,ULONG,ULONG*);
+HRESULT WINAPI VarUI4FromUI1(BYTE,ULONG*);
+HRESULT WINAPI VarUI4FromI2(SHORT,ULONG*);
+HRESULT WINAPI VarUI4FromI4(LONG,ULONG*);
+HRESULT WINAPI VarUI4FromI8(LONG64,ULONG*);
+HRESULT WINAPI VarUI4FromR4(FLOAT,ULONG*);
+HRESULT WINAPI VarUI4FromR8(DOUBLE,ULONG*);
+HRESULT WINAPI VarUI4FromDate(DATE,ULONG*);
+HRESULT WINAPI VarUI4FromBool(VARIANT_BOOL,ULONG*);
+HRESULT WINAPI VarUI4FromI1(signed char,ULONG*);
+HRESULT WINAPI VarUI4FromUI2(USHORT,ULONG*);
+HRESULT WINAPI VarUI4FromUI8(ULONG64,ULONG*);
+HRESULT WINAPI VarUI4FromCy(CY,ULONG*);
+HRESULT WINAPI VarUI4FromDec(DECIMAL*,ULONG*);
+HRESULT WINAPI VarUI4FromDisp(IDispatch*,LCID,ULONG*);
 
+HRESULT WINAPI VarUI8FromUI1(BYTE,ULONG64*);
+HRESULT WINAPI VarUI8FromI2(SHORT,ULONG64*);
+HRESULT WINAPI VarUI8FromI4(LONG,ULONG64*);
+HRESULT WINAPI VarUI8FromI8(LONG64,ULONG64*);
+HRESULT WINAPI VarUI8FromR4(FLOAT,ULONG64*);
+HRESULT WINAPI VarUI8FromR8(DOUBLE,ULONG64*);
+HRESULT WINAPI VarUI8FromDate(DATE,ULONG64*);
+HRESULT WINAPI VarUI8FromStr(OLECHAR*,LCID,ULONG,ULONG64*);
+HRESULT WINAPI VarUI8FromBool(VARIANT_BOOL,ULONG64*);
+HRESULT WINAPI VarUI8FromI1(signed char,ULONG64*);
+HRESULT WINAPI VarUI8FromUI2(USHORT,ULONG64*);
+HRESULT WINAPI VarUI8FromUI4(ULONG,ULONG64*);
+HRESULT WINAPI VarUI8FromDec(DECIMAL*,ULONG64*);
+HRESULT WINAPI VarUI8FromInt(INT,ULONG64*);
+HRESULT WINAPI VarUI8FromCy(CY,ULONG64*);
+HRESULT WINAPI VarUI8FromDisp(IDispatch*,LCID,ULONG64*);
 
+HRESULT WINAPI VarDecFromUI1(BYTE,DECIMAL*);
+HRESULT WINAPI VarDecFromI2(SHORT,DECIMAL*);
+HRESULT WINAPI VarDecFromI4(LONG,DECIMAL*);
+HRESULT WINAPI VarDecFromI8(LONG64,DECIMAL*);
+HRESULT WINAPI VarDecFromR4(FLOAT,DECIMAL*);
+HRESULT WINAPI VarDecFromR8(DOUBLE,DECIMAL*);
+HRESULT WINAPI VarDecFromDate(DATE,DECIMAL*);
+HRESULT WINAPI VarDecFromStr(OLECHAR*,LCID,ULONG,DECIMAL*);
+HRESULT WINAPI VarDecFromBool(VARIANT_BOOL,DECIMAL*);
+HRESULT WINAPI VarDecFromI1(signed char,DECIMAL*);
+HRESULT WINAPI VarDecFromUI2(USHORT,DECIMAL*);
+HRESULT WINAPI VarDecFromUI4(ULONG,DECIMAL*);
+HRESULT WINAPI VarDecFromUI8(ULONG64,DECIMAL*);
+HRESULT WINAPI VarDecFromCy(CY,DECIMAL*);
+HRESULT WINAPI VarDecFromDisp(IDispatch*,LCID,DECIMAL*);
 
-#define VarUI4FromUI4( in, pOut ) ( *(pOut) =  (in) )
-#define VarI4FromI4( in, pOut )   ( *(pOut) =  (in) )
+#define VarUI4FromUI4( in,pOut ) ( *(pOut) =  (in) )
+#define VarI4FromI4( in,pOut )   ( *(pOut) =  (in) )
 
 #define VarUI1FromInt		VarUI1FromI4
 #define VarUI1FromUint	VarUI1FromUI4
@@ -443,6 +471,8 @@ HRESULT WINAPI VarDecFromDisp(IDispatch* pdispIn, LCID lcid, DECIMAL* pdecOut);
 #define VarI2FromUint		VarI2FromUI4
 #define VarI4FromInt		VarI4FromI4
 #define VarI4FromUint		VarI4FromUI4
+#define VarI8FromInt		VarI8FromI4
+#define VarI8FromUint		VarI8FromUI4
 #define VarR4FromInt		VarR4FromI4
 #define VarR4FromUint		VarR4FromUI4
 #define VarR8FromInt		VarR8FromI4
@@ -461,11 +491,14 @@ HRESULT WINAPI VarDecFromDisp(IDispatch* pdispIn, LCID lcid, DECIMAL* pdecOut);
 #define VarUI2FromUint	VarUI2FromUI4
 #define VarUI4FromInt		VarUI4FromI4
 #define VarUI4FromUint	VarUI4FromUI4
+#define VarUI8FromInt		VarUI8FromI4
+#define VarUI8FromUint	VarUI8FromUI4
 #define VarDecFromInt		VarDecFromI4
 #define VarDecFromUint	VarDecFromUI4
 #define VarIntFromUI1		VarI4FromUI1
 #define VarIntFromI2		VarI4FromI2
 #define VarIntFromI4		VarI4FromI4
+#define VarIntFromI8		VarI4FromI8
 #define VarIntFromR4		VarI4FromR4
 #define VarIntFromR8		VarI4FromR8
 #define VarIntFromDate	VarI4FromDate
@@ -476,11 +509,13 @@ HRESULT WINAPI VarDecFromDisp(IDispatch* pdispIn, LCID lcid, DECIMAL* pdecOut);
 #define VarIntFromI1		VarI4FromI1
 #define VarIntFromUI2		VarI4FromUI2
 #define VarIntFromUI4		VarI4FromUI4
+#define VarIntFromUI8		VarI4FromUI8
 #define VarIntFromDec		VarI4FromDec
 #define VarIntFromUint	VarI4FromUI4
 #define VarUintFromUI1	VarUI4FromUI1
 #define VarUintFromI2		VarUI4FromI2
 #define VarUintFromI4		VarUI4FromI4
+#define VarUintFromI8		VarUI4FromI8
 #define VarUintFromR4		VarUI4FromR4
 #define VarUintFromR8		VarUI4FromR8
 #define VarUintFromDate	VarUI4FromDate
@@ -491,6 +526,7 @@ HRESULT WINAPI VarDecFromDisp(IDispatch* pdispIn, LCID lcid, DECIMAL* pdecOut);
 #define VarUintFromI1		VarUI4FromI1
 #define VarUintFromUI2	VarUI4FromUI2
 #define VarUintFromUI4	VarUI4FromUI4
+#define VarUintFromUI8	VarUI4FromUI8
 #define VarUintFromDec	VarUI4FromDec
 #define VarUintFromInt	VarUI4FromI4
 
@@ -501,6 +537,31 @@ HRESULT WINAPI VarDecFromDisp(IDispatch* pdispIn, LCID lcid, DECIMAL* pdecOut);
 #define VARCMP_EQ   1
 #define VARCMP_GT   2
 #define VARCMP_NULL 3
+
+HRESULT WINAPI VarDecAbs(const DECIMAL*,DECIMAL*);
+HRESULT WINAPI VarDecAdd(const DECIMAL*,const DECIMAL*,DECIMAL*);
+HRESULT WINAPI VarDecCmp(const DECIMAL*,const DECIMAL*);
+HRESULT WINAPI VarDecCmpR8(const DECIMAL*,DOUBLE);
+HRESULT WINAPI VarDecDiv(const DECIMAL*,const DECIMAL*,DECIMAL*);
+HRESULT WINAPI VarDecFix(const DECIMAL*,DECIMAL*);
+HRESULT WINAPI VarDecInt(const DECIMAL*,DECIMAL*);
+HRESULT WINAPI VarDecMul(const DECIMAL*,const DECIMAL*,DECIMAL*);
+HRESULT WINAPI VarDecNeg(const DECIMAL*,DECIMAL*);
+HRESULT WINAPI VarDecRound(const DECIMAL*,int,DECIMAL*);
+HRESULT WINAPI VarDecSub(const DECIMAL*,const DECIMAL*,DECIMAL*);
+
+HRESULT WINAPI VarCyAbs(const CY,CY*);
+HRESULT WINAPI VarCyAdd(const CY,const CY,CY*);
+HRESULT WINAPI VarCyCmp(const CY,const CY);
+HRESULT WINAPI VarCyCmpR8(const CY,DOUBLE);
+HRESULT WINAPI VarCyFix(const CY,CY*);
+HRESULT WINAPI VarCyInt(const CY,CY*);
+HRESULT WINAPI VarCyMul(const CY,CY,CY*);
+HRESULT WINAPI VarCyMulI4(const CY,LONG,CY*);
+HRESULT WINAPI VarCyMulI8(const CY,LONG64,CY*);
+HRESULT WINAPI VarCyNeg(const CY,CY*);
+HRESULT WINAPI VarCyRound(const CY,INT,CY*);
+HRESULT WINAPI VarCySub(const CY,const CY,CY*);
 
 HRESULT WINAPI VarAdd(LPVARIANT,LPVARIANT,LPVARIANT);
 HRESULT WINAPI VarAnd(LPVARIANT,LPVARIANT,LPVARIANT);
@@ -594,6 +655,8 @@ typedef struct {
 #define VTBIT_UI2       (1 << VT_UI2)
 #define VTBIT_I4        (1 << VT_I4)
 #define VTBIT_UI4       (1 << VT_UI4)
+#define VTBIT_I8        (1 << VT_I8)
+#define VTBIT_UI8       (1 << VT_UI8)
 #define VTBIT_R4        (1 << VT_R4)
 #define VTBIT_R8        (1 << VT_R8)
 #define VTBIT_CY        (1 << VT_CY)
@@ -603,32 +666,26 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*);
 HRESULT WINAPI VarNumFromParseNum(NUMPARSE*,BYTE*,ULONG,VARIANT*);
 
 INT WINAPI DosDateTimeToVariantTime(USHORT,USHORT,DATE*);
-INT WINAPI VariantTimeToDosDateTime(DATE, USHORT *, USHORT *);
+INT WINAPI VariantTimeToDosDateTime(DATE,USHORT*,USHORT*);
 
-HRESULT WINAPI VariantTimeToSystemTime(double,LPSYSTEMTIME);
+HRESULT WINAPI VariantTimeToSystemTime(DOUBLE,LPSYSTEMTIME);
 HRESULT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME,double*);
 
-HRESULT WINAPI VarDateFromUdate(UDATE*,ULONG, DATE*);
-HRESULT WINAPI VarUdateFromDate(DATE, ULONG, UDATE *);
+HRESULT WINAPI VarDateFromUdate(UDATE*,ULONG,DATE*);
+HRESULT WINAPI VarUdateFromDate(DATE,ULONG,UDATE*);
 
-ULONG WINAPI LHashValOfNameSysA(SYSKIND syskind,LCID lcid,LPCSTR szName);
-ULONG WINAPI LHashValOfNameSys (SYSKIND syskind,LCID lcid,LPCOLESTR szName);
+ULONG WINAPI LHashValOfNameSysA(SYSKIND,LCID,LPCSTR);
+ULONG WINAPI LHashValOfNameSys (SYSKIND,LCID,LPCOLESTR);
 
-HRESULT WINAPI DispGetParam(DISPPARAMS* pdispparams, UINT position,
-            VARTYPE vtTarg, VARIANT* pvarResult, UINT* puArgErr);
-HRESULT WINAPI DispGetIDsOfNames(ITypeInfo* ptinfo, OLECHAR** rgszNames,
-            UINT cNames, DISPID* rgdispid);
-HRESULT WINAPI DispInvoke(void* _this, ITypeInfo* ptinfo, DISPID dispidMember,
-            WORD wFlags, DISPPARAMS* pparams, VARIANT* pvarResult,
-            EXCEPINFO* pexcepinfo, UINT* puArgErr);
-HRESULT WINAPI CreateDispTypeInfo(INTERFACEDATA* pidata, LCID lcid,
-            ITypeInfo** pptinfo);
-HRESULT WINAPI CreateStdDispatch(IUnknown* punkOuter, void* pvThis,
-            ITypeInfo* ptinfo, IUnknown** ppunkStdDisp);
-HRESULT WINAPI DispCallFunc(void* pvInstance, ULONG oVft, CALLCONV cc,
-            VARTYPE vtReturn, UINT  cActuals, VARTYPE* prgvt,
-            VARIANTARG** prgpvarg, VARIANT* pvargResult);
-HRESULT WINAPI GetActiveObject(REFCLSID, void*, IUnknown**);
+HRESULT WINAPI DispGetParam(DISPPARAMS*,UINT,VARTYPE,VARIANT*,UINT*);
+HRESULT WINAPI DispGetIDsOfNames(ITypeInfo*,OLECHAR**,UINT,DISPID*);
+HRESULT WINAPI DispInvoke(void*,ITypeInfo*,DISPID,WORD,DISPPARAMS*,VARIANT*,
+                          EXCEPINFO*,UINT*);
+HRESULT WINAPI CreateDispTypeInfo(INTERFACEDATA*,LCID,ITypeInfo**);
+HRESULT WINAPI CreateStdDispatch(IUnknown*,void*,ITypeInfo*,IUnknown**);
+HRESULT WINAPI DispCallFunc(void*,ULONG,CALLCONV,VARTYPE,UINT,VARTYPE*,
+                            VARIANTARG**,VARIANT*);
+HRESULT WINAPI GetActiveObject(REFCLSID,void*,IUnknown**);
 
 
 /*
