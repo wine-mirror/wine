@@ -109,6 +109,7 @@ EXTRADLLNAMES = \
 	win32s16 \
 	winaspi \
 	winsock \
+	ws2_32 \
 	wow32 \
 	wprocs
 
@@ -341,7 +342,7 @@ libwinspool.drv.@LIBEXT@: winspool/libwinspool.drv.@LIBEXT@
 libwnaspi32.@LIBEXT@ libwinaspi.@LIBEXT@: winaspi/libwnaspi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) winaspi/libwnaspi32.@LIBEXT@ $@
 
-libwsock32.@LIBEXT@ libwinsock.@LIBEXT@: winsock/libwsock32.@LIBEXT@
+libwsock32.@LIBEXT@ libwinsock.@LIBEXT@ libws2_32.@LIBEXT@: winsock/libwsock32.@LIBEXT@
 	$(RM) $@ && $(LN_S) winsock/libwsock32.@LIBEXT@ $@
 
 libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@

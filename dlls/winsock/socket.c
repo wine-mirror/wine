@@ -612,6 +612,67 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 }
 
 /***********************************************************************
+ *      WS2_WSAStartup()		(WS2_32.115)	
+ */
+INT WINAPI WS2_WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
+{
+    WSADATA WINSOCK_data = { 0x0202, 0x0202,
+                          "WINE Sockets 2.0",
+                        #ifdef linux
+                                "Linux/i386",
+                        #elif defined(__NetBSD__)
+                                "NetBSD/i386",
+                        #elif defined(sunos)
+                                "SunOS",
+                        #elif defined(__FreeBSD__)
+                                "FreeBSD",
+                        #elif defined(__OpenBSD__)
+                                "OpenBSD/i386",
+                        #else
+                                "Unknown",
+                        #endif
+			   WS_MAX_SOCKETS_PER_PROCESS,
+			   WS_MAX_UDP_DATAGRAM, (SEGPTR)NULL };
+    LPWSINFO            pwsi;
+
+    TRACE("verReq=%x\n", wVersionRequested);
+
+    if (LOBYTE(wVersionRequested) < 2)
+        return WSAVERNOTSUPPORTED;
+
+    if (!lpWSAData) return WSAEINVAL;
+
+    /* initialize socket heap */
+
+    if( !_WSHeap )
+    {
+	_WSHeap = HeapCreate(HEAP_ZERO_MEMORY, 8120, 32768);
+	if( !_WSHeap )
+	{
+	    ERR("Fatal: failed to create WinSock heap\n");
+	    return 0;
+	}
+    }
+    if( _WSHeap == 0 ) return WSASYSNOTREADY;
+
+    pwsi = WINSOCK_GetIData();
+    if( pwsi == NULL )
+    {
+        WINSOCK_CreateIData();
+        pwsi = WINSOCK_GetIData();
+	if (!pwsi) return WSASYSNOTREADY;
+    }
+    pwsi->num_startup++;
+
+    /* return winsock information */
+    memcpy(lpWSAData, &WINSOCK_data, sizeof(WINSOCK_data));
+
+    TRACE("succeeded\n");
+    return 0;
+}
+
+
+/***********************************************************************
  *      WSACleanup()			(WINSOCK.116)
  */
 INT WINAPI WSACleanup(void)
@@ -2324,6 +2385,49 @@ INT16     WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags) {
   FIXME("(WSARecvEx16) partial packet return value not set \n");
 
   return WINSOCK_recv16(s, buf, len, *flags);
+}
+
+
+/***********************************************************************
+ *      WSACreateEvent()          (WS2_32.???)
+ *
+ */
+WSAEVENT WINAPI WSACreateEvent(void)
+{
+    /* Create a manual-reset event, with initial state: unsignealed */
+    TRACE("\n");
+    
+    return CreateEventA(NULL, TRUE, FALSE, NULL);    
+}
+
+/***********************************************************************
+ *      WSACloseEvent()          (WS2_32.???)
+ *
+ */
+BOOL WINAPI WSACloseEvent(WSAEVENT event)
+{
+    TRACE ("event=0x%x\n", event);
+
+    return CloseHandle(event);
+}
+
+/***********************************************************************
+ *      WSASocketA()          (WS2_32.???)
+ *
+ */
+SOCKET WINAPI WSASocketA(int af, int type, int protocol,
+                         LPWSAPROTOCOL_INFOA lpProtocolInfo,
+                         GROUP g, DWORD dwFlags)
+{
+   /* 
+      FIXME: The "advanced" parameters of WSASocketA (lpProtocolInfo,
+      g, dwFlags) are ignored.
+   */
+   
+   TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%lx\n", 
+         af, type, protocol, lpProtocolInfo, g, dwFlags );
+
+   return ( WSOCK32_socket (af, type, protocol) );
 }
 
 
