@@ -70,12 +70,24 @@ fi
 #   to relocate this installation.  If so, that stuff above
 #   is all broken and we should rejigger it.
 #------------------------------------------------------------------------------
-if [ ! -x $WINEBIN/wine ] ; then
-    WINEBIN=`find $argv0_dir -maxdepth 1 -perm +0111 -type f -name 'wine' -printf "%h\n" | head -1`
+WINE_BIN_NAME=wine.bin
+if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
+    WINEBIN=`find $argv0_dir -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -1`
 fi
 
-if [ ! -x $WINEBIN/wine ] ; then
-    WINEBIN=`find $argv0_dir/../ -maxdepth 1 -perm +0111 -type f -name 'wine' -printf "%h\n" | head -1`
+if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
+    WINEBIN=`find $argv0_dir/../ -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -1`
+fi
+
+if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
+    WINE_BIN_NAME=wine
+    if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
+        WINEBIN=`find $argv0_dir -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -1`
+    fi
+
+    if [ ! -x $WINEBIN/$WINE_BIN_NAME ] ; then
+        WINEBIN=`find $argv0_dir/../ -maxdepth 1 -perm +0111 -type f -name "$WINE_BIN_NAME" -printf "%h\n" | head -1`
+    fi
 fi
 
 if [ ! -r $WINELIB/libwine.so ] ; then
@@ -86,12 +98,16 @@ if [ ! -r $WINELIB/libwine.so ] ; then
     WINELIB=`find $argv0_dir/../ -maxdepth 2 -name 'libwine.so' -printf "%h\n" | head -1`
 fi
 
+if [ -x $WINEBIN/wineserver ] ; then
+    WINESERVER=$WINEBIN/wineserver
+fi
+
 #------------------------------------------------------------------------------
 #  Hey, if we built Wine from source, let's add a little extra fun to
 #   mix it up a bit
 #------------------------------------------------------------------------------
 if [ -x $WINEBIN/server/wineserver ] ; then
-    WINESERVERBIN=$WINEBIN/server
+    WINESERVER=$WINEBIN/server/wineserver
 fi
 
 if [ -r $WINELIB/dlls/libuser.so ] ; then
@@ -103,8 +119,9 @@ fi
 #  Okay, set the paths and move on.
 #------------------------------------------------------------------------------
 export LD_LIBRARY_PATH=$WINELIB:$WINELIBDLLS:$LD_LIBRARY_PATH
-export PATH=$WINEBIN:$WINESERVERBIN:$PATH
-
+export PATH=$WINEBIN:$PATH
+export WINEDLLPATH=$WINELIBDLLS
+export WINELOADER=$WINEBIN/$WINE_BIN_NAME
 
 info_flag=~/.wine/.no_prelaunch_window_flag
 debug_flag=~/.wine/.no_debug_window_flag
@@ -138,7 +155,7 @@ fi
 
 if [ $no_args -eq 1 ] ; then
     echo "Wine called with no arguments."
-    echo "Invoking $WINEBIN/wine $@ ..."
+    echo "Invoking $WINEBIN/$WINE_BIN_NAME $@ ..."
     $XMESSAGE -buttons "    Okay    ":0," See the Wine Usage Statement ":1,"  Configure Wine  ":2 \
         -title "Welcome to Wine" \
         "
@@ -184,13 +201,71 @@ if [ $no_args -eq 1 ] ; then
 fi
 
 #------------------------------------------------------------------------------
+#  No config file?  Offer to help 'em out...
+#------------------------------------------------------------------------------
+conf=0
+
+while [ $conf -eq 0 ] ; do
+
+    if [ -f ~/.winerc ] ; then
+        conf=1
+    fi
+    if [ -f ~/.wine/config ] ; then
+        conf=2
+    fi
+    if [ -f /etc/wine.conf ] ; then
+        conf=3
+    fi
+
+    if [ $conf -ne 0 ] ; then
+        break;
+    fi
+
+    echo "No configuration file detected."
+    $XMESSAGE -buttons "    Cancel    ":0,"  Proceed   ":1,"  Configure Wine  ":2 \
+        -title "Welcome to Wine" \
+        "
+
+        You have started Wine but we cannot find a Wine
+        configuration file.
+
+        This is normal if you have never run Wine before.
+        If this is the case, select the 'Configure Wine'
+        option, below, to create a configuration file.
+
+        " 
+    init_rc=$?
+    if [ $init_rc -eq 0 ] ; then
+        exit
+    fi
+
+    if [ $init_rc -eq 1 ] ; then
+        break
+    fi
+
+    if [ $init_rc -eq 2 ] ; then
+        which winesetup
+        if [ $? -eq 0 ] ; then
+            winesetup
+        else
+            if [ -x /opt/wine/bin/winesetup ] ; then
+                /opt/wine/bin/winesetup
+            else
+                $XMESSAGE -title "Error" "Error:  Unable to find winesetup in your PATH or in /opt/wine/bin"
+            fi
+        fi
+    fi
+
+done
+
+#------------------------------------------------------------------------------
 #  Optionally Warn the user we're going to be launching Wine...
 #------------------------------------------------------------------------------
 if [ $use_info_message -ne 0 ] ; then
-    echo "Invoking $WINEBIN/wine $@ ..."
+    echo "Invoking $WINEBIN/$WINE_BIN_NAME $@ ..."
     $XMESSAGE -timeout 30 -buttons "    Dismiss    ":0," Never display this message again ":3 \
         -title "Wine Launch Window" \
-        "Invoking $WINEBIN/wine $@ ...
+        "Invoking $WINEBIN/$WINE_BIN_NAME $@ ...
 
         This dialog box is a temporary status dialog to let you know
         that Wine is attempting to launch your application.
@@ -267,7 +342,7 @@ if [ $use_log_name -ne 0 ] ; then
     #   but then I can't find a way to get the return code of wine;
     #   I only get the return code of tee.
     #------------------------------------------------------------------------------
-    $WINEBIN/wine "$@" >$log_name 2>&1 &
+    $WINEBIN/$WINE_BIN_NAME "$@" >$log_name 2>&1 &
     wine_pid=$!
 
     tail -f $log_name &
@@ -278,7 +353,7 @@ if [ $use_log_name -ne 0 ] ; then
 
     kill $tail_pid
 else
-    $WINEBIN/wine "$@"
+    $WINEBIN/$WINE_BIN_NAME "$@"
     wine_return=$?
 fi
 
