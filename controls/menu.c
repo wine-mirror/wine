@@ -2538,7 +2538,8 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     MTRACKER mt = { 0, hmenu, hmenu, hwnd, {x, y} };	/* control struct */
 
     TRACE(menu,"hmenu=0x%04x flags=0x%08x (%d,%d) hwnd=0x%04x (%d,%d)-(%d,%d)\n",
-	    hmenu, wFlags, x, y, hwnd, lprect->left,  lprect->top,  lprect->right,  lprect->bottom);
+	    hmenu, wFlags, x, y, hwnd, (lprect) ? lprect->left : 0, (lprect) ? lprect->top : 0,
+	    (lprect) ? lprect->right : 0,  (lprect) ? lprect->bottom : 0);
 
     fEndMenu = FALSE;
     if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu ))) return FALSE;
@@ -2718,6 +2719,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     }
 
     ReleaseCapture();
+
     if( IsWindow( mt.hOwnerWnd ) )
     {
 	MENU_HideSubPopups( mt.hOwnerWnd, mt.hTopMenu, FALSE );
@@ -3278,34 +3280,26 @@ INT WINAPI GetMenuItemCount( HMENU hMenu )
     return menu->nItems;
 }
 
-
 /**********************************************************************
  *         GetMenuItemID16    (USER.264)
  */
 UINT16 WINAPI GetMenuItemID16( HMENU16 hMenu, INT16 nPos )
 {
-    LPPOPUPMENU	menu;
-
-    if (!(menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu))) return -1;
-    if ((nPos < 0) || ((UINT16) nPos >= menu->nItems)) return -1;
-    if (menu->items[nPos].fType & MF_POPUP) return -1;
-    return menu->items[nPos].wID;
+    return (UINT16) GetMenuItemID (hMenu, nPos);
 }
-
 
 /**********************************************************************
  *         GetMenuItemID32    (USER32.263)
  */
 UINT WINAPI GetMenuItemID( HMENU hMenu, INT nPos )
 {
-    LPPOPUPMENU	menu;
+    MENUITEM * lpmi;
 
-    if (!(menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu))) return -1;
-    if ((nPos < 0) || (nPos >= menu->nItems)) return -1;
-    if (menu->items[nPos].fType & MF_POPUP) return -1; 
-    return menu->items[nPos].wID;
+    if (!(lpmi = MENU_FindItem(&hMenu,&nPos,MF_BYPOSITION))) return 0;
+    if (lpmi->fType & MF_POPUP) return -1;
+    return lpmi->wID;
+
 }
-
 
 /*******************************************************************
  *         InsertMenu16    (USER.410)
@@ -3857,12 +3851,11 @@ HMENU16 WINAPI GetSubMenu16( HMENU16 hMenu, INT16 nPos )
  */
 HMENU WINAPI GetSubMenu( HMENU hMenu, INT nPos )
 {
-    LPPOPUPMENU lppop;
+    MENUITEM * lpmi;
 
-    if (!(lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu))) return 0;
-    if ((UINT)nPos >= lppop->nItems) return 0;
-    if (!(lppop->items[nPos].fType & MF_POPUP)) return 0;
-    return lppop->items[nPos].hSubMenu;
+    if (!(lpmi = MENU_FindItem(&hMenu,&nPos,MF_BYPOSITION))) return 0;
+    if (!(lpmi->fType & MF_POPUP)) return 0;
+    return lpmi->hSubMenu;
 }
 
 
@@ -4299,7 +4292,7 @@ BOOL WINAPI SetMenuDefaultItem(HMENU hmenu, UINT item, UINT bypos)
 }
 
 /**********************************************************************
- *		GetMenuDefaultItem32    (USER32.260)
+ *		GetMenuDefaultItem    (USER32.260)
  */
 UINT WINAPI GetMenuDefaultItem(HMENU hmenu, UINT bypos, UINT flags)
 {
