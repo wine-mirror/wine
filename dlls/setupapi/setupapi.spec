@@ -218,8 +218,8 @@
 @ stub SetupGetTargetPathW
 @ stdcall SetupInitDefaultQueueCallback(long)
 @ stdcall SetupInitDefaultQueueCallbackEx(long long long long ptr)
-@ stub SetupInitializeFileLogA
-@ stub SetupInitializeFileLogW
+@ stdcall SetupInitializeFileLogA (str long)
+@ stdcall SetupInitializeFileLogW (wstr long)
 @ stub SetupInstallFileA
 @ stub SetupInstallFileExA
 @ stub SetupInstallFileExW
@@ -297,7 +297,7 @@
 @ stub SetupSetSourceListA
 @ stub SetupSetSourceListW
 @ stdcall SetupTermDefaultQueueCallback(ptr)
-@ stub SetupTerminateFileLog
+@ stdcall SetupTerminateFileLog(long)
 @ stub ShouldDeviceBeExcluded
 @ stub StampFileSecurity
 @ stub StringTableAddString

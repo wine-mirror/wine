@@ -217,3 +217,30 @@ HDSKSPC SetupCreateDiskSpaceListW( PVOID Reserved1, DWORD Reserved2, UINT Flags 
     FIXME("%08x\n", Flags);
     return NULL;
 }
+
+/***********************************************************************
+ *		SetupInitializeFileLogW(SETUPAPI.@)
+ */
+HANDLE WINAPI SetupInitializeFileLogW(LPWSTR LogFileName, DWORD Flags)
+{
+    FIXME("Stub %s, 0x%lx\n",debugstr_w(LogFileName),Flags);
+    return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
+ *		SetupInitializeFileLogA(SETUPAPI.@)
+ */
+HANDLE WINAPI SetupInitializeFileLogA(LPSTR LogFileName, DWORD Flags)
+{
+    FIXME("Stub %s, 0x%lx\n",debugstr_a(LogFileName),Flags);
+    return INVALID_HANDLE_VALUE;
+}
+
+/***********************************************************************
+ *		SetupTerminateFileLog(SETUPAPI.@)
+ */
+BOOL WINAPI SetupTerminateFileLog(HANDLE FileLogHandle)
+{
+    FIXME ("Stub %p\n",FileLogHandle);
+    return TRUE;
+}
