@@ -23,6 +23,8 @@
 
 DEFAULT_DEBUG_CHANNEL(text);
 
+#define countof(a) (sizeof(a)/sizeof(a[0]))
+
 /*********************************************************************
  *
  *            DrawText functions
@@ -291,19 +293,18 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	    if (flags & DT_VCENTER) y = rect->top +
 	    	(rect->bottom - rect->top) / 2 - size.cy / 2;
 	    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
+        }
 
-	    if (flags & (DT_PATH_ELLIPSIS | DT_END_ELLIPSIS | DT_WORD_ELLIPSIS))
-	    {
-	        WCHAR swapStr[sizeof(line)];
+        if ((flags & DT_SINGLELINE) && size.cx > width &&
+	    (flags & (DT_PATH_ELLIPSIS | DT_END_ELLIPSIS | DT_WORD_ELLIPSIS)))
+	{
+	        WCHAR swapStr[countof(line)];
 	        WCHAR* fnameDelim = NULL;
 	        int totalLen = i_count >= 0 ? i_count : strlenW(str);
-
-		if (size.cx > width)
-	        {
 	            int fnameLen = totalLen;
 
 	            /* allow room for '...' */
-	            count = min(totalLen+3, sizeof(line)-3);
+	            count = min(totalLen+3, countof(line)-3);
 
                     if (flags & DT_WORD_ELLIPSIS)
 	                flags |= DT_WORDBREAK;
@@ -374,10 +375,14 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	            strncpyW(line, swapStr, len);
 	            line[len] = '\0';
 	            strPtr = NULL;
-	        }
+
                if (flags & DT_MODIFYSTRING)
                     strcpyW(str, swapStr);
-	    }
+
+               /* Note that really we ought to refigure the location of
+                * the underline for the prefix; it might be currently set for
+                * something we have just ellipsified out.
+                */
 	}
 	if (!(flags & DT_CALCRECT))
 	{
