@@ -435,6 +435,9 @@ void X11DRV_OpenGL_Init(Display *display)
 {
 }
 
+/***********************************************************************
+ *		ChoosePixelFormat (X11DRV.@)
+ */
 int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 			     const PIXELFORMATDESCRIPTOR *ppfd) {
   ERR("No OpenGL support compiled in.\n");
@@ -442,6 +445,9 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   return 0;
 }
 
+/***********************************************************************
+ *		DescribePixelFormat (X11DRV.@)
+ */
 int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 			       int iPixelFormat,
 			       UINT nBytes,
@@ -451,12 +457,18 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   return 0;
 }
 
+/***********************************************************************
+ *		GetPixelFormat (X11DRV.@)
+ */
 int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
   ERR("No OpenGL support compiled in.\n");
 
   return 0;
 }
 
+/***********************************************************************
+ *		SetPixelFormat (X11DRV.@)
+ */
 BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   int iPixelFormat,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
@@ -465,6 +477,9 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
   return FALSE;
 }
 
+/***********************************************************************
+ *		SwapBuffers (X11DRV.@)
+ */
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   ERR("No OpenGL support compiled in.\n");
 

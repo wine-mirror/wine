@@ -1044,3 +1044,8 @@
 
 # signal handling
 @ cdecl __wine_set_signal_handler(long ptr) __wine_set_signal_handler
+
+################################################################
+# Wine dll separation hacks, these will go away, don't use them
+#
+@ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr) VIRTUAL_SetFaultHandler

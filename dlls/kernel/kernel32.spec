@@ -1065,4 +1065,3 @@
 @ cdecl LOCAL_Unlock(long long) LOCAL_Unlock
 @ stdcall NE_DefResourceHandler(long long long) NE_DefResourceHandler
 @ cdecl SELECTOR_AllocBlock(ptr long long) SELECTOR_AllocBlock
-@ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr) VIRTUAL_SetFaultHandler
