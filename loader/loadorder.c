@@ -520,8 +520,8 @@ BOOL MODULE_InitLoadOrder(void)
  *
  * Locate the loadorder of a module.
  * Any path is stripped from the path-argument and so are the extension
- * '.dll' and '.exe'. A lookup in the table can yield an override for the
- * specific dll. Otherwise the default load order is returned.
+ * '.dll', '.exe' and '.drv'. A lookup in the table can yield an override for
+ * the specific dll. Otherwise the default load order is returned.
  */
 module_loadorder_t *MODULE_GetLoadOrder(const char *path)
 {
@@ -556,7 +556,9 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path)
 	}
 
 	strcpy(fname, name);
-	if(len >= 4 && (!lstrcmpiA(fname+len-4, ".dll") || !lstrcmpiA(fname+len-4, ".exe")))
+	if(len >= 4 && (!lstrcmpiA(fname+len-4, ".dll") ||
+			!lstrcmpiA(fname+len-4, ".exe") ||
+			!lstrcmpiA(fname+len-4, ".drv")))
 		fname[len-4] = '\0';
 
 	lo.modulename = fname;
