@@ -1137,7 +1137,7 @@ BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestProcess,
                                    LPHANDLE lphRead )
 {
   /* These are the handles for the created process */
-  HANDLE hAppStart, hAppDeath, hAppRead, hTemp;
+  HANDLE hAppStart, hAppDeath, hAppRead;
   SECURITY_ATTRIBUTES s_attrib;
 
   s_attrib.nLength              = sizeof( s_attrib );
@@ -1145,14 +1145,9 @@ BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestProcess,
   s_attrib.bInheritHandle       = TRUE;
 
   /* FIXME: Is there a handle leak here? */
-  hTemp = CreateEventA( &s_attrib, TRUE, FALSE, NULL );
-  *lphStart = ConvertToGlobalHandle( hTemp );
-
-  hTemp = CreateEventA( &s_attrib, TRUE, FALSE, NULL );
-  *lphDeath = ConvertToGlobalHandle( hTemp );
-
-  hTemp = CreateEventA( &s_attrib, TRUE, FALSE, NULL );
-  *lphRead  = ConvertToGlobalHandle( hTemp );
+  *lphStart = CreateEventA( &s_attrib, TRUE, FALSE, NULL );
+  *lphDeath = CreateEventA( &s_attrib, TRUE, FALSE, NULL );
+  *lphRead  = CreateEventA( &s_attrib, TRUE, FALSE, NULL );
 
   if( ( !DuplicateHandle( GetCurrentProcess(), *lphStart, 
                           hDestProcess, &hAppStart, 

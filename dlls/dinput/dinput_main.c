@@ -611,7 +611,6 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 		newDevice->ref = 1;
 		ICOM_VTBL(newDevice) = &SysMouseAvt;
 		InitializeCriticalSection(&(newDevice->crit));
-		MakeCriticalSectionGlobal(&(newDevice->crit));
 		memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
                 *pdev=(IDirectInputDeviceA*)newDevice;
 

@@ -328,13 +328,10 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
     /* Create scheduler event for 16-bit tasks */
 
     if ( !(pTask->flags & TDBF_WIN32) )
-    {
         pTask->hEvent = CreateEventA( NULL, TRUE, FALSE, NULL );
-        pTask->hEvent = ConvertToGlobalHandle( pTask->hEvent );
-    }
 
     /* Enter task handle into thread and process */
- 
+
     teb->htask16 = hTask;
     if (!initial_task) initial_task = hTask;
 

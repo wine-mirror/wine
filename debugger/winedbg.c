@@ -816,6 +816,7 @@ int DEBUG_main(int argc, char** argv)
 	    BOOL	ret = DEBUG_Attach(pid, TRUE);
 
 	    SetEvent(hEvent);
+            CloseHandle(hEvent);
 	    if (!ret) {
 		DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
 			     DEBUG_CurrPid, GetLastError());
