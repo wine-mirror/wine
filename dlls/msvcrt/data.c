@@ -142,9 +142,9 @@ static WCHAR *wstrdupa(const char *str)
  */
 void msvcrt_init_args(void)
 {
-  char *cmdline, **xargv = NULL;
-  WCHAR *wcmdline, **wxargv = NULL;
-  int xargc,end,last_arg,afterlastspace;
+  char *cmdline, **xargv = NULL, *ptr, *env;
+  WCHAR *wcmdline, **wxargv = NULL, *wptr, *wenv;
+  int xargc,end,last_arg,afterlastspace,count;
   DWORD version;
 
   MSVCRT__acmdln = _strdup( GetCommandLineA() );
@@ -221,15 +221,42 @@ void msvcrt_init_args(void)
   MSVCRT_free( cmdline );
 
   TRACE("found %d arguments\n",MSVCRT___argc);
-  /* FIXME: This is plain wrong, we must convert from a '\0' separated 
-   * memory block to an array of pointers to string format.
-   */
-  MSVCRT__environ = GetEnvironmentStringsA();
+
+  env = GetEnvironmentStringsA();
+  count = 1; /* for NULL sentinel */
+  for (ptr = env; *ptr; ptr += strlen(ptr) + 1)
+  {
+    count++;
+  }
+  MSVCRT__environ = HeapAlloc(GetProcessHeap(), 0, count * sizeof(char*));
+  if (MSVCRT__environ)
+  {
+    count = 0;
+    for (ptr = env; *ptr; ptr += strlen(ptr) + 1)
+    {
+      MSVCRT__environ[count++] = ptr;
+    }
+    MSVCRT__environ[count] = NULL;
+  }
+
   MSVCRT___initenv = MSVCRT__environ;
-  /* FIXME: This is plain wrong, we must convert from a '\0' separated 
-   * memory block to an array of pointers to string format.
-   */
-  MSVCRT__wenviron = GetEnvironmentStringsW();
+
+  wenv = GetEnvironmentStringsW();
+  count = 1; /* for NULL sentinel */
+  for (wptr = wenv; *wptr; wptr += lstrlenW(wptr) + 1)
+  {
+    count++;
+  }
+  MSVCRT__wenviron = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR*));
+  if (MSVCRT__wenviron)
+  {
+    count = 0;
+    for (wptr = wenv; *wptr; wptr += lstrlenW(wptr) + 1)
+    {
+      MSVCRT__wenviron[count++] = wptr;
+    }
+    MSVCRT__wenviron[count] = NULL;
+  }
   MSVCRT___winitenv = MSVCRT__wenviron;
 }
 
