@@ -22,5 +22,6 @@ extern LONG   NC_HandleSetCursor( HWND hwnd, WPARAM16 wParam, LPARAM lParam );
 extern void   NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down );
 extern BOOL NC_DrawSysButton95( HWND hwnd, HDC hdc, BOOL down );
 extern BOOL NC_GetSysPopupPos( struct tagWND* wndPtr, RECT* rect );
+extern void NC_GetInsideRect( HWND hwnd, RECT *rect );
 
 #endif /* __WINE_NONCLIENT_H */

@@ -41,8 +41,6 @@ extern Atom wmChangeState;
 WND_DRIVER X11DRV_WND_Driver =
 {
   X11DRV_WND_ForceWindowRaise,
-  X11DRV_WND_PreSizeMove,
-  X11DRV_WND_PostSizeMove,
   X11DRV_WND_SurfaceCopy,
   X11DRV_WND_SetHostAttr
 };
@@ -314,27 +312,6 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 	   TSXMapWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
     }
     WIN_ReleaseWndPtr(winposPtr);
-}
-
-/*****************************************************************
- *		X11DRV_WND_PreSizeMove
- */
-void X11DRV_WND_PreSizeMove(WND *wndPtr)
-{
-  /* Grab the server only when moving top-level windows without desktop */
-  if ((X11DRV_GetXRootWindow() == DefaultRootWindow(display)) &&
-      (wndPtr->parent->hwndSelf == GetDesktopWindow()))
-    TSXGrabServer( display );
-}
-
-/*****************************************************************
- *		 X11DRV_WND_PostSizeMove
- */
-void X11DRV_WND_PostSizeMove(WND *wndPtr)
-{
-  if ((X11DRV_GetXRootWindow() == DefaultRootWindow(display)) &&
-      (wndPtr->parent->hwndSelf == GetDesktopWindow()))
-    TSXUngrabServer( display );
 }
 
 /*****************************************************************

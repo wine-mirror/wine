@@ -81,6 +81,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pSetWindowRgn)(HWND,HRGN,BOOL);
     HICON  (*pSetWindowIcon)(HWND,HICON,BOOL);
     BOOL   (*pSetWindowText)(HWND,LPCWSTR);
+    void   (*pSysCommandSizeMove)(HWND,WPARAM);
     BOOL   (*pIsSingleWindow)(void);
 } USER_DRIVER;
 

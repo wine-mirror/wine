@@ -18,8 +18,6 @@ DEFAULT_DEBUG_CHANNEL(ttydrv);
 WND_DRIVER TTYDRV_WND_Driver =
 {
   TTYDRV_WND_ForceWindowRaise,
-  TTYDRV_WND_PreSizeMove,
-  TTYDRV_WND_PostSizeMove,
   TTYDRV_WND_ScrollWindow,
   TTYDRV_WND_SetHostAttr
 };
@@ -96,22 +94,6 @@ BOOL TTYDRV_DestroyWindow( HWND hwnd )
  *		TTYDRV_WND_ForceWindowRaise
  */
 void TTYDRV_WND_ForceWindowRaise(WND *wndPtr)
-{
-  FIXME("(%p): stub\n", wndPtr);
-}
-
-/*****************************************************************
- *		TTYDRV_WND_PreSizeMove
- */
-void TTYDRV_WND_PreSizeMove(WND *wndPtr)
-{
-  FIXME("(%p): stub\n", wndPtr);
-}
-
-/*****************************************************************
- *		 TTYDRV_WND_PostSizeMove
- */
-void TTYDRV_WND_PostSizeMove(WND *wndPtr)
 {
   FIXME("(%p): stub\n", wndPtr);
 }

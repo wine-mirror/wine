@@ -94,6 +94,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(SetWindowRgn);
     GET_USER_FUNC(SetWindowIcon);
     GET_USER_FUNC(SetWindowText);
+    GET_USER_FUNC(SysCommandSizeMove);
 
     return TRUE;
 }

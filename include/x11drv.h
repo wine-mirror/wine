@@ -391,8 +391,6 @@ extern Window X11DRV_WND_FindXWindow(struct tagWND *wndPtr);
 extern void X11DRV_WND_ForceWindowRaise(struct tagWND *pWnd);
 extern void X11DRV_WND_SetWindowPos(struct tagWND *wndPtr, const struct tagWINDOWPOS *winpos, BOOL bSMC_SETXPOS);
 extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCWSTR text);
-extern void X11DRV_WND_PreSizeMove(struct tagWND *wndPtr);
-extern void X11DRV_WND_PostSizeMove(struct tagWND *wndPtr);
 extern void X11DRV_WND_SurfaceCopy(struct tagWND *wndPtr, HDC hdc, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
 extern void X11DRV_WND_SetGravity(struct tagWND* wndPtr, int value );
 extern BOOL X11DRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);

@@ -15,10 +15,14 @@
 #include "winuser.h"
 
 #include "x11drv.h"
+#include "hook.h"
 #include "win.h"
 #include "winpos.h"
 #include "region.h"
 #include "dce.h"
+#include "cursoricon.h"
+#include "nonclient.h"
+#include "message.h"
 
 #include "debugtools.h"
 
@@ -36,6 +40,18 @@ DEFAULT_DEBUG_CHANNEL(win);
 #define SWP_EX_PAINTSELF    0x0002
 #define SWP_EX_NONCLIENT    0x0004
 
+#define HAS_THICKFRAME(style,exStyle) \
+    (((style) & WS_THICKFRAME) && \
+     !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
+
+#define ON_LEFT_BORDER(hit) \
+ (((hit) == HTLEFT) || ((hit) == HTTOPLEFT) || ((hit) == HTBOTTOMLEFT))
+#define ON_RIGHT_BORDER(hit) \
+ (((hit) == HTRIGHT) || ((hit) == HTTOPRIGHT) || ((hit) == HTBOTTOMRIGHT))
+#define ON_TOP_BORDER(hit) \
+ (((hit) == HTTOP) || ((hit) == HTTOPLEFT) || ((hit) == HTTOPRIGHT))
+#define ON_BOTTOM_BORDER(hit) \
+ (((hit) == HTBOTTOM) || ((hit) == HTBOTTOMLEFT) || ((hit) == HTBOTTOMRIGHT))
 
 /***********************************************************************
  *           DCE_OffsetVisRgn
@@ -1321,4 +1337,396 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
  done:
     WIN_ReleaseWndPtr(wndPtr);
     return ret;
+}
+
+
+/***********************************************************************
+ *           draw_moving_frame
+ *
+ * Draw the frame used when moving or resizing window.
+ *
+ * FIXME:  This causes problems in Win95 mode.  (why?)
+ */
+static void draw_moving_frame( HDC hdc, RECT *rect, BOOL thickframe )
+{
+    if (thickframe)
+    {
+        const int width = GetSystemMetrics(SM_CXFRAME);
+        const int height = GetSystemMetrics(SM_CYFRAME);
+
+        HBRUSH hbrush = SelectObject( hdc, GetStockObject( GRAY_BRUSH ) );
+        PatBlt( hdc, rect->left, rect->top,
+                rect->right - rect->left - width, height, PATINVERT );
+        PatBlt( hdc, rect->left, rect->top + height, width,
+                rect->bottom - rect->top - height, PATINVERT );
+        PatBlt( hdc, rect->left + width, rect->bottom - 1,
+                rect->right - rect->left - width, -height, PATINVERT );
+        PatBlt( hdc, rect->right - 1, rect->top, -width,
+                rect->bottom - rect->top - height, PATINVERT );
+        SelectObject( hdc, hbrush );
+    }
+    else DrawFocusRect( hdc, rect );
+}
+
+
+/***********************************************************************
+ *           start_size_move
+ *
+ * Initialisation of a move or resize, when initiatied from a menu choice.
+ * Return hit test code for caption or sizing border.
+ */
+static LONG start_size_move( WND* wndPtr, WPARAM wParam, POINT *capturePoint )
+{
+    LONG hittest = 0;
+    POINT pt;
+    MSG msg;
+    RECT rectWindow;
+
+    GetWindowRect(wndPtr->hwndSelf,&rectWindow);
+
+    if ((wParam & 0xfff0) == SC_MOVE)
+    {
+        /* Move pointer at the center of the caption */
+        RECT rect;
+        NC_GetInsideRect( wndPtr->hwndSelf, &rect );
+        if (wndPtr->dwStyle & WS_SYSMENU)
+            rect.left += GetSystemMetrics(SM_CXSIZE) + 1;
+        if (wndPtr->dwStyle & WS_MINIMIZEBOX)
+            rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+        if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
+            rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+        pt.x = rectWindow.left + (rect.right - rect.left) / 2;
+        pt.y = rectWindow.top + rect.top + GetSystemMetrics(SM_CYSIZE)/2;
+        hittest = HTCAPTION;
+        *capturePoint = pt;
+    }
+    else  /* SC_SIZE */
+    {
+        while(!hittest)
+        {
+            MSG_InternalGetMessage( &msg, 0, 0, WM_KEYFIRST, WM_MOUSELAST,
+                                    MSGF_SIZE, PM_REMOVE, FALSE, NULL );
+            switch(msg.message)
+            {
+            case WM_MOUSEMOVE:
+                hittest = NC_HandleNCHitTest( wndPtr->hwndSelf, msg.pt );
+                if ((hittest < HTLEFT) || (hittest > HTBOTTOMRIGHT))
+                    hittest = 0;
+                break;
+
+            case WM_LBUTTONUP:
+                return 0;
+
+            case WM_KEYDOWN:
+                switch(msg.wParam)
+                {
+                case VK_UP:
+                    hittest = HTTOP;
+                    pt.x =(rectWindow.left+rectWindow.right)/2;
+                    pt.y = rectWindow.top + GetSystemMetrics(SM_CYFRAME) / 2;
+                    break;
+                case VK_DOWN:
+                    hittest = HTBOTTOM;
+                    pt.x =(rectWindow.left+rectWindow.right)/2;
+                    pt.y = rectWindow.bottom - GetSystemMetrics(SM_CYFRAME) / 2;
+                    break;
+                case VK_LEFT:
+                    hittest = HTLEFT;
+                    pt.x = rectWindow.left + GetSystemMetrics(SM_CXFRAME) / 2;
+                    pt.y =(rectWindow.top+rectWindow.bottom)/2;
+                    break;
+                case VK_RIGHT:
+                    hittest = HTRIGHT;
+                    pt.x = rectWindow.right - GetSystemMetrics(SM_CXFRAME) / 2;
+                    pt.y =(rectWindow.top+rectWindow.bottom)/2;
+                    break;
+                case VK_RETURN:
+                case VK_ESCAPE: return 0;
+                }
+            }
+        }
+        *capturePoint = pt;
+    }
+    SetCursorPos( pt.x, pt.y );
+    NC_HandleSetCursor( wndPtr->hwndSelf,
+                        wndPtr->hwndSelf, MAKELONG( hittest, WM_MOUSEMOVE ));
+    return hittest;
+}
+
+
+/***********************************************************************
+ *           X11DRV_SysCommandSizeMove   (X11DRV.@)
+ *
+ * Perform SC_MOVE and SC_SIZE commands.
+ */
+void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
+{
+    MSG msg;
+    RECT sizingRect, mouseRect, origRect;
+    HDC hdc;
+    LONG hittest = (LONG)(wParam & 0x0f);
+    HCURSOR16 hDragCursor = 0, hOldCursor = 0;
+    POINT minTrack, maxTrack;
+    POINT capturePoint, pt;
+    WND *     wndPtr = WIN_FindWndPtr( hwnd );
+    BOOL    thickframe = HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle );
+    BOOL    iconic = wndPtr->dwStyle & WS_MINIMIZE;
+    BOOL    moved = FALSE;
+    DWORD     dwPoint = GetMessagePos ();
+    BOOL DragFullWindows = FALSE;
+    int iWndsLocks;
+
+    SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
+
+    pt.x = SLOWORD(dwPoint);
+    pt.y = SHIWORD(dwPoint);
+    capturePoint = pt;
+
+    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
+        (wndPtr->dwExStyle & WS_EX_MANAGED)) goto END;
+
+    if ((wParam & 0xfff0) == SC_MOVE)
+    {
+        if (!hittest) hittest = start_size_move( wndPtr, wParam, &capturePoint );
+        if (!hittest) goto END;
+    }
+    else  /* SC_SIZE */
+    {
+        if (!thickframe) goto END;
+        if ( hittest && hittest != HTSYSMENU ) hittest += 2;
+        else
+        {
+            SetCapture(hwnd);
+            hittest = start_size_move( wndPtr, wParam, &capturePoint );
+            if (!hittest)
+            {
+                ReleaseCapture();
+                goto END;
+            }
+        }
+    }
+
+      /* Get min/max info */
+
+    WINPOS_GetMinMaxInfo( wndPtr, NULL, NULL, &minTrack, &maxTrack );
+    sizingRect = wndPtr->rectWindow;
+    origRect = sizingRect;
+    if (wndPtr->dwStyle & WS_CHILD)
+        GetClientRect( wndPtr->parent->hwndSelf, &mouseRect );
+    else
+        SetRect(&mouseRect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+    if (ON_LEFT_BORDER(hittest))
+    {
+        mouseRect.left  = max( mouseRect.left, sizingRect.right-maxTrack.x );
+        mouseRect.right = min( mouseRect.right, sizingRect.right-minTrack.x );
+    }
+    else if (ON_RIGHT_BORDER(hittest))
+    {
+        mouseRect.left  = max( mouseRect.left, sizingRect.left+minTrack.x );
+        mouseRect.right = min( mouseRect.right, sizingRect.left+maxTrack.x );
+    }
+    if (ON_TOP_BORDER(hittest))
+    {
+        mouseRect.top    = max( mouseRect.top, sizingRect.bottom-maxTrack.y );
+        mouseRect.bottom = min( mouseRect.bottom,sizingRect.bottom-minTrack.y);
+    }
+    else if (ON_BOTTOM_BORDER(hittest))
+    {
+        mouseRect.top    = max( mouseRect.top, sizingRect.top+minTrack.y );
+        mouseRect.bottom = min( mouseRect.bottom, sizingRect.top+maxTrack.y );
+    }
+    if (wndPtr->dwStyle & WS_CHILD)
+    {
+        MapWindowPoints( wndPtr->parent->hwndSelf, 0, (LPPOINT)&mouseRect, 2 );
+    }
+    SendMessageA( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
+
+    if (GetCapture() != hwnd) SetCapture( hwnd );
+
+    if (wndPtr->parent && (wndPtr->parent->hwndSelf != GetDesktopWindow()))
+    {
+          /* Retrieve a default cache DC (without using the window style) */
+        hdc = GetDCEx( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
+    }
+    else
+        hdc = GetDC( 0 );
+
+    if( iconic ) /* create a cursor for dragging */
+    {
+        HICON hIcon = GetClassLongA( hwnd, GCL_HICON);
+        if(!hIcon) hIcon = (HICON)SendMessageA( hwnd, WM_QUERYDRAGICON, 0, 0L);
+        if( hIcon ) hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
+        if( !hDragCursor ) iconic = FALSE;
+    }
+
+    /* repaint the window before moving it around */
+    RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
+
+    /* grab the server only when moving top-level windows without desktop */
+    if ((root_window == DefaultRootWindow(display)) &&
+        (wndPtr->parent->hwndSelf == GetDesktopWindow()))
+        TSXGrabServer( display );
+
+    while(1)
+    {
+        int dx = 0, dy = 0;
+
+        MSG_InternalGetMessage( &msg, 0, 0, WM_KEYFIRST, WM_MOUSELAST,
+                                MSGF_SIZE, PM_REMOVE, FALSE, NULL );
+
+        /* Exit on button-up, Return, or Esc */
+        if ((msg.message == WM_LBUTTONUP) ||
+            ((msg.message == WM_KEYDOWN) &&
+             ((msg.wParam == VK_RETURN) || (msg.wParam == VK_ESCAPE)))) break;
+
+        if ((msg.message != WM_KEYDOWN) && (msg.message != WM_MOUSEMOVE))
+            continue;  /* We are not interested in other messages */
+
+        pt = msg.pt;
+
+        if (msg.message == WM_KEYDOWN) switch(msg.wParam)
+        {
+        case VK_UP:    pt.y -= 8; break;
+        case VK_DOWN:  pt.y += 8; break;
+        case VK_LEFT:  pt.x -= 8; break;
+        case VK_RIGHT: pt.x += 8; break;
+        }
+
+        pt.x = max( pt.x, mouseRect.left );
+        pt.x = min( pt.x, mouseRect.right );
+        pt.y = max( pt.y, mouseRect.top );
+        pt.y = min( pt.y, mouseRect.bottom );
+
+        dx = pt.x - capturePoint.x;
+        dy = pt.y - capturePoint.y;
+
+        if (dx || dy)
+        {
+            if( !moved )
+            {
+                moved = TRUE;
+
+                if( iconic ) /* ok, no system popup tracking */
+                {
+                    hOldCursor = SetCursor(hDragCursor);
+                    ShowCursor( TRUE );
+                    WINPOS_ShowIconTitle( wndPtr, FALSE );
+                }
+                else if(!DragFullWindows)
+                    draw_moving_frame( hdc, &sizingRect, thickframe );
+            }
+
+            if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
+            else
+            {
+                RECT newRect = sizingRect;
+                WPARAM wpSizingHit = 0;
+
+                if (hittest == HTCAPTION) OffsetRect( &newRect, dx, dy );
+                if (ON_LEFT_BORDER(hittest)) newRect.left += dx;
+                else if (ON_RIGHT_BORDER(hittest)) newRect.right += dx;
+                if (ON_TOP_BORDER(hittest)) newRect.top += dy;
+                else if (ON_BOTTOM_BORDER(hittest)) newRect.bottom += dy;
+                if(!iconic && !DragFullWindows) draw_moving_frame( hdc, &sizingRect, thickframe );
+                capturePoint = pt;
+
+                /* determine the hit location */
+                if (hittest >= HTLEFT && hittest <= HTBOTTOMRIGHT)
+                    wpSizingHit = WMSZ_LEFT + (hittest - HTLEFT);
+                SendMessageA( hwnd, WM_SIZING, wpSizingHit, (LPARAM)&newRect );
+
+                if (!iconic)
+                {
+                    if(!DragFullWindows)
+                        draw_moving_frame( hdc, &newRect, thickframe );
+                    else {
+                        /* To avoid any deadlocks, all the locks on the windows
+			   structures must be suspended before the SetWindowPos */
+                        iWndsLocks = WIN_SuspendWndsLock();
+                        SetWindowPos( hwnd, 0, newRect.left, newRect.top,
+                                      newRect.right - newRect.left,
+                                      newRect.bottom - newRect.top,
+                                      ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+                        WIN_RestoreWndsLock(iWndsLocks);
+                    }
+                }
+                sizingRect = newRect;
+            }
+        }
+    }
+
+    ReleaseCapture();
+    if( iconic )
+    {
+        if( moved ) /* restore cursors, show icon title later on */
+        {
+            ShowCursor( FALSE );
+            SetCursor( hOldCursor );
+        }
+        DestroyCursor( hDragCursor );
+    }
+    else if (moved && !DragFullWindows)
+        draw_moving_frame( hdc, &sizingRect, thickframe );
+
+    if (wndPtr->parent && (wndPtr->parent->hwndSelf != GetDesktopWindow()))
+        ReleaseDC( wndPtr->parent->hwndSelf, hdc );
+    else
+        ReleaseDC( 0, hdc );
+
+    if ((root_window == DefaultRootWindow(display)) &&
+        (wndPtr->parent->hwndSelf == GetDesktopWindow()))
+        TSXUngrabServer( display );
+
+    if (HOOK_CallHooksA( WH_CBT, HCBT_MOVESIZE, hwnd, (LPARAM)&sizingRect ))
+        sizingRect = wndPtr->rectWindow;
+
+    SendMessageA( hwnd, WM_EXITSIZEMOVE, 0, 0 );
+    SendMessageA( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
+
+    /* window moved or resized */
+    if (moved)
+    {
+        /* To avoid any deadlocks, all the locks on the windows
+	   structures must be suspended before the SetWindowPos */
+        iWndsLocks = WIN_SuspendWndsLock();
+
+        /* if the moving/resizing isn't canceled call SetWindowPos
+         * with the new position or the new size of the window
+         */
+        if (!((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) )
+        {
+            /* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
+            if(!DragFullWindows)
+                SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top,
+                              sizingRect.right - sizingRect.left,
+                              sizingRect.bottom - sizingRect.top,
+                              ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+        }
+        else
+        { /* restore previous size/position */
+            if(DragFullWindows)
+                SetWindowPos( hwnd, 0, origRect.left, origRect.top,
+                              origRect.right - origRect.left,
+                              origRect.bottom - origRect.top,
+                              ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+        }
+
+        WIN_RestoreWndsLock(iWndsLocks);
+    }
+
+    if (IsIconic(hwnd))
+    {
+        /* Single click brings up the system menu when iconized */
+
+        if( !moved )
+        {
+            if( wndPtr->dwStyle & WS_SYSMENU )
+                SendMessageA( hwnd, WM_SYSCOMMAND,
+                              SC_MOUSEMENU + HTSYSMENU, MAKELONG(pt.x,pt.y));
+        }
+        else WINPOS_ShowIconTitle( wndPtr, TRUE );
+    }
+
+END:
+    WIN_ReleaseWndPtr(wndPtr);
 }

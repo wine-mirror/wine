@@ -134,8 +134,6 @@ extern struct tagWND_DRIVER TTYDRV_WND_Driver;
 extern HANDLE TTYDRV_LoadOEMResource(WORD resid, WORD type);
 
 extern void TTYDRV_WND_ForceWindowRaise(struct tagWND *pWnd);
-extern void TTYDRV_WND_PreSizeMove(struct tagWND *wndPtr);
-extern void TTYDRV_WND_PostSizeMove(struct tagWND *wndPtr);
 extern void TTYDRV_WND_ScrollWindow(struct tagWND *wndPtr, HDC hdc, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
 extern BOOL TTYDRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 
