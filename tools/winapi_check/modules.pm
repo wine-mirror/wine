@@ -17,9 +17,24 @@ sub new {
     $$output = shift;
     my $wine_dir = shift;
     my $current_dir = shift;
+    my $file_type = shift;
     my $module_file = shift;
 
     $module_file =~ s/^\.\///;
+
+    my @all_spec_files = map {
+	s/^.\/(.*)$/$1/;
+	if(&$file_type($_) eq "library") {
+	    $_;
+	} else {
+	    ();
+	}
+    } split(/\n/, `find $wine_dir -name \\*.spec`);
+
+    my %all_spec_files;
+    foreach my $file (@all_spec_files) {
+	$all_spec_files{$file}++ ;
+    }
 
     if($$options->progress) {
 	$$output->progress("$module_file");
@@ -37,6 +52,12 @@ sub new {
 
 	if(/^%\s+(.*?)$/) {
 	    $spec_file = $1;
+	    if($wine_dir eq ".") {
+		$all_spec_files{$spec_file}--;
+	    } else {
+		$all_spec_files{"$wine_dir/$spec_file"}--;
+	    }
+	    $$spec_files{""}{$spec_file}++; # FIXME: Kludge
 	    next;
 	} else {
 	    $allowed_dir = $1;
@@ -48,6 +69,12 @@ sub new {
 	} 
     }
     close(IN);
+
+    foreach my $spec_file (sort(keys(%all_spec_files))) {
+	if($all_spec_files{$spec_file} > 0) {
+	    $$output->write("$module_file: $spec_file: exists but is not specified\n");
+	}
+    }
 
     return $self;
 }

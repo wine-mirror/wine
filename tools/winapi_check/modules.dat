@@ -201,6 +201,10 @@ dlls/rasapi32
 
 dlls/rasapi32
 
+% dlls/richedit/riched32.spec
+
+dlls/richedit
+
 % dlls/setupx/setupx.spec
 
 dlls/setupx

@@ -66,11 +66,6 @@ if(!defined($options)) {
     exit;
 }
 
-my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, "$winapi_check_dir/modules.dat");
-
-my $win16api = 'winapi'->new($options, $output, "win16", "$winapi_check_dir/win16");
-my $win32api = 'winapi'->new($options, $output, "win32", "$winapi_check_dir/win32");
-
 sub file_type {
     my $file = shift;
 
@@ -92,6 +87,11 @@ sub file_type {
 	return "library";
     }
 }
+
+my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
+
+my $win16api = 'winapi'->new($options, $output, "win16", "$winapi_check_dir/win16");
+my $win32api = 'winapi'->new($options, $output, "win32", "$winapi_check_dir/win32");
 
 if($options->global) {
     'winapi'->read_all_spec_files($modules, $wine_dir, $current_dir, \&file_type, $win16api, $win32api);
