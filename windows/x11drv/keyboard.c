@@ -67,10 +67,27 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym);
 static const WORD main_key_scan_qwerty[MAIN_LEN] =
 {
 /* this is my (102-key) keyboard layout, sorry if it doesn't quite match yours */
+ /* `    1    2    3    4    5    6    7    8    9    0    -    = */
    0x29,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,
+ /* q    w    e    r    t    y    u    i    o    p    [    ] */
    0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,
+ /* a    s    d    f    g    h    j    k    l    ;    '    \ */
    0x1E,0x1F,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x2B,
+ /* z    x    c    v    b    n    m    ,    .    / */
    0x2C,0x2D,0x2E,0x2F,0x30,0x31,0x32,0x33,0x34,0x35,
+   0x56 /* the 102nd key (actually to the right of l-shift) */
+};
+
+static const WORD main_key_scan_dvorak[MAIN_LEN] =
+{
+ /* `    1    2    3    4    5    6    7    8    9    0    [    ] */
+   0x29,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x1A,0x1B,
+ /* '    ,    .    p    y    f    g    c    r    l    /    = */
+   0x28,0x33,0x34,0x19,0x15,0x21,0x22,0x2E,0x13,0x26,0x35,0x0D,
+ /* a    o    e    u    i    d    h    t    n    s    -    \ */
+   0x1E,0x18,0x12,0x16,0x17,0x20,0x23,0x14,0x31,0x1F,0x0C,0x2B,
+ /* ;    q    j    k    x    b    m    w    v    z */
+   0x27,0x10,0x24,0x25,0x2D,0x30,0x32,0x11,0x2F,0x2C,
    0x56 /* the 102nd key (actually to the right of l-shift) */
 };
 
@@ -94,7 +111,17 @@ static const WORD main_key_vkey_azerty[MAIN_LEN] =
    VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
 };
 
-/* FIXME: add other layouts, such as DVORAK and German QWERTZ */
+static const WORD main_key_vkey_dvorak[MAIN_LEN] =
+{
+/* NOTE: this layout must concur with the scan codes layout above */
+   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_4,VK_OEM_6,
+   VK_OEM_7,VK_OEM_COMMA,VK_OEM_PERIOD,VK_P,VK_Y,VK_F,VK_G,VK_C,VK_R,VK_L,VK_OEM_2,VK_OEM_PLUS,
+   VK_A,VK_O,VK_E,VK_U,VK_I,VK_D,VK_H,VK_T,VK_N,VK_S,VK_OEM_MINUS,VK_OEM_5,
+   VK_OEM_1,VK_Q,VK_J,VK_K,VK_X,VK_B,VK_M,VK_W,VK_V,VK_Z,
+   VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
+};
+
+/* FIXME: add other layouts, such as German QWERTZ */
 
 /*** DEFINE YOUR NEW LANGUAGE-SPECIFIC MAPPINGS BELOW, SEE EXISTING TABLES */
 
@@ -137,6 +164,15 @@ static const char main_key_US_phantom[MAIN_LEN][4] =
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'\"","\\|",
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
  "<>" /* the phantom key */
+};
+
+/*** United States keyboard layout (dvorak version) */
+static const char main_key_US_dvorak[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","[{","]}",
+ "'\"",",<",".>","pP","yY","fF","gG","cC","rR","lL","/?","=+",
+ "aA","oO","eE","uU","iI","dD","hH","tT","nN","sS","-_","\\|",
+ ";:","qQ","jJ","kK","xX","bB","mM","wW","vV","zZ"
 };
 
 /*** British keyboard layout */
@@ -516,6 +552,7 @@ static const struct {
 } main_key_tab[]={
  {"United States keyboard layout", 28591, &main_key_US, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"United States keyboard layout (phantom key version)", 28591, &main_key_US_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"United States keyboard layout (dvorak)", 28591, &main_key_US_dvorak, &main_key_scan_dvorak, &main_key_vkey_dvorak},
  {"British keyboard layout", 28591, &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"German keyboard layout", 28591, &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"German keyboard layout without dead keys", 28591, &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwerty},
