@@ -314,7 +314,7 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
     FIXME("PreeditCaretCalback %p\n",ic);
 }
 
-void WINAPI X11DRV_ForceXIMReset(HWND hwnd)
+void X11DRV_ForceXIMReset(HWND hwnd)
 {
     XIC ic = X11DRV_get_ic(hwnd);
     if (ic)

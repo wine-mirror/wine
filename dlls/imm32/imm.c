@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
 #define FROM_IME 0xcafe1337
 
-static void (WINAPI *pX11DRV_ForceXIMReset)(HWND);
+static void (*pX11DRV_ForceXIMReset)(HWND);
 
 typedef struct tagInputContextData
 {

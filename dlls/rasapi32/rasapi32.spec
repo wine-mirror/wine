@@ -72,7 +72,7 @@
 @ stub RasSetSubEntryPropertiesA
 @ stub RasSetSubEntryPropertiesW
 @ stdcall RasValidateEntryNameA(str str)
-@ stub RasValidateEntryNameW
+@ stdcall RasValidateEntryNameW(wstr wstr)
 
 500 stub	RnaEngineRequest
 501 stub	DialEngineRequest

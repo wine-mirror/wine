@@ -1079,7 +1079,7 @@
 @ stdcall FindActCtxSectionGuid(long ptr long ptr ptr)
 @ stdcall FindActCtxSectionStringA(long ptr long str ptr)
 @ stdcall FindActCtxSectionStringW(long ptr long wstr ptr)
-@ stdcall GetCurrentActCtx()
+@ stdcall GetCurrentActCtx(ptr)
 @ stdcall QueryActCtxW(long ptr ptr long ptr long ptr)
 @ stdcall ReleaseActCtx(ptr)
 @ stdcall ZombifyActCtx(ptr)

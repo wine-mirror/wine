@@ -136,6 +136,10 @@ static void wprint_name(WCHAR *buffer, int len, ULONG transport,
         *ptr1 = *ptr2;
     *ptr1 = '\0';
 }
+
+/***********************************************************************
+ *                NetWkstaTransportEnum  (NETAPI32.@)
+ */
  
 struct WkstaTransportEnumData
 {
@@ -145,6 +149,8 @@ struct WkstaTransportEnumData
     LPBYTE        *pbuf;
     NET_API_STATUS ret;
 };
+
+/**********************************************************************/
 
 static BOOL WkstaEnumAdaptersCallback(UCHAR totalLANAs, UCHAR lanaIndex,
  ULONG transport, const NetBIOSAdapterImpl *data, void *closure)
@@ -236,6 +242,8 @@ static BOOL WkstaEnumAdaptersCallback(UCHAR totalLANAs, UCHAR lanaIndex,
         ret = FALSE;
     return ret;
 }
+
+/**********************************************************************/
 
 NET_API_STATUS WINAPI 
 NetWkstaTransportEnum(LPWSTR ServerName, DWORD level, PBYTE* pbuf,
