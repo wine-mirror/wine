@@ -301,6 +301,8 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
         SetLastError( ERROR_OUTOFMEMORY );
         return NULL;
     }
+
+    wm->refCount++;  /* we don't support freeing builtin dlls (FIXME)*/
     return wm;
 }
 
