@@ -469,6 +469,8 @@ typedef struct WS(timeval)
 #define WS_FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (WS_fd_set*)(set))
 #endif
 
+int WINAPI __WSAFDIsSet(SOCKET,WS(fd_set)*);
+
 #endif /* WS_DEFINE_SELECT */
 
 /* we have to define hton/ntoh as macros to avoid conflicts with Unix headers */
