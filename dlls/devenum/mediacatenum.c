@@ -94,8 +94,8 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
     VARIANT* pVar,
     IErrorLog* pErrorLog)
 {
-    WCHAR wszData[MAX_PATH + 1];
-    LONG received = MAX_PATH + 1;
+    LPVOID pData = NULL;
+    LONG received;
     DWORD type = 0;
     ICOM_THIS(RegPropBagImpl, iface);
     HRESULT res = S_OK;
@@ -106,13 +106,24 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
     if (!pszPropName || !pVar)
         return E_POINTER;
 
-    /* work around a GCC bug that occurs here unless we use the reswin32 variable as well */
-    reswin32 = RegQueryValueExW(This->hkey, pszPropName, NULL, &type, (LPVOID)wszData, &received);
+    reswin32 = RegQueryValueExW(This->hkey, pszPropName, NULL, NULL, NULL, &received);
     res = HRESULT_FROM_WIN32(reswin32);
 
     if (SUCCEEDED(res))
     {
-        TRACE("%ld, %s\n", received, debugstr_w(wszData));
+        pData = HeapAlloc(GetProcessHeap(), 0, received);
+
+        /* work around a GCC bug that occurs here unless we use the reswin32 variable as well */
+        reswin32 = RegQueryValueExW(This->hkey, pszPropName, NULL, &type, pData, &received);
+        res = HRESULT_FROM_WIN32(reswin32);
+    }
+
+    if (SUCCEEDED(res))
+    {
+        res = E_INVALIDARG; /* assume we cannot coerce into right type */
+
+        TRACE("Read %ld bytes (%s)\n", received, type == REG_SZ ? debugstr_w((LPWSTR)pData) : "binary data");
+
         switch (type)
         {
         case REG_SZ:
@@ -120,18 +131,20 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
             {
             case VT_LPWSTR:
                 V_UNION(pVar, bstrVal) = CoTaskMemAlloc(received * sizeof(WCHAR));
-                strcpyW(V_UNION(pVar, bstrVal), wszData);
-                return S_OK;
+                strcpyW(V_UNION(pVar, bstrVal), (LPWSTR)pData);
+                res = S_OK;
+                break;
             case VT_EMPTY:
                 V_VT(pVar) = VT_BSTR;
             /* fall through */
             case VT_BSTR:
-                V_UNION(pVar, bstrVal) = SysAllocStringLen(wszData, received - 1);
-                return S_OK;
+                V_UNION(pVar, bstrVal) = SysAllocStringLen((LPWSTR)pData, received - 1);
+                res = S_OK;
+                break;
             }
             break;
         case REG_DWORD:
-            TRACE("REG_DWORD: %lx\n", *(DWORD *)wszData);
+            TRACE("REG_DWORD: %lx\n", *(DWORD *)pData);
             switch (V_VT(pVar))
             {
             case VT_EMPTY:
@@ -139,8 +152,9 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
                 /* fall through */
             case VT_I4:
             case VT_UI4:
-                V_UNION(pVar, ulVal) = *(DWORD *)wszData;
-                return S_OK;
+                V_UNION(pVar, ulVal) = *(DWORD *)pData;
+                res = S_OK;
+                break;
             }
             break;
         case REG_BINARY:
@@ -155,25 +169,29 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
                 case VT_EMPTY:
                 case VT_ARRAY | VT_UI1:
                     if (!(V_UNION(pVar, parray) = SafeArrayCreate(VT_UI1, 1, &bound)))
-                        return E_OUTOFMEMORY;
+                        res = E_OUTOFMEMORY;
+                    res = S_OK;
                     break;
                 }
 
+                if (res == E_INVALIDARG)
+                    break;
+
                 res = SafeArrayAccessData(V_UNION(pVar, parray), &pArrayElements);
                 if (FAILED(res))
-                {
-                    TRACE(" <- %lx\n", res);
-                    return res;
-                }
-                CopyMemory(pArrayElements, wszData, received);
+                    break;
+
+                CopyMemory(pArrayElements, pData, received);
                 res = SafeArrayUnaccessData(V_UNION(pVar, parray));
-                TRACE(" <- %lx\n", res);
-                return res;
+                break;
             }
         }
-        FIXME("Variant type %x not supported for regtype %lx\n", V_VT(pVar), type);
-        return E_FAIL;
+        if (res == E_INVALIDARG)
+            FIXME("Variant type %x not supported for regtype %lx\n", V_VT(pVar), type);
     }
+
+    if (pData)
+        HeapFree(GetProcessHeap(), 0, pData);
 
     TRACE("<- %lx\n", res);
     return res;
