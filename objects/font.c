@@ -1315,7 +1315,8 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
     metrics->tmMaxCharWidth     = WDPTOLP(metrics->tmMaxCharWidth);
     metrics->tmOverhang         = WDPTOLP(metrics->tmOverhang);
         ret = TRUE;
-
+#undef WDPTOLP
+#undef HDPTOLP
     TRACE("text metrics:\n"
           "    Weight = %03li\t FirstChar = %i\t AveCharWidth = %li\n"
           "    Italic = % 3i\t LastChar = %i\t\t MaxCharWidth = %li\n"
@@ -1515,8 +1516,52 @@ UINT WINAPI GetOutlineTextMetricsW(
     TRACE("(%d,%d,%p)\n", hdc, cbData, lpOTM);
     if(!dc) return 0;
 
-    if(dc->gdiFont)
+    if(dc->gdiFont) {
         ret = WineEngGetOutlineTextMetrics(dc->gdiFont, cbData, lpOTM);
+	if(ret && ret <= cbData) {
+#define WDPTOLP(x) ((x<0)?					\
+		(-abs(INTERNAL_XDSTOWS(dc, (x)))):		\
+		(abs(INTERNAL_XDSTOWS(dc, (x)))))
+#define HDPTOLP(y) ((y<0)?					\
+		(-abs(INTERNAL_YDSTOWS(dc, (y)))):		\
+		(abs(INTERNAL_YDSTOWS(dc, (y)))))
+
+	    lpOTM->otmTextMetrics.tmHeight           = HDPTOLP(lpOTM->otmTextMetrics.tmHeight);
+	    lpOTM->otmTextMetrics.tmAscent           = HDPTOLP(lpOTM->otmTextMetrics.tmAscent);
+	    lpOTM->otmTextMetrics.tmDescent          = HDPTOLP(lpOTM->otmTextMetrics.tmDescent);
+	    lpOTM->otmTextMetrics.tmInternalLeading  = HDPTOLP(lpOTM->otmTextMetrics.tmInternalLeading);
+	    lpOTM->otmTextMetrics.tmExternalLeading  = HDPTOLP(lpOTM->otmTextMetrics.tmExternalLeading);
+	    lpOTM->otmTextMetrics.tmAveCharWidth     = WDPTOLP(lpOTM->otmTextMetrics.tmAveCharWidth);
+	    lpOTM->otmTextMetrics.tmMaxCharWidth     = WDPTOLP(lpOTM->otmTextMetrics.tmMaxCharWidth);
+	    lpOTM->otmTextMetrics.tmOverhang         = WDPTOLP(lpOTM->otmTextMetrics.tmOverhang);
+	    lpOTM->otmAscent = HDPTOLP(lpOTM->otmAscent);
+	    lpOTM->otmDescent = HDPTOLP(lpOTM->otmDescent);
+	    lpOTM->otmLineGap = HDPTOLP(lpOTM->otmLineGap);
+	    lpOTM->otmsCapEmHeight = HDPTOLP(lpOTM->otmsCapEmHeight);
+	    lpOTM->otmsXHeight = HDPTOLP(lpOTM->otmsXHeight);
+	    lpOTM->otmrcFontBox.top = HDPTOLP(lpOTM->otmrcFontBox.top);
+	    lpOTM->otmrcFontBox.bottom = HDPTOLP(lpOTM->otmrcFontBox.bottom);
+	    lpOTM->otmrcFontBox.left = WDPTOLP(lpOTM->otmrcFontBox.left);
+	    lpOTM->otmrcFontBox.right = WDPTOLP(lpOTM->otmrcFontBox.right);
+	    lpOTM->otmMacAscent = HDPTOLP(lpOTM->otmMacAscent);
+	    lpOTM->otmMacDescent = HDPTOLP(lpOTM->otmMacDescent);
+	    lpOTM->otmMacLineGap = HDPTOLP(lpOTM->otmMacLineGap);
+	    lpOTM->otmptSubscriptSize.x = WDPTOLP(lpOTM->otmptSubscriptSize.x);
+	    lpOTM->otmptSubscriptSize.y = HDPTOLP(lpOTM->otmptSubscriptSize.y);
+	    lpOTM->otmptSubscriptOffset.x = WDPTOLP(lpOTM->otmptSubscriptOffset.x);
+	    lpOTM->otmptSubscriptOffset.y = HDPTOLP(lpOTM->otmptSubscriptOffset.y);
+	    lpOTM->otmptSuperscriptSize.x = WDPTOLP(lpOTM->otmptSuperscriptSize.x);
+	    lpOTM->otmptSuperscriptSize.y = HDPTOLP(lpOTM->otmptSuperscriptSize.y);
+	    lpOTM->otmptSuperscriptOffset.x = WDPTOLP(lpOTM->otmptSuperscriptOffset.x);
+	    lpOTM->otmptSuperscriptOffset.y = HDPTOLP(lpOTM->otmptSuperscriptOffset.y);
+	    lpOTM->otmsStrikeoutSize = HDPTOLP(lpOTM->otmsStrikeoutSize);
+	    lpOTM->otmsStrikeoutPosition = HDPTOLP(lpOTM->otmsStrikeoutPosition);
+	    lpOTM->otmsUnderscoreSize = HDPTOLP(lpOTM->otmsUnderscoreSize);
+	    lpOTM->otmsUnderscorePosition = HDPTOLP(lpOTM->otmsUnderscorePosition);
+#undef WDPTOLP
+#undef HDPTOLP
+	}
+    }
 
     else { /* This stuff was in GetOutlineTextMetricsA, I've moved it here
 	      but really this should just be a return 0. */
