@@ -4853,7 +4853,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixma
     HGLOBAL hPackedDIB = 0;
 
     /* Allocates an HBITMAP which references the Pixmap passed to us */
-    hBmp = X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(pixmap);
+    hBmp = X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(hdc, pixmap);
     if (!hBmp)
     {
         TRACE("\tCould not create bitmap header for Pixmap\n");

@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-const struct tagDC_FUNCS *X11DRV_DC_Funcs = NULL;  /* hack */
-
 Display *gdi_display;  /* display to use for all GDI functions */
 
 /* a few dynamic device caps */
@@ -92,14 +90,11 @@ BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR dev
 {
     X11DRV_PDEVICE *physDev;
 
-    if (!X11DRV_DC_Funcs) X11DRV_DC_Funcs = dc->funcs;  /* hack */
-
     physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) );
     if (!physDev) return FALSE;
 
     *pdev = physDev;
     physDev->hdc = dc->hSelf;
-    physDev->dc  = dc;  /* FIXME */
 
     if (GetObjectType( dc->hSelf ) == OBJ_MEMDC)
     {

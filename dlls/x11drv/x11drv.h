@@ -86,7 +86,6 @@ typedef struct tagXRENDERINFO *XRENDERINFO;
 typedef struct
 {
     HDC           hdc;
-    struct tagDC *dc;          /* direct pointer to DC, should go away */
     GC            gc;          /* X Window GC */
     Drawable      drawable;
     POINT         org;          /* DC origin relative to drawable */
@@ -200,12 +199,10 @@ struct tagBITMAPOBJ;
 extern int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
 extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth );
-extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap);
+extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(HDC hdc, Pixmap pixmap);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap);
-extern HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap);
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
-extern Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc );
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp );
 

@@ -37,8 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 Pixmap BITMAP_stock_pixmap;   /* pixmap for the default stock bitmap */
 
-extern const struct tagDC_FUNCS *X11DRV_DC_Funcs;  /* hack */
-
 /***********************************************************************
  *           X11DRV_BITMAP_Init
  */
@@ -440,9 +438,10 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
  *  Note: This function makes the bitmap an owner of the Pixmap so subsequently
  *  calling DeleteObject on this will free the Pixmap as well.
  */
-HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
+HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(HDC hdc, Pixmap pixmap)
 {
-    HBITMAP hBmp = 0;
+    HDC hdcMem;
+    HBITMAP hBmp = 0, old;
     BITMAPOBJ *pBmp = NULL;
     Window root;
     int x,y;               /* Unused */
@@ -465,87 +464,22 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
      */
     hBmp = CreateBitmap( width, height, 1, depth, NULL );
 
+    /* force bitmap to be owned by a screen DC */
+    hdcMem = CreateCompatibleDC( hdc );
+    old = SelectObject( hdcMem, hBmp );
+
     pBmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
 
-    pBmp->funcs = X11DRV_DC_Funcs;
+    if (pBmp->physBitmap) XFreePixmap( gdi_display, (Pixmap)pBmp->physBitmap );
     pBmp->physBitmap = (void *)pixmap;
     GDI_ReleaseObj( hBmp );
+
+    SelectObject( hdcMem, old );
+    DeleteDC( hdcMem );
 
 END:
     TRACE("\tReturning HBITMAP %p\n", hBmp);
     return hBmp;
-}
-
-
-/**************************************************************************
- *	        X11DRV_BITMAP_CreateBitmapFromPixmap
- *
- *  Allocates an HBITMAP and copies the Pixmap data into it.
- *  If bDeletePixmap is TRUE, the Pixmap passed in is deleted after the conversion.
- */
-HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap)
-{
-    HBITMAP hBmp = 0, hBmpCopy = 0;
-    BITMAPOBJ *pBmp = NULL;
-    unsigned int width, height;
-
-    /* Allocate an HBITMAP which references the Pixmap passed to us */
-    hBmp = X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(pixmap);
-    if (!hBmp)
-    {
-        TRACE("\tCould not create bitmap header for Pixmap\n");
-        goto END;
-    }
-
-    /* Get the bitmap dimensions */
-    width = pBmp->bitmap.bmWidth;
-    height = pBmp->bitmap.bmHeight;
-
-    hBmpCopy = (HBITMAP)CopyImage(hBmp, IMAGE_BITMAP, width, height, LR_CREATEDIBSECTION);
-
-    /* We can now get rid of the HBITMAP wrapper we created earlier.
-     * Note: Simply calling DeleteObject will free the embedded Pixmap as well.
-     */
-    if (!bDeletePixmap)
-    {
-        /* Manually clear the bitmap internals to prevent the Pixmap
-         * from being deleted by DeleteObject.
-         */
-        pBmp->physBitmap = NULL;
-        pBmp->funcs = NULL;
-    }
-    DeleteObject(hBmp);
-
-END:
-    TRACE("\tReturning HBITMAP %p\n", hBmpCopy);
-    return hBmpCopy;
-}
-
-
-/**************************************************************************
- *	           X11DRV_BITMAP_CreatePixmapFromBitmap
- *
- *    Creates a Pixmap from a bitmap
- */
-Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc )
-{
-    HGLOBAL hPackedDIB = 0;
-    Pixmap pixmap = 0;
-
-    /*
-     * Create a packed DIB from the bitmap passed to us.
-     * A packed DIB contains a BITMAPINFO structure followed immediately by
-     * an optional color palette and the pixel data.
-     */
-    hPackedDIB = X11DRV_DIB_CreateDIBFromBitmap(hdc, hBmp);
-
-    /* Create a Pixmap from the packed DIB */
-    pixmap = X11DRV_DIB_CreatePixmapFromDIB( hPackedDIB, hdc );
-
-    /* Free the temporary packed DIB */
-    GlobalFree(hPackedDIB);
-
-    return pixmap;
 }
 
 
