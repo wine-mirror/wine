@@ -1,4 +1,4 @@
-@ stub CertAddCRLContextToStore
+@ stdcall CertAddCRLContextToStore(long ptr long ptr)
 @ stub CertAddCTLContextToStore
 @ stub CertAddCertificateContextToStore
 @ stub CertAddEncodedCRLToStore
@@ -38,7 +38,7 @@
 @ stub CertFindExtension
 @ stub CertFindRDNAttr
 @ stub CertFindSubjectInCTL
-@ stub CertFreeCRLContext
+@ stdcall CertFreeCRLContext(ptr)
 @ stub CertFreeCTLContext
 @ stub CertFreeCertificateChain
 @ stub CertFreeCertificateChainEngine

@@ -25,11 +25,47 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwEncodingType,
- HCRYPTPROV hCryptProv, DWORD dwFlags, const void *pvPara)
+#define WINE_CRYPTCERTSTORE_MAGIC 0x74726563
+
+typedef struct WINE_CRYPTCERTSTORE
 {
-  FIXME("(%s, %ld, %ld, %ld, %p), stub.\n", debugstr_a(lpszStoreProvider), dwEncodingType, hCryptProv, dwFlags, pvPara);
-  return (HCERTSTORE)1;
+    DWORD dwMagic;
+} WINECRYPT_CERTSTORE;
+
+
+/*
+ * CertOpenStore
+ *
+ * System Store CA is
+ *  HKLM\\Software\\Microsoft\\SystemCertificates\\CA\\
+ *    Certificates\\<compressed guid>
+ *         "Blob" = REG_BINARY
+ *    CRLs\\<compressed guid>
+ *         "Blob" = REG_BINARY
+ *    CTLs\\<compressed guid>
+ *         "Blob" = REG_BINARY
+ */
+HCERTSTORE WINAPI CertOpenStore( LPCSTR lpszStoreProvider,
+              DWORD dwMsgAndCertEncodingType, HCRYPTPROV hCryptProv, 
+              DWORD dwFlags, const void* pvPara )
+{
+    WINECRYPT_CERTSTORE *hcs;
+
+    FIXME("%s %08lx %08lx %08lx %p stub\n", debugstr_a(lpszStoreProvider),
+          dwMsgAndCertEncodingType, hCryptProv, dwFlags, pvPara);
+
+    if( lpszStoreProvider == (LPCSTR) 0x0009 )
+    {
+        FIXME("pvPara = %s\n", debugstr_a( (LPCSTR) pvPara ) );
+    }
+
+    hcs = HeapAlloc( GetProcessHeap(), 0, sizeof (WINECRYPT_CERTSTORE) );
+    if( !hcs )
+        return NULL;
+
+    hcs->dwMagic = WINE_CRYPTCERTSTORE_MAGIC;
+
+    return (HCERTSTORE) hcs;
 }
 
 HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV hProv,
@@ -63,13 +99,55 @@ BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
 PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
   const BYTE* pbCrlEncoded, DWORD cbCrlEncoded)
 {
-    FIXME("%08lx %p %08lx\n", dwCertEncodingType, pbCrlEncoded, cbCrlEncoded);
-    return NULL;
+    PCRL_CONTEXT pcrl;
+    BYTE* data;
+
+    TRACE("%08lx %p %08lx\n", dwCertEncodingType, pbCrlEncoded, cbCrlEncoded);
+
+    pcrl = HeapAlloc( GetProcessHeap(), 0, sizeof (CRL_CONTEXT) );
+    if( !pcrl )
+        return NULL;
+
+    data = HeapAlloc( GetProcessHeap(), 0, cbCrlEncoded );
+    if( !data )
+    {
+        HeapFree( GetProcessHeap(), 0, pcrl );
+        return NULL;
+    }
+
+    pcrl->dwCertEncodingType = dwCertEncodingType;
+    pcrl->pbCrlEncoded       = data;
+    pcrl->cbCrlEncoded       = cbCrlEncoded;
+    pcrl->pCrlInfo           = NULL;
+    pcrl->hCertStore         = 0;
+
+    return pcrl;
+}
+
+BOOL WINAPI CertAddCRLContextToStore( HCERTSTORE hCertStore,
+             PCCRL_CONTEXT pCrlContext, DWORD dwAddDisposition,
+             PCCRL_CONTEXT* ppStoreContext )
+{
+    FIXME("%p %p %08lx %p\n", hCertStore, pCrlContext,
+          dwAddDisposition, ppStoreContext);
+    return TRUE;
+}
+
+BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext)
+{
+    FIXME("%p\n", pCrlContext );
+
+    return TRUE;
 }
 
 BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags )
 {
     FIXME("%p %08lx\n", hCertStore, dwFlags );
+    if( ! hCertStore )
+        return FALSE;
+
+    HeapFree( GetProcessHeap(), 0, hCertStore );
+
     return TRUE;
 }
 
