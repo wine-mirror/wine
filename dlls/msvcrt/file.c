@@ -204,11 +204,14 @@ void msvcrt_init_io(void)
 {
   int i;
   memset(MSVCRT__iob,0,3*sizeof(MSVCRT_FILE));
-  MSVCRT_handles[0] = GetStdHandle(STD_INPUT_HANDLE);
+  DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_INPUT_HANDLE),
+    GetCurrentProcess(), &MSVCRT_handles[0], 0, FALSE, DUPLICATE_SAME_ACCESS);
   MSVCRT_flags[0] = MSVCRT__iob[0]._flag = MSVCRT__IOREAD;
-  MSVCRT_handles[1] = GetStdHandle(STD_OUTPUT_HANDLE);
+  DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_OUTPUT_HANDLE),
+    GetCurrentProcess(), &MSVCRT_handles[1], 0, FALSE, DUPLICATE_SAME_ACCESS);
   MSVCRT_flags[1] = MSVCRT__iob[1]._flag = MSVCRT__IOWRT;
-  MSVCRT_handles[2] = GetStdHandle(STD_ERROR_HANDLE);
+  DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_ERROR_HANDLE),
+    GetCurrentProcess(), &MSVCRT_handles[2], 0, FALSE, DUPLICATE_SAME_ACCESS);
   MSVCRT_flags[2] = MSVCRT__iob[2]._flag = MSVCRT__IOWRT;
 
   TRACE(":handles (%p)(%p)(%p)\n",MSVCRT_handles[0],

@@ -47,7 +47,8 @@ void msvcrt_init_console(void)
 {
   TRACE(":Opening console handles\n");
 
-  MSVCRT_console_in = GetStdHandle(STD_INPUT_HANDLE);
+  DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_INPUT_HANDLE),
+    GetCurrentProcess(), &MSVCRT_console_in, 0, FALSE, DUPLICATE_SAME_ACCESS);
 
   /* FIXME: Should be initialised with:
    * CreateFileA("CONIN$", GENERIC_READ, FILE_SHARE_READ,
