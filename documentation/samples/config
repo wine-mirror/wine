@@ -80,6 +80,9 @@ WINE REGISTRY Version 2
 ; Be careful here, wrong DllOverrides settings have the potential
 ; to pretty much kill your setup.
 [DllOverrides]
+"rpcrt4"       = "builtin, native"
+"oleaut32"     = "builtin, native"
+"ole32"        = "builtin, native"
 "commdlg"      = "builtin, native"
 "comdlg32"     = "builtin, native"
 "ver"          = "builtin, native"
@@ -102,7 +105,6 @@ WINE REGISTRY Version 2
 "dsound"       = "builtin, native"
 "opengl32"     = "builtin, native"
 "msvcrt"       = "native, builtin"
-"rpcrt4"       = "native, builtin"
 "msvideo"      = "builtin, native"
 "msvfw32"      = "builtin, native"
 "mcicda.drv"   = "builtin, native"
