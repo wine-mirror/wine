@@ -43,6 +43,17 @@ sub set_find_align_callback {
 }
 
 ########################################################################
+# set_find_kind_callback
+#
+sub set_find_kind_callback {
+    my $self = shift;
+
+    my $find_kind = \${$self->{FIND_KIND}};
+
+    $$find_kind = shift;
+}
+
+########################################################################
 # set_find_size_callback
 #
 sub set_find_size_callback {
@@ -61,6 +72,10 @@ sub kind {
     local $_ = shift;
 
     if(defined($_)) { $$kind = $_; $$dirty = 1; }
+
+    if (!defined($$kind)) {
+	$self->_refresh();
+    }
 
     return $$kind;
 }
@@ -219,6 +234,7 @@ sub _refresh {
     return if !$$dirty;
 
     my $find_align = \${$self->{FIND_ALIGN}};
+    my $find_kind = \${$self->{FIND_KIND}};
     my $find_size = \${$self->{FIND_SIZE}};
 
     my $align = \${$self->{ALIGN}};
@@ -230,6 +246,7 @@ sub _refresh {
     my $field_sizes = \${$self->{FIELD_SIZES}};
 
     my $pack = $self->pack;
+    $pack = 4 if !defined($pack);
 
     my $max_field_align = 0;
 
@@ -256,6 +273,10 @@ sub _refresh {
 	    if ($offset % $align != 0) {
 		$offset = (int($offset / $align) + 1) * $align;
 	    }
+	}
+
+	if ($$kind !~ /^(?:struct|union)$/) {
+	    $$kind = &$$find_kind($type_name) || "";
 	}
 
 	if (!defined($size)) {

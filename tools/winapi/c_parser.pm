@@ -1186,8 +1186,8 @@ sub parse_c_function {
 
     my $match;
     while($self->_parse_c('(?:const|inline|extern(?:\s+\"C\")?|EXTERN_C|static|volatile|' .
-			  'signed(?=\s+__int64\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
-			  'unsigned(?=\s+__int64\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'signed(?=\s+__int(?:8|16|32|64)\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'unsigned(?=\s+__int(?:8|16|32|64)\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
 			  'long(?=\s+double\b|\s+int\b|\s+long\b))(?=\b)',
 			  \$_, \$line, \$column, \$match))
     {
@@ -1933,6 +1933,7 @@ sub parse_c_variable {
     my $begin_column = $column + 1;
 
     my $linkage = "";
+    my $sign = "";
     my $type = "";
     my $name = "";
 
@@ -1940,14 +1941,22 @@ sub parse_c_variable {
 
     my $match;
     while($self->_parse_c('(?:const|inline|extern(?:\s+\"C\")?|EXTERN_C|static|volatile|' .
-			  'signed(?=\s+__int64\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
-			  'unsigned(?=\s+__int64\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'signed(?=\s+__int(?:8|16|32|64)\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
+			  'unsigned(?=\s+__int(?:8|16|32|64)\b|\s+char\b|\s+int\b|\s+long(?:\s+long)?\b|\s+short\b)|' .
 			  'long(?=\s+double\b|\s+int\b|\s+long\b))(?=\b)',
 			  \$_, \$line, \$column, \$match))
     {
-	if($match =~ /^extern|static$/) {
-	    if(!$linkage) {
+	if ($match =~ /^extern|static$/) {
+	    if (!$linkage) {
 		$linkage = $match;
+	    } else {
+		$self->_parse_c_warning($_, $line, $column, "repeated linkage (ignored): $match");
+	    }
+	} elsif ($match =~ /^signed|unsigned$/) {
+	    if (!$sign) {
+		$sign = "$match ";
+	    } else {
+		$self->_parse_c_warning($_, $line, $column, "repeated sign (ignored): $match");
 	    }
 	}
     }
@@ -1970,8 +1979,8 @@ sub parse_c_variable {
 	}
 
 	$finished = 1;
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+(?:\s*\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
-	$type = $1;
+    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
+	$type = "$sign$1";
 	$name = $2;
 
 	if (defined($3)) {
@@ -1989,13 +1998,8 @@ sub parse_c_variable {
 	$type = $self->_format_c_type($type);
 
 	$finished = 1;
-    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+(?:\s*\*)*\s*\(\s*(?:\*\s*)*)(\w+)\s*(\)\(.*?\))$//s) {
-	$type = $self->_format_c_type("$1$3");
-	$name = $2;
-
-	$finished = 1;
-
-	$type = $self->_format_c_type("$1$3");
+    } elsif(s/^((?:enum\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?(?:\s*\*)*)\s*(\w+)\s*(\)\s*\(.*?\))$//s) {
+	$type = $self->_format_c_type("$sign$1$3");
 	$name = $2;
 
 	$finished = 1;

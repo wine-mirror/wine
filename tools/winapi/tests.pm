@@ -135,6 +135,46 @@ sub get_test_dirs {
     return sort(keys(%test_dirs));
 }
 
+sub get_sections {
+    my $self = shift;
+
+    my $tests = \%{$self->{TESTS}};
+
+    my $test_dir = shift;
+    my $test = shift;
+
+    my %sections = ();   
+    if (defined($test_dir)) { 
+	if (defined($test)) {
+	    foreach my $section (sort(keys(%{$$tests{$test_dir}{$test}}))) {
+		$sections{$section}++;
+	    }
+	} else {
+	    foreach my $test (sort(keys(%{$$tests{$test_dir}}))) {
+		foreach my $section (sort(keys(%{$$tests{$test_dir}{$test}}))) {
+		    $sections{$section}++;
+		}
+	    }
+	}
+    } elsif (defined($test)) {
+	foreach my $test_dir (sort(keys(%$tests))) {
+	    foreach my $section (sort(keys(%{$$tests{$test_dir}{$test}}))) {
+		$sections{$section}++;
+	    }
+	}
+    } else {
+	foreach my $test_dir (sort(keys(%$tests))) {
+	    foreach my $test (sort(keys(%{$$tests{$test_dir}}))) {
+		foreach my $section (sort(keys(%{$$tests{$test_dir}{$test}}))) {
+		    $sections{$section}++;
+		}
+	    }
+	}
+    }
+
+    return sort(keys(%sections));
+}
+
 sub get_section {
     my $self = shift;
 
@@ -144,7 +184,12 @@ sub get_section {
     my $test = shift;
     my $section = shift;
 
-    return @{$$tests{$test_dir}{$test}{$section}};
+    my $array = $$tests{$test_dir}{$test}{$section};
+    if (defined($array)) {
+	return @$array;
+    } else {
+	return ();
+    }
 }
 
 1;
