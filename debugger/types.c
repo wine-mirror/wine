@@ -166,7 +166,7 @@ DEBUG_InitBasic(int type, char * name, int size, int b_signed,
 	  hash = NR_TYPE_HASH;
 	}
 
-      dt->type = BASIC;
+      dt->type = DT_BASIC;
       dt->name = name;
       dt->next = type_hash_table[hash];
       type_hash_table[hash] = dt;
@@ -242,7 +242,7 @@ DEBUG_NewDataType(enum debug_type xtype, const char * typename)
 	    {
 	      dt->name = NULL;
 	    }
-	  if( xtype == POINTER )
+	  if( xtype == DT_POINTER )
 	    {
 	      dt->next = pointer_types;
 	      pointer_types = dt;
@@ -267,7 +267,7 @@ DEBUG_FindOrMakePointerType(struct datatype * reftype)
     {
       for( dt = pointer_types; dt; dt = dt->next )
 	{
-	  if( dt->type != POINTER )
+	  if( dt->type != DT_POINTER )
 	    {
 	      continue;
 	    }
@@ -285,7 +285,7 @@ DEBUG_FindOrMakePointerType(struct datatype * reftype)
       
       if( dt != NULL )
 	{
-	  dt->type = POINTER;
+	  dt->type = DT_POINTER;
 	  dt->un.pointer.pointsto = reftype;
 	  dt->next = pointer_types;
 	  pointer_types = dt;
@@ -336,7 +336,7 @@ DEBUG_InitTypes()
   DEBUG_InitBasic(BASIC_CMPLX_LONG_DBL,"complex long double",24,0,NULL);
   DEBUG_InitBasic(BASIC_VOID,"void",0,0,NULL);
 
-  DEBUG_TypeString = DEBUG_NewDataType(POINTER, NULL);
+  DEBUG_TypeString = DEBUG_NewDataType(DT_POINTER, NULL);
   DEBUG_SetPointerType(DEBUG_TypeString, chartype);
 
   /*
@@ -361,7 +361,7 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
 
   switch(addr->type->type)
     {
-    case BASIC:
+    case DT_BASIC:
       if (!DBG_CHECK_READ_PTR( &address,  addr->type->un.basic.basic_size)) 
 	{
 	  return 0;
@@ -389,11 +389,11 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
 	  def_format = "%d";
 	}
       break;
-    case POINTER:
+    case DT_POINTER:
       if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
       rtn = (unsigned int)  *((unsigned char **)addr->off);
       type2 = addr->type->un.pointer.pointsto;
-      if( type2->type == BASIC && type2->un.basic.basic_size == 1 )
+      if( type2->type == DT_BASIC && type2->un.basic.basic_size == 1 )
 	{
 	  def_format = "\"%s\"";
 	  break;
@@ -403,13 +403,13 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
 	  def_format = "0x%8.8x";
 	}
       break;
-    case ARRAY:
-    case STRUCT:
+    case DT_ARRAY:
+    case DT_STRUCT:
       if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
       rtn = (unsigned int)  *((unsigned char **)addr->off);
       def_format = "0x%8.8x";
       break;
-    case ENUM:
+    case DT_ENUM:
       if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
       rtn = (unsigned int)  *((unsigned char **)addr->off);
       for(e = addr->type->un.enumeration.members; e; e = e->next )
@@ -450,7 +450,7 @@ DEBUG_TypeDerefPointer(DBG_ADDR * addr, struct datatype ** newtype)
   /*
    * Make sure that this really makes sense.
    */
-  if( addr->type->type != POINTER )
+  if( addr->type->type != DT_POINTER )
     {
       *newtype = NULL;
       return 0;
@@ -470,7 +470,7 @@ DEBUG_FindStructElement(DBG_ADDR * addr, const char * ele_name, int * tmpbuf)
   /*
    * Make sure that this really makes sense.
    */
-  if( addr->type->type != STRUCT )
+  if( addr->type->type != DT_STRUCT )
     {
       addr->type = NULL;
       return FALSE;
@@ -497,7 +497,7 @@ DEBUG_FindStructElement(DBG_ADDR * addr, const char * ele_name, int * tmpbuf)
 	       * Check to see whether the basic type is signed or not, and if so,
 	       * we need to sign extend the number.
 	       */
-	      if( m->type->type == BASIC && m->type->un.basic.b_signed != 0
+	      if( m->type->type == DT_BASIC && m->type->un.basic.b_signed != 0
 		  && (*tmpbuf & (1 << (m->size - 1))) != 0 )
 		{
 		  *tmpbuf |= mask;
@@ -518,7 +518,7 @@ DEBUG_FindStructElement(DBG_ADDR * addr, const char * ele_name, int * tmpbuf)
 int
 DEBUG_SetStructSize(struct datatype * dt, int size)
 {
-  assert(dt->type == STRUCT);
+  assert(dt->type == DT_STRUCT);
 
   if( dt->un.structure.members != NULL )
     {
@@ -535,9 +535,9 @@ int
 DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2)
 {
 
-  assert( dt->type == dt2->type && ((dt->type == STRUCT) || (dt->type == ENUM)));
+  assert( dt->type == dt2->type && ((dt->type == DT_STRUCT) || (dt->type == DT_ENUM)));
 
-  if( dt->type == STRUCT )
+  if( dt->type == DT_STRUCT )
     {
       dt->un.structure.members = dt2->un.structure.members;
     }
@@ -557,7 +557,7 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
   struct member * last;
   struct en_values * e;
 
-  if( dt->type == STRUCT )
+  if( dt->type == DT_STRUCT )
     {
       for(last = dt->un.structure.members; last; last = last->next)
 	{
@@ -595,14 +595,14 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
        * If the base type is bitfield, then adjust the offsets here so that we
        * are able to look things up without lots of falter-all.
        */
-      if( type->type == BITFIELD )
+      if( type->type == DT_BITFIELD )
 	{
 	  m->offset += m->type->un.bitfield.bitoff;
 	  m->size = m->type->un.bitfield.nbits;
 	  m->type = m->type->un.bitfield.basetype;
 	}
     }
-  else if( dt->type == ENUM )
+  else if( dt->type == DT_ENUM )
     {
       e = (struct en_values *) xmalloc(sizeof(struct en_values));
       if( e == FALSE )
@@ -625,7 +625,7 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
 struct datatype * 
 DEBUG_GetPointerType(struct datatype * dt)
 {
-  if( dt->type == POINTER )
+  if( dt->type == DT_POINTER )
     {
       return dt->un.pointer.pointsto;
     }
@@ -638,10 +638,10 @@ DEBUG_SetPointerType(struct datatype * dt, struct datatype * dt2)
 {
   switch(dt->type)
     {
-    case POINTER:
+    case DT_POINTER:
       dt->un.pointer.pointsto = dt2;
       break;
-    case FUNC:
+    case DT_FUNC:
       dt->un.funct.rettype = dt2;
       break;
     default:
@@ -654,7 +654,7 @@ DEBUG_SetPointerType(struct datatype * dt, struct datatype * dt2)
 int
 DEBUG_SetArrayParams(struct datatype * dt, int min, int max, struct datatype * dt2)
 {
-  assert(dt->type == ARRAY);
+  assert(dt->type == DT_ARRAY);
   dt->un.array.start = min;
   dt->un.array.end   = max;
   dt->un.array.basictype = dt2;
@@ -666,7 +666,7 @@ int
 DEBUG_SetBitfieldParams(struct datatype * dt, int offset, int nbits, 
 			struct datatype * dt2)
 {
-  assert(dt->type == BITFIELD);
+  assert(dt->type == DT_BITFIELD);
   dt->un.bitfield.bitoff   = offset;
   dt->un.bitfield.nbits    = nbits;
   dt->un.bitfield.basetype = dt2;
@@ -683,26 +683,26 @@ int DEBUG_GetObjectSize(struct datatype * dt)
 
   switch(dt->type)
     {
-    case BASIC:
+    case DT_BASIC:
       return dt->un.basic.basic_size;
-    case POINTER:
+    case DT_POINTER:
       return sizeof(int *);
-    case STRUCT:
+    case DT_STRUCT:
       return dt->un.structure.size;
-    case ENUM:
+    case DT_ENUM:
       return sizeof(int);
-    case ARRAY:
+    case DT_ARRAY:
       return (dt->un.array.end - dt->un.array.start) 
 	* DEBUG_GetObjectSize(dt->un.array.basictype);
-    case BITFIELD:
+    case DT_BITFIELD:
       /*
        * Bitfields have to be handled seperately later on
        * when we insert the element into the structure.
        */
       return 0;
-    case TYPEDEF:
-    case FUNC:
-    case CONST:
+    case DT_TYPEDEF:
+    case DT_FUNC:
+    case DT_CONST:
       assert(FALSE);
     }
   return 0;
@@ -716,7 +716,7 @@ DEBUG_ArrayIndex(DBG_ADDR * addr, DBG_ADDR * result, int index)
   /*
    * Make sure that this really makes sense.
    */
-  if( addr->type->type == POINTER )
+  if( addr->type->type == DT_POINTER )
     {
       /*
        * Get the base type, so we know how much to index by.
@@ -725,7 +725,7 @@ DEBUG_ArrayIndex(DBG_ADDR * addr, DBG_ADDR * result, int index)
       result->type = addr->type->un.pointer.pointsto;
       result->off = (*(unsigned int*) (addr->off)) + size * index;
     }
-  else if (addr->type->type == ARRAY)
+  else if (addr->type->type == DT_ARRAY)
     {
       size = DEBUG_GetObjectSize(addr->type->un.array.basictype);
       result->type = addr->type->un.array.basictype;
@@ -784,13 +784,13 @@ DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level )
 
   switch(addr->type->type)
     {
-    case BASIC:
-    case ENUM:
-    case CONST:
-    case POINTER:
+    case DT_BASIC:
+    case DT_ENUM:
+    case DT_CONST:
+    case DT_POINTER:
       DEBUG_PrintBasic(addr, 1, format);
       break;
-    case STRUCT:
+    case DT_STRUCT:
       DEBUG_nchar += fprintf(stderr, "{");
       for(m = addr->type->un.structure.members; m; m = m->next)
 	{
@@ -811,7 +811,7 @@ DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level )
 	}
       DEBUG_nchar += fprintf(stderr, "}");
       break;
-    case ARRAY:
+    case DT_ARRAY:
       /*
        * Loop over all of the entries, printing stuff as we go.
        */
@@ -893,15 +893,15 @@ DEBUG_DumpTypes()
 	    }
 	  switch(dt->type)
 	    {
-	    case BASIC:
+	    case DT_BASIC:
 	      fprintf(stderr, "0x%p - BASIC(%s)\n",
 		      dt, name);
 	      break;
-	    case POINTER:
+	    case DT_POINTER:
 	      fprintf(stderr, "0x%p - POINTER(%s)(%p)\n",
 		      dt, name, dt->un.pointer.pointsto);
 	      break;
-	    case STRUCT:
+	    case DT_STRUCT:
 	      member_name = "none";
 	      nm = 0;
 	      if( dt->un.structure.members != NULL
@@ -916,23 +916,23 @@ DEBUG_DumpTypes()
 	      fprintf(stderr, "0x%p - STRUCT(%s) %d %d %s\n", dt, name,
 		      dt->un.structure.size, nm, member_name);
 	      break;
-	    case ARRAY:
+	    case DT_ARRAY:
 	      fprintf(stderr, "0x%p - ARRAY(%s)(%p)\n",
 		      dt, name, dt->un.array.basictype);
 	      break;
-	    case ENUM:
+	    case DT_ENUM:
 	      fprintf(stderr, "0x%p - ENUM(%s)\n",
 		      dt, name);
 	      break;
-	    case BITFIELD:
+	    case DT_BITFIELD:
 	      fprintf(stderr, "0x%p - BITFIELD(%s)\n", dt, name);
 	      break;
-	    case FUNC:
+	    case DT_FUNC:
 	      fprintf(stderr, "0x%p - FUNC(%s)(%p)\n",
 		      dt, name, dt->un.funct.rettype);
 	      break;
-	    case CONST:
-	    case TYPEDEF:
+	    case DT_CONST:
+	    case DT_TYPEDEF:
 	      fprintf(stderr, "What???\n");
 	      break;
 	    }
@@ -984,31 +984,31 @@ DEBUG_PrintTypeCast(struct datatype * dt)
 
   switch(dt->type)
     {
-    case BASIC:
+    case DT_BASIC:
       fprintf(stderr, "%s", name);
       break;
-    case POINTER:
+    case DT_POINTER:
       DEBUG_PrintTypeCast(dt->un.pointer.pointsto);
       fprintf(stderr, "*");
       break;
-    case STRUCT:
+    case DT_STRUCT:
       fprintf(stderr, "struct %s", name);
       break;
-    case ARRAY:
+    case DT_ARRAY:
       fprintf(stderr, "%s[]", name);
       break;
-    case ENUM:
+    case DT_ENUM:
       fprintf(stderr, "enum %s", name);
       break;
-    case BITFIELD:
+    case DT_BITFIELD:
       fprintf(stderr, "unsigned %s", name);
       break;
-    case FUNC:
+    case DT_FUNC:
       DEBUG_PrintTypeCast(dt->un.funct.rettype);
       fprintf(stderr, "(*%s)()", name);
       break;
-    case CONST:
-    case TYPEDEF:
+    case DT_CONST:
+    case DT_TYPEDEF:
       fprintf(stderr, "What???\n");
       break;
     }

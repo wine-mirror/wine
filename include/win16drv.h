@@ -216,8 +216,8 @@ extern BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                                   const INT32 *lpDx );
 extern BOOL32 WIN16DRV_LineTo( DC *dc, INT32 x, INT32 y );
 extern BOOL32 WIN16DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt);
-extern BOOL32 WIN16DRV_Polygon(DC *dc, LPPOINT32 pt, INT32 count );
-extern BOOL32 WIN16DRV_Polyline(DC *dc, LPPOINT32 pt, INT32 count );
+extern BOOL32 WIN16DRV_Polygon(DC *dc, const POINT32* pt, INT32 count );
+extern BOOL32 WIN16DRV_Polyline(DC *dc, const POINT32* pt, INT32 count );
 extern BOOL32 WIN16DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom);
 extern HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle );
 extern BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,

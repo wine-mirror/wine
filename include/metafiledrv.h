@@ -63,9 +63,9 @@ extern BOOL32 MFDRV_RoundRect( struct tagDC *dc, INT32 left, INT32 top,
 			       INT32 right, INT32 bottom, INT32 ell_width,
 			       INT32 ell_height );
 extern COLORREF MFDRV_SetPixel( struct tagDC *dc, INT32 x, INT32 y, COLORREF color );
-extern BOOL32 MFDRV_Polyline( struct tagDC *dc, const LPPOINT32 pt,INT32 count);
-extern BOOL32 MFDRV_Polygon( struct tagDC *dc, LPPOINT32 pt, INT32 count );
-extern BOOL32 MFDRV_PolyPolygon( struct tagDC *dc, LPPOINT32 pt, LPINT32 counts,
+extern BOOL32 MFDRV_Polyline( struct tagDC *dc, const POINT32* pt,INT32 count);
+extern BOOL32 MFDRV_Polygon( struct tagDC *dc, const POINT32* pt, INT32 count );
+extern BOOL32 MFDRV_PolyPolygon( struct tagDC *dc, const POINT32* pt, const INT32* counts,
 				 UINT32 polygons);
 extern HGDIOBJ32 MFDRV_SelectObject( DC *dc, HGDIOBJ32 handle );
 extern COLORREF MFDRV_SetBkColor( DC *dc, COLORREF color );

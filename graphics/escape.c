@@ -22,7 +22,7 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
 }
 
 INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
-                       LPVOID lpszInData, LPVOID lpvOutData )
+                       LPCSTR lpszInData, LPVOID lpvOutData )
 {
     DC		*dc = DC_GetDCPtr( hdc );
     SEGPTR	segin,segout;

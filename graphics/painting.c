@@ -423,11 +423,9 @@ COLORREF WINAPI GetPixel32( HDC32 hdc, INT32 x, INT32 y )
  *    Success: Pixel format index closest to given format
  *    Failure: 0
  */
-INT32 WINAPI ChoosePixelFormat( HDC32 hdc, PIXELFORMATDESCRIPTOR *ppfd )
+INT32 WINAPI ChoosePixelFormat( HDC32 hdc, const PIXELFORMATDESCRIPTOR* ppfd )
 {
     FIXME(gdi, "(%d,%p): stub\n",hdc,ppfd);
-    ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
-    ppfd->nVersion = 1;
     return 1;
 }
 
@@ -444,7 +442,7 @@ INT32 WINAPI ChoosePixelFormat( HDC32 hdc, PIXELFORMATDESCRIPTOR *ppfd )
  * RETURNS STD
  */
 BOOL32 WINAPI SetPixelFormat( HDC32 hdc, int iPixelFormat, 
-                              PIXELFORMATDESCRIPTOR * ppfd)
+                              const PIXELFORMATDESCRIPTOR* ppfd)
 {
     FIXME(gdi, "(%d,%d,%p): stub\n",hdc,iPixelFormat,ppfd);
     return TRUE;
@@ -656,7 +654,7 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
 /**********************************************************************
  *          Polyline16  (GDI.37)
  */
-BOOL16 WINAPI Polyline16( HDC16 hdc, LPPOINT16 pt, INT16 count )
+BOOL16 WINAPI Polyline16( HDC16 hdc, const POINT16* pt, INT16 count )
 {
     register int i;
     BOOL16 ret;
@@ -674,7 +672,7 @@ BOOL16 WINAPI Polyline16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 /**********************************************************************
  *          Polyline32   (GDI32.276)
  */
-BOOL32 WINAPI Polyline32( HDC32 hdc, const LPPOINT32 pt, INT32 count )
+BOOL32 WINAPI Polyline32( HDC32 hdc, const POINT32* pt, INT32 count )
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -686,7 +684,7 @@ BOOL32 WINAPI Polyline32( HDC32 hdc, const LPPOINT32 pt, INT32 count )
 /**********************************************************************
  *          Polygon16  (GDI.36)
  */
-BOOL16 WINAPI Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
+BOOL16 WINAPI Polygon16( HDC16 hdc, const POINT16* pt, INT16 count )
 {
     register int i;
     BOOL32 ret;
@@ -704,7 +702,7 @@ BOOL16 WINAPI Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 /**********************************************************************
  *          Polygon32  (GDI32.275)
  */
-BOOL32 WINAPI Polygon32( HDC32 hdc, LPPOINT32 pt, INT32 count )
+BOOL32 WINAPI Polygon32( HDC32 hdc, const POINT32* pt, INT32 count )
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -716,7 +714,7 @@ BOOL32 WINAPI Polygon32( HDC32 hdc, LPPOINT32 pt, INT32 count )
 /**********************************************************************
  *          PolyPolygon16  (GDI.450)
  */
-BOOL16 WINAPI PolyPolygon16( HDC16 hdc, LPPOINT16 pt, LPINT16 counts,
+BOOL16 WINAPI PolyPolygon16( HDC16 hdc, const POINT16* pt, const INT16* counts,
                              UINT16 polygons )
 {
     int		i,nrpts;
@@ -743,7 +741,7 @@ BOOL16 WINAPI PolyPolygon16( HDC16 hdc, LPPOINT16 pt, LPINT16 counts,
 /**********************************************************************
  *          PolyPolygon32  (GDI.450)
  */
-BOOL32 WINAPI PolyPolygon32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts,
+BOOL32 WINAPI PolyPolygon32( HDC32 hdc, const POINT32* pt, const INT32* counts,
                              UINT32 polygons )
 {
     DC * dc = DC_GetDCPtr( hdc );
@@ -755,7 +753,7 @@ BOOL32 WINAPI PolyPolygon32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts,
 /**********************************************************************
  *          PolyPolyline32  (GDI32.272)
  */
-BOOL32 WINAPI PolyPolyline32( HDC32 hdc, LPPOINT32 pt, LPDWORD counts,
+BOOL32 WINAPI PolyPolyline32( HDC32 hdc, const POINT32* pt, const DWORD* counts,
                              DWORD polylines )
 {
     DC * dc = DC_GetDCPtr( hdc );
@@ -809,8 +807,8 @@ BOOL32 WINAPI FloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
  *          DrawAnimatedRects32  (USER32.153)
  */
 BOOL32 WINAPI DrawAnimatedRects32( HWND32 hwnd, int idAni,
-                                   const LPRECT32 lprcFrom,
-                                   const LPRECT32 lprcTo )
+                                   const RECT32* lprcFrom,
+                                   const RECT32* lprcTo )
 {
     FIXME(gdi,"(0x%x,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
     return TRUE;
@@ -1057,7 +1055,7 @@ BOOL16 WINAPI DrawState16(HDC16 hdc, HBRUSH16 hbr,
 /******************************************************************************
  * PolyBezier16 [GDI.502]
  */
-BOOL16 WINAPI PolyBezier16( HDC16 hDc, LPPOINT16 lppt, INT16 cPoints )
+BOOL16 WINAPI PolyBezier16( HDC16 hDc, const POINT16* lppt, INT16 cPoints )
 {
     int i;
     BOOL16 ret;
@@ -1073,7 +1071,7 @@ BOOL16 WINAPI PolyBezier16( HDC16 hDc, LPPOINT16 lppt, INT16 cPoints )
 /******************************************************************************
  * PolyBezierTo16 [GDI.503]
  */
-BOOL16 WINAPI PolyBezierTo16( HDC16 hDc, LPPOINT16 lppt, INT16 cPoints )
+BOOL16 WINAPI PolyBezierTo16( HDC16 hDc, const POINT16* lppt, INT16 cPoints )
 {
     int i;
     BOOL16 ret;
@@ -1097,7 +1095,7 @@ BOOL16 WINAPI PolyBezierTo16( HDC16 hDc, LPPOINT16 lppt, INT16 cPoints )
  *
  * RETURNS STD
  */
-BOOL32 WINAPI PolyBezier32( HDC32 hdc, LPPOINT32 lppt, DWORD cPoints )
+BOOL32 WINAPI PolyBezier32( HDC32 hdc, const POINT32* lppt, DWORD cPoints )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if(!dc) return FALSE;
@@ -1120,7 +1118,7 @@ BOOL32 WINAPI PolyBezier32( HDC32 hdc, LPPOINT32 lppt, DWORD cPoints )
  *
  * RETURNS STD
  */
-BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, LPPOINT32 lppt, DWORD cPoints )
+BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, const POINT32* lppt, DWORD cPoints )
 {
     DC * dc = DC_GetDCPtr( hdc );
     POINT32 pt;

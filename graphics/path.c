@@ -340,7 +340,8 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
 {
    GdiPath *pPath;
    INT32   mapMode, graphicsMode;
-   POINT32 ptViewportExt, ptViewportOrg, ptWindowExt, ptWindowOrg;
+   SIZE32  ptViewportExt, ptWindowExt;
+   POINT32 ptViewportOrg, ptWindowOrg;
    XFORM   xform;
    HRGN32  hrgn;
    
@@ -392,9 +393,9 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
 
       /* Restore the old mapping mode */
       SetMapMode32(hdc, mapMode);
-      SetViewportExtEx32(hdc, ptViewportExt.x, ptViewportExt.y, NULL);
+      SetViewportExtEx32(hdc, ptViewportExt.cx, ptViewportExt.cy, NULL);
       SetViewportOrgEx32(hdc, ptViewportOrg.x, ptViewportOrg.y, NULL);
-      SetWindowExtEx32(hdc, ptWindowExt.x, ptWindowExt.y, NULL);
+      SetWindowExtEx32(hdc, ptWindowExt.cx, ptWindowExt.cy, NULL);
       SetWindowOrgEx32(hdc, ptWindowOrg.x, ptWindowOrg.y, NULL);
 
       /* Go to GM_ADVANCED temporarily to restore the world transform */

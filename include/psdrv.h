@@ -310,11 +310,11 @@ extern BOOL32 PSDRV_MoveToEx( DC *dc, INT32 x, INT32 y, LPPOINT32 pt );
 extern BOOL32 PSDRV_Pie( DC *dc, INT32 left, INT32 top, INT32 right,
 			 INT32 bottom, INT32 xstart, INT32 ystart,
 			 INT32 xend, INT32 yend );
-extern BOOL32 PSDRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count );
-extern BOOL32 PSDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count );
-extern BOOL32 PSDRV_PolyPolygon( DC *dc, LPPOINT32 pts, LPINT32 counts,
+extern BOOL32 PSDRV_Polygon( DC *dc, const POINT32* pt, INT32 count );
+extern BOOL32 PSDRV_Polyline( DC *dc, const POINT32* pt, INT32 count );
+extern BOOL32 PSDRV_PolyPolygon( DC *dc, const POINT32* pts, const INT32* counts,
 				 UINT32 polygons );
-extern BOOL32 PSDRV_PolyPolyline( DC *dc, LPPOINT32 pts, LPDWORD counts,
+extern BOOL32 PSDRV_PolyPolyline( DC *dc, const POINT32* pts, const DWORD* counts,
 				  DWORD polylines );
 extern BOOL32 PSDRV_Rectangle( DC *dc, INT32 left, INT32 top, INT32 right,
 			      INT32 bottom );

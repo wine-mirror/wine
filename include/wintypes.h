@@ -62,6 +62,7 @@
 #define WINAPIV     __cdecl
 #define APIENTRY    WINAPI
 
+#define CONST       const
 
 /* Standard data types. These are the same for emulator and library. */
 

@@ -620,11 +620,11 @@ DEBUG_ParseTypeTable(char * table, int len)
 	    {
 	      memset(symname, 0, sizeof(symname));
 	      memcpy(symname, type->array.name, type->array.namelen);
-	      typeptr = DEBUG_NewDataType(ARRAY, symname);
+	      typeptr = DEBUG_NewDataType(DT_ARRAY, symname);
 	    }
 	  else
 	    {
-	      typeptr = DEBUG_NewDataType(ARRAY, NULL);
+	      typeptr = DEBUG_NewDataType(DT_ARRAY, NULL);
 	    }
 	  cv_defined_types[curr_type - 0x1000] = typeptr;
 
@@ -653,13 +653,13 @@ DEBUG_ParseTypeTable(char * table, int len)
 	  type2 = (union codeview_type *) ptr2.c;
 	  if( type2->member.id == LF_MEMBER )
 	    {
-	      typeptr = DEBUG_NewDataType(STRUCT, NULL);
-	      fieldtype = STRUCT;
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
+	      fieldtype = DT_STRUCT;
 	    }
 	  else if( type2->member.id == LF_ENUMERATE )
 	    {
-	      typeptr = DEBUG_NewDataType(ENUM, NULL);
-	      fieldtype = ENUM;
+	      typeptr = DEBUG_NewDataType(DT_ENUM, NULL);
+	      fieldtype = DT_ENUM;
 	    }
 	  else
 	    {
@@ -670,7 +670,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 	  while( ptr2.c < (ptr.c + ((type->generic.len + 3) & ~3)) )
 	    {
 	      type2 = (union codeview_type *) ptr2.c;
-	      if( type2->member.id == LF_MEMBER && fieldtype == STRUCT )
+	      if( type2->member.id == LF_MEMBER && fieldtype == DT_STRUCT )
 		{
 		  memset(symname, 0, sizeof(symname));
 		  memcpy(symname, type2->member.name, type2->member.namelen);
@@ -697,7 +697,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 					     elem_size << 3);
 		    }
 		}
-	      else if( type2->member.id == LF_ENUMERATE && fieldtype == ENUM )
+	      else if( type2->member.id == LF_ENUMERATE && fieldtype == DT_ENUM )
 		{
 		  memset(symname, 0, sizeof(symname));
 		  memcpy(symname, type2->enumerate.name, type2->enumerate.namelen);
@@ -746,11 +746,11 @@ DEBUG_ParseTypeTable(char * table, int len)
 	  memcpy(symname, type->structure.name, type->structure.namelen);
 	  if( strcmp(symname, "__unnamed") == 0 )
 	    {
-	      typeptr = DEBUG_NewDataType(STRUCT, NULL);
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
 	    }
 	  else
 	    {
-	      typeptr = DEBUG_NewDataType(STRUCT, symname);
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, symname);
 	    }
 	  cv_defined_types[curr_type - 0x1000] = typeptr;
 
@@ -780,11 +780,11 @@ DEBUG_ParseTypeTable(char * table, int len)
 
 	  if( strcmp(symname, "__unnamed") == 0 )
 	    {
-	      typeptr = DEBUG_NewDataType(STRUCT, NULL);
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
 	    }
 	  else
 	    {
-	      typeptr = DEBUG_NewDataType(STRUCT, symname);
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, symname);
 	    }
 
 	  cv_defined_types[curr_type - 0x1000] = typeptr;
@@ -801,7 +801,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 	    }
 	  break;
 	case LF_BITFIELD:
-	  typeptr = DEBUG_NewDataType(BITFIELD, NULL);
+	  typeptr = DEBUG_NewDataType(DT_BITFIELD, NULL);
 	  cv_defined_types[curr_type - 0x1000] = typeptr;
 	  DEBUG_SetBitfieldParams(typeptr, type->bitfield.bitoff,
 				  type->bitfield.nbits, 
@@ -810,7 +810,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 	case LF_ENUMERATION:
 	  memset(symname, 0, sizeof(symname));
 	  memcpy(symname, type->enumeration.name, type->enumeration.namelen);
-	  typeptr = DEBUG_NewDataType(ENUM, symname);
+	  typeptr = DEBUG_NewDataType(DT_ENUM, symname);
 	  cv_defined_types[curr_type - 0x1000] = typeptr;
 
 	  /*
@@ -842,21 +842,21 @@ DEBUG_InitCVDataTypes()
    */
   cv_basic_types[T_NOTYPE] = NULL;
   cv_basic_types[T_ABS] = NULL;
-  cv_basic_types[T_VOID] = DEBUG_NewDataType(BASIC, "void");
-  cv_basic_types[T_CHAR] = DEBUG_NewDataType(BASIC, "char");
-  cv_basic_types[T_SHORT] = DEBUG_NewDataType(BASIC, "short int");
-  cv_basic_types[T_LONG] = DEBUG_NewDataType(BASIC, "long int");
-  cv_basic_types[T_QUAD] = DEBUG_NewDataType(BASIC, "long long int");
-  cv_basic_types[T_UCHAR] = DEBUG_NewDataType(BASIC, "unsigned char");
-  cv_basic_types[T_USHORT] = DEBUG_NewDataType(BASIC, "short unsigned int");
-  cv_basic_types[T_ULONG] = DEBUG_NewDataType(BASIC, "long unsigned int");
-  cv_basic_types[T_UQUAD] = DEBUG_NewDataType(BASIC, "long long unsigned int");
-  cv_basic_types[T_REAL32] = DEBUG_NewDataType(BASIC, "float");
-  cv_basic_types[T_REAL64] = DEBUG_NewDataType(BASIC, "double");
-  cv_basic_types[T_RCHAR] = DEBUG_NewDataType(BASIC, "char");
-  cv_basic_types[T_WCHAR] = DEBUG_NewDataType(BASIC, "short");
-  cv_basic_types[T_INT4] = DEBUG_NewDataType(BASIC, "int");
-  cv_basic_types[T_UINT4] = DEBUG_NewDataType(BASIC, "unsigned int");
+  cv_basic_types[T_VOID] = DEBUG_NewDataType(DT_BASIC, "void");
+  cv_basic_types[T_CHAR] = DEBUG_NewDataType(DT_BASIC, "char");
+  cv_basic_types[T_SHORT] = DEBUG_NewDataType(DT_BASIC, "short int");
+  cv_basic_types[T_LONG] = DEBUG_NewDataType(DT_BASIC, "long int");
+  cv_basic_types[T_QUAD] = DEBUG_NewDataType(DT_BASIC, "long long int");
+  cv_basic_types[T_UCHAR] = DEBUG_NewDataType(DT_BASIC, "unsigned char");
+  cv_basic_types[T_USHORT] = DEBUG_NewDataType(DT_BASIC, "short unsigned int");
+  cv_basic_types[T_ULONG] = DEBUG_NewDataType(DT_BASIC, "long unsigned int");
+  cv_basic_types[T_UQUAD] = DEBUG_NewDataType(DT_BASIC, "long long unsigned int");
+  cv_basic_types[T_REAL32] = DEBUG_NewDataType(DT_BASIC, "float");
+  cv_basic_types[T_REAL64] = DEBUG_NewDataType(DT_BASIC, "double");
+  cv_basic_types[T_RCHAR] = DEBUG_NewDataType(DT_BASIC, "char");
+  cv_basic_types[T_WCHAR] = DEBUG_NewDataType(DT_BASIC, "short");
+  cv_basic_types[T_INT4] = DEBUG_NewDataType(DT_BASIC, "int");
+  cv_basic_types[T_UINT4] = DEBUG_NewDataType(DT_BASIC, "unsigned int");
 
   cv_basic_types[T_32PVOID] = DEBUG_FindOrMakePointerType(cv_basic_types[T_VOID]);
   cv_basic_types[T_32PCHAR] = DEBUG_FindOrMakePointerType(cv_basic_types[T_CHAR]);

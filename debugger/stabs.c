@@ -270,28 +270,28 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
       switch(ptr[1])
 	{
 	case '*':
-	  expect = POINTER;
+	  expect = DT_POINTER;
 	  break;
 	case 's':
 	case 'u':
-	  expect = STRUCT;
+	  expect = DT_STRUCT;
 	  break;
 	case 'a':
-	  expect = ARRAY;
+	  expect = DT_ARRAY;
 	  break;
 	case '1':
 	case '(':
 	case 'r':
-	  expect = BASIC;
+	  expect = DT_BASIC;
 	  break;
 	case 'x':
-	  expect = STRUCT;
+	  expect = DT_STRUCT;
 	  break;
 	case 'e':
-	  expect = ENUM;
+	  expect = DT_ENUM;
 	  break;
 	case 'f':
-	  expect = FUNC;
+	  expect = DT_FUNC;
 	  break;
 	default:
 	  fprintf(stderr, "Unknown type (%c).\n",ptr[1]);
@@ -390,35 +390,35 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
       switch(c[1])
 	{
 	case '*':
-	  stab_types[typenum] = DEBUG_NewDataType(POINTER, NULL);
+	  stab_types[typenum] = DEBUG_NewDataType(DT_POINTER, NULL);
 	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 's':
 	case 'u':
-	  stab_types[typenum] = DEBUG_NewDataType(STRUCT, typename);
+	  stab_types[typenum] = DEBUG_NewDataType(DT_STRUCT, typename);
 	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 'a':
-	  stab_types[typenum] = DEBUG_NewDataType(ARRAY, NULL);
+	  stab_types[typenum] = DEBUG_NewDataType(DT_ARRAY, NULL);
 	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case '(':
 	case '1':
 	case 'r':
-	  stab_types[typenum] = DEBUG_NewDataType(BASIC, typename);
+	  stab_types[typenum] = DEBUG_NewDataType(DT_BASIC, typename);
 	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 'x':
 	  stab_strcpy(element_name, c + 3);
-	  stab_types[typenum] = DEBUG_NewDataType(STRUCT, element_name);
+	  stab_types[typenum] = DEBUG_NewDataType(DT_STRUCT, element_name);
 	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 'e':
-	  stab_types[typenum] = DEBUG_NewDataType(ENUM, NULL);
+	  stab_types[typenum] = DEBUG_NewDataType(DT_ENUM, NULL);
 	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 'f':
-	  stab_types[typenum] = DEBUG_NewDataType(FUNC, NULL);
+	  stab_types[typenum] = DEBUG_NewDataType(DT_FUNC, NULL);
 	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	default:

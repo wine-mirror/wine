@@ -84,7 +84,7 @@ WIN16DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
  *           WIN16DRV_Polygon
  */
 BOOL32
-WIN16DRV_Polygon(DC *dc, LPPOINT32 pt, INT32 count )
+WIN16DRV_Polygon(DC *dc, const POINT32* pt, INT32 count )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     BOOL32 bRet = 0;
@@ -117,7 +117,7 @@ WIN16DRV_Polygon(DC *dc, LPPOINT32 pt, INT32 count )
  *           WIN16DRV_Polyline
  */
 BOOL32
-WIN16DRV_Polyline(DC *dc, LPPOINT32 pt, INT32 count )
+WIN16DRV_Polyline(DC *dc, const POINT32* pt, INT32 count )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     BOOL32 bRet = 0;

@@ -121,7 +121,7 @@ MFDRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color )
  *          MFDRV_Polyline
  */
 BOOL32
-MFDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count )
+MFDRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
 {
     register int i;
     LPPOINT16	pt16;
@@ -140,7 +140,7 @@ MFDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count )
  *          MFDRV_Polygon
  */
 BOOL32
-MFDRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count )
+MFDRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
 {
     register int i;
     LPPOINT16	pt16;
@@ -159,11 +159,11 @@ MFDRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count )
  *          PolyPolygon
  */
 BOOL32 
-MFDRV_PolyPolygon( DC *dc, LPPOINT32 pt, LPINT32 counts, UINT32 polygons)
+MFDRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polygons)
 {
     int		i,j;
     LPPOINT16	pt16;
-    LPPOINT32	curpt=pt;
+    const POINT32* curpt=pt;
     BOOL32	ret;
 
     for (i=0;i<polygons;i++) {

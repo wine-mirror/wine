@@ -297,7 +297,7 @@ BOOL32 WINAPI ResizePalette32(
  *           AnimatePalette16   (GDI.367)
  */
 void WINAPI AnimatePalette16( HPALETTE16 hPal, UINT16 StartIndex,
-                              UINT16 NumEntries, LPPALETTEENTRY PaletteColors)
+                              UINT16 NumEntries, const PALETTEENTRY* PaletteColors)
 {
     AnimatePalette32( hPal, StartIndex, NumEntries, PaletteColors );
 }
@@ -317,7 +317,7 @@ BOOL32 WINAPI AnimatePalette32(
     HPALETTE32 hPal,              /* [in] Handle to logical palette */
     UINT32 StartIndex,            /* [in] First entry in palette */
     UINT32 NumEntries,            /* [in] Count of entries in palette */
-    LPPALETTEENTRY PaletteColors) /* [in] Pointer to first replacement */
+    const PALETTEENTRY* PaletteColors) /* [in] Pointer to first replacement */
 {
     TRACE(palette, "%04x (%i - %i)\n", hPal, StartIndex,StartIndex+NumEntries);
 

@@ -217,11 +217,11 @@ BOOL32 PSDRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 /***********************************************************************
  *           PSDRV_PolyPolyline
  */
-BOOL32 PSDRV_PolyPolyline( DC *dc, LPPOINT32 pts, LPDWORD counts,
+BOOL32 PSDRV_PolyPolyline( DC *dc, const POINT32* pts, const DWORD* counts,
 			   DWORD polylines )
 {
     DWORD polyline, line;
-    LPPOINT32 pt;
+    const POINT32* pt;
     TRACE(psdrv, "\n");
 
     pt = pts;
@@ -242,7 +242,7 @@ BOOL32 PSDRV_PolyPolyline( DC *dc, LPPOINT32 pts, LPDWORD counts,
 /***********************************************************************
  *           PSDRV_Polyline
  */
-BOOL32 PSDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count )
+BOOL32 PSDRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
 {
     return PSDRV_PolyPolyline( dc, pt, (LPDWORD) &count, 1 );
 }
@@ -251,11 +251,11 @@ BOOL32 PSDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count )
 /***********************************************************************
  *           PSDRV_PolyPolygon
  */
-BOOL32 PSDRV_PolyPolygon( DC *dc, LPPOINT32 pts, LPINT32 counts,
+BOOL32 PSDRV_PolyPolygon( DC *dc, const POINT32* pts, const INT32* counts,
 			  UINT32 polygons )
 {
     DWORD polygon, line;
-    LPPOINT32 pt;
+    const POINT32* pt;
     TRACE(psdrv, "\n");
 
     pt = pts;
@@ -278,10 +278,11 @@ BOOL32 PSDRV_PolyPolygon( DC *dc, LPPOINT32 pts, LPINT32 counts,
     return TRUE;
 }
 
+
 /***********************************************************************
  *           PSDRV_Polygon
  */
-BOOL32 PSDRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count )
+BOOL32 PSDRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
 {
      return PSDRV_PolyPolygon( dc, pt, &count, 1 );
 }

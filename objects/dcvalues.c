@@ -33,22 +33,26 @@ func_type WINAPI func_name( HDC16 hdc ) \
     return MAKELONG( dc->ret_x, dc->ret_y ); \
 }
 
-#define DC_GET_VAL_EX( func_name, ret_x, ret_y ) \
-BOOL16 WINAPI func_name##16( HDC16 hdc, LPPOINT16 pt ) \
+/* DC_GET_VAL_EX is used to define functions returning a POINT or a SIZE. It is 
+ * important that the function has the right signature, for the implementation 
+ * we can do whatever we want.
+ */
+#define DC_GET_VAL_EX( func_name, ret_x, ret_y, type ) \
+BOOL16 WINAPI func_name##16( HDC16 hdc, LP##type##16 pt ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
     if (!dc) return FALSE; \
-    pt->x = dc->ret_x; \
-    pt->y = dc->ret_y; \
+    ((LPPOINT16)pt)->x = dc->ret_x; \
+    ((LPPOINT16)pt)->y = dc->ret_y; \
     return TRUE; \
 } \
  \
-BOOL32 WINAPI func_name##32( HDC32 hdc, LPPOINT32 pt ) \
+BOOL32 WINAPI func_name##32( HDC32 hdc, LP##type##32 pt ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( (HDC16)hdc, DC_MAGIC ); \
     if (!dc) return FALSE; \
-    pt->x = dc->ret_x; \
-    pt->y = dc->ret_y; \
+    ((LPPOINT32)pt)->x = dc->ret_x; \
+    ((LPPOINT32)pt)->y = dc->ret_y; \
     return TRUE; \
 }
 
@@ -134,10 +138,10 @@ DC_GET_X_Y( DWORD, GetBrushOrg, w.brushOrgX, w.brushOrgY )      /* GDI.149   */
 DC_GET_VAL_16( UINT16, GetTextAlign16, w.textAlign )            /* GDI.345   */
 DC_GET_VAL_32( UINT32, GetTextAlign32, w.textAlign )            /* GDI32.224 */
 DC_GET_VAL_16( HFONT16, GetCurLogFont, w.hFont )                /* GDI.411   */
-DC_GET_VAL_EX( GetBrushOrgEx, w.brushOrgX, w.brushOrgY )/* GDI.469 GDI32.148 */
-DC_GET_VAL_EX( GetCurrentPositionEx, w.CursPosX,        /* GDI.470 GDI32.167 */
-               w.CursPosY )
-DC_GET_VAL_EX( GetViewportExtEx, vportExtX, vportExtY ) /* GDI.472 GDI32.239 */
-DC_GET_VAL_EX( GetViewportOrgEx, vportOrgX, vportOrgY ) /* GDI.473 GDI32.240 */
-DC_GET_VAL_EX( GetWindowExtEx, wndExtX, wndExtY )       /* GDI.474 GDI32.242 */
-DC_GET_VAL_EX( GetWindowOrgEx, wndOrgX, wndOrgY )       /* GDI.475 GDI32.243 */
+DC_GET_VAL_EX( GetBrushOrgEx, w.brushOrgX, w.brushOrgY, POINT ) /* GDI.469 GDI32.148 */
+DC_GET_VAL_EX( GetCurrentPositionEx, w.CursPosX, w.CursPosY,    /* GDI.470 GDI32.167 */
+               POINT )
+DC_GET_VAL_EX( GetViewportExtEx, vportExtX, vportExtY, SIZE )   /* GDI.472 GDI32.239 */
+DC_GET_VAL_EX( GetViewportOrgEx, vportOrgX, vportOrgY, POINT )  /* GDI.473 GDI32.240 */
+DC_GET_VAL_EX( GetWindowExtEx, wndExtX, wndExtY, SIZE )         /* GDI.474 GDI32.242 */
+DC_GET_VAL_EX( GetWindowOrgEx, wndOrgX, wndOrgY, POINT )        /* GDI.475 GDI32.243 */

@@ -292,23 +292,23 @@ type_cast:
 
 type_expr:
       type_expr '*'		{ $$ = DEBUG_FindOrMakePointerType($1); }
-    |  tINT			{ $$ = DEBUG_TypeCast(BASIC, "int"); }
-    | tCHAR			{ $$ = DEBUG_TypeCast(BASIC, "char"); }
-    | tLONG tINT		{ $$ = DEBUG_TypeCast(BASIC, "long int"); }
-    | tUNSIGNED tINT		{ $$ = DEBUG_TypeCast(BASIC, "unsigned int"); }
-    | tLONG tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(BASIC, "long unsigned int"); }
-    | tLONG tLONG tINT		{ $$ = DEBUG_TypeCast(BASIC, "long long int"); }
-    | tLONG tLONG tUNSIGNED tINT { $$ = DEBUG_TypeCast(BASIC, "long long unsigned int"); }
-    | tSHORT tINT		{ $$ = DEBUG_TypeCast(BASIC, "short int"); }
-    | tSHORT tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(BASIC, "short unsigned int"); }
-    | tSIGNED tCHAR		{ $$ = DEBUG_TypeCast(BASIC, "signed char"); }
-    | tUNSIGNED tCHAR		{ $$ = DEBUG_TypeCast(BASIC, "unsigned char"); }
-    | tFLOAT			{ $$ = DEBUG_TypeCast(BASIC, "float"); }
-    | tDOUBLE			{ $$ = DEBUG_TypeCast(BASIC, "double"); }
-    | tLONG tDOUBLE		{ $$ = DEBUG_TypeCast(BASIC, "long double"); }
-    | tSTRUCT tIDENTIFIER	{ $$ = DEBUG_TypeCast(STRUCT, $2); }
-    | tUNION tIDENTIFIER	{ $$ = DEBUG_TypeCast(STRUCT, $2); }
-    | tENUM tIDENTIFIER		{ $$ = DEBUG_TypeCast(ENUM, $2); }
+    |  tINT			{ $$ = DEBUG_TypeCast(DT_BASIC, "int"); }
+    | tCHAR			{ $$ = DEBUG_TypeCast(DT_BASIC, "char"); }
+    | tLONG tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "long int"); }
+    | tUNSIGNED tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "unsigned int"); }
+    | tLONG tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(DT_BASIC, "long unsigned int"); }
+    | tLONG tLONG tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "long long int"); }
+    | tLONG tLONG tUNSIGNED tINT { $$ = DEBUG_TypeCast(DT_BASIC, "long long unsigned int"); }
+    | tSHORT tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "short int"); }
+    | tSHORT tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(DT_BASIC, "short unsigned int"); }
+    | tSIGNED tCHAR		{ $$ = DEBUG_TypeCast(DT_BASIC, "signed char"); }
+    | tUNSIGNED tCHAR		{ $$ = DEBUG_TypeCast(DT_BASIC, "unsigned char"); }
+    | tFLOAT			{ $$ = DEBUG_TypeCast(DT_BASIC, "float"); }
+    | tDOUBLE			{ $$ = DEBUG_TypeCast(DT_BASIC, "double"); }
+    | tLONG tDOUBLE		{ $$ = DEBUG_TypeCast(DT_BASIC, "long double"); }
+    | tSTRUCT tIDENTIFIER	{ $$ = DEBUG_TypeCast(DT_STRUCT, $2); }
+    | tUNION tIDENTIFIER	{ $$ = DEBUG_TypeCast(DT_STRUCT, $2); }
+    | tENUM tIDENTIFIER		{ $$ = DEBUG_TypeCast(DT_ENUM, $2); }
 
 expr_addr:
     expr			 { $$ = DEBUG_EvalExpr($1); }

@@ -560,7 +560,7 @@ DWORD WINAPI GetRegionData(HRGN32 hrgn, DWORD count, LPRGNDATA rgndata)
  *           ExtCreateRegion   (GDI32.94)
  * 
  */
-HRGN32 WINAPI ExtCreateRegion( XFORM *lpXform, DWORD dwCount, RGNDATA *rgndata)
+HRGN32 WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA* rgndata)
 {
     HRGN32 hrgn = CreateRectRgn32(0, 0, 0, 0);
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );

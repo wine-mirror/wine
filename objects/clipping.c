@@ -427,7 +427,7 @@ BOOL32 WINAPI PtVisible32( HDC32 hdc, INT32 x, INT32 y )
 /***********************************************************************
  *           RectVisible16    (GDI.104)
  */
-BOOL16 WINAPI RectVisible16( HDC16 hdc, LPRECT16 rect )
+BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect )
 {
     RECT16 tmpRect;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -446,7 +446,7 @@ BOOL16 WINAPI RectVisible16( HDC16 hdc, LPRECT16 rect )
 /***********************************************************************
  *           RectVisible32    (GDI32.282)
  */
-BOOL32 WINAPI RectVisible32( HDC32 hdc, LPRECT32 rect )
+BOOL32 WINAPI RectVisible32( HDC32 hdc, const RECT32* rect )
 {
     RECT16 rect16;
     CONV_RECT32TO16( rect, &rect16 );

@@ -652,7 +652,7 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
  *          X11DRV_Polyline
  */
 BOOL32
-X11DRV_Polyline( DC *dc, LPPOINT32 pt, INT32 count )
+X11DRV_Polyline( DC *dc, const POINT32* pt, INT32 count )
 {
     INT32 oldwidth;
     register int i;
@@ -680,7 +680,7 @@ X11DRV_Polyline( DC *dc, LPPOINT32 pt, INT32 count )
  *          X11DRV_Polygon
  */
 BOOL32
-X11DRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count )
+X11DRV_Polygon( DC *dc, const POINT32* pt, INT32 count )
 {
     register int i;
     XPoint *points;
@@ -710,7 +710,7 @@ X11DRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count )
  *          X11DRV_PolyPolygon
  */
 BOOL32 
-X11DRV_PolyPolygon( DC *dc, LPPOINT32 pt, LPINT32 counts, UINT32 polygons)
+X11DRV_PolyPolygon( DC *dc, const POINT32* pt, const INT32* counts, UINT32 polygons)
 {
     HRGN32 hrgn;
 
@@ -754,7 +754,7 @@ X11DRV_PolyPolygon( DC *dc, LPPOINT32 pt, LPINT32 counts, UINT32 polygons)
  *          X11DRV_PolyPolyline
  */
 BOOL32 
-X11DRV_PolyPolyline( DC *dc, LPPOINT32 pt, LPDWORD counts, DWORD polylines )
+X11DRV_PolyPolyline( DC *dc, const POINT32* pt, const DWORD* counts, DWORD polylines )
 {
     if (DC_SetupGCForPen ( dc ))
     {
@@ -1086,7 +1086,7 @@ static void X11DRV_Bezier(int level, DC * dc, POINT32 *Points,
  *          multiple of 3.
  */
 BOOL32
-X11DRV_PolyBezier(DC *dc, POINT32 start, POINT32 *BezierPoints, DWORD count)
+X11DRV_PolyBezier(DC *dc, POINT32 start, const POINT32* BezierPoints, DWORD count)
 {
     POINT32 Points[4]; 
     int i;

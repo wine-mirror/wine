@@ -106,13 +106,13 @@ extern COLORREF X11DRV_SetPixel( struct tagDC *dc, INT32 x, INT32 y,
 				 COLORREF color );
 extern COLORREF X11DRV_GetPixel( struct tagDC *dc, INT32 x, INT32 y);
 extern BOOL32 X11DRV_PaintRgn( struct tagDC *dc, HRGN32 hrgn );
-extern BOOL32 X11DRV_Polyline( struct tagDC *dc,const LPPOINT32 pt,INT32 count);
-extern BOOL32 X11DRV_PolyBezier( struct tagDC *dc,const POINT32 start, const LPPOINT32 lppt,DWORD cPoints);
-extern BOOL32 X11DRV_Polygon( struct tagDC *dc, LPPOINT32 pt, INT32 count );
-extern BOOL32 X11DRV_PolyPolygon( struct tagDC *dc, LPPOINT32 pt,
-				  LPINT32 counts, UINT32 polygons);
-extern BOOL32 X11DRV_PolyPolyline( struct tagDC *dc, LPPOINT32 pt,
-				  LPDWORD counts, DWORD polylines);
+extern BOOL32 X11DRV_Polyline( struct tagDC *dc,const POINT32* pt,INT32 count);
+extern BOOL32 X11DRV_PolyBezier( struct tagDC *dc, const POINT32 start, const POINT32* lppt, DWORD cPoints);
+extern BOOL32 X11DRV_Polygon( struct tagDC *dc, const POINT32* pt, INT32 count );
+extern BOOL32 X11DRV_PolyPolygon( struct tagDC *dc, const POINT32* pt, 
+				  const INT32* counts, UINT32 polygons);
+extern BOOL32 X11DRV_PolyPolyline( struct tagDC *dc, const POINT32* pt, 
+				  const DWORD* counts, DWORD polylines);
 
 extern HGDIOBJ32 X11DRV_SelectObject( struct tagDC *dc, HGDIOBJ32 handle );
 
