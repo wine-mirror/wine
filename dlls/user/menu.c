@@ -2010,9 +2010,9 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
 /**********************************************************************
  *         MENU_IsMenuActive
  */
-BOOL MENU_IsMenuActive(void)
+HWND MENU_IsMenuActive(void)
 {
-    return (top_popup != 0);
+    return top_popup;
 }
 
 /***********************************************************************
@@ -2690,8 +2690,13 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	    switch(msg.message)
 	    {
 	    case WM_KEYDOWN:
+	    case WM_SYSKEYDOWN:
 		switch(msg.wParam)
 		{
+		case VK_MENU:
+		    fEndMenu = TRUE;
+		    break;
+
 		case VK_HOME:
 		case VK_END:
 		    MENU_SelectItem( mt.hOwnerWnd, mt.hCurrentMenu,
@@ -2744,17 +2749,8 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		}
 		break;  /* WM_KEYDOWN */
 
-	    case WM_SYSKEYDOWN:
-		switch(msg.wParam)
-		{
-		case VK_MENU:
-		    fEndMenu = TRUE;
-		    break;
-
-		}
-		break;  /* WM_SYSKEYDOWN */
-
 	    case WM_CHAR:
+	    case WM_SYSCHAR:
 		{
 		    UINT	pos;
 

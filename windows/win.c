@@ -1439,6 +1439,9 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     if (HOOK_CallHooks( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0, TRUE )) return FALSE;
 
+    if (MENU_IsMenuActive() == hwnd)
+        EndMenu();
+
     is_child = (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) != 0;
 
     if (is_child)

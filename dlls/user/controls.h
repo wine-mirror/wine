@@ -54,7 +54,7 @@ extern HWND ICONTITLE_Create( HWND hwnd );
 
 /* menu controls */
 extern BOOL MENU_Init(void);
-extern BOOL MENU_IsMenuActive(void);
+extern HWND MENU_IsMenuActive(void);
 extern HMENU MENU_GetSysMenu(HWND hWndOwner, HMENU hSysPopup);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
                                      INT orgX, INT orgY );
