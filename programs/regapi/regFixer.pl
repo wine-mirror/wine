@@ -12,7 +12,6 @@ ${line}   = "";
 
 LINE: while(<>) {
   chomp;                    # Get rid of 0x0a
-  chop;                     # Get rid of 0x0d
 
   next LINE if(/^$/);       # This is an empty line
 
