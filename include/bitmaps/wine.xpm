@@ -1,5 +1,5 @@
 /* XPM */
-static char * wine_xpm[] = {
+static const char * wine_xpm[] = {
 "48 48 159 2",
 "  	c None",
 ". 	c #010101",

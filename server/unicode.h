@@ -33,6 +33,6 @@ static inline WCHAR *strdupW( const WCHAR *str )
     return memdup( str, len );
 }
 
-extern int dump_strW( const WCHAR *str, size_t len, FILE *f, char escape[2] );
+extern int dump_strW( const WCHAR *str, size_t len, FILE *f, const char escape[2] );
 
 #endif  /* __WINE_SERVER_UNICODE_H */

@@ -27,7 +27,7 @@
 #include "unicode.h"
 
 /* dump a Unicode string with proper escaping */
-int dump_strW( const WCHAR *str, size_t len, FILE *f, char escape[2] )
+int dump_strW( const WCHAR *str, size_t len, FILE *f, const char escape[2] )
 {
     static const char escapes[32] = ".......abtnvfr.............e....";
     char buffer[256];

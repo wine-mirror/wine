@@ -230,14 +230,14 @@ typedef struct macexpstackentry {
  * Prototypes
  */
 static void newline(int);
-static int make_number(int radix, YYSTYPE *val, char *str, int len);
-static void put_buffer(char *s, int len);
+static int make_number(int radix, YYSTYPE *val, const char *str, int len);
+static void put_buffer(const char *s, int len);
 /* Buffer management */
 static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop);
 static bufferstackentry_t *pop_buffer(void);
 /* String functions */
 static void new_string(void);
-static void add_string(char *str, int len);
+static void add_string(const char *str, int len);
 static char *get_string(void);
 static void put_string(void);
 static int string_start(void);
@@ -246,7 +246,7 @@ static void push_macro(pp_entry_t *ppp);
 static macexpstackentry_t *top_macro(void);
 static macexpstackentry_t *pop_macro(void);
 static void free_macro(macexpstackentry_t *mep);
-static void add_text_to_macro(char *text, int len);
+static void add_text_to_macro(const char *text, int len);
 static void macro_add_arg(int last);
 static void macro_add_expansion(void);
 /* Expansion */
@@ -778,7 +778,7 @@ static void newline(int dowrite)
  *
  *-------------------------------------------------------------------------
  */
-static int make_number(int radix, YYSTYPE *val, char *str, int len)
+static int make_number(int radix, YYSTYPE *val, const char *str, int len)
 {
 	int is_l  = 0;
 	int is_ll = 0;
@@ -849,7 +849,7 @@ static int make_number(int radix, YYSTYPE *val, char *str, int len)
  */
 static void expand_special(pp_entry_t *ppp)
 {
-	char *dbgtext = "?";
+	const char *dbgtext = "?";
 	static char *buf = NULL;
 
 	assert(ppp->type == def_special);
@@ -906,7 +906,7 @@ static int curdef_idx = 0;
 static int curdef_alloc = 0;
 static char *curdef_text = NULL;
 
-static void add_text(char *str, int len)
+static void add_text(const char *str, int len)
 {
 	if(len == 0)
 		return;
@@ -1106,7 +1106,7 @@ static void new_string(void)
 	str_startline = pp_status.line_number;
 }
 
-static void add_string(char *str, int len)
+static void add_string(const char *str, int len)
 {
 	if(len == 0)
 		return;
@@ -1307,7 +1307,7 @@ static void free_macro(macexpstackentry_t *mep)
 	free(mep);
 }
 
-static void add_text_to_macro(char *text, int len)
+static void add_text_to_macro(const char *text, int len)
 {
 	macexpstackentry_t *mep = top_macro();
 
@@ -1388,7 +1388,7 @@ static void macro_add_expansion(void)
  * Output management
  *-------------------------------------------------------------------------
  */
-static void put_buffer(char *s, int len)
+static void put_buffer(const char *s, int len)
 {
 	if(top_macro())
 		add_text_to_macro(s, len);

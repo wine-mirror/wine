@@ -125,7 +125,7 @@ static LPWSTR _strdupnAtoW(LPCSTR strA,size_t lenA)
 
 /* dump a Unicode string with proper escaping [Internal] */
 /* FIXME: this code duplicates server/unicode.c */
-static int _dump_strW(const WCHAR *str,size_t len,FILE *f,char escape[2])
+static int _dump_strW(const WCHAR *str,size_t len,FILE *f,const char escape[2])
 {
     static const char escapes[32] = ".......abtnvfr.............e....";
     char buffer[256];
@@ -168,7 +168,7 @@ static int _dump_strW(const WCHAR *str,size_t len,FILE *f,char escape[2])
 }
 
 /* convert ansi string to unicode and dump with proper escaping [Internal] */
-static int _dump_strAtoW(LPCSTR strA,size_t len,FILE *f,char escape[2])
+static int _dump_strAtoW(LPCSTR strA,size_t len,FILE *f,const char escape[2])
 {
     WCHAR *strW;
     int ret;
@@ -688,7 +688,7 @@ static int _w95_dump_dkv(_w95dkh *dkh,int nrLS,int nrMS,FILE *f)
 /******************************************************************************
  * _w95_dump_dke [Internal]
  */
-static int _w95_dump_dke(LPSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *dke,FILE *f,int level)
+static int _w95_dump_dke(LPCSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *dke,FILE *f,int level)
 {
     _w95dkh * dkh;
     LPSTR new_key_name = NULL;
@@ -936,7 +936,7 @@ static int _nt_dump_vk(LPSTR key_name, char *base, nt_vk *vk,FILE *f)
 }
 
 /* it's called from _nt_dump_lf() */
-static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level);
+static int _nt_dump_nk(LPCSTR key_name,char *base,nt_nk *nk,FILE *f,int level);
 
 /*
  * get the subkeys
@@ -947,7 +947,7 @@ static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level);
  * exception: if the id is 'il' there are no hash values and every
  * dword is a offset
  */
-static int _nt_dump_lf(LPSTR key_name, char *base, int subkeys, nt_lf *lf, FILE *f, int level)
+static int _nt_dump_lf(LPCSTR key_name, char *base, int subkeys, nt_lf *lf, FILE *f, int level)
 {
     int i;
 
@@ -1002,7 +1002,7 @@ error:
 }
 
 /* _nt_dump_nk [Internal] */
-static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level)
+static int _nt_dump_nk(LPCSTR key_name,char *base,nt_nk *nk,FILE *f,int level)
 {
     unsigned int n;
     DWORD *vl;

@@ -375,7 +375,7 @@ err:
 #define NB_SESSION_REQ 0x81
 
 /* RFC 1002, section 4.3.2 */
-static BOOL NB_SessionReq(int fd, char *called, char *calling)
+static BOOL NB_SessionReq(int fd, const char *called, const char *calling)
 {
     unsigned char buffer[0x100];
     int len = 0,r;
@@ -538,7 +538,7 @@ static BOOL NB_Transaction(int fd, struct NB_Buffer *in, struct NB_Buffer *out)
 
 static DWORD SMB_GetError(unsigned char *buffer)
 {
-    char *err_class;
+    const char *err_class;
 
     switch(buffer[SMB_ERRCLASS])
     {

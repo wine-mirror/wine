@@ -231,7 +231,7 @@ static const SuffixCharset sufch_any[] = {
 
 typedef struct __fet
 {
-  LPSTR		 prefix;
+  LPCSTR	 prefix;
   const SuffixCharset* sufch;
   struct __fet*  next;
 } fontEncodingTemplate;
@@ -867,7 +867,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
 			    INT height, LPSTR lpLFD, UINT uRelax )
 {
    int		i, h;
-   char         *any = "*";
+   const char   *any = "*";
    char         h_string[64], resx_string[64], resy_string[64];
    LFD          aLFD;
 
@@ -1002,7 +1002,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
 
 /* spacing */
    {
-       char* w;
+       const char* w;
 
        if( fo->fi->fi_flags & FI_FIXEDPITCH )
 	   w = ( fo->fi->fi_flags & FI_FIXEDEX ) ? "c" : "m";

@@ -228,7 +228,7 @@ pp_entry_t *pp_add_define(char *def, char *text)
 	ppp->ident = def;
 	ppp->type = def_define;
 	ppp->subst.text = text;
-	ppp->filename = pp_status.input ? pp_xstrdup(pp_status.input) : "<internal or cmdline>";
+	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
 	ppp->next = pp_def_state->defines[idx];
 	pp_def_state->defines[idx] = ppp;
@@ -272,7 +272,7 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 	ppp->margs	= args;
 	ppp->nargs	= nargs;
 	ppp->subst.mtext= exp;
-	ppp->filename = pp_status.input ? pp_xstrdup(pp_status.input) : "<internal or cmdline>";
+	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
 	ppp->next	= pp_def_state->defines[idx];
 	pp_def_state->defines[idx] = ppp;
@@ -467,7 +467,7 @@ FILE *pp_open_include(const char *name, int search, char **newpath)
  *
  *-------------------------------------------------------------------------
  */
-static char *pp_if_state_str[] = {
+static const char * const pp_if_state_str[] = {
 	"if_false",
 	"if_true",
 	"if_elif",
