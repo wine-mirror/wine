@@ -290,7 +290,7 @@ int WINAPI SysStringByteLen(BSTR str)
 /******************************************************************************
  * CreateDispTypeInfo [OLE2DISP.31]
  */
-HRESULT CreateDispTypeInfo16(
+HRESULT WINAPI CreateDispTypeInfo16(
 	INTERFACEDATA *pidata,
 	LCID lcid,
 	ITypeInfo **pptinfo
@@ -302,7 +302,7 @@ HRESULT CreateDispTypeInfo16(
 /******************************************************************************
  * RegisterActiveObject [OLE2DISP.35]
  */
-HRESULT RegisterActiveObject16(
+HRESULT WINAPI RegisterActiveObject16(
 	IUnknown *punk, REFCLSID rclsid, DWORD dwFlags, unsigned long *pdwRegister
 ) {
 	char	buf[80];

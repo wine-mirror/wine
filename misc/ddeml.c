@@ -729,7 +729,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
  *  1.0      March 1999 K Matthews		stub only
  */
 
-DWORD DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, int codepage)
+DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, int codepage)
 {
 	FIXME(ddeml,"(%ld, 0x%lx, %p, %ld, %d): stub \n", 
          idInst,

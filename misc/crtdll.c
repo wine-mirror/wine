@@ -2036,7 +2036,7 @@ VOID __cdecl CRTDLL__dllonexit ()
  *                  wcstok           (CRTDLL.519)
  * Like strtok, but for wide character strings. s is modified, yes.
  */
-LPWSTR CRTDLL_wcstok(LPWSTR s,LPCWSTR delim) {
+LPWSTR __cdecl CRTDLL_wcstok(LPWSTR s,LPCWSTR delim) {
 	static LPWSTR nexttok = NULL;
 	LPWSTR	x,ret;
 
@@ -2060,7 +2060,7 @@ LPWSTR CRTDLL_wcstok(LPWSTR s,LPCWSTR delim) {
  *                  wcstol           (CRTDLL.520)
  * Like strtol, but for wide character strings.
  */
-INT CRTDLL_wcstol(LPWSTR s,LPWSTR *end,INT base) {
+INT __cdecl CRTDLL_wcstol(LPWSTR s,LPWSTR *end,INT base) {
 	LPSTR	sA = HEAP_strdupWtoA(GetProcessHeap(),0,s),endA;
 	INT	ret = strtol(sA,&endA,base);
 
