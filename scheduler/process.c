@@ -1264,12 +1264,11 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
                 char comspec[MAX_PATH];
                 if (GetEnvironmentVariableA("COMSPEC", comspec, sizeof(comspec)))
                 {
-                    char *newcmdline, *q = strchr(cmd_line, ' ');
-                    if (!q) q = "";
+                    char *newcmdline;
                     if ((newcmdline = HeapAlloc( GetProcessHeap(), 0,
-                                                 strlen(comspec) + strlen(name) + strlen(q) + 8)))
+                                                 strlen(comspec) + 4 + strlen(tidy_cmdline) + 1)))
                     {
-                        sprintf( newcmdline, "%s /c %s%s", comspec, name, q );
+                        sprintf( newcmdline, "%s /c %s", comspec,  tidy_cmdline);
                         TRACE( "starting %s as batch binary: %s\n",
                                debugstr_a(name), debugstr_a(newcmdline) );
                         retv = CreateProcessA( comspec, newcmdline, process_attr, thread_attr,
