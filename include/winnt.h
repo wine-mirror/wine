@@ -78,21 +78,50 @@
 #endif  /* __i386__ */
 
 #ifndef __WINE__
-#define pascal      __stdcall
-#define _pascal     __stdcall
-#define _stdcall    __stdcall
-#define _fastcall   __stdcall
-#define __fastcall  __stdcall
-#define __export    __stdcall
-#define cdecl       __cdecl
-#define _cdecl      __cdecl
 
+#ifndef pascal
+#define pascal      __stdcall
+#endif
+#ifndef _pascal
+#define _pascal     __stdcall
+#endif
+#ifndef _stdcall
+#define _stdcall    __stdcall
+#endif
+#ifndef _fastcall
+#define _fastcall   __stdcall
+#endif
+#ifndef __fastcall
+#define __fastcall  __stdcall
+#endif
+#ifndef __export
+#define __export    __stdcall
+#endif
+#ifndef cdecl
+#define cdecl       __cdecl
+#endif
+#ifndef _cdecl
+#define _cdecl      __cdecl
+#endif
+
+#ifndef near
 #define near
+#endif
+#ifndef far
 #define far
+#endif
+#ifndef _near
 #define _near
+#endif
+#ifndef _far
 #define _far
+#endif
+#ifndef NEAR
 #define NEAR
+#endif
+#ifndef FAR
 #define FAR
+#endif
 
 #ifndef _declspec
 #define _declspec(x)
@@ -100,6 +129,7 @@
 #ifndef __declspec
 #define __declspec(x)
 #endif
+
 #endif /* __WINE__ */
 
 #define CALLBACK    __stdcall
