@@ -308,7 +308,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 /***********************************************************************
  *           SetDIBColorTable    (GDI32.@)
  */
-UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *colors )
+UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUAD *colors )
 {
     DC * dc;
     UINT result = 0;
