@@ -72,8 +72,8 @@ INSTALLSUBDIRS = \
 
 # Sub-directories to run make test into
 TESTSUBDIRS = \
-	programs/winetest \
-	dlls
+	dlls \
+	programs
 
 EMUOBJS = \
 	miscemu/miscemu.o

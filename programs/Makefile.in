@@ -49,6 +49,8 @@ uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 $(SUBDIRS:%=%/__checklink__): dummy
 	@cd `dirname $@` && $(MAKE) checklink
 
+check test:: $(SUBDIRS:%=%/__test__)
+
 checklink:: $(SUBDIRS:%=%/__checklink__)
 
 ### Dependencies:
