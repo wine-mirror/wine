@@ -177,7 +177,18 @@ then
 	  )
         )
 
-        if test "$wine_cv_mesa_version_OK" = "yes"
+	dnl Check for the thread-safety of the OpenGL library
+        AC_CACHE_CHECK("for thread-safe Mesa version", 
+		       wine_cv_mesa_version_threadsafe,
+                       [saved_libs=$LIBS
+		        LIBS="$X_LIBS -lGL"
+			AC_TRY_LINK([],[pthread_getspecific();],
+				    [wine_cv_mesa_version_threadsafe="yes"],
+				    [wine_cv_mesa_version_threadsafe="no"])
+			LIBS=$saved_libs]
+	)
+
+        if test "$wine_cv_mesa_version_OK" = "yes" -a "$wine_cv_mesa_version_threadsafe" = "no"
         then
 	    dnl Check for the presense of the library
             AC_CHECK_LIB(GL,glXCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lGL",,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
@@ -1086,7 +1097,15 @@ if test "$wine_cv_mesa_version_OK" = "no"
 then
   echo
   echo "*** Warning: old Mesa headers detected. Wine will be built without Direct3D"
-  echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)"
+  echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)."
+fi
+
+if test "$wine_cv_mesa_version_threadsafe" = "yes"
+then
+  echo
+  echo "*** Warning: the OpenGL version you have installed relies on libpthread for"
+  echo "*** thread-safety. To prevent crashes, OpenGL support has been removed"
+  echo "*** (while we work on a better fix)."
 fi
 
 echo
