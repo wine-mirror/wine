@@ -348,6 +348,10 @@ StdMarshalImpl_UnmarshalInterface(
       FIXME("Calling back to ourselves for %s!\n",debugstr_guid(riid));
       return S_OK;
   }
+  if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_NULL)) {
+    /* should return proxy manager IUnknown object */
+    FIXME("Special treatment required for IID of %s\n", debugstr_guid(riid));
+  }
   hres = get_facbuf_for_iid(riid,&psfacbuf);
   if (hres) return hres;
   hres = IPSFactoryBuffer_CreateProxy(psfacbuf,NULL,riid,&rpcproxy,ppv);
