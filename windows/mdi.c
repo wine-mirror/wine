@@ -258,6 +258,7 @@ void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT del
         MDICLIENTINFO *ci = get_client_info(hwndClient);
         total = ci ? ci->nTotalCreated : 0;
         *id = ci->idFirstChild + ci->nActiveChildren;
+        TRACE("MDI child id %04x\n", *id);
     }
 
     GetClientRect( hwndClient, &rect );
@@ -1039,7 +1040,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 
 	if (!hBmpClose) hBmpClose = CreateMDIMenuBitmap();
 
-        TRACE("Client created: hwnd %p, Window menu %p, idFirst = %u\n",
+        TRACE("Client created: hwnd %p, Window menu %p, idFirst = %04x\n",
               hwnd, ci->hWindowMenu, ci->idFirstChild );
         return 0;
       }

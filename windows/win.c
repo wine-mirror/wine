@@ -800,6 +800,18 @@ BOOL WIN_CreateDesktopWindow(void)
  */
 static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
 {
+    POINT pos[2];
+
+    if (cs->dwExStyle & WS_EX_MDICHILD)
+    {
+        UINT id = 0;
+
+        MDI_CalcDefaultChildPos(cs->hwndParent, -1, pos, 0, &id);
+        if (!(cs->style & WS_POPUP)) cs->hMenu = (HMENU)id;
+
+        TRACE("MDI child id %04x\n", id);
+    }
+
     if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16 ||
         cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
     {
@@ -807,12 +819,6 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
         {
             if (cs->dwExStyle & WS_EX_MDICHILD)
             {
-                UINT id = 0;
-                POINT pos[2];
-
-                MDI_CalcDefaultChildPos(cs->hwndParent, -1, pos, 0, &id);
-                if (!(cs->style & WS_POPUP)) cs->hMenu = (HMENU)id;
-
                 if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
                 {
                     cs->x = pos[0].x;
@@ -1930,6 +1936,8 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
 {
     LONG_PTR retvalue = 0;
     WND *wndPtr;
+
+    TRACE( "%p %d %x\n", hwnd, offset, type );
 
     if (offset == GWLP_HWNDPARENT)
     {
