@@ -19,7 +19,7 @@
  *
  *
  * This code was audited for completeness against the documented features
- * of Comctl32.dll version 6.0 on Mar. 14, 2004, by Robert Shearman.
+ * of Comctl32.dll version 6.0 on Oct. 19, 2004, by Robert Shearman.
  * 
  * Unless otherwise noted, we believe this code to be complete, as per
  * the specification mentioned above.
