@@ -535,7 +535,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			return IE_HARDWARE;
 		} else {
                         unknown[port] = SEGPTR_ALLOC(40);
-                        bzero(unknown[port],40);
+			memset(unknown[port], 0, 40);
 			COM[port].fd = fd;
 			COM[port].commerror = 0;
 			COM[port].eventmask = 0;
