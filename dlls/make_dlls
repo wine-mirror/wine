@@ -292,7 +292,7 @@ print NEWMAKE <<EOF;
 uninstall::
 	\$(RM) \$(LINKABLE_DLLS:%=\$(libdir)/lib%.\$(LIBEXT))
 
-install install-lib::
+install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
 	\$(RM) \$(LINKABLE_DLLS:%=\$(libdir)/lib%.\$(LIBEXT))
 	cd \$(libdir) && if [ "\$(dlldir)" = "\$(libdir)/wine" ]; \\
 	then \\
@@ -317,8 +317,6 @@ print NEWMAKE <<EOF;
 install install-dev:: \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT))
 	\$(MKINSTALLDIRS) \$(dlldir)
 	for f in \$(IMPORT_LIBS:%=%.\$(IMPLIBEXT)); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
-
-install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall::
 	\$(RM) \$(IMPORT_LIBS:%=\$(dlldir)/%.\$(IMPLIBEXT))
