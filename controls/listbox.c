@@ -1790,9 +1790,9 @@ static LRESULT LISTBOX_Directory( HWND hwnd, LB_DESCR *descr, UINT attrib,
                         continue;
 #undef ATTRIBS
                     if (!long_names && entry.cAlternateFileName[0])
-                        strcpyW( buffer + 1, entry.cAlternateFileName );
+                        strcpyW( buffer, entry.cAlternateFileName );
                     else
-                        strcpyW( buffer + 1, entry.cFileName );
+                        strcpyW( buffer, entry.cFileName );
                 }
                 if (!long_names) CharLowerW( buffer );
                 pos = LISTBOX_FindFileStrPos( hwnd, descr, buffer );
