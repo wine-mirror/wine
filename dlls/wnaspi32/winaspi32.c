@@ -17,6 +17,8 @@
 
 DEFAULT_DEBUG_CHANNEL(aspi)
 
+#define malloc(x) HeapAlloc(GetProcessHeap(),0,x)
+#define free(p) HeapFree(GetProcessHeap(),0,p)
 
 /* FIXME!
  * 1) Residual byte length reporting not handled
