@@ -1475,6 +1475,7 @@ PSFacBuf_CreateProxy(
     proxy->ref		= 2;
     proxy->tinfo	= tinfo;
     memcpy(&proxy->iid,riid,sizeof(*riid));
+    proxy->chanbuf      = 0;
     *ppv		= (LPVOID)proxy;
     *ppProxy		= (IRpcProxyBuffer *)&(proxy->lpvtbl2);
     return S_OK;
