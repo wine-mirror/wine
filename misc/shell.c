@@ -582,13 +582,13 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE hFile, LPicoICOND
 
   if( id[0] || id[1] != 1 || !id[2] ) return 0;
 
-  i = id[2]*sizeof(icoICONDIRENTRY) + sizeof(id);
+  i = id[2]*sizeof(icoICONDIRENTRY) ;
 
-  lpiID = (LPicoICONDIR)HeapAlloc( GetProcessHeap(), 0, i);
+  lpiID = (LPicoICONDIR)HeapAlloc( GetProcessHeap(), 0, i + sizeof(id));
 
   if( _lread(hFile,(char*)lpiID->idEntries,i) == i )
   { HGLOBAL16 handle = DirectResAlloc16( hInst, 0x10,
-                                     id[2]*sizeof(ICONDIRENTRY) + sizeof(id) );
+                                     id[2]*sizeof(CURSORICONDIRENTRY) + sizeof(id) );
      if( handle ) 
     { CURSORICONDIR*     lpID = (CURSORICONDIR*)GlobalLock16( handle );
        lpID->idReserved = lpiID->idReserved = id[0];
@@ -596,8 +596,8 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE hFile, LPicoICOND
        lpID->idCount = lpiID->idCount = id[2];
        for( i=0; i < lpiID->idCount; i++ )
       { memcpy((void*)(lpID->idEntries + i), 
-		   (void*)(lpiID->idEntries + i), sizeof(ICONDIRENTRY) - 2);
-	    lpID->idEntries[i].icon.wResId = i;
+		   (void*)(lpiID->idEntries + i), sizeof(CURSORICONDIRENTRY) - 2);
+	    lpID->idEntries[i].wResId = i;
          }
       *lplpiID = lpiID;
        return handle;
