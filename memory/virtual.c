@@ -552,12 +552,13 @@ LPVOID WINAPI VirtualAlloc(
     if (addr)
     {
         if (type & MEM_RESERVE) /* Round down to 64k boundary */
-            base = ((UINT)addr + granularity_mask) & ~granularity_mask;
+            base = (UINT)addr & ~granularity_mask;
         else
             base = ROUND_ADDR( addr );
         size = (((UINT)addr + size + page_mask) & ~page_mask) - base;
-        if (base + size < base)  /* Disallow wrap-around */
+        if ((base <= granularity_mask) || (base + size < base))
         {
+            /* disallow low 64k and wrap-around */
             SetLastError( ERROR_INVALID_PARAMETER );
             return NULL;
         }
@@ -636,7 +637,7 @@ LPVOID WINAPI VirtualAlloc(
     if (!(view = VIRTUAL_FindView( base )) ||
         (base + size > view->base + view->size))
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_INVALID_ADDRESS );
         return NULL;
     }
 
