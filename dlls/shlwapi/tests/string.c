@@ -33,6 +33,8 @@
 #include "shlwapi.h"
 #include "shtypes.h"
 
+static HRESULT (WINAPI *ptr_StrRetToBSTR) (STRRET*, void*, BSTR*);
+
 static inline int strcmpW(const WCHAR *str1, const WCHAR *str2)
 {
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
@@ -596,16 +598,22 @@ static WCHAR *CoDupStrW(const char* src)
 
 static void test_StrRetToBSTR(void)
 {
+    HMODULE module;
     static const WCHAR szTestW[] = { 'T','e','s','t','\0' };
     ITEMIDLIST iidl[10];
     BSTR bstr;
     STRRET strret;
     HRESULT ret;
 
+    module = GetModuleHandleA("shlwapi");
+    if (!module) return;
+    ptr_StrRetToBSTR = (void *)GetProcAddress(module, "StrRetToBSTR");
+    if (!ptr_StrRetToBSTR) return;
+
     strret.uType = STRRET_WSTR;
     strret.u.pOleStr = CoDupStrW("Test");
     bstr = 0;
-    ret = StrRetToBSTR(&strret, NULL, &bstr);
+    ret = ptr_StrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_WSTR: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
     if (bstr)
@@ -613,7 +621,7 @@ static void test_StrRetToBSTR(void)
 
     strret.uType = STRRET_CSTR;
     lstrcpyA(strret.u.cStr, "Test");
-    ret = StrRetToBSTR(&strret, NULL, &bstr);
+    ret = ptr_StrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_CSTR: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
     if (bstr)
@@ -622,7 +630,7 @@ static void test_StrRetToBSTR(void)
     strret.uType = STRRET_OFFSET;
     strret.u.uOffset = 1;
     strcpy((char*)&iidl, " Test");
-    ret = StrRetToBSTR(&strret, iidl, &bstr);
+    ret = ptr_StrRetToBSTR(&strret, iidl, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_OFFSET: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
     if (bstr)
