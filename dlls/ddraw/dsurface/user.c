@@ -49,7 +49,6 @@ static void User_destroy_own_window(IDirectDrawSurfaceImpl* This);
 static DWORD CALLBACK User_update_thread(LPVOID);
 #endif
 static void User_copy_to_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc);
-static void User_copy_from_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc);
 
 static HWND get_display_window(IDirectDrawSurfaceImpl* This, LPPOINT pt);
 
@@ -597,6 +596,7 @@ static void User_copy_to_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
     }
 }
 
+#if 0
 static void User_copy_from_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 {
     if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
@@ -623,6 +623,7 @@ static void User_copy_from_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 	ReleaseDC(hDisplayWnd, hDisplayDC);
     }
 }
+#endif
 
 static ICOM_VTABLE(IDirectDrawSurface7) User_IDirectDrawSurface7_VTable =
 {

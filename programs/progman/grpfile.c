@@ -641,6 +641,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
     }
 
   /* Icons */
+#if 0  /* FIXME: this is broken anyway */
   hProgram = group->hPrograms;
   while(hProgram)
     {
@@ -649,7 +650,6 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       LPVOID XorBits, AndBits;
       INT sizeXor = iconinfo->nHeight * iconinfo->nWidthBytes;
       INT sizeAnd = iconinfo->nHeight * ((iconinfo->nWidth + 15) / 16 * 2);
-      /* FIXME: this is broken anyway */
       /* DumpIcon16(LocalLock(program->hIcon), 0, &XorBits, &AndBits);*/
 
       PUT_SHORT(buffer, 0, iconinfo->ptHotSpot.x);
@@ -666,6 +666,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
 
       hProgram = program->hNext;
     }
+#endif
 
   if (need_extension)
     {

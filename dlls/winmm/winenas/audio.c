@@ -212,16 +212,6 @@ static const char *wodPlayerCmdString[] = {
     "WINE_WM_CLOSING",
 };
 
-static char *nas_event_types[] = {
-        "Undefined",
-        "Undefined",
-        "ElementNotify",
-        "GrabNotify",
-        "MonitorNotify",
-        "BucketNotify",
-        "DeviceNotify"
-};
-
 static char *nas_elementnotify_kinds[] = {
         "LowWater",
         "HighWater",
@@ -259,11 +249,24 @@ static char* nas_elementnotify_kind(unsigned int kind)
 }
 
 
-static char* nas_event_type(unsigned int type)
+#if 0
+static const char* nas_event_type(unsigned int type)
 {
+        static const char * const nas_event_types[] =
+        {
+            "Undefined",
+            "Undefined",
+            "ElementNotify",
+            "GrabNotify",
+            "MonitorNotify",
+            "BucketNotify",
+            "DeviceNotify"
+        };
+
         if (type > 6) type = 0;
         return nas_event_types[type];
 }
+#endif
 
 
 static char* nas_state(unsigned int state)
