@@ -53,6 +53,8 @@ void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
  */
 void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
 {
+    DWORD res;
+
     if (!crit->LockSemaphore)
     {
     	FIXME(win32,"entering uninitialized section(%p)?\n",crit);
@@ -66,8 +68,14 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
             return;
         }
         /* Now wait for it */
-        /* FIXME: should set a timeout and raise an exception */
-        WaitForSingleObject( crit->LockSemaphore, INFINITE );
+
+        res = WaitForSingleObject( crit->LockSemaphore, 2000 );
+        if (res == STATUS_TIMEOUT) res = WaitForSingleObject( crit->LockSemaphore, 2000 );
+        if (res != STATUS_WAIT_0)
+        {
+            ERR(win32, "Critical section %p wait failed err=%lx\n", crit, res );
+            /* FIXME: should raise an exception */
+        }
     }
     crit->OwningThread   = GetCurrentThreadId();
     crit->RecursionCount = 1;
