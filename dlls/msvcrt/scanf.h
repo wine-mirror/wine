@@ -47,6 +47,8 @@
 #define _FUNCTION_ _cscanf(const _CHAR_ *format, ...)
 #else
 #ifdef STRING
+#undef _EOF_
+#define _EOF_ 0
 #define _GETC_(file) *file++
 #define _UNGETC_(nch, file) file--
 #ifdef WIDE_SCANF
