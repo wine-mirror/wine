@@ -10,6 +10,14 @@
 #ifndef RC_INVOKED
 #include <sys/types.h>
 
+#ifndef __WINE__
+#ifdef __svr4__
+#ifndef HAVE_SYS_SOCKET_H
+#define HAVE_SYS_SOCKET_H
+#endif /* HAVE_SYS_SOCKET_H */
+#endif /* __svr4__ */
+#endif /* __WINE__ */
+
 /* Solaris uses these macro names */
 #undef FSHIFT
 #undef TRANSPARENT
