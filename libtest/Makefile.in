@@ -5,7 +5,7 @@ TOPOBJDIR  = ..
 SRCDIR     = @srcdir@
 VPATH      = @srcdir@
 MODULE     = none
-PROGRAMS   = expand hello hello2 hello3 hello4 hello5 new rolex vartest volinfo
+PROGRAMS   = expand hello hello2 hello3 hello4 hello5 new rolex volinfo
 ALL_LIBS   = $(LIBWINE) $(LIBS)
 
 C_SRCS = \
@@ -17,7 +17,6 @@ C_SRCS = \
 	hello5.c \
 	new.c \
 	rolex.c \
-	vartest.c \
 	volinfo.c
 
 SPEC_SRCS = \
@@ -29,7 +28,6 @@ SPEC_SRCS = \
 	hello5.spec \
 	new.spec \
 	rolex.spec \
-	vartest.spec \
 	volinfo.spec
 
 RC_SRCS = \
@@ -78,11 +76,6 @@ rolex.spec.c: rolex.spec rolex.o $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym rolex.o -o rolex.spec.c -spec rolex.spec
 rolex.so: rolex.o rolex.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o rolex.so $+ $(ALL_LIBS)
-
-vartest.spec.c: vartest.spec vartest.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym vartest.o -o vartest.spec.c -spec vartest.spec
-vartest.so: vartest.o vartest.spec.o
-	$(LDSHARED) $(LDDLLFLAGS) -o vartest.so $+ $(ALL_LIBS)
 
 volinfo.spec.c: volinfo.spec volinfo.o $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym volinfo.o -o volinfo.spec.c -spec volinfo.spec

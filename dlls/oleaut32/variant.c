@@ -1650,7 +1650,7 @@ static HRESULT WINAPI ValidateVariantType( VARTYPE vt )
             ( vt & VT_TYPEMASK ) == VT_NULL ||
 			( vt & VT_TYPEMASK ) > VT_MAXVALIDTYPE )
 		{
-			res = E_INVALIDARG;
+			res = DISP_E_BADVARTYPE;
 		}
 			
     }
@@ -1972,8 +1972,8 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 	      break;
 	  }
 	}
-	
-	V_VT(pvargDest) = V_VT(pvargSrc) & VT_TYPEMASK;
+
+        if (res == S_OK) V_VT(pvargDest) = V_VT(pvargSrc) & VT_TYPEMASK;
       }
     }
 
