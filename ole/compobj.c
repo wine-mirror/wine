@@ -721,6 +721,14 @@ OLESTATUS WINAPI CoRegisterClassObject32(
 }
 
 /***********************************************************************
+ *           CoRevokeClassObject [OLE32.40]
+ */
+HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister) {
+    FIXME(ole,"(%08lx),stub!\n",dwRegister);
+    return S_OK;
+}
+
+/***********************************************************************
  *           CoGetClassObject [COMPOBJ.7]
  */
 HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,

@@ -40,7 +40,7 @@ type	win32
  37 stub CoRegisterMallocSpy
  38 stdcall CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter32
  39 stub CoReleaseMarshalData
- 40 stub CoRevokeClassObject
+ 40 stdcall CoRevokeClassObject(long) CoRevokeClassObject
  41 stub CoRevokeMallocSpy
  42 stdcall CoSetState(ptr) CoSetState32
  43 stdcall CoTaskMemAlloc(long) CoTaskMemAlloc
@@ -127,7 +127,7 @@ type	win32
 124 stub OleSave
 125 stub OleSaveToStream
 126 stub OleSetAutoConvert
-127 stub OleSetClipboard
+127 stdcall OleSetClipboard(ptr) OleSetClipboard
 128 stub OleSetContainedObject
 129 stub OleSetMenuDescriptor
 130 stub OleTranslateAccelerator

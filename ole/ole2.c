@@ -54,6 +54,15 @@ HRESULT WINAPI OleFlushClipboard()
     return S_OK;
 }
 
+/***********************************************************************
+ *           OleSetClipboard     [OLE32.127]
+ */
+HRESULT WINAPI OleSetClipboard(LPVOID pDataObj)
+{
+    FIXME(ole,"(%p), stub!\n", pDataObj);
+    return S_OK;
+}
+
 /******************************************************************************
  *		CoRegisterMessageFilter32	[OLE32.38]
  */
@@ -131,7 +140,7 @@ HRESULT WINAPI RevokeDragDrop32(
  */
 HRESULT WINAPI CreateBindCtx32 (DWORD reserved,	LPVOID *ppbc)
 {
-    FIXME(ole,"(0x%08x %p): stub!\n", reserved, ppbc);
+    FIXME(ole,"(0x%08lx %p): stub!\n", reserved, ppbc);
     *ppbc = 0;
 //    return S_OK;
     return E_OUTOFMEMORY;
