@@ -306,6 +306,10 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	/* And warn the D3D object that this device is no longer active... */
 	This->d3d->removed_device(This->d3d, This);
 
+	HeapFree(GetProcessHeap(), 0, This->world_mat);
+	HeapFree(GetProcessHeap(), 0, This->view_mat);
+	HeapFree(GetProcessHeap(), 0, This->proj_mat);
+
 	ENTER_GL();
 	glXDestroyContext(glThis->display, glThis->gl_context);
 	LEAVE_GL();
@@ -359,8 +363,8 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     TRACE("Enumerating GL_RGBA unpacked (32)\n");
     pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
     pformat->u1.dwRGBBitCount = 32;
-    pformat->u2.dwRBitMask =         0xFF000000;
-    pformat->u3.dwGBitMask =         0x00FF0000;
+    pformat->u2.dwRBitMask =        0xFF000000;
+    pformat->u3.dwGBitMask =        0x00FF0000;
     pformat->u4.dwBBitMask =        0x0000FF00;
     pformat->u5.dwRGBAlphaBitMask = 0x000000FF;
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
@@ -369,8 +373,8 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     TRACE("Enumerating GL_RGB unpacked (24)\n");
     pformat->dwFlags = DDPF_RGB;
     pformat->u1.dwRGBBitCount = 24;
-    pformat->u2.dwRBitMask =  0x00FF0000;
-    pformat->u3.dwGBitMask =  0x0000FF00;
+    pformat->u2.dwRBitMask = 0x00FF0000;
+    pformat->u3.dwGBitMask = 0x0000FF00;
     pformat->u4.dwBBitMask = 0x000000FF;
     pformat->u5.dwRGBAlphaBitMask = 0x00000000;
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
@@ -379,8 +383,8 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     TRACE("Enumerating GL_RGB packed GL_UNSIGNED_SHORT_5_6_5 (16)\n");
     pformat->dwFlags = DDPF_RGB;
     pformat->u1.dwRGBBitCount = 16;
-    pformat->u2.dwRBitMask =  0x0000F800;
-    pformat->u3.dwGBitMask =  0x000007E0;
+    pformat->u2.dwRBitMask = 0x0000F800;
+    pformat->u3.dwGBitMask = 0x000007E0;
     pformat->u4.dwBBitMask = 0x0000001F;
     pformat->u5.dwRGBAlphaBitMask = 0x00000000;
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
@@ -449,9 +453,9 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     TRACE("Enumerating Paletted (8)\n");
     pformat->dwFlags = DDPF_PALETTEINDEXED8;
     pformat->u1.dwRGBBitCount = 8;
-    pformat->u2.dwRBitMask =  0x00000000;
-    pformat->u3.dwGBitMask =  0x00000000;
-    pformat->u4.dwBBitMask = 0x00000000;
+    pformat->u2.dwRBitMask =        0x00000000;
+    pformat->u3.dwGBitMask =        0x00000000;
+    pformat->u4.dwBBitMask =        0x00000000;
     pformat->u5.dwRGBAlphaBitMask = 0x00000000;
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
@@ -624,25 +628,31 @@ GL_IDirect3DDeviceImpl_7_3T_2T_SetTransform(LPDIRECT3DDEVICE7 iface,
     switch (dtstTransformStateType) {
         case D3DTRANSFORMSTATE_WORLD: {
 	    TRACE(" D3DTRANSFORMSTATE_WORLD :\n");
-	    conv_mat(lpD3DMatrix, glThis->world_mat);
-	    glMatrixMode(GL_MODELVIEW);
-	    glLoadMatrixf((float *) glThis->view_mat);
-	    glMultMatrixf((float *) glThis->world_mat);
+	    conv_mat(lpD3DMatrix, This->world_mat);
+	    if (glThis->last_vertices_transformed == FALSE) {
+	        glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf((float *) This->view_mat);
+		glMultMatrixf((float *) This->world_mat);
+	    }
 	} break;
 
 	case D3DTRANSFORMSTATE_VIEW: {
 	    TRACE(" D3DTRANSFORMSTATE_VIEW :\n");
-	    conv_mat(lpD3DMatrix, glThis->view_mat);
-	    glMatrixMode(GL_MODELVIEW);
-	    glLoadMatrixf((float *) glThis->view_mat);
-	    glMultMatrixf((float *) glThis->world_mat);
+	    conv_mat(lpD3DMatrix, This->view_mat);
+	    if (glThis->last_vertices_transformed == FALSE) {
+	        glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf((float *) This->view_mat);
+		glMultMatrixf((float *) This->world_mat);
+	    }
 	} break;
 
 	case D3DTRANSFORMSTATE_PROJECTION: {
 	    TRACE(" D3DTRANSFORMSTATE_PROJECTION :\n");
-	    conv_mat(lpD3DMatrix, glThis->proj_mat);
-	    glMatrixMode(GL_PROJECTION);
-	    glLoadMatrixf((float *) glThis->proj_mat);
+	    conv_mat(lpD3DMatrix, This->proj_mat);
+	    if (glThis->last_vertices_transformed == FALSE) {
+	        glMatrixMode(GL_PROJECTION);
+		glLoadMatrixf((float *) This->proj_mat);
+	    }
 	} break;
 
 	default:
@@ -650,9 +660,6 @@ GL_IDirect3DDeviceImpl_7_3T_2T_SetTransform(LPDIRECT3DDEVICE7 iface,
 	    break;
     }
     LEAVE_GL();
-
-    /* And set the 'matrix changed' flag */
-    glThis->matrices_changed = TRUE;
 
     return DD_OK;
 }
@@ -696,26 +703,26 @@ static void draw_primitive_start_GL(D3DPRIMITIVETYPE d3dpt)
     }
 }
 
-static void draw_primitive_handle_GL_state(IDirect3DDeviceGLImpl *glThis,
+static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 					   BOOLEAN vertex_transformed,
 					   BOOLEAN vertex_lit) {
+    IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
+  
     /* Puts GL in the correct lighting / transformation mode */
     if ((vertex_transformed == FALSE) && 
-	((glThis->last_vertices_transformed == TRUE) ||
-	 (glThis->matrices_changed == TRUE))) {
+	(glThis->last_vertices_transformed == TRUE)) {
         /* Need to put the correct transformation again if we go from Transformed
 	   vertices to non-transformed ones.
 	*/
         glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf((float *) glThis->view_mat);
-	glMultMatrixf((float *) glThis->world_mat);
+	glLoadMatrixf((float *) This->view_mat);
+	glMultMatrixf((float *) This->world_mat);
 	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf((float *) glThis->proj_mat);
+	glLoadMatrixf((float *) This->proj_mat);
 
 	if (glThis->render_state.fog_on == TRUE) glEnable(GL_FOG);
     } else if ((vertex_transformed == TRUE) &&
-	       ((glThis->last_vertices_transformed == FALSE) ||
-		(glThis->matrices_changed == TRUE))) {
+	       (glThis->last_vertices_transformed == FALSE)) {
         GLfloat height, width;
 	GLfloat trans_mat[16];
 	
@@ -739,7 +746,6 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceGLImpl *glThis,
 	/* Remove also fogging... */
 	glDisable(GL_FOG);
     }
-    glThis->matrices_changed = FALSE;
     
     if ((glThis->last_vertices_lit == TRUE) && (vertex_lit == FALSE)) {
         glEnable(GL_LIGHTING);
@@ -976,7 +982,7 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
     }
 
     ENTER_GL();
-    draw_primitive_handle_GL_state(glThis,
+    draw_primitive_handle_GL_state(This,
 				   (d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ,
 				   (d3dvtVertexType & D3DFVF_NORMAL) == 0);
     draw_primitive_start_GL(d3dptPrimitiveType);
@@ -1958,14 +1964,12 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     gl_object->render_state.fog_on = FALSE;
     
     /* Allocate memory for the matrices */
-    gl_object->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
-    gl_object->view_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
-    gl_object->proj_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
-    gl_object->matrices_changed = TRUE;
-    
-    memcpy(gl_object->world_mat, id_mat, 16 * sizeof(float));
-    memcpy(gl_object->view_mat , id_mat, 16 * sizeof(float));
-    memcpy(gl_object->proj_mat , id_mat, 16 * sizeof(float));
+    object->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+    object->view_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+    object->proj_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
+    memcpy(object->world_mat, id_mat, 16 * sizeof(float));
+    memcpy(object->view_mat , id_mat, 16 * sizeof(float));
+    memcpy(object->proj_mat , id_mat, 16 * sizeof(float));
 
     /* Initialisation */
     TRACE(" setting current context\n");

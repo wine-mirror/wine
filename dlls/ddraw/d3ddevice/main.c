@@ -211,7 +211,32 @@ Main_IDirect3DDeviceImpl_7_3T_2T_GetTransform(LPDIRECT3DDEVICE7 iface,
                                               LPD3DMATRIX lpD3DMatrix)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08x,%p): stub!\n", This, iface, dtstTransformStateType, lpD3DMatrix);
+    TRACE("(%p/%p)->(%08x,%p)\n", This, iface, dtstTransformStateType, lpD3DMatrix);
+
+    switch (dtstTransformStateType) {
+        case D3DTRANSFORMSTATE_WORLD: {
+	    TRACE(" returning D3DTRANSFORMSTATE_WORLD :\n");
+	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
+	    dump_mat(lpD3DMatrix);
+	} break;
+
+	case D3DTRANSFORMSTATE_VIEW: {
+	    TRACE(" returning D3DTRANSFORMSTATE_VIEW :\n");
+	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
+	    dump_mat(lpD3DMatrix);
+	} break;
+
+	case D3DTRANSFORMSTATE_PROJECTION: {
+	    TRACE(" returning D3DTRANSFORMSTATE_PROJECTION :\n");
+	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
+	    dump_mat(lpD3DMatrix);
+	} break;
+
+	default:
+	    ERR("Unknown transform type %08x !!!\n", dtstTransformStateType);
+	    return DDERR_INVALIDPARAMS;
+    }
+
     return DD_OK;
 }
 

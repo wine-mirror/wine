@@ -243,16 +243,16 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			glLoadIdentity(); /* The model transformation was done during the
 					     transformation phase */
 			glMatrixMode(GL_PROJECTION);
-			TRACE("  Projection Matrix : (%p)\n", lpDeviceGL->proj_mat);
-			dump_mat(lpDeviceGL->proj_mat);
-			TRACE("  View       Matrix : (%p)\n", lpDeviceGL->view_mat);
-			dump_mat(lpDeviceGL->view_mat);
+			TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
+			dump_mat(lpDevice->proj_mat);
+			TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
+			dump_mat(lpDevice->view_mat);
 
 			/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
 			   are always 0.0 at the front viewing volume and 1.0 at the back with Direct 3D and with
 			   the default behaviour of OpenGL. So, no additional transformation is required. */
-			glLoadMatrixf((float *) lpDeviceGL->proj_mat);
-			glMultMatrixf((float *) lpDeviceGL->view_mat);
+			glLoadMatrixf((float *) lpDevice->proj_mat);
+			glMultMatrixf((float *) lpDevice->view_mat);
 			break;
 
 		    case D3DVT_LVERTEX:
@@ -265,16 +265,16 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 					     transformation phase */
 			glMatrixMode(GL_PROJECTION);
 			
-			TRACE("  Projection Matrix : (%p)\n", lpDeviceGL->proj_mat);
-			dump_mat(lpDeviceGL->proj_mat);
-			TRACE("  View       Matrix : (%p)\n", lpDeviceGL->view_mat);
-			dump_mat(lpDeviceGL->view_mat);
+			TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
+			dump_mat(lpDevice->proj_mat);
+			TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
+			dump_mat(lpDevice->view_mat);
 			
 			/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
 			   are always 0 at the front viewing volume and 1 at the back with Direct 3D and with
 			   the default behaviour of OpenGL. So, no additional transformation is required. */
-			glLoadMatrixf((float *) lpDeviceGL->proj_mat);
-			glMultMatrixf((float *) lpDeviceGL->view_mat);
+			glLoadMatrixf((float *) lpDevice->proj_mat);
+			glMultMatrixf((float *) lpDevice->view_mat);
 			break;
 
 		    case D3DVT_TLVERTEX: {
@@ -379,17 +379,17 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    switch (ci->u1.dtstTransformStateType) {
 		        case D3DTRANSFORMSTATE_WORLD: {
 			    TRACE("  WORLD (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
-			    lpDeviceGL->world_mat = (D3DMATRIX*) ci->u2.dwArg[0];
+			    lpDevice->world_mat = (D3DMATRIX*) ci->u2.dwArg[0];
 			} break;
 
 			case D3DTRANSFORMSTATE_VIEW: {
 			    TRACE("  VIEW (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
-			    lpDeviceGL->view_mat = (D3DMATRIX*) ci->u2.dwArg[0];
+			    lpDevice->view_mat = (D3DMATRIX*) ci->u2.dwArg[0];
 			} break;
 
 			case D3DTRANSFORMSTATE_PROJECTION: {
 			    TRACE("  PROJECTION (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
-			    lpDeviceGL->proj_mat = (D3DMATRIX*) ci->u2.dwArg[0];
+			    lpDevice->proj_mat = (D3DMATRIX*) ci->u2.dwArg[0];
 			} break;
 			  
 			default:
@@ -538,7 +538,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		        int nb;
 			D3DVERTEX  *src = ((LPD3DVERTEX)  (This->desc.lpData + vs)) + ci->wStart;
 			OGL_Vertex *dst = ((OGL_Vertex *) (This->vertex_data)) + ci->wDest;
-			D3DMATRIX *mat = lpDeviceGL->world_mat;
+			D3DMATRIX *mat = lpDevice->world_mat;
 			
 			TRACE("  World Matrix : (%p)\n", mat);
 			dump_mat(mat);
@@ -567,7 +567,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		        int nb;
 			D3DLVERTEX *src  = ((LPD3DLVERTEX) (This->desc.lpData + vs)) + ci->wStart;
 			OGL_LVertex *dst = ((OGL_LVertex *) (This->vertex_data)) + ci->wDest;
-			D3DMATRIX *mat = lpDeviceGL->world_mat;
+			D3DMATRIX *mat = lpDevice->world_mat;
 			
 			TRACE("  World Matrix : (%p)\n", mat);
 			dump_mat(mat);

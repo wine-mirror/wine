@@ -118,11 +118,6 @@ typedef struct IDirect3DDeviceGLImpl
     BOOLEAN last_vertices_transformed;
     BOOLEAN last_vertices_lit;
 
-    D3DMATRIX *world_mat;
-    D3DMATRIX *view_mat;
-    D3DMATRIX *proj_mat;
-    BOOLEAN matrices_changed;
-
     Display  *display;
     Drawable drawable;
 } IDirect3DDeviceGLImpl;

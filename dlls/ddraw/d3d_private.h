@@ -181,6 +181,11 @@ struct IDirect3DDeviceImpl
 
     IDirectDrawSurfaceImpl *current_texture[MAX_TEXTURES];
 
+    /* Current transformation matrices */
+    D3DMATRIX *world_mat;
+    D3DMATRIX *view_mat;
+    D3DMATRIX *proj_mat;
+
     void (*set_context)(IDirect3DDeviceImpl*);
     HRESULT (*clear)(IDirect3DDeviceImpl *This,
 		     DWORD dwCount,
