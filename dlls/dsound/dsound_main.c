@@ -2083,7 +2083,7 @@ static DWORD WINAPI DSOUND_MixPrimary(void)
 
 static int DSOUND_OpenAudio(void)
 {
-	int	audioFragment;
+	int	audioFragment,flags;
 
 	if (primarybuf == NULL)
 		return DSERR_OUTOFMEMORY;
@@ -2107,6 +2107,13 @@ static int DSOUND_OpenAudio(void)
 	audioFragment=0x0002000c;
 	if (-1==ioctl(audiofd,SNDCTL_DSP_SETFRAGMENT,&audioFragment))
 		perror("ioctl SETFRAGMENT");
+	
+	if ((flags = fcntl(audiofd,F_GETFL,0)) != -1) {
+	    flags &= ~O_NDELAY;
+	    if (-1==fcntl(audiofd,F_SETFL,flags))
+		perror("clearing the non-blocking flags in DSOUND_OpenAudio");
+	} else 
+	    perror("cannot get flags of audiofd");
 
 	audioOK = 1;
 	DSOUND_setformat(&(primarybuf->wfx));
