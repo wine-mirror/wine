@@ -57,7 +57,6 @@ static LPDDHALMODEINFO dd_modes;
 static unsigned int dd_mode_count;
 static XF86VidModeModeInfo** real_xf86vm_modes;
 static unsigned int real_xf86vm_mode_count;
-static unsigned int xf86vm_initial_mode = 0;
 
 static void convert_modeinfo( const XF86VidModeModeInfo *mode)
 {
@@ -114,7 +113,7 @@ int X11DRV_XF86VM_GetCurrentMode(void)
       return i;
     }
   ERR("In unknown mode, returning default\n");
-  return xf86vm_initial_mode;
+  return 0;
 }
 
 void X11DRV_XF86VM_SetCurrentMode(int mode)
@@ -211,9 +210,8 @@ void X11DRV_XF86VM_Init(void)
 
   TRACE("Available DD modes: count=%d\n", dd_mode_count);
 
-  /* store the current mode at the time we started */
-  xf86vm_initial_mode = X11DRV_XF86VM_GetCurrentMode();
-  X11DRV_Settings_SetDefaultMode(xf86vm_initial_mode);
+  /* the first mode in the list seems to be the default */
+  X11DRV_Settings_SetDefaultMode(0);
   
   TRACE("Enabling XVidMode\n");
 }
