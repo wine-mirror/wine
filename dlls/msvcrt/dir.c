@@ -433,9 +433,9 @@ void _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar
   MSVCRT_wchar_t ch, *ptr, *p;
   MSVCRT_wchar_t pathbuff[MAX_PATH],*path=pathbuff;
 
-  TRACE(":splitting path %s\n",debugstr_w(path));
   /* FIXME: Should be an strncpyW or something */
   strcpyW(pathbuff, inpath);
+  TRACE(":splitting path %s\n",debugstr_w(path));
 
   /* convert slashes to backslashes for searching */
   for (ptr = (MSVCRT_wchar_t*)path; *ptr; ++ptr)
