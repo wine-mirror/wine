@@ -326,19 +326,6 @@ LPVOID WINAPI SHAlloc(DWORD len) {
 }
 
 /*************************************************************************
- * OpenRegStream				[SHELL32.85]
- *
- * NOTES
- *     exported by ordinal
- */
-DWORD WINAPI OpenRegStream(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-    FIXME(shell,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub.\n",
-    	x1,x2,x3,x4
-    );
-    return 0;
-}
-
-/*************************************************************************
  * SHRegisterDragDrop				[SHELL32.86]
  *
  * NOTES
