@@ -240,6 +240,12 @@ EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine
 .idl.h:
 	$(LDPATH) $(WIDL) $(DEFS) -b -h -H $@ $<
 
+$(IDL_SRCS:.idl=.h): $(WIDL)
+
+.PHONY: idl
+
+idl: $(IDL_SRCS:.idl=.h)
+
 install::
 	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/msvcrt $(includedir)/msvcrt/sys
 	for f in $(WINDOWS_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/windows/$$f; done

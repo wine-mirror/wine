@@ -157,7 +157,7 @@ $(MODULE).dbg.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
 
 # Rule to rebuild the tools
 
-$(MAKEDEP) $(WINEBUILD) $(WMC) $(WRC):
+$(MAKEDEP) $(WIDL) $(WINEBUILD) $(WMC) $(WRC):
 	cd $(TOOLSDIR)/tools && $(MAKE) `basename $@`
 
 # Rules for makefile
