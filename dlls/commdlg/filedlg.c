@@ -1960,7 +1960,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
             if (lpstrFilter != (LPWSTR)CB_ERR)  /* control is not empty */
                 filterExt = PathFindExtensionW(lpstrFilter);
 
-            if ( *filterExt ) /* attach the file extension from file type filter*/
+            if ( filterExt && *filterExt ) /* attach the file extension from file type filter*/
                 strcatW(lpstrPathAndFile, filterExt + 1);
             else if ( fodInfos->defext ) /* attach the default file extension*/
                 strcatW(lpstrPathAndFile, fodInfos->defext);
