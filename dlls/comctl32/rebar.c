@@ -1674,7 +1674,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 #if PROBLEM2
 	     (x < adjcx) : (y < adjcy)
 #else
-	     (adjcx - x > 4) : (adjcy - y > 4)
+	     (adjcx - x > 5) : (adjcy - y > 4)
 #endif
 	     ) &&
 	    (infoPtr->uNumBands > 1)) {
@@ -3204,9 +3204,9 @@ REBAR_InsertBandW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	}
 
 	/* post copy */
-	if (uIndex < infoPtr->uNumBands - 1) {
+	if (uIndex <= infoPtr->uNumBands - 1) {
 	    memcpy (&infoPtr->bands[uIndex+1], &oldBands[uIndex],
-		    (infoPtr->uNumBands - uIndex - 1) * sizeof(REBAR_BAND));
+		    (infoPtr->uNumBands - uIndex) * sizeof(REBAR_BAND));
 	}
 
 	Free (oldBands);
@@ -3238,7 +3238,7 @@ REBAR_InsertBandW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     REBAR_ValidateBand (infoPtr, lpBand);
     /* On insert of second band, revalidate band 1 to possible add gripper */
     if (infoPtr->uNumBands == 2)
-	REBAR_ValidateBand (infoPtr, &infoPtr->bands[0]);
+	REBAR_ValidateBand (infoPtr, &infoPtr->bands[uIndex ? 0 : 1]);
 
     REBAR_DumpBand (infoPtr);
 
