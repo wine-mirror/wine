@@ -107,6 +107,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
 static LPCSTR whole_window_atom;
 static LPCSTR icon_window_atom;
 static LPCSTR client_offset_atom;
+static LPCSTR managed_atom;
 
 /***********************************************************************
  *		is_window_managed
@@ -170,13 +171,12 @@ BOOL X11DRV_is_window_rect_mapped( const RECT *rect )
  */
 static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttributes *attr )
 {
-    BOOL managed = !using_wine_desktop && is_window_managed( data->hwnd );
-    DWORD ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
-
-    if (managed) WIN_SetExStyle( data->hwnd, ex_style | WS_EX_MANAGED );
-    else WIN_SetExStyle( data->hwnd, ex_style & ~WS_EX_MANAGED );
-
-    attr->override_redirect = !managed;
+    if (!data->managed && !using_wine_desktop && is_window_managed( data->hwnd ))
+    {
+        data->managed = TRUE;
+        SetPropA( data->hwnd, managed_atom, (HANDLE)1 );
+    }
+    attr->override_redirect = !data->managed;
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
     attr->cursor            = x11drv_thread_data()->cursor;
@@ -291,14 +291,14 @@ static void destroy_icon_window( Display *display, struct x11drv_win_data *data 
  * Set the icon wm hints
  */
 static void set_icon_hints( Display *display, struct x11drv_win_data *data,
-                            XWMHints *hints, HICON hIcon, DWORD ex_style )
+                            XWMHints *hints, HICON hIcon )
 {
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
     data->hWMIconBitmap = 0;
     data->hWMIconMask = 0;
 
-    if (!(ex_style & WS_EX_MANAGED))
+    if (!data->managed)
     {
         destroy_icon_window( display, data );
         hints->flags &= ~(IconPixmapHint | IconMaskHint | IconWindowHint);
@@ -484,7 +484,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
         wm_hints->input = !(style & WS_DISABLED);
 
         set_icon_hints( display, data, wm_hints,
-                        (HICON)GetClassLongW( data->hwnd, GCL_HICON ), ex_style );
+                        (HICON)GetClassLongW( data->hwnd, GCL_HICON ) );
 
         wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
         wm_hints->window_group = group_leader;
@@ -544,18 +544,17 @@ void X11DRV_set_iconic_state( HWND hwnd )
  *
  * Convert a rect from client to X window coordinates
  */
-void X11DRV_window_to_X_rect( HWND hwnd, RECT *rect )
+void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect )
 {
     RECT rc;
-    DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
 
-    if (!(ex_style & WS_EX_MANAGED)) return;
+    if (!data->managed) return;
     if (IsRectEmpty( rect )) return;
 
     rc.top = rc.bottom = rc.left = rc.right = 0;
 
-    AdjustWindowRectEx( &rc, GetWindowLongW(hwnd, GWL_STYLE) & ~(WS_HSCROLL|WS_VSCROLL),
-                        FALSE, ex_style );
+    AdjustWindowRectEx( &rc, GetWindowLongW( data->hwnd, GWL_STYLE ) & ~(WS_HSCROLL|WS_VSCROLL),
+                        FALSE, GetWindowLongW( data->hwnd, GWL_EXSTYLE ) );
 
     rect->left   -= rc.left;
     rect->right  -= rc.right;
@@ -571,15 +570,13 @@ void X11DRV_window_to_X_rect( HWND hwnd, RECT *rect )
  *
  * Opposite of X11DRV_window_to_X_rect
  */
-void X11DRV_X_to_window_rect( HWND hwnd, RECT *rect )
+void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect )
 {
-    DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
-
-    if (!(ex_style & WS_EX_MANAGED)) return;
+    if (!data->managed) return;
     if (IsRectEmpty( rect )) return;
 
-    AdjustWindowRectEx( rect, GetWindowLongW(hwnd, GWL_STYLE) & ~(WS_HSCROLL|WS_VSCROLL),
-                        FALSE, ex_style );
+    AdjustWindowRectEx( rect, GetWindowLongW( data->hwnd, GWL_STYLE ) & ~(WS_HSCROLL|WS_VSCROLL),
+                        FALSE, GetWindowLongW( data->hwnd, GWL_EXSTYLE ));
 
     if (rect->top >= rect->bottom) rect->bottom = rect->top + 1;
     if (rect->left >= rect->right) rect->right = rect->left + 1;
@@ -600,7 +597,7 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
 
     old_whole_rect = data->whole_rect;
     data->whole_rect = data->window_rect;
-    X11DRV_window_to_X_rect( data->hwnd, &data->whole_rect );
+    X11DRV_window_to_X_rect( data, &data->whole_rect );
 
     data->client_rect = *new_client_rect;
     OffsetRect( &data->client_rect, -data->whole_rect.left, -data->whole_rect.top );
@@ -674,6 +671,7 @@ static void create_desktop( Display *display, struct x11drv_win_data *data )
     whole_window_atom  = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_whole_window" ));
     icon_window_atom   = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_icon_window" ));
     client_offset_atom = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_client_area_offset" ));
+    managed_atom       = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_managed" ));
 
     data->whole_window = root_window;
     data->whole_rect = data->client_rect = data->window_rect;
@@ -700,7 +698,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     RECT rect;
 
     rect = data->window_rect;
-    X11DRV_window_to_X_rect( data->hwnd, &rect );
+    X11DRV_window_to_X_rect( data, &rect );
 
     if (!(cx = rect.right - rect.left)) cx = 1;
     if (!(cy = rect.bottom - rect.top)) cy = 1;
@@ -900,6 +898,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     data->whole_window  = 0;
     data->icon_window   = 0;
     data->xic           = 0;
+    data->managed       = FALSE;
     data->hWMIconBitmap = 0;
     data->hWMIconMask   = 0;
 
@@ -1181,8 +1180,8 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 void X11DRV_SetFocus( HWND hwnd )
 {
     Display *display = thread_display();
+    struct x11drv_win_data *data;
     XWindowAttributes win_attr;
-    Window win;
 
     /* Only mess with the X focus if there's */
     /* no desktop window and if the window is not managed by the WM. */
@@ -1198,19 +1197,20 @@ void X11DRV_SetFocus( HWND hwnd )
     }
 
     hwnd = GetAncestor( hwnd, GA_ROOT );
-    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_MANAGED) return;
-    if (!(win = X11DRV_get_whole_window( hwnd ))) return;
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!data->managed || !data->whole_window) return;
 
     /* Set X focus and install colormap */
     wine_tsx11_lock();
-    if (XGetWindowAttributes( display, win, &win_attr ) &&
+    if (XGetWindowAttributes( display, data->whole_window, &win_attr ) &&
         (win_attr.map_state == IsViewable))
     {
         /* If window is not viewable, don't change anything */
 
         /* we must not use CurrentTime (ICCCM), so try to use last message time instead */
         /* FIXME: this is not entirely correct */
-        XSetInputFocus( display, win, RevertToParent,
+        XSetInputFocus( display, data->whole_window, RevertToParent,
                         /* CurrentTime */
                         GetMessageTime() - EVENT_x11_time_to_win32_time(0));
         if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
@@ -1234,28 +1234,23 @@ void X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
     Display *display = thread_display();
     struct x11drv_win_data *data;
-    DWORD ex_style;
+    XWMHints* wm_hints;
 
     if (type != ICON_BIG) return;  /* nothing to do here */
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
     if (!data->whole_window) return;
+    if (!data->managed) return;
 
-    ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
-    if (ex_style & WS_EX_MANAGED)
+    wine_tsx11_lock();
+    if (!(wm_hints = XGetWMHints( display, data->whole_window ))) wm_hints = XAllocWMHints();
+    wine_tsx11_unlock();
+    if (wm_hints)
     {
-        XWMHints* wm_hints;
-
+        set_icon_hints( display, data, wm_hints, icon );
         wine_tsx11_lock();
-        if (!(wm_hints = XGetWMHints( display, data->whole_window ))) wm_hints = XAllocWMHints();
+        XSetWMHints( display, data->whole_window, wm_hints );
+        XFree( wm_hints );
         wine_tsx11_unlock();
-        if (wm_hints)
-        {
-            set_icon_hints( display, data, wm_hints, icon, ex_style );
-            wine_tsx11_lock();
-            XSetWMHints( display, data->whole_window, wm_hints );
-            XFree( wm_hints );
-            wine_tsx11_unlock();
-        }
     }
 }

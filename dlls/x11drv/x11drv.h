@@ -536,6 +536,7 @@ struct x11drv_win_data
     RECT    whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT    client_rect;    /* client area relative to whole window */
     XIC     xic;            /* X input context */
+    BOOL    managed;        /* is window managed? */
     HBITMAP hWMIconBitmap;
     HBITMAP hWMIconMask;
 };
@@ -558,8 +559,8 @@ typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void
 extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
 extern int X11DRV_check_error(void);
 extern void X11DRV_set_iconic_state( HWND hwnd );
-extern void X11DRV_window_to_X_rect( HWND hwnd, RECT *rect );
-extern void X11DRV_X_to_window_rect( HWND hwnd, RECT *rect );
+extern void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect );
+extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect );
 extern void X11DRV_create_desktop_thread(void);
 extern Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geometry );
 extern void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data );

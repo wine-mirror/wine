@@ -58,7 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 #define SWP_EX_PAINTSELF    0x0002
 #define SWP_EX_NONCLIENT    0x0004
 
-#define HAS_THICKFRAME(style,exStyle) \
+#define HAS_THICKFRAME(style) \
     (((style) & WS_THICKFRAME) && \
      !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
 
@@ -582,7 +582,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 
     if (changed & WS_DISABLED)
     {
-        if (data->whole_window && (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_MANAGED))
+        if (data->whole_window && data->managed)
         {
             XWMHints *wm_hints;
             wine_tsx11_lock();
@@ -1115,9 +1115,7 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
 
     if (!(win = WIN_GetPtr( hwnd ))) return;
 
-    if ((win->dwStyle & WS_VISIBLE) &&
-        (win->dwStyle & WS_MINIMIZE) &&
-        (win->dwExStyle & WS_EX_MANAGED))
+    if (data->managed && (win->dwStyle & WS_VISIBLE) && (win->dwStyle & WS_MINIMIZE))
     {
         int x, y;
         unsigned int width, height, border, depth;
@@ -1135,7 +1133,7 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
         rect.top    = y;
         rect.right  = x + width;
         rect.bottom = y + height;
-        X11DRV_X_to_window_rect( hwnd, &rect );
+        X11DRV_X_to_window_rect( data, &rect );
 
         DCE_InvalidateDCE( hwnd, &data->window_rect );
 
@@ -1157,11 +1155,14 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
  */
 void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event )
 {
+    struct x11drv_win_data *data;
     WND *win;
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
     if (!(win = WIN_GetPtr( hwnd ))) return;
 
-    if ((win->dwStyle & WS_VISIBLE) && (win->dwExStyle & WS_EX_MANAGED) &&
+    if ((win->dwStyle & WS_VISIBLE) && data->managed &&
         X11DRV_is_window_rect_mapped( &win->rectWindow ))
     {
         if (win->dwStyle & WS_MAXIMIZE)
@@ -1250,8 +1251,8 @@ static HWND query_zorder( Display *display, HWND hWndCheck)
     if (!list) return 0;
     for (i = 0; list[i]; i++)
     {
-        if (!(GetWindowLongW( list[i], GWL_EXSTYLE ) & WS_EX_MANAGED)) continue;
         if (!(GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE)) continue;
+        if (!GetPropA( list[i], "__wine_x11_managed" )) continue;
         if (!hwndA) hwndA = list[i];
         else
         {
@@ -1279,7 +1280,7 @@ static HWND query_zorder( Display *display, HWND hWndCheck)
             for (i = 0; list[i]; i++)
             {
                 if (list[i] == hWndCheck) continue;
-                if (!(GetWindowLongW( list[i], GWL_EXSTYLE ) & WS_EX_MANAGED)) continue;
+                if (!GetPropA( list[i], "__wine_x11_managed" )) continue;
                 if (!(w = __get_top_decoration( display, X11DRV_get_whole_window(list[i]),
                                                 parent ))) continue;
                 pos = __td_lookup( w, children, total );
@@ -1351,7 +1352,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
     TRACE( "win %p new X rect %ld,%ld,%ldx%ld (event %d,%d,%dx%d)\n",
            hwnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
-    X11DRV_X_to_window_rect( hwnd, &rect );
+    X11DRV_X_to_window_rect( data, &rect );
 
     winpos.hwnd  = hwnd;
     winpos.x     = rect.left;
@@ -1650,8 +1651,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     POINT minTrack, maxTrack;
     POINT capturePoint, pt;
     LONG style = GetWindowLongA( hwnd, GWL_STYLE );
-    LONG exstyle = GetWindowLongA( hwnd, GWL_EXSTYLE );
-    BOOL    thickframe = HAS_THICKFRAME( style, exstyle );
+    BOOL    thickframe = HAS_THICKFRAME( style );
     BOOL    iconic = style & WS_MINIMIZE;
     BOOL    moved = FALSE;
     DWORD     dwPoint = GetMessagePos ();
@@ -1660,6 +1660,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     Window parent_win, whole_win;
     Display *old_gdi_display = NULL;
     Display *display = thread_display();
+    struct x11drv_win_data *data;
 
     pt.x = (short)LOWORD(dwPoint);
     pt.y = (short)HIWORD(dwPoint);
@@ -1667,8 +1668,10 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     if (IsZoomed(hwnd) || !IsWindowVisible(hwnd)) return;
 
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+
     /* if we are managed then we let the WM do all the work */
-    if (exstyle & WS_EX_MANAGED)
+    if (data->managed)
     {
         int dir;
         if (syscommand == SC_MOVE)

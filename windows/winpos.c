@@ -696,7 +696,7 @@ BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
 {
     LPINTERNALPOS lpPos = (LPINTERNALPOS)GetPropA( hwnd, atomInternalPos );
 
-    if( lpPos && !(GetWindowLongA( hwnd, GWL_EXSTYLE) & WS_EX_MANAGED))
+    if (lpPos && !GetPropA( hwnd, "__wine_x11_managed" ))
     {
         HWND title = lpPos->hwndIconTitle;
 

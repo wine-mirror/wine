@@ -2948,7 +2948,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
     if (wParam & HTSYSMENU)
     {
         /* prevent sysmenu activation for managed windows on Alt down/up */
-        if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MANAGED)
+        if (GetPropA( hwnd, "__wine_x11_managed" ))
             wFlags |= TF_ENDMENU; /* schedule end of menu tracking */
     }
     else
