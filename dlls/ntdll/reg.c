@@ -85,6 +85,20 @@ NTSTATUS WINAPI NtCreateKey( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTR
     return ret;
 }
 
+/******************************************************************************
+ *  RtlpNtCreateKey [NTDLL.@]
+ *
+ *  See NtCreateKey.
+ */
+NTSTATUS WINAPI RtlpNtCreateKey( PHKEY retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                 ULONG TitleIndex, const UNICODE_STRING *class, ULONG options,
+                                 PULONG dispos )
+{
+    if (attr)
+        attr->Attributes &= ~(OBJ_PERMANENT|OBJ_EXCLUSIVE);
+
+    return NtCreateKey(retkey, access, attr, 0, NULL, 0, dispos);
+}
 
 /******************************************************************************
  * NtOpenKey [NTDLL.@]
@@ -118,6 +132,17 @@ NTSTATUS WINAPI NtOpenKey( PHKEY retkey, ACCESS_MASK access, const OBJECT_ATTRIB
     return ret;
 }
 
+/******************************************************************************
+ * RtlpNtOpenKey [NTDLL.@]
+ *
+ * See NtOpenKey.
+ */
+NTSTATUS WINAPI RtlpNtOpenKey( PHKEY retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr )
+{
+    if (attr)
+        attr->Attributes &= ~(OBJ_PERMANENT|OBJ_EXCLUSIVE);
+    return NtOpenKey(retkey, access, attr);
+}
 
 /******************************************************************************
  * NtDeleteKey [NTDLL.@]
@@ -138,6 +163,15 @@ NTSTATUS WINAPI NtDeleteKey( HKEY hkey )
     return ret;
 }
 
+/******************************************************************************
+ * RtlpNtMakeTemporaryKey [NTDLL.@]
+ *
+ *  See NtDeleteKey.
+ */
+NTSTATUS WINAPI RtlpNtMakeTemporaryKey( HKEY hkey )
+{
+    return NtDeleteKey(hkey);
+}
 
 /******************************************************************************
  * NtDeleteValueKey [NTDLL.@]
@@ -264,6 +298,53 @@ NTSTATUS WINAPI NtEnumerateKey( HKEY handle, ULONG index, KEY_INFORMATION_CLASS 
     return enumerate_key( handle, index, info_class, info, length, result_len );
 }
 
+
+/******************************************************************************
+ * RtlpNtEnumerateSubKey [NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI RtlpNtEnumerateSubKey( HKEY handle, UNICODE_STRING *out, ULONG index )
+{
+  KEY_BASIC_INFORMATION *info;
+  DWORD dwLen, dwResultLen;
+  NTSTATUS ret;
+
+  if (out->Length)
+  {
+    dwLen = out->Length + sizeof(KEY_BASIC_INFORMATION);
+    info = (KEY_BASIC_INFORMATION*)RtlAllocateHeap( ntdll_get_process_heap(), 0, dwLen );
+    if (!info)
+      return STATUS_NO_MEMORY;
+  }
+  else
+  {
+    dwLen = 0;
+    info = NULL;
+  }
+
+  ret = NtEnumerateKey( handle, index, KeyBasicInformation, info, dwLen, &dwResultLen );
+  dwResultLen -= sizeof(KEY_BASIC_INFORMATION);
+
+  if (ret == STATUS_BUFFER_OVERFLOW)
+    out->Length = dwResultLen;
+  else if (!ret)
+  {
+    if (out->Length < info->NameLength)
+    {
+      out->Length = dwResultLen;
+      ret = STATUS_BUFFER_OVERFLOW;
+    }
+    else
+    {
+      out->Length = info->NameLength;
+      memcpy(out->Buffer, info->Name, info->NameLength);
+    }
+  }
+
+  if (info)
+    RtlFreeHeap( ntdll_get_process_heap(), 0, info );
+  return ret;
+}
 
 /******************************************************************************
  * NtQueryKey [NTDLL.@]
@@ -421,6 +502,41 @@ NTSTATUS WINAPI NtQueryValueKey( HKEY handle, const UNICODE_STRING *name,
     return ret;
 }
 
+/******************************************************************************
+ * RtlpNtQueryValueKey [NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI RtlpNtQueryValueKey( HKEY handle, ULONG *result_type, PBYTE dest,
+                                     DWORD *result_len )
+{
+    KEY_VALUE_PARTIAL_INFORMATION *info;
+    UNICODE_STRING name;
+    NTSTATUS ret;
+    DWORD dwResultLen;
+    DWORD dwLen = sizeof (KEY_VALUE_PARTIAL_INFORMATION) + result_len ? *result_len : 0;
+
+    info = (KEY_VALUE_PARTIAL_INFORMATION*)RtlAllocateHeap( ntdll_get_process_heap(), 0, dwLen );
+    if (!info)
+      return STATUS_NO_MEMORY;
+
+    name.Length = 0;
+    ret = NtQueryValueKey( handle, &name, KeyValuePartialInformation, info, dwLen, &dwResultLen );
+
+    if (!ret || ret == STATUS_BUFFER_OVERFLOW)
+    {
+        if (result_len)
+            *result_len = info->DataLength;
+
+        if (result_type)
+            *result_type = info->Type;
+
+        if (ret != STATUS_BUFFER_OVERFLOW)
+            memcpy( dest, info->Data, info->DataLength );
+    }
+
+    RtlFreeHeap( ntdll_get_process_heap(), 0, info );
+    return ret;
+}
 
 /******************************************************************************
  *  NtFlushKey	[NTDLL.@]
@@ -569,6 +685,19 @@ NTSTATUS WINAPI NtSetValueKey( HKEY hkey, const UNICODE_STRING *name, ULONG Titl
     }
     SERVER_END_REQ;
     return ret;
+}
+
+/******************************************************************************
+ * RtlpNtSetValueKey [NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI RtlpNtSetValueKey( HKEY hkey, ULONG type, const void *data,
+                                   ULONG count )
+{
+    UNICODE_STRING name;
+
+    name.Length = 0;
+    return NtSetValueKey( hkey, &name, 0, type, data, count );
 }
 
 /******************************************************************************

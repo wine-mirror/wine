@@ -80,7 +80,7 @@
 @ stub NtCreateEventPair
 @ stdcall NtCreateFile(ptr long ptr ptr long long long ptr long long ptr)
 @ stub NtCreateIoCompletion
-@ stdcall NtCreateKey(long long long long long long long)
+@ stdcall NtCreateKey(ptr long ptr long ptr long long)
 @ stdcall NtCreateMailslotFile(long long long long long long long long)
 @ stub NtCreateMutant
 @ stub NtCreateNamedPipeFile
@@ -579,12 +579,12 @@
 @ stub RtlZeroHeap
 @ stdcall RtlZeroMemory(ptr long)
 @ stub RtlpInitializeRtl
-@ stub RtlpNtCreateKey
-@ stub RtlpNtEnumerateSubKey
-@ stub RtlpNtMakeTemporaryKey
-@ stub RtlpNtOpenKey
-@ stub RtlpNtQueryValueKey
-@ stub RtlpNtSetValueKey
+@ stdcall RtlpNtCreateKey(ptr long ptr long ptr long long)
+@ stdcall RtlpNtEnumerateSubKey(ptr ptr long)
+@ stdcall RtlpNtMakeTemporaryKey(ptr)
+@ stdcall RtlpNtOpenKey(ptr long ptr)
+@ stdcall RtlpNtQueryValueKey(long ptr ptr ptr)
+@ stdcall RtlpNtSetValueKey(ptr long ptr long)
 @ stdcall RtlpUnWaitCriticalSection(ptr)
 @ stdcall RtlpWaitForCriticalSection(ptr)
 @ stdcall RtlxAnsiStringToUnicodeSize(ptr) RtlAnsiStringToUnicodeSize
@@ -616,7 +616,7 @@
 @ stub ZwCreateEventPair
 @ stdcall ZwCreateFile(ptr long ptr ptr long long long ptr long long ptr) NtCreateFile
 @ stub ZwCreateIoCompletion
-@ stdcall ZwCreateKey(long long long long long long long) NtCreateKey
+@ stdcall ZwCreateKey(ptr long ptr long ptr long long) NtCreateKey
 @ stdcall ZwCreateMailslotFile(long long long long long long long long) NtCreateMailslotFile
 @ stub ZwCreateMutant
 @ stub ZwCreateNamedPipeFile
