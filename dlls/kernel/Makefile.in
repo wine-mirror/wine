@@ -51,6 +51,7 @@ C_SRCS = \
 	module.c \
 	ne_module.c \
 	ne_segment.c \
+	path.c \
 	powermgnt.c \
 	process.c \
 	profile.c \

@@ -141,7 +141,7 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
    We test both conversion from GetFullPathNameA and from GetShortPathNameA
 */
   if(pGetLongPathNameA) {
-    if(len==0) {
+    if(len!=0) {
       SetLastError(0);
       len=pGetLongPathNameA(shortstr,tmpstr,MAX_PATH);
       if(passfail==NULL) {
@@ -160,12 +160,9 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
     if(passfail==NULL) {
       ok(len, "%s: GetLongPathNameA failed",errstr);
       if(HAS_TRAIL_SLASH_A(fullpath)) {
-/* Wine strips off the trailing '\\'  Neither Win98 nor Win2k do this */
-        todo_wine {
-          ok(lstrcmpiA(fullpathlong,tmpstr)==0,
+        ok(lstrcmpiA(fullpathlong,tmpstr)==0,
            "%s: GetLongPathNameA returned '%s' instead of '%s'",
            errstr,tmpstr,fullpathlong);
-        }
       } else {
         ok(lstrcmpiA(fullpathlong,tmpstr)==0,
           "%s: GetLongPathNameA returned '%s' instead of '%s'",
@@ -229,7 +226,7 @@ static void test_LongtoShortA(CHAR *teststr,CHAR *goodstr,
 /* Test that Get(Short|Long|Full)PathNameA work correctly with interesting
    characters in the filename.
      'valid' indicates whether this would be an allowed filename
-     'todo' indictaes that wine doesn't get this right yet.
+     'todo' indicates that wine doesn't get this right yet.
    NOTE: We always call this routine with a non-existent filename, so
          Get(Short|Long)PathNameA should never pass, but GetFullPathNameA
          should.
@@ -518,13 +515,11 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
        "GetLongPathNameA: wrong return code, %ld instead of %d",
        rc1, strlen(tmpstr)+1);
 
-    todo_wine {
-        sprintf(dir,"%c:",curDrive);
-        rc1=(*pGetLongPathNameA)(dir,tmpstr,sizeof(tmpstr));
-        ok(strcmp(dir,tmpstr)==0,
-           "GetLongPathNameA: returned '%s' instead of '%s' (rc=%ld)",
-           tmpstr,dir,rc1);
-    }
+    sprintf(dir,"%c:",curDrive);
+    rc1=(*pGetLongPathNameA)(dir,tmpstr,sizeof(tmpstr));
+    ok(strcmp(dir,tmpstr)==0,
+       "GetLongPathNameA: returned '%s' instead of '%s' (rc=%ld)",
+       tmpstr,dir,rc1);
   }
 
 /* Check the cases where both file and directory exist first */
@@ -773,11 +768,9 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   ok(GetShortPathNameA(LONGDIR,tmpstr,MAX_PATH),"GetShortPathNameA failed");
   test_SplitShortPathA(tmpstr,dir,eight,three);
   if(pGetLongPathNameA) {
-    ok(pGetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
-    todo_wine {
-      ok(lstrcmpiA(tmpstr1,LONGDIR)==0,
-         "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,LONGDIR);
-    }
+    ok(pGetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed");
+    ok(lstrcmpiA(tmpstr1,LONGDIR)==0,
+       "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,LONGDIR);
   }
   sprintf(tmpstr,".\\%s",LONGDIR);
   ok(GetShortPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
@@ -785,11 +778,10 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   ok(lstrcmpiA(dir,".")==0 || dir[0]=='\0',
      "GetShortPathNameA did not keep relative directory [%s]",tmpstr1);
   if(pGetLongPathNameA) {
-    ok(pGetLongPathNameA(tmpstr1,tmpstr1,MAX_PATH),"GetShortPathNameA failed");
-    todo_wine {
-      ok(lstrcmpiA(tmpstr1,tmpstr)==0,
-         "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
-    }
+    ok(pGetLongPathNameA(tmpstr1,tmpstr1,MAX_PATH),"GetLongPathNameA failed %s",
+       tmpstr);
+    ok(lstrcmpiA(tmpstr1,tmpstr)==0,
+       "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
   }
 /* Check out Get*PathNameA on some funny characters */
   for(i=0;i<lstrlenA(funny_chars);i++) {
