@@ -1,0 +1,152 @@
+set WC_banner "Configuring wine - Please, fill in all sections"
+
+set WC_drivesSect "Drive section: Add the drives wine will need"
+set WC_path "Path"
+set WC_type "Type"
+set WC_label "Label"
+set WC_fstype "FS type"
+set EDIT Edit
+set REMOVE Remove
+set ADD Add
+
+set WC_wineSect "Wine section : please, check all path below"
+set WC_windows "Windows"
+set WC_system "System"
+set WC_temp "Temp"
+set WC_Symbols "Symbols"
+set WC_winepath "Click here to change the PATH variable"
+
+set WC_serialSect "Serial ports"
+set CLEAR "Clear"
+set WC_pathtitle "TkWineSetup Edit PATH "
+set WC_parallelSect "Parallel ports"
+
+set WC_logSect "Runtime Log file"
+set WC_exclude "Exlude messages"
+
+set WC_wineLook "Wine look"
+
+set WC_confserial "TkWineSetup - Configuring Serial Ports"
+set WC_confparallel "TkWineSetup - Configuring Parallel Ports"
+set WC_confdrives "TkWineSetup - Configuring Drives"
+
+set WC_serialbanner "Serial Ports Configuration.\n\n\
+Attach each device that you\n may need to a DOS port"
+
+set WC_driveSetBanner "Drive settings"
+set WC_editPathBanner "TkWineSetup: give search path for wine"
+
+set WC_PPbanner "Parallel Ports Configuration.\n\n\
+Attach each device that you\n may need to a DOS port"
+
+set chdrives1 {Drive letter}
+set chdrives2 "Drive Unix Path"
+set chdrives3 "Drive type"
+set chdrives4 "File System Type"
+set chdrives5 "Label"
+set chdrives6 "Device"
+set chdrives7 "Serial Number"
+
+set WC_helpondrives "Drives settings\n\n\
+List of drives availlable to wine. For each drive, you must specify the drive\
+letter, the type of the drive (floppy, hard drive, cdrom or network), the\
+filesystem type (mounted as unix (ext2), msdos (fat) or win95 (vfat). \n\n\
+To edit the parameters of a drive, select this drive and choose Edit.\n\n\
+Click Add to insert a new drive.\n\n \ A star at the beginning of the line\
+warns you that\ TkWineSetup cannot find the selected path. This is either an\
+error (if the drive does not exist) or a reference to an unmounted drive."
+
+set WC_helponwine "Wine System settings\n\n\
+Windows: Used to specify where wine would find the windows\
+directory (usually c:\\windows under dos).\n\n \
+System: Used to specify the system directory (usually 
+C:\\windows\\system under DOS)\n\n \
+Temp: Used to specify where windows\
+applications should store temporary files (usually /tmp on unixes).\n\n \
+Symbols: give the full path to the symbol table required for wine\
+ internal debugger \
+(usually, this file is named wine.sym) \n\n \
+You also need to set the PATH variable (same as standart dos \
+PATH variable) to tell wine where to search your windows application.\n\n \ 
+All path can be given both in UNIX or MSDOS syntax."
+
+
+set WC_helponserial "Serial Ports configuration\n\n\
+The left list shows the DOS name of communication port, and the rigth\
+column shows on which device it is attached. For exemple, if you\
+have a modem on /dev/cua0, and you put com1 attached\
+to /dev/cua0, then you will have to set your modem on com1\
+in windows application that requires it. It is common to\
+have a link /dev/modem pointing to the device where the modem\
+is attached, check with ls -l /dev/modem. You can specify\
+the max speed on each port (eg /dev/modem,38400 specify a port\
+attached to /dev/modem with a max speed of 38400 bps on that\
+prot).\n\n \ 
+If you have problems with the recognition of ports at runtime,\
+try to start wine -debugmsg +comm and see what you get"
+
+set WC_helponPP "Parallel Ports configuration\n\n\
+The left list shows the DOS name of parallel port, and the rigth\
+column shows on which device it is attached. For exemple, if you\
+have a printer on /dev/lpt1, and you put lpt1 attached\
+to /dev/lpt1, then you will have to set your printer on lpt1\
+in windows application that requires it. It is common to\
+have a link /dev/printer pointing to the device where the printer\
+is attached, check with ls -l /dev/printer."
+
+set WC_helponmisc "Spy\n\n \
+Give in the entry box below the name of the file that wine\
+will use at run time as logfile.\n\n\
+The Exclude message button below allow to select which\
+message to exclude (or include) from the log\
+(NOT IMPLEMENTED YET in TkWineSetup,\
+edit the file ~/.winerc manually), or leave the default (no exclude).\n\n\
+Wine look\n\n\
+Choose the prefered look (Win 3.1, Win95 or Win 98) to use. \
+This can be overidden when starting an application.\n "
+
+
+set WC_oneletter " is not valid.\n Drive letter can only be a SINGLE alpha character"
+set WC_usedletter " is not valid.\n Drive letter alreaddy in use"
+set WC_11letters " is not valid.\n Label cannot exeed 11 characters"
+set WC_givepath "You MUST specify a UNIX path"
+
+set WCHLP(1) "Enter Drive letter (this must be a single character) to use for \
+MSDOS like path"
+set WCHLP(2) "Enter Drive full path in UNIX syntax."
+set WCHLP(3) "Choose the type of drive that you want"
+set WCHLP(4) "Choose the file system type to use\
+ to access this drive\
+\n\nWARNING\n\n
+This is NOT the way it is mounted on your UNIX box, but the way\
+you want wine to see it. Say unix for case sensitive search, winxx for case non sensitive file search.\
+So, if windows app are about to read/write files on this drive, it should be\
+set to winxx. This includes the TMP drives, EVEN IF IT'S A UNIX FILESYSTEM.\n\n\
+If the drives spans several file systems\
+(like CDroms or floppies can do)\
+then leave blank or say unix"
+set WCHLP(5) "Enter the desired Label.\
+Must not be more than 11 characters.\
+(Label is optional)."
+set WCHLP(6) "Enter the device (as in /dev/fd0).\n
+This is not requiered if\
+the drive is mounted at the time\
+you start wine."
+set WCHLP(7) "Enter the drive serial number\
+as an 8-characters hexadecimal number.\
+(optional)."
+
+set WC_quit "Any unsaved changes you made will be lost.\n
+ are you sure you want to quit?"
+
+set WC_quitreally "Quit anyway"
+set WC_noquit "Cancel"
+
+set ChDefautConf "Choose the prefered configuration file to use as the default one"
+set DejaConf "Use existing config file:"
+set GiveCustomDefault "Enter (or choose) the configuration file to use"
+set GenereConf "Auto-generate a new configuration file"
+set TkWBuiltConf "Use TkWine built-in configuration file (not recommended)"
+set AutoConfFail " Warning: An error occured while running tools/wineconf.\n\
+You can still edit the generated file (if it does not crashes) but \n\
+some parts are probably missing. Check for a newer release of wine where wineconf could have been imporved"

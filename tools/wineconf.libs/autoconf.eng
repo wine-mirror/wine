@@ -1,0 +1,8 @@
+set AlternateFstab "No /etc/fstab on your system, please, give an alternate filename"
+
+set IsCDwrite "is a cdrom.\n\n Please, let me know if you want to write CDs on this device."
+
+set RootDrives1 "I need to know which directories from the root (that is " 
+set RootDrives2 "on your system) you want to use under wine. Any folder wher you wish to put Applications or store files must show up there. Choose in the left list below. Selected folders will appear on the right list."
+
+set WhereTmp "Could not find /tmp, enter the folder to use for temporary files"

@@ -1,0 +1,6 @@
+set DIRBROWSE "Browse Folders"
+set FolderSelection "Selection:"
+set FILTERFOLD "Search Filter (Folders):"
+set FILTERFILES "Search Filter (Files):"
+set RESCAN Rescan
+set VIEW View

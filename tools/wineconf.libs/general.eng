@@ -1,0 +1,57 @@
+set TO TO
+set OK OK
+set QUIT QUIT
+set CANCEL CANCEL
+set GO GO
+set YES YES
+set NO NO
+set NEXT NEXT
+set SAVE SAVE 
+set SKIP SKIP
+set MSG_title "TkWine:Messenger" 
+set SUCCES succesfull
+set HELP HELP; set START START
+set RESTART RESTART
+set CLOSE CLOSE
+set OPTIONS Options
+set pathtosetup [pwd]/setupfiles
+
+set MAKE make
+set CONF configure
+set INSTALL install
+
+#related to exit:
+set EXIT_title "TkWineSetup Exit"
+set CONFIRMQUIT "This will close TkWineSetup.\n \"Quit Saving\" will store your choices (source and install folders, compilation options etc..) for the next start. \"Quit No Save\" aborts any changes you made." 
+set QUITSAVING "Quit Saving"
+set QUITNOSAVE "Quit No Save"
+
+#related to browsers:
+set GETDIRtitle "TkWineSetup - Get directory"
+set FOLDBROWSEtitle "TkWineSetup - Directories browser"
+set BROWSE BROWSE
+set CHFOLD "Choose folder"
+set CHFOLDsel "Selected directory:"
+
+#related to downloads:
+set DOWNLOADING  "Dowload file:"
+
+#related to the internal file viewer:
+set ScrollEdits "Scroll to bottom on input"
+set EditTitle "TkWine Text Viewer"
+
+set errorTitle "\n*************** TkWine Error ****************\n\
+\n An error occured, that I could not resolve. This might be \n\n\
+a) An invalid entry \n\
+b) An error in the script\n\
+In any case, this error should be detected by the script, even an invalid\
+entry deserve better error message than this one!!\n\
+ The following lines are tk output. it might be uninteligible for you, but it makes sense for the maintainers. If you're keen to provide a bug reports, please, send the following info to thirot@univ-brest.fr.\n\n\
+(this info can be send in attachement, the file name is /tmp/tkwerror)\n\
+In some cases, however, the error is harmless. Feel free to add comment about this when you send me the file. If you want to receive the patch via email, please mention this in your mail. \n\
+Sorry not to make it better at once... I'll try to improve. \
+\nThanks for using TkWine.\
+\n                    Bye,\
+\n                           Jean-Louis,\
+\n                                    TkWine primary contact.\n\
+======================================================================="
