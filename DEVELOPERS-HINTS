@@ -19,6 +19,8 @@ DLLs:
 		avicap32/	- AVI capture window class
 		avifil32/	- COM object to play AVI files
 		cabinet/	- Cabinet file interface
+		capi2032/	- Wrapper library for CAPI4Linux access
+		cfgmgr32/	- Config manager
 		comcat/		- Component category manager
 		comctl32/	- Common controls
 		commdlg/	- Common dialog boxes (both 16 & 32 bit)
@@ -69,6 +71,7 @@ DLLs:
 		msvcrt20/	- C runtime library version 2.0
 		msvcrtd/	- C runtime library debugging
 		msvideo/	- 16 bit video manager
+		msvideo/msrle32/- Video codecs
 		mswsock/	- Misc networking
 		netapi32/	- Network interface
 		ntdll/		- NT implementation of kernel calls
@@ -100,6 +103,7 @@ DLLs:
 		url/		- Internet shortcut shell extension
 		urlmon/		- URL Moniker allows binding to a URL (like KIO/gnome-vfs)
 		user/		- Window management, standard controls, etc.
+		uxtheme/	- Theme library
 		version/	- File installation library
 		win32s/		- 32-bit function access for 16-bit systems
 		winaspi/	- 16 bit Advanced SCSI Peripheral Interface
@@ -107,6 +111,7 @@ DLLs:
 		wineps/		- Postscript driver (Wine specific)
 		wininet/	- Internet extensions
 		winmm/		- Multimedia (16 & 32 bit)
+		winmm/joystick/	- Joystick driver
 		winmm/mcianim/	- MCI animation driver
 		winmm/mciavi/	- MCI video driver
 		winmm/mcicda/	- MCI audio CD driver
@@ -116,7 +121,9 @@ DLLs:
 		winmm/wavemap/	- Audio mapper
 		winmm/winealsa/	- ALSA audio driver
 		winmm/winearts/	- aRts audio driver
+		winmm/wineaudioio/ - audioio audio driver
 		winmm/winejack/	- JACK audio server driver
+		winmm/winenas/	- NAS audio driver
 		winmm/wineoss/	- OSS audio driver
 		winnls/		- National Language Support
 		winsock/	- Sockets 2.0 (networking)
