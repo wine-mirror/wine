@@ -616,7 +616,8 @@ static BOOL    ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
 
     /* check uncompressed AVI */
     if ((infoPtr->ash.fccHandler == mmioFOURCC('D', 'I', 'B', ' ')) ||
-       (infoPtr->ash.fccHandler == mmioFOURCC('R', 'L', 'E', ' ')))
+       (infoPtr->ash.fccHandler == mmioFOURCC('R', 'L', 'E', ' ')) ||
+       (infoPtr->ash.fccHandler == mmioFOURCC(0, 0, 0, 0)))
     {
         infoPtr->hic = 0;             
 	return TRUE;
@@ -665,6 +666,7 @@ static LRESULT ANIMATE_OpenA(HWND hWnd, WPARAM wParam, LPARAM lParam)
     HINSTANCE hInstance = (HINSTANCE)wParam;
 
     ANIMATE_Free(infoPtr);
+    infoPtr->hWnd = hWnd;
 
     if (!lParam) {
 	TRACE("Closing avi!\n");
