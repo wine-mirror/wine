@@ -251,10 +251,10 @@ FONT 8, "helv"
     LTEXT	"" , IDC_TOOLBARSTATIC, 181, 2, 122, 17, NOT WS_GROUP | NOT WS_VISIBLE
     LISTBOX	IDC_SHELLSTATIC,4,20,292,85, LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_MULTICOLUMN | WS_HSCROLL | NOT WS_VISIBLE
 
-    LTEXT	"File&name:",IDC_FILENAMESTATIC,5,112,46,8, SS_NOTIFY
+    LTEXT	"Datei&name:",IDC_FILENAMESTATIC,5,112,46,8, SS_NOTIFY
     EDITTEXT	IDC_FILENAME,54,110,155,12,ES_AUTOHSCROLL
 
-    LTEXT	"File&typen",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
+    LTEXT	"Datei&typen",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
     COMBOBOX	IDC_FILETYPE,54,126,155,53,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
     CONTROL	"&Schreibgeschützt",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
@@ -346,7 +346,7 @@ STRINGTABLE DISCARDABLE
     IDS_DOCUMENTFOLDERS     "Dokumenten Ordner"
     IDS_PERSONAL            "Meine Dokumente"
     IDS_FAVORITES           "Meine Favoriten"
-    IDS_PATH                "System Directory"
+    IDS_PATH                "System Ordner"
     IDS_DESKTOP             "Desktop"
     IDS_FONTS               "Schriftarten"
     IDS_MYCOMPUTER          "Mein Computer"
@@ -355,13 +355,13 @@ STRINGTABLE DISCARDABLE
 STRINGTABLE DISCARDABLE
 {
     IDS_SYSTEMFOLDERS       "System Ordner"
-    IDS_LOCALHARDRIVES      "Lokale Hard Disks"
+    IDS_LOCALHARDRIVES      "Lokale Festplatten"
     IDS_FILENOTFOUND        "Datei nicht gefunden"
-    IDS_VERIFYFILE          "Bitte überprüfen sie, ob der korrekte Filename angegeben wurde"
+    IDS_VERIFYFILE          "Bitte überprüfen sie, ob der korrekte Dateiname angegeben wurde"
     IDS_CREATEFILE          "Die Datei existiert nicht.\nWollen Sie sie neu anlegen?"
     IDL_OVERWRITEFILE       "Die Datei existiert bereits.\nWollen Sie sie überschreiben?"
     IDS_INVALID_FILENAME_TITLE "Unzulässige Zeichen im Pfad"
-    IDS_INVALID_FILENAME    "Ein Filename darf folgende Zeichen nicht enthalten:\n                          / : < > |"
+    IDS_INVALID_FILENAME    "Ein Dateiname darf folgende Zeichen nicht enthalten:\n                          / : < > |"
     IDS_PATHNOTEXISTING     "Der Pfad existiert nicht"
     IDS_FILENOTEXISTING     "Die Datei existiert nicht"
 }
@@ -369,10 +369,10 @@ STRINGTABLE DISCARDABLE
 STRINGTABLE DISCARDABLE
 {
     IDS_UPFOLDER         "Eine Verzeichnisebene höher"
-    IDS_NEWFOLDER        "Neues Directory anlegen"
-    IDS_LISTVIEW         "List"
+    IDS_NEWFOLDER        "Neuen Ordner anlegen"
+    IDS_LISTVIEW         "Liste"
     IDS_REPORTVIEW       "Details"
-    IDS_TODESKTOP        "Browse to Desktop"
+    IDS_TODESKTOP        "Desktopordner anzeigen"
 }
 
 STRINGTABLE DISCARDABLE
