@@ -15,31 +15,9 @@ BOOL TTYDRV_EVENT_Init(void)
 }
 
 /***********************************************************************
- *		TTYDRV_EVENT_AddIO
- */
-void TTYDRV_EVENT_AddIO(int fd, unsigned flag)
-{
-}
-
-/***********************************************************************
- *		TTYDRV_EVENT_DeleteIO
- */
-void TTYDRV_EVENT_DeleteIO(int fd, unsigned flag)
-{
-}
-
-/***********************************************************************
- *		TTYDRV_EVENT_WaitNetEvent
- */
-BOOL TTYDRV_EVENT_WaitNetEvent(BOOL sleep, BOOL peek)
-{
-  return TRUE;
-}
-
-/***********************************************************************
  *		TTYDRV_EVENT_Synchronize
  */
-void TTYDRV_EVENT_Synchronize(void)
+void TTYDRV_EVENT_Synchronize( BOOL bProcessEvents )
 {
 }
 
@@ -76,24 +54,9 @@ void TTYDRV_EVENT_DummyMotionNotify(void)
 }
 
 /***********************************************************************
- *		TTYDRV_EVENT_Pending
+ *		TTYDRV_EVENT_UserRepaintDisable
  */
-BOOL TTYDRV_EVENT_Pending(void)
+void TTYDRV_EVENT_UserRepaintDisable( BOOL bDisable )
 {
-  return FALSE;
 }
 
-/***********************************************************************
- *		TTYDRV_EVENT_IsUserIdle
- */
-BOOL16 TTYDRV_EVENT_IsUserIdle(void)
-{
-  return TRUE;
-}
-
-/**********************************************************************
- *		TTYDRV_EVENT_WakeUp
- */
-void TTYDRV_EVENT_WakeUp(void)
-{
-}

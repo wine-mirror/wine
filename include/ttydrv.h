@@ -91,16 +91,11 @@ extern int TTYDRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
 extern struct tagEVENT_DRIVER TTYDRV_EVENT_Driver;
 
 extern BOOL TTYDRV_EVENT_Init(void);
-extern void TTYDRV_EVENT_AddIO(int fd, unsigned flag);
-extern void TTYDRV_EVENT_DeleteIO(int fd, unsigned flag);
-extern BOOL TTYDRV_EVENT_WaitNetEvent(BOOL sleep, BOOL peek);
-extern void TTYDRV_EVENT_Synchronize(void);
+extern void TTYDRV_EVENT_Synchronize(BOOL bProcessEvents);
 extern BOOL TTYDRV_EVENT_CheckFocus(void);
 extern BOOL TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void TTYDRV_EVENT_DummyMotionNotify(void);
-extern BOOL TTYDRV_EVENT_Pending(void);
-extern BOOL16 TTYDRV_EVENT_IsUserIdle(void);
-extern void TTYDRV_EVENT_WakeUp(void);
+extern void TTYDRV_EVENT_UserRepaintDisable(BOOL bDisable);
 
 /* TTY keyboard driver */
 
