@@ -20,11 +20,11 @@
 
 WWWDIR=www.winehq.com
 ## Want to put this into a sub-directory for easier maintenance
-if [ -a $WWWDIR ]; then
+if [ -e $WWWDIR ]; then
   rm -rf $WWWDIR.old
   mv $WWWDIR $WWWDIR.old
-  mkdir $WWWDIR
 fi
+mkdir $WWWDIR
 
 ## Create four-book HTML tarball
 echo "./db2html-winehq wine-user.sgml"
