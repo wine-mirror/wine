@@ -115,9 +115,10 @@ static char usage[] =
 	"   -s          Add structure with win32/16 (PE/NE) resource directory\n"
 	"   -t          Generate indirect loadable resource tables\n"
 	"   -T          Generate only indirect loadable resources tables\n"
-	"   -V          Print version end exit\n"
+	"   -V          Print version and exit\n"
 	"   -w 16|32    Select win16 or win32 output (default is win32)\n"
 	"   -W          Enable pedantic warnings\n"
+#ifdef HAVE_GETOPT_LONG
 	"The following long options are supported:\n"
 	"   --input		Synonym for -i.\n"
 	"   --output		Synonym for -o.\n"
@@ -129,7 +130,8 @@ static char usage[] =
 	"   --language		Synonym for -l.\n"
 	"   --preprocessor	Specify the preprocessor to use, including arguments.\n"
 	"   --help		Prints a usage summary.\n"
-	"   --version		Prints the version number for wrc.\n"
+	"   --version		Synonym for -V.\n"
+#endif
 	"Input is taken from stdin if no sourcefile specified.\n"
 	"Debug level 'n' is a bitmask with following meaning:\n"
 	"    * 0x01 Tell which resource is parsed (verbose mode)\n"
@@ -304,7 +306,7 @@ static struct option long_options[] = {
 	{ "language", 1, 0, 'l' },
 	{ "preprocessor", 1, 0, 1 },
 	{ "help", 0, 0, 2 },
-	{ "version", 0, 0, 3 },
+	{ "version", 0, 0, 'V' },
 	{ 0, 0, 0, 0 }
 };
 #endif
@@ -351,11 +353,9 @@ int main(int argc,char *argv[])
 			fprintf(stderr, "--preprocessor option not yet supported, ignored.\n");
 			break;
 		case 2:
-			fprintf(stderr, usage);
-			return 0;
-		case 3:
-			fprintf(stderr, version_string);
-			return 0;
+			printf(usage);
+			exit(0);
+			break;
 		case 'a':
 			alignment = atoi(optarg);
 			break;
