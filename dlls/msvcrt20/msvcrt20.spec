@@ -464,7 +464,7 @@
 @ forward -noimport __dllonexit msvcrt.__dllonexit
 @ forward -noimport __doserrno msvcrt.__doserrno
 @ forward -noimport __fpecode msvcrt.__fpecode
-@ forward -noimport __getmainargs msvcrt.__getmainargs
+@ cdecl -noimport __getmainargs(ptr ptr ptr long long) MSVCRT20__getmainargs
 @ forward -noimport __initenv msvcrt.__initenv
 @ forward -noimport __isascii msvcrt.__isascii
 @ forward -noimport __iscsym msvcrt.__iscsym
@@ -502,7 +502,7 @@
 @ forward -noimport __threadid msvcrt.__threadid
 @ forward -noimport __toascii msvcrt.__toascii
 @ forward -noimport __wargv msvcrt.__wargv
-@ forward -noimport __wgetmainargs msvcrt.__wgetmainargs
+@ cdecl -noimport __wgetmainargs(ptr ptr ptr long long) MSVCRT20__wgetmainargs
 @ forward -noimport __winitenv msvcrt.__winitenv
 @ forward -noimport _abnormal_termination msvcrt._abnormal_termination
 @ forward -noimport _access msvcrt._access
