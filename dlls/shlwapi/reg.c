@@ -1823,7 +1823,7 @@ BOOL WINAPI GetMIMETypeSubKeyW(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
 
     if (dwStrLen < dwLen - dwLenMimeDbContent)
     {
-      memcpy(lpszBuffer, szMimeDbContentA, dwLenMimeDbContent * sizeof(WCHAR));
+      memcpy(lpszBuffer, szMimeDbContentW, dwLenMimeDbContent * sizeof(WCHAR));
       memcpy(lpszBuffer + dwLenMimeDbContent, lpszType, (dwStrLen + 1) * sizeof(WCHAR));
       return TRUE;
     }
