@@ -2889,6 +2889,8 @@ static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
  */
 static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 {
+        BOOL control = GetKeyState(VK_CONTROL) & 0x8000;
+
 	switch (c) {
 	case '\r':
 	case '\n':
@@ -2903,6 +2905,18 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 	case '\t':
 		if ((es->style & ES_MULTILINE) && !(es->style & ES_READONLY))
 			EDIT_EM_ReplaceSel(wnd, es, TRUE, "\t");
+		break;
+	case VK_BACK:
+		if (!(es->style & ES_READONLY) && !control) {
+			if (es->selection_start != es->selection_end)
+				EDIT_WM_Clear(wnd, es);
+			else {
+				/* delete character left of caret */
+				EDIT_EM_SetSel(wnd, es, -1, 0, FALSE);
+				EDIT_MoveBackward(wnd, es, TRUE);
+				EDIT_WM_Clear(wnd, es);
+			}
+		}
 		break;
 	default:
 		if (!(es->style & ES_READONLY) && ((BYTE)c >= ' ') && (c != 127)) {
@@ -3383,18 +3397,6 @@ static LRESULT EDIT_WM_KeyDown(WND *wnd, EDITSTATE *es, INT key, DWORD key_data)
 	case VK_NEXT:
 		if (es->style & ES_MULTILINE)
 			EDIT_MovePageDown_ML(wnd, es, shift);
-		break;
-	case VK_BACK:
-		if (!(es->style & ES_READONLY) && !control) {
-			if (es->selection_start != es->selection_end)
-				EDIT_WM_Clear(wnd, es);
-			else {
-				/* delete character left of caret */
-				EDIT_EM_SetSel(wnd, es, -1, 0, FALSE);
-				EDIT_MoveBackward(wnd, es, TRUE);
-				EDIT_WM_Clear(wnd, es);
-			}
-		}
 		break;
 	case VK_DELETE:
 		if (!(es->style & ES_READONLY) && !(shift && control)) {
