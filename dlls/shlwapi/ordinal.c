@@ -843,11 +843,16 @@ LONG WINAPI SHLWAPI_165(HWND hwnd, INT offset, UINT wFlags, UINT wMask)
  *
  *  Do IUnknown::Release on passed object.
  */
-DWORD WINAPI SHLWAPI_169 (IUnknown * lpUnknown)
+DWORD WINAPI SHLWAPI_169 (IUnknown ** lpUnknown)
 {
+        IUnknown *temp;
+
 	TRACE("(%p)\n",lpUnknown);
 	if(!lpUnknown || !*((LPDWORD)lpUnknown)) return 0;
-	return IUnknown_Release(lpUnknown);
+	temp = *lpUnknown;
+	*lpUnknown = NULL;
+	TRACE("doing Release\n");
+	return IUnknown_Release(temp);
 }
 
 /*************************************************************************
@@ -904,12 +909,12 @@ DWORD WINAPI SHLWAPI_174(
 
     /* see if SetSite interface exists for IObjectWithSite object */
     ret = IUnknown_QueryInterface((IUnknown *)p1, (REFIID)id1, (LPVOID *)&p1);
-    TRACE("first IU_QI ret=%08lx, p1=%08lx\n", ret, (DWORD)p1);
+    TRACE("first IU_QI ret=%08lx, p1=%p\n", ret, p1);
     if (ret) { 
 
 	/* see if GetClassId interface exists for IPersistMoniker object */
 	ret = IUnknown_QueryInterface((IUnknown *)p1, (REFIID)id2, (LPVOID *)&aa);
-	TRACE("second IU_QI ret=%08lx, p1=%08lx\n", ret, aa);
+	TRACE("second IU_QI ret=%08lx, aa=%08lx\n", ret, aa);
 	if (ret) return ret;
 
 	/* fake a GetClassId call */
@@ -1422,7 +1427,7 @@ HWND WINAPI SHLWAPI_278 (
 	HCURSOR hCursor;
 	char * clsname = "WorkerA";
 
-	FIXME("(0x%08lx 0x%08x 0x%08lx 0x%08lx 0x%08x 0x%08lx)stub\n",
+	FIXME("(0x%08lx 0x%08x 0x%08lx 0x%08lx 0x%08x 0x%08lx) partial stub\n",
 	  wndProc,hWndParent,dwExStyle,dwStyle,hMenu,z);
 
 	hCursor = LoadCursorA(0x00000000,IDC_ARROWA);
