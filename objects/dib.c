@@ -866,13 +866,26 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
 				     DWORD offset)
 {
     HBITMAP16 hbitmap;
-    DC *dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
+    DC *dc;
+    BOOL bDesktopDC = FALSE;
+
+    /* If the reference hdc is null, take the desktop dc */
+    if (hdc == 0)
+    {
+        hdc = CreateCompatibleDC(0);
+        bDesktopDC = TRUE;
+    }
+
+    dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
     if(!dc) dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
     if(!dc) return (HBITMAP16) NULL;
 
     hbitmap = dc->funcs->pCreateDIBSection16(dc, bmi, usage, bits, section, offset, 0);
 
     GDI_HEAP_UNLOCK(hdc);
+
+    if (bDesktopDC)
+      DeleteDC(hdc);
 
     return hbitmap;
 }
@@ -885,13 +898,26 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
 			     DWORD offset, DWORD ovr_pitch)
 {
     HBITMAP hbitmap;
-    DC *dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
+    DC *dc;
+    BOOL bDesktopDC = FALSE;
+
+    /* If the reference hdc is null, take the desktop dc */
+    if (hdc == 0)
+    {
+        hdc = CreateCompatibleDC(0);
+        bDesktopDC = TRUE;
+    }
+
+    dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
     if(!dc) dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
     if(!dc) return (HBITMAP) NULL;
 
     hbitmap = dc->funcs->pCreateDIBSection(dc, bmi, usage, bits, section, offset, ovr_pitch);
 
     GDI_HEAP_UNLOCK(hdc);
+
+    if (bDesktopDC)
+      DeleteDC(hdc);
 
     return hbitmap;
 }
