@@ -792,15 +792,26 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
 static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {    
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
-    
+    DWORD		dwRet = 0;
+
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (wmm == NULL)	return MCIERR_INVALID_DEVICE_ID;
     
     if (wmm->dwStatus != MCI_MODE_STOP) {
-	wmm->dwStatus = MCI_MODE_STOP;
-	midiOutClose(wmm->hMidi);
+	int	oldstat = wmm->dwStatus;
+
+	wmm->dwStatus = MCI_MODE_NOT_READY;
+	if (oldstat == MCI_MODE_PAUSE)
+	    dwRet = midiOutReset(wmm->hMidi);
+
+	while (wmm->dwStatus != MCI_MODE_STOP)
+	    Sleep(10);
     }
+
+    /* sanitiy reset */
+    wmm->dwStatus = MCI_MODE_STOP;
+
     TRACE("wmm->dwStatus=%d\n", wmm->dwStatus);    
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
@@ -826,7 +837,6 @@ static DWORD MIDI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 	MIDI_mciStop(wDevID, MCI_WAIT, lpParms);
     }
     
-    wmm->dwStatus = MCI_MODE_STOP;
     wmm->nUseCount--;
     if (wmm->nUseCount == 0) {
 	if (wmm->hFile != 0) {
@@ -880,7 +890,8 @@ static MCI_MIDITRACK*	MIDI_mciFindNextEvent(WINE_MCIMIDI* wmm, LPDWORD hiPulse)
  */
 static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
-    DWORD		dwStartMS, dwEndMS, dwRet;
+    DWORD		dwStartMS, dwEndMS;
+    DWORD		dwRet = 0;
     WORD		doPlay, nt;
     MCI_MIDITRACK*	mmt;
     DWORD		hiPulse;
@@ -946,7 +957,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     dwRet = midiOutOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);
     /*	dwRet = midiInOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);*/
 
-    while (wmm->dwStatus != MCI_MODE_STOP) {
+    while (wmm->dwStatus != MCI_MODE_STOP && wmm->dwStatus != MCI_MODE_NOT_READY) {
 	/* it seems that in case of multi-threading, gcc is optimizing just a little bit 
 	 * too much. Tell gcc not to optimize status value using volatile. 
 	 */
@@ -1138,8 +1149,6 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     midiOutReset(wmm->hMidi);
     
     dwRet = midiOutClose(wmm->hMidi);
-    wmm->dwStatus = MCI_MODE_STOP;
-    
     /* to restart playing at beginning when it's over */
     wmm->dwPositionMS = 0;
     
@@ -1148,7 +1157,9 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
-    return 0;
+
+    wmm->dwStatus = MCI_MODE_STOP;
+    return dwRet;
 }
 
 /**************************************************************************
