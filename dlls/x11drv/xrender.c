@@ -1376,8 +1376,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    XPutImage(gdi_display, physDev->drawable, physDev->gc, image, 0, 0,
 		      image_x, image_y, image_w, image_h);
 	    XDestroyImage(image);
-no_image:
 	}
+    no_image:
 	wine_tsx11_unlock();
     }
     LeaveCriticalSection(&xrender_cs);
