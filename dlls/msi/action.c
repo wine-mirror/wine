@@ -1324,7 +1324,7 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view );
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
@@ -1702,14 +1702,14 @@ static UINT ACTION_FileCost(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
    
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
     {
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
-        return rc;
+        return ERROR_SUCCESS;
     }
 
     while (1)
@@ -2017,44 +2017,44 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     TRACE("Building Directory properties\n");
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
+    if (rc == ERROR_SUCCESS)
     {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-    
-    while (1)
-    {
-        WCHAR name[0x100];
-        WCHAR path[MAX_PATH];
-        MSIRECORD * row = 0;
-        DWORD sz;
-
-        rc = MSI_ViewFetch(view,&row);
+        rc = MSI_ViewExecute(view, 0);
         if (rc != ERROR_SUCCESS)
         {
-            rc = ERROR_SUCCESS;
-            break;
+            MSI_ViewClose(view);
+            msiobj_release(&view->hdr);
+            return rc;
         }
 
-        sz=0x100;
-        MSI_RecordGetStringW(row,1,name,&sz);
+        while (1)
+        {
+            WCHAR name[0x100];
+            WCHAR path[MAX_PATH];
+            MSIRECORD * row = 0;
+            DWORD sz;
 
-        /* This helper function now does ALL the work */
-        TRACE("Dir %s ...\n",debugstr_w(name));
-        load_folder(package,name);
-        resolve_folder(package,name,path,FALSE,TRUE,NULL);
-        TRACE("resolves to %s\n",debugstr_w(path));
+            rc = MSI_ViewFetch(view,&row);
+            if (rc != ERROR_SUCCESS)
+            {
+                rc = ERROR_SUCCESS;
+                break;
+            }
 
-        msiobj_release(&row->hdr);
-     }
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
+            sz=0x100;
+            MSI_RecordGetStringW(row,1,name,&sz);
+
+            /* This helper function now does ALL the work */
+            TRACE("Dir %s ...\n",debugstr_w(name));
+            load_folder(package,name);
+            resolve_folder(package,name,path,FALSE,TRUE,NULL);
+            TRACE("resolves to %s\n",debugstr_w(path));
+
+            msiobj_release(&row->hdr);
+        }
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+    }
 
     TRACE("File calculations %i files\n",package->loaded_files);
 
@@ -2122,9 +2122,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     TRACE("Evaluating Condition Table\n");
 
     rc = MSI_DatabaseOpenViewW(package->db, ConditionQuery, &view);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
+    if (rc == ERROR_SUCCESS)
+    {
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
     {
@@ -2159,11 +2158,12 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             LPWSTR Condition;
             Condition = load_dynamic_stringW(row,3);
 
-            if (MSI_EvaluateConditionW(package,Condition) == MSICONDITION_TRUE)
+                if (MSI_EvaluateConditionW(package,Condition) == 
+                    MSICONDITION_TRUE)
             {
                 int level = MSI_RecordGetInteger(row,2);
-                TRACE("Reseting feature %s to level %i\n",debugstr_w(Feature),
-                       level);
+                    TRACE("Reseting feature %s to level %i\n",
+                           debugstr_w(Feature), level);
                 package->features[feature_index].Level = level;
             }
             HeapFree(GetProcessHeap(),0,Condition);
@@ -2173,6 +2173,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     }
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
+    }
 
     TRACE("Enabling or Disabling Components\n");
     for (i = 0; i < package->loaded_components; i++)
@@ -2558,7 +2559,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
@@ -2768,7 +2769,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
@@ -3076,7 +3077,8 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, q1, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
+
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
     {
@@ -3119,7 +3121,7 @@ static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
@@ -3328,7 +3330,7 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
@@ -3569,7 +3571,10 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
+    {
+        rc = ERROR_SUCCESS;
         goto end;
+    }
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
@@ -3836,7 +3841,7 @@ static UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
@@ -3922,7 +3927,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
@@ -4102,7 +4107,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+        return ERROR_SUCCESS;
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
