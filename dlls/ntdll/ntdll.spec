@@ -547,7 +547,7 @@
 @ stdcall RtlUnicodeStringToOemString(ptr ptr long)
 @ stub RtlUnicodeToCustomCPN
 @ stdcall RtlUnicodeToMultiByteN(ptr long ptr ptr long)
-@ stdcall RtlUnicodeToMultiByteSize(ptr wstr long)
+@ stdcall RtlUnicodeToMultiByteSize(ptr ptr long)
 @ stdcall RtlUnicodeToOemN(ptr long ptr ptr long)
 @ stdcall RtlUniform(ptr)
 @ stdcall RtlUnlockHeap(long)
