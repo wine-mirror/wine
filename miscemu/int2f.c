@@ -10,6 +10,10 @@ int do_int2f(struct sigcontext_struct *context)
 {
 	switch((context->sc_eax >> 8) & 0xff)
 	{
+	case 0x10: /* share isn't installed */
+	        EAX = (EAX & 0xffffff00) | 0x01;
+		break;
+
 	case 0x15: /* mscdex */
 		/* ignore requests */
 		return 1;

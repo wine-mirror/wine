@@ -5,12 +5,14 @@ MODULE = miscemu
 SRCS = \
 	emulate.c \
 	int10.c \
+	int13.c \
 	int15.c \
 	int16.c \
 	int1a.c \
 	int21.c \
 	int25.c \
 	int26.c \
+	int2a.c \
 	int2f.c \
 	int31.c \
 	ioports.c \

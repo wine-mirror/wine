@@ -3,8 +3,9 @@
  *
  * Copyright 1993 Martin Ayotte
  */
-#ifndef WINELIB
 static char Copyright[] = "Copyright  Martin Ayotte, 1993";
+
+#ifndef WINELIB
 
 #include "stdio.h"
 #include <fcntl.h>
@@ -38,6 +39,8 @@ static MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
 
 UINT WINAPI midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT WINAPI waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
+LRESULT DrvDefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+						DWORD dwParam1, DWORD dwParam2);
 
 
 /**************************************************************************
@@ -55,66 +58,91 @@ int MMSYSTEM_WEP(HANDLE hInstance, WORD wDataSeg,
 */
 BOOL WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT uFlags)
 {
-	int			hFile;
-	int			count;
-	WAVEHDR		WaveHdr;
-	PCMWAVEFORMAT	WaveFormat;
+	HMMIO			hmmio;
+	MMCKINFO		mmckInfo;
+	MMCKINFO		ckMainRIFF;
+	PCMWAVEFORMAT 	pcmWaveFormat;
+	int				count;
+	WAVEHDR			WaveHdr;
 	WAVEOPENDESC 	WaveDesc;
-	DWORD		dwRet;
-	char		str[128];
-	LPSTR		ptr;
+	DWORD			dwRet;
+	char			str[128];
+	LPSTR			ptr;
 	printf("sndPlaySound // SoundName='%s' uFlags=%04X !\n", 
 									lpszSoundName, uFlags);
 	if (lpszSoundName == NULL) {
 		printf("sndPlaySound // Stop !\n");
 		return FALSE;
 		}
-	hFile = open(lpszSoundName, O_RDONLY);
-	if (hFile == 0) {
+	hmmio = mmioOpen((LPSTR)lpszSoundName, NULL, 
+		MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
+	if (hmmio == 0) {
 		printf("sndPlaySound // searching in SystemSound List !\n");
 		GetProfileString("Sounds", (LPSTR)lpszSoundName, "", str, sizeof(str));
 		if (strlen(str) == 0) return FALSE;
-		if ((ptr = strchr(str, ',')) != NULL) *ptr = '\0';
-		hFile = open(str, O_RDONLY);
-		if (hFile == 0) {
+		if ( (ptr = (LPSTR)strchr(str, ',')) != NULL) *ptr = '\0';
+		hmmio = mmioOpen(str, NULL, MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
+		if (hmmio == 0) {
 			printf("sndPlaySound // can't find SystemSound='%s' !\n", str);
 			return FALSE;
 			}
 		}
+	if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0) != 0) {
+ErrSND:	if (hmmio != 0)   mmioClose(hmmio, 0);
+		return FALSE;
+		}
+	printf("sndPlaySound // ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
+				(LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
+				ckMainRIFF.cksize);
+	if ((ckMainRIFF.ckid != FOURCC_RIFF) ||
+	    (ckMainRIFF.fccType != mmioFOURCC('W', 'A', 'V', 'E'))) goto ErrSND;
+	mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
+	if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) goto ErrSND;
+	printf("sndPlaySound // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
+			(LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType,
+			mmckInfo.cksize);
+	if (mmioRead(hmmio, (HPSTR) &pcmWaveFormat,
+	    (long) sizeof(PCMWAVEFORMAT)) != (long) sizeof(PCMWAVEFORMAT)) goto ErrSND;
+	mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
+	if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) goto ErrSND;
+	printf("sndPlaySound // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
+			(LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType,
+			mmckInfo.cksize);
 	WaveDesc.hWave = 0;
-	WaveDesc.lpFormat = (LPWAVEFORMAT)&WaveFormat;
-	WaveFormat.wf.wFormatTag = WAVE_FORMAT_PCM;
-	WaveFormat.wBitsPerSample = 8;
-	WaveFormat.wf.nChannels = 1;
-	WaveFormat.wf.nSamplesPerSec = 11025;
-	WaveFormat.wf.nAvgBytesPerSec = 11025;
-	WaveFormat.wf.nBlockAlign = 1;
+	WaveDesc.lpFormat = (LPWAVEFORMAT)&pcmWaveFormat;
+	pcmWaveFormat.wf.wFormatTag = WAVE_FORMAT_PCM;
+/*	pcmWaveFormat.wBitsPerSample = 8;
+	pcmWaveFormat.wf.nChannels = 1;
+	pcmWaveFormat.wf.nSamplesPerSec = 11025; 
+	pcmWaveFormat.wf.nBlockAlign = 1; */
+	pcmWaveFormat.wf.nAvgBytesPerSec = 
+		pcmWaveFormat.wf.nSamplesPerSec * pcmWaveFormat.wf.nBlockAlign;
 	dwRet = wodMessage(0, WODM_OPEN, 0, (DWORD)&WaveDesc, CALLBACK_NULL);
 	if (dwRet != MMSYSERR_NOERROR) {
 		printf("sndPlaySound // can't open WaveOut device !\n");
-		return FALSE;
+		goto ErrSND;
 		}
 	WaveHdr.lpData = (LPSTR) malloc(64000);
-	WaveHdr.dwBufferLength = 64000;
+	WaveHdr.dwBufferLength = 32000;
 	WaveHdr.dwUser = 0L;
 	WaveHdr.dwFlags = 0L;
 	WaveHdr.dwLoops = 0L;
 	dwRet = wodMessage(0, WODM_PREPARE, 0, (DWORD)&WaveHdr, sizeof(WAVEHDR));
 	if (dwRet != MMSYSERR_NOERROR) {
 		printf("sndPlaySound // can't prepare WaveOut device !\n");
-		return FALSE;
+		free(WaveHdr.lpData);
+		goto ErrSND;
 		}
 	while(TRUE) {
-		count = read(hFile, WaveHdr.lpData, WaveHdr.dwBufferLength);
-		if (count == 0) break;
+		count = mmioRead(hmmio, WaveHdr.lpData, WaveHdr.dwBufferLength);
+		if (count < 1) break;
 		WaveHdr.dwBytesRecorded = count;
 		wodMessage(0, WODM_WRITE, 0, (DWORD)&WaveHdr, sizeof(WAVEHDR));
 		}
 	wodMessage(0, WODM_UNPREPARE, 0, (DWORD)&WaveHdr, sizeof(WAVEHDR));
 	wodMessage(0, WODM_CLOSE, 0, 0L, 0L);
 	free(WaveHdr.lpData);
-	close(hFile);
-
+	if (hmmio != 0)   mmioClose(hmmio, 0);
 	return TRUE;
 }
 
@@ -561,6 +589,7 @@ msg# 543 : tmsf
 BOOL WINAPI mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
 {
 	printf("mciDriverNotify(%04X, %u, %04X)\n", hWndCallBack, wDevID, wStatus);
+	if (!IsWindow(hWndCallBack)) return FALSE;
 	PostMessage(hWndCallBack, MM_MCINOTIFY, wStatus, 
 			MAKELONG(mciDrv[wDevID].wDeviceID, 0));
 	return TRUE;
@@ -1653,6 +1682,10 @@ WORD FAR PASCAL MMSysTimeCallback(HWND hWnd, WORD wMsg, int nID, DWORD dwTime)
 		if (lpTimer->wCurTime == 0) {
 			lpTimer->wCurTime = lpTimer->wDelay;
 			if (lpTimer->lpFunc != NULL) {
+#ifdef DEBUG_MMTIME
+				printf("MMSysTimeCallback // before CallBack16 !\n");
+				fflush(stdout);
+#endif
 #ifdef WINELIB
 				(*lpTimer->lpFunc)(lpTimer->wTimerID, (WORD)0, 
 						lpTimer->dwUser, (DWORD)0, (DWORD)0);
@@ -1661,12 +1694,17 @@ WORD FAR PASCAL MMSysTimeCallback(HWND hWnd, WORD wMsg, int nID, DWORD dwTime)
 					0, (int)lpTimer->wTimerID, 0, (int)0, 
 					2, lpTimer->dwUser, 2, 0, 2, 0);
 #endif
+#ifdef DEBUG_MMTIME
+				printf("MMSysTimeCallback // after CallBack16 !\n");
+				fflush(stdout);
+#endif
 				}
 			if (lpTimer->wFlags & TIME_ONESHOT)
 				timeKillEvent(lpTimer->wTimerID);
 			}
 		lpTimer = lpTimer->Next;
 		}
+	return 0;
 }
 
 /**************************************************************************
@@ -1727,12 +1765,12 @@ WORD timeSetEvent(WORD wDelay, WORD wResol,
 		lpTimer->Next == lpNewTimer;
 		lpNewTimer->Prev == lpTimer;
 		}
-	lpNewTimer->Next == NULL;
+	lpNewTimer->Next = NULL;
 	lpNewTimer->wTimerID = wNewID + 1;
 	lpNewTimer->wCurTime = wDelay;
 	lpNewTimer->wDelay = wDelay;
 	lpNewTimer->wResol = wResol;
-	lpNewTimer->lpFunc = lpFunc;
+	lpNewTimer->lpFunc = (FARPROC)lpFunc;
 	lpNewTimer->dwUser = dwUser;
 	lpNewTimer->wFlags = wFlags;
 	return lpNewTimer->wTimerID;
@@ -1801,9 +1839,20 @@ DWORD timeGetTime()
 HMMIO WINAPI mmioOpen(LPSTR szFileName, MMIOINFO FAR* lpmmioinfo, DWORD dwOpenFlags)
 {
 	int		hFile;
+	HANDLE	hmmio;
+	OFSTRUCT	ofs;
+	LPMMIOINFO	lpmminfo;
 	printf("mmioOpen('%s', %08X, %08X);\n", szFileName, lpmmioinfo, dwOpenFlags);
-	hFile = _lopen(szFileName, dwOpenFlags);
-	return (HMMIO)hFile;
+	hFile = OpenFile(szFileName, &ofs, dwOpenFlags);
+	if (hFile == -1) return 0;
+	hmmio = GlobalAlloc(GMEM_MOVEABLE, sizeof(MMIOINFO));
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	memset(lpmminfo, 0, sizeof(MMIOINFO));
+	lpmminfo->hmmio = hmmio;
+	lpmminfo->dwReserved2 = MAKELONG(hFile, 0);
+	GlobalUnlock(hmmio);
+	return (HMMIO)hmmio;
 }
 
 
@@ -1813,8 +1862,13 @@ HMMIO WINAPI mmioOpen(LPSTR szFileName, MMIOINFO FAR* lpmmioinfo, DWORD dwOpenFl
 */
 UINT WINAPI mmioClose(HMMIO hmmio, UINT uFlags)
 {
+	LPMMIOINFO	lpmminfo;
 	printf("mmioClose(%04X, %04X);\n", hmmio, uFlags);
-	_lclose(hmmio);
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	_lclose(LOWORD(lpmminfo->dwReserved2));
+	GlobalUnlock(hmmio);
+	GlobalFree(hmmio);
 	return 0;
 }
 
@@ -1825,9 +1879,16 @@ UINT WINAPI mmioClose(HMMIO hmmio, UINT uFlags)
 */
 LONG WINAPI mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
 {
-	printf("mmioRead\n");
-	_lread(hmmio, pch, cch);
-	return 0;
+	int		count;
+	LPMMIOINFO	lpmminfo;
+#ifdef DEBUG_MMIO
+	printf("mmioRead(%04X, %08X, %ld);\n", hmmio, pch, cch);
+#endif
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	count = _lread(LOWORD(lpmminfo->dwReserved2), pch, cch);
+	GlobalUnlock(hmmio);
+	return count;
 }
 
 
@@ -1837,8 +1898,14 @@ LONG WINAPI mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
 */
 LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
 {
-	printf("mmioWrite\n");
-	return 0;
+	int		count;
+	LPMMIOINFO	lpmminfo;
+	printf("mmioWrite(%04X, %08X, %ld);\n", hmmio, pch, cch);
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	count = _lwrite(LOWORD(lpmminfo->dwReserved2), (LPSTR)pch, cch);
+	GlobalUnlock(hmmio);
+	return count;
 }
 
 /**************************************************************************
@@ -1846,8 +1913,14 @@ LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
 */
 LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, int iOrigin)
 {
-	printf("mmioSeek\n");
-	return 0;
+	int		count;
+	LPMMIOINFO	lpmminfo;
+	printf("mmioSeek(%04X, %08X, %d);\n", hmmio, lOffset, iOrigin);
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	count = _llseek(LOWORD(lpmminfo->dwReserved2), lOffset, iOrigin);
+	GlobalUnlock(hmmio);
+	return count;
 }
 
 /**************************************************************************
@@ -1855,16 +1928,25 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, int iOrigin)
 */
 UINT WINAPI mmioGetInfo(HMMIO hmmio, MMIOINFO FAR* lpmmioinfo, UINT uFlags)
 {
+	LPMMIOINFO	lpmminfo;
 	printf("mmioGetInfo\n");
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	memcpy(lpmmioinfo, lpmminfo, sizeof(MMIOINFO));
+	GlobalUnlock(hmmio);
 	return 0;
 }
 
 /**************************************************************************
-* 				mmioGetInfo			[MMSYSTEM.1216]
+* 				mmioSetInfo			[MMSYSTEM.1216]
 */
 UINT WINAPI mmioSetInfo(HMMIO hmmio, const MMIOINFO FAR* lpmmioinfo, UINT uFlags)
 {
+	LPMMIOINFO	lpmminfo;
 	printf("mmioSetInfo\n");
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	GlobalUnlock(hmmio);
 	return 0;
 }
 
@@ -1883,7 +1965,11 @@ UINT WINAPI mmioSetBuffer(HMMIO hmmio, LPSTR pchBuffer,
 */
 UINT WINAPI mmioFlush(HMMIO hmmio, UINT uFlags)
 {
-	printf("mmioFlush\n");
+	LPMMIOINFO	lpmminfo;
+	printf("mmioFlush(%04X, %04X)\n", hmmio, uFlags);
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	GlobalUnlock(hmmio);
 	return 0;
 }
 
@@ -1892,7 +1978,22 @@ UINT WINAPI mmioFlush(HMMIO hmmio, UINT uFlags)
 */
 UINT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO FAR* lpmmioinfo, UINT uFlags)
 {
+	int		count = 0;
+	LPMMIOINFO	lpmminfo;
 	printf("mmioAdvance\n");
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	if (uFlags == MMIO_READ) {
+		count = _lread(LOWORD(lpmminfo->dwReserved2), 
+			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
+		}
+	if (uFlags == MMIO_WRITE) {
+		count = _lwrite(LOWORD(lpmminfo->dwReserved2),
+			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
+		}
+	lpmmioinfo->pchNext	+= count;
+	GlobalUnlock(hmmio);
+	lpmminfo->lDiskOffset = _llseek(LOWORD(lpmminfo->dwReserved2), 0, SEEK_CUR);
 	return 0;
 }
 
@@ -1931,7 +2032,66 @@ LRESULT WINAPI mmioSendMessage(HMMIO hmmio, UINT uMessage,
 UINT WINAPI mmioDescend(HMMIO hmmio, MMCKINFO FAR* lpck,
 		    const MMCKINFO FAR* lpckParent, UINT uFlags)
 {
-	printf("mmioDescend\n");
+	DWORD	dwfcc, dwOldPos;
+	LPMMIOINFO	lpmminfo;
+#ifdef DEBUG_MMIO
+	printf("mmioDescend(%04X, %08X, %08X, %04X);\n", 
+				hmmio, lpck, lpckParent, uFlags);
+#endif
+	if (lpck == NULL) return 0;
+	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
+	if (lpmminfo == NULL) return 0;
+	dwfcc = lpck->ckid;
+	dwOldPos = _llseek(LOWORD(lpmminfo->dwReserved2), 0, SEEK_CUR);
+	if (lpckParent != NULL) {
+#ifdef DEBUG_MMIO
+		printf("mmioDescend // seek inside parent at %ld !\n", lpckParent->dwDataOffset);
+#endif
+		dwOldPos = _llseek(LOWORD(lpmminfo->dwReserved2), 
+					lpckParent->dwDataOffset, SEEK_SET);
+		}
+	if ((uFlags & MMIO_FINDCHUNK) || (uFlags & MMIO_FINDRIFF) || 
+		(uFlags & MMIO_FINDLIST)) {
+#ifdef DEBUG_MMIO
+		printf("mmioDescend // MMIO_FINDxxxx dwfcc=%08X !\n", dwfcc);
+#endif
+		while (TRUE) {
+			if (_lread(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
+					sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
+				_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
+				GlobalUnlock(hmmio);
+				return MMIOERR_CHUNKNOTFOUND;
+				}
+#ifdef DEBUG_MMIO
+			printf("mmioDescend // dwfcc=%08X ckid=%08X cksize=%08X !\n", 
+									dwfcc, lpck->ckid, lpck->cksize);
+#endif
+			if (dwfcc == lpck->ckid) break;
+			dwOldPos += lpck->cksize + 2 * sizeof(DWORD);
+			if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
+				dwOldPos += sizeof(DWORD);
+			_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
+			}
+		}
+	else {
+		if (_lread(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
+				sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
+			_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
+			GlobalUnlock(hmmio);
+			return MMIOERR_CHUNKNOTFOUND;
+			}
+		}
+	GlobalUnlock(hmmio);
+	lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
+	if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
+		lpck->dwDataOffset += sizeof(DWORD);
+	lpmminfo->lDiskOffset = _llseek(LOWORD(lpmminfo->dwReserved2), 
+									lpck->dwDataOffset, SEEK_SET);
+#ifdef DEBUG_MMIO
+	printf("mmioDescend // lpck->ckid=%08X lpck->cksize=%ld !\n", 
+								lpck->ckid, lpck->cksize);
+	printf("mmioDescend // lpck->fccType=%08X !\n", lpck->fccType);
+#endif
 	return 0;
 }
 
@@ -2018,5 +2178,5 @@ LRESULT DrvDefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 }
 
 
+#endif /* #ifdef WINELIB */
 
-#endif

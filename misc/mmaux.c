@@ -3,8 +3,13 @@
  *
  * Copyright 1994 Martin Ayotte
  */
-#ifndef WINELIB
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
+
+#ifndef WINELIB
+#define BUILTIN_MMSYSTEM
+#endif 
+
+#ifdef BUILTIN_MMSYSTEM
 
 #include "stdio.h"
 #include "win.h"
@@ -128,4 +133,4 @@ DWORD auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 }
 
 
-#endif /* !WINELIB */
+#endif /* #ifdef BUILTIN_MMSYSTEM */

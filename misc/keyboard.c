@@ -1,49 +1,53 @@
 static char RCSId[] = "$Id: keyboard.c,v 1.2 1993/09/13 18:52:02 scott Exp $";
-static char Copyright[] = "Copyright  Scott A. Laird, 1993";
+static char Copyright[] = "Copyright  Scott A. Laird, Erik Bos  1993, 1994";
 
 #include <stdlib.h>
 #include <stdio.h>
 #include "prototypes.h"
 #include "windows.h"
+#include "keyboard.h"
 
 int ToAscii(WORD wVirtKey, WORD wScanCode, LPSTR lpKeyState, 
-	    LPVOID lpChar, WORD wFlags) 
+	LPVOID lpChar, WORD wFlags) 
 {
-  printf("ToAscii (%d,%d)\n",wVirtKey, wScanCode);
-  return -1;
+	int i;
+
+	printf("ToAscii (%d,%d)\n",wVirtKey, wScanCode);
+
+	/* FIXME: this is not sufficient but better than returing -1 */
+
+	for (i = 0 ; i != KeyTableSize ; i++) 
+		if (KeyTable[i].virtualkey == wVirtKey)  {
+			*(BYTE*)lpChar++ = *KeyTable[i].name;
+			*(BYTE*)lpChar = 0;
+			return 1;
+		}
+
+	*(BYTE*)lpChar = 0;
+	return 0;
 }
-
-#ifdef  BOGUS_ANSI_OEM
-
-int AnsiToOem(LPSTR lpAnsiStr, LPSTR lpOemStr)
-{
-  printf("AnsiToOem (%s)\n",lpAnsiStr);
-  strcpy(lpOemStr,lpAnsiStr);  /* Probably not the right thing to do, but... */
-  return -1;
-}
-
-BOOL OemToAnsi(LPSTR lpOemStr, LPSTR lpAnsiStr)
-{
-  printf("OemToAnsi (%s)\n",lpOemStr);
-  strcpy(lpAnsiStr,lpOemStr);  /* Probably not the right thing to do, but... */
-  return -1;
-}
-
-#endif
 
 DWORD OemKeyScan(WORD wOemChar)
 {
-  printf("*OemKeyScan (%d)\n",wOemChar);
-  return 0;
+	printf("*OemKeyScan (%d)\n",wOemChar);
+
+	return wOemChar;
 }
 
 /* VkKeyScan translates an ANSI character to a virtual-key and shift code
- * for the current keyboard.  For now we return -1, which is fail. */
+ * for the current keyboard. */
 
 WORD VkKeyScan(WORD cChar)
 {
-  printf("VkKeyScan (%d)\n",cChar);
-  return -1;
+	int i;
+	
+	printf("VkKeyScan (%d)\n",cChar);
+	
+	for (i = 0 ; i != KeyTableSize ; i++) 
+		if (KeyTable[i].ASCII == cChar)
+			return KeyTable[i].virtualkey;
+
+	return -1;
 }
 
 int GetKeyboardType(int nTypeFlag)
@@ -61,58 +65,64 @@ int GetKeyboardType(int nTypeFlag)
       return 12;   /* We're doing an 101 for now, so return 12 F-keys */
       break;
     default:     
-      printf("  Unknown type on GetKeyboardType\n");
+      fprintf(stderr, "Unknown type on GetKeyboardType\n");
       return 0;    /* The book says 0 here, so 0 */
     }
 }
 
-/* MapVirtualKey translates keycodes from one format to another.  This
- *  is a total punt.  */
+/* MapVirtualKey translates keycodes from one format to another. */
 
 WORD MapVirtualKey(WORD wCode, WORD wMapType)
 {
-  printf("*MapVirtualKey(%d,%d)\n",wCode,wMapType);
-  return 0;
+	int i;
+	
+	switch(wMapType) {
+		case 0:
+			for (i = 0 ; i != KeyTableSize ; i++) 
+				if (KeyTable[i].virtualkey == wCode) 
+					return KeyTable[i].scancode;
+			return 0;
+
+		case 1:
+			for (i = 0 ; i != KeyTableSize ; i++) 
+				if (KeyTable[i].scancode == wCode) 
+					return KeyTable[i].virtualkey;
+			return 0;
+
+		case 2:
+			for (i = 0 ; i != KeyTableSize ; i++) 
+				if (KeyTable[i].virtualkey == wCode) 
+					return KeyTable[i].ASCII;
+			return 0;
+
+		default: 
+			fprintf(stderr, "MapVirtualKey: unknown wMapType!\n");
+			return 0;	
+	}
+	return 0;
 }
 
 int GetKbCodePage(void)
 {
-  printf("GetKbCodePage()\n");
-  return 437; /* US -- probably should be 850 from time to time */
+	printf("GetKbCodePage()\n");
+	return 850;
 }
-
-/* This should distinguish key names.  Maybe later */
 
 int GetKeyNameText(LONG lParam, LPSTR lpBuffer, int nSize)
 {
-  printf("GetKeyNameText(%d,<ptr>, %d)\n",lParam,nSize);
-  lpBuffer[0]=0;  /* This key has no name */
-  return 0;
+	int i;
+	
+	printf("GetKeyNameText(%d,<ptr>, %d)\n",lParam,nSize);
+
+	lParam >>= 16;
+	lParam &= 0xff;
+
+	for (i = 0 ; i != KeyTableSize ; i++) 
+		if (KeyTable[i].scancode == lParam)  {
+			strncpy(lpBuffer, KeyTable[i].name, nSize);
+			return strlen(lpBuffer);
+		}
+
+	*lpBuffer = 0;
+	return 0;
 }
-
-#ifdef  BOGUS_ANSI_OEM
-
-void AnsiToOemBuff(LPSTR lpAnsiStr, LPSTR lpOemStr, int nLength)
-{
-  printf("AnsiToOemBuff(%s,<ptr>,%d)\n",lpAnsiStr,nLength);
-  strncpy(lpOemStr,lpAnsiStr,nLength);  /* should translate... */
-}
-
-void OemToAnsiBuff(LPSTR lpOemStr, LPSTR lpAnsiStr, int nLength)
-{
-  printf("OemToAnsiBuff(%s,<ptr>,%d)\n",lpOemStr,nLength);
-  strncpy(lpAnsiStr,lpOemStr,nLength);  /* should translate... */
-}
-
-#endif
-
-
-
-
-
-
-
-
-
-
-

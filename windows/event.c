@@ -44,6 +44,7 @@ BYTE KeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
 static WORD ALTKeyState;
 static HWND captureWnd = 0;
+static BOOL	InputEnabled = TRUE;
 Window winHasCursor = 0;
 
 /* Keyboard translation tables */
@@ -517,3 +518,16 @@ HWND GetCapture()
 {
     return captureWnd;
 }
+
+
+/**********************************************************************
+ *			EnableHardwareInput 		[USER.331]
+ */
+BOOL EnableHardwareInput(BOOL bEnable)
+{
+	BOOL bOldState = InputEnabled;
+	printf("EMPTY STUB !!! EnableHardwareInput(%d);\n", bEnable);
+	InputEnabled = bEnable;
+    return (bOldState && !bEnable);
+}
+

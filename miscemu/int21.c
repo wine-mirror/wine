@@ -1169,7 +1169,16 @@ int do_int21(struct sigcontext_struct * context)
               case 0x00:
                 ioctlGetDeviceInfo(context);
 		break;
-		                
+		   
+	      case 0x09:   /* CHECK IF BLOCK DEVICE REMOTE */
+		EDX = (EDX & 0xffff0000) | (1<<9) | (1<<12);
+		ResetCflag;
+		break;
+
+	      case 0x0b:   /* SET SHARING RETRY COUNT */
+		ResetCflag;
+		break;
+
               case 0x0d:
                 ioctlGenericBlkDevReq(context);
                 break;
@@ -1363,6 +1372,9 @@ int do_int21(struct sigcontext_struct * context)
 	  case 0x6a: /* COMMIT FILE */
 	    ResetCflag;
 	    break;		
+
+	  case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
+	    break;
 
 	  default:
             IntBarf(0x21, context);

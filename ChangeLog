@@ -1,4 +1,62 @@
 ----------------------------------------------------------------------
+Thu Aug  4 07:18:02 1994  Michael Patra  <micky@marie.physik.tu-berlin.de>
+
+        * [windows/message.c]
+	Implemented WaitMessage() (USER.112).
+
+        * [if1632/user.spec]
+	Added WaitMessage.
+
+	* [windows/defwnd.c]
+	WM_ERASEBKGND: Added support for hbrBackground=COLOR_xxx.
+
+   	* [miscemu/int{13,21,2a}.c]
+        * [miscemu/Imakefile]
+	* [signal/loader.c]
+	Added a few basic disk information and diagnostic functions to
+	prevent programs using this function from crashing. All drives
+	are claimed to be remote ones, so direct I/O isn't allowed.
+
+	* [controls/edit.c]
+	EDIT_WriteText(): Added code to correctly erase the remaining space
+	of the edit-control if the size of the control has changed sinced it's
+	creation.
+
+Tue Jul 26 22:05:54 MET DST 1994 Erik Bos <erik@hacktic.nl>
+
+	* [if1632/mouse.spec]
+	Added mouse.dll entry, no functions.
+
+	* [loader/resource.c]
+	Bug fix in AccessResource(). 
+
+	* [misc/keyboard.c], added [include/keyboard.h]
+	Changed functions to return more useful values.
+
+	* [windows/dialog.c]
+	Hacked DIALOG_GetControl() to support resources which
+	have 0xff00 - 0xffff as id. ** Needs to be done properly by
+	someone who knows the NE fileformat **
+
+Jul 29, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [windows/event.c]
+	Add new stub for EnableHGardwareInput() function.
+
+	* [windows/message.c]
+	Add coding for HWND_BROADCAST in PostMessage().
+
+	* [misc/file.c]
+	Add coding for OpenFile() also search in WindowPaths.
+
+	* [misc/mmsystem.c]
+	* [misc/audio.c]
+	* [misc/mmaux.c]
+	* [misc/mcicda.c]
+	Change #include "linux/soundcard.h" by #include "sys/soundcard.h"
+	Add coding in MMIO functions. Now, mmioDescend() can find WAV chunks.
+	SndPlaySound & MCI_ELEMENT now use MMIO and adjust to proper formats.
+----------------------------------------------------------------------
 Mon Jul 18 23:55:13 MET DST 1994
 
 	* [if1632/call.S]

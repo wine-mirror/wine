@@ -147,11 +147,11 @@ static int loaded_symbols = 0;
 void
 wine_debug(int signal, int * regs)
 {
+	static int dummy_regs[32];
 	int i;
 #ifdef YYDEBUG
 	yydebug = 0;
 #endif
-	static int dummy_regs[32];
 
 	yyin = stdin;
 	regval = regs ? regs : dummy_regs;

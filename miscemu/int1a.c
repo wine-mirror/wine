@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "msdos.h"
 #include "wine.h"
+#include "options.h"
 
 #ifdef linux
 #include <linux/sched.h> /* needed for HZ */
@@ -16,6 +17,12 @@ int do_int1A(struct sigcontext_struct * context){
 	struct tm *bdtime;
 	int ticks;
 
+    if (Options.relay_debug) {
+	printf("int1A: AX %04x, BX %04x, CX %04x, DX %04x, "
+	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
+	       AX, BX, CX, DX, SI, DI, DS, ES);
+    }
+
 	switch((context->sc_eax >> 8) & 0xff){
 	case 0:
 		ltime = time(NULL);
@@ -23,6 +30,7 @@ int do_int1A(struct sigcontext_struct * context){
 		context->sc_ecx = ticks >> 16;
 		context->sc_edx = ticks & 0x0000FFFF;
 		context->sc_eax = 0;  /* No midnight rollover */
+		printf("int1a_00 // ltime=%ld ticks=%ld\n", ltime, ticks);
 		break;
 		
 	case 2: 

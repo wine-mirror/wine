@@ -15,6 +15,26 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
 LPDRIVERITEM lpDrvItemList = NULL;
 
+void LoadStartupDrivers()
+{
+	HDRVR	hDrv;
+	char	str[256];
+	LPSTR	ptr	= str;
+	LPSTR	file = "SYSTEM.INI";
+	if (GetPrivateProfileString("drivers", NULL, 
+		"", str, sizeof(str), file) < 2) {
+		printf("LoadStartupDrivers // can't find drivers section in '%s'\n", file);
+		return;
+		}
+	while(strlen(ptr) != 0) {
+		printf("LoadStartupDrivers // str='%s'\n", ptr);
+		hDrv = OpenDriver(ptr, "drivers", 0L);
+		printf("LoadStartupDrivers // hDrv=%04X\n", hDrv);
+		ptr += strlen(ptr) + 1;
+		}
+	printf("LoadStartupDrivers // end of list !\n");
+}
+
 /**************************************************************************
  *				SendDriverMessage		[USER.251]
  */
@@ -48,12 +68,13 @@ HDRVR OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 	lpnewdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
 	if (lpnewdrv == NULL) return 0;
 	lpnewdrv->dis.length = sizeof(DRIVERINFOSTRUCT);
-	lpnewdrv->dis.hModule = LoadImage("DrvName", DLL, 0);
+	lpnewdrv->dis.hModule = 0;
+/*	lpnewdrv->dis.hModule = LoadImage(DrvName, DLL, 0);
 	if (lpnewdrv->dis.hModule == 0) {
 		GlobalUnlock(hDrvr);
 		GlobalFree(hDrvr);
 		return 0;
-		}
+		} */
 	lpnewdrv->dis.hDriver = hDrvr;
 	strcpy(lpnewdrv->dis.szAliasName, lpDriverName);
 	lpnewdrv->count = 0;
@@ -165,18 +186,30 @@ HDRVR GetNextDriver(HDRVR hDrvr, DWORD dwFlags)
 	LPDRIVERITEM	lpdrv;
 	HDRVR			hRetDrv = 0;
 	printf("GetNextDriver(%04X, %08X);\n", hDrvr, dwFlags);
+	if (hDrvr == 0) {
+		if (lpDrvItemList == NULL) {
+			printf("GetNextDriver // drivers list empty !\n");
+			LoadStartupDrivers();
+			if (lpDrvItemList == NULL) return 0;
+			}
+		printf("GetNextDriver // return first %04X !\n", 
+							lpDrvItemList->dis.hDriver);
+		return lpDrvItemList->dis.hDriver;
+		}
 	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
 	if (lpdrv != NULL) {
-		if (dwFlags & GND_REVERSE) 
+		if (dwFlags & GND_REVERSE) {
 			if (lpdrv->lpPrevItem) 
 				hRetDrv = ((LPDRIVERITEM)lpdrv->lpPrevItem)->dis.hDriver;
-		if (dwFlags & GND_FORWARD) 
+			}
+		else {
 			if (lpdrv->lpNextItem) 
 				hRetDrv = ((LPDRIVERITEM)lpdrv->lpNextItem)->dis.hDriver;
+			}
 		GlobalUnlock(hDrvr);
 		}
+	printf("GetNextDriver // return %04X !\n", hRetDrv);
 	return hRetDrv;
-	
 }
 
 

@@ -21,6 +21,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "sysmetrics.h"
 #include "hook.h"
 
+#define HWND_BROADCAST  ((HWND)0xffff)
+
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
 
@@ -115,8 +117,10 @@ static int MSG_AddMsg( MESSAGEQUEUE * msgQueue, MSG * msg, DWORD extraInfo )
     pos = msgQueue->nextFreeMessage;
 
       /* Check if queue is full */
-    if ((pos == msgQueue->nextMessage) && (msgQueue->msgCount > 0))
-	return FALSE;
+    if ((pos == msgQueue->nextMessage) && (msgQueue->msgCount > 0)) {
+		printf("MSG_AddMsg // queue is full !\n");
+		return FALSE;
+		}
 
       /* Store message */
     msgQueue->messages[pos].msg = *msg;
@@ -724,16 +728,44 @@ BOOL GetMessage( LPMSG msg, HWND hwnd, WORD first, WORD last )
 }
 
 
+
 /***********************************************************************
  *           PostMessage   (USER.110)
  */
 BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {
-    MSG msg;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    MSG 	msg;
+    WND 	*wndPtr;
 
+	if (hwnd == HWND_BROADCAST) {
+#ifdef DEBUG_MSG
+		printf("PostMessage // HWND_BROADCAST !\n");
+#endif
+	    hwnd = GetTopWindow(GetDesktopWindow());
+	    while (hwnd) {
+	        if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
+			if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
+#ifdef DEBUG_MSG
+				printf("BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08X !\n", 
+							hwnd, message, wParam, lParam);
+#endif
+				PostMessage(hwnd, message, wParam, lParam);
+				}
+/*				{
+				char	str[128];
+				GetWindowText(hwnd, str, sizeof(str));
+				printf("BROADCAST GetWindowText()='%s' !\n", str); 
+				}*/
+			hwnd = wndPtr->hwndNext;
+			}
+#ifdef DEBUG_MSG
+		printf("PostMessage // End of HWND_BROADCAST !\n");
+#endif
+		return TRUE;
+		}
+
+	wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr || !wndPtr->hmemTaskQ) return FALSE;
-
     msg.hwnd    = hwnd;
     msg.message = message;
     msg.wParam  = wParam;
@@ -756,6 +788,51 @@ LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
     return CallWindowProc( wndPtr->lpfnWndProc, hwnd, msg, wParam, lParam );
+}
+
+
+/***********************************************************************
+ *           WaitMessage    (USER.112)
+ */
+void WaitMessage( void )
+{
+    MSG msg;
+    LONG nextExp;  /* Next timer expiration time */
+    XEvent event;
+
+    while (XPending( display ))
+    {
+        XNextEvent( display, &event );
+        EVENT_ProcessEvent( &event );
+    }    
+
+    while(1)
+    {
+        if ((appMsgQueue->wPostQMsg) || 
+            (appMsgQueue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
+            (appMsgQueue->msgCount) || (sysMsgQueue->msgCount) )
+            break;
+        if ((appMsgQueue->status & QS_TIMER) && 
+            TIMER_CheckTimer( &nextExp, &msg, 0, FALSE))
+            break;
+        else
+            nextExp=-1;
+
+        if (!XPending( display ) && (nextExp != -1))
+        {
+            fd_set read_set;
+            struct timeval timeout;
+            int fd = ConnectionNumber(display);
+            FD_ZERO( &read_set );
+            FD_SET( fd, &read_set );
+            timeout.tv_sec = nextExp / 1000;
+            timeout.tv_usec = (nextExp % 1000) * 1000;
+            if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
+                continue;  /* On timeout or error, restart from the start */
+        }
+        XNextEvent( display, &event );
+        EVENT_ProcessEvent( &event );
+    }
 }
 
 
@@ -851,10 +928,12 @@ LONG GetMessageExtraInfo(void)
  */
 WORD RegisterWindowMessage( LPCSTR str )
 {
+	WORD	wRet;
 #ifdef DEBUG_MSG
     printf( "RegisterWindowMessage: '%s'\n", str );
 #endif
-    return GlobalAddAtom( str );
+	wRet = GlobalAddAtom( str );
+    return wRet;
 }
 
 

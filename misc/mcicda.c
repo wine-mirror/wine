@@ -3,8 +3,13 @@
  *
  * Copyright 1994 Martin Ayotte
  */
-#ifndef WINELIB
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
+
+#ifndef WINELIB
+#define BUILTIN_MMSYSTEM
+#endif 
+
+#ifdef BUILTIN_MMSYSTEM
 
 /*
 #define DEBUG_CDAUDIO
@@ -158,7 +163,7 @@ DWORD CDAUDIO_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 #endif
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwFlags & MCI_GETDEVCAPS_ITEM) {
-		printf("CDAUDIO_mciGetDevCaps // MCI_GETDEVCAPS_ITEM dwItem=%08X);\n", 
+		printf("CDAUDIO_mciGetDevCaps // MCI_GETDEVCAPS_ITEM dwItem=%08X;\n", 
 				lpParms->dwItem);
 		switch(lpParms->dwItem) {
 			case MCI_GETDEVCAPS_CAN_RECORD:
@@ -192,7 +197,7 @@ DWORD CDAUDIO_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 				return MCIERR_UNRECOGNIZED_COMMAND;
 			}
 		}
-	printf("CDAUDIO_mciGetDevCaps // lpParms->dwReturn=%08X);\n", lpParms->dwReturn);
+	printf("CDAUDIO_mciGetDevCaps // lpParms->dwReturn=%08X;\n", lpParms->dwReturn);
  	return 0;
 #else
 	return MCIERR_INTERNAL;
@@ -486,6 +491,7 @@ BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 	if (CDADev[wDevID].nTracks == 0) {
 		if (CDAUDIO_GetNumberOfTracks(wDevID) == (WORD)-1) return FALSE;
 		}
+	printf("CDAUDIO_GetTracksInfo // nTracks=%u\n", CDADev[wDevID].nTracks);
 	if (CDADev[wDevID].lpdwTrackLen != NULL) 
 		free(CDADev[wDevID].lpdwTrackLen);
 	CDADev[wDevID].lpdwTrackLen = (LPDWORD)malloc(
@@ -533,6 +539,7 @@ BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 		}
 	CDADev[wDevID].dwTotalLen = total_length;
 	printf("CDAUDIO_GetTracksInfo // total_len=%u\n", total_length);
+	fflush(stdout);
 	return TRUE;
 #else
 	return FALSE;
@@ -552,7 +559,7 @@ BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 #ifdef DEBUG_CDAUDIO
 		printf("CDAUDIO_GetCDStatus // opened or no_media !\n");
 #endif
-		CDADev[wDevID].mode = MCI_MODE_OPEN;
+		CDADev[wDevID].mode = MCI_MODE_NOT_READY;
 		return TRUE;
 		}
 	switch (CDADev[wDevID].sc.cdsc_audiostatus) {
@@ -923,4 +930,4 @@ LRESULT CDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 
 /*-----------------------------------------------------------------------*/
 
-#endif
+#endif /* #ifdef BUILTIN_MMSYSTEM */

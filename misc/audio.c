@@ -3,10 +3,15 @@
  *
  * Copyright 1994 Martin Ayotte
  */
-#ifndef WINELIB
-#define DEBUG_MCIWAVE
-
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
+
+#ifndef WINELIB
+#define BUILTIN_MMSYSTEM
+#endif 
+
+#ifdef BUILTIN_MMSYSTEM
+
+#define DEBUG_MCIWAVE
 
 #include "stdio.h"
 #include "win.h"
@@ -60,7 +65,7 @@ typedef struct {
     BOOL    fShareable;         /* TRUE if first open was shareable */
     WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
     HANDLE  hCallback;          /* Callback handle for pending notification */
-	int		hFile;				/* file handle open as Element		*/
+	HMMIO	hFile;				/* mmio file handle open as Element		*/
 	MCI_WAVE_OPEN_PARMS openParms;
 	PCMWAVEFORMAT	WaveFormat;
 	WAVEHDR		WaveHdr;
@@ -207,13 +212,13 @@ DWORD WAVE_mciOpen(DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpParms)
     if (dwFlags & MCI_OPEN_ELEMENT) {
 		printf("WAVE_mciOpen // MCI_OPEN_ELEMENT '%s' !\n", 
 								lpParms->lpstrElementName);
-		printf("WAVE_mciOpen // cdw='%s'\n", DOS_GetCurrentDir(DOS_GetDefaultDrive()));
+/*		printf("WAVE_mciOpen // cdw='%s'\n", DOS_GetCurrentDir(DOS_GetDefaultDrive())); */
 		if (strlen(lpParms->lpstrElementName) > 0) {
 			strcpy(str, lpParms->lpstrElementName);
 			AnsiUpper(str);
-			MCIWavDev[wDevID].hFile = _lopen(str, OF_READWRITE);
-			if (MCIWavDev[wDevID].hFile < 1) {
-				MCIWavDev[wDevID].hFile = 0;
+			MCIWavDev[wDevID].hFile = mmioOpen(str, NULL, 
+				MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
+			if (MCIWavDev[wDevID].hFile == 0) {
 				printf("WAVE_mciOpen // can't find file='%s' !\n", str);
 				return MCIERR_FILE_NOT_FOUND;
 				}
@@ -233,6 +238,49 @@ DWORD WAVE_mciOpen(DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpParms)
 	lpWaveFormat->wf.nSamplesPerSec = 11025;
 	lpWaveFormat->wf.nAvgBytesPerSec = 11025;
 	lpWaveFormat->wf.nBlockAlign = 1;
+	if (MCIWavDev[wDevID].hFile != 0) {
+		MMCKINFO	mmckInfo;
+		MMCKINFO	ckMainRIFF;
+		if (mmioDescend(MCIWavDev[wDevID].hFile, &ckMainRIFF, NULL, 0) != 0) {
+			return MCIERR_INTERNAL;
+			}
+#ifdef DEBUG_MCIWAVE
+		printf("WAVE_mciOpen // ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
+				(LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
+				ckMainRIFF.cksize);
+#endif
+		if ((ckMainRIFF.ckid != FOURCC_RIFF) ||
+		    (ckMainRIFF.fccType != mmioFOURCC('W', 'A', 'V', 'E'))) {
+			return MCIERR_INTERNAL;
+			}
+		mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
+		if (mmioDescend(MCIWavDev[wDevID].hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) {
+			return MCIERR_INTERNAL;
+			}
+#ifdef DEBUG_MCIWAVE
+		printf("WAVE_mciOpen // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
+				(LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType,
+				mmckInfo.cksize);
+#endif
+		if (mmioRead(MCIWavDev[wDevID].hFile, (HPSTR) lpWaveFormat,
+		    (long) sizeof(PCMWAVEFORMAT)) != (long) sizeof(PCMWAVEFORMAT)) {
+			return MCIERR_INTERNAL;
+			}
+		mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
+		if (mmioDescend(MCIWavDev[wDevID].hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) {
+			return MCIERR_INTERNAL;
+			}
+#ifdef DEBUG_MCIWAVE
+		printf("WAVE_mciOpen // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
+				(LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType,
+				mmckInfo.cksize);
+		printf("WAVE_mciOpen // nChannels=%d nSamplesPerSec=%d\n",
+			lpWaveFormat->wf.nChannels, lpWaveFormat->wf.nSamplesPerSec);
+#endif
+		lpWaveFormat->wBitsPerSample = 0;
+		}
+	lpWaveFormat->wf.nAvgBytesPerSec = 
+		lpWaveFormat->wf.nSamplesPerSec * lpWaveFormat->wf.nBlockAlign;
 	dwRet = wodMessage(0, WODM_OPEN, 0, (DWORD)&WaveDesc, CALLBACK_NULL);
 	dwRet = widMessage(0, WIDM_OPEN, 0, (DWORD)&WaveDesc, CALLBACK_NULL);
 	return 0;
@@ -318,20 +366,18 @@ DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	lpWaveHdr->dwFlags = 0L;
 	lpWaveHdr->dwLoops = 0L;
 	dwRet = wodMessage(0, WODM_PREPARE, 0, (DWORD)lpWaveHdr, sizeof(WAVEHDR));
-	printf("WAVE_mciPlay // after WODM_PREPARE \n");
+/*	printf("WAVE_mciPlay // after WODM_PREPARE \n"); */
 	while(TRUE) {
-/*		printf("WAVE_mciPlay // before 'read' hFile=%u lpData=%08X dwBufferLength=%u\n",
-				MCIWavDev[wDevID].hFile, lpWaveHdr->lpData, lpWaveHdr->dwBufferLength); */
-		count = _lread(MCIWavDev[wDevID].hFile, lpWaveHdr->lpData, lpWaveHdr->dwBufferLength);
+		count = mmioRead(MCIWavDev[wDevID].hFile, lpWaveHdr->lpData, lpWaveHdr->dwBufferLength);
 		if (count < 1) break;
 		lpWaveHdr->dwBytesRecorded = count;
+#ifdef DEBUG_MCIWAVE
 		printf("WAVE_mciPlay // before WODM_WRITE lpWaveHdr=%08X dwBytesRecorded=%u\n",
 					lpWaveHdr, lpWaveHdr->dwBytesRecorded);
+#endif
 		dwRet = wodMessage(0, WODM_WRITE, 0, (DWORD)lpWaveHdr, sizeof(WAVEHDR));
 		}
-	printf("WAVE_mciPlay // before WODM_UNPREPARE \n");
 	dwRet = wodMessage(0, WODM_UNPREPARE, 0, (DWORD)lpWaveHdr, sizeof(WAVEHDR));
-	printf("WAVE_mciPlay // after WODM_UNPREPARE \n");
 	if (lpWaveHdr->lpData != NULL) {
 		free(lpWaveHdr->lpData);
 		lpWaveHdr->lpData = NULL;
@@ -1642,4 +1688,4 @@ DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 	return MMSYSERR_NOTENABLED;
 }
 
-#endif /* !WINELIB */
+#endif /* #ifdef BUILTIN_MMSYSTEM */

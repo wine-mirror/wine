@@ -493,7 +493,7 @@ int GetRsrcCount(HINSTANCE hInst, int type_id)
     off_t rtoff;
     if (hInst == 0) return 0;
 #ifdef DEBUG_RESOURCE
-    printf("GetRsrcCount hInst=%04X typename=%08X\n", hInst, type_name);
+    printf("GetRsrcCount hInst=%04X typename=%08X\n", hInst, type_id);
 #endif
     if (OpenResourceFile(hInst) < 0)	return 0;
 
@@ -978,7 +978,7 @@ int AccessResource(HANDLE instance, HANDLE hResInfo)
     lseek(resfile, ((int) r->nameinfo.offset << r->size_shift), SEEK_SET);
     GlobalUnlock(hResInfo);
 
-    return resfile;
+    return dup(resfile);
 }
 
 /**********************************************************************
@@ -1049,9 +1049,9 @@ RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret)
     }
     if (size_shift == -1) {
     	if ((LONG)rsc_name >= 0x00010000L)
-	    printf("RSC_LoadResource / Resource '%s' not Found !\n", rsc_name);
+	    printf("RSC_LoadResource inst (%x)/ Resource '%s' not Found !\n", instance, rsc_name);
 	else
-	    printf("RSC_LoadResource / Resource '%X' not Found !\n", rsc_name);
+	    printf("RSC_LoadResource inst (%x)/ Resource '0x%X' not Found !\n", instance, rsc_name);
 	return 0;
 	}
     /*

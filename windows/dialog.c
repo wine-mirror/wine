@@ -54,8 +54,10 @@ BOOL DIALOG_Init()
 static DLGCONTROLHEADER * DIALOG_GetControl( DLGCONTROLHEADER * ptr,
 					     char ** class, char ** text )
 {
+    int i;
     unsigned char * p = (unsigned char *)ptr;
     p += 14;  /* size of control header */
+
     if (*p & 0x80)
     {
 	switch(*p++)
@@ -74,8 +76,15 @@ static DLGCONTROLHEADER * DIALOG_GetControl( DLGCONTROLHEADER * ptr,
 	*class = p;
 	p += strlen(p) + 1;
     }
-    *text = p;
-    p += strlen(p) + 2;
+/* FIXME: how can I determine if the resource id is an integer or a string ? */
+    if (*p == 0xff) { 
+/*	*(DWORD*)text = (*p << 8) | *p;*/
+	*(DWORD*)text = 0xebeb;
+	p += 4;
+    } else {
+	*text = p;
+	p += strlen(p) + 2;
+    }
     return (DLGCONTROLHEADER *)p;
 }
 
@@ -285,9 +294,14 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	next_header = DIALOG_GetControl( header, &class, &text );
 
 #ifdef DEBUG_DIALOG
-	printf( "   %s '%s' %d, %d, %d, %d, %d, %08x\n",
-	        class, text, header->id, header->x, header->y, header->cx,
-	        header->cy, header->style );
+	printf( "   %s ", class);
+	if ((DWORD*)text < 0x10000)
+		printf("'%4X'", (DWORD*)text);
+	else
+		printf("'%s'", text);
+	
+	printf(" %d, %d, %d, %d, %d, %08x\n", header->id, header->x, header->y, 
+		header->cx, header->cy, header->style );
 #endif
 	if ((strcmp(class, "STATIC") == 0) & ((header->style & SS_ICON) == SS_ICON)) {
 	    header->cx = 32;

@@ -14,6 +14,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "syscolor.h"
 
+  /* Last COLOR id */
+#define COLOR_MAX   COLOR_BTNHIGHLIGHT
+
 extern LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn );
 extern LONG NC_HandleNCActivate( HWND hwnd, WORD wParam );
 extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params );
@@ -149,7 +152,16 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	{
 	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 1;
 	    if (!classPtr->wc.hbrBackground) return 1;
-	    FillWindow( GetParent(hwnd), hwnd, (HDC)wParam,
+            if (classPtr->wc.hbrBackground <= COLOR_MAX+1)
+            {
+                 HBRUSH hbrush;
+                 hbrush = CreateSolidBrush(
+                     GetSysColor(classPtr->wc.hbrBackground-1));
+                 FillWindow( GetParent(hwnd), hwnd, (HDC)wParam, hbrush);
+                 DeleteObject (hbrush);
+            }
+            else
+	         FillWindow( GetParent(hwnd), hwnd, (HDC)wParam,
 		        classPtr->wc.hbrBackground );
 	    return 0;
 	}

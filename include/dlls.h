@@ -96,7 +96,8 @@ extern struct dll_table_entry_s WINSOCK_table[];
 extern struct dll_table_entry_s STRESS_table[];
 extern struct dll_table_entry_s SYSTEM_table[];
 extern struct dll_table_entry_s TOOLHELP_table[];
+extern struct dll_table_entry_s MOUSE_table[];
 
-#define N_BUILTINS	13
+#define N_BUILTINS	14
 
 #endif /* DLLS_H */

@@ -115,7 +115,7 @@ length	540
 109 pascal PeekMessage(ptr word word word word) PeekMessage(1 2 3 4 5)
 110 pascal PostMessage(word word word long) PostMessage(1 2 3 4)
 111 pascal SendMessage(word word word long) SendMessage(1 2 3 4)
-#112 WAITMESSAGE
+112 pascal WaitMessage() WaitMessage()
 113 pascal TranslateMessage(ptr) TranslateMessage(1)
 114 pascal DispatchMessage(ptr) DispatchMessage(1)
 #115 REPLYMESSAGE
@@ -261,13 +261,13 @@ length	540
 248 pascal GetOpenClipboardWindow() GetOpenClipboardWindow()
 249 pascal GetAsyncKeyState(word) GetAsyncKeyState(1)
 250 pascal GetMenuState(word word word) GetMenuState(1 2 3)
-#251 SENDDRIVERMESSAGE
-#252 OPENDRIVER
-#253 CLOSEDRIVER
-#254 GETDRIVERMODULEHANDLE
-#255 DEFDRIVERPROC
-#256 GETDRIVERINFO
-#257 GETNEXTDRIVER
+251 pascal SendDriverMessage(word word long long) SendDriverMessage(1 2 3 4)
+252 pascal OpenDriver(ptr ptr long) OpenDriver(1 2 3)
+253 pascal CloseDriver(word word long) CloseDriver(1 2 3)
+254 pascal GetDriverModuleHandle(word) GetDriverModuleHandle(1)
+255 pascal DefDriverProc(long word word long long) DefDriverProc(1 2 3 4 5)
+256 pascal GetDriverInfo(word ptr) GetDriverInfo(1 2)
+257 pascal GetNextDriver(word long) GetNextDriver(1 2)
 258 pascal MapWindowPoints(word word ptr word) MapWindowPoints(1 2 3 4)
 #259 BEGINDEFERWINDOWPOS
 #260 DEFERWINDOWPOS
@@ -319,7 +319,7 @@ length	540
 324 pascal FillWindow(word word word word) FillWindow(1 2 3 4)
 325 pascal PaintRect(word word word word ptr) PaintRect(1 2 3 4 5)
 #326 GETCONTROLBRUSH
-#331 ENABLEHARDWAREINPUT
+331 pascal EnableHardwareInput(word) EnableHardwareInput(1)
 332 return UserYield 0 0
 #333 ISUSERIDLE
 334 pascal GetQueueStatus(word) GetQueueStatus(1)

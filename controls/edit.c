@@ -1026,6 +1026,14 @@ void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
 	SetTextColor(hdc, oldBkgdColor);
     }
 
+    if (strlen(blanks) < (ClientWidth(wndPtr) / charWidths[32]) + 2)
+    {
+        es->hBlankLine = EDIT_HeapReAlloc(hwnd, es->hBlankLine,
+             (ClientWidth(wndPtr) / charWidths[32]) + 2);
+        blanks = EDIT_HeapAddr(hwnd, es->hBlankLine);
+        memset(blanks, ' ', (ClientWidth(wndPtr) / charWidths[32]) + 2);
+    }
+
     if (!(cp = strchr(str, VK_TAB)))
 	TextOut(hdc, col - diff, row * es->txtht, str, strlen(str));
     else

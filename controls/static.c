@@ -292,7 +292,7 @@ static LONG PaintIconfn(HWND hwnd)
     GetClientRect(hwnd, &rc);
     FillRect(hdc, &rc, GetStockObject(WHITE_BRUSH));
     textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
-    printf("SS_ICON : textPtr='%s' / left=%d top=%d right=%d bottom=%d \n", 
+    printf("SS_ICON : textPtr='%8x' / left=%d top=%d right=%d bottom=%d \n", 
     		textPtr, rc.left, rc.top, rc.right, rc.bottom);
 /*
     SetWindowPos(hwnd, (HWND)NULL, 0, 0, 32, 32,

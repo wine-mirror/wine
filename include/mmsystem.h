@@ -623,6 +623,10 @@ typedef MMCKINFO FAR  *LPMMCKINFO;
 #define MMIO_CREATERIFF         0x0020  /* mmioCreateChunk: make a LIST chunk */
 #define MMIO_CREATELIST         0x0040  /* mmioCreateChunk: make a RIFF chunk */
 
+#define SEEK_SET   0
+#define SEEK_CUR   1
+#define SEEK_END   2
+
 #define MMIOM_READ      MMIO_READ       /* read */
 #define MMIOM_WRITE    MMIO_WRITE       /* write */
 #define MMIOM_SEEK              2       /* seek to a new position in file */

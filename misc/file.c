@@ -28,6 +28,7 @@
 /* #define DEBUG_FILE /* */
 
 char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
+extern char WindowsPath[256];
 
 /***************************************************************************
  _lopen 
@@ -123,9 +124,10 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
     int 	base, flags;
     int		handle;
+	char	buf[256];
 
 #ifdef DEBUG_FILE
-    fprintf(stderr,"Openfile(%s,<struct>,%d) ",lpFileName,wStyle);
+    fprintf(stderr,"OpenFile(%s,<struct>,%04X)\n",lpFileName,wStyle);
 #endif
 
     base   = wStyle & 0xF;
@@ -150,6 +152,12 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     {
 	printf("OpenFile // OF_EXIST '%s' !\n", lpFileName);
 	handle = _lopen (lpFileName, wStyle);
+	if (handle == -1) {
+		/* Try again with WindowsPath */
+		if (FindFile(buf, sizeof(buf), lpFileName, NULL, WindowsPath) != NULL) {
+			handle = _lopen (buf, wStyle);
+			}
+		}
 	close(handle);
 	return handle;
     }
@@ -160,12 +168,21 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     }
     else 
     {
-	int  handle;
-	char *UnixFileName;
-
+	int  	handle;
+	char 	*UnixFileName;
 	if ((UnixFileName = GetUnixFileName(lpFileName)) == NULL)
 	    return HFILE_ERROR;
 	handle = open(UnixFileName, base, 0666);
+	if (handle == -1) {
+		/* Try again with WindowsPath */
+		if (FindFile(buf, sizeof(buf), lpFileName, NULL, WindowsPath) != NULL) {
+#ifdef DEBUG_FILE
+			printf("OpenFile // file '%s' found !\n", buf);
+#endif
+			UnixFileName = buf;
+			handle = open(UnixFileName, base, 0666);
+			}
+		}
 
 #ifdef DEBUG_FILE
 	fprintf(stderr, "OpenFile: returning %04.4x\n", handle);
