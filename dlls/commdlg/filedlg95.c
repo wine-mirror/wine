@@ -821,6 +821,7 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
          FILEDLG95_InitControls(hwnd);
          SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
       	 FILEDLG95_FillControls(hwnd, wParam, lParam);
+         SendCustomDlgNotificationMessage(hwnd,CDN_SELCHANGE);
          return 0;
        }
     case WM_COMMAND:
