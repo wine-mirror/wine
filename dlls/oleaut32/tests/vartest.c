@@ -19,10 +19,6 @@
  *
  * NOTES
  * - Does not test IDispatch, IUnknown, IRecordInfo, DECIMAL, CY, I8/UI8
- * - VarDateFromStr is not implemented yet.
- * - The date and floating point format may not be the exact same
- *   format has the one inwindows depending on what the Internatinal
- *   setting are in windows.
  */
 
 #include <stdarg.h>
@@ -32,6 +28,8 @@
 #include <float.h>
 #include <time.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winsock.h"
@@ -77,10 +75,22 @@ static INT (WINAPI *pSystemTimeToVariantTime)(LPSYSTEMTIME,double*);
 static INT (WINAPI *pVariantTimeToSystemTime)(double,LPSYSTEMTIME);
 static INT (WINAPI *pDosDateTimeToVariantTime)(USHORT,USHORT,double*);
 static INT (WINAPI *pVariantTimeToDosDateTime)(double,USHORT*,USHORT *);
+static HRESULT (WINAPI *pVarFormatNumber)(LPVARIANT,int,int,int,int,ULONG,BSTR*);
+static HRESULT (WINAPI *pVarFormat)(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
 
 /* Get a conversion function ptr, return if function not available */
 #define CHECKPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func); \
   if (!p##func) { trace("function " # func " not available, not testing it\n"); return; }
+
+  /* Is a given function exported from oleaut32? */
+#define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
+
+/* Have IRecordInfo data type? */
+#define HAVE_OLEAUT32_RECORD  HAVE_FUNC(SafeArraySetRecordInfo)
+/* Have CY data type? */
+#define HAVE_OLEAUT32_CY      HAVE_FUNC(VarCyAdd)
+/* Have I8/UI8 data type? */
+#define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
 
 /* When comparing floating point values we cannot expect an exact match
  * because the rounding errors depend on the exact algorithm.
@@ -106,6 +116,12 @@ static OLECHAR* AtoW( const char* p )
     buffer = malloc( len * sizeof(OLECHAR) );
     MultiByteToWideChar( CP_ACP, 0, p, -1, buffer, len );
     return buffer;
+}
+
+static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
+{
+    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
 }
 
 static const struct _vartypes {
@@ -2267,30 +2283,14 @@ static void test_variant(void)
 	for (i = 0; i < NB_OLE_STRINGS; i++)
 	{
             *pDouble=42.0;
-            rc=VarDateFromStr( pOleChar[i], lcid, 0, pDouble );
-            if (strrets_DATE[i].todo_rc) {
-                todo_wine {
-                    ok(rc == strrets_DATE[i].error,
-                       "VarDateFromStr([%d]=\"%s\") rc= %lx instead of %lx",
-                       i,_pTestStrA[i],rc,strrets_DATE[i].error);
-                }
-            } else {
-                ok(rc == strrets_DATE[i].error,
-                   "VarDateFromStr([%d]=\"%s\") rc= %lx instead of %lx",
-                   i,_pTestStrA[i],rc,strrets_DATE[i].error);
-            }
+            rc=VarDateFromStr( pOleChar[i], lcid, LOCALE_NOUSEROVERRIDE, pDouble );
+            ok(i == 94 /* FIXME: Bug in native */ || rc == strrets_DATE[i].error,
+               "VarDateFromStr([%d]=\"%s\") rc= %lx instead of %lx",
+               i,_pTestStrA[i],rc,strrets_DATE[i].error);
             if (rc == 0 && strrets_DATE[i].error == 0) {
-	            if (strrets_DATE[i].todo_rc || strrets_DATE[i].todo_val) {
-		            todo_wine {
-                        ok(EQ_DOUBLE(*pDouble,strrets_DATE[i].retval),
-                           "VarDateFromStr([%d]=\"%s\") got %.15f instead of %.15f",
-                           i,_pTestStrA[i],*pDouble,strrets_DATE[i].retval);
-                    }
-	            } else {
-                    ok(EQ_DOUBLE(*pDouble,strrets_DATE[i].retval),
-                       "VarDateFromStr([%d]=\"%s\") got %.15f instead of %.15f",
-                       i,_pTestStrA[i],*pDouble,strrets_DATE[i].retval);
-                }
+               ok(EQ_DOUBLE(*pDouble,strrets_DATE[i].retval),
+                  "VarDateFromStr([%d]=\"%s\") got %.15f instead of %.15f",
+                  i,_pTestStrA[i],*pDouble,strrets_DATE[i].retval);
             }
 	}
 	/* bool from ...
@@ -2534,53 +2534,39 @@ static void test_variant(void)
 	ok(S_OK == VarBstrFromBool( 0xFF, lcid, 0, &bstr ), XOK);
 	ok(!strcmp(WtoA(bstr),"\"True\""),"should be 'True'");
 
-	ok(S_OK == VarBstrFromDate( 0.0, lcid, 0, &bstr ), XOK);
-	todo_wine {
-	    ok(!strcmp(WtoA(bstr),"\"12:00:00 AM\""),
-               "should be '12:00:00 AM', but is %s\n",WtoA(bstr));
-	}
+	ok(S_OK == VarBstrFromDate( 0.0, lcid, LOCALE_NOUSEROVERRIDE, &bstr ), XOK);
+	ok(!strcmp(WtoA(bstr),"\"12:00:00 AM\""),
+       "should be '12:00:00 AM', but is %s\n",WtoA(bstr));
 
-	ok(S_OK == VarBstrFromDate( 3.34, lcid, 0, &bstr ), XOK);
-	todo_wine {
-	    ok(strcmp(WtoA(bstr),"\"1/2/1900 8:09:36 AM\"")==0 ||
-           strcmp(WtoA(bstr),"\"1/2/00 8:09:36 AM\"")==0 /* Win95 */,
-               "should be '1/2/1900 8:09:36 AM', but is %s\n",WtoA(bstr));
-	}
+	ok(S_OK == VarBstrFromDate( 3.34, lcid, LOCALE_NOUSEROVERRIDE, &bstr ), XOK);
+	ok(strcmp(WtoA(bstr),"\"1/2/1900 8:09:36 AM\"")==0 ||
+       strcmp(WtoA(bstr),"\"1/2/00 8:09:36 AM\"")==0 /* Win95 */,
+       "should be '1/2/1900 8:09:36 AM', but is %s\n",WtoA(bstr));
 
-	ok(S_OK == VarBstrFromDate( 3339.34, lcid, 0, &bstr ), XOK);
-	todo_wine {
-	    ok(strcmp(WtoA(bstr),"\"2/20/1909 8:09:36 AM\"")==0 ||
-           strcmp(WtoA(bstr),"\"2/20/09 8:09:36 AM\"")==0 /* Win95 */,
-               "should be '2/20/1909 8:09:36 AM', but is %s\n",WtoA(bstr));
-	}
+	ok(S_OK == VarBstrFromDate( 3339.34, lcid, LOCALE_NOUSEROVERRIDE, &bstr ), XOK);
+	ok(strcmp(WtoA(bstr),"\"2/20/1909 8:09:36 AM\"")==0 ||
+       strcmp(WtoA(bstr),"\"2/20/09 8:09:36 AM\"")==0 /* Win95 */,
+       "should be '2/20/1909 8:09:36 AM', but is %s\n",WtoA(bstr));
 
-	ok(S_OK == VarBstrFromDate( 365.00, lcid, 0, &bstr ), XOK);
-	todo_wine {
-	    ok(strcmp(WtoA(bstr),"\"12/30/1900\"")==0 ||
-           strcmp(WtoA(bstr),"\"12/30/00\"")==0 /* Win95 */,
-               "should be '12/30/1900', but is %s\n",WtoA(bstr));
-	}
+	ok(S_OK == VarBstrFromDate( 365.00, lcid, LOCALE_NOUSEROVERRIDE, &bstr ), XOK);
+	ok(strcmp(WtoA(bstr),"\"12/30/1900\"")==0 ||
+       strcmp(WtoA(bstr),"\"12/30/00\"")==0 /* Win95 */,
+       "should be '12/30/1900', but is %s\n",WtoA(bstr));
 
-	ok(S_OK == VarBstrFromDate( 365.25, lcid, 0, &bstr ), XOK);
-	todo_wine {
-	    ok(strcmp(WtoA(bstr),"\"12/30/1900 6:00:00 AM\"")==0 ||
-           strcmp(WtoA(bstr),"\"12/30/00 6:00:00 AM\"")==0 /* Win95 */,
-               "should be '12/30/1900 6:00:00 AM', but is %s\n",WtoA(bstr));
-	}
+	ok(S_OK == VarBstrFromDate( 365.25, lcid, LOCALE_NOUSEROVERRIDE, &bstr ), XOK);
+	ok(strcmp(WtoA(bstr),"\"12/30/1900 6:00:00 AM\"")==0 ||
+       strcmp(WtoA(bstr),"\"12/30/00 6:00:00 AM\"")==0 /* Win95 */,
+       "should be '12/30/1900 6:00:00 AM', but is %s\n",WtoA(bstr));
 
-	ok(S_OK == VarBstrFromDate( 1461.0, lcid, 0, &bstr ), XOK);
-	todo_wine {
-	    ok(strcmp(WtoA(bstr),"\"12/31/1903\"")==0 ||
-           strcmp(WtoA(bstr),"\"12/31/03\"")==0 /* Win95 */,
-               "should be '12/31/1903', but is %s\n",WtoA(bstr));
-	}
+	ok(S_OK == VarBstrFromDate( 1461.0, lcid, LOCALE_NOUSEROVERRIDE, &bstr ), XOK);
+	ok(strcmp(WtoA(bstr),"\"12/31/1903\"")==0 ||
+       strcmp(WtoA(bstr),"\"12/31/03\"")==0 /* Win95 */,
+       "should be '12/31/1903', but is %s\n",WtoA(bstr));
 
-	ok(S_OK == VarBstrFromDate( 1461.5, lcid, 0, &bstr ), XOK);
-	todo_wine {
-	    ok(strcmp(WtoA(bstr),"\"12/31/1903 12:00:00 PM\"")==0 ||
-           strcmp(WtoA(bstr),"\"12/31/03 12:00:00 PM\"")==0 /* Win95 */,
-               "should be '12/31/1903 12:00:00 PM', but is %s\n",WtoA(bstr));
-	}
+	ok(S_OK == VarBstrFromDate( 1461.5, lcid, LOCALE_NOUSEROVERRIDE, &bstr ), XOK);
+	ok(strcmp(WtoA(bstr),"\"12/31/1903 12:00:00 PM\"")==0 ||
+       strcmp(WtoA(bstr),"\"12/31/03 12:00:00 PM\"")==0 /* Win95 */,
+       "should be '12/31/1903 12:00:00 PM', but is %s\n",WtoA(bstr));
 
 	/* Test variant API...
 	 */
@@ -2649,12 +2635,10 @@ static void test_variant(void)
 
 	V_VT(&va) = VT_DATE;
 	V_UNION(&va,date) = 34465.332431;
-	ok(S_OK == VariantChangeTypeEx(&vb, &va, lcid, 0, VT_BSTR ), XOK);
-	todo_wine {
-	    ok(strcmp(WtoA(V_BSTR(&vb)),"\"5/11/1994 7:58:42 AM\"")==0 ||
-           strcmp(WtoA(V_BSTR(&vb)),"\"5/11/94 7:58:42 AM\"")==0 /* Win95 */,
-           "should be 5/11/94 7:58:42 AM got %s",WtoA(V_BSTR(&vb)));
-	}
+	ok(S_OK == VariantChangeTypeEx(&vb, &va, lcid, VARIANT_NOUSEROVERRIDE, VT_BSTR ), XOK);
+	ok(strcmp(WtoA(V_BSTR(&vb)),"\"5/11/1994 7:58:42 AM\"")==0 ||
+       strcmp(WtoA(V_BSTR(&vb)),"\"5/11/94 7:58:42 AM\"")==0 /* Win95 */,
+       "should be 5/11/94 7:58:42 AM got %s",WtoA(V_BSTR(&vb)));
 
 	bstr = pOleChar[4];
 	V_VT(&va) = VT_BSTR;
@@ -2699,17 +2683,9 @@ static void test_variant(void)
 		    d = 4.123;
 		    V_UNION(&va,pdblVal) = &d;
 		    rc = VariantCopyInd( &vb, &va );
-            if (vartypes[i].todoind2) {
-                todo_wine {
-		            ok(vartypes[i].vcind2 == rc,
-                               "%d: vt %d, return value %lx, expected was %lx",
-                               i,vartypes[i].ind,rc,vartypes[i].vcind2);
-                }
-            } else {
 		        ok(vartypes[i].vcind2 == rc,
                            "%d: vt %d, return value %lx, expected was %lx",
                            i,vartypes[i].ind,rc,vartypes[i].vcind2);
-            }
 		    V_VT(&va) = VT_R8;
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
@@ -2788,6 +2764,26 @@ static const VARTYPE ExtraFlags[16] =
   VT_BYREF|VT_RESERVED,
 };
 
+/* Determine if a vt is valid for VariantClear() */
+static int IsValidVariantClearVT(VARTYPE vt, VARTYPE extraFlags)
+{
+  int ret = 0;
+
+  /* Only the following flags/types are valid */
+  if ((vt <= VT_LPWSTR || vt == VT_RECORD || vt == VT_CLSID) &&
+      vt != (VARTYPE)15 &&
+      (vt < (VARTYPE)24 || vt > (VARTYPE)31) &&
+      (!(extraFlags & (VT_BYREF|VT_ARRAY)) || vt > VT_NULL) &&
+      (extraFlags == 0 || extraFlags == VT_BYREF || extraFlags == VT_ARRAY ||
+       extraFlags == (VT_ARRAY|VT_BYREF)))
+    ret = 1; /* ok */
+
+  if ((vt == VT_RECORD && !HAVE_OLEAUT32_RECORD) ||
+      ((vt == VT_I8 || vt == VT_UI8) && !HAVE_OLEAUT32_I8))
+    ret = 0; /* Old versions of oleaut32 */
+  return ret;
+}
+
 static void test_VariantClear(void)
 {
   HRESULT hres;
@@ -2823,13 +2819,7 @@ static void test_VariantClear(void)
 
       hres = VariantClear(&v);
 
-      /* Only the following flags/types are valid */
-      if ((vt <= VT_LPWSTR || vt == VT_RECORD || vt == VT_CLSID) &&
-          vt != (VARTYPE)15 &&
-          (vt < (VARTYPE)24 || vt > (VARTYPE)31) &&
-          (!(ExtraFlags[i] & (VT_BYREF|VT_ARRAY)) || vt > VT_NULL) &&
-          (ExtraFlags[i] == 0 || ExtraFlags[i] == VT_BYREF || ExtraFlags[i] == VT_ARRAY ||
-           ExtraFlags[i] == (VT_ARRAY|VT_BYREF)))
+      if (IsValidVariantClearVT(vt, ExtraFlags[i]))
         hExpected = S_OK;
 
       ok(hres == hExpected, "VariantClear: expected 0x%lX, got 0x%lX for vt %d | 0x%X\n",
@@ -2838,11 +2828,307 @@ static void test_VariantClear(void)
   }
 }
 
+static void test_VariantCopy(void)
+{
+  VARIANTARG vSrc, vDst;
+  VARTYPE vt;
+  size_t i;
+  HRESULT hres, hExpected;
+
+  /* Establish that the failure/other cases are dealt with. Individual tests
+   * for each type should verify that data is copied correctly, references
+   * are updated, etc.
+   */
+
+  /* vSrc == vDst */
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+  {
+    for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+    {
+      memset(&vSrc, 0, sizeof(vSrc));
+      V_VT(&vSrc) = vt | ExtraFlags[i];
+
+      hExpected = DISP_E_BADVARTYPE;
+      /* src is allowed to be a VT_CLSID */
+      if (vt != VT_CLSID && IsValidVariantClearVT(vt, ExtraFlags[i]))
+        hExpected = S_OK;
+
+      hres = VariantCopy(&vSrc, &vSrc);
+
+      ok(hres == hExpected,
+         "Copy(src==dst): expected 0x%lX, got 0x%lX for src==dest vt %d|0x%X\n",
+         hExpected, hres, vt, ExtraFlags[i]);
+    }
+  }
+
+  /* Test that if VariantClear() fails on dest, the function fails. This also
+   * shows that dest is in fact cleared and not just overwritten
+   */
+  memset(&vSrc, 0, sizeof(vSrc));
+  V_VT(&vSrc) = VT_UI1;
+
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+  {
+    for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+    {
+      hExpected = DISP_E_BADVARTYPE;
+
+      memset(&vDst, 0, sizeof(vDst));
+      V_VT(&vDst) = vt | ExtraFlags[i];
+
+      if (IsValidVariantClearVT(vt, ExtraFlags[i]))
+        hExpected = S_OK;
+
+      hres = VariantCopy(&vDst, &vSrc);
+
+      ok(hres == hExpected,
+         "Copy(bad dst): expected 0x%lX, got 0x%lX for dest vt %d|0x%X\n",
+         hExpected, hres, vt, ExtraFlags[i]);
+      if (hres == S_OK)
+        ok(V_VT(&vDst) == VT_UI1,
+           "Copy(bad dst): expected vt = VT_UI1, got %d\n", V_VT(&vDst));
+    }
+  }
+
+  /* Test that VariantClear() checks vSrc for validity before copying */
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+  {
+    for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+    {
+      hExpected = DISP_E_BADVARTYPE;
+
+      memset(&vDst, 0, sizeof(vDst));
+      V_VT(&vDst) = VT_EMPTY;
+
+      memset(&vSrc, 0, sizeof(vSrc));
+      V_VT(&vSrc) = vt | ExtraFlags[i];
+
+      /* src is allowed to be a VT_CLSID */
+      if (vt != VT_CLSID && IsValidVariantClearVT(vt, ExtraFlags[i]))
+        hExpected = S_OK;
+
+      hres = VariantCopy(&vDst, &vSrc);
+
+      ok(hres == hExpected,
+         "Copy(bad src): expected 0x%lX, got 0x%lX for src vt %d|0x%X\n",
+         hExpected, hres, vt, ExtraFlags[i]);
+      if (hres == S_OK)
+        ok(V_VT(&vDst) == (vt|ExtraFlags[i]),
+           "Copy(bad src): expected vt = %d, got %d\n",
+           vt | ExtraFlags[i], V_VT(&vDst));
+    }
+  }
+}
+
+/* Determine if a vt is valid for VariantCopyInd() */
+static int IsValidVariantCopyIndVT(VARTYPE vt, VARTYPE extraFlags)
+{
+  int ret = 0;
+
+  if ((extraFlags & VT_ARRAY) ||
+     (vt > VT_NULL && vt != (VARTYPE)15 && vt < VT_VOID &&
+     !(extraFlags & (VT_VECTOR|VT_RESERVED))))
+  {
+    ret = 1; /* ok */
+  }
+  return ret;
+}
+
+static void test_VariantCopyInd(void)
+{
+  VARIANTARG vSrc, vDst, vRef, vRef2;
+  VARTYPE vt;
+  size_t i;
+  BYTE buffer[64];
+  HRESULT hres, hExpected;
+
+  memset(buffer, 0, sizeof(buffer));
+
+  /* vSrc == vDst */
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+  {
+    if (ExtraFlags[i] & VT_ARRAY)
+      continue; /* Native crashes on NULL safearray */
+
+    for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+    {
+      memset(&vSrc, 0, sizeof(vSrc));
+      V_VT(&vSrc) = vt | ExtraFlags[i];
+
+      hExpected = DISP_E_BADVARTYPE;
+      if (!(ExtraFlags[i] & VT_BYREF))
+      {
+        /* if src is not by-reference, acts as VariantCopy() */
+        if (vt != VT_CLSID && IsValidVariantClearVT(vt, ExtraFlags[i]))
+          hExpected = S_OK;
+      }
+      else
+      {
+        if (vt == VT_SAFEARRAY || vt == VT_BSTR || vt == VT_UNKNOWN ||
+            vt == VT_DISPATCH || vt == VT_RECORD)
+          continue; /* Need valid ptrs for deep copies */
+
+        V_BYREF(&vSrc) = &buffer;
+        hExpected = E_INVALIDARG;
+
+        if ((vt == VT_I8 || vt == VT_UI8) &&
+            ExtraFlags[i] == VT_BYREF)
+        {
+          if (HAVE_OLEAUT32_I8)
+            hExpected = S_OK; /* Only valid if I8 is a known type */
+        }
+        else if (IsValidVariantCopyIndVT(vt, ExtraFlags[i]))
+          hExpected = S_OK;
+      }
+
+      hres = VariantCopyInd(&vSrc, &vSrc);
+
+      ok(hres == hExpected,
+         "CopyInd(src==dst): expected 0x%lX, got 0x%lX for src==dst vt %d|0x%X\n",
+         hExpected, hres, vt, ExtraFlags[i]);
+    }
+  }
+
+  /* Bad dest */
+  memset(&vSrc, 0, sizeof(vSrc));
+  V_VT(&vSrc) = VT_UI1|VT_BYREF;
+  V_BYREF(&vSrc) = &buffer;
+
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+  {
+    for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+    {
+      memset(&vDst, 0, sizeof(vDst));
+      V_VT(&vDst) = vt | ExtraFlags[i];
+
+      hExpected = DISP_E_BADVARTYPE;
+
+      if (IsValidVariantClearVT(vt, ExtraFlags[i]))
+        hExpected = S_OK;
+
+      hres = VariantCopyInd(&vDst, &vSrc);
+
+      ok(hres == hExpected,
+         "CopyInd(bad dst): expected 0x%lX, got 0x%lX for dst vt %d|0x%X\n",
+         hExpected, hres, vt, ExtraFlags[i]);
+      if (hres == S_OK)
+        ok(V_VT(&vDst) == VT_UI1,
+           "CopyInd(bad dst): expected vt = VT_UI1, got %d\n", V_VT(&vDst));
+    }
+  }
+
+  /* bad src */
+  for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+  {
+    if (ExtraFlags[i] & VT_ARRAY)
+      continue; /* Native crashes on NULL safearray */
+
+    for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+    {
+      memset(&vDst, 0, sizeof(vDst));
+      V_VT(&vDst) = VT_EMPTY;
+
+      memset(&vSrc, 0, sizeof(vSrc));
+      V_VT(&vSrc) = vt | ExtraFlags[i];
+
+      hExpected = DISP_E_BADVARTYPE;
+      if (!(ExtraFlags[i] & VT_BYREF))
+      {
+        /* if src is not by-reference, acts as VariantCopy() */
+        if (vt != VT_CLSID && IsValidVariantClearVT(vt, ExtraFlags[i]))
+          hExpected = S_OK;
+      }
+      else
+      {
+        if (vt == VT_SAFEARRAY || vt == VT_BSTR || vt == VT_UNKNOWN ||
+            vt == VT_DISPATCH || vt == VT_RECORD)
+          continue; /* Need valid ptrs for deep copies, see vartype.c */
+
+        V_BYREF(&vSrc) = &buffer;
+
+        hExpected = E_INVALIDARG;
+
+        if ((vt == VT_I8 || vt == VT_UI8) &&
+            ExtraFlags[i] == VT_BYREF)
+        {
+          if (HAVE_OLEAUT32_I8)
+            hExpected = S_OK; /* Only valid if I8 is a known type */
+        }
+        else if (IsValidVariantCopyIndVT(vt, ExtraFlags[i]))
+          hExpected = S_OK;
+      }
+
+      hres = VariantCopyInd(&vDst, &vSrc);
+
+      ok(hres == hExpected,
+         "CopyInd(bad src): expected 0x%lX, got 0x%lX for src vt %d|0x%X\n",
+         hExpected, hres, vt, ExtraFlags[i]);
+      if (hres == S_OK)
+      {
+        if (vt == VT_VARIANT && ExtraFlags[i] == VT_BYREF)
+        {
+          /* Type of vDst should be the type of the referenced variant.
+           * Since we set the buffer to all zeros, its type should be
+           * VT_EMPTY.
+           */
+          ok(V_VT(&vDst) == VT_EMPTY,
+             "CopyInd(bad src): expected dst vt = VT_EMPTY, got %d|0x%X\n",
+             V_VT(&vDst) & VT_TYPEMASK, V_VT(&vDst) & ~VT_TYPEMASK);
+        }
+        else
+        {
+          ok(V_VT(&vDst) == (vt|(ExtraFlags[i] & ~VT_BYREF)),
+             "CopyInd(bad src): expected dst vt = %d|0x%X, got %d|0x%X\n",
+             vt, ExtraFlags[i] & ~VT_BYREF,
+             V_VT(&vDst) & VT_TYPEMASK, V_VT(&vDst) & ~VT_TYPEMASK);
+        }
+      }
+    }
+  }
+
+  /* By-reference variants are dereferenced */
+  V_VT(&vRef) = VT_UI1;
+  V_UI1(&vRef) = 0x77;
+  V_VT(&vSrc) = VT_VARIANT|VT_BYREF;
+  V_VARIANTREF(&vSrc) = &vRef;
+  VariantInit(&vDst);
+
+  hres = VariantCopyInd(&vDst, &vSrc);
+  ok(V_VT(&vDst) == VT_UI1 && V_UI1(&vDst) == 0x77,
+     "CopyInd(deref): expected dst vt = VT_UI1, val 0x77, got %d|0x%X, 0x%2X\n",
+      V_VT(&vDst) & VT_TYPEMASK, V_VT(&vDst) & ~VT_TYPEMASK, V_UI1(&vDst));
+
+  /* By-reference variant to a by-reference type succeeds */
+  V_VT(&vRef) = VT_UI1|VT_BYREF;
+  V_UI1REF(&vRef) = buffer; buffer[0] = 0x88;
+  V_VT(&vSrc) = VT_VARIANT|VT_BYREF;
+  V_VARIANTREF(&vSrc) = &vRef;
+  VariantInit(&vDst);
+
+  hres = VariantCopyInd(&vDst, &vSrc);
+  ok(V_VT(&vDst) == VT_UI1 && V_UI1(&vDst) == 0x88,
+     "CopyInd(deref): expected dst vt = VT_UI1, val 0x77, got %d|0x%X, 0x%2X\n",
+      V_VT(&vDst) & VT_TYPEMASK, V_VT(&vDst) & ~VT_TYPEMASK, V_UI1(&vDst));
+
+  /* But a by-reference variant to a by-reference variant fails */
+  V_VT(&vRef2) = VT_UI1;
+  V_UI1(&vRef2) = 0x77;
+  V_VT(&vRef) = VT_VARIANT|VT_BYREF;
+  V_VARIANTREF(&vRef) = &vRef2;
+  V_VT(&vSrc) = VT_VARIANT|VT_BYREF;
+  V_VARIANTREF(&vSrc) = &vRef;
+  VariantInit(&vDst);
+
+  hres = VariantCopyInd(&vDst, &vSrc);
+  ok(hres == E_INVALIDARG,
+     "CopyInd(ref->ref): expected E_INVALIDARG, got 0x%08lx\n", hres);
+}
+
 /* Macros for converting and testing the result of VarParseNumFromStr */
 #define FAILDIG 255
 #define CONVERTN(str,dig,flags) MultiByteToWideChar(CP_ACP,0,str,-1,buff,sizeof(buff)); \
   memset(rgb, FAILDIG, sizeof(rgb)); memset(&np,-1,sizeof(np)); np.cDig = dig; np.dwInFlags = flags; \
-  hres = VarParseNumFromStr(buff,lcid,0,&np,rgb)
+  hres = VarParseNumFromStr(buff,lcid,LOCALE_NOUSEROVERRIDE,&np,rgb)
 #define CONVERT(str,flags) CONVERTN(str,sizeof(rgb),flags)
 #define EXPECT(a,b,c,d,e,f) ok(hres == (HRESULT)S_OK, "Call failed, hres = %08lx\n", hres); \
   if (hres == (HRESULT)S_OK) { \
@@ -3518,6 +3804,450 @@ static void test_VariantTimeToDosDateTime(void)
   DT2DOS(29221.95833333333,1,1,1,1980,23,0,0); /* 1/1/1980 11:00:00 PM */
 }
 
+#define FMT_NUMBER(vt,val) \
+  VariantInit(&v); V_VT(&v) = vt; val(&v) = 1; \
+  hres = pVarFormatNumber(&v,2,0,0,0,0,&str); \
+  ok(hres == S_OK, "VarFormatNumber (vt %d): returned %8lx\n", vt, hres); \
+  if (hres == S_OK) \
+    ok(str && strcmpW(str,szResult1) == 0, \
+       "VarFormatNumber (vt %d): string different\n", vt)
+
+static void test_VarFormatNumber(void)
+{
+  static WCHAR szSrc1[] = { '1','\0' };
+  static WCHAR szResult1[] = { '1','.','0','0','\0' };
+  static WCHAR szSrc2[] = { '-','1','\0' };
+  static WCHAR szResult2[] = { '(','1','.','0','0',')','\0' };
+  char buff[8];
+  HRESULT hres;
+  VARIANT v;
+  BSTR str = NULL;
+
+  CHECKPTR(VarFormatNumber);
+
+  GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
+  if (buff[0] != '.' || buff[1])
+  {
+    trace("Skipping VarFormatNumber tests as decimal seperator is '%s'\n", buff);
+    return;
+  }
+
+  FMT_NUMBER(VT_I1, V_I1);
+  FMT_NUMBER(VT_UI1, V_UI1);
+  FMT_NUMBER(VT_I2, V_I2);
+  FMT_NUMBER(VT_UI2, V_UI2);
+  FMT_NUMBER(VT_I4, V_I4);
+  FMT_NUMBER(VT_UI4, V_UI4);
+  todo_wine {
+  FMT_NUMBER(VT_I8, V_I8);
+  FMT_NUMBER(VT_UI8, V_UI8);
+  }
+  FMT_NUMBER(VT_R4, V_R4);
+  FMT_NUMBER(VT_R8, V_R8);
+  FMT_NUMBER(VT_BOOL, V_BOOL);
+
+  V_VT(&v) = VT_BSTR;
+  V_BSTR(&v) = SysAllocString(szSrc1);
+
+  hres = pVarFormatNumber(&v,2,0,0,0,0,&str);
+  ok(hres == S_OK, "VarFormatNumber (bstr): returned %8lx\n", hres);
+  if (hres == S_OK)
+    ok(str && strcmpW(str, szResult1) == 0, "VarFormatNumber (bstr): string different\n");
+  SysFreeString(V_BSTR(&v));
+  SysFreeString(str);
+
+  V_BSTR(&v) = SysAllocString(szSrc2);
+  hres = pVarFormatNumber(&v,2,0,-1,0,0,&str);
+  ok(hres == S_OK, "VarFormatNumber (bstr): returned %8lx\n", hres);
+  if (hres == S_OK)
+    ok(str && strcmpW(str, szResult2) == 0, "VarFormatNumber (-bstr): string different\n");
+  SysFreeString(V_BSTR(&v));
+  SysFreeString(str);
+}
+
+#define SIGNED_VTBITS (VTBIT_I1|VTBIT_I2|VTBIT_I4|VTBIT_I8|VTBIT_R4|VTBIT_R8)
+
+#define VARFMT(vt,v,val,fmt,ret,str) do { \
+  if (out) SysFreeString(out); out = NULL; \
+  V_VT(&in) = (vt); v(&in) = val; \
+  if (fmt) MultiByteToWideChar(CP_ACP, 0, fmt, -1, buffW, sizeof(buffW)/sizeof(WCHAR)); \
+  hres = pVarFormat(&in,fmt ? buffW : NULL,fd,fw,flags,&out); \
+  if (SUCCEEDED(hres)) WideCharToMultiByte(CP_ACP, 0, out, -1, buff, sizeof(buff),0,0); \
+  else buff[0] = '\0'; \
+  ok(hres == ret && (FAILED(ret) || !strcmp(buff, str)), \
+     "VT %d|0x%04x Format %s: expected 0x%08lx, '%s', got 0x%08lx, '%s'\n", \
+     (vt)&VT_TYPEMASK,(vt)&~VT_TYPEMASK,fmt?fmt:"<null>",ret,str,hres,buff); \
+  } while(0)
+
+typedef struct tagFMTRES
+{
+  LPCSTR fmt;
+  LPCSTR one_res;
+  LPCSTR zero_res;
+} FMTRES;
+
+static const FMTRES VarFormat_results[] =
+{
+  { NULL, "1", "0" },
+  { "", "1", "0" },
+  { "General Number", "1", "0" },
+  { "Percent", "100.00%", "0.00%" },
+  { "Standard", "1.00", "0.00" },
+  { "Scientific","1.00E+00", "0.00E+00" },
+  { "True/False", "True", "False" },
+/*  { "On/Off", "On", "Off" },
+  { "Yes/No", "Yes", "No")}, */
+  { "#", "1", "" },
+  { "##", "1", "" },
+  { "#.#", "1.", "." },
+  { "0", "1", "0" },
+  { "00", "01", "00" },
+  { "0.0", "1.0", "0.0" },
+  { "00\\c\\o\\p\\y", "01copy","00copy" },
+  { "\"pos\";\"neg\"", "pos", "pos" },
+  { "\"pos\";\"neg\";\"zero\"","pos", "zero" }
+};
+
+typedef struct tagFMTDATERES
+{
+  DATE   val;
+  LPCSTR fmt;
+  LPCSTR res;
+} FMTDATERES;
+
+static const FMTDATERES VarFormat_date_results[] =
+{
+  { 0.0, "w", "7" },
+  { 0.0, "w", "6" },
+  { 0.0, "w", "5" },
+  { 0.0, "w", "4" },
+  { 0.0, "w", "3" },
+  { 0.0, "w", "2" },
+  { 0.0, "w", "1" }, /* First 7 entries must remain in this order! */
+  { 2.525, "am/pm", "pm" },
+  { 2.525, "AM/PM", "PM" },
+  { 2.525, "A/P", "P" },
+  { 2.525, "a/p", "p" },
+  { 2.525, "q", "1" },
+  { 2.525, "d", "1" },
+  { 2.525, "dd", "01" },
+  { 2.525, "ddd", "Mon" },
+  { 2.525, "dddd", "Monday" },
+  { 2.525, "mmm", "Jan" },
+  { 2.525, "mmmm", "January" },
+  { 2.525, "y", "1" },
+  { 2.525, "yy", "00" },
+  { 2.525, "yyy", "001" },
+  { 2.525, "yyyy", "1900" },
+  { 2.525, "dd mm yyyy hh:mm:ss", "01 01 1900 12:36:00" },
+  { 2.525, "dd mm yyyy mm", "01 01 1900 01" },
+  { 2.525, "dd mm yyyy :mm", "01 01 1900 :01" },
+  { 2.525, "dd mm yyyy hh:mm", "01 01 1900 12:36" },
+  { 2.525, "mm mm", "01 01" },
+  { 2.525, "mm :mm:ss", "01 :01:00" },
+  { 2.525, "mm :ss:mm", "01 :00:01" },
+  { 2.525, "hh:mm :ss:mm", "12:36 :00:01" },
+  { 2.525, "hh:dd :mm:mm", "12:01 :01:01" },
+  { 2.525, "dd:hh :mm:mm", "01:12 :36:01" },
+  { 2.525, "hh :mm:mm", "12 :36:01" },
+  { 2.525, "dd :mm:mm", "01 :01:01" },
+  { 2.525, "dd :mm:nn", "01 :01:36" },
+  { 2.725, "hh:nn:ss A/P", "05:24:00 P" }
+};
+
+#define VNUMFMT(vt,v) \
+  for (i = 0; i < sizeof(VarFormat_results)/sizeof(FMTRES); i++) \
+  { \
+    VARFMT(vt,v,1,VarFormat_results[i].fmt,S_OK,VarFormat_results[i].one_res); \
+    VARFMT(vt,v,0,VarFormat_results[i].fmt,S_OK,VarFormat_results[i].zero_res); \
+  } \
+  if ((1 << vt) & SIGNED_VTBITS) \
+  { \
+    VARFMT(vt,v,-1,"\"pos\";\"neg\"",S_OK,"neg"); \
+    VARFMT(vt,v,-1,"\"pos\";\"neg\";\"zero\"",S_OK,"neg"); \
+  }
+
+static void test_VarFormat(void)
+{
+  static const WCHAR szTesting[] = { 't','e','s','t','i','n','g','\0' };
+  size_t i;
+  WCHAR buffW[256];
+  char buff[256];
+  VARIANT in;
+  VARIANT_BOOL bTrue = VARIANT_TRUE, bFalse = VARIANT_FALSE;
+  int fd = 0, fw = 0;
+  ULONG flags = 0;
+  BSTR bstrin, out = NULL;
+  HRESULT hres;
+
+  CHECKPTR(VarFormat);
+
+  if (PRIMARYLANGID(LANGIDFROMLCID(GetUserDefaultLCID())) != LANG_ENGLISH)
+  {
+    trace("Skipping VarFormat tests for non english language\n");
+    return;
+  }
+  GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
+  if (buff[0] != '.' || buff[1])
+  {
+    trace("Skipping VarFormat tests as decimal seperator is '%s'\n", buff);
+    return;
+  }
+  GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_IDIGITS, buff, sizeof(buff)/sizeof(char));
+  if (buff[0] != '2' || buff[1])
+  {
+    trace("Skipping VarFormat tests as decimal places is '%s'\n", buff);
+    return;
+  }
+
+  VARFMT(VT_BOOL,V_BOOL,VARIANT_TRUE,"True/False",S_OK,"True");
+  VARFMT(VT_BOOL,V_BOOL,VARIANT_FALSE,"True/False",S_OK,"False");
+
+  VNUMFMT(VT_I1,V_I1);
+  VNUMFMT(VT_I2,V_I2);
+  VNUMFMT(VT_I4,V_I4);
+  todo_wine {
+  VNUMFMT(VT_I8,V_I8);
+  }
+  VNUMFMT(VT_INT,V_INT);
+  VNUMFMT(VT_UI1,V_UI1);
+  VNUMFMT(VT_UI2,V_UI2);
+  VNUMFMT(VT_UI4,V_UI4);
+  todo_wine {
+  VNUMFMT(VT_UI8,V_UI8);
+  }
+  VNUMFMT(VT_UINT,V_UINT);
+  VNUMFMT(VT_R4,V_R4);
+  VNUMFMT(VT_R8,V_R8);
+
+  /* Reference types are dereferenced */
+  VARFMT(VT_BOOL|VT_BYREF,V_BOOLREF,&bTrue,"True/False",S_OK,"True");
+  VARFMT(VT_BOOL|VT_BYREF,V_BOOLREF,&bFalse,"True/False",S_OK,"False");
+
+  /* Dates */
+  for (i = 0; i < sizeof(VarFormat_date_results)/sizeof(FMTDATERES); i++)
+  {
+    if (i < 7)
+      fd = i + 1; /* Test first day */
+    else
+      fd = 0;
+    VARFMT(VT_DATE,V_DATE,VarFormat_date_results[i].val,
+           VarFormat_date_results[i].fmt,S_OK,
+           VarFormat_date_results[i].res);
+  }
+
+  /* Strings */
+  bstrin = SysAllocString(szTesting);
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"",S_OK,"testing");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"@",S_OK,"testing");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"&",S_OK,"testing");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"\\x@\\x@",S_OK,"xtxesting");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"\\x&\\x&",S_OK,"xtxesting");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"@\\x",S_OK,"txesting");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"@@@@@@@@",S_OK," testing");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"@\\x@@@@@@@",S_OK," xtesting");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"&&&&&&&&",S_OK,"testing");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"!&&&&&&&",S_OK,"testing");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"&&&&&&&!",S_OK,"testing");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,">&&",S_OK,"TESTING");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"<&&",S_OK,"testing");
+  VARFMT(VT_BSTR,V_BSTR,bstrin,"<&>&",S_OK,"testing");
+  SysFreeString(bstrin);
+  /* Numeric values are converted to strings then output */
+  VARFMT(VT_I1,V_I1,1,"<&>&",S_OK,"1");
+
+  /* 'out' is not cleared */
+  out = (BSTR)0x1;
+  pVarFormat(&in,NULL,fd,fw,flags,&out); /* Would crash if out is cleared */
+  out = NULL;
+
+  /* Invalid args */
+  hres = pVarFormat(&in,NULL,fd,fw,flags,NULL);
+  ok(hres == E_INVALIDARG, "Null out: expected E_INVALIDARG, got 0x%08lx\n", hres);
+  hres = pVarFormat(NULL,NULL,fd,fw,flags,&out);
+  ok(hres == E_INVALIDARG, "Null in: expected E_INVALIDARG, got 0x%08lx\n", hres);
+  fd = -1;
+  VARFMT(VT_BOOL,V_BOOL,VARIANT_TRUE,"",E_INVALIDARG,"");
+  fd = 8;
+  VARFMT(VT_BOOL,V_BOOL,VARIANT_TRUE,"",E_INVALIDARG,"");
+  fd = 0; fw = -1;
+  VARFMT(VT_BOOL,V_BOOL,VARIANT_TRUE,"",E_INVALIDARG,"");
+  fw = 4;
+  VARFMT(VT_BOOL,V_BOOL,VARIANT_TRUE,"",E_INVALIDARG,"");
+}
+
+static HRESULT (WINAPI *pVarAbs)(LPVARIANT,LPVARIANT);
+
+#define VARABS(vt,val,rvt,rval) V_VT(&v) = VT_##vt; V_##vt(&v) = val; \
+        memset(&vDst,0,sizeof(vDst)); hres = pVarAbs(&v,&vDst); \
+        ok(hres == S_OK && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
+           "VarAbs: expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##rvt, (int)(rval), \
+           hres, V_VT(&vDst), (int)V_##rvt(&vDst))
+
+static void test_VarAbs(void)
+{
+    static const WCHAR szNum[] = {'-','1','.','1','\0' };
+    HRESULT hres;
+    VARIANT v, vDst;
+    size_t i;
+
+    CHECKPTR(VarAbs);
+
+    /* Test all possible V_VT values.
+     */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE vt;
+
+        for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+        {
+            HRESULT hExpected = DISP_E_BADVARTYPE;
+
+            memset(&v, 0, sizeof(v));
+            V_VT(&v) = vt | ExtraFlags[i];
+            V_VT(&vDst) = VT_EMPTY;
+
+            hres = pVarAbs(&v,&vDst);
+            if (ExtraFlags[i] & (VT_ARRAY|VT_ARRAY) ||
+                (!ExtraFlags[i] && (vt == VT_UNKNOWN || vt == VT_BSTR ||
+                 vt == VT_DISPATCH || vt == VT_ERROR || vt == VT_RECORD)))
+            {
+                hExpected = DISP_E_TYPEMISMATCH;
+            }
+            else if (ExtraFlags[i] || vt >= VT_CLSID || vt == VT_VARIANT)
+            {
+                hExpected = DISP_E_BADVARTYPE;
+            }
+            else if (IsValidVariantClearVT(vt, ExtraFlags[i]))
+                hExpected = S_OK;
+
+            /* Native always fails on some vartypes that should be valid. don't
+             * check that Wine does the same; these are bugs in native.
+             */
+            if (vt == VT_I8 || vt == VT_UI8 || vt == VT_INT || vt == VT_UINT ||
+                vt == VT_I1 || vt == VT_UI2 || vt == VT_UI4)
+                continue;
+            ok(hres == hExpected, "VarAbs: expected 0x%lX, got 0x%lX for vt %d | 0x%X\n",
+               hExpected, hres, vt, ExtraFlags[i]);
+        }
+    }
+
+    /* BOOL->I2, BSTR->R8, all others remain the same */
+    VARABS(BOOL,VARIANT_TRUE,I2,-VARIANT_TRUE);
+    VARABS(BOOL,VARIANT_FALSE,I2,VARIANT_FALSE);
+    VARABS(I2,1,I2,1);
+    VARABS(I2,-1,I2,1);
+    VARABS(I4,1,I4,1);
+    VARABS(I4,-1,I4,1);
+    VARABS(UI1,1,UI1,1);
+    VARABS(R4,1,R4,1);
+    VARABS(R4,-1,R4,1);
+    VARABS(R8,1,R8,1);
+    VARABS(R8,-1,R8,1);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = (BSTR)szNum;
+    memset(&vDst,0,sizeof(vDst));
+    hres = pVarAbs(&v,&vDst);
+    ok(hres == S_OK && V_VT(&vDst) == VT_R8 && V_R8(&vDst) == 1.1,
+       "VarAbs: expected 0x0,%d,%g, got 0x%lX,%d,%g\n", VT_R8, 1.1, hres, V_VT(&vDst), V_R8(&vDst));
+}
+
+static HRESULT (WINAPI *pVarNot)(LPVARIANT,LPVARIANT);
+
+#define VARNOT(vt,val,rvt,rval) V_VT(&v) = VT_##vt; V_##vt(&v) = val; \
+        memset(&vDst,0,sizeof(vDst)); hres = pVarNot(&v,&vDst); \
+        ok(hres == S_OK && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
+        "VarNot: expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##rvt, (int)(rval), \
+        hres, V_VT(&vDst), (int)V_##rvt(&vDst))
+
+static void test_VarNot(void)
+{
+    static const WCHAR szNum0[] = {'0','\0' };
+    static const WCHAR szNum1[] = {'1','\0' };
+    HRESULT hres;
+    VARIANT v, vDst;
+    DECIMAL *pdec = &V_DECIMAL(&v);
+    CY *pcy = &V_CY(&v);
+    size_t i;
+
+    CHECKPTR(VarNot);
+
+    /* Test all possible V_VT values */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE vt;
+
+        for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+        {
+            HRESULT hExpected = DISP_E_BADVARTYPE;
+
+            memset(&v, 0, sizeof(v));
+            V_VT(&v) = vt | ExtraFlags[i];
+            V_VT(&vDst) = VT_EMPTY;
+
+            hres = pVarNot(&v,&vDst);
+            switch (V_VT(&v))
+            {
+            case VT_I1:  case VT_UI1: case VT_I2:  case VT_UI2:
+            case VT_INT: case VT_UINT: case VT_I4:  case VT_UI4:
+            case VT_I8:  case VT_UI8: case VT_R4:  case VT_R8:
+            case VT_DECIMAL: case VT_BOOL: case VT_NULL: case VT_EMPTY:
+            case VT_DATE: case VT_CY:
+                hExpected = S_OK;
+                break;
+            case VT_UNKNOWN: case VT_BSTR: case VT_DISPATCH: case VT_ERROR:
+            case VT_RECORD:
+                hExpected = DISP_E_TYPEMISMATCH;
+                break;
+            default:
+                if (IsValidVariantClearVT(vt, ExtraFlags[i]) && vt != VT_CLSID)
+                   hExpected = DISP_E_TYPEMISMATCH;
+                break;
+            }
+
+            hres = pVarNot(&v,&vDst);
+            if (V_VT(&v) == VT_DECIMAL)
+            {
+              todo_wine {
+              ok(hres == hExpected, "VarNot: expected 0x%lX, got 0x%lX vt %d|0x%X\n",
+                 hExpected, hres, vt, ExtraFlags[i]);
+              }
+            }
+            else
+              ok(hres == hExpected, "VarNot: expected 0x%lX, got 0x%lX vt %d|0x%X\n",
+                 hExpected, hres, vt, ExtraFlags[i]);
+        }
+    }
+    /* R4,R8,BSTR,DECIMAL,CY->I4, all others remain the same */
+    VARNOT(BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE);
+    VARNOT(BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE);
+    VARNOT(I2,-1,I2,0);
+    VARNOT(I2,0,I2,-1);
+    VARNOT(I2,1,I2,-2);
+    VARNOT(I4,1,I4,-2);
+    VARNOT(I4,0,I4,-1);
+    VARNOT(UI1,1,UI1,254);
+    VARNOT(UI1,0,UI1,255);
+    VARNOT(R4,1,I4,-2);
+    VARNOT(R4,0,I4,-1);
+    VARNOT(R8,1,I4,-2);
+    VARNOT(R8,0,I4,-1);
+    VARNOT(BSTR,(BSTR)szNum0,I4,-1);
+    VARNOT(BSTR,(BSTR)szNum1,I4,-2);
+
+    todo_wine {
+    V_VT(&v) = VT_DECIMAL;
+    pdec->u.s.sign = DECIMAL_NEG;
+    pdec->u.s.scale = 0;
+    pdec->Hi32 = 0;
+    pdec->u1.s1.Mid32 = 0;
+    pdec->u1.s1.Lo32 = 1;
+    VARNOT(DECIMAL,*pdec,I4,0);
+    pcy->int64 = 10000;
+    VARNOT(CY,*pcy,I4,-2);
+    }
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -3525,6 +4255,8 @@ START_TEST(vartest)
   test_variant();
   test_VariantInit();
   test_VariantClear();
+  test_VariantCopy();
+  test_VariantCopyInd();
   test_VarParseNumFromStr();
   test_VarNumFromParseNum();
   test_VarUdateFromDate();
@@ -3533,4 +4265,8 @@ START_TEST(vartest)
   test_VariantTimeToSystemTime();
   test_DosDateTimeToVariantTime();
   test_VariantTimeToDosDateTime();
+  test_VarFormatNumber();
+  test_VarFormat();
+  test_VarAbs();
+  test_VarNot();
 }
