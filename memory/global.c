@@ -4,6 +4,8 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#ifndef WINELIB
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,6 +13,7 @@
 
 #include "windows.h"
 #include "global.h"
+#include "heap.h"
 #include "toolhelp.h"
 #include "selectors.h"
 #include "dde_mem.h"
@@ -199,7 +202,7 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
     else 
 #endif  /* CONFIG_IPC */
     {
-	ptr = malloc( size );
+	ptr = HeapAlloc( SystemHeap, 0, size );
     }
     if (!ptr) return 0;
 
@@ -209,7 +212,7 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
 				isCode, is32Bit, isReadOnly, &shmdata);
     if (!handle)
     {
-        free( ptr );
+        HeapFree( SystemHeap, 0, ptr );
         return 0;
     }
 
@@ -306,7 +309,7 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
         if (!(pArena->flags & GA_MOVEABLE) ||
             !(pArena->flags & GA_DISCARDABLE) ||
             (pArena->lockCount > 0) || (pArena->pageLockCount > 0)) return 0;
-        free( (void *)pArena->base );
+        HeapFree( SystemHeap, 0, (void *)pArena->base );
         pArena->base = 0;
         /* Note: we rely on the fact that SELECTOR_ReallocBlock won't */
         /* change the selector if we are shrinking the block */
@@ -337,7 +340,7 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
     dprintf_global(stddeb,"oldsize %08lx\n",oldsize);
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
-    ptr = realloc( ptr, size );
+    ptr = HeapReAlloc( SystemHeap, 0, ptr, size );
     if (!ptr)
     {
         FreeSelector( sel );
@@ -350,7 +353,7 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
     sel = SELECTOR_ReallocBlock( sel, ptr, size, SEGMENT_DATA, 0, 0 );
     if (!sel)
     {
-        free( ptr );
+        HeapFree( SystemHeap, 0, ptr );
         memset( pArena, 0, sizeof(GLOBALARENA) );
         return 0;
     }
@@ -358,7 +361,7 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
 
     if (!(pNewArena = GLOBAL_GetArena( sel, selcount )))
     {
-        free( ptr );
+        HeapFree( SystemHeap, 0, ptr );
         FreeSelector( sel );
         return 0;
     }
@@ -392,7 +395,7 @@ HGLOBAL GlobalFree( HGLOBAL handle )
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_GlobalFree(handle);
 #endif  /* CONFIG_IPC */
-    if (ptr) free( ptr );
+    if (ptr) HeapFree( SystemHeap, 0, ptr );
     return 0;
 }
 
@@ -825,3 +828,13 @@ void *GlobalAlloc32(int flags,int size)
     dprintf_global(stddeb,"GlobalAlloc32(%x,%x)\n",flags,size);
     return malloc(size);
 }
+
+/***********************************************************************
+ *               GlobalLock32
+ */
+void* GlobalLock32(DWORD ptr)
+{
+	return (void*)ptr;
+}
+
+#endif  /* WINELIB */

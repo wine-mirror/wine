@@ -71,7 +71,7 @@ void DEBUG_BackTrace(void)
         DEBUG_PrintAddress( &addr, 32 );
         fprintf( stderr, "\n" );
         addr.off = EBP_reg(DEBUG_context);
-        for (;;)
+        while (addr.off)
         {
             FRAME32 *frame = (FRAME32 *)addr.off;
             if (!DBG_CHECK_READ_PTR( &addr, sizeof(FRAME32) )) return;

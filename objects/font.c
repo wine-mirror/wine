@@ -491,9 +491,12 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
       /* Unuse previous font */
 	for (i=0; i < FONTCACHE; i++) {
 		if (cacheFonts[i].id == prevHandle) {
-			cacheFonts[i].used--;
-			}
+			if(cacheFonts[i].used == 0)
+				fprintf(stderr, "Trying to decrement a use count of 0.\n");
+			else 
+				cacheFonts[i].used--;
 		}
+	}
 
       /* Store font */
     dc->w.hFont = hfont;
@@ -517,9 +520,10 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 			if ((!cacheFontsMin) || ((cacheFontsMin) && (cacheFontsMin->access > cacheFonts[i].access)))
 				cacheFontsMin=&cacheFonts[i];
 		}
-	if (!cacheFontsMin)
+	if (!cacheFontsMin) {
 		fprintf(stderr,"No unused font cache entry !!!!\n" );
-
+		return prevHandle;
+	}
 	if (cacheFontsMin->id!=0) {
 		dprintf_font(stddeb,
 			"FONT_SelectObject: Freeing %04x \n",cacheFontsMin->id );

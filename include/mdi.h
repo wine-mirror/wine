@@ -35,14 +35,14 @@ typedef struct
     HWND   flagChildMaximized;
     HWND   hwndActiveChild;
     HMENU  hWindowMenu;
-    WORD   idFirstChild;       /* order is 3.1-like up to this point */
+    WORD   idFirstChild;
     HANDLE hFrameTitle;
     WORD   sbNeedUpdate;
     WORD   sbRecalc;
     HBITMAP obmClose;
     HBITMAP obmRestore;
-    HWND   hwndHitTest;
     HWND   self;
 } MDICLIENTINFO;
 
 #endif /* MDI_H */
+

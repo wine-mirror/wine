@@ -125,6 +125,14 @@ SEGPTR WIN16_lstrcpyn( SEGPTR target, SEGPTR source, WORD n )
 /* KERNEL.90 */
 INT lstrlen(LPCSTR str)
 {
+  /* looks weird, but win3.1 KERNEL got a GeneralProtection handler
+   * in lstrlen() ... we check only for NULL pointer reference.
+   * - Marcus Meissner
+   */
+  if (str==NULL) {
+  	fprintf(stddeb,"lstrlen(NULL) caught, returning 0.\n");
+  	return 0;
+  }
   return strlen(str);
 }
 

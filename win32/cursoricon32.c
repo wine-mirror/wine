@@ -39,6 +39,43 @@
 #include "xmalloc.h"
 #include "task.h"
 
+/* This dictionary could might eventually become a macro for better reuse */
+struct MAP_DWORD_DWORD{
+	DWORD key;
+	DWORD value;
+};
+
+struct MAP_DWORD_DWORD *CURSORICON_map;
+int CURSORICON_count;
+
+BOOL CURSORICON_lookup(DWORD key,DWORD *value)
+{
+	int i;
+	for(i=0;i<CURSORICON_count;i++)
+	{
+		if(key==CURSORICON_map[i].key)
+		{
+			*value=CURSORICON_map[i].value;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+void CURSORICON_insert(DWORD key,DWORD value)
+{
+	if(!CURSORICON_count)
+	{
+		CURSORICON_count=1;
+		CURSORICON_map=malloc(sizeof(struct MAP_DWORD_DWORD));
+	}else{
+		CURSORICON_count++;
+		CURSORICON_map=realloc(CURSORICON_map,
+			sizeof(struct MAP_DWORD_DWORD)*CURSORICON_count);
+	}
+	CURSORICON_map[CURSORICON_count-1].key=key;
+	CURSORICON_map[CURSORICON_count-1].value=value;
+}
 
 /**********************************************************************
  *	    CURSORICON32_FindBestIcon
@@ -407,8 +444,13 @@ static HANDLE CURSORICON32_Load( HANDLE hInstance, LPCWSTR name, int width,
                       (LPWSTR) (fCursor ? RT_CURSOR : RT_ICON )))) return 0;
     if (!(handle = LoadResource32( hInstance, hRsrc ))) return 0;
 
+	/* Use the resource handle as key to detect multiple loading */
+	if(CURSORICON_lookup(handle,&hRet))
+		return hRet;
+
     hRet = CURSORICON32_LoadHandler( handle, hInstance, fCursor );
-    FreeResource32(handle);
+    /* Obsolete - FreeResource32(handle);*/
+	CURSORICON_insert(handle,hRet);
     return hRet;
 }
 

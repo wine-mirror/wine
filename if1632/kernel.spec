@@ -1,6 +1,5 @@
 name	kernel
 type	win16
-id	1
 
 1   stub FatalExit
 2   stub ExitKernel

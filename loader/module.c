@@ -11,10 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "windows.h"
-#include "dlls.h"
+#include "class.h"
 #include "dos_fs.h"
 #include "file.h"
 #include "global.h"
+#include "hook.h"
 #include "ldt.h"
 #include "module.h"
 #include "neexe.h"
@@ -35,96 +36,6 @@ static HMODULE hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
 #ifndef WINELIB
 static HANDLE hInitialStack32 = 0;
 #endif
-/***********************************************************************
- *           MODULE_LoadBuiltin
- *
- * Load a built-in module. If the 'force' parameter is FALSE, we only
- * load the module if it has not been disabled via the -dll option.
- */
-#ifndef WINELIB
-static HMODULE MODULE_LoadBuiltin( LPCSTR name, BOOL force )
-{
-    HMODULE hModule;
-    NE_MODULE *pModule;
-    SEGTABLEENTRY *pSegTable;
-    BUILTIN_DLL *table;
-    char dllname[16], *p;
-
-    /* Fix the name in case we have a full path and extension */
-
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
-    lstrcpyn( dllname, name, sizeof(dllname) );
-    if ((p = strrchr( dllname, '.' ))) *p = '\0';
-
-    for (table = dll_builtin_table; table->name; table++)
-        if (!lstrcmpi( table->name, dllname )) break;
-    if (!table->name) return 0;
-    if ((table->flags & DLL_FLAG_NOT_USED) && !force) return 0;
-
-    hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, table->module_start,
-                                  table->module_end - table->module_start,
-                                  0, FALSE, FALSE, FALSE, NULL );
-    if (!hModule) return 0;
-    FarSetOwner( hModule, hModule );
-
-    table->hModule = hModule;
-
-    dprintf_module( stddeb, "Built-in %s: hmodule=%04x\n",
-                    table->name, hModule );
-    pModule = (NE_MODULE *)GlobalLock( hModule );
-    pModule->self = hModule;
-
-    if (pModule->flags & NE_FFLAGS_WIN32)
-    {
-        pModule->pe_module = (PE_MODULE *)table;
-    }
-    else  /* Win16 module */
-    {
-        /* Allocate the code segment */
-
-        pSegTable = NE_SEG_TABLE( pModule );
-        pSegTable->selector = GLOBAL_CreateBlock(GMEM_FIXED, table->code_start,
-                                                 pSegTable->minsize, hModule,
-                                                 TRUE, TRUE, FALSE, NULL );
-        if (!pSegTable->selector) return 0;
-        pSegTable++;
-
-        /* Allocate the data segment */
-
-        pSegTable->selector = GLOBAL_Alloc( GMEM_FIXED, pSegTable->minsize,
-                                            hModule, FALSE, FALSE, FALSE );
-        if (!pSegTable->selector) return 0;
-        memcpy( GlobalLock( pSegTable->selector ),
-                table->data_start, pSegTable->minsize );
-    }
-
-    pModule->next = hFirstModule;
-    hFirstModule = hModule;
-    return hModule;
-}
-#endif
-
-/***********************************************************************
- *           MODULE_Init
- *
- * Create the built-in modules.
- */
-BOOL MODULE_Init(void)
-{
-#ifndef WINELIB32
-    BUILTIN_DLL *dll;
-
-    /* Load all modules marked as always used */
-
-    for (dll = dll_builtin_table; dll->name; dll++)
-        if (dll->flags & DLL_FLAG_ALWAYS_USED)
-            if (!MODULE_LoadBuiltin(dll->name, TRUE)) return FALSE;
-#endif
-    /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
-
-    MODULE_SetEntryPoint( GetModuleHandle( "KERNEL" ), 178, GetWinFlags() );
-    return TRUE;
-}
 
 
 /***********************************************************************
@@ -358,7 +269,7 @@ static WORD MODULE_Ne2MemFlags(WORD flags)
 }
 
 /***********************************************************************
- *           MODULE_AllocateSegment (WINPROCS.26)
+ *           MODULE_AllocateSegment (WPROCS.26)
  */
 
 DWORD MODULE_AllocateSegment(WORD wFlags, WORD wSize, WORD wElem)
@@ -410,7 +321,7 @@ static BOOL MODULE_CreateSegments( HMODULE hModule )
  *           MODULE_GetInstance
  */
 #ifndef WINELIB32
-static HINSTANCE MODULE_GetInstance( HMODULE hModule )
+HINSTANCE MODULE_GetInstance( HMODULE hModule )
 {
     SEGTABLEENTRY *pSegment;
     NE_MODULE *pModule;
@@ -462,7 +373,7 @@ HINSTANCE MODULE_CreateInstance( HMODULE hModule, LOADPARAMS *params )
 /***********************************************************************
  *           MODULE_LoadExeHeader
  */
-HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
+static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
 {
     struct mz_header_s mz_header;
     struct ne_header_s ne_header;
@@ -677,8 +588,7 @@ HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
     }
     else pModule->dlls_to_init = 0;
 
-    pModule->next = hFirstModule;
-    hFirstModule = hModule;
+    MODULE_RegisterModule( pModule );
     return hModule;
 #undef READ
 }
@@ -844,45 +754,9 @@ BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset )
 
 
 /***********************************************************************
- *           MODULE_GetEntryPointName
- *
- * Return the entry point name for a given ordinal.
- * Used only by relay debugging.
- * Warning: returned pointer is to a Pascal-type string.
- */
-LPSTR MODULE_GetEntryPointName( HMODULE hModule, WORD ordinal )
-{
-    register char *cpnt;
-    NE_MODULE *pModule;
-
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-
-      /* First search the resident names */
-
-    cpnt = (char *)pModule + pModule->name_table;
-    while (*cpnt)
-    {
-        cpnt += *cpnt + 1 + sizeof(WORD);
-        if (*(WORD *)(cpnt + *cpnt + 1) == ordinal) return cpnt;
-    }
-
-      /* Now search the non-resident names table */
-
-    if (!pModule->nrname_handle) return 0;  /* No non-resident table */
-    cpnt = (char *)GlobalLock( pModule->nrname_handle );
-    while (*cpnt)
-    {
-        cpnt += *cpnt + 1 + sizeof(WORD);
-        if (*(WORD *)(cpnt + *cpnt + 1) == ordinal) return cpnt;
-    }
-    return NULL;
-}
-
-
-/***********************************************************************
  *           MODULE_GetWndProcEntry16  (not a Windows API function)
  *
- * Return an entry point from the WINPROCS dll.
+ * Return an entry point from the WPROCS dll.
  */
 #ifndef WINELIB
 WNDPROC MODULE_GetWndProcEntry16( const char *name )
@@ -890,7 +764,7 @@ WNDPROC MODULE_GetWndProcEntry16( const char *name )
     WORD ordinal;
     static HMODULE hModule = 0;
 
-    if (!hModule) hModule = GetModuleHandle( "WINPROCS" );
+    if (!hModule) hModule = GetModuleHandle( "WPROCS" );
     ordinal = MODULE_GetOrdinal( hModule, name );
     return MODULE_GetEntryPoint( hModule, ordinal );
 }
@@ -900,14 +774,14 @@ WNDPROC MODULE_GetWndProcEntry16( const char *name )
 /***********************************************************************
  *           MODULE_GetWndProcEntry32  (not a Windows API function)
  *
- * Return an entry point from the WINPROCS32 dll.
+ * Return an entry point from the WPROCS32 dll.
  */
 #ifndef WINELIB
 WNDPROC MODULE_GetWndProcEntry32( const char *name )
 {
     static HMODULE hModule = 0;
 
-    if (!hModule) hModule = GetModuleHandle( "WINPROCS32" );
+    if (!hModule) hModule = GetModuleHandle( "WPROCS32" );
     return PE_GetProcAddress( hModule, name );
 }
 #endif
@@ -934,12 +808,12 @@ LPSTR MODULE_GetModuleName( HMODULE hModule )
 /**********************************************************************
  *           MODULE_RegisterModule
  */
-void MODULE_RegisterModule( HMODULE hModule )
+void MODULE_RegisterModule( NE_MODULE *pModule )
 {
-    NE_MODULE *pModule = MODULE_GetPtr( hModule );
     pModule->next = hFirstModule;
-    hFirstModule = hModule;
+    hFirstModule = pModule->self;
 }
+
 
 /**********************************************************************
  *	    MODULE_FindModule
@@ -995,6 +869,11 @@ static void MODULE_FreeModule( HMODULE hModule )
         return;  /* Can't free built-in module */
 
     /* FIXME: should call the exit code for the library here */
+
+    /* Free the objects owned by the module */
+
+    HOOK_FreeModuleHooks( hModule );
+    CLASS_FreeModuleClasses( hModule );
 
     /* Clear magic number just in case */
 
@@ -1058,12 +937,12 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
         OFSTRUCT ofs;
 
         /* Try to load the built-in first if not disabled */
-        if ((hModule = MODULE_LoadBuiltin( name, FALSE ))) return hModule;
+        if ((hModule = BUILTIN_LoadModule( name, FALSE ))) return hModule;
 
         if ((hFile = OpenFile( name, &ofs, OF_READ )) == HFILE_ERROR)
         {
             /* Now try the built-in even if disabled */
-            if ((hModule = MODULE_LoadBuiltin( name, TRUE )))
+            if ((hModule = BUILTIN_LoadModule( name, TRUE )))
             {
                 fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
                 return hModule;
@@ -1148,7 +1027,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		/* Handle self loading modules */
 		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 		SELFLOADHEADER *selfloadheader;
-		HMODULE hselfload = GetModuleHandle("WINPROCS");
+		HMODULE hselfload = GetModuleHandle("WPROCS");
 		WORD oldss, oldsp, saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
 		fprintf (stderr, "Warning:  %*.*s is a self-loading module\n"
                                 "Support for self-loading modules is very experimental\n",

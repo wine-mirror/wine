@@ -18,8 +18,8 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include "windows.h"
+#include "winbase.h"
 #include "callback.h"
-#include "dlls.h"
 #include "neexe.h"
 #include "peexe.h"
 #include "pe_image.h"
@@ -140,16 +140,9 @@ DWORD PE_GetProcAddress(HMODULE hModule, char* function)
     NE_MODULE *pModule;
 
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;
+    if (!(pModule->flags & NE_FFLAGS_WIN32) || !pModule->pe_module) return 0;
     if (pModule->flags & NE_FFLAGS_BUILTIN)
-    {
-        BUILTIN_DLL *dll = (BUILTIN_DLL *)pModule->pe_module;
-        if(HIWORD(function))
-            return RELAY32_GetEntryPoint(dll,function,0);
-        else
-            return RELAY32_GetEntryPoint(dll,0,(int)function);
-    }
-    if (!pModule->pe_module) return 0;
+        return BUILTIN_GetProcAddress32( pModule, function );
     return PE_FindExportedFunction( pModule->pe_module, function );
 }
 
@@ -247,12 +240,8 @@ void fixup_imports(struct pe_data *pe, HMODULE hModule)
         dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
 	/* FIXME: Both calls should be unified into GetProcAddress */
-#if 0
-        *thunk_list=(unsigned int)RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
-	if(*thunk_list == 0)
-#endif
-	  	*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
-				pe_name->Name);
+        *thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
+                                           pe_name->Name);
 #else
         fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
 #endif
@@ -619,7 +608,7 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 	pModule->res_table=pModule->import_table=pModule->entry_table=
 		(int)pStr-(int)pModule;
 
-        MODULE_RegisterModule(hModule);
+        MODULE_RegisterModule( pModule );
 
 	pe = PE_LoadImage( fd, hModule, mz_header.ne_offset );
 
@@ -656,7 +645,6 @@ void PE_Win32CallToStart(struct sigcontext_struct context)
     int fs;
     HMODULE hModule;
     NE_MODULE *pModule;
-    struct pe_data *pe;
 
     dprintf_win32(stddeb,"Going to start Win32 program\n");	
     InitTask(context);

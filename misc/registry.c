@@ -368,11 +368,10 @@ SHELL_SaveRegistry() {
 		strcat(fn,WINE_PREFIX);
 		/* create the directory. don't care about errorcodes. */
 		mkdir(fn,0755); /* drwxr-xr-x */
-		strcat(fn,"/");
-		strcat(fn,SAVE_CURRENT_USER);
+		strcat(fn,"/"SAVE_CURRENT_USER);
 		_SaveSubReg(key_current_user,fn);
 		free(fn);
-		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+1);
+		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+2);
 		strcpy(fn,pwd->pw_dir);
 		strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
 		_SaveSubReg(key_local_machine,fn);
@@ -676,6 +675,7 @@ _LoadSubReg(LPKEYSTRUCT lpkey,char *fn) {
 	if (!_do_loadsubreg(F,lpkey)) {
 		fclose(F);
 		unlink(fn);
+		return;
 	}
 	fclose(F);
 }
@@ -694,12 +694,12 @@ SHELL_LoadRegistry() {
 	/* load the user saved registry. overwriting only newer entries */
 	pwd=getpwuid(getuid());
 	if (pwd!=NULL && pwd->pw_dir!=NULL) {
-		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_CURRENT_USER)+1);
+		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_CURRENT_USER)+2);
 		strcpy(fn,pwd->pw_dir);
 		strcat(fn,WINE_PREFIX"/"SAVE_CURRENT_USER);
 		_LoadSubReg(key_current_user,fn);
 		free(fn);
-		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+1);
+		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+2);
 		strcpy(fn,pwd->pw_dir);
 		strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
 		_LoadSubReg(key_local_machine,fn);
@@ -1710,7 +1710,7 @@ RegEnumValueW(
 	lpkey = lookup_hkey(hkey);
 	if (!lpkey)
 		return SHELL_ERROR_BADKEY;
-	if (lpkey->nrofvalues<iValue)
+	if (lpkey->nrofvalues<=iValue)
 		return ERROR_NO_MORE_ITEMS;
 	val	= lpkey->values+iValue;
 

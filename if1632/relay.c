@@ -5,7 +5,6 @@
 
 #include <stdio.h>
 
-#include "dlls.h"
 #include "global.h"
 #include "module.h"
 #include "registers.h"
@@ -18,55 +17,6 @@
 /* Make make_debug think these were really used */
 dprintf_relay
 #endif
-
-#define DLL_ENTRY(name,flags) \
-  { #name, name##_Code_Start, name##_Data_Start, \
-    name##_Module_Start, name##_Module_End, (flags) }
-
-BUILTIN_DLL dll_builtin_table[] =
-{
-    /* Win16 DLLs */
-    DLL_ENTRY( KERNEL,     DLL_FLAG_ALWAYS_USED),
-    DLL_ENTRY( USER,       DLL_FLAG_ALWAYS_USED),
-    DLL_ENTRY( GDI,        DLL_FLAG_ALWAYS_USED),
-    DLL_ENTRY( WIN87EM,    DLL_FLAG_NOT_USED),
-    DLL_ENTRY( SHELL,      0),
-    DLL_ENTRY( SOUND,      0),
-    DLL_ENTRY( KEYBOARD,   0),
-    DLL_ENTRY( WINSOCK,    0),
-    DLL_ENTRY( STRESS,     0),
-    DLL_ENTRY( MMSYSTEM,   0),
-    DLL_ENTRY( SYSTEM,     0),
-    DLL_ENTRY( TOOLHELP,   0),
-    DLL_ENTRY( MOUSE,      0),
-    DLL_ENTRY( COMMDLG,    DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2,       DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2CONV,   DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2DISP,   DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2NLS,    DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLE2PROX,   DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLECLI,     DLL_FLAG_NOT_USED),
-    DLL_ENTRY( OLESVR,     DLL_FLAG_NOT_USED),
-    DLL_ENTRY( COMPOBJ,    DLL_FLAG_NOT_USED),
-    DLL_ENTRY( STORAGE,    DLL_FLAG_NOT_USED),
-    DLL_ENTRY( WINPROCS,   DLL_FLAG_ALWAYS_USED),
-    DLL_ENTRY( DDEML,      DLL_FLAG_NOT_USED),
-    DLL_ENTRY( LZEXPAND,   0),
-    DLL_ENTRY( W32SYS,     0),
-    /* Win32 DLLs */
-    DLL_ENTRY( ADVAPI32,   0),
-    DLL_ENTRY( COMCTL32,   0),
-    DLL_ENTRY( COMDLG32,   0),
-    DLL_ENTRY( OLE32,      0),
-    DLL_ENTRY( GDI32,      0),
-    DLL_ENTRY( KERNEL32,   DLL_FLAG_ALWAYS_USED),
-    DLL_ENTRY( SHELL32,    0),
-    DLL_ENTRY( USER32,     0),
-    DLL_ENTRY( WINPROCS32, DLL_FLAG_ALWAYS_USED),
-    DLL_ENTRY( WINSPOOL,   0),
-    /* Last entry */
-    { NULL, }
-};
 
   /* Saved 16-bit stack for current process (Win16 only) */
 WORD IF1632_Saved16_ss = 0;
@@ -116,17 +66,20 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
                             void *entry_point, int args32 )
 {
     STACK16FRAME *frame;
-    struct dll_table_s *table;
+    NE_MODULE *pModule;
+    WORD ordinal;
     char *args16, *name;
     int i;
 
     if (!debugging_relay) return;
 
     frame = CURRENT_STACK16;
-    table = &dll_builtin_table[frame->dll_id-1];
-    name  = MODULE_GetEntryPointName( table->hModule, frame->ordinal_number );
-    printf( "Call %s.%d: %.*s(",
-            table->name, frame->ordinal_number, *name, name + 1 );
+    pModule = BUILTIN_GetEntryPoint( frame->entry_cs, frame->entry_ip,
+                                     &ordinal, &name );
+    printf( "Call %.*s.%d: %.*s(",
+            *((BYTE *)pModule + pModule->name_table),
+            (char *)pModule + pModule->name_table + 1,
+            ordinal, *name, name + 1 );
 
     args16 = (char *)frame->args;
     for (i = 0; i < strlen(args); i++)
@@ -184,7 +137,8 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
 void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
 {
     STACK16FRAME *frame;
-    struct dll_table_s *table;
+    NE_MODULE *pModule;
+    WORD ordinal;
     char *name;
 
     if (*(DWORD *)PTR_SEG_TO_LIN(IF1632_Stack32_base) != 0xDEADBEEF)
@@ -194,11 +148,14 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
     }
     if (!debugging_relay) return;
 
-    frame = CURRENT_STACK16;
-    table = &dll_builtin_table[frame->dll_id-1];
-    name  = MODULE_GetEntryPointName( table->hModule, frame->ordinal_number );
-    printf( "Ret  %s.%d: %.*s() ",
-            table->name, frame->ordinal_number, *name, name + 1 );
+    frame   = CURRENT_STACK16;
+    pModule = BUILTIN_GetEntryPoint( frame->entry_cs, frame->entry_ip,
+                                     &ordinal, &name );
+    printf( "Ret  %.*s.%d: %.*s() ",
+            *((BYTE *)pModule + pModule->name_table),
+            (char *)pModule + pModule->name_table + 1,
+            ordinal, *name, name + 1 );
+
     switch(func_type)
     {
     case 0: /* long */
@@ -232,12 +189,16 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
  */
 void RELAY_Unimplemented16(void)
 {
+    WORD ordinal;
+    char *name;
     STACK16FRAME *frame = CURRENT_STACK16;
-    struct dll_table_s *table = &dll_builtin_table[frame->dll_id-1];
-    char *name = MODULE_GetEntryPointName( table->hModule, frame->ordinal_number );
-
-    fprintf( stderr, "No handler for routine %s.%d (%.*s)\n",
-             table->name, frame->ordinal_number, *name, name + 1 );
+    NE_MODULE *pModule  = BUILTIN_GetEntryPoint( frame->entry_cs,
+                                                 frame->entry_ip,
+                                                 &ordinal, &name );
+    fprintf( stderr, "No handler for routine %.*s.%d (%.*s)\n",
+             *((BYTE *)pModule + pModule->name_table),
+             (char *)pModule + pModule->name_table + 1,
+             ordinal, *name, name + 1 );
     exit(1);
 }
 

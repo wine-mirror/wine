@@ -1,4 +1,105 @@
 ----------------------------------------------------------------------
+Sun Apr 28 14:32:43 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [Makefile.in]
+	Subdir memory is now also compiled for Winelib, in order to get
+	the Win32 heap functions.
+
+	* [if1632/Makefile.in]
+	Renamed winprocs and winprocs32 to wprocs and wprocs32 to avoid
+	DLL names > 8 characters.
+
+	* [loader/builtin.c] (New file)
+	Grouped all built-in DLLs code in a single file.
+
+	* [memory/global.c]
+	Use the Win32 heap code instead of malloc() to allocate linear
+	memory. This will help test the heap code.
+
+	* [memory/local.c]
+	Fixed FreeSelector() to clear DS and ES correctly for huge blocks.
+
+	* [tools/build.c] [if1632/relay.c]
+	Removed 'id' directive in spec files. For relay debugging, the DLL
+	entry point is now computed from the CS:IP entry point address.
+	Added 'heap' directive to specifiy a local heap for the DLL. USER
+	and GDI heap are now created this way.
+
+	* [windows/class.c] [include/class.h]
+	Changed the class structure to use pointers instead of handles.
+	Changed Get/SetClassWord/Long to use a switch statement; this
+	allows changing the layout of the CLASS structure.
+
+	* [windows/win.c] [include/win.h]
+	Use a CLASS * instead of a handle for the window class.
+
+Sat Apr 27 18:10:11 Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [if1632/kernel32.spec] [memory/global.c]
+	  [win32/memory.c] [win32/process.c]
+	GetProcessAffinityMask,GlobalLock,IsBadReadPtr,IsBadWritePtr,
+	LocalLock,SetThreadAffinityMask: new relays.
+
+	* [win32/cursoricon32.c]
+	Return same handle if a cursor is loaded multiple times.
+
+Sat Apr 27 15:13:37 1996  Bang Jun Young <bangjy@nownuri.nowcom.co.kr>
+
+	* [resources/sysres_Ko.rc]
+        Added support for Korean [Ko] language.
+
+Fri Apr 26 00:49:05 1996  Huw D. M. Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [objects/dc.c] [objects/font.c]
+	Fixed problem with SaveDC()/RestoreDC() and font cache 'used' count.
+
+	* [objects/metafile.c] [objects/dcvalues.c]
+	Fixed broken SetTextAlign() on metafiles.
+
+	* [objects/metafile.c]
+	Delete objects in handle table at end of PlayMetaFile().
+
+Wed Apr 24 19:21:01  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [if1632/ver.spec] [misc/ver.c] [include/ver.h] (New files)
+	VER.DLL (partially) implemented (VerFindFile,VerInstallFile)
+	[If it doesn't work for you, use -dll -ver and report it to me]
+
+	* [if1632/user32.spec] [if1632/kernel32.spec] [if1632/shell.spec]
+	  [if1632/shell32.spec] [misc/ole2nls.c] [windows/message.c]
+	  [windows/graphics.c]
+	Simple win32 functions, where we can just use the win16 counterpart.
+	Misc. stubs. 
+
+	* [misc/lstr.c]
+	Someone reported a _lstrlen(NULL). NULL is a valid argument. Fixed.
+
+	* [misc/registry.c]
+	Some alloclens were off by 1, one double fclose() fixed.
+	Requesting value 0 of a key with no values returns an error 
+	(should we always return a made up value NULL? what does win3.1?)
+
+Tue Apr 23 17:00:00 1996 Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [misc/shell.c]
+	Implemented FindEnvironmentString(), DoEnvironmentSubst(),
+	ExtractIcon(), InternalExtractIcon() and ExtractAssociatedIcon().
+
+	* [misc/user.c]
+	Do extensive cleanup on application exit.
+
+	* [windows/hook.c] [windows/win.c] [windows/class.c]
+	Added miscellaneous cleanup routines.
+
+	* [controls/menu.c]
+	More efficient popup menu window handling.
+
+Mon Apr 22 21:35:22 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [include/windows.h][objects/oembitmap.c][include/bitmaps/obm_trtype]
+	Added "TT-bitmap" for later usage in a ChooseFont() ownerdraw combobox.
+
+----------------------------------------------------------------------
 Sat Apr 20 23:23:16 1996  Robert Pouliot <krynos@qbc.clic.net>
 
 	* [resources/sysres_Fr.rc] [resources/TODO]

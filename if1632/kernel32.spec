@@ -31,7 +31,7 @@ base	1
 0026 stub CommConfigDialogA
 0027 stub CommConfigDialogW
 0028 stub CompareFileTime
-0029 stub CompareStringA
+0029 stdcall CompareStringA(long long ptr long ptr long) CompareStringA
 0030 stub CompareStringW
 0031 stub ConnectNamedPipe
 0032 stub ConsoleMenuControl
@@ -231,7 +231,7 @@ base	1
 0226 stub GetLargestConsoleWindowSize
 0227    stdcall GetLastError() GetLastError
 0228    stdcall GetLocalTime(ptr) GetLocalTime
-0229 stub GetLocaleInfoA
+0229 stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfoA
 0230 stub GetLocaleInfoW
 0231 stub GetLogicalDriveStringsA
 0232 stub GetLogicalDriveStringsW
@@ -257,10 +257,10 @@ base	1
 0252 stub GetPrivateProfileIntW
 0253 stub GetPrivateProfileSectionA
 0254 stub GetPrivateProfileSectionW
-0255 stub GetPrivateProfileStringA
+0255 stdcall GetPrivateProfileStringA(ptr ptr ptr ptr long ptr) GetPrivateProfileString
 0256 stub GetPrivateProfileStringW
 0257	stdcall GetProcAddress(long long)	WIN32_GetProcAddress
-0258 stub GetProcessAffinityMask
+0258 stdcall GetProcessAffinityMask(long ptr ptr)	GetProcessAffinityMask
 0259 stdcall GetProcessHeap() GetProcessHeap
 0260 stub GetProcessHeaps
 0261 stub GetProcessShutdownParameters
@@ -270,7 +270,7 @@ base	1
 0265 stub GetProfileIntW
 0266 stub GetProfileSectionA
 0267 stub GetProfileSectionW
-0268 stub GetProfileStringA
+0268 stdcall GetProfileStringA(ptr ptr ptr ptr long) GetProfileString
 0269 stub GetProfileStringW
 0270 stub GetQueuedCompletionStatus
 0271 stub GetShortPathNameA
@@ -282,7 +282,7 @@ base	1
 0277 stub GetStringTypeExA
 0278 stub GetStringTypeExW
 0279 stub GetStringTypeW
-0280 stub GetSystemDefaultLCID
+0280 stdcall GetSystemDefaultLCID() GetSystemDefaultLCID
 0281 stub GetSystemDefaultLangID
 0282 stub GetSystemDirectoryA
 0283 stub GetSystemDirectoryW
@@ -329,7 +329,7 @@ base	1
 0323 stub GlobalGetAtomNameA
 0324 stub GlobalGetAtomNameW
 0325 stub GlobalHandle
-0326 stub GlobalLock
+0326 stdcall GlobalLock(long)	GlobalLock32
 0327 stub GlobalMemoryStatus
 0328 stub GlobalReAlloc
 0329 stub GlobalSize
@@ -357,10 +357,10 @@ base	1
 0351 stub IsBadCodePtr
 0352 stub IsBadHugeReadPtr
 0353 stub IsBadHugeWritePtr
-0354 stub IsBadReadPtr
+0354 stdcall IsBadReadPtr(ptr long)	WIN32_IsBadReadPtr
 0355 stub IsBadStringPtrA
 0356 stub IsBadStringPtrW
-0357 stub IsBadWritePtr
+0357 stdcall IsBadWritePtr(ptr long)	WIN32_IsBadWritePtr
 0358 stub IsDBCSLeadByte
 0359 stub IsDBCSLeadByteEx
 0360 stub IsValidCodePage
@@ -380,7 +380,7 @@ base	1
 0374 stub LocalFlags
 0375 stub LocalFree
 0376 stub LocalHandle
-0377 stub LocalLock
+0377 stdcall LocalLock(long)	GlobalLock32
 0378 stub LocalReAlloc
 0379 stub LocalShrink
 0380 stub LocalSize
@@ -502,7 +502,7 @@ base	1
 0496 stub SetLastConsoleEventActive
 0497    stdcall SetLastError(long) SetLastError
 0498 stub SetLocalTime
-0499 stub SetLocaleInfoA
+0499 stdcall SetLocaleInfoA(long long ptr) SetLocaleInfoA
 0500 stub SetLocaleInfoW
 0501 stub SetMailslotInfo
 0502 stub SetNamedPipeHandleState
@@ -514,7 +514,7 @@ base	1
 0508 stub SetSystemTimeAdjustment
 0509 stub SetTapeParameters
 0510 stub SetTapePosition
-0511 stub SetThreadAffinityMask
+0511 stdcall SetThreadAffinityMask(long long)	SetThreadAffinityMask
 0512 stub SetThreadContext
 0513 stub SetThreadLocale
 0514 stub SetThreadPriority

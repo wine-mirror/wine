@@ -16,7 +16,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "task.h"
 #include "selectors.h"
 #include "comm.h"
-#include "user.h"
 #include "win.h"
 #include "menu.h"
 #include "kernel32.h"
@@ -28,8 +27,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "syscolor.h"
 #include "sysmetrics.h"
 #include "gdi.h"
+#include "heap.h"
 #include "debugger.h"
-#include "dlls.h"
 #include "miscemu.h"
 #include "neexe.h"
 #include "options.h"
@@ -42,6 +41,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 void init_wine_signals(void);
 
+HANDLE32 SystemHeap = 0;
 
 /***********************************************************************
  *           Main initialisation routine
@@ -52,6 +52,9 @@ int MAIN_Init(void)
 
     int queueSize;
 
+    /* Create the system heap */
+    if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return 0;
+
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return 0;
 
@@ -61,10 +64,10 @@ int MAIN_Init(void)
 #ifndef WINELIB
       /* Initialize relay code */
     if (!RELAY_Init()) return 0;
-#endif
 
       /* Create built-in modules */
-    if (!MODULE_Init()) return 0;
+    if (!BUILTIN_Init()) return 0;
+#endif
 
     /* Initialise DOS drives */
     if (!DRIVE_Init()) return 0;
@@ -90,9 +93,6 @@ int MAIN_Init(void)
 
       /* Initialize the DOS memory */
     if (!INT21_Init()) return 0;
-
-      /* Create USER heap */
-    if (!USER_HeapInit()) return 0;
 #endif
     
       /* Global atom table initialisation */

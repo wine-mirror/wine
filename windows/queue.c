@@ -91,6 +91,8 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
     MESSAGEQUEUE * msgQueue;
     int queueSize;
 
+    dprintf_msg(stddeb,"Creating message queue...\n");
+
     queueSize = sizeof(MESSAGEQUEUE) + size * sizeof(QMSG);
     if (!(hQueue = GlobalAlloc( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
         return 0;
@@ -112,6 +114,8 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE hQueue )
 {
     MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock(hQueue);
     HQUEUE *pPrev;
+
+    dprintf_msg(stddeb,"Deleting message queue %04x\n", hQueue);
 
     if (!hQueue || !msgQueue)
     {
@@ -398,6 +402,8 @@ BOOL SetMessageQueue( int size )
 {
     HQUEUE hQueue, hNewQueue;
     MESSAGEQUEUE *queuePtr;
+
+    dprintf_msg(stddeb,"SetMessageQueue: task %04x size %i\n", GetCurrentTask(), size); 
 
     if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return TRUE;
 

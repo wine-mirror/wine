@@ -1,6 +1,5 @@
 name	lzexpand
 type	win16
-id	26
 
 1  pascal   LZCopy(word word) LZCopy
 2  pascal16 LZOpenFile(ptr ptr word) LZOpenFile

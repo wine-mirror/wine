@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include "windows.h"
+#include "file.h"
 #include "shell.h"
 #include "module.h"
 #include "neexe.h"
@@ -17,17 +18,19 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+extern HANDLE 	CURSORICON_LoadHandler( HANDLE, HINSTANCE, BOOL);
+extern WORD 	GetIconID( HANDLE hResource, DWORD resType );
+
 /*************************************************************************
  *				DragAcceptFiles		[SHELL.9]
  */
 void DragAcceptFiles(HWND hWnd, BOOL b)
 {
-    /* flips WS_EX_ACCEPTFILES bit according to the value of b */
-    dprintf_reg(stddeb,"DragAcceptFiles(%04x, %u) old exStyle %08lx\n",
-		hWnd,b,GetWindowLong(hWnd,GWL_EXSTYLE));
+    WND* wnd = WIN_FindWndPtr(hWnd);
 
-    SetWindowLong(hWnd,GWL_EXSTYLE,
-		  GetWindowLong(hWnd,GWL_EXSTYLE) | b*(LONG)WS_EX_ACCEPTFILES);
+    if( wnd )
+	wnd->dwExStyle = b? wnd->dwExStyle | WS_EX_ACCEPTFILES
+			  : wnd->dwExStyle & ~WS_EX_ACCEPTFILES;
 }
 
 
@@ -111,15 +114,20 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPSTR lpPar
     char *p,*x;
     long len;
     char subclass[200];
+
     /* OK. We are supposed to lookup the program associated with lpFile,
      * then to execute it using that program. If lpFile is a program,
      * we have to pass the parameters. If an instance is already running,
      * we might have to send DDE commands.
+     *
+     * FIXME: Should also look up WIN.INI [Extensions] section?
      */
+
     dprintf_exec(stddeb, "ShellExecute(%04x,'%s','%s','%s','%s',%x)\n",
 		hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
 		lpParameters ? lpParameters : "<null>", 
 		lpDirectory ? lpDirectory : "<null>", iShowCmd);
+
     if (lpFile==NULL) return 0; /* should not happen */
     if (lpOperation==NULL) /* default is open */
       lpOperation="open";
@@ -188,8 +196,10 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPSTR lpPar
  */
 HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 {
-	fprintf(stdnimp, "FindExecutable : Empty Stub !!!\n");
-        return 0;
+	fprintf(stdnimp, "FindExecutable: someone has to fix me and this is YOUR turn! :-)\n");
+
+	lpResult[0]='\0';
+        return 31;		/* no association */
 }
 
 static char AppName[128], AppMisc[906];
@@ -253,48 +263,305 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 }
 
 /*************************************************************************
- *				ExtractIcon		[SHELL.34]
+ *				SHELL_GetResourceTable
+ *
+ * FIXME: Implement GetPEResourceTable in w32sys.c and call it here.
  */
-HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
+BYTE* SHELL_GetResourceTable(HFILE hFile)
 {
-	HICON	hIcon = 0;
-	HINSTANCE hInst2 = hInst;
-	dprintf_reg(stddeb, "ExtractIcon(%04x, '%s', %d\n", 
-			hInst, lpszExeFileName, nIconIndex);
-        return 0;
-	if (lpszExeFileName != NULL) {
-		hInst2 = LoadModule(lpszExeFileName,(LPVOID)-1);
-	}
-	if (hInst2 != 0 && nIconIndex == (UINT)-1) {
-#if 0
-		count = GetRsrcCount(hInst2, NE_RSCTYPE_GROUP_ICON);
-		dprintf_reg(stddeb, "ExtractIcon // '%s' has %d icons !\n", lpszExeFileName, count);
-		return (HICON)count;
-#endif
-	}
-	if (hInst2 != hInst && hInst2 != 0) {
-		FreeLibrary(hInst2);
-	}
-	return hIcon;
+  struct mz_header_s mz_header;
+  struct ne_header_s ne_header;
+  int		size;
+  
+  _llseek( hFile, 0, SEEK_SET );
+  if ((FILE_Read(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
+      (mz_header.mz_magic != MZ_SIGNATURE)) return (BYTE*)-1;
+
+  _llseek( hFile, mz_header.ne_offset, SEEK_SET );
+  if (FILE_Read( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
+      return NULL;
+
+  if (ne_header.ne_magic == PE_SIGNATURE) 
+     { fprintf(stdnimp,"Win32 FIXME: file %s line %i\n", __FILE__, __LINE__ );
+       return NULL; }
+
+  if (ne_header.ne_magic != NE_SIGNATURE) return NULL;
+
+  size = ne_header.rname_tab_offset - ne_header.resource_tab_offset;
+
+  if( size > sizeof(NE_TYPEINFO) )
+    {
+      BYTE* pTypeInfo = (BYTE*)xmalloc(size);
+
+      if( !pTypeInfo ) return NULL;
+
+      _llseek(hFile, mz_header.ne_offset+ne_header.resource_tab_offset, SEEK_SET);
+      if( FILE_Read( hFile, (char*)pTypeInfo, size) != size )
+	{ free(pTypeInfo); return NULL; }
+      return pTypeInfo;
+    }
+  /* no resources */
+
+  return NULL;
 }
 
+/*************************************************************************
+ *			SHELL_LoadResource
+ */
+HANDLE	SHELL_LoadResource(HINSTANCE hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WORD sizeShift)
+{
+ BYTE*	ptr;
+ HANDLE handle = DirectResAlloc( hInst, 0x10, (DWORD)pNInfo->length << sizeShift);
+
+ if( (ptr = (BYTE*)GlobalLock( handle )) )
+   {
+    _llseek( hFile, (DWORD)pNInfo->offset << sizeShift, SEEK_SET);
+     FILE_Read( hFile, (char*)ptr, pNInfo->length << sizeShift);
+     return handle;
+   }
+ return (HANDLE)0;
+}
+
+/*************************************************************************
+ *			InternalExtractIcon		[SHELL.39]
+ *
+ * This abortion is called directly by Progman
+ */
+HICON InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIconIndex, WORD n )
+{
+  HANDLE 	hRet = 0;
+  HICON*	RetPtr = NULL;
+  BYTE*  	pData;
+  OFSTRUCT 	ofs;
+  HFILE 	hFile = OpenFile( lpszExeFileName, &ofs, OF_READ );
+  
+  dprintf_reg(stddeb, "InternalExtractIcon(%04x, file '%s', start from %d, extract %d\n", 
+		       hInstance, lpszExeFileName, nIconIndex, n);
+
+  if( hFile == HFILE_ERROR || !n ) return 0;
+
+  hRet = GlobalAlloc( GMEM_MOVEABLE, sizeof(HICON)*n);
+  RetPtr = (HICON*)GlobalLock(hRet);
+
+ *RetPtr = (n == 0xFFFF)? 0: 1;				/* error return values */
+
+  pData = SHELL_GetResourceTable(hFile);
+  if( pData ) 
+    if( pData == (BYTE*)-1 )
+      {
+	/* FIXME: possible .ICO file */
+
+	fprintf(stddeb,"InternalExtractIcon: cannot handle file %s\n", lpszExeFileName);
+      }
+    else						/* got resource table */
+      {
+	UINT	     iconDirCount = 0;
+	UINT	     iconCount = 0;
+	NE_TYPEINFO* pTInfo = (NE_TYPEINFO*)(pData + 2);
+	NE_NAMEINFO* pIconStorage = NULL;
+	NE_NAMEINFO* pIconDir = NULL;
+
+	/* find icon directory and icon repository */
+
+        while( pTInfo->type_id && !(pIconStorage && pIconDir) )
+	  {
+	   if( pTInfo->type_id == NE_RSCTYPE_GROUP_ICON ) 
+	       {
+		 iconDirCount = pTInfo->count;
+	         pIconDir = ((NE_NAMEINFO*)(pTInfo + 1));
+		 dprintf_reg(stddeb,"\tfound directory - %i icon families\n", iconDirCount);
+	       }
+	   if( pTInfo->type_id == NE_RSCTYPE_ICON ) 
+	       { 
+		 iconCount = pTInfo->count;
+		 pIconStorage = ((NE_NAMEINFO*)(pTInfo + 1));
+		 dprintf_reg(stddeb,"\ttotal icons - %i\n", iconCount);
+	       }
+  	   pTInfo = (NE_TYPEINFO *)((char*)(pTInfo+1)+pTInfo->count*sizeof(NE_NAMEINFO));
+          }
+
+	/* load resources and create icons */
+
+        if( pIconStorage && pIconDir )
+
+            if( nIconIndex == (UINT)-1 ) RetPtr[0] = iconDirCount;
+	    else if( nIconIndex < iconDirCount )
+	      {
+		  HANDLE hIcon;
+		  UINT   i, icon;
+
+		  if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
+
+		  for( i = nIconIndex; i < nIconIndex + n; i++ ) 
+		     {
+		       hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + (i - nIconIndex), 
+										 *(WORD*)pData );
+		       RetPtr[i-nIconIndex] = GetIconID( hIcon, 3 );
+		       GlobalFree(hIcon); 
+		     }
+
+		  for( icon = nIconIndex; icon < nIconIndex + n; icon++ )
+		     {
+		       hIcon = 0;
+		       for( i = 0; i < iconCount; i++ )
+			  if( pIconStorage[i].id == (RetPtr[icon-nIconIndex] | 0x8000) )
+			      hIcon = SHELL_LoadResource( hInstance, hFile, pIconStorage + i,
+									     *(WORD*)pData );
+	               RetPtr[icon-nIconIndex] = (hIcon)?CURSORICON_LoadHandler( hIcon, hInstance, FALSE ):0;
+		     }
+	      }
+	free(pData);
+      }
+
+ _lclose( hFile );
+ 
+  /* return array with icon handles */
+
+  return hRet;
+}
+
+/*************************************************************************
+ *				ExtractIcon 		[SHELL.34]
+ */
+HICON ExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, WORD nIconIndex)
+{
+  HANDLE handle = InternalExtractIcon(hInstance,lpszExeFileName,nIconIndex, 1);
+
+  if( handle )
+    {
+      HICON* ptr = (HICON*)GlobalLock(handle);
+      HICON  hIcon = *ptr;
+
+      GlobalFree(handle);
+      return hIcon;
+    }
+  return 0;
+}
 
 /*************************************************************************
  *				ExtractAssociatedIcon	[SHELL.36]
  */
 HICON ExtractAssociatedIcon(HINSTANCE hInst,LPSTR lpIconPath, LPWORD lpiIcon)
 {
-    dprintf_reg(stdnimp, "ExtractAssociatedIcon : Empty Stub !!!\n");
-    return 0;
+    HICON hIcon = ExtractIcon(hInst, lpIconPath, *lpiIcon);
+
+    /* MAKEINTRESOURCE(2) seems to be "default" icon according to Progman 
+     *
+     * For data files it probably should call FindExecutable and load
+     * icon from there. As of now FindExecutable is empty stub.
+     */
+
+    if( hIcon < 2 ) hIcon = LoadIcon( hInst, MAKEINTRESOURCE(2));
+
+    return hIcon;
 }
 
 /*************************************************************************
- *              DoEnvironmentSubst      [SHELL.37]
+ *				FindEnvironmentString	[SHELL.38]
+ *
+ * Returns a pointer into the DOS environment... Ugh.
  */
-DWORD DoEnvironmentSubst(LPSTR str,WORD len)
+LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 {
-    dprintf_reg(stdnimp, "DoEnvironmentSubst(%s,%x): Empty Stub !!!\n",str,len);
-    return 0;
+  UINT 	l = strlen(entry); 
+  for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
+     {
+       if( strncasecmp(lpEnv, entry, l) ) continue;
+       
+       if( !*(lpEnv+l) )
+         return (lpEnv + l); 		/* empty entry */
+       else if ( *(lpEnv+l)== '=' )
+	 return (lpEnv + l + 1);
+     }
+  return NULL;
+}
+
+SEGPTR FindEnvironmentString(LPSTR str)
+{
+ SEGPTR  spEnv = GetDOSEnvironment();
+ LPSTR  lpEnv = (LPSTR)PTR_SEG_TO_LIN(spEnv);
+ 
+ LPSTR  lpString = (spEnv)?SHELL_FindString(lpEnv, str):NULL; 
+
+ if( lpString )		/*  offset should be small enough */
+     return spEnv + (lpString - lpEnv);
+
+ return (SEGPTR)NULL;
+}
+
+/*************************************************************************
+ *              		DoEnvironmentSubst      [SHELL.37]
+ *
+ * Replace %KEYWORD% in the str with the value of variable KEYWORD
+ * from "DOS" environment.
+ */
+DWORD DoEnvironmentSubst(LPSTR str,WORD length)
+{
+  LPSTR   lpEnv = (LPSTR)PTR_SEG_TO_LIN(GetDOSEnvironment());
+  LPSTR   lpBuffer = (LPSTR)xmalloc(length);
+  LPSTR   lpstr = str;
+  LPSTR   lpbstr = lpBuffer;
+
+  AnsiToOem(str,str);
+
+  dprintf_reg(stddeb,"DoEnvSubst: accept %s", str);
+
+  while( *lpstr && lpbstr - lpBuffer < length )
+   {
+     LPSTR lpend = lpstr;
+
+     if( *lpstr == '%' )
+       {
+	  do { lpend++; } while( *lpend && *lpend != '%' );
+	  if( *lpend == '%' && lpend - lpstr > 1 )	/* found key */
+	    {
+	       LPSTR lpKey;
+	      *lpend = '\0';  
+	       lpKey = SHELL_FindString(lpEnv, lpstr+1);
+	       if( lpKey )				/* found key value */
+		 {
+		   int l = strlen(lpKey);
+
+		   if( l > length - (lpbstr - lpBuffer) - 1 )
+		     {
+		       fprintf(stdnimp,"File %s, line %i: Env subst aborted - string too short\n", 
+					__FILE__, __LINE__);
+		      *lpend = '%';
+		       break;
+		     }
+		   strcpy(lpbstr, lpKey);
+		   lpbstr += l;
+		 }
+	       else break;
+	      *lpend = '%';
+	       lpstr = lpend + 1;
+	    }
+	  else break;					/* back off and whine */
+
+	  continue;
+       } 
+
+     *lpbstr++ = *lpstr++;
+   }
+
+ *lpbstr = '\0';
+  if( lpstr - str == strlen(str) )
+    {
+      strncpy(str, lpBuffer, length);
+      length = 1;
+    }
+  else
+      length = 0;
+
+  dprintf_reg(stddeb," return %s\n", str);
+
+  OemToAnsi(str,str);
+  free(lpBuffer);
+
+  /*  Return str length in the LOWORD
+   *  and 1 in HIWORD if subst was successful.
+   */
+ return (DWORD)MAKELONG(strlen(str), length);
 }
 
 /*************************************************************************

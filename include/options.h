@@ -19,7 +19,8 @@ typedef enum
     LANG_Da,  /* Danish */
     LANG_Cz,  /* Czech */
     LANG_Eo,  /* Esperanto */
-    LANG_It   /* Italian */
+    LANG_It,  /* Italian */
+    LANG_Ko   /* Korean */
 } WINE_LANGUAGE;
 
 extern const char *langNames[];

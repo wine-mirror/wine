@@ -23,9 +23,6 @@
 #include "stddebug.h"
 #include "debug.h"
 
-typedef struct resource_typeinfo_s NE_TYPEINFO;
-typedef struct resource_nameinfo_s NE_NAMEINFO;
-
 
 /***********************************************************************
  *           NE_FindNameTableId

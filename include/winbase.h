@@ -102,6 +102,15 @@ typedef struct
   int ss;
 } exception_info;
 
+/* Could this type be considered opaque? */
+typedef struct {
+	LPVOID	DebugInfo;
+	LONG LockCount;
+	LONG RecursionCount;
+	HANDLE OwningThread;
+	HANDLE LockSemaphore;
+	DWORD Reserved;
+}CRITICAL_SECTION;
 
 /*DWORD WINAPI GetVersion( void );*/
 

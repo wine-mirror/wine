@@ -10,9 +10,6 @@
 #include "ldt.h"
 #include "local.h"
 
-extern BOOL USER_HeapInit(void);
-/* USER local heap */
-
 #ifdef WINELIB
 
 #define USER_HEAP_ALLOC(size) LocalAlloc (LMEM_FIXED, size)
@@ -23,7 +20,6 @@ extern BOOL USER_HeapInit(void);
 
 #else  /* WINELIB */
 
-extern LPSTR USER_Heap;
 extern WORD USER_HeapSel;
 
 #define USER_HEAP_ALLOC(size) \

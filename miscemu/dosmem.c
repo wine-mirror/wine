@@ -9,11 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "windows.h"
+#include "winbase.h"
 #include "global.h"
 #include "ldt.h"
 #include "miscemu.h"
 #include "module.h"
-#include "xmalloc.h"
 
 
 HANDLE DOSMEM_BiosSeg;  /* BIOS data segment at 0x40:0 */
@@ -82,7 +82,7 @@ static BIOSDATA *pBiosData = NULL;
  *           DOSMEM_Init
  *
  * Create the dos memory segments, and store them into the KERNEL
- * exported values. MODULE_Init() must already have been called.
+ * exported values. BUILTIN_Init() must already have been called.
  */
 BOOL DOSMEM_Init(void)
 {
@@ -91,7 +91,12 @@ BOOL DOSMEM_Init(void)
 
     /* Allocate 7 64k segments for 0000, A000, B000, C000, D000, E000, F000. */
 
-    dosmem = xmalloc( 0x70000 );
+    dosmem = VirtualAlloc( NULL, 0x70000, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    if (!dosmem)
+    {
+        fprintf( stderr, "Could not allocate DOS segments\n" );
+        return FALSE;
+    }
 
     MODULE_SetEntryPoint( hModule, 183,  /* KERNEL.183: __0000H */
                           GLOBAL_CreateBlock( GMEM_FIXED, dosmem,

@@ -129,7 +129,7 @@ break_command:
 
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
-    | tINFO tCLASS expr tEOL    { CLASS_DumpClass( $3 ); }
+    | tINFO tCLASS expr tEOL    { CLASS_DumpClass( (CLASS *)$3 ); }
     | tINFO tMODULE expr tEOL   { MODULE_DumpModule( $3 ); }
     | tINFO tQUEUE expr tEOL    { QUEUE_DumpQueue( $3 ); }
     | tINFO tREGS tEOL          { DEBUG_InfoRegisters(); }

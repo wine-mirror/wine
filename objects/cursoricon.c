@@ -231,7 +231,7 @@ static BOOL CURSORICON_LoadDirEntry(HANDLE hInstance, SEGPTR name,
  *
  * Create a cursor or icon from a resource.
  */
-static HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
+HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
                                       BOOL fCursor )
 {
     HANDLE hAndBits, hXorBits;

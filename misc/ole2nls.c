@@ -33,6 +33,7 @@ DWORD WINAPI GetUserDefaultLCID()
     case LANG_Cz:
     case LANG_Eo:
     case LANG_It:
+    case LANG_Ko:
     default:
 	return 0;  /* Neutral language */
     }
@@ -699,3 +700,10 @@ int CompareStringA(DWORD lcid, DWORD fdwStyle,
 	return (l1<l2)? 1 : 3;
 }
 
+/***********************************************************************
+ *           SetLocalInfoA       (KERNEL32.499)
+ */
+BOOL SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data) {
+	fprintf(stdnimp,"SetLocaleInfoA(%ld,%ld,%s)\n",lcid,lctype,data);
+	return TRUE;
+}

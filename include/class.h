@@ -11,30 +11,21 @@
 
 #define CLASS_MAGIC   0x4b4e      /* 'NK' */
 
-#ifndef WINELIB
-#pragma pack(1)
-#endif
-
-  /* !! Don't change this structure (see GetClassLong()) */
 typedef struct tagCLASS
 {
-    HCLASS       hNext;         /* Next class */
-    WORD         wMagic;        /* Magic number (must be CLASS_MAGIC) */
-    ATOM         atomName;      /* Name of the class */
-    HANDLE       hdce;          /* Class DCE (if CS_CLASSDC) */
-    WORD         cWindows;      /* Count of existing windows of this class */
-    WNDCLASS     wc WINE_PACKED;  /* Class information */
-    WORD         wExtra[1];     /* Class extra bytes */
+    struct tagCLASS *next;      /* Next class */
+    HCLASS           self;      /* Handle to this class */
+    WORD             wMagic;    /* Magic number (must be CLASS_MAGIC) */
+    ATOM             atomName;  /* Name of the class */
+    HANDLE           hdce;      /* Class DCE (if CS_CLASSDC) */
+    WORD             cWindows;  /* Count of existing windows of this class */
+    WNDCLASS         wc;        /* Class information */
+    WORD             wExtra[1]; /* Class extra bytes */
 } CLASS;
 
-#ifndef WINELIB
-#pragma pack(4)
-#endif
-
-extern void CLASS_DumpClass( HCLASS hClass );
+extern void CLASS_DumpClass( CLASS *class );
 extern void CLASS_WalkClasses(void);
-extern HCLASS CLASS_FindClassByName( SEGPTR name, HINSTANCE hinstance,
-                                     CLASS **ptr );
-extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
+extern void CLASS_FreeModuleClasses( HMODULE hModule );
+extern CLASS * CLASS_FindClassByName( SEGPTR name, HINSTANCE hinstance );
 
 #endif  /* CLASS_H */

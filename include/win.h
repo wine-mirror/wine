@@ -29,35 +29,35 @@
 
 typedef struct tagWND
 {
-    struct tagWND *next;         /* Next sibling */
-    struct tagWND *child;        /* First child */
-    struct tagWND *parent;       /* Window parent (from CreateWindow) */
-    struct tagWND *owner;        /* Window owner */
-    DWORD        dwMagic;        /* Magic number (must be WND_MAGIC) */
-    HWND         hwndSelf;       /* Handle of this window */
-    HCLASS       hClass;         /* Window class */
-    HANDLE       hInstance;      /* Window hInstance (from CreateWindow) */
-    RECT         rectClient;     /* Client area rel. to parent client area */
-    RECT         rectWindow;     /* Whole window rel. to parent client area */
-    RECT         rectNormal;     /* Window rect. when in normal state */
-    POINT        ptIconPos;      /* Icon position */
-    POINT        ptMaxPos;       /* Maximized window position */
-    HGLOBAL      hmemTaskQ;      /* Task queue global memory handle */
-    HRGN         hrgnUpdate;     /* Update region */
-    HWND         hwndLastActive; /* Last active popup hwnd */
-    WNDPROC      lpfnWndProc;    /* Window procedure */
-    DWORD        dwStyle;        /* Window style (from CreateWindow) */
-    DWORD        dwExStyle;      /* Extended style (from CreateWindowEx) */
-    HANDLE       hdce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
-    HANDLE       hVScroll;       /* Vertical scroll-bar info */
-    HANDLE       hHScroll;       /* Horizontal scroll-bar info */
-    UINT         wIDmenu;        /* ID or hmenu (from CreateWindow) */
-    HANDLE       hText;          /* Handle of window text */
-    WORD         flags;          /* Misc. flags (see below) */
-    Window       window;         /* X window (only for top-level windows) */
-    HMENU        hSysMenu;	 /* window's copy of System Menu */
-    HANDLE       hProp;          /* Handle of Properties List */
-    WORD         wExtra[1];      /* Window extra bytes */
+    struct tagWND *next;          /* Next sibling */
+    struct tagWND *child;         /* First child */
+    struct tagWND *parent;        /* Window parent (from CreateWindow) */
+    struct tagWND *owner;         /* Window owner */
+    CLASS         *class;         /* Window class */
+    DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
+    HWND           hwndSelf;      /* Handle of this window */
+    HANDLE         hInstance;     /* Window hInstance (from CreateWindow) */
+    RECT           rectClient;    /* Client area rel. to parent client area */
+    RECT           rectWindow;    /* Whole window rel. to parent client area */
+    RECT           rectNormal;    /* Window rect. when in normal state */
+    POINT          ptIconPos;     /* Icon position */
+    POINT          ptMaxPos;      /* Maximized window position */
+    HGLOBAL        hmemTaskQ;     /* Task queue global memory handle */
+    HRGN           hrgnUpdate;    /* Update region */
+    HWND           hwndLastActive;/* Last active popup hwnd */
+    WNDPROC        lpfnWndProc;   /* Window procedure */
+    DWORD          dwStyle;       /* Window style (from CreateWindow) */
+    DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
+    HANDLE         hdce;          /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
+    HANDLE         hVScroll;      /* Vertical scroll-bar info */
+    HANDLE         hHScroll;      /* Horizontal scroll-bar info */
+    UINT           wIDmenu;       /* ID or hmenu (from CreateWindow) */
+    HANDLE         hText;         /* Handle of window text */
+    WORD           flags;         /* Misc. flags (see below) */
+    Window         window;        /* X window (only for top-level windows) */
+    HMENU          hSysMenu;      /* window's copy of System Menu */
+    HANDLE         hProp;         /* Handle of Properties List */
+    WORD           wExtra[1];     /* Window extra bytes */
 } WND;
 
   /* WND flags values */
@@ -70,9 +70,6 @@ typedef struct tagWND
 #define WIN_GOT_SIZEMSG        0x0040 /* WM_SIZE has been sent to the window */
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
 #define WIN_MANAGED            0x0100 /* Window managed by the X wm */
-
-#define WIN_CLASS_INFO(wndPtr)   (CLASS_FindClassPtr((wndPtr)->hClass)->wc)
-#define WIN_CLASS_STYLE(wndPtr)  (WIN_CLASS_INFO(wndPtr).style)
 
   /* Window functions */
 extern WND *WIN_FindWndPtr( HWND hwnd );

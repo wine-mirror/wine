@@ -18,7 +18,6 @@
 #include "ldt.h"
 #include "neexe.h"
 #include "peexe.h"
-#include "dlls.h"
 #include "pe_image.h"
 #include "resource.h"
 #include "stddebug.h"

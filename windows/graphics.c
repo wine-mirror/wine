@@ -994,3 +994,26 @@ BOOL FloodFill( HDC hdc, INT x, INT y, COLORREF color )
 {
     return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
 }
+
+
+/**********************************************************************
+ *          DrawEdge  (USER.659)
+ */
+BOOL WINAPI 
+DrawEdge(HDC hdc, LPRECT qrc, UINT edge, UINT flags) {
+	fprintf(stdnimp,"DrawEdge(%x,%p,%d,%x), empty stub!\n",
+		hdc,qrc,edge,flags
+	);
+	return TRUE;
+}
+
+/**********************************************************************
+ *          DrawFrameControl  (USER.656)
+ */
+BOOL WINAPI 
+DrawFrameControl(HDC hdc, LPRECT qrc, UINT edge, UINT flags) {
+	fprintf(stdnimp,"DrawFrameControl(%x,%p,%d,%x), empty stub!\n",
+		hdc,qrc,edge,flags
+	);
+	return TRUE;
+}

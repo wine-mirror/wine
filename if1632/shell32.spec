@@ -86,7 +86,7 @@ base	1
 0081 stub SheShortenPathW
 0082 stub ShellAboutA
 0083 stub ShellAboutW
-0084 stub ShellExecuteA
+0084 stdcall ShellExecuteA(word ptr ptr ptr ptr s_word) ShellExecute
 0085 stub ShellExecuteEx
 0086 stub ShellExecuteExA
 0087 stub ShellExecuteExW

@@ -1,6 +1,5 @@
 name	mmsystem
 type	win16
-id	10
 
 #1      pascal  MMSYSTEM_WEP(word word word ptr) MMSYSTEM_WEP
 2      pascal  SNDPLAYSOUND(ptr word) sndPlaySound

@@ -5,7 +5,6 @@
 #  
 name	winsock
 type	win16
-id	8
 
 1   pascal16 accept(word ptr ptr) WINSOCK_accept
 2   pascal16 bind(word ptr word) WINSOCK_bind

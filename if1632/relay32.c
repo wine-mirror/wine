@@ -12,70 +12,16 @@
 #include <errno.h>
 #include "windows.h"
 #include "callback.h"
-#include "dlls.h"
 #include "module.h"
 #include "neexe.h"
 #include "peexe.h"
 #include "relay32.h"
 #include "struct32.h"
 #include "stackframe.h"
-#include "xmalloc.h"
 #include "ldt.h"
 #include "stddebug.h"
 #include "debug.h"
 
-typedef struct
-{
-    char *name;
-    void *definition;
-} WIN32_function;
-
-typedef struct
-{
-    int base;
-    int size;
-    WIN32_function functions[1];
-} WIN32_DLL_INFO;
-
-
-void *RELAY32_GetEntryPoint(BUILTIN_DLL *dll, char *item, int hint)
-{
-    const WIN32_DLL_INFO *info = (const WIN32_DLL_INFO *)dll->data_start;
-    int i;
-
-    dprintf_module(stddeb, "Looking for %s in %s, hint %x\n",
-                   item ? item: "(no name)", dll->name, hint);
-    if(!dll) return 0;
-
-    /* import by ordinal */
-    if(!item)
-    {
-        if(hint && hint < info->size)
-            return info->functions[hint - info->base].definition;
-        return 0;
-    }
-
-    /* hint is correct */
-    if (hint && hint < info->size && 
-        info->functions[hint].name &&
-        strcmp(item,info->functions[hint].name)==0)
-        return info->functions[hint].definition;
-
-    /* hint is incorrect, search for name */
-    for(i=0;i < info->size;i++)
-        if (info->functions[i].name && !strcmp(item,info->functions[i].name))
-            return info->functions[i].definition;
-
-    /* function at hint has no name (unimplemented) */
-    if(hint && hint < info->size && !info->functions[hint].name)
-    {
-/*        info->functions[hint].name=xstrdup(item); */
-        dprintf_module(stddeb,"Returning unimplemented function %s.%d (%s?)\n",
-                       dll->name,hint,item);
-        return info->functions[hint].definition;
-    }
-    return 0;
-}
 
 LONG RELAY32_CallWindowProcConvStruct( WNDPROC func, int hwnd, int message,
 	int wParam, LPARAM lParam16)

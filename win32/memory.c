@@ -296,3 +296,23 @@ int TranslateProtectionFlags(DWORD protection_flags)
    return prot;
 }
 
+
+/******************************************************************
+ *                   IsBadReadPtr
+ */
+BOOL WIN32_IsBadReadPtr(void* ptr, unsigned int bytes)
+{
+	dprintf_global(stddeb,"IsBadReadPtr(%x,%x)\n",ptr,bytes);
+	/* FIXME: Should make check based on actual mappings, here */
+	return FALSE;
+}
+
+/******************************************************************
+ *                   IsBadWritePtr
+ */
+BOOL WIN32_IsBadWritePtr(void* ptr, unsigned int bytes)
+{
+	dprintf_global(stddeb,"IsBadWritePtr(%x,%x)\n",ptr,bytes);
+	/* FIXME: Should make check based on actual mappings, here */
+	return FALSE;
+}

@@ -3,7 +3,6 @@
 
 #include <sys/types.h>
 #include "windows.h"
-#include "dlls.h"
 
 struct pe_data {
 	struct pe_header_s *pe_header;

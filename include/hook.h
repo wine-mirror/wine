@@ -4,8 +4,8 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#ifndef HOOK_H
-#define HOOK_H
+#ifndef __WINE_HOOK_H
+#define __WINE_HOOK_H
 
 #include "windows.h"
 #include "ldt.h"
@@ -34,5 +34,7 @@ typedef struct
 
 extern DWORD HOOK_CallHooks( short id, short code,
                              WPARAM wParam, LPARAM lParam );
+extern void HOOK_FreeModuleHooks( HMODULE hModule );
+extern void HOOK_FreeQueueHooks( HQUEUE hQueue );
 
-#endif  /* HOOK_H */
+#endif  /* __WINE_HOOK_H */

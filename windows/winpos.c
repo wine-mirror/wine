@@ -1056,8 +1056,6 @@ HWND WINPOS_ReorderOwnedPopups(HWND hwndInsertAfter, WND* wndPtr, WORD flags)
  */
 static void WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT lpOldWndRect, LPRECT lpOldClientRect, BOOL bNoCopy )
 {
- /* visible regions are in window coordinates */
-
  HRGN newVisRgn    = DCE_GetVisRgn(Wnd->hwndSelf, DCX_WINDOW | DCX_CLIPSIBLINGS );
  HRGN dirtyRgn     = CreateRectRgn(0,0,0,0);
  int  other, my;

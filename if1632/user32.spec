@@ -240,7 +240,7 @@ base	1
 0228 stub GetCursorPos
 0229 stdcall GetDC(long) GetDC
 0230 stub GetDCEx
-0231 stub GetDesktopWindow
+0231 stdcall GetDesktopWindow() GetDesktopWindow
 0232 stub GetDialogBaseUnits
 0233 stub GetDlgCtrlID
 0234 stdcall GetDlgItem(long long) GetDlgItem
@@ -298,8 +298,8 @@ base	1
 0286 stub GetShellWindow
 0287 stub GetSubMenu
 0288 	stdcall GetSysColor(long) GetSysColor
-0289 stub GetSysColorBrush
-0290 stub GetSystemMenu
+0289 stdcall GetSysColorBrush(long) GetSysColorBrush
+0290 stdcall GetSystemMenu(long long) GetSystemMenu
 0291 stdcall GetSystemMetrics(long) GetSystemMetrics
 0292 stub GetTabbedTextExtentA
 0293 stub GetTabbedTextExtentW
@@ -310,14 +310,14 @@ base	1
 0298 stub GetUserObjectInformationA
 0299 stub GetUserObjectInformationW
 0300 stub GetUserObjectSecurity
-0301 stub GetWindow
+0301 stdcall GetWindow(long long) GetWindow
 0302 stub GetWindowContextHelpId
 0303 stdcall GetWindowDC(long) GetWindowDC
 0304 stub GetWindowLongA
 0305 stub GetWindowLongW
 0306 stub GetWindowPlacement
 0307 stub GetWindowRect
-0308 stub GetWindowTextA
+0308 stdcall GetWindowTextA(long segptr long) WIN16_GetWindowText
 0309 stub GetWindowTextLengthA
 0310 stub GetWindowTextLengthW
 0311 stub GetWindowTextW
@@ -398,7 +398,7 @@ base	1
 0386 stub MenuItemFromPoint
 0387 stub MenuWindowProcA
 0388 stub MenuWindowProcW
-0389 stub MessageBeep
+0389 stdcall MessageBeep(long) MessageBeep
 0390	stdcall MessageBoxA(long ptr ptr long)	MessageBox
 0391 stub MessageBoxExA
 0392 stub MessageBoxExW

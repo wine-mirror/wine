@@ -1,6 +1,5 @@
 name	system
 type	win16
-id	11
 
 1 stub InquireSystem
 2 stub CreateSystemTimer

@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "win.h"
-#include "class.h"
 #include "user.h"
 #include "nonclient.h"
 #include "winpos.h"
@@ -52,7 +51,6 @@ void DEFWND_SetText( WND *wndPtr, LPSTR text )
  */
 LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    CLASS * classPtr;
     LPSTR textPtr;
     int len;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -164,19 +162,18 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
 	{
-	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
-	    if (!classPtr->wc.hbrBackground) return 0;
-            if (classPtr->wc.hbrBackground <= (HBRUSH)(COLOR_MAX+1))
+	    if (!wndPtr->class->wc.hbrBackground) return 0;
+            if (wndPtr->class->wc.hbrBackground <= (HBRUSH)(COLOR_MAX+1))
             {
                  HBRUSH hbrush;
                  hbrush = CreateSolidBrush(
-                     GetSysColor(((DWORD)classPtr->wc.hbrBackground)-1));
+                     GetSysColor(((DWORD)wndPtr->class->wc.hbrBackground)-1));
                  FillWindow( GetParent(hwnd), hwnd, (HDC)wParam, hbrush);
                  DeleteObject (hbrush);
             }
             else
 	         FillWindow( GetParent(hwnd), hwnd, (HDC)wParam,
-		        classPtr->wc.hbrBackground );
+                             wndPtr->class->wc.hbrBackground );
 	    return 1;
 	}
 

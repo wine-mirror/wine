@@ -35,17 +35,6 @@ BOOL func_name( HDC hdc, LPPOINT pt ) \
     return TRUE; \
 }
 
-#define DC_SET_VAL( func_type, func_name, dc_field ) \
-func_type func_name( HDC hdc, func_type val ) \
-{ \
-    func_type prevVal; \
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
-    if (!dc) return 0; \
-    prevVal = dc->w.dc_field; \
-    dc->w.dc_field = val; \
-    return prevVal; \
-}
-
 #define DC_SET_MODE( func_name, dc_field, min_val, max_val, meta_func ) \
 WORD func_name( HDC hdc, WORD mode ) \
 { \
@@ -90,7 +79,6 @@ DC_GET_VAL( HRGN, InquireVisRgn, hVisRgn )                        /* GDI.131 */
 DC_GET_X_Y( DWORD, GetBrushOrg, brushOrgX, brushOrgY )            /* GDI.149 */
 DC_GET_VAL( HRGN, GetClipRgn, hClipRgn )                          /* GDI.173 */
 DC_GET_VAL( WORD, GetTextAlign, textAlign )                       /* GDI.345 */
-DC_SET_VAL( WORD, SetTextAlign, textAlign )                       /* GDI.346 */
 DC_GET_VAL( HFONT, GetCurLogFont, hFont )                         /* GDI.411 */
 DC_GET_VAL_EX( GetBrushOrgEx, brushOrgX, brushOrgY )              /* GDI.469 */
 DC_GET_VAL_EX( GetCurrentPositionEx, CursPosX, CursPosY )         /* GDI.470 */

@@ -54,6 +54,7 @@
 #include "bitmaps/obm_old_uparrow"
 #include "bitmaps/obm_size"
 #include "bitmaps/obm_old_close"
+#include "bitmaps/obm_trtype"
 
 #ifndef WIN_95_LOOK
 #include "bitmaps/obm_zoomd"
@@ -70,7 +71,7 @@
 #include "bitmaps/obm_closed_95"
 #endif  /* WIN_95_LOOK */
 
-#define OBM_FIRST  OBM_CDROM      /* First OEM bitmap */
+#define OBM_FIRST  OBM_TRTYPE	   /* First OEM bitmap */
 #define OBM_LAST   OBM_OLD_CLOSE   /* Last OEM bitmap */
 
 static const struct
@@ -78,6 +79,7 @@ static const struct
     char** data;   /* Pointer to bitmap data */
     BOOL   color;  /* Is it a color bitmap?  */
 } OBM_Pixmaps_Data[OBM_LAST-OBM_FIRST+1] = {
+    { obm_trtype, TRUE },	/* OBM_TRTYPE */    
     { obm_cdrom, TRUE },        /* OBM_CDROM    */
     { obm_harddisk, TRUE },     /* OBM_HARDDISK */
     { obm_drive, TRUE },        /* OBM_DRIVE    */

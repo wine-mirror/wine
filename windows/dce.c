@@ -310,9 +310,9 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
                    DCX_CLIPSIBLINGS | DCX_PARENTCLIP);
 	if (wndPtr)
 	{
-            if (!(WIN_CLASS_STYLE(wndPtr) & (CS_OWNDC | CS_CLASSDC)))
+            if (!(wndPtr->class->wc.style & (CS_OWNDC | CS_CLASSDC)))
 		flags |= DCX_CACHE;
-            if (WIN_CLASS_STYLE(wndPtr) & CS_PARENTDC) flags |= DCX_PARENTCLIP;
+            if (wndPtr->class->wc.style & CS_PARENTDC) flags |= DCX_PARENTCLIP;
 	    if (wndPtr->dwStyle & WS_CLIPCHILDREN) flags |= DCX_CLIPCHILDREN;
 	    if (wndPtr->dwStyle & WS_CLIPSIBLINGS) flags |= DCX_CLIPSIBLINGS;
 	}

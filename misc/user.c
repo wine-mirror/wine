@@ -2,6 +2,7 @@
  * Misc. USER functions
  *
  * Copyright 1993 Robert J. Amstadt
+ *	     1996 Alex Korobka 
  */
 
 #include <stdio.h>
@@ -9,15 +10,19 @@
 #include "windows.h"
 #include "gdi.h"
 #include "user.h"
+#include "task.h"
+#include "queue.h"
+#include "class.h"
 #include "win.h"
+#include "hook.h"
+#include "debug.h"
 #include "toolhelp.h"
 
-#define USER_HEAP_SIZE          0x10000
-
 #ifndef WINELIB
-LPSTR USER_Heap = NULL;
 WORD USER_HeapSel = 0;
 
+extern void 	TIMER_NukeTimers(HWND, HQUEUE );
+extern HTASK	TASK_GetNextTask(HTASK);
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
@@ -66,19 +71,7 @@ BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
     return TRUE;
 }
 
-
-/***********************************************************************
- *           USER_HeapInit
- */
-BOOL USER_HeapInit(void)
-{
-    if (!(USER_HeapSel = GlobalAlloc(GMEM_FIXED,USER_HEAP_SIZE))) return FALSE;
-    USER_Heap = GlobalLock( USER_HeapSel );
-    LocalInit( USER_HeapSel, 0, USER_HEAP_SIZE-1 );
-    return TRUE;
-}
-#endif
-
+#endif  /* WINELIB */
 
 /***********************************************************************
  *           TimerCount   (TOOLHELP.80)
@@ -114,3 +107,35 @@ int USER_InitApp(HINSTANCE hInstance)
 
     return 1;
 }
+
+/**********************************************************************
+ *					USER_AppExit
+ */
+void USER_AppExit(HTASK hTask, HINSTANCE hInstance, HQUEUE hQueue)
+{
+    /* FIXME: flush send messages (which are not implemented yet),
+     *        empty clipboard if needed, maybe destroy menus (Windows
+     *	      only complains about them but does nothing);
+     */
+
+    WND* desktop = WIN_GetDesktop();
+
+    /* Patch desktop window queue */
+    if( desktop->hmemTaskQ == hQueue )
+	desktop->hmemTaskQ = GetTaskQueue(TASK_GetNextTask(hTask));
+
+    /* Nuke timers */
+
+    TIMER_NukeTimers( 0, hQueue );
+
+    HOOK_FreeQueueHooks( hQueue );
+
+    /* Nuke orphaned windows */
+
+    WIN_DestroyQueueWindows( desktop->child, hQueue );
+
+    /* Free the message queue */
+
+    QUEUE_DeleteMsgQueue( hQueue );
+}
+

@@ -34,8 +34,7 @@
 #define STACK32_SIZE 0x10000
 
 extern void TIMER_SwitchQueue(HQUEUE, HQUEUE );
-extern void TIMER_NukeTimers(HWND, HQUEUE );
-
+extern void USER_AppExit(HTASK, HINSTANCE, HQUEUE );
 /* ------ Internal variables ------ */
 
 static HTASK hFirstTask = 0;
@@ -67,6 +66,18 @@ BOOL TASK_Init(void)
     if (!(hDOSEnvironment = TASK_CreateDOSEnvironment()))
         fprintf( stderr, "Not enough memory for DOS Environment\n" );
     return (hDOSEnvironment != 0);
+}
+
+
+/***********************************************************************
+ *	     TASK_GetNextTask
+ */
+HTASK TASK_GetNextTask( HTASK hTask )
+{
+    TDB* pTask = (TDB*)GlobalLock(hTask);
+
+    if (pTask->hNext) return pTask->hNext;
+    return (hFirstTask != hTask) ? hFirstTask : 0; 
 }
 
 
@@ -526,8 +537,8 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     frame16->saved_sp = 0; /*pTask->sp;*/
     frame16->ds = frame16->es = pTask->hInstance;
     frame16->entry_point = 0;
-    frame16->ordinal_number = 24;  /* WINPROCS.24 is TASK_Reschedule */
-    frame16->dll_id = 24; /* WINPROCS */
+    frame16->entry_ip = OFFSETOF(TASK_RescheduleProc) + 14;
+    frame16->entry_cs = SELECTOROF(TASK_RescheduleProc);
     frame16->bp = 0;
     frame16->ip = LOWORD( CALLTO16_RetAddr_word );
     frame16->cs = HIWORD( CALLTO16_RetAddr_word );
@@ -583,14 +594,6 @@ static void TASK_DeleteTask( HTASK hTask )
 
     FILE_CloseAllFiles( pTask->hPDB );
 
-    /* Nuke timers */
-
-    TIMER_NukeTimers( 0, pTask->hQueue );
-
-    /* Free the message queue */
-
-    QUEUE_DeleteMsgQueue( pTask->hQueue );
-
     /* Free the selector aliases */
 
     GLOBAL_FreeBlock( pTask->hCSAlias );
@@ -618,6 +621,12 @@ static void TASK_DeleteTask( HTASK hTask )
 void TASK_KillCurrentTask( int exitCode )
 {
     extern void EXEC_ExitWindows( int retCode );
+
+    TDB* pTask = (TDB*) GlobalLock( hCurrentTask );
+
+    /* Perform USER cleanup */
+
+    USER_AppExit( hCurrentTask, pTask->hInstance, pTask->hQueue );
 
     if (hTaskToKill && (hTaskToKill != hCurrentTask))
     {

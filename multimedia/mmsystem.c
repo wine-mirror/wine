@@ -20,6 +20,7 @@
 #include "callback.h"
 #include "user.h"
 #include "driver.h"
+#include "file.h"
 #include "mmsystem.h"
 #include "stddebug.h"
 #include "debug.h"

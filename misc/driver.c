@@ -9,7 +9,6 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "windows.h"
 #include "win.h"
 #include "user.h"
-#include "dlls.h"
 #include "driver.h"
 #include "stddebug.h"
 #include "debug.h"

@@ -53,6 +53,7 @@ COMMONSUBDIRS = \
 	files \
 	ipc \
 	loader \
+	memory \
 	misc \
 	multimedia \
 	objects \
@@ -65,7 +66,6 @@ EMUSUBDIRS = \
 	debugger \
 	debugger/readline \
 	if1632 \
-	memory \
 	miscemu
 
 LIBSUBDIRS = library
@@ -79,6 +79,7 @@ COMMONOBJS = \
 	files/files.o \
 	ipc/ipc.o \
 	loader/loader.o \
+	memory/memory.o \
 	misc/misc.o \
 	multimedia/multimedia.o \
 	objects/objects.o \
@@ -90,7 +91,6 @@ EMUOBJS = \
 	debugger/debugger.o \
 	debugger/readline/readline.o \
 	if1632/if1632.o \
-	memory/memory.o \
 	miscemu/miscemu.o
 
 LIBOBJS = library/library.o

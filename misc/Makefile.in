@@ -28,6 +28,7 @@ C_SRCS = \
 	stress.c \
 	toolhelp.c \
 	user.c \
+	ver.c \
 	w32sys.c \
 	winsocket.c \
 	xmalloc.c

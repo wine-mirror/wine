@@ -80,8 +80,8 @@ static ORDDEF OrdinalDefinitions[MAX_ORDINALS];
 static enum SPEC_TYPE SpecType = SPEC_INVALID;
 char DLLName[80];
 int Limit = 0;
-int DLLId;
 int Base = 0;
+int HeapSize = 0;
 FILE *SpecFp;
 
 char *ParseBuffer = NULL;
@@ -475,27 +475,25 @@ static int ParseTopLevel(void)
                 exit(1);
             }
         }
-	else if (strcmp(token, "id") == 0)
-	{
-	    token = GetToken();
-	    if (!IsNumberString(token))
-	    {
-		fprintf(stderr, "%d: Expected number after id\n", Line);
-		exit(1);
-	    }
-	    
-	    DLLId = atoi(token);
-	}
 	else if (strcmp(token, "base") == 0)
 	{
-		token = GetToken();
-		if (!IsNumberString(token))
-		{
+            token = GetToken();
+            if (!IsNumberString(token))
+            {
 		fprintf(stderr, "%d: Expected number after base\n", Line);
 		exit(1);
-		}
-
-		Base = atoi(token);
+            }
+            Base = atoi(token);
+	}
+	else if (strcmp(token, "heap") == 0)
+	{
+            token = GetToken();
+            if (!IsNumberString(token))
+            {
+		fprintf(stderr, "%d: Expected number after heap\n", Line);
+		exit(1);
+            }
+            HeapSize = atoi(token);
 	}
 	else if (IsNumberString(token))
 	{
@@ -554,16 +552,11 @@ static int StoreVariableCode( unsigned char *buffer, int size, ORDDEF *odp )
  * Dump a byte stream into the assembly code.
  */
 static void DumpBytes( const unsigned char *data, int len,
-                       const char *section, const char *label_start,
-                       const char *label_end )
+                       const char *section, const char *label_start )
 {
     int i;
     if (section) printf( "\t%s\n", section );
-    if (label_start)
-    {
-        printf( "\t.globl " PREFIX "%s_%s\n", DLLName, label_start );
-        printf( PREFIX "%s_%s:\n", DLLName, label_start );
-    }
+    if (label_start) printf( "%s:\n", label_start );
     for (i = 0; i < len; i++)
     {
         if (!(i & 0x0f)) printf( "\t.byte " );
@@ -571,11 +564,6 @@ static void DumpBytes( const unsigned char *data, int len,
         if (i < len - 1) printf( "%c", ((i & 0x0f) != 0x0f) ? ',' : '\n' );
     }
     printf( "\n" );
-    if (label_end)
-    {
-        printf( "\t.globl " PREFIX "%s_%s\n", DLLName, label_end );
-        printf( PREFIX "%s_%s:\n", DLLName, label_end );
-    }
 }
 
 
@@ -585,7 +573,7 @@ static void DumpBytes( const unsigned char *data, int len,
  * Build the in-memory representation of a 16-bit NE module, and dump it
  * as a byte stream into the assembly code.
  */
-static void BuildModule16( int max_code_offset, int max_data_offset )
+static int BuildModule16( int max_code_offset, int max_data_offset )
 {
     ORDDEF *odp;
     int i;
@@ -615,7 +603,7 @@ static void BuildModule16( int max_code_offset, int max_data_offset )
     pModule->next = 0;
     pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN | NE_FFLAGS_LIBMODULE;
     pModule->dgroup = 2;
-    pModule->heap_size = 0xffff;
+    pModule->heap_size = HeapSize;
     pModule->stack_size = 0;
     pModule->ip = 0;
     pModule->cs = 0;
@@ -761,7 +749,8 @@ static void BuildModule16( int max_code_offset, int max_data_offset )
       /* Dump the module content */
 
     DumpBytes( (char *)pModule, (int)pstr - (int)pModule,
-               ".data", "Module_Start", "Module_End" );
+               ".data", "Module_Start" );
+    return (int)pstr - (int)pModule;
 }
 
 
@@ -771,7 +760,7 @@ static void BuildModule16( int max_code_offset, int max_data_offset )
  * Build the in-memory representation of a 32-bit pseudo-NE module, and dump it
  * as a byte stream into the assembly code.
  */
-static void BuildModule32(void)
+static int BuildModule32(void)
 {
     char *buffer;
     NE_MODULE *pModule;
@@ -798,7 +787,7 @@ static void BuildModule32(void)
     pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN |
                      NE_FFLAGS_LIBMODULE | NE_FFLAGS_WIN32;
     pModule->dgroup = 0;
-    pModule->heap_size = 0;
+    pModule->heap_size = HeapSize;
     pModule->stack_size = 0;
     pModule->ip = 0;
     pModule->cs = 0;
@@ -869,7 +858,8 @@ static void BuildModule32(void)
       /* Dump the module content */
 
     DumpBytes( (char *)pModule, (int)pstr - (int)pModule,
-               ".data", "Module_Start", "Module_End" );
+               ".data", "Module_Start" );
+    return (int)pstr - (int)pModule;
 }
 
 
@@ -883,13 +873,12 @@ static void BuildSpec32Files(void)
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
     ORDRETDEF *rdp;
-    int i;
+    int i, module_size;
 
     printf( "/* File generated automatically; do not edit! */\n" );
     printf( "\t.text\n" );
     printf( "\t.align 4\n" );
-    printf( "\t.globl " PREFIX "%s_Code_Start\n", DLLName );
-    printf( PREFIX "%s_Code_Start:\n\n", DLLName );
+    printf( "Code_Start:\n\n" );
 
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
@@ -940,25 +929,28 @@ static void BuildSpec32Files(void)
         }
     }
 
-    BuildModule32();
+    module_size = BuildModule32();
+
+    /* Output the DLL functions table */
 
     printf( "\t.text\n" );
-    printf( "\t.globl " PREFIX "%s_Data_Start\n", DLLName );
-    printf( PREFIX "%s_Data_Start:\n", DLLName );
-    printf( "\t.long %d,%d\n", Base, Limit );
-    printf( "\n/* Function table */\n" );
+    printf( "\t.align 4\n" );
+    printf( "Functions:\n" );
+    odp = OrdinalDefinitions;
+    for (i = 0; i <= Limit; i++, odp++) printf("\t.long %s_%d\n", DLLName, i);
 
+    /* Output the DLL names table */
+
+    printf( "FuncNames:\n" );
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
     {
-        if (odp->type == TYPE_INVALID)
-            printf( "\t.long 0,%s_%d\n", DLLName, i );
-        else
-            printf( "\t.long Name_%d,%s_%d\n", i, DLLName, i );
+        if (odp->type == TYPE_INVALID) printf( "\t.long 0\n" );
+        else printf( "\t.long Name_%d\n", i );
     }
-    printf( "\t.long 0,0\n" );
 
-    printf( "\n/* Name table */\n" );
+    /* Output the DLL names */
+
     for (i = 0, odp = OrdinalDefinitions; i <= Limit; i++, odp++)
     {
         printf( "Name_%d:\t", i );
@@ -967,6 +959,20 @@ static void BuildSpec32Files(void)
         else
             printf( ".ascii \"%s\\0\"\n", odp->export_name );
     }
+
+    /* Output the DLL descriptor */
+
+    printf( "DLLName:\t.ascii \"%s\\0\"\n", DLLName );
+    printf( "\t.align 4\n" );
+    printf( "\t.globl " PREFIX "%s_Descriptor\n", DLLName );
+    printf( PREFIX "%s_Descriptor:\n", DLLName );
+    printf( "\t.long DLLName\n" );          /* Name */
+    printf( "\t.long Module_Start\n" );     /* Module start */
+    printf( "\t.long %d\n", module_size );  /* Module size */
+    printf( "\t.long %d\n", Base );         /* Base */
+    printf( "\t.long %d\n", Limit );        /* Limit */
+    printf( "\t.long Functions\n" );        /* Functions */
+    printf( "\t.long FuncNames\n" );        /* Function names */
 }
 
 
@@ -981,7 +987,7 @@ static void BuildSpec16Files(void)
     ORDFUNCDEF *fdp;
     ORDRETDEF *rdp;
     int i;
-    int code_offset, data_offset;
+    int code_offset, data_offset, module_size;
     unsigned char *data;
 
     data = (unsigned char *)xmalloc( 0x10000 );
@@ -990,8 +996,7 @@ static void BuildSpec16Files(void)
 
     printf( "/* File generated automatically; do not edit! */\n" );
     printf( "\t.text\n" );
-    printf( "\t.globl " PREFIX "%s_Code_Start\n", DLLName );
-    printf( PREFIX "%s_Code_Start:\n", DLLName );
+    printf( "Code_Start:\n" );
     code_offset = 0;
 
     odp = OrdinalDefinitions;
@@ -1051,20 +1056,16 @@ static void BuildSpec16Files(void)
           case TYPE_STUB:
             printf( "/* %s.%d */\n", DLLName, i);
             printf( "\tpushw %%bp\n" );
-            printf( "\tpushl $0x%08x\n", (DLLId << 16) | i);
             printf( "\tpushl $" PREFIX "%s\n", fdp->internal_name );
-            printf( "\tljmp $0x%04x, $" PREFIX "CallFrom16_%s_%s\n",
+            printf( "\tlcall $0x%04x, $" PREFIX "CallFrom16_%s_%s\n",
                     WINE_CODE_SELECTOR,
                     (odp->type == TYPE_REGISTER) ? "regs" :
                     (odp->type == TYPE_PASCAL) ? "long" : "word",
                     fdp->arg_types );
             printf( "\tnop\n" );
-            printf( "\tnop\n" );
-            printf( "\tnop\n" );
-            printf( "\tnop\n" );
             printf( "\tnop\n\n" );
             odp->offset = code_offset;
-            code_offset += 24;  /* Assembly code is 24 bytes long */
+            code_offset += 16;  /* Assembly code is 16 bytes long */
             break;
 		
           default:
@@ -1082,11 +1083,24 @@ static void BuildSpec16Files(void)
 
     /* Output data segment */
 
-    DumpBytes( data, data_offset, NULL, "Data_Start", NULL );
+    DumpBytes( data, data_offset, NULL, "Data_Start" );
 
     /* Build the module */
 
-    BuildModule16( code_offset, data_offset );
+    module_size = BuildModule16( code_offset, data_offset );
+
+    /* Output the DLL descriptor */
+
+    printf( "\t.text\n" );
+    printf( "DLLName:\t.ascii \"%s\\0\"\n", DLLName );
+    printf( "\t.align 4\n" );
+    printf( "\t.globl " PREFIX "%s_Descriptor\n", DLLName );
+    printf( PREFIX "%s_Descriptor:\n", DLLName );
+    printf( "\t.long DLLName\n" );          /* Name */
+    printf( "\t.long Module_Start\n" );     /* Module start */
+    printf( "\t.long %d\n", module_size );  /* Module size */
+    printf( "\t.long Code_Start\n" );       /* Code start */
+    printf( "\t.long Data_Start\n" );       /* Data start */
 }
 
 
@@ -1306,7 +1320,7 @@ static void BuildContext(void)
     printf( "\tmovl %%edi,%d(%%ebx)\n", CONTEXTOFFSET(EDI) );
     printf( "\tmovw -10(%%ebp),%%ax\n" );  /* Get saved ds from stack */
     printf( "\tmovw %%ax,%d(%%ebx)\n", CONTEXTOFFSET(DS) );
-    printf( "\tmovw -12(%%ebp),%%ax\n" );  /* Get saved es from stack */
+    printf( "\tmovw -6(%%ebp),%%ax\n" );  /* Get saved es from stack */
     printf( "\tmovw %%ax,%d(%%ebx)\n", CONTEXTOFFSET(ES) );
     printf( "\tpushfl\n" );
     printf( "\tpopl %d(%%ebx)\n", CONTEXTOFFSET(EFL) );
@@ -1330,7 +1344,8 @@ static void RestoreContext(void)
     printf( "\tmovl %d(%%ebx),%%edx\n", CONTEXTOFFSET(EDX) );
     printf( "\tmovl %d(%%ebx),%%esi\n", CONTEXTOFFSET(ESI) );
     printf( "\tmovl %d(%%ebx),%%edi\n", CONTEXTOFFSET(EDI) );
-    printf( "\tpopl %%eax\n" );  /* Remove old ds and es from stack */
+    printf( "\tpopl %%eax\n" );  /* Remove old ds and ip from stack */
+    printf( "\tpopl %%eax\n" );  /* Remove old cs and es from stack */
     printf( "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(DS) ); /* Push new ds */
     printf( "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(ES) ); /* Push new es */
     printf( "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(EFL) );
@@ -1351,13 +1366,16 @@ static void RestoreContext(void)
  * removed from the stack upon return.
  *
  * Stack layout upon entry to the callback function:
- *  ...      ...
- * (sp+14)  first 16-bit arg
- * (sp+12)  cs (word)
- * (sp+10)  ip (word)
- * (sp+8)   bp (word)
- * (sp+4)   dll_id+ordinal (long)
- * (sp)     entrypoint (long)
+ *  ...           ...
+ * (sp+18) word   first 16-bit arg
+ * (sp+16) word   cs
+ * (sp+14) word   ip
+ * (sp+12) word   bp
+ * (sp+8)  long   32-bit entry point
+ * (sp+6)  word   high word of cs (always 0, used to store es)
+ * (sp+4)  word   low word of cs of 16-bit entry point
+ * (sp+2)  word   high word of ip (always 0, used to store ds)
+ * (sp)    word   low word of ip of 16-bit entry point
  *
  */
 static void BuildCallFrom16Func( char *profile )
@@ -1389,12 +1407,12 @@ static void BuildCallFrom16Func( char *profile )
     /* Setup bp to point to its copy on the stack */
 
     printf( "\tmovzwl %%sp,%%ebp\n" );
-    printf( "\taddw $8,%%bp\n" );
+    printf( "\taddw $12,%%bp\n" );
 
     /* Save 16-bit ds and es */
 
-    printf( "\tpushw %%ds\n" );
-    printf( "\tpushw %%es\n" );
+    printf( "\tmovw %%ds,-10(%%ebp)\n" );
+    printf( "\tmovw %%es,-6(%%ebp)\n" );
 
     /* Restore 32-bit ds and es */
 
@@ -1420,12 +1438,12 @@ static void BuildCallFrom16Func( char *profile )
 
     /* Get the address of the API function */
 
-    printf( "\tmovl -8(%%ebp),%%eax\n" );
+    printf( "\tmovl -4(%%ebp),%%eax\n" );
 
     /* If necessary, save %edx over the API function address */
 
     if (!reg_func && short_ret)
-        printf( "\tmovl %%edx,-8(%%ebp)\n" );
+        printf( "\tmovl %%edx,-4(%%ebp)\n" );
 
     /* Switch to the 32-bit stack */
 
@@ -1506,38 +1524,33 @@ static void BuildCallFrom16Func( char *profile )
             }
             args++;
         }
-    }
 
-    /* Restore ds and es */
+        /* Restore ds and es */
+        printf( "\tpopw %%es\n" );
+        printf( "\tpopw %%ds\n" );
 
-    printf( "\tpopw %%es\n" );
-    printf( "\tpopw %%ds\n" );
-
-    /* Get the return value into dx:ax and clean up the stack */
-
-    if (!reg_func)
-    {
-        if (short_ret)
-        {
-            printf( "\tpopl %%edx\n" );     /* Restore %edx */
-            printf( "\taddl $4,%%esp\n" );  /* Remove DLL id and ordinal */
-        }
-        else
-        {
-            printf( "\tpushl %%eax\n" );
-            printf( "\tpopw %%ax\n" );
-            printf( "\tpopw %%dx\n" );
-            /* Remove API entry point, DLL id and ordinal from the stack */
-            printf( "\taddl $8,%%esp\n" );
-        }
+        /* Remove the entry point from the stack */
+        /* (we don't use add to avoid modifying the carry flag) */
+        printf( "\tpopl %%ebp\n" );
     }
     else
     {
-        /* Remove API entry point, DLL id and ordinal from the stack, */
-        /* but take care not to change the value of the carry flag.   */
+        /* Restore ds and es */
+        printf( "\tpopw %%bp\n" );       /* Remove ip */
+        printf( "\tpopl %%ebp\n" );      /* Remove ds and cs */
+        printf( "\tmovw %%bp,%%ds\n" );  /* Restore ds */
+        printf( "\tpopw %%es\n" );       /* Restore es */
 
-        printf( "\tpopl %%ebp\n" );
-        printf( "\tpopl %%ebp\n" );
+        if (short_ret) printf( "\tpopl %%edx\n" );     /* Restore edx */
+        else
+        {
+            /* Get the return value into dx:ax */
+            printf( "\tpushl %%eax\n" );
+            printf( "\tpopw %%ax\n" );
+            printf( "\tpopw %%dx\n" );
+            /* Remove API entry point */
+            printf( "\taddl $4,%%esp\n" );
+        }
     }
 
     /* Restore bp */

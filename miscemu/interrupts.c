@@ -18,7 +18,7 @@
 
 static SEGPTR INT_Vectors[256];
 
-  /* Ordinal number for interrupt 0 handler in WINPROCS.DLL */
+  /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
 #define FIRST_INTERRUPT_ORDINAL 100
 
 
@@ -28,7 +28,7 @@ static SEGPTR INT_Vectors[256];
 BOOL INT_Init(void)
 {
     WORD vector;
-    HMODULE hModule = GetModuleHandle( "WINPROCS" );
+    HMODULE hModule = GetModuleHandle( "WPROCS" );
 
     for (vector = 0; vector < 256; vector++)
     {
@@ -72,8 +72,11 @@ void INT_SetHandler( BYTE intnum, SEGPTR handler )
  */
 void INT_DummyHandler( struct sigcontext_struct context )
 {
-    INT_BARF( &context,
-              CURRENT_STACK16->ordinal_number - FIRST_INTERRUPT_ORDINAL );
+    WORD ordinal;
+    char *name;
+    STACK16FRAME *frame = CURRENT_STACK16;
+    BUILTIN_GetEntryPoint( frame->entry_cs, frame->entry_ip, &ordinal, &name );
+    INT_BARF( &context, ordinal - FIRST_INTERRUPT_ORDINAL );
 }
 
 

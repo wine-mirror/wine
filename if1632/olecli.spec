@@ -1,6 +1,5 @@
 name	olecli
 type	win16
-id	20
 
 #1 WEP
 2 stub OLEDELETE

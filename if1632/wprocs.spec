@@ -1,6 +1,5 @@
-name	winprocs
+name	wprocs
 type	win16
-id	24
 
 1  pascal ButtonWndProc(word word word long) ButtonWndProc
 2  pascal StaticWndProc(word word word long) StaticWndProc

@@ -1,0 +1,20 @@
+/* XPM */
+static char * obm_trtype[] = {
+"14 14 3 1",
+" 	s white c white",
+".	s black c black",
+"o	s dkgray c #808080",
+"              ",
+" oooooooo     ",
+" oo oo oo     ",
+" o  oo  o     ",
+" o  o........ ",
+"    o.. .. .. ",
+"    o.  ..  . ",
+"    o.  ..  . ",
+"    oo  ..    ",
+" ooooooo..    ",
+"        ..    ",
+"        ..    ",
+"      ......  ",
+"              "};

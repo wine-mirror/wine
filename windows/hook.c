@@ -32,7 +32,7 @@ static HANDLE HOOK_systemHooks[WH_NB_HOOKS] = { 0, };
 static HANDLE HOOK_GetNextHook( HANDLE hook )
 {
     HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR( hook );
-    if (!data) return 0;
+    if (!data || !hook) return 0;
     if (data->next) return data->next;
     if (!data->ownerQueue) return 0;  /* Already system hook */
     /* Now start enumerating the system hooks */
@@ -45,12 +45,12 @@ static HANDLE HOOK_GetNextHook( HANDLE hook )
  *
  * Get the first hook for a given type.
  */
-static HANDLE HOOK_GetHook( short id )
+static HANDLE HOOK_GetHook( short id , HQUEUE hQueue )
 {
     MESSAGEQUEUE *queue;
     HANDLE hook = 0;
 
-    if ((queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) )) != NULL)
+    if ((queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(hQueue) )) != NULL)
         hook = queue->hooks[id - WH_FIRST_HOOK];
     if (!hook) hook = HOOK_systemHooks[id - WH_FIRST_HOOK];
     return hook;
@@ -206,11 +206,69 @@ static DWORD HOOK_CallHook( HANDLE hook, short code,
  */
 DWORD HOOK_CallHooks( short id, short code, WPARAM wParam, LPARAM lParam )
 {
-    HANDLE hook = HOOK_GetHook( id );
+    HANDLE hook = HOOK_GetHook( id , 0 );
     if (!hook) return 0;
     return HOOK_CallHook( hook, code, wParam, lParam );
 }
 
+
+/***********************************************************************
+ *	     HOOK_FreeModuleHooks
+ */
+void HOOK_FreeModuleHooks( HMODULE hModule )
+{
+ /* remove all system hooks registered by this module */
+
+  HOOKDATA*     hptr;
+  HHOOK         hook, next;
+  int           id;
+
+  for( id = WH_FIRST_HOOK; id <= WH_LAST_HOOK; id++ )
+    {
+       hook = HOOK_systemHooks[id - WH_FIRST_HOOK];
+       while( hook )
+          if( (hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook)) )
+	    {
+	      next = hptr->next;
+	      if( hptr->ownerModule == hModule )
+                {
+                  hptr->inHookProc = 0;
+                  HOOK_RemoveHook(hook);
+                }
+	      hook = next;
+	    }
+	  else hook = 0;
+    }
+}
+
+/***********************************************************************
+ *	     HOOK_FreeQueueHooks
+ */
+void HOOK_FreeQueueHooks( HQUEUE hQueue )
+{
+  /* remove all hooks registered by this queue */
+
+  HOOKDATA*	hptr = NULL;
+  HHOOK 	hook, next;
+  int 		id;
+
+  for( id = WH_FIRST_HOOK; id <= WH_LAST_HOOK; id++ )
+    {
+       hook = HOOK_GetHook( id, hQueue );
+       while( hook )
+	{
+	  next = HOOK_GetNextHook(hook);
+
+	  hptr = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
+	  if( hptr && hptr->ownerQueue == hQueue )
+	    {
+	      hptr->inHookProc = 0;
+	      HOOK_RemoveHook(hook);
+	    }
+	  hook = next;
+	}
+    }
+}
 
 /***********************************************************************
  *           SetWindowsHook   (USER.121)
@@ -243,7 +301,7 @@ FARPROC SetWindowsHook( short id, HOOKPROC proc )
  */
 BOOL UnhookWindowsHook( short id, HOOKPROC proc )
 {
-    HANDLE hook = HOOK_GetHook( id );
+    HANDLE hook = HOOK_GetHook( id , 0 );
 
     dprintf_hook( stddeb, "UnhookWindowsHook: %d %08lx\n", id, (DWORD)proc );
 

@@ -258,7 +258,6 @@ typedef struct tagDC
 
 #else
 
-extern LPSTR GDI_Heap;
 extern WORD GDI_HeapSel;
 
 #define GDI_HEAP_ALLOC(size) \

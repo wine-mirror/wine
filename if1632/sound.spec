@@ -1,6 +1,5 @@
 name	sound
 type	win16
-id	6
 
 1  pascal16 OpenSound() OpenSound
 2  pascal16 CloseSound() CloseSound

@@ -1,6 +1,5 @@
 name	w32sys
 type	win16
-id	27
 
 #1 WEP
 2 stub ISPEFORMAT

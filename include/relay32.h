@@ -7,10 +7,7 @@
 #ifndef __WINE_RELAY32_H
 #define __WINE_RELAY32_H
 
-#include "dlls.h"
 #include "struct32.h"
-
-void *RELAY32_GetEntryPoint(BUILTIN_DLL *dll, char *item, int hint);
 
 typedef struct tagWNDCLASSA{
 	UINT	style;

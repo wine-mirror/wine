@@ -94,6 +94,10 @@ typedef struct
     SEGPTR reserved;
 } LOADPARAMS;
 
+/* Resource types */
+typedef struct resource_typeinfo_s NE_TYPEINFO;
+typedef struct resource_nameinfo_s NE_NAMEINFO;
+
 #define NE_SEG_TABLE(pModule) \
     ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->seg_table))
 
@@ -111,20 +115,30 @@ typedef struct
 #pragma pack(4)
 #endif
 
-extern BOOL MODULE_Init(void);
+/* module.c */
 extern NE_MODULE *MODULE_GetPtr( HMODULE hModule );
 extern void MODULE_DumpModule( HMODULE hmodule );
 extern void MODULE_WalkModules(void);
 extern int MODULE_OpenFile( HMODULE hModule );
 extern LPSTR MODULE_GetModuleName( HMODULE hModule );
-extern void MODULE_RegisterModule( HMODULE hModule );
+extern void MODULE_RegisterModule( NE_MODULE *pModule );
+extern HINSTANCE MODULE_GetInstance( HMODULE hModule );
 extern WORD MODULE_GetOrdinal( HMODULE hModule, const char *name );
 extern SEGPTR MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal );
 extern BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset );
-extern LPSTR MODULE_GetEntryPointName( HMODULE hModule, WORD ordinal );
 extern FARPROC MODULE_GetWndProcEntry16( const char *name );
 extern FARPROC MODULE_GetWndProcEntry32( const char *name );
 
+/* builtin.c */
+extern BOOL BUILTIN_Init(void);
+extern HMODULE BUILTIN_LoadModule( LPCSTR name, BOOL force );
+extern NE_MODULE *BUILTIN_GetEntryPoint( WORD cs, WORD ip,
+                                         WORD *pOrd, char **ppName );
+extern DWORD BUILTIN_GetProcAddress32( NE_MODULE *pModule, char *function );
+extern BOOL BUILTIN_ParseDLLOptions( const char *str );
+extern void BUILTIN_PrintDLLs(void);
+
+/* ne_image.c */
 extern BOOL NE_LoadSegment( HMODULE hModule, WORD segnum );
 extern void NE_FixupPrologs( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE hModule );

@@ -19,6 +19,11 @@
 # endif
 #endif
 
+typedef short INT16;
+typedef unsigned short UINT16;
+typedef int INT32;
+typedef unsigned int UINT32;
+
 typedef unsigned short WORD;
 typedef unsigned long DWORD;
 typedef unsigned short BOOL;
@@ -42,8 +47,9 @@ typedef WORD NPVOID;
 typedef DWORD SEGPTR;
 #endif  /* WINELIB32 */
 
+typedef UINT16 HANDLE16;
+typedef UINT32 HANDLE32;
 typedef UINT HANDLE;
-typedef DWORD HANDLE32;
 typedef UINT WPARAM;
 typedef LONG LPARAM;
 typedef LONG LRESULT;
@@ -69,7 +75,10 @@ typedef WORD *LPCATCHBUF;
 typedef DWORD ACCESS_MASK;
 typedef ACCESS_MASK REGSAM;
 
-#define DECLARE_HANDLE(a) typedef HANDLE a;
+#define DECLARE_HANDLE(a) \
+    typedef HANDLE a; \
+    typedef HANDLE16 a##16; \
+    typedef HANDLE32 a##32;
 
 DECLARE_HANDLE(HBITMAP);
 DECLARE_HANDLE(HBRUSH);

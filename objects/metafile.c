@@ -138,6 +138,7 @@ HANDLE CreateMetaFile(LPCTSTR lpFilename)
 		      sizeof(HANDLETABLE) * HTLen);
     
     GlobalUnlock(dc->w.hMetaFile);
+    dprintf_metafile(stddeb,"CreateMetaFile: returning %04x\n", handle);
     return handle;
 }
 
@@ -265,7 +266,8 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
     METARECORD *mr;
     HANDLETABLE *ht;
     int offset = 0;
-    
+    WORD i;
+
     dprintf_metafile(stddeb,"PlayMetaFile(%04x %04x)\n",hdc,hmf);
     
     /* create the handle table */
@@ -284,6 +286,11 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
 	PlayMetaFileRecord(hdc, ht, mr, mh->mtNoObjects);
     }
 
+    /* free objects in handle table */
+    for(i = 0; i < mh->mtNoObjects; i++)
+      if(*(ht->objectHandle + i) != 0)
+        DeleteObject(*(ht->objectHandle + i));
+    
     /* free handle table */
     GlobalFree(hHT);
 
@@ -356,6 +363,7 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 
     case META_DELETEOBJECT:
       DeleteObject(*(ht->objectHandle + *(mr->rdParam)));
+      *(ht->objectHandle + *(mr->rdParam)) = 0;
       break;
 
     case META_SETBKCOLOR:
@@ -576,8 +584,7 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 	break;
 
     case META_SETTEXTALIGN:
-        fprintf(stderr,"PlayMetaFileRecord: SETTEXTALIGN: %hd\n",mr->rdParam[0]);
-	SetTextAlign(hdc, *(mr->rdParam));
+       	SetTextAlign(hdc, *(mr->rdParam));
 	break;
 
     case META_SELECTPALETTE:

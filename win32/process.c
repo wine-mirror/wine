@@ -120,3 +120,32 @@ void* WINAPI WIN32_GetProcAddress(HANDLE32 hModule, char* function)
 	return PE_GetProcAddress(GetExePtr(hModule),function);
 }
 #endif  /* WINELIB */
+
+/**********************************************************************
+ *          GetProcessAffinityMask
+ */
+BOOL GetProcessAffinityMask(HANDLE32 hProcess, LPDWORD lpProcessAffinityMask,
+  LPDWORD lpSystemAffinityMask)
+{
+	dprintf_task(stddeb,"GetProcessAffinityMask(%x,%x,%x)\n",
+		hProcess,(lpProcessAffinityMask?*lpProcessAffinityMask:0),
+		(lpSystemAffinityMask?*lpSystemAffinityMask:0));
+	/* It is definitely important for a process to know on what processor
+	   it is running :-) */
+	if(lpProcessAffinityMask)
+		*lpProcessAffinityMask=1;
+	if(lpSystemAffinityMask)
+		*lpSystemAffinityMask=1;
+	return TRUE;
+}
+
+/**********************************************************************
+ *           SetThreadAffinityMask
+ */
+BOOL SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask)
+{
+	dprintf_task(stddeb,"SetThreadAffinityMask(%x,%x)\n",hThread,
+		dwThreadAffinityMask);
+	/* FIXME: We let it fail */
+	return 1;
+}

@@ -129,11 +129,6 @@ HGLOBAL GlobalHandle(LPCVOID a)
   return 0;
 }
 
-void *RELAY32_GetEntryPoint(BUILTIN_DLL *dll, char *item, int hint)
-{
-  return NULL;
-}
-
 extern LRESULT ACTIVATEAPP_callback(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ButtonWndProc(HWND,UINT,WPARAM,LPARAM);
@@ -166,7 +161,7 @@ LRESULT ErrorProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 /***********************************************************************
  *           MODULE_GetWndProcEntry16 (not a Windows API function)
  *
- * Return an entry point from the WINPROCS dll.
+ * Return an entry point from the WPROCS dll.
  */
 WNDPROC MODULE_GetWndProcEntry16( char *name )
 {
@@ -201,7 +196,7 @@ WNDPROC MODULE_GetWndProcEntry16( char *name )
 /***********************************************************************
  *           MODULE_GetWndProcEntry32 (not a Windows API function)
  *
- * Return an entry point from the WINPROCS32 dll.
+ * Return an entry point from the WPROCS32 dll.
  */
 WNDPROC MODULE_GetWndProcEntry32( char *name )
 {

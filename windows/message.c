@@ -127,7 +127,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 	if (dbl_click && (hittest == HTCLIENT))
 	{
 	    /* Check whether window wants the double click message. */
-            dbl_click = (WIN_CLASS_STYLE(pWnd) & CS_DBLCLKS) != 0;
+            dbl_click = (pWnd->class->wc.style & CS_DBLCLKS) != 0;
 	}
 
 	if (dbl_click) switch(msg->message)
@@ -812,6 +812,12 @@ WORD RegisterWindowMessage( SEGPTR str )
     return GlobalAddAtom( str );
 }
 
+WORD RegisterWindowMessageA( LPSTR str )
+{
+    char buffer[256];
+    lstrcpyn( buffer, str, sizeof(buffer) );
+    return RegisterWindowMessage(MAKE_SEGPTR(buffer));
+}
 
 /***********************************************************************
  *           GetTickCount    (USER.13) (KERNEL32.299)

@@ -1,6 +1,6 @@
 name	user
 type	win16
-id	2
+heap	65520
 
 1   pascal16 MessageBox(word ptr ptr word) MessageBox
 2   stub OldExitWindows
@@ -300,7 +300,7 @@ id	2
 294 stub LockWindowUpdate
 299 register Mouse_Event() Mouse_Event
 300 stub UnloadInstalledDrivers
-#301 BOZOSLIVEHERE :-))
+#301 BOZOSLIVEHERE :-))	<- this is actually EditWndProc
 #306 BEAR306
 308 pascal   DefDlgProc(word word word long) DefDlgProc
 309 pascal16 GetClipCursor(ptr) GetClipCursor
@@ -481,10 +481,10 @@ id	2
 652 stub GetKeyboardLayoutList
 654 stub UnloadKeyboardLayout
 655 stub PostPostedMessages
-656 stub DrawFrameControl
+656 pascal16 DrawFrameControl(word ptr word word) DrawFrameControl
 657 stub DrawCaptionTemp
 658 stub DispatchInput
-659 stub DrawEdge
+659 pascal16 DrawEdge(word ptr word word) DrawEdge
 660 stub DrawCaption
 661 stub SetSysColorsTemp
 662 stub DrawMenubarTemp

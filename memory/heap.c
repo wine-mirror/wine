@@ -179,7 +179,7 @@ static HEAP *HEAP_GetPtr( HANDLE32 heap )
     HEAP *heapPtr = (HEAP *)heap;
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
-        fprintf( stderr, "Invalid heap %08lx!\n", heap );
+        fprintf( stderr, "Invalid heap %08x!\n", heap );
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
     }
@@ -740,7 +740,7 @@ BOOL HeapDestroy( HANDLE32 heap )
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
 
-    dprintf_heap( stddeb, "HeapDestroy: %08lx\n", heap );
+    dprintf_heap( stddeb, "HeapDestroy: %08x\n", heap );
     if (!heapPtr) return FALSE;
 
     DeleteCriticalSection( &heapPtr->critSection );
@@ -779,7 +779,7 @@ LPVOID HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
 
     if (!(pArena = HEAP_FindFreeBlock( heapPtr, size, &subheap )))
     {
-        dprintf_heap( stddeb, "HeapAlloc(%08lx,%08lx,%08lx): returning NULL\n",
+        dprintf_heap( stddeb, "HeapAlloc(%08x,%08lx,%08lx): returning NULL\n",
                   heap, flags, size  );
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         SetLastError( ERROR_OUTOFMEMORY );
@@ -810,7 +810,7 @@ LPVOID HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
     SetLastError( 0 );
 
-    dprintf_heap( stddeb, "HeapAlloc(%08lx,%08lx,%08lx): returning %08lx\n",
+    dprintf_heap( stddeb, "HeapAlloc(%08x,%08lx,%08lx): returning %08lx\n",
                   heap, flags, size, (DWORD)(pInUse + 1) );
     return (LPVOID)(pInUse + 1);
 }
@@ -835,7 +835,7 @@ BOOL HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
     {
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         SetLastError( ERROR_INVALID_PARAMETER );
-        dprintf_heap( stddeb, "HeapFree(%08lx,%08lx,%08lx): returning FALSE\n",
+        dprintf_heap( stddeb, "HeapFree(%08x,%08lx,%08lx): returning FALSE\n",
                       heap, flags, (DWORD)ptr );
         return FALSE;
     }
@@ -849,7 +849,7 @@ BOOL HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
     SetLastError( 0 );
 
-    dprintf_heap( stddeb, "HeapFree(%08lx,%08lx,%08lx): returning TRUE\n",
+    dprintf_heap( stddeb, "HeapFree(%08x,%08lx,%08lx): returning TRUE\n",
                   heap, flags, (DWORD)ptr );
     return TRUE;
 }
@@ -881,7 +881,7 @@ LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
     {
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
         SetLastError( ERROR_INVALID_PARAMETER );
-        dprintf_heap( stddeb, "HeapReAlloc(%08lx,%08lx,%08lx,%08lx): returning NULL\n",
+        dprintf_heap( stddeb, "HeapReAlloc(%08x,%08lx,%08lx,%08lx): returning NULL\n",
                       heap, flags, (DWORD)ptr, size );
         return NULL;
     }
@@ -904,6 +904,13 @@ LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
             pFree->next->prev = pFree->prev;
             pFree->prev->next = pFree->next;
             pArena->size += (pFree->size & ARENA_SIZE_MASK) + sizeof(*pFree);
+            if (!HEAP_Commit( subheap, (char *)pArena + sizeof(ARENA_INUSE)
+                                               + size + HEAP_MIN_BLOCK_SIZE))
+            {
+                if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+                SetLastError( ERROR_OUTOFMEMORY );
+                return NULL;
+            }
         }
         else  /* Do it the hard way */
         {
@@ -915,6 +922,7 @@ LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
                 !(pNew = HEAP_FindFreeBlock( heapPtr, size, &newsubheap )))
             {
                 if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
+                SetLastError( ERROR_OUTOFMEMORY );
                 return NULL;
             }
 
@@ -959,7 +967,7 @@ LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
     pArena->callerEIP = *((DWORD *)&heap - 1);  /* hack hack */
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
 
-    dprintf_heap( stddeb, "HeapReAlloc(%08lx,%08lx,%08lx,%08lx): returning %08lx\n",
+    dprintf_heap( stddeb, "HeapReAlloc(%08x,%08lx,%08lx,%08lx): returning %08lx\n",
                   heap, flags, (DWORD)ptr, size, (DWORD)(pArena + 1) );
     return (LPVOID)(pArena + 1);
 }
@@ -1024,7 +1032,7 @@ DWORD HeapSize( HANDLE32 heap, DWORD flags, LPVOID ptr )
     }
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
 
-    dprintf_heap( stddeb, "HeapSize(%08lx,%08lx,%08lx): returning %08lx\n",
+    dprintf_heap( stddeb, "HeapSize(%08x,%08lx,%08lx): returning %08lx\n",
                   heap, flags, (DWORD)ptr, ret );
     return ret;
 }
@@ -1040,7 +1048,7 @@ BOOL HeapValidate( HANDLE32 heap, DWORD flags, LPVOID block )
 
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
-        fprintf( stderr, "Invalid heap %08lx!\n", heap );
+        fprintf( stderr, "Invalid heap %08x!\n", heap );
         return FALSE;
     }
 

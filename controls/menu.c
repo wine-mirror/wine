@@ -18,6 +18,7 @@
 #include "windows.h"
 #include "syscolor.h"
 #include "sysmetrics.h"
+#include "task.h"
 #include "win.h"
 #include "menu.h"
 #include "module.h"
@@ -65,6 +66,12 @@ extern void NC_DrawSysButton(HWND hwnd, HDC hdc, BOOL down);  /* nonclient.c */
 static HBITMAP hStdCheck = 0;
 static HBITMAP hStdMnArrow = 0;
 
+/* we _can_ use global popup window because there's no way 2 menues can
+ * be tracked at the same time.
+ */ 
+
+static WND* pTopPWnd   = 0;
+static UINT uSubPWndLevel = 0;
 
 /***********************************************************************
  *           MENU_Init
@@ -678,6 +685,23 @@ UINT MENU_DrawMenuBar(HDC hDC, LPRECT lprect, HWND hwnd, BOOL suppress_draw)
     return lppop->Height;
 } 
 
+/***********************************************************************
+ *	     MENU_SwitchTPWndTo
+ */
+BOOL MENU_SwitchTPWndTo( HTASK hTask)
+{
+  /* This is supposed to be called when popup is hidden */
+
+  TDB* task = (TDB*)GlobalLock(hTask);
+
+  if( !task ) return 0;
+
+  /* if this task got as far as menu tracking it must have a queue */
+
+  pTopPWnd->hInstance = task->hInstance;
+  pTopPWnd->hmemTaskQ = task->hQueue;
+  return 1;
+}
 
 /***********************************************************************
  *           MENU_ShowPopup
@@ -686,7 +710,9 @@ UINT MENU_DrawMenuBar(HDC hDC, LPRECT lprect, HWND hwnd, BOOL suppress_draw)
  */
 static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
 {
-    POPUPMENU *menu;
+    POPUPMENU 	*menu;
+    WND 	*wndPtr = NULL;
+    BOOL	 skip_init = 0;
 
     if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu ))) return FALSE;
     if (menu->FocusedItem != NO_SELECTED_ITEM)
@@ -698,21 +724,47 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
     SendMessage( hwndOwner, WM_INITMENUPOPUP, (WPARAM)hmenu,
 		 MAKELONG( id, (menu->wFlags & MF_SYSMENU) ? 1 : 0 ));
     MENU_PopupMenuCalcSize( menu, hwndOwner );
-    if (!menu->hWnd)
+
+    wndPtr = WIN_FindWndPtr( hwndOwner );
+    if (!wndPtr) return FALSE;
+
+    if (!pTopPWnd)
     {
-	WND *wndPtr = WIN_FindWndPtr( hwndOwner );
-	if (!wndPtr) return FALSE;
-	menu->hWnd = CreateWindow( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
-				   WS_POPUP | WS_BORDER, x, y, 
-				   menu->Width + 2*SYSMETRICS_CXBORDER,
-				   menu->Height + 2*SYSMETRICS_CYBORDER,
-				   0, 0, wndPtr->hInstance, (SEGPTR)hmenu );
-	if (!menu->hWnd) return FALSE;
+	pTopPWnd = WIN_FindWndPtr(CreateWindow( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
+				   		WS_POPUP | WS_BORDER, x, y, 
+				   		menu->Width + 2*SYSMETRICS_CXBORDER,
+				   		menu->Height + 2*SYSMETRICS_CYBORDER,
+				   		0, 0, wndPtr->hInstance, (SEGPTR)hmenu ));
+	if (!pTopPWnd) return FALSE;
+	skip_init = TRUE;
     }
-    else SetWindowPos( menu->hWnd, 0, x, y,
-		       menu->Width + 2*SYSMETRICS_CXBORDER,
-		       menu->Height + 2*SYSMETRICS_CYBORDER,
-		       SWP_NOACTIVATE | SWP_NOZORDER );
+
+    if( uSubPWndLevel )
+    {
+	/* create new window for the submenu */
+	HWND  hWnd = CreateWindow( POPUPMENU_CLASS_ATOM, (SEGPTR)0,
+                                   WS_POPUP | WS_BORDER, x, y,
+                                   menu->Width + 2*SYSMETRICS_CXBORDER,
+                                   menu->Height + 2*SYSMETRICS_CYBORDER,
+                                   menu->hWnd, 0, wndPtr->hInstance, (SEGPTR)hmenu );
+	if( !hWnd ) return FALSE;
+	menu->hWnd = hWnd;
+    }
+    else 
+    {
+	if( !skip_init )
+	  {
+            MENU_SwitchTPWndTo(GetCurrentTask());
+	    SendMessage( pTopPWnd->hwndSelf, WM_USER, (WPARAM)hmenu, 0L);
+	  }
+	menu->hWnd = pTopPWnd->hwndSelf;
+    }
+
+    uSubPWndLevel++;
+
+    SetWindowPos(menu->hWnd, 0, x, y, menu->Width + 2*SYSMETRICS_CXBORDER, 
+				      menu->Height + 2*SYSMETRICS_CYBORDER,
+		  		      SWP_NOACTIVATE | SWP_NOZORDER );
 
       /* Display the window */
 
@@ -1095,7 +1147,16 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu )
     }
     submenu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hsubmenu );
     MENU_HideSubPopups( hwndOwner, hsubmenu );
-    if (submenu->hWnd) ShowWindow( submenu->hWnd, SW_HIDE );
+    if (submenu->hWnd == pTopPWnd->hwndSelf ) 
+      {
+	ShowWindow( submenu->hWnd, SW_HIDE );
+	uSubPWndLevel = 0;
+      }
+    else
+      {
+	DestroyWindow( submenu->hWnd );
+	submenu->hWnd = 0;
+      }
     MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM );
 }
 
@@ -1596,7 +1657,11 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
     USER_HEAP_FREE( hMsg );
     ReleaseCapture();
     MENU_HideSubPopups( hwnd, hmenu );
-    if (menu->wFlags & MF_POPUP) ShowWindow( menu->hWnd, SW_HIDE );
+    if (menu->wFlags & MF_POPUP) 
+       {
+         ShowWindow( menu->hWnd, SW_HIDE );
+	 uSubPWndLevel = 0;
+       }
     MENU_SelectItem( hwnd, hmenu, NO_SELECTED_ITEM );
     SendMessage( hwnd, WM_MENUSELECT, 0, MAKELONG( 0xffff, 0 ) );
     fEndMenuCalled = FALSE;
@@ -1743,6 +1808,25 @@ LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 	    return 0;
 	}
 
+    case WM_DESTROY:
+	    /* zero out global pointer in case system popup
+	     * was destroyed by AppExit 
+	     */
+
+	    if( hwnd == pTopPWnd->hwndSelf )
+		pTopPWnd = 0;
+	    else
+		uSubPWndLevel--;
+	    break;
+
+    case WM_USER:
+	if( wParam )
+#ifdef WINELIB32
+            SetWindowLong( hwnd, 0, (HMENU)wParam );
+#else
+            SetWindowWord( hwnd, 0, (HMENU)wParam );
+#endif
+        break;
     default:
 	return DefWindowProc(hwnd, message, wParam, lParam);
     }
@@ -2139,7 +2223,7 @@ BOOL DestroyMenu(HMENU hMenu)
     lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu);
     if (!lppop || (lppop->wMagic != MENU_MAGIC)) return FALSE;
     lppop->wMagic = 0;  /* Mark it as destroyed */
-    if ((lppop->wFlags & MF_POPUP) && lppop->hWnd)
+    if ((lppop->wFlags & MF_POPUP) && lppop->hWnd && lppop->hWnd != pTopPWnd->hwndSelf )
         DestroyWindow( lppop->hWnd );
 
     if (lppop->hItems)

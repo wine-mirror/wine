@@ -12,6 +12,8 @@
  *        SetWindowPos(childHwnd,...) implicitly calls it if SWP_NOACTIVATE
  *        is not used.
  *
+ *        Also, Excel and WinWord do _not_ use MDI so if you're trying
+ *	  to fix them look elsewhere. 
  */
 
 #include <stdlib.h>

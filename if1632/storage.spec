@@ -1,6 +1,5 @@
 name	storage
 type	win16
-id	23
  
 1 stub StgCreateDocFile
 2 stub StgCreateDocFileOnILockBytes

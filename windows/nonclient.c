@@ -6,7 +6,6 @@
  */
 
 #include "win.h"
-#include "class.h"
 #include "message.h"
 #include "sysmetrics.h"
 #include "user.h"
@@ -644,11 +643,10 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
      */
     if (IsIconic(hwnd))
     {
-        HICON hIcon = WIN_CLASS_INFO(wndPtr).hIcon;
-        if (hIcon)  
+        if (wndPtr->class->wc.hIcon)
         {
             SendMessage(hwnd, WM_ICONERASEBKGND, (WPARAM)hdc, 0);
-            DrawIcon(hdc, 0, 0, hIcon);
+            DrawIcon( hdc, 0, 0, wndPtr->class->wc.hIcon );
         }
         ReleaseDC(hwnd, hdc);
         wndPtr->flags &= ~WIN_INTERNAL_PAINT;
@@ -783,12 +781,10 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case HTCLIENT:
 	{
 	    WND *wndPtr;
-	    CLASS *classPtr;
 	    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) break;
-	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) break;
-	    if (classPtr->wc.hCursor)
+	    if (wndPtr->class->wc.hCursor)
 	    {
-		SetCursor( classPtr->wc.hCursor );
+		SetCursor( wndPtr->class->wc.hCursor );
 		return TRUE;
 	    }
 	    else return FALSE;

@@ -11,6 +11,8 @@
  * have to be changed.
  */
 
+#ifndef WINELIB
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -39,9 +41,6 @@
 #define GET_ATOM_TABLE(sel)  ((ATOMTABLE*)PTR_SEG_OFF_TO_LIN(sel, \
           ((INSTANCEDATA*)PTR_SEG_OFF_TO_LIN(sel,0))->atomtable))
 		
-#ifdef WINELIB
-#define USER_HeapSel	0
-#endif
 
 /***********************************************************************
  *           ATOM_InitTable
@@ -375,3 +374,5 @@ WORD GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
 #endif
     return ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
 }
+
+#endif  /* WINELIB */

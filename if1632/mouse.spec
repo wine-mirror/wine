@@ -1,6 +1,5 @@
 name	mouse
 type	win16
-id	13
 
 1 stub INQUIRE
 2 stub ENABLE

@@ -18,7 +18,6 @@
 #include "global.h"
 #include "neexe.h"
 #include "accel.h"
-#include "dlls.h"
 #include "module.h"
 #include "resource.h"
 #include "stddebug.h"

@@ -1,6 +1,5 @@
 name	keyboard
 type	win16
-id	7
 
 #1	pascal	Inquire
 #2	pascal	Enable

@@ -11,6 +11,8 @@
  * parameter than usual.
  */
 
+#ifndef WINELIB
+
 #include <stdlib.h>
 #include <string.h>
 #include "windows.h"
@@ -1029,8 +1031,15 @@ WORD LOCAL_CountFree( WORD ds )
 {
     WORD arena, total;
     LOCALARENA *pArena;
+    LOCALHEAPINFO *pInfo;
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
-    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
+
+    if (!(pInfo = LOCAL_GetHeap( ds )))
+    {
+        fprintf( stderr, "LOCAL_Handle(%04x): Local heap not found\n", ds );
+	LOCAL_PrintHeap( ds );
+	return 0;
+    }
 
     total = 0;
     arena = pInfo->first;
@@ -1309,3 +1318,5 @@ BOOL LocalNext( LOCALENTRY *pLocalEntry )
     pLocalEntry->wSize     = pLocalEntry->wNext - pLocalEntry->hHandle;
     return TRUE;
 }
+
+#endif  /* WINELIB */

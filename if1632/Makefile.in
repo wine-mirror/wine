@@ -34,12 +34,13 @@ DLLS	= \
 	toolhelp.spec \
 	user.spec \
 	user32.spec \
+	ver.spec \
 	w32sys.spec \
 	win87em.spec \
-	winprocs.spec \
-	winprocs32.spec \
 	winsock.spec \
-	winspool.spec
+	winspool.spec \
+	wprocs.spec \
+	wprocs32.spec
 
 SPEC_FILES = $(DLLS:.spec=.S)
 

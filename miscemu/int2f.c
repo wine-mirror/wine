@@ -14,7 +14,7 @@
 /* #define DEBUG_INT */
 #include "debug.h"
 
-  /* base WINPROC module number for VxDs */
+  /* base WPROCS.DLL ordinal number for VxDs */
 #define VXD_BASE 400
 
 static void do_int2f_16(struct sigcontext_struct *context);
@@ -100,7 +100,7 @@ static void do_int2f_16(struct sigcontext_struct *context)
 	break;
 
     case 0x84:  /* Get device API entry point */
-        addr = MODULE_GetEntryPoint( GetModuleHandle("WINPROCS"),
+        addr = MODULE_GetEntryPoint( GetModuleHandle("WPROCS"),
                                      VXD_BASE + BX_reg(context) );
         if (!addr)  /* not supported */
         {

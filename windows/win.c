@@ -66,7 +66,6 @@ WND * WIN_FindWndPtr( HWND hwnd )
  */
 void WIN_DumpWindow( HWND hwnd )
 {
-    CLASS *classPtr;
     WND *ptr;
     char className[80];
     int i;
@@ -82,13 +81,13 @@ void WIN_DumpWindow( HWND hwnd )
 
     fprintf( stderr, "Window %04x (%p):\n", hwnd, ptr );
     fprintf( stderr,
-             "next=%p  child=%p  parent=%p  owner=%p  class=%04x '%s'\n"
+             "next=%p  child=%p  parent=%p  owner=%p  class=%p '%s'\n"
              "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x hdce=%04x  idmenu=%04x\n"
              "style=%08lx  exstyle=%08lx  wndproc=%08lx  text=%04x '%s'\n"
              "client=%d,%d-%d,%d  window=%d,%d-%d,%d  iconpos=%d,%d  maxpos=%d,%d\n"
              "sysmenu=%04x  flags=%04x  props=%04x  vscroll=%04x  hscroll=%04x\n",
              ptr->next, ptr->child, ptr->parent, ptr->owner,
-             ptr->hClass, className, ptr->hInstance, ptr->hmemTaskQ,
+             ptr->class, className, ptr->hInstance, ptr->hmemTaskQ,
              ptr->hrgnUpdate, ptr->hwndLastActive, ptr->hdce, ptr->wIDmenu,
              ptr->dwStyle, ptr->dwExStyle, (DWORD)ptr->lpfnWndProc, ptr->hText,
              ptr->hText ? (char*)USER_HEAP_LIN_ADDR(ptr->hText) : "",
@@ -98,11 +97,10 @@ void WIN_DumpWindow( HWND hwnd )
              ptr->ptIconPos.y, ptr->ptMaxPos.x, ptr->ptMaxPos.y, ptr->hSysMenu,
              ptr->flags, ptr->hProp, ptr->hVScroll, ptr->hHScroll );
 
-    if ((classPtr = CLASS_FindClassPtr( ptr->hClass )) &&
-        classPtr->wc.cbWndExtra)
+    if (ptr->class->wc.cbWndExtra)
     {
         fprintf( stderr, "extra bytes:" );
-        for (i = 0; i < classPtr->wc.cbWndExtra; i++)
+        for (i = 0; i < ptr->class->wc.cbWndExtra; i++)
             fprintf( stderr, " %02x", *((BYTE*)ptr->wExtra+i) );
         fprintf( stderr, "\n" );
     }
@@ -118,7 +116,6 @@ void WIN_DumpWindow( HWND hwnd )
 void WIN_WalkWindows( HWND hwnd, int indent )
 {
     WND *ptr;
-    CLASS *classPtr;
     char className[80];
 
     ptr = hwnd ? WIN_FindWndPtr( hwnd ) : pWndDesktop;
@@ -135,9 +132,8 @@ void WIN_WalkWindows( HWND hwnd, int indent )
     while (ptr)
     {
         fprintf(stderr, "%*s%04x%*s", indent, "", ptr->hwndSelf, 13-indent,"");
-        
-        if (!(classPtr = CLASS_FindClassPtr( ptr->hClass ))) strcpy( className, "#NULL#" );
-        else GlobalGetAtomName( classPtr->atomName, className, sizeof(className) );
+
+        GlobalGetAtomName( ptr->class->atomName, className, sizeof(className));
         
         fprintf( stderr, "%08lx %-6.4x %-17.17s %08x %04x:%04x\n",
                  (DWORD)ptr, ptr->hmemTaskQ, className,
@@ -307,14 +303,13 @@ void WIN_SendParentNotify( HWND hwnd, WORD event, WORD idChild, LONG lValue )
 static void WIN_DestroyWindow( HWND hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    CLASS *classPtr = CLASS_FindClassPtr( wndPtr->hClass );
 
 #ifdef CONFIG_IPC
     if (main_block)
 	DDE_DestroyWindow(hwnd);
 #endif  /* CONFIG_IPC */
 	
-    if (!wndPtr || !classPtr) return;
+    if (!wndPtr) return;
     WIN_UnlinkWindow( hwnd ); /* Remove the window from the linked list */
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
     wndPtr->hwndSelf = 0;
@@ -329,9 +324,26 @@ static void WIN_DestroyWindow( HWND hwnd )
     }
     if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
     if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
-    if (classPtr->wc.style & CS_OWNDC) DCE_FreeDCE( wndPtr->hdce );
-    classPtr->cWindows--;
+    if (wndPtr->class->wc.style & CS_OWNDC) DCE_FreeDCE( wndPtr->hdce );
+    wndPtr->class->cWindows--;
     USER_HEAP_FREE( hwnd );
+}
+
+
+/***********************************************************************
+ *	     WIN_DestroyQueueWindows
+ */
+void WIN_DestroyQueueWindows( WND* wnd, HQUEUE hQueue )
+{
+    WND* next;
+
+    while (wnd)
+    {
+        next = wnd->next;
+        if (wnd->hmemTaskQ == hQueue) DestroyWindow( wnd->hwndSelf );
+        else WIN_DestroyQueueWindows( wnd->child, hQueue );
+        wnd = next;
+    }
 }
 
 
@@ -342,15 +354,14 @@ static void WIN_DestroyWindow( HWND hwnd )
  */
 BOOL WIN_CreateDesktopWindow(void)
 {
-    HCLASS hclass;
-    CLASS *classPtr;
+    CLASS *class;
     HDC hdc;
     HWND hwndDesktop;
 
-    if (!(hclass = CLASS_FindClassByName( DESKTOP_CLASS_ATOM, 0, &classPtr )))
+    if (!(class = CLASS_FindClassByName( DESKTOP_CLASS_ATOM, 0 )))
 	return FALSE;
 
-    hwndDesktop = USER_HEAP_ALLOC( sizeof(WND)+classPtr->wc.cbWndExtra );
+    hwndDesktop = USER_HEAP_ALLOC( sizeof(WND)+class->wc.cbWndExtra );
     if (!hwndDesktop) return FALSE;
     pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
 
@@ -358,9 +369,9 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->child             = NULL;
     pWndDesktop->parent            = NULL;
     pWndDesktop->owner             = NULL;
+    pWndDesktop->class             = class;
     pWndDesktop->dwMagic           = WND_MAGIC;
     pWndDesktop->hwndSelf          = hwndDesktop;
-    pWndDesktop->hClass            = hclass;
     pWndDesktop->hInstance         = 0;
     pWndDesktop->rectWindow.left   = 0;
     pWndDesktop->rectWindow.top    = 0;
@@ -375,7 +386,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->hmemTaskQ         = 0; /* Desktop does not belong to a task */
     pWndDesktop->hrgnUpdate        = 0;
     pWndDesktop->hwndLastActive    = hwndDesktop;
-    pWndDesktop->lpfnWndProc       = classPtr->wc.lpfnWndProc;
+    pWndDesktop->lpfnWndProc       = class->wc.lpfnWndProc;
     pWndDesktop->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN |
                                      WS_CLIPSIBLINGS;
     pWndDesktop->dwExStyle         = 0;
@@ -418,7 +429,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 		     DWORD style, INT x, INT y, INT width, INT height,
 		     HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
 {
-    HANDLE class, hwnd;
+    HANDLE hwnd;
     CLASS *classPtr;
     WND *wndPtr;
     POINT maxSize, maxPos, minTrack, maxTrack;
@@ -426,8 +437,6 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     int wmcreate;
     XSetWindowAttributes win_attr;
     Atom XA_WM_DELETE_WINDOW;
-
-    /* FIXME: windowName and className should be SEGPTRs */
 
     dprintf_win( stddeb, "CreateWindowEx: " );
     if (HIWORD(windowName))
@@ -468,8 +477,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 	}
     }
 
-    if (!(class = CLASS_FindClassByName( className, GetExePtr(instance),
-                                         &classPtr )))
+    if (!(classPtr = CLASS_FindClassByName( className, GetExePtr(instance) )))
     {
         fprintf(stderr,"CreateWindow BAD CLASSNAME " );
         if (HIWORD(className)) fprintf( stderr, "'%s'\n", 
@@ -500,9 +508,9 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
     wndPtr->parent         = (style & WS_CHILD) ? WIN_FindWndPtr( parent ) : pWndDesktop;
     wndPtr->owner          = (style & WS_CHILD) ? NULL : WIN_FindWndPtr(WIN_GetTopParent(parent));
     wndPtr->window         = 0;
+    wndPtr->class          = classPtr;
     wndPtr->dwMagic        = WND_MAGIC;
     wndPtr->hwndSelf       = hwnd;
-    wndPtr->hClass         = class;
     wndPtr->hInstance      = instance;
     wndPtr->ptIconPos.x    = -1;
     wndPtr->ptIconPos.y    = -1;
@@ -679,7 +687,6 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 BOOL DestroyWindow( HWND hwnd )
 {
     WND * wndPtr;
-    CLASS * classPtr;
 
     dprintf_win(stddeb, "DestroyWindow(%04x)\n", hwnd);
     
@@ -687,7 +694,6 @@ BOOL DestroyWindow( HWND hwnd )
 
     if (hwnd == pWndDesktop->hwndSelf) return FALSE; /* Can't destroy desktop*/
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return FALSE;
 
       /* Hide the window */
 
@@ -754,22 +760,19 @@ BOOL OpenIcon(HWND hWnd)
  */
 HWND FindWindow( SEGPTR ClassMatch, LPSTR TitleMatch )
 {
-    HCLASS hclass;
-    CLASS *classPtr;
     WND *wndPtr;
+    CLASS *class = NULL;
 
     if (ClassMatch)
     {
-	hclass = CLASS_FindClassByName( ClassMatch, (HINSTANCE)0xffff,
-                                        &classPtr );
-	if (!hclass) return 0;
+	if (!(class = CLASS_FindClassByName( ClassMatch, (HINSTANCE)0xffff )))
+            return 0;
     }
-    else hclass = 0;
 
     wndPtr = pWndDesktop->child;
     while (wndPtr)
     {
-	if (!hclass || (wndPtr->hClass == hclass))
+	if (!class || (wndPtr->class == class))
 	{
 	      /* Found matching class */
 	    if (!TitleMatch) return wndPtr->hwndSelf;

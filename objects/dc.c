@@ -362,16 +362,20 @@ void SetDCState( HDC hdc, HDC hdcs )
 {
     DC * dc, * dcs;
     HRGN hVisRgn, hClipRgn, hGCClipRgn;
-
+    HFONT hfont;
+    HBRUSH hbrush;
+    
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
     if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return;
     if (!dcs->w.flags & DC_SAVED) return;
     dprintf_dc(stddeb, "SetDCState: %04x %04x\n", hdc, hdcs );
 
-      /* Save the regions before overwriting everything */
+      /* Save the regions, font & brush before overwriting everything */
     hVisRgn    = dc->w.hVisRgn;
     hClipRgn   = dc->w.hClipRgn;
     hGCClipRgn = dc->w.hGCClipRgn;
+    hfont      = dc->w.hFont;
+    hbrush     = dc->w.hBrush;
     memcpy( &dc->w, &dcs->w, sizeof(dc->w) );
     memcpy( &dc->u.x.pen, &dcs->u.x.pen, sizeof(dc->u.x.pen) );
     dc->w.flags &= ~DC_SAVED;
@@ -380,6 +384,8 @@ void SetDCState( HDC hdc, HDC hdcs )
     dc->w.hVisRgn    = hVisRgn;
     dc->w.hClipRgn   = hClipRgn;
     dc->w.hGCClipRgn = hGCClipRgn;
+    dc->w.hFont      = hfont;
+    dc->w.hBrush     = hbrush;
     CombineRgn( dc->w.hVisRgn, dcs->w.hVisRgn, 0, RGN_COPY );
     SelectClipRgn( hdc, dcs->w.hClipRgn );
 
@@ -655,6 +661,25 @@ COLORREF SetTextColor( HDC hdc, COLORREF color )
     dc->w.textColor = color;
     dc->w.textPixel = COLOR_ToPhysical( dc, color );
     return oldColor;
+}
+
+
+/***********************************************************************
+ *           SetTextAlign    (GDI.346)
+ */
+WORD SetTextAlign( HDC hdc, WORD textAlign )
+{
+    WORD prevAlign;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc)
+    {
+	if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
+	MF_MetaParam1( dc, META_SETTEXTALIGN, textAlign );
+	return 1;
+    }
+    prevAlign = dc->w.textAlign;
+    dc->w.textAlign = textAlign;
+    return prevAlign;
 }
 
 

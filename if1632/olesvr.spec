@@ -1,6 +1,5 @@
 name	olesvr
 type	win16
-id	21
 
 #1 WEP
 2  pascal OleRegisterServer(ptr ptr ptr word word) OleRegisterServer

@@ -1371,6 +1371,7 @@ typedef struct tagCOMSTAT
 #define OBM_FLOPPY          32731
 #define OBM_HDISK           32730
 #define OBM_CDROM           32729
+#define OBM_TRTYPE          32728
 
 #define OBM_OLD_CLOSE       32767
 #define OBM_SIZE            32766
@@ -2811,7 +2812,7 @@ int        ExcludeVisRect(HDC,short,short,short,short);
 BOOL       ExitWindows(DWORD,WORD);
 BOOL       ExtFloodFill(HDC,INT,INT,COLORREF,WORD);
 BOOL       ExtTextOut(HDC,short,short,WORD,LPRECT,LPSTR,WORD,LPINT);
-HICON      ExtractIcon(HINSTANCE,LPCSTR,UINT);
+HICON      ExtractIcon(HINSTANCE,LPCSTR,WORD);
 WORD       FarGetOwner(HANDLE);
 void       FarSetOwner(HANDLE,HANDLE);
 void       FatalAppExit(UINT,LPCSTR);

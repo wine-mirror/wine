@@ -19,13 +19,13 @@
 #include <X11/cursorfont.h>
 #include "wine.h"
 #include "message.h"
+#include "module.h"
 #include "msdos.h"
 #include "windows.h"
 #include "winsock.h"
 #include "options.h"
 #include "desktop.h"
 #include "shell.h"
-#include "dlls.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
@@ -65,6 +65,7 @@ const char *langNames[] =
     "Cz",  /* LANG_Cz */
     "Eo",  /* LANG_Eo */
     "It",  /* LANG_It */
+    "Ko",  /* LANG_Ko */
     NULL
 };
 
@@ -147,7 +148,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
-  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It)\n" \
+  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
@@ -264,48 +265,6 @@ BOOL ParseDebugOptions(char *options)
 }
 
 #endif
-
-#ifndef WINELIB
-/***********************************************************************
- *           MAIN_ParseDLLOptions
- *
- * Set runtime DLL usage flags
- */
-static BOOL MAIN_ParseDLLOptions(char *options)
-{
-    int l;
-    BUILTIN_DLL *dll;
-
-    if (strlen(options)<3) return FALSE;
-    do
-    {
-        if ((*options!='+') && (*options!='-')) return FALSE;
-        if (strchr(options,',')) l=strchr(options,',')-options;
-        else l=strlen(options);
-        for (dll = dll_builtin_table; dll->name; dll++)
-        {
-            if (!lstrncmpi(options+1,dll->name,l-1))
-            {
-                if (*options == '+') dll->flags &= ~DLL_FLAG_NOT_USED;
-                else
-                {
-                    if (dll->flags & DLL_FLAG_ALWAYS_USED) return FALSE;
-                    dll->flags |= DLL_FLAG_NOT_USED;
-                }
-                break;
-            }
-        }
-        if (!dll->name) return FALSE;
-        options+=l;
-    }
-    while((*options==',')&&(*(++options)));
-    if (*options)
-        return FALSE;
-    else
-        return TRUE;
-}
-#endif
-
 
 
 /***********************************************************************
@@ -441,23 +400,20 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
       }
 
       if(MAIN_GetResource( db, ".dll", &value))
+      {
 #ifndef WINELIB
-       if(MAIN_ParseDLLOptions((char*)value.addr)==FALSE)
-       {
-         int i;
-         BUILTIN_DLL *dll;
-         fprintf(stderr,"%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",argv[0]);
-         fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
-         fprintf(stderr,"Available DLLs\n");
-         for (i = 0, dll = dll_builtin_table; dll->name; dll++)
-             if (!(dll->flags & DLL_FLAG_ALWAYS_USED))
-                 fprintf(stderr,"%-9s%c",dll->name, (((++i)%8==0)?'\n':' '));
-         fprintf(stderr,"\n\n");
-         exit(1);
-       }
+          if (!BUILTIN_ParseDLLOptions( (char*)value.addr ))
+          {
+              fprintf(stderr,"%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",argv[0]);
+              fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
+              fprintf(stderr,"Available DLLs:\n");
+              BUILTIN_PrintDLLs();
+              exit(1);
+          }
 #else
-		fprintf(stderr,"-dll not supported in libwine\n");
+          fprintf(stderr,"-dll not supported in libwine\n");
 #endif
+      }
 }
 
 

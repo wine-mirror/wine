@@ -1,6 +1,6 @@
 name	gdi
 type	win16
-id	3
+heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 
 1   pascal SetBkColor(word long) SetBkColor
 2   pascal16 SetBkMode(word word) SetBkMode

@@ -16,7 +16,6 @@
 #include <string.h>
 #include <errno.h>
 #include "neexe.h"
-#include "dlls.h"
 #include "windows.h"
 #include "arch.h"
 #include "selectors.h"

@@ -1,6 +1,5 @@
 name	ole2disp
 type	win16
-id	17
 
 1 stub DLLGETCLASSOBJECT
 2 pascal SysAllocString(ptr)	SysAllocString

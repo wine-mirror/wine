@@ -20,7 +20,6 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-LPSTR GDI_Heap = NULL;
 WORD GDI_HeapSel = 0;
 
 /* Object types for EnumObjects() */
@@ -163,14 +162,6 @@ BOOL GDI_Init(void)
 {
     HPALETTE hpalette;
 
-#ifndef WINELIB
-      /* Create GDI heap */
-
-    if (!(GDI_HeapSel = GlobalAlloc(GMEM_FIXED, GDI_HEAP_SIZE))) return FALSE;
-    GDI_Heap = GlobalLock( GDI_HeapSel );
-    LocalInit( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
-#endif
-    
       /* Create default palette */
 
     if (!(hpalette = COLOR_Init())) return FALSE;

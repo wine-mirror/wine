@@ -1,6 +1,5 @@
 name	shell
 type	win16
-id	5
 
   1 pascal   RegOpenKey(long ptr ptr) RegOpenKey
   2 pascal   RegCreateKey(long ptr ptr) RegCreateKey
@@ -20,12 +19,30 @@ id	5
  34 pascal16 ExtractIcon(word ptr s_word) ExtractIcon
  36 pascal16 ExtractAssociatedIcon(word ptr ptr) ExtractAssociatedIcon
  37 pascal   DoEnvironmentSubst(ptr word) DoEnvironmentSubst
- 38 stub FindEnvironmentString
- 39 stub InternalExtractIcon
+ 38 pascal   FindEnvironmentString(ptr) FindEnvironmentString
+ 39 pascal16 InternalExtractIcon(word ptr s_word word) InternalExtractIcon
+ 40 stub ExtractIconEx
+ 98 stub SHL3216_THUNKDATA16
+ 99 stub SHL1632_THUNKDATA16
+
+#100   4  0550  HERETHARBETYGARS exported, shared data
+#101   8  010e  FINDEXEDLGPROC exported, shared data
+#101 DLLENTRYPOINT #win95 SHELL.DLL
+
 102 pascal16 RegisterShellHook(ptr) RegisterShellHook
 103 pascal16 ShellHookProc() ShellHookProc
 
-#  8   7  0000  WEP exported, shared data
-#100   4  0550  HERETHARBETYGARS exported, shared data
-#101   8  010e  FINDEXEDLGPROC exported, shared data
-# 32   9  0829  WCI exported, shared data
+#  157 RESTARTDIALOG
+#  166 PICKICONDLG
+
+262 pascal16 DriveType(long) GetDriveType
+
+#  263 SH16TO32DRIVEIOCTL
+#  264 SH16TO32INT2526
+#  300 SHGETFILEINFO
+#  400 SHFORMATDRIVE
+#  401 SHCHECKDRIVE
+#  402 _RUNDLLCHECKDRIVE
+
+# 8 WEP 
+#32 WCI
