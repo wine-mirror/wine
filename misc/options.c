@@ -82,7 +82,8 @@ static const struct option option_table[] =
     { "dll",          0, 1, 1, do_dll,
       "--dll name       Enable or disable built-in DLLs" },
     { "dosver",       0, 1, 1, VERSION_ParseDosVersion,
-      "--dosver x.xx    DOS version to imitate (e.g. 6.22). Only valid with --winver win31" },
+      "--dosver x.xx    DOS version to imitate (e.g. 6.22)\n"
+      "                    Only valid with --winver win31" },
     { "help",       'h', 0, 0, do_help,
       "--help,-h        Show this help message" },
     { "language",     0, 1, 1, do_language,
@@ -95,7 +96,7 @@ static const struct option option_table[] =
     { "version",    'v', 0, 0, do_version,
       "--version,-v     Display the Wine version" },
     { "winver",       0, 1, 1, VERSION_ParseWinVersion,
-      "--winver         Version to imitate (one of win31,win95,nt351,nt40)" },
+      "--winver         Version to imitate (win95,nt40,win31,nt2k,win98,nt351,win30,win20)" },
     { NULL,           0, 0, 0, NULL, NULL }  /* terminator */
 };
 

@@ -352,9 +352,14 @@ HRESULT WINAPI UnRegisterTypeLib(
  * OLE 2.03 W98 SE orig. file !!	1993-95	10     3024
  * OLE 2.1   NT				1993-95	??	???
  * OLE 2.3.1 W95				23	700
+ * OLE2 4.0  NT4SP6			1993-98	40     4277
  */
 DWORD WINAPI OaBuildVersion16(void)
 {
+    /* FIXME: I'd like to return the highest currently known version value
+     * in case the user didn't force a --winver, but I don't know how
+     * to retrieve the "versionForced" info from misc/version.c :(
+     * (this would be useful in other places, too) */
     FIXME("Please report to a.mohr@mailto.de if you get version error messages !\n");
     switch(GetVersion() & 0x8000ffff)  /* mask off build number */
     {
@@ -364,8 +369,10 @@ DWORD WINAPI OaBuildVersion16(void)
 		return MAKELONG(700, 23); /* Win95A */
     case 0x80000a04:  /* WIN98 */
 		return MAKELONG(3024, 10); /* W98 SE */
+    case 0x00000004:  /* NT4 */
+		return MAKELONG(4277, 40); /* NT4 SP6 */
     default:
-	FIXME_(ole)("Version value not known yet. Please investigate it !");
+	FIXME("Version value not known yet. Please investigate it !");
 		return 0;
     }
 }

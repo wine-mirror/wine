@@ -26,11 +26,15 @@ DEFAULT_DEBUG_CHANNEL(ver);
 
 typedef enum
 {
-    WIN31, /* Windows 3.1 */
+    WIN20,   /* Windows 2.0 */
+    WIN30,   /* Windows 3.0 */
+    WIN31,   /* Windows 3.1 */
     WIN95,   /* Windows 95 */
     WIN98,   /* Windows 98 */
+ /* insert Windows ME here as WINME if needed */
     NT351,   /* Windows NT 3.51 */
     NT40,    /* Windows NT 4.0 */  
+    NT2K,    /* Windows 2000 */
     NB_WINDOWS_VERSIONS
 } WINDOWS_VERSION;
 
@@ -44,6 +48,24 @@ typedef struct
 /* FIXME: compare values below with original and fix */
 static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 {
+    /* WIN20 FIXME: verify values */
+    {
+	MAKELONG( 0x0002, 0x0303 ), /* assume DOS 3.3 */
+	MAKELONG( 0x0003, 0x8000 ),
+	{
+            sizeof(OSVERSIONINFOA), 2, 0, 0,
+            VER_PLATFORM_WIN32s, "Win32s 1.3" 
+	}
+    },
+    /* WIN30 FIXME: verify values */
+    {
+	MAKELONG( 0x0003, 0x0500 ), /* assume DOS 5.00 */
+	MAKELONG( 0x0003, 0x8000 ),
+	{
+            sizeof(OSVERSIONINFOA), 3, 0, 0,
+            VER_PLATFORM_WIN32s, "Win32s 1.3" 
+	}
+    },
     /* WIN31 */
     {
 	MAKELONG( 0x0a03, 0x0616 ), /* DOS 6.22 */
@@ -86,18 +108,30 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x05650004,
         {
             sizeof(OSVERSIONINFOA), 4, 0, 0x565,
-            VER_PLATFORM_WIN32_NT, "Service Pack 3"
+            VER_PLATFORM_WIN32_NT, "Service Pack 6"
+        }
+    },
+    /* NT2K FIXME: verify values */
+    {
+        0x05000A03, /* ? */
+        0x08930005, /* better build ? using 2195 (final) for now */
+        {
+            sizeof(OSVERSIONINFOA), 5, 0, 0x893,
+            VER_PLATFORM_WIN32_NT, "FIXME: OS version string not known yet"
         }
     }
 };
 
 static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
 {
+    "win20",
+    "win30",
     "win31",
     "win95",
     "win98",
     "nt351",
-    "nt40"
+    "nt40",
+    "nt2k"
 };
 
 /* if one of the following dlls is importing ntdll the windows
@@ -162,10 +196,10 @@ void VERSION_ParseDosVersion( const char *arg )
 /**********************************************************************
  *	VERSION_GetSystemDLLVersion
  *
- * This function tryes to figure out if a given (native) dll comes from
+ * This function tries to figure out if a given (native) dll comes from
  * win95/98 or winnt. Since all values in the OptionalHeader are not a 
  * usable hint, we test if a dll imports the ntdll.
- * This is at least working for all system-dlls like comctl32, comdlg32 and
+ * This is at least working for all system dlls like comctl32, comdlg32 and
  * shell32.
  * If you have a better idea to figure this out...
  */
@@ -242,13 +276,13 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 	    ophd->MajorImageVersion, ophd->MinorImageVersion,
 	    ophd->MajorSubsystemVersion, ophd->MinorSubsystemVersion);
 
-	  /* test if it is a external (native) dll */
+	  /* test if it is an external (native) dll */
 	  if (!(wm->flags & WINE_MODREF_INTERNAL))
 	  {
 	    int i;
 	    for (i = 0; special_dlls[i]; i++)
 	    {
-	      /* test if it a special dll */
+	      /* test if it is a special dll */
 	      if (!strncasecmp(wm->modname, special_dlls[i], strlen(special_dlls[i]) ))
 	      {
 	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm->module);
@@ -287,7 +321,7 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 	    return NT351;
 	}
 
-	/* the MajorSubsystemVersion is the only usable singn */
+	/* the MajorSubsystemVersion is the only usable sign */
 	if (ophd->MajorSubsystemVersion < 4)
 	{
 	  if ( ophd->MajorOperatingSystemVersion == 1 
