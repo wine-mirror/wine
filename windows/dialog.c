@@ -387,10 +387,10 @@ static BOOL DIALOG_CreateControls( WND *pWnd, LPCSTR template,
             hwndCtrl = CreateWindowEx16( info.exStyle | WS_EX_NOPARENTNOTIFY,
                                          info.className, info.windowName,
                                          info.style | WS_CHILD,
-                                         info.x * dlgInfo->xBaseUnit / 4,
-                                         info.y * dlgInfo->yBaseUnit / 8,
-                                         info.cx * dlgInfo->xBaseUnit / 4,
-                                         info.cy * dlgInfo->yBaseUnit / 8,
+                                         MulDiv(info.x, dlgInfo->xBaseUnit, 4),
+                                         MulDiv(info.y, dlgInfo->yBaseUnit, 8),
+                                         MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
+                                         MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
                                          pWnd->hwndSelf, (HMENU16)info.id,
                                          instance, info.data );
         }
@@ -402,10 +402,10 @@ static BOOL DIALOG_CreateControls( WND *pWnd, LPCSTR template,
                                           (LPCWSTR)info.className,
                                           (LPCWSTR)info.windowName,
                                           info.style | WS_CHILD,
-                                          info.x * dlgInfo->xBaseUnit / 4,
-                                          info.y * dlgInfo->yBaseUnit / 8,
-                                          info.cx * dlgInfo->xBaseUnit / 4,
-                                          info.cy * dlgInfo->yBaseUnit / 8,
+                                          MulDiv(info.x, dlgInfo->xBaseUnit, 4),
+                                          MulDiv(info.y, dlgInfo->yBaseUnit, 8),
+                                          MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
+                                          MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
                                           pWnd->hwndSelf, (HMENU)info.id,
                                           hInst, info.data );
         }
@@ -677,8 +677,8 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     /* Create dialog main window */
 
     rect.left = rect.top = 0;
-    rect.right = template.cx * xUnit / 4;
-    rect.bottom = template.cy * yUnit / 8;
+    rect.right = MulDiv(template.cx, xUnit, 4);
+    rect.bottom =  MulDiv(template.cy, yUnit, 8);
     if (template.style & DS_MODALFRAME)
         template.exStyle |= WS_EX_DLGMODALFRAME;
     AdjustWindowRectEx( &rect, template.style, 
@@ -699,8 +699,8 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
         }
         else
         {
-            rect.left += template.x * xUnit / 4;
-            rect.top += template.y * yUnit / 8;
+            rect.left += MulDiv(template.x, xUnit, 4);
+            rect.top += MulDiv(template.y, yUnit, 8);
         }
         if ( !(template.style & WS_CHILD) )
 	{
@@ -1740,10 +1740,10 @@ void WINAPI MapDialogRect16( HWND16 hwnd, LPRECT16 rect )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return;
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    rect->left   = (rect->left * dlgInfo->xBaseUnit) / 4;
-    rect->right  = (rect->right * dlgInfo->xBaseUnit) / 4;
-    rect->top    = (rect->top * dlgInfo->yBaseUnit) / 8;
-    rect->bottom = (rect->bottom * dlgInfo->yBaseUnit) / 8;
+    rect->left   = MulDiv(rect->left, dlgInfo->xBaseUnit, 4);
+    rect->right  = MulDiv(rect->right, dlgInfo->xBaseUnit, 4);
+    rect->top    = MulDiv(rect->top, dlgInfo->yBaseUnit, 8);
+    rect->bottom = MulDiv(rect->bottom, dlgInfo->yBaseUnit, 8);
     WIN_ReleaseWndPtr(wndPtr);
 }
 
@@ -1757,10 +1757,10 @@ BOOL WINAPI MapDialogRect( HWND hwnd, LPRECT rect )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return FALSE;
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    rect->left   = (rect->left * dlgInfo->xBaseUnit) / 4;
-    rect->right  = (rect->right * dlgInfo->xBaseUnit) / 4;
-    rect->top    = (rect->top * dlgInfo->yBaseUnit) / 8;
-    rect->bottom = (rect->bottom * dlgInfo->yBaseUnit) / 8;
+    rect->left   = MulDiv(rect->left, dlgInfo->xBaseUnit, 4);
+    rect->right  = MulDiv(rect->right, dlgInfo->xBaseUnit, 4);
+    rect->top    = MulDiv(rect->top, dlgInfo->yBaseUnit, 8);
+    rect->bottom = MulDiv(rect->bottom, dlgInfo->yBaseUnit, 8);
     WIN_ReleaseWndPtr(wndPtr);
     return TRUE;
 }
