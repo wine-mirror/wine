@@ -345,7 +345,9 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 	  if (size_hints) 
 	  {
               size_hints->win_gravity = StaticGravity;
-              size_hints->flags = PWinGravity;
+              size_hints->x = cs->x;
+              size_hints->y = cs->y;
+              size_hints->flags = PWinGravity|PPosition;
 
               if (HAS_DLGFRAME(cs->style,cs->dwExStyle))
 	      {
