@@ -23,34 +23,29 @@ inline static float round(float f)
 {
     return (f > 0) ? (f + 0.5) : (f - 0.5);
 }
- 
-static void ScaleFont(DC *dc, LOGFONTW *lf, PSDRV_PDEVICE *physDev)
+
+static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
+    	TEXTMETRICW *tm)
 {
-    PSFONT  	    	*font = &(physDev->font);
-    const WINMETRICS	*wm = &(font->afm->WinMetrics);
-    TEXTMETRICW     	*tm = &(font->tm);
-    LONG    	    	lfHeight_ds;
+    const WINMETRICS	*wm = &(afm->WinMetrics);
     USHORT  	    	usUnitsPerEm, usWinAscent, usWinDescent;
     SHORT   	    	sAscender, sDescender, sLineGap, sTypoAscender;
     SHORT    	    	sTypoDescender, sTypoLineGap, sAvgCharWidth;
     
-    TRACE("'%s' %li\n", font->afm->FontName, lf->lfHeight);
+    TRACE("'%s' %li\n", afm->FontName, lfHeight);
 		
-    lfHeight_ds = INTERNAL_YWSTODS(dc, lf->lfHeight);	/* world->viewport */
-
-    if (lfHeight_ds < 0)   	    	    	    	/* match em height */
+    if (lfHeight < 0)   	    	    	    	/* match em height */
     {
-        font->scale = - ((float)lfHeight_ds / (float)(wm->usUnitsPerEm));
+        font->scale = - ((float)lfHeight / (float)(wm->usUnitsPerEm));
     }
     else    	    	    	    	    	    	/* match cell height */
     {
-    	font->scale = (float)lfHeight_ds /
+    	font->scale = (float)lfHeight /
 	    	(float)(wm->usWinAscent + wm->usWinDescent);
     }
     
-    physDev->font.size = (INT)round(font->scale * (float)wm->usUnitsPerEm);
-    physDev->font.escapement = lf->lfEscapement;
-    physDev->font.set = FALSE;
+    font->size = (INT)round(font->scale * (float)wm->usUnitsPerEm);
+    font->set = FALSE;
     
     usUnitsPerEm = (USHORT)round((float)(wm->usUnitsPerEm) * font->scale);
     sAscender = (SHORT)round((float)(wm->sAscender) * font->scale);
@@ -75,38 +70,26 @@ static void ScaleFont(DC *dc, LOGFONTW *lf, PSDRV_PDEVICE *physDev)
     	    (LONG)(sAscender - sDescender + sLineGap) - tm->tmHeight;
     if (tm->tmExternalLeading < 0)
     	tm->tmExternalLeading = 0;
-	
-    /*
-     *	Character widths are stored as PostScript metrics, which assume an
-     *	em square size of 1000.
-     */
-     
+    
     tm->tmAveCharWidth = (LONG)sAvgCharWidth;
-         
-    tm->tmMaxCharWidth = (LONG)round(
-    	    (font->afm->FontBBox.urx - font->afm->FontBBox.llx) *
-	    font->scale * (float)(wm->usUnitsPerEm) / 1000.0);
-
-    tm->tmWeight = font->afm->Weight;
-    tm->tmItalic = (font->afm->ItalicAngle != 0.0);
+	
+    tm->tmWeight = afm->Weight;
+    tm->tmItalic = (afm->ItalicAngle != 0.0);
     tm->tmUnderlined = 0;
     tm->tmStruckOut = 0;
-    tm->tmFirstChar = (WCHAR)(font->afm->Metrics[0].UV);
-    tm->tmLastChar =
-    	    (WCHAR)(font->afm->Metrics[font->afm->NumofMetrics - 1].UV);
+    tm->tmFirstChar = (WCHAR)(afm->Metrics[0].UV);
+    tm->tmLastChar = (WCHAR)(afm->Metrics[afm->NumofMetrics - 1].UV);
     tm->tmDefaultChar = 0x001f;     	/* Win2K does this - FIXME? */
     tm->tmBreakChar = tm->tmFirstChar;	    	/* should be 'space' */
     
-    /* Assume that a font with an em square size of 1000 is a PostScript font */
+    tm->tmPitchAndFamily = TMPF_DEVICE | TMPF_VECTOR;
+    if (!afm->IsFixedPitch)
+    	tm->tmPitchAndFamily |= TMPF_FIXED_PITCH;   /* yes, it's backwards */
+    if (wm->usUnitsPerEm != 1000)
+    	tm->tmPitchAndFamily |= TMPF_TRUETYPE;
     
-    tm->tmPitchAndFamily = (font->afm->IsFixedPitch ? 0 : TMPF_FIXED_PITCH) |
-    	    ((wm->usUnitsPerEm == 1000) ? TMPF_DEVICE : TMPF_TRUETYPE) |
-	    TMPF_VECTOR;    	/* TMPF_VECTOR always set per Win32 API doc */
-	    
     tm->tmCharSet = ANSI_CHARSET;   	/* FIXME */
     tm->tmOverhang = 0;
-    tm->tmDigitizedAspectX = physDev->logPixelsY;
-    tm->tmDigitizedAspectY = physDev->logPixelsX;
     
     /*
      *	This is kludgy.  font->scale is used in several places in the driver
@@ -116,14 +99,15 @@ static void ScaleFont(DC *dc, LOGFONTW *lf, PSDRV_PDEVICE *physDev)
      */
      
     font->scale *= (float)wm->usUnitsPerEm / 1000.0;
+     
+    tm->tmMaxCharWidth = (LONG)round(
+    	    (afm->FontBBox.urx - afm->FontBBox.llx) * font->scale);
     
-    TRACE("Selected PS font '%s' size %d weight %ld.\n", 
-	  physDev->font.afm->FontName, physDev->font.size,
-	  physDev->font.tm.tmWeight );
-    TRACE("H = %ld As = %ld Des = %ld IL = %ld EL = %ld\n",
-	  physDev->font.tm.tmHeight, physDev->font.tm.tmAscent,
-	  physDev->font.tm.tmDescent, physDev->font.tm.tmInternalLeading,
-	  physDev->font.tm.tmExternalLeading);
+    TRACE("Selected PS font '%s' size %d weight %ld.\n", afm->FontName,
+    	    font->size, tm->tmWeight );
+    TRACE("H = %ld As = %ld Des = %ld IL = %ld EL = %ld\n", tm->tmHeight,
+    	    tm->tmAscent, tm->tmDescent, tm->tmInternalLeading,
+    	    tm->tmExternalLeading);
 }
 
 /***********************************************************************
@@ -248,7 +232,15 @@ HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
     TRACE("Got font '%s'\n", afmle->afm->FontName);
     
     physDev->font.afm = afmle->afm;
-    ScaleFont(dc, &lf, physDev);
+    ScaleFont(physDev->font.afm, INTERNAL_YWSTODS(dc, lf.lfHeight),
+    	    &(physDev->font), &(physDev->font.tm));
+    
+    physDev->font.escapement = lf.lfEscapement;
+    
+    /* Does anyone know if these are supposed to be reversed like this? */
+    
+    physDev->font.tm.tmDigitizedAspectX = physDev->logPixelsY;
+    physDev->font.tm.tmDigitizedAspectY = physDev->logPixelsX;
     
     return prevfont;
 }
@@ -374,48 +366,32 @@ BOOL PSDRV_SetFont( DC *dc )
 /***********************************************************************
  *           PSDRV_GetFontMetric
  */
-static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *pafm,
-    	NEWTEXTMETRICEXW *pTM, ENUMLOGFONTEXW *pLF, INT16 size)
-
+static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *afm,
+    	NEWTEXTMETRICEXW *ntmx, ENUMLOGFONTEXW *elfx)
 {
-    float scale = size / (pafm->FullAscender - pafm->Descender);
+    /* ntmx->ntmTm is NEWTEXTMETRICW; compatible w/ TEXTMETRICW per Win32 doc */
 
-    memset( pLF, 0, sizeof(*pLF) );
-    memset( pTM, 0, sizeof(*pTM) );
-
-#define plf ((LPLOGFONTW)pLF)
-#define ptm ((LPNEWTEXTMETRICW)pTM)
-    plf->lfHeight    = ptm->tmHeight       = size;
-    plf->lfWidth     = ptm->tmAveCharWidth = pafm->CharWidths[120] * scale;
-    plf->lfWeight    = ptm->tmWeight       = pafm->Weight;
-    plf->lfItalic    = ptm->tmItalic       = pafm->ItalicAngle != 0.0;
-    plf->lfUnderline = ptm->tmUnderlined   = 0;
-    plf->lfStrikeOut = ptm->tmStruckOut    = 0;
-    plf->lfCharSet   = ptm->tmCharSet      = ANSI_CHARSET;
-
-    /* convert pitch values */
-
-    ptm->tmPitchAndFamily = pafm->IsFixedPitch ? 0 : TMPF_FIXED_PITCH;
-    ptm->tmPitchAndFamily |= TMPF_DEVICE;
-    plf->lfPitchAndFamily = 0;
-
-    MultiByteToWideChar(CP_ACP, 0, pafm->FamilyName, -1,
-			plf->lfFaceName, LF_FACESIZE);
-#undef plf
-
-    ptm->tmAscent = pafm->FullAscender * scale;
-    ptm->tmDescent = -pafm->Descender * scale;
-    ptm->tmInternalLeading = (pafm->FullAscender - pafm->Ascender) * scale;
-    ptm->tmMaxCharWidth = pafm->CharWidths[77] * scale;
-    /* FIXME: X and Y are swapped here, is this on purpose? */
-    ptm->tmDigitizedAspectX = GetDeviceCaps( hdc, LOGPIXELSY );
-    ptm->tmDigitizedAspectY = GetDeviceCaps( hdc, LOGPIXELSX );
-
-    *(INT*)&ptm->tmFirstChar = 32;
-
-    /* return font type */
+    TEXTMETRICW     *tm = (TEXTMETRICW *)&(ntmx->ntmTm);
+    LOGFONTW	    *lf = &(elfx->elfLogFont);
+    PSFONT  	    font;
+    
+    memset(ntmx, 0, sizeof(*ntmx));
+    memset(elfx, 0, sizeof(*elfx));
+    
+    ScaleFont(afm, -(LONG)(afm->WinMetrics.usUnitsPerEm), &font, tm);
+    
+    lf->lfHeight = tm->tmHeight;
+    lf->lfWidth = tm->tmAveCharWidth;
+    lf->lfWeight = tm->tmWeight;
+    lf->lfItalic = tm->tmItalic;
+    lf->lfCharSet = tm->tmCharSet;
+    
+    lf->lfPitchAndFamily = (afm->IsFixedPitch) ? FIXED_PITCH : VARIABLE_PITCH;
+    
+    MultiByteToWideChar(CP_ACP, 0, afm->FamilyName, -1, lf->lfFaceName,
+    	    LF_FACESIZE);
+	    
     return DEVICE_FONTTYPE;
-#undef ptm
 }
 
 /***********************************************************************
@@ -451,7 +427,7 @@ BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
 	    for(afmle = family->afmlist; afmle; afmle = afmle->next) {
 	        TRACE("Got '%s'\n", afmle->afm->FontName);
 		if( (b = (*proc)( &lf, &tm, 
-			PSDRV_GetFontMetric( hdc, afmle->afm, &tm, &lf, 200 ),
+			PSDRV_GetFontMetric( hdc, afmle->afm, &tm, &lf ),
 				  lp )) )
 		     bRet = b;
 		else break;
@@ -464,7 +440,7 @@ BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
 	    afmle = family->afmlist;
 	    TRACE("Got '%s'\n", afmle->afm->FontName);
 	    if( (b = (*proc)( &lf, &tm, 
-		   PSDRV_GetFontMetric( hdc, afmle->afm, &tm, &lf, 200 ), 
+		   PSDRV_GetFontMetric( hdc, afmle->afm, &tm, &lf ), 
 			      lp )) )
 	        bRet = b;
 	    else break;
