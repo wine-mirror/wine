@@ -20,10 +20,10 @@ debug_channels (setupapi setupx)
 # 53 stdcall SetupAdjustDiskSpaceListA()                      SetupAdjustDiskSpaceListA
 # 54 stdcall SetupAdjustDiskSpaceListW()                      SetupAdjustDiskSpaceListW
 # 55 stdcall SetupCancelTemporarySourceList()                 SetupCancelTemporarySourceList
-# 56 stdcall SetupCloseFileQueue()                            SetupCloseFileQueue
+56 stdcall SetupCloseFileQueue(ptr)                           SetupCloseFileQueue
 57 stdcall SetupCloseInfFile(long)                            SetupCloseInfFile
 # 58 stdcall SetupCommitFileQueue()                           SetupCommitFileQueue
-# 59 stdcall SetupCommitFileQueueA()                          SetupCommitFileQueueA
+59 stdcall SetupCommitFileQueueA(ptr ptr ptr ptr)             SetupCommitFileQueueA
 # 60 stdcall SetupCommitFileQueueW()                          SetupCommitFileQueueW
 # 61 stdcall SetupCopyErrorA()                                SetupCopyErrorA
 # 62 stdcall SetupCopyErrorW()                                SetupCopyErrorW
@@ -137,7 +137,7 @@ debug_channels (setupapi setupx)
 #170 stdcall SetupGetInfInformationA()                        SetupGetInfInformationA
 #171 stdcall SetupGetInfInformationW()                        SetupGetInfInformationW
 #172 stdcall SetupGetIntField()                               SetupGetIntField
-#173 stdcall SetupGetLineByIndexA()                           SetupGetLineByIndexA
+173 stdcall SetupGetLineByIndexA(ptr str long ptr)            SetupGetLineByIndexA
 #174 stdcall SetupGetLineByIndexW()                           SetupGetLineByIndexW
 #175 stdcall SetupGetLineCountA()                             SetupGetLineCountA
 #176 stdcall SetupGetLineCountW()                             SetupGetLineCountW
@@ -156,7 +156,7 @@ debug_channels (setupapi setupx)
 #189 stdcall SetupGetTargetPathA()                            SetupGetTargetPathA
 #190 stdcall SetupGetTargetPathW()                            SetupGetTargetPathW
 191 stdcall SetupInitDefaultQueueCallback(long)               SetupInitDefaultQueueCallback
-#192 stdcall SetupInitDefaultQueueCallbackEx()                SetupInitDefaultQueueCallbackEx
+192 stdcall SetupInitDefaultQueueCallbackEx(long long long long ptr) SetupInitDefaultQueueCallbackEx
 #193 stdcall SetupInitializeFileLogA()                        SetupInitializeFileLogA
 #194 stdcall SetupInitializeFileLogW()                        SetupInitializeFileLogW
 #195 stdcall SetupInstallFileA()                              SetupInstallFileA
@@ -173,9 +173,9 @@ debug_channels (setupapi setupx)
 206 stdcall SetupIterateCabinetW(wstr long ptr ptr) SetupIterateCabinetW
 #207 stdcall SetupLogFileA()                                  SetupLogFileA
 #208 stdcall SetupLogFileW()                                  SetupLogFileW
-#209 stdcall SetupOpenAppendInfFileA()                        SetupOpenAppendInfFileA
+209 stdcall SetupOpenAppendInfFileA(str ptr ptr)              SetupOpenAppendInfFileA
 #210 stdcall SetupOpenAppendInfFileW()                        SetupOpenAppendInfFileW
-#211 stdcall SetupOpenFileQueue()                             SetupOpenFileQueue
+211 stdcall SetupOpenFileQueue()                              SetupOpenFileQueue
 212 stdcall SetupOpenInfFileA(ptr ptr long ptr)               SetupOpenInfFileA
 #213 stdcall SetupOpenInfFileW()                              SetupOpenInfFileW
 #214 stdcall SetupOpenMasterInf()                             SetupOpenMasterInf
@@ -194,7 +194,7 @@ debug_channels (setupapi setupx)
 #227 stdcall SetupQuerySourceListW()                          SetupQuerySourceListW
 #228 stdcall SetupQuerySpaceRequiredOnDriveA()                SetupQuerySpaceRequiredOnDriveA
 #229 stdcall SetupQuerySpaceRequiredOnDriveW()                SetupQuerySpaceRequiredOnDriveW
-#230 stdcall SetupQueueCopyA()                                SetupQueueCopyA
+230 stdcall SetupQueueCopyA(ptr str str str str str str str long) SetupQueueCopyA
 #231 stdcall SetupQueueCopySectionA()                         SetupQueueCopySectionA
 #232 stdcall SetupQueueCopySectionW()                         SetupQueueCopySectionW
 #233 stdcall SetupQueueCopyW()                                SetupQueueCopyW
@@ -223,7 +223,7 @@ debug_channels (setupapi setupx)
 #256 stdcall SetupScanFileQueue()                             SetupScanFileQueue
 #257 stdcall SetupScanFileQueueA()                            SetupScanFileQueueA
 #258 stdcall SetupScanFileQueueW()                            SetupScanFileQueueW
-#259 stdcall SetupSetDirectoryIdA(long long str)               SetupSetDirectoryIdA
+259 stdcall SetupSetDirectoryIdA(long long str)               SetupSetDirectoryIdA
 #260 stdcall SetupSetDirectoryIdExA(long long str long long ptr)  SetupSetDirectoryIdExA
 #261 stdcall SetupSetDirectoryIdExW(long long wstr long long ptr) SetupSetDirectoryIdExW
 #262 stdcall SetupSetDirectoryIdW(long long wstr)             SetupSetDirectoryIdW
@@ -231,5 +231,5 @@ debug_channels (setupapi setupx)
 #264 stdcall SetupSetPlatformPathOverrideW(wstr)              SetupSetPlatformPathOverrideW
 #265 stdcall SetupSetSourceListA(long str long)               SetupSetSourceListA
 #266 stdcall SetupSetSourceListW(long wstr long)              SetupSetSourceListW
-#267 stdcall SetupTermDefaultQueueCallback(ptr)               SetupTermDefaultQueueCallback
+267 stdcall SetupTermDefaultQueueCallback(ptr)               SetupTermDefaultQueueCallback
 #268 stdcall SetupTerminateFileLog(ptr)                       SetupTerminateFileLog
