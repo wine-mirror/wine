@@ -2152,13 +2152,13 @@ else
     AC_CACHE_CHECK("whether we can build a NetBSD dll",
                    ac_cv_c_dll_netbsd,
     [saved_cflags=$CFLAGS
-    CFLAGS="$CFLAGS -fPIC -Bshareable -Bforcearchive"
+    CFLAGS="$CFLAGS -fPIC -Wl,-Bshareable,-Bforcearchive"
     AC_TRY_LINK(,[return 1],ac_cv_c_dll_netbsd="yes",ac_cv_c_dll_netbsd="no")
     CFLAGS=$saved_cflags
     ])
     if test "$ac_cv_c_dll_netbsd" = "yes"
     then
-      LDSHARED="ld -Bshareable -Bforcearchive"
+      LDSHARED="\$(CC) -Wl,-Bshareable,-Bforcearchive"
     fi
   fi
 fi
@@ -2168,7 +2168,7 @@ then
 fi
 
 DLLFLAGS="-fPIC"
-DLL_LINK="\$(WINELIB_LIBRARY_PATH) \$(DLLS:%=-l%) \$(IMPORTS:%=-l%) -lwine -lwine_unicode"
+DLL_LINK="\$(WINE_LIBRARY_PATH) \$(DLLS:%=-l%) \$(IMPORTS:%=-l%) -lwine -lwine_unicode"
 
 AC_SUBST(DLL_LINK)
 AC_SUBST(DLLFLAGS)
@@ -2227,134 +2227,207 @@ then
     CXXFLAGS="$CXXFLAGS -fno-for-scope"
   fi
 fi
+AC_LANG_C()
 
 dnl **** Test Winelib-related features of the C compiler
 dnl none for now
 
+dnl **** Macros for finding a headers/libraries in a collection of places
+
+dnl AC_PATH_HEADER(variable,header,action-if-not-found,default-locations)
+dnl Note that the above may set variable to an empty value if the header is 
+dnl already in the include path
+AC_DEFUN(AC_PATH_HEADER,[
+AC_MSG_CHECKING([for $2])
+AC_CACHE_VAL(ac_cv_path_$1,
+[
+  ac_found=
+  ac_dummy="ifelse([$4], , :/usr/local/include, [$4])"
+  save_CPPFLAGS="$CPPFLAGS"
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=":"
+  for ac_dir in $ac_dummy; do
+    IFS="$ac_save_ifs"
+    if test -z "$ac_dir"
+    then
+      CPPFLAGS="$save_CPPFLAGS"
+    else
+      CPPFLAGS="-I$ac_dir $save_CPPFLAGS"
+    fi
+    AC_TRY_COMPILE([#include <$2>],,ac_found=1;ac_cv_path_$1="$ac_dir";break)
+  done
+  CPPFLAGS="$save_CPPFLAGS"
+  ifelse([$3],,,[if test -z "$ac_found"
+    then
+      $3
+    fi
+  ])
+])
+$1="$ac_cv_path_$1"
+if test -n "$ac_found" -o -n "[$]$1"
+then
+  AC_MSG_RESULT([$]$1)
+else
+  AC_MSG_RESULT(no)
+fi
+AC_SUBST($1)
+])
+
+dnl AC_PATH_LIBRARY(variable,libraries,extra libs,action-if-not-found,default-locations)
+AC_DEFUN(AC_PATH_LIBRARY,[
+AC_MSG_CHECKING([for $2])
+AC_CACHE_VAL(ac_cv_path_$1,
+[
+  ac_found=
+  ac_dummy="ifelse([$5], , :/usr/local/lib, [$5])"
+  save_LIBS="$LIBS"
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=":"
+  for ac_dir in $ac_dummy; do
+    IFS="$ac_save_ifs"
+    if test -z "$ac_dir"
+    then
+      LIBS="$2 $3 $save_LIBS"
+    else
+      LIBS="-L$ac_dir $2 $3 $save_LIBS"
+    fi
+    AC_TRY_LINK(,,ac_found=1;ac_cv_path_$1="$ac_dir";break)
+  done
+  LIBS="$save_LIBS"
+  ifelse([$4],,,[if test -z "$ac_found"
+    then
+      $4
+    fi
+  ])
+])
+$1="$ac_cv_path_$1"
+if test -n "$ac_found" -o -n "[$]$1"
+then
+  AC_MSG_RESULT([$]$1)
+else
+  AC_MSG_RESULT(no)
+fi
+AC_SUBST($1)
+])
+
 dnl **** Try to find where winelib is located ****
 
-dnl This section is implemented using custom code since autoconf does not 
-dnl provide a standard method. Here is how other people have tried to 
-dnl solve the same (or similar) problem.
-dnl See: http://www.geocrawler.com/archives/3/402/1999/4/50/2131449/
-dnl or   http://www.geocrawler.com/archives/3/402/1999/4/50/2131443/
-dnl      ftp://ftp.slac.stanford.edu/users/langston/autoconf/smr_macros-0.09.tar.gz
-dnl or   http://www.geocrawler.com/archives/3/402/1999/4/50/2131452/
-dnl or   http://www.geocrawler.com/archives/3/402/1999/4/50/2131446/
-
-WINELIB_INCLUDE_ROOT="";
-WINELIB_INCLUDE_PATH="";
-WINELIB_LIBRARY_ROOT="";
-WINELIB_LIBRARY_PATH="";
-WINELIB_TOOL_PATH="";
+WINE_INCLUDE_ROOT="";
+WINE_INCLUDE_PATH="";
+WINE_LIBRARY_ROOT="";
+WINE_LIBRARY_PATH="";
+WINE_TOOL_PATH="";
 WINEBUILD="";
 WRC="";
 
-AC_ARG_WITH(winelib-root,
-[  --with-winelib-root=DIR       take the Winelib includes, libraries and tools from this directory],
+AC_ARG_WITH(wine,
+[  --with-wine=DIR           the Wine package (or sources) is in DIR],
 [if test "$withval" != "no"; then
-  WINELIB_ROOT="$withval";
-  WINELIB_INCLUDES="";
-  WINELIB_LIBRARIES="";
-  WINELIB_TOOLS="";
+  WINE_ROOT="$withval";
+  WINE_INCLUDES="";
+  WINE_LIBRARIES="";
+  WINE_TOOLS="";
 else
-  WINELIB_ROOT="";
+  WINE_ROOT="";
 fi])
-if test -n "$WINELIB_ROOT"
+if test -n "$WINE_ROOT"
 then
-  WINELIB_INCLUDE_ROOT="$WINELIB_ROOT/include";
-  WINELIB_LIBRARY_ROOT="$WINELIB_ROOT";
-  WINELIB_TOOL_PATH="$WINELIB_ROOT:$WINELIB_ROOT/bin:$WINELIB_ROOT/tools/wrc:$WINELIB_ROOT/tools/winebuild:$PATH";
+  WINE_INCLUDE_ROOT="$WINE_ROOT/include";
+  WINE_LIBRARY_ROOT="$WINE_ROOT";
+  WINE_TOOL_PATH="$WINE_ROOT:$WINE_ROOT/bin:$WINE_ROOT/tools/wrc:$WINE_ROOT/tools/winebuild:$PATH";
 fi
 
-AC_ARG_WITH(winelib-includes,
-[  --with-winelib-includes=DIR   take the Winelib includes from this directory],
+AC_ARG_WITH(wine-includes,
+[  --with-wine-includes=DIR  the Wine includes are in DIR],
 [if test "$withval" != "no"; then
-  WINELIB_INCLUDES="$withval";
+  WINE_INCLUDES="$withval";
 else
-  WINELIB_INCLUDES="";
+  WINE_INCLUDES="";
 fi])
-if test -n "$WINELIB_INCLUDES"
+if test -n "$WINE_INCLUDES"
 then
-  WINELIB_INCLUDE_ROOT="$WINELIB_INCLUDES";
+  WINE_INCLUDE_ROOT="$WINE_INCLUDES";
 fi
 
-AC_ARG_WITH(winelib-libraries,
-[  --with-winelib-libraries=DIR  take the Winelib libraries from this directory],
+AC_ARG_WITH(wine-libraries,
+[  --with-wine-libraries=DIR the Wine libraries are in DIR],
 [if test "$withval" != "no"; then
-  WINELIB_LIBRARIES="$withval";
+  WINE_LIBRARIES="$withval";
 else
-  WINELIB_LIBRARIES="";
+  WINE_LIBRARIES="";
 fi])
-if test -n "$WINELIB_LIBRARIES"
+if test -n "$WINE_LIBRARIES"
 then
-  WINELIB_LIBRARY_ROOT="$WINELIB_LIBRARIES";
+  WINE_LIBRARY_ROOT="$WINE_LIBRARIES";
 fi
 
-AC_ARG_WITH(winelib-tools,
-[  --with-winelib-tools=DIR      take the Winelib tools from this directory],
+AC_ARG_WITH(wine-tools,
+[  --with-wine-tools=DIR     the Wine tools are in DIR],
 [if test "$withval" != "no"; then
-  WINELIB_TOOLS="$withval";
+  WINE_TOOLS="$withval";
 else
-  WINELIB_TOOLS="";
+  WINE_TOOLS="";
 fi])
-if test -n "$WINELIB_TOOLS"
+if test -n "$WINE_TOOLS"
 then
-  WINELIB_TOOL_PATH="$WINELIB_TOOLS:$WINELIB_TOOLS/wrc:$WINELIB_TOOLS/winebuild";
+  WINE_TOOL_PATH="$WINE_TOOLS:$WINE_TOOLS/wrc:$WINE_TOOLS/winebuild";
 fi
 
-if test -z "$WINELIB_INCLUDE_ROOT"
+if test -z "$WINE_INCLUDE_ROOT"
 then
-  WINELIB_INCLUDE_ROOT="/usr/include/wine";
+  WINE_INCLUDE_ROOT=":/usr/include/wine:/usr/local/include/wine:/opt/wine/include";
 fi
-if test ! -f "$WINELIB_INCLUDE_ROOT/windows.h"
+AC_PATH_HEADER(WINE_INCLUDE_ROOT,windef.h,[
+  AC_MSG_ERROR([Could not find the Wine includes])
+],$WINE_INCLUDE_ROOT)
+if test -n "$WINE_INCLUDE_ROOT"
 then
-  AC_MSG_ERROR([Could not find the Winelib includes])
-fi
-WINELIB_INCLUDE_PATH="-I$WINELIB_INCLUDE_ROOT"
-
-if test -z "$WINELIB_LIBRARY_ROOT"
-then
-  WINELIB_LIBRARY_ROOT="/usr/lib/wine";
-fi
-if test ! -f "$WINELIB_LIBRARY_ROOT/libwine.so"
-then
-  if test -f "$WINELIB_LIBRARY_ROOT/lib/libwine.so"
-  then
-    WINELIB_LIBRARY_ROOT="$WINELIB_LIBRARY_ROOT/lib";
-  else
-    AC_MSG_ERROR([Could not find the Winelib libraries (libwine)])
-  fi
-fi
-if test -f "$WINELIB_LIBRARY_ROOT/libkernel32.so"
-then
-  WINELIB_LIBRARY_PATH="-L$WINELIB_LIBRARY_ROOT";
+  WINE_INCLUDE_PATH="-I$WINE_INCLUDE_ROOT"
 else
-  if test -f "$WINELIB_LIBRARY_ROOT/dlls/libkernel32.so"
-  then
-    WINELIB_LIBRARY_PATH="-L$WINELIB_LIBRARY_ROOT -L$WINELIB_LIBRARY_ROOT/dlls";
-  else
-    AC_MSG_ERROR([Could not find the Winelib libraries (libkernel32)])
-  fi
+  WINE_INCLUDE_PATH=""
 fi
 
-AC_PATH_PROG(WINEBUILD,winebuild,,$WINELIB_TOOL_PATH)
+if test -z "$WINE_LIBRARY_ROOT"
+then
+  WINE_LIBRARY_ROOT=":/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine:/opt/wine/lib";
+else
+  WINE_LIBRARY_ROOT="$WINE_LIBRARY_ROOT:$WINE_LIBRARY_ROOT/lib";
+fi
+AC_PATH_LIBRARY(WINE_LIBRARY_ROOT,[-lwine],[-lutil],[
+  AC_MSG_ERROR([Could not find the Wine libraries (libwine.so)])
+],$WINE_LIBRARY_ROOT)
+if test -n "$WINE_LIBRARY_ROOT"
+then
+  WINE_LIBRARY_PATH="-L$WINE_LIBRARY_ROOT"
+else
+  WINE_LIBRARY_PATH=""
+fi
+AC_PATH_LIBRARY(LIBNTDLL_PATH,[-lntdll],[$WINE_LIBRARY_PATH -lwine -lwine_unicode -lncurses -ldl -lutil],[
+  AC_MSG_ERROR([Could not find the Wine libraries (libntdll.so)])
+],[$WINE_LIBRARY_ROOT:$WINE_LIBRARY_ROOT/dlls])
+if test -n "$LIBNTDLL_PATH" -a "-L$LIBNTDLL_PATH" != "$WINE_LIBRARY_PATH"
+then
+  WINE_LIBRARY_PATH="$WINE_LIBRARY_PATH -L$LIBNTDLL_PATH"
+fi
+
+if test -z "$WINE_TOOL_PATH"
+then
+  WINE_TOOL_PATH="$PATH:/usr/local/bin:/opt/wine/bin";
+fi
+AC_PATH_PROG(WINEBUILD,winebuild,,$WINE_TOOL_PATH)
 if test -z "$WINEBUILD"
 then
-  AC_MSG_ERROR([Could not find Winelib's winebuild tool])
+  AC_MSG_ERROR([Could not find Wine's winebuild tool])
 fi
-AC_PATH_PROG(WRC,wrc,,$WINELIB_TOOL_PATH)
+AC_PATH_PROG(WRC,wrc,,$WINE_TOOL_PATH)
 if test -z "$WRC"
 then
-  AC_MSG_ERROR([Could not find Winelib's wrc tool])
+  AC_MSG_ERROR([Could not find Wine's wrc tool])
 fi
 
-AC_SUBST(WINELIB_INCLUDE_ROOT)
-AC_SUBST(WINELIB_INCLUDE_PATH)
-AC_SUBST(WINELIB_LIBRARY_ROOT)
-AC_SUBST(WINELIB_LIBRARY_PATH)
+AC_SUBST(WINE_INCLUDE_PATH)
+AC_SUBST(WINE_LIBRARY_PATH)
 
 dnl **** Try to find where the MFC are located ****
+AC_LANG_CPLUSPLUS()
 
 if test "x$NEEDS_MFC" = "x1"
 then
@@ -2365,8 +2438,8 @@ then
   MFC_LIBRARY_ROOT="";
   MFC_LIBRARY_PATH="";
 
-  AC_ARG_WITH(mfc-root,
-  [  --with-mfc-root=DIR           take the MFC includes and libraries from this directory],
+  AC_ARG_WITH(mfc,
+  [  --with-mfc=DIR            the MFC package (or sources) is in DIR],
   [if test "$withval" != "no"; then
     MFC_ROOT="$withval";
     ATL_INCLUDES="";
@@ -2383,7 +2456,7 @@ then
   fi
 
   AC_ARG_WITH(atl-includes,
-  [  --with-atl-includes=DIR       take the ATL includes from this directory],
+  [  --with-atl-includes=DIR   the ATL includes are in DIR],
   [if test "$withval" != "no"; then
     ATL_INCLUDES="$withval";
   else
@@ -2395,7 +2468,7 @@ then
   fi
 
   AC_ARG_WITH(mfc-includes,
-  [  --with-mfc-includes=DIR       take the MFC includes from this directory],
+  [  --with-mfc-includes=DIR   the MFC includes are in DIR],
   [if test "$withval" != "no"; then
     MFC_INCLUDES="$withval";
   else
@@ -2407,7 +2480,7 @@ then
   fi
 
   AC_ARG_WITH(mfc-libraries,
-  [  --with-mfc-libraries=DIR      take the MFC libraries from this directory],
+  [  --with-mfc-libraries=DIR  the MFC libraries are in DIR],
   [if test "$withval" != "no"; then
     MFC_LIBRARIES="$withval";
   else
@@ -2418,77 +2491,62 @@ then
     MFC_LIBRARY_ROOT="$MFC_LIBRARIES";
   fi
 
-  dnl FIXME: We should have an include path and just iterate through it.
-  dnl These tests become ugly.
+  OLDCPPFLAGS="$CPPFLAGS"
+  dnl FIXME: We should not have defines in any of the include paths
+  CPPFLAGS="$WINE_INCLUDE_PATH -I$WINE_INCLUDE_ROOT/mixedcrt -D_DLL -D_MT $CPPFLAGS"
+  ATL_INCLUDE_PATH="-I\$(WINE_INCLUDE_ROOT)/mixedcrt -D_DLL -D_MT"
   if test -z "$ATL_INCLUDE_ROOT"
   then
-    ATL_INCLUDE_ROOT="/usr/include";
+    ATL_INCLUDE_ROOT=":$WINE_INCLUDE_ROOT/atl:/usr/include/atl:/usr/local/include/atl:/opt/mfc/include/atl:/opt/atl/include"
+  else
+    ATL_INCLUDE_ROOT="$ATL_INCLUDE_ROOT:$ATL_INCLUDE_ROOT/atl:$ATL_INCLUDE_ROOT/atl/include"
   fi
-  if test ! -f "$ATL_INCLUDE_ROOT/atlbase.h"
+  AC_PATH_HEADER(ATL_INCLUDE_ROOT,atldef.h,[
+    AC_MSG_ERROR([Could not find the ATL includes])
+  ],$ATL_INCLUDE_ROOT)
+  if test -n "$ATL_INCLUDE_ROOT"
   then
-    if test -f "$ATL_INCLUDE_ROOT/atl/atlbase.h"
-    then
-      ATL_INCLUDE_ROOT="$ATL_INCLUDE_ROOT/atl"
-    else
-      if test -f "$ATL_INCLUDE_ROOT/atl/include/atlbase.h"
-      then
-        ATL_INCLUDE_ROOT="$ATL_INCLUDE_ROOT/atl/include"
-      else
-        AC_MSG_ERROR([Could not find the ATL includes])
-      fi
-    fi
+    ATL_INCLUDE_PATH="$ATL_INCLUDE_PATH -I$ATL_INCLUDE_ROOT"
   fi
-  ATL_INCLUDE_PATH="-I$ATL_INCLUDE_ROOT"
 
+  MFC_INCLUDE_PATH="$ATL_INCLUDE_PATH"
   if test -z "$MFC_INCLUDE_ROOT"
   then
-    MFC_INCLUDE_ROOT="/usr/include";
+    MFC_INCLUDE_ROOT=":$WINE_INCLUDE_ROOT/mfc:/usr/include/mfc:/usr/local/include/mfc:/opt/mfc/include/mfc:/opt/mfc/include"
+  else
+    MFC_INCLUDE_ROOT="$MFC_INCLUDE_ROOT:$MFC_INCLUDE_ROOT/mfc:$MFC_INCLUDE_ROOT/mfc/include"
   fi
-  if test ! -f "$MFC_INCLUDE_ROOT/afx.h"
+  AC_PATH_HEADER(MFC_INCLUDE_ROOT,afx.h,[
+    AC_MSG_ERROR([Could not find the MFC includes])
+  ],$MFC_INCLUDE_ROOT)
+  if test -n "$MFC_INCLUDE_ROOT" -a "$ATL_INCLUDE_ROOT" != "$MFC_INCLUDE_ROOT"
   then
-    if test -f "$MFC_INCLUDE_ROOT/mfc/afx.h"
-    then
-      MFC_INCLUDE_ROOT="$MFC_INCLUDE_ROOT/mfc"
-    else
-      if test -f "$MFC_INCLUDE_ROOT/mfc/include/afx.h"
-      then
-        MFC_INCLUDE_ROOT="$MFC_INCLUDE_ROOT/mfc/include"
-      else
-        AC_MSG_ERROR([Could not find the MFC includes])
-      fi
-    fi
+    MFC_INCLUDE_PATH="$MFC_INCLUDE_PATH -I$MFC_INCLUDE_ROOT"
   fi
-  MFC_INCLUDE_PATH="-D_DLL -D_MT -I$ATL_INCLUDE_ROOT -I$MFC_INCLUDE_ROOT -I\$(WINELIB_INCLUDE_ROOT)/mixedcrt"
+  CPPFLAGS="$OLDCPPFLAGS"
 
   if test -z "$MFC_LIBRARY_ROOT"
   then
-    MFC_LIBRARY_ROOT="/usr/lib/mfc";
-  fi
-  if test -f "$MFC_LIBRARY_ROOT/libmfc.so"
-  then
-    MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT";
+    MFC_LIBRARY_ROOT=":$WINE_LIBRARY_ROOT:/usr/lib/mfc:/usr/local/lib:/usr/local/lib/mfc:/opt/mfc/lib";
   else
-    if test -f "$MFC_LIBRARY_ROOT/lib/libmfc.so"
-    then
-      MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT/lib";
-    else
-      if test -f "$MFC_LIBRARY_ROOT/mfc/src/libmfc.so"
-      then
-        MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT/mfc/src";
-      else
-        AC_MSG_ERROR([Could not find the MFC library (libmfc)])
-      fi
-    fi
+    MFC_LIBRARY_ROOT="$MFC_LIBRARY_ROOT:$MFC_LIBRARY_ROOT/lib:$MFC_LIBRARY_ROOT/mfc/src";
   fi
-  MFC_LIBRARY_PATH="-L$MFC_LIBRARY_ROOT"
+  AC_PATH_LIBRARY(MFC_LIBRARY_ROOT,[-lmfc],[$WINE_LIBRARY_PATH -lwine -lwine_unicode -lncurses -ldl -lutil -ladvapi32 -lcomctl32 -lcomdlg32 -lcrtdll -ldplayx -lgdi32 -limagehlp -lkernel32 -lodbc32 -lntdll -lole32 -loleaut32 -loledlg -lrpcrt4 -lshell32 -lshlwapi -luser32 -lwinmm -lwinspool.drv -lwow32 -lws2_32],[
+    AC_MSG_ERROR([Could not find the MFC library])
+  ],$MFC_LIBRARY_ROOT)
+  if test -n "$MFC_LIBRARY_ROOT" -a "$MFC_LIBRARY_ROOT" != "$WINE_LIBRARY_ROOT"
+  then
+    MFC_LIBRARY_PATH="-L$MFC_LIBRARY_ROOT"
+  else
+    MFC_LIBRARY_PATH=""
+  fi
 
-  AC_SUBST(ATL_INCLUDE_ROOT)
   AC_SUBST(ATL_INCLUDE_PATH)
-  AC_SUBST(MFC_INCLUDE_ROOT)
   AC_SUBST(MFC_INCLUDE_PATH)
-  AC_SUBST(MFC_LIBRARY_ROOT)
   AC_SUBST(MFC_LIBRARY_PATH)
 fi
+
+AC_LANG_C()
 
 dnl **** Generate output files ****
 
@@ -2517,8 +2575,8 @@ dnl End:
 # Global rules shared by all makefiles     -*-Makefile-*-
 #
 # Each individual makefile must define the following variables:
-# WINELIB_INCLUDE_ROOT: Winelib includes location
-# WINELIB_LIBRARY_ROOT: Winelib libraries location
+# WINE_INCLUDE_ROOT: Wine's headers location
+# WINE_LIBRARY_ROOT: Wine's libraries location
 # TOPOBJDIR    : top-level object directory
 # SRCDIR       : source directory for this module
 #
@@ -2544,10 +2602,10 @@ dnl End:
 
 # Where is Winelib
 
-WINELIB_INCLUDE_ROOT = @WINELIB_INCLUDE_ROOT@
-WINELIB_INCLUDE_PATH = @WINELIB_INCLUDE_PATH@
-WINELIB_LIBRARY_ROOT = @WINELIB_LIBRARY_ROOT@
-WINELIB_LIBRARY_PATH = @WINELIB_LIBRARY_PATH@
+WINE_INCLUDE_ROOT = @WINE_INCLUDE_ROOT@
+WINE_INCLUDE_PATH = @WINE_INCLUDE_PATH@
+WINE_LIBRARY_ROOT = @WINE_LIBRARY_ROOT@
+WINE_LIBRARY_PATH = @WINE_LIBRARY_PATH@
 
 # Where are the MFC
 
@@ -2575,7 +2633,7 @@ YACC      = @YACC@
 LEX       = @LEX@
 LEXLIB    = @LEXLIB@
 LN_S      = @LN_S@
-DIVINCL   = -I$(SRCDIR) $(WINELIB_INCLUDE_PATH) $(INCLUDE_PATH)
+DIVINCL   = -I$(SRCDIR) $(WINE_INCLUDE_PATH) $(INCLUDE_PATH)
 ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(CEXTRA) $(OPTIONS) $(X_CFLAGS) $(DEFINES)
 ALLCXXFLAGS = $(DIVINCL) $(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(X_CFLAGS) $(DEFINES)
 LDCOMBINE = ld -r
