@@ -389,6 +389,8 @@ int DOSVM_Enter( PCONTEXT context )
 #define CP(x,y) VM86.regs.x = y##_reg(context)
   CV;
 #undef CP
+  if (VM86.regs.eflags & IF_MASK)
+    VM86.regs.eflags |= VIF_MASK;
  } else {
 /* initial setup */
   /* allocate standard DOS handles */

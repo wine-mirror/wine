@@ -537,9 +537,9 @@ void MZ_KillModule( LPDOSTASK lpDosTask )
 #undef DFREE
 
 #if 0
- /* FIXME: this seems to crash */
- if (lpDosTask->dpmi_sel)
-  UnMapLS(PTR_SEG_OFF_TO_SEGPTR(lpDosTask->dpmi_sel,0));
+  /* FIXME: this seems to crash */
+  if (lpDosTask->dpmi_sel)
+    SELECTOR_FreeBlock(lpDosTask->dpmi_sel, 1);
 #endif
 }
 

@@ -243,7 +243,7 @@ static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
             es = ES_reg(&ctx);
             edi = EDI_reg(&ctx);
         }
-        UnMapLS(PTR_SEG_OFF_TO_SEGPTR(ss,0));
+	SELECTOR_FreeBlock(ss, 1);
         INT_GetRealModeContext((REALMODECALL*)PTR_SEG_OFF_TO_LIN( es, edi ), context);
 #else
         ERR(int31,"RMCBs only implemented for i386\n");
@@ -391,7 +391,7 @@ callrmproc_again:
         EBP_reg(context) = OFFSETOF( thdb->cur_stack )
                                    + (WORD)&((STACK16FRAME*)0)->bp;
         Callbacks->CallRegisterShortProc(context, args*sizeof(WORD));
-        UnMapLS(seg_addr);
+	SELECTOR_FreeBlock(sel, 1);
 #endif
     }
     if (alloc) DOSMEM_FreeBlock( pModule->self, addr );
@@ -596,14 +596,28 @@ static void StartPM( CONTEXT *context, LPDOSTASK lpDosTask )
     char *base = DOSMEM_MemoryBase(0);
     UINT16 cs, ss, ds, es;
     CONTEXT pm_ctx;
+    DWORD psp_ofs = (DWORD)(lpDosTask->psp_seg<<4);
+    PDB16 *psp = (PDB16 *)(base + psp_ofs);
+    HANDLE16 env_seg = psp->environment;
+    int is32;
 
     RESET_CFLAG(context);
     lpDosTask->dpmi_flag = AX_reg(context);
+    is32 = lpDosTask->dpmi_flag & 1;
 /* our mode switch wrapper have placed the desired CS into DX */
     cs = SELECTOR_AllocBlock( base + (DWORD)(DX_reg(context)<<4), 0x10000, SEGMENT_CODE, FALSE, FALSE );
-    ss = SELECTOR_AllocBlock( base + (DWORD)(SS_reg(context)<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
-    ds = SELECTOR_AllocBlock( base + (DWORD)(DS_reg(context)<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
-    es = SELECTOR_AllocBlock( base + (DWORD)(lpDosTask->psp_seg<<4), 0x100, SEGMENT_DATA, FALSE, FALSE );
+/* due to a flaw in some CPUs (at least mine), it is best to mark stack segments as 32-bit if they
+   can be used in 32-bit code. Otherwise, these CPUs may not set the high word of esp during a
+   ring transition (from kernel code) to the 16-bit stack, and this causes trouble if executing
+   32-bit code using this stack. */
+    ss = SELECTOR_AllocBlock( base + (DWORD)(SS_reg(context)<<4), 0x10000, SEGMENT_DATA, is32, FALSE );
+/* do the same for the data segments, just in case */
+    if (DS_reg(context) == SS_reg(context)) ds = ss;
+    else ds = SELECTOR_AllocBlock( base + (DWORD)(DS_reg(context)<<4), 0x10000, SEGMENT_DATA, is32, FALSE );
+    es = SELECTOR_AllocBlock( base + psp_ofs, 0x100, SEGMENT_DATA, is32, FALSE );
+/* convert environment pointer, as the spec says, but we're a bit lazy about the size here... */
+    psp->environment = SELECTOR_AllocBlock( base + (DWORD)(env_seg<<4),
+					    0x10000, SEGMENT_DATA, FALSE, FALSE );
 
     pm_ctx = *context;
     CS_reg(&pm_ctx) = lpDosTask->dpmi_sel;
@@ -619,13 +633,89 @@ static void StartPM( CONTEXT *context, LPDOSTASK lpDosTask )
     Callbacks->CallRegisterShortProc(&pm_ctx, 0);
 
     /* in the current state of affairs, we won't ever actually return here... */
+    /* we should have int21/ah=4c do it someday, though... */
 
-    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(es,0));
-    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(ds,0));
-    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(ss,0));
-    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(cs,0));
+    SELECTOR_FreeBlock(psp->environment, 1);
+    psp->environment = env_seg;
+    SELECTOR_FreeBlock(es, 1);
+    if (ds != ss) SELECTOR_FreeBlock(ds, 1);
+    SELECTOR_FreeBlock(ss, 1);
+    SELECTOR_FreeBlock(cs, 1);
+}
+
+/* DPMI Raw Mode Switch handler */
+
+void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
+{
+  LPDOSTASK lpDosTask = MZ_Current();
+  CONTEXT rm_ctx;
+  int ret;
+
+  if (!lpDosTask) {
+    /* we could probably start a DPMI-only dosmod task here, but I doubt
+       anything other than real DOS apps want to call raw mode switch */
+    ERR(int31,"attempting raw mode switch without DOS task!\n");
+    ExitProcess(1);
+  }
+  /* initialize real-mode context as per spec */
+  memset(&rm_ctx, 0, sizeof(rm_ctx));
+  DS_reg(&rm_ctx) = AX_sig(context);
+  ES_reg(&rm_ctx) = CX_sig(context);
+  SS_reg(&rm_ctx) = DX_sig(context);
+  ESP_reg(&rm_ctx) = EBX_sig(context);
+  CS_reg(&rm_ctx) = SI_sig(context);
+  EIP_reg(&rm_ctx) = EDI_sig(context);
+  EBP_reg(&rm_ctx) = EBP_sig(context);
+  FS_reg(&rm_ctx) = 0;
+  GS_reg(&rm_ctx) = 0;
+  EFL_reg(&rm_ctx) = EFL_sig(context); /* at least we need the IF flag */
+
+  /* enter real mode again */
+  TRACE(int31,"re-entering real mode at %04lx:%04lx\n",
+	CS_reg(&rm_ctx),EIP_reg(&rm_ctx));
+  ret = DOSVM_Enter( &rm_ctx );
+  /* when the real-mode stuff call its mode switch address,
+     DOSVM_Enter will return and we will continue here */
+
+  if (ret<0) {
+    /* if the sync was lost, there's no way to recover */
+    ExitProcess(1);
+  }
+
+  /* alter protected-mode context as per spec */
+  DS_sig(context) = AX_reg(&rm_ctx);
+  ES_sig(context) = CX_reg(&rm_ctx);
+  SS_sig(context) = DX_reg(&rm_ctx);
+  ESP_sig(context) = EBX_reg(&rm_ctx);
+  CS_sig(context) = SI_reg(&rm_ctx);
+  EIP_sig(context) = EDI_reg(&rm_ctx);
+  EBP_sig(context) = EBP_reg(&rm_ctx);
+  FS_sig(context) = 0;
+  GS_sig(context) = 0;
+
+  /* Return to new address and hope that we didn't mess up */
+  TRACE(int31,"re-entering protected mode at %04x:%08lx\n",
+	CS_sig(context), EIP_sig(context));
+}
+
+#else
+void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
+{
+  ERR(int31,"don't even think about DPMI raw mode switch without DOS support!\n");
+  ExitProcess(1);
 }
 #endif
+
+#define DOS_APP_ISDOS(addr,base) ((addr) < 0x110000)
+#define DOS_WINE_ISDOS(addr,base) (((addr) >= (base)) && ((addr) < (base) + 0x110000))
+#define DOS_UC_APPTOWINE(addr,base) ((addr) + (base))
+#define DOS_UC_WINETOAPP(addr,base) ((addr) - (base))
+#define DOS_APPTOWINE(addr,base) (DOS_APP_ISDOS(addr,base) ? DOS_UC_APPTOWINE(addr,base) : (addr))
+#define DOS_WINETOAPP(addr,base) (DOS_WINE_ISDOS(addr,base) ? DOS_UC_WINETOAPP(addr,base) : (addr))
+#define DOS_BADLIMIT(addr,base,limit) \
+  ((limit == 0xffffffff) || /* disallow "fat DS" for now */ \
+   (DOS_WINE_ISDOS(addr,base) && \
+    ((addr) + (limit) > (base) + 0x110000)))
 
 /**********************************************************************
  *	    INT_Int31Handler
@@ -645,21 +735,18 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     DWORD dw;
     BYTE *ptr;
 
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
-
-    GlobalUnlock16( GetCurrentTask() );
+    LPDOSTASK lpDosTask = MZ_Current();
 
 #ifdef MZ_SUPPORTED
-    if (ISV86(context) && pModule && pModule->lpDosTask) {
+    if (ISV86(context) && lpDosTask) {
         /* Called from real mode, check if it's our wrapper */
         TRACE(int31,"called from real mode\n");
-        if (CS_reg(context)==pModule->lpDosTask->dpmi_seg) {
+        if (CS_reg(context)==lpDosTask->dpmi_seg) {
             /* This is the protected mode switch */
-            StartPM(context,pModule->lpDosTask);
+            StartPM(context,lpDosTask);
             return;
         } else
-        if (CS_reg(context)==pModule->lpDosTask->xms_seg) {
+        if (CS_reg(context)==lpDosTask->xms_seg) {
             /* This is the XMS driver entry point */
             XMS_Handler(context);
             return;
@@ -673,7 +760,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             
             if (CurrRMCB) {
                 /* RMCB call, propagate to protected-mode handler */
-                DPMI_CallRMCBProc(context, CurrRMCB, pModule->lpDosTask->dpmi_flag);
+                DPMI_CallRMCBProc(context, CurrRMCB, lpDosTask->dpmi_flag);
                 return;
             }
         }
@@ -763,9 +850,9 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         else
         {
 #ifdef MZ_SUPPORTED
-            if (pModule && pModule->lpDosTask) {
-                DWORD base = (DWORD)DOSMEM_MemoryBase(pModule->self);
-                if ((dw >= base) && (dw < base + 0x110000)) dw -= base;
+            if (lpDosTask) {
+                DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+		dw = DOS_WINETOAPP(dw, base);
             }
 #endif
             CX_reg(context) = HIWORD(W32S_WINE2APP(dw, offset));
@@ -779,9 +866,9 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
                      W32S_APP2WINE(MAKELONG(DX_reg(context),CX_reg(context)), offset));
         dw = W32S_APP2WINE(MAKELONG(DX_reg(context), CX_reg(context)), offset);
 #ifdef MZ_SUPPORTED
-        /* well, what else could we possibly do? */
-        if (pModule && pModule->lpDosTask) {
-            if (dw < 0x110000) dw += (DWORD)DOSMEM_MemoryBase(pModule->self);
+        if (lpDosTask) {
+            DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+	    dw = DOS_APPTOWINE(dw, base);
         }
 #endif
         SetSelectorBase(BX_reg(context), dw);
@@ -791,9 +878,21 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     	TRACE(int31,"set selector limit (0x%04x,0x%08lx)\n",BX_reg(context),MAKELONG(DX_reg(context),CX_reg(context)));
         dw = MAKELONG( DX_reg(context), CX_reg(context) );
 #ifdef MZ_SUPPORTED
-        if (pModule && pModule->lpDosTask) {
-            DWORD base = GetSelectorBase( BX_reg(context) );
-            if ((dw == 0xffffffff) || ((base < 0x110000) && (base + dw > 0x110000))) {
+        if (lpDosTask) {
+	    DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+            DWORD sbase = GetSelectorBase( BX_reg(context) );
+	    if (!sbase) {
+	        /* the app has set the limit without setting the base,
+	         * it must be relying on that the default should be DOS space;
+	         * so set the base address now */
+	        SetSelectorBase( BX_reg(context), sbase = base );
+	        if (dw == 0xffffffff) {
+	            /* djgpp does this without checking (in _dos_ds setup, crt1.c),
+	             * so we have to override the limit here */
+	            dw = 0x110000;
+	        }
+	    }
+	    if (DOS_BADLIMIT(sbase, base, dw)) {
                 AX_reg(context) = 0x8021;  /* invalid value */
                 SET_CFLAG(context);
                 break;
@@ -822,6 +921,12 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         {
             ldt_entry entry;
             LDT_GetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
+#ifdef MZ_SUPPORTED
+            if (lpDosTask) {
+                DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+		entry.base = DOS_WINETOAPP(entry.base, base);
+            }
+#endif
             entry.base = W32S_WINE2APP(entry.base, offset);
 
             /* FIXME: should use ES:EDI for 32-bit clients */
@@ -837,6 +942,17 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( ES_reg(context),
                                                   DI_reg(context) ), &entry );
             entry.base = W32S_APP2WINE(entry.base, offset);
+#ifdef MZ_SUPPORTED
+            if (lpDosTask) {
+                DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+	        entry.base = DOS_APPTOWINE(entry.base, base);
+		if (DOS_BADLIMIT(entry.base, base, entry.limit)) {
+		    AX_reg(context) = 0x8021;  /* invalid value */
+                    SET_CFLAG(context);
+		    break;
+		}
+            }
+#endif
 
             LDT_SetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
         }
@@ -911,6 +1027,34 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
 	FreeRMCB( context );
 	break;
 
+    case 0x0305:  /* Get State Save/Restore Addresses */
+        TRACE(int31,"get state save/restore addresses\n");
+        /* we probably won't need this kind of state saving */
+        AX_reg(context) = 0;
+	/* real mode: just point to the lret */
+	BX_reg(context) = DPMI_wrap_seg;
+	ECX_reg(context) = 2;
+	/* protected mode: don't have any handler yet... */
+	FIXME(int31,"no protected-mode dummy state save/restore handler yet\n");
+	SI_reg(context) = 0;
+	EDI_reg(context) = 0;
+        break;
+
+    case 0x0306:  /* Get Raw Mode Switch Addresses */
+        TRACE(int31,"get raw mode switch addresses\n");
+	if (lpDosTask) {
+	  /* real mode, point to standard DPMI return wrapper */
+	  BX_reg(context) = DPMI_wrap_seg;
+	  ECX_reg(context) = 0;
+	  /* protected mode, point to DPMI call wrapper */
+	  SI_reg(context) = lpDosTask->dpmi_sel;
+	  EDI_reg(context) = 8; /* offset of the INT 0x31 call */
+	} else {
+	  ERR(int31,"win app attempting to get raw mode switch!\n");
+	  AX_reg(context) = 0x8001; /* unsupported function */
+	  SET_CFLAG(context);
+	}
+	break;
     case 0x0400:  /* Get DPMI version */
         TRACE(int31,"get DPMI version\n");
     	{
