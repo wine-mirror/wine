@@ -39,8 +39,16 @@
 "Personal"="C:\My Documents"
 "Favorites"="C:\WINDOWS\Favorites"
 
-# The classfactory(?) entry for shortcuts (aka *.lnk files), used on the desktop and in the Start Menu.
-# Used by installation programs to create shortcuts.
+#
+# SHELL32 entrys base classes of the desktop/ shelllinks
+# Used by common dialogs, programs creating and may others
+#
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021400-0000-0000-C000-000000000046}]
+@="Shortcut"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021400-0000-0000-C000-000000000046}\InProcServer32]
+@="shell32.dll"
+"ThreadingModel"="Apartment"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021401-0000-0000-C000-000000000046}]
 @="Shortcut"
@@ -52,7 +60,9 @@
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00021401-0000-0000-C000-000000000046}\shellex\MayChangeDefaultMenu]
 @=""
 
+#
 # Entries for DirectX. Used by high-performance multimedia applications, like games.
+#
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D7B70EE0-4340-11CF-B063-0020AFC2CD35}]
 @="DirectDraw Object"
