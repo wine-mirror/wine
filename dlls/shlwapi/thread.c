@@ -69,8 +69,7 @@ DWORD WINAPI SHLWAPI_23(REFGUID,LPSTR,INT);
  *  Wine is impersonating does not use security descriptors (i.e. anything
  *  before Windows NT).
  */
-LPSECURITY_ATTRIBUTES
-WINAPI _CreateAllAccessSecurityAttributes(
+LPSECURITY_ATTRIBUTES WINAPI _CreateAllAccessSecurityAttributes(
 	LPSECURITY_ATTRIBUTES lpAttr,
 	PSECURITY_DESCRIPTOR lpSec)
 {
@@ -104,7 +103,7 @@ WINAPI _CreateAllAccessSecurityAttributes(
  * Get an interface to the shell explorer.
  *
  * PARAMS
- *  lppUnknown [O] pointer to receive IUnknown interface.
+ *  lppUnknown [O] Destination for explorers IUnknown interface.
  *
  * RETURNS
  *  Success: S_OK. lppUnknown contains the explorer interface.
@@ -135,7 +134,7 @@ typedef struct tagSHLWAPI_THREAD_INFO
 /*************************************************************************
  * SHGetThreadRef	[SHLWAPI.@]
  *
- * Get a per-thread object reference set by SHSetThreadRef.
+ * Get a per-thread object reference set by SHSetThreadRef().
  *
  * PARAMS
  *   lppUnknown [O] Destination to receive object reference
@@ -148,7 +147,7 @@ HRESULT WINAPI SHGetThreadRef(IUnknown **lppUnknown)
 {
   TRACE("(%p)\n", lppUnknown);
 
-  if (!lppUnknown || SHLWAPI_ThreadRef_index == -1u)
+  if (!lppUnknown || SHLWAPI_ThreadRef_index == TLS_OUT_OF_INDEXES)
     return E_NOINTERFACE;
 
   *lppUnknown = (IUnknown*)TlsGetValue(SHLWAPI_ThreadRef_index);
@@ -192,7 +191,7 @@ HRESULT WINAPI SHSetThreadRef(IUnknown *lpUnknown)
  *  None.
  *
  * RETURNS
- *   Success: S_OK. The threads obbject reference is released.
+ *   Success: S_OK. The threads object reference is released.
  *   Failure: An HRESULT error code.
  */
 HRESULT WINAPI SHReleaseThreadRef()
@@ -261,7 +260,7 @@ static DWORD WINAPI SHLWAPI_ThreadWrapper(PVOID pTi)
  * PARAMS
  *   pfnThreadProc [I] Function to execute in new thread
  *   pData         [I] Application specific data passed to pfnThreadProc
- *   dwFlags       [I] Initialisation to perform in the new thread
+ *   dwFlags       [I] CTF_ flags from "shlwapi.h"
  *   pfnCallback   [I] Function to execute before pfnThreadProc
  *
  * RETURNS
@@ -348,9 +347,9 @@ BOOL WINAPI SHCreateThread(LPTHREAD_START_ROUTINE pfnThreadProc, VOID *pData,
  * RETURNS
  *  The current count of the semaphore.
  */
-DWORD WINAPI _SHGlobalCounterGetValue(HANDLE hSem)
+LONG WINAPI _SHGlobalCounterGetValue(HANDLE hSem)
 {
-  DWORD dwOldCount = 0;
+  LONG dwOldCount = 0;
 
   TRACE("(%p)\n", hSem);
   ReleaseSemaphore(hSem, 1, &dwOldCount); /* +1 */
@@ -369,9 +368,9 @@ DWORD WINAPI _SHGlobalCounterGetValue(HANDLE hSem)
  * RETURNS
  *  The new count of the semaphore.
  */
-DWORD WINAPI _SHGlobalCounterIncrement(HANDLE hSem)
+LONG WINAPI _SHGlobalCounterIncrement(HANDLE hSem)
 {
-  DWORD dwOldCount = 0;
+  LONG dwOldCount = 0;
 
   TRACE("(%p)\n", hSem);
   ReleaseSemaphore(hSem, 1, &dwOldCount);
