@@ -252,34 +252,34 @@ int main(int argc, char **argv)
 
 static FILE *file = 0;
 
-HFILE OpenFile32( LPCSTR path, OFSTRUCT *ofs, UINT mode )
+HFILE WINAPI OpenFile32( LPCSTR path, OFSTRUCT *ofs, UINT mode )
 {
   file = *path ? fopen(path, "r") : stdin;
   return file ? 1 : HFILE_ERROR;
 }
 
-HFILE _lclose32( HFILE hFile )
+HFILE WINAPI _lclose32( HFILE hFile )
 {
   fclose(file);
   return 0;
 }
 
-LONG _hread32( HFILE hFile, LPVOID buffer, LONG count )
+LONG WINAPI _hread32( HFILE hFile, LPVOID buffer, LONG count )
 {
   return fread(buffer, 1, count, file);
 }
 
-HGLOBAL GlobalAlloc( UINT flags, DWORD size )
+HGLOBAL WINAPI GlobalAlloc( UINT flags, DWORD size )
 {
   return (HGLOBAL) malloc(size);
 }
 
-LPVOID GlobalLock( HGLOBAL handle )
+LPVOID WINAPI GlobalLock( HGLOBAL handle )
 {
   return (LPVOID) handle;
 }
 
-HGLOBAL GlobalFree( HGLOBAL handle )
+HGLOBAL WINAPI GlobalFree( HGLOBAL handle )
 {
   free((VOID*) handle);
   return(0);
@@ -291,12 +291,12 @@ HGLOBAL GlobalFree( HGLOBAL handle )
  * Copyright 1993 Yngvi Sigurjonsson (yngvi@hafro.is)
  */
 
-INT lstrcmp(LPCSTR str1,LPCSTR str2)
+INT WINAPI lstrcmp(LPCSTR str1,LPCSTR str2)
 {
   return strcmp( str1, str2 );
 }
 
-INT lstrcmpi( LPCSTR str1, LPCSTR str2 )
+INT WINAPI lstrcmpi( LPCSTR str1, LPCSTR str2 )
 {
   INT res;
 
@@ -309,19 +309,19 @@ INT lstrcmpi( LPCSTR str1, LPCSTR str2 )
   return toupper(*str1) - toupper(*str2);
 }
 
-INT lstrlen(LPCSTR str)
+INT WINAPI lstrlen(LPCSTR str)
 {
   return strlen(str);
 }
 
-LPSTR lstrcpy32A( LPSTR dst, LPCSTR src )
+LPSTR WINAPI lstrcpy32A( LPSTR dst, LPCSTR src )
 {
     if (!src || !dst) return NULL;
     strcpy( dst, src );
     return dst;
 }
 
-void hmemcpy(LPVOID hpvDest, LPCVOID hpvSource, LONG cbCopy)
+void WINAPI hmemcpy(LPVOID hpvDest, LPCVOID hpvSource, LONG cbCopy)
 {
   memcpy(hpvDest, hpvSource, cbCopy);
 }

@@ -37,6 +37,7 @@
 #include "process.h"
 #include "task.h"
 #include "async.h"
+#include "wincon.h"
 #include "debug.h"
 
 #include "server/request.h"

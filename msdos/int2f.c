@@ -28,7 +28,7 @@ static void do_int2f_16( CONTEXT *context );
  */
 void WINAPI INT_Int2fHandler( CONTEXT *context )
 {
-    TRACE(int,"Subfunction 0x%X\n", AH_reg(context));
+    TRACE(int,"Subfunction 0x%X\n", AX_reg(context));
 
     switch(AH_reg(context))
     {
@@ -265,9 +265,6 @@ static void do_int2f_16( CONTEXT *context )
 
     case 0x80:  /* Release time-slice */
 	AL_reg(context) = 0;
-	/* FIXME: We need to do something that lets some other process run
-	   here.  */
-	sleep(0);
         break;
 
     case 0x81: /* Begin critical section.  */

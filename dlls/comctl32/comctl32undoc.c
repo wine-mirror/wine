@@ -335,7 +335,7 @@ CreateMRUListLazy32A (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwPa
     if (lpmi) {
 	FIXME (commctrl, "(%lx %lx %lx %lx \"%s\" %lx)\n",
 	       lpmi->dwParam1, lpmi->dwParam2, lpmi->dwParam3,
-	       lpmi->hkeyMain, lpmi->lpszSubKey, lpmi->dwParam6);
+	       (DWORD)lpmi->hkeyMain, lpmi->lpszSubKey, lpmi->dwParam6);
     }
 
     /* dummy pointer creation */
