@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt;
 static ICOM_VTABLE(IDirectInputDevice7A) SysKeyboard7Avt;
-     
+
 typedef struct SysKeyboardAImpl SysKeyboardAImpl;
 struct SysKeyboardAImpl
 {
@@ -48,10 +48,14 @@ struct SysKeyboardAImpl
 
 	IDirectInputAImpl *dinput;
 	
+	HANDLE	hEvent;	
+	HHOOK hook;
         /* SysKeyboardAImpl */
         BYTE                            keystate[256];
 	int                             acquired;
 };
+
+static SysKeyboardAImpl* current_lock = NULL;
 
 static GUID DInput_Wine_Keyboard_GUID = { /* 0ab8648a-7735-11d2-8c73-71df54a96441 */
   0x0ab8648a,
@@ -205,6 +209,14 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
         return DI_OK;
 }
 
+static LRESULT CALLBACK dinput_keyboard_hook(int code, WPARAM wparam, LPARAM lparam)
+{
+	SysKeyboardAImpl *This = current_lock;
+	if (This && This->hEvent)
+		SetEvent(This->hEvent);
+	return 1;
+}
+
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
@@ -215,6 +227,7 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 	  This->acquired = 1;
 	}
 	
+	This->hook = SetWindowsHookExW(WH_KEYBOARD, dinput_keyboard_hook, 0, 0);
 	return DI_OK;
 }
 
@@ -225,6 +238,7 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 
 	if (This->acquired == 1) {
 	  This->acquired = 0;
+          UnhookWindowsHookEx( This->hook );
 	} else {
 	  ERR("Unacquiring a not-acquired device !!!\n");
 	}
@@ -235,6 +249,17 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 /******************************************************************************
   *     GetCapabilities : get the device capablitites
   */
+static HRESULT WINAPI SysKeyboardAImpl_SetEventNotification(LPDIRECTINPUTDEVICE2A iface,
+							 HANDLE hnd) {
+  ICOM_THIS(SysKeyboardAImpl,iface);
+
+  TRACE("(this=%p,0x%08lx)\n",This,(DWORD)hnd);
+
+  This->hEvent = hnd;
+  current_lock = This;
+  return DI_OK;
+}
+
 static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE2A iface,
 	LPDIDEVCAPS lpDIDevCaps)
@@ -277,7 +302,7 @@ static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt =
 	SysKeyboardAImpl_GetDeviceState,
 	SysKeyboardAImpl_GetDeviceData,
 	IDirectInputDevice2AImpl_SetDataFormat,
-	IDirectInputDevice2AImpl_SetEventNotification,
+	SysKeyboardAImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
 	IDirectInputDevice2AImpl_GetObjectInfo,
 	IDirectInputDevice2AImpl_GetDeviceInfo,
@@ -315,7 +340,7 @@ static ICOM_VTABLE(IDirectInputDevice7A) SysKeyboard7Avt =
 	XCAST(GetDeviceState)SysKeyboardAImpl_GetDeviceState,
 	XCAST(GetDeviceData)SysKeyboardAImpl_GetDeviceData,
 	XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
-	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
+	XCAST(SetEventNotification)SysKeyboardAImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
 	XCAST(GetObjectInfo)IDirectInputDevice2AImpl_GetObjectInfo,
 	XCAST(GetDeviceInfo)IDirectInputDevice2AImpl_GetDeviceInfo,
