@@ -9,6 +9,7 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	acmwrap.c \
 	amundoc.c \
 	asyncsrc.c \
 	audioutl.c \
@@ -35,6 +36,7 @@ C_SRCS = \
 	iunk.c \
 	main.c \
 	memalloc.c \
+	mpgparse.c \
 	mtype.c \
 	parser.c \
 	regsvr.c \

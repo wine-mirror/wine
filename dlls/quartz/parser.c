@@ -172,6 +172,28 @@ static HRESULT CParserImplThread_SendEndOfStream( CParserImpl* This )
 	return hrRet;
 }
 
+static
+void CParserImplThread_MemDecommit( CParserImpl* This )
+{
+	ULONG	nIndex;
+	IMemAllocator*	pAlloc;
+
+	TRACE("(%p)\n",This);
+
+	if ( This->m_pAllocator != NULL )
+		IMemAllocator_Decommit( This->m_pAllocator );
+
+	if ( This->m_ppOutPins != NULL && This->m_cOutStreams > 0 )
+	{
+		for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+		{
+			pAlloc = This->m_ppOutPins[nIndex]->m_pOutPinAllocator;
+			if ( pAlloc != NULL )
+				IMemAllocator_Decommit( pAlloc );
+		}
+	}
+}
+
 static HRESULT CParserImplThread_SendFlush( CParserImpl* This )
 {
 	ULONG	nIndex;
@@ -211,6 +233,19 @@ static void CParserImplThread_ErrorAbort( CParserImpl* This, HRESULT hr )
 }
 
 static
+void CParserImplThread_ResetAllStreams( CParserImpl* This )
+{
+	ULONG	nIndex;
+
+	if ( This->m_pHandler->pSetCurPos != NULL )
+	{
+		for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+			This->m_pHandler->pSetCurPos(This,
+				&This->m_guidTimeFormat,nIndex,(LONGLONG)0);
+	}
+}
+
+static
 HRESULT CParserImplThread_ProcessNextSample( CParserImpl* This )
 {
 	IMediaSample*	pSample;
@@ -233,6 +268,11 @@ HRESULT CParserImplThread_ProcessNextSample( CParserImpl* This )
 				CParserImplThread_ClearAllRequests(This);
 				CParserImplThread_SendFlush(This);
 				CParserImplThread_SendEndOfStream(This);
+				This->m_bSendEOS = FALSE;
+
+				CParserImplThread_ResetAllStreams(This);
+				CParserImplThread_MemDecommit(This);
+
 				TRACE("(%p) exit thread\n",This);
 				return S_FALSE;
 			case QUARTZ_MSG_SEEK:
@@ -607,28 +647,6 @@ HRESULT CParserImpl_MemCommit( CParserImpl* This )
 }
 
 static
-void CParserImpl_MemDecommit( CParserImpl* This )
-{
-	ULONG	nIndex;
-	IMemAllocator*	pAlloc;
-
-	TRACE("(%p)\n",This);
-
-	if ( This->m_pAllocator != NULL )
-		IMemAllocator_Decommit( This->m_pAllocator );
-
-	if ( This->m_ppOutPins != NULL && This->m_cOutStreams > 0 )
-	{
-		for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
-		{
-			pAlloc = This->m_ppOutPins[nIndex]->m_pOutPinAllocator;
-			if ( pAlloc != NULL )
-				IMemAllocator_Decommit( pAlloc );
-		}
-	}
-}
-
-static
 HRESULT CParserImpl_GetPreferredTimeFormat( CParserImpl* This, GUID* pguidFormat )
 {
 	static const GUID* tryformats[] =
@@ -705,20 +723,10 @@ static HRESULT CParserImpl_OnInactive( CBaseFilterImpl* pImpl )
 static HRESULT CParserImpl_OnStop( CBaseFilterImpl* pImpl )
 {
 	CParserImpl_THIS(pImpl,basefilter);
-	DWORD	n;
 
 	FIXME( "(%p)\n", This );
 
 	CParserImpl_EndThread(This);
-	CParserImpl_MemDecommit(This);
-	This->m_bSendEOS = FALSE;
-
-	/* reset streams. */
-	if ( This->m_pHandler->pSetCurPos != NULL )
-	{
-		for ( n = 0; n < This->m_cOutStreams; n++ )
-			This->m_pHandler->pSetCurPos(This,&This->m_guidTimeFormat,n,(LONGLONG)0);
-	}
 
 	return NOERROR;
 }

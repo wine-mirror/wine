@@ -1,6 +1,8 @@
 /*
  * Implements AVI Parser(Splitter).
  *
+ *	FIXME - no seeking
+ *
  * Copyright (C) Hidenori TAKESHIMA <hidenori@a2.ctktv.ne.jp>
  *
  * This library is free software; you can redistribute it and/or
@@ -79,6 +81,7 @@ struct CAVIParseStream
 	DWORD	cIndexCur;
 	REFERENCE_TIME	rtCur;
 	REFERENCE_TIME	rtInternal;
+	BOOL	bDataDiscontinuity;
 };
 
 
@@ -288,6 +291,7 @@ static HRESULT CAVIParseImpl_InitParser( CParserImpl* pImpl, ULONG* pcStreams )
 			This->pStreamsBuf[nIndex].rtCur = 0;
 			This->pStreamsBuf[nIndex].rtInternal = 0;
 			TRACE("stream %lu - %lu entries\n",nIndex,This->pStreamsBuf[nIndex].cIndexEntries);
+			This->pStreamsBuf[nIndex].bDataDiscontinuity = TRUE;
 		}
 		QUARTZ_FreeMem(This->pIndexEntriesBuf);
 		This->pIndexEntriesBuf = pEntriesBuf;
@@ -610,6 +614,11 @@ static HRESULT CAVIParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStream
 		*prtStop = rtNext;
 		/* FIXME - is this frame keyframe?? */
 		*pdwSampleFlags = AM_SAMPLE_SPLICEPOINT;
+		if ( pStream->bDataDiscontinuity )
+		{
+			*pdwSampleFlags |= AM_SAMPLE_DATADISCONTINUITY;
+			pStream->bDataDiscontinuity = FALSE;
+		}
 
 		switch ( pStream->strh.fccType )
 		{

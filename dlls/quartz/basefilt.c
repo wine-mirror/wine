@@ -187,20 +187,21 @@ static HRESULT WINAPI
 CBaseFilterImpl_fnGetState(IBaseFilter* iface,DWORD dw,FILTER_STATE* pState)
 {
 	ICOM_THIS(CBaseFilterImpl,iface);
+	HRESULT hr = S_OK;
 
 	TRACE("(%p)->(%p)\n",This,pState);
 
 	if ( pState == NULL )
 		return E_POINTER;
 
-	/* FIXME - ignore 'intermediate state' now */
-
 	EnterCriticalSection( &This->csFilter );
 	TRACE("(%p) state = %d\n",This,This->fstate);
 	*pState = This->fstate;
+	if ( This->bIntermediateState )
+		hr = VFW_S_STATE_INTERMEDIATE;
 	LeaveCriticalSection( &This->csFilter );
 
-	return NOERROR;
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -455,6 +456,7 @@ HRESULT CBaseFilterImpl_InitIBaseFilter(
 	This->pClock = NULL;
 	This->rtStart = 0;
 	This->fstate = State_Stopped;
+	This->bIntermediateState = FALSE;
 
 	This->cbNameGraph = sizeof(WCHAR) * (lstrlenW(lpwszNameGraph)+1);
 	This->pwszNameGraph = (WCHAR*)QUARTZ_AllocMem( This->cbNameGraph );

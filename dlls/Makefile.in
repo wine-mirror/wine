@@ -636,8 +636,8 @@ qcap/qcap.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd qcap && $(MAKE) qcap.dll$(DLLEXT)
 
 quartz/quartz.dll$(DLLEXT): dummy oleaut32.dll$(DLLEXT) ole32.dll$(DLLEXT) \
-  msvfw32.dll$(DLLEXT) winmm.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  msvfw32.dll$(DLLEXT) msacm32.dll$(DLLEXT) winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
+  gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd quartz && $(MAKE) quartz.dll$(DLLEXT)
 
 rasapi32/rasapi32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)

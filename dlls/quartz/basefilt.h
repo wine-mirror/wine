@@ -56,6 +56,7 @@ typedef struct CBaseFilterImpl
 	IReferenceClock*	pClock;
 	REFERENCE_TIME	rtStart;
 	FILTER_STATE	fstate;
+	BOOL	bIntermediateState; /* if set, fstate is ignored. */
 } CBaseFilterImpl;
 
 struct CBaseFilterHandlers

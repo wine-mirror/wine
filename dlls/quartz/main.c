@@ -104,6 +104,8 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_VideoRenderer, &QUARTZ_CreateVideoRenderer },
 	{ &CLSID_quartzWaveParser, &QUARTZ_CreateWaveParser },
 	{ &CLSID_AviSplitter, &QUARTZ_CreateAVISplitter },
+	{ &CLSID_MPEG1Splitter, &QUARTZ_CreateMPEG1Splitter },
+	{ &CLSID_MMSPLITTER, &QUARTZ_CreateMPEG2Splitter },
 	{ &CLSID_AsyncReader, &QUARTZ_CreateAsyncReader },
 	{ &CLSID_URLReader, &QUARTZ_CreateURLReader },
 	{ &CLSID_AVIDec, &QUARTZ_CreateAVIDec },
