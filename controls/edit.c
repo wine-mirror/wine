@@ -358,6 +358,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 	case EM_SETSEL:
 		DPRINTF_EDIT_MSG32("EM_SETSEL");
 		EDIT_EM_SetSel(wnd, es, wParam, lParam, FALSE);
+		EDIT_EM_ScrollCaret(wnd, es);
 		result = 1;
 		break;
 
@@ -1509,7 +1510,7 @@ static void EDIT_MoveHome(WND *wnd, EDITSTATE *es, BOOL extend)
 			HIWORD(EDIT_EM_PosFromChar(wnd, es, es->selection_end, es->flags & EF_AFTER_WRAP)), NULL);
 	else
 		e = 0;
-	EDIT_EM_SetSel(wnd, es, e, extend ? es->selection_start : e, FALSE);
+	EDIT_EM_SetSel(wnd, es, extend ? es->selection_start : e, e, FALSE);
 	EDIT_EM_ScrollCaret(wnd, es);
 }
 
@@ -3028,22 +3029,26 @@ static void EDIT_WM_Copy(WND *wnd, EDITSTATE *es)
  */
 static LRESULT EDIT_WM_Create(WND *wnd, EDITSTATE *es, LPCREATESTRUCTA cs)
 {
-	/*
-	 *	To initialize some final structure members, we call some helper
-	 *	functions.  However, since the EDITSTATE is not consistent (i.e.
-	 *	not fully initialized), we should be very careful which
-	 *	functions can be called, and in what order.
-	 */
-	EDIT_WM_SetFont(wnd, es, 0, FALSE);
-    EDIT_EM_EmptyUndoBuffer(wnd, es);
+       /*
+        *	To initialize some final structure members, we call some helper
+        *	functions.  However, since the EDITSTATE is not consistent (i.e.
+        *	not fully initialized), we should be very careful which
+        *	functions can be called, and in what order.
+        */
+        EDIT_WM_SetFont(wnd, es, 0, FALSE);
+        EDIT_EM_EmptyUndoBuffer(wnd, es);
 
-	if (cs->lpszName && *(cs->lpszName) != '\0') {
-		EDIT_EM_ReplaceSel(wnd, es, FALSE, cs->lpszName);
-                /* if we insert text to the editline, the text scrolls out of the window, as the caret is placed after the insert pos normally; thus we reset es->selection... to 0 and update caret */
-                es->selection_start = es->selection_end = 0;
-                EDIT_EM_ScrollCaret(wnd, es);
-        }
-	return 0;
+       if (cs->lpszName && *(cs->lpszName) != '\0') {
+	   EDIT_EM_ReplaceSel(wnd, es, FALSE, cs->lpszName);
+	   /* if we insert text to the editline, the text scrolls out
+            * of the window, as the caret is placed after the insert
+            * pos normally; thus we reset es->selection... to 0 and
+            * update caret
+            */
+	   es->selection_start = es->selection_end = 0;
+	   EDIT_EM_ScrollCaret(wnd, es);
+       }
+       return 0;
 }
 
 
