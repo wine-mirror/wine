@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include "winbase.h"
 #include "windef.h"
+#include "winreg.h"
+#include "winerror.h"
 #include "tapi.h"
 #include "wine/debug.h"
 
@@ -281,24 +283,15 @@ typedef struct tagTAPI_CountryInfo
     LPSTR  lpInternationalRule;
 } TAPI_CountryInfo;
 
-/* FIXME: this should be stored in an ini file... perhaps TAPI.INI */
-static TAPI_CountryInfo TAPI_LCList[] =
-{
-    { 1, 61, "Australia", "", "0", "0011" },
-    { 2, 86, "China", "", "0", "00" },
-    { 3, 82, "Korea", "", "0", "00" },
-    { 4, 1,  "USA", "", "0", "001" },
-};
-
-#define NUMCOUNTRIES (sizeof TAPI_LCList/sizeof (TAPI_CountryInfo))
-
 /***********************************************************************
  *		lineGetCountry (TAPI32.@)
  */
 DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRYLIST lpLineCountryList)
 {
-    DWORD dwAvailSize, dwOffset, i;
+    DWORD dwAvailSize, dwOffset, i, num_countries, max_subkey_len;
     LPLINECOUNTRYENTRY lpLCE;
+    HKEY hkey;
+    char *subkey_name;
 
     if(!lpLineCountryList) {
 	TRACE("(%08lx, %08lx, %p): stub. Returning LINEERR_INVALPOINTER\n",
@@ -309,6 +302,12 @@ DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRY
     TRACE("(%08lx, %08lx, %p(%ld)): stub.\n",
 	  dwCountryID, dwAPIVersion, lpLineCountryList,
 	  lpLineCountryList->dwTotalSize);
+
+    if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
+		   "Software\\Microsoft\\Windows\\CurrentVersion\\Telephony\\Country List",
+		   &hkey) != ERROR_SUCCESS)
+        return LINEERR_INIFILECORRUPT;
+
 
     dwAvailSize = lpLineCountryList->dwTotalSize;
     dwOffset = sizeof (LINECOUNTRYLIST);
@@ -325,78 +324,122 @@ DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRY
     lpLineCountryList->dwCountryListOffset = dwOffset;
 
     lpLCE = (LPLINECOUNTRYENTRY)(&lpLineCountryList[1]);
-    dwOffset+= NUMCOUNTRIES * sizeof (LINECOUNTRYENTRY);
 
-    for(i=0; i<NUMCOUNTRIES; i++)
+    if(RegQueryInfoKeyA(hkey, NULL, NULL, NULL, &num_countries, &max_subkey_len,
+			NULL, NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) {
+        RegCloseKey(hkey);
+        return LINEERR_STRUCTURETOOSMALL;
+    }
+
+    if(dwCountryID)
+        dwOffset = sizeof (LINECOUNTRYENTRY);
+    else
+        dwOffset += num_countries * sizeof (LINECOUNTRYENTRY);
+
+    max_subkey_len++;
+    subkey_name = HeapAlloc(GetProcessHeap(), 0, max_subkey_len);
+    for(i = 0; i < num_countries; i++)
     {
-        LPSTR lpstr;
-        DWORD len;
+        DWORD len, size, size_int, size_long, size_name, size_same;
+	HKEY hsubkey;
 
-        if(dwCountryID && (TAPI_LCList[i].dwCountryID != dwCountryID))
+	if(RegEnumKeyA(hkey, i, subkey_name, max_subkey_len) !=
+	   ERROR_SUCCESS)
+	    continue;
+
+        if(dwCountryID && (atoi(subkey_name) != dwCountryID))
             continue;
 
-        len  = strlen (TAPI_LCList[i].lpCountryName)+1;
-        len += strlen (TAPI_LCList[i].lpSameAreaRule)+1;
-        len += strlen (TAPI_LCList[i].lpLongDistanceRule)+1;
-        len += strlen (TAPI_LCList[i].lpInternationalRule)+1;
+	if(RegOpenKeyA(hkey, subkey_name, &hsubkey) != ERROR_SUCCESS)
+	    continue;
 
-        if(dwAvailSize<(dwOffset+len))
+	RegQueryValueExA(hsubkey, "InternationalRule", NULL, NULL,
+			 NULL, &size_int);
+        len  = size_int;
+
+	RegQueryValueExA(hsubkey, "LongDistanceRule", NULL, NULL,
+			 NULL, &size_long);
+        len += size_long;
+
+	RegQueryValueExA(hsubkey, "Name", NULL, NULL,
+			 NULL, &size_name);
+        len += size_name;
+
+	RegQueryValueExA(hsubkey, "SameAreaRule", NULL, NULL,
+			 NULL, &size_same);
+        len += size_same;
+
+        if(dwAvailSize < (dwOffset+len))
         {
-            dwOffset+=len;
+            dwOffset += len;
+	    RegCloseKey(hsubkey);
+	    if(dwCountryID)
+		break;
             continue;
         }
 
         lpLineCountryList->dwNumCountries++;
-        lpLineCountryList->dwCountryListSize += len;
-        lpLineCountryList->dwUsedSize += sizeof (LINECOUNTRYENTRY); /* maybe wrong */
+        lpLineCountryList->dwCountryListSize += sizeof (LINECOUNTRYENTRY);
+        lpLineCountryList->dwUsedSize += len + sizeof (LINECOUNTRYENTRY);
 
-        TRACE("Adding country %s at %p\n", TAPI_LCList[i].lpCountryName, &lpLCE[i]);
+	if(dwCountryID)
+	    i = 0;
 
-        lpLCE[i].dwCountryID   = TAPI_LCList[i].dwCountryID;
-        lpLCE[i].dwCountryCode = TAPI_LCList[i].dwCountryCode;
+        lpLCE[i].dwCountryID = atoi(subkey_name);
+	size = sizeof(DWORD);
+	RegQueryValueExA(hsubkey, "CountryCode", NULL, NULL,
+			 (BYTE*)&lpLCE[i].dwCountryCode, &size);
 
-        /* deal with troublesome dwNextCountryID */
-        if( (i+1) == NUMCOUNTRIES )
-            lpLCE[i].dwNextCountryID = 0;
-        else
-            lpLCE[i].dwNextCountryID = TAPI_LCList[i+1].dwCountryID;
+	lpLCE[i].dwNextCountryID = 0;
+        
+	if(i > 0)
+            lpLCE[i-1].dwNextCountryID = lpLCE[i].dwCountryID;
 
         /* add country name */
-        len = strlen(TAPI_LCList[i].lpCountryName)+1;
-        lpLCE[i].dwCountryNameSize = len;
+        lpLCE[i].dwCountryNameSize = size_name;
         lpLCE[i].dwCountryNameOffset = dwOffset;
-        lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
-        strcpy(lpstr, TAPI_LCList[i].lpCountryName);
-        dwOffset+=len;
+	RegQueryValueExA(hsubkey, "Name", NULL, NULL,
+			 ((LPSTR)lpLineCountryList)+dwOffset,
+			 &size_name);
+        dwOffset += size_name;
 
         /* add Same Area Rule */
-        len = strlen (TAPI_LCList[i].lpSameAreaRule)+1;
-        lpLCE[i].dwSameAreaRuleSize = len;
+        lpLCE[i].dwSameAreaRuleSize = size_same;
         lpLCE[i].dwSameAreaRuleOffset = dwOffset;
-        lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
-        strcpy(lpstr, TAPI_LCList[i].lpSameAreaRule);
-        dwOffset+=len;
+	RegQueryValueExA(hsubkey, "SameAreaRule", NULL, NULL,
+			 ((LPSTR)lpLineCountryList)+dwOffset,
+			 &size_same);
+        dwOffset += size_same;
 
         /* add Long Distance Rule */
-        len = strlen (TAPI_LCList[i].lpLongDistanceRule)+1;
-        lpLCE[i].dwLongDistanceRuleSize = len;
+        lpLCE[i].dwLongDistanceRuleSize = size_long;
         lpLCE[i].dwLongDistanceRuleOffset = dwOffset;
-        lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
-        strcpy(lpstr, TAPI_LCList[i].lpLongDistanceRule);
-        dwOffset+=len;
+	RegQueryValueExA(hsubkey, "LongDistanceRule", NULL, NULL,
+			 ((LPSTR)lpLineCountryList)+dwOffset,
+			 &size_long);
+        dwOffset += size_long;
 
         /* add Long Distance Rule */
-        len = strlen (TAPI_LCList[i].lpInternationalRule)+1;
-        lpLCE[i].dwInternationalRuleSize = len;
+        lpLCE[i].dwInternationalRuleSize = size_int;
         lpLCE[i].dwInternationalRuleOffset = dwOffset;
-        lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
-        strcpy(lpstr, TAPI_LCList[i].lpInternationalRule);
-        dwOffset+=len;
+	RegQueryValueExA(hsubkey, "InternationalRule", NULL, NULL,
+			 ((LPSTR)lpLineCountryList)+dwOffset,
+			 &size_int);
+        dwOffset += size_int;
+	RegCloseKey(hsubkey);
+
+        TRACE("Added country %s at %p\n", (LPSTR)lpLineCountryList + lpLCE[i].dwCountryNameOffset,
+	      &lpLCE[i]);
+
+	if(dwCountryID) break;
     }
 
     lpLineCountryList->dwNeededSize = dwOffset;
 
     TRACE("%ld available %ld required\n", dwAvailSize, dwOffset);
+
+    HeapFree(GetProcessHeap(), 0, subkey_name);
+    RegCloseKey(hkey);
 
     return 0;
 }
@@ -497,6 +540,8 @@ DWORD WINAPI lineGetStatusMessages(HLINE hLine, LPDWORD lpdwLineStatus, LPDWORD 
 DWORD WINAPI lineGetTranslateCaps(HLINEAPP hLineApp, DWORD dwAPIVersion, LPLINETRANSLATECAPS lpTranslateCaps)
 {
     FIXME("(%p, %08lx, %p): stub.\n", hLineApp, dwAPIVersion, lpTranslateCaps);
+    if(lpTranslateCaps->dwTotalSize >= sizeof(DWORD))
+        memset(&lpTranslateCaps->dwNeededSize, 0, lpTranslateCaps->dwTotalSize - sizeof(DWORD));
     return 0;
 }
 

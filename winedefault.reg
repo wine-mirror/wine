@@ -109,16 +109,16 @@
 # 
 
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Print\Printers\Wine PostScript Driver]
-"Attributes"="dword:00000000"
+"Attributes"=dword:00000000
 "Default Devmode"=
 "Name"="Wine PostScript Driver"
 "Port"="LPT1:"
 "Print Processor"="WinPrint"
 "Printer Driver"="PS Driver"
-"Priority"="dword:00000000"
-"Start Time"="dword:00000000"
-"Status"="dword:00000000"
-"Until Time"="dword:00000000"
+"Priority"=dword:00000000
+"Start Time"=dword:00000000
+"Status"=dword:00000000
+"Until Time"=dword:00000000
 
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Print\Printers\Wine PostScript Driver\PrinterDriverData]
 "PPD File"="/unix/path/to/PPD/file"
@@ -133,7 +133,7 @@
 "Configuration File"="WINEPS.DRV"
 "Data File"=""
 "Driver"="WINEPS.DRV"
-"Version"="dword:0a000000"
+"Version"=dword:0a000000
 "Datatype"=""
 "Dependent Files"=""
 "Help Files"=""
@@ -1144,3 +1144,1694 @@
 [HKEY_CLASSES_ROOT\CLSID\{0002000F-0000-0000-C000-000000000046}\InProcServer32]
 @="avifil32.dll"
 "ThreadingModel"="Apartment"
+
+#
+# Entries for TAPI
+#
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony]
+"Perf1"=dword:5045524a
+"Perf2"=dword:50455246
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List]
+"CountryListVersion"=dword:00000019
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\1]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="United States of America"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\101]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Anguilla"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\102]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Antigua"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\103]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Bahamas"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\104]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Barbados"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\105]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Bermuda"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\106]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="British Virgin Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\107]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Canada"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\108]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Cayman Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\109]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Dominica"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\110]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Dominican Republic"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\111]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Grenada"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\112]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Jamaica"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\113]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Montserrat"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\115]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="St. Kitts and Nevis"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\116]
+"CountryCode"=dword:00000001
+"InternationalRule"="0EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="St. Vincent and the Grenadines"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\117]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Trinidad and Tobago"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\118]
+"CountryCode"=dword:00000001
+"InternationalRule"="0EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Turks and Caicos Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\120]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Barbuda"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\121]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Puerto Rico"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\122]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Saint Lucia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\123]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="United States Virgin Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\124]
+"CountryCode"=dword:00000001
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Guam"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\20]
+"CountryCode"=dword:00000014
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Egypt"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\212]
+"CountryCode"=dword:000000d4
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Morocco"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\213]
+"CountryCode"=dword:000000d5
+"InternationalRule"="00,EFG"
+"LongDistanceRule"="0FG"
+"Name"="Algeria"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\216]
+"CountryCode"=dword:000000d8
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Tunisia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\218]
+"CountryCode"=dword:000000da
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Libya"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\220]
+"CountryCode"=dword:000000dc
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Gambia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\221]
+"CountryCode"=dword:000000dd
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Senegal Republic"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\222]
+"CountryCode"=dword:000000de
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Mauritania"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\223]
+"CountryCode"=dword:000000df
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Mali"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\224]
+"CountryCode"=dword:000000e0
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Guinea"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\225]
+"CountryCode"=dword:000000e1
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Cote d'Ivoire"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\226]
+"CountryCode"=dword:000000e2
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Burkina Faso"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\227]
+"CountryCode"=dword:000000e3
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Niger"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\228]
+"CountryCode"=dword:000000e4
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Togo"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\229]
+"CountryCode"=dword:000000e5
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Benin"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\230]
+"CountryCode"=dword:000000e6
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Mauritius"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\231]
+"CountryCode"=dword:000000e7
+"InternationalRule"="0EFG"
+"LongDistanceRule"=""
+"Name"="Liberia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\232]
+"CountryCode"=dword:000000e8
+"InternationalRule"="00EFG"
+"LongDistanceRule"="IG"
+"Name"="Sierra Leone"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\233]
+"CountryCode"=dword:000000e9
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Ghana"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\234]
+"CountryCode"=dword:000000ea
+"InternationalRule"="009EFG"
+"LongDistanceRule"="0FG"
+"Name"="Nigeria"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\235]
+"CountryCode"=dword:000000eb
+"InternationalRule"="15EFG"
+"LongDistanceRule"=""
+"Name"="Chad"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\236]
+"CountryCode"=dword:000000ec
+"InternationalRule"="19EFG"
+"LongDistanceRule"=""
+"Name"="Central African Republic"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\237]
+"CountryCode"=dword:000000ed
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Cameroon"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\238]
+"CountryCode"=dword:000000ee
+"InternationalRule"="0EFG"
+"LongDistanceRule"=""
+"Name"="Cape Verde Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\239]
+"CountryCode"=dword:000000ef
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Sao Tome and Principe"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\240]
+"CountryCode"=dword:000000f0
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Equatorial Guinea"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\241]
+"CountryCode"=dword:000000f1
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Gabon"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\242]
+"CountryCode"=dword:000000f2
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Congo"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\243]
+"CountryCode"=dword:000000f3
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Congo, Democratic Republic of the"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\244]
+"CountryCode"=dword:000000f4
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Angola"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\245]
+"CountryCode"=dword:000000f5
+"InternationalRule"="099EFG"
+"LongDistanceRule"=""
+"Name"="Guinea-Bissau"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\246]
+"CountryCode"=dword:000000f6
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Diego Garcia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\247]
+"CountryCode"=dword:000000f7
+"InternationalRule"="01EFG"
+"LongDistanceRule"=""
+"Name"="Ascension Island"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\248]
+"CountryCode"=dword:000000f8
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Seychelles"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\249]
+"CountryCode"=dword:000000f9
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Sudan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\250]
+"CountryCode"=dword:000000fa
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Rwanda"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\251]
+"CountryCode"=dword:000000fb
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Ethiopia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\252]
+"CountryCode"=dword:000000fc
+"InternationalRule"="19,EFG"
+"LongDistanceRule"=""
+"Name"="Somalia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\253]
+"CountryCode"=dword:000000fd
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Djibouti"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\254]
+"CountryCode"=dword:000000fe
+"InternationalRule"="000EFG"
+"LongDistanceRule"="0FG"
+"Name"="Kenya"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\255]
+"CountryCode"=dword:000000ff
+"InternationalRule"="0900EFG"
+"LongDistanceRule"="0FG"
+"Name"="Tanzania"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\256]
+"CountryCode"=dword:00000100
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Uganda"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\257]
+"CountryCode"=dword:00000101
+"InternationalRule"="90EFG"
+"LongDistanceRule"=""
+"Name"="Burundi"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\258]
+"CountryCode"=dword:00000102
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Mozambique"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\260]
+"CountryCode"=dword:00000104
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Zambia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\261]
+"CountryCode"=dword:00000105
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Madagascar"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\262]
+"CountryCode"=dword:00000106
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Reunion Island"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\263]
+"CountryCode"=dword:00000107
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Zimbabwe"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\264]
+"CountryCode"=dword:00000108
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Namibia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\265]
+"CountryCode"=dword:00000109
+"InternationalRule"="101EFG"
+"LongDistanceRule"=""
+"Name"="Malawi"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\266]
+"CountryCode"=dword:0000010a
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Lesotho"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\267]
+"CountryCode"=dword:0000010b
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Botswana"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\268]
+"CountryCode"=dword:0000010c
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Swaziland"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\269]
+"CountryCode"=dword:0000010d
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Mayotte Island"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\2691]
+"CountryCode"=dword:0000010d
+"InternationalRule"="10EFG"
+"LongDistanceRule"=""
+"Name"="Comoros"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\27]
+"CountryCode"=dword:0000001b
+"InternationalRule"="09EFG"
+"LongDistanceRule"="0FG"
+"Name"="South Africa"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\290]
+"CountryCode"=dword:00000122
+"InternationalRule"="01EFG"
+"LongDistanceRule"=""
+"Name"="St. Helena"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\291]
+"CountryCode"=dword:00000123
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Eritrea"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\297]
+"CountryCode"=dword:00000129
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Aruba"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\298]
+"CountryCode"=dword:0000012a
+"InternationalRule"="009EFG"
+"LongDistanceRule"=""
+"Name"="Faroe Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\299]
+"CountryCode"=dword:0000012b
+"InternationalRule"="009EFG"
+"LongDistanceRule"=""
+"Name"="Greenland"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\30]
+"CountryCode"=dword:0000001e
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Greece"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\31]
+"CountryCode"=dword:0000001f
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Netherlands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\32]
+"CountryCode"=dword:00000020
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Belgium"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\33]
+"CountryCode"=dword:00000021
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="France"
+"SameAreaRule"="0FG"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\34]
+"CountryCode"=dword:00000022
+"InternationalRule"="00,EFG"
+"LongDistanceRule"="IG"
+"Name"="Spain"
+"SameAreaRule"="IG"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\350]
+"CountryCode"=dword:0000015e
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Gibraltar"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\351]
+"CountryCode"=dword:0000015f
+"InternationalRule"="00EFG"
+"LongDistanceRule"="IG"
+"Name"="Portugal"
+"SameAreaRule"="IG"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\352]
+"CountryCode"=dword:00000160
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Luxembourg"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\353]
+"CountryCode"=dword:00000161
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Ireland"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\354]
+"CountryCode"=dword:00000162
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Iceland"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\355]
+"CountryCode"=dword:00000163
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Albania"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\356]
+"CountryCode"=dword:00000164
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Malta"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\357]
+"CountryCode"=dword:00000165
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Cyprus"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\358]
+"CountryCode"=dword:00000166
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Finland"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\359]
+"CountryCode"=dword:00000167
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Bulgaria"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\36]
+"CountryCode"=dword:00000024
+"InternationalRule"="00EFG"
+"LongDistanceRule"=" 06,FG"
+"Name"="Hungary"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\370]
+"CountryCode"=dword:00000172
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Lithuania"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\371]
+"CountryCode"=dword:00000173
+"InternationalRule"="00EFG"
+"LongDistanceRule"=" 8,FG"
+"Name"="Latvia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\372]
+"CountryCode"=dword:00000174
+"InternationalRule"="8,00EFG"
+"LongDistanceRule"=" 8,2IG"
+"Name"="Estonia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\373]
+"CountryCode"=dword:00000175
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Moldova"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\374]
+"CountryCode"=dword:00000176
+"InternationalRule"="8,10EFG"
+"LongDistanceRule"=" 8,IG"
+"Name"="Armenia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\375]
+"CountryCode"=dword:00000177
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Belarus"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\376]
+"CountryCode"=dword:00000178
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Andorra"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\377]
+"CountryCode"=dword:00000179
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Monaco"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\378]
+"CountryCode"=dword:0000017a
+"InternationalRule"="00EFG"
+"LongDistanceRule"="IG"
+"Name"="San Marino"
+"SameAreaRule"="IG"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\379]
+"CountryCode"=dword:00000027
+"InternationalRule"="00EFG"
+"LongDistanceRule"="IG"
+"Name"="Vatican City"
+"SameAreaRule"="IG"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\380]
+"CountryCode"=dword:0000017c
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Ukraine"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\381]
+"CountryCode"=dword:0000017d
+"InternationalRule"="99EFG"
+"LongDistanceRule"="0FG"
+"Name"="Yugoslavia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\385]
+"CountryCode"=dword:00000181
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Croatia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\386]
+"CountryCode"=dword:00000182
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Slovenia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\387]
+"CountryCode"=dword:00000183
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Bosnia and Herzegovina"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\389]
+"CountryCode"=dword:00000185
+"InternationalRule"="99EFG"
+"LongDistanceRule"="0FG"
+"Name"="F.Y.R.O.M. (Former Yugoslav Republic of Macedonia)"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\39]
+"CountryCode"=dword:00000027
+"InternationalRule"="00EFG"
+"LongDistanceRule"="IG"
+"Name"="Italy"
+"SameAreaRule"="IG"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\40]
+"CountryCode"=dword:00000028
+"InternationalRule"="00EFG"
+"LongDistanceRule"=" 0FG"
+"Name"="Romania"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\41]
+"CountryCode"=dword:00000029
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Switzerland"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\420]
+"CountryCode"=dword:000001a4
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Czech Republic"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\421]
+"CountryCode"=dword:000001a5
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Slovakia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\423]
+"CountryCode"=dword:000001a7
+"InternationalRule"="00EFG"
+"LongDistanceRule"="G"
+"Name"="Liechtenstein"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\43]
+"CountryCode"=dword:0000002b
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Austria"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\44]
+"CountryCode"=dword:0000002c
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="United Kingdom"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\45]
+"CountryCode"=dword:0000002d
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Denmark"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\46]
+"CountryCode"=dword:0000002e
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Sweden"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\47]
+"CountryCode"=dword:0000002f
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Norway"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\48]
+"CountryCode"=dword:00000030
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Poland"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\49]
+"CountryCode"=dword:00000031
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Germany"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\500]
+"CountryCode"=dword:000001f4
+"InternationalRule"="0EFG"
+"LongDistanceRule"=""
+"Name"="Falkland Islands (Islas Malvinas)"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\501]
+"CountryCode"=dword:000001f5
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Belize"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\502]
+"CountryCode"=dword:000001f6
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Guatemala"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\503]
+"CountryCode"=dword:000001f7
+"InternationalRule"="0EFG"
+"LongDistanceRule"=""
+"Name"="El Salvador"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\504]
+"CountryCode"=dword:000001f8
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Honduras"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\505]
+"CountryCode"=dword:000001f9
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Nicaragua"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\506]
+"CountryCode"=dword:000001fa
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Costa Rica"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\507]
+"CountryCode"=dword:000001fb
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Panama"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\508]
+"CountryCode"=dword:000001fc
+"InternationalRule"="00,EFG"
+"LongDistanceRule"=""
+"Name"="St. Pierre and Miquelon"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\509]
+"CountryCode"=dword:000001fd
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Haiti"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\51]
+"CountryCode"=dword:00000033
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Peru"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\52]
+"CountryCode"=dword:00000034
+"InternationalRule"="00EFG"
+"LongDistanceRule"=" 01FG"
+"Name"="Mexico"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\53]
+"CountryCode"=dword:00000035
+"InternationalRule"="119EFG"
+"LongDistanceRule"="0FG"
+"Name"="Cuba"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\5399]
+"CountryCode"=dword:00000035
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Guantanamo Bay"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\54]
+"CountryCode"=dword:00000036
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Argentina"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\55]
+"CountryCode"=dword:00000037
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Brazil"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\56]
+"CountryCode"=dword:00000038
+"InternationalRule"="00EFG"
+"LongDistanceRule"="FG"
+"Name"="Chile"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\57]
+"CountryCode"=dword:00000039
+"InternationalRule"="009EFG"
+"LongDistanceRule"="09FG"
+"Name"="Colombia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\58]
+"CountryCode"=dword:0000003a
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Venezuela"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\590]
+"CountryCode"=dword:0000024e
+"InternationalRule"="00,EFG"
+"LongDistanceRule"=""
+"Name"="Guadeloupe"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\5901]
+"CountryCode"=dword:0000024e
+"InternationalRule"="00,EFG"
+"LongDistanceRule"=""
+"Name"="French Antilles"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\591]
+"CountryCode"=dword:0000024f
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Bolivia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\592]
+"CountryCode"=dword:00000250
+"InternationalRule"="001EFG"
+"LongDistanceRule"="0FG"
+"Name"="Guyana"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\593]
+"CountryCode"=dword:00000251
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Ecuador"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\594]
+"CountryCode"=dword:00000252
+"InternationalRule"="00,EFG"
+"LongDistanceRule"=""
+"Name"="French Guiana"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\595]
+"CountryCode"=dword:00000253
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Paraguay"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\596]
+"CountryCode"=dword:00000254
+"InternationalRule"="00,EFG"
+"LongDistanceRule"=""
+"Name"="Martinique"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\597]
+"CountryCode"=dword:00000255
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Suriname"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\598]
+"CountryCode"=dword:00000256
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Uruguay"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\599]
+"CountryCode"=dword:00000257
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Netherlands Antilles"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\60]
+"CountryCode"=dword:0000003c
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Malaysia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\61]
+"CountryCode"=dword:0000003d
+"InternationalRule"="0011EFG"
+"LongDistanceRule"=" 0FG"
+"Name"="Australia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\6101]
+"CountryCode"=dword:0000003d
+"InternationalRule"="00EFG"
+"LongDistanceRule"=" 0FG"
+"Name"="Cocos-Keeling Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\62]
+"CountryCode"=dword:0000003e
+"InternationalRule"="001EFG"
+"LongDistanceRule"="0FG"
+"Name"="Indonesia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\63]
+"CountryCode"=dword:0000003f
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Philippines"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\64]
+"CountryCode"=dword:00000040
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="New Zealand"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\65]
+"CountryCode"=dword:00000041
+"InternationalRule"="001EFG"
+"LongDistanceRule"=""
+"Name"="Singapore"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\66]
+"CountryCode"=dword:00000042
+"InternationalRule"="001EFG"
+"LongDistanceRule"="0FG"
+"Name"="Thailand"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\670]
+"CountryCode"=dword:0000029e
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Saipan Island"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\6701]
+"CountryCode"=dword:0000029e
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Rota Island"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\6702]
+"CountryCode"=dword:0000029e
+"InternationalRule"="011EFG"
+"LongDistanceRule"=" 1FG"
+"Name"="Tinian Island"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\672]
+"CountryCode"=dword:000002a0
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Christmas Island"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\6722]
+"CountryCode"=dword:000002a0
+"InternationalRule"="0101EFG"
+"LongDistanceRule"=""
+"Name"="Norfolk Island"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\673]
+"CountryCode"=dword:000002a1
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Brunei"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\674]
+"CountryCode"=dword:000002a2
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Nauru"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\675]
+"CountryCode"=dword:000002a3
+"InternationalRule"="05EFG"
+"LongDistanceRule"=""
+"Name"="Papua New Guinea"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\676]
+"CountryCode"=dword:000002a4
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Tonga"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\677]
+"CountryCode"=dword:000002a5
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Solomon Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\678]
+"CountryCode"=dword:000002a6
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Vanuatu"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\679]
+"CountryCode"=dword:000002a7
+"InternationalRule"="05EFG"
+"LongDistanceRule"=""
+"Name"="Fiji Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\680]
+"CountryCode"=dword:000002a8
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Palau"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\681]
+"CountryCode"=dword:000002a9
+"InternationalRule"="00,EFG"
+"LongDistanceRule"=""
+"Name"="Wallis and Futuna Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\682]
+"CountryCode"=dword:000002aa
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Cook Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\683]
+"CountryCode"=dword:000002ab
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Niue"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\684]
+"CountryCode"=dword:000002ac
+"InternationalRule"="1EFG"
+"LongDistanceRule"=""
+"Name"="American Samoa"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\685]
+"CountryCode"=dword:000002ad
+"InternationalRule"="0EFG"
+"LongDistanceRule"=""
+"Name"="Samoa"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\686]
+"CountryCode"=dword:000002ae
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Kiribati"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\687]
+"CountryCode"=dword:000002af
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="New Caledonia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\688]
+"CountryCode"=dword:000002b0
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Tuvalu"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\689]
+"CountryCode"=dword:000002b1
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="French Polynesia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\690]
+"CountryCode"=dword:000002b2
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Tokelau"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\691]
+"CountryCode"=dword:000002b3
+"InternationalRule"="011EFG"
+"LongDistanceRule"=""
+"Name"="Micronesia, Federated States of"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\692]
+"CountryCode"=dword:000002b4
+"InternationalRule"="011EFG"
+"LongDistanceRule"="1FG"
+"Name"="Marshall Islands"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\7]
+"CountryCode"=dword:00000007
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Russia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\705]
+"CountryCode"=dword:00000007
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Kazakhstan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\708]
+"CountryCode"=dword:00000007
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Tajikistan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\800]
+"CountryCode"=dword:00000320
+"InternationalRule"=""
+"LongDistanceRule"=""
+"Name"="International Freephone Service"
+"SameAreaRule"=""
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\81]
+"CountryCode"=dword:00000051
+"InternationalRule"="001EFG"
+"LongDistanceRule"="0FG"
+"Name"="Japan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\82]
+"CountryCode"=dword:00000052
+"InternationalRule"="001EFG"
+"LongDistanceRule"="0FG"
+"Name"="Korea (Republic of)"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\84]
+"CountryCode"=dword:00000054
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Vietnam"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\850]
+"CountryCode"=dword:00000352
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Korea (North)"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\852]
+"CountryCode"=dword:00000354
+"InternationalRule"="001EFG"
+"LongDistanceRule"=""
+"Name"="Hong Kong S.A.R."
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\853]
+"CountryCode"=dword:00000355
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Macau S.A.R."
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\855]
+"CountryCode"=dword:00000357
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Cambodia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\856]
+"CountryCode"=dword:00000358
+"InternationalRule"="14EFG"
+"LongDistanceRule"=""
+"Name"="Laos"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\86]
+"CountryCode"=dword:00000056
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="China"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\870]
+"CountryCode"=dword:00000366
+"InternationalRule"="00EFG#"
+"LongDistanceRule"="00EFG#"
+"Name"="INMARSAT"
+"SameAreaRule"="00EFG#"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\871]
+"CountryCode"=dword:00000367
+"InternationalRule"="00EFG#"
+"LongDistanceRule"="00EFG#"
+"Name"="INMARSAT (Atlantic-East)"
+"SameAreaRule"="00EFG#"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\872]
+"CountryCode"=dword:00000368
+"InternationalRule"="00EFG#"
+"LongDistanceRule"="00EFG#"
+"Name"="INMARSAT (Pacific)"
+"SameAreaRule"="00EFG#"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\873]
+"CountryCode"=dword:00000369
+"InternationalRule"="00EFG#"
+"LongDistanceRule"="00EFG#"
+"Name"="INMARSAT (Indian)"
+"SameAreaRule"="00EFG#"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\874]
+"CountryCode"=dword:0000036a
+"InternationalRule"="00EFG#"
+"LongDistanceRule"="00EFG#"
+"Name"="INMARSAT (Atlantic-West)"
+"SameAreaRule"="00EFG#"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\880]
+"CountryCode"=dword:00000370
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Bangladesh"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\886]
+"CountryCode"=dword:00000376
+"InternationalRule"="002EFG"
+"LongDistanceRule"="0FG"
+"Name"="Taiwan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\90]
+"CountryCode"=dword:0000005a
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Turkey"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\91]
+"CountryCode"=dword:0000005b
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="India"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\92]
+"CountryCode"=dword:0000005c
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Pakistan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\93]
+"CountryCode"=dword:0000005d
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Afghanistan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\94]
+"CountryCode"=dword:0000005e
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Sri Lanka"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\95]
+"CountryCode"=dword:0000005f
+"InternationalRule"="0EFG"
+"LongDistanceRule"=""
+"Name"="Myanmar"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\960]
+"CountryCode"=dword:000003c0
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Maldives"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\961]
+"CountryCode"=dword:000003c1
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Lebanon"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\962]
+"CountryCode"=dword:000003c2
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Jordan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\963]
+"CountryCode"=dword:000003c3
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Syria"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\964]
+"CountryCode"=dword:000003c4
+"InternationalRule"="00EFG"
+"LongDistanceRule"="FG"
+"Name"="Iraq"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\965]
+"CountryCode"=dword:000003c5
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Kuwait"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\966]
+"CountryCode"=dword:000003c6
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Saudi Arabia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\967]
+"CountryCode"=dword:000003c7
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Yemen"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\968]
+"CountryCode"=dword:000003c8
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Oman"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\971]
+"CountryCode"=dword:000003cb
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="United Arab Emirates"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\972]
+"CountryCode"=dword:000003cc
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Israel"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\973]
+"CountryCode"=dword:000003cd
+"InternationalRule"="0EFG"
+"LongDistanceRule"=""
+"Name"="Bahrain"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\974]
+"CountryCode"=dword:000003ce
+"InternationalRule"="0EFG"
+"LongDistanceRule"=""
+"Name"="Qatar"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\975]
+"CountryCode"=dword:000003cf
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Bhutan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\976]
+"CountryCode"=dword:000003d0
+"InternationalRule"="00EFG"
+"LongDistanceRule"="0FG"
+"Name"="Mongolia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\977]
+"CountryCode"=dword:000003d1
+"InternationalRule"="00EFG"
+"LongDistanceRule"=""
+"Name"="Nepal"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\98]
+"CountryCode"=dword:00000062
+"InternationalRule"="00EFG"
+"LongDistanceRule"="FG"
+"Name"="Iran"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\993]
+"CountryCode"=dword:000003e1
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Turkmenistan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\994]
+"CountryCode"=dword:000003e2
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Azerbaijan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\995]
+"CountryCode"=dword:000003e3
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Georgia"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\996]
+"CountryCode"=dword:000003e4
+"InternationalRule"="00EFG"
+"LongDistanceRule"="8FG"
+"Name"="Kyrgyzstan"
+"SameAreaRule"="G"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Telephony\Country List\998]
+"CountryCode"=dword:000003e6
+"InternationalRule"="8W10EFG"
+"LongDistanceRule"=" 8WFG"
+"Name"="Uzbekistan"
+"SameAreaRule"="G"
