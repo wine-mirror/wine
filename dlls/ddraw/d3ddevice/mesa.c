@@ -2373,6 +2373,7 @@ ICOM_VTABLE(IDirect3DDevice) VTABLE_IDirect3DDevice =
 #endif
 
 static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
+			       WINE_GL_BUFFER_TYPE buffer_type,
 			       DWORD dwCount,
 			       LPD3DRECT lpRects,
 			       DWORD dwFlags,
@@ -2382,10 +2383,7 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
 {
     IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     GLboolean ztest;
-    GLfloat old_z_clear_value;
     GLbitfield bitfield = 0;
-    GLint old_stencil_clear_value;
-    GLfloat old_color_clear_value[4];
     D3DRECT rect;
     int i;
     
@@ -2401,7 +2399,6 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     }
 
     if (dwCount == 0) {
-        /* Not sure if this is really needed... */
         dwCount = 1;
 	rect.u1.x1 = 0;
 	rect.u2.y1 = 0;
@@ -2413,29 +2410,28 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     /* Clears the screen */
     ENTER_GL();
 
-    if (glThis->state[WINE_GL_BUFFER_BACK] == SURFACE_MEMORY_DIRTY) {
-        /* TODO: optimize here the case where Clear changes all the screen... */
-        This->flush_to_framebuffer(This, &(glThis->lock_rect[WINE_GL_BUFFER_BACK]), glThis->lock_surf[WINE_GL_BUFFER_BACK]);
+    if (dwFlags & D3DCLEAR_TARGET) {
+	if (glThis->state[buffer_type] == SURFACE_MEMORY_DIRTY) {
+	    /* TODO: optimize here the case where Clear changes all the screen... */
+	    This->flush_to_framebuffer(This, &(glThis->lock_rect[buffer_type]), glThis->lock_surf[buffer_type]);
+	}
+	glThis->state[buffer_type] = SURFACE_GL;
     }
-    glThis->state[WINE_GL_BUFFER_BACK] = SURFACE_GL;
 
     if (dwFlags & D3DCLEAR_ZBUFFER) {
 	bitfield |= GL_DEPTH_BUFFER_BIT;
         glGetBooleanv(GL_DEPTH_WRITEMASK, &ztest);
 	glDepthMask(GL_TRUE); /* Enables Z writing to be sure to delete also the Z buffer */
-	glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
 	glClearDepth(dvZ);
 	TRACE(" depth value : %f\n", dvZ);
     }
     if (dwFlags & D3DCLEAR_STENCIL) {
         bitfield |= GL_STENCIL_BUFFER_BIT;
-	glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
 	glClearStencil(dwStencil);
 	TRACE(" stencil value : %ld\n", dwStencil);
     }    
     if (dwFlags & D3DCLEAR_TARGET) {
         bitfield |= GL_COLOR_BUFFER_BIT;
-	glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
 	glClearColor(((dwColor >> 16) & 0xFF) / 255.0,
 		     ((dwColor >>  8) & 0xFF) / 255.0,
 		     ((dwColor >>  0) & 0xFF) / 255.0,
@@ -2452,19 +2448,7 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     glDisable(GL_SCISSOR_TEST); 
     
     if (dwFlags & D3DCLEAR_ZBUFFER) {
-        glDepthMask(ztest);
-	glClearDepth(old_z_clear_value);
-    }
-     if (dwFlags & D3DCLEAR_STENCIL) {
-        bitfield |= GL_STENCIL_BUFFER_BIT;
-	glClearStencil(old_stencil_clear_value);
-    }    
-    if (dwFlags & D3DCLEAR_TARGET) {
-        bitfield |= GL_COLOR_BUFFER_BIT;
-	glClearColor(old_color_clear_value[0],
-		     old_color_clear_value[1],
-		     old_color_clear_value[2],
-		     old_color_clear_value[3]);
+        if (ztest == 0) glDepthMask(ztest);
     }
     
     LEAVE_GL();
@@ -2472,28 +2456,64 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     return DD_OK;
 }
 
+static HRESULT d3ddevice_clear_back(IDirect3DDeviceImpl *This,
+				    DWORD dwCount,
+				    LPD3DRECT lpRects,
+				    DWORD dwFlags,
+				    DWORD dwColor,
+				    D3DVALUE dvZ,
+				    DWORD dwStencil)
+{
+    return d3ddevice_clear(This, WINE_GL_BUFFER_BACK, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
+}
+
 HRESULT
 d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 	      LPDIRECTDRAWSURFACE7 src, LPRECT rsrc,
 	      DWORD dwFlags, LPDDBLTFX lpbltfx)
 {
+    IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
+    WINE_GL_BUFFER_TYPE buffer_type;
+    D3DRECT rect;
+    
+    /* First check if we BLT to the backbuffer... */
+    if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) != 0) {
+	buffer_type = WINE_GL_BUFFER_BACK;
+    } else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
+	buffer_type = WINE_GL_BUFFER_FRONT;
+    } else {
+	ERR("Only BLT override to front or back-buffer is supported for now !\n");
+	return DDERR_INVALIDPARAMS;
+    }
+    
+    if (rdst) {
+	rect.u1.x1 = rdst->left;
+	rect.u2.y1 = rdst->top;
+	rect.u3.x2 = rdst->right;
+	rect.u4.y2 = rdst->bottom;
+    } else {
+	rect.u1.x1 = 0;
+	rect.u2.y1 = 0;
+	rect.u3.x2 = This->surface_desc.dwWidth;
+	rect.u4.y2 = This->surface_desc.dwHeight;
+    }
+        
+    if ((gl_d3d_dev->state[buffer_type] == SURFACE_MEMORY_DIRTY) &&
+	(rect.u1.x1 >= gl_d3d_dev->lock_rect[buffer_type].left) &&
+	(rect.u2.y1 >= gl_d3d_dev->lock_rect[buffer_type].top) &&
+	(rect.u3.x2 <= gl_d3d_dev->lock_rect[buffer_type].right) &&
+	(rect.u4.y2 <= gl_d3d_dev->lock_rect[buffer_type].bottom)) {
+	/* If the memory zone is already dirty, use the standard 'in memory' blit operations and not
+	 * GL to do it.
+	 */
+	return DDERR_INVALIDPARAMS;
+    }
+
     if (dwFlags & DDBLT_COLORFILL) {
         /* This is easy to handle for the D3D Device... */
         DWORD color;
-        D3DRECT rect;
         GLenum prev_draw;
-        BOOL is_front;
         
-        /* First check if we BLT to the backbuffer... */
-        if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) != 0) {
-            is_front = FALSE;
-        } else if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
-            is_front = TRUE;
-        } else {
-            ERR("Only BLT override to front or back-buffer is supported for now !\n");
-            return DDERR_INVALIDPARAMS;
-        }
-	
         /* The color as given in the Blt function is in the format of the frame-buffer...
          * 'clear' expect it in ARGB format => we need to do some conversion :-)
          */
@@ -2538,25 +2558,18 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
         
         TRACE(" executing D3D Device override.\n");
 	
-        if (rdst) {
-            rect.u1.x1 = rdst->left;
-            rect.u2.y1 = rdst->top;
-            rect.u3.x2 = rdst->right;
-            rect.u4.y2 = rdst->bottom;
-        }
-        
         ENTER_GL();
 
         glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
-        if (is_front)
+        if (buffer_type == WINE_GL_BUFFER_FRONT)
             glDrawBuffer(GL_FRONT);
         else
             glDrawBuffer(GL_BACK);
         
-        d3ddevice_clear(This->d3ddevice, rdst != NULL ? 1 : 0, &rect, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
+        d3ddevice_clear(This->d3ddevice, buffer_type, 1, &rect, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
 	
-        if ((( is_front) && (prev_draw == GL_BACK)) ||
-            ((!is_front) && (prev_draw == GL_FRONT)))
+        if (((buffer_type == WINE_GL_BUFFER_FRONT) && (prev_draw == GL_BACK)) ||
+            ((buffer_type == WINE_GL_BUFFER_BACK)  && (prev_draw == GL_FRONT)))
             glDrawBuffer(prev_draw);
 	
         LEAVE_GL();
@@ -3138,7 +3151,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     object->d3d = d3d;
     object->surface = surface;
     object->set_context = set_context;
-    object->clear = d3ddevice_clear;
+    object->clear = d3ddevice_clear_back;
     object->set_matrices = d3ddevice_set_matrices;
     object->matrices_updated = d3ddevice_matrices_updated;
     object->flush_to_framebuffer = d3ddevice_flush_to_frame_buffer;
