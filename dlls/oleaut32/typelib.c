@@ -4715,7 +4715,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	    DWORD res;
 	    int   numargs, numargs2, argspos, args2pos;
 	    DWORD *args , *args2;
-
+            VARIANT *rgvarg = HeapAlloc(GetProcessHeap(),0,sizeof(VARIANT)*pFDesc->funcdesc.cParams);
+            memcpy(rgvarg,pDispParams->rgvarg,sizeof(VARIANT)*pDispParams->cArgs);
 
 	    numargs = 1; numargs2 = 0;
 	    for (i=0;i<pFDesc->funcdesc.cParams;i++) {
@@ -4735,11 +4736,40 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	    for (i=0;i<pFDesc->funcdesc.cParams;i++) {
 		int arglen = _argsize(pFDesc->funcdesc.lprgelemdescParam[i].tdesc.vt);
 		if (i<pDispParams->cArgs) {
-		    VARIANT *arg = &pDispParams->rgvarg[pDispParams->cArgs-i-1];
-		    TYPEDESC *tdesc = &pFDesc->funcdesc.lprgelemdescParam[i].tdesc;
-		    hres = _copy_arg(iface, tdesc, &args[argspos], arg, tdesc->vt);
-		    if (FAILED(hres)) return hres;
-		    argspos += arglen;
+                    VARIANT *arg = &rgvarg[pDispParams->cArgs-i-1];
+                    TYPEDESC *tdesc = &pFDesc->funcdesc.lprgelemdescParam[i].tdesc;
+                    USHORT paramFlags = pFDesc->funcdesc.lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                    if (paramFlags & PARAMFLAG_FOPT) {
+                        if(i < pFDesc->funcdesc.cParams-pFDesc->funcdesc.cParamsOpt)
+                            ERR("Parameter has PARAMFLAG_FOPT flag but is not one of last cParamOpt parameters\n");
+                        if(V_VT(arg) == VT_EMPTY
+                          || ((V_VT(arg) & VT_BYREF) && !V_BYREF(arg))) {
+                               /* FIXME: Documentation says that we do this when parameter is left unspecified.
+                                         How to determine it? */
+
+                            if(paramFlags & PARAMFLAG_FHASDEFAULT)
+                                FIXME("PARAMFLAG_FHASDEFAULT flag not supported\n");
+                            V_VT(arg) = VT_ERROR;
+                            V_ERROR(arg) = DISP_E_PARAMNOTFOUND;
+                            arglen = _argsize(VT_ERROR);
+                        }
+                    }
+                    hres = _copy_arg(iface, tdesc, &args[argspos], arg, tdesc->vt);
+                    if (FAILED(hres)) return hres;
+                    argspos += arglen;
+                } else if(pFDesc->funcdesc.lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FOPT) {
+                    VARIANT *arg = &rgvarg[i];
+                    TYPEDESC *tdesc = &pFDesc->funcdesc.lprgelemdescParam[i].tdesc;
+                    if(i < pFDesc->funcdesc.cParams-pFDesc->funcdesc.cParamsOpt)
+                        ERR("Parameter has PARAMFLAG_FOPT flag but is not one of last cParamOpt parameters\n");
+                    if(pFDesc->funcdesc.lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+                        FIXME("PARAMFLAG_FHASDEFAULT flag not supported\n");
+                    V_VT(arg) = VT_ERROR;
+                    V_ERROR(arg) = DISP_E_PARAMNOTFOUND;
+                    arglen = _argsize(VT_ERROR);
+                    hres = _copy_arg(iface, tdesc, &args[argspos], arg, tdesc->vt);
+                    if (FAILED(hres)) return hres;
+                    argspos += arglen;
 		} else {
 		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i].tdesc);
 		    if (tdesc->vt != VT_PTR)
@@ -4757,16 +4787,19 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		    args2pos	+= arglen;
 		}
 	    }
-	    if (pFDesc->funcdesc.cParamsOpt)
+	    if (pFDesc->funcdesc.cParamsOpt < 0)
 		FIXME("Does not support optional parameters (%d)\n",
 			pFDesc->funcdesc.cParamsOpt
-		);
+                );
 
 	    res = _invoke((*(FARPROC**)pIUnk)[pFDesc->funcdesc.oVft/4],
 		    pFDesc->funcdesc.callconv,
 		    numargs,
 		    args
 	    );
+
+            HeapFree(GetProcessHeap(), 0, rgvarg);
+
 	    if (pVarResult && (dwFlags & (DISPATCH_PROPERTYGET))) {
 		args2pos = 0;
 		for (i=0;i<pFDesc->funcdesc.cParams-pDispParams->cArgs;i++) {
