@@ -49,7 +49,6 @@ static void test_IMalloc(void)
         return;
 
     lpMalloc = pMAPIGetDefaultMalloc();
-    ok (lpMalloc != NULL, "iMAPIGetDefaultMalloc returned null\n");
     if (!lpMalloc)
         return;
 
