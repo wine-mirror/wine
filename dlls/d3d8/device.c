@@ -3570,7 +3570,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     IDirect3DBaseTexture8Impl_AddRef(*ppTexture);
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage,IDirect3DBaseTexture8* pTexture) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage, IDirect3DBaseTexture8* pTexture) {
 
     IDirect3DBaseTexture8 *oldTxt;
     BOOL reapplyStates = TRUE;
@@ -3610,22 +3610,20 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     }
 
     /* Decrement the count of the previous texture */
-    if (oldTxt != NULL) {
+    if (NULL != oldTxt) {
         IDirect3DBaseTexture8Impl_Release(oldTxt);
     }
 
-    if (pTexture) {
-        IDirect3DBaseTexture8Impl_AddRef((LPDIRECT3DBASETEXTURE8)This->UpdateStateBlock->textures[Stage]);
+    if (NULL != pTexture) {
+        IDirect3DBaseTexture8Impl_AddRef((LPDIRECT3DBASETEXTURE8) This->UpdateStateBlock->textures[Stage]);
 
         /* Now setup the texture appropraitly */
         textureType = IDirect3DBaseTexture8Impl_GetType(pTexture);
 
         if (textureType == D3DRTYPE_TEXTURE) {
-          IDirect3DTexture8Impl *pTexture2 = (IDirect3DTexture8Impl*) pTexture;
-
-          if ((void*) oldTxt == (void*) pTexture2 && pTexture2->Dirty == FALSE) {
-              TRACE("Skipping setting texture as old == new\n");
-              reapplyStates = FALSE;
+          if (oldTxt == pTexture && TRUE == IDirect3DBaseTexture8Impl_IsDirty(pTexture)) {
+            TRACE("Skipping setting texture as old == new\n");
+            reapplyStates = FALSE;
           } else {
             /* Standard 2D texture */
             TRACE("Standard 2d texture\n");
@@ -3635,19 +3633,29 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
             IDirect3DTexture8Impl_PreLoad((LPDIRECT3DTEXTURE8) pTexture);
           }
         } else if (textureType == D3DRTYPE_VOLUMETEXTURE) {
-            /* Standard 3D (volume) texture */
+	  if (oldTxt == pTexture && TRUE == IDirect3DBaseTexture8Impl_IsDirty(pTexture)) {
+	    TRACE("Skipping setting texture as old == new\n");
+	    reapplyStates = FALSE;
+          } else {
+	    /* Standard 3D (volume) texture */
             TRACE("Standard 3d texture\n");
             This->UpdateStateBlock->textureDimensions[Stage] = GL_TEXTURE_3D;
 
             /* Load up the texture now */
 	    IDirect3DVolumeTexture8Impl_PreLoad((LPDIRECT3DVOLUMETEXTURE8) pTexture);
+	  }
         } else if (textureType == D3DRTYPE_CUBETEXTURE) {
+	  if (oldTxt == pTexture && TRUE == IDirect3DBaseTexture8Impl_IsDirty(pTexture)) {
+	    TRACE("Skipping setting texture as old == new\n");
+	    reapplyStates = FALSE;
+          } else {
 	    /* Standard Cube texture */
 	    TRACE("Standard Cube texture\n");
 	    This->UpdateStateBlock->textureDimensions[Stage] = GL_TEXTURE_CUBE_MAP_ARB;
 
 	    /* Load up the texture now */
 	    IDirect3DCubeTexture8Impl_PreLoad((LPDIRECT3DCUBETEXTURE8) pTexture);
+	  }
 	} else {
             FIXME("(%p) : Incorrect type for a texture : (%d,%s)\n", This, textureType, debug_d3dressourcetype(textureType));
         }
@@ -3662,7 +3670,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     /* Even if the texture has been set to null, reapply the stages as a null texture to directx requires
        a dummy texture in opengl, and we always need to ensure the current view of the TextureStates apply */
     if (reapplyStates) {
-       setupTextureStates (iface, Stage);
+       setupTextureStates(iface, Stage);
     }
        
     return D3D_OK;
@@ -4439,9 +4447,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, IDirec
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pFunction, DWORD* pHandle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     IDirect3DPixelShaderImpl* object;
+    HRESULT res;
     UINT i;
 
-    FIXME("(%p) : PixelShader not fully supported yet\n", This);    
+    TRACE_(d3d_shader)("(%p) : PixelShader not fully supported yet : Func=%p\n", This, pFunction);
     if (NULL == pFunction || NULL == pHandle) {
       return D3DERR_INVALIDCALL;
     }
@@ -4449,21 +4458,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface,
     if (i >= sizeof(PixelShaders) / sizeof(IDirect3DPixelShaderImpl*)) {
       return D3DERR_OUTOFVIDEOMEMORY;
     }
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DPixelShaderImpl));
-    if (NULL == object) {
-      return D3DERR_OUTOFVIDEOMEMORY;
-    }
-    
-    object->data = NULL; /* TODO */
 
-    PixelShaders[i] = object;
-    *pHandle = VS_HIGHESTFIXEDFXF + i;
-
-    object->function = pFunction;
-    for (i = 0; D3DPS_END() != pFunction[i]; ++i) ;
-    object->functionLength = i + 1;
-
-    return D3D_OK;
+    /** Create the Pixel Shader */
+    res = IDirect3DDeviceImpl_CreatePixelShader(This, pFunction, &object);
+    if (SUCCEEDED(res)) {
+      PixelShaders[i] = object;
+      *pHandle = VS_HIGHESTFIXEDFXF + i;
+      return D3D_OK;
+    } 
+    *pHandle = 0xFFFFFFFF;
+    return res;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -4474,22 +4478,22 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DW
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
-        TRACE("Recording... not performing anything\n");
+        TRACE_(d3d_shader)("Recording... not performing anything\n");
         return D3D_OK;
     }
 
     /* FIXME: Quieten when not being used */
     if (Handle != 0) {
-      FIXME("(%p) : stub %ld\n", This, Handle);
+      FIXME_(d3d_shader)("(%p) : stub %ld\n", This, Handle);
     } else {
-      TRACE("(%p) : stub %ld\n", This, Handle);
+      TRACE_(d3d_shader)("(%p) : stub %ld\n", This, Handle);
     }
 
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD* pHandle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    TRACE("(%p) : GetPixelShader returning %ld\n", This, This->StateBlock->PixelShader);
+    TRACE_(d3d_shader)("(%p) : GetPixelShader returning %ld\n", This, This->StateBlock->PixelShader);
     *pHandle = This->StateBlock->PixelShader;
     return D3D_OK;
 }
@@ -4502,42 +4506,63 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 iface,
       return D3DERR_INVALIDCALL;
     }
     object = PixelShaders[Handle - VS_HIGHESTFIXEDFXF];
-    TRACE("(%p) : freeing PixelShader %p\n", This, object);
+    TRACE_(d3d_shader)("(%p) : freeing PixelShader %p\n", This, object);
     /* TODO: check validity of object before free */
+    if (NULL != object->function) HeapFree(GetProcessHeap(), 0, (void *)object->function);
+    HeapFree(GetProcessHeap(), 0, (void *)object->data);
     HeapFree(GetProcessHeap(), 0, (void *)object);
-    PixelShaders[Handle - VS_HIGHESTFIXEDFXF] = 0;
+    PixelShaders[Handle - VS_HIGHESTFIXEDFXF] = NULL;
+
     return D3D_OK;
 }
 
-HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register,CONST void* pConstantData, DWORD ConstantCount) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, CONST void* pConstantData, DWORD ConstantCount) {
+  ICOM_THIS(IDirect3DDevice8Impl,iface);
+
+  if (Register + ConstantCount > D3D8_PSHADER_MAX_CONSTANTS) {
+    ERR_(d3d_shader)("(%p) : SetPixelShaderConstant C[%lu] invalid\n", This, Register);
+    return D3DERR_INVALIDCALL;
+  }
+  if (NULL == pConstantData) {
+    return D3DERR_INVALIDCALL;
+  }
+  if (ConstantCount > 1) {
+    FLOAT* f = (FLOAT*)pConstantData;
+    UINT i;
+    TRACE_(d3d_shader)("(%p) : SetPixelShaderConstant C[%lu..%lu]=\n", This, Register, Register + ConstantCount - 1);
+    for (i = 0; i < ConstantCount; ++i) {
+      TRACE_(d3d_shader)("{%f, %f, %f, %f}\n", f[0], f[1], f[2], f[3]);
+      f += 4;
+    }
+  } else { 
+    FLOAT* f = (FLOAT*) pConstantData;
+    TRACE_(d3d_shader)("(%p) : SetPixelShaderConstant, C[%lu]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
+  }
+  This->UpdateStateBlock->Changed.pixelShaderConstant = TRUE;
+  memcpy(&This->UpdateStateBlock->pixelShaderConstant[Register], pConstantData, ConstantCount * 4 * sizeof(FLOAT));
+  return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register,void* pConstantData, DWORD ConstantCount) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);  
-    return D3D_OK;
+HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, void* pConstantData, DWORD ConstantCount) {
+  ICOM_THIS(IDirect3DDevice8Impl,iface);
+
+  TRACE_(d3d_shader)("(%p) : C[%lu] count=%ld\n", This, Register, ConstantCount);
+  if (Register + ConstantCount > D3D8_PSHADER_MAX_CONSTANTS) {
+    return D3DERR_INVALIDCALL;
+  }
+  if (NULL == pConstantData) {
+    return D3DERR_INVALIDCALL;
+  }
+  memcpy(pConstantData, &This->UpdateStateBlock->pixelShaderConstant[Register], ConstantCount * 4 * sizeof(FLOAT));
+  return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShaderFunction(LPDIRECT3DDEVICE8 iface, DWORD Handle, void* pData, DWORD* pSizeOfData) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
     IDirect3DPixelShaderImpl* object;
 
     object = PIXEL_SHADER(Handle);
     if (NULL == object) {
       return D3DERR_INVALIDCALL;
-    }
-    if (NULL == pData) {
-      *pSizeOfData = object->functionLength;
-      return D3D_OK;
-    }
-    if (*pSizeOfData < object->functionLength) {
-      *pSizeOfData = object->functionLength;
-      return D3DERR_MOREDATA;
-    }
-    TRACE("(%p) : GetPixelShaderFunction copying to %p\n", This, pData);
-    memcpy(pData, object->function, object->functionLength);
-    return D3D_OK;
+    } 
+    return IDirect3DPixelShaderImpl_GetFunction(object, pData, (UINT*) pSizeOfData);
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_DrawRectPatch(LPDIRECT3DDEVICE8 iface, UINT Handle,CONST float* pNumSegs,CONST D3DRECTPATCH_INFO* pRectPatchInfo) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);

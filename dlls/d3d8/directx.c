@@ -681,12 +681,6 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         int dblBuf[] = {GLX_RGBA, 
 			GLX_STENCIL_SIZE, 8, /*  2 */
 			GLX_DEPTH_SIZE,  16, /*  4 */
-#if 0
-			GLX_RED_SIZE,     8, /*  6 */ 
-			GLX_GREEN_SIZE,   8, /*  8 */
-			GLX_BLUE_SIZE,    8, /* 10 */
-			GLX_ALPHA_SIZE,   8, /* 12 */
-#endif
 			GLX_DOUBLEBUFFER, None};
         /* FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat */
 
@@ -889,8 +883,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
      */
     memset(&This->gl_info.supported, 0, sizeof(This->gl_info.supported));
     This->gl_info.max_textures   = 1;
+    This->gl_info.ps_arb_version = PS_VERSION_NOT_SUPPORTED;
     This->gl_info.vs_arb_version = VS_VERSION_NOT_SUPPORTED;
     This->gl_info.vs_nv_version  = VS_VERSION_NOT_SUPPORTED;
+    This->gl_info.vs_ati_version = VS_VERSION_NOT_SUPPORTED;
 
     /* Retrieve opengl defaults */
     glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
@@ -922,7 +918,11 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 	/**
 	 * ARB 
 	 */
-        if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
+	if (strcmp(ThisExtn, "GL_ARB_fragment_program") == 0) {
+	  This->gl_info.ps_arb_version = PS_VERSION_11;
+	  FIXME(" FOUND: ARB Pixel Shader support - version=%02x\n", This->gl_info.ps_arb_version);
+	  This->gl_info.supported[ARB_FRAGMENT_PROGRAM] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
 	  FIXME(" FOUND: ARB Multisample support\n");
 	  This->gl_info.supported[ARB_MULTISAMPLE] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_ARB_multitexture") == 0) {
@@ -976,6 +976,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 	/**
 	 * NVIDIA 
 	 */
+	} else if (strstr(ThisExtn, "GL_NV_fragment_program")) {
+	  This->gl_info.ps_nv_version = PS_VERSION_11;
+	  FIXME(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", This->gl_info.ps_nv_version);
+	  This->gl_info.supported[NV_FRAGMENT_PROGRAM] = TRUE;
 	} else if (strstr(ThisExtn, "GL_NV_vertex_program")) {
 	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program1_1")) ? VS_VERSION_11 : VS_VERSION_10);
 	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program2"))   ? VS_VERSION_20 : VS_VERSION_10);

@@ -38,10 +38,9 @@ HRESULT WINAPI D3D8GetSWInfo(void)
     return 0;
 }
 
-HRESULT WINAPI DebugSetMute(void)
+void DebugSetMute(void)
 {
-    FIXME("(void): stub\n");
-    return 0;
+    /* nothing to do */
 }
 
 IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion)

@@ -99,17 +99,16 @@ typedef struct D3DSHADERSCALAR {
 } D3DSHADERSCALAR;
 
 #define D3D8_VSHADER_MAX_CONSTANTS 96
-#define D3D8_PSHADER_MAX_CONSTANTS 96
 typedef D3DSHADERVECTOR VSHADERCONSTANTS8[D3D8_VSHADER_MAX_CONSTANTS];
 
-typedef struct SHADERDATA8 {
+typedef struct VSHADERDATA8 {
   /** Run Time Shader Function Constants */
   /*D3DXBUFFER* constants;*/
   VSHADERCONSTANTS8 C;
   /** Shader Code as char ... */
   CONST DWORD* code;
   UINT codeLength;
-} SHADERDATA8;
+} VSHADERDATA8;
 
 /** temporary here waiting for buffer code */
 typedef struct VSHADERINPUTDATA8 {
@@ -124,6 +123,34 @@ typedef struct VSHADEROUTPUTDATA8 {
   D3DSHADERVECTOR oFog;
   D3DSHADERVECTOR oPts;
 } VSHADEROUTPUTDATA8;
+
+
+#define D3D8_PSHADER_MAX_CONSTANTS 32
+typedef D3DSHADERVECTOR PSHADERCONSTANTS8[D3D8_PSHADER_MAX_CONSTANTS];
+
+typedef struct PSHADERDATA8 {
+  /** Run Time Shader Function Constants */
+  /*D3DXBUFFER* constants;*/
+  PSHADERCONSTANTS8 C;
+  /** Shader Code as char ... */
+  CONST DWORD* code;
+  UINT codeLength;
+} PSHADERDATA8;
+
+/** temporary here waiting for buffer code */
+typedef struct PSHADERINPUTDATA8 {
+  D3DSHADERVECTOR V[2];
+  D3DSHADERVECTOR T[8];
+  D3DSHADERVECTOR S[16];
+  /*D3DSHADERVECTOR R[12];*/
+} PSHADERINPUTDATA8;
+
+/** temporary here waiting for buffer code */
+typedef struct PSHADEROUTPUTDATA8 {
+  D3DSHADERVECTOR oC[4];
+  D3DSHADERVECTOR oDepth;
+} PSHADEROUTPUTDATA8;
+
 
 /*
  * External prototypes
@@ -155,6 +182,7 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface);
 
 typedef enum _GL_SupportedExt {
   /* ARB */
+  ARB_FRAGMENT_PROGRAM,
   ARB_MULTISAMPLE,
   ARB_MULTITEXTURE,
   ARB_POINT_PARAMETERS,
@@ -173,6 +201,7 @@ typedef enum _GL_SupportedExt {
   EXT_TEXTURE_LOD_BIAS,
   EXT_VERTEX_WEIGHTING,
   /* NVIDIA */
+  NV_FRAGMENT_PROGRAM,
   NV_VERTEX_PROGRAM,
   /* ATI */
   EXT_VERTEX_SHADER,
@@ -190,6 +219,19 @@ typedef enum _GL_VSVersion {
   VS_VERSION_FORCE_DWORD = 0x7FFFFFFF
 } GL_VSVersion;
 
+typedef enum _GL_PSVersion {
+  PS_VERSION_NOT_SUPPORTED = 0x0,
+  PS_VERSION_10 = 0x10,
+  PS_VERSION_11 = 0x11,
+  PS_VERSION_12 = 0x12,
+  PS_VERSION_13 = 0x13,
+  PS_VERSION_14 = 0x14,
+  PS_VERSION_20 = 0x20,
+  PS_VERSION_30 = 0x30,
+  /*Force 32-bits*/
+  PS_VERSION_FORCE_DWORD = 0x7FFFFFFF
+} GL_PSVersion;
+
 typedef struct _GL_Info {
   /** 
    * CAPS Constants 
@@ -198,11 +240,14 @@ typedef struct _GL_Info {
   UINT   max_textures;
   UINT   max_clipplanes;
 
+  GL_PSVersion ps_arb_version;
+  GL_PSVersion ps_nv_version;
+
   GL_VSVersion vs_arb_version;
   GL_VSVersion vs_nv_version;
   GL_VSVersion vs_ati_version;
   
-  BOOL supported[25];
+  BOOL supported[30];
 } GL_Info;
 
 #define GL_LIMITS(ExtName)     (This->direct3d8->gl_info.max_##ExtName)
@@ -1017,6 +1062,7 @@ typedef struct SAVEDSTATES {
         BOOL                      vertexShaderConstant;
         BOOL                      vertexShaderDecl;
         BOOL                      pixelShader;
+        BOOL                      pixelShaderConstant;
         BOOL                      renderstate[HIGHEST_RENDER_STATE];
         BOOL                      texture_state[8][HIGHEST_TEXTURE_STATE];
         BOOL                      clipplane[MAX_CLIPPLANES];
@@ -1091,7 +1137,6 @@ struct  IDirect3DStateBlockImpl {
   
   /* Pixel Shader */
   DWORD                     PixelShader;
-  /* TODO: Pixel Shader Constant */
   
   /* Indexed Vertex Blending */
   D3DVERTEXBLENDFLAGS       vertex_blend;
@@ -1099,6 +1144,8 @@ struct  IDirect3DStateBlockImpl {
 
   /* Vertex Shader Constant */
   D3DSHADERVECTOR           vertexShaderConstant[D3D8_VSHADER_MAX_CONSTANTS];
+  /* Pixel Shader Constant */
+  D3DSHADERVECTOR           pixelShaderConstant[D3D8_PSHADER_MAX_CONSTANTS];
 };
 
 /* exported Interfaces */
@@ -1171,7 +1218,7 @@ struct IDirect3DVertexShaderImpl {
   DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
   DWORD version;
   /* run time datas */
-  SHADERDATA8* data;
+  VSHADERDATA8* data;
   VSHADERINPUTDATA8 input;
   VSHADEROUTPUTDATA8 output;
 };
@@ -1210,18 +1257,21 @@ struct IDirect3DPixelShaderImpl {
   /* The device, to be replaced by a IDirect3DDeviceImpl */
   IDirect3DDevice8Impl* device;
 
-  /* TODO: Pixel Shader */
-  CONST DWORD* function;
+  DWORD* function;
   UINT functionLength;
   DWORD version;
   /* run time datas */
-  SHADERDATA8* data;
+  PSHADERDATA8* data;
+  PSHADERINPUTDATA8 input;
+  PSHADEROUTPUTDATA8 output;
 };
 
 /* exported Interfaces */
 extern HRESULT WINAPI IDirect3DPixelShaderImpl_GetFunction(IDirect3DPixelShaderImpl* This, VOID* pData, UINT* pSizeOfData);
 /* internal Interfaces */
 extern DWORD WINAPI IDirect3DPixelShaderImpl_GetVersion(IDirect3DPixelShaderImpl* This);
+/* temporary internal Interfaces */
+extern HRESULT WINAPI IDirect3DDeviceImpl_CreatePixelShader(IDirect3DDevice8Impl* This, CONST DWORD* pFunction, IDirect3DPixelShaderImpl** ppPixelShader);
 
 
 /**
@@ -1229,7 +1279,10 @@ extern DWORD WINAPI IDirect3DPixelShaderImpl_GetVersion(IDirect3DPixelShaderImpl
  *
  * to see how not defined it here
  */ 
+void   GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand);
 void   setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage);
+void   set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
+
 
 SHORT  D3DFmtGetBpp(IDirect3DDevice8Impl* This, D3DFORMAT fmt);
 GLint  D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt);
