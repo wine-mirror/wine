@@ -1161,8 +1161,9 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 	/* FIXME is there any memory leak here ? */
 	MCI_GetOpenDrv(wDevID)->lpstrAlias = strdup(lpParms->lpstrAlias);
 	/* mplayer does allocate alias to CDAUDIO */
-    } else 
+    } else {
 	MCI_GetOpenDrv(wDevID)->lpstrAlias = NULL;
+    }
     if (dwParam & MCI_OPEN_TYPE) {
 	if (dwParam & MCI_OPEN_TYPE_ID) {
 #if 0
@@ -1261,6 +1262,7 @@ DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
     }
     MCI_GetDrv(wDevID)->modp.wType = 0;
     free(MCI_GetDrv(wDevID)->mop.lpstrDeviceType);
+    free(MCI_GetDrv(wDevID)->mop.lpstrAlias);
 
     if (dwParam & MCI_NOTIFY)
 	mciDriverNotify16(lpParms->dwCallback, wDevID,
