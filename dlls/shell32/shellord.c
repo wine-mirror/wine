@@ -1228,6 +1228,28 @@ HRESULT WINAPI SHFlushClipboard(void)
 	return 1;
 }
 /*************************************************************************
+ * StrRChrA					[SHELL32.346]
+ *
+ */
+LPSTR WINAPI StrRChrA(LPCSTR lpStart, LPCSTR lpEnd, DWORD wMatch)
+{
+    	if (!lpStart)
+	    return NULL;
+
+	/* if the end not given, search*/
+	if (!lpEnd)
+	{ lpEnd=lpStart;
+	  while (*lpEnd) 
+	    lpEnd++;
+	}
+
+	for (--lpEnd;lpStart <= lpEnd; lpEnd--)
+	    if (*lpEnd==(char)wMatch)
+		return (LPSTR)lpEnd;
+
+	return NULL;
+}
+/*************************************************************************
  * StrRChrW					[SHELL32.320]
  *
  */

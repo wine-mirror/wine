@@ -346,7 +346,7 @@ type win32
 343	stub	StrNCatW
 344	stub	StrPBrkA
 345	stub	StrPBrkW
-346	stub	StrRChrA
+346	stdcall	StrRChrA (str str long) StrRChrA
 347	stub	StrRChrIA
 348	stub	StrRChrIW
 349	stdcall	StrRChrW (wstr wstr long) StrRChrW
