@@ -260,7 +260,7 @@ void WCMD_process_command (char *command)
     DWORD count;
     HANDLE old_stdin = 0, old_stdout = 0, h;
     char *whichcmd;
-
+    SECURITY_ATTRIBUTES sa;
 
 /*
  *	Expand up environment variables.
@@ -287,12 +287,15 @@ void WCMD_process_command (char *command)
 
     /* Dont issue newline WCMD_output (newline);           @JED*/
 
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
 /*
  *	Redirect stdin and/or stdout if required.
  */
 
     if ((p = strchr(cmd,'<')) != NULL) {
-      h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+      h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_READ, FILE_SHARE_READ, &sa, OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
@@ -303,7 +306,7 @@ void WCMD_process_command (char *command)
       SetStdHandle (STD_INPUT_HANDLE, h);
     }
     if ((p = strchr(cmd,'>')) != NULL) {
-      h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+      h = CreateFile (WCMD_parameter (++p, 0, NULL), GENERIC_WRITE, 0, &sa, CREATE_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
 	WCMD_print_error ();
@@ -531,8 +534,8 @@ char filetorun[MAX_PATH];
   console = SHGetFileInfo (filetorun, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
   ZeroMemory (&st, sizeof(STARTUPINFO));
   st.cb = sizeof(STARTUPINFO);
-  status = CreateProcess (NULL, command, NULL, NULL, FALSE,
-  		 0, NULL, NULL, &st, &pe);
+  status = CreateProcess (NULL, command, NULL, NULL, TRUE, 
+                          0, NULL, NULL, &st, &pe);
   if (!status) {
     WCMD_print_error ();
     return;
@@ -544,6 +547,8 @@ char filetorun[MAX_PATH];
       GetExitCodeProcess (pe.hProcess, &errorlevel);
       if (errorlevel == STILL_ACTIVE) errorlevel = 0;
   }
+  CloseHandle(pe.hProcess);
+  CloseHandle(pe.hThread);
 }
 
 /******************************************************************************
