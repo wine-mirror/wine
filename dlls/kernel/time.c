@@ -60,14 +60,15 @@ BOOL WINAPI SetLocalTime(
     const SYSTEMTIME *systime) /* [in] The desired local time. */
 {
     FILETIME ft;
-    LARGE_INTEGER st;
+    LARGE_INTEGER st, st2;
     NTSTATUS status;
 
     SystemTimeToFileTime( systime, &ft );
+    st.s.LowPart = ft.dwLowDateTime;
+    st.s.HighPart = ft.dwHighDateTime;
+    RtlLocalTimeToSystemTime( &st, &st2 );
 
-    RtlLocalTimeToSystemTime( (PLARGE_INTEGER)&ft, &st );
-
-    if ((status = NtSetSystemTime(&st, NULL)))
+    if ((status = NtSetSystemTime(&st2, NULL)))
         SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
@@ -112,11 +113,13 @@ BOOL WINAPI GetSystemTimeAdjustment(
 BOOL WINAPI SetSystemTime(
     const SYSTEMTIME *systime) /* [in] The desired system time. */
 {
+    FILETIME ft;
     LARGE_INTEGER t;
     NTSTATUS status;
 
-    SystemTimeToFileTime( systime, (PFILETIME)&t );
-
+    SystemTimeToFileTime( systime, &ft );
+    t.s.LowPart = ft.dwLowDateTime;
+    t.s.HighPart = ft.dwHighDateTime;
     if ((status = NtSetSystemTime(&t, NULL)))
         SetLastError( RtlNtStatusToDosError(status) );
     return !status;
@@ -194,7 +197,10 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
 VOID WINAPI GetSystemTimeAsFileTime(
     LPFILETIME time) /* [out] The file time struct to be filled with the system time. */
 {
-    NtQuerySystemTime( (LARGE_INTEGER *)time );
+    LARGE_INTEGER t;
+    NtQuerySystemTime( &t );
+    time->dwLowDateTime = t.s.LowPart;
+    time->dwHighDateTime = t.s.HighPart;
 }
 
 
@@ -435,26 +441,40 @@ int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWST
 /*********************************************************************
  *      LocalFileTimeToFileTime                         (KERNEL32.@)
  */
-BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
-                                       LPFILETIME utcft )
+BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft, LPFILETIME utcft )
 {
     NTSTATUS status;
-    if ((status = RtlLocalTimeToSystemTime((PLARGE_INTEGER)localft,
-                                           (PLARGE_INTEGER)utcft)))
-        SetLastError( RtlNtStatusToDosError(status) );
+    LARGE_INTEGER local, utc;
+
+    local.s.LowPart = localft->dwLowDateTime;
+    local.s.HighPart = localft->dwHighDateTime;
+    if (!(status = RtlLocalTimeToSystemTime( &local, &utc )))
+    {
+        utcft->dwLowDateTime = utc.s.LowPart;
+        utcft->dwHighDateTime = utc.s.HighPart;
+    }
+    else SetLastError( RtlNtStatusToDosError(status) );
+
     return !status;
 }
 
 /*********************************************************************
  *      FileTimeToLocalFileTime                         (KERNEL32.@)
  */
-BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
-                                       LPFILETIME localft )
+BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft, LPFILETIME localft )
 {
     NTSTATUS status;
-    if ((status = RtlSystemTimeToLocalTime((PLARGE_INTEGER)utcft,
-                                           (PLARGE_INTEGER)localft)))
-        SetLastError( RtlNtStatusToDosError(status) );
+    LARGE_INTEGER local, utc;
+
+    utc.s.LowPart = utcft->dwLowDateTime;
+    utc.s.HighPart = utcft->dwHighDateTime;
+    if (!(status = RtlSystemTimeToLocalTime( &utc, &local )))
+    {
+        localft->dwLowDateTime = local.s.LowPart;
+        localft->dwHighDateTime = local.s.HighPart;
+    }
+    else SetLastError( RtlNtStatusToDosError(status) );
+
     return !status;
 }
 
@@ -464,8 +484,11 @@ BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
 BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
 {
     TIME_FIELDS tf;
+    LARGE_INTEGER t;
 
-    RtlTimeToTimeFields((PLARGE_INTEGER)ft, &tf);
+    t.s.LowPart = ft->dwLowDateTime;
+    t.s.HighPart = ft->dwHighDateTime;
+    RtlTimeToTimeFields(&t, &tf);
 
     syst->wYear = tf.Year;
     syst->wMonth = tf.Month;
@@ -484,6 +507,7 @@ BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
 BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 {
     TIME_FIELDS tf;
+    LARGE_INTEGER t;
 
     tf.Year = syst->wYear;
     tf.Month = syst->wMonth;
@@ -493,14 +517,16 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
     tf.Second = syst->wSecond;
     tf.Milliseconds = syst->wMilliseconds;
 
-    RtlTimeFieldsToTime(&tf, (PLARGE_INTEGER)ft);
+    RtlTimeFieldsToTime(&tf, &t);
+    ft->dwLowDateTime = t.s.LowPart;
+    ft->dwHighDateTime = t.s.HighPart;
     return TRUE;
 }
 
 /*********************************************************************
  *      CompareFileTime                                 (KERNEL32.@)
  */
-INT WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
+INT WINAPI CompareFileTime( const FILETIME *x, const FILETIME *y )
 {
     if (!x || !y) return -1;
 
@@ -521,12 +547,12 @@ INT WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
 VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
 {
     FILETIME lft;
-    LARGE_INTEGER ft;
+    LARGE_INTEGER ft, ft2;
 
     NtQuerySystemTime(&ft);
-
-    RtlSystemTimeToLocalTime(&ft, (PLARGE_INTEGER)&lft);
-
+    RtlSystemTimeToLocalTime(&ft, &ft2);
+    lft.dwLowDateTime = ft2.s.LowPart;
+    lft.dwHighDateTime = ft2.s.HighPart;
     FileTimeToSystemTime(&lft, systime);
 }
 
@@ -536,8 +562,10 @@ VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
 VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
 {
     FILETIME ft;
+    LARGE_INTEGER t;
 
-    NtQuerySystemTime((PLARGE_INTEGER)&ft);
-
+    NtQuerySystemTime(&t);
+    ft.dwLowDateTime = t.s.LowPart;
+    ft.dwHighDateTime = t.s.HighPart;
     FileTimeToSystemTime(&ft, systime);
 }

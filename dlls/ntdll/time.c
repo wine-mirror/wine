@@ -258,7 +258,7 @@ static const struct tagTZ_INFO TZ_INFO[] =
 #define SECSPERMIN         60
 #define MINSPERHOUR        60
 #define HOURSPERDAY        24
-#define EPOCHWEEKDAY       0
+#define EPOCHWEEKDAY       1  /* Jan 1, 1601 was Monday */
 #define DAYSPERWEEK        7
 #define EPOCHYEAR          1601
 #define DAYSPERNORMALYEAR  365
@@ -309,11 +309,7 @@ VOID WINAPI RtlTimeToTimeFields(
 	int SecondsInDay, CurYear;
 	int LeapYear, CurMonth;
 	long int Days;
-	LONGLONG Time;
-
-	Time = liTime->s.HighPart;
-	Time <<= 32;
-	Time += liTime->s.LowPart;
+	LONGLONG Time = liTime->QuadPart;
 
 	/* Extract millisecond from time and convert time into seconds */
 	TimeFields->Milliseconds = (CSHORT) ((Time % TICKSPERSEC) / TICKSPERMSEC);
@@ -408,7 +404,7 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 	rcTime += TimeFields.Hour * SECSPERHOUR + TimeFields.Minute * SECSPERMIN + TimeFields.Second;
 	rcTime *= TICKSPERSEC;
 	rcTime += TimeFields.Milliseconds * TICKSPERMSEC;
-	*Time = *(LARGE_INTEGER *)&rcTime;
+	Time->QuadPart = rcTime;
 
 	return TRUE;
 }
@@ -582,13 +578,10 @@ VOID WINAPI RtlTimeToElapsedTimeFields(
  */
 NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER time )
 {
-    ULONGLONG secs;
     struct timeval now;
 
     gettimeofday( &now, 0 );
-    secs = RtlExtendedIntegerMultiply( now.tv_sec+SECS_1601_TO_1970, 10000000 ) + now.tv_usec * 10;
-    time->s.LowPart  = (DWORD)secs;
-    time->s.HighPart = (DWORD)(secs >> 32);
+    time->QuadPart = RtlExtendedIntegerMultiply( now.tv_sec+SECS_1601_TO_1970, 10000000 ) + now.tv_usec * 10;
     return STATUS_SUCCESS;
 }
 
