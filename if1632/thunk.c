@@ -130,7 +130,7 @@ static THUNK *firstThunk = NULL;
 static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
                                            UINT16 msg, WPARAM16 wParam,
                                            LPARAM lParam );
-static void WINAPI THUNK_CallTaskReschedule(void);
+static BOOL32 WINAPI THUNK_CallTaskReschedule(void);
 static BOOL32 WINAPI THUNK_WOWCallback16Ex( FARPROC16,DWORD,DWORD,
                                             LPVOID,LPDWORD );
 
@@ -309,9 +309,9 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 /***********************************************************************
  *           THUNK_CallTaskReschedule
  */
-static void WINAPI THUNK_CallTaskReschedule(void)
+static BOOL32 WINAPI THUNK_CallTaskReschedule(void)
 {
-    CallTo16_word_(TASK_RescheduleProc);
+    return CallTo16_word_(TASK_RescheduleProc);
 }
 
 

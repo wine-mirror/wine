@@ -238,11 +238,15 @@ static BOOL32 WINAPI CALLBACK_CallWOWCallback16Ex(
 /**********************************************************************
  *	     CALLBACK_CallTaskRescheduleProc
  */
-static void WINAPI CALLBACK_CallTaskRescheduleProc( void )
+static BOOL32 WINAPI CALLBACK_CallTaskRescheduleProc( void )
 {
+    BOOL32 pending;
+
     SYSLEVEL_EnterWin16Lock();
-    TASK_Reschedule();
+    pending = TASK_Reschedule();
     SYSLEVEL_LeaveWin16Lock();
+
+    return pending;
 }
 
 

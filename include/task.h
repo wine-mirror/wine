@@ -152,7 +152,7 @@ extern HTASK16 TASK_Create( struct _THDB *thdb, struct _NE_MODULE *pModule,
 extern void TASK_StartTask( HTASK16 hTask );
 extern void TASK_KillCurrentTask( INT16 exitCode );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
-extern void TASK_Reschedule(void);
+extern BOOL32 TASK_Reschedule(void);
 extern void TASK_InstallTHHook( THHOOK *pNewThook );
 
 #endif /* __WINE_TASK_H */

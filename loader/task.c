@@ -653,11 +653,12 @@ void TASK_KillCurrentTask( INT16 exitCode )
  *   
  *       It must not call functions that may yield control.
  */
-void TASK_Reschedule(void)
+BOOL32 TASK_Reschedule(void)
 {
     TDB *pOldTask = NULL, *pNewTask;
     HTASK16 hTask = 0;
     STACK16FRAME *newframe16;
+    BOOL32 pending = FALSE;
 
     /* Get the initial task up and running */
     if (!hCurrentTask && GetCurrentTask())
@@ -683,7 +684,7 @@ void TASK_Reschedule(void)
         hCurrentTask = GetCurrentTask();
         pNewTask = (TDB *)GlobalLock16( hCurrentTask );
         pNewTask->ss_sp = pNewTask->thdb->cur_stack;
-        return;
+        return FALSE;
     }
 
     /* NOTE: As we are entered from 16-bit code, we hold the Win16Lock.
@@ -720,7 +721,7 @@ void TASK_Reschedule(void)
 
     /* extract hardware events only! */
 
-    if (!hTask) EVENT_WaitNetEvent( FALSE, TRUE );
+    if (!hTask) pending = EVENT_WaitNetEvent( FALSE, TRUE );
 
     while (!hTask)
     {
@@ -739,6 +740,10 @@ void TASK_Reschedule(void)
         if (hLockedTask && (hTask != hLockedTask)) hTask = 0;
         if (hTask) break;
 
+        /* If a non-hardware event is pending, return to TASK_YieldToSystem
+           temporarily to process it safely */
+        if (pending) return TRUE;
+
         /* No task found, wait for some events to come in */
 
         /* NOTE: We release the Win16Lock while waiting for events. This is to enable
@@ -747,14 +752,14 @@ void TASK_Reschedule(void)
                  TASK_Reschedule anyway, there should be no re-entrancy problem ... */
 
         SYSLEVEL_ReleaseWin16Lock();
-        EVENT_WaitNetEvent( TRUE, TRUE );
+        pending = EVENT_WaitNetEvent( TRUE, TRUE );
         SYSLEVEL_RestoreWin16Lock();
     }
 
     if (hTask == hCurrentTask) 
     {
        TRACE(task, "returning to the current task(%04x)\n", hTask );
-       return;  /* Nothing to do */
+       return FALSE;  /* Nothing to do */
     }
     pNewTask = (TDB *)GlobalLock16( hTask );
     TRACE(task, "Switching to task %04x (%.8s)\n",
@@ -797,6 +802,8 @@ void TASK_Reschedule(void)
     pNewTask->ss_sp = pNewTask->thdb->cur_stack;
 
     SYSLEVEL_RestoreWin16Lock();
+
+    return FALSE;
 }
 
 
@@ -808,26 +815,30 @@ void TASK_Reschedule(void)
  */
 void TASK_YieldToSystem(TDB* pTask)
 {
-  MESSAGEQUEUE*		pQ;
-
-  if ( !THREAD_IsWin16( THREAD_Current() ) )
-  {
-    FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
-    return;
-  }
-
-  Callbacks->CallTaskRescheduleProc();
-
-  if( pTask )
-  {
-    pQ = (MESSAGEQUEUE*)GlobalLock16(pTask->hQueue);
-    if( pQ && pQ->flags & QUEUE_FLAG_XEVENT &&
-	    !(pQ->wakeBits & (QS_SENDMESSAGE | QS_SMRESULT)) )
+    if ( !THREAD_IsWin16( THREAD_Current() ) )
     {
-      pQ->flags &= ~QUEUE_FLAG_XEVENT;
-      EVENT_WaitNetEvent( FALSE, FALSE );
+        FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        return;
     }
-  }
+
+    if ( Callbacks->CallTaskRescheduleProc() )
+    {
+        /* NOTE: We get here only when no task has an event. This means also
+                 the current task, so we shouldn't actually return to the
+                 caller here. But, we need to do so, as the EVENT_WaitNetEvent
+                 call could lead to a complex series of inter-task SendMessage
+                 calls which might leave this task in a state where it again
+                 has no event, but where its queue's wakeMask is also reset
+                 to zero. Reentering TASK_Reschedule in this state would be 
+                 suicide.  Hence, we do return to the caller after processing
+                 non-hardware events. Actually, this should not hurt anyone,
+                 as the caller must be WaitEvent, and thus the QUEUE_WaitBits
+                 loop in USER. Should there actually be no message pending 
+                 for this task after processing non-hardware events, that loop
+                 will simply return to WaitEvent.  */
+                 
+        EVENT_WaitNetEvent( FALSE, FALSE );
+    }
 }
 
 

@@ -27,13 +27,10 @@
 #include "gdi.h"
 #include "heap.h"
 #include "queue.h"
-#include "win.h"
 #include "class.h"
 #include "dce.h"
-#include "message.h"
 #include "module.h"
 #include "options.h"
-#include "queue.h"
 #include "winpos.h"
 #include "drive.h"
 #include "shell.h"
@@ -113,6 +110,10 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
                                unsigned int *pwidth, unsigned int *pheight );
 
 
+static BOOL32 (WINAPI *EVENT_RedrawWindow)( HWND32 hwnd, const RECT32 *rectUpdate,
+                                            HRGN32 hrgnUpdate, UINT32 flags ) = NULL;
+
+
 /***********************************************************************
  *           EVENT_Init
  *
@@ -166,8 +167,8 @@ BOOL16 X11DRV_EVENT_IsUserIdle(void)
  *           X11DRV_EVENT_WaitNetEvent
  *
  * Wait for a network event, optionally sleeping until one arrives.
- * Return TRUE if an event is pending, FALSE on timeout or error
- * (for instance lost connection with the server).
+ * Returns TRUE if an event is pending that cannot be processed in
+ * 'peek' mode, FALSE otherwise.
  */
 
 BOOL32 X11DRV_EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
@@ -198,7 +199,7 @@ BOOL32 X11DRV_EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
       if (DDE_GetRemoteMessage()) {
 	while(DDE_GetRemoteMessage())
 	  ;
-	return TRUE;
+	return FALSE;
       }
       stop_wait_op = STOP_WAIT_X;
       /* The code up to the next "stop_wait_op = CONT" must be reentrant */
@@ -233,7 +234,10 @@ BOOL32 X11DRV_EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 	    WINSOCK_HandleIO( &__event_max_fd, num_pending, io_set, __event_io_set );
 	}
       else /* no X events */
-	return WINSOCK_HandleIO( &__event_max_fd, num_pending, io_set, __event_io_set );
+      {
+	WINSOCK_HandleIO( &__event_max_fd, num_pending, io_set, __event_io_set );
+	return FALSE;
+      }
     }
   else if(!pending)
     {				/* Wait for X11 input. */
@@ -255,19 +259,14 @@ BOOL32 X11DRV_EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
         {
 	  LeaveCriticalSection(&X11DRV_CritSection);
 	  while(DDE_GetRemoteMessage()) ;
-	  return TRUE;
+	  return FALSE;
         }
 #endif  /* CONFIG_IPC */
       
       XNextEvent( display, &event );
       
-      LeaveCriticalSection(&X11DRV_CritSection);
       if( peek )
-        {
-	  WND*		pWnd;
-	  MESSAGEQUEUE* pQ;
-	  
-
+      {
 	  /* Check only for those events which can be processed
 	   * internally. */
 
@@ -276,31 +275,30 @@ BOOL32 X11DRV_EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 	      event.type == KeyPress || event.type == KeyRelease ||
 	      event.type == SelectionRequest || event.type == SelectionClear ||
 	      event.type == ClientMessage )
-	    {
+	  {
+	      LeaveCriticalSection(&X11DRV_CritSection);
 	      EVENT_ProcessEvent( &event );
+	      EnterCriticalSection(&X11DRV_CritSection);
 	      continue;
-	    }
+	  }
+
+	  if ( event.type == NoExpose )
+	    continue;
 	  
-          if (TSXFindContext( display, ((XAnyEvent *)&event)->window, winContext,
-			      (char **)&pWnd ) || (event.type == NoExpose))
-	    pWnd = NULL;
-	  
-	  if( pWnd )
-	    {
-	      if( (pQ = (MESSAGEQUEUE*)GlobalLock16(pWnd->hmemTaskQ)) )
-		{
-		  pQ->flags |= QUEUE_FLAG_XEVENT;
-		  PostEvent(pQ->hTask);
-		  TSXPutBackEvent(display, &event);
-		  break;
-		}
-	    }
-        }
-      else EVENT_ProcessEvent( &event );
-      EnterCriticalSection(&X11DRV_CritSection);
+	  XPutBackEvent(display, &event);
+	  LeaveCriticalSection(&X11DRV_CritSection);
+	  return TRUE;
+      }
+      else
+      {
+          LeaveCriticalSection(&X11DRV_CritSection);
+          EVENT_ProcessEvent( &event );
+          EnterCriticalSection(&X11DRV_CritSection);
+      }
     }
   LeaveCriticalSection(&X11DRV_CritSection);
-  return TRUE;
+
+  return FALSE;
 }
 
 /***********************************************************************
@@ -396,12 +394,10 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
       
     case Expose:
-      if (!pWnd) return;
       EVENT_Expose( pWnd, (XExposeEvent *)event );
       break;
       
     case GraphicsExpose:
-      if (!pWnd) return;
       EVENT_GraphicsExpose( pWnd, (XGraphicsExposeEvent *)event );
       break;
       
@@ -613,14 +609,20 @@ static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
   RECT32 rect;
 
   /* Make position relative to client area instead of window */
-  rect.left   = event->x - (pWnd->rectClient.left - pWnd->rectWindow.left);
-  rect.top    = event->y - (pWnd->rectClient.top - pWnd->rectWindow.top);
+  rect.left   = event->x - (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
+  rect.top    = event->y - (pWnd? (pWnd->rectClient.top - pWnd->rectWindow.top) : 0);
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
-  
-  PAINT_RedrawWindow( pWnd->hwndSelf, &rect, 0,
+ 
+  if ( !EVENT_RedrawWindow )
+  {
+    HMODULE32 hModule = GetModuleHandle32A( "USER32" );
+    EVENT_RedrawWindow = GetProcAddress32( hModule, "RedrawWindow" );
+  }
+ 
+  EVENT_RedrawWindow( pWnd? pWnd->hwndSelf : 0, &rect, 0,
 		      RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
-		      (event->count ? 0 : RDW_ERASENOW), 0 );
+		      (event->count ? 0 : RDW_ERASENOW) );
 }
 
 
@@ -635,14 +637,20 @@ static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
   RECT32 rect;
   
   /* Make position relative to client area instead of window */
-  rect.left   = event->x - (pWnd->rectClient.left - pWnd->rectWindow.left);
-  rect.top    = event->y - (pWnd->rectClient.top - pWnd->rectWindow.top);
+  rect.left   = event->x - (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
+  rect.top    = event->y - (pWnd? (pWnd->rectClient.top - pWnd->rectWindow.top) : 0);
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
   
-  PAINT_RedrawWindow( pWnd->hwndSelf, &rect, 0,
+  if ( !EVENT_RedrawWindow )
+  {
+    HMODULE32 hModule = GetModuleHandle32A( "USER32" );
+    EVENT_RedrawWindow = GetProcAddress32( hModule, "RedrawWindow" );
+  }
+
+  EVENT_RedrawWindow( pWnd? pWnd->hwndSelf : 0, &rect, 0,
 		      RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
-		      (event->count ? 0 : RDW_ERASENOW), 0 );
+		      (event->count ? 0 : RDW_ERASENOW) );
 }
 
 

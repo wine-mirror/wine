@@ -71,7 +71,6 @@ typedef struct tagMESSAGEQUEUE
 #define QS_SMPARAMSFREE  0x4000  /* SendMessage() parameters are available */
 
 /* Queue flags */
-#define QUEUE_FLAG_XEVENT  0x0001
 #define QUEUE_SM_WIN32     0x0002  /* Currently sent message is Win32 */
 #define QUEUE_SM_UNICODE   0x0004  /* Currently sent message is Unicode */
 
