@@ -679,7 +679,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     {
         INTERNET_ASYNC_RESULT iar;
 
-        iar.dwResult = (DWORD)lpwhr;
+        iar.dwResult = (DWORD)handle;
         iar.dwError = ERROR_SUCCESS;
 
         SendAsyncCallback(hIC, hHttpSession, dwContext,
@@ -1626,7 +1626,7 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
     {
         INTERNET_ASYNC_RESULT iar;
 
-        iar.dwResult = (DWORD)lpwhs;
+        iar.dwResult = (DWORD)handle;
         iar.dwError = ERROR_SUCCESS;
 
         SendAsyncCallback(hIC, hInternet, dwContext,

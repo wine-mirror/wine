@@ -982,7 +982,7 @@ HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession,
 
 	if (lpwh)
 	{
-            iar.dwResult = (DWORD)lpwh;
+            iar.dwResult = (DWORD)handle;
             iar.dwError = ERROR_SUCCESS;
             hIC->lpfnStatusCB(hFtpSession, lpwfs->hdr.dwContext, INTERNET_STATUS_HANDLE_CREATED,
                 &iar, sizeof(INTERNET_ASYNC_RESULT));
@@ -1582,7 +1582,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
             {
                 INTERNET_ASYNC_RESULT iar;
 
-                iar.dwResult = (DWORD)lpwfs;
+                iar.dwResult = (DWORD)handle;
                 iar.dwError = ERROR_SUCCESS;
 
                 hIC->lpfnStatusCB(hInternet, dwContext, INTERNET_STATUS_HANDLE_CREATED,
