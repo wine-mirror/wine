@@ -453,6 +453,7 @@ static BOOL get_registry_value( HKEY hkey, const char *module, enum loadorder_ty
             {
             case 'n': type = LOADORDER_DLL; break;
             case 'b': type = LOADORDER_BI; break;
+            case 's': break;  /* no longer supported, ignore */
             case 0:   break;  /* end of string */
             default:
                 ERR("Invalid load order module-type %s, ignored\n", debugstr_w(str));
