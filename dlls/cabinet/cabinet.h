@@ -269,7 +269,7 @@ struct cabinet {
   cab_UBYTE flags;                     /* header flags                   */
 };
 
-struct {
+typedef struct {
   struct cab_folder *current;      /* current folder we're extracting from  */
   cab_ULONG offset;                /* uncompressed offset within folder     */
   cab_UBYTE *outpos;               /* (high level) start of data to use up  */
@@ -283,7 +283,7 @@ struct {
     struct QTMstate qtm;
     struct LZXstate lzx;
   } methods;
-} decomp_state;
+} cab_decomp_state;
 
 /* from cabextract.c */
 BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower);

@@ -46,6 +46,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(cabinet);
  */
 cab_UBYTE search_buf[CAB_SEARCH_SIZE];
 
+cab_decomp_state decomp_state;
+
 /* all the file IO is abstracted into these routines:
  * cabinet_(open|close|read|seek|skip|getoffset)
  * file_(open|close|write)
@@ -2770,6 +2772,8 @@ BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower)
 
   /* has the list-mode header been seen before? */
   int viewhdr = 0;
+
+  ZeroMemory(&decomp_state, sizeof(cab_decomp_state));
 
   TRACE("Extract %s\n", debugstr_a(cabname));
 
