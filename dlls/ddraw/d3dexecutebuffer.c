@@ -38,6 +38,7 @@
 #include "mesa_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+WINE_DECLARE_DEBUG_CHANNEL(ddraw_geom);
 
 static void _dump_d3dstatus(LPD3DSTATUS lpStatus) {
 
@@ -111,28 +112,30 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			
 		for (i = 0; i < count; i++) {
                     LPD3DTRIANGLE ci = (LPD3DTRIANGLE) instr;
-		    TRACE("  v1: %d  v2: %d  v3: %d\n",ci->u1.v1, ci->u2.v2, ci->u3.v3);
-		    TRACE("  Flags : ");
+		    TRACE_(ddraw_geom)("  v1: %d  v2: %d  v3: %d\n",ci->u1.v1, ci->u2.v2, ci->u3.v3);
+		    TRACE_(ddraw_geom)("  Flags : ");
 		    if (TRACE_ON(ddraw)) {
 			/* Wireframe */
 			if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)
-	        	    TRACE("EDGEENABLE1 ");
+	        	    TRACE_(ddraw_geom)("EDGEENABLE1 ");
 	    		if (ci->wFlags & D3DTRIFLAG_EDGEENABLE2)
-	        	    TRACE("EDGEENABLE2 ");
+	        	    TRACE_(ddraw_geom)("EDGEENABLE2 ");
 	    		if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)
-	        	    TRACE("EDGEENABLE3 ");
+	        	    TRACE_(ddraw_geom)("EDGEENABLE3 ");
 	    		/* Strips / Fans */
 	    		if (ci->wFlags == D3DTRIFLAG_EVEN)
-	        	    TRACE("EVEN ");
+	        	    TRACE_(ddraw_geom)("EVEN ");
 	    		if (ci->wFlags == D3DTRIFLAG_ODD)
-	        	    TRACE("ODD ");
+	        	    TRACE_(ddraw_geom)("ODD ");
 	    		if (ci->wFlags == D3DTRIFLAG_START)
-	        	    TRACE("START ");
+	        	    TRACE_(ddraw_geom)("START ");
 	    		if ((ci->wFlags > 0) && (ci->wFlags < 30))
-	       		    TRACE("STARTFLAT(%d) ", ci->wFlags);
-	    		TRACE("\n");
+	       		    TRACE_(ddraw_geom)("STARTFLAT(%d) ", ci->wFlags);
+	    		TRACE_(ddraw_geom)("\n");
         	    }
-		    This->indices[i*3]=ci->u1.v1;This->indices[i*3+1]=ci->u2.v2;This->indices[i*3+2]=ci->u3.v3;
+		    This->indices[(i * 3)    ] = ci->u1.v1;
+		    This->indices[(i * 3) + 1] = ci->u2.v2;
+		    This->indices[(i * 3) + 2] = ci->u3.v3;
                     instr += size;
 		}
                 IDirect3DDevice7_DrawIndexedPrimitive(ICOM_INTERFACE(lpDevice,IDirect3DDevice7),
