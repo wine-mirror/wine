@@ -1014,6 +1014,70 @@ static HWND DIALOG_FindMsgDestination( HWND hwndDlg )
 }
 
 /***********************************************************************
+ *              DIALOG_FixOneChildOnChangeFocus
+ *
+ * Callback helper for DIALOG_FixChildrenOnChangeFocus
+ */
+
+static BOOL CALLBACK DIALOG_FixOneChildOnChangeFocus (HWND hwndChild,
+        LPARAM lParam)
+{
+    /* If a default pushbutton then no longer default */
+    if (DLGC_DEFPUSHBUTTON & SendMessageW (hwndChild, WM_GETDLGCODE, 0, 0))
+        SendMessageW (hwndChild, BM_SETSTYLE, BS_PUSHBUTTON, TRUE);
+    return TRUE;
+}
+
+/***********************************************************************
+ *              DIALOG_FixChildrenOnChangeFocus
+ *
+ * Following the change of focus that occurs for example after handling
+ * a WM_KEYDOWN VK_TAB in IsDialogMessage, some tidying of the dialog's
+ * children may be required.
+ */
+static void DIALOG_FixChildrenOnChangeFocus (HWND hwndDlg, HWND hwndNext)
+{
+    INT dlgcode_next = SendMessageW (hwndNext, WM_GETDLGCODE, 0, 0);
+    /* INT dlgcode_dlg  = SendMessageW (hwndDlg, WM_GETDLGCODE, 0, 0); */
+    /* Windows does ask for this.  I don't know why yet */
+
+    EnumChildWindows (hwndDlg, DIALOG_FixOneChildOnChangeFocus, 0);
+
+    /* If the button that is getting the focus WAS flagged as the default
+     * pushbutton then ask the dialog what it thinks the default is and
+     * set that in the default style.
+     */
+    if (dlgcode_next & DLGC_DEFPUSHBUTTON)
+    {
+        DWORD def_id = SendMessageW (hwndDlg, DM_GETDEFID, 0, 0);
+        if (HIWORD(def_id) == DC_HASDEFID)
+        {
+            HWND hwndDef;
+            def_id = LOWORD(def_id);
+            hwndDef = GetDlgItem (hwndDlg, def_id);
+            if (hwndDef)
+            {
+                INT dlgcode_def = SendMessageW (hwndDef, WM_GETDLGCODE, 0, 0);
+                /* I know that if it is a button then it should already be a
+                 * UNDEFPUSHBUTTON, since we have just told the buttons to 
+                 * change style.  But maybe they ignored our request
+                 */
+                if ((dlgcode_def & DLGC_BUTTON) &&
+                        (dlgcode_def &  DLGC_UNDEFPUSHBUTTON))
+                {
+                    SendMessageW (hwndDef, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE);
+                }
+            }
+        }
+    }
+    else
+    {
+        SendMessageW (hwndNext, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE);
+        /* I wonder why it doesn't send a DM_SETDEFID */
+    }
+}
+
+/***********************************************************************
  *		IsDialogMessageW (USER32.@)
  */
 BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
@@ -1038,7 +1102,55 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
         case VK_TAB:
             if (!(dlgCode & DLGC_WANTTAB))
             {
-                SendMessageW( hwndDlg, WM_NEXTDLGCTL, (GetKeyState(VK_SHIFT) & 0x8000), 0 );
+                BOOL fIsDialog = TRUE;
+                WND *pWnd = WIN_GetPtr( hwndDlg );
+
+                if (pWnd && pWnd != WND_OTHER_PROCESS)
+                {
+                    fIsDialog = (pWnd->flags & WIN_ISDIALOG) != 0;
+                    WIN_ReleasePtr(pWnd);
+                }
+
+                /* I am not sure under which circumstances the TAB is handled
+                 * each way.  All I do know is that it does not always simply
+                 * send WM_NEXTDLGCTL.  (Personally I have never yet seen it
+                 * do so but I presume someone has)
+                 */
+                if (fIsDialog)
+                    SendMessageW( hwndDlg, WM_NEXTDLGCTL, (GetKeyState(VK_SHIFT) & 0x8000), 0 );
+                else
+                {
+                    /* It would appear that GetNextDlgTabItem can handle being
+                     * passed hwndDlg rather than NULL but that is undocumented
+                     * so let's do it properly
+                     */
+                    HWND hwndFocus = GetFocus();
+                    HWND hwndNext = GetNextDlgTabItem (hwndDlg,
+                            hwndFocus == hwndDlg ? NULL : hwndFocus,
+                            GetKeyState (VK_SHIFT) & 0x8000);
+                    if (hwndNext)
+                    {
+                        dlgCode = SendMessageW (hwndNext, WM_GETDLGCODE,
+                                msg->wParam, (LPARAM)msg);
+                        if (dlgCode & DLGC_HASSETSEL)
+                        {
+                            INT maxlen = 1 + SendMessageW (hwndNext, WM_GETTEXTLENGTH, 0, 0);
+                            WCHAR *buffer = HeapAlloc (GetProcessHeap(), 0, maxlen * sizeof(WCHAR));
+                            if (buffer)
+                            {
+                                INT length;
+                                SendMessageW (hwndNext, WM_GETTEXT, maxlen, (LPARAM) buffer);
+                                length = strlenW (buffer);
+                                HeapFree (GetProcessHeap(), 0, buffer);
+                                SendMessageW (hwndNext, EM_SETSEL, 0, length);
+                            }
+                        }
+                        SetFocus (hwndNext);
+                        DIALOG_FixChildrenOnChangeFocus (hwndDlg, hwndNext);
+                    }
+                    else
+                        return FALSE;
+                }
                 return TRUE;
             }
             break;
@@ -1064,8 +1176,13 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
         case VK_EXECUTE:
         case VK_RETURN:
             {
-                DWORD dw = SendMessageW( hwndDlg, DM_GETDEFID, 0, 0 );
-                if (HIWORD(dw) == DC_HASDEFID)
+                DWORD dw;
+                if ((GetFocus() == msg->hwnd) &&
+                    (SendMessageW (msg->hwnd, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON))
+                {
+                    SendMessageW (hwndDlg, WM_COMMAND, MAKEWPARAM (GetDlgCtrlID(msg->hwnd),BN_CLICKED), (LPARAM)msg->hwnd); 
+                }
+                else if (DC_HASDEFID == HIWORD(dw = SendMessageW (hwndDlg, DM_GETDEFID, 0, 0)))
                 {
                     SendMessageW( hwndDlg, WM_COMMAND, MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
                                     (LPARAM)GetDlgItem(hwndDlg, LOWORD(dw)));
@@ -1081,6 +1198,9 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
         break;
 
     case WM_CHAR:
+        /* FIXME Under what circumstances does WM_GETDLGCODE get sent?
+         * It does NOT get sent in the test program I have
+         */
         dlgCode = SendMessageW( msg->hwnd, WM_GETDLGCODE, msg->wParam, (LPARAM)msg );
         if (dlgCode & (DLGC_WANTCHARS|DLGC_WANTMESSAGE)) break;
         if (msg->wParam == '\t' && (dlgCode & DLGC_WANTTAB)) break;
@@ -1343,60 +1463,111 @@ BOOL WINAPI MapDialogRect( HWND hwnd, LPRECT rect )
 
 /***********************************************************************
  *		GetNextDlgGroupItem (USER32.@)
+ *
+ * Corrections to MSDN documentation
+ *
+ * (Under Windows 2000 at least, where hwndDlg is not actually a dialog)
+ * 1. hwndCtrl can be hwndDlg in which case it behaves as for NULL
+ * 2. Prev of NULL or hwndDlg fails
  */
 HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
 {
-    HWND hwnd, retvalue;
+    HWND hwnd, hwndNext, retvalue, hwndLastGroup = 0;
+    BOOL fLooped=FALSE;
+    BOOL fSkipping=FALSE;
 
     hwndDlg = WIN_GetFullHandle( hwndDlg );
     hwndCtrl = WIN_GetFullHandle( hwndCtrl );
 
-    if(hwndCtrl)
-    {
-        /* if the hwndCtrl is the child of the control in the hwndDlg,
-	 * then the hwndDlg has to be the parent of the hwndCtrl */
-        if(GetParent(hwndCtrl) != hwndDlg && GetParent(GetParent(hwndCtrl)) == hwndDlg)
-            hwndDlg = GetParent(hwndCtrl);
-    }
+    if (hwndDlg == hwndCtrl) hwndCtrl = NULL;
+    if (!hwndCtrl && fPrevious) return 0;
 
     if (hwndCtrl)
     {
-        /* Make sure hwndCtrl is a top-level child */
-        HWND parent = GetParent( hwndCtrl );
-        while (parent && parent != hwndDlg) parent = GetParent(parent);
-        if (parent != hwndDlg) return 0;
+        if (!IsChild (hwndDlg, hwndCtrl)) return 0;
     }
     else
     {
         /* No ctrl specified -> start from the beginning */
         if (!(hwndCtrl = GetWindow( hwndDlg, GW_CHILD ))) return 0;
-        if (fPrevious) hwndCtrl = GetWindow( hwndCtrl, GW_HWNDLAST );
+        /* MSDN is wrong. fPrevious does not result in the last child */
+
+        /* Maybe that first one is valid.  If so then we don't want to skip it*/
+        if ((GetWindowLongW( hwndCtrl, GWL_STYLE ) & (WS_VISIBLE|WS_DISABLED)) == WS_VISIBLE)
+        {
+            return hwndCtrl;
+        }
     }
 
+    /* Always go forward around the group and list of controls; for the 
+     * previous control keep track; for the next break when you find one
+     */
     retvalue = hwndCtrl;
-    hwnd = GetWindow( hwndCtrl, GW_HWNDNEXT );
-    while (1)
+    hwnd = hwndCtrl;
+    while (hwndNext = GetWindow (hwnd, GW_HWNDNEXT),
+           1)
     {
-        if (!hwnd || (GetWindowLongW( hwnd, GWL_STYLE ) & WS_GROUP))
+        while (!hwndNext)
         {
-            /* Wrap-around to the beginning of the group */
-            HWND tmp;
-
-            hwnd = GetWindow( hwndDlg, GW_CHILD );
-            for (tmp = hwnd; tmp; tmp = GetWindow( tmp, GW_HWNDNEXT ) )
+            /* Climb out until there is a next sibling of the ancestor or we
+             * reach the top (in which case we loop back to the start)
+             */
+            if (hwndDlg == GetParent (hwnd))
             {
-                if (GetWindowLongW( tmp, GWL_STYLE ) & WS_GROUP) hwnd = tmp;
-                if (tmp == hwndCtrl) break;
+                /* Wrap around to the beginning of the list, within the same
+                 * group. (Once only)
+                 */
+                if (fLooped) goto end;
+                fLooped = TRUE;
+                hwndNext = GetWindow (hwndDlg, GW_CHILD);
+            }
+            else
+            {
+                hwnd = GetParent (hwnd);
+                hwndNext = GetWindow (hwnd, GW_HWNDNEXT);
             }
         }
-        if (hwnd == hwndCtrl) break;
-        if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_VISIBLE|WS_DISABLED)) == WS_VISIBLE)
+        hwnd = hwndNext;
+
+        /* Wander down the leading edge of controlparents */
+        while ( (GetWindowLongW (hwnd, GWL_EXSTYLE) & WS_EX_CONTROLPARENT) &&
+                ((GetWindowLongW (hwnd, GWL_STYLE) & (WS_VISIBLE | WS_DISABLED)) == WS_VISIBLE) &&
+                (hwndNext = GetWindow (hwnd, GW_CHILD)))
+            hwnd = hwndNext;
+        /* Question.  If the control is a control parent but either has no
+         * children or is not visible/enabled then if it has a WS_GROUP does
+         * it count?  For that matter does it count anyway?
+         * I believe it doesn't count.
+         */
+
+        if ((GetWindowLongW (hwnd, GWL_STYLE) & WS_GROUP))
+        {
+            hwndLastGroup = hwnd;
+            if (!fSkipping)
+            {
+                /* Look for the beginning of the group */
+                fSkipping = TRUE;
+            }
+        }
+
+        if (hwnd == hwndCtrl)
+        {
+            if (!fSkipping) break;
+            if (hwndLastGroup == hwnd) break;
+            hwnd = hwndLastGroup;
+            fSkipping = FALSE;
+            fLooped = FALSE;
+        }
+
+        if (!fSkipping &&
+            (GetWindowLongW (hwnd, GWL_STYLE) & (WS_VISIBLE|WS_DISABLED)) ==
+             WS_VISIBLE)
         {
             retvalue = hwnd;
-	    if (!fPrevious) break;
-	}
-        hwnd = GetWindow( hwnd, GW_HWNDNEXT );
+            if (!fPrevious) break;
+        }
     }
+end:
     return retvalue;
 }
 
@@ -1404,7 +1575,7 @@ HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
 /***********************************************************************
  *           DIALOG_GetNextTabItem
  *
- * Helper for GetNextDlgTabItem
+ * Recursive helper for GetNextDlgTabItem
  */
 static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
 {
@@ -1425,44 +1596,30 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
         if(!hChildFirst)
         {
             if(GetParent(hwndCtrl) != hwndMain)
+                /* i.e. if we are not at the top level of the recursion */
                 hChildFirst = GetWindow(GetParent(hwndCtrl),wndSearch);
             else
-            {
-                if(fPrevious)
-                    hChildFirst = GetWindow(hwndCtrl,GW_HWNDLAST);
-                else
-                    hChildFirst = GetWindow(hwndCtrl,GW_HWNDFIRST);
-            }
+                hChildFirst = GetWindow(hwndCtrl, fPrevious ? GW_HWNDLAST : GW_HWNDFIRST);
         }
     }
 
     while(hChildFirst)
     {
-        BOOL bCtrl = FALSE;
-        while(hChildFirst)
+        dsStyle = GetWindowLongA(hChildFirst,GWL_STYLE);
+        exStyle = GetWindowLongA(hChildFirst,GWL_EXSTYLE);
+        if( (exStyle & WS_EX_CONTROLPARENT) && (dsStyle & WS_VISIBLE) && !(dsStyle & WS_DISABLED))
         {
-            dsStyle = GetWindowLongA(hChildFirst,GWL_STYLE);
-            exStyle = GetWindowLongA(hChildFirst,GWL_EXSTYLE);
-            if( (dsStyle & DS_CONTROL || exStyle & WS_EX_CONTROLPARENT) && (dsStyle & WS_VISIBLE) && !(dsStyle & WS_DISABLED))
-            {
-                bCtrl=TRUE;
-                break;
-            }
-            else if( (dsStyle & WS_TABSTOP) && (dsStyle & WS_VISIBLE) && !(dsStyle & WS_DISABLED))
-                break;
-            hChildFirst = GetWindow(hChildFirst,wndSearch);
+            HWND retWnd;
+            retWnd = DIALOG_GetNextTabItem(hwndMain,hChildFirst,NULL,fPrevious );
+            if (retWnd) return (retWnd);
         }
-        if(hChildFirst)
+        else if( (dsStyle & WS_TABSTOP) && (dsStyle & WS_VISIBLE) && !(dsStyle & WS_DISABLED))
         {
-            if(bCtrl)
-                retWnd = DIALOG_GetNextTabItem(hwndMain,hChildFirst,NULL,fPrevious );
-            else
-                retWnd = hChildFirst;
+            return (hChildFirst);
         }
-        if(retWnd) break;
         hChildFirst = GetWindow(hChildFirst,wndSearch);
     }
-    if(!retWnd && hwndCtrl)
+    if(hwndCtrl)
     {
         HWND hParent = GetParent(hwndCtrl);
         while(hParent)
@@ -1486,6 +1643,16 @@ HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
 {
     hwndDlg = WIN_GetFullHandle( hwndDlg );
     hwndCtrl = WIN_GetFullHandle( hwndCtrl );
+
+    /* Undocumented but tested under Win2000 and WinME */
+    if (hwndDlg == hwndCtrl) hwndCtrl = NULL;
+
+    /* Contrary to MSDN documentation, tested under Win2000 and WinME
+     * NB GetLastError returns whatever was set before the function was
+     * called.
+     */
+    if (!hwndCtrl && fPrevious) return 0;
+
     return DIALOG_GetNextTabItem(hwndDlg,hwndDlg,hwndCtrl,fPrevious);
 }
 
