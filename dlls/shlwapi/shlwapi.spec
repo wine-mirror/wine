@@ -392,7 +392,7 @@ init SHLWAPI_LibMain
 390 stdcall @(ptr ptr) SHLWAPI_390
 391 stdcall @(ptr ptr ptr ptr ptr ) SHLWAPI_391
 392 stub @
-393 stub @
+393 forward @ user32.CreateDialogIndirectParamW
 394 forward @ user32.CreateDialogIndirectParamA
 395 stub @
 396 stub @
