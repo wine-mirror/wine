@@ -139,6 +139,18 @@ MAKE_FUNCPTR(FcPatternGet);
 
 #undef MAKE_FUNCPTR
 
+#ifndef FT_ENCODING_NONE
+#define FT_ENCODING_NONE ft_encoding_none
+#endif
+#ifndef FT_ENCODING_MS_SYMBOL
+#define FT_ENCODING_MS_SYMBOL ft_encoding_symbol
+#endif
+#ifndef FT_ENCODING_UNICODE
+#define FT_ENCODING_UNICODE ft_encoding_unicode
+#endif
+#ifndef FT_ENCODING_APPLE_ROMAN
+#define FT_ENCODING_APPLE_ROMAN ft_encoding_apple_roman
+#endif
 
 #define GET_BE_WORD(ptr) MAKEWORD( ((BYTE *)(ptr))[1], ((BYTE *)(ptr))[0] )
 
@@ -572,11 +584,11 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
             if(face->fs.fsCsb[0] == 0) { /* let's see if we can find any interesting cmaps */
                 for(i = 0; i < ft_face->num_charmaps; i++) {
                     switch(ft_face->charmaps[i]->encoding) {
-                    case ft_encoding_unicode:
-                    case ft_encoding_apple_roman:
+                    case FT_ENCODING_UNICODE:
+                    case FT_ENCODING_APPLE_ROMAN:
 			face->fs.fsCsb[0] |= 1;
                         break;
-                    case ft_encoding_symbol:
+                    case FT_ENCODING_MS_SYMBOL:
                         face->fs.fsCsb[0] |= 1L << 31;
                         break;
                     default:
@@ -1858,14 +1870,14 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     }
 
     if (ret->charset == SYMBOL_CHARSET && 
-        !pFT_Select_Charmap(ret->ft_face, ft_encoding_symbol)) {
+        !pFT_Select_Charmap(ret->ft_face, FT_ENCODING_MS_SYMBOL)) {
         /* No ops */
     }
-    else if (!pFT_Select_Charmap(ret->ft_face, ft_encoding_unicode)) {
+    else if (!pFT_Select_Charmap(ret->ft_face, FT_ENCODING_UNICODE)) {
         /* No ops */
     }
     else {
-        pFT_Select_Charmap(ret->ft_face, ft_encoding_apple_roman);
+        pFT_Select_Charmap(ret->ft_face, FT_ENCODING_APPLE_ROMAN);
     }
 
     ret->orientation = FT_IS_SCALABLE(ret->ft_face) ? lf.lfOrientation : 0;
