@@ -1932,7 +1932,6 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
 {
     SCROLLINFO info;
     RECT childRect, clientRect;
-    INT  vmin, vmax, hmin, hmax, vpos, hpos;
     HWND *list;
 
     GetClientRect( hwnd, &clientRect );
@@ -1961,26 +1960,27 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
     }
     UnionRect( &childRect, &clientRect, &childRect );
 
-    hmin = childRect.left;
-    hmax = childRect.right - clientRect.right;
-    hpos = clientRect.left - childRect.left;
-    vmin = childRect.top;
-    vmax = childRect.bottom - clientRect.bottom;
-    vpos = clientRect.top - childRect.top;
+    /* set common info values */
+    info.cbSize = sizeof(info);
+    info.fMask = SIF_POS | SIF_RANGE;
 
+    /* set the specific */
     switch( scroll )
     {
+	case SB_BOTH:
 	case SB_HORZ:
-			vpos = hpos; vmin = hmin; vmax = hmax;
+			info.nMin = childRect.left;
+			info.nMax = childRect.right - clientRect.right;
+			info.nPos = clientRect.left - childRect.left;
+			SetScrollInfo(hwnd, scroll, &info, TRUE);
+			if (scroll == SB_HORZ) break;
+			/* fall through */
 	case SB_VERT:
-			info.cbSize = sizeof(info);
-			info.nMax = vmax; info.nMin = vmin; info.nPos = vpos;
-			info.fMask = SIF_POS | SIF_RANGE;
+			info.nMin = childRect.top;
+			info.nMax = childRect.bottom - clientRect.bottom;
+			info.nPos = clientRect.top - childRect.top;
 			SetScrollInfo(hwnd, scroll, &info, TRUE);
 			break;
-	case SB_BOTH:
-			SCROLL_SetNCSbState( hwnd, vmin, vmax, vpos,
-                                             hmin, hmax, hpos);
     }
 }
 
@@ -2249,4 +2249,3 @@ static void MDI_SwapMenuItems(HWND parent, UINT pos1, UINT pos2)
     }
     HeapFree( GetProcessHeap(), 0, list );
 }
-
