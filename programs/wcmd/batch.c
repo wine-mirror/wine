@@ -16,7 +16,7 @@ extern char version_string[];
 extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
-
+extern DWORD errorlevel;
 
 
 /****************************************************************************
@@ -43,7 +43,8 @@ BATCH_CONTEXT *prev_context;
   if (strstr (string, ".bat") == NULL) strcat (string, ".bat");
   h = CreateFile (string, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (h == INVALID_HANDLE_VALUE) {
-    WCMD_output ("File %s not found\n", string);
+    SetLastError (ERROR_FILE_NOT_FOUND);
+    WCMD_print_error ();
     return;
   }
 
@@ -223,7 +224,7 @@ char *p;
   }
 }
 
-/**************************************************************************** 
+/****************************************************************************
  * WCMD_fgets
  *
  * Get one line from a batch file. We can't use the native f* functions because
@@ -244,7 +245,7 @@ char *p;
     if (*s == '\n') bytes = 0;
     else if (*s != '\r') {
       s++;
-    n--;
+      n--;
     }
     *s = '\0';
   } while ((bytes == 1) && (n > 1));

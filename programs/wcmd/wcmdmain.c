@@ -20,10 +20,12 @@ char *inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
 		"TIME", "TYPE", "VERIFY", "VER", "VOL", "EXIT"};
 
+HINSTANCE hinst;
+DWORD errorlevel;
 int echo_mode = 1, verify_mode = 0;
 char nyi[] = "Not Yet Implemented\n\n";
 char newline[] = "\n";
-char version_string[] = "WCMD Version 0.12\n\n";
+char version_string[] = "WCMD Version 0.14\n\n";
 char anykey[] = "Press any key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
@@ -376,6 +378,8 @@ char filetorun[MAX_PATH];
   if (!status) {
     WCMD_print_error ();
   }
+  GetExitCodeProcess (pe.hProcess, &errorlevel);
+  if (errorlevel == STILL_ACTIVE) errorlevel = 0;
 }
 
 /******************************************************************************
@@ -459,30 +463,25 @@ char *p, *q;
 /****************************************************************************
  * WCMD_print_error
  *
- * Print the message for GetLastError - not much use yet as Wine doesn't have
- * the messages available, so we show meaningful messages for the most likely.
+ * Print the message for GetLastError
  */
 
 void WCMD_print_error () {
 LPVOID lpMsgBuf;
 DWORD error_code;
+int status;
 
   error_code = GetLastError ();
-  switch (error_code) {
-    case ERROR_FILE_NOT_FOUND:
-      WCMD_output ("File Not Found\n");
-      break;
-    case ERROR_PATH_NOT_FOUND:
-      WCMD_output ("Path Not Found\n");
-      break;
-    default:
-      FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-    			NULL, error_code,
-			MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),
-			(LPTSTR) &lpMsgBuf, 0, NULL);
-      WCMD_output (lpMsgBuf);
-      LocalFree ((HLOCAL)lpMsgBuf);
+  status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+    			NULL, error_code, 0, (LPTSTR) &lpMsgBuf, 0, NULL);
+  if (!status) {
+    WCMD_output ("FIXME: Cannot display message for error %d, status %d\n",
+			error_code, GetLastError());
+    return;
   }
+  WCMD_output (lpMsgBuf);
+  LocalFree ((HLOCAL)lpMsgBuf);
+  WCMD_output (newline);
   return;
 }
 
@@ -568,7 +567,10 @@ void WCMD_output_asis (char *message) {
 
 
 
-/*	Remove leading spaces from a string. Return a pointer to the first
+/***************************************************************************
+ * WCMD_strtrim_leading_spaces
+ *
+ *	Remove leading spaces from a string. Return a pointer to the first
  *	non-space character. Does not modify the input string
  */
 
@@ -581,7 +583,10 @@ char *ptr;
   return ptr;
 }
 
-/*	Remove trailing spaces from a string. This routine modifies the input
+/*************************************************************************
+ * WCMD_strtrim_trailing_spaces
+ *
+ *	Remove trailing spaces from a string. This routine modifies the input
  *	string by placing a null after the last non-space character
  */
 

@@ -29,6 +29,7 @@ extern char anykey[];
 extern int echo_mode, verify_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
+extern DWORD errorlevel;
 
 
 
@@ -61,7 +62,6 @@ void WCMD_change_tty () {
  *
  * Copy a file or wildcarded set.
  * FIXME: No wildcard support
- * FIXME: Needs output file to be fully specified (can't just enter directory)
  */
 
 void WCMD_copy () {
@@ -71,13 +71,22 @@ WIN32_FIND_DATA fd;
 HANDLE hff;
 BOOL force, status;
 static char *overwrite = "Overwrite file (Y/N)?";
-char string[8], outpath[MAX_PATH];
+char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile;
 
   if ((strchr(param1,'*') != NULL) && (strchr(param1,'%') != NULL)) {
     WCMD_output ("Wildcards not yet supported\n");
     return;
   }
   GetFullPathName (param2, sizeof(outpath), outpath, NULL);
+  hff = FindFirstFile (outpath, &fd);
+  if (hff != INVALID_HANDLE_VALUE) {
+    if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+      GetFullPathName (param1, sizeof(inpath), inpath, &infile);
+      strcat (outpath, "\\");
+      strcat (outpath, infile);
+    }
+    FindClose (hff);
+  }
   force = (strstr (quals, "/Y") != NULL);
   if (!force) {
     hff = FindFirstFile (outpath, &fd);
@@ -236,7 +245,9 @@ int i;
   }
 }
 
-/*
+/*****************************************************************************
+ * WCMD_Execute
+ *
  *	Execute a command after substituting variable text for the supplied parameter
  */
 
@@ -283,10 +294,10 @@ char buffer[2048];
   else {
     for (i=0; i<=WCMD_EXIT; i++) {
       if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-      	  param1, -1, inbuilt[i], -1) == 2) {
-        LoadString (0, i, buffer, sizeof(buffer));
-        WCMD_output (buffer);
-        return;
+	  param1, -1, inbuilt[i], -1) == 2) {
+	LoadString (hinst, i, buffer, sizeof(buffer));
+	WCMD_output (buffer);
+	return;
       }
     }
     WCMD_output ("No help available for %s\n", param1);
@@ -322,7 +333,6 @@ char string[MAX_PATH];
  * WCMD_if
  *
  * Batch file conditional.
- * FIXME: The "errorlevel" version is not supported.
  * FIXME: Much more syntax checking needed!
  */
 
@@ -340,7 +350,7 @@ char condition[MAX_PATH], *command, *s;
     lstrcpy (condition, param1);
   }
   if (!lstrcmpi (condition, "errorlevel")) {
-    WCMD_output (nyi);
+    if (errorlevel >= atoi(WCMD_parameter (p, 1+negate, NULL))) test = 1;
     return;
   }
   else if (!lstrcmpi (condition, "exist")) {
@@ -421,15 +431,9 @@ void WCMD_remove_dir () {
 void WCMD_rename () {
 
 int status;
-static char *dirmsg = "Input file is a directory. Use the MOVE command\n\n";
 
   if ((strchr(param1,'*') != NULL) || (strchr(param1,'%') != NULL)) {
     WCMD_output ("Wildcards not yet supported\n");
-    return;
-  }
-  status = GetFileAttributes (param1);
-  if ((status != -1) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
-    WCMD_output (dirmsg);
     return;
   }
   status = MoveFile (param1, param2);

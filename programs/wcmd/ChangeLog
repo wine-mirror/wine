@@ -1,3 +1,20 @@
+v0.14 - 1 August 2000
+Errorlevel support added
+Most errors reported via FormatMessage()
+COPY command now works correctly if output specifier is a directory.
+
+v0.13 - 30 July 2000
+By Jason Edmeades (jason@the-edmeades.fsnet.co.uk)
+-Enhanced 'if' support
+-Use of PATHEXT env var (NT) - eg. run file with non-normal extension
+  if allowed through pathext
+-Better searching of path for these files
+-Support of .cmd as extension for batch (NT allows this)
+-Support for %* as a batch option
+-Lookup in registry for filetype to see how it should be launched 
+  (HKEY_CLASSES_ROOT, then its name, getting shell->open->command and
+  launching the appropriate program).
+
 v0.12 - 4 July 1999
 FOR and IF commands added.
 MOVE command added, but no wildcard support.

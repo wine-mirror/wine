@@ -29,6 +29,7 @@ extern char version_string[];
 extern char anykey[];
 extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
+extern DWORD errorlevel;
 
 int file_total, dir_total, line_count, page_mode, recurse;
 __int64 byte_total;
@@ -52,7 +53,11 @@ DWORD spc, bps, fc, capacity;
   page_mode = (strstr(quals, "/P") != NULL);
   recurse = (strstr(quals, "/S") != NULL);
   if (param1[0] == '\0') strcpy (param1, ".");
-  GetFullPathName (param1, sizeof(path), path, NULL);
+  status = GetFullPathName (param1, sizeof(path), path, NULL);
+  if (!status) {
+    WCMD_print_error();
+    return;
+  }
   lstrcpyn (drive, path, 3);
   status = WCMD_volume (0, drive);
   if (!status) {
@@ -121,7 +126,8 @@ __int64 byte_count;
   fd = malloc (sizeof(WIN32_FIND_DATA));
   hff = FindFirstFile (search_path, fd);
   if (hff == INVALID_HANDLE_VALUE) {
-    WCMD_output ("File Not Found\n");
+    SetLastError (ERROR_FILE_NOT_FOUND);
+    WCMD_print_error ();
     free (fd);
     return;
   }

@@ -64,11 +64,10 @@ GOTO has no effect when used interactively.\n"
  \
 Syntax:	IF [NOT] EXIST filename command \
 	IF [NOT] string1==string2 command \
+	IF [NOT] ERRORLEVEL number command \
  \
 In the second form of the command, string1 and string2 must be in double \
-quotes. The comparison is not case-sensitive.\
- \
-The form IF [NOT] ERRORLEVEL number is not implemented in Wcmd.\n"
+quotes. The comparison is not case-sensitive.\n"
 
   WCMD_LABEL,  "Help about LABEL\n"
   WCMD_MD,     "Help about MD\n"

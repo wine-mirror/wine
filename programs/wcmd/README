@@ -22,18 +22,18 @@ READONLY setting depends on the Unix file permissions. All other flags are
 always clear. The Wine attributes API calls map to the Unix stat() function
 which cannot handle the other attributes available in DOS.
 - Date/timestamps of files in the DIR listing are shown using the current
-locale. As there is AFAIK no way to set the locale, they will always appear in
-US format.
+locale, which is set using the Unix LANG environment variable. By default the
+US date-time format is used. Set eg "LANG=en_GB" for DD/MM/YY dates and 24-hour
+times.
 - Line editing and command recall doesn't work due to missing functionality in
 Wine.
 - File sizes in the DIR function are all given in 32 bits, though totals and
 free space are computed to 64 bits.
-- DIR/S fails if there is no matching file in the starting directory, ie
-"DIR C:\TEMP\*.c /S" doesn't work if there is no file matching *.c in C:\TEMP
-but one does exist in a lower directory.
+- DIR/S only works if no file specification is given, ie "DIR C:\TEMP /S" works
+but "DIR C:\TEMP\*.C" doesn't work if a matching file exists in a lower
+directory.
 - Copy, rename, move, need the source and destination to be specified fully
 with an absolute or relative path but no wildcards or partial filenames.
-- The IF ERRORLEVEL construct is not implemented.
 - Redirection is implemented as a command line is parsed. This means that ">"
 and "<" symbols cannot appear in command arguments even within quotes.
 - In many cases parsing and syntax checking is less rigorous than DOS. Thus an
