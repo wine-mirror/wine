@@ -723,6 +723,7 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 		glReadBuffer(GL_BACK);
 	    else {
 		ERR("Wrong surface type for locking !\n");
+		glBindTexture(GL_TEXTURE_2D, cur_tex);
 		LEAVE_GL();
 		return DDERR_INVALIDPARAMS;
 	    }

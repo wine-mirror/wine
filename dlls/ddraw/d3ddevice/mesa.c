@@ -1666,6 +1666,8 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
         This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSU - 1] = dwState;
 	This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSV - 1] = dwState;
     }
+
+    ENTER_GL();
     
     switch (d3dTexStageStateType) {
         case D3DTSS_MINFILTER:
@@ -2006,7 +2008,9 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	    FIXME(" Unhandled stage type : %s => %08lx\n", type, dwState);
 	    break;
     }
-   
+
+    LEAVE_GL();
+    
     return DD_OK;
 }
 
@@ -3016,7 +3020,9 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_tex);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, tex_env);
+    LEAVE_GL();
     d3d_dev->matrices_updated(d3d_dev, TEXMAT0_CHANGED);
+    ENTER_GL();
 #if 0
     /* I keep this code here as it's very useful to debug :-) */
     {
