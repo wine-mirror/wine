@@ -1504,7 +1504,9 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
     sDst = X11DRV_LockDIBSection( dcDst, DIB_Status_None, FALSE );
     sSrc = X11DRV_LockDIBSection( dcSrc, DIB_Status_None, FALSE );
 
-    if ((sSrc == DIB_Status_AppMod) && (rop == SRCCOPY)) {
+    if ((sSrc == DIB_Status_AppMod) && (rop == SRCCOPY) &&
+        (dcSrc->bitsPerPixel == dcDst->bitsPerPixel))
+    {
       /* do everything ourselves; map coordinates */
       xSrc = dcSrc->DCOrgX + XLPTODP( dcSrc, xSrc );
       ySrc = dcSrc->DCOrgY + YLPTODP( dcSrc, ySrc );
