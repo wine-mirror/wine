@@ -42,6 +42,8 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "dplobby.h"
 #include "dinput.h"
 
+#include "ddrawi.h"
+
 /* other GUIDs */
 
 #include "vfw.h"
