@@ -273,7 +273,10 @@ static BOOL UPDOWN_GetBuddyInt (UPDOWN_INFO *infoPtr)
         if(newVal < 0) return FALSE;
     } else {
         /* we have a regular window, so will get the text */
-        if (!GetWindowTextW(infoPtr->Buddy, txt, COUNT_OF(txt))) return FALSE;
+        /* note that a zero-length string is a legitimate value for 'txt',
+         * and ought to result in a successful conversion to '0'. */
+        if (GetWindowTextW(infoPtr->Buddy, txt, COUNT_OF(txt)) < 0)
+            return FALSE;
 
         sep = UPDOWN_GetThousandSep();
 

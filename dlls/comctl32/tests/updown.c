@@ -77,7 +77,7 @@ static void test_updown_control (void)
     hWndUpDown = create_updown_control (hWndEdit);
     /* before we set a value, it should be '0' */
     num = SendMessage(hWndUpDown, UDM_GETPOS, 0, 0L);
-    todo_wine { ok(num == 0, "Expected 0 got %d\n", num); }
+    ok(num == 0, "Expected 0 got %d\n", num);
     /* set a value, check it. */
     SendMessage(hWndUpDown, UDM_SETPOS, 0L, MAKELONG( 1, 0));
     num = SendMessage(hWndUpDown, UDM_GETPOS, 0, 0L);
