@@ -1,0 +1,4 @@
+Makefile
+winecfg.exe.dbg.c
+winecfg.exe.spec.c
+winecfg.res

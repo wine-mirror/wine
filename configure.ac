@@ -1543,6 +1543,7 @@ programs/uninstaller/Makefile
 programs/view/Makefile
 programs/wcmd/Makefile
 programs/wineboot/Makefile
+programs/winecfg/Makefile
 programs/wineconsole/Makefile
 programs/winedbg/Makefile
 programs/winefile/Makefile
