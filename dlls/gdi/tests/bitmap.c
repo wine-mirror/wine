@@ -157,8 +157,8 @@ static void test_createdibitmap(void)
 
 static void test_dibsections(void)
 {
-    HDC hdc, hdcmem;
-    HBITMAP hdib, oldbm;
+    HDC hdc, hdcmem, hdcmem2;
+    HBITMAP hdib, oldbm, hdib2, oldbm2;
     char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
     BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
     BYTE *bits;
@@ -167,6 +167,7 @@ static void test_dibsections(void)
     char logpalbuf[sizeof(LOGPALETTE) + 256 * sizeof(PALETTEENTRY)];
     LOGPALETTE *plogpal = (LOGPALETTE*)logpalbuf;
     WORD *index;
+    DWORD *bits32;
     HPALETTE hpal, oldpal;
 
     hdc = GetDC(0);
@@ -234,6 +235,25 @@ static void test_dibsections(void)
        rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue, rgb[0].rgbReserved,
        rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue, rgb[1].rgbReserved);
 
+    /* Bottom and 2nd row from top green, everything else magenta */
+    bits[0] = bits[1] = 0xff;
+    bits[13 * 4] = bits[13*4 + 1] = 0xff;
+
+
+    pbmi->bmiHeader.biBitCount = 32;
+
+    hdib2 = CreateDIBSection(NULL, pbmi, DIB_RGB_COLORS, (void **)&bits32, NULL, 0);
+    ok(hdib2 != NULL, "CreateDIBSection failed\n");
+    hdcmem2 = CreateCompatibleDC(hdc);
+    oldbm2 = SelectObject(hdcmem2, hdib2);
+
+    BitBlt(hdcmem2, 0, 0, 16,16, hdcmem, 0, 0, SRCCOPY);
+
+    ok(bits32[0] == 0xff00, "lower left pixel is %08lx\n", bits32[0]);
+    ok(bits32[17] == 0xff00ff, "bottom but one, left pixel is %08lx\n", bits32[17]);
+
+    SelectObject(hdcmem2, oldbm2);
+    DeleteObject(hdib2);
 
     SelectObject(hdcmem, oldbm);
     DeleteObject(hdib);
