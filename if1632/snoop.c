@@ -260,7 +260,7 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	CS_reg(context) = HIWORD(fun->origfun);
 
 
-	DPRINTF("Call %s.%ld: %s(",dll->name,ordinal,fun->name);
+	DPRINTF("CALL %s.%ld: %s(",dll->name,ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs;
 		if (max>16) max=16;
@@ -292,7 +292,7 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	if (ret->args) {
 		int	i,max;
 
-		DPRINTF("Ret  %s.%ld: %s(",ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);
+		DPRINTF("RET  %s.%ld: %s(",ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);
 		max = ret->dll->funs[ret->ordinal].nrofargs;
 		if (max>16)
 			max=16;
@@ -309,7 +309,7 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	} else
-		DPRINTF("Ret  %s.%ld: %s() retval = %04x:%04x ret=%04x:%04x\n",
+		DPRINTF("RET  %s.%ld: %s() retval = %04x:%04x ret=%04x:%04x\n",
 			ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name,
 			DX_reg(context),AX_reg(context),HIWORD(ret->origreturn),LOWORD(ret->origreturn)
 		);
