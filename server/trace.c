@@ -2268,6 +2268,11 @@ static void dump_get_visible_region_request( const struct get_visible_region_req
 
 static void dump_get_visible_region_reply( const struct get_visible_region_reply *req )
 {
+    fprintf( stderr, " top_win=%p,", req->top_win );
+    fprintf( stderr, " top_org_x=%d,", req->top_org_x );
+    fprintf( stderr, " top_org_y=%d,", req->top_org_y );
+    fprintf( stderr, " win_org_x=%d,", req->win_org_x );
+    fprintf( stderr, " win_org_y=%d,", req->win_org_y );
     fprintf( stderr, " total_size=%d,", req->total_size );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );

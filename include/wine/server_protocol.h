@@ -2675,6 +2675,11 @@ struct get_visible_region_request
 struct get_visible_region_reply
 {
     struct reply_header __header;
+    user_handle_t  top_win;
+    int            top_org_x;
+    int            top_org_y;
+    int            win_org_x;
+    int            win_org_y;
     size_t         total_size;
     /* VARARG(region,rectangles); */
 };
@@ -3872,6 +3877,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 165
+#define SERVER_PROTOCOL_VERSION 166
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

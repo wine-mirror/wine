@@ -86,21 +86,33 @@ static void dump_cache(void)
 
 
 /***********************************************************************
- *		get_server_visible_region
+ *		update_visible_region
+ *
+ * Set the visible region and X11 drawable for the DC associated to
+ * a given window.
  */
-static HRGN get_server_visible_region( HWND hwnd, UINT flags )
+static void update_visible_region( struct dce *dce )
 {
-    RGNDATA *data;
     NTSTATUS status;
-    HRGN ret = 0;
+    HRGN vis_rgn = 0;
+    HWND top = 0;
+    struct x11drv_escape_set_drawable escape;
+    struct x11drv_win_data *data;
+    DWORD flags = dce->flags;
     size_t size = 256;
 
+    /* don't clip siblings if using parent clip region */
+    if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
+
+    /* fetch the visible region from the server */
     do
     {
-        if (!(data = HeapAlloc( GetProcessHeap(), 0, sizeof(*data) + size - 1 ))) return 0;
+        RGNDATA *data = HeapAlloc( GetProcessHeap(), 0, sizeof(*data) + size - 1 );
+        if (!data) return;
+
         SERVER_START_REQ( get_visible_region )
         {
-            req->window  = hwnd;
+            req->window  = dce->hwnd;
             req->flags   = flags;
             wine_server_set_reply( req, data->Buffer, size );
             if (!(status = wine_server_call( req )))
@@ -110,7 +122,13 @@ static HRGN get_server_visible_region( HWND hwnd, UINT flags )
                 data->rdh.iType    = RDH_RECTANGLES;
                 data->rdh.nCount   = reply_size / sizeof(RECT);
                 data->rdh.nRgnSize = reply_size;
-                ret = ExtCreateRegion( NULL, size, data );
+                vis_rgn = ExtCreateRegion( NULL, size, data );
+
+                top = reply->top_win;
+                escape.org.x = reply->win_org_x - reply->top_org_x;
+                escape.org.y = reply->win_org_y - reply->top_org_y;
+                escape.drawable_org.x = reply->top_org_x;
+                escape.drawable_org.y = reply->top_org_y;
             }
             else size = reply->total_size;
         }
@@ -118,119 +136,27 @@ static HRGN get_server_visible_region( HWND hwnd, UINT flags )
         HeapFree( GetProcessHeap(), 0, data );
     } while (status == STATUS_BUFFER_OVERFLOW);
 
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return ret;
-}
+    if (status || !vis_rgn) return;
 
+    if (dce->clip_rgn) CombineRgn( vis_rgn, vis_rgn, dce->clip_rgn,
+                                   (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
-/***********************************************************************
- *           get_top_clipping_window
- *
- * Get the top window to clip against (i.e. the top parent that has
- * an associated X window).
- */
-static HWND get_top_clipping_window( HWND hwnd )
-{
-    HWND ret = GetAncestor( hwnd, GA_ROOT );
-    if (!ret) ret = GetDesktopWindow();
-    return ret;
-}
-
-
-/***********************************************************************
- *		set_drawable
- *
- * Set the drawable, origin and dimensions for the DC associated to
- * a given window.
- */
-static void set_drawable( struct dce *dce, BOOL update_visrgn )
-{
-    HWND top = get_top_clipping_window( dce->hwnd );
-    struct x11drv_escape_set_drawable escape;
-    struct x11drv_win_data *data;
-    DWORD flags = dce->flags;
-
-    escape.mode = IncludeInferiors;
-    /* don't clip siblings if using parent clip region */
-    if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
-
-    if (top != dce->hwnd || !(data = X11DRV_get_win_data( dce->hwnd )))
-    {
-        POINT client_offset;
-
-        if (flags & DCX_WINDOW)
-        {
-            RECT rect;
-            GetWindowRect( dce->hwnd, &rect );
-            escape.org.x = rect.left;
-            escape.org.y = rect.top;
-            MapWindowPoints( 0, top, &escape.org, 1 );
-            escape.drawable_org.x = rect.left - escape.org.x;
-            escape.drawable_org.y = rect.top - escape.org.y;
-        }
-        else
-        {
-            escape.org.x = escape.org.y = 0;
-            escape.drawable_org.x = escape.drawable_org.y = 0;
-            MapWindowPoints( dce->hwnd, top, &escape.org, 1 );
-            MapWindowPoints( top, 0, &escape.drawable_org, 1 );
-        }
-
-        /* now make origins relative to the X window and not the client area */
-        client_offset = X11DRV_get_client_area_offset( top );
-        escape.org.x += client_offset.x;
-        escape.org.y += client_offset.y;
-        escape.drawable_org.x -= client_offset.x;
-        escape.drawable_org.y -= client_offset.y;
-        escape.drawable = X11DRV_get_whole_window( top );
-    }
+    if (top == dce->hwnd && ((data = X11DRV_get_win_data( dce->hwnd )) != NULL) &&
+         IsIconic( dce->hwnd ) && data->icon_window)
+        escape.drawable = data->icon_window;
     else
-    {
-        if (IsIconic( dce->hwnd ))
-        {
-            escape.drawable = data->icon_window ? data->icon_window : data->whole_window;
-            escape.org.x = 0;
-            escape.org.y = 0;
-            escape.drawable_org = escape.org;
-            MapWindowPoints( dce->hwnd, 0, &escape.drawable_org, 1 );
-        }
-        else
-        {
-            escape.drawable = data->whole_window;
-            escape.drawable_org.x = data->whole_rect.left;
-            escape.drawable_org.y = data->whole_rect.top;
-            if (flags & DCX_WINDOW)
-            {
-                escape.org.x = data->window_rect.left - data->whole_rect.left;
-                escape.org.y = data->window_rect.top - data->whole_rect.top;
-            }
-            else
-            {
-                escape.org.x = data->client_rect.left;
-                escape.org.y = data->client_rect.top;
-            }
-        }
-    }
+        escape.drawable = X11DRV_get_whole_window( top );
 
     escape.code = X11DRV_SET_DRAWABLE;
+    escape.mode = IncludeInferiors;
     ExtEscape( dce->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
-    if (update_visrgn)
-    {
-        /* need to recompute the visible region */
-        HRGN visRgn = get_server_visible_region( dce->hwnd, flags );
-
-        if (dce->clip_rgn)
-            CombineRgn( visRgn, visRgn, dce->clip_rgn,
-                        (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-
-        /* map region to DC coordinates */
-        OffsetRgn( visRgn, -(escape.org.x + escape.drawable_org.x),
-                   -(escape.org.y + escape.drawable_org.y) );
-
-        SelectVisRgn16( HDC_16(dce->hdc), HRGN_16(visRgn) );
-        DeleteObject( visRgn );
-    }
+    /* map region to DC coordinates */
+    OffsetRgn( vis_rgn,
+               -(escape.drawable_org.x + escape.org.x),
+               -(escape.drawable_org.y + escape.org.y) );
+    SelectVisRgn16( HDC_16(dce->hdc), HRGN_16(vis_rgn) );
+    DeleteObject( vis_rgn );
 }
 
 
@@ -619,7 +545,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     if (SetHookFlags16( HDC_16(dce->hdc), DCHF_VALIDATEVISRGN ))
         bUpdateVisRgn = TRUE;  /* DC was dirty */
 
-    set_drawable( dce, bUpdateVisRgn );
+    if (bUpdateVisRgn) update_visible_region( dce );
 
     if (!(flags & DCX_NORESETATTRS))
     {
@@ -678,7 +604,7 @@ static BOOL16 CALLBACK dc_hook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam 
          * DC is dirty (usually after SetHookFlags()). This
          * means that we have to recompute the visible region.
          */
-        if (dce->count) set_drawable( dce, TRUE );
+        if (dce->count) update_visible_region( dce );
         else /* non-fatal but shouldn't happen */
             WARN("DC is not in use!\n");
         break;
