@@ -727,9 +727,6 @@
 #
 @ cdecl DCE_InvalidateDCE(long ptr)
 @ cdecl HOOK_CallHooks(long long long long long)
-@ cdecl NC_GetInsideRect(long ptr)
-@ cdecl NC_HandleNCHitTest(long long long)
-@ cdecl NC_HandleSetCursor(long long long)
 @ cdecl USER_Unlock()
 @ cdecl WINPOS_ActivateOtherWindow(long)
 @ cdecl WINPOS_GetMinMaxInfo(long ptr ptr ptr ptr)

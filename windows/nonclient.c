@@ -33,7 +33,6 @@
 #include "controls.h"
 #include "cursoricon.h"
 #include "winpos.h"
-#include "nonclient.h"
 #include "shellapi.h"
 #include "wine/debug.h"
 
@@ -427,7 +426,7 @@ LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
  * but without the borders (if any).
  * The rectangle is in window coordinates (for drawing with GetWindowDC()).
  */
-void NC_GetInsideRect( HWND hwnd, RECT *rect )
+static void NC_GetInsideRect( HWND hwnd, RECT *rect )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 

@@ -37,7 +37,6 @@
 #include "win.h"
 #include "message.h"
 #include "winpos.h"
-#include "nonclient.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);

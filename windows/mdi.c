@@ -94,7 +94,6 @@
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "win.h"
-#include "nonclient.h"
 #include "controls.h"
 #include "message.h"
 #include "user_private.h"

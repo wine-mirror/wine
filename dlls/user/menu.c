@@ -43,7 +43,6 @@
 #include "wine/unicode.h"
 #include "win.h"
 #include "controls.h"
-#include "nonclient.h"
 #include "user_private.h"
 #include "wine/debug.h"
 

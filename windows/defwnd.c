@@ -33,7 +33,6 @@
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"
-#include "nonclient.h"
 #include "winpos.h"
 #include "message.h"
 #include "wine/unicode.h"

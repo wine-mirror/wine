@@ -41,7 +41,6 @@
 #include "win.h"
 #include "winpos.h"
 #include "dce.h"
-#include "nonclient.h"
 
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -1581,16 +1580,19 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
     if ((wParam & 0xfff0) == SC_MOVE)
     {
         /* Move pointer at the center of the caption */
-        RECT rect;
-        NC_GetInsideRect( hwnd, &rect );
+        RECT rect = rectWindow;
+        /* Note: to be exactly centered we should take the different types
+         * of border into account, but it shouldn't make more that a few pixels
+         * of difference so let's not bother with that */
+        rect.top += GetSystemMetrics(SM_CYBORDER);
         if (style & WS_SYSMENU)
             rect.left += GetSystemMetrics(SM_CXSIZE) + 1;
         if (style & WS_MINIMIZEBOX)
             rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
         if (style & WS_MAXIMIZEBOX)
             rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
-        pt.x = rectWindow.left + (rect.right - rect.left) / 2;
-        pt.y = rectWindow.top + rect.top + GetSystemMetrics(SM_CYSIZE)/2;
+        pt.x = (rect.right + rect.left) / 2;
+        pt.y = rect.top + GetSystemMetrics(SM_CYSIZE)/2;
         hittest = HTCAPTION;
         *capturePoint = pt;
     }
@@ -1604,9 +1606,9 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
             switch(msg.message)
             {
             case WM_MOUSEMOVE:
-                hittest = NC_HandleNCHitTest( hwnd, msg.pt );
-                if ((hittest < HTLEFT) || (hittest > HTBOTTOMRIGHT))
-                    hittest = 0;
+                pt = msg.pt;
+                hittest = SendMessageW( hwnd, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ) );
+                if ((hittest < HTLEFT) || (hittest > HTBOTTOMRIGHT)) hittest = 0;
                 break;
 
             case WM_LBUTTONUP:
@@ -1643,7 +1645,7 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
         *capturePoint = pt;
     }
     SetCursorPos( pt.x, pt.y );
-    NC_HandleSetCursor( hwnd, (WPARAM)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
+    SendMessageW( hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
     return hittest;
 }
 
