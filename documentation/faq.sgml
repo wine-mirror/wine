@@ -1,10 +1,5 @@
 <!-- *** Wine FAQ *** -->
   <title>Wine FAQ</title>
-  <para>
-     For technical questions, visit the 
-     <ulink url="http://www.winehq.org/fom-meta/cache/19.html">
-     Wine Troubleshooting Guide</ulink> instead.
-  </para>
 
   <qandaset>
     <qandadiv id="About-this-FAQ"><title>About this FAQ</title>
@@ -543,9 +538,8 @@
           missing device/hardware support).
         </para>
         <para>
-          Linux/x86: WORKS. If it doesn't, you may also want to see the
-          <ulink url="http://www.winehq.org/fom-meta/cache/19.html">Wine
-          Troubleshooting Guide</ulink>.
+          Linux/x86: Works, and as most popular platform for both developers
+	  and users, it is the best supported platform of all.
         </para>
       </answer>
       </qandaentry>
@@ -1254,11 +1248,6 @@ rm -fR \[/path/\]Wine*
 
     <qandadiv id="About-running-Wine">
       <title>About running Wine</title>
-      <para>
-         In case of problems when running Wine, You may also want to see the
-         <ulink url="http://www.winehq.org/fom-meta/cache/19.html">
-         Wine Troubleshooting Guide</ulink>.
-       </para>
       <qandaentry>
       <question id="How-do-I-run-an-MS-Windows-program">
         <para>How do I run an MS Windows program under Wine?</para>
