@@ -16,7 +16,6 @@ C_SRCS = \
 	defwnd.c \
 	dialog.c \
 	driver.c \
-	event.c \
 	focus.c \
 	hook.c \
 	input.c \

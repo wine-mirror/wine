@@ -58,8 +58,6 @@ static BOOL load_driver(void)
         return FALSE;
     }
 
-    GET_USER_FUNC(Synchronize);
-    GET_USER_FUNC(CheckFocus);
     GET_USER_FUNC(UserRepaintDisable);
     GET_USER_FUNC(InitKeyboard);
     GET_USER_FUNC(VkKeyScan);
@@ -71,8 +69,6 @@ static BOOL load_driver(void)
     GET_USER_FUNC(Beep);
     GET_USER_FUNC(GetDIState);
     GET_USER_FUNC(GetDIData);
-    GET_USER_FUNC(GetKeyboardConfig);
-    GET_USER_FUNC(SetKeyboardConfig);
     GET_USER_FUNC(InitMouse);
     GET_USER_FUNC(SetCursor);
     GET_USER_FUNC(MoveCursor);
@@ -90,6 +86,16 @@ static BOOL load_driver(void)
     GET_USER_FUNC(RegisterClipboardFormat);
     GET_USER_FUNC(IsSelectionOwner);
     GET_USER_FUNC(ResetSelectionOwner);
+    GET_USER_FUNC(CreateWindow);
+    GET_USER_FUNC(DestroyWindow);
+    GET_USER_FUNC(GetDC);
+    GET_USER_FUNC(EnableWindow);
+    GET_USER_FUNC(SetFocus);
+    GET_USER_FUNC(SetParent);
+    GET_USER_FUNC(SetWindowPos);
+    GET_USER_FUNC(SetWindowRgn);
+    GET_USER_FUNC(SetWindowIcon);
+    GET_USER_FUNC(SetWindowText);
 
     return TRUE;
 }

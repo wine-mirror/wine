@@ -1726,30 +1726,3 @@ BOOL X11DRV_GetDIData(
 
   return TRUE;
 }
-
-/***********************************************************************
- *		GetKeyboardConfig (X11DRV.@)
- */
-void X11DRV_GetKeyboardConfig(KEYBOARD_CONFIG *cfg) {
-  XKeyboardState   xks;
-
-  /* For the moment, only get the auto-repeat mode */
-  TSXGetKeyboardControl(display, &xks);
-  cfg->auto_repeat = xks.global_auto_repeat;
-}
-
-/***********************************************************************
- *		SetKeyboardConfig (X11DRV.@)
- */
-void X11DRV_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask) {
-  XKeyboardControl xkc;
-  unsigned long X_mask = 0;
-  
-  if (mask & WINE_KEYBOARD_CONFIG_AUTO_REPEAT) {
-    X_mask |= KBAutoRepeatMode;
-    xkc.auto_repeat_mode = cfg->auto_repeat;
-  }
-  if (X_mask)
-    TSXChangeKeyboardControl(display, X_mask, &xkc);
-}
-

@@ -66,45 +66,15 @@ typedef struct tagWND
 } WND;
 
 /* Host attributes */
-
-#define HAK_BITGRAVITY     1
-#define HAK_ACCEPTFOCUS	   2
 #define HAK_ICONICSTATE	   3
-#define HAK_ICONS          4
-
-/* Bit Gravity */
-
-#define BGForget           0
-#define BGNorthWest        1
-#define BGNorth            2
-#define BGNorthEast        3
-#define BGWest             4
-#define BGCenter           5
-#define BGEast             6
-#define BGSouthWest        7
-#define BGSouth            8
-#define BGSouthEast        9
-#define BGStatic           10
 
 typedef struct tagWND_DRIVER
 {
-    void   (*pInitialize)(WND *);
-    void   (*pFinalize)(WND *);
-    BOOL   (*pCreateDesktopWindow)(WND *);
-    BOOL   (*pCreateWindow)(WND *, CREATESTRUCTA *, BOOL);
-    BOOL (*pDestroyWindow)(WND *);
-    WND*   (*pSetParent)(WND *, WND *);
     void   (*pForceWindowRaise)(WND *);
-    void   (*pSetWindowPos)(WND *, const WINDOWPOS *, BOOL);
-    void   (*pSetText)(WND *, LPCWSTR);
-    void   (*pSetFocus)(WND *);
     void   (*pPreSizeMove)(WND *);
     void   (*pPostSizeMove)(WND *);
     void   (*pSurfaceCopy)(WND *, HDC, INT, INT, const RECT *, BOOL);
-    void   (*pSetDrawable)(WND *, HDC, WORD, BOOL);
     BOOL   (*pSetHostAttr)(WND *, INT haKey, INT value);
-    BOOL (*pIsSelfClipping)(WND *);
-    void   (*pSetWindowRgn)(WND *, const HRGN);
 } WND_DRIVER;
 
 extern WND_DRIVER *WND_Driver;

@@ -72,7 +72,8 @@ void DEFWND_SetTextA( WND *wndPtr, LPCSTR text )
     else
         ERR("Not enough memory for window text");
 
-    wndPtr->pDriver->pSetText(wndPtr, wndPtr->text);
+    if (USER_Driver.pSetWindowText)
+        USER_Driver.pSetWindowText(wndPtr->hwndSelf, wndPtr->text);
 }
 
 /***********************************************************************
@@ -94,7 +95,8 @@ void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text )
     else
         ERR("Not enough memory for window text");
 
-    wndPtr->pDriver->pSetText(wndPtr, wndPtr->text);
+    if (USER_Driver.pSetWindowText)
+        USER_Driver.pSetWindowText(wndPtr->hwndSelf, wndPtr->text);
 }
 
 /***********************************************************************
@@ -165,7 +167,7 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM wParam )
 	if( wndPtr->dwStyle & WS_MINIMIZE ) wParam = RDW_VALIDATE;
 	else wParam = RDW_ALLCHILDREN | RDW_VALIDATE;
 
-	PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, wParam, 0 );
+	RedrawWindow( wndPtr->hwndSelf, NULL, 0, wParam );
 	DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
 	wndPtr->dwStyle &= ~WS_VISIBLE;
     }
@@ -623,6 +625,9 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	return 1;
 
     case WM_SETICON:
+        if (USER_Driver.pSetWindowIcon)
+            return USER_Driver.pSetWindowIcon( wndPtr->hwndSelf, lParam, (wParam != ICON_SMALL) );
+        else
 	{
 		int index = (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM;
 		HICON hOldIcon = GetClassLongW(wndPtr->hwndSelf, index); 
@@ -631,10 +636,6 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 		SetWindowPos(wndPtr->hwndSelf, 0, 0, 0, 0, 0, SWP_FRAMECHANGED
 			 | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
 			 | SWP_NOZORDER);
-
-		if( wndPtr->flags & WIN_NATIVE )
-		    wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_ICONS, 0);
-
 		return hOldIcon;
 	}
 

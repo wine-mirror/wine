@@ -357,242 +357,6 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 
 
 /***********************************************************************
- *           DCE_GetVisRect
- *
- * Calculate the visible rectangle of a window (i.e. the client or
- * window area clipped by the client area of all ancestors) in the
- * corresponding coordinates. Return FALSE if the visible region is empty.
- */
-static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
-{
-    *lprect = clientArea ? wndPtr->rectClient : wndPtr->rectWindow;
-
-    if (wndPtr->dwStyle & WS_VISIBLE)
-    {
-	INT xoffset = lprect->left;
-	INT yoffset = lprect->top;
-
-	while( !(wndPtr->flags & WIN_NATIVE) &&
-	   ( wndPtr = WIN_LockWndPtr(wndPtr->parent)) )
-	{
-	    if ( (wndPtr->dwStyle & (WS_ICONIC | WS_VISIBLE)) != WS_VISIBLE )
-            {
-                WIN_ReleaseWndPtr(wndPtr);
-		goto fail;
-            }
-
-	    xoffset += wndPtr->rectClient.left;
-	    yoffset += wndPtr->rectClient.top;
-	    OffsetRect( lprect, wndPtr->rectClient.left,
-				  wndPtr->rectClient.top );
-
-	    if( (wndPtr->rectClient.left >= wndPtr->rectClient.right) ||
-		(wndPtr->rectClient.top >= wndPtr->rectClient.bottom) ||
-		(lprect->left >= wndPtr->rectClient.right) ||
-		(lprect->right <= wndPtr->rectClient.left) ||
-		(lprect->top >= wndPtr->rectClient.bottom) ||
-		(lprect->bottom <= wndPtr->rectClient.top) )
-            {
-                WIN_ReleaseWndPtr(wndPtr);
-		goto fail;
-            }
-
-	    lprect->left = max( lprect->left, wndPtr->rectClient.left );
-	    lprect->right = min( lprect->right, wndPtr->rectClient.right );
-	    lprect->top = max( lprect->top, wndPtr->rectClient.top );
-	    lprect->bottom = min( lprect->bottom, wndPtr->rectClient.bottom );
-
-            WIN_ReleaseWndPtr(wndPtr);
-	}
-	OffsetRect( lprect, -xoffset, -yoffset );
-	return TRUE;
-    }
-
-fail:
-    SetRectEmpty( lprect );
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           DCE_AddClipRects
- *
- * Go through the linked list of windows from pWndStart to pWndEnd,
- * adding to the clip region the intersection of the target rectangle
- * with an offset window rectangle.
- */
-static BOOL DCE_AddClipRects( WND *pWndStart, WND *pWndEnd, 
-			        HRGN hrgnClip, LPRECT lpRect, int x, int y )
-{
-    RECT rect;
-
-    if( pWndStart->pDriver->pIsSelfClipping( pWndStart ) )
-        return TRUE; /* The driver itself will do the clipping */
-
-    for (WIN_LockWndPtr(pWndStart); (pWndStart && (pWndStart != pWndEnd)); WIN_UpdateWndPtr(&pWndStart,pWndStart->next))
-    {
-        if( !(pWndStart->dwStyle & WS_VISIBLE) ) continue;
-	    
-	rect.left = pWndStart->rectWindow.left + x;
-	rect.top = pWndStart->rectWindow.top + y;
-	rect.right = pWndStart->rectWindow.right + x;
-	rect.bottom = pWndStart->rectWindow.bottom + y;
-
-	if( IntersectRect( &rect, &rect, lpRect ))
-        {
-	    if(!REGION_UnionRectWithRgn( hrgnClip, &rect )) break;
-        }
-    }
-    WIN_ReleaseWndPtr(pWndStart);
-    return (pWndStart == pWndEnd);
-}
-
-
-/***********************************************************************
- *           DCE_GetVisRgn
- *
- * Return the visible region of a window, i.e. the client or window area
- * clipped by the client area of all ancestors, and then optionally
- * by siblings and children.
- */
-HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
-{
-    HRGN hrgnVis = 0;
-    RECT rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    WND *childWnd = WIN_FindWndPtr( hwndChild );
-
-    /* Get visible rectangle and create a region with it. */
-
-    if (wndPtr && DCE_GetVisRect(wndPtr, !(flags & DCX_WINDOW), &rect))
-    {
-	if((hrgnVis = CreateRectRgnIndirect( &rect )))
-        {
-	    HRGN hrgnClip = CreateRectRgn( 0, 0, 0, 0 );
-	    INT xoffset, yoffset;
-
-	    if( hrgnClip )
-	    {
-		/* Compute obscured region for the visible rectangle by 
-		 * clipping children, siblings, and ancestors. Note that
-		 * DCE_GetVisRect() returns a rectangle either in client
-		 * or in window coordinates (for DCX_WINDOW request). */
-
-		if( (flags & DCX_CLIPCHILDREN) && wndPtr->child )
-		{
-		    if( flags & DCX_WINDOW )
-		    {
-			/* adjust offsets since child window rectangles are 
-			 * in client coordinates */
-
-			xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
-			yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-		    }
-		    else 
-			xoffset = yoffset = 0;
-
-		    DCE_AddClipRects( wndPtr->child, NULL, hrgnClip, 
-				      &rect, xoffset, yoffset );
-		}
-
-		/* We may need to clip children of child window, if a window with PARENTDC
-		 * class style and CLIPCHILDREN window style (like in Free Agent 16
-		 * preference dialogs) gets here, we take the region for the parent window
-		 * but apparently still need to clip the children of the child window... */
-
-		if( (cflags & DCX_CLIPCHILDREN) && childWnd && childWnd->child )
-		{
-		    if( flags & DCX_WINDOW )
-		    {
-			/* adjust offsets since child window rectangles are 
-			 * in client coordinates */
-
-			xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
-			yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-		    }
-		    else 
-			xoffset = yoffset = 0;
-
-		    /* client coordinates of child window */
-		    xoffset += childWnd->rectClient.left;
-		    yoffset += childWnd->rectClient.top;
-
-		    DCE_AddClipRects( childWnd->child, NULL, hrgnClip, 
-				      &rect, xoffset, yoffset );
-		}
-
-		/* sibling window rectangles are in client 
-		 * coordinates of the parent window */
-
-		if (flags & DCX_WINDOW)
-		{
-		    xoffset = -wndPtr->rectWindow.left;
-		    yoffset = -wndPtr->rectWindow.top;
-		}
-		else
-		{
-		    xoffset = -wndPtr->rectClient.left;
-		    yoffset = -wndPtr->rectClient.top;
-		}
-
-		if (flags & DCX_CLIPSIBLINGS && wndPtr->parent )
-		    DCE_AddClipRects( wndPtr->parent->child,
-				      wndPtr, hrgnClip, &rect, xoffset, yoffset );
-
-		/* Clip siblings of all ancestors that have the
-                 * WS_CLIPSIBLINGS style
-		 */
-
-		while (wndPtr->parent)
-		{
-		    WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
-		    xoffset -= wndPtr->rectClient.left;
-		    yoffset -= wndPtr->rectClient.top;
-		    if(wndPtr->dwStyle & WS_CLIPSIBLINGS && wndPtr->parent)
-		    {
-			DCE_AddClipRects( wndPtr->parent->child, wndPtr,
-					  hrgnClip, &rect, xoffset, yoffset );
-		    }
-		}
-
-		/* Now once we've got a jumbo clip region we have
-		 * to substract it from the visible rectangle.
-	         */
-
-		CombineRgn( hrgnVis, hrgnVis, hrgnClip, RGN_DIFF );
-		DeleteObject( hrgnClip );
-	    }
-	    else
-	    {
-		DeleteObject( hrgnVis );
-		hrgnVis = 0;
-	    }
-	}
-    }
-    else
-	hrgnVis = CreateRectRgn(0, 0, 0, 0); /* empty */
-    WIN_ReleaseWndPtr(wndPtr);
-    WIN_ReleaseWndPtr(childWnd);
-    return hrgnVis;
-}
-
-/***********************************************************************
- *           DCE_OffsetVisRgn
- *
- * Change region from DC-origin relative coordinates to screen coords.
- */
-
-static void DCE_OffsetVisRgn( HDC hDC, HRGN hVisRgn )
-{
-    DC *dc;
-    if (!(dc = DC_GetDCPtr( hDC ))) return;
-
-    OffsetRgn( hVisRgn, dc->DCOrgX, dc->DCOrgY );
-
-    GDI_ReleaseObj( hDC );
-}
-
-/***********************************************************************
  *           DCE_ExcludeRgn
  * 
  *  Translate given region from the wnd client to the DC coordinates
@@ -640,10 +404,8 @@ HDC16 WINAPI GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
  */
 HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
-    HRGN 	hrgnVisible = 0;
     HDC 	hdc = 0;
     DCE * 	dce;
-    DC * 	dc;
     WND * 	wndPtr;
     DWORD 	dcxFlags = 0;
     BOOL	bUpdateVisRgn = TRUE;
@@ -779,90 +541,21 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         goto END;
     }
 
+    if (!(flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN))) hrgnClip = 0;
     dce->hwndCurrent = hwnd;
-    dce->hClipRgn = 0;
-    dce->DCXflags = dcxFlags | (flags & DCX_WINDOWPAINT) | DCX_DCEBUSY;
+    dce->hClipRgn = hrgnClip;
+    dce->DCXflags = flags & (DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
+                             DCX_CACHE | DCX_WINDOW | DCX_WINDOWPAINT |
+                             DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_EXCLUDERGN);
+    dce->DCXflags |= DCX_DCEBUSY;
+    dce->DCXflags &= ~DCX_DCEDIRTY;
     hdc = dce->hDC;
-    
-    if (!(dc = DC_GetDCPtr( hdc )))
-    {
-        hdc = 0;
-        goto END;
-    }
-    bUpdateVisRgn = bUpdateVisRgn || (dc->flags & DC_DIRTY);
 
-    /* recompute visible region */
-    wndPtr->pDriver->pSetDrawable( wndPtr, hdc, flags, bUpdateClipOrigin );
-    dc->flags &= ~DC_DIRTY;
-    GDI_ReleaseObj( hdc );
+    if (bUpdateVisRgn) SetHookFlags16( hdc, DCHF_INVALIDATEVISRGN ); /* force update */
 
-    if( bUpdateVisRgn )
-    {
-	TRACE("updating visrgn for %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
+    if (!USER_Driver.pGetDC( hwnd, hdc, hrgnClip, flags )) hdc = 0;
 
-	if (flags & DCX_PARENTCLIP)
-        {
-            WND *parentPtr = WIN_LockWndPtr(wndPtr->parent);
-
-	    if( wndPtr->dwStyle & WS_VISIBLE && !(parentPtr->dwStyle & WS_MINIMIZE) )
-	    {
-		if( parentPtr->dwStyle & WS_CLIPSIBLINGS ) 
-		    dcxFlags = DCX_CLIPSIBLINGS | (flags & ~(DCX_CLIPCHILDREN | DCX_WINDOW));
-		else
-		    dcxFlags = flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW);
-
-                hrgnVisible = DCE_GetVisRgn( parentPtr->hwndSelf, dcxFlags,
-                                             wndPtr->hwndSelf, flags );
-		if( flags & DCX_WINDOW )
-		    OffsetRgn( hrgnVisible, -wndPtr->rectWindow.left,
-					      -wndPtr->rectWindow.top );
-		else
-		    OffsetRgn( hrgnVisible, -wndPtr->rectClient.left,
-					      -wndPtr->rectClient.top );
-                DCE_OffsetVisRgn( hdc, hrgnVisible );
-	    }
-	    else
-		hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
-            WIN_ReleaseWndPtr(parentPtr);
-        }
-        else
-	    if ((hwnd == GetDesktopWindow()) && !USER_Driver.pIsSingleWindow())
-                 hrgnVisible = CreateRectRgn( 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) );
-	    else 
-            {
-                hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );
-                DCE_OffsetVisRgn( hdc, hrgnVisible );
-            }
-
-	dce->DCXflags &= ~DCX_DCEDIRTY;
-	SelectVisRgn16( hdc, hrgnVisible );
-    }
-    else
-	TRACE("no visrgn update %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
-
-    /* apply additional region operation (if any) */
-
-    if( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) )
-    {
-	if( !hrgnVisible ) hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
-
-	dce->DCXflags |= flags & (DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_EXCLUDERGN);
-	dce->hClipRgn = hrgnClip;
-
-	TRACE("\tsaved VisRgn, clipRgn = %04x\n", hrgnClip);
-
-	SaveVisRgn16( hdc );
-        CombineRgn( hrgnVisible, hrgnClip, 0, RGN_COPY );
-        DCE_OffsetVisRgn( hdc, hrgnVisible );
-        CombineRgn( hrgnVisible, InquireVisRgn16( hdc ), hrgnVisible,
-                      (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-	SelectVisRgn16( hdc, hrgnVisible );
-    }
-
-    if( hrgnVisible ) DeleteObject( hrgnVisible );
-
-    TRACE("(%04x,%04x,0x%lx): returning %04x\n", 
-	       hwnd, hrgnClip, flags, hdc);
+    TRACE("(%04x,%04x,0x%lx): returning %04x\n", hwnd, hrgnClip, flags, hdc);
 END:
     WIN_ReleaseWndPtr(wndPtr);
     return hdc;
@@ -960,9 +653,7 @@ INT WINAPI ReleaseDC(
 BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 {
     BOOL retv = TRUE;
-    HRGN hVisRgn;
     DCE *dce = (DCE *)data;
-    WND *wndPtr;
 
     TRACE("hDC = %04x, %i\n", hDC, code);
 
@@ -975,43 +666,12 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
     switch( code )
     {
       case DCHC_INVALIDVISRGN:
-
 	   /* GDI code calls this when it detects that the
 	    * DC is dirty (usually after SetHookFlags()). This
 	    * means that we have to recompute the visible region.
 	    */
-
            if( dce->DCXflags & DCX_DCEBUSY )
- 	   {
-
-               /* Update stale DC in DCX */
-               wndPtr = WIN_FindWndPtr( dce->hwndCurrent);
-	       if (wndPtr) wndPtr->pDriver->pSetDrawable( wndPtr, dce->hDC, dce->DCXflags, TRUE);
-
-	       SetHookFlags16(hDC, DCHF_VALIDATEVISRGN);
-	       hVisRgn = DCE_GetVisRgn(dce->hwndCurrent, dce->DCXflags, 0, 0);
-
-	       TRACE("\tapplying saved clipRgn\n");
-  
-	       /* clip this region with saved clipping region */
-
-               if ( (dce->DCXflags & DCX_INTERSECTRGN && dce->hClipRgn != 1) ||
-                  (  dce->DCXflags & DCX_EXCLUDERGN && dce->hClipRgn) )
-               {
-
-                    if( (!dce->hClipRgn && dce->DCXflags & DCX_INTERSECTRGN) ||
-                         (dce->hClipRgn == 1 && dce->DCXflags & DCX_EXCLUDERGN) )            
-                         SetRectRgn(hVisRgn,0,0,0,0);
-                    else
-                         CombineRgn(hVisRgn, hVisRgn, dce->hClipRgn, 
-                                      (dce->DCXflags & DCX_EXCLUDERGN)? RGN_DIFF:RGN_AND);
-	       }
-	       dce->DCXflags &= ~DCX_DCEDIRTY;
-               DCE_OffsetVisRgn( hDC, hVisRgn );
-	       SelectVisRgn16(hDC, hVisRgn);
-	       DeleteObject( hVisRgn );
-              WIN_ReleaseWndPtr( wndPtr );  /* Release WIN_FindWndPtr lock */
-	   }
+               USER_Driver.pGetDC( dce->hwndCurrent, dce->hDC, dce->hClipRgn, dce->DCXflags );
            else /* non-fatal but shouldn't happen */
 	     WARN("DC is not in use!\n");
 	   break;

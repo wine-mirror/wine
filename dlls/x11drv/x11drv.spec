@@ -11,8 +11,6 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 
 # USER driver
 
-@ cdecl Synchronize() X11DRV_Synchronize
-@ cdecl CheckFocus() X11DRV_CheckFocus
 @ cdecl UserRepaintDisable(long) X11DRV_UserRepaintDisable
 @ cdecl InitKeyboard() X11DRV_InitKeyboard
 @ cdecl VkKeyScan(long) X11DRV_VkKeyScan
@@ -24,8 +22,6 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl Beep() X11DRV_Beep
 @ cdecl GetDIState(long ptr) X11DRV_GetDIState
 @ cdecl GetDIData(ptr long ptr ptr long) X11DRV_GetDIData
-@ cdecl GetKeyboardConfig(ptr) X11DRV_GetKeyboardConfig
-@ cdecl SetKeyboardConfig(ptr long) X11DRV_SetKeyboardConfig
 @ cdecl InitMouse(ptr) X11DRV_InitMouse
 @ cdecl SetCursor(ptr) X11DRV_SetCursor
 @ cdecl MoveCursor(long long) X11DRV_MoveCursor
@@ -34,6 +30,16 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl GetScreenSaveTimeout() X11DRV_GetScreenSaveTimeout
 @ cdecl SetScreenSaveTimeout(long) X11DRV_SetScreenSaveTimeout
 @ cdecl LoadOEMResource(long long) X11DRV_LoadOEMResource
+@ cdecl CreateWindow(long) X11DRV_CreateWindow
+@ cdecl DestroyWindow(long) X11DRV_DestroyWindow
+@ cdecl GetDC(long long long long) X11DRV_GetDC
+@ cdecl EnableWindow(long long) X11DRV_EnableWindow
+@ cdecl SetFocus(long) X11DRV_SetFocus
+@ cdecl SetParent(long long) X11DRV_SetParent
+@ cdecl SetWindowPos(ptr) X11DRV_SetWindowPos
+@ cdecl SetWindowRgn(long long) X11DRV_SetWindowRgn
+@ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
+@ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
 @ cdecl IsSingleWindow() X11DRV_IsSingleWindow
 @ cdecl AcquireClipboard() X11DRV_AcquireClipboard
 @ cdecl ReleaseClipboard() X11DRV_ReleaseClipboard

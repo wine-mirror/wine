@@ -12,21 +12,6 @@
 DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /***********************************************************************
- *		TTYDRV_Synchronize
- */
-void TTYDRV_Synchronize( void )
-{
-}
-
-/***********************************************************************
- *		TTYDRV_CheckFocus
- */
-BOOL TTYDRV_CheckFocus(void)
-{
-  return TRUE;
-}
-
-/***********************************************************************
  *		TTYDRV_UserRepaintDisable
  */
 void TTYDRV_UserRepaintDisable( BOOL bDisable )
@@ -115,20 +100,6 @@ BOOL TTYDRV_GetDIData( BYTE *keystate, DWORD dodsize, LPDIDEVICEOBJECTDATA dod,
                        LPDWORD entries, DWORD flags )
 {
   return TRUE;
-}
-
-/***********************************************************************
- *		TTYDRV_GetKeyboardConfig
- */
-void TTYDRV_GetKeyboardConfig(KEYBOARD_CONFIG *cfg)
-{
-}
-
-/***********************************************************************
- *		TTYDRV_SetKeyboardConfig
- */
-extern void TTYDRV_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask)
-{
 }
 
 /***********************************************************************

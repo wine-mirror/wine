@@ -336,8 +336,9 @@ rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
 	}
 
 	if( flags & (SW_INVALIDATE | SW_ERASE) )
-	    PAINT_RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE |
-		((flags & SW_ERASE) ? RDW_ERASENOW : 0) | ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ), 0 );
+	    RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE |
+                          ((flags & SW_ERASE) ? RDW_ERASENOW : 0) |
+                          ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ) );
 
 	if( bCaret )
 	{

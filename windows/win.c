@@ -455,8 +455,6 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     TIMER_RemoveWindowTimers( wndPtr->hwndSelf );
     PROPERTY_RemoveWindowProps( wndPtr );
 
-    wndPtr->dwMagic = 0;  /* Mark it as invalid */
-
     /* toss stale messages from the queue */
 
     if( wndPtr->hmemTaskQ )
@@ -494,15 +492,14 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 	DestroyMenu( wndPtr->hSysMenu );
 	wndPtr->hSysMenu = 0;
     }
-    wndPtr->pDriver->pDestroyWindow( wndPtr );
+    USER_Driver.pDestroyWindow( wndPtr->hwndSelf );
     DCE_FreeWindowDCE( wndPtr );    /* Always do this to catch orphaned DCs */ 
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
     CLASS_RemoveWindow( wndPtr->class );
     wndPtr->class = NULL;
+    wndPtr->dwMagic = 0;  /* Mark it as invalid */
 
     WIN_UpdateWndPtr(&pWnd,wndPtr->next);
-
-    wndPtr->pDriver->pFinalize(wndPtr);
 
     return pWnd;
 }
@@ -590,8 +587,6 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
 
     pWndDesktop->pDriver = WND_Driver;
-    pWndDesktop->pDriver->pInitialize(pWndDesktop);
-
     pWndDesktop->next              = NULL;
     pWndDesktop->child             = NULL;
     pWndDesktop->parent            = NULL;
@@ -626,7 +621,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->cbWndExtra        = wndExtra;
     pWndDesktop->irefCount         = 0;
 
-    if(!pWndDesktop->pDriver->pCreateDesktopWindow(pWndDesktop)) return FALSE;
+    if (!USER_Driver.pCreateWindow( hwndDesktop )) return FALSE;
 
     SendMessageW( hwndDesktop, WM_NCCREATE, 0, 0 );
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
@@ -789,7 +784,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     
 
     wndPtr->pDriver = wndPtr->parent->pDriver;
-    wndPtr->pDriver->pInitialize(wndPtr);
 
     wndPtr->class          = classPtr;
     wndPtr->winproc        = winproc;
@@ -835,7 +829,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         if (ret)
 	{
 	    TRACE("CBT-hook returned 0\n");
-	    wndPtr->pDriver->pFinalize(wndPtr);
 	    USER_HEAP_FREE( hwnd );
             CLASS_RemoveWindow( classPtr );
             retvalue =  0;
@@ -889,7 +882,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->rectWindow.bottom = cs->y + cs->cy;
     wndPtr->rectClient        = wndPtr->rectWindow;
 
-    if(!wndPtr->pDriver->pCreateWindow(wndPtr, cs, type == WIN_PROC_32W))
+    if (!USER_Driver.pCreateWindow(wndPtr->hwndSelf))
     {
         retvalue = FALSE;
         goto end;
@@ -1374,9 +1367,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     if (wndPtr->dwStyle & WS_VISIBLE)
     {
-        SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_HIDEWINDOW |
-		        SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|
-		        ((QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))?SWP_DEFERERASE:0) );
+        ShowWindow( hwnd, SW_HIDE );
         if (!IsWindow(hwnd))
         {
             retvalue = TRUE;
@@ -1413,8 +1404,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
         else break;
       }
 
-      if( !Options.managed || EVENT_CheckFocus() )
-          WINPOS_ActivateOtherWindow(wndPtr);
+      WINPOS_ActivateOtherWindow(wndPtr);
 
       if( wndPtr->owner &&
 	  wndPtr->owner->hwndLastActive == wndPtr->hwndSelf )
@@ -1725,45 +1715,34 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
     WND *wndPtr;
     BOOL retvalue;
 
-    TRACE("EnableWindow32: ( %x, %d )\n", hwnd, enable);
-   
+    TRACE("( %x, %d )\n", hwnd, enable);
+
+    if (USER_Driver.pEnableWindow)
+        return USER_Driver.pEnableWindow( hwnd, enable );
+
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+
+    retvalue = ((wndPtr->dwStyle & WS_DISABLED) != 0);
+
     if (enable && (wndPtr->dwStyle & WS_DISABLED))
     {
-	  /* Enable window */
-	wndPtr->dwStyle &= ~WS_DISABLED;
-
-	if( wndPtr->flags & WIN_NATIVE )
-	    wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ACCEPTFOCUS, TRUE );
-
-	SendMessageA( hwnd, WM_ENABLE, TRUE, 0 );
-        retvalue = TRUE;
-        goto end;
+        wndPtr->dwStyle &= ~WS_DISABLED; /* Enable window */
+        SendMessageA( hwnd, WM_ENABLE, TRUE, 0 );
     }
     else if (!enable && !(wndPtr->dwStyle & WS_DISABLED))
     {
-	SendMessageA( wndPtr->hwndSelf, WM_CANCELMODE, 0, 0);
+        SendMessageA( wndPtr->hwndSelf, WM_CANCELMODE, 0, 0);
 
-	  /* Disable window */
-	wndPtr->dwStyle |= WS_DISABLED;
+        wndPtr->dwStyle |= WS_DISABLED; /* Disable window */
 
-	if( wndPtr->flags & WIN_NATIVE )
-            wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ACCEPTFOCUS, FALSE );
+        if (hwnd == GetFocus())
+            SetFocus( 0 );  /* A disabled window can't have the focus */
 
-	if (hwnd == GetFocus())
-        {
-	    SetFocus( 0 );  /* A disabled window can't have the focus */
-        }
-	if (hwnd == GetCapture())
-        {
-	    ReleaseCapture();  /* A disabled window can't capture the mouse */
-        }
-	SendMessageA( hwnd, WM_ENABLE, FALSE, 0 );
-        retvalue = FALSE;
-        goto end;
+        if (hwnd == GetCapture())
+            ReleaseCapture();  /* A disabled window can't capture the mouse */
+
+        SendMessageA( hwnd, WM_ENABLE, FALSE, 0 );
     }
-    retvalue = ((wndPtr->dwStyle & WS_DISABLED) != 0);
-end:
     WIN_ReleaseWndPtr(wndPtr);
     return retvalue;
 }
@@ -2392,47 +2371,71 @@ HWND16 WINAPI SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
 /*****************************************************************
  *		SetParent (USER32.@)
  */
-HWND WINAPI SetParent( HWND hwndChild, HWND hwndNewParent )
+HWND WINAPI SetParent( HWND hwnd, HWND parent )
 {
-  WND *wndPtr;
-  DWORD dwStyle;
-  WND *pWndNewParent;
-  WND *pWndOldParent;
-  HWND retvalue;
+    WND *wndPtr;
+    WND *pWndParent;
+    DWORD dwStyle;
+    HWND retvalue;
 
+    if (hwnd == GetDesktopWindow()) /* sanity check */
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
 
-  if(!(wndPtr = WIN_FindWndPtr(hwndChild))) return 0;
+    if (USER_Driver.pSetParent)
+        return USER_Driver.pSetParent( hwnd, parent );
 
-  dwStyle = wndPtr->dwStyle;
+    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
 
-  pWndNewParent = hwndNewParent ? WIN_FindWndPtr(hwndNewParent)
-                                : WIN_LockWndPtr(pWndDesktop);
+    dwStyle = wndPtr->dwStyle;
 
-  /* Windows hides the window first, then shows it again
-   * including the WM_SHOWWINDOW messages and all */
-  if (dwStyle & WS_VISIBLE)
-      ShowWindow( hwndChild, SW_HIDE );
+    pWndParent = parent ? WIN_FindWndPtr(parent) : WIN_GetDesktop();
+    if (!pWndParent)
+    {
+        WIN_ReleaseWndPtr( wndPtr );
+        return 0;
+    }
 
-  pWndOldParent = WIN_LockWndPtr((*wndPtr->pDriver->pSetParent)(wndPtr, pWndNewParent));
+    /* Windows hides the window first, then shows it again
+     * including the WM_SHOWWINDOW messages and all */
+    if (dwStyle & WS_VISIBLE) ShowWindow( hwnd, SW_HIDE );
 
-  /* SetParent additionally needs to make hwndChild the topmost window
-     in the x-order and send the expected WM_WINDOWPOSCHANGING and
-     WM_WINDOWPOSCHANGED notification messages. 
-  */
-  SetWindowPos( hwndChild, HWND_TOPMOST, 0, 0, 0, 0,
-      SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
-  /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
-   * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
+    retvalue = wndPtr->parent->hwndSelf;  /* old parent */
+    if (pWndParent != wndPtr->parent)
+    {
+        WIN_UnlinkWindow(wndPtr->hwndSelf);
+        wndPtr->parent = pWndParent;
 
-  retvalue = pWndOldParent?pWndOldParent->hwndSelf:0;
+        if (parent != GetDesktopWindow()) /* a child window */
+        {
+            if( !( wndPtr->dwStyle & WS_CHILD ) )
+            {
+                if( wndPtr->wIDmenu != 0)
+                {
+                    DestroyMenu( (HMENU) wndPtr->wIDmenu );
+                    wndPtr->wIDmenu = 0;
+                }
+            }
+        }
+        WIN_LinkWindow(wndPtr->hwndSelf, HWND_TOP);
+    }
+    WIN_ReleaseWndPtr( pWndParent );
+    WIN_ReleaseWndPtr( wndPtr );
 
-  WIN_ReleaseWndPtr(pWndOldParent);
-  WIN_ReleaseWndPtr(pWndNewParent);
-  WIN_ReleaseWndPtr(wndPtr);
-
-  return retvalue;
-  
+    /* SetParent additionally needs to make hwnd the topmost window
+       in the x-order and send the expected WM_WINDOWPOSCHANGING and
+       WM_WINDOWPOSCHANGED notification messages. 
+    */
+    SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+                  SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|
+                  ((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
+    /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
+     * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
+    return retvalue;
 }
+
 
 /*******************************************************************
  *		IsChild (USER.48)
@@ -3071,8 +3074,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         }
         else
         {
-            PAINT_RedrawWindow( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE |
-					  RDW_UPDATENOW | RDW_FRAME, 0 );
+            RedrawWindow( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
             wndPtr->flags &= ~WIN_NCACTIVATED;
         }
         WIN_ReleaseWndPtr(wndPtr);

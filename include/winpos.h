@@ -14,8 +14,6 @@
 
 struct tagWND;
 
-#define DWP_MAGIC  ((INT)('W' | ('P' << 8) | ('O' << 16) | ('S' << 24)))
-
 /* undocumented SWP flags - from SDK 3.1 */
 #define SWP_NOCLIENTSIZE	0x0800
 #define SWP_NOCLIENTMOVE	0x1000
@@ -24,16 +22,6 @@ struct tagWND;
 #define SWP_WINE_NOHOSTMOVE	0x80000000
 
 struct tagWINDOWPOS16;
-
-typedef struct
-{
-    INT       actualCount;
-    INT       suggestedCount;
-    BOOL      valid;
-    INT       wMagic;
-    HWND      hwndParent;
-    WINDOWPOS winPos[1];
-} DWP;
 
 extern BOOL WINPOS_RedrawIconTitle( HWND hWnd );
 extern BOOL WINPOS_ShowIconTitle( struct tagWND* pWnd, BOOL bShow );

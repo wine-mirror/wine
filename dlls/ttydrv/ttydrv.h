@@ -29,7 +29,6 @@ struct tagWND;
 struct tagCURSORICONINFO;
 struct tagCREATESTRUCTA;
 struct tagWINDOWPOS;
-struct tagKEYBOARD_CONFIG;
 struct DIDEVICEOBJECTDATA;
 
 #if defined(HAVE_LIBCURSES) || defined(HAVE_LIBNCURSES)
@@ -127,36 +126,17 @@ extern int cell_height;
 extern int screen_rows;
 extern int screen_cols;
 extern WINDOW *root_window;
-static inline WINDOW *TTYDRV_GetRootWindow(void) { return root_window; }
 
 /* TTY windows driver */
 
 extern struct tagWND_DRIVER TTYDRV_WND_Driver;
 
-typedef struct tagTTYDRV_WND_DATA {
-  WINDOW *window;
-} TTYDRV_WND_DATA;
-
-WINDOW *TTYDRV_WND_GetCursesWindow(struct tagWND *wndPtr);
-
 extern HANDLE TTYDRV_LoadOEMResource(WORD resid, WORD type);
 
-extern void TTYDRV_WND_Initialize(struct tagWND *wndPtr);
-extern void TTYDRV_WND_Finalize(struct tagWND *wndPtr);
-extern BOOL TTYDRV_WND_CreateDesktopWindow(struct tagWND *wndPtr);
-extern BOOL TTYDRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCREATESTRUCTA *cs, BOOL bUnicode);
-extern BOOL TTYDRV_WND_DestroyWindow(struct tagWND *pWnd);
-extern struct tagWND *TTYDRV_WND_SetParent(struct tagWND *wndPtr, struct tagWND *pWndParent);
 extern void TTYDRV_WND_ForceWindowRaise(struct tagWND *pWnd);
-extern void TTYDRV_WND_SetWindowPos(struct tagWND *wndPtr, const struct tagWINDOWPOS *winpos, BOOL bSMC_SETXPOS);
-extern void TTYDRV_WND_SetText(struct tagWND *wndPtr, LPCWSTR text);
-extern void TTYDRV_WND_SetFocus(struct tagWND *wndPtr);
 extern void TTYDRV_WND_PreSizeMove(struct tagWND *wndPtr);
 extern void TTYDRV_WND_PostSizeMove(struct tagWND *wndPtr);
 extern void TTYDRV_WND_ScrollWindow(struct tagWND *wndPtr, HDC hdc, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
-extern void TTYDRV_WND_SetDrawable(struct tagWND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigin);
 extern BOOL TTYDRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
-extern BOOL TTYDRV_WND_IsSelfClipping(struct tagWND *wndPtr);
-extern void TTYDRV_WND_SetWindowRgn(struct tagWND *wndPtr, HRGN hrgnWnd);
 
 #endif /* !defined(__WINE_TTYDRV_H) */

@@ -31,7 +31,6 @@ struct tagDeviceCaps;
 struct tagPALETTEOBJ;
 struct tagWND;
 struct tagWINDOWPOS;
-struct tagKEYBOARD_CONFIG;
 struct DIDEVICEOBJECTDATA;
 
   /* X physical pen */
@@ -364,8 +363,6 @@ extern UINT16 X11DRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
 extern INT16 X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
 extern BOOL X11DRV_GetDIState(DWORD len, LPVOID ptr);
 extern BOOL X11DRV_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDEVICEOBJECTDATA *dod, LPDWORD entries, DWORD flags);
-extern void X11DRV_GetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg);
-extern void X11DRV_SetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg, DWORD mask);
 
 extern void X11DRV_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
 
@@ -391,28 +388,20 @@ typedef struct _X11DRV_WND_DATA {
 extern Window X11DRV_WND_GetXWindow(struct tagWND *wndPtr);
 extern Window X11DRV_WND_FindXWindow(struct tagWND *wndPtr);
 
-extern void X11DRV_WND_Initialize(struct tagWND *wndPtr);
-extern void X11DRV_WND_Finalize(struct tagWND *wndPtr);
-extern BOOL X11DRV_WND_CreateDesktopWindow(struct tagWND *wndPtr);
-extern BOOL X11DRV_WND_CreateWindow(struct tagWND *wndPtr, struct tagCREATESTRUCTA *cs, BOOL bUnicode);
-extern BOOL X11DRV_WND_DestroyWindow(struct tagWND *pWnd);
-extern struct tagWND *X11DRV_WND_SetParent(struct tagWND *wndPtr, struct tagWND *pWndParent);
 extern void X11DRV_WND_ForceWindowRaise(struct tagWND *pWnd);
 extern void X11DRV_WND_SetWindowPos(struct tagWND *wndPtr, const struct tagWINDOWPOS *winpos, BOOL bSMC_SETXPOS);
 extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCWSTR text);
-extern void X11DRV_WND_SetFocus(struct tagWND *wndPtr);
 extern void X11DRV_WND_PreSizeMove(struct tagWND *wndPtr);
 extern void X11DRV_WND_PostSizeMove(struct tagWND *wndPtr);
 extern void X11DRV_WND_SurfaceCopy(struct tagWND *wndPtr, HDC hdc, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
-extern void X11DRV_WND_SetDrawable(struct tagWND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigin);
+extern void X11DRV_WND_SetGravity(struct tagWND* wndPtr, int value );
 extern BOOL X11DRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
-extern BOOL X11DRV_WND_IsSelfClipping(struct tagWND *wndPtr);
-extern void X11DRV_WND_DockWindow(struct tagWND *wndPtr);
-extern void X11DRV_WND_SetWindowRgn(struct tagWND *wndPtr, HRGN hrgnWnd); 
 
 extern int X11DRV_EVENT_PrepareShmCompletion( Drawable dw );
 extern void X11DRV_EVENT_WaitShmCompletion( int compl );
 extern void X11DRV_EVENT_WaitShmCompletions( Drawable dw );
 extern void X11DRV_EVENT_WaitReplaceShmCompletion( int *compl, Drawable dw );
+
+extern void X11DRV_SetFocus( HWND hwnd );
 
 #endif  /* __WINE_X11DRV_H */

@@ -25,10 +25,6 @@ extern BOOL TIMER_GetTimerMsg( struct tagMSG *msg, HWND hwnd,
                                  HQUEUE16 hQueue, BOOL remove );
 extern BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc );
 
-/* event.c */
-extern void EVENT_Synchronize( void );
-extern BOOL EVENT_CheckFocus( void );
-
 /* input.c */
 
 extern HWND EVENT_Capture( HWND, INT16 );

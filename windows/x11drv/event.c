@@ -93,7 +93,7 @@ static const char * const event_names[] =
 static void CALLBACK EVENT_Flush( ULONG_PTR arg );
 static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg );
 static void EVENT_ProcessEvent( XEvent *event );
-BOOL X11DRV_CheckFocus(void);
+static BOOL X11DRV_CheckFocus(void);
 
   /* Event handlers */
 static void EVENT_Key( HWND hWnd, XKeyEvent *event );
@@ -401,8 +401,8 @@ static void EVENT_ProcessEvent( XEvent *event )
                  (win_attr.map_state == IsViewable) )
           {
             TSXSetInputFocus( xfocChange->display, glastXFocusWin, RevertToParent, CurrentTime );
-            EVENT_Synchronize();
-      break;
+            X11DRV_Synchronize();
+            break;
           }
         }
       }
@@ -877,7 +877,7 @@ static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
 /**********************************************************************
  *		CheckFocus (X11DRV.@)
  */
-BOOL X11DRV_CheckFocus(void)
+static BOOL X11DRV_CheckFocus(void)
 {
   HWND   hWnd;
   Window xW;
@@ -1850,7 +1850,7 @@ void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
   WIN_ReleaseWndPtr(pWnd);
 
   if (hwndFocus && IsChild( hWnd, hwndFocus ))
-      X11DRV_WND_SetFocus(wndFocus);
+      X11DRV_SetFocus(hwndFocus);
 
   WIN_ReleaseWndPtr(wndFocus);
   

@@ -11,8 +11,6 @@ debug_channels (ttydrv)
 
 # USER driver
 
-@ cdecl Synchronize() TTYDRV_Synchronize
-@ cdecl CheckFocus() TTYDRV_CheckFocus
 @ cdecl UserRepaintDisable(long) TTYDRV_UserRepaintDisable
 @ cdecl InitKeyboard() TTYDRV_InitKeyboard
 @ cdecl VkKeyScan(long) TTYDRV_VkKeyScan
@@ -24,8 +22,6 @@ debug_channels (ttydrv)
 @ cdecl Beep() TTYDRV_Beep
 @ cdecl GetDIState(long ptr) TTYDRV_GetDIState
 @ cdecl GetDIData(ptr long ptr ptr long) TTYDRV_GetDIData
-@ cdecl GetKeyboardConfig(ptr) TTYDRV_GetKeyboardConfig
-@ cdecl SetKeyboardConfig(ptr long) TTYDRV_SetKeyboardConfig
 @ cdecl InitMouse(ptr) TTYDRV_InitMouse
 @ cdecl SetCursor(ptr) TTYDRV_SetCursor
 @ cdecl MoveCursor(long long) TTYDRV_MoveCursor
@@ -34,6 +30,10 @@ debug_channels (ttydrv)
 @ cdecl GetScreenSaveTimeout() TTYDRV_GetScreenSaveTimeout
 @ cdecl SetScreenSaveTimeout(long) TTYDRV_SetScreenSaveTimeout
 @ cdecl LoadOEMResource(long long) TTYDRV_LoadOEMResource
+@ cdecl CreateWindow(long) TTYDRV_CreateWindow
+@ cdecl DestroyWindow(long) TTYDRV_DestroyWindow
+@ cdecl GetDC(long long long long) TTYDRV_GetDC
+@ cdecl SetWindowPos(ptr) TTYDRV_SetWindowPos
 @ cdecl IsSingleWindow() TTYDRV_IsSingleWindow
 @ cdecl AcquireClipboard() TTYDRV_AcquireClipboard
 @ cdecl ReleaseClipboard() TTYDRV_ReleaseClipboard

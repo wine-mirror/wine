@@ -988,8 +988,7 @@ BOOL16 WINAPI RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
         CONV_RECT16TO32( rectUpdate, &r );
         return (BOOL16)RedrawWindow( (HWND)hwnd, &r, hrgnUpdate, flags );
     }
-    return (BOOL16)PAINT_RedrawWindow( (HWND)hwnd, NULL, 
-				       (HRGN)hrgnUpdate, flags, 0 );
+    return RedrawWindow( hwnd, NULL, hrgnUpdate, flags );
 }
 
 
@@ -998,7 +997,7 @@ BOOL16 WINAPI RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
  */
 void WINAPI UpdateWindow16( HWND16 hwnd )
 {
-    PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN, 0 );
+    RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 }
 
 /***********************************************************************
@@ -1006,7 +1005,7 @@ void WINAPI UpdateWindow16( HWND16 hwnd )
  */
 void WINAPI UpdateWindow( HWND hwnd )
 {
-    PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN, 0 );
+    RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 }
 
 /***********************************************************************
@@ -1014,8 +1013,7 @@ void WINAPI UpdateWindow( HWND hwnd )
  */
 void WINAPI InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 {
-    PAINT_RedrawWindow((HWND)hwnd, NULL, (HRGN)hrgn, 
-		       RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
+    RedrawWindow((HWND)hwnd, NULL, (HRGN)hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
 
@@ -1024,7 +1022,7 @@ void WINAPI InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
  */
 BOOL WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
-    return PAINT_RedrawWindow(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
+    return RedrawWindow(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
 
@@ -1042,8 +1040,7 @@ void WINAPI InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
  */
 BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
 {
-    return PAINT_RedrawWindow( hwnd, rect, 0, 
-			       RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
+    return RedrawWindow( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
 
@@ -1052,8 +1049,7 @@ BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
  */
 void WINAPI ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
 {
-    PAINT_RedrawWindow( (HWND)hwnd, NULL, (HRGN)hrgn, 
-			RDW_VALIDATE | RDW_NOCHILDREN, 0 );
+    RedrawWindow( (HWND)hwnd, NULL, (HRGN)hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
 }
 
 
@@ -1062,7 +1058,7 @@ void WINAPI ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
  */
 void WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 {
-    PAINT_RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN, 0 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
 }
 
 
@@ -1080,7 +1076,7 @@ void WINAPI ValidateRect16( HWND16 hwnd, const RECT16 *rect )
  */
 void WINAPI ValidateRect( HWND hwnd, const RECT *rect )
 {
-    PAINT_RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN, 0 );
+    RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
 }
 
 

@@ -2458,8 +2458,8 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
 	    msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
-        PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0,
-                        RDW_FRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT, 0 );  
+        RedrawWindow( wndPtr->hwndSelf, NULL, 0,
+                      RDW_FRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
     }
 END:
     WIN_ReleaseWndPtr(wndPtr);

@@ -15,6 +15,7 @@
 #include "hook.h"
 #include "message.h"
 #include "queue.h"
+#include "user.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
@@ -26,35 +27,20 @@ DEFAULT_DEBUG_CHANNEL(win);
  */
 void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND hFocusFrom, HWND hFocusTo )
 {
-    WND *pFocusTo = WIN_FindWndPtr( hFocusTo );
-
     PERQDATA_SetFocusWnd( pMsgQ->pQData, hFocusTo );
-    
-#if 0
-    if (hFocusFrom) SendMessageA( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
-#else
-    /* FIXME: must be SendMessage16() because 32A doesn't do
-     * intertask at this time */
-    if (hFocusFrom) SendMessage16( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
-#endif
 
-    if( !pFocusTo || hFocusTo != PERQDATA_GetFocusWnd( pMsgQ->pQData ) )
+    if (hFocusFrom) SendMessageA( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
+
+    if( !hFocusTo || hFocusTo != PERQDATA_GetFocusWnd( pMsgQ->pQData ) )
     {
-        WIN_ReleaseWndPtr(pFocusTo);
-	return;
+        return;
     }
 
     /* According to API docs, the WM_SETFOCUS message is sent AFTER the window
        has received the keyboard focus. */
+    if (USER_Driver.pSetFocus) USER_Driver.pSetFocus(hFocusTo);
 
-    pFocusTo->pDriver->pSetFocus(pFocusTo);
-
-    WIN_ReleaseWndPtr(pFocusTo);
-#if 0
     SendMessageA( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
-#else
-    SendMessage16( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
-#endif
 }
 
 

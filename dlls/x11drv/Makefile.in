@@ -8,6 +8,8 @@ IMPORTS   = user32 gdi32 kernel32
 
 C_SRCS = \
 	dga2.c \
+	window.c \
+	winpos.c \
 	x11ddraw.c \
 	x11drv_main.c \
 	xvidmode.c

@@ -239,7 +239,7 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     
     GDI_ReleaseObj( dc->hBitmap );
   } else {
-    physDev->window = TTYDRV_GetRootWindow();
+    physDev->window = root_window;
     physDev->cellWidth = cell_width;
     physDev->cellHeight = cell_height;
     

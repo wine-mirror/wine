@@ -7,6 +7,10 @@
 #ifndef __WINE_USER_H
 #define __WINE_USER_H
 
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+
 #include "local.h"
 
 extern WORD USER_HeapSel;
@@ -29,19 +33,12 @@ extern WORD USER_HeapSel;
 struct tagCURSORICONINFO;
 struct DIDEVICEOBJECTDATA;
 
-#define WINE_KEYBOARD_CONFIG_AUTO_REPEAT 0x00000001
-typedef struct tagKEYBOARD_CONFIG {
-  BOOL auto_repeat;
-} KEYBOARD_CONFIG;
-
 typedef VOID CALLBACK (*LPMOUSE_EVENT_PROC)(DWORD,DWORD,DWORD,DWORD,DWORD);
 
 struct tagWND;
 
 typedef struct tagUSER_DRIVER {
     /* event functions */
-    void   (*pSynchronize)(void);
-    BOOL   (*pCheckFocus)(void);
     void   (*pUserRepaintDisable)(BOOL);
     /* keyboard functions */
     void   (*pInitKeyboard)(void);
@@ -54,8 +51,6 @@ typedef struct tagUSER_DRIVER {
     void   (*pBeep)(void);
     BOOL   (*pGetDIState)(DWORD, LPVOID);
     BOOL   (*pGetDIData)(BYTE *, DWORD, struct DIDEVICEOBJECTDATA *, LPDWORD, DWORD);
-    void   (*pGetKeyboardConfig)(KEYBOARD_CONFIG *);
-    void   (*pSetKeyboardConfig)(KEYBOARD_CONFIG *, DWORD);
     /* mouse functions */
     void   (*pInitMouse)(LPMOUSE_EVENT_PROC);
     void   (*pSetCursor)(struct tagCURSORICONINFO *);
@@ -67,8 +62,6 @@ typedef struct tagUSER_DRIVER {
     void   (*pSetScreenSaveTimeout)(int);
     /* resource functions */
     HANDLE (*pLoadOEMResource)(WORD,WORD);
-    /* windowing functions */
-    BOOL   (*pIsSingleWindow)(void);
     /* clipboard functions */
     void   (*pAcquireClipboard)(void);            /* Acquire selection */
     void   (*pReleaseClipboard)(void);            /* Release selection */
@@ -78,6 +71,19 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pRegisterClipboardFormat)(LPCSTR);   /* Register a clipboard format */
     BOOL   (*pIsSelectionOwner)(void);            /* Check if we own the selection */
     void   (*pResetSelectionOwner)(struct tagWND *, BOOL);
+
+    /* windowing functions */
+    BOOL   (*pCreateWindow)(HWND);
+    BOOL   (*pDestroyWindow)(HWND);
+    BOOL   (*pGetDC)(HWND,HDC,HRGN,DWORD);
+    BOOL   (*pEnableWindow)(HWND,BOOL);
+    void   (*pSetFocus)(HWND);
+    HWND   (*pSetParent)(HWND,HWND);
+    BOOL   (*pSetWindowPos)(WINDOWPOS *);
+    BOOL   (*pSetWindowRgn)(HWND,HRGN,BOOL);
+    HICON  (*pSetWindowIcon)(HWND,HICON,BOOL);
+    BOOL   (*pSetWindowText)(HWND,LPCWSTR);
+    BOOL   (*pIsSingleWindow)(void);
 } USER_DRIVER;
 
 extern USER_DRIVER USER_Driver;

@@ -42,7 +42,6 @@ extern DCE*  DCE_AllocDCE( HWND hWnd, DCE_TYPE type );
 extern DCE*  DCE_FreeDCE( DCE *dce );
 extern void  DCE_FreeWindowDCE( struct tagWND* );
 extern INT  DCE_ExcludeRgn( HDC, struct tagWND*, HRGN );
-extern HRGN DCE_GetVisRgn( HWND, WORD, HWND, WORD );
 extern BOOL DCE_InvalidateDCE( struct tagWND*, const RECT* );
 
 #endif  /* __WINE_DCE_H */
