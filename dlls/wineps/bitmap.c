@@ -204,6 +204,15 @@ static BOOL PSDRV_WriteImageMaskHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO 
     return TRUE;
 }
 
+static inline DWORD max_rle_size(DWORD size)
+{
+    return size + (size + 127) / 128 + 1;
+}
+
+static inline DWORD max_ascii85_size(DWORD size)
+{
+    return (size + 3) / 4 * 5;
+}
 
 /***************************************************************************
  *
@@ -222,9 +231,11 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
     LONG fullSrcWidth, fullSrcHeight;
     INT widthbytes;
     WORD bpp, compression;
-    const char *ptr;
     INT line;
     POINT pt[2];
+    const BYTE *src_ptr;
+    BYTE *dst_ptr, *bitmap, *rle, *ascii85;
+    DWORD rle_len, ascii85_len, bitmap_size;
 
     TRACE("%p (%d,%d %dx%d) -> (%d,%d %dx%d)\n", physDev->hdc,
 	  xSrc, ySrc, widthSrc, heightSrc, xDst, yDst, widthDst, heightDst);
@@ -261,12 +272,14 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
         /* Use imagemask rather than image */
 	PSDRV_WriteImageMaskHeader(physDev, info, xDst, yDst, widthDst, heightDst,
                                    widthSrc, heightSrc);
-	ptr = bits;
-	ptr += (ySrc * widthbytes);
+	src_ptr = bits;
+	src_ptr += (ySrc * widthbytes);
 	if(xSrc & 7)
 	    FIXME("This won't work...\n");
-        for(line = 0; line < heightSrc; line++, ptr += widthbytes)
-	    PSDRV_WriteBytes(physDev, ptr + xSrc/8, (widthSrc+7)/8);
+        bitmap_size = heightSrc * ((widthSrc + 7) / 8);
+        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
+        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes, dst_ptr += ((widthSrc + 7) / 8))
+            memcpy(dst_ptr, src_ptr + xSrc / 8, (widthSrc + 7) / 8);
 	break;
 
     case 4:
@@ -274,12 +287,14 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
-	ptr = bits;
-	ptr += (ySrc * widthbytes);
+	src_ptr = bits;
+	src_ptr += (ySrc * widthbytes);
 	if(xSrc & 1)
 	    FIXME("This won't work...\n");
-        for(line = 0; line < heightSrc; line++, ptr += widthbytes)
-	    PSDRV_WriteBytes(physDev, ptr + xSrc/2, (widthSrc+1)/2);
+        bitmap_size = heightSrc * ((widthSrc + 1) / 2);
+        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
+        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes, dst_ptr += ((widthSrc + 1) / 2))
+	    memcpy(dst_ptr, src_ptr + xSrc/2, (widthSrc+1)/2);
 	break;
 
     case 8:
@@ -287,10 +302,12 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
-	ptr = bits;
-	ptr += (ySrc * widthbytes);
-        for(line = 0; line < heightSrc; line++, ptr += widthbytes)
-	    PSDRV_WriteBytes(physDev, ptr + xSrc, widthSrc);
+	src_ptr = bits;
+	src_ptr += (ySrc * widthbytes);
+        bitmap_size = heightSrc * widthSrc;
+        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
+        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes, dst_ptr += widthSrc)
+	    memcpy(dst_ptr, src_ptr + xSrc, widthSrc);
 	break;
 
     case 15:
@@ -300,10 +317,31 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 
-	ptr = bits;
-	ptr += (ySrc * widthbytes);
-        for(line = 0; line < heightSrc; line++, ptr += widthbytes)
-	    PSDRV_WriteDIBits16(physDev, (WORD *)ptr + xSrc, widthSrc);
+
+        src_ptr = bits;
+        src_ptr += (ySrc * widthbytes);
+        bitmap_size = heightSrc * widthSrc * 2;
+        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
+        
+        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes) {
+            const WORD *words = (const WORD *)src_ptr + xSrc;
+            int i;
+            for(i = 0; i < widthSrc; i++) {
+                BYTE r, g, b;
+
+                /* We want 0x0 -- 0x1f to map to 0x0 -- 0xff */
+                r = words[i] >> 10 & 0x1f;
+                r = r << 3 | r >> 2;
+                g = words[i] >> 5 & 0x1f;
+                g = g << 3 | g >> 2;
+                b = words[i] & 0x1f;
+                b = b << 3 | b >> 2;
+                dst_ptr[0] = r;
+                dst_ptr[1] = g;
+                dst_ptr[2] = b;
+                dst_ptr += 3;
+            }
+        }
 	break;
 
     case 24:
@@ -312,10 +350,20 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 
-	ptr = bits;
-	ptr += (ySrc * widthbytes);
-        for(line = 0; line < heightSrc; line++, ptr += widthbytes)
-	    PSDRV_WriteDIBits24(physDev, ptr + xSrc * 3, widthSrc);
+        src_ptr = bits;
+        src_ptr += (ySrc * widthbytes);
+        bitmap_size = heightSrc * widthSrc * 3;
+        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
+        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes) {
+            const BYTE *byte = src_ptr + xSrc * 3;
+            int i;
+            for(i = 0; i < widthSrc; i++) {
+                dst_ptr[0] = byte[i * 3 + 2];
+                dst_ptr[1] = byte[i * 3 + 1];
+                dst_ptr[2] = byte[i * 3];
+                dst_ptr += 3;
+            }
+        }
 	break;
 
     case 32:
@@ -324,10 +372,20 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
 
-	ptr = bits;
-	ptr += (ySrc * widthbytes);
-        for(line = 0; line < heightSrc; line++, ptr += widthbytes)
-	    PSDRV_WriteDIBits32(physDev, ptr + xSrc * 3, widthSrc);
+        src_ptr = bits;
+        src_ptr += (ySrc * widthbytes);
+        bitmap_size = heightSrc * widthSrc * 3;
+        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
+        for(line = 0; line < heightSrc; line++, src_ptr += widthbytes) {
+            const BYTE *byte = src_ptr + xSrc * 4;
+            int i;
+            for(i = 0; i < widthSrc; i++) {
+                dst_ptr[0] = byte[i * 4 + 2];
+                dst_ptr[1] = byte[i * 4 + 1];
+                dst_ptr[2] = byte[i * 4];
+                dst_ptr += 3;
+            }
+        }
 	break;
 
     default:
@@ -335,7 +393,16 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	return FALSE;
 
     }
-    PSDRV_WriteSpool(physDev, ">\n", 2);  /* End-of-Data for /HexASCIIDecodeFilter */
+
+    rle = HeapAlloc(GetProcessHeap(), 0, max_rle_size(bitmap_size));
+    rle_len = RLE_encode(bitmap, bitmap_size, rle);
+    HeapFree(GetProcessHeap(), 0, bitmap);
+    ascii85 = HeapAlloc(GetProcessHeap(), 0, max_ascii85_size(rle_len));
+    ascii85_len = ASCII85_encode(rle, rle_len, ascii85);
+    HeapFree(GetProcessHeap(), 0, rle);
+    PSDRV_WriteData(physDev, ascii85, ascii85_len);
+    HeapFree(GetProcessHeap(), 0, ascii85);
+    PSDRV_WriteSpool(physDev, "~>\n", 3);
     PSDRV_WriteGRestore(physDev);
     PSDRV_ResetClip(physDev);
     return abs(heightSrc);

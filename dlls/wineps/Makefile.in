@@ -60,6 +60,7 @@ C_SRCS = \
 	color.c \
 	download.c \
 	driver.c \
+	encode.c \
 	escape.c \
 	font.c \
 	glyphlist.c \

@@ -636,8 +636,8 @@ BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst
     const char decode1[] = " /Decode [0 %d]\n";
     const char decode3[] = " /Decode [0 1 0 1 0 1]\n";
 
-    const char end[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> image\n";
-    const char endmask[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> imagemask\n";
+    const char end[] = " /DataSource currentfile /ASCII85Decode filter /RunLengthDecode filter\n>> image\n";
+    const char endmask[] = " /DataSource currentfile /ASCII85Decode filter /RunLengthDecode filter\n>> imagemask\n";
 
     const char endbits[] = " /DataSource <%s>\n>> image\n";
 
@@ -683,7 +683,7 @@ BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst
 }
 
 
-BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, int number)
+BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, DWORD number)
 {
     char *buf = HeapAlloc(PSDRV_Heap, 0, number * 3 + 1);
     char *ptr;
@@ -704,81 +704,18 @@ BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, int number)
     return TRUE;
 }
 
-BOOL PSDRV_WriteDIBits16(PSDRV_PDEVICE *physDev, const WORD *words, int number)
+BOOL PSDRV_WriteData(PSDRV_PDEVICE *physDev, const BYTE *data, DWORD number)
 {
-    char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1);
-    char *ptr;
-    int i;
+    int num, num_left = number;
 
-    ptr = buf;
+    do {
+        num = min(num_left, 60);
+        PSDRV_WriteSpool(physDev, data, num);
+        PSDRV_WriteSpool(physDev, "\n", 1);
+        data += num;
+        num_left -= num;
+    } while(num_left);
 
-    for(i = 0; i < number; i++) {
-        int r, g, b;
-
-	/* We want 0x0 -- 0x1f to map to 0x0 -- 0xff */
-
-	r = words[i] >> 10 & 0x1f;
-	r = r << 3 | r >> 2;
-	g = words[i] >> 5 & 0x1f;
-	g = g << 3 | g >> 2;
-	b = words[i] & 0x1f;
-	b = b << 3 | b >> 2;
-        sprintf(ptr, "%02x%02x%02x", r, g, b);
-	ptr += 6;
-        if(((i & 0x7) == 0x7) || (i == number - 1)) {
-            strcpy(ptr, "\n");
-            ptr++;
-        }
-    }
-    PSDRV_WriteSpool(physDev, buf, ptr - buf);
-
-    HeapFree(PSDRV_Heap, 0, buf);
-    return TRUE;
-}
-
-BOOL PSDRV_WriteDIBits24(PSDRV_PDEVICE *physDev, const BYTE *bits, int number)
-{
-    char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1);
-    char *ptr;
-    int i;
-
-    ptr = buf;
-
-    for(i = 0; i < number; i++) {
-        sprintf(ptr, "%02x%02x%02x", bits[i * 3 + 2], bits[i * 3 + 1],
-		bits[i * 3]);
-	ptr += 6;
-        if(((i & 0x7) == 0x7) || (i == number - 1)) {
-            strcpy(ptr, "\n");
-            ptr++;
-        }
-    }
-    PSDRV_WriteSpool(physDev, buf, ptr - buf);
-
-    HeapFree(PSDRV_Heap, 0, buf);
-    return TRUE;
-}
-
-BOOL PSDRV_WriteDIBits32(PSDRV_PDEVICE *physDev, const BYTE *bits, int number)
-{
-    char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1);
-    char *ptr;
-    int i;
-
-    ptr = buf;
-
-    for(i = 0; i < number; i++) {
-        sprintf(ptr, "%02x%02x%02x", bits[i * 4 + 2], bits[i * 4 + 1],
-		bits[i * 4]);
-	ptr += 6;
-        if(((i & 0x7) == 0x7) || (i == number - 1)) {
-            strcpy(ptr, "\n");
-            ptr++;
-        }
-    }
-    PSDRV_WriteSpool(physDev, buf, ptr - buf);
-
-    HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }
 

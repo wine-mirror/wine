@@ -446,10 +446,8 @@ extern BOOL PSDRV_WriteRGB(PSDRV_PDEVICE *physDev, COLORREF *map, int number);
 extern BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst,
 				 INT widthDst, INT heightDst, INT widthSrc,
 				 INT heightSrc, char *bits, BOOL mask);
-extern BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, int number);
-extern BOOL PSDRV_WriteDIBits16(PSDRV_PDEVICE *physDev, const WORD *words, int number);
-extern BOOL PSDRV_WriteDIBits24(PSDRV_PDEVICE *physDev, const BYTE *bits, int number);
-extern BOOL PSDRV_WriteDIBits32(PSDRV_PDEVICE *physDev, const BYTE *bits, int number);
+extern BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, DWORD number);
+extern BOOL PSDRV_WriteData(PSDRV_PDEVICE *physDev, const BYTE *byte, DWORD number);
 extern DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch);
 extern BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits);
 extern BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage);
@@ -543,4 +541,8 @@ extern TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
 extern BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl,
 			       DWORD index, char *glyph_name);
 extern void T42_free(TYPE42 *t42);
+
+extern DWORD RLE_encode(BYTE *in_buf, DWORD len, BYTE *out_buf);
+extern DWORD ASCII85_encode(BYTE *in_buf, DWORD len, BYTE *out_buf);
+
 #endif
