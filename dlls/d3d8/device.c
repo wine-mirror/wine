@@ -3121,7 +3121,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
        checkGLcall("Disable oldTextureDimensions");
        if (This->StateBlock->texture_state[Stage][D3DTSS_COLOROP] != D3DTOP_DISABLE) {
           glEnable(This->UpdateStateBlock->textureDimensions[Stage]);
-          checkGLcall("Disable new texture dimensions");
+          checkGLcall("glEnable new texture dimensions");
        }
 
        /* If Alpha arg1 is texture then handle the special case when there changes between a

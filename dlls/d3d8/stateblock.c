@@ -80,7 +80,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
     }
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FILLMODE, D3DFILL_SOLID);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
-    lp.wRepeatFactor = 0; lp.wLinePattern = 0; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_LINEPATTERN, (DWORD) &lp);
+    lp.wRepeatFactor = 0; lp.wLinePattern = 0; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_LINEPATTERN, *(DWORD *)&lp);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_ZWRITEENABLE, TRUE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_ALPHATESTENABLE, FALSE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_LASTPIXEL, TRUE);

@@ -330,6 +330,44 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
         glPixelZoom(1.0, -1.0);
         vcheckGLcall("glPixelZoom");
 
+        /* glDrawPixels transforms the raster position as though it was a vertex -
+           we want to draw at screen position 0,0 - Set up ortho (rhw) mode as   
+           per drawprim (and leave set - it will sort itself out due to last_was_rhw */
+        if (!This->Device->last_was_rhw) {
+
+            double X, Y, height, width, minZ, maxZ;
+            This->Device->last_was_rhw = TRUE;
+
+            /* Transformed already into viewport coordinates, so we do not need transform
+               matrices. Reset all matrices to identity and leave the default matrix in world 
+               mode.                                                                         */
+            glMatrixMode(GL_MODELVIEW);
+            checkGLcall("glMatrixMode");
+            glLoadIdentity();
+            checkGLcall("glLoadIdentity");
+
+            glMatrixMode(GL_PROJECTION);
+            checkGLcall("glMatrixMode");
+            glLoadIdentity();
+            checkGLcall("glLoadIdentity");
+
+            /* Set up the viewport to be full viewport */
+            X      = This->Device->StateBlock->viewport.X;
+            Y      = This->Device->StateBlock->viewport.Y;
+            height = This->Device->StateBlock->viewport.Height;
+            width  = This->Device->StateBlock->viewport.Width;
+            minZ   = This->Device->StateBlock->viewport.MinZ;
+            maxZ   = This->Device->StateBlock->viewport.MaxZ;
+            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
+            glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
+            checkGLcall("glOrtho");
+
+            /* Window Coord 0 is the middle of the first pixel, so translate by half
+               a pixel (See comment above glTranslate below)                         */
+            glTranslatef(0.5, 0.5, 0);
+            checkGLcall("glTranslatef(0.5, 0.5, 0)");
+        }
+
 	if (This == This->Device->backBuffer) {
 	  glDrawBuffer(GL_BACK);
 	} else if (This == This->Device->frontBuffer) {
