@@ -96,16 +96,9 @@ INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField);
 BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, INT index);
 
 /***********************************************************************
- *           HttpAddRequestHeadersW (WININET.@)
- *
- * Adds one or more HTTP header to the request handler
- *
- * RETURNS
- *    TRUE  on success
- *    FALSE on failure
- *
+ *           HTTP_HttpAddRequestHeadersW (internal)
  */
-BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
+static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
 	LPCWSTR lpszHeader, DWORD dwHeaderLength, DWORD dwModifier)
 {
     LPWSTR lpszStart;
@@ -113,21 +106,6 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
     LPWSTR buffer;
     WCHAR value[MAX_FIELD_VALUE_LEN], field[MAX_FIELD_LEN];
     BOOL bSuccess = FALSE;
-    LPWININETHTTPREQW lpwhr;
-
-    TRACE("%p, %s, %li, %li\n", hHttpRequest, debugstr_w(lpszHeader), dwHeaderLength,
-          dwModifier);
-
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hHttpRequest );
-
-    if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        return FALSE;
-    }
-
-    if (!lpszHeader) 
-      return TRUE;
 
     TRACE("copying header: %s\n", debugstr_w(lpszHeader));
     buffer = WININET_strdupW(lpszHeader);
@@ -158,6 +136,40 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
     } while (bSuccess);
 
     HeapFree(GetProcessHeap(), 0, buffer);
+
+    return bSuccess;
+}
+
+/***********************************************************************
+ *           HttpAddRequestHeadersW (WININET.@)
+ *
+ * Adds one or more HTTP header to the request handler
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
+	LPCWSTR lpszHeader, DWORD dwHeaderLength, DWORD dwModifier)
+{
+    BOOL bSuccess = FALSE;
+    LPWININETHTTPREQW lpwhr;
+
+    TRACE("%p, %s, %li, %li\n", hHttpRequest, debugstr_w(lpszHeader), dwHeaderLength,
+          dwModifier);
+
+    if (!lpszHeader) 
+      return TRUE;
+
+    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hHttpRequest );
+    if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        return bSuccess;
+    }
+    bSuccess = HTTP_HttpAddRequestHeadersW( lpwhr, lpszHeader, dwHeaderLength, dwModifier );
+
     return bSuccess;
 }
 
@@ -704,7 +716,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
         agent_header = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
         sprintfW(agent_header, user_agent, hIC->lpszAgent );
 
-        HttpAddRequestHeadersW(handle, agent_header, strlenW(agent_header),
+        HTTP_HttpAddRequestHeadersW(lpwhr, agent_header, strlenW(agent_header),
                                HTTP_ADDREQ_FLAG_ADD);
         HeapFree(GetProcessHeap(), 0, agent_header);
     }
@@ -725,7 +737,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
         InternetGetCookieW(lpszUrl, NULL, lpszCookies + cnt, &nCookieSize);
         strcatW(lpszCookies, szcrlf);
 
-        HttpAddRequestHeadersW(handle, lpszCookies, strlenW(lpszCookies),
+        HTTP_HttpAddRequestHeadersW(lpwhr, lpszCookies, strlenW(lpszCookies),
                                HTTP_ADDREQ_FLAG_ADD);
         HeapFree(GetProcessHeap(), 0, lpszCookies);
     }
@@ -774,6 +786,181 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
 
 
 /***********************************************************************
+ *           HTTP_HttpQueryInfoW (internal)
+ */
+BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
+	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
+{
+    LPHTTPHEADERW lphttpHdr = NULL;
+    BOOL bSuccess = FALSE;
+    static const WCHAR szFmt[] = { '%','s',':',' ','%','s','%','s',0 };
+    static const WCHAR szcrlf[] = { '\r','\n',0 };
+    static const WCHAR sznul[] = { 0 };
+
+    /* Find requested header structure */
+    if ((dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK) == HTTP_QUERY_CUSTOM)
+    {
+        INT index = HTTP_GetCustomHeaderIndex(lpwhr, (LPWSTR)lpBuffer);
+
+        if (index < 0)
+            return bSuccess;
+
+        lphttpHdr = &lpwhr->pCustHeaders[index];
+    }
+    else
+    {
+        INT index = dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK;
+
+        if (index == HTTP_QUERY_RAW_HEADERS_CRLF || index == HTTP_QUERY_RAW_HEADERS)
+        {
+            INT i, delim, size = 0, cnt = 0;
+
+            delim = index == HTTP_QUERY_RAW_HEADERS_CRLF ? 2 : 1;
+
+           /* Calculate length of custom reuqest headers */
+           for (i = 0; i < lpwhr->nCustHeaders; i++)
+           {
+               if ((~lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST) && lpwhr->pCustHeaders[i].lpszField &&
+		   lpwhr->pCustHeaders[i].lpszValue)
+	       {
+                  size += strlenW(lpwhr->pCustHeaders[i].lpszField) +
+                       strlenW(lpwhr->pCustHeaders[i].lpszValue) + delim + 2;
+	       }
+           }
+
+           /* Calculate the length of stadard request headers */
+           for (i = 0; i <= HTTP_QUERY_MAX; i++)
+           {
+              if ((~lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST) && lpwhr->StdHeaders[i].lpszField &&
+                   lpwhr->StdHeaders[i].lpszValue)
+              {
+                 size += strlenW(lpwhr->StdHeaders[i].lpszField) +
+                    strlenW(lpwhr->StdHeaders[i].lpszValue) + delim + 2;
+              }
+           }
+           size += delim;
+
+           if (size + 1 > *lpdwBufferLength/sizeof(WCHAR))
+           {
+              *lpdwBufferLength = (size + 1) * sizeof(WCHAR);
+              INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+              return bSuccess;
+           }
+
+           /* Append standard request heades */
+           for (i = 0; i <= HTTP_QUERY_MAX; i++)
+           {
+               if ((~lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST) &&
+					   lpwhr->StdHeaders[i].lpszField &&
+					   lpwhr->StdHeaders[i].lpszValue)
+               {
+                   cnt += sprintfW((WCHAR*)lpBuffer + cnt, szFmt, 
+                            lpwhr->StdHeaders[i].lpszField, lpwhr->StdHeaders[i].lpszValue,
+                          index == HTTP_QUERY_RAW_HEADERS_CRLF ? szcrlf : sznul );
+               }
+            }
+
+            /* Append custom request heades */
+            for (i = 0; i < lpwhr->nCustHeaders; i++)
+            {
+                if ((~lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST) &&
+						lpwhr->pCustHeaders[i].lpszField &&
+						lpwhr->pCustHeaders[i].lpszValue)
+                {
+                   cnt += sprintfW((WCHAR*)lpBuffer + cnt, szFmt,
+                    lpwhr->pCustHeaders[i].lpszField, lpwhr->pCustHeaders[i].lpszValue,
+					index == HTTP_QUERY_RAW_HEADERS_CRLF ? szcrlf : sznul);
+                }
+            }
+
+            strcpyW((WCHAR*)lpBuffer + cnt, index == HTTP_QUERY_RAW_HEADERS_CRLF ? szcrlf : sznul);
+
+            *lpdwBufferLength = (cnt + delim) * sizeof(WCHAR);
+            bSuccess = TRUE;
+            return bSuccess;
+        }
+	else if (index >= 0 && index <= HTTP_QUERY_MAX && lpwhr->StdHeaders[index].lpszValue)
+	{
+	    lphttpHdr = &lpwhr->StdHeaders[index];
+	}
+	else
+            return bSuccess;
+    }
+
+    /* Ensure header satisifies requested attributes */
+    if ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) &&
+	    (~lphttpHdr->wFlags & HDR_ISREQUEST))
+	return bSuccess;
+
+    /* coalesce value to reuqested type */
+    if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER)
+    {
+	*(int *)lpBuffer = atoiW(lphttpHdr->lpszValue);
+	bSuccess = TRUE;
+
+	TRACE(" returning number : %d\n", *(int *)lpBuffer);
+    }
+    else if (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME)
+    {
+        time_t tmpTime;
+        struct tm tmpTM;
+        SYSTEMTIME *STHook;
+
+        tmpTime = ConvertTimeString(lphttpHdr->lpszValue);
+
+        tmpTM = *gmtime(&tmpTime);
+        STHook = (SYSTEMTIME *) lpBuffer;
+        if(STHook==NULL)
+            return bSuccess;
+
+	STHook->wDay = tmpTM.tm_mday;
+	STHook->wHour = tmpTM.tm_hour;
+	STHook->wMilliseconds = 0;
+	STHook->wMinute = tmpTM.tm_min;
+	STHook->wDayOfWeek = tmpTM.tm_wday;
+	STHook->wMonth = tmpTM.tm_mon + 1;
+	STHook->wSecond = tmpTM.tm_sec;
+	STHook->wYear = tmpTM.tm_year;
+	
+	bSuccess = TRUE;
+	
+	TRACE(" returning time : %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n", 
+	      STHook->wYear, STHook->wMonth, STHook->wDay, STHook->wDayOfWeek,
+	      STHook->wHour, STHook->wMinute, STHook->wSecond, STHook->wMilliseconds);
+    }
+    else if (dwInfoLevel & HTTP_QUERY_FLAG_COALESCE)
+    {
+	    if (*lpdwIndex >= lphttpHdr->wCount)
+		{
+	        INTERNET_SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
+		}
+	    else
+	    {
+	    /* Copy strncpyW(lpBuffer, lphttpHdr[*lpdwIndex], len); */
+            (*lpdwIndex)++;
+	    }
+    }
+    else
+    {
+        INT len = (strlenW(lphttpHdr->lpszValue) + 1) * sizeof(WCHAR);
+
+        if (len > *lpdwBufferLength)
+        {
+            *lpdwBufferLength = len;
+            INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return bSuccess;
+        }
+
+        memcpy(lpBuffer, lphttpHdr->lpszValue, len);
+        *lpdwBufferLength = len - sizeof(WCHAR);
+        bSuccess = TRUE;
+
+	TRACE(" returning string : '%s'\n", debugstr_w(lpBuffer));
+    }
+    return bSuccess;
+}
+
+/***********************************************************************
  *           HttpQueryInfoW (WININET.@)
  *
  * Queries for information about an HTTP request
@@ -786,12 +973,8 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
 BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
-    LPHTTPHEADERW lphttpHdr = NULL;
     BOOL bSuccess = FALSE;
     LPWININETHTTPREQW lpwhr;
-    static const WCHAR szFmt[] = { '%','s',':',' ','%','s','%','s',0 };
-    static const WCHAR szcrlf[] = { '\r','\n',0 };
-    static const WCHAR sznul[] = { 0 };
 
     if (TRACE_ON(wininet)) {
 #define FE(x) { x, #x }
@@ -907,171 +1090,12 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	goto lend;
+	return FALSE;
     }
 
-    /* Find requested header structure */
-    if ((dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK) == HTTP_QUERY_CUSTOM)
-    {
-        INT index = HTTP_GetCustomHeaderIndex(lpwhr, (LPWSTR)lpBuffer);
+    bSuccess = HTTP_HttpQueryInfoW( lpwhr, dwInfoLevel,
+	                            lpBuffer, lpdwBufferLength, lpdwIndex);
 
-        if (index < 0)
-            goto lend;
-
-        lphttpHdr = &lpwhr->pCustHeaders[index];
-    }
-    else
-    {
-        INT index = dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK;
-
-        if (index == HTTP_QUERY_RAW_HEADERS_CRLF || index == HTTP_QUERY_RAW_HEADERS)
-        {
-            INT i, delim, size = 0, cnt = 0;
-
-            delim = index == HTTP_QUERY_RAW_HEADERS_CRLF ? 2 : 1;
-
-           /* Calculate length of custom reuqest headers */
-           for (i = 0; i < lpwhr->nCustHeaders; i++)
-           {
-               if ((~lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST) && lpwhr->pCustHeaders[i].lpszField &&
-		   lpwhr->pCustHeaders[i].lpszValue)
-	       {
-                  size += strlenW(lpwhr->pCustHeaders[i].lpszField) +
-                       strlenW(lpwhr->pCustHeaders[i].lpszValue) + delim + 2;
-	       }
-           }
-
-           /* Calculate the length of stadard request headers */
-           for (i = 0; i <= HTTP_QUERY_MAX; i++)
-           {
-              if ((~lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST) && lpwhr->StdHeaders[i].lpszField &&
-                   lpwhr->StdHeaders[i].lpszValue)
-              {
-                 size += strlenW(lpwhr->StdHeaders[i].lpszField) +
-                    strlenW(lpwhr->StdHeaders[i].lpszValue) + delim + 2;
-              }
-           }
-           size += delim;
-
-           if (size + 1 > *lpdwBufferLength/sizeof(WCHAR))
-           {
-              *lpdwBufferLength = (size + 1) * sizeof(WCHAR);
-              INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-              goto lend;
-           }
-
-           /* Append standard request heades */
-           for (i = 0; i <= HTTP_QUERY_MAX; i++)
-           {
-               if ((~lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST) &&
-					   lpwhr->StdHeaders[i].lpszField &&
-					   lpwhr->StdHeaders[i].lpszValue)
-               {
-                   cnt += sprintfW((WCHAR*)lpBuffer + cnt, szFmt, 
-                            lpwhr->StdHeaders[i].lpszField, lpwhr->StdHeaders[i].lpszValue,
-                          index == HTTP_QUERY_RAW_HEADERS_CRLF ? szcrlf : sznul );
-               }
-            }
-
-            /* Append custom request heades */
-            for (i = 0; i < lpwhr->nCustHeaders; i++)
-            {
-                if ((~lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST) &&
-						lpwhr->pCustHeaders[i].lpszField &&
-						lpwhr->pCustHeaders[i].lpszValue)
-                {
-                   cnt += sprintfW((WCHAR*)lpBuffer + cnt, szFmt,
-                    lpwhr->pCustHeaders[i].lpszField, lpwhr->pCustHeaders[i].lpszValue,
-					index == HTTP_QUERY_RAW_HEADERS_CRLF ? szcrlf : sznul);
-                }
-            }
-
-            strcpyW((WCHAR*)lpBuffer + cnt, index == HTTP_QUERY_RAW_HEADERS_CRLF ? szcrlf : sznul);
-
-            *lpdwBufferLength = (cnt + delim) * sizeof(WCHAR);
-            bSuccess = TRUE;
-            goto lend;
-        }
-	else if (index >= 0 && index <= HTTP_QUERY_MAX && lpwhr->StdHeaders[index].lpszValue)
-	{
-	    lphttpHdr = &lpwhr->StdHeaders[index];
-	}
-	else
-            goto lend;
-    }
-
-    /* Ensure header satisifies requested attributes */
-    if ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) &&
-	    (~lphttpHdr->wFlags & HDR_ISREQUEST))
-	goto lend;
-
-    /* coalesce value to reuqested type */
-    if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER)
-    {
-	*(int *)lpBuffer = atoiW(lphttpHdr->lpszValue);
-	bSuccess = TRUE;
-
-	TRACE(" returning number : %d\n", *(int *)lpBuffer);
-    }
-    else if (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME)
-    {
-        time_t tmpTime;
-        struct tm tmpTM;
-        SYSTEMTIME *STHook;
-
-        tmpTime = ConvertTimeString(lphttpHdr->lpszValue);
-
-        tmpTM = *gmtime(&tmpTime);
-        STHook = (SYSTEMTIME *) lpBuffer;
-        if(STHook==NULL)
-            goto lend;
-
-	STHook->wDay = tmpTM.tm_mday;
-	STHook->wHour = tmpTM.tm_hour;
-	STHook->wMilliseconds = 0;
-	STHook->wMinute = tmpTM.tm_min;
-	STHook->wDayOfWeek = tmpTM.tm_wday;
-	STHook->wMonth = tmpTM.tm_mon + 1;
-	STHook->wSecond = tmpTM.tm_sec;
-	STHook->wYear = tmpTM.tm_year;
-	
-	bSuccess = TRUE;
-	
-	TRACE(" returning time : %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n", 
-	      STHook->wYear, STHook->wMonth, STHook->wDay, STHook->wDayOfWeek,
-	      STHook->wHour, STHook->wMinute, STHook->wSecond, STHook->wMilliseconds);
-    }
-    else if (dwInfoLevel & HTTP_QUERY_FLAG_COALESCE)
-    {
-	    if (*lpdwIndex >= lphttpHdr->wCount)
-		{
-	        INTERNET_SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
-		}
-	    else
-	    {
-	    /* Copy strncpyW(lpBuffer, lphttpHdr[*lpdwIndex], len); */
-            (*lpdwIndex)++;
-	    }
-    }
-    else
-    {
-        INT len = (strlenW(lphttpHdr->lpszValue) + 1) * sizeof(WCHAR);
-
-        if (len > *lpdwBufferLength)
-        {
-            *lpdwBufferLength = len;
-            INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            goto lend;
-        }
-
-        memcpy(lpBuffer, lphttpHdr->lpszValue, len);
-        *lpdwBufferLength = len - sizeof(WCHAR);
-        bSuccess = TRUE;
-
-	TRACE(" returning string : '%s'\n", debugstr_w(lpBuffer));
-    }
-
-lend:
     TRACE("%d <--\n", bSuccess);
     return bSuccess;
 }
@@ -1412,9 +1436,11 @@ BOOL WINAPI HTTP_HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     /* if we are using optional stuff, we must add the fixed header of that option length */
     if (lpOptional && dwOptionalLength)
     {
-        char contentLengthStr[sizeof("Content-Length: ") + 20 /* int */ + 2 /* \n\r */];
-        sprintf(contentLengthStr, "Content-Length: %li\r\n", dwOptionalLength);
-        HttpAddRequestHeadersA(hHttpRequest, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD);
+        static const WCHAR szContentLength[] = {
+            'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','l','i','\r','\n',0};
+        WCHAR contentLengthStr[sizeof szContentLength/2 /* includes \n\r */ + 20 /* int */ ];
+        sprintfW(contentLengthStr, szContentLength, dwOptionalLength);
+        HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD);
     }
 
     do
@@ -1743,13 +1769,13 @@ lend:
     if(!(hIC->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && bSuccess)
     {
         DWORD dwCode,dwCodeLength=sizeof(DWORD),dwIndex=0;
-        if(HttpQueryInfoW(hHttpRequest,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,&dwIndex) &&
+        if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,&dwIndex) &&
             (dwCode==302 || dwCode==301))
         {
             WCHAR szNewLocation[2048];
             DWORD dwBufferSize=2048;
             dwIndex=0;
-            if(HttpQueryInfoW(hHttpRequest,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,&dwIndex))
+            if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,&dwIndex))
             {
                 SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_REDIRECT, szNewLocation,
