@@ -149,7 +149,9 @@ static BOOL CALLBACK CRYPT_VerifyImage(LPCSTR lpszImage, BYTE* pData)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-	/* FIXME: Actually verify the image! */
+
+	FIXME("(%s, %p): not verifying image", lpszImage, pData);
+
 	return TRUE;
 }
 
@@ -254,9 +256,7 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	PCRYPTPROV pProv = NULL;
 	HKEY key;
 	PSTR imagepath = NULL, keyname = NULL, provname = NULL, temp = NULL;
-#if 0
 	BYTE* signature;
-#endif
 	DWORD keytype, type, len;
 
 	TRACE("(%p, %s, %s, %ld, %08lx)\n", phProv, pszContainer,
@@ -280,28 +280,47 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		 */
 		if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, TRUE)) ) {
 			FIXME("No provider registered for crypto provider type %ld.\n", dwProvType);
-			CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
+			SetLastError(NTE_PROV_TYPE_NOT_DEF);
+			return FALSE;
 		}
 		if (RegOpenKeyA(HKEY_CURRENT_USER, keyname, &key))
 		{
 			CRYPT_Free(keyname);
 			if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, FALSE)) ) {
 				FIXME("No type registered for crypto provider type %ld.\n", dwProvType);
-				CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
+				RegCloseKey(key);
+				SetLastError(NTE_PROV_TYPE_NOT_DEF);
+				goto error;
 			}
 			if (RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &key)) {
-				FIXME("Did not find registry entry of crypto provider for %s.\n", debugstr_a(keyname)); 
+				FIXME("Did not find registry entry of crypto provider for %s.\n", debugstr_a(keyname));
+				RegCloseKey(key);
+				SetLastError(NTE_PROV_TYPE_NOT_DEF);
 				goto error;
 			}
 		}
 		CRYPT_Free(keyname);
 		RegQueryValueExA(key, "Name", NULL, &keytype, NULL, &len);
-		if (!len || keytype != REG_SZ || !(provname = CRYPT_Alloc(len))) goto error;
+		if (!len || keytype != REG_SZ)
+		{
+			RegCloseKey(key);
+			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+			goto error;
+		}
+		if(!(provname = CRYPT_Alloc(len)))
+		{
+			RegCloseKey(key);
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			goto error;
+		}
 		RegQueryValueExA(key, "Name", NULL, NULL, provname, &len);
 		RegCloseKey(key);
 	} else {
 		if ( !(provname = CRYPT_Alloc(strlen(pszProvider) +1)) )
+		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			goto error;
+		}
 		strcpy(provname, pszProvider);
 	}
 
@@ -318,26 +337,63 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	}
 
 	RegQueryValueExA(key, "Image Path", NULL, &keytype, NULL, &len);
-	if (keytype != REG_SZ || !(temp = CRYPT_Alloc(len))) goto error;
+	if (keytype != REG_SZ)
+	{
+		RegCloseKey(key);
+		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+		goto error;
+	}
+	if (!(temp = CRYPT_Alloc(len)))
+	{
+		RegCloseKey(key);
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		goto error;
+	}
 	RegQueryValueExA(key, "Image Path", NULL, NULL, temp, &len);
+
+	RegQueryValueExA(key, "Signature", NULL, &keytype, NULL, &len);
+	if (keytype != REG_BINARY)
+	{
+		RegCloseKey(key);
+		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+		goto error;
+	}
+	if (!(signature = CRYPT_Alloc(len)))
+	{
+		RegCloseKey(key);
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		goto error;
+	}
+	RegQueryValueExA(key, "Signature", NULL, NULL, signature, &len);
 
 	RegCloseKey(key);
 	len = ExpandEnvironmentStringsA(temp, NULL, 0);
 	if ( !(imagepath = CRYPT_Alloc(len)) )
 	{
+		CRYPT_Free(signature);
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		goto error;
 	}
-	if (!ExpandEnvironmentStringsA(temp, imagepath, len)) goto error;
+	if (!ExpandEnvironmentStringsA(temp, imagepath, len))
+	{
+		CRYPT_Free(signature);
+		/* ExpandEnvironmentStrings will call SetLastError */
+		goto error;
+	}
 
-#if 0
-	if (!CRYPT_VerifyImage(imagepath, signature)) goto error;
-#endif
+	if (!CRYPT_VerifyImage(imagepath, signature))
+	{
+		CRYPT_Free(signature);
+		SetLastError(NTE_SIGNATURE_FILE_BAD);
+		goto error;
+	}
 	pProv = CRYPT_LoadProvider(imagepath);
 	CRYPT_Free(temp);
 	CRYPT_Free(imagepath);
+	CRYPT_Free(signature);
 	if (!pProv) {
 		FIXME("Could not load crypto provider from DLL %s\n", debugstr_a(imagepath));
+		/* CRYPT_LoadProvider calls SetLastError */
 		goto error;
 	}
 	if (pProv->pFuncs->pCPAcquireContext(&pProv->hPrivate, (CHAR*)pszContainer, dwFlags, pProv->pVTable))
