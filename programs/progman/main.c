@@ -11,13 +11,7 @@
 #include "license.h"
 #include "progman.h"
 
-#ifdef WINELIB
-#include "options.h"
-#endif
-
 GLOBALS Globals;
-
-VOID WINAPI WriteOutProfiles16(void);
 
 static VOID MAIN_CreateGroups(void);
 static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
@@ -37,26 +31,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 {
   MSG      msg;
 
-#ifndef WINELIB
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.ico";
-#else /* Configuration in `wine.ini' */
-  {
-    CHAR buffer[MAX_PATHNAME_LEN], *p;
-
-    /* Redirect `progman.ini' */
-    PROFILE_GetWineIniString("progman", "progman.ini", "progman.ini", 
-			     buffer, sizeof(buffer));
-    Globals.lpszIniFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
-    memcpy(p, buffer, 1 + lstrlen(buffer));
-
-    /* Redirect `progman.ico' */
-    PROFILE_GetWineIniString("progman", "progman.ico", "progman.ico", 
-			     buffer, sizeof(buffer));
-    Globals.lpszIcoFile = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
-    memcpy(p, buffer, 1 + lstrlen(buffer));
-  }
-#endif
 
   /* Select Language */
   Globals.lpszLanguage = "En";
@@ -279,7 +255,7 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       WritePrivateProfileString("Settings", "AutoArrange",
 				Globals.bAutoArrange ? "1" : "0",
 				Globals.lpszIniFile);
-      WriteOutProfiles16();
+      WritePrivateProfileString(NULL,NULL,NULL,Globals.lpszIniFile); /* flush it */
       break;
 
     case PM_MIN_ON_RUN:
@@ -290,7 +266,7 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       WritePrivateProfileString("Settings", "MinOnRun",
 				Globals.bMinOnRun ? "1" : "0",
 				Globals.lpszIniFile);
-      WriteOutProfiles16();
+      WritePrivateProfileString(NULL,NULL,NULL,Globals.lpszIniFile); /* flush it */
       break;
 
     case PM_SAVE_SETTINGS:
@@ -301,7 +277,7 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       WritePrivateProfileString("Settings", "SaveSettings",
 				Globals.bSaveSettings ? "1" : "0",
 				Globals.lpszIniFile);
-      WriteOutProfiles16();
+      WritePrivateProfileString(NULL,NULL,NULL,Globals.lpszIniFile); /* flush it */
       break;
 
       /* Menu Windows */

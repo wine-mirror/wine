@@ -1,11 +1,9 @@
-DEFS      = -DWINELIB -DSTRICT
+DEFS      = -DSTRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = progman
-IMPORTS   = shlwapi shell32 comdlg32 ole32 rpcrt4 winspool.drv user32 gdi32 kernel32 ntdll
+MODULE    = progman
 
 LICENSELANG = En
 
@@ -19,25 +17,8 @@ C_SRCS = \
 	string.c \
 	$(LICENSELANG:%=License_%.c)
 
-SPEC_SRCS = progman.spec
-
 RC_SRCS = rsrc.rc
 
-all: $(PROGRAMS)
-
-@MAKE_RULES@
-
-progman: $(OBJS)
-	$(CC) -o progman $(OBJS) $(DLL_LINK) $(LIBS)
-
-$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
-
-install::
-	$(INSTALL_PROGRAM) progman $(bindir)/progman
-
-uninstall::
-	$(RM) $(bindir)/progman
-
-checklink::
+@MAKE_PROG_RULES@
 
 ### Dependencies:
