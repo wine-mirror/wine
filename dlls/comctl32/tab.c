@@ -27,6 +27,10 @@
 #define ROUND_CORNER_SIZE       2
 #define FOCUS_RECT_HOFFSET      2
 #define FOCUS_RECT_VOFFSET      1
+#define DISPLAY_AREA_PADDINGX   5
+#define DISPLAY_AREA_PADDINGY   5
+#define CONTROL_BORDER_SIZEX    2
+#define CONTROL_BORDER_SIZEY    2
 
 #define TAB_GetInfoPtr(hwnd) ((TAB_INFO *)GetWindowLongA(hwnd,0))
 
@@ -423,14 +427,67 @@ TAB_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
   return 0;
 }
 
-static LRESULT
-TAB_AdjustRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
+/******************************************************************************
+ * TAB_AdjustRect
+ *
+ * Calculates the tab control's display area given the windows rectangle or
+ * the window rectangle given the requested display rectangle.
+ */
+static LRESULT TAB_AdjustRect(
+  HWND   hwnd, 
+  WPARAM fLarger, 
+  LPRECT prc)
 {
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
 
-  if (wParam==TRUE) {
-    FIXME (tab,"Should set display rectangle\n");
-  } else {
-    FIXME (tab,"Should set window rectangle\n");
+  if (fLarger) 
+  {
+    /*
+     * Go from display rectangle
+     */
+
+    /*
+     * Add the height of the tabs.
+     */
+    if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BOTTOM) 
+      prc->bottom += infoPtr->tabHeight;
+    else
+      prc->top -= infoPtr->tabHeight;
+
+    /*
+     * Inflate the rectangle for the padding
+     */
+    InflateRect(prc, DISPLAY_AREA_PADDINGX, DISPLAY_AREA_PADDINGY);
+
+    /*
+     * Inflate for the border
+     */
+    InflateRect(prc, CONTROL_BORDER_SIZEX, CONTROL_BORDER_SIZEX);
+  }
+  else 
+  {
+    /*
+     * Go from window rectangle.
+     */
+  
+    /*
+     * Deflate the rectangle for the border
+     */
+    InflateRect(prc, -CONTROL_BORDER_SIZEX, -CONTROL_BORDER_SIZEX);
+
+    /*
+     * Deflate the rectangle for the padding
+     */
+    InflateRect(prc, -DISPLAY_AREA_PADDINGX, -DISPLAY_AREA_PADDINGY);
+
+    /*
+     * Remove the height of the tabs.
+     */
+    if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BOTTOM) 
+      prc->bottom -= infoPtr->tabHeight;
+    else
+      prc->top += infoPtr->tabHeight;
+
   }
   
   return 0;
@@ -1302,9 +1359,9 @@ TAB_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     SetWindowPos (hwnd, 0, parent_rect.left, parent_rect.top,
             cx, cy, uPosFlags | SWP_NOZORDER);
-  } else {*/
+  } else {
     FIXME (tab,"WM_SIZE flag %x %lx not handled\n", wParam, lParam);
-/*  } */
+  } */
 
   /*
    * Recompute the size/position of the tabs.
@@ -1450,7 +1507,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return 0;
       
     case TCM_ADJUSTRECT:
-      return TAB_AdjustRect (hwnd, wParam, lParam);
+      return TAB_AdjustRect (hwnd, (BOOL)wParam, (LPRECT)lParam);
       
     case TCM_SETITEMSIZE:
       FIXME (tab, "Unimplemented msg TCM_SETITEMSIZE\n");
