@@ -52,6 +52,7 @@ typedef int Status;
 
 struct tagBITMAPOBJ;
 struct tagCURSORICONINFO;
+struct dce;
 
 extern void wine_tsx11_lock(void);
 extern void wine_tsx11_unlock(void);
@@ -100,6 +101,7 @@ typedef struct
     int           textPixel;
     int           depth;       /* bit depth of the DC */
     int           exposures;   /* count of graphics exposures operations */
+    struct dce   *dce;         /* opaque pointer to DCE */
     XVisualInfo  *visuals[MAX_PIXELFORMATS];
     int           used_visuals;
     int           current_pf;
@@ -482,6 +484,8 @@ enum x11drv_escape_codes
     X11DRV_SET_DRAWABLE,     /* set current drawable for a DC */
     X11DRV_START_EXPOSURES,  /* start graphics exposures */
     X11DRV_END_EXPOSURES,    /* end graphics exposures */
+    X11DRV_GET_DCE,          /* get the DCE pointer */
+    X11DRV_SET_DCE,          /* set the DCE pointer */
 };
 
 struct x11drv_escape_set_drawable
@@ -491,6 +495,12 @@ struct x11drv_escape_set_drawable
     int                      mode;         /* ClipByChildren or IncludeInferiors */
     POINT                    org;          /* origin of DC relative to drawable */
     POINT                    drawable_org; /* origin of drawable relative to screen */
+};
+
+struct x11drv_escape_set_dce
+{
+    enum x11drv_escape_codes code;            /* escape code (X11DRV_SET_DRAWABLE) */
+    struct dce              *dce;             /* pointer to DCE (opaque ptr for GDI) */
 };
 
 /**************************************************************************
@@ -504,7 +514,7 @@ struct x11drv_thread_data
     int      process_event_count;  /* recursion count for event processing */
     Cursor   cursor;               /* current cursor */
     Window   cursor_window;        /* current window that contains the cursor */
-    Window   grab_window;          /* window that currentl grabs the mouse */
+    Window   grab_window;          /* window that currently grabs the mouse */
     HWND     last_focus;           /* last window that had focus */
     XIM      xim;                  /* input method */
     Window   selection_wnd;        /* window used for selection interactions */
