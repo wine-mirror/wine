@@ -2580,9 +2580,10 @@ LRESULT WINAPI ListBoxWndProc( HWND hwnd, UINT msg,
     case WM_ERASEBKGND:
         if (IS_OWNERDRAW(descr))
         {
-            RECT rect = { 0, 0, descr->width, descr->height };
+            RECT rect;
             HBRUSH hbrush = SendMessageA( descr->owner, WM_CTLCOLORLISTBOX,
                                               wParam, (LPARAM)wnd->hwndSelf );
+            GetClientRect(hwnd, &rect);
             if (hbrush) FillRect( (HDC)wParam, &rect, hbrush );
         }
         retvalue =1;
