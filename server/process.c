@@ -38,8 +38,7 @@ struct handle_entry
     unsigned int   access;
 };
 
-/* process structure; not much for now... */
-
+/* process structure */
 struct process
 {
     struct object        obj;             /* object header */
@@ -57,10 +56,12 @@ struct process
     int                  affinity;        /* process affinity mask */
     struct object       *console_in;      /* console input */
     struct object       *console_out;     /* console output */
+    struct new_process_request *info;     /* startup info (freed after startup) */
 };
 
-static struct process *first_process;
-static struct process *initial_process;
+
+static struct process initial_process;
+static struct process *first_process = &initial_process;
 static int running_processes;
 
 #define MIN_HANDLE_ENTRIES  32
@@ -87,21 +88,12 @@ static const struct object_ops process_ops =
     process_destroy
 };
 
-/* create a new process */
-struct process *create_process(void)
+
+/* initialization of a process structure */
+static void init_process( struct process *process )
 {
-    struct process *process, *parent;
-
-    if (!(process = mem_alloc( sizeof(*process) ))) return NULL;
-
-    parent = current ? current->process : NULL;
-    if (!copy_handle_table( process, parent ))
-    {
-        free( process );
-        return NULL;
-    }
     init_object( &process->obj, &process_ops, NULL );
-    process->next            = first_process;
+    process->next            = NULL;
     process->prev            = NULL;
     process->thread_list     = NULL;
     process->exit_code       = 0x103;  /* STILL_ACTIVE */
@@ -110,24 +102,59 @@ struct process *create_process(void)
     process->affinity        = 1;
     process->console_in      = NULL;
     process->console_out     = NULL;
-    if (parent)
-    {
-        if (parent->console_in) process->console_in = grab_object( parent->console_in );
-        if (parent->console_out) process->console_out = grab_object( parent->console_out );
-    }
-
-    if (first_process) first_process->prev = process;
-    first_process = process;
-    if (!initial_process)
-    {
-        initial_process = process;
-        grab_object( initial_process ); /* so that we never free it */
-    }
-
+    process->info            = NULL;
     gettimeofday( &process->start_time, NULL );
     /* alloc a handle for the process itself */
     alloc_handle( process, process, PROCESS_ALL_ACCESS, 0 );
+}
+
+/* create the initial process */
+struct process *create_initial_process(void)
+{
+    copy_handle_table( &initial_process, NULL );
+    init_process( &initial_process );
+    grab_object( &initial_process ); /* so that we never free it */
+    return &initial_process;
+
+}
+
+/* create a new process */
+struct process *create_process( struct new_process_request *req )
+{
+    struct process *process = NULL;
+    struct process *parent = current->process;
+
+    if (!(process = mem_alloc( sizeof(*process) ))) return NULL;
+    if (!copy_handle_table( process, req->inherit_all ? parent : NULL ))
+    {
+        free( process );
+        return NULL;
+    }
+    init_process( process );
+    if (parent->console_in) process->console_in = grab_object( parent->console_in );
+    if (parent->console_out) process->console_out = grab_object( parent->console_out );
+
+    if (!(process->info = mem_alloc( sizeof(*process->info) ))) goto error;
+    memcpy( process->info, req, sizeof(*req) );
+
+    if (!req->inherit_all && !(req->start_flags & STARTF_USESTDHANDLES))
+    {
+        process->info->hstdin  = duplicate_handle( parent, req->hstdin, process,
+                                                   0, TRUE, DUPLICATE_SAME_ACCESS );
+        process->info->hstdout = duplicate_handle( parent, req->hstdout, process,
+                                                   0, TRUE, DUPLICATE_SAME_ACCESS );
+        process->info->hstderr = duplicate_handle( parent, req->hstderr, process,
+                                                   0, TRUE, DUPLICATE_SAME_ACCESS );
+    }
+
+    process->next = first_process;
+    first_process->prev = process;
+    first_process = process;
     return process;
+
+ error:
+    release_object( process );
+    return NULL;
 }
 
 /* destroy a process when its refcount is 0 */
@@ -135,7 +162,7 @@ static void process_destroy( struct object *obj )
 {
     struct process *process = (struct process *)obj;
     assert( obj->ops == &process_ops );
-    assert( process != initial_process );
+    assert( process != &initial_process );
 
     /* we can't have a thread remaining */
     assert( !process->thread_list );
@@ -144,6 +171,7 @@ static void process_destroy( struct object *obj )
     else first_process = process->next;
     free_console( process );
     free_handles( process );
+    if (process->info) free( process->info );
     if (debug_level) memset( process, 0xbb, sizeof(process) );  /* catch errors */
     free( process );
 }
@@ -163,6 +191,7 @@ static int process_signaled( struct object *obj, struct thread *thread )
     return !process->running_threads;
 }
 
+
 /* get a process from an id (and increment the refcount) */
 struct process *get_process_from_id( void *id )
 {
@@ -178,6 +207,20 @@ struct process *get_process_from_handle( int handle, unsigned int access )
 {
     return (struct process *)get_handle_obj( current->process, handle,
                                              access, &process_ops );
+}
+
+/* retrieve the initialization info for a new process */
+int get_process_init_info( struct process *process, struct init_process_reply *reply )
+{
+    struct new_process_request *info;
+    if (!(info = process->info)) return 0;
+    process->info = NULL;
+    reply->start_flags = info->start_flags;
+    reply->hstdin      = info->hstdin;
+    reply->hstdout     = info->hstdout;
+    reply->hstderr     = info->hstderr;
+    free( info );
+    return 1;
 }
 
 /* a process has been killed (i.e. its last thread died) */
@@ -296,7 +339,7 @@ static struct handle_entry *get_handle( struct process *process, int handle )
     if (HANDLE_IS_GLOBAL(handle))
     {
         handle = HANDLE_GLOBAL_TO_LOCAL(handle);
-        process = initial_process;
+        process = &initial_process;
     }
     handle--;  /* handles start at 1 */
     if ((handle < 0) || (handle > process->handle_last)) goto error;
@@ -383,7 +426,7 @@ int close_handle( struct process *process, int handle )
     if (HANDLE_IS_GLOBAL(handle))
     {
         handle = HANDLE_GLOBAL_TO_LOCAL(handle);
-        process = initial_process;
+        process = &initial_process;
     }
     if (!(entry = get_handle( process, handle ))) return 0;
     if (entry->access & RESERVED_CLOSE_PROTECT) return 0;  /* FIXME: error code */
@@ -449,7 +492,7 @@ int duplicate_handle( struct process *src, int src_handle, struct process *dst,
     if (!entry) return -1;
 
     if (options & DUP_HANDLE_SAME_ACCESS) access = entry->access;
-    if (options & DUP_HANDLE_MAKE_GLOBAL) dst = initial_process;
+    if (options & DUP_HANDLE_MAKE_GLOBAL) dst = &initial_process;
     access &= ~RESERVED_ALL;
     res = alloc_handle( dst, entry->ptr, access, inherit );
     if (options & DUP_HANDLE_MAKE_GLOBAL) res = HANDLE_LOCAL_TO_GLOBAL(res);

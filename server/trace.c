@@ -6,21 +6,36 @@
 #include "server.h"
 #include "server/thread.h"
 
+static int dump_new_process_request( struct new_process_request *req, int len )
+{
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " inherit_all=%d,", req->inherit_all );
+    fprintf( stderr, " start_flags=%d,", req->start_flags );
+    fprintf( stderr, " hstdin=%d,", req->hstdin );
+    fprintf( stderr, " hstdout=%d,", req->hstdout );
+    fprintf( stderr, " hstderr=%d", req->hstderr );
+    return (int)sizeof(*req);
+}
+
+static int dump_new_process_reply( struct new_process_reply *req, int len )
+{
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
 static int dump_new_thread_request( struct new_thread_request *req, int len )
 {
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " suspend=%d,", req->suspend );
-    fprintf( stderr, " tinherit=%d,", req->tinherit );
-    fprintf( stderr, " pinherit=%d", req->pinherit );
+    fprintf( stderr, " inherit=%d", req->inherit );
     return (int)sizeof(*req);
 }
 
 static int dump_new_thread_reply( struct new_thread_reply *req, int len )
 {
     fprintf( stderr, " tid=%p,", req->tid );
-    fprintf( stderr, " thandle=%d,", req->thandle );
-    fprintf( stderr, " pid=%p,", req->pid );
-    fprintf( stderr, " phandle=%d", req->phandle );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
@@ -30,11 +45,25 @@ static int dump_set_debug_request( struct set_debug_request *req, int len )
     return (int)sizeof(*req);
 }
 
+static int dump_init_process_request( struct init_process_request *req, int len )
+{
+    fprintf( stderr, " dummy=%d", req->dummy );
+    return (int)sizeof(*req);
+}
+
+static int dump_init_process_reply( struct init_process_reply *req, int len )
+{
+    fprintf( stderr, " start_flags=%d,", req->start_flags );
+    fprintf( stderr, " hstdin=%d,", req->hstdin );
+    fprintf( stderr, " hstdout=%d,", req->hstdout );
+    fprintf( stderr, " hstderr=%d", req->hstderr );
+    return (int)sizeof(*req);
+}
+
 static int dump_init_thread_request( struct init_thread_request *req, int len )
 {
-    fprintf( stderr, " unix_pid=%d,", req->unix_pid );
-    fprintf( stderr, " cmd_line=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
-    return len;
+    fprintf( stderr, " unix_pid=%d", req->unix_pid );
+    return (int)sizeof(*req);
 }
 
 static int dump_terminate_process_request( struct terminate_process_request *req, int len )
@@ -84,7 +113,7 @@ static int dump_get_thread_info_request( struct get_thread_info_request *req, in
 
 static int dump_get_thread_info_reply( struct get_thread_info_reply *req, int len )
 {
-    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " tid=%p,", req->tid );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d", req->priority );
     return (int)sizeof(*req);
@@ -600,10 +629,14 @@ struct dumper
 
 static const struct dumper dumpers[REQ_NB_REQUESTS] =
 {
+    { (int(*)(void *,int))dump_new_process_request,
+      (void(*)())dump_new_process_reply },
     { (int(*)(void *,int))dump_new_thread_request,
       (void(*)())dump_new_thread_reply },
     { (int(*)(void *,int))dump_set_debug_request,
       (void(*)())0 },
+    { (int(*)(void *,int))dump_init_process_request,
+      (void(*)())dump_init_process_reply },
     { (int(*)(void *,int))dump_init_thread_request,
       (void(*)())0 },
     { (int(*)(void *,int))dump_terminate_process_request,
@@ -708,8 +741,10 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
 
 static const char * const req_names[REQ_NB_REQUESTS] =
 {
+    "new_process",
     "new_thread",
     "set_debug",
+    "init_process",
     "init_thread",
     "terminate_process",
     "terminate_thread",

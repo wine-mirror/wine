@@ -101,46 +101,63 @@ void call_kill_handler( struct thread *thread, int exit_code )
 }
 
 
+/* create a new process */
+DECL_HANDLER(new_process)
+{
+    struct new_process_reply reply;
+    struct process *process;
+
+    if ((process = create_process( req )))
+    {
+        reply.pid    = process;
+        reply.handle = alloc_handle( current->process, process,
+                                     PROCESS_ALL_ACCESS, req->inherit );
+        release_object( process );
+    }
+    else
+    {
+        reply.handle = -1;
+        reply.pid    = NULL;
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
 /* create a new thread */
 DECL_HANDLER(new_thread)
 {
     struct new_thread_reply reply;
-    struct thread *new_thread;
-    int new_fd, err;
+    int new_fd;
 
-    if ((new_fd = dup(fd)) == -1)
+    if ((new_fd = dup(fd)) != -1)
     {
-        new_thread = NULL;
-        err = ERROR_TOO_MANY_OPEN_FILES;
-        goto done;
-    }
-    if (!(new_thread = create_thread( new_fd, req->pid, req->suspend,
-                                      req->tinherit, req->pinherit,
-                                      &reply.thandle, &reply.phandle )))
-    {
-        close( new_fd );
-        err = ERROR_OUTOFMEMORY;
-        goto done;
-    }
-    reply.tid = new_thread;
-    reply.pid = new_thread->process;
-    err = ERROR_SUCCESS;
-
- done:
-    if (!current)
-    {
-        /* first client doesn't have a current */
-        struct iovec vec = { &reply, sizeof(reply) };
-        send_reply_v( get_initial_client_fd(), err, -1, &vec, 1 );
+        reply.tid = create_thread( new_fd, req->pid, req->suspend,
+                                   req->inherit, &reply.handle );
+        if (!reply.tid) close( new_fd );
     }
     else
-    {
-        SET_ERROR( err );
-        send_reply( current, -1, 1, &reply, sizeof(reply) );
-    }
+        SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
+
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
-/* create a new thread */
+/* initialize a new process */
+DECL_HANDLER(init_process)
+{
+    struct init_process_reply reply;
+    if (current->state != RUNNING)
+    {
+        fatal_protocol_error( "init_process: init_thread not called yet\n" );
+        return;
+    }
+    if (!get_process_init_info( current->process, &reply ))
+    {
+        fatal_protocol_error( "init_process: called twice\n" );
+        return;
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* initialize a new thread */
 DECL_HANDLER(init_thread)
 {
     if (current->state != STARTING)
@@ -150,12 +167,7 @@ DECL_HANDLER(init_thread)
     }
     current->state    = RUNNING;
     current->unix_pid = req->unix_pid;
-    if (!(current->name = mem_alloc( len + 1 ))) goto done;
-    memcpy( current->name, data, len );
-    current->name[len] = '\0';
-    CLEAR_ERROR();
- done:
-    if (current->suspend > 0 && current->unix_pid)
+    if (current->suspend > 0)
         kill( current->unix_pid, SIGSTOP );
     send_reply( current, -1, 0 );
 }

@@ -40,20 +40,34 @@ struct cmsg_fd
 /* which case it isn't necessary to define a structure.      */
 
 
+/* Create a new process from the context of the parent */
+struct new_process_request
+{
+    int          inherit;      /* inherit flag */
+    int          inherit_all;  /* inherit all handles from parent */
+    int          start_flags;  /* flags from startup info */
+    int          hstdin;       /* handle for stdin */
+    int          hstdout;      /* handle for stdout */
+    int          hstderr;      /* handle for stderr */
+};
+struct new_process_reply
+{
+    void*        pid;          /* process id */
+    int          handle;       /* process handle (in the current process) */
+};
+
+
 /* Create a new thread from the context of the parent */
 struct new_thread_request
 {
-    void*        pid;          /* process id for the new thread (or 0 if none yet) */
+    void*        pid;          /* process id for the new thread */
     int          suspend;      /* new thread should be suspended on creation */ 
-    int          tinherit;     /* inherit flag for thread handle */
-    int          pinherit;     /* inherit flag for process handle */
+    int          inherit;      /* inherit flag */
 };
 struct new_thread_reply
 {
     void*        tid;          /* thread id */
-    int          thandle;      /* thread handle (in the current process) */
-    void*        pid;          /* process id (created if necessary) */
-    int          phandle;      /* process handle (in the current process) */
+    int          handle;       /* thread handle (in the current process) */
 };
 
 
@@ -64,11 +78,24 @@ struct set_debug_request
 };
 
 
+/* Initialize a process; called from the new process context */
+struct init_process_request
+{
+    int          dummy;
+};
+struct init_process_reply
+{
+    int          start_flags;  /* flags from startup info */
+    int          hstdin;       /* handle for stdin */
+    int          hstdout;      /* handle for stdout */
+    int          hstderr;      /* handle for stderr */
+};
+
+
 /* Initialize a thread; called from the child after fork()/clone() */
 struct init_thread_request
 {
     int          unix_pid;     /* Unix pid of new thread */
-    char         cmd_line[0];  /* Thread command line */
 };
 
 
@@ -122,7 +149,7 @@ struct get_thread_info_request
 };
 struct get_thread_info_reply
 {
-    void*        pid;          /* server thread id */
+    void*        tid;          /* server thread id */
     int          exit_code;    /* thread exit code */
     int          priority;     /* thread priority level */
 };
@@ -657,11 +684,9 @@ extern void CLIENT_SendRequest( enum request req, int pass_fd,
 extern unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
                                       int n, ... /* arg_1, len_1, etc. */ );
 extern unsigned int CLIENT_WaitSimpleReply( void *reply, int len, int *passed_fd );
+extern int CLIENT_InitServer(void);
 
 struct _THDB;
-extern int CLIENT_NewThread( struct _THDB *thdb, 
-                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                             int *thandle, int *phandle );
 extern int CLIENT_SetDebug( int level );
 extern int CLIENT_InitThread(void);
 #endif  /* __WINE_SERVER__ */

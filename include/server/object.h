@@ -112,10 +112,8 @@ extern void select_loop(void);
 
 /* socket functions */
 
-extern void server_init( int fd );
 extern int add_client( int client_fd, struct thread *self );
 extern void remove_client( int client_fd, int exit_code );
-extern int get_initial_client_fd(void);
 extern void set_timeout( int client_fd, struct timeval *when );
 extern int send_reply_v( int client_fd, int type, int pass_fd,
                          struct iovec *vec, int veclen );

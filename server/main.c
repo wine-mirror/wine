@@ -12,6 +12,7 @@
 
 #include "server.h"
 #include "server/object.h"
+#include "server/thread.h"
 
 int main( int argc, char *argv[] )
 {
@@ -26,8 +27,7 @@ int main( int argc, char *argv[] )
     debug_level = 1;
 
     if (debug_level) fprintf( stderr, "Server: starting (pid=%d)\n", getpid() );
-    server_init( fd );
-    select_loop();
+    create_initial_thread( fd );
     if (debug_level) fprintf( stderr, "Server: exiting (pid=%d)\n", getpid() );
     exit(0);
 

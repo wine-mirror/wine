@@ -5,8 +5,10 @@
 
 enum request
 {
+    REQ_NEW_PROCESS,
     REQ_NEW_THREAD,
     REQ_SET_DEBUG,
+    REQ_INIT_PROCESS,
     REQ_INIT_THREAD,
     REQ_TERMINATE_PROCESS,
     REQ_TERMINATE_THREAD,
@@ -65,8 +67,10 @@ enum request
 #define DECL_HANDLER(name) \
     static void req_##name( struct name##_request *req, void *data, int len, int fd )
 
+DECL_HANDLER(new_process);
 DECL_HANDLER(new_thread);
 DECL_HANDLER(set_debug);
+DECL_HANDLER(init_process);
 DECL_HANDLER(init_thread);
 DECL_HANDLER(terminate_process);
 DECL_HANDLER(terminate_thread);
@@ -122,8 +126,10 @@ static const struct handler {
     void       (*handler)();
     unsigned int min_size;
 } req_handlers[REQ_NB_REQUESTS] = {
+    { (void(*)())req_new_process, sizeof(struct new_process_request) },
     { (void(*)())req_new_thread, sizeof(struct new_thread_request) },
     { (void(*)())req_set_debug, sizeof(struct set_debug_request) },
+    { (void(*)())req_init_process, sizeof(struct init_process_request) },
     { (void(*)())req_init_thread, sizeof(struct init_thread_request) },
     { (void(*)())req_terminate_process, sizeof(struct terminate_process_request) },
     { (void(*)())req_terminate_thread, sizeof(struct terminate_thread_request) },

@@ -71,32 +71,15 @@ static const struct object_ops thread_ops =
     destroy_thread
 };
 
-static struct thread *first_thread;
+static struct thread initial_thread;
+static struct thread *first_thread = &initial_thread;
 
-
-/* create a new thread */
-struct thread *create_thread( int fd, void *pid, int suspend,
-                              int thread_inherit, int process_inherit,
-                              int *thread_handle, int *process_handle )
+/* initialization of a thread structure */
+static void init_thread( struct thread *thread, int fd )
 {
-    struct thread *thread;
-    struct process *process;
-
-    if (!(thread = mem_alloc( sizeof(*thread) ))) return NULL;
-
-    if (pid) process = get_process_from_id( pid );
-    else process = create_process();
-    if (!process)
-    {
-        free( thread );
-        return NULL;
-    }
-
     init_object( &thread->obj, &thread_ops, NULL );
     thread->client_fd = fd;
-    thread->process   = process;
     thread->unix_pid  = 0;  /* not known yet */
-    thread->name      = NULL;
     thread->mutex     = NULL;
     thread->wait      = NULL;
     thread->apc       = NULL;
@@ -104,40 +87,58 @@ struct thread *create_thread( int fd, void *pid, int suspend,
     thread->error     = 0;
     thread->state     = STARTING;
     thread->exit_code = 0x103;  /* STILL_ACTIVE */
-    thread->next      = first_thread;
+    thread->next      = NULL;
     thread->prev      = NULL;
     thread->priority  = THREAD_PRIORITY_NORMAL;
     thread->affinity  = 1;
-    thread->suspend   = suspend? 1 : 0;
+    thread->suspend   = 0;
+}
 
-    if (first_thread) first_thread->prev = thread;
+/* create the initial thread and start the main server loop */
+void create_initial_thread( int fd )
+{
+    current = &initial_thread;
+    init_thread( &initial_thread, fd );
+    initial_thread.process = create_initial_process(); 
+    add_process_thread( initial_thread.process, &initial_thread );
+    add_client( fd, &initial_thread );
+    select_loop();
+}
+
+/* create a new thread */
+struct thread *create_thread( int fd, void *pid, int suspend, int inherit, int *handle )
+{
+    struct thread *thread;
+    struct process *process;
+
+    if (!(thread = mem_alloc( sizeof(*thread) ))) return NULL;
+
+    if (!(process = get_process_from_id( pid )))
+    {
+        free( thread );
+        return NULL;
+    }
+    init_thread( thread, fd );
+    thread->process = process;
+
+    if (suspend) thread->suspend++;
+
+    thread->next = first_thread;
+    first_thread->prev = thread;
     first_thread = thread;
     add_process_thread( process, thread );
 
-    *thread_handle = *process_handle = -1;
-    if (current)
+    if ((*handle = alloc_handle( current->process, thread,
+                                 THREAD_ALL_ACCESS, inherit )) == -1) goto error;
+    if (add_client( fd, thread ) == -1)
     {
-        if ((*thread_handle = alloc_handle( current->process, thread,
-                                            THREAD_ALL_ACCESS, thread_inherit )) == -1)
-            goto error;
+        SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
+        goto error;
     }
-    if (current && !pid)
-    {
-        if ((*process_handle = alloc_handle( current->process, process,
-                                             PROCESS_ALL_ACCESS, process_inherit )) == -1)
-            goto error;
-    }
-
-    if (add_client( fd, thread ) == -1) goto error;
-
     return thread;
 
  error:
-    if (current)
-    {
-        close_handle( current->process, *thread_handle );
-        close_handle( current->process, *process_handle );
-    }
+    if (current) close_handle( current->process, *handle );
     remove_process_thread( process, thread );
     release_object( thread );
     return NULL;
@@ -153,7 +154,6 @@ static void destroy_thread( struct object *obj )
     if (thread->next) thread->next->prev = thread->prev;
     if (thread->prev) thread->prev->next = thread->next;
     else first_thread = thread->next;
-    if (thread->name) free( thread->name );
     if (thread->apc) free( thread->apc );
     if (debug_level) memset( thread, 0xaa, sizeof(thread) );  /* catch errors */
     free( thread );
@@ -165,8 +165,8 @@ static void dump_thread( struct object *obj, int verbose )
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
-    fprintf( stderr, "Thread pid=%d fd=%d name='%s'\n",
-             thread->unix_pid, thread->client_fd, thread->name );
+    fprintf( stderr, "Thread pid=%d fd=%d\n",
+             thread->unix_pid, thread->client_fd );
 }
 
 static int thread_signaled( struct object *obj, struct thread *thread )
@@ -195,7 +195,7 @@ struct thread *get_thread_from_handle( int handle, unsigned int access )
 void get_thread_info( struct thread *thread,
                       struct get_thread_info_reply *reply )
 {
-    reply->pid       = thread;
+    reply->tid       = thread;
     reply->exit_code = thread->exit_code;
     reply->priority  = thread->priority;
 }

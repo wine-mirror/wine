@@ -43,16 +43,14 @@ struct thread
     int                 affinity;  /* affinity mask */
     int                 suspend;   /* suspend count */
     enum request        last_req;  /* last request received (for debugging) */
-    char               *name;
 };
 
 extern struct thread *current;
 
 /* thread functions */
 
-extern struct thread *create_thread( int fd, void *pid, int suspend, 
-                                     int thread_inherit, int process_inherit,
-                                     int *thread_handle, int *process_handle );
+extern void create_initial_thread( int fd );
+extern struct thread *create_thread( int fd, void *pid, int suspend, int inherit, int *handle );
 extern struct thread *get_thread_from_id( void *id );
 extern struct thread *get_thread_from_handle( int handle, unsigned int access );
 extern void get_thread_info( struct thread *thread,

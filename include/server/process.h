@@ -27,9 +27,11 @@ struct process_snapshot
 
 /* process functions */
 
-extern struct process *create_process(void);
+extern struct process *create_initial_process(void);
+extern struct process *create_process( struct new_process_request *req );
 extern struct process *get_process_from_id( void *id );
 extern struct process *get_process_from_handle( int handle, unsigned int access );
+extern int get_process_init_info( struct process *process, struct init_process_reply *reply );
 extern void add_process_thread( struct process *process,
                                 struct thread *thread );
 extern void remove_process_thread( struct process *process,

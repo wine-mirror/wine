@@ -47,7 +47,6 @@ struct client
     struct thread     *self;         /* client thread (opaque pointer) */
 };
 
-static int initial_client_fd;               /* fd of the first client */
 
 /* exit code passed to remove_client */
 #define OUT_OF_MEMORY  -1
@@ -258,15 +257,6 @@ static const struct select_ops client_ops =
 /*******************************************************************/
 /* server-side exported functions                                  */
 
-/* server initialization */
-void server_init( int fd )
-{
-    /* special magic to create the initial thread */
-    initial_client_fd = fd;
-    add_client( initial_client_fd, NULL );
-}
-
-
 /* add a client */
 int add_client( int client_fd, struct thread *self )
 {
@@ -299,20 +289,12 @@ void remove_client( int client_fd, int exit_code )
     call_kill_handler( client->self, exit_code );
 
     remove_select_user( client_fd );
-    if (initial_client_fd == client_fd) initial_client_fd = -1;
     close( client_fd );
 
     /* Purge messages */
     if (client->data) free( client->data );
     if (client->pass_fd != -1) close( client->pass_fd );
     free( client );
-}
-
-/* return the fd of the initial client */
-int get_initial_client_fd(void)
-{
-    assert( initial_client_fd != -1 );
-    return initial_client_fd;
 }
 
 /* send a reply to a client */
