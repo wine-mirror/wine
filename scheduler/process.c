@@ -19,7 +19,6 @@
 #include "main.h"
 #include "module.h"
 #include "neexe.h"
-#include "dosexe.h"
 #include "file.h"
 #include "global.h"
 #include "heap.h"
@@ -42,6 +41,7 @@ PDB current_process;
 static char **main_exe_argv;
 static char main_exe_name[MAX_PATH];
 static HANDLE main_exe_file = INVALID_HANDLE_VALUE;
+static HMODULE main_module;
 
 unsigned int server_startticks;
 
@@ -317,27 +317,34 @@ static void start_process(void)
 {
     int debugged, console_app;
     LPTHREAD_START_ROUTINE entry;
-    HMODULE module = current_process.exe_modref->module;
-
-    /* Increment EXE refcount */
-    current_process.exe_modref->refCount++;
+    WINE_MODREF *wm;
 
     /* build command line */
     if (!(current_envdb.cmd_line = build_command_line( main_exe_argv ))) goto error;
 
-    /* Retrieve entry point address */
-    entry = (LPTHREAD_START_ROUTINE)((char*)module + PE_HEADER(module)->OptionalHeader.AddressOfEntryPoint);
-    console_app = (PE_HEADER(module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
+    /* create 32-bit module for main exe */
+    if (!(main_module = BUILTIN32_LoadExeModule( main_module ))) goto error;
 
+    /* use original argv[0] as name for the main module */
+    if (!main_exe_name[0])
+    {
+        if (!GetLongPathNameA( full_argv0, main_exe_name, sizeof(main_exe_name) ))
+            lstrcpynA( main_exe_name, full_argv0, sizeof(main_exe_name) );
+    }
+
+    /* Retrieve entry point address */
+    entry = (LPTHREAD_START_ROUTINE)((char*)main_module +
+                                     PE_HEADER(main_module)->OptionalHeader.AddressOfEntryPoint);
+    console_app = (PE_HEADER(main_module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
     if (console_app) current_process.flags |= PDB32_CONSOLE_PROC;
 
     /* Signal the parent process to continue */
     SERVER_START_REQ
     {
         struct init_process_done_request *req = server_alloc_req( sizeof(*req), 0 );
-        req->module = (void *)module;
+        req->module = (void *)main_module;
         req->entry  = entry;
-        req->name   = &current_process.exe_modref->filename;
+        req->name   = main_exe_name;
         req->gui    = !console_app;
         server_call( REQ_INIT_PROCESS_DONE );
         debugged = req->debugged;
@@ -348,6 +355,11 @@ static void start_process(void)
      * send exceptions to the debugger before the create process event that
      * is sent by REQ_INIT_PROCESS_DONE */
     if (!SIGNAL_Init()) goto error;
+
+    /* create the main modref and load dependencies */
+    if (!(wm = PE_CreateModule( main_module, main_exe_name, 0, main_exe_file, FALSE )))
+        goto error;
+    wm->refCount++;
 
     /* Load the system dlls */
     if (!load_system_dlls()) goto error;
@@ -373,50 +385,13 @@ static void start_process(void)
 
 
 /***********************************************************************
- *           PROCESS_Start
- *
- * Startup routine of a new Win32 process once the main module has been loaded.
- */
-static void PROCESS_Start( HMODULE main_module, HFILE hFile, LPCSTR filename ) WINE_NORETURN;
-static void PROCESS_Start( HMODULE main_module, HFILE hFile, LPCSTR filename )
-{
-    if (!filename)
-    {
-        /* if no explicit filename, use argv[0] */
-        filename = main_exe_name;
-        if (!GetLongPathNameA( full_argv0, main_exe_name, sizeof(main_exe_name) ))
-            lstrcpynA( main_exe_name, full_argv0, sizeof(main_exe_name) );
-    }
-
-    /* load main module */
-    if (PE_HEADER(main_module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
-        ExitProcess( ERROR_BAD_EXE_FORMAT );
-
-    /* Create 32-bit MODREF */
-    if (!PE_CreateModule( main_module, filename, 0, hFile, FALSE ))
-        goto error;
-
-    /* allocate main thread stack */
-    if (!THREAD_InitStack( NtCurrentTeb(),
-                           PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve, TRUE ))
-        goto error;
-
-    /* switch to the new stack */
-    SYSDEPS_SwitchToThreadStack( start_process );
-
- error:
-    ExitProcess( GetLastError() );
-}
-
-
-/***********************************************************************
  *           PROCESS_InitWine
  *
  * Wine initialisation: load and start the main exe file.
  */
 void PROCESS_InitWine( int argc, char *argv[] )
 {
-    DWORD type;
+    DWORD stack_size = 0;
 
     /* Initialize everything */
     if (!process_init( argv )) exit(1);
@@ -446,52 +421,29 @@ void PROCESS_InitWine( int argc, char *argv[] )
         }
     }
 
-    if (!MODULE_GetBinaryType( main_exe_file, main_exe_name, &type ))
+    /* first try Win32 format; this will fail if the file is not a PE binary */
+    if ((main_module = PE_LoadImage( main_exe_file, main_exe_name, 0 )))
     {
-        MESSAGE( "%s: unrecognized executable '%s'\n", argv0, main_exe_name );
-        goto error;
+        if (PE_HEADER(main_module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
+            ExitProcess( ERROR_BAD_EXE_FORMAT );
+        stack_size = PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve;
+    }
+    else /* it must be 16-bit or DOS format */
+    {
+        NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
+        current_process.flags |= PDB32_WIN16_PROC;
+        main_exe_name[0] = 0;
+        CloseHandle( main_exe_file );
+        main_exe_file = INVALID_HANDLE_VALUE;
+        SYSLEVEL_EnterWin16Lock();
     }
 
-    switch (type)
-    {
-    case SCS_32BIT_BINARY:
-        {
-            HMODULE main_module = PE_LoadImage( main_exe_file, main_exe_name, 0 );
-            if (main_module) PROCESS_Start( main_module, main_exe_file, main_exe_name );
-        }
-        break;
+    /* allocate main thread stack */
+    if (!THREAD_InitStack( NtCurrentTeb(), stack_size, TRUE )) goto error;
 
-    case SCS_WOW_BINARY:
-        {
-            HMODULE main_module;
-            /* create 32-bit module for main exe */
-            if (!(main_module = BUILTIN32_LoadExeModule())) goto error;
-            NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
-            current_process.flags |= PDB32_WIN16_PROC;
-            SYSLEVEL_EnterWin16Lock();
-            PROCESS_Start( main_module, -1, NULL );
-        }
-        break;
+    /* switch to the new stack */
+    SYSDEPS_SwitchToThreadStack( start_process );
 
-    case SCS_DOS_BINARY:
-        {
-            HMODULE main_module;
-            /* create 32-bit module for main exe */
-            if (!(main_module = BUILTIN32_LoadExeModule())) goto error;
-            NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
-            if (!MZ_LoadImage( main_module, main_exe_file, main_exe_name )) goto error;
-            PROCESS_Start( main_module, main_exe_file, NULL );
-        }
-        break;
-
-    case SCS_PIF_BINARY:
-    case SCS_POSIX_BINARY:
-    case SCS_OS216_BINARY:
-    default:
-        MESSAGE( "%s: unrecognized executable '%s'\n", argv0, main_exe_name );
-        SetLastError( ERROR_BAD_FORMAT );
-        break;
-    }
  error:
     ExitProcess( GetLastError() );
 }
@@ -504,15 +456,14 @@ void PROCESS_InitWine( int argc, char *argv[] )
  */
 void PROCESS_InitWinelib( int argc, char *argv[] )
 {
-    HMODULE main_module;
-
     if (!process_init( argv )) exit(1);
-
-    /* create 32-bit module for main exe */
-    if (!(main_module = BUILTIN32_LoadExeModule())) ExitProcess( GetLastError() );
-
     main_exe_argv = argv;
-    PROCESS_Start( main_module, -1, NULL );
+
+    /* allocate main thread stack */
+    if (!THREAD_InitStack( NtCurrentTeb(), 0, TRUE )) ExitProcess( GetLastError() );
+
+    /* switch to the new stack */
+    SYSDEPS_SwitchToThreadStack( start_process );
 }
 
 

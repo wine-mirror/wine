@@ -605,26 +605,35 @@ void BuildSpec32File( FILE *outfile )
     /* Output the DLL constructor */
 
     fprintf( outfile, "#ifdef __GNUC__\n" );
-    fprintf( outfile, "static void %s_init(void) __attribute__((constructor));\n", DLLName );
-    fprintf( outfile, "static void %s_fini(void) __attribute__((destructor));\n", DLLName );
+    fprintf( outfile, "static void init(void) __attribute__((constructor));\n" );
+    if (nr_debug)
+        fprintf( outfile, "static void fini(void) __attribute__((destructor));\n" );
     fprintf( outfile, "#else /* defined(__GNUC__) */\n" );
     fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall %s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\tcall init\\n\"\n" );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall %s_fini\\n\"\n", DLLName );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    if (nr_debug)
+    {
+        fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall fini\\n\"\n" );
+        fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    }
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n\n" );
-    fprintf( outfile, "static void %s_init(void)\n{\n", DLLName );
-    fprintf( outfile, "    extern void BUILTIN32_RegisterDLL( const struct image_nt_headers *, const char * );\n" );
-    fprintf( outfile, "    extern void *wine_dbg_register( char * const *, int );\n");
-    fprintf( outfile, "    BUILTIN32_RegisterDLL( &nt_header, \"%s\" );\n", DLLFileName );
-    if (nr_debug) fprintf( outfile, "    debug_registration = wine_dbg_register( debug_channels, %d );\n", nr_debug );
-    fprintf( outfile, "}\n\n" );
-    fprintf( outfile, "static void %s_fini(void)\n{\n", DLLName );
-    fprintf( outfile, "    extern void wine_dbg_unregister( void * );\n");
-    if (nr_debug) fprintf( outfile, "    wine_dbg_unregister( debug_registration );\n" );
+    fprintf( outfile, "static void init(void)\n{\n" );
+    fprintf( outfile, "    extern void __wine_dll_register( const struct image_nt_headers *, const char * );\n" );
+    fprintf( outfile, "    extern void *__wine_dbg_register( char * const *, int );\n");
+    fprintf( outfile, "    __wine_dll_register( &nt_header, \"%s\" );\n", DLLFileName );
+    if (nr_debug)
+        fprintf( outfile, "    debug_registration = __wine_dbg_register( debug_channels, %d );\n",
+                 nr_debug );
     fprintf( outfile, "}\n" );
+    if (nr_debug)
+    {
+        fprintf( outfile, "\nstatic void fini(void)\n{\n" );
+        fprintf( outfile, "    extern void __wine_dbg_unregister( void * );\n");
+        fprintf( outfile, "    __wine_dbg_unregister( debug_registration );\n" );
+        fprintf( outfile, "}\n" );
+    }
 }

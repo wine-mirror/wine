@@ -532,7 +532,7 @@ good:
  * Note that .COM and .PIF files are only recognized by their
  * file name extension; but Windows does it the same way ...
  */
-BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinaryType )
+static BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinaryType )
 {
     IMAGE_DOS_HEADER mz_header;
     char magic[4], *ptr;

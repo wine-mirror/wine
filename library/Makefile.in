@@ -10,6 +10,7 @@ SONAME    = libwine.so
 
 C_SRCS = \
 	debug.c \
+	loader.c \
 	port.c
 
 all: libwine.$(LIBEXT)

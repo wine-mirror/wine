@@ -475,6 +475,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
     TRACE_(module)( "loading %s\n", filename );
 
     mapping = CreateFileMappingA( hFile, NULL, SEC_IMAGE, 0, 0, NULL );
+    if (!mapping) return 0;
     base = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
     CloseHandle( mapping );
     if (!base) return 0;

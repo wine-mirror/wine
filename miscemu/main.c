@@ -10,6 +10,7 @@
 
 #include "callback.h"
 #include "options.h"
+#include "dosexe.h"
 #include "process.h"
 #include "debugtools.h"
 
@@ -27,6 +28,13 @@ void wine_initial_task(void)
 
     if ((instance = WinExec16( GetCommandLineA(), info.wShowWindow )) < 32)
     {
+        if (instance == 11)  /* try DOS format */
+        {
+            MZ_LoadImage( GetCommandLineA() );
+            /* if we get back here it failed */
+            instance = GetLastError();
+        }
+
         MESSAGE( "%s: can't exec '%s': ", argv0, GetCommandLineA() );
         switch (instance) 
         {

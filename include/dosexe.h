@@ -30,7 +30,7 @@ typedef struct _DOSTASK {
 
 #define V86_FLAG 0x00020000
 
-extern BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename );
+extern BOOL MZ_LoadImage( LPCSTR cmdline );
 extern BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
 extern void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
 extern LPDOSTASK MZ_Current( void );

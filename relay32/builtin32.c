@@ -20,6 +20,7 @@
 
 #include "windef.h"
 #include "wine/winbase16.h"
+#include "wine/library.h"
 #include "elfdll.h"
 #include "global.h"
 #include "neexe.h"
@@ -32,19 +33,9 @@
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(relay);
 
-#define MAX_DLLS 100
-
-typedef struct
-{
-    const IMAGE_NT_HEADERS *nt;           /* NT header */
-    const char             *filename;     /* DLL file name */
-} BUILTIN32_DESCRIPTOR;
-
 extern void RELAY_SetupDLL( const char *module );
 
-static BUILTIN32_DESCRIPTOR builtin_dlls[MAX_DLLS];
-static int nb_dlls;
-
+static HMODULE main_module;
 
 /***********************************************************************
  *           BUILTIN32_dlopen
@@ -53,16 +44,10 @@ void *BUILTIN32_dlopen( const char *name )
 {
 #ifdef HAVE_DL_API
     void *handle;
-    char buffer[128], *p;
-    if ((p = strrchr( name, '/' ))) name = p + 1;
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
-    sprintf( buffer, "lib%s", name );
-    for (p = buffer; *p; p++) *p = tolower(*p);
-    if ((p = strrchr( buffer, '.' )) && (!strcmp( p, ".dll" ) || !strcmp( p, ".exe" ))) *p = 0;
-    strcat( buffer, ".so" );
 
-    if (!(handle = ELFDLL_dlopen( buffer, RTLD_NOW )))
+    if (!(handle = wine_dll_load( name )))
     {
+        char buffer[128];
 	LPSTR pErr, p;
 	pErr = dlerror();
 	p = strchr(pErr, ':');
@@ -130,11 +115,11 @@ static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, char *root, void *ba
 
 
 /***********************************************************************
- *           BUILTIN32_DoLoadImage
+ *           load_image
  *
- * Load a built-in Win32 module. Helper function for BUILTIN32_LoadImage.
+ * Load a built-in Win32 module. Helper function for load_library.
  */
-static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
+static HMODULE load_image( const IMAGE_NT_HEADERS *nt_descr, const char *filename )
 {
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_DOS_HEADER *dos;
@@ -154,13 +139,12 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
 
     assert( size <= page_size );
 
-    if (descr->nt->OptionalHeader.ImageBase)
+    if (nt_descr->OptionalHeader.ImageBase)
     {
-        void *base = (void *)descr->nt->OptionalHeader.ImageBase;
-        if ((addr = VIRTUAL_mmap( -1, base, page_size, 0,
-                                  PROT_READ|PROT_WRITE, MAP_FIXED )) != base)
+        void *base = (void *)nt_descr->OptionalHeader.ImageBase;
+        if ((addr = wine_anon_mmap( base, page_size, PROT_READ|PROT_WRITE, MAP_FIXED )) != base)
         {
-            ERR("failed to map over PE header for %s at %p\n", descr->filename, base );
+            ERR("failed to map over PE header for %s at %p\n", filename, base );
             return 0;
         }
     }
@@ -182,7 +166,7 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     dos->e_magic  = IMAGE_DOS_SIGNATURE;
     dos->e_lfanew = sizeof(*dos);
 
-    *nt = *descr->nt;
+    *nt = *nt_descr;
 
     nt->FileHeader.NumberOfSections                = nb_sections;
     nt->OptionalHeader.SizeOfCode                  = data_start - code_start;
@@ -255,6 +239,42 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     return (HMODULE)addr;
 }
 
+
+/***********************************************************************
+ *           load_library
+ *
+ * Load a library in memory; callback function for wine_dll_register
+ */
+static void load_library( const IMAGE_NT_HEADERS *nt, const char *filename )
+{
+    HMODULE module;
+    WINE_MODREF *wm;
+
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
+    {
+        /* if we already have an executable, ignore this one */
+        if (!main_module) main_module = load_image( nt, "main exe" );
+        return; /* don't create the modref here, will be done later on */
+    }
+
+    if (GetModuleHandleA( filename ))
+        MESSAGE( "Warning: loading builtin %s, but native version already present. Expect trouble.\n", filename );
+
+    /* Load built-in module */
+    if (!(module = load_image( nt, filename ))) return;
+
+    /* Create 32-bit MODREF */
+    if (!(wm = PE_CreateModule( module, filename, 0, -1, TRUE )))
+    {
+        ERR( "can't load %s\n", filename );
+        SetLastError( ERROR_OUTOFMEMORY );
+        return;
+    }
+    TRACE( "loaded %s %p %x %p\n", filename, wm, module, nt );
+    wm->refCount++;  /* we don't support freeing builtin dlls (FIXME)*/
+}
+
+
 /***********************************************************************
  *           BUILTIN32_LoadLibraryExA
  *
@@ -263,12 +283,10 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
  */
 WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
 {
-    HMODULE module;
     WINE_MODREF   *wm;
     char dllname[20], *p;
     LPCSTR name;
     void *handle;
-    int i;
 
     /* Fix the name in case we have a full path and extension */
     name = path;
@@ -281,66 +299,36 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
     p = strrchr( dllname, '.' );
     if (!p) strcat( dllname, ".dll" );
 
-    /* Search built-in descriptor */
-    for (i = 0; i < nb_dlls; i++)
-        if (!strcasecmp( builtin_dlls[i].filename, dllname )) goto found;
+    if (!(handle = BUILTIN32_dlopen( dllname ))) goto error;
 
-    if ((handle = BUILTIN32_dlopen( dllname )))
+    if (!(wm = MODULE_FindModule( path ))) wm = MODULE_FindModule( dllname );
+    if (!wm)
     {
-        for (i = 0; i < nb_dlls; i++)
-            if (!strcasecmp( builtin_dlls[i].filename, dllname )) goto found;
         ERR( "loaded .so but dll %s still not found\n", dllname );
-        BUILTIN32_dlclose( handle );
+        /* wine_dll_unload( handle );*/
+        return NULL;
     }
+    wm->dlhandle = handle;
+    return wm;
 
  error:
     SetLastError( ERROR_FILE_NOT_FOUND );
     return NULL;
-
- found:
-    /* Load built-in module */
-    if (!(module = BUILTIN32_DoLoadImage( &builtin_dlls[i] ))) return NULL;
-
-    /* Create 32-bit MODREF */
-    if ( !(wm = PE_CreateModule( module, path, flags, -1, TRUE )) )
-    {
-        ERR( "can't load %s\n", path );
-        SetLastError( ERROR_OUTOFMEMORY );
-        return NULL;
-    }
-
-    wm->refCount++;  /* we don't support freeing builtin dlls (FIXME)*/
-    return wm;
 }
 
 /***********************************************************************
- *           BUILTIN32_LoadExeModule
+ *           BUILTIN32_Init
+ *
+ * Initialize loading callbacks and return HMODULE of main exe.
+ * 'main' is the main exe in case if was already loaded from a PE file.
  */
-HMODULE BUILTIN32_LoadExeModule(void)
+HMODULE BUILTIN32_LoadExeModule( HMODULE main )
 {
-    int i, exe = -1;
-
-    /* Search built-in EXE descriptor */
-    for ( i = 0; i < nb_dlls; i++ )
-        if ( !(builtin_dlls[i].nt->FileHeader.Characteristics & IMAGE_FILE_DLL) )
-        {
-            if ( exe != -1 )
-            {
-                MESSAGE( "More than one built-in EXE module loaded!\n" );
-                break;
-            }
-
-            exe = i;
-        }
-
-    if ( exe == -1 ) 
-    {
+    main_module = main;
+    wine_dll_set_callback( load_library );
+    if (!main_module)
         MESSAGE( "No built-in EXE module loaded!  Did you create a .spec file?\n" );
-        return 0;
-    }
-
-    /* Load built-in module */
-    return BUILTIN32_DoLoadImage( &builtin_dlls[exe] );
+    return main_module;
 }
 
 
@@ -351,8 +339,6 @@ HMODULE BUILTIN32_LoadExeModule(void)
  */
 void BUILTIN32_RegisterDLL( const IMAGE_NT_HEADERS *header, const char *filename )
 {
-    assert( nb_dlls < MAX_DLLS );
-    builtin_dlls[nb_dlls].nt = header;
-    builtin_dlls[nb_dlls].filename = filename;
-    nb_dlls++;
+    extern void __wine_dll_register( const IMAGE_NT_HEADERS *header, const char *filename );
+    __wine_dll_register( header, filename );
 }

@@ -85,6 +85,7 @@ INSTALLED_INCLUDES = \
 	wine/exception.h \
 	wine/icmpapi.h \
 	wine/ipexport.h \
+	wine/library.h \
 	wine/obj_base.h \
 	wine/obj_cache.h \
 	wine/obj_channel.h \

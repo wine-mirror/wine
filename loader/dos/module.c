@@ -203,7 +203,7 @@ static BOOL MZ_InitMemory(void)
     return TRUE;
 }
 
-BOOL MZ_DoLoadImage( HMODULE module, HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
+BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
 {
   LPDOSTASK lpDosTask = dos_current;
   IMAGE_DOS_HEADER mz_header;
@@ -233,6 +233,12 @@ BOOL MZ_DoLoadImage( HMODULE module, HANDLE hFile, LPCSTR filename, OverlayBlock
  if (   !ReadFile(hFile,&mz_header,sizeof(mz_header),&len,NULL)
      || len != sizeof(mz_header) 
      || mz_header.e_magic != IMAGE_DOS_SIGNATURE) {
+  char *p = strrchr( filename, '.' );
+  if (!p || strcasecmp( p, ".com" ))  /* check for .COM extension */
+  {
+      SetLastError(ERROR_BAD_FORMAT);
+      goto load_error;
+  }
   old_com=1; /* assume .COM file */
   image_start=0;
   image_size=GetFileSize(hFile,NULL);
@@ -331,16 +337,33 @@ load_error:
   return FALSE;
 }
 
-BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
+BOOL MZ_LoadImage( LPCSTR cmdline )
 {
-  IMAGE_NT_HEADERS *win_hdr = PE_HEADER(module);
+    HFILE hFile;
+    char *name, buffer[MAX_PATH];
+    LPCSTR p = strchr( cmdline, ' ' );
 
-  if (win_hdr) {
-    win_hdr->OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-    win_hdr->OptionalHeader.AddressOfEntryPoint = (LPBYTE)MZ_Launch - (LPBYTE)module;
-  }
+    if (p)
+    {
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, p - cmdline + 1 ))) return FALSE;
+        memcpy( name, cmdline, p - cmdline );
+        name[p - cmdline] = 0;
+    }
+    else name = (char *)cmdline;
 
-  return MZ_DoLoadImage( module, hFile, filename, NULL );
+    if (!SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, NULL )) goto error;
+    if ((hFile = CreateFileA( buffer, GENERIC_READ, FILE_SHARE_READ,
+                              NULL, OPEN_EXISTING, 0, -1 )) == INVALID_HANDLE_VALUE)
+        goto error;
+    if (!MZ_DoLoadImage( hFile, buffer, NULL ))
+    {
+        CloseHandle( hFile );
+        goto error;
+    }
+    MZ_Launch();
+ error:
+    if (name != cmdline) HeapFree( GetProcessHeap(), 0, name );
+    return FALSE;
 }
 
 BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
@@ -363,7 +386,7 @@ BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
       PDB16 *psp = (PDB16 *)psp_start;
       psp->saveStack = (DWORD)PTR_SEG_OFF_TO_SEGPTR(context->SegSs, LOWORD(context->Esp));
     }
-    ret = MZ_DoLoadImage( NULL, hFile, filename, NULL );
+    ret = MZ_DoLoadImage( hFile, filename, NULL );
     if (ret) {
       /* MZ_LoadImage created a new PSP and loaded new values into lpDosTask,
        * let's work on the new values now */
@@ -393,7 +416,7 @@ BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
   case 3: /* load overlay */
     {
       OverlayBlock *blk = (OverlayBlock *)paramblk;
-      ret = MZ_DoLoadImage( NULL, hFile, filename, blk );
+      ret = MZ_DoLoadImage( hFile, filename, blk );
     }
     break;
   default:
@@ -589,7 +612,7 @@ void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 
 #else /* !MZ_SUPPORTED */
 
-BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
+BOOL MZ_LoadImage( LPCSTR cmdline )
 {
   WARN("DOS executables not supported on this platform\n");
   SetLastError(ERROR_BAD_FORMAT);

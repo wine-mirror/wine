@@ -56,7 +56,7 @@ static void apply_option( struct dll *dll, const struct option *opt )
 }
 
 /* register a new set of channels for a dll */
-void *wine_dbg_register( char * const *channels, int nb )
+void *__wine_dbg_register( char * const *channels, int nb )
 {
     struct option *opt = first_option;
     struct dll *dll = malloc( sizeof(*dll) );
@@ -80,7 +80,7 @@ void *wine_dbg_register( char * const *channels, int nb )
 
 
 /* unregister a set of channels; must pass the pointer obtained from wine_dbg_register */
-void wine_dbg_unregister( void *channel )
+void __wine_dbg_unregister( void *channel )
 {
     struct dll *dll = channel;
     if (dll)
