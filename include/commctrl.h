@@ -2516,6 +2516,10 @@ typedef struct tagTCHITTESTINFO
 
 typedef INT (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
+#define ListView_GetNextItem(hwnd,nItem,flags) \
+    (INT)SendMessageA((hwnd),LVM_GETNEXTITEM,(WPARAM)(INT)(nItem),(LPARAM)(MAKELPARAM(flags,0)))
+#define ListView_FindItem(hwnd,nItem,plvfi) \
+    (INT)SendMessageA((hwnd),LVM_FINDITEMA,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFO*)(plvfi))
 #define ListView_Arrange(hwnd,code) \
     (INT)SendMessageA((hwnd),LVM_ARRANGE,(WPARAM)(INT)(code),0L)
 #define ListView_GetItemPosition(hwnd,i,ppt) \

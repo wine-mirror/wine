@@ -37,8 +37,6 @@ typedef struct tagLISTVIEW_INFO
     HIMAGELIST himlState;
     BOOL bLButtonDown;
     BOOL bRButtonDown;
-    INT nCountPerColumn;
-    INT nCountPerRow;
     INT nFocusedItem;
     INT nItemHeight;
     INT nItemWidth;
