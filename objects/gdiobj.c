@@ -66,37 +66,6 @@ static const LOGPEN WhitePen = { PS_SOLID, { 0, 0 }, RGB(255,255,255) };
 static const LOGPEN BlackPen = { PS_SOLID, { 0, 0 }, RGB(0,0,0) };
 static const LOGPEN NullPen  = { PS_NULL,  { 0, 0 }, 0 };
 
-static const LOGFONTW OEMFixedFont =
-{ 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, OEM_CHARSET,
-  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} };
-
-static const LOGFONTW AnsiFixedFont =
-{ 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} };
-
-static const LOGFONTW AnsiVarFont =
-{ 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-  0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-  {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'} };
-
-static const LOGFONTW SystemFont =
-{ 16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-  0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-  {'S','y','s','t','e','m','\0'} };
-
-static const LOGFONTW DeviceDefaultFont =
-{ 16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-  0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, {'\0'} };
-
-static const LOGFONTW SystemFixedFont =
-{ 16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} };
-
-/* FIXME: Is this correct? */
-static const LOGFONTW DefaultGuiFont =
-{ -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-  0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-  {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'} };
 
 /* reserve one extra entry for the stock default bitmap */
 /* this is what Windows does too */
@@ -112,6 +81,406 @@ inline static BOOL get_bool(char *buffer)
     return (buffer[0] == 'y' || buffer[0] == 'Y' ||
             buffer[0] == 't' || buffer[0] == 'T' ||
             buffer[0] == '1');
+}
+
+
+/****************************************************************************
+ *
+ *	language-independent stock fonts
+ *
+ */
+
+static const LOGFONTW OEMFixedFont =
+{ 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, OEM_CHARSET,
+  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} };
+
+static const LOGFONTW AnsiFixedFont =
+{ 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+  0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, {'\0'} };
+
+static const LOGFONTW AnsiVarFont =
+{ 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+  0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+  {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'} };
+
+/******************************************************************************
+ *
+ *      language-dependent stock fonts
+ *
+ *      'ANSI' charset and 'DEFAULT' charset is not same.
+ *      The chars in CP_ACP should be drawn with 'DEFAULT' charset.
+ *      'ANSI' charset seems to be identical with ISO-8859-1.
+ *      'DEFAULT' charset is a language-dependent charset.
+ *
+ *      'System' font seems to be an alias for language-dependent font.
+ */
+
+/*
+ * language-dependenet stock fonts for all known charsets
+ * please see TranslateCharsetInfo (objects/font.c) and
+ * CharsetBindingInfo (graphics/x11drv/xfont.c),
+ * and modify entries for your language if needed.
+ */
+struct DefaultFontInfo
+{
+        UINT            charset;
+        LOGFONTW        SystemFont;
+        LOGFONTW        DeviceDefaultFont;
+        LOGFONTW        SystemFixedFont;
+        LOGFONTW        DefaultGuiFont;
+};
+
+static const struct DefaultFontInfo default_fonts[] =
+{
+    {   ANSI_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+        },
+    },
+    {   EASTEUROPE_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? */
+        },
+    },
+    {   RUSSIAN_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? */
+        },
+    },
+    {   GREEK_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? */
+        },
+    },
+    {   TURKISH_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? */
+        },
+    },
+    {   HEBREW_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? */
+        },
+    },
+    {   ARABIC_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? */
+        },
+    },
+    {   BALTIC_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? */
+        },
+    },
+
+    {   THAI_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? */
+        },
+    },
+    {   SHIFTJIS_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - mbtowc of native ("MS P gothic") */
+        },
+    },
+    {   GB2312_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'M','S',' ','S','o','n','g','\0'}   /* FIXME: Is this correct? */
+        },
+    },
+    {   HANGEUL_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'G','u','l','i','m','C','h','e'}, /* FIXME: Is this correct? */
+        },
+    },
+    {   CHINESEBIG5_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? */
+        },
+    },
+    {   JOHAB_CHARSET,
+        { /* System */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'S','y','s','t','e','m','\0'}
+        },
+        { /* Device Default */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}
+        },
+        { /* System Fixed */
+          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+           0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
+           {'\0'}
+        },
+        { /* DefaultGuiFont */
+         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+           0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
+           {'\0'}       /* FIXME - what is the native font??? mbtowc of native ("MS Mingliu")??? */
+        },
+    },
+};
+
+
+/******************************************************************************
+ *      get_default_fonts
+ */
+static const struct DefaultFontInfo* get_default_fonts(UINT charset)
+{
+        int     n;
+
+        for(n=0;n<(sizeof(default_fonts)/sizeof(default_fonts[0]));n++)
+        {
+                if ( default_fonts[n].charset == charset )
+                        return &default_fonts[n];
+        }
+
+        FIXME( "unhandled charset 0x%08x - use ANSI_CHARSET for default stock objects\n", charset );
+        return &default_fonts[0];
+}
+
+
+/******************************************************************************
+ *      get_default_charset    (internal)
+ *
+ * get the language-dependent charset that can handle CP_ACP correctly.
+ */
+static UINT get_default_charset( void )
+{
+    CHARSETINFO     csi;
+    UINT    uACP;
+
+    uACP = GetACP();
+    csi.ciCharset = ANSI_CHARSET;
+    if ( ! TranslateCharsetInfo( (LPDWORD)uACP, &csi, TCI_SRCCODEPAGE ) )
+    {
+        FIXME( "unhandled codepage %u - use ANSI_CHARSET for default stock objects\n", uACP );
+        return ANSI_CHARSET;
+    }
+
+    return csi.ciCharset;
 }
 
 
@@ -212,6 +581,7 @@ BOOL GDI_Init(void)
     HINSTANCE16 instance;
     HKEY hkey;
     GDIOBJHDR *ptr;
+    const struct DefaultFontInfo* deffonts;
     int i;
 
     if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Fonts", &hkey))
@@ -236,13 +606,17 @@ BOOL GDI_Init(void)
     stock_objects[DEFAULT_PALETTE] = PALETTE_Init();
     stock_objects[DEFAULT_BITMAP]  = CreateBitmap( 1, 1, 1, 1, NULL );
 
+    /* language-independent stock fonts */
     stock_objects[OEM_FIXED_FONT]      = create_stock_font( "OEMFixed", &OEMFixedFont, hkey );
     stock_objects[ANSI_FIXED_FONT]     = create_stock_font( "AnsiFixed", &AnsiFixedFont, hkey );
     stock_objects[ANSI_VAR_FONT]       = create_stock_font( "AnsiVar", &AnsiVarFont, hkey );
-    stock_objects[SYSTEM_FONT]         = create_stock_font( "System", &SystemFont, hkey );
-    stock_objects[DEVICE_DEFAULT_FONT] = create_stock_font( "DeviceDefault", &DeviceDefaultFont, hkey );
-    stock_objects[SYSTEM_FIXED_FONT]   = create_stock_font( "SystemFixed", &SystemFixedFont, hkey );
-    stock_objects[DEFAULT_GUI_FONT]    = create_stock_font( "DefaultGui", &DefaultGuiFont, hkey );
+
+    /* language-dependent stock fonts */
+    deffonts = get_default_fonts(get_default_charset());
+    stock_objects[SYSTEM_FONT]         = create_stock_font( "System", &deffonts->SystemFont, hkey );
+    stock_objects[DEVICE_DEFAULT_FONT] = create_stock_font( "DeviceDefault", &deffonts->DeviceDefaultFont, hkey );
+    stock_objects[SYSTEM_FIXED_FONT]   = create_stock_font( "SystemFixed", &deffonts->SystemFixedFont, hkey );
+    stock_objects[DEFAULT_GUI_FONT]    = create_stock_font( "DefaultGui", &deffonts->DefaultGuiFont, hkey );
 
 
     /* clear the NOSYSTEM bit on all stock objects*/
