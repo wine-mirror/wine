@@ -3441,6 +3441,24 @@ typedef struct NMLVSCROLL
     (HWND)SNDMSGW((hwndLV),LVM_EDITLABELW,(WPARAM)(int)(i), 0L)
 #define ListView_EditLabel WINELIB_NAME_AW(ListView_EditLabel)
 
+#define ListView_GetItemTextA(hwndLV, i, _iSubItem, _pszText, _cchTextMax) \
+{ \
+    LVITEMA _LVi;\
+    _LVi.iSubItem = _iSubItem;\
+    _LVi.cchTextMax = _cchTextMax;\
+    _LVi.pszText = _pszText;\
+    SNDMSGA(hwndLV, LVM_GETITEMTEXTA, (WPARAM)(i), (LPARAM)&_LVi);\
+}
+#define ListView_GetItemTextW(hwndLV, i, _iSubItem, _pszText, _cchTextMax) \
+{ \
+    LVITEMW _LVi;\
+    _LVi.iSubItem = _iSubItem;\
+    _LVi.cchTextMax = _cchTextMax;\
+    _LVi.pszText = _pszText;\
+    SNDMSGW(hwndLV, LVM_GETITEMTEXTW, (WPARAM)(i), (LPARAM)&_LVi);\
+}
+#define ListView_GetItemText WINELIB_NAME_AW(ListView_GetItemText)
+
 #define ListView_SetItemTextA(hwndLV, i, _iSubItem, _pszText) \
 { LVITEMA _LVi; _LVi.iSubItem = _iSubItem; _LVi.pszText = _pszText;\
   SNDMSGA(hwndLV, LVM_SETITEMTEXTA, (WPARAM)i, (LPARAM) (LVITEMA*)&_LVi);}
