@@ -980,6 +980,28 @@ BOOL32 WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
 	sprintf(stemp,"%lu", pdata->u.file.dwFileSize);
 	return GetNumberFormat32A(LOCALE_USER_DEFAULT, 0, stemp, NULL, pOut, uOutSize);
 }
+
+BOOL32 WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
+{	char pTemp[MAX_PATH];
+	int i;
+
+	TRACE(pidl,"pidl=%p\n",pidl);
+
+	if ( ! _ILGetValueText(pidl, pTemp, MAX_PATH))
+	{ return FALSE;
+	}
+
+	for (i=0; pTemp[i]!='.' && pTemp[i];i++);
+
+	if (!pTemp[i])
+	  return FALSE;
+	  
+	strncpy(pOut, &pTemp[i], uOutSize);
+	TRACE(pidl,"%s\n",pOut);
+
+	return TRUE;
+}
+
 /**************************************************************************
  *  IDLList "Item ID List List"
  * 
