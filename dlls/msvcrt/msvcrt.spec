@@ -655,7 +655,7 @@
 @ cdecl labs(long)
 @ cdecl ldexp( double long) MSVCRT_ldexp
 @ cdecl ldiv(long long) MSVCRT_ldiv
-@ stub localeconv #()
+@ cdecl localeconv() MSVCRT_localeconv
 @ cdecl localtime(ptr)
 @ cdecl log(double)
 @ cdecl log10(double)

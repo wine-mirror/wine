@@ -30,6 +30,8 @@
 
 #include "wine/debug.h"
 
+#include <locale.h>
+
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* FIXME: Need to hold locale for each LC_* type and aggregate
@@ -546,4 +548,36 @@ int __crtLCMapStringA(
    * arguments to wide strings and then calls LCMapStringW
    */
   return LCMapStringA(lcid,mapflags,src,srclen,dst,dstlen);
+}
+
+/*********************************************************************
+ *		localeconv (MSVCRT.@)
+ */
+struct MSVCRT_lconv *MSVCRT_localeconv(void) {
+
+  struct lconv *ylconv;
+  static struct MSVCRT_lconv xlconv;
+
+  ylconv = localeconv();
+
+#define X(x) xlconv.x = ylconv->x;
+  X(decimal_point);
+  X(thousands_sep);
+  X(grouping);
+  X(int_curr_symbol);
+  X(currency_symbol);
+  X(mon_decimal_point);
+  X(mon_thousands_sep);
+  X(mon_grouping);
+  X(positive_sign);
+  X(negative_sign);
+  X(int_frac_digits);
+  X(frac_digits);
+  X(p_cs_precedes);
+  X(p_sep_by_space);
+  X(n_cs_precedes);
+  X(n_sep_by_space);
+  X(p_sign_posn);
+  X(n_sign_posn);
+  return &xlconv;
 }
