@@ -13,7 +13,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/files/file.c \
 	$(TOPOBJDIR)/files/profile.c \
 	$(TOPOBJDIR)/files/smb.c \
-	$(TOPOBJDIR)/if1632/builtin.c \
 	$(TOPOBJDIR)/if1632/relay.c \
 	$(TOPOBJDIR)/if1632/snoop.c \
 	$(TOPOBJDIR)/loader/loadorder.c \

@@ -38,6 +38,7 @@
 #include "wine/library.h"
 #include "module.h"
 #include "toolhelp.h"
+#include "global.h"
 #include "file.h"
 #include "task.h"
 #include "snoop.h"
@@ -75,6 +76,23 @@ struct ne_segment_table_entry_s
 
 static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
 
+typedef struct
+{
+    void       *module_start;      /* 32-bit address of the module data */
+    int         module_size;       /* Size of the module data */
+    void       *code_start;        /* 32-bit address of DLL code */
+    void       *data_start;        /* 32-bit address of DLL data */
+    const char *owner;             /* 32-bit dll that contains this dll */
+    const void *rsrc;              /* resources data */
+} BUILTIN16_DESCRIPTOR;
+
+/* Table of all built-in DLLs */
+
+#define MAX_DLLS 50
+
+static const BUILTIN16_DESCRIPTOR *builtin_dlls[MAX_DLLS];
+
+
 static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only );
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
 
@@ -89,6 +107,106 @@ static WINE_EXCEPTION_FILTER(page_fault)
         GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
         return EXCEPTION_EXECUTE_HANDLER;
     return EXCEPTION_CONTINUE_SEARCH;
+}
+
+
+/* patch all the flat cs references of the code segment if necessary */
+inline static void patch_code_segment( void *code_segment )
+{
+#ifdef __i386__
+    CALLFROM16 *call = code_segment;
+    if (call->flatcs == wine_get_cs()) return;  /* nothing to patch */
+    while (call->pushl == 0x68)
+    {
+        call->flatcs = wine_get_cs();
+        call++;
+    }
+#endif
+}
+
+
+/***********************************************************************
+ *           find_dll_descr
+ *
+ * Find a descriptor in the list
+ */
+static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
+{
+    int i;
+    for (i = 0; i < MAX_DLLS; i++)
+    {
+        const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
+        if (descr)
+        {
+            NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
+            OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
+            BYTE *name_table = (BYTE *)pModule + pModule->name_table;
+
+            /* check the dll file name */
+            if (!FILE_strcasecmp( pOfs->szPathName, dllname )) return descr;
+            /* check the dll module name (without extension) */
+            if (!FILE_strncasecmp( dllname, name_table+1, *name_table ) &&
+                !strcmp( dllname + *name_table, ".dll" ))
+                return descr;
+        }
+    }
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           is_builtin_present
+ *
+ * Check if a builtin dll descriptor is present (because we loaded its 32-bit counterpart).
+ */
+static BOOL is_builtin_present( LPCSTR name )
+{
+    char dllname[20], *p;
+
+    if (strlen(name) >= sizeof(dllname)-4) return FALSE;
+    strcpy( dllname, name );
+    p = strrchr( dllname, '.' );
+    if (!p) strcat( dllname, ".dll" );
+    for (p = dllname; *p; p++) *p = FILE_tolower(*p);
+
+    return (find_dll_descr( dllname ) != NULL);
+}
+
+
+/***********************************************************************
+ *           __wine_register_dll_16 (KERNEL32.@)
+ *
+ * Register a built-in DLL descriptor.
+ */
+void __wine_register_dll_16( const BUILTIN16_DESCRIPTOR *descr )
+{
+    int i;
+
+    for (i = 0; i < MAX_DLLS; i++)
+    {
+        if (builtin_dlls[i]) continue;
+        builtin_dlls[i] = descr;
+        break;
+    }
+    assert( i < MAX_DLLS );
+}
+
+
+/***********************************************************************
+ *           __wine_unregister_dll_16 (KERNEL32.@)
+ *
+ * Unregister a built-in DLL descriptor.
+ */
+void __wine_unregister_dll_16( const BUILTIN16_DESCRIPTOR *descr )
+{
+    int i;
+
+    for (i = 0; i < MAX_DLLS; i++)
+    {
+        if (builtin_dlls[i] != descr) continue;
+        builtin_dlls[i] = NULL;
+        break;
+    }
 }
 
 
@@ -785,6 +903,105 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
 }
 
 
+/***********************************************************************
+ *           NE_DoLoadBuiltinModule
+ *
+ * Load a built-in Win16 module. Helper function for NE_LoadBuiltinModule.
+ */
+static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
+{
+    NE_MODULE *pModule;
+    int minsize;
+    SEGTABLEENTRY *pSegTable;
+    HMODULE16 hModule;
+
+    hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, descr->module_start,
+                                  descr->module_size, 0, WINE_LDT_FLAGS_DATA );
+    if (!hModule) return 0;
+    FarSetOwner16( hModule, hModule );
+
+    pModule = (NE_MODULE *)GlobalLock16( hModule );
+    pModule->self = hModule;
+    /* NOTE: (Ab)use the hRsrcMap parameter for resource data pointer */
+    pModule->hRsrcMap = (void *)descr->rsrc;
+
+    /* Allocate the code segment */
+
+    pSegTable = NE_SEG_TABLE( pModule );
+    pSegTable->hSeg = GLOBAL_CreateBlock( GMEM_FIXED, descr->code_start,
+                                          pSegTable->minsize, hModule,
+                                          WINE_LDT_FLAGS_CODE|WINE_LDT_FLAGS_32BIT );
+    if (!pSegTable->hSeg) return 0;
+    patch_code_segment( descr->code_start );
+    pSegTable++;
+
+    /* Allocate the data segment */
+
+    minsize = pSegTable->minsize ? pSegTable->minsize : 0x10000;
+    minsize += pModule->heap_size;
+    if (minsize > 0x10000) minsize = 0x10000;
+    pSegTable->hSeg = GlobalAlloc16( GMEM_FIXED, minsize );
+    if (!pSegTable->hSeg) return 0;
+    FarSetOwner16( pSegTable->hSeg, hModule );
+    if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->hSeg ),
+                                    descr->data_start, pSegTable->minsize);
+    if (pModule->heap_size)
+        LocalInit16( GlobalHandleToSel16(pSegTable->hSeg), pSegTable->minsize, minsize );
+
+    if (descr->rsrc) NE_InitResourceHandler(pModule);
+
+    NE_RegisterModule( pModule );
+
+    /* make sure the 32-bit library containing this one is loaded too */
+    LoadLibraryA( descr->owner );
+
+    return hModule;
+}
+
+
+/***********************************************************************
+ *           NE_LoadBuiltinModule
+ *
+ * Load a built-in module.
+ */
+static HMODULE16 NE_LoadBuiltinModule( LPCSTR name )
+{
+    const BUILTIN16_DESCRIPTOR *descr;
+    char error[256], dllname[20], *p;
+    int file_exists;
+    void *handle;
+
+    /* Fix the name in case we have a full path and extension */
+
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+
+    if (strlen(name) >= sizeof(dllname)-4) return (HMODULE16)2;
+
+    strcpy( dllname, name );
+    p = strrchr( dllname, '.' );
+    if (!p) strcat( dllname, ".dll" );
+    for (p = dllname; *p; p++) *p = FILE_tolower(*p);
+
+    if ((descr = find_dll_descr( dllname )))
+        return NE_DoLoadBuiltinModule( descr );
+
+    if ((handle = wine_dll_load( dllname, error, sizeof(error), &file_exists )))
+    {
+        if ((descr = find_dll_descr( dllname )))
+            return NE_DoLoadBuiltinModule( descr );
+
+        ERR( "loaded .so but dll %s still not found\n", dllname );
+    }
+    else
+    {
+        if (!file_exists) WARN("cannot open .so lib for 16-bit builtin %s: %s\n", name, error);
+        else ERR("failed to load .so lib for 16-bit builtin %s: %s\n", name, error );
+    }
+    return (HMODULE16)2;
+}
+
+
 /**********************************************************************
  *	    MODULE_LoadModule16
  *
@@ -798,8 +1015,22 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     enum loadorder_type loadorder[LOADORDER_NTYPES];
     int i;
     const char *filetype = "";
+    const char *ptr;
 
-    MODULE_GetLoadOrder(loadorder, libname, FALSE);
+    /* strip path information */
+
+    if (libname[0] && libname[1] == ':') libname += 2;  /* strip drive specification */
+    if ((ptr = strrchr( libname, '\\' ))) libname = ptr + 1;
+    if ((ptr = strrchr( libname, '/' ))) libname = ptr + 1;
+
+    if (is_builtin_present(libname))
+    {
+        TRACE( "forcing loadorder to builtin for %s\n", debugstr_a(libname) );
+        /* force builtin loadorder since the dll is already in memory */
+        loadorder[0] = LOADORDER_BI;
+        loadorder[1] = LOADORDER_INVALID;
+    }
+    else MODULE_GetLoadOrder(loadorder, libname, FALSE);
 
     for(i = 0; i < LOADORDER_NTYPES; i++)
     {
@@ -815,7 +1046,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 
         case LOADORDER_BI:
             TRACE("Trying built-in '%s'\n", libname);
-            hinst = BUILTIN_LoadModule(libname);
+            hinst = NE_LoadBuiltinModule(libname);
             filetype = "builtin";
             break;
 

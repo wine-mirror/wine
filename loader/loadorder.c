@@ -555,21 +555,10 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
 
     loadorder[0] = LOADORDER_INVALID;  /* in case something bad happens below */
 
-    /* Strip path information for 16 bit modules or if the module
-     * resides in the system directory */
-    if (!win32)
-    {
-        path = get_basename( path );
-        if (BUILTIN_IsPresent(path))
-        {
-            TRACE( "forcing loadorder to builtin for %s\n", debugstr_a(path) );
-            /* force builtin loadorder since the dll is already in memory */
-            loadorder[0] = LOADORDER_BI;
-            loadorder[1] = LOADORDER_INVALID;
-            return;
-        }
-    }
-    else
+    /* Strip path information if the module resides in the system directory
+     * (path is already stripped by caller for 16-bit modules)
+     */
+    if (win32)
     {
         char sysdir[MAX_PATH+1];
         if (!GetSystemDirectoryA( sysdir, MAX_PATH )) return;
