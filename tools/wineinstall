@@ -317,7 +317,7 @@ then {
 
     std_sleep
 
-    if ! su root -c"$sucommand"
+    if ! su root -c "$sucommand"
     then {
       echo
       echo "Either you entered an incorrect password or we failed to run"
