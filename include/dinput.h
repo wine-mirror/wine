@@ -6,12 +6,6 @@
 #include "unknwn.h"
 #include "mouse.h"
 
-#define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
-#define STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)
-#define PURE
-#define FAR
-#define THIS_ THIS,
-
 #define DIRECTINPUT_VERSION	0x0500
 
 /* Classes */
@@ -61,8 +55,9 @@ DEFINE_GUID(GUID_Inertia,	0x13541C29,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,0xA0
 DEFINE_GUID(GUID_Friction,	0x13541C2A,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,0xA0,0x6E,0x35);
 DEFINE_GUID(GUID_CustomForce,	0x13541C2B,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,0xA0,0x6E,0x35);
 
-typedef struct IDirectInput32A IDirectInput32A,*LPDIRECTINPUT32A;
-typedef struct IDirectInputDevice32A IDirectInputDevice32A,*LPDIRECTINPUTDEVICE32A;
+typedef struct IDirectInputA IDirectInputA,*LPDIRECTINPUTA;
+typedef struct IDirectInputDeviceA IDirectInputDeviceA,*LPDIRECTINPUTDEVICEA;
+typedef struct IDirectInputDevice2A IDirectInputDevice2A,*LPDIRECTINPUTDEVICE2A;
 typedef struct IDirectInputEffect IDirectInputEffect,*LPDIRECTINPUTEFFECT;
 typedef struct SysKeyboard32A SysKeyboard32A,*LPSYSKEYBOARD32A;
 typedef struct SysMouse32A SysMouse32A,*LPSYSMOUSE32A;
@@ -649,74 +644,148 @@ typedef struct DIEFFESCAPE {
 	DWORD			cbOutBuffer;
 } DIEFFESCAPE, *LPDIEFFESCAPE;
 
-#define THIS LPDIRECTINPUTEFFECT this
-typedef struct IDirectInputEffect_VTable {
+/*****************************************************************************
+ * IDirectInputEffect interface
+ */
+#define ICOM_INTERFACE IDirectInputEffect
+#define IDirectInputEffect_METHODS \
+    ICOM_METHOD3(HRESULT,Initialize,      HINSTANCE32,, DWORD,, REFGUID,) \
+    ICOM_METHOD1(HRESULT,GetEffectGuid,   LPGUID,) \
+    ICOM_METHOD2(HRESULT,GetParameters,   LPDIEFFECT,, DWORD,) \
+    ICOM_METHOD2(HRESULT,SetParameters,   LPCDIEFFECT,, DWORD,) \
+    ICOM_METHOD2(HRESULT,Start,           DWORD,, DWORD,) \
+    ICOM_METHOD (HRESULT,Stop) \
+    ICOM_METHOD1(HRESULT,GetEffectStatus, LPDWORD,) \
+    ICOM_METHOD (HRESULT,Download) \
+    ICOM_METHOD (HRESULT,Unload) \
+    ICOM_METHOD1(HRESULT,Escape,          LPDIEFFESCAPE,)
+#define IDirectInputEffect_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectInputEffect_METHODS
+ICOM_DEFINE(IDirectInputEffect,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD_(ULONG,Release)(THIS) PURE;
+#define IDirectInputEffect_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectInputEffect_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectInputEffect_Release(p)            ICOM_CALL (Release,p)
     /*** IDirectInputEffect methods ***/
-    STDMETHOD(Initialize)(THIS_ HINSTANCE32,DWORD,REFGUID) PURE;
-    STDMETHOD(GetEffectGuid)(THIS_ LPGUID) PURE;
-    STDMETHOD(GetParameters)(THIS_ LPDIEFFECT,DWORD) PURE;
-    STDMETHOD(SetParameters)(THIS_ LPCDIEFFECT,DWORD) PURE;
-    STDMETHOD(Start)(THIS_ DWORD,DWORD) PURE;
-    STDMETHOD(Stop)(THIS) PURE;
-    STDMETHOD(GetEffectStatus)(THIS_ LPDWORD) PURE;
-    STDMETHOD(Download)(THIS) PURE;
-    STDMETHOD(Unload)(THIS) PURE;
-    STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE) PURE;
-} IDirectInputEffect_VTable,*LPDIRECTINPUTEFFECT_VTABLE;
-#undef THIS
+#define IDirectInputEffect_Initialize(p,a,b,c)    ICOM_CALL3(Initialize,p,a,b,c)
+#define IDirectInputEffect_GetEffectGuid(p,a)     ICOM_CALL1(GetEffectGuid,p,a)
+#define IDirectInputEffect_GetParameters(p,a,b)   ICOM_CALL2(GetParameters,p,a,b)
+#define IDirectInputEffect_SetParameters(p,a,b)   ICOM_CALL2(SetParameters,p,a,b)
+#define IDirectInputEffect_Start(p,a,b)           ICOM_CALL2(Start,p,a,b)
+#define IDirectInputEffect_Stop(p)                ICOM_CALL (Stop,p)
+#define IDirectInputEffect_GetEffectStatus(p,a,b) ICOM_CALL1(GetEffectStatus,p,a)
+#define IDirectInputEffect_Download(p)            ICOM_CALL (Download,p)
+#define IDirectInputEffect_Unload(p)              ICOM_CALL (Unload,p)
+#define IDirectInputEffect_Escape(p,a)            ICOM_CALL1(Escape,p,a)
+#endif
 
-struct IDirectInputEffect {
-	LPDIRECTINPUTEFFECT_VTABLE	lpvtbl;
-	DWORD				ref;
-	GUID				guid;
-};
 
-#define THIS LPDIRECTINPUTDEVICE32A this
-typedef struct IDirectInputDeviceA_VTable {
+/*****************************************************************************
+ * IDirectInputDeviceA interface
+ */
+#define ICOM_INTERFACE IDirectInputDeviceA
+#define IDirectInputDeviceA_METHODS \
+    ICOM_METHOD1(HRESULT,GetCapabilities, LPDIDEVCAPS,lpDIDevCaps) \
+    ICOM_METHOD3(HRESULT,EnumObjects, LPDIENUMDEVICEOBJECTSCALLBACK32A,lpCallback, LPVOID,pvRef, DWORD,dwFlags) \
+    ICOM_METHOD2(HRESULT,GetProperty, REFGUID,rguidProp, LPDIPROPHEADER,pdiph) \
+    ICOM_METHOD2(HRESULT,SetProperty, REFGUID,rguidProp, LPCDIPROPHEADER,pdiph) \
+    ICOM_METHOD (HRESULT,Acquire) \
+    ICOM_METHOD (HRESULT,Unacquire) \
+    ICOM_METHOD2(HRESULT,GetDeviceState, DWORD,cbData, LPVOID,lpvData) \
+    ICOM_METHOD4(HRESULT,GetDeviceData, DWORD,cbObjectData, LPDIDEVICEOBJECTDATA,rgdod, LPDWORD,pdwInOut, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,SetDataFormat, LPCDIDATAFORMAT,lpdf) \
+    ICOM_METHOD1(HRESULT,SetEventNotification, HANDLE32,hEvent) \
+    ICOM_METHOD2(HRESULT,SetCooperativeLevel, HWND32,hwnd, DWORD,dwFlags) \
+    ICOM_METHOD3(HRESULT,GetObjectInfo, LPDIDEVICEOBJECTINSTANCE32A,pdidoi, DWORD,dwObj, DWORD,dwHow) \
+    ICOM_METHOD1(HRESULT,GetDeviceInfo, LPDIDEVICEINSTANCE32A,pdidi) \
+    ICOM_METHOD2(HRESULT,RunControlPanel, HWND32,hwndOwner, DWORD,dwFlags) \
+    ICOM_METHOD3(HRESULT,Initialize, HINSTANCE32,hinst, DWORD,dwVersion, REFGUID,rguid)
+#define IDirectInputDeviceA_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectInputDeviceA_METHODS
+ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
     /*** IUnknown methods ***/
-    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD_(ULONG,Release)(THIS) PURE;
+#define IDirectInputDevice_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectInputDevice_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectInputDevice_Release(p)            ICOM_CALL (Release,p)
+/*** IDirectInputDevice methods ***/
+#define IDirectInputDevice_GetCapabilities(p,a)       ICOM_CALL1(GetCapabilities,p,a)
+#define IDirectInputDevice_EnumObjects(p,a,b,c)       ICOM_CALL3(EnumObjects,p,a,b,c)
+#define IDirectInputDevice_GetProperty(p,a,b)         ICOM_CALL2(GetProperty,p,a,b)
+#define IDirectInputDevice_SetProperty(p,a,b)         ICOM_CALL2(SetProperty,p,a,b)
+#define IDirectInputDevice_Acquire(p)                 ICOM_CALL (Acquire,p)
+#define IDirectInputDevice_Unacquire(p)               ICOM_CALL (Unacquire,p)
+#define IDirectInputDevice_GetDeviceState(p,a,b)      ICOM_CALL2(GetDeviceState,p,a,b)
+#define IDirectInputDevice_GetDeviceData(p,a,b,c,d)   ICOM_CALL4(GetDeviceData,p,a,b,c,d)
+#define IDirectInputDevice_SetDataFormat(p,a)         ICOM_CALL1(SetDataFormat,p,a)
+#define IDirectInputDevice_SetEventNotification(p,a)  ICOM_CALL1(SetEventNotification,p,a)
+#define IDirectInputDevice_SetCooperativeLevel(p,a,b) ICOM_CALL2(SetCooperativeLevel,p,a,b)
+#define IDirectInputDevice_GetObjectInfo(p,a,b,c)     ICOM_CALL3(GetObjectInfo,p,a,b,c)
+#define IDirectInputDevice_GetDeviceInfo(p,a)         ICOM_CALL1(GetDeviceInfo,p,a)
+#define IDirectInputDevice_RunControlPanel(p,a,b)     ICOM_CALL2(RunControlPanel,p,a,b)
+#define IDirectInputDevice_Initialize(p,a,b,c)        ICOM_CALL3(Initialize,p,a,b,c)
+#endif
 
-    /*** IDirectInputDeviceA methods ***/
-    STDMETHOD(GetCapabilities)(THIS_ LPDIDEVCAPS) PURE;
-    STDMETHOD(EnumObjects)(THIS_ LPDIENUMDEVICEOBJECTSCALLBACK32A,LPVOID,DWORD) PURE;
-    STDMETHOD(GetProperty)(THIS_ REFGUID,LPDIPROPHEADER) PURE;
-    STDMETHOD(SetProperty)(THIS_ REFGUID,LPCDIPROPHEADER) PURE;
-    STDMETHOD(Acquire)(THIS) PURE;
-    STDMETHOD(Unacquire)(THIS) PURE;
-    STDMETHOD(GetDeviceState)(THIS_ DWORD,LPVOID) PURE;
-    STDMETHOD(GetDeviceData)(THIS_ DWORD,LPDIDEVICEOBJECTDATA,LPDWORD,DWORD) PURE;
-    STDMETHOD(SetDataFormat)(THIS_ LPCDIDATAFORMAT) PURE;
-    STDMETHOD(SetEventNotification)(THIS_ HANDLE32) PURE;
-    STDMETHOD(SetCooperativeLevel)(THIS_ HWND32,DWORD) PURE;
-    STDMETHOD(GetObjectInfo)(THIS_ LPDIDEVICEOBJECTINSTANCE32A,DWORD,DWORD) PURE;
-    STDMETHOD(GetDeviceInfo)(THIS_ LPDIDEVICEINSTANCE32A) PURE;
-    STDMETHOD(RunControlPanel)(THIS_ HWND32,DWORD) PURE;
-    STDMETHOD(Initialize)(THIS_ HINSTANCE32,DWORD,REFGUID) PURE;
-    /*** IDirectInputDevice2A methods ***/
-    STDMETHOD(CreateEffect)(THIS_ REFGUID,LPCDIEFFECT,LPDIRECTINPUTEFFECT *,LPUNKNOWN) PURE;
-    STDMETHOD(EnumEffects)(THIS_ LPDIENUMEFFECTSCALLBACKA,LPVOID,DWORD) PURE;
-    STDMETHOD(GetEffectInfo)(THIS_ LPDIEFFECTINFOA,REFGUID) PURE;
-    STDMETHOD(GetForceFeedbackState)(THIS_ LPDWORD) PURE;
-    STDMETHOD(SendForceFeedbackCommand)(THIS_ DWORD) PURE;
-    STDMETHOD(EnumCreatedEffectObjects)(THIS_ LPDIENUMCREATEDEFFECTOBJECTSCALLBACK,LPVOID,DWORD) PURE;
-    STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE) PURE;
-    STDMETHOD(Poll)(THIS) PURE;
-    STDMETHOD(SendDeviceData)(THIS_ DWORD,LPDIDEVICEOBJECTDATA,LPDWORD,DWORD) PURE;
 
-} IDirectInputDeviceA_VTable,*LPDIRECTINPUTDEVICEA_VTABLE,
-  IDirectInputDevice2A_VTable,*LPDIRECTINPUTDEVICE2A_VTABLE;
+/*****************************************************************************
+ * IDirectInputDevice2A interface
+ */
+#define ICOM_INTERFACE IDirectInputDevice2A
+#define IDirectInputDevice2A_METHODS \
+    ICOM_METHOD4(HRESULT,CreateEffect, REFGUID,rguid, LPCDIEFFECT,lpeff, LPDIRECTINPUTEFFECT*,ppdeff, LPUNKNOWN,punkOuter) \
+    ICOM_METHOD3(HRESULT,EnumEffects, LPDIENUMEFFECTSCALLBACKA,lpCallback, LPVOID,pvRef, DWORD,dwEffType) \
+    ICOM_METHOD2(HRESULT,GetEffectInfo, LPDIEFFECTINFOA,pdei, REFGUID,rguid) \
+    ICOM_METHOD1(HRESULT,GetForceFeedbackState, LPDWORD,pdwOut) \
+    ICOM_METHOD1(HRESULT,SendForceFeedbackCommand, DWORD,dwFlags) \
+    ICOM_METHOD3(HRESULT,EnumCreatedEffectObjects, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK,lpCallback, LPVOID,pvRef, DWORD,fl) \
+    ICOM_METHOD1(HRESULT,Escape, LPDIEFFESCAPE,pesc) \
+    ICOM_METHOD (HRESULT,Poll) \
+    ICOM_METHOD4(HRESULT,SendDeviceData, DWORD,cbObjectData, LPDIDEVICEOBJECTDATA,rgdod, LPDWORD,pdwInOut, DWORD,fl)
+#define IDirectInputDevice2A_IMETHODS \
+    IDirectInputDeviceA_IMETHODS \
+    IDirectInputDevice2A_METHODS
+ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
+#undef ICOM_INTERFACE
 
-struct IDirectInputDevice32A {
-	LPDIRECTINPUTDEVICEA_VTABLE	lpvtbl;
-	DWORD				ref;
-	GUID				guid;
-};
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IDirectInputDevice2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectInputDevice2_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectInputDevice2_Release(p)            ICOM_CALL (Release,p)
+/*** IDirectInputDevice methods ***/
+#define IDirectInputDevice2_GetCapabilities(p,a)       ICOM_CALL1(GetCapabilities,p,a)
+#define IDirectInputDevice2_EnumObjects(p,a,b,c)       ICOM_CALL3(EnumObjects,p,a,b,c)
+#define IDirectInputDevice2_GetProperty(p,a,b)         ICOM_CALL2(GetProperty,p,a,b)
+#define IDirectInputDevice2_SetProperty(p,a,b)         ICOM_CALL2(SetProperty,p,a,b)
+#define IDirectInputDevice2_Acquire(p)                 ICOM_CALL (Acquire,p)
+#define IDirectInputDevice2_Unacquire(p)               ICOM_CALL (Unacquire,p)
+#define IDirectInputDevice2_GetDeviceState(p,a,b)      ICOM_CALL2(GetDeviceState,p,a,b)
+#define IDirectInputDevice2_GetDeviceData(p,a,b,c,d)   ICOM_CALL4(GetDeviceData,p,a,b,c,d)
+#define IDirectInputDevice2_SetDataFormat(p,a)         ICOM_CALL1(SetDataFormat,p,a)
+#define IDirectInputDevice2_SetEventNotification(p,a)  ICOM_CALL1(SetEventNotification,p,a)
+#define IDirectInputDevice2_SetCooperativeLevel(p,a,b) ICOM_CALL2(SetCooperativeLevel,p,a,b)
+#define IDirectInputDevice2_GetObjectInfo(p,a,b,c)     ICOM_CALL3(GetObjectInfo,p,a,b,c)
+#define IDirectInputDevice2_GetDeviceInfo(p,a)         ICOM_CALL1(GetDeviceInfo,p,a)
+#define IDirectInputDevice2_RunControlPanel(p,a,b)     ICOM_CALL2(RunControlPanel,p,a,b)
+#define IDirectInputDevice2_Initialize(p,a,b,c)        ICOM_CALL3(Initialize,p,a,b,c)
+/*** IDirectInputDevice2 methods ***/
+#define IDirectInputDevice2_CreateEffect(p,a,b,c,d)           ICOM_CALL4(CreateEffect,p,a,b,c,d)
+#define IDirectInputDevice2_EnumEffects(p,a,b,c)              ICOM_CALL3(EnumEffects,p,a,b,c)
+#define IDirectInputDevice2_GetEffectInfo(p,a,b)              ICOM_CALL2(GetEffectInfo,p,a,b)
+#define IDirectInputDevice2_GetForceFeedbackState(p,a)        ICOM_CALL1(GetForceFeedbackState,p,a)
+#define IDirectInputDevice2_SendForceFeedbackCommand(p,a)     ICOM_CALL1(SendForceFeedbackCommand,p,a)
+#define IDirectInputDevice2_EnumCreatedEffectObjects(p,a,b,c) ICOM_CALL3(EnumCreatedEffectObjects,p,a,b,c)
+#define IDirectInputDevice2_Escape(p,a)                       ICOM_CALL1(Escape,p,a)
+#define IDirectInputDevice2_Poll(p)                           ICOM_CALL (Poll,p)
+#define IDirectInputDevice2_SendDeviceData(p,a,b,c,d)         ICOM_CALL4(SendDeviceData,p,a,b,c,d)
+#endif
 
 /* "Standard" Mouse report... */
 typedef struct DIMOUSESTATE {
@@ -734,54 +803,35 @@ typedef struct DIMOUSESTATE {
 #define DIMOFS_BUTTON2 (FIELD_OFFSET(DIMOUSESTATE, rgbButtons) + 2)
 #define DIMOFS_BUTTON3 (FIELD_OFFSET(DIMOUSESTATE, rgbButtons) + 3)
 
-struct SysMouse32A {
-	LPDIRECTINPUTDEVICEA_VTABLE	lpvtbl;
-	DWORD				ref;
-	GUID				guid;
-	BYTE                            absolute;
-	/* Previous position for relative moves */
-	LONG prevX, prevY;
-	LPMOUSE_EVENT_PROC prev_handler;
-	HWND32 win;
-	int xwin;
-	DWORD win_centerX, win_centerY;
-	LPDIDEVICEOBJECTDATA data_queue;
-	int queue_pos, queue_len;
-	int need_warp;
-	int acquired;
-};
 
-struct SysKeyboard32A {
-	LPDIRECTINPUTDEVICEA_VTABLE	lpvtbl;
-	DWORD				ref;
-	GUID				guid;
-	BYTE				keystate[256];
-};
-#undef THIS
+/*****************************************************************************
+ * IDirectInputA interface
+ */
+#define ICOM_INTERFACE IDirectInputA
+#define IDirectInputA_METHODS \
+    ICOM_METHOD3(HRESULT,CreateDevice,    REFGUID,rguid, LPDIRECTINPUTDEVICEA*,lplpDirectInputDevice, LPUNKNOWN,pUnkOuter) \
+    ICOM_METHOD4(HRESULT,EnumDevices,     DWORD,dwDevType, LPDIENUMDEVICESCALLBACK32A,lpCallback, LPVOID,pvRef, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,GetDeviceStatus, REFGUID,rguidInstance) \
+    ICOM_METHOD2(HRESULT,RunControlPanel, HWND32,hwndOwner, DWORD,dwFlags) \
+    ICOM_METHOD2(HRESULT,Initialize,      HINSTANCE32,hinst, DWORD,dwVersion)
+#define IDirectInputA_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectInputA_METHODS
+ICOM_DEFINE(IDirectInputA,IUnknown)
+#undef ICOM_INTERFACE
 
-#define THIS LPDIRECTINPUT32A this
-typedef struct IDirectInputA_VTable {
-	/*** IUnknown methods ***/
-	STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-	STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-	STDMETHOD_(ULONG,Release)(THIS) PURE;
-
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IDirectInputA_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectInputA_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectInputA_Release(p)            ICOM_CALL (Release,p)
 	/*** IDirectInputA methods ***/
-	STDMETHOD(CreateDevice)(THIS_ REFGUID,LPDIRECTINPUTDEVICE32A*,LPUNKNOWN) PURE;
-	STDMETHOD(EnumDevices)(THIS_ DWORD,LPDIENUMDEVICESCALLBACK32A,LPVOID,DWORD) PURE;
-	STDMETHOD(GetDeviceStatus)(THIS_ REFGUID) PURE;
-	STDMETHOD(RunControlPanel)(THIS_ HWND32,DWORD) PURE;
-	STDMETHOD(Initialize)(THIS_ HINSTANCE32,DWORD) PURE;
-} IDirectInputA_VTable,*LPDIRECTINPUTA_VTABLE;
-
-struct IDirectInput32A {
-	LPDIRECTINPUTA_VTABLE	lpvtbl;
-	DWORD			ref;
-};
-#undef THIS
-#undef THIS_
-#undef STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
-#undef STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)
-#undef PURE
-#undef FAR
+#define IDirectInputA_CreateDevice(p,a,b,c)  ICOM_CALL3(CreateDevice,p,a,b,c)
+#define IDirectInputA_EnumDevices(p,a,b,c,d) ICOM_CALL4(EnumDevices,p,a,b,c,d)
+#define IDirectInputA_GetDeviceStatus(p,a)   ICOM_CALL1(GetDeviceStatus,p,a)
+#define IDirectInputA_RunControlPanel(p,a,b) ICOM_CALL2(RunControlPanel,p,a,b)
+#define IDirectInputA_Initialize(p,a,b)      ICOM_CALL2(Initialize,p,a,b)
 #endif
+
+
+#endif /* __WINE_DINPUT_H */
