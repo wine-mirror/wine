@@ -16,9 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_OBJBASE_H
-#define __WINE_OBJBASE_H
+#include "rpc.h"
+#include "rpcndr.h"
 
+#ifndef _OBJBASE_H_
 #define _OBJBASE_H_
 
 #define __WINE_INCLUDE_OBJIDL
@@ -100,4 +101,4 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
 
 #endif /* __WINE__ */
 
-#endif /* __WINE_OBJBASE_H */
+#endif /* _OBJBASE_H_ */
