@@ -1143,6 +1143,13 @@ static void LISTBOX_InvalidateItems( HWND hwnd, LB_DESCR *descr, INT index )
     }
 }
 
+static void LISTBOX_InvalidateItemRect( HWND hwnd, LB_DESCR *descr, INT index )
+{
+    RECT rect;
+
+    if (LISTBOX_GetItemRect( descr, index, &rect ) == 1)
+        InvalidateRect( hwnd, &rect, TRUE );
+}
 
 /***********************************************************************
  *           LISTBOX_GetItemHeight
@@ -1361,7 +1368,7 @@ static LRESULT LISTBOX_SelectItemRange( HWND hwnd, LB_DESCR *descr, INT first,
         {
             if (descr->items[i].selected) continue;
             descr->items[i].selected = TRUE;
-            LISTBOX_RepaintItem( hwnd, descr, i, ODA_SELECT );
+            LISTBOX_InvalidateItemRect(hwnd, descr, i);
         }
         LISTBOX_SetCaretIndex( hwnd, descr, last, TRUE );
     }
@@ -1371,7 +1378,7 @@ static LRESULT LISTBOX_SelectItemRange( HWND hwnd, LB_DESCR *descr, INT first,
         {
             if (!descr->items[i].selected) continue;
             descr->items[i].selected = FALSE;
-            LISTBOX_RepaintItem( hwnd, descr, i, ODA_SELECT );
+            LISTBOX_InvalidateItemRect(hwnd, descr, i);
         }
     }
     return LB_OKAY;
