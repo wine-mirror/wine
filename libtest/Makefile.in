@@ -6,6 +6,7 @@ MODULE    = none
 RCFLAGS   = -w32 -h
 PROGRAMS  = expand hello hello2 hello3 hello4 hello5 new rolex vartest volinfo
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+WRCEXTRA  = -A -p $*
 
 C_SRCS = \
 	expand.c \

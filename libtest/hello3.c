@@ -1,7 +1,16 @@
 #include <windows.h>
 #include <resource.h>
-#include "hello3res.h"
 #include <commdlg.h>
+#include "hello3res.h"
+
+typedef struct
+{
+  HANDLE  hInstance;
+  HWND    hMainWnd;
+  HMENU   hMainMenu;
+} GLOBALS;
+
+GLOBALS Globals;
 
 BOOL FileOpen(HWND hWnd)
 {
@@ -34,19 +43,26 @@ LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 	case WM_COMMAND:
 	switch(w){
 		case 100:
-			CreateDialogIndirect(0,hello3res_DIALOG_DIADEMO.bytes,wnd,(WNDPROC)DlgProc);
+			DialogBox(Globals.hInstance,
+				"DIADEMO", wnd,
+				(DLGPROC)DlgProc);
 			return 0;
 		case 101:
 		{
-			BITMAPINFO *bm=(BITMAPINFO*)hello3res_BITMAP_BITDEMO.bytes;
-			char *bits=(char*)bm;
-			HDC hdc=GetDC(wnd);
-			bits+=bm->bmiHeader.biSize;
-			bits+=(1<<bm->bmiHeader.biBitCount)*sizeof(RGBQUAD);
-			SetDIBitsToDevice(hdc,0,0,bm->bmiHeader.biWidth,
-				bm->bmiHeader.biHeight,0,0,0,bm->bmiHeader.biHeight,
-				bits,bm,DIB_RGB_COLORS);
-			ReleaseDC(wnd,hdc);
+			HDC hdc, hMemDC;
+			HBITMAP hBitmap, hPrevBitmap;
+			BITMAP bmp;
+
+			hBitmap = LoadBitmapA (Globals.hInstance, "BITDEMO");
+			hdc = GetDC (wnd);
+			hMemDC = CreateCompatibleDC (hdc);
+			hPrevBitmap = SelectObject (hMemDC, hBitmap);
+			GetObjectA (hBitmap, sizeof(BITMAP), &bmp);
+			BitBlt (hdc, 0, 0, bmp.bmWidth, bmp.bmHeight,
+				hMemDC, 0, 0, SRCCOPY);
+			SelectObject (hMemDC, hPrevBitmap);
+			DeleteDC (hMemDC);
+			ReleaseDC (wnd, hdc);
 			return 0;
 		}
 	        case 102:
@@ -67,12 +83,12 @@ LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 
 int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 {
-    HWND     wnd;
     MSG      msg;
     WNDCLASS class;
     char className[] = "class";  /* To make sure className >= 0x10000 */
     char winName[] = "Test app";
 
+    Globals.hInstance = inst;
     if (!prev){
 	class.style = CS_HREDRAW | CS_VREDRAW;
 	class.lpfnWndProc = WndProc;
@@ -88,11 +104,11 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
     if (!RegisterClass (&class))
 	return FALSE;
 
-    wnd = CreateWindow (className, winName, WS_OVERLAPPEDWINDOW,
+    Globals.hMainWnd = CreateWindow (className, winName, WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
 			LoadMenu(inst,"MAIN"), inst, 0);
-    ShowWindow (wnd, show);
-    UpdateWindow (wnd);
+    ShowWindow (Globals.hMainWnd, show);
+    UpdateWindow (Globals.hMainWnd);
 
     while (GetMessage (&msg, 0, 0, 0)){
 	TranslateMessage (&msg);
