@@ -6531,6 +6531,11 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
 	{
 	    RANGE range = { nItems, nOldCount };
 	    ranges_del(infoPtr->selectionRanges, range);
+	    if (infoPtr->nFocusedItem >= nItems)
+	    {
+		infoPtr->nFocusedItem = -1;
+		SetRectEmpty(&infoPtr->rcFocus);
+	    }
 	}
 
 	infoPtr->nItemCount = nItems;
@@ -6539,8 +6544,8 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
 	/* the flags are valid only in ownerdata report and list modes */
 	if (uView == LVS_ICON || uView == LVS_SMALLICON) dwFlags = 0;
 
-	if (!(dwFlags & LVSICF_NOSCROLL))
-	    LISTVIEW_EnsureVisible(infoPtr, nItems - 1, FALSE);
+	if (!(dwFlags & LVSICF_NOSCROLL) && infoPtr->nFocusedItem != -1)
+	    LISTVIEW_EnsureVisible(infoPtr, infoPtr->nFocusedItem, FALSE);
 
 	if (!(dwFlags & LVSICF_NOINVALIDATEALL))
 	    LISTVIEW_InvalidateList(infoPtr);
