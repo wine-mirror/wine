@@ -578,6 +578,9 @@ HRESULT WINAPI SafeArrayDestroyData(
   if(psa->cLocks > 0)
     return DISP_E_ARRAYISLOCKED;
 
+  if(psa->pvData==NULL)
+    return S_OK;
+
   ulWholeArraySize = getArraySize(psa);
 
   if(isPointer(psa->fFeatures)) {           /* release the pointers */
