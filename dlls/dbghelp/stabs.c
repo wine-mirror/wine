@@ -1085,8 +1085,8 @@ BOOL stabs_parse(struct module* module, const char* addr,
     struct symt_function*       curr_func = NULL;
     struct symt_block*          block = NULL;
     struct symt_compiland*      compiland = NULL;
-    char                        currpath[PATH_MAX];
-    char                        srcpath[PATH_MAX];
+    char                        currpath[PATH_MAX]; /* path to current file */
+    char                        srcpath[PATH_MAX]; /* path to directory source file is in */
     int                         i, j;
     int                         nstab;
     const char*                 ptr;
@@ -1108,7 +1108,6 @@ BOOL stabs_parse(struct module* module, const char* addr,
     stab_ptr = (const struct stab_nlist*)(addr + staboff);
     strs = (const char*)(addr + strtaboff);
 
-    memset(currpath, 0, sizeof(currpath));
     memset(srcpath, 0, sizeof(srcpath));
     memset(stabs_basic, 0, sizeof(stabs_basic));
 
@@ -1377,7 +1376,7 @@ BOOL stabs_parse(struct module* module, const char* addr,
             if (*ptr == '\0') /* end of N_SO file */
             {
                 /* Nuke old path. */
-                currpath[0] = '\0';
+                srcpath[0] = '\0';
                 stabs_finalize_function(module, curr_func);
                 curr_func = NULL;
                 source_idx = -1;
@@ -1387,20 +1386,17 @@ BOOL stabs_parse(struct module* module, const char* addr,
             }
             else
             {
-                stabs_reset_includes();
-                if (*ptr != '/')
+                int len = strlen(ptr);
+                if (ptr[len-1] != '/')
                 {
                     strcpy(currpath, srcpath);
                     strcat(currpath, ptr);
+                    stabs_reset_includes();
                     compiland = symt_new_compiland(module, currpath);
                     source_idx = source_new(module, currpath);
                 }
                 else
-                {
                     strcpy(srcpath, ptr);
-                    compiland = symt_new_compiland(module, srcpath);
-                    source_idx = source_new(module, srcpath);
-                }
             }
             break;
         case N_SOL:
