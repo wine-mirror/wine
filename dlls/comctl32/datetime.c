@@ -563,11 +563,15 @@ DATETIME_HitTest (DATETIME_INFO *infoPtr, POINT pt)
 
 
 static LRESULT
-DATETIME_LButtonDown (DATETIME_INFO *infoPtr, WORD wKey, POINTS pts)
+DATETIME_LButtonDown (DATETIME_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
-    POINT pt = { pts.x, pts.y };
-    int old = infoPtr->select;
-    int new = DATETIME_HitTest (infoPtr, pt);
+    POINT pt;
+    int old, new;
+
+    pt.x = x;
+    pt.y = y;
+    old = infoPtr->select;
+    new = DATETIME_HitTest (infoPtr, pt);
 
     /* FIXME: might be conditions where we don't want to update infoPtr->select */
     infoPtr->select = new;
@@ -614,7 +618,7 @@ DATETIME_LButtonDown (DATETIME_INFO *infoPtr, WORD wKey, POINTS pts)
 
 
 static LRESULT
-DATETIME_LButtonUp (DATETIME_INFO *infoPtr, WORD wKey, POINTS pts)
+DATETIME_LButtonUp (DATETIME_INFO *infoPtr, WORD wKey)
 {
     if(infoPtr->bCalDepressed == TRUE) {
         infoPtr->bCalDepressed = FALSE;
@@ -1003,10 +1007,10 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return DATETIME_Size (infoPtr, wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
     case WM_LBUTTONDOWN:
-        return DATETIME_LButtonDown (infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+        return DATETIME_LButtonDown (infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
     case WM_LBUTTONUP:
-        return DATETIME_LButtonUp (infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+        return DATETIME_LButtonUp (infoPtr, (WORD)wParam);
 
     case WM_CREATE:
 	return DATETIME_Create (hwnd, (LPCREATESTRUCTW)lParam);

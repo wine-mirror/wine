@@ -650,10 +650,10 @@ static BOOL UPDOWN_CancelMode (UPDOWN_INFO *infoPtr)
  * 'pt' is the location of the mouse event in client or
  * windows coordinates.
  */
-static void UPDOWN_HandleMouseEvent (UPDOWN_INFO *infoPtr, UINT msg, POINTS pts)
+static void UPDOWN_HandleMouseEvent (UPDOWN_INFO *infoPtr, UINT msg, INT x, INT y)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->Self, GWL_STYLE);
-    POINT pt = { pts.x, pts.y };
+    POINT pt = { x, y };
     RECT rect;
     int temp, arrow;
 
@@ -840,7 +840,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	case WM_LBUTTONDOWN:
 	case WM_MOUSEMOVE:
 	    if(UPDOWN_IsEnabled(infoPtr))
-		UPDOWN_HandleMouseEvent (infoPtr, message, MAKEPOINTS(lParam));
+		UPDOWN_HandleMouseEvent (infoPtr, message, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 	    break;
 
 	case WM_KEYDOWN:

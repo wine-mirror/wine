@@ -3140,7 +3140,7 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] fwKeys : key indicator
- * [I] pts : mouse position
+ * [I] x,y : mouse position
  *
  * RETURN:
  *   0 if the message was processed, non-zero if there was an error
@@ -3150,7 +3150,7 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
  * over the item for a certain period of time.
  *
  */
-static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKyes, POINTS pts)
+static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKyes, INT x, INT y)
 {
     if(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT)
 	/* FIXME: select the item!!! */
@@ -3166,12 +3166,12 @@ static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKyes, POINTS p
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] fwKeys : key indicator
- * [I] pts : mouse position
+ * [I] x,y : mouse position
  *
  * RETURN:
  *   0 if the message is processed, non-zero if there was an error
  */
-static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, POINTS pts)
+static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, INT y)
 {
   TRACKMOUSEEVENT trackinfo;
 
@@ -7960,22 +7960,22 @@ static LRESULT LISTVIEW_TrackMouse(LISTVIEW_INFO *infoPtr, POINT pt)
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
- * [I] pts : mouse coordinate
+ * [I] x,y : mouse coordinate
  *
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
+static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
     LVHITTESTINFO htInfo;
 
-    TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
+    TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, x, y);
 
     /* send NM_RELEASEDCAPTURE notification */
     notify(infoPtr, NM_RELEASEDCAPTURE);
 
-    htInfo.pt.x = pts.x;
-    htInfo.pt.y = pts.y;
+    htInfo.pt.x = x;
+    htInfo.pt.y = y;
 
     /* send NM_DBLCLK notification */
     LISTVIEW_HitTest(infoPtr, &htInfo, TRUE, FALSE);
@@ -7994,19 +7994,19 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
- * [I] pts : mouse coordinate
+ * [I] x,y : mouse coordinate
  *
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
+static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
   LVHITTESTINFO lvHitTestInfo;
   static BOOL bGroupSelect = TRUE;
-  POINT pt = { pts.x, pts.y };
+  POINT pt = { x, y };
   INT nItem;
 
-  TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
+  TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, x, y);
 
   /* send NM_RELEASEDCAPTURE notification */
   notify(infoPtr, NM_RELEASEDCAPTURE);
@@ -8016,8 +8016,8 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   /* set left button down flag */
   infoPtr->bLButtonDown = TRUE;
 
-  lvHitTestInfo.pt.x = pts.x;
-  lvHitTestInfo.pt.y = pts.y;
+  lvHitTestInfo.pt.x = x;
+  lvHitTestInfo.pt.y = y;
 
   nItem = LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
   TRACE("at %s, nItem=%d\n", debugpoint(&pt), nItem);
@@ -8121,21 +8121,21 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
- * [I] pts : mouse coordinate
+ * [I] x,y : mouse coordinate
  *
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
+static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
     LVHITTESTINFO lvHitTestInfo;
     
-    TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, pts.x, pts.y);
+    TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, x, y);
 
     if (!infoPtr->bLButtonDown) return 0;
 
-    lvHitTestInfo.pt.x = pts.x;
-    lvHitTestInfo.pt.y = pts.y;
+    lvHitTestInfo.pt.x = x;
+    lvHitTestInfo.pt.y = y;
 
     /* send NM_CLICK notification */
     LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, FALSE);
@@ -8353,23 +8353,23 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
- * [I] pts : mouse coordinate
+ * [I] x,y : mouse coordinate
  *
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_RButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
+static LRESULT LISTVIEW_RButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
     LVHITTESTINFO lvHitTestInfo;
     
-    TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, pts.x, pts.y);
+    TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, x, y);
 
     /* send NM_RELEASEDCAPTURE notification */
     notify(infoPtr, NM_RELEASEDCAPTURE);
 
     /* send NM_RDBLCLK notification */
-    lvHitTestInfo.pt.x = pts.x;
-    lvHitTestInfo.pt.y = pts.y;
+    lvHitTestInfo.pt.x = x;
+    lvHitTestInfo.pt.y = y;
     LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, FALSE);
     notify_click(infoPtr, NM_RDBLCLK, &lvHitTestInfo);
 
@@ -8383,17 +8383,17 @@ static LRESULT LISTVIEW_RButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
- * [I] pts : mouse coordinate
+ * [I] x,y : mouse coordinate
  *
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
+static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
     LVHITTESTINFO lvHitTestInfo;
     INT nItem;
 
-    TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, pts.x, pts.y);
+    TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, x, y);
 
     /* send NM_RELEASEDCAPTURE notification */
     notify(infoPtr, NM_RELEASEDCAPTURE);
@@ -8405,8 +8405,8 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
     infoPtr->bRButtonDown = TRUE;
 
     /* determine the index of the selected item */
-    lvHitTestInfo.pt.x = pts.x;
-    lvHitTestInfo.pt.y = pts.y;
+    lvHitTestInfo.pt.x = x;
+    lvHitTestInfo.pt.y = y;
     nItem = LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
   
     if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
@@ -8431,17 +8431,17 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] wKey : key flag
- * [I] pts : mouse coordinate
+ * [I] x,y : mouse coordinate
  *
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
+static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
     LVHITTESTINFO lvHitTestInfo;
     POINT pt;
 
-    TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, pts.x, pts.y);
+    TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, x, y);
 
     if (!infoPtr->bRButtonDown) return 0;
  
@@ -8449,8 +8449,8 @@ static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
     infoPtr->bRButtonDown = FALSE;
 
     /* Send NM_RClICK notification */
-    lvHitTestInfo.pt.x = pts.x;
-    lvHitTestInfo.pt.y = pts.y;
+    lvHitTestInfo.pt.x = x;
+    lvHitTestInfo.pt.y = y;
     LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, FALSE);
     notify_click(infoPtr, NM_RCLICK, &lvHitTestInfo);
 
@@ -9168,19 +9168,19 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_KillFocus(infoPtr);
 
   case WM_LBUTTONDBLCLK:
-    return LISTVIEW_LButtonDblClk(infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+    return LISTVIEW_LButtonDblClk(infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_LBUTTONDOWN:
-    return LISTVIEW_LButtonDown(infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+    return LISTVIEW_LButtonDown(infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_LBUTTONUP:
-    return LISTVIEW_LButtonUp(infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+    return LISTVIEW_LButtonUp(infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_MOUSEMOVE:
-    return LISTVIEW_MouseMove (infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+    return LISTVIEW_MouseMove (infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_MOUSEHOVER:
-    return LISTVIEW_MouseHover(infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+    return LISTVIEW_MouseHover(infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_NCDESTROY:
     return LISTVIEW_NCDestroy(infoPtr);
@@ -9197,13 +9197,13 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_Paint(infoPtr, (HDC)wParam);
 
   case WM_RBUTTONDBLCLK:
-    return LISTVIEW_RButtonDblClk(infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+    return LISTVIEW_RButtonDblClk(infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_RBUTTONDOWN:
-    return LISTVIEW_RButtonDown(infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+    return LISTVIEW_RButtonDown(infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_RBUTTONUP:
-    return LISTVIEW_RButtonUp(infoPtr, (WORD)wParam, MAKEPOINTS(lParam));
+    return LISTVIEW_RButtonUp(infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_SETCURSOR:
     if(LISTVIEW_SetCursor(infoPtr, (HWND)wParam, LOWORD(lParam), HIWORD(lParam)))

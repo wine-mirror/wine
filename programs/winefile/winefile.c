@@ -3667,8 +3667,9 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 			 /* first select the current item in the listbox */
 			HWND hpanel = (HWND) wparam;
-			POINTS* ppos = &MAKEPOINTS(lparam);
-			POINT pt; POINTSTOPOINT(pt, *ppos);
+			POINT pt;
+			pt.x = (short)LOWORD(lparam);
+			pt.y = (short)HIWORD(lparam);
 			ScreenToClient(hpanel, &pt);
 			SendMessage(hpanel, WM_LBUTTONDOWN, 0, MAKELONG(pt.x, pt.y));
 			SendMessage(hpanel, WM_LBUTTONUP, 0, MAKELONG(pt.x, pt.y));
@@ -3689,7 +3690,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 					 /* get and use the parent folder to display correct context menu in all cases */
 					if (SUCCEEDED(SHBindToParent(pidl_abs, &IID_IShellFolder, (LPVOID*)&parentFolder, &pidlLast))) {
-						hr = ShellFolderContextMenu(parentFolder, hwnd, 1, &pidlLast, ppos->x, ppos->y);
+						hr = ShellFolderContextMenu(parentFolder, hwnd, 1, &pidlLast, pt.x, pt.y);
 
 						(*parentFolder->lpVtbl->Release)(parentFolder);
 					}

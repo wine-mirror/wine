@@ -1478,12 +1478,10 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
     case WM_SETCURSOR:
     {
         LHITTESTINFO ht;
-        POINTS pt;
         DWORD mp = GetMessagePos();
         
-        pt = MAKEPOINTS(mp);
-        ht.pt.x = pt.x;
-        ht.pt.y = pt.y;
+        ht.pt.x = (short)LOWORD(mp);
+        ht.pt.y = (short)HIWORD(mp);
         
         ScreenToClient(infoPtr->Self, &ht.pt);
         if(SYSLINK_HitTest (infoPtr, &ht))
