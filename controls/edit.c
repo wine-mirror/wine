@@ -238,6 +238,7 @@ static LRESULT	EDIT_WM_KillFocus(WND *wnd, EDITSTATE *es, HWND window_getting_fo
 static LRESULT	EDIT_WM_LButtonDblClk(WND *wnd, EDITSTATE *es, DWORD keys, INT x, INT y);
 static LRESULT	EDIT_WM_LButtonDown(WND *wnd, EDITSTATE *es, DWORD keys, INT x, INT y);
 static LRESULT	EDIT_WM_LButtonUp(WND *wnd, EDITSTATE *es, DWORD keys, INT x, INT y);
+static LRESULT	EDIT_WM_MButtonDown(WND *wnd);
 static LRESULT	EDIT_WM_MouseMove(WND *wnd, EDITSTATE *es, DWORD keys, INT x, INT y);
 static LRESULT	EDIT_WM_NCCreate(WND *wnd, LPCREATESTRUCTA cs);
 static void	EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam);
@@ -803,6 +804,11 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 	case WM_LBUTTONUP:
 		DPRINTF_EDIT_MSG32("WM_LBUTTONUP");
 		result = EDIT_WM_LButtonUp(wnd, es, (DWORD)wParam, SLOWORD(lParam), SHIWORD(lParam));
+		break;
+
+	case WM_MBUTTONDOWN:                        
+  		DPRINTF_EDIT_MSG32("WM_MBUTTONDOWN");    
+  		result = EDIT_WM_MButtonDown(wnd);
 		break;
 
 	case WM_MOUSEACTIVATE:
@@ -3590,6 +3596,18 @@ static LRESULT EDIT_WM_LButtonUp(WND *wnd, EDITSTATE *es, DWORD keys, INT x, INT
 	}
 	es->bCaptureState = FALSE;
 	return 0;
+}
+
+
+/*********************************************************************
+ *
+ *	WM_MBUTTONDOWN
+ *
+ */
+static LRESULT EDIT_WM_MButtonDown(WND *wnd)
+{  
+    SendMessageA(wnd->hwndSelf,WM_PASTE,0,0);  
+    return 0;
 }
 
 
