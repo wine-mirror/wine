@@ -657,6 +657,16 @@ typedef struct
 #define WM_CAPTURECHANGED   0x0215
 #define WM_MOVING	    0x0216
 
+/* wParam for WM_SIZING message */
+#define WMSZ_LEFT           1
+#define WMSZ_RIGHT          2
+#define WMSZ_TOP            3
+#define WMSZ_TOPLEFT        4
+#define WMSZ_TOPRIGHT       5
+#define WMSZ_BOTTOM         6
+#define WMSZ_BOTTOMLEFT     7
+#define WMSZ_BOTTOMRIGHT    8
+
   /* MDI messages */
 #define WM_MDICREATE	    0x0220
 #define WM_MDIDESTROY	    0x0221

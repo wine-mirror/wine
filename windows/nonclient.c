@@ -2256,18 +2256,22 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	    else
 	    {
 		RECT newRect = sizingRect;
+                WPARAM wpSizingHit = 0;
 
 		if (hittest == HTCAPTION) OffsetRect( &newRect, dx, dy );
 		if (ON_LEFT_BORDER(hittest)) newRect.left += dx;
 		else if (ON_RIGHT_BORDER(hittest)) newRect.right += dx;
 		if (ON_TOP_BORDER(hittest)) newRect.top += dy;
 		else if (ON_BOTTOM_BORDER(hittest)) newRect.bottom += dy;
-		if( !iconic )
-		{
-		    NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
-		    NC_DrawMovingFrame( hdc, &newRect, thickframe );
-		}
+		if(!iconic) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 		capturePoint = pt;
+                
+                /* determine the hit location */
+                if (hittest >= HTLEFT && hittest <= HTBOTTOMRIGHT)
+                    wpSizingHit = WMSZ_LEFT + (hittest - HTLEFT);
+		SendMessageA( hwnd, WM_SIZING, wpSizingHit, (LPARAM)&newRect );
+
+		if (!iconic) NC_DrawMovingFrame( hdc, &newRect, thickframe );
 		sizingRect = newRect;
 	    }
 	}
