@@ -4423,13 +4423,18 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 	/*
 	 * In Win95 look and feel, the WS_BORDER style is replaced by the
 	 * WS_EX_CLIENTEDGE style for the edit control. This gives the edit
-	 * control a non client area.  Not always.  This coordinates in some
-         * way with the window creation code in dialog.c  When making
-         * modifications please ensure that the code still works for edit
-         * controls created directly with style 0x50800000, exStyle 0 (
-         * which should have a single pixel border)
+	 * control a nonclient area so we don't need to draw the border.
+         * If WS_BORDER without WS_EX_CLIENTEDGE is specified we shouldn't have
+         * a nonclient area and we should handle painting the border ourselves.
+         *
+         * When making modifications please ensure that the code still works 
+         * for edit controls created directly with style 0x50800000, exStyle 0
+         * (which should have a single pixel border)
 	 */
-	es->style      &= ~WS_BORDER;
+	if (lpcs->dwExStyle & WS_EX_CLIENTEDGE)
+		es->style &= ~WS_BORDER;
+        else if (es->style & WS_BORDER)
+		SetWindowLongW(hwnd, GWL_STYLE, es->style & ~WS_BORDER);
 
 	return TRUE;
 }
