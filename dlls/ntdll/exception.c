@@ -36,6 +36,7 @@
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "excpt.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
