@@ -23,7 +23,6 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "wine/unicode.h"
 
 static const WCHAR foobarW[] = {'f','o','o','b','a','r',0};
 static const WCHAR FOOBARW[] = {'F','O','O','B','A','R',0};
@@ -105,7 +104,7 @@ static void test_get_atom_name(void)
     /* Repeat, unicode-style */
     for (i = 0; i < 10; i++) bufW[i] = '.';
     len = GlobalGetAtomNameW( atom, bufW, 10 );
-    ok( len == strlenW(foobarW), "bad length %d", len );
+    ok( len == lstrlenW(foobarW), "bad length %d", len );
     todo_wine
     {
         ok( !memcmp( bufW, resultW, 10*sizeof(WCHAR) ), "bad buffer contents" );
