@@ -106,22 +106,22 @@ static void testQuery(void)
 
         pRtlMultiByteToUnicodeN( bn, sizeof(bn), NULL, test->var, strlen(test->var)+1 );
         nts = pRtlQueryEnvironmentVariable_U(small_env, &name, &value);
-        ok( nts == test->status, "[%d]: Wrong status for '%s', expecting %lx got %lx",
+        ok( nts == test->status, "[%d]: Wrong status for '%s', expecting %lx got %lx\n",
             test - tests, test->var, test->status, nts );
         if (nts == test->status) switch (nts)
         {
         case STATUS_SUCCESS:
             pRtlMultiByteToUnicodeN( bn, sizeof(bn), NULL, test->val, strlen(test->val)+1 );
-            ok( value.Length == strlen(test->val) * sizeof(WCHAR), "Wrong length %d/%d for %s",
+            ok( value.Length == strlen(test->val) * sizeof(WCHAR), "Wrong length %d/%d for %s\n",
                 value.Length, strlen(test->val) * sizeof(WCHAR), test->var );
             ok((value.Length == strlen(test->val) * sizeof(WCHAR) && strncmpW(bv, bn, test->len) == 0) ||
 	       strcmpW(bv, bn) == 0, 
-	       "Wrong result for %s/%d", test->var, test->len);
-            ok(bv[test->len] == '@', "Writing too far away in the buffer for %s/%d", test->var, test->len);
+	       "Wrong result for %s/%d\n", test->var, test->len);
+            ok(bv[test->len] == '@', "Writing too far away in the buffer for %s/%d\n", test->var, test->len);
             break;
         case STATUS_BUFFER_TOO_SMALL:
             ok( value.Length == strlen(test->val) * sizeof(WCHAR), 
-                "Wrong returned length %d/%d (too small buffer) for %s",
+                "Wrong returned length %d/%d (too small buffer) for %s\n",
                 value.Length, strlen(test->val) * sizeof(WCHAR), test->var );
             break;
         }
@@ -147,7 +147,7 @@ static void testSetHelper(LPWSTR* env, const char* var, const char* val, NTSTATU
         pRtlMultiByteToUnicodeN( bval1, sizeof(bval1), NULL, val, strlen(val)+1 );
     }
     nts = pRtlSetEnvironmentVariable(env, &uvar, val ? &uval : NULL);
-    ok(nts == ret, "Setting var %s=%s (%lx/%lx)", var, val, nts, ret);
+    ok(nts == ret, "Setting var %s=%s (%lx/%lx)\n", var, val, nts, ret);
     if (nts == STATUS_SUCCESS)
     {
         uval.Length = 0;
@@ -157,13 +157,13 @@ static void testSetHelper(LPWSTR* env, const char* var, const char* val, NTSTATU
         switch (nts)
         {
         case STATUS_SUCCESS:
-            ok(strcmpW(bval1, bval2) == 0, "Cannot get value written to environment");
+            ok(strcmpW(bval1, bval2) == 0, "Cannot get value written to environment\n");
             break;
         case STATUS_VARIABLE_NOT_FOUND:
-            ok(val == NULL, "Couldn't find variable, but didn't delete it");
+            ok(val == NULL, "Couldn't find variable, but didn't delete it\n");
             break;
         default:
-            ok(0, "Wrong ret %lu for %s", nts, var);
+            ok(0, "Wrong ret %lu for %s\n", nts, var);
             break;
         }
     }
@@ -175,7 +175,7 @@ static void testSet(void)
     char                tmp[16];
     int                 i;
 
-    ok(pRtlCreateEnvironment(FALSE, &env) == STATUS_SUCCESS, "Creating environment");
+    ok(pRtlCreateEnvironment(FALSE, &env) == STATUS_SUCCESS, "Creating environment\n");
     memmove(env, small_env, sizeof(small_env));
 
     testSetHelper(&env, "cat", "dog", STATUS_SUCCESS);
@@ -202,7 +202,7 @@ static void testSet(void)
     }
     testSetHelper(&env, "fOo", NULL, STATUS_SUCCESS);
 
-    ok(pRtlDestroyEnvironment(env) == STATUS_SUCCESS, "Destroying environment");
+    ok(pRtlDestroyEnvironment(env) == STATUS_SUCCESS, "Destroying environment\n");
 }
 
 static void testExpand(void)
@@ -248,7 +248,7 @@ static void testExpand(void)
 
         nts = pRtlExpandEnvironmentStrings_U(small_env, &us_src, &us_dst, &ul);
         ok(ul == strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR), 
-           "Wrong  returned length for %s: %lu <> %u", 
+           "Wrong  returned length for %s: %lu <> %u\n",
            test->src, ul, strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR));
 
         us_dst.Length = 0;
@@ -256,14 +256,14 @@ static void testExpand(void)
         us_dst.Buffer = dst;
 
         nts = pRtlExpandEnvironmentStrings_U(small_env, &us_src, &us_dst, &ul);
-        ok(nts == STATUS_SUCCESS, "Call failed (%lu)", nts);
+        ok(nts == STATUS_SUCCESS, "Call failed (%lu)\n", nts);
         ok(ul == us_dst.Length + sizeof(WCHAR), 
-           "Wrong returned length for %s: %lu <> %u", 
+           "Wrong returned length for %s: %lu <> %u\n",
            test->src, ul, us_dst.Length + sizeof(WCHAR));
         ok(ul == strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR), 
-           "Wrong  returned length for %s: %lu <> %u", 
+           "Wrong  returned length for %s: %lu <> %u\n",
            test->src, ul, strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR));
-        ok(strcmpW(dst, rst) == 0, "Wrong result for %s: expecting %s", 
+        ok(strcmpW(dst, rst) == 0, "Wrong result for %s: expecting %s\n",
            test->src, test->dst);
 
         us_dst.Length = 0;
@@ -271,14 +271,14 @@ static void testExpand(void)
         us_dst.Buffer = dst;
         dst[8] = '-';
         nts = pRtlExpandEnvironmentStrings_U(small_env, &us_src, &us_dst, &ul);
-        ok(nts == STATUS_BUFFER_TOO_SMALL, "Call failed (%lu)", nts);
+        ok(nts == STATUS_BUFFER_TOO_SMALL, "Call failed (%lu)\n", nts);
         ok(ul == strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR), 
-           "Wrong  returned length for %s (with buffer too small): %lu <> %u", 
+           "Wrong  returned length for %s (with buffer too small): %lu <> %u\n",
            test->src, ul, strlen(test->dst) * sizeof(WCHAR) + sizeof(WCHAR));
         ok(strncmpW(dst, rst, 8) == 0, 
-           "Wrong result for %s (with buffer too small): expecting %s", 
+           "Wrong result for %s (with buffer too small): expecting %s\n",
            test->src, test->dst);
-        ok(dst[8] == '-', "Writing too far in buffer (got %c/%d)", dst[8], dst[8]);
+        ok(dst[8] == '-', "Writing too far in buffer (got %c/%d)\n", dst[8], dst[8]);
     }
 
 }

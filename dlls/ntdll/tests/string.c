@@ -65,7 +65,7 @@ static ULONG    (WINAPIV *pwcstoul)(LPCWSTR, LPWSTR *, INT);
 static void InitFunctionPtrs()
 {
     hntdll = LoadLibraryA("ntdll.dll");
-    ok(hntdll != 0, "LoadLibrary failed");
+    ok(hntdll != 0, "LoadLibrary failed\n");
     if (hntdll) {
 	pRtlUnicodeStringToAnsiString = (void *)GetProcAddress(hntdll, "RtlUnicodeStringToAnsiString");
 	pRtlFreeAnsiString = (void *)GetProcAddress(hntdll, "RtlFreeAnsiString");
@@ -219,10 +219,10 @@ static void one_itoa_test(int test_num, const ulong2str_t *ulong2str)
     value = ulong2str->value;
     result = p_itoa(value, dest_str, ulong2str->base);
     ok(result == dest_str,
-       "(test %d): _itoa(%d, [out], %d) has result %p, expected: %p",
+       "(test %d): _itoa(%d, [out], %d) has result %p, expected: %p\n",
        test_num, value, ulong2str->base, result, dest_str);
     ok(memcmp(dest_str, ulong2str->Buffer, LARGE_STRI_BUFFER_LENGTH) == 0,
-       "(test %d): _itoa(%d, [out], %d) assigns string \"%s\", expected: \"%s\"",
+       "(test %d): _itoa(%d, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
        test_num, value, ulong2str->base, dest_str, ulong2str->Buffer);
 }
 
@@ -238,10 +238,10 @@ static void one_ltoa_test(int test_num, const ulong2str_t *ulong2str)
     value = ulong2str->value;
     result = p_ltoa(ulong2str->value, dest_str, ulong2str->base);
     ok(result == dest_str,
-       "(test %d): _ltoa(%ld, [out], %d) has result %p, expected: %p",
+       "(test %d): _ltoa(%ld, [out], %d) has result %p, expected: %p\n",
        test_num, value, ulong2str->base, result, dest_str);
     ok(memcmp(dest_str, ulong2str->Buffer, LARGE_STRI_BUFFER_LENGTH) == 0,
-       "(test %d): _ltoa(%ld, [out], %d) assigns string \"%s\", expected: \"%s\"",
+       "(test %d): _ltoa(%ld, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
        test_num, value, ulong2str->base, dest_str, ulong2str->Buffer);
 }
 
@@ -257,10 +257,10 @@ static void one_ultoa_test(int test_num, const ulong2str_t *ulong2str)
     value = ulong2str->value;
     result = p_ultoa(ulong2str->value, dest_str, ulong2str->base);
     ok(result == dest_str,
-       "(test %d): _ultoa(%lu, [out], %d) has result %p, expected: %p",
+       "(test %d): _ultoa(%lu, [out], %d) has result %p, expected: %p\n",
        test_num, value, ulong2str->base, result, dest_str);
     ok(memcmp(dest_str, ulong2str->Buffer, LARGE_STRI_BUFFER_LENGTH) == 0,
-       "(test %d): _ultoa(%lu, [out], %d) assigns string \"%s\", expected: \"%s\"",
+       "(test %d): _ultoa(%lu, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
        test_num, value, ulong2str->base, dest_str, ulong2str->Buffer);
 }
 
@@ -309,10 +309,10 @@ static void one_itow_test(int test_num, const ulong2str_t *ulong2str)
     result = p_itow(value, dest_wstr, ulong2str->base);
     pRtlUnicodeStringToAnsiString(&ansi_str, &unicode_string, 1);
     ok(result == dest_wstr,
-       "(test %d): _itow(%d, [out], %d) has result %p, expected: %p",
+       "(test %d): _itow(%d, [out], %d) has result %p, expected: %p\n",
        test_num, value, ulong2str->base, result, dest_wstr);
     ok(memcmp(dest_wstr, expected_wstr, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-       "(test %d): _itow(%d, [out], %d) assigns string \"%s\", expected: \"%s\"",
+       "(test %d): _itow(%d, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
        test_num, value, ulong2str->base, ansi_str.Buffer, ulong2str->Buffer);
     pRtlFreeAnsiString(&ansi_str);
 }
@@ -345,10 +345,10 @@ static void one_ltow_test(int test_num, const ulong2str_t *ulong2str)
     result = p_ltow(value, dest_wstr, ulong2str->base);
     pRtlUnicodeStringToAnsiString(&ansi_str, &unicode_string, 1);
     ok(result == dest_wstr,
-       "(test %d): _ltow(%ld, [out], %d) has result %p, expected: %p",
+       "(test %d): _ltow(%ld, [out], %d) has result %p, expected: %p\n",
        test_num, value, ulong2str->base, result, dest_wstr);
     ok(memcmp(dest_wstr, expected_wstr, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-       "(test %d): _ltow(%ld, [out], %d) assigns string \"%s\", expected: \"%s\"",
+       "(test %d): _ltow(%ld, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
        test_num, value, ulong2str->base, ansi_str.Buffer, ulong2str->Buffer);
     pRtlFreeAnsiString(&ansi_str);
 }
@@ -381,10 +381,10 @@ static void one_ultow_test(int test_num, const ulong2str_t *ulong2str)
     result = p_ultow(value, dest_wstr, ulong2str->base);
     pRtlUnicodeStringToAnsiString(&ansi_str, &unicode_string, 1);
     ok(result == dest_wstr,
-       "(test %d): _ultow(%lu, [out], %d) has result %p, expected: %p",
+       "(test %d): _ultow(%lu, [out], %d) has result %p, expected: %p\n",
        test_num, value, ulong2str->base, result, dest_wstr);
     ok(memcmp(dest_wstr, expected_wstr, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-       "(test %d): _ultow(%lu, [out], %d) assigns string \"%s\", expected: \"%s\"",
+       "(test %d): _ultow(%lu, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
        test_num, value, ulong2str->base, ansi_str.Buffer, ulong2str->Buffer);
     pRtlFreeAnsiString(&ansi_str);
 }
@@ -415,7 +415,7 @@ static void test_ulongtow(void)
     expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
     result = p_itow(ulong2str[0].value, NULL, 10);
     ok(result == NULL,
-       "(test a): _itow(%ld, NULL, 10) has result %p, expected: NULL",
+       "(test a): _itow(%ld, NULL, 10) has result %p, expected: NULL\n",
        ulong2str[0].value, result);
 
     for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
@@ -424,7 +424,7 @@ static void test_ulongtow(void)
     expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
     result = p_ltow(ulong2str[0].value, NULL, 10);
     ok(result == NULL,
-       "(test b): _ltow(%ld, NULL, 10) has result %p, expected: NULL",
+       "(test b): _ltow(%ld, NULL, 10) has result %p, expected: NULL\n",
        ulong2str[0].value, result);
 
     for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
@@ -433,7 +433,7 @@ static void test_ulongtow(void)
     expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
     result = p_ultow(ulong2str[0].value, NULL, 10);
     ok(result == NULL,
-       "(test c): _ultow(%ld, NULL, 10) has result %p, expected: NULL",
+       "(test c): _ultow(%ld, NULL, 10) has result %p, expected: NULL\n",
        ulong2str[0].value, result);
 }
 
@@ -598,19 +598,19 @@ static void one_i64toa_test(int test_num, const ulonglong2str_t *ulonglong2str)
     dest_str[LARGE_STRI_BUFFER_LENGTH] = '\0';
     result = p_i64toa(ulonglong2str->value, dest_str, ulonglong2str->base);
     ok(result == dest_str,
-       "(test %d): _i64toa(%Lu, [out], %d) has result %p, expected: %p",
+       "(test %d): _i64toa(%Lu, [out], %d) has result %p, expected: %p\n",
        test_num, ulonglong2str->value, ulonglong2str->base, result, dest_str);
     if (ulonglong2str->mask & 0x04) {
 	if (memcmp(dest_str, ulonglong2str->Buffer, LARGE_STRI_BUFFER_LENGTH) != 0) {
 	    if (memcmp(dest_str, ulonglong2str[1].Buffer, LARGE_STRI_BUFFER_LENGTH) != 0) {
 		ok(memcmp(dest_str, ulonglong2str->Buffer, LARGE_STRI_BUFFER_LENGTH) == 0,
-		   "(test %d): _i64toa(%Lu, [out], %d) assigns string \"%s\", expected: \"%s\"",
+		   "(test %d): _i64toa(%Lu, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
 		   test_num, ulonglong2str->value, ulonglong2str->base, dest_str, ulonglong2str->Buffer);
 	    } /* if */
 	} /* if */
     } else {
 	ok(memcmp(dest_str, ulonglong2str->Buffer, LARGE_STRI_BUFFER_LENGTH) == 0,
-	   "(test %d): _i64toa(%Lu, [out], %d) assigns string \"%s\", expected: \"%s\"",
+	   "(test %d): _i64toa(%Lu, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
 	   test_num, ulonglong2str->value, ulonglong2str->base, dest_str, ulonglong2str->Buffer);
     } /* if */
 }
@@ -625,10 +625,10 @@ static void one_ui64toa_test(int test_num, const ulonglong2str_t *ulonglong2str)
     dest_str[LARGE_STRI_BUFFER_LENGTH] = '\0';
     result = p_ui64toa(ulonglong2str->value, dest_str, ulonglong2str->base);
     ok(result == dest_str,
-       "(test %d): _ui64toa(%Lu, [out], %d) has result %p, expected: %p",
+       "(test %d): _ui64toa(%Lu, [out], %d) has result %p, expected: %p\n",
        test_num, ulonglong2str->value, ulonglong2str->base, result, dest_str);
     ok(memcmp(dest_str, ulonglong2str->Buffer, LARGE_STRI_BUFFER_LENGTH) == 0,
-       "(test %d): _ui64toa(%Lu, [out], %d) assigns string \"%s\", expected: \"%s\"",
+       "(test %d): _ui64toa(%Lu, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
        test_num, ulonglong2str->value, ulonglong2str->base, dest_str, ulonglong2str->Buffer);
 }
 
@@ -675,7 +675,7 @@ static void one_i64tow_test(int test_num, const ulonglong2str_t *ulonglong2str)
     result = p_i64tow(ulonglong2str->value, dest_wstr, ulonglong2str->base);
     pRtlUnicodeStringToAnsiString(&ansi_str, &unicode_string, 1);
     ok(result == dest_wstr,
-       "(test %d): _i64tow(%llu, [out], %d) has result %p, expected: %p",
+       "(test %d): _i64tow(%llu, [out], %d) has result %p, expected: %p\n",
        test_num, ulonglong2str->value, ulonglong2str->base, result, dest_wstr);
     if (ulonglong2str->mask & 0x04) {
 	if (memcmp(dest_wstr, expected_wstr, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) != 0) {
@@ -685,13 +685,13 @@ static void one_i64tow_test(int test_num, const ulonglong2str_t *ulonglong2str)
 	    expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
 	    if (memcmp(dest_wstr, expected_wstr, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) != 0) {
 		ok(memcmp(dest_wstr, expected_wstr, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-		   "(test %d): _i64tow(%llu, [out], %d) assigns string \"%s\", expected: \"%s\"",
+		   "(test %d): _i64tow(%llu, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
 		   test_num, ulonglong2str->value, ulonglong2str->base, ansi_str.Buffer, ulonglong2str->Buffer);
 	    } /* if */
 	} /* if */
     } else {
 	ok(memcmp(dest_wstr, expected_wstr, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-	   "(test %d): _i64tow(%llu, [out], %d) assigns string \"%s\", expected: \"%s\"",
+	   "(test %d): _i64tow(%llu, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
 	   test_num, ulonglong2str->value, ulonglong2str->base, ansi_str.Buffer, ulonglong2str->Buffer);
     } /* if */
     pRtlFreeAnsiString(&ansi_str);
@@ -723,10 +723,10 @@ static void one_ui64tow_test(int test_num, const ulonglong2str_t *ulonglong2str)
     result = p_ui64tow(ulonglong2str->value, dest_wstr, ulonglong2str->base);
     pRtlUnicodeStringToAnsiString(&ansi_str, &unicode_string, 1);
     ok(result == dest_wstr,
-       "(test %d): _ui64tow(%llu, [out], %d) has result %p, expected: %p",
+       "(test %d): _ui64tow(%llu, [out], %d) has result %p, expected: %p\n",
        test_num, ulonglong2str->value, ulonglong2str->base, result, dest_wstr);
     ok(memcmp(dest_wstr, expected_wstr, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-       "(test %d): _ui64tow(%llu, [out], %d) assigns string \"%s\", expected: \"%s\"",
+       "(test %d): _ui64tow(%llu, [out], %d) assigns string \"%s\", expected: \"%s\"\n",
        test_num, ulonglong2str->value, ulonglong2str->base, ansi_str.Buffer, ulonglong2str->Buffer);
     pRtlFreeAnsiString(&ansi_str);
 }
@@ -756,7 +756,7 @@ static void test_ulonglongtow(void)
     expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
     result = p_i64tow(ulong2str[0].value, NULL, 10);
     ok(result == NULL,
-       "(test d): _i64tow(%llu, NULL, 10) has result %p, expected: NULL",
+       "(test d): _i64tow(%llu, NULL, 10) has result %p, expected: NULL\n",
        ulonglong2str[0].value, result);
 
     if (p_ui64tow) {
@@ -766,7 +766,7 @@ static void test_ulonglongtow(void)
 	expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
 	result = p_ui64tow(ulong2str[0].value, NULL, 10);
 	ok(result == NULL,
-	   "(test e): _ui64tow(%llu, NULL, 10) has result %p, expected: NULL",
+	   "(test e): _ui64tow(%llu, NULL, 10) has result %p, expected: NULL\n",
 	   ulonglong2str[0].value, result);
     } /* if */
 }
@@ -893,7 +893,7 @@ static void test_wtoi(void)
 	pRtlCreateUnicodeStringFromAsciiz(&uni, str2long[test_num].str);
 	result = p_wtoi(uni.Buffer);
 	ok(result == str2long[test_num].value,
-	   "(test %d): call failed: _wtoi(\"%s\") has result %d, expected: %ld",
+	   "(test %d): call failed: _wtoi(\"%s\") has result %d, expected: %ld\n",
 	   test_num, str2long[test_num].str, result, str2long[test_num].value);
 	pRtlFreeUnicodeString(&uni);
     } /* for */
@@ -910,7 +910,7 @@ static void test_wtol(void)
 	pRtlCreateUnicodeStringFromAsciiz(&uni, str2long[test_num].str);
 	result = p_wtol(uni.Buffer);
 	ok(result == str2long[test_num].value,
-	   "(test %d): call failed: _wtol(\"%s\") has result %ld, expected: %ld",
+	   "(test %d): call failed: _wtol(\"%s\") has result %ld, expected: %ld\n",
 	   test_num, str2long[test_num].str, result, str2long[test_num].value);
 	pRtlFreeUnicodeString(&uni);
     } /* for */
@@ -1048,7 +1048,7 @@ static void test_atoi64(void)
     for (test_num = 0; test_num < NB_STR2LONGLONG; test_num++) {
 	result = p_atoi64(str2longlong[test_num].str);
 	ok(result == str2longlong[test_num].value,
-	   "(test %d): call failed: _atoi64(\"%s\") has result %lld, expected: %lld",
+	   "(test %d): call failed: _atoi64(\"%s\") has result %lld, expected: %lld\n",
 	   test_num, str2longlong[test_num].str, result, str2longlong[test_num].value);
     } /* for */
 }
@@ -1064,7 +1064,7 @@ static void test_wtoi64(void)
 	pRtlCreateUnicodeStringFromAsciiz(&uni, str2longlong[test_num].str);
 	result = p_wtoi64(uni.Buffer);
 	ok(result == str2longlong[test_num].value,
-	   "(test %d): call failed: _wtoi64(\"%s\") has result %lld, expected: %lld",
+	   "(test %d): call failed: _wtoi64(\"%s\") has result %lld, expected: %lld\n",
 	   test_num, str2longlong[test_num].str, result, str2longlong[test_num].value);
 	pRtlFreeUnicodeString(&uni);
     } /* for */

@@ -84,7 +84,7 @@ static void test_RtlDetermineDosPathNameType(void)
     {
         pRtlMultiByteToUnicodeN( buffer, sizeof(buffer), NULL, test->path, strlen(test->path)+1 );
         ret = pRtlDetermineDosPathNameType_U( buffer );
-        ok( ret == test->ret, "Wrong result %d/%d for %s", ret, test->ret, test->path );
+        ok( ret == test->ret, "Wrong result %d/%d for %s\n", ret, test->ret, test->path );
     }
 }
 
@@ -148,7 +148,7 @@ static void test_RtlIsDosDeviceName(void)
         pRtlMultiByteToUnicodeN( buffer, sizeof(buffer), NULL, test->path, strlen(test->path)+1 );
         ret = pRtlIsDosDeviceName_U( buffer );
         ok( ret == MAKELONG( test->len, test->pos ),
-            "Wrong result (%d,%d)/(%d,%d) for %s",
+            "Wrong result (%d,%d)/(%d,%d) for %s\n",
             HIWORD(ret), LOWORD(ret), test->pos, test->len, test->path );
     }
 }
@@ -209,18 +209,18 @@ static void test_RtlIsNameLegalDOS8Dot3(void)
         oem_ret.Length = oem_ret.MaximumLength = sizeof(buff2);
         oem_ret.Buffer = buff2;
         ret = pRtlIsNameLegalDOS8Dot3( &ustr, &oem_ret, &spaces );
-        ok( ret == test->result, "Wrong result %d/%d for '%s'", ret, test->result, test->path );
-        ok( spaces == test->spaces, "Wrong spaces value %d/%d for '%s'", spaces, test->spaces, test->path );
+        ok( ret == test->result, "Wrong result %d/%d for '%s'\n", ret, test->result, test->path );
+        ok( spaces == test->spaces, "Wrong spaces value %d/%d for '%s'\n", spaces, test->spaces, test->path );
         if (strlen(test->path) <= 12)
         {
             char str[13];
             int i;
             strcpy( str, test->path );
             for (i = 0; str[i]; i++) str[i] = toupper(str[i]);
-            ok( oem_ret.Length == strlen(test->path), "Wrong length %d/%d for '%s'",
+            ok( oem_ret.Length == strlen(test->path), "Wrong length %d/%d for '%s'\n",
                 oem_ret.Length, strlen(test->path), test->path );
             ok( !memcmp( oem_ret.Buffer, str, oem_ret.Length ),
-                "Wrong string '%.*s'/'%s'", oem_ret.Length, oem_ret.Buffer, str );
+                "Wrong string '%.*s'/'%s'\n", oem_ret.Length, oem_ret.Buffer, str );
         }
     }
 }
