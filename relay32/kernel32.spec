@@ -717,7 +717,7 @@ init	MAIN_KernelInit
 698 stdcall UTRegister(long str str str ptr ptr ptr) UTRegister
 699 stdcall UTUnRegister(long) UTUnRegister
 700 stdcall UnMapLS(long) UnMapLS
-701 stdcall UnMapSLFixArray(ptr long) UnMapSLFixArray
+701 register UnMapSLFixArray() UnMapSLFixArray
 702 stdcall UnhandledExceptionFilter(ptr) UnhandledExceptionFilter
 703 stub UninitializeCriticalSection
 704 stdcall UnlockFile(long long long long long) UnlockFile

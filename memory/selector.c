@@ -554,8 +554,11 @@ LPVOID WINAPI MapSLFix( SEGPTR sptr )
  *           UnMapSLFixArray   (KERNEL32.701)
  */
 
-void WINAPI UnMapSLFixArray( SEGPTR sptr[], INT32 length )
+REGS_ENTRYPOINT(UnMapSLFixArray) /* SEGPTR sptr[], INT32 length */
 {
+    /* Must not change EAX, hence defined as 'register' function */
+    /* We need to remove the arguments ourselves */
+    ESP_reg( context ) += 8;
 }
 
 /***********************************************************************
