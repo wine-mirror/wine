@@ -195,6 +195,8 @@ struct tagGdiFont {
     int charset;
     BOOL fake_italic;
     BOOL fake_bold;
+    BYTE underline;
+    BYTE strikeout;
     INT orientation;
     GM *gm;
     DWORD gmsize;
@@ -1694,6 +1696,8 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     ret->orientation = lf.lfOrientation;
     ret->name = strdupW(family->FamilyName);
+    ret->underline = lf.lfUnderline ? 0xff : 0;
+    ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
     ret->hfont = hfont;
@@ -2482,8 +2486,8 @@ static BOOL get_bitmap_text_metrics(GdiFont font)
         TM.tmDefaultChar = winfnt_header.default_char;
         TM.tmBreakChar = winfnt_header.break_char;
         TM.tmItalic = winfnt_header.italic;
-        TM.tmUnderlined = winfnt_header.underline;
-        TM.tmStruckOut = winfnt_header.strike_out;
+        TM.tmUnderlined = font->underline;
+        TM.tmStruckOut = font->strikeout;
         TM.tmPitchAndFamily = winfnt_header.pitch_and_family;
         TM.tmCharSet = winfnt_header.charset;
     }
@@ -2506,8 +2510,8 @@ static BOOL get_bitmap_text_metrics(GdiFont font)
         TM.tmDefaultChar = 32;
         TM.tmBreakChar = 32;
         TM.tmItalic = ft_face->style_flags & FT_STYLE_FLAG_ITALIC ? 1 : 0;
-        TM.tmUnderlined = 0;
-        TM.tmStruckOut = 0;
+        TM.tmUnderlined = font->underline;
+        TM.tmStruckOut = font->strikeout;
         /* NB inverted meaning of TMPF_FIXED_PITCH */
         TM.tmPitchAndFamily = ft_face->face_flags & FT_FACE_FLAG_FIXED_WIDTH ? 0 : TMPF_FIXED_PITCH;
         TM.tmCharSet = font->charset;
@@ -2671,8 +2675,8 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     TM.tmDefaultChar = pOS2->usDefaultChar;
     TM.tmBreakChar = pOS2->usBreakChar ? pOS2->usBreakChar : ' ';
     TM.tmItalic = font->fake_italic ? 255 : ((ft_face->style_flags & FT_STYLE_FLAG_ITALIC) ? 255 : 0);
-    TM.tmUnderlined = 0; /* entry in OS2 table */
-    TM.tmStruckOut = 0; /* entry in OS2 table */
+    TM.tmUnderlined = font->underline;
+    TM.tmStruckOut = font->strikeout;
 
     /* Yes TPMF_FIXED_PITCH is correct; braindead api */
     if(!FT_IS_FIXED_WIDTH(ft_face))
