@@ -1262,7 +1262,7 @@ static void TAB_SetItemBounds (HWND hwnd)
 	  /* ************  FIXME FIXME FIXME  *************** */
 	  /*                                                  */
 	  /* FIXME:                                           */
-	  /* if vertical,                                     */ 
+	  /* if vertical,                                     */
 	  /*   if item n and n+1 are in the same row,         */
 	  /*      then the display has n+1 lower (toward the  */
 	  /*      bottom) than n. We do it just the           */
@@ -1284,7 +1284,7 @@ static void TAB_SetItemBounds (HWND hwnd)
 		  curItemLeftPos = 0;
 		  iCount = 0;
 	      }
-	  } 
+	  }
 
           /* shift the item to the right to place it as the next item in this row */
           infoPtr->items[iItm].rect.left += curItemLeftPos;
@@ -1587,14 +1587,14 @@ TAB_DrawItemInterior
       else if(lStyle & TCS_VERTICAL)
       {
         rcImage.top = drawRect->bottom - cy - center_offset;
-	rcImage.left--; 
+	rcImage.left--;
         drawRect->bottom = rcImage.top - HORIZONTAL_ITEM_PADDING;
       }
       else /* normal style, whether TCS_BOTTOM or not */
       {
         rcImage.left = drawRect->left + center_offset + 3;
         drawRect->left = rcImage.left + cx + HORIZONTAL_ITEM_PADDING;
-	rcImage.top -= (lStyle & TCS_BOTTOM) ? 2 : 1; 
+	rcImage.top -= (lStyle & TCS_BOTTOM) ? 2 : 1;
       }
 
       TRACE("drawing image=%d, left=%d, top=%d\n",
@@ -3175,7 +3175,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_NCHitTest(hwnd, lParam);
 
     default:
-      if (uMsg >= WM_USER)
+      if ((uMsg >= WM_USER) && (uMsg < WM_APP))
 	WARN("unknown msg %04x wp=%08x lp=%08lx\n",
 	     uMsg, wParam, lParam);
       return DefWindowProcA(hwnd, uMsg, wParam, lParam);

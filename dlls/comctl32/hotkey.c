@@ -343,7 +343,7 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*	case WM_SYSCHAR: */
 
 	default:
-	    if (uMsg >= WM_USER)
+	    if ((uMsg >= WM_USER) && (uMsg < WM_APP))
 		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
@@ -375,4 +375,3 @@ HOTKEY_Unregister (void)
 {
     UnregisterClassA (HOTKEY_CLASSA, (HINSTANCE)NULL);
 }
-

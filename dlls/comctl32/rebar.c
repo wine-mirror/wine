@@ -4472,7 +4472,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_WindowPosChanged (infoPtr, wParam, lParam);
 
 	default:
-	    if (uMsg >= WM_USER)
+	    if ((uMsg >= WM_USER) && (uMsg < WM_APP))
 		ERR("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
@@ -4511,4 +4511,3 @@ REBAR_Unregister (void)
 {
     UnregisterClassA (REBARCLASSNAMEA, (HINSTANCE)NULL);
 }
-

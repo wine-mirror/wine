@@ -2174,7 +2174,7 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return COMBOEX_WindowPosChanging (infoPtr, (WINDOWPOS *)lParam);
 
 	default:
-	    if (uMsg >= WM_USER)
+	    if ((uMsg >= WM_USER) && (uMsg < WM_APP))
 		ERR("unknown msg %04x wp=%08x lp=%08lx\n",uMsg,wParam,lParam);
 	    return DefWindowProcW (hwnd, uMsg, wParam, lParam);
     }
@@ -2203,4 +2203,3 @@ void COMBOEX_Unregister (void)
 {
     UnregisterClassW (WC_COMBOBOXEXW, (HINSTANCE)NULL);
 }
-

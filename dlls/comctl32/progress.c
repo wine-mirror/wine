@@ -360,7 +360,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	return 0;
 
     default:
-        if (message >= WM_USER)
+        if ((message >= WM_USER) && (message < WM_APP))
 	    ERR("unknown msg %04x wp=%04x lp=%08lx\n", message, wParam, lParam );
         return DefWindowProcW( hwnd, message, wParam, lParam );
     }
@@ -397,4 +397,3 @@ VOID PROGRESS_Unregister (void)
 {
     UnregisterClassW (PROGRESS_CLASSW, (HINSTANCE)NULL);
 }
-

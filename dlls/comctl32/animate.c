@@ -917,7 +917,7 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 
     default:
-	if (uMsg >= WM_USER)
+	if ((uMsg >= WM_USER) && (uMsg < WM_APP))
 	    ERR("unknown msg %04x wp=%08x lp=%08lx\n", uMsg, wParam, lParam);
 
 	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
@@ -946,4 +946,3 @@ void ANIMATE_Unregister(void)
 {
     UnregisterClassA(ANIMATE_CLASSA, (HINSTANCE)NULL);
 }
-

@@ -5374,7 +5374,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     default:
 	/* This mostly catches MFC and Delphi messages. :( */
-	if (uMsg >= WM_USER)
+	if ((uMsg >= WM_USER) && (uMsg < WM_APP))
 	    TRACE("Unknown msg %04x wp=%08x lp=%08lx\n", uMsg, wParam, lParam);
 def:
 	return DefWindowProcA(hwnd, uMsg, wParam, lParam);

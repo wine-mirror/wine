@@ -1223,7 +1223,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return DefWindowProcW (hwnd, msg, wParam, lParam);
 
 	default:
-	    if (msg >= WM_USER)
+	    if ((msg >= WM_USER) && (msg < WM_APP))
 		ERR("unknown msg %04x wp=%04x lp=%08lx\n",
 		     msg, wParam, lParam);
 	    return DefWindowProcW (hwnd, msg, wParam, lParam);
@@ -1267,4 +1267,3 @@ STATUS_Unregister (void)
 {
     UnregisterClassW (STATUSCLASSNAMEW, (HINSTANCE)NULL);
 }
-
