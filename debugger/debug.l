@@ -94,7 +94,7 @@ STRING     \"[^\n"]+\"
 <INITIAL>set|se				{ BEGIN(NOCMD); return tSET; }
 <INITIAL,NOPROCESS>walk|w		{ BEGIN(WALK_CMD); return tWALK; }
 <INITIAL>x				{ BEGIN(FORMAT_EXPECTED); return tEXAM; }
-<INITIAL>help|hel|he|"?"		{ BEGIN(HELP_CMD); return tHELP; }
+<INITIAL,NOPROCESS>help|hel|he|"?"		{ BEGIN(HELP_CMD); return tHELP; }
 
 <INITIAL>backtrace|backtrac|backtra|backt|back|bac|ba|bt { BEGIN(NOCMD); return tBACKTRACE; }
 <INITIAL>where|wher|whe                 { BEGIN(NOCMD); return tBACKTRACE; }
