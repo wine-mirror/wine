@@ -24,6 +24,24 @@
 #include "oleauto.h"
 #include <math.h>
 
+/* Get just the type from a variant pointer */
+#define V_TYPE(v)  (V_VT((v)) & VT_TYPEMASK)
+
+/* Flags set in V_VT, other than the actual type value */
+#define VT_EXTRA_TYPE (VT_VECTOR|VT_ARRAY|VT_BYREF|VT_RESERVED)
+
+/* Get the extra flags from a variant pointer */
+#define V_EXTRA_TYPE(v) (V_VT((v)) & VT_EXTRA_TYPE)
+
+extern const char* wine_vtypes[];
+#define debugstr_vt(v) (((v)&VT_TYPEMASK) <= VT_CLSID ? wine_vtypes[((v)&VT_TYPEMASK)] : \
+  ((v)&VT_TYPEMASK) == VT_BSTR_BLOB ? "VT_BSTR_BLOB": "Invalid")
+#define debugstr_VT(v) (!(v) ? "(null)" : debugstr_vt(V_TYPE((v))))
+
+extern const char* wine_vflags[];
+#define debugstr_vf(v) (wine_vflags[((v)&VT_EXTRA_TYPE)>>12])
+#define debugstr_VF(v) (!(v) ? "(null)" : debugstr_vf(V_EXTRA_TYPE(v)))
+
 /* Size constraints */
 #define I1_MAX   0x7f
 #define I1_MIN   ((-I1_MAX)-1)
@@ -48,7 +66,7 @@
 #define R8_MAX 1.79769313486231470e+308
 #define R8_MIN 4.94065645841246544e-324
 
-/* Value of sign for a positive number */
+/* Value of sign for a positive decimal number */
 #define DECIMAL_POS 0
 
 /* Native headers don't change the union ordering for DECIMAL sign/scale (duh).
@@ -74,7 +92,7 @@
 #define DEC_MAX_SCALE    28 /* Maximum scale for a decimal */
 
 /* Inline return type */
-#define RETTYP inline static HRESULT 
+#define RETTYP inline static HRESULT
 
 /* Simple compiler cast from one type to another */
 #define SIMPLE(dest, src, func) RETTYP _##func(src in, dest* out) { \
@@ -297,10 +315,15 @@ BOOLFUNC(double,VarBoolFromR8);
 #define _VarBoolFromDisp(disp,lcid,out) VARIANT_FromDisp(disp, lcid, (BYTE*)out, VT_BOOL)
 #define _VarBoolFromDec VarBoolFromDec
 
+/* Internal flags for low level conversion functions */
+#define  VAR_BOOLONOFF 0x0400 /* Convert bool to "On"/"Off" */
+#define  VAR_BOOLYESNO 0x0800 /* Convert bool to "Yes"/"No" */
+#define  VAR_NEGATIVE  0x1000 /* Number is negative */
+
 /* DECIMAL */
 #define _VarDecFromUI1 VarDecFromUI4
 #define _VarDecFromI2 VarDecFromI4
-#define _VarDecFromR4 VarDecFromR8
+#define _VarDecFromR4 VarDecFromR4
 #define _VarDecFromR8 VarDecFromR8
 #define _VarDecFromCy VarDecFromCy
 #define _VarDecFromDate(dt,out) VarDecFromR8((double)dt,out)
@@ -336,21 +359,33 @@ RETTYP _VarCyFromI8(LONG64 i, CY* o) {
 #define _VarCyFromUI8 VarCyFromR8
 
 /* DATE */
-#define _VarDateFromUI1 VarDateFromR8
-#define _VarDateFromI2 VarDateFromR8
-#define _VarDateFromR4 VarDateFromR8
-#define _VarDateFromR8 VarDateFromR8
-#define _VarDateFromCy VarDateFromCy
+#define _VarDateFromUI1 _VarR8FromUI1
+#define _VarDateFromI2 _VarR8FromI2
+#define _VarDateFromR4 _VarDateFromR8
+RETTYP _VarDateFromR8(double i, DATE* o) {
+  if (i <= (DATE_MIN - 1.0) || i >= (DATE_MAX + 1.0)) return DISP_E_OVERFLOW;
+  *o = (DATE)i;
+  return S_OK;
+}
+#define _VarDateFromCy _VarR8FromCy
 #define _VarDateFromStr VarDateFromStr
 #define _VarDateFromDisp(disp,lcid,out) VARIANT_FromDisp(disp, lcid, out, VT_DATE)
-#define _VarDateFromBool VarDateFromR8
-#define _VarDateFromI1 VarDateFromR8
-#define _VarDateFromUI2 VarDateFromR8
-#define _VarDateFromI4 VarDateFromR8
-#define _VarDateFromUI4 VarDateFromR8
-#define _VarDateFromDec VarDateFromDec
-#define _VarDateFromI8 VarDateFromR8
-#define _VarDateFromUI8 VarDateFromR8
+#define _VarDateFromBool _VarR8FromBool
+#define _VarDateFromI1 _VarR8FromI1
+#define _VarDateFromUI2 _VarR8FromUI2
+#define _VarDateFromI4 _VarDateFromR8
+#define _VarDateFromUI4 _VarDateFromR8
+#define _VarDateFromDec _VarR8FromDec
+RETTYP _VarDateFromI8(LONG64 i, DATE* o) {
+  if (i < DATE_MIN || i > DATE_MAX) return DISP_E_OVERFLOW;
+  *o = (DATE)i;
+  return S_OK;
+}
+RETTYP _VarDateFromUI8(ULONG64 i, DATE* o) {
+  if (i > DATE_MAX) return DISP_E_OVERFLOW;
+  *o = (DATE)i;
+  return S_OK;
+}
 
 /* BSTR */
 #define _VarBstrFromUI1 VarBstrFromUI4
@@ -373,7 +408,8 @@ RETTYP _VarCyFromI8(LONG64 i, CY* o) {
  * rounding according to the 'dutch' convention.
  */
 #define OLEAUT32_DutchRound(typ, value, res) do { \
-  double whole = floor((double)value), fract = (double)value - whole; \
+  double whole = (double)value < 0 ? ceil((double)value) : floor((double)value); \
+  double fract = (double)value - whole; \
   if (fract > 0.5) res = (typ)whole + (typ)1; \
   else if (fract == 0.5) { typ is_odd = (typ)whole & 1; res = whole + is_odd; } \
   else if (fract >= 0.0) res = (typ)whole; \
