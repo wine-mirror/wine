@@ -1393,6 +1393,7 @@ dlls/dplay/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
 dlls/gdi/Makefile
+dlls/gdi/tests/Makefile
 dlls/glu32/Makefile
 dlls/icmp/Makefile
 dlls/imagehlp/Makefile

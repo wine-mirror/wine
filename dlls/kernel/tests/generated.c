@@ -1,4 +1,4 @@
-/* File generated automatically from ../../../tools/winapi/test.dat; do not edit! */
+/* File generated automatically from tools/winapi/test.dat; do not edit! */
 /* This file can be copied, modified and distributed without restriction. */
 
 /*
@@ -10,7 +10,7 @@
 #include "wine/test.h"
 #include "winbase.h"
 
-START_TEST(generated)
+void test_pack(void)
 {
     /* BY_HANDLE_FILE_INFORMATION */
     ok(FIELD_OFFSET(BY_HANDLE_FILE_INFORMATION, dwFileAttributes) == 0,
@@ -840,4 +840,9 @@ START_TEST(generated)
        FIELD_OFFSET(WIN32_STREAM_ID, cStreamName)); /* WCHAR[ANYSIZE_ARRAY] */
     ok(sizeof(WIN32_STREAM_ID) == 24, "sizeof(WIN32_STREAM_ID) == %d (expected 24)", sizeof(WIN32_STREAM_ID));
 
+}
+
+START_TEST(generated)
+{
+    test_pack();
 }

@@ -1,0 +1,4 @@
+Makefile
+gdi32_test.exe.spec.c
+generated.ok
+testlist.c

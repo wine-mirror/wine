@@ -2,15 +2,11 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-TESTDLL   = user32.dll
-IMPORTS   = user32 gdi32 advapi32
+TESTDLL   = gdi32.dll
+IMPORTS   = gdi32
 
 CTESTS = \
-	class.c \
-	generated.c \
-	sysparams.c \
-	win.c \
-	wsprintf.c
+	generated.c
 
 @MAKE_TEST_RULES@
 

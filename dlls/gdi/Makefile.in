@@ -70,6 +70,8 @@ RC_SRCS16 = version16.rc
 
 EXTRA_OBJS = $(MODULE).glue.o
 
+SUBDIRS = tests
+
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/graphics \
 	$(TOPOBJDIR)/objects \
