@@ -118,7 +118,8 @@ BOOL TTYDRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
   if(cs->style & WS_CHILD)
     return TRUE;
 
-  rootWindow = TTYDRV_WND_GetCursesRootWindow(wndPtr);
+  if(!(rootWindow = TTYDRV_WND_GetCursesRootWindow(wndPtr)))
+    return FALSE;
 
   window = subwin(rootWindow, cs->cy/cellHeight, cs->cx/cellWidth,
 		  cs->y/cellHeight, cs->x/cellWidth);
@@ -230,14 +231,14 @@ void TTYDRV_WND_ScrollWindow(
  */
 void TTYDRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin)
 {
-  FIXME("(%p, %p, %d, %d): semistub\n", wndPtr, dc, flags, bSetClipOrigin);
+  TRACE("(%p, %p, %d, %d)\n", wndPtr, dc, flags, bSetClipOrigin);
 
-  if (!wndPtr)  {
-    /* Get a DC for the whole screen */
+  /* FIXME: Should be done in the common code instead */
+  if(!wndPtr)  {
     dc->w.DCOrgX = 0;
     dc->w.DCOrgY = 0;
   } else {
-    if (flags & DCX_WINDOW) {
+    if(flags & DCX_WINDOW) {
       dc->w.DCOrgX = wndPtr->rectWindow.left;
       dc->w.DCOrgY = wndPtr->rectWindow.top;
     } else {

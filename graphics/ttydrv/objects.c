@@ -53,7 +53,7 @@ HGDIOBJ TTYDRV_DC_SelectObject(DC *dc, HGDIOBJ handle)
       result = (HGDIOBJ) SelectClipRgn(dc->hSelf, handle);
       break;
     default:
-      ERR("unknown magic (0x%04x)\n", ptr->wMagic);
+      ERR("handle (0x%04x) has unknown magic (0x%04x)\n", handle, ptr->wMagic);
   }
 
   GDI_HEAP_UNLOCK(handle);
@@ -83,7 +83,7 @@ BOOL TTYDRV_DC_DeleteObject(HGDIOBJ handle)
       result = TRUE;
       break;
     default:
-      ERR("unknown magic (0x%04x)\n", ptr->wMagic);   
+      ERR("handle (0x%04x) has unknown magic (0x%04x)\n", handle, ptr->wMagic);   
       result = FALSE;
   }
 

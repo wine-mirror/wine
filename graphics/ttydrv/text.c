@@ -25,8 +25,11 @@ BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row, col;
 
-  FIXME("(%p, %d, %d, 0x%08x, %p, %s, %d, %p): semistub\n",
+  TRACE("(%p, %d, %d, 0x%08x, %p, %s, %d, %p)\n",
 	dc, x, y, flags, lpRect, debugstr_a(str), count, lpDx);
+
+  if(!physDev->window)
+    return FALSE;
 
   /* FIXME: Is this really correct? */
   if(dc->w.textAlign & TA_UPDATECP) {

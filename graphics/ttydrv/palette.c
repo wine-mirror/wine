@@ -94,7 +94,7 @@ int TTYDRV_PALETTE_SetMapping(
  */
 int TTYDRV_PALETTE_UpdateMapping(PALETTEOBJ *palPtr)
 {
-  FIXME("(%p): stub\n", palPtr);
+  TRACE("(%p)\n", palPtr);
 
   return 0;
 }

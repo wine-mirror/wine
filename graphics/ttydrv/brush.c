@@ -16,7 +16,12 @@ DEFAULT_DEBUG_CHANNEL(ttydrv)
  */
 HBRUSH TTYDRV_DC_BRUSH_SelectObject(DC *dc, HBRUSH hbrush, BRUSHOBJ *brush)
 {
-  FIXME("(%p, 0x%08x, %p): stub\n", dc, hbrush, brush);
+  HBRUSH hPreviousBrush;
 
-  return NULL;
+  TRACE("(%p, 0x%04x, %p)\n", dc, hbrush, brush);
+
+  hPreviousBrush = dc->w.hBrush;
+  dc->w.hBrush = hbrush;
+
+  return hPreviousBrush;
 }

@@ -15,7 +15,7 @@ DEFAULT_DEBUG_CHANNEL(ttydrv)
  */
 void TTYDRV_DC_SetDeviceClipping(DC *dc)
 {
-  FIXME("(%p): stub\n", dc);
+  TRACE("(%p)\n", dc);
 }
 
 

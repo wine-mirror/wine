@@ -68,8 +68,10 @@ void TTYDRV_MONITOR_Initialize(MONITOR *pMonitor)
 
 #ifdef HAVE_LIBCURSES
   pTTYMonitor->rootWindow = initscr();
-  werase(pTTYMonitor->rootWindow);
-  wrefresh(pTTYMonitor->rootWindow);
+  if(pTTYMonitor->rootWindow) {
+    werase(pTTYMonitor->rootWindow);
+    wrefresh(pTTYMonitor->rootWindow);
+  }
 
   getmaxyx(pTTYMonitor->rootWindow, rows, cols);
 #else /* defined(HAVE_LIBCURSES) */
@@ -87,7 +89,16 @@ void TTYDRV_MONITOR_Initialize(MONITOR *pMonitor)
  */
 void TTYDRV_MONITOR_Finalize(MONITOR *pMonitor)
 {
-  HeapFree(SystemHeap, 0, pMonitor->pDriverData);
+  TTYDRV_MONITOR_DATA *pTTYMonitor =
+    (TTYDRV_MONITOR_DATA *) pMonitor->pDriverData;
+
+#ifdef HAVE_LIBCURSES
+  if(pTTYMonitor->rootWindow) {
+     endwin();
+  }
+#endif /* defined(HAVE_LIBCURSES) */
+
+  HeapFree(SystemHeap, 0, pTTYMonitor);
 }
 
 /***********************************************************************

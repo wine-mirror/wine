@@ -58,7 +58,14 @@ typedef struct {
   int cellHeight;
 } TTYDRV_PDEVICE;
 
+typedef struct {
+  int dummy; /* FIXME: Remove later */
+} TTYDRV_PHYSBITMAP;
+
+extern BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap);
+
 extern BOOL TTYDRV_DC_Arc(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
+extern LONG TTYDRV_DC_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags);
 extern BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap);
 extern BOOL TTYDRV_DC_CreateDC(struct tagDC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODEA *initData);
 extern BOOL TTYDRV_DC_DeleteDC(struct tagDC *dc);
@@ -92,6 +99,7 @@ extern COLORREF TTYDRV_DC_SetBkColor(struct tagDC *dc, COLORREF color);
 extern COLORREF TTYDRV_DC_SetPixel(struct tagDC *dc, INT x, INT y, COLORREF color);
 extern COLORREF TTYDRV_DC_SetTextColor(struct tagDC *dc, COLORREF color);
 extern BOOL TTYDRV_DC_StretchBlt(struct tagDC *dcDst, INT xDst, INT yDst, INT widthDst, INT heightDst, struct tagDC *dcSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop);
+INT TTYDRV_DC_SetDIBitsToDevice(struct tagDC *dc, INT xDest, INT yDest, DWORD cx, DWORD cy, INT xSrc, INT ySrc, UINT startscan, UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse);
 
 /* TTY GDI palette driver */
 

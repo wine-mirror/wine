@@ -5,36 +5,52 @@
  */
 
 #include "bitmap.h"
-#include "debugtools.h"
 #include "ttydrv.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ttydrv)
+
+/**********************************************************************
+ *		TTYDRV_DC_LoadOEMBitmap
+ */
+static HANDLE TTYDRV_DC_LoadOEMBitmap(WORD resid)
+{
+  HBITMAP hbitmap;
+
+  TRACE("(%d)\n", resid);
+ 
+  hbitmap = CreateBitmap(1, 1, 1, 1, NULL);
+  TTYDRV_DC_CreateBitmap(hbitmap);
+
+  return hbitmap;
+}
+
+/**********************************************************************
+ *		TTYDRV_DC_LoadOEMCursorIcon
+ */
+static HANDLE TTYDRV_DC_LoadOEMCursorIcon(WORD resid, BOOL bCursor)
+{
+  return (HANDLE) NULL;
+}
 
 /**********************************************************************
  *		TTYDRV_DC_LoadOEMResource
  */
 HANDLE TTYDRV_DC_LoadOEMResource(WORD resid, WORD type)
 {
-  HBITMAP hbitmap;
-  BITMAPOBJ *bmpObjPtr;
+  switch(type)
+  {
+    case OEM_BITMAP:
+      return TTYDRV_DC_LoadOEMBitmap(resid);
+    case OEM_CURSOR:
+      return TTYDRV_DC_LoadOEMCursorIcon(resid, TRUE);
+    case OEM_ICON:
+      return TTYDRV_DC_LoadOEMCursorIcon(resid, FALSE);
+    default:
+      ERR("unknown type (%d)\n", type);
+  }
 
-  FIXME("(%d, %d): semistub\n", resid, type);
- 
-  if(!(hbitmap = GDI_AllocObject(sizeof(BITMAPOBJ), BITMAP_MAGIC)))
-    return (HANDLE) NULL;
-  
-  bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LOCK(hbitmap);
-  bmpObjPtr->size.cx = 0;
-  bmpObjPtr->size.cy = 0;
-  bmpObjPtr->bitmap.bmType       = 0;
-  bmpObjPtr->bitmap.bmWidth      = 0;
-  bmpObjPtr->bitmap.bmHeight     = 0;
-  bmpObjPtr->bitmap.bmWidthBytes = 0;
-  bmpObjPtr->bitmap.bmPlanes     = 0;
-  bmpObjPtr->bitmap.bmBitsPixel  = 0;
-  bmpObjPtr->bitmap.bmBits       = NULL;
-  bmpObjPtr->dib                 = NULL;
-  
-  GDI_HEAP_UNLOCK( hbitmap );
-  return hbitmap;
+  return (HANDLE) NULL;
 }
+
+

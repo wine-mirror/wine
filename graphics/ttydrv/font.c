@@ -37,7 +37,7 @@ BOOL TTYDRV_DC_GetTextExtentPoint(DC *dc, LPCSTR str, INT count,
 {
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
 
-  FIXME("(%p, %s, %d, %p): semistub\n", dc, debugstr_an(str,count), count, size);
+  TRACE("(%p, %s, %d, %p)\n", dc, debugstr_an(str, count), count, size);
 
   size->cx = count * physDev->cellWidth;
   size->cy = physDev->cellHeight;
@@ -52,7 +52,7 @@ BOOL TTYDRV_DC_GetTextMetrics(DC *dc, LPTEXTMETRICA lptm)
 {
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
 
-  FIXME("(%p, %p): stub\n", dc, lptm);
+  TRACE("(%p, %p)\n", dc, lptm);
 
   lptm->tmHeight = physDev->cellHeight;
   lptm->tmAscent = 0;
@@ -83,7 +83,12 @@ BOOL TTYDRV_DC_GetTextMetrics(DC *dc, LPTEXTMETRICA lptm)
  */
 HFONT TTYDRV_DC_FONT_SelectObject(DC* dc, HFONT hfont, FONTOBJ *font)
 {
-  FIXME("(%p, 0x%08x, %p): stub\n", dc, hfont, font);
+  HFONT hPreviousFont;
 
-  return NULL;
+  TRACE("(%p, 0x%04x, %p)\n", dc, hfont, font);
+
+  hPreviousFont = dc->w.hFont;
+  dc->w.hFont = hfont;
+
+  return hPreviousFont;
 }

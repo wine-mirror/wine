@@ -79,6 +79,9 @@ BOOL TTYDRV_DC_LineTo(DC *dc, INT x, INT y)
 
   TRACE("(%p, %d, %d)\n", dc, x, y);
 
+  if(!physDev->window)
+    return FALSE;
+
   row1 = (dc->w.DCOrgY + XLPTODP(dc, dc->w.CursPosY)) / physDev->cellHeight;
   col1 = (dc->w.DCOrgX + XLPTODP(dc, dc->w.CursPosX)) / physDev->cellWidth;
   row2 = (dc->w.DCOrgY + XLPTODP(dc, y)) / physDev->cellHeight;
@@ -98,9 +101,9 @@ BOOL TTYDRV_DC_LineTo(DC *dc, INT x, INT y)
 
   wmove(physDev->window, row1, col1);
   if(col1 == col2) {
-    wvline(physDev->window, '|', row2-row1);
+    wvline(physDev->window, ACS_VLINE, row2-row1);
   } else if(row1 == row2) {
-    whline(physDev->window, '-', col2-col1);
+    whline(physDev->window, ACS_HLINE, col2-col1);
   } else {
     FIXME("Diagonal line drawing not yet supported\n");
   }
@@ -197,6 +200,9 @@ BOOL TTYDRV_DC_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
 
   TRACE("(%p, %d, %d, %d, %d)\n", dc, left, top, right, bottom);
 
+  if(!physDev->window)
+    return FALSE;
+
   row1 = (dc->w.DCOrgY + XLPTODP(dc, top)) / physDev->cellHeight;
   col1 = (dc->w.DCOrgX + XLPTODP(dc, left)) / physDev->cellWidth;
   row2 = (dc->w.DCOrgY + XLPTODP(dc, bottom)) / physDev->cellHeight;
@@ -214,21 +220,21 @@ BOOL TTYDRV_DC_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
   } 
 
   wmove(physDev->window, row1, col1);
-  whline(physDev->window, '-', col2-col1);
+  whline(physDev->window, ACS_HLINE, col2-col1);
 
   wmove(physDev->window, row1, col2);
-  wvline(physDev->window, '|', row2-row1);
+  wvline(physDev->window, ACS_VLINE, row2-row1);
 
   wmove(physDev->window, row2, col1);
-  whline(physDev->window, '-', col2-col1);
+  whline(physDev->window, ACS_HLINE, col2-col1);
 
   wmove(physDev->window, row1, col1);
-  wvline(physDev->window, '|', row2-row1);
+  wvline(physDev->window, ACS_VLINE, row2-row1);
 
-  mvwaddch(physDev->window, row1, col1, '+');
-  mvwaddch(physDev->window, row1, col2, '+');
-  mvwaddch(physDev->window, row2, col2, '+');
-  mvwaddch(physDev->window, row2, col1, '+');
+  mvwaddch(physDev->window, row1, col1, ACS_ULCORNER);
+  mvwaddch(physDev->window, row1, col2, ACS_URCORNER);
+  mvwaddch(physDev->window, row2, col2, ACS_LRCORNER);
+  mvwaddch(physDev->window, row2, col1, ACS_LLCORNER);
 
   wrefresh(physDev->window);
 
@@ -278,10 +284,13 @@ COLORREF TTYDRV_DC_SetPixel(DC *dc, INT x, INT y, COLORREF color)
 
   TRACE("(%p, %d, %d, 0x%08lx)\n", dc, x, y, color);
 
+  if(!physDev->window)
+    return FALSE;
+
   row = (dc->w.DCOrgY + XLPTODP(dc, y)) / physDev->cellHeight;
   col = (dc->w.DCOrgX + XLPTODP(dc, x)) / physDev->cellWidth;
 
-  mvwaddch(physDev->window, row, col, '.');
+  mvwaddch(physDev->window, row, col, ACS_BULLET);
   wrefresh(physDev->window);
 
   return RGB(0,0,0); /* FIXME: Always returns black */

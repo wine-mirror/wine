@@ -16,7 +16,12 @@ DEFAULT_DEBUG_CHANNEL(ttydrv)
  */
 HPEN TTYDRV_DC_PEN_SelectObject(DC *dc, HBRUSH hpen, PENOBJ *pen)
 {
-  FIXME("(%p, 0x%08x, %p): stub\n", dc, hpen, pen);
+  HPEN hPreviousPen;
 
-  return NULL;
+  TRACE("(%p, 0x%04x, %p)\n", dc, hpen, pen);
+
+  hPreviousPen = dc->w.hPen;
+  dc->w.hPen = hpen;
+
+  return hPreviousPen;
 }
