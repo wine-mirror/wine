@@ -55,20 +55,28 @@ typedef struct
 #define FI_VARIABLEPITCH    0x0040
 #define FI_FIXEDPITCH       0x0080
 
-#define FI_ENC_ISO8859	    0x0100	/* iso8859-* 	*/
-#define FI_ENC_ISO646	    0x0200	/* iso646* 	*/
-#define FI_ENC_ANSI	    0x0400	/* ansi-0 	*/
-#define FI_ENC_MSCODEPAGE   0x0800	/* cp125-* 	*/
-
 #define FI_FIXEDEX	    0x1000
 #define FI_NORMAL	    0x2000
 #define FI_SUBSET 	    0x4000
 #define FI_TRUETYPE	    0x8000
 
+/* code pages */
+
+#define FI_ENC_ANSI		0
+#define FI_ENC_ISO8859	    	1
+#define FI_ENC_ISO646		2
+#define FI_ENC_MICROSOFT	3
+#define FI_ENC_KOI8		4
+#define FI_ENC_ASCII		5
+#define FI_ENC_VISCII		6
+#define FI_ENC_TCVN		7
+#define FI_ENC_TIS620		8
+
 typedef struct tagFontInfo
 {
     struct tagFontInfo*		next;
     UINT16			fi_flags;
+    UINT16			fi_encoding;
 
  /* LFD parameters can be quite different from the actual metrics */
 
@@ -90,14 +98,17 @@ typedef struct tagFontResource
 {
   struct tagFontResource*	next;
   UINT16			fr_flags;
-  UINT16			count;
+  UINT16			fr_penalty;
+  UINT16			fi_count;
+  UINT16			fo_count;
   fontInfo*			fi;
   char*                         resource;
+  HANDLE32			hOwner;		/*  For FR_SOFTFONT/FR_SOFTRESOURCE fonts */
   CHAR				lfFaceName[LF_FACESIZE];
 } fontResource;
 
 typedef struct {
-  float		a,b,c,d;	/* pixelsize matrix */
+  float		a,b,c,d;	/* pixelsize matrix, FIXME: switch to MAT2 format */
   unsigned long	RAW_ASCENT;
   unsigned long	RAW_DESCENT;
   float		pixelsize;
@@ -132,7 +143,6 @@ typedef struct
   XFontStruct*          fs;			/* text metrics */
   fontResource*         fr;			/* font family */
   fontInfo*		fi;			/* font instance info */
-  LPMAT2*		lpXForm;		/* optional transformation matrix */
   Pixmap*               lpPixmap;		/* optional character bitmasks for synth fonts */
 
   XFONTTRANS		*lpX11Trans;		/* Info for X11R6 transform */
