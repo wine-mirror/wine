@@ -6267,6 +6267,7 @@ programs/regtest/Makefile
 programs/regapi/Makefile
 programs/view/Makefile
 programs/wcmd/Makefile
+programs/winemine/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
 rc/Makefile
@@ -6482,6 +6483,7 @@ programs/regtest/Makefile
 programs/regapi/Makefile
 programs/view/Makefile
 programs/wcmd/Makefile
+programs/winemine/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
 rc/Makefile

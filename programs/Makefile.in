@@ -10,6 +10,7 @@ SUBDIRS = \
 	regtest \
 	view \
 	wcmd \
+	winemine \
 	winhelp \
 	winver
 
