@@ -1418,6 +1418,7 @@ struct create_mapping_request
     int          size_high;
     int          size_low;
     int          protect;
+    unsigned int access;
     int          inherit;
     obj_handle_t file_handle;
     /* VARARG(name,unicode_str); */
@@ -3209,6 +3210,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 81
+#define SERVER_PROTOCOL_VERSION 82
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

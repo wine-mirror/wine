@@ -293,17 +293,16 @@ static inline BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
     size = (size + COMMIT_MASK) & ~COMMIT_MASK;
     if (size > subheap->size) size = subheap->size;
     if (size <= subheap->commitSize) return TRUE;
-    if (!VirtualAlloc( (char *)subheap + subheap->commitSize,
-                       size - subheap->commitSize, MEM_COMMIT,
-                       PAGE_EXECUTE_READWRITE))
+    size -= subheap->commitSize;
+    if (NtAllocateVirtualMemory( GetCurrentProcess(), &ptr, (char *)subheap + subheap->commitSize,
+                                 &size, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
     {
         WARN("Could not commit %08lx bytes at %08lx for heap %08lx\n",
-                 size - subheap->commitSize,
-                 (DWORD)((char *)subheap + subheap->commitSize),
+                 size, (DWORD)((char *)subheap + subheap->commitSize),
                  (DWORD)subheap->heap );
         return FALSE;
     }
-    subheap->commitSize = size;
+    subheap->commitSize += size;
     return TRUE;
 }
 
@@ -315,20 +314,23 @@ static inline BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
  */
 static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 {
+    void *addr;
+    ULONG decommit_size;
+
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
     /* round to next block and add one full block */
     size = ((size + COMMIT_MASK) & ~COMMIT_MASK) + COMMIT_MASK + 1;
     if (size >= subheap->commitSize) return TRUE;
-    if (!VirtualFree( (char *)subheap + size,
-                      subheap->commitSize - size, MEM_DECOMMIT ))
+    decommit_size = subheap->commitSize - size;
+    addr = (char *)subheap + size;
+
+    if (NtFreeVirtualMemory( GetCurrentProcess(), &addr, &decommit_size, MEM_DECOMMIT ))
     {
-        WARN("Could not decommit %08lx bytes at %08lx for heap %08lx\n",
-                 subheap->commitSize - size,
-                 (DWORD)((char *)subheap + size),
-                 (DWORD)subheap->heap );
+        WARN("Could not decommit %08lx bytes at %08lx for heap %p\n",
+                 decommit_size, (DWORD)((char *)subheap + size), subheap->heap );
         return FALSE;
     }
-    subheap->commitSize = size;
+    subheap->commitSize -= decommit_size;
     return TRUE;
 }
 
@@ -472,7 +474,7 @@ static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, DWORD size)
 static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
                                 DWORD commitSize, DWORD totalSize )
 {
-    SUBHEAP *subheap = (SUBHEAP *)address;
+    SUBHEAP *subheap;
     FREE_LIST_ENTRY *pEntry;
     int i;
 
@@ -480,15 +482,16 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     if (flags & HEAP_SHARED)
         commitSize = totalSize;  /* always commit everything in a shared heap */
-    if (!VirtualAlloc(address, commitSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
+    if (NtAllocateVirtualMemory( GetCurrentProcess(), &address, address,
+                                 &commitSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
     {
-        WARN("Could not commit %08lx bytes for sub-heap %08lx\n",
-                   commitSize, (DWORD)address );
+        WARN("Could not commit %08lx bytes for sub-heap %p\n", commitSize, address );
         return FALSE;
     }
 
     /* Fill the sub-heap structure */
 
+    subheap = (SUBHEAP *)address;
     subheap->heap       = heap;
     subheap->size       = totalSize;
     subheap->commitSize = commitSize;
@@ -560,10 +563,10 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
     if (!address)
     {
         /* allocate the memory block */
-        if (!(address = VirtualAlloc( NULL, totalSize, MEM_RESERVE, PAGE_EXECUTE_READWRITE )))
+        if (NtAllocateVirtualMemory( GetCurrentProcess(), &address, NULL, &totalSize,
+                                     MEM_RESERVE, PAGE_EXECUTE_READWRITE ))
         {
-            WARN("Could not VirtualAlloc %08lx bytes\n",
-                 totalSize );
+            WARN("Could not allocate %08lx bytes\n", totalSize );
             return NULL;
         }
     }
@@ -573,7 +576,8 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
     if (!HEAP_InitSubHeap( heap ? heap : (HEAP *)address,
                            address, flags, commitSize, totalSize ))
     {
-        if (!base) VirtualFree( address, 0, MEM_RELEASE );
+        ULONG size = 0;
+        if (!base) NtFreeVirtualMemory( GetCurrentProcess(), &address, &size, MEM_RELEASE );
         return NULL;
     }
 
@@ -988,7 +992,9 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     while (subheap)
     {
         SUBHEAP *next = subheap->next;
-        VirtualFree( subheap, 0, MEM_RELEASE );
+        ULONG size = 0;
+        void *addr = subheap;
+        NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
         subheap = next;
     }
     return 0;

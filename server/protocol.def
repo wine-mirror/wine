@@ -1043,6 +1043,7 @@ enum char_info_mode
     int          size_high;     /* mapping size */
     int          size_low;      /* mapping size */
     int          protect;       /* protection flags (see below) */
+    unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
     obj_handle_t file_handle;   /* file handle */
     VARARG(name,unicode_str);   /* object name */

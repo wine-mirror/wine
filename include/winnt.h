@@ -3185,6 +3185,13 @@ typedef enum tagSID_NAME_USE {
 #define THREAD_BASE_PRIORITY_MIN   -2
 #define THREAD_BASE_PRIORITY_IDLE  -15
 
+#define SECTION_QUERY              0x0001
+#define SECTION_MAP_WRITE          0x0002
+#define SECTION_MAP_READ           0x0004
+#define SECTION_MAP_EXECUTE        0x0008
+#define SECTION_EXTEND_SIZE        0x0010
+#define SECTION_ALL_ACCESS         (STANDARD_RIGHTS_REQUIRED|0x01f)
+
 #define FILE_READ_DATA            0x0001    /* file & pipe */
 #define FILE_LIST_DIRECTORY       0x0001    /* directory */
 #define FILE_WRITE_DATA           0x0002    /* file & pipe */

@@ -1213,6 +1213,7 @@ static void dump_create_mapping_request( const struct create_mapping_request *re
     fprintf( stderr, " size_high=%d,", req->size_high );
     fprintf( stderr, " size_low=%d,", req->size_low );
     fprintf( stderr, " protect=%d,", req->protect );
+    fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " file_handle=%d,", req->file_handle );
     fprintf( stderr, " name=" );

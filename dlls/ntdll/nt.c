@@ -418,41 +418,6 @@ NTSTATUS WINAPI NtQueryInformationToken(
  */
 
 /******************************************************************************
- *  NtCreateSection	[NTDLL.@]
- *  ZwCreateSection	[NTDLL.@]
- */
-NTSTATUS WINAPI NtCreateSection(
-	OUT PHANDLE SectionHandle,
-	IN ACCESS_MASK DesiredAccess,
-	IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-	IN PLARGE_INTEGER MaximumSize OPTIONAL,
-	IN ULONG SectionPageProtection OPTIONAL,
-	IN ULONG AllocationAttributes,
-	IN HANDLE FileHandle OPTIONAL)
-{
-	FIXME("(%p,0x%08lx,%p,%p,0x%08lx,0x%08lx,0x%08x) stub\n",
-	SectionHandle,DesiredAccess, ObjectAttributes,
-	MaximumSize,SectionPageProtection,AllocationAttributes,FileHandle);
-	dump_ObjectAttributes(ObjectAttributes);
-	return 0;
-}
-
-/******************************************************************************
- *  NtOpenSection	[NTDLL.@]
- *  ZwOpenSection	[NTDLL.@]
- */
-NTSTATUS WINAPI NtOpenSection(
-	PHANDLE SectionHandle,
-	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes)
-{
-	FIXME("(%p,0x%08lx,%p),stub!\n",
-	SectionHandle,DesiredAccess,ObjectAttributes);
-	dump_ObjectAttributes(ObjectAttributes);
-	return 0;
-}
-
-/******************************************************************************
  *  NtQuerySection	[NTDLL.@]
  */
 NTSTATUS WINAPI NtQuerySection(
@@ -464,44 +429,6 @@ NTSTATUS WINAPI NtQuerySection(
 {
 	FIXME("(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
 	SectionHandle,SectionInformationClass,SectionInformation,Length,ResultLength);
-	return 0;
-}
-
-/******************************************************************************
- * NtMapViewOfSection	[NTDLL.@]
- * ZwMapViewOfSection	[NTDLL.@]
- * FUNCTION: Maps a view of a section into the virtual address space of a process
- *
- * ARGUMENTS:
- *  SectionHandle	Handle of the section
- *  ProcessHandle	Handle of the process
- *  BaseAddress		Desired base address (or NULL) on entry
- *			Actual base address of the view on exit
- *  ZeroBits		Number of high order address bits that must be zero
- *  CommitSize		Size in bytes of the initially committed section of the view
- *  SectionOffset	Offset in bytes from the beginning of the section to the beginning of the view
- *  ViewSize		Desired length of map (or zero to map all) on entry
- 			Actual length mapped on exit
- *  InheritDisposition	Specified how the view is to be shared with
- *			child processes
- *  AllocateType	Type of allocation for the pages
- *  Protect		Protection for the committed region of the view
- */
-NTSTATUS WINAPI NtMapViewOfSection(
-	HANDLE SectionHandle,
-	HANDLE ProcessHandle,
-	PVOID* BaseAddress,
-	ULONG ZeroBits,
-	ULONG CommitSize,
-	PLARGE_INTEGER SectionOffset,
-	PULONG ViewSize,
-	SECTION_INHERIT InheritDisposition,
-	ULONG AllocationType,
-	ULONG Protect)
-{
-	FIXME("(0x%08x,0x%08x,%p,0x%08lx,0x%08lx,%p,%p,0x%08x,0x%08lx,0x%08lx) stub\n",
-	SectionHandle,ProcessHandle,BaseAddress,ZeroBits,CommitSize,SectionOffset,
-	ViewSize,InheritDisposition,AllocationType,Protect);
 	return 0;
 }
 

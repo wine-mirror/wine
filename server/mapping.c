@@ -375,9 +375,7 @@ DECL_HANDLER(create_mapping)
                                req->protect, req->file_handle,
                                get_req_data(), get_req_data_size() )))
     {
-        int access = FILE_MAP_ALL_ACCESS;
-        if (!(req->protect & VPROT_WRITE)) access &= ~FILE_MAP_WRITE;
-        reply->handle = alloc_handle( current->process, obj, access, req->inherit );
+        reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
         release_object( obj );
     }
 }

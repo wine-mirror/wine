@@ -940,7 +940,7 @@ init	MAIN_KernelInit
 @ stdcall SwitchToThread() SwitchToThread
 @ forward TryEnterCriticalSection ntdll.RtlTryEnterCriticalSection
 @ stdcall VirtualAllocEx(long ptr long long long) VirtualAllocEx
-@ stub VirtualFreeEx
+@ stdcall VirtualFreeEx(long ptr long long) VirtualFreeEx
 @ stub WriteFileGather
 
 #Win98 and higher

@@ -63,7 +63,7 @@
 @ stub NtAlertThread
 @ stdcall NtAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
 @ stdcall NtAllocateUuids(ptr ptr ptr) NtAllocateUuids
-@ stub NtAllocateVirtualMemory
+@ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long) NtAllocateVirtualMemory
 @ stub NtCallbackReturn
 @ stub NtCancelIoFile
 @ stub NtCancelTimer
@@ -86,7 +86,7 @@
 @ stdcall NtCreatePort(long long long long long) NtCreatePort
 @ stub NtCreateProcess
 @ stub NtCreateProfile
-@ stdcall NtCreateSection(long long long long long long long) NtCreateSection
+@ stdcall NtCreateSection(ptr long ptr ptr long long long) NtCreateSection
 @ stdcall NtCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
 @ stdcall NtCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
 @ stub NtCreateThread
@@ -108,9 +108,9 @@
 @ stub NtFlushBuffersFile
 @ stub NtFlushInstructionCache
 @ stdcall NtFlushKey(long) NtFlushKey
-@ stub NtFlushVirtualMemory
+@ stdcall NtFlushVirtualMemory(long ptr ptr long) NtFlushVirtualMemory
 @ stub NtFlushWriteBuffer
-@ stub NtFreeVirtualMemory
+@ stdcall NtFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
 @ stdcall NtFsControlFile(long long long long long long long long long long) NtFsControlFile
 @ stub NtGetContextThread
 @ stub NtGetPlugPlayEvent
@@ -122,9 +122,9 @@
 @ stub NtLoadDriver
 @ stdcall NtLoadKey(ptr ptr) NtLoadKey
 @ stub NtLockFile
-@ stub NtLockVirtualMemory
+@ stdcall NtLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
 @ stub NtMakeTemporaryObject
-@ stdcall NtMapViewOfSection(long long long long long long long long long long) NtMapViewOfSection
+@ stdcall NtMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
 @ stub NtNotifyChangeDirectoryFile
 @ stdcall NtNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
 @ stdcall NtOpenDirectoryObject(long long long) NtOpenDirectoryObject
@@ -137,7 +137,7 @@
 @ stub NtOpenObjectAuditAlarm
 @ stub NtOpenProcess
 @ stdcall NtOpenProcessToken(long long long) NtOpenProcessToken
-@ stdcall NtOpenSection(long long long) NtOpenSection
+@ stdcall NtOpenSection(ptr long ptr) NtOpenSection
 @ stdcall NtOpenSemaphore(long long ptr) NtOpenSemaphore
 @ stdcall NtOpenSymbolicLinkObject (long long long) NtOpenSymbolicLinkObject
 @ stub NtOpenThread
@@ -147,7 +147,7 @@
 @ stub NtPrivilegeCheck
 @ stub NtPrivilegeObjectAuditAlarm
 @ stub NtPrivilegedServiceAuditAlarm
-@ stub NtProtectVirtualMemory
+@ stdcall NtProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory
 @ stdcall NtPulseEvent(long ptr) NtPulseEvent
 @ stub NtQueryAttributesFile
 @ stub NtQueryDefaultLocale
@@ -176,7 +176,7 @@
 @ stub NtQueryTimer
 @ stdcall NtQueryTimerResolution(long long long) NtQueryTimerResolution
 @ stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
-@ stub NtQueryVirtualMemory
+@ stdcall NtQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
 @ stdcall NtQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 @ stdcall NtRaiseException(ptr ptr long) NtRaiseException
 @ stub NtRaiseHardError
@@ -241,8 +241,8 @@
 @ stub NtUnloadDriver
 @ stdcall NtUnloadKey(long) NtUnloadKey
 @ stub NtUnlockFile
-@ stub NtUnlockVirtualMemory
-@ stub NtUnmapViewOfSection
+@ stdcall NtUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
+@ stdcall NtUnmapViewOfSection(long ptr) NtUnmapViewOfSection
 @ stub NtVdmControl
 @ stub NtW32Call
 @ stub NtWaitForMultipleObjects
@@ -581,7 +581,7 @@
 @ stub ZwAlertThread
 @ stub ZwAllocateLocallyUniqueId
 @ stub ZwAllocateUuids
-@ stub ZwAllocateVirtualMemory
+@ stdcall ZwAllocateVirtualMemory(long ptr ptr ptr long long) NtAllocateVirtualMemory
 @ stub ZwCallbackReturn
 @ stub ZwCancelIoFile
 @ stub ZwCancelTimer
@@ -604,7 +604,7 @@
 @ stdcall ZwCreatePort(long long long long long) NtCreatePort
 @ stub ZwCreateProcess
 @ stub ZwCreateProfile
-@ stdcall ZwCreateSection(long long long long long long long) NtCreateSection
+@ stdcall ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
 @ stub ZwCreateSemaphore
 @ stub ZwCreateSymbolicLinkObject
 @ stub ZwCreateThread
@@ -625,9 +625,9 @@
 @ stub ZwFlushBuffersFile
 @ stub ZwFlushInstructionCache
 @ stdcall ZwFlushKey(long) NtFlushKey
-@ stub ZwFlushVirtualMemory
+@ stdcall ZwFlushVirtualMemory(long ptr ptr long) NtFlushVirtualMemory
 @ stub ZwFlushWriteBuffer
-@ stub ZwFreeVirtualMemory
+@ stdcall ZwFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
 @ stdcall ZwFsControlFile(long long long long long long long long long long) NtFsControlFile
 @ stub ZwGetContextThread
 @ stub ZwGetPlugPlayEvent
@@ -639,9 +639,9 @@
 @ stub ZwLoadDriver
 @ stdcall ZwLoadKey(ptr ptr) NtLoadKey
 @ stub ZwLockFile
-@ stub ZwLockVirtualMemory
+@ stdcall ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
 @ stub ZwMakeTemporaryObject
-@ stdcall ZwMapViewOfSection(long long long long long long long long long long) NtMapViewOfSection
+@ stdcall ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
 @ stub ZwNotifyChangeDirectoryFile
 @ stdcall ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
 @ stdcall ZwOpenDirectoryObject(long long long) NtOpenDirectoryObject
@@ -654,7 +654,7 @@
 @ stub ZwOpenObjectAuditAlarm
 @ stub ZwOpenProcess
 @ stdcall ZwOpenProcessToken(long long long) NtOpenProcessToken
-@ stdcall ZwOpenSection(long long long) NtOpenSection
+@ stdcall ZwOpenSection(ptr long ptr) NtOpenSection
 @ stub ZwOpenSemaphore
 @ stub ZwOpenSymbolicLinkObject
 @ stub ZwOpenThread
@@ -664,7 +664,7 @@
 @ stub ZwPrivilegeCheck
 @ stub ZwPrivilegeObjectAuditAlarm
 @ stub ZwPrivilegedServiceAuditAlarm
-@ stub ZwProtectVirtualMemory
+@ stdcall ZwProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory
 @ stub ZwPulseEvent
 @ stub ZwQueryAttributesFile
 @ stub ZwQueryDefaultLocale
@@ -693,7 +693,7 @@
 @ stub ZwQueryTimer
 @ stub ZwQueryTimerResolution
 @ stdcall ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
-@ stub ZwQueryVirtualMemory
+@ stdcall ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
 @ stdcall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 @ stub ZwRaiseException
 @ stub ZwRaiseHardError
@@ -756,8 +756,8 @@
 @ stub ZwUnloadDriver
 @ stdcall ZwUnloadKey(long) NtUnloadKey
 @ stub ZwUnlockFile
-@ stub ZwUnlockVirtualMemory
-@ stub ZwUnmapViewOfSection
+@ stdcall ZwUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
+@ stdcall ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
 @ stub ZwVdmControl
 @ stub ZwW32Call
 @ stub ZwWaitForMultipleObjects

@@ -111,6 +111,7 @@ C_SRCS = \
 	signal_powerpc.c \
 	signal_sparc.c \
 	sync.c \
+	virtual.c \
 	time.c \
 	wcstring.c
 
