@@ -913,6 +913,62 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
                                 (LPVOID)mdi_lParam_test_message);
     ok(mdi_child != 0, "MDI child creation failed\n");
     DestroyWindow(mdi_child);
+
+    /* maximized child */
+    mdi_child = CreateWindowExA(0, "MDI_child_Class_2", "MDI child",
+                                WS_CHILD | WS_MAXIMIZE,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    DestroyWindow(mdi_child);
+
+    trace("Creating maximized child with a caption\n");
+    mdi_child = CreateWindowExA(0, "MDI_child_Class_2", "MDI child",
+                                WS_CHILD | WS_MAXIMIZE | WS_CAPTION,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    DestroyWindow(mdi_child);
+
+    trace("Creating maximized child with a caption and a thick frame\n");
+    mdi_child = CreateWindowExA(0, "MDI_child_Class_2", "MDI child",
+                                WS_CHILD | WS_MAXIMIZE | WS_CAPTION | WS_THICKFRAME,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    DestroyWindow(mdi_child);
+}
+
+/**********************************************************************
+ * MDI_ChildGetMinMaxInfo (copied from windows/mdi.c)
+ *
+ * Note: The rule here is that client rect of the maximized MDI child
+ *	 is equal to the client rect of the MDI client window.
+ */
+static void MDI_ChildGetMinMaxInfo( HWND client, HWND hwnd, MINMAXINFO* lpMinMax )
+{
+    RECT rect;
+
+    GetClientRect( client, &rect );
+    AdjustWindowRectEx( &rect, GetWindowLongA( hwnd, GWL_STYLE ),
+                        0, GetWindowLongA( hwnd, GWL_EXSTYLE ));
+
+    rect.right -= rect.left;
+    rect.bottom -= rect.top;
+    lpMinMax->ptMaxSize.x = rect.right;
+    lpMinMax->ptMaxSize.y = rect.bottom;
+
+    lpMinMax->ptMaxPosition.x = rect.left;
+    lpMinMax->ptMaxPosition.y = rect.top;
+
+    trace("max rect (%ld,%ld - %ld, %ld)\n",
+           rect.left, rect.top, rect.right, rect.bottom);
 }
 
 static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -969,6 +1025,69 @@ static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, L
             }
             break;
         }
+
+        case WM_GETMINMAXINFO:
+        {
+            HWND client = GetParent(hwnd);
+            RECT rc;
+            MINMAXINFO *minmax = (MINMAXINFO *)lparam;
+            MINMAXINFO my_minmax;
+            LONG style, exstyle;
+
+            style = GetWindowLongA(hwnd, GWL_STYLE);
+            exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
+
+            GetWindowRect(client, &rc);
+            trace("MDI client %p window size = (%ld x %ld)\n", client, rc.right-rc.left, rc.bottom-rc.top);
+            GetClientRect(client, &rc);
+            trace("MDI client %p client size = (%ld x %ld)\n", client, rc.right, rc.bottom);
+            trace("screen size: %d x %d\n", GetSystemMetrics(SM_CXSCREEN),
+                                            GetSystemMetrics(SM_CYSCREEN));
+
+            GetClientRect(client, &rc);
+            if ((style & WS_CAPTION) == WS_CAPTION)
+                style &= ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
+            AdjustWindowRectEx(&rc, style, 0, exstyle);
+            trace("MDI child: calculated max window size = (%ld x %ld)\n", rc.right-rc.left, rc.bottom-rc.top);
+
+            trace("ptReserved = (%ld,%ld)\n"
+                  "ptMaxSize = (%ld,%ld)\n"
+                  "ptMaxPosition = (%ld,%ld)\n"
+                  "ptMinTrackSize = (%ld,%ld)\n"
+                  "ptMaxTrackSize = (%ld,%ld)\n",
+                  minmax->ptReserved.x, minmax->ptReserved.y,
+                  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
+                  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
+                  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
+                  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+
+            ok(minmax->ptMaxSize.x == rc.right - rc.left, "default width of maximized child %ld != %ld\n",
+               minmax->ptMaxSize.x, rc.right - rc.left);
+            ok(minmax->ptMaxSize.y == rc.bottom - rc.top, "default height of maximized child %ld != %ld\n",
+               minmax->ptMaxSize.y, rc.bottom - rc.top);
+
+            DefMDIChildProcA(hwnd, msg, wparam, lparam);
+
+            trace("DefMDIChildProc returned:\n"
+                  "ptReserved = (%ld,%ld)\n"
+                  "ptMaxSize = (%ld,%ld)\n"
+                  "ptMaxPosition = (%ld,%ld)\n"
+                  "ptMinTrackSize = (%ld,%ld)\n"
+                  "ptMaxTrackSize = (%ld,%ld)\n",
+                  minmax->ptReserved.x, minmax->ptReserved.y,
+                  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
+                  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
+                  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
+                  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+
+            MDI_ChildGetMinMaxInfo(client, hwnd, &my_minmax);
+            ok(minmax->ptMaxSize.x == my_minmax.ptMaxSize.x, "default width of maximized child %ld != %ld\n",
+               minmax->ptMaxSize.x, my_minmax.ptMaxSize.x);
+            ok(minmax->ptMaxSize.y == my_minmax.ptMaxSize.y, "default height of maximized child %ld != %ld\n",
+               minmax->ptMaxSize.y, my_minmax.ptMaxSize.y);
+
+            return 1;
+        }
     }
     return DefMDIChildProcA(hwnd, msg, wparam, lparam);
 }
@@ -981,6 +1100,9 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
         case WM_CREATE:
         {
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
+
+            trace("%s\n", (msg == WM_NCCREATE) ? "WM_NCCREATE" : "WM_CREATE");
+            trace("x %d, y %d, cx %d, cy %d\n", cs->x, cs->y, cs->cx, cs->cy);
 
             ok(!(cs->dwExStyle & WS_EX_MDICHILD), "WS_EX_MDICHILD should not be set\n");
             ok(cs->lpCreateParams == mdi_lParam_test_message, "wrong cs->lpCreateParams\n");
@@ -998,6 +1120,68 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
             ok(cs->cx == 0, "%d != 0\n", cs->cx);
             ok(cs->cy == 0, "%d != 0\n", cs->cy);
             break;
+        }
+
+        case WM_GETMINMAXINFO:
+        {
+            HWND parent = GetParent(hwnd);
+            RECT rc;
+            MINMAXINFO *minmax = (MINMAXINFO *)lparam;
+            LONG style, exstyle;
+
+            trace("WM_GETMINMAXINFO\n");
+
+            style = GetWindowLongA(hwnd, GWL_STYLE);
+            exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
+
+            GetClientRect(parent, &rc);
+            trace("parent %p client size = (%ld x %ld)\n", parent, rc.right, rc.bottom);
+
+            GetClientRect(parent, &rc);
+            if ((style & WS_CAPTION) == WS_CAPTION)
+                style &= ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
+            AdjustWindowRectEx(&rc, style, 0, exstyle);
+            trace("calculated max child window size = (%ld x %ld)\n", rc.right-rc.left, rc.bottom-rc.top);
+
+            trace("ptReserved = (%ld,%ld)\n"
+                  "ptMaxSize = (%ld,%ld)\n"
+                  "ptMaxPosition = (%ld,%ld)\n"
+                  "ptMinTrackSize = (%ld,%ld)\n"
+                  "ptMaxTrackSize = (%ld,%ld)\n",
+                  minmax->ptReserved.x, minmax->ptReserved.y,
+                  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
+                  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
+                  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
+                  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+
+            ok(minmax->ptMaxSize.x == rc.right - rc.left, "default width of maximized child %ld != %ld\n",
+               minmax->ptMaxSize.x, rc.right - rc.left);
+            ok(minmax->ptMaxSize.y == rc.bottom - rc.top, "default height of maximized child %ld != %ld\n",
+               minmax->ptMaxSize.y, rc.bottom - rc.top);
+            break;
+        }
+
+        case WM_WINDOWPOSCHANGING:
+        case WM_WINDOWPOSCHANGED:
+        {
+            WINDOWPOS *winpos = (WINDOWPOS *)lparam;
+            WINDOWPOS my_winpos = *winpos;
+
+            trace("%s\n", (msg == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
+            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                  winpos->hwnd, winpos->hwndInsertAfter,
+                  winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+
+            DefWindowProcA(hwnd, msg, wparam, lparam);
+
+            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                  winpos->hwnd, winpos->hwndInsertAfter,
+                  winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+
+            ok(!memcmp(&my_winpos, winpos, sizeof(WINDOWPOS)),
+               "DefWindowProc should not change WINDOWPOS values\n");
+
+            return 1;
         }
     }
     return DefWindowProcA(hwnd, msg, wparam, lparam);

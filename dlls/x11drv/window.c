@@ -1032,8 +1032,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack);
         if (maxSize.x < cs->cx) cs->cx = maxSize.x;
         if (maxSize.y < cs->cy) cs->cy = maxSize.y;
-        if (cs->cx < minTrack.x ) cs->cx = minTrack.x;
-        if (cs->cy < minTrack.y ) cs->cy = minTrack.y;
         if (cs->cx < 0) cs->cx = 0;
         if (cs->cy < 0) cs->cy = 0;
 

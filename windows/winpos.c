@@ -753,9 +753,17 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 
     if (style & WS_CHILD)
     {
+        if ((style & WS_CAPTION) == WS_CAPTION)
+            style &= ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
+
         GetClientRect(GetParent(hwnd), &rc);
-        MinMax.ptMaxSize.x = rc.right;
-        MinMax.ptMaxSize.y = rc.bottom;
+        AdjustWindowRectEx(&rc, style, 0, exstyle);
+
+        /* avoid calculating this twice */
+        style &= ~(WS_DLGFRAME | WS_BORDER | WS_THICKFRAME);
+
+        MinMax.ptMaxSize.x = rc.right - rc.left;
+        MinMax.ptMaxSize.y = rc.bottom - rc.top;
     }
     else
     {
@@ -1085,15 +1093,15 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
  */
 LONG WINPOS_HandleWindowPosChanging16( HWND hwnd, WINDOWPOS16 *winpos )
 {
-    POINT maxSize, minTrack;
-    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
+    POINT minTrack, maxTrack;
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
     if (winpos->flags & SWP_NOSIZE) return 0;
     if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
     {
-	WINPOS_GetMinMaxInfo( hwnd, &maxSize, NULL, &minTrack, NULL );
-	if (maxSize.x < winpos->cx) winpos->cx = maxSize.x;
-	if (maxSize.y < winpos->cy) winpos->cy = maxSize.y;
+	WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
+	if (winpos->cx > maxTrack.x) winpos->cx = maxTrack.x;
+	if (winpos->cy > maxTrack.y) winpos->cy = maxTrack.y;
 	if (!(style & WS_MINIMIZE))
 	{
 	    if (winpos->cx < minTrack.x ) winpos->cx = minTrack.x;
@@ -1111,15 +1119,15 @@ LONG WINPOS_HandleWindowPosChanging16( HWND hwnd, WINDOWPOS16 *winpos )
  */
 LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
 {
-    POINT maxSize, minTrack;
-    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
+    POINT minTrack, maxTrack;
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
     if (winpos->flags & SWP_NOSIZE) return 0;
     if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
     {
-	WINPOS_GetMinMaxInfo( hwnd, &maxSize, NULL, &minTrack, NULL );
-	winpos->cx = min( winpos->cx, maxSize.x );
-	winpos->cy = min( winpos->cy, maxSize.y );
+	WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
+	if (winpos->cx > maxTrack.x) winpos->cx = maxTrack.x;
+	if (winpos->cy > maxTrack.y) winpos->cy = maxTrack.y;
 	if (!(style & WS_MINIMIZE))
 	{
 	    if (winpos->cx < minTrack.x ) winpos->cx = minTrack.x;
