@@ -718,8 +718,10 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	GUID devGuid;
 	TRACE("(%p,%p,%p)\n",lpcGUID,ippDS,pUnkOuter);
 
-	if (ippDS == NULL)
+	if (ippDS == NULL) {
+		WARN("invalid parameter\n");
 		return DSERR_INVALIDPARAM;
+	}
 
         /* Get dsound configuration */
         setup_dsound_options();
@@ -733,9 +735,9 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 		return DSERR_INVALIDPARAM;
 	}
 
-	if (dsound && IsEqualGUID(&devGuid, &dsound->guid) ) {
-		ERR("dsound already opened\n");
+	if (dsound) {
 		if (IsEqualGUID(&devGuid, &dsound->guid) ) {
+			ERR("dsound already opened\n");
 			IDirectSound_AddRef((LPDIRECTSOUND)dsound);
 			*ippDS = dsound;
 			return DS_OK;
@@ -791,7 +793,6 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	(*ippDS)->state		= STATE_STOPPED;
 	(*ippDS)->nrofbuffers	= 0;
 	(*ippDS)->buffers	= NULL;
-/*	(*ippDS)->primary	= NULL; */
 	(*ippDS)->listener	= NULL;
 
 	(*ippDS)->prebuf	= ds_snd_queue_max;
@@ -803,8 +804,9 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	} else {
 		/* if no DirectSound interface available, use WINMM API instead */
 		(*ippDS)->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT;
-		(*ippDS)->drvdesc.dnDevNode = wod; /* FIXME? */
 	}
+
+	(*ippDS)->drvdesc.dnDevNode = wod;
 
 	/* Set default wave format (may need it for waveOutOpen) */
 	(*ippDS)->wfx.wFormatTag	= WAVE_FORMAT_PCM;
@@ -830,22 +832,10 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 		if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
 		    flags |= WAVE_DIRECTSOUND;
 
-		/* FIXME: is this right? */
-                (*ippDS)->drvdesc.dnDevNode = 0;
-                err = DSERR_ALLOCATED;
-
-                /* if this device is busy try the next one */
-                while((err == DSERR_ALLOCATED) &&
-                        ((*ippDS)->drvdesc.dnDevNode < wodn))
-                {
-                  err = mmErr(waveOutOpen(&((*ippDS)->hwo),
+                err = mmErr(waveOutOpen(&((*ippDS)->hwo),
 					  (*ippDS)->drvdesc.dnDevNode, &((*ippDS)->wfx),
 					  (DWORD)DSOUND_callback, (DWORD)(*ippDS),
 					  flags));
-                  (*ippDS)->drvdesc.dnDevNode++; /* next wave device */
-		}
-
-                (*ippDS)->drvdesc.dnDevNode--; /* take away last increment */
 	}
 
 	if (drv && (err == DS_OK))

@@ -517,8 +517,9 @@ IDirectSoundCaptureImpl_Initialize(
         /* if no DirectSound interface available, use WINMM API instead */
         This->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN | 
             DSDDESC_DOMMSYSTEMSETFORMAT;
-        This->drvdesc.dnDevNode = wid; /* FIXME? */
     }
+
+    This->drvdesc.dnDevNode = wid;
     
     /* open the DirectSound driver if available */
     if (This->driver && (err == DS_OK))
