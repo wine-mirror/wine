@@ -910,17 +910,23 @@ static int encode_type(
 	*alignment = 1;
 
         if(type->type == RPC_FC_IP) {
-            typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
-	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+            for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
+                typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+                if ((typedata[0] == ((0x7fff << 16) | VT_PTR)) && (typedata[1] == *encoded_type)) break;
+            }
+            if (typeoffset == typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
+                typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
+                typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
 
-	    typedata[0] = (0x7fff << 16) | VT_PTR;
-	    typedata[1] = *encoded_type;
+                typedata[0] = (0x7fff << 16) | VT_PTR;
+                typedata[1] = *encoded_type;
+            }
             *encoded_type = typeoffset;
             *width = 4;
             *alignment = 4;
             *decoded_size += 8;
-        }            
-	break;
+        }
+        break;
       }
 
     default:
