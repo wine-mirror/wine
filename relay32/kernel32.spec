@@ -122,9 +122,9 @@ import  ntdll.dll
 104 stub AllocLSCallback
 105 stdcall AllocSLCallback(ptr ptr) AllocSLCallback
 106 stdcall AreFileApisANSI() AreFileApisANSI
-107 stub BackupRead
-108 stub BackupSeek
-109 stub BackupWrite
+107 stdcall BackupRead(ptr ptr long ptr long long ptr) BackupRead
+108 stdcall BackupSeek(ptr long long ptr ptr ptr) BackupSeek
+109 stdcall BackupWrite(ptr ptr long ptr long long ptr) BackupWrite
 110 stdcall Beep(long long) Beep
 111 stub BeginUpdateResourceA
 112 stub BeginUpdateResourceW
@@ -227,7 +227,7 @@ import  ntdll.dll
 209 stdcall EnumSystemLocalesW(ptr long) EnumSystemLocalesW
 210 stdcall EnumTimeFormatsA(ptr long long) EnumTimeFormatsA
 211 stdcall EnumTimeFormatsW(ptr long long) EnumTimeFormatsW
-212 stub EraseTape
+212 stdcall EraseTape(ptr long long) EraseTape
 213 stdcall EscapeCommFunction(long long) EscapeCommFunction
 214 stdcall ExitProcess(long) ExitProcess
 215 stdcall ExitThread(long) ExitThread
@@ -424,9 +424,9 @@ import  ntdll.dll
 406 stdcall GetSystemTime(ptr) GetSystemTime
 407 stub GetSystemTimeAdjustment
 408 stdcall GetSystemTimeAsFileTime(ptr) GetSystemTimeAsFileTime
-409 stub GetTapeParameters
-410 stub GetTapePosition
-411 stub GetTapeStatus
+409 stdcall GetTapeParameters(ptr long ptr ptr) GetTapeParameters
+410 stdcall GetTapePosition(ptr long ptr ptr ptr) GetTapePosition
+411 stdcall GetTapeStatus(ptr) GetTapeStatus
 412 stdcall GetTempFileNameA(str str long ptr) GetTempFileNameA
 413 stdcall GetTempFileNameW(wstr wstr long ptr) GetTempFileNameW
 414 stdcall GetTempPathA(long ptr) GetTempPathA
@@ -569,7 +569,7 @@ import  ntdll.dll
 551 stdcall PeekConsoleInputW(ptr ptr long ptr) PeekConsoleInputW
 552 stub PeekNamedPipe
 553 stub PostQueuedCompletionStatus
-554 stub PrepareTape
+554 stdcall PrepareTape(ptr long long) PrepareTape
 555 stdcall Process32First (ptr ptr) Process32First
 556 stdcall Process32Next (ptr ptr) Process32Next
 557 stdcall PulseEvent(long) PulseEvent
@@ -682,8 +682,8 @@ import  ntdll.dll
 664 stdcall SetSystemPowerState(long long) SetSystemPowerState
 665 stdcall SetSystemTime(ptr) SetSystemTime
 666 stub SetSystemTimeAdjustment
-667 stub SetTapeParameters
-668 stub SetTapePosition
+667 stdcall SetTapeParemeters(ptr long ptr) SetTapeParameters
+668 stdcall SetTapePosition(ptr long long long long long) SetTapePosition
 669 stdcall SetThreadAffinityMask(long long) SetThreadAffinityMask
 670 stdcall SetThreadContext(long ptr) SetThreadContext
 671 stdcall SetThreadLocale(long) SetThreadLocale
@@ -766,7 +766,7 @@ import  ntdll.dll
 748 stdcall WriteProfileSectionW(str str) WriteProfileSectionW
 749 stdcall WriteProfileStringA(str str str) WriteProfileStringA
 750 stdcall WriteProfileStringW(wstr wstr wstr) WriteProfileStringW
-751 stub WriteTapemark
+751 stdcall WriteTapemark(ptr long long long) WriteTapemark
 752 stub _DebugOut
 753 stub _DebugPrintf
 754 stdcall _hread(long ptr long) _hread

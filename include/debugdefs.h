@@ -138,38 +138,40 @@ const int dbch_string = 126;
 const int dbch_syscolor = 127;
 const int dbch_system = 128;
 const int dbch_tab = 129;
-const int dbch_tapi = 130;
-const int dbch_task = 131;
-const int dbch_text = 132;
-const int dbch_thread = 133;
-const int dbch_thunk = 134;
-const int dbch_timer = 135;
-const int dbch_toolbar = 136;
-const int dbch_toolhelp = 137;
-const int dbch_tooltips = 138;
-const int dbch_trackbar = 139;
-const int dbch_treeview = 140;
-const int dbch_ttydrv = 141;
-const int dbch_tweak = 142;
-const int dbch_typelib = 143;
-const int dbch_updown = 144;
-const int dbch_ver = 145;
-const int dbch_virtual = 146;
-const int dbch_vxd = 147;
-const int dbch_wave = 148;
-const int dbch_win = 149;
-const int dbch_win16drv = 150;
-const int dbch_win32 = 151;
-const int dbch_wing = 152;
-const int dbch_winsock = 153;
-const int dbch_winspool = 154;
-const int dbch_wnet = 155;
-const int dbch_x11 = 156;
-const int dbch_x11drv = 157;
+const int dbch_tape = 130;
+const int dbch_tapi = 131;
+const int dbch_task = 132;
+const int dbch_text = 133;
+const int dbch_thread = 134;
+const int dbch_thunk = 135;
+const int dbch_timer = 136;
+const int dbch_toolbar = 137;
+const int dbch_toolhelp = 138;
+const int dbch_tooltips = 139;
+const int dbch_trackbar = 140;
+const int dbch_treeview = 141;
+const int dbch_ttydrv = 142;
+const int dbch_tweak = 143;
+const int dbch_typelib = 144;
+const int dbch_updown = 145;
+const int dbch_ver = 146;
+const int dbch_virtual = 147;
+const int dbch_vxd = 148;
+const int dbch_wave = 149;
+const int dbch_win = 150;
+const int dbch_win16drv = 151;
+const int dbch_win32 = 152;
+const int dbch_wing = 153;
+const int dbch_winsock = 154;
+const int dbch_winspool = 155;
+const int dbch_wnet = 156;
+const int dbch_x11 = 157;
+const int dbch_x11drv = 158;
 
-#define DEBUG_CHANNEL_COUNT 158
+#define DEBUG_CHANNEL_COUNT 159
 
 char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -461,6 +463,7 @@ const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {
 "syscolor",
 "system",
 "tab",
+"tape",
 "tapi",
 "task",
 "text",

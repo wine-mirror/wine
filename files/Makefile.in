@@ -13,7 +13,8 @@ C_SRCS = \
 	dos_fs.c \
 	drive.c \
 	file.c \
-	profile.c
+	profile.c \
+	tape.c
 
 all: $(MODULE).o
 
