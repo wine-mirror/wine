@@ -108,7 +108,7 @@ IShellBrowser * IShellBrowserImpl_Construct(HWND hwndOwner)
     IShellBrowserImpl *sb;
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwndOwner,FileOpenDlgInfosStr);
 
-    sb=(IShellBrowserImpl*)SHAlloc(sizeof(IShellBrowserImpl));
+    sb=(IShellBrowserImpl*)COMDLG32_SHAlloc(sizeof(IShellBrowserImpl));
 
     /* Initialisation of the member variables */
     sb->ref=1;
@@ -704,6 +704,39 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBrowser *
 
     return NOERROR;     
 }
+
+/* copied from shell32 to avoid linking to it */
+static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+{
+	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+
+	switch (src->uType)
+	{
+	  case STRRET_WSTR:
+	    lstrcpynW((LPWSTR)dest, src->u.pOleStr, len);
+	    COMDLG32_SHFree(src->u.pOleStr);
+	    break;
+
+	  case STRRET_CSTRA:
+	    lstrcpynAtoW((LPWSTR)dest, src->u.cStr, len);
+	    break;
+
+	  case STRRET_OFFSETA:
+	    if (pidl)
+	    {
+	      lstrcpynAtoW((LPWSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+	    }
+	    break;
+
+	  default:
+	    FIXME("unknown type!\n");
+	    if (len)
+	    { *(LPSTR)dest = '\0';
+	    }
+	    return(FALSE);
+	}
+	return S_OK;
+}
 /**************************************************************************
 *  IShellBrowserImpl_ICommDlgBrowser_IncludeObject
 */
@@ -738,7 +771,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
         return S_OK;
 
     if (SUCCEEDED(IShellFolder_GetDisplayNameOf(fodInfos->Shell.FOIShellFolder, pidl, SHGDN_FORPARSING, &str)))
-    { if (SUCCEEDED(StrRetToBufW(&str, pidl,szPathW, MAX_PATH)))
+    { if (SUCCEEDED(COMDLG32_StrRetToStrNW(szPathW, MAX_PATH, &str, pidl)))
       {
 	  if (COMDLG32_PathMatchSpecW(szPathW, fodInfos->ShellInfos.lpstrCurrentFilter))
           return S_OK;

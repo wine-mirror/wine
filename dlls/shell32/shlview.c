@@ -599,7 +599,7 @@ static HRESULT ShellView_FillList(IShellViewImpl * This)
 
 	for (i=0; i < DPA_GetPtrCount(hdpa); ++i) 	/* DPA_GetPtrCount is a macro*/
 	{
-	  pidl = (LPITEMIDLIST)DPA_GetPtr(hdpa, i);
+	  pidl = (LPITEMIDLIST)pDPA_GetPtr(hdpa, i);
 
 	  /* in a commdlg This works as a filemask*/
 	  if ( IncludeObject(This, pidl)==S_OK )

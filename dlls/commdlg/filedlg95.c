@@ -148,8 +148,8 @@ LPITEMIDLIST  GetParentPidl(LPITEMIDLIST pidl);
 LPITEMIDLIST  GetPidlFromName(IShellFolder *psf,LPCSTR lpcstrFileName);
 
 /* Shell memory allocation */
-void *MemAlloc(UINT size);
-void MemFree(void *mem);
+static void *MemAlloc(UINT size);
+static void MemFree(void *mem);
 
 BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos);
 HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -834,9 +834,6 @@ static LRESULT FILEDLG95_OnWMInitDialog(HWND hwnd, WPARAM wParam, LPARAM lParam)
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) lParam;
 
   TRACE("\n");
-
-  /* Make sure the common control DLL is loaded */      
-  InitCommonControls();
 
   /* Initialise shell objects */
   FILEDLG95_SHELL_Init(hwnd);
@@ -2303,6 +2300,35 @@ static void FILEDLG95_LOOKIN_Clean(HWND hwnd)
  * TOOLS
  */
 
+/* copied from shell32 to avoid linking to it */
+static HRESULT COMDLG32_StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+{
+	switch (src->uType)
+	{
+	  case STRRET_WSTR:
+	    WideCharToMultiByte(CP_ACP, 0, src->u.pOleStr, -1, (LPSTR)dest, len, NULL, NULL);
+	    COMDLG32_SHFree(src->u.pOleStr);
+	    break;
+
+	  case STRRET_CSTRA:
+	    lstrcpynA((LPSTR)dest, src->u.cStr, len);
+	    break;
+
+	  case STRRET_OFFSETA:
+	    lstrcpynA((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+	    break;
+
+	  default:
+	    FIXME("unknown type!\n");
+	    if (len)
+	    {
+	      *(LPSTR)dest = '\0';
+	    }
+	    return(FALSE);
+	}
+	return S_OK;
+}
+
 /***********************************************************************
  *      GetName
  *
@@ -2335,7 +2361,7 @@ HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrF
                                                      dwFlags, 
                                                      &str)))
   {
-      return StrRetToBufA(&str, pidl,lpstrFileName, MAX_PATH);
+      return COMDLG32_StrRetToStrNA(lpstrFileName, MAX_PATH, &str, pidl);
   }
   return E_FAIL;
 }
@@ -2446,12 +2472,12 @@ BOOL GetFileExtension(IShellFolder *psf,LPITEMIDLIST pidl,LPSTR lpstrFileExtensi
 
 /*
  * Memory allocation methods */
-void *MemAlloc(UINT size)
+static void *MemAlloc(UINT size)
 {
     return HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,size);
 }
 
-void MemFree(void *mem)
+static void MemFree(void *mem)
 {
     if(mem)
     {

@@ -91,19 +91,8 @@ typedef struct {
 #include "wine/undocshell.h"
 #include "shellapi.h"
 
-/* DPA */
-extern HDPA	(WINAPI* COMDLG32_DPA_Create) (INT);  
-extern LPVOID	(WINAPI* COMDLG32_DPA_GetPtr) (const HDPA, INT);   
-extern LPVOID	(WINAPI* COMDLG32_DPA_DeleteAllPtrs) (const HDPA hdpa);
-extern LPVOID	(WINAPI* COMDLG32_DPA_DeletePtr) (const HDPA hdpa, INT i);
-extern INT	(WINAPI* COMDLG32_DPA_InsertPtr) (const HDPA, INT, LPVOID); 
-extern BOOL	(WINAPI* COMDLG32_DPA_Destroy) (const HDPA); 
-
 /* IMAGELIST */
-extern HICON	(WINAPI* COMDLG32_ImageList_GetIcon) (HIMAGELIST, INT, UINT);
-extern HIMAGELIST (WINAPI *COMDLG32_ImageList_LoadImageA) (HINSTANCE, LPCSTR, INT, INT, COLORREF, UINT, UINT);
 extern BOOL	(WINAPI* COMDLG32_ImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
-extern BOOL	(WINAPI* COMDLG32_ImageList_Destroy) (HIMAGELIST himl);
 
 /* ITEMIDLIST */
 
@@ -118,6 +107,7 @@ extern BOOL (WINAPI *COMDLG32_SHGetPathFromIDListA) (LPCITEMIDLIST,LPSTR);
 extern HRESULT (WINAPI *COMDLG32_SHGetSpecialFolderLocation)(HWND,INT,LPITEMIDLIST *);
 extern DWORD (WINAPI *COMDLG32_SHGetDesktopFolder)(IShellFolder **);
 extern DWORD	(WINAPI *COMDLG32_SHGetFileInfoA)(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
+extern LPVOID (WINAPI *COMDLG32_SHAlloc)(DWORD);
 extern DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
 
 /* PATH */

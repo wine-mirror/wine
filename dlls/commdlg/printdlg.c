@@ -318,7 +318,7 @@ BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
 /***********************************************************************
  *               PRINTDLG_UpdatePrinterInfoTexts               [internal]
  */
-void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
+static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
 {
     char   StatusMsg[256];
     char   ResourceString[256];
@@ -382,7 +382,7 @@ void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, PRINT_PTRA* PrintStructures)
  *   but on ID value, as some drivers name the same paper format 
  *   differently (language differences, added paper size)
  */
-short PRINTSETUP32DLG_UpdateComboBox(HWND hDlg,
+static short PRINTSETUP32DLG_UpdateComboBox(HWND hDlg,
                                       int   nIDComboBox,
                                       char* PrinterName, 
                                       char* PortName)
@@ -702,7 +702,7 @@ static LRESULT PRINTSETUP32DLG_WMInitDialog(HWND hDlg, WPARAM wParam,
  *   HGLOBAL to DevNames memory object on success or
  *   zero on faillure
  */
-HGLOBAL PRINTDLG_CreateDevNames(
+static HGLOBAL PRINTDLG_CreateDevNames(
                     char* DeviceDriverName, 
                     char* DeviceName, 
                     char* OutputPort, 
