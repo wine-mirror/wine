@@ -11,6 +11,7 @@ C_SRCS = \
 	cookie.c \
 	dialogs.c \
 	ftp.c \
+	gopher.c \
 	http.c \
 	internet.c \
 	netconnection.c \

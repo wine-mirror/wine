@@ -60,16 +60,16 @@
 @ stdcall GetUrlCacheEntryInfoExW(wstr ptr ptr wstr ptr ptr long)
 @ stdcall GetUrlCacheEntryInfoW(wstr ptr long)
 @ stub GetUrlCacheHeaderData
-@ stub GopherCreateLocatorA
-@ stub GopherCreateLocatorW
-@ stub GopherFindFirstFileA
-@ stub GopherFindFirstFileW
-@ stub GopherGetAttributeA
-@ stub GopherGetAttributeW
-@ stub GopherGetLocatorTypeA
-@ stub GopherGetLocatorTypeW
-@ stub GopherOpenFileA
-@ stub GopherOpenFileW
+@ stdcall GopherCreateLocatorA(str long str str long str ptr)
+@ stdcall GopherCreateLocatorW(wstr long wstr wstr long wstr ptr)
+@ stdcall GopherFindFirstFileA(ptr str str ptr long long)
+@ stdcall GopherFindFirstFileW(ptr wstr wstr ptr long long)
+@ stdcall GopherGetAttributeA(ptr str str ptr long ptr ptr long)
+@ stdcall GopherGetAttributeW(ptr wstr wstr ptr long ptr ptr long)
+@ stdcall GopherGetLocatorTypeA(str ptr)
+@ stdcall GopherGetLocatorTypeW(wstr ptr)
+@ stdcall GopherOpenFileA(ptr str str long long)
+@ stdcall GopherOpenFileW(ptr wstr wstr long long)
 @ stdcall HttpAddRequestHeadersA(ptr str long long)
 @ stub HttpAddRequestHeadersW
 @ stdcall HttpEndRequestA(ptr ptr long long)
@@ -131,7 +131,7 @@
 @ stdcall InternetSetCookieA(str str str)
 @ stdcall InternetSetCookieW(wstr wstr wstr)
 @ stub InternetSetDialState
-@ stub InternetSetFilePointer
+@ stdcall InternetSetFilePointer(ptr long ptr long long)
 @ stdcall InternetSetOptionA(ptr long ptr long)
 @ stdcall InternetSetOptionW(ptr long ptr long)
 @ stdcall InternetSetOptionExA(ptr long ptr long long)

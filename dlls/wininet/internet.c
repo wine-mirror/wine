@@ -1298,6 +1298,14 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
     return retVal;
 }
 
+/***********************************************************************
+ *           InternetSetFilePointer (WININET.@)
+ */
+DWORD WINAPI InternetSetFilePointer(HINTERNET f1, LONG f2, PVOID f3, DWORD f4, DWORD f5)
+{
+    FIXME("stub\n");
+    return FALSE;
+}
 
 /***********************************************************************
  *           InternetWriteFile (WININET.@)
