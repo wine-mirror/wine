@@ -224,7 +224,7 @@ if [ $RET -eq 0 ]; then
 fi
 
 # check whether wine binary still available
-if [ -n "`which wine`" ]; then
+if [ -n "`which wine 2>/dev/null|grep '/wine'`" ]; then
   echo "Warning !! wine binary (still) found, which may indicate"
   echo "a (conflicting) previous installation."
   echo "You might want to abort and uninstall Wine first."
