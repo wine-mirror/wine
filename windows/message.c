@@ -777,9 +777,14 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
     }
     if (wndPtr == WND_OTHER_PROCESS)
     {
-        if (IsWindow( msg->hwnd ))
-            ERR( "cannot dispatch msg to other process window %p\n", msg->hwnd );
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        if (IsWindow( msg->hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr->tid != GetCurrentThreadId())
+    {
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        WIN_ReleasePtr( wndPtr );
         return 0;
     }
     if (!(winproc = wndPtr->winproc))
@@ -869,9 +874,14 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
     }
     if (wndPtr == WND_OTHER_PROCESS)
     {
-        if (IsWindow( msg->hwnd ))
-            ERR( "cannot dispatch msg to other process window %p\n", msg->hwnd );
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        if (IsWindow( msg->hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr->tid != GetCurrentThreadId())
+    {
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        WIN_ReleasePtr( wndPtr );
         return 0;
     }
     if (!(winproc = wndPtr->winproc))
