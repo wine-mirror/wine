@@ -2049,7 +2049,17 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
     return ret;
 }
 
-
+/***********************************************************************
+ *		MsgWaitForMultipleObjects16 (USER.640)
+ */
+DWORD WINAPI MsgWaitForMultipleObjects16( DWORD nCount, HANDLE *pHandles,
+                                          BOOL fWaitAll, DWORD dwMilliseconds,
+                                          DWORD dwWakeMask )
+{
+	TRACE("(%lu,%p,%u,%lu,0x%lx)\n", 
+			nCount, pHandles, fWaitAll, dwMilliseconds, dwWakeMask);
+	return MsgWaitForMultipleObjects(nCount, pHandles, fWaitAll, dwMilliseconds, dwWakeMask);
+}
 
 struct accent_char
 {

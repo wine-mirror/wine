@@ -356,6 +356,15 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
 }
 
 /***********************************************************************
+ *		ChangeDisplaySettings16 (USER.620)
+ */
+LONG WINAPI ChangeDisplaySettings16( LPDEVMODEA devmode, DWORD flags )
+{
+	TRACE_(system)("(%p,0x%08lx), stub\n",devmode,flags);
+	return ChangeDisplaySettingsA(devmode, flags);
+}
+
+/***********************************************************************
  *		ChangeDisplaySettingsExA (USER32.@)
  */
 LONG WINAPI ChangeDisplaySettingsExA( 
@@ -437,6 +446,18 @@ BOOL WINAPI EnumDisplaySettingsW(LPCWSTR name,DWORD n,LPDEVMODEW devmode) {
 	}
 	HeapFree(GetProcessHeap(),0,nameA);
 	return ret;
+}
+
+/***********************************************************************
+ *		EnumDisplaySettings16 (USER.621)
+ */
+BOOL16 WINAPI EnumDisplaySettings16(
+	LPCSTR name,		/* [in] huh? */
+	DWORD n,		/* [in] nth entry in display settings list*/
+	LPDEVMODEA devmode	/* [out] devmode for that setting */
+) {
+	TRACE_(system)("(%s, %ld, %p)\n", name, n, devmode);
+	return (BOOL16)EnumDisplaySettingsA(name, n, devmode);
 }
 
 /***********************************************************************

@@ -509,9 +509,9 @@ owner	user32
 608 pascal16 GetForegroundWindow() GetForegroundWindow16
 609 pascal16 SetForegroundWindow(word) SetForegroundWindow16
 610 pascal16 DestroyIcon32(word word) CURSORICON_Destroy
-620 stub ChangeDisplaySettings
-621 stub EnumDisplaySettings
-640 stub MsgWaitForMultipleObjects
+620 pascal   ChangeDisplaySettings(ptr long) ChangeDisplaySettings16
+621 pascal16 EnumDisplaySettings(str long ptr) EnumDisplaySettings16
+640 pascal   MsgWaitForMultipleObjects(long ptr long long long) MsgWaitForMultipleObjects16
 650 stub ActivateKeyboardLayout
 651 stub GetKeyboardLayout
 652 stub GetKeyboardLayoutList
