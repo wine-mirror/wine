@@ -59,10 +59,6 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Pt",0x0416},	/* LANG_Pt */
     {"Sv",0x041d},	/* LANG_Sv */
     {"Ca",0x0403},	/* LANG_Ca */
-/* for compatibility whith non-iso names previously used */
-    {"Sw",0x041d},      /* LANG_Sv */
-    {"Cz",0x0405},      /* LANG_Cs */
-    {"Po",0x0416},      /* LANG_Pt */
     {NULL,0}
 };
 
@@ -692,7 +688,12 @@ static void MAIN_ParseLanguageOption( char *arg )
 {
     const WINE_LANGUAGE_DEF *p = Languages;
 
-    Options.language = LANG_En;  /* First language */
+/* for compatibility whith non-iso names previously used */
+    if (!strcmp("Sw",arg)) { strcpy(arg,"Sv"); FIXME(system,"use 'Sv' instead of 'Sw'\n");}
+    if (!strcmp("Cz",arg)) { strcpy(arg,"Cs"); FIXME(system,"use 'Cs' instead of 'Cz'\n");}
+    if (!strcmp("Po",arg)) { strcpy(arg,"Pt"); FIXME(system,"use 'Pt' instead of 'Po'\n");}
+
+    Options.language = LANG_Xx;  /* First (dummy) language */
     for (;p->name;p++)
     {
         if (!lstrcmpi32A( p->name, arg ))
