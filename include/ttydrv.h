@@ -16,11 +16,8 @@
 
 #include "windef.h"
 #include "wingdi.h"
-#include "dinput.h"
 #include "wine/winuser16.h"
 #include "wine/wingdi16.h"
-
-#include "keyboard.h"
 
 struct tagBITMAPOBJ;
 struct tagCLASS;
@@ -31,6 +28,8 @@ struct tagWND;
 struct tagCURSORICONINFO;
 struct tagCREATESTRUCTA;
 struct tagWINDOWPOS;
+struct tagKEYBOARD_CONFIG;
+struct DIDEVICEOBJECTDATA;
 
 /**************************************************************************
  * TTY GDI driver
@@ -119,8 +118,6 @@ extern struct tagUSER_DRIVER TTYDRV_USER_Driver;
 
 extern BOOL TTYDRV_USER_Initialize(void);
 extern void TTYDRV_USER_Finalize(void);
-extern void TTYDRV_USER_BeginDebugging(void);
-extern void TTYDRV_USER_EndDebugging(void);
 
 /* TTY clipboard driver */
 
@@ -171,9 +168,9 @@ extern BOOL TTYDRV_KEYBOARD_GetBeepActive(void);
 extern void TTYDRV_KEYBOARD_SetBeepActive(BOOL bActivate);
 extern void TTYDRV_KEYBOARD_Beep(void);
 extern BOOL TTYDRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr);
-extern BOOL TTYDRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags);
-extern void TTYDRV_KEYBOARD_GetKeyboardConfig(KEYBOARD_CONFIG *cfg);
-extern void TTYDRV_KEYBOARD_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask);
+extern BOOL TTYDRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDEVICEOBJECTDATA *dod, LPDWORD entries, DWORD flags);
+extern void TTYDRV_KEYBOARD_GetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg);
+extern void TTYDRV_KEYBOARD_SetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg, DWORD mask);
 
 /* TTY monitor driver */
 

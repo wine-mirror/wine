@@ -17,9 +17,7 @@
 USER_DRIVER TTYDRV_USER_Driver =
 {
   TTYDRV_USER_Initialize,
-  TTYDRV_USER_Finalize,
-  TTYDRV_USER_BeginDebugging,
-  TTYDRV_USER_EndDebugging
+  TTYDRV_USER_Finalize
 };
 
 CLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver =

@@ -99,21 +99,3 @@ int TWEAK_Init (void)
 
     return 1;
 }
-
-
-/******************************************************************************
- *
- *   int  TWEAK_CheckConfiguration()
- *
- *   Examines wine.conf for old/bad entries and recommends changes to the user.
- *
- *   Revision history
- *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *             Original implementation.
- *
- *****************************************************************************/
-
-int  TWEAK_CheckConfiguration()
-{
-    return 1;
-}

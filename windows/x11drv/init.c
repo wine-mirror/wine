@@ -21,9 +21,7 @@
 USER_DRIVER X11DRV_USER_Driver =
 {
   X11DRV_USER_Initialize,
-  X11DRV_USER_Finalize,
-  X11DRV_USER_BeginDebugging,
-  X11DRV_USER_EndDebugging
+  X11DRV_USER_Finalize
 };
 
 CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver =

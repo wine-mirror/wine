@@ -261,9 +261,6 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
     /* Initialize message spying */
     if (!SPY_Init()) return FALSE;
 
-    /* Check wine.conf for old/bad entries */
-    if (!TWEAK_CheckConfiguration()) return FALSE;
-
     /* Create system message queue */
     queueSize = GetProfileIntA( "windows", "TypeAhead", 120 );
     if (!QUEUE_CreateSysMsgQueue( queueSize )) return FALSE;

@@ -32,7 +32,7 @@ struct NLS_langlocale {
 	struct NLS_localevar {
 		const int	type;
 		const char	*val;
-	} locvars[150];
+	} locvars[120];
 };
 
 static LPVOID lpNLSInfo = NULL;
@@ -295,8 +295,8 @@ LANG_END
  * last entry has NULL name, 0 id.
  */ 
 #define LOCALE_ENTRY(x)	{#x,LOCALE_##x}
-static struct tagLOCALE_NAME2ID {
-	char	*name;
+static const struct tagLOCALE_NAME2ID {
+    const char	*name;
 	DWORD	id;
 } locale_name2id[]= {
 	LOCALE_ENTRY(ILANGUAGE),

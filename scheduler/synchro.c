@@ -14,7 +14,6 @@
 #include "winerror.h"
 #include "syslevel.h"
 #include "message.h"
-#include "x11drv.h"
 #include "server.h"
 
 /***********************************************************************

@@ -14,12 +14,9 @@
 #include <X11/Xatom.h>
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#include "dinput.h"
 #include "gdi.h"
 #include "winbase.h"
 #include "windef.h"
-
-#include "keyboard.h"
 
 #include <X11/extensions/XShm.h>
 
@@ -32,6 +29,8 @@ struct tagDeviceCaps;
 struct tagPALETTEOBJ;
 struct tagWND;
 struct tagWINDOWPOS;
+struct tagKEYBOARD_CONFIG;
+struct DIDEVICEOBJECTDATA;
 
   /* X physical pen */
 typedef struct
@@ -85,7 +84,6 @@ extern DeviceCaps X11DRV_DevCaps;
 
 /* Wine driver X11 functions */
 
-extern BOOL X11DRV_Init(void);
 extern BOOL X11DRV_BitBlt( struct tagDC *dcDst, INT xDst, INT yDst,
                              INT width, INT height, struct tagDC *dcSrc,
                              INT xSrc, INT ySrc, DWORD rop );
@@ -323,8 +321,6 @@ extern Window X11DRV_GetXRootWindow(void);
 
 extern BOOL X11DRV_USER_Initialize(void);
 extern void X11DRV_USER_Finalize(void);
-extern void X11DRV_USER_BeginDebugging(void);
-extern void X11DRV_USER_EndDebugging(void);
 
 /* X11 clipboard driver */
 
@@ -400,9 +396,9 @@ extern BOOL X11DRV_KEYBOARD_GetBeepActive(void);
 extern void X11DRV_KEYBOARD_SetBeepActive(BOOL bActivate);
 extern void X11DRV_KEYBOARD_Beep(void);
 extern BOOL X11DRV_KEYBOARD_GetDIState(DWORD len, LPVOID ptr);
-extern BOOL X11DRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags);
-extern void X11DRV_KEYBOARD_GetKeyboardConfig(KEYBOARD_CONFIG *cfg);
-extern void X11DRV_KEYBOARD_SetKeyboardConfig(KEYBOARD_CONFIG *cfg, DWORD mask);
+extern BOOL X11DRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDEVICEOBJECTDATA *dod, LPDWORD entries, DWORD flags);
+extern void X11DRV_KEYBOARD_GetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg);
+extern void X11DRV_KEYBOARD_SetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg, DWORD mask);
 
 extern void X11DRV_KEYBOARD_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
 

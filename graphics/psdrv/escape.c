@@ -25,13 +25,18 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
         RECT16 *r = (RECT16 *)PTR_SEG_TO_LIN(lpOutData);
 	if(!physDev->job.banding) {
 	    physDev->job.banding = TRUE;
-	    SetRect16( r, 0, 0, dc->w.devCaps->horzRes,
-		                     dc->w.devCaps->vertRes );
+            r->left   = 0;
+            r->top    = 0;
+            r->right  = dc->w.devCaps->horzRes;
+            r->bottom = dc->w.devCaps->vertRes;
 	    TRACE("NEXTBAND returning %d,%d - %d,%d\n", r->left,
 		  r->top, r->right, r->bottom );
 	    return 1;
 	}
-        SetRect16( r, 0, 0, 0, 0 );
+        r->left   = 0;
+        r->top    = 0;
+        r->right  = 0;
+        r->bottom = 0;
 	TRACE("NEXTBAND rect to 0,0 - 0,0\n" );
 	physDev->job.banding = FALSE;
     }	/* Fall through */

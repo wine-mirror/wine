@@ -31,8 +31,6 @@
 #include "win.h"
 #include "windef.h"
 #include "x11drv.h"
-#include "xmalloc.h"
-#include "version.h"
 
 /**********************************************************************/
 
@@ -123,22 +121,6 @@ BOOL X11DRV_USER_Initialize(void)
 void X11DRV_USER_Finalize(void)
 {
   X11DRV_USER_RestoreSetup();
-}
-
-/**************************************************************************
- *		X11DRV_USER_BeginDebugging
- */
-void X11DRV_USER_BeginDebugging(void)
-{
-  TSXUngrabServer(display);
-  TSXFlush(display);
-}
-
-/**************************************************************************
- *		X11DRV_USER_EndDebugging
- */
-void X11DRV_USER_EndDebugging(void)
-{
 }
 
 /***********************************************************************

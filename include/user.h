@@ -32,8 +32,6 @@ extern WORD USER_HeapSel;
 typedef struct tagUSER_DRIVER {
   BOOL (*pInitialize)(void);
   void (*pFinalize)(void);
-  void (*pBeginDebugging)(void);
-  void (*pEndDebugging)(void);
 } USER_DRIVER;
 
 extern USER_DRIVER *USER_Driver;

@@ -20,7 +20,6 @@ typedef enum
 
 
 int  TWEAK_Init(void);
-int  TWEAK_CheckConfiguration(void);
 
 extern WINE_LOOK TWEAK_WineLook;
 

@@ -38,19 +38,3 @@ BOOL TTYDRV_USER_Initialize(void)
 void TTYDRV_USER_Finalize(void)
 {
 }
-
-/**************************************************************************
- *		TTYDRV_USER_BeginDebugging
- */
-void TTYDRV_USER_BeginDebugging(void)
-{
-}
-
-/**************************************************************************
- *		TTYDRV_USER_EndDebugging
- */
-void TTYDRV_USER_EndDebugging(void)
-{
-}
-
-

@@ -4,6 +4,7 @@
  * Copyright 1998 Patrik Stridvall
  */
 
+#include "dinput.h"
 #include "keyboard.h"
 #include "ttydrv.h"
 
