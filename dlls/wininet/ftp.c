@@ -46,6 +46,7 @@
 #include "wininet.h"
 #include "winnls.h"
 #include "winerror.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 #include "internet.h"
@@ -835,6 +836,11 @@ HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
         return FALSE;
     }
 
+    if (lpwfs->download_in_progress != NULL) {
+	INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+	return FALSE;
+    }
+    
     hIC = (LPWININETAPPINFOA) lpwfs->hdr.lpwhparent;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
@@ -927,6 +933,10 @@ HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession,
         hFile->hdr.dwContext = dwContext;
         hFile->hdr.lpwhparent = hFtpSession;
         hFile->nDataSocket = nDataSocket;
+	hFile->session_deleted = FALSE;
+	
+	/* Indicate that a download is currently in progress */
+	lpwfs->download_in_progress = hFile;
     }
 
     if (lpwfs->lstnSocket != -1)
@@ -978,6 +988,11 @@ BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszN
         return FALSE;
     }
 
+    if (lpwfs->download_in_progress != NULL) {
+	INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+	return FALSE;
+    }
+    
     hIC = (LPWININETAPPINFOA) lpwfs->hdr.lpwhparent;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
@@ -1485,6 +1500,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
         lpwfs->hdr.dwContext = dwContext;
         lpwfs->hdr.lpwhparent = (LPWININETHANDLEHEADER)hInternet;
         lpwfs->sndSocket = nsocket;
+	lpwfs->download_in_progress = NULL;
 	sock_namelen = sizeof(lpwfs->socketAddress);
 	getsockname(nsocket, (struct sockaddr *) &lpwfs->socketAddress, &sock_namelen);
         lpwfs->phostent = phe;
@@ -2348,6 +2364,9 @@ recv_end:
 BOOL FTP_CloseSessionHandle(LPWININETFTPSESSIONA lpwfs)
 {
     TRACE("\n");
+
+    if (lpwfs->download_in_progress != NULL)
+	lpwfs->download_in_progress->session_deleted = TRUE;
     
     if (lpwfs->sndSocket != -1)
         close(lpwfs->sndSocket);
@@ -2396,7 +2415,7 @@ BOOL FTP_CloseFindNextHandle(LPWININETFINDNEXTA lpwfn)
 }
 
 /***********************************************************************
- *           FTP_CloseFindNextHandle (internal)
+ *           FTP_CloseFileTransferHandle (internal)
  *
  * Closes the file transfer handle. This also 'cleans' the data queue of
  * the 'transfer conplete' message (this is a bit of a hack though :-/ )
@@ -2408,7 +2427,21 @@ BOOL FTP_CloseFindNextHandle(LPWININETFINDNEXTA lpwfn)
  */
 BOOL FTP_CloseFileTransferHandle(LPWININETFILE lpwh)
 {
+    LPWININETFTPSESSIONA lpwfs = (LPWININETFTPSESSIONA) lpwh->hdr.lpwhparent;
+    INT nResCode;
+
     TRACE("\n");
+
+    if (!lpwh->session_deleted)
+	lpwfs->download_in_progress = NULL;
+
+    /* This just serves to flush the control socket of any spurrious lines written
+       to it (like '226 Transfer complete.').
+
+       Wonder what to do if the server sends us an error code though...
+    */
+    nResCode = FTP_ReceiveResponse(lpwfs->sndSocket, INTERNET_GetResponseBuffer(),
+				   MAX_REPLY_LEN, 0, 0, 0);
     
     if (lpwh->nDataSocket != -1)
         close(lpwh->nDataSocket);
@@ -2476,13 +2509,13 @@ BOOL FTP_ConvertFileProp(LPFILEPROPERTIESA lpafp, LPWIN32_FIND_DATAA lpFindFileD
 
     if (lpafp)
     {
-        DWORD access = mktime(&lpafp->tmLastModified);
-
+	/* Convert 'Unix' time to Windows time */
+	RtlSecondsSince1970ToTime(mktime(&lpafp->tmLastModified),
+				  (LARGE_INTEGER *) &(lpFindFileData->ftLastAccessTime));
+	
         /* Not all fields are filled in */
-        lpFindFileData->ftLastAccessTime.dwHighDateTime = HIWORD(access);
-        lpFindFileData->ftLastAccessTime.dwLowDateTime  = LOWORD(access);
-        lpFindFileData->nFileSizeHigh = HIWORD(lpafp->nSize);
-        lpFindFileData->nFileSizeLow = LOWORD(lpafp->nSize);
+        lpFindFileData->nFileSizeHigh = 0; /* We do not handle files bigger than 0xFFFFFFFF bytes yet :-) */
+        lpFindFileData->nFileSizeLow = lpafp->nSize;
 
 	if (lpafp->bIsDirectory)
 	    lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
@@ -2661,7 +2694,11 @@ BOOL FTP_ParseDirectory(LPWININETFTPSESSIONA lpwfs, INT nSocket, LPFILEPROPERTIE
 	    sscanf(pszToken, "%d-%d-%d",
 		   &curFileProp->tmLastModified.tm_mon,
 		   &curFileProp->tmLastModified.tm_mday,
-		   &curFileProp->tmLastModified.tm_year); /* Do we check for Y2K problems ? */
+		   &curFileProp->tmLastModified.tm_year);
+
+	    /* Hacky and bad Y2K protection :-) */
+	    if (curFileProp->tmLastModified.tm_year < 70)
+		curFileProp->tmLastModified.tm_year += 100;
 	    
 	    pszToken = strtok(NULL, " \t");
 	    if (pszToken == NULL) {
@@ -2678,7 +2715,8 @@ BOOL FTP_ParseDirectory(LPWININETFTPSESSIONA lpwfs, INT nSocket, LPFILEPROPERTIE
 
 	    TRACE("Mod time: %2d:%2d:%2d  %2d/%2d/%2d\n",
 		  curFileProp->tmLastModified.tm_hour, curFileProp->tmLastModified.tm_min, curFileProp->tmLastModified.tm_sec,
-		  curFileProp->tmLastModified.tm_year, curFileProp->tmLastModified.tm_mon, curFileProp->tmLastModified.tm_mday);
+		  (curFileProp->tmLastModified.tm_year >= 100) ? curFileProp->tmLastModified.tm_year - 100 : curFileProp->tmLastModified.tm_year,
+		  curFileProp->tmLastModified.tm_mon, curFileProp->tmLastModified.tm_mday);
 	    
 	    pszToken = strtok(NULL, " \t");
 	    if (pszToken == NULL) {

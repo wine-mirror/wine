@@ -117,22 +117,24 @@ typedef struct
 typedef struct
 {
     WININETHANDLEHEADER hdr;
+    BOOL session_deleted;
+    int nDataSocket;
+} WININETFILE, *LPWININETFILE;
+
+
+typedef struct
+{
+    WININETHANDLEHEADER hdr;
     int sndSocket;
     int lstnSocket;
     int pasvSocket; /* data socket connected by us in case of passive FTP */
+    LPWININETFILE download_in_progress;
     struct sockaddr_in socketAddress;
     struct sockaddr_in lstnSocketAddress;
     struct hostent *phostent;
     LPSTR  lpszPassword;
     LPSTR  lpszUserName;
 } WININETFTPSESSIONA, *LPWININETFTPSESSIONA;
-
-
-typedef struct
-{
-    WININETHANDLEHEADER hdr;
-    int nDataSocket;
-} WININETFILE, *LPWININETFILE;
 
 
 typedef struct
