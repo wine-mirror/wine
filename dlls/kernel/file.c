@@ -1247,7 +1247,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         static const WCHAR conW[] = {'C','O','N'};
 
         if (LOWORD(dosdev) == sizeof(conW) &&
-            !memicmpW( filename + HIWORD(dosdev)/sizeof(WCHAR), conW, sizeof(conW)))
+            !memicmpW( filename + HIWORD(dosdev)/sizeof(WCHAR), conW, sizeof(conW)/sizeof(WCHAR)))
         {
             switch (access & (GENERIC_READ|GENERIC_WRITE))
             {
