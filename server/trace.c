@@ -198,13 +198,13 @@ static void dump_varargs_set_key_value_request( const struct set_key_value_reque
 
 static void dump_varargs_get_key_value_reply( const struct get_key_value_request *req )
 {
-    int count = min( req->len, get_req_size( req, req->data, 1 ));
+    int count = min( req->len - req->offset, get_req_size( req, req->data, 1 ));
     dump_bytes( req->data, count );
 }
 
 static void dump_varargs_enum_key_value_reply( const struct enum_key_value_request *req )
 {
-    int count = min( req->len, get_req_size( req, req->data, 1 ));
+    int count = min( req->len - req->offset, get_req_size( req, req->data, 1 ));
     dump_bytes( req->data, count );
 }
 
@@ -1141,7 +1141,9 @@ static void dump_set_key_value_request( const struct set_key_value_request *req 
 {
     fprintf( stderr, " hkey=%d,", req->hkey );
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " len=%d,", req->len );
+    fprintf( stderr, " total=%08x,", req->total );
+    fprintf( stderr, " offset=%08x,", req->offset );
+    fprintf( stderr, " len=%08x,", req->len );
     fprintf( stderr, " name=" );
     dump_path_t( req, &req->name );
     fprintf( stderr, "," );
@@ -1152,6 +1154,7 @@ static void dump_set_key_value_request( const struct set_key_value_request *req 
 static void dump_get_key_value_request( const struct get_key_value_request *req )
 {
     fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " offset=%08x,", req->offset );
     fprintf( stderr, " name=" );
     dump_unicode_string( req, req->name );
 }
@@ -1167,7 +1170,8 @@ static void dump_get_key_value_reply( const struct get_key_value_request *req )
 static void dump_enum_key_value_request( const struct enum_key_value_request *req )
 {
     fprintf( stderr, " hkey=%d,", req->hkey );
-    fprintf( stderr, " index=%d", req->index );
+    fprintf( stderr, " index=%d,", req->index );
+    fprintf( stderr, " offset=%08x", req->offset );
 }
 
 static void dump_enum_key_value_reply( const struct enum_key_value_request *req )
@@ -1213,7 +1217,6 @@ static void dump_set_registry_levels_request( const struct set_registry_levels_r
 {
     fprintf( stderr, " current=%d,", req->current );
     fprintf( stderr, " saving=%d,", req->saving );
-    fprintf( stderr, " version=%d,", req->version );
     fprintf( stderr, " period=%d", req->period );
 }
 

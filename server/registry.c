@@ -73,25 +73,12 @@ struct key_value
 #define IS_ROOT_HKEY(h)   (((h) >= HKEY_ROOT_FIRST) && ((h) <= HKEY_ROOT_LAST))
 static struct key *root_keys[NB_ROOT_KEYS];
 
-static const char * const root_key_names[NB_ROOT_KEYS] =
-{
-    "HKEY_CLASSES_ROOT",
-    "HKEY_CURRENT_USER",
-    "HKEY_LOCAL_MACHINE",
-    "HKEY_USERS",
-    "HKEY_PERFORMANCE_DATA",
-    "HKEY_CURRENT_CONFIG",
-    "HKEY_DYN_DATA"
-};
-
 
 /* keys saving level */
 /* current_level is the level that is put into all newly created or modified keys */
 /* saving_level is the minimum level that a key needs in order to get saved */
 static int current_level;
 static int saving_level;
-
-static int saving_version = 1;  /* file format version */
 
 static struct timeval next_save_time;           /* absolute time of next periodic save */
 static int save_period;                         /* delay between periodic saves (ms) */
@@ -165,14 +152,7 @@ static void dump_path( struct key *key, struct key *base, FILE *f )
         dump_path( key->parent, base, f );
         fprintf( f, "\\\\" );
     }
-
-    if (key->name) dump_strW( key->name, strlenW(key->name), f, "[]" );
-    else  /* root key */
-    {
-        int i;
-        for (i = 0; i < NB_ROOT_KEYS; i++)
-            if (root_keys[i] == key) fprintf( f, "%s", root_key_names[i] );
-    }
+    dump_strW( key->name, strlenW(key->name), f, "[]" );
 }
 
 /* dump a value to a text file */
@@ -274,7 +254,7 @@ static void key_destroy( struct object *obj )
     struct key *key = (struct key *)obj;
     assert( obj->ops == &key_ops );
 
-    free( key->name );
+    if (key->name) free( key->name );
     if (key->class) free( key->class );
     for (i = 0; i <= key->last_value; i++)
     {
@@ -345,7 +325,6 @@ static struct key *alloc_key( const WCHAR *name, time_t modif )
     struct key *key;
     if ((key = (struct key *)alloc_object( &key_ops, -1 )))
     {
-        key->name        = NULL;
         key->class       = NULL;
         key->flags       = 0;
         key->last_subkey = -1;
@@ -357,7 +336,7 @@ static struct key *alloc_key( const WCHAR *name, time_t modif )
         key->level       = current_level;
         key->modif       = modif;
         key->parent      = NULL;
-        if (name && !(key->name = strdupW( name )))
+        if (!(key->name = strdupW( name )))
         {
             release_object( key );
             key = NULL;
@@ -719,16 +698,42 @@ static struct key_value *insert_value( struct key *key, const WCHAR *name )
 }
 
 /* set a key value */
-static void set_value( struct key *key, WCHAR *name, int type, int datalen, void *data )
+static void set_value( struct key *key, WCHAR *name, int type, unsigned int total_len,
+                       unsigned int offset, unsigned int data_len, void *data )
 {
     struct key_value *value;
     void *ptr = NULL;
-    
-    /* first copy the data */
-    if (datalen)
+
+    if (data_len + offset > total_len)
     {
-        if (!(ptr = mem_alloc( datalen ))) return;
-        memcpy( ptr, data, datalen );
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (offset)  /* adding data to an existing value */
+    {
+        int index;
+        if (!(value = find_value( key, name, &index )))
+        {
+            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+            return;
+        }
+        if (value->len != total_len)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+        memcpy( (char *)value->data + offset, data, data_len );
+        if (debug_level > 1) dump_operation( key, value, "Set" );
+        return;
+    }
+
+    /* first copy the data */
+    if (total_len)
+    {
+        if (!(ptr = mem_alloc( total_len ))) return;
+        memcpy( ptr, data, data_len );
+        if (data_len < total_len) memset( (char *)ptr + data_len, 0, total_len - data_len );
     }
 
     if (!(value = insert_value( key, name )))
@@ -738,14 +743,15 @@ static void set_value( struct key *key, WCHAR *name, int type, int datalen, void
     }
     if (value->data) free( value->data ); /* already existing, free previous data */
     value->type  = type;
-    value->len   = datalen;
+    value->len   = total_len;
     value->data  = ptr;
     touch_key( key );
     if (debug_level > 1) dump_operation( key, value, "Set" );
 }
 
 /* get a key value */
-static void get_value( struct key *key, WCHAR *name, int *type, int *len, void *data )
+static void get_value( struct key *key, WCHAR *name, unsigned int offset,
+                       unsigned int maxlen, int *type, int *len, void *data )
 {
     struct key_value *value;
     int index;
@@ -754,7 +760,11 @@ static void get_value( struct key *key, WCHAR *name, int *type, int *len, void *
     {
         *type = value->type;
         *len  = value->len;
-        if (value->data) memcpy( data, value->data, value->len );
+        if (value->data && offset < value->len)
+        {
+            if (maxlen > value->len - offset) maxlen = value->len - offset;
+            memcpy( data, (char *)value->data + offset, maxlen );
+        }
         if (debug_level > 1) dump_operation( key, value, "Get" );
     }
     else
@@ -765,7 +775,8 @@ static void get_value( struct key *key, WCHAR *name, int *type, int *len, void *
 }
 
 /* enumerate a key value */
-static void enum_value( struct key *key, int i, WCHAR *name, int *type, int *len, void *data )
+static void enum_value( struct key *key, int i, WCHAR *name, unsigned int offset,
+                        unsigned int maxlen, int *type, int *len, void *data )
 {
     struct key_value *value;
 
@@ -776,7 +787,11 @@ static void enum_value( struct key *key, int i, WCHAR *name, int *type, int *len
         strcpyW( name, value->name );
         *type = value->type;
         *len  = value->len;
-        if (value->data) memcpy( data, value->data, value->len );
+        if (value->data && offset < value->len)
+        {
+            if (maxlen > value->len - offset) maxlen = value->len - offset;
+            memcpy( data, (char *)value->data + offset, maxlen );
+        }
         if (debug_level > 1) dump_operation( key, value, "Enum" );
     }
 }
@@ -890,9 +905,17 @@ static struct key *create_root_key( int hkey )
         break;
     /* dynamically generated keys */
     case HKEY_PERFORMANCE_DATA:
+        {
+	    static const WCHAR name[] = { 'P','E','R','F','D','A','T','A',0 };  /* FIXME */
+            key = alloc_key( name, time(NULL) );
+	}
+	break;
     case HKEY_DYN_DATA:
-        key = alloc_key( NULL, time(NULL) );
-        break;
+        {
+	    static const WCHAR name[] = { 'D','Y','N','D','A','T','A',0 };  /* FIXME */
+            key = alloc_key( name, time(NULL) );
+	}
+	break;
     default:
         key = NULL;
         assert(0);
@@ -1067,7 +1090,8 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
 }
 
 /* load and create a key from the input file */
-static struct key *load_key( struct key *base, const char *buffer, struct file_load_info *info )
+static struct key *load_key( struct key *base, const char *buffer, unsigned int options,
+                             int prefix_len, struct file_load_info *info )
 {
     WCHAR *p;
     int res, len, modif;
@@ -1082,8 +1106,20 @@ static struct key *load_key( struct key *base, const char *buffer, struct file_l
     }
     if (!sscanf( buffer + res, " %d", &modif )) modif = time(NULL);
 
-    for (p = (WCHAR *)info->tmp; *p; p++) if (*p == '\\') { p++; break; }
-    return create_key( base, p, len - ((char *)p - info->tmp), NULL, 0, modif, &res );
+    p = (WCHAR *)info->tmp;
+    while (prefix_len && *p) { if (*p++ == '\\') prefix_len--; }
+
+    if (!*p)
+    {
+        if (prefix_len > 1)
+        {
+            file_read_error( "Malformed key", info );
+            return NULL;
+        }
+        /* empty key name, return base key */
+        return (struct key *)grab_object( base );
+    }
+    return create_key( base, p, len - ((char *)p - info->tmp), NULL, options, modif, &res );
 }
 
 /* parse a comma-separated list of hex digits */
@@ -1198,12 +1234,41 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     return 0;
 }
 
+/* return the length (in path elements) of name that is part of the key name */
+/* for instance if key is USER\foo\bar and name is foo\bar\baz, return 2 */
+static int get_prefix_len( struct key *key, const char *name, struct file_load_info *info )
+{
+    WCHAR *p;
+    int res;
+    int len = strlen(name) * sizeof(WCHAR);
+    if (!get_file_tmp_space( info, len )) return NULL;
+
+    if ((res = parse_strW( (WCHAR *)info->tmp, &len, name, ']' )) == -1)
+    {
+        file_read_error( "Malformed key", info );
+        return NULL;
+    }
+    for (p = (WCHAR *)info->tmp; *p; p++) if (*p == '\\') break;
+    *p = 0;
+    for (res = 1; key; res++)
+    {
+        if (!strcmpiW( (WCHAR *)info->tmp, key->name )) break;
+        key = key->parent;
+    }
+    if (!key) res = 0;  /* no matching name */
+    return res;
+}
+
 /* load all the keys from the input file */
 static void load_keys( struct key *key, FILE *f )
 {
     struct key *subkey = NULL;
     struct file_load_info info;
     char *p;
+    unsigned int options = 0;
+    int prefix_len = -1;  /* number of key name prefixes to skip */
+
+    if (key->flags & KEY_VOLATILE) options |= REG_OPTION_VOLATILE;
 
     info.file   = f;
     info.len    = 4;
@@ -1230,7 +1295,9 @@ static void load_keys( struct key *key, FILE *f )
         {
         case '[':   /* new key */
             if (subkey) release_object( subkey );
-            subkey = load_key( key, p + 1, &info );
+            if (prefix_len == -1) prefix_len = get_prefix_len( key, p + 1, &info );
+            if (!(subkey = load_key( key, p + 1, options, prefix_len, &info )))
+                file_read_error( "Error creating key", &info );
             break;
         case '@':   /* default value */
         case '\"':  /* value */
@@ -1288,50 +1355,14 @@ static int update_level( struct key *key )
     return max;
 }
 
-/* dump a string to a registry save file in the old v1 format */
-static void save_string_v1( LPCWSTR str, FILE *f, int len )
+/* save a registry branch to a file */
+static void save_all_subkeys( struct key *key, FILE *f )
 {
-    if (!str) return;
-    while ((len == -1) ? *str : (*str && len--))
-    {
-        if ((*str > 0x7f) || (*str == '\n') || (*str == '='))
-            fprintf( f, "\\u%04x", *str );
-        else
-        {
-            if (*str == '\\') fputc( '\\', f );
-            fputc( (char)*str, f );
-        }
-        str++;
-    }
-}
-
-/* save a registry and all its subkeys to a text file in the old v1 format */
-static void save_subkeys_v1( struct key *key, int nesting, FILE *f )
-{
-    int i, j;
-
-    if (key->flags & KEY_VOLATILE) return;
-    if (key->level < saving_level) return;
-    for (i = 0; i <= key->last_value; i++)
-    {
-        struct key_value *value = &key->values[i];
-        for (j = nesting; j > 0; j --) fputc( '\t', f );
-        save_string_v1( value->name, f, -1 );
-        fprintf( f, "=%d,%d,", value->type, 0 );
-        if (value->type == REG_SZ || value->type == REG_EXPAND_SZ)
-            save_string_v1( (LPWSTR)value->data, f, value->len / 2 );
-        else
-            for (j = 0; j < value->len; j++)
-                fprintf( f, "%02x", *((unsigned char *)value->data + j) );
-        fputc( '\n', f );
-    }
-    for (i = 0; i <= key->last_subkey; i++)
-    {
-        for (j = nesting; j > 0; j --) fputc( '\t', f );
-        save_string_v1( key->subkeys[i]->name, f, -1 );
-        fputc( '\n', f );
-        save_subkeys_v1( key->subkeys[i], nesting + 1, f );
-    }
+    fprintf( f, "WINE REGISTRY Version 2\n" );
+    fprintf( f, ";; All keys relative to " );
+    dump_path( key, NULL, f );
+    fprintf( f, "\n" );
+    save_subkeys( key, key, f );
 }
 
 /* save a registry branch to a file handle */
@@ -1353,13 +1384,7 @@ static void save_registry( struct key *key, int handle )
         FILE *f = fdopen( fd, "w" );
         if (f)
         {
-            fprintf( f, "WINE REGISTRY Version %d\n", saving_version );
-            if (saving_version == 2) save_subkeys( key, key, f );
-            else
-            {
-                update_level( key );
-                save_subkeys_v1( key, 0, f );
-            }
+            save_all_subkeys( key, f );
             if (fclose( f )) file_set_error();
         }
         else
@@ -1446,13 +1471,7 @@ static int save_branch( struct key *key, const char *path )
         dump_operation( key, NULL, "saving" );
     }
 
-    fprintf( f, "WINE REGISTRY Version %d\n", saving_version );
-    if (saving_version == 2) save_subkeys( key, key, f );
-    else
-    {
-        update_level( key );
-        save_subkeys_v1( key, 0, f );
-    }
+    save_all_subkeys( key, f );
     ret = !fclose(f);
 
     if (tmp)
@@ -1594,16 +1613,14 @@ DECL_HANDLER(query_key_info)
 DECL_HANDLER(set_key_value)
 {
     struct key *key;
-    int max = get_req_size( req, req->data, sizeof(req->data[0]) );
-    int datalen = req->len;
-    if (datalen > max)
-    {
-        set_error( STATUS_NO_MEMORY );  /* FIXME */
-        return;
-    }
+    unsigned int max = get_req_size( req, req->data, sizeof(req->data[0]) );
+    unsigned int datalen = req->len;
+
+    if (datalen > max) datalen = max;
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
-        set_value( key, copy_path( req->name ), req->type, datalen, req->data );
+        set_value( key, copy_path( req->name ), req->type, req->total,
+                   req->offset, datalen, req->data );
         release_object( key );
     }
 }
@@ -1612,11 +1629,13 @@ DECL_HANDLER(set_key_value)
 DECL_HANDLER(get_key_value)
 {
     struct key *key;
+    unsigned int max = get_req_size( req, req->data, sizeof(req->data[0]) );
 
     req->len = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
-        get_value( key, copy_path( req->name ), &req->type, &req->len, req->data );
+        get_value( key, copy_path( req->name ), req->offset, max,
+                   &req->type, &req->len, req->data );
         release_object( key );
     }
 }
@@ -1625,12 +1644,14 @@ DECL_HANDLER(get_key_value)
 DECL_HANDLER(enum_key_value)
 {
     struct key *key;
+    unsigned int max = get_req_size( req, req->data, sizeof(req->data[0]) );
 
     req->len = 0;
     req->name[0] = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
-        enum_value( key, req->index, req->name, &req->type, &req->len, req->data );
+        enum_value( key, req->index, req->name, req->offset, max,
+                    &req->type, &req->len, req->data );
         release_object( key );
     }
 }
@@ -1682,7 +1703,6 @@ DECL_HANDLER(set_registry_levels)
 {
     current_level  = req->current;
     saving_level   = req->saving;
-    saving_version = req->version;
 
     /* set periodic save timer */
 

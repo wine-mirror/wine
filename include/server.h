@@ -975,7 +975,9 @@ struct set_key_value_request
 {
     IN  int          hkey;         /* handle to registry key */
     IN  int          type;         /* value type */
-    IN  int          len;          /* value data len */
+    IN  unsigned int total;        /* total value len */
+    IN  unsigned int offset;       /* offset for setting data */
+    IN  unsigned int len;          /* value data len */
     IN  path_t       name;         /* value name */
     IN  unsigned char data[1];     /* value data */
 };
@@ -985,6 +987,7 @@ struct set_key_value_request
 struct get_key_value_request
 {
     IN  int          hkey;         /* handle to registry key */
+    IN  unsigned int offset;       /* offset for getting data */
     OUT int          type;         /* value type */
     OUT int          len;          /* value data len */
     IN  WCHAR        name[1];      /* value name */
@@ -997,6 +1000,7 @@ struct enum_key_value_request
 {
     IN  int          hkey;         /* handle to registry key */
     IN  int          index;        /* value index */
+    IN  unsigned int offset;       /* offset for getting data */
     OUT int          type;         /* value type */
     OUT int          len;          /* value data len */
     OUT path_t       name;         /* value name */
@@ -1042,7 +1046,6 @@ struct set_registry_levels_request
 {
     IN  int          current;      /* new current level */
     IN  int          saving;       /* new saving level */
-    IN  int          version;      /* file format version for saving */
     IN  int          period;       /* duration between periodic saves (milliseconds) */
 };
 
@@ -1255,7 +1258,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 11
+#define SERVER_PROTOCOL_VERSION 12
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

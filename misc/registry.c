@@ -59,6 +59,7 @@ static void REGISTRY_Init(void);
 
 /* relative in ~user/.wine/ : */
 #define SAVE_CURRENT_USER           "user.reg"
+#define SAVE_DEFAULT_USER           "userdef.reg"
 #define SAVE_LOCAL_USERS_DEFAULT    "wine.userreg"
 #define SAVE_LOCAL_MACHINE          "system.reg"
 
@@ -444,7 +445,7 @@ static int _wine_loadsubreg( FILE *F, HKEY hkey, const char *fn )
 /******************************************************************************
  * _wine_loadreg [Internal]
  */
-static void _wine_loadreg( HKEY hkey, char *fn )
+static int _wine_loadreg( HKEY hkey, char *fn )
 {
     FILE *F;
 
@@ -453,10 +454,11 @@ static void _wine_loadreg( HKEY hkey, char *fn )
     F = fopen(fn,"rb");
     if (F==NULL) {
         WARN("Couldn't open %s for reading: %s\n",fn,strerror(errno) );
-        return;
+        return -1;
     }
     _wine_loadsubreg(F,hkey,fn);
     fclose(F);
+    return 0;
 }
 
 /* NT REGISTRY LOADER */
@@ -1346,18 +1348,16 @@ void _w31_loadreg(void) {
 
 
 /* configure save files and start the periodic saving timer */
-static void SHELL_InitRegistrySaving(void)
+static void SHELL_InitRegistrySaving( HKEY hkey_users_default )
 {
     struct set_registry_levels_request *req = get_req_buffer();
 
     int all = PROFILE_GetWineIniBool( "registry", "SaveOnlyUpdatedKeys", 1 );
-    int version = PROFILE_GetWineIniBool( "registry", "UseNewFormat", 1 ) ? 2 : 1;
     int period = PROFILE_GetWineIniInt( "registry", "PeriodicSave", 0 );
 
     /* set saving level (0 for saving everything, 1 for saving only modified keys) */
     req->current = 1;
     req->saving  = !all;
-    req->version = version;
     req->period  = period * 1000;
     server_call( REQ_SET_REGISTRY_LEVELS );
 
@@ -1384,6 +1384,11 @@ static void SHELL_InitRegistrySaving(void)
         server_call( REQ_SAVE_REGISTRY_ATEXIT );
 
         strcpy( req->file, confdir );
+        strcpy( str, "/" SAVE_DEFAULT_USER );
+        req->hkey = hkey_users_default;
+        server_call( REQ_SAVE_REGISTRY_ATEXIT );
+
+        strcpy( req->file, confdir );
         strcpy( str, "/" SAVE_LOCAL_USERS_DEFAULT );
         req->hkey = HKEY_USERS;
         server_call( REQ_SAVE_REGISTRY_ATEXIT );
@@ -1403,7 +1408,6 @@ static void SetLoadLevel(int level)
 
 	req->current = level;
 	req->saving  = 0;
-	req->version = 1;
         req->period  = 0;
 	server_call( REQ_SET_REGISTRY_LEVELS );
 }
@@ -1422,6 +1426,7 @@ void SHELL_LoadRegistry( void )
   char windir[MAX_PATHNAME_LEN];
   char path[MAX_PATHNAME_LEN];
   int  systemtype = REG_WIN31;
+  HKEY hkey_users_default;
 
   TRACE("(void)\n");
 
@@ -1429,6 +1434,8 @@ void SHELL_LoadRegistry( void )
 
   REGISTRY_Init();
   SetLoadLevel(0);
+
+  if (RegCreateKeyA(HKEY_USERS, ".Default", &hkey_users_default)) hkey_users_default = 0;
 
   GetWindowsDirectoryA( windir, MAX_PATHNAME_LEN );
 
@@ -1491,12 +1498,11 @@ void SHELL_LoadRegistry( void )
 	  MESSAGE("check wine.conf, section [Wine], value 'Profile'\n");
 	}
 	/* default user.dat */
-	if (!RegCreateKeyA(HKEY_USERS, ".Default", &hkey))
+	if (hkey_users_default)
 	{
           strcpy(path, windir);
           strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
-          NativeRegLoadKey(hkey, path, 1);
-	  RegCloseKey(hkey);
+          NativeRegLoadKey(hkey_users_default, path, 1);
 	}
       }
       else
@@ -1521,12 +1527,11 @@ void SHELL_LoadRegistry( void )
       }
 
       /* default user.dat */
-      if (!RegCreateKeyA(HKEY_USERS, ".Default", &hkey))
+      if (hkey_users_default)
       {
         strcpy(path, windir);
         strncat(path, "\\system32\\config\\default", MAX_PATHNAME_LEN - strlen(path) - 1);
-        NativeRegLoadKey(hkey, path, 1);
-        RegCloseKey(hkey);
+        NativeRegLoadKey(hkey_users_default, path, 1);
       }
 
       /*
@@ -1599,8 +1604,14 @@ void SHELL_LoadRegistry( void )
           str = fn + strlen(fn);
           *str++ = '/';
 
-          strcpy( str, SAVE_LOCAL_USERS_DEFAULT );
-          _wine_loadreg( HKEY_USERS, fn ); 
+          /* try to load HKU\.Default key only */
+          strcpy( str, SAVE_DEFAULT_USER );
+          if (_wine_loadreg( hkey_users_default, fn ))
+          {
+              /* if not found load old file containing both HKU\.Default and HKU\user */
+              strcpy( str, SAVE_LOCAL_USERS_DEFAULT );
+              _wine_loadreg( HKEY_USERS, fn ); 
+          }
 
           strcpy( str, SAVE_CURRENT_USER );
           _wine_loadreg( HKEY_CURRENT_USER, fn );
@@ -1611,8 +1622,8 @@ void SHELL_LoadRegistry( void )
           if (fn != path) HeapFree( GetProcessHeap(), 0, fn );
       }
   }
-
-  SHELL_InitRegistrySaving();
+  SHELL_InitRegistrySaving( hkey_users_default );
+  RegCloseKey( hkey_users_default );
 }
 
 /********************* API FUNCTIONS ***************************************/

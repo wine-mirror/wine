@@ -51,59 +51,6 @@ static inline int is_string( DWORD type )
     return (type == REG_SZ) || (type == REG_EXPAND_SZ) || (type == REG_MULTI_SZ);
 }
 
-/* copy key value data into a user-specified buffer
- *
- * 'len' is the total length of the data
- * 'count' is the size of the user-specified buffer
- * and is updated to reflect the length copied
- *
- * if the type is REG_SZ and data is not 0-terminated and there is enough space in the
- * buffer nt appends a \0
- */
-static DWORD copy_data( void *data, const void *src, DWORD len, DWORD *count, DWORD type )
-{
-    DWORD ret = ERROR_SUCCESS;
-    if (data)
-    {
-        if (*count < len) ret = ERROR_MORE_DATA;
-        else memcpy( data, src, len );
-    }
-    if (count) 
-    {
-        if (len && data && is_string( type ) && (len < *count) && ((WCHAR *)data)[len-1])
-            ((WCHAR *)data)[len] = 0;
-        *count = len;
-    }
-    return ret;
-}
-
-/* same as copy_data but with optional Unicode->Ascii conversion depending on the type */
-static DWORD copy_data_WtoA( void *data, const void *src, DWORD len, DWORD *count, DWORD type )
-{
-    DWORD ret = ERROR_SUCCESS;
-    if (is_string( type ))
-    {
-        /* need to convert from Unicode */
-        len /= sizeof(WCHAR);
-        if (data)
-        {
-            if (*count < len) ret = ERROR_MORE_DATA;
-            else if (len)
-            {
-                memcpyWtoA( data, src, len );
-                if ((len < *count) && ((char*)data)[len-1]) ((char *)data)[len] = 0;
-            }
-        }
-    }
-    else if (data)
-    {
-        if (*count < len) ret = ERROR_MORE_DATA;
-        else memcpy( data, src, len );
-    }
-    if (count) *count = len;
-    return ret;
-}
-
 /* copy a key name into the request buffer */
 static inline DWORD copy_nameW( LPWSTR dest, LPCWSTR name )
 {
@@ -623,6 +570,7 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
 {
     DWORD ret;
     struct set_key_value_request *req = get_req_buffer();
+    unsigned int max, pos;
 
     TRACE( "(0x%x,%s,%ld,%ld,%p,%ld)\n", hkey, debugstr_w(name), reserved, type, data, count );
 
@@ -635,13 +583,25 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
         if (str[count / sizeof(WCHAR) - 1] && !str[count / sizeof(WCHAR)])
             count += sizeof(WCHAR);
     }
-    if (count >= server_remaining( req->data )) return ERROR_OUTOFMEMORY;  /* FIXME */
+
     req->hkey = hkey;
     req->type = type;
-    req->len = count;
+    req->total = count;
     if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-    memcpy( req->data, data, count );
-    return reg_server_call( REQ_SET_KEY_VALUE );
+
+    max = server_remaining( req->data );
+    pos = 0;
+    while (pos < count)
+    {
+        unsigned int len = count - pos;
+        if (len > max) len = max;
+        req->offset = pos;
+        req->len    = len;
+        memcpy( req->data, data + pos, len );
+        if ((ret = reg_server_call( REQ_SET_KEY_VALUE )) != ERROR_SUCCESS) break;
+        pos += len;
+    }
+    return ret;
 }
 
 
@@ -653,6 +613,7 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
 {
     DWORD ret;
     struct set_key_value_request *req = get_req_buffer();
+    unsigned int max, pos;
 
     TRACE( "(0x%x,%s,%ld,%ld,%p,%ld)\n", hkey, debugstr_a(name), reserved, type, data, count );
 
@@ -663,23 +624,31 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
         /* if user forgot to count terminating null, add it (yes NT does this) */
         if (data[count-1] && !data[count]) count++;
     }
-    if (is_string( type ))
-    {
-        /* need to convert to Unicode */
+    if (is_string( type )) /* need to convert to Unicode */
         count *= sizeof(WCHAR);
-        if (count >= server_remaining( req->data )) return ERROR_OUTOFMEMORY;  /* FIXME */
-        memcpyAtoW( (LPWSTR)req->data, data, count / sizeof(WCHAR) );
-    }
-    else
-    {
-        if (count >= server_remaining( req->data )) return ERROR_OUTOFMEMORY;  /* FIXME */
-        memcpy( req->data, data, count );
-    }
+
     req->hkey = hkey;
     req->type = type;
-    req->len = count;
+    req->total = count;
     if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    return reg_server_call( REQ_SET_KEY_VALUE );
+
+    max = server_remaining( req->data );
+    pos = 0;
+    while (pos < count)
+    {
+        unsigned int len = count - pos;
+        if (len > max) len = max;
+        req->offset = pos;
+        req->len    = len;
+
+        if (is_string( type ))
+            memcpyAtoW( (LPWSTR)req->data, data + pos/sizeof(WCHAR), len/sizeof(WCHAR) );
+        else
+            memcpy( req->data, data + pos, len );
+        if ((ret = reg_server_call( REQ_SET_KEY_VALUE )) != ERROR_SUCCESS) break;
+        pos += len;
+    }
+    return ret;
 }
 
 
@@ -762,12 +731,35 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
+    req->offset = 0;
     if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) == ERROR_SUCCESS)
+    if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+
+    if (data)
     {
-        if (type) *type = req->type;
-        ret = copy_data( data, req->data, req->len, count, req->type );
+        if (*count < req->len) ret = ERROR_MORE_DATA;
+        else
+        {
+            /* copy the data */
+            unsigned int max = server_remaining( req->data );
+            unsigned int pos = 0;
+            while (pos < req->len)
+            {
+                unsigned int len = min( req->len - pos, max );
+                memcpy( data + pos, req->data, len );
+                if ((pos += len) >= req->len) break;
+                req->offset = pos;
+                if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
+                if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+            }
+        }
+        /* if the type is REG_SZ and data is not 0-terminated
+         * and there is enough space in the buffer NT appends a \0 */
+        if (req->len && is_string(req->type) &&
+            (req->len < *count) && ((WCHAR *)data)[req->len-1]) ((WCHAR *)data)[req->len] = 0;
     }
+    if (type) *type = req->type;
+    if (count) *count = req->len;
     return ret;
 }
 
@@ -781,7 +773,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
 DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD type,
 			       LPBYTE data, LPDWORD count )
 {
-    DWORD ret;
+    DWORD ret, total_len;
     struct get_key_value_request *req = get_req_buffer();
 
     TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
@@ -790,12 +782,41 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
+    req->offset = 0;
     if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
-    if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) == ERROR_SUCCESS)
+    if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+
+    total_len = is_string( req->type ) ? req->len/sizeof(WCHAR) : req->len;
+
+    if (data)
     {
-        if (type) *type = req->type;
-        ret = copy_data_WtoA( data, req->data, req->len, count, req->type );
+        if (*count < total_len) ret = ERROR_MORE_DATA;
+        else
+        {
+            /* copy the data */
+            unsigned int max = server_remaining( req->data );
+            unsigned int pos = 0;
+            while (pos < req->len)
+            {
+                unsigned int len = min( req->len - pos, max );
+                if (is_string( req->type ))
+                    memcpyWtoA( data + pos/sizeof(WCHAR), (WCHAR *)req->data, len/sizeof(WCHAR) );
+                else
+                    memcpy( data + pos, req->data, len );
+                if ((pos += len) >= req->len) break;
+                req->offset = pos;
+                if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
+                if ((ret = reg_server_call( REQ_GET_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+            }
+        }
+        /* if the type is REG_SZ and data is not 0-terminated
+         * and there is enough space in the buffer NT appends a \0 */
+        if (total_len && is_string(req->type) && (total_len < *count) && data[total_len-1])
+            data[total_len] = 0;
     }
+
+    if (count) *count = total_len;
+    if (type) *type = req->type;
     return ret;
 }
 
@@ -882,6 +903,7 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
 
     req->hkey = hkey;
     req->index = index;
+    req->offset = 0;
     if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
 
     len = lstrlenW( req->name ) + 1;
@@ -889,8 +911,31 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
     memcpy( value, req->name, len * sizeof(WCHAR) );
     *val_count = len - 1;
 
+    if (data)
+    {
+        if (*count < req->len) ret = ERROR_MORE_DATA;
+        else
+        {
+            /* copy the data */
+            unsigned int max = server_remaining( req->data );
+            unsigned int pos = 0;
+            while (pos < req->len)
+            {
+                unsigned int len = min( req->len - pos, max );
+                memcpy( data + pos, req->data, len );
+                if ((pos += len) >= req->len) break;
+                req->offset = pos;
+                if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+            }
+        }
+        /* if the type is REG_SZ and data is not 0-terminated
+         * and there is enough space in the buffer NT appends a \0 */
+        if (req->len && is_string(req->type) &&
+            (req->len < *count) && ((WCHAR *)data)[req->len-1]) ((WCHAR *)data)[req->len] = 0;
+    }
     if (type) *type = req->type;
-    return copy_data( data, req->data, req->len, count, req->type );
+    if (count) *count = req->len;
+    return ret;
 }
 
 
@@ -900,7 +945,7 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
 DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_count,
                             LPDWORD reserved, LPDWORD type, LPBYTE data, LPDWORD count )
 {
-    DWORD ret, len;
+    DWORD ret, len, total_len;
     struct enum_key_value_request *req = get_req_buffer();
 
     TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
@@ -911,6 +956,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
 
     req->hkey = hkey;
     req->index = index;
+    req->offset = 0;
     if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
 
     len = lstrlenW( req->name ) + 1;
@@ -918,8 +964,37 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
     memcpyWtoA( value, req->name, len );
     *val_count = len - 1;
 
+    total_len = is_string( req->type ) ? req->len/sizeof(WCHAR) : req->len;
+
+    if (data)
+    {
+        if (*count < total_len) ret = ERROR_MORE_DATA;
+        else
+        {
+            /* copy the data */
+            unsigned int max = server_remaining( req->data );
+            unsigned int pos = 0;
+            while (pos < req->len)
+            {
+                unsigned int len = min( req->len - pos, max );
+                if (is_string( req->type ))
+                    memcpyWtoA( data + pos/sizeof(WCHAR), (WCHAR *)req->data, len/sizeof(WCHAR) );
+                else
+                    memcpy( data + pos, req->data, len );
+                if ((pos += len) >= req->len) break;
+                req->offset = pos;
+                if ((ret = reg_server_call( REQ_ENUM_KEY_VALUE )) != ERROR_SUCCESS) return ret;
+            }
+        }
+        /* if the type is REG_SZ and data is not 0-terminated
+         * and there is enough space in the buffer NT appends a \0 */
+        if (total_len && is_string(req->type) && (total_len < *count) && data[total_len-1])
+            data[total_len] = 0;
+    }
+
+    if (count) *count = total_len;
     if (type) *type = req->type;
-    return copy_data_WtoA( data, req->data, req->len, count, req->type );
+    return ret;
 }
 
 
