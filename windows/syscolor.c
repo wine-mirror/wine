@@ -116,18 +116,19 @@ void SYSCOLOR_Init(void)
     int i, r, g, b;
     const char * const *p;
     char buffer[100];
+    BOOL bOk = FALSE, bNoReg = FALSE;
+    HKEY  hKey;
+    DWORD dwDataSize = 32;
 
     p = (TWEAK_WineLook == WIN31_LOOK) ? DefSysColors : DefSysColors95;
 
     /* first, try to read the values from the registry */
     if (VERSION_GetVersion() != WIN31)
-    { HKEY  hKey;
-      DWORD dwDataSize = 32;
-      BOOL bOk = FALSE, bNoReg = FALSE;
-
+    {
       if (RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
         bNoReg = TRUE;
 	
+    }	
       for (i = 0; i < NUM_SYS_COLORS; i++)
       { bOk = FALSE;
 
@@ -154,7 +155,6 @@ void SYSCOLOR_Init(void)
       }
       if (!bNoReg)
         RegCloseKey(hKey);
-    }
 
 }
 
