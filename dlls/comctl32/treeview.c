@@ -2495,26 +2495,25 @@ TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr)
 
     if (vert)
     {
-	infoPtr->uInternalStatus |= TV_VSCROLL;
-
 	si.nPage = TREEVIEW_GetVisibleCount(infoPtr);
 	si.nPos  = infoPtr->firstVisible->visibleOrder;
 	si.nMax  = infoPtr->maxVisibleOrder - 1;
 
 	SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
+
+	if (!(infoPtr->uInternalStatus & TV_VSCROLL))
+	    ShowScrollBar(hwnd, SB_VERT, TRUE);
+	infoPtr->uInternalStatus |= TV_VSCROLL;
     }
     else
     {
 	if (infoPtr->uInternalStatus & TV_VSCROLL)
 	    ShowScrollBar(hwnd, SB_VERT, FALSE);
-
 	infoPtr->uInternalStatus &= ~TV_VSCROLL;
     }
 
     if (horz)
     {
-	infoPtr->uInternalStatus |= TV_HSCROLL;
-
 	si.nPage = infoPtr->clientWidth;
 	si.nPos  = infoPtr->scrollX;
 	si.nMax  = infoPtr->treeWidth - 1;
@@ -2525,12 +2524,17 @@ TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr)
            scrollX = si.nPos;
         }
 
+	if (!(infoPtr->uInternalStatus & TV_HSCROLL))
+	    ShowScrollBar(hwnd, SB_HORZ, TRUE);
+	infoPtr->uInternalStatus |= TV_HSCROLL;
+
 	SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
     }
     else
     {
 	if (infoPtr->uInternalStatus & TV_HSCROLL)
 	    ShowScrollBar(hwnd, SB_HORZ, FALSE);
+	infoPtr->uInternalStatus &= ~TV_HSCROLL;
 
 	scrollX = 0;
     }
