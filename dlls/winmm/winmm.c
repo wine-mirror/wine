@@ -75,9 +75,9 @@ void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
 LPWINE_MM_IDATA		WINMM_IData /* = NULL */;
 
 /**************************************************************************
- * 			MULTIMEDIA_CreateIData			[internal]
+ * 			WINMM_CreateIData			[internal]
  */
-static	BOOL	MULTIMEDIA_CreateIData(HINSTANCE hInstDLL)
+static	BOOL	WINMM_CreateIData(HINSTANCE hInstDLL)
 {
     WINMM_IData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MM_IDATA));
 
@@ -93,9 +93,9 @@ static	BOOL	MULTIMEDIA_CreateIData(HINSTANCE hInstDLL)
 }
 
 /**************************************************************************
- * 			MULTIMEDIA_DeleteIData			[internal]
+ * 			WINMM_DeleteIData			[internal]
  */
-static	void MULTIMEDIA_DeleteIData(void)
+static	void WINMM_DeleteIData(void)
 {
     if (WINMM_IData) {
 	TIME_MMTimeStop();
@@ -110,6 +110,30 @@ static	void MULTIMEDIA_DeleteIData(void)
     }
 }
 
+/******************************************************************
+ *             WINMM_LoadMMSystem
+ *
+ */
+BOOL WINMM_CheckForMMSystem(void)
+{
+    /* 0 is not checked yet, -1 is not present, 1 is present */
+    static      int    loaded /* = 0 */;
+
+    if (loaded == 0)
+    {
+        HANDLE      h = GetModuleHandleA("kernel32");
+        loaded = -1;
+        if (h)
+        {
+            HANDLE  (WINAPI *gmh)(LPCSTR) = (void*)GetProcAddress(h, "GetModuleHandle16");
+            DWORD   (WINAPI *ll)(LPCSTR)  = (void*)GetProcAddress(h, "LoadLibrary16");
+            if (gmh && ll && (gmh("MMSYSTEM.DLL") || ll("MMSYSTEM.DLL")))
+                loaded = 1;
+        }
+    }
+    return loaded > 0;
+}
+
 /**************************************************************************
  *		DllEntryPoint (WINMM.init)
  *
@@ -122,15 +146,15 @@ BOOL WINAPI WINMM_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-	if (!MULTIMEDIA_CreateIData(hInstDLL))
+	if (!WINMM_CreateIData(hInstDLL))
 	    return FALSE;
         if (!MULTIMEDIA_MciInit() || !MMDRV_Init()) {
-            MULTIMEDIA_DeleteIData();
+            WINMM_DeleteIData();
             return FALSE;
 	}
 	break;
     case DLL_PROCESS_DETACH:
-	MULTIMEDIA_DeleteIData();
+	WINMM_DeleteIData();
 	break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:

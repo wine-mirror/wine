@@ -66,32 +66,27 @@ static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM
 BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 			     WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
-    HANDLE			hndl;
-
     TRACE("0x%x 0x%lx\n", hinstDLL, fdwReason);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
 	/* need to load WinMM in order to:
-	 * - initiate correctly shared variables (MULTIMEDIA_Init())
-	 * - create correctly the per process WINE_MM_IDATA chunk
+	 * - initiate correctly shared variables (WINMM_Init())
 	 */
-	hndl = LoadLibraryA("WINMM.DLL");
-
-	if (!hndl) {
-	    ERR("Could not load sibling WinMM.dll\n");
-	    return FALSE;
+        if (!GetModuleHandleA("WINMM.DLL") && !LoadLibraryA("WINMM.DLL"))
+        {
+            ERR("Could not load sibling WinMM.dll\n");
+            return FALSE;
 	}
 	WINMM_IData->hWinMM16Instance = hinstDLL;
-	WINMM_IData->h16Module32 = hndl;
         /* hook in our 16 bit function pointers */
-        pFnMmioCallback16 = MMIO_Callback16;
         pFnGetMMThread16  = WINMM_GetmmThread;
+        pFnMmioCallback16 = MMIO_Callback16;
 	break;
     case DLL_PROCESS_DETACH:
-	FreeLibrary(WINMM_IData->h16Module32);
-        pFnMmioCallback16 = NULL;
+	WINMM_IData->hWinMM16Instance = 0;
         pFnGetMMThread16  = NULL;
+        pFnMmioCallback16 = NULL;
 	break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
