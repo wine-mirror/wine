@@ -694,6 +694,52 @@ VOID _makepath(char * path, const char * drive,
     TRACE("returning %s\n",path);
 }
 
+/*********************************************************************
+ *		_wmakepath (MSVCRT.@)
+ */
+VOID _wmakepath(WCHAR *path, const WCHAR *drive, const WCHAR *directory,
+		const WCHAR *filename, const WCHAR *extension)
+{
+    WCHAR ch;
+    TRACE("%s %s %s %s\n", debugstr_w(drive), debugstr_w(directory),
+	  debugstr_w(filename), debugstr_w(extension));
+
+    if ( !path )
+        return;
+
+    path[0] = 0;
+    if (drive && drive[0])
+    {
+        path[0] = drive[0];
+        path[1] = ':';
+        path[2] = 0;
+    }
+    if (directory && directory[0])
+    {
+        strcatW(path, directory);
+        ch = path[strlenW(path) - 1];
+        if (ch != '/' && ch != '\\')
+	{
+	    static const WCHAR backslashW[] = {'\\',0};
+            strcatW(path, backslashW);
+	}
+    }
+    if (filename && filename[0])
+    {
+        strcatW(path, filename);
+        if (extension && extension[0])
+        {
+            if ( extension[0] != '.' )
+	    {
+		static const WCHAR dotW[] = {'.',0};
+                strcatW(path, dotW);
+	    }
+            strcatW(path, extension);
+        }
+    }
+
+    TRACE("returning %s\n", debugstr_w(path));
+}
 
 /*********************************************************************
  *		_searchenv (MSVCRT.@)

@@ -534,7 +534,7 @@ debug_channels (msvcrt)
 @ extern _winmajor MSVCRT__winmajor
 @ extern _winminor MSVCRT__winminor
 @ extern _winver MSVCRT__winver
-@ stub _wmakepath #(wstr wstr wstr wstr wstr)
+@ cdecl _wmakepath(wstr wstr wstr wstr wstr) _wmakepath
 @ cdecl _wmkdir(wstr) _wmkdir
 @ cdecl _wmktemp(wstr) _wmktemp
 @ varargs _wopen(wstr long) _wopen
