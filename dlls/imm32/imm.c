@@ -325,6 +325,15 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 }
 
 /***********************************************************************
+ *		ImmDisableIME (IMM32.@)
+ */
+BOOL WINAPI ImmDisableIME(DWORD idThread)
+{
+    FIXME("(%ld): stub\n", idThread);
+    return TRUE;
+}
+
+/***********************************************************************
  *		ImmEnumRegisterWordA (IMM32.@)
  */
 UINT WINAPI ImmEnumRegisterWordA(
