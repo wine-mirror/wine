@@ -913,7 +913,7 @@ static	LRESULT	PCM_StreamClose(PACMDRVSTREAMINSTANCE adsi)
  */
 static	inline DWORD	PCM_round(DWORD a, DWORD b, DWORD c)
 {
-    assert(a && b && c);
+    assert(c);
     /* to be sure, always return an entire number of c... */
     return ((double)a * (double)b + (double)c - 1) / (double)c;
 }
