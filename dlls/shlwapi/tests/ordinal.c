@@ -97,15 +97,23 @@ static void test_GetAcceptLanguagesA(void)
 
     buffersize = buffersize2 = 1;
     memset(buffer, 0, sizeof(buffer));
+    SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
     switch(retval) {
 	case 0L:
-            ok(buffersize == exactsize,
-                 "buffersize wrong: got %08lx, expected %08lx (2nd parameter;Win2k)\n", buffersize, exactsize);
+            if(buffersize == exactsize) {
             ok(ERROR_NO_IMPERSONATION_TOKEN == GetLastError(),
                  "last error wrong: got %08lx; expected ERROR_NO_IMPERSONATION_TOKEN\n", GetLastError());
             ok(exactsize == strlen(buffer),
                  "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), exactsize);
+            } else if((buffersize -1) == exactsize) {
+                ok(ERROR_SUCCESS == GetLastError(),
+                    "last error wrong: got %08lx; expected ERROR_SUCCESS\n", GetLastError());
+                ok(buffersize == strlen(buffer),
+                    "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize);
+            } else
+                ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
+                    retval, buffersize, buffer, GetLastError());
             break;
 	case E_INVALIDARG:
             ok(buffersize == 0,
@@ -127,12 +135,15 @@ static void test_GetAcceptLanguagesA(void)
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
     switch(retval) {
 	case 0L:
-            ok(buffersize == exactsize,
-                 "buffersize wrong: got %08lx, expected %08lx (2nd parameter;Win2k)\n", buffersize, exactsize);
             ok(ERROR_SUCCESS == GetLastError(),
                  "last error wrong: got %08lx; expected ERROR_SUCCESS\n", GetLastError());
-            ok(exactsize == strlen(buffer),
-                 "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), exactsize);
+            if((buffersize == exactsize) /* XP */ ||
+               ((buffersize -1)== exactsize) /* 98 */)
+                ok(buffersize == strlen(buffer),
+                    "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize);
+            else
+                ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
+                    retval, buffersize, buffer, GetLastError());
             break;
 	case E_INVALIDARG:
             ok(buffersize == 0,
