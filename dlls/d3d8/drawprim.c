@@ -679,8 +679,6 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
 
         glDisableClientState(GL_COLOR_ARRAY);
         checkGLcall("glDisableClientState(GL_COLOR_ARRAY)");
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        checkGLcall("glColor4f(1, 1, 1, 1)");
     }
 
     /* Specular Colour ------------------------------------------*/
@@ -734,58 +732,58 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
     /* Texture coords -------------------------------------------*/
     for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
 
-        if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
-            FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
-            continue ;
-        }
+        /* Select the correct texture stage */
+#if defined(GL_VERSION_1_3)
+        glClientActiveTexture(GL_TEXTURE0 + textureNo);
+#else
+        glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo);
+#endif
 
         /* Query tex coords */
         if (This->StateBlock->textures[textureNo] != NULL) {
             int coordIdx = This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX];
 
+            if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
+                FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
+                continue;
+            }
+
             if (coordIdx > 7) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
             } else if (sd->u.s.texCoords[coordIdx].lpData == NULL) {
                 VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
             } else {
-                int coordsToUse = sd->u.s.texCoords[coordIdx].dwType + 1; /* 0 == D3DVSDT_FLOAT1 etc */
-                int numFloats = coordsToUse;
-#if defined(GL_VERSION_1_3)
-                glClientActiveTexture(GL_TEXTURE0 + textureNo);
-#else
-                glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo);
-#endif
-                /* If texture transform flags in effect, values passed through to vertex
-                   depend on the D3DTSS_TEXTURETRANSFORMFLAGS */
-                if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) {
 
-                    /* This indicates how many coords to use regardless of the
-                       texture type. However, d3d/opengl fill in the rest appropriately */
-                    coordsToUse = This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & ~D3DTTFF_PROJECTED;
+                /* The coords to supply depend completely on the fvf / vertex shader */
+                GLint size;
+                GLenum type;
 
-                    /* BUT - Projected is more 'fun' - Cant be done for ptr mode.
-                       Probably should scan enabled texture units and drop back to
-                       slow mode if found? */
-                    if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
-                        FIXME("Cannot handle projected transform state in fast mode\n");
-                    }
+                switch (sd->u.s.texCoords[coordIdx].dwType) {
+    		case D3DVSDT_FLOAT1: size = 1, type = GL_FLOAT; break;
+    		case D3DVSDT_FLOAT2: size = 2, type = GL_FLOAT; break;
+    		case D3DVSDT_FLOAT3: size = 3, type = GL_FLOAT; break;
+    		case D3DVSDT_FLOAT4: size = 4, type = GL_FLOAT; break;
+    		case D3DVSDT_SHORT2: size = 2, type = GL_SHORT; break;
+    		case D3DVSDT_SHORT4: size = 4, type = GL_SHORT; break;
+    		case D3DVSDT_UBYTE4: size = 4, type = GL_UNSIGNED_BYTE; break;
+    		default: FIXME("Unrecognized data type %ld\n", sd->u.s.texCoords[coordIdx].dwType);
+                      size = 4; type = GL_UNSIGNED_BYTE;
+    		}
 
-                    /* coordsToUse maps to D3DTTFF_COUNT1,2,3,4 == 1,2,3,4 which is correct */
-                }
-                if (numFloats == 0) {
-                    FIXME("Skipping as invalid request - numfloats=%d, coordIdx=%d\n", numFloats, coordIdx);
-                    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                    checkGLcall("glDisableClientState(GL_TEXTURE_COORD_ARRAY);");
-                } else {
-                    VTRACE(("tex: %d, ptr=%p, numcoords=%d\n", textureNo, sd->u.s.texCoords[coordIdx].lpData, numFloats));
-                    glTexCoordPointer(numFloats, GL_FLOAT, sd->u.s.texCoords[coordIdx].dwStride, sd->u.s.texCoords[coordIdx].lpData);
-                    checkGLcall("glTexCoordPointer(x, ...)");
-                    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                    checkGLcall("glEnableClientState(GL_TEXTURE_COORD_ARRAY);");
-                }
-            }
-        }
-    }
+    		glTexCoordPointer(size, type, sd->u.s.texCoords[coordIdx].dwStride, sd->u.s.texCoords[coordIdx].lpData);
+    		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    	    }
+    	} else {
+    	    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    	    glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
+    	}
+    } 
 
     /* Ok, Work out which primitive is requested and how many vertexes that 
        will be                                                              */
@@ -795,23 +793,14 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
     if (idxData != NULL) {
 
         TRACE("glElements(%x, %d, %ld, ...)\n", glPrimType, NumVertexes, minIndex);
-        if (idxSize==2) {
 #if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
-            glDrawElements(glPrimType, NumVertexes, GL_UNSIGNED_SHORT,
-                           (char *)idxData+(2 * startIdx));
+        glDrawElements(glPrimType, NumVertexes, idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT,
+                      (char *)idxData+(idxSize * startIdx));
 #else
-            glDrawRangeElements(glPrimType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
-                                GL_UNSIGNED_SHORT, (char *)idxData+(2 * startIdx));
+        glDrawRangeElements(glPrimType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
+                      idxSize==2?GL_UNSIGNED_SHORT:GL_UNSIGNED_INT, 
+                      (char *)idxData+(idxSize * startIdx));
 #endif
-        } else {
-#if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
-            glDrawElements(glPrimType, NumVertexes, GL_UNSIGNED_INT,
-                           (char *)idxData+(4 * startIdx));
-#else
-            glDrawRangeElements(glPrimType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
-                                GL_UNSIGNED_INT, (char *)idxData+(2 * startIdx));
-#endif
-        }
         checkGLcall("glDrawRangeElements");
 
     } else {
@@ -968,23 +957,19 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
 
                     int coordsToUse = sd->u.s.texCoords[coordIdx].dwType + 1; /* 0 == D3DVSDT_FLOAT1 etc */
 
-                    /* If texture transform flags in effect, values passed through to vertex
-                       depend on the D3DTSS_TEXTURETRANSFORMFLAGS */
-                    if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) {
+                    /* The coords to supply depend completely on the fvf / vertex shader */
+                    switch (coordsToUse) {
+                    case 4: q = ptrToCoords[3]; /* drop through */
+                    case 3: r = ptrToCoords[2]; /* drop through */
+                    case 2: t = ptrToCoords[1]; /* drop through */
+                    case 1: s = ptrToCoords[0]; 
+                    }
 
-                        /* This indicates how many coords to use regardless of the
-                           texture type. However, d3d/opengl fill in the rest appropriately */
-                        coordsToUse = This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & ~D3DTTFF_PROJECTED;
+                    /* Projected is more 'fun' - Move the last coord to the 'q'
+                          parameter (see comments under D3DTSS_TEXTURETRANSFORMFLAGS */
+                    if ((This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) &&
+                        (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED)) {
 
-                        switch (coordsToUse) {
-                        case 4: q = ptrToCoords[3]; /* drop through */
-                        case 3: r = ptrToCoords[2]; /* drop through */
-                        case 2: t = ptrToCoords[1]; /* drop through */
-                        case 1: s = ptrToCoords[0]; 
-                        }
-
-                        /* BUT - Projected is more 'fun' - Move the last coord to the 'q'
-                           parameter (see comments under D3DTSS_TEXTURETRANSFORMFLAGS */
                         if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
                             switch (coordsToUse) {
                             case 0:  /* Drop Through */
@@ -1007,13 +992,6 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
                                 FIXME("Unexpected D3DTSS_TEXTURETRANSFORMFLAGS value of %ld\n", 
                                       This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED);
                             }
-                        }
-                    } else {
-                        switch (coordsToUse) {
-                        case 4: q = ptrToCoords[3]; /* drop through */
-                        case 3: r = ptrToCoords[2]; /* drop through */
-                        case 2: t = ptrToCoords[1]; /* drop through */
-                        case 1: s = ptrToCoords[0]; 
                         }
                     }
 
@@ -1327,8 +1305,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
         drawStridedSoftwareVS(iface, &dataLocations, PrimitiveType, NumPrimitives, 
                         idxData, idxSize, minIndex, StartIdx);            
 
-    } else if (TRUE ||
-	       (dataLocations.u.s.pSize.lpData        != NULL) || 
+    } else if ((dataLocations.u.s.pSize.lpData        != NULL) || 
                (dataLocations.u.s.diffuse.lpData      != NULL) || 
                (dataLocations.u.s.blendWeights.lpData != NULL)) {
 
