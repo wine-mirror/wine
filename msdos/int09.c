@@ -14,8 +14,10 @@
 
 DEFAULT_DEBUG_CHANNEL(int)
 
+#define QUEUELEN 31
+
 typedef struct {
-  BYTE queuelen,queue[15],ascii[15];
+  BYTE queuelen,queue[QUEUELEN],ascii[QUEUELEN];
 } KBDSYSTEM;
 
 /**********************************************************************
@@ -75,6 +77,10 @@ void WINAPI INT_Int09SendScan( BYTE scan, BYTE ascii )
   if (!sys) {
     sys = calloc(1,sizeof(KBDSYSTEM));
     DOSVM_SetSystemData(0x09,sys);
+  }
+  if (sys->queuelen == QUEUELEN) {
+    ERR("keyboard queue overflow\n");
+    return;
   }
   /* add scancode to queue */
   sys->queue[sys->queuelen] = scan;

@@ -398,7 +398,7 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
   int objc;
   BOOL got_msg = FALSE;
 
-  objs[0]=GetStdHandle(STD_INPUT_HANDLE);
+  objs[0]=lpDosTask->hConInput;
   objs[1]=hObject;
   objc=hObject?2:1;
   do {
@@ -684,7 +684,7 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*
     /* callback event, perform it with dummy context */
     CONTEXT86 context;
     memset(&context,0,sizeof(context));
-    (*relay)(lpDosTask,&context,data);
+    (*relay)(NULL,&context,data);
   } else {
     ERR_(int)("IRQ without DOS task: should not happen");
   }
