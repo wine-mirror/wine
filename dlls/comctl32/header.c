@@ -10,7 +10,8 @@
  *   - Hottrack support (partially).
  *   - Custom draw support (including Notifications).
  *   - Drag and Drop support (including Notifications).
- *   - Unicode support.
+ *   - New messages.
+ *   - Use notification format
  *
  *  FIXME:
  *   - Little flaw when drawing a bitmap on the right side of the text.
@@ -46,6 +47,7 @@ typedef struct
 typedef struct
 {
     HWND      hwndNotify;     /* Owner window to send notifications to */
+    INT       nNotifyFormat;	/* format used for WM_NOTIFY messages */
     UINT      uNumItem;	/* number of items (columns) */
     INT       nHeight;	/* height of the header (pixels) */
     HFONT     hFont;		/* handle to the current font */
@@ -653,7 +655,8 @@ HEADER_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask & HDI_TEXT) {
 	if (lpItem->pszText != LPSTR_TEXTCALLBACKW) {
 	    if (lpItem->pszText)
-		lstrcpynWtoA (phdi->pszText, lpItem->pszText, phdi->cchTextMax);
+		WideCharToMultiByte (CP_ACP, 0, lpItem->pszText, -1,
+				     phdi->pszText, phdi->cchTextMax, NULL, NULL);
 	    else
 	        *phdi->pszText = 0;
 	}	
@@ -862,9 +865,9 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (!phdi->pszText) /* null pointer check */
 	    phdi->pszText = "";
 	if (phdi->pszText != LPSTR_TEXTCALLBACKA) {
-	    len = strlen (phdi->pszText);
-	    lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-	    lstrcpyAtoW (lpItem->pszText, phdi->pszText);
+	    len = MultiByteToWideChar(CP_ACP, 0, phdi->pszText, -1, NULL, 0);
+	    lpItem->pszText = COMCTL32_Alloc( len*sizeof(WCHAR) );
+	    MultiByteToWideChar(CP_ACP, 0, phdi->pszText, -1, lpItem->pszText, len);
 	}
 	else
 	    lpItem->pszText = LPSTR_TEXTCALLBACKW;
@@ -1072,11 +1075,9 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		lpItem->pszText = NULL;
 	    }
 	    if (phdi->pszText) {
-		INT len = strlen (phdi->pszText);
-		lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-//		lstrcpyAtoW (lpItem->pszText, phdi->pszText);
-		MultiByteToWideChar (CP_ACP,0,phdi->pszText,-1,
-				     lpItem->pszText,0x7fffffff);
+		INT len = MultiByteToWideChar (CP_ACP,0,phdi->pszText,-1,NULL,0);
+		lpItem->pszText = COMCTL32_Alloc( len*sizeof(WCHAR) );
+		MultiByteToWideChar (CP_ACP,0,phdi->pszText,-1,lpItem->pszText,len);
 	    }
 	}
 	else
@@ -1210,6 +1211,8 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->himl = 0;
     infoPtr->iHotItem = -1;
     infoPtr->bUnicode = IsWindowUnicode (hwnd);
+    infoPtr->nNotifyFormat =
+	SendMessageA (infoPtr->hwndNotify, WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
 
     hdc = GetDC (0);
     hOldFont = SelectObject (hdc, GetStockObject (SYSTEM_FONT));
@@ -1420,6 +1423,27 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
+HEADER_NotifyFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+
+    switch (lParam)
+    {
+	case NF_QUERY:
+	    return infoPtr->nNotifyFormat;
+
+	case NF_REQUERY:
+	    infoPtr->nNotifyFormat =
+		SendMessageA ((HWND)wParam, WM_NOTIFYFORMAT,
+			      (WPARAM)hwnd, (LPARAM)NF_QUERY);
+	    return infoPtr->nNotifyFormat;
+    }
+
+    return 0;
+}
+
+
+static LRESULT
 HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
@@ -1589,11 +1613,17 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     if (!HEADER_GetInfoPtr (hwnd) && (msg != WM_CREATE))
 	return DefWindowProcA (hwnd, msg, wParam, lParam);
     switch (msg) {
+/*	case HDM_CLEARFILTER: */
+
 	case HDM_CREATEDRAGIMAGE:
 	    return HEADER_CreateDragImage (hwnd, wParam);
 
 	case HDM_DELETEITEM:
 	    return HEADER_DeleteItem (hwnd, wParam);
+
+/*	case HDM_EDITFILTER: */
+
+/*	case HDM_GETBITMAPMARGIN: */
 
 	case HDM_GETIMAGELIST:
 	    return HEADER_GetImageList (hwnd);
@@ -1613,12 +1643,6 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case HDM_GETORDERARRAY: 
 	    return HEADER_GetOrderArray(hwnd, wParam, lParam);
 
-	case HDM_SETORDERARRAY: 
-	    return HEADER_SetOrderArray(hwnd, wParam, lParam);
-
-	case HDM_ORDERTOINDEX: 
-	    return HEADER_OrderToIndex(hwnd, wParam);
-
 	case HDM_GETUNICODEFORMAT:
 	    return HEADER_GetUnicodeFormat (hwnd);
 
@@ -1634,6 +1658,15 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case HDM_LAYOUT:
 	    return HEADER_Layout (hwnd, wParam, lParam);
 
+	case HDM_ORDERTOINDEX:
+	    return HEADER_OrderToIndex(hwnd, wParam);
+
+/*	case HDM_SETBITMAPMARGIN: */
+
+/*	case HDM_SETFILTERCHANGETIMEOUT: */
+
+/*	case HDM_SETHOTDIVIDER: */
+
 	case HDM_SETIMAGELIST:
 	    return HEADER_SetImageList (hwnd, wParam, lParam);
 
@@ -1642,6 +1675,9 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case HDM_SETITEMW:
 	    return HEADER_SetItemW (hwnd, wParam, lParam);
+
+	case HDM_SETORDERARRAY:
+	    return HEADER_SetOrderArray(hwnd, wParam, lParam);
 
 	case HDM_SETUNICODEFORMAT:
 	    return HEADER_SetUnicodeFormat (hwnd, wParam);
@@ -1673,7 +1709,8 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_MOUSEMOVE:
             return HEADER_MouseMove (hwnd, wParam, lParam);
 
-/*	case WM_NOTIFYFORMAT: */
+	case WM_NOTIFYFORMAT:
+            return HEADER_NotifyFormat (hwnd, wParam, lParam);
 
 	case WM_SIZE:
 	    return HEADER_Size (hwnd, wParam);
