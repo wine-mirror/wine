@@ -990,10 +990,10 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
         TRACE("(%p)->Lock(%p,%p,%08lx,%08lx)\n",This,prect,pDDSD,flags,(DWORD)h);
 	TRACE(" - locking flags : "); DDRAW_dump_lockflag(flags);
     }
-
-    if (flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY))
-	WARN("(%p)->Lock(%p,%p,%08lx,%08lx)\n",
-		 This,prect,pDDSD,flags,(DWORD)h);
+    if (WARN_ON(ddraw)) {
+	if (flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY))
+	    WARN(" - unsupported locking flag : "); DDRAW_dump_lockflag(flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY));
+    }
 
     /* First, copy the Surface description */
     DD_STRUCT_COPY_BYSIZE(pDDSD,&(This->surface_desc));
