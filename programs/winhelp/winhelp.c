@@ -115,6 +115,7 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
             strcpy(mwi.caption, hlpfile->lpszTitle);
         mwi.origin.x = mwi.origin.y = mwi.size.cx = mwi.size.cy = CW_USEDEFAULT;
         mwi.style = SW_SHOW;
+        mwi.win_style = WS_OVERLAPPEDWINDOW;
         mwi.sr_color = mwi.sr_color = 0xFFFFFF;
     }
     return &mwi;
