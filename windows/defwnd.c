@@ -21,9 +21,6 @@
 
 DEFAULT_DEBUG_CHANNEL(win)
 
-  /* Last COLOR id */
-#define COLOR_MAX   COLOR_GRADIENTINACTIVECAPTION
-
   /* bits in the dwKeyData */
 #define KEYDATA_ALT 		0x2000
 #define KEYDATA_PREVSTATE	0x4000
@@ -301,28 +298,21 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
 	{
-	    RECT16 rect;
+	    RECT rect;
 
 	    if (!wndPtr->class->hbrBackground) return 0;
 
 	    /*  Since WM_ERASEBKGND may receive either a window dc or a    */ 
 	    /*  client dc, the area to be erased has to be retrieved from  */
 	    /*  the device context.      				   */
-	    GetClipBox16( (HDC16)wParam, &rect );
+	    GetClipBox( (HDC)wParam, &rect );
 
-	    if (wndPtr->class->hbrBackground <= (HBRUSH16)(COLOR_MAX+1))
-            {
-                HBRUSH hbrush = CreateSolidBrush( 
-                       GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
-		PaintRect16( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
-				(HDC16)wParam, hbrush, &rect);
-                 DeleteObject( hbrush );
-	    }
-	    else
-	    {
-		PaintRect16( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
-			(HDC16)wParam, wndPtr->class->hbrBackground, &rect );
-            }
+            /* Always call the Win32 variant of FillRect even on Win16,
+             * since despite the fact that Win16, as well as Win32,
+             * supports special background brushes for a window class,
+             * the Win16 variant of FillRect does not.
+             */
+            FillRect( (HDC) wParam, &rect, wndPtr->class->hbrBackground);
 	    return 1;
 	}
 

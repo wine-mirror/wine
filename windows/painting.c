@@ -24,6 +24,9 @@ DECLARE_DEBUG_CHANNEL(nonclient)
 					(r).right = (wnd)->rectClient.right - (wnd)->rectWindow.left; \
 					(r).bottom = (wnd)->rectClient.bottom - (wnd)->rectWindow.top
 
+  /* Last COLOR id */
+#define COLOR_MAX   COLOR_GRADIENTINACTIVECAPTION
+
   /* Last CTLCOLOR id */
 #define CTLCOLOR_MAX   CTLCOLOR_STATIC
 
@@ -568,7 +571,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 			    {
 				DeleteObject( wndPtr->hrgnUpdate );
 				wndPtr->hrgnUpdate = 0;
-			        goto OUT;
+			        goto end;
 			    }
 			}
 			break;
@@ -686,7 +689,7 @@ EMPTY:
 		 RDW_UpdateRgns( wnd, hRgn, flags, FALSE );
     }
 
-OUT:
+end:
 
     /* Set/clear internal paint flag */
 
@@ -1228,6 +1231,10 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 
 /***********************************************************************
  *           FillRect16    (USER.81)
+ * NOTE
+ *   The Win16 variant doesn't support special color brushes like
+ *   the Win32 one, despite the fact that Win16, as well as Win32,
+ *   supports special background brushes for a window class.
  */
 INT16 WINAPI FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 {
@@ -1251,6 +1258,10 @@ INT16 WINAPI FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 INT WINAPI FillRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
 {
     HBRUSH prevBrush;
+
+    if (hbrush <= (HBRUSH) (COLOR_MAX + 1)) {
+	hbrush = GetSysColorBrush( (INT) hbrush - 1 );
+    }
 
     if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
     PatBlt( hdc, rect->left, rect->top,
