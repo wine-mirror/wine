@@ -229,7 +229,7 @@ static void write_name_str(FILE *fp, name_id_t *nid)
 		if(res.size == 0)
 			internal_error(__FILE__, __LINE__, "Attempt to write empty string");
 		res.dataidx = 0;
-		res.data = (char *)xmalloc(res.size + 1);
+		res.data = (char *)xmalloc(1 + res.size + 1);
 		res.data[0] = (char)res.size;
 		res.size++;	/* We need to write the length byte as well */
 		strcpy(res.data+1, nid->name.s_name->str.cstr);
@@ -264,11 +264,11 @@ static void write_name_str(FILE *fp, name_id_t *nid)
 	{
 		res.size = strlenW(nid->name.s_name->str.wstr);
 		if(res.size > 65534)
-			error("Can't write strings larger than 65534 bytes");
+			error("Can't write strings larger than 65534 characters");
 		if(res.size == 0)
 			internal_error(__FILE__, __LINE__, "Attempt to write empty string");
 		res.dataidx = 0;
-		res.data = (char *)xmalloc((res.size + 1) * 2);
+		res.data = (char *)xmalloc(2 + (res.size + 1) * 2);
 		((short *)res.data)[0] = (short)res.size;
 		strcpyW((WCHAR *)(res.data+2), nid->name.s_name->str.wstr);
 		res.size *= 2; /* Function writes bytes, not shorts... */
