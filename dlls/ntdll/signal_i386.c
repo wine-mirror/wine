@@ -115,13 +115,17 @@ static inline int wine_sigaltstack( const struct sigaltstack *new,
 }
 #endif
 
-int vm86_enter( struct vm86plus_struct *ptr );
-void vm86_return();
+#define VM86_EAX 0 /* the %eax value while vm86_enter is executing */
+
+int vm86_enter( void **vm86_ptr );
+void vm86_return(void);
+void vm86_return_end(void);
 __ASM_GLOBAL_FUNC(vm86_enter,
                   "pushl %ebp\n\t"
                   "movl %esp, %ebp\n\t"
                   "movl $166,%eax\n\t"  /*SYS_vm86*/
-                  "movl 8(%ebp),%ecx\n\t"
+                  "movl 8(%ebp),%ecx\n\t" /* vm86_ptr */
+                  "movl (%ecx),%ecx\n\t"
                   "pushl %ebx\n\t"
                   "movl $1,%ebx\n\t"    /*VM86_ENTER*/
                   "pushl %ecx\n\t"      /* put vm86plus_struct ptr somewhere we can find it */
@@ -134,6 +138,16 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   "popl %ecx\n\t"
                   "popl %ebx\n\t"
                   "popl %ebp\n\t"
+                  "testl %eax,%eax\n\t"
+                  "jl 0f\n\t"
+                  "cmpb $0,%al\n\t" /* VM86_SIGNAL */
+                  "je " __ASM_NAME("vm86_enter") "\n\t"
+                  "0:\n\t"
+                  "movl 4(%esp),%ecx\n\t"  /* vm86_ptr */
+                  "movl $0,(%ecx)\n\t"
+                  ".globl " __ASM_NAME("vm86_return_end") "\n\t"
+                  ".type " __ASM_NAME("vm86_return_end") ",@function\n"
+                  __ASM_NAME("vm86_return_end") ":\n\t"
                   "ret" );
 
 #define __HAVE_VM86
@@ -474,14 +488,18 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 #ifdef __HAVE_VM86
     else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
     {
-        /* retrieve pointer to vm86plus struct that was stored in vm86_enter */
-        struct vm86plus_struct *vm86 = *(struct vm86plus_struct **)(ESP_sig(sigcontext) + sizeof(int));
         /* fetch the saved %fs on the stack */
         fs = *(unsigned int *)ESP_sig(sigcontext);
-        __set_fs(fs);
-        /* get context from vm86 struct */
-        save_vm86_context( context, vm86 );
-        return;
+        if (EAX_sig(sigcontext) == VM86_EAX) {
+            struct vm86plus_struct *vm86;
+            __set_fs(fs);
+            /* retrieve pointer to vm86plus struct that was stored in vm86_enter
+             * (but we could also get if from teb->vm86_ptr) */
+            vm86 = *(struct vm86plus_struct **)(ESP_sig(sigcontext) + sizeof(int));
+            /* get context from vm86 struct */
+            save_vm86_context( context, vm86 );
+            return;
+        }
     }
 #endif  /* __HAVE_VM86 */
 
@@ -519,9 +537,11 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 #ifdef __HAVE_VM86
     /* check if exception occurred in vm86 mode */
     if ((void *)EIP_sig(sigcontext) == vm86_return &&
-        IS_SELECTOR_SYSTEM(CS_sig(sigcontext)))
+        IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) &&
+        EAX_sig(sigcontext) == VM86_EAX)
     {
-        /* retrieve pointer to vm86plus struct that was stored in vm86_enter */
+        /* retrieve pointer to vm86plus struct that was stored in vm86_enter
+         * (but we could also get it from teb->vm86_ptr) */
         struct vm86plus_struct *vm86 = *(struct vm86plus_struct **)(ESP_sig(sigcontext) + sizeof(int));
         restore_vm86_context( context, vm86 );
         return;
@@ -807,8 +827,10 @@ static void set_vm86_pend( CONTEXT *context )
         if (context->EFlags & VIF_MASK) {
             /* VIF is set, throw exception */
             teb->vm86_pending = 0;
+            teb->vm86_ptr = NULL;
             rec.ExceptionAddress = (LPVOID)context->Eip;
             EXC_RtlRaiseException( &rec, context );
+            teb->vm86_ptr = vm86;
         }
     }
     else if (vm86)
@@ -816,18 +838,22 @@ static void set_vm86_pend( CONTEXT *context )
         /* not in VM86, but possibly setting up for it */
         if (vm86->regs.eflags & VIP_MASK) return;
         vm86->regs.eflags |= VIP_MASK;
+        if (((char*)context->Eip >= (char*)vm86_return) &&
+            ((char*)context->Eip <= (char*)vm86_return_end) &&
+            (VM86_TYPE(context->Eax) != VM86_SIGNAL)) {
+            /* exiting from VM86, can't throw */
+            return;
+        }
         if (vm86->regs.eflags & VIF_MASK) {
             /* VIF is set, throw exception */
             CONTEXT vcontext;
             teb->vm86_pending = 0;
+            teb->vm86_ptr = NULL;
             save_vm86_context( &vcontext, vm86 );
             rec.ExceptionAddress = (LPVOID)vcontext.Eip;
             EXC_RtlRaiseException( &rec, &vcontext );
+            teb->vm86_ptr = vm86;
             restore_vm86_context( &vcontext, vm86 );
-            if (teb->vm86_ctx) {
-                /* must also save here */
-                *(CONTEXT*)(teb->vm86_ctx) = vcontext;
-            }
         }
     }
 }
@@ -1065,7 +1091,7 @@ void __wine_enter_vm86( CONTEXT *context )
 
         do
         {
-            res = vm86_enter( &vm86 );
+            res = vm86_enter( &teb->vm86_ptr ); /* uses and clears teb->vm86_ptr */
             if (res < 0)
             {
                 errno = -res;
@@ -1073,10 +1099,7 @@ void __wine_enter_vm86( CONTEXT *context )
             }
         } while (VM86_TYPE(res) == VM86_SIGNAL);
 
-        teb->vm86_ctx = context;
         save_vm86_context( context, &vm86 );
-        teb->vm86_ptr = NULL;
-        teb->vm86_ctx = NULL;
         context->EFlags |= teb->vm86_pending;
 
         switch(VM86_TYPE(res))
