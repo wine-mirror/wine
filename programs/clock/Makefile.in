@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = clock
 APPMODE   = gui
-IMPORTS   = comdlg32 shell32 user32 gdi32 kernel32 ntdll
+IMPORTS   = comdlg32 shell32 user32 gdi32 kernel32
 
 LICENSELANG = En
 

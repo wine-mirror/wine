@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rasapi32.dll
-IMPORTS   = kernel32 ntdll
+IMPORTS   = kernel32
 ALTNAMES  = rasapi16.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@

@@ -38,52 +38,52 @@ all: $(PROGRAMS) $(PROGRAMS:%=%.so)
 @MAKE_RULES@
 
 expand.spec.c: expand.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym expand.o -o expand.spec.c -exe expand -mgui -L$(DLLDIR) -llz32 -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym expand.o -o expand.spec.c -exe expand -mgui -L$(DLLDIR) -llz32 -lkernel32
 expand.so: expand.o expand.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o expand.so $+ $(ALL_LIBS)
 
 hello.spec.c: hello.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello.o -o hello.spec.c -exe hello -mgui -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello.o -o hello.spec.c -exe hello -mgui -L$(DLLDIR) -luser32 -lgdi32 -lkernel32
 hello.so: hello.o hello.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o hello.so $+ $(ALL_LIBS)
 
 hello2.spec.c: hello2.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello2.o -o hello2.spec.c -exe hello2 -mgui -L$(DLLDIR) -luser32 -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello2.o -o hello2.spec.c -exe hello2 -mgui -L$(DLLDIR) -luser32 -lkernel32
 hello2.so: hello2.o hello2.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o hello2.so $+ $(ALL_LIBS)
 
 hello3.spec.c: hello3.o hello3res.res $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello3.o -res hello3res.res -o hello3.spec.c -exe hello3 -mgui -L$(DLLDIR) -lcomdlg32 -luser32 -lgdi32 -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello3.o -res hello3res.res -o hello3.spec.c -exe hello3 -mgui -L$(DLLDIR) -lcomdlg32 -luser32 -lgdi32 -lkernel32
 hello3.so: hello3.o hello3.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o hello3.so $+ $(ALL_LIBS)
 
 hello4.spec.c: hello4.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello4.o -o hello4.spec.c -exe hello4 -mgui -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello4.o -o hello4.spec.c -exe hello4 -mgui -L$(DLLDIR) -luser32 -lgdi32 -lkernel32
 hello4.so: hello4.o hello4.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o hello4.so $+ $(ALL_LIBS)
 
 hello5.spec.c: hello5.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello5.o -o hello5.spec.c -exe hello5 -mgui -L$(DLLDIR) -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym hello5.o -o hello5.spec.c -exe hello5 -mgui -L$(DLLDIR) -lkernel32
 hello5.so: hello5.o hello5.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o hello5.so $+ $(ALL_LIBS)
 
 new.spec.c: new.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym new.o -o new.spec.c -exe new -mgui -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym new.o -o new.spec.c -exe new -mgui -L$(DLLDIR) -luser32 -lgdi32 -lkernel32
 new.so: new.o new.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o new.so $+ $(ALL_LIBS)
 
 rolex.spec.c: rolex.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym rolex.o -o rolex.spec.c -exe rolex -mgui -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym rolex.o -o rolex.spec.c -exe rolex -mgui -L$(DLLDIR) -luser32 -lgdi32 -lkernel32
 rolex.so: rolex.o rolex.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o rolex.so $+ $(ALL_LIBS)
 
 volinfo.spec.c: volinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym volinfo.o -o volinfo.spec.c -exe volinfo -mgui -L$(DLLDIR) -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym volinfo.o -o volinfo.spec.c -exe volinfo -mgui -L$(DLLDIR) -lkernel32
 volinfo.so: volinfo.o volinfo.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o volinfo.so $+ $(ALL_LIBS)
 
 $(PROGRAMS):
-	$(LN_S) $(TOPOBJDIR)/wine $@
+	$(RM) $@ && $(LN_S) $(TOPOBJDIR)/wine $@
 
 $(PROGRAMS:%=%.so/_checklink_): $(PROGRAMS:%=%.so)
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c `dirname $@` && $(RM) checklink

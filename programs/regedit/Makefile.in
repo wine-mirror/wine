@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = regedit
 APPMODE   = gui
-IMPORTS   = msvcrt advapi32 kernel32 ntdll
+IMPORTS   = msvcrt advapi32 kernel32
 
 C_SRCS = \
 	regedit.c \

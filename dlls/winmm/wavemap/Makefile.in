@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm.drv
-IMPORTS   = msacm32 winmm user32 kernel32 ntdll
+IMPORTS   = msacm32 winmm user32 kernel32
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

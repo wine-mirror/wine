@@ -519,132 +519,127 @@ x11drv.dll$(DLLEXT): x11drv/x11drv.dll$(DLLEXT)
 advapi32/advapi32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd advapi32 && $(MAKE) advapi32.dll$(DLLEXT)
 
-avicap32/avicap32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+avicap32/avicap32.dll$(DLLEXT): dummy
 	@cd avicap32 && $(MAKE) avicap32.dll$(DLLEXT)
 
-avifil32/avifil32.dll$(DLLEXT): dummy msvfw32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+avifil32/avifil32.dll$(DLLEXT): dummy msvfw32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd avifil32 && $(MAKE) avifil32.dll$(DLLEXT)
 
 comcat/comcat.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd comcat && $(MAKE) comcat.dll$(DLLEXT)
 
 comctl32/comctl32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) winmm.dll$(DLLEXT)
+  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) winmm.dll$(DLLEXT)
 	@cd comctl32 && $(MAKE) comctl32.dll$(DLLEXT)
 
 commdlg/comdlg32.dll$(DLLEXT): dummy shell32.dll$(DLLEXT) shlwapi.dll$(DLLEXT) \
   comctl32.dll$(DLLEXT) winspool.drv$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd commdlg && $(MAKE) comdlg32.dll$(DLLEXT)
 
-crtdll/crtdll.dll$(DLLEXT): dummy msvcrt.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+crtdll/crtdll.dll$(DLLEXT): dummy msvcrt.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd crtdll && $(MAKE) crtdll.dll$(DLLEXT)
 
-crypt32/crypt32.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+crypt32/crypt32.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd crypt32 && $(MAKE) crypt32.dll$(DLLEXT)
 
-dciman32/dciman32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+dciman32/dciman32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd dciman32 && $(MAKE) dciman32.dll$(DLLEXT)
 
 ddraw/ddraw.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) libuser32.dll.$(LIBEXT) libgdi32.dll.$(LIBEXT) \
-  libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
+  kernel32.dll$(DLLEXT) libuser32.dll.$(LIBEXT) libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT) \
+  libntdll.dll.$(LIBEXT)
 	@cd ddraw && $(MAKE) ddraw.dll$(DLLEXT)
 
-devenum/devenum.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+devenum/devenum.dll$(DLLEXT): dummy
 	@cd devenum && $(MAKE) devenum.dll$(DLLEXT)
 
-dinput/dinput.dll$(DLLEXT): dummy user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+dinput/dinput.dll$(DLLEXT): dummy user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd dinput && $(MAKE) dinput.dll$(DLLEXT)
 
 dplay/dplay.dll$(DLLEXT): dummy dplayx.dll$(DLLEXT)
 	@cd dplay && $(MAKE) dplay.dll$(DLLEXT)
 
 dplayx/dplayx.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) ole32.dll$(DLLEXT) \
-  user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd dplayx && $(MAKE) dplayx.dll$(DLLEXT)
 
 dsound/dsound.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd dsound && $(MAKE) dsound.dll$(DLLEXT)
 
 gdi/gdi32.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT) libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
+  libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
 	@cd gdi && $(MAKE) gdi32.dll$(DLLEXT)
 
 glu32/glu32.dll$(DLLEXT): dummy
 	@cd glu32 && $(MAKE) glu32.dll$(DLLEXT)
 
-icmp/icmp.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+icmp/icmp.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd icmp && $(MAKE) icmp.dll$(DLLEXT)
 
-imagehlp/imagehlp.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+imagehlp/imagehlp.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd imagehlp && $(MAKE) imagehlp.dll$(DLLEXT)
 
-imm32/imm32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+imm32/imm32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd imm32 && $(MAKE) imm32.dll$(DLLEXT)
 
 kernel/kernel32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT) libntdll.dll.$(LIBEXT)
 	@cd kernel && $(MAKE) kernel32.dll$(DLLEXT)
 
-lzexpand/lz32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+lzexpand/lz32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd lzexpand && $(MAKE) lz32.dll$(DLLEXT)
 
-mapi32/mapi32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+mapi32/mapi32.dll$(DLLEXT): dummy
 	@cd mapi32 && $(MAKE) mapi32.dll$(DLLEXT)
 
-mpr/mpr.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+mpr/mpr.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd mpr && $(MAKE) mpr.dll$(DLLEXT)
 
 msacm/imaadp32/imaadp32.acm$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd msacm/imaadp32 && $(MAKE) imaadp32.acm$(DLLEXT)
 
 msacm/msacm32.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd msacm && $(MAKE) msacm32.dll$(DLLEXT)
 
-msacm/msg711/msg711.drv$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+msacm/msg711/msg711.drv$(DLLEXT): dummy
 	@cd msacm/msg711 && $(MAKE) msg711.drv$(DLLEXT)
 
-msdmo/msdmo.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+msdmo/msdmo.dll$(DLLEXT): dummy
 	@cd msdmo && $(MAKE) msdmo.dll$(DLLEXT)
 
-msimg32/msimg32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+msimg32/msimg32.dll$(DLLEXT): dummy
 	@cd msimg32 && $(MAKE) msimg32.dll$(DLLEXT)
 
-msisys/msisys.ocx$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+msisys/msisys.ocx$(DLLEXT): dummy
 	@cd msisys && $(MAKE) msisys.ocx$(DLLEXT)
 
-msnet32/msnet32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+msnet32/msnet32.dll$(DLLEXT): dummy
 	@cd msnet32 && $(MAKE) msnet32.dll$(DLLEXT)
 
-msrle32/msrle32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+msrle32/msrle32.dll$(DLLEXT): dummy
 	@cd msrle32 && $(MAKE) msrle32.dll$(DLLEXT)
 
 msvcrt/msvcrt.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd msvcrt && $(MAKE) msvcrt.dll$(DLLEXT)
 
-msvcrt20/msvcrt20.dll$(DLLEXT): dummy msvcrt.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+msvcrt20/msvcrt20.dll$(DLLEXT): dummy msvcrt.dll$(DLLEXT)
 	@cd msvcrt20 && $(MAKE) msvcrt20.dll$(DLLEXT)
 
 msvideo/msvfw32.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) comctl32.dll$(DLLEXT) \
-  version.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+  version.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd msvideo && $(MAKE) msvfw32.dll$(DLLEXT)
 
-netapi32/netapi32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+netapi32/netapi32.dll$(DLLEXT): dummy
 	@cd netapi32 && $(MAKE) netapi32.dll$(DLLEXT)
 
 ntdll/ntdll.dll$(DLLEXT): dummy
 	@cd ntdll && $(MAKE) ntdll.dll$(DLLEXT)
 
-odbc32/odbc32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+odbc32/odbc32.dll$(DLLEXT): dummy
 	@cd odbc32 && $(MAKE) odbc32.dll$(DLLEXT)
 
 ole32/ole32.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) user32.dll$(DLLEXT) \
@@ -652,190 +647,181 @@ ole32/ole32.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) user32.dll$(DLLEXT) \
 	@cd ole32 && $(MAKE) ole32.dll$(DLLEXT)
 
 oleaut32/oleaut32.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) \
-  comctl32.dll$(DLLEXT)
+  gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) comctl32.dll$(DLLEXT)
 	@cd oleaut32 && $(MAKE) oleaut32.dll$(DLLEXT)
 
 olecli/olecli32.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd olecli && $(MAKE) olecli32.dll$(DLLEXT)
 
-oledlg/oledlg.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+oledlg/oledlg.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd oledlg && $(MAKE) oledlg.dll$(DLLEXT)
 
-olepro32/olepro32.dll$(DLLEXT): dummy oleaut32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+olepro32/olepro32.dll$(DLLEXT): dummy oleaut32.dll$(DLLEXT)
 	@cd olepro32 && $(MAKE) olepro32.dll$(DLLEXT)
 
-olesvr/olesvr32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+olesvr/olesvr32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd olesvr && $(MAKE) olesvr32.dll$(DLLEXT)
 
 opengl32/opengl32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd opengl32 && $(MAKE) opengl32.dll$(DLLEXT)
 
 psapi/psapi.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd psapi && $(MAKE) psapi.dll$(DLLEXT)
 
-qcap/qcap.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+qcap/qcap.dll$(DLLEXT): dummy
 	@cd qcap && $(MAKE) qcap.dll$(DLLEXT)
 
-quartz/quartz.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+quartz/quartz.dll$(DLLEXT): dummy
 	@cd quartz && $(MAKE) quartz.dll$(DLLEXT)
 
-rasapi32/rasapi32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+rasapi32/rasapi32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd rasapi32 && $(MAKE) rasapi32.dll$(DLLEXT)
 
-richedit/riched32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+richedit/riched32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd richedit && $(MAKE) riched32.dll$(DLLEXT)
 
-rpcrt4/rpcrt4.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+rpcrt4/rpcrt4.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd rpcrt4 && $(MAKE) rpcrt4.dll$(DLLEXT)
 
 serialui/serialui.dll$(DLLEXT): dummy user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd serialui && $(MAKE) serialui.dll$(DLLEXT)
 
 setupapi/setupapi.dll$(DLLEXT): dummy user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
   kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd setupapi && $(MAKE) setupapi.dll$(DLLEXT)
 
-shdocvw/shdocvw.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+shdocvw/shdocvw.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd shdocvw && $(MAKE) shdocvw.dll$(DLLEXT)
 
 shell32/shell32.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) shlwapi.dll$(DLLEXT) \
   comctl32.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd shell32 && $(MAKE) shell32.dll$(DLLEXT)
 
 shfolder/shfolder.dll$(DLLEXT): dummy shell32.dll$(DLLEXT)
 	@cd shfolder && $(MAKE) shfolder.dll$(DLLEXT)
 
 shlwapi/shlwapi.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd shlwapi && $(MAKE) shlwapi.dll$(DLLEXT)
 
-snmpapi/snmpapi.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+snmpapi/snmpapi.dll$(DLLEXT): dummy
 	@cd snmpapi && $(MAKE) snmpapi.dll$(DLLEXT)
 
-sti/sti.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+sti/sti.dll$(DLLEXT): dummy
 	@cd sti && $(MAKE) sti.dll$(DLLEXT)
 
-tapi32/tapi32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+tapi32/tapi32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd tapi32 && $(MAKE) tapi32.dll$(DLLEXT)
 
 ttydrv/ttydrv.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) libuser32.dll.$(LIBEXT) libgdi32.dll.$(LIBEXT) \
-  libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
+  kernel32.dll$(DLLEXT) libuser32.dll.$(LIBEXT) libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT) \
+  libntdll.dll.$(LIBEXT)
 	@cd ttydrv && $(MAKE) ttydrv.dll$(DLLEXT)
 
 twain/twain_32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd twain && $(MAKE) twain_32.dll$(DLLEXT)
 
-url/url.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+url/url.dll$(DLLEXT): dummy
 	@cd url && $(MAKE) url.dll$(DLLEXT)
 
-urlmon/urlmon.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+urlmon/urlmon.dll$(DLLEXT): dummy ole32.dll$(DLLEXT)
 	@cd urlmon && $(MAKE) urlmon.dll$(DLLEXT)
 
 user/user32.dll$(DLLEXT): dummy gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT) \
-  libntdll.dll.$(LIBEXT)
+  kernel32.dll$(DLLEXT) libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
 	@cd user && $(MAKE) user32.dll$(DLLEXT)
 
-version/version.dll$(DLLEXT): dummy lz32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+version/version.dll$(DLLEXT): dummy lz32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd version && $(MAKE) version.dll$(DLLEXT)
 
-win32s/w32skrnl.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+win32s/w32skrnl.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd win32s && $(MAKE) w32skrnl.dll$(DLLEXT)
 
-winaspi/wnaspi32.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+winaspi/wnaspi32.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd winaspi && $(MAKE) wnaspi32.dll$(DLLEXT)
 
 winedos/winedos.dll$(DLLEXT): dummy user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT) libuser32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
+  libuser32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
 	@cd winedos && $(MAKE) winedos.dll$(DLLEXT)
 
 wineps/wineps.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  winspool.drv$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  winspool.drv$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd wineps && $(MAKE) wineps.dll$(DLLEXT)
 
 wininet/wininet.dll$(DLLEXT): dummy shlwapi.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd wininet && $(MAKE) wininet.dll$(DLLEXT)
 
-winmm/joystick/joystick.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+winmm/joystick/joystick.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT)
 	@cd winmm/joystick && $(MAKE) joystick.drv$(DLLEXT)
 
 winmm/mcianim/mcianim.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd winmm/mcianim && $(MAKE) mcianim.drv$(DLLEXT)
 
 winmm/mciavi/mciavi.drv$(DLLEXT): dummy msvfw32.dll$(DLLEXT) winmm.dll$(DLLEXT) \
-  user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd winmm/mciavi && $(MAKE) mciavi.drv$(DLLEXT)
 
 winmm/mcicda/mcicda.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT) user32.dll$(DLLEXT)
+  user32.dll$(DLLEXT)
 	@cd winmm/mcicda && $(MAKE) mcicda.drv$(DLLEXT)
 
 winmm/mciseq/mciseq.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT) user32.dll$(DLLEXT)
+  user32.dll$(DLLEXT)
 	@cd winmm/mciseq && $(MAKE) mciseq.drv$(DLLEXT)
 
 winmm/mciwave/mciwave.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT) user32.dll$(DLLEXT)
+  user32.dll$(DLLEXT)
 	@cd winmm/mciwave && $(MAKE) mciwave.drv$(DLLEXT)
 
 winmm/midimap/midimap.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd winmm/midimap && $(MAKE) midimap.drv$(DLLEXT)
 
 winmm/wavemap/msacm.drv$(DLLEXT): dummy msacm32.dll$(DLLEXT) winmm.dll$(DLLEXT) \
-  user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd winmm/wavemap && $(MAKE) msacm.drv$(DLLEXT)
 
 winmm/winearts/winearts.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd winmm/winearts && $(MAKE) winearts.drv$(DLLEXT)
 
 winmm/wineoss/wineoss.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd winmm/wineoss && $(MAKE) wineoss.drv$(DLLEXT)
 
 winmm/winmm.dll$(DLLEXT): dummy user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+  kernel32.dll$(DLLEXT)
 	@cd winmm && $(MAKE) winmm.dll$(DLLEXT)
 
-winnls/winnls32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+winnls/winnls32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd winnls && $(MAKE) winnls32.dll$(DLLEXT)
 
 winsock/ws2_32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
   ntdll.dll$(DLLEXT)
 	@cd winsock && $(MAKE) ws2_32.dll$(DLLEXT)
 
-winspool/winspool.drv$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+winspool/winspool.drv$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd winspool && $(MAKE) winspool.drv$(DLLEXT)
 
-wintrust/wintrust.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+wintrust/wintrust.dll$(DLLEXT): dummy
 	@cd wintrust && $(MAKE) wintrust.dll$(DLLEXT)
 
 wow32/wow32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd wow32 && $(MAKE) wow32.dll$(DLLEXT)
 
-wsock32/wsock32.dll$(DLLEXT): dummy ws2_32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+wsock32/wsock32.dll$(DLLEXT): dummy ws2_32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd wsock32 && $(MAKE) wsock32.dll$(DLLEXT)
 
 x11drv/x11drv.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) libuser32.dll.$(LIBEXT) \
-  libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT)
+  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) libuser32.dll.$(LIBEXT) libgdi32.dll.$(LIBEXT) \
+  libkernel32.dll.$(LIBEXT)
 	@cd x11drv && $(MAKE) x11drv.dll$(DLLEXT)
 
 # Special targets for dlls that we need to link to

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olesvr32.dll
-IMPORTS   = kernel32 ntdll
+IMPORTS   = kernel32
 ALTNAMES  = olesvr.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@

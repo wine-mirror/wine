@@ -8,7 +8,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winetest
 APPMODE   = cui
-IMPORTS   = kernel32 ntdll
+IMPORTS   = kernel32
 
 C_SRCS = winetest.c
 

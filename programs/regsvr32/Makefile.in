@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = regsvr32
 APPMODE   = cui
-IMPORTS   = msvcrt kernel32 ntdll
+IMPORTS   = msvcrt kernel32
 
 C_SRCS = \
 	regsvr32.c

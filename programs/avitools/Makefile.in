@@ -13,13 +13,13 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 aviinfo.spec.c: aviinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym aviinfo.o -o aviinfo.spec.c -exe aviinfo -mgui -L$(DLLDIR) -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym aviinfo.o -o aviinfo.spec.c -exe aviinfo -mgui -L$(DLLDIR) -lkernel32
 
 aviplay.spec.c: aviplay.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym aviplay.o -o aviplay.spec.c -exe aviplay -mgui -L$(DLLDIR) -lddraw -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym aviplay.o -o aviplay.spec.c -exe aviplay -mgui -L$(DLLDIR) -lddraw -lkernel32
 
 icinfo.spec.c: icinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -sym icinfo.o -o icinfo.spec.c -exe icinfo -mgui -L$(DLLDIR) -lmsvfw32 -lkernel32 -lntdll
+	$(LDPATH) $(WINEBUILD) $(DEFS) -sym icinfo.o -o icinfo.spec.c -exe icinfo -mgui -L$(DLLDIR) -lmsvfw32 -lkernel32
 
 aviinfo.so: aviinfo.o aviinfo.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o aviinfo.so aviinfo.o aviinfo.spec.o $(ALL_LIBS)

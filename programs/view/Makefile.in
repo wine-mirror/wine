@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = view
 APPMODE   = gui
-IMPORTS   = comdlg32 user32 gdi32 kernel32 ntdll
+IMPORTS   = comdlg32 user32 gdi32 kernel32
 
 C_SRCS = \
 	init.c \

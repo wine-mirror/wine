@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mciseq.drv
-IMPORTS   = winmm kernel32 ntdll
+IMPORTS   = winmm kernel32
 DELAYIMPORTS = user32
 
 LDDLLFLAGS = @LDDLLFLAGS@

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = progman
 APPMODE   = gui
-IMPORTS   = shell32 comdlg32 user32 gdi32 kernel32 ntdll
+IMPORTS   = shell32 comdlg32 user32 gdi32 kernel32
 
 LICENSELANG = En
 

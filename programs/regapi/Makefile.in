@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = regapi
 APPMODE   = gui
-IMPORTS   = advapi32 kernel32 ntdll
+IMPORTS   = advapi32 kernel32
 
 C_SRCS = \
 	regapi.c

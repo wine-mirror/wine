@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw.dll
-IMPORTS   = user32 gdi32 kernel32 ntdll
+IMPORTS   = user32 gdi32 kernel32
 EXTRALIBS = $(LIBUUID) $(LIBTSX11) $(X_LIBS) $(XLIB)
 LDIMPORTS = user32.dll gdi32.dll kernel32.dll ntdll.dll
 
