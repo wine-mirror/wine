@@ -135,26 +135,11 @@ static void	DEBUG_UnmapDebugInfoFile(HANDLE hFile, HANDLE hMap, void* addr)
  * Process COFF debug information.
  */
 
-struct CoffDebug 
-{
-    unsigned int   N_Sym;
-    unsigned int   SymbolOffset;
-    unsigned int   N_Linenum;
-    unsigned int   LinenumberOffset;
-    unsigned int   Unused[4];
-};
-
-struct CoffLinenum 
-{
-    unsigned int   VirtualAddr;
-    unsigned short Linenum;
-};
-
-struct CoffFiles 
+struct CoffFile
 {
     unsigned int       startaddr;
     unsigned int       endaddr;
-    char              *filename;
+    const char        *filename;
     int                linetab_offset;
     int                linecnt;
     struct name_hash **entries;
@@ -162,109 +147,125 @@ struct CoffFiles
     int		       neps_alloc;
 };
 
-struct CoffSymbol 
+struct CoffFileSet
 {
-    union 
-    {
-        char    ShortName[8];
-        struct 
-        {
-            unsigned int   NotLong;
-            unsigned int   StrTaboff;
-        } Name;
-    } N;
-    unsigned int   Value;
-    short	   SectionNumber;
-    short	   Type;
-    char	   StorageClass;
-    unsigned char  NumberOfAuxSymbols;
+  struct CoffFile     *files;
+  int		       nfiles;
+  int		       nfiles_alloc;
 };
 
-struct CoffAuxSection
+static const char*	DEBUG_GetCoffName( PIMAGE_SYMBOL coff_sym, const char* coff_strtab )
 {
-    unsigned int   Length;
-    unsigned short NumberOfRelocations;
-    unsigned short NumberOfLinenumbers;
-    unsigned int   CheckSum;
-    short          Number;
-    char           Selection;
-};
+   static	char	namebuff[9];
+   const char*		nampnt;
+
+   if( coff_sym->N.Name.Short )
+      {
+	 memcpy(namebuff, coff_sym->N.ShortName, 8);
+	 namebuff[8] = '\0';
+	 nampnt = &namebuff[0];
+      }
+   else
+      {
+	 nampnt = coff_strtab + coff_sym->N.Name.Long;
+      }
+   
+   if( nampnt[0] == '_' )
+      nampnt++;
+   return nampnt;
+}
+
+static int DEBUG_AddCoffFile( struct CoffFileSet* coff_files, const char* filename )
+{
+   struct CoffFile* file;
+
+   if( coff_files->nfiles + 1 >= coff_files->nfiles_alloc )
+     {
+	coff_files->nfiles_alloc += 10;
+	coff_files->files = (struct CoffFile *) DBG_realloc(coff_files->files,
+							    coff_files->nfiles_alloc * sizeof(struct CoffFile));
+     }	
+   file = coff_files->files + coff_files->nfiles;
+   file->startaddr = 0xffffffff;
+   file->endaddr   = 0;
+   file->filename = filename;
+   file->linetab_offset = -1;
+   file->linecnt = 0;
+   file->entries = NULL;
+   file->neps = file->neps_alloc = 0;
+  
+   return coff_files->nfiles++;
+}
+
+static void DEBUG_AddCoffSymbol( struct CoffFile* coff_file, struct name_hash* sym )
+{
+   if( coff_file->neps + 1 >= coff_file->neps_alloc )
+      {
+	 coff_file->neps_alloc += 10;
+	 coff_file->entries = (struct name_hash **) 
+	    DBG_realloc(coff_file->entries, 
+			coff_file->neps_alloc * sizeof(struct name_hash *));
+      }
+   coff_file->entries[coff_file->neps++] = sym;
+}
 
 static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 {
-  struct CoffAuxSection * aux;
-  struct CoffDebug   * coff;
-  struct CoffFiles   * coff_files = NULL;
-  struct CoffLinenum * coff_linetab;
-  char		     * coff_strtab;
-  struct CoffSymbol  * coff_sym;
-  struct CoffSymbol  * coff_symbol;
-  struct CoffFiles   * curr_file = NULL;
-  int		       i;
-  int		       j;
-  int		       k;
-  struct CoffLinenum * linepnt;
-  int		       linetab_indx;
-  char		       namebuff[9];
-  char		     * nampnt;
-  int		       naux;
-  DBG_VALUE	       new_value;
-  int		       nfiles = 0;
-  int		       nfiles_alloc = 0;
-  struct CoffFiles     orig_file;
-  int		       rtn = FALSE;
-  char		     * this_file = NULL;
-
+  PIMAGE_AUX_SYMBOL		aux;
+  PIMAGE_COFF_SYMBOLS_HEADER	coff;
+  PIMAGE_LINENUMBER		coff_linetab;
+  PIMAGE_LINENUMBER		linepnt;
+  char		     	      * coff_strtab;
+  PIMAGE_SYMBOL			coff_sym;
+  PIMAGE_SYMBOL			coff_symbols;
+  struct CoffFileSet	        coff_files;
+  int				curr_file_idx = -1;
+  int		       		i;
+  int		       		j;
+  int		       		k;
+  int		       		linetab_indx;
+  const char	     	      * nampnt;
+  int		       		naux;
+  DBG_VALUE	       		new_value;
+  int		       		rtn = FALSE;
 
   DEBUG_Printf(DBG_CHN_TRACE, "Processing COFF symbols...\n");
 
-  coff = (struct CoffDebug *) root;
+  assert(sizeof(IMAGE_SYMBOL) == IMAGE_SIZEOF_SYMBOL);
+  assert(sizeof(IMAGE_LINENUMBER) == IMAGE_SIZEOF_LINENUMBER);
 
-  coff_symbol = (struct CoffSymbol *) ((unsigned int) coff + coff->SymbolOffset);
-  coff_linetab = (struct CoffLinenum *) ((unsigned int) coff + coff->LinenumberOffset);
-  coff_strtab = (char *) ((unsigned int) coff_symbol + 18*coff->N_Sym);
+  coff_files.files = NULL;
+  coff_files.nfiles = coff_files.nfiles_alloc = 0;
+  
+  coff = (PIMAGE_COFF_SYMBOLS_HEADER) root;
+
+  coff_symbols = (PIMAGE_SYMBOL) ((unsigned int) coff + coff->LvaToFirstSymbol);
+  coff_linetab = (PIMAGE_LINENUMBER) ((unsigned int) coff + coff->LvaToFirstLinenumber);
+  coff_strtab = (char *) (coff_symbols + coff->NumberOfSymbols);
 
   linetab_indx = 0;
 
   new_value.cookie = DV_TARGET;
   new_value.type = NULL;
 
-  for(i=0; i < coff->N_Sym; i++ )
+  for(i=0; i < coff->NumberOfSymbols; i++ )
     {
-      /*
-       * We do this because some compilers (i.e. gcc) incorrectly
-       * pad the structure up to a 4 byte boundary.  The structure
-       * is really only 18 bytes long, so we have to manually make sure
-       * we get it right.
-       *
-       * FIXME - there must be a way to have autoconf figure out the
-       * correct compiler option for this.  If it is always gcc, that
-       * makes life simpler, but I don't want to force this.
-       */
-      coff_sym = (struct CoffSymbol *) ((unsigned int) coff_symbol + 18*i);
+      coff_sym = coff_symbols + i;
       naux = coff_sym->NumberOfAuxSymbols;
 
       if( coff_sym->StorageClass == IMAGE_SYM_CLASS_FILE )
 	{
-	  if( nfiles + 1 >= nfiles_alloc )
-	    {
-	      nfiles_alloc += 10;
-	      coff_files = (struct CoffFiles *) DBG_realloc(coff_files,
-			nfiles_alloc * sizeof(struct CoffFiles));
-	    }
-	  curr_file = coff_files + nfiles;
-	  nfiles++;
-	  curr_file->startaddr = 0xffffffff;
-	  curr_file->endaddr   = 0;
-	  curr_file->filename =  ((char *) coff_sym) + 18;
-	  curr_file->linetab_offset = -1;
-	  curr_file->linecnt = 0;
-	  curr_file->entries = NULL;
-	  curr_file->neps = curr_file->neps_alloc = 0;
-	  DEBUG_Printf(DBG_CHN_TRACE,"New file %s\n", curr_file->filename);
+	  curr_file_idx = DEBUG_AddCoffFile( &coff_files, (char *) (coff_sym + 1) );
+	  DEBUG_Printf(DBG_CHN_TRACE,"New file %s\n", coff_files.files[curr_file_idx].filename);
 	  i += naux;
 	  continue;
 	}
+
+      if (curr_file_idx < 0) {
+	  assert(coff_files.nfiles == 0 && coff_files.nfiles_alloc == 0);
+	  curr_file_idx = DEBUG_AddCoffFile( &coff_files, "<none>" );
+	  DEBUG_Printf(DBG_CHN_TRACE,"New file %s\n", coff_files.files[curr_file_idx].filename);
+      }
 
       /*
        * This guy marks the size and location of the text section
@@ -277,20 +278,26 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  && (coff_sym->Type == 0)
 	  && (coff_sym->SectionNumber == 1) )
 	{
-	  aux = (struct CoffAuxSection *) ((unsigned int) coff_sym + 18);
+	  aux = (PIMAGE_AUX_SYMBOL) (coff_sym + 1);
 
-	  if( curr_file->linetab_offset != -1 )
+	  if( coff_files.files[curr_file_idx].linetab_offset != -1 )
 	    {
-#if 0
-	      DEBUG_Printf(DBG_CHN_TRACE, "Duplicating sect from %s: %x %x %x %d %d\n",
-			   curr_file->filename,
-			   aux->Length,
-			   aux->NumberOfRelocations,
-			   aux->NumberOfLinenumbers,
-			   aux->Number,
-			   aux->Selection);
-	      DEBUG_Printf(DBG_CHN_TRACE, "More sect %d %x %d %d %d\n", 
+	      /*
+	       * Save this so we can still get the old name.
+	       */
+	      const char* fn = coff_files.files[curr_file_idx].filename;
+
+#ifdef MORE_DBG
+	      DEBUG_Printf(DBG_CHN_TRACE, "Duplicating sect from %s: %lx %x %x %d %d\n",
+			   coff_files.files[curr_file_idx].filename,
+			   aux->Section.Length,
+			   aux->Section.NumberOfRelocations,
+			   aux->Section.NumberOfLinenumbers,
+			   aux->Section.Number,
+			   aux->Section.Selection);
+	      DEBUG_Printf(DBG_CHN_TRACE, "More sect %d %s %08lx %d %d %d\n", 
 			   coff_sym->SectionNumber,
+			   DEBUG_GetCoffName( coff_sym, coff_strtab ),
 			   coff_sym->Value,
 			   coff_sym->Type,
 			   coff_sym->StorageClass,
@@ -298,61 +305,37 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 #endif
 
 	      /*
-	       * Save this so we can copy bits from it.
-	       */
-	      orig_file = *curr_file;
-
-	      /*
 	       * Duplicate the file entry.  We have no way to describe
 	       * multiple text sections in our current way of handling things.
 	       */
-	      if( nfiles + 1 >= nfiles_alloc )
-		{
-		  nfiles_alloc += 10;
-		  coff_files = (struct CoffFiles *) DBG_realloc(coff_files,
-								nfiles_alloc * sizeof(struct CoffFiles));
-		}
-	      curr_file = coff_files + nfiles;
-	      nfiles++;
-	      curr_file->startaddr = 0xffffffff;
-	      curr_file->endaddr   = 0;
-	      curr_file->filename = orig_file.filename;
-	      curr_file->linetab_offset = -1;
-	      curr_file->linecnt = 0;
-	      curr_file->entries = NULL;
-	      curr_file->neps = curr_file->neps_alloc = 0;
+	      DEBUG_AddCoffFile( &coff_files, fn );
 	    }
-#if 0
+#ifdef MORE_DBG
 	  else
 	    {
-	      DEBUG_Printf(DBG_CHN_TRACE, "New text sect from %s: %x %x %x %d %d\n",
-			   curr_file->filename,
-			   aux->Length,
-			   aux->NumberOfRelocations,
-			   aux->NumberOfLinenumbers,
-			   aux->Number,
-			   aux->Selection);
+	      DEBUG_Printf(DBG_CHN_TRACE, "New text sect from %s: %lx %x %x %d %d\n",
+			   coff_files.files[curr_file_idx].filename,
+			   aux->Section.Length,
+			   aux->Section.NumberOfRelocations,
+			   aux->Section.NumberOfLinenumbers,
+			   aux->Section.Number,
+			   aux->Section.Selection);
 	    }
 #endif
 
-	  if( curr_file->startaddr > coff_sym->Value )
+	  if( coff_files.files[curr_file_idx].startaddr > coff_sym->Value )
 	    {
-	      curr_file->startaddr = coff_sym->Value;
+	      coff_files.files[curr_file_idx].startaddr = coff_sym->Value;
 	    }
 	  
-	  if( curr_file->startaddr > coff_sym->Value )
+	  if( coff_files.files[curr_file_idx].endaddr < coff_sym->Value + aux->Section.Length )
 	    {
-	      curr_file->startaddr = coff_sym->Value;
+	      coff_files.files[curr_file_idx].endaddr = coff_sym->Value + aux->Section.Length;
 	    }
 	  
-	  if( curr_file->endaddr < coff_sym->Value + aux->Length )
-	    {
-	      curr_file->endaddr = coff_sym->Value + aux->Length;
-	    }
-	  
-	  curr_file->linetab_offset = linetab_indx;
-	  curr_file->linecnt = aux->NumberOfLinenumbers;
-	  linetab_indx += aux->NumberOfLinenumbers;
+	  coff_files.files[curr_file_idx].linetab_offset = linetab_indx;
+	  coff_files.files[curr_file_idx].linecnt = aux->Section.NumberOfLinenumbers;
+	  linetab_indx += aux->Section.NumberOfLinenumbers;
 	  i += naux;
 	  continue;
 	}
@@ -361,42 +344,26 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  && (naux == 0)
 	  && (coff_sym->SectionNumber == 1) )
 	{
+	  DWORD	base = MSC_INFO(module)->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
 	  /*
 	   * This is a normal static function when naux == 0.
 	   * Just register it.  The current file is the correct
 	   * one in this instance.
 	   */
-	  if( coff_sym->N.Name.NotLong )
-	    {
-	      memcpy(namebuff, coff_sym->N.ShortName, 8);
-	      namebuff[8] = '\0';
-	      nampnt = &namebuff[0];
-	    }
-	  else
-	    {
-	      nampnt = coff_strtab + coff_sym->N.Name.StrTaboff;
-	    }
-
-	  if( nampnt[0] == '_' )
-	    {
-	      nampnt++;
-	    }
+	  nampnt = DEBUG_GetCoffName( coff_sym, coff_strtab );
 
 	  new_value.addr.seg = 0;
-	  new_value.addr.off = (int) ((char *)module->load_addr + coff_sym->Value);
+	  new_value.addr.off = (int) ((char *)module->load_addr + base + coff_sym->Value);
 
-	  if( curr_file->neps + 1 >= curr_file->neps_alloc )
-	    {
-	      curr_file->neps_alloc += 10;
-	      curr_file->entries = (struct name_hash **) 
-		DBG_realloc(curr_file->entries, 
-			 curr_file->neps_alloc * sizeof(struct name_hash *));
-	    }
-#if 0
+#ifdef MORE_DBG
 	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding static symbol %s\n", nampnt);
 #endif
-	  curr_file->entries[curr_file->neps++] =
-	     DEBUG_AddSymbol( nampnt, &new_value, this_file, SYM_WIN32 );
+
+	  /* FIXME: was adding symbol to this_file ??? */
+	  DEBUG_AddCoffSymbol( &coff_files.files[curr_file_idx], 
+			       DEBUG_AddSymbol( nampnt, &new_value, 
+						coff_files.files[curr_file_idx].filename, 
+						SYM_WIN32 | SYM_FUNC ) );
 	  i += naux;
 	  continue;
 	}
@@ -405,54 +372,38 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  && ISFCN(coff_sym->Type)
           && (coff_sym->SectionNumber > 0) )
 	{
-	  if( coff_sym->N.Name.NotLong )
-	    {
-	      memcpy(namebuff, coff_sym->N.ShortName, 8);
-	      namebuff[8] = '\0';
-	      nampnt = &namebuff[0];
-	    }
-	  else
-	    {
-	      nampnt = coff_strtab + coff_sym->N.Name.StrTaboff;
-	    }
-
-
-	  if( nampnt[0] == '_' )
-	    {
-	      nampnt++;
-	    }
+	  const char* this_file = NULL;
+	  DWORD	base = MSC_INFO(module)->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
+	  nampnt = DEBUG_GetCoffName( coff_sym, coff_strtab );
 
 	  new_value.addr.seg = 0;
-	  new_value.addr.off = (int) ((char *)module->load_addr + coff_sym->Value);
+	  new_value.addr.off = (int) ((char *)module->load_addr + base + coff_sym->Value);
 
-#if 0
-	  DEBUG_Printf(DBG_CHN_TRACE, "%d: %x %s\n", i, new_value.addr.off, nampnt);
+#ifdef MORE_DBG
+	  DEBUG_Printf(DBG_CHN_TRACE, "%d: %lx %s\n", i, new_value.addr.off, nampnt);
 
-	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding global symbol %s\n", nampnt);
+	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding global symbol %s (sect=%s)\n", 
+		       nampnt, MSC_INFO(module)->sectp[coff_sym->SectionNumber - 1].Name);
 #endif
 
 	  /*
 	   * Now we need to figure out which file this guy belongs to.
 	   */
-	  this_file = NULL;
-	  for(j=0; j < nfiles; j++)
+	  for(j=0; j < coff_files.nfiles; j++)
 	    {
-	      if( coff_files[j].startaddr <= coff_sym->Value
-		  && coff_files[j].endaddr > coff_sym->Value )
+	      if( coff_files.files[j].startaddr <= base + coff_sym->Value
+		  && coff_files.files[j].endaddr > base + coff_sym->Value )
 		{
-		  this_file = coff_files[j].filename;
+		  this_file = coff_files.files[j].filename;
 		  break;
 		}
 	    }
-	  if( coff_files[j].neps + 1 >= coff_files[j].neps_alloc )
-	    {
-	      coff_files[j].neps_alloc += 10;
-	      coff_files[j].entries = (struct name_hash **) 
-		DBG_realloc(coff_files[j].entries, 
-			 coff_files[j].neps_alloc * sizeof(struct name_hash *));
-	    }
-	  coff_files[j].entries[coff_files[j].neps++] =
-	    DEBUG_AddSymbol( nampnt, &new_value, this_file, SYM_WIN32 );
+	  if (j < coff_files.nfiles) {
+	     DEBUG_AddCoffSymbol( &coff_files.files[j], 
+				  DEBUG_AddSymbol( nampnt, &new_value, this_file, SYM_WIN32 | SYM_FUNC ) );
+	  } else {
+	     DEBUG_AddSymbol( nampnt, &new_value, NULL, SYM_WIN32 | SYM_FUNC );
+	  }
 	  i += naux;
 	  continue;
 	}
@@ -460,32 +411,18 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
       if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_EXTERNAL)
           && (coff_sym->SectionNumber > 0) )
 	{
+	  DWORD	base = MSC_INFO(module)->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
 	  /*
 	   * Similar to above, but for the case of data symbols.
 	   * These aren't treated as entrypoints.
 	   */
-	  if( coff_sym->N.Name.NotLong )
-	    {
-	      memcpy(namebuff, coff_sym->N.ShortName, 8);
-	      namebuff[8] = '\0';
-	      nampnt = &namebuff[0];
-	    }
-	  else
-	    {
-	      nampnt = coff_strtab + coff_sym->N.Name.StrTaboff;
-	    }
-
-
-	  if( nampnt[0] == '_' )
-	    {
-	      nampnt++;
-	    }
+	  nampnt = DEBUG_GetCoffName( coff_sym, coff_strtab );
 
 	  new_value.addr.seg = 0;
-	  new_value.addr.off = (int) ((char *)module->load_addr + coff_sym->Value);
+	  new_value.addr.off = (int) ((char *)module->load_addr + base + coff_sym->Value);
 
-#if 0
-	  DEBUG_Printf(DBG_CHN_TRACE, "%d: %x %s\n", i, new_value.addr.off, nampnt);
+#ifdef MORE_DBG
+	  DEBUG_Printf(DBG_CHN_TRACE, "%d: %lx %s\n", i, new_value.addr.off, nampnt);
 
 	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding global data symbol %s\n", nampnt);
 #endif
@@ -493,7 +430,7 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  /*
 	   * Now we need to figure out which file this guy belongs to.
 	   */
-	  DEBUG_AddSymbol( nampnt, &new_value, NULL, SYM_WIN32 );
+	  DEBUG_AddSymbol( nampnt, &new_value, NULL, SYM_WIN32 | SYM_DATA );
 	  i += naux;
 	  continue;
 	}
@@ -509,9 +446,10 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  continue;
 	}
 
-#if 0
-      DEBUG_Printf(DBG_CHN_TRACE,"Skipping unknown entry %d %d %d\n", coff_sym->StorageClass, 
-		   coff_sym->SectionNumber, naux);
+#ifdef MORE_DBG
+      DEBUG_Printf(DBG_CHN_TRACE,"Skipping unknown entry '%s' %d %d %d\n", 
+		   DEBUG_GetCoffName( coff_sym, coff_strtab ),
+		   coff_sym->StorageClass, coff_sym->SectionNumber, naux);
 #endif
 
       /*
@@ -527,13 +465,13 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
    * able to tie the line numbers with the given functions within the
    * file.
    */
-  if( coff_files != NULL )
+  if( coff_files.files != NULL )
     {
-      for(j=0; j < nfiles; j++)
+      for(j=0; j < coff_files.nfiles; j++)
 	{
-	  if( coff_files[j].entries != NULL )
+	  if( coff_files.files[j].entries != NULL )
 	    {
-	      qsort(coff_files[j].entries, coff_files[j].neps,
+	      qsort(coff_files.files[j].entries, coff_files.files[j].neps,
 		    sizeof(struct name_hash *), DEBUG_cmp_sym);
 	    }
 	}
@@ -542,30 +480,23 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
        * Now pick apart the line number tables, and attach the entries
        * to the given functions.
        */
-      for(j=0; j < nfiles; j++)
+      for(j=0; j < coff_files.nfiles; j++)
 	{
 	  i = 0;
-	  if( coff_files[j].neps != 0 )
-	    for(k=0; k < coff_files[j].linecnt; k++)
+	  if( coff_files.files[j].neps != 0 )
+	    for(k=0; k < coff_files.files[j].linecnt; k++)
 	    {
-	      /*
-	       * Another monstrosity caused by the fact that we are using
-	       * a 6 byte structure, and gcc wants to pad structures to 4 byte
-	       * boundaries.  Otherwise we could just index into an array.
-	       */
-	      linepnt = (struct CoffLinenum *) 
-		((unsigned int) coff_linetab + 
-		 6*(coff_files[j].linetab_offset + k));
+	      linepnt = coff_linetab + coff_files.files[j].linetab_offset + k;
 	      /*
 	       * If we have spilled onto the next entrypoint, then
 	       * bump the counter..
 	       */
 	      while(TRUE)
 		{
-		  if (i+1 >= coff_files[j].neps) break;
-		  DEBUG_GetSymbolAddr(coff_files[j].entries[i+1], &new_value.addr);
+		  if (i+1 >= coff_files.files[j].neps) break;
+		  DEBUG_GetSymbolAddr(coff_files.files[j].entries[i+1], &new_value.addr);
 		  if( (((unsigned int)module->load_addr +
-		        linepnt->VirtualAddr) >= new_value.addr.off) )
+		        linepnt->Type.VirtualAddress) >= new_value.addr.off) )
 		  {
 		      i++;
 		  } else break;
@@ -576,11 +507,11 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	       * start of the function, so we need to subtract that offset
 	       * first.
 	       */
-	      DEBUG_GetSymbolAddr(coff_files[j].entries[i], &new_value.addr);
-	      DEBUG_AddLineNumber(coff_files[j].entries[i], 
-				  linepnt->Linenum,
+	      DEBUG_GetSymbolAddr(coff_files.files[j].entries[i], &new_value.addr);
+	      DEBUG_AddLineNumber(coff_files.files[j].entries[i], 
+				  linepnt->Linenumber,
 				  (unsigned int) module->load_addr 
-				  + linepnt->VirtualAddr 
+				  + linepnt->Type.VirtualAddress 
 				  - new_value.addr.off);
 	    }
 	}
@@ -588,16 +519,16 @@ static BOOL DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 
   rtn = TRUE;
 
-  if( coff_files != NULL )
+  if( coff_files.files != NULL )
     {
-      for(j=0; j < nfiles; j++)
+      for(j=0; j < coff_files.nfiles; j++)
 	{
-	  if( coff_files[j].entries != NULL )
+	  if( coff_files.files[j].entries != NULL )
 	    {
-	      DBG_free(coff_files[j].entries);
+	      DBG_free(coff_files.files[j].entries);
 	    }
 	}
-      DBG_free(coff_files);
+      DBG_free(coff_files.files);
     }
 
   return (rtn);
@@ -2906,7 +2837,6 @@ static BOOL DEBUG_ProcessDebugDirectory( DBG_MODULE *module, LPBYTE file_map,
     BOOL retv = FALSE;
     int i;
 
-
     /* First, watch out for OMAP data */
     for ( i = 0; i < nDbg; i++ )
         if ( dbg[i].Type == IMAGE_DEBUG_TYPE_OMAP_FROM_SRC )
@@ -3014,7 +2944,6 @@ int DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
                                   extra_info.sectp,
                                   extra_info.nsect * sizeof(IMAGE_SECTION_HEADER) ) )
         goto leave;
-
 
     /* Read in debug directory */
 
