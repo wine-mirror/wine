@@ -565,16 +565,19 @@ const char * __stdcall MSVCRT_type_info_name(type_info * _this)
   if (!_this->name)
   {
     /* Create and set the demangled name */
-    char* name = __unDName(0, _this->mangled, 0,
-                           (malloc_func_t)MSVCRT_malloc,
-                           (free_func_t)MSVCRT_free, 0x2800);
+    /* Nota: mangled name in type_info struct always start with a '.', while
+     * it isn't valid for mangled name.
+     * Is this '.' really part of the mangled name, or has it some other meaning ?
+     */
+    char* name = __unDName(0, _this->mangled + 1, 0,
+                           MSVCRT_malloc, MSVCRT_free, 0x2800);
 
     if (name)
     {
       unsigned int len = strlen(name);
 
       /* It seems _unDName may leave blanks at the end of the demangled name */
-      if (name[len] == ' ')
+      while (len && name[--len] == ' ')
         name[len] = '\0';
 
       _mlock(_EXIT_LOCK2);

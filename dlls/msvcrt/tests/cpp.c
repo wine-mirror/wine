@@ -748,11 +748,7 @@ static void test_type_info(void)
   name = call_func1(ptype_info_name, &t1);
   ok(name && t1.name && !strcmp(name, t1.name), "bad name '%s' for t1\n", name);
 
-  todo_wine
-  {
-    /* Demangling doesn't work yet, since __unDName() is a stub */
-    ok(t1.name && !strcmp(t1.name, "class test1"), "demangled to '%s' for t1\n", t1.name);
-  }
+  ok(t1.name && !strcmp(t1.name, "class test1"), "demangled to '%s' for t1\n", t1.name);
   call_func1(ptype_info_dtor, &t1);
 
   /* before */
