@@ -225,19 +225,8 @@ then
             AC_MSG_WARN([[XVideo extension not found, Wine will be built without it]]),
             [#include <X11/Xlib.h>])
 
-        dnl *** Check for XRender extension
-        AC_CHECK_HEADERS(X11/extensions/Xrender.h,
-            [ dnl *** If X11/extensions/Xrender.h exists...
-                AC_CHECK_LIB(Xrender, XRenderQueryExtension,
-                  [ AC_DEFINE(HAVE_LIBXRENDER, 1, [Define if you have the XRender extension library])
-                     X_PRE_LIBS="$X_PRE_LIBS -lXrender"
-                  ],,
-                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-                )
-            ],
-            AC_MSG_WARN([[XRender extension not found, Wine will be built without it]]),
-            [#include <X11/Xlib.h>])
-
+        dnl *** Check for XRender include file
+        AC_CHECK_HEADERS(X11/extensions/Xrender.h,,,[#include <X11/Xlib.h>])
       ]
     ) dnl *** End of X11/Xlib.h check
 

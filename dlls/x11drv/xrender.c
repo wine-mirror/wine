@@ -18,24 +18,26 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "config.h"
+#include "wine/port.h"
+
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "winnt.h"
 #include "x11drv.h"
 #include "bitmap.h"
-#include "wine/debug.h"
 #include "region.h"
-#include <string.h>
-#include <stdlib.h>
 #include "wine/unicode.h"
-#include <assert.h>
+#include "wine/debug.h"
 
 BOOL X11DRV_XRender_Installed = FALSE;
 WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 
-#ifdef HAVE_LIBXRENDER
+#ifdef HAVE_X11_EXTENSIONS_XRENDER_H
 
 #include "ts_xlib.h"
-#include "ts_xrender.h"
+#include <X11/extensions/Xrender.h>
 
 static XRenderPictFormat *screen_format; /* format of screen */
 static XRenderPictFormat *mono_format; /* format of mono bitmap */
@@ -80,6 +82,24 @@ static INT mru = -1;
 
 static int antialias = 1;
 
+static void *xrender_handle;
+
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f;
+MAKE_FUNCPTR(XRenderAddGlyphs)
+MAKE_FUNCPTR(XRenderCompositeString8)
+MAKE_FUNCPTR(XRenderCompositeString16)
+MAKE_FUNCPTR(XRenderCompositeString32)
+MAKE_FUNCPTR(XRenderCreateGlyphSet)
+MAKE_FUNCPTR(XRenderCreatePicture)
+MAKE_FUNCPTR(XRenderFillRectangle)
+MAKE_FUNCPTR(XRenderFindFormat)
+MAKE_FUNCPTR(XRenderFindVisualFormat)
+MAKE_FUNCPTR(XRenderFreeGlyphSet)
+MAKE_FUNCPTR(XRenderFreePicture)
+MAKE_FUNCPTR(XRenderSetPictureClipRectangles)
+MAKE_FUNCPTR(XRenderQueryExtension)
+#undef MAKE_FUNCPTR
+
 /***********************************************************************
  *   X11DRV_XRender_Init
  *
@@ -91,15 +111,38 @@ void X11DRV_XRender_Init(void)
     int error_base, event_base, i;
     XRenderPictFormat pf;
 
-    if(TSXRenderQueryExtension(gdi_display, &event_base, &error_base)) {
+    /* FIXME: should find correct soname at compile time */
+    if (!wine_dlopen("libX11.so", RTLD_NOW|RTLD_GLOBAL, NULL, 0)) return;
+    if (!wine_dlopen("libXext.so", RTLD_NOW|RTLD_GLOBAL, NULL, 0)) return;
+    xrender_handle = wine_dlopen("libXrender.so", RTLD_NOW, NULL, 0);
+    if(!xrender_handle) return;
+
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xrender_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
+LOAD_FUNCPTR(XRenderAddGlyphs)
+LOAD_FUNCPTR(XRenderCompositeString8)
+LOAD_FUNCPTR(XRenderCompositeString16)
+LOAD_FUNCPTR(XRenderCompositeString32)
+LOAD_FUNCPTR(XRenderCreateGlyphSet)
+LOAD_FUNCPTR(XRenderCreatePicture)
+LOAD_FUNCPTR(XRenderFillRectangle)
+LOAD_FUNCPTR(XRenderFindFormat)
+LOAD_FUNCPTR(XRenderFindVisualFormat)
+LOAD_FUNCPTR(XRenderFreeGlyphSet)
+LOAD_FUNCPTR(XRenderFreePicture)
+LOAD_FUNCPTR(XRenderSetPictureClipRectangles)
+LOAD_FUNCPTR(XRenderQueryExtension)
+#undef LOAD_FUNCPTR
+
+    wine_tsx11_lock();
+    if(pXRenderQueryExtension(gdi_display, &event_base, &error_base)) {
         X11DRV_XRender_Installed = TRUE;
 	TRACE("Xrender is up and running error_base = %d\n", error_base);
-	screen_format = TSXRenderFindVisualFormat(gdi_display, visual);
+	screen_format = pXRenderFindVisualFormat(gdi_display, visual);
 	pf.type = PictTypeDirect;
 	pf.depth = 1;
 	pf.direct.alpha = 0;
 	pf.direct.alphaMask = 1;
-	mono_format = TSXRenderFindFormat(gdi_display, PictFormatType |
+	mono_format = pXRenderFindFormat(gdi_display, PictFormatType |
 					  PictFormatDepth | PictFormatAlpha |
 					  PictFormatAlphaMask, &pf, 0);
 
@@ -116,7 +159,12 @@ void X11DRV_XRender_Init(void)
     } else {
         TRACE("Xrender is not available on this server\n");
     }
+    wine_tsx11_unlock();
     return;
+
+sym_not_found:
+    wine_dlclose(xrender_handle, NULL, 0);
+    xrender_handle = NULL;
 }
 
 static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
@@ -191,7 +239,9 @@ static gsCacheEntry *AllocEntry(void)
 
   if(best >= 0) {
     TRACE("freeing unused glyphset at cache %d\n", best);
-    TSXRenderFreeGlyphSet(gdi_display, glyphsetCache[best].glyphset);
+    wine_tsx11_lock();
+    pXRenderFreeGlyphSet(gdi_display, glyphsetCache[best].glyphset);
+    wine_tsx11_unlock();
     glyphsetCache[best].glyphset = 0;
     if(glyphsetCache[best].nrealized) { /* do we really want to do this? */
       HeapFree(GetProcessHeap(), 0, glyphsetCache[best].realized);
@@ -252,14 +302,16 @@ static gsCacheEntry *GetCacheEntry(LFANDSIZE *plfsz)
   pf.type = PictTypeDirect;
   pf.direct.alpha = 0;
 
-  ret->font_format = TSXRenderFindFormat(gdi_display,
+  wine_tsx11_lock();
+  ret->font_format = pXRenderFindFormat(gdi_display,
 					 PictFormatType |
 					 PictFormatDepth |
 					 PictFormatAlpha |
 					 PictFormatAlphaMask,
 					 &pf, 0);
 
-  ret->glyphset = TSXRenderCreateGlyphSet(gdi_display, ret->font_format);
+  ret->glyphset = pXRenderCreateGlyphSet(gdi_display, ret->font_format);
+  wine_tsx11_unlock();
   return ret;
 }
 
@@ -296,7 +348,8 @@ static void lfsz_calc_hash(LFANDSIZE *plfsz)
 void X11DRV_XRender_Finalize(void)
 {
     FIXME("Free cached glyphsets\n");
-    return;
+    if (xrender_handle) wine_dlclose(xrender_handle, NULL, 0);
+    xrender_handle = NULL;
 }
 
 
@@ -329,16 +382,18 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
  */
 void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
 {
+    wine_tsx11_lock();
     if(physDev->xrender->tile_pict)
-        TSXRenderFreePicture(gdi_display, physDev->xrender->tile_pict);
+        pXRenderFreePicture(gdi_display, physDev->xrender->tile_pict);
 
     if(physDev->xrender->tile_xpm)
-        TSXFreePixmap(gdi_display, physDev->xrender->tile_xpm);
+        XFreePixmap(gdi_display, physDev->xrender->tile_xpm);
 
     if(physDev->xrender->pict) {
 	TRACE("freeing pict = %lx dc = %p\n", physDev->xrender->pict, physDev->dc);
-        TSXRenderFreePicture(gdi_display, physDev->xrender->pict);
+        pXRenderFreePicture(gdi_display, physDev->xrender->pict);
     }
+    wine_tsx11_unlock();
 
     if(physDev->xrender->cacheEntry)
         dec_ref_cache(physDev->xrender->cacheEntry);
@@ -359,7 +414,9 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
 {
     if(physDev->xrender->pict) {
         TRACE("freeing pict %08lx from dc %p\n", physDev->xrender->pict, physDev->dc);
-        TSXRenderFreePicture(gdi_display, physDev->xrender->pict);
+        wine_tsx11_lock();
+        pXRenderFreePicture(gdi_display, physDev->xrender->pict);
+        wine_tsx11_unlock();
     }
     physDev->xrender->pict = 0;
     return;
@@ -464,8 +521,10 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 	}
     }
     gid = glyph;
-    TSXRenderAddGlyphs(gdi_display, entry->glyphset, &gid, &gi, 1,
+    wine_tsx11_lock();
+    pXRenderAddGlyphs(gdi_display, entry->glyphset, &gid, &gi, 1,
 		       buf, buflen);
+    wine_tsx11_unlock();
     HeapFree(GetProcessHeap(), 0, buf);
     return TRUE;
 }
@@ -640,12 +699,13 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         XRenderPictureAttributes pa;
 	pa.subwindow_mode = IncludeInferiors;
 
-        physDev->xrender->pict =
-	  TSXRenderCreatePicture(gdi_display,
-				 physDev->drawable,
-				 (dc->bitsPerPixel == 1) ?
-				   mono_format : screen_format,
-				 CPSubwindowMode, &pa);
+        wine_tsx11_lock();
+        physDev->xrender->pict = pXRenderCreatePicture(gdi_display,
+                                                       physDev->drawable,
+                                                       (dc->bitsPerPixel == 1) ?
+                                                       mono_format : screen_format,
+                                                       CPSubwindowMode, &pa);
+        wine_tsx11_unlock();
 
 	TRACE("allocing pict = %lx dc = %p drawable = %08lx\n", physDev->xrender->pict, dc, physDev->drawable);
     } else {
@@ -689,8 +749,10 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         pXrect = NULL;
     }
 
-    TSXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
-				       0, 0, pXrect, obj->rgn->numRects );
+    wine_tsx11_lock();
+    pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
+                                      0, 0, pXrect, obj->rgn->numRects );
+    wine_tsx11_unlock();
 
     if(pXrect)
         HeapFree( GetProcessHeap(), 0, pXrect );
@@ -714,15 +776,17 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         XRenderPictureAttributes pa;
 
       	XRenderPictFormat *format = (dc->bitsPerPixel == 1) ? mono_format : screen_format;
-	physDev->xrender->tile_xpm = TSXCreatePixmap(gdi_display,
+        wine_tsx11_lock();
+	physDev->xrender->tile_xpm = XCreatePixmap(gdi_display,
 						     physDev->drawable,
 						     1, 1,
 						     format->depth);
 	pa.repeat = True;
-	physDev->xrender->tile_pict = TSXRenderCreatePicture(gdi_display,
+	physDev->xrender->tile_pict = pXRenderCreatePicture(gdi_display,
 							     physDev->xrender->tile_xpm,
 							     format,
 							     CPRepeat, &pa);
+        wine_tsx11_unlock();
 	TRACE("Created pixmap of depth %d\n", format->depth);
 	/* init lastTextColor to something different from dc->textColor */
 	physDev->xrender->lastTextColor = ~dc->textColor;
@@ -743,9 +807,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    col.red = col.green = col.blue = 0;
 	    col.alpha = 0xffff;
 	}
-	TSXRenderFillRectangle(gdi_display, PictOpSrc,
+        wine_tsx11_lock();
+	pXRenderFillRectangle(gdi_display, PictOpSrc,
 			       physDev->xrender->tile_pict,
 			       &col, 0, 0, 1, 1);
+        wine_tsx11_unlock();
 	physDev->xrender->lastTextColor = dc->textColor;
     }
 
@@ -764,8 +830,10 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     TRACE("Writing %s at %d,%d\n", debugstr_wn(wstr,count), dc->DCOrgX + x,
 	  dc->DCOrgY + y);
+
+    wine_tsx11_lock();
     if(!lpDx)
-        TSXRenderCompositeString16(gdi_display, render_op, 
+        pXRenderCompositeString16(gdi_display, render_op, 
 				   physDev->xrender->tile_pict,
 				   physDev->xrender->pict,
 				   physDev->xrender->cacheEntry->font_format,
@@ -776,7 +844,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     else {
         INT offset = 0, xoff = 0, yoff = 0;
 	for(idx = 0; idx < count; idx++) {
-	    TSXRenderCompositeString16(gdi_display, render_op, 
+	    pXRenderCompositeString16(gdi_display, render_op, 
 				       physDev->xrender->tile_pict,
 				       physDev->xrender->pict,
 				       physDev->xrender->cacheEntry->font_format,
@@ -791,10 +859,10 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     }
 
     if(physDev->xrender->pict) {
-        TSXRenderFreePicture(gdi_display, physDev->xrender->pict);
+        pXRenderFreePicture(gdi_display, physDev->xrender->pict);
     }
     physDev->xrender->pict = 0;
-
+    wine_tsx11_unlock();
 
     if (flags & ETO_CLIPPED) 
         RestoreVisRgn16( hdc );
@@ -804,7 +872,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     return TRUE;
 }
 
-#else /* #ifdef HAVE_LIBXRENDER */
+#else /* HAVE_X11_EXTENSIONS_XRENDER_H */
 
 void X11DRV_XRender_Init(void)
 {
@@ -814,8 +882,6 @@ void X11DRV_XRender_Init(void)
 
 void X11DRV_XRender_Finalize(void)
 {
-  assert(0);
-  return;
 }
 
 BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
@@ -844,4 +910,4 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
   return;
 }
 
-#endif
+#endif /* HAVE_X11_EXTENSIONS_XRENDER_H */

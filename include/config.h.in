@@ -218,9 +218,6 @@
 /* Define to 1 if you have the `xpg4' library (-lxpg4). */
 #undef HAVE_LIBXPG4
 
-/* Define if you have the XRender extension library */
-#undef HAVE_LIBXRENDER
-
 /* Define if you have the X Shape extension */
 #undef HAVE_LIBXSHAPE
 

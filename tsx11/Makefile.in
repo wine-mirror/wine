@@ -16,7 +16,6 @@ C_SRCS = \
 	ts_xf86vmode.c \
 	ts_xshm.c \
 	ts_xlib.c \
-	ts_xrender.c \
 	ts_xresource.c \
 	ts_xvideo.c \
 	ts_xutil.c \
