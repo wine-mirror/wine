@@ -1701,7 +1701,7 @@ INT __cdecl CRTDLL_scanf( LPCSTR format, ... )
 
   va_start( valist, format );
   res = CRTDLL_fscanf(CRTDLL_stdin, format, valist);
-  va_end(va_list);
+  va_end(valist);
   return res;
 }
 
