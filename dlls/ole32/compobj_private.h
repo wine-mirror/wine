@@ -39,105 +39,7 @@
 #include "winternl.h"
 
 struct apartment;
-
-
-/* exported interface */
-typedef struct tagXIF {
-  struct tagXIF *next;
-  LPVOID iface;            /* interface pointer */
-  IID iid;                 /* interface ID */
-  IPID ipid;               /* exported interface ID */
-  LPRPCSTUBBUFFER stub;    /* interface stub */
-  DWORD refs;              /* external reference count */
-  HRESULT hres;            /* result of stub creation attempt */
-} XIF;
-
-/* exported object */
-typedef struct tagXOBJECT {
-  IRpcStubBufferVtbl *lpVtbl;
-  struct apartment *parent;
-  struct tagXOBJECT *next;
-  LPUNKNOWN obj;           /* object identity (IUnknown) */
-  OID oid;                 /* object ID */
-  DWORD ifc;               /* interface ID counter */
-  XIF *ifaces;             /* exported interfaces */
-  DWORD refs;              /* external reference count */
-} XOBJECT;
-
-/* imported interface proxy */
-struct ifproxy
-{
-  struct list entry;
-  LPVOID iface;            /* interface pointer */
-  IID iid;                 /* interface ID */
-  IPID ipid;               /* imported interface ID */
-  LPRPCPROXYBUFFER proxy;  /* interface proxy */
-  DWORD refs;              /* imported (public) references */
-};
-
-/* imported object / proxy manager */
-struct proxy_manager
-{
-  const IInternalUnknownVtbl *lpVtbl;
-  struct apartment *parent;
-  struct list entry;
-  LPRPCCHANNELBUFFER chan; /* channel to object */
-  OXID oxid;               /* object exported ID */
-  OID oid;                 /* object ID */
-  struct list interfaces;  /* imported interfaces */
-  DWORD refs;              /* proxy reference count */
-  CRITICAL_SECTION cs;     /* thread safety for this object and children */
-};
-
-/* this needs to become a COM object that implements IRemUnknown */
-struct apartment
-{
-  struct list entry;       
-
-  DWORD refs;              /* refcount of the apartment */
-  DWORD model;             /* threading model */
-  DWORD tid;               /* thread id */
-  HANDLE thread;           /* thread handle */
-  OXID oxid;               /* object exporter ID */
-  OID oidc;                /* object ID counter, starts at 1, zero is invalid OID */
-  HWND win;                /* message window */
-  CRITICAL_SECTION cs;     /* thread safety */
-  LPMESSAGEFILTER filter;  /* message filter */
-  XOBJECT *objs;           /* exported objects */
-  struct list proxies;     /* imported objects */
-  DWORD listenertid;       /* id of apartment_listener_thread */
-  struct list stubmgrs;    /* stub managers for exported objects */
-};
-
 typedef struct apartment APARTMENT;
-
-extern void* StdGlobalInterfaceTable_Construct(void);
-extern void  StdGlobalInterfaceTable_Destroy(void* self);
-extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv);
-
-extern HRESULT WINE_StringFromCLSID(const CLSID *id,LPSTR idstr);
-extern HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
-
-extern void* StdGlobalInterfaceTableInstance;
-
-/* Standard Marshalling definitions */
-typedef struct _wine_marshal_id {
-    OXID    oxid;       /* id of apartment */
-    OID     oid;        /* id of stub manager */
-    IPID    ipid;       /* id of interface pointer */
-} wine_marshal_id;
-
-inline static BOOL
-MARSHAL_Compare_Mids(wine_marshal_id *mid1,wine_marshal_id *mid2) {
-    return
-	(mid1->oxid == mid2->oxid)	&&
-	(mid1->oid == mid2->oid)	&&
-	IsEqualGUID(&(mid1->ipid),&(mid2->ipid))
-    ;
-}
-
-HRESULT MARSHAL_Disconnect_Proxies(APARTMENT *apt);
-HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
 /* Thread-safety Annotation Legend:
  *
@@ -176,6 +78,91 @@ struct stub_manager
     ULONG             next_ipid;  /* currently unused (LOCK) */
 };
 
+/* imported interface proxy */
+struct ifproxy
+{
+  struct list entry;
+  LPVOID iface;            /* interface pointer (RO) */
+  IID iid;                 /* interface ID (RO) */
+  IPID ipid;               /* imported interface ID (RO) */
+  LPRPCPROXYBUFFER proxy;  /* interface proxy (RO) */
+  DWORD refs;              /* imported (public) references (CS ?) */
+};
+
+/* imported object / proxy manager */
+struct proxy_manager
+{
+  const IInternalUnknownVtbl *lpVtbl;
+  struct apartment *parent; /* owning apartment (RO) */
+  struct list entry;        /* entry in apartment (CS parent->cs) */
+  LPRPCCHANNELBUFFER chan;  /* channel to object (CS cs) */
+  OXID oxid;                /* object exported ID (RO) */
+  OID oid;                  /* object ID (RO) */
+  struct list interfaces;   /* imported interfaces (CS cs) */
+  DWORD refs;               /* proxy reference count (LOCK) */
+  CRITICAL_SECTION cs;      /* thread safety for this object and children */
+};
+
+/* this needs to become a COM object that implements IRemUnknown */
+struct apartment
+{
+  struct list entry;       
+
+  DWORD refs;              /* refcount of the apartment (LOCK) */
+  DWORD model;             /* threading model (RO) */
+  DWORD tid;               /* thread id (RO) */
+  HANDLE thread;           /* thread handle (RO) */
+  OXID oxid;               /* object exporter ID (RO) */
+  OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs) */
+  HWND win;                /* message window (RO) */
+  CRITICAL_SECTION cs;     /* thread safety */
+  LPMESSAGEFILTER filter;  /* message filter (CS cs) */
+  struct list proxies;     /* imported objects (CS cs) */
+  struct list stubmgrs;    /* stub managers for exported objects (CS cs) */
+
+  DWORD listenertid;       /* id of apartment_listener_thread. FIXME: remove me */
+};
+
+/* this is what is stored in TEB->ReservedForOle */
+struct oletls
+{
+    struct apartment *apt;
+    IErrorInfo       *errorinfo;   /* see errorinfo.c */
+    IUnknown         *state;       /* see CoSetState */
+    DWORD            inits;        /* number of times CoInitializeEx called */
+};
+
+extern void* StdGlobalInterfaceTable_Construct(void);
+extern void  StdGlobalInterfaceTable_Destroy(void* self);
+extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv);
+
+/* FIXME: these shouldn't be needed, except for 16-bit functions */
+extern HRESULT WINE_StringFromCLSID(const CLSID *id,LPSTR idstr);
+HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id);
+
+extern HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
+
+extern void* StdGlobalInterfaceTableInstance;
+
+/* Standard Marshalling definitions */
+typedef struct _wine_marshal_id {
+    OXID    oxid;       /* id of apartment */
+    OID     oid;        /* id of stub manager */
+    IPID    ipid;       /* id of interface pointer */
+} wine_marshal_id;
+
+inline static BOOL
+MARSHAL_Compare_Mids(wine_marshal_id *mid1,wine_marshal_id *mid2) {
+    return
+	(mid1->oxid == mid2->oxid)	&&
+	(mid1->oid == mid2->oid)	&&
+	IsEqualGUID(&(mid1->ipid),&(mid2->ipid))
+    ;
+}
+
+HRESULT MARSHAL_Disconnect_Proxies(APARTMENT *apt);
+HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
+
 ULONG stub_manager_int_addref(struct stub_manager *This);
 ULONG stub_manager_int_release(struct stub_manager *This);
 struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object);
@@ -202,22 +189,11 @@ HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void);
 /* This function decomposes a String path to a String Table containing all the elements ("\" or "subDirectory" or "Directory" or "FileName") of the path */
 int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);
 
-HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id);
-
 /* compobj.c */
 APARTMENT *COM_CreateApartment(DWORD model);
 APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref);
 DWORD COM_ApartmentAddRef(struct apartment *apt);
 DWORD COM_ApartmentRelease(struct apartment *apt);
-
-/* this is what is stored in TEB->ReservedForOle */
-struct oletls
-{
-    struct apartment *apt;
-    IErrorInfo       *errorinfo;   /* see errorinfo.c */
-    IUnknown         *state;       /* see CoSetState */
-    DWORD            inits;        /* number of times CoInitializeEx called */
-};
 
 /*
  * Per-thread values are stored in the TEB on offset 0xF80,
