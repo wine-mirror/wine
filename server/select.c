@@ -179,7 +179,10 @@ void select_loop(void)
         }
 
         if (!ret) continue;
-        if (ret == -1) perror("select");
+        if (ret == -1) {
+            if (errno == EINTR) continue;
+            perror("select");
+        }
 
         for (i = 0; i <= max_fd; i++)
         {
