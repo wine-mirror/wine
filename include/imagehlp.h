@@ -324,7 +324,7 @@ typedef BOOL (CALLBACK *DIGEST_FUNCTION)(
 );
 
 typedef BOOL (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE)(
-  HANDLE  hProcess, PCVOID lpBaseAddress, PVOID lpBuffer,
+  HANDLE  hProcess, LPCVOID lpBaseAddress, PVOID lpBuffer,
   DWORD nSize, PDWORD lpNumberOfBytesRead
 );
 

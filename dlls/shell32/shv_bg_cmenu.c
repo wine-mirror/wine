@@ -384,7 +384,7 @@ static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 	IContextMenu *iface,
 	UINT idCommand,
 	UINT uFlags,
-	LPUINT lpReserved,
+	UINT* lpReserved,
 	LPSTR lpszName,
 	UINT uMaxNameLen)
 {

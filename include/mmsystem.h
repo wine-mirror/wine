@@ -29,6 +29,7 @@ extern "C" {
 
 typedef LPSTR		HPSTR;          /* a huge version of LPSTR */
 typedef LPCSTR		HPCSTR;         /* a huge version of LPCSTR */
+typedef UINT*           LPUINT;
 
 DECLARE_HANDLE(HDRVR);
 DECLARE_HANDLE(HWAVE);

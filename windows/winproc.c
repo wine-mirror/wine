@@ -2269,9 +2269,9 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 
     case CB_GETEDITSEL:
 	if( wParam )
-	    *((LPUINT)(wParam)) = LOWORD(p16->lResult);
+	    *((PUINT)(wParam)) = LOWORD(p16->lResult);
 	if( lParam )
-	    *((LPUINT)(lParam)) = HIWORD(p16->lResult);	/* FIXME: substract 1? */
+	    *((PUINT)(lParam)) = HIWORD(p16->lResult);	/* FIXME: substract 1? */
 	break;
 
     case WM_MEASUREITEM:

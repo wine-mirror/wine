@@ -218,7 +218,7 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 VOID WINAPI
 MenuHelp (UINT uMsg, WPARAM wParam, LPARAM lParam, HMENU hMainMenu,
-	  HINSTANCE hInst, HWND hwndStatus, LPUINT lpwIDs)
+	  HINSTANCE hInst, HWND hwndStatus, UINT* lpwIDs)
 {
     UINT uMenuID = 0;
 

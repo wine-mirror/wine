@@ -1292,7 +1292,7 @@ ULONG WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 /***********************************************************************
  *           RtlValidateHeap   (NTDLL.@)
  */
-BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, PCVOID block )
+BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, LPCVOID block )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     if (!heapPtr) return FALSE;

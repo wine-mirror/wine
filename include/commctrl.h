@@ -324,7 +324,7 @@ VOID WINAPI DrawStatusTextA (HDC, LPRECT, LPCSTR, UINT);
 VOID WINAPI DrawStatusTextW (HDC, LPRECT, LPCWSTR, UINT);
 #define DrawStatusText WINELIB_NAME_AW(DrawStatusText)
 VOID WINAPI MenuHelp (UINT, WPARAM, LPARAM, HMENU,
-                      HINSTANCE, HWND, LPUINT);
+                      HINSTANCE, HWND, UINT*);
 
 typedef struct tagCOLORSCHEME
 {

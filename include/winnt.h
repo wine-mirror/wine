@@ -317,18 +317,18 @@
 #define ERROR_SEVERITY_ERROR         0xC0000000
 
 /* Standard data types */
-typedef const void                  *PCVOID,   *LPCVOID;
+typedef const void                             *LPCVOID;
 typedef int             BOOL,       *PBOOL,    *LPBOOL;
 typedef unsigned char   BYTE,       *PBYTE,    *LPBYTE;
 typedef unsigned char   UCHAR,      *PUCHAR;
-typedef unsigned short  USHORT,     *PUSHORT,  *LPUSHORT;
+typedef unsigned short  USHORT,     *PUSHORT;
 typedef unsigned short  WORD,       *PWORD,    *LPWORD;
 typedef int             INT,        *PINT,     *LPINT;
-typedef unsigned int    UINT,       *PUINT,    *LPUINT;
+typedef unsigned int    UINT,       *PUINT;
 typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
-typedef unsigned long   ULONG,      *PULONG,   *LPULONG;
-typedef float           FLOAT,      *PFLOAT,   *LPFLOAT;
-typedef double          DOUBLE,     *PDOUBLE,  *LPDOUBLE;
+typedef unsigned long   ULONG,      *PULONG;
+typedef float           FLOAT,      *PFLOAT;
+typedef double          DOUBLE;
 typedef double          DATE;
 
 

@@ -227,7 +227,7 @@ static BOOL	EDIT_EM_FmtLines(EDITSTATE *es, BOOL add_eol);
 static HLOCAL	EDIT_EM_GetHandle(EDITSTATE *es);
 static HLOCAL16	EDIT_EM_GetHandle16(HWND hwnd, EDITSTATE *es);
 static INT	EDIT_EM_GetLine(EDITSTATE *es, INT line, LPARAM lParam, BOOL unicode);
-static LRESULT	EDIT_EM_GetSel(EDITSTATE *es, LPUINT start, LPUINT end);
+static LRESULT	EDIT_EM_GetSel(EDITSTATE *es, PUINT start, PUINT end);
 static LRESULT	EDIT_EM_GetThumb(HWND hwnd, EDITSTATE *es);
 static INT	EDIT_EM_LineFromChar(EDITSTATE *es, INT index);
 static INT	EDIT_EM_LineIndex(EDITSTATE *es, INT line);
@@ -448,7 +448,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		/* fall through */
 	case EM_GETSEL:
 		DPRINTF_EDIT_MSG32("EM_GETSEL");
-		result = EDIT_EM_GetSel(es, (LPUINT)wParam, (LPUINT)lParam);
+		result = EDIT_EM_GetSel(es, (PUINT)wParam, (PUINT)lParam);
 		break;
 
 	case EM_SETSEL16:
@@ -2735,7 +2735,7 @@ static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPARAM lParam, BOOL unicode)
  *	EM_GETSEL
  *
  */
-static LRESULT EDIT_EM_GetSel(EDITSTATE *es, LPUINT start, LPUINT end)
+static LRESULT EDIT_EM_GetSel(EDITSTATE *es, PUINT start, PUINT end)
 {
 	UINT s = es->selection_start;
 	UINT e = es->selection_end;

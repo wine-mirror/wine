@@ -83,7 +83,7 @@ static ULONG WINAPI Release(_IDummyStream *This)
 }
 
 static HRESULT WINAPI Read(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
-                           LPULONG lpRead)
+                           PULONG lpRead)
 {
   HRESULT hRet = S_OK;
   ++This->readcalls;
@@ -134,7 +134,7 @@ static HRESULT WINAPI Read(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
 }
 
 static HRESULT WINAPI Write(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
-                            LPULONG lpWritten)
+                            PULONG lpWritten)
 {
   HRESULT hRet = S_OK;
 

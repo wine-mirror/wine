@@ -950,7 +950,7 @@ static BOOL SMB_Open(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
 
 
 static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
-       USHORT file_id, DWORD offset, LPVOID out, USHORT count, LPUSHORT read)
+       USHORT file_id, DWORD offset, LPVOID out, USHORT count, USHORT* read)
 {
     int buf_size,n,i;
     struct NB_Buffer rx,tx;
