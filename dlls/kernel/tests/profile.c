@@ -114,6 +114,14 @@ void test_profile_string()
     /* and test */
     ok( !strcmp( buf, "name1,name2,name4"), "wrong keys returned: %s\n",
             buf);
+
+    ret=GetPrivateProfileSectionA("s", buf, sizeof(buf), TESTFILE2);
+    for( p = buf + strlen(buf) + 1; *p;p += strlen(p)+1) 
+        p[-1] = ',';
+    /* and test */
+    ok( !strcmp( buf, "name1=val1,name2=,name3,name4=val4"), "wrong section returned: %s\n",
+            buf);
+    
     /* add a new key to test that the file is quite usable */
     WritePrivateProfileStringA( "s", "name5", "val5", TESTFILE2); 
     ret=GetPrivateProfileStringA( "s", NULL, "", buf, sizeof(buf),
