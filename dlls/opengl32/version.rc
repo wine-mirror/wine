@@ -22,6 +22,5 @@
 #define WINE_FILEVERSION_STR "5.1.2600.2082"
 #define WINE_PRODUCTVERSION 5,1,2600,2082
 #define WINE_PRODUCTVERSION_STR "5.1"
-#define WINE_PRODUCTNAME_STR "DirectX"
 
 #include "wine/wine_common_ver.rc"

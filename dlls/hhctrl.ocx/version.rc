@@ -2,6 +2,7 @@
  * Version information for hhctrl.ocx
  *
  * Copyright 2004 Hans Leidekker
+ * Copyright 2004 Tom Wickline
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,5 +21,9 @@
 
 #define WINE_FILEDESCRIPTION_STR "Wine htmlhelp OCX"
 #define WINE_FILENAME_STR "hhctrl.ocx"
+#define WINE_FILEVERSION 4,72,7325,0
+#define WINE_FILEVERSION_STR "4.72.7325.0"
+#define WINE_PRODUCTVERSION 4,72,7325,0
+#define WINE_PRODUCTVERSION_STR "4.72.7325.0"
 
 #include <wine/wine_common_ver.rc>
