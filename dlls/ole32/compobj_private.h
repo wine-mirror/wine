@@ -109,6 +109,7 @@ struct proxy_manager
   struct list interfaces;   /* imported interfaces (CS cs) */
   DWORD refs;               /* proxy reference count (LOCK) */
   CRITICAL_SECTION cs;      /* thread safety for this object and children */
+  ULONG sorflags;           /* STDOBJREF flags (RO) */
 };
 
 /* this needs to become a COM object that implements IRemUnknown */
