@@ -27,7 +27,6 @@
 #include <sys/types.h>
 #include "winerror.h"
 #include "ntddk.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -119,13 +118,13 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         {
             const char *name = (char *)crit->DebugInfo;
             if (!name || IsBadStringPtrA(name,80)) name = "?";
-            ERR( "section %p %s wait timed out, retrying (60 sec) fs=%04x\n",
-                 crit, debugstr_a(name), wine_get_fs() );
+            ERR( "section %p %s wait timed out, retrying (60 sec) tid=%08lx\n",
+                 crit, debugstr_a(name), GetCurrentThreadId() );
             res = WaitForSingleObject( sem, 60000L );
             if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
             {
-                ERR( "section %p %s wait timed out, retrying (5 min) fs=%04x\n",
-                     crit, debugstr_a(name), wine_get_fs() );
+                ERR( "section %p %s wait timed out, retrying (5 min) tid=%08lx\n",
+                     crit, debugstr_a(name), GetCurrentThreadId() );
                 res = WaitForSingleObject( sem, 300000L );
             }
         }
