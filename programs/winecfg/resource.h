@@ -31,7 +31,7 @@
 #define IDD_ABOUTCFG                    107
 #define IDD_APPCFG                      108
 #define IDD_AUDIOCFG                    109
-#define IDD_X11DRVCFG                   110
+#define IDD_GRAPHCFG                    110
 #define IDD_DLLCFG                      111
 #define IDD_DRIVECFG                    112
 #define IDD_SYSTEMCFG                   113
@@ -111,7 +111,7 @@
 #define IDC_BUTTON_SHOW_HIDE_ADVANCED   1076
 #define IDC_STATIC_TYPE                 1077
 
-/* x11drv */
+/* graphics */
 #define IDC_ENABLE_MANAGED              1100
 #define IDC_SCREEN_DEPTH                1101
 #define IDC_DX_MOUSE_GRAB               1102

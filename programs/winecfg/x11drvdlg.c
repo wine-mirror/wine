@@ -1,5 +1,5 @@
 /*
- * X11DRV configuration code
+ * Graphics configuration code
  *
  * Copyright 2003 Mark Westcott
  * Copyright 2003 Mike Hearn
@@ -35,7 +35,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
-#define section (appSettings == EDITING_GLOBAL ? "x11drv" : (getSectionForApp("x11drv")))
+#define section (appSettings == EDITING_GLOBAL ? "graphics" : (getSectionForApp("graphics")))
 
 int updatingUI;
 
@@ -84,7 +84,7 @@ void updateGUIForDesktopMode(HWND dialog) {
 }
 
 /* pokes the win32 api to setup the dialog from the config struct */
-void initX11DrvDlg (HWND hDlg)
+void initGraphDlg (HWND hDlg)
 {
     static const char default_desktop[] = "640x480";
     char *buf;
@@ -213,7 +213,7 @@ void onDoubleBufferClicked(HWND hDlg) {
 }
 
 INT_PTR CALLBACK
-X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+GraphDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
 	case WM_INITDIALOG:
@@ -258,7 +258,7 @@ X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    break;
 		}
 		case PSN_SETACTIVE: {
-		    initX11DrvDlg (hDlg);
+		    initGraphDlg (hDlg);
 		    break;
 		}
 	    }

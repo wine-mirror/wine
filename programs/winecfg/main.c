@@ -129,10 +129,10 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[pg].dwSize = sizeof (PROPSHEETPAGE);
     psp[pg].dwFlags = PSP_USETITLE;
     psp[pg].hInstance = hInstance;
-    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_X11DRVCFG);
+    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_GRAPHCFG);
     psp[pg].u2.pszIcon = NULL;
-    psp[pg].pfnDlgProc = X11DrvDlgProc;
-    psp[pg].pszTitle = "X11 Driver";
+    psp[pg].pfnDlgProc = GraphDlgProc;
+    psp[pg].pszTitle = "Graphics";
     psp[pg].lParam = 0;
     pg++;
 

@@ -96,11 +96,11 @@ char *getConfigValue (const char *subkey, const char *valueName, const char *def
 HRESULT doesConfigValueExist (const char *subkey, const char *valueName);
 HRESULT removeConfigValue (const char *subkey, const char *valueName);
 
-/* X11DRV */
+/* Graphics */
 
-void initX11DrvDlg (HWND hDlg);
-void saveX11DrvDlgSettings (HWND hDlg);
-INT_PTR CALLBACK X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void initGraphDlg (HWND hDlg);
+void saveGraphDlgSettings (HWND hDlg);
+INT_PTR CALLBACK GraphDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /* Drive management */
 void initDriveDlg (HWND hDlg);
