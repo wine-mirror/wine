@@ -133,8 +133,9 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         {
             PAINTSTRUCT ps;
             HDC hdc = wParam ? (HDC)wParam : BeginPaint( hWnd, &ps );
-	    SetBkMode( hdc, OPAQUE );
+            int nOldMode = SetBkMode( hdc, OPAQUE );
             (btnPaintFunc[style])( wndPtr, hdc, ODA_DRAWENTIRE );
+            SetBkMode(hdc, nOldMode); /*  reset painting mode */
             if( !wParam ) EndPaint( hWnd, &ps );
         }
         break;
@@ -266,7 +267,11 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         wndPtr->dwStyle = (wndPtr->dwStyle & 0xfffffff0) 
                            | (wParam & 0x0000000f);
         style = wndPtr->dwStyle & 0x0000000f;
-        PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
+
+        /* Only redraw if lParam flag is set.*/
+        if (lParam)
+           PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
+
         break;
 
     case BM_CLICK:
