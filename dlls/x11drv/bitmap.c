@@ -109,7 +109,8 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
  */
 BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
-    Pixmap pixmap;
+    X_PHYSBITMAP *physBitmap;
+    BOOL ret = FALSE;
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
 
     if(!bmp) {
@@ -118,47 +119,47 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
     }
 
       /* Check parameters */
-    if (bmp->bitmap.bmPlanes != 1)
-    {
-        GDI_ReleaseObj( hbitmap );
-        return 0;
-    }
+    if (bmp->bitmap.bmPlanes != 1) goto done;
+
     if ((bmp->bitmap.bmBitsPixel != 1) && (bmp->bitmap.bmBitsPixel != screen_depth))
     {
         ERR("Trying to make bitmap with planes=%d, bpp=%d\n",
 	    bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel);
-        GDI_ReleaseObj( hbitmap );
-	return FALSE;
+        goto done;
     }
     if (hbitmap == BITMAP_stock_bitmap)
     {
         ERR( "called for stock bitmap, please report\n" );
-        GDI_ReleaseObj( hbitmap );
-        return FALSE;
+        goto done;
     }
 
     TRACE("(%p) %dx%d %d bpp\n", hbitmap, bmp->bitmap.bmWidth,
 	  bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
 
+    if (!(physBitmap = HeapAlloc( GetProcessHeap(), 0, sizeof(*physBitmap) ))) goto done;
+
       /* Create the pixmap */
     wine_tsx11_lock();
-    pixmap = XCreatePixmap(gdi_display, root_window,
-                           bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
+    physBitmap->pixmap = XCreatePixmap(gdi_display, root_window,
+                                       bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+                                       bmp->bitmap.bmBitsPixel);
     wine_tsx11_unlock();
-    if (!pixmap)
+    if (!physBitmap->pixmap)
     {
         WARN("Can't create Pixmap\n");
-	GDI_ReleaseObj( hbitmap );
-	return FALSE;
+        HeapFree( GetProcessHeap(), 0, physBitmap );
+        goto done;
     }
-    X11DRV_set_pixmap( hbitmap, pixmap );
+    bmp->physBitmap = physBitmap;
+    ret = TRUE;
 
     if (bmp->bitmap.bmBits) /* Set bitmap bits */
         X11DRV_SetBitmapBits( hbitmap, bmp->bitmap.bmBits,
                               bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes );
 
+done:
     GDI_ReleaseObj( hbitmap );
-    return TRUE;
+    return ret;
 }
 
 
@@ -422,15 +423,38 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (bmp)
     {
-        Pixmap pixmap;
-        if (bmp->dib) X11DRV_DIB_DeleteDIBSection( bmp );
-        pixmap = X11DRV_set_pixmap( hbitmap, 0 );
-        wine_tsx11_lock();
-        if (pixmap) XFreePixmap( gdi_display, pixmap );
-        wine_tsx11_unlock();
+        X_PHYSBITMAP *physBitmap = bmp->physBitmap;
+
+        if (physBitmap)
+        {
+            if (bmp->dib) X11DRV_DIB_DeleteDIBSection( physBitmap, bmp );
+            wine_tsx11_lock();
+            if (physBitmap->pixmap) XFreePixmap( gdi_display, physBitmap->pixmap );
+            wine_tsx11_unlock();
+            HeapFree( GetProcessHeap(), 0, physBitmap );
+            bmp->physBitmap = NULL;
+        }
         GDI_ReleaseObj( hbitmap );
     }
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           X11DRV_get_phys_bitmap
+ *
+ * Retrieve the X physical bitmap info.
+ */
+X_PHYSBITMAP *X11DRV_get_phys_bitmap( HBITMAP hbitmap )
+{
+    X_PHYSBITMAP *ret = NULL;
+    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    if (bmp)
+    {
+        ret = bmp->physBitmap;
+        GDI_ReleaseObj( hbitmap );
+    }
+    return ret;
 }
 
 
@@ -442,12 +466,12 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
 Pixmap X11DRV_set_pixmap( HBITMAP hbitmap, Pixmap pixmap )
 {
     Pixmap ret = 0;
-    BITMAPOBJ *bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    if (bmp)
+    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
+
+    if (physBitmap)
     {
-        ret = (Pixmap)bmp->physBitmap;
-        bmp->physBitmap = (void *)pixmap;
-        GDI_ReleaseObj( hbitmap );
+        ret = physBitmap->pixmap;
+        physBitmap->pixmap = pixmap;
     }
     return ret;
 }
@@ -460,12 +484,8 @@ Pixmap X11DRV_set_pixmap( HBITMAP hbitmap, Pixmap pixmap )
  */
 Pixmap X11DRV_get_pixmap( HBITMAP hbitmap )
 {
-    Pixmap pixmap = 0;
-    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    if (bmp)
-    {
-        pixmap = (Pixmap)bmp->physBitmap;
-        GDI_ReleaseObj( hbitmap );
-    }
-    return pixmap;
+    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
+
+    if (!physBitmap) return 0;
+    return physBitmap->pixmap;
 }

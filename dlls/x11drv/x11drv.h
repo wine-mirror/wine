@@ -79,6 +79,12 @@ typedef struct
     Pixmap       pixmap;
 } X_PHYSBRUSH;
 
+  /* X physical bitmap */
+typedef struct
+{
+    Pixmap       pixmap;
+} X_PHYSBITMAP;
+
   /* X physical font */
 typedef UINT	 X_PHYSFONT;
 
@@ -206,6 +212,7 @@ extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth );
 extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc);
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
+extern X_PHYSBITMAP *X11DRV_get_phys_bitmap( HBITMAP hbitmap );
 extern Pixmap X11DRV_set_pixmap( HBITMAP hbitmap, Pixmap pixmap );
 extern Pixmap X11DRV_get_pixmap( HBITMAP hbitmap );
 
@@ -431,10 +438,7 @@ extern void X11DRV_UnlockDIBSection2(HBITMAP bmp,BOOL);
 
 extern HBITMAP X11DRV_DIB_CreateDIBSection(X11DRV_PDEVICE *physDev, const BITMAPINFO *bmi, UINT usage,
                                            VOID **bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
-extern void X11DRV_DIB_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
-extern INT X11DRV_DIB_Coerce(struct tagBITMAPOBJ *,INT,BOOL);
-extern INT X11DRV_DIB_Lock(struct tagBITMAPOBJ *,INT,BOOL);
-extern void X11DRV_DIB_Unlock(struct tagBITMAPOBJ *,BOOL);
+extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, struct tagBITMAPOBJ *bmp);
 void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
                                DWORD width, DWORD height);
