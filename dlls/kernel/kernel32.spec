@@ -892,7 +892,7 @@ import  ntdll.dll
 874 stdcall GetFileAttributesExA(str long ptr) GetFileAttributesExA
 875 stdcall GetFileAttributesExW(wstr long ptr) GetFileAttributesExW
 876 stub GetProcessPriorityBoost
-877 stub GetThreadPriorityBoost
+877 stdcall GetThreadPriorityBoost(long ptr) GetThreadPriorityBoost 
 878 stdcall InterlockedCompareExchange (ptr long long) InterlockedCompareExchange
 879 stdcall InterlockedExchangeAdd (ptr long ) InterlockedExchangeAdd
 880 stdcall IsProcessorFeaturePresent(long) IsProcessorFeaturePresent
@@ -908,7 +908,7 @@ import  ntdll.dll
 890 stdcall SetProcessAffinityMask(long long) SetProcessAffinityMask
 891 stdcall SetProcessPriorityBoost(long long) SetProcessPriorityBoost
 892 stub SetThreadIdealProcessor
-893 stub SetThreadPriorityBoost
+893 stdcall SetThreadPriorityBoost(long long) SetThreadPriorityBoost
 894 stdcall SetWaitableTimer(long ptr long ptr ptr long) SetWaitableTimer
 895 stub SignalObjectAndWait
 896 stub SwitchToFiber

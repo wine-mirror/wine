@@ -574,6 +574,42 @@ BOOL WINAPI SetThreadPriority(
 
 
 /**********************************************************************
+ * GetThreadPriorityBoost [KERNEL32.877]  Returns priority boost for thread.
+ *
+ * Always reports that priority boost is disabled.
+ *
+ * RETURNS
+ *    Success: TRUE.
+ *    Failure: FALSE
+ */
+BOOL WINAPI GetThreadPriorityBoost(
+    HANDLE hthread, /* [in] Handle to thread */
+    PBOOL pstate)   /* [out] pointer to var that receives the boost state */
+{
+    if (pstate) *pstate = FALSE;
+    return NO_ERROR;
+}
+
+
+/**********************************************************************
+ * SetThreadPriorityBoost [KERNEL32.893]  Sets priority boost for thread.
+ *
+ * Priority boost is not implemented. Thsi function always returns 
+ * FALSE and sets last error to ERROR_CALL_NOT_IMPLEMENTED
+ *
+ * RETURNS
+ *    Always returns FALSE to indicate a failure 
+ */
+BOOL WINAPI SetThreadPriorityBoost(
+    HANDLE hthread, /* [in] Handle to thread */
+    BOOL disable)   /* [in] TRUE to disable priority boost */
+{
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/**********************************************************************
  *           SetThreadAffinityMask   (KERNEL32.669)
  */
 DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
