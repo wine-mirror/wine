@@ -230,8 +230,8 @@ interface IPStore : IUnknown
         [in] const GUID* pItemType,
         [in] const GUID* pItemSubtype,
         [in] LPCWSTR szItemName,
-        [out] DWORD cbData,
-        [out] BYTE *ppbData,
+        [in] DWORD cbData,
+        [in,size_is(cbData)] BYTE *ppbData,
         [in] PPST_PROMPTIFO pPromptInfo,
         [in] DWORD dwDefaultConfirmationStyle,
         [in] DWORD dwFlags);
@@ -246,7 +246,7 @@ interface IPStore : IUnknown
         [in] DWORD dwFlags );
 
     HRESULT CloseItem( 
-        [out] PST_KEY Key, 
+        [in] PST_KEY Key, 
         [in] const GUID* pItemType, 
         [in] const GUID* pItemSubtype,
         [in] LPCWSTR* szItemName,
