@@ -438,7 +438,7 @@ BOOL WINAPI PathRemoveFileSpecW(LPWSTR lpszPath)
 }
 
 /*************************************************************************
- * PathStripPathA	[SHELLWAPI.@]
+ * PathStripPathA	[SHLWAPI.@]
  * 
  * NOTES
  *  removes the path from the beginning of a filename
@@ -454,7 +454,7 @@ void WINAPI PathStripPathA(LPSTR lpszPath)
 }
 
 /*************************************************************************
- * PathStripPathW	[SHELLWAPI.@]
+ * PathStripPathW	[SHLWAPI.@]
  */
 void WINAPI PathStripPathW(LPWSTR lpszPath)
 {

@@ -115,7 +115,7 @@ BOOL WINAPI SHRegGetBoolUSValueW(
 }
 
 /*************************************************************************
- *      SHRegQueryUSValueA	[SHLWAPI]
+ *      SHRegQueryUSValueA	[SHLWAPI.@]
  */
 LONG WINAPI SHRegQueryUSValueA(
 	HKEY hUSKey,             /* [in] FIXME: HUSKEY */
@@ -132,7 +132,7 @@ LONG WINAPI SHRegQueryUSValueA(
 }
 
 /*************************************************************************
- *      SHRegQueryUSValueA	[SHLWAPI]
+ *      SHRegQueryUSValueW	[SHLWAPI.@]
  */
 LONG WINAPI SHRegQueryUSValueW(
 	HKEY hUSKey,             /* [in] FIXME: HUSKEY */

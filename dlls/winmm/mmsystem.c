@@ -1419,7 +1419,7 @@ UINT16 WINAPI auxGetDevCaps16(UINT16 uDeviceID, LPAUXCAPS16 lpCaps, UINT16 uSize
 }
 
 /**************************************************************************
- * 				auxGetVolume		[WINM.23]
+ * 				auxGetVolume		[WINMM.23]
  */
 UINT WINAPI auxGetVolume(UINT uDeviceID, DWORD* lpdwVolume)
 {
@@ -2117,7 +2117,7 @@ UINT MMSYSTEM_midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback
 }
 
 /**************************************************************************
- * 				midiOutOpen    		[WINM.84]
+ * 				midiOutOpen    		[WINMM.84]
  */
 UINT WINAPI midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID,
 			DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
@@ -2324,7 +2324,7 @@ UINT16 WINAPI midiOutReset16(HMIDIOUT16 hMidiOut)
 }
 
 /**************************************************************************
- * 				midiOutGetVolume	[WINM.81]
+ * 				midiOutGetVolume	[WINMM.81]
  */
 UINT WINAPI midiOutGetVolume(UINT uDeviceID, DWORD* lpdwVolume)
 {

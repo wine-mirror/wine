@@ -457,8 +457,8 @@ INT WINAPI SHLWAPI_217(LPCWSTR lpSrcStr, LPSTR lpDstStr, LPINT lpnMultiCharCount
  */
 HRESULT WINAPI SHLWAPI_219 (
 	LPVOID w, /* [???] NOTE: returned by LocalAlloc, 0x450 bytes, iface */
-	LPVOID x,
-	REFIID riid, /* e.g. IWebBrowser2 */
+	LPVOID x, /* [???] */
+	REFIID riid, /* [???] e.g. IWebBrowser2 */
 	LPWSTR z) /* [???] NOTE: OUT: path */
 {
 	FIXME("(%p %s %s %p)stub\n",w,debugstr_a(x),debugstr_guid(riid),z);

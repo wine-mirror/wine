@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(reg);
 static BYTE PF[64] = {0,};
 
 /***********************************************************************
- * 			GetSystemInfo            	[KERNELL32.404]
+ * 			GetSystemInfo            	[KERNEL32.404]
  *
  * Gets the current system information.
  *
@@ -220,7 +220,7 @@ VOID WINAPI GetSystemInfo(
 
 
 /***********************************************************************
- * 			IsProcessorFeaturePresent	[KERNELL32.880]
+ * 			IsProcessorFeaturePresent	[KERNEL32.880]
  * RETURNS:
  *	TRUE if processorfeature present
  *	FALSE otherwise

@@ -34,7 +34,7 @@ void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID lpv, LPDWORD lParam1, LPDWORD lPara
 LRESULT MSVIDEO_SendMessage(HIC hic, UINT msg, DWORD lParam1, DWORD lParam2, BOOL bFrom32);
 
 /***********************************************************************
- *		VideoForWindowsVersion		[MSVFW.2][MSVIDEO.2]
+ *		VideoForWindowsVersion		[MSVFW32.2][MSVIDEO.2]
  * Returns the version in major.minor form.
  * In Windows95 this returns 0x040003b6 (4.950)
  */
@@ -115,7 +115,7 @@ DWORD WINAPI VideoCapDriverDescAndVer(
 /* system.ini: [drivers] */
 
 /***********************************************************************
- *		ICInfo				[MSVFW.33]
+ *		ICInfo				[MSVFW32.33]
  * Get information about an installable compressor. Return TRUE if there
  * is one.
  */
@@ -170,7 +170,7 @@ BOOL16 VFWAPI ICInfo16(
 }
 
 /***********************************************************************
- *		ICOpen				[MSVFW.37]
+ *		ICOpen				[MSVFW32.37]
  * Opens an installable compressor. Return special handle.
  */
 HIC VFWAPI ICOpen(DWORD fccType,DWORD fccHandler,UINT wMode) {
@@ -264,7 +264,7 @@ HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHa
 }
 
 /***********************************************************************
- *		ICOpenFunction			[MSVFW.38]
+ *		ICOpenFunction			[MSVFW32.38]
  */
 HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHandler) {
 	return MSVIDEO_OpenFunc(fccType,fccHandler,wMode,lpfnHandler,TRUE);
@@ -286,7 +286,7 @@ HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FAR
 }
 
 /***********************************************************************
- *		ICGetInfo			[MSVFW.30]
+ *		ICGetInfo			[MSVFW32.30]
  */
 LRESULT VFWAPI ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
 	LRESULT		ret;
@@ -310,7 +310,7 @@ LRESULT VFWAPI ICGetInfo16(HIC16 hic, ICINFO16 *picinfo,DWORD cb) {
 }
 
 /***********************************************************************
- *		ICLocate			[MSVFW.35]
+ *		ICLocate			[MSVFW32.35]
  */
 HIC VFWAPI ICLocate(
 	DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
@@ -400,7 +400,7 @@ HIC16 VFWAPI ICLocate16(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbi
 }
 
 /***********************************************************************
- *		ICGetDisplayFormat			[MSVFW.29]
+ *		ICGetDisplayFormat			[MSVFW32.29]
  */
 HIC VFWAPI ICGetDisplayFormat(
 	HIC hic,LPBITMAPINFOHEADER lpbiIn,LPBITMAPINFOHEADER lpbiOut,
@@ -462,7 +462,7 @@ HIC16 VFWAPI ICGetDisplayFormat16(HIC16 hic, LPBITMAPINFOHEADER lpbiIn,
 }
 
 /***********************************************************************
- *		ICCompress			[MSVFW.23]
+ *		ICCompress			[MSVFW32.23]
  */
 DWORD VFWAPIV
 ICCompress(
@@ -525,7 +525,7 @@ DWORD VFWAPIV ICCompress16(HIC16 hic, DWORD dwFlags, LPBITMAPINFOHEADER lpbiOutp
 }
 
 /***********************************************************************
- *		ICDecompress			[MSVFW.26]
+ *		ICDecompress			[MSVFW32.26]
  */
 DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 				LPVOID lpData,LPBITMAPINFOHEADER lpbi,LPVOID lpBits)
@@ -972,7 +972,7 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL b
 }
 
 /***********************************************************************
- *		ICSendMessage			[MSVFW.40]
+ *		ICSendMessage			[MSVFW32.40]
  */
 LRESULT VFWAPI ICSendMessage(HIC hic, UINT msg, DWORD lParam1, DWORD lParam2) {
 	return MSVIDEO_SendMessage(hic,msg,lParam1,lParam2,TRUE);
@@ -1019,7 +1019,7 @@ LRESULT VFWAPIV ICMessage16(void) {
 }
 
 /***********************************************************************
- *		ICDrawBegin		[MSVFW.28]
+ *		ICDrawBegin		[MSVFW32.28]
  */
 DWORD VFWAPIV ICDrawBegin(
 	HIC                hic,     /* [in] */
@@ -1114,7 +1114,7 @@ DWORD VFWAPIV ICDrawBegin16(
 }
 
 /***********************************************************************
- *		ICDraw			[MSVFW.27]
+ *		ICDraw			[MSVFW32.27]
  */
 DWORD VFWAPIV ICDraw(HIC hic, DWORD dwFlags, LPVOID lpFormat, LPVOID lpData, DWORD cbData, LONG lTime) {
 	ICDRAW	icd;
@@ -1154,7 +1154,7 @@ DWORD VFWAPIV ICDraw16(
 }
 
 /***********************************************************************
- *		ICClose			[MSVFW.22]
+ *		ICClose			[MSVFW32.22]
  */
 LRESULT WINAPI ICClose(HIC hic) {
 	WINE_HIC *whic = GlobalLock16(hic);
@@ -1180,7 +1180,7 @@ LRESULT WINAPI ICClose16(HIC16 hic) {
 }
 
 /***********************************************************************
- *		MCIWndCreateA		[MSVFW.44 & MSVFW.45]
+ *		MCIWndCreateA		[MSVFW32.44][MSVFW32.45]
  */
 HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
                       DWORD dwStyle,LPCSTR szFile)
@@ -1190,7 +1190,7 @@ HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
 }
 
 /***********************************************************************
- *		MCIWndCreateW		[MSVFW.46]
+ *		MCIWndCreateW		[MSVFW32.46]
  */
 HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
                       DWORD dwStyle,LPCWSTR szFile)

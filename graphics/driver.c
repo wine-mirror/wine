@@ -129,7 +129,7 @@ BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size )
 }
     
 /*****************************************************************************
- *      GDI_CallDevInstall16   [GDI32.100]
+ *      @ [GDI32.100]
  *
  * This should thunk to 16-bit and simply call the proc with the given args.
  */
@@ -142,7 +142,7 @@ INT WINAPI GDI_CallDevInstall16( FARPROC16 lpfnDevInstallProc, HWND hWnd,
 }
 
 /*****************************************************************************
- *      GDI_CallExtDeviceModePropSheet16   [GDI32.101]
+ *      @ [GDI32.101]
  *
  * This should load the correct driver for lpszDevice and calls this driver's
  * ExtDeviceModePropSheet proc. 
@@ -167,7 +167,7 @@ INT WINAPI GDI_CallExtDeviceModePropSheet16( HWND hWnd, LPCSTR lpszDevice,
 }
 
 /*****************************************************************************
- *      GDI_CallExtDeviceMode16   [GDI32.102]
+ *      @ [GDI32.102]
  *
  * This should load the correct driver for lpszDevice and calls this driver's
  * ExtDeviceMode proc.
@@ -192,7 +192,7 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
 }
 
 /****************************************************************************
- *      GDI_CallAdvancedSetupDialog16     [GDI32.103]
+ *      @ [GDI32.103]
  *
  * This should load the correct driver for lpszDevice and calls this driver's
  * AdvancedSetupDialog proc.
@@ -206,7 +206,7 @@ INT WINAPI GDI_CallAdvancedSetupDialog16( HWND hwnd, LPSTR lpszDevice,
 }
 
 /*****************************************************************************
- *      GDI_CallDeviceCapabilities16      [GDI32.104]
+ *      @ [GDI32.104]
  *
  * This should load the correct driver for lpszDevice and calls this driver's
  * DeviceCapabilities proc.

@@ -62,7 +62,7 @@ INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
 }
 
 /******************************************************************
- *                  StartDocA  [GDI32.347]
+ *                  StartDocA  [GDI32.@]
  *
  * StartDoc calls the STARTDOC Escape with the input data pointing to DocName
  * and the output data (which is used as a second input parameter).pointing at
@@ -89,7 +89,7 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 }
 
 /*************************************************************************
- *                  StartDocW [GDI32.348]
+ *                  StartDocW [GDI32.@]
  * 
  */
 INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
@@ -128,7 +128,7 @@ INT16 WINAPI EndDoc16(HDC16 hdc)
 }
 
 /******************************************************************
- *                  EndDoc  [GDI32.76]
+ *                  EndDoc  [GDI32.@]
  *
  */
 INT WINAPI EndDoc(HDC hdc)
@@ -155,7 +155,7 @@ INT16 WINAPI StartPage16(HDC16 hdc)
 }
 
 /******************************************************************
- *                  StartPage  [GDI32.349]
+ *                  StartPage  [GDI32.@]
  *
  */
 INT WINAPI StartPage(HDC hdc)
@@ -182,7 +182,7 @@ INT16 WINAPI EndPage16( HDC16 hdc )
 }
 
 /******************************************************************
- *                  EndPage  [GDI32.77]
+ *                  EndPage  [GDI32.@]
  *
  */
 INT WINAPI EndPage(HDC hdc)
@@ -213,7 +213,7 @@ INT16 WINAPI AbortDoc16(HDC16 hdc)
 }
 
 /******************************************************************************
- *                 AbortDoc  [GDI32.105]
+ *                 AbortDoc  [GDI32.@]
  */
 INT WINAPI AbortDoc(HDC hdc)
 {
@@ -269,7 +269,7 @@ INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)
 }
 
 /**********************************************************************
- *           SetAbortProc   (GDI32.301)
+ *           SetAbortProc   (GDI32.@)
  *
  */
 INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)

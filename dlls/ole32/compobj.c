@@ -1719,7 +1719,7 @@ HRESULT WINAPI CoGetState16(LPDWORD state)
     return S_OK;
 }
 /***********************************************************************
- *           CoSetState [COM32.42]
+ *           CoSetState [OLE32.42]
  */
 HRESULT WINAPI CoSetState(LPDWORD state)
 {

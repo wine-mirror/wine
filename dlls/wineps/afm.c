@@ -6,12 +6,16 @@
  * 
  */
 
+#include "config.h"
+
 #include <string.h>
 #include <stdlib.h> 	/* qsort() & bsearch() */
 #include <stdio.h>
 #include <dirent.h>
 #include <limits.h> 	/* INT_MIN */
-#include <float.h>  	/* FLT_MAX */
+#ifdef HAVE_FLOAT_H
+# include <float.h>  	/* FLT_MAX */
+#endif
 #include "winnt.h"  	/* HEAP_ZERO_MEMORY */
 #include "psdrv.h"
 #include "options.h"

@@ -619,7 +619,7 @@ HRESULT WINAPI AntiMonikerROTDataImpl_GetComparaisonData(IROTData* iface,
 }
 
 /******************************************************************************
- *        CreateAntiMoniker	[OLE.55]
+ *        CreateAntiMoniker	[OLE32.55]
  ******************************************************************************/
 HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk)
 {
