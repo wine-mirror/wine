@@ -82,6 +82,8 @@ static int has_unicode(void) { return 1; }
 #define SPI_SETFASTTASKSWITCH_VALNAME           "CoolSwitch"
 #define SPI_SETDRAGFULLWINDOWS_REGKEY           "Control Panel\\Desktop"
 #define SPI_SETDRAGFULLWINDOWS_VALNAME          "DragFullWindows"
+#define SPI_SETDESKWALLPAPER_REGKEY		"Control Panel\\Desktop"
+#define SPI_SETDESKWALLPAPER_VALNAME		"Wallpaper"
 /* FIXME - don't have access to Windows with this action (W95, NT5.0). Set real values */
 #define SPI_SETKEYBOARDPREF_REGKEY      "Control Panel\\Desktop"
 #define SPI_SETKEYBOARDPREF_VALNAME     "WINE_WorkArea"
@@ -984,6 +986,22 @@ static void test_SPI_SETSCREENREADER( void )           /*     71 */
     /* TODO!!! - don't have version of Windows which has this */
 }
 
+static void test_SPI_SETWALLPAPER( void )              /*   115 */
+{
+    char oldval[260];
+    char newval[260];
+    trace("testing SPI_{GET,SET}DESKWALLPAPER\n");
+
+    SystemParametersInfoA(SPI_GETDESKWALLPAPER, 260, oldval, 0);
+    test_reg_key(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, oldval);
+
+    strcpy(newval, "");
+    SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, newval, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+    test_change_message(SPI_SETDESKWALLPAPER, "");
+
+    SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, oldval, SPIF_UPDATEINIFILE);
+}
+
 /*
  * Registry entries for the system parameters.
  * Names are created by 'SET' flags names.
@@ -1013,6 +1031,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETSHOWSOUNDS();                   /*     57 */
     test_SPI_SETKEYBOARDPREF();                 /*     69 */
     test_SPI_SETSCREENREADER();                 /*     71 */
+    test_SPI_SETWALLPAPER();			/*    115 */
     SendMessageA( ghTestWnd, WM_DESTROY, 0, 0 );
     return 0;
 }

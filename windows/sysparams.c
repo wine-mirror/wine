@@ -109,6 +109,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETWORKAREA_VALNAME                 "WINE_WorkArea"
 #define SPI_SETSHOWSOUNDS_REGKEY        "Control Panel\\Accessibility\\ShowSounds"
 #define SPI_SETSHOWSOUNDS_VALNAME       "On"
+#define SPI_SETDESKWALLPAPER_REGKEY	"Control Panel\\Desktop"
+#define SPI_SETDESKWALLPAPER_VALNAME	"Wallpaper"
 /* FIXME - real values */
 #define SPI_SETKEYBOARDPREF_REGKEY      "Control Panel\\Desktop"
 #define SPI_SETKEYBOARDPREF_VALNAME     "WINE_KeyboardPref"
@@ -836,6 +838,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_SETDESKWALLPAPER:			/*     20 */
+        SYSPARAMS_Save(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, pvParam, fWinIni);
 	ret = SetDeskWallPaper( (LPSTR)pvParam );
 	break;
     case SPI_SETDESKPATTERN:			/*     21 */
@@ -1661,7 +1664,28 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	*(BOOL *)pvParam = screensaver_running;
         break;
 
-    WINE_SPI_FIXME(SPI_GETDESKWALLPAPER);       /*    115  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETDESKWALLPAPER:                  /*    115  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    {
+	char buf[MAX_PATH];
+
+        if (uiParam > MAX_PATH)
+	{
+	    uiParam = MAX_PATH;
+	}
+
+        if (SYSPARAMS_Load(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, buf))
+	{
+	    strncpy((char*)pvParam, buf, uiParam);
+	}
+	else
+	{
+	    /* Return an empty string */
+	    memset((char*)pvParam, 0, uiParam);
+	}
+
+	break;
+    }
+
     WINE_SPI_FIXME(SPI_GETACTIVEWINDOWTRACKING);/* 0x1000  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETACTIVEWINDOWTRACKING);/* 0x1001  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_GETMENUANIMATION);       /* 0x1002  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
