@@ -37,16 +37,28 @@ char* msvcrt_get_current_time(char* out, const char* format)
  */
 MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
 {
-  struct tm aa;
+  MSVCRT_time_t res;
+  struct tm tm;
 
-  aa.tm_sec = t->tm_sec;
-  aa.tm_min = t->tm_min;
-  aa.tm_hour = t->tm_hour;
-  aa.tm_mday = t->tm_mday;
-  aa.tm_mon = t->tm_mon;
-  aa.tm_year = t->tm_year;
-  aa.tm_isdst = t->tm_isdst;
-  return mktime(&aa);
+  tm.tm_sec = t->tm_sec;
+  tm.tm_min = t->tm_min;
+  tm.tm_hour = t->tm_hour;
+  tm.tm_mday = t->tm_mday;
+  tm.tm_mon = t->tm_mon;
+  tm.tm_year = t->tm_year;
+  tm.tm_isdst = t->tm_isdst;
+  res = mktime(&tm);
+  if (res != -1)
+  {
+      t->tm_sec = tm.tm_sec;
+      t->tm_min = tm.tm_min;
+      t->tm_hour = tm.tm_hour;
+      t->tm_mday = tm.tm_mday;
+      t->tm_mon = tm.tm_mon;
+      t->tm_year = tm.tm_year;
+      t->tm_isdst = tm.tm_isdst;
+  }
+  return res;
 }
 
 /**********************************************************************
