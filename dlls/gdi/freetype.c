@@ -36,11 +36,12 @@ DEFAULT_DEBUG_CHANNEL(font);
 #ifdef HAVE_FREETYPE_TTTABLES_H
 #include <freetype/tttables.h>
 #endif
-#ifdef HAVE_FREETYPE_FTNAMES_H
-#include <freetype/ftnames.h>
-#endif
 #ifdef HAVE_FREETYPE_FTSNAMES_H
 #include <freetype/ftsnames.h>
+#else
+# ifdef HAVE_FREETYPE_FTNAMES_H
+# include <freetype/ftnames.h>
+# endif
 #endif
 #ifdef HAVE_FREETYPE_TTNAMEID_H
 #include <freetype/ttnameid.h>
