@@ -143,8 +143,8 @@ LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam);
 /******************************************************************************
  * These are the prototypes of the OLE Clipboard initialization methods (in clipboard.c)
  */
-void OLEClipbrd_UnInitialize(void);
-void OLEClipbrd_Initialize(void);
+extern void OLEClipbrd_UnInitialize(void);
+extern void OLEClipbrd_Initialize(void);
 
 /******************************************************************************
  * These are the prototypes of the utility methods used for OLE Drag n Drop

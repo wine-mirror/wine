@@ -172,11 +172,11 @@ static OLEClipbrd* theOleClipboard = NULL;
 /*
  * Prototypes for the methods of the OLEClipboard class.
  */
-extern void OLEClipbrd_Initialize();
-extern void OLEClipbrd_UnInitialize();
-static OLEClipbrd* OLEClipbrd_Construct();
+void OLEClipbrd_Initialize(void);
+void OLEClipbrd_UnInitialize(void);
+static OLEClipbrd* OLEClipbrd_Construct(void);
 static void OLEClipbrd_Destroy(OLEClipbrd* ptrToDestroy);
-static HWND OLEClipbrd_CreateWindow();
+static HWND OLEClipbrd_CreateWindow(void);
 static void OLEClipbrd_DestroyWindow(HWND hwnd);
 LRESULT CALLBACK OLEClipbrd_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 static HRESULT OLEClipbrd_RenderFormat( IDataObject *pIDataObject, LPFORMATETC pFormatetc );
@@ -610,7 +610,7 @@ HRESULT WINAPI OleIsCurrentClipboard (  IDataObject *pDataObject)
  * OLEClipbrd_Initialize()
  * Initializes the OLE clipboard.
  */
-void OLEClipbrd_Initialize()
+void OLEClipbrd_Initialize(void)
 {
   /*
    * Create the clipboard if necessary
@@ -627,7 +627,7 @@ void OLEClipbrd_Initialize()
  * OLEClipbrd_UnInitialize()
  * Un-Initializes the OLE clipboard
  */
-void OLEClipbrd_UnInitialize()
+void OLEClipbrd_UnInitialize(void)
 {
   TRACE("()\n");
   /*
