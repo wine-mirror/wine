@@ -65,7 +65,7 @@ HWND ICONTITLE_Create( WND* wnd )
 static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
 {
     static WCHAR emptyTitleText[] = {'<','.','.','.','>',0};
-    LPWSTR str;
+    LPWSTR str = NULL;
     int length = lstrlenW( wnd->owner->text );
 
     if( length )
