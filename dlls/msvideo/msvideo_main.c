@@ -553,6 +553,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 	case DRV_OPEN:
 	case ICM_GETDEFAULTQUALITY:
 	case ICM_GETQUALITY:
+	case ICM_SETSTATE:
 		*lParam1 = (DWORD)MapSL(*lParam1);
 		break;
 	case ICM_GETINFO:
