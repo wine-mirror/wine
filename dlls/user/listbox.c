@@ -1706,7 +1706,7 @@ static void LISTBOX_ResetContent( LB_DESCR *descr )
 {
     INT i;
 
-    for (i = 0; i < descr->nb_items; i++) LISTBOX_DeleteItem( descr, i );
+    for(i = descr->nb_items - 1; i>=0; i--) LISTBOX_DeleteItem( descr, i);
     HeapFree( GetProcessHeap(), 0, descr->items );
     descr->nb_items      = 0;
     descr->top_item      = 0;
