@@ -71,6 +71,7 @@ typedef struct
   LPENUMLOGFONTEX16     lpLogFont;
   SEGPTR                segTextMetric;
   SEGPTR                segLogFont;
+  DWORD                 dwFlags;
   HDC                   hdc;
   DC                   *dc;
   PHYSDEV               physDev;
@@ -524,6 +525,7 @@ static INT FONT_EnumInstance16( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
     {
         FONT_EnumLogFontExWTo16(plf, pfe->lpLogFont);
 	FONT_NewTextMetricExWTo16(ptm, pfe->lpTextMetric);
+        pfe->dwFlags |= ENUM_CALLED;
         GDI_ReleaseObj( pfe->hdc );  /* release the GDI lock */
 
         ret = FONT_CallTo16_word_llwl( pfe->lpEnumFunc, pfe->segLogFont, pfe->segTextMetric,
@@ -590,36 +592,49 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
                                    DWORD dwFlags)
 {
     fontEnum16 fe16;
-    INT16	retVal = 0;
+    INT16	ret = 1, ret2;
     DC* 	dc = DC_GetDCPtr( HDC_32(hDC) );
+    NEWTEXTMETRICEX16 tm16;
+    ENUMLOGFONTEX16 lf16;
+    LOGFONTW lfW;
+    BOOL enum_gdi_fonts;
 
     if (!dc) return 0;
+    FONT_LogFont16ToW(plf, &lfW);
+
     fe16.hdc = HDC_32(hDC);
     fe16.dc = dc;
     fe16.physDev = dc->physDev;
+    fe16.lpLogFontParam = plf;
+    fe16.lpEnumFunc = efproc;
+    fe16.lpData = lParam;
+    fe16.lpTextMetric = &tm16;
+    fe16.lpLogFont = &lf16;
+    fe16.segTextMetric = MapLS( &tm16 );
+    fe16.segLogFont = MapLS( &lf16 );
+    fe16.dwFlags = 0;
 
-    if (dc->funcs->pEnumDeviceFonts)
+    enum_gdi_fonts = GetDeviceCaps(fe16.hdc, TEXTCAPS) & TC_VA_ABLE;
+
+    if (!dc->funcs->pEnumDeviceFonts && !enum_gdi_fonts)
     {
-        NEWTEXTMETRICEX16 tm16;
-        ENUMLOGFONTEX16 lf16;
-        LOGFONTW lfW;
-        FONT_LogFont16ToW(plf, &lfW);
-
-        fe16.lpLogFontParam = plf;
-        fe16.lpEnumFunc = efproc;
-        fe16.lpData = lParam;
-        fe16.lpTextMetric = &tm16;
-        fe16.lpLogFont = &lf16;
-        fe16.segTextMetric = MapLS( &tm16 );
-        fe16.segLogFont = MapLS( &lf16 );
-
-        retVal = dc->funcs->pEnumDeviceFonts( dc->physDev, &lfW,
-                                              FONT_EnumInstance16, (LPARAM)&fe16 );
-        UnMapLS( fe16.segTextMetric );
-        UnMapLS( fe16.segLogFont );
+        ret = 0;
+        goto done;
     }
+
+    if (enum_gdi_fonts)
+        ret = WineEngEnumFonts( &lfW, FONT_EnumInstance16, (LPARAM)&fe16 );
+    fe16.dwFlags &= ~ENUM_CALLED;
+    if (ret && dc->funcs->pEnumDeviceFonts) {
+	ret2 = dc->funcs->pEnumDeviceFonts( dc->physDev, &lfW, FONT_EnumInstance16, (LPARAM)&fe16 );
+	if(fe16.dwFlags & ENUM_CALLED) /* update ret iff a font gets enumed */
+	    ret = ret2;
+    }
+done:
+    UnMapLS( fe16.segTextMetric );
+    UnMapLS( fe16.segLogFont );
     if (fe16.hdc) GDI_ReleaseObj( fe16.hdc );
-    return retVal;
+    return ret;
 }
 
 /***********************************************************************
