@@ -221,8 +221,8 @@ int serial_async_get_poll_events( struct async *ov )
         mask = async_get_eventmask(ov);
         if(mask&EV_RXCHAR)
             events |= POLLIN;
-        if(mask&EV_TXEMPTY)
-            events |= POLLOUT;
+        /* if(mask&EV_TXEMPTY)
+            events |= POLLOUT; */
         break;
     }
     return events;
