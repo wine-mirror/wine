@@ -35,15 +35,26 @@
 
 void WINAPI INT_Int10Handler( CONTEXT *context )
 {
-    switch(AH_reg(context))
-    {
-    case 0x00: /* SET VIDEO MODE */
-        /* If the mode is 0x02 or 0x07 then we are still in
-           80x25 text and can ignore the request */
-        if ((AL_reg(context) == 0x02) || (AL_reg(context) == 0x07))
-           break;
+    switch(AH_reg(context)) {
 
-        FIXME(int10, "Set Video Mode - Not Supported\n");
+    case 0x00: /* SET VIDEO MODE */
+        /* Text Modes: (can xterm or similar change text rows/cols?) */
+        /* (mode) (text rows/cols)
+            0x00 - 40x25 
+            0x01 - 40x25
+            0x02 - 80x25
+            0x03 - 80x25 or 80x43 or 80x50 
+            0x07 - 80x25
+        */
+
+        if ((AL_reg(context) == 0x02) || (AL_reg(context) == 0x07)) {
+           TRACE(int10, "Set Video Mode - Set to Text - 0x0%x\n",
+              AL_reg(context));
+        }
+        else {
+           FIXME(int10, "Set Video Mode (0x%x) - Not Supported\n", 
+              AL_reg(context));
+        }
         break;
 
     case 0x01: /* SET CURSOR SHAPE */
@@ -116,10 +127,12 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         break;
               
     case 0x0e: /* TELETYPE OUTPUT */
+        TRACE(int10, "Teletype Output\n");
         _lwrite16(1, &AL_reg(context), 1);
         break;
 
     case 0x0f: /* GET CURRENT VIDEO MODE */
+        TRACE(int10, "Get Current Video Mode\n");
         AL_reg(context) = 0x5b; /* WHY ARE WE RETURNING THIS? */
         break;
 
@@ -129,7 +142,8 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
             FIXME(int10, "Set Single Palette Register - Not Supported\n");
             break;
         case 0x01: /* SET BORDER (OVERSCAN) */
-            FIXME(int10, "Set Border (Overscan) - Not Supported\n");
+            /* Text terminals have no overscan */
+            TRACE(int10, "Set Border (Overscan) - Ignored\n");
             break;
         case 0x02: /* SET ALL PALETTE REGISTERS */
             FIXME(int10, "Set all palette registers - Not Supported\n");
