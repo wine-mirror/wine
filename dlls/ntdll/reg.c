@@ -779,10 +779,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
     if (pInfo == NULL)
     {
         if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
-        {
-            FIXME("(pInfo == NULL, pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT), stub!\n");
-            return status;
-        }
+            return STATUS_INVALID_PARAMETER;
         else
         {
             status = pQuery->QueryRoutine(pQuery->Name, pQuery->DefaultType, pQuery->DefaultData,
@@ -1022,6 +1019,9 @@ NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
     INT i;
 
     TRACE("(%ld, %s, %p, %p, %p)\n", RelativeTo, debugstr_w(Path), QueryTable, Context, Environment);
+
+    if(Path == NULL)
+        return STATUS_INVALID_PARAMETER;
 
     /* get a valid handle */
     if (RelativeTo & RTL_REGISTRY_HANDLE)
