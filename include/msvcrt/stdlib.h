@@ -49,6 +49,12 @@ typedef struct MSVCRT(_ldiv_t) {
 #define min(a,b)   (((a) < (b)) ? (a) : (b))
 #endif
 
+/* _set_error_mode() constants */
+#define _OUT_TO_DEFAULT      0
+#define _OUT_TO_STDERR       1
+#define _OUT_TO_MSGBOX       2
+#define _REPORT_ERRMODE      3
+
 
 #ifdef __cplusplus
 extern "C" {
