@@ -324,6 +324,9 @@ static BOOL process_raw_keyboard_message( MSG *msg, ULONG_PTR extra_info )
         HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event );
     }
 
+    /* if we are going to throw away the message, update the queue state now */
+    if (!msg->hwnd) update_queue_key_state( msg->message, msg->wParam );
+
     return (msg->hwnd != 0);
 }
 
