@@ -771,6 +771,8 @@ static void CBPaintText(
    if( (id = SendMessageW(lphc->hWndLBox, LB_GETCURSEL, 0, 0) ) != LB_ERR )
    {
         size = SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, id, 0);
+	if (size == LB_ERR)
+	  FIXME("LB_ERR probably not handled yet\n");
         if( (pText = HeapAlloc( GetProcessHeap(), 0, (size + 1) * sizeof(WCHAR))) )
 	{
             /* size from LB_GETTEXTLEN may be too large, from LB_GETTEXT is accurate */
@@ -1113,7 +1115,7 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
    if( index >= 0 ) /* got an entry */
    {
        length = SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, (WPARAM)index, 0);
-       if( length )
+       if( length != LB_ERR)
        {
 	   if( (pText = HeapAlloc( GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR))) )
 	   {
@@ -1538,7 +1540,8 @@ static LRESULT COMBO_GetText( LPHEADCOMBO lphc, INT N, LPARAM lParam, BOOL unico
 	   INT n = 0;
            INT length = SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN,
 					        (WPARAM)idx, 0 );
-
+	   if(length == LB_ERR)
+	     FIXME("LB_ERR probably not handled yet\n");
 	    if(unicode)
 	    {
 		LPWSTR lpBuffer, lpText = (LPWSTR)lParam;
