@@ -725,7 +725,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
 /*
  * Find a symbol in the symbol table of the executable loaded
  */
-static void *find_symbol( const ElfW(Phdr) *phdr, int num, char *var )
+static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var )
 {
     const ElfW(Dyn) *dyn = NULL;
     const ElfW(Phdr) *ph;

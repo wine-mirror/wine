@@ -137,8 +137,8 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
 {
     COORD		c;
     DWORD		len, mode;
-    char*		mytest;
-    int                 mylen;
+    const char*         mytest = "123";
+    const int           mylen = strlen(mytest);
     int                 ret;
     int			p;
 
@@ -148,10 +148,6 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     /* write line, wrapping disabled, buffer exceeds sb width */
     c.X = sbSize.X - 3; c.Y = 0;
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3\n");
-
-    mytest = "123";
-
-    mylen = strlen(mytest);
 
     ret = WriteConsole(hCon, mytest, mylen, &len, NULL);
     ok(ret != 0 && len == mylen, "Couldn't write, ret = %d, len = %ld\n", ret, len);

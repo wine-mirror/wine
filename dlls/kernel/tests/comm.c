@@ -409,7 +409,7 @@ static TEST test[] =
 		pdcb->wReserved1 & 0xffff );
 } */
 
-static void check_result(char *function, TEST *ptest, int initial_value, BOOL result)
+static void check_result(const char *function, TEST *ptest, int initial_value, BOOL result)
 {
 	DWORD LastError = GetLastError();
 	DWORD CorrectError = (ptest->result ? 0xdeadbeef : ERROR_INVALID_PARAMETER);
@@ -421,7 +421,7 @@ static void check_result(char *function, TEST *ptest, int initial_value, BOOL re
 #define check_dcb_member(a,b) ok(pdcb1->a == pdcb2->a, "%s(\"%s\"), 0x%02x: "#a" is "b", should be "b"\n", function, ptest->string, initial_value, pdcb1->a, pdcb2->a)
 #define check_dcb_member2(a,c,b) if(pdcb2->a == c) { check_dcb_member(a,b); } else { ok(pdcb1->a == pdcb2->a || pdcb1->a == c, "%s(\"%s\"), 0x%02x: "#a" is "b", should be "b" or "b"\n", function, ptest->string, initial_value, pdcb1->a, pdcb2->a, c); }
 
-static void check_dcb(char *function, TEST *ptest, int initial_value, DCB *pdcb1, DCB *pdcb2)
+static void check_dcb(const char *function, TEST *ptest, int initial_value, DCB *pdcb1, DCB *pdcb2)
 {
 	/* DCBlength is a special case since Win 9x sets it but NT does not.
 	   We will accept either as correct. */
@@ -493,7 +493,7 @@ static void check_dcb(char *function, TEST *ptest, int initial_value, DCB *pdcb1
 
 #define check_timeouts_member(a) ok(ptimeouts1->a == ptimeouts2->a, "%s(\"%s\"), 0x%02x: "#a" is %lu, should be %lu\n", function, ptest->string, initial_value, ptimeouts1->a, ptimeouts2->a);
 
-static void check_timeouts(char *function, TEST *ptest, int initial_value, COMMTIMEOUTS *ptimeouts1, COMMTIMEOUTS *ptimeouts2)
+static void check_timeouts(const char *function, TEST *ptest, int initial_value, COMMTIMEOUTS *ptimeouts1, COMMTIMEOUTS *ptimeouts2)
 {
 	check_timeouts_member(ReadIntervalTimeout);
 	check_timeouts_member(ReadTotalTimeoutMultiplier);

@@ -47,11 +47,11 @@
 #include <winerror.h>
 #include <lzexpand.h>
 
-static char* filename_ = "testfile.xx_";
+static char filename_[] = "testfile.xx_";
 #if 0
-static char* filename = "testfile.xxx";
+static char filename[] = "testfile.xxx";
 #endif
-static char* filename2 = "testfile.yyy";
+static char filename2[] = "testfile.yyy";
 
 /* This is the hex string representation of the file created by compressing
    a simple text file with the contents "This is a test file."
