@@ -1259,7 +1259,7 @@ INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
                                          LPSTR lpPathBuf, DWORD* pcchBuf)
 {
     INSTALLSTATE rc;
-    UINT len;
+    UINT len,incoming_len;
     LPWSTR szwProduct= NULL;
     LPWSTR szwComponent= NULL;
     LPWSTR lpwPathBuf= NULL;
@@ -1290,14 +1290,15 @@ INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
     else
         lpwPathBuf = NULL;
 
+    incoming_len = *pcchBuf;
     rc = MsiGetComponentPathW(szwProduct, szwComponent, lpwPathBuf, pcchBuf);
 
     HeapFree( GetProcessHeap(), 0, szwProduct);
     HeapFree( GetProcessHeap(), 0, szwComponent);
     if (lpwPathBuf)
     {
-        WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, *pcchBuf,
-                            lpPathBuf, GUID_SIZE, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, incoming_len,
+                            lpPathBuf, incoming_len, NULL, NULL);
         HeapFree( GetProcessHeap(), 0, lpwPathBuf);
     }
 
@@ -1307,10 +1308,58 @@ INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
 INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
                                          LPWSTR lpPathBuf, DWORD* pcchBuf)
 {
-    FIXME("STUB: (%s %s %p %p)\n", debugstr_w(szProduct),
+    WCHAR squished_pc[0x100];
+    WCHAR squished_cc[0x100];
+    UINT rc;
+    INSTALLSTATE rrc = INSTALLSTATE_ABSENT;
+    HKEY hkey=0,hkey2=0,hkey3=0;
+    static const WCHAR szInstaller[] = {
+         'S','o','f','t','w','a','r','e','\\',
+         'M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\',
+         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+         'I','n','s','t','a','l','l','e','r',0 };
+    static const WCHAR szComponents[] = {
+         'C','o','m','p','o','n','e','n','t','s',0 };
+
+    TRACE("(%s %s %p %p)\n", debugstr_w(szProduct),
            debugstr_w(szComponent), lpPathBuf, pcchBuf);
 
-    return INSTALLSTATE_UNKNOWN;
+    squash_guid(szProduct,squished_pc);
+    squash_guid(szComponent,squished_cc);
+
+    rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,szInstaller,&hkey);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegOpenKeyW(hkey,szComponents,&hkey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegOpenKeyW(hkey2,squished_cc,&hkey3);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    *pcchBuf *= sizeof(WCHAR);
+    rc = RegQueryValueExW(hkey3,squished_pc,NULL,NULL,(LPVOID)lpPathBuf,
+                          pcchBuf);
+    *pcchBuf /= sizeof(WCHAR);
+
+    if (rc!= ERROR_SUCCESS)
+        goto end;
+
+    TRACE("found path of (%s:%s)(%s)\n", debugstr_w(squished_cc),
+           debugstr_w(squished_pc), debugstr_w(lpPathBuf));
+
+    FIXME("Only working for installed files, not registry keys\n");
+    if (GetFileAttributesW(lpPathBuf) != INVALID_FILE_ATTRIBUTES)
+        rrc = INSTALLSTATE_LOCAL;
+
+end:
+    RegCloseKey(hkey3);
+    RegCloseKey(hkey2);
+    RegCloseKey(hkey);
+    return rrc;
 }
 
 INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature)
