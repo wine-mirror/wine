@@ -30,6 +30,7 @@
 #include <sys/errno.h>
 #endif
 #include <sys/types.h>
+#include <fcntl.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -731,7 +732,10 @@ static void _copy_registry( HKEY from, HKEY to )
     }
 }
 /* NT REGISTRY LOADER */
-#include <sys/mman.h>
+
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
 
 #ifndef MAP_FAILED
 #define MAP_FAILED ((LPVOID)-1)

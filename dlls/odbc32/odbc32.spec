@@ -33,7 +33,7 @@ init    MAIN_OdbcInit
 029 stdcall SQLEndTran(long long long) SQLEndTran
 030 stdcall SQLFetchScroll(long long long) SQLFetchScroll
 031 stdcall SQLFreeHandle(long long) SQLFreeHandle
-032 stdcall SQLGetConnectAttr(long long ptr ptr) SQLGetConnectAttr
+032 stdcall SQLGetConnectAttr(long long ptr long ptr) SQLGetConnectAttr
 033 stdcall SQLGetDescField(long long long ptr long ptr) SQLGetDescField
 034 stdcall SQLGetDescRec(long long str long ptr ptr ptr ptr ptr ptr ptr) SQLGetDescRec
 035 stdcall SQLGetDiagField(long long long long ptr long ptr) SQLGetDiagField
@@ -62,10 +62,10 @@ init    MAIN_OdbcInit
 058 stdcall SQLDescribeParam(long long ptr ptr ptr ptr) SQLDescribeParam
 059 stdcall SQLExtendedFetch(long long long ptr ptr) SQLExtendedFetch
 060 stdcall SQLForeignKeys(long str long str long str long str long str long str long) SQLForeignKeys
-061 stdcall SQLMoreResults(long str long str long ptr) SQLMoreResults
-062 stdcall SQLNativeSql(long str long str long str long) SQLNativeSql
+061 stdcall SQLMoreResults(long) SQLMoreResults
+062 stdcall SQLNativeSql(long str long str long ptr) SQLNativeSql
 063 stdcall SQLNumParams(long ptr) SQLNumParams
-064 stdcall SQLParamOptions(long str long str long str long) SQLParamOptions
+064 stdcall SQLParamOptions(long long ptr) SQLParamOptions
 065 stdcall SQLPrimaryKeys(long str long str long str long) SQLPrimaryKeys
 066 stdcall SQLProcedureColumns(long str long str long str long str long) SQLProcedureColumns
 067 stdcall SQLProcedures(long str long str long str long) SQLProcedures

@@ -192,7 +192,7 @@ import  ntdll.dll
 174 stdcall CreateSemaphoreA(ptr long long str) CreateSemaphoreA
 175 stdcall CreateSemaphoreW(ptr long long wstr) CreateSemaphoreW
 176 stdcall CreateSocketHandle() CreateSocketHandle
-177 stub CreateTapePartition
+177 stdcall CreateTapePartition(long long long long) CreateTapePartition
 178 stdcall CreateThread(ptr long ptr long long ptr) CreateThread
 179 stdcall CreateToolhelp32Snapshot(long long) CreateToolhelp32Snapshot
 180 stdcall DebugActiveProcess(long) DebugActiveProcess
