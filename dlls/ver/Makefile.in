@@ -1,0 +1,15 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ver
+
+C_SRCS = \
+	ver16.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
