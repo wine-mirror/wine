@@ -267,7 +267,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
                     if (!DBG_CHECK_READ_PTR( &addr, sizeof(int) )) return;
                     fprintf(stderr," %8.8x", *dump++);
                     addr.off += sizeof(int);
-                    if ((i % 8) == 7)
+                    if ((i % 4) == 3)
                     {
                         fprintf(stderr,"\n");
                         DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
@@ -282,9 +282,9 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 		for(i=0; i<count; i++) 
 		{
                     if (!DBG_CHECK_READ_PTR( &addr, sizeof(int) )) return;
-                    fprintf(stderr," %d", *dump++);
+                    fprintf(stderr," %10d", *dump++);
                     addr.off += sizeof(int);
-                    if ((i % 8) == 7)
+                    if ((i % 4) == 3)
                     {
                         fprintf(stderr,"\n");
                         DEBUG_PrintAddress( &addr, dbg_mode, FALSE );
