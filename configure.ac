@@ -551,6 +551,16 @@ then
     AC_DEFINE(HAVE_ARTS, 1, [Define if you have ARTS sound server])
 fi
 
+dnl **** Check for ALSA ****
+AC_SUBST(ALSALIBS,"")
+AC_CHECK_HEADERS(sys/asoundlib.h)
+if test "$ac_cv_header_sys_asoundlib_h" = "yes"
+then
+    AC_CHECK_LIB(asound,snd_pcm_open,
+    	AC_DEFINE(HAVE_ALSA,1,[Define if you have ALSA including devel headers])
+	ALSALIBS="-lasound")
+fi
+
 dnl **** Check for broken glibc mmap64 ****
 
 AC_CACHE_CHECK( [whether mmap64 works defined as mmap], ac_cv_mmap64_works,

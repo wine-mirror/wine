@@ -20,6 +20,9 @@
    */
 #undef HAVE_ALLOCA_H
 
+/* Define if you have ALSA including devel headers */
+#undef HAVE_ALSA
+
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
@@ -427,6 +430,9 @@
 
 /* Define to 1 if you have the <syscall.h> header file. */
 #undef HAVE_SYSCALL_H
+
+/* Define to 1 if you have the <sys/asoundlib.h> header file. */
+#undef HAVE_SYS_ASOUNDLIB_H
 
 /* Define to 1 if you have the <sys/cdio.h> header file. */
 #undef HAVE_SYS_CDIO_H

@@ -19,7 +19,9 @@
 # error You must include config.h to use this header
 #endif
 
+#ifdef HAVE_SYS_ASOUNDLIB_H
 #include <sys/asoundlib.h>
+#endif
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif

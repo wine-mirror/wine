@@ -4,11 +4,10 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winealsa.drv
 IMPORTS   = winmm user32 kernel32 ntdll
+EXTRALIBS = @ALSALIBS@
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
-
-EXTRALIBS  = -lasound
 
 C_SRCS = \
 	audio.c \
