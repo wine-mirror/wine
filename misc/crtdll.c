@@ -106,7 +106,7 @@ CRTDLL_FILE * __cdecl CRTDLL__fdopen(INT handle, LPCSTR mode);
  */
 BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	TRACE(crtdll,"(0x%08lx,%ld,%p)\n",hinstDLL,fdwReason,lpvReserved);
+	TRACE(crtdll,"(0x%08x,%ld,%p)\n",hinstDLL,fdwReason,lpvReserved);
 
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 		CRTDLL__fdopen(0,"r");
