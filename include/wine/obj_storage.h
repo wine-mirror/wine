@@ -449,18 +449,18 @@ ICOM_DEFINE(ISequentialStream,IUnknown)
  */
 #define ICOM_INTERFACE IStorage16
 #define IStorage16_METHODS \
-    ICOM_METHOD5(HRESULT,CreateStream,   OLECHAR*,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream16**,ppstm) \
-    ICOM_METHOD5(HRESULT,OpenStream,     OLECHAR*,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream16**,ppstm) \
-    ICOM_METHOD5(HRESULT,CreateStorage,  OLECHAR*,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage16**,ppstg) \
-    ICOM_METHOD6(HRESULT,OpenStorage,    OLECHAR*,pwcsName, IStorage16*,pstgPriority, DWORD,grfMode, SNB16,snb16Exclude, DWORD,reserved, IStorage16**,ppstg) \
+    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream16**,ppstm) \
+    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR16,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream16**,ppstm) \
+    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage16**,ppstg) \
+    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR16,pwcsName, IStorage16*,pstgPriority, DWORD,grfMode, SNB16,snb16Exclude, DWORD,reserved, IStorage16**,ppstg) \
     ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB16,snb16Exclude, IStorage16*,pstgDest) \
     ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR16,pwcsName, IStorage16*,pstgDest, LPCOLESTR16,pwcsNewName, DWORD,grfFlags) \
     ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags) \
     ICOM_METHOD (HRESULT,Revert) \
     ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum) \
-    ICOM_METHOD1(HRESULT,DestroyElement, OLECHAR*,pwcsName) \
-    ICOM_METHOD2(HRESULT,RenameElement,  OLECHAR*,pwcsOldName, OLECHAR*,pwcsNewName) \
-    ICOM_METHOD4(HRESULT,SetElementTimes,OLECHAR*,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime) \
+    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR16,pwcsName) \
+    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR16,pwcsOldName, LPOLESTR16,pwcsNewName) \
+    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR16,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime) \
     ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid) \
     ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask) \
     ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag)
