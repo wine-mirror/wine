@@ -201,24 +201,6 @@ BOOL WINAPI SetupGetInfInformationA( LPCVOID InfSpec, DWORD SearchControl,
 }
 
 /***********************************************************************
- *		SetupCreateDiskSpaceListA  (SETUPAPI.@)
- */
-HDSKSPC SetupCreateDiskSpaceListA( PVOID Reserved1, DWORD Reserved2, UINT Flags )
-{
-    FIXME("%08x\n", Flags);
-    return NULL;
-}
-
-/***********************************************************************
- *		SetupCreateDiskSpaceListA  (SETUPAPI.@)
- */
-HDSKSPC SetupCreateDiskSpaceListW( PVOID Reserved1, DWORD Reserved2, UINT Flags )
-{
-    FIXME("%08x\n", Flags);
-    return NULL;
-}
-
-/***********************************************************************
  *		SetupInitializeFileLogW(SETUPAPI.@)
  */
 HANDLE WINAPI SetupInitializeFileLogW(LPWSTR LogFileName, DWORD Flags)

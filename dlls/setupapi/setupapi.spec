@@ -50,7 +50,7 @@
 @ stub RetrieveServiceConfig
 @ stub SearchForInfFile
 @ stub SetArrayToMultiSzValue
-@ stub SetupAddInstallSectionToDiskSpaceListA
+@ stdcall SetupAddInstallSectionToDiskSpaceListA(long long long str ptr long)
 @ stub SetupAddInstallSectionToDiskSpaceListW
 @ stub SetupAddSectionToDiskSpaceListA
 @ stub SetupAddSectionToDiskSpaceListW
@@ -79,7 +79,7 @@
 @ stdcall SetupDefaultQueueCallbackW(ptr long long long)
 @ stub SetupDeleteErrorA
 @ stub SetupDeleteErrorW
-@ stub SetupDestroyDiskSpaceList
+@ stdcall SetupDestroyDiskSpaceList(long)
 @ stub SetupDiAskForOEMDisk
 @ stub SetupDiBuildClassInfoList
 @ stdcall SetupDiBuildClassInfoListExW(long ptr long ptr wstr ptr)
@@ -254,7 +254,7 @@
 @ stub SetupQueryInfOriginalFileInformationW
 @ stub SetupQuerySourceListA
 @ stub SetupQuerySourceListW
-@ stub SetupQuerySpaceRequiredOnDriveA
+@ stdcall SetupQuerySpaceRequiredOnDriveA(long str ptr ptr long)
 @ stub SetupQuerySpaceRequiredOnDriveW
 @ stdcall SetupQueueCopyA(long str str str str str str str long)
 @ stdcall SetupQueueCopyIndirectA(ptr)

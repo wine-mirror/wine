@@ -13,6 +13,7 @@ SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 C_SRCS = \
 	devinst.c \
 	dirid.c \
+	diskspace.c \
 	install.c \
 	parser.c \
 	queue.c \
