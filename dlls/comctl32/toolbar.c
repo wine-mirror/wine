@@ -51,7 +51,6 @@
  *     - NM_CHAR
  *     - NM_KEYDOWN
  *     - TBN_GETOBJECT
- *     - TBN_RESTORE
  *     - TBN_SAVE
  *   - Button wrapping (under construction).
  *   - Fix TB_SETROWS.
@@ -73,6 +72,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
@@ -4385,64 +4385,184 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return TRUE;
 }
 
-static LRESULT
-TOOLBAR_SaveRestoreA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+
+/* helper for TOOLBAR_SaveRestoreW */
+static BOOL
+TOOLBAR_Save(TOOLBAR_INFO *infoPtr, LPTBSAVEPARAMSW lpSave)
 {
-#if 0
-    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    LPTBSAVEPARAMSA lpSave = (LPTBSAVEPARAMSA)lParam;
+    FIXME("save to %s %s\n", debugstr_w(lpSave->pszSubKey),
+        debugstr_w(lpSave->pszValueName));
 
-    if (lpSave == NULL) return 0;
-
-    if ((BOOL)wParam) {
-	/* save toolbar information */
-	FIXME("save to \"%s\" \"%s\"\n",
-	       lpSave->pszSubKey, lpSave->pszValueName);
+    return FALSE;
+}
 
 
+/* helper for TOOLBAR_Restore */
+static void
+TOOLBAR_DeleteAllButtons(TOOLBAR_INFO *infoPtr)
+{
+    INT i;
+    TTTOOLINFOW ti;
+
+    ZeroMemory(&ti, sizeof(ti));
+    ti.cbSize   = sizeof(ti);
+    ti.hwnd     = infoPtr->hwndSelf;
+
+    for (i = 0; i < infoPtr->nNumButtons; i++)
+    {
+        if ((infoPtr->hwndToolTip) &&
+            !(infoPtr->buttons[i].fsStyle & BTNS_SEP))
+        {
+            ti.uId      = infoPtr->buttons[i].idCommand;
+            SendMessageW(infoPtr->hwndToolTip, TTM_DELTOOLW, 0, (LPARAM)&ti);
+        }
     }
-    else {
-	/* restore toolbar information */
 
-	FIXME("restore from \"%s\" \"%s\"\n",
-	       lpSave->pszSubKey, lpSave->pszValueName);
+    Free(infoPtr->buttons);
+    infoPtr->buttons = NULL;
+    infoPtr->nNumButtons = 0;
+}
 
 
+/* helper for TOOLBAR_SaveRestoreW */
+static BOOL
+TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, LPTBSAVEPARAMSW lpSave)
+{
+    LONG res;
+    HKEY hkey = NULL;
+    BOOL ret = FALSE;
+    DWORD dwType;
+    DWORD dwSize = 0;
+    NMTBRESTORE nmtbr;
+
+    /* restore toolbar information */
+    TRACE("restore from %s %s\n", debugstr_w(lpSave->pszSubKey),
+        debugstr_w(lpSave->pszValueName));
+
+    memset(&nmtbr, 0, sizeof(nmtbr));
+
+    res = RegOpenKeyExW(lpSave->hkr, lpSave->pszSubKey, 0,
+        KEY_QUERY_VALUE, &hkey);
+    if (!res)
+        res = RegQueryValueExW(hkey, lpSave->pszValueName, NULL, &dwType,
+            NULL, &dwSize);
+    if (!res && dwType != REG_BINARY)
+        res = ERROR_FILE_NOT_FOUND;
+    if (!res)
+    {
+        nmtbr.pData = HeapAlloc(GetProcessHeap(), 0, dwSize);
+        nmtbr.cbData = (UINT)dwSize;
+        if (!nmtbr.pData) res = ERROR_OUTOFMEMORY;
     }
-#endif
+    if (!res)
+        res = RegQueryValueExW(hkey, lpSave->pszValueName, NULL, &dwType,
+            (LPBYTE)nmtbr.pData, &dwSize);
+    if (!res)
+    {
+        nmtbr.pCurrent = nmtbr.pData;
+        nmtbr.iItem = -1;
+        nmtbr.cbBytesPerRecord = sizeof(DWORD);
+        nmtbr.cButtons = nmtbr.cbData / nmtbr.cbBytesPerRecord;
 
-    return 0;
+        if (!TOOLBAR_SendNotify(&nmtbr.hdr, infoPtr, TBN_RESTORE))
+        {
+            INT i;
+
+            /* remove all existing buttons as this function is designed to
+             * restore the toolbar to a previously saved state */
+            TOOLBAR_DeleteAllButtons(infoPtr);
+
+            for (i = 0; i < nmtbr.cButtons; i++)
+            {
+                nmtbr.iItem = i;
+                nmtbr.tbButton.iBitmap = -1;
+                nmtbr.tbButton.fsState = 0;
+                nmtbr.tbButton.fsStyle = 0;
+                nmtbr.tbButton.idCommand = 0;
+                if (*nmtbr.pCurrent == (DWORD)-1)
+                {
+                    /* separator */
+                    nmtbr.tbButton.fsStyle = TBSTYLE_SEP;
+                    nmtbr.tbButton.iBitmap = SEPARATOR_WIDTH;
+                }
+                else if (*nmtbr.pCurrent == (DWORD)-2)
+                    /* hidden button */
+                    nmtbr.tbButton.fsState = TBSTATE_HIDDEN;
+                else
+                    nmtbr.tbButton.idCommand = (int)*nmtbr.pCurrent;
+
+                nmtbr.pCurrent++;
+                
+                TOOLBAR_SendNotify(&nmtbr.hdr, infoPtr, TBN_RESTORE);
+
+                /* can't contain real string as we don't know whether
+                 * the client put an ANSI or Unicode string in there */
+                if (HIWORD(nmtbr.tbButton.iString))
+                    nmtbr.tbButton.iString = 0;
+
+                TOOLBAR_InsertButtonW(infoPtr->hwndSelf, -1,
+                    (LPARAM)&nmtbr.tbButton);
+            }
+
+            /* do legacy notifications */
+            if (infoPtr->iVersion < 5)
+            {
+                /* FIXME: send TBN_BEGINADJUST */
+                FIXME("send TBN_GETBUTTONINFO for each button\n");
+                /* FIXME: send TBN_ENDADJUST */
+            }
+
+            /* remove all uninitialised buttons
+             * note: loop backwards to avoid having to fixup i on a
+             * delete */
+            for (i = infoPtr->nNumButtons - 1; i >= 0; i--)
+                if (infoPtr->buttons[i].iBitmap == -1)
+                    TOOLBAR_DeleteButton(infoPtr->hwndSelf, i, 0);
+
+            /* only indicate success if at least one button survived */
+            if (infoPtr->nNumButtons > 0) ret = TRUE;
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, nmtbr.pData);
+    RegCloseKey(hkey);
+
+    return ret;
 }
 
 
 static LRESULT
-TOOLBAR_SaveRestoreW (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TOOLBAR_SaveRestoreW (HWND hwnd, WPARAM wParam, LPTBSAVEPARAMSW lpSave)
 {
-#if 0
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    LPTBSAVEPARAMSW lpSave = (LPTBSAVEPARAMSW)lParam;
 
-    if (lpSave == NULL)
-	return 0;
+    if (lpSave == NULL) return 0;
 
-    if ((BOOL)wParam) {
-	/* save toolbar information */
-	FIXME("save to \"%s\" \"%s\"\n",
-	       lpSave->pszSubKey, lpSave->pszValueName);
-
-
-    }
-    else {
-	/* restore toolbar information */
-
-	FIXME("restore from \"%s\" \"%s\"\n",
-	       lpSave->pszSubKey, lpSave->pszValueName);
+    if (wParam)
+        return TOOLBAR_Save(infoPtr, lpSave);
+    else
+        return TOOLBAR_Restore(infoPtr, lpSave);
+}
 
 
-    }
-#endif
+static LRESULT
+TOOLBAR_SaveRestoreA (HWND hwnd, WPARAM wParam, LPTBSAVEPARAMSA lpSave)
+{
+    TBSAVEPARAMSW SaveW;
+    int len;
 
-    return 0;
+    if (lpSave == NULL) return 0;
+
+    SaveW.hkr = lpSave->hkr;
+
+    len = MultiByteToWideChar(CP_ACP, 0, lpSave->pszSubKey, -1, NULL, 0);
+    SaveW.pszSubKey = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, lpSave->pszSubKey, -1, (LPWSTR)SaveW.pszSubKey, len);
+
+    len = MultiByteToWideChar(CP_ACP, 0, lpSave->pszValueName, -1, NULL, 0);
+    SaveW.pszValueName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, lpSave->pszValueName, -1, (LPWSTR)SaveW.pszValueName, len);
+
+    return TOOLBAR_SaveRestoreW(hwnd, wParam, &SaveW);
 }
 
 
@@ -6813,10 +6933,10 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return TOOLBAR_ReplaceBitmap (hwnd, wParam, lParam);
 
 	case TB_SAVERESTOREA:
-	    return TOOLBAR_SaveRestoreA (hwnd, wParam, lParam);
+	    return TOOLBAR_SaveRestoreA (hwnd, wParam, (LPTBSAVEPARAMSA)lParam);
 
 	case TB_SAVERESTOREW:
-	    return TOOLBAR_SaveRestoreW (hwnd, wParam, lParam);
+	    return TOOLBAR_SaveRestoreW (hwnd, wParam, (LPTBSAVEPARAMSW)lParam);
 
 	case TB_SETANCHORHIGHLIGHT:
 	    return TOOLBAR_SetAnchorHighlight (hwnd, wParam);
