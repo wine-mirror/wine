@@ -2928,17 +2928,17 @@ typedef struct _SID_AND_ATTRIBUTES {
  */
 
 typedef struct _TOKEN_USER {
-  SID_AND_ATTRIBUTES User;
-} TOKEN_USER;
+    SID_AND_ATTRIBUTES User;
+} TOKEN_USER, *PTOKEN_USER;
 
 /*
  * TOKEN_GROUPS
  */
 
-typedef struct _TOKEN_GROUPS  {
-  DWORD GroupCount;
-  SID_AND_ATTRIBUTES Groups[ANYSIZE_ARRAY];
-} TOKEN_GROUPS;
+typedef struct _TOKEN_GROUPS {
+    DWORD GroupCount;
+    SID_AND_ATTRIBUTES Groups[ANYSIZE_ARRAY];
+} TOKEN_GROUPS, *PTOKEN_GROUPS;
 
 /*
  * LUID_AND_ATTRIBUTES
