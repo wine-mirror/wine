@@ -49,6 +49,61 @@ INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
 BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
                                    LPARAM lParam);
 
+/* There is a table here of all charsets, and the sample text for each.
+ * There is a second table that translates a charset into an index into
+ * the first table.
+ */
+
+#define CI(cs) ((IDS_CHARSET_##cs)-IDS_CHARSET_ANSI)
+#define SAMPLE_EXTLEN 10
+
+static const WCHAR SAMPLE_LANG_TEXT[][SAMPLE_EXTLEN]={
+    {'Y','y','Z','z',0}, /* Western and default */
+    {0}, /* Symbol */
+    {0}, /* Shift JIS */
+    {0}, /* Hangul */
+    {0}, /* GB2312 */
+    {0}, /* BIG5 */
+    {0}, /* Greek */
+    {0}, /* Turkish */
+    {0x05e0, 0x05e1, 0x05e9, 0x05ea, 0}, /* Hebrew */
+    {0}, /* Arabic */
+    {0}, /* Baltic */
+    {0}, /* Vietnamese */
+    {0}, /* Russian */
+    {0}, /* East European */
+    {0}, /* Thai */
+    {0}, /* Johab */
+    {0}, /* Mac */
+    {0}, /* OEM */
+    {0}, /* VISCII */
+    {0}, /* TCVN */
+    {0}, /* KOI-8 */
+    {0}, /* ISO-8859-3 */
+    {0}, /* ISO-8859-4 */
+    {0}, /* ISO-8859-10 */
+    {0} /* Celtic */
+};
+
+static const int CHARSET_ORDER[256]={
+    CI(ANSI), 0, CI(SYMBOL), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CI(MAC), 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    CI(JIS), CI(HANGUL), CI(JOHAB), 0, 0, 0, CI(GB2312), 0, CI(BIG5), 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, CI(GREEK), CI(TURKISH), CI(VIETNAMESE), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, CI(HEBREW), CI(ARABIC), 0, 0, 0, 0, 0, 0, 0, CI(BALTIC), 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CI(RUSSIAN), 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CI(THAI), 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CI(EE), 0,
+    CI(VISCII), CI(TCVN), CI(KOI8), CI(ISO3), CI(ISO4), CI(ISO10), CI(CELTIC), 0, 0, 0, 0, 0, 0, 0, 0, CI(OEM),
+};
+
 static void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 )
 {
     font32->lfHeight = font16->lfHeight;
@@ -740,10 +795,6 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
   if (!hBitmapTT)
     hBitmapTT = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_TRTYPE));
 
-  /* This font will be deleted by WM_COMMAND */
-  SendDlgItemMessageA(hDlg,stc5,WM_SETFONT,
-     (WPARAM)CreateFontA(0, 0, 1, 1, 400, 0, 0, 0, 0, 0, 0, 0, 0, NULL),FALSE);
-
   if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow(lpcf->hwndOwner))
     ShowWindow(GetDlgItem(hDlg,pshHelp),SW_HIDE);
   if (!(lpcf->Flags & CF_APPLY))
@@ -978,27 +1029,11 @@ static LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 }
 
 /***********************************************************************
- *           CFn_WMCtlColor                              [internal]
- */
-static LRESULT CFn_WMCtlColorStatic(HWND hDlg, WPARAM wParam, LPARAM lParam,
-                             LPCHOOSEFONTA lpcf)
-{
-  if (lpcf->Flags & CF_EFFECTS)
-   if (GetDlgCtrlID(HWND_32(LOWORD(lParam)))==stc5)
-   {
-     SetTextColor((HDC)wParam, lpcf->rgbColors);
-     return (LRESULT)GetStockObject(WHITE_BRUSH);
-   }
-  return 0;
-}
-
-/***********************************************************************
  *           CFn_WMCommand                               [internal]
  */
 static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
                       LPCHOOSEFONTA lpcf)
 {
-  HFONT hFont;
   int i,j;
   long l;
   HDC hdc;
@@ -1047,6 +1082,8 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 	case cmb3:if (HIWORD(wParam)==CBN_SELCHANGE || HIWORD(wParam)== BN_CLICKED )
 	          {
                     char str[256];
+                    WINDOWINFO wininfo;
+
                     TRACE("WM_COMMAND/cmb2,3 =%08lX\n", lParam);
 		    i=SendDlgItemMessageA(hDlg,cmb1,CB_GETCURSEL,0,0);
 		    if (i==CB_ERR)
@@ -1087,22 +1124,28 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 		    lpxx->lfQuality=DEFAULT_QUALITY;
                     lpcf->iPointSize= -10*lpxx->lfHeight;
 
-		    hFont=CreateFontIndirectA(lpxx);
-		    if (hFont)
+                    wininfo.cbSize=sizeof(wininfo);
+
+                    if( GetWindowInfo( GetDlgItem( hDlg, stc5), &wininfo ) )
 		    {
-		      HFONT oldFont=(HFONT)SendDlgItemMessageA(hDlg, stc5,
-		          WM_GETFONT, 0, 0);
-		      SendDlgItemMessageA(hDlg,stc5,WM_SETFONT,(WPARAM)hFont,TRUE);
-		      DeleteObject(oldFont);
+                        InvalidateRect( hDlg, &wininfo.rcWindow, TRUE );
 		    }
                   }
                   break;
 
-	case cmb4:i=SendDlgItemMessageA(hDlg, cmb4, CB_GETCURSEL, 0, 0);
+	case cmb4:
+                  i=SendDlgItemMessageA(hDlg, cmb4, CB_GETCURSEL, 0, 0);
 		  if (i!=CB_ERR)
 		  {
+                    WINDOWINFO wininfo;
+
 		   lpcf->rgbColors=textcolors[i];
-		   InvalidateRect( GetDlgItem(hDlg,stc5), NULL, 0 );
+                    wininfo.cbSize=sizeof(wininfo);
+
+                    if( GetWindowInfo( GetDlgItem( hDlg, stc5), &wininfo ) )
+		    {
+                        InvalidateRect( hDlg, &wininfo.rcWindow, TRUE );
+		    }
 		  }
 		  break;
 
@@ -1134,10 +1177,57 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 
 static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  DeleteObject((HFONT)SendDlgItemMessageA(hwnd, stc5, WM_GETFONT, 0, 0));
   return TRUE;
 }
 
+static LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
+                      LPCHOOSEFONTA lpcf )
+{
+    WINDOWINFO info;
+
+    info.cbSize=sizeof(info);
+
+    if( GetWindowInfo( GetDlgItem( hDlg, stc5), &info ) )
+    {
+        PAINTSTRUCT ps;
+        HDC hdc;
+        HPEN hOrigPen;
+        HFONT hOrigFont;
+        COLORREF rgbPrev;
+        WCHAR sample[SAMPLE_EXTLEN+5]={'A','a','B','b'};
+        /* Always start with this basic sample */
+
+        hdc=BeginPaint( hDlg, &ps );
+
+        /* Paint frame */
+        MoveToEx( hdc, info.rcWindow.left, info.rcWindow.bottom, NULL );
+        hOrigPen=SelectObject( hdc, CreatePen( PS_SOLID, 2,
+                    GetSysColor( COLOR_3DSHADOW ) )); 
+        LineTo( hdc, info.rcWindow.left, info.rcWindow.top );
+        LineTo( hdc, info.rcWindow.right, info.rcWindow.top );
+        DeleteObject(SelectObject( hdc, CreatePen( PS_SOLID, 2,
+                    GetSysColor( COLOR_3DLIGHT ) )));
+        LineTo( hdc, info.rcWindow.right, info.rcWindow.bottom );
+        LineTo( hdc, info.rcWindow.left, info.rcWindow.bottom );
+        DeleteObject(SelectObject( hdc, hOrigPen ));
+
+        /* Draw the sample text itself */
+        lstrcatW(sample, SAMPLE_LANG_TEXT[CHARSET_ORDER[lpcf->lpLogFont->lfCharSet]] );
+        
+        info.rcWindow.right--;
+        info.rcWindow.bottom--;
+        info.rcWindow.top++;
+        info.rcWindow.left++;
+        hOrigFont=SelectObject( hdc, CreateFontIndirectA( lpcf->lpLogFont ) );
+        rgbPrev=SetTextColor( hdc, lpcf->rgbColors );
+
+        DrawTextW( hdc, sample, -1, &info.rcWindow, DT_CENTER|DT_VCENTER|DT_SINGLELINE );
+        
+        EndPaint( hDlg, &ps );
+    }
+
+    return FALSE;
+}
 
 /***********************************************************************
  *           FormatCharDlgProc   (COMMDLG.16)
@@ -1208,10 +1298,6 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
             res = CFn_WMDrawItem(hDlg, wParam, (LPARAM)&dis);
         }
         break;
-    case WM_CTLCOLOR:
-        if (HIWORD(lParam) == CTLCOLOR_STATIC)
-            res=CFn_WMCtlColorStatic(hDlg, wParam, LOWORD(lParam), lpcf32a);
-        break;
     case WM_COMMAND:
         res=CFn_WMCommand(hDlg, MAKEWPARAM( wParam, HIWORD(lParam) ), LOWORD(lParam), lpcf32a);
         break;
@@ -1261,8 +1347,6 @@ INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
                         return CFn_WMMeasureItem(hDlg, wParam, lParam);
       case WM_DRAWITEM:
                         return CFn_WMDrawItem(hDlg, wParam, lParam);
-      case WM_CTLCOLORSTATIC:
-                        return CFn_WMCtlColorStatic(hDlg, wParam, lParam, lpcf);
       case WM_COMMAND:
                         return CFn_WMCommand(hDlg, wParam, lParam, lpcf);
       case WM_DESTROY:
@@ -1272,6 +1356,8 @@ INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 				      lParam);
 			 FIXME("current logfont back to caller\n");
                         break;
+      case WM_PAINT:
+                        return CFn_WMPaint(hDlg, wParam, lParam, lpcf);
     }
   return res;
 }
@@ -1314,8 +1400,6 @@ INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
                         return CFn_WMMeasureItem(hDlg, wParam, lParam);
       case WM_DRAWITEM:
                         return CFn_WMDrawItem(hDlg, wParam, lParam);
-      case WM_CTLCOLORSTATIC:
-                        return CFn_WMCtlColorStatic(hDlg, wParam, lParam, lpcf32a);
       case WM_COMMAND:
                         return CFn_WMCommand(hDlg, wParam, lParam, lpcf32a);
       case WM_DESTROY:

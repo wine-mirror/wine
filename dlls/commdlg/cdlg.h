@@ -109,19 +109,29 @@ typedef struct {
 
 #define IDS_CHARSET_ANSI        200
 #define IDS_CHARSET_SYMBOL      201
-#define IDS_CHARSET_SHIFTJIS    202
+#define IDS_CHARSET_JIS         202
 #define IDS_CHARSET_HANGUL      203
-#define IDS_CHARSET_GREEK       204
-#define IDS_CHARSET_TURKISH     205
-#define IDS_CHARSET_HEBREW      206
-#define IDS_CHARSET_ARABIC      207
-#define IDS_CHARSET_BALTIC      208
-#define IDS_CHARSET_VIETNAMESE  209
-#define IDS_CHARSET_RUSSIAN     210
-#define IDS_CHARSET_EE          211
-#define IDS_CHARSET_THAI        212
-#define IDS_CHARSET_JOHAB       213
-#define IDS_CHARSET_OEM         214
+#define IDS_CHARSET_GB2312      204
+#define IDS_CHARSET_BIG5        205
+#define IDS_CHARSET_GREEK       206
+#define IDS_CHARSET_TURKISH     207
+#define IDS_CHARSET_HEBREW      208
+#define IDS_CHARSET_ARABIC      209
+#define IDS_CHARSET_BALTIC      210
+#define IDS_CHARSET_VIETNAMESE  211
+#define IDS_CHARSET_RUSSIAN     212
+#define IDS_CHARSET_EE          213
+#define IDS_CHARSET_THAI        214
+#define IDS_CHARSET_JOHAB       215
+#define IDS_CHARSET_MAC         216
+#define IDS_CHARSET_OEM         217
+#define IDS_CHARSET_VISCII      218
+#define IDS_CHARSET_TCVN        219
+#define IDS_CHARSET_KOI8        220
+#define IDS_CHARSET_ISO3        221
+#define IDS_CHARSET_ISO4        222
+#define IDS_CHARSET_ISO10       223
+#define IDS_CHARSET_CELTIC      224
 
 /* Color names string IDs */
 
