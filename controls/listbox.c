@@ -636,12 +636,13 @@ static LRESULT LISTBOX_GetText( WND *wnd, LB_DESCR *descr, INT32 index,
     if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
     if (HAS_STRINGS(descr))
     {
+        if (!buffer)
+		return strlen(descr->items[index].str);
         lstrcpy32A( buffer, descr->items[index].str );
         return strlen(buffer);
-    }
-    else
-    {
-        memcpy( buffer, &descr->items[index].data, sizeof(DWORD) );
+    } else {
+    	if (buffer)
+        	*((LPDWORD)buffer)=*(LPDWORD)(&descr->items[index].data);
         return sizeof(DWORD);
     }
 }
