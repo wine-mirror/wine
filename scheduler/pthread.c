@@ -47,7 +47,7 @@
 #endif
 
 /* get necessary libc symbols */
-#if (__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1)
+#if (__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1) && defined(HAVE___LIBC_FORK)
 #define LIBC_FORK __libc_fork
 #define PTHREAD_FORK __fork
 #define ALIAS_FORK

@@ -146,6 +146,9 @@
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 
+/* Define if you have the __libc_fork function.  */
+#undef HAVE___LIBC_FORK
+
 /* Define if you have the _lwp_create function.  */
 #undef HAVE__LWP_CREATE
 
