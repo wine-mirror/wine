@@ -1,22 +1,21 @@
-
-1 stub PrintHTML
-2 stub SvrTri_ClearCache
-3 stub CreateHTMLPropertyPage
-4 stdcall -private DllCanUnloadNow() MSHTML_DllCanUnloadNow
-5 stub DllEnumClassObjects
-6 stdcall -private DllGetClassObject(ptr ptr ptr) MSHTML_DllGetClassObject
-7 stub DllInstall
-8 stub DllRegisterServer
-9 stub DllUnregisterServer
-10 stub MatchExactGetIDsOfNames
-11 stub RNIGetCompatibleVersion
-12 stdcall RunHTMLApplication(long long str long)
-13 stub ShowHTMLDialog
-14 stub ShowModalDialog
-15 stub ShowModelessHTMLDialog
-16 stub SvrTri_GetDLText
-17 stub SvrTri_NormalizeUA
-18 stub com_ms_osp_ospmrshl_classInit
-19 stub com_ms_osp_ospmrshl_copyToExternal
-20 stub com_ms_osp_ospmrshl_releaseByValExternal
-21 stub com_ms_osp_ospmrshl_toJava
+@ stub CreateHTMLPropertyPage
+@ stdcall -private DllCanUnloadNow() MSHTML_DllCanUnloadNow
+@ stub DllEnumClassObjects
+@ stdcall -private DllGetClassObject(ptr ptr ptr) MSHTML_DllGetClassObject
+@ stub DllInstall
+@ stub DllRegisterServer
+@ stub DllUnregisterServer
+@ stub MatchExactGetIDsOfNames
+@ stub PrintHTML
+@ stub RNIGetCompatibleVersion
+@ stdcall RunHTMLApplication(long long str long)
+@ stub ShowHTMLDialog
+@ stub ShowModalDialog
+@ stub ShowModelessHTMLDialog
+@ stub SvrTri_ClearCache
+@ stub SvrTri_GetDLText
+@ stub SvrTri_NormalizeUA
+@ stub com_ms_osp_ospmrshl_classInit
+@ stub com_ms_osp_ospmrshl_copyToExternal
+@ stub com_ms_osp_ospmrshl_releaseByValExternal
+@ stub com_ms_osp_ospmrshl_toJava
