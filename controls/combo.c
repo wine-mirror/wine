@@ -722,7 +722,12 @@ static void CBPaintButton(
 	    buttonState |= DFCS_PUSHED;
 	}
 
-        DrawFrameControl(hdc,
+	if (CB_DISABLED(lphc))
+	{
+	  buttonState |= DFCS_INACTIVE;
+	}
+
+	DrawFrameControl(hdc,
 			 &rectButton,
 			 DFC_SCROLL,
 			 buttonState);			  
@@ -765,114 +770,89 @@ static void CBPaintText(
    }
    else /* paint text field ourselves */
    {
-        HBRUSH hPrevBrush = 0;
-	HDC	 hDC = hdc;
+     UINT	itemState;
+     HFONT	hPrevFont = (lphc->hFont) ? SelectObject(hdc, lphc->hFont) : 0;
 
-	if( !hDC ) 
-	{
-	    if ((hDC = GetDC(lphc->self->hwndSelf)))
-            {
-                HBRUSH hBrush = SendMessageA( lphc->owner,
-                                                  WM_CTLCOLORLISTBOX, 
-                                                  hDC, lphc->self->hwndSelf );
-                hPrevBrush = SelectObject( hDC, 
-                           (hBrush) ? hBrush : GetStockObject(WHITE_BRUSH) );
-            }
-	}
-	if( hDC )
-	{
-	    UINT	itemState;
-	    HFONT	hPrevFont = (lphc->hFont) ? SelectObject(hDC, lphc->hFont) : 0;
-
-	    /*
-	     * Give ourselves some space.
-	     */
-	    InflateRect( &rectEdit, -1, -1 );
-
-	    if ( (lphc->wState & CBF_FOCUSED) && 
-	        !(lphc->wState & CBF_DROPPED) )
-	    {
-		/* highlight */
-
-		FillRect( hDC, &rectEdit, GetSysColorBrush(COLOR_HIGHLIGHT) );
-                SetBkColor( hDC, GetSysColor( COLOR_HIGHLIGHT ) );
-                SetTextColor( hDC, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
-		itemState = ODS_SELECTED | ODS_FOCUS;
-	    } 
-	    else 
-	      itemState = 0;
-
-	    if( CB_OWNERDRAWN(lphc) )
-	    {
-		DRAWITEMSTRUCT dis;
-		HRGN           clipRegion;
-
-		/*
-		 * Save the current clip region.
-		 * To retrieve the clip region, we need to create one "dummy"
-		 * clip region.
-		 */
-		clipRegion = CreateRectRgnIndirect(&rectEdit);
-
-		if (GetClipRgn(hDC, clipRegion)!=1)
-		{
-		  DeleteObject(clipRegion);
-		  clipRegion=(HRGN)NULL;
-		}
-
-		if ( lphc->self->dwStyle & WS_DISABLED )
-		  itemState |= ODS_DISABLED;
-
-		dis.CtlType	= ODT_COMBOBOX;
-		dis.CtlID	= lphc->self->wIDmenu;
-		dis.hwndItem	= lphc->self->hwndSelf;
-		dis.itemAction	= ODA_DRAWENTIRE;
-		dis.itemID	= id;
-		dis.itemState	= itemState;
-		dis.hDC		= hDC;
-		dis.rcItem	= rectEdit;
-		dis.itemData	= SendMessageA( lphc->hWndLBox, LB_GETITEMDATA, 
-						  		  (WPARAM)id, 0 );
-
-		/*
-		 * Clip the DC and have the parent draw the item.
-		 */
-		IntersectClipRect(hDC,
-				  rectEdit.left,  rectEdit.top,
-				  rectEdit.right, rectEdit.bottom);
-
-		SendMessageA(lphc->owner, WM_DRAWITEM, 
-			     lphc->self->wIDmenu, (LPARAM)&dis );
-
-		/*
-		 * Reset the clipping region.
-		 */
-		SelectClipRgn(hDC, clipRegion);		
-	    }
-	    else
-	    {
-	        ExtTextOutA( hDC, 
-			     rectEdit.left + 1, 
-			     rectEdit.top + 1,
-			     ETO_OPAQUE | ETO_CLIPPED, 
-			     &rectEdit,
-                               pText ? pText : "" , size, NULL );
-
-		if(lphc->wState & CBF_FOCUSED && !(lphc->wState & CBF_DROPPED))
-		    DrawFocusRect( hDC, &rectEdit );
-	    }
-
-	    if( hPrevFont ) 
-	      SelectObject(hDC, hPrevFont );
-
-	    if( !hdc ) 
-	    {
-		if( hPrevBrush ) 
-		  SelectObject( hDC, hPrevBrush );
-
-		ReleaseDC( lphc->self->hwndSelf, hDC );
-	    }
-	}
+     /*
+      * Give ourselves some space.
+      */
+     InflateRect( &rectEdit, -1, -1 );
+     
+     if ( (lphc->wState & CBF_FOCUSED) && 
+	  !(lphc->wState & CBF_DROPPED) )
+     {
+       /* highlight */
+       
+       FillRect( hdc, &rectEdit, GetSysColorBrush(COLOR_HIGHLIGHT) );
+       SetBkColor( hdc, GetSysColor( COLOR_HIGHLIGHT ) );
+       SetTextColor( hdc, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
+       itemState = ODS_SELECTED | ODS_FOCUS;
+     } 
+     else 
+       itemState = 0;
+     
+     if( CB_OWNERDRAWN(lphc) )
+     {
+       DRAWITEMSTRUCT dis;
+       HRGN           clipRegion;
+       
+       /*
+	* Save the current clip region.
+	* To retrieve the clip region, we need to create one "dummy"
+	* clip region.
+	*/
+       clipRegion = CreateRectRgnIndirect(&rectEdit);
+       
+       if (GetClipRgn(hdc, clipRegion)!=1)
+       {
+	 DeleteObject(clipRegion);
+	 clipRegion=(HRGN)NULL;
+       }
+       
+       if ( lphc->self->dwStyle & WS_DISABLED )
+	 itemState |= ODS_DISABLED;
+       
+       dis.CtlType	= ODT_COMBOBOX;
+       dis.CtlID	= lphc->self->wIDmenu;
+       dis.hwndItem	= lphc->self->hwndSelf;
+       dis.itemAction	= ODA_DRAWENTIRE;
+       dis.itemID	= id;
+       dis.itemState	= itemState;
+       dis.hDC		= hdc;
+       dis.rcItem	= rectEdit;
+       dis.itemData	= SendMessageA( lphc->hWndLBox, LB_GETITEMDATA, 
+					(WPARAM)id, 0 );
+       
+       /*
+	* Clip the DC and have the parent draw the item.
+	*/
+       IntersectClipRect(hdc,
+			 rectEdit.left,  rectEdit.top,
+			 rectEdit.right, rectEdit.bottom);
+       
+       SendMessageA(lphc->owner, WM_DRAWITEM, 
+		    lphc->self->wIDmenu, (LPARAM)&dis );
+       
+       /*
+	* Reset the clipping region.
+	*/
+       SelectClipRgn(hdc, clipRegion);		
+     }
+     else
+     {
+       ExtTextOutA( hdc, 
+		    rectEdit.left + 1, 
+		    rectEdit.top + 1,
+		    ETO_OPAQUE | ETO_CLIPPED, 
+		    &rectEdit,
+		    pText ? pText : "" , size, NULL );
+       
+       if(lphc->wState & CBF_FOCUSED && !(lphc->wState & CBF_DROPPED))
+	 DrawFocusRect( hdc, &rectEdit );
+     }
+     
+     if( hPrevFont ) 
+       SelectObject(hdc, hPrevFont );
    }
    if (pText)
 	HeapFree( GetProcessHeap(), 0, pText );
@@ -904,6 +884,59 @@ static void CBPaintBorder(
 }
 
 /***********************************************************************
+ *           COMBO_PrepareColors
+ *
+ * This method will sent the appropriate WM_CTLCOLOR message to
+ * prepare and setup the colors for the combo's DC.
+ *
+ * It also returns the brush to use for the background.
+ */
+static HBRUSH COMBO_PrepareColors(
+  HWND        hwnd, 
+  LPHEADCOMBO lphc,
+  HDC         hDC)
+{
+  HBRUSH  hBkgBrush;
+
+  /*
+   * Get the background brush for this control.
+   */
+  if (CB_DISABLED(lphc))
+  {
+    hBkgBrush = SendMessageA( lphc->owner, WM_CTLCOLORSTATIC,
+			      hDC, lphc->self->hwndSelf );
+    
+    /*
+     * We have to change the text color since WM_CTLCOLORSTATIC will
+     * set it to the "enabled" color. This is the same behavior as the
+     * edit control
+     */
+    SetTextColor(hDC, GetSysColor(COLOR_GRAYTEXT));
+  }
+  else
+  {
+    if (lphc->wState & CBF_EDIT)
+    {
+      hBkgBrush = SendMessageA( lphc->owner, WM_CTLCOLOREDIT,
+				hDC, lphc->self->hwndSelf );
+    }
+    else
+    {
+      hBkgBrush = SendMessageA( lphc->owner, WM_CTLCOLORLISTBOX,
+				hDC, lphc->self->hwndSelf );
+    }
+  }
+
+  /*
+   * Catch errors.
+   */
+  if( !hBkgBrush ) 
+    hBkgBrush = GetSysColorBrush(COLOR_WINDOW);
+
+  return hBkgBrush;
+}
+
+/***********************************************************************
  *           COMBO_EraseBackground
  */
 static LRESULT COMBO_EraseBackground(
@@ -932,11 +965,10 @@ static LRESULT COMBO_EraseBackground(
     InflateRect(&clientRect, COMBO_XBORDERSIZE(), COMBO_YBORDERSIZE());
   }
 
-  hBkgBrush = SendMessageA( lphc->owner, WM_CTLCOLORLISTBOX,
-			    hDC, hwnd);
-
-  if( !hBkgBrush ) 
-    hBkgBrush = GetStockObject(WHITE_BRUSH);
+  /*
+   * Retrieve the background brush
+   */
+  hBkgBrush = COMBO_PrepareColors(hwnd, lphc, hDC);
   
   FillRect(hDC, &clientRect, hBkgBrush);
 
@@ -962,11 +994,11 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
   {
       HBRUSH	hPrevBrush, hBkgBrush;
 
-      hBkgBrush = SendMessageA( lphc->owner, WM_CTLCOLORLISTBOX,
-				  hDC, lphc->self->hwndSelf );
-
-      if( !hBkgBrush ) 
-	hBkgBrush = GetStockObject(WHITE_BRUSH);
+      /*
+       * Retrieve the background brush and select it in the
+       * DC.
+       */
+      hBkgBrush = COMBO_PrepareColors(lphc->self->hwndSelf, lphc, hDC);
 
       hPrevBrush = SelectObject( hDC, hBkgBrush );
 
@@ -1886,6 +1918,9 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 		if( lphc->wState & CBF_EDIT )
 		    EnableWindow( lphc->hWndEdit, (BOOL)wParam ); 
 		EnableWindow( lphc->hWndLBox, (BOOL)wParam );
+
+		/* Force the control to repaint when the enabled state changes. */
+		InvalidateRect(CB_HWND(lphc), NULL, TRUE);
 		return  TRUE;
 	case WM_SETREDRAW:
 		if( wParam )
