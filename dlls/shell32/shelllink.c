@@ -1341,12 +1341,18 @@ static HRESULT WINAPI IShellLinkA_fnResolve(IShellLinkA * iface, HWND hwnd, DWOR
 static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
 {
     IShellLinkImpl *This = (IShellLinkImpl *)iface;
+    char buffer[MAX_PATH];
+    LPSTR fname;
 
     TRACE("(%p)->(path=%s)\n",This, pszFile);
 
+    if (!GetFullPathNameA(pszFile, MAX_PATH, buffer, &fname))
+	return E_FAIL;
+
     if (This->sPath)
         HeapFree(GetProcessHeap(), 0, This->sPath);
-    This->sPath = HEAP_strdupAtoW(GetProcessHeap(), 0, pszFile);
+
+    This->sPath = HEAP_strdupAtoW(GetProcessHeap(), 0, buffer);
     if( !This->sPath )
         return E_OUTOFMEMORY;
 
@@ -1758,17 +1764,23 @@ static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWOR
 static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile)
 {
     _ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
+    WCHAR buffer[MAX_PATH];
+    LPWSTR fname;
 
     TRACE("(%p)->(path=%s)\n",This, debugstr_w(pszFile));
 
+    if (!GetFullPathNameW(pszFile, MAX_PATH, buffer, &fname))
+	return E_FAIL;
+
     if (This->sPath)
         HeapFree(GetProcessHeap(), 0, This->sPath);
+
     This->sPath = HeapAlloc( GetProcessHeap(), 0,
-                             (lstrlenW( pszFile )+1) * sizeof (WCHAR) );
-    if ( !This->sPath )
+                             (lstrlenW( buffer )+1) * sizeof (WCHAR) );
+    if (!This->sPath)
         return E_OUTOFMEMORY;
 
-    lstrcpyW( This->sPath, pszFile );
+    lstrcpyW(This->sPath, buffer);
     This->bDirty = TRUE;
 
     return S_OK;
