@@ -300,7 +300,7 @@ init	MAIN_KernelInit
 282 stdcall GetCPInfo(long ptr) GetCPInfo
 283 stub GetCommConfig
 284 stdcall GetCommMask(long ptr) GetCommMask
-285 stub GetCommModemStatus
+285 stdcall GetCommModemStatus(long ptr) GetCommModemStatus
 286 stub GetCommProperties
 287 stdcall GetCommState(long ptr) GetCommState32
 288 stdcall GetCommTimeouts(long ptr) GetCommTimeouts
@@ -734,7 +734,7 @@ init	MAIN_KernelInit
 716 stdcall VirtualQuery(ptr ptr long) VirtualQuery
 717 stdcall VirtualQueryEx(long ptr ptr long) VirtualQueryEx
 718 stdcall VirtualUnlock(ptr long) VirtualUnlock
-719 stub WaitCommEvent
+719 stdcall WaitCommEvent(long ptr ptr) WaitCommEvent
 720 stdcall WaitForDebugEvent(ptr long) WaitForDebugEvent
 721 stdcall WaitForMultipleObjects(long ptr long long) WaitForMultipleObjects
 722 stdcall WaitForMultipleObjectsEx(long ptr long long long) WaitForMultipleObjectsEx

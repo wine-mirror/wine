@@ -953,7 +953,7 @@ BOOL32 WINAPI SetupComm( HANDLE32 hFile, DWORD insize, DWORD outsize)
 /*****************************************************************************
  *	GetCommMask	(KERNEL32.156)
  */
-BOOL32 WINAPI GetCommMask(INT32 fd,LPDWORD evtmask)
+BOOL32 WINAPI GetCommMask(HANDLE32 fd,LPDWORD evtmask)
 {
     	TRACE(comm, "fd %d, mask %p\n", fd, evtmask);
 	*evtmask = eventmask;
@@ -1816,6 +1816,23 @@ BOOL16 WINAPI EnableCommNotification( INT16 fd, HWND16 hwnd,
                                       INT16 cbWriteNotify, INT16 cbOutQueue )
 {
 	FIXME(comm, "(%d, %x, %d, %d):stub.\n", fd, hwnd, cbWriteNotify, cbOutQueue);
+	return TRUE;
+}
+
+/***********************************************************************
+ *           GetCommModemStatus   (KERNEL32.285)
+ */
+BOOL32 WINAPI GetCommModemStatus(HANDLE32 hFile,LPDWORD lpModemStat )
+{
+	FIXME(comm, "(%d %p)\n",hFile,lpModemStat );
+	return TRUE;
+}
+/***********************************************************************
+ *           WaitCommEvent   (KERNEL32.719)
+ */
+BOOL32 WINAPI WaitCommEvent(HANDLE32 hFile,LPDWORD eventmask ,LPOVERLAPPED overlapped)
+{
+	FIXME(comm, "(%d %p %p )\n",hFile, eventmask,overlapped);
 	return TRUE;
 }
 
