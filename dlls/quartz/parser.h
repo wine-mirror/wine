@@ -48,6 +48,7 @@ struct CParserImpl
 	IMemAllocator*	m_pAllocator;
 	ALLOCATOR_PROPERTIES	m_propAlloc;
 	HANDLE	m_hEventInit;
+	BOOL	m_bIsRunning;
 	DWORD	m_dwThreadId;
 	HANDLE	m_hThread;
 	BOOL	m_bSendEOS;

@@ -568,9 +568,11 @@ HRESULT CParserImpl_BeginThread( CParserImpl* This )
 	DWORD dwRes;
 	HANDLE hEvents[2];
 
-	if ( This->m_hEventInit != (HANDLE)NULL &&
-		 This->m_hThread != (HANDLE)NULL )
+	if ( This->m_bIsRunning )
+	{
+		TRACE("(%p) - already running\n",This);
 		return NOERROR;
+	}
 
 	This->m_hEventInit = CreateEventA(NULL,TRUE,FALSE,NULL);
 	if ( This->m_hEventInit == (HANDLE)NULL )
@@ -601,6 +603,8 @@ HRESULT CParserImpl_BeginThread( CParserImpl* This )
 	if ( dwRes != WAIT_OBJECT_0 )
 		return E_FAIL;
 
+	This->m_bIsRunning = TRUE;
+
 	return NOERROR;
 }
 
@@ -613,14 +617,16 @@ BOOL CParserImpl_EndThread( CParserImpl* This, BOOL bAsync )
 	dwThreadId = This->m_dwThreadId;
 	if ( This->m_hEventInit != (HANDLE)NULL )
 	{
-		if ( dwThreadId != 0 ) /* FIXME? */
+		if ( dwThreadId != 0 )
 			PostThreadMessageA(
 				dwThreadId, QUARTZ_MSG_EXITTHREAD, 0, 0 );
-		if ( bAsync )
+		if ( bAsync &&
+			 WaitForSingleObject( This->m_hEventInit, 0 ) == WAIT_TIMEOUT )
 			return FALSE;
 
 		WaitForSingleObject( This->m_hEventInit, INFINITE );
 		CloseHandle( This->m_hEventInit );
+		This->m_bIsRunning = FALSE;
 		This->m_hEventInit = (HANDLE)NULL;
 	}
 
@@ -724,9 +730,14 @@ static HRESULT CParserImpl_OnInactive( CBaseFilterImpl* pImpl )
 	hr = CParserImpl_MemCommit(This);
 	if ( FAILED(hr) )
 		return hr;
+
+	if ( This->basefilter.fstate == State_Stopped )
+		CParserImpl_EndThread(This,FALSE);
+
 	hr = CParserImpl_BeginThread(This);
 	if ( FAILED(hr) )
 	{
+		FIXME("CParserImpl_BeginThread returns %08lx\n",hr);
 		CParserImpl_EndThread(This,FALSE);
 		return hr;
 	}
@@ -1100,6 +1111,7 @@ HRESULT QUARTZ_CreateParser(
 	This->m_pAllocator = NULL;
 	ZeroMemory( &This->m_propAlloc, sizeof(ALLOCATOR_PROPERTIES) );
 	This->m_hEventInit = (HANDLE)NULL;
+	This->m_bIsRunning = FALSE;
 	This->m_hThread = (HANDLE)NULL;
 	This->m_dwThreadId = 0;
 	This->m_bSendEOS = FALSE;
