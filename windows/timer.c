@@ -50,7 +50,14 @@ typedef struct tagTIMER
 
 static TIMER TimersArray[NB_TIMERS];
 
-static CRITICAL_SECTION csTimer = CRITICAL_SECTION_INIT("csTimer");
+static CRITICAL_SECTION csTimer;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &csTimer,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": csTimer") }
+};
+static CRITICAL_SECTION csTimer = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
 /***********************************************************************

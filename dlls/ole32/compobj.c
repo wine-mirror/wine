@@ -62,10 +62,16 @@ static void COM_ExternalLockFreeList();
 
 const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
 
-
-
 APARTMENT MTA, *apts;
-static CRITICAL_SECTION csApartment = CRITICAL_SECTION_INIT("csApartment");
+
+static CRITICAL_SECTION csApartment;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &csApartment,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": csApartment") }
+};
+static CRITICAL_SECTION csApartment = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /*
  * This lock count counts the number of times CoInitialize is called. It is
@@ -93,8 +99,16 @@ typedef struct tagRegisteredClass
   struct tagRegisteredClass* nextClass;
 } RegisteredClass;
 
-static CRITICAL_SECTION csRegisteredClassList = CRITICAL_SECTION_INIT("csRegisteredClassList");
 static RegisteredClass* firstRegisteredClass = NULL;
+
+static CRITICAL_SECTION csRegisteredClassList;
+static CRITICAL_SECTION_DEBUG class_cs_debug =
+{
+    0, 0, &csRegisteredClassList,
+    { &class_cs_debug.ProcessLocksList, &class_cs_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": csRegisteredClassList") }
+};
+static CRITICAL_SECTION csRegisteredClassList = { &class_cs_debug, -1, 0, 0, 0, 0 };
 
 /*****************************************************************************
  * This section contains OpenDllList definitions
@@ -112,8 +126,16 @@ typedef struct tagOpenDll {
   struct tagOpenDll *next;
 } OpenDll;
 
-static CRITICAL_SECTION csOpenDllList = CRITICAL_SECTION_INIT("csOpenDllList");
 static OpenDll *openDllList = NULL; /* linked list of open dlls */
+
+static CRITICAL_SECTION csOpenDllList;
+static CRITICAL_SECTION_DEBUG dll_cs_debug =
+{
+    0, 0, &csOpenDllList,
+    { &dll_cs_debug.ProcessLocksList, &dll_cs_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": csOpenDllList") }
+};
+static CRITICAL_SECTION csOpenDllList = { &dll_cs_debug, -1, 0, 0, 0, 0 };
 
 static const char aptWinClass[] = "WINE_OLE32_APT_CLASS";
 static LRESULT CALLBACK COM_AptWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

@@ -41,7 +41,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 static RpcConnection* conn_cache;
-static CRITICAL_SECTION conn_cache_cs = CRITICAL_SECTION_INIT("conn_cache_cs");
+
+static CRITICAL_SECTION conn_cache_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &conn_cache_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": conn_cache_cs") }
+};
+static CRITICAL_SECTION conn_cache_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 LPSTR RPCRT4_strndupA(LPSTR src, INT slen)
 {

@@ -76,9 +76,17 @@ typedef struct _DOSEVENT {
   struct _DOSEVENT *next;
 } DOSEVENT, *LPDOSEVENT;
 
-static CRITICAL_SECTION qcrit = CRITICAL_SECTION_INIT("DOSVM");
 static struct _DOSEVENT *pending_event, *current_event;
 static HANDLE event_notifier;
+
+static CRITICAL_SECTION qcrit;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &qcrit,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": qcrit") }
+};
+static CRITICAL_SECTION qcrit = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
 /***********************************************************************

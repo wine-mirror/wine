@@ -27,7 +27,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-static CRITICAL_SECTION SHELL32_ChangenotifyCS = CRITICAL_SECTION_INIT("SHELL32_ChangenotifyCS");
+static CRITICAL_SECTION SHELL32_ChangenotifyCS;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &SHELL32_ChangenotifyCS,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": SHELL32_ChangenotifyCS") }
+};
+static CRITICAL_SECTION SHELL32_ChangenotifyCS = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* internal list of notification clients (internal) */
 typedef struct _NOTIFICATIONLIST

@@ -64,7 +64,15 @@ static UINT tls_module_count;      /* number of modules with TLS directory */
 static UINT tls_total_size;        /* total size of TLS storage */
 static const IMAGE_TLS_DIRECTORY **tls_dirs;  /* array of TLS directories */
 
-static CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
+static CRITICAL_SECTION loader_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &loader_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": loader_section") }
+};
+static CRITICAL_SECTION loader_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 static WINE_MODREF *cached_modref;
 static WINE_MODREF *current_modref;
 

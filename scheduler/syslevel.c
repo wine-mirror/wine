@@ -32,7 +32,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
 
-static SYSLEVEL Win16Mutex = { CRITICAL_SECTION_INIT("Win16Mutex"), 1 };
+static SYSLEVEL Win16Mutex;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &Win16Mutex.crst,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": Win16Mutex") }
+};
+static SYSLEVEL Win16Mutex = { { &critsect_debug, -1, 0, 0, 0, 0 }, 1 };
 
 /* Global variable to save current TEB while in 16-bit code */
 WORD SYSLEVEL_Win16CurrentTeb = 0;

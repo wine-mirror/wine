@@ -1274,7 +1274,15 @@ struct ConsoleHandler {
 static unsigned int             CONSOLE_IgnoreCtrlC = 0; /* FIXME: this should be inherited somehow */
 static struct ConsoleHandler    CONSOLE_DefaultConsoleHandler = {CONSOLE_DefaultHandler, NULL};
 static struct ConsoleHandler*   CONSOLE_Handlers = &CONSOLE_DefaultConsoleHandler;
-static CRITICAL_SECTION         CONSOLE_CritSect = CRITICAL_SECTION_INIT("console_ctrl_section");
+
+static CRITICAL_SECTION CONSOLE_CritSect;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &CONSOLE_CritSect,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": CONSOLE_CritSect") }
+};
+static CRITICAL_SECTION CONSOLE_CritSect = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /*****************************************************************************/
 

@@ -114,7 +114,15 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
 static WINDOWPROC winproc_array[MAX_WINPROCS];
 static WINDOWPROC *winproc_first_free;
 static UINT winproc_used;
-static CRITICAL_SECTION winproc_cs = CRITICAL_SECTION_INIT("winproc_cs");
+
+static CRITICAL_SECTION winproc_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &winproc_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": winproc_cs") }
+};
+static CRITICAL_SECTION winproc_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* allocate a window procedure from the global array */
 static WINDOWPROC *alloc_winproc(void)

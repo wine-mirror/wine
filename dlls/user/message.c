@@ -1127,7 +1127,15 @@ struct DDE_pair {
 static      struct DDE_pair*    dde_pairs;
 static      int                 dde_num_alloc;
 static      int                 dde_num_used;
-static      CRITICAL_SECTION    dde_crst = CRITICAL_SECTION_INIT("Raw_DDE_CritSect");
+
+static CRITICAL_SECTION dde_crst;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &dde_crst,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": dde_crst") }
+};
+static CRITICAL_SECTION dde_crst = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static BOOL dde_add_pair(HGLOBAL chm, HGLOBAL shm)
 {

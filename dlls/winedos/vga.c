@@ -131,7 +131,14 @@ static BOOL vga_address_3c0 = TRUE;
  * tries to modify VGA state. This is not how real VGA adapters work,
  * but it makes timing and correctness issues much easier to deal with.
  */
-static CRITICAL_SECTION vga_lock = CRITICAL_SECTION_INIT("VGA");
+static CRITICAL_SECTION vga_lock;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &vga_lock,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": vga_lock") }
+};
+static CRITICAL_SECTION vga_lock = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 typedef HRESULT (WINAPI *DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
 static DirectDrawCreateProc pDirectDrawCreate;

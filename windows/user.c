@@ -42,8 +42,14 @@ WINE_DECLARE_DEBUG_CHANNEL(system);
 WINE_DECLARE_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(win32);
 
-SYSLEVEL USER_SysLevel = { CRITICAL_SECTION_INIT("USER_SysLevel"), 2 };
-
+static SYSLEVEL USER_SysLevel;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &USER_SysLevel.crst,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": USER_SysLevel") }
+};
+static SYSLEVEL USER_SysLevel = { { &critsect_debug, -1, 0, 0, 0, 0 }, 2 };
 
 /* USER signal proc flags and codes */
 /* See UserSignalProc for comments */
@@ -150,6 +156,36 @@ void USER_CheckNotLock(void)
     _CheckNotSysLevel( &USER_SysLevel );
 }
 
+
+/***********************************************************************
+ *           WIN_SuspendWndsLock
+ *
+ * Suspend the lock on WND structures.
+ * Returns the number of locks suspended
+ * FIXME: should be removed
+ */
+int WIN_SuspendWndsLock( void )
+{
+    int isuspendedLocks = _ConfirmSysLevel( &USER_SysLevel );
+    int count = isuspendedLocks;
+
+    while ( count-- > 0 )
+        _LeaveSysLevel( &USER_SysLevel );
+
+    return isuspendedLocks;
+}
+
+/***********************************************************************
+ *           WIN_RestoreWndsLock
+ *
+ * Restore the suspended locks on WND structures
+ * FIXME: should be removed
+ */
+void WIN_RestoreWndsLock( int ipreviousLocks )
+{
+    while ( ipreviousLocks-- > 0 )
+        _EnterSysLevel( &USER_SysLevel );
+}
 
 /***********************************************************************
  *		FinalUserInit (USER.400)

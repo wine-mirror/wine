@@ -52,7 +52,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-static CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT("X11DRV_CritSection");
+static CRITICAL_SECTION X11DRV_CritSection;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &X11DRV_CritSection,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": X11DRV_CritSection") }
+};
+static CRITICAL_SECTION X11DRV_CritSection = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 Screen *screen;
 Visual *visual;

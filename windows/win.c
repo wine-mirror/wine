@@ -56,37 +56,6 @@ static WORD wDragHeight= 3;
 
 static void *user_handles[NB_USER_HANDLES];
 
-/* thread safeness */
-extern SYSLEVEL USER_SysLevel;  /* FIXME */
-
-/***********************************************************************
- *           WIN_SuspendWndsLock
- *
- *   Suspend the lock on WND structures.
- *   Returns the number of locks suspended
- */
-int WIN_SuspendWndsLock( void )
-{
-    int isuspendedLocks = _ConfirmSysLevel( &USER_SysLevel );
-    int count = isuspendedLocks;
-
-    while ( count-- > 0 )
-        _LeaveSysLevel( &USER_SysLevel );
-
-    return isuspendedLocks;
-}
-
-/***********************************************************************
- *           WIN_RestoreWndsLock
- *
- *  Restore the suspended locks on WND structures
- */
-void WIN_RestoreWndsLock( int ipreviousLocks )
-{
-    while ( ipreviousLocks-- > 0 )
-        _EnterSysLevel( &USER_SysLevel );
-}
-
 /***********************************************************************
  *           create_window_handle
  *

@@ -66,7 +66,15 @@ static const LOGPEN NullPen  = { PS_NULL,  { 0, 0 }, 0 };
 
 static HGDIOBJ stock_objects[NB_STOCK_OBJECTS];
 
-static SYSLEVEL GDI_level = { CRITICAL_SECTION_INIT("GDI_level"), 3 };
+static SYSLEVEL GDI_level;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &GDI_level.crst,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": GDI_level") }
+};
+static SYSLEVEL GDI_level = { { &critsect_debug, -1, 0, 0, 0, 0 }, 3 };
+
 static WORD GDI_HeapSel;
 
 inline static BOOL get_bool(char *buffer)

@@ -95,7 +95,15 @@ static const BYTE VIRTUAL_Win32Flags[16] =
 
 
 static FILE_VIEW *VIRTUAL_FirstView;
-static CRITICAL_SECTION csVirtual = CRITICAL_SECTION_INIT("csVirtual");
+
+static CRITICAL_SECTION csVirtual;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &csVirtual,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": csVirtual") }
+};
+static CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 #ifdef __i386__
 /* These are always the same on an i386, and it will be faster this way */

@@ -72,7 +72,15 @@ but 'DI_LOSTFOCUS' and 'DI_UNACQUIRED' exist for a reason.
 
 static BYTE DInputKeyState[256]; /* array for 'GetDeviceState' */
 
-static CRITICAL_SECTION keyboard_crit = CRITICAL_SECTION_INIT("dinput_keyboard");
+static CRITICAL_SECTION keyboard_crit;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &keyboard_crit,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": keyboard_crit") }
+};
+static CRITICAL_SECTION keyboard_crit = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 static DWORD keyboard_users;
 static HHOOK keyboard_hook;
 

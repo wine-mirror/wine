@@ -93,7 +93,16 @@ typedef struct tagICONCACHE
 } ICONCACHE;
 
 static ICONCACHE *IconAnchor = NULL;
-static CRITICAL_SECTION IconCrst = CRITICAL_SECTION_INIT("IconCrst");
+
+static CRITICAL_SECTION IconCrst;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &IconCrst,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": IconCrst") }
+};
+static CRITICAL_SECTION IconCrst = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 static WORD ICON_HOTSPOT = 0x4242;
 
 

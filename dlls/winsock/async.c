@@ -112,7 +112,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 
 /* critical section to protect some non-rentrant net function */
-CRITICAL_SECTION csWSgetXXXbyYYY = CRITICAL_SECTION_INIT("csWSgetXXXbyYYY");
+CRITICAL_SECTION csWSgetXXXbyYYY;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &csWSgetXXXbyYYY,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": csWSgetXXXbyYYY") }
+};
+CRITICAL_SECTION csWSgetXXXbyYYY = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* protoptypes of some functions in socket.c
  */

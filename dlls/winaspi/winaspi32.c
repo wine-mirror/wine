@@ -51,7 +51,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 #ifdef linux
 
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
-static CRITICAL_SECTION ASPI_CritSection = CRITICAL_SECTION_INIT("ASPI_CritSection");
+
+static CRITICAL_SECTION ASPI_CritSection;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &ASPI_CritSection,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": ASPI_CritSection") }
+};
+static CRITICAL_SECTION ASPI_CritSection = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 #endif /* defined(linux) */
 

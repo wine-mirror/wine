@@ -42,7 +42,15 @@ struct graphics_driver
 
 static struct graphics_driver *first_driver;
 static struct graphics_driver *display_driver;
-static CRITICAL_SECTION driver_section = CRITICAL_SECTION_INIT( "driver_section" );
+
+static CRITICAL_SECTION driver_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &driver_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": driver_section") }
+};
+static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /**********************************************************************
  *	     create_driver

@@ -58,7 +58,15 @@ typedef struct
 } SIC_ENTRY, * LPSIC_ENTRY;
 
 static HDPA		sic_hdpa = 0;
-static CRITICAL_SECTION SHELL32_SicCS = CRITICAL_SECTION_INIT("SHELL32_SicCS");
+
+static CRITICAL_SECTION SHELL32_SicCS;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &SHELL32_SicCS,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": SHELL32_SicCS") }
+};
+static CRITICAL_SECTION SHELL32_SicCS = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /*****************************************************************************
  * SIC_CompareEntries

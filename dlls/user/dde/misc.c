@@ -49,7 +49,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 static WDML_INSTANCE*	WDML_InstanceList = NULL;
 static DWORD		WDML_MaxInstanceID = 0;  /* OK for present, have to worry about wrap-around later */
 const char		WDML_szEventClass[] = "DdeEventClass";
-CRITICAL_SECTION	WDML_CritSect = CRITICAL_SECTION_INIT("WDML_CritSect");
+
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &WDML_CritSect,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": WDML_CritSect") }
+};
+CRITICAL_SECTION WDML_CritSect = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* ================================================================
  *

@@ -59,7 +59,14 @@ typedef struct {
 _Malloc32 Malloc32 = {&VT_IMalloc32, 0, NULL, 0, 0, NULL, 0};
 
 /* with a spy active all calls from pre to post methods are threadsave */
-static CRITICAL_SECTION IMalloc32_SpyCS = CRITICAL_SECTION_INIT("IMalloc32_SpyCS");
+static CRITICAL_SECTION IMalloc32_SpyCS;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &IMalloc32_SpyCS,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": IMalloc32_SpyCS") }
+};
+static CRITICAL_SECTION IMalloc32_SpyCS = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* resize the old table */
 static int SetSpyedBlockTableLength ( int NewLength )

@@ -27,6 +27,7 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -73,7 +74,19 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    crit->DebugInfo      = NULL;
+    crit->DebugInfo      = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(CRITICAL_SECTION_DEBUG));
+    if (crit->DebugInfo)
+    {
+        crit->DebugInfo->Type = 0;
+        crit->DebugInfo->CreatorBackTraceIndex = 0;
+        crit->DebugInfo->CriticalSection = crit;
+        crit->DebugInfo->ProcessLocksList.Blink = &(crit->DebugInfo->ProcessLocksList);
+        crit->DebugInfo->ProcessLocksList.Flink = &(crit->DebugInfo->ProcessLocksList);
+        crit->DebugInfo->EntryCount = 0;
+        crit->DebugInfo->ContentionCount = 0;
+        crit->DebugInfo->Spare[0] = 0;
+        crit->DebugInfo->Spare[1] = 0;
+    }
     crit->LockCount      = -1;
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
@@ -125,6 +138,16 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
     crit->OwningThread   = 0;
     if (crit->LockSemaphore) NtClose( crit->LockSemaphore );
     crit->LockSemaphore  = 0;
+    if (crit->DebugInfo)
+    {
+        /* only free the ones we made in here */
+        if (!crit->DebugInfo->Spare[1])
+        {
+            
+            RtlFreeHeap( ntdll_get_process_heap(), 0, crit->DebugInfo );
+            crit->DebugInfo = NULL;
+        }
+    }
     return STATUS_SUCCESS;
 }
 
@@ -153,7 +176,8 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         status = NtWaitForSingleObject( sem, FALSE, &time );
         if ( status == WAIT_TIMEOUT )
         {
-            const char *name = (char *)crit->DebugInfo;
+            const char *name = NULL;
+            if (crit->DebugInfo) name = (char *)crit->DebugInfo->Spare[1];
             if (!name) name = "?";
             ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (60 sec)\n",
                  crit, debugstr_a(name), GetCurrentThreadId(), (DWORD)crit->OwningThread );
@@ -170,7 +194,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         if (status == STATUS_WAIT_0) return STATUS_SUCCESS;
 
         /* Throw exception only for Wine internal locks */
-        if (!crit->DebugInfo) continue;
+        if ((!crit->DebugInfo) || (!crit->DebugInfo->Spare[1])) continue;
 
         rec.ExceptionCode    = STATUS_POSSIBLE_DEADLOCK;
         rec.ExceptionFlags   = 0;

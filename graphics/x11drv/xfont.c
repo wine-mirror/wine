@@ -322,7 +322,14 @@ static const struct CharsetBindingInfo charsetbindings[] =
 
 static int		DefResolution = 0;
 
-static CRITICAL_SECTION crtsc_fonts_X11 = CRITICAL_SECTION_INIT("crtsc_fonts_X11");
+static CRITICAL_SECTION crtsc_fonts_X11;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &crtsc_fonts_X11,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": crtsc_fonts_X11") }
+};
+static CRITICAL_SECTION crtsc_fonts_X11 = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static fontResource*	fontList = NULL;
 static fontObject*      fontCache = NULL;		/* array */

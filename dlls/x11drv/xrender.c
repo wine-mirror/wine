@@ -120,7 +120,14 @@ MAKE_FUNCPTR(XRenderSetPictureClipRectangles)
 MAKE_FUNCPTR(XRenderQueryExtension)
 #undef MAKE_FUNCPTR
 
-static CRITICAL_SECTION xrender_cs = CRITICAL_SECTION_INIT("xrender_cs");
+static CRITICAL_SECTION xrender_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &xrender_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": xrender_cs") }
+};
+static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
 /***********************************************************************

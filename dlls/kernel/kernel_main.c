@@ -53,7 +53,14 @@ extern void ENV_CopyStartupInformation(void);
 
 extern int main_create_flags;
 
-static CRITICAL_SECTION ldt_section = CRITICAL_SECTION_INIT("ldt_section");
+static CRITICAL_SECTION ldt_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &ldt_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": ldt_section") }
+};
+static CRITICAL_SECTION ldt_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /***********************************************************************
  *           locking for LDT routines
