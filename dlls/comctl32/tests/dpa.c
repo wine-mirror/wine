@@ -29,11 +29,13 @@
 
 #include "wine/test.h"
 
+static HDPA (WINAPI *pDPA_Create)(int);
+
 static INT CALLBACK dpa_strcmp(LPVOID pvstr1, LPVOID pvstr2, LPARAM flags)
 {
   LPCSTR str1 = (LPCSTR)pvstr1;
   LPCSTR str2 = (LPCSTR)pvstr2;
-  
+
   return lstrcmpA (str1, str2);
 }
 
@@ -42,19 +44,26 @@ void DPA_test()
   HDPA dpa_ret;
   INT  int_ret;
   CHAR test_str0[]="test0";
-  
-  dpa_ret = DPA_Create(0);
-  ok((dpa_ret !=0), "DPA_Create failed");
+
+  if (!pDPA_Create)
+      return;
+
+  dpa_ret = pDPA_Create(0);
+  ok((dpa_ret !=0), "DPA_Create failed\n");
   int_ret = DPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED);
-  ok((int_ret == -1), "DPA_Search found invalid item");
+  ok((int_ret == -1), "DPA_Search found invalid item\n");
   int_ret = DPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED|DPAS_INSERTBEFORE);
-  ok((int_ret == 0), "DPA_Search proposed bad item");
+  ok((int_ret == 0), "DPA_Search proposed bad item\n");
   int_ret = DPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED|DPAS_INSERTAFTER);
-  ok((int_ret == 0), "DPA_Search proposed bad item");
+  ok((int_ret == 0), "DPA_Search proposed bad item\n");
 }
 
 START_TEST(dpa)
 {
+    HMODULE hdll;
+
+    hdll=GetModuleHandleA("comctl32.dll");
+    pDPA_Create=(void*)GetProcAddress(hdll,(LPCSTR)328);
+
     DPA_test();
-    
 }
