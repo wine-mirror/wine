@@ -154,6 +154,7 @@ static int wcstombs_sbcs_slow( const struct sbcs_table *table, int flags,
 
     if (!defchar) defchar = &table_default;
     if (!used) used = &tmp;  /* avoid checking on every char */
+    *used = 0;
 
     for (len = dstlen; srclen && len; dst++, len--, src++, srclen--)
     {
@@ -320,6 +321,7 @@ static int wcstombs_dbcs_slow( const struct dbcs_table *table, int flags,
 
     if (defchar) defchar_value = defchar[1] ? ((defchar[0] << 8) | defchar[1]) : defchar[0];
     if (!used) used = &tmp;  /* avoid checking on every char */
+    *used = 0;
 
     for (len = dstlen; srclen && len; len--, srclen--, src++)
     {
