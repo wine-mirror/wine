@@ -221,7 +221,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
                  "pushfl\n"
                  "mov %7,%%es\n"
                  "mov %5,%%ds\n"
-                 ".byte 0x36; lcall *(%3)\n"
+                 ".byte 0x36, 0xff, 0x18\n" /* lcall *%ss:(%eax) */
                  "popl %%ds\n"
                  "mov %%es,%0\n"
                  "popl %%es\n"
