@@ -441,6 +441,9 @@ sub source_scan_directory
   # the name of this directory, including a trailing '/', or an empty
   # string if this is the top level directory
   my $dirname=$_[2];
+  # if set then no targets will be looked for and the sources will all 
+  # end up in the parent_project's 'misc' bucket
+  my $no_target=$_[3];
 
   # reference to the project for this directory. May not be used
   my $project;
@@ -493,11 +496,12 @@ sub source_scan_directory
       } elsif ($dentry =~ /^include/i) {
         # This directory must contain headers we're going to need
         push @{@$project_settings[$T_INCLUDE_PATH]},"-I$dentry";
+        source_scan_directory($project,"$fullentry/","$dentry/",1);
       } else {
 	# Recursively scan this directory. Any source file that cannot be 
-	# attributed to a project in one of the subdirectories will be attributed 
-	# to this project.
-	source_scan_directory($project,"$fullentry/","$dentry/");
+	# attributed to a project in one of the subdirectories will be 
+	# attributed to this project.
+	source_scan_directory($project,"$fullentry/","$dentry/",$no_target);
       }
     } elsif (-f "$fullentry") {
       if ($dentry =~ s/\.exe$//i) {
@@ -544,6 +548,14 @@ sub source_scan_directory
     push @{@$target[$T_SOURCES_MISC]},map "$path$_",@sources_misc;
     return;
   }
+  if ($no_target) {
+    my $parent_settings=@$parent_project[$P_SETTINGS];
+    push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_c;
+    push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_cxx;
+    push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_rc;
+    push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_misc;
+    return;
+  }
 
   my $source_count=@sources_c+@sources_cxx+@sources_rc+
                    @{@$project_settings[$T_SOURCES_C]}+
@@ -552,7 +564,7 @@ sub source_scan_directory
   if ($source_count == 0) {
     # A project without real sources is not a project, get out!
     if ($project!=$parent_project) {
-      $parent_settings=@$parent_project[$P_SETTINGS];
+      my $parent_settings=@$parent_project[$P_SETTINGS];
       push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_misc;
       push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@{@$project_settings[$T_SOURCES_MISC]};
     }
@@ -900,7 +912,7 @@ sub source_scan
 
   # Now scan the directory tree looking for source files and, maybe, targets
   print "Scanning the source directories...\n";
-  source_scan_directory(\@main_project,"","");
+  source_scan_directory(\@main_project,"","",0);
 
   @projects=sort { @$a[$P_PATH] cmp @$b[$P_PATH] } @projects;
 }
