@@ -138,6 +138,7 @@ static const SuffixCharset sufch_iso8859[] = {
     { "13", BALTIC_CHARSET, 28603, X11DRV_CPTABLE_SBCS },
     { "14", CELTIC_CHARSET, 28604, X11DRV_CPTABLE_SBCS },
     { "15", ANSI_CHARSET, 28605, X11DRV_CPTABLE_SBCS },
+    { "16", ISO3_CHARSET, 28606, X11DRV_CPTABLE_SBCS },
     { NULL, ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
 static const SuffixCharset sufch_microsoft[] = {
