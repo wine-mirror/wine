@@ -46,7 +46,7 @@ typedef struct _LOADDATA
     PVOID ptr;
 } LOADDATA, *LPLOADDATA;
 
-typedef HRESULT(CALLBACK *DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
+typedef HRESULT CALLBACK (*DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
 
 
 /**************************************************************************
