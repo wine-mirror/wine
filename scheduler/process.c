@@ -520,7 +520,7 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
 
  found:
     /* allocate main thread stack */
-    if (!THREAD_InitStack( NtCurrentTeb(), stack_size, TRUE )) goto error;
+    if (!THREAD_InitStack( NtCurrentTeb(), stack_size )) goto error;
 
     /* switch to the new stack */
     SYSDEPS_SwitchToThreadStack( start_process );
@@ -540,7 +540,7 @@ void PROCESS_InitWinelib( int argc, char *argv[] )
     if (!process_init( argv )) exit(1);
 
     /* allocate main thread stack */
-    if (!THREAD_InitStack( NtCurrentTeb(), 0, TRUE )) ExitProcess( GetLastError() );
+    if (!THREAD_InitStack( NtCurrentTeb(), 0 )) ExitProcess( GetLastError() );
 
     /* switch to the new stack */
     SYSDEPS_SwitchToThreadStack( start_process );

@@ -24,7 +24,6 @@
 #include "stackframe.h"
 #include "debugtools.h"
 #include "loadorder.h"
-#include "server.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(loaddll);
@@ -46,7 +45,6 @@ static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
 
 static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only );
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
-static void NE_InitProcess(void) WINE_NORETURN;
 
 static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only );
 
@@ -983,35 +981,13 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
  */
 static HINSTANCE16 NE_CreateThread( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmdline )
 {
-    TEB *teb = NULL;
-    HANDLE hThread = 0;
-    int socket = -1;
-    HTASK hTask;
+    HANDLE hThread;
     TDB *pTask;
+    HTASK hTask;
     HINSTANCE16 instance = 0;
 
-    SERVER_START_REQ( new_thread )
-    {
-        req->suspend = 0;
-        req->inherit = 0;
-        if (!SERVER_CALL_ERR())
-        {
-            hThread = req->handle;
-            socket = wine_server_recv_fd( hThread, 0 );
-        }
-    }
-    SERVER_END_REQ;
-    if (!hThread) return 0;
-
-    if (!(teb = THREAD_Create( socket, 0, FALSE ))) goto error;
-    teb->tibflags &= ~TEBF_WIN32;
-    teb->startup = NE_InitProcess;
-
-    /* Create a task for this process */
-
-    if (!TASK_Create( pModule, cmdShow, teb, cmdline + 1, *cmdline )) goto error;
-    hTask = teb->htask16;
-    if (SYSDEPS_SpawnThread( teb ) == -1) goto error;
+    if (!(hTask = TASK_SpawnTask( pModule, cmdShow, cmdline + 1, *cmdline, &hThread )))
+        return 0;
 
     /* Post event to start the task */
     PostEvent16( hTask );
@@ -1033,13 +1009,8 @@ static HINSTANCE16 NE_CreateThread( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmd
         GlobalUnlock16( hTask );
     } while (!instance);
 
-    return instance;
-
- error:
-    /* FIXME: free TEB and task */
-    close( socket );
     CloseHandle( hThread );
-    return 0;  /* FIXME */
+    return instance;
 }
 
 
@@ -1138,17 +1109,17 @@ HINSTANCE16 NE_StartMain( LPCSTR name, HANDLE file )
 
 
 /**********************************************************************
- *          NE_InitProcess
+ *          NE_StartTask
+ *
+ * Startup code for a new 16-bit task.
  */
-static void NE_InitProcess(void)
+DWORD NE_StartTask(void)
 {
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     HINSTANCE16 hInstance, hPrevInstance;
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
     WORD sp;
-
-    _EnterWin16Lock();
 
     if ( pModule->count > 0 )
     {
@@ -1184,8 +1155,11 @@ static void NE_InitProcess(void)
         pTask->hInstance = hInstance;
         pTask->hPrevInstance = hPrevInstance;
 
+        /* Free the previous stack selector */
+        FreeSelector16( SELECTOROF(pTask->teb->cur_stack) );
+
         /* Use DGROUP for 16-bit stack */
- 
+
         if (!(sp = pModule->sp))
             sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
         sp &= ~1;
@@ -1224,9 +1198,7 @@ static void NE_InitProcess(void)
         wine_call_to_16_regs_short( &context, 0 );
         ExitThread( LOWORD(context.Eax) );
     }
-
-    _LeaveWin16Lock();
-    ExitThread( hInstance );
+    return hInstance;  /* error code */
 }
 
 /***********************************************************************

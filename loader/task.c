@@ -218,7 +218,7 @@ static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
  *       by entering the Win16Lock while linking the task into the
  *       global task list.
  */
-BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, BYTE len )
+static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, BYTE len )
 {
     HTASK16 hTask;
     TDB *pTask;
@@ -227,7 +227,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
       /* Allocate the task structure */
 
     hTask = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB) );
-    if (!hTask) return FALSE;
+    if (!hTask) return NULL;
     pTask = (TDB *)GlobalLock16( hTask );
     FarSetOwner16( hTask, pModule->self );
 
@@ -235,7 +235,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
 
     pTask->hSelf = hTask;
 
-    if (teb->tibflags & TEBF_WIN32)
+    if (teb && teb->tibflags & TEBF_WIN32)
     {
         pTask->flags        |= TDBF_WIN32;
         pTask->hInstance     = pModule->self;
@@ -323,19 +323,14 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
     if ( !(pTask->flags & TDBF_WIN32) )
         NtCreateEvent( &pTask->hEvent, EVENT_ALL_ACCESS, NULL, TRUE, FALSE );
 
-    /* Enter task handle into thread and process */
+    /* Enter task handle into thread */
 
-    teb->htask16 = hTask;
+    if (teb) teb->htask16 = hTask;
     if (!initial_task) initial_task = hTask;
 
-    /* Add the task to the linked list */
-
-    _EnterWin16Lock();
-    TASK_LinkTask( hTask );
-    _LeaveWin16Lock();
-
-    return TRUE;
+    return pTask;
 }
+
 
 /***********************************************************************
  *           TASK_DeleteTask
@@ -368,6 +363,70 @@ static void TASK_DeleteTask( HTASK16 hTask )
 
     GlobalFreeAll16( hPDB );
 }
+
+
+/***********************************************************************
+ *           TASK_CreateMainTask
+ *
+ * Create a task for the main (32-bit) process.
+ */
+void TASK_CreateMainTask(void)
+{
+    TDB *pTask;
+    STARTUPINFOA startup_info;
+    UINT cmdShow = 1; /* SW_SHOWNORMAL but we don't want to include winuser.h here */
+
+    GetStartupInfoA( &startup_info );
+    if (startup_info.dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup_info.wShowWindow;
+    pTask = TASK_Create( (NE_MODULE *)GlobalLock16( MapHModuleLS(GetModuleHandleA(0)) ),
+                         cmdShow, NtCurrentTeb(), NULL, 0 );
+    if (!pTask)
+    {
+        ERR("could not create task for main process\n");
+        ExitProcess(1);
+    }
+
+    /* Add the task to the linked list */
+    /* (no need to get the win16 lock, we are the only thread at this point) */
+    TASK_LinkTask( pTask->hSelf );
+}
+
+
+/* startup routine for a new 16-bit thread */
+static DWORD CALLBACK task_start( TDB *pTask )
+{
+    DWORD ret;
+
+    NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
+    NtCurrentTeb()->htask16 = pTask->hSelf;
+
+    _EnterWin16Lock();
+    TASK_LinkTask( pTask->hSelf );
+    pTask->teb = NtCurrentTeb();
+    ret = NE_StartTask();
+    _LeaveWin16Lock();
+    return ret;
+}
+
+
+/***********************************************************************
+ *           TASK_SpawnTask
+ *
+ * Spawn a new 16-bit task.
+ */
+HTASK TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmdline, BYTE len, HANDLE *hThread )
+{
+    TDB *pTask;
+
+    if (!(pTask = TASK_Create( pModule, cmdShow, NULL, cmdline, len ))) return 0;
+    if (!(*hThread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)task_start, pTask, 0, NULL )))
+    {
+        TASK_DeleteTask( pTask->hSelf );
+        return 0;
+    }
+    return pTask->hSelf;
+}
+
 
 /***********************************************************************
  *           TASK_KillTask
@@ -525,7 +584,7 @@ void TASK_Reschedule(void)
     {
         hNewTask = pOldTask->hYieldTo;
         pNewTask = (TDB *)GlobalLock16( hNewTask );
-        if( !pNewTask || !pNewTask->nEvents) hNewTask = 0;
+        if( !pNewTask || !pNewTask->nEvents || !pNewTask->teb) hNewTask = 0;
         pOldTask->hYieldTo = 0;
     }
 

@@ -131,7 +131,7 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
  *
  * Allocate the stack of a thread.
  */
-TEB *THREAD_InitStack( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
+TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
 {
     DWORD old_prot, total_size;
     DWORD page_size = getpagesize();
@@ -169,7 +169,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
 
     stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
     total_size = stack_size + SIGNAL_STACK_SIZE + 3 * page_size;
-    if (alloc_stack16) total_size += 0x10000;
+    total_size += 0x10000; /* 16-bit stack */
     if (!teb) total_size += page_size;
 
     if (!(base = VirtualAlloc( NULL, total_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
@@ -199,12 +199,10 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
 
     /* Allocate the 16-bit stack selector */
 
-    if (alloc_stack16)
-    {
-        teb->stack_sel = SELECTOR_AllocBlock( teb->stack_top, 0x10000, WINE_LDT_FLAGS_DATA );
-        if (!teb->stack_sel) goto error;
-        teb->cur_stack = MAKESEGPTR( teb->stack_sel, 0x10000 - sizeof(STACK16FRAME) );
-    }
+    teb->stack_sel = SELECTOR_AllocBlock( teb->stack_top, 0x10000, WINE_LDT_FLAGS_DATA );
+    if (!teb->stack_sel) goto error;
+    teb->cur_stack = MAKESEGPTR( teb->stack_sel, 0x10000 - sizeof(STACK16FRAME) );
+
     return teb;
 
 error:
@@ -254,25 +252,6 @@ void THREAD_Init(void)
 }
 
 DECL_GLOBAL_CONSTRUCTOR(thread_init) { THREAD_Init(); }
-
-/***********************************************************************
- *           THREAD_Create
- *
- */
-TEB *THREAD_Create( int fd, DWORD stack_size, BOOL alloc_stack16 )
-{
-    TEB *teb;
-
-    if ((teb = THREAD_InitStack( NULL, stack_size, alloc_stack16 )))
-    {
-        teb->tibflags = TEBF_WIN32;
-        teb->process  = NtCurrentTeb()->process;
-        teb->socket   = fd;
-        fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
-        TRACE("(%p) succeeded\n", teb);
-    }
-    return teb;
-}
 
 
 /***********************************************************************
@@ -325,15 +304,20 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     SERVER_END_REQ;
     if (!handle) return 0;
 
-    if (!(teb = THREAD_Create( socket, stack, TRUE )))
+    if (!(teb = THREAD_InitStack( NULL, stack )))
     {
         close( socket );
         return 0;
     }
+
+    teb->process     = NtCurrentTeb()->process;
+    teb->socket      = socket;
     teb->entry_point = start;
     teb->entry_arg   = param;
     teb->startup     = THREAD_Start;
     teb->htask16     = GetCurrentTask();
+    fcntl( socket, F_SETFD, 1 ); /* set close on exec flag */
+
     if (id) *id = (DWORD)tid;
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {

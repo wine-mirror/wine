@@ -26,8 +26,6 @@ extern void COMM_Init(void);
 static BOOL process_attach(void)
 {
     HMODULE16 hModule;
-    STARTUPINFOA startup_info;
-    UINT cmdShow = 1; /* SW_SHOWNORMAL but we don't want to include winuser.h here */
 
     /* Setup codepage info */
     CODEPAGE_Init();
@@ -83,11 +81,7 @@ static BOOL process_attach(void)
     if (!DOSCONF_ReadConfig()) return FALSE;
 
     /* Create 16-bit task */
-    GetStartupInfoA( &startup_info );
-    if (startup_info.dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup_info.wShowWindow;
-    if (!TASK_Create( (NE_MODULE *)GlobalLock16( MapHModuleLS(GetModuleHandleA(0)) ),
-                      cmdShow, NtCurrentTeb(), NULL, 0 ))
-        return FALSE;
+    TASK_CreateMainTask();
 
     return TRUE;
 }
