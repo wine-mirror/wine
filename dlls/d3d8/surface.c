@@ -280,8 +280,9 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 }
 
 HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
+    GLint skipBytes = 0;
     ICOM_THIS(IDirect3DSurface8Impl,iface);
-    
+
     if (FALSE == This->locked) {
       ERR("trying to lock unlocked surf@%p\n", This);  
       return D3DERR_INVALIDCALL;
@@ -375,19 +376,26 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	}
 	vcheckGLcall("glDrawBuffer");
 
-	glRasterPos2i(This->lockedRect.left, This->lockedRect.top);
+    /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
+    glGetIntegerv(GL_UNPACK_ROW_LENGTH, &skipBytes);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, This->myDesc.Width);
+
+    /* And back buffers are not blended */
+    glDisable(GL_BLEND);
+
+	glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
 	vcheckGLcall("glRasterPos2f");
 	switch (This->myDesc.Format) {
 	case D3DFMT_R5G6B5:
 	  {
-	    glDrawPixels(This->lockedRect.right - This->lockedRect.left, This->lockedRect.bottom - This->lockedRect.top,
+	    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
 			 GL_RGB, GL_UNSIGNED_SHORT_5_6_5, This->allocatedMemory);
 	    vcheckGLcall("glDrawPixels");
 	  }
 	  break;
 	case D3DFMT_R8G8B8:
 	  {
-	    glDrawPixels(This->lockedRect.right - This->lockedRect.left, This->lockedRect.bottom - This->lockedRect.top,
+	    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
 			 GL_RGB, GL_UNSIGNED_BYTE, This->allocatedMemory);
 	    vcheckGLcall("glDrawPixels");
 	  }
@@ -396,7 +404,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	  {
 	    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
 	    vcheckGLcall("glPixelStorei");
-	    glDrawPixels(This->lockedRect.right - This->lockedRect.left, This->lockedRect.bottom - This->lockedRect.top,
+	    glDrawPixels(This->lockedRect.right - This->lockedRect.left, (This->lockedRect.bottom - This->lockedRect.top)-1,
 			 GL_BGRA, GL_UNSIGNED_BYTE, This->allocatedMemory);
 	    vcheckGLcall("glDrawPixels");
 	    glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
@@ -413,6 +421,10 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	vcheckGLcall("glDrawBuffer");
 	glRasterPos3iv(&prev_rasterpos[0]);
 	vcheckGLcall("glRasterPos3iv");
+
+    /* Reset to previous pack row length / blending state */
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, skipBytes);
+    if (This->Device->StateBlock->renderstate[D3DRS_ALPHABLENDENABLE]) glEnable(GL_BLEND);
 
 	LEAVE_GL();
 

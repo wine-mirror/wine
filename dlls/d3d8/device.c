@@ -1051,7 +1051,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
             dest_rect.left  = p->x;
             dest_rect.top   = p->y;
             dest_rect.right = p->x + (r->right - r->left);
-            dest_rect.left  = p->y + (r->bottom - r->top);
+            dest_rect.bottom= p->y + (r->bottom - r->top);
             IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) dst, &lrDst, &dest_rect, 0L);
             TRACE("Locked src and dst\n");
 
