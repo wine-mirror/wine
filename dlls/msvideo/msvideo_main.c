@@ -278,7 +278,7 @@ LRESULT VFWAPI ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
 	 * goes unitialized.
 	 */
 	if (picinfo && cb >= sizeof(ICINFO)) 
-	   szDriver[0] = 0; /* At first, set it to an empty string */
+	   picinfo->szDriver[0] = 0; /* At first, set it to an empty string */
 
 	ret = ICSendMessage(hic,ICM_GETINFO,(DWORD)picinfo,cb);
 
@@ -287,7 +287,7 @@ LRESULT VFWAPI ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
 	 * be obtained from the registry as we do here.
 	 */
 	if (picinfo && cb >= sizeof(ICINFO))
-	   if (szDriver[0] == 0) { /* was szDriver not supplied? */
+	   if (picinfo->szDriver[0] == 0) { /* was szDriver not supplied? */
               sprintf(codecname, "vidc.%.4s", (char*)&(picinfo->fccHandler));
               GetPrivateProfileStringA("drivers32", codecname, "", szDriver, sizeof(szDriver), "system.ini");
 	      MultiByteToWideChar(CP_ACP, 0, szDriver, -1, picinfo->szDriver, sizeof(picinfo->szDriver)/sizeof(WCHAR));
