@@ -157,12 +157,6 @@ void wine_pthread_init_process( const struct wine_pthread_functions *functions )
 {
     memcpy( &funcs, functions, sizeof(funcs) );
     funcs.ptr_set_thread_data( &initial_descr );
-    initial_descr.cancel_state = PTHREAD_CANCEL_ENABLE;
-    initial_descr.cancel_type  = PTHREAD_CANCEL_ASYNCHRONOUS;
-    writejump( "__errno_location", __errno_location );
-    writejump( "__h_errno_location", __h_errno_location );
-    writejump( "__res_state", __res_state );
-    if (libc_uselocale) libc_uselocale( -1 /*LC_GLOBAL_LOCALE*/ );
 }
 
 
@@ -173,17 +167,24 @@ void wine_pthread_init_process( const struct wine_pthread_functions *functions )
  */
 void wine_pthread_init_thread(void)
 {
+    struct pthread_descr_struct *descr;
+
     if (funcs.ptr_set_thread_data)
     {
-        struct pthread_descr_struct *descr = calloc( 1, sizeof(*descr) );
-
+        descr = calloc( 1, sizeof(*descr) );
         funcs.ptr_set_thread_data( descr );
-        descr->cancel_state = PTHREAD_CANCEL_ENABLE;
-        descr->cancel_type  = PTHREAD_CANCEL_ASYNCHRONOUS;
         if (libc_multiple_threads) *libc_multiple_threads = 1;
-        if (libc_uselocale) libc_uselocale( -1 /*LC_GLOBAL_LOCALE*/ );
     }
-    /* else it's the first thread, init will be done in wine_pthread_init_process */
+    else  /* first thread */
+    {
+        descr = &initial_descr;
+        writejump( "__errno_location", __errno_location );
+        writejump( "__h_errno_location", __h_errno_location );
+        writejump( "__res_state", __res_state );
+    }
+    descr->cancel_state = PTHREAD_CANCEL_ENABLE;
+    descr->cancel_type  = PTHREAD_CANCEL_ASYNCHRONOUS;
+    if (libc_uselocale) libc_uselocale( -1 /*LC_GLOBAL_LOCALE*/ );
 }
 
 
