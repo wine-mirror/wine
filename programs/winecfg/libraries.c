@@ -47,62 +47,73 @@ struct dll
         enum dllmode mode;
 };
 
-static enum dllmode parse_override(char *in)
+/* Convert a registry string to a dllmode */
+static enum dllmode string_to_mode(char *in)
 {
-    int i, j;
+    int i, j, len;
     char *out;
+    enum dllmode res;
 
-    out = HeapAlloc(GetProcessHeap(), 0, strlen(in));
+    len = strlen(in);
+    out = HeapAlloc(GetProcessHeap(), 0, len);
 
     /* remove the spaces */
-    j = 0;
-    for (i = 0; i < strlen(in); i++)
-    {
-        if (in[i] != ' ')
-        {
-            out[j] = in[i];
-            j++;
+    for (i = j = 0; i <= len; ++i) {
+        if (in[i] != ' ') {
+            out[j++] = in[i];
         }
     }
-    out[j] = 0;
 
     /* parse the string */
-    if (strcmp(out, "builtin,native") == 0) return BUILTIN_NATIVE;
-    else if (strcmp(out, "native,builtin") == 0) return NATIVE_BUILTIN;
-    else if (strcmp(out, "native") == 0) return NATIVE;
-    else if (strcmp(out, "builtin") == 0) return BUILTIN;
-    else if (strcmp(out, "") == 0) return DISABLE;
+    res = UNKNOWN;
+    if (strcmp(out, "builtin,native") == 0) res = BUILTIN_NATIVE;
+    if (strcmp(out, "native,builtin") == 0) res = NATIVE_BUILTIN;
+    if (strcmp(out, "builtin") == 0) res = BUILTIN;
+    if (strcmp(out, "native") == 0) res = NATIVE;
+    if (strcmp(out, "") == 0) res = DISABLE;
 
-    return UNKNOWN;
+    HeapFree(GetProcessHeap(), 0, out);
+    return res;
 }
 
-/* this is used to convert a dllmode to a human readable string. we should read from the translations here  */
+/* Convert a dllmode to a registry string. */
+static char* mode_to_string(enum dllmode mode)
+{
+    if (mode == NATIVE) return "native";
+    if (mode == BUILTIN) return "builtin";
+    if (mode == NATIVE_BUILTIN) return "native,builtin";
+    if (mode == BUILTIN_NATIVE) return "builtin,native";
+    if (mode == DISABLE) return "";
+    assert(FALSE);
+}
+
+/* Convert a dllmode to a pretty string for display. TODO: use translations. */
 static char* mode_to_label(enum dllmode mode)
 {
-    char* res;
+    WINE_FIXME("translate me");
+    return mode_to_string(mode);
+}
 
-    switch (mode) {
-        case NATIVE:
-            res = "native";
-            break;
-        case BUILTIN:
-            res = "builtin";
-            break;
-        case NATIVE_BUILTIN:
-            res = "native, builtin";
-            break;
-        case BUILTIN_NATIVE:
-            res = "builtin, native";
-            break;
-        case DISABLE:
-            res = "disabled";
-            break;
-        default:
-            res = "unknown/invalid";
-            break;
-    }
+/* Convert a control id (IDC_ constant) to a dllmode */
+static enum dllmode id_to_mode(DWORD id)
+{
+    if (id == IDC_RAD_BUILTIN) return BUILTIN;
+    if (id == IDC_RAD_NATIVE) return NATIVE;
+    if (id == IDC_RAD_NATIVE_BUILTIN) return NATIVE_BUILTIN;
+    if (id == IDC_RAD_BUILTIN_NATIVE) return BUILTIN_NATIVE;
+    if (id == IDC_RAD_DISABLE) return DISABLE;
+    assert( FALSE ); /* should not be reached  */
+}
 
-    return res;
+/* Convert a dllmode to a control id (IDC_ constant) */
+static DWORD mode_to_id(enum dllmode mode)
+{
+    if (mode == BUILTIN) return IDC_RAD_BUILTIN;
+    if (mode == NATIVE) return IDC_RAD_NATIVE;
+    if (mode == NATIVE_BUILTIN) return IDC_RAD_NATIVE_BUILTIN;
+    if (mode == BUILTIN_NATIVE) return IDC_RAD_BUILTIN_NATIVE;
+    if (mode == DISABLE) return IDC_RAD_DISABLE;
+    assert( FALSE ); /* should not be reached  */
 }
 
 static void set_controls_from_selection(HWND dialog)
@@ -127,30 +138,8 @@ static void set_controls_from_selection(HWND dialog)
         enable(i);
 
     dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, index, 0);
-    
-    switch (dll->mode)
-    {
-        case NATIVE:
-            id = IDC_RAD_NATIVE;
-            break;
-        case BUILTIN:
-            id = IDC_RAD_BUILTIN;
-            break;
-        case NATIVE_BUILTIN:
-            id = IDC_RAD_NATIVE_BUILTIN;
-            break;
-        case BUILTIN_NATIVE:
-            id = IDC_RAD_BUILTIN_NATIVE;
-            break;
-        case DISABLE:
-            id = IDC_RAD_DISABLE;
-            break;
-
-        case UNKNOWN:
-        default:
-            id = -1;
-            break;
-    }
+   
+    id = mode_to_id(dll->mode);
 
     CheckRadioButton(dialog, IDC_RAD_BUILTIN, IDC_RAD_DISABLE, id);
 }
@@ -204,7 +193,7 @@ static void load_library_settings(HWND dialog)
 
         value = get(keypath("DllOverrides"), *p, NULL);
 
-        label = mode_to_label(parse_override(value));
+        label = mode_to_label(string_to_mode(value));
         
         str = HeapAlloc(GetProcessHeap(), 0, strlen(*p) + 2 + strlen(label) + 2);
         strcpy(str, *p);
@@ -214,7 +203,7 @@ static void load_library_settings(HWND dialog)
 
         dll = HeapAlloc(GetProcessHeap(), 0, sizeof(struct dll));
         dll->name = *p;
-        dll->mode = parse_override(value);
+        dll->mode = string_to_mode(value);
 
         index = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_ADDSTRING, (WPARAM) -1, (LPARAM) str);
         SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SETITEMDATA, index, (LPARAM) dll);
@@ -263,41 +252,17 @@ static void set_dllmode(HWND dialog, DWORD id)
     int sel;
     char *str;
 
-#define CONVERT(s) case IDC_RAD_##s: mode = s; break;
-    
-    switch (id)
-    {
-        CONVERT( BUILTIN );
-        CONVERT( NATIVE );
-        CONVERT( BUILTIN_NATIVE );
-        CONVERT( NATIVE_BUILTIN );
-        CONVERT( DISABLE );
-
-        default:
-            assert( FALSE ); /* should not be reached  */
-            return;
-    }
-
-#undef CONVERT
+    mode = id_to_mode(id);
 
     sel = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
     if (sel == -1) return;
     
     dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, sel, 0);
 
-    switch (mode)
-    {
-        case BUILTIN: str = "builtin"; break;
-        case NATIVE: str = "native"; break;
-        case BUILTIN_NATIVE: str = "builtin, native"; break;
-        case NATIVE_BUILTIN: str = "native, builtin"; break;
-        case DISABLE: str = ""; break;
-        default:
-            assert( FALSE ); /* unreachable  */
-            return;
-    }
+    str = mode_to_string(mode);
     WINE_TRACE("Setting %s to %s\n", dll->name, str);
     
+    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
     set(keypath("DllOverrides"), dll->name, str);
 
     load_library_settings(dialog);  /* ... and refresh  */
@@ -316,6 +281,7 @@ static void on_add_click(HWND dialog)
     
     WINE_TRACE("Adding %s as native, builtin", buffer);
     
+    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
     set(keypath("DllOverrides"), buffer, "native,builtin");
 
     load_library_settings(dialog);
@@ -336,6 +302,7 @@ static void on_remove_click(HWND dialog)
     
     SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_DELETESTRING, sel, 0);
 
+    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
     set(keypath("DllOverrides"), dll->name, NULL);
 
     HeapFree(GetProcessHeap(), 0, dll->name);

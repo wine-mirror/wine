@@ -253,7 +253,7 @@ char *get(char *path, char *name, char *def)
         if (strcasecmp(name, s->name) != 0) continue;
 
         WINE_TRACE("found %s:%s in settings list, returning %s\n", path, name, s->value);
-        return strdupA(s->value);
+        return s->value ? strdupA(s->value) : NULL;
     }
 
     /* no, so get from the registry */

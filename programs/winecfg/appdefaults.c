@@ -277,13 +277,12 @@ static void on_add_app_click(HWND dialog)
   {
       HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
       int count = ListView_GetItemCount(listview);
+      char* new_app;
       
-      HeapFree(GetProcessHeap(), 0, current_app);
-      current_app = strdupA(filetitle);
-
-      WINE_TRACE("adding %s\n", current_app);
+      new_app = strdupA(filetitle);
+      WINE_TRACE("adding %s\n", new_app);
       
-      add_listview_item(listview, current_app, current_app);
+      add_listview_item(listview, new_app, new_app);
 
       ListView_SetItemState(listview, count, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 

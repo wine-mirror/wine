@@ -64,22 +64,21 @@ void selectAudioDriver(HWND hDlg, char *drivername)
   }
 }
 
-void
-initAudioDlg (HWND hDlg)
+void initAudioDlg (HWND hDlg)
 {
-  char *curAudioDriver = get("Winmm", "Drivers", "winealsa.drv");
-  const AUDIO_DRIVER *pAudioDrv = NULL;
-  int i;
+    char *curAudioDriver = get("Winmm", "Drivers", "winealsa.drv");
+    const AUDIO_DRIVER *pAudioDrv = NULL;
+    int i;
 
-    if ((pAudioDrv = getAudioDrivers ()))
-    {
-	for (i = 0; *pAudioDrv->szName; i++, pAudioDrv++)
-	{
-	    SendDlgItemMessage (hDlg, IDC_AUDIO_DRIVER, CB_ADDSTRING,
-				0, (LPARAM) pAudioDrv->szName);
-	    if (!strcmp (pAudioDrv->szDriver, curAudioDriver))
-	      selectAudioDriver(hDlg, (char*)pAudioDrv->szDriver);
-	}
+    WINE_TRACE("\n");
+
+    pAudioDrv = getAudioDrivers ();
+    for (i = 0; *pAudioDrv->szName; i++, pAudioDrv++) {
+        SendDlgItemMessage (hDlg, IDC_AUDIO_DRIVER, CB_ADDSTRING, 
+                0, (LPARAM) pAudioDrv->szName);
+        if (!strcmp (pAudioDrv->szDriver, curAudioDriver)) {
+            SendDlgItemMessage(hDlg, IDC_AUDIO_DRIVER, CB_SETCURSEL, i, 0);
+        }
     }
 }
 
