@@ -37,9 +37,9 @@ debug_channels (ole typelib)
 25 stdcall SafeArrayGetElement(ptr ptr ptr) SafeArrayGetElement
 26 stdcall SafeArrayPutElement(ptr ptr ptr) SafeArrayPutElement
 27 stdcall SafeArrayCopy(ptr ptr) SafeArrayCopy
-28 stub DispGetParam
-29 stub DispGetIDsOfNames
-30 stub DispInvoke
+28 stdcall DispGetParam(ptr long long ptr ptr) DispGetParam
+29 stdcall DispGetIDsOfNames(ptr ptr long ptr) DispGetIDsOfNames
+30 stdcall DispInvoke(ptr ptr long long ptr ptr ptr ptr) DispInvoke
 31 stdcall CreateDispTypeInfo(ptr long ptr) CreateDispTypeInfo
 32 stdcall CreateStdDispatch(ptr ptr ptr ptr) CreateStdDispatch
 33 stdcall RegisterActiveObject(ptr ptr long ptr) RegisterActiveObject
