@@ -195,6 +195,8 @@ void *pp_xmalloc(size_t);
 void *pp_xrealloc(void *, size_t);
 char *pp_xstrdup(const char *str);
 pp_entry_t *pplookup(const char *ident);
+void pp_push_define_state(void);
+void pp_pop_define_state(void);
 pp_entry_t *pp_add_define(char *def, char *text);
 pp_entry_t *pp_add_macro(char *ident, marg_t *args[], int nargs, mtext_t *exp);
 void pp_del_define(const char *name);

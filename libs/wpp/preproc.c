@@ -33,15 +33,22 @@
 struct pp_status pp_status;
 
 #define HASHKEY		2039
-static pp_entry_t *pp_defines[HASHKEY];
+
+typedef struct pp_def_state
+{
+    struct pp_def_state *next;
+    pp_entry_t          *defines[HASHKEY];
+} pp_def_state_t;
+
+static pp_def_state_t *pp_def_state;
 
 #define MAXIFSTACK	64
 static pp_if_state_t if_stack[MAXIFSTACK];
 static int if_stack_idx = 0;
 
 #if 0
-void pp_status(void) __attribute__((destructor));
-void pp_status(void)
+void pp_print_status(void) __attribute__((destructor));
+void pp_print_status(void)
 {
 	int i;
 	int sum;
@@ -52,10 +59,10 @@ void pp_status(void)
 	for(i = 0; i < HASHKEY; i++)
 	{
 		sum = 0;
-		for(ppp = pp_defines[i]; ppp; ppp = ppp->next)
+		for(ppp = pp_def_state->defines[i]; ppp; ppp = ppp->next)
 			sum++;
 		total += sum;
-		fprintf(stderr, "%4d, %3d\n", i, sum);
+		if (sum) fprintf(stderr, "%4d, %3d\n", i, sum);
 	}
 	fprintf(stderr, "Total defines: %d\n", total);
 }
@@ -112,7 +119,7 @@ pp_entry_t *pplookup(const char *ident)
 	int idx = pphash(ident);
 	pp_entry_t *ppp;
 
-	for(ppp = pp_defines[idx]; ppp; ppp = ppp->next)
+	for(ppp = pp_def_state->defines[idx]; ppp; ppp = ppp->next)
 	{
 		if(!strcmp(ident, ppp->ident))
 			return ppp;
@@ -120,22 +127,10 @@ pp_entry_t *pplookup(const char *ident)
 	return NULL;
 }
 
-void pp_del_define(const char *name)
+static void free_pp_entry( pp_entry_t *ppp, int idx )
 {
-	int idx;
-	pp_entry_t *ppp;
-
-	if((ppp = pplookup(name)) == NULL)
-	{
-		if(pp_status.pedantic)
-			ppwarning("%s was not defined", name);
-		return;
-	}
-
 	if(ppp->iep)
 	{
-		if(pp_status.debug)
-			fprintf(stderr, "pp_del_define: %s:%d: includelogic removed, include_ppp='%s', file=%s\n", pp_status.input, pp_status.line_number, name, ppp->iep->filename);
 		if(ppp->iep == pp_includelogiclist)
 		{
 			pp_includelogiclist = ppp->iep->next;
@@ -152,12 +147,11 @@ void pp_del_define(const char *name)
 		free(ppp->iep);
 	}
 
-	idx = pphash(name);
-	if(pp_defines[idx] == ppp)
+	if(pp_def_state->defines[idx] == ppp)
 	{
-		pp_defines[idx] = ppp->next;
-		if(pp_defines[idx])
-			pp_defines[idx]->prev = NULL;
+		pp_def_state->defines[idx] = ppp->next;
+		if(pp_def_state->defines[idx])
+			pp_def_state->defines[idx]->prev = NULL;
 	}
 	else
 	{
@@ -167,6 +161,46 @@ void pp_del_define(const char *name)
 	}
 
 	free(ppp);
+}
+
+/* push a new (empty) define state */
+void pp_push_define_state(void)
+{
+    pp_def_state_t *state = pp_xmalloc( sizeof(*state) );
+
+    memset( state->defines, 0, sizeof(state->defines) );
+    state->next = pp_def_state;
+    pp_def_state = state;
+}
+
+/* pop the current define state */
+void pp_pop_define_state(void)
+{
+    int i;
+    pp_entry_t *ppp;
+    pp_def_state_t *state;
+
+    for (i = 0; i < HASHKEY; i++)
+    {
+        while ((ppp = pp_def_state->defines[i]) != NULL) free_pp_entry( ppp, i );
+    }
+    state = pp_def_state;
+    pp_def_state = state->next;
+    free( state );
+}
+
+void pp_del_define(const char *name)
+{
+	pp_entry_t *ppp;
+
+	if((ppp = pplookup(name)) == NULL)
+	{
+		if(pp_status.pedantic)
+			ppwarning("%s was not defined", name);
+		return;
+	}
+
+	free_pp_entry( ppp, pphash(name) );
 
 	if(pp_status.debug)
 		printf("Deleted (%s, %d) <%s>\n", pp_status.input, pp_status.line_number, name);
@@ -192,8 +226,8 @@ pp_entry_t *pp_add_define(char *def, char *text)
 	ppp->subst.text = text;
 	ppp->filename = pp_status.input ? pp_xstrdup(pp_status.input) : "<internal or cmdline>";
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
-	ppp->next = pp_defines[idx];
-	pp_defines[idx] = ppp;
+	ppp->next = pp_def_state->defines[idx];
+	pp_def_state->defines[idx] = ppp;
 	if(ppp->next)
 		ppp->next->prev = ppp;
 	if(text)
@@ -236,8 +270,8 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 	ppp->subst.mtext= exp;
 	ppp->filename = pp_status.input ? pp_xstrdup(pp_status.input) : "<internal or cmdline>";
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
-	ppp->next	= pp_defines[idx];
-	pp_defines[idx] = ppp;
+	ppp->next	= pp_def_state->defines[idx];
+	pp_def_state->defines[idx] = ppp;
 	if(ppp->next)
 		ppp->next->prev = ppp;
 

@@ -30,6 +30,25 @@
 
 int ppdebug;
 
+struct define
+{
+    struct define *next;
+    char          *name;
+    char          *value;
+};
+
+static struct define *cmdline_defines;
+
+static void add_cmdline_defines(void)
+{
+    struct define *def;
+
+    for (def = cmdline_defines; def; def = def->next)
+    {
+        if (def->value) pp_add_define( pp_xstrdup(def->name), pp_xstrdup(def->value) );
+    }
+}
+
 static void add_special_defines(void)
 {
     time_t now = time(NULL);
@@ -53,15 +72,42 @@ static void add_special_defines(void)
 /* add a define to the preprocessor list */
 void wpp_add_define( const char *name, const char *value )
 {
+    struct define *def;
+
     if (!value) value = "";
-    pp_add_define( pp_xstrdup(name), pp_xstrdup(value) );
+
+    for (def = cmdline_defines; def; def = def->next)
+    {
+        if (!strcmp( def->name, name ))
+        {
+            if (def->value) free( def->value );
+            def->value = pp_xstrdup(value);
+            return;
+        }
+    }
+
+    def = pp_xmalloc( sizeof(*def) );
+    def->next  = cmdline_defines;
+    def->name  = pp_xstrdup(name);
+    def->value = pp_xstrdup(value);
+    cmdline_defines = def;
 }
 
 
 /* undefine a previously added definition */
-void wpp_del_define( const char *value )
+void wpp_del_define( const char *name )
 {
-    pp_del_define( value );
+    struct define *def;
+
+    for (def = cmdline_defines; def; def = def->next)
+    {
+        if (!strcmp( def->name, name ))
+        {
+            if (def->value) free( def->value );
+            def->value = NULL;
+            return;
+        }
+    }
 }
 
 
@@ -71,8 +117,8 @@ void wpp_add_cmdline_define( const char *value )
     char *str = pp_xstrdup(value);
     char *p = strchr( str, '=' );
     if (p) *p++ = 0;
-    else p = "";
-    pp_add_define( str, pp_xstrdup(p) );
+    wpp_add_define( str, p );
+    free( str );
 }
 
 
@@ -97,6 +143,8 @@ int wpp_parse( const char *input, FILE *output )
 {
     int ret;
 
+    pp_push_define_state();
+    add_cmdline_defines();
     add_special_defines();
 
     if (!input) ppin = stdin;
@@ -114,6 +162,7 @@ int wpp_parse( const char *input, FILE *output )
     ret = ppparse();
 
     if (input) fclose(ppin);
+    pp_pop_define_state();
     return ret;
 }
 
