@@ -196,7 +196,6 @@ ISF_MyComputer_fnParseDisplayName (IShellFolder2 * iface,
     HRESULT hr = E_INVALIDARG;
     LPCWSTR szNext = NULL;
     WCHAR szElement[MAX_PATH];
-    CHAR szTempA[MAX_PATH];
     LPITEMIDLIST pidlTemp = NULL;
     CLSID clsid;
 
@@ -217,8 +216,7 @@ ISF_MyComputer_fnParseDisplayName (IShellFolder2 * iface,
     /* do we have an absolute path name ? */
     else if (PathGetDriveNumberW (lpszDisplayName) >= 0 && lpszDisplayName[2] == (WCHAR) '\\') {
 	szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
-	WideCharToMultiByte (CP_ACP, 0, szElement, -1, szTempA, MAX_PATH, NULL, NULL);
-	pidlTemp = _ILCreateDrive (szTempA);
+	pidlTemp = _ILCreateDrive (szElement);
     }
 
     if (szNext && *szNext) {
@@ -249,15 +247,15 @@ static BOOL CreateMyCompEnumList(IEnumIDList *list, DWORD dwFlags)
     /*enumerate the folders*/
     if(dwFlags & SHCONTF_FOLDERS)
     {
-        CHAR szDriveName[] = "A:\\";
+        WCHAR wszDriveName[] = {'A', ':', '\\', '\0'};
         DWORD dwDrivemap = GetLogicalDrives();
         HKEY hkey;
 
-        while (ret && szDriveName[0]<='Z')
+        while (ret && wszDriveName[0]<='Z')
         {
             if(dwDrivemap & 0x00000001L)
-                ret = AddToEnumList(list, _ILCreateDrive(szDriveName));
-            szDriveName[0]++;
+                ret = AddToEnumList(list, _ILCreateDrive(wszDriveName));
+            wszDriveName[0]++;
             dwDrivemap = dwDrivemap >> 1;
         }
 
