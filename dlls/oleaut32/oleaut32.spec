@@ -155,7 +155,7 @@ type win32
 198 stub VarDecFromDisp
 199 stub VarDecFromBool
 200 stub GetErrorInfo
-201 stub SetErrorInfo
+201 stdcall SetErrorInfo(long ptr) SetErrorInfo
 202 stub CreateErrorInfo
 205 stdcall VarI2FromI1(long ptr) VarI2FromI1
 206 stdcall VarI2FromUI2(long ptr) VarI2FromUI2

@@ -23,7 +23,9 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/mman.h>
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
 #include "winuser.h"
 
 extern char*   g_lpstrFileName;

@@ -4,7 +4,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#include "wine/port.h"
+#include "config.h"
 
 #ifdef __BEOS__
 #include <be/kernel/fs_info.h>
@@ -32,6 +32,8 @@
 #ifdef HAVE_PTY_H
 # include <pty.h>
 #endif
+
+#include "wine/port.h"
 
 /***********************************************************************
  *		usleep
