@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 #include "winbase.h"
 
@@ -38,6 +39,8 @@
 extern void CODEPAGE_Init(void);
 extern BOOL RELAY_Init(void);
 
+extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
+extern  int CONSOLE_HandleCtrlC(unsigned);
 
 /***********************************************************************
  *           KERNEL process initialisation routine
@@ -99,6 +102,9 @@ static BOOL process_attach(void)
 
     /* Create the shared heap for broken win95 native dlls */
     HeapCreate( HEAP_SHARED, 0, 0 );
+
+    /* finish the process initialisation, if needed */
+    __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);
 
     return TRUE;
 }

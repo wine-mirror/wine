@@ -380,7 +380,21 @@ typedef struct
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+typedef int (*wine_signal_handler)(unsigned sig);
+
+static wine_signal_handler handlers[256];
+
 static sigset_t all_sigs;
+
+
+/***********************************************************************
+ *           dispatch_signal
+ */
+inline static int dispatch_signal(unsigned sig)
+{
+    if (handlers[sig] == NULL) return 0;
+    return handlers[sig](sig);
+}
 
 
 /***********************************************************************
@@ -974,8 +988,7 @@ static HANDLER_DEF(fpe_handler)
  */
 static HANDLER_DEF(int_handler)
 {
-    extern int CONSOLE_HandleCtrlC(void);
-    if (!CONSOLE_HandleCtrlC())
+    if (!dispatch_signal(SIGINT))
     {
         EXCEPTION_RECORD rec;
         CONTEXT context;
@@ -1031,6 +1044,18 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
     if (have_sigaltstack) sig_act.sa_flags |= SA_ONSTACK;
 #endif
     return sigaction( sig, &sig_act, NULL );
+}
+
+
+/***********************************************************************
+ *           __wine_set_signal_handler   (NTDLL.@)
+ */
+int __wine_set_signal_handler(unsigned sig, wine_signal_handler wsh)
+{
+    if (sig > sizeof(handlers) / sizeof(handlers[0])) return -1;
+    if (handlers[sig] != NULL) return -2;
+    handlers[sig] = wsh;
+    return 0;
 }
 
 

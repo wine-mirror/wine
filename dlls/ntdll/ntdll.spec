@@ -1026,3 +1026,6 @@
 
 # Codepages
 @ cdecl __wine_init_codepages(ptr ptr) __wine_init_codepages
+
+# signal handling
+@ cdecl __wine_set_signal_handler(long ptr) __wine_set_signal_handler
