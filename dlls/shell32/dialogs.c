@@ -36,6 +36,7 @@
 #include "shellapi.h"
 #include "shlobj.h"
 #include "shell32_main.h"
+#include "shresdef.h"
 #include "undocshell.h"
 
 typedef struct
@@ -372,6 +373,64 @@ void FillList (HWND hCb, char *pszLatest)
     free (pszList) ;
     }
 
+
+/*************************************************************************
+ * ConfirmDialog				[internal]
+ *
+ * Put up a confirm box, return TRUE if the user confirmed
+ */
+static BOOL ConfirmDialog(HWND hWndOwner, UINT PromptId, UINT TitleId)
+{
+  WCHAR Prompt[256];
+  WCHAR Title[256];
+
+  LoadStringW(shell32_hInstance, PromptId, Prompt, sizeof(Prompt) / sizeof(WCHAR));
+  LoadStringW(shell32_hInstance, TitleId, Title, sizeof(Title) / sizeof(WCHAR));
+  return MessageBoxW(hWndOwner, Prompt, Title, MB_YESNO|MB_ICONQUESTION) == IDYES;
+}
+
+
+/*************************************************************************
+ * RestartDialogEx				[SHELL32.730]
+ */
+
+int WINAPI RestartDialogEx(HWND hWndOwner, LPCWSTR lpwstrReason, DWORD uFlags, DWORD uReason)
+{
+    TRACE("(%p)\n", hWndOwner);
+
+    /*FIXME: use uReason */
+
+    if (ConfirmDialog(hWndOwner, IDS_RESTART_PROMPT, IDS_RESTART_TITLE))
+    {
+        HANDLE hToken;
+        TOKEN_PRIVILEGES npr;
+
+        /* enable shutdown privilege for current process */
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            LookupPrivilegeValueA(0, "SeShutdownPrivilege", &npr.Privileges[0].Luid);
+            npr.PrivilegeCount = 1;
+            npr.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+            AdjustTokenPrivileges(hToken, FALSE, &npr, 0, 0, 0);
+            CloseHandle(hToken);
+        }
+        ExitWindowsEx(EWX_REBOOT, 0);
+    }
+
+    return 0;
+}
+
+
+/*************************************************************************
+ * RestartDialog				[SHELL32.59]
+ */
+
+int WINAPI RestartDialog(HWND hWndOwner, LPCWSTR lpstrReason, DWORD uFlags)
+{
+    return RestartDialogEx(hWndOwner, lpstrReason, uFlags, 0);
+}
+
+
 /*************************************************************************
  * ExitWindowsDialog				[SHELL32.60]
  *
@@ -380,9 +439,22 @@ void FillList (HWND hCb, char *pszLatest)
  */
 void WINAPI ExitWindowsDialog (HWND hWndOwner)
 {
-	TRACE("(%p)\n", hWndOwner);
-	if (MessageBoxA( hWndOwner, "Do you want to exit WINE?", "Shutdown", MB_YESNO|MB_ICONQUESTION) == IDYES)
-	{
-	  SendMessageA ( hWndOwner, WM_QUIT, 0, 0);
-	}
+    TRACE("(%p)\n", hWndOwner);
+
+    if (ConfirmDialog(hWndOwner, IDS_SHUTDOWN_PROMPT, IDS_SHUTDOWN_TITLE))
+    {
+        HANDLE hToken;
+        TOKEN_PRIVILEGES npr;
+
+        /* enable shutdown privilege for current process */
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+        {
+            LookupPrivilegeValueA(0, "SeShutdownPrivilege", &npr.Privileges[0].Luid);
+            npr.PrivilegeCount = 1;
+            npr.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+            AdjustTokenPrivileges(hToken, FALSE, &npr, 0, 0, 0);
+            CloseHandle(hToken);
+        }
+        ExitWindowsEx(EWX_SHUTDOWN, 0);
+    }
 }

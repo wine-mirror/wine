@@ -45,6 +45,9 @@ HRESULT      WINAPI SHILCreateFromPath(LPCWSTR,LPITEMIDLIST*,DWORD*);
 LPITEMIDLIST WINAPI SHSimpleIDListFromPath(LPCWSTR);
 int          WINAPI SHMapPIDLToSystemImageListIndex(IShellFolder*,LPCITEMIDLIST,int*);
 
+int          WINAPI RestartDialog(HWND,LPCWSTR,DWORD);
+int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
+
 
 /* SHObjectProperties flags */
 #define SHOP_PRINTERNAME 0x01
