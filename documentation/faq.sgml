@@ -1292,7 +1292,7 @@ wine
         <para>
           Either use a classic no-windows install (Wine is getting better all
           the time) or use a Win9x install (Win95, 98, 98SE, ME). DON'T 
-          configure Wine to use an NT-based Windows install (NT, Win2K, WinXP).
+          configure Wine to use an NT-based Windows install (NT, Win2K, WinXP, Win2K3).
         </para>
 	<para>
 	  In general, most Windows installations contain vast quantities of garbage

@@ -76,7 +76,7 @@ WINE REGISTRY Version 2
 # [wineconf]
 
 [Version]
-; Windows version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win20,win30,win31)
+; Windows version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win2k3,win20,win30,win31)
 ;"Windows" = "win98"
 ; DOS version to imitate
 ;"DOS" = "6.22"
