@@ -79,6 +79,22 @@ struct relocation_entry_s
 #define NE_RELTYPE_OSFIXUP   3
 #define NE_RELFLAG_ADDITIVE  4
 
+/* Self-loading modules contain this structure in their first segment */
+typedef struct
+{
+    WORD      version;       /* Must be "A0" (0x3041) */
+    WORD      reserved;
+    FARPROC16 BootApp;       /* startup procedure */
+    FARPROC16 LoadAppSeg;    /* procedure to load a segment */
+    FARPROC16 reserved2;
+    FARPROC16 MyAlloc;       /* memory allocation procedure,
+                              * wine must write this field */
+    FARPROC16 EntryAddrProc;
+    FARPROC16 ExitProc;      /* exit procedure */
+    WORD      reserved3[4];
+    FARPROC16 SetOwner;      /* Set Owner procedure, exported by wine */
+} SELFLOADHEADER;
+
 #define SEL(x) ((x)|1)
 
 static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum);
@@ -108,7 +124,7 @@ static const char *NE_GetRelocAddrName( BYTE addr_type, int additive )
 BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 {
     SEGTABLEENTRY *pSegTable, *pSeg;
-    WORD *pModuleTable;
+    HMODULE16 *pModuleTable;
     WORD count, i, offset, next_offset;
     HMODULE16 module;
     FARPROC16 address = 0;
@@ -139,7 +155,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 
-    pModuleTable = NE_MODULE_TABLE( pModule );
+    pModuleTable = (HMODULE16 *)((char *)pModule + pModule->modref_table);
 
     hf = NE_OpenFile( pModule );
     TRACE_(module)("Loading segment %d, hSeg=%04x, flags=%04x\n",
@@ -861,7 +877,7 @@ static void free_init_list( struct ne_init_list *list )
 static void fill_init_list( struct ne_init_list *list, HMODULE16 hModule )
 {
     NE_MODULE *pModule;
-    WORD *pModRef;
+    HMODULE16 *pModRef;
     int i;
 
     if (!(pModule = NE_GetPtr( hModule ))) return;
@@ -881,10 +897,9 @@ static void fill_init_list( struct ne_init_list *list, HMODULE16 hModule )
     pModule->misc_flags |= 0x80;
 
     /* Recursively attach all DLLs this one depends on */
-    pModRef = NE_MODULE_TABLE( pModule );
+    pModRef = (HMODULE16 *)((char *)pModule + pModule->modref_table);
     for ( i = 0; i < pModule->modref_count; i++ )
-        if ( pModRef[i] )
-            fill_init_list( list, (HMODULE16)pModRef[i] );
+        if ( pModRef[i] ) fill_init_list( list, pModRef[i] );
 
     /* Add current module */
     add_to_init_list( list, pModule );

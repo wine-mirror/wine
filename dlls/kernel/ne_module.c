@@ -225,7 +225,7 @@ NE_MODULE *NE_GetPtr( HMODULE16 hModule )
 /**********************************************************************
  *           NE_RegisterModule
  */
-void NE_RegisterModule( NE_MODULE *pModule )
+static void NE_RegisterModule( NE_MODULE *pModule )
 {
     pModule->next = hFirstModule;
     hFirstModule = pModule->self;
@@ -390,7 +390,7 @@ void NE_WalkModules(void)
  *
  * Fill in 'resloader' fields in the resource table.
  */
-void NE_InitResourceHandler( NE_MODULE *pModule )
+static void NE_InitResourceHandler( NE_MODULE *pModule )
 {
     static FARPROC16 proc;
 
@@ -1577,7 +1577,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
 
     /* Free the referenced modules */
 
-    pModRef = (HMODULE16*)NE_MODULE_TABLE( pModule );
+    pModRef = (HMODULE16*)((char *)pModule + pModule->modref_table);
     for (i = 0; i < pModule->modref_count; i++, pModRef++)
     {
         NE_FreeModule( *pModRef, call_wep );

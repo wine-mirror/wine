@@ -34,7 +34,6 @@
 #include "thread.h"
 #include "drive.h"
 #include "file.h"
-#include "heap.h"
 #include "module.h"
 #include "options.h"
 #include "kernel_private.h"
@@ -45,6 +44,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(server);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+
+typedef struct
+{
+    LPSTR lpEnvAddress;
+    LPSTR lpCmdLine;
+    LPSTR lpCmdShow;
+    DWORD dwReserved;
+} LOADPARMS32;
 
 static UINT process_error_mode;
 
@@ -1746,7 +1753,7 @@ UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
  */
 HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
 {
-    LOADPARAMS *params = (LOADPARAMS *)paramBlock;
+    LOADPARMS32 *params = paramBlock;
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
     HINSTANCE hInstance;
@@ -1775,7 +1782,7 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
     if (params->lpCmdShow)
     {
         startup.dwFlags = STARTF_USESHOWWINDOW;
-        startup.wShowWindow = params->lpCmdShow[1];
+        startup.wShowWindow = ((WORD *)params->lpCmdShow)[1];
     }
 
     if (CreateProcessA( filename, cmdline, NULL, NULL, FALSE, 0,

@@ -98,43 +98,10 @@ typedef struct
                          /* of segment in memory */
 } SEGTABLEENTRY;
 
-
-  /* Self-loading modules contain this structure in their first segment */
-
-#include <pshpack1.h>
-
-typedef struct
-{
-    WORD      version;       /* Must be "A0" (0x3041) */
-    WORD      reserved;
-    FARPROC16 BootApp;       /* startup procedure */
-    FARPROC16 LoadAppSeg;    /* procedure to load a segment */
-    FARPROC16 reserved2;
-    FARPROC16 MyAlloc;       /* memory allocation procedure,
-                              * wine must write this field */
-    FARPROC16 EntryAddrProc;
-    FARPROC16 ExitProc;      /* exit procedure */
-    WORD      reserved3[4];
-    FARPROC16 SetOwner;      /* Set Owner procedure, exported by wine */
-} SELFLOADHEADER;
-
-typedef struct
-{
-    LPSTR lpEnvAddress;
-    LPSTR lpCmdLine;
-    UINT16 *lpCmdShow;
-    DWORD dwReserved;
-} LOADPARAMS;
-
-#include <poppack.h>
-
 /* Resource types */
 
 #define NE_SEG_TABLE(pModule) \
     ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->seg_table))
-
-#define NE_MODULE_TABLE(pModule) \
-    ((WORD *)((char *)(pModule) + (pModule)->modref_table))
 
 #define NE_MODULE_NAME(pModule) \
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
@@ -164,15 +131,9 @@ enum binary_type
 /* module.c */
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
 extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
-extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
-extern void MODULE_WalkModref( DWORD id );
 
 /* loader/ne/module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
-extern void NE_DumpModule( HMODULE16 hModule );
-extern void NE_WalkModules(void);
-extern void NE_InitResourceHandler( NE_MODULE *pModule );
-extern void NE_RegisterModule( NE_MODULE *pModule );
 extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
 extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
 extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop );
@@ -192,10 +153,6 @@ extern HINSTANCE16 NE_GetInstance( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE16 hModule );
 extern void NE_DllProcessAttach( HMODULE16 hModule );
 extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code );
-
-/* loader/pe_resource.c */
-extern HRSRC PE_FindResourceW(HMODULE,LPCWSTR,LPCWSTR);
-extern HRSRC PE_FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
 
 /* loader/loadorder.c */
 extern void MODULE_GetLoadOrderW( enum loadorder_type plo[], const WCHAR *app_name,
