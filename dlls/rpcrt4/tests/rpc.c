@@ -101,7 +101,12 @@ void UuidConversionAndComparison(void) {
     /* Uuid to String to Uuid (wchar) */
     for (i1 = 0; i1 < 10; i1++) {
         Uuid1 = Uuid_Table[i1];
-	ok( (UuidToStringW(&Uuid1, &wstr) == RPC_S_OK), "Simple UUID->WString copy" );
+        rslt=UuidToStringW(&Uuid1, &wstr);
+        if (rslt==RPC_S_CANNOT_SUPPORT) {
+            /* Must be Win9x (no Unicode support), skip the tests */
+            break;
+        }
+	ok( (rslt == RPC_S_OK), "Simple UUID->WString copy" );
 	ok( (UuidFromStringW(wstr, &Uuid2) == RPC_S_OK), "Simple WString->UUID copy from generated UUID String" );
 	ok( UuidEqual(&Uuid1, &Uuid2, &rslt), "Uuid -> WString -> Uuid transform" );
 	/* invalid uuid tests  -- size of valid UUID string=36 */
