@@ -328,32 +328,6 @@ int CLIENT_SetDebug( int level )
 }
 
 /***********************************************************************
- *           CLIENT_TerminateProcess
- *
- * Send a terminate process request. Return 0 if OK.
- */
-int CLIENT_TerminateProcess( int handle, int exit_code )
-{
-    CLIENT_SendRequest( REQ_TERMINATE_PROCESS, -1, 2,
-                        &handle, sizeof(handle),
-                        &exit_code, sizeof(exit_code) );
-    return CLIENT_WaitReply( NULL, NULL, 0 );
-}
-
-/***********************************************************************
- *           CLIENT_TerminateThread
- *
- * Send a terminate thread request. Return 0 if OK.
- */
-int CLIENT_TerminateThread( int handle, int exit_code )
-{
-    CLIENT_SendRequest( REQ_TERMINATE_THREAD, -1, 2,
-                        &handle, sizeof(handle),
-                        &exit_code, sizeof(exit_code) );
-    return CLIENT_WaitReply( NULL, NULL, 0 );
-}
-
-/***********************************************************************
  *           CLIENT_CloseHandle
  *
  * Send a close handle request. Return 0 if OK.

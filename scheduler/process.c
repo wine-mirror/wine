@@ -23,20 +23,10 @@
 #include "server.h"
 #include "debug.h"
 
-static BOOL32 PROCESS_Signaled( K32OBJ *obj, DWORD thread_id );
-static BOOL32 PROCESS_Satisfied( K32OBJ *obj, DWORD thread_id );
-static void PROCESS_AddWait( K32OBJ *obj, DWORD thread_id );
-static void PROCESS_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void PROCESS_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS PROCESS_Ops =
 {
-    PROCESS_Signaled,    /* signaled */
-    PROCESS_Satisfied,   /* satisfied */
-    PROCESS_AddWait,     /* add_wait */
-    PROCESS_RemoveWait,  /* remove_wait */
-    NULL,                /* read */
-    NULL,                /* write */
     PROCESS_Destroy      /* destroy */
 };
 
@@ -295,8 +285,6 @@ static void PROCESS_FreePDB( PDB32 *pdb )
     if (pdb->handle_table) HANDLE_CloseAll( pdb, NULL );
     ENV_FreeEnvironment( pdb );
     if (pdb->heap && (pdb->heap != pdb->system_heap)) HeapDestroy( pdb->heap );
-    if (pdb->load_done_evt) K32OBJ_DecCount( pdb->load_done_evt );
-    if (pdb->event) K32OBJ_DecCount( pdb->event );
     DeleteCriticalSection( &pdb->crit_section );
     HeapFree( SystemHeap, 0, pdb );
 }
@@ -325,24 +313,31 @@ static PDB32 *PROCESS_CreatePDB( PDB32 *parent )
     pdb->priority        = 8;  /* Normal */
     pdb->heap            = pdb->system_heap;  /* will be changed later on */
 
-    InitializeCriticalSection( &pdb->crit_section );
-
-    /* Allocate the events */
-
-    if (!(pdb->event = EVENT_Create( TRUE, FALSE ))) goto error;
-    if (!(pdb->load_done_evt = EVENT_Create( TRUE, FALSE ))) goto error;
-
     /* Create the handle table */
 
     if (!HANDLE_CreateTable( pdb, TRUE )) goto error;
 
     PROCESS_PDBList_Insert (pdb);
-
     return pdb;
 
 error:
     PROCESS_FreePDB( pdb );
     return NULL;
+}
+
+
+/***********************************************************************
+ *           PROCESS_FinishCreatePDB
+ *
+ * Second part of CreatePDB
+ */
+static BOOL32 PROCESS_FinishCreatePDB( PDB32 *pdb )
+{
+    InitializeCriticalSection( &pdb->crit_section );
+    /* Allocate the event */
+    if (!(pdb->load_done_evt = CreateEvent32A( NULL, TRUE, FALSE, NULL )))
+        return FALSE;
+    return TRUE;
 }
 
 
@@ -357,9 +352,8 @@ BOOL32 PROCESS_Init(void)
     /* Initialize virtual memory management */
     if (!VIRTUAL_Init()) return FALSE;
 
-    /* Create the system and SEGPTR heaps */
+    /* Create the system heaps */
     if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
-    if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
 
     /* Create the initial process and thread structures */
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
@@ -376,6 +370,10 @@ BOOL32 PROCESS_Init(void)
 
     /* Initialize the first thread */
     if (CLIENT_InitThread()) return FALSE;
+    if (!PROCESS_FinishCreatePDB( pdb )) return FALSE;
+
+    /* Create the SEGPTR heap */
+    if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
 
     return TRUE;
 }
@@ -400,6 +398,7 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     if (!pdb) return NULL;
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE32;
+    if (!PROCESS_FinishCreatePDB( pdb )) goto error;
 
     /* Create the heap */
 
@@ -473,56 +472,6 @@ error:
 
 
 /***********************************************************************
- *           PROCESS_Signaled
- */
-static BOOL32 PROCESS_Signaled( K32OBJ *obj, DWORD thread_id )
-{
-    PDB32 *pdb = (PDB32 *)obj;
-    assert( obj->type == K32OBJ_PROCESS );
-    return K32OBJ_OPS( pdb->event )->signaled( pdb->event, thread_id );
-}
-
-
-/***********************************************************************
- *           PROCESS_Satisfied
- *
- * Wait on this object has been satisfied.
- */
-static BOOL32 PROCESS_Satisfied( K32OBJ *obj, DWORD thread_id )
-{
-    PDB32 *pdb = (PDB32 *)obj;
-    assert( obj->type == K32OBJ_PROCESS );
-    return K32OBJ_OPS( pdb->event )->satisfied( pdb->event, thread_id );
-}
-
-
-/***********************************************************************
- *           PROCESS_AddWait
- *
- * Add thread to object wait queue.
- */
-static void PROCESS_AddWait( K32OBJ *obj, DWORD thread_id )
-{
-    PDB32 *pdb = (PDB32 *)obj;
-    assert( obj->type == K32OBJ_PROCESS );
-    return K32OBJ_OPS( pdb->event )->add_wait( pdb->event, thread_id );
-}
-
-
-/***********************************************************************
- *           PROCESS_RemoveWait
- *
- * Remove thread from object wait queue.
- */
-static void PROCESS_RemoveWait( K32OBJ *obj, DWORD thread_id )
-{
-    PDB32 *pdb = (PDB32 *)obj;
-    assert( obj->type == K32OBJ_PROCESS );
-    return K32OBJ_OPS( pdb->event )->remove_wait( pdb->event, thread_id );
-}
-
-
-/***********************************************************************
  *           PROCESS_Destroy
  */
 static void PROCESS_Destroy( K32OBJ *ptr )
@@ -552,7 +501,6 @@ void WINAPI ExitProcess( DWORD status )
     SYSTEM_LOCK();
     /* FIXME: should kill all running threads of this process */
     pdb->exit_code = status;
-    EVENT_Set( pdb->event );
     if (pdb->console) FreeConsole();
     SYSTEM_UNLOCK();
 
@@ -566,13 +514,13 @@ void WINAPI ExitProcess( DWORD status )
  */
 BOOL32 WINAPI TerminateProcess( HANDLE32 handle, DWORD exit_code )
 {
-    int server_handle;
-    BOOL32 ret;
-    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_TERMINATE, &server_handle );
-    if (!pdb) return FALSE;
-    ret = !CLIENT_TerminateProcess( server_handle, exit_code );
-    K32OBJ_DecCount( &pdb->header );
-    return ret;
+    struct terminate_process_request req;
+
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                         K32OBJ_PROCESS, PROCESS_TERMINATE );
+    req.exit_code = exit_code;
+    CLIENT_SendRequest( REQ_TERMINATE_PROCESS, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 /***********************************************************************
@@ -832,8 +780,8 @@ BOOL32 WINAPI GetProcessWorkingSetSize(HANDLE32 hProcess,LPDWORD minset,
  * It really shouldn't be here, but I'll move it when it's been checked!
  */
 #define SHUTDOWN_NORETRY 1
-extern unsigned int shutdown_noretry = 0;
-extern unsigned int shutdown_priority = 0x280L;
+static unsigned int shutdown_noretry = 0;
+static unsigned int shutdown_priority = 0x280L;
 BOOL32 WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
 {
     if (flags & SHUTDOWN_NORETRY)
@@ -901,28 +849,6 @@ BOOL32 WINAPI WriteProcessMemory(HANDLE32 hProcess, LPVOID lpBaseAddress,
 }
 
 /***********************************************************************
- *           ConvertToGlobalHandle    		(KERNEL32)
- */
-HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 hSrc)
-{
-    HANDLE32 hProcessInit, hDest;
-
-    /* Get a handle to the initial process */
-    hProcessInit = OpenProcess( PROCESS_ALL_ACCESS, FALSE, PROCESS_InitialProcessID );
-
-    /* Duplicate the handle into the initial process */
-    if ( !DuplicateHandle( GetCurrentProcess(), hSrc, hProcessInit, &hDest,
-                           0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE ) )
-        hDest = 0;
-
-    /* Close initial process handle */
-    CloseHandle( hProcessInit );
-
-    /* Return obfuscated global handle */
-    return hDest? HANDLE_LOCAL_TO_GLOBAL( hDest ) : 0;
-}
-
-/***********************************************************************
  *           RegisterServiceProcess             (KERNEL, KERNEL32)
  *
  * A service process calls this function to ensure that it continues to run
@@ -942,28 +868,17 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
  * RETURNS
  *   Success: TRUE
  *   Failure: FALSE
- * 
- * FIXME
- *   Should call SetLastError (but doesn't).
  */
 BOOL32 WINAPI GetExitCodeProcess(
     HANDLE32 hProcess,  /* [I] handle to the process */
     LPDWORD lpExitCode) /* [O] address to receive termination status */
 {
-    PDB32 *process;
-    int server_handle;
     struct get_process_info_reply info;
+    int handle = HANDLE_GetServerHandle( PROCESS_Current(), hProcess,
+                                         K32OBJ_PROCESS, PROCESS_QUERY_INFORMATION );
 
-    if (!(process = PROCESS_GetPtr( hProcess, PROCESS_QUERY_INFORMATION,
-                                    &server_handle )))
-        return FALSE;
-    if (server_handle != -1)
-    {
-        CLIENT_GetProcessInfo( server_handle, &info );
-        if (lpExitCode) *lpExitCode = info.exit_code;
-    }
-    else if (lpExitCode) *lpExitCode = process->exit_code;
-    K32OBJ_DecCount( &process->header );
+    if (CLIENT_GetProcessInfo( handle, &info )) return FALSE;
+    if (lpExitCode) *lpExitCode = info.exit_code;
     return TRUE;
 }
 

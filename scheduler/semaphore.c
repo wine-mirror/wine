@@ -17,25 +17,12 @@
 typedef struct
 {
     K32OBJ        header;
-    THREAD_QUEUE  wait_queue;
-    LONG          count;
-    LONG          max;
 } SEMAPHORE;
 
-static BOOL32 SEMAPHORE_Signaled( K32OBJ *obj, DWORD thread_id );
-static BOOL32 SEMAPHORE_Satisfied( K32OBJ *obj, DWORD thread_id );
-static void SEMAPHORE_AddWait( K32OBJ *obj, DWORD thread_id );
-static void SEMAPHORE_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void SEMAPHORE_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS SEMAPHORE_Ops =
 {
-    SEMAPHORE_Signaled,    /* signaled */
-    SEMAPHORE_Satisfied,   /* satisfied */
-    SEMAPHORE_AddWait,     /* add_wait */
-    SEMAPHORE_RemoveWait,  /* remove_wait */
-    NULL,                  /* read */
-    NULL,                  /* write */
     SEMAPHORE_Destroy      /* destroy */
 };
 
@@ -57,7 +44,7 @@ HANDLE32 WINAPI CreateSemaphore32A( SECURITY_ATTRIBUTES *sa, LONG initial,
     if ((max <= 0) || (initial < 0) || (initial > max))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
-        return INVALID_HANDLE_VALUE32;
+        return 0;
     }
 
     req.initial = (unsigned int)initial;
@@ -67,21 +54,15 @@ HANDLE32 WINAPI CreateSemaphore32A( SECURITY_ATTRIBUTES *sa, LONG initial,
     CLIENT_SendRequest( REQ_CREATE_SEMAPHORE, -1, 2, &req, sizeof(req), name, len );
     CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
     CHECK_LEN( len, sizeof(reply) );
-    if (reply.handle == -1) return NULL;
+    if (reply.handle == -1) return 0;
 
     SYSTEM_LOCK();
     sem = (SEMAPHORE *)K32OBJ_Create( K32OBJ_SEMAPHORE, sizeof(*sem),
                                       name, reply.handle, SEMAPHORE_ALL_ACCESS,
                                       sa, &handle);
-    if (sem)
-    {
-        /* Finish initializing it */
-        sem->wait_queue = NULL;
-        sem->count      = initial;
-        sem->max        = max;
-        K32OBJ_DecCount( &sem->header );
-    }
+    if (sem) K32OBJ_DecCount( &sem->header );
     SYSTEM_UNLOCK();
+    if (handle == INVALID_HANDLE_VALUE32) handle = 0;
     return handle;
 }
 
@@ -106,13 +87,29 @@ HANDLE32 WINAPI OpenSemaphore32A( DWORD access, BOOL32 inherit, LPCSTR name )
 {
     HANDLE32 handle = 0;
     K32OBJ *obj;
-    SYSTEM_LOCK();
-    if ((obj = K32OBJ_FindNameType( name, K32OBJ_SEMAPHORE )) != NULL)
+    struct open_named_obj_request req;
+    struct open_named_obj_reply reply;
+    int len = name ? strlen(name) + 1 : 0;
+
+    req.type    = OPEN_SEMAPHORE;
+    req.access  = access;
+    req.inherit = inherit;
+    CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
+    if (reply.handle != -1)
     {
-        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
-        K32OBJ_DecCount( obj );
+        SYSTEM_LOCK();
+        if ((obj = K32OBJ_FindNameType( name, K32OBJ_SEMAPHORE )) != NULL)
+        {
+            handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, reply.handle );
+            K32OBJ_DecCount( obj );
+            if (handle == INVALID_HANDLE_VALUE32)
+                handle = 0; /* must return 0 on failure, not -1 */
+        }
+        else CLIENT_CloseHandle( reply.handle );
+        SYSTEM_UNLOCK();
     }
-    SYSTEM_UNLOCK();
     return handle;
 }
 
@@ -135,107 +132,23 @@ HANDLE32 WINAPI OpenSemaphore32W( DWORD access, BOOL32 inherit, LPCWSTR name )
 BOOL32 WINAPI ReleaseSemaphore( HANDLE32 handle, LONG count, LONG *previous )
 {
     struct release_semaphore_request req;
-    SEMAPHORE *sem;
+    struct release_semaphore_reply reply;
+    int len;
 
     if (count < 0)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    SYSTEM_LOCK();
-    if (!(sem = (SEMAPHORE *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                               K32OBJ_SEMAPHORE,
-                                               SEMAPHORE_MODIFY_STATE, &req.handle )))
-    {
-        SYSTEM_UNLOCK();
-        return FALSE;
-    }
-    if (req.handle != -1)
-    {
-        struct release_semaphore_reply reply;
-        int len;
-
-        SYSTEM_UNLOCK();
-        req.count = (unsigned int)count;
-        CLIENT_SendRequest( REQ_RELEASE_SEMAPHORE, -1, 1, &req, sizeof(req) );
-        if (CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) )) return FALSE;
-        CHECK_LEN( len, sizeof(reply) );
-        if (previous) *previous = reply.prev_count;
-        return TRUE;
-    }
-    if (previous) *previous = sem->count;
-    if (sem->count + count > sem->max)
-    {
-        SYSTEM_UNLOCK();
-        SetLastError( ERROR_TOO_MANY_POSTS );
-        return FALSE;
-    }
-    if (sem->count > 0)
-    {
-        /* There cannot be any thread waiting if the count is > 0 */
-        assert( sem->wait_queue == NULL );
-        sem->count += count;
-    }
-    else
-    {
-        sem->count = count;
-        SYNC_WakeUp( &sem->wait_queue, count );
-    }
-    K32OBJ_DecCount( &sem->header );
-    SYSTEM_UNLOCK();
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                         K32OBJ_SEMAPHORE, SEMAPHORE_MODIFY_STATE );
+    if (req.handle == -1) return FALSE;
+    req.count = (unsigned int)count;
+    CLIENT_SendRequest( REQ_RELEASE_SEMAPHORE, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) )) return FALSE;
+    CHECK_LEN( len, sizeof(reply) );
+    if (previous) *previous = reply.prev_count;
     return TRUE;
-}
-
-
-/***********************************************************************
- *           SEMAPHORE_Signaled
- */
-static BOOL32 SEMAPHORE_Signaled( K32OBJ *obj, DWORD thread_id )
-{
-    SEMAPHORE *sem = (SEMAPHORE *)obj;
-    assert( obj->type == K32OBJ_SEMAPHORE );
-    return (sem->count > 0);
-}
-
-
-/***********************************************************************
- *           SEMAPHORE_Satisfied
- *
- * Wait on this object has been satisfied.
- */
-static BOOL32 SEMAPHORE_Satisfied( K32OBJ *obj, DWORD thread_id )
-{
-    SEMAPHORE *sem = (SEMAPHORE *)obj;
-    assert( obj->type == K32OBJ_SEMAPHORE );
-    assert( sem->count > 0 );
-    sem->count--;
-    return FALSE;  /* Not abandoned */
-}
-
-
-/***********************************************************************
- *           SEMAPHORE_AddWait
- *
- * Add current thread to object wait queue.
- */
-static void SEMAPHORE_AddWait( K32OBJ *obj, DWORD thread_id )
-{
-    SEMAPHORE *sem = (SEMAPHORE *)obj;
-    assert( obj->type == K32OBJ_SEMAPHORE );
-    THREAD_AddQueue( &sem->wait_queue, THREAD_ID_TO_THDB(thread_id) );
-}
-
-
-/***********************************************************************
- *           SEMAPHORE_RemoveWait
- *
- * Remove thread from object wait queue.
- */
-static void SEMAPHORE_RemoveWait( K32OBJ *obj, DWORD thread_id )
-{
-    SEMAPHORE *sem = (SEMAPHORE *)obj;
-    assert( obj->type == K32OBJ_SEMAPHORE );
-    THREAD_RemoveQueue( &sem->wait_queue, THREAD_ID_TO_THDB(thread_id) );
 }
 
 
@@ -247,7 +160,6 @@ static void SEMAPHORE_Destroy( K32OBJ *obj )
     SEMAPHORE *sem = (SEMAPHORE *)obj;
     assert( obj->type == K32OBJ_SEMAPHORE );
     /* There cannot be any thread on the list since the ref count is 0 */
-    assert( sem->wait_queue == NULL );
     obj->type = K32OBJ_UNKNOWN;
     HeapFree( SystemHeap, 0, sem );
 }

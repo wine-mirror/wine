@@ -23,12 +23,6 @@ static void PIPE_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS PIPE_Ops =
 {
-    NULL,             /* signaled */
-    NULL,             /* satisfied */
-    NULL,             /* add_wait */
-    NULL,             /* remove_wait */
-    NULL,             /* read */
-    NULL,             /* write */
     PIPE_Destroy      /* destroy */
 };
 

@@ -29,12 +29,6 @@ static void SNAPSHOT_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS SNAPSHOT_Ops =
 {
-  NULL,    		/* signaled */
-  NULL,   		/* satisfied */
-  NULL,     		/* add_wait */
-  NULL,  		/* remove_wait */
-  NULL,			/* read */
-  NULL,			/* write */
   SNAPSHOT_Destroy	/* destroy */
 };
 

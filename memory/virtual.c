@@ -110,13 +110,6 @@ static void VIRTUAL_DestroyMapping( K32OBJ *obj );
 
 const K32OBJ_OPS MEM_MAPPED_FILE_Ops =
 {
-    /* Object cannot be waited upon, so we don't need these (except destroy) */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
-    NULL,                      /* add_wait */
-    NULL,                      /* remove_wait */
-    NULL,                      /* read */
-    NULL,                      /* write */
     VIRTUAL_DestroyMapping     /* destroy */
 };
 

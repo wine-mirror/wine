@@ -45,29 +45,10 @@
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
-#if 0
-static BOOL32 FILE_Signaled(K32OBJ *ptr, DWORD tid);
-static BOOL32 FILE_Satisfied(K32OBJ *ptr, DWORD thread_id);
-static void FILE_AddWait(K32OBJ *ptr, DWORD tid);
-static void FILE_RemoveWait(K32OBJ *ptr, DWORD thread_id);
-#endif
 static void FILE_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS FILE_Ops =
 {
-#if 0
-    FILE_Signaled,     /* signaled */
-    FILE_Satisfied,    /* satisfied */
-    FILE_AddWait,      /* add_wait */
-    FILE_RemoveWait,   /* remove_wait */
-#else
-    NULL,              /* signaled */
-    NULL,              /* satisfied */
-    NULL,              /* add_wait */
-    NULL,              /* remove_wait */
-#endif
-    NULL,              /* read */
-    NULL,              /* write */
     FILE_Destroy       /* destroy */
 };
 
@@ -125,58 +106,6 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle )
     if (handle == INVALID_HANDLE_VALUE32) *file = NULL;
     return handle;
 }
-
-/***********************************************************************
- *		FILE_async_handler			[internal]
- */
-#if 0
-static void
-FILE_async_handler(int unixfd,void *private) {
-	FILE_OBJECT *file = (FILE_OBJECT*)private;
-
-	SYNC_WakeUp(&file->wait_queue,INFINITE32);
-}
-
-static BOOL32 FILE_Signaled(K32OBJ *ptr, DWORD thread_id)
-{
-	fd_set	fds,*readfds = NULL,*writefds = NULL;
-	struct timeval tv;
-	FILE_OBJECT *file = (FILE_OBJECT *)ptr;
-
-	FD_ZERO(&fds);
-	FD_SET(file->unix_handle,&fds);
-	if (file->mode == OF_READ) readfds = &fds;
-	if (file->mode == OF_WRITE) writefds = &fds;
-	if (file->mode == OF_READWRITE) {writefds = &fds; readfds = &fds;}
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	assert(readfds || writefds);
-	if (select(file->unix_handle+1,readfds,writefds,NULL,&tv)>0)
-		return TRUE; /* we triggered one fd. Whereever. */
-	return FALSE;
-}
-
-static void FILE_AddWait(K32OBJ *ptr, DWORD thread_id)
-{
-	FILE_OBJECT *file = (FILE_OBJECT*)ptr;
-	if (!file->wait_queue)
-		ASYNC_RegisterFD(file->unix_handle,FILE_async_handler,file);
-	THREAD_AddQueue(&file->wait_queue,thread_id);
-}
-
-static void FILE_RemoveWait(K32OBJ *ptr, DWORD thread_id)
-{
-	FILE_OBJECT *file = (FILE_OBJECT*)ptr;
-	THREAD_RemoveQueue(&file->wait_queue,thread_id);
-	if (!file->wait_queue)
-		ASYNC_UnregisterFD(file->unix_handle,FILE_async_handler);
-}
-
-static BOOL32 FILE_Satisfied(K32OBJ *ptr, DWORD thread_id)
-{
-	return FALSE; /* not abandoned. Hmm? */
-}
-#endif
 
 
 /***********************************************************************
@@ -1248,6 +1177,7 @@ BOOL32 WINAPI ReadFile( HANDLE32 hFile, LPVOID buffer, DWORD bytesToRead,
 {
     K32OBJ *ptr;
     struct get_read_fd_request req;
+    int unix_handle, result;
 
     TRACE(file, "%d %p %ld\n", hFile, buffer, bytesToRead );
 
@@ -1258,29 +1188,25 @@ BOOL32 WINAPI ReadFile( HANDLE32 hFile, LPVOID buffer, DWORD bytesToRead,
                                   K32OBJ_UNKNOWN, GENERIC_READ, &req.handle )))
         return FALSE;
 
-    if (req.handle != -1)  /* We have a server handle */
+    if (req.handle == -1)  /* We need a server handle */
     {
-        int unix_handle, result;
-
-        CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &req, sizeof(req) );
-        CLIENT_WaitReply( NULL, &unix_handle, 0 );
-        if (unix_handle == -1) return FALSE;
-        if ((result = read( unix_handle, buffer, bytesToRead )) == -1)
-            FILE_SetDosError();
-        close( unix_handle );
         K32OBJ_DecCount( ptr );
-        if (result == -1) return FALSE;
-        if (bytesRead) *bytesRead = result;
-        return TRUE;
+        return FALSE;
     }
-    else
+    CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &req, sizeof(req) );
+    CLIENT_WaitReply( NULL, &unix_handle, 0 );
+    K32OBJ_DecCount( ptr );
+    if (unix_handle == -1) return FALSE;
+    while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
     {
-        BOOL32 status = FALSE;
-        if (K32OBJ_OPS(ptr)->read)
-            status = K32OBJ_OPS(ptr)->read(ptr, buffer, bytesToRead, bytesRead, overlapped );
-        K32OBJ_DecCount( ptr );
-        return status;
+        if ((errno == EAGAIN) || (errno == EINTR)) continue;
+        FILE_SetDosError();
+        break;
     }
+    close( unix_handle );
+    if (result == -1) return FALSE;
+    if (bytesRead) *bytesRead = result;
+    return TRUE;
 }
 
 
@@ -1292,6 +1218,7 @@ BOOL32 WINAPI WriteFile( HANDLE32 hFile, LPCVOID buffer, DWORD bytesToWrite,
 {
     K32OBJ *ptr;
     struct get_write_fd_request req;
+    int unix_handle, result;
 
     TRACE(file, "%d %p %ld\n", hFile, buffer, bytesToWrite );
 
@@ -1302,31 +1229,25 @@ BOOL32 WINAPI WriteFile( HANDLE32 hFile, LPCVOID buffer, DWORD bytesToWrite,
                                   K32OBJ_UNKNOWN, GENERIC_WRITE, &req.handle )))
         return FALSE;
 
-    if (req.handle != -1)  /* We have a server handle */
+    if (req.handle == -1)  /* We need a server handle */
     {
-        int unix_handle, result;
-
-        CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
-        CLIENT_WaitReply( NULL, &unix_handle, 0 );
-        if (unix_handle == -1) return FALSE;
-
-        if ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
-            FILE_SetDosError();
-        close( unix_handle );
         K32OBJ_DecCount( ptr );
-        if (result == -1) return FALSE;
-        if (bytesWritten) *bytesWritten = result;
-        return TRUE;
+        return FALSE;
     }
-    else
+    CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
+    CLIENT_WaitReply( NULL, &unix_handle, 0 );
+    K32OBJ_DecCount( ptr );
+    if (unix_handle == -1) return FALSE;
+    while ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
     {
-        BOOL32 status = FALSE;
-        if (K32OBJ_OPS(ptr)->write)
-            status = K32OBJ_OPS(ptr)->write( ptr, buffer, bytesToWrite,
-                                             bytesWritten, overlapped );
-        K32OBJ_DecCount( ptr );
-        return status;
+        if ((errno == EAGAIN) || (errno == EINTR)) continue;
+        FILE_SetDosError();
+        break;
     }
+    close( unix_handle );
+    if (result == -1) return FALSE;
+    if (bytesWritten) *bytesWritten = result;
+    return TRUE;
 }
 
 

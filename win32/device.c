@@ -32,14 +32,9 @@
 #include "miscemu.h"
 
 static void DEVICE_Destroy(K32OBJ *dev);
+
 const K32OBJ_OPS DEVICE_Ops =
 {
-    NULL,		/* signaled */
-    NULL,		/* satisfied */
-    NULL,		/* add_wait */
-    NULL,		/* remove_wait */
-    NULL,		/* read */
-    NULL,		/* write */
     DEVICE_Destroy	/* destroy */
 };
 

@@ -25,20 +25,10 @@
 THDB *pCurrentThread;
 #endif
 
-static BOOL32 THREAD_Signaled( K32OBJ *obj, DWORD thread_id );
-static BOOL32 THREAD_Satisfied( K32OBJ *obj, DWORD thread_id );
-static void THREAD_AddWait( K32OBJ *obj, DWORD thread_id );
-static void THREAD_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void THREAD_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS THREAD_Ops =
 {
-    THREAD_Signaled,    /* signaled */
-    THREAD_Satisfied,   /* satisfied */
-    THREAD_AddWait,     /* add_wait */
-    THREAD_RemoveWait,  /* remove_wait */
-    NULL,               /* read */
-    NULL,               /* write */
     THREAD_Destroy      /* destroy */
 };
 
@@ -234,10 +224,6 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
                                                  0x10000 - sizeof(STACK16FRAME) );
     }
 
-    /* Allocate the event */
-
-    if (!(thdb->event = EVENT_Create( TRUE, FALSE ))) goto error;
-
     /* Create the thread socket */
 
     if (CLIENT_NewThread( thdb, server_thandle, server_phandle )) goto error;
@@ -274,56 +260,6 @@ error:
 
 
 /***********************************************************************
- *           THREAD_Signaled
- */
-static BOOL32 THREAD_Signaled( K32OBJ *obj, DWORD thread_id )
-{
-    THDB *thdb = (THDB *)obj;
-    assert( obj->type == K32OBJ_THREAD );
-    return K32OBJ_OPS( thdb->event )->signaled( thdb->event, thread_id );
-}
-
-
-/***********************************************************************
- *           THREAD_Satisfied
- *
- * Wait on this object has been satisfied.
- */
-static BOOL32 THREAD_Satisfied( K32OBJ *obj, DWORD thread_id )
-{
-    THDB *thdb = (THDB *)obj;
-    assert( obj->type == K32OBJ_THREAD );
-    return K32OBJ_OPS( thdb->event )->satisfied( thdb->event, thread_id );
-}
-
-
-/***********************************************************************
- *           THREAD_AddWait
- *
- * Add thread to object wait queue.
- */
-static void THREAD_AddWait( K32OBJ *obj, DWORD thread_id )
-{
-    THDB *thdb = (THDB *)obj;
-    assert( obj->type == K32OBJ_THREAD );
-    return K32OBJ_OPS( thdb->event )->add_wait( thdb->event, thread_id );
-}
-
-
-/***********************************************************************
- *           THREAD_RemoveWait
- *
- * Remove thread from object wait queue.
- */
-static void THREAD_RemoveWait( K32OBJ *obj, DWORD thread_id )
-{
-    THDB *thdb = (THDB *)obj;
-    assert( obj->type == K32OBJ_THREAD );
-    return K32OBJ_OPS( thdb->event )->remove_wait( thdb->event, thread_id );
-}
-
-
-/***********************************************************************
  *           THREAD_Destroy
  */
 static void THREAD_Destroy( K32OBJ *ptr )
@@ -348,7 +284,6 @@ static void THREAD_Destroy( K32OBJ *ptr )
     }
 #endif
     close( thdb->socket );
-    K32OBJ_DecCount( thdb->event );
     SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
     HeapFree( SystemHeap, 0, thdb );
@@ -418,10 +353,6 @@ void WINAPI ExitThread(
 
     SYSTEM_LOCK();
     thdb->exit_code = code;
-    EVENT_Set( thdb->event );
-
-    /* Abandon all owned mutexes */
-    while (thdb->mutex_list) MUTEX_Abandon( thdb->mutex_list );
 
     /* FIXME: should free the stack somehow */
 #if 0
@@ -731,15 +662,13 @@ BOOL32 WINAPI TerminateThread(
     HANDLE32 handle, /* [in] Handle to thread */
     DWORD exitcode)  /* [in] Exit code for thread */
 {
-    int server_handle;
-    BOOL32 ret;
-    THDB *thread;
-    
-    if (!(thread = THREAD_GetPtr( handle, THREAD_TERMINATE, &server_handle )))
-        return FALSE;
-    ret = !CLIENT_TerminateThread( server_handle, exitcode );
-    K32OBJ_DecCount( &thread->header );
-    return ret;
+    struct terminate_thread_request req;
+
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                         K32OBJ_THREAD, THREAD_TERMINATE );
+    req.exit_code = exitcode;
+    CLIENT_SendRequest( REQ_TERMINATE_THREAD, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 
@@ -754,19 +683,11 @@ BOOL32 WINAPI GetExitCodeThread(
     HANDLE32 hthread, /* [in]  Handle to thread */
     LPDWORD exitcode) /* [out] Address to receive termination status */
 {
-    THDB *thread;
-    int server_handle;
-
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, &server_handle )))
-        return FALSE;
-    if (server_handle != -1)
-    {
-        struct get_thread_info_reply info;
-        CLIENT_GetThreadInfo( server_handle, &info );
-        if (exitcode) *exitcode = info.exit_code;
-    }
-    else if (exitcode) *exitcode = thread->exit_code;
-    K32OBJ_DecCount( &thread->header );
+    struct get_thread_info_reply info;
+    int handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
+                                         K32OBJ_THREAD, THREAD_QUERY_INFORMATION );
+    if (CLIENT_GetThreadInfo( handle, &info )) return FALSE;
+    if (exitcode) *exitcode = info.exit_code;
     return TRUE;
 }
 

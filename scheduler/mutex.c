@@ -17,64 +17,14 @@
 typedef struct _MUTEX
 {
     K32OBJ         header;
-    THREAD_QUEUE   wait_queue;
-    DWORD          owner;
-    DWORD          count;
-    BOOL32         abandoned;
-    struct _MUTEX *next;
-    struct _MUTEX *prev;
 } MUTEX;
 
-static BOOL32 MUTEX_Signaled( K32OBJ *obj, DWORD thread_id );
-static BOOL32 MUTEX_Satisfied( K32OBJ *obj, DWORD thread_id );
-static void MUTEX_AddWait( K32OBJ *obj, DWORD thread_id );
-static void MUTEX_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void MUTEX_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS MUTEX_Ops =
 {
-    MUTEX_Signaled,    /* signaled */
-    MUTEX_Satisfied,   /* satisfied */
-    MUTEX_AddWait,     /* add_wait */
-    MUTEX_RemoveWait,  /* remove_wait */
-    NULL,              /* read */
-    NULL,              /* write */
     MUTEX_Destroy      /* destroy */
 };
-
-
-/***********************************************************************
- *           MUTEX_Release
- *
- * Release a mutex once the count is 0.
- * Helper function for MUTEX_Abandon and ReleaseMutex.
- */
-static void MUTEX_Release( MUTEX *mutex )
-{
-    /* Remove the mutex from the thread list of owned mutexes */
-    if (mutex->next) mutex->next->prev = mutex->prev;
-    if (mutex->prev) mutex->prev->next = mutex->next;
-    else THREAD_Current()->mutex_list = &mutex->next->header;
-    mutex->next = mutex->prev = NULL;
-    mutex->owner = 0;
-    SYNC_WakeUp( &mutex->wait_queue, INFINITE32 );
-}
-
-
-/***********************************************************************
- *           MUTEX_Abandon
- *
- * Abandon a mutex.
- */
-void MUTEX_Abandon( K32OBJ *obj )
-{
-    MUTEX *mutex = (MUTEX *)obj;
-    assert( obj->type == K32OBJ_MUTEX );
-    assert( mutex->count && (mutex->owner == GetCurrentThreadId()) );
-    mutex->count = 0;
-    mutex->abandoned = TRUE;
-    MUTEX_Release( mutex );
-}
 
 
 /***********************************************************************
@@ -95,37 +45,14 @@ HANDLE32 WINAPI CreateMutex32A( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
     CLIENT_SendRequest( REQ_CREATE_MUTEX, -1, 2, &req, sizeof(req), name, len );
     CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
     CHECK_LEN( len, sizeof(reply) );
-    if (reply.handle == -1) return NULL;
+    if (reply.handle == -1) return 0;
 
     SYSTEM_LOCK();
     mutex = (MUTEX *)K32OBJ_Create( K32OBJ_MUTEX, sizeof(*mutex),
                                     name, reply.handle, MUTEX_ALL_ACCESS,
                                     sa, &handle );
-    if (mutex)
-    {
-        /* Finish initializing it */
-        mutex->wait_queue = NULL;
-        mutex->abandoned  = FALSE;
-        mutex->prev       = NULL;
-        if (owner)
-        {
-            K32OBJ **list;
-            mutex->owner = GetCurrentThreadId();
-            mutex->count = 1;
-            /* Add the mutex in the thread list of owned mutexes */
-            list = &THREAD_Current()->mutex_list;
-            if ((mutex->next = (MUTEX *)*list)) mutex->next->prev = mutex;
-            *list = &mutex->header;
-        }
-        else
-        {
-            mutex->owner = 0;
-            mutex->count = 0;
-            mutex->next  = NULL;
-        }
-        K32OBJ_DecCount( &mutex->header );
-    }
-    SetLastError(0); /* FIXME */
+    if (mutex) K32OBJ_DecCount( &mutex->header );
+    if (handle == INVALID_HANDLE_VALUE32) handle = 0;
     SYSTEM_UNLOCK();
     return handle;
 }
@@ -151,13 +78,29 @@ HANDLE32 WINAPI OpenMutex32A( DWORD access, BOOL32 inherit, LPCSTR name )
 {
     HANDLE32 handle = 0;
     K32OBJ *obj;
-    SYSTEM_LOCK();
-    if ((obj = K32OBJ_FindNameType( name, K32OBJ_MUTEX )) != NULL)
+    struct open_named_obj_request req;
+    struct open_named_obj_reply reply;
+    int len = name ? strlen(name) + 1 : 0;
+
+    req.type    = OPEN_MUTEX;
+    req.access  = access;
+    req.inherit = inherit;
+    CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
+    if (reply.handle != -1)
     {
-        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
-        K32OBJ_DecCount( obj );
+        SYSTEM_LOCK();
+        if ((obj = K32OBJ_FindNameType( name, K32OBJ_MUTEX )) != NULL)
+        {
+            handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, reply.handle );
+            K32OBJ_DecCount( obj );
+            if (handle == INVALID_HANDLE_VALUE32)
+                handle = 0; /* must return 0 on failure, not -1 */
+        }
+        else CLIENT_CloseHandle( reply.handle );
+        SYSTEM_UNLOCK();
     }
-    SYSTEM_UNLOCK();
     return handle;
 }
 
@@ -180,95 +123,12 @@ HANDLE32 WINAPI OpenMutex32W( DWORD access, BOOL32 inherit, LPCWSTR name )
 BOOL32 WINAPI ReleaseMutex( HANDLE32 handle )
 {
     struct release_mutex_request req;
-    MUTEX *mutex;
-    SYSTEM_LOCK();
-    if (!(mutex = (MUTEX *)HANDLE_GetObjPtr(PROCESS_Current(), handle,
-                                            K32OBJ_MUTEX, MUTEX_MODIFY_STATE,
-                                            &req.handle )))
-    {
-        SYSTEM_UNLOCK();
-        return FALSE;
-    }
-    if (req.handle != -1)
-    {
-        SYSTEM_UNLOCK();
-        CLIENT_SendRequest( REQ_RELEASE_MUTEX, -1, 1, &req, sizeof(req) );
-        return !CLIENT_WaitReply( NULL, NULL, 0 );
-    }
-    if (!mutex->count || (mutex->owner != GetCurrentThreadId()))
-    {
-        SYSTEM_UNLOCK();
-        SetLastError( ERROR_NOT_OWNER );
-        return FALSE;
-    }
-    if (!--mutex->count) MUTEX_Release( mutex );
-    K32OBJ_DecCount( &mutex->header );
-    SYSTEM_UNLOCK();
-    return TRUE;
-}
 
-
-/***********************************************************************
- *           MUTEX_Signaled
- */
-static BOOL32 MUTEX_Signaled( K32OBJ *obj, DWORD thread_id )
-{
-    MUTEX *mutex = (MUTEX *)obj;
-    assert( obj->type == K32OBJ_MUTEX );
-    return (!mutex->count || (mutex->owner == thread_id));
-}
-
-
-/***********************************************************************
- *           MUTEX_Satisfied
- *
- * Wait on this object has been satisfied.
- */
-static BOOL32 MUTEX_Satisfied( K32OBJ *obj, DWORD thread_id )
-{
-    BOOL32 ret;
-    MUTEX *mutex = (MUTEX *)obj;
-    assert( obj->type == K32OBJ_MUTEX );
-    assert( !mutex->count || (mutex->owner == thread_id) );
-    mutex->owner = thread_id;
-    if (!mutex->count++)
-    {
-        /* Add the mutex in the thread list of owned mutexes */
-        K32OBJ **list = &THREAD_ID_TO_THDB( thread_id )->mutex_list;
-        assert( !mutex->next );
-        if ((mutex->next = (MUTEX *)*list)) mutex->next->prev = mutex;
-        *list = &mutex->header;
-        mutex->prev = NULL;
-    }
-    ret = mutex->abandoned;
-    mutex->abandoned = FALSE;
-    return ret;
-}
-
-
-/***********************************************************************
- *           MUTEX_AddWait
- *
- * Add a thread to the object wait queue.
- */
-static void MUTEX_AddWait( K32OBJ *obj, DWORD thread_id )
-{
-    MUTEX *mutex = (MUTEX *)obj;
-    assert( obj->type == K32OBJ_MUTEX );
-    THREAD_AddQueue( &mutex->wait_queue, THREAD_ID_TO_THDB(thread_id) );
-}
-
-
-/***********************************************************************
- *           MUTEX_RemoveWait
- *
- * Remove a thread from the object wait queue.
- */
-static void MUTEX_RemoveWait( K32OBJ *obj, DWORD thread_id )
-{
-    MUTEX *mutex = (MUTEX *)obj;
-    assert( obj->type == K32OBJ_MUTEX );
-    THREAD_RemoveQueue( &mutex->wait_queue, THREAD_ID_TO_THDB(thread_id) );
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                         K32OBJ_MUTEX, MUTEX_MODIFY_STATE );
+    if (req.handle == -1) return FALSE;
+    CLIENT_SendRequest( REQ_RELEASE_MUTEX, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 
@@ -279,8 +139,6 @@ static void MUTEX_Destroy( K32OBJ *obj )
 {
     MUTEX *mutex = (MUTEX *)obj;
     assert( obj->type == K32OBJ_MUTEX );
-    /* There cannot be any thread on the list since the ref count is 0 */
-    assert( mutex->wait_queue == NULL );
     obj->type = K32OBJ_UNKNOWN;
     HeapFree( SystemHeap, 0, mutex );
 }

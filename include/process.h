@@ -63,7 +63,7 @@ typedef struct _PDB32
 {
     K32OBJ           header;           /* 00 Kernel object header */
     DWORD            unknown1;         /* 08 Unknown */
-    K32OBJ          *event;            /* 0c Pointer to an event object */
+    K32OBJ          *event;            /* 0c Pointer to an event object (unused) */
     DWORD            exit_code;        /* 10 Process exit code */
     DWORD            unknown2;         /* 14 Unknown */
     HANDLE32         heap;             /* 18 Default process heap */
@@ -102,7 +102,7 @@ typedef struct _PDB32
     K32OBJ          *console_provider; /* b0 Console provider (??) */
     WORD             env_selector;     /* b4 Selector to process environment */
     WORD             error_mode;       /* b6 Error mode */
-    K32OBJ          *load_done_evt;    /* b8 Event for process loading done */
+    HANDLE32         load_done_evt;    /* b8 Event for process loading done */
     DWORD            unknown7;         /* bc Unknown */
     DWORD            unknown8;         /* c0 Unknown (NT) */
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
@@ -136,6 +136,8 @@ extern HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access,
 extern K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
                                  K32OBJ_TYPE type, DWORD access,
                                  int *server_handle );
+extern int HANDLE_GetServerHandle( PDB32 *pdb, HANDLE32 handle,
+                                   K32OBJ_TYPE type, DWORD access );
 extern BOOL32 HANDLE_SetObjPtr( PDB32 *pdb, HANDLE32 handle,
                                 K32OBJ *ptr, DWORD access );
 extern void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *ptr );

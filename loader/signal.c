@@ -156,8 +156,6 @@ extern void ASYNC_sigio(int a);
  */
 BOOL32 SIGNAL_Init(void)
 {
-    extern void SYNC_SetupSignals(void);
-
 #ifdef HAVE_WORKING_SIGALTSTACK
     struct sigaltstack ss;
     ss.ss_sp    = SIGNAL_Stack;
@@ -187,8 +185,6 @@ BOOL32 SIGNAL_Init(void)
 
     /* ignore SIGPIPE so that WINSOCK can get a EPIPE error instead  */
     signal (SIGPIPE, SIG_IGN);
-
-    SYNC_SetupSignals();
     return TRUE;
 }
 

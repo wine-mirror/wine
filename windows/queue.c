@@ -235,6 +235,8 @@ void QUEUE_Signal( HTASK16 hTask )
     /* NOTE: This should really wake up *the* thread that owns
              the queue. Since we dont't have thread-local message
              queues yet, we wake up all waiting threads ... */
+#if 0
+    /* FIXME: should be replaced by a server event */
     SYSTEM_LOCK();
     pdb = pTask->thdb->process;
     entry = pdb? pdb->thread_list->next : NULL;
@@ -251,6 +253,7 @@ void QUEUE_Signal( HTASK16 hTask )
             entry = entry->next;
         }
     SYSTEM_UNLOCK();
+#endif
 
 /*    if ( !wakeup )*/
         PostEvent( hTask );

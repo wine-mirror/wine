@@ -15,22 +15,13 @@
 #include "process.h"
 #include "thread.h"
 #include "heap.h"
+#include "server.h"
 #include "debug.h"
 
-static BOOL32 CHANGE_Signaled( K32OBJ *obj, DWORD thread_id );
-static BOOL32 CHANGE_Satisfied( K32OBJ *obj, DWORD thread_id );
-static void CHANGE_AddWait( K32OBJ *obj, DWORD thread_id );
-static void CHANGE_RemoveWait( K32OBJ *obj, DWORD thread_id );
 static void CHANGE_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS CHANGE_Ops =
 {
-    CHANGE_Signaled,    /* signaled */
-    CHANGE_Satisfied,   /* satisfied */
-    CHANGE_AddWait,     /* add_wait */
-    CHANGE_RemoveWait,  /* remove_wait */
-    NULL,               /* read */
-    NULL,               /* write */
     CHANGE_Destroy      /* destroy */
 };
 
@@ -47,51 +38,6 @@ typedef struct
     BOOL32       notify;
 
 } CHANGE_OBJECT;
-
-/***********************************************************************
- *           CHANGE_Signaled
- */
-static BOOL32 CHANGE_Signaled( K32OBJ *obj, DWORD thread_id )
-{
-    CHANGE_OBJECT *change = (CHANGE_OBJECT *)obj;
-    assert( obj->type == K32OBJ_CHANGE );
-    return change->notify;
-}
-
-/***********************************************************************
- *           CHANGE_Satisfied
- *
- * Wait on this object has been satisfied.
- */
-static BOOL32 CHANGE_Satisfied( K32OBJ *obj, DWORD thread_id )
-{
-    assert( obj->type == K32OBJ_CHANGE );
-    return FALSE;  /* Not abandoned */
-}
-
-/***********************************************************************
- *           CHANGE_AddWait
- *
- * Add thread to object wait queue.
- */
-static void CHANGE_AddWait( K32OBJ *obj, DWORD thread_id )
-{
-    CHANGE_OBJECT *change = (CHANGE_OBJECT *)obj;
-    assert( obj->type == K32OBJ_CHANGE );
-    THREAD_AddQueue( &change->wait_queue, THREAD_ID_TO_THDB(thread_id) );
-}
-
-/***********************************************************************
- *           CHANGE_RemoveWait
- *
- * Remove thread from object wait queue.
- */
-static void CHANGE_RemoveWait( K32OBJ *obj, DWORD thread_id )
-{
-    CHANGE_OBJECT *change = (CHANGE_OBJECT *)obj;
-    assert( obj->type == K32OBJ_CHANGE );
-    THREAD_RemoveQueue( &change->wait_queue, THREAD_ID_TO_THDB(thread_id) );
-}
 
 /****************************************************************************
  *		CHANGE_Destroy
@@ -118,11 +64,24 @@ HANDLE32 WINAPI FindFirstChangeNotification32A( LPCSTR lpPathName,
                                                 BOOL32 bWatchSubtree,
                                                 DWORD dwNotifyFilter ) 
 {
-    HANDLE32 handle;
     CHANGE_OBJECT *change;
+    struct create_change_notification_request req;
+    struct create_change_notification_reply reply;
+    int len;
+
+    req.subtree = bWatchSubtree;
+    req.filter  = dwNotifyFilter;
+    CLIENT_SendRequest( REQ_CREATE_CHANGE_NOTIFICATION, -1, 1, &req, sizeof(req) );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
 
     change = HeapAlloc( SystemHeap, 0, sizeof(CHANGE_OBJECT) );
-    if (!change) return INVALID_HANDLE_VALUE32;
+    if (!change)
+    {
+        CLIENT_CloseHandle( reply.handle );
+        return INVALID_HANDLE_VALUE32;
+    }
 
     change->header.type = K32OBJ_CHANGE;
     change->header.refcount = 1;
@@ -134,11 +93,9 @@ HANDLE32 WINAPI FindFirstChangeNotification32A( LPCSTR lpPathName,
     change->wait_queue = NULL;
     change->notify = FALSE;
 
-    handle = HANDLE_Alloc( PROCESS_Current(), &change->header, 
-                           FILE_ALL_ACCESS /*FIXME*/, TRUE, -1 );
-    /* If the allocation failed, the object is already destroyed */
-    if (handle == INVALID_HANDLE_VALUE32) change = NULL;
-    return handle;
+    return HANDLE_Alloc( PROCESS_Current(), &change->header, 
+                         STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE /*FIXME*/,
+                         FALSE, reply.handle );
 }
 
 /****************************************************************************

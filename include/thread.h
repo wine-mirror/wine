@@ -64,7 +64,6 @@ typedef struct
     DWORD         signaled;  /* Index of signaled object (or WAIT_FAILED)*/
     BOOL32        wait_all;  /* Wait for all objects flag */
     BOOL32        wait_msg;  /* Wait for message flag */
-    BOOL32        use_server; /* Use server call for waiting */
     K32OBJ       *objs[MAXIMUM_WAIT_OBJECTS];  /* Object pointers */
     int           server[MAXIMUM_WAIT_OBJECTS];  /* Server handles */
 } WAIT_STRUCT;
@@ -107,8 +106,7 @@ typedef struct _THDB
     void          *entry_point;    /* 1c0 Thread entry point (was: unknown) */
     void          *entry_arg;      /* 1c4 Entry point arg (was: unknown) */
     int            unix_pid;       /* 1c8 Unix thread pid (was: unknown) */
-    K32OBJ        *mutex_list;     /* 1cc List of owned mutex (was: unknown)*/
-    DWORD          unknown5[2];    /* 1d0 Unknown */
+    DWORD          unknown5[3];    /* 1cc Unknown */
     DWORD          sys_count[4];   /* 1d8 Syslevel mutex entry counters */
     CRITICAL_SECTION *sys_mutex[4];/* 1e8 Syslevel mutex pointers */
     DWORD          unknown6[2];    /* 1f8 Unknown */
@@ -162,18 +160,7 @@ extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );
 extern void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread );
 extern DWORD THREAD_TlsAlloc( THDB *thread );
 
-/* scheduler/event.c */
-extern void EVENT_Set( K32OBJ *obj );
-extern K32OBJ *EVENT_Create( BOOL32 manual_reset, BOOL32 initial_state );
-
-/* scheduler/mutex.c */
-extern void MUTEX_Abandon( K32OBJ *obj );
-
 /* scheduler/synchro.c */
-extern void SYNC_WaitForCondition( WAIT_STRUCT *wait, DWORD timeout );
-extern void SYNC_WakeUp( THREAD_QUEUE *queue, DWORD max );
-extern void SYNC_MsgWakeUp( THDB *thdb );
-extern void SYNC_SetupSignals(void);
 extern DWORD SYNC_DoWait( DWORD count, const HANDLE32 *handles,
                           BOOL32 wait_all, DWORD timeout,
                           BOOL32 alertable, BOOL32 wait_msg );

@@ -192,6 +192,27 @@ K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
 
 
 /***********************************************************************
+ *           HANDLE_GetServerHandle
+ *
+ * Retrieve the server handle associated to an object.
+ */
+int HANDLE_GetServerHandle( PDB32 *pdb, HANDLE32 handle,
+                            K32OBJ_TYPE type, DWORD access )
+{
+    int server_handle;
+    K32OBJ *obj;
+
+    SYSTEM_LOCK();
+    if ((obj = HANDLE_GetObjPtr( pdb, handle, type, access, &server_handle )))
+        K32OBJ_DecCount( obj );
+    else
+        server_handle = -1;
+    SYSTEM_UNLOCK();
+    return server_handle;
+}
+
+
+/***********************************************************************
  *           HANDLE_SetObjPtr
  *
  * Change the object pointer of a handle, and increment the refcount.
@@ -412,4 +433,39 @@ done:
     if (src_pdb) K32OBJ_DecCount( &src_pdb->header );
     SYSTEM_UNLOCK();
     return ret;
+}
+
+
+/***********************************************************************
+ *           ConvertToGlobalHandle    		(KERNEL32)
+ */
+HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 hSrc)
+{
+    int src_handle, dst_handle;
+    HANDLE32 handle;
+    K32OBJ *obj = NULL;
+    DWORD access;
+
+    if (HANDLE_IS_GLOBAL(hSrc))
+        return hSrc;
+
+    if (!(obj = HANDLE_GetObjPtr( PROCESS_Current(), hSrc, K32OBJ_UNKNOWN, 0, &src_handle )))
+        return 0;
+
+    HANDLE_GetAccess( PROCESS_Current(), hSrc, &access );
+
+    if (src_handle != -1)
+        dst_handle = CLIENT_DuplicateHandle( GetCurrentProcess(), src_handle, -1, -1, 0, FALSE,
+                                             DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS );
+    else
+        dst_handle = -1;
+
+    if ((handle = HANDLE_Alloc( PROCESS_Initial(), obj, access, FALSE,
+                                dst_handle )) != INVALID_HANDLE_VALUE32)
+        handle = HANDLE_LOCAL_TO_GLOBAL(handle);
+    else
+        handle = 0;
+
+    CloseHandle( hSrc );
+    return handle;
 }

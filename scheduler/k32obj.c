@@ -12,7 +12,6 @@
 
 
 /* The declarations are here to avoid including a lot of unnecessary files */
-extern const K32OBJ_OPS CRITICAL_SECTION_Ops;
 extern const K32OBJ_OPS PROCESS_Ops;
 extern const K32OBJ_OPS THREAD_Ops;
 extern const K32OBJ_OPS FILE_Ops;
@@ -30,12 +29,6 @@ extern const K32OBJ_OPS PIPE_Ops;
 
 static const K32OBJ_OPS K32OBJ_NullOps =
 {
-    NULL,    /* signaled */
-    NULL,    /* satisfied */
-    NULL,    /* add_wait */
-    NULL,    /* remove_wait */
-    NULL,    /* read */
-    NULL,    /* write */
     NULL     /* destroy */
 };
 
@@ -45,7 +38,7 @@ const K32OBJ_OPS * const K32OBJ_Ops[K32OBJ_NBOBJECTS] =
     &SEMAPHORE_Ops,         /* K32OBJ_SEMAPHORE */
     &EVENT_Ops,             /* K32OBJ_EVENT */
     &MUTEX_Ops,             /* K32OBJ_MUTEX */
-    &CRITICAL_SECTION_Ops,  /* K32OBJ_CRITICAL_SECTION */
+    &K32OBJ_NullOps,        /* K32OBJ_CRITICAL_SECTION */
     &PROCESS_Ops,           /* K32OBJ_PROCESS */
     &THREAD_Ops,            /* K32OBJ_THREAD */
     &FILE_Ops,              /* K32OBJ_FILE */
