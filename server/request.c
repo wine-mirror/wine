@@ -129,6 +129,20 @@ void fatal_protocol_error( struct thread *thread, const char *err, ... )
     kill_thread( thread, 1 );
 }
 
+/* complain about a protocol error and terminate the client connection */
+void fatal_protocol_perror( struct thread *thread, const char *err, ... )
+{
+    va_list args;
+
+    va_start( args, err );
+    fprintf( stderr, "Protocol error:%p: ", thread );
+    vfprintf( stderr, err, args );
+    perror( " " );
+    va_end( args );
+    thread->exit_code = 1;
+    kill_thread( thread, 1 );
+}
+
 /* die on a fatal error */
 void fatal_error( const char *err, ... )
 {
@@ -155,20 +169,24 @@ void fatal_perror( const char *err, ... )
 }
 
 /* call a request handler */
-static inline void call_req_handler( struct thread *thread )
+static inline void call_req_handler( struct thread *thread, union generic_request *request )
 {
-    enum request req;
+    enum request req = request->header.req;
+
     current = thread;
     clear_error();
 
-    req = ((struct request_header *)current->buffer)->req;
+    if (debug_level) trace_request( thread, request );
 
-    if (debug_level) trace_request( req );
-
-    if (req < REQ_NB_REQUESTS)
+    if ((unsigned int)request->header.var_offset + request->header.var_size > MAX_REQUEST_LENGTH)
     {
-        req_handlers[req]( current->buffer );
-        if (current && !current->wait) send_reply( current );
+        fatal_protocol_error( current, "bad request offset/size %d/%d\n",
+                              request->header.var_offset, request->header.var_size );
+    }
+    else if (req < REQ_NB_REQUESTS)
+    {
+        req_handlers[req]( request );
+        if (current) send_reply( current, request );
         current = NULL;
         return;
     }
@@ -176,18 +194,32 @@ static inline void call_req_handler( struct thread *thread )
 }
 
 /* send a reply to a thread */
-void send_reply( struct thread *thread )
+void send_reply( struct thread *thread, union generic_request *request )
 {
-    assert( !thread->wait );
-    if (debug_level) trace_reply( thread );
-    if (!write_request( thread )) set_select_events( &thread->obj, POLLOUT );
+    int ret;
+
+    assert (thread->pass_fd == -1);
+
+    if (debug_level) trace_reply( thread, request );
+
+    request->header.error = thread->error;
+
+    if ((ret = write( thread->reply_fd, request, sizeof(*request) )) != sizeof(*request))
+    {
+        if (ret >= 0)
+            fatal_protocol_error( thread, "partial write %d\n", ret );
+        else if (errno == EPIPE)
+            kill_thread( thread, 0 );  /* normal death */
+        else
+            fatal_protocol_perror( thread, "sendmsg" );
+    }
 }
 
 /* read a message from a client that has something to say */
 void read_request( struct thread *thread )
 {
+    union generic_request req;
     int ret;
-    char dummy[1];
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(int);
@@ -200,57 +232,39 @@ void read_request( struct thread *thread )
 
     assert( thread->pass_fd == -1 );
 
-    myiovec.iov_base = dummy;
-    myiovec.iov_len  = 1;
+    myiovec.iov_base = &req;
+    myiovec.iov_len  = sizeof(req);
 
     ret = recvmsg( thread->obj.fd, &msghdr, 0 );
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     thread->pass_fd = cmsg.fd;
 #endif
 
-    if (ret > 0)
+    if (ret == sizeof(req))
     {
-        call_req_handler( thread );
+        call_req_handler( thread, &req );
         thread->pass_fd = -1;
         return;
     }
     if (!ret)  /* closed pipe */
-    {
         kill_thread( thread, 0 );
-        return;
-    }
-    perror("recvmsg");
-    thread->exit_code = 1;
-    kill_thread( thread, 1 );
+    else if (ret > 0)
+        fatal_protocol_error( thread, "partial recvmsg %d\n", ret );
+    else
+        fatal_protocol_perror( thread, "recvmsg" );
 }
 
-/* send a message to a client that is ready to receive something */
-int write_request( struct thread *thread )
+/* send the wakeup signal to a thread */
+int send_thread_wakeup( struct thread *thread, int signaled )
 {
-    int ret;
-    struct request_header *header = thread->buffer;
-
-    header->error = thread->error;
-
-    assert (thread->pass_fd == -1);
-
-    ret = write( thread->reply_fd, header, 1 );
-    if (ret > 0)
-    {
-        set_select_events( &thread->obj, POLLIN );
-        return 1;
-    }
-    if (errno == EWOULDBLOCK) return 0;  /* not a fatal error */
-    if (errno == EPIPE)
-    {
+    int ret = write( thread->wait_fd, &signaled, sizeof(signaled) );
+    if (ret == sizeof(signaled)) return 0;
+    if (ret >= 0)
+        fatal_protocol_error( thread, "partial wakeup write %d\n", ret );
+    else if (errno == EPIPE)
         kill_thread( thread, 0 );  /* normal death */
-    }
     else
-    {
-        perror("sendmsg");
-        thread->exit_code = 1;
-        kill_thread( thread, 1 );
-    }
+        fatal_protocol_perror( thread, "write" );
     return -1;
 }
 
@@ -283,9 +297,7 @@ int send_client_fd( struct thread *thread, int fd, handle_t handle )
     }
     else
     {
-        perror("sendmsg");
-        thread->exit_code = 1;
-        kill_thread( thread, 1 );
+        fatal_protocol_perror( thread, "sendmsg" );
     }
     return -1;
 }
@@ -349,23 +361,20 @@ static void request_socket_poll_event( struct object *obj, int event )
     else if (event & POLLIN)
     {
         struct thread *thread = sock->thread;
+        union generic_request req;
         int ret;
-        char dummy[1];
 
-        ret = read( sock->obj.fd, &dummy, 1 );
-        if (ret > 0)
+        if ((ret = read( sock->obj.fd, &req, sizeof(req) )) == sizeof(req))
         {
-            call_req_handler( thread );
+            call_req_handler( thread, &req );
             return;
         }
         if (!ret)  /* closed pipe */
-        {
             kill_thread( thread, 0 );
-            return;
-        }
-        perror("read");
-        thread->exit_code = 1;
-        kill_thread( thread, 1 );
+        else if (ret > 0)
+            fatal_protocol_error( thread, "partial read %d\n", ret );
+        else
+            fatal_protocol_perror( thread, "read" );
     }
 }
 
@@ -384,6 +393,7 @@ struct object *create_request_socket( struct thread *thread )
     sock->thread = thread;
     send_client_fd( thread, fd[1], 0 );
     close( fd[1] );
+    fcntl( fd[0], F_SETFL, O_NONBLOCK );
     set_select_events( &sock->obj, POLLIN );
     return &sock->obj;
 }

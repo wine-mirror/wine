@@ -417,7 +417,6 @@ struct select_request
     IN  int          flags;        /* wait flags (see below) */
     IN  int          sec;          /* absolute timeout */
     IN  int          usec;         /* absolute timeout */
-    OUT int          signaled;     /* signaled handle */
     IN  VARARG(handles,handles);   /* handles to select on */
 };
 #define SELECT_ALL           1
@@ -1593,7 +1592,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 38
+#define SERVER_PROTOCOL_VERSION 39
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

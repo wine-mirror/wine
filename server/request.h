@@ -32,22 +32,16 @@ extern void fatal_error( const char *err, ... ) WINE_NORETURN;
 extern void fatal_perror( const char *err, ... ) WINE_NORETURN;
 extern const char *get_config_dir(void);
 extern void read_request( struct thread *thread );
-extern int write_request( struct thread *thread );
+extern int send_thread_wakeup( struct thread *thread, int signaled );
 extern int send_client_fd( struct thread *thread, int fd, handle_t handle );
-extern void send_reply( struct thread *thread );
+extern void send_reply( struct thread *thread, union generic_request *request );
 extern void open_master_socket(void);
 extern void close_master_socket(void);
 extern void lock_master_socket( int locked );
 extern struct object *create_request_socket( struct thread *thread );
 
-extern void trace_request( enum request req );
-extern void trace_reply( struct thread *thread );
-
-/* get the request buffer */
-static inline void *get_req_ptr( struct thread *thread )
-{
-    return thread->buffer;
-}
+extern void trace_request( struct thread *thread, const union generic_request *request );
+extern void trace_reply( struct thread *thread, const union generic_request *request );
 
 /* get the request vararg data */
 inline static void *get_req_data( const void *req )

@@ -40,7 +40,6 @@ struct thread_wait
     int                     flags;
     struct timeval          timeout;
     struct timeout_user    *user;
-    sleep_reply             reply;      /* function to build the reply */
     struct wait_queue_entry queues[1];
 };
 
@@ -88,14 +87,16 @@ static struct thread *booting_thread;
 /* allocate the buffer for the communication with the client */
 static int alloc_client_buffer( struct thread *thread )
 {
-    struct get_thread_buffer_request *req;
-    int fd, fd_pipe[2];
+    union generic_request *req;
+    int fd = -1, fd_pipe[2], wait_pipe[2];
 
+    wait_pipe[0] = wait_pipe[1] = -1;
     if (pipe( fd_pipe ) == -1)
     {
         file_set_error();
         return 0;
     }
+    if (pipe( wait_pipe ) == -1) goto error;
     if ((fd = create_anonymous_file()) == -1) goto error;
     if (ftruncate( fd, MAX_REQUEST_LENGTH ) == -1) goto error;
     if ((thread->buffer = mmap( 0, MAX_REQUEST_LENGTH, PROT_READ | PROT_WRITE,
@@ -103,21 +104,30 @@ static int alloc_client_buffer( struct thread *thread )
     thread->buffer_info = (struct server_buffer_info *)((char *)thread->buffer + MAX_REQUEST_LENGTH) - 1;
     if (!(thread->request_fd = create_request_socket( thread ))) goto error;
     thread->reply_fd = fd_pipe[1];
+    thread->wait_fd  = wait_pipe[1];
+
+    /* make the pipes non-blocking */
+    fcntl( fd_pipe[1], F_SETFL, O_NONBLOCK );
+    fcntl( wait_pipe[1], F_SETFL, O_NONBLOCK );
+
     /* build the first request into the buffer and send it */
     req = thread->buffer;
-    req->pid  = get_process_id( thread->process );
-    req->tid  = get_thread_id( thread );
-    req->boot = (thread == booting_thread);
-    req->version = SERVER_PROTOCOL_VERSION;
+    req->get_thread_buffer.pid  = get_process_id( thread->process );
+    req->get_thread_buffer.tid  = get_thread_id( thread );
+    req->get_thread_buffer.boot = (thread == booting_thread);
+    req->get_thread_buffer.version = SERVER_PROTOCOL_VERSION;
 
     /* add it here since send_client_fd may call kill_thread */
     add_process_thread( thread->process, thread );
 
     send_client_fd( thread, fd_pipe[0], 0 );
+    send_client_fd( thread, wait_pipe[0], 0 );
     send_client_fd( thread, fd, 0 );
-    send_reply( thread );
+    send_reply( thread, req );
     close( fd_pipe[0] );
+    close( wait_pipe[0] );
     close( fd );
+
     return 1;
 
  error:
@@ -125,6 +135,8 @@ static int alloc_client_buffer( struct thread *thread )
     if (fd != -1) close( fd );
     close( fd_pipe[0] );
     close( fd_pipe[1] );
+    if (wait_pipe[0] != -1) close( wait_pipe[0] );
+    if (wait_pipe[1] != -1) close( wait_pipe[1] );
     return 0;
 }
 
@@ -155,6 +167,7 @@ struct thread *create_thread( int fd, struct process *process )
     thread->pass_fd     = -1;
     thread->request_fd  = NULL;
     thread->reply_fd    = -1;
+    thread->wait_fd     = -1;
     thread->state       = RUNNING;
     thread->attached    = 0;
     thread->exit_code   = 0;
@@ -194,11 +207,7 @@ void thread_poll_event( struct object *obj, int event )
     assert( obj->ops == &thread_ops );
 
     if (event & (POLLERR | POLLHUP)) kill_thread( thread, 0 );
-    else
-    {
-        if (event & POLLOUT) write_request( thread );
-        if (event & POLLIN) read_request( thread );
-    }
+    else if (event & POLLIN) read_request( thread );
 }
 
 /* destroy a thread when its refcount is 0 */
@@ -218,6 +227,7 @@ static void destroy_thread( struct object *obj )
     if (thread->queue) release_object( thread->queue );
     if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
     if (thread->reply_fd != -1) close( thread->reply_fd );
+    if (thread->wait_fd != -1) close( thread->wait_fd );
     if (thread->pass_fd != -1) close( thread->pass_fd );
     if (thread->request_fd) release_object( thread->request_fd );
 }
@@ -355,8 +365,7 @@ static void end_wait( struct thread *thread )
 }
 
 /* build the thread wait structure */
-static int wait_on( int count, struct object *objects[], int flags,
-                    int sec, int usec, sleep_reply func )
+static int wait_on( int count, struct object *objects[], int flags, int sec, int usec )
 {
     struct thread_wait *wait;
     struct wait_queue_entry *entry;
@@ -367,7 +376,6 @@ static int wait_on( int count, struct object *objects[], int flags,
     wait->count   = count;
     wait->flags   = flags;
     wait->user    = NULL;
-    wait->reply   = func;
     if (flags & SELECT_TIMEOUT)
     {
         wait->timeout.tv_sec = sec;
@@ -389,14 +397,13 @@ static int wait_on( int count, struct object *objects[], int flags,
 }
 
 /* check if the thread waiting condition is satisfied */
-static int check_wait( struct thread *thread, struct object **object )
+static int check_wait( struct thread *thread )
 {
     int i, signaled;
     struct thread_wait *wait = thread->wait;
     struct wait_queue_entry *entry = wait->queues;
 
     assert( wait );
-    *object = NULL;
     if (wait->flags & SELECT_ALL)
     {
         int not_ok = 0;
@@ -419,7 +426,6 @@ static int check_wait( struct thread *thread, struct object **object )
             if (!entry->obj->ops->signaled( entry->obj, thread )) continue;
             /* Wait satisfied: tell it to the object */
             signaled = i;
-            *object = entry->obj;
             if (entry->obj->ops->satisfied( entry->obj, thread ))
                 signaled = i + STATUS_ABANDONED_WAIT_0;
             return signaled;
@@ -438,23 +444,17 @@ static int check_wait( struct thread *thread, struct object **object )
     return -1;
 }
 
-/* build a reply to the select request */
-static void build_select_reply( struct thread *thread, struct object *obj, int signaled )
-{
-    struct select_request *req = get_req_ptr( thread );
-    req->signaled = signaled;
-}
-
 /* attempt to wake up a thread */
 /* return 1 if OK, 0 if the wait condition is still not satisfied */
 static int wake_thread( struct thread *thread )
 {
     int signaled;
-    struct object *object;
-    if ((signaled = check_wait( thread, &object )) == -1) return 0;
-    thread->error = 0;
-    thread->wait->reply( thread, object, signaled );
+    if ((signaled = check_wait( thread )) == -1) return 0;
+
+    if (debug_level) fprintf( stderr, "%08x: *wakeup* object=%d\n",
+                              (unsigned int)thread, signaled );
     end_wait( thread );
+    send_thread_wakeup( thread, signaled );
     return 1;
 }
 
@@ -462,21 +462,45 @@ static int wake_thread( struct thread *thread )
 static void thread_timeout( void *ptr )
 {
     struct thread *thread = ptr;
+
     if (debug_level) fprintf( stderr, "%08x: *timeout*\n", (unsigned int)thread );
+
     assert( thread->wait );
-    thread->error = 0;
     thread->wait->user = NULL;
-    thread->wait->reply( thread, NULL, STATUS_TIMEOUT );
     end_wait( thread );
-    send_reply( thread );
+    send_thread_wakeup( thread, STATUS_TIMEOUT );
 }
 
-/* sleep on a list of objects */
-int sleep_on( int count, struct object *objects[], int flags, int sec, int usec, sleep_reply func )
+/* select on a list of handles */
+static void select_on( int count, handle_t *handles, int flags, int sec, int usec )
 {
+    int ret, i;
+    struct object *objects[MAXIMUM_WAIT_OBJECTS];
+
     assert( !current->wait );
-    if (!wait_on( count, objects, flags, sec, usec, func )) return 0;
-    if (wake_thread( current )) return 1;
+
+    if ((count < 0) || (count > MAXIMUM_WAIT_OBJECTS))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    for (i = 0; i < count; i++)
+    {
+        if (!(objects[i] = get_handle_obj( current->process, handles[i], SYNCHRONIZE, NULL )))
+            break;
+    }
+
+    if (i < count) goto done;
+    if (!wait_on( count, objects, flags, sec, usec )) goto done;
+
+    if ((ret = check_wait( current )) != -1)
+    {
+        /* condition is already satisfied */
+        end_wait( current );
+        set_error( ret );
+        goto done;
+    }
+
     /* now we need to wait */
     if (flags & SELECT_TIMEOUT)
     {
@@ -484,32 +508,13 @@ int sleep_on( int count, struct object *objects[], int flags, int sec, int usec,
                                                       thread_timeout, current )))
         {
             end_wait( current );
-            return 0;
+            goto done;
         }
     }
-    return 1;
-}
+    set_error( STATUS_PENDING );
 
-/* select on a list of handles */
-static int select_on( int count, handle_t *handles, int flags, int sec, int usec )
-{
-    int ret = 0;
-    int i;
-    struct object *objects[MAXIMUM_WAIT_OBJECTS];
-
-    if ((count < 0) || (count > MAXIMUM_WAIT_OBJECTS))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return 0;
-    }
-    for (i = 0; i < count; i++)
-    {
-        if (!(objects[i] = get_handle_obj( current->process, handles[i], SYNCHRONIZE, NULL )))
-            break;
-    }
-    if (i == count) ret = sleep_on( count, objects, flags, sec, usec, build_select_reply );
+done:
     while (--i >= 0) release_object( objects[i] );
-    return ret;
 }
 
 /* attempt to wake threads sleeping on the object wait queue */
@@ -523,7 +528,6 @@ void wake_up( struct object *obj, int max )
         entry = entry->next;
         if (wake_thread( thread ))
         {
-            send_reply( thread );
             if (max && !--max) break;
         }
     }
@@ -558,7 +562,7 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
     if (!apc->prev)  /* first one */
     {
         queue->head = apc;
-        if (thread->wait && wake_thread( thread )) send_reply( thread );
+        if (thread->wait) wake_thread( thread );
     }
     return 1;
 }
@@ -648,9 +652,11 @@ void kill_thread( struct thread *thread, int violent_death )
     remove_select_user( &thread->obj );
     release_object( thread->request_fd );
     close( thread->reply_fd );
+    close( thread->wait_fd );
     munmap( thread->buffer, MAX_REQUEST_LENGTH );
     thread->request_fd = NULL;
     thread->reply_fd = -1;
+    thread->wait_fd = -1;
     thread->buffer = (void *)-1;
     release_object( thread );
 }
@@ -819,8 +825,7 @@ DECL_HANDLER(resume_thread)
 DECL_HANDLER(select)
 {
     int count = get_req_data_size(req) / sizeof(int);
-    if (!select_on( count, get_req_data(req), req->flags, req->sec, req->usec ))
-        req->signaled = -1;
+    select_on( count, get_req_data(req), req->flags, req->sec, req->usec );
 }
 
 /* queue an APC for a thread */

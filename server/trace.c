@@ -550,11 +550,6 @@ static void dump_select_request( const struct select_request *req )
     cur_pos += dump_varargs_handles( req );
 }
 
-static void dump_select_reply( const struct select_request *req )
-{
-    fprintf( stderr, " signaled=%d", req->signaled );
-}
-
 static void dump_create_event_request( const struct create_event_request *req )
 {
     fprintf( stderr, " manual_reset=%d,", req->manual_reset );
@@ -1625,7 +1620,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_handle_info_reply,
     (dump_func)dump_dup_handle_reply,
     (dump_func)dump_open_process_reply,
-    (dump_func)dump_select_reply,
+    (dump_func)0,
     (dump_func)dump_create_event_reply,
     (dump_func)0,
     (dump_func)dump_open_event_reply,
@@ -1827,33 +1822,90 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
 
-void trace_request( enum request req )
+static const char *get_status_name( unsigned int status )
 {
+#define NAME(status)  { #status, STATUS_##status }
+    static const struct
+    {
+        const char  *name;
+        unsigned int value;
+    } status_names[] =
+    {
+        NAME(ACCESS_DENIED),
+        NAME(ACCESS_VIOLATION),
+        NAME(BUFFER_OVERFLOW),
+        NAME(CHILD_MUST_BE_VOLATILE),
+        NAME(DIRECTORY_NOT_EMPTY),
+        NAME(DISK_FULL),
+        NAME(FILE_LOCK_CONFLICT),
+        NAME(INVALID_FILE_FOR_SECTION),
+        NAME(INVALID_HANDLE),
+        NAME(INVALID_PARAMETER),
+        NAME(KEY_DELETED),
+        NAME(MEDIA_WRITE_PROTECTED),
+        NAME(MUTANT_NOT_OWNED),
+        NAME(NOT_REGISTRY_FILE),
+        NAME(NO_MEMORY),
+        NAME(NO_MORE_ENTRIES),
+        NAME(NO_MORE_FILES),
+        NAME(NO_SUCH_FILE),
+        NAME(OBJECT_NAME_COLLISION),
+        NAME(OBJECT_NAME_INVALID),
+        NAME(OBJECT_NAME_NOT_FOUND),
+        NAME(OBJECT_PATH_INVALID),
+        NAME(OBJECT_TYPE_MISMATCH),
+        NAME(PENDING),
+        NAME(PIPE_BROKEN),
+        NAME(SEMAPHORE_LIMIT_EXCEEDED),
+        NAME(SHARING_VIOLATION),
+        NAME(SUSPEND_COUNT_EXCEEDED),
+        NAME(TIMEOUT),
+        NAME(TOO_MANY_OPENED_FILES),
+        NAME(UNSUCCESSFUL),
+        NAME(USER_APC),
+        { NULL, 0 }  /* terminator */
+    };
+#undef NAME
+
+    int i;
+    static char buffer[10];
+
+    if (status)
+    {
+        for (i = 0; status_names[i].name; i++)
+            if (status_names[i].value == status) return status_names[i].name;
+    }
+    sprintf( buffer, "%x", status );
+    return buffer;
+}
+
+void trace_request( struct thread *thread, const union generic_request *request )
+{
+    enum request req = request->header.req;
     cur_pos = 0;
     current->last_req = req;
     if (req < REQ_NB_REQUESTS)
     {
-        fprintf( stderr, "%08x: %s(", (unsigned int)current, req_names[req] );
+        fprintf( stderr, "%08x: %s(", (unsigned int)thread, req_names[req] );
         cur_pos = 0;
-        req_dumpers[req]( current->buffer );
+        req_dumpers[req]( request );
     }
     else
-        fprintf( stderr, "%08x: %d(", (unsigned int)current, req );
-    if (current->pass_fd != -1) fprintf( stderr, " ) fd=%d\n", current->pass_fd );
+        fprintf( stderr, "%08x: %d(", (unsigned int)thread, req );
+    if (thread->pass_fd != -1) fprintf( stderr, " ) fd=%d\n", thread->pass_fd );
     else fprintf( stderr, " )\n" );
 }
 
-void trace_reply( struct thread *thread )
+void trace_reply( struct thread *thread, const union generic_request *request )
 {
-    fprintf( stderr, "%08x: %s() = %x",
-             (unsigned int)thread, req_names[thread->last_req], thread->error );
+    fprintf( stderr, "%08x: %s() = %s",
+             (unsigned int)thread, req_names[thread->last_req], get_status_name(thread->error) );
     if (reply_dumpers[thread->last_req])
     {
         fprintf( stderr, " {" );
         cur_pos = 0;
-        reply_dumpers[thread->last_req]( thread->buffer );
+        reply_dumpers[thread->last_req]( request );
         fprintf( stderr, " }" );
     }
-    if (thread->pass_fd != -1) fprintf( stderr, " fd=%d\n", thread->pass_fd );
-    else fprintf( stderr, "\n" );
+    fputc( '\n', stderr );
 }

@@ -96,13 +96,14 @@ typedef struct _TEB
     void        *buffer;         /* --3 204 Buffer shared with server */
     int          request_fd;     /* --3 208 fd for sending server requests */
     int          reply_fd;       /* --3 20c fd for receiving server replies */
-    struct server_buffer_info *buffer_info;   /* --3 210 Buffer information */
-    void        *debug_info;     /* --3 214 Info for debugstr functions */
-    void        *pthread_data;   /* --3 218 Data for pthread emulation */
+    int          wait_fd;        /* --3 210 fd for sleeping server requests */
+    struct server_buffer_info *buffer_info;   /* --3 214 Buffer information */
+    void        *debug_info;     /* --3 218 Info for debugstr functions */
+    void        *pthread_data;   /* --3 21c Data for pthread emulation */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
 
     /* the following are nt specific fields */
-    DWORD        pad6[631];                  /* --n 21c */
+    DWORD        pad6[630];                  /* --n 220 */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
     USHORT       StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
     DWORD        pad7;                       /* --n e0c */

@@ -55,7 +55,8 @@ struct thread
     unsigned int        error;       /* current error code */
     struct object      *request_fd;  /* fd for receiving client requests */
     int                 pass_fd;     /* fd to pass to the client */
-    int                 reply_fd;    /* fd to use to wake a client waiting on a reply */
+    int                 reply_fd;    /* fd to send a reply to a client */
+    int                 wait_fd;     /* fd to use to wake a sleeping client */
     enum run_state      state;     /* running state */
     int                 attached;  /* is thread attached with ptrace? */
     int                 exit_code; /* thread exit code */
@@ -77,9 +78,6 @@ struct thread_snapshot
     int             priority;  /* priority class */
 };
 
-/* callback function for building the thread reply when sleep_on is finished */
-typedef void (*sleep_reply)( struct thread *thread, struct object *obj, int signaled );
-
 extern struct thread *current;
 
 /* thread functions */
@@ -96,8 +94,6 @@ extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int violent_death );
 extern void wake_up( struct object *obj, int max );
-extern int sleep_on( int count, struct object *objects[], int flags,
-                     int sec, int usec, sleep_reply func );
 extern int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
                              enum apc_type type, int system, int nb_args, ... );
 extern void thread_cancel_apc( struct thread *thread, struct object *owner, int system );

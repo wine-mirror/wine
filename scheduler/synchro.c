@@ -5,10 +5,11 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include "heap.h"
+
 #include "file.h"  /* for DOSFS_UnixTimeToFileTime */
 #include "thread.h"
 #include "winerror.h"
@@ -31,6 +32,29 @@ inline static void get_timeout( struct timeval *when, int timeout )
         }
         when->tv_sec += sec;
     }
+}
+
+
+/***********************************************************************
+ *              wait_reply
+ *
+ * Wait for a reply on the waiting pipe of the current thread.
+ */
+static int wait_reply(void)
+{
+    int signaled;
+    for (;;)
+    {
+        int ret = read( NtCurrentTeb()->wait_fd, &signaled, sizeof(signaled) );
+        if (ret == sizeof(signaled)) return signaled;
+        if (!ret) break;
+        if (ret > 0) server_protocol_error( "partial wakeup read %d\n", ret );
+        if (errno == EINTR) continue;
+        if (errno == EPIPE) break;
+        server_protocol_perror("read");
+    }
+    /* the server closed the connection; time to die... */
+    SYSDEPS_ExitThread(0);
 }
 
 
@@ -166,22 +190,27 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
             if (alertable) req->flags |= SELECT_ALERTABLE;
             if (timeout != INFINITE) req->flags |= SELECT_TIMEOUT;
 
-            server_call( REQ_SELECT );
-            ret = req->signaled;
+            ret = server_call_noerr( REQ_SELECT );
         }
         SERVER_END_REQ;
+        if (ret == STATUS_PENDING) ret = wait_reply();
         if (ret != STATUS_USER_APC) break;
         call_apcs( alertable );
         if (alertable) break;
+    }
+    if (HIWORD(ret))  /* is it an error code? */
+    {
+        SetLastError( RtlNtStatusToDosError(ret) );
+        ret = WAIT_FAILED;
     }
     return ret;
 }
 
 
 /***********************************************************************
- *           WIN16_WaitForSingleObject   (KERNEL.460)
+ *           WaitForSingleObject16   (KERNEL.460)
  */
-DWORD WINAPI WIN16_WaitForSingleObject( HANDLE handle, DWORD timeout )
+DWORD WINAPI WaitForSingleObject16( HANDLE handle, DWORD timeout )
 {
     DWORD retval, mutex_count;
 
@@ -192,26 +221,24 @@ DWORD WINAPI WIN16_WaitForSingleObject( HANDLE handle, DWORD timeout )
 }
 
 /***********************************************************************
- *           WIN16_WaitForMultipleObjects   (KERNEL.461)
+ *           WaitForMultipleObjects16   (KERNEL.461)
  */
-DWORD WINAPI WIN16_WaitForMultipleObjects( DWORD count, const HANDLE *handles,
-                                           BOOL wait_all, DWORD timeout )
+DWORD WINAPI WaitForMultipleObjects16( DWORD count, const HANDLE *handles,
+                                       BOOL wait_all, DWORD timeout )
 {
     DWORD retval, mutex_count;
 
     ReleaseThunkLock( &mutex_count );
-    retval = WaitForMultipleObjects( count, handles, wait_all, timeout );
+    retval = WaitForMultipleObjectsEx( count, handles, wait_all, timeout, FALSE );
     RestoreThunkLock( mutex_count );
     return retval;
 }
 
 /***********************************************************************
- *           WIN16_WaitForMultipleObjectsEx   (KERNEL.495)
+ *           WaitForMultipleObjectsEx16   (KERNEL.495)
  */
-DWORD WINAPI WIN16_WaitForMultipleObjectsEx( DWORD count, 
-                                             const HANDLE *handles,
-                                             BOOL wait_all, DWORD timeout,
-                                             BOOL alertable )
+DWORD WINAPI WaitForMultipleObjectsEx16( DWORD count, const HANDLE *handles,
+                                         BOOL wait_all, DWORD timeout, BOOL alertable )
 {
     DWORD retval, mutex_count;
 
@@ -220,4 +247,3 @@ DWORD WINAPI WIN16_WaitForMultipleObjectsEx( DWORD count,
     RestoreThunkLock( mutex_count );
     return retval;
 }
-

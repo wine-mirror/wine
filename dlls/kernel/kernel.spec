@@ -369,8 +369,8 @@ owner	kernel32
 457 pascal CreateW32Event(long long) WIN16_CreateEvent
 458 pascal SetW32Event(long) SetEvent
 459 pascal ResetW32Event(long) ResetEvent
-460 pascal WaitForSingleObject(long long) WIN16_WaitForSingleObject
-461 pascal WaitForMultipleObjects(long ptr long long) WIN16_WaitForMultipleObjects
+460 pascal WaitForSingleObject(long long) WaitForSingleObject16
+461 pascal WaitForMultipleObjects(long ptr long long) WaitForMultipleObjects16
 462 pascal GetCurrentThreadId() GetCurrentThreadId
 463 pascal SetThreadQueue(long word) SetThreadQueue16
 464 pascal GetThreadQueue(long) GetThreadQueue16
@@ -406,7 +406,7 @@ owner	kernel32
 494 stub KERNEL_494
 
 # 495 is present only in Win98
-495 pascal WaitForMultipleObjectsEx(long ptr long long long) WIN16_WaitForMultipleObjectsEx
+495 pascal WaitForMultipleObjectsEx(long ptr long long long) WaitForMultipleObjectsEx16
 
 # 500-544 are WinNT extensions; some are also available in Win95
 

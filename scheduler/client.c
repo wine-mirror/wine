@@ -154,14 +154,15 @@ void *wine_server_alloc_req( size_t fixed_size, size_t var_size )
  */
 static void send_request( enum request req, union generic_request *request )
 {
+    int ret;
+
     request->header.req = req;
     NtCurrentTeb()->buffer_info->cur_req = (char *)request - (char *)NtCurrentTeb()->buffer;
-    /* write a single byte; the value is ignored anyway */
-    if (write( NtCurrentTeb()->request_fd, request, 1 ) == -1)
-    {
-        if (errno == EPIPE) SYSDEPS_ExitThread(0);
-        server_protocol_perror( "sendmsg" );
-    }
+    if ((ret = write( NtCurrentTeb()->request_fd, request, sizeof(*request) )) == sizeof(*request))
+        return;
+    if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
+    if (errno == EPIPE) SYSDEPS_ExitThread(0);
+    server_protocol_perror( "sendmsg" );
 }
 
 /***********************************************************************
@@ -176,10 +177,10 @@ static void send_request_fd( enum request req, union generic_request *request, i
 #endif
     struct msghdr msghdr;
     struct iovec vec;
+    int ret;
 
-    /* write a single byte; the value is ignored anyway */
     vec.iov_base = (void *)request;
-    vec.iov_len  = 1;
+    vec.iov_len  = sizeof(*request);
 
     msghdr.msg_name    = NULL;
     msghdr.msg_namelen = 0;
@@ -201,11 +202,10 @@ static void send_request_fd( enum request req, union generic_request *request, i
 
     request->header.req = req;
 
-    if (sendmsg( NtCurrentTeb()->socket, &msghdr, 0 ) == -1)
-    {
-        if (errno == EPIPE) SYSDEPS_ExitThread(0);
-        server_protocol_perror( "sendmsg" );
-    }
+    if ((ret = sendmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(*request)) return;
+    if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
+    if (errno == EPIPE) SYSDEPS_ExitThread(0);
+    server_protocol_perror( "sendmsg" );
 }
 
 /***********************************************************************
@@ -213,15 +213,16 @@ static void send_request_fd( enum request req, union generic_request *request, i
  *
  * Wait for a reply from the server.
  */
-static void wait_reply(void)
+static void wait_reply( union generic_request *req )
 {
     int ret;
-    char dummy[1];
 
     for (;;)
     {
-        if ((ret = read( NtCurrentTeb()->reply_fd, dummy, 1 )) > 0) return;
+        if ((ret = read( NtCurrentTeb()->reply_fd, req, sizeof(*req) )) == sizeof(*req))
+            return;
         if (!ret) break;
+        if (ret > 0) server_protocol_error( "partial read %d\n", ret );
         if (errno == EINTR) continue;
         if (errno == EPIPE) break;
         server_protocol_perror("read");
@@ -240,7 +241,7 @@ unsigned int wine_server_call( enum request req )
 {
     union generic_request *req_ptr = NtCurrentTeb()->buffer;
     send_request( req, req_ptr );
-    wait_reply();
+    wait_reply( req_ptr );
     return req_ptr->header.error;
 }
 
@@ -256,7 +257,7 @@ unsigned int server_call_fd( enum request req, int fd_out )
     union generic_request *req_ptr = NtCurrentTeb()->buffer;
 
     send_request_fd( req, req_ptr, fd_out );
-    wait_reply();
+    wait_reply( req_ptr );
 
     if ((res = req_ptr->header.error)) SetLastError( RtlNtStatusToDosError(res) );
     return res;  /* error code */
@@ -609,6 +610,10 @@ int CLIENT_InitThread(void)
     if (teb->reply_fd == -1) server_protocol_error( "no reply fd passed on first request\n" );
     fcntl( teb->reply_fd, F_SETFD, 1 ); /* set close on exec flag */
 
+    teb->wait_fd = wine_server_recv_fd( 0, 0 );
+    if (teb->wait_fd == -1) server_protocol_error( "no wait fd passed on first request\n" );
+    fcntl( teb->wait_fd, F_SETFD, 1 ); /* set close on exec flag */
+
     fd = wine_server_recv_fd( 0, 0 );
     if (fd == -1) server_protocol_error( "no fd received for thread buffer\n" );
 
@@ -618,15 +623,16 @@ int CLIENT_InitThread(void)
     if (teb->buffer == (void*)-1) server_protocol_perror( "mmap" );
     teb->buffer_info = (struct server_buffer_info *)((char *)teb->buffer + size) - 1;
 
-    wait_reply();
-
     req = (struct get_thread_buffer_request *)teb->buffer;
+    wait_reply( (union generic_request *)req );
+
     teb->pid = req->pid;
     teb->tid = req->tid;
     if (req->version != SERVER_PROTOCOL_VERSION)
         server_protocol_error( "version mismatch %d/%d.\n"
                                "Your %s binary was not upgraded correctly,\n"
-                               "or you have an older one somewhere in your PATH.\nOr maybe wrong wineserver still running ?",
+                               "or you have an older one somewhere in your PATH.\n"
+                               "Or maybe the wrong wineserver is still running?\n",
                                req->version, SERVER_PROTOCOL_VERSION,
                                (req->version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
     if (req->boot) boot_thread_id = teb->tid;
