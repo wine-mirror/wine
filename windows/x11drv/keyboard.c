@@ -314,7 +314,8 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 		bScan = event->keycode;
 		break;
 	}
-	bScan -= min_keycode; /* Windows starts from 0, X from min_keycode (8 usually) */
+	bScan -= min_keycode - 1; /* Windows starts from 1, 
+                                     X from min_keycode (8 usually) */
 	TRACE(key, "bScan = 0x%02x.\n", bScan);
 
 	dwFlags = 0;
