@@ -1,14 +1,12 @@
-This is release 20040505 of Wine, a free implementation of Windows on
+This is release 20040615 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
 
-WHAT'S NEW with Wine-20040505: (see ChangeLog for details)
-        - Many more filesystem improvements, including autodetection
-          of drive types and devices, and support for editing the drive
-          configuration with winecfg.
-        - Many Direct3D improvements.
-        - Several fixes to the various sound drivers.
+WHAT'S NEW with Wine-20040615: (see ChangeLog for details)
+        - Major winedbg rewrite using the dbghelp dll.
+        - New Wine preloader to reserve memory areas at startup.
+        - Many improvements to the audio support.
         - Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -17,8 +15,8 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20040505.tar.gz
-  http://prdownloads.sourceforge.net/wine/Wine-20040505.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20040615.tar.gz
+  http://prdownloads.sourceforge.net/wine/Wine-20040615.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 These locations also hold pre-built documentation packages in various
