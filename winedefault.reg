@@ -155,6 +155,16 @@
 "ThreadingModel"="Both"
 
 #
+# Entries for Multimedia
+#
+
+# Midi Mapper
+[HKEY_LOCAL_USER\Software\Microsoft\Windows\CurrentVersion\Multimedia\MIDIMap] 989041554
+"AutoScheme"=dword:00000000
+"CurrentInstrument"="#0"
+"UseScheme"=dword:00000000
+
+#
 # Entries for IWebBrowser
 # Used by Internet Explorer HTML-rendering control
 #
