@@ -126,11 +126,26 @@ then
     then 
         AC_CHECK_LIB(Xxf86vm,XF86VidModeQueryExtension,AC_DEFINE(HAVE_LIBXXF86VM) X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm",,$X_LIBS -lXext -lX11)
     fi
+
     dnl Check for the presence of Mesa
     AC_CHECK_HEADERS(GL/gl.h GL/osmesa.h)
     if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_osmesa_h" = "yes"
     then
-        AC_CHECK_LIB(MesaGL,OSMesaCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lMesaGL",,$X_LIBS -lXext -lX11 -lm)
+        dnl Check for some problems due to old Mesa versions
+        AC_CACHE_CHECK("for up-to-date Mesa version", wine_cv_mesa_version_OK,
+          AC_TRY_COMPILE(
+            [#include <GL/gl.h>],
+            [GLenum test = GL_UNSIGNED_SHORT_5_6_5;],
+            [wine_cv_mesa_version_OK="yes"],
+            [wine_cv_mesa_version_OK="no"]
+	  )
+        )
+
+        if test "$wine_cv_mesa_version_OK" = "yes"
+        then
+	    dnl Check for the presense of the library
+            AC_CHECK_LIB(MesaGL,OSMesaCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lMesaGL",,$X_LIBS -lXext -lX11 -lm)
+        fi
     fi
 
     CPPFLAGS="$ac_save_CPPFLAGS"
@@ -694,6 +709,13 @@ then
   echo "*** Warning: non-reentrant libc detected. Wine will be build without"
   echo "*** thread support. Consider upgrading libc to a more recent"
   echo "*** reentrant version of libc."
+fi
+
+if test "$wine_cv_mesa_version_OK" = "no"
+then
+  echo
+  echo "*** Warning: old Mesa headers detected. Wine will be built without Direct3D"
+  echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)"
 fi
 
 echo
