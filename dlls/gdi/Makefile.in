@@ -9,7 +9,10 @@ ALTNAMES  = gdi
 SPEC_SRCS = gdi32.spec gdi.spec
 
 C_SRCS = \
-	gdi_main.c
+	gdi_main.c \
+	thunk.c
+
+GLUE = thunk.c
 
 @MAKE_DLL_RULES@
 

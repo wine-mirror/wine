@@ -35,52 +35,15 @@ extern WORD CALLBACK THUNK_CallTo16_word_w    (FARPROC16,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_l    (FARPROC16,LONG);
 extern LONG CALLBACK THUNK_CallTo16_long_l    (FARPROC16,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_ww   (FARPROC16,WORD,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_wl   (FARPROC16,WORD,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_ll   (FARPROC16,LONG,LONG);
 extern LONG CALLBACK THUNK_CallTo16_long_ll   (FARPROC16,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_lllw (FARPROC16,LONG,LONG,LONG,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern LONG CALLBACK THUNK_CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
 /* ### stop build ### */
-
-
-
-#include "pshpack1.h"
-
-typedef struct tagTHUNK
-{
-    BYTE             popl_eax;           /* 0x58  popl  %eax (return address)*/
-    BYTE             pushl_func;         /* 0x68  pushl $proc */
-    FARPROC16        proc WINE_PACKED;
-    BYTE             pushl_eax;          /* 0x50  pushl %eax */
-    BYTE             jmp;                /* 0xe9  jmp   relay (relative jump)*/
-    RELAY            relay WINE_PACKED;
-    struct tagTHUNK *next WINE_PACKED;
-    DWORD            magic;
-} THUNK;
-
-#define CALLTO16_THUNK_MAGIC 0x54484e4b   /* "THNK" */
-
-#include "poppack.h"
-
-#define DECL_THUNK(aname,aproc,arelay) \
-    THUNK aname; \
-    aname.popl_eax = 0x58; \
-    aname.pushl_func = 0x68; \
-    aname.proc = (FARPROC) (aproc); \
-    aname.pushl_eax = 0x50; \
-    aname.jmp = 0xe9; \
-    aname.relay = (RELAY)((char *)(arelay) - (char *)(&(aname).next)); \
-    aname.next = NULL; \
-    aname.magic = CALLTO16_THUNK_MAGIC;
 
 static THUNK *firstThunk = NULL;
 
@@ -197,132 +160,6 @@ void THUNK_Free( FARPROC thunk )
 
 
 /***********************************************************************
- *           THUNK_EnumObjects16   (GDI.71)
- */
-INT16 WINAPI THUNK_EnumObjects16( HDC16 hdc, INT16 nObjType,
-                                  GOBJENUMPROC16 func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_ll );
-    return EnumObjects16( hdc, nObjType, (GOBJENUMPROC16)&thunk, lParam );
-}
-
-
-/*************************************************************************
- *           THUNK_EnumFonts16   (GDI.70)
- */
-INT16 WINAPI THUNK_EnumFonts16( HDC16 hdc, LPCSTR lpFaceName,
-                                FONTENUMPROC16 func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_llwl );
-    return EnumFonts16( hdc, lpFaceName, (FONTENUMPROC16)&thunk, lParam );
-}
-
-/******************************************************************
- *           THUNK_EnumMetaFile16   (GDI.175)
- */
-BOOL16 WINAPI THUNK_EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
-                                    MFENUMPROC16 func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wllwl );
-    return EnumMetaFile16( hdc, hmf, (MFENUMPROC16)&thunk, lParam );
-}
-
-
-/*************************************************************************
- *           THUNK_EnumFontFamilies16   (GDI.330)
- */
-INT16 WINAPI THUNK_EnumFontFamilies16( HDC16 hdc, LPCSTR lpszFamily,
-                                       FONTENUMPROC16 func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_llwl );
-    return EnumFontFamilies16(hdc, lpszFamily, (FONTENUMPROC16)&thunk, lParam);
-}
-
-
-/*************************************************************************
- *           THUNK_EnumFontFamiliesEx16   (GDI.613)
- */
-INT16 WINAPI THUNK_EnumFontFamiliesEx16( HDC16 hdc, LPLOGFONT16 lpLF,
-                                         FONTENUMPROCEX16 func, LPARAM lParam,
-                                         DWORD reserved )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_llwl );
-    return EnumFontFamiliesEx16( hdc, lpLF, (FONTENUMPROCEX16)&thunk,
-                                 lParam, reserved );
-}
-
-
-/**********************************************************************
- *           THUNK_LineDDA16   (GDI.100)
- */
-void WINAPI THUNK_LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd,
-                             INT16 nYEnd, LINEDDAPROC16 func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wwl );
-    LineDDA16( nXStart, nYStart, nXEnd, nYEnd, (LINEDDAPROC16)&thunk, lParam );
-}
-
-
-/*******************************************************************
- *           THUNK_EnumWindows16   (USER.54)
- */
-BOOL16 WINAPI THUNK_EnumWindows16( WNDENUMPROC16 func, LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wl );
-    return EnumWindows16( (WNDENUMPROC16)&thunk, lParam );
-}
-
-
-/**********************************************************************
- *           THUNK_EnumChildWindows16   (USER.55)
- */
-BOOL16 WINAPI THUNK_EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func,
-                                        LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wl );
-    return EnumChildWindows16( parent, (WNDENUMPROC16)&thunk, lParam );
-}
-
-
-/**********************************************************************
- *           THUNK_EnumTaskWindows16   (USER.225)
- */
-BOOL16 WINAPI THUNK_EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
-                                       LPARAM lParam )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wl );
-    return EnumTaskWindows16( hTask, (WNDENUMPROC16)&thunk, lParam );
-}
-
-
-/***********************************************************************
- *           THUNK_EnumProps16   (USER.27)
- */
-INT16 WINAPI THUNK_EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wlw );
-    return EnumProps16( hwnd, (PROPENUMPROC16)&thunk );
-}
-
-
-/***********************************************************************
- *           THUNK_GrayString16   (USER.185)
- */
-BOOL16 WINAPI THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr,
-                                  GRAYSTRINGPROC16 func, LPARAM lParam,
-                                  INT16 cch, INT16 x, INT16 y,
-                                  INT16 cx, INT16 cy )
-{
-    DECL_THUNK( thunk, func, THUNK_CallTo16_word_wlw );
-    if (!func)
-        return GrayString16( hdc, hbr, NULL, lParam, cch, x, y, cx, cy );
-    else
-        return GrayString16( hdc, hbr, (GRAYSTRINGPROC16)&thunk, lParam, cch,
-                             x, y, cx, cy );
-}
-
-
-/***********************************************************************
  *           THUNK_GetCalloutThunk
  *
  * Retrieve API entry point with given name from given module.
@@ -353,25 +190,26 @@ void THUNK_InitCallout(void)
     hModule = GetModuleHandleA( "USER32" );
     if ( hModule )
     {
-#define GETADDR( var, name )  \
-        *(FARPROC *)&Callout.##var = GetProcAddress( hModule, name )
+#define GETADDR( name )  \
+        *(FARPROC *)&Callout.##name = GetProcAddress( hModule, #name )
 
-        GETADDR( PeekMessageA, "PeekMessageA" );
-        GETADDR( PeekMessageW, "PeekMessageW" );
-        GETADDR( GetMessageA, "GetMessageA" );
-        GETADDR( GetMessageW, "GetMessageW" );
-        GETADDR( SendMessageA, "SendMessageA" );
-        GETADDR( SendMessageW, "SendMessageW" );
-        GETADDR( PostMessageA, "PostMessageA" );
-        GETADDR( PostMessageW, "PostMessageW" );
-        GETADDR( PostThreadMessageA, "PostThreadMessageA" );
-        GETADDR( PostThreadMessageW, "PostThreadMessageW" );
-        GETADDR( TranslateMessage, "TranslateMessage" );
-        GETADDR( DispatchMessageW, "DispatchMessageW" );
-        GETADDR( DispatchMessageA, "DispatchMessageA" );
-        GETADDR( RedrawWindow, "RedrawWindow" );
-        GETADDR( WaitForInputIdle, "WaitForInputIdle" );
-
+        GETADDR( PeekMessageA );
+        GETADDR( PeekMessageW );
+        GETADDR( GetMessageA );
+        GETADDR( GetMessageW );
+        GETADDR( SendMessageA );
+        GETADDR( SendMessageW );
+        GETADDR( PostMessageA );
+        GETADDR( PostMessageW );
+        GETADDR( PostThreadMessageA );
+        GETADDR( PostThreadMessageW );
+        GETADDR( TranslateMessage );
+        GETADDR( DispatchMessageW );
+        GETADDR( DispatchMessageA );
+        GETADDR( RedrawWindow );
+        GETADDR( WaitForInputIdle );
+        GETADDR( MessageBoxA );
+        GETADDR( MessageBoxW );
 #undef GETADDR
     }
 

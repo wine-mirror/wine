@@ -10,7 +10,6 @@ SPEC_SRCS = \
 	ddeml.spec \
 	dispdib.spec \
 	kernel.spec \
-	keyboard.spec \
 	ole2conv.spec \
 	ole2nls.spec \
 	ole2prox.spec \

@@ -2,3 +2,4 @@
 *.spec.glue.s
 Makefile
 libgdi32.so.1.0
+thunk.glue.c

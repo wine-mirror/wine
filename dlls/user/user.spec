@@ -55,8 +55,8 @@ file	user.exe
 51  stub BEAR51 # IsTwoByteCharPrefix
 52  pascal16 AnyPopup() AnyPopup16
 53  pascal16 DestroyWindow(word) DestroyWindow16
-54  pascal16 EnumWindows(segptr long) THUNK_EnumWindows16
-55  pascal16 EnumChildWindows(word segptr long) THUNK_EnumChildWindows16
+54  pascal16 EnumWindows(segptr long) EnumWindows16
+55  pascal16 EnumChildWindows(word segptr long) EnumChildWindows16
 56  pascal16 MoveWindow(word word word word word word) MoveWindow16
 57  pascal16 RegisterClass(ptr) RegisterClass16
 58  pascal16 GetClassName(word ptr word) GetClassName16

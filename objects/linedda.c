@@ -9,16 +9,6 @@
 #include "wingdi.h"
 #include "wine/wingdi16.h"
 
-/**********************************************************************
- *           LineDDA16   (GDI.100)
- */
-void WINAPI LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd, INT16 nYEnd,
-                       LINEDDAPROC16 callback, LPARAM lParam )
-{
-    LineDDA( nXStart, nYStart, nXEnd, nYEnd,
-               (LINEDDAPROC)callback, lParam );
-}
-
 
 /**********************************************************************
  *           LineDDA32   (GDI32.248)

@@ -99,10 +99,41 @@ typedef struct
     void WINAPI (*UserYield16)( void );
     WORD WINAPI (*DestroyIcon32)( HGLOBAL16 handle, UINT16 flags );
     DWORD WINAPI (*WaitForInputIdle)( HANDLE hProcess, DWORD dwTimeOut );
+
+    INT WINAPI (*MessageBoxA)( HWND hWnd, LPCSTR text, LPCSTR title, UINT type );
+    INT WINAPI (*MessageBoxW)( HWND hwnd, LPCWSTR text, LPCWSTR title, UINT type );
     
 }  CALLOUT_TABLE;
 
 extern CALLOUT_TABLE Callout;
 
+#include "pshpack1.h"
+
+typedef struct tagTHUNK
+{
+    BYTE             popl_eax;           /* 0x58  popl  %eax (return address)*/
+    BYTE             pushl_func;         /* 0x68  pushl $proc */
+    FARPROC16        proc WINE_PACKED;
+    BYTE             pushl_eax;          /* 0x50  pushl %eax */
+    BYTE             jmp;                /* 0xe9  jmp   relay (relative jump)*/
+    RELAY            relay WINE_PACKED;
+    struct tagTHUNK *next WINE_PACKED;
+    DWORD            magic;
+} THUNK;
+
+#include "poppack.h"
+
+#define CALLTO16_THUNK_MAGIC 0x54484e4b   /* "THNK" */
+
+#define DECL_THUNK(aname,aproc,arelay) \
+    THUNK aname; \
+    aname.popl_eax = 0x58; \
+    aname.pushl_func = 0x68; \
+    aname.proc = (FARPROC) (aproc); \
+    aname.pushl_eax = 0x50; \
+    aname.jmp = 0xe9; \
+    aname.relay = (RELAY)((char *)(arelay) - (char *)(&(aname).next)); \
+    aname.next = NULL; \
+    aname.magic = CALLTO16_THUNK_MAGIC;
 
 #endif /* __WINE_CALLBACK_H */

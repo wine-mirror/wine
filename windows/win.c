@@ -2756,9 +2756,9 @@ void WIN_ReleaseWinArray(WND **wndArray)
 }
 
 /*******************************************************************
- *           EnumWindows16   (USER.54)
+ *           EnumWindows   (USER32.193)
  */
-BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
+BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 {
     WND **list, **ppWnd;
 
@@ -2793,15 +2793,6 @@ BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
     WIN_ReleaseWinArray(list);
     WIN_ReleaseDesktop();
     return TRUE;
-}
-
-
-/*******************************************************************
- *           EnumWindows32   (USER32.193)
- */
-BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
-{
-    return (BOOL)EnumWindows16( (WNDENUMPROC16)lpEnumFunc, lParam );
 }
 
 
@@ -2863,8 +2854,7 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
  *
  * Helper function for EnumChildWindows().
  */
-static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC16 func,
-                                    LPARAM lParam )
+static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC func, LPARAM lParam )
 {
     WND **childList;
     BOOL16 ret = FALSE;
@@ -2897,9 +2887,9 @@ static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC16 func,
 
 
 /**********************************************************************
- *           EnumChildWindows16   (USER.55)
+ *           EnumChildWindows   (USER32.178)
  */
-BOOL16 WINAPI EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func,
+BOOL WINAPI EnumChildWindows( HWND parent, WNDENUMPROC func,
                                   LPARAM lParam )
 {
     WND **list, *pParent;
@@ -2914,17 +2904,6 @@ BOOL16 WINAPI EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func,
     WIN_ReleaseWinArray(list);
     WIN_ReleaseWndPtr(pParent);
     return TRUE;
-}
-
-
-/**********************************************************************
- *           EnumChildWindows32   (USER32.178)
- */
-BOOL WINAPI EnumChildWindows( HWND parent, WNDENUMPROC func,
-                                  LPARAM lParam )
-{
-    return (BOOL)EnumChildWindows16( (HWND16)parent, (WNDENUMPROC16)func,
-                                       lParam );
 }
 
 

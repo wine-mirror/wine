@@ -9,7 +9,10 @@ ALTNAMES  = user
 SPEC_SRCS = user32.spec user.spec
 
 C_SRCS = \
-	user_main.c
+	user_main.c \
+	thunk.c
+
+GLUE = thunk.c
 
 @MAKE_DLL_RULES@
 

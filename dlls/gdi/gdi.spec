@@ -108,7 +108,7 @@ file	gdi.exe
 98  pascal16 IntersectVisRect(word s_word s_word s_word s_word)
              IntersectVisRect16
 99  pascal16 LPtoDP(word ptr s_word) LPtoDP16
-100 pascal16 LineDDA(s_word s_word s_word s_word segptr long) THUNK_LineDDA16
+100 pascal16 LineDDA(s_word s_word s_word s_word segptr long) LineDDA16
 101 pascal16 OffsetRgn(word s_word s_word) OffsetRgn16
 102 pascal16 OffsetVisRgn(word s_word s_word) OffsetVisRgn16
 103 pascal16 PtVisible(word s_word s_word) PtVisible16
