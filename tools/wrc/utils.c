@@ -172,7 +172,6 @@ void *xmalloc(size_t size)
     void *res;
 
     assert(size > 0);
-    assert(size < 102400);
     res = malloc(size);
     if(res == NULL)
     {
@@ -193,7 +192,6 @@ void *xrealloc(void *p, size_t size)
     void *res;
 
     assert(size > 0);
-    assert(size < 102400);
     res = realloc(p, size);
     if(res == NULL)
     {
