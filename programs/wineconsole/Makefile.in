@@ -4,11 +4,13 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineconsole.exe
+EXTRALIBS = @CURSESLIBS@
 APPMODE   = gui
-IMPORTS   = gdi32 user32 advapi32 kernel32 ntdll
-DELAYIMPORTS = comctl32
+IMPORTS   = advapi32 kernel32 ntdll
+DELAYIMPORTS = comctl32 user32 gdi32
 
 C_SRCS = \
+	curses.c \
 	dialog.c \
 	registry.c \
 	user.c \

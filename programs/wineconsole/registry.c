@@ -160,7 +160,7 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     cfg->cursor_size = 25;
     cfg->cursor_visible = 1;
     cfg->exit_on_die = 1;
-    cfg->face_name[0] = 0;
+    memset(cfg->face_name, 0, sizeof(cfg->face_name));
     cfg->cell_height = 12;
     cfg->cell_width  = 8;
     cfg->font_weight = 0;

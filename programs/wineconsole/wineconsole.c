@@ -23,8 +23,8 @@
 
 #include <stdio.h>
 #include "wine/server.h"
-#include "wine/unicode.h"
 #include "winecon_private.h"
+#include "winnls.h"
 
 #include "wine/debug.h"
 
@@ -428,11 +428,11 @@ static void WINECON_Delete(struct inner_data* data)
 {
     if (!data) return;
 
+    if (data->fnDeleteBackend)  data->fnDeleteBackend(data);
     if (data->hConIn)		CloseHandle(data->hConIn);
     if (data->hConOut)		CloseHandle(data->hConOut);
     if (data->hSynchro)		CloseHandle(data->hSynchro);
     if (data->cells)		HeapFree(GetProcessHeap(), 0, data->cells);
-    if (data->fnDeleteBackend)  data->fnDeleteBackend(data);
     HeapFree(GetProcessHeap(), 0, data);
 }
 
@@ -499,7 +499,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     {
         req->handle = (obj_handle_t)data->hConIn;
         req->mask = SET_CONSOLE_INPUT_INFO_TITLE;
-        wine_server_add_data( req, appname, strlenW(appname) * sizeof(WCHAR) );
+        wine_server_add_data( req, appname, lstrlenW(appname) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -580,7 +580,7 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
  *
  *
  */
-static BOOL WINECON_HasEvent(LPCSTR ptr, unsigned *evt)
+static BOOL WINECON_HasEvent(LPCSTR ptr, unsigned* evt)
 {
     while (*ptr == ' ' || *ptr == '\t') ptr++;
     if (strncmp(ptr, "--use-event=", 12)) return FALSE;
@@ -599,15 +599,12 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
 {
     struct inner_data*	data;
     int			ret = 1;
-    unsigned		evt;
-    BOOL                (*backend)(struct inner_data*);
-
-    backend = WCUSER_InitBackend;
+    unsigned            evt;
 
     /* case of wineconsole <evt>, signal process that created us that we're up and running */
     if (WINECON_HasEvent(lpCmdLine, &evt))
     {
-        if (!(data = WINECON_Init(hInst, 0, NULL, backend))) return 0;
+        if (!(data = WINECON_Init(hInst, 0, NULL, WCUSER_InitBackend))) return 0;
 	ret = SetEvent((HANDLE)evt);
 	if (!ret)
 	{
@@ -628,6 +625,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
          * the correct way would be to check the existence of the left part of ptr
          * (to be a file)
          */
+        /* FIXME: could also add an option to choose another backend if needed */
         while (*wcmdLine && *wcmdLine++ != ' ');
 
         /* FIXME: see above */
@@ -635,7 +633,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
         while (*src && *src != ' ') *dst++ = *src++;
         *dst = 0;
 
-        if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, backend))) return 0;
+        if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, WCCURSE_InitBackend))) return 0;
 	ret = WINECON_Spawn(data, wcmdLine);
         if (!ret)
 	{
