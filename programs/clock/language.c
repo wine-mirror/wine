@@ -31,32 +31,26 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID)
 
         /* analog clock */
 
-        CheckMenuItem(Globals.hPropertiesMenu, 0x100,
-                       MF_BYCOMMAND | MF_CHECKED);
-        CheckMenuItem(Globals.hPropertiesMenu, 0x101,
-                       MF_BYCOMMAND | MF_UNCHECKED);
-        EnableMenuItem(Globals.hPropertiesMenu, 0x103,
-                       MF_BYCOMMAND | MF_GRAYED);
+        CheckMenuItem(Globals.hPropertiesMenu, IDM_ANALOG, MF_BYCOMMAND | MF_CHECKED);
+        CheckMenuItem(Globals.hPropertiesMenu, IDM_DIGITAL, MF_BYCOMMAND | MF_UNCHECKED);
+        EnableMenuItem(Globals.hPropertiesMenu, IDM_FONT, MF_BYCOMMAND | MF_GRAYED);
     }
     else
     {
         /* digital clock */
 
-        CheckMenuItem(Globals.hPropertiesMenu, 0x100,
-                       MF_BYCOMMAND | MF_UNCHECKED);
-        CheckMenuItem(Globals.hPropertiesMenu, 0x101,
-                       MF_BYCOMMAND | MF_CHECKED);
-        EnableMenuItem(Globals.hPropertiesMenu, 0x103,
-                       MF_BYCOMMAND);
+        CheckMenuItem(Globals.hPropertiesMenu, IDM_ANALOG, MF_BYCOMMAND | MF_UNCHECKED);
+        CheckMenuItem(Globals.hPropertiesMenu, IDM_DIGITAL, MF_BYCOMMAND | MF_CHECKED);
+        EnableMenuItem(Globals.hPropertiesMenu, IDM_FONT, MF_BYCOMMAND);
     }
 
-    CheckMenuItem(Globals.hPropertiesMenu, 0x105, MF_BYCOMMAND |
+    CheckMenuItem(Globals.hPropertiesMenu, IDM_NOTITLE, MF_BYCOMMAND |
                  (Globals.bWithoutTitle ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hSystemMenu, 0x10D, MF_BYCOMMAND |
+    CheckMenuItem(Globals.hSystemMenu, IDM_ONTOP, MF_BYCOMMAND |
                  (Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hPropertiesMenu, 0x107, MF_BYCOMMAND |
+    CheckMenuItem(Globals.hPropertiesMenu, IDM_SECONDS, MF_BYCOMMAND |
                  (Globals.bSeconds ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hPropertiesMenu, 0x108, MF_BYCOMMAND |
+    CheckMenuItem(Globals.hPropertiesMenu, IDM_DATE, MF_BYCOMMAND |
                  (Globals.bDate ? MF_CHECKED : MF_UNCHECKED));
 }
 
@@ -71,7 +65,7 @@ VOID LANGUAGE_UpdateWindowCaption(VOID)
     GetDateFormat(LOCALE_USER_DEFAULT, LOCALE_SLONGDATE, &st, NULL, szDate, sizeof(szDate));
 
     /* Set frame caption */
-    LoadString(Globals.hInstance, 0x10C, szCaption, sizeof(szCaption));
+    LoadString(Globals.hInstance, IDS_CLOCK, szCaption, sizeof(szCaption));
     if (Globals.bDate) {
         lstrcat(szCaption, " - ");
         lstrcat(szCaption, szDate);
@@ -105,8 +99,8 @@ VOID LANGUAGE_LoadMenus(VOID)
     
     /* FIXME: Append a SEPARATOR to Globals.hSystemMenu here */
 
-    LoadString(Globals.hInstance, 0x10D, szItem, sizeof(szItem));
-    AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND, 1000, szItem);
+    LoadString(Globals.hInstance, IDS_ONTOP, szItem, sizeof(szItem));
+    AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND, IDM_ONTOP, szItem);
 }
 
 /* Local Variables:    */

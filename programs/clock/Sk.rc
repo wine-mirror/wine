@@ -23,25 +23,25 @@
 MAIN_MENU MENU LANGUAGE LANG_SLOVAK, SUBLANG_DEFAULT
 {
  POPUP "&Vlastnosti" {
-  MENUITEM "Ana&lógové", 0x100
-  MENUITEM "Digi&tálne", 0x101
+  MENUITEM "Ana&lógové", IDM_ANALOG
+  MENUITEM "Digi&tálne", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Font...", 0x103
+  MENUITEM "&Font...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Bez titulkového pruhu", 0x105
+  MENUITEM "&Bez titulkového pruhu", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Sekundy", 0x107
-  MENUITEM "&Dátum", 0x108
+  MENUITEM "&Sekundy", IDM_SECONDS
+  MENUITEM "&Dátum", IDM_DATE
  }
- POPUP "Inf&o..." {
-  MENUITEM "&Licencia", 0x109
-  MENUITEM "&BEZ ZÁRUKY", 0x10A
-  MENUITEM "&O hodinách...", 0x10B
+ POPUP "Inf&o" {
+  MENUITEM "&Licencia...", IDM_LICENSE
+  MENUITEM "&BEZ ZÁRUKY...", IDM_NOWARRANTY
+  MENUITEM "&O hodinách...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_SLOVAK, SUBLANG_DEFAULT
 {
-CLOCK,		"Hodiny"
-MENU_ON_TOP,	"&Vždy na vrchu"
+IDS_CLOCK, "Hodiny"
+IDS_ONTOP, "&Vždy na vrchu"
 }

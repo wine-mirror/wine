@@ -23,25 +23,25 @@ LANGUAGE LANG_THAI, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "ปรับแต่งนาฬิกา" {
-  MENUITEM "ธรรมดา", 0x100
-  MENUITEM "ดิจิตัล", 0x101
+  MENUITEM "ธรรมดา", IDM_ANALOG
+  MENUITEM "ดิจิตัล", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "รูปแบบต้วอักษร...", 0x103
+  MENUITEM "รูปแบบต้วอักษร...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "แสดงแทบเมนู", 0x105
+  MENUITEM "แสดงแทบเมนู", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "วินาที", 0x107
-  MENUITEM "วันที่", 0x108
+  MENUITEM "วินาที", IDM_SECONDS
+  MENUITEM "วันที่", IDM_DATE
  }
- POPUP "รายละเอียด..." {
-  MENUITEM "ใบอนุญาต", 0x109
-  MENUITEM "ไม่มี WARRANTY", 0x10A
-  MENUITEM "เกี่ยวกับนาฬิกา... ", 0x10B
+ POPUP "รายละเอียด" {
+  MENUITEM "ใบอนุญาต...", IDM_LICENSE
+  MENUITEM "ไม่มี WARRANTY...", IDM_NOWARRANTY
+  MENUITEM "เกี่ยวกับนาฬิกา...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE
 {
-  CLOCK,       "นาฬิกา"
-  MENU_ON_TOP, "ยูบนสุดเสมอ"
+IDS_CLOCK, "นาฬิกา"
+IDS_ONTOP, "ยูบนสุดเสมอ"
 }

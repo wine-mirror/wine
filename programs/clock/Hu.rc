@@ -23,25 +23,25 @@
 MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 {
  POPUP "&Beállítások" {
-  MENUITEM "Ana&lóg", 0x100
-  MENUITEM "Digi&tális", 0x101
+  MENUITEM "Ana&lóg", IDM_ANALOG
+  MENUITEM "Digi&tális", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Betûtípus...", 0x103
+  MENUITEM "&Betûtípus...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Címsor nélkül", 0x105
+  MENUITEM "&Címsor nélkül", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Másodperc", 0x107
-  MENUITEM "&Dátum", 0x108
+  MENUITEM "&Másodperc", IDM_SECONDS
+  MENUITEM "&Dátum", IDM_DATE
  }
- POPUP "Inf&ormáció..." {
-  MENUITEM "&Licenc", 0x109
-  MENUITEM "&SEMMI GARANCIA", 0x10A
-  MENUITEM "&Óra névjegy... ", 0x10B
+ POPUP "Inf&ormáció" {
+  MENUITEM "&Licenc...", IDM_LICENSE
+  MENUITEM "&SEMMI GARANCIA...", IDM_NOWARRANTY
+  MENUITEM "&Óra névjegy...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 {
-CLOCK,		"Óra"
-MENU_ON_TOP,	"&Mindig legfelül"
+IDS_CLOCK, "Óra"
+IDS_ONTOP, "&Mindig legfelül"
 }

@@ -25,25 +25,25 @@ LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Properietà" {
-  MENUITEM "Ana&logico", 0x100
-  MENUITEM "Digi&tale", 0x101
+  MENUITEM "Ana&logico", IDM_ANALOG
+  MENUITEM "Digi&tale", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Font...", 0x103
+  MENUITEM "&Font...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Nascondi la barra del titolo", 0x105
+  MENUITEM "&Nascondi la barra del titolo", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Secondi", 0x107
-  MENUITEM "&Data", 0x108
+  MENUITEM "&Secondi", IDM_SECONDS
+  MENUITEM "&Data", IDM_DATE
  }
- POPUP "Inf&o..." {
-  MENUITEM "&Licenza", 0x109
-  MENUITEM "&Garanzia", 0x10A
-  MENUITEM "&Informazioni sull'orologio", 0x10B
+ POPUP "Inf&o" {
+  MENUITEM "&Licenza...", IDM_LICENSE
+  MENUITEM "&Garanzia...", IDM_NOWARRANTY
+  MENUITEM "&Informazioni sull'orologio...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE
 {
-CLOCK,		"Orologio"
-MENU_ON_TOP,	"&Sempre in primo piano"
+IDS_CLOCK, "Orologio"
+IDS_ONTOP, "&Sempre in primo piano"
 }

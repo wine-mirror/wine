@@ -19,9 +19,9 @@
  */
 
 #include <windows.h>
-#include "main.h"
 
 #include "clock_res.h"
+
 #include "Da.rc"
 #include "De.rc"
 #include "En.rc"

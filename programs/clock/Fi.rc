@@ -22,25 +22,25 @@
 MAIN_MENU MENU LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 {
  POPUP "&Ominaisuudet" {
-  MENUITEM "&Analoginen", 0x100
-  MENUITEM "Di&gitaalinen", 0x101
+  MENUITEM "&Analoginen", IDM_ANALOG
+  MENUITEM "Di&gitaalinen", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Fontti...", 0x103
+  MENUITEM "&Fontti...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Ilman otsikkopalkkia", 0x105
+  MENUITEM "&Ilman otsikkopalkkia", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Sekunnit", 0x107
-  MENUITEM "&P‰iv‰m‰‰r‰", 0x108
+  MENUITEM "&Sekunnit", IDM_SECONDS
+  MENUITEM "&P‰iv‰m‰‰r‰", IDM_DATE
  }
- POPUP "Inf&o..." {
-  MENUITEM "&Lisenssi", 0x109
-  MENUITEM "&EI TAKUUTA", 0x10A
-  MENUITEM "&Kellosta...", 0x10B
+ POPUP "Inf&o" {
+  MENUITEM "&Lisenssi...", IDM_LICENSE
+  MENUITEM "&EI TAKUUTA...", IDM_NOWARRANTY
+  MENUITEM "&Kellosta...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 {
-CLOCK,		"Kello"
-MENU_ON_TOP,	"&Aina p‰‰llimm‰isen‰"
+IDS_CLOCK, "Kello"
+IDS_ONTOP, "&Aina p‰‰llimm‰isen‰"
 }

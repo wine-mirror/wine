@@ -21,25 +21,25 @@
 MAIN_MENU MENU LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 {
  POPUP "&Lastnosti" {
-  MENUITEM "Ana&logna ura", 0x100
-  MENUITEM "Digi&talna ura", 0x101
+  MENUITEM "Ana&logna ura", IDM_ANALOG
+  MENUITEM "Digi&talna ura", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Pisava ...", 0x103
+  MENUITEM "&Pisava ...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Brez naslovne vrstice", 0x105
+  MENUITEM "&Brez naslovne vrstice", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Sekunde", 0x107
-  MENUITEM "&Datum", 0x108
+  MENUITEM "&Sekunde", IDM_SECONDS
+  MENUITEM "&Datum", IDM_DATE
  }
- POPUP "Inf&ormacije ..." {
-  MENUITEM "&Licenèna pogodba", 0x109
-  MENUITEM "&BREZ GARANCIJE", 0x10A
-  MENUITEM "&O Uri", 0x10B
+ POPUP "Inf&ormacije " {
+  MENUITEM "&Licenèna pogodba...", IDM_LICENSE
+  MENUITEM "&BREZ GARANCIJE...", IDM_NOWARRANTY
+  MENUITEM "&O Uri...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 {
-CLOCK,		"Ura"
-MENU_ON_TOP,	"&Vedno na vrhu"
+IDS_CLOCK, "Ura"
+IDS_ONTOP, "&Vedno na vrhu"
 }

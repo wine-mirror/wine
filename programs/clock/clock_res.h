@@ -16,6 +16,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define CLOCK 0x10C
-#define MENU_ON_TOP 0x10D
-#define MAIN_MENU 0x10E
+#define MAIN_MENU                 0x100
+#define IDM_ANALOG                0x101
+#define IDM_DIGITAL               0x102
+#define IDM_FONT                  0x103
+#define IDM_NOTITLE               0x104
+#define IDM_SECONDS               0x105
+#define IDM_DATE                  0x106
+
+#define IDM_LICENSE               0x110
+#define IDM_NOWARRANTY            0x111
+#define IDM_ABOUT                 0x112
+
+#define IDM_ONTOP                 0x113
+
+#define IDS_CLOCK                 0x10C
+#define IDS_ONTOP                 0x10D

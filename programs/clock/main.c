@@ -54,64 +54,64 @@ int CLOCK_MenuCommand (WPARAM wParam)
     CHAR szAppRelease[MAX_STRING_LEN];
     switch (wParam) {
         /* switch to analog */
-        case 0x100: {
+        case IDM_ANALOG: {
             Globals.bAnalog = TRUE;
             LANGUAGE_UpdateMenuCheckmarks();
             SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
             break;
         }
             /* switch to digital */
-        case 0x101: {
+        case IDM_DIGITAL: {
             Globals.bAnalog = FALSE;
             LANGUAGE_UpdateMenuCheckmarks();
             SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
             break;
         }
             /* change font */
-        case 0x103: {
+        case IDM_FONT: {
             MAIN_FileChooseFont();
             break;
         }
             /* hide title bar */
-        case 0x105: {
+        case IDM_NOTITLE: {
             Globals.bWithoutTitle = !Globals.bWithoutTitle;
             LANGUAGE_UpdateWindowCaption();
             LANGUAGE_UpdateMenuCheckmarks();
             break;
         }
             /* always on top */
-        case 0x10D: {
+        case IDM_ONTOP: {
             Globals.bAlwaysOnTop = !Globals.bAlwaysOnTop;
             LANGUAGE_UpdateMenuCheckmarks();
             break;
         }
             /* show or hide seconds */
-        case 0x107: {
+        case IDM_SECONDS: {
             Globals.bSeconds = !Globals.bSeconds;
             LANGUAGE_UpdateMenuCheckmarks();
             SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
             break;
         }
             /* show or hide date */
-        case 0x108: {
+        case IDM_DATE: {
             Globals.bDate = !Globals.bDate;
             LANGUAGE_UpdateMenuCheckmarks();
             LANGUAGE_UpdateWindowCaption();
             break;
         }
             /* show license */
-        case 0x109: {
+        case IDM_LICENSE: {
             WineLicense(Globals.hMainWnd);
             break;
         }
             /* show warranties */
-        case 0x10A: {
+        case IDM_NOWARRANTY: {
             WineWarranty(Globals.hMainWnd);
             break;
         }
             /* show "about" box */
-        case 0x10B: {
-            LoadString(Globals.hInstance, 0x10C, szApp, sizeof(szApp));
+        case IDM_ABOUT: {
+            LoadString(Globals.hInstance, IDS_CLOCK, szApp, sizeof(szApp));
             lstrcpy(szAppRelease,szApp);
             lstrcat(szAppRelease,"\n" PACKAGE_STRING);
             ShellAbout(Globals.hMainWnd, szApp, szAppRelease, 0);

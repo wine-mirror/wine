@@ -21,25 +21,25 @@
 MAIN_MENU MENU LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 {
  POPUP "&Свойства" {
-  MENUITEM "&Аналовые", 0x100
-  MENUITEM "&Цифровые", 0x101
+  MENUITEM "&Аналовые", IDM_ANALOG
+  MENUITEM "&Цифровые", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Шрифт...", 0x103
+  MENUITEM "&Шрифт...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Без заголовка", 0x105
+  MENUITEM "&Без заголовка", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Секунды", 0x107
-  MENUITEM "&Дата", 0x108
+  MENUITEM "&Секунды", IDM_SECONDS
+  MENUITEM "&Дата", IDM_DATE
  }
- POPUP "&Сведения..." {
-  MENUITEM "&Лицензия", 0x109
-  MENUITEM "&БЕЗ ГАРАНТИЙ", 0x10A
-  MENUITEM "&О программе", 0x10B
+ POPUP "&Сведения" {
+  MENUITEM "&Лицензия...", IDM_LICENSE
+  MENUITEM "&БЕЗ ГАРАНТИЙ...", IDM_NOWARRANTY
+  MENUITEM "&О программе...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 {
-CLOCK,		"Часы"
-MENU_ON_TOP,	"&Поверх всех"
+IDS_CLOCK, "Часы"
+IDS_ONTOP, "&Поверх всех"
 }

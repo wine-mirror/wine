@@ -28,27 +28,27 @@
 MAIN_MENU MENU LANGUAGE LANG_WALON, SUBLANG_DEFAULT
 {
  POPUP "&Propietés" {
-  MENUITEM "&Analodjike", 0x100
-  MENUITEM "&Limerike", 0x101
+  MENUITEM "&Analodjike", IDM_ANALOG
+  MENUITEM "&Limerike", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Fonte...", 0x103
+  MENUITEM "&Fonte...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "Sin bår di &Tite", 0x105
+  MENUITEM "Sin bår di &Tite", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Segondes", 0x107
-  MENUITEM "&Date", 0x108
+  MENUITEM "&Segondes", IDM_SECONDS
+  MENUITEM "&Date", IDM_DATE
  }
- POPUP "&Informåcion..." {
-  MENUITEM "&Licinse", 0x109
-  MENUITEM "&NOLE WARANTEYE", 0x10A
-  MENUITEM "Å &dfait di l' ôrlodje...", 0x10B
+ POPUP "&Informåcion" {
+  MENUITEM "&Licinse...", IDM_LICENSE
+  MENUITEM "&NOLE WARANTEYE...", IDM_NOWARRANTY
+  MENUITEM "Å &dfait di l' ôrlodje...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_WALON, SUBLANG_DEFAULT
 {
-CLOCK,		"Ôrlodje"
-MENU_ON_TOP,	"Todi &Visibe"
+IDS_CLOCK, "Ôrlodje"
+IDS_ONTOP, "Todi &Visibe"
 }
 
 #endif  /* LANG_WALON */

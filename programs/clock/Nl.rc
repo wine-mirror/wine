@@ -23,25 +23,25 @@ LANGUAGE LANG_DUTCH, SUBLANG_DEFAULT
 MAIN_MENU MENU 
 {
  POPUP "&Eigenschappen" {
-  MENUITEM "&Analoog", 0x100
-  MENUITEM "&Digitaal", 0x101
+  MENUITEM "&Analoog", IDM_ANALOG
+  MENUITEM "&Digitaal", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Lettertype...", 0x103
+  MENUITEM "&Lettertype...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Zonder titelbalk", 0x105
+  MENUITEM "&Zonder titelbalk", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Seconden", 0x107
-  MENUITEM "Da&tum", 0x108
+  MENUITEM "&Seconden", IDM_SECONDS
+  MENUITEM "Da&tum", IDM_DATE
  }
- POPUP "Inf&o..." {
-  MENUITEM "&Licentie", 0x109
-  MENUITEM "&GEEN GARANTIE", 0x10A
-  MENUITEM "&Over Klok... ", 0x10B
+ POPUP "Inf&o" {
+  MENUITEM "&Licentie...", IDM_LICENSE
+  MENUITEM "&GEEN GARANTIE...", IDM_NOWARRANTY
+  MENUITEM "&Over Klok...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE
 {
-CLOCK,		"Klok"
-MENU_ON_TOP,	"&Altijd op de voorgrond"
+IDS_CLOCK, "Klok"
+IDS_ONTOP, "&Altijd op de voorgrond"
 }

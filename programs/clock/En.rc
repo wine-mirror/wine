@@ -24,25 +24,25 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 MAIN_MENU MENU 
 {
  POPUP "&Properties" {
-  MENUITEM "Ana&log", 0x100
-  MENUITEM "Digi&tal", 0x101
+  MENUITEM "Ana&log", IDM_ANALOG
+  MENUITEM "Digi&tal", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Font...", 0x103
+  MENUITEM "&Font...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Without Titlebar", 0x105
+  MENUITEM "&Without Titlebar", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Seconds", 0x107
-  MENUITEM "&Date", 0x108
+  MENUITEM "&Seconds", IDM_SECONDS
+  MENUITEM "&Date", IDM_DATE
  }
- POPUP "Inf&o..." {
-  MENUITEM "&License", 0x109
-  MENUITEM "&NO WARRANTY", 0x10A
-  MENUITEM "&About Clock... ", 0x10B
+ POPUP "Inf&o" {
+  MENUITEM "&License...", IDM_LICENSE
+  MENUITEM "&NO WARRANTY...", IDM_NOWARRANTY
+  MENUITEM "&About Clock...", IDM_ABOUT
  }
 }
 
 STRINGTABLE DISCARDABLE
 {
-CLOCK,		"Clock"
-MENU_ON_TOP,	"&Always on Top"
+IDS_CLOCK, "Clock"
+IDS_ONTOP, "&Always on Top"
 }
