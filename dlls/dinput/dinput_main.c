@@ -479,6 +479,26 @@ static DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT 
 }
 
 /******************************************************************************
+ *	DirectInputCreateEx
+ */
+HRESULT WINAPI DirectInputCreateEx(
+	HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI,
+	LPUNKNOWN punkOuter
+) {
+	IDirectInputAImpl* This;
+	HRESULT	res;
+	TRACE("(0x%08lx,%04lx,%s,%p,%p)\n",
+		(DWORD)hinst,dwVersion,debugstr_guid(riid),ppDI,punkOuter
+	);
+	This = (IDirectInputAImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputAImpl));
+	This->ref = 1;
+	ICOM_VTBL(This) = &ddiavt;
+	res=IDirectInputA_QueryInterface(This,riid,ppDI);
+	IDirectInputA_Release(This); /* throw one reference away */
+	return res;
+}
+
+/******************************************************************************
  *	DirectInputCreateA
  */
 HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTA *ppDI, LPUNKNOWN punkOuter)
