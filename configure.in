@@ -227,6 +227,20 @@ then
             ],
             AC_MSG_WARN([XFree86 VMODE extension not found!!])
         )
+
+        dnl *** Check for XVideo extension supporting XvImages
+        AC_CHECK_HEADERS(X11/extensions/Xvlib.h,
+            [ dnl *** If X11/extensions/Xvlib.h exists...
+                AC_CHECK_LIB(Xv, XvShmCreateImage,
+                  [ AC_DEFINE(HAVE_XVIDEO)
+                     X_PRE_LIBS="$X_PRE_LIBS -lXv"
+                  ],,
+                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
+                )
+            ],
+            AC_MSG_WARN([XVideo extension not found !!])
+        )
+
       ]
     ) dnl *** End of X11/Xlib.h check
 

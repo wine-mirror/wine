@@ -113,3 +113,6 @@
 
 /* Define if the OpenGL headers define extension typedefs */
 #undef HAVE_GLEXT_PROTOTYPES
+
+/* Define if the X libraries support XVideo */
+#undef HAVE_XVIDEO

@@ -12,6 +12,7 @@ C_SRCS = \
 	ts_xshm.c \
 	ts_xlib.c \
 	ts_xresource.c \
+	ts_xvideo.c \
 	ts_xutil.c \
 	ts_shape.c \
 	ts_xpm.c

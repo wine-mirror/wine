@@ -17,7 +17,7 @@
 $X11_include_dir = "/usr/X11/include";
 $outdir = "tsx11";
 $wantfile = "$outdir/X11_calls";
-@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86dga2", "xf86vmode", "shape");
+@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86dga2", "xf86vmode", "shape", "xvideo");
 
 # First read list of wanted function names.
 
@@ -86,7 +86,13 @@ foreach $name (@dolist) {
         $post_file = "#endif /* defined(HAVE_LIBXSHAPE) */\n";
         $inc_name = "shape";
     }
-
+    if($name eq "xvideo")  {
+    	$x11_incl = "#include <X11/Xlib.h>\n#include <X11/extensions/Xv.h>\n#include <X11/extensions/XShm.h>\n";
+	$extensions_dir = "extensions/";
+	$pre_file = "#ifdef HAVE_XVIDEO\n";
+	$post_file = "#endif /* defined(HAVE_XVIDEO) */\n";
+	$inc_name = "Xvlib";
+    }
 
 
     print OUTH <<END;
@@ -227,6 +233,30 @@ END
     	output_fn_short("Bool", "XDGASetClientVersion", "Display*");
     	output_fn_short("void", "XDGAChangePixmapMode", "Display*" ,"int", "int*", "int*", "int");
 	output_fn_short("void", "XDGAKeyEventToXKeyEvent", "XDGAKeyEvent*" ,"XKeyEvent*");
+    } elsif ($name eq "xvideo") {
+	output_fn_short("int", "XvQueryExtension", "Display*", "unsigned int*", "unsigned int*", "unsigned int*", "unsigned int*", "unsigned int*");
+	output_fn_short("int", "XvQueryAdaptors", "Display*", "Window", "unsigned int*", "XvAdaptorInfo**");
+	output_fn_short("int", "XvQueryEncodings", "Display*", "XvPortID", "unsigned int*", "XvEncodingInfo**");
+	output_fn_short("int", "XvPutVideo", "Display*", "XvPortID", "Drawable", "GC", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
+	output_fn_short("int", "XvPutStill", "Display*", "XvPortID", "Drawable", "GC", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
+	output_fn_short("int", "XvGetVideo", "Display*", "XvPortID", "Drawable", "GC", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
+	output_fn_short("int", "XvGetStill", "Display*", "XvPortID", "Drawable", "GC", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
+	output_fn_short("int", "XvStopVideo", "Display*", "XvPortID", "Drawable");
+	output_fn_short("int", "XvGrabPort", "Display*", "XvPortID", "Time");
+	output_fn_short("int", "XvUngrabPort", "Display*", "XvPortID", "Time");
+	output_fn_short("int", "XvSelectVideoNotify", "Display*", "Drawable", "Bool");
+	output_fn_short("int", "XvSelectPortNotify", "Display*", "XvPortID", "Bool");
+	output_fn_short("int", "XvSetPortAttribute", "Display*", "XvPortID", "Atom", "int");
+	output_fn_short("int", "XvGetPortAttribute", "Display*", "XvPortID", "Atom", "int*");
+	output_fn_short("int", "XvQueryBestSize", "Display*", "XvPortID", "Bool", "unsigned int", "unsigned int", "unsigned int", "unsigned int", "unsigned int*", "unsigned int*");
+	output_fn_short("XvAttribute*", "XvQueryPortAttributes", "Display*", "XvPortID", "int*");
+	output_fn_short("void", "XvFreeAdaptorInfo", "XvAdaptorInfo*");
+	output_fn_short("void", "XvFreeEncodingInfo", "XvEncodingInfo*");
+	output_fn_short("XvImageFormatValues *", "XvListImageFormats", "Display*", "XvPortID", "int*");
+	output_fn_short("XvImage *", "XvCreateImage", "Display*", "XvPortID", "int", "char*", "int", "int");
+	output_fn_short("int", "XvPutImage", "Display*", "XvPortID", "Drawable", "GC", "XvImage*", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
+	output_fn_short("int", "XvShmPutImage", "Display*", "XvPortID", "Drawable", "GC", "XvImage*", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int", "Bool");
+output_fn_short("XvImage *", "XvShmCreateImage", "Display*", "XvPortID", "int", "char*", "int", "int", "XShmSegmentInfo*");
     } elsif($name eq "xf86vmode") {
     	output_fn("XF86VidModeQueryVersion",Bool,
 		"Display*,int*,int*",

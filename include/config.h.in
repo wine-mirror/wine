@@ -149,6 +149,9 @@
 /* Define if the OpenGL headers define extension typedefs */
 #undef HAVE_GLEXT_PROTOTYPES
 
+/* Define if the X libraries support XVideo */
+#undef HAVE_XVIDEO
+
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 
@@ -259,6 +262,9 @@
 
 /* Define if you have the <X11/extensions/XShm.h> header file.  */
 #undef HAVE_X11_EXTENSIONS_XSHM_H
+
+/* Define if you have the <X11/extensions/Xvlib.h> header file.  */
+#undef HAVE_X11_EXTENSIONS_XVLIB_H
 
 /* Define if you have the <X11/extensions/shape.h> header file.  */
 #undef HAVE_X11_EXTENSIONS_SHAPE_H
