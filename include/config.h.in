@@ -254,6 +254,9 @@
 /* Define to 1 if you have the <lcms.h> header file. */
 #undef HAVE_LCMS_H
 
+/* Define to 1 if you have the <lcms/lcms.h> header file. */
+#undef HAVE_LCMS_LCMS_H
+
 /* Define if you have libaudioIO */
 #undef HAVE_LIBAUDIOIO
 

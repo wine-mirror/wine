@@ -7272,6 +7272,7 @@ done
 
 
 
+
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -7286,6 +7287,7 @@ for ac_header in \
 	io.h \
 	jack/jack.h \
 	jpeglib.h \
+	lcms/lcms.h \
 	lcms.h \
 	libio.h \
 	libutil.h \

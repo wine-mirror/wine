@@ -177,6 +177,7 @@ AC_CHECK_HEADERS(\
 	io.h \
 	jack/jack.h \
 	jpeglib.h \
+	lcms/lcms.h \
 	lcms.h \
 	libio.h \
 	libutil.h \

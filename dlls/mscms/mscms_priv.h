@@ -18,6 +18,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_LCMS_LCMS_H
+#define HAVE_LCMS_H 1
+#endif
+
 #ifdef HAVE_LCMS_H
 
 /*  These basic Windows types are defined in lcms.h when compiling on
@@ -46,7 +50,11 @@
 #undef LOWORD
 #undef MAX_PATH
 
+#ifdef HAVE_LCMS_LCMS_H
+#include <lcms/lcms.h>
+#else
 #include <lcms.h>
+#endif
 
 /*  Funny thing is lcms.h defines DWORD as an 'unsigned int' whereas Wine
  *  defines it as an 'unsigned long'. To avoid compiler warnings we use a
