@@ -419,6 +419,8 @@ typedef struct _PROCESS_HEAP_ENTRY
 #define NONZEROLHND         (LMEM_MOVEABLE)
 #define NONZEROLPTR         (LMEM_FIXED)
 
+#define LocalDiscard(h)     (LocalReAlloc((h),0,LMEM_MOVEABLE))
+
 #define GMEM_FIXED          0x0000
 #define GMEM_MOVEABLE       0x0002
 #define GMEM_NOCOMPACT      0x0010
@@ -437,6 +439,10 @@ typedef struct _PROCESS_HEAP_ENTRY
 
 #define GHND                (GMEM_MOVEABLE | GMEM_ZEROINIT)
 #define GPTR                (GMEM_FIXED | GMEM_ZEROINIT)
+
+#define GlobalLRUNewest(h)  ((HANDLE)(h))
+#define GlobalLRUOldest(h)  ((HANDLE)(h))
+#define GlobalDiscard(h)    (GlobalReAlloc((h),0,GMEM_MOVEABLE))
 
 #define INVALID_ATOM        ((ATOM)0)
 #define MAXINTATOM          0xc000
