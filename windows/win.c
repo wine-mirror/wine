@@ -56,12 +56,7 @@ static CRITICAL_SECTION WIN_CritSection;
  */
 void WIN_LockWnds()
 {
-/*
-     This code will be released in the future
-     info : francois@macadamian.com
-     
     EnterCriticalSection(&WIN_CritSection);
-*/
 }
 
 /***********************************************************************
@@ -71,12 +66,7 @@ void WIN_LockWnds()
  */
 void WIN_UnlockWnds()
     {
-/*
-     This code will be released in the future
-     info : francois@macadamian.com
-     
         LeaveCriticalSection(&WIN_CritSection);
-*/
 }
 /***********************************************************************
  *           WIN_SuspendWndsLock
