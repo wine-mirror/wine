@@ -224,6 +224,14 @@ extern BOOL WIN16DRV_Ellipse(DC *dc, INT left, INT top, INT right, INT bottom);
 extern BOOL WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp );
 
+extern INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd,
+				  LPDEVMODEA lpdmOutput,
+				  LPSTR lpszDevice,
+				  LPSTR lpszPort, LPDEVMODEA lpdmInput,
+				  LPSTR lpszProfile, DWORD dwMode);
+extern DWORD WIN16DRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
+					 LPCSTR lpszPort, WORD fwCapability,
+					 LPSTR lpszOutput, LPDEVMODEA lpdm);
 
 /*
  * Wine 16bit driver global variables

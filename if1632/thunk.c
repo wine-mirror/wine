@@ -69,6 +69,10 @@ extern LONG CALLBACK THUNK_CallTo16_word_lwwwwlwwwwllll(FARPROC16,LONG,WORD,WORD
                                                         WORD,WORD,LONG,WORD,WORD,
                                                         WORD,WORD,LONG,LONG,LONG,
                                                         LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_wwlllllw(FARPROC16,WORD,WORD,LONG,
+						  LONG,LONG,LONG,LONG,WORD);
+extern LONG CALLBACK THUNK_CallTo16_long_llwll(FARPROC16,LONG,LONG,WORD,LONG,
+					       LONG);
 /* ### stop build ### */
 
 
@@ -127,8 +131,11 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)THUNK_CallTo16_long_lwlll,           /* CallDrvRealizeProc */
     (void *)THUNK_CallTo16_word_lwwwwlwwwwllll,  /* CallDrvStretchBltProc */
     (void *)THUNK_CallTo16_long_lwwllwlllllw,    /* CallDrvExtTextOutProc */
-    (void *)THUNK_CallTo16_word_llwwlll,         /* CallDrvGetCharWidth */ 
-    (void *)THUNK_CallTo16_word_ww               /* CallDrvAbortProc */
+    (void *)THUNK_CallTo16_word_llwwlll,         /* CallDrvGetCharWidth */
+    (void *)THUNK_CallTo16_word_ww,              /* CallDrvAbortProc */
+    (void *)THUNK_CallTo16_word_wwlllllw,        /* CallDrvExtDeviceModeProc */
+    (void *)THUNK_CallTo16_long_llwll            /* CallDrvDeviceCapabilitesProc */
+    
 };
 
 const CALLBACKS_TABLE *Callbacks = &CALLBACK_EmulatorTable;

@@ -61,6 +61,11 @@ typedef struct
     WORD (CALLBACK *CallDrvGetCharWidthProc)( FARPROC16, SEGPTR, SEGPTR, WORD,
 					      WORD, SEGPTR, SEGPTR, SEGPTR );
     BOOL16 (CALLBACK *CallDrvAbortProc)( FARPROC16, HDC16, INT16 );
+    WORD (CALLBACK *CallDrvExtDeviceModeProc)( FARPROC16, WORD, WORD, SEGPTR,
+					       SEGPTR, SEGPTR, SEGPTR, SEGPTR,
+					       WORD );
+    DWORD (CALLBACK *CallDrvDeviceCapabilitiesProc)( FARPROC16, SEGPTR, SEGPTR,
+						     WORD, SEGPTR, SEGPTR );
 } CALLBACKS_TABLE;
 
 extern const CALLBACKS_TABLE *Callbacks;

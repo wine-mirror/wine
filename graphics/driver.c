@@ -179,7 +179,7 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
     if(!DRIVER_GetDriverName( lpszDevice, buf, sizeof(buf) )) return -1;
     funcs = DRIVER_FindDriver( buf );
     if(!funcs || !funcs->pExtDeviceMode) return -1;
-    return funcs->pExtDeviceMode(hwnd, lpdmOutput, lpszDevice, lpszPort,
+    return funcs->pExtDeviceMode(buf, hwnd, lpdmOutput, lpszDevice, lpszPort,
 				 lpdmInput, lpszProfile, fwMode);
 }
 
@@ -217,8 +217,9 @@ DWORD WINAPI GDI_CallDeviceCapabilities16( LPCSTR lpszDevice, LPCSTR lpszPort,
     if(!DRIVER_GetDriverName( lpszDevice, buf, sizeof(buf) )) return -1;
     funcs = DRIVER_FindDriver( buf );
     if(!funcs || !funcs->pDeviceCapabilities) return -1;
-    return funcs->pDeviceCapabilities( lpszDevice, lpszPort, fwCapability,
-				       lpszOutput, lpdm);
+    return funcs->pDeviceCapabilities( buf, lpszDevice, lpszPort,
+				       fwCapability, lpszOutput, lpdm);
+
 }
 
 

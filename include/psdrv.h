@@ -360,11 +360,13 @@ extern INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst,
 				const void *bits, const BITMAPINFO *info,
 				UINT wUsage, DWORD dwRop );
 
-extern INT PSDRV_ExtDeviceMode(HWND hwnd, LPDEVMODEA lpdmOutput,
+extern INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd,
+			       LPDEVMODEA lpdmOutput,
 			       LPSTR lpszDevice, LPSTR lpszPort,
 			       LPDEVMODEA lpdmInput, LPSTR lpszProfile,
 			       DWORD dwMode);
-extern DWORD PSDRV_DeviceCapabilities(LPCSTR lpszDevice, LPCSTR lpszPort,
+extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
+				      LPCSTR lpszPort,
 				      WORD fwCapability, LPSTR lpszOutput,
 				      LPDEVMODEA lpdm);
 

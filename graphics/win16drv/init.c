@@ -55,14 +55,14 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pCreateDIBSection16 */
     NULL,                            /* pDeleteDC */
     NULL,                            /* pDeleteObject */
-    NULL,                            /* pDeviceCapabilities */
+    WIN16DRV_DeviceCapabilities,     /* pDeviceCapabilities */
     WIN16DRV_Ellipse,                /* pEllipse */
     NULL,                            /* pEndDoc */
     NULL,                            /* pEndPage */
     WIN16DRV_EnumDeviceFonts,        /* pEnumDeviceFonts */
     WIN16DRV_Escape,                 /* pEscape */
     NULL,                            /* pExcludeClipRect */
-    NULL,                            /* pExtDeviceMode */
+    WIN16DRV_ExtDeviceMode,          /* pExtDeviceMode */
     NULL,                            /* pExtFloodFill */
     WIN16DRV_ExtTextOut,             /* pExtTextOut */
     NULL,                            /* pFillRgn */
@@ -210,6 +210,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     printerDevCaps = (DeviceCaps *) xmalloc(sizeof(DeviceCaps));
     memset(printerDevCaps, 0, sizeof(DeviceCaps));
 
+    if(!output) output = "LPT1:";
     /* Get GDIINFO which is the same as a DeviceCaps structure */
     wRet = PRTDRV_Enable(printerDevCaps, GETGDIINFO, device, driver, output,NULL); 
 

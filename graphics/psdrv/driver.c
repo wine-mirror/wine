@@ -281,8 +281,8 @@ fwMode);
  *
  *       PSDRV_ExtDeviceMode
  */
-INT PSDRV_ExtDeviceMode(HWND hwnd, LPDEVMODEA lpdmOutput, LPSTR lpszDevice,
-			LPSTR lpszPort, LPDEVMODEA lpdmInput,
+INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
+			LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
 			LPSTR lpszProfile, DWORD dwMode)
 {
     return PSDRV_ExtDeviceMode16(hwnd, 0, lpdmOutput, lpszDevice, lpszPort,
@@ -485,12 +485,12 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
  *
  *     PSDRV_DeviceCapabilities
  */
-DWORD PSDRV_DeviceCapabilities(LPCSTR lpszDevice, LPCSTR lpszPort,
-			       WORD fwCapability, LPSTR lpszOutput,
-			       LPDEVMODEA lpdm)
+DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
+			       LPCSTR lpszPort, WORD fwCapability,
+			       LPSTR lpszOutput, LPDEVMODEA lpdm)
 {
-  return PSDRV_DeviceCapabilities16(lpszDevice, lpszPort, fwCapability,
-				    lpszOutput, lpdm);
+    return PSDRV_DeviceCapabilities16(lpszDevice, lpszPort, fwCapability,
+				      lpszOutput, lpdm);
 }
 
 /***************************************************************

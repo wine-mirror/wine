@@ -82,7 +82,7 @@ static LOADED_PRINTER_DRIVER *FindPrinterDriverFromName(const char *pszDriver)
 	{
 	    TRACE("Comparing %s,%s\n",ptmpLPD->szDriver,pszDriver);
 	    /* Found driver store info, exit loop */
-	    if (lstrcmpiA(ptmpLPD->szDriver, pszDriver) == 0)
+	    if (strcasecmp(ptmpLPD->szDriver, pszDriver) == 0)
 	      pLPD = ptmpLPD;
 	}
     }
@@ -789,4 +789,197 @@ WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT lpBuffer,
 	SEGPTR_FREE(lP2);
     }
     return wRet;
+}
+
+/**************************************************************
+ *
+ *       WIN16DRV_ExtDeviceMode
+ */
+INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
+			   LPSTR lpszDevice, LPSTR lpszPort,
+			   LPDEVMODEA lpdmInput, LPSTR lpszProfile,
+			   DWORD dwMode)
+{
+    LOADED_PRINTER_DRIVER *pLPD = LoadPrinterDriver(lpszDriver);
+    LPVOID lpSegOut = NULL, lpSegIn = NULL;
+    LPSTR lpSegDevice, lpSegPort, lpSegProfile;
+    INT16 wRet;
+    WORD wOutSize = 0;
+
+    if(!pLPD) return -1;
+
+    if(pLPD->fn[FUNC_EXTDEVICEMODE] == NULL) {
+        WARN("No EXTDEVICEMODE\n");
+	return -1;
+    }
+    lpSegDevice = SEGPTR_STRDUP(lpszDevice);
+    lpSegPort = SEGPTR_STRDUP(lpszPort);
+    lpSegProfile = SEGPTR_STRDUP(lpszProfile);
+    if(lpdmOutput) {
+      /* We don't know how big this will be so we call the driver's
+	 ExtDeviceMode to find out */
+
+	wOutSize = Callbacks->CallDrvExtDeviceModeProc(
+	    pLPD->fn[FUNC_EXTDEVICEMODE], hwnd, pLPD->hInst, 0,
+	    SEGPTR_GET(lpSegDevice), SEGPTR_GET(lpSegPort), 0,
+	    SEGPTR_GET(lpSegProfile), 0 );
+	lpSegOut = SEGPTR_ALLOC(wOutSize);
+	memcpy(lpSegOut, lpdmOutput, wOutSize); /* probably unnecessary */
+    }
+    if(lpdmInput) {
+      /* This time we get the information from the fields */
+        lpSegIn = SEGPTR_ALLOC(lpdmInput->dmSize + lpdmInput->dmDriverExtra);
+	memcpy(lpSegIn, lpdmInput, lpdmInput->dmSize +
+	       lpdmInput->dmDriverExtra);
+    }
+    wRet = Callbacks->CallDrvExtDeviceModeProc( pLPD->fn[FUNC_EXTDEVICEMODE],
+						hwnd, pLPD->hInst,
+						SEGPTR_GET(lpSegOut),
+						SEGPTR_GET(lpSegDevice),
+						SEGPTR_GET(lpSegPort),
+						SEGPTR_GET(lpSegIn),
+						SEGPTR_GET(lpSegProfile),
+						dwMode );
+    if(lpSegOut) {
+        memcpy(lpdmOutput, lpSegOut, wOutSize);
+	SEGPTR_FREE(lpSegOut);
+    }
+    if(lpSegIn) {
+        memcpy(lpdmInput, lpSegIn, lpdmInput->dmSize +
+	       lpdmInput->dmDriverExtra);
+	SEGPTR_FREE(lpSegIn);
+    }
+    SEGPTR_FREE(lpSegDevice);
+    SEGPTR_FREE(lpSegPort);
+    SEGPTR_FREE(lpSegProfile);
+    return wRet;
+}
+
+/**************************************************************
+ *
+ *       WIN16DRV_DeviceCapabilities
+ *
+ * This is a bit of a pain since we don't know the size of lpszOutput we have
+ * call the driver twice.
+ */
+DWORD WIN16DRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
+				  LPCSTR lpszPort, WORD fwCapability,
+				  LPSTR lpszOutput, LPDEVMODEA lpDevMode)
+{
+    LOADED_PRINTER_DRIVER *pLPD = LoadPrinterDriver(lpszDriver);
+    LPVOID lpSegdm = NULL, lpSegOut = NULL;
+    LPSTR lpSegDevice, lpSegPort;
+    DWORD dwRet;
+    INT OutputSize;
+
+    TRACE("%s,%s,%s,%d,%p,%p\n", lpszDriver, lpszDevice, lpszPort,
+	  fwCapability, lpszOutput, lpDevMode);
+
+    if(!pLPD) return -1;
+
+    if(pLPD->fn[FUNC_DEVICECAPABILITIES] == NULL) {
+        WARN("No DEVICECAPABILITES\n");
+	return -1;
+    }
+    lpSegDevice = SEGPTR_STRDUP(lpszDevice);
+    lpSegPort = SEGPTR_STRDUP(lpszPort);
+
+    if(lpDevMode) {
+        lpSegdm = SEGPTR_ALLOC(lpDevMode->dmSize + lpDevMode->dmDriverExtra);
+	memcpy(lpSegdm, lpDevMode, lpDevMode->dmSize +
+	       lpDevMode->dmDriverExtra);
+    }
+
+    dwRet = Callbacks->CallDrvDeviceCapabilitiesProc(
+	    pLPD->fn[FUNC_DEVICECAPABILITIES],
+	    SEGPTR_GET(lpSegDevice), SEGPTR_GET(lpSegPort),
+	    fwCapability, 0, SEGPTR_GET(lpSegdm) );
+
+    if(dwRet == -1) return -1;
+
+    switch(fwCapability) {
+    case DC_BINADJUST:
+    case DC_COLLATE:
+    case DC_COLORDEVICE:
+    case DC_COPIES:
+    case DC_DRIVER:
+    case DC_DUPLEX:
+    case DC_EMF_COMPLIANT:
+    case DC_EXTRA:
+    case DC_FIELDS:
+    case DC_MANUFACTURER:
+    case DC_MAXEXTENT:
+    case DC_MINEXTENT:
+    case DC_MODEL:
+    case DC_ORIENTATION:
+    case DC_PRINTERMEM:
+    case DC_PRINTRATEUNIT:
+    case DC_SIZE:
+        OutputSize = 0;
+	break;
+
+    case DC_BINNAMES:
+	OutputSize = 24 * dwRet;
+	break;
+
+    case DC_BINS:
+    case DC_PAPERS:
+	OutputSize = sizeof(WORD) * dwRet;
+	break;
+
+    case DC_DATATYPE_PRODUCED:
+	OutputSize = dwRet;
+	FIXME("%ld DataTypes supported. Don't know how long to make buffer!\n",
+	      dwRet);
+   	break;
+
+    case DC_ENUMRESOLUTIONS:
+	OutputSize = 2 * sizeof(LONG) * dwRet;
+	break;
+
+    case DC_FILEDEPENDENCIES:
+    case DC_MEDIAREADY:
+    case DC_PAPERNAMES:
+	OutputSize = 64 * dwRet;
+	break;
+
+    case DC_NUP:
+	OutputSize = sizeof(DWORD) * dwRet;
+	break;
+
+    case DC_PAPERSIZE:
+	OutputSize = sizeof(POINT16) * dwRet;
+	break;
+
+    case DC_PERSONALITY:
+	OutputSize = 32 * dwRet;
+	break;
+
+    default:
+        FIXME("Unsupported capability %d\n", fwCapability);
+	OutputSize = 0;
+	break;
+    }
+
+    if(OutputSize && lpszOutput) {
+        lpSegOut = SEGPTR_ALLOC(OutputSize);
+	dwRet = Callbacks->CallDrvDeviceCapabilitiesProc(
+					pLPD->fn[FUNC_DEVICECAPABILITIES],
+					SEGPTR_GET(lpSegDevice),
+					SEGPTR_GET(lpSegPort),
+					fwCapability,
+					SEGPTR_GET(lpSegOut),
+					SEGPTR_GET(lpSegdm) );
+	memcpy(lpszOutput, lpSegOut, OutputSize);
+	SEGPTR_FREE(lpSegOut);
+    }
+
+    if(lpSegdm) {
+        memcpy(lpDevMode, lpSegdm, lpDevMode->dmSize +
+	       lpDevMode->dmDriverExtra);
+	SEGPTR_FREE(lpSegdm);
+    }
+    SEGPTR_FREE(lpSegDevice);
+    SEGPTR_FREE(lpSegPort);
+    return dwRet;
 }

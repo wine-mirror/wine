@@ -179,15 +179,15 @@ typedef struct tagDC_FUNCS
 				     DWORD);
     BOOL     (*pDeleteDC)(DC*);
     BOOL     (*pDeleteObject)(HGDIOBJ);
-    DWORD    (*pDeviceCapabilities)(LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
+    DWORD    (*pDeviceCapabilities)(LPSTR,LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
     BOOL     (*pEllipse)(DC*,INT,INT,INT,INT);
     INT      (*pEndDoc)(DC*);
     INT      (*pEndPage)(DC*);
     BOOL     (*pEnumDeviceFonts)(DC*,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
     INT      (*pEscape)(DC*,INT,INT,SEGPTR,SEGPTR);
     INT      (*pExcludeClipRect)(DC*,INT,INT,INT,INT);
-    INT      (*pExtDeviceMode)(HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,
-			       DWORD); 
+    INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,
+			       LPSTR,DWORD); 
     BOOL     (*pExtFloodFill)(DC*,INT,INT,COLORREF,UINT);
     BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCSTR,UINT,
 			    const INT*);
