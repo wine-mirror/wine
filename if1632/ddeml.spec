@@ -8,7 +8,7 @@ type	win16
 6 pascal DdeDisconnectList(word) DdeDisconnectList16
 7 pascal   DdeConnect(long long long ptr) DdeConnect16
 8 pascal16 DdeDisconnect(long) DdeDisconnect16
-9 stub DdeQueryConvInfo #(word long ptr) DdeQueryConvInfo
+9 pascal16  DdeQueryConvInfo (word long ptr) DdeQueryConvInfo16
 10 pascal DdeSetUserHandle(word long long) DdeSetUserHandle16
 11 pascal   DdeClientTransaction(ptr long long long s_word s_word long ptr)
             DdeClientTransaction16
@@ -23,7 +23,7 @@ type	win16
 20 pascal16 DdeGetLastError(long) DdeGetLastError16
 21 pascal   DdeCreateStringHandle(long str s_word) DdeCreateStringHandle16
 22 pascal16 DdeFreeStringHandle(long long) DdeFreeStringHandle16
-23 stub DdeQueryString #(long word ptr long word) DdeQueryString
+23 pascal  DdeQueryString (long word ptr long word) DdeQueryString16
 24 pascal16 DdeKeepStringHandle(long long) DdeKeepStringHandle16
 
 26 pascal DdeEnableCallback(long word word) DdeEnableCallback16

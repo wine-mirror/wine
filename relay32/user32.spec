@@ -88,9 +88,9 @@ init	MAIN_UserInit
  84 stdcall CreateWindowExW(long wstr wstr long long long long long long long long ptr) CreateWindowExW
  85 stub CreateWindowStationA
  86 stdcall CreateWindowStationW(wstr long long ptr) CreateWindowStationW
- 87 stub DdeAbandonTransaction
+ 87 stdcall DdeAbandonTransaction(long long long)DdeAbandonTransaction
  88 stdcall DdeAccessData(long ptr) DdeAccessData
- 89 stub DdeAddData
+ 89 stdcall DdeAddData(long ptr long long) DdeAddData
  90 stdcall DdeClientTransaction(ptr long long long long long long ptr) DdeClientTransaction
  91 stdcall DdeCmpStringHandles(long long) DdeCmpStringHandles
  92 stdcall DdeConnect(long long long ptr) DdeConnect
@@ -106,19 +106,19 @@ init	MAIN_UserInit
 102 stdcall DdeGetData(long ptr long long) DdeGetData
 103 stdcall DdeGetLastError(long) DdeGetLastError
 104 stub DdeGetQualityOfService
-105 stub DdeImpersonateClient
+105 stdcall DdeImpersonateClient(long) DdeImpersonateClient
 106 stdcall DdeInitializeA(ptr ptr long long) DdeInitializeA
 107 stdcall DdeInitializeW(ptr ptr long long) DdeInitializeW
 108 stdcall DdeKeepStringHandle(long long) DdeKeepStringHandle
 109 stdcall DdeNameService(long long long long) DdeNameService
 110 stdcall DdePostAdvise(long long long) DdePostAdvise
-111 stub DdeQueryConvInfo
+111 stdcall DdeQueryConvInfo(long long ptr) DdeQueryConvInfo
 112 stdcall DdeQueryNextServer(long long) DdeQueryNextServer
 113 stdcall DdeQueryStringA(long long ptr long long) DdeQueryStringA
 114 stdcall DdeQueryStringW(long long ptr long long) DdeQueryStringW
 115 stdcall DdeReconnect(long) DdeReconnect
-116 stub DdeSetQualityOfService
-117 stub DdeSetUserHandle
+116 stdcall DdeSetQualityOfService(long ptr ptr) DdeSetQualityOfService
+117 stdcall DdeSetUserHandle (long long long) DdeSetUserHandle
 118 stdcall DdeUnaccessData(long) DdeUnaccessData
 119 stdcall DdeUninitialize(long) DdeUninitialize
 120 stdcall DefDlgProcA(long long long long) DefDlgProcA

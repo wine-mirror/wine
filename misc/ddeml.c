@@ -17,6 +17,7 @@
 #include "heap.h"
 #include "shm_semaph.h"
 #include "debug.h"
+#include "winnt.h"
 
 /* Has defined in atom.c file.
  */
@@ -28,7 +29,7 @@
 
 
 static DDE_HANDLE_ENTRY *DDE_Handle_Table_Base = NULL;
-static LPDWORD 		DDE_Max_Assigned_Instance = 0;  // OK for present, may have to worry about wrap-around later
+static DWORD 		DDE_Max_Assigned_Instance = 0;  // OK for present, may have to worry about wrap-around later
 static const char	inst_string[]= "DDEMaxInstance";
 static LPCWSTR 		DDEInstanceAccess = (LPCWSTR)&inst_string;
 static const char	handle_string[] = "DDEHandleAccess";
@@ -42,7 +43,7 @@ static HANDLE	     	handle_mutex = 0;
 /*  typedef struct {
 	DWORD		nLength;
 	LPVOID		lpSecurityDescriptor;
-	BOOL32		bInheritHandle;
+	BOOL		bInheritHandle;
 }	SECURITY_ATTRIBUTES; */
 
 #define TRUE	1
@@ -206,6 +207,7 @@ static void InsertHSZNode( DWORD idInst, HSZ hsz )
  *  Vn       Date    	Author         		Comment
  *
  *  1.0      Jan 1999  Keith Matthews        Initial version
+ *  1.1	     Mar 1999  Keith Matthews	     Corrected Heap handling.
  *
  */
  DWORD Release_reserved_mutex (HANDLE mutex, LPTSTR mutex_name, BOOL release_handle_m, BOOL release_this_i )
@@ -214,7 +216,7 @@ static void InsertHSZNode( DWORD idInst, HSZ hsz )
         if ( (err_no=GetLastError()) != 0 )
         {
                 ERR(ddeml,"ReleaseMutex failed - %s mutex %li\n",mutex_name,err_no);
-                HeapFree(GetProcessHeap(), 0, this_instance);
+                HeapFree(SystemHeap, 0, this_instance);
 		if ( release_handle_m )
 		{
 			ReleaseMutex(handle_mutex);
@@ -223,7 +225,7 @@ static void InsertHSZNode( DWORD idInst, HSZ hsz )
          }
 	if ( release_this_i )
 	{
-                HeapFree(GetProcessHeap(), 0, this_instance);
+                HeapFree(SystemHeap, 0, this_instance);
 	}
 	return DMLERR_NO_ERROR;
 }
@@ -257,7 +259,7 @@ DWORD IncrementInstanceId()
 		WaitForSingleObject(inst_count_mutex,1000); // subsequent calls
 		/*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 	}
-	if ( (err_no=GetLastError()) == ERROR_INVALID_HANDLE )
+	if ( (err_no=GetLastError()) != 0 )
 	{
 		ERR(ddeml,"CreateMutex failed - inst_count %li\n",err_no);
 		err_no=Release_reserved_mutex (handle_mutex,"handle_mutex",0,1);
@@ -275,23 +277,25 @@ DWORD IncrementInstanceId()
 UINT16 WINAPI DdeInitialize16( LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
                                DWORD afCmd, DWORD ulRes)
 {
+    TRACE(ddeml,"DdeInitialize16 called - calling DdeInitializeA\n");
     return (UINT16)DdeInitializeA(pidInst,(PFNCALLBACK)pfnCallback,
                                     afCmd, ulRes);
 }
 
 
 /******************************************************************************
- *            DdeInitialize32A   (USER32.106)
+ *            DdeInitializeA   (USER32.106)
  */
 UINT WINAPI DdeInitializeA( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
+    TRACE(ddeml,"DdeInitializeA called - calling DdeInitializeW\n");
     return DdeInitializeW(pidInst,pfnCallback,afCmd,ulRes);
 }
 
 
 /******************************************************************************
- * DdeInitialize32W [USER32.107]
+ * DdeInitializeW [USER32.107]
  * Registers an application with the DDEML
  *
  * PARAMS
@@ -312,6 +316,7 @@ UINT WINAPI DdeInitializeA( LPDWORD pidInst, PFNCALLBACK pfnCallback,
  *
  *  1.0      Pre 1998  Alexandre/Len	     Initial Stub
  *  1.1      Jan 1999  Keith Matthews        Initial (near-)complete version
+ *  1.2	     Mar 1999  Keith Matthews	     Corrected Heap handling, CreateMutex failure handling
  *
  */
 UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
@@ -333,6 +338,9 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
     }
     if (!pfnCallback ) 
     {
+	/*  this one may be wrong - MS dll seems to accept the condition, leave this until we find out more !! */
+
+
         /* can't set up the instance with nothing to act as a callback */
         TRACE(ddeml,"No callback provided\n");
         return DMLERR_INVALIDPARAMETER; /* might be DMLERR_DLL_USAGE */
@@ -353,7 +361,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
      // messy bit, spec implies that 'Client Only' can be set in 2 different ways, catch 1 here
 
      this_instance->Client_only=afCmd&APPCMD_CLIENTONLY;
-     this_instance->Instance_id = pidInst; // May need to add calling proc Id
+     this_instance->Instance_id = *pidInst; // May need to add calling proc Id
      this_instance->CallBack=*pfnCallback;
      this_instance->Txn_count=0;
      this_instance->Unicode = TRUE;
@@ -383,10 +391,10 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	s_att->lpSecurityDescriptor = NULL;
 	s_att->nLength = sizeof(s_att);
 	handle_mutex = CreateMutexW(s_att,1,DDEHandleAccess);
-	if ( (err_no=GetLastError()) == ERROR_INVALID_HANDLE )
+	if ( (err_no=GetLastError()) != 0 )
 	{
 		ERR(ddeml,"CreateMutex failed - handle list  %li\n",err_no);
-                HeapFree(GetProcessHeap(), 0, this_instance);
+                HeapFree(SystemHeap, 0, this_instance);
 		return DMLERR_SYS_ERROR;
 	}
 	TRACE(ddeml,"Handle Mutex created/reserved\n");
@@ -472,7 +480,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	     /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
 
                     ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
-                    HeapFree(GetProcessHeap(), 0, this_instance);
+                    HeapFree(SystemHeap, 0, this_instance);
                     return DMLERR_SYS_ERROR;
         }
         if (DDE_Handle_Table_Base == NULL ) 
@@ -480,13 +488,13 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1)) return DMLERR_SYS_ERROR;
         	return DMLERR_DLL_USAGE;
  	}
-        HeapFree(GetProcessHeap(), 0, this_instance); // finished - release heap space used as work store
+        HeapFree(SystemHeap, 0, this_instance); // finished - release heap space used as work store
         // can't reinitialise if we have initialised nothing !!
         reference_inst =  DDE_Handle_Table_Base;
         /* must first check if we have been given a valid instance to re-initialise !!  how do we do that ? */
 	while ( reference_inst->Next_Entry != NULL )
 	{
-		if ( pidInst == reference_inst->Instance_id && pfnCallback == reference_inst->CallBack )
+		if ( *pidInst == reference_inst->Instance_id && pfnCallback == reference_inst->CallBack )
 		{
 			// Check 1 - cannot change client-only mode if set via APPCMD_CLIENTONLY
 
@@ -546,7 +554,7 @@ BOOL16 WINAPI DdeUninitialize16( DWORD idInst )
 
 
 /*****************************************************************
- * DdeUninitialize32 [USER32.119]  Frees DDEML resources
+ * DdeUninitialize [USER32.119]  Frees DDEML resources
  *
  * PARAMS
  *    idInst [I] Instance identifier
@@ -581,7 +589,7 @@ HCONVLIST WINAPI DdeConnectList16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 
 
 /******************************************************************************
- * DdeConnectList32 [USER32.93]  Establishes conversation with DDE servers
+ * DdeConnectList [USER32.93]  Establishes conversation with DDE servers
  *
  * PARAMS
  *    idInst     [I] Instance identifier
@@ -613,7 +621,7 @@ HCONV WINAPI DdeQueryNextServer16( HCONVLIST hConvList, HCONV hConvPrev )
 
 
 /*****************************************************************
- * DdeQueryNextServer32 [USER32.112]
+ * DdeQueryNextServer [USER32.112]
  */
 HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
 {
@@ -622,7 +630,16 @@ HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
 }
 
 /*****************************************************************
- * DdeQueryString32A [USER32.113]
+ * DdeQueryStringA [USER32.113]
+ *
+ *****************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *
  */
 DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT iCodePage)
 {
@@ -655,7 +672,16 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
 }
 
 /*****************************************************************
- * DdeQueryString32W [USER32.114]
+ * DdeQueryStringW [USER32.114]
+ *
+ *****************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *
  */
 DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, INT iCodePage)
 {
@@ -690,6 +716,30 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
     return ret;
 }
 
+/*****************************************************************
+*
+*		DdeQueryString16 (DDEML.23)
+*
+******************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      March 1999 K Matthews		stub only
+ */
+
+DWORD DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, int codepage)
+{
+	FIXME(ddeml,"(%ld, 0x%lx, %p, %ld, %d): stub \n", 
+         idInst,
+         hsz,
+         lpsz, 
+         cchMax,
+         codepage);
+	return 0;
+}
+
 
 /*****************************************************************
  *            DdeDisconnectList (DDEML.6)
@@ -701,7 +751,7 @@ BOOL16 WINAPI DdeDisconnectList16( HCONVLIST hConvList )
 
 
 /******************************************************************************
- * DdeDisconnectList32 [USER32.98]  Destroys list and terminates conversations
+ * DdeDisconnectList [USER32.98]  Destroys list and terminates conversations
  *
  * RETURNS
  *    Success: TRUE
@@ -727,7 +777,7 @@ HCONV WINAPI DdeConnect16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 
 
 /*****************************************************************
- *            DdeConnect32   (USER32.92)
+ *            DdeConnect   (USER32.92)
  */
 HCONV WINAPI DdeConnect( DWORD idInst, HSZ hszService, HSZ hszTopic,
                            LPCONVCONTEXT pCC )
@@ -747,7 +797,7 @@ BOOL16 WINAPI DdeDisconnect16( HCONV hConv )
 }
 
 /*****************************************************************
- *            DdeSetUserHandle (DDEML.10)
+ *            DdeSetUserHandle16 (DDEML.10)
  */
 BOOL16 WINAPI DdeSetUserHandle16( HCONV hConv, DWORD id, DWORD hUser )
 {
@@ -772,7 +822,7 @@ HDDEDATA WINAPI DdeCreateDataHandle16( DWORD idInst, LPBYTE pSrc, DWORD cb,
 }
 
 /*****************************************************************
- *            DdeCreateDataHandle32 (USER32.94)
+ *            DdeCreateDataHandle (USER32.94)
  */
 HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb, 
                                        DWORD cbOff, HSZ hszItem, UINT wFmt, 
@@ -792,7 +842,7 @@ HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb,
 }
 
 /*****************************************************************
- *            DdeDisconnect32   (USER32.97)
+ *            DdeDisconnect   (USER32.97)
  */
 BOOL WINAPI DdeDisconnect( HCONV hConv )
 {
@@ -821,7 +871,7 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
 
 
 /*****************************************************************
- * DdeCreateStringHandle32A [USER32.95]
+ * DdeCreateStringHandleA [USER32.95]
  *
  * RETURNS
  *    Success: String handle
@@ -846,7 +896,7 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
 
 
 /******************************************************************************
- * DdeCreateStringHandle32W [USER32.96]  Creates handle to identify string
+ * DdeCreateStringHandleW [USER32.96]  Creates handle to identify string
  *
  * RETURNS
  *    Success: String handle
@@ -884,7 +934,7 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
 
 
 /*****************************************************************
- *            DdeFreeStringHandle32   (USER32.101)
+ *            DdeFreeStringHandle   (USER32.101)
  * RETURNS: success: nonzero
  *          fail:    zero
  */
@@ -910,7 +960,7 @@ BOOL16 WINAPI DdeFreeDataHandle16( HDDEDATA hData )
 
 
 /*****************************************************************
- *            DdeFreeDataHandle32   (USER32.100)
+ *            DdeFreeDataHandle   (USER32.100)
  */
 BOOL WINAPI DdeFreeDataHandle( HDDEDATA hData )
 {
@@ -931,7 +981,7 @@ BOOL16 WINAPI DdeKeepStringHandle16( DWORD idInst, HSZ hsz )
 
 
 /*****************************************************************
- *            DdeKeepStringHandle32  (USER32.108)
+ *            DdeKeepStringHandle  (USER32.108)
  */
 BOOL WINAPI DdeKeepStringHandle( DWORD idInst, HSZ hsz )
 {
@@ -954,7 +1004,7 @@ HDDEDATA WINAPI DdeClientTransaction16( LPVOID pData, DWORD cbData,
 
 
 /*****************************************************************
- *            DdeClientTransaction32  (USER32.90)
+ *            DdeClientTransaction  (USER32.90)
  */
 HDDEDATA WINAPI DdeClientTransaction( LPBYTE pData, DWORD cbData,
                                         HCONV hConv, HSZ hszItem, UINT wFmt,
@@ -966,15 +1016,36 @@ HDDEDATA WINAPI DdeClientTransaction( LPBYTE pData, DWORD cbData,
 }
 
 /*****************************************************************
- *            DdeAbandonTransaction (DDEML.12)
+ *
+ *            DdeAbandonTransaction16 (DDEML.12)
+ *
  */
 BOOL16 WINAPI DdeAbandonTransaction16( DWORD idInst, HCONV hConv, 
                                      DWORD idTransaction )
 {
     FIXME( ddeml, "empty stub\n" );
-    return 0;
+    return TRUE;
 }
 
+
+/*****************************************************************
+ *
+ *            DdeAbandonTransaction (USER32.87)
+ *
+******************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      March 1999 K Matthews		stub only
+ */
+BOOL WINAPI DdeAbandonTransaction( DWORD idInst, HCONV hConv, 
+                                     DWORD idTransaction )
+{
+    FIXME( ddeml, "empty stub\n" );
+    return TRUE;
+}
 
 /*****************************************************************
  * DdePostAdvise16 [DDEML.13]
@@ -986,7 +1057,7 @@ BOOL16 WINAPI DdePostAdvise16( DWORD idInst, HSZ hszTopic, HSZ hszItem )
 
 
 /******************************************************************************
- * DdePostAdvise32 [USER32.110]  Send transaction to DDE callback function.
+ * DdePostAdvise [USER32.110]  Send transaction to DDE callback function.
  *
  * RETURNS
  *    Success: TRUE
@@ -1003,7 +1074,7 @@ BOOL WINAPI DdePostAdvise(
 
 
 /*****************************************************************
- *            DdeAddData (DDEML.15)
+ *            DdeAddData16 (DDEML.15)
  */
 HDDEDATA WINAPI DdeAddData16( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
                             DWORD cbOff )
@@ -1012,9 +1083,87 @@ HDDEDATA WINAPI DdeAddData16( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
     return 0;
 }
 
+/*****************************************************************
+ *
+ *            DdeAddData (USER32.89)
+ *
+******************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      March 1999 K Matthews		stub only
+ */
+HDDEDATA WINAPI DdeAddData( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
+                            DWORD cbOff )
+{
+    FIXME( ddeml, "empty stub\n" );
+    return 0;
+}
+
+
+/*****************************************************************
+ *
+ *            DdeImpersonateClient (USER32.105)
+ *
+******************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      March 1999 K Matthews		stub only
+ */
+
+BOOL WINAPI DdeImpersonateClient( HCONV hConv)
+{
+    FIXME( ddeml, "empty stub\n" );
+    return TRUE;
+}
+
+
+/*****************************************************************
+ *
+ *            DdeSetQualityOfService (USER32.116)
+ *
+******************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      March 1999 K Matthews		stub only
+ */
+
+BOOL WINAPI DdeSetQualityOfService( HWND hwndClient, CONST SECURITY_QUALITY_OF_SERVICE *pqosNew,
+					PSECURITY_QUALITY_OF_SERVICE pqosPrev)
+{
+    FIXME( ddeml, "empty stub\n" );
+    return TRUE;
+}
+
+/*****************************************************************
+ *
+ *            DdeSetUserHandle (USER32.117)
+ *
+******************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      March 1999 K Matthews		stub only
+ */
+
+BOOL WINAPI DdeSetUserHandle( HCONV hConv, DWORD id, DWORD hUser)
+{
+    FIXME( ddeml, "empty stub\n" );
+    return TRUE;
+}
 
 /******************************************************************************
- * DdeGetData32 [USER32.102]  Copies data from DDE object ot local buffer
+ * DdeGetData [USER32.102]  Copies data from DDE object ot local buffer
  *
  * RETURNS
  *    Size of memory object associated with handle
@@ -1052,7 +1201,7 @@ LPBYTE WINAPI DdeAccessData16( HDDEDATA hData, LPDWORD pcbDataSize )
 }
 
 /*****************************************************************
- *            DdeAccessData32 (USER32.88)
+ *            DdeAccessData (USER32.88)
  */
 LPBYTE WINAPI DdeAccessData( HDDEDATA hData, LPDWORD pcbDataSize )
 {
@@ -1069,7 +1218,7 @@ BOOL16 WINAPI DdeUnaccessData16( HDDEDATA hData )
 }
 
 /*****************************************************************
- *            DdeUnaccessData32 (USER32.118)
+ *            DdeUnaccessData (USER32.118)
  */
 BOOL WINAPI DdeUnaccessData( HDDEDATA hData )
 {
@@ -1087,7 +1236,7 @@ BOOL16 WINAPI DdeEnableCallback16( DWORD idInst, HCONV hConv, UINT16 wCmd )
 }
 
 /*****************************************************************
- *            DdeEnableCallback32 (USER32.99)
+ *            DdeEnableCallback (USER32.99)
  */
 BOOL WINAPI DdeEnableCallback( DWORD idInst, HCONV hConv, UINT wCmd )
 {
@@ -1107,7 +1256,7 @@ HDDEDATA WINAPI DdeNameService16( DWORD idInst, HSZ hsz1, HSZ hsz2,
 
 
 /******************************************************************************
- * DdeNameService32 [USER32.109]  {Un}registers service name of DDE server
+ * DdeNameService [USER32.109]  {Un}registers service name of DDE server
  *
  * PARAMS
  *    idInst [I] Instance identifier
@@ -1137,7 +1286,7 @@ UINT16 WINAPI DdeGetLastError16( DWORD idInst )
 
 
 /******************************************************************************
- * DdeGetLastError32 [USER32.103]  Gets most recent error code
+ * DdeGetLastError [USER32.103]  Gets most recent error code
  *
  * PARAMS
  *    idInst [I] Instance identifier
@@ -1161,7 +1310,7 @@ int WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
 }
 
 /*****************************************************************
- *            DdeCmpStringHandles32 (USER32.91)
+ *            DdeCmpStringHandles (USER32.91)
  *
  * Compares the value of two string handles.  This comparison is
  * not case sensitive.
@@ -1277,3 +1426,24 @@ UINT WINAPI ReuseDDElParam(UINT lParam, UINT msgIn, UINT msgOut,
     FIXME(ddeml, "stub.\n");
     return 0;
 } 
+
+/******************************************************************
+ *		DdeQueryConvInfo16 (DDEML.9)
+ *
+ */
+UINT16 WINAPI DdeQueryConvInfo16( HCONV hconv, DWORD idTransaction , LPCONVINFO16 lpConvInfo)
+{
+	FIXME(ddeml,"stub.\n");
+	return 0;
+}
+
+
+/******************************************************************
+ *		DdeQueryConvInfo (USER32.111)
+ *
+ */
+UINT WINAPI DdeQueryConvInfo( HCONV hconv, DWORD idTransaction , LPCONVINFO lpConvInfo)
+{
+	FIXME(ddeml,"stub.\n");
+	return 0;
+}

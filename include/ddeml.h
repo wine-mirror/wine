@@ -12,10 +12,23 @@
 
 /* Codepage Constants
  */
+
 #define CP_WINANSI      1004
 #define CP_WINUNICODE   1200
 
+/* DDE synchronisation constants 
+ */
+
 #define MSGF_DDEMGR 0x8001
+
+#define QID_SYNC16	-1L
+#define QID_SYNC	0xFFFFFFFF
+
+/*   Type variation for MS  deliberate departures from ANSI standards
+ */
+
+#define EXPENTRY CALLBACK
+
 /***************************************************
 
       FLAGS Section - copied from Microsoft SDK as must be standard, probably Copyright Microsoft Corporation
@@ -39,6 +52,8 @@
 #define     CBF_SKIP_UNREGISTRATIONS     0x00100000
 #define     CBF_SKIP_DISCONNECTS         0x00200000
 #define     CBF_SKIP_ALLNOTIFICATIONS    0x003c0000
+
+#define     CBR_BLOCK			 0xFFFFFFFFL
 
 /*
  * Application command flags
@@ -87,6 +102,57 @@
 
 /****************************************************
 
+	Message Types Section
+
+****************************************************/
+
+#define XTYPF_NOBLOCK		0x0002		/* CBR_NOBLOCK will not work */
+#define XTYPF_NODATA		0x0004		/* DDE_FDEFERUPD  */
+#define XTYPF_ACKREQ		0x0008		/* DDE_FACKREQ */
+
+#define XCLASS_MASK		0xFC00
+#define XCLASS_BOOL		0x1000
+#define XCLASS_DATA		0x2000
+#define XCLASS_FLAGS		0x4000
+#define	XCLASS_NOTIFICATION	0x8000
+
+#define XTYP_ADVDATA		(0x0010 | XCLASS_FLAGS)
+#define XTYP_XACT_COMPLETE	(0x0080 | XCLASS_NOTIFICATION )
+#define XTYP_REGISTER		(0x00A0 | XCLASS_NOTIFICATION | XTYPF_NOBLOCK )
+#define XTYP_REQUEST		(0x00B0 | XCLASS_DATA )
+#define XTYP_DISCONNECT		(0x00C0 | XCLASS_NOTIFICATION | XTYPF_NOBLOCK )
+#define XTYP_UNREGISTER		(0x00D0 | XCLASS_NOTIFICATION | XTYPF_NOBLOCK )
+
+/**************************************************
+
+	End of Message Types Section
+
+****************************************************/
+
+/*****************************************************
+
+	DDE Codes for wStatus field
+
+*****************************************************/
+
+#define DDE_FACK		0x8000
+#define DDE_FBUSY		0x4000
+#define DDE_FDEFERUPD		0x4000
+#define DDE_FACKREQ		0x8000
+#define DDE_FRELEASE		0x2000
+#define DDE_FREQUESTED		0x1000
+#define DDE_FAPPSTATUS		0x00FF
+#define DDE_FNOTPROCESSED	0x0000
+
+
+/*****************************************************
+
+	End of wStatus codes
+
+*****************************************************/
+
+/****************************************************
+
       Return Codes section again copied from SDK as must be same
 
 *****************************************************/
@@ -130,6 +196,13 @@ typedef DWORD HSZ;
 typedef DWORD HDDEDATA;
 typedef CHAR *LPTSTR;
 
+
+/*******************************************************
+
+	API Entry Points
+
+*******************************************************/
+
 typedef HDDEDATA (CALLBACK *PFNCALLBACK16)(UINT16,UINT16,HCONV,HSZ,HSZ,
                                            HDDEDATA,DWORD,DWORD);
 typedef HDDEDATA (CALLBACK *PFNCALLBACK)(UINT,UINT,HCONV,HSZ,HSZ,
@@ -161,6 +234,43 @@ typedef struct
     DWORD   dwSecurity;
 } CONVCONTEXT, *LPCONVCONTEXT;
 
+typedef struct
+{
+    DWORD		cb;
+    DWORD 		hUser;
+    HCONV		hConvPartner;
+    HSZ			hszSvcPartner;
+    HSZ			hszServiceReq;
+    HSZ			hszTopic;
+    HSZ			hszItem;
+    UINT16		wFmt;
+    UINT16		wType;
+    UINT16		wStatus;
+    UINT16		wConvst;
+    UINT16		wLastError;
+    HCONVLIST		hConvList;
+    CONVCONTEXT16	ConvCtxt;
+} CONVINFO16, *LPCONVINFO16;
+
+typedef struct
+{
+    DWORD		cb;
+    DWORD 		hUser;
+    HCONV		hConvPartner;
+    HSZ			hszSvcPartner;
+    HSZ			hszServiceReq;
+    HSZ			hszTopic;
+    HSZ			hszItem;
+    UINT		wFmt;
+    UINT		wType;
+    UINT		wStatus;
+    UINT		wConvst;
+    UINT		wLastError;
+    HCONVLIST		hConvList;
+    CONVCONTEXT		ConvCtxt;
+    HWND		hwnd;
+    HWND		hwndPartner;
+} CONVINFO, *LPCONVINFO;
 //  Internal data structures
 
       /*  entry for handle table     */
@@ -169,7 +279,7 @@ typedef struct DDE_HANDLE_ENTRY {
     BOOL16              Client_only;    // bit wasteful of space but it will be faster
     BOOL16		Unicode;	/* Flag to indicate Win32 API used to initialise */
     BOOL16		Win16;		/* flag to indicate Win16 API used to initialize */
-    LPDWORD            	Instance_id;  // needed to track monitor usage
+    DWORD            	Instance_id;  // needed to track monitor usage
     struct DDE_HANDLE_ENTRY    *Next_Entry;
     PFNCALLBACK	CallBack;
     DWORD               CBF_Flags;
