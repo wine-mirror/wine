@@ -3,7 +3,7 @@
 #  win95 and winNT dlls import shell32.dll by ordinal)
 # This list was updated to dll version 4.72
 
-   2 stdcall SHChangeNotifyRegister(long long long long long long)
+   2 stdcall SHChangeNotifyRegister(long long long long long ptr)
    4 stdcall SHChangeNotifyDeregister (long)
    5 stdcall SHChangeNotifyUpdateEntryList (long long long long)
    9 stub PifMgr_OpenProperties@16
@@ -173,6 +173,7 @@
  183 varargs ShellMessageBoxA(long long long str long)
  184 stdcall ArrangeWindows(long long long long long)
  185 stub SHHandleDiskFull
+ 186 stdcall ILGetDisplayNameEx(ptr ptr ptr long)
  195 stdcall SHFree(ptr)
  196 stdcall SHAlloc(long)
  197 stub SHGlobalDefect

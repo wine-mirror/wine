@@ -63,7 +63,18 @@ BOOL WINAPI ILIsParent(
 
 BOOL WINAPI ILGetDisplayName(
 	LPCITEMIDLIST pidl,
-	LPSTR path);
+	LPVOID path);
+
+/* type parameter for ILGetDisplayNameEx() */
+#define ILGDN_FORPARSING  0
+#define ILGDN_NORMAL      1
+#define ILGDN_INFOLDER    2
+
+BOOL WINAPI ILGetDisplayNameEx(
+	LPSHELLFOLDER psf,
+	LPCITEMIDLIST pidl,
+	LPVOID path,
+	DWORD type);
 
 DWORD WINAPI ILFree(LPITEMIDLIST pidl);
 

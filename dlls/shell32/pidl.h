@@ -198,4 +198,7 @@ void _ILFreeaPidl(LPITEMIDLIST * apidl, UINT cidl);
 LPITEMIDLIST * _ILCopyaPidl(LPITEMIDLIST * apidlsrc, UINT cidl);
 LPITEMIDLIST * _ILCopyCidaToaPidl(LPITEMIDLIST* pidl, LPIDA cida);
 
+BOOL WINAPI ILGetDisplayNameExA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPSTR path, DWORD type);
+BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR path, DWORD type);
+
 #endif

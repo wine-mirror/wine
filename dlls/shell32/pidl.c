@@ -50,13 +50,126 @@ extern LPVOID WINAPI Alloc(INT);
 extern BOOL WINAPI Free(LPVOID);
 
 /*************************************************************************
+ * ILGetDisplayNameEx		[SHELL32.186]
+ *
+ * Retrieves the display name of an ItemIDList
+ *
+ * PARAMS
+ *  psf        [I]   Shell Folder to start with, if NULL the desktop is used
+ *  pidl       [I]   ItemIDList relativ to the psf to get the display name for
+ *  path       [O]   Filled in with the display name, assumed to be at least MAX_PATH long
+ *  type       [I]   Type of display name to retrieve
+ *                    0 = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR uses always the desktop as root
+ *                    1 = SHGDN_NORMAL relative to the root folder
+ *                    2 = SHGDN_INFOLDER relative to the root folder, only the last name
+ *
+ * RETURNS
+ *  True if the display name could be retrieved successfully, False otherwise
+ */
+BOOL WINAPI ILGetDisplayNameExA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPSTR path, DWORD type)
+{
+	BOOL ret = FALSE;
+	WCHAR wPath[MAX_PATH];
+
+	TRACE("%p %p %p %ld\n", psf, pidl, path, type);
+
+	if (!pidl || !path)
+	  return FALSE;
+
+	ret = ILGetDisplayNameExW(psf, pidl, wPath, type);
+	WideCharToMultiByte(CP_ACP, 0, wPath, -1, path, MAX_PATH, NULL, NULL);
+	TRACE("%p %p %s\n", psf, pidl, debugstr_a(path));
+
+	return ret;
+}
+
+BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR path, DWORD type)
+{
+	LPSHELLFOLDER psfParent, lsf = psf;
+	HRESULT ret = NO_ERROR;
+	LPITEMIDLIST pidllast;
+	STRRET strret;
+	DWORD flag;
+
+	TRACE("%p %p %p %ld\n", psf, pidl, path, type);
+
+	if (!pidl || !path)
+	  return FALSE;
+
+	if (!lsf)
+	{
+	  ret = SHGetDesktopFolder(&lsf);
+	  if (FAILED(ret))
+	    return FALSE;
+	}
+
+	if (type >= 0 && type <= 2)
+	{
+	  switch (type)
+	  {
+	    case ILGDN_FORPARSING:
+	      flag = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR;
+	      break;
+	    case ILGDN_NORMAL:
+	      flag = SHGDN_NORMAL;
+	      break;
+	    case ILGDN_INFOLDER:
+	      flag = SHGDN_INFOLDER;
+	      break;
+	    default:
+	      FIXME("Unknown type parameter = %lx", type);
+	      flag = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR;
+	      break;
+	  }
+	  if (!*(LPWORD)pidl || type == ILGDN_FORPARSING)
+	  {
+	    ret = IShellFolder_GetDisplayNameOf(lsf, pidl, flag, &strret);
+	    if (SUCCEEDED(ret))
+	    {
+	      ret = StrRetToStrNW(path, MAX_PATH, &strret, pidl);
+	    }
+	  }
+	  else
+	  {
+	    ret = SHBindToParent(pidl, &IID_IShellFolder, (LPVOID*)&psfParent, &pidllast);
+	    if (SUCCEEDED(ret))
+	    {
+	      ret = IShellFolder_GetDisplayNameOf(psfParent, pidllast, flag, &strret);
+	      if (SUCCEEDED(ret))
+	      {
+	        ret = StrRetToStrNW(path, MAX_PATH, &strret, pidllast);
+	      }
+	      IShellFolder_Release(psfParent);
+	    }
+	  }
+	}
+
+	TRACE("%p %p %s\n", psf, pidl, debugstr_w(path));
+
+	if (!psf)
+	  IShellFolder_Release(lsf);
+	return SUCCEEDED(ret);
+}
+
+BOOL WINAPI ILGetDisplayNameEx(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPVOID path, DWORD type)
+{
+	TRACE_(shell)("%p %p %p %ld\n", psf, pidl, path, type);
+	if (SHELL_OsIsUnicode())
+	  return ILGetDisplayNameExW(psf, pidl, path, type);
+	return ILGetDisplayNameExA(psf, pidl, path, type);
+}
+
+/*************************************************************************
  * ILGetDisplayName			[SHELL32.15]
  */
-BOOL WINAPI ILGetDisplayName(LPCITEMIDLIST pidl,LPSTR path)
+BOOL WINAPI ILGetDisplayName(LPCITEMIDLIST pidl, LPVOID path)
 {
-	TRACE_(shell)("pidl=%p %p semi-stub\n",pidl,path);
-	return SHGetPathFromIDListA(pidl, path);
+	TRACE_(shell)("%p %p\n", pidl, path);
+	if (SHELL_OsIsUnicode())
+	  return ILGetDisplayNameExW(NULL, pidl, path, ILGDN_FORPARSING);
+	return ILGetDisplayNameExA(NULL, pidl, path, ILGDN_FORPARSING);
 }
+
 /*************************************************************************
  * ILFindLastID [SHELL32.16]
  *
@@ -217,8 +330,6 @@ HRESULT WINAPI ILSaveToStream (IStream * pStream, LPCITEMIDLIST pPidl)
 	  { ret = S_OK;
 	  }
 	}
-
-
 	IStream_Release (pStream);
 
 	return ret;

@@ -104,9 +104,12 @@ ICOM_DEFINE(IEnumExtraSearch,IUnknown)
  * IShellFolder::GetDisplayNameOf/SetNameOf uFlags
  */
 typedef enum
-{	SHGDN_NORMAL		= 0,		/* default (display purpose) */
-	SHGDN_INFOLDER		= 1,		/* displayed under a folder (relative)*/
-	SHGDN_FORPARSING	= 0x8000	/* for ParseDisplayName or path */
+{	SHGDN_NORMAL             = 0,      /* default (display purpose) */
+	SHGDN_INFOLDER           = 1,      /* displayed under a folder (relative)*/
+	SHGDN_INCLUDE_NONFILESYS = 0x2000, /* if not set, display names for shel name space
+	                                           items, that are not in the file system wil fail */
+	SHGDN_FORADDRESSBAR      = 0x4000, /* for displaying in the address (drives drop down) bar */
+	SHGDN_FORPARSING         = 0x8000  /* for ParseDisplayName or path */
 } SHGNO;
 
 /*****************************************************************************
