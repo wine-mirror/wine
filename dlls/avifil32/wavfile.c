@@ -44,6 +44,46 @@ WINE_DEFAULT_DEBUG_CHANNEL(avifile);
 
 /***********************************************************************/
 
+#define ENDIAN_SWAPWORD(x)  ((((x) >> 8) & 0xFF) | (((x) & 0xFF) << 8))
+#define ENDIAN_SWAPDWORD(x) (ENDIAN_SWAPWORD((x >> 16) & 0xFFFF) | \
+                             ENDIAN_SWAPWORD(x & 0xFFFF) << 16)
+
+#ifdef WORDS_BIGENDIAN
+#define BE2H_WORD(x)  (x)
+#define BE2H_DWORD(x) (x)
+#define LE2H_WORD(x)  ENDIAN_SWAPWORD(x)
+#define LE2H_DWORD(x) ENDIAN_SWAPDWORD(x)
+#else
+#define BE2H_WORD(x)  ENDIAN_SWAPWORD(x)
+#define BE2H_DWORD(x) ENDIAN_SWAPDWORD(x)
+#define LE2H_WORD(x)  (x)
+#define LE2H_DWORD(x) (x)
+#endif
+
+typedef struct {
+  FOURCC  fccType;
+  DWORD   offset;
+  DWORD   size;
+  INT     encoding;
+  DWORD   sampleRate;
+  DWORD   channels;
+} SUNAUDIOHEADER;
+
+#define AU_ENCODING_ULAW_8                 1
+#define AU_ENCODING_PCM_8                  2
+#define AU_ENCODING_PCM_16                 3
+#define AU_ENCODING_PCM_24                 4
+#define AU_ENCODING_PCM_32                 5
+#define AU_ENCODING_FLOAT                  6
+#define AU_ENCODING_DOUBLE                 7
+#define AU_ENCODING_ADPCM_G721_32         23
+#define AU_ENCODING_ADPCM_G722            24
+#define AU_ENCODING_ADPCM_G723_24         25
+#define AU_ENCODING_ADPCM_G723_5          26
+#define AU_ENCODING_ALAW_8                27
+
+/***********************************************************************/
+
 static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile* iface,REFIID refiid,LPVOID *obj);
 static ULONG   WINAPI IAVIFile_fnAddRef(IAVIFile* iface);
 static ULONG   WINAPI IAVIFile_fnRelease(IAVIFile* iface);
@@ -547,8 +587,20 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
 
   /* try to open the file */
   This->hmmio = mmioOpenW(This->szFileName, NULL, MMIO_ALLOCBUF | dwMode);
-  if (This->hmmio == NULL)
-    return AVIERR_FILEOPEN;
+  if (This->hmmio == NULL) {
+    /* mmioOpenW not in native DLLs of Win9x -- try mmioOpenA */
+    LPSTR szFileName = LocalAlloc(LPTR, len * sizeof(CHAR));
+    if (szFileName == NULL)
+      return AVIERR_MEMORY;
+
+    WideCharToMultiByte(CP_ACP, 0, This->szFileName, -1, szFileName,
+			len, NULL, NULL);
+
+    This->hmmio = mmioOpenA(szFileName, NULL, MMIO_ALLOCBUF | dwMode);
+    LocalFree((HLOCAL)szFileName);
+    if (This->hmmio == NULL)
+      return AVIERR_FILEOPEN;
+  }
 
   memset(& This->fInfo, 0, sizeof(This->fInfo));
   memset(& This->sInfo, 0, sizeof(This->sInfo));
@@ -1068,9 +1120,131 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 
 static HRESULT AVIFILE_LoadSunFile(IAVIFileImpl *This)
 {
-  FIXME(": pherhaps sun-audio file -- not implemented !\n");
+  SUNAUDIOHEADER auhdr;
 
-  return AVIERR_UNSUPPORTED;
+  mmioSeek(This->hmmio, 0, SEEK_SET);
+  if (mmioRead(This->hmmio, (HPSTR)&auhdr, sizeof(auhdr)) != sizeof(auhdr))
+    return AVIERR_FILEREAD;
+
+  if (auhdr.fccType == 0x0064732E) {
+    /* header in little endian */
+    This->ckData.dwDataOffset = LE2H_DWORD(auhdr.offset);
+    This->ckData.cksize       = LE2H_DWORD(auhdr.size);
+
+    auhdr.encoding   = LE2H_DWORD(auhdr.encoding);
+    auhdr.sampleRate = LE2H_DWORD(auhdr.sampleRate);
+    auhdr.channels   = LE2H_DWORD(auhdr.channels);
+  } else if (auhdr.fccType == mmioFOURCC('.','s','n','d')) {
+    /* header in big endian */
+    This->ckData.dwDataOffset = BE2H_DWORD(auhdr.offset);
+    This->ckData.cksize       = BE2H_DWORD(auhdr.size);
+
+    auhdr.encoding   = BE2H_DWORD(auhdr.encoding);
+    auhdr.sampleRate = BE2H_DWORD(auhdr.sampleRate);
+    auhdr.channels   = BE2H_DWORD(auhdr.channels);
+  } else
+    return AVIERR_FILEREAD;
+
+  if (auhdr.channels < 1)
+    return AVIERR_BADFORMAT;
+
+  /* get size of header */
+  switch(auhdr.encoding) {
+  case AU_ENCODING_ADPCM_G721_32:
+    This->cbFormat = sizeof(G721_ADPCMWAVEFORMAT); break;
+  case AU_ENCODING_ADPCM_G723_24:
+    This->cbFormat = sizeof(G723_ADPCMWAVEFORMAT); break;
+  case AU_ENCODING_ADPCM_G722:
+  case AU_ENCODING_ADPCM_G723_5:
+    WARN("unsupported Sun audio format %d\n", auhdr.encoding);
+    return AVIERR_UNSUPPORTED; /* FIXME */
+  default:
+    This->cbFormat = sizeof(WAVEFORMATEX); break;
+  };
+
+  This->lpFormat =
+    (LPWAVEFORMATEX)GlobalAllocPtr(GMEM_MOVEABLE, This->cbFormat);
+  if (This->lpFormat == NULL)
+    return AVIERR_MEMORY;
+
+  This->lpFormat->nChannels      = auhdr.channels;
+  This->lpFormat->nSamplesPerSec = auhdr.sampleRate;
+  switch(auhdr.encoding) {
+  case AU_ENCODING_ULAW_8:
+    This->lpFormat->wFormatTag     = WAVE_FORMAT_MULAW;
+    This->lpFormat->wBitsPerSample = 8;
+    break;
+  case AU_ENCODING_PCM_8:
+    This->lpFormat->wFormatTag     = WAVE_FORMAT_PCM;
+    This->lpFormat->wBitsPerSample = 8;
+    break;
+  case AU_ENCODING_PCM_16:
+    This->lpFormat->wFormatTag     = WAVE_FORMAT_PCM;
+    This->lpFormat->wBitsPerSample = 16;
+    break;
+  case AU_ENCODING_PCM_24:
+    This->lpFormat->wFormatTag     = WAVE_FORMAT_PCM;
+    This->lpFormat->wBitsPerSample = 24;
+    break;
+  case AU_ENCODING_PCM_32:
+    This->lpFormat->wFormatTag     = WAVE_FORMAT_PCM;
+    This->lpFormat->wBitsPerSample = 32;
+    break;
+  case AU_ENCODING_ALAW_8:
+    This->lpFormat->wFormatTag     = WAVE_FORMAT_ALAW;
+    This->lpFormat->wBitsPerSample = 8;
+    break;
+  case AU_ENCODING_ADPCM_G721_32:
+    This->lpFormat->wFormatTag     = WAVE_FORMAT_G721_ADPCM;
+    This->lpFormat->wBitsPerSample = (3*5*8);
+    This->lpFormat->nBlockAlign    = 15*15*8;
+    This->lpFormat->cbSize         = sizeof(WORD);
+    ((LPG721_ADPCMWAVEFORMAT)This->lpFormat)->nAuxBlockSize = 0;
+    break;
+  case AU_ENCODING_ADPCM_G723_24:
+    This->lpFormat->wFormatTag     = WAVE_FORMAT_G723_ADPCM;
+    This->lpFormat->wBitsPerSample = (3*5*8);
+    This->lpFormat->nBlockAlign    = 15*15*8;
+    This->lpFormat->cbSize         = 2*sizeof(WORD);
+    ((LPG723_ADPCMWAVEFORMAT)This->lpFormat)->cbExtraSize   = 0;
+    ((LPG723_ADPCMWAVEFORMAT)This->lpFormat)->nAuxBlockSize = 0;
+    break;
+  default:
+    WARN("unsupported Sun audio format %d\n", auhdr.encoding);
+    return AVIERR_UNSUPPORTED;
+  };
+
+  This->lpFormat->nBlockAlign =
+    (This->lpFormat->nChannels * This->lpFormat->wBitsPerSample) / 8;
+  if (This->lpFormat->nBlockAlign == 0 && This->lpFormat->wBitsPerSample < 8)
+    This->lpFormat->nBlockAlign++;
+  This->lpFormat->nAvgBytesPerSec =
+    This->lpFormat->nBlockAlign * This->lpFormat->nSamplesPerSec;
+
+  This->fDirty = 0;
+
+  This->sInfo.fccType               = streamtypeAUDIO;
+  This->sInfo.fccHandler            = 0;
+  This->sInfo.dwFlags               = 0;
+  This->sInfo.wPriority             = 0;
+  This->sInfo.wLanguage             = 0;
+  This->sInfo.dwInitialFrames       = 0;
+  This->sInfo.dwScale               = This->lpFormat->nBlockAlign;
+  This->sInfo.dwRate                = This->lpFormat->nAvgBytesPerSec;
+  This->sInfo.dwStart               = 0;
+  This->sInfo.dwLength              =
+    This->ckData.cksize / This->lpFormat->nBlockAlign;
+  This->sInfo.dwSuggestedBufferSize = This->sInfo.dwLength;
+  This->sInfo.dwSampleSize          = This->lpFormat->nBlockAlign;
+
+  This->fInfo.dwStreams = 1;
+  This->fInfo.dwScale   = 1;
+  This->fInfo.dwRate    = This->lpFormat->nSamplesPerSec;
+  This->fInfo.dwLength  =
+    MulDiv(This->ckData.cksize, This->lpFormat->nSamplesPerSec,
+	   This->lpFormat->nAvgBytesPerSec);
+
+  return AVIERR_OK;
 }
 
 static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
