@@ -192,6 +192,23 @@ static const char * wave_open_flags(DWORD flags)
     return msg;
 }
 
+static const char * wave_out_caps(DWORD dwSupport)
+{
+#define ADD_FLAG(f) if (dwSupport & f) strcat(msg, " " #f)
+    static char msg[256];
+    msg[0] = 0;
+
+    ADD_FLAG(WAVECAPS_PITCH);
+    ADD_FLAG(WAVECAPS_PLAYBACKRATE);
+    ADD_FLAG(WAVECAPS_VOLUME);
+    ADD_FLAG(WAVECAPS_LRVOLUME);
+    ADD_FLAG(WAVECAPS_SYNC);
+    ADD_FLAG(WAVECAPS_SAMPLEACCURATE);
+
+    return msg[0] ? msg + 1 : "";
+#undef FLAG
+}
+
 static void wave_out_test_deviceOut(int device, int format, DWORD flags, LPWAVEOUTCAPS pcaps)
 {
     WAVEFORMATEX wfx;
@@ -334,11 +351,11 @@ static void wave_out_tests()
             name=strdup("not supported");
         }
 
-        trace("  %d: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx\n",
+        trace("  %d: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx(%s)\n",
               d,caps.szPname,(name?name:"failed"),caps.vDriverVersion >> 8,
               caps.vDriverVersion & 0xff,
               caps.wMid,caps.wPid,
-              caps.wChannels,caps.dwFormats,caps.dwSupport);
+              caps.wChannels,caps.dwFormats,caps.dwSupport,wave_out_caps(caps.dwSupport));
         free(name);
 
         for (f=0;f<NB_WIN_FORMATS;f++) {
