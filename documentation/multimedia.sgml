@@ -990,7 +990,7 @@
 
 	<para>
            Configuration of low level drivers is done with the Wine configuration file.
-	   Default keys are provided in winedefault.reg.
+	   Default keys are provided in wine.inf.
 	</para>
 
 	<para>

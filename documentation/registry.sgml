@@ -19,23 +19,19 @@
         them are necessary for even installers to operate correctly.
         The keys that the Wine developers have found necessary to
         install applications are distributed in a file called
-        <filename>winedefault.reg</filename>. It is automatically
+        <filename>wine.inf</filename>. It is automatically
         installed for you if you use the
         <filename>tools/wineinstall</filename> script in the Wine source,
 	but if you want to install it manually, you can do so by using the
         <command>regedit</command> tool to be found in the
 	<filename>programs/regedit/</filename>
 	directory in Wine source.
-	<filename>winedefault.reg</filename> should even be applied if
+	<filename>wine.inf</filename> is  applied even if
 	you plan to use a native Windows registry, since Wine needs some
 	specific registry settings in its registry (for special
 	workarounds for certain programs etc.).
-	In the main Wine source code directory in a <glossterm>terminal</glossterm>, run:
-      </para>
-  <screen>
-  <prompt>$ </><userinput>cd programs/regedit</>
-  <prompt>$ </><userinput>./regedit ../../winedefault.reg</>
-  </screen>
+	This is done automatically by wine the first time you run it.
+       </para>
     </sect2>
 
     <sect2>
@@ -60,7 +56,7 @@
         <para>
           The initial default registry content to be used by the Wine
 	  registry files is in the file
-          <filename>winedefault.reg</filename>. It contains directory
+          <filename>wine.inf</filename>. It contains directory
           paths, class IDs, and more; it must be installed before most
           <filename>INSTALL.EXE</filename> or
           <filename>SETUP.EXE</filename> applications will work.

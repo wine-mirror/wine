@@ -133,12 +133,12 @@ WINEDEBUG=+key,+keyboard wine > key.log 2>&1
         <constant>SUBLANG_*</constant> definitions are in
         <filename>include/winnls.h</filename>, which you might need to
         know to find out which numbers your language is assigned, and
-        find it in the debugmsg output. The numbers will be
+        find it in the WINEDEBUG output. The numbers will be
         <literal>(SUBLANG * 0x400 + LANG)</literal>, so, for example
         the combination <literal>LANG_NORWEGIAN (0x14)</literal> and
         <literal>SUBLANG_DEFAULT (0x1)</literal> will be (in hex)
         <literal>14 + 1*400 = 414</literal>, so since I'm Norwegian, I
-        could look for <literal>0414</literal> in the debugmsg output
+        could look for <literal>0414</literal> in the WINEDEBUG output
         to find out why my keyboard won't detect.
       </para>
       <para>

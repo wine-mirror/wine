@@ -2709,12 +2709,12 @@ export LIB_ODBC_DRIVER_MANAGER=/usr/lib/libodbc.so.1.0.0
           calling code and the Unix ODBC library.
         </para>
         <para>
-          If you have any problems then you can use the debugmsg channel
-          odbc32 to trace what is happening.  One word of warning.  Some
-          programs actually cheat a little and bypass the ODBC library.  For
-          example the Crystal Reports engine goes to the registry to check on
-          the DSN.  The fix for this is documented at unixODBC's site where
-          there is a section on using unixODBC with Wine.
+          If you have any problems then you can use WINEDEBUG=+odbc32 command
+          before running wine to trace what is happening.  One word of 
+          warning. Some programs actually cheat a little and bypass the ODBC 
+          library. For example the Crystal Reports engine goes to the registry 
+          to check on the DSN.  The fix for this is documented at unixODBC's
+          site where there is a section on using unixODBC with Wine.
         </para>
       </sect2>
       <sect2>
