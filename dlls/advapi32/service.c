@@ -43,6 +43,8 @@ static const WCHAR _ServiceStartDataW[]  = {'A','D','V','A','P','I','_','S',
 static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
       'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
       'S','e','r','v','i','c','e','s','\\',0 };
+static const WCHAR  szSCMLock[] = {'A','D','V','A','P','I','_','S','C','M',
+                                   'L','O','C','K',0};
 
 /******************************************************************************
  * SC_HANDLEs
@@ -286,8 +288,22 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
  */
 LPVOID WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
 {
-        FIXME("%p\n",hSCManager);
-        return (SC_HANDLE)0xcacacafe;
+    HANDLE ret;
+
+    TRACE("%p\n",hSCManager);
+
+    ret = CreateFileMappingW( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
+                              0, MAX_SERVICE_NAME * sizeof(WCHAR), szSCMLock );
+    if( ret && GetLastError() == ERROR_ALREADY_EXISTS )
+    {
+        CloseHandle( ret );
+        ret = NULL;
+        SetLastError( ERROR_SERVICE_DATABASE_LOCKED );
+    }
+
+    TRACE("returning %p\n", ret);
+
+    return ret;
 }
 
 /******************************************************************************
@@ -295,8 +311,9 @@ LPVOID WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
  */
 BOOL WINAPI UnlockServiceDatabase (LPVOID ScLock)
 {
-        FIXME(": %p\n",ScLock);
-	return TRUE;
+    TRACE("%p\n",ScLock);
+
+    return CloseHandle( (HANDLE) ScLock );
 }
 
 /******************************************************************************
