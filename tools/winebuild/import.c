@@ -976,7 +976,7 @@ static int output_delayed_imports( FILE *outfile )
     fprintf( outfile, "    rec.rec     = 0;\n" );
     fprintf( outfile, "    rec.params  = 2;\n" );
     fprintf( outfile, "    rec.info[0] = imd->szName;\n" );
-    fprintf( outfile, "    rec.info[1] = *pINT + 2;\n" );
+    fprintf( outfile, "    rec.info[1] = *pINT;\n" );
     fprintf( outfile, "#ifdef __GNUC__\n" );
     fprintf( outfile, "    rec.addr = __builtin_return_address(1);\n" );
     fprintf( outfile, "#else\n" );
