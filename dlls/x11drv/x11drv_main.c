@@ -185,7 +185,12 @@ static int error_handler( Display *display, XErrorEvent *error_evt )
                error_evt->error_code, error_evt->request_code );
         return 0;
     }
-    if (synchronous) DebugBreak();  /* force an entry in the debugger */
+    if (synchronous)
+    {
+        ERR( "X protocol error: serial=%ld, request_code=%d - breaking into debugger\n",
+             error_evt->serial, error_evt->request_code );
+        DebugBreak();  /* force an entry in the debugger */
+    }
     old_error_handler( display, error_evt );
     return 0;
 }
