@@ -33,6 +33,7 @@ typedef struct dm_func                          /* driver manager functions */
     const char     *name;
     void           *d_func;
     SQLRETURN      (*func)();
+    SQLRETURN      (*funcW)();
 } DM_FUNC;
 
 typedef struct proxyhandle
