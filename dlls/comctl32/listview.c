@@ -78,6 +78,9 @@ DEFAULT_DEBUG_CHANNEL(listview)
 /* default column width for items in list display mode */
 #define DEFAULT_COLUMN_WIDTH 96 
 
+/* Increment size of the horizontal scroll bar */
+#define REPORT_HSCROLL_INC_SIZE 10
+
 /* 
  * macros
  */
@@ -144,6 +147,43 @@ static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem);
 static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem);
 static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam);
 
+/*************************************************************************
+ * LISTVIEW_UpdateHeaderSize [Internal] 
+ *
+ * Function to resize the header control
+ *
+ * PARAMS
+ *     hwnd             [I] handle to a window
+ *     nNewScrollPos    [I] Scroll Pos to Set
+ *     nOldScrollPos    [I] Previous Scroll Pos
+ *
+ * RETURNS
+ *     nothing
+ *
+ * NOTES
+ */
+static VOID LISTVIEW_UpdateHeaderSize(HWND hwnd, INT nNewScrollPos, INT nOldScrollPos)
+{
+    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+    INT nDiff = nOldScrollPos-nNewScrollPos;
+    RECT winRect;
+    POINT point[2];
+
+    GetWindowRect(infoPtr->hwndHeader, &winRect);
+    point[0].x = winRect.left;
+    point[0].y = winRect.top;
+    point[1].x = winRect.right;
+    point[1].y = winRect.bottom;
+
+    MapWindowPoints(HWND_DESKTOP, hwnd, point, 2);
+    point[0].x += (nDiff * REPORT_HSCROLL_INC_SIZE );
+    point[1].x -= point[0].x;
+
+    SetWindowPos(infoPtr->hwndHeader,0,
+        point[0].x,point[0].y,point[1].x,point[1].y,
+        SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
 /***
  * DESCRIPTION:
  * Update the scrollbars. This functions should be called whenever 
@@ -174,19 +214,18 @@ static VOID LISTVIEW_UpdateScroll(HWND hwnd)
     if (nCountPerPage < GETITEMCOUNT(infoPtr))
     {
       /* calculate new scrollbar range */
-      INT nHiddenItemCount = GETITEMCOUNT(infoPtr) - nCountPerPage;
-      if (nHiddenItemCount % nCountPerColumn == 0)
+      if((GETITEMCOUNT(infoPtr) % nCountPerPage) == 0)
       {
-        scrollInfo.nMax = nHiddenItemCount / nCountPerColumn;
+          scrollInfo.nMax = GETITEMCOUNT(infoPtr) / nCountPerPage * LISTVIEW_GetCountPerRow(hwnd)-1;
       }
       else
       {
-        scrollInfo.nMax = nHiddenItemCount / nCountPerColumn + 1;
+          scrollInfo.nMax = (GETITEMCOUNT(infoPtr) / nCountPerPage)* LISTVIEW_GetCountPerRow(hwnd);
       }
       
       scrollInfo.nPos = ListView_GetTopIndex(hwnd) / nCountPerColumn;
-      /*scrollInfo.nPage = LISTVIEW_GetCountPerRow(hwnd);*/
-      scrollInfo.fMask = SIF_RANGE | SIF_POS /*| SIF_PAGE*/;
+      scrollInfo.nPage = LISTVIEW_GetCountPerRow(hwnd);
+      scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
       SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE);
     }
     else
@@ -200,23 +239,53 @@ static VOID LISTVIEW_UpdateScroll(HWND hwnd)
   }
   else if (uView == LVS_REPORT)
   {
+    RECT clientRect;
     /* update vertical scrollbar */
     scrollInfo.nMin = 0;
-    scrollInfo.nMax = GETITEMCOUNT(infoPtr) - LISTVIEW_GetCountPerColumn(hwnd);
+    scrollInfo.nMax = GETITEMCOUNT(infoPtr) - 1;
     scrollInfo.nPos = ListView_GetTopIndex(hwnd);
-    /*scrollInfo.nPage = nCountPerColumn;*/
-    scrollInfo.fMask = SIF_RANGE | SIF_POS /*| SIF_PAGE*/;
+    scrollInfo.nPage = LISTVIEW_GetCountPerColumn(hwnd);
+    scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
     SetScrollInfo(hwnd, SB_VERT, &scrollInfo, TRUE);
 
     /* update horizontal scrollbar */
-/*     if (infoPtr->nItemWidth > nListWidth) */
-/*     { */
-/*       scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE; */
-/*       SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE); */
-/*     } */
+    infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
+    GetClientRect(hwnd, &clientRect);
 
-    /* horizontal scrolling has not been implemented yet! I experienced some 
-       problems when performing child window scrolling. */
+    if (GetScrollInfo(hwnd, SB_HORZ, &scrollInfo) == FALSE)
+    {
+      scrollInfo.nPos = 0;
+    } 
+    scrollInfo.nMin = 0;
+    scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE  ; 
+    scrollInfo.nPage = (clientRect.right - clientRect.left) / REPORT_HSCROLL_INC_SIZE;
+    scrollInfo.nMax = infoPtr->nItemWidth;
+
+    /* Check to see if we need the scroll bar */
+    if(scrollInfo.nMax < 0)
+    {
+      scrollInfo.nMax = 0;
+    }
+    else
+    {
+      /* Even up the max */
+      scrollInfo.nMax -= (scrollInfo.nMax % REPORT_HSCROLL_INC_SIZE);
+      scrollInfo.nMax = (scrollInfo.nMax / REPORT_HSCROLL_INC_SIZE)-1;
+    }
+    /* Set the scroll pos to the max if the current scroll pos is greater */
+    if((scrollInfo.nPos+scrollInfo.nPage) > scrollInfo.nMax 
+        && scrollInfo.nMax > scrollInfo.nPage)
+    {
+      UINT nOldScrollPos = scrollInfo.nPos;
+      scrollInfo.nPos = scrollInfo.nMax;
+      SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE); 
+      GetScrollInfo(hwnd, SB_HORZ, &scrollInfo);
+      LISTVIEW_UpdateHeaderSize(hwnd, scrollInfo.nPos, nOldScrollPos);
+    }
+    else
+    {
+        SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE); 
+    }
   }
   else
   {
@@ -258,8 +327,8 @@ static VOID LISTVIEW_UpdateScroll(HWND hwnd)
         }
           
         scrollInfo.nMin = 0;
-        /*scrollInfo.nPage = 10;*/
-        scrollInfo.fMask = SIF_RANGE | SIF_POS /*| SIF_PAGE*/;
+        scrollInfo.nPage = 10;
+        scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
         SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE);
       }
       else
@@ -301,8 +370,8 @@ static VOID LISTVIEW_UpdateScroll(HWND hwnd)
         }
 
         scrollInfo.nMin = 0;
-        /*scrollInfo.nPage = 10;*/
-        scrollInfo.fMask = SIF_RANGE | SIF_POS /*| SIF_PAGE*/;
+        scrollInfo.nPage = 10;
+        scrollInfo.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
         SetScrollInfo(hwnd, SB_VERT, &scrollInfo, TRUE);
       }
       else
@@ -1951,12 +2020,17 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
 static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd,0);
+  SCROLLINFO scrollInfo;
   INT nDrawPosY = infoPtr->rcList.top;
   INT nColumnCount;
   RECT rcItem;
   INT  j;
   INT nItem;
   INT nLast;
+
+  ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
+  scrollInfo.cbSize = sizeof(SCROLLINFO);
+  scrollInfo.fMask = SIF_POS;
 
   nItem = ListView_GetTopIndex(hwnd);
 
@@ -1973,6 +2047,14 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc)
       rcItem.right = max(rcItem.left, rcItem.right - REPORT_MARGINX);
       rcItem.top = nDrawPosY;
       rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+
+      /* Offset the Scroll Bar Pos */
+      if (GetScrollInfo(hwnd, SB_HORZ, &scrollInfo) != FALSE) 
+      {
+        rcItem.left -= (scrollInfo.nPos * REPORT_HSCROLL_INC_SIZE);
+        rcItem.right -= (scrollInfo.nPos * REPORT_HSCROLL_INC_SIZE);
+      }
+
       if (j == 0)
       {
         LISTVIEW_DrawItem(hwnd, hdc, nItem, rcItem); 
@@ -5776,12 +5858,11 @@ static LRESULT LISTVIEW_GetFont(HWND hwnd)
 static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
                                 HWND hScrollWnd)
 {
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   SCROLLINFO scrollInfo;
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
-  scrollInfo.fMask = /*SIF_PAGE |*/ SIF_POS | SIF_RANGE;
+  scrollInfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
  
   if (GetScrollInfo(hwnd, SB_VERT, &scrollInfo) != FALSE)
   {
@@ -5805,20 +5886,10 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
     case SB_PAGEUP:
       if (scrollInfo.nPos > scrollInfo.nMin)
       {
-        INT nPage = 0;
 
-        if (uView == LVS_REPORT)
+        if (scrollInfo.nPos >= scrollInfo.nPage)
         {
-          nPage = LISTVIEW_GetCountPerColumn(hwnd);
-        }
-        else if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
-        {
-          nPage = 10;
-        }
-
-        if (scrollInfo.nPos >= nPage)
-        {
-          scrollInfo.nPos -= nPage;
+          scrollInfo.nPos -= scrollInfo.nPage;
         }
         else
         {
@@ -5830,20 +5901,9 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
     case SB_PAGEDOWN:
       if (scrollInfo.nPos < scrollInfo.nMax)
       {
-        INT nPage = 0;
-
-        if (uView == LVS_REPORT)
+        if (scrollInfo.nPos <= scrollInfo.nMax - scrollInfo.nPage)
         {
-          nPage = LISTVIEW_GetCountPerColumn(hwnd);
-        }
-        else if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
-        {
-          nPage = 10;
-        }
-        
-        if (scrollInfo.nPos <= scrollInfo.nMax - nPage)
-        {
-          scrollInfo.nPos += nPage;
+          scrollInfo.nPos += scrollInfo.nPage;
         }
         else
         {
@@ -5885,12 +5945,11 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
 static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
                                 HWND hScrollWnd)
 {
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   SCROLLINFO scrollInfo;
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
-  scrollInfo.fMask = /*SIF_PAGE |*/ SIF_POS | SIF_RANGE;
+  scrollInfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
  
   if (GetScrollInfo(hwnd, SB_HORZ, &scrollInfo) != FALSE)
   {
@@ -5915,20 +5974,9 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
     case SB_PAGELEFT:
       if (scrollInfo.nPos > scrollInfo.nMin)
       {
-        INT nPage = 0;
-
-        if (uView == LVS_LIST)
+        if (scrollInfo.nPos >= scrollInfo.nPage)
         {
-          nPage = LISTVIEW_GetCountPerRow(hwnd);
-        }
-        else if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
-        {
-          nPage = 10;
-        }
-        
-        if (scrollInfo.nPos >= nPage)
-        {
-          scrollInfo.nPos -= nPage;
+          scrollInfo.nPos -= scrollInfo.nPage;
         }
         else
         {
@@ -5940,20 +5988,9 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
     case SB_PAGERIGHT:
       if (scrollInfo.nPos < scrollInfo.nMax)
       {
-        INT nPage = 0;
-
-        if (uView == LVS_LIST)
+        if (scrollInfo.nPos <= scrollInfo.nMax - scrollInfo.nPage)
         {
-          nPage = LISTVIEW_GetCountPerRow(hwnd);
-        }
-        else if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
-        {
-          nPage = 10;
-        }
-        
-        if (scrollInfo.nPos <= scrollInfo.nMax - nPage)
-        {
-          scrollInfo.nPos += nPage;
+          scrollInfo.nPos += scrollInfo.nPage;
         }
         else
         {
@@ -5969,8 +6006,15 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
 
     if (nOldScrollPos != scrollInfo.nPos)
     {
+      UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
       scrollInfo.fMask = SIF_POS;
       SetScrollInfo(hwnd, SB_HORZ, &scrollInfo, TRUE);
+      scrollInfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
+      GetScrollInfo(hwnd, SB_HORZ, &scrollInfo);
+      if(uView == LVS_REPORT)
+      {
+          LISTVIEW_UpdateHeaderSize(hwnd, scrollInfo.nPos, nOldScrollPos);
+      }
       InvalidateRect(hwnd, NULL, TRUE);
     }
   }
@@ -6369,7 +6413,7 @@ static LRESULT LISTVIEW_Notify(HWND hwnd, INT nCtrlId, LPNMHDR lpnmh)
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
       InvalidateRect(hwnd, NULL, TRUE);
     }
-    if(lpnmh->code ==  HDN_ITEMCLICKA)
+    else if(lpnmh->code ==  HDN_ITEMCLICKA)
     {
         /* Handle sorting by Header Column */
         NMLISTVIEW nmlv;
@@ -6384,8 +6428,18 @@ static LRESULT LISTVIEW_Notify(HWND hwnd, INT nCtrlId, LPNMHDR lpnmh)
         nmlv.iSubItem = pnmHeader->iItem;
         
         ListView_LVNotify(GetParent(hwnd),lCtrlId, &nmlv);
-        InvalidateRect(hwnd, NULL, TRUE);
 
+    }
+    else if(lpnmh->code == NM_RELEASEDCAPTURE)
+    {
+      /* Idealy this should be done in HDN_ENDTRACKA
+       * but since SetItemBounds in Header.c is called after
+       * the notification is sent, it is neccessary to handle the
+       * update of the scroll bar here (Header.c works fine as it is,
+       * no need to disturb it)
+       */
+      LISTVIEW_UpdateScroll(hwnd);
+      InvalidateRect(hwnd, NULL, TRUE);
     }
 
   }
