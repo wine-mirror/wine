@@ -1119,6 +1119,7 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
     case VWIN32_DIOC_DOS_INT13:
     case VWIN32_DIOC_DOS_INT25:
     case VWIN32_DIOC_DOS_INT26:
+	case VWIN32_DIOC_DOS_DRIVEINFO:
     {
         CONTEXT86 cxt;
         DIOC_REGISTERS *pIn  = (DIOC_REGISTERS *)lpvInBuffer;
@@ -1130,7 +1131,8 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
                (dwIoControlCode == VWIN32_DIOC_DOS_IOCTL)? "VWIN32_DIOC_DOS_IOCTL" :
                (dwIoControlCode == VWIN32_DIOC_DOS_INT13)? "VWIN32_DIOC_DOS_INT13" :
                (dwIoControlCode == VWIN32_DIOC_DOS_INT25)? "VWIN32_DIOC_DOS_INT25" :
-               (dwIoControlCode == VWIN32_DIOC_DOS_INT26)? "VWIN32_DIOC_DOS_INT26" : "???",
+               (dwIoControlCode == VWIN32_DIOC_DOS_INT26)? "VWIN32_DIOC_DOS_INT26" : 
+               (dwIoControlCode == VWIN32_DIOC_DOS_DRIVEINFO)? "VWIN32_DIOC_DOS_DRIVEINFO" :  "???",
                pIn->reg_EAX, pIn->reg_EBX, pIn->reg_ECX,
                pIn->reg_EDX, pIn->reg_ESI, pIn->reg_EDI );
 
@@ -1142,6 +1144,7 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
         case VWIN32_DIOC_DOS_INT13: INT_Int13Handler( &cxt ); break;
         case VWIN32_DIOC_DOS_INT25: INT_Int25Handler( &cxt ); break;
         case VWIN32_DIOC_DOS_INT26: INT_Int26Handler( &cxt ); break;
+		case VWIN32_DIOC_DOS_DRIVEINFO:	DOS3Call( &cxt ); break; /* Call int 21h 730x */
         }
 
         CONTEXT_2_DIOCRegs( &cxt, pOut );
