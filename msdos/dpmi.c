@@ -270,6 +270,7 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
     NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
     RMCB *CurrRMCB;
     int alloc = 0, already = 0;
+    BYTE *code;
 
     GlobalUnlock16( GetCurrentTask() );
 
@@ -280,6 +281,25 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
                  CS_reg(context), IP_reg(context), args, iret?"IRET":"FAR" );
 
 callrmproc_again:
+
+/* there might be some code that just jumps to RMCBs or the like,
+   in which case following the jumps here might get us to a shortcut */
+    code = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), EIP_reg(context));
+    switch (*code) {
+    case 0xe9: /* JMP NEAR */
+      IP_reg(context) += 3 + *(WORD *)(code+1);
+      /* yeah, I know these gotos don't look good... */
+      goto callrmproc_again;
+    case 0xea: /* JMP FAR */
+      IP_reg(context) = *(WORD *)(code+1);
+      CS_reg(context) = *(WORD *)(code+3);
+      /* ...but since the label is there anyway... */
+      goto callrmproc_again;
+    case 0xeb: /* JMP SHORT */
+      IP_reg(context) += 2 + *(signed char *)(code+1);
+      /* ...because of other gotos below, so... */
+      goto callrmproc_again;
+    }
 
 /* shortcut for chaining to internal interrupt handlers */
     if ((CS_reg(context) == 0xF000) && iret) {
