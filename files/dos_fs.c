@@ -1072,7 +1072,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     
     TRACE_(dosfs)("converting '%s'\n", name );
 
-    if (!name || !result || ((drive = DOSFS_GetPathDrive( &name )) == -1) )
+    if (!name || ((drive = DOSFS_GetPathDrive( &name )) == -1) )
     {   SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
@@ -1136,10 +1136,13 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
         CharUpperA( buffer );
        
-    if (unicode)
-        lstrcpynAtoW( (LPWSTR)result, buffer, len );
-    else
-        lstrcpynA( result, buffer, len );
+    if (result)
+    {
+	if (unicode)
+	    lstrcpynAtoW( (LPWSTR)result, buffer, len );
+	else
+	    lstrcpynA( result, buffer, len );
+    }
 
     TRACE_(dosfs)("returning '%s'\n", buffer );
 
@@ -1164,7 +1167,7 @@ DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
                                  LPSTR *lastpart )
 {
     DWORD ret = DOSFS_DoGetFullPathName( name, len, buffer, FALSE );
-    if (ret && lastpart)
+    if (ret && buffer && lastpart)
     {
         LPSTR p = buffer + strlen(buffer);
 
@@ -1188,7 +1191,7 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
     DWORD ret = DOSFS_DoGetFullPathName( nameA, len, (LPSTR)buffer, TRUE );
     HeapFree( GetProcessHeap(), 0, nameA );
-    if (ret && lastpart)
+    if (ret && buffer && lastpart)
     {
         LPWSTR p = buffer + lstrlenW(buffer);
         if (*p != (WCHAR)'\\')
