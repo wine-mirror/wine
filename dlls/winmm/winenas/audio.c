@@ -330,11 +330,11 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
 /*======================================================================*
  *                  Low level WAVE implementation			*
  *======================================================================*/
-
+#if 0
 /* Volume functions derived from Alsaplayer source */
 /* length is the number of 16 bit samples */
-void volume_effect16(void *bufin, void* bufout, int length, int left,
-		int right, int 	nChannels)
+static void volume_effect16(void *bufin, void* bufout, int length, int left,
+                            int right, int nChannels)
 {
   short *d_out = (short *)bufout;
   short *d_in = (short *)bufin;
@@ -359,8 +359,8 @@ void volume_effect16(void *bufin, void* bufout, int length, int left,
 }
 
 /* length is the number of 8 bit samples */
-void volume_effect8(void *bufin, void* bufout, int length, int left,
-		int right, int 	nChannels)
+static void volume_effect8(void *bufin, void* bufout, int length, int left,
+                           int right, int nChannels)
 {
   char *d_out = (char *)bufout;
   char *d_in = (char *)bufin;
@@ -383,12 +383,13 @@ void volume_effect8(void *bufin, void* bufout, int length, int left,
     }
   }
 }
+#endif
 
 /******************************************************************
  *		NAS_CloseDevice
  *
  */
-void		NAS_CloseDevice(WINE_WAVEOUT* wwo)
+static void NAS_CloseDevice(WINE_WAVEOUT* wwo)
 {
   TRACE("NAS_CloseDevice\n");
   nas_close(wwo);

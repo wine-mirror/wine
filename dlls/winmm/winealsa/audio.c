@@ -627,8 +627,6 @@ if (err<0) { \
 
     if (!sw)
 	return;
-
-
 }
 
 /* return a string duplicated on the win32 process heap, free with HeapFree */
@@ -644,7 +642,7 @@ static char* ALSA_strdup(char *s) {
  * Returns either "default" or reads the registry so the user can
  * override the playback/record device used.
  */
-char *ALSA_GetDeviceFromReg(char *value)
+static char *ALSA_GetDeviceFromReg(char *value)
 {
     DWORD res;
     DWORD type;
@@ -1323,7 +1321,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 }
 
 
-void wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
+static void wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
 {
     unsigned short revents;
 

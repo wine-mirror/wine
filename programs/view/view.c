@@ -31,7 +31,7 @@ int deltax = 0, deltay = 0;
 int width = 0, height = 0;
 BOOL isAldus;
 
-BOOL FileOpen(HWND hWnd, char *fn, int fnsz)
+static BOOL FileOpen(HWND hWnd, char *fn, int fnsz)
 {
   OPENFILENAME ofn = { sizeof(OPENFILENAME),
 		       0, 0, NULL, NULL, 0, 0, NULL,

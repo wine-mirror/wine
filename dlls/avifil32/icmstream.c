@@ -111,7 +111,7 @@ static HRESULT AVIFILE_EncodeFrame(IAVIStreamImpl *This,
 				   LPBITMAPINFOHEADER lpbi, LPVOID lpBits);
 static HRESULT AVIFILE_OpenGetFrame(IAVIStreamImpl *This);
 
-inline void AVIFILE_Reset(IAVIStreamImpl *This)
+static inline void AVIFILE_Reset(IAVIStreamImpl *This)
 {
   This->lCurrent      = -1;
   This->lLastKey      = 0;

@@ -157,7 +157,7 @@ static int change_channel_CB(HANDLE hProcess, void* addr, char* buffer, void* pm
     return 1;
 }
 
-void* get_symbol(HANDLE hProcess, char* name, char* lib)
+static void* get_symbol(HANDLE hProcess, char* name, char* lib)
 {
     char                buffer[sizeof(IMAGEHLP_SYMBOL) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;

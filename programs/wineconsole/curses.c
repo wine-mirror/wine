@@ -267,7 +267,7 @@ static void	WCCURSES_PosCursor(const struct inner_data* data)
  *
  * Sets a new shape for the cursor
  */
-void	WCCURSES_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
+static void	WCCURSES_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
 {
     /* we can't do much about the size... */
     data->curcfg.cursor_size = size;
@@ -280,7 +280,7 @@ void	WCCURSES_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force
  *
  * Recomputes all the components (mainly scroll bars) positions
  */
-void	WCCURSES_ComputePositions(struct inner_data* data)
+static void	WCCURSES_ComputePositions(struct inner_data* data)
 {
     int         x, y;
 

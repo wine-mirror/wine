@@ -515,7 +515,7 @@ int status;
  *
  * Make a copy of the environment.
  */
-WCHAR *WCMD_dupenv( const WCHAR *env )
+static WCHAR *WCMD_dupenv( const WCHAR *env )
 {
   WCHAR *env_copy;
   int len;
@@ -575,7 +575,7 @@ void WCMD_setlocal (const char *s) {
 /*****************************************************************************
  * WCMD_strchrW
  */
-inline WCHAR *WCMD_strchrW(WCHAR *str, WCHAR ch)
+static inline WCHAR *WCMD_strchrW(WCHAR *str, WCHAR ch)
 {
    while(*str)
    {
@@ -757,7 +757,7 @@ DWORD count;
 /****************************************************************************
  * WCMD_compare
  */
-int WCMD_compare( const void *a, const void *b )
+static int WCMD_compare( const void *a, const void *b )
 {
     int r;
     const char * const *str_a = a, * const *str_b = b;
@@ -773,7 +773,7 @@ int WCMD_compare( const void *a, const void *b )
  *
  * sort variables into order for display
  */
-void WCMD_setshow_sortenv(const char *s)
+static void WCMD_setshow_sortenv(const char *s)
 {
   UINT count=0, len=0, i;
   const char **str;

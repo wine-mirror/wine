@@ -1379,8 +1379,8 @@ static void AVISaveOptionsUpdate(HWND hWnd)
 
 }
 
-INT_PTR CALLBACK AVISaveOptionsDlgProc(HWND hWnd, UINT uMsg,
-				    WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK AVISaveOptionsDlgProc(HWND hWnd, UINT uMsg,
+                                              WPARAM wParam, LPARAM lParam)
 {
   DWORD dwInterleave;
   BOOL  bIsInterleaved;

@@ -276,8 +276,8 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
 
 /* Volume functions derived from Alsaplayer source */
 /* length is the number of 16 bit samples */
-void volume_effect16(void *bufin, void* bufout, int length, int left,
-		int right, int 	nChannels)
+static void volume_effect16(void *bufin, void* bufout, int length, int left,
+                            int right, int nChannels)
 {
   short *d_out = (short *)bufout;
   short *d_in = (short *)bufin;
@@ -302,8 +302,8 @@ void volume_effect16(void *bufin, void* bufout, int length, int left,
 }
 
 /* length is the number of 8 bit samples */
-void volume_effect8(void *bufin, void* bufout, int length, int left,
-		int right, int 	nChannels)
+static void volume_effect8(void *bufin, void* bufout, int length, int left,
+                           int right, int 	nChannels)
 {
   BYTE *d_out = (BYTE *)bufout;
   BYTE *d_in = (BYTE *)bufin;
@@ -331,7 +331,7 @@ void volume_effect8(void *bufin, void* bufout, int length, int left,
  *		ARTS_CloseWaveOutDevice
  *
  */
-void		ARTS_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
+static void ARTS_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
 {
   arts_close_stream(wwo->play_stream); 	/* close the arts stream */
   wwo->play_stream = (arts_stream_t*)-1;
@@ -350,7 +350,7 @@ void		ARTS_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
  *		ARTS_CloseWaveInDevice
  *
  */
-void		ARTS_CloseWaveInDevice(WINE_WAVEIN* wwi)
+static void ARTS_CloseWaveInDevice(WINE_WAVEIN* wwi)
 {
   arts_close_stream(wwi->record_stream); 	/* close the arts stream */
   wwi->record_stream = (arts_stream_t*)-1;

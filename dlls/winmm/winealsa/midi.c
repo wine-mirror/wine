@@ -1084,7 +1084,7 @@ static DWORD modReset(WORD wDevID)
  *
  * Helper for ALSA_MidiInit
  */
-void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, int cap, int type)
+static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, int cap, int type)
 {
     if (cap & SND_SEQ_PORT_CAP_WRITE) {
 	TRACE("OUT (%d:%s:%s:%d:%s:%x)\n",snd_seq_client_info_get_client(cinfo),

@@ -24,7 +24,7 @@
 #include "params.h"
 
 extern void WINAPI Control_RunDLL(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdShow);
-void launch(const char *what)
+static void launch(const char *what)
 {
   Control_RunDLL(GetDesktopWindow(), 0, what, SW_SHOW);
   exit(0);

@@ -40,7 +40,7 @@ typedef LPSTR (*wine_get_unix_file_name_t) ( LPCWSTR dos );
 /*
  * handle an option
  */
-int option(int shortopt, char *longopt)
+static int option(int shortopt, char *longopt)
 {
     const char *helpmsg =
     "Convert PATH(s) to Unix or Windows long or short paths.\n"
@@ -83,7 +83,7 @@ int option(int shortopt, char *longopt)
 /*
  * Parse command line options
  */
-int parse_options(char *argv[])
+static int parse_options(char *argv[])
 {
     int outputformats = 0;
     int done = 0;

@@ -202,7 +202,7 @@ static void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL 
  *
  * Recomputes all the components (mainly scroll bars) positions
  */
-void	WCUSER_ComputePositions(struct inner_data* data)
+static void	WCUSER_ComputePositions(struct inner_data* data)
 {
     RECT		r;
     int			dx, dy;
@@ -1299,7 +1299,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
  *
  *
  */
-void WCUSER_DeleteBackend(struct inner_data* data)
+static void WCUSER_DeleteBackend(struct inner_data* data)
 {
     if (!PRIVATE(data)) return;
     if (PRIVATE(data)->hMemDC)		DeleteDC(PRIVATE(data)->hMemDC);

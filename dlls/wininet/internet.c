@@ -90,17 +90,17 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
               LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
 static VOID INTERNET_ExecuteWork();
 
-DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
-DWORD dwNumThreads;
-DWORD dwNumIdleThreads;
-DWORD dwNumJobs;
-HANDLE hEventArray[2];
+static DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
+static DWORD dwNumThreads;
+static DWORD dwNumIdleThreads;
+static DWORD dwNumJobs;
+static HANDLE hEventArray[2];
 #define hQuitEvent hEventArray[0]
 #define hWorkEvent hEventArray[1]
-CRITICAL_SECTION csQueue;
-LPWORKREQUEST lpHeadWorkQueue;
-LPWORKREQUEST lpWorkQueueTail;
-HMODULE WININET_hModule;
+static CRITICAL_SECTION csQueue;
+static LPWORKREQUEST lpHeadWorkQueue;
+static LPWORKREQUEST lpWorkQueueTail;
+static HMODULE WININET_hModule;
 
 extern void URLCacheContainers_CreateDefaults();
 extern void URLCacheContainers_DeleteAll();
@@ -1036,10 +1036,9 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
  * Helper function for InternetCrackUrlW
  *
  */
-void ConvertUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen,
-                              LPWSTR lpwszComponent, DWORD dwwComponentLen,
-                              LPCSTR lpszStart,
-                              LPCWSTR lpwszStart)
+static void ConvertUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen,
+                                     LPWSTR lpwszComponent, DWORD dwwComponentLen,
+                                     LPCSTR lpszStart, LPCWSTR lpwszStart)
 {
     if (*dwComponentLen != 0)
     {
@@ -1104,6 +1103,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
       HeapFree(GetProcessHeap(), 0, lpwszUrl);
       return FALSE;
   }
+
   ConvertUrlComponentValue(&lpUrlComponents->lpszHostName, &lpUrlComponents->dwHostNameLength,
                            UCW.lpszHostName, UCW.dwHostNameLength,
                            lpszUrl, lpwszUrl);
@@ -1241,7 +1241,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     if(dwUrlLength==0)
         dwUrlLength=strlenW(lpszUrl);
 
-    TRACE("\n");
+    TRACE("(%s %lu %lx %p)\n", debugstr_w(lpszUrl), dwUrlLength, dwFlags, lpUC);
 
     /* Determine if the URI is absolute. */
     while (*lpszap != '\0')
@@ -1771,7 +1771,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             else
             {
                 memcpy(lpBuffer, &type, sizeof(ULONG));
-                    *lpdwBufferLength = sizeof(ULONG);
+                *lpdwBufferLength = sizeof(ULONG);
                 bSuccess = TRUE;
             }
             break;
@@ -1786,7 +1786,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             else
             {
                 memcpy(lpBuffer, &flags, sizeof(ULONG));
-                    *lpdwBufferLength = sizeof(ULONG);
+                *lpdwBufferLength = sizeof(ULONG);
                 bSuccess = TRUE;
             }
             break;
@@ -2391,7 +2391,7 @@ void INTERNET_SetLastError(DWORD dwError)
  * RETURNS
  *
  */
-DWORD INTERNET_GetLastError()
+DWORD INTERNET_GetLastError(void)
 {
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
     return lpwite->dwError;
@@ -2406,7 +2406,7 @@ DWORD INTERNET_GetLastError()
  * RETURNS
  *
  */
-DWORD INTERNET_WorkerThreadFunc(LPVOID *lpvParam)
+static DWORD INTERNET_WorkerThreadFunc(LPVOID *lpvParam)
 {
     DWORD dwWaitRes;
 
@@ -2441,7 +2441,7 @@ DWORD INTERNET_WorkerThreadFunc(LPVOID *lpvParam)
  * RETURNS
  *
  */
-BOOL INTERNET_InsertWorkRequest(LPWORKREQUEST lpWorkRequest)
+static BOOL INTERNET_InsertWorkRequest(LPWORKREQUEST lpWorkRequest)
 {
     BOOL bSuccess = FALSE;
     LPWORKREQUEST lpNewRequest;
@@ -2481,7 +2481,7 @@ BOOL INTERNET_InsertWorkRequest(LPWORKREQUEST lpWorkRequest)
  * RETURNS
  *
  */
-BOOL INTERNET_GetWorkRequest(LPWORKREQUEST lpWorkRequest)
+static BOOL INTERNET_GetWorkRequest(LPWORKREQUEST lpWorkRequest)
 {
     BOOL bSuccess = FALSE;
     LPWORKREQUEST lpRequest = NULL;
@@ -2560,7 +2560,7 @@ lerror:
  * RETURNS
  *
  */
-static VOID INTERNET_ExecuteWork()
+static VOID INTERNET_ExecuteWork(void)
 {
     WORKREQUEST workRequest;
 
@@ -2786,7 +2786,7 @@ static VOID INTERNET_ExecuteWork()
  * RETURNS
  *
  */
-LPSTR INTERNET_GetResponseBuffer()
+LPSTR INTERNET_GetResponseBuffer(void)
 {
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
     TRACE("\n");

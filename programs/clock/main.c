@@ -320,7 +320,7 @@ static VOID CLOCK_Paint(HWND hWnd)
  *           CLOCK_WndProc
  */
 
-LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
 	/* L button drag moves the window */
