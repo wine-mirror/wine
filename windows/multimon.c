@@ -4,9 +4,56 @@
  * Copyright 1998 Turchanov Sergey
  */
 
+#include "monitor.h"
 #include "windows.h"
 
+/**********************************************************************/
+
 #define xPRIMARY_MONITOR ((HMONITOR)0x12340042)
+
+MONITOR MONITOR_PrimaryMonitor;
+
+/***********************************************************************
+ *              MONITOR_Initialize
+ */
+void MONITOR_Initialize(MONITOR *pMonitor)
+{
+  pMonitor->pDriver->pInitialize(pMonitor);
+}
+
+/***********************************************************************
+ *              MONITOR_Finalize
+ */
+void MONITOR_Finalize(MONITOR *pMonitor)
+{
+  pMonitor->pDriver->pFinalize(pMonitor);
+}
+
+/***********************************************************************
+ *              MONITOR_GetWidth
+ */
+int MONITOR_GetWidth(MONITOR *pMonitor)
+{
+  return pMonitor->pDriver->pGetWidth(pMonitor);
+}
+
+/***********************************************************************
+ *              MONITOR_GetHeight
+ */
+int MONITOR_GetHeight(MONITOR *pMonitor)
+{
+  return pMonitor->pDriver->pGetHeight(pMonitor);
+}
+
+/***********************************************************************
+ *              MONITOR_GetDepth
+ */
+int MONITOR_GetDepth(MONITOR *pMonitor)
+{
+  return pMonitor->pDriver->pGetDepth(pMonitor);
+}
+
+/**********************************************************************/
 
 HMONITOR WINAPI MonitorFromPoint(POINT32 ptScreenCoords, DWORD dwFlags)
 {
