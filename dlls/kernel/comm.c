@@ -297,7 +297,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 		}
 		if (!strncmp("parity=",ptr,7)) {
 			lpdcb->fParity	= TRUE;
-			switch (ptr[8]) {
+			switch (ptr[7]) {
 			case 'N':case 'n':
 				lpdcb->fParity	= FALSE;
 				lpdcb->Parity	= NOPARITY;
