@@ -163,10 +163,8 @@ static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT
     if (gl_d3d_dev->cull_face != FALSE) glDisable(GL_CULL_FACE);
     if (use_alpha) {
 	if (gl_d3d_dev->alpha_test == FALSE) glEnable(GL_ALPHA_TEST);
-	if (((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) != 0x00) ||
-	    ((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAFUNC - 1]) != D3DCMP_GREATER)) {
-	    glAlphaFunc(GL_GREATER, 0.0);
-	}
+	if ((gl_d3d_dev->current_alpha_test_func != GL_NOTEQUAL) || (gl_d3d_dev->current_alpha_test_ref != 0.0))
+	    glAlphaFunc(GL_NOTEQUAL, 0.0);
     } else {
 	if (gl_d3d_dev->alpha_test != FALSE) glDisable(GL_ALPHA_TEST);
     }
@@ -190,11 +188,8 @@ static void d3ddevice_restore_state_after_flush(IDirect3DDeviceImpl *d3d_dev, DW
     else if ((gl_d3d_dev->alpha_test == 0) && (use_alpha != 0))
 	glDisable(GL_ALPHA_TEST);
     if (use_alpha) {
-	if (((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) != 0x00) ||
-	    ((d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAFUNC - 1]) != D3DCMP_GREATER)) {
-	    glAlphaFunc(convert_D3D_compare_to_GL(d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAFUNC - 1]),
-			(d3d_dev->state_block.render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) / 255.0);
-	}
+	if ((gl_d3d_dev->current_alpha_test_func != GL_NOTEQUAL) || (gl_d3d_dev->current_alpha_test_ref != 0.0))
+	    glAlphaFunc(gl_d3d_dev->current_alpha_test_func, gl_d3d_dev->current_alpha_test_ref);
     }
     if (gl_d3d_dev->stencil_test != 0) glEnable(GL_STENCIL_TEST);
     if (gl_d3d_dev->cull_face != 0) glEnable(GL_CULL_FACE);
@@ -2152,6 +2147,7 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
 {
     IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     DWORD stage;
+    BOOLEAN enable_colorkey = FALSE;
     
     for (stage = 0; stage < MAX_TEXTURES; stage++) {
 	IDirectDrawSurfaceImpl *surf_ptr = This->current_texture[stage];
@@ -2208,8 +2204,57 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
 	   This will also update the various texture parameters if needed.
 	*/
 	gltex_upload_texture(surf_ptr, This, stage);
+
+	/* And finally check for color-keying (only on first stage) */
+	if (This->current_texture[stage]->surface_desc.dwFlags & DDSD_CKSRCBLT) {
+	    if (stage == 0) {
+		enable_colorkey = TRUE;
+	    } else {
+		static BOOL warn = FALSE;
+		if (warn == FALSE) {
+		    warn = TRUE;
+		    WARN(" Surface has color keying on stage different from 0 (%ld) !", stage);
+		}
+	    }
+	} else {
+	    if (stage == 0) {
+		enable_colorkey = FALSE;
+	    }
+	}
     }
 
+    /* Apparently, whatever the state of BLEND, color keying is always activated for 'old' D3D versions */
+    if (((This->state_block.render_state[D3DRENDERSTATE_COLORKEYENABLE - 1]) ||
+	 (glThis->version == 1)) &&
+	(enable_colorkey)) {
+	TRACE(" colorkey activated.\n");
+	
+	if (glThis->alpha_test == FALSE) {
+	    glEnable(GL_ALPHA_TEST);
+	    glThis->alpha_test = TRUE;
+	}
+	if ((glThis->current_alpha_test_func != GL_NOTEQUAL) || (glThis->current_alpha_test_ref != 0.0)) {
+	    if (This->state_block.render_state[D3DRENDERSTATE_ALPHATESTENABLE - 1] == TRUE) {
+		static BOOL warn = FALSE;
+		if (warn == FALSE) {
+		    warn = TRUE;
+		    WARN(" Overriding application-given alpha test values - some graphical glitches may appear !\n");
+		}
+	    }
+	    glThis->current_alpha_test_func = GL_NOTEQUAL;
+	    glThis->current_alpha_test_ref = 0.0;
+	    glAlphaFunc(GL_NOTEQUAL, 0.0);
+	}
+	/* Some sanity checks should be added here if a game mixes alphatest + color keying...
+	   Only one has been found for now, and the ALPHAFUNC is 'Always' so it works :-) */
+    } else {
+	if (This->state_block.render_state[D3DRENDERSTATE_ALPHATESTENABLE - 1] == FALSE) {
+	    glDisable(GL_ALPHA_TEST);
+	    glThis->alpha_test = FALSE;
+	}
+	/* Maybe we should restore here the application-given alpha test states ? */
+    }
+    
     return stage;
 }
 
@@ -3712,7 +3757,7 @@ apply_texture_state(IDirect3DDeviceImpl *This)
 }     
 
 HRESULT
-d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surface)
+d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surface, BOOLEAN from_surface)
 {
     IDirect3DDeviceImpl *object;
     IDirect3DDeviceGLImpl *gl_object;
@@ -3744,7 +3789,14 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     InitializeCriticalSection(&(object->crit));
 
     TRACE(" device critical section : %p\n", &(object->crit));
-    
+
+    /* This is just a hack for some badly done games :-/ */
+    if (from_surface) {
+	gl_object->version = 1;
+	TRACE(" using D3D1 special hacks.\n");
+    } else
+	gl_object->version = 7;
+
     device_context = GetDC(surface->ddraw_owner->window);
     gl_object->display = get_display(device_context);
     gl_object->drawable = get_drawable(device_context);
@@ -3868,6 +3920,9 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     if (GL_extensions.glActiveTexture != NULL) {
 	GL_extensions.glActiveTexture(GL_TEXTURE0_WINE);
     }
+    gl_object->current_alpha_test_ref = 0.0;
+    gl_object->current_alpha_test_func = GL_ALWAYS;
+    glAlphaFunc(GL_ALWAYS, 0.0);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDrawBuffer(buffer);

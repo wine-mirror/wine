@@ -117,6 +117,9 @@ typedef struct IDirect3DDeviceGLImpl
     /* The last type of vertex drawn */
     GL_TRANSFORM_STATE transform_state;
 
+    /* Maybe a hack, but it works */
+    DWORD version;
+    
     /* Used to handle fogging faster... */
     BYTE fog_table[3 * 0x10000]; /* 3 is for R, G and B
 				    0x10000 is 0xFF for the vertex color and
@@ -142,6 +145,8 @@ typedef struct IDirect3DDeviceGLImpl
     DWORD prev_clear_stencil;
     D3DVALUE prev_clear_Z;
     BOOLEAN depth_mask, depth_test, alpha_test, stencil_test, cull_face, lighting, blending, fogging;
+    GLenum current_alpha_test_func;
+    GLclampf current_alpha_test_ref;
     GLenum current_tex_env;
     GLenum current_active_tex_unit;
 } IDirect3DDeviceGLImpl;
@@ -180,7 +185,7 @@ extern HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirect
 extern HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirectDrawImpl *d3d);
 extern HRESULT d3dviewport_create(IDirect3DViewportImpl **obj, IDirectDrawImpl *d3d);
 extern HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirectDrawImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc, DWORD dwFlags);
-extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surface);
+extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surface, BOOLEAN from_surface);
 
 /* Used for Direct3D to request the device to enumerate itself */
 extern HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD version) ;

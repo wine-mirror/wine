@@ -332,10 +332,17 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        glDepthFunc(convert_D3D_compare_to_GL(dwRenderState));
 	        break;
 	      
-	    case D3DRENDERSTATE_ALPHAREF:   /* 24 */
-	    case D3DRENDERSTATE_ALPHAFUNC:  /* 25 */
-	        glAlphaFunc(convert_D3D_compare_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_ALPHAFUNC - 1]),
-			    (lpStateBlock->render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) / 255.0);
+	    case D3DRENDERSTATE_ALPHAREF:    /* 24 */
+	    case D3DRENDERSTATE_ALPHAFUNC: { /* 25 */
+		    GLenum func = convert_D3D_compare_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_ALPHAFUNC - 1]);
+		    GLclampf ref = (lpStateBlock->render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) / 255.0;
+
+		    if ((func != glThis->current_alpha_test_func) || (ref != glThis->current_alpha_test_ref)) {
+			glAlphaFunc(func, ref);
+			glThis->current_alpha_test_func = func;
+			glThis->current_alpha_test_ref = ref;
+		    }
+	        }
 	        break;
 
 	    case D3DRENDERSTATE_DITHERENABLE:     /* 26 */
@@ -352,6 +359,11 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		    glDisable(GL_BLEND);
 		}
 	        glThis->blending = dwRenderState;
+
+	        /* Hack for some old games ... */
+	        if (glThis->version == 1) {
+		    lpStateBlock->render_state[D3DRENDERSTATE_COLORKEYENABLE - 1] = dwRenderState;
+		}
 	        break;
 	      
 	    case D3DRENDERSTATE_FOGENABLE: /* 28 */
@@ -395,13 +407,7 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		break;
 
 	    case D3DRENDERSTATE_COLORKEYENABLE:     /* 41 */
-	        /* This needs to be fixed. */
-	        if ((dwRenderState != 0) && (glThis->blending == 0)) {
-		    glEnable(GL_BLEND);
-		} else if ((dwRenderState == 0) && (glThis->blending != 0)) {
-		    glDisable(GL_BLEND);
-		}
-	        glThis->blending = dwRenderState;
+	        /* Nothing done here, only storage matters. */
 	        break;
 
 	    case D3DRENDERSTATE_MIPMAPLODBIAS: /* 46 */
@@ -926,6 +932,8 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 
     /* Used when converting stuff */
     line_increase = src_d->u1.lPitch - (width * bpp);
+
+    TRACE(" uploading texture to memory using conversion %d.\n", convert_type);
     
     switch (convert_type) {
         case CONVERT_PALETTED: {
@@ -996,7 +1004,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    for (y = 0; y < height; y++) {
 		for (x = 0; x < width; x++) {
 		    WORD color = *src++;
-		    *dst = ((color & 0xFFD0) | ((color & 0x1F) << 1));
+		    *dst = ((color & 0xFFC0) | ((color & 0x1F) << 1));
 		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
 			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
 			*dst |= 0x0001;

@@ -146,7 +146,7 @@ create_device_helper(IDirectDrawImpl *This,
     IDirect3DDeviceImpl *lpd3ddev;
     HRESULT ret_value;
 
-    ret_value = d3ddevice_create(&lpd3ddev, This, lpDDS);
+    ret_value = d3ddevice_create(&lpd3ddev, This, lpDDS, FALSE);
     if (FAILED(ret_value)) return ret_value;
     
     if ((iid == NULL) ||
