@@ -513,6 +513,7 @@ typedef struct
 
 /***** Dialogs *****/
 
+#define IS_INTRESOURCE(x)   (((ULONG_PTR)(x) >> 16) == 0)
 #define MAKEINTRESOURCEA(i) (LPSTR)((ULONG_PTR)((WORD)(i)))
 #define MAKEINTRESOURCEW(i) (LPWSTR)((ULONG_PTR)((WORD)(i)))
 

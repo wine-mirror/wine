@@ -3,11 +3,12 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = shell32.dll
-IMPORTS   = shell32 ole32
+IMPORTS   = shell32 ole32 shlwapi advapi32
 EXTRALIBS = -luuid
 
 CTESTS = \
 	generated.c \
+	shellpath.c \
 	shlfileop.c \
 	shlfolder.c \
 	string.c
