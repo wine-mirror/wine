@@ -71,15 +71,26 @@ typedef struct tagHlpFileParagraph
     struct tagHlpFileParagraph* next;
 } HLPFILE_PARAGRAPH;
 
+typedef struct tagHlpFileMacro
+{
+    LPCSTR                      lpszMacro;
+    struct tagHlpFileMacro*     next;
+} HLPFILE_MACRO;
+
 typedef struct tagHlpFilePage
 {
     LPSTR                       lpszTitle;
     HLPFILE_PARAGRAPH*          first_paragraph;
+    HLPFILE_MACRO*              first_macro;
 
     unsigned                    wNumber;
     unsigned                    offset;
     struct tagHlpFilePage*      next;
     struct tagHlpFilePage*      prev;
+
+    DWORD                       browse_bwd;
+    DWORD                       browse_fwd;
+
     struct tagHlpFileFile*      file;
 } HLPFILE_PAGE;
 
@@ -88,12 +99,6 @@ typedef struct
     LONG                        lHash;
     unsigned long               offset;
 } HLPFILE_CONTEXT;
-
-typedef struct tagHlpFileMacro
-{
-    LPCSTR                      lpszMacro;
-    struct tagHlpFileMacro*     next;
-} HLPFILE_MACRO;
 
 typedef struct
 {
@@ -132,9 +137,9 @@ typedef struct tagHlpFileFile
     HLPFILE_WINDOWINFO*         windows;
 } HLPFILE;
 
-HLPFILE      *HLPFILE_ReadHlpFile(LPCSTR lpszPath);
-HLPFILE_PAGE *HLPFILE_Contents(HLPFILE* hlpfile);
-HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG wNum);
+HLPFILE*      HLPFILE_ReadHlpFile(LPCSTR lpszPath);
+HLPFILE_PAGE* HLPFILE_Contents(HLPFILE* hlpfile);
+HLPFILE_PAGE* HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash);
+HLPFILE_PAGE* HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset);
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
-VOID          HLPFILE_FreeHlpFilePage(HLPFILE_PAGE*);
-VOID          HLPFILE_FreeHlpFile(HLPFILE*);
+void          HLPFILE_FreeHlpFile(HLPFILE*);

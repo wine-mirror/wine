@@ -86,23 +86,6 @@ static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
 
 /***********************************************************************
  *
- *           HLPFILE_Contents
- */
-HLPFILE_PAGE *HLPFILE_Contents(HLPFILE *hlpfile)
-{
-    if (!hlpfile) return 0;
-#if 1
-    return hlpfile->first_page;
-#else
-    if (hlpfile->contents_start) 
-        return HLPFILE_PageByHash(hlpfile, hlpfile->contents_start);
-    else
-        return hlpfile->first_page;
-#endif
-}
-
-/***********************************************************************
- *
  *           HLPFILE_PageByNumber
  */
 HLPFILE_PAGE *HLPFILE_PageByNumber(LPCSTR lpszPath, UINT wNum)
@@ -119,51 +102,78 @@ HLPFILE_PAGE *HLPFILE_PageByNumber(LPCSTR lpszPath, UINT wNum)
     return page;
 }
 
+/* FIXME:
+ * this finds the page containing the offset. The offset can either
+ * refer to the top of the page (offset == page->offset), or
+ * to some paragraph inside the page...
+ * As of today, we only return the page... we should also return
+ * a paragraph, and then, while opening a new page, compute the
+ * y-offset of the paragraph to be shown and scroll the window
+ * accordinly
+ */
+/******************************************************************
+ *		HLPFILE_PageByOffset
+ *
+ *
+ */
+HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
+{
+    HLPFILE_PAGE*       page;
+    HLPFILE_PAGE*       found;
+
+    if (!hlpfile) return 0;
+
+    WINE_TRACE("<%s>[%lx]\n", hlpfile->lpszPath, offset);
+
+    if (offset == 0xFFFFFFFF) return NULL;
+    page = NULL;
+
+    for (found = NULL, page = hlpfile->first_page; page; page = page->next)
+    {
+        if (page->offset <= offset && (!found || found->offset < page->offset))
+            found = page;
+    }
+    if (!found)
+        WINE_ERR("Page of offset %lu not found in file %s\n",
+                 offset, hlpfile->lpszPath);
+    return found;
+}
+
 /***********************************************************************
  *
  *           HLPFILE_HlpFilePageByHash
  */
 HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
 {
-    HLPFILE_PAGE*       page;
-    HLPFILE_PAGE*       found;
     int                 i;
-
-    WINE_TRACE("path<%s>[%lx]\n", hlpfile->lpszPath, lHash);
 
     if (!hlpfile) return 0;
 
-    page = NULL;
+    WINE_TRACE("<%s>[%lx]\n", hlpfile->lpszPath, lHash);
+
     for (i = 0; i < hlpfile->wContextLen; i++)
     {
-        if (hlpfile->Context[i].lHash != lHash) continue;
-
-        /* FIXME:
-         * this finds the page containing the offset. The offset can either
-         * refer to the top of the page (offset == page->offset), or
-         * to some paragraph inside the page...
-         * As of today, we only return the page... we should also return
-         * a paragraph, and then, while opening a new page, compute the
-         * y-offset of the paragraph to be shown and scroll the window
-         * accordinly
-         */
-        found = NULL;
-        for (page = hlpfile->first_page; page; page = page->next)
-        {
-            if (page->offset <= hlpfile->Context[i].offset)
-            {
-                if (!found || found->offset < page->offset)
-                    found = page;
-            }
-        }
-        if (found) return found;
-
-        WINE_ERR("Page of offset %lu not found in file %s\n",
-                  hlpfile->Context[i].offset, hlpfile->lpszPath);
-        return NULL;
+        if (hlpfile->Context[i].lHash == lHash)
+            return HLPFILE_PageByOffset(hlpfile, hlpfile->Context[i].offset);
     }
+
     WINE_ERR("Page of hash %lx not found in file %s\n", lHash, hlpfile->lpszPath);
     return NULL;
+}
+
+/***********************************************************************
+ *
+ *           HLPFILE_Contents
+ */
+HLPFILE_PAGE* HLPFILE_Contents(HLPFILE *hlpfile)
+{
+    HLPFILE_PAGE*       page = NULL;
+
+    if (!hlpfile) return NULL;
+
+    page = HLPFILE_PageByOffset(hlpfile, hlpfile->contents_start);
+    if (!page) page = hlpfile->first_page;
+    return page;
 }
 
 /***********************************************************************
@@ -216,7 +226,7 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
     hlpfile->first_macro        = NULL;
     hlpfile->wContextLen        = 0;
     hlpfile->Context            = NULL;
-    hlpfile->contents_start     = 0;
+    hlpfile->contents_start     = 0xFFFFFFFF;
     hlpfile->prev               = NULL;
     hlpfile->next               = first_hlpfile;
     hlpfile->wRefCount          = 1;
@@ -338,35 +348,37 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     HLPFILE_PAGE* page;
     BYTE*         title;
     UINT          titlesize;
+    char*         ptr;
+    HLPFILE_MACRO*macro;
 
     if (buf + 0x31 > end) {WINE_WARN("page1\n"); return FALSE;};
     title = buf + GET_UINT(buf, 0x10);
     if (title > end) {WINE_WARN("page2\n"); return FALSE;};
 
-    titlesize = GET_UINT(buf, 4) + 1;
-    page = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_PAGE) + titlesize);
+    titlesize = GET_UINT(buf, 4);
+    page = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_PAGE) + titlesize + 1);
     if (!page) return FALSE;
     page->lpszTitle = (char*)page + sizeof(HLPFILE_PAGE);
 
     if (hlpfile->hasPhrases)
     {
-        HLPFILE_Uncompress2(title, end, page->lpszTitle, page->lpszTitle + titlesize - 1);
+        HLPFILE_Uncompress2(title, end, page->lpszTitle, page->lpszTitle + titlesize);
     }
     else
     {
         if (GET_UINT(buf, 0x4) > GET_UINT(buf, 0) - GET_UINT(buf, 0x10))
         {
             /* need to decompress */
-            HLPFILE_Uncompress3(page->lpszTitle, page->lpszTitle + titlesize - 1, 
+            HLPFILE_Uncompress3(page->lpszTitle, page->lpszTitle + titlesize, 
                                 title, end);
         }
         else
         {
-            memcpy(page->lpszTitle, title, titlesize - 1);
+            memcpy(page->lpszTitle, title, titlesize);
         }
     }
 
-    page->lpszTitle[titlesize - 1] = 0;
+    page->lpszTitle[titlesize] = '\0';
 
     if (hlpfile->first_page)
     {
@@ -385,13 +397,35 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     page->file            = hlpfile;
     page->next            = NULL;
     page->first_paragraph = NULL;
+    page->first_macro     = NULL;
     page->wNumber         = GET_UINT(buf, 0x21);
     page->offset          = offset;
 
-    WINE_TRACE("Added page[%d]: title='%s' offset=%08x\n",
-               page->wNumber, page->lpszTitle, page->offset);
+    page->browse_bwd = GET_UINT(buf, 0x19);
+    page->browse_fwd = GET_UINT(buf, 0x1D);
+
+    WINE_TRACE("Added page[%d]: title='%s' %08lx << %08x >> %08lx\n",
+               page->wNumber, page->lpszTitle, 
+               page->browse_bwd, page->offset, page->browse_fwd);
 
     memset(&attributes, 0, sizeof(attributes));
+
+    /* now load macros */
+    ptr = page->lpszTitle + strlen(page->lpszTitle) + 1;
+    while (ptr < page->lpszTitle + titlesize)
+    {
+        unsigned len = strlen(ptr);
+        WINE_TRACE("macro: %s\n", ptr);
+        macro = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_MACRO) + len + 1);
+        macro->lpszMacro = (char*)(macro + 1);
+        memcpy((char*)macro->lpszMacro, ptr, len + 1);
+        /* FIXME: shall we really link macro in reverse order ??
+         * may produce strange results when played at page opening
+         */
+        macro->next = page->first_macro;
+        page->first_macro = macro;
+        ptr += len + 1;
+    }
 
     return TRUE;
 }
@@ -1764,23 +1798,6 @@ static void HLPFILE_DeleteParagraph(HLPFILE_PARAGRAPH* paragraph)
 
 /***********************************************************************
  *
- *           DeletePage
- */
-static void HLPFILE_DeletePage(HLPFILE_PAGE* page)
-{
-    HLPFILE_PAGE* next;
-
-    while (page)
-    {
-        next = page->next;
-        HLPFILE_DeleteParagraph(page->first_paragraph);
-        HeapFree(GetProcessHeap(), 0, page);
-        page = next;
-    }
-}
-
-/***********************************************************************
- *
  *           DeleteMacro
  */
 static void HLPFILE_DeleteMacro(HLPFILE_MACRO* macro)
@@ -1792,6 +1809,24 @@ static void HLPFILE_DeleteMacro(HLPFILE_MACRO* macro)
         next = macro->next;
         HeapFree(GetProcessHeap(), 0, macro);
         macro = next;
+    }
+}
+
+/***********************************************************************
+ *
+ *           DeletePage
+ */
+static void HLPFILE_DeletePage(HLPFILE_PAGE* page)
+{
+    HLPFILE_PAGE* next;
+
+    while (page)
+    {
+        next = page->next;
+        HLPFILE_DeleteParagraph(page->first_paragraph);
+        HLPFILE_DeleteMacro(page->first_macro);
+        HeapFree(GetProcessHeap(), 0, page);
+        page = next;
     }
 }
 
@@ -1835,14 +1870,4 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
     if (hlpfile->lpszTitle)     HeapFree(GetProcessHeap(), 0, hlpfile->lpszTitle);
     if (hlpfile->lpszCopyright) HeapFree(GetProcessHeap(), 0, hlpfile->lpszCopyright);
     HeapFree(GetProcessHeap(), 0, hlpfile);
-}
-
-/***********************************************************************
- *
- *           FreeHlpFilePage
- */
-void HLPFILE_FreeHlpFilePage(HLPFILE_PAGE* page)
-{
-    if (!page) return;
-    HLPFILE_FreeHlpFile(page->file);
 }

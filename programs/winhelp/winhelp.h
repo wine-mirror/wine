@@ -95,6 +95,7 @@ typedef struct tagWinHelp
     HWND                hButtonBoxWnd;
     HWND                hTextWnd;
     HWND                hShadowWnd;
+    HWND                hHistoryWnd;
 
     HFONT*              fonts;
     UINT                fonts_len;
@@ -103,6 +104,12 @@ typedef struct tagWinHelp
     HCURSOR             hHandCur;
 
     HLPFILE_WINDOWINFO* info;
+
+    /* FIXME: for now it's a fixed size */
+    HLPFILE_PAGE*       history[40];
+    unsigned            histIndex;
+    HLPFILE_PAGE*       back[40];
+    unsigned            backIndex;
 
     struct tagWinHelp*  next;
 } WINHELP_WINDOW;
@@ -131,6 +138,7 @@ extern char MAIN_WIN_CLASS_NAME[];
 extern char BUTTON_BOX_WIN_CLASS_NAME[];
 extern char TEXT_WIN_CLASS_NAME[];
 extern char SHADOW_WIN_CLASS_NAME[];
+extern char HISTORY_WIN_CLASS_NAME[];
 extern char STRING_BUTTON[];
 extern char STRING_MENU_Xx[];
 extern char STRING_DIALOG_TEST[];

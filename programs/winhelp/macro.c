@@ -222,12 +222,32 @@ void MACRO_AppendItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4)
 
 void MACRO_Back(void)
 {
-    WINE_FIXME("()\n");
+    WINHELP_WINDOW* win = Globals.active_win;
+
+    WINE_TRACE("()\n");
+
+    if (win && win->backIndex >= 2)
+        WINHELP_CreateHelpWindow(win->back[--win->backIndex - 1],
+                                 win->info, SW_SHOW);
 }
 
 void MACRO_BackFlush(void)
 {
-    WINE_FIXME("()\n");
+    WINHELP_WINDOW* win = Globals.active_win;
+
+    WINE_TRACE("()\n");
+
+    if (win)
+    {
+        int     i;
+
+        for (i = 0; i < win->backIndex; i++)
+        {
+            HLPFILE_FreeHlpFile(win->back[i]->file);
+            win->back[i] = NULL;
+        }
+        win->backIndex = 0;
+    }
 }
 
 void MACRO_BookmarkDefine(void)
@@ -599,7 +619,14 @@ void MACRO_HelpOnTop(void)
 
 void MACRO_History(void)
 {
-    WINE_FIXME("()\n");
+    WINE_TRACE("()\n");
+
+    if (Globals.active_win && !Globals.active_win->hHistoryWnd)
+    {
+        HWND hWnd = CreateWindow(HISTORY_WIN_CLASS_NAME, "History", WS_OVERLAPPEDWINDOW,
+                                 0, 0, 0, 0, 0, 0, Globals.hInstance, Globals.active_win);
+        ShowWindow(hWnd, SW_NORMAL);
+    }
 }
 
 void MACRO_IfThen(BOOL b, LPCSTR t)
@@ -717,7 +744,9 @@ void MACRO_Next(void)
     HLPFILE_PAGE*   page;
 
     WINE_TRACE("()\n");
-    if ((page = Globals.active_win->page->next) != NULL)
+    page = Globals.active_win->page;
+    page = HLPFILE_PageByOffset(page->file, page->browse_fwd);
+    if (page)
     {
         page->file->wRefCount++;
         WINHELP_CreateHelpWindow(page, Globals.active_win->info, SW_NORMAL);
@@ -754,7 +783,9 @@ void MACRO_Prev(void)
     HLPFILE_PAGE*   page;
 
     WINE_TRACE("()\n");
-    if ((page = Globals.active_win->page->prev) != NULL)
+    page = Globals.active_win->page;
+    page = HLPFILE_PageByOffset(page->file, page->browse_bwd);
+    if (page)
     {
         page->file->wRefCount++;
         WINHELP_CreateHelpWindow(page, Globals.active_win->info, SW_NORMAL);

@@ -24,6 +24,7 @@ char MAIN_WIN_CLASS_NAME[]       = "MS_WINHELP";
 char BUTTON_BOX_WIN_CLASS_NAME[] = "WHButtonBox";
 char TEXT_WIN_CLASS_NAME[]       = "WHText";
 char SHADOW_WIN_CLASS_NAME[]     = "WHShadow";
+char HISTORY_WIN_CLASS_NAME[]    = "WHHistory";
 char STRING_BUTTON[]             = "BUTTON";
 
 /* Resource names */

@@ -38,6 +38,7 @@ static BOOL    WINHELP_RegisterWinClasses(void);
 static LRESULT CALLBACK WINHELP_MainWndProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WINHELP_TextWndProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND, UINT, WPARAM, LPARAM);
+static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND, UINT, WPARAM, LPARAM);
 static void    WINHELP_CheckPopup(UINT);
 static BOOL    WINHELP_SplitLines(HWND hWnd, LPSIZE);
 static void    WINHELP_InitFonts(HWND hWnd);
@@ -104,9 +105,9 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
     {
         strcpy(mwi.type, "primary");
         strcpy(mwi.name, "main");
-        LoadString(Globals.hInstance, STID_WINE_HELP, 
-                   mwi.caption, sizeof(mwi.caption));
-        /*strcpy(mwi.caption, hlpfile->lpszTitle); */
+        if (!LoadString(Globals.hInstance, STID_WINE_HELP, 
+                        mwi.caption, sizeof(mwi.caption)))
+            strcpy(mwi.caption, hlpfile->lpszTitle);
         mwi.origin.x = mwi.origin.y = mwi.size.cx = mwi.size.cy = CW_USEDEFAULT;
         mwi.style = SW_SHOW;
         mwi.sr_color = mwi.sr_color = 0xFFFFFF;
@@ -214,7 +215,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
  */
 static BOOL WINHELP_RegisterWinClasses(void)
 {
-    WNDCLASS class_main, class_button_box, class_text, class_shadow;
+    WNDCLASS class_main, class_button_box, class_text, class_shadow, class_history;
 
     class_main.style               = CS_HREDRAW | CS_VREDRAW;
     class_main.lpfnWndProc         = WINHELP_MainWndProc;
@@ -241,10 +242,15 @@ static BOOL WINHELP_RegisterWinClasses(void)
     class_shadow.hbrBackground     = GetStockObject(GRAY_BRUSH);
     class_shadow.lpszClassName     = SHADOW_WIN_CLASS_NAME;
 
+    class_history = class_main;
+    class_history.lpfnWndProc      = WINHELP_HistoryWndProc;
+    class_history.lpszClassName    = HISTORY_WIN_CLASS_NAME;
+
     return (RegisterClass(&class_main) &&
             RegisterClass(&class_button_box) &&
             RegisterClass(&class_text) &&
-            RegisterClass(&class_shadow));
+            RegisterClass(&class_shadow) &&
+            RegisterClass(&class_history));
 }
 
 typedef struct
@@ -310,6 +316,96 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
     return 0L;
 }
 
+/******************************************************************
+ *		WINHELP_ReuseWindow
+ *
+ *
+ */
+static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin, 
+                                    HLPFILE_PAGE* page, int nCmdShow)
+{
+    int                 i;
+
+    win->hMainWnd      = oldwin->hMainWnd;
+    win->hButtonBoxWnd = oldwin->hButtonBoxWnd;
+    win->hTextWnd      = oldwin->hTextWnd;
+    win->hHistoryWnd   = oldwin->hHistoryWnd;
+    oldwin->hMainWnd = oldwin->hButtonBoxWnd = oldwin->hTextWnd = oldwin->hHistoryWnd = 0;
+
+    SetWindowLong(win->hMainWnd,      0, (LONG)win);
+    SetWindowLong(win->hButtonBoxWnd, 0, (LONG)win);
+    SetWindowLong(win->hTextWnd,      0, (LONG)win);
+    SetWindowLong(win->hHistoryWnd,   0, (LONG)win);
+
+    WINHELP_InitFonts(win->hMainWnd);
+
+    if (page)
+        SetWindowText(win->hMainWnd, page->file->lpszTitle);
+
+    WINHELP_SetupText(win->hTextWnd);
+    InvalidateRect(win->hTextWnd, NULL, TRUE);
+    SendMessage(win->hMainWnd, WM_USER, 0, 0);
+    ShowWindow(win->hMainWnd, nCmdShow);
+    UpdateWindow(win->hTextWnd);
+
+    if (!(win->info->win_style & WS_POPUP))
+    {
+        unsigned        num;
+
+        memcpy(win->history, oldwin->history, sizeof(win->history));
+        win->histIndex = oldwin->histIndex;
+
+        /* FIXME: when using back, we shouldn't update the history... */
+
+        if (page)
+        {
+            for (i = 0; i < win->histIndex; i++)
+                if (win->history[i] == page) break;
+
+            /* if the new page is already in the history, do nothing */
+            if (i == win->histIndex)
+            {
+                num = sizeof(win->history) / sizeof(win->history[0]);
+                if (win->histIndex == num)
+                {
+                    /* we're full, remove latest entry */
+                    HLPFILE_FreeHlpFile(win->history[0]->file);
+                    memmove(&win->history[0], &win->history[1], 
+                            (num - 1) * sizeof(win->history[0]));
+                    win->histIndex--;
+                }
+                win->history[win->histIndex++] = page;
+                page->file->wRefCount++;
+                if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
+            }
+        }
+
+        memcpy(win->back, oldwin->back, sizeof(win->back));
+        win->backIndex = oldwin->backIndex;
+
+        if (page)
+        {
+            num = sizeof(win->back) / sizeof(win->back[0]);
+            if (win->backIndex == num)
+            {
+                /* we're full, remove latest entry */
+                HLPFILE_FreeHlpFile(win->back[0]->file);
+                memmove(&win->back[0], &win->back[1], 
+                        (num - 1) * sizeof(win->back[0]));
+                win->backIndex--;
+            }
+            win->back[win->backIndex++] = page;
+            page->file->wRefCount++;
+        }
+    }
+    else
+        win->backIndex = win->histIndex = 0;
+
+    oldwin->histIndex = oldwin->backIndex = 0;
+    WINHELP_DeleteWindow(oldwin);
+    return TRUE;
+}
+
 /***********************************************************************
  *
  *           WINHELP_CreateHelpWindow
@@ -320,8 +416,10 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     WINHELP_WINDOW *win, *oldwin;
     HWND hWnd;
     BOOL bPrimary;
+    BOOL bPopup;
 
     bPrimary = !lstrcmpi(wi->name, "main");
+    bPopup = wi->win_style & WS_POPUP;
 
     /* Initialize WINHELP_WINDOW struct */
     win = HeapAlloc(GetProcessHeap(), 0,
@@ -341,6 +439,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     win->hButtonBoxWnd = 0;
     win->hTextWnd = 0;
     win->hShadowWnd = 0;
+    win->hHistoryWnd = 0;
 
     win->hArrowCur = LoadCursorA(0, IDC_ARROWA);
     win->hHandCur = LoadCursorA(0, IDC_HANDA);
@@ -372,49 +471,30 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
         HLPFILE_MACRO  *macro;
         for (macro = page->file->first_macro; macro; macro = macro->next)
             MACRO_ExecuteMacro(macro->lpszMacro);
+
+        for (macro = page->first_macro; macro; macro = macro->next)
+            MACRO_ExecuteMacro(macro->lpszMacro);
     }
 
     /* Reuse existing window */
-    if (!(wi->win_style & WS_POPUP))
+    if (!bPopup)
     {
         for (oldwin = win->next; oldwin; oldwin = oldwin->next)
         {
             if (!lstrcmpi(oldwin->lpszName, wi->name))
             {
-                WINHELP_BUTTON *button;
-
-                win->hMainWnd      = oldwin->hMainWnd;
-                win->hButtonBoxWnd = oldwin->hButtonBoxWnd;
-                win->hTextWnd      = oldwin->hTextWnd;
-                oldwin->hMainWnd = oldwin->hButtonBoxWnd = oldwin->hTextWnd = 0;
-
-                SetWindowLong(win->hMainWnd,      0, (LONG)win);
-                SetWindowLong(win->hButtonBoxWnd, 0, (LONG)win);
-                SetWindowLong(win->hTextWnd,      0, (LONG)win);
-
-                WINHELP_InitFonts(win->hMainWnd);
-
-                if (page) {
-                    SetWindowText(win->hMainWnd, page->file->lpszTitle);
-                }
-
-                WINHELP_SetupText(win->hTextWnd);
-                InvalidateRect(win->hTextWnd, NULL, TRUE);
-                SendMessage(win->hMainWnd, WM_USER, 0, 0);
-                ShowWindow(win->hMainWnd, nCmdShow);
-                UpdateWindow(win->hTextWnd);
-
-
-                for (button = oldwin->first_button; button; button = button->next)
-                    DestroyWindow(button->hWnd);
-
-                WINHELP_DeleteWindow(oldwin);
-                return TRUE;
+                return WINHELP_ReuseWindow(win, oldwin, page, nCmdShow);
             }
         }
-    }
 
-    hWnd = CreateWindow((wi->win_style & WS_POPUP) ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
+        win->histIndex = win->backIndex = 1;
+        win->history[0] = win->back[0] = page;
+        page->file->wRefCount += 2;
+    }
+    else
+        win->histIndex = win->backIndex = 0;
+
+    hWnd = CreateWindow(bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
                         wi->caption, wi->win_style,
                         wi->origin.x, wi->origin.y, wi->size.cx, wi->size.cy,
                         0, bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
@@ -854,7 +934,6 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
 
         if (hWnd == Globals.hPopupWnd) Globals.hPopupWnd = 0;
-        if (win->hShadowWnd) DestroyWindow(win->hShadowWnd);
 
         bExit = (Globals.wVersion >= 4 && !lstrcmpi(win->lpszName, "main"));
 
@@ -867,6 +946,72 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         break;
     }
 
+    return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+/******************************************************************
+ *		WINHELP_HistoryWndProc
+ *
+ *
+ */
+static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    WINHELP_WINDOW*     win;
+    PAINTSTRUCT         ps;
+    HDC                 hDc;
+    TEXTMETRIC          tm;
+    int                 i;
+    RECT                r;
+
+    switch (msg)
+    {
+    case WM_NCCREATE:
+        win = (WINHELP_WINDOW*)((LPCREATESTRUCT)lParam)->lpCreateParams;
+        SetWindowLong(hWnd, 0, (LONG)win);
+        win->hHistoryWnd = hWnd;
+        break;
+    case WM_CREATE:
+        win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+        hDc = GetDC(hWnd);
+        GetTextMetrics(hDc, &tm);
+        GetWindowRect(hWnd, &r);
+
+        r.right = r.left + 30 * tm.tmAveCharWidth;
+        r.bottom = r.top + (sizeof(win->history) / sizeof(win->history[0])) * tm.tmHeight;
+        AdjustWindowRect(&r, GetWindowLong(hWnd, GWL_STYLE), FALSE);
+        if (r.left < 0) {r.right -= r.left; r.left = 0;}
+        if (r.top < 0) {r.bottom -= r.top; r.top = 0;}
+
+        MoveWindow(hWnd, r.left, r.top, r.right, r.bottom, TRUE);
+        ReleaseDC(hWnd, hDc);
+        break;
+    case WM_LBUTTONDOWN:
+        win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+        hDc = GetDC(hWnd);
+        GetTextMetrics(hDc, &tm);
+        i = HIWORD(lParam) / tm.tmHeight;
+        if (i < win->histIndex)
+            WINHELP_CreateHelpWindow(win->history[i], win->info, SW_SHOW);
+        ReleaseDC(hWnd, hDc);
+        break;
+    case WM_PAINT:
+        hDc = BeginPaint(hWnd, &ps);
+        win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+        GetTextMetrics(hDc, &tm);
+
+        for (i = 0; i < win->histIndex; i++)
+        {
+            TextOut(hDc, 0, i * tm.tmHeight, win->history[i]->lpszTitle, 
+                    strlen(win->history[i]->lpszTitle));
+        }
+        EndPaint(hWnd, &ps);
+        break;
+    case WM_DESTROY:
+        win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+        if (hWnd == win->hHistoryWnd)
+            win->hHistoryWnd = 0;
+        break;
+    }
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
@@ -1315,19 +1460,41 @@ static void WINHELP_DeleteLines(WINHELP_WINDOW *win)
  *
  *           WINHELP_DeleteWindow
  */
-static void WINHELP_DeleteWindow(WINHELP_WINDOW *win)
+static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
 {
-    WINHELP_WINDOW **w;
+    WINHELP_WINDOW**    w;
+    int                 i;
+    WINHELP_BUTTON*     b;
+    WINHELP_BUTTON*     bp;
 
     for (w = &Globals.win_list; *w; w = &(*w)->next)
+    {
         if (*w == win)
         {
             *w = win->next;
             break;
         }
+    }
+
+    for (b = win->first_button; b; b = bp)
+    {
+        DestroyWindow(b->hWnd);
+        bp = b->next;
+        HeapFree(GetProcessHeap(), 0, b);
+    }
 
     if (win->hShadowWnd) DestroyWindow(win->hShadowWnd);
-    HLPFILE_FreeHlpFilePage(win->page);
+    if (win->hHistoryWnd) DestroyWindow(win->hHistoryWnd);
+
+    for (i = 0; i < win->histIndex; i++)
+    {
+        HLPFILE_FreeHlpFile(win->history[i]->file);
+    }
+
+    for (i = 0; i < win->backIndex; i++)
+        HLPFILE_FreeHlpFile(win->back[i]->file);
+
+    if (win->page) HLPFILE_FreeHlpFile(win->page->file);
     WINHELP_DeleteLines(win);
     HeapFree(GetProcessHeap(), 0, win);
 }
@@ -1359,7 +1526,7 @@ static void WINHELP_InitFonts(HWND hWnd)
     {
         INT i;
 
-        for(i = 0; i < FONTS_LEN; i++)
+        for (i = 0; i < FONTS_LEN; i++)
 	{
             fonts[i] = CreateFontIndirect(&logfontlist[i]);
 	}
