@@ -2,6 +2,7 @@
  * Clock (Danish resources)
  *
  * Copyright 1998 Henrik Olsen <henrik@iaeste.dk>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,38 +19,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  Da
-#define LANGUAGE_NUMBER              6
+MAIN_MENU MENU LANGUAGE LANG_DANISH, SUBLANG_NEUTRAL
+{
+ POPUP "&Instillinger" {
+  MENUITEM "&Analog", 0x100
+  MENUITEM "&Digital", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "&Skrifttype...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "Skjul Titel&linje", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "Se&kunder", 0x107
+  MENUITEM "Da&to", 0x108
+ }
+ POPUP "Inf&o..." {
+  MENUITEM "&Licens", 0x109
+  MENUITEM "&NO WARRANTY", 0x10A
+  MENUITEM "&Om Ur...", 0x10B
+ }
+} 
 
-
-/* System Menu */
-
-#define MENU_ON_TOP                  "&Altid øverst"
-
-
-/* Window Menu */
-
-#define MENU_PROPERTIES              "&Instillinger"
-#define MENU_ANALOG                  "&Analog"
-#define MENU_DIGITAL                 "&Digital"
-#define MENU_FONT                    "&Skrifttype..."
-#define MENU_WITHOUT_TITLE           "Skjul Titel&linje"
-
-#define MENU_SECONDS                 "Se&kunder"
-#define MENU_DATE                    "Da&to"
-
-#define MENU_LANGUAGE                "S&prog"
-#define LANGUAGE_MENU_ITEM           "&Dansk"
-
-#define MENU_INFO                    "Inf&o..."
-#define MENU_INFO_LICENSE            "&Licens"
-#define MENU_INFO_NO_WARRANTY        "&NO WARRANTY"
-#define MENU_INFO_ABOUT_WINE         "&Om Ur..."
-
-
-/* Window Caption */
-
-#define STRING_CLOCK                 "Ur"
-
-
-#include "clock.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_DANISH, SUBLANG_NEUTRAL
+{
+CLOCK, 		"Ur"
+MENU_ON_TOP,	"&Altid øverst"
+}

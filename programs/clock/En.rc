@@ -2,7 +2,7 @@
  * Clock (English resources)
  *
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
- * FIXME: Weak translation !
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,35 +19,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  En
-#define LANGUAGE_NUMBER              0
+MAIN_MENU MENU LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+{
+ POPUP "&Properties" {
+  MENUITEM "Ana&log", 0x100
+  MENUITEM "Digi&tal", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "&Font...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "&Without Titlebar", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "&Seconds", 0x107
+  MENUITEM "&Date", 0x108
+ }
+ POPUP "Inf&o..." {
+  MENUITEM "&License", 0x109
+  MENUITEM "&NO WARRANTY", 0x10A
+  MENUITEM "&About Clock... ", 0x10B
+ }
+} 
 
-
-/* System Menu */
-
-#define MENU_ON_TOP                  "&Always on Top"
-
-/* Window Menu */
-
-#define MENU_PROPERTIES              "&Properties"
-#define MENU_ANALOG                  "Ana&log"
-#define MENU_DIGITAL                 "Digi&tal"
-#define MENU_FONT                    "&Font..."
-#define MENU_WITHOUT_TITLE           "&Without Titlebar"
-
-#define MENU_SECONDS                 "&Seconds"
-#define MENU_DATE                    "&Date"
-
-#define MENU_LANGUAGE                "&Language"
-#define LANGUAGE_MENU_ITEM           "&English"
-
-#define MENU_INFO                    "Inf&o..."
-#define MENU_INFO_LICENSE            "&License"
-#define MENU_INFO_NO_WARRANTY        "&NO WARRANTY"
-#define MENU_INFO_ABOUT_WINE         "&About Clock..."
-
-/* Window Caption */
-#define STRING_CLOCK                 "Clock"
-
-
-#include "clock.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+{
+CLOCK,		"Clock"
+MENU_ON_TOP,	"&Always on Top"
+}

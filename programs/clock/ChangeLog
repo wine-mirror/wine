@@ -1,3 +1,7 @@
+Tue Mar 26 19:15:00 2002  Sylvain Petreolle <spetreolle@yahoo.fr>
+	* [*.rc] [clock_res.h] [main.?] [language.?]
+	Rewrite for NLS use.
+
 Tue Oct 12 20:31:00 1999  Gustavo Junior Alves <alves@correionet.com.br>
 	* [Pt.rc] [Makefile.in]
 	Added Portuguese language support.

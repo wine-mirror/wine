@@ -43,61 +43,77 @@ CLOCK_GLOBALS Globals;
 
 int CLOCK_MenuCommand (WPARAM wParam)
 {  
+CHAR szApp[MAX_STRING_LEN];
+CHAR szAppRelease[MAX_STRING_LEN];
    switch (wParam) {
-     case CL_ANALOG: {
+	/* switch to analog */
+     case 0x100: { 
          Globals.bAnalog = TRUE;
          LANGUAGE_UpdateMenuCheckmarks();
 	 SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
 	 break;	     
        } 
-     case CL_DIGITAL: {
+	/* switch to digital */
+     case 0x101: {
          Globals.bAnalog = FALSE;
          LANGUAGE_UpdateMenuCheckmarks();
 	 SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
 	 break;	       
        }
-     case CL_FONT: {
+	/* change font */
+     case 0x103: {
          MAIN_FileChooseFont();
          break;
        }
-     case CL_WITHOUT_TITLE: {     
+	/* hide title bar */
+     case 0x105: {     
          Globals.bWithoutTitle = !Globals.bWithoutTitle;
          LANGUAGE_UpdateWindowCaption();
          LANGUAGE_UpdateMenuCheckmarks();
          break;
        } 
-     case CL_ON_TOP: {
+	/* always on top */
+     case 0x10D: {
          Globals.bAlwaysOnTop = !Globals.bAlwaysOnTop;
          LANGUAGE_UpdateMenuCheckmarks();
          break;
        }  
-     case CL_SECONDS: {
+	/* show or hide seconds */
+     case 0x107: {
          Globals.bSeconds = !Globals.bSeconds;
          LANGUAGE_UpdateMenuCheckmarks();
          SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
          break;
        }
-     case CL_DATE: {
+	/* show or hide date */
+     case 0x108: {
          Globals.bDate = !Globals.bDate;
          LANGUAGE_UpdateMenuCheckmarks();
          LANGUAGE_UpdateWindowCaption();
          break;
        }
-     case CL_INFO_LICENSE: {
+	/* show license */
+     case 0x109: {
          WineLicense(Globals.hMainWnd);
          break;
        }
-     case CL_INFO_NO_WARRANTY: {
+	/* show warranties */
+     case 0x10A: {
          WineWarranty(Globals.hMainWnd);
          break;
        }
-     case CL_INFO_ABOUT_WINE: {
-         ShellAbout(Globals.hMainWnd, "Clock", "Clock\n" WINE_RELEASE_INFO, 0);
+	/* show "about" box */
+     case 0x10B: {
+         LoadString(Globals.hInstance, 0x10C, szApp, sizeof(szApp));
+         lstrcpy(szAppRelease,szApp);
+         lstrcat(szAppRelease,"\n" WINE_RELEASE_INFO);
+         ShellAbout(Globals.hMainWnd, szApp, szAppRelease, 0);
          break;
        }
      /* Handle languages */
-     default:
+/*     default:
          LANGUAGE_DefaultHandle(wParam); 
+*/
    }
    return 0;
 }
@@ -244,7 +260,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         CW_USEDEFAULT, CW_USEDEFAULT, Globals.MaxX, Globals.MaxY, 0,
         LoadMenu(Globals.hInstance, STRING_MENU_Xx), Globals.hInstance, 0);
 			
-    LANGUAGE_SelectByName("En");
+    LANGUAGE_LoadMenus();
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
 
     LANGUAGE_UpdateMenuCheckmarks();

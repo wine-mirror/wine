@@ -11,8 +11,7 @@ Some ideas for improvements:
 - Implement Timer Mechanism instead Polling.
   Clock does not run if menu is being selected (?).
 
-- Fix English translation by comparing strings from an original English
-  Windows Clock application (I only have a German version).
+- Complete translation for the following languages : Pt,Sk
 
 - Add new .rc resources for all languages you know. That's in fact very easy. 
   Just clone the file En.rc, change the strings and submit it. You can find

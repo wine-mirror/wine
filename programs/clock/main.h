@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "clock_res.h"
+
 #define MAX_STRING_LEN      255
 #define MAX_PATHNAME_LEN    1024
 #define MAX_LANGUAGE_NUMBER (CL_LAST_LANGUAGE - CL_FIRST_LANGUAGE)

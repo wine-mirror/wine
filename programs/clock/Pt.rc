@@ -1,7 +1,8 @@
 /*
- * Clock (English resources)
+ * Clock (Portuguese resources)
  *
  * Copyright 1999 Gustavo Junior Alves <alves@correionet.com.br>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  * FIXME: Weak translation !
  *
  * This library is free software; you can redistribute it and/or
@@ -19,34 +20,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  Pt
-#define LANGUAGE_NUMBER              16
-#define LANGUAGE_MENU_ITEM           "&Português"
+MAIN_MENU MENU LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+{
+ POPUP "&Propriedades" {
+  MENUITEM "&Analógico", 0x100
+  MENUITEM "Digi&tal", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "&Fonte...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "&Sem barra de título", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "&Segundos", 0x107
+  MENUITEM "&Data", 0x108
+ }
+ POPUP "Inf&ormações..." {
+  MENUITEM "&Licença", 0x109
+  MENUITEM "&SEM GARANTIA", 0x10A
+  MENUITEM "&Sobre Clock...", 0x10B
+ }
+} 
 
-/* System Menu */
-
-#define MENU_ON_TOP                  "&Sempre visível"
-
-/* Window Menu */
-
-#define MENU_PROPERTIES              "&Propriedades"
-#define MENU_ANALOG                  "&Analógico"
-#define MENU_DIGITAL                 "&Digital"
-#define MENU_FONT                    "&Fonte..."
-#define MENU_WITHOUT_TITLE           "&Sem barra de título"
-
-#define MENU_SECONDS                 "&Segundos"
-#define MENU_DATE                    "&Data"
-
-#define MENU_LANGUAGE                "&Linguagem"
-
-#define MENU_INFO                    "Inf&ormações..."
-#define MENU_INFO_LICENSE            "&Licença"
-#define MENU_INFO_NO_WARRANTY        "&SEM GARANTIA"
-#define MENU_INFO_ABOUT_WINE         "&Sobre Clock..."
-
-/* Window Caption */
-#define STRING_CLOCK                 "Clock"
-
-
-#include "clock.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+{
+CLOCK,		"Clock"
+MENU_ON_TOP,	"&Sempre visível"
+}

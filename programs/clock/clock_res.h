@@ -1,7 +1,5 @@
 /*
- * Clock resources
- *
- * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ * Copyright 2002 Sylvain Petreolle
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,18 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windows.h"
-#include "main.h"
-
-#include "clock_res.h"
-#include "Da.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Es.rc"
-#include "Fi.rc"
-#include "Fr.rc"
-#include "Pt.rc"
-#include "Sk.rc"
-#include "Sw.rc"
-#include "Wa.rc"
-
+#define CLOCK 0x10C
+#define MENU_ON_TOP 0x10D
+#define MAIN_MENU 0x10E

@@ -3,6 +3,7 @@
  *
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
  * Spanish translation by Pablo Saratxaga <srtxg@chanae.alphanet.ch>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,35 +20,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  Es
-#define LANGUAGE_NUMBER              d
+MAIN_MENU MENU LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
+{
+ POPUP "&Propepiedades" {
+  MENUITEM "Ana&lógico", 0x100
+  MENUITEM "Digi&tal", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "&Fuente...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "Sin barra de &título", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "&Segundos", 0x107
+  MENUITEM "Fe&cha", 0x108
+ }
+ POPUP "Inf&o..." {
+  MENUITEM "&Licencia", 0x109
+  MENUITEM "&SIN &GARANTÍA", 0x10A
+  MENUITEM "&Acerca del Reloj...", 0x10B
+ }
+} 
 
-
-/* System Menu */
-
-#define MENU_ON_TOP                  "Siempre &visible"
-
-/* Window Menu */
-
-#define MENU_PROPERTIES              "&Propepiedades"
-#define MENU_ANALOG                  "Ana&lógico"
-#define MENU_DIGITAL                 "Digi&tal"
-#define MENU_FONT                    "&Fuente..."
-#define MENU_WITHOUT_TITLE           "Sin barra de &título"
-
-#define MENU_SECONDS                 "&Segundos"
-#define MENU_DATE                    "Fe&cha"
-
-#define MENU_LANGUAGE                "&Idioma"
-#define LANGUAGE_MENU_ITEM           "Castellano"
-
-#define MENU_INFO                    "Inf&o..."
-#define MENU_INFO_LICENSE            "&Licencia"
-#define MENU_INFO_NO_WARRANTY        "SIN &GARANTÍA"
-#define MENU_INFO_ABOUT_WINE         "&Acerca del Reloj..."
-
-/* Window Caption */
-#define STRING_CLOCK                 "Reloj"
-
-
-#include "clock.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
+{
+CLOCK,		"Reloj"
+MENU_ON_TOP,	"Siempre &visible"
+}

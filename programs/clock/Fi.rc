@@ -2,6 +2,7 @@
  * Clock (Finnish resources)
  *
  * Copyright 1999 Jukka Iivonen
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,35 +19,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  Fi
-#define LANGUAGE_NUMBER              b
+MAIN_MENU MENU LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
+{
+ POPUP "&Ominaisuudet" {
+  MENUITEM "&Analoginen", 0x100
+  MENUITEM "Di&gitaalinen", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "&Fontti...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "&Ilman otsikkopalkkia", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "&Sekunnit", 0x107
+  MENUITEM "&P‰iv‰m‰‰r‰", 0x108
+ }
+ POPUP "Inf&o..." {
+  MENUITEM "&Lisenssi", 0x109
+  MENUITEM "&EI TAKUUTA", 0x10A
+  MENUITEM "&Kellosta...", 0x10B
+ }
+} 
 
-
-/* System Menu */
-
-#define MENU_ON_TOP                  "&Aina p‰‰llimm‰isen‰"
-
-/* Window Menu */
-
-#define MENU_PROPERTIES              "&Ominaisuudet"
-#define MENU_ANALOG                  "&Analoginen"
-#define MENU_DIGITAL                 "Di&gitaalinen"
-#define MENU_FONT                    "&Fontti..."
-#define MENU_WITHOUT_TITLE           "&Ilman otsikkopalkkia"
-
-#define MENU_SECONDS                 "&Sekunnit"
-#define MENU_DATE                    "&P‰iv‰m‰‰r‰"
-
-#define MENU_LANGUAGE                "&Kieli"
-#define LANGUAGE_MENU_ITEM           "&Finnish"
-
-#define MENU_INFO                    "Inf&o..."
-#define MENU_INFO_LICENSE            "&Lisenssi"
-#define MENU_INFO_NO_WARRANTY        "&EI TAKUUTA"
-#define MENU_INFO_ABOUT_WINE         "&Kellosta..."
-
-/* Window Caption */
-#define STRING_CLOCK                 "Kello"
-
-
-#include "clock.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
+{
+CLOCK,		"Kello"
+MENU_ON_TOP,	"&Aina p‰‰llimm‰isen‰"
+}

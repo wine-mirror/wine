@@ -33,11 +33,11 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
     
         /* analog clock */
         
-        CheckMenuItem(Globals.hPropertiesMenu, CL_ANALOG, \
+        CheckMenuItem(Globals.hPropertiesMenu, 0x100, \
                        MF_BYCOMMAND | MF_CHECKED);
-        CheckMenuItem(Globals.hPropertiesMenu, CL_DIGITAL, \
+        CheckMenuItem(Globals.hPropertiesMenu, 0x101, \
                        MF_BYCOMMAND | MF_UNCHECKED);
-        EnableMenuItem(Globals.hPropertiesMenu, CL_FONT, \
+        EnableMenuItem(Globals.hPropertiesMenu, 0x103, \
                        MF_BYCOMMAND | MF_GRAYED);
     }
         else 
@@ -45,22 +45,22 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
     
         /* digital clock */
         
-        CheckMenuItem(Globals.hPropertiesMenu, CL_ANALOG, \
+        CheckMenuItem(Globals.hPropertiesMenu, 0x100, \
                        MF_BYCOMMAND | MF_UNCHECKED);
-        CheckMenuItem(Globals.hPropertiesMenu, CL_DIGITAL, \
+        CheckMenuItem(Globals.hPropertiesMenu, 0x101, \
                        MF_BYCOMMAND | MF_CHECKED);
-        EnableMenuItem(Globals.hPropertiesMenu, CL_FONT, \
+        EnableMenuItem(Globals.hPropertiesMenu, 0x103, \
                        MF_BYCOMMAND);
                        
     }
     
-    CheckMenuItem(Globals.hPropertiesMenu, CL_WITHOUT_TITLE, MF_BYCOMMAND | \
+    CheckMenuItem(Globals.hPropertiesMenu, 0x105, MF_BYCOMMAND | \
                  (Globals.bWithoutTitle ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hSystemMenu, CL_ON_TOP, MF_BYCOMMAND | \
+    CheckMenuItem(Globals.hSystemMenu, 0x10D, MF_BYCOMMAND | \
                  (Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hPropertiesMenu, CL_SECONDS, MF_BYCOMMAND | \
+    CheckMenuItem(Globals.hPropertiesMenu, 0x107, MF_BYCOMMAND | \
                  (Globals.bSeconds ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hPropertiesMenu, CL_DATE, MF_BYCOMMAND | \
+    CheckMenuItem(Globals.hPropertiesMenu, 0x108, MF_BYCOMMAND | \
                  (Globals.bDate ? MF_CHECKED : MF_UNCHECKED));
 }
 
@@ -79,7 +79,7 @@ VOID LANGUAGE_UpdateWindowCaption(VOID) {
                 MAX_STRING_LEN);
 
   /* Set frame caption */
-  LoadString(Globals.hInstance, IDS_CLOCK, szCaption, sizeof(szCaption));
+  LoadString(Globals.hInstance, 0x10C, szCaption, sizeof(szCaption));
   if (Globals.bDate) {
      lstrcat(szCaption, " - ");
      lstrcat(szCaption, szDate);
@@ -88,71 +88,18 @@ VOID LANGUAGE_UpdateWindowCaption(VOID) {
 
 }
 
-
-
-static BOOL LANGUAGE_LoadStringOther(UINT num, UINT ids, LPSTR str, UINT len)
+VOID LANGUAGE_LoadMenus(VOID)
 {
-  ids -= Globals.wStringTableOffset;
-  ids += num * 0x100;
-  return(LoadString(Globals.hInstance, ids, str, len));
-};
-
-VOID LANGUAGE_SelectByName(LPCSTR lang)
-{
-  INT i;
-  CHAR szNewLang[3];
-
-  for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
-    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, szNewLang, 
-                sizeof(szNewLang)) && !lstrcmp(lang, szNewLang))
-      {
-        LANGUAGE_SelectByNumber(i);
-        return;
-      }
-
-  /* Fallback */
-    for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
-    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, szNewLang, sizeof(szNewLang)))
-      {
-        LANGUAGE_SelectByNumber(i);
-        return;
-      }
-
-    MessageBox(Globals.hMainWnd, "No language found", "FATAL ERROR", MB_OK);
-    PostQuitMessage(1);
-}
-
-VOID LANGUAGE_SelectByNumber(UINT num)
-{
-  INT    i;
-  CHAR   szLanguage[3];
 
   CHAR   szItem[MAX_STRING_LEN];
   HMENU  hMainMenu;
 
-  /* Select string table */
-  Globals.wStringTableOffset = num * 0x100;
-
-  /* Get Language id */
-  LoadString(Globals.hInstance, IDS_LANGUAGE_ID, szLanguage, sizeof(szLanguage));
-
-  /* Change Resource names */
-  lstrcpyn(STRING_MENU_Xx + sizeof(STRING_MENU_Xx) - 3, szLanguage, 3);
 
   /* Create menu */
-  hMainMenu = LoadMenu(Globals.hInstance, STRING_MENU_Xx);
+  hMainMenu = LoadMenu(Globals.hInstance, MAIN_MENU);
     Globals.hPropertiesMenu     = GetSubMenu(hMainMenu, 0);
     Globals.hLanguageMenu       = GetSubMenu(hMainMenu, 1);
     Globals.hInfoMenu           = GetSubMenu(hMainMenu, 2);
-
-  /* Remove dummy item */
-  RemoveMenu(Globals.hLanguageMenu, 0, MF_BYPOSITION);
-  /* Add language items */
-  for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
-    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_MENU_ITEM, szItem, sizeof(szItem)))
-             AppendMenu(Globals.hLanguageMenu, MF_STRING | MF_BYCOMMAND,
-                        CL_FIRST_LANGUAGE + i, szItem);
-  EnableMenuItem(Globals.hLanguageMenu, CL_FIRST_LANGUAGE + num, MF_BYCOMMAND | MF_CHECKED);
 
   SetMenu(Globals.hMainWnd, hMainMenu);
 
@@ -169,16 +116,18 @@ VOID LANGUAGE_SelectByNumber(UINT num)
 
   /* FIXME: Append a SEPARATOR to Globals.hSystemMenu here */
 
-  LoadString(Globals.hInstance, IDS_MENU_ON_TOP, szItem, sizeof(szItem));
+  LoadString(Globals.hInstance, 0x10D, szItem, sizeof(szItem));
   AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND, 1000, szItem);
 }
 
+/*
 VOID LANGUAGE_DefaultHandle(WPARAM wParam)
 {
   if ((wParam >=CL_FIRST_LANGUAGE) && (wParam<=CL_LAST_LANGUAGE))
           LANGUAGE_SelectByNumber(wParam - CL_FIRST_LANGUAGE);
      else printf("Unimplemented menu command %i\n", wParam);
 }
+*/
 
 /* Local Variables:    */
 /* c-file-style: "GNU" */

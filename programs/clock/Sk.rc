@@ -1,7 +1,8 @@
 /*
- * Clock (English resources)
+ * Clock (Slovak resources)
  *
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  * FIXME: Weak translation !
  *
  * This library is free software; you can redistribute it and/or
@@ -19,35 +20,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  Sk
-#define LANGUAGE_NUMBER              10
+MAIN_MENU MENU LANGUAGE LANG_SLOVAK, SUBLANG_NEUTRAL
+{
+ POPUP "&Vlastnosti" {
+  MENUITEM "Ana&lógové", 0x100
+  MENUITEM "Digi&tálne", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "&Font...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "&Bez titulkového pruhu", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "&Sekundy", 0x107
+  MENUITEM "&Dátum", 0x108
+ }
+ POPUP "Inf&o..." {
+  MENUITEM "&Licencia", 0x109
+  MENUITEM "&BEZ ZÁRUKY", 0x10A
+  MENUITEM "&O hodinách...", 0x10B
+ }
+} 
 
-
-/* System Menu */
-
-#define MENU_ON_TOP                  "&Vždy na vrchu"
-
-/* Window Menu */
-
-#define MENU_PROPERTIES              "&Vlastnosti"
-#define MENU_ANALOG                  "Ana&lógové"
-#define MENU_DIGITAL                 "Digi&tálne"
-#define MENU_FONT                    "&Font..."
-#define MENU_WITHOUT_TITLE           "&Bez titulkového pruhu"
-
-#define MENU_SECONDS                 "&Sekundy"
-#define MENU_DATE                    "&Dátum"
-
-#define MENU_LANGUAGE                "&Jazyk"
-#define LANGUAGE_MENU_ITEM           "&Slovensky"
-
-#define MENU_INFO                    "Inf&o..."
-#define MENU_INFO_LICENSE            "&Licencia"
-#define MENU_INFO_NO_WARRANTY        "&BEZ ZÁRUKY"
-#define MENU_INFO_ABOUT_WINE         "&O hodinách..."
-
-/* Window Caption */
-#define STRING_CLOCK                 "Hodiny"
-
-
-#include "clock.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_SLOVAK, SUBLANG_NEUTRAL
+{
+CLOCK,		"Hodiny"
+MENU_ON_TOP,	"&Vždy na vrchu"
+}
