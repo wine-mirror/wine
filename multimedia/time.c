@@ -6,35 +6,16 @@
  * Copyright 1993 Martin Ayotte
  */
 
-#include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
 #include "winbase.h"
-#include "wine/winbase16.h" /* GetTaskDS */
 #include "callback.h"
-#include "mmsystem.h"
+#include "multimedia.h"
 #include "services.h"
+#include "syslevel.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mmtime)
-
-typedef struct tagTIMERENTRY {
-    UINT			wDelay;
-    UINT			wResol;
-    FARPROC16 			lpFunc;
-    HINSTANCE			hInstance;
-    DWORD			dwUser;
-    UINT			wFlags;
-    UINT			wTimerID;
-    UINT			wCurTime;
-    UINT			isWin32;
-    struct tagTIMERENTRY*	lpNext;
-} TIMERENTRY, *LPTIMERENTRY;
-
-static DWORD		mmSysTimeMS;
-static LPTIMERENTRY 	lpTimerList = NULL;
-static HANDLE 		hMMTimer = 0;
-CRITICAL_SECTION	mmTimeCritSect;
 
 /*
  * FIXME
@@ -51,7 +32,6 @@ static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
 	TRACE("before CallBack (%lu)!\n", dwCurrent);
 	TRACE("lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
 	      lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
-	TRACE("hInstance=%04X !\n", lpTimer->hInstance);	
 	
 	/* - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
 	 * 		during interrupt time,  is allowed to execute very limited number of API calls (like
@@ -84,19 +64,31 @@ static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
 /**************************************************************************
  *           TIME_MMSysTimeCallback
  */
-static void CALLBACK TIME_MMSysTimeCallback( ULONG_PTR dummy )
+static void CALLBACK TIME_MMSysTimeCallback(ULONG_PTR ptr_)
 {
-    LPTIMERENTRY lpTimer, lpNextTimer;
+    LPTIMERENTRY 	lpTimer, lpNextTimer;
+    LPWINE_MM_IDATA	iData = (LPWINE_MM_IDATA)ptr_;
 
-    mmSysTimeMS += MMSYSTIME_MININTERVAL;
+    iData->mmSysTimeMS += MMSYSTIME_MININTERVAL;
 
-    EnterCriticalSection(&mmTimeCritSect);
+    /* this is a hack...
+     * since timeSetEvent() and timeKillEvent() can be called
+     * from 16 bit code, there are cases where win16 lock is
+     * locked upon entering timeSetEvent(), and then the process
+     * heap is locked. OTOH, in this callback the process heap
+     * is first locked, and the win16 lock can be locked while
+     * calling a client callback. to avoid deadlocks, the process 
+     * heap and win 16 lock must always be locked in the same 
+     * order...
+     */
+    SYSLEVEL_EnterWin16Lock();
+    EnterCriticalSection(&iData->cs);
 
-    for (lpTimer = lpTimerList; lpTimer != NULL; ) {
+    for (lpTimer = iData->lpTimerList; lpTimer != NULL; ) {
 	lpNextTimer = lpTimer->lpNext;
 	if (lpTimer->wCurTime < MMSYSTIME_MININTERVAL) {
 	    lpTimer->wCurTime = lpTimer->wDelay;    
-	    TIME_TriggerCallBack(lpTimer, mmSysTimeMS);
+	    TIME_TriggerCallBack(lpTimer, iData->mmSysTimeMS);
 	    if (lpTimer->wFlags & TIME_ONESHOT)
 		timeKillEvent(lpTimer->wTimerID);
 	} else {
@@ -105,35 +97,36 @@ static void CALLBACK TIME_MMSysTimeCallback( ULONG_PTR dummy )
 	lpTimer = lpNextTimer;
     }
 
-    LeaveCriticalSection(&mmTimeCritSect);
-}
-
-/**************************************************************************
- * 				MULTIMEDIA_MMTimeInit		[internal]
- */
-BOOL	MULTIMEDIA_MMTimeInit(void)
-{
-    InitializeCriticalSection(&mmTimeCritSect);
-    MakeCriticalSectionGlobal(&mmTimeCritSect);
-    
-    return TRUE;
+    LeaveCriticalSection(&iData->cs);
+    SYSLEVEL_LeaveWin16Lock();
 }
 
 /**************************************************************************
  * 				MULTIMEDIA_MMTimeStart		[internal]
  */
-static	BOOL	MULTIMEDIA_MMTimeStart(void)
+static	LPWINE_MM_IDATA	MULTIMEDIA_MMTimeStart(void)
 {
-    /* one could think it's possible to stop the service thread activity when no more
-     * mm timers are active, but this would require to handle delta (in time) between
-     * GetTickCount() and timeGetTime() which are not -currently- synchronized.
+    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
+
+    if (!iData || IsBadWritePtr(iData, sizeof(WINE_MM_IDATA))) {
+	ERR("iData is not correctly set, please report. Expect failure.\n");
+	return 0;
+    }
+    /* FIXME: the service timer is never killed, even when process is
+     * detached from this DLL
      */
-    if (!hMMTimer) {
-	mmSysTimeMS = GetTickCount();
-	hMMTimer = SERVICE_AddTimer( MMSYSTIME_MININTERVAL*1000L, TIME_MMSysTimeCallback, 0 );
+    /* one could think it's possible to stop the service thread activity when no more
+     * mm timers are active, but this would require to keep mmSysTimeMS up-to-date
+     * without being incremented within the service thread callback.
+     */
+    if (!iData->hMMTimer) {
+	iData->mmSysTimeMS = GetTickCount();
+	iData->lpTimerList = NULL;
+	iData->hMMTimer = SERVICE_AddTimer(MMSYSTIME_MININTERVAL*1000L, TIME_MMSysTimeCallback, (DWORD)iData);
+	InitializeCriticalSection(&iData->cs);
     }
 
-    return TRUE;
+    return iData;
 }
 
 /**************************************************************************
@@ -141,14 +134,18 @@ static	BOOL	MULTIMEDIA_MMTimeStart(void)
  */
 MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
 {
+    LPWINE_MM_IDATA	iData;
+
     TRACE("(%p, %u);\n", lpTime, wSize);
 
     if (wSize >= sizeof(*lpTime)) {
-	MULTIMEDIA_MMTimeStart();
+	iData = MULTIMEDIA_MMTimeStart();
+	if (!iData)
+	    return MMSYSERR_NOMEM;
 	lpTime->wType = TIME_MS;
-	lpTime->u.ms = mmSysTimeMS;
+	lpTime->u.ms = iData->mmSysTimeMS;
 
-	TRACE("=> %lu\n", mmSysTimeMS);
+	TRACE("=> %lu\n", iData->mmSysTimeMS);
     }
 
     return 0;
@@ -159,14 +156,18 @@ MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
  */
 MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
 {
+    LPWINE_MM_IDATA	iData;
+
     TRACE("(%p, %u);\n", lpTime, wSize);
 
     if (wSize >= sizeof(*lpTime)) {
-	MULTIMEDIA_MMTimeStart();
+	iData = MULTIMEDIA_MMTimeStart();
+	if (!iData)
+	    return MMSYSERR_NOMEM;
 	lpTime->wType = TIME_MS;
-	lpTime->u.ms = mmSysTimeMS;
+	lpTime->u.ms = iData->mmSysTimeMS;
 
-	TRACE("=> %lu\n", mmSysTimeMS);
+	TRACE("=> %lu\n", iData->mmSysTimeMS);
     }
 
     return 0;
@@ -182,37 +183,40 @@ static	WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
     WORD 		wNewID = 0;
     LPTIMERENTRY	lpNewTimer;
     LPTIMERENTRY	lpTimer;
-    
+    LPWINE_MM_IDATA	iData;
+
     TRACE("(%u, %u, %p, %08lX, %04X);\n", wDelay, wResol, lpFunc, dwUser, wFlags);
 
-    lpNewTimer = (LPTIMERENTRY)malloc(sizeof(TIMERENTRY));
+    lpNewTimer = (LPTIMERENTRY)HeapAlloc(GetProcessHeap(), 0, sizeof(TIMERENTRY));
     if (lpNewTimer == NULL)
 	return 0;
 
-    MULTIMEDIA_MMTimeStart();
+    iData = MULTIMEDIA_MMTimeStart();
+
+    if (!iData)
+	return 0;
 
     lpNewTimer->wCurTime = wDelay;
     lpNewTimer->wDelay = wDelay;
     lpNewTimer->wResol = wResol;
     lpNewTimer->lpFunc = lpFunc;
     lpNewTimer->isWin32 = isWin32;
-    lpNewTimer->hInstance = GetTaskDS16();
     lpNewTimer->dwUser = dwUser;
     lpNewTimer->wFlags = wFlags;
 
-    TRACE("hInstance=%04X,lpFunc=0x%08lx !\n", lpNewTimer->hInstance, (DWORD)lpFunc);
+    TRACE("lpFunc=0x%08lx !\n", (DWORD)lpFunc);
 
-    EnterCriticalSection(&mmTimeCritSect);
+    EnterCriticalSection(&iData->cs);
 
-    for (lpTimer = lpTimerList; lpTimer != NULL; lpTimer = lpTimer->lpNext) {
+    for (lpTimer = iData->lpTimerList; lpTimer != NULL; lpTimer = lpTimer->lpNext) {
 	wNewID = MAX(wNewID, lpTimer->wTimerID);
     }
     
-    lpNewTimer->lpNext = lpTimerList;
-    lpTimerList = lpNewTimer;
+    lpNewTimer->lpNext = iData->lpTimerList;
+    iData->lpTimerList = lpNewTimer;
     lpNewTimer->wTimerID = wNewID + 1;
 
-    LeaveCriticalSection(&mmTimeCritSect);
+    LeaveCriticalSection(&iData->cs);
 
     return wNewID + 1;
 }
@@ -241,22 +245,23 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 
 MMRESULT WINAPI timeKillEvent(UINT wID)
 {
     LPTIMERENTRY*	lpTimer;
+    LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
     MMRESULT		ret = MMSYSERR_INVALPARAM;
 
-    EnterCriticalSection(&mmTimeCritSect);
+    EnterCriticalSection(&iData->cs);
 
-    for (lpTimer = &lpTimerList; *lpTimer; lpTimer = &((*lpTimer)->lpNext)) {
+    for (lpTimer = &iData->lpTimerList; *lpTimer; lpTimer = &((*lpTimer)->lpNext)) {
 	if (wID == (*lpTimer)->wTimerID) {
 	    LPTIMERENTRY xlptimer = (*lpTimer)->lpNext;
 	    
-	    free(*lpTimer);
+	    HeapFree(GetProcessHeap(), 0, *lpTimer);
 	    *lpTimer = xlptimer;
 	    ret = TIMERR_NOERROR;
 	    break;
 	}
     }
 
-    LeaveCriticalSection(&mmTimeCritSect);
+    LeaveCriticalSection(&iData->cs);
 
     return ret;
 }
@@ -346,6 +351,5 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
  */
 DWORD WINAPI timeGetTime(void)
 {
-    MULTIMEDIA_MMTimeStart();
-    return mmSysTimeMS;
+    return MULTIMEDIA_MMTimeStart()->mmSysTimeMS;
 }

@@ -13,6 +13,7 @@
 #define __WINE_MULTIMEDIA_H
 
 #include "mmsystem.h"
+#include "winbase.h"
 
 #define MAX_MIDIINDRV 	(16)
 /* For now I'm making 16 the maximum number of midi devices one can
@@ -84,6 +85,33 @@ typedef enum {
     MCI_MAP_PASS	/* ok, no memory allocated. to be sent to 32 bit proc */
 } MCI_MapType;
 
+typedef struct tagTIMERENTRY {
+    UINT			wDelay;
+    UINT			wResol;
+    FARPROC16 			lpFunc;
+    DWORD			dwUser;
+    UINT			wFlags;
+    UINT			wTimerID;
+    UINT			wCurTime;
+    UINT			isWin32;
+    struct tagTIMERENTRY*	lpNext;
+} TIMERENTRY, *LPTIMERENTRY;
+
+typedef struct tagWINE_MM_IDATA {
+    /* iData reference */
+    DWORD			dwThisProcess;
+    struct tagWINE_MM_IDATA*	lpNextIData;
+    /* winmm part */
+    HANDLE			hWinMM32Instance;
+    HANDLE			hWinMM16Instance;
+    HANDLE			h16Module32;
+    /* mm timer part */
+    HANDLE			hMMTimer;
+    DWORD			mmSysTimeMS;
+    LPTIMERENTRY 		lpTimerList;
+    CRITICAL_SECTION		cs;
+} WINE_MM_IDATA, *LPWINE_MM_IDATA;
+
 /* function prototypes */
 
 #define MCI_GetDrv(wDevID) 	(&mciDrv[MCI_DevIDToIndex(wDevID)])
@@ -136,8 +164,9 @@ HANDLE16 		WINAPI	mmThreadGetTask16(HANDLE16 hndl);
 BOOL16   		WINAPI	mmThreadIsValid16(HANDLE16 hndl);
 BOOL16  		WINAPI	mmThreadIsCurrent16(HANDLE16 hndl);
 
-BOOL				MULTIMEDIA_MMTimeInit(void);
 BOOL				MULTIMEDIA_MciInit(void);
+LPWINE_MM_IDATA			MULTIMEDIA_GetIData(void);
+
 BOOL				MULTIMEDIA_MidiInit(void);
 
 #endif /* __WINE_MULTIMEDIA_H */
