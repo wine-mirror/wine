@@ -2,6 +2,7 @@
  * Misc marshalling routines
  *
  * Copyright 2002 Ove Kaaven
+ * Copyright 2003 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -184,6 +185,9 @@ static unsigned wire_size(VARTYPE vt)
 
 static unsigned wire_extra(unsigned long *pFlags, VARIANT *pvar)
 {
+  ULONG size;
+  HRESULT hr;
+
   if (V_VT(pvar) & VT_ARRAY) {
     FIXME("wire-size safearray\n");
     return 0;
@@ -201,8 +205,15 @@ static unsigned wire_extra(unsigned long *pFlags, VARIANT *pvar)
     return VARIANT_UserSize(pFlags, 0, V_VARIANTREF(pvar));
   case VT_UNKNOWN:
   case VT_DISPATCH:
-    FIXME("wire-size interfaces\n");
-    return 0;
+    /* find the buffer size of the marshalled dispatch interface */
+    hr = CoGetMarshalSizeMax(&size, &IID_IDispatch, (IUnknown*)V_DISPATCH(pvar), LOWORD(*pFlags), NULL, MSHLFLAGS_NORMAL);
+    if (FAILED(hr)) {
+      ERR("Dispatch variant buffer size calculation failed, HRESULT=0x%lx\n", hr);
+      return 0;
+    }
+    size += sizeof(ULONG); /* we have to store the buffersize in the stream */
+    TRACE("wire-size extra of dispatch variant is %ld\n", size);
+    return size;
   case VT_RECORD:
     FIXME("wire-size record\n");
     return 0;
@@ -210,6 +221,100 @@ static unsigned wire_extra(unsigned long *pFlags, VARIANT *pvar)
     return 0;
   }
 }
+
+/* helper: called for VT_DISPATCH variants to marshal the IDispatch* into the buffer. returns Buffer on failure, new position otherwise */
+static unsigned char* dispatch_variant_marshal(unsigned long *pFlags, unsigned char *Buffer, VARIANT *pvar) {
+  IStream *working; 
+  HGLOBAL working_mem;
+  void *working_memlocked;
+  unsigned char *oldpos;
+  ULONG size;
+  HRESULT hr;
+  
+  TRACE("pFlags=%ld, Buffer=%p, pvar=%p\n", *pFlags, Buffer, pvar);
+
+  oldpos = Buffer;
+  
+  /* CoMarshalInterface needs a stream, whereas at this level we are operating in terms of buffers.
+   * We create a stream on an HGLOBAL, so we can simply do a memcpy to move it to the buffer.
+   * in rpcrt4/ndr_ole.c, a simple IStream implementation is wrapped around the buffer object,
+   * but that would be overkill here, hence this implementation. We save the size because the unmarshal
+   * code has no way to know how long the marshalled buffer is. */
+
+  size = wire_extra(pFlags, pvar);
+  
+  working_mem = GlobalAlloc(0, size);
+  if (!working_mem) return oldpos;
+
+  hr = CreateStreamOnHGlobal(working_mem, TRUE, &working);
+  if (hr != S_OK) {
+    GlobalFree(working_mem);
+    return oldpos;
+  }
+  
+  hr = CoMarshalInterface(working, &IID_IDispatch, (IUnknown*)V_DISPATCH(pvar), LOWORD(*pFlags), NULL, MSHLFLAGS_NORMAL);
+  if (hr != S_OK) {
+    IStream_Release(working); /* this also releases the hglobal */
+    return oldpos;
+  }
+
+  working_memlocked = GlobalLock(working_mem);
+  memcpy(Buffer, &size, sizeof(ULONG)); /* copy the buffersize */
+  Buffer += sizeof(ULONG);
+  memcpy(Buffer, working_memlocked, size);
+  GlobalUnlock(working_mem);
+
+  IStream_Release(working);
+
+  TRACE("done, size=%ld\n", sizeof(ULONG) + size);
+  return Buffer + sizeof(ULONG) + size;
+}
+
+/* helper: called for VT_DISPATCH variants to unmarshal the buffer back into a dispatch variant. returns Buffer on failure, new position otherwise */
+static unsigned char *dispatch_variant_unmarshal(unsigned long *pFlags, unsigned char *Buffer, VARIANT *pvar) {
+  IStream *working;
+  HGLOBAL working_mem;
+  void *working_memlocked;
+  unsigned char *oldpos;
+  ULONG size;
+  HRESULT hr;
+  
+  TRACE("pFlags=%ld, Buffer=%p, pvar=%p\n", *pFlags, Buffer, pvar);
+
+  oldpos = Buffer;
+  
+  /* get the buffersize */
+  memcpy(&size, Buffer, sizeof(ULONG));
+  TRACE("buffersize=%ld\n", size);
+  Buffer += sizeof(ULONG);
+  
+  working_mem = GlobalAlloc(0, size);
+  if (!working_mem) return oldpos;
+
+  hr = CreateStreamOnHGlobal(working_mem, TRUE, &working);
+  if (hr != S_OK) {
+    GlobalFree(working_mem);
+    return oldpos;
+  }
+
+  working_memlocked = GlobalLock(working_mem);
+  
+  /* now we copy the contents of the marshalling buffer to working_memlocked, unlock it, and demarshal the stream */
+  memcpy(working_memlocked, Buffer, size);
+  GlobalUnlock(working_mem);
+
+  hr = CoUnmarshalInterface(working, &IID_IDispatch, (void**)&V_DISPATCH(pvar));
+  if (hr != S_OK) {
+    IStream_Release(working);
+    return oldpos;
+  }
+
+  IStream_Release(working); /* this also frees the underlying hglobal */
+
+  TRACE("done, processed=%ld bytes\n", sizeof(ULONG) + size);
+  return Buffer + sizeof(ULONG) + size;
+}
+
 
 unsigned long WINAPI VARIANT_UserSize(unsigned long *pFlags, unsigned long Start, VARIANT *pvar)
 {
@@ -266,6 +371,13 @@ unsigned char * WINAPI VARIANT_UserMarshal(unsigned long *pFlags, unsigned char 
     break;
   case VT_VARIANT | VT_BYREF:
     Pos = VARIANT_UserMarshal(pFlags, Pos, V_VARIANTREF(pvar));
+    break;
+  case VT_DISPATCH | VT_BYREF:
+    FIXME("handle DISPATCH by ref\n");
+    break;
+  case VT_DISPATCH:
+    /* this should probably call WdtpInterfacePointer_UserMarshal in ole32.dll */
+    Pos = dispatch_variant_marshal(pFlags, Pos, pvar);
     break;
   case VT_RECORD:
     FIXME("handle BRECORD by val\n");
@@ -335,6 +447,11 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(unsigned long *pFlags, unsigned cha
   case VT_RECORD | VT_BYREF:
     FIXME("handle BRECORD by ref\n");
     break;
+  case VT_DISPATCH:
+    Pos = dispatch_variant_unmarshal(pFlags, Pos, pvar);
+    break;
+  case VT_DISPATCH | VT_BYREF:
+    FIXME("handle DISPATCH by ref\n");
   default:
     FIXME("handle unknown complex type\n");
     break;
