@@ -15,7 +15,7 @@ dnl **** Command-line arguments ****
 dnl Default values
 MAIN_TARGET=emu
 LIB_TARGET=libwine.a
-ALT_LINK="-L\$(TOPOBJDIR) -lwine"
+ALT_LINK="-Wl,--whole-archive -L\$(TOPOBJDIR) -lwine -Wl,--no-whole-archive"
 TRACE_MSGS=yes	# the TRACE() macro
 DEBUG_MSGS=yes	# the TRACE(), WARN(), and FIXME() macros.
 
