@@ -1085,6 +1085,9 @@ static void _allocate_default_keys(void)
     static const WCHAR StatDataW[] = {'D','y','n','D','a','t','a','\\',
                                       'P','e','r','f','S','t','a','t','s','\\',
                                       'S','t','a','t','D','a','t','a',0};
+    static const WCHAR ConfigManagerW[] = {'D','y','n','D','a','t','a','\\',
+                                           'C','o','n','f','i','g',' ','M','a','n','a','g','e','r','\\',
+                                            'E','n','u','m',0};
     HKEY hkey;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -1099,6 +1102,9 @@ static void _allocate_default_keys(void)
     attr.SecurityQualityOfService = NULL;
 
     RtlInitUnicodeString( &nameW, StatDataW );
+    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
+
+    RtlInitUnicodeString( &nameW, ConfigManagerW );
     if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
 }
 
