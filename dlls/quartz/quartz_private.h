@@ -41,6 +41,7 @@ HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) ;
 HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT StdMemAllocator_create(IUnknown * pUnkOuter, LPVOID * ppv);
+HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv);
 
 HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum);
 

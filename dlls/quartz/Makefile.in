@@ -7,6 +7,8 @@ IMPORTS   = ole32 oleaut32 advapi32 kernel32 user32
 EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
 C_SRCS = \
+	avisplit.c \
+	control.c \
 	enummedia.c \
 	enummoniker.c \
 	enumpins.c \

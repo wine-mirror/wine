@@ -174,6 +174,12 @@ static inline const char *wine_dbgstr_rect( const RECT *rect )
     return wine_dbg_sprintf( "(%ld,%ld)-(%ld,%ld)", rect->left, rect->top, rect->right, rect->bottom );
 }
 
+static inline const char *wine_dbgstr_longlong( ULONGLONG ll )
+{
+    if (ll >> 32) return wine_dbg_sprintf( "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll );
+    else return wine_dbg_sprintf( "%lx", (unsigned long)ll );
+}
+
 #ifndef WINE_TRACE
 #define WINE_TRACE                 __WINE_DPRINTF(_TRACE,__wine_dbch___default)
 #define WINE_TRACE_(ch)            __WINE_DPRINTF(_TRACE,__wine_dbch_##ch)

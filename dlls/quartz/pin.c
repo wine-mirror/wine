@@ -135,6 +135,8 @@ HRESULT InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LP
 /* Note that we don't init the vtables here (like C++ constructor) */
 HRESULT InputPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, InputPin * pPinImpl)
 {
+    TRACE("\n");
+
     /* Common attributes */
     pPinImpl->pin.refCount = 1;
     pPinImpl->pin.pConnectedTo = NULL;
@@ -155,6 +157,8 @@ HRESULT InputPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID 
 
 HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl)
 {
+    TRACE("\n");
+
     /* Common attributes */
     pPinImpl->pin.lpVtbl = &OutputPin_Vtbl;
     pPinImpl->pin.refCount = 1;

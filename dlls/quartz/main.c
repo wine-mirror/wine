@@ -65,6 +65,7 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_FilterMapper2, FilterMapper2_create },
     { &CLSID_AsyncReader, AsyncReader_create },
     { &CLSID_MemoryAllocator, StdMemAllocator_create },
+    { &CLSID_AviSplitter, AVISplitter_create },
 };
 
 static HRESULT WINAPI
