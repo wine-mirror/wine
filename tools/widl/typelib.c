@@ -170,7 +170,7 @@ unsigned short get_var_vt(var_t *v)
 void start_typelib(char *name, attr_t *attrs)
 {
     in_typelib++;
-    if (!do_everything && !typelib_only) return;
+    if (!do_typelib) return;
 
     typelib = xmalloc(sizeof(*typelib));
     typelib->name = xstrdup(name);

@@ -59,11 +59,11 @@ static char usage[] =
 "   -d n        Set debug level to 'n'\n"
 "   -D id[=val] Define preprocessor identifier id=val\n"
 "   -E          Preprocess only\n"
-"   -h          Generate headers only\n"
+"   -h          Generate headers\n"
 "   -H file     Name of header file (default is infile.h)\n"
 "   -I path     Set include search dir to path (multiple -I allowed)\n"
 "   -N          Do not preprocess input\n"
-"   -t          Generate typelib only\n"
+"   -t          Generate typelib\n"
 "   -T file     Name of typelib file (default is infile.tlb)\n"
 "   -V          Print version and exit\n"
 "   -W          Enable pedantic warnings\n"
@@ -83,10 +83,11 @@ int win32 = 1;
 int debuglevel = DEBUGLEVEL_NONE;
 
 int pedantic = 0;
-int do_everything = 1;
+static int do_everything = 1;
 int preprocess_only = 0;
-int header_only = 0;
-int typelib_only = 0;
+int do_header = 0;
+int do_typelib = 0;
+int do_proxies = 0;
 int no_preprocess = 0;
 
 char *input_name;
@@ -150,7 +151,7 @@ int main(int argc,char *argv[])
       break;
     case 'h':
       do_everything = 0;
-      header_only = 1;
+      do_header = 1;
       break;
     case 'H':
       header_name = strdup(optarg);
@@ -163,7 +164,7 @@ int main(int argc,char *argv[])
       break;
     case 't':
       do_everything = 0;
-      typelib_only = 1;
+      do_typelib = 1;
       break;
     case 'T':
       typelib_name = strdup(optarg);
@@ -180,6 +181,9 @@ int main(int argc,char *argv[])
     }
   }
 
+  if(do_everything) {
+      do_header = do_typelib = do_proxies = 1;
+  }
   if(optind < argc) {
     input_name = xstrdup(argv[optind]);
   }
@@ -201,17 +205,17 @@ int main(int argc,char *argv[])
                  (debuglevel & DEBUGLEVEL_PPTRACE) != 0,
                  (debuglevel & DEBUGLEVEL_PPMSG) != 0 );
 
-  if (!header_name && (do_everything || header_only)) {
+  if (!header_name && do_header) {
     header_name = dup_basename(input_name, ".idl");
     strcat(header_name, ".h");
   }
 
-  if (!typelib_name && (do_everything || typelib_only)) {
+  if (!typelib_name && do_typelib) {
     typelib_name = dup_basename(input_name, ".idl");
     strcat(typelib_name, ".tlb");
   }
 
-  if (!proxy_name && do_everything) {
+  if (!proxy_name && do_proxies) {
     proxy_name = dup_basename(input_name, ".idl");
     proxy_token = xstrdup(proxy_name);
     strcat(proxy_name, "_p.c");
@@ -247,7 +251,7 @@ int main(int argc,char *argv[])
     }
   }
 
-  if(do_everything || header_only) {
+  if(do_header) {
     header_token = make_token(header_name);
 
     if(!(header = fopen(header_name, "w"))) {
@@ -262,9 +266,11 @@ int main(int argc,char *argv[])
     fprintf(header, "#ifdef __cplusplus\n");
     fprintf(header, "extern \"C\" {\n");
     fprintf(header, "#endif\n");
+  }
 
-    ret = yyparse();
+  ret = yyparse();
 
+  if(do_header) {
     fprintf(header, "#ifdef __cplusplus\n");
     fprintf(header, "}\n");
     fprintf(header, "#endif\n");

@@ -249,17 +249,17 @@ int_statements:					{ $$ = NULL; }
 	;
 
 statement: ';'					{}
-	| constdef ';'				{ if (!parse_only) { write_constdef($1); } }
+	| constdef ';'				{ if (!parse_only && do_header) { write_constdef($1); } }
 	| cppquote				{}
-	| enumdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
-	| externdef ';'				{ if (!parse_only) { write_externdef($1); } }
+	| enumdef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
+	| externdef ';'				{ if (!parse_only && do_header) { write_externdef($1); } }
 	| import				{}
-	| structdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
+	| structdef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
 	| typedef ';'				{}
-	| uniondef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
+	| uniondef ';'				{ if (!parse_only && do_header) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
 	;
 
-cppquote: tCPPQUOTE '(' aSTRING ')'		{ if (!parse_only) fprintf(header, "%s\n", $3); }
+cppquote: tCPPQUOTE '(' aSTRING ')'		{ if (!parse_only && do_header) fprintf(header, "%s\n", $3); }
 	;
 import_start: tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
 						  if (!do_import($2)) yychar = aEOF; }
@@ -580,7 +580,7 @@ coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
 
 coclasshdr: attributes coclass			{ $$ = $2;
 						  $$->attrs = $1;
-                                                  if (!parse_only) write_coclass($$);
+                                                  if (!parse_only && do_header) write_coclass($$);
 						}
 	;
 
@@ -609,7 +609,7 @@ dispinterfacehdr: attributes dispinterface	{ $$ = $2;
 						  $$->ref = find_type("IDispatch", 0);
 						  if (!$$->ref) yyerror("IDispatch is undefined\n");
 						  $$->defined = TRUE;
-						  if (!parse_only) write_forward($$);
+						  if (!parse_only && do_header) write_forward($$);
 						}
 	;
 
@@ -627,11 +627,11 @@ dispinterfacedef: dispinterfacehdr '{'
 	  '}'					{ $$ = $1;
 						  $$->fields = $3;
 						  $$->funcs = $4;
-						  if (!parse_only) write_dispinterface($$);
+						  if (!parse_only && do_header) write_dispinterface($$);
 						}
 /* FIXME: not sure how to handle this yet
 	| dispinterfacehdr '{' interface '}'	{ $$ = $1;
-						  if (!parse_only) write_interface($$);
+						  if (!parse_only && do_header) write_interface($$);
 						}
 */
 	;
@@ -648,7 +648,7 @@ interfacehdr: attributes interface		{ $$ = $2;
 						  if ($$->defined) yyerror("multiple definition error\n");
 						  $$->attrs = $1;
 						  $$->defined = TRUE;
-						  if (!parse_only) write_forward($$);
+						  if (!parse_only && do_header) write_forward($$);
 						}
 	;
 
@@ -656,7 +656,7 @@ interfacedef: interfacehdr inherit
 	  '{' int_statements '}'		{ $$ = $1;
 						  $$->ref = $2;
 						  $$->funcs = $4;
-						  if (!parse_only) write_interface($$);
+						  if (!parse_only && do_header) write_interface($$);
 						}
 /* MIDL is able to import the definition of a base class from inside the
  * definition of a derived class, I'll try to support it with this rule */
@@ -665,14 +665,14 @@ interfacedef: interfacehdr inherit
 						  $$->ref = find_type2($3, 0);
 						  if (!$$->ref) yyerror("base class %s not found in import\n", $3);
 						  $$->funcs = $6;
-						  if (!parse_only) write_interface($$);
+						  if (!parse_only && do_header) write_interface($$);
 						}
 	| dispinterfacedef			{ $$ = $1; }
 	;
 
 interfacedec:
-	  interface ';'				{ $$ = $1; if (!parse_only) write_forward($$); }
-	| dispinterface ';'			{ $$ = $1; if (!parse_only) write_forward($$); }
+	  interface ';'				{ $$ = $1; if (!parse_only && do_header) write_forward($$); }
+	| dispinterface ';'			{ $$ = $1; if (!parse_only && do_header) write_forward($$); }
 	;
 
 module:   tMODULE aIDENTIFIER			{ $$ = make_type(0, NULL); $$->name = $2; }
@@ -686,7 +686,7 @@ modulehdr: attributes module			{ $$ = $2;
 
 moduledef: modulehdr '{' int_statements '}'	{ $$ = $1;
 						  $$->funcs = $3;
-						  /* FIXME: if (!parse_only) write_module($$); */
+						  /* FIXME: if (!parse_only && do_header) write_module($$); */
 						}
 	;
 
@@ -736,7 +736,7 @@ typedef: tTYPEDEF m_attributes type pident_list	{ typeref_t *tref = uniq_tref($3
 						  tref->name = NULL;
 						  $$ = type_ref(tref);
 						  $$->attrs = $2;
-						  if (!parse_only) write_typedef($$, $4);
+						  if (!parse_only && do_header) write_typedef($$, $4);
 						  reg_types($$, $4, 0);
 						}
 	;

@@ -14,20 +14,22 @@ No options are used.
 The program prints the help info and then exits.
 .PP
 .B General options:
-.IP \fB-t\fR
-Only generate a type library.
-.IP "\fB-T \fIfile\fR"
-Define the name of the type library to be generated. 
-The default filename is infile.tlb.
 .IP \fB-V\fR
 Print version number and exits from the program.
 .PP
 .B Header options:
 .IP \fB-h\fR
-Only generate header files.
+Generate header files.
 .IP "\fB-H \fIfile\fR"
 Name of header file to generate. The default header
 filename is infile.h.
+.PP
+.B Type library options:
+.IP \fB-t\fR
+Generate a type library.
+.IP "\fB-T \fIfile\fR"
+Define the name of the type library to be generated. 
+The default filename is infile.tlb.
 .PP
 .B Preprocessor options:
 .IP "\fB-I \fIpath\fR"

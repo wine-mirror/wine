@@ -952,7 +952,7 @@ void write_proxies(ifref_t *ifaces)
   char *file_id = proxy_token;
   int c;
 
-  if (!do_everything) return;
+  if (!do_proxies) return;
   if (!lcur) return;
   END_OF_LIST(lcur);
 

@@ -38,9 +38,9 @@ extern int debuglevel;
 
 extern int win32;
 extern int pedantic;
-extern int do_everything;
-extern int header_only;
-extern int typelib_only;
+extern int do_header;
+extern int do_typelib;
+extern int do_proxies;
 
 extern char *input_name;
 extern char *header_name;
