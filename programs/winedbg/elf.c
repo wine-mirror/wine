@@ -267,7 +267,7 @@ static unsigned is_dt_flag_valid(unsigned d_tag)
 #define DT_PROCNUM 0
 #endif
 #ifndef DT_EXTRANUM
-#define DT_PROCNUM 0
+#define DT_EXTRANUM 0
 #endif
     return (d_tag >= 0 && d_tag < DT_NUM + DT_PROCNUM + DT_EXTRANUM)
 #if defined(DT_LOOS) && defined(DT_HIOS)
