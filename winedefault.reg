@@ -909,6 +909,9 @@
 #"Version"="4.07.00.0700"
 "Version"="4.08.01.0810"
 
+#
+# DirectDraw
+#
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D7B70EE0-4340-11CF-B063-0020AFC2CD35}]
 @="DirectDraw Object"
 
@@ -923,31 +926,1112 @@
 @="ddraw.dll"
 "ThreadingModel"="Both"
 
+#
+# DirectMusic
+#
+
+
+# DirectMusic
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{636B9F10-0C7D-11D1-95B2-0020AFDC7421}]
 @="DirectMusic"
-
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{636B9F10-0C7D-11D1-95B2-0020AFDC7421}\InProcServer32]
 @="dmusic.dll"
 "ThreadingModel"="Both"
-
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{636B9F10-0C7D-11D1-95B2-0020AFDC7421}\ProgID]
 @="Microsoft.DirectMusic.1"
-
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{636B9F10-0C7D-11D1-95B2-0020AFDC7421}\VersionIndependentProgID]
 @="Microsoft.DirectMusic"
 
-[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D1EB6D20-8923-11D0-9D97-00A0C90A43CB}]
-@="DirectPlay Object"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusic]
+@="DirectMusic"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusic\CLSID]
+@="{636B9F10-0C7D-11D1-95B2-0020AFDC7421}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusic\CurVer]
+@="Microsoft.DirectMusic.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusic.1]
+@="DirectMusic"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusic.1\CLSID]
+@="{636B9F10-0C7D-11D1-95B2-0020AFDC7421}"
 
-[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D1EB6D20-8923-11D0-9D97-00A0C90A43CB}\InprocServer32]
-@="dplayx.dll"
+# DirectMusicCollection
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{480FF4B0-28B2-11D1-BEF7-00C04FBF8FEF}]
+@="DirectMusicCollection"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{480FF4B0-28B2-11D1-BEF7-00C04FBF8FEF}\InProcServer32]
+@="dmusic.dll"
 "ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{480FF4B0-28B2-11D1-BEF7-00C04FBF8FEF}\ProgID]
+@="Microsoft.DirectMusicCollection.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{480FF4B0-28B2-11D1-BEF7-00C04FBF8FEF}\VersionIndependentProgID]
+@="Microsoft.DirectMusicCollection"
 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCollection]
+@="DirectMusicCollection"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCollection\CLSID]
+@="{480FF4B0-28B2-11D1-BEF7-00C04FBF8FEF}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCollection\CurVer]
+@="Microsoft.DirectMusicCollection.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCollection.1]
+@="DirectMusicCollection"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCollection.1\CLSID]
+@="{480FF4B0-28B2-11D1-BEF7-00C04FBF8FEF}"
+
+# DirectMusicSynth
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{58C2B4D0-46E7-11D1-89AC-00A0C9054129}]
+@="DirectMusicSynth"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{58C2B4D0-46E7-11D1-89AC-00A0C9054129}\InProcServer32]
+@="dmsynth.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{58C2B4D0-46E7-11D1-89AC-00A0C9054129}\ProgID]
+@="Microsoft.DirectMusicSynth.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{58C2B4D0-46E7-11D1-89AC-00A0C9054129}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSynth"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynth]
+@="DirectMusicSynth"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynth\CLSID]
+@="{58C2B4D0-46E7-11D1-89AC-00A0C9054129}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynth\CurVer]
+@="Microsoft.DirectMusicSynth.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynth.1]
+@="DirectMusicSynth"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynth.1\CLSID]
+@="{58C2B4D0-46E7-11D1-89AC-00A0C9054129}"
+
+# DirectMusicSynthSink
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{AEC17CE3-A514-11D1-AFA6-00AA0024D8B6}]
+@="DirectMusicSynthSink"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{AEC17CE3-A514-11D1-AFA6-00AA0024D8B6}\InProcServer32]
+@="dmsynth.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{AEC17CE3-A514-11D1-AFA6-00AA0024D8B6}\ProgID]
+@="Microsoft.DirectMusicSynthSink.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{AEC17CE3-A514-11D1-AFA6-00AA0024D8B6}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSynthSink"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynthSink]
+@="DirectMusicSynthSink"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynthSink\CLSID]
+@="{AEC17CE3-A514-11D1-AFA6-00AA0024D8B6}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynthSink\CurVer]
+@="Microsoft.DirectMusicSynthSink.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynthSink.1]
+@="DirectMusicSynthSink"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSynthSink.1\CLSID]
+@="{AEC17CE3-A514-11D1-AFA6-00AA0024D8B6}"
+
+# DirectMusicLoader
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2892-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicLoader"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2892-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmloader.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2892-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicLoader.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2892-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicLoader"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLoader]
+@="DirectMusicLoader"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLoader\CLSID]
+@="{D2AC2892-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLoader\CurVer]
+@="Microsoft.DirectMusicLoader.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLoader.1]
+@="DirectMusicLoader"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLoader.1\CLSID]
+@="{D2AC2892-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicSection
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{3F037241-414E-11D1-A7CE-00A0C913F73C}]
+@="DirectMusicSection"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{3F037241-414E-11D1-A7CE-00A0C913F73C}\InProcServer32]
+@="dmstyle.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{3F037241-414E-11D1-A7CE-00A0C913F73C}\ProgID]
+@="Microsoft.DirectMusicSection.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{3F037241-414E-11D1-A7CE-00A0C913F73C}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSection"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSection]
+@="DirectMusicSection"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSection\CLSID]
+@="{3F037241-414E-11D1-A7CE-00A0C913F73C}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSection\CurVer]
+@="Microsoft.DirectMusicSection.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSection.1]
+@="DirectMusicSection"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSection.1\CLSID]
+@="{3F037241-414E-11D1-A7CE-00A0C913F73C}"
+
+# DirectMusicStyle
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288A-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicStyle"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288A-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmstyle.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288A-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicStyle.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288A-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicStyle"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyle]
+@="DirectMusicStyle"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyle\CLSID]
+@="{D2AC288A-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyle\CurVer]
+@="Microsoft.DirectMusicStyle.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyle.1]
+@="DirectMusicStyle"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyle.1\CLSID]
+@="{D2AC288A-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicChordTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288B-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicChordTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288B-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmstyle.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288B-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicChordTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288B-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicChordTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordTrack]
+@="DirectMusicChordTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordTrack\CLSID]
+@="{D2AC288B-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordTrack\CurVer]
+@="Microsoft.DirectMusicChordTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordTrack.1]
+@="DirectMusicChordTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordTrack.1\CLSID]
+@="{D2AC288B-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicCommandTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288C-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicCommandTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288C-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmstyle.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288C-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicCommandTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288C-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicCommandTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCommandTrack]
+@="DirectMusicCommandTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCommandTrack\CLSID]
+@="{D2AC288C-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCommandTrack\CurVer]
+@="Microsoft.DirectMusicCommandTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCommandTrack.1]
+@="DirectMusicCommandTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicCommandTrack.1\CLSID]
+@="{D2AC288C-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicStyleTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288D-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicStyleTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288D-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmstyle.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288D-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicStyleTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288D-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicStyleTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyleTrack]
+@="DirectMusicStyleTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyleTrack\CLSID]
+@="{D2AC288D-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyleTrack\CurVer]
+@="Microsoft.DirectMusicStyleTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyleTrack.1]
+@="DirectMusicStyleTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicStyleTrack.1\CLSID]
+@="{D2AC288D-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicMotifTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288E-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicMotifTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288E-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmstyle.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288E-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicMotifTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288E-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicMotifTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMotifTrack]
+@="DirectMusicMotifTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMotifTrack\CLSID]
+@="{D2AC288E-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMotifTrack\CurVer]
+@="Microsoft.DirectMusicMotifTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMotifTrack.1]
+@="DirectMusicMotifTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMotifTrack.1\CLSID]
+@="{D2AC288E-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicAuditionTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2897-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicAuditionTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2897-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmstyle.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2897-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicAuditionTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2897-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicAuditionTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAuditionTrack]
+@="DirectMusicAuditionTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAuditionTrack\CLSID]
+@="{D2AC2897-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAuditionTrack\CurVer]
+@="Microsoft.DirectMusicAuditionTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAuditionTrack.1]
+@="DirectMusicAuditionTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAuditionTrack.1\CLSID]
+@="{D2AC2897-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicMuteTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2898-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicMuteTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2898-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmstyle.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2898-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicMuteTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2898-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicMuteTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMuteTrack]
+@="DirectMusicMuteTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMuteTrack\CLSID]
+@="{D2AC2898-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMuteTrack\CurVer]
+@="Microsoft.DirectMusicMuteTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMuteTrack.1]
+@="DirectMusicMuteTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMuteTrack.1\CLSID]
+@="{D2AC2898-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicPerformance
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2881-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicPerformance"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2881-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2881-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicPerformance.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2881-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicPerformance"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicPerformance]
+@="DirectMusicPerformance"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicPerformance\CLSID]
+@="{D2AC2881-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicPerformance\CurVer]
+@="Microsoft.DirectMusicPerformance.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicPerformance.1]
+@="DirectMusicPerformance"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicPerformance.1\CLSID]
+@="{D2AC2881-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicSegment
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2882-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicSegment"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2882-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2882-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicSegment.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2882-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSegment"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegment]
+@="DirectMusicSegment"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegment\CLSID]
+@="{D2AC2882-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegment\CurVer]
+@="Microsoft.DirectMusicSegment.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegment.1]
+@="DirectMusicSegment"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegment.1\CLSID]
+@="{D2AC2882-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicSegmentState
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2883-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicSegmentState"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2883-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2883-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicSegmentState.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2883-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSegmentState"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegmentState]
+@="DirectMusicSegmentState"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegmentState\CLSID]
+@="{D2AC2883-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegmentState\CurVer]
+@="Microsoft.DirectMusicSegmentState.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegmentState.1]
+@="DirectMusicSegmentState"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegmentState.1\CLSID]
+@="{D2AC2883-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicGraph
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2884-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicGraph"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2884-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2884-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicGraph.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2884-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicGraph"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicGraph]
+@="DirectMusicGraph"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicGraph\CLSID]
+@="{D2AC2884-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicGraph\CurVer]
+@="Microsoft.DirectMusicGraph.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicGraph.1]
+@="DirectMusicGraph"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicGraph.1\CLSID]
+@="{D2AC2884-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicTempoTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2885-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicTempoTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2885-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2885-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicTempoTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2885-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicTempoTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTempoTrack]
+@="DirectMusicTempoTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTempoTrack\CLSID]
+@="{D2AC2885-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTempoTrack\CurVer]
+@="Microsoft.DirectMusicTempoTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTempoTrack.1]
+@="DirectMusicTempoTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTempoTrack.1\CLSID]
+@="{D2AC2885-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicSeqTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2886-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicSeqTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2886-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2886-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicSeqTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2886-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSeqTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSeqTrack]
+@="DirectMusicSeqTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSeqTrack\CLSID]
+@="{D2AC2886-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSeqTrack\CurVer]
+@="Microsoft.DirectMusicSeqTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSeqTrack.1]
+@="DirectMusicSeqTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSeqTrack.1\CLSID]
+@="{D2AC2886-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicSysExTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2887-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicSysExTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2887-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2887-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicSysExTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2887-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSysExTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSysExTrack]
+@="DirectMusicSysExTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSysExTrack\CLSID]
+@="{D2AC2887-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSysExTrack\CurVer]
+@="Microsoft.DirectMusicSysExTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSysExTrack.1]
+@="DirectMusicSysExTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSysExTrack.1\CLSID]
+@="{D2AC2887-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicTimeSigTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2888-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicTimeSigTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2888-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2888-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicTimeSigTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2888-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicTimeSigTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTimeSigTrack]
+@="DirectMusicTimeSigTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTimeSigTrack\CLSID]
+@="{D2AC2888-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTimeSigTrack\CurVer]
+@="Microsoft.DirectMusicTimeSigTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTimeSigTrack.1]
+@="DirectMusicTimeSigTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTimeSigTrack.1\CLSID]
+@="{D2AC2888-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicChordMap
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288F-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicChordMap"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288F-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmcompos.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288F-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicChordMap.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC288F-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicChordMap"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMap]
+@="DirectMusicChordMap"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMap\CLSID]
+@="{D2AC288F-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMap\CurVer]
+@="Microsoft.DirectMusicChordMap.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMap.1]
+@="DirectMusicChordMap"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMap.1\CLSID]
+@="{D2AC288F-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicComposer
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2890-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicComposer"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2890-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmcompos.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2890-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicComposer.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2890-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicComposer"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicComposer]
+@="DirectMusicComposer"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicComposer\CLSID]
+@="{D2AC2890-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicComposer\CurVer]
+@="Microsoft.DirectMusicComposer.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicComposer.1]
+@="DirectMusicComposer"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicComposer.1\CLSID]
+@="{D2AC2890-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicChordMapTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2896-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicChordMapTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2896-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmcompos.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2896-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicChordMapTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2896-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicChordMapTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMapTrack]
+@="DirectMusicChordMapTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMapTrack\CLSID]
+@="{D2AC2896-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMapTrack\CurVer]
+@="Microsoft.DirectMusicChordMapTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMapTrack.1]
+@="DirectMusicChordMapTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicChordMapTrack.1\CLSID]
+@="{D2AC2896-B39B-11D1-8704-00600893B1BD}"
+
+# DirectMusicTemplate
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D30BCC65-60E8-11D1-A7CE-00A0C913F73C}]
+@="DirectMusicTemplate"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D30BCC65-60E8-11D1-A7CE-00A0C913F73C}\InProcServer32]
+@="dmcompos.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D30BCC65-60E8-11D1-A7CE-00A0C913F73C}\ProgID]
+@="Microsoft.DirectMusicTemplate.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D30BCC65-60E8-11D1-A7CE-00A0C913F73C}\VersionIndependentProgID]
+@="Microsoft.DirectMusicTemplate"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTemplate]
+@="DirectMusicTemplate"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTemplate\CLSID]
+@="{D30BCC65-60E8-11D1-A7CE-00A0C913F73C}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTemplate\CurVer]
+@="Microsoft.DirectMusicTemplate.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTemplate.1]
+@="DirectMusicTemplate"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicTemplate.1\CLSID]
+@="{D30BCC65-60E8-11D1-A7CE-00A0C913F73C}"
+
+# DirectMusicSignPostTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{F17E8672-C3B4-11D1-870B-00600893B1BD}]
+@="DirectMusicSignPostTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{F17E8672-C3B4-11D1-870B-00600893B1BD}\InProcServer32]
+@="dmcompos.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{F17E8672-C3B4-11D1-870B-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicSignPostTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{F17E8672-C3B4-11D1-870B-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSignPostTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSignPostTrack]
+@="DirectMusicSignPostTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSignPostTrack\CLSID]
+@="{F17E8672-C3B4-11D1-870B-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSignPostTrack\CurVer]
+@="Microsoft.DirectMusicSignPostTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSignPostTrack.1]
+@="DirectMusicSignPostTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSignPostTrack.1\CLSID]
+@="{F17E8672-C3B4-11D1-870B-00600893B1BD}"
+
+# DirectMusicBand
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{79BA9E00-B6EE-11D1-86BE-00C04FBF8FEF}]
+@="DirectMusicBand"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{79BA9E00-B6EE-11D1-86BE-00C04FBF8FEF}\InProcServer32]
+@="dmband.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{79BA9E00-B6EE-11D1-86BE-00C04FBF8FEF}\ProgID]
+@="Microsoft.DirectMusicBand.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{79BA9E00-B6EE-11D1-86BE-00C04FBF8FEF}\VersionIndependentProgID]
+@="Microsoft.DirectMusicBand"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBand]
+@="DirectMusicBand"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBand\CLSID]
+@="{79BA9E00-B6EE-11D1-86BE-00C04FBF8FEF}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBand\CurVer]
+@="Microsoft.DirectMusicBand.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBand.1]
+@="DirectMusicBand"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBand.1\CLSID]
+@="{79BA9E00-B6EE-11D1-86BE-00C04FBF8FEF}"
+
+# DirectMusicBandTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2894-B39B-11D1-8704-00600893B1BD}]
+@="DirectMusicBandTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2894-B39B-11D1-8704-00600893B1BD}\InProcServer32]
+@="dmband.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2894-B39B-11D1-8704-00600893B1BD}\ProgID]
+@="Microsoft.DirectMusicBandTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D2AC2894-B39B-11D1-8704-00600893B1BD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicBandTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBandTrack]
+@="DirectMusicBandTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBandTrack\CLSID]
+@="{D2AC2894-B39B-11D1-8704-00600893B1BD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBandTrack\CurVer]
+@="Microsoft.DirectMusicBandTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBandTrack.1]
+@="DirectMusicBandTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicBandTrack.1\CLSID]
+@="{D2AC2894-B39B-11D1-8704-00600893B1BD}"
+
+[HKEY_LOCAL_MACHINE\Software\Microsoft\DirectMusic\SoftwareSynths\{58C2B4D0-46E7-11D1-89AC-00A0C9054129}]
+@=""
+"Description"="Microsoft Software Synthesizer"
+
+# DirectMusicParamControlTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4BE0537B-5C19-11D3-8BDC-00600893B1B6}]
+@="DirectMusicParamControlTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4BE0537B-5C19-11D3-8BDC-00600893B1B6}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4BE0537B-5C19-11D3-8BDC-00600893B1B6}\ProgID]
+@="Microsoft.DirectMusicParamControlTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4BE0537B-5C19-11D3-8BDC-00600893B1B6}\VersionIndependentProgID]
+@="Microsoft.DirectMusicParamControlTrack"
+
+# DirectMusicMarkerTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{55A8FD00-4288-11D3-9BD1-8A0D61C88835}]
+@="DirectMusicMarkerTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{55A8FD00-4288-11D3-9BD1-8A0D61C88835}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{55A8FD00-4288-11D3-9BD1-8A0D61C88835}\ProgID]
+@="Microsoft.DirectMusicMarkerTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{55A8FD00-4288-11D3-9BD1-8A0D61C88835}\VersionIndependentProgID]
+@="Microsoft.DirectMusicMarkerTrack"
+
+# DirectMusicLyricsTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{995C1CF5-54FF-11D3-8BDA-00600893B1B6}]
+@="DirectMusicLyricsTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{995C1CF5-54FF-11D3-8BDA-00600893B1B6}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{995C1CF5-54FF-11D3-8BDA-00600893B1B6}\ProgID]
+@="Microsoft.DirectMusicLyricsTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{995C1CF5-54FF-11D3-8BDA-00600893B1B6}\VersionIndependentProgID]
+@="Microsoft.DirectMusicLyricsTrack"
+
+# DirectMusicSong
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{AED5F0A5-D972-483D-A384-649DFEB9C181}]
+@="DirectMusicSong"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{AED5F0A5-D972-483D-A384-649DFEB9C181}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{AED5F0A5-D972-483D-A384-649DFEB9C181}\ProgID]
+@="Microsoft.DirectMusicSong.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{AED5F0A5-D972-483D-A384-649DFEB9C181}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSong"
+
+# DirectMusicSegTriggerTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{BAE4D665-4EA1-11D3-8BDA-00600893B1B6}]
+@="DirectMusicSegTriggerTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{BAE4D665-4EA1-11D3-8BDA-00600893B1B6}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{BAE4D665-4EA1-11D3-8BDA-00600893B1B6}\ProgID]
+@="Microsoft.DirectMusicSegTriggerTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{BAE4D665-4EA1-11D3-8BDA-00600893B1B6}\VersionIndependentProgID]
+@="Microsoft.DirectMusicSegTriggerTrack"
+
+# DirectMusicAudioPath
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EE0B9CA0-A81E-11D3-9BD1-0080C7150A74}]
+@="DirectMusicAudioPath"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EE0B9CA0-A81E-11D3-9BD1-0080C7150A74}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EE0B9CA0-A81E-11D3-9BD1-0080C7150A74}\ProgID]
+@="Microsoft.DirectMusicAudioPath.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EE0B9CA0-A81E-11D3-9BD1-0080C7150A74}\VersionIndependentProgID]
+@="Microsoft.DirectMusicAudioPath"
+
+# DirectMusicWaveTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EED36461-9EA5-11D3-9BD1-0080C7150A74}]
+@="DirectMusicWaveTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EED36461-9EA5-11D3-9BD1-0080C7150A74}\InProcServer32]
+@="dmime.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EED36461-9EA5-11D3-9BD1-0080C7150A74}\ProgID]
+@="Microsoft.DirectMusicWaveTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EED36461-9EA5-11D3-9BD1-0080C7150A74}\VersionIndependentProgID]
+@="Microsoft.DirectMusicWaveTrack"
+
+# DirectMusicAudioPath
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAudioPath]
+@="DirectMusicAudioPath"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAudioPath\CLSID]
+@="{EE0B9CA0-A81E-11D3-9BD1-0080C7150A74}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAudioPath\CurVer]
+@="Microsoft.DirectMusicAudioPath.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAudioPath.1]
+@="DirectMusicAudioPath"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicAudioPath.1\CLSID]
+@="{EE0B9CA0-A81E-11D3-9BD1-0080C7150A74}"
+
+# DirectMusicLyricsTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLyricsTrack]
+@="DirectMusicLyricsTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLyricsTrack\CLSID]
+@="{995C1CF5-54FF-11D3-8BDA-00600893B1B6}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLyricsTrack\CurVer]
+@="Microsoft.DirectMusicLyricsTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLyricsTrack.1]
+@="DirectMusicLyricsTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicLyricsTrack.1\CLSID]
+@="{995C1CF5-54FF-11D3-8BDA-00600893B1B6}"
+
+# DirectMusicMarkerTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMarkerTrack]
+@="DirectMusicMarkerTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMarkerTrack\CLSID]
+@="{55A8FD00-4288-11D3-9BD1-8A0D61C88835}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMarkerTrack\CurVer]
+@="Microsoft.DirectMusicMarkerTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMarkerTrack.1]
+@="DirectMusicMarkerTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMarkerTrack.1\CLSID]
+@="{55A8FD00-4288-11D3-9BD1-8A0D61C88835}"
+
+# DirectMusicParamControlTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicParamControlTrack]
+@="DirectMusicParamControlTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicParamControlTrack\CLSID]
+@="{4BE0537B-5C19-11D3-8BDC-00600893B1B6}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicParamControlTrack\CurVer]
+@="Microsoft.DirectMusicParamControlTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicParamControlTrack.1]
+@="DirectMusicParamControlTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicParamControlTrack.1\CLSID]
+@="{4BE0537B-5C19-11D3-8BDC-00600893B1B6}"
+
+# DirectMusicSegTriggerTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegTriggerTrack]
+@="DirectMusicSegTriggerTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegTriggerTrack\CLSID]
+@="{BAE4D665-4EA1-11D3-8BDA-00600893B1B6}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegTriggerTrack\CurVer]
+@="Microsoft.DirectMusicSegTriggerTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegTriggerTrack.1]
+@="DirectMusicSegTriggerTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSegTriggerTrack.1\CLSID]
+@="{BAE4D665-4EA1-11D3-8BDA-00600893B1B6}"
+
+# DirectMusicSong
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSong]
+@="DirectMusicSong"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSong\CLSID]
+@="{AED5F0A5-D972-483D-A384-649DFEB9C181}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSong\CurVer]
+@="Microsoft.DirectMusicSong.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSong.1]
+@="DirectMusicSong"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicSong.1\CLSID]
+@="{AED5F0A5-D972-483D-A384-649DFEB9C181}"
+
+# DirectMusicWaveTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicWaveTrack]
+@="DirectMusicWaveTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicWaveTrack\CLSID]
+@="{EED36461-9EA5-11D3-9BD1-0080C7150A74}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicWaveTrack\CurVer]
+@="Microsoft.DirectMusicWaveTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicWaveTrack.1]
+@="DirectMusicWaveTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicWaveTrack.1\CLSID]
+@="{EED36461-9EA5-11D3-9BD1-0080C7150A74}"
+
+# DirectMusicContainer
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{9301E380-1F22-11D3-8226-D2FA76255D47}]
+@="DirectMusicContainer"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{9301E380-1F22-11D3-8226-D2FA76255D47}\InProcServer32]
+@="dmloader.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{9301E380-1F22-11D3-8226-D2FA76255D47}\ProgID]
+@="Microsoft.DirectMusicContainer.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{9301E380-1F22-11D3-8226-D2FA76255D47}\VersionIndependentProgID]
+@="Microsoft.DirectMusicContainer"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicContainer]
+@="DirectMusicContainer"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicContainer\CLSID]
+@="{9301E380-1F22-11D3-8226-D2FA76255D47}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicContainer\CurVer]
+@="Microsoft.DirectMusicContainer.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicContainer.1]
+@="DirectMusicContainer"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicContainer.1\CLSID]
+@="{9301E380-1F22-11D3-8226-D2FA76255D47}"
+
+# DirectMusic Script AutoImp Segment
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4062C116-0270-11D3-8BCB-00600893B1B6}]
+@="DirectMusic Script AutoImp Segment"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4062C116-0270-11D3-8BCB-00600893B1B6}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4062C116-0270-11D3-8BCB-00600893B1B6}\ProgID]
+@="Microsoft.DirectMusicScriptAutoImpSegment.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4062C116-0270-11D3-8BCB-00600893B1B6}\VersionIndependentProgID]
+@="Microsoft.DirectMusicScriptAutoImpSegment"
+
+# DirectMusicScriptTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4108FA85-3586-11D3-8BD7-00600893B1B6}]
+@="DirectMusicScriptTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4108FA85-3586-11D3-8BD7-00600893B1B6}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4108FA85-3586-11D3-8BD7-00600893B1B6}\ProgID]
+@="Microsoft.DirectMusicScriptTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4108FA85-3586-11D3-8BD7-00600893B1B6}\VersionIndependentProgID]
+@="Microsoft.DirectMusicScriptTrack"
+
+# DirectMusic Audio VB Script Language
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4EE17959-931E-49E4-A2C6-977ECF3628F3}]
+@="DirectMusic Audio VB Script Language"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4EE17959-931E-49E4-A2C6-977ECF3628F3}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4EE17959-931E-49E4-A2C6-977ECF3628F3}\ProgID]
+@="AudioVBScript.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{4EE17959-931E-49E4-A2C6-977ECF3628F3}\VersionIndependentProgID]
+@="AudioVBScript"
+
+# DirectMusic Script Object
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{810B5013-E88D-11D2-8BC1-00600893B1B6}]
+@="DirectMusic Script Object"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{810B5013-E88D-11D2-8BC1-00600893B1B6}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{810B5013-E88D-11D2-8BC1-00600893B1B6}\ProgID]
+@="Microsoft.DirectMusicScript.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{810B5013-E88D-11D2-8BC1-00600893B1B6}\VersionIndependentProgID]
+@="Microsoft.DirectMusicScript"
+
+# DirectMusic Script AutoImp Performance
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{A861C6E2-FCFC-11D2-8BC9-00600893B1B6}]
+@="DirectMusic Script AutoImp Performance"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{A861C6E2-FCFC-11D2-8BC9-00600893B1B6}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{A861C6E2-FCFC-11D2-8BC9-00600893B1B6}\ProgID]
+@="Microsoft.DirectMusicScriptAutoImpPerformance.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{A861C6E2-FCFC-11D2-8BC9-00600893B1B6}\VersionIndependentProgID]
+@="Microsoft.DirectMusicScriptAutoImpPerformance"
+
+# DirectMusic Script Source Code Loader
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{C70EB77F-EFD4-4678-A27B-BF1648F30D04}]
+@="DirectMusic Script Source Code Loader"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{C70EB77F-EFD4-4678-A27B-BF1648F30D04}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{C70EB77F-EFD4-4678-A27B-BF1648F30D04}\ProgID]
+@="Microsoft.DirectMusicScripSourceCodeLoader.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{C70EB77F-EFD4-4678-A27B-BF1648F30D04}\VersionIndependentProgID]
+@="Microsoft.DirectMusicScripSourceCodeLoader"
+
+# DirectMusic Script AutoImp SegmentState
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EBF2320A-2502-11D3-8BD1-00600893B1B6}]
+@="DirectMusic Script AutoImp SegmentState"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EBF2320A-2502-11D3-8BD1-00600893B1B6}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EBF2320A-2502-11D3-8BD1-00600893B1B6}\ProgID]
+@="Microsoft.DirectMusicScriptAutoImpSegmentState.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{EBF2320A-2502-11D3-8BD1-00600893B1B6}\VersionIndependentProgID]
+@="Microsoft.DirectMusicScriptAutoImpSegmentState"
+
+# DirectMusic Script AutoImp AudioPathConfig
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{1CEBDE3E-6B91-484A-AF48-5E4F4ED6B1E1}]
+@="DirectMusic Script AutoImp AudioPathConfig"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{1CEBDE3E-6B91-484A-AF48-5E4F4ED6B1E1}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{1CEBDE3E-6B91-484A-AF48-5E4F4ED6B1E1}\ProgID]
+@="Microsoft.DirectMusicScriptAutoImpAudioPathConfig.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{1CEBDE3E-6B91-484A-AF48-5E4F4ED6B1E1}\VersionIndependentProgID]
+@="Microsoft.DirectMusicScriptAutoImpAudioPathConfig"
+
+# DirectMusic Script AutoImp AudioPath
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{2C5F9B72-7148-4D97-BFC9-68A0E076BEBD}]
+@="DirectMusic Script AutoImp AudioPath"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{2C5F9B72-7148-4D97-BFC9-68A0E076BEBD}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{2C5F9B72-7148-4D97-BFC9-68A0E076BEBD}\ProgID]
+@="Microsoft.DirectMusicScriptAutoImpAudioPath.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{2C5F9B72-7148-4D97-BFC9-68A0E076BEBD}\VersionIndependentProgID]
+@="Microsoft.DirectMusicScriptAutoImpAudioPath"
+
+# DirectMusic Script AutoImp Song
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{A16F1761-B6D8-42EB-8D57-4A44FEDD3BD2}]
+@="DirectMusic Script AutoImp Song"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{A16F1761-B6D8-42EB-8D57-4A44FEDD3BD2}\InProcServer32]
+@="dmscript.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{A16F1761-B6D8-42EB-8D57-4A44FEDD3BD2}\ProgID]
+@="Microsoft.DirectMusicScriptAutoImpSong.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{A16F1761-B6D8-42EB-8D57-4A44FEDD3BD2}\VersionIndependentProgID]
+@="Microsoft.DirectMusicScriptAutoImpSong"
+
+# DirectMusic Audio VB Script Language
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AudioVBScript]
+@="DirectMusic Audio VB Script Language"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AudioVBScript\CLSID]
+@="{4EE17959-931E-49E4-A2C6-977ECF3628F3}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AudioVBScript\CurVer]
+@="AudioVBScript.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AudioVBScript\DMScript]
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AudioVBScript.1]
+@="DirectMusic Audio VB Script Language"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AudioVBScript.1\CLSID]
+@="{4EE17959-931E-49E4-A2C6-977ECF3628F3}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AudioVBScript.1\DMScript
+
+# DirectMusic Script Source Code Loader
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScripSourceCodeLoader]
+@="DirectMusic Script Source Code Loader"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScripSourceCodeLoader\CLSID]
+@="{C70EB77F-EFD4-4678-A27B-BF1648F30D04}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScripSourceCodeLoader\CurVer]
+@="Microsoft.DirectMusicScripSourceCodeLoader.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScripSourceCodeLoader.1]
+@="DirectMusic Script Source Code Loader"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScripSourceCodeLoader.1\CLSID]
+@="{C70EB77F-EFD4-4678-A27B-BF1648F30D04}"
+
+# DirectMusic Script Object
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScript]
+@="DirectMusic Script Object"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScript\CLSID]
+@="{810B5013-E88D-11D2-8BC1-00600893B1B6}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScript\CurVer]
+@="Microsoft.DirectMusicScript.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScript.1]
+@="DirectMusic Script Object"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScript.1\CLSID]
+@="{810B5013-E88D-11D2-8BC1-00600893B1B6}"
+
+# DirectMusic Script AutoImp Performance
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpPerformance]
+@="DirectMusic Script AutoImp Performance"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpPerformance\CLSID]
+@="{A861C6E2-FCFC-11D2-8BC9-00600893B1B6}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpPerformance\CurVer]
+@="Microsoft.DirectMusicScriptAutoImpPerformance.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpPerformance.1]
+@="DirectMusic Script AutoImp Performance"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpPerformance.1\CLSID]
+@="{A861C6E2-FCFC-11D2-8BC9-00600893B1B6}"
+
+# DirectMusic Script AutoImp Segment
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegment]
+@="DirectMusic Script AutoImp Segment"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegment\CLSID]
+@="{4062C116-0270-11D3-8BCB-00600893B1B6}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegment\CurVer]
+@="Microsoft.DirectMusicScriptAutoImpSegment.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegment.1]
+@="DirectMusic Script AutoImp Segment"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegment.1\CLSID]
+@="{4062C116-0270-11D3-8BCB-00600893B1B6}"
+
+# DirectMusic Script AutoImp SegmentState
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegmentState]
+@="DirectMusic Script AutoImp SegmentState"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegmentState\CLSID]
+@="{EBF2320A-2502-11D3-8BD1-00600893B1B6}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegmentState\CurVer]
+@="Microsoft.DirectMusicScriptAutoImpSegmentState.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegmentState.1]
+@="DirectMusic Script AutoImp SegmentState"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSegmentState.1\CLSID]
+@="{EBF2320A-2502-11D3-8BD1-00600893B1B6}"
+
+# DirectMusicScriptTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptTrack]
+@="DirectMusicScriptTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptTrack\CLSID]
+@="{4108FA85-3586-11D3-8BD7-00600893B1B6}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptTrack\CurVer]
+@="Microsoft.DirectMusicScriptTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptTrack.1]
+@="DirectMusicScriptTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptTrack.1\CLSID]
+@="{4108FA85-3586-11D3-8BD7-00600893B1B6}"
+
+# DirectMusic Script AutoImp AudioPath
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPath]
+@="DirectMusic Script AutoImp AudioPath"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPath\CLSID]
+@="{2C5F9B72-7148-4D97-BFC9-68A0E076BEBD}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPath\CurVer]
+@="Microsoft.DirectMusicScriptAutoImpAudioPath.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPath.1]
+@="DirectMusic Script AutoImp AudioPath"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPath.1\CLSID]
+@="{2C5F9B72-7148-4D97-BFC9-68A0E076BEBD}"
+
+# DirectMusic Script AutoImp AudioPathConfig
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPathConfig]
+@="DirectMusic Script AutoImp AudioPathConfig"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPathConfig\CLSID]
+@="{1CEBDE3E-6B91-484A-AF48-5E4F4ED6B1E1}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPathConfig\CurVer]
+@="Microsoft.DirectMusicScriptAutoImpAudioPathConfig.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPathConfig.1]
+@="DirectMusic Script AutoImp AudioPathConfig"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpAudioPathConfig.1\CLSID]
+@="{1CEBDE3E-6B91-484A-AF48-5E4F4ED6B1E1}"
+
+# DirectMusic Script AutoImp Song
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSong]
+@="DirectMusic Script AutoImp Song"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSong\CLSID]
+@="{A16F1761-B6D8-42EB-8D57-4A44FEDD3BD2}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSong\CurVer]
+@="Microsoft.DirectMusicScriptAutoImpSong.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSong.1]
+@="DirectMusic Script AutoImp Song"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicScriptAutoImpSong.1\CLSID]
+@="{A16F1761-B6D8-42EB-8D57-4A44FEDD3BD2}"
+
+# DirectMusicMelodyFormulationTrack
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{B0684266-B57F-11D2-97F9-00C04FA36E58}]
+@="DirectMusicMelodyFormulationTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{B0684266-B57F-11D2-97F9-00C04FA36E58}\InProcServer32]
+@="dmstyle.dll"
+"ThreadingModel"="Both"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{B0684266-B57F-11D2-97F9-00C04FA36E58}\ProgID]
+@="Microsoft.DirectMusicMelodyFormulationTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{B0684266-B57F-11D2-97F9-00C04FA36E58}\VersionIndependentProgID]
+@="Microsoft.DirectMusicMelodyFormulationTrack"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMelodyFormulationTrack]
+@="DirectMusicMelodyFormulationTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMelodyFormulationTrack\CLSID]
+@="{B0684266-B57F-11D2-97F9-00C04FA36E58}"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMelodyFormulationTrack\CurVer]
+@="Microsoft.DirectMusicMelodyFormulationTrack.1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMelodyFormulationTrack.1]
+@="DirectMusicMelodyFormulationTrack"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectMusicMelodyFormulationTrack.1\CLSID]
+@="{B0684266-B57F-11D2-97F9-00C04FA36E58}"
+
+# As far as I know, not yet available
+## Microsoft DirectSound Wave
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}]
+#@="Microsoft DirectSound Wave"
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}\InProcServer32]
+#@="dswave.dll"
+#"ThreadingModel"="Both"
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}\ProgID]
+#@="Microsoft.DirectSoundWave.1"
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{8A667154-F9CB-11D2-AD8A-0060B0575ABC}\VersionIndependentProgID]
+#@="Microsoft.DirectSoundWave"
+
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave]
+#@="Microsoft DirectSound Wave"
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave\CLSID]
+#@="{8A667154-F9CB-11D2-AD8A-0060B0575ABC}"
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave\CurVer]
+#@="Microsoft.DirectSoundWave.1"
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave.1]
+#@="Microsoft DirectSound Wave"
+#[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Microsoft.DirectSoundWave.1\CLSID]
+#@="{8A667154-F9CB-11D2-AD8A-0060B0575ABC}"
+
+
+#
+# DirectSound
+#
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{47D4D946-62E8-11cf-93BC-444553540000}]
 @="DirectSound Object"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{47D4D946-62E8-11cf-93BC-444553540000}\InprocServer32]
 @="dsound.dll"
+"ThreadingModel"="Both"
+
+
+
+#
+# DirectPlay
+#
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D1EB6D20-8923-11D0-9D97-00A0C90A43CB}]
+@="DirectPlay Object"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{D1EB6D20-8923-11D0-9D97-00A0C90A43CB}\InprocServer32]
+@="dplayx.dll"
 "ThreadingModel"="Both"
 
 [HKEY_CLASSES_ROOT\CLSID\{2FE8F810-B2A5-11d0-A787-0000F803ABFC}]
