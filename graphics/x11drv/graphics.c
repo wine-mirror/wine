@@ -1387,23 +1387,24 @@ X11DRV_PolyBezier(DC *dc, POINT start, const POINT* BezierPoints, DWORD count)
     TRACE("dc=%p count=%ld %ld,%ld - %ld,%ld - %ld,%ld - %ld,%ld\n", 
             dc, count,
             start.x, start.y,
-            (Points+0)->x, (Points+0)->y, 
-            (Points+1)->x, (Points+1)->y, 
-            (Points+2)->x, (Points+2)->y); 
+            (BezierPoints+0)->x, (BezierPoints+0)->y, 
+            (BezierPoints+1)->x, (BezierPoints+1)->y, 
+            (BezierPoints+2)->x, (BezierPoints+2)->y); 
     if(!count || count % 3){/* paranoid */
         WARN(" bad value for count : %ld\n", count);
         return FALSE; 
     }
     xpoints=(XPoint*) xmalloc( sizeof(XPoint)*BEZMAXPOINTS);
-    Points[3].x=BEZIERSHIFTUP(XLPTODP(dc,start.x));
-    Points[3].y=BEZIERSHIFTUP(YLPTODP(dc,start.y));
+    start.x=BEZIERSHIFTUP(XLPTODP(dc,start.x));
+    start.y=BEZIERSHIFTUP(YLPTODP(dc,start.y));
     while(count){
-        Points[0]=Points[3];
+        Points[0]=start;
         for(i=1;i<4;i++) {
             Points[i].x= BEZIERSHIFTUP(XLPTODP(dc,BezierPoints->x));
             Points[i].y= BEZIERSHIFTUP(YLPTODP(dc,BezierPoints->y));
             BezierPoints++;
         }
+        start=Points[3];
         X11DRV_Bezier(BEZIERMAXDEPTH , dc, Points, xpoints, &ix );
         count -=3;
     }
