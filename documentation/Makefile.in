@@ -65,7 +65,7 @@ $(BOOKNAME).ps: $(BOOK_SRCS)
 	db2ps $(BOOKNAME).sgml > /dev/null
 
 wine.man: wine.man.in
-	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' $(SRCDIR)/wine.man.in >wine.man
+	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' $(SRCDIR)/wine.man.in >$@ || $(RM) $@
 
 install:: $(MAN_TARGETS)
 	$(INSTALL) -d $(mandir)/man$(prog_manext)

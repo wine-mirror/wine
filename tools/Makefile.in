@@ -41,7 +41,7 @@ bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o
 
 winelauncher: winelauncher.in
-	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' $(SRCDIR)/winelauncher.in >winelauncher
+	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' $(SRCDIR)/winelauncher.in >$@ || $(RM) $@
 
 install:: $(PROGRAMS) $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
