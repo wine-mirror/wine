@@ -198,19 +198,51 @@ done:
 
 
 /***********************************************************************
+ *           filter_event
+ */
+static Bool filter_event( Display *display, XEvent *event, char *arg )
+{
+    DWORD mask = (ULONG_PTR)arg;
+
+    if ((mask & QS_ALLINPUT) == QS_ALLINPUT) return 1;
+
+    switch(event->type)
+    {
+    case KeyPress:
+    case KeyRelease:
+    case KeymapNotify:
+        return (mask & QS_KEY) != 0;
+    case ButtonPress:
+    case ButtonRelease:
+        return (mask & QS_MOUSEBUTTON) != 0;
+    case MotionNotify:
+    case EnterNotify:
+    case LeaveNotify:
+        return (mask & QS_MOUSEMOVE) != 0;
+    case Expose:
+        return (mask & QS_PAINT) != 0;
+    case ClientMessage:
+        return (mask & QS_POSTMESSAGE) != 0;
+    default:
+        return (mask & QS_SENDMESSAGE) != 0;
+    }
+}
+
+
+/***********************************************************************
  *           process_events
  */
-static int process_events( Display *display )
+static int process_events( Display *display, DWORD mask )
 {
     XEvent event;
     HWND hwnd;
-    int count;
+    int count = 0;
     x11drv_event_handler handler;
 
     wine_tsx11_lock();
-    for (count = 0; XPending(display); count++)
+    while (XCheckIfEvent( display, &event, filter_event, (char *)mask ))
     {
-        XNextEvent( display, &event );
+        count++;
         if (XFilterEvent( &event, None )) continue;  /* filtered, ignore it */
 
         if (!(handler = find_handler( event.type )))
@@ -261,12 +293,12 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     wine_tsx11_unlock();
 
     data->process_event_count++;
-    if (process_events( data->display )) ret = count;
+    if (process_events( data->display, mask )) ret = count;
     else
     {
         ret = WaitForMultipleObjectsEx( count+1, new_handles, flags & MWMO_WAITALL,
                                         timeout, flags & MWMO_ALERTABLE );
-        if (ret == count) process_events( data->display );
+        if (ret == count) process_events( data->display, mask );
     }
     data->process_event_count--;
     return ret;
