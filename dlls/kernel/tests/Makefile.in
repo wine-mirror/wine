@@ -26,6 +26,7 @@ CTESTS = \
 	process.c \
 	profile.c \
 	thread.c \
+	time.c \
 	virtual.c
 
 @MAKE_TEST_RULES@
