@@ -148,6 +148,7 @@ STRING     \"[^\n"]+\"
 <INFO_CMD,WALK_CMD>process|proces|proce|proc   		{ return tPROCESS; }
 <INFO_CMD,WALK_CMD>threads|thread|threa|thre|thr|th { return tTHREAD; }
 <INFO_CMD,WALK_CMD>modref|modre|modr	{ return tMODREF; }
+<WALK_CMD>exception|except|exc|ex	{ return tEXCEPTION; }
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
 <INFO_CMD>stack|stac|sta|st     	{ return tSTACK; }

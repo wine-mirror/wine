@@ -405,6 +405,7 @@ extern void DEBUG_DumpModule(DWORD mod);
 extern void DEBUG_WalkModules(void);
 extern void DEBUG_WalkProcess(void);
 extern void DEBUG_WalkThreads(void);
+extern void DEBUG_WalkExceptions(DWORD tid);
 extern void DEBUG_DumpQueue(DWORD q);
 extern void DEBUG_WalkQueues(void);
 extern void DEBUG_InfoSegments(DWORD s, int v);

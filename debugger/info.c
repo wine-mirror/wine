@@ -543,6 +543,59 @@ void DEBUG_WalkModref(DWORD p)
    DEBUG_Printf(DBG_CHN_MESG, "No longer walking module references list\n");
 }
 
+/***********************************************************************
+ *           DEBUG_WalkExceptions
+ *
+ * Walk the exception frames of a given thread.
+ */
+void DEBUG_WalkExceptions(DWORD tid)
+{
+    DBG_THREAD * thread;
+    void *next_frame;
+
+    DEBUG_Printf( DBG_CHN_MESG, "Exception frames:\n" );
+
+    if (tid == DEBUG_CurrTid) thread = DEBUG_CurrThread;
+    else
+    {
+         thread = DEBUG_GetThread(DEBUG_CurrProcess, tid);
+
+         if (!thread)
+         {
+              DEBUG_Printf( DBG_CHN_MESG, "Unknown thread id (0x%08lx) in current process\n", tid);
+              return;
+         }
+         if (SuspendThread( thread->handle ) == -1)
+         {
+              DEBUG_Printf( DBG_CHN_MESG, "Can't suspend thread id (0x%08lx)\n", tid);
+              return;
+         }
+    }
+
+    if (!DEBUG_READ_MEM(thread->teb, &next_frame, sizeof(next_frame)))
+    {
+        DEBUG_Printf( DBG_CHN_MESG, "Can't read TEB:except_frame\n");
+        return;
+    }
+
+    while (next_frame != (void *)-1)
+    {
+        EXCEPTION_FRAME frame;
+
+        DEBUG_Printf( DBG_CHN_MESG, "%p: ", next_frame );
+        if (!DEBUG_READ_MEM(next_frame, &frame, sizeof(frame)))
+        {
+            DEBUG_Printf( DBG_CHN_MESG, "Invalid frame address\n" );
+            break;
+        }
+        DEBUG_Printf( DBG_CHN_MESG, "prev=%p handler=%p\n", frame.Prev, frame.Handler );
+        next_frame = frame.Prev;
+    }
+
+    if (tid != DEBUG_CurrTid) ResumeThread( thread->handle );
+}
+
+
 void DEBUG_InfoSegments(DWORD start, int length)
 {
     char 	flags[3];
