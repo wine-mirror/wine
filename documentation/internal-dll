@@ -21,7 +21,7 @@ BOOL32 WINAPI YourLibMain(HINSTANCE32 hinstDLL,
 }
 
 
-2. Using functions from other build-in DLL's
+2. Using functions from other built-in DLL's
 --------------------------------------------
 The problem here is, that you can't know if you have to call the function from
 the internal or the external DLL. If you just call the function you will get

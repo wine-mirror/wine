@@ -312,16 +312,29 @@ Call KERNEL.52: FREEPROCINSTANCE(0x02cf00ba) ret=01f7:1460 ds=01ff
 Ret  KERNEL.52: FREEPROCINSTANCE() retval=0x0001 ret=01f7:1460 ds=01ff
 Call USER.1: MESSAGEBOX(0x0000,0x01ff1246 "Runtime error 219 at 0004:1056.",0x00000000,0x1010) ret=01f7:2160 ds=01ff
 
-I think that the call to MessageBox() in this example is _not_ caused by a wrong result value of some previously executed function (it's happening quite often like that), but instead the messagebox complains about a runtime error at 0x0004:0x1056.
-As the segment value of the address is only "4", I think that that is only an internal program value. But the offset address reveals something quite interesting:
+I think that the call to MessageBox() in this example is _not_ caused
+by a wrong result value of some previously executed function (it's
+happening quite often like that), but instead the messagebox complains
+about a runtime error at 0x0004:0x1056.
+
+As the segment value of the address is only "4", I think that that is
+only an internal program value. But the offset address reveals something
+quite interesting:
+
 Offset 1056 is _very_ close to the return address of FREELIBRARY():
 
 Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
                                              ^^^^
-Provided that segment 0x0004 is indeed segment 0x1cf, we now we can use IDA (available at ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip) to
-disassemble the part that caused the error. We just have to find the address of
-the call to FreeLibrary(). Some lines before that the runtime error occurred.
-But be careful ! In some cases you don't have to disassemble the main program, but instead some DLL called by it in order to find the correct place where the runtime error occurred. That can be determined by finding the origin of the segment value (in this case 0x1cf).
+Provided that segment 0x0004 is indeed
+segment 0x1cf, we now we can use IDA (available at
+ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip)
+to disassemble the part that caused the error. We just have to find
+the address of the call to FreeLibrary(). Some lines before that the
+runtime error occurred.  But be careful ! In some cases you don't have
+to disassemble the main program, but instead some DLL called by it in
+order to find the correct place where the runtime error occurred. That
+can be determined by finding the origin of the segment value (in this
+case 0x1cf).
 
 c) If you have created a relay file of some crashing program and want to set a
 breakpoint at a certain location which is not yet available as the

@@ -72,7 +72,7 @@ Debugging channels
 Also, we divide the debugging messages on a component basis. Each
 component is assigned a debugging channel. The identifier of the
 channel must be a valid C identifier but note that it may also be a
-reserve word like int or static.
+reserved word like int or static.
 
 Examples of debugging channels:
 reg, updown, string
@@ -248,7 +248,7 @@ IMPORTANT NOTE:
   reason, please try not to use it. However, if you need to output a line
   in more than one dprintf_xxx calls, then USE THIS INTERFACE. DO NOT use
   other methods. This way, I will easily translate everything to the new
-  interface (when it will become available). So, if you need to use if,
+  interface (when it will become available). So, if you need to use it,
   then follow the following guidelines:
    -- wrap calls to dsprintf with a 
       if(YYY(xxx))
@@ -416,10 +416,10 @@ use : to separate categories.
 * try to avoid the style:
 
    FIXME(xxx,
-         "(fd: %d, file: %s): stub\n", fd, name);
+         "(fd=%d, file=%s): stub\n", fd, name);
 but use:
 
-  FIXME(xxx, "(fd: %d, file: %s): stub\n", fd, name);
+  FIXME(xxx, "(fd=%d, file=%s): stub\n", fd, name);
 
 The reason is that if you want to grep for things, you would search for
 FIXME but in the first case there is no additional information available,

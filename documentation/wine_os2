@@ -34,7 +34,7 @@ What needs to be redone:
 - File functions, 
 - I/O access (do it!),
 - Communication (modem),
-- Interrupt (if int unknow, call current RealMode one...), 
+- Interrupt (if int unknown, call current RealMode one...), 
 - verify that everything is thread safe (how does Win95/NT handle multi-thread?), 
 - move X functions in some files (and make a wrapper, to use PM instead latter), 
 - return right CPU type, 

@@ -174,10 +174,10 @@ put: 05 8f
 put: 84 8f
 wait: ff
 
-From this it is easy to see that put routine is oftern gouped together in five
-sucessive calls sending information to the scanner. Once these are understood
+From this it is easy to see that put routine is often grouped together in five
+successive calls sending information to the scanner. Once these are understood
 it should be possible to process the logs further to show the higher level
-routines in an easy to see format. Once the higest level format that you
+routines in an easy to see format. Once the highest level format that you
 can derive from this process is understood, you then need to produce a
 series of scans varying only one parameter between them, so you can
 discover how to set the various parameters for the scanner.
