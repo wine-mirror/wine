@@ -43,7 +43,7 @@
 #include "wine/debug.h"
 #include "variant.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ole);
+WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
 /************************************************************************
  * SafeArray {OLEAUT32}

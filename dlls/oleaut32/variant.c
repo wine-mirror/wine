@@ -38,7 +38,7 @@
 #include "winerror.h"
 #include "variant.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ole);
+WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
 const char* wine_vtypes[VT_CLSID] =
 {

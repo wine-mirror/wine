@@ -41,7 +41,7 @@
 #include "winerror.h"
 #include "variant.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ole);
+WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
 /* Make sure internal conversions to strings use the '.','+'/'-' and ','
  * format chars from the US locale. This enables us to parse the created

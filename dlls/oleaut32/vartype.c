@@ -27,7 +27,7 @@
 #include "variant.h"
 #include "resource.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ole);
+WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
 extern HMODULE OLEAUT32_hModule;
 
