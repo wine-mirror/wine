@@ -55,8 +55,11 @@
 #include "wine/library.h"
 #include "wine/pthread.h"
 #include "wine/server.h"
+#include "wine/debug.h"
 #include "winerror.h"
 #include "ntdll_misc.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(server);
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS
@@ -480,7 +483,7 @@ static void start_server( const char *oldcwd )
 {
     static int started;  /* we only try once */
     char *path, *p;
-    char *argv[2];
+    char *argv[3];
 
     if (!started)
     {
@@ -489,6 +492,9 @@ static void start_server( const char *oldcwd )
         if (pid == -1) fatal_perror( "fork" );
         if (!pid)
         {
+            argv[0] = "wineserver";
+            argv[1] = TRACE_ON(server) ? "-d" : NULL;
+            argv[2] = NULL;
             /* if server is explicitly specified, use this */
             if ((p = getenv("WINESERVER")))
             {
@@ -499,14 +505,13 @@ static void start_server( const char *oldcwd )
                     sprintf( path, "%s/%s", oldcwd, p );
                     p = path;
                 }
-                execl( p, p, NULL );
+                argv[0] = p;
+                execv( argv[0], argv );
                 fatal_perror( "could not exec the server '%s'\n"
                               "    specified in the WINESERVER environment variable", p );
             }
             /* now use the standard search strategy */
-            argv[0] = "wineserver";
-            argv[1] = NULL;
-            wine_exec_wine_binary( "wineserver", argv, NULL );
+            wine_exec_wine_binary( argv[0], argv, NULL );
             fatal_error( "could not exec wineserver\n" );
         }
         waitpid( pid, &status, 0 );

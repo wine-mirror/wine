@@ -155,11 +155,7 @@ int wine_dbg_parse_options( const char *str )
         if ((next = strchr( opt, ',' ))) *next++ = 0;
 
         p = opt + strcspn( opt, "+-" );
-        if (!p[0] || !p[1])  /* bad option, skip it */
-        {
-            errors++;
-            continue;
-        }
+        if (!p[0]) p = opt;  /* assume it's a debug channel name */
 
         if (p > opt)
         {
@@ -182,10 +178,15 @@ int wine_dbg_parse_options( const char *str )
         }
         else
         {
-            if (*p == '+') set = ~0;
-            else clear = ~0;
+            if (*p == '-') clear = ~0;
+            else set = ~0;
         }
-        p++;
+        if (*p == '+' || *p == '-') p++;
+        if (!p[0])
+        {
+            errors++;
+            continue;
+        }
         if (!strcmp( p, "all" )) p = "";  /* empty string means all */
         wine_dbg_add_option( p, set, clear );
     }

@@ -412,6 +412,22 @@ void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
 
 
 /***********************************************************************
+ *           debug_usage
+ */
+static void debug_usage(void)
+{
+    static const char usage[] =
+        "Syntax of the WINEDEBUG variable:\n"
+        "  WINEDEBUG=[class]+xxx,[class]-yyy,...\n\n"
+        "Example: WINEDEBUG=+all,warn-heap\n"
+        "    turns on all messages except warning heap messages\n"
+        "Available message classes: err, warn, fixme, trace\n";
+    write( 2, usage, sizeof(usage) - 1 );
+    exit(1);
+}
+
+
+/***********************************************************************
  *           wine_init
  *
  * Main Wine initialisation.
@@ -419,6 +435,7 @@ void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
 void wine_init( int argc, char *argv[], char *error, int error_size )
 {
     extern char **environ;
+    char *wine_debug;
     int file_exists;
     void *ntdll;
     void (*init_func)(void);
@@ -428,6 +445,12 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     __wine_main_argc = argc;
     __wine_main_argv = argv;
     __wine_main_environ = environ;
+
+    if ((wine_debug = getenv("WINEDEBUG")))
+    {
+        if (!strcmp( wine_debug, "help" )) debug_usage();
+        wine_dbg_parse_options( wine_debug );
+    }
 
     if (!(ntdll = dlopen_dll( "ntdll.dll", error, error_size, 0, &file_exists ))) return;
     if (!(init_func = wine_dlsym( ntdll, "__wine_process_init", error, error_size ))) return;
