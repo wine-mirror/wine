@@ -558,16 +558,10 @@ void test_StrCmpA(void)
   ok(!ChrCmpIA('b', 'B'), "ChrCmpIA is not case-insensitive\n");
   ok(ChrCmpIA('a', 'z'), "ChrCmpIA believes that a == z!\n");
 
-  todo_wine
-  {
-    ok(StrIsIntlEqualA(FALSE, str1, str2, 5), "StrIsIntlEqualA(FALSE,...) isn't case-insensitive\n");
-  }
+  ok(StrIsIntlEqualA(FALSE, str1, str2, 5), "StrIsIntlEqualA(FALSE,...) isn't case-insensitive\n");
   ok(!StrIsIntlEqualA(TRUE, str1, str2, 5), "StrIsIntlEqualA(TRUE,...) isn't case-sensitive\n");
 
-  todo_wine
-  {
-    ok(IntlStrEqWorkerA(FALSE, str1, str2, 5), "IntlStrEqWorkerA(FALSE,...) isn't case-insensitive\n");
-  }
+  ok(IntlStrEqWorkerA(FALSE, str1, str2, 5), "IntlStrEqWorkerA(FALSE,...) isn't case-insensitive\n");
   ok(!IntlStrEqWorkerA(TRUE, str1, str2, 5), "IntlStrEqWorkerA(TRUE,...) isn't case-sensitive\n");
 }
 
