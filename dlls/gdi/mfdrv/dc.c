@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "metafiledrv.h"
+#include "mfdrv/metafiledrv.h"
 
 INT MFDRV_SaveDC( DC *dc )
 {

@@ -24,7 +24,7 @@
 
 #include "bitmap.h"
 #include "font.h"
-#include "metafiledrv.h"
+#include "mfdrv/metafiledrv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);

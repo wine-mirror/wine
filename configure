@@ -10334,6 +10334,12 @@ ac_config_commands="$ac_config_commands dlls/dinput/keyboard"
 
 ac_config_commands="$ac_config_commands dlls/dinput/mouse"
 
+ac_config_commands="$ac_config_commands dlls/gdi/enhmfdrv"
+
+ac_config_commands="$ac_config_commands dlls/gdi/mfdrv"
+
+ac_config_commands="$ac_config_commands dlls/gdi/win16drv"
+
 ac_config_commands="$ac_config_commands dlls/kernel/messages"
 
 ac_config_commands="$ac_config_commands dlls/kernel/tests"
@@ -10362,7 +10368,7 @@ MAKE_DLL_RULES=dlls/Makedll.rules
 
 MAKE_PROG_RULES=programs/Makeprog.rules
 
-ac_config_files="$ac_config_files Make.rules dlls/Makedll.rules programs/Makeprog.rules Makefile console/Makefile controls/Makefile debugger/Makefile dlls/Makefile dlls/advapi32/Makefile dlls/avicap32/Makefile dlls/avifil32/Makefile dlls/comctl32/Makefile dlls/commdlg/Makefile dlls/crtdll/Makefile dlls/crypt32/Makefile dlls/dciman32/Makefile dlls/ddraw/Makefile dlls/devenum/Makefile dlls/dinput/Makefile dlls/dplay/Makefile dlls/dplayx/Makefile dlls/dsound/Makefile dlls/gdi/Makefile dlls/glu32/Makefile dlls/icmp/Makefile dlls/imagehlp/Makefile dlls/imm32/Makefile dlls/kernel/Makefile dlls/lzexpand/Makefile dlls/mapi32/Makefile dlls/mpr/Makefile dlls/msacm/Makefile dlls/msacm/imaadp32/Makefile dlls/msacm/msg711/Makefile dlls/msdmo/Makefile dlls/msimg32/Makefile dlls/msnet32/Makefile dlls/msrle32/Makefile dlls/msvcrt/Makefile dlls/msvcrt20/Makefile dlls/msvideo/Makefile dlls/netapi32/Makefile dlls/ntdll/Makefile dlls/odbc32/Makefile dlls/ole32/Makefile dlls/oleaut32/Makefile dlls/olecli/Makefile dlls/oledlg/Makefile dlls/olepro32/Makefile dlls/olesvr/Makefile dlls/opengl32/Makefile dlls/psapi/Makefile dlls/qcap/Makefile dlls/quartz/Makefile dlls/rasapi32/Makefile dlls/richedit/Makefile dlls/rpcrt4/Makefile dlls/serialui/Makefile dlls/setupapi/Makefile dlls/shdocvw/Makefile dlls/shell32/Makefile dlls/shfolder/Makefile dlls/shlwapi/Makefile dlls/sti/Makefile dlls/tapi32/Makefile dlls/ttydrv/Makefile dlls/twain/Makefile dlls/url/Makefile dlls/urlmon/Makefile dlls/user/Makefile dlls/version/Makefile dlls/win32s/Makefile dlls/winaspi/Makefile dlls/winedos/Makefile dlls/wineps/Makefile dlls/wininet/Makefile dlls/winmm/Makefile dlls/winmm/joystick/Makefile dlls/winmm/mcianim/Makefile dlls/winmm/mciavi/Makefile dlls/winmm/mcicda/Makefile dlls/winmm/mciseq/Makefile dlls/winmm/mciwave/Makefile dlls/winmm/midimap/Makefile dlls/winmm/wavemap/Makefile dlls/winmm/winearts/Makefile dlls/winmm/wineoss/Makefile dlls/winnls/Makefile dlls/winsock/Makefile dlls/winspool/Makefile dlls/wintrust/Makefile dlls/wow32/Makefile dlls/wsock32/Makefile dlls/x11drv/Makefile documentation/Makefile files/Makefile graphics/Makefile graphics/enhmetafiledrv/Makefile graphics/metafiledrv/Makefile graphics/win16drv/Makefile graphics/x11drv/Makefile if1632/Makefile include/Makefile library/Makefile libtest/Makefile loader/Makefile loader/ne/Makefile memory/Makefile misc/Makefile miscemu/Makefile msdos/Makefile objects/Makefile ole/Makefile programs/Makefile programs/avitools/Makefile programs/clock/Makefile programs/cmdlgtst/Makefile programs/control/Makefile programs/notepad/Makefile programs/osversioncheck/Makefile programs/progman/Makefile programs/regapi/Makefile programs/regtest/Makefile programs/uninstaller/Makefile programs/view/Makefile programs/wcmd/Makefile programs/wineconsole/Makefile programs/winemine/Makefile programs/winetest/Makefile programs/winhelp/Makefile programs/winver/Makefile relay32/Makefile scheduler/Makefile server/Makefile tools/Makefile tools/winapi/Makefile tools/winebuild/Makefile tools/winedump/Makefile tools/wmc/Makefile tools/wrc/Makefile tsx11/Makefile unicode/Makefile win32/Makefile windows/Makefile windows/x11drv/Makefile"
+ac_config_files="$ac_config_files Make.rules dlls/Makedll.rules programs/Makeprog.rules Makefile console/Makefile controls/Makefile debugger/Makefile dlls/Makefile dlls/advapi32/Makefile dlls/avicap32/Makefile dlls/avifil32/Makefile dlls/comctl32/Makefile dlls/commdlg/Makefile dlls/crtdll/Makefile dlls/crypt32/Makefile dlls/dciman32/Makefile dlls/ddraw/Makefile dlls/devenum/Makefile dlls/dinput/Makefile dlls/dplay/Makefile dlls/dplayx/Makefile dlls/dsound/Makefile dlls/gdi/Makefile dlls/glu32/Makefile dlls/icmp/Makefile dlls/imagehlp/Makefile dlls/imm32/Makefile dlls/kernel/Makefile dlls/lzexpand/Makefile dlls/mapi32/Makefile dlls/mpr/Makefile dlls/msacm/Makefile dlls/msacm/imaadp32/Makefile dlls/msacm/msg711/Makefile dlls/msdmo/Makefile dlls/msimg32/Makefile dlls/msnet32/Makefile dlls/msrle32/Makefile dlls/msvcrt/Makefile dlls/msvcrt20/Makefile dlls/msvideo/Makefile dlls/netapi32/Makefile dlls/ntdll/Makefile dlls/odbc32/Makefile dlls/ole32/Makefile dlls/oleaut32/Makefile dlls/olecli/Makefile dlls/oledlg/Makefile dlls/olepro32/Makefile dlls/olesvr/Makefile dlls/opengl32/Makefile dlls/psapi/Makefile dlls/qcap/Makefile dlls/quartz/Makefile dlls/rasapi32/Makefile dlls/richedit/Makefile dlls/rpcrt4/Makefile dlls/serialui/Makefile dlls/setupapi/Makefile dlls/shdocvw/Makefile dlls/shell32/Makefile dlls/shfolder/Makefile dlls/shlwapi/Makefile dlls/sti/Makefile dlls/tapi32/Makefile dlls/ttydrv/Makefile dlls/twain/Makefile dlls/url/Makefile dlls/urlmon/Makefile dlls/user/Makefile dlls/version/Makefile dlls/win32s/Makefile dlls/winaspi/Makefile dlls/winedos/Makefile dlls/wineps/Makefile dlls/wininet/Makefile dlls/winmm/Makefile dlls/winmm/joystick/Makefile dlls/winmm/mcianim/Makefile dlls/winmm/mciavi/Makefile dlls/winmm/mcicda/Makefile dlls/winmm/mciseq/Makefile dlls/winmm/mciwave/Makefile dlls/winmm/midimap/Makefile dlls/winmm/wavemap/Makefile dlls/winmm/winearts/Makefile dlls/winmm/wineoss/Makefile dlls/winnls/Makefile dlls/winsock/Makefile dlls/winspool/Makefile dlls/wintrust/Makefile dlls/wow32/Makefile dlls/wsock32/Makefile dlls/x11drv/Makefile documentation/Makefile files/Makefile graphics/Makefile graphics/x11drv/Makefile if1632/Makefile include/Makefile library/Makefile libtest/Makefile loader/Makefile loader/ne/Makefile memory/Makefile misc/Makefile miscemu/Makefile msdos/Makefile objects/Makefile ole/Makefile programs/Makefile programs/avitools/Makefile programs/clock/Makefile programs/cmdlgtst/Makefile programs/control/Makefile programs/notepad/Makefile programs/osversioncheck/Makefile programs/progman/Makefile programs/regapi/Makefile programs/regtest/Makefile programs/uninstaller/Makefile programs/view/Makefile programs/wcmd/Makefile programs/wineconsole/Makefile programs/winemine/Makefile programs/winetest/Makefile programs/winhelp/Makefile programs/winver/Makefile relay32/Makefile scheduler/Makefile server/Makefile tools/Makefile tools/winapi/Makefile tools/winebuild/Makefile tools/winedump/Makefile tools/wmc/Makefile tools/wrc/Makefile tsx11/Makefile unicode/Makefile win32/Makefile windows/Makefile windows/x11drv/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -10443,7 +10449,7 @@ DEFS=-DHAVE_CONFIG_H
 : ${CONFIG_STATUS=./config.status}
 ac_clean_files_save=$ac_clean_files
 ac_clean_files="$ac_clean_files $CONFIG_STATUS"
-{ echo "$as_me:10446: creating $CONFIG_STATUS" >&5
+{ echo "$as_me:10452: creating $CONFIG_STATUS" >&5
 echo "$as_me: creating $CONFIG_STATUS" >&6;}
 cat >$CONFIG_STATUS <<_ACEOF
 #! $SHELL
@@ -10619,7 +10625,7 @@ cat >>$CONFIG_STATUS <<\EOF
     echo "$ac_cs_version"; exit 0 ;;
   --he | --h)
     # Conflict between --help and --header
-    { { echo "$as_me:10622: error: ambiguous option: $1
+    { { echo "$as_me:10628: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -10638,7 +10644,7 @@ Try \`$0 --help' for more information." >&2;}
     ac_need_defaults=false;;
 
   # This is an error.
-  -*) { { echo "$as_me:10641: error: unrecognized option: $1
+  -*) { { echo "$as_me:10647: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -10779,9 +10785,6 @@ do
   "documentation/Makefile" ) CONFIG_FILES="$CONFIG_FILES documentation/Makefile" ;;
   "files/Makefile" ) CONFIG_FILES="$CONFIG_FILES files/Makefile" ;;
   "graphics/Makefile" ) CONFIG_FILES="$CONFIG_FILES graphics/Makefile" ;;
-  "graphics/enhmetafiledrv/Makefile" ) CONFIG_FILES="$CONFIG_FILES graphics/enhmetafiledrv/Makefile" ;;
-  "graphics/metafiledrv/Makefile" ) CONFIG_FILES="$CONFIG_FILES graphics/metafiledrv/Makefile" ;;
-  "graphics/win16drv/Makefile" ) CONFIG_FILES="$CONFIG_FILES graphics/win16drv/Makefile" ;;
   "graphics/x11drv/Makefile" ) CONFIG_FILES="$CONFIG_FILES graphics/x11drv/Makefile" ;;
   "if1632/Makefile" ) CONFIG_FILES="$CONFIG_FILES if1632/Makefile" ;;
   "include/Makefile" ) CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
@@ -10836,6 +10839,9 @@ do
   "dlls/dinput/joystick" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/dinput/joystick" ;;
   "dlls/dinput/keyboard" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/dinput/keyboard" ;;
   "dlls/dinput/mouse" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/dinput/mouse" ;;
+  "dlls/gdi/enhmfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/enhmfdrv" ;;
+  "dlls/gdi/mfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/mfdrv" ;;
+  "dlls/gdi/win16drv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/win16drv" ;;
   "dlls/kernel/messages" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/messages" ;;
   "dlls/kernel/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/tests" ;;
   "dlls/oleaut32/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/oleaut32/tests" ;;
@@ -10848,7 +10854,7 @@ do
   "programs/winetest/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/winetest/tests" ;;
   "include/wine/version.h" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine/version.h" ;;
   "include/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
-  *) { { echo "$as_me:10851: error: invalid argument: $ac_config_target" >&5
+  *) { { echo "$as_me:10857: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
   esac
@@ -11120,7 +11126,7 @@ done; }
   esac
 
   if test x"$ac_file" != x-; then
-    { echo "$as_me:11123: creating $ac_file" >&5
+    { echo "$as_me:11129: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
     rm -f "$ac_file"
   fi
@@ -11138,7 +11144,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:11141: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:11147: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -11151,7 +11157,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:11154: error: cannot find input file: $f" >&5
+           { { echo "$as_me:11160: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -11212,7 +11218,7 @@ for ac_file in : $CONFIG_HEADERS; do test "x$ac_file" = x: && continue
   * )   ac_file_in=$ac_file.in ;;
   esac
 
-  test x"$ac_file" != x- && { echo "$as_me:11215: creating $ac_file" >&5
+  test x"$ac_file" != x- && { echo "$as_me:11221: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
 
   # First look for the input files in the build tree, otherwise in the
@@ -11223,7 +11229,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:11226: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:11232: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -11236,7 +11242,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:11239: error: cannot find input file: $f" >&5
+           { { echo "$as_me:11245: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -11353,7 +11359,7 @@ cat >>$CONFIG_STATUS <<\EOF
   rm -f $tmp/in
   if test x"$ac_file" != x-; then
     if cmp -s $ac_file $tmp/config.h 2>/dev/null; then
-      { echo "$as_me:11356: $ac_file is unchanged" >&5
+      { echo "$as_me:11362: $ac_file is unchanged" >&5
 echo "$as_me: $ac_file is unchanged" >&6;}
     else
       ac_dir=`$as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
@@ -11404,52 +11410,58 @@ for ac_file in : $CONFIG_COMMANDS; do test "x$ac_file" = x: && continue
   ac_source=`echo "$ac_file" | sed 's,[^:]*:,,'`
 
   case $ac_dest in
-    dlls/ddraw/d3ddevice ) test -d "dlls/ddraw/d3ddevice" || ({ echo "$as_me:11407: creating dlls/ddraw/d3ddevice" >&5
+    dlls/ddraw/d3ddevice ) test -d "dlls/ddraw/d3ddevice" || ({ echo "$as_me:11413: creating dlls/ddraw/d3ddevice" >&5
 echo "$as_me: creating dlls/ddraw/d3ddevice" >&6;} && mkdir "dlls/ddraw/d3ddevice") ;;
-    dlls/ddraw/dclipper ) test -d "dlls/ddraw/dclipper" || ({ echo "$as_me:11409: creating dlls/ddraw/dclipper" >&5
+    dlls/ddraw/dclipper ) test -d "dlls/ddraw/dclipper" || ({ echo "$as_me:11415: creating dlls/ddraw/dclipper" >&5
 echo "$as_me: creating dlls/ddraw/dclipper" >&6;} && mkdir "dlls/ddraw/dclipper") ;;
-    dlls/ddraw/ddraw ) test -d "dlls/ddraw/ddraw" || ({ echo "$as_me:11411: creating dlls/ddraw/ddraw" >&5
+    dlls/ddraw/ddraw ) test -d "dlls/ddraw/ddraw" || ({ echo "$as_me:11417: creating dlls/ddraw/ddraw" >&5
 echo "$as_me: creating dlls/ddraw/ddraw" >&6;} && mkdir "dlls/ddraw/ddraw") ;;
-    dlls/ddraw/direct3d ) test -d "dlls/ddraw/direct3d" || ({ echo "$as_me:11413: creating dlls/ddraw/direct3d" >&5
+    dlls/ddraw/direct3d ) test -d "dlls/ddraw/direct3d" || ({ echo "$as_me:11419: creating dlls/ddraw/direct3d" >&5
 echo "$as_me: creating dlls/ddraw/direct3d" >&6;} && mkdir "dlls/ddraw/direct3d") ;;
-    dlls/ddraw/dpalette ) test -d "dlls/ddraw/dpalette" || ({ echo "$as_me:11415: creating dlls/ddraw/dpalette" >&5
+    dlls/ddraw/dpalette ) test -d "dlls/ddraw/dpalette" || ({ echo "$as_me:11421: creating dlls/ddraw/dpalette" >&5
 echo "$as_me: creating dlls/ddraw/dpalette" >&6;} && mkdir "dlls/ddraw/dpalette") ;;
-    dlls/ddraw/dsurface ) test -d "dlls/ddraw/dsurface" || ({ echo "$as_me:11417: creating dlls/ddraw/dsurface" >&5
+    dlls/ddraw/dsurface ) test -d "dlls/ddraw/dsurface" || ({ echo "$as_me:11423: creating dlls/ddraw/dsurface" >&5
 echo "$as_me: creating dlls/ddraw/dsurface" >&6;} && mkdir "dlls/ddraw/dsurface") ;;
-    dlls/dinput/joystick ) test -d "dlls/dinput/joystick" || ({ echo "$as_me:11419: creating dlls/dinput/joystick" >&5
+    dlls/dinput/joystick ) test -d "dlls/dinput/joystick" || ({ echo "$as_me:11425: creating dlls/dinput/joystick" >&5
 echo "$as_me: creating dlls/dinput/joystick" >&6;} && mkdir "dlls/dinput/joystick") ;;
-    dlls/dinput/keyboard ) test -d "dlls/dinput/keyboard" || ({ echo "$as_me:11421: creating dlls/dinput/keyboard" >&5
+    dlls/dinput/keyboard ) test -d "dlls/dinput/keyboard" || ({ echo "$as_me:11427: creating dlls/dinput/keyboard" >&5
 echo "$as_me: creating dlls/dinput/keyboard" >&6;} && mkdir "dlls/dinput/keyboard") ;;
-    dlls/dinput/mouse ) test -d "dlls/dinput/mouse" || ({ echo "$as_me:11423: creating dlls/dinput/mouse" >&5
+    dlls/dinput/mouse ) test -d "dlls/dinput/mouse" || ({ echo "$as_me:11429: creating dlls/dinput/mouse" >&5
 echo "$as_me: creating dlls/dinput/mouse" >&6;} && mkdir "dlls/dinput/mouse") ;;
-    dlls/kernel/messages ) test -d "dlls/kernel/messages" || ({ echo "$as_me:11425: creating dlls/kernel/messages" >&5
+    dlls/gdi/enhmfdrv ) test -d "dlls/gdi/enhmfdrv" || ({ echo "$as_me:11431: creating dlls/gdi/enhmfdrv" >&5
+echo "$as_me: creating dlls/gdi/enhmfdrv" >&6;} && mkdir "dlls/gdi/enhmfdrv") ;;
+    dlls/gdi/mfdrv ) test -d "dlls/gdi/mfdrv" || ({ echo "$as_me:11433: creating dlls/gdi/mfdrv" >&5
+echo "$as_me: creating dlls/gdi/mfdrv" >&6;} && mkdir "dlls/gdi/mfdrv") ;;
+    dlls/gdi/win16drv ) test -d "dlls/gdi/win16drv" || ({ echo "$as_me:11435: creating dlls/gdi/win16drv" >&5
+echo "$as_me: creating dlls/gdi/win16drv" >&6;} && mkdir "dlls/gdi/win16drv") ;;
+    dlls/kernel/messages ) test -d "dlls/kernel/messages" || ({ echo "$as_me:11437: creating dlls/kernel/messages" >&5
 echo "$as_me: creating dlls/kernel/messages" >&6;} && mkdir "dlls/kernel/messages") ;;
-    dlls/kernel/tests ) test -d "dlls/kernel/tests" || ({ echo "$as_me:11427: creating dlls/kernel/tests" >&5
+    dlls/kernel/tests ) test -d "dlls/kernel/tests" || ({ echo "$as_me:11439: creating dlls/kernel/tests" >&5
 echo "$as_me: creating dlls/kernel/tests" >&6;} && mkdir "dlls/kernel/tests") ;;
-    dlls/oleaut32/tests ) test -d "dlls/oleaut32/tests" || ({ echo "$as_me:11429: creating dlls/oleaut32/tests" >&5
+    dlls/oleaut32/tests ) test -d "dlls/oleaut32/tests" || ({ echo "$as_me:11441: creating dlls/oleaut32/tests" >&5
 echo "$as_me: creating dlls/oleaut32/tests" >&6;} && mkdir "dlls/oleaut32/tests") ;;
-    dlls/user/dde ) test -d "dlls/user/dde" || ({ echo "$as_me:11431: creating dlls/user/dde" >&5
+    dlls/user/dde ) test -d "dlls/user/dde" || ({ echo "$as_me:11443: creating dlls/user/dde" >&5
 echo "$as_me: creating dlls/user/dde" >&6;} && mkdir "dlls/user/dde") ;;
-    dlls/user/resources ) test -d "dlls/user/resources" || ({ echo "$as_me:11433: creating dlls/user/resources" >&5
+    dlls/user/resources ) test -d "dlls/user/resources" || ({ echo "$as_me:11445: creating dlls/user/resources" >&5
 echo "$as_me: creating dlls/user/resources" >&6;} && mkdir "dlls/user/resources") ;;
-    dlls/user/tests ) test -d "dlls/user/tests" || ({ echo "$as_me:11435: creating dlls/user/tests" >&5
+    dlls/user/tests ) test -d "dlls/user/tests" || ({ echo "$as_me:11447: creating dlls/user/tests" >&5
 echo "$as_me: creating dlls/user/tests" >&6;} && mkdir "dlls/user/tests") ;;
-    dlls/wineps/data ) test -d "dlls/wineps/data" || ({ echo "$as_me:11437: creating dlls/wineps/data" >&5
+    dlls/wineps/data ) test -d "dlls/wineps/data" || ({ echo "$as_me:11449: creating dlls/wineps/data" >&5
 echo "$as_me: creating dlls/wineps/data" >&6;} && mkdir "dlls/wineps/data") ;;
-    include/wine ) test -d "include/wine" || ({ echo "$as_me:11439: creating include/wine" >&5
+    include/wine ) test -d "include/wine" || ({ echo "$as_me:11451: creating include/wine" >&5
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
-    programs/regapi/tests ) test -d "programs/regapi/tests" || ({ echo "$as_me:11441: creating programs/regapi/tests" >&5
+    programs/regapi/tests ) test -d "programs/regapi/tests" || ({ echo "$as_me:11453: creating programs/regapi/tests" >&5
 echo "$as_me: creating programs/regapi/tests" >&6;} && mkdir "programs/regapi/tests") ;;
-    programs/winetest/tests ) test -d "programs/winetest/tests" || ({ echo "$as_me:11443: creating programs/winetest/tests" >&5
+    programs/winetest/tests ) test -d "programs/winetest/tests" || ({ echo "$as_me:11455: creating programs/winetest/tests" >&5
 echo "$as_me: creating programs/winetest/tests" >&6;} && mkdir "programs/winetest/tests") ;;
-    include/wine/version.h ) { echo "$as_me:11445: creating include/wine/version.h" >&5
+    include/wine/version.h ) { echo "$as_me:11457: creating include/wine/version.h" >&5
 echo "$as_me: creating include/wine/version.h" >&6;}
 cat >$tmp/version.h <<CEOF
 /* Generated automatically by configure; DO NOT EDIT! */
 #define WINE_RELEASE_INFO "Wine version $wine_version"
 CEOF
 if cmp -s $tmp/version.h include/wine/version.h 2>/dev/null; then
-  { echo "$as_me:11452: include/wine/version.h is unchanged" >&5
+  { echo "$as_me:11464: include/wine/version.h is unchanged" >&5
 echo "$as_me: include/wine/version.h is unchanged" >&6;}
   rm -f $tmp/version.h
 else

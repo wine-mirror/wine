@@ -1255,6 +1255,9 @@ WINE_CONFIG_EXTRA_DIR(dlls/ddraw/dsurface)
 WINE_CONFIG_EXTRA_DIR(dlls/dinput/joystick)
 WINE_CONFIG_EXTRA_DIR(dlls/dinput/keyboard)
 WINE_CONFIG_EXTRA_DIR(dlls/dinput/mouse)
+WINE_CONFIG_EXTRA_DIR(dlls/gdi/enhmfdrv)
+WINE_CONFIG_EXTRA_DIR(dlls/gdi/mfdrv)
+WINE_CONFIG_EXTRA_DIR(dlls/gdi/win16drv)
 WINE_CONFIG_EXTRA_DIR(dlls/kernel/messages)
 WINE_CONFIG_EXTRA_DIR(dlls/kernel/tests)
 WINE_CONFIG_EXTRA_DIR(dlls/oleaut32/tests)
@@ -1388,9 +1391,6 @@ dlls/x11drv/Makefile
 documentation/Makefile
 files/Makefile
 graphics/Makefile
-graphics/enhmetafiledrv/Makefile
-graphics/metafiledrv/Makefile
-graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile
 include/Makefile

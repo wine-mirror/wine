@@ -22,7 +22,7 @@
 #include <string.h>
 #include "winnls.h"
 #include "wine/winbase16.h"
-#include "win16drv.h"
+#include "win16drv/win16drv.h"
 #include "font.h"
 #include "gdi.h"
 #include "wine/debug.h"

@@ -24,7 +24,7 @@
 #include <string.h>
 
 #include "winreg.h"
-#include "win16drv.h"
+#include "win16drv/win16drv.h"
 #include "gdi.h"
 #include "bitmap.h"
 #include "font.h"

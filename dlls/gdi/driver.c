@@ -24,7 +24,7 @@
 #include "ntddk.h"
 
 #include "gdi.h"
-#include "win16drv.h"
+#include "win16drv/win16drv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);

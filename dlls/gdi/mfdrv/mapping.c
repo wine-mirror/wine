@@ -19,7 +19,7 @@
  */
 
 #include "gdi.h"
-#include "metafiledrv.h"
+#include "mfdrv/metafiledrv.h"
 
 
 /***********************************************************************

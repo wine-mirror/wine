@@ -26,7 +26,7 @@
 #include <errno.h>
 #include "wine/winbase16.h"
 #include "winuser.h"
-#include "win16drv.h"
+#include "win16drv/win16drv.h"
 #include "wine/debug.h"
 #include "bitmap.h"
 

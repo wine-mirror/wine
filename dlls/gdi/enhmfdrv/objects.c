@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include "bitmap.h"
-#include "enhmetafiledrv.h"
+#include "enhmfdrv/enhmetafiledrv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);

@@ -20,7 +20,7 @@
  */
 
 #include <stdlib.h>
-#include "win16drv.h"
+#include "win16drv/win16drv.h"
 #include "gdi.h"
 #include "wine/debug.h"
 #include "winbase.h"

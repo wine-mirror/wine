@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "gdi.h"
-#include "metafiledrv.h"
+#include "mfdrv/metafiledrv.h"
 #include "wine/debug.h"
 #include "bitmap.h"
 

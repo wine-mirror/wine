@@ -24,7 +24,6 @@
 #include "wine/winbase16.h"
 
 #include "gdi.h"
-#include "win16drv.h"
 #include "winbase.h"
 
 /***********************************************************************
