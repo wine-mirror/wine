@@ -28,7 +28,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "mmsystem.h"
-#include "mmddk.h"
 #define NOBITMAP
 #include "mmreg.h"
 #include "ks.h"

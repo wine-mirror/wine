@@ -33,7 +33,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "mmsystem.h"
-#include "mmddk.h"
 
 #include "winmm_test.h"
 
