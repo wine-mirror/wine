@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -191,6 +192,8 @@ static char spi_loaded[SPI_WINE_IDX + 1];
 static BOOL notify_change = TRUE;
 
 /* System parameters storage */
+static int sysMetrics[SM_CMETRICS+1];
+static HDC display_dc;
 static BOOL beep_active = TRUE;
 static int mouse_threshold1 = 6;
 static int mouse_threshold2 = 10;
@@ -502,91 +505,213 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
 
 
 /***********************************************************************
- *           SYSPARAMS_GetDoubleClickSize
+ * SYSPARAMS_Twips2Pixels
  *
- * There is no SPI_GETDOUBLECLK* so we export this function instead.
+ * Convert a dimension value that was obtained from the registry.  These are
+ * quoted as being "twips" values if negative and pixels if positive.
+ * See for example
+ *   MSDN Library - April 2001 -> Resource Kits ->
+ *       Windows 2000 Resource Kit Reference ->
+ *       Technical Reference to the Windows 2000 Registry ->
+ *       HKEY_CURRENT_USER -> Control Panel -> Desktop -> WindowMetrics
  */
-void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height )
-{
-    WCHAR buf[10];
-
-    if (!spi_loaded[SPI_SETDOUBLECLKWIDTH_IDX])
-    {
-        if (SYSPARAMS_Load( SPI_SETDOUBLECLKWIDTH_REGKEY1,
-                            SPI_SETDOUBLECLKWIDTH_VALNAME, buf, sizeof(buf) ))
-        {
-            SYSMETRICS_Set( SM_CXDOUBLECLK, atoiW( buf ) );
-        }
-        spi_loaded[SPI_SETDOUBLECLKWIDTH_IDX] = TRUE;
-    }
-    if (!spi_loaded[SPI_SETDOUBLECLKHEIGHT_IDX])
-    {
-        if (SYSPARAMS_Load( SPI_SETDOUBLECLKHEIGHT_REGKEY1,
-                            SPI_SETDOUBLECLKHEIGHT_VALNAME, buf, sizeof(buf) ))
-        {
-            SYSMETRICS_Set( SM_CYDOUBLECLK, atoiW( buf ) );
-        }
-        spi_loaded[SPI_SETDOUBLECLKHEIGHT_IDX] = TRUE;
-    }
-    *width  = GetSystemMetrics( SM_CXDOUBLECLK );
-    *height = GetSystemMetrics( SM_CYDOUBLECLK );
-}
-
-
-/***********************************************************************
- *           SYSPARAMS_GetMouseButtonSwap
- *
- * There is no SPI_GETMOUSEBUTTONSWAP so we export this function instead.
- */
-INT SYSPARAMS_GetMouseButtonSwap( void )
-{
-        int spi_idx = SPI_SETMOUSEBUTTONSWAP_IDX;
-
-        if (!spi_loaded[spi_idx])
-        {
-            WCHAR buf[5];
-
-            if (SYSPARAMS_Load( SPI_SETMOUSEBUTTONSWAP_REGKEY,
-                                SPI_SETMOUSEBUTTONSWAP_VALNAME, buf, sizeof(buf) ))
-            {
-                SYSMETRICS_Set( SM_SWAPBUTTON, atoiW( buf ) );
-            }
-            spi_loaded[spi_idx] = TRUE;
-        }
-
-        return GetSystemMetrics( SM_SWAPBUTTON );
-}
-
-/***********************************************************************
- *
- *	SYSPARAMS_GetGUIFont
- *
- *  fills LOGFONT with 'default GUI font'.
- */
-
-static void SYSPARAMS_GetGUIFont( LOGFONTW* plf )
-{
-	HFONT	hf;
-
-	memset( plf, 0, sizeof(LOGFONTW) );
-	hf = (HFONT)GetStockObject( DEFAULT_GUI_FONT );
-	if ( GetObjectW( hf, sizeof(LOGFONTW), plf ) != sizeof(LOGFONTW) )
-	{
-		/*
-		 * GetObjectW() would be succeeded always
-		 * since this is a stock object
-		 */
-		ERR("GetObjectW() failed\n");
-	}
-}
-
-/* copied from GetSystemMetrics()'s RegistryTwips2Pixels() */
 inline static int SYSPARAMS_Twips2Pixels(int x)
 {
     if (x < 0)
         x = (-x+7)/15;
     return x;
 }
+
+/***********************************************************************
+ * SYSPARAMS_GetRegistryMetric
+ *
+ * Get a registry entry from the already open key.  This allows us to open the
+ * section once and read several values.
+ *
+ * Of course this function belongs somewhere more usable but here will do
+ * for now.
+ */
+static int SYSPARAMS_GetRegistryMetric (
+        HKEY       hkey,            /* handle to the registry section */
+        const char *key,            /* value name in the section */
+        int        default_value)   /* default to return */
+{
+    int value = default_value;
+    if (hkey)
+    {
+        BYTE buffer[128];
+        DWORD type, count = sizeof(buffer);
+        if(!RegQueryValueExA (hkey, key, 0, &type, buffer, &count))
+        {
+            if (type != REG_SZ)
+            {
+                /* Are there any utilities for converting registry entries
+                 * between formats?
+                 */
+                /* FIXME_(reg)("We need reg format converter\n"); */
+            }
+            else
+                value = atoi(buffer);
+        }
+    }
+    return SYSPARAMS_Twips2Pixels(value);
+}
+
+
+/***********************************************************************
+ *           SYSPARAMS_Init
+ *
+ * Initialisation of the system metrics array.
+ *
+ * Differences in return values between 3.1 and 95 apps under Win95 (FIXME ?):
+ * SM_CXVSCROLL        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
+ * SM_CYHSCROLL        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
+ * SM_CXDLGFRAME       x-1      x	Already fixed
+ * SM_CYDLGFRAME       x-1      x	Already fixed
+ * SM_CYCAPTION        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
+ * SM_CYMENU           x-1      x	Already fixed
+ * SM_CYFULLSCREEN     x-1      x
+ * SM_CXFRAME                           Fixed July 6, 2001 - Bill Medland
+ *
+ * Starting at Win95 there are now a large number or Registry entries in the
+ * [WindowMetrics] section that are probably relevant here.
+ */
+void SYSPARAMS_Init(void)
+{
+    HKEY hkey; /* key to the window metrics area of the registry */
+    WCHAR buf[10];
+    INT border;
+
+    display_dc = CreateICA( "DISPLAY", NULL, NULL, NULL );
+    assert( display_dc );
+
+    if (RegOpenKeyExA (HKEY_CURRENT_USER, "Control Panel\\desktop\\WindowMetrics",
+                       0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
+
+    sysMetrics[SM_CXVSCROLL] = SYSPARAMS_GetRegistryMetric( hkey, "ScrollWidth", 16 );
+    sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
+
+    /* The Win 2000 resource kit SAYS that this is governed by the ScrollHeight
+     * but on my computer that controls the CYV/CXH values. */
+    sysMetrics[SM_CYCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, "CaptionHeight", 18)
+                                 + 1; /* for the separator? */
+
+    sysMetrics[SM_CYMENU] = SYSPARAMS_GetRegistryMetric (hkey, "MenuHeight", 18) + 1;
+
+
+    sysMetrics[SM_CXDLGFRAME] = 3;
+    sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
+
+    SystemParametersInfoA( SPI_GETBORDER, 0, &border, 0 );
+    sysMetrics[SM_CXFRAME] = sysMetrics[SM_CXDLGFRAME] + border;
+    sysMetrics[SM_CYFRAME] = sysMetrics[SM_CYDLGFRAME] + border;
+
+    sysMetrics[SM_CXCURSOR] = 32;
+    sysMetrics[SM_CYCURSOR] = 32;
+    sysMetrics[SM_CXBORDER] = 1;
+    sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
+    sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL];
+    sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
+    sysMetrics[SM_CXICON] = 32;
+    sysMetrics[SM_CYICON] = 32;
+    sysMetrics[SM_CYKANJIWINDOW] = 0;
+    sysMetrics[SM_MOUSEPRESENT] = 1;
+    sysMetrics[SM_CYVSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, "ScrollHeight", sysMetrics[SM_CXVSCROLL]);
+    sysMetrics[SM_CXHSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, "ScrollHeight", sysMetrics[SM_CYHSCROLL]);
+    sysMetrics[SM_DEBUG] = 0;
+
+    sysMetrics[SM_SWAPBUTTON] = 0;
+    if (SYSPARAMS_Load( SPI_SETMOUSEBUTTONSWAP_REGKEY, SPI_SETMOUSEBUTTONSWAP_VALNAME, buf, sizeof(buf) ))
+        sysMetrics[SM_SWAPBUTTON] = atoiW( buf );
+    spi_loaded[SPI_SETMOUSEBUTTONSWAP_IDX] = TRUE;
+
+    sysMetrics[SM_RESERVED1] = 0;
+    sysMetrics[SM_RESERVED2] = 0;
+    sysMetrics[SM_RESERVED3] = 0;
+    sysMetrics[SM_RESERVED4] = 0;
+
+    /* FIXME: The following two are calculated, but how? */
+    sysMetrics[SM_CXMIN] = 112;
+    sysMetrics[SM_CYMIN] = 27;
+
+    sysMetrics[SM_CXSIZE] = SYSPARAMS_GetRegistryMetric (hkey, "CaptionWidth", sysMetrics[SM_CYCAPTION] - 1);
+    sysMetrics[SM_CYSIZE] = sysMetrics[SM_CYCAPTION] - 1;
+    sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
+    sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
+
+    sysMetrics[SM_CXDOUBLECLK] = 4;
+    sysMetrics[SM_CYDOUBLECLK] = 4;
+
+    if (SYSPARAMS_Load( SPI_SETDOUBLECLKWIDTH_REGKEY1, SPI_SETDOUBLECLKWIDTH_VALNAME, buf, sizeof(buf) ))
+        sysMetrics[SM_CXDOUBLECLK] = atoiW( buf );
+    spi_loaded[SPI_SETDOUBLECLKWIDTH_IDX] = TRUE;
+
+    if (SYSPARAMS_Load( SPI_SETDOUBLECLKHEIGHT_REGKEY1, SPI_SETDOUBLECLKHEIGHT_VALNAME, buf, sizeof(buf) ))
+        sysMetrics[SM_CYDOUBLECLK] = atoiW( buf );
+    spi_loaded[SPI_SETDOUBLECLKHEIGHT_IDX] = TRUE;
+
+    sysMetrics[SM_CXICONSPACING] = 75;
+    SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &sysMetrics[SM_CXICONSPACING], 0 );
+    sysMetrics[SM_CYICONSPACING] = 75;
+    SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &sysMetrics[SM_CYICONSPACING], 0 );
+
+    SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0, &sysMetrics[SM_MENUDROPALIGNMENT], 0 );
+    sysMetrics[SM_PENWINDOWS] = 0;
+    sysMetrics[SM_DBCSENABLED] = 0;
+
+    /* FIXME: Need to query X for the following */
+    sysMetrics[SM_CMOUSEBUTTONS] = 3;
+
+    sysMetrics[SM_SECURE] = 0;
+    sysMetrics[SM_CXEDGE] = sysMetrics[SM_CXBORDER] + 1;
+    sysMetrics[SM_CYEDGE] = sysMetrics[SM_CXEDGE];
+    sysMetrics[SM_CXMINSPACING] = 160;
+    sysMetrics[SM_CYMINSPACING] = 24;
+    sysMetrics[SM_CXSMICON] = 16;
+    sysMetrics[SM_CYSMICON] = 16;
+    sysMetrics[SM_CYSMCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, "SmCaptionHeight", 15) + 1;
+    sysMetrics[SM_CXSMSIZE] = SYSPARAMS_GetRegistryMetric(hkey, "SmCaptionWidth", 13);
+    sysMetrics[SM_CYSMSIZE] = sysMetrics[SM_CYSMCAPTION] - 1;
+    sysMetrics[SM_CXMENUSIZE] = SYSPARAMS_GetRegistryMetric(hkey, "MenuWidth", sysMetrics[SM_CYMENU] - 1);
+    sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CYMENU] - 1;
+
+    /* FIXME: What do these mean? */
+    sysMetrics[SM_ARRANGE] = ARW_HIDE;
+    sysMetrics[SM_CXMINIMIZED] = 160;
+    sysMetrics[SM_CYMINIMIZED] = 24;
+
+    /* FIXME: How do I calculate these? */
+    sysMetrics[SM_NETWORK] = 3;
+
+    /* For the following: 0 = ok, 1 = failsafe, 2 = failsafe + network */
+    sysMetrics[SM_CLEANBOOT] = 0;
+
+    sysMetrics[SM_CXDRAG] = 4;
+    sysMetrics[SM_CYDRAG] = 4;
+    sysMetrics[SM_CXMENUCHECK] = 13;
+    sysMetrics[SM_CYMENUCHECK] = 13;
+
+    /* FIXME: Should check the type of processor for the following */
+    sysMetrics[SM_SLOWMACHINE] = 0;
+
+    /* FIXME: Should perform a check */
+    sysMetrics[SM_MIDEASTENABLED] = 0;
+
+    sysMetrics[SM_MOUSEWHEELPRESENT] = 1;
+
+    sysMetrics[SM_XVIRTUALSCREEN] = 0;
+    sysMetrics[SM_YVIRTUALSCREEN] = 0;
+    sysMetrics[SM_CMONITORS] = 1;
+    sysMetrics[SM_SAMEDISPLAYFORMAT] = 1;
+    sysMetrics[SM_CMETRICS] = SM_CMETRICS;
+
+    SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &sysMetrics[SM_SHOWSOUNDS], 0 );
+
+    if (hkey) RegCloseKey (hkey);
+
+    SYSCOLOR_Init();
+}
+
 
 /***********************************************************************
  *		SystemParametersInfoW (USER32.@)
@@ -727,8 +852,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                 border = SYSPARAMS_Twips2Pixels( atoiW(buf) );
 
             spi_loaded[spi_idx] = TRUE;
-            SYSMETRICS_Set( SM_CXFRAME, border + GetSystemMetrics( SM_CXDLGFRAME ) );
-            SYSMETRICS_Set( SM_CYFRAME, border + GetSystemMetrics( SM_CXDLGFRAME ) );
+            sysMetrics[SM_CXFRAME] = border + sysMetrics[SM_CXDLGFRAME];
+            sysMetrics[SM_CYFRAME] = border + sysMetrics[SM_CYDLGFRAME];
         }
 	*(INT *)pvParam = border;
 	break;
@@ -747,8 +872,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             {
                 border = uiParam;
                 spi_loaded[spi_idx] = TRUE;
-                SYSMETRICS_Set( SM_CXFRAME, uiParam + GetSystemMetrics( SM_CXDLGFRAME ) );
-                SYSMETRICS_Set( SM_CYFRAME, uiParam + GetSystemMetrics( SM_CXDLGFRAME ) );
+                sysMetrics[SM_CXFRAME] = border + sysMetrics[SM_CXDLGFRAME];
+                sysMetrics[SM_CYFRAME] = border + sysMetrics[SM_CYDLGFRAME];
             }
         }
         else
@@ -810,12 +935,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                     SPI_ICONHORIZONTALSPACING_VALNAME, buf, sizeof(buf) ))
                 {
                     val = SYSPARAMS_Twips2Pixels( atoiW(buf) );
-                    SYSMETRICS_Set( SM_CXICONSPACING, val );
+                    sysMetrics[SM_CXICONSPACING] = val;
                 }
                 spi_loaded[spi_idx] = TRUE;
             }
 
-            *(INT *)pvParam = GetSystemMetrics( SM_CXICONSPACING );
+            *(INT *)pvParam = sysMetrics[SM_CXICONSPACING];
         }
 	else
         {
@@ -828,7 +953,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                 SPI_ICONHORIZONTALSPACING_VALNAME,
                                 buf, fWinIni ))
             {
-                SYSMETRICS_Set( SM_CXICONSPACING, uiParam );
+                sysMetrics[SM_CXICONSPACING] = uiParam;
                 spi_loaded[spi_idx] = TRUE;
             }
             else
@@ -1005,12 +1130,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                     SPI_ICONVERTICALSPACING_VALNAME, buf, sizeof(buf) ))
                 {
                     val = SYSPARAMS_Twips2Pixels( atoiW(buf) );
-                    SYSMETRICS_Set( SM_CYICONSPACING, val );
+                    sysMetrics[SM_CYICONSPACING] = val;
                 }
                 spi_loaded[spi_idx] = TRUE;
             }
 
-            *(INT *)pvParam = GetSystemMetrics( SM_CYICONSPACING );
+            *(INT *)pvParam = sysMetrics[SM_CYICONSPACING];
         }
 	else
         {
@@ -1023,7 +1148,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                 SPI_ICONVERTICALSPACING_VALNAME,
                                 buf, fWinIni ))
             {
-                SYSMETRICS_Set( SM_CYICONSPACING, uiParam );
+                sysMetrics[SM_CYICONSPACING] = uiParam;
                 spi_loaded[spi_idx] = TRUE;
             }
             else
@@ -1082,12 +1207,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             if (SYSPARAMS_Load( SPI_SETMENUDROPALIGNMENT_REGKEY1,
                                 SPI_SETMENUDROPALIGNMENT_VALNAME, buf, sizeof(buf) ))
             {
-                SYSMETRICS_Set( SM_MENUDROPALIGNMENT, atoiW( buf ) );
+                sysMetrics[SM_MENUDROPALIGNMENT] = atoiW( buf );
             }
             spi_loaded[spi_idx] = TRUE;
         }
 
-        *(BOOL *)pvParam = GetSystemMetrics( SM_MENUDROPALIGNMENT );
+        *(BOOL *)pvParam = sysMetrics[SM_MENUDROPALIGNMENT];
         break;
 
     case SPI_SETMENUDROPALIGNMENT:              /*     28 */
@@ -1103,7 +1228,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             SYSPARAMS_Save( SPI_SETMENUDROPALIGNMENT_REGKEY2,
                             SPI_SETMENUDROPALIGNMENT_VALNAME,
                             buf, fWinIni );
-            SYSMETRICS_Set( SM_MENUDROPALIGNMENT, uiParam );
+            sysMetrics[SM_MENUDROPALIGNMENT] = uiParam;
             spi_loaded[spi_idx] = TRUE;
         }
         else
@@ -1124,7 +1249,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             SYSPARAMS_Save( SPI_SETDOUBLECLKWIDTH_REGKEY2,
                             SPI_SETDOUBLECLKWIDTH_VALNAME,
                             buf, fWinIni );
-            SYSMETRICS_Set( SM_CXDOUBLECLK, uiParam );
+            sysMetrics[SM_CXDOUBLECLK] = uiParam;
             spi_loaded[spi_idx] = TRUE;
         }
         else
@@ -1145,7 +1270,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             SYSPARAMS_Save( SPI_SETDOUBLECLKHEIGHT_REGKEY2,
                             SPI_SETDOUBLECLKHEIGHT_VALNAME,
                             buf, fWinIni );
-            SYSMETRICS_Set( SM_CYDOUBLECLK, uiParam );
+            sysMetrics[SM_CYDOUBLECLK] = uiParam;
             spi_loaded[spi_idx] = TRUE;
         }
         else
@@ -1165,7 +1290,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	 * If a returned font is not a correct font in your environment,
 	 * please try to fix objects/gdiobj.c at first.
 	 */
-	SYSPARAMS_GetGUIFont( &lfDefault );
+	GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(LOGFONTW), &lfDefault );
 
 	GetProfileStringW( Desktop, IconTitleFaceName,
 			   lfDefault.lfFaceName,
@@ -1216,7 +1341,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                             SPI_SETMOUSEBUTTONSWAP_VALNAME,
                             buf, fWinIni ))
         {
-            SYSMETRICS_Set( SM_SWAPBUTTON, uiParam );
+            sysMetrics[SM_SWAPBUTTON] = uiParam;
             spi_loaded[spi_idx] = TRUE;
         }
         else
@@ -1288,20 +1413,20 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
 	    /* initialize geometry entries */
 	    lpnm->iBorderWidth = 1;
-	    lpnm->iScrollWidth = GetSystemMetrics(SM_CXVSCROLL);
-	    lpnm->iScrollHeight = GetSystemMetrics(SM_CYHSCROLL);
+	    lpnm->iScrollWidth = sysMetrics[SM_CXVSCROLL];
+	    lpnm->iScrollHeight = sysMetrics[SM_CYHSCROLL];
 
 	    /* size of the normal caption buttons */
-	    lpnm->iCaptionWidth = GetSystemMetrics(SM_CXSIZE);
-	    lpnm->iCaptionHeight = GetSystemMetrics(SM_CYSIZE);
+	    lpnm->iCaptionWidth = sysMetrics[SM_CXSIZE];
+	    lpnm->iCaptionHeight = sysMetrics[SM_CYSIZE];
 
 	    /* caption font metrics */
 	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfCaptionFont), 0 );
 	    lpnm->lfCaptionFont.lfWeight = FW_BOLD;
 
 	    /* size of the small caption buttons */
-	    lpnm->iSmCaptionWidth = GetSystemMetrics(SM_CXSMSIZE);
-	    lpnm->iSmCaptionHeight = GetSystemMetrics(SM_CYSMSIZE);
+	    lpnm->iSmCaptionWidth = sysMetrics[SM_CXSMSIZE];
+	    lpnm->iSmCaptionHeight = sysMetrics[SM_CYSMSIZE];
 
 	    /* small caption font metrics */
 	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont), 0 );
@@ -1309,8 +1434,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	    /* menus, FIXME: names of wine.conf entries are bogus */
 
 	    /* size of the menu (MDI) buttons */
-	    lpnm->iMenuWidth = GetSystemMetrics(SM_CXMENUSIZE);
-	    lpnm->iMenuHeight = GetSystemMetrics(SM_CYMENUSIZE);
+	    lpnm->iMenuWidth = sysMetrics[SM_CXMENUSIZE];
+	    lpnm->iMenuHeight = sysMetrics[SM_CYMENUSIZE];
 
 	    /* menu font metrics */
 	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfMenuFont), 0 );
@@ -1512,12 +1637,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             if (SYSPARAMS_Load( SPI_SETSHOWSOUNDS_REGKEY,
                                 SPI_SETSHOWSOUNDS_VALNAME, buf, sizeof(buf) ))
             {
-                SYSMETRICS_Set( SM_SHOWSOUNDS, atoiW( buf ) );
+                sysMetrics[SM_SHOWSOUNDS] = atoiW( buf );
             }
             spi_loaded[spi_idx] = TRUE;
         }
 
-        *(INT *)pvParam = GetSystemMetrics( SM_SHOWSOUNDS );
+        *(INT *)pvParam = sysMetrics[SM_SHOWSOUNDS];
         break;
 
     case SPI_SETSHOWSOUNDS:			/*     57 */
@@ -1530,7 +1655,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                             SPI_SETSHOWSOUNDS_VALNAME,
                             buf, fWinIni ))
         {
-            SYSMETRICS_Set( SM_SHOWSOUNDS, uiParam );
+            sysMetrics[SM_SHOWSOUNDS] = uiParam;
             spi_loaded[spi_idx] = TRUE;
         }
         else
@@ -2385,6 +2510,41 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         break;
     }
     return ret;
+}
+
+
+/***********************************************************************
+ *		GetSystemMetrics (USER32.@)
+ */
+INT WINAPI GetSystemMetrics( INT index )
+{
+    /* some metrics are dynamic */
+    switch (index)
+    {
+    case SM_CXSCREEN:
+    case SM_CXFULLSCREEN:
+    case SM_CXVIRTUALSCREEN:
+        return GetDeviceCaps( display_dc, HORZRES );
+    case SM_CYSCREEN:
+    case SM_CYVIRTUALSCREEN:
+        return GetDeviceCaps( display_dc, VERTRES );
+    case SM_CYFULLSCREEN:
+        return GetDeviceCaps( display_dc, VERTRES ) - sysMetrics[SM_CYCAPTION];
+
+    /* FIXME: How do I calculate these? */
+    case SM_CXMAXTRACK:
+        return GetDeviceCaps( display_dc, HORZRES ) + 4 + 2 * sysMetrics[SM_CXFRAME];
+    case SM_CYMAXTRACK:
+        return GetDeviceCaps( display_dc, VERTRES ) + 4 + 2 * sysMetrics[SM_CYFRAME];
+    case SM_CXMAXIMIZED:
+        return GetDeviceCaps( display_dc, HORZRES ) + 2 * sysMetrics[SM_CXFRAME];
+    case SM_CYMAXIMIZED:
+        return GetDeviceCaps( display_dc, VERTRES ) + 2 * sysMetrics[SM_CYFRAME];
+
+    default:
+        if ((index < 0) || (index > SM_CMETRICS)) return 0;
+        return sysMetrics[index];
+    }
 }
 
 

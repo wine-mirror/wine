@@ -126,8 +126,7 @@ extern BOOL FOCUS_MouseActivate( HWND hwnd );
 extern BOOL HOOK_IsHooked( INT id );
 extern void SYSCOLOR_Init(void);
 extern HPEN SYSCOLOR_GetPen( INT index );
-extern void SYSMETRICS_Init(void);
-extern INT SYSMETRICS_Set( INT index, INT value );
+extern void SYSPARAMS_Init(void);
 extern void USER_CheckNotLock(void);
 extern BOOL USER_IsExitingThread( DWORD tid );
 

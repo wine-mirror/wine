@@ -225,8 +225,7 @@ static BOOL process_attach(void)
     if (!load_driver()) return FALSE;
 
     /* Initialize system colors and metrics */
-    SYSMETRICS_Init();
-    SYSCOLOR_Init();
+    SYSPARAMS_Init();
 
     /* Setup palette function pointers */
     palette_init();

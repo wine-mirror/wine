@@ -34,8 +34,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/scroll.c \
 	$(TOPOBJDIR)/windows/spy.c \
 	$(TOPOBJDIR)/windows/syscolor.c \
-	$(TOPOBJDIR)/windows/sysmetrics.c \
-	$(TOPOBJDIR)/windows/sysparams.c \
 	$(TOPOBJDIR)/windows/user.c \
 	$(TOPOBJDIR)/windows/win.c \
 	$(TOPOBJDIR)/windows/winhelp.c \
@@ -66,6 +64,7 @@ C_SRCS = \
 	resource.c \
 	scroll.c \
 	static.c \
+	sysparams.c \
 	text.c \
 	uitools.c \
 	user_main.c \
