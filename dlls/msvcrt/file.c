@@ -257,7 +257,7 @@ void msvcrt_init_io(void)
   MSVCRT__iob[0]._flag = MSVCRT__IOREAD;
   MSVCRT__iob[0]._tmpfname = NULL;
   DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_OUTPUT_HANDLE),
-    GetCurrentProcess(), &MSVCRT_fdesc[0].handle, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    GetCurrentProcess(), &MSVCRT_fdesc[1].handle, 0, FALSE, DUPLICATE_SAME_ACCESS);
   MSVCRT_fdesc[1].xflag = WX_OPEN;
   MSVCRT__iob[1]._flag = MSVCRT__IOWRT;
   MSVCRT__iob[1]._tmpfname = NULL;
