@@ -5184,7 +5184,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     static const WCHAR szPropKeys[][80] = 
     {
 {'A','R','P','A','U','T','H','O','R','I','Z','E','D','C','D','F','P','R','E','F','I','X',0},
-{'A','R','P','C','O','N','T','A','C','T'},
+{'A','R','P','C','O','N','T','A','C','T',0},
 {'A','R','P','C','O','M','M','E','N','T','S',0},
 {'P','r','o','d','u','c','t','N','a','m','e',0},
 {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0},
@@ -5221,7 +5221,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 
     static const WCHAR path[] = {
     'C',':','\\','W','i','n','d','o','w','s','\\',
-    'I','n','s','t','a','l','l','e','r','\\'};
+    'I','n','s','t','a','l','l','e','r','\\',0};
     static const WCHAR fmt[] = {
     'C',':','\\','W','i','n','d','o','w','s','\\',
     'I','n','s','t','a','l','l','e','r','\\',
@@ -5352,14 +5352,14 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     'M','i','c','r','o','s','o','f','t','\\',
     'W','i','n','d','o','w','s','\\',
     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-    'R','u','n','O','n','c','e'};
+    'R','u','n','O','n','c','e',0};
     static const WCHAR InstallRunOnce[] = {
     'S','o','f','t','w','a','r','e','\\',
     'M','i','c','r','o','s','o','f','t','\\',
     'W','i','n','d','o','w','s','\\',
     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
     'I','n','s','t','a','l','l','e','r','\\',
-    'R','u','n','O','n','c','e','E','n','t','r','i','e','s'};
+    'R','u','n','O','n','c','e','E','n','t','r','i','e','s',0};
 
     static const WCHAR msiexec_fmt[] = {
     'C',':','\\','W','i','n','d','o','w','s','\\','S','y','s','t','e','m',
