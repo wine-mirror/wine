@@ -295,9 +295,28 @@ DECL_WINELIB_TYPE_AW(CHARFORMAT2)
 #define CFE_UNDERLINE         0x00000004
 #define CFE_STRIKEOUT         0x00000008
 #define CFE_PROTECTED         0x00000010
+#define CFE_LINK              0x00000020
 #define CFE_SUBSCRIPT         0x00010000
-#define CFE_SUPERSCRIPT	      0x00020000
+#define CFE_SUPERSCRIPT       0x00020000
 #define CFE_AUTOCOLOR         0x40000000
+
+#define CFE_SMALLCAPS         CFM_SMALLCAPS
+#define CFE_ALLCAPS           CFM_ALLCAPS
+#define CFE_HIDDEN            CFM_HIDDEN
+#define CFE_OUTLINE           CFM_OUTLINE
+#define CFE_SHADOW            CFM_SHADOW
+#define CFE_EMBOSS            CFM_EMBOSS
+#define CFE_IMPRINT           CFM_IMPRINT
+#define CFE_DISABLED          CFM_DISABLED
+#define CFE_REVISED           CFM_REVISED
+
+#define CFU_CF1UNDERLINE      0xFF
+#define CFU_INVERT            0xFE
+#define CFU_UNDERLINEDOTTED   0x04
+#define CFU_UNDERLINEDOUBLE   0x03
+#define CFU_UNDERLINEWORD     0x02
+#define CFU_UNDERLINE         0x01
+#define CFU_UNDERLINENONE     0x00
 
 /* ECO operations */
 #define ECOOP_SET             0x0001
