@@ -45,11 +45,17 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 {
     /* some sanity checks here on dm2 */
 
-    if(dm2->dmPublic.dmFields & DM_ORIENTATION)
+    if(dm2->dmPublic.dmFields & DM_ORIENTATION) {
         dm1->dmPublic.u1.s1.dmOrientation = dm2->dmPublic.u1.s1.dmOrientation;
+	TRACE("Changing orientation to %d (%s)\n",
+	      dm1->dmPublic.u1.s1.dmOrientation,
+	      dm1->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT ?
+	      "Portrait" :
+	      (dm1->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE ?
+	       "Landscape" : "unknown"));
+    }
 
     /* NB PaperWidth is always < PaperLength */
-
     if(dm2->dmPublic.dmFields & DM_PAPERSIZE) {
         PAGESIZE *page;
 
@@ -63,6 +69,8 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 								254.0 / 72.0;
 	    dm1->dmPublic.u1.s1.dmPaperLength = page->PaperDimension->y *
 								254.0 / 72.0;
+	    dm1->dmPublic.dmFields &= ~(DM_PAPERLENGTH | DM_PAPERWIDTH);
+	    dm1->dmPublic.dmFields |= DM_PAPERSIZE;
 	    TRACE("Changing page to %s %d x %d\n", page->FullName,
 		  dm1->dmPublic.u1.s1.dmPaperWidth,
 		  dm1->dmPublic.u1.s1.dmPaperLength );
@@ -70,20 +78,22 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 	    TRACE("Trying to change to unsupported pagesize %d\n",
 		      dm2->dmPublic.u1.s1.dmPaperSize);
 	}
-    }
-
-    if(dm2->dmPublic.dmFields & DM_PAPERLENGTH) {
+    } else if((dm2->dmPublic.dmFields & DM_PAPERLENGTH) &&
+       (dm2->dmPublic.dmFields & DM_PAPERWIDTH)) {
         dm1->dmPublic.u1.s1.dmPaperLength = dm2->dmPublic.u1.s1.dmPaperLength; 
-	TRACE("Changing PaperLength to %d\n",
-	      dm2->dmPublic.u1.s1.dmPaperLength);
-	FIXME("Changing PaperLength.  Do we adjust PaperSize?\n");
-    }
-
-    if(dm2->dmPublic.dmFields & DM_PAPERWIDTH) {
         dm1->dmPublic.u1.s1.dmPaperWidth = dm2->dmPublic.u1.s1.dmPaperWidth; 
-	TRACE("Changing PaperWidth to %d\n",
+	TRACE("Changing PaperLength|Width to %dx%d\n",
+	      dm2->dmPublic.u1.s1.dmPaperLength,
 	      dm2->dmPublic.u1.s1.dmPaperWidth);
-	FIXME("Changing PaperWidth.  Do we adjust PaperSize?\n");
+	dm1->dmPublic.dmFields &= ~DM_PAPERSIZE;
+	dm1->dmPublic.dmFields |= (DM_PAPERLENGTH | DM_PAPERWIDTH);
+    } else if(dm2->dmPublic.dmFields & (DM_PAPERLENGTH | DM_PAPERWIDTH)) {
+      /* You might think that this would be allowed if dm1 is in custom size
+	 mode, but apparently Windows reverts to standard paper mode even in
+	 this case */
+        FIXME("Trying to change only paperlength or paperwidth\n");
+	dm1->dmPublic.dmFields &= ~(DM_PAPERLENGTH | DM_PAPERWIDTH);
+	dm1->dmPublic.dmFields |= DM_PAPERSIZE;
     }
 
     if(dm2->dmPublic.dmFields & DM_SCALE) {

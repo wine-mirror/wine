@@ -38,6 +38,7 @@ debug_channels (psdrv)
 @ cdecl Polygon(ptr ptr long) PSDRV_Polygon
 @ cdecl Polyline(ptr ptr long) PSDRV_Polyline
 @ cdecl Rectangle(ptr long long long long) PSDRV_Rectangle
+@ cdecl ResetDC(ptr ptr) PSDRV_ResetDC
 @ cdecl RoundRect(ptr long long long long long long) PSDRV_RoundRect
 @ cdecl SelectBitmap(ptr long) PSDRV_SelectBitmap
 @ cdecl SelectBrush(ptr long) PSDRV_SelectBrush

@@ -277,7 +277,12 @@ typedef struct {
     JOB			job;
     PSDRV_DEVMODEA	*Devmode;
     PRINTERINFO		*pi;
-    RECT                PageSize;      /* Imageable area in device co-ords */
+    SIZE                PageSize;      /* Physical page size in device units */
+    RECT                ImageableArea; /* Imageable area in device units */
+                                       /* NB both PageSize and ImageableArea
+					  are not rotated in landscape mode,
+					  so PageSize.cx is generally
+					  < PageSize.cy */
     int                 horzRes;       /* device caps */
     int                 vertRes;
     int                 horzSize;

@@ -237,10 +237,10 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
     
     /* BBox co-ords are in default user co-ord system so urx < ury even in
        landscape mode */
-    llx = physDev->PageSize.left * 72.0 / physDev->logPixelsX;
-    lly = physDev->PageSize.bottom * 72.0 / physDev->logPixelsY;
-    urx = physDev->PageSize.right * 72.0 / physDev->logPixelsX;
-    ury = physDev->PageSize.top * 72.0 / physDev->logPixelsY;
+    llx = physDev->ImageableArea.left * 72.0 / physDev->logPixelsX;
+    lly = physDev->ImageableArea.bottom * 72.0 / physDev->logPixelsY;
+    urx = physDev->ImageableArea.right * 72.0 / physDev->logPixelsX;
+    ury = physDev->ImageableArea.top * 72.0 / physDev->logPixelsY;
 
     if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
 	orient = "Landscape";
@@ -346,17 +346,17 @@ INT PSDRV_WriteNewPage( PSDRV_PDEVICE *physDev )
 
     if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
         if(physDev->pi->ppd->LandscapeOrientation == -90) {
-	    xtrans = physDev->PageSize.right;
-	    ytrans = physDev->PageSize.top;
+	    xtrans = physDev->ImageableArea.right;
+	    ytrans = physDev->ImageableArea.top;
 	    rotation = 90;
 	} else {
-	    xtrans = physDev->PageSize.left;
-	    ytrans = physDev->PageSize.bottom;
+	    xtrans = physDev->ImageableArea.left;
+	    ytrans = physDev->ImageableArea.bottom;
 	    rotation = -90;
 	}
     } else {
-        xtrans = physDev->PageSize.left;
-	ytrans = physDev->PageSize.top;
+        xtrans = physDev->ImageableArea.left;
+	ytrans = physDev->ImageableArea.top;
 	rotation = 0;
     }
 

@@ -138,6 +138,94 @@ BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 }
 
 
+static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
+{
+    PAGESIZE *page;
+    INT width = 0, height = 0;
+    
+    if(physDev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
+        for(page = physDev->pi->ppd->PageSizes; page; page = page->next) {
+	    if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize)
+	        break;
+	}
+
+	if(!page) {
+	    FIXME("Can't find page\n");
+	    physDev->ImageableArea.left = 0;
+	    physDev->ImageableArea.right = 0;
+	    physDev->ImageableArea.bottom = 0;
+	    physDev->ImageableArea.top = 0;
+	    physDev->PageSize.cx = 0;
+	    physDev->PageSize.cy = 0;
+	} else if(page->ImageableArea) {
+	  /* physDev sizes in device units; ppd sizes in 1/72" */
+	    physDev->ImageableArea.left = page->ImageableArea->llx *
+	      physDev->logPixelsX / 72;
+	    physDev->ImageableArea.right = page->ImageableArea->urx *
+	      physDev->logPixelsX / 72;
+	    physDev->ImageableArea.bottom = page->ImageableArea->lly *
+	      physDev->logPixelsY / 72;
+	    physDev->ImageableArea.top = page->ImageableArea->ury *
+	      physDev->logPixelsY / 72;
+	    physDev->PageSize.cx = page->PaperDimension->x *
+	      physDev->logPixelsX / 72;
+	    physDev->PageSize.cy = page->PaperDimension->y *
+	      physDev->logPixelsY / 72;
+	} else {
+	    physDev->ImageableArea.left = physDev->ImageableArea.bottom = 0;
+	    physDev->ImageableArea.right = physDev->PageSize.cx =
+	      page->PaperDimension->x * physDev->logPixelsX / 72;
+	    physDev->ImageableArea.top = physDev->PageSize.cy =
+	      page->PaperDimension->y * physDev->logPixelsY / 72;
+	}
+    } else if((physDev->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) &&
+	      (physDev->Devmode->dmPublic.dmFields & DM_PAPERWIDTH)) {
+      /* physDev sizes in device units; Devmode sizes in 1/10 mm */
+        physDev->ImageableArea.left = physDev->ImageableArea.bottom = 0;
+	physDev->ImageableArea.right = physDev->PageSize.cx =
+	  physDev->Devmode->dmPublic.u1.s1.dmPaperWidth *
+	  physDev->logPixelsX / 254;
+	physDev->ImageableArea.top = physDev->PageSize.cy =
+	  physDev->Devmode->dmPublic.u1.s1.dmPaperLength *
+	  physDev->logPixelsY / 254;
+    } else {
+        FIXME("Odd dmFields %lx\n", physDev->Devmode->dmPublic.dmFields);
+	physDev->ImageableArea.left = 0;
+	physDev->ImageableArea.right = 0;
+	physDev->ImageableArea.bottom = 0;
+	physDev->ImageableArea.top = 0;
+	physDev->PageSize.cx = 0;
+	physDev->PageSize.cy = 0;
+    }
+
+    TRACE("ImageableArea = %d,%d - %d,%d: PageSize = %ldx%ld\n",
+	  physDev->ImageableArea.left, physDev->ImageableArea.bottom,
+	  physDev->ImageableArea.right, physDev->ImageableArea.top,
+	  physDev->PageSize.cx, physDev->PageSize.cy);
+
+    /* these are in device units */
+    width = physDev->ImageableArea.right - physDev->ImageableArea.left;
+    height = physDev->ImageableArea.top - physDev->ImageableArea.bottom;
+
+    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT) {
+        physDev->horzRes = width;
+        physDev->vertRes = height;
+    } else {
+        physDev->horzRes = height;
+        physDev->vertRes = width;
+    }
+
+    /* these are in mm */
+    physDev->horzSize = (physDev->horzRes * 25.4) / physDev->logPixelsX;
+    physDev->vertSize = (physDev->vertRes * 25.4) / physDev->logPixelsY;
+
+    TRACE("devcaps: horzSize = %dmm, vertSize = %dmm, "
+	  "horzRes = %d, vertRes = %d\n",
+	  physDev->horzSize, physDev->vertSize,
+	  physDev->horzRes, physDev->vertRes);
+}
+
+
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
@@ -146,8 +234,6 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
-    PAGESIZE *page;
-    INT width = 0, height = 0;
 
     /* If no device name was specified, retrieve the device name
      * from the DEVMODE structure from the DC's physDev.
@@ -186,68 +272,24 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     
     memcpy( physDev->Devmode, pi->Devmode, sizeof(PSDRV_DEVMODEA) );
 
-    if(initData) {
-        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)initData, pi);
-    }
-
     physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
     physDev->logPixelsY = physDev->pi->ppd->DefaultResolution;
-
-    for(page = pi->ppd->PageSizes; page; page = page->next) {
-        if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize)
-	    break;
-    }
-
-    if(!page) {
-        FIXME("Can't find page\n");
-	physDev->PageSize.left = 0;
-	physDev->PageSize.right = 0;
-	physDev->PageSize.bottom = 0;
-        physDev->PageSize.top = 0;
-    } else if(page->ImageableArea) {  /* PageSize is in device units */
-        physDev->PageSize.left = page->ImageableArea->llx * physDev->logPixelsX / 72;
-        physDev->PageSize.right = page->ImageableArea->urx * physDev->logPixelsX / 72;
-        physDev->PageSize.bottom = page->ImageableArea->lly * physDev->logPixelsY / 72;
-        physDev->PageSize.top = page->ImageableArea->ury * physDev->logPixelsY / 72;
-    } else {
-        physDev->PageSize.left = physDev->PageSize.bottom = 0;
-        physDev->PageSize.right = page->PaperDimension->x * physDev->logPixelsX / 72;
-        physDev->PageSize.top = page->PaperDimension->y * physDev->logPixelsY / 72;
-    }
-    TRACE("PageSize = (%d,%d - %d,%d)\n",physDev->PageSize.left, physDev->PageSize.bottom, physDev->PageSize.right, physDev->PageSize.top);
-
-    /* these are in device units */
-    width = physDev->PageSize.right - physDev->PageSize.left;
-    height = physDev->PageSize.top - physDev->PageSize.bottom;
-
-    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT) {
-        physDev->horzRes = width;
-        physDev->vertRes = height;
-    } else {
-        physDev->horzRes = height;
-        physDev->vertRes = width;
-    }
-
-    /* these are in mm */
-    physDev->horzSize = (physDev->horzRes * 25.4) / physDev->logPixelsX;
-    physDev->vertSize = (physDev->vertRes * 25.4) / physDev->logPixelsY;
-
-    TRACE("devcaps: horzSize = %dmm, vertSize = %dmm, "
-	  "horzRes = %d, vertRes = %d\n",
-	  physDev->horzSize, physDev->vertSize,
-	  physDev->horzRes, physDev->vertRes);
-
-    /* etc */
-
-    dc->hVisRgn = CreateRectRgn(0, 0, physDev->horzRes, physDev->vertRes);
-    dc->hFont = PSDRV_DefaultFont;
 
     if (!output) output = "LPT1:";  /* HACK */
     physDev->job.output = HeapAlloc( PSDRV_Heap, 0, strlen(output)+1 );
     strcpy( physDev->job.output, output );
     physDev->job.hJob = 0;
+
+    if(initData) {
+        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)initData, pi);
+    }
+
+    PSDRV_UpdateDevCaps(physDev);
+    dc->hVisRgn = CreateRectRgn(0, 0, physDev->horzRes, physDev->vertRes);
+    dc->hFont = PSDRV_DefaultFont;
     return TRUE;
 }
+
 
 
 /**********************************************************************
@@ -266,76 +308,16 @@ BOOL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
 }
 
 
-/***********************************************************************
- *           get_phys_page_size
- *
- * Helper function to compute PHYSICALWIDTH and PHYSICALHEIGHT dev caps.
+/**********************************************************************
+ *	     ResetDC   (WINEPS.@)
  */
-static void get_phys_page_size( const PSDRV_PDEVICE *pdev, POINT *p )
+HDC PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEA *lpInitData )
 {
-    p->x = p->y = 0;
-
-    if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) != 0 &&
-        pdev->Devmode->dmPublic.u1.s1.dmPaperSize != 0)
-    {
-        PAGESIZE *page = pdev->pi->ppd->PageSizes;
-
-        while (page != NULL)
-        {
-            if (page->WinPage == pdev->Devmode->dmPublic.u1.s1.dmPaperSize)
-                break;
-            page = page->next;
-        }
-
-        if (page == NULL)
-        {
-            ERR("No entry for papersize %u in PPD file for '%s'\n",
-                pdev->Devmode->dmPublic.u1.s1.dmPaperSize,
-                pdev->pi->FriendlyName);
-            return;
-        }
-
-        TRACE("Found '%s' for paper size %u\n", page->FullName,
-              pdev->Devmode->dmPublic.u1.s1.dmPaperSize);
-
-        p->x = page->PaperDimension->x * pdev->logPixelsX / 72;
-        p->y = page->PaperDimension->y * pdev->logPixelsY / 72;
-
-        TRACE("%fx%f PostScript points = %lix%li device units\n",
-              page->PaperDimension->x, page->PaperDimension->y,
-              p->x, p->y);
+    if(lpInitData) {
+        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)lpInitData, physDev->pi);
+        PSDRV_UpdateDevCaps(physDev);
     }
-
-    /* These are in tenths of a millimeter */
-    if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERWIDTH) != 0 &&
-        pdev->Devmode->dmPublic.u1.s1.dmPaperWidth != 0)
-    {
-        p->x = (pdev->Devmode->dmPublic.u1.s1.dmPaperWidth *
-                pdev->logPixelsX) / 254;
-        TRACE("dmPaperWidth = %li device units\n", p->x);
-    }
-
-    if ((pdev->Devmode->dmPublic.dmFields & DM_PAPERLENGTH) != 0 &&
-        pdev->Devmode->dmPublic.u1.s1.dmPaperLength != 0)
-    {
-        p->y = (pdev->Devmode->dmPublic.u1.s1.dmPaperLength *
-                pdev->logPixelsY) / 254;
-        TRACE("dmPaperLength = %li device units\n", p->y);
-    }
-
-    if (p->x == 0 || p->y == 0)
-    {
-        ERR("Paper size not properly set for '%s'\n", pdev->pi->FriendlyName);
-        return;
-    }
-
-    if ((pdev->Devmode->dmPublic.dmFields & DM_ORIENTATION) != 0 &&
-        pdev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE)
-    {
-        INT temp = p->y;
-        p->y = p->x;
-        p->x = temp;
-    }
+    return physDev->hdc;
 }
 
 
@@ -344,8 +326,6 @@ static void get_phys_page_size( const PSDRV_PDEVICE *pdev, POINT *p )
  */
 INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
 {
-    POINT pt;
-
     switch(cap)
     {
     case DRIVERVERSION:
@@ -386,7 +366,7 @@ INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
         return (PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON | PC_SCANLINE |
                 PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS);
     case TEXTCAPS:
-        return TC_CR_ANY; /* psdrv 0x59f7 */
+        return TC_CR_ANY | TC_VA_ABLE; /* psdrv 0x59f7 */
     case CLIPCAPS:
         return CP_RECTANGLE;
     case RASTERCAPS:
@@ -411,13 +391,29 @@ INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
     case COLORRES:
         return 0;
     case PHYSICALWIDTH:
-        get_phys_page_size( physDev, &pt );
-        return pt.x;
+        return (physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) ?
+	  physDev->PageSize.cy : physDev->PageSize.cx;
     case PHYSICALHEIGHT:
-        get_phys_page_size( physDev, &pt );
-        return pt.y;
+        return (physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) ?
+	  physDev->PageSize.cx : physDev->PageSize.cy;
     case PHYSICALOFFSETX:
+      if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
+          if(physDev->pi->ppd->LandscapeOrientation == -90)
+	      return physDev->PageSize.cy - physDev->ImageableArea.top;
+	  else
+	      return physDev->ImageableArea.bottom;
+      }
+      return physDev->ImageableArea.left;
+
     case PHYSICALOFFSETY:
+      if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
+          if(physDev->pi->ppd->LandscapeOrientation == -90)
+	      return physDev->PageSize.cx - physDev->ImageableArea.right;
+	  else
+	      return physDev->ImageableArea.left;
+      }
+      return physDev->PageSize.cy - physDev->ImageableArea.top;
+
     case SCALINGFACTORX:
     case SCALINGFACTORY:
     case VREFRESH:
