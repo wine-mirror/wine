@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -287,8 +288,12 @@ static void client_event( int event, void *private )
 /* add a client */
 struct client *add_client( int fd, struct thread *self )
 {
+    int flags;
     struct client *client = mem_alloc( sizeof(*client) );
     if (!client) return NULL;
+
+    flags = fcntl( fd, F_GETFL, 0 );
+    fcntl( fd, F_SETFL, flags | O_NONBLOCK );
 
     client->state                = RUNNING;
     client->select.fd            = fd;

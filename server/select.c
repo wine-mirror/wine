@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,11 +36,7 @@ static struct timeout_user *timeout_tail;   /* sorted timeouts list tail */
 /* register a user */
 void register_select_user( struct select_user *user )
 {
-    int flags;
     assert( !users[user->fd] );
-
-    flags = fcntl( user->fd, F_GETFL, 0 );
-    fcntl( user->fd, F_SETFL, flags | O_NONBLOCK );
 
     users[user->fd] = user;
     if (user->fd > max_fd) max_fd = user->fd;
