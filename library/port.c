@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -23,7 +24,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <termios.h>
-#include <wchar.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
