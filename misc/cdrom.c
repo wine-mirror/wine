@@ -779,8 +779,6 @@ end:
     return serial;
 }
 
-static const char empty_label[] = "           ";
-
 /**************************************************************************
  *				CDROM_Data_GetLabel		[internal]
  */
@@ -822,13 +820,12 @@ DWORD CDROM_Data_GetLabel(WINE_CDAUDIO* wcda, char *label, int parentdev)
 		strncpy(label, (LPSTR)label_read, 11);
 		label[11] = '\0';
 	    }
-	    return 0;
+	    return 1;
 	}
     }
 failure:
     CDROM_CLOSE( dev, parentdev );
     ERR("error reading label !\n");
-    strcpy(label, empty_label);
     return 0;
 }
 
@@ -866,22 +863,23 @@ DWORD CDROM_GetLabel(int drive, char *label)
 
 		/* common code *here* !! */
 		/* hopefully a data CD */
-		CDROM_Data_GetLabel(&wcda, label, dev);
+		if (!CDROM_Data_GetLabel(&wcda, label, dev))
+			ret = 0;
 		break;
 
 	    case CDS_MIXED:
 		cdname = "Mixed mode";
 		ERR("We don't have a way of determining the label of a mixed mode CD - Linux doesn't allow raw access !!\n");
 		/* fall through */
+
 	    case CDS_NO_INFO:
 		if (!cdname) cdname = "No_info";
-		strcpy(label, empty_label);
+		ret = 0;
 		break;
 
 	    default:
                 WARN("Strange CD type (%d) or empty ?\n", media);
 		cdname = "Strange/empty";
-	        strcpy(label, empty_label);
 	        ret = 0;
 		break;
 	}

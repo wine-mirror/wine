@@ -189,7 +189,7 @@ int DRIVE_Init(void)
             drive->ino      = drive_stat_buffer.st_ino;
 
             /* Get the drive label */
-            PROFILE_GetWineIniString( name, "Label", name, drive->label_conf, 12 );
+            PROFILE_GetWineIniString( name, "Label", "", drive->label_conf, 12 );
             if ((len = strlen(drive->label_conf)) < 11)
             {
                 /* Pad label with spaces */
