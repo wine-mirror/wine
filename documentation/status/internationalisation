@@ -2,7 +2,6 @@ Status of Internationalisation and Language Support in WINE
 -----------------------------------------------------------
 May 29, 1999, Klaas van Gend
 
-
 Just like Windows, Wine must support several languages and
 localised settings for countries other than the US.
 Since the last module-loader re-organisation by Bertho,
@@ -13,8 +12,8 @@ support a certain language/region.
 Keyboard Settings:
 ------------------
 Currently, the following keyboard layouts are available:
-US, UK, FR, DE, Swiss German, NO, DA, Swedish, Canadian French,
-PT, IT, FI, RU, ES, Belgian, Icelandic.
+US, UK, FR, Icelandic, DE, Swiss German, Swiss French, NO, DA, Swedish, 
+Canadian French, PT, IT, FI, RU, ES, Belgian.
 Please refer to documentation/keyboard by Ove Kaaven on how
 to add more keyboard layouts.
 
@@ -55,21 +54,38 @@ yet complete and shouldn't be translated yet.
 
 Common Dialog boxes:
 --------------------
-OFN  = CommonDialogs' File Dialog
+OFN  = CommonDialogs' 16 bit File Dialog
 FR   = CommonDialogs' Find & Replace Dialogs
 CC   = CommonDialogs' Choose Colour Dialog
 CF   = CommonDialogs' Choose Font Dialog
 PD16 = CommonDialogs' 16 bit Print Dialog
 PSD  = CommonDialogs' Page Setup Dialog
-PD32 = CommonDialogs' 32 bit Print Dialog
+PD32 = CommonDialogs' 32 bit Print Dialog + stringtable
+F32  = CommonDialogs' 32 bit File Dialogs + stringtables
+
   10 denotes: ok ?
    5 denotes: available, but not in current layout 
   -- denotes: not available.
-Please note that the Print32 dialog box is still under development,
-so do not translate it yet.
+
 See documentation/languages on how to add another language.
 
+
+Common Controls:
+----------------
+There are several menus present in dlls/comctl32/rsrc.rc.
+Thuy Nguyen is still modifying the property dialog sheet templates, 
+so don't start translating them yet. Also, there is no structure for 
+comctrl32 internationalisation.
+The resources for the other controls are stable.
+
+
+Multimedia:
+-----------
+In the multimedia subdirectory, a large stringtable with all
+multimedia errors and messages is waiting for translation.
+Be careful, this is a large piece of text!
 	
+    
 Programs:
 ---------
 Several of the Winelib-based programs in programs/* contain their own
@@ -78,40 +94,42 @@ Check the appropriate files and subdirectories for instructions on
 how to add additional languages.
 Note that currently the Swedish files are named "Sw.rc" where they
 should be called "Sv.rc".
+The WCMD program notes that internationalisation is lacking, but doesn't
+support it, either.
 
 
+At this moment (Oct 2, 1999), the following is supported:
 
-At this moment (May 29, 1999), the following is supported:
-
-(10 = max support, 0 = very bad/broken support, empty = no support)
+(10 = max support, 0 = very bad/broken support, empty = no support,
+ ** = submitted)
 (note that I only looked into the source, I did not try to run the various languages)
 
-                 Sys| Commdlg                   | Shell| Programs
-                 Res| OFN PD16 PSD CF CC FR PD32| 32   | Clock Notepad Progman WinHelp
-                ----+---------------------------+------+------------------------------
-Ca Catalan        10   10  10   10 10 10 10  --      2     --    --       --     --
-Cs Czech          de   10  10   10  5  5 10  --      1     --    --       --     --
-Da Danish         10   10  10   10 10 10 10  --      2
-De German         10   10  10   10 10 10 10  --      1
-En English        10   10  10   10 10 10 10  10      2
+                 Sys| Commdlg                        | Win | Shell| Programs
+                 Res| OFN PD16 PSD CF CC FR PD32 F32 | MM  | 32   | Clock Notepad Progman WinHelp
+                ----+--------------------------------+-----+------+------------------------------
+Ca Catalan        10   10  10   10 10 10 10  --  --    --      2     --    --       --     --
+Cs Czech          de   10  10   10  5  5 10  --  --    --      1     --    --       --     --
+Da Danish         10   10  10   10 10 10 10  --  --    --      2
+De German         10   10  10   10 10 10 10  --  --    --      1
+En English        10   10  10   10 10 10 10  10  10    10      2
 
-Eo Esperanto      de   10  10   10  5  5 10  --      1     --    --       --     --
-Es Spanish        10   10  10   10 10 10 10  --      2
-Fi Finnish        10   10  10   10 10 10 10  --      1
-Fr French         10   10  10   10 10 10 10  --      2
-Hu Hungarian       d   10  10   10 10 10 10  --      1     --    --
+Eo Esperanto      de   10  10   10  5  5 10  --  --    --      1     --    --       --     --
+Es Spanish        10   10  10   10 10 10 10  --  --    --      2
+Fi Finnish        10   10  10   10 10 10 10  --  --    --      1
+Fr French         10   10  10   10 10 10 10  --  --    10      2
+Hu Hungarian       d   10  10   10 10 10 10  --  --    --      1     --    --
 
-It Italian         d   10  10   10 10 10 10  --      1     --    --
-Ko Korean          d   10  10   10  5 10 10  --      1     --    --
-Nl Dutch          10   10  10   10 10 10 10  --      2     --    --       --     --
-No Norwegian      de   10  10   10  5  5 10  --      1     --    --       --     --
-Pl Polish          d   -code is undecipherable-      1     --    --       --     --
+It Italian         d   10  10   10 10 10 10  --  --    --      1     --    --
+Ko Korean          d   10  10   10  5 10 10  --  --    --      1     --    --
+Nl Dutch          10   10  10   10 10 10 10  10  --    **      2     --    --       --     --
+No Norwegian      de   10  10   10  5  5 10  --  --    --      1     --    --       --     --
+Pl Polish          d   ---code is undecipherable---    --      1     --    --       --     --
 
-Pt Portugese       d   10  10   10 10 10 10  --      2     --    --       --     --
-Ru Russian        10   10  10   10 10 10 10  --      2     --    --       --     --
-Sv Swedish         d   10  10   10 10 10 10  --      2    "Sw"  "Sw"     "Sw"   "Sw"
-Wa Walon          10   10  10   10 10 10 10  --      2     --    --       --     --
-Va Rumantsch Ladin (Vallader)                             "Va"  "Va"     "Va"   "Va"
+Pt Portugese       d   10  10   10 10 10 10  --  --    --      2     --    --       --     --
+Ru Russian        10   10  10   10 10 10 10  --  --    --      2     --    --       --     --
+Sv Swedish         d   10  10   10 10 10 10  --  --    --      2    "Sw"  "Sw"     "Sw"   "Sw"
+Wa Walon          10   10  10   10 10 10 10  --  --    --      2     --    --       --     --
+Va Rumantsch Ladin (Vallader)                          --           "Va"  "Va"     "Va"   "Va"
 
 
 
