@@ -15,6 +15,7 @@ C. Scott Ananian
 Eric Anholt
 Dag Asheim
 Jim Aston
+Zimler Attila
 Martin Ayotte
 Viktor Babrian
 Karl Backström
@@ -33,10 +34,13 @@ Marcel Baur
 Michael Beach
 Francis Beaudet
 Tom Bech
+David Beck
 Matthew Becker
 Dave Belanger
+Ken Belleau
 Maxime Bellengé
 Leo van den Berg
+Vincent Béron
 Joris Beugnies
 Stephan Beuze
 Georg Beyerle
@@ -61,15 +65,19 @@ Erik Bos
 Fons Botman
 Sylvain Bouchard
 Frederic Boulanger
+Finlo Boyde
 Justin Bradford
 John Brezak
+Alastair Bridgewater
 Simon Britnell
+Christian Britz
+Marcus R. Brown
 Philip Brown
 Przemyslaw Bruski
 Andrew Bulhak
 John Burton
 Jonathan Buzzard
-Vincent Béron
+Jacek Caban
 Brad Campbell
 Jose Marcos López Caravaca
 Michael Cardenas
@@ -79,9 +87,12 @@ Mike Castle
 Ron Cemer
 Gordon Chaffee
 Gael de Chalendar
+Matt Chapman
 Mauro Carvalho Chehab
+Fabian Cenedese
 Jau-Horng Chen
 Tisheng Chen
+Justin Chevrier
 Jimen Ching
 Hann-huei Chiou
 Geoff Clare
@@ -95,6 +106,7 @@ Ken Coleman
 Roderick Colenbrander
 Christian Costa
 Jean-Claude Cote
+James Courtier-Dutton
 Chuck Crayne
 Stephen Crowley
 Ryan Cumming
@@ -137,16 +149,19 @@ Susan Farley
 Rob Farnum
 David Faure
 Matthias Fechner
+Tim Ferguson
 Raul Fernandes
 Wesley Filardo
 Claus Fischer
 Olaf Flebbe
+Krzysztof Foltman
 Chad Fraleigh
 Matthew Francis
 Eric Frias
 Christoph Frick
 Todd T. Fries
 Alexander Frink
+Michael Fritscher
 Philippe Froidevaux
 Martin Fuchs
 Satsuki Fujishima
@@ -158,6 +173,7 @@ Gabriel Garcia
 Ramon Garcia
 Jeff Garzik
 Julio Cesar Gazquez
+Ge van Geldorp
 Klaas van Gend
 Abey George
 Brian Gerst
@@ -169,6 +185,7 @@ Kristoffer Gleditsch
 Jody Goldberg
 David Golding
 Bob Goodwin
+Florian Goth
 Alexander Gottwald
 François Gouget
 Hans de Graaff
@@ -188,10 +205,12 @@ David D. Hagood
 Robert W Hall
 Patrick Haller
 Stefan Haller
+Jake Hamby
 David Hammerton
 Noomen Hamza
 Charles M. Hannum
 Yorick Hardy
+Boaz Harrosh
 Adrian Harvey
 John Harvey
 James Hatheway
@@ -210,6 +229,7 @@ Jukka Heinonen
 Pierre d'Herbemont
 Juraj Hercek
 Bernd Herd
+Robert van Herk
 Theodore S. Hetke
 Haithem Hmida
 Jochen Hoenicke
@@ -219,6 +239,7 @@ Erik Hofman
 John K. Hohm
 Kevin Holbrook
 Nick Holloway
+Alfons Hoogervorst
 Aaron Hope
 Enrico Horn
 Casper Hornstrup
@@ -231,9 +252,11 @@ Tom Hughes
 Peter Hunnisett
 Miguel de Icaza
 Jukka Iivonen
+Hiroshi Inoue
 Kostya Ivanov
 Serge Ivanov
 Peter Ivanyi
+Michael Jacobsen
 Francois Jacques
 Lee Jaekil
 Gautam Jain
@@ -263,6 +286,7 @@ Michael Karcher
 Niclas Karlsson
 Jochen Karrer
 Valery Kartel
+Rudolf Kastl
 Tapio Kautto
 Dan Kegel
 Don Kelly
@@ -276,6 +300,7 @@ Kevin Koltzau
 Jon Konrath
 Ilya Konstantinov
 Oleg Korda
+Ilya Korniyko
 Alex Korobka
 Kusanagi Kouichi
 Zoltan Kovacs
@@ -284,11 +309,13 @@ Marko Kreen
 Greg Kreider
 Phil Krylov
 Junichi Kuchinishi
+Vik Kumar
 Anand Kumria
 Gerson Kurz
 Ove Kåven
 Dusan Lacko
 Eric Laforest
+William Lahti
 Scott A. Laird
 Matthew Lake
 David Lee Lambert
@@ -299,8 +326,10 @@ Stephen Langasek
 Sean Langley
 Dan Langlois
 Peter Berg Larsen
+Thomas Brix Larsen
 Alexander Larsson
 Tommy Schultz Lassen
+Alex Villacís Lasso
 David Lassonde
 Paul Laufer
 Jaekil Lee
@@ -309,6 +338,8 @@ Stefan Leichter
 Hans Leidekker
 Karl Lessard
 Pascal Lessard
+Blake Leverett
+Wim Lewis
 Andrew Lewycky
 John Li
 Weisheng Li
@@ -336,6 +367,7 @@ Kester Maddock
 Pierre Mageau
 Michael C. Maggio
 William Magro
+Emmanuel Maillard
 Rok Mandeljc
 Vitaliy Margolen
 Daniel Marmier
@@ -369,7 +401,9 @@ Travis Michielsen
 Toufic Milan
 Paul Millar
 Dave Miller
+David Miller
 Donn Miller
+Jeff Miller
 Bruce Milner
 Michal Janusz Miroslaw
 Peter Mladek
@@ -383,7 +417,7 @@ Richard Mortimer
 Adam D. Moss
 Jeff Muizelaar
 Vasudev Mulchandani
-Ivan Leo Murray-Smith
+Krishna Murthy
 Rick Mutzke
 Philippe De Muyter
 Zoltan Nagy
@@ -400,6 +434,7 @@ Thuy Nguyen
 Kristian Nielsen
 Arjen Nienhuis
 Nix N. Nix
+Sami Nopanen
 Leonard Norrgård
 Per Nystrom
 Robert O'Callahan
@@ -410,6 +445,7 @@ José Manuel Ferrer Ortiz
 Knut St. Osmundsen
 Andriy Palamarchuk
 Giovanni Pancotti
+Andrey Panov
 Won Kyu Park
 Alex Pasadyn
 Michal Pasternak
@@ -420,10 +456,12 @@ Catalin Patulea
 Dimitrie O. Paun
 Bernd Paysan
 Brad Pepers
+James Perry
 Ori Pessach
 Nemeth Peter
 Jim Peterson
 Sylvain Petreolle
+Ofir Petruska
 Gerald Pfeifer
 Jason Phillips
 Dave Pickles
@@ -445,6 +483,8 @@ Alex Priem
 Oleg Prokhorov
 Roberto Augusto Pungartnik
 Francesco Di Punzio
+Ivan Leo Puoti
+Andrew de Quincey
 Paul Quinn
 Pete Ratzlaff
 Ron Record
@@ -461,9 +501,11 @@ Matthew Robertson
 Vedran Rodic
 Troy Rollo
 Drew Ronneberg
+Andreas Rosenberg
 Bernhard Rosenkraenzer
 Pavel Roskin
 Herbert Rosmanith
+Elias Ross
 Lilia Roumiantseva
 Paul Rupe
 Johannes Ruscheinski
@@ -490,17 +532,21 @@ Ingo Schneider
 Victor Schneider
 Kees Schoenmakers
 Glenn Schrader
+Waldeck Schutzer
 Federico Schwindt
 Wolfgang Schwotzer
 Dan Scott
 Tim Segall
 Stas Sergeev
+Jeremy Shaw
 Robert Shearman
 John Sheets
 Shachar Shemesh
+Santosh Siddheshwar
 Yngvi Sigurjonsson
 Gustavo Noronha Silva
 Stephen Simmons
+Daniel Skorka
 Jesper Skov
 Rick Sladkey
 Kirill Smelkov
@@ -511,6 +557,7 @@ Jaroslaw Piotr Sobieszek
 Carl Sopchak
 Liu Spider
 Patrick Spinler
+Alexey Spiridonov
 Sylvain St-Germain
 Malte Starostik
 Gavriel State
@@ -531,6 +578,7 @@ Supphachoke Suntiwichaya
 Charles Suprin
 James Sutherland
 Erik Svendsen
+Yoshiro Takeno
 Hidenori Takeshima
 Tristan Tarrant
 Andrew Taylor
@@ -556,7 +604,7 @@ Gregory Trubetskoy
 Petri Tuomola
 Sergey Turchanov
 Warren Turkal
-Greg Turner
+Gregory M. Turner
 Lionel Ulmer
 Moshe Vainer
 Hleb Valoska
@@ -566,9 +614,11 @@ Michael Veksler
 Sven Verdoolaege
 Todd Vierling
 Brian Vincent
+Leonardo Quijano Vincenzi
 Vasily I. Volchenko
 Erez Volk
 Jerome Vouillon
+Paul Vriens
 Duc Vuong
 William Waghorn
 Ferenc Wagner
@@ -581,6 +631,7 @@ Eric Warnke
 Leigh Wedding
 Randy Weems
 Manfred Weichel
+Thomas Weidenmueller
 Ulrich Weigand
 Morten Welinder
 Marcelo Welter
@@ -594,12 +645,14 @@ Martin Wilck
 Jan Willamowius
 Carl Williams
 Eric Williams
+Grant Williamson
 Dan Wolf
 Erwin Wolff
 Philipp Wollermann
 Cliff Wright
 Karl Guenter Wuensch
 Mehmet Yasar
+Sean Young
 Eric Youngdale
 James Youngman
 Nikita V. Youshchenko
