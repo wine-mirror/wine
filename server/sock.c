@@ -78,9 +78,19 @@ static const struct object_ops sock_ops =
 static void sock_reselect( struct sock *sock )
 {
     int ev = sock_get_poll_events( &sock->obj );
+    struct pollfd pfd;
+
     if (debug_level)
         fprintf(stderr,"sock_reselect(%d): new mask %x\n", sock->obj.fd, ev);
     set_select_events( &sock->obj, ev );
+
+    /* check whether condition is satisfied already */
+    pfd.fd = sock->obj.fd;
+    pfd.events = ev;
+    pfd.revents = 0;
+    poll( &pfd, 1, 0 );
+    if (pfd.revents & (POLLIN|POLLOUT|POLLPRI))
+        sock_poll_event( &sock->obj, pfd.revents);
 }
 
 inline static int sock_error(int s)
@@ -163,6 +173,7 @@ static void sock_poll_event( struct object *obj, int event )
         {
             sock->pmask |= FD_OOB;
             sock->hmask |= FD_OOB;
+            sock->errors[FD_OOB_BIT] = 0;
             if (debug_level)
                 fprintf(stderr, "socket %d got OOB data\n", sock->obj.fd);
         }
@@ -178,7 +189,10 @@ static void sock_poll_event( struct object *obj, int event )
         }
     }
 
-    sock_reselect( sock );
+    if (event & (POLLERR|POLLHUP))
+        set_select_events( &sock->obj, -1 );
+    else
+        sock_reselect( sock );
     /* wake up anyone waiting for whatever just happened */
     emask = sock->pmask & sock->mask;
     if (debug_level && emask)
