@@ -490,19 +490,16 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
     RECT *rcClient = &infoPtr->rcClient;
     RECT *calbutton = &infoPtr->calbutton;
     RECT *checkbox = &infoPtr->checkbox;
-    HBRUSH hbr;
     SIZE size;
-    COLORREF oldBk, oldTextColor;
+    COLORREF oldTextColor;
 
     /* draw control edge */
     TRACE("\n");
-    hbr = CreateSolidBrush(RGB(255, 255, 255));
-    FillRect(hdc, rcClient, hbr);
     DrawEdge(hdc, rcClient, EDGE_SUNKEN, BF_RECT);
-    DeleteObject(hbr);
 
     if (infoPtr->dateValid) {
         HFONT oldFont = SelectObject (hdc, infoPtr->hFont);
+        INT oldBkMode = SetBkMode (hdc, TRANSPARENT);
         WCHAR txt[80];
 
         DATETIME_ReturnTxt (infoPtr, 0, txt, sizeof(txt)/sizeof(txt[0]));
@@ -521,18 +518,23 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
             field->bottom = rcDraw->bottom;
             prevright = field->right;
 
-            if ((infoPtr->haveFocus) && (i == infoPtr->select)) {
-                hbr = CreateSolidBrush (GetSysColor (COLOR_ACTIVECAPTION));
+            if (infoPtr->dwStyle & WS_DISABLED)
+                oldTextColor = SetTextColor (hdc, comctl32_color.clrGrayText);
+            else if ((infoPtr->haveFocus) && (i == infoPtr->select)) {
+                /* fill if focussed */
+                HBRUSH hbr = CreateSolidBrush (comctl32_color.clrActiveCaption);
                 FillRect(hdc, field, hbr);
-                oldBk = SetBkColor (hdc, GetSysColor(COLOR_ACTIVECAPTION));
-                oldTextColor = SetTextColor (hdc, GetSysColor(COLOR_WINDOW));
                 DeleteObject (hbr);
-                DrawTextW (hdc, txt, strlenW(txt), field, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
-                SetBkColor (hdc, oldBk);
-		SetTextColor (hdc, oldTextColor);
-            } else 
-                DrawTextW ( hdc, txt, strlenW(txt), field, DT_RIGHT | DT_VCENTER | DT_SINGLELINE );
+                oldTextColor = SetTextColor (hdc, comctl32_color.clrWindow);
+            }
+            else
+                oldTextColor = SetTextColor (hdc, comctl32_color.clrWindowText);
+
+            /* draw the date text using the colour set above */
+            DrawTextW (hdc, txt, strlenW(txt), field, DT_RIGHT | DT_VCENTER | DT_SINGLELINE);
+            SetTextColor (hdc, oldTextColor);
         }
+        SetBkMode (hdc, oldBkMode);
         SelectObject (hdc, oldFont);
     }
 
@@ -611,7 +613,7 @@ DATETIME_LButtonDown (DATETIME_INFO *infoPtr, WORD wKey, INT x, INT y)
         DATETIME_SendSimpleNotify (infoPtr, DTN_DROPDOWN);
     }
 
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -664,6 +666,45 @@ DATETIME_Command (DATETIME_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if(infoPtr->hwndCheckbut == (HWND)lParam)
         return DATETIME_Button_Command(infoPtr, wParam, lParam);
     return 0;
+}
+
+
+static LRESULT
+DATETIME_Enable (DATETIME_INFO *infoPtr, BOOL bEnable)
+{
+    TRACE("%p %s\n", infoPtr, bEnable ? "TRUE" : "FALSE");
+    if (bEnable)
+        infoPtr->dwStyle &= ~WS_DISABLED;
+    else
+        infoPtr->dwStyle |= WS_DISABLED;
+    return 0;
+}
+
+
+static LRESULT
+DATETIME_EraseBackground (DATETIME_INFO *infoPtr, HDC hdc)
+{
+    HBRUSH hBrush, hSolidBrush = NULL;
+    RECT   rc;
+
+    if (infoPtr->dwStyle & WS_DISABLED)
+        hBrush = hSolidBrush = CreateSolidBrush(comctl32_color.clrBtnFace);
+    else
+    {
+        hBrush = (HBRUSH)SendMessageW(infoPtr->hwndNotify, WM_CTLCOLOREDIT,
+                                      (WPARAM)hdc, (LPARAM)infoPtr->hwndSelf);
+        if (!hBrush)
+            hBrush = hSolidBrush = CreateSolidBrush(comctl32_color.clrWindow);
+    }
+
+    GetClientRect (infoPtr->hwndSelf, &rc);
+
+    FillRect (hdc, &rc, hBrush);
+
+    if (hSolidBrush)
+        DeleteObject(hSolidBrush);
+
+    return -1;
 }
 
 
@@ -904,6 +945,7 @@ DATETIME_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
     infoPtr->fieldRect = (RECT *) Alloc (infoPtr->nrFieldsAllocated * sizeof(RECT));
     infoPtr->buflen = (int *) Alloc (infoPtr->nrFieldsAllocated * sizeof(int));
     infoPtr->hwndNotify = lpcs->hwndParent;
+    infoPtr->select = -1; /* initially, nothing is selected */
 
     DATETIME_StyleChanged(infoPtr, GWL_STYLE, &ss);
     DATETIME_SetFormatW (infoPtr, 0);
@@ -988,6 +1030,12 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_NOTIFY:
 	return DATETIME_Notify (infoPtr, (int)wParam, (LPNMHDR)lParam);
+
+    case WM_ENABLE:
+        return DATETIME_Enable (infoPtr, (BOOL)wParam);
+
+    case WM_ERASEBKGND:
+        return DATETIME_EraseBackground (infoPtr, (HDC)wParam);
 
     case WM_GETDLGCODE:
         return DLGC_WANTARROWS | DLGC_WANTCHARS;
