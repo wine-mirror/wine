@@ -347,7 +347,8 @@ static WPARAM map_wparam_AtoW( UINT message, WPARAM wparam )
             WCHAR wch;
             ch[0] = (wparam >> 8);
             ch[1] = (wparam & 0xff);
-            MultiByteToWideChar(CP_ACP, 0, ch, 2, &wch, 1);
+            if (ch[0]) MultiByteToWideChar(CP_ACP, 0, ch, 2, &wch, 1);
+            else MultiByteToWideChar(CP_ACP, 0, &ch[1], 1, &wch, 1);
             wparam = MAKEWPARAM( wch, HIWORD(wparam) );
         }
         break;
@@ -384,9 +385,10 @@ static WPARAM map_wparam_WtoA( UINT message, WPARAM wparam )
             WCHAR wch = LOWORD(wparam);
             BYTE ch[2];
 
-            ch[1] = 0;
-            WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL );
-            wparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(wparam) );
+            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL ) == 2)
+                wparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(wparam) );
+            else
+                wparam = MAKEWPARAM( ch[0], HIWORD(wparam) );
         }
         break;
     }

@@ -772,7 +772,8 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 
                 strng[0] = wParam >> 8;
                 strng[1] = wParam & 0xff;
-                MultiByteToWideChar(CP_ACP, 0, strng, 2, &charW, 1);
+                if (strng[0]) MultiByteToWideChar(CP_ACP, 0, strng, 2, &charW, 1);
+                else MultiByteToWideChar(CP_ACP, 0, &strng[1], 1, &charW, 1);
 		EDIT_WM_Char(es, charW);
 		break;
             }

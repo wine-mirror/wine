@@ -871,9 +871,9 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 	    CHAR    chChar1 = (CHAR)( (wParam>>8) & 0xff );
 	    CHAR    chChar2 = (CHAR)( wParam & 0xff );
 
-	    SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar1, lParam );
-	    if ( IsDBCSLeadByte( chChar1 ) )
-		SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar2, lParam );
+	    if (chChar1)
+		SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar1, lParam );
+	    SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar2, lParam );
 	}
 	break;
     case WM_IME_KEYDOWN:

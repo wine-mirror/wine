@@ -797,7 +797,10 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
             WCHAR wch;
             ch[0] = (*pwparam >> 8);
             ch[1] = *pwparam & 0xff;
-            MultiByteToWideChar(CP_ACP, 0, ch, 2, &wch, 1);
+            if (ch[0])
+                MultiByteToWideChar(CP_ACP, 0, ch, 2, &wch, 1);
+            else
+                MultiByteToWideChar(CP_ACP, 0, &ch[1], 1, &wch, 1);
             *pwparam = MAKEWPARAM( wch, HIWORD(*pwparam) );
         }
         return 0;
@@ -1092,9 +1095,10 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
             WCHAR wch = LOWORD(*pwparam);
             BYTE ch[2];
 
-            ch[1] = 0;
-            WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL );
-            *pwparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(*pwparam) );
+            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL ) == 2)
+                *pwparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(*pwparam) );
+            else
+                *pwparam = MAKEWPARAM( ch[0], HIWORD(*pwparam) );
         }
         return 0;
 
