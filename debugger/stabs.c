@@ -82,7 +82,8 @@
 #define N_EXCL		0xc2
 #define N_RBRAC		0xe0
 
-typedef struct tagELF_DBG_INFO {
+typedef struct tagELF_DBG_INFO
+{
     unsigned long	elf_addr;
 } ELF_DBG_INFO;
 
@@ -1099,7 +1100,7 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
     int		stabsect;
     int		stabstrsect;
 
-    if (module->type != DMT_ELF || ! module->elf_info) {
+    if (module->type != DMT_ELF || !module->elf_info) {
 	DEBUG_Printf(DBG_CHN_ERR, "Bad elf module '%s'\n", module->module_name);
 	return DIL_ERROR;
     }
@@ -1192,7 +1193,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
 					     unsigned int load_offset,
 					     unsigned int* dyn_addr)
 {
-    static const unsigned char elf_signature[4] = { 0x7f, 'E', 'L', 'F' };
+    static const unsigned char elf_signature[4] = { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
     enum DbgInfoLoad dil = DIL_ERROR;
     char*	addr = (char*)0xffffffff;
     int		fd = -1;
@@ -1249,14 +1250,17 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
 	    size = ppnt[i].p_vaddr - delta + ppnt[i].p_memsz;
     }
 
-    for (i = 0; i < ehptr->e_shnum; i++) {
+    for (i = 0; i < ehptr->e_shnum; i++)
+    {
 	if (strcmp(shstrtab + spnt[i].sh_name, ".bss") == 0 &&
-	    spnt[i].sh_type == SHT_NOBITS) {
+	    spnt[i].sh_type == SHT_NOBITS)
+        {
 	    if (size < spnt[i].sh_addr - delta + spnt[i].sh_size)
 		size = spnt[i].sh_addr - delta + spnt[i].sh_size;
 	}
 	if (strcmp(shstrtab + spnt[i].sh_name, ".dynamic") == 0 &&
-	    spnt[i].sh_type == SHT_DYNAMIC) {
+	    spnt[i].sh_type == SHT_DYNAMIC)
+        {
 	    if (dyn_addr) *dyn_addr = spnt[i].sh_addr;
 	}
     }
@@ -1329,6 +1333,8 @@ static enum DbgInfoLoad DEBUG_ProcessElfObject(const char* filename,
       dil = DEBUG_ProcessElfFileFromPath(filename, load_offset, dyn_addr, getenv("PATH"));
       if (dil == DIL_ERROR)
 	dil = DEBUG_ProcessElfFileFromPath(filename, load_offset, dyn_addr, getenv("LD_LIBRARY_PATH"));
+      if (dil == DIL_ERROR)
+	dil = DEBUG_ProcessElfFileFromPath(filename, load_offset, dyn_addr, getenv("WINEDLLPATH"));
    }
 
    DEBUG_ReportDIL(dil, "ELF", filename, load_offset);
@@ -1435,6 +1441,46 @@ enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 
  leave:
     return dil;
+}
+
+/* FIXME: merge with some of the routines above */
+int read_elf_info(const char* filename, unsigned long tab[])
+{
+    static const unsigned char elf_signature[4] = { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
+    char*	addr;
+    Elf32_Ehdr* ehptr;
+    Elf32_Shdr* spnt;
+    char*       shstrtab;
+    int	       	i;
+    int         ret = 0;
+    HANDLE      hFile;
+    HANDLE      hMap = 0;
+
+    addr = NULL;
+    hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) goto leave;
+    hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+    if (hMap == 0) goto leave;
+    addr = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
+    if (addr == NULL) goto leave;
+
+    ehptr = (Elf32_Ehdr*) addr;
+    if (memcmp(ehptr->e_ident, elf_signature, sizeof(elf_signature))) goto leave;
+
+    spnt = (Elf32_Shdr*) (addr + ehptr->e_shoff);
+    shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
+
+    tab[0] = tab[1] = tab[2] = 0;
+    for (i = 0; i < ehptr->e_shnum; i++)
+    {
+    }
+    ret = 1;
+ leave:
+    if (addr != NULL) UnmapViewOfFile(addr);
+    if (hMap != 0) CloseHandle(hMap);
+    if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
+    return ret;
 }
 
 #else	/* !__ELF__ */

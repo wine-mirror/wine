@@ -1100,10 +1100,8 @@ int main(int argc, char** argv)
 	DEBUG_LastCmdLine = cmdLine;
     }
     /* don't save local vars in gdb mode */
-#if 0
     if (local_mode == gdb_mode && DEBUG_CurrPid)
         return DEBUG_GdbRemote(gdb_flags);
-#endif
 
     /* Initialize the type handling stuff. */
     DEBUG_InitTypes();
