@@ -106,8 +106,8 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_COMPAREITEM",
     "wm_testing",
     NULL,
-    "wm_otherwindowcreated",
-    "wm_otherwindowdestroyed",
+    NULL,
+    "WM_GETOBJECT",             /* 0x3d */
     "wm_activateshellwindow",
     NULL,
 

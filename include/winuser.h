@@ -985,8 +985,8 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_COMPAREITEM          0x0039
 #define WM_TESTING              0x003a
 
-#define WM_OTHERWINDOWCREATED	0x003c
-#define WM_OTHERWINDOWDESTROYED	0x003d
+#define WM_GETOBJECT            0x003d
+
 #define WM_ACTIVATESHELLWINDOW	0x003e
 
 #define WM_COMPACTING		0x0041
