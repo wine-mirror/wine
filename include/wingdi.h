@@ -386,6 +386,8 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define R2_MERGEPEN     15
 #define R2_WHITE        16
 
+#define MAKEROP4(fore,back) (DWORD)((((back)<<8)&0xFF000000)|(fore))
+
 #define SRCCOPY         0xcc0020
 #define SRCPAINT        0xee0086
 #define SRCAND          0x8800c6
