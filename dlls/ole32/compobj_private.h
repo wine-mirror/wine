@@ -105,6 +105,7 @@ typedef struct tagAPARTMENT {
   IOBJECT *proxies;        /* imported objects */
   LPUNKNOWN state;         /* state object (see Co[Get,Set]State) */
   LPVOID ErrorInfo;        /* thread error info */
+  DWORD listenertid;       /* id of apartment_listener_thread */
 } APARTMENT;
 
 extern APARTMENT MTA, *apts;
@@ -152,7 +153,7 @@ HRESULT MARSHAL_Disconnect_Proxies(void);
 
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
-void start_listener_thread(void);
+void start_apartment_listener_thread(void);
 
 extern HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf);
 

@@ -1105,7 +1105,7 @@ _LocalServerThread(LPVOID param) {
     ULARGE_INTEGER	newpos;
     ULONG		res;
 
-    TRACE("Starting threader for %s.\n",debugstr_guid(&newClass->classIdentifier));
+    TRACE("Starting classfactory server thread for %s.\n",debugstr_guid(&newClass->classIdentifier));
 
     strcpy(pipefn,PIPEPREF);
     WINE_StringFromCLSID(&newClass->classIdentifier,pipefn+strlen(PIPEPREF));
@@ -1262,7 +1262,7 @@ HRESULT WINAPI CoRegisterClassObject(
   if (dwClsContext & CLSCTX_LOCAL_SERVER) {
       DWORD tid;
 
-      start_listener_thread();
+      start_apartment_listener_thread();
       newClass->hThread = CreateThread(NULL,0,_LocalServerThread,newClass,0,&tid);
   }
   return S_OK;

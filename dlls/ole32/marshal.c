@@ -176,7 +176,11 @@ MARSHAL_Register_Proxy(wine_marshal_id *mid,LPUNKNOWN punk) {
 
     for (i=0;i<nrofproxies;i++) {
 	if (MARSHAL_Compare_Mids(mid,&(proxies[i].mid))) {
-	    ERR("Already have mid?\n");
+            /* this will happen if the program attempts to marshal two
+             * objects that implement the same interface */
+            
+	    FIXME("need to use IPIDs, already have mid oxid=%s, oid=%s, iid=%s\n",
+                  wine_dbgstr_longlong(mid->oxid), wine_dbgstr_longlong(mid->oid), debugstr_guid(&mid->iid));
 	    return E_FAIL;
 	}
     }
@@ -262,7 +266,7 @@ StdMarshalImpl_MarshalInterface(
 
   TRACE("(...,%s,...)\n",debugstr_guid(riid));
 
-  start_listener_thread(); /* just to be sure we have one running. */
+  start_apartment_listener_thread(); /* just to be sure we have one running. */
 
   IUnknown_QueryInterface((LPUNKNOWN)pv,&IID_IUnknown,(LPVOID*)&pUnk);
   mid.oxid = COM_CurrentApt()->oxid;
