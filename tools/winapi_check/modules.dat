@@ -60,6 +60,10 @@ dlls/d3dim
 
 dlls/d3d8
 
+% dlls/d3d9/d3d9.spec
+
+dlls/d3d9
+
 % dlls/d3dx8/d3dx8.spec
 
 dlls/d3dx8
@@ -177,6 +181,10 @@ dlls/imagehlp
 
 dlls/imm32
 
+% dlls/iphlpapi/iphlpapi.spec
+
+dlls/iphlpapi
+
 % dlls/kernel/comm.spec
 
 % dlls/kernel/krnl386.exe.spec
@@ -201,7 +209,6 @@ loader
 memory
 msdos
 misc
-ole
 scheduler
 win32
 
@@ -248,10 +255,6 @@ dlls/kernel
 loader/ne
 loader
 memory
-
-% dlls/kernel/wprocs.spec
-
-msdos
 
 % dlls/kernel/win87em.spec
 
@@ -350,6 +353,10 @@ dlls/ole32
 % dlls/ole32/storage.spec
 
 dlls/ole32
+
+% dlls/oleacc/oleacc.spec
+
+dlls/oleacc
 
 % dlls/oleaut32/ole2disp.spec
 
@@ -647,6 +654,11 @@ dlls/winsock
 % dlls/wsock32/wsock32.spec
 
 dlls/wsock32
+
+% dlls/winedos/wprocs.spec
+
+dlls/winedos
+msdos
 
 % dlls/winspool/winspool.drv.spec
 
