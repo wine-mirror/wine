@@ -128,6 +128,57 @@ static const struct message WmSWP_HideOverlappedSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
+
+/* SetWindowPos(SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE)
+ * for a visible overlapped window.
+ */
+static const struct message WmSWP_ResizeSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
+    { WM_NCCALCSIZE, sent|wparam|optional, TRUE },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { 0 }
+};
+
+/* SetWindowPos(SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE)
+ * for a visible popup window.
+ */
+static const struct message WmSWP_ResizePopupSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
+    { WM_NCCALCSIZE, sent|wparam|optional, TRUE },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { 0 }
+};
+
+/* SetWindowPos(SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE)
+ * for a visible overlapped window.
+ */
+static const struct message WmSWP_MoveSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOSIZE },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOCLIENTSIZE },
+    { WM_MOVE, sent|defwinproc|wparam, 0 },
+    { 0 }
+};
+
 /* ShowWindow(SW_SHOW) for a not visible overlapped window */
 static const struct message WmShowOverlappedSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
@@ -2785,6 +2836,9 @@ static void test_messages(void)
     ShowWindow(hwnd, SW_SHOW);
     ok_sequence(WmShowOverlappedSeq, "ShowWindow(SW_SHOW):overlapped", TRUE);
 
+    ShowWindow(hwnd, SW_SHOW);
+    ok_sequence(WmEmptySeq, "ShowWindow(SW_SHOW):overlapped already visible", FALSE);
+
     ok(GetActiveWindow() == hwnd, "window should be active\n");
     ok(GetFocus() == hwnd, "window should have input focus\n");
     SetWindowPos(hwnd, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE);
@@ -2797,6 +2851,19 @@ static void test_messages(void)
 
     trace("testing scroll APIs on a visible top level window %p\n", hwnd);
     test_scroll_messages(hwnd);
+
+    /* test resizing and moving */
+    SetWindowPos( hwnd, 0, 0, 0, 300, 300, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE );
+    ok_sequence(WmSWP_ResizeSeq, "SetWindowPos:Resize", FALSE );
+    SetWindowPos( hwnd, 0, 200, 200, 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE );
+    ok_sequence(WmSWP_MoveSeq, "SetWindowPos:Move", FALSE );
+
+    /* popups don't get WM_GETMINMAXINFO */
+    SetWindowLongW( hwnd, GWL_STYLE, WS_VISIBLE|WS_POPUP );
+    SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_FRAMECHANGED);
+    flush_sequence();
+    SetWindowPos( hwnd, 0, 0, 0, 200, 200, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE );
+    ok_sequence(WmSWP_ResizePopupSeq, "SetWindowPos:ResizePopup", FALSE );
 
     DestroyWindow(hwnd);
     ok_sequence(WmDestroyOverlappedSeq, "DestroyWindow:overlapped", FALSE);
