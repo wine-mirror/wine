@@ -100,7 +100,28 @@ HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(
 	    IDirectDrawPalette_Release( (IDirectDrawPalette*)This->s.palette );
 	This->s.palette = ipal;
 	fppriv = (dga_dp_private*)This->s.palette->private;
-	ddpriv->InstallColormap(display,DefaultScreen(display),fppriv->cm);
+
+	if (!fppriv->cm &&
+	    (This->s.ddraw->d->screen_pixelformat.u.dwRGBBitCount<=8) ) {
+	  int i;
+	  
+	  /* Delayed palette creation */
+	  fppriv->cm = TSXCreateColormap(display,DefaultRootWindow(display),
+					 DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
+	    
+	  for (i=0;i<256;i++) {
+	    XColor xc;
+	    
+	    xc.red		= ipal->palents[i].peRed<<8;
+	    xc.blue		= ipal->palents[i].peBlue<<8;
+	    xc.green	= ipal->palents[i].peGreen<<8;
+	    xc.flags	= DoRed|DoBlue|DoGreen;
+	    xc.pixel	= i;
+	    TSXStoreColor(display,fppriv->cm,&xc);
+	  }
+	}
+
+	TSXF86DGAInstallColormap(display,DefaultScreen(display),fppriv->cm);
 
         if (This->s.hdc != 0) {
 	    /* hack: set the DIBsection color map */

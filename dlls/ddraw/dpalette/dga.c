@@ -26,36 +26,29 @@ HRESULT WINAPI DGA_IDirectDrawPaletteImpl_SetEntries(
 ) {
     ICOM_THIS(IDirectDrawPaletteImpl,iface);
     DPPRIVATE(This);
-    DDPRIVATE(This->ddraw);
     XColor	xc;
-    Colormap	cm;
     int		i;
 
     TRACE("(%p)->SetEntries(%08lx,%ld,%ld,%p)\n",This,x,start,count,palent);
     if (!dppriv->cm) /* should not happen */ {
-	FIXME("app tried to set colormap in non-palettized mode\n");
-	return DDERR_GENERIC;
+	TRACE("app tried to set colormap in non-palettized mode\n");
     }
-    /* FIXME: free colorcells instead of freeing whole map */
-    cm = dppriv->cm;
-    dppriv->cm = TSXCopyColormapAndFree(display,dppriv->cm);
-    TSXFreeColormap(display,cm);
-
     for (i=0;i<count;i++) {
 	xc.red = palent[i].peRed<<8;
 	xc.blue = palent[i].peBlue<<8;
 	xc.green = palent[i].peGreen<<8;
 	xc.flags = DoRed|DoBlue|DoGreen;
 	xc.pixel = i+start;
-
-	TSXStoreColor(display,dppriv->cm,&xc);
+	
+	if (dppriv->cm)
+	  TSXStoreColor(display,dppriv->cm,&xc);
 
 	This->palents[start+i].peRed = palent[i].peRed;
 	This->palents[start+i].peBlue = palent[i].peBlue;
 	This->palents[start+i].peGreen = palent[i].peGreen;
 	This->palents[start+i].peFlags = palent[i].peFlags;
     }
-    ddpriv->InstallColormap(display,DefaultScreen(display),dppriv->cm);
+    /* Flush the display queue so that palette updates are visible directly */
     TSXFlush(display);
     return DD_OK;
 }

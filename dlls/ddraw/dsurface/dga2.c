@@ -14,6 +14,7 @@
 
 #include "debugtools.h"
 #include "dga2_private.h"
+#include "bitmap.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
@@ -69,6 +70,61 @@ HRESULT WINAPI DGA2_IDirectDrawSurface4Impl_Flip(
     return DD_OK;
 }
 
+HRESULT WINAPI DGA2_IDirectDrawSurface4Impl_SetPalette(
+    LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWPALETTE pal
+) {
+    ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    DDPRIVATE(This->s.ddraw);
+    IDirectDrawPaletteImpl* ipal=(IDirectDrawPaletteImpl*)pal;
+
+    TRACE("(%p)->(%p)\n",This,ipal);
+
+    /* According to spec, we are only supposed to 
+     * AddRef if this is not the same palette.
+     */
+    if( This->s.palette != ipal ) {
+	dga_dp_private	*fppriv;
+	if( ipal != NULL )
+	    IDirectDrawPalette_AddRef( (IDirectDrawPalette*)ipal );
+	if( This->s.palette != NULL )
+	    IDirectDrawPalette_Release( (IDirectDrawPalette*)This->s.palette );
+	This->s.palette = ipal;
+	fppriv = (dga_dp_private*)This->s.palette->private;
+
+	if (!fppriv->cm &&
+	    (This->s.ddraw->d->screen_pixelformat.u.dwRGBBitCount<=8) ) {
+	  int i;
+	  
+	  /* Delayed palette creation */
+	  fppriv->cm = TSXDGACreateColormap(display,DefaultScreen(display), ddpriv->dev, AllocAll);
+	    
+	  for (i=0;i<256;i++) {
+	    XColor xc;
+	    
+	    xc.red		= ipal->palents[i].peRed<<8;
+	    xc.blue		= ipal->palents[i].peBlue<<8;
+	    xc.green	= ipal->palents[i].peGreen<<8;
+	    xc.flags	= DoRed|DoBlue|DoGreen;
+	    xc.pixel	= i;
+	    TSXStoreColor(display,fppriv->cm,&xc);
+	  }
+	}
+
+	TSXDGAInstallColormap(display,DefaultScreen(display),fppriv->cm);
+
+        if (This->s.hdc != 0) {
+	    /* hack: set the DIBsection color map */
+	    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(This->s.DIBsection, BITMAP_MAGIC);
+	    X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *)bmp->dib;
+	    dib->colorMap = This->s.palette ? This->s.palette->screen_palents : NULL;
+	    GDI_ReleaseObj(This->s.DIBsection);
+	}
+	TSXFlush(display);
+    }
+    return DD_OK;
+}
+
+
 ICOM_VTABLE(IDirectDrawSurface4) dga2_dds4vt = 
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -103,7 +159,7 @@ ICOM_VTABLE(IDirectDrawSurface4) dga2_dds4vt =
     IDirectDrawSurface4Impl_SetClipper,
     IDirectDrawSurface4Impl_SetColorKey,
     IDirectDrawSurface4Impl_SetOverlayPosition,
-    DGA_IDirectDrawSurface4Impl_SetPalette,
+    DGA2_IDirectDrawSurface4Impl_SetPalette,
     DGA_IDirectDrawSurface4Impl_Unlock,
     IDirectDrawSurface4Impl_UpdateOverlay,
     IDirectDrawSurface4Impl_UpdateOverlayDisplay,
