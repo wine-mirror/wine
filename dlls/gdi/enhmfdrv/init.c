@@ -38,7 +38,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_Arc,                      /* pArc */
     NULL,                            /* pArcTo */
     EMFDRV_BeginPath,                /* pBeginPath */
-    NULL,                            /* pBitBlt */
+    EMFDRV_BitBlt,                   /* pBitBlt */
     NULL,                            /* pChoosePixelFormat */
     EMFDRV_Chord,                    /* pChord */
     EMFDRV_CloseFigure,              /* pCloseFigure */
@@ -119,7 +119,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pSetDCOrg */
     NULL,                            /* pSetDIBColorTable */
     NULL,                            /* pSetDIBits */
-    NULL,                            /* pSetDIBitsToDevice */
+    EMFDRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */
     EMFDRV_SetMapMode,               /* pSetMapMode */
@@ -141,7 +141,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_SetWorldTransform,        /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
-    NULL,                            /* pStretchBlt */
+    EMFDRV_StretchBlt,               /* pStretchBlt */
     EMFDRV_StretchDIBits,            /* pStretchDIBits */
     EMFDRV_StrokeAndFillPath,        /* pStrokeAndFillPath */
     EMFDRV_StrokePath,               /* pStrokePath */

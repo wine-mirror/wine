@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "gdi.h"
 #include "enhmetafiledrv.h"
+#include "bitmap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
@@ -68,6 +69,130 @@ BOOL EMFDRV_PatBlt( PHYSDEV dev, INT left, INT top,
     return ret;
 }
 
+/* Utilitarian function used by EMFDRV_BitBlt and EMFDRV_StretchBlt */
+
+static BOOL EMFDRV_BitBlockTransfer( 
+    PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,  
+    PHYSDEV devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop,
+    DWORD emrType)
+{
+    BOOL ret;
+    PEMRBITBLT pEMR;
+    UINT emrSize;
+    UINT bmiSize;
+    UINT bitsSize;
+    UINT size;
+    BITMAP  BM;
+    WORD nBPP;
+    LPBITMAPINFOHEADER lpBmiH;
+    EMFDRV_PDEVICE* physDevSrc = (EMFDRV_PDEVICE*)devSrc;
+    DC* dcSrc = physDevSrc->dc;
+
+    if (emrType == EMR_BITBLT)
+        emrSize = sizeof(EMRBITBLT);
+    else if (emrType == EMR_STRETCHBLT)
+        emrSize = sizeof(EMRSTRETCHBLT);
+    else
+        return FALSE;
+
+    GetObjectA(dcSrc->hBitmap, sizeof(BITMAP), &BM);
+
+    nBPP = BM.bmPlanes * BM.bmBitsPixel;
+    if(nBPP > 8) nBPP = 24; /* FIXME Can't get 16bpp to work for some reason */
+
+    bitsSize = DIB_GetDIBWidthBytes(BM.bmWidth, nBPP) * BM.bmHeight;
+    bmiSize = sizeof(BITMAPINFOHEADER) + 
+        (nBPP <= 8 ? 1 << nBPP : 0) * sizeof(RGBQUAD);
+    size = emrSize + bmiSize + bitsSize;
+
+    pEMR = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!pEMR) return FALSE;
+
+    /* Initialize EMR */
+    pEMR->emr.iType = emrType;
+    pEMR->emr.nSize = size;
+    pEMR->rclBounds.left = xDst;
+    pEMR->rclBounds.top = yDst;
+    pEMR->rclBounds.right = xDst + widthDst - 1;
+    pEMR->rclBounds.bottom = yDst + heightDst - 1;
+    pEMR->xDest = xDst;
+    pEMR->yDest = yDst;
+    pEMR->cxDest = widthDst;
+    pEMR->cyDest = heightDst;
+    pEMR->dwRop = rop;
+    pEMR->xSrc = xSrc;
+    pEMR->ySrc = ySrc;
+    pEMR->xformSrc.eM11 = 1.0;  /** FIXME:           */
+    pEMR->xformSrc.eM12 = 0.0;  /** Setting default  */
+    pEMR->xformSrc.eM21 = 0.0;  /** value.           */
+    pEMR->xformSrc.eM22 = 1.0;  /** Where should we  */
+    pEMR->xformSrc.eDx = 0.0;   /** get that info    */
+    pEMR->xformSrc.eDy = 0.0;   /** ????             */
+    pEMR->crBkColorSrc = dcSrc->backgroundColor;
+    pEMR->iUsageSrc = DIB_RGB_COLORS;
+    pEMR->offBmiSrc = emrSize;
+    pEMR->cbBmiSrc = bmiSize;
+    pEMR->offBitsSrc = emrSize + bmiSize;
+    pEMR->cbBitsSrc = bitsSize;
+    if (emrType == EMR_STRETCHBLT) 
+    {
+        PEMRSTRETCHBLT pEMRStretch = (PEMRSTRETCHBLT)pEMR;
+        pEMRStretch->cxSrc = widthSrc;
+        pEMRStretch->cySrc = heightSrc;
+    }
+
+    /* Initialize BITMAPINFO structure */
+    lpBmiH = (LPBITMAPINFOHEADER)((BYTE*)pEMR + pEMR->offBmiSrc);
+
+    lpBmiH->biSize = sizeof(BITMAPINFOHEADER); 
+    lpBmiH->biWidth =  BM.bmWidth;
+    lpBmiH->biHeight = BM.bmHeight;
+    lpBmiH->biPlanes = BM.bmPlanes;
+    lpBmiH->biBitCount = nBPP;
+    /* Assume the bitmap isn't compressed and set the BI_RGB flag. */
+    lpBmiH->biCompression = BI_RGB;
+    lpBmiH->biSizeImage = bitsSize;
+    lpBmiH->biYPelsPerMeter = /* 1 meter  = 39.37 inch */
+        MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSX),3937,100);
+    lpBmiH->biXPelsPerMeter = 
+        MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
+    lpBmiH->biClrUsed   = nBPP <= 8 ? 1 << nBPP : 0;
+    /* Set biClrImportant to 0, indicating that all of the 
+       device colors are important. */
+    lpBmiH->biClrImportant = 0; 
+
+    /* Initiliaze bitmap bits */
+    if (GetDIBits(dcSrc->hSelf, dcSrc->hBitmap, 0, (UINT)lpBmiH->biHeight,
+                  (BYTE*)pEMR + pEMR->offBitsSrc,
+                  (LPBITMAPINFO)lpBmiH, DIB_RGB_COLORS))
+    {
+        ret = EMFDRV_WriteRecord(devDst, (EMR*)pEMR);
+        if (ret) EMFDRV_UpdateBBox(devDst, &(pEMR->rclBounds));
+    } 
+    else
+        ret = FALSE;
+
+    HeapFree( GetProcessHeap(), 0, pEMR);
+    return ret;
+}
+
+BOOL EMFDRV_BitBlt( 
+    PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
+    PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop)
+{
+    return EMFDRV_BitBlockTransfer( devDst, xDst, yDst, width, height,  
+                                    devSrc, xSrc, ySrc, width, height, 
+                                    rop, EMR_BITBLT );
+}
+
+BOOL EMFDRV_StretchBlt( 
+    PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,  
+    PHYSDEV devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop )
+{
+    return EMFDRV_BitBlockTransfer( devDst, xDst, yDst, widthDst, heightDst,  
+                                    devSrc, xSrc, ySrc, widthSrc, heightSrc, 
+                                    rop, EMR_STRETCHBLT );
+}
 
 INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                                       INT heightDst, INT xSrc, INT ySrc,
@@ -78,48 +203,17 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
     EMRSTRETCHDIBITS *emr;
     BOOL ret;
     UINT bmi_size=0, bits_size, emr_size;
-    UINT width_bytes;
-
-    /* calculate the size of the bits we need to store */
-    switch(info->bmiHeader.biBitCount)
-    {
-    case 1:
-         width_bytes = (info->bmiHeader.biWidth+7)/8;
-         break;
-    case 4:
-         width_bytes = (info->bmiHeader.biWidth+1)/2;
-         break;
-    case 8:
-         width_bytes = info->bmiHeader.biWidth;
-         break;
-    case 16:
-         width_bytes = info->bmiHeader.biWidth*2;
-         break;
-    case 24:
-         width_bytes = info->bmiHeader.biWidth*3;
-         break;
-    case 32:
-         width_bytes = info->bmiHeader.biWidth*4;
-         break;
-    default:
-         FIXME("bi.biCount has and unknown value (%d)\n", info->bmiHeader.biBitCount);
-         return FALSE;
-    }
-    width_bytes = ((width_bytes+3)/4) << 2;
-    bits_size = width_bytes * info->bmiHeader.biHeight;
+    
+    bits_size = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
+                                     info->bmiHeader.biHeight,
+                                     info->bmiHeader.biBitCount);
 
     /* calculate the size of the colour table */
-    bmi_size = sizeof (BITMAPINFO);
-    if ( info->bmiHeader.biBitCount <= 8 )
-    {
-         UINT num_colors = info->bmiHeader.biClrUsed;
-         if ( num_colors == 0 )
-              num_colors = (1<<info->bmiHeader.biBitCount);
-         bmi_size += num_colors*sizeof(RGBQUAD);
-    }
+    bmi_size = DIB_BitmapInfoSize(info, wUsage);
 
     emr_size = sizeof (EMRSTRETCHDIBITS) + bmi_size + bits_size;
     emr = HeapAlloc(GetProcessHeap(), 0, emr_size );
+    if (!emr) return 0;
 
     /* write a bitmap info header (with colours) to the record */
     memcpy( &emr[1], info, bmi_size);
@@ -139,7 +233,7 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
     emr->xSrc      = xSrc; /* FIXME: only save the piece of the bitmap needed */
     emr->ySrc      = ySrc;
 
-    emr->iUsageSrc    = DIB_RGB_COLORS;
+    emr->iUsageSrc    = wUsage;
     emr->offBmiSrc    = sizeof (EMRSTRETCHDIBITS);
     emr->cbBmiSrc     = bmi_size;
     emr->offBitsSrc   = emr->offBmiSrc + bmi_size; 
@@ -161,4 +255,50 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
     HeapFree(GetProcessHeap(), 0, emr);
 
     return ret;
+}
+
+INT EMFDRV_SetDIBitsToDevice( 
+    PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWORD height,
+    INT xSrc, INT ySrc, UINT startscan, UINT lines,
+    LPCVOID bits, const BITMAPINFO *info, UINT wUsage )
+{
+    EMRSETDIBITSTODEVICE* pEMR;
+    DWORD size, bmiSize, bitsSize;
+
+    bmiSize = DIB_BitmapInfoSize(info, wUsage);
+    bitsSize = DIB_GetDIBImageBytes( info->bmiHeader.biWidth,
+                                     info->bmiHeader.biHeight,
+                                     info->bmiHeader.biBitCount );
+    size = sizeof(EMRSETDIBITSTODEVICE) + bmiSize + bitsSize;
+
+    pEMR = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!pEMR) return 0;
+
+    pEMR->emr.iType = EMR_SETDIBITSTODEVICE;
+    pEMR->emr.nSize = size;
+    pEMR->rclBounds.left = xDst;
+    pEMR->rclBounds.top = yDst;
+    pEMR->rclBounds.right = xDst + width - 1;
+    pEMR->rclBounds.bottom = yDst + height - 1;
+    pEMR->xDest = xDst;
+    pEMR->yDest = yDst;
+    pEMR->xSrc = xSrc;
+    pEMR->ySrc = ySrc;
+    pEMR->cxSrc = width;
+    pEMR->cySrc = height;
+    pEMR->offBmiSrc = sizeof(EMRSETDIBITSTODEVICE);
+    pEMR->cbBmiSrc = bmiSize;
+    pEMR->offBitsSrc = sizeof(EMRSETDIBITSTODEVICE) + bmiSize;
+    pEMR->cbBitsSrc = bitsSize;
+    pEMR->iUsageSrc = wUsage;
+    pEMR->iStartScan = startscan;
+    pEMR->cScans = lines;
+    memcpy((BYTE*)pEMR + pEMR->offBmiSrc, info, bmiSize);
+    memcpy((BYTE*)pEMR + pEMR->offBitsSrc, bits, bitsSize);
+
+    if (EMFDRV_WriteRecord(dev, (EMR*)pEMR))
+        EMFDRV_UpdateBBox(dev, &(pEMR->rclBounds));
+
+    HeapFree( GetProcessHeap(), 0, pEMR);
+    return lines;
 }
