@@ -68,6 +68,12 @@
 # Feb 20 2002 - Adam D. Moss
 #  Partially revert previous changes, force configure to write an
 #    old-style config.cache
+# Mar 27 2002 - Chris Morgan
+#  prevent the user from running wineinstall as root
+#  add script commands so we su root for 'make install' and other commands
+#    that require root access
+#  add text to tell the user we need to run stuff as root so they don't 
+#    think we are trying to pull something funny
 
 #--- defaults (change these if you are a packager)
 CONFARGS="--enable-opengl"    # configure args, e.g. --prefix=/usr --sysconfdir=/etc
@@ -167,7 +173,7 @@ function create_windows_directories {
 
 # startup...
 
-echo "WINE Installer v0.71"
+echo "WINE Installer v0.72"
 echo
 
 if [ "$BINDIST" = 'no' ]
@@ -181,6 +187,14 @@ then {
 }
 fi
 
+if [ `whoami` == 'root' ]
+then {
+  echo "You are running wineinstall as root, this is not advisable. Please rerun as a user."
+  echo "Aborting."
+  exit 1
+}
+fi
+
 # check whether RPM installed, and if it is, remove any old wine rpm.
 hash rpm &>/dev/null
 RET=$?
@@ -189,8 +203,10 @@ if [ $RET -eq 0 ]; then
     echo "Warning: Old Wine RPM install detected. Do you want to remove it first?"
     conf_yesno_answer "(yes/no) "
     if [ "$ANSWER" = 'yes' ]; then
+      echo "We need to remove the rpm as root, please enter your root password"
+      echo
       echo Starting wine rpm removal...
-      rpm -e wine; RET=$?
+      su -c "rpm -e wine; RET=$?"
       if [ $RET -eq 0 ]; then
         echo Done.
       else
@@ -199,7 +215,8 @@ if [ $RET -eq 0 ]; then
       fi
     else
       echo "Sorry, I won't install Wine when an rpm version is still installed."
-      echo "(Wine support suffered from way too many conflicts)"
+      echo "(Wine support suffered from way too many conflicts between RPM"
+      echo "and source installs)"
       echo "Have a nice day !"
       exit 1
     fi 
@@ -218,6 +235,7 @@ fi
 
 if [ -f config.cache ] && [ -f Makefile ] && [ Makefile -nt configure ]
 then {
+  echo
   echo "I see that WINE has already been configured, so I'll skip that."
   std_sleep
   # load configure results
@@ -248,82 +266,109 @@ else {
 }
 fi
 
-# now do the compilation
-
-if [ -f wine ] && [ wine -nt config.cache ]
-then {
-  echo "Hmm, looks like WINE is already compiled. I'll skip that too, I guess."
-  std_sleep
-}
-else {
-  echo "Compiling WINE. Grab a lunch or two, rent a video, or whatever,"
-  echo "in the meantime..."
-  echo
-  std_sleep
-  if ! { make depend && make; }
-  then {
-    echo
-    echo "Compilation failed, aborting install."
-    exit 1
-  }
-  fi
-  echo
-}
-fi
-
-# and installation, if root
-
+# now do the compilation and install, we need to always do this because we 
+# don't want the 'make install' command we might run to run 'make' as root
 if [ `whoami` != 'root' ]
 then {
-  echo "You aren't root, so I'll skip the make install."
-
-  # setup to run from current directory
-  DLLPATH="$PWD/dlls"
-  if [ -z "$LD_LIBRARY_PATH" ]
-  then LD_LIBRARY_PATH="$PWD:$DLLPATH"
-  else LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD:$DLLPATH"
-  fi
-  export LD_LIBRARY_PATH
-  DEBUGGER="$PWD/$HDEBUGGER"
+  # ask the user if they want to build and install wine
   echo
-  echo "NOTE! To run Wine without installing, you must set the environment variable"
-  echo "LD_LIBRARY_PATH to $PWD:$DLLPATH"
-  echo "in your logon scripts."
-  echo
+  echo "We need to install wine as root user, do you want us to build wine,"
+  echo "'su root' and install Wine?  Enter 'no' to continue without installing"
+  conf_yesno_answer "(yes/no) "
 
-  # see if wine is installed on the users system, if not prompt them
-  # and then exit
-  if [ ! `which wine` ]
-  then
-    echo "Could not find wine on your system.  Run wineinstall as root to install wine"
-    echo "before re-running wineinstall as a user."
+  if [ "$ANSWER" = "yes" ]
+  then {
+    # start out with the basic command
+    sucommand="make install"
+
+    # if the user doesn't have $libdir in their ld.so.conf add this
+    # to our sucommand string
+    if [ -f /etc/ld.so.conf ] && ! grep -qs "$libdir" /etc/ld.so.conf
+    then {
+      echo
+      echo "$libdir doesn't exist in your /etc/ld.so.conf, it will be added"
+      echo "when we perform the install..."
+      sucommand="echo $libdir>>/etc/ld.so.conf;ldconfig;$sucommand"
+    }
+    fi
+
     echo
-    echo "Exiting wineinstall"
-    exit 1;
+
+    echo "Compiling WINE. Grab a lunch or two, rent a video, or whatever,"
+    echo "in the meantime..."
+    echo
+    std_sleep
+
+    # try to just make wine, if this fails 'make depend' and try to remake
+    if ! { make; }
+    then {
+      if ! { make depend && make; }
+      then {
+        echo
+        echo "Compilation failed, aborting install."
+        exit 1
+      }
+      fi
+    }
+    fi
+    echo
+
+    echo "Performing 'make install' as root to install binaries, enter root password"
+
+    std_sleep
+
+    if ! su root -c"$sucommand"
+    then {
+      echo
+      echo "Either you entered an incorrect password or we failed to run"
+      echo "'$sucommand' correctly."
+      echo "If you didn't enter an incorrect password then please report this"
+      echo "error to wine-devel@winehq.com."
+      echo
+      echo "Installation failed, aborting."
+      exit 1
+    }
+    fi
+
+    echo
+
+    # see if wine is installed on the users system, if not prompt them
+    # and then exit
+    if [ ! `which wine` ]
+    then
+      echo "Could not find wine on your system.  Run wineinstall as root to install wine"
+      echo "before re-running wineinstall as a user."
+      echo
+      echo "Exiting wineinstall"
+      exit 1;
+    fi
+  }
+  else {
+    # user didn't want to install wine so tell them about running from the
+    # current directory and set some stuff up for them
+
+    # setup to run from current directory
+    DLLPATH="$PWD/dlls"
+    if [ -z "$LD_LIBRARY_PATH" ]
+    then LD_LIBRARY_PATH="$PWD:$DLLPATH"
+    else LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD:$DLLPATH"
+    fi
+    export LD_LIBRARY_PATH
+    DEBUGGER="$PWD/$HDEBUGGER"
+    echo
+    echo "NOTE! To run Wine without installing, you must set the environment variable"
+    echo "LD_LIBRARY_PATH to $PWD:$DLLPATH"
+    echo "in your logon scripts."
+    echo
+  }
   fi
 }
 else {
-  echo "Now installing binaries onto the system..."
-  echo
-  std_sleep
-  if ! make install
-  then {
-    echo
-    echo "Installation failed, aborting."
-    exit 1
-  }
-  fi
-  if [ -f /etc/ld.so.conf ] && ! grep -qs "$libdir" /etc/ld.so.conf
-  then {
-    echo
-    echo "$libdir didn't exist in your /etc/ld.so.conf, adding it now..."
-    echo "$libdir" >>/etc/ld.so.conf
-    echo "Re-running ldconfig..."
-    eval "$ac_cv_path_LDCONFIG"
-  }
-  fi
+  echo "You are running wineinstall as root, this is not advisable. Please rerun as a user."
+  echo "Aborting."
+  exit 1
 }
-fi
+fi # [ `whoami` != 'root' ]
 
 }
 fi # BINDIST
@@ -359,28 +404,27 @@ then {
     conf_yesno_answer "(yes/no) "
     DOLOCALCONF="$ANSWER"
   else
-    echo "Create local config file ~/.wine/config?"
-    conf_yesno_answer "(yes/no) "
-    echo
-    DOLOCALCONF="$ANSWER"
-    if [ "$ANSWER" = 'no' ]
+    # if the user has an existing config file ask them if they want us to
+    # overwrite it, otherwise just ask them if they want to create one
+    if [ -f "$LCONF" ]
     then
-      conf_question high need_root \
-        "Aborting install. Try again as root to generate a system wine.conf."
-      exit 1
-    fi
-  fi
-
-  if [ -f "$LCONF" ]
-  then
-    echo "Found existing $LCONF, if you continue this file will be"
-    echo "overwritten.  Continue running wineinstall?"
-    conf_yesno_answer "(yes/no) "
-    echo
-    if [ "$ANSWER" = 'no' ]
-    then
-      echo "Exiting wineinstall"
-      exit 1
+      echo "Found existing $LCONF, do you want to overwrite this"
+      echo "existing Wine configuration file?"
+      conf_yesno_answer "(yes/no) "
+      DOLOCALCONF="$ANSWER"
+      echo
+    else {
+      echo "Create local config file ~/.wine/config?"
+      conf_yesno_answer "(yes/no) "
+      DOLOCALCONF="$ANSWER"
+      echo
+      if [ "$ANSWER" = 'no' ]
+      then
+        conf_question high need_root \
+          "Aborting install. Try again as root to generate a system wine.conf."
+        exit 1
+      fi
+    }
     fi
   fi
 }
@@ -534,6 +578,7 @@ fi
 # (not to be done if windows registry exists)
 if [ "$DOREG" = 'auto' ]
 then {
+  CROOT=`sed -n '/^\[Drive C\]$/,/^\[.*\]$/ s/^Path=\(.*\)/\1/p' $CONF`
   echo "Checking for real Windows registry..."
   if [ -f "$CROOT/windows/system.dat" ]
   then DOREG=no
