@@ -54,10 +54,16 @@ static const float idmatrix[16] = {
 };
 
 HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* This) {
-    D3DLINEPATTERN lp;
+    union {
+        D3DLINEPATTERN lp;
+	DWORD d;
+    } lp;
+    union {
+        float f;
+	DWORD d;
+    } tmpfloat;
     int i;
     int j;
-    float tmpfloat = 0.0f; 
     LPDIRECT3DDEVICE8 iface = (LPDIRECT3DDEVICE8) This;
 
     /* Note this may have a large overhead but it should only be executed
@@ -81,7 +87,9 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
     }
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FILLMODE, D3DFILL_SOLID);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
-    lp.wRepeatFactor = 0; lp.wLinePattern = 0; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_LINEPATTERN, *(DWORD *)&lp);
+
+    lp.lp.wRepeatFactor = 0; lp.lp.wLinePattern = 0;
+    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_LINEPATTERN, lp.d);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_ZWRITEENABLE, TRUE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_ALPHATESTENABLE, FALSE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_LASTPIXEL, TRUE);
@@ -98,9 +106,12 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_ZVISIBLE, 0);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FOGCOLOR, 0);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FOGTABLEMODE, D3DFOG_NONE);
-    tmpfloat = 0.0f; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FOGSTART, *((DWORD *)&tmpfloat));
-    tmpfloat = 1.0f; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FOGEND, *((DWORD *)&tmpfloat));
-    tmpfloat = 1.0f; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FOGDENSITY, *((DWORD *)&tmpfloat));
+    tmpfloat.f = 0.0f;
+    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FOGSTART, tmpfloat.d);
+    tmpfloat.f = 1.0f;
+    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FOGEND, tmpfloat.d);
+    tmpfloat.f = 1.0f;
+    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_FOGDENSITY, tmpfloat.d);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_EDGEANTIALIAS, FALSE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_ZBIAS, 0);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_RANGEFOGENABLE, FALSE);
@@ -142,8 +153,10 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_VERTEXBLEND, D3DVBF_DISABLE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_CLIPPLANEENABLE, 0);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_SOFTWAREVERTEXPROCESSING, FALSE);
-    tmpfloat = 1.0f; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POINTSIZE, *((DWORD *)&tmpfloat));
-    tmpfloat = 0.0f; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POINTSIZE_MIN, *((DWORD *)&tmpfloat));
+    tmpfloat.f = 1.0f;
+    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POINTSIZE, tmpfloat.d);
+    tmpfloat.f = 0.0f;
+    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POINTSIZE_MIN, tmpfloat.d);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POINTSPRITEENABLE, FALSE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POINTSCALEENABLE, FALSE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POINTSCALE_A, TRUE);
@@ -152,12 +165,15 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_MULTISAMPLEANTIALIAS, TRUE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_MULTISAMPLEMASK, 0xFFFFFFFF);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_PATCHEDGESTYLE, D3DPATCHEDGE_DISCRETE);
-    tmpfloat = 1.0f; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_PATCHSEGMENTS, *((DWORD *)&tmpfloat));
+    tmpfloat.f = 1.0f;
+    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_PATCHSEGMENTS, tmpfloat.d);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_DEBUGMONITORTOKEN, D3DDMT_DISABLE);
-    tmpfloat = 64.0f; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POINTSIZE_MAX, (DWORD) *((DWORD *)&tmpfloat));
+    tmpfloat.f = 64.0f;
+    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POINTSIZE_MAX, tmpfloat.d);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_COLORWRITEENABLE, 0x0000000F);
-    tmpfloat = 0.0f; IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_TWEENFACTOR, (DWORD) *((DWORD *)&tmpfloat));
+    tmpfloat.f = 0.0f;
+    IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_TWEENFACTOR, tmpfloat.d);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_BLENDOP, D3DBLENDOP_ADD);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POSITIONORDER, D3DORDER_CUBIC);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_NORMALORDER, D3DORDER_LINEAR);

@@ -2184,6 +2184,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3DRENDERSTATETYPE State,DWORD Value) {
+    union {
+	DWORD d;
+	float f;
+    } tmpvalue;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     DWORD OldValue = This->StateBlock->renderstate[State];
         
@@ -2752,26 +2756,26 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_FOGSTART                  :
         {
-            float *f = (float*) &Value;
-            glFogfv(GL_FOG_START, f);
+	    tmpvalue.d = Value;
+            glFogfv(GL_FOG_START, &tmpvalue.f);
             checkGLcall("glFogf(GL_FOG_START, (float) Value)");
-            TRACE("Fog Start == %f\n", *f);
+            TRACE("Fog Start == %f\n", tmpvalue.f);
         }
         break;
 
     case D3DRS_FOGEND                    :
         {
-            float *f = (float*) &Value;
-            glFogfv(GL_FOG_END, f);
+            tmpvalue.d = Value;
+            glFogfv(GL_FOG_END, &tmpvalue.f);
             checkGLcall("glFogf(GL_FOG_END, (float) Value)");
-            TRACE("Fog End == %f\n", *f);
+            TRACE("Fog End == %f\n", tmpvalue.f);
         }
         break;
 
     case D3DRS_FOGDENSITY                :
         {
-            float *f = (float*) &Value;
-            glFogfv(GL_FOG_DENSITY, f);
+            tmpvalue.d = Value;
+            glFogfv(GL_FOG_DENSITY, &tmpvalue.f);
             checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
         }
         break;
@@ -2785,7 +2789,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_TWEENFACTOR               :
         {
-	  This->UpdateStateBlock->tween_factor = *((float*) &Value);
+	  tmpvalue.d = Value;
+	  This->UpdateStateBlock->tween_factor = tmpvalue.f;
 	  TRACE("Vertex Blending Tween Factor to %f\n", This->UpdateStateBlock->tween_factor);
         }
 	break;
@@ -2842,11 +2847,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_LINEPATTERN               :
         {
-            D3DLINEPATTERN *pattern = (D3DLINEPATTERN *)&Value;
-            TRACE("Line pattern: repeat %d bits %x\n", pattern->wRepeatFactor, pattern->wLinePattern);
+            union {
+		DWORD 		d;
+		D3DLINEPATTERN	lp;
+	    } tmppattern;
+	    tmppattern.d = Value;
 
-            if (pattern->wRepeatFactor) {
-                glLineStipple(pattern->wRepeatFactor, pattern->wLinePattern);
+            TRACE("Line pattern: repeat %d bits %x\n", tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
+
+            if (tmppattern.lp.wRepeatFactor) {
+                glLineStipple(tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
                 checkGLcall("glLineStipple(repeat, linepattern)");
                 glEnable(GL_LINE_STIPPLE);
                 checkGLcall("glEnable(GL_LINE_STIPPLE);");
@@ -2860,8 +2870,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_ZBIAS                     :
         {
             if (Value) {
-                TRACE("ZBias value %f\n", *((float*)&Value));
-                glPolygonOffset(0, -*((float*)&Value));
+		tmpvalue.d = Value;
+                TRACE("ZBias value %f\n", tmpvalue.f);
+                glPolygonOffset(0, -tmpvalue.f);
                 checkGLcall("glPolygonOffset(0, -Value)");
                 glEnable(GL_POLYGON_OFFSET_FILL);
                 checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL);");
@@ -2891,14 +2902,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         break;
 
     case D3DRS_POINTSIZE                 :
-        TRACE("Set point size to %f\n", *((float*)&Value));
-        glPointSize(*((float*)&Value));
+	tmpvalue.d = Value;
+        TRACE("Set point size to %f\n", tmpvalue.f);
+        glPointSize(tmpvalue.f);
         checkGLcall("glPointSize(...);");
         break;
 
     case D3DRS_POINTSIZE_MIN             :
         if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-	  GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, *((float*)&Value));
+	  tmpvalue.d = Value;
+	  GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, tmpvalue.f);
 	  checkGLcall("glPointParameterfEXT(...);");
 	} else {
 	  FIXME("D3DRS_POINTSIZE_MIN not supported on this opengl\n");
@@ -2907,7 +2920,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_POINTSIZE_MAX             :
         if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-	  GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, *((float*)&Value));
+	  tmpvalue.d = Value;
+	  GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, tmpvalue.f);
 	  checkGLcall("glPointParameterfEXT(...);");
 	} else {
 	  FIXME("D3DRS_POINTSIZE_MAX not supported on this opengl\n");
@@ -3211,6 +3225,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
+    union {
+	float f;
+	DWORD d;
+    } tmpvalue;
 
     /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
    
@@ -3383,10 +3401,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     case D3DTSS_MIPMAPLODBIAS         :
       {	
 	if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
-	  float f = *(float*) &Value;
+	  tmpvalue.d = Value;
 	  glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, 
 		    GL_TEXTURE_LOD_BIAS_EXT,
-		    f);
+		    tmpvalue.f);
 	  checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
 	}
       }

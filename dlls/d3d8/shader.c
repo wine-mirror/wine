@@ -125,14 +125,18 @@ void vshader_dst(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
 }
 
 void vshader_expp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
-  float tmp_f = floorf(s0->w);
-  DWORD tmp_d = 0;
-  tmp_f = powf(2.0f, s0->w);
-  tmp_d = *((DWORD*) &tmp_f) & 0xFFFFFF00;
+  union {
+    float f;
+    DWORD d;
+  } tmp;
 
-  d->x  = powf(2.0f, tmp_f);
-  d->y  = s0->w - tmp_f;
-  d->z  = *((float*) &tmp_d);
+  tmp.f = floorf(s0->w);
+  d->x  = powf(2.0f, tmp.f);
+  d->y  = s0->w - tmp.f;
+
+  tmp.f = powf(2.0f, s0->w);
+  tmp.d &= 0xFFFFFF00U;
+  d->z  = tmp.f;
   d->w  = 1.0f;
   VSTRACE(("executing exp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
                 s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));

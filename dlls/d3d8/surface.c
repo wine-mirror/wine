@@ -263,7 +263,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       /** Dirtify Container if needed */
       if (NULL != This->Container) {
 	IDirect3DBaseTexture8* cont = NULL;
-	hr = IUnknown_QueryInterface(This->Container, &IID_IDirect3DBaseTexture8, (void**) &cont);
+	hr = IUnknown_QueryInterface(This->Container, &IID_IDirect3DBaseTexture8, (void**)(char*) &cont);
 	
 	if (SUCCEEDED(hr) && NULL != cont) {
 	  IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
