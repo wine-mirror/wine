@@ -284,8 +284,8 @@ HRESULT WINAPI LoadTypeLibEx(
     WCHAR *pIndexStr;
     HRESULT res;
     INT index = 1;
-    TRACE("(%s,%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
 
+    TRACE("(%s,%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
     if(!SearchPathW(NULL,szFile,NULL,sizeof(szPath)/sizeof(WCHAR),szPath,
 		    NULL)) {
 
@@ -301,8 +301,29 @@ HRESULT WINAPI LoadTypeLibEx(
 	        return TYPE_E_CANTLOADLIBRARY;
 	    if (GetFileAttributesW(szFileCopy) & FILE_ATTRIBUTE_DIRECTORY)
 		return TYPE_E_CANTLOADLIBRARY;
-	} else
+	} else {
+	    WCHAR tstpath[260];
+	    WCHAR stdole32tlb[] = { 's','t','d','o','l','e','3','2','.','t','l','b',0 };
+	    int i;
+
+	    lstrcpyW(tstpath,szFile);
+	    CharLowerW(tstpath);
+	    for (i=0;i<strlenW(tstpath);i++) {
+		if (tstpath[i] == 's') {
+		    if (!strcmpW(tstpath+i,stdole32tlb)) {
+		    	MESSAGE("\n");
+		    	MESSAGE("**************************************************************************\n");
+		    	MESSAGE("You must copy a 'stdole32.tlb' file to your Windows\\System directory!\n");
+		    	MESSAGE("You can get one from a Windows installation, or look for the DCOM95 package\n");
+		    	MESSAGE("on the Microsoft Download Pages.\n");
+		    	MESSAGE("**************************************************************************\n");
+			break;
+		    }
+		}
+	    }
+	    FIXME("Wanted to load %s as typelib, but file was not found.\n",debugstr_w(szFile));
 	    return TYPE_E_CANTLOADLIBRARY;
+	}
     }
 
     TRACE("File %s index %d\n", debugstr_w(szPath), index);
