@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdll.dll
-EXTRALIBS = $(LIBUNICODE)
+EXTRALIBS = $(LIBUNICODE) @IOKITLIB@
 
 C_SRCS = \
 	cdrom.c \

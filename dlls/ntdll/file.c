@@ -1349,6 +1349,68 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
                     info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
                     break;
                 }
+#elif defined (__APPLE__)
+                #include <IOKit/IOKitLib.h>
+                #include <CoreFoundation/CFNumber.h> /* for kCFBooleanTrue, kCFBooleanFalse */
+                #include <paths.h>
+                struct statfs stfs;
+                
+                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+		
+		if (fstatfs( fd, &stfs ) < 0) break;
+
+		/* stfs.f_type is reserved (always set to 0) so use IOKit */
+		kern_return_t kernResult = KERN_FAILURE; 
+		mach_port_t masterPort;
+		
+		char bsdName[6]; /* disk#\0 */
+		
+		strncpy(bsdName, stfs.f_mntfromname+strlen(_PATH_DEV) , 5);
+		bsdName[5] = 0;
+
+		kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
+
+		if (kernResult == KERN_SUCCESS)
+		{
+		    CFMutableDictionaryRef matching = IOBSDNameMatching(masterPort, 0, bsdName);
+		    
+		    if (matching)
+		    {
+			CFMutableDictionaryRef properties;
+			io_service_t devService = IOServiceGetMatchingService(masterPort, matching);
+			
+			if (IORegistryEntryCreateCFProperties(devService, 
+								&properties,
+								kCFAllocatorDefault, 0) != KERN_SUCCESS)
+								    break;
+			if ( CFEqual(
+					CFDictionaryGetValue(properties, CFSTR("Removable")),
+					kCFBooleanTrue)
+			    ) info->Characteristics |= FILE_REMOVABLE_MEDIA;
+			    
+			if ( CFEqual(
+					CFDictionaryGetValue(properties, CFSTR("Writable")),
+					kCFBooleanFalse)
+			    ) info->Characteristics |= FILE_READ_ONLY_DEVICE;
+
+                        /*
+                            NB : mounted disk image (.img/.dmg) don't provide specific type
+                        */
+                    	CFStringRef type;
+			if ( (type = CFDictionaryGetValue(properties, CFSTR("Type"))) )
+			{
+			    if ( CFStringCompare(type, CFSTR("CD-ROM"), 0) == kCFCompareEqualTo
+				|| CFStringCompare(type, CFSTR("DVD-ROM"), 0) == kCFCompareEqualTo
+			    )
+			    {
+				info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+			    }
+			} 
+			
+			if (properties)
+			    CFRelease(properties);
+		    }
+		}
 #else
                 static int warned;
                 if (!warned++) FIXME( "device info not properly supported on this platform\n" );

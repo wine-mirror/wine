@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = kernel32.dll
 IMPORTS   = ntdll
-EXTRALIBS = $(LIBUNICODE)
+EXTRALIBS = $(LIBUNICODE) @COREFOUNDATIONLIB@
 
 SPEC_SRCS16 = \
 	comm.drv.spec \

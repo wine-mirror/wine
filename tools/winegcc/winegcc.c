@@ -607,13 +607,15 @@ static void forward(int argc, char **argv, struct options* opts)
  *          object-file-name  -llibrary -nostartfiles  -nodefaultlibs
  *          -nostdlib -s  -static  -static-libgcc  -shared  -shared-libgcc
  *          -symbolic -Wl,option  -Xlinker option -u symbol
+ *	    -framework name
  */
 static int is_linker_arg(const char* arg)
 {
     static const char* link_switches[] = 
     {
 	"-nostartfiles", "-nodefaultlibs", "-nostdlib", "-s", 
-	"-static", "-static-libgcc", "-shared", "-shared-libgcc", "-symbolic"
+	"-static", "-static-libgcc", "-shared", "-shared-libgcc", "-symbolic",
+	"-framework"
     };
     int j;
 
@@ -733,6 +735,10 @@ int main(int argc, char **argv)
 			if (argv[i][3]) option_arg = &argv[i][3];
 			else next_is_arg = 1;
 		    }
+		    break;
+		case 'f':
+		    if (strcmp("-framework", argv[i]) == 0)
+			next_is_arg = 1;
 		    break;
 	    }
 	    if (next_is_arg) option_arg = argv[i+1];

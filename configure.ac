@@ -944,6 +944,11 @@ case $host_os in
             AC_SUBST(LDEXECFLAGS,"-seg1addr 0x120000")
             dnl Relocate libwine.dyld too
             AC_SUBST(LDLIBWINEFLAGS,"-seg1addr 0x140000")
+	    dnl declare needed frameworks
+	    AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
+            AC_SUBST(IOKITLIB,"-framework IOKit")
+	    dnl using IOKit imply we use CoreFoundation too
+	    IOKITLIB = "$IOKITLIB $COREFOUNDATIONLIB"
           fi
         fi
       fi
