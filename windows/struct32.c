@@ -91,8 +91,8 @@ void STRUCT32_CREATESTRUCT32Ato16( const CREATESTRUCTA* from,
                                    CREATESTRUCT16* to )
 {
     to->lpCreateParams = from->lpCreateParams;
-    to->hInstance      = (HINSTANCE16)from->hInstance;
-    to->hMenu          = (HMENU16)from->hMenu;
+    to->hInstance      = HINSTANCE_16(from->hInstance);
+    to->hMenu          = HMENU_16(from->hMenu);
     to->hwndParent     = HWND_16(from->hwndParent);
     to->cy             = from->cy;
     to->cx             = from->cx;
@@ -106,8 +106,8 @@ void STRUCT32_CREATESTRUCT16to32A( const CREATESTRUCT16* from,
                                    CREATESTRUCTA *to )
 {
     to->lpCreateParams = from->lpCreateParams;
-    to->hInstance      = (HINSTANCE)from->hInstance;
-    to->hMenu          = (HMENU)from->hMenu;
+    to->hInstance      = HINSTANCE_32(from->hInstance);
+    to->hMenu          = HMENU_32(from->hMenu);
     to->hwndParent     = WIN_Handle32(from->hwndParent);
     to->cy             = from->cy;
     to->cx             = from->cx;
@@ -121,7 +121,7 @@ void STRUCT32_CREATESTRUCT16to32A( const CREATESTRUCT16* from,
 void STRUCT32_MDICREATESTRUCT32Ato16( const MDICREATESTRUCTA* from,
                                       MDICREATESTRUCT16* to )
 {
-    to->hOwner = (HINSTANCE16)from->hOwner;
+    to->hOwner = HINSTANCE_16(from->hOwner);
     to->x      = from->x;
     to->y      = from->y;
     to->cx     = from->cx;
@@ -133,7 +133,7 @@ void STRUCT32_MDICREATESTRUCT32Ato16( const MDICREATESTRUCTA* from,
 void STRUCT32_MDICREATESTRUCT16to32A( const MDICREATESTRUCT16* from,
                                       MDICREATESTRUCTA *to )
 {
-    to->hOwner = (HINSTANCE)from->hOwner;
+    to->hOwner = HINSTANCE_32(from->hOwner);
     to->x      = from->x;
     to->y      = from->y;
     to->cx     = from->cx;

@@ -1079,7 +1079,7 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     }
 }
 
-static HANDLE convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
+static UINT convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
 {
     HANDLE	dst;
     UINT	sz = GlobalSize16(src);
@@ -1093,7 +1093,7 @@ static HANDLE convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
     GlobalUnlock16(src);
     GlobalUnlock(dst);
 
-    return dst;
+    return (UINT)dst;
 }
 
 /**********************************************************************
@@ -1187,7 +1187,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
             dis->itemState  = dis16->itemState;
             dis->hwndItem   = (dis->CtlType == ODT_MENU) ? (HWND)HMENU_32(dis16->hwndItem)
                                                          : WIN_Handle32( dis16->hwndItem );
-            dis->hDC        = dis16->hDC;
+            dis->hDC        = HDC_32(dis16->hDC);
             dis->itemData   = dis16->itemData;
             CONV_RECT16TO32( &dis16->rcItem, &dis->rcItem );
             *plparam = (LPARAM)dis;
@@ -1240,7 +1240,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         if((LOWORD(*plparam) & MF_POPUP) && (LOWORD(*plparam) != 0xFFFF))
         {
             HMENU hmenu=HMENU_32(HIWORD(*plparam));
-            UINT Pos=MENU_FindSubMenu( &hmenu, wParam16);
+            UINT Pos=MENU_FindSubMenu( &hmenu, HMENU_32(wParam16));
             if(Pos==0xFFFF) Pos=0; /* NO_SELECTED_ITEM */
             *pwparam32 = MAKEWPARAM( Pos, LOWORD(*plparam) );
         }
@@ -1367,7 +1367,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         {
 	    HANDLE16	lo16;
 	    ATOM	hi;
-	    HANDLE	lo32 = 0;
+	    UINT lo32 = 0;
 
 	    *pwparam32 = (WPARAM)WIN_Handle32(wParam16);
 	    lo16 = LOWORD(*plparam);
@@ -1686,18 +1686,18 @@ LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     return result;
 }
 
-static HANDLE16 convert_handle_32_to_16(HANDLE src, unsigned int flags)
+static HANDLE16 convert_handle_32_to_16(UINT src, unsigned int flags)
 {
     HANDLE16	dst;
-    UINT	sz = GlobalSize(src);
+    UINT	sz = GlobalSize((HANDLE)src);
     LPSTR	ptr16, ptr32;
 
     if (!(dst = GlobalAlloc16(flags, sz)))
 	return 0;
-    ptr32 = GlobalLock(src);
+    ptr32 = GlobalLock((HANDLE)src);
     ptr16 = GlobalLock16(dst);
     if (ptr16 != NULL && ptr32 != NULL) memcpy(ptr16, ptr32, sz);
-    GlobalUnlock(src);
+    GlobalUnlock((HANDLE)src);
     GlobalUnlock16(dst);
 
     return dst;
@@ -2149,7 +2149,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_DDE_DATA:
     case WM_DDE_POKE:
         {
-	    unsigned    lo32, hi;
+	    UINT lo32, hi;
 	    HANDLE16	lo16 = 0;
 
 	    *pwparam16 = HWND_16((HWND)wParam32);
@@ -2170,7 +2170,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             UnpackDDElParam(msg32, *plparam, &lo, &hi);
 
 	    if (GlobalGetAtomNameA((ATOM)hi, buf, sizeof(buf)) > 0) flag |= 1;
-	    if (GlobalSize(hi) != 0) flag |= 2;
+	    if (GlobalSize((HANDLE)hi) != 0) flag |= 2;
 	    switch (flag)
 	    {
 	    case 0:

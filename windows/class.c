@@ -298,7 +298,7 @@ void CLASS_FreeModuleClasses( HMODULE16 hModule )
     for (ptr = firstClass; ptr; ptr = next)
     {
         next = ptr->next;
-	if (ptr->hInstance == hModule) CLASS_FreeClass( ptr );
+	if (ptr->hInstance == HINSTANCE_32(hModule)) CLASS_FreeClass( ptr );
     }
     USER_Unlock();
 }
@@ -331,13 +331,13 @@ static CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance )
         if (class->style & CS_GLOBALCLASS) continue;
         if (class->atomName == atom)
         {
-            if (hinstance==class->hInstance || hinstance==0xffff)
+            if (hinstance==class->hInstance || hinstance == (HINSTANCE)0xffff)
             {
                 TRACE("-- found local %p\n", class);
                 return class;
             }
             if (class->hInstance == 0) tclass = class;
-            else if(class->hInstance == hUser)
+            else if(class->hInstance == HINSTANCE_32(hUser))
             {
                 user_class = class;
             }
@@ -494,7 +494,7 @@ CLASS *CLASS_AddWindow( ATOM atom, HINSTANCE inst, WINDOWPROCTYPE type,
                         INT *winExtra, WNDPROC *winproc, DWORD *style, struct tagDCE **dce )
 {
     CLASS *class;
-    if (type == WIN_PROC_16) inst = GetExePtr(inst);
+    if (type == WIN_PROC_16) inst = HINSTANCE_32(GetExePtr(HINSTANCE_16(inst)));
 
     if (!(class = CLASS_FindClassByAtom( atom, inst ))) return NULL;
     class->cWindows++;
@@ -533,7 +533,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
     ATOM atom;
     CLASS *classPtr;
     int iSmIconWidth, iSmIconHeight;
-    HINSTANCE16 hInstance=GetExePtr(wc->hInstance);
+    HINSTANCE hInstance = HINSTANCE_32(GetExePtr(wc->hInstance));
 
     if (!(atom = GlobalAddAtomA( MapSL(wc->lpszClassName) ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
@@ -555,7 +555,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
     iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
 
     classPtr->hIcon         = HICON_32(wc->hIcon);
-    classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
+    classPtr->hIconSm       = CopyImage(classPtr->hIcon, IMAGE_ICON,
 					iSmIconWidth, iSmIconHeight,
 					LR_COPYFROMRESOURCE);
     classPtr->hCursor       = HCURSOR_32(wc->hCursor);
@@ -660,7 +660,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
-    HINSTANCE16 hInstance = GetExePtr( wc->hInstance );
+    HINSTANCE hInstance = HINSTANCE_32(GetExePtr( wc->hInstance ));
 
     if (!(atom = GlobalAddAtomA( MapSL(wc->lpszClassName) ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
@@ -758,7 +758,7 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
  */
 BOOL16 WINAPI UnregisterClass16( LPCSTR className, HINSTANCE16 hInstance )
 {
-    return UnregisterClassA( className, GetExePtr( hInstance ) );
+    return UnregisterClassA( className, HINSTANCE_32(GetExePtr( hInstance )) );
 }
 
 /***********************************************************************
@@ -1107,14 +1107,14 @@ INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
 /***********************************************************************
  *		GetClassInfo (USER.404)
  */
-BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc )
+BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASS16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
+    HINSTANCE hInstance = HINSTANCE_32(GetExePtr( hInst16 ));
 
     TRACE("%x %s %p\n",hInstance, debugstr_a(MapSL(name)), wc);
 
-    hInstance = GetExePtr( hInstance );
     if (!(atom = GlobalFindAtomA( MapSL(name) )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )))
         return FALSE;
@@ -1125,7 +1125,7 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc
     wc->lpfnWndProc   = CLASS_GetProc( classPtr, WIN_PROC_16 );
     wc->cbClsExtra    = (INT16)classPtr->cbClsExtra;
     wc->cbWndExtra    = (INT16)classPtr->cbWndExtra;
-    wc->hInstance     = classPtr->style & CS_GLOBALCLASS ? GetModuleHandle16("USER") : (HINSTANCE16)classPtr->hInstance;
+    wc->hInstance     = classPtr->style & CS_GLOBALCLASS ? GetModuleHandle16("USER") : HINSTANCE_16(classPtr->hInstance);
     wc->hIcon         = HICON_16(classPtr->hIcon);
     wc->hCursor       = HCURSOR_16(classPtr->hCursor);
     wc->hbrBackground = HBRUSH_16(classPtr->hbrBackground);
@@ -1219,14 +1219,14 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name,
  * FIXME: this is just a guess, I have no idea if GetClassInfoEx() is the
  * same in Win16 as in Win32. --AJ
  */
-BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16 *wc )
+BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASSEX16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
+    HINSTANCE hInstance = HINSTANCE_32(GetExePtr( hInst16 ));
 
     TRACE("%x %s %p\n",hInstance,debugstr_a( MapSL(name) ), wc);
 
-    hInstance = GetExePtr( hInstance );
     if (!(atom = GlobalFindAtomA( MapSL(name) )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
         (hInstance != classPtr->hInstance)) return FALSE;
@@ -1234,7 +1234,7 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16
     wc->lpfnWndProc   = CLASS_GetProc( classPtr, WIN_PROC_16 );
     wc->cbClsExtra    = (INT16)classPtr->cbClsExtra;
     wc->cbWndExtra    = (INT16)classPtr->cbWndExtra;
-    wc->hInstance     = (HINSTANCE16)classPtr->hInstance;
+    wc->hInstance     = HINSTANCE_16(classPtr->hInstance);
     wc->hIcon         = HICON_16(classPtr->hIcon);
     wc->hIconSm       = HICON_16(classPtr->hIconSm);
     wc->hCursor       = HCURSOR_16(classPtr->hCursor);

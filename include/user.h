@@ -150,10 +150,13 @@ extern HPALETTE WINAPI SelectPalette( HDC hDC, HPALETTE hPal, BOOL bForceBackgro
 extern DWORD USER16_AlertableWait;
 
 /* HANDLE16 <-> HANDLE conversions */
-#define HCURSOR_16(h32) (LOWORD(h32))
-#define HICON_16(h32)   (LOWORD(h32))
+#define HCURSOR_16(h32)    (LOWORD(h32))
+#define HICON_16(h32)      (LOWORD(h32))
+#define HINSTANCE_16(h32)  (LOWORD(h32))
 
-#define HCURSOR_32(h16) ((HCURSOR)(ULONG_PTR)(h16))
-#define HICON_32(h16)   ((HICON)(ULONG_PTR)(h16))
+#define HCURSOR_32(h16)    ((HCURSOR)(ULONG_PTR)(h16))
+#define HICON_32(h16)      ((HICON)(ULONG_PTR)(h16))
+#define HINSTANCE_32(h16)  ((HINSTANCE)(ULONG_PTR)(h16))
+#define HMODULE_32(h16)    ((HMODULE)(ULONG_PTR)(h16))
 
 #endif  /* __WINE_USER_H */

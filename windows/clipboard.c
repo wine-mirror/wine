@@ -57,6 +57,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
 #define  CF_REGFORMATBASE 	0xC000
 
+#define HGDIOBJ_32(handle16)  ((HGDIOBJ)(ULONG_PTR)(handle16))
+
 /**************************************************************************
  *	  Clipboard context global variables
  */
@@ -207,7 +209,7 @@ void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
       if (lpFormat->hData32)
 	DeleteObject(lpFormat->hData32);
       if (lpFormat->hData16)
-	DeleteObject(lpFormat->hData16);
+	DeleteObject(HGDIOBJ_32(lpFormat->hData16));
     }
     else if( lpFormat->wFormatID == CF_METAFILEPICT )
     {

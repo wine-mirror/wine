@@ -1120,9 +1120,9 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
 
     if ( (menuInfo.fType & MFT_BITMAP)           &&
 	 (LOWORD(menuInfo.dwTypeData)!=0)        &&
-	 (LOWORD(menuInfo.dwTypeData)!=hBmpClose) )
+	 (LOWORD(menuInfo.dwTypeData)!=HBITMAP_16(hBmpClose)) )
     {
-      DeleteObject((HBITMAP)LOWORD(menuInfo.dwTypeData));
+        DeleteObject(HBITMAP_32(LOWORD(menuInfo.dwTypeData)));
     }
 
     if(TWEAK_WineLook > WIN31_LOOK)
@@ -1245,7 +1245,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
         else
 	{
 	    LPCLIENTCREATESTRUCT16 ccs = MapSL((SEGPTR)cs->lpCreateParams);
-	    ci->hWindowMenu	= ccs->hWindowMenu;
+	    ci->hWindowMenu	= HMENU_32(ccs->hWindowMenu);
 	    ci->idFirstChild	= ccs->idFirstChild;
 	}
         WIN_ReleasePtr( wndPtr );

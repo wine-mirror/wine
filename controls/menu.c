@@ -551,7 +551,7 @@ static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
     POPUPMENU *menu;
     UINT i;
 
-    if (((*hmenu)==0xffff) || (!(menu = MENU_GetMenu(*hmenu)))) return NULL;
+    if ((*hmenu == (HMENU)0xffff) || (!(menu = MENU_GetMenu(*hmenu)))) return NULL;
     if (wFlags & MF_BYPOSITION)
     {
 	if (*nPos >= menu->nItems) return NULL;
@@ -1789,7 +1789,7 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT_PTR id,
         }
     }
     else if (IS_BITMAP_ITEM(flags))
-        item->text = (LPWSTR)(HBITMAP)LOWORD(str);
+        item->text = (LPWSTR)HBITMAP_32(LOWORD(str));
     else item->text = NULL;
 
     if (flags & MF_OWNERDRAW)
@@ -3827,7 +3827,7 @@ BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
         lpmenu->hWnd = hWnd;
         lpmenu->Height = 0;  /* Make sure we recalculate the size */
     }
-    SetWindowLongA( hWnd, GWL_ID, hMenu );
+    SetWindowLongA( hWnd, GWL_ID, (LONG_PTR)hMenu );
 
     if (IsWindowVisible(hWnd))
         SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
@@ -3909,10 +3909,10 @@ void WINAPI EndMenu(void)
  */
 HMENU16 WINAPI LookupMenuHandle16( HMENU16 hmenu, INT16 id )
 {
-    HMENU hmenu32 = hmenu;
+    HMENU hmenu32 = HMENU_32(hmenu);
     UINT id32 = id;
     if (!MENU_FindItem( &hmenu32, &id32, MF_BYCOMMAND )) return 0;
-    else return hmenu32;
+    else return HMENU_16(hmenu32);
 }
 
 
@@ -3964,7 +3964,7 @@ HMENU WINAPI LoadMenuW( HINSTANCE instance, LPCWSTR name )
  */
 HMENU16 WINAPI LoadMenuIndirect16( LPCVOID template )
 {
-    HMENU16 hMenu;
+    HMENU hMenu;
     WORD version, offset;
     LPCSTR p = (LPCSTR)template;
 
@@ -3984,7 +3984,7 @@ HMENU16 WINAPI LoadMenuIndirect16( LPCVOID template )
         DestroyMenu( hMenu );
         return 0;
     }
-    return hMenu;
+    return HMENU_16(hMenu);
 }
 
 
@@ -3993,7 +3993,7 @@ HMENU16 WINAPI LoadMenuIndirect16( LPCVOID template )
  */
 HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
 {
-    HMENU16 hMenu;
+    HMENU hMenu;
     WORD version, offset;
     LPCSTR p = (LPCSTR)template;
 

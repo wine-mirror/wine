@@ -263,14 +263,10 @@ static INT CURSORICON_DelSharedIcon( HICON hIcon )
 /**********************************************************************
  *	    CURSORICON_FreeModuleIcons
  */
-void CURSORICON_FreeModuleIcons( HMODULE hModule )
+void CURSORICON_FreeModuleIcons( HMODULE16 hMod16 )
 {
     ICONCACHE **ptr = &IconAnchor;
-
-    if ( HIWORD( hModule ) )
-        hModule = MapHModuleLS( hModule );
-    else
-        hModule = GetExePtr( hModule );
+    HMODULE hModule = HMODULE_32(GetExePtr( hMod16 ));
 
     EnterCriticalSection( &IconCrst );
 
@@ -761,9 +757,9 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         /* Normalize hInstance (must be uniquely represented for icon cache) */
 
         if ( HIWORD( hInstance ) )
-            hInstance = MapHModuleLS( hInstance );
+            hInstance = HINSTANCE_32(MapHModuleLS( hInstance ));
         else
-            hInstance = GetExePtr( hInstance );
+            hInstance = HINSTANCE_32(GetExePtr( HINSTANCE_16(hInstance) ));
 
         /* Get directory resource ID */
 

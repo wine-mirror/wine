@@ -2049,7 +2049,7 @@ UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, LPCONVINFO lpConvInfo)
     }
     else if ((DWORD)hConv & 1)
     {
-	pConv = WDML_GetConv((DWORD)hConv & ~1, FALSE);
+	pConv = WDML_GetConv((HCONV)((DWORD)hConv & ~1), FALSE);
 	if (pConv != NULL)
 	{
 	    FIXME("Request on remote conversation information is not implemented yet\n");

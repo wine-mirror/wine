@@ -120,8 +120,8 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
         d1 = dwData1;
         break;
     }
-    ret = WDML_CallTo16_long_llllllll((FARPROC16)pfn, uType, uFmt, hConv,
-                                      hsz1, hsz2, hdata, d1, dwData2);
+    ret = (HDDEDATA)WDML_CallTo16_long_llllllll((FARPROC16)pfn, uType, uFmt, (LONG)hConv,
+                                                (LONG)hsz1, (LONG)hsz2, (LONG)hdata, d1, dwData2);
     switch (uType)
     {
     case XTYP_CONNECT:

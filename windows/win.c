@@ -793,7 +793,7 @@ BOOL WIN_CreateDesktopWindow(void)
         wine_server_call( req );
         pWndDesktop->dwStyle   = reply->old_style;
         pWndDesktop->dwExStyle = reply->old_ex_style;
-        pWndDesktop->hInstance = (ULONG_PTR)reply->old_instance;
+        pWndDesktop->hInstance = (HINSTANCE)reply->old_instance;
         pWndDesktop->userdata  = (ULONG_PTR)reply->old_user_data;
         pWndDesktop->wIDmenu   = reply->old_id;
     }
@@ -1154,7 +1154,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
                 if (HIWORD(cs->hInstance))
                     cs->hMenu = LoadMenuA(cs->hInstance,menuName);
                 else
-                    cs->hMenu = LoadMenu16(cs->hInstance,menuName);
+                    cs->hMenu = HMENU_32(LoadMenu16(HINSTANCE_16(cs->hInstance),menuName));
 
                 if (cs->hMenu) SetMenu( hwnd, cs->hMenu );
             }
@@ -1250,7 +1250,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
     /* Create the window */
 
     cs.lpCreateParams = data;
-    cs.hInstance      = (HINSTANCE)instance;
+    cs.hInstance      = HINSTANCE_32(instance);
     cs.hMenu          = HMENU_32(menu);
     cs.hwndParent     = WIN_Handle32( parent );
     cs.style          = style;

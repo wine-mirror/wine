@@ -407,12 +407,12 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
 
 
 /***********************************************************************
- *           DIALOG_CreateControls
+ *           DIALOG_CreateControls16
  *
  * Create the control windows for a dialog.
  */
-static BOOL DIALOG_CreateControls( HWND hwnd, LPCSTR template, const DLG_TEMPLATE *dlgTemplate,
-                                   HINSTANCE hInst, BOOL win32 )
+static BOOL DIALOG_CreateControls16( HWND hwnd, LPCSTR template,
+                                     const DLG_TEMPLATE *dlgTemplate, HINSTANCE16 hInst )
 {
     DIALOGINFO *dlgInfo = DIALOG_get_info( hwnd );
     DLG_CONTROL_INFO info;
@@ -422,62 +422,93 @@ static BOOL DIALOG_CreateControls( HWND hwnd, LPCSTR template, const DLG_TEMPLAT
     TRACE(" BEGIN\n" );
     while (items--)
     {
-        if (!win32)
-        {
-            HINSTANCE16 instance;
-            SEGPTR segptr;
+        HINSTANCE16 instance = hInst;
+        SEGPTR segptr;
 
-            template = DIALOG_GetControl16( template, &info );
-            if (HIWORD(info.className) && !strcmp( info.className, "EDIT") &&
-                !(GetWindowLongW( hwnd, GWL_STYLE ) & DS_LOCALEDIT))
+        template = DIALOG_GetControl16( template, &info );
+        if (HIWORD(info.className) && !strcmp( info.className, "EDIT") &&
+            !(GetWindowLongW( hwnd, GWL_STYLE ) & DS_LOCALEDIT))
+        {
+            if (!dlgInfo->hDialogHeap)
             {
+                dlgInfo->hDialogHeap = GlobalAlloc16(GMEM_FIXED, 0x10000);
                 if (!dlgInfo->hDialogHeap)
                 {
-                    dlgInfo->hDialogHeap = GlobalAlloc16(GMEM_FIXED, 0x10000);
-                    if (!dlgInfo->hDialogHeap)
-                    {
-                        ERR("Insufficient memory to create heap for edit control\n" );
-                        continue;
-                    }
-                    LocalInit16(dlgInfo->hDialogHeap, 0, 0xffff);
+                    ERR("Insufficient memory to create heap for edit control\n" );
+                    continue;
                 }
-                instance = dlgInfo->hDialogHeap;
+                LocalInit16(dlgInfo->hDialogHeap, 0, 0xffff);
             }
-            else instance = (HINSTANCE16)hInst;
+            instance = dlgInfo->hDialogHeap;
+        }
 
-            segptr = MapLS( info.data );
-            hwndCtrl = WIN_Handle32( CreateWindowEx16( info.exStyle | WS_EX_NOPARENTNOTIFY,
-                                                       info.className, info.windowName,
-                                                       info.style | WS_CHILD,
-                                                       MulDiv(info.x, dlgInfo->xBaseUnit, 4),
-                                                       MulDiv(info.y, dlgInfo->yBaseUnit, 8),
-                                                       MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
-                                                       MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
-                                                       HWND_16(hwnd), (HMENU16)info.id,
-                                                       instance, (LPVOID)segptr ));
-            UnMapLS( segptr );
-        }
-        else
+        segptr = MapLS( info.data );
+        hwndCtrl = WIN_Handle32( CreateWindowEx16( info.exStyle | WS_EX_NOPARENTNOTIFY,
+                                                   info.className, info.windowName,
+                                                   info.style | WS_CHILD,
+                                                   MulDiv(info.x, dlgInfo->xBaseUnit, 4),
+                                                   MulDiv(info.y, dlgInfo->yBaseUnit, 8),
+                                                   MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
+                                                   MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
+                                                   HWND_16(hwnd), (HMENU16)info.id,
+                                                   instance, (LPVOID)segptr ));
+        UnMapLS( segptr );
+
+        if (!hwndCtrl) return FALSE;
+
+            /* Send initialisation messages to the control */
+        if (dlgInfo->hUserFont) SendMessageA( hwndCtrl, WM_SETFONT,
+                                             (WPARAM)dlgInfo->hUserFont, 0 );
+        if (SendMessageA(hwndCtrl, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
         {
-            template = (LPCSTR)DIALOG_GetControl32( (WORD *)template, &info,
-                                                    dlgTemplate->dialogEx );
-            /* Is this it? */
-            if (info.style & WS_BORDER)
-            {
-                info.style &= ~WS_BORDER;
-                info.exStyle |= WS_EX_CLIENTEDGE;
-            }
-            hwndCtrl = CreateWindowExW( info.exStyle | WS_EX_NOPARENTNOTIFY,
-                                          (LPCWSTR)info.className,
-                                          (LPCWSTR)info.windowName,
-                                          info.style | WS_CHILD,
-                                          MulDiv(info.x, dlgInfo->xBaseUnit, 4),
-                                          MulDiv(info.y, dlgInfo->yBaseUnit, 8),
-                                          MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
-                                          MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
-                                          hwnd, (HMENU)info.id,
-                                          hInst, (LPVOID)info.data );
+              /* If there's already a default push-button, set it back */
+              /* to normal and use this one instead. */
+            if (hwndDefButton)
+                SendMessageA( hwndDefButton, BM_SETSTYLE,
+                                BS_PUSHBUTTON,FALSE );
+            hwndDefButton = hwndCtrl;
+            dlgInfo->idResult = GetWindowLongA( hwndCtrl, GWL_ID );
         }
+    }
+    TRACE(" END\n" );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DIALOG_CreateControls32
+ *
+ * Create the control windows for a dialog.
+ */
+static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template,
+                                     const DLG_TEMPLATE *dlgTemplate, HINSTANCE hInst )
+{
+    DIALOGINFO *dlgInfo = DIALOG_get_info( hwnd );
+    DLG_CONTROL_INFO info;
+    HWND hwndCtrl, hwndDefButton = 0;
+    INT items = dlgTemplate->nbItems;
+
+    TRACE(" BEGIN\n" );
+    while (items--)
+    {
+        template = (LPCSTR)DIALOG_GetControl32( (WORD *)template, &info,
+                                                dlgTemplate->dialogEx );
+        /* Is this it? */
+        if (info.style & WS_BORDER)
+        {
+            info.style &= ~WS_BORDER;
+            info.exStyle |= WS_EX_CLIENTEDGE;
+        }
+        hwndCtrl = CreateWindowExW( info.exStyle | WS_EX_NOPARENTNOTIFY,
+                                    (LPCWSTR)info.className,
+                                    (LPCWSTR)info.windowName,
+                                    info.style | WS_CHILD,
+                                    MulDiv(info.x, dlgInfo->xBaseUnit, 4),
+                                    MulDiv(info.y, dlgInfo->yBaseUnit, 8),
+                                    MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
+                                    MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
+                                    hwnd, (HMENU)info.id,
+                                    hInst, (LPVOID)info.data );
         if (!hwndCtrl) return FALSE;
 
             /* Send initialisation messages to the control */
@@ -697,6 +728,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     DIALOGINFO * dlgInfo;
     BOOL ownerEnabled = TRUE;
     BOOL win32Template = (procType != WIN_PROC_16);
+    BOOL res;
 
       /* Parse dialog template */
 
@@ -722,7 +754,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 
     if (template.menuName)
     {
-        if (!win32Template) dlgInfo->hMenu = LoadMenu16( hInst, template.menuName );
+        if (!win32Template) dlgInfo->hMenu = HMENU_32(LoadMenu16( HINSTANCE_16(hInst), template.menuName ));
         else dlgInfo->hMenu = LoadMenuW( hInst, (LPCWSTR)template.menuName );
     }
 
@@ -813,7 +845,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         hwnd = WIN_Handle32( CreateWindowEx16(template.exStyle, template.className,
                                               template.caption, template.style & ~WS_VISIBLE,
                                               rect.left, rect.top, rect.right, rect.bottom,
-                                              HWND_16(owner), dlgInfo->hMenu, hInst, NULL ));
+                                              HWND_16(owner), HMENU_16(dlgInfo->hMenu),
+                                              HINSTANCE_16(hInst), NULL ));
     else
         hwnd = CreateWindowExW(template.exStyle, (LPCWSTR)template.className,
                                  (LPCWSTR)template.caption,
@@ -848,8 +881,12 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 
     /* Create controls */
 
-    if (DIALOG_CreateControls( hwnd, dlgTemplate, &template,
-                               hInst, win32Template ))
+    if (win32Template)
+        res = DIALOG_CreateControls32( hwnd, dlgTemplate, &template, hInst );
+    else
+        res = DIALOG_CreateControls16( hwnd, dlgTemplate, &template, HINSTANCE_16(hInst) );
+
+    if (res)
     {
         HWND hwndPreInitFocus;
 
@@ -973,8 +1010,8 @@ HWND16 WINAPI CreateDialogIndirectParam16( HINSTANCE16 hInst,
                                            HWND16 owner, DLGPROC16 dlgProc,
                                            LPARAM param )
 {
-    return HWND_16( DIALOG_CreateIndirect( hInst, dlgTemplate, WIN_Handle32(owner),
-                                                (DLGPROC)dlgProc, param, WIN_PROC_16, FALSE ));
+    return HWND_16( DIALOG_CreateIndirect( HINSTANCE_32(hInst), dlgTemplate, WIN_Handle32(owner),
+                                           (DLGPROC)dlgProc, param, WIN_PROC_16, FALSE ));
 }
 
 
@@ -1083,7 +1120,7 @@ INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, LPCSTR template,
     if ((data = LockResource16( hmem )))
     {
         HWND owner = WIN_Handle32(owner16);
-        hwnd = DIALOG_CreateIndirect( hInst, data, owner,
+        hwnd = DIALOG_CreateIndirect( HINSTANCE_32(hInst), data, owner,
                                       (DLGPROC)dlgProc, param, WIN_PROC_16, TRUE );
         if (hwnd) ret = DIALOG_DoDialogBox( hwnd, owner );
         GlobalUnlock16( hmem );
@@ -1146,7 +1183,7 @@ INT16 WINAPI DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
     LPCVOID ptr;
 
     if (!(ptr = GlobalLock16( dlgTemplate ))) return -1;
-    hwnd = DIALOG_CreateIndirect( hInst, ptr, owner, (DLGPROC)dlgProc,
+    hwnd = DIALOG_CreateIndirect( HINSTANCE_32(hInst), ptr, owner, (DLGPROC)dlgProc,
                                   param, WIN_PROC_16, TRUE );
     GlobalUnlock16( dlgTemplate );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );

@@ -30,11 +30,12 @@
 #include "sysmetrics.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "wine/debug.h"
+#include "wownt32.h"
 #include "winreg.h"
 #include "local.h"
 #include "user.h"
 #include "gdi.h" /* sic */
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(syscolor);
 
@@ -123,7 +124,7 @@ static HPEN   SysColorPens[NUM_SYS_COLORS];
  * For a description of the GDI object magics and their flags,
  * see "Undocumented Windows" (wrong about the OBJECT_NOSYSTEM flag, though).
  */
-static void SYSCOLOR_MakeObjectSystem( HGDIOBJ handle, BOOL set)
+static void SYSCOLOR_MakeObjectSystem( HGDIOBJ16 handle, BOOL set)
 {
     static WORD heap_sel = 0;
     LPWORD ptr;
@@ -151,19 +152,19 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
     SysColors[index] = color;
     if (SysColorBrushes[index])
     {
-	SYSCOLOR_MakeObjectSystem(SysColorBrushes[index], FALSE);
+	SYSCOLOR_MakeObjectSystem( HBRUSH_16(SysColorBrushes[index]), FALSE);
 	DeleteObject( SysColorBrushes[index] );
     }
     SysColorBrushes[index] = CreateSolidBrush( color );
-    SYSCOLOR_MakeObjectSystem(SysColorBrushes[index], TRUE);
+    SYSCOLOR_MakeObjectSystem( HBRUSH_16(SysColorBrushes[index]), TRUE);
 
     if (SysColorPens[index])
     {
-        SYSCOLOR_MakeObjectSystem(SysColorPens[index], FALSE);
+        SYSCOLOR_MakeObjectSystem( HPEN_16(SysColorPens[index]), FALSE);
 	DeleteObject( SysColorPens[index] );
     }
     SysColorPens[index] = CreatePen( PS_SOLID, 1, color );
-    SYSCOLOR_MakeObjectSystem(SysColorPens[index], TRUE);
+    SYSCOLOR_MakeObjectSystem( HPEN_16(SysColorPens[index]), TRUE);
 }
 
 

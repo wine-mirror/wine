@@ -39,13 +39,14 @@
 #include "wine/debug.h"
 #include "windef.h"
 #include "wingdi.h"
+#include "wownt32.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
 static DCE *firstDCE;
-static HDC defaultDCstate;
+static HDC16 defaultDCstate;
 
 static void DCE_DeleteClipRgn( DCE* );
 static INT DCE_ReleaseDC( DCE* );
@@ -89,7 +90,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
         HeapFree( GetProcessHeap(), 0, dce );
 	return 0;
     }
-    if (!defaultDCstate) defaultDCstate = GetDCState16( dce->hDC );
+    if (!defaultDCstate) defaultDCstate = GetDCState16( HDC_16(dce->hDC) );
 
     /* store DCE handle in DC hook data field */
 
@@ -107,7 +108,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
             if (style & WS_CLIPCHILDREN) dce->DCXflags |= DCX_CLIPCHILDREN;
             if (style & WS_CLIPSIBLINGS) dce->DCXflags |= DCX_CLIPSIBLINGS;
 	}
-	SetHookFlags16(dce->hDC,DCHF_INVALIDATEVISRGN);
+        SetHookFlags16( HDC_16(dce->hDC), DCHF_INVALIDATEVISRGN );
     }
     else dce->DCXflags = DCX_CACHE | DCX_DCEEMPTY;
 
@@ -223,7 +224,7 @@ static void DCE_DeleteClipRgn( DCE* dce )
 
     /* make it dirty so that the vis rgn gets recomputed next time */
     dce->DCXflags |= DCX_DCEDIRTY;
-    SetHookFlags16( dce->hDC, DCHF_INVALIDATEVISRGN );
+    SetHookFlags16( HDC_16(dce->hDC), DCHF_INVALIDATEVISRGN );
 }
 
 
@@ -243,8 +244,8 @@ static INT DCE_ReleaseDC( DCE* dce )
     if (dce->DCXflags & DCX_CACHE)
     {
         /* make the DC clean so that SetDCState doesn't try to update the vis rgn */
-        SetHookFlags16( dce->hDC, DCHF_VALIDATEVISRGN );
-        SetDCState16( dce->hDC, defaultDCstate );
+        SetHookFlags16( HDC_16(dce->hDC), DCHF_VALIDATEVISRGN );
+        SetDCState16( HDC_16(dce->hDC), defaultDCstate );
         dce->DCXflags &= ~DCX_DCEBUSY;
 	if (dce->DCXflags & DCX_DCEDIRTY)
 	{
@@ -323,7 +324,7 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
 
                     TRACE("\tfixed up %p dce [%04x]\n", dce, dce->hwndCurrent);
                     dce->DCXflags |= DCX_DCEDIRTY;
-                    SetHookFlags16(dce->hDC, DCHF_INVALIDATEVISRGN);
+                    SetHookFlags16( HDC_16(dce->hDC), DCHF_INVALIDATEVISRGN );
                     bRet = TRUE;
                 }
             }
@@ -510,7 +511,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     dce->DCXflags &= ~DCX_DCEDIRTY;
     hdc = dce->hDC;
 
-    if (bUpdateVisRgn) SetHookFlags16( hdc, DCHF_INVALIDATEVISRGN ); /* force update */
+    if (bUpdateVisRgn) SetHookFlags16( HDC_16(hdc), DCHF_INVALIDATEVISRGN ); /* force update */
 
     if (!USER_Driver.pGetDC( hwnd, hdc, hrgnClip, flags )) hdc = 0;
 
@@ -588,7 +589,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
     TRACE("hDC = %04x, %i\n", hDC, code);
 
     if (!dce) return 0;
-    assert(dce->hDC == hDC);
+    assert( HDC_16(dce->hDC) == hDC );
 
     /* Grab the windows lock before doing anything else  */
     USER_Lock();
@@ -604,7 +605,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
            {
                /* Dirty bit has been cleared by caller, set it again so that
                 * pGetDC recomputes the visible region. */
-               SetHookFlags16( dce->hDC, DCHF_INVALIDATEVISRGN );
+               SetHookFlags16( hDC, DCHF_INVALIDATEVISRGN );
                USER_Driver.pGetDC( dce->hwndCurrent, dce->hDC, dce->hClipRgn, dce->DCXflags );
            }
            else /* non-fatal but shouldn't happen */

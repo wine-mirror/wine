@@ -659,7 +659,7 @@ static WDML_XACT*	WDML_ClientQueueExecute(WDML_CONV* pConv, LPCVOID pData, DWORD
 	pXAct->hMem = WDML_BuildExecuteCommand(pConv, pData, cbData);
     }
 
-    pXAct->lParam = pXAct->hMem;
+    pXAct->lParam = (LPARAM)pXAct->hMem;
 
     return pXAct;
 }
@@ -682,7 +682,7 @@ static WDML_QUEUE_STATE WDML_HandleExecuteReply(WDML_CONV* pConv, MSG* msg, WDML
     UnpackDDElParam(WM_DDE_ACK, msg->lParam, &uiLo, &uiHi);
     FreeDDElParam(WM_DDE_ACK, msg->lParam);
 
-    if (uiHi != pXAct->hMem)
+    if ((HANDLE)uiHi != pXAct->hMem)
     {
         return WDML_QS_PASS;
     }
@@ -735,7 +735,7 @@ static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPCVOID pData, DWORD cb
 	}
     }
 
-    pXAct->lParam = PackDDElParam(WM_DDE_POKE, pXAct->hMem, atom);
+    pXAct->lParam = PackDDElParam(WM_DDE_POKE, (UINT)pXAct->hMem, atom);
 
     return pXAct;
 }
@@ -869,10 +869,7 @@ static WDML_QUEUE_STATE WDML_HandleIncomingData(WDML_CONV* pConv, MSG* msg, HDDE
 
     if (hDdeDataOut != (HDDEDATA)DDE_FACK || wdh.fRelease)
     {
-        if (uiLo)
-        {
-            GlobalFree(uiLo);
-        }
+        if (uiLo) GlobalFree((HANDLE)uiLo);
     }
 
     DdeFreeDataHandle(hDdeDataIn);

@@ -1173,7 +1173,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
         if (HIWORD(uiHi))
         {
             /* uiHi should contain a hMem from WM_DDE_EXECUTE */
-            HGLOBAL h = dde_get_pair( uiHi );
+            HGLOBAL h = dde_get_pair( (HANDLE)uiHi );
             if (h)
             {
                 /* send back the value of h on the other side */
@@ -1279,8 +1279,8 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
             if (!buffer || !*buffer) return FALSE;
             uiLo = *lparam;
             memcpy( &hMem, *buffer, size );
-            uiHi = hMem;
-            TRACE("recv dde-ack %u mem=%x[%lx]\n", uiLo, uiHi, GlobalSize( uiHi ));
+            uiHi = (UINT)hMem;
+            TRACE("recv dde-ack %u mem=%x[%lx]\n", uiLo, uiHi, GlobalSize( hMem ));
         }
         else
         {
@@ -1306,7 +1306,7 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
             }
             else return FALSE;
         }
-	uiLo = hMem;
+        uiLo = (UINT)hMem;
 
 	*lparam = PackDDElParam( message, uiLo, uiHi );
 	break;
@@ -1320,14 +1320,14 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 		memcpy( ptr, *buffer, size );
 		GlobalUnlock( hMem );
                 TRACE( "exec: pairing c=%08lx s=%08lx\n", *lparam, (DWORD)hMem );
-                if (!dde_add_pair( *lparam, hMem ))
+                if (!dde_add_pair( (HGLOBAL)*lparam, hMem ))
                 {
                     GlobalFree( hMem );
                     return FALSE;
                 }
 	    }
 	} else return FALSE;
-	*lparam = hMem;
+        *lparam = (LPARAM)hMem;
         break;
     }
     return TRUE;

@@ -84,6 +84,6 @@ typedef struct
 #define CID_WIN32     0x0004
 #define CID_NONSHARED 0x0008
 
-extern void CURSORICON_FreeModuleIcons( HMODULE hModule );
+extern void CURSORICON_FreeModuleIcons( HMODULE16 hModule );
 
 #endif /* __WINE_CURSORICON_H */
