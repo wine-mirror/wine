@@ -1212,7 +1212,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
             if ((p = strrchrW( buffer, '\\' ))) p++;
             else p = buffer;
         }
-        MODULE_GetLoadOrder(loadorder, p, basename, FALSE);
+        MODULE_GetLoadOrderA(loadorder, p, basename, FALSE);
     }
 
     for(i = 0; i < LOADORDER_NTYPES; i++)

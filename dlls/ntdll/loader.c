@@ -1374,7 +1374,7 @@ static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm )
     }
 
     main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
-    MODULE_GetLoadOrder( loadorder, main_exe->ldr.BaseDllName.Buffer, filename, TRUE);
+    MODULE_GetLoadOrderA( loadorder, main_exe->ldr.BaseDllName.Buffer, filename, TRUE);
 
     for (i = 0; i < LOADORDER_NTYPES; i++)
     {
