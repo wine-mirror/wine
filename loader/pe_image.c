@@ -724,7 +724,7 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 	}
 
 	/* Create 32-bit MODREF */
-	if ( !(wm = PE_CreateModule( hModule32, name, flags, -1, FALSE )) )
+	if ( !(wm = PE_CreateModule( hModule32, name, flags, hFile, FALSE )) )
 	{
 		ERR( "can't load %s\n", name );
                 CloseHandle( hFile );
