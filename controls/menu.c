@@ -2781,7 +2781,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	    uSubPWndLevel = 0;
 	}
 	MENU_SelectItem( mt.hOwnerWnd, mt.hTopMenu, NO_SELECTED_ITEM, FALSE );
-	SendMessageA( mt.hOwnerWnd, WM_MENUSELECT, MAKELONG(0,0), 0xffff );
+	SendMessageA( mt.hOwnerWnd, WM_MENUSELECT, MAKELONG(0,0xffff), 0 );
     }
 
     /* Reset the variable for hiding menu */
