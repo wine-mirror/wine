@@ -158,7 +158,7 @@ DLLS = \
 
 # Implicit rules
 
-.SUFFIXES: .rc .res .spec .spec.c .spec.o .glue.c
+.SUFFIXES: .mc .rc .res .spec .spec.c .spec.o .glue.c
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
@@ -171,6 +171,9 @@ DLLS = \
 
 .S.o:
 	$(CC) -c -o $*.o $<  
+
+.mc.rc:
+	$(WMC) -i -H /dev/null -o $@ $<
 
 .rc.s:
 	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) $<
@@ -276,7 +279,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(MC_SRCS:.mc=.rc) $(PROGRAMS)
 
 # Rules for installing
 
@@ -293,6 +296,8 @@ $(SPEC_SRCS:.spec=.spec.c): $(BUILD) $(TOPSRCDIR)/include/builtin16.h $(TOPSRCDI
 $(GLUE:.c=.glue.c): $(BUILD) $(TOPSRCDIR)/include/builtin16.h $(TOPSRCDIR)/include/builtin32.h
 
 $(RC_SRCS:.rc=.s): $(WRC)
+
+$(MC_SRCS:.mc=.rc): $(WMC)
 
 $(SUBDIRS): dummy
 	@cd $@ && $(MAKE)
