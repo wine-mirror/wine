@@ -212,7 +212,7 @@ DEBUG_SetFrame(int newframe)
       curr_frame = 0;
     }
 
-   if( frames[curr_frame].frame.list.sourcefile != NULL )
+   if( frames && frames[curr_frame].frame.list.sourcefile != NULL )
     {
       DEBUG_List(&frames[curr_frame].frame.list, NULL, 0);
     }
