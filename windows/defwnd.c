@@ -38,10 +38,10 @@ static short iMenuSysKey = 0;
 static void DEFWND_HandleWindowPosChanged( HWND hwnd, UINT flags )
 {
     RECT rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_GetPtr( hwnd );
 
     rect = wndPtr->rectClient;
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 
     if (!(flags & SWP_NOCLIENTMOVE))
         SendMessageW( hwnd, WM_MOVE, 0, MAKELONG(rect.left, rect.top));
@@ -96,14 +96,14 @@ static void DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
     if (!text) text = empty_string;
     count = strlenW(text) + 1;
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
+    if (!(wndPtr = WIN_GetPtr( hwnd ))) return;
     if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
     if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
 	strcpyW( wndPtr->text, text );
     else
         ERR("Not enough memory for window text\n");
     text = wndPtr->text;
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 
     if (USER_Driver.pSetWindowText) USER_Driver.pSetWindowText( hwnd, text );
 }
@@ -357,9 +357,9 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         {
             LONG hitcode;
             POINT pt;
-            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            WND *wndPtr = WIN_GetPtr( hwnd );
             HMENU hMenu = wndPtr->hSysMenu;
-            WIN_ReleaseWndPtr( wndPtr );
+            WIN_ReleasePtr( wndPtr );
             if (!hMenu) return 0;
             pt.x = SLOWORD(lParam);
             pt.y = SHIWORD(lParam);
@@ -378,14 +378,14 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_NCDESTROY:
         {
-            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            WND *wndPtr = WIN_GetPtr( hwnd );
             if (!wndPtr) return 0;
             if (wndPtr->text) HeapFree( GetProcessHeap(), 0, wndPtr->text );
             wndPtr->text = NULL;
             if (wndPtr->pVScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pVScroll );
             if (wndPtr->pHScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pHScroll );
             wndPtr->pVScroll = wndPtr->pHScroll = NULL;
-            WIN_ReleaseWndPtr( wndPtr );
+            WIN_ReleasePtr( wndPtr );
             return 0;
         }
 
@@ -607,9 +607,9 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_ISACTIVEICON:
         {
-            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            WND *wndPtr = WIN_GetPtr( hwnd );
             BOOL ret = (wndPtr->flags & WIN_NCACTIVATED) != 0;
-            WIN_ReleaseWndPtr( wndPtr );
+            WIN_ReleasePtr( wndPtr );
             return ret;
         }
 
@@ -626,21 +626,15 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             return USER_Driver.pSetWindowIcon( hwnd, lParam, (wParam != ICON_SMALL) );
         else
 	{
-		int index = (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM;
-		HICON hOldIcon = GetClassLongW(hwnd, index); 
-		SetClassLongW(hwnd, index, lParam);
-
-		SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED
-			 | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
-			 | SWP_NOZORDER);
-		return hOldIcon;
+            HICON hOldIcon = SetClassLongW( hwnd, (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM,
+                                            lParam);
+            SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE |
+                         SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
+            return hOldIcon;
 	}
 
     case WM_GETICON:
-	{
-		int index = (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM;
-		return GetClassLongW(hwnd, index); 
-	}
+        return GetClassLongW( hwnd, (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM );
 
     case WM_HELP:
         SendMessageW( GetParent(hwnd), msg, wParam, lParam );
@@ -661,7 +655,12 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam,
     LRESULT result = 0;
     HWND hwnd = WIN_Handle32( hwnd16 );
 
-    if (!IsWindow( hwnd )) return 0;
+    if (!WIN_IsCurrentProcess( hwnd ))
+    {
+        if (!IsWindow( hwnd )) return 0;
+        ERR( "called for other process window %x\n", hwnd );
+        return 0;
+    }
     SPY_EnterMessage( SPY_DEFWNDPROC16, hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -719,9 +718,16 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd16, UINT16 msg, WPARAM16 wParam,
 LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     LRESULT result = 0;
+    HWND full_handle;
 
-    if (!IsWindow( hwnd )) return 0;
-    hwnd = WIN_GetFullHandle( hwnd );
+    if (!(full_handle = WIN_IsCurrentProcess( hwnd )))
+    {
+        if (!IsWindow( hwnd )) return 0;
+        ERR( "called for other process window %x\n", hwnd );
+        return 0;
+    }
+    hwnd = full_handle;
+
     SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -754,17 +760,17 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     case WM_GETTEXTLENGTH:
         {
-            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            WND *wndPtr = WIN_GetPtr( hwnd );
             if (wndPtr && wndPtr->text)
                 result = WideCharToMultiByte( CP_ACP, 0, wndPtr->text, strlenW(wndPtr->text),
                                               NULL, 0, NULL, NULL );
-            WIN_ReleaseWndPtr( wndPtr );
+            WIN_ReleasePtr( wndPtr );
         }
         break;
 
     case WM_GETTEXT:
         {
-            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            WND *wndPtr = WIN_GetPtr( hwnd );
             if (wParam && wndPtr && wndPtr->text)
             {
                 LPSTR dest = (LPSTR)lParam;
@@ -772,7 +778,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
                                           dest, wParam, NULL, NULL )) dest[wParam-1] = 0;
                 result = strlen( dest );
             }
-            WIN_ReleaseWndPtr( wndPtr );
+            WIN_ReleasePtr( wndPtr );
         }
         break;
 
@@ -849,9 +855,15 @@ LRESULT WINAPI DefWindowProcW(
     LPARAM lParam )   /* [in] second message parameter */
 {
     LRESULT result = 0;
+    HWND full_handle;
 
-    if (!IsWindow( hwnd )) return 0;
-    hwnd = WIN_GetFullHandle( hwnd );
+    if (!(full_handle = WIN_IsCurrentProcess( hwnd )))
+    {
+        if (!IsWindow( hwnd )) return 0;
+        ERR( "called for other process window %x\n", hwnd );
+        return 0;
+    }
+    hwnd = full_handle;
     SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -884,22 +896,22 @@ LRESULT WINAPI DefWindowProcW(
 
     case WM_GETTEXTLENGTH:
         {
-            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            WND *wndPtr = WIN_GetPtr( hwnd );
             if (wndPtr && wndPtr->text) result = (LRESULT)strlenW(wndPtr->text);
-            WIN_ReleaseWndPtr( wndPtr );
+            WIN_ReleasePtr( wndPtr );
         }
         break;
 
     case WM_GETTEXT:
         {
-            WND *wndPtr = WIN_FindWndPtr( hwnd );
+            WND *wndPtr = WIN_GetPtr( hwnd );
             if (wParam && wndPtr && wndPtr->text)
             {
                 LPWSTR dest = (LPWSTR)lParam;
                 lstrcpynW( dest, wndPtr->text, wParam );
                 result = strlenW( dest );
             }
-            WIN_ReleaseWndPtr( wndPtr );
+            WIN_ReleasePtr( wndPtr );
         }
         break;
 

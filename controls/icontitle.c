@@ -46,25 +46,22 @@ HWND ICONTITLE_Create( HWND owner )
     WND* wndPtr;
     HWND hWnd;
     HINSTANCE instance = GetWindowLongA( owner, GWL_HINSTANCE );
+    LONG style = WS_CLIPSIBLINGS;
 
+    if (!IsWindowEnabled(owner)) style |= WS_DISABLED;
     if( GetWindowLongA( owner, GWL_STYLE ) & WS_CHILD )
 	hWnd = CreateWindowExA( 0, ICONTITLE_CLASS_ATOM, NULL,
-				  WS_CHILD | WS_CLIPSIBLINGS, 0, 0, 1, 1,
-				  GetParent(owner), 0, instance, NULL );
+                                style | WS_CHILD, 0, 0, 1, 1,
+                                GetParent(owner), 0, instance, NULL );
     else
 	hWnd = CreateWindowExA( 0, ICONTITLE_CLASS_ATOM, NULL,
-				  WS_CLIPSIBLINGS, 0, 0, 1, 1,
-				  owner, 0, instance, NULL );
-    wndPtr = WIN_FindWndPtr( hWnd );
-    if( wndPtr )
-    {
-        wndPtr->owner = owner; /* MDI depends on this */
-	wndPtr->dwStyle &= ~(WS_CAPTION | WS_BORDER);
-        if (!IsWindowEnabled(owner)) wndPtr->dwStyle |= WS_DISABLED;
-        WIN_ReleaseWndPtr(wndPtr);
-	return hWnd;
-    }
-    return 0;
+                                style, 0, 0, 1, 1,
+                                owner, 0, instance, NULL );
+    if (!(wndPtr = WIN_GetPtr( hWnd ))) return 0;
+    wndPtr->owner = owner; /* MDI depends on this */
+    wndPtr->dwStyle &= ~(WS_CAPTION | WS_BORDER);
+    WIN_ReleasePtr(wndPtr);
+    return hWnd;
 }
 
 /***********************************************************************

@@ -791,7 +791,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     if (!wndPtr || !infoPtr ||
         ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
         ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) goto END;
-    if (!WIN_IsWindowDrawable( wndPtr, FALSE )) goto END;
+    if (!WIN_IsWindowDrawable( hwnd, FALSE )) goto END;
     hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,

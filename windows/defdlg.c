@@ -12,6 +12,9 @@
 #include "controls.h"
 #include "win.h"
 #include "winproc.h"
+#include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(dialog);
 
 
 /***********************************************************************
@@ -19,13 +22,17 @@
  */
 static WNDPROC DEFDLG_GetDlgProc( HWND hwnd )
 {
-    WNDPROC ret = 0;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (wndPtr)
+    WNDPROC ret;
+    WND *wndPtr = WIN_GetPtr( hwnd );
+
+    if (!wndPtr) return 0;
+    if (wndPtr == WND_OTHER_PROCESS)
     {
-        ret = *(WNDPROC *)((char *)wndPtr->wExtra + DWL_DLGPROC);
-        WIN_ReleaseWndPtr(wndPtr);
+        ERR( "cannot get dlg proc %x from other process\n", hwnd );
+        return 0;
     }
+    ret = *(WNDPROC *)((char *)wndPtr->wExtra + DWL_DLGPROC);
+    WIN_ReleasePtr( wndPtr );
     return ret;
 }
 

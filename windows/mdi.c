@@ -180,9 +180,14 @@ const struct builtin_class_descr MDICLIENT_builtin_class =
 static MDICLIENTINFO *get_client_info( HWND client )
 {
     MDICLIENTINFO *ret = NULL;
-    WND *win = WIN_FindWndPtr( client );
+    WND *win = WIN_GetPtr( client );
     if (win)
     {
+        if (win == WND_OTHER_PROCESS)
+        {
+            ERR( "client %x belongs to other process\n", client );
+            return NULL;
+        }
         if (win->cbWndExtra < sizeof(MDICLIENTINFO)) WARN( "%x is not an MDI client\n", client );
         else ret = (MDICLIENTINFO *)win->wExtra;
         WIN_ReleaseWndPtr( win );
@@ -1215,7 +1220,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
           /* Since we are using only cs->lpCreateParams, we can safely
            * cast to LPCREATESTRUCTA here */
           LPCREATESTRUCTA cs = (LPCREATESTRUCTA)lParam;
-          WND *wndPtr = WIN_FindWndPtr( hwnd );
+          WND *wndPtr = WIN_GetPtr( hwnd );
 
 	/* Translation layer doesn't know what's in the cs->lpCreateParams
 	 * so we have to keep track of what environment we're in. */
@@ -1233,7 +1238,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 	    ci->hWindowMenu	= ccs->hWindowMenu;
 	    ci->idFirstChild	= ccs->idFirstChild;
 	}
-        WIN_ReleaseWndPtr( wndPtr );
+        WIN_ReleasePtr( wndPtr );
 
 	ci->hwndChildMaximized  = 0;
 	ci->nActiveChildren	= 0;
@@ -1549,17 +1554,17 @@ LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
                 {
                     /* control menu is between the frame system menu and 
                      * the first entry of menu bar */
-                    WND *wndPtr = WIN_FindWndPtr(hwnd);
+                    WND *wndPtr = WIN_GetPtr(hwnd);
 
                     if( (wParam == VK_LEFT && GetMenu(hwnd) == next_menu->hmenuIn) ||
                         (wParam == VK_RIGHT && GetSubMenu(wndPtr->hSysMenu, 0) == next_menu->hmenuIn) )
                     {
-                        WIN_ReleaseWndPtr(wndPtr);
-                        wndPtr = WIN_FindWndPtr(ci->hwndActiveChild);
+                        WIN_ReleasePtr(wndPtr);
+                        wndPtr = WIN_GetPtr(ci->hwndActiveChild);
                         next_menu->hmenuNext = GetSubMenu(wndPtr->hSysMenu, 0);
                         next_menu->hwndNext = ci->hwndActiveChild;
-                        WIN_ReleaseWndPtr(wndPtr);
                     }
+                    WIN_ReleasePtr(wndPtr);
                 }
                 return 0;
             }
@@ -1765,9 +1770,9 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
 
             if( wParam == VK_LEFT )  /* switch to frame system menu */
             {
-                WND *wndPtr = WIN_FindWndPtr( parent );
+                WND *wndPtr = WIN_GetPtr( parent );
                 next_menu->hmenuNext = GetSubMenu( wndPtr->hSysMenu, 0 );
-                WIN_ReleaseWndPtr( wndPtr );
+                WIN_ReleasePtr( wndPtr );
             }
             if( wParam == VK_RIGHT )  /* to frame menu bar */
             {

@@ -176,26 +176,27 @@ static HWND *list_window_children( HWND hwnd, ATOM atom, DWORD tid )
 
 
 /***********************************************************************
- *           WIN_GetWndPtr
+ *           WIN_GetPtr
  *
  * Return a pointer to the WND structure if local to the process,
- * or BAD_WND_PTR is handle is local but not valid.
- * If ret value is a valid pointer, the user lock is held.
+ * or WND_OTHER_PROCESS is handle may be valid in other process.
+ * If ret value is a valid pointer, it must be released with WIN_ReleasePtr.
  */
-WND *WIN_GetWndPtr( HWND hwnd )
+WND *WIN_GetPtr( HWND hwnd )
 {
     WND * ptr;
     WORD index = LOWORD(hwnd) - FIRST_USER_HANDLE;
 
-    if (index >= NB_USER_HANDLES) return BAD_WND_PTR;
+    if (index >= NB_USER_HANDLES) return NULL;
 
     USER_Lock();
     if ((ptr = user_handles[index]))
     {
         if (ptr->dwMagic == WND_MAGIC && (!HIWORD(hwnd) || hwnd == ptr->hwndSelf))
             return ptr;
-        ptr = BAD_WND_PTR;
+        ptr = NULL;
     }
+    else ptr = WND_OTHER_PROCESS;
     USER_Unlock();
     return ptr;
 }
@@ -204,32 +205,34 @@ WND *WIN_GetWndPtr( HWND hwnd )
 /***********************************************************************
  *           WIN_IsCurrentProcess
  *
- * Check whether a given window belongs to the current process.
+ * Check whether a given window belongs to the current process (and return the full handle).
  */
-BOOL WIN_IsCurrentProcess( HWND hwnd )
+HWND WIN_IsCurrentProcess( HWND hwnd )
 {
     WND *ptr;
+    HWND ret;
 
-    if (!(ptr = WIN_GetWndPtr( hwnd )) || ptr == BAD_WND_PTR) return FALSE;
-    USER_Unlock();
-    return TRUE;
+    if (!(ptr = WIN_GetPtr( hwnd )) || ptr == WND_OTHER_PROCESS) return 0;
+    ret = ptr->hwndSelf;
+    WIN_ReleasePtr( ptr );
+    return ret;
 }
 
 
 /***********************************************************************
  *           WIN_IsCurrentThread
  *
- * Check whether a given window belongs to the current thread.
+ * Check whether a given window belongs to the current thread (and return the full handle).
  */
-BOOL WIN_IsCurrentThread( HWND hwnd )
+HWND WIN_IsCurrentThread( HWND hwnd )
 {
     WND *ptr;
-    BOOL ret = FALSE;
+    HWND ret = 0;
 
-    if ((ptr = WIN_GetWndPtr( hwnd )) && ptr != BAD_WND_PTR)
+    if ((ptr = WIN_GetPtr( hwnd )) && ptr != WND_OTHER_PROCESS)
     {
-        ret = (ptr->tid == GetCurrentThreadId());
-        USER_Unlock();
+        if (ptr->tid == GetCurrentThreadId()) ret = ptr->hwndSelf;
+        WIN_ReleasePtr( ptr );
     }
     return ret;
 }
@@ -249,13 +252,12 @@ HWND WIN_Handle32( HWND16 hwnd16 )
     /* do sign extension for -2 and -3 */
     if (hwnd16 >= (HWND16)-3) return (HWND)(LONG_PTR)(INT16)hwnd16;
 
-    if ((ptr = WIN_GetWndPtr( hwnd )))
+    if (!(ptr = WIN_GetPtr( hwnd ))) return hwnd;
+
+    if (ptr != WND_OTHER_PROCESS)
     {
-        if (ptr != BAD_WND_PTR)
-        {
-            hwnd = ptr->hwndSelf;
-            USER_Unlock();
-        }
+        hwnd = ptr->hwndSelf;
+        WIN_ReleasePtr( ptr );
     }
     else  /* may belong to another process */
     {
@@ -281,44 +283,24 @@ WND * WIN_FindWndPtr( HWND hwnd )
 
     if (!hwnd) return NULL;
 
-    if ((ptr = WIN_GetWndPtr( hwnd )))
+    if ((ptr = WIN_GetPtr( hwnd )))
     {
-        if (ptr != BAD_WND_PTR)
+        if (ptr != WND_OTHER_PROCESS)
         {
             /* increment destruction monitoring */
             ptr->irefCount++;
             return ptr;
         }
-    }
-    else if (IsWindow( hwnd )) /* check other processes */
-    {
-        ERR( "window %04x belongs to other process\n", hwnd );
-        /* DbgBreakPoint(); */
+        if (IsWindow( hwnd )) /* check other processes */
+        {
+            ERR( "window %04x belongs to other process\n", hwnd );
+            /* DbgBreakPoint(); */
+        }
     }
     SetLastError( ERROR_INVALID_WINDOW_HANDLE );
     return NULL;
 }
 
-
-/***********************************************************************
- *           WIN_LockWndPtr
- *
- * Use in case the wnd ptr is not initialized with WIN_FindWndPtr
- * but by initWndPtr;
- * Returns the locked initialisation pointer
- */
-WND *WIN_LockWndPtr(WND *initWndPtr)
-{
-    if(!initWndPtr) return 0;
-
-    /* Lock all WND structures for thread safeness*/
-    USER_Lock();
-    /*and increment destruction monitoring*/
-    initWndPtr->irefCount++;
-
-    return initWndPtr;
-
-}
 
 /***********************************************************************
  *           WIN_ReleaseWndPtr
@@ -344,21 +326,6 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
      }
      /*unlock all WND structures for thread safeness*/
      USER_Unlock();
-}
-
-/***********************************************************************
- *           WIN_UpdateWndPtr
- *
- * Updates the value of oldPtr to newPtr.
- */
-void WIN_UpdateWndPtr(WND **oldPtr, WND *newPtr)
-{
-    WND *tmpWnd = NULL;
-
-    tmpWnd = WIN_LockWndPtr(newPtr);
-    WIN_ReleaseWndPtr(*oldPtr);
-    *oldPtr = tmpWnd;
-
 }
 
 
@@ -421,9 +388,9 @@ static HWND find_child_to_repaint( HWND parent )
 
     for (i = 0; list[i] && !ret; i++)
     {
-        WND *win = WIN_GetWndPtr( list[i] );
-        if (win == BAD_WND_PTR) continue;  /* ignore it */
-        if (!win)
+        WND *win = WIN_GetPtr( list[i] );
+        if (!win) continue;  /* ignore it */
+        if (win == WND_OTHER_PROCESS)
         {
             /* doesn't belong to this process, but check children */
             ret = find_child_to_repaint( list[i] );
@@ -431,14 +398,14 @@ static HWND find_child_to_repaint( HWND parent )
         }
         if (!(win->dwStyle & WS_VISIBLE))
         {
-            USER_Unlock();
+            WIN_ReleasePtr( win );
             continue;
         }
         if ((win->tid != GetCurrentThreadId()) ||
             (!win->hrgnUpdate && !(win->flags & WIN_INTERNAL_PAINT)))
         {
             /* does not need repaint, check children */
-            USER_Unlock();
+            WIN_ReleasePtr( win );
             ret = find_child_to_repaint( list[i] );
             continue;
         }
@@ -448,29 +415,29 @@ static HWND find_child_to_repaint( HWND parent )
         if (!(win->dwExStyle & WS_EX_TRANSPARENT))
         {
             /* not transparent, we can repaint it */
-            USER_Unlock();
+            WIN_ReleasePtr( win );
             break;
         }
-        USER_Unlock();
+        WIN_ReleasePtr( win );
 
         /* transparent window, look for non-transparent sibling to paint first */
         for (i++; list[i]; i++)
         {
-            if (!(win = WIN_GetWndPtr( list[i] ))) continue;
-            if (win == BAD_WND_PTR) continue;
+            if (!(win = WIN_GetPtr( list[i] ))) continue;
+            if (win == WND_OTHER_PROCESS) continue;
             if (!(win->dwStyle & WS_VISIBLE))
             {
-                USER_Unlock();
+                WIN_ReleasePtr( win );
                 continue;
             }
             if (!(win->dwExStyle & WS_EX_TRANSPARENT) &&
                 (win->hrgnUpdate || (win->flags & WIN_INTERNAL_PAINT)))
             {
                 ret = list[i];
-                USER_Unlock();
+                WIN_ReleasePtr( win );
                 break;
             }
-            USER_Unlock();
+            WIN_ReleasePtr( win );
         }
     }
     HeapFree( GetProcessHeap(), 0, list );
@@ -587,7 +554,6 @@ void WIN_DestroyThreadWindows( HWND hwnd )
     if (!(list = WIN_ListChildren( hwnd ))) return;
     for (i = 0; list[i]; i++)
     {
-        if (!IsWindow( list[i] )) continue;
         if (WIN_IsCurrentThread( list[i] ))
             DestroyWindow( list[i] );
         else
@@ -779,16 +745,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             WARN("Bad parent %04x\n", cs->hwndParent );
 	    return 0;
 	}
-        if (cs->style & WS_CHILD)
-        {
-            parent = WIN_GetFullHandle(cs->hwndParent);
-            if (!WIN_IsCurrentProcess(parent))
-            {
-                FIXME( "creating child window of %x in other process not supported yet\n",
-                       parent );
-                return 0;
-            }
-        }
+        if (cs->style & WS_CHILD) parent = WIN_GetFullHandle(cs->hwndParent);
         else owner = GetAncestor( cs->hwndParent, GA_ROOT );
     }
     else if ((cs->style & WS_CHILD) && !(cs->style & WS_POPUP))
@@ -2033,10 +1990,11 @@ BOOL WINAPI IsWindow( HWND hwnd )
     WND *ptr;
     BOOL ret;
 
-    if ((ptr = WIN_GetWndPtr( hwnd )))
+    if (!(ptr = WIN_GetPtr( hwnd ))) return FALSE;
+
+    if (ptr != WND_OTHER_PROCESS)
     {
-        if (ptr == BAD_WND_PTR) return FALSE;
-        USER_Unlock();
+        WIN_ReleasePtr( ptr );
         return TRUE;
     }
 
@@ -2059,16 +2017,18 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
     WND *ptr;
     DWORD tid = 0;
 
-    if ((ptr = WIN_GetWndPtr( hwnd )))
+    if (!(ptr = WIN_GetPtr( hwnd )))
     {
-        if (ptr != BAD_WND_PTR)
-        {
-            /* got a valid window */
-            tid = ptr->tid;
-            if (process) *process = GetCurrentProcessId();
-            USER_Unlock();
-        }
-        else SetLastError( ERROR_INVALID_WINDOW_HANDLE);
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE);
+        return 0;
+    }
+
+    if (ptr != WND_OTHER_PROCESS)
+    {
+        /* got a valid window */
+        tid = ptr->tid;
+        if (process) *process = GetCurrentProcessId();
+        WIN_ReleasePtr( ptr );
         return tid;
     }
 
@@ -2256,17 +2216,17 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
  * minimized, and it is itself not minimized unless we are
  * trying to draw its default class icon.
  */
-BOOL WIN_IsWindowDrawable( WND* wnd, BOOL icon )
+BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL icon )
 {
     HWND *list;
     BOOL retval;
     int i;
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
-    if (!(wnd->dwStyle & WS_VISIBLE)) return FALSE;
-    if ((wnd->dwStyle & WS_MINIMIZE) &&
-        icon && GetClassLongA( wnd->hwndSelf, GCL_HICON ))  return FALSE;
+    if (!(style & WS_VISIBLE)) return FALSE;
+    if ((style & WS_MINIMIZE) && icon && GetClassLongA( hwnd, GCL_HICON ))  return FALSE;
 
-    if (!(list = WIN_ListParents( wnd->hwndSelf ))) return TRUE;
+    if (!(list = WIN_ListParents( hwnd ))) return TRUE;
     for (i = 0; list[i]; i++)
         if ((GetWindowLongW( list[i], GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) != WS_VISIBLE)
             break;

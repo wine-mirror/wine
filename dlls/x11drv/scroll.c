@@ -142,16 +142,9 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     INT  retVal = NULLREGION;
     BOOL bCaret = FALSE, bOwnRgn = TRUE;
     RECT rc, cliprc;
-    WND*   wnd = WIN_FindWndPtr( hwnd );
 
-    if (!wnd) return ERROR;
-    if (!WIN_IsWindowDrawable( wnd, TRUE ))
-    {
-        WIN_ReleaseWndPtr( wnd );
-        return ERROR;
-    }
-    hwnd = wnd->hwndSelf;  /* make it a full handle */
-    WIN_ReleaseWndPtr( wnd );
+    if (!WIN_IsWindowDrawable( hwnd, TRUE )) return ERROR;
+    hwnd = WIN_GetFullHandle( hwnd );
 
     GetClientRect(hwnd, &rc);
     if (rect) IntersectRect(&rc, &rc, rect);

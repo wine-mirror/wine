@@ -1006,7 +1006,8 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
     WND * wndPtr;
     LONG retval;
     int painting;
-    
+    WNDPROC winproc;
+
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
     {
@@ -1025,40 +1026,48 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
         }
     }
 
-    if (!msg->hwnd) return 0;
-    if (!(wndPtr = WIN_FindWndPtr( msg->hwnd ))) return 0;
-    if (!wndPtr->winproc)
+    if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
     {
-        retval = 0;
-        goto END;
+        if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( msg->hwnd ))
+            ERR( "cannot dispatch msg to other process window %x\n", msg->hwnd );
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (!(winproc = wndPtr->winproc))
+    {
+        WIN_ReleasePtr( wndPtr );
+        return 0;
     }
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
-/*    HOOK_CallHooks32A( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
+    WIN_ReleasePtr( wndPtr );
+/*    hook_CallHooks32A( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
                       msg->wParam, msg->lParam );
-    retval = CallWindowProcA( (WNDPROC)wndPtr->winproc,
-                                msg->hwnd, msg->message,
-                                msg->wParam, msg->lParam );
+    retval = CallWindowProcA( winproc, msg->hwnd, msg->message,
+                              msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
-		     msg->wParam, msg->lParam );
+                     msg->wParam, msg->lParam );
 
-    WIN_ReleaseWndPtr(wndPtr);
-    wndPtr = WIN_FindWndPtr(msg->hwnd);
-
-    if (painting && wndPtr &&
-        (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
+    if (painting && (wndPtr = WIN_GetPtr( msg->hwnd )) && (wndPtr != WND_OTHER_PROCESS))
     {
-	ERR("BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
-	    msg->hwnd);
-	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
-        /* Validate the update region to avoid infinite WM_PAINT loop */
-        RedrawWindow( wndPtr->hwndSelf, NULL, 0,
-                      RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
+        BOOL validate = ((wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate);
+        wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
+        WIN_ReleasePtr( wndPtr );
+        if (validate)
+        {
+            ERR( "BeginPaint not called on WM_PAINT for hwnd %04x!\n", msg->hwnd );
+            /* Validate the update region to avoid infinite WM_PAINT loop */
+            RedrawWindow( msg->hwnd, NULL, 0,
+                          RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
+        }
     }
-END:
-    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 
@@ -1089,7 +1098,8 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
     WND * wndPtr;
     LONG retval;
     int painting;
-    
+    WNDPROC winproc;
+
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
     {
@@ -1108,40 +1118,48 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
         }
     }
 
-    if (!msg->hwnd) return 0;
-    if (!(wndPtr = WIN_FindWndPtr( msg->hwnd ))) return 0;
-    if (!wndPtr->winproc)
+    if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
     {
-        retval = 0;
-        goto END;
+        if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( msg->hwnd ))
+            ERR( "cannot dispatch msg to other process window %x\n", msg->hwnd );
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (!(winproc = wndPtr->winproc))
+    {
+        WIN_ReleasePtr( wndPtr );
+        return 0;
     }
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
+    WIN_ReleasePtr( wndPtr );
 /*    HOOK_CallHooks32W( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
                       msg->wParam, msg->lParam );
-    retval = CallWindowProcW( (WNDPROC)wndPtr->winproc,
-                                msg->hwnd, msg->message,
-                                msg->wParam, msg->lParam );
+    retval = CallWindowProcW( winproc, msg->hwnd, msg->message,
+                              msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
-		     msg->wParam, msg->lParam );
+                     msg->wParam, msg->lParam );
 
-    WIN_ReleaseWndPtr(wndPtr);
-    wndPtr = WIN_FindWndPtr(msg->hwnd);
-
-    if (painting && wndPtr &&
-        (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
+    if (painting && (wndPtr = WIN_GetPtr( msg->hwnd )) && (wndPtr != WND_OTHER_PROCESS))
     {
-	ERR("BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
-	    msg->hwnd);
-	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
-        /* Validate the update region to avoid infinite WM_PAINT loop */
-        RedrawWindow( wndPtr->hwndSelf, NULL, 0,
-                      RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
+        BOOL validate = ((wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate);
+        wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
+        WIN_ReleasePtr( wndPtr );
+        if (validate)
+        {
+            ERR( "BeginPaint not called on WM_PAINT for hwnd %04x!\n", msg->hwnd );
+            /* Validate the update region to avoid infinite WM_PAINT loop */
+            RedrawWindow( msg->hwnd, NULL, 0,
+                          RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
+        }
     }
-END:
-    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 

@@ -104,7 +104,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     TIMER * pTimer;
     HWINDOWPROC winproc = 0;
 
-    if (hwnd && !WIN_IsCurrentThread( hwnd ))
+    if (hwnd && !(hwnd = WIN_IsCurrentThread( hwnd )))
     {
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
@@ -243,8 +243,7 @@ UINT WINAPI SetTimer( HWND hwnd, UINT id, UINT timeout,
 {
     TRACE("%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( WIN_GetFullHandle(hwnd), id, timeout, (WNDPROC16)proc,
-                           WIN_PROC_32A, FALSE );
+    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc, WIN_PROC_32A, FALSE );
 }
 
 
@@ -294,8 +293,7 @@ UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
 {
     TRACE("%04x %d %d %08lx\n", 
                    hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( WIN_GetFullHandle(hwnd), id, timeout, (WNDPROC16)proc,
-                           WIN_PROC_32A, TRUE );
+    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc, WIN_PROC_32A, TRUE );
 }
 
 

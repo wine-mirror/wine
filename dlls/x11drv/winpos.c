@@ -148,7 +148,7 @@ static HRGN get_visible_region( WND *win, HWND top, UINT flags, int mode )
 
     if (top && top != win->hwndSelf)  /* need to clip siblings of ancestors */
     {
-        WND *parent, *ptr = WIN_LockWndPtr( win );
+        WND *parent, *ptr = WIN_FindWndPtr( win->hwndSelf );
         HRGN tmp = 0;
 
         OffsetRgn( rgn, xoffset, yoffset );
@@ -194,7 +194,7 @@ static int get_covered_region( WND *win, HRGN rgn )
 {
     HRGN tmp;
     int ret;
-    WND *parent, *ptr = WIN_LockWndPtr( win );
+    WND *parent, *ptr = WIN_FindWndPtr( win->hwndSelf );
     int xoffset = 0, yoffset = 0;
 
     tmp = CreateRectRgn( 0, 0, 0, 0 );
@@ -384,7 +384,7 @@ void X11DRV_Expose( HWND hwnd, XExposeEvent *event )
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
-    if (!(win = WIN_FindWndPtr(hwnd))) return;
+    if (!(win = WIN_GetPtr( hwnd ))) return;
     data = win->pDriverData;
 
     if (event->window != data->client_window)  /* whole window or icon window */
@@ -393,7 +393,7 @@ void X11DRV_Expose( HWND hwnd, XExposeEvent *event )
         /* make position relative to client area instead of window */
         OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
     }
-    WIN_ReleaseWndPtr( win );
+    WIN_ReleasePtr( win );
 
     expose_window( hwnd, &rect, 0, flags );
 }
@@ -1434,7 +1434,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
     WINDOWPOS winpos;
     int x = event->x, y = event->y;
 
-    if (!(win = WIN_FindWndPtr( hwnd ))) return;
+    if (!(win = WIN_GetPtr( hwnd ))) return;
     data = win->pDriverData;
 
     /* Get geometry */
@@ -1455,7 +1455,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
            hwnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
     X11DRV_X_to_window_rect( win, &rect );
-    WIN_ReleaseWndPtr( win );
+    WIN_ReleasePtr( win );
 
     winpos.hwnd  = hwnd;
     winpos.x     = rect.left;

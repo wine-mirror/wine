@@ -787,16 +787,12 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
     WND* wndPtr;
 
     if (!hwnd) hwnd = GetDesktopWindow();
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
 
     /* check if the window or its parents are visible/not minimized */
 
-    if (!WIN_IsWindowDrawable( wndPtr, !(flags & RDW_FRAME) ) )
-    {
-        WIN_ReleaseWndPtr(wndPtr);
-        return TRUE; 
-    }
+    if (!WIN_IsWindowDrawable( hwnd, !(flags & RDW_FRAME) )) return TRUE;
 
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (TRACE_ON(win))
     {
 	if( hrgnUpdate )

@@ -14,6 +14,8 @@
 #include "winuser.h"
 #include "wine/windef16.h"
 
+#include "user.h"
+
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
 struct tagCLASS;
@@ -76,22 +78,20 @@ typedef struct
 #define WIN_NEEDS_INTERNALSOP  0x1000 /* Window was hidden by WIN_InternalShowOwnedPopups */
 
   /* Window functions */
-extern WND *WIN_GetWndPtr( HWND hwnd );
+extern WND *WIN_GetPtr( HWND hwnd );
 extern int    WIN_SuspendWndsLock( void );
 extern void   WIN_RestoreWndsLock(int ipreviousLock);
 extern WND*   WIN_FindWndPtr( HWND hwnd );
-extern WND*   WIN_LockWndPtr(WND *wndPtr);
 extern void   WIN_ReleaseWndPtr(WND *wndPtr);
-extern void   WIN_UpdateWndPtr(WND **oldPtr,WND *newPtr);
 extern HWND WIN_Handle32( HWND16 hwnd16 );
-extern BOOL WIN_IsCurrentProcess( HWND hwnd );
-extern BOOL WIN_IsCurrentThread( HWND hwnd );
+extern HWND WIN_IsCurrentProcess( HWND hwnd );
+extern HWND WIN_IsCurrentThread( HWND hwnd );
 extern void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter );
 extern void WIN_UnlinkWindow( HWND hwnd );
 extern HWND WIN_FindWinToRepaint( HWND hwnd );
 extern void WIN_DestroyThreadWindows( HWND hwnd );
 extern BOOL WIN_CreateDesktopWindow(void);
-extern BOOL WIN_IsWindowDrawable(WND*, BOOL );
+extern BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL );
 extern HWND *WIN_ListParents( HWND hwnd );
 extern HWND *WIN_ListChildren( HWND hwnd );
 extern BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly );
@@ -113,7 +113,13 @@ inline static WND *WIN_FindWndPtr16( HWND16 hwnd )
     return WIN_FindWndPtr( (HWND)(ULONG_PTR)hwnd );
 }
 
-#define BAD_WND_PTR ((WND *)1)  /* returned by WIN_GetWndPtr on bad window handles */
+/* to release pointers retrieved by WIN_GetPtr; do not confuse with WIN_ReleaseWndPtr!! */
+inline static void WIN_ReleasePtr( WND *ptr )
+{
+    USER_Unlock();
+}
+
+#define WND_OTHER_PROCESS ((WND *)1)  /* returned by WIN_GetPtr on unknown window handles */
 
 extern HWND CARET_GetHwnd(void);
 extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */

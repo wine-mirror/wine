@@ -5,6 +5,7 @@
  */
 
 #include "wine/winuser16.h"
+#include "winerror.h"
 #include "heap.h"
 #include "hook.h"
 #include "message.h"
@@ -263,35 +264,44 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         }
     }
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    if (!wndPtr->winproc)
+    if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
     {
-        WIN_ReleaseWndPtr( wndPtr );
+        if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    winproc = (WNDPROC16)wndPtr->winproc;
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( msg->hwnd ))
+            ERR( "cannot dispatch msg to other process window %x\n", msg->hwnd );
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    if (!(winproc = (WNDPROC16)wndPtr->winproc))
+    {
+        WIN_ReleasePtr( wndPtr );
+        return 0;
+    }
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE16, hwnd, msg->message, msg->wParam, msg->lParam );
     retval = CallWindowProc16( winproc, msg->hwnd, msg->message, msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg->message, retval, msg->wParam, msg->lParam );
 
-    if (!painting) return retval;
-
-    if ((wndPtr = WIN_FindWndPtr( hwnd )))
+    if (painting && (wndPtr = WIN_GetPtr( hwnd )) && (wndPtr != WND_OTHER_PROCESS))
     {
-        if ((wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
+        BOOL validate = ((wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate);
+        wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
+        WIN_ReleasePtr( wndPtr );
+        if (validate)
         {
             ERR( "BeginPaint not called on WM_PAINT for hwnd %04x!\n", msg->hwnd );
-            wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
-            WIN_ReleaseWndPtr( wndPtr );
             /* Validate the update region to avoid infinite WM_PAINT loop */
             RedrawWindow( hwnd, NULL, 0,
                           RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
         }
-        else WIN_ReleaseWndPtr( wndPtr );
     }
     return retval;
 }

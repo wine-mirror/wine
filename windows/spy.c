@@ -1710,19 +1710,17 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
  */
 void SPY_GetWndName( SPY_INSTANCE *sp_e )
 {
-    WND* pWnd = WIN_FindWndPtr( sp_e->msg_hwnd );
-    if( pWnd )
+    WND* pWnd = WIN_GetPtr( sp_e->msg_hwnd );
+    if (pWnd && pWnd != WND_OTHER_PROCESS)
     {
-	LPSTR p = (LPSTR)&sp_e->wnd_name;
-	LPSTR s = (LPSTR)&sp_e->wnd_name;
+	LPSTR p = sp_e->wnd_name;
+	LPSTR s = sp_e->wnd_name;
         char  postfix;
 	DWORD save_error;
 
 	/* save and restore error code over the next call */	
 	save_error = GetLastError();
-	GlobalGetAtomNameA((ATOM) GetClassWord(pWnd->hwndSelf, GCW_ATOM), 
-			       (LPSTR)&sp_e->wnd_class, 
-			       sizeof(sp_e->wnd_class)-1);
+	GetClassNameA( sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)-1);
 	SetLastError(save_error);
 
 	if( pWnd->text && pWnd->text[0] != '\0' )
@@ -1734,7 +1732,7 @@ void SPY_GetWndName( SPY_INSTANCE *sp_e )
 	}
 	else /* get class name */
 	{
-	    LPSTR src = (LPSTR)&sp_e->wnd_class;
+	    LPSTR src = sp_e->wnd_class;
 	    int n=sizeof(sp_e->wnd_name)-2;
 	    *(p++) = '{';
 	    while ((n-- > 0) && *src) *p++ = *src++;
@@ -1749,10 +1747,14 @@ void SPY_GetWndName( SPY_INSTANCE *sp_e )
 	}
 	*(p++) = postfix;
 	*(p++) = '\0';
-        WIN_ReleaseWndPtr(pWnd);
+        WIN_ReleasePtr(pWnd);
 
     }
-    else {strcpy( sp_e->wnd_name, "\"NULL\"" ); sp_e->wnd_class[0] = 0;}
+    else
+    {
+        strcpy( sp_e->wnd_name, "\"NULL\"" );
+        sp_e->wnd_class[0] = 0;
+    }
     return;
 }
 

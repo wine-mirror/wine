@@ -851,9 +851,9 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
         HeapFree( GetProcessHeap(), 0, dlgInfo );
 	return 0;
     }
-    wndPtr = WIN_FindWndPtr( hwnd );
+    wndPtr = WIN_GetPtr( hwnd );
     wndPtr->flags |= WIN_ISDIALOG;
-    WIN_ReleaseWndPtr(wndPtr);
+    WIN_ReleasePtr( wndPtr );
 
     if (template.helpId) SetWindowContextHelpId( hwnd, template.helpId );
     SetWindowLongW( hwnd, DWL_WINE_DIALOGINFO, (LONG)dlgInfo );

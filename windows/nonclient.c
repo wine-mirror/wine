@@ -1401,7 +1401,7 @@ static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
     HWND hwnd = wndPtr->hwndSelf;
 
     if ( wndPtr->dwStyle & WS_MINIMIZE ||
-	!WIN_IsWindowDrawable( wndPtr, 0 )) return; /* Nothing to do */
+         !WIN_IsWindowDrawable( hwnd, 0 )) return; /* Nothing to do */
 
     active  = wndPtr->flags & WIN_NCACTIVATED;
 
@@ -1513,7 +1513,7 @@ static void  NC_DoNCPaint95(
     HWND hwnd = wndPtr->hwndSelf;
 
     if ( wndPtr->dwStyle & WS_MINIMIZE ||
-	!WIN_IsWindowDrawable( wndPtr, 0 )) return; /* Nothing to do */
+         !WIN_IsWindowDrawable( hwnd, 0 )) return; /* Nothing to do */
 
     active  = wndPtr->flags & WIN_NCACTIVATED;
 

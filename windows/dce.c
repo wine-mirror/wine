@@ -274,65 +274,42 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
 
 	for (dce = firstDCE; (dce); dce = dce->next)
 	{
-            WND* wndCurrent;
-            HWND tmp;
-            INT xoffset = 0, yoffset = 0;
-
             if (dce->DCXflags & DCX_DCEEMPTY) continue;
             if ((dce->hwndCurrent == hwndScope) && !(dce->DCXflags & DCX_CLIPCHILDREN))
                 continue;  /* child window positions don't bother us */
-            if (!(wndCurrent = WIN_FindWndPtr(dce->hwndCurrent))) continue;
 
             /* check if DCE window is within the z-order scope */
 
-            for (tmp = dce->hwndCurrent; tmp; tmp = GetAncestor( tmp, GA_PARENT ))
+            if (hwndScope == dce->hwndCurrent || IsChild( hwndScope, dce->hwndCurrent ))
             {
-                if (tmp == hwndScope )
+                if (hwnd != dce->hwndCurrent)
                 {
-                    RECT wndRect;
+                    /* check if the window rectangle intersects this DCE window */
+                    RECT rect;
+                    GetWindowRect( dce->hwndCurrent, &rect );
+                    MapWindowPoints( 0, hwndScope, (POINT *)&rect, 2 );
+                    if (!IntersectRect( &rect, &rect, pRectUpdate )) continue;
 
-                    wndRect = wndCurrent->rectWindow;
+                }
+                if( !(dce->DCXflags & DCX_DCEBUSY) )
+                {
+                    /* Don't bother with visible regions of unused DCEs */
 
-                    OffsetRect( &wndRect, xoffset - wndCurrent->rectClient.left, 
-                                yoffset - wndCurrent->rectClient.top);
-
-                    if (hwnd == wndCurrent->hwndSelf ||
-                        IntersectRect( &wndRect, &wndRect, pRectUpdate ))
-                    { 
-                        if( !(dce->DCXflags & DCX_DCEBUSY) )
-                        {
-                            /* Don't bother with visible regions of unused DCEs */
-
-                            TRACE("\tpurged %08x dce [%04x]\n", 
-                                  (unsigned)dce, wndCurrent->hwndSelf);
-
-                            dce->hwndCurrent = 0;
-                            dce->DCXflags &= DCX_CACHE;
-                            dce->DCXflags |= DCX_DCEEMPTY;
-                        }
-                        else
-                        {
-                            /* Set dirty bits in the hDC and DCE structs */
-
-                            TRACE("\tfixed up %08x dce [%04x]\n", 
-                                  (unsigned)dce, wndCurrent->hwndSelf);
-
-                            dce->DCXflags |= DCX_DCEDIRTY;
-                            SetHookFlags16(dce->hDC, DCHF_INVALIDATEVISRGN);
-                            bRet = TRUE;
-                        }
-                    }
-                    break;
+                    TRACE("\tpurged %p dce [%04x]\n", dce, dce->hwndCurrent);
+                    dce->hwndCurrent = 0;
+                    dce->DCXflags &= DCX_CACHE;
+                    dce->DCXflags |= DCX_DCEEMPTY;
                 }
                 else
                 {
-                    WND* wnd = WIN_FindWndPtr( tmp );
-                    xoffset += wnd->rectClient.left;
-                    yoffset += wnd->rectClient.top;
-                    WIN_ReleaseWndPtr( wnd );
+                    /* Set dirty bits in the hDC and DCE structs */
+
+                    TRACE("\tfixed up %p dce [%04x]\n", dce, dce->hwndCurrent);
+                    dce->DCXflags |= DCX_DCEDIRTY;
+                    SetHookFlags16(dce->hDC, DCHF_INVALIDATEVISRGN);
+                    bRet = TRUE;
                 }
             }
-            WIN_ReleaseWndPtr(wndCurrent);
 	} /* dce list */
     }
     return bRet;

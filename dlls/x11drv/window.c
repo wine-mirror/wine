@@ -45,6 +45,9 @@ Atom wmChangeState = None;
 Atom kwmDockWindow = None;
 Atom _kde_net_wm_system_tray_window_for = None; /* KDE 2 Final */
 
+static LPCSTR whole_window_atom;
+static LPCSTR client_window_atom;
+static LPCSTR icon_window_atom;
 
 /***********************************************************************
  *		is_window_managed
@@ -197,7 +200,7 @@ static Window create_icon_window( Display *display, WND *win )
     wine_tsx11_unlock();
 
     TRACE( "created %lx\n", data->icon_window );
-    SetPropA( win->hwndSelf, "__wine_x11_icon_window", (HANDLE)data->icon_window );
+    SetPropA( win->hwndSelf, icon_window_atom, (HANDLE)data->icon_window );
     return data->icon_window;
 }
 
@@ -216,7 +219,7 @@ inline static void destroy_icon_window( Display *display, WND *win )
     XDestroyWindow( display, data->icon_window );
     data->icon_window = 0;
     wine_tsx11_unlock();
-    RemovePropA( win->hwndSelf, "__wine_x11_icon_window" );
+    RemovePropA( win->hwndSelf, icon_window_atom );
 }
 
 
@@ -600,11 +603,15 @@ static void create_desktop( Display *display, WND *wndPtr, CREATESTRUCTA *cs )
     _kde_net_wm_system_tray_window_for = XInternAtom( display, "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR", False );
     wine_tsx11_unlock();
 
+    whole_window_atom  = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_whole_window" ));
+    client_window_atom = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_client_window" ));
+    icon_window_atom   = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_icon_window" ));
+
     data->whole_window = data->client_window = root_window;
     data->whole_rect = data->client_rect = wndPtr->rectWindow;
 
-    SetPropA( wndPtr->hwndSelf, "__wine_x11_whole_window", (HANDLE)root_window );
-    SetPropA( wndPtr->hwndSelf, "__wine_x11_client_window", (HANDLE)root_window );
+    SetPropA( wndPtr->hwndSelf, whole_window_atom, (HANDLE)root_window );
+    SetPropA( wndPtr->hwndSelf, client_window_atom, (HANDLE)root_window );
     SetPropA( wndPtr->hwndSelf, "__wine_x11_visual_id", (HANDLE)XVisualIDFromVisual(visual) );
 
     SendMessageW( wndPtr->hwndSelf, WM_NCCREATE, 0, (LPARAM)cs );
@@ -717,10 +724,8 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
     char *utf8_buffer;
     static UINT text_cp = (UINT)-1;
     Window win;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if (!wndPtr) return FALSE;
-    if ((win = get_whole_window(wndPtr)))
+    if ((win = X11DRV_get_whole_window( hwnd )))
     {
         if (text_cp == (UINT)-1)
         {
@@ -743,7 +748,6 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, count )))
         {
             ERR("Not enough memory for window text\n");
-            WIN_ReleaseWndPtr( wndPtr );
             return FALSE;
         }
         WideCharToMultiByte(text_cp, 0, text, -1, buffer, count, NULL, NULL);
@@ -752,7 +756,6 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         if (!(utf8_buffer = HeapAlloc( GetProcessHeap(), 0, count )))
         {
             ERR("Not enough memory for window text in UTF-8\n");
-            WIN_ReleaseWndPtr( wndPtr );
             return FALSE;
         }
         WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), utf8_buffer, count, NULL, NULL);
@@ -775,7 +778,6 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         HeapFree( GetProcessHeap(), 0, utf8_buffer );
         HeapFree( GetProcessHeap(), 0, buffer );
     }
-    WIN_ReleaseWndPtr( wndPtr );
     return TRUE;
 }
 
@@ -786,7 +788,7 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
 BOOL X11DRV_DestroyWindow( HWND hwnd )
 {
     Display *display = thread_display();
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_GetPtr( hwnd );
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
 
     if (!data) goto done;
@@ -808,7 +810,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
     HeapFree( GetProcessHeap(), 0, data );
     wndPtr->pDriverData = NULL;
  done:
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
     return TRUE;
 }
 
@@ -847,8 +849,8 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     WIN_ReleaseWndPtr( wndPtr );
 
-    SetPropA( hwnd, "__wine_x11_whole_window", (HANDLE)data->whole_window );
-    SetPropA( hwnd, "__wine_x11_client_window", (HANDLE)data->client_window );
+    SetPropA( hwnd, whole_window_atom, (HANDLE)data->whole_window );
+    SetPropA( hwnd, client_window_atom, (HANDLE)data->client_window );
 
     /* send WM_NCCREATE */
     TRACE( "hwnd %x cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );
@@ -958,12 +960,16 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 Window X11DRV_get_client_window( HWND hwnd )
 {
     Window ret = 0;
-    WND *win = WIN_FindWndPtr( hwnd );
+    WND *win = WIN_GetPtr( hwnd );
+
+    if (win == WND_OTHER_PROCESS)
+        return GetPropA( hwnd, client_window_atom );
+
     if (win)
     {
         struct x11drv_win_data *data = win->pDriverData;
         ret = data->client_window;
-        WIN_ReleaseWndPtr( win );
+        WIN_ReleasePtr( win );
     }
     return ret;
 }
@@ -977,12 +983,16 @@ Window X11DRV_get_client_window( HWND hwnd )
 Window X11DRV_get_whole_window( HWND hwnd )
 {
     Window ret = 0;
-    WND *win = WIN_FindWndPtr( hwnd );
+    WND *win = WIN_GetPtr( hwnd );
+
+    if (win == WND_OTHER_PROCESS)
+        return GetPropA( hwnd, whole_window_atom );
+
     if (win)
     {
         struct x11drv_win_data *data = win->pDriverData;
         ret = data->whole_window;
-        WIN_ReleaseWndPtr( win );
+        WIN_ReleasePtr( win );
     }
     return ret;
 }
@@ -1176,18 +1186,14 @@ void X11DRV_SetFocus( HWND hwnd )
  */
 HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
 {
+    WND *wndPtr;
     Display *display = thread_display();
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    int index = small ? GCL_HICONSM : GCL_HICON;
-    HICON old;
-
-    if (!wndPtr) return 0;
-
-    old = GetClassLongW( hwnd, index );
-    SetClassLongW( hwnd, index, icon );
+    HICON old = SetClassLongW( hwnd, small ? GCL_HICONSM : GCL_HICON, icon );
 
     SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE |
                   SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+
+    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return old;
 
     if (wndPtr->dwExStyle & WS_EX_MANAGED)
     {
@@ -1202,7 +1208,6 @@ HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
             TSXFree( wm_hints );
         }
     }
-
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
     return old;
 }
