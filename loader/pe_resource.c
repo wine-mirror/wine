@@ -70,7 +70,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DI
     {
         pos = (min + max) / 2;
         if (entry[pos].u1.Id == id)
-            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s.OffsetToDirectory);
+            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s2.OffsetToDirectory);
         if (entry[pos].u1.Id > id) max = pos - 1;
         else min = pos + 1;
     }
@@ -106,10 +106,10 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_nameW( const IMAGE_RESOURCE
     while (min <= max)
     {
         pos = (min + max) / 2;
-        str = (IMAGE_RESOURCE_DIR_STRING_U *)((char *)root + entry[pos].u1.s.NameOffset);
+        str = (IMAGE_RESOURCE_DIR_STRING_U *)((char *)root + entry[pos].u1.s1.NameOffset);
         res = strncmpiW( name, str->NameString, str->Length );
         if (!res && namelen == str->Length)
-            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s.OffsetToDirectory);
+            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s2.OffsetToDirectory);
         if (res < 0) max = pos - 1;
         else min = pos + 1;
     }
@@ -154,7 +154,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_
     const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
 
     entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s.OffsetToDirectory);
+    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s2.OffsetToDirectory);
 }
 
 
@@ -288,9 +288,9 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG lpara
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
         LPSTR type;
 
-        if (et[i].u1.s.NameIsString)
+        if (et[i].u1.s1.NameIsString)
         {
-            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s.NameOffset);
+            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s1.NameOffset);
             DWORD len = WideCharToMultiByte( CP_ACP, 0, pResString->NameString, pResString->Length,
                                              NULL, 0, NULL, NULL);
             if (!(type = HeapAlloc(GetProcessHeap(), 0, len + 1)))
@@ -330,9 +330,9 @@ BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG lpara
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
 	LPWSTR	type;
 
-        if (et[i].u1.s.NameIsString)
+        if (et[i].u1.s1.NameIsString)
         {
-            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s.NameOffset);
+            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s1.NameOffset);
             if (!(type = HeapAlloc(GetProcessHeap(), 0, (pResString->Length+1) * sizeof (WCHAR))))
                 return FALSE;
             memcpy(type, pResString->NameString, pResString->Length * sizeof (WCHAR));
@@ -372,9 +372,9 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
         LPSTR name;
 
-        if (et[i].u1.s.NameIsString)
+        if (et[i].u1.s1.NameIsString)
         {
-            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) basedir + et[i].u1.s.NameOffset);
+            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) basedir + et[i].u1.s1.NameOffset);
             DWORD len = WideCharToMultiByte(CP_ACP, 0, pResString->NameString, pResString->Length,
                                             NULL, 0, NULL, NULL);
             if (!(name = HeapAlloc(GetProcessHeap(), 0, len + 1 )))
@@ -417,9 +417,9 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
         LPWSTR name;
 
-        if (et[i].u1.s.NameIsString)
+        if (et[i].u1.s1.NameIsString)
         {
-            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) basedir + et[i].u1.s.NameOffset);
+            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) basedir + et[i].u1.s1.NameOffset);
             if (!(name = HeapAlloc(GetProcessHeap(), 0, (pResString->Length + 1) * sizeof (WCHAR))))
                 return FALSE;
             memcpy(name, pResString->NameString, pResString->Length * sizeof (WCHAR));

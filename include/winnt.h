@@ -2196,17 +2196,17 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY {
 		struct {
 			unsigned NameOffset:31;
 			unsigned NameIsString:1;
-		} s;
+		} DUMMYSTRUCTNAME1;
 		DWORD   Name;
 		WORD    Id;
-	} u1;
+	} DUMMYUNIONNAME1;
 	union {
 		DWORD   OffsetToData;
 		struct {
 			unsigned OffsetToDirectory:31;
 			unsigned DataIsDirectory:1;
-		} s;
-	} u2;
+		} DUMMYSTRUCTNAME2;
+	} DUMMYUNIONNAME2;
 } IMAGE_RESOURCE_DIRECTORY_ENTRY,*PIMAGE_RESOURCE_DIRECTORY_ENTRY;
 
 

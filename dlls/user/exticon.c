@@ -79,7 +79,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DI
     {
         pos = (min + max) / 2;
         if (entry[pos].u1.Id == id)
-            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s.OffsetToDirectory);
+            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s2.OffsetToDirectory);
         if (entry[pos].u1.Id > id) max = pos - 1;
         else min = pos + 1;
     }
@@ -97,7 +97,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_
 {
     const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
     entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s.OffsetToDirectory);
+    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s2.OffsetToDirectory);
 }
 
 /*************************************************************************
@@ -448,7 +448,7 @@ static HRESULT ICO_ExtractIconExW(
               const IMAGE_RESOURCE_DIRECTORY *resdir;
 
 	    /* go down this resource entry, name */
-	    resdir = (PIMAGE_RESOURCE_DIRECTORY)((DWORD)rootresdir+(xresent->u2.s.OffsetToDirectory));
+	    resdir = (PIMAGE_RESOURCE_DIRECTORY)((DWORD)rootresdir+(xresent->u2.s2.OffsetToDirectory));
 
 	    /* default language (0) */
 	    resdir = find_entry_default(resdir,rootresdir);

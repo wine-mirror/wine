@@ -1543,12 +1543,12 @@ BOOL WINAPI HeapWalk(
     if (ptr == (char *)(currentheap + currentheap->headerSize))
     {
 	entry->wFlags |= PROCESS_HEAP_REGION;
-	entry->Foo.Region.dwCommittedSize = currentheap->commitSize;
-	entry->Foo.Region.dwUnCommittedSize =
+	entry->u.Region.dwCommittedSize = currentheap->commitSize;
+	entry->u.Region.dwUnCommittedSize =
 		currentheap->size - currentheap->commitSize;
-	entry->Foo.Region.lpFirstBlock = /* first valid block */
+	entry->u.Region.lpFirstBlock = /* first valid block */
 		currentheap + currentheap->headerSize;
-	entry->Foo.Region.lpLastBlock  = /* first invalid block */
+	entry->u.Region.lpLastBlock  = /* first invalid block */
 		currentheap + currentheap->size;
     }
     ret = TRUE;

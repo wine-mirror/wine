@@ -255,7 +255,7 @@ typedef struct
             LPVOID lpFirstBlock;
             LPVOID lpLastBlock;
         } Region;
-    } Foo;
+    } DUMMYUNIONNAME;
 } PROCESS_HEAP_ENTRY, *LPPROCESS_HEAP_ENTRY;
 
 #define PROCESS_HEAP_REGION                   0x0001

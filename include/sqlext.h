@@ -1638,11 +1638,11 @@ typedef struct tagODBC_VS_ARGS {
 	union {
 		WCHAR	*wszArg;	
 		CHAR	*szArg;
-	}u1;
+	} DUMMYUNIONNAME1;
 	union {
 		WCHAR	*wszCorrelation;
 		CHAR	*szCorrelation;
-	}u2;				
+	} DUMMYUNIONNAME2;
 	RETCODE	RetCode;
 } ODBC_VS_ARGS, *PODBC_VS_ARGS;
 
