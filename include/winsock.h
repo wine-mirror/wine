@@ -65,6 +65,7 @@
 #  define timeval unix_timeval
 #  define select unix_select
 #  include <sys/types.h>
+#  include <sys/time.h>
 #  include <stdlib.h>
 #  undef fd_set
 #  undef timeval
