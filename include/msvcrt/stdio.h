@@ -269,6 +269,7 @@ static inline char* tempnam(const char *dir, const char *prefix) { return _tempn
 static inline int unlink(const char* path) { return _unlink(path); }
 #define MSVCRT_UNLINK_DEFINED
 #endif
+static inline int vsnprintf(char *buffer, size_t size, const char *format, va_list args) { return _vsnprintf(buffer,size,format,args); }
 
 static inline MSVCRT(wint_t) fgetwchar(void) { return _fgetwchar(); }
 static inline MSVCRT(wint_t) fputwchar(MSVCRT(wint_t) wc) { return _fputwchar(wc); }
