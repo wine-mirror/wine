@@ -203,13 +203,6 @@ extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );
 extern void MODULE_WalkModref( DWORD id );
-/* the following parts of module.c are temporary exported during move of code
- * from loader/module.c to dlls/ntdll/loader.c
- */
-extern WINE_MODREF *exe_modref;
-extern CRITICAL_SECTION loader_section;
-extern int process_detaching;
-extern BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved );
 
 /* loader/ne/module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
