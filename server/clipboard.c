@@ -80,7 +80,7 @@ static int set_clipboard_window(user_handle_t win, int clear)
 
 static int set_clipboard_owner(user_handle_t win, int clear)
 {
-    if (cbowner && cbowner != current)
+    if (cbthread && cbthread != current)
     {
         set_error(STATUS_WAS_LOCKED);
         return 0;
