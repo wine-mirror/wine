@@ -3783,6 +3783,7 @@ HMENU16 WINAPI GetSystemMenu16( HWND16 hWnd, BOOL16 bRevert )
 HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 {
     WND *wndPtr = WIN_FindWndPtr( hWnd );
+    HMENU retvalue = 0;
 
     if (wndPtr)
     {
@@ -3797,8 +3798,17 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 	    {
 		POPUPMENU *menu = (POPUPMENU*) 
 			   USER_HEAP_LIN_ADDR(wndPtr->hSysMenu);
-		if( menu->nItems > 0 && menu->items[0].hSubMenu == MENU_DefSysPopup )
-		    menu->items[0].hSubMenu = MENU_CopySysPopup();
+		if( IS_A_MENU(menu) ) 
+                {
+		   if( menu->nItems > 0 && menu->items[0].hSubMenu == MENU_DefSysPopup )
+		      menu->items[0].hSubMenu = MENU_CopySysPopup();
+		}
+		else 
+		{
+		   WARN("Current sys-menu (%04x) of wnd %04x is broken\n", 
+			wndPtr->hSysMenu, hWnd);
+		   wndPtr->hSysMenu = 0;
+		}
 	    }
 	}
 
@@ -3807,19 +3817,18 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 
 	if( wndPtr->hSysMenu )
         {
-            HMENU retvalue = GetSubMenu16(wndPtr->hSysMenu, 0);
+	    POPUPMENU *menu;
+	    retvalue = GetSubMenu16(wndPtr->hSysMenu, 0);
 
 	    /* Store the dummy sysmenu handle to facilitate the refresh */
 	    /* of the close button if the SC_CLOSE item change */
-	    POPUPMENU *menu = (POPUPMENU*) USER_HEAP_LIN_ADDR(retvalue);
-	    menu->hSysMenuOwner = wndPtr->hSysMenu;
-
-            WIN_ReleaseWndPtr(wndPtr);
-            return retvalue;
+	    menu = (POPUPMENU*) USER_HEAP_LIN_ADDR(retvalue);
+	    if ( IS_A_MENU(menu) )
+	       menu->hSysMenuOwner = wndPtr->hSysMenu;
         }
         WIN_ReleaseWndPtr(wndPtr);
     }
-    return 0;
+    return retvalue;
 }
 
 
