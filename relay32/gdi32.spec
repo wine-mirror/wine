@@ -176,7 +176,7 @@ init	MAIN_GdiInit
 171 stdcall GetDeviceCaps(long long) GetDeviceCaps32
 172 stub GetDeviceGammaRamp
 173 stub GetETM
-174 stdcall GetEnhMetaFileA(ptr) GetEnhMetaFile32A
+174 stdcall GetEnhMetaFileA(str) GetEnhMetaFile32A
 175 stdcall GetEnhMetaFileBits(long long ptr) GetEnhMetaFileBits
 176 stdcall GetEnhMetaFileDescriptionA(long long ptr) GetEnhMetaFileDescription32A
 177 stdcall GetEnhMetaFileDescriptionW(long long ptr) GetEnhMetaFileDescription32W

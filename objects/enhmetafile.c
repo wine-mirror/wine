@@ -4,6 +4,7 @@
 */
 
 #include <string.h>
+#include <assert.h>
 #include "windows.h"
 #include "gdi.h"
 #include "winbase.h"
@@ -26,6 +27,10 @@ HENHMETAFILE32 WINAPI GetEnhMetaFile32A(
   DWORD read;
   HFILE32 hf = CreateFile32A(lpszMetaFile, GENERIC_READ, 0, 0, 
 			     OPEN_EXISTING, 0, 0);
+  if (hf == INVALID_HANDLE_VALUE32) {
+    FIXME(metafile,"could not open %s\n",lpszMetaFile);
+    return 0;
+  }
   if (!ReadFile(hf, &h, sizeof(ENHMETAHEADER), &read, NULL)) 
     return 0;
   if (read!=sizeof(ENHMETAHEADER)) return 0;
@@ -34,6 +39,7 @@ HENHMETAFILE32 WINAPI GetEnhMetaFile32A(
   hmf = GlobalAlloc32(GPTR, h.nBytes);
   p = GlobalLock32(hmf);
   if (!ReadFile(hf, p, h.nBytes, &read, NULL)) return 0;
+  assert(read==h.nBytes);
   GlobalUnlock32(hmf);
   return hmf;
 }
