@@ -7665,8 +7665,12 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, LPNMHEADERW l
 		LISTVIEW_ScrollColumns(infoPtr, lpnmh->iItem + 1, dx);
 		if (uView == LVS_REPORT && is_redrawing(infoPtr))
 		{
-		    rcCol.right = min (rcCol.right, lpColumnInfo->rcHeader.right);
-		    rcCol.left = max (rcCol.left, rcCol.right - 3 * infoPtr->ntmAveCharWidth);
+		    /* this trick works for left aligned columns only */
+		    if ((lpColumnInfo->fmt & LVCFMT_JUSTIFYMASK) == LVCFMT_LEFT)
+		    {
+			rcCol.right = min (rcCol.right, lpColumnInfo->rcHeader.right);
+			rcCol.left = max (rcCol.left, rcCol.right - 3 * infoPtr->ntmAveCharWidth);
+		    }
 		    rcCol.top = infoPtr->rcList.top;
 		    rcCol.bottom = infoPtr->rcList.bottom;
 		    LISTVIEW_InvalidateRect(infoPtr, &rcCol);
