@@ -102,8 +102,6 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define MEM_IMAGE               SEC_IMAGE
 
 
-#define ANYSIZE_ARRAY 1
-
 #define MINCHAR       0x80
 #define MAXCHAR       0x7f
 #define MINSHORT      0x8000
