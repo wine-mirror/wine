@@ -2311,9 +2311,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT num,
 	TRACE("DRVM_ENABLE => %08lx\n", ret);
 #endif
         count = part->u.fnMessage32(0, wMsg, 0L, 0L, 0L);
-    }
-
-    if (!lpDrv->bIs32 && part->u.fnMessage16) {
+    } else if (!lpDrv->bIs32 && part->u.fnMessage16) {
         ret = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16, 
 					0, DRVM_INIT, 0L, 0L, 0L);
 	TRACE("DRVM_INIT => %08lx\n", ret);
@@ -2324,14 +2322,15 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT num,
 #endif
         count = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16, 
 					  0, wMsg, 0L, 0L, 0L);
+    } else {
+	return FALSE;
     }
 
     TRACE("Got %u dev for (%s:%s)\n", count, lpDrv->name, llTypes[type].name);
-    if (count == 0)
-	return FALSE;
 
     /* got some drivers */
     if (lpDrv->bIsMapper) {
+	/* it seems native mappers return 0 devices :-( */
 	if (llTypes[type].nMapper != -1)
 	    ERR("Two mappers for type %s (%d, %s)\n", 
 		llTypes[type].name, llTypes[type].nMapper, lpDrv->name);
@@ -2339,6 +2338,8 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT num,
 	    ERR("Strange: mapper with %d > 1 devices\n", count);
 	llTypes[type].nMapper = num;
     } else {
+	if (count == 0)
+	    return FALSE;
 	part->nIDMin = llTypes[type].wMaxId;
 	llTypes[type].wMaxId += count;
 	part->nIDMax = llTypes[type].wMaxId;
@@ -2433,7 +2434,9 @@ static	BOOL	MMDRV_Install(LPCSTR name, int num, BOOL bIsMapper)
 	 */
 	
 	if (d->d.d16.hDriver16) {
-#define A(_x,_y)	AA(d->d.d16.hDriver16,_x,_y,16,GetProcAddress16)
+	    HMODULE16	hMod16 = GetDriverModuleHandle16(d->d.d16.hDriver16);
+
+#define A(_x,_y)	AA(hMod16,_x,_y,16,GetProcAddress16)
 	    A(MMDRV_AUX,	auxMessage);
 	    A(MMDRV_MIXER,	mixMessage);
 	    A(MMDRV_MIDIIN,	midMessage);
