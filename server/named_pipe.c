@@ -163,7 +163,9 @@ static void notify_waiter( struct pipe_user *user, unsigned int status)
 static struct fd *pipe_user_get_fd( struct object *obj )
 {
     struct pipe_user *user = (struct pipe_user *)obj;
-    return (struct fd *)grab_object( user->fd );
+    if (user->fd) return (struct fd *)grab_object( user->fd );
+    set_error( STATUS_PIPE_DISCONNECTED );
+    return NULL;
 }
 
 static void pipe_user_destroy( struct object *obj)

@@ -987,7 +987,7 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
 
     if ((obj = get_handle_obj( process, handle, access, NULL )))
     {
-        if (!(fd = get_obj_fd( obj ))) set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        fd = get_obj_fd( obj );
         release_object( obj );
     }
     return fd;
