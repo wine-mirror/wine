@@ -25,12 +25,11 @@ winedump: $(OBJS)
 	$(CC) $(CFLAGS) -o winedump $(OBJS) $(LIBWINE) $(LDFLAGS)
 
 install:: $(PROGRAMS)
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) winedump $(bindir)/winedump
 	$(INSTALL_SCRIPT) $(SRCDIR)/function_grep.pl $(bindir)/function_grep.pl
 
 uninstall::
-	$(RM) $(bindir)/winedump
-	$(RM) $(bindir)/function_grep.pl
+	$(RM) $(bindir)/function_grep.pl $(bindir)/winedump
 
 ### Dependencies:

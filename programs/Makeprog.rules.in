@@ -44,12 +44,12 @@ debug_channels: dummy
 # Rules for installation
 
 install:: $(MODULE).so
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) $(MODULE).so $(bindir)/$(MODULE).so
 	cd $(bindir) && $(RM) $(MODULE) && $(LN_S) wine $(MODULE)
 
 uninstall::
-	cd $(bindir) && $(RM) $(MODULE) $(MODULE).so
+	$(RM) $(bindir)/$(MODULE) $(bindir)/$(MODULE).so
 
 clean::
 	$(RM) $(MODULE)

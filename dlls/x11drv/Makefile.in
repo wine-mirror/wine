@@ -42,7 +42,7 @@ $(EXTRA_OBJS): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 install:: $(PROGRAMS) install_libdir
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) wineclipsrv $(bindir)/wineclipsrv
 
 uninstall:: uninstall_libdir

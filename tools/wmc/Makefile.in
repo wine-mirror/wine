@@ -34,8 +34,7 @@ clean::
 	$(RM) y.tab.c y.tab.h y.output
 
 install:: $(PROGRAMS)
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
-	[ -d $(mandir)/man$(prog_manext) ] || $(MKDIR) $(mandir)/man$(prog_manext)
+	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_DATA) $(SRCDIR)/wmc.man $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
 	$(INSTALL_PROGRAM) wmc $(bindir)/wmc
 

@@ -28,11 +28,11 @@ wine.c: wine.xs
 	perl $(XSUBPPDIR)/xsubpp -typemap $(XSUBPPDIR)/typemap $(SRCDIR)/wine.xs >wine.c || $(RM) wine.c
 
 install::
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) wine.pm $(libdir)/wine.pm
 
 uninstall::
-	cd $(libdir) && $(RM) wine.pm
+	$(RM) $(libdir)/wine.pm
 
 clean::
 	$(RM) wine.c

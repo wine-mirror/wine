@@ -45,7 +45,7 @@ icinfo: icinfo.so
 	$(RM) icinfo && $(LN_S) $(TOPOBJDIR)/wine icinfo
 
 install:: $(PROGRAMS:%=%.so)
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) aviinfo.so $(bindir)/aviinfo.so
 	$(INSTALL_PROGRAM) aviplay.so $(bindir)/aviplay.so
 	$(INSTALL_PROGRAM) icinfo.so $(bindir)/icinfo.so

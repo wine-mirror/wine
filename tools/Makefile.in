@@ -44,7 +44,7 @@ winelauncher: winelauncher.in
 	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' -e 's,@dlldir\@,$(dlldir),g' $(SRCDIR)/winelauncher.in >$@ || $(RM) $@
 
 install:: $(PROGRAMS) $(INSTALLSUBDIRS:%=%/__install__)
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) fnt2bdf $(bindir)/fnt2bdf
 	$(INSTALL_SCRIPT) winelauncher $(bindir)/winelauncher
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker

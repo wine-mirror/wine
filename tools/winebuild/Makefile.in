@@ -26,7 +26,7 @@ winebuild: $(OBJS)
 	$(CC) $(CFLAGS) -o winebuild $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LDFLAGS)
 
 install:: $(PROGRAMS)
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) winebuild $(bindir)/winebuild
 
 uninstall::

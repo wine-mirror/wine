@@ -93,14 +93,14 @@ wine: $(EMUOBJS) $(LDIMPORTS:%=lib%.$(LIBEXT)) library/libwine.$(LIBEXT) unicode
 	$(CC) -o wine $(EMUOBJS) -L. $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
 
 install_wine: dummy
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 
 install:: all install_wine $(INSTALLSUBDIRS:%=%/__install__)
 	-$(LDCONFIG)
 
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
-	cd $(bindir) && $(RM) wine
+	$(RM) $(bindir)/wine
 
 $(EMUOBJS) $(PROGRAMS) $(LIBRARIES): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
@@ -163,11 +163,11 @@ TAGS etags:
 	etags `find $(TOPSRCDIR) -name '*.[chS]' -print | grep -v dbgmain`
 
 manpages:
-	-$(MKDIR) $(TOPOBJDIR)/documentation/man3w
+	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w
 	for i in $(SUBDIRS); do (cd $$i && $(MAKE) man); done
 
 htmlpages:
-	-$(MKDIR) $(TOPOBJDIR)/documentation/html
+	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html
 	for i in $(SUBDIRS); do (cd $$i && $(MAKE) html); done
 
 clean::

@@ -205,10 +205,7 @@ EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine
 @MAKE_RULES@
 
 install::
-	[ -d $(includedir) ] || $(MKDIR) $(includedir)
-	[ -d $(includedir)/wine ] || $(MKDIR) $(includedir)/wine
-	[ -d $(includedir)/msvcrt ] || $(MKDIR) $(includedir)/msvcrt
-	[ -d $(includedir)/msvcrt/sys ] || $(MKDIR) $(includedir)/msvcrt/sys
+	$(MKINSTALLDIRS) $(includedir) $(includedir)/wine $(includedir)/msvcrt $(includedir)/msvcrt/sys
 	for f in $(INSTALLED_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out 

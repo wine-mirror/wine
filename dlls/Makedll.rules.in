@@ -59,7 +59,7 @@ $(ALTNAMES:%=_install_/%$(DLLEXT)): install_lib
 	cd $(dlldir) && $(RM) `basename $@` && $(LN_S) $(MODULE)$(DLLEXT) `basename $@`
 
 install_lib: $(MODULE)$(DLLEXT)
-	[ -d $(dlldir) ] || $(MKDIR) $(dlldir)
+	$(MKINSTALLDIRS) $(dlldir)
 	$(INSTALL_PROGRAM) $(MODULE)$(DLLEXT) $(dlldir)/$(MODULE)$(DLLEXT)
 
 install:: install_lib $(ALTNAMES:%=_install_/%$(DLLEXT))

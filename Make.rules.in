@@ -51,7 +51,6 @@ LDFLAGS   = @LDFLAGS@
 AR        = ar rc
 RM        = rm -f
 MV        = mv
-MKDIR     = mkdir -p
 C2MAN     = @C2MAN@
 MANSPECS  = -w $(TOPSRCDIR)/dlls/gdi/gdi32.spec \
 	    -w $(TOPSRCDIR)/dlls/user/user32.spec \
@@ -61,6 +60,7 @@ MANSPECS  = -w $(TOPSRCDIR)/dlls/gdi/gdi32.spec \
 LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
 ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
+MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
 WINEBUILD = $(TOPOBJDIR)/tools/winebuild/winebuild
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep
@@ -198,13 +198,13 @@ $(SUBDIRS:%=%/__man__): dummy
 	cd `dirname $@` && $(MAKE) man
 
 man: $(C_SRCS) $(SUBDIRS:%=%/__man__)
-	if [ -n "$(C_SRCS)" ]; then $(MKDIR) $(TOPOBJDIR)/documentation/man3w; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/man3w -S3w $(DIVINCL) -D__WINE__ $(MANSPECS) $$i; done; fi
+	if [ -n "$(C_SRCS)" ]; then $(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/man3w -S3w $(DIVINCL) -D__WINE__ $(MANSPECS) $$i; done; fi
 
 $(SUBDIRS:%=%/__doc_html__): dummy
 	cd `dirname $@` && $(MAKE) doc-html
 
 doc-html: $(C_SRCS) $(SUBDIRS:%=%/__doc_html__)
-	if [ -n "$(C_SRCS)" ]; then $(MKDIR) $(TOPOBJDIR)/documentation/html; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) -D__WINE__ $(MANSPECS) $$i; done; fi
+	if [ -n "$(C_SRCS)" ]; then $(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html; for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) -D__WINE__ $(MANSPECS) $$i; done; fi
 
 # Rule for linting
 

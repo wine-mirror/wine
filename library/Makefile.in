@@ -35,18 +35,18 @@ libwine.dll: $(OBJS)
 	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine.a -o libwine.dll $(OBJS)
 
 install_so: libwine.so.$(SOVERSION)
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_PROGRAM) libwine.so.$(SOVERSION) $(libdir)/libwine.so.$(SOVERSION)
 	cd $(libdir) && $(RM) libwine.so && $(LN_S) libwine.so.$(SOVERSION) libwine.so
 
 install_a: libwine.a
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine.a $(libdir)/libwine.a
 
 install:: all $(LIBEXT:%=install_%)
 
 uninstall::
-	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION)
+	$(RM) $(libdir)/libwine.a $(libdir)/libwine.so $(libdir)/libwine.so.$(SOVERSION)
 
 clean::
 	$(RM) libwine.so.$(SOVERSION)

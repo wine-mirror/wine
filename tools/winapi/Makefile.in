@@ -12,7 +12,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 install:: $(PROGRAMS)
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/make_filter
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_check
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_extract
