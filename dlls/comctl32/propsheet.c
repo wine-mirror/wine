@@ -596,6 +596,7 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_CAPTION;
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_SYSMENU;
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_POPUP;
+    ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_DISABLED;
   }
   else
   {
@@ -604,6 +605,7 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
     pTemplate->style &= ~WS_CAPTION;
     pTemplate->style &= ~WS_SYSMENU;
     pTemplate->style &= ~WS_POPUP;
+    pTemplate->style &= ~WS_DISABLED;
   }
 
   if (psInfo->proppage[index].useCallback)
