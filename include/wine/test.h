@@ -119,7 +119,7 @@ static tls_data* get_tls_data(void)
 
 static void exit_process( int code )
 {
-    fflush( stderr );
+    fflush( stdout );
     ExitProcess( code );
 }
 
@@ -156,16 +156,16 @@ int winetest_ok( int condition, const char *msg, ... )
     {
         if (condition)
         {
-            fprintf( stderr, "%s:%d: Test succeeded inside todo block",
+            fprintf( stdout, "%s:%d: Test succeeded inside todo block",
                      data->current_file, data->current_line );
             if (msg && msg[0])
             {
                 va_start(valist, msg);
-                fprintf(stderr,": ");
-                vfprintf(stderr, msg, valist);
+                fprintf(stdout,": ");
+                vfprintf(stdout, msg, valist);
                 va_end(valist);
             }
-            fputc( '\n', stderr );
+            fputc( '\n', stdout );
             InterlockedIncrement(&todo_failures);
             return 0;
         }
@@ -175,23 +175,23 @@ int winetest_ok( int condition, const char *msg, ... )
     {
         if (!condition)
         {
-            fprintf( stderr, "%s:%d: Test failed",
+            fprintf( stdout, "%s:%d: Test failed",
                      data->current_file, data->current_line );
             if (msg && msg[0])
             {
                 va_start(valist, msg);
-                fprintf( stderr,": ");
-                vfprintf(stderr, msg, valist);
+                fprintf( stdout,": ");
+                vfprintf(stdout, msg, valist);
                 va_end(valist);
             }
-            fputc( '\n', stderr );
+            fputc( '\n', stdout );
             InterlockedIncrement(&failures);
             return 0;
         }
         else
         {
             if (report_success)
-                fprintf( stderr, "%s:%d: Test succeeded\n",
+                fprintf( stdout, "%s:%d: Test succeeded\n",
                          data->current_file, data->current_line);
             InterlockedIncrement(&successes);
         }
@@ -206,9 +206,9 @@ void winetest_trace( const char *msg, ... )
 
     if (winetest_debug > 0)
     {
-        fprintf( stderr, "%s:%d:", data->current_file, data->current_line );
+        fprintf( stdout, "%s:%d:", data->current_file, data->current_line );
         va_start(valist, msg);
-        vfprintf(stderr, msg, valist);
+        vfprintf(stdout, msg, valist);
         va_end(valist);
     }
 }
@@ -272,7 +272,7 @@ static int run_test( const char *name )
 
     if (!(test = find_test( name )))
     {
-        fprintf( stderr, "Fatal: test '%s' does not exist.\n", name );
+        fprintf( stdout, "Fatal: test '%s' does not exist.\n", name );
         exit_process(1);
     }
     successes = failures = todo_successes = todo_failures = 0;
@@ -282,7 +282,7 @@ static int run_test( const char *name )
 
     if (winetest_debug)
     {
-        fprintf( stderr, "%s: %ld tests executed, %ld marked as todo, %ld %s.\n",
+        fprintf( stdout, "%s: %ld tests executed, %ld marked as todo, %ld %s.\n",
                  name, successes + failures + todo_successes + todo_failures,
                  todo_successes, failures + todo_failures,
                  (failures + todo_failures != 1) ? "failures" : "failure" );
@@ -297,9 +297,9 @@ static void usage( const char *argv0 )
 {
     const struct test *test;
 
-    fprintf( stderr, "Usage: %s test_name\n", argv0 );
-    fprintf( stderr, "\nValid test names:\n" );
-    for (test = winetest_testlist; test->name; test++) fprintf( stderr, "    %s\n", test->name );
+    fprintf( stdout, "Usage: %s test_name\n", argv0 );
+    fprintf( stdout, "\nValid test names:\n" );
+    for (test = winetest_testlist; test->name; test++) fprintf( stdout, "    %s\n", test->name );
     exit_process(1);
 }
 
