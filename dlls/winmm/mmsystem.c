@@ -1366,7 +1366,7 @@ UINT WINAPI mixerMessage(HMIXER hmix, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
 /**************************************************************************
  * 				mixerMessage		[MMSYSTEM.804]
  */
-UINT16 WINAPI mixerMessage16(HMIXER16 hmix, UINT16 uMsg, DWORD dwParam1, 
+DWORD WINAPI mixerMessage16(HMIXER16 hmix, UINT16 uMsg, DWORD dwParam1, 
 			     DWORD dwParam2) 
 {
     return mixerMessage(hmix, uMsg, dwParam1, dwParam2);
