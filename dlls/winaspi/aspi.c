@@ -546,7 +546,7 @@ int SCSI_Linux_CheckDevices(void)
 
     if (dent == NULL)
     {
-	MESSAGE("WARNING: You don't have any /dev/sgX generic scsi devices ! \"man MAKEDEV\" !\n");
+	TRACE("WARNING: You don't have any /dev/sgX generic scsi devices ! \"man MAKEDEV\" !\n");
 	return 0;
     }
     return 1;
