@@ -18,8 +18,6 @@
  *	   an utter mess.)
  */
 
-#include "ts_xlib.h"
-
 #include "config.h"
 #include <string.h>
 #include <unistd.h>

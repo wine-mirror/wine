@@ -43,6 +43,6 @@ BOOL32 TTYDRV_CLIPBOARD_RequestSelection()
 /***********************************************************************
  *		TTYDRV_CLIPBOARD_ResetOwner
  */
-void TTYDRV_CLIPBOARD_ResetOwner(WND *pWnd)
+void TTYDRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL32 bFooBar)
 {
 }

@@ -4,11 +4,12 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
+#include "ts_xlib.h"
+#include <X11/Intrinsic.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <X11/Xlib.h>
-#include <X11/Intrinsic.h>
 #include "bitmap.h"
 #include "callback.h"
 #include "color.h"

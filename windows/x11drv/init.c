@@ -12,6 +12,8 @@
 
 WND_DRIVER X11DRV_WND_Driver =
 {
+  X11DRV_WND_Initialize,
+  X11DRV_WND_Finalize,
   X11DRV_WND_CreateDesktopWindow,
   X11DRV_WND_CreateWindow,
   X11DRV_WND_DestroyWindow,
@@ -21,7 +23,10 @@ WND_DRIVER X11DRV_WND_Driver =
   X11DRV_WND_SetText,
   X11DRV_WND_SetFocus,
   X11DRV_WND_PreSizeMove,
-  X11DRV_WND_PostSizeMove
+  X11DRV_WND_PostSizeMove,
+  X11DRV_WND_ScrollWindow,
+  X11DRV_WND_SetDrawable,
+  X11DRV_WND_IsSelfClipping
 };
 
 CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver =
@@ -55,16 +60,12 @@ EVENT_DRIVER X11DRV_EVENT_Driver =
   X11DRV_EVENT_IsUserIdle
 };
 
-#if 0 
 MOUSE_DRIVER X11DRV_MOUSE_Driver =
 {
+  X11DRV_MOUSE_SetCursor,
+  X11DRV_MOUSE_MoveCursor
 };
-#endif
 
 #endif /* !defined(X_DISPLAY_MISSING) */
-
-
-
-
 
 

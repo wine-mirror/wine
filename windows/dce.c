@@ -26,7 +26,6 @@
 #include "heap.h"
 #include "sysmetrics.h"
 #include "debug.h"
-#include "x11drv.h"
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
@@ -380,7 +379,8 @@ static BOOL32 DCE_AddClipRects( WND *pWndStart, WND *pWndEnd,
 {
     RECT32 rect;
 
-    if (pWndStart->window) return TRUE; /* X itself will do the clipping */
+    if( pWndStart->pDriver->pIsSelfClipping( pWndStart ) )
+        return TRUE; /* The driver itself will do the clipping */
 
     for (; pWndStart != pWndEnd; pWndStart = pWndStart->next)
     {
@@ -514,57 +514,6 @@ static void DCE_OffsetVisRgn( HDC32 hDC, HRGN32 hVisRgn )
     GDI_HEAP_UNLOCK( hDC );
 }
 
-
-/***********************************************************************
- *           DCE_SetDrawable
- *
- * Set the drawable, origin and dimensions for the DC associated to
- * a given window.
- */
-static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOrigin )
-{
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-
-    if (!wndPtr)  /* Get a DC for the whole screen */
-    {
-        dc->w.DCOrgX = 0;
-        dc->w.DCOrgY = 0;
-        physDev->drawable = rootWindow;
-        TSXSetSubwindowMode( display, physDev->gc, IncludeInferiors );
-    }
-    else
-    {
-        if (flags & DCX_WINDOW)
-        {
-            dc->w.DCOrgX  = wndPtr->rectWindow.left;
-            dc->w.DCOrgY  = wndPtr->rectWindow.top;
-        }
-        else
-        {
-            dc->w.DCOrgX  = wndPtr->rectClient.left;
-            dc->w.DCOrgY  = wndPtr->rectClient.top;
-        }
-        while (!wndPtr->window)
-        {
-            wndPtr = wndPtr->parent;
-            dc->w.DCOrgX += wndPtr->rectClient.left;
-            dc->w.DCOrgY += wndPtr->rectClient.top;
-        }
-        dc->w.DCOrgX -= wndPtr->rectWindow.left;
-        dc->w.DCOrgY -= wndPtr->rectWindow.top;
-        physDev->drawable = wndPtr->window;
-
-#if 0
-	/* This is needed when we reuse a cached DC because
-	 * SetDCState() called by ReleaseDC() screws up DC
-	 * origins for child windows.
-	 */
-
-	if( bSetClipOrigin )
-	    TSXSetClipOrigin( display, physDev->gc, dc->w.DCOrgX, dc->w.DCOrgY );
-#endif
-    }
-}
 /***********************************************************************
  *           DCE_ExcludeRgn
  * 
@@ -745,7 +694,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 
     /* recompute visible region */
 
-    DCE_SetDrawable( wndPtr, dc, flags, bUpdateClipOrigin );
+    wndPtr->pDriver->pSetDrawable( wndPtr, dc, flags, bUpdateClipOrigin );
     if( bUpdateVisRgn )
     {
 	TRACE(dc,"updating visrgn for %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);

@@ -4,6 +4,8 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
+#include "ts_xlib.h"
+
 #include <stdlib.h>
 #include "brush.h"
 #include "bitmap.h"

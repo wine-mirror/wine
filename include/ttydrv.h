@@ -16,7 +16,7 @@ extern CLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
 extern void TTYDRV_CLIPBOARD_EmptyClipboard();
 extern void TTYDRV_CLIPBOARD_SetClipboardData(UINT32 wFormat);
 extern BOOL32 TTYDRV_CLIPBOARD_RequestSelection();
-extern void TTYDRV_CLIPBOARD_ResetOwner(WND *pWnd);
+extern void TTYDRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL32 bFooBar);
 
 /* TTY event driver */
 

@@ -322,6 +322,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     wndPtr->class = NULL;
     pWnd = wndPtr->next;
 
+    wndPtr->pDriver->pFinalize(wndPtr);
     USER_HEAP_FREE( hwnd );
     return pWnd;
 }
@@ -395,6 +396,9 @@ BOOL32 WIN_CreateDesktopWindow(void)
     if (!hwndDesktop) return FALSE;
     pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
 
+    pWndDesktop->pDriver = &X11DRV_WND_Driver;
+    pWndDesktop->pDriver->pInitialize(pWndDesktop);
+
     pWndDesktop->next              = NULL;
     pWndDesktop->child             = NULL;
     pWndDesktop->parent            = NULL;
@@ -424,7 +428,6 @@ BOOL32 WIN_CreateDesktopWindow(void)
     pWndDesktop->flags             = 0;
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->userdata          = 0;
-    pWndDesktop->pDriver           = &X11DRV_WND_Driver;
     pWndDesktop->winproc = (WNDPROC16)class->winproc;
 
     /* FIXME: How do we know if it should be Unicode or not */
@@ -543,8 +546,9 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             wndPtr->owner = WIN_GetTopParentPtr(WIN_FindWndPtr(cs->hwndParent));
     }
 
-    wndPtr->pDriver        = &X11DRV_WND_Driver;
-    wndPtr->window         = 0;
+    wndPtr->pDriver = wndPtr->parent->pDriver;
+    wndPtr->pDriver->pInitialize(wndPtr);
+
     wndPtr->class          = classPtr;
     wndPtr->winproc        = classPtr->winproc;
     wndPtr->dwMagic        = WND_MAGIC;
@@ -585,6 +589,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
         if (ret)
 	{
 	    TRACE(win, "CBT-hook returned 0\n");
+	    wndPtr->pDriver->pFinalize(wndPtr);
 	    USER_HEAP_FREE( hwnd );
 	    return 0;
 	}
@@ -916,7 +921,7 @@ static void WIN_SendDestroyMsg( WND* pWnd )
     WIN_CheckFocus(pWnd);
 
     if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret32();
-    if( !pWnd->window ) CLIPBOARD_GetDriver()->pResetOwner( pWnd ); 
+    CLIPBOARD_GetDriver()->pResetOwner( pWnd, TRUE ); 
   
     SendMessage32A( pWnd->hwndSelf, WM_DESTROY, 0, 0);
 
@@ -978,7 +983,7 @@ BOOL32 WINAPI DestroyWindow32( HWND32 hwnd )
 	    if( !IsWindow32(hwnd) ) return TRUE;
 	}
 
-    if( wndPtr->window ) CLIPBOARD_GetDriver()->pResetOwner( wndPtr ); /* before the window is unmapped */
+    CLIPBOARD_GetDriver()->pResetOwner( wndPtr, FALSE ); /* before the window is unmapped */
 
       /* Hide the window */
 

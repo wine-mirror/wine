@@ -22,11 +22,11 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "message.h"
+#include "sysmetrics.h"
 #include "debug.h"
 #include "debugtools.h"
 #include "struct32.h"
 #include "winerror.h"
-#include "x11drv.h"
 
 static INT16  captureHT = HTCLIENT;
 static HWND32 captureWnd = 0;
@@ -162,8 +162,8 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
         extra = (DWORD)wme->hWnd;
 
         assert( dwFlags & MOUSEEVENTF_ABSOLUTE );
-        posX = (dx * screenWidth) >> 16;
-        posY = (dy * screenHeight) >> 16;
+        posX = (dx * SYSMETRICS_CXSCREEN) >> 16;
+        posY = (dy * SYSMETRICS_CYSCREEN) >> 16;
     }
     else
     {
@@ -177,8 +177,8 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
         {
             if ( dwFlags & MOUSEEVENTF_ABSOLUTE )
             {
-                posX = (dx * screenWidth) >> 16;
-                posY = (dy * screenHeight) >> 16;
+                posX = (dx * SYSMETRICS_CXSCREEN) >> 16;
+                posY = (dy * SYSMETRICS_CYSCREEN) >> 16;
             }
             else
             {

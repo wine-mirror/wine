@@ -4,6 +4,8 @@
  * Copyright 1998 Huw Davies
  */
 
+#include "ts_xlib.h"
+
 #include <stdio.h>
 #include "dc.h"
 #include "x11drv.h"

@@ -4,8 +4,6 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
-#include "ts_xlib.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>

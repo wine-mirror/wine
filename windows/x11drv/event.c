@@ -1,5 +1,5 @@
 /*
- * X11 windows driver
+ * X11 event driver
  *
  * Copyright 1993 Alexandre Julliard
  */
@@ -526,11 +526,12 @@ static BOOL32 EVENT_QueryZOrder( WND* pWndCheck )
   
   if( !__check_query_condition(&pWndZ, &pWnd) ) return TRUE;
   
-  parent = __get_common_ancestor( pWndZ->window, pWnd->window,
+  parent = __get_common_ancestor( X11DRV_WND_GetXWindow(pWndZ), 
+				  X11DRV_WND_GetXWindow(pWnd),
 				  &children, &total );
   if( parent && children )
     {
-      w = __get_top_decoration( pWndCheck->window, parent );
+      w = __get_top_decoration( X11DRV_WND_GetXWindow(pWndCheck), parent );
       if( w != children[total - 1] )
         {
 	  check = __td_lookup( w, children, total );
@@ -540,7 +541,7 @@ static BOOL32 EVENT_QueryZOrder( WND* pWndCheck )
 	      if( pWnd != pWndCheck )
                 {
 		  if( !(pWnd->flags & WIN_MANAGED) ||
-		      !(w = __get_top_decoration( pWnd->window, parent )) )
+		      !(w = __get_top_decoration( X11DRV_WND_GetXWindow(pWnd), parent )) )
 		    continue;
 		  pos = __td_lookup( w, children, total );
 		  if( pos < best && pos > check )
@@ -1029,7 +1030,7 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
   
   if( !lpDragInfo || !spDragInfo ) return;
   
-  TSXQueryPointer( display, pWnd->window, &w_aux_root, &w_aux_child, 
+  TSXQueryPointer( display, X11DRV_WND_GetXWindow(pWnd), &w_aux_root, &w_aux_child, 
 		   &x, &y, &u.pt_aux.x, &u.pt_aux.y, (unsigned int*)&aux_long);
   
   lpDragInfo->hScope = pWnd->hwndSelf;

@@ -10,8 +10,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "ts_xlib.h"
-
 #include "gdi.h"
 #include "color.h"
 #include "palette.h"

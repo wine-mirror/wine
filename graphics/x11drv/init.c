@@ -4,6 +4,8 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include "ts_xlib.h"
+
 #include <string.h>
 #include "x11drv.h"
 #include "color.h"

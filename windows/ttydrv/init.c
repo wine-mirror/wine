@@ -11,6 +11,8 @@
 #if 0
 WND_DRIVER TTYDRV_WND_Driver =
 {
+  TTYDRV_WND_Initialize,
+  TTYDRV_WND_Finalize,
   TTYDRV_WND_CreateDesktopWindow,
   TTYDRV_WND_CreateWindow,
   TTYDRV_WND_DestroyWindow,

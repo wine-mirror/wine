@@ -1,10 +1,14 @@
 #ifndef __WINE_DDRAW_H
 #define __WINE_DDRAW_H
 
-#include "ts_xlib.h"
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+#include <X11/Xlib.h>
 #ifdef HAVE_LIBXXSHM
-#include "ts_xshm.h"
-#endif
+#include <X11/extensions/XShm.h>
+#endif /* defined(HAVE_LIBXXSHM) */
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #ifndef	DIRECTDRAW_VERSION
 #define	DIRECTDRAW_VERSION	0x0500

@@ -20,6 +20,7 @@
 #include "dce.h"
 #include "nonclient.h"
 #include "debug.h"
+#include "x11drv.h"
 
 #define HAS_DLGFRAME(style,exStyle) \
     (((exStyle) & WS_EX_DLGMODALFRAME) || \
@@ -2108,7 +2109,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	   if( wnd->next == wndPtr ) flags |= SWP_NOZORDER;
 	 }
        }
-    else if (!(wndPtr->window))
+    else if (!((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
     {
          /* FIXME: the following optimization is no good for "X-ed" windows */
        if (hwndInsertAfter == HWND_TOP)
@@ -2166,7 +2167,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	    hwndInsertAfter = WINPOS_ReorderOwnedPopups( hwndInsertAfter,
 							 wndPtr, winpos.flags );
 
-        if (wndPtr->window)
+        if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
         {
             WIN_UnlinkWindow( winpos.hwnd );
             WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
@@ -2174,7 +2175,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
         else WINPOS_MoveWindowZOrder( winpos.hwnd, hwndInsertAfter );
     }
 
-    if ( !wndPtr->window && !(winpos.flags & SWP_NOREDRAW) && 
+    if ( !((X11DRV_WND_DATA *) wndPtr->pDriverData)->window && !(winpos.flags & SWP_NOREDRAW) && 
 	((winpos.flags & (SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED)) 
 		      != (SWP_NOMOVE | SWP_NOSIZE)) )
           visRgn = DCE_GetVisRgn(hwnd, DCX_WINDOW | DCX_CLIPSIBLINGS);
@@ -2222,7 +2223,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 
     oldWindowRect = wndPtr->rectWindow;
 
-    if (wndPtr->window)
+    if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
     {
         RECT32 oldClientRect = wndPtr->rectClient;
 
@@ -2325,7 +2326,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     if (flags & SWP_SHOWWINDOW)
     {
 	wndPtr->dwStyle |= WS_VISIBLE;
-        if (wndPtr->window)
+        if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
         {
 	    HWND32 focus, curr;
 
@@ -2360,7 +2361,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     {
         wndPtr->dwStyle &= ~WS_VISIBLE;
 
-        if (wndPtr->window)
+        if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
         {
 	    wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, uFlags & SMC_SETXPOS );
 	    if( uFlags & SMC_SETXPOS )
@@ -2396,7 +2397,8 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     
       /* Repaint the window */
 
-    if (wndPtr->window) EVENT_Synchronize();  /* Wait for all expose events */
+    if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->window)
+        EVENT_Synchronize();  /* Wait for all expose events */
 
     if (!GetCapture32())
         EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */

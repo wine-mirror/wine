@@ -6,6 +6,8 @@
  * Copyright 1995 Morten Welinder
  */
 
+#include "ts_xlib.h"
+
 #include <stdio.h>
 #include <signal.h>
 #include <sys/stat.h>

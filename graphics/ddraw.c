@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include "ts_xlib.h"
+#include "ts_xutil.h"
 #include <sys/signal.h>
 #include <fcntl.h>
 #include <string.h>
@@ -2249,10 +2250,10 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 	_common_IDirectDraw_SetDisplayMode(this);
 
 	this->e.xlib.paintable = 1;
-        this->e.xlib.drawable  = WIN_FindWndPtr(this->d.window)->window;  
+        this->e.xlib.drawable  = ((X11DRV_WND_DATA *) WIN_FindWndPtr(this->d.window)->pDriverData)->window;  
         /* We don't have a context for this window. Host off the desktop */
         if( !this->e.xlib.drawable )
-           this->e.xlib.drawable = WIN_GetDesktop()->window;
+           this->e.xlib.drawable = ((X11DRV_WND_DATA *) WIN_GetDesktop()->pDriverData)->window;
 	return DD_OK;
 }
 

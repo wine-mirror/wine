@@ -38,19 +38,21 @@ static Window selectionPrevWindow = None;
  */
 static void X11DRV_CLIPBOARD_CheckSelection(WND* pWnd)
 {
-    TRACE(clipboard,"\tchecking %08x\n", (unsigned)pWnd->window);
+    TRACE(clipboard,"\tchecking %08x\n",
+        (unsigned) X11DRV_WND_GetXWindow(pWnd)
+    );
 
     if( selectionAcquired && selectionWindow != None &&
-        pWnd->window == selectionWindow )
+        X11DRV_WND_GetXWindow(pWnd) == selectionWindow )
     {
 	selectionPrevWindow = selectionWindow;
 	selectionWindow = None;
 
 	if( pWnd->next ) 
-	    selectionWindow = pWnd->next->window;
+	    selectionWindow = X11DRV_WND_GetXWindow(pWnd->next);
 	else if( pWnd->parent )
              if( pWnd->parent->child != pWnd ) 
-                 selectionWindow = pWnd->parent->child->window;
+                 selectionWindow = X11DRV_WND_GetXWindow(pWnd->parent->child);
 
 	TRACE(clipboard,"\tswitching selection from %08x to %08x\n", 
                     (unsigned)selectionPrevWindow, (unsigned)selectionWindow);
@@ -208,7 +210,9 @@ void X11DRV_CLIPBOARD_SetClipboardData(UINT32 wFormat)
     if( !selectionAcquired && 
 	(wFormat == CF_TEXT || wFormat == CF_OEMTEXT) )
     {
-	owner = X11DRV_WND_GetXWindow( hWndClipWindow ? hWndClipWindow : AnyPopup32() );
+	owner = X11DRV_WND_FindXWindow( 
+	    WIN_FindWndPtr( hWndClipWindow ? hWndClipWindow : AnyPopup32() ) 
+	);
 
 	TSXSetSelectionOwner(display,XA_PRIMARY, owner, CurrentTime);
 	if( TSXGetSelectionOwner(display,XA_PRIMARY) == owner )
@@ -240,9 +244,10 @@ BOOL32 X11DRV_CLIPBOARD_RequestSelection()
    * CLIPBOARD_ReadSelection() will be invoked 
    * from the SelectionNotify event handler */
 
-    TSXConvertSelection(display,XA_PRIMARY,XA_STRING,
-                      TSXInternAtom(display,"PRIMARY_TEXT",False),
-                      X11DRV_WND_GetXWindow(hWnd),CurrentTime);
+    TSXConvertSelection(display, XA_PRIMARY, XA_STRING,
+			TSXInternAtom(display, "PRIMARY_TEXT", False),
+			X11DRV_WND_FindXWindow( WIN_FindWndPtr( hWnd ) ),
+			CurrentTime);
 
   /* wait until SelectionNotify is processed 
    *
@@ -265,9 +270,15 @@ BOOL32 X11DRV_CLIPBOARD_RequestSelection()
  *
  * Called from DestroyWindow().
  */
-void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd)
+void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL32 bFooBar)
 {
     LPCLIPFORMAT lpFormat = ClipFormats;
+
+    if(bFooBar && X11DRV_WND_GetXWindow(pWnd))
+      return;
+
+    if(!bFooBar && !X11DRV_WND_GetXWindow(pWnd))
+      return;
 
     TRACE(clipboard,"clipboard owner = %04x, selection = %08x\n", 
 				hWndClipOwner, (unsigned)selectionWindow);
@@ -293,7 +304,7 @@ void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd)
 
     /* now try to salvage current selection from being destroyed by X */
 
-    if( pWnd->window ) X11DRV_CLIPBOARD_CheckSelection(pWnd);
+    if( X11DRV_WND_GetXWindow(pWnd) ) X11DRV_CLIPBOARD_CheckSelection(pWnd);
 }
 
 #endif /* !defined(X_DISPLAY_MISSING) */

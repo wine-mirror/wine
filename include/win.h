@@ -55,6 +55,7 @@ typedef enum
 #define RDW_C_DELETEHRGN	0x0002
 
 struct tagDCE;
+struct tagDC;
 struct _WND_DRIVER;
 
 typedef struct tagWND
@@ -83,15 +84,20 @@ typedef struct tagWND
     UINT32         wIDmenu;       /* ID or hmenu (from CreateWindow) */
     DWORD          helpContext;   /* Help context ID */
     WORD           flags;         /* Misc. flags (see below) */
+#if 0
     Window         window;        /* X window (only for top-level windows) */
+#endif
     HMENU16        hSysMenu;      /* window's copy of System Menu */
     DWORD          userdata;      /* User private data */
     struct _WND_DRIVER *pDriver;  /* Window driver */
+    void          *pDriverData;   /* Window driver data */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 
 typedef struct _WND_DRIVER
 {
+    void   (*pInitialize)(WND *);
+    void   (*pFinalize)(WND *);
     BOOL32 (*pCreateDesktopWindow)(WND *, CLASS *, BOOL32);
     BOOL32 (*pCreateWindow)(WND *, CLASS *, CREATESTRUCT32A *, BOOL32);
     BOOL32 (*pDestroyWindow)(WND *);
@@ -102,6 +108,9 @@ typedef struct _WND_DRIVER
     void   (*pSetFocus)(WND *);
     void   (*pPreSizeMove)(WND *);
     void   (*pPostSizeMove)(WND *);
+    void   (*pScrollWindow)(WND *, struct tagDC *, INT32, INT32, const RECT32 *, BOOL32);
+    void   (*pSetDrawable)(WND *, struct tagDC *, WORD, BOOL32);
+    BOOL32 (*pIsSelfClipping)(WND *);
 } WND_DRIVER;
 
 typedef struct

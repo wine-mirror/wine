@@ -17,12 +17,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "color.h"
+#include "debug.h"
 #include "display.h"
 #include "dce.h"
 #include "options.h"
 #include "message.h"
+#include "heap.h"
 #include "win.h"
-#include "windows.h"
+#include "wintypes.h"
 #include "x11drv.h"
 
 /**********************************************************************/
@@ -40,15 +42,28 @@ Atom dndProtocol = None;
 Atom dndSelection = None;
 
 /***********************************************************************
- *           X11DRV_WND_GetXWindow
+ *		X11DRV_WND_GetXWindow
  *
  * Return the X window associated to a window.
  */
-Window X11DRV_WND_GetXWindow(HWND32 hwnd)
+Window X11DRV_WND_GetXWindow(WND *wndPtr)
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    while (wndPtr && !wndPtr->window) wndPtr = wndPtr->parent;
-    return wndPtr ? wndPtr->window : 0;
+    return wndPtr ? 
+      ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window : 0;
+}
+
+/***********************************************************************
+ *		X11DRV_WND_FindXWindow
+ *
+ * Return the the first X window associated to a window chain.
+ */
+Window X11DRV_WND_FindXWindow(WND *wndPtr)
+{
+    while (wndPtr && 
+	   !((X11DRV_WND_DATA *) wndPtr->pDriverData)->window) 
+      wndPtr = wndPtr->parent;
+    return wndPtr ?
+      ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window : 0;
 }
 
 /***********************************************************************
@@ -58,10 +73,42 @@ Window X11DRV_WND_GetXWindow(HWND32 hwnd)
  */
 static void X11DRV_WND_RegisterWindow(WND *pWnd)
 {
-  TSXSetWMProtocols( display, pWnd->window, &wmDeleteWindow, 1 );
+  TSXSetWMProtocols( display, X11DRV_WND_GetXWindow(pWnd), &wmDeleteWindow, 1 );
   
   if (!winContext) winContext = TSXUniqueContext();
-  TSXSaveContext( display, pWnd->window, winContext, (char *)pWnd );
+  TSXSaveContext( display, X11DRV_WND_GetXWindow(pWnd), winContext, (char *)pWnd );
+}
+
+/**********************************************************************
+ *		X11DRV_WND_Initialize
+ */
+void X11DRV_WND_Initialize(WND *wndPtr)
+{
+  X11DRV_WND_DATA *pWndDriverData = 
+    (X11DRV_WND_DATA *) HeapAlloc(SystemHeap, 0, sizeof(X11DRV_WND_DATA));
+
+  wndPtr->pDriverData = (void *) pWndDriverData;
+
+  pWndDriverData->window = 0;
+}
+
+/**********************************************************************
+ *		X11DRV_WND_Finalize
+ */
+void X11DRV_WND_Finalize(WND *wndPtr)
+{
+  X11DRV_WND_DATA *pWndDriverData =
+    (X11DRV_WND_DATA *) wndPtr->pDriverData;
+
+  if(pWndDriverData->window)
+    {
+      ERR(win, 
+	  "WND destroyed without destroying "
+	  "the associated X Window (%ld)\n", 
+	  pWndDriverData->window
+      );
+    }
+  HeapFree(SystemHeap, 0, wndPtr->pDriverData);
 }
 
 /**********************************************************************
@@ -78,7 +125,7 @@ BOOL32 X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL32 bUnic
     if( dndSelection == None )
 	dndSelection = TSXInternAtom( display, "DndSelection" , False );
 
-    wndPtr->window = rootWindow;
+    ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = rootWindow;
     X11DRV_WND_RegisterWindow( wndPtr );
 
     return TRUE;
@@ -118,14 +165,15 @@ BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
       win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
       win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
       win_attr.cursor        = DISPLAY_XCursor;
-      wndPtr->window = TSXCreateWindow( display, rootWindow, cs->x, cs->y,
-                                        cs->cx, cs->cy, 0, CopyFromParent,
-                                        InputOutput, CopyFromParent,
-                                        CWEventMask | CWOverrideRedirect |
-                                        CWColormap | CWCursor | CWSaveUnder |
-                                        CWBackingStore, &win_attr );
-     
-      if(!wndPtr->window)
+      ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
+	TSXCreateWindow( display, rootWindow, cs->x, cs->y,
+			 cs->cx, cs->cy, 0, CopyFromParent,
+			 InputOutput, CopyFromParent,
+			 CWEventMask | CWOverrideRedirect |
+			 CWColormap | CWCursor | CWSaveUnder |
+			 CWBackingStore, &win_attr );
+      
+      if(!X11DRV_WND_GetXWindow(wndPtr))
 	return FALSE;
 
       if (wndPtr->flags & WIN_MANAGED) {
@@ -134,7 +182,7 @@ BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
 	if (class_hints) {
 	  class_hints->res_name = "wineManaged";
 	  class_hints->res_class = "Wine";
-	  TSXSetClassHint( display, wndPtr->window, class_hints );
+	  TSXSetClassHint( display, ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window, class_hints );
 	  TSXFree (class_hints);
 	}
 
@@ -145,7 +193,7 @@ BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
 	      size_hints->min_width = size_hints->max_width = cs->cx;
 	      size_hints->min_height = size_hints->max_height = cs->cy;
                 size_hints->flags = (PSize | PMinSize | PMaxSize);
-                TSXSetWMSizeHints( display, wndPtr->window, size_hints,
+                TSXSetWMSizeHints( display, X11DRV_WND_GetXWindow(wndPtr), size_hints,
 				   XA_WM_NORMAL_HINTS );
                 TSXFree(size_hints);
             }
@@ -154,8 +202,8 @@ BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
       
       if (cs->hwndParent)  /* Get window owner */
 	{
-	  Window win = X11DRV_WND_GetXWindow( cs->hwndParent );
-	  if (win) TSXSetTransientForHint( display, wndPtr->window, win );
+	  Window win = X11DRV_WND_FindXWindow( WIN_FindWndPtr( cs->hwndParent ) );
+	  if (win) TSXSetTransientForHint( display, X11DRV_WND_GetXWindow(wndPtr), win );
 	}
       X11DRV_WND_RegisterWindow( wndPtr );
     }
@@ -167,13 +215,13 @@ BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
  */
 BOOL32 X11DRV_WND_DestroyWindow(WND *pWnd)
 {
-   if (pWnd->window)
+   if (X11DRV_WND_GetXWindow(pWnd))
      {
        XEvent xe;
-       TSXDeleteContext( display, pWnd->window, winContext );
-       TSXDestroyWindow( display, pWnd->window );
-       while( TSXCheckWindowEvent(display, pWnd->window, NoEventMask, &xe) );
-       pWnd->window = None;
+       TSXDeleteContext( display, X11DRV_WND_GetXWindow(pWnd), winContext );
+       TSXDestroyWindow( display, X11DRV_WND_GetXWindow(pWnd) );
+       while( TSXCheckWindowEvent(display, X11DRV_WND_GetXWindow(pWnd), NoEventMask, &xe) );
+       ((X11DRV_WND_DATA *) pWnd->pDriverData)->window = None;
      }
 
    return TRUE;
@@ -192,12 +240,12 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
 	{
 	    BOOL32 bFixupDCE = IsWindowVisible32(wndPtr->hwndSelf);
 
-	    if ( wndPtr->window )
+	    if ( X11DRV_WND_GetXWindow(wndPtr) )
 	    {
 		/* Toplevel window needs to be reparented.  Used by Tk 8.0 */
 
-		TSXDestroyWindow( display, wndPtr->window );
-		wndPtr->window = None;
+		TSXDestroyWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
+		((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = None;
 	    }
 	    else if( bFixupDCE )
 		DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
@@ -233,7 +281,7 @@ void X11DRV_WND_ForceWindowRaise(WND *pWnd)
   XWindowChanges winChanges;
   WND *wndPrev;
   
-  if( !pWnd || !pWnd->window || (pWnd->flags & WIN_MANAGED) )
+  if( !pWnd || !X11DRV_WND_GetXWindow(pWnd) || (pWnd->flags & WIN_MANAGED) )
     return;
   
   /* Raise all windows up to pWnd according to their Z order.
@@ -243,8 +291,9 @@ void X11DRV_WND_ForceWindowRaise(WND *pWnd)
   winChanges.stack_mode = Above;
   while (pWnd)
     {
-      if (pWnd->window) TSXReconfigureWMWindow( display, pWnd->window, 0,
-                                                CWStackMode, &winChanges );
+      if (X11DRV_WND_GetXWindow(pWnd)) 
+	TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(pWnd), 0,
+				CWStackMode, &winChanges );
       wndPrev = WIN_GetDesktop()->child;
       if (wndPrev == pWnd) break;
       while (wndPrev && (wndPrev->next != pWnd)) wndPrev = wndPrev->next;
@@ -261,12 +310,12 @@ void X11DRV_WND_ForceWindowRaise(WND *pWnd)
 static Window X11DRV_WND_FindDesktopXWindow( WND *wndPtr )
 {
   if (!(wndPtr->flags & WIN_MANAGED))
-    return wndPtr->window;
+    return X11DRV_WND_GetXWindow(wndPtr);
   else
     {
       Window window, root, parent, *children;
       int nchildren;
-      window = wndPtr->window;
+      window = X11DRV_WND_GetXWindow(wndPtr);
       for (;;)
         {
 	  TSXQueryTree( display, window, &root, &parent,
@@ -292,7 +341,8 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC
   
   if (!(winpos->flags & SWP_SHOWWINDOW) && (winpos->flags & SWP_HIDEWINDOW))
     {
-      if(wndPtr && wndPtr->window) TSXUnmapWindow( display, wndPtr->window );
+      if(X11DRV_WND_GetXWindow(wndPtr)) 
+	TSXUnmapWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
     }
 
   if(bSMC_SETXPOS)
@@ -314,11 +364,11 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC
 		{
 		  long supplied_return;
 		  
-		  TSXGetWMSizeHints( display, winposPtr->window, size_hints,
+		  TSXGetWMSizeHints( display, X11DRV_WND_GetXWindow(winposPtr), size_hints,
 				     &supplied_return, XA_WM_NORMAL_HINTS);
 		  size_hints->min_width = size_hints->max_width = winpos->cx;
 		  size_hints->min_height = size_hints->max_height = winpos->cy;
-		  TSXSetWMSizeHints( display, winposPtr->window, size_hints,
+		  TSXSetWMSizeHints( display, X11DRV_WND_GetXWindow(winposPtr), size_hints,
 				     XA_WM_NORMAL_HINTS );
 		  TSXFree(size_hints);
 		}
@@ -352,13 +402,13 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC
 	}
       if (changeMask)
 	{
-	  TSXReconfigureWMWindow( display, winposPtr->window, 0, changeMask, &winChanges );
+	  TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(winposPtr), 0, changeMask, &winChanges );
 	}
     }
 
   if ( winpos->flags & SWP_SHOWWINDOW )
     {
-      if(wndPtr && wndPtr->window) TSXMapWindow( display, wndPtr->window );
+      if(X11DRV_WND_GetXWindow(wndPtr)) TSXMapWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
     }
 }
 
@@ -367,11 +417,11 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS32 *winpos, BOOL32 bSMC
  */
 void X11DRV_WND_SetText(WND *wndPtr, LPCSTR text)
 {   
-  if (!wndPtr->window)
+  if (!X11DRV_WND_GetXWindow(wndPtr))
     return;
 
-  TSXStoreName( display, wndPtr->window, text );
-  TSXSetIconName( display, wndPtr->window, text );
+  TSXStoreName( display, X11DRV_WND_GetXWindow(wndPtr), text );
+  TSXSetIconName( display, X11DRV_WND_GetXWindow(wndPtr), text );
 }
 
 /*****************************************************************
@@ -398,13 +448,13 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   
   /* Set X focus and install colormap */
   
-  if (!wndPtr->window) return;
+  if (!X11DRV_WND_GetXWindow(wndPtr)) return;
   
-  if (!TSXGetWindowAttributes( display, wndPtr->window, &win_attr ) ||
+  if (!TSXGetWindowAttributes( display, X11DRV_WND_GetXWindow(wndPtr), &win_attr ) ||
       (win_attr.map_state != IsViewable))
     return;  /* If window is not viewable, don't change anything */
   
-  TSXSetInputFocus( display,wndPtr->window, RevertToParent, CurrentTime );
+  TSXSetInputFocus( display, X11DRV_WND_GetXWindow(wndPtr), RevertToParent, CurrentTime );
   if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
     TSXInstallColormap( display, COLOR_GetColormap() );
   
@@ -427,6 +477,102 @@ void X11DRV_WND_PostSizeMove(WND *wndPtr)
 {
   if (!(wndPtr->dwStyle & WS_CHILD) && (rootWindow == DefaultRootWindow(display)))
     TSXUngrabServer( display );
+}
+
+
+/*****************************************************************
+ *		 X11DRV_WND_ScrollWindow
+ */
+void X11DRV_WND_ScrollWindow(
+  WND *wndPtr, DC *dcPtr, INT32 dx, INT32 dy, 
+  const RECT32 *clipRect, BOOL32 bUpdate)
+{
+  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dcPtr->physDev;
+  POINT32 dst, src;
+  
+  if( dx > 0 ) dst.x = (src.x = dcPtr->w.DCOrgX + clipRect->left) + dx;
+  else src.x = (dst.x = dcPtr->w.DCOrgX + clipRect->left) - dx;
+  
+  if( dy > 0 ) dst.y = (src.y = dcPtr->w.DCOrgY + clipRect->top) + dy;
+  else src.y = (dst.y = dcPtr->w.DCOrgY + clipRect->top) - dy;
+  
+  
+  if ((clipRect->right - clipRect->left > abs(dx)) &&
+      (clipRect->bottom - clipRect->top > abs(dy)))
+    {
+      if (bUpdate) /* handles non-Wine windows hanging over the scrolled area */
+	TSXSetGraphicsExposures( display, physDev->gc, True );
+      TSXSetFunction( display, physDev->gc, GXcopy );
+      TSXCopyArea( display, physDev->drawable, physDev->drawable,
+		   physDev->gc, src.x, src.y,
+		   clipRect->right - clipRect->left - abs(dx),
+		   clipRect->bottom - clipRect->top - abs(dy),
+		   dst.x, dst.y );
+      if (bUpdate)
+	TSXSetGraphicsExposures( display, physDev->gc, False );
+    }
+}
+
+/***********************************************************************
+ *		X11DRV_WND_SetDrawable
+ *
+ * Set the drawable, origin and dimensions for the DC associated to
+ * a given window.
+ */
+void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOrigin)
+{
+    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+
+    if (!wndPtr)  /* Get a DC for the whole screen */
+    {
+        dc->w.DCOrgX = 0;
+        dc->w.DCOrgY = 0;
+        physDev->drawable = rootWindow;
+        TSXSetSubwindowMode( display, physDev->gc, IncludeInferiors );
+    }
+    else
+    {
+        if (flags & DCX_WINDOW)
+        {
+            dc->w.DCOrgX  = wndPtr->rectWindow.left;
+            dc->w.DCOrgY  = wndPtr->rectWindow.top;
+        }
+        else
+        {
+            dc->w.DCOrgX  = wndPtr->rectClient.left;
+            dc->w.DCOrgY  = wndPtr->rectClient.top;
+        }
+        while (!X11DRV_WND_GetXWindow(wndPtr))
+        {
+            wndPtr = wndPtr->parent;
+            dc->w.DCOrgX += wndPtr->rectClient.left;
+            dc->w.DCOrgY += wndPtr->rectClient.top;
+        }
+        dc->w.DCOrgX -= wndPtr->rectWindow.left;
+        dc->w.DCOrgY -= wndPtr->rectWindow.top;
+        physDev->drawable = X11DRV_WND_GetXWindow(wndPtr);
+
+#if 0
+	/* This is needed when we reuse a cached DC because
+	 * SetDCState() called by ReleaseDC() screws up DC
+	 * origins for child windows.
+	 */
+
+	if( bSetClipOrigin )
+	    TSXSetClipOrigin( display, physDev->gc, dc->w.DCOrgX, dc->w.DCOrgY );
+#endif
+    }
+}
+
+/***********************************************************************
+ *		X11DRV_WND_IsSelfClipping
+ */
+BOOL32 X11DRV_WND_IsSelfClipping(WND *wndPtr)
+{
+  if( X11DRV_WND_GetXWindow(wndPtr) ) 
+      return TRUE; /* X itself will do the clipping */
+
+  return FALSE;
 }
 
 #endif /* !defined(X_DISPLAY_MISSING) */

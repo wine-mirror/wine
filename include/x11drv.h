@@ -6,11 +6,17 @@
 #define __WINE_X11DRV_H
 
 #include "config.h"
-#include "ts_xlib.h"
-#include "ts_xutil.h"
+
+#ifndef X_DISPLAY_MISSING
+#include <X11/Xlib.h>
+#include <X11/Xresource.h>
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #include "winbase.h"
-#include "windows.h"
+#include "wintypes.h"
+#include "display.h"
 #include "gdi.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
 #include "clipboard.h"
@@ -219,10 +225,18 @@ extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 				      int *nColors );
 
 /* X11 windows driver */
+
 extern WND_DRIVER X11DRV_WND_Driver;
 
-extern Window X11DRV_WND_GetXWindow(HWND32 hwnd);
+typedef struct _X11DRV_WND_DATA {
+  Window window;
+} X11DRV_WND_DATA;
 
+extern Window X11DRV_WND_GetXWindow(WND *wndPtr);
+extern Window X11DRV_WND_FindXWindow(WND *wndPtr);
+
+extern void X11DRV_WND_Initialize(WND *wndPtr);
+extern void X11DRV_WND_Finalize(WND *wndPtr);
 extern BOOL32 X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL32 bUnicode);
 extern BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs, BOOL32 bUnicode);
 extern BOOL32 X11DRV_WND_DestroyWindow(WND *pWnd);
@@ -233,6 +247,9 @@ extern void X11DRV_WND_SetText(WND *wndPtr, LPCSTR text);
 extern void X11DRV_WND_SetFocus(WND *wndPtr);
 extern void X11DRV_WND_PreSizeMove(WND *wndPtr);
 extern void X11DRV_WND_PostSizeMove(WND *wndPtr);
+extern void X11DRV_WND_ScrollWindow(WND *wndPtr, DC *dcPtr, INT32 dx, INT32 dy, const RECT32 *clipRect, BOOL32 bUpdate);
+extern void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOrigin);
+extern BOOL32 X11DRV_WND_IsSelfClipping(WND *wndPtr);
 
 /* X11 clipboard driver */
 
@@ -241,7 +258,7 @@ extern CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
 extern void X11DRV_CLIPBOARD_EmptyClipboard();
 extern void X11DRV_CLIPBOARD_SetClipboardData(UINT32 wFormat);
 extern BOOL32 X11DRV_CLIPBOARD_RequestSelection();
-extern void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd);
+extern void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL32 bFooBar);
 
 void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop);
 void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd);
@@ -258,9 +275,10 @@ extern INT16 X11DRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpK
 
 /* X11 mouse driver */
 
-#if 0 
 extern MOUSE_DRIVER X11DRV_MOUSE_Driver;
-#endif
+
+extern void X11DRV_MOUSE_SetCursor(CURSORICONINFO *lpCursor);
+extern void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
 
 /* X11 event driver */
 

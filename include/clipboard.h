@@ -21,7 +21,7 @@ typedef struct _CLIPBOARD_DRIVER
     void (*pEmptyClipboard)();
     void (*pSetClipboardData)(UINT32);
     BOOL32 (*pRequestSelection)();
-    void (*pResetOwner)(WND *);
+    void (*pResetOwner)(WND *, BOOL32);
 } CLIPBOARD_DRIVER;
 
 CLIPBOARD_DRIVER *CLIPBOARD_GetDriver();

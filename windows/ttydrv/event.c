@@ -66,6 +66,8 @@ BOOL32 TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
 
   if(state)
     *state = 0;
+
+  return TRUE;
 }
 
 /***********************************************************************
