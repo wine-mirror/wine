@@ -56,6 +56,8 @@
 #include "heap.h"
 #include "msdos.h"
 #include "wincon.h"
+
+#include "smb.h"
 #include "wine/debug.h"
 
 #include "wine/server.h"
@@ -74,6 +76,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 static HANDLE dos_handles[DOS_TABLE_SIZE];
 
+extern WINAPI HANDLE FILE_SmbOpen(LPCSTR name);
 
 /***********************************************************************
  *              FILE_ConvertOFMode
@@ -480,9 +483,8 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     /* If the name still starts with '\\', it's a UNC name. */
     if (!strncmp(filename, "\\\\", 2))
     {
-        FIXME("UNC name (%s) not supported.\n", filename );
-        SetLastError( ERROR_PATH_NOT_FOUND );
-        return INVALID_HANDLE_VALUE;
+        ret = SMB_CreateFileA(filename, access, sharing, sa, creation, attributes, template );
+        goto done;
     }
 
     /* If the name contains a DOS wild card (* or ?), do no create a file */
@@ -1531,6 +1533,8 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     }
     switch(type)
     {
+    case FD_TYPE_SMB:
+        return SMB_ReadFile(hFile, buffer, bytesToRead, bytesRead, NULL);
     case FD_TYPE_CONSOLE:
 	return ReadConsoleA(hFile, buffer, bytesToRead, bytesRead, NULL);
 

@@ -736,7 +736,8 @@ enum fd_type
 {
     FD_TYPE_INVALID,
     FD_TYPE_DEFAULT,
-    FD_TYPE_CONSOLE
+    FD_TYPE_CONSOLE,
+    FD_TYPE_SMB
 };
 #define FD_FLAG_OVERLAPPED 0x01
 #define FD_FLAG_TIMEOUT    0x02
@@ -2321,6 +2322,41 @@ struct get_named_pipe_info_reply
 };
 
 
+struct create_smb_request
+{
+    struct request_header __header;
+    int            fd;
+    unsigned int   tree_id;
+    unsigned int   user_id;
+    unsigned int   file_id;
+    unsigned int   dialect;
+};
+struct create_smb_reply
+{
+    struct reply_header __header;
+    handle_t       handle;
+};
+
+
+struct get_smb_info_request
+{
+    struct request_header __header;
+    handle_t       handle;
+    unsigned int   flags;
+    unsigned int   offset;
+};
+struct get_smb_info_reply
+{
+    struct reply_header __header;
+    unsigned int   tree_id;
+    unsigned int   user_id;
+    unsigned int   dialect;
+    unsigned int   file_id;
+    unsigned int   offset;
+};
+#define SMBINFO_SET_OFFSET    0x01
+
+
 
 struct create_window_request
 {
@@ -2742,6 +2778,8 @@ enum request
     REQ_wait_named_pipe,
     REQ_disconnect_named_pipe,
     REQ_get_named_pipe_info,
+    REQ_create_smb,
+    REQ_get_smb_info,
     REQ_create_window,
     REQ_link_window,
     REQ_destroy_window,
@@ -2899,6 +2937,8 @@ union generic_request
     struct wait_named_pipe_request wait_named_pipe_request;
     struct disconnect_named_pipe_request disconnect_named_pipe_request;
     struct get_named_pipe_info_request get_named_pipe_info_request;
+    struct create_smb_request create_smb_request;
+    struct get_smb_info_request get_smb_info_request;
     struct create_window_request create_window_request;
     struct link_window_request link_window_request;
     struct destroy_window_request destroy_window_request;
@@ -3054,6 +3094,8 @@ union generic_reply
     struct wait_named_pipe_reply wait_named_pipe_reply;
     struct disconnect_named_pipe_reply disconnect_named_pipe_reply;
     struct get_named_pipe_info_reply get_named_pipe_info_reply;
+    struct create_smb_reply create_smb_reply;
+    struct get_smb_info_reply get_smb_info_reply;
     struct create_window_reply create_window_reply;
     struct link_window_reply link_window_reply;
     struct destroy_window_reply destroy_window_reply;
@@ -3075,6 +3117,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 72
+#define SERVER_PROTOCOL_VERSION 73
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
