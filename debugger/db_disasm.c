@@ -1006,19 +1006,8 @@ void db_read_address( DBG_ADDR *addr, int short_addr, int regmodrm,
 
 static void db_task_printsym(unsigned int addr, int size)
 {
-    switch(size)
-    {
-    case BYTE:
-    case WORD:
-        fprintf(stderr, "0x%4.4x", addr & 0xffff );
-        break;
-    case LONG:
-        {
-            DBG_ADDR address = { NULL, 0, addr };
-            DEBUG_PrintAddress( &address, db_disasm_16 ? 16 : 32, TRUE );
-        }
-        break;
-    }
+    DBG_ADDR address = { NULL, 0, addr };
+    DEBUG_PrintAddress( &address, db_disasm_16 ? 16 : 32, TRUE );
 }
 
 void
