@@ -32,14 +32,6 @@
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(relay);
 
-typedef struct
-{
-    BYTE			*restab;
-    DWORD			nresources;
-    DWORD			restabsize;
-    IMAGE_RESOURCE_DATA_ENTRY	*entries;
-} BUILTIN32_RESOURCE;
-
 #define MAX_DLLS 100
 
 typedef struct
