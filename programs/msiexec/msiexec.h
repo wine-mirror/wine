@@ -21,11 +21,6 @@
 typedef HRESULT (*DLLREGISTERSERVER)(void);
 typedef HRESULT (*DLLUNREGISTERSERVER)(void);
 
-/* Advertising flags */
-
-#define ADVERTISE_CURRENT_USER		0x00000001
-#define ADVERTISE_ALL_USERS		0x00000002
-
 /* Logging flags */
 
 #define LOG_STATUS_MESSAGES		0x00000001

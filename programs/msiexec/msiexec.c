@@ -124,6 +124,7 @@ int main(int argc, char *argv[])
 	int i;
 	BOOL FunctionInstall = FALSE;
 	BOOL FunctionRepair = FALSE;
+	BOOL FunctionAdvertise = FALSE;
 	BOOL FunctionDllRegisterServer = FALSE;
 	BOOL FunctionDllUnregisterServer = FALSE;
 
@@ -135,9 +136,14 @@ int main(int argc, char *argv[])
 
 	DWORD RepairMode = 0;
 
+	DWORD AdvertiseMode = 0;
+	LPSTR Transforms = HeapAlloc(GetProcessHeap(), 0, 1);
+	LANGID Language = 0;
+
 	LPSTR DllName = NULL;
 
 	Properties[0] = 0;
+	Transforms[0] = 0;
 
 	for(i = 1; i < argc; i++)
 	{
@@ -262,40 +268,82 @@ int main(int argc, char *argv[])
 		}
 		else if(!strncasecmp(argv[i], "/j", 2))
 		{
+			int j;
+			int len = strlen(argv[i]);
+			FunctionAdvertise = TRUE;
+			for(j = 2; j < len; j++)
+			{
+				switch(argv[i][j])
+				{
+					case 'U':
+					case 'u':
+						AdvertiseMode = ADVERTISEFLAGS_USERASSIGN;
+						break;
+					case 'M':
+					case 'm':
+						AdvertiseMode = ADVERTISEFLAGS_MACHINEASSIGN;
+						break;
+					default:
+						fprintf(stderr, "Unknown option \"%c\" in Advertise mode\n", argv[i][j]);
+						break;
+				}
+			}
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
-			WINE_FIXME("Advertising not yet implemented\n");
-			ExitProcess(1);
+			PackageName = argv[i];
 		}
-		else if(!strcasecmp(argv[i], "u") || !strcasecmp(argv[i], "m"))
+		else if(!strcasecmp(argv[i], "u"))
 		{
+			FunctionAdvertise = TRUE;
+			AdvertiseMode = ADVERTISEFLAGS_USERASSIGN;
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
-			WINE_FIXME("Advertising not yet implemented\n");
-			ExitProcess(1);
+			PackageName = argv[i];
+		}
+		else if(!strcasecmp(argv[i], "m"))
+		{
+			FunctionAdvertise = TRUE;
+			AdvertiseMode = ADVERTISEFLAGS_MACHINEASSIGN;
+			i++;
+			if(i >= argc)
+				ShowUsage(1);
+			PackageName = argv[i];
 		}
 		else if(!strcasecmp(argv[i], "/t"))
 		{
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
-			WINE_FIXME("Transforms not yet implemented\n");
-			ExitProcess(1);
+			TempStr = HeapReAlloc(GetProcessHeap(), 0, Transforms, HeapSize(GetProcessHeap(), 0, Transforms)+strlen(argv[i])+1);
+			if(!TempStr)
+			{
+				WINE_ERR("Out of memory!\n");
+				ExitProcess(1);
+			}
+			Transforms = TempStr;
+			strcat(Transforms, argv[i]);
+			strcat(Transforms, ";");
 		}
-		else if(!strncasecmp(argv[i], "TRANSFORMS", 10))
+		else if(!strncasecmp(argv[i], "TRANSFORMS=", 11))
 		{
-			WINE_FIXME("Transforms not yet implemented\n");
-			ExitProcess(1);
+			TempStr = HeapReAlloc(GetProcessHeap(), 0, Transforms, HeapSize(GetProcessHeap(), 0, Transforms)+strlen(argv[i])+1-11);
+			if(!TempStr)
+			{
+				WINE_ERR("Out of memory!\n");
+				ExitProcess(1);
+			}
+			Transforms = TempStr;
+			strcat(Transforms, argv[i]+11);
+			strcat(Transforms, ";");
 		}
 		else if(!strcasecmp(argv[i], "/g"))
 		{
 			i++;
 			if(i >= argc)
 				ShowUsage(1);
-			WINE_FIXME("Language ID not yet implemented\n");
-			ExitProcess(1);
+			Language = strtol(argv[i], NULL, 0);
 		}
 		else if(!strncasecmp(argv[i], "/l", 2))
 		{
@@ -354,6 +402,17 @@ int main(int argc, char *argv[])
 		}
 		Properties = TempStr;
 	}
+	if(Transforms[strlen(Transforms)-1] == ';')
+	{
+		Transforms[strlen(Transforms)-1] = 0;
+		TempStr = HeapReAlloc(GetProcessHeap(), 0, Transforms, HeapSize(GetProcessHeap(), 0, Transforms)-1);
+		if(!TempStr)
+		{
+			fprintf(stderr, "Out of memory!\n");
+			ExitProcess(1);
+		}
+		Transforms = TempStr;
+	}
 
 	if(FunctionInstall)
 	{
@@ -385,6 +444,14 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Repair of %s (0x%08lx) failed.\n", PackageName, RepairMode);
 				ExitProcess(1);
 			}
+		}
+	}
+	else if(FunctionAdvertise)
+	{
+		if(MsiAdvertiseProductA(PackageName, (LPSTR) AdvertiseMode, Transforms, Language) != ERROR_SUCCESS)
+		{
+			fprintf(stderr, "Advertising of %s (%lu, %s, 0x%04x) failed.\n", PackageName, AdvertiseMode, Transforms, Language);
+			ExitProcess(1);
 		}
 	}
 	else if(FunctionDllRegisterServer)
