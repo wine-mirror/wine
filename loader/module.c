@@ -1165,6 +1165,14 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
     return TRUE;  /* FIXME */
 }
 
+/***********************************************************************
+ *           FreeLibraryAndExitThread
+ */
+VOID WINAPI FreeLibraryAndExitThread(HINSTANCE hLibModule, DWORD dwExitCode)
+{
+    FreeLibrary(hLibModule);
+    ExitThread(dwExitCode);
+}
 
 /***********************************************************************
  *           PrivateLoadLibrary       (KERNEL32)

@@ -286,7 +286,7 @@ init	MAIN_KernelInit
 268 stdcall FreeEnvironmentStringsA(ptr) FreeEnvironmentStringsA
 269 stdcall FreeEnvironmentStringsW(ptr) FreeEnvironmentStringsW
 270 stub FreeLSCallback
-272 stub FreeLibraryAndExitThread
+272 stdcall FreeLibraryAndExitThread(long long) FreeLibraryAndExitThread
 271 stdcall FreeLibrary(long) FreeLibrary
 273 stdcall FreeResource(long) FreeResource
 274 stdcall FreeSLCallback(long) FreeSLCallback
@@ -294,7 +294,7 @@ init	MAIN_KernelInit
 276 stdcall GetACP() GetACP
 277 stdcall GetAtomNameA(long ptr long) GetAtomNameA
 278 stdcall GetAtomNameW(long ptr long) GetAtomNameW
-279 stub GetBinaryType
+279 stdcall GetBinaryType(ptr ptr) GetBinaryTypeA
 280 stdcall GetBinaryTypeA(ptr ptr) GetBinaryTypeA
 281 stdcall GetBinaryTypeW(ptr ptr) GetBinaryTypeW
 282 stdcall GetCPInfo(long ptr) GetCPInfo
