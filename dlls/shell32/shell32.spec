@@ -35,6 +35,8 @@
   38 stdcall PathStripPath(ptr)PathStripPathAW
   39 stdcall PathIsUNC (ptr) PathIsUNCAW
   40 stdcall PathIsRelative (ptr) PathIsRelativeAW
+  41 stdcall IsLFNDriveA(str)
+  42 stdcall IsLFNDriveW(wstr)
   43 stdcall PathIsExe (ptr) PathIsExeAW
   45 stdcall PathFileExists(ptr) PathFileExistsAW
   46 stdcall PathMatchSpec (ptr ptr) PathMatchSpecAW
@@ -92,6 +94,7 @@
   98 stdcall SHGetRealIDL (ptr ptr ptr)
   99 stdcall SetAppStartingCursor (long long)
  100 stdcall SHRestricted(long)
+
  102 stdcall SHCoCreateInstance(ptr ptr long ptr ptr)
  103 stdcall SignalFileOpen(long)
  104 stdcall FileMenu_DeleteAllItems(long)
@@ -109,7 +112,7 @@
  116 stdcall FileMenu_TrackPopupMenuEx (long long long long long long)
  117 stdcall FileMenu_DeleteItemByCmd(long long)
  118 stdcall FileMenu_Destroy (long)
- 119 stdcall IsLFNDrive(str) IsLFNDriveA
+ 119 stdcall IsLFNDrive(ptr) IsLFNDriveAW
  120 stdcall FileMenu_AbortInitMenu ()
  121 stdcall SHFlushClipboard ()
  122 stdcall RunDLL_CallEntry16 (long long long long long) #name wrong?
@@ -138,6 +141,7 @@
  146 stdcall RLBuildListOfPaths()
  147 stdcall SHCLSIDFromString(long long) SHCLSIDFromStringAW
  149 stdcall SHFind_InitMenuPopup(long long long long)
+
  151 stdcall SHLoadOLE (long)
  152 stdcall ILGetSize(ptr)
  153 stdcall ILGetNext(ptr)
@@ -174,6 +178,8 @@
  184 stdcall ArrangeWindows(long long long long long)
  185 stub SHHandleDiskFull
  186 stdcall ILGetDisplayNameEx(ptr ptr ptr long)
+ 187 stub ILGetPseudoNameW
+ 188 stub ShellDDEInit
  189 stdcall ILCreateFromPathA(str)
  190 stdcall ILCreateFromPathW(wstr)
  195 stdcall SHFree(ptr)

@@ -426,18 +426,37 @@ BOOL WINAPI PathIsSameRootAW(LPCVOID lpszPath1, LPCVOID lpszPath2)
 }
 
 /*************************************************************************
- * IsLFNDrive		[SHELL32.119]
- *
- * NOTES
- *     exported by ordinal Name
+ * IsLFNDriveA		[SHELL32.41]
  */
 BOOL WINAPI IsLFNDriveA(LPCSTR lpszPath)
 {
     DWORD	fnlen;
 
-    if (!GetVolumeInformationA(lpszPath,NULL,0,NULL,&fnlen,NULL,NULL,0))
+    if (!GetVolumeInformationA(lpszPath, NULL, 0, NULL, &fnlen, NULL, NULL, 0))
+	return FALSE;
+    return fnlen > 12;
+}
+
+/*************************************************************************
+ * IsLFNDriveW		[SHELL32.42]
+ */
+BOOL WINAPI IsLFNDriveW(LPCWSTR lpszPath)
+{
+    DWORD	fnlen;
+
+    if (!GetVolumeInformationW(lpszPath, NULL, 0, NULL, &fnlen, NULL, NULL, 0))
 	return FALSE;
     return fnlen>12;
+}
+
+/*************************************************************************
+ * IsLFNDrive		[SHELL32.119]
+ */
+BOOL WINAPI IsLFNDriveAW(LPCVOID lpszPath)
+{
+	if (SHELL_OsIsUnicode())
+	  return IsLFNDriveW(lpszPath);
+	return IsLFNDriveA(lpszPath);
 }
 
 /*
