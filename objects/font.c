@@ -1507,10 +1507,10 @@ BOOL16 WINAPI GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 
 
 /***********************************************************************
- *           GetCharWidthA      (GDI32.@)
- *           GetCharWidth32A    (GDI32.@)
+ *           GetCharWidthW      (GDI32.@)
+ *           GetCharWidth32W    (GDI32.@)
  */
-BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
+BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
                                LPINT buffer )
 {
     UINT i, extra;
@@ -1538,13 +1538,39 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
 
 
 /***********************************************************************
- *           GetCharWidthW      (GDI32.@)
- *           GetCharWidth32W    (GDI32.@)
+ *           GetCharWidthA      (GDI32.@)
+ *           GetCharWidth32A    (GDI32.@)
  */
-BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
+BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
                                LPINT buffer )
 {
-    return GetCharWidth32A( hdc, firstChar, lastChar, buffer );
+    INT i, wlen, count = (INT)(lastChar - firstChar + 1);
+    LPSTR str;
+    LPWSTR wstr;
+    BOOL ret = TRUE;
+
+    if(count <= 0) return FALSE;
+    
+    str = HeapAlloc(GetProcessHeap(), 0, count);
+    for(i = 0; i < count; i++)
+	str[i] = (BYTE)(firstChar + i);
+
+    wstr = FONT_mbtowc(hdc, str, count, &wlen, NULL);
+
+    for(i = 0; i < wlen; i++)
+    {
+	if(!GetCharWidth32W(hdc, wstr[i], wstr[i], buffer))
+	{
+	    ret = FALSE;
+	    break;
+	}
+	buffer++;
+    }
+
+    HeapFree(GetProcessHeap(), 0, str);
+    HeapFree(GetProcessHeap(), 0, wstr);
+
+    return ret;
 }
 
 

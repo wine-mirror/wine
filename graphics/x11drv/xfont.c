@@ -3326,10 +3326,15 @@ BOOL X11DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 
 	    for (i = firstChar; i <= lastChar; i++)
 	    {
-		if (i >= pfo->fs->min_char_or_byte2 && 
-		    i <= pfo->fs->max_char_or_byte2)
+		WCHAR wch = i;
+		BYTE ch;
+		UINT ch_f; /* character code in the font encoding */
+		WideCharToMultiByte( pfo->fi->codepage, 0, &wch, 1, &ch, 1, NULL, NULL );
+		ch_f = ch;
+		if (ch_f >= pfo->fs->min_char_or_byte2 && 
+		    ch_f <= pfo->fs->max_char_or_byte2)
 		{
-		    cs = &pfo->fs->per_char[(i - pfo->fs->min_char_or_byte2)]; 
+		    cs = &pfo->fs->per_char[(ch_f - pfo->fs->min_char_or_byte2)]; 
 		    if (CI_NONEXISTCHAR(cs)) cs = def; 
   		} else cs = def;
 		if(pfo->lpX11Trans)
