@@ -374,6 +374,17 @@ void add_import_dll( const char *name, int delay )
     else free_imports( imp );
 }
 
+/* remove an imported dll, based on its index in the dll_imports array */
+static void remove_import_dll( int index )
+{
+    struct import *imp = dll_imports[index];
+
+    memmove( &dll_imports[index], &dll_imports[index+1], sizeof(imp) * (nb_imports - index - 1) );
+    nb_imports--;
+    if (imp->delay) nb_delayed--;
+    free_imports( imp );
+}
+
 /* initialize the list of ignored symbols */
 static void init_ignored_symbols(void)
 {
@@ -545,8 +556,8 @@ static void add_extra_undef_symbols(void)
     }
 }
 
-/* warn if a given dll is not used, but check forwards first */
-static void warn_unused( const struct import* imp )
+/* check if a given imported dll is not needed, taking forwards into account */
+static int check_unused( const struct import* imp )
 {
     int i;
     size_t len = strlen(imp->dll);
@@ -559,9 +570,9 @@ static void warn_unused( const struct import* imp )
         if (!odp || !(odp->flags & FLAG_FORWARD)) continue;
         if (!strncasecmp( odp->link_name, imp->dll, len ) &&
             odp->link_name[len] == '.')
-            return;  /* found an import, do not warn */
+            return 0;  /* found a forward, it is used */
     }
-    warning( "%s imported but no symbols used\n", imp->dll );
+    return 1;
 }
 
 /* combine a list of object files with ld into a single object file */
@@ -667,7 +678,13 @@ int resolve_imports( void )
             }
         }
         /* remove all the holes in the undef symbols list */
-        if (!remove_symbol_holes()) warn_unused( imp );
+        if (!remove_symbol_holes() && check_unused( imp ))
+        {
+            /* the dll is not used, get rid of it */
+            warning( "%s imported but no symbols used\n", imp->dll );
+            remove_import_dll( i );
+            i--;
+        }
     }
     return 1;
 }
