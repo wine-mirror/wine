@@ -9,7 +9,6 @@ C_SRCS = \
 	audio.c \
 	dplay.c \
 	dsound.c \
-	init.c \
 	joystick.c \
 	mci.c \
 	mcianim.c \
