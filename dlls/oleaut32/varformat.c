@@ -1386,7 +1386,7 @@ VARIANT_FormatNumber_Bool:
         TRACE("write %d fractional digits or skip\n", pToken[1]);
 
         for (count = 0; count < fractionalDigits; count++)
-          pBuff[count] = rgbDig[wholeNumberDigits + count];
+          pBuff[count] = '0' + rgbDig[wholeNumberDigits + count];
         pBuff += fractionalDigits;
       }
       else
@@ -1416,7 +1416,7 @@ VARIANT_FormatNumber_Bool:
         TRACE("write %d fractional digits or 0's\n", pToken[1]);
 
         for (count = 0; count < fractionalDigits; count++)
-          pBuff[count] = rgbDig[wholeNumberDigits + count];
+          pBuff[count] = '0' + rgbDig[wholeNumberDigits + count];
         pBuff += fractionalDigits;
         if (pToken[1] > fractionalDigits)
         {
