@@ -19,6 +19,14 @@ dlls/avifil32
 
 dlls/cabinet
 
+% dlls/capi2032/capi2032.spec
+
+dlls/capi2032
+
+% dlls/cfgmgr32/cfgmgr32.spec
+
+dlls/cfgmgr32
+
 % dlls/comcat/comcat.spec
 
 dlls/comcat
@@ -518,6 +526,10 @@ dlls/user/dde
 objects
 windows
 
+% dlls/uxtheme/uxtheme.spec
+
+dlls/uxtheme
+
 % dlls/version/ver.spec
 
 dlls/version
@@ -545,6 +557,10 @@ dlls/winaspi
 % dlls/winaspi/wnaspi32.spec
 
 dlls/winaspi
+
+% dlls/wined3d/wined3d.spec
+
+dlls/wined3d
 
 % dlls/winedos/winedos.spec
 
