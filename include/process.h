@@ -147,7 +147,6 @@ extern DWORD WINAPI MapProcessHandle( HANDLE handle );
 extern BOOL ENV_BuildEnvironment(void);
 
 /* scheduler/process.c */
-extern BOOL PROCESS_Init(void);
 extern void PROCESS_InitWine( int argc, char *argv[] ) WINE_NORETURN;
 extern void PROCESS_InitWinelib( int argc, char *argv[] ) WINE_NORETURN;
 extern PDB *PROCESS_IdToPDB( DWORD id );

@@ -27,16 +27,8 @@ DEFAULT_DEBUG_CHANNEL(server);
 /***********************************************************************
  *           Main initialisation routine
  */
-BOOL MAIN_MainInit( char *argv[] )
+BOOL MAIN_MainInit(void)
 {
-    /* store the program name */
-    argv0 = argv[0];
-
-    /* Create the initial process */
-    if (!PROCESS_Init()) return FALSE;
-
-    /* Parse command line arguments */
-    OPTIONS_ParseOptions( argv );
     MAIN_WineInit();
 
     /* Load the configuration file */

@@ -459,6 +459,20 @@ int CLIENT_InitServer(void)
         break;
     }
 
+    /* if argv[0] is a relative path, make it absolute */
+    full_argv0 = argv0;
+    if (oldcwd && argv0[0] != '/' && strchr( argv0, '/' ))
+    {
+        char *new_argv0 = malloc( strlen(oldcwd) + strlen(argv0) + 2 );
+        if (new_argv0)
+        {
+            strcpy( new_argv0, oldcwd );
+            strcat( new_argv0, "/" );
+            strcat( new_argv0, argv0 );
+            full_argv0 = new_argv0;
+        }
+    }
+
     /* get the server directory name */
     if (gethostname( hostname, sizeof(hostname) ) == -1) fatal_perror( "gethostname" );
     configdir = get_config_dir();

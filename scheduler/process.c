@@ -171,12 +171,17 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
 
 
 /***********************************************************************
- *           PROCESS_Init
+ *           process_init
+ *
+ * Main process initialisation code
  */
-BOOL PROCESS_Init(void)
+static BOOL process_init( char *argv[] )
 {
     struct init_process_request *req;
     PDB *pdb = PROCESS_Current();
+
+    /* store the program name */
+    argv0 = argv[0];
 
     /* Fill the initial process structure */
     pdb->exit_code              = STILL_ACTIVE;
@@ -227,7 +232,10 @@ BOOL PROCESS_Init(void)
     /* Initialize syslevel handling */
     SYSLEVEL_Init();
 
-    return TRUE;
+    /* Parse command line arguments */
+    OPTIONS_ParseOptions( argv );
+
+    return MAIN_MainInit();
 }
 
 
@@ -396,8 +404,8 @@ static void PROCESS_Start( HMODULE main_module, LPSTR filename )
     {
         /* if no explicit filename, use argv[0] */
         if (!(filename = malloc( MAX_PATH ))) ExitProcess(1);
-        if (!GetFullPathNameA( argv0, MAX_PATH, filename, NULL ))
-            lstrcpynA( filename, argv0, MAX_PATH );
+        if (!GetLongPathNameA( full_argv0, filename, MAX_PATH ))
+            lstrcpynA( filename, full_argv0, MAX_PATH );
     }
 
     /* load main module */
@@ -432,7 +440,7 @@ void PROCESS_InitWine( int argc, char *argv[] )
     DWORD type;
 
     /* Initialize everything */
-    if (!MAIN_MainInit( argv )) exit(1);
+    if (!process_init( argv )) exit(1);
 
     main_exe_argv = ++argv;  /* remove argv[0] (wine itself) */
 
@@ -519,7 +527,7 @@ void PROCESS_InitWinelib( int argc, char *argv[] )
 {
     HMODULE main_module;
 
-    if (!MAIN_MainInit( argv )) exit(1);
+    if (!process_init( argv )) exit(1);
 
     /* create 32-bit module for main exe */
     if (!(main_module = BUILTIN32_LoadExeModule())) ExitProcess( GetLastError() );
@@ -636,11 +644,11 @@ static void exec_wine_binary( char **argv, char **envp )
     execve( argv[0], argv, envp );
 
     /* now try the path of argv0 of the current binary */
-    if (!(argv[0] = malloc( strlen(argv0) + 6 ))) return;
-    if ((ptr = strrchr( argv0, '/' )))
+    if (!(argv[0] = malloc( strlen(full_argv0) + 6 ))) return;
+    if ((ptr = strrchr( full_argv0, '/' )))
     {
-        memcpy( argv[0], argv0, ptr - argv0 );
-        strcpy( argv[0] + (ptr - argv0), "/wine" );
+        memcpy( argv[0], full_argv0, ptr - full_argv0 );
+        strcpy( argv[0] + (ptr - full_argv0), "/wine" );
         execve( argv[0], argv, envp );
     }
     free( argv[0] );
@@ -781,7 +789,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     }
     else  /* new wine process */
     {
-        if (!GetFullPathNameA( filename, server_remaining(req->filename), req->filename, NULL ))
+        if (!GetLongPathNameA( filename, req->filename, server_remaining(req->filename) ))
             lstrcpynA( req->filename, filename, server_remaining(req->filename) );
     }
     if (server_call( REQ_NEW_PROCESS )) return FALSE;

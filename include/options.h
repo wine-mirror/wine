@@ -21,6 +21,7 @@ struct options
 
 extern struct options Options;
 extern const char *argv0;
+extern const char *full_argv0;
 
 extern void OPTIONS_Usage(void) WINE_NORETURN;
 extern void OPTIONS_ParseOptions( char *argv[] );

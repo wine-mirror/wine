@@ -40,7 +40,8 @@ struct options Options =
     NULL            /* Alternate config file name */
 };
 
-const char *argv0;
+const char *argv0;       /* the original argv[0] */
+const char *full_argv0;  /* the full path of argv[0] (if known) */
 
 static char *inherit_str;  /* options to pass to child processes */
 

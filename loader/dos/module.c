@@ -432,7 +432,7 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   /* now load dosmod */
   /* check argv[0]-derived paths first, since the newest dosmod is most likely there
    * (at least it was once for Andreas Mohr, so I decided to make it easier for him) */
-  fpath=strrchr(strcpy(path,argv0),'/');
+  fpath=strrchr(strcpy(path,full_argv0),'/');
   if (fpath) {
    strcpy(fpath,"/dosmod");
    execl(path,fname,farg,NULL);
