@@ -1967,7 +1967,7 @@ TREEVIEW_GetItemT(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
 
     if (tvItem->mask & TVIF_CHILDREN)
     {
-        if (TVIF_CHILDREN==I_CHILDRENCALLBACK)
+        if (wineItem->cChildren==I_CHILDRENCALLBACK)
             FIXME("I_CHILDRENCALLBACK not supported\n");
 	tvItem->cChildren = wineItem->cChildren;
     }
