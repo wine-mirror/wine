@@ -84,12 +84,16 @@ LINTS = $(C_SRCS:.c=.ln)
 
 # DLL list
 
+X_DLLS = \
+	ddraw \
+	x11drv
+
 DLLS = \
+	@X_DLLS@ \
 	avifil32 \
 	comctl32 \
 	comdlg32 \
 	dciman32 \
-	ddraw \
 	dinput \
 	dplayx \
 	dsound \
@@ -138,8 +142,7 @@ DLLS = \
 	winmm \
 	winspool.drv \
 	wnaspi32 \
-	wsock32 \
-	x11drv
+	wsock32
 
 # Implicit rules
 

@@ -3,12 +3,16 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
+XFILES = \
+	ddraw/libddraw.@LIBEXT@ \
+	x11drv/libx11drv.@LIBEXT@
+
 DLLFILES = \
+	@XFILES@ \
 	avifil32/libavifil32.@LIBEXT@ \
 	comctl32/libcomctl32.@LIBEXT@ \
 	commdlg/libcomdlg32.@LIBEXT@ \
 	dciman32/libdciman32.@LIBEXT@ \
-	ddraw/libddraw.@LIBEXT@ \
 	dinput/libdinput.@LIBEXT@ \
 	dplayx/libdplayx.@LIBEXT@ \
 	dsound/libdsound.@LIBEXT@ \
@@ -57,8 +61,7 @@ DLLFILES = \
 	winmm/wavemap/libmsacm.drv.@LIBEXT@ \
 	winmm/wineoss/libwineoss.drv.@LIBEXT@ \
 	winsock/libwsock32.@LIBEXT@ \
-	winspool/libwinspool.drv.@LIBEXT@ \
-	x11drv/libx11drv.@LIBEXT@
+	winspool/libwinspool.drv.@LIBEXT@
 
 # extra names for dlls containing multiple spec files
 EXTRADLLNAMES = \

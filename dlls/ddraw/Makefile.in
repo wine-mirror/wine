@@ -26,7 +26,7 @@ DGA_SRCS = \
 	dsurface/dga.c \
 	dga.c
 
-X_SRCS = \
+XFILES = \
 	@DGA_SRCS@ \
 	@MESA_SRCS@ \
 	ddraw/x11.c \
@@ -35,7 +35,7 @@ X_SRCS = \
 	x11.c 
 
 C_SRCS = \
-	@X_SRCS@ \
+	@XFILES@ \
 	convert.c \
 	d3ddevice/main.c \
 	dclipper/main.c \

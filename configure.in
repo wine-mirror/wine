@@ -117,8 +117,10 @@ AC_CHECK_HEADERS(dlfcn.h,
 	LIBEXT="a"
 )
 AC_SUBST(XLIB)
-AC_SUBST(X_SRCS)
-X_SRCS=""
+AC_SUBST(X_DLLS)
+X_DLLS=""
+AC_SUBST(XFILES)
+XFILES=""
 AC_SUBST(DGA_SRCS)
 DGA_SRCS=""
 AC_SUBST(MESA_SRCS)
@@ -247,7 +249,8 @@ then
     fi
 
     CPPFLAGS="$ac_save_CPPFLAGS"
-    X_SRCS='$(X_SRCS)'
+    X_DLLS='$(X_DLLS)'
+    XFILES='$(XFILES)'
 else
     XLIB=""
     X_CFLAGS=""
