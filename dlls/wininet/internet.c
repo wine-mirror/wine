@@ -2032,7 +2032,7 @@ BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRes
 
 
 /**********************************************************
- *	INTERNET_InternetOpenUrlA (internal)
+ *	INTERNET_InternetOpenUrlW (internal)
  *
  * Opens an URL
  *
@@ -2114,7 +2114,7 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 }
 
 /**********************************************************
- *	InternetOpenUrlA (WININET.@)
+ *	InternetOpenUrlW (WININET.@)
  *
  * Opens an URL
  *
@@ -2171,7 +2171,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 }
 
 /**********************************************************
- *	InternetOpenUrlW (WININET.@)
+ *	InternetOpenUrlA (WININET.@)
  *
  * Opens an URL
  *
@@ -2183,30 +2183,36 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
 {
     HINTERNET rc = (HINTERNET)NULL;
 
-    INT lenUrl = MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, NULL, 0 );
-    INT lenHeaders = MultiByteToWideChar(CP_ACP, 0, lpszHeaders, -1, NULL, 0 );
-    LPWSTR szUrl = HeapAlloc(GetProcessHeap(), 0, lenUrl*sizeof(WCHAR));
-    LPWSTR szHeaders = HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(WCHAR));
+    INT lenUrl;
+    INT lenHeaders = 0;
+    LPWSTR szUrl = NULL;
+    LPWSTR szHeaders = NULL;
 
     TRACE("\n");
 
-    if (!szUrl || !szHeaders)
-    {
-        if (szUrl)
-            HeapFree(GetProcessHeap(), 0, szUrl);
-        if (szHeaders)
-            HeapFree(GetProcessHeap(), 0, szHeaders);
-        return (HINTERNET)NULL;
+    if(lpszUrl) {
+        lenUrl = MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, NULL, 0 );
+        szUrl = HeapAlloc(GetProcessHeap(), 0, lenUrl*sizeof(WCHAR));
+        if(!szUrl)
+            return (HINTERNET)NULL;
+        MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, szUrl, lenUrl);
     }
-
-    MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, szUrl, lenUrl);
-    MultiByteToWideChar(CP_ACP, 0, lpszHeaders, -1, szHeaders, lenHeaders);
-
+    
+    if(lpszHeaders) {
+        lenHeaders = MultiByteToWideChar(CP_ACP, 0, lpszHeaders, dwHeadersLength, NULL, 0 );
+        szHeaders = HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(WCHAR));
+        if(!szHeaders) {
+            if(szUrl) HeapFree(GetProcessHeap(), 0, szUrl);
+            return (HINTERNET)NULL;
+        }
+        MultiByteToWideChar(CP_ACP, 0, lpszHeaders, dwHeadersLength, szHeaders, lenHeaders);
+    }
+    
     rc = InternetOpenUrlW(hInternet, szUrl, szHeaders,
-        dwHeadersLength, dwFlags, dwContext);
+        lenHeaders, dwFlags, dwContext);
 
-    HeapFree(GetProcessHeap(), 0, szUrl);
-    HeapFree(GetProcessHeap(), 0, szHeaders);
+    if(szUrl) HeapFree(GetProcessHeap(), 0, szUrl);
+    if(szHeaders) HeapFree(GetProcessHeap(), 0, szHeaders);
 
     return rc;
 }
