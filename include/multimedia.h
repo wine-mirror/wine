@@ -100,6 +100,7 @@ extern MCI_MapType		MCI_UnMapMsg16To32A(WORD uDevTyp, WORD wMsg, DWORD lParam);
 extern DWORD 			MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms);
 extern DWORD 			MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms);
 extern DWORD 			MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParms);
+extern DWORD 			MCI_Break(UINT uDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms);
 
 typedef LONG			(*MCIPROC16)(DWORD, HDRVR16, WORD, DWORD, DWORD);
 typedef LONG			(*MCIPROC)(DWORD, HDRVR, DWORD, DWORD, DWORD);

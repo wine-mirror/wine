@@ -558,7 +558,9 @@ MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lP
      * MCI_SETAUDIO, MCI_SETTUNER, MCI_SETVIDEO
      */
     switch (wMsg) {
-	/* case MCI_BREAK: */
+    case MCI_BREAK:
+	size = sizeof(MCI_BREAK_PARMS);
+	break;
 	/* case MCI_CAPTURE */
     case MCI_CLOSE:
     case MCI_CLOSE_DRIVER:	
@@ -832,6 +834,8 @@ MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD l
     DWORD 	map = 0;
 
     switch (wMsg) {
+    case MCI_BREAK:
+        break;
 	/* case MCI_CAPTURE */
     case MCI_CLOSE:	
     case MCI_CLOSE_DRIVER:	
@@ -1111,11 +1115,13 @@ DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
    
     TRACE("(%08lX, %p)\n", dwParam, lpParms);
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
-    
-    if ((dwParam & ~(MCI_OPEN_SHAREABLE|MCI_OPEN_ELEMENT|MCI_OPEN_ALIAS|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID|MCI_NOTIFY|MCI_WAIT)) != 0) {
-	FIXME("Unsupported yet dwFlags=%08lX\n", 
-	      (dwParam & ~(MCI_OPEN_SHAREABLE|MCI_OPEN_ELEMENT|MCI_OPEN_ALIAS|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID|MCI_NOTIFY|MCI_WAIT)));
+
+    /* only two low bytes are generic, the other ones are dev type specific */
+#define WINE_MCI_SUPP	(0xFFFF0000|MCI_OPEN_SHAREABLE|MCI_OPEN_ELEMENT|MCI_OPEN_ALIAS|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID|MCI_NOTIFY|MCI_WAIT)
+    if ((dwParam & ~WINE_MCI_SUPP) != 0) {
+	FIXME("Unsupported yet dwFlags=%08lX\n", dwParam & ~WINE_MCI_SUPP);
     }
+#undef WINE_MCI_SUPP
 
     while (MCI_GetDrv(wDevID)->modp.wType != 0) {
 	wDevID = MCI_NextDevID(wDevID);
@@ -1357,6 +1363,22 @@ DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParms)
     return ret;
 }
 
+/**************************************************************************
+ * 			MCI_Break				[internal]
+ */
+DWORD MCI_Break(UINT wDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms)
+{
+    DWORD	dwRet = 0;
+    
+    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
+
+    if (dwFlags & MCI_NOTIFY)
+	mciDriverNotify16(lpParms->dwCallback, wDevID,
+			  (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
+
+    return dwRet;
+}
+    
 struct SCA {
     UINT 	wDevID;
     UINT 	wMsg;

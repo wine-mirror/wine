@@ -1798,6 +1798,10 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
     case MCI_SYSINFO:
 	dwRet = MCI_SysInfo(wDevID, dwParam1, (LPMCI_SYSINFO_PARMSA)dwParam2);
 	break;
+    case MCI_BREAK:
+	dwRet = MCI_Break(wDevID, dwParam1, (LPMCI_BREAK_PARMS)dwParam2);
+	break;
+    /* FIXME: it seems that MCI_BREAK and MCI_SOUND need the same handling */
     default:
 	if (wDevID == MCI_ALL_DEVICE_ID) {
 	    FIXME("unhandled MCI_ALL_DEVICE_ID\n");
@@ -1839,7 +1843,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 	    dwRet = MCI_Open(dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
 	    MCI_UnMapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam2);
 	    break;
-	default: break; /* so that gcc does bark */
+	default: break; /* so that gcc does not bark */
 	}
 	break;
     case MCI_CLOSE:
@@ -1855,7 +1859,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 		dwRet = MCI_Close(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
 		MCI_UnMapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, dwParam2);
 		break;
-	    default: break; /* so that gcc does bark */
+	    default: break; /* so that gcc does not bark */
 	    }
 	}
 	break;
@@ -1866,9 +1870,20 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 	    dwRet = MCI_SysInfo(wDevID, dwParam1, (LPMCI_SYSINFO_PARMSA)dwParam2);
 	    MCI_UnMapMsg16To32A(0, wDevID, dwParam2);
 	    break;
-	default: break; /* so that gcc does bark */
+	default: break; /* so that gcc doesnot  bark */
 	}
 	break;
+    case MCI_BREAK:
+	switch (MCI_MapMsg16To32A(0, wDevID, &dwParam2)) {
+	case MCI_MAP_OK:
+	case MCI_MAP_OKMEM:
+	    dwRet = MCI_Break(wDevID, dwParam1, (LPMCI_BREAK_PARMS)dwParam2);
+	    MCI_UnMapMsg16To32A(0, wDevID, dwParam2);
+	    break;
+	default: break; /* so that gcc does not bark */
+	}
+	break;
+
     /* FIXME: it seems that MCI_BREAK and MCI_SOUND need the same handling */
     default:
 	if (wDevID == MCI_ALL_DEVICE_ID) {
