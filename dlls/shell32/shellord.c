@@ -13,6 +13,7 @@
 #include "winnls.h"
 #include "winversion.h"
 #include "heap.h"
+#include "crtdll.h"
 
 #include "shellapi.h"
 #include "shlobj.h"
@@ -25,25 +26,28 @@ DEFAULT_DEBUG_CHANNEL(shell);
 /*************************************************************************
  * ParseField					[SHELL32.58]
  *
+ * copys a field from a ',' delimited string
+ * 
+ * first field is nField = 1
  */
-DWORD WINAPI ParseFieldA(LPCSTR src, DWORD field, LPSTR dst, DWORD len) 
-{	WARN("('%s',0x%08lx,%p,%ld) semi-stub.\n",src,field,dst,len);
+DWORD WINAPI ParseFieldA(LPCSTR src, DWORD nField, LPSTR dst, DWORD len) 
+{
+	WARN("('%s',0x%08lx,%p,%ld) semi-stub.\n",src,nField,dst,len);
 
 	if (!src || !src[0] || !dst || !len)
 	  return 0;
 
-	if (field >1)
-	{ field--;	
-	  while (field)
-	  { if (*src==0x0) return FALSE;
-	    if (*src==',') field--;
-	    src++;
-	  }
+	/* skip n fields delimited by ',' */
+	while (nField > 1)
+	{
+	  if (*src=='\0') return FALSE;
+	  if (*(src++)==',') nField--;
 	}
 
-	while (*src!=0x00 && *src!=',' && len>0) 
-	{ *dst=*src; dst++, src++; len--;
-	}
+	/* copy part till the next ',' to dst */
+	while ( *src!='\0' && *src!=',' && (len--)>0 ) *(dst++)=*(src++);
+	
+	/* finalize the string */
 	*dst=0x0;
 	
 	return TRUE;
@@ -391,27 +395,6 @@ BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
 }
 
 /*************************************************************************
- * SHCreateDirectory				[SHELL32.165]
- *
- * NOTES
- *  exported by ordinal
- *  not sure about LPSECURITY_ATTRIBUTES
- */
-DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
-	TRACE("(%p,%s):stub.\n",sec,path);
-	if (CreateDirectoryA(path,sec))
-		return TRUE;
-	/* SHChangeNotify(8,1,path,0); */
-	return FALSE;
-#if 0
-	if (SHELL32_79(path,(LPVOID)x))
-		return 0;
-	FIXME("(%08lx,%s):stub.\n",x,path);
-	return 0;
-#endif
-}
-
-/*************************************************************************
  * SHFree					[SHELL32.195]
  *
  * NOTES
@@ -633,13 +616,22 @@ BOOL WINAPI ShellExecuteExAW (LPVOID sei)
 /*************************************************************************
  * ShellExecuteExA				[SHELL32.292]
  *
+ * placeholder in the commandline:
+ *	%1 file
+ *	%2 printer
+ *	%3 driver
+ *	%4 port
+ *	%I adress of a global item ID (explorer switch /idlist)
+ *	%L ??? path/url/current file ???
+ *	%S ???
+ *	%* all following parameters (see batfile)
  */
 BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 { 	CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20];
 	LPSTR pos;
 	int gap, len;
-	STARTUPINFOA  startupinfo;
-	PROCESS_INFORMATION processinformation;
+	STARTUPINFOA  startup;
+	PROCESS_INFORMATION info;
 			
 	WARN("mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s incomplete\n",
 		sei->fMask, sei->hwnd, sei->lpVerb, sei->lpFile,
@@ -655,27 +647,36 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	  strcpy(szCommandline, sei->lpParameters);
 			
 	if (sei->fMask & (SEE_MASK_CLASSKEY | SEE_MASK_INVOKEIDLIST | SEE_MASK_ICON | SEE_MASK_HOTKEY |
-			  SEE_MASK_NOCLOSEPROCESS | SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT |
+			  SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT |
 			  SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI | SEE_MASK_UNICODE | 
 			  SEE_MASK_NO_CONSOLE | SEE_MASK_ASYNCOK | SEE_MASK_HMONITOR ))
-	{ FIXME("flags ignored: 0x%08lx\n", sei->fMask);
+	{
+	  FIXME("flags ignored: 0x%08lx\n", sei->fMask);
 	}
-
+	
+	/* launch a document by fileclass like 'Wordpad.Document.1' */
 	if (sei->fMask & SEE_MASK_CLASSNAME)
-	{ HCR_GetExecuteCommand(sei->lpClass, (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, 256);	    
+	{
+	  /* the commandline contains 'c:\Path\wordpad.exe "%1"' */
+	  HCR_GetExecuteCommand(sei->lpClass, (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, 256);
+	  /* fixme: get the extension of lpFile, check if it fits to the lpClass */
+	  TRACE("SEE_MASK_CLASSNAME->'%s'\n", szCommandline);
 	}
 
 	/* process the IDList */
 	if ( (sei->fMask & SEE_MASK_INVOKEIDLIST) == SEE_MASK_INVOKEIDLIST) /*0x0c*/
-	{ SHGetPathFromIDListA (sei->lpIDList,szApplicationName);
+	{
+	  SHGetPathFromIDListA (sei->lpIDList,szApplicationName);
 	  TRACE("-- idlist=%p (%s)\n", sei->lpIDList, szApplicationName);
 	}
 	else
-	{ if (sei->fMask & SEE_MASK_IDLIST )
-	  { /* %I is the adress of a global item ID*/
+	{
+	  if (sei->fMask & SEE_MASK_IDLIST )
+	  {
 	    pos = strstr(szCommandline, "%I");
 	    if (pos)
-	    { HGLOBAL hmem = SHAllocShared ( sei->lpIDList, ILGetSize(sei->lpIDList), 0);
+	    {
+	      HGLOBAL hmem = SHAllocShared ( sei->lpIDList, ILGetSize(sei->lpIDList), 0);
 	      sprintf(szPidl,":%li",(DWORD)SHLockShared(hmem,0) );
 	      SHUnlockShared(hmem);
 	    
@@ -688,24 +689,34 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	  }
 	}
 
-	pos = strstr(szCommandline, ",%L");	/* dunno what it means: kill it*/
-	if (pos)
-	{ len = strlen(pos)-2;
-	  *pos=0x0;
-	  memmove(pos,pos+3,len);
+	TRACE("execute:'%s','%s'\n",szApplicationName, szCommandline);
+
+	strcat(szApplicationName, " ");
+	strcat(szApplicationName, szCommandline);
+
+	ZeroMemory(&startup,sizeof(STARTUPINFOA));
+	startup.cb = sizeof(STARTUPINFOA);
+
+	if (! CreateProcessA(NULL, szApplicationName,
+			 NULL, NULL, FALSE, 0, 
+			 NULL, NULL, &startup, &info))
+	{
+	  sei->hInstApp = GetLastError();
+	  return FALSE;
 	}
 
-	TRACE("execute: %s %s\n",szApplicationName, szCommandline);
-
-	ZeroMemory(&startupinfo,sizeof(STARTUPINFOA));
-	startupinfo.cb = sizeof(STARTUPINFOA);
-
-	return CreateProcessA(szApplicationName[0] ? szApplicationName:NULL,
-			 szCommandline[0] ? szCommandline : NULL,
-			 NULL, NULL, FALSE, 0, 
-			 NULL, NULL, &startupinfo, &processinformation);
-	  
+        sei->hInstApp = 33;
 	
+    	/* Give 30 seconds to the app to come up */
+	if ( WaitForInputIdle ( info.hProcess, 30000 ) ==  0xFFFFFFFF )
+	  ERR("WaitForInputIdle failed: Error %ld\n", GetLastError() );
+ 
+	if(sei->fMask & SEE_MASK_NOCLOSEPROCESS)
+	  sei->hProcess = info.hProcess;	  
+        else
+          CloseHandle( info.hProcess );
+        CloseHandle( info.hThread );
+	return TRUE;
 }
 /*************************************************************************
  * ShellExecuteExW				[SHELL32.293]
@@ -874,6 +885,87 @@ HRESULT WINAPI SHRegQueryValueExW (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserv
 	return ret;
 }
 
+ /* SHGetValue: Gets a value from the registry */
+
+DWORD WINAPI SHGetValueA(
+    HKEY     hkey,
+    LPCSTR   pSubKey,
+    LPCSTR   pValue,
+    LPDWORD  pwType,
+    LPVOID   pvData,
+    LPDWORD  pbData
+    )
+{
+    FIXME("(%p),stub!\n", pSubKey);
+
+	return ERROR_SUCCESS;  /* return success */
+}
+
+DWORD WINAPI SHGetValueW(
+    HKEY     hkey,
+    LPCWSTR  pSubKey,
+    LPCWSTR  pValue,
+    LPDWORD  pwType,
+    LPVOID   pvData,
+    LPDWORD  pbData
+    )
+{
+    FIXME("(%p),stub!\n", pSubKey);
+
+	return ERROR_SUCCESS;  /* return success */
+}
+
+/* gets a user-specific registry value. */
+
+LONG WINAPI SHRegGetUSValueA(
+    LPCSTR   pSubKey,
+    LPCSTR   pValue,
+    LPDWORD  pwType,
+    LPVOID   pvData,
+    LPDWORD  pbData,
+    BOOL     fIgnoreHKCU,
+    LPVOID   pDefaultData,
+    DWORD    wDefaultDataSize
+    )
+{
+    FIXME("(%p),stub!\n", pSubKey);
+
+	return ERROR_SUCCESS;  /* return success */
+}
+
+LONG WINAPI SHRegGetUSValueW(
+    LPCWSTR  pSubKey,
+    LPCWSTR  pValue,
+    LPDWORD  pwType,
+    LPVOID   pvData,
+    LPDWORD  pbData,
+    BOOL     flagIgnoreHKCU,
+    LPVOID   pDefaultData,
+    DWORD    wDefaultDataSize
+    )
+{
+    FIXME("(%p),stub!\n", pSubKey);
+
+	return ERROR_SUCCESS;  /* return success */
+}
+  
+/*************************************************************************
+ * SHRegDeleteKeyA and SHDeleteKeyA
+ */
+HRESULT WINAPI SHRegDeleteKeyA(HKEY hkey, LPCSTR pszSubKey)
+{
+	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_a(pszSubKey));
+	return 0;
+}
+
+/*************************************************************************
+ * SHRegDeleteKeyW and SHDeleteKeyA
+ */
+HRESULT WINAPI SHRegDeleteKeyW(HKEY hkey, LPCWSTR pszSubKey)
+{
+	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_w(pszSubKey));
+	return 0;
+}
 /*************************************************************************
  * ReadCabinetState				[NT 4.0:SHELL32.651]
  *
@@ -997,16 +1089,9 @@ HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIS
  *
  */
 LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
-{	LPWSTR ptr=str;
-	
+{
 	TRACE("%s 0x%04x\n",debugstr_w(str),x);
-	do 
-	{  if (*ptr==x)
-	   { return ptr;
-	   }
-	   ptr++;
-	} while (*ptr);
-	return NULL;
+	return CRTDLL_wcschr(str, x);
 }
 
 /*************************************************************************
@@ -1014,8 +1099,9 @@ LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
  *
  */
 INT WINAPI StrCmpNIW ( LPWSTR wstr1, LPWSTR wstr2, INT len)
-{	FIXME("%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
-	return 0;
+{
+	TRACE("%s %s %i stub\n", debugstr_w(wstr1),debugstr_w(wstr2),len);
+	return CRTDLL__wcsnicmp(wstr1, wstr2, len);
 }
 
 /*************************************************************************
@@ -1131,50 +1217,7 @@ HRESULT WINAPI SHFlushClipboard(void)
 {	FIXME("stub\n");
 	return 1;
 }
-/*************************************************************************
- * StrRChrA					[SHELL32.346]
- *
- */
-LPSTR WINAPI StrRChrA(LPCSTR lpStart, LPCSTR lpEnd, DWORD wMatch)
-{
-    	if (!lpStart)
-	    return NULL;
 
-	/* if the end not given, search*/
-	if (!lpEnd)
-	{ lpEnd=lpStart;
-	  while (*lpEnd) 
-	    lpEnd++;
-	}
-
-	for (--lpEnd;lpStart <= lpEnd; lpEnd--)
-	    if (*lpEnd==(char)wMatch)
-		return (LPSTR)lpEnd;
-
-	return NULL;
-}
-/*************************************************************************
- * StrRChrW					[SHELL32.320]
- *
- */
-LPWSTR WINAPI StrRChrW(LPWSTR lpStart, LPWSTR lpEnd, DWORD wMatch)
-{	LPWSTR wptr=NULL;
-	TRACE("%s %s 0x%04x\n",debugstr_w(lpStart),debugstr_w(lpEnd), (WCHAR)wMatch );
-
-	/* if the end not given, search*/
-	if (!lpEnd)
-	{ lpEnd=lpStart;
-	  while (*lpEnd) 
-	    lpEnd++;
-	}
-
-	do 
-	{ if (*lpStart==(WCHAR)wMatch)
-	    wptr = lpStart;
-	  lpStart++;  
-	} while ( lpStart<=lpEnd ); 
-	return wptr;
-}
 /*************************************************************************
 * StrFormatByteSize				[SHLWAPI]
 */
@@ -1338,34 +1381,3 @@ BOOL WINAPI shell32_243(DWORD a, DWORD b)
   return FALSE; 
 }
 
-/************************************************************************
- *      Win32DeleteFile                         [SHELL32.164]  
- *
- * Deletes a file.  Also triggers a change notify if one exists, but
- * that mechanism doesn't yet exist in Wine's SHELL32.
- *
- * FIXME:
- * Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be
- * ANSI.  Is this Unicode on NT?
- *
- */ 
-
-BOOL WINAPI Win32DeleteFile(LPSTR fName)
-{
-  FIXME("%p(%s): partial stub\n", fName, fName);
-
-  DeleteFileA(fName);
-
-  return TRUE;
-}
-/*
-LPSTR WINAPI StrCpyNA(LPSTR psz1, LPCSTR psz2, int cchMax)
-{
-	return lstrcpynA(psz1, psz2, cchMax);
-}
-
-LPWSTR WINAPI StrCpyNW(LPWSTR psz1, LPCWSTR psz2, int cchMax)
-{
-	return lstrcpynW(psz1, psz2, cchMax);
-}
-*/
