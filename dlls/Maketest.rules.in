@@ -9,7 +9,8 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DEFS         = @DLLFLAGS@ $(EXTRADEFS)
+DEFS         = $(EXTRADEFS)
+DLLFLAGS     = @DLLFLAGS@
 LDDLLFLAGS   = @LDDLLFLAGS@
 
 MODULE       = $(TESTDLL:%.dll=%)_test.exe
@@ -36,7 +37,7 @@ all: $(TESTPROGRAM)
 # Rule for main module spec file
 
 $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(IMPORTLIBS) $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) --exe-mode cui $(RC_SRCS:.rc=.res) $(OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%)
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe $(MODULE) --exe-mode cui $(RC_SRCS:.rc=.res) $(OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%)
 
 # Rules for .so main module
 

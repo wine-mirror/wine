@@ -9,7 +9,8 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DEFS        = @DLLFLAGS@ -D__WINESRC__ $(EXTRADEFS)
+DEFS        = -D__WINESRC__ $(EXTRADEFS)
+DLLFLAGS    = @DLLFLAGS@
 DLLEXT      = @DLLEXT@
 MAINSPEC    = $(MODULE:%.dll=%).spec
 SPEC_DEF    = $(MAINSPEC).def
@@ -25,7 +26,7 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 # Rules for .so files
 
 $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(IMPORTLIBS) $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(DLLMAIN:%=--entry %) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(DLLMAIN:%=--entry %) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 $(MODULE).so: $(MAINSPEC).o $(ALL_OBJS) Makefile.in
 	$(LDSHARED) $(LDDLLFLAGS) $(MAINSPEC).o $(ALL_OBJS) -o $@ -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS) -lc

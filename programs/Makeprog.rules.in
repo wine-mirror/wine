@@ -9,7 +9,8 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DEFS        = @DLLFLAGS@ $(EXTRADEFS)
+DEFS        = $(EXTRADEFS)
+DLLFLAGS    = @DLLFLAGS@
 LDDLLFLAGS  = @LDDLLFLAGS@
 ALL_OBJS    = $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
@@ -24,7 +25,7 @@ all: $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
 # Rule for main module spec file
 
 $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) $(APPMODE:%=--exe-mode %) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe $(MODULE) $(APPMODE:%=--exe-mode %) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 # Rules for .so main module
 

@@ -93,12 +93,12 @@ EXTRASUBDIRS = messages nls
 kernel.res: $(MC_SRCS:.mc=.mc.rc)
 
 relay16asm.s: $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) -o $@ --relay16
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --relay16
 
 # Special rules for 16-bit resource and spec files
 
 krnl386.exe.spec.c: krnl386.exe.spec version16.res
-	$(WINEBUILD) $(DEFS) -o $@ --dll-name kernel --main-module $(MODULE) --res version16.res --spec $(SRCDIR)/krnl386.exe.spec
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --dll-name kernel --main-module $(MODULE) --res version16.res --spec $(SRCDIR)/krnl386.exe.spec
 
 version16.res: version16.rc
 	$(LDPATH) $(RC16) $(RC16FLAGS) -fo$@ $(SRCDIR)/version16.rc
