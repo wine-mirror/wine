@@ -79,6 +79,8 @@ extern BOOL32  BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
 extern XImage *BITMAP_GetXImage( const BITMAPOBJ *bmp );
 extern INT32   BITMAP_GetBitsPadding( int width, int depth );
 extern INT32   BITMAP_GetBitsWidth( int width, int depth );
+extern HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
+  UINT32 loadflags);
 
   /* objects/dib.c */
 extern int DIB_GetDIBWidthBytes( int width, int depth );
@@ -87,6 +89,8 @@ extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
 extern void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB );
 extern void DIB_DeleteDIBSection( BITMAPOBJ *bmp );
 extern void DIB_SelectDIBSection( DC *dc, BITMAPOBJ *bmp );
+extern void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT32 loadflags,
+  BYTE pix);
 
   /* objects/oembitmap.c */
 extern BOOL32 OBM_Init(void);

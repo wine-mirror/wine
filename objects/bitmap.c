@@ -13,7 +13,11 @@
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
+#include "global.h"
 #include "debug.h"
+#include "sysmetrics.h"
+#include "cursoricon.h"
+#include "color.h"
 
 #ifdef PRELIMINARY_WING16_SUPPORT
 #include <sys/types.h>
@@ -193,7 +197,7 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
     bmpObjPtr->bitmap.bmPlanes = (BYTE)planes;
     bmpObjPtr->bitmap.bmBitsPixel = (BYTE)bpp;
     bmpObjPtr->bitmap.bmWidthBytes = (INT16)BITMAP_WIDTH_BYTES( width, bpp );
-    bmpObjPtr->bitmap.bmBits = NULL;
+    bmpObjPtr->bitmap.bmBits = 0;
 
     bmpObjPtr->dib = NULL;
 
@@ -617,39 +621,21 @@ HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
 /**********************************************************************
  *	    LoadImage32A    (USER32.365)
  * 
- * FIXME: implementation still lacks nearly all features, see LR_*
- * defines in windows.h
+ * FIXME: implementation lacks some features, see LR_ defines in windows.h
  */
 
 HANDLE32 WINAPI LoadImage32A( HINSTANCE32 hinst, LPCSTR name, UINT32 type,
                               INT32 desiredx, INT32 desiredy, UINT32 loadflags)
 {
-	if (HIWORD(name)) {
-		TRACE(resource,"(0x%04x,%s,%d,%d,%d,0x%08x)\n",
-			hinst,name,type,desiredx,desiredy,loadflags
-		);
-	} else {
-		TRACE(resource,"(0x%04x,%p,%d,%d,%d,0x%08x)\n",
-			hinst,name,type,desiredx,desiredy,loadflags
-		);
-	}
-	switch (type) {
-	case IMAGE_BITMAP:
-		return LoadBitmap32A(hinst,name);
-	case IMAGE_ICON:
-		return LoadIcon32A(hinst,name);
-	case IMAGE_CURSOR:
-		return LoadCursor32A(hinst,name);
-	}
-	return 0;
-}
+    HANDLE32 res;
+    LPWSTR u_name;
 
-/**********************************************************************
- *	    LoadImage32W    (USER32.366)
- * 
- * FIXME: implementation still lacks nearly all features, see LR_*
- * defines in windows.h
- */
+    if (HIWORD(name)) u_name = HEAP_strdupAtoW(GetProcessHeap(), 0, name);
+    else u_name=(LPWSTR)name;
+    res = LoadImage32W(hinst, u_name, type, desiredx, desiredy, loadflags);
+    if (HIWORD(name)) HeapFree(GetProcessHeap(), 0, u_name);
+    return res;
+}
 
 
 /******************************************************************************
@@ -667,9 +653,7 @@ HANDLE32 WINAPI LoadImage32A( HINSTANCE32 hinst, LPCSTR name, UINT32 type,
  *    Success: Handle to newly loaded image
  *    Failure: NULL
  *
- * BUGS
- *    Implementation still lacks nearly all features, see LR_*
- *    defines in windows.h
+ * FIXME: Implementation lacks some features, see LR_ defines in windows.h
  */
 HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
                 INT32 desiredx, INT32 desiredy, UINT32 loadflags )
@@ -683,16 +667,26 @@ HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
 			hinst,name,type,desiredx,desiredy,loadflags
 		);
 	}
-
+    if (loadflags & LR_DEFAULTSIZE)
+      if (type == IMAGE_ICON) {
+        if (!desiredx) desiredx = SYSMETRICS_CXICON;
+	if (!desiredy) desiredy = SYSMETRICS_CYICON;
+      } else if (type == IMAGE_CURSOR) {
+        if (!desiredx) desiredx = SYSMETRICS_CXCURSOR;
+	if (!desiredy) desiredy = SYSMETRICS_CYCURSOR;
+      }
+    if (loadflags & LR_LOADFROMFILE) loadflags &= ~LR_SHARED;
     switch (type) {
         case IMAGE_BITMAP:
-            return LoadBitmap32W(hinst,name);
+            return BITMAP_LoadBitmap32W(hinst, name, loadflags);
         case IMAGE_ICON:
-            return LoadIcon32W(hinst,name);
+	    return CURSORICON_Load32(hinst, name, desiredx, desiredy,
+	      MIN(16, COLOR_GetSystemPaletteSize()), FALSE, loadflags);
         case IMAGE_CURSOR:
-            return LoadCursor32W(hinst,name);
+	    return CURSORICON_Load32(hinst, name, desiredx, desiredy, 1, TRUE,
+	      loadflags);
     }
-    return NULL;
+    return 0;
 }
 
 
@@ -795,6 +789,59 @@ HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 }
 
 
+HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
+  UINT32 loadflags)
+{
+    HBITMAP32 hbitmap = 0;
+    HDC32 hdc;
+    HRSRC32 hRsrc;
+    HGLOBAL32 handle;
+    char *ptr = NULL;
+    BITMAPINFO *info, *fix_info=NULL;
+    HGLOBAL32 hFix;
+    int size;
+
+    if (!(loadflags & LR_LOADFROMFILE)) {
+      if (!instance)  /* OEM bitmap */
+      {
+          if (HIWORD((int)name)) return 0;
+          return OBM_LoadBitmap( LOWORD((int)name) );
+      }
+
+      if (!(hRsrc = FindResource32W( instance, name, RT_BITMAP32W ))) return 0;
+      if (!(handle = LoadResource32( instance, hRsrc ))) return 0;
+
+      if ((info = (BITMAPINFO *)LockResource32( handle )) == NULL) return 0;
+    }
+    else
+    {
+        if (!(ptr = (char *)VIRTUAL_MapFileW( name ))) return 0;
+        info = (BITMAPINFO *)(ptr + sizeof(BITMAPFILEHEADER));
+    }
+    size = DIB_BitmapInfoSize(info, DIB_RGB_COLORS);
+    if ((hFix = GlobalAlloc32(0, size))) fix_info=GlobalLock32(hFix);
+    if (fix_info) {
+      BYTE pix;
+
+      memcpy(fix_info, info, size);
+      pix = *((LPBYTE)info+DIB_BitmapInfoSize(info, DIB_RGB_COLORS));
+      DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
+      if ((hdc = GetDC32(0)) != 0) {
+	if (loadflags & LR_CREATEDIBSECTION)
+	  hbitmap = CreateDIBSection32(hdc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
+        else {
+          char *bits = (char *)info + size;;
+          hbitmap = CreateDIBitmap32( hdc, &fix_info->bmiHeader, CBM_INIT,
+                                      bits, fix_info, DIB_RGB_COLORS );
+	}
+        ReleaseDC32( 0, hdc );
+      }
+      GlobalUnlock32(hFix);
+      GlobalFree32(hFix);
+    }
+    if (loadflags & LR_LOADFROMFILE) UnmapViewOfFile( ptr );
+    return hbitmap;
+}
 /******************************************************************************
  * LoadBitmap32W [USER32.358]  Loads bitmap from the executable file
  *
@@ -806,30 +853,7 @@ HBITMAP32 WINAPI LoadBitmap32W(
     HINSTANCE32 instance, /* [in] Handle to application instance */
     LPCWSTR name)         /* [in] Address of bitmap resource name */
 {
-    HBITMAP32 hbitmap = 0;
-    HDC32 hdc;
-    HRSRC32 hRsrc;
-    HGLOBAL32 handle;
-    BITMAPINFO *info;
-
-    if (!instance)  /* OEM bitmap */
-    {
-        if (HIWORD((int)name)) return 0;
-        return OBM_LoadBitmap( LOWORD((int)name) );
-    }
-
-    if (!(hRsrc = FindResource32W( instance, name, RT_BITMAP32W ))) return 0;
-    if (!(handle = LoadResource32( instance, hRsrc ))) return 0;
-
-    info = (BITMAPINFO *)LockResource32( handle );
-    if ((hdc = GetDC32(0)) != 0)
-    {
-        char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
-        hbitmap = CreateDIBitmap32( hdc, &info->bmiHeader, CBM_INIT,
-                                    bits, info, DIB_RGB_COLORS );
-        ReleaseDC32( 0, hdc );
-    }
-    return hbitmap;
+    return BITMAP_LoadBitmap32W(instance, name, 0);
 }
 
 
