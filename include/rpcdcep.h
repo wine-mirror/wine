@@ -93,11 +93,7 @@ typedef struct _RPC_CLIENT_INTERFACE
 #define TRANSPORT_TYPE_LPC  0x04
 #define TRANSPORT_TYPE_WMSG 0x08
 
-#ifdef WINNT
 typedef RPC_STATUS (*RPC_BLOCKING_FN)(void* hWnd, void* Context, HANDLE hSyncEvent);
-#else
-typedef RPC_STATUS (*RPC_BLOCKING_FN)(void* hWnd, void* Context, void* hSyncEvent);
-#endif
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcGetBuffer( RPC_MESSAGE* Message );
@@ -130,25 +126,15 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcAsyncSendReceive( RPC_MESSAGE* Message, void* Context, HWND hWnd );
 
-#ifdef WINNT
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING_FN BlockingFn );
-#else
-RPCRTAPI RPC_STATUS RPC_ENTRY
-  I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING_FN BlockingFn, unsigned long ServerTid );
-#endif
 
 /* WIN9x */
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcSetThreadParams( int fClientFree, void* Context, void* hWndClient );
 
-#ifdef WINNT
 RPCRTAPI LONG RPC_ENTRY
   I_RpcWindowProc( HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam );
-#else
-RPCRTAPI unsigned int RPC_ENTRY
-  I_RpcWindowProc( void* hWnd, unsigned int Message, unsigned int wParam, unsigned long lParam );
-#endif
 
 /* WINNT */
 RPCRTAPI RPC_STATUS RPC_ENTRY
