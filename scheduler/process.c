@@ -243,8 +243,6 @@ static int load_system_dlls(void)
 {
     char driver[MAX_PATH];
 
-    if (!LoadLibraryA( "KERNEL32" )) return 0;
-
     PROFILE_GetWineIniString( "Wine", "GraphicsDriver", "x11drv", driver, sizeof(driver) );
     if (!LoadLibraryA( driver ))
     {
@@ -340,6 +338,18 @@ static void start_process(void)
         entry = (LPTHREAD_START_ROUTINE)RVA_PTR( module, OptionalHeader.AddressOfEntryPoint );
         console_app = (PE_HEADER(module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
 
+        if (console_app) pdb->flags |= PDB32_CONSOLE_PROC;
+
+        /* Signal the parent process to continue */
+        req->module = (void *)module;
+        req->entry  = entry;
+        req->gui    = !console_app;
+        server_call( REQ_INIT_PROCESS_DONE );
+        debugged = req->debugged;
+
+        /* Load KERNEL (necessary for TASK_Create) */
+        if (!LoadLibraryA( "KERNEL32" )) goto error;
+
         /* Create 16-bit dummy module */
         if ((hModule16 = MODULE_CreateDummyModule( pdb->exe_modref->filename, module )) < 32)
             ExitProcess( hModule16 );
@@ -349,15 +359,6 @@ static void start_process(void)
         if (!TASK_Create( (NE_MODULE *)GlobalLock16( hModule16 ), cmdShow,
                           NtCurrentTeb(), NULL, 0 ))
             goto error;
-
-        if (console_app) pdb->flags |= PDB32_CONSOLE_PROC;
-
-        /* Signal the parent process to continue */
-        req->module = (void *)module;
-        req->entry  = entry;
-        req->gui    = !console_app;
-        server_call( REQ_INIT_PROCESS_DONE );
-        debugged = req->debugged;
 
         /* Load the system dlls */
         if (!load_system_dlls()) goto error;

@@ -311,6 +311,9 @@ static void process_attach(void)
 
     /* initialize event handling */
     X11DRV_EVENT_Init();
+
+    /* load display.dll */
+    LoadLibrary16( "display" );
 }
 
 

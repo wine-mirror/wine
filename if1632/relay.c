@@ -8,10 +8,10 @@
 #include <string.h>
 #include "wine/winbase16.h"
 #include "winnt.h"
-#include "global.h"
 #include "heap.h"
 #include "module.h"
 #include "stackframe.h"
+#include "selectors.h"
 #include "builtin16.h"
 #include "task.h"
 #include "syslevel.h"
@@ -35,28 +35,24 @@ BOOL RELAY_Init(void)
     extern void CallTo16_Ret();
     extern void CALL32_CBClient_Ret();
     extern void CALL32_CBClientEx_Ret();
-    extern DWORD CallTo16_RetAddr;
-    extern DWORD CALL32_CBClient_RetAddr;
-    extern DWORD CALL32_CBClientEx_RetAddr;
+    extern SEGPTR CallTo16_RetAddr;
+    extern SEGPTR CALL32_CBClient_RetAddr;
+    extern SEGPTR CALL32_CBClientEx_RetAddr;
 
-    codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)Call16_Ret_Start,
-                                  (int)Call16_Ret_End - (int)Call16_Ret_Start,
-                                  GetModuleHandle16( "KERNEL" ), 
-                                  TRUE, TRUE, FALSE, NULL );
+    codesel = SELECTOR_AllocBlock( (void *)Call16_Ret_Start,
+                                   (char *)Call16_Ret_End - (char *)Call16_Ret_Start,
+                                   SEGMENT_CODE, TRUE, FALSE );
     if (!codesel) return FALSE;
 
       /* Patch the return addresses for CallTo16 routines */
 
     CallTo16_RetAddr = 
-        MAKELONG( (int)CallTo16_Ret -(int)Call16_Ret_Start, codesel );
+        PTR_SEG_OFF_TO_SEGPTR( codesel, (char*)CallTo16_Ret - (char*)Call16_Ret_Start );
     CALL32_CBClient_RetAddr = 
-        MAKELONG( (int)CALL32_CBClient_Ret -(int)Call16_Ret_Start, codesel );
+        PTR_SEG_OFF_TO_SEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
     CALL32_CBClientEx_RetAddr = 
-        MAKELONG( (int)CALL32_CBClientEx_Ret -(int)Call16_Ret_Start, codesel );
+        PTR_SEG_OFF_TO_SEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
 #endif
-
-    /* Create built-in modules */
-    if (!BUILTIN_Init()) return FALSE;
 
     /* Initialize thunking */
     return THUNK_Init();

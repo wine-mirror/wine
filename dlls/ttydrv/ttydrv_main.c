@@ -87,6 +87,9 @@ static void process_attach(void)
     MONITOR_PrimaryMonitor.depth       = 1;
 
     TTYDRV_GDI_Initialize();
+
+    /* load display.dll */
+    LoadLibrary16( "display" );
 }
 
 

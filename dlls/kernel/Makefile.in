@@ -15,6 +15,9 @@ SPEC_SRCS = \
 	toolhelp.spec \
 	wprocs.spec
 
+C_SRCS = \
+	kernel_main.c
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
