@@ -2028,6 +2028,21 @@ static int XLoadQueryFont_ErrorHandler(Display *dpy, XErrorEvent *event, void *a
     return 1;
 }
 
+/* XLoadQueryFont has the bad habit of crashing when loading a bad font... */
+static XFontStruct *safe_XLoadQueryFont(Display *display, char *name)
+{
+    XFontStruct *ret;
+    
+    wine_tsx11_lock();
+    X11DRV_expect_error(display, XLoadQueryFont_ErrorHandler, NULL);
+    ret = XLoadQueryFont(display, name);
+    if (X11DRV_check_error()) ret = NULL;
+    wine_tsx11_unlock();
+
+    return ret;
+}
+
+
 static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, int x_count)
 {
     int		  i;
@@ -2130,12 +2145,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	else lpstr = x_pattern[i];
 
 	/* X11 may return an error on some bad fonts... So be prepared to handle these. */
-	wine_tsx11_lock();
-	X11DRV_expect_error(gdi_display, XLoadQueryFont_ErrorHandler, NULL);
-	x_fs = XLoadQueryFont(gdi_display, lpstr);
-	if (X11DRV_check_error()) x_fs = 0;
-	wine_tsx11_unlock();
-	if (x_fs != 0)
+	if ((x_fs = safe_XLoadQueryFont(gdi_display, lpstr)) != 0)
 	{
 	    XFONT_SetFontMetric( fi, fr, x_fs );
 	    TSXFreeFont( gdi_display, x_fs );
@@ -2991,7 +3001,7 @@ void X11DRV_FONT_InitX11Metrics( void )
   {
       XFontStruct*  x_fs;
       strcpy(buffer, "-*-*-*-*-normal-*-[12 0 0 12]-*-72-*-*-*-iso8859-1");
-      if( (x_fs = TSXLoadQueryFont(gdi_display, buffer)) )
+      if( (x_fs = safe_XLoadQueryFont(gdi_display, buffer)) )
       {
 	  text_caps |= TC_SF_X_YINDEP;
 	  TSXFreeFont(gdi_display, x_fs);
@@ -3133,7 +3143,7 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
 	    do
 	    {
 		LFD_ComposeLFD( pfo, fm.height, lpLFD, uRelaxLevel++ );
-		if( (pfo->fs = TSXLoadQueryFont( gdi_display, lpLFD )) ) break;
+		if( (pfo->fs = safe_XLoadQueryFont( gdi_display, lpLFD )) ) break;
 	    } while( uRelaxLevel );
 
 
