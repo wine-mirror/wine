@@ -38,9 +38,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* Per-vertex trace: */
 #if 0
-   #define VTRACE(A) TRACE A
+# define VTRACE(A) TRACE A
 #else 
-   #define VTRACE(A) 
+# define VTRACE(A) 
 #endif
 
 
@@ -151,12 +151,16 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         BOOL                        enableTexture = FALSE;
         int                         vx_index;
 
-        float x=0.0, y=0.0, z=0.0;             /* x,y,z coordinates          */
-        float nx=0.0, ny=0.0, nz=0.0;          /* normal x,y,z coordinates   */
-        float rhw=0.0;                         /* rhw                        */
-        float ptSize=0.0;                      /* Point size                 */
-        DWORD diffuseColor=0;                  /* Diffusre Color             */
-        DWORD specularColor=0;                 /* Specular Color             */
+        float x = 0.0f, 
+              y = 0.0f, 
+              z = 0.0f;                     /* x,y,z coordinates          */
+        float nx = 0.0f, 
+              ny =0.0, 
+              nz = 0.0f;                    /* normal x,y,z coordinates   */
+        float rhw = 0.0f;                   /* rhw                        */
+        float ptSize = 0.0f;                /* Point size                 */
+        DWORD diffuseColor = 0xFFFFFFFF;    /* Diffuse Color              */
+        DWORD specularColor = 0;            /* Specular Color             */
 
         ENTER_GL();
 
@@ -166,10 +170,14 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         }
 
         /* Check vertex formats expected ? */
+	/** 
+	 * FVF parser as seen it
+	 * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dx8_c/directx_cpp/Graphics/Reference/CPP/D3D/FlexibleVertexFormatFlags.asp 
+	 */
         normal        = fvf & D3DFVF_NORMAL;
         isRHW         = fvf & D3DFVF_XYZRHW;
-        numBlends     = ((fvf & D3DFVF_POSITION_MASK) >> 1) - 2; /* WARNING can be < 0 because -2 */
         isLastUByte4  = fvf & D3DFVF_LASTBETA_UBYTE4;
+        numBlends     = ((fvf & D3DFVF_POSITION_MASK) >> 1) - 2 + ((FALSE == isLastUByte4) ? 0 : -1); /* WARNING can be < 0 because -2 */    
         isPtSize      = fvf & D3DFVF_PSIZE;
         isDiffuse     = fvf & D3DFVF_DIFFUSE;
         isSpecular    = fvf & D3DFVF_SPECULAR;
@@ -579,20 +587,44 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
             if (isRHW) {
                glVertexPointer(4, GL_FLOAT, skip, curPos);
                checkGLcall("glVertexPointer(4, ...)");
-               curPos += 4*sizeof(float);
+               curPos += 4 * sizeof(float);
             } else {
                glVertexPointer(3, GL_FLOAT, skip, curPos);
                checkGLcall("glVertexPointer(3, ...)");
-               curPos += 3*sizeof(float);
+               curPos += 3 * sizeof(float);
             }
             glEnableClientState(GL_VERTEX_ARRAY);
             checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
  
-            if (numBlends>0) {
-                /* no such functionality in the fixed function GL pipeline */
-                /* FIXME: Wont get here as will drop to slow method        */
-                FIXME("Cannot handle blending data here in openGl\n");
-            }
+            if (numBlends > 0) {
+               /* no such functionality in the fixed function GL pipeline */
+               /* FIXME: Wont get here as will drop to slow method        */
+   	       /* FIXME("Cannot handle blending data here in openGl\n");*/
+	       if (checkGLSupport(ARB_VERTEX_BLEND)) {
+		  FIXME("TODO\n");
+	       } else if (checkGLSupport(EXT_VERTEX_WEIGHTING)) {
+		  FIXME("TODO\n");
+		  /*
+		  GLExtCall(glVertexWeightPointerEXT)(numBlends, GL_FLOAT, skip, curPos); 
+		  checkGLcall("glVertexWeightPointerEXT(numBlends, ...)");
+		  glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
+		  checkGLcall("glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");
+		  */
+		  curPos += numBlends * sizeof(float);
+	       } else {
+		  FIXME("unsupported blending in openGl\n");
+	       }
+            } else {
+	       if (checkGLSupport(ARB_VERTEX_BLEND)) {
+		  FIXME("TODO\n");
+	       } else if (checkGLSupport(EXT_VERTEX_WEIGHTING)) {
+		  FIXME("TODO\n");
+		  /*
+		  glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
+		  checkGLcall("glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");
+		  */
+	       }
+	    }
 
  
             if (normal) {
@@ -600,7 +632,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                 checkGLcall("glNormalPointer");
                 glEnableClientState(GL_NORMAL_ARRAY);
                 checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
-                curPos += 3*sizeof(float);
+                curPos += 3 * sizeof(float);
             } else {
                 glDisableClientState(GL_NORMAL_ARRAY);
                 checkGLcall("glDisableClientState(GL_NORMAL_ARRAY)");
@@ -1593,7 +1625,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE d3dts,CONST D3DMATRIX* lpmatrix) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
+    D3DMATRIX m;
     int k;
+    float f;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
     TRACE("(%p) : State=%d\n", This, d3dts);
@@ -1632,22 +1666,48 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
        to the other so that if I ever find out that I need to transpose them, I
        will able to do it quickly, only by changing the macro conv_mat. */
 
-    switch (d3dts) {
-    case D3DTS_WORLDMATRIX(0):
+    if (d3dts < 256) {
+      switch (d3dts) {
+      case D3DTS_WORLDMATRIX(0):
         conv_mat(lpmatrix, &This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)]);
         break;
 
-    case D3DTS_VIEW:
+      case D3DTS_VIEW:
         conv_mat(lpmatrix, &This->StateBlock.transforms[D3DTS_VIEW]);
         break;
 
-    case D3DTS_PROJECTION:
+      case D3DTS_PROJECTION:
         conv_mat(lpmatrix, &This->StateBlock.transforms[D3DTS_PROJECTION]);
         break;
 
-    default:
+      case D3DTS_TEXTURE0:
+      case D3DTS_TEXTURE1:
+      case D3DTS_TEXTURE2:
+      case D3DTS_TEXTURE3:
+      case D3DTS_TEXTURE4:
+      case D3DTS_TEXTURE5:
+      case D3DTS_TEXTURE6:
+      case D3DTS_TEXTURE7:
+	conv_mat(lpmatrix, &This->StateBlock.transforms[d3dts]);
+        FIXME("Unhandled transform state for TEXTURE%d!!!\n", d3dts - D3DTS_TEXTURE0);
+        FIXME("must use glMatrixMode(GL_TEXTURE) before texturing\n");
+        break;
+
+      default:
         FIXME("Unhandled transform state!!\n");
         break;
+      }
+    } else {
+      /** 
+       * Indexed Vertex Blending Matrices 256 -> 511 
+       */
+      /** store it */
+      conv_mat(lpmatrix, &This->StateBlock.transforms[d3dts]);
+      if (checkGLSupport(ARB_VERTEX_BLEND)) {
+	FIXME("TODO\n");
+      } else if (checkGLSupport(EXT_VERTEX_WEIGHTING)) {
+	FIXME("TODO\n");
+      }
     }
 
     /*
@@ -1675,8 +1735,59 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
         }
     }
 
-    glMultMatrixf((float *) &This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
-    checkGLcall("glMultMatrixf");
+    /**
+     * Vertex Blending as described
+     *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/d3d/enums/d3dvertexblendflags.asp
+     */
+    switch (This->UpdateStateBlock->vertex_blend) {
+    case D3DVBF_DISABLE:
+      {
+	glMultMatrixf((float *) &This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
+	checkGLcall("glMultMatrixf");
+      }
+      break;
+    case D3DVBF_1WEIGHTS:
+    case D3DVBF_2WEIGHTS:
+    case D3DVBF_3WEIGHTS:
+      {
+	FIXME("valid/correct D3DVBF_[1..3]WEIGHTS\n");
+	/*
+	 * doc seems to say that the weight values must be in vertex data (specified in FVF by D3DFVF_XYZB*)
+	 * so waiting for the values before matrix work
+	for (k = 0; k < This->UpdateStateBlock->vertex_blend; ++k) {
+	  glMultMatrixf((float *) &This->StateBlock.transforms[D3DTS_WORLDMATRIX(k)].u.m[0][0]);
+	  checkGLcall("glMultMatrixf");
+	}
+	*/
+      }
+      break;
+    case D3DVBF_TWEENING:
+      {
+	FIXME("valid/correct D3DVBF_TWEENING\n");
+	f = This->UpdateStateBlock->tween_factor;
+	m.u.s._11 = f; m.u.s._12 = f; m.u.s._13 = f; m.u.s._14 = f;
+	m.u.s._21 = f; m.u.s._22 = f; m.u.s._23 = f; m.u.s._24 = f;
+	m.u.s._31 = f; m.u.s._32 = f; m.u.s._33 = f; m.u.s._34 = f;
+	m.u.s._41 = f; m.u.s._42 = f; m.u.s._43 = f; m.u.s._44 = f;
+	glMultMatrixf((float *) &m.u.m[0][0]);
+	checkGLcall("glMultMatrixf");
+      }
+      break;
+    case D3DVBF_0WEIGHTS:
+      {
+	FIXME("valid/correct D3DVBF_0WEIGHTS\n");
+	/* single matrix of weight 1.0f */
+	m.u.s._11 = 1.0f; m.u.s._12 = 1.0f; m.u.s._13 = 1.0f; m.u.s._14 = 1.0f;
+	m.u.s._21 = 1.0f; m.u.s._22 = 1.0f; m.u.s._23 = 1.0f; m.u.s._24 = 1.0f;
+	m.u.s._31 = 1.0f; m.u.s._32 = 1.0f; m.u.s._33 = 1.0f; m.u.s._34 = 1.0f;
+	m.u.s._41 = 1.0f; m.u.s._42 = 1.0f; m.u.s._43 = 1.0f; m.u.s._44 = 1.0f;
+	glMultMatrixf((float *) &m.u.m[0][0]);
+	checkGLcall("glMultMatrixf");
+      }
+      break;
+    default:
+      break; /* stupid compilator */
+    }
 
     LEAVE_GL();
 
@@ -2535,6 +2646,27 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         }
         break;
 
+    case D3DRS_VERTEXBLEND               :
+        {
+	  This->UpdateStateBlock->vertex_blend = (D3DVERTEXBLENDFLAGS) Value;
+	  TRACE("Vertex Blending state to %ld\n",  Value);
+        }
+	break;
+
+    case D3DRS_TWEENFACTOR               :
+        {
+	  This->UpdateStateBlock->tween_factor = *((float*) &Value);
+	  TRACE("Vertex Blending Tween Factor to %f\n", This->UpdateStateBlock->tween_factor);
+        }
+	break;
+
+    case D3DRS_INDEXEDVERTEXBLENDENABLE  :
+        {
+	  TRACE("Indexed Vertex Blend Enable to %ul\n", (BOOL) Value);
+        }
+	break;
+
+
         /* Unhandled yet...! */
     case D3DRS_LINEPATTERN               :
     case D3DRS_LASTPIXEL                 :
@@ -2559,7 +2691,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_SPECULARMATERIALSOURCE    :
     case D3DRS_AMBIENTMATERIALSOURCE     :
     case D3DRS_EMISSIVEMATERIALSOURCE    :
-    case D3DRS_VERTEXBLEND               :
     case D3DRS_SOFTWAREVERTEXPROCESSING  :
     case D3DRS_POINTSIZE                 :
     case D3DRS_POINTSIZE_MIN             :
@@ -2574,9 +2705,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_PATCHSEGMENTS             :
     case D3DRS_DEBUGMONITORTOKEN         :
     case D3DRS_POINTSIZE_MAX             :
-    case D3DRS_INDEXEDVERTEXBLENDENABLE  :
     case D3DRS_COLORWRITEENABLE          :
-    case D3DRS_TWEENFACTOR               :
     case D3DRS_POSITIONORDER             :
     case D3DRS_NORMALORDER               :
         /*Put back later: FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value); */
@@ -3638,7 +3767,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface
     VERTEXSHADER8* object;
     UINT i;
 
-    FIXME("(%p) : VertexShader not fully supported yet : Decl=%p, Func=%p\n", This, pDeclaration, pFunction);    
+    TRACE("(%p) : VertexShader not fully supported yet : Decl=%p, Func=%p\n", This, pDeclaration, pFunction);    
     if (NULL == pDeclaration || NULL == pHandle) { /* pFunction can be NULL see MSDN */
       return D3DERR_INVALIDCALL;
     }
@@ -4106,10 +4235,12 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
     This->StateBlock.blockType = D3DSBT_ALL;
 
     /* FIXME: Set some of the defaults for lights, transforms etc */
-    memcpy(&This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)], &idmatrix, sizeof(idmatrix));
     memcpy(&This->StateBlock.transforms[D3DTS_PROJECTION], &idmatrix, sizeof(idmatrix));
     memcpy(&This->StateBlock.transforms[D3DTS_VIEW], &idmatrix, sizeof(idmatrix));
-
+    for (i = 0; i < 256; ++i) {
+      memcpy(&This->StateBlock.transforms[D3DTS_WORLDMATRIX(i)], &idmatrix, sizeof(idmatrix));
+    }
+ 
     /* Render states: */
     if (This->PresentParms.EnableAutoDepthStencil) {
        IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_ZENABLE, D3DZB_TRUE );

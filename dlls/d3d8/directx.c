@@ -370,10 +370,10 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
     pCaps->MaxStreams = 1;
     pCaps->MaxStreamStride = 1024;
 
-    pCaps->VertexShaderVersion = 01;
+    pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
     pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
 
-    pCaps->PixelShaderVersion = 01;
+    pCaps->PixelShaderVersion = D3DPS_VERSION(1,1);
     pCaps->MaxPixelShaderValue = 1.0;
 
     return D3D_OK;
