@@ -291,7 +291,7 @@
             </para>
            </listitem>
           </varlistentry>
- 
+
 	  <varlistentry>
           <term><ulink url="http://rewind.sourceforge.net">ReWind</ulink></term>
           <listitem>
@@ -303,7 +303,7 @@
             </para>
           </listitem>
           </varlistentry>
- 
+
 	  <varlistentry>
           <term><ulink url="http://www.transgaming.com">TransGaming's WineX</ulink></term>
           <listitem>
@@ -615,7 +615,6 @@
       </answer>
       </qandaentry>
 
-
     </qandadiv>
     <qandadiv id="What-do-I-need-in-order-to-use-Wine">
       <title>What do I need in order to use Wine?</title>
@@ -784,17 +783,11 @@
           on how memory hungry the application is.
         </para>
         <para>
-          A Wine workstation will work with 16 megabytes of RAM and a 16 
-          megabyte swap partition as long as you have a reasonable graphics 
-          card. Most applications will run reasonably with 64/64 Mb, 
-          interactive games are likely to need more. You can run Wine with 8/8,
-          but it is going to be unusably slow and very constraining on the 
-          applications you can run. If you wish to be part of the development
-          team and program Wine itself, be aware that the debugger is rather 
-          memory intensive. Some have suggested that 64 megabytes is the
-          minimum RAM needed for Wine development, although some are able to 
-          work (albeit slowly) with 24 megabytes of physical RAM and lots of
-          swap space.
+          Wine's memory requirements will depend on the application or game
+          that you choose to run. You will need to meet the minimum requirements for
+          the application as well as the overhead of your underlying OS.
+          You may want to check with the vendor of the application for its 
+          suggested memory requirements.
         </para>
       </answer>
       </qandaentry>
@@ -806,10 +799,10 @@
       <answer>
         <para>
           Wine is getting to be quite large, and building from scratch takes a
-          lot of processing. As of September 2002, compile times were around 20
-          minutes on an Athlon 1200 with 640 Mb and 45-50 minutes on a Cyrix 
-          300 with 64 Mb. If you have a CVS copy, you may not need to rebuild
-          the whole thing every time you update.
+          lot of processing. As of May 2004, compile times were around 10
+          minutes on a Athlon 2000 with 512 MB of RAM and 20 minutes on a Athlon 
+          1200 with 640 MB of RAM. If you have a CVS copy of wine, you may not need
+          to rebuild every thing each update.
         </para>
       </answer>
       </qandaentry>
@@ -847,7 +840,7 @@
         </para>
       </answer>
       </qandaentry>
- 
+
       <qandaentry>
       <question id="Does-MS-Windows-need-to-be-installed">
         <para>
@@ -917,7 +910,7 @@
         </para>
       </answer>
       </qandaentry>
- 
+
       <qandaentry>
       <question id="If-Wine-completely-replaces-MS-Windows">
         <para>
@@ -978,7 +971,7 @@
         </para>
       </answer>
       </qandaentry>
- 
+
       <qandaentry>
       <question id="Will-Wine-run-only-under-X">
         <para>Will Wine run only under X, or can it run in character mode?</para>
@@ -997,7 +990,7 @@
         </para>
       </answer>
       </qandaentry>
- 
+
       <qandaentry>
       <question id="Will-Wine-run-under-any-X-window-manager">
         <para>Will Wine run under any X window manager? Does it require a window manager at all?</para>
@@ -1017,16 +1010,15 @@
 
       <qandaentry>
       <question id="Will-32-bit-applications-run-under-Wine">
-        <para>Will 32-bit Windows 95/98 applications run under Wine?</para>
+        <para>Will 32-bit Windows 95/98/ME/NT/2000/XP applications run under Wine?</para>
       </question>
       <answer>
         <para>
-          Yes, 32-bit programs are now about as well supported as 16-bit 
-           programs.
+          Yes, 32-bit programs are now well supported.
         </para>
       </answer>
       </qandaentry>
-      
+
     </qandadiv>
     <qandadiv id="FAQ-Getting-Wine">
       <title>Getting Wine</title>
@@ -1036,7 +1028,7 @@
       </question>
       <answer>
         <para>
-          Because of lags created by using mirror, word of the latest release
+          Because of lags created by using a mirror, word of the latest release
           may reach you before the release is actually available at the ftp
           sites listed here. The sources are available from the following
           locations:
@@ -1083,8 +1075,8 @@
         </itemizedlist>
         <para>
           It should also be available from any other site that mirrors 
-          ibiblio.org, see <ulink url="http://www.ibiblio.org/pub/Linux/MIRRORS.html">http://www.ibiblio.org/pub/Linux/MIRRORS.html</>. Some of
-          these sites may archive previous versions of Wine as well as the
+          ibiblio.org, see <ulink url="http://www.ibiblio.org/pub/Linux/MIRRORS.html">http://www.ibiblio.org/pub/Linux/MIRRORS.html</>.
+          Some of these sites may archive previous versions of Wine as well as the
           current one. To determine which is the latest one, look at the 
           distribution file name, which will take the form 
           Wine-YYYYMMDD.tar.gz. Simply replace YYYYMMDD in the distribution
@@ -1143,7 +1135,7 @@ cvs -z 3 checkout wine/ANNOUNCE
         </para>
         <para>
           Patch files are also available, so that you don't have to download,
-          install, and configure the entire distribution each week if you are
+          install, and configure the entire distribution each month if you are
           current to the previous release. Patch file release names follow the
           same numbering convention as do the general releases, and take the 
           form
@@ -1336,11 +1328,6 @@ wine
 cd /my/windows/program/directory
 wine myprogram.exe
         </screen>
-        <para>
-          Or alternatively you could download the CodeWeavers Wine preview 
-          which includes .exe extension registration for KDE/Gnome and a nice
-          setup program.
-        </para>
       </answer>
       </qandaentry>
 
@@ -1529,30 +1516,36 @@ export PATH=$PATH:/path/to/wine/binary
 	    If you are a programmer and know C, then start debugging
 	    Wine and help us make it better! If you can't, then you will
 	    have to either convince a Wine developer to try and make your
-	    program work (there must be a downloadable version or demo for
-	    that), or hire somebody to do it for you. If this application
-	    is an internal corporate application, you may be able to hire a
-	    Wine developer to do consulting work for you on the matter.
+	    program work (there must be a downloadable version or demo for that). 
+          </para>
+          <para>  
+            You can submit your application to the <ulink url="http://appdb.winehq.org/">
+            Wine Application DB </ulink> and gather tips on ways to get your app to work its best.
+          </para>
+          <para> 
+            You can also submit your application to the CodeWeavers CrossOver 
+            <ulink url="http://www.codeweavers.com/site/compatibility/"> Compatibility </ulink> Center.
+            Where you can pledge/vote toward future support of your favorite application.
 	  </para>
 	  <para>
 	    Alternatively, you may be able to get the app working by
 	    taking native DLLs from a Microsoft Windows install, and using
 	    them (set the dlls to native in the config file). Not all DLLs
 	    can be replaced that way - in particular DirectX cannot be, nor
-	    can some core system DLLs like user, ntdll, kernel32 etc
+	    can some core system DLLs like gdi32, user, ntdll, kernel32 etc.
 	  </para>
 	</answer>
       </qandaentry>
-      
+
       <qandaentry>
       <question id="Can-I-use-Wine-with-other-Linux-Distros">
-        <para>Can I use Wine with SUSE, Peanut or other Linux Distro's?</para>
+        <para>Can I use Wine with SUSE, RedHat or other Linux Distro's?</para>
       </question>
       <answer>
         <para>
           You can use Wine on any sufficiently recent Linux installation. The
-          amount of work getting Wine up and running depends on whether there
-          are proper packages available or a source compile has to be done.
+          amount of work getting Wine up and running depends on whether you
+          install a binary packages or do a source install.
         </para>
       </answer>
       </qandaentry>
@@ -1609,13 +1602,13 @@ export PATH=$PATH:/path/to/wine/binary
           which doesn't exist yet).
         </para>
         <para>
-          You should repeat the <command>ps</command> to make sure the old 
+          You should repeat the <command>ps</command> to make sure all of the old 
           Wine processes are gone.
         </para>
        </answer>
       </qandaentry>
     </qandadiv>
-     
+
     <qandadiv id="Getting-help">
       <title>Getting help</title>
       <qandaentry>
@@ -1838,7 +1831,7 @@ export PATH=$PATH:/path/to/wine/binary
       </answer>
       </qandaentry>
     </qandadiv>
- 
+
     <qandadiv id="Developing-programs-using-Wine-WineLib">
       <title>Developing programs using Wine/WineLib</title>
       <qandaentry>
@@ -1938,7 +1931,7 @@ export PATH=$PATH:/path/to/wine/binary
       </answer>
       </qandaentry>
 
-  
+
     </qandadiv>
 
     <qandadiv id="Wine-HQ-issues">
@@ -1951,7 +1944,7 @@ export PATH=$PATH:/path/to/wine/binary
       </question>
       <answer>
         <para>
-          There are very valid reasons for doing so.
+          There are some very valid reasons for doing so.
         </para>
       </answer>
       </qandaentry>
