@@ -34,9 +34,8 @@ DEFAULT_DEBUG_CHANNEL(mmaux);
 
 #define WINE_CHN_MASK(_x)		(1L << (_x))
 #define WINE_CHN_SUPPORTS(_c, _x)	((_c) & WINE_CHN_MASK(_x))
+/* Bass and Treble are no longer in the mask as Windows does not handle them */
 #define WINE_MIXER_MASK			(WINE_CHN_MASK(SOUND_MIXER_VOLUME) | \
-                                         WINE_CHN_MASK(SOUND_MIXER_BASS)   | \
-                                         WINE_CHN_MASK(SOUND_MIXER_TREBLE) | \
                                          WINE_CHN_MASK(SOUND_MIXER_SYNTH)  | \
                                          WINE_CHN_MASK(SOUND_MIXER_PCM)    | \
                                          WINE_CHN_MASK(SOUND_MIXER_LINE)   | \
@@ -148,10 +147,6 @@ static	DWORD	MIX_GetLineInfoFromIndex(LPMIXERLINEA lpMl, int devmask, DWORD idx)
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_WAVEOUT;
 	lpMl->fdwLine	 |= MIXERLINE_LINEF_SOURCE;
 	break;
-	case SOUND_MIXER_BASS:
-	case SOUND_MIXER_TREBLE:
-	WARN("BASS/TREBLE not handled correctly.\n");
-	return MMSYSERR_NOERROR;
     default:
 	WARN("Index %ld not handled.\n", idx);
 	return MIXERR_INVALLINE;
