@@ -32,10 +32,14 @@ static inline struct debug_info *get_info(void)
     struct debug_info *info = NtCurrentTeb()->debug_info;
     if (!info)
     {
+        if (!tmp.str_pos)
+        {
+            tmp.str_pos = tmp.strings;
+            tmp.out_pos = tmp.output;
+        }
+        if (!GetProcessHeap()) return &tmp;
         /* setup the temp structure in case HeapAlloc wants to print something */
         NtCurrentTeb()->debug_info = &tmp;
-        tmp.str_pos = tmp.strings;
-        tmp.out_pos = tmp.output;
         info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) );
         info->str_pos = info->strings;
         info->out_pos = info->output;
