@@ -1133,6 +1133,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
     if (hFile == INVALID_HANDLE_VALUE32)
     {
+    	FIXME(virtual,"shared anon mapping not correctly supported!\n");
         if (!size_high && !size_low)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
