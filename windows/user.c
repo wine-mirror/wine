@@ -710,9 +710,40 @@ void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 
 /***********************************************************************
  *		RegisterDeviceNotificationA (USER32.@)
+ *
+ * See RegisterDeviceNotificationW.
  */
 HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hnd, LPVOID notifyfilter, DWORD flags)
 {
     FIXME("(hwnd=%p, filter=%p,flags=0x%08lx), STUB!\n", hnd,notifyfilter,flags );
+    return 0;
+}
+
+/***********************************************************************
+ *		RegisterDeviceNotificationW (USER32.@)
+ *
+ * Registers a window with the system so that it will receive
+ * notifications about a device.
+ *
+ * PARAMS
+ *     hRecepient           [I] Window or service status handle that
+ *                              will receive notifications.
+ *     pNotificationFilter  [I] DEV_BROADCAST_HDR followed by some
+ *                              type-specific data.
+ *     dwFlags              [I] See notes
+ *
+ * RETURNS
+ *
+ * A handle to the device notification.
+ *
+ * NOTES
+ *
+ * The dwFlags parameter can be one of two values:
+ *| DEVICE_NOTIFY_WINDOW_HANDLE  - hRecepient is a window handle
+ *| DEVICE_NOTIFY_SERVICE_HANDLE - hRecepient is a service status handle
+ */
+HDEVNOTIFY WINAPI RegisterDeviceNotificationW(HANDLE hRecepient, LPVOID pNotificationFilter, DWORD dwFlags)
+{
+    FIXME("(hwnd=%p, filter=%p,flags=0x%08lx), STUB!\n", hRecepient,pNotificationFilter,dwFlags );
     return 0;
 }

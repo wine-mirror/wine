@@ -676,7 +676,7 @@
 @ stdcall GetProcessDefaultLayout(ptr)
 @ stdcall SetProcessDefaultLayout(long)
 @ stdcall RegisterDeviceNotificationA(long ptr long)
-@ stub    RegisterDeviceNotificationW
+@ stdcall RegisterDeviceNotificationW(long ptr long)
 @ stdcall TrackMouseEvent(ptr)
 @ stub    UnregisterDeviceNotification
 
