@@ -632,6 +632,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, int use_emacs)
     KeyEntry*		ke;
     unsigned		ofs;
     void		(*func)(struct WCEL_Context* ctx);
+    DWORD               ks;
 
     memset(&ctx, 0, sizeof(ctx));
     ctx.hConIn = hConsoleIn;
@@ -659,11 +660,13 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, int use_emacs)
 
 /* EPP 	WCEL_Dump(&ctx, "before func"); */
 	ofs = ctx.ofs;
+        /* mask out some bits which don't interest us */
+        ks = ir.Event.KeyEvent.dwControlKeyState & ~(NUMLOCK_ON|SCROLLLOCK_ON|CAPSLOCK_ON);
 
 	func = NULL;
 	for (km = (use_emacs) ? EmacsKeyMap : Win32KeyMap; km->entries != NULL; km++)
 	{	
-	    if (km->keyState != ir.Event.KeyEvent.dwControlKeyState)
+	    if (km->keyState != ks)
 		continue;
 	    if (km->chkChar)
 	    {
