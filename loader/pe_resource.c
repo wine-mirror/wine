@@ -117,12 +117,18 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA( PIMAGE_RESOURCE_DIRECTORY resdirptr,
 
 /**********************************************************************
  *	    PE_FindResourceExW
+ *
+ * FindResourceExA/W does search in the following order:
+ * 1. Exact specified language
+ * 2. Language with neutral sublanguage
+ * 3. Neutral language with neutral sublanguage
+ * 4. Neutral language with default sublanguage
  */
-HANDLE PE_FindResourceExW( HMODULE hmod, LPCWSTR name, LPCWSTR type, WORD lang )
+HRSRC PE_FindResourceExW( HMODULE hmod, LPCWSTR name, LPCWSTR type, WORD lang )
 {
     PIMAGE_RESOURCE_DIRECTORY resdirptr = get_resdir(hmod);
     DWORD root;
-    HANDLE result;
+    HRSRC result;
 
     if (!resdirptr) return 0;
 
@@ -131,17 +137,99 @@ HANDLE PE_FindResourceExW( HMODULE hmod, LPCWSTR name, LPCWSTR type, WORD lang )
 	return 0;
     if ((resdirptr = GetResDirEntryW(resdirptr, name, root, FALSE)) == NULL)
 	return 0;
+
+    /* 1. Exact specified language */
     result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
 
-    /* Try with only the primary language set */
     if (!result)
     {
-        lang = MAKELANGID(PRIMARYLANGID(lang), SUBLANG_DEFAULT);
+	/* 2. Language with neutral sublanguage */
+        lang = MAKELANGID(PRIMARYLANGID(lang), SUBLANG_NEUTRAL);
         result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
     }
-	/* Try LANG_NEUTRAL, too */
-    if(!result)
-        return (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)0, root, TRUE);
+
+    if (!result)
+    {
+	/* 3. Neutral language with neutral sublanguage */
+        lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
+        result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+    }
+
+    if (!result)
+    {
+	/* 4. Neutral language with default sublanguage */
+        lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+        result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+    }
+
+    return result;
+}
+
+/**********************************************************************
+ *	    PE_FindResourceW
+ *
+ * Load[String]/[Icon]/[Menu]/[etc.] does use FindResourceA/W.
+ * FindResourceA/W does search in the following order:
+ * 1. Neutral language with neutral sublanguage
+ * 2. Neutral language with default sublanguage
+ * 3. Current locale lang id
+ * 4. Current locale lang id with neutral sublanguage
+ * 5. (!) LANG_ENGLISH, SUBLANG_DEFAULT
+ * 6. Return first in the list
+ */
+HRSRC PE_FindResourceW( HMODULE hmod, LPCWSTR name, LPCWSTR type )
+{
+    PIMAGE_RESOURCE_DIRECTORY resdirptr = get_resdir(hmod);
+    DWORD root;
+    HRSRC result;
+    WORD lang;
+
+    if (!resdirptr) return 0;
+
+    root = (DWORD) resdirptr;
+    if ((resdirptr = GetResDirEntryW(resdirptr, type, root, FALSE)) == NULL)
+	return 0;
+    if ((resdirptr = GetResDirEntryW(resdirptr, name, root, FALSE)) == NULL)
+	return 0;
+
+    /* 1. Neutral language with neutral sublanguage */
+    lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
+    result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+
+    if (!result)
+    {
+	/* 2. Neutral language with default sublanguage */
+	lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+    }
+
+    if (!result)
+    {
+	/* 3. Current locale lang id */
+	lang = LANGIDFROMLCID(GetUserDefaultLCID());
+	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+    }
+
+    if (!result)
+    {
+	/* 4. Current locale lang id with neutral sublanguage */
+	lang = MAKELANGID(PRIMARYLANGID(lang), SUBLANG_NEUTRAL);
+	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+    }
+
+    if (!result)
+    {
+	/* 5. (!) LANG_ENGLISH, SUBLANG_DEFAULT */
+	lang = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+    }
+
+    if (!result)
+    {
+	/* 6. Return first in the list */
+	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)0, root, TRUE);
+    }
+
     return result;
 }
 

@@ -194,7 +194,14 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
         else
             nameStr = (LPWSTR)name;
 
-        hRsrc = PE_FindResourceExW( hModule, nameStr, typeStr, lang );
+	/* Here is the real difference between FindResouce and FindResourceEx */
+	if(lang == MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) ||
+		lang == MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT) ||
+		lang == MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT) ||
+		lang == MAKELANGID(LANG_NEUTRAL, 3)) /* FIXME: real name? */
+	    hRsrc = PE_FindResourceW( hModule, nameStr, typeStr );
+	else
+	    hRsrc = PE_FindResourceExW( hModule, nameStr, typeStr, lang );
 	    
         if ( HIWORD( type ) && !bUnicode ) 
             HeapFree( GetProcessHeap(), 0, typeStr );
@@ -319,7 +326,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
     LPCSTR typeStr = HIWORD(type)? PTR_SEG_TO_LIN(type) : (LPCSTR)type;
 
     return RES_FindResource( hModule, typeStr, nameStr, 
-                             GetSystemDefaultLangID(), FALSE, TRUE );
+                    MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), FALSE, TRUE );
 }
 
 /**********************************************************************
@@ -328,7 +335,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 HANDLE WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
 {
     return RES_FindResource( hModule, type, name, 
-                             GetSystemDefaultLangID(), FALSE, FALSE );
+                    MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), FALSE, FALSE );
 }
 
 /**********************************************************************
@@ -357,7 +364,7 @@ HRSRC WINAPI FindResourceExW( HMODULE hModule,
 HRSRC WINAPI FindResourceW(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
 {
     return RES_FindResource( hModule, (LPCSTR)type, (LPCSTR)name, 
-                             GetSystemDefaultLangID(), TRUE, FALSE );
+                    MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), TRUE, FALSE );
 }
 
 /**********************************************************************

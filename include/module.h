@@ -218,6 +218,7 @@ extern void NE_DllProcessAttach( HMODULE16 hModule );
 HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size );
 
 /* loader/pe_resource.c */
+extern HRSRC PE_FindResourceW(HMODULE,LPCWSTR,LPCWSTR);
 extern HRSRC PE_FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
 extern DWORD PE_SizeofResource(HRSRC);
 extern HGLOBAL PE_LoadResource(HMODULE,HRSRC);
