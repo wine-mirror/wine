@@ -81,6 +81,7 @@ extern BOOL MFDRV_FillPath( PHYSDEV dev );
 extern BOOL MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush );
 extern BOOL MFDRV_FlattenPath( PHYSDEV dev );
 extern BOOL MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y );
+extern INT MFDRV_GetDeviceCaps( PHYSDEV dev , INT cap );
 extern INT MFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT
                                     bottom );
 extern BOOL MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn );

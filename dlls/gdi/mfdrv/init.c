@@ -68,7 +68,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pGetDCOrgEx */
     NULL,                            /* pGetDIBColorTable */
     NULL,                            /* pGetDIBits */
-    NULL,                            /* pGetDeviceCaps */
+    MFDRV_GetDeviceCaps,             /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetNearestColor */
     NULL,                            /* pGetPixel */
@@ -551,4 +551,21 @@ INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
         return 1;
     }
     return 0;
+}
+
+/******************************************************************
+ *         MFDRV_GetDeviceCaps
+ *
+ *A very simple implementation that returns DT_METAFILE
+ */
+INT MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
+{
+    switch(cap)
+    {
+    case TECHNOLOGY:
+         return DT_METAFILE;
+    default:
+         TRACE(" unsupported capability %d, will return 0\n", cap );
+         return 0;
+    }
 }
