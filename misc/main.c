@@ -349,6 +349,9 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 	for (i=0;i<j;i++)
 	    dialect[i]=tolower(Dialect[i]);
 	dialect[i]='\0';
+    } else {
+    	dialect = malloc(1);
+	dialect[0] = '\0';
     }
 
 #define LANG_ENTRY_BEGIN(x,y)	if(!strcmp(lang, x )) { \
@@ -650,7 +653,7 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 
 end_MAIN_GetLanguageID:
 	if (Charset) free(charset);
-	if (Dialect) free(dialect);
+	free(dialect);
 
 	return ret;
 }
