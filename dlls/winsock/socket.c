@@ -2498,6 +2498,15 @@ INT WINAPI WSASend( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 }
 
 /***********************************************************************
+ *              WSASendDisconnect       (WS2_32.73)
+ */
+INT WINAPI WSASendDisconnect( SOCKET s, LPWSABUF lpBuffers )
+{
+    return WS_shutdown ( s, SD_SEND );
+}
+
+
+/***********************************************************************
  *		WSASendTo		(WS2_32.74)
  */
 INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,

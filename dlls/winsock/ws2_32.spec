@@ -77,7 +77,7 @@ init WS_LibMain
 70  stub     WSARemoveServiceClass
 71  forward  WSAResetEvent KERNEL32.ResetEvent
 72  stdcall  WSASend(long ptr long ptr long ptr ptr) WSASend
-73  stub     WSASendDisconnect
+73  stdcall  WSASendDisconnect(long ptr) WSASendDisconnect
 74  stdcall  WSASendTo(long ptr long ptr long ptr long ptr ptr) WSASendTo
 75  stub     WSASetEvent
 76  stub     WSASetServiceA
