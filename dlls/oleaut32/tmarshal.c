@@ -132,7 +132,7 @@ _unmarshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN *pUnk) {
     if (hres) { FIXME("Failed Seek %lx\n",hres); return hres;}
     hres = CoUnmarshalInterface(pStm,riid,(LPVOID*)pUnk);
     if (hres) {
-	FIXME("Marshalling interface %s failed with %lx\n",debugstr_guid(riid),hres);
+	FIXME("Unmarshalling interface %s failed with %lx\n",debugstr_guid(riid),hres);
 	return hres;
     }
     IStream_Release(pStm);
@@ -1145,7 +1145,7 @@ _get_funcdesc(
 		ITypeInfo_Release(tinfo2);
 		if (!hres) return S_OK;
 	    }
-	    return E_FAIL;
+	    return hres;
 	}
 	if (((*fdesc)->oVft/4) == iMethod) {
 	    if (fname)
@@ -1374,6 +1374,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
 		);
 	    if (hres) {
 		FIXME("Failed to unmarshall param, hres %lx\n",hres);
+		status = hres;
 		break;
 	    }
 	    xargs += _argsize(elem->tdesc.vt);
