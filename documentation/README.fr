@@ -48,8 +48,9 @@ Information Linux :
   dû aux "threads"), il est préférable d'avoir un noyau récent tel que 2.4.x.
 
 Information FreeBSD :
-  Assurez-vous d'avoir les options USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG
-  enclanchées dans votre noyau.
+  Wine devrait pouvoir être compilé sur FreeBSD 4.x et FreeBSD 5.x, mais les
+  versions antérieures à FreeBSD 5.3 ne fonctionneront généralement pas.
+
   Plus d'information est située dans l'arbre de ports :
   ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/
 
