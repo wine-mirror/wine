@@ -73,7 +73,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 #define SDDSCAPS(iface) ((iface)->s.surface_desc.ddsCaps.dwCaps)
 
 /* Get the number of bytes per pixel for a given surface */
-#define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:(pf.x.dwRGBBitCount/8))
+#define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:(pf.u.dwRGBBitCount/8))
 
 #define GET_BPP(desc) PFGET_BPP(desc.ddpfPixelFormat)
 
@@ -530,8 +530,8 @@ static void _dump_pixelformat(void *in) {
     DPRINTF(", dwFourCC : %ld", pf->dwFourCC);
   }
   if (pf->dwFlags & DDPF_RGB) {
-    DPRINTF(", RGB bits: %ld, ", pf->x.dwRGBBitCount);
-    switch (pf->x.dwRGBBitCount) {
+    DPRINTF(", RGB bits: %ld, ", pf->u.dwRGBBitCount);
+    switch (pf->u.dwRGBBitCount) {
     case 4:
       cmd = "%1lx";
       break;
@@ -551,21 +551,21 @@ static void _dump_pixelformat(void *in) {
       ERR("Unexpected bit depth !\n");
       cmd = "%d";
     }
-    DPRINTF(" R "); DPRINTF(cmd, pf->y.dwRBitMask);
-    DPRINTF(" G "); DPRINTF(cmd, pf->z.dwGBitMask);
-    DPRINTF(" B "); DPRINTF(cmd, pf->xx.dwBBitMask);
+    DPRINTF(" R "); DPRINTF(cmd, pf->u1.dwRBitMask);
+    DPRINTF(" G "); DPRINTF(cmd, pf->u2.dwGBitMask);
+    DPRINTF(" B "); DPRINTF(cmd, pf->u3.dwBBitMask);
     if (pf->dwFlags & DDPF_ALPHAPIXELS) {
-      DPRINTF(" A "); DPRINTF(cmd, pf->xy.dwRGBAlphaBitMask);
+      DPRINTF(" A "); DPRINTF(cmd, pf->u4.dwRGBAlphaBitMask);
     }
     if (pf->dwFlags & DDPF_ZPIXELS) {
-      DPRINTF(" Z "); DPRINTF(cmd, pf->xy.dwRGBZBitMask);
+      DPRINTF(" Z "); DPRINTF(cmd, pf->u4.dwRGBZBitMask);
 }
   }
   if (pf->dwFlags & DDPF_ZBUFFER) {
-    DPRINTF(", Z bits : %ld", pf->x.dwZBufferBitDepth);
+    DPRINTF(", Z bits : %ld", pf->u.dwZBufferBitDepth);
   }
   if (pf->dwFlags & DDPF_ALPHA) {
-    DPRINTF(", Alpha bits : %ld", pf->x.dwAlphaBitDepth);
+    DPRINTF(", Alpha bits : %ld", pf->u.dwAlphaBitDepth);
   }
   DPRINTF(")");
 }
@@ -615,17 +615,17 @@ static void _dump_surface_desc(DDSURFACEDESC *lpddsd) {
     FE(DDSD_WIDTH, _dump_DWORD, dwWidth);
     FE(DDSD_PITCH, _dump_DWORD, lPitch);
     FE(DDSD_BACKBUFFERCOUNT, _dump_DWORD, dwBackBufferCount);
-    FE(DDSD_ZBUFFERBITDEPTH, _dump_DWORD, x.dwZBufferBitDepth);
+    FE(DDSD_ZBUFFERBITDEPTH, _dump_DWORD, u.dwZBufferBitDepth);
     FE(DDSD_ALPHABITDEPTH, _dump_DWORD, dwAlphaBitDepth);
     FE(DDSD_PIXELFORMAT, _dump_pixelformat, ddpfPixelFormat);
     FE(DDSD_CKDESTOVERLAY, _dump_DDCOLORKEY, ddckCKDestOverlay);
     FE(DDSD_CKDESTBLT, _dump_DDCOLORKEY, ddckCKDestBlt);
     FE(DDSD_CKSRCOVERLAY, _dump_DDCOLORKEY, ddckCKSrcOverlay);
     FE(DDSD_CKSRCBLT, _dump_DDCOLORKEY, ddckCKSrcBlt);
-    FE(DDSD_MIPMAPCOUNT, _dump_DWORD, x.dwMipMapCount);
-    FE(DDSD_REFRESHRATE, _dump_DWORD, x.dwRefreshRate);
-    FE(DDSD_LINEARSIZE, _dump_DWORD, y.dwLinearSize);
-    FE(DDSD_LPSURFACE, _dump_PTR, y.lpSurface);
+    FE(DDSD_MIPMAPCOUNT, _dump_DWORD, u.dwMipMapCount);
+    FE(DDSD_REFRESHRATE, _dump_DWORD, u.dwRefreshRate);
+    FE(DDSD_LINEARSIZE, _dump_DWORD, u1.dwLinearSize);
+    FE(DDSD_LPSURFACE, _dump_PTR, u1.lpSurface);
 #undef FE
 
   for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
@@ -673,11 +673,11 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Lock(
 		  return DDERR_INVALIDPARAMS;
                }
                
-		lpddsd->y.lpSurface = (LPVOID) ((char *) This->s.surface_desc.y.lpSurface +
+		lpddsd->u1.lpSurface = (LPVOID) ((char *) This->s.surface_desc.u1.lpSurface +
 			(lprect->top*This->s.surface_desc.lPitch) +
 			lprect->left*GET_BPP(This->s.surface_desc));
 	} else {
-		assert(This->s.surface_desc.y.lpSurface);
+		assert(This->s.surface_desc.u1.lpSurface);
 	}
 	return DD_OK;
 }
@@ -694,7 +694,7 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Unlock(
 
 static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
   if (This->s.ddraw->d.pixel_convert != NULL)
-    This->s.ddraw->d.pixel_convert(This->s.surface_desc.y.lpSurface,
+    This->s.ddraw->d.pixel_convert(This->s.surface_desc.u1.lpSurface,
 				   This->t.xlib.image->data,
 				   This->s.surface_desc.dwWidth,
 				   This->s.surface_desc.dwHeight,
@@ -814,9 +814,9 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Flip(
     iflipto->t.dga.fb_height	= xheight;
 
     /* And the assciated surface pointer */
-    surf				= This->s.surface_desc.y.lpSurface;
-    This->s.surface_desc.y.lpSurface	= iflipto->s.surface_desc.y.lpSurface;
-    iflipto->s.surface_desc.y.lpSurface	= surf;
+    surf				= This->s.surface_desc.u1.lpSurface;
+    This->s.surface_desc.u1.lpSurface	= iflipto->s.surface_desc.u1.lpSurface;
+    iflipto->s.surface_desc.u1.lpSurface	= surf;
 
     return DD_OK;
 }
@@ -849,9 +849,9 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
 
     /* We need to switch the lowlevel surfaces, for xlib this is: */
     /* The surface pointer */
-    surf				= This->s.surface_desc.y.lpSurface;
-    This->s.surface_desc.y.lpSurface	= iflipto->s.surface_desc.y.lpSurface;
-    iflipto->s.surface_desc.y.lpSurface	= surf;
+    surf				= This->s.surface_desc.u1.lpSurface;
+    This->s.surface_desc.u1.lpSurface	= iflipto->s.surface_desc.u1.lpSurface;
+    iflipto->s.surface_desc.u1.lpSurface	= surf;
     /* the associated ximage */
     image				= This->t.xlib.image;
     This->t.xlib.image			= iflipto->t.xlib.image;
@@ -884,7 +884,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_SetPalette(
 	  return DD_OK;
 	}
 	
-	if( !(ipal->cm) && (This->s.ddraw->d.screen_pixelformat.x.dwRGBBitCount<=8)) 
+	if( !(ipal->cm) && (This->s.ddraw->d.screen_pixelformat.u.dwRGBBitCount<=8)) 
 	{
 		ipal->cm = TSXCreateColormap(display,This->s.ddraw->d.drawable,
 					    DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
@@ -1035,14 +1035,14 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
   dstheight = xdst.bottom - xdst.top;
   dstwidth = xdst.right - xdst.left;
   width = (xdst.right - xdst.left) * bpp;
-  dbuf = (BYTE *) ddesc.y.lpSurface + (xdst.top * ddesc.lPitch) + (xdst.left * bpp);
+  dbuf = (BYTE *) ddesc.u1.lpSurface + (xdst.top * ddesc.lPitch) + (xdst.left * bpp);
   
   dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);/* FIXME: can't handle right now */
   
   /* First, all the 'source-less' blits */
   if (dwFlags & DDBLT_COLORFILL) {
     ret = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp,
-			 ddesc.lPitch, lpbltfx->b.dwFillColor);
+			 ddesc.lPitch, lpbltfx->u4.dwFillColor);
     dwFlags &= ~DDBLT_COLORFILL;
   }
   
@@ -1074,14 +1074,14 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
       ret = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, ddesc.lPitch, ~0);
       break;
     default: 
-      FIXME("Unsupported raster op: %08lx  Pattern: %p\n", lpbltfx->dwROP, lpbltfx->b.lpDDSPattern);
+      FIXME("Unsupported raster op: %08lx  Pattern: %p\n", lpbltfx->dwROP, lpbltfx->u4.lpDDSPattern);
       goto error;
     }
     dwFlags &= ~DDBLT_ROP;
   }
 
   if (dwFlags & DDBLT_DDROPS) {
-    FIXME("\tDdraw Raster Ops: %08lx  Pattern: %p\n", lpbltfx->dwDDROP, lpbltfx->b.lpDDSPattern);
+    FIXME("\tDdraw Raster Ops: %08lx  Pattern: %p\n", lpbltfx->dwDDROP, lpbltfx->u4.lpDDSPattern);
   }
   
   /* Now the 'with source' blits */
@@ -1089,7 +1089,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
     LPBYTE sbase;
     int sx, xinc, sy, yinc;
     
-    sbase = (BYTE *) sdesc.y.lpSurface + (xsrc.top * sdesc.lPitch) + xsrc.left * bpp;
+    sbase = (BYTE *) sdesc.u1.lpSurface + (xsrc.top * sdesc.lPitch) + xsrc.left * bpp;
     xinc = (srcwidth << 16) / dstwidth;
     yinc = (srcheight << 16) / dstheight;
     
@@ -1199,8 +1199,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
     _dump_DDBLT(dwFlags);
   }
   
-  IDirectDrawSurface4_Unlock(iface,ddesc.y.lpSurface);
-  if (src) IDirectDrawSurface4_Unlock(src,sdesc.y.lpSurface);
+  IDirectDrawSurface4_Unlock(iface,ddesc.u1.lpSurface);
+  if (src) IDirectDrawSurface4_Unlock(src,sdesc.u1.lpSurface);
   
   return DD_OK;
 }
@@ -1229,8 +1229,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 	IDirectDrawSurface4_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
 
 	bpp = GET_BPP(This->s.surface_desc);
-	sbuf = (BYTE *) sdesc.y.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp;
-	dbuf = (BYTE *) ddesc.y.lpSurface + (dsty      * ddesc.lPitch) + dstx       * bpp;
+	sbuf = (BYTE *) sdesc.u1.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp;
+	dbuf = (BYTE *) ddesc.u1.lpSurface + (dsty      * ddesc.lPitch) + dstx       * bpp;
 
 
 	h=rsrc->bottom-rsrc->top;
@@ -1257,8 +1257,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 
 #define COPYBOX_COLORKEY(type) { \
 	type *d = (type *)dbuf, *s = (type *)sbuf, tmp; \
-	s = (type *) ((BYTE *) sdesc.y.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp); \
-	d = (type *) ((BYTE *) ddesc.y.lpSurface + (dsty * ddesc.lPitch) + dstx * bpp); \
+	s = (type *) ((BYTE *) sdesc.u1.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp); \
+	d = (type *) ((BYTE *) ddesc.u1.lpSurface + (dsty * ddesc.lPitch) + dstx * bpp); \
 	for (y = 0; y < h; y++) { \
 		for (x = 0; x < w; x++) { \
 			tmp = s[x]; \
@@ -1294,8 +1294,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 
 error:
 
-	IDirectDrawSurface4_Unlock(iface,ddesc.y.lpSurface);
-	IDirectDrawSurface4_Unlock(src,sdesc.y.lpSurface);
+	IDirectDrawSurface4_Unlock(iface,ddesc.u1.lpSurface);
+	IDirectDrawSurface4_Unlock(src,sdesc.u1.lpSurface);
 	return ret;
 }
 
@@ -1350,7 +1350,7 @@ static ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 ifa
     IDirectDraw2_Release((IDirectDraw2*)This->s.ddraw);
     /* clear out of surface list */
     if (This->t.dga.fb_height == -1)
-	HeapFree(GetProcessHeap(),0,This->s.surface_desc.y.lpSurface);
+	HeapFree(GetProcessHeap(),0,This->s.surface_desc.u1.lpSurface);
     else
 	This->s.ddraw->e.dga.vpmask &= ~(1<<(This->t.dga.fb_height/This->s.ddraw->e.dga.fb_height));
 
@@ -1379,7 +1379,7 @@ static ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 if
     if (This->t.xlib.image != NULL) {
 	if (This->s.ddraw->d.pixel_convert != NULL) {
 	    /* In pixel conversion mode, there are 2 buffers to release. */
-	    HeapFree(GetProcessHeap(),0,This->s.surface_desc.y.lpSurface);
+	    HeapFree(GetProcessHeap(),0,This->s.surface_desc.u1.lpSurface);
 
 #ifdef HAVE_LIBXXSHM
 	    if (This->s.ddraw->e.xlib.xshm_active) {
@@ -1404,7 +1404,7 @@ static ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 if
 		shmdt(This->t.xlib.shminfo.shmaddr);
 	    } else {
 #endif
-		HeapFree(GetProcessHeap(),0,This->s.surface_desc.y.lpSurface);
+		HeapFree(GetProcessHeap(),0,This->s.surface_desc.u1.lpSurface);
 		TSXDestroyImage(This->t.xlib.image);
 #ifdef HAVE_LIBXXSHM	
 	    }
@@ -1412,7 +1412,7 @@ static ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 if
 	}
 	This->t.xlib.image = 0;
     } else {
-	HeapFree(GetProcessHeap(),0,This->s.surface_desc.y.lpSurface);
+	HeapFree(GetProcessHeap(),0,This->s.surface_desc.u1.lpSurface);
     }
 
     if (This->s.palette)
@@ -1559,7 +1559,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,H
     IDirectDrawSurface4_Lock(iface,NULL,&desc,0,0);
 
     if (This->s.hdc == 0) {
-	switch (desc.ddpfPixelFormat.x.dwRGBBitCount) {
+	switch (desc.ddpfPixelFormat.u.dwRGBBitCount) {
 	case 16:
 	case 32:
 #if 0 /* This should be filled if Wine's DIBSection did understand BI_BITFIELDS */
@@ -1573,7 +1573,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,H
 
 	default:
 	    b_info = (BITMAPINFO *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-		    sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (2 << desc.ddpfPixelFormat.x.dwRGBBitCount));
+		    sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (2 << desc.ddpfPixelFormat.u.dwRGBBitCount));
 	    break;
 	}
 
@@ -1581,23 +1581,23 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,H
 	b_info->bmiHeader.biWidth = desc.dwWidth;
 	b_info->bmiHeader.biHeight = desc.dwHeight;
 	b_info->bmiHeader.biPlanes = 1;
-	b_info->bmiHeader.biBitCount = desc.ddpfPixelFormat.x.dwRGBBitCount;
+	b_info->bmiHeader.biBitCount = desc.ddpfPixelFormat.u.dwRGBBitCount;
 #if 0
-	if ((desc.ddpfPixelFormat.x.dwRGBBitCount != 16) &&
-	    (desc.ddpfPixelFormat.x.dwRGBBitCount != 32))
+	if ((desc.ddpfPixelFormat.u.dwRGBBitCount != 16) &&
+	    (desc.ddpfPixelFormat.u.dwRGBBitCount != 32))
 #endif
 	b_info->bmiHeader.biCompression = BI_RGB;
 #if 0
 	else
 	b_info->bmiHeader.biCompression = BI_BITFIELDS;
 #endif
-	b_info->bmiHeader.biSizeImage = (desc.ddpfPixelFormat.x.dwRGBBitCount / 8) * desc.dwWidth * desc.dwHeight;
+	b_info->bmiHeader.biSizeImage = (desc.ddpfPixelFormat.u.dwRGBBitCount / 8) * desc.dwWidth * desc.dwHeight;
 	b_info->bmiHeader.biXPelsPerMeter = 0;
 	b_info->bmiHeader.biYPelsPerMeter = 0;
 	b_info->bmiHeader.biClrUsed = 0;
 	b_info->bmiHeader.biClrImportant = 0;
 
-	switch (desc.ddpfPixelFormat.x.dwRGBBitCount) {
+	switch (desc.ddpfPixelFormat.u.dwRGBBitCount) {
 	case 16:
 	case 32:
 #if 0
@@ -1605,9 +1605,9 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,H
 		DWORD *masks = (DWORD *) &(b_info->bmiColors);
 
 		usage = 0;
-		masks[0] = desc.ddpfPixelFormat.y.dwRBitMask;
-		masks[1] = desc.ddpfPixelFormat.z.dwGBitMask;
-		masks[2] = desc.ddpfPixelFormat.xx.dwBBitMask;
+		masks[0] = desc.ddpfPixelFormat.u1.dwRBitMask;
+		masks[1] = desc.ddpfPixelFormat.u2.dwGBitMask;
+		masks[2] = desc.ddpfPixelFormat.u3.dwBBitMask;
 	    }
 	    break;
 #endif
@@ -1628,7 +1628,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,H
 		    RGBQUAD *rgb = (RGBQUAD *) &(b_info->bmiColors);
 		    PALETTEENTRY *pent = (PALETTEENTRY *)&(This->s.palette->palents);
 
-		    for (i=0;i<(1<<desc.ddpfPixelFormat.x.dwRGBBitCount);i++) {
+		    for (i=0;i<(1<<desc.ddpfPixelFormat.u.dwRGBBitCount);i++) {
 			rgb[i].rgbBlue = pent[i].peBlue;
 			rgb[i].rgbRed = pent[i].peRed;
 			rgb[i].rgbGreen = pent[i].peGreen; 
@@ -1657,7 +1657,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,H
 
     /* Copy our surface in the DIB section */
     if ((GET_BPP(desc) * desc.dwWidth) == desc.lPitch)
-	memcpy(This->s.bitmap_data,desc.y.lpSurface,desc.lPitch*desc.dwHeight);
+	memcpy(This->s.bitmap_data,desc.u1.lpSurface,desc.lPitch*desc.dwHeight);
     else
 	/* TODO */
 	FIXME("This case has to be done :/\n");
@@ -1675,13 +1675,13 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_ReleaseDC(LPDIRECTDRAWSURFACE4 ifa
     TRACE( "Copying DIBSection at : %p\n", This->s.bitmap_data);
     /* Copy the DIB section to our surface */
     if ((GET_BPP(This->s.surface_desc) * This->s.surface_desc.dwWidth) == This->s.surface_desc.lPitch) {
-	memcpy(This->s.surface_desc.y.lpSurface, This->s.bitmap_data, This->s.surface_desc.lPitch * This->s.surface_desc.dwHeight);
+	memcpy(This->s.surface_desc.u1.lpSurface, This->s.bitmap_data, This->s.surface_desc.lPitch * This->s.surface_desc.dwHeight);
     } else {
 	/* TODO */
 	FIXME("This case has to be done :/\n");
     }
     /* Unlock the surface */
-    IDirectDrawSurface4_Unlock(iface,This->s.surface_desc.y.lpSurface);
+    IDirectDrawSurface4_Unlock(iface,This->s.surface_desc.u1.lpSurface);
     return DD_OK;
 }
 
@@ -2814,8 +2814,8 @@ static HRESULT common_off_screen_CreateSurface(IDirectDraw2Impl* This,
 
   if (lpdsf->s.surface_desc.dwFlags & DDSD_ZBUFFERBITDEPTH) {
     /* This is a Z Buffer */
-    TRACE("Creating Z-Buffer of %ld bit depth\n", lpdsf->s.surface_desc.x.dwZBufferBitDepth);
-    bpp = lpdsf->s.surface_desc.x.dwZBufferBitDepth / 8;
+    TRACE("Creating Z-Buffer of %ld bit depth\n", lpdsf->s.surface_desc.u.dwZBufferBitDepth);
+    bpp = lpdsf->s.surface_desc.u.dwZBufferBitDepth / 8;
   } else {
     /* This is a standard image */
     if (!(lpdsf->s.surface_desc.dwFlags & DDSD_PIXELFORMAT)) {
@@ -2833,7 +2833,7 @@ static HRESULT common_off_screen_CreateSurface(IDirectDraw2Impl* This,
   }
   
   lpdsf->s.surface_desc.dwFlags |= DDSD_PITCH|DDSD_LPSURFACE;
-  lpdsf->s.surface_desc.y.lpSurface =
+  lpdsf->s.surface_desc.u1.lpSurface =
     (LPBYTE)HeapAlloc(GetProcessHeap(),0,lpdsf->s.surface_desc.dwWidth * lpdsf->s.surface_desc.dwHeight * bpp);
   lpdsf->s.surface_desc.lPitch = lpdsf->s.surface_desc.dwWidth * bpp;
   
@@ -2892,7 +2892,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
 	lpddsd->lPitch = (*ilpdsf)->s.surface_desc.lPitch = 
 		This->e.dga.fb_width*PFGET_BPP(This->d.directdraw_pixelformat);
 
-	(*ilpdsf)->s.surface_desc.y.lpSurface =
+	(*ilpdsf)->s.surface_desc.u1.lpSurface =
 	    This->e.dga.fb_addr + i*fbheight*lpddsd->lPitch;
 
 	(*ilpdsf)->t.dga.fb_height = i*fbheight;
@@ -2932,7 +2932,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
 		/* Copy the surface description from the front buffer */
 		back->s.surface_desc = (*ilpdsf)->s.surface_desc;
 		/* Change the parameters that are not the same */
-		back->s.surface_desc.y.lpSurface =
+		back->s.surface_desc.u1.lpSurface =
 		    This->e.dga.fb_addr + i*fbheight*lpddsd->lPitch;
 
 		back->s.ddraw = This;
@@ -3044,7 +3044,7 @@ static XImage *create_xshmimage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl*
     shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
 
     if (This->d.pixel_convert != NULL) {
-	lpdsf->s.surface_desc.y.lpSurface = HeapAlloc(
+	lpdsf->s.surface_desc.u1.lpSurface = HeapAlloc(
 	    GetProcessHeap(),
 	    HEAP_ZERO_MEMORY,
 	    lpdsf->s.surface_desc.dwWidth *
@@ -3052,7 +3052,7 @@ static XImage *create_xshmimage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl*
 	    PFGET_BPP(This->d.directdraw_pixelformat)
 	);
     } else {
-	lpdsf->s.surface_desc.y.lpSurface = img->data;
+	lpdsf->s.surface_desc.u1.lpSurface = img->data;
     }
     return img;
 }
@@ -3069,7 +3069,7 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
     if (img == NULL) {
 #endif
     /* Allocate surface memory */
-	lpdsf->s.surface_desc.y.lpSurface = HeapAlloc(
+	lpdsf->s.surface_desc.u1.lpSurface = HeapAlloc(
 	    GetProcessHeap(),HEAP_ZERO_MEMORY,
 	    lpdsf->s.surface_desc.dwWidth *
 	    lpdsf->s.surface_desc.dwHeight *
@@ -3083,7 +3083,7 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
 		PFGET_BPP(This->d.screen_pixelformat)
 	    );
 	} else {
-	    img_data = lpdsf->s.surface_desc.y.lpSurface;
+	    img_data = lpdsf->s.surface_desc.u1.lpSurface;
 	}
 
 	/* In this case, create an XImage */
@@ -3336,18 +3336,18 @@ static int _common_depth_to_pixelformat(DWORD depth,
 	  pixelformat->dwSize = sizeof(*pixelformat);
 	  if (depth == 8) {
 	    pixelformat->dwFlags = DDPF_PALETTEINDEXED8;
-	    pixelformat->y.dwRBitMask = 0;
-	    pixelformat->z.dwGBitMask = 0;
-	    pixelformat->xx.dwBBitMask = 0;
+	    pixelformat->u1.dwRBitMask = 0;
+	    pixelformat->u2.dwGBitMask = 0;
+	    pixelformat->u3.dwBBitMask = 0;
 	  } else {
 	    pixelformat->dwFlags = DDPF_RGB;
-	    pixelformat->y.dwRBitMask = vi[j].red_mask;
-	    pixelformat->z.dwGBitMask = vi[j].green_mask;
-	    pixelformat->xx.dwBBitMask = vi[j].blue_mask;
+	    pixelformat->u1.dwRBitMask = vi[j].red_mask;
+	    pixelformat->u2.dwGBitMask = vi[j].green_mask;
+	    pixelformat->u3.dwBBitMask = vi[j].blue_mask;
 	  }
 	  pixelformat->dwFourCC = 0;
-	  pixelformat->x.dwRGBBitCount = pf[i].bits_per_pixel;
-	  pixelformat->xy.dwRGBAlphaBitMask= 0;
+	  pixelformat->u.dwRGBBitCount = pf[i].bits_per_pixel;
+	  pixelformat->u4.dwRGBAlphaBitMask= 0;
 
 	  *screen_pixelformat = *pixelformat;
 	  
@@ -3382,28 +3382,28 @@ static int _common_depth_to_pixelformat(DWORD depth,
 	    screen_pixelformat->dwSize = sizeof(*screen_pixelformat);
 	    screen_pixelformat->dwFlags = DDPF_RGB;
 	    screen_pixelformat->dwFourCC = 0;
-	    screen_pixelformat->x.dwRGBBitCount = pf[i].bits_per_pixel;
-	    screen_pixelformat->y.dwRBitMask = vi[j].red_mask;
-	    screen_pixelformat->z.dwGBitMask = vi[j].green_mask;
-	    screen_pixelformat->xx.dwBBitMask = vi[j].blue_mask;
-	    screen_pixelformat->xy.dwRGBAlphaBitMask= 0;
+	    screen_pixelformat->u.dwRGBBitCount = pf[i].bits_per_pixel;
+	    screen_pixelformat->u1.dwRBitMask = vi[j].red_mask;
+	    screen_pixelformat->u2.dwGBitMask = vi[j].green_mask;
+	    screen_pixelformat->u3.dwBBitMask = vi[j].blue_mask;
+	    screen_pixelformat->u4.dwRGBAlphaBitMask= 0;
 
 		pixelformat->dwSize = sizeof(*pixelformat);
 		pixelformat->dwFourCC = 0;
 		if (depth == 8) {
 		  pixelformat->dwFlags = DDPF_PALETTEINDEXED8;
-		  pixelformat->x.dwRGBBitCount = 8;
-		  pixelformat->y.dwRBitMask = 0;
-		  pixelformat->z.dwGBitMask = 0;
-		  pixelformat->xx.dwBBitMask = 0;
+		  pixelformat->u.dwRGBBitCount = 8;
+		  pixelformat->u1.dwRBitMask = 0;
+		  pixelformat->u2.dwGBitMask = 0;
+		  pixelformat->u3.dwBBitMask = 0;
 		} else {
 		  pixelformat->dwFlags = DDPF_RGB;
-		  pixelformat->x.dwRGBBitCount = ModeEmulations[c].dest.bpp;
-		  pixelformat->y.dwRBitMask = ModeEmulations[c].dest.rmask;
-		  pixelformat->z.dwGBitMask = ModeEmulations[c].dest.gmask;
-		  pixelformat->xx.dwBBitMask = ModeEmulations[c].dest.bmask;
+		  pixelformat->u.dwRGBBitCount = ModeEmulations[c].dest.bpp;
+		  pixelformat->u1.dwRBitMask = ModeEmulations[c].dest.rmask;
+		  pixelformat->u2.dwGBitMask = ModeEmulations[c].dest.gmask;
+		  pixelformat->u3.dwBBitMask = ModeEmulations[c].dest.bmask;
 		}
-		pixelformat->xy.dwRGBAlphaBitMask= 0;    
+		pixelformat->u4.dwRGBAlphaBitMask= 0;    
 
 	    if (pix_depth != NULL)
 	      *pix_depth = vi[j].depth;
@@ -3871,7 +3871,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreatePalette(
 	res = common_IDirectDraw2Impl_CreatePalette(This,dwFlags,palent,ilpddpal,lpunk,&xsize);
 	if (res != 0) return res;
 	(*ilpddpal)->lpvtbl = &dga_ddpalvt;
-	if (This->d.directdraw_pixelformat.x.dwRGBBitCount<=8) {
+	if (This->d.directdraw_pixelformat.u.dwRGBBitCount<=8) {
 		(*ilpddpal)->cm = TSXCreateColormap(display,DefaultRootWindow(display),DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
 	} else {
 		FIXME("why are we doing CreatePalette in hi/truecolor?\n");
@@ -4173,41 +4173,41 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_EnumDisplayModes(
 	ddsfd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
 	if (dwFlags & DDEDM_REFRESHRATES) {
 		ddsfd.dwFlags |= DDSD_REFRESHRATE;
-		ddsfd.x.dwRefreshRate = 60;
+		ddsfd.u.dwRefreshRate = 60;
 	}
 
 	for (i=0;i<sizeof(depths)/sizeof(depths[0]);i++) {
 		ddsfd.dwBackBufferCount = 1;
 		ddsfd.ddpfPixelFormat.dwFourCC	= 0;
 		ddsfd.ddpfPixelFormat.dwFlags 	= DDPF_RGB;
-		ddsfd.ddpfPixelFormat.x.dwRGBBitCount	= depths[i];
+		ddsfd.ddpfPixelFormat.u.dwRGBBitCount	= depths[i];
 		/* FIXME: those masks would have to be set in depth > 8 */
 		if (depths[i]==8) {
-		ddsfd.ddpfPixelFormat.y.dwRBitMask  	= 0;
-		ddsfd.ddpfPixelFormat.z.dwGBitMask  	= 0;
-		ddsfd.ddpfPixelFormat.xx.dwBBitMask 	= 0;
-		ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+		ddsfd.ddpfPixelFormat.u1.dwRBitMask  	= 0;
+		ddsfd.ddpfPixelFormat.u2.dwGBitMask  	= 0;
+		ddsfd.ddpfPixelFormat.u3.dwBBitMask 	= 0;
+		ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
 			ddsfd.ddsCaps.dwCaps=DDSCAPS_PALETTE;
 			ddsfd.ddpfPixelFormat.dwFlags|=DDPF_PALETTEINDEXED8;
 		} else {
-		  ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+		  ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
 		  
 		  /* FIXME: We should query those from X itself */
 		  switch (depths[i]) {
 		  case 16:
-		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0xF800;
-		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x07E0;
-		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x001F;
+		    ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0xF800;
+		    ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x07E0;
+		    ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x001F;
 		    break;
 		  case 24:
-		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x00FF0000;
-		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000FF00;
-		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x000000FF;
+		    ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0x00FF0000;
+		    ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x0000FF00;
+		    ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x000000FF;
 		    break;
 		  case 32:
-		    ddsfd.ddpfPixelFormat.y.dwRBitMask = 0x00FF0000;
-		    ddsfd.ddpfPixelFormat.z.dwGBitMask = 0x0000FF00;
-		    ddsfd.ddpfPixelFormat.xx.dwBBitMask= 0x000000FF;
+		    ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0x00FF0000;
+		    ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0x0000FF00;
+		    ddsfd.ddpfPixelFormat.u3.dwBBitMask= 0x000000FF;
 		    break;
 		  }
 		}
@@ -4265,7 +4265,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   ddsfd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_CAPS;
   if (dwFlags & DDEDM_REFRESHRATES) {
     ddsfd.dwFlags |= DDSD_REFRESHRATE;
-    ddsfd.x.dwRefreshRate = 60;
+    ddsfd.u.dwRefreshRate = 60;
   }
   maxWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
   maxHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
@@ -4302,11 +4302,11 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
       ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
       ddsfd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
       ddsfd.ddpfPixelFormat.dwFourCC = 0;
-      ddsfd.ddpfPixelFormat.x.dwRGBBitCount = 8;
-      ddsfd.ddpfPixelFormat.y.dwRBitMask = 0;
-      ddsfd.ddpfPixelFormat.z.dwGBitMask = 0;
-      ddsfd.ddpfPixelFormat.xx.dwBBitMask = 0;
-      ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+      ddsfd.ddpfPixelFormat.u.dwRGBBitCount = 8;
+      ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
+      ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0;
+      ddsfd.ddpfPixelFormat.u3.dwBBitMask = 0;
+      ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
       
 	  has_mode[mode_index] = 1;
 	} else {
@@ -4318,11 +4318,11 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 	  ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
 	  ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB;
 	  ddsfd.ddpfPixelFormat.dwFourCC = 0;
-	  ddsfd.ddpfPixelFormat.x.dwRGBBitCount = pf[i].bits_per_pixel;
-	  ddsfd.ddpfPixelFormat.y.dwRBitMask = vi[j].red_mask;
-	  ddsfd.ddpfPixelFormat.z.dwGBitMask = vi[j].green_mask;
-	  ddsfd.ddpfPixelFormat.xx.dwBBitMask = vi[j].blue_mask;
-	  ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+	  ddsfd.ddpfPixelFormat.u.dwRGBBitCount = pf[i].bits_per_pixel;
+	  ddsfd.ddpfPixelFormat.u1.dwRBitMask = vi[j].red_mask;
+	  ddsfd.ddpfPixelFormat.u2.dwGBitMask = vi[j].green_mask;
+	  ddsfd.ddpfPixelFormat.u3.dwBBitMask = vi[j].blue_mask;
+	  ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
 
 	  send_mode = 1;
 	      has_mode[mode_index] = 1;
@@ -4359,18 +4359,18 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 		    ddsfd.ddpfPixelFormat.dwFourCC = 0;
 		    if (depth == 8) {
 		      ddsfd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
-		      ddsfd.ddpfPixelFormat.x.dwRGBBitCount = 8;
-		      ddsfd.ddpfPixelFormat.y.dwRBitMask = 0;
-		      ddsfd.ddpfPixelFormat.z.dwGBitMask = 0;
-		      ddsfd.ddpfPixelFormat.xx.dwBBitMask = 0;
+		      ddsfd.ddpfPixelFormat.u.dwRGBBitCount = 8;
+		      ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
+		      ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0;
+		      ddsfd.ddpfPixelFormat.u3.dwBBitMask = 0;
     } else {
 		      ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-		      ddsfd.ddpfPixelFormat.x.dwRGBBitCount = ModeEmulations[c].dest.bpp;
-		      ddsfd.ddpfPixelFormat.y.dwRBitMask = ModeEmulations[c].dest.rmask;
-		      ddsfd.ddpfPixelFormat.z.dwGBitMask = ModeEmulations[c].dest.gmask;
-		      ddsfd.ddpfPixelFormat.xx.dwBBitMask = ModeEmulations[c].dest.bmask;
+		      ddsfd.ddpfPixelFormat.u.dwRGBBitCount = ModeEmulations[c].dest.bpp;
+		      ddsfd.ddpfPixelFormat.u1.dwRBitMask = ModeEmulations[c].dest.rmask;
+		      ddsfd.ddpfPixelFormat.u2.dwGBitMask = ModeEmulations[c].dest.gmask;
+		      ddsfd.ddpfPixelFormat.u3.dwBBitMask = ModeEmulations[c].dest.bmask;
 		    }
-		    ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+		    ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
 		    send_mode = 1;
 		  }
 		  
@@ -4437,7 +4437,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
 	lpddsfd->dwWidth = This->d.width;
 	lpddsfd->lPitch = This->e.dga.fb_width*PFGET_BPP(This->d.directdraw_pixelformat);
 	lpddsfd->dwBackBufferCount = 1;
-	lpddsfd->x.dwRefreshRate = 60;
+	lpddsfd->u.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
 	lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
 	return DD_OK;
@@ -4454,7 +4454,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetDisplayMode(
 	lpddsfd->dwWidth = This->d.width;
 	lpddsfd->lPitch = lpddsfd->dwWidth * PFGET_BPP(This->d.directdraw_pixelformat);
 	lpddsfd->dwBackBufferCount = 1;
-	lpddsfd->x.dwRefreshRate = 60;
+	lpddsfd->u.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
 	lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
 	return DD_OK;

@@ -65,7 +65,7 @@ int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth)
     if (!lpddsurf) return 1;
     if (Height) *Height=sdesc.dwHeight;
     if (Width) *Width=sdesc.dwWidth;
-    if (Depth) *Depth=sdesc.ddpfPixelFormat.x.dwRGBBitCount;
+    if (Depth) *Depth=sdesc.ddpfPixelFormat.u.dwRGBBitCount;
     return 0;
 }
 
@@ -115,13 +115,13 @@ LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth)
     if (Pitch) *Pitch=sdesc.lPitch;
     if (Height) *Height=sdesc.dwHeight;
     if (Width) *Width=sdesc.dwWidth;
-    if (Depth) *Depth=sdesc.ddpfPixelFormat.x.dwRGBBitCount;
-    return sdesc.y.lpSurface;
+    if (Depth) *Depth=sdesc.ddpfPixelFormat.u.dwRGBBitCount;
+    return sdesc.u1.lpSurface;
 }
 
 void VGA_Unlock(void)
 {
-    IDirectDrawSurface_Unlock(lpddsurf,sdesc.y.lpSurface);
+    IDirectDrawSurface_Unlock(lpddsurf,sdesc.u1.lpSurface);
 }
 
 /* We are called from SIGALRM, aren't we? We should _NOT_ do synchronization
