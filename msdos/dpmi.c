@@ -289,7 +289,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
             es = ctx.SegEs;
             edi = ctx.Edi;
         }
-	SELECTOR_FreeBlock(ss, 1);
+	FreeSelector16(ss);
         INT_GetRealModeContext((REALMODECALL*)PTR_SEG_OFF_TO_LIN( es, edi ), context);
 #else
         ERR("RMCBs only implemented for i386\n");
@@ -619,12 +619,12 @@ static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
     /* in the current state of affairs, we won't ever actually return here... */
     /* we should have int21/ah=4c do it someday, though... */
 
-    SELECTOR_FreeBlock(psp->environment, 1);
+    FreeSelector16(psp->environment);
     psp->environment = env_seg;
-    SELECTOR_FreeBlock(es, 1);
-    if (ds != ss) SELECTOR_FreeBlock(ds, 1);
-    SELECTOR_FreeBlock(ss, 1);
-    SELECTOR_FreeBlock(cs, 1);
+    FreeSelector16(es);
+    if (ds != ss) FreeSelector16(ds);
+    FreeSelector16(ss);
+    FreeSelector16(cs);
 }
 
 /* DPMI Raw Mode Switch handler */
@@ -823,6 +823,9 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
                      BX_reg(context),
                      W32S_APP2WINE(MAKELONG(DX_reg(context),CX_reg(context)), offset));
         dw = W32S_APP2WINE(MAKELONG(DX_reg(context), CX_reg(context)), offset);
+        if (dw < 0x10000)
+            /* app wants to access lower 64K of DOS memory, map it in now */
+            DOSMEM_Init(TRUE);
         SetSelectorBase(BX_reg(context), dw);
         break;
 
