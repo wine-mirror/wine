@@ -171,9 +171,188 @@ void test_msidecomposedesc(void)
     ok(len == (strlen(desc) - strlen("extra")), "length wrong\n");
 }
 
+static UINT try_query_param( MSIHANDLE hdb, LPSTR szQuery, MSIHANDLE hrec )
+{
+    MSIHANDLE htab = 0;
+    UINT res;
+
+    res = MsiDatabaseOpenView( hdb, szQuery, &htab );
+    if(res == ERROR_SUCCESS )
+    {
+        UINT r;
+
+        r = MsiViewExecute( htab, hrec );
+        if(r != ERROR_SUCCESS )
+            res = r;
+
+        r = MsiViewClose( htab );
+        if(r != ERROR_SUCCESS )
+            res = r;
+
+        r = MsiCloseHandle( htab );
+        if(r != ERROR_SUCCESS )
+            res = r;
+    }
+    return res;
+}
+
+static UINT try_query( MSIHANDLE hdb, LPSTR szQuery )
+{
+    return try_query_param( hdb, szQuery, 0 );
+}
+
+static UINT try_insert_query( MSIHANDLE hdb, LPSTR szQuery )
+{
+    MSIHANDLE hrec = 0;
+    UINT r;
+
+    hrec = MsiCreateRecord( 1 );
+    MsiRecordSetString( hrec, 1, "Hello");
+
+    r = try_query_param( hdb, szQuery, hrec );
+
+    MsiCloseHandle( hrec );
+    return r;
+}
+
+void test_msibadqueries()
+{
+    const char *msifile = "winetest.msi";
+    MSIHANDLE hdb = 0;
+    UINT r;
+
+    DeleteFile(msifile);
+
+    /* just MsiOpenDatabase should not create a file */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    r = MsiDatabaseCommit( hdb );
+    ok(r == ERROR_SUCCESS , "Failed to commit database\n");
+
+    r = MsiCloseHandle( hdb );
+    ok(r == ERROR_SUCCESS , "Failed to close database\n");
+
+    /* open it readonly */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_READONLY, &hdb );
+    ok(r == ERROR_SUCCESS , "Failed to open database r/o\n");
+
+    /* add a table to it */
+    r = try_query( hdb, "select * from _Tables");
+    ok(r == ERROR_SUCCESS , "query 1 failed\n");
+
+    r = MsiCloseHandle( hdb );
+    ok(r == ERROR_SUCCESS , "Failed to close database r/o\n");
+
+    /* open it read/write */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_TRANSACT, &hdb );
+    ok(r == ERROR_SUCCESS , "Failed to open database r/w\n");
+
+    /* a bunch of test queries that fail with the native MSI */
+
+    r = try_query( hdb, "CREATE TABLE");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2a return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a`");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2b return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` ()");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2c return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b`)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2d return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) )");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2e return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2f return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2g return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2h return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2i return code\n");
+
+    todo_wine {
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY 'b')");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2j return code\n");
+    }
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY `b')");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2k return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY `b')");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2l return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHA(72) NOT NULL PRIMARY KEY `b`)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2m return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(-1) NOT NULL PRIMARY KEY `b`)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2n return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(720) NOT NULL PRIMARY KEY `b`)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2o return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL KEY `b`)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2p return code\n");
+
+    r = try_query( hdb, "CREATE TABLE `a` (`` CHAR(72) NOT NULL PRIMARY KEY `b`)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2p return code\n");
+
+    todo_wine {
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY `b`)");
+    ok(r == ERROR_SUCCESS , "valid query 2z failed\n");
+    }
+
+    r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY `b`)");
+    ok(r == ERROR_BAD_QUERY_SYNTAX , "created same table again\n");
+
+    r = try_query( hdb, "CREATE TABLE `aa` (`b` CHAR(72) NOT NULL, `c` "
+          "CHAR(72), `d` CHAR(255) NOT NULL LOCALIZABLE PRIMARY KEY `b`)");
+    ok(r == ERROR_SUCCESS , "query 4 failed\n");
+
+    r = MsiDatabaseCommit( hdb );
+    ok(r == ERROR_SUCCESS , "Failed to commit database after write");
+
+    r = try_query( hdb, "CREATE TABLE `blah` (`foo` CHAR(72) NOT NULL "
+                          "PRIMARY KEY `foo`)");
+    ok(r == ERROR_SUCCESS , "query 4 failed\n");
+
+    r = try_insert_query( hdb, "insert into a  ( `b` ) VALUES ( ? )");
+    ok(r == ERROR_SUCCESS , "failed to insert record in db\n");
+
+    r = MsiDatabaseCommit( hdb );
+    ok(r == ERROR_SUCCESS , "Failed to commit database after write");
+
+    r = try_query( hdb, "CREATE TABLE `boo` (`foo` CHAR(72) NOT NULL "
+                          "PRIMARY KEY `ba`)");
+    ok(r != ERROR_SUCCESS , "query 5 succeeded\n");
+
+    r = try_query( hdb,"CREATE TABLE `bee` (`foo` CHAR(72) NOT NULL )");
+    ok(r != ERROR_SUCCESS , "query 6 succeeded\n");
+
+    r = try_query( hdb, "CREATE TABLE `temp` (`t` CHAR(72) NOT NULL "
+                          "PRIMARY KEY `t`)");
+    ok(r == ERROR_SUCCESS , "query 7 failed\n");
+
+    r = try_query( hdb, "CREATE TABLE `c` (`b` CHAR NOT NULL PRIMARY KEY `b`)");
+    ok(r == ERROR_SUCCESS , "query 8 failed\n");
+
+    r = MsiCloseHandle( hdb );
+    ok(r == ERROR_SUCCESS , "Failed to close database transact\n");
+
+    r = DeleteFile( msifile );
+    ok(r == TRUE, "file didn't exist after commit\n");
+}
+
 START_TEST(db)
 {
     test_msidatabase();
     test_msiinsert();
     test_msidecomposedesc();
+    test_msibadqueries();
 }
