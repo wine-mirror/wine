@@ -62,7 +62,7 @@ preceding it with an @ sign.\n"
 \n\
 Syntax: FOR %variable IN (set) DO command\n\
 \n\
-The requirement to double the % sign when using FOR in a batch file does\n\
+The requirement to double the \% sign when using FOR in a batch file does\n\
 not exist in wcmd.\n"
 
   WCMD_GOTO,
@@ -132,12 +132,12 @@ The following character strings have the special meaning shown:\n\
 \n\
 $$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n\
 $d    Current date        $e    Escape              $g    > sign\n\
-$l    > sign              $n    Current drive       $p    Current path\n\
+$l    < sign              $n    Current drive       $p    Current path\n\
 $q    Equal sign          $t    Current time        $v    wcmd version\n\
 \n\
 Note that entering the PROMPT command without a prompt-string resets the\n\
-prompt to the default, which is the current drive letter followed by a\n\
-greater-than (>) sign.\n\
+prompt to the default, which is the current drive letter followed by its\n\
+current directory and a greater-than (>) sign.\n\
 \n\
 The prompt can also be changed by altering the PROMPT environment variable,\n\
 so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
@@ -161,7 +161,7 @@ To create or modify an environment variable the syntax is:\n\
       SET <variable>=<value>\n\
 \n\
 where <variable> and <value> are character strings. There must be no\n\
-spaces either side of the equals sign, nor can the variable or value\n\
+spaces before the equals sign, nor can the variable name\n\
 have embedded spaces.\n\
 \n\
 Under Wine, the environment of the underlying operating system is\n\
@@ -176,7 +176,7 @@ if called from the command line.\n"
 
   WCMD_TIME,   "Help about TIME\n"
 
-  WCMD_TITLE,  "Sets the window title for the wcmd window, syntax TITLE [string]"
+  WCMD_TITLE,  "Sets the window title for the wcmd window, syntax TITLE [string]\n"
 
   WCMD_TYPE,
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n\

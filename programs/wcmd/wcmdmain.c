@@ -38,7 +38,7 @@ int echo_mode = 1, verify_mode = 0;
 char nyi[] = "Not Yet Implemented\n\n";
 char newline[] = "\n";
 char version_string[] = "WCMD Version 0.17\n\n";
-char anykey[] = "Press any key to continue: ";
+char anykey[] = "Press Return key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
 

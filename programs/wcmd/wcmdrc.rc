@@ -19,6 +19,7 @@
 #include "wcmd.h"
 
 #include "En.rc"
+#include "Fr.rc"
 #include "Pt.rc"
 
 LANGUAGE LANG_NEUTRAL,SUBLANG_NEUTRAL

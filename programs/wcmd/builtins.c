@@ -328,8 +328,8 @@ char buffer[2048];
 
   command = WCMD_strtrim_leading_spaces(command);
   if (lstrlen(command) == 0) {
-    LoadString (0, 1000, buffer, sizeof(buffer));
-    WCMD_output (buffer);
+    LoadString (hinst, 1000, buffer, sizeof(buffer));
+    WCMD_output_asis (buffer);
   }
   else {
     for (i=0; i<=WCMD_EXIT; i++) {

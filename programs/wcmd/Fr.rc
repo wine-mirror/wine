@@ -1,0 +1,226 @@
+/*
+ * Wine command prompt
+ * French Language Support
+ *
+ * Copyright 2003 Sylvain Petreolle
+ * 
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_FRENCH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+  WCMD_ATTRIB, "Aide d' ATTRIB\n"
+  WCMD_CALL,
+"CALL <fichierbatch> sert à appeler un fichier batch \n\
+depuis un autre fichier batch. Quand le fichier batch sort, le controle revient\n\
+au fichier qui l'a appelé. La commande CALL doit être suivie des paramètres\n\
+de la procédure appelée.\n\
+\n\
+Les changements de répertoire courant, de variables d'environment etc faits\n\
+dans une procédure appelée sont transmis à l'appelant.\n"
+
+  WCMD_CD,     "Change le répertoire courant par défaut\n"
+  WCMD_CHDIR,  "Change le répertoire courant par défaut\n"
+
+  WCMD_CLS,
+"CLS efface l'écran\n"
+
+  WCMD_COPY,   "Aide de COPY\n"
+  WCMD_CTTY,   "Aide de CTTY\n"
+  WCMD_DATE,   "Aide de DATE\n"
+  WCMD_DEL,    "Aide de DEL\n"
+  WCMD_DIR,    "Aide de DIR\n"
+
+  WCMD_ECHO,
+"ECHO <chaîne> affiche <chaîne> sur la console courante.\n\
+\n\
+ECHO ON provoque l'affichage de toutes les commandes sur la console\n\
+avant leur exécution.\n\
+\n\
+ECHO OFF annule l'effet de tout precédent ECHO ON (ECHO est OFF par\n\
+défaut). On peut empêcher l'affichage de ECHO OFF en le faisant\n\
+précéder d'un signe @.\n"
+
+  WCMD_ERASE,  "Aide de ERASE\n"
+
+  WCMD_FOR,
+"La commande FOR sert à exécuter une commande pour un groupe de fichiers.\n\
+\n\
+Syntaxe: FOR %variable IN (groupe) DO commande\n\
+\n\
+La nécessité de doubler le signe '%' en utilisant FOR dans un fichier batch \n\
+n'existe pas dans wcmd.\n"
+
+  WCMD_GOTO,
+"La commande GOTO transfère l'exécution à un autre label dans un \n\
+fichier batch.\n\
+\n\
+Le label cible de GOTO peut etre long de 255 caractères\n\
+mais ne peut inclure d'espaces (this is different to other operating\n\
+systems). Si deux ou plusieurs labels identiques sont dans le meme fichier \n\
+seul le premier sera exécuté. Essayer de sauter à un label non-existant\n\
+termine l'exécution du fichier batch .\n\
+\n\
+GOTO n'a pas d'effet si utilisé interactivement.\n"
+
+  WCMD_HELP,   "Affiche une brève aide sur les commandes internes de WCMD\n"
+
+  WCMD_IF,
+"IF est utilisé pour exécuter une commande de façon conditionnelle.\n\
+\n\
+Syntaxe:	IF [NOT] EXIST nomfichier commande\n\
+	IF [NOT] chaîne1==chaîne2 commande\n\
+	IF [NOT] ERRORLEVEL nombre commande\n\
+\n\
+Dans la deuxieme forme de la commande, chaîne1 et chaîne2 doivent être \n\
+entre guillemets. La comparaison est insensible à la casse.\n"
+
+  WCMD_LABEL,  "LABEL sert à régler le nom de volume d'un disque.  \n\
+\n\
+Syntaxe: LABEL [lecteur:]\n\
+La commnande le nouveau nom de volume pour le lecteur donné.\n\
+Vous pouvez afficher le nom de volume avec la commande VOL.\n"
+
+  WCMD_MD,     "Crée  le répertoire donné en paramètre.\n"
+  WCMD_MKDIR,  "Crée  le répertoire donné en paramètre.\n"
+  WCMD_MOVE,
+"MOVE déplace un fichier,un groupe de fichiers ou un répertoire\n\
+à un autre endroit. Si l'objet déplacé est un répertoire alors\n\
+tous les fichiers et sous-répertoires de l'objet sont également déplacés.\n\
+MOVE échoue si l'ancien et le nouvel emplacement sont sur des lecteurs DOS différents.\n"
+
+  WCMD_PATH,
+"PATH affiche ou change le chemin de recherche de wcmd.\n\
+Entrer PATH affichera le réglage courant de PATH (au départ\n\
+c'est la valeur donnée dans le fichier de configuration wine). Pour changer\n\
+le réglage, faites suivre la commande PATH de la nouvelle valeur.\n\
+Il est possible de modifier le PATH en utilisant la variable d'environment PATH, \n\
+par exemple :\n\
+		PATH %PATH%;c:\\temp \n"
+
+  WCMD_PAUSE,
+"PAUSE affiche un message sur l'écran : 'Pressez Entrée pour continuer'\n\
+et attend que l'utilisateur presse la touche Entrée. PAUSE est surout utilisé dans\n\
+les fichiers batchs pour permettre à l'utilisateur de lire la sortie de\n\
+la dernière commande avant qu'elle ne descende l'écran\n"
+
+  WCMD_PROMPT,
+"PROMPT règle l'invite de commande.\n\
+\n\
+La chaine suivant la commande PROMPT (and the space immediately after)\n\
+apprait au début de la ligne quand wcmd attend une entrée texte.\n\
+\n\
+Les chaînes de caractères suivantes ont une signification spéciale :\n\
+\n\
+$$    Signe Dollar        $_    Saut de ligne       $b    Signe Pipe (|)\n\
+$d    Date courante       $e    Escape              $g    Signe >\n\
+$l    Signe <             $n    Lecteur courant     $p    Répertoire courant\n\
+$q    Signe =             $t    Heure courante      $v    Version de wcmd\n\
+\n\
+Notez qu' entrer la commande PROMPT sans texte d'invite remet \n\
+prompt à la valeur par défaut, qui est la lettre du lecteur courant suivie de\n\
+son répertoire courant et d'un signe plus-grand-que. (>) \n\
+\n\
+L'invite peut aussi être modifiée en changeant la variable d'environment PROMPT,\n\
+donc la commande 'SET PROMPT=texte' a le même effet que 'PROMPT texte'\n"
+
+  WCMD_REM,
+"Une ligne de commande commençant par REM (suivi d'une espace) n'engendre \n\
+aucune action, et peut donc servir de commentaire dans un fichier batch.\n"
+
+  WCMD_REN,    "Aide de REN\n"
+  WCMD_RENAME, "Aide de RENAME\n"
+  WCMD_RD,     "Efface le répertoire donné en paramètre.\n"
+  WCMD_RMDIR,  "Efface le répertoire donné en paramètre.\n"
+
+  WCMD_SET,
+"SET affiche ou change les variables d'environnement de wcmd.\n\
+\n\
+SET sans paramètre affiche l'environnement courant.\n\
+\n\
+Pour créer et modifier une variable d'environnement la syntaxe est:\n\
+\n\
+      SET <variable>=<valeur>\n\
+\n\
+où <variable> et <valeur> sont des chaines de caractères. Il est à noter que <variable>\n\
+ne peut contenir d'espace.\n\
+\n\
+Sous Wine, l'environment du système hôte est\n\
+inclus dans l'environnment Win32, il y aura par conséquent généralement\n\
+bien plus de valeurs que dans un système Win32 natif. Notez qu'il\n\
+n'est pas possible de modifier l'environnement du système d'exploitation dans wcmd.\n"
+
+  WCMD_SHIFT,
+"SHIFT est utilisé dans un fichier batch pour enlever un paramètre de la\n\
+que de la liste, ainsi le paramétre 1 devient paramètre 1 et ainsi de suite. Il est sans effet\n\
+s'il est appelé depuis la ligne de commande.\n"
+
+  WCMD_TIME,   "Aide de TIME\n"
+
+  WCMD_TITLE,
+"Règle le titre de la fenêtre pour la session wcmd, syntaxe: TITLE [chaîne]\n"
+
+  WCMD_TYPE,
+"TYPE <nomfichier> affiche <nomfichier> sur la console (ou ailleurs\n\
+si redirigé). Aucun test n'est fait quand au format texte du fichier.\n"
+
+  WCMD_VERIFY,
+"VERIFY est utilisé pour positionner, effacer ou tester le flag de vérification.\n\
+Les formes suivantes sont correctes :\n\
+VERIFY ON	Positionne le flag\n\
+VERIFY OFF	Efface le flag\n\
+VERIFY\t\tAffiche l'état ON ou OFF du flag.\n\
+\n\
+Le flag de verification n'a pas de fonction dans Wine.\n"
+
+  WCMD_VER,
+"VER affiche la version de wcmd actuellement en mémoire.\n"
+
+  WCMD_VOL, "\t\tAffiche le nom de volume d'un lecteur de disque\n"
+
+  WCMD_EXIT,
+"EXIT termine la session de ligne de commande et retourne\n\
+au système d'exploitation ou au shell où vous avez invoqué wcmd.\n"
+
+  1000, "Les commandes internes WCMD sont:\n\
+ATTRIB\t\tAffiche ou change les attributs de fichiers DOS\n\
+CALL\t\t\Invoque un fichier batch à l'intérieur d'un autre\n\
+CD (CHDIR)\tChange le répertoire courant par défaut\n\
+CLS\t\tEfface l'écran\n\
+COPY\t\tCopie un ou plusieurs fichiers\n\
+CTTY\t\tChange le périphérique d'entrée/sortie\n\
+DATE\t\tAffiche ou change la date système\n\
+DEL (ERASE)\tEfface un fichier ou un groupe de fichiers\n\
+DIR\t\tListe le contenu d'un répertoire\n\
+ECHO\t\tAffiche du texte sur la console\n\
+HELP\t\tAffiche de brefs détails sur l'utilisation d'une commande\n\
+MD (MKDIR)\tCrée un répertoire\n\
+MOVE\t\tDéplace un fichier,un groupe de fichiers ou un répertoire\n\
+PATH\t\tRègle ou affiche le chemin de recherche\n\
+PROMPT\t\tChange l'invite de commande\n\
+REN (RENAME)\tRenomme un fichier,un groupe de fichiers ou un répertoire\n\
+RD (RMDIR)\tEfface un répertoire\n\
+SET\t\tRègle ou affiche les variables d'environment\n\
+TIME\t\tRègle ou affiche l'heure système courante\n\
+TITLE\t\tRègle le titre de la fenêtre pour la session WCMD\n\
+TYPE\t\tAffiche le contenu d'un fichier texte\n\
+VER\t\tAffiche la version de wcmd actuellement en mémoire.\n\
+VOL\t\tAffiche le nom de volume d'un lecteur de disque\n\
+EXIT\t\tQuitte WCMD\n\n\
+Entrer HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
+}
