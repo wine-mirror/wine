@@ -1908,6 +1908,12 @@ HWND32 WINAPI SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
   WND *pWndOldParent =
     (wndPtr)?(*wndPtr->pDriver->pSetParent)(wndPtr, pWndNewParent):NULL;
 
+  /* SetParent32 additionally needs to make hwndChild the topmost window
+     in the x-order and send the expected WM_WINDOWPOSCHANGING and
+     WM_WINDOWPOSCHANGED notification messages. 
+  */
+  SetWindowPos32( hwndChild, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+                              
   return pWndOldParent?pWndOldParent->hwndSelf:0;
 }
 
