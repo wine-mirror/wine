@@ -213,47 +213,47 @@ imagelist</><entry> imm</><entry>int</><entry>int10</><entry>int16</>
 </row><row><entry> 
 int17</><entry>int19</><entry>int21</><entry>int31</><entry> io</>
 </row><row><entry> 
-ipaddress</><entry>joystick</><entry>key</><entry>keyboard</><entry>ldt</>
+ipaddress</><entry>joystick</><entry>key</><entry>keyboard</><entry>loaddll</>
 </row><row><entry> 
-listbox</><entry> listview</><entry> local</><entry>mci</><entry>mcianim</>
+ldt</><entry>listbox</><entry>listview</><entry>local</><entry>mci</>
 </row><row><entry> 
-mciavi</><entry>mcicda</><entry> mcimidi</><entry> mciwave</><entry> mdi</>
+mcianim</><entry>mciavi</><entry>mcicda</><entry>mcimidi</><entry>mciwave</>
 </row><row><entry> 
-menu</><entry> message</><entry> metafile</><entry>midi</><entry> mmaux</>
+mdi</><entry>menu</><entry>message</><entry>metafile</><entry>midi</>
 </row><row><entry> 
-mmio</><entry> mmsys</><entry> mmtime</><entry> module</><entry>monthcal</>
+mmaux</><entry>mmio</><entry>mmsys</><entry>mmtime</><entry>module</>
 </row><row><entry> 
-mpr</><entry> msacm</><entry> msg</><entry> msvideo</><entry> nativefont</>
+monthcal</><entry>mpr</><entry>msacm</><entry>msg</><entry>msvideo</>
 </row><row><entry> 
-nonclient</><entry> ntdll</><entry> odbc</><entry> ole</><entry> opengl</>
+nativefont</><entry>nonclient</><entry>ntdll</><entry>odbc</><entry>ole</>
 </row><row><entry> 
-pager</><entry> palette</><entry> pidl</><entry> print</><entry> process</>
+opengl</><entry>pager</><entry>palette</><entry>pidl</><entry>print</>
 </row><row><entry> 
-profile</><entry> progress</><entry>prop</><entry> propsheet</><entry>psapi</>
+process</><entry>profile</><entry>progress</><entry>prop</><entry>propsheet</>
 </row><row><entry> 
-psdrv</><entry> ras</><entry> rebar</><entry> reg</><entry> region</>
+psapi</><entry>psdrv</><entry>ras</><entry>rebar</><entry>reg</>
 </row><row><entry> 
-relay</><entry> resource</><entry>richedit</><entry>scroll</><entry>segment</>
+region</><entry>relay</><entry>resource</><entry>richedit</><entry>scroll</>
 </row><row><entry> 
-seh</><entry>selector</><entry>sendmsg</><entry> server</><entry>setupapi</>
+segment</><entry>seh</><entry>selector</><entry>sendmsg</><entry>server</>
 </row><row><entry> 
-setupx</><entry>shell</><entry> snoop</><entry> sound</><entry>static</>
+setupapi</><entry>setupx</><entry>shell</><entry>snoop</><entry>sound</>
 </row><row><entry> 
-statusbar</><entry>storage</><entry> stress</><entry> string</><entry>syscolor</>
+static</><entry>statusbar</><entry>storage</><entry>stress</><entry>string</>
 </row><row><entry> 
-system</><entry> tab</><entry>tape</><entry>tapi</><entry>task</>
+syscolor</><entry>system</><entry>tab</><entry>tape</><entry>tapi</>
 </row><row><entry> 
-text</><entry>thread</><entry>thunk</><entry>timer</><entry> toolbar</>
+task</><entry>text</><entry>thread</><entry>thunk</><entry>timer</>
 </row><row><entry> 
-toolhelp</><entry>tooltips</><entry>trackbar</><entry>treeview</><entry>ttydrv</>
+toolbar</><entry>toolhelp</><entry>tooltips</><entry>trackbar</><entry>treeview</>
 </row><row><entry> 
-tweak</><entry>typelib</><entry> updown</><entry>ver</><entry>virtual</>
+ttydrv</><entry>tweak</><entry>typelib</><entry>updown</><entry>ver</>
 </row><row><entry> 
-vxd</><entry>wave</><entry>win</><entry>win16drv</><entry>win32</>
+virtual</><entry>vxd</><entry>wave</><entry>win</><entry>win16drv</>
 </row><row><entry> 
-wing</><entry>wininet</><entry> winsock</><entry> winspool</><entry>wnet</>
+win32</><entry>winedbg</><entry>wing</><entry>wininet</><entry>winsock</>
 </row><row><entry> 
-x11</><entry> x11drv</>
+winspool</><entry>wnet</><entry>x11</>
 </row>
 		</tbody>
 		</tgroup>

@@ -92,16 +92,17 @@ delayhlp, dialog, dinput, dll, dosfs, dosmem, dplay, driver, dsound, edit,
 elfdll, enhmetafile, event, exec, file, fixup, font, gdi, global, graphics,
 header, heap, hook, hotkey, icmp, icon, imagehlp, imagelist, imm, int, int10,
 int16, int17, int19, int21, int31, io, ipaddress, joystick, key, keyboard,
-ldt, listbox, listview, local, mci, mcianim, mciavi, mcicda, mcimidi,
+loaddll, ldt, listbox, listview, local, mci, mcianim, mciavi, mcicda, mcimidi,
 mciwave, mdi, menu, message, metafile, midi, mmaux, mmio, mmsys, mmtime,
 module, monthcal, mpr, msacm, msg, msvideo, nativefont, nonclient, ntdll,
-odbc, ole, pager, palette, pidl, print, process, profile, progress, prop,
-propsheet, psapi, psdrv, ras, rebar, reg, region, relay, resource, scroll,
-segment, seh, selector, sendmsg, server, setupx, shell, snoop, sound,
-static, statusbar, storage, stress, string, syscolor, system, tab, tape,
-tapi, task, text, thread, thunk, timer, toolbar, toolhelp, tooltips,
-trackbar, treeview, ttydrv, tweak, typelib, updown, ver, virtual, vxd, wave,
-win, win16drv, win32, winedbg, wing, winsock, winspool, wnet, x11 and x11drv.
+odbc, ole, opengl, pager, palette, pidl, print, process, profile, progress, 
+prop, propsheet, psapi, psdrv, ras, rebar, reg, region, relay, resource, 
+richedit, scroll, segment, seh, selector, sendmsg, server, setupapi, 
+setupx, shell, snoop, sound, static, statusbar, storage, stress, string, 
+syscolor, system, tab, tape, tapi, task, text, thread, thunk, timer, toolbar,
+toolhelp, tooltips, trackbar, treeview, ttydrv, tweak, typelib, updown, ver,
+virtual, vxd, wave, win, win16drv, win32, winedbg, wing, wininet, winsock,
+winspool, wnet, x11 and x11drv.
 
 .PP
 For more information on debugging messages, see the file 
