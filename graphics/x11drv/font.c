@@ -332,6 +332,9 @@ BOOL32 X11DRV_GetTextMetrics(DC *dc, TEXTMETRIC32A *metrics)
 
 /***********************************************************************
  *           X11DRV_FONT_SelectObject
+ *
+ * FIXME: the fonts should not be cached by hfont only, because
+ * metrics may be different in an other DC.
  */
 HFONT32 X11DRV_FONT_SelectObject( DC * dc, HFONT32 hfont, FONTOBJ * font )
 {

@@ -281,7 +281,13 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
 
 	offset  = rep->offset;
 
-	switch (rep->address_type)
+        /* Apparently, high bit of address_type is sometimes set; */
+        /* we ignore it for now */
+	if (rep->address_type & 0x80)
+            fprintf( stderr, "Warning: reloc addr type = 0x%02x\n",
+                     rep->address_type );
+
+	switch (rep->address_type & 0x7f)
 	{
 	  case NE_RADDR_LOWBYTE:
             do {
@@ -415,12 +421,16 @@ void NE_FixupPrologs( NE_MODULE *pModule )
                 {
                     if (*p & 0x0002)
                     {
-			if (pModule->flags & NE_FFLAGS_MULTIPLEDATA) {
+			if (pModule->flags & NE_FFLAGS_MULTIPLEDATA)
+                        {
 			    /* can this happen? */
 			    fprintf( stderr, "FixupPrologs got confused\n" );
 			}
-                        *fixup_ptr = 0xb8;	/* MOV AX, */
-                        *(WORD *)(fixup_ptr+1) = dgroup;
+                        else if (pModule->flags & NE_FFLAGS_SINGLEDATA)
+                        {
+                            *fixup_ptr = 0xb8;	/* MOV AX, */
+                            *(WORD *)(fixup_ptr+1) = dgroup;
+                        }
                     }
                     else
                     {

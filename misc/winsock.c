@@ -628,19 +628,31 @@ INT16 WINSOCK_ioctlsocket(SOCKET16 s, UINT32 cmd, UINT32 *argp)
 
     switch( cmd )
     {
-	case WS_FIONREAD:   newcmd=FIONREAD; break;
-	case WS_FIONBIO:    newcmd=FIONBIO;  
-			    if( pws->p_aop && *argp == 0 ) 
-			    { 
-				pwsi->err = WSAEINVAL; 
-				return SOCKET_ERROR; 
-			    }
-			    break;
-	case WS_SIOCATMARK: newcmd=SIOCATMARK; break;
+	case WS_FIONREAD:   
+		newcmd=FIONREAD; 
+		break;
+
+	case WS_FIONBIO:    
+		newcmd=FIONBIO;  
+		if( pws->p_aop && *argp == 0 ) 
+		{
+		    pwsi->err = WSAEINVAL; 
+		    return SOCKET_ERROR; 
+		}
+		break;
+
+	case WS_SIOCATMARK: 
+		newcmd=SIOCATMARK; 
+		break;
+
 	case WS_IOW('f',125,u_long): 
-			  fprintf(stderr,"Warning: WS1.1 shouldn't be using async I/O\n");
-			  pwsi->err = WSAEINVAL; return SOCKET_ERROR;
-	default:	  fprintf(stderr,"Warning: Unknown WS_IOCTL cmd (%08x)\n", cmd);
+		fprintf(stderr,"Warning: WS1.1 shouldn't be using async I/O\n");
+		pwsi->err = WSAEINVAL; 
+		return SOCKET_ERROR;
+
+	default:	  
+		/* Netscape tries hard to use bogus ioctl 0x667e */
+		dprintf_winsock(stddeb,"\tunknown WS_IOCTL cmd (%08x)\n", cmd);
     }
     if( ioctl(pws->fd, newcmd, (char*)argp ) == 0 ) return 0;
     pwsi->err = (errno == EBADF) ? WSAENOTSOCK : wsaErrno(); 
@@ -1429,7 +1441,7 @@ INT16 WSACancelBlockingCall(void)
   return SOCKET_ERROR;
 }
 
-FARPROC16 WSASetBlockingHook(FARPROC16 lpBlockFunc)
+FARPROC16 WSASetBlockingHook16(FARPROC16 lpBlockFunc)
 {
   FARPROC16		prev;
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
@@ -1443,6 +1455,12 @@ FARPROC16 WSASetBlockingHook(FARPROC16 lpBlockFunc)
       return prev; 
   }
   return 0;
+}
+
+FARPROC32 WSASetBlockingHook32(FARPROC32 lpBlockFunc)
+{
+    fprintf( stderr, "Empty stub WSASetBlockingHook32(%p)\n", lpBlockFunc );
+    return NULL;
 }
 
 INT16 WSAUnhookBlockingHook(void)

@@ -1485,6 +1485,7 @@ typedef struct {
 	LPWAVEFORMAT	lpFormat;
 	DWORD			dwCallBack;
 	DWORD			dwInstance;
+	UINT16                  uDeviceID;
 } WAVEOPENDESC, *LPWAVEOPENDESC;
 
 typedef struct {

@@ -325,7 +325,7 @@ DWORD WaitForSingleObject(HANDLE32 h, DWORD timeout)
 }
 
 /***********************************************************************
- *           WaitForSingleObject    (USER32.399)
+ *           WaitForMultipleObjects    (USER32.399)
  */
 DWORD MsgWaitForMultipleObjects(
 	DWORD nCount,HANDLE32 *pHandles,BOOL32 fWaitAll,DWORD dwMilliseconds,

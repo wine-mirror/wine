@@ -50,7 +50,7 @@ type	win16
 107 pascal16 WSAAsyncGetServByName(word word ptr ptr segptr word)
              WSAAsyncGetServByName
 108 pascal16 WSACancelAsyncRequest(word) WSACancelAsyncRequest
-109 pascal16 WSASetBlockingHook() WSASetBlockingHook
+109 pascal16 WSASetBlockingHook(segptr) WSASetBlockingHook16
 110 pascal16 WSAUnhookBlockingHook() WSAUnhookBlockingHook
 111 pascal16 WSAGetLastError() WSAGetLastError
 112 pascal   WSASetLastError(word) WSASetLastError

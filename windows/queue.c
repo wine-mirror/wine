@@ -19,7 +19,7 @@
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
 static HQUEUE16 hFirstQueue = 0;
-static HQUEUE16 hDoomedQueue = 0;
+static HQUEUE16 hExitingQueue = 0;
 static HQUEUE16 hmemSysMsgQueue = 0;
 static MESSAGEQUEUE *sysMsgQueue = NULL;
 
@@ -94,20 +94,20 @@ void QUEUE_WalkQueues(void)
 
 
 /***********************************************************************
- *	     QUEUE_IsDoomedQueue
+ *	     QUEUE_IsExitingQueue
  */
-BOOL32 QUEUE_IsDoomedQueue( HQUEUE16 hQueue )
+BOOL32 QUEUE_IsExitingQueue( HQUEUE16 hQueue )
 {
-    return (hDoomedQueue && (hQueue == hDoomedQueue));
+    return (hExitingQueue && (hQueue == hExitingQueue));
 }
 
 
 /***********************************************************************
- *	     QUEUE_SetDoomedQueue
+ *	     QUEUE_SetExitingQueue
  */
-void QUEUE_SetDoomedQueue( HQUEUE16 hQueue )
+void QUEUE_SetExitingQueue( HQUEUE16 hQueue )
 {
-    hDoomedQueue = hQueue;
+    hExitingQueue = hQueue;
 }
 
 

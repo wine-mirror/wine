@@ -40,7 +40,7 @@ base	0
 106 stub WSAAsyncGetServByPort
 107 stub WSAAsyncGetServByName
 108 stub WSACancelAsyncRequest
-109 stub WSASetBlockingHook
+109 stdcall WSASetBlockingHook(ptr) WSASetBlockingHook32
 110 stub WSAUnhookBlockingHook
 111 stub WSAGetLastError
 112 stub WSASetLastError

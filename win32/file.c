@@ -25,6 +25,7 @@
 #define DEBUG_WIN32
 #include "debug.h"
 
+DWORD ErrnoToLastError(int errno_num);
 
 static int TranslateCreationFlags(DWORD create_flags);
 static int TranslateAccessFlags(DWORD access_flags);

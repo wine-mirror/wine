@@ -639,7 +639,7 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
       if (sendmsg)      /* found an accelerator, but send a message... ? */
       {
         INT16  iSysStat,iStat,mesg=0;
-        HMENU16 hSysMenu,hMenu;
+        HMENU16 hMenu;
         
         if (msg->message == WM_KEYUP || msg->message == WM_SYSKEYUP)
           mesg=1;
@@ -651,16 +651,14 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
             mesg=3;
           else
           {
-            hMenu=GetMenu32(hWnd);
-            hSysMenu=GetSystemMenu32(hWnd,FALSE);
-            if (hSysMenu)
-              iSysStat=GetMenuState32(hSysMenu,lpAccelTbl->tbl[i].wIDval,MF_BYCOMMAND);
-            else
-              iSysStat=-1;
-            if (hMenu)
-              iStat=GetMenuState32(hMenu,lpAccelTbl->tbl[i].wIDval,MF_BYCOMMAND);
-            else
-              iStat=-1;
+	    WND* wndPtr = WIN_FindWndPtr(hWnd);
+
+            hMenu = (wndPtr->dwStyle & WS_CHILD) ? 0 : (HMENU32)wndPtr->wIDmenu;
+	    iSysStat = (wndPtr->hSysMenu) ? GetMenuState32(GetSubMenu16(wndPtr->hSysMenu, 0),
+					    lpAccelTbl->tbl[i].wIDval, MF_BYCOMMAND) : -1 ;
+	    iStat = (hMenu) ? GetMenuState32(hMenu,
+					    lpAccelTbl->tbl[i].wIDval, MF_BYCOMMAND) : -1 ;
+
             if (iSysStat!=-1)
             {
               if (iSysStat & (MF_DISABLED|MF_GRAYED))

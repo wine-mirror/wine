@@ -981,10 +981,17 @@ LONG _hwrite32( HFILE32 hFile, LPCSTR buffer, LONG count )
     if (count == 0)  /* Expand or truncate at current position */
         result = ftruncate( file->unix_handle,
                             lseek( file->unix_handle, 0, SEEK_CUR ) );
-    else
+    else for (;;)
+    {
         result = write( file->unix_handle, buffer, count );
+        if (result != -1) break;
+        if (errno != EINTR)
+        {
+            FILE_SetDosError();
+            break;
+        }
+    }
 
-    if (result == -1) FILE_SetDosError();
     FILE_ReleaseFile( file );
     return result;
 }

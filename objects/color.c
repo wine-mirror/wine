@@ -40,6 +40,8 @@ typedef struct
     Colormap    colorMap;
     UINT16      size;
     UINT16      flags;
+    INT32	monoPlane;	 /* bit plane different for white and black pixels */
+    BOOL32	bWhiteOn;	 /* monoPlane bit is 1 for the white pixel */
 } CSPACE;
 
 static CSPACE cSpace = {0, 0, 0};
@@ -123,6 +125,12 @@ int COLOR_mapEGAPixel[16];
 Colormap COLOR_GetColormap(void)
 {
     return cSpace.colorMap;
+}
+
+BOOL32 COLOR_GetMonoPlane(INT32* plane)
+{
+    *plane = cSpace.monoPlane;
+    return (cSpace.flags & COLOR_WHITESET) ? TRUE : FALSE;
 }
 
 UINT16 COLOR_GetSystemPaletteSize(void)
@@ -537,10 +545,6 @@ static HPALETTE16 COLOR_InitPalette(void)
 
     memset(COLOR_freeList, 0, 256*sizeof(unsigned char));
 
-    /* calculate max palette size */
-
-    cSpace.size = visual->map_entries;
-
     if (cSpace.flags & COLOR_PRIVATE)
 	COLOR_BuildPrivateMap( &cSpace );
     else
@@ -610,9 +614,19 @@ static void COLOR_Computeshifts(unsigned long maskbits, int *shift, int *max)
  */
 HPALETTE16 COLOR_Init(void)
 {
+    int	mask, white, black;
+
     visual = DefaultVisual( display, DefaultScreen(display) );
 
     dprintf_palette(stddeb,"COLOR_Init: initializing palette manager...");
+
+    white = WhitePixelOfScreen( screen );
+    black = BlackPixelOfScreen( screen );
+    cSpace.monoPlane = 1;
+    for( mask = 1; !((white & mask)^(black & mask)); mask <<= 1 )
+	 cSpace.monoPlane++;
+    cSpace.flags = (white & mask) ? COLOR_WHITESET : 0;
+    cSpace.size = visual->map_entries;
 
     switch(visual->class)
     {
@@ -624,18 +638,23 @@ HPALETTE16 COLOR_Init(void)
 	{
 	    XSetWindowAttributes win_attr;
 
-	    cSpace.flags |= COLOR_PRIVATE;
 	    cSpace.colorMap = XCreateColormap( display, rootWindow,
 						 visual, AllocAll );
 	    if (cSpace.colorMap)
 	    {
-	       if( rootWindow != DefaultRootWindow(display) )
-	         {
+	        cSpace.flags |= (COLOR_PRIVATE | COLOR_WHITESET);
+
+		cSpace.monoPlane = 1;
+		for( white = cSpace.size - 1; !(white & 1); white >>= 1 )
+		     cSpace.monoPlane++;
+
+	        if( rootWindow != DefaultRootWindow(display) )
+	        {
 		    win_attr.colormap = cSpace.colorMap;
 		    XChangeWindowAttributes( display, rootWindow,
 					 CWColormap, &win_attr );
-		 }
-	       break;
+		}
+		break;
 	    }
 	}
 	cSpace.colorMap = DefaultColormapOfScreen( screen );
@@ -658,7 +677,8 @@ HPALETTE16 COLOR_Init(void)
 	break;	
     }
 
-    dprintf_palette(stddeb," visual class %i\n", visual->class);
+    dprintf_palette(stddeb," visual class %i (%i)\n", 
+		    visual->class, cSpace.monoPlane);
 
     return COLOR_InitPalette();
 }

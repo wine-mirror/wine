@@ -20,6 +20,8 @@
 
 #define DOS_GET_DRIVE(reg) ((reg) ? (reg) - 1 : DRIVE_GetCurrentDrive())
 
+void CreateBPB(int drive, BYTE *data);  /* defined in int21.c */
+
 
 /* Structure for real-mode callbacks */
 typedef struct

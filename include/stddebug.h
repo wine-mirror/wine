@@ -123,6 +123,7 @@
 #undef DEBUG_MESSAGE
 #undef DEBUG_METAFILE
 #undef DEBUG_MIDI
+#undef DEBUG_MMAUX
 #undef DEBUG_MMIO
 #undef DEBUG_MMSYS
 #undef DEBUG_MMTIME
@@ -205,6 +206,7 @@
 #define DEBUG_MESSAGE
 #define DEBUG_METAFILE
 #define DEBUG_MIDI
+#define DEBUG_MMAUX
 #define DEBUG_MMIO
 #define DEBUG_MMSYS
 #define DEBUG_MMTIME

@@ -31,15 +31,15 @@ typedef struct tagMDIWCL
 
 typedef struct 
 {
-    WORD   	nActiveChildren;
+    UINT16   	nActiveChildren;
     HWND16   	hwndChildMaximized;
     HWND16   	hwndActiveChild;
     HMENU16  	hWindowMenu;
-    WORD   	idFirstChild;
-    WORD	nTotalCreated;
+    UINT32   	idFirstChild;
     LPSTR 	frameTitle;
-    WORD   	sbNeedUpdate;
-    WORD   	sbRecalc;
+    UINT16	nTotalCreated;
+    UINT16   	mdiFlags;
+    UINT16   	sbRecalc;		/* SB_xxx flags for scrollbar fixup */
     HWND16   	self;
 } MDICLIENTINFO;
 

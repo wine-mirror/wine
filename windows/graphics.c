@@ -11,6 +11,7 @@
 #include <X11/Xutil.h>
 #include <X11/Intrinsic.h>
 #include "graphics.h"
+#include "color.h"
 #include "bitmap.h"
 #include "gdi.h"
 #include "dc.h"
@@ -65,7 +66,7 @@ BOOL32 GRAPH_DrawLines( HDC32 hdc, LPPOINT32 pXY, INT32 N, HPEN32 hPen )
  */
 BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap, 
 			 INT32 xdest, INT32 ydest, INT32 xsrc, INT32 ysrc, 
-                         INT32 width, INT32 height )
+                         INT32 width, INT32 height, BOOL32 bMono )
 {
     BITMAPOBJ *bmp;
     DC *dc;
@@ -73,24 +74,43 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
     if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
         return FALSE;
+
+    xdest += dc->w.DCOrgX; ydest += dc->w.DCOrgY;
+
     XSetFunction( display, dc->u.x.gc, GXcopy );
     if (bmp->bitmap.bmBitsPixel == 1)
     {
         XSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
         XSetBackground( display, dc->u.x.gc, dc->w.textPixel );
         XCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
-                    xsrc, ysrc, width, height,
-                    dc->w.DCOrgX + xdest, dc->w.DCOrgY + ydest, 1 );
-        return TRUE;
+                    xsrc, ysrc, width, height, xdest, ydest, 1 );
     }
     else if (bmp->bitmap.bmBitsPixel == dc->w.bitsPerPixel)
     {
-        XCopyArea( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
-                   xsrc, ysrc, width, height,
-                   dc->w.DCOrgX + xdest, dc->w.DCOrgY + ydest );
-        return TRUE;
+	if( bMono )
+	{
+	    INT32	plane;
+
+	    if( COLOR_GetMonoPlane(&plane) )
+	    {
+		XSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+		XSetBackground( display, dc->u.x.gc, dc->w.textPixel );
+	    }
+	    else
+	    {
+		XSetForeground( display, dc->u.x.gc, dc->w.textPixel );
+		XSetBackground( display, dc->u.x.gc, dc->w.backgroundPixel );
+	    }
+	    XCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
+			xsrc, ysrc, width, height, xdest, ydest, plane );
+	}
+	else 
+	    XCopyArea( display, bmp->pixmap, dc->u.x.drawable, 
+		       dc->u.x.gc, xsrc, ysrc, width, height, xdest, ydest );
     }
     else return FALSE;
+
+    return TRUE;
 }
 
 

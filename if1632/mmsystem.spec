@@ -55,7 +55,7 @@ type	win16
 401    pascal  WAVEOUTGETNUMDEVS() waveOutGetNumDevs
 402    pascal  WAVEOUTGETDEVCAPS(word segptr word) waveOutGetDevCaps
 403    pascal  WAVEOUTGETERRORTEXT(word ptr word) waveOutGetErrorText
-404    pascal  WAVEOUTOPEN(ptr word ptr long long long) waveOutOpen
+404    pascal  WAVEOUTOPEN(ptr word segptr long long long) waveOutOpen
 405    pascal  WAVEOUTCLOSE(word) waveOutClose
 406    pascal  WAVEOUTPREPAREHEADER(word segptr word) waveOutPrepareHeader
 407    pascal  WAVEOUTUNPREPAREHEADER(word segptr word) waveOutUnprepareHeader
@@ -76,7 +76,7 @@ type	win16
 501    pascal  WAVEINGETNUMDEVS() waveInGetNumDevs
 502    pascal  WAVEINGETDEVCAPS(word segptr word) waveInGetDevCaps
 503    pascal  WAVEINGETERRORTEXT(word ptr word) waveInGetErrorText
-504    pascal  WAVEINOPEN(ptr word ptr long long long) waveInOpen
+504    pascal  WAVEINOPEN(ptr word segptr long long long) waveInOpen
 505    pascal  WAVEINCLOSE(word) waveInClose
 506    pascal  WAVEINPREPAREHEADER(word segptr word) waveInPrepareHeader
 507    pascal  WAVEINUNPREPAREHEADER(word segptr word) waveInUnprepareHeader

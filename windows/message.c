@@ -1055,7 +1055,7 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
         fprintf( stderr, "SendMessage16: invalid hwnd %04x\n", hwnd );
         return 0;
     }
-    if (QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))
+    if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
         return 0;  /* Don't send anything if the task is dying */
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
         return MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam );
@@ -1120,7 +1120,7 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         return 0;
     }
 
-    if (QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))
+    if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
         return 0;  /* Don't send anything if the task is dying */
 
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
@@ -1168,7 +1168,7 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         fprintf( stderr, "SendMessage32W: invalid hwnd %08x\n", hwnd );
         return 0;
     }
-    if (QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))
+    if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
         return 0;  /* Don't send anything if the task is dying */
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
     {

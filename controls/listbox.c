@@ -724,6 +724,7 @@ static INT32 LISTBOX_FindString( WND *wnd, LB_DESCR *descr, INT32 start,
     item = descr->items + start + 1;
     if (HAS_STRINGS(descr))
     {
+        if (!str) return LB_ERR;
         if (exact)
         {
             for (i = start + 1; i < descr->nb_items; i++, item++)
@@ -1913,6 +1914,11 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr, WPARAM32 wParam
         {
             LISTBOX_SetSelection( wnd, descr, descr->focus_item,
                                   !descr->items[descr->focus_item].selected,
+                                  (descr->style & LBS_NOTIFY) != 0 );
+        }
+        else if (descr->selected_item == -1)
+        {
+            LISTBOX_SetSelection( wnd, descr, descr->focus_item, TRUE,
                                   (descr->style & LBS_NOTIFY) != 0 );
         }
         break;

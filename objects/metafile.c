@@ -607,30 +607,38 @@ void PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     case META_EXTTEXTOUT:
       {
         LPINT16 dxx;
+	LPSTR sot; 
         DWORD len;
 
         s1 = mr->rdParam[2];                              /* String length */
         len = sizeof(METARECORD) + (((s1 + 1) >> 1) * 2) + 2 * sizeof(short)
-         + sizeof(UINT16) + sizeof(RECT16);
-        if (mr->rdSize == len / 2)
-          dxx = NULL;                                    /* No array present */
-        else if (mr->rdSize == (len + s1 * sizeof(INT16)) / 2)
-          dxx = &mr->rdParam[8+(s1+1)/2];                /* start of array */
-        else {
-          fprintf(stderr,
-           "PlayMetaFileRecord ExtTextOut mr->rdSize = %08lx, count = %x\n",
-           mr->rdSize, s1);
-          dxx = NULL;
-        }
+	 + sizeof(UINT16) +  (mr->rdParam[3] ? sizeof(RECT16) : 0);  /* rec len without dx array */
+
+	sot= (LPSTR)&mr->rdParam[4];			/* start_of_text */
+	if (mr->rdParam[3])
+	   sot+=sizeof(RECT16);				/* there is a rectangle, so add offset */
+	 
+	if (mr->rdSize == len / 2)
+          dxx = NULL;                                   /* determine if array present */
+        else 
+	  if (mr->rdSize == (len + s1 * sizeof(INT16)) / 2)
+            dxx = (LPINT16)(sot+(((s1+1)>>1)*2));	   
+          else 
+	  {
+           fprintf(stderr,
+	     "Please report: PlayMetaFile/ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
+		   len,s1,mr->rdSize,mr->rdParam[3]);
+           dxx = NULL; /* should't happen -- but if, we continue with NULL [for workaround] */
+          }
         ExtTextOut16( hdc, mr->rdParam[1],              /* X position */
 	                   mr->rdParam[0],              /* Y position */
 	                   mr->rdParam[3],              /* options */
-	                   (LPRECT16) &mr->rdParam[4],  /* rectangle */
-                           (char *)(mr->rdParam + 8),   /* string */
+		     	   mr->rdParam[3] ? (LPRECT16) &mr->rdParam[4]:NULL,  /* rectangle */
+		           sot,				/* string */
                            s1, dxx);                    /* length, dx array */
         if (dxx)                      
-          dprintf_metafile(stddeb,"EXTTEXTOUT len: %ld  (%hd %hd)  [%s].\n",
-            mr->rdSize,dxx[0],dxx[1],(char*) &(mr->rdParam[8]) );
+          dprintf_metafile(stddeb,"EXTTEXTOUT: %s  len: %ld  dx0: %d\n",
+            sot,mr->rdSize,dxx[0]);
        }
        break;
     
@@ -740,16 +748,29 @@ void PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	GlobalFree16(hndl);
 	break;
 
+     case META_DIBBITBLT:
+        {
+         LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParam[8]);
+         LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParam[0] );
+         StretchDIBits16(hdc,mr->rdParam[7],mr->rdParam[6],mr->rdParam[5],
+                       mr->rdParam[4],mr->rdParam[3],mr->rdParam[2],
+                       mr->rdParam[5],mr->rdParam[4],bits,info,
+                       DIB_RGB_COLORS,MAKELONG(mr->rdParam[0],mr->rdParam[1]));
+        }
+        break;	
+       
+     case META_SETTEXTJUSTIFICATION:
+       	SetTextJustification32(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	break;
+
 #define META_UNIMP(x) case x: fprintf(stderr,"PlayMetaFileRecord:record type "#x" not implemented.\n");break;
     META_UNIMP(META_SETTEXTCHAREXTRA)
-    META_UNIMP(META_SETTEXTJUSTIFICATION)
     META_UNIMP(META_FRAMEREGION)
     META_UNIMP(META_DRAWTEXT)
     META_UNIMP(META_SETDIBTODEV)
     META_UNIMP(META_ANIMATEPALETTE)
     META_UNIMP(META_SETPALENTRIES)
     META_UNIMP(META_RESIZEPALETTE)
-    META_UNIMP(META_DIBBITBLT)
     META_UNIMP(META_EXTFLOODFILL)
     META_UNIMP(META_RESETDC)
     META_UNIMP(META_STARTDOC)

@@ -1,4 +1,58 @@
 ----------------------------------------------------------------------
+Tue May 20 19:20:23 1997  Pablo Saratxaga <srtxg@linux.chanae.stben.be>
+
+	* [resources/sysres_Es.rc]
+	Updated CHOOSE_FONT, CHOOSE_COLOR, EDITMENU for Spanish.
+
+Mon May 19 22:06:04 1997  Michiel van Loon <mfvl@xs4all.nl>
+
+	* [multimedia/mcistring.c]
+	Corrected bug for device!element command.
+
+	* [multimedia/mmaux.c]
+	Replaced printf and fprintf calls by dprintf_mmaux.
+
+	* [multimedia/audio.c]
+	Corrected debugmessage in wodGetVolume.
+	Include code for MCI_CUE command.
+
+	* [multimedia/mmsystem.c]
+	Added the MCIERR_SEQ error messages.
+
+	* [if1632/mmsystem.spec] [multimedia/audio.c] [multimedia/mmsystem.c]
+	Changed call structure of waveInOpen and waveOutOpen.
+
+	* [multimedia/mmsystem.c] [multimedia/audio.c] [multimedia/midi.c]
+	  [multimedia/mmaux.c] [multimedia/mcicda.c] [multimedia/mcianim.c]
+	  [multimedia/mcistring.c] [include/mmsystem.h]
+	Changed the deviceID scheme.
+
+	* [include/queue.h] [include/win16drv.h] [msdos/dpmi.c]
+	  [windows/user.c] [windows/driver.c] [graphic/wing.c]
+	  [graphics/x11drv/bitmap.c] [misc/wsprintf.c] [misc/crtdll.c]
+	Removed compiler warnings.
+
+Mon May 19 01:32:24 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [controls/menu.c] [windows/win.c] [windows/graphics.c]
+	Popup menu shade, new system menu implementation, 
+	ModifyMenu() fixes, better check mark painting.
+
+	* [windows/mdi.c]
+	MDI client fix for Win32.
+
+Sat May 17 12:02:11 1997  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [objects/metafile.c]
+	Added handling of META_DIBBITBLT, META_SETTEXTJUSTIFICATION
+	plus bugfix in META_EXTTEXTOUT (start_of_text etc.)
+
+Thu May 15 22:52:00 1997  Jimen Ching  <jching@flex.com>
+
+	* [loader/ne_image.c]
+	Make sure dgroup is valid by checking pModule->flags consistently.
+
+----------------------------------------------------------------------
 Tue May  6 19:12:20 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [loader/task.c] [loader/module.c]

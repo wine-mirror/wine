@@ -524,7 +524,7 @@ INT32 wsprintf32A( LPSTR buffer, LPCSTR spec, ... )
 }
 
 /* Emulator version */
-INT32 WIN32_wsprintf32A( int *args )
+INT32 WIN32_wsprintf32A( DWORD *args )
 {
     return wvsprintf32A( (LPSTR)args[0], (LPCSTR)args[1], (LPCVOID)&args[2] );
 }
@@ -546,7 +546,7 @@ INT32 wsprintf32W( LPWSTR buffer, LPCWSTR spec, ... )
 }
 
 /* Emulator version */
-INT32 WIN32_wsprintf32W( int *args )
+INT32 WIN32_wsprintf32W( DWORD *args )
 {
     return wvsprintf32W( (LPWSTR)args[0], (LPCWSTR)args[1], (LPCVOID)&args[2]);
 }

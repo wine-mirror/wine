@@ -7,6 +7,8 @@
 /*
  * Theory:
  *
+ * http://www.microsoft.com/win32dev/ui/icons.htm
+ *
  * Cursors and icons are stored in a global heap block, with the
  * following layout:
  *
@@ -33,7 +35,6 @@
 #include "win.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "xmalloc.h"
 #include "task.h"
 
 extern UINT16 COLOR_GetSystemPaletteSize();
@@ -237,14 +238,15 @@ static BOOL32 CURSORICON_LoadDirEntry( HINSTANCE32 hInstance, SEGPTR name,
 HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
                                   BOOL32 fCursor )
 {
-    HBITMAP32 hAndBits, hXorBits;
-    HDC32 hdc;
-    int size, sizeAnd, sizeXor;
-    POINT16 hotspot = { 0 ,0 };
+    static char* __loadhandlerStr = "CURSORICON_LoadHandler";
+
+    int sizeAnd, sizeXor;
+    HBITMAP32 hAndBits = 0, hXorBits = 0; /* error condition for later */
     BITMAPOBJ *bmpXor, *bmpAnd;
-    BITMAPINFO *bmi, *pInfo;
+    POINT16 hotspot = { 0 ,0 };
     CURSORICONINFO *info;
-    char *bits;
+    BITMAPINFO *bmi;
+    HDC32 hdc;
 
     if (fCursor)  /* If cursor, get the hotspot */
     {
@@ -254,87 +256,81 @@ HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
     }
     else bmi = (BITMAPINFO *)LockResource16( handle );
 
-    /* Create a copy of the bitmap header */
+    /* Check bitmap header */
 
-    size = DIB_BitmapInfoSize( bmi, DIB_RGB_COLORS );
-    /* Make sure we have room for the monochrome bitmap later on */
-    size = MAX( size, sizeof(BITMAPINFOHEADER) + 2*sizeof(RGBQUAD) );
-    pInfo = (BITMAPINFO *)xmalloc( size );
-    memcpy( pInfo, bmi, size );
-
-    if (pInfo->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+    if ( (bmi->bmiHeader.biSize != sizeof(BITMAPCOREHEADER)) &&
+	 (bmi->bmiHeader.biSize != sizeof(BITMAPINFOHEADER)  ||
+	  bmi->bmiHeader.biCompression != BI_RGB) )
     {
-        if (pInfo->bmiHeader.biCompression != BI_RGB)
-        {
-            fprintf(stderr,"Unknown size for compressed icon bitmap.\n");
-            free( pInfo );
-            return 0;
-        }
-        pInfo->bmiHeader.biHeight /= 2;
+          fprintf(stderr,"%s: invalid bitmap header.\n", __loadhandlerStr);
+          return 0;
     }
-    else if (pInfo->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+
+    if( (hdc = GetDC32( 0 )) )
     {
-        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)pInfo;
-        core->bcHeight /= 2;
+	BITMAPINFO* pInfo;
+        INT32 size = DIB_BitmapInfoSize( bmi, DIB_RGB_COLORS );
+
+        /* Make sure we have room for the monochrome bitmap later on.
+	 * Note that BITMAPINFOINFO and BITMAPCOREHEADER are the same
+	 * up to and including the biBitCount. In-memory icon resource 
+	 * format is as follows:
+	 *
+	 *   BITMAPINFOHEADER   icHeader  // DIB header
+	 *   RGBQUAD         icColors[]   // Color table
+  	 *   BYTE            icXOR[]      // DIB bits for XOR mask
+	 *   BYTE            icAND[]      // DIB bits for AND mask
+	 */
+
+    	if( (pInfo = (BITMAPINFO *)HeapAlloc( GetProcessHeap(), 0, 
+			  MAX(size, sizeof(BITMAPINFOHEADER) + 2*sizeof(RGBQUAD)))) )
+	{	
+	    memcpy( pInfo, bmi, size );	
+	    pInfo->bmiHeader.biHeight /= 2;
+
+	    /* Create the XOR bitmap */
+
+	    hXorBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
+                                    (char*)bmi + size, pInfo, DIB_RGB_COLORS );
+	    if( hXorBits )
+	    {
+		char* bits = (char *)bmi + size + bmi->bmiHeader.biHeight *
+				DIB_GetDIBWidthBytes(bmi->bmiHeader.biWidth,
+						     bmi->bmiHeader.biBitCount) / 2;
+
+		pInfo->bmiHeader.biBitCount = 1;
+	        if (pInfo->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+	        {
+	            RGBQUAD *rgb = pInfo->bmiColors;
+
+	            pInfo->bmiHeader.biClrUsed = pInfo->bmiHeader.biClrImportant = 2;
+	            rgb[0].rgbBlue = rgb[0].rgbGreen = rgb[0].rgbRed = 0x00;
+	            rgb[1].rgbBlue = rgb[1].rgbGreen = rgb[1].rgbRed = 0xff;
+	            rgb[0].rgbReserved = rgb[1].rgbReserved = 0;
+	        }
+	        else
+	        {
+	            RGBTRIPLE *rgb = (RGBTRIPLE *)(((BITMAPCOREHEADER *)pInfo) + 1);
+
+	            rgb[0].rgbtBlue = rgb[0].rgbtGreen = rgb[0].rgbtRed = 0x00;
+	            rgb[1].rgbtBlue = rgb[1].rgbtGreen = rgb[1].rgbtRed = 0xff;
+	        }
+
+	        /* Create the AND bitmap */
+
+	        hAndBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
+	                                     bits, pInfo, DIB_RGB_COLORS );
+		if( !hAndBits ) DeleteObject32( hXorBits );
+	    }
+	    HeapFree( GetProcessHeap(), 0, pInfo ); 
+	}
+	ReleaseDC32( 0, hdc );
     }
-    else
+
+    if( !hXorBits || !hAndBits ) 
     {
-        fprintf( stderr, "CURSORICON_Load: Unknown bitmap length %ld!\n",
-                 pInfo->bmiHeader.biSize );
-        free( pInfo );
-        return 0;
-    }
-
-    /* Create the XOR bitmap */
-
-    if (!(hdc = GetDC32( 0 )))
-    {
-        free( pInfo );
-        return 0;
-    }
-
-    hXorBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
-                                 (char*)bmi + size, pInfo, DIB_RGB_COLORS );
-    if (!hXorBits) {
-        free( pInfo );
-    	ReleaseDC32( 0, hdc );
-    	return 0;
-    }
-
-    /* Fix the bitmap header to load the monochrome mask */
-
-    if (pInfo->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
-    {
-        BITMAPINFOHEADER *bih = &pInfo->bmiHeader;
-        RGBQUAD *rgb = pInfo->bmiColors;
-        bits = (char *)bmi + size +
-            DIB_GetImageWidthBytes(bih->biWidth,bih->biBitCount)*bih->biHeight;
-        bih->biBitCount = 1;
-        bih->biClrUsed = bih->biClrImportant = 2;
-        rgb[0].rgbBlue = rgb[0].rgbGreen = rgb[0].rgbRed = 0x00;
-        rgb[1].rgbBlue = rgb[1].rgbGreen = rgb[1].rgbRed = 0xff;
-        rgb[0].rgbReserved = rgb[1].rgbReserved = 0;
-    }
-    else
-    {
-        BITMAPCOREHEADER *bch = (BITMAPCOREHEADER *)pInfo;
-        RGBTRIPLE *rgb = (RGBTRIPLE *)(bch + 1);
-        bits = (char *)bmi + size +
-            DIB_GetImageWidthBytes(bch->bcWidth,bch->bcBitCount)*bch->bcHeight;
-        bch->bcBitCount = 1;
-        rgb[0].rgbtBlue = rgb[0].rgbtGreen = rgb[0].rgbtRed = 0x00;
-        rgb[1].rgbtBlue = rgb[1].rgbtGreen = rgb[1].rgbtRed = 0xff;
-    }
-
-    /* Create the AND bitmap */
-
-    hAndBits = CreateDIBitmap32( hdc, &pInfo->bmiHeader, CBM_INIT,
-                                 bits, pInfo, DIB_RGB_COLORS );
-    ReleaseDC32( 0, hdc );
-    if (!hAndBits) {
-        DeleteObject32( hXorBits );
-        free( pInfo );
-    	return 0;
+	fprintf(stderr,"%s: unable to create a bitmap.\n", __loadhandlerStr );
+	return 0;
     }
 
     /* Now create the CURSORICONINFO structure */
@@ -451,12 +447,12 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL32 bSemiTransparent)
  HTASK16 	 hTask = GetCurrentTask();
  TDB*  		 pTask = (TDB *)GlobalLock16(hTask);
 
- if(hIcon)
+ if(hIcon && pTask)
     if (!(ptr = (CURSORICONINFO*)GlobalLock16( hIcon ))) return FALSE;
        if (ptr->bPlanes * ptr->bBitsPerPixel == 1)
            hRet = CURSORICON_Copy( pTask->hInstance, hIcon );
        else
-          {
+       {
            BYTE  pAndBits[128];
            BYTE  pXorBits[128];
 	   int   x, y, ix, iy, shift; 
@@ -470,8 +466,6 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL32 bSemiTransparent)
 
            COLORREF       col;
            CURSORICONINFO cI;
-
-           if(!pTask) return 0;
 
            memset(pXorBits, 0, 128);
            cI.bBitsPerPixel = 1; cI.bPlanes = 1;
@@ -519,7 +513,7 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL32 bSemiTransparent)
                 hRet = CURSORICON_Copy( pTask->hInstance ,
                               CURSORICON_Load(0,MAKEINTRESOURCE(OCR_DRAGOBJECT),
                                          SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, 1, TRUE) );
-          }
+       }
 
  return hRet;
 }
@@ -1149,3 +1143,8 @@ HICON16 LoadIconHandler( HGLOBAL16 hResource, BOOL16 bNew )
       }
     return CURSORICON_LoadHandler( hResource, 0, FALSE);
 }
+
+/**********************************************************************
+ *          GetIconInfo		(USER32.241)
+ */
+

@@ -465,11 +465,11 @@ static void NC_DrawMaxButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
-      GRAPH_DrawBitmap( hdc, (IsZoomed32(hwnd) ?
-			     (down ? hbitmapRestoreD : hbitmapRestore) :
-			     (down ? hbitmapMaximizeD : hbitmapMaximize)),
+      GRAPH_DrawBitmap( hdc, (IsZoomed32(hwnd) 
+			     ? (down ? hbitmapRestoreD : hbitmapRestore)
+			     : (down ? hbitmapMaximizeD : hbitmapMaximize)),
 		        rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
-		        0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE );
+		        0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE, FALSE );
     }
 }
 
@@ -488,7 +488,7 @@ static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
       if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE+1;
       GRAPH_DrawBitmap( hdc, (down ? hbitmapMinimizeD : hbitmapMinimize),
 		        rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
-		        0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE );
+		        0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE, FALSE );
     }
 }
 
@@ -927,19 +927,18 @@ static void NC_TrackSysMenu( HWND32 hwnd, POINT16 pt )
  * Initialisation of a move or resize, when initiatied from a menu choice.
  * Return hit test code for caption or sizing border.
  */
-static LONG NC_StartSizeMove( HWND32 hwnd, WPARAM16 wParam,
+static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
                               POINT16 *capturePoint )
 {
     LONG hittest = 0;
     POINT16 pt;
     MSG16 msg;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
 
     if ((wParam & 0xfff0) == SC_MOVE)
     {
 	  /* Move pointer at the center of the caption */
 	RECT32 rect;
-	NC_GetInsideRect( hwnd, &rect );
+	NC_GetInsideRect( wndPtr->hwndSelf, &rect );
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.left += SYSMETRICS_CXSIZE + 1;
 	if (wndPtr->dwStyle & WS_MINIMIZEBOX)
@@ -948,20 +947,21 @@ static LONG NC_StartSizeMove( HWND32 hwnd, WPARAM16 wParam,
 	    rect.right -= SYSMETRICS_CXSIZE + 1;
 	pt.x = wndPtr->rectWindow.left + (rect.right - rect.left) / 2;
 	pt.y = wndPtr->rectWindow.top + rect.top + SYSMETRICS_CYSIZE/2;
+	hittest = HTCAPTION;
+	*capturePoint = pt;
+
 	if (wndPtr->dwStyle & WS_CHILD)
 	    ClientToScreen16( wndPtr->parent->hwndSelf, &pt );
-	hittest = HTCAPTION;
     }
     else  /* SC_SIZE */
     {
-	SetCapture32(hwnd);
 	while(!hittest)
 	{
             MSG_InternalGetMessage( &msg, 0, 0, MSGF_SIZE, PM_REMOVE, FALSE );
 	    switch(msg.message)
 	    {
 	    case WM_MOUSEMOVE:
-		hittest = NC_HandleNCHitTest( hwnd, msg.pt );
+		hittest = NC_HandleNCHitTest( wndPtr->hwndSelf, msg.pt );
 		pt = msg.pt;
 		if ((hittest < HTLEFT) || (hittest > HTBOTTOMRIGHT))
 		    hittest = 0;
@@ -998,10 +998,11 @@ static LONG NC_StartSizeMove( HWND32 hwnd, WPARAM16 wParam,
 		}
 	    }
 	}
+	*capturePoint = pt;
     }
-    *capturePoint = pt;
-    SetCursorPos32( capturePoint->x, capturePoint->y );
-    NC_HandleSetCursor( hwnd, (WPARAM16)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
+    SetCursorPos32( pt.x, pt.y );
+    NC_HandleSetCursor( wndPtr->hwndSelf, 
+			wndPtr->hwndSelf, MAKELONG( hittest, WM_MOUSEMOVE ));
     return hittest;
 }
 
@@ -1030,17 +1031,18 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
     if ((wParam & 0xfff0) == SC_MOVE)
     {
 	if (!(wndPtr->dwStyle & WS_CAPTION)) return;
-	if (!hittest) hittest = NC_StartSizeMove( hwnd, wParam, &capturePoint );
+	if (!hittest) 
+	     hittest = NC_StartSizeMove( wndPtr, wParam, &capturePoint );
 	if (!hittest) return;
     }
     else  /* SC_SIZE */
     {
 	if (!thickframe) return;
-	if (hittest) hittest += HTLEFT-1;
+	if ( hittest && hittest != HTSYSMENU ) hittest += 2;
 	else
 	{
 	    SetCapture32(hwnd);
-	    hittest = NC_StartSizeMove( hwnd, wParam, &capturePoint );
+	    hittest = NC_StartSizeMove( wndPtr, wParam, &capturePoint );
 	    if (!hittest)
 	    {
 		ReleaseCapture();
@@ -1055,7 +1057,8 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
     sizingRect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
 	GetClientRect16( wndPtr->parent->hwndSelf, &mouseRect );
-    else SetRect16(&mouseRect, 0, 0, SYSMETRICS_CXSCREEN, SYSMETRICS_CYSCREEN);
+    else 
+        SetRect16(&mouseRect, 0, 0, SYSMETRICS_CXSCREEN, SYSMETRICS_CYSCREEN);
     if (ON_LEFT_BORDER(hittest))
     {
 	mouseRect.left  = MAX( mouseRect.left, sizingRect.right-maxTrack.x );
@@ -1361,7 +1364,8 @@ LONG NC_HandleNCLButtonDown( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
     case HTBOTTOM:
     case HTBOTTOMLEFT:
     case HTBOTTOMRIGHT:
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_SIZE + wParam - HTLEFT+1, lParam);
+	/* make sure hittest fits into 0xf and doesn't overlap with HTSYSMENU */
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_SIZE + wParam - 2, lParam);
 	break;
 
     case HTBORDER:
@@ -1416,14 +1420,15 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     POINT32 pt32;
+    UINT16 uCommand = wParam & 0xFFF0;
 
     dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
 		      wParam, pt.x, pt.y );
 
-    if (wndPtr->dwStyle & WS_CHILD && wParam != SC_KEYMENU )
+    if (wndPtr->dwStyle & WS_CHILD && uCommand != SC_KEYMENU )
         ScreenToClient16( wndPtr->parent->hwndSelf, &pt );
 
-    switch (wParam & 0xfff0)
+    switch (uCommand)
     {
     case SC_SIZE:
     case SC_MOVE:

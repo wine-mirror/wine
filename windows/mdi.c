@@ -30,6 +30,8 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#define MDIF_NEEDUPDATE		0x0001
+
 
 static HBITMAP16 hBmpClose   = 0;
 static HBITMAP16 hBmpRestore = 0;
@@ -57,9 +59,9 @@ static HWND16 MDI_GetChildByID(WND* wndPtr,int id)
 
 static void MDI_PostUpdate(HWND16 hwnd, MDICLIENTINFO* ci, WORD recalc)
 {
- if( !ci->sbNeedUpdate )
+ if( !(ci->mdiFlags & MDIF_NEEDUPDATE) )
    {
-      ci->sbNeedUpdate = TRUE;
+      ci->mdiFlags |= MDIF_NEEDUPDATE;
       PostMessage16( hwnd, WM_MDICALCCHILDSCROLL, 0, 0);
    }
  ci->sbRecalc = recalc;
@@ -980,7 +982,6 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND16 hClient,
 LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lParam)
 {
     LPCREATESTRUCT16     cs;
-    LPCLIENTCREATESTRUCT16 ccs;
     MDICLIENTINFO       *ci;
     RECT16		 rect;
     WND                 *w 	  = WIN_FindWndPtr(hwnd);
@@ -999,17 +1000,25 @@ LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lP
 	 * so we have to keep track of what environment we're in. */
 
 	if( w->flags & WIN_ISWIN32 )
-	    ccs = (LPCLIENTCREATESTRUCT16) cs->lpCreateParams;
+	{
+#define ccs ((LPCLIENTCREATESTRUCT32)cs->lpCreateParams)
+	    ci->hWindowMenu	= ccs->hWindowMenu;
+	    ci->idFirstChild	= ccs->idFirstChild;
+#undef ccs
+	}
         else    
-	    ccs = (LPCLIENTCREATESTRUCT16) PTR_SEG_TO_LIN(cs->lpCreateParams);
+	{
+	    LPCLIENTCREATESTRUCT16 ccs = (LPCLIENTCREATESTRUCT16) 
+				   PTR_SEG_TO_LIN(cs->lpCreateParams);
+	    ci->hWindowMenu	= ccs->hWindowMenu;
+	    ci->idFirstChild	= ccs->idFirstChild;
+	}
 
-	ci->hWindowMenu         = ccs->hWindowMenu;
-	ci->idFirstChild        = ccs->idFirstChild;
 	ci->hwndChildMaximized  = 0;
 	ci->nActiveChildren	= 0;
 	ci->nTotalCreated	= 0;
 	ci->frameTitle		= NULL;
-	ci->sbNeedUpdate	= 0;
+	ci->mdiFlags		= 0;
 	ci->self		= hwnd;
 	w->dwStyle             |= WS_CLIPCHILDREN;
 
@@ -1020,7 +1029,7 @@ LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lP
         }
 	MDI_UpdateFrameText(frameWnd, hwnd, MDI_NOFRAMEREPAINT,frameWnd->text);
 
-	AppendMenu32A( ccs->hWindowMenu, MF_SEPARATOR, 0, NULL );
+	AppendMenu32A( ci->hWindowMenu, MF_SEPARATOR, 0, NULL );
 
 	GetClientRect16(frameWnd->hwndSelf, &rect);
 	NC_HandleNCCalcSize( w, &rect );
@@ -1064,7 +1073,7 @@ LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lP
 		((LONG) (ci->hwndChildMaximized>0) << 16));
 
       case WM_MDIICONARRANGE:
-	ci->sbNeedUpdate = TRUE;
+	ci->mdiFlags |= MDIF_NEEDUPDATE;
 	MDIIconArrange(hwnd);
 	ci->sbRecalc = SB_BOTH+1;
 	SendMessage16(hwnd,WM_MDICALCCHILDSCROLL,0,0L);
@@ -1090,17 +1099,17 @@ LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lP
 #endif
 	
       case WM_MDITILE:
-	ci->sbNeedUpdate = TRUE;
+	ci->mdiFlags |= MDIF_NEEDUPDATE;
 	ShowScrollBar32(hwnd,SB_BOTH,FALSE);
 	MDITile(w, ci,wParam);
-        ci->sbNeedUpdate = FALSE;
+        ci->mdiFlags &= ~MDIF_NEEDUPDATE;
         return 0;
 
       case WM_VSCROLL:
       case WM_HSCROLL:
-	ci->sbNeedUpdate = TRUE;
+	ci->mdiFlags |= MDIF_NEEDUPDATE;
         ScrollChildren32(hwnd,message,wParam,lParam);
-	ci->sbNeedUpdate = FALSE;
+	ci->mdiFlags &= ~MDIF_NEEDUPDATE;
         return 0;
 
       case WM_SETFOCUS:
@@ -1132,27 +1141,27 @@ LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lP
         return 0;
 
       case WM_SIZE:
-          if( ci->hwndChildMaximized )
-	  {
-	     WND*	child = WIN_FindWndPtr(ci->hwndChildMaximized);
-	     RECT16	rect  = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
+        if( ci->hwndChildMaximized )
+	{
+	    WND*	child = WIN_FindWndPtr(ci->hwndChildMaximized);
+	    RECT16	rect  = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
 
-	     AdjustWindowRectEx16(&rect, child->dwStyle, 0, child->dwExStyle);
-	     MoveWindow16(ci->hwndChildMaximized, rect.left, rect.top,
-			  rect.right - rect.left, rect.bottom - rect.top, 1);
-	  }
+	    AdjustWindowRectEx16(&rect, child->dwStyle, 0, child->dwExStyle);
+	    MoveWindow16(ci->hwndChildMaximized, rect.left, rect.top,
+			 rect.right - rect.left, rect.bottom - rect.top, 1);
+	}
 	else
 	  MDI_PostUpdate(hwnd, ci, SB_BOTH+1);
 
 	break;
 
       case WM_MDICALCCHILDSCROLL:
-	if( ci->sbNeedUpdate )
-	  if( ci->sbRecalc )
-	    {
-	      CalcChildScroll(hwnd, ci->sbRecalc-1);
-	      ci->sbRecalc = ci->sbNeedUpdate = 0;
-	    }
+	if( (ci->mdiFlags & MDIF_NEEDUPDATE) && ci->sbRecalc )
+	{
+	    CalcChildScroll(hwnd, ci->sbRecalc-1);
+	    ci->sbRecalc = 0;
+	    ci->mdiFlags &= ~MDIF_NEEDUPDATE;
+	}
 	return 0;
     }
     
@@ -1236,20 +1245,20 @@ LRESULT DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient, UINT16 message,
 
 	    if( !(wndPtr->parent->dwStyle & WS_MINIMIZE) 
 		&& ci->hwndActiveChild && !ci->hwndChildMaximized )
-	      {
+	    {
 		/* control menu is between the frame system menu and 
 		 * the first entry of menu bar */
 
-		if( wParam == VK_LEFT ) 
-		  { if( wndPtr->parent->wIDmenu != LOWORD(lParam) ) break; }
-		else if( wParam == VK_RIGHT )
-		  { if( GetSystemMenu16( wndPtr->parent->hwndSelf, 0) 
-                          != LOWORD(lParam) ) break; }
-		else break;
-		
-		return MAKELONG( GetSystemMenu16(ci->hwndActiveChild, 0), 
-				 ci->hwndActiveChild );
-	      }
+		if( (wParam == VK_LEFT &&
+		     wndPtr->parent->wIDmenu == LOWORD(lParam)) ||
+		    (wParam == VK_RIGHT &&
+		     GetSubMenu16(wndPtr->parent->hSysMenu, 0) == LOWORD(lParam)) )
+		{
+		    wndPtr = WIN_FindWndPtr(ci->hwndActiveChild);
+		    return MAKELONG( GetSubMenu16(wndPtr->hSysMenu, 0), 
+						  ci->hwndActiveChild);
+		}
+	    }
 	    break;
 	}
     }
@@ -1405,8 +1414,7 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 	return 0;
 
       case WM_SETVISIBLE:
-         if( ci->hwndChildMaximized)
-             ci->sbNeedUpdate = 0;
+         if( ci->hwndChildMaximized) ci->mdiFlags &= ~MDIF_NEEDUPDATE;
 	 else
             MDI_PostUpdate(clientWnd->hwndSelf, ci, SB_BOTH+1);
 	break;
@@ -1469,7 +1477,7 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
       case WM_NEXTMENU:
 
 	if( wParam == VK_LEFT )		/* switch to frame system menu */
-	  return MAKELONG( GetSystemMenu16(clientWnd->parent->hwndSelf, 0), 
+	  return MAKELONG( GetSubMenu16(clientWnd->parent->hSysMenu, 0), 
 			   clientWnd->parent->hwndSelf );
 	if( wParam == VK_RIGHT )	/* to frame menu bar */
 	  return MAKELONG( clientWnd->parent->wIDmenu,
@@ -1598,42 +1606,49 @@ BOOL32 TranslateMDISysAccel32( HWND32 hwndClient, LPMSG32 msg )
  */
 BOOL16 TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 {
-  WND* clientWnd = WIN_FindWndPtr( hwndClient);
-  WND* wnd;
-  MDICLIENTINFO       *ci     = NULL;
-  WPARAM16	       wParam = 0;
+    WND* clientWnd = WIN_FindWndPtr( hwndClient);
+    WND* wnd;
+    MDICLIENTINFO     *ci     = NULL;
+    WPARAM16	       wParam = 0;
 
-  if( (msg->message != WM_KEYDOWN && msg->message != WM_SYSKEYDOWN) || !clientWnd )
-    return 0;
+    if( clientWnd && (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN))
+    {
+	MDICLIENTINFO	*ci = NULL;
+	WND*		wnd;
 
-  ci = (MDICLIENTINFO*) clientWnd->wExtra;
-  wnd = WIN_FindWndPtr(ci->hwndActiveChild);
- 
-  if( !wnd ) return 0;
+	ci = (MDICLIENTINFO*) clientWnd->wExtra;
+	wnd = WIN_FindWndPtr(ci->hwndActiveChild);
+	if( wnd && !(wnd->dwStyle & WS_DISABLED) )
+	{
+	    WPARAM16	wParam = 0;
+
+	    /* translate if the Ctrl key is down and Alt not. */
   
-  if( wnd->dwStyle & WS_DISABLED ) return 0;
-   
-  if ((GetKeyState32(VK_CONTROL) & 0x8000) && !(GetKeyState32(VK_MENU) & 0x8000))
-    switch( msg->wParam )
-      {
-	case VK_F6:
-	case VK_SEPARATOR:
-	     wParam = ( GetKeyState32(VK_SHIFT) & 0x8000 )? SC_NEXTWINDOW: SC_PREVWINDOW;
-	     break;
-        case VK_F4:
-	case VK_RBUTTON:
-	     wParam = SC_CLOSE; 
-	     break;
-	default:
-	     return 0;
-      }
-  else
-      return 0;
-
-  dprintf_mdi(stddeb,"TranslateMDISysAccel: wParam = %04x\n", wParam);
-
-  SendMessage16(ci->hwndActiveChild,WM_SYSCOMMAND, wParam, (LPARAM)msg->wParam);
-  return 1;
+	    if( (GetKeyState32(VK_CONTROL) & 0x8000) && 
+	       !(GetKeyState32(VK_MENU) & 0x8000))
+	    {
+		switch( msg->wParam )
+		{
+		    case VK_F6:
+		    case VK_SEPARATOR:
+			 wParam = ( GetKeyState32(VK_SHIFT) & 0x8000 )
+				  ? SC_NEXTWINDOW : SC_PREVWINDOW;
+			 break;
+		    case VK_F4:
+		    case VK_RBUTTON:
+			 wParam = SC_CLOSE; 
+			 break;
+		    default:
+			 return 0;
+		}
+	        dprintf_mdi(stddeb,"TranslateMDISysAccel: wParam = %04x\n", wParam);
+	        SendMessage16( ci->hwndActiveChild, WM_SYSCOMMAND, 
+					wParam, (LPARAM)msg->wParam);
+	        return 1;
+	    }
+	}
+    }
+    return 0; /* failure */
 }
 
 

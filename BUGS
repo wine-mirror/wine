@@ -40,8 +40,6 @@ Miscellaneous:
  * 32-bit Freecell segfaults when started from the Progman (looks like
    a problem with cards.dll).
 
- * Word 6.0 often segfaults when system menu is double-clicked. 
-
  * Edit controls are prone to show blank space when, in fact, there is a
    text there.
 

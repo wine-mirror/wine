@@ -122,7 +122,7 @@ install_libwine.a: dummy
 	$(INSTALL_DATA) libwine.a $(libdir)
 
 libwine.so.1.0: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
-	$(CC) -shared -Wl,-soname,libwine.so.1 -o$@ $(COMMONOBJS) $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(COMMONOBJS) $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
 install_libwine.so.1.0: dummy
 	$(INSTALL_DATA) libwine.so.1.0 $(libdir)

@@ -28,6 +28,8 @@
 static short iF10Key = 0;
 static short iMenuSysKey = 0;
 
+extern void  EndMenu(void);
+
 /***********************************************************************
  *           DEFWND_HandleWindowPosChanged
  *
@@ -328,8 +330,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	break; 
 
     case WM_CANCELMODE:
-	/* EndMenu() should be called if in menu state but currently it's
-	   impossible to detect - menu code should be updated*/
+	if (wndPtr->parent == WIN_GetDesktop()) EndMenu();
 	if (GetCapture32() == wndPtr->hwndSelf) ReleaseCapture();
 	break;
 

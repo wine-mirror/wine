@@ -76,7 +76,7 @@ static WNDCLASS32A WIDGETS_BuiltinClasses32[BIC32_NB_CLASSES] =
       ComboLBWndProc, 0, sizeof(void *), 0, 0, IDC_ARROW, 0, 0, "ComboLBox" },
     /* BIC32_POPUPMENU */
     { CS_GLOBALCLASS | CS_SAVEBITS, PopupMenuWndProc,
-      0, sizeof(HMENU32), 0, 0, IDC_ARROW, 0, 0, POPUPMENU_CLASS_NAME },
+      0, sizeof(HMENU32), 0, 0, IDC_ARROW, NULL_BRUSH, 0, POPUPMENU_CLASS_NAME },
     /* BIC32_SCROLL */
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
       ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, IDC_ARROW, 0, 0, "ScrollBar"},

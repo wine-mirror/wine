@@ -6,7 +6,7 @@
 #define __WINE_MENU_H
 
 extern BOOL32 MENU_Init(void);
-extern HMENU32 MENU_GetDefSysMenu(void);
+extern HMENU32 MENU_GetSysMenu(HWND32 hWndOwner, HMENU32 hSysPopup);
 extern void MENU_InitSysMenuPopup(HMENU32 hmenu, DWORD style, DWORD clsStyle);
 extern UINT32 MENU_GetMenuBarHeight( HWND32 hwnd, UINT32 menubarWidth,
                                      INT32 orgX, INT32 orgY );

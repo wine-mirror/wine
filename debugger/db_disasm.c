@@ -1531,7 +1531,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		      }
 
 		    if (seg)
-			fprintf(stderr,"%s:%d",seg, displ);
+			fprintf(stderr,"%s:0x%x",seg, displ);
 		    else
 			db_task_printsym(displ, short_addr ? WORD : LONG);
 		    break;

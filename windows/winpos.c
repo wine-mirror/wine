@@ -1181,7 +1181,7 @@ BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd)
       hwndPrevActive = 0;
 
   if( hwndActive != pWnd->hwndSelf && 
-    ( hwndActive || QUEUE_IsDoomedQueue(pWnd->hmemTaskQ)) )
+    ( hwndActive || QUEUE_IsExitingQueue(pWnd->hmemTaskQ)) )
       return 0;
 
   if( pWnd->dwStyle & WS_POPUP &&

@@ -20,6 +20,8 @@
 #include "stddebug.h"
 #include "debug.h"
 
+extern void CLIPPING_UpdateGCRegion(DC* );
+
 typedef enum WING_DITHER_TYPE
 {
   WING_DISPERSED_4x4, WING_DISPERSED_8x8, WING_CLUSTERED_4x4

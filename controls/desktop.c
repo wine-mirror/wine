@@ -108,7 +108,7 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
 		    GRAPH_DrawBitmap( hdc, infoPtr->hbitmapWallPaper,
 				      x, y, 0, 0, 
 				      infoPtr->bitmapSize.cx,
-				      infoPtr->bitmapSize.cy );
+				      infoPtr->bitmapSize.cy, FALSE );
 	}
 	else
 	{
@@ -116,8 +116,9 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
 	    y = (rect.top + rect.bottom - infoPtr->bitmapSize.cy) / 2;
 	    if (x < 0) x = 0;
 	    if (y < 0) y = 0;
-	    GRAPH_DrawBitmap( hdc, infoPtr->hbitmapWallPaper, x, y, 0, 0, 
-                              infoPtr->bitmapSize.cx, infoPtr->bitmapSize.cy );
+	    GRAPH_DrawBitmap( hdc, infoPtr->hbitmapWallPaper, 
+			      x, y, 0, 0, infoPtr->bitmapSize.cx, 
+			      infoPtr->bitmapSize.cy, FALSE );
 	}
     }
 

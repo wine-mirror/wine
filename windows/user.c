@@ -21,7 +21,7 @@
 
 WORD USER_HeapSel = 0;
 
-extern BOOL32 MENU_SwitchTPWndTo(HTASK16);
+extern BOOL32 MENU_PatchResidentPopup( HQUEUE16, WND* );
 extern void QUEUE_FlushMessages(HQUEUE16);
 
 /***********************************************************************
@@ -108,7 +108,7 @@ INT16 InitApp( HINSTANCE16 hInstance )
 }
 
 /**********************************************************************
- *					USER_AppExit
+ *           USER_AppExit
  */
 void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
 {
@@ -123,16 +123,16 @@ void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
 	desktop->hmemTaskQ = GetTaskQueue(TASK_GetNextTask(hTask));
 
     /* Patch resident popup menu window */
-    MENU_SwitchTPWndTo(0);
+    MENU_PatchResidentPopup( hQueue, NULL );
 
     TIMER_RemoveQueueTimers( hQueue );
 
     QUEUE_FlushMessages( hQueue );
     HOOK_FreeQueueHooks( hQueue );
 
-    QUEUE_SetDoomedQueue( hQueue );
+    QUEUE_SetExitingQueue( hQueue );
     WIN_ResetQueueWindows( desktop->child, hQueue, (HQUEUE16)0);
-    QUEUE_SetDoomedQueue( 0 );
+    QUEUE_SetExitingQueue( 0 );
 
     /* Free the message queue */
 

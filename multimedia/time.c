@@ -86,7 +86,7 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
 /**************************************************************************
  * 				StartMMTime			[internal]
  */
-void StartMMTime()
+static void StartMMTime()
 {
     if (!mmTimeStarted) {
 	mmTimeStarted = TRUE;

@@ -413,7 +413,7 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
         else if (infoPtr->state & BUTTON_3STATE) y += 2 * checkBoxHeight;
 
         GRAPH_DrawBitmap( hDC, hbitmapCheckBoxes, rbox.left, rbox.top + delta,
-                          x, y, checkBoxWidth, checkBoxHeight );
+                          x, y, checkBoxWidth, checkBoxHeight, FALSE );
         if( textlen && action != ODA_SELECT )
         {
             if (wndPtr->dwStyle & WS_DISABLED)

@@ -339,7 +339,7 @@ static HGLOBAL32 CURSORICON32_LoadHandler( HANDLE32 handle,
         BITMAPINFOHEADER *bih = &pInfo->bmiHeader;
         RGBQUAD *rgb = pInfo->bmiColors;
         bits = (char *)bmi + size +
-            DIB_GetImageWidthBytes(bih->biWidth,bih->biBitCount)*bih->biHeight;
+            DIB_GetDIBWidthBytes(bih->biWidth,bih->biBitCount)*bih->biHeight;
         bih->biBitCount = 1;
         bih->biClrUsed = bih->biClrImportant = 2;
         rgb[0].rgbBlue = rgb[0].rgbGreen = rgb[0].rgbRed = 0x00;
@@ -351,7 +351,7 @@ static HGLOBAL32 CURSORICON32_LoadHandler( HANDLE32 handle,
         BITMAPCOREHEADER *bch = (BITMAPCOREHEADER *)pInfo;
         RGBTRIPLE *rgb = (RGBTRIPLE *)(bch + 1);
         bits = (char *)bmi + size +
-            DIB_GetImageWidthBytes(bch->bcWidth,bch->bcBitCount)*bch->bcHeight;
+            DIB_GetDIBWidthBytes(bch->bcWidth,bch->bcBitCount)*bch->bcHeight;
         bch->bcBitCount = 1;
         rgb[0].rgbtBlue = rgb[0].rgbtGreen = rgb[0].rgbtRed = 0x00;
         rgb[1].rgbtBlue = rgb[1].rgbtGreen = rgb[1].rgbtRed = 0xff;

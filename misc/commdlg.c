@@ -202,7 +202,8 @@ static BOOL32 FILEDLG_ScanDir(HWND16 hWnd, LPSTR newPath)
     len = strlen(str);
     GetDlgItemText32A( hWnd, edt1, str + len, sizeof(str) - len );
     if (!DlgDirList32A( hWnd, str, lst1, 0, 0x0000 )) return FALSE;
-    return DlgDirList32A( hWnd, "*.*", lst2, stc1, 0x8010 );
+    strcpy( str, "*.*" );
+    return DlgDirList32A( hWnd, str, lst2, stc1, 0x8010 );
 }
 
 /***********************************************************************
@@ -409,7 +410,8 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   			lpofn->nFilterIndex, tmpstr);
   SetDlgItemText32A( hWnd, edt1, tmpstr );
   /* get drive list */
-  DlgDirListComboBox32A(hWnd, "", cmb2, 0, 0xC000);
+  *tmpstr = 0;
+  DlgDirListComboBox32A(hWnd, tmpstr, cmb2, 0, 0xC000);
   /* read initial directory */
   if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) 
     {

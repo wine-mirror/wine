@@ -42,7 +42,7 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 
 #define XCREATEIMAGE(image,width,height,bpp) \
 { \
-    int width_bytes = DIB_GetImageWidthBytesX11( (width), (bpp) ); \
+    int width_bytes = DIB_GetXImageWidthBytes( (width), (bpp) ); \
     (image) = XCreateImage(display, DefaultVisualOfScreen(screen), \
                            (bpp), ZPixmap, 0, xmalloc( (height)*width_bytes ),\
                            (width), (height), 32, width_bytes ); \
@@ -55,8 +55,8 @@ extern INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer );
 extern BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
 
   /* objects/dib.c */
-extern int DIB_GetImageWidthBytes( int width, int depth );
-extern int DIB_GetImageWidthBytesX11( int width, int depth );
+extern int DIB_GetDIBWidthBytes( int width, int depth );
+extern int DIB_GetXImageWidthBytes( int width, int depth );
 extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
 
   /* objects/oembitmap.c */

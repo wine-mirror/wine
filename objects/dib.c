@@ -18,53 +18,51 @@
 
 extern void CLIPPING_UpdateGCRegion(DC* );
 
+static int	bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
+static int	ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
+
 /***********************************************************************
- *           DIB_GetImageWidthBytesX11
- *
- * Return the width of an X image in bytes
+ *           DIB_Init
  */
-int DIB_GetImageWidthBytesX11( int width, int depth )
+BOOL32 DIB_Init()
 {
-    int		wbits;
-    XImage	*testimage;
+    int		i;
+    XImage*	testimage;
 
-#define DEPTHCASE(depth) 						\
-    case depth: {							\
-	static int w##depth = 0;					\
-	if (! w##depth ) {						\
-	    testimage=XCreateImage(display,DefaultVisualOfScreen(screen),\
-		   depth,ZPixmap,0,NULL,1,1,32,20);			\
-	    w##depth = testimage->bits_per_pixel;			\
-	    XDestroyImage(testimage);					\
-	}								\
-	wbits = width*w##depth;						\
-	break;								\
-    }
-
-    switch(depth)
+    for( i = 0; bitmapDepthTable[i]; i++ )
     {
-    	DEPTHCASE(1);
-	DEPTHCASE(4);
-	DEPTHCASE(8);
-	DEPTHCASE(15);
-	DEPTHCASE(16);
-	DEPTHCASE(24);
-	DEPTHCASE(32);
-	default:
-        	fprintf(stderr, "DIB: unsupported depth %d.\n", depth );
-	/* assume 32 bits/pixel */
-	        wbits = width*32;
-		break;
+	 testimage = XCreateImage(display, DefaultVisualOfScreen(screen),
+			 bitmapDepthTable[i], ZPixmap, 0, NULL, 1, 1, 32, 20 );
+	 if( testimage ) ximageDepthTable[i] = testimage->bits_per_pixel;
+	 else return FALSE;
+	 XDestroyImage(testimage);
     }
-    return 4 * ((wbits+31)/32);
+    return TRUE;
 }
 
 /***********************************************************************
- *           DIB_GetImageWidthBytes
+ *           DIB_GetXImageWidthBytes
  *
  * Return the width of an X image in bytes
  */
-int DIB_GetImageWidthBytes( int width, int depth )
+int DIB_GetXImageWidthBytes( int width, int depth )
+{
+    int		i;
+
+    for( i = 0; bitmapDepthTable[i] ; i++ )
+	 if( bitmapDepthTable[i] == depth )
+	     return (4 * ((width * ximageDepthTable[i] + 31)/32));
+    fprintf(stderr, "DIB: unsupported depth %d.\n", depth );
+    return (4 * width);
+}
+
+/***********************************************************************
+ *           DIB_GetDIBWidthBytes
+ *
+ * Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned.
+ * http://www.microsoft.com/msdn/sdk/platforms/doc/sdk/win32/struc/src/str01.htm
+ */
+int DIB_GetDIBWidthBytes( int width, int depth )
 {
     int words;
 
@@ -90,7 +88,7 @@ int DIB_GetImageWidthBytes( int width, int depth )
 /***********************************************************************
  *           DIB_BitmapInfoSize
  *
- * Return the size of the bitmap info structure.
+ * Return the size of the bitmap info structure including color table.
  */
 int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse )
 {
@@ -791,6 +789,8 @@ INT16 GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
 
 /***********************************************************************
  *           GetDIBits32    (GDI32.170)
+ *
+ * http://www.microsoft.com/msdn/sdk/platforms/doc/sdk/win32/func/src/f30_14.htm
  */
 INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
                    UINT32 lines, LPSTR bits, BITMAPINFO * info,
@@ -864,7 +864,7 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 	switch( info->bmiHeader.biBitCount )
 	{
 	   case 8:
-		/* pad up to 32 bit (FIXME: not 16? ) */
+		/* pad up to 32 bit */
 		pad += (4 - (info->bmiHeader.biWidth & 3)) & 3;
 		for( y = yend - 1; (int)y >= (int)startscan; y-- )
 		{
@@ -953,8 +953,8 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 	info->bmiHeader.biPlanes = 1;
 	info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
 	info->bmiHeader.biSizeImage = bmp->bitmap.bmHeight *
-                             DIB_GetImageWidthBytes( bmp->bitmap.bmWidth,
-                                                     bmp->bitmap.bmBitsPixel );
+                             DIB_GetDIBWidthBytes( bmp->bitmap.bmWidth,
+                                                   bmp->bitmap.bmBitsPixel );
 	info->bmiHeader.biCompression = 0;
     }
 

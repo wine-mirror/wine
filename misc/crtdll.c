@@ -25,6 +25,8 @@
 #include "crtdll.h"
 #include "drive.h"
 
+extern INT32 WIN32_wsprintf32W( DWORD *args );
+
 UINT32 CRTDLL_argc_dll;         /* CRTDLL.23 */
 LPSTR *CRTDLL_argv_dll;         /* CRTDLL.24 */
 LPSTR  CRTDLL_acmdln_dll;       /* CRTDLL.38 */

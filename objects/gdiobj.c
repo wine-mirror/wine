@@ -156,10 +156,12 @@ BOOL32 GDI_Init(void)
 {
     HPALETTE16 hpalette;
     extern BOOL32 X11DRV_Init(void);
+    extern BOOL32 DIB_Init(void);
 
     /* Initialize drivers */
 
     if (!X11DRV_Init()) return FALSE;
+    if (!DIB_Init()) return FALSE;
 
       /* Create default palette */
 

@@ -18,7 +18,7 @@ extern void GRAPH_DrawRectangle( HDC32 hdc, INT32 x, INT32 y,
 				 INT32 width, INT32 height, HPEN32 hPen);
 extern BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
                                 INT32 xdest, INT32 ydest, INT32 xsrc,
-                                INT32 ysrc, INT32 width, INT32 height );
+                                INT32 ysrc, INT32 width, INT32 height, BOOL32 bMono );
 extern BOOL32 GRAPH_SelectClipMask( HDC32 hdc, HBITMAP32 hMono,
                                     INT32 x, INT32 y );
 

@@ -872,7 +872,7 @@ HGLOBAL32 GlobalAlloc32(UINT32 flags, DWORD size)
       pintern=HeapAlloc(GetProcessHeap(), 0,  sizeof(GLOBAL32_INTERN));
       if(size)
       {
-	 palloc=HeapAlloc(GetProcessHeap(), 0, size+sizeof(HGLOBAL32));
+	 palloc=HeapAlloc(GetProcessHeap(), hpflags, size+sizeof(HGLOBAL32));
 	 *(HGLOBAL32 *)palloc=INTERN_TO_HANDLE(pintern);
 	 pintern->Pointer=palloc+sizeof(HGLOBAL32);
       }

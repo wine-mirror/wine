@@ -43,6 +43,7 @@ static HWND32 hwndSysModal = 0;
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
+extern BOOL32 MENU_PatchResidentPopup( HQUEUE16, WND* );
 extern HCURSOR16 CURSORICON_IconToCursor(HICON16, BOOL32);
 extern HWND32 CARET_GetHwnd(void);
 extern BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd);
@@ -569,8 +570,9 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->pVScroll       = NULL;
     wndPtr->pHScroll       = NULL;
     wndPtr->pProp          = NULL;
-    wndPtr->hSysMenu       = MENU_GetDefSysMenu();
     wndPtr->userdata       = 0;
+    wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU)
+			     ? MENU_GetSysMenu( hwnd, 0 ) : 0;
 
     if (classPtr->cbWndExtra) memset( wndPtr->wExtra, 0, classPtr->cbWndExtra);
 
@@ -1000,7 +1002,7 @@ BOOL32 DestroyWindow32( HWND32 hwnd )
         /* FIXME: clean up palette - see "Internals" p.352 */
     }
 
-    if( !QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ) )
+    if( !QUEUE_IsExitingQueue(wndPtr->hmemTaskQ) )
 	 WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LPARAM)hwnd );
     if (!IsWindow32(hwnd)) return TRUE;
 
@@ -1012,7 +1014,7 @@ BOOL32 DestroyWindow32( HWND32 hwnd )
     {
         SetWindowPos32( hwnd, 0, 0, 0, 0, 0, SWP_HIDEWINDOW |
 		        SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|
-		        ((QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))?SWP_DEFERERASE:0) );
+		        ((QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))?SWP_DEFERERASE:0) );
 	if (!IsWindow32(hwnd)) return TRUE;
     }
 
@@ -1020,6 +1022,9 @@ BOOL32 DestroyWindow32( HWND32 hwnd )
 
     if( !(wndPtr->dwStyle & WS_CHILD) )
     {
+      /* make sure top menu popup doesn't get destroyed */
+      MENU_PatchResidentPopup( TRUE, wndPtr );
+
       for (;;)
       {
         WND *siblingPtr = wndPtr->parent->child;  /* First sibling */

@@ -201,7 +201,7 @@ LONG GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
 	return 0;
     }
 
-    widthbytes	= DIB_GetImageWidthBytesX11(bmp->bitmap.bmWidth,bmp->bitmap.bmBitsPixel);
+    widthbytes	= DIB_GetXImageWidthBytes(bmp->bitmap.bmWidth,bmp->bitmap.bmBitsPixel);
     tmpbuffer	= (LPBYTE)xmalloc(widthbytes*height);
     image = XCreateImage( display, DefaultVisualOfScreen(screen),
 		  bmp->bitmap.bmBitsPixel, ZPixmap, 0, tmpbuffer,
@@ -223,8 +223,10 @@ LONG GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
             *tbuf = 0;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
+                if ((w%8) == 0)
+                    *tbuf = 0;
                 *tbuf |= XGetPixel(image,w,h)<<(7-(w&7));
-                if ((w&7) == 7) *(++tbuf) = 0;
+                if ((w&7) == 7) ++tbuf;
             }
             tbuf += pad;
         }
@@ -348,7 +350,7 @@ LONG SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
     }
     sbuf = (LPBYTE)buffer;
 
-    widthbytes	= DIB_GetImageWidthBytesX11(bmp->bitmap.bmWidth,bmp->bitmap.bmBitsPixel);
+    widthbytes	= DIB_GetXImageWidthBytes(bmp->bitmap.bmWidth,bmp->bitmap.bmBitsPixel);
     tmpbuffer	= (LPBYTE)xmalloc(widthbytes*height);
     image = XCreateImage( display, DefaultVisualOfScreen(screen),
 		  bmp->bitmap.bmBitsPixel, ZPixmap, 0, tmpbuffer,

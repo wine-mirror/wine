@@ -8,6 +8,7 @@
 #define COLOR_VIRTUAL   0x0002          /* no mapping needed - pixel == pixel color */
 
 #define COLOR_PRIVATE   0x1000          /* private colormap, identity mapping */
+#define COLOR_WHITESET	0x2000
 
 #define PC_SYS_USED     0x80		/* palentry is used (both system and logical) */
 #define PC_SYS_RESERVED 0x40		/* system palentry is not to be mapped to */
@@ -22,6 +23,7 @@ extern BOOL32 	  COLOR_IsSolid( COLORREF color );
 extern Colormap	  COLOR_GetColormap();
 extern UINT16	  COLOR_GetSystemPaletteSize();
 extern UINT16	  COLOR_GetSystemPaletteFlags();
+extern BOOL32	  COLOR_GetMonoPlane( int* );
 
 extern COLORREF	  COLOR_LookupNearestColor( PALETTEENTRY*, int, COLORREF );
 extern int        COLOR_PaletteLookupPixel( PALETTEENTRY*, int, int* , COLORREF, BOOL32 );

@@ -26,10 +26,9 @@
 #include "stddebug.h"
 #include "debug.h"
 
-int MMSYSTEM_DevIDToIndex(UINT16);
-
 #if defined(linux) || defined(__FreeBSD__)
 #define SOUND_DEV "/dev/dsp"
+#define MIXER_DEV "/dev/mixer"
 
 #ifdef SOUND_VERSION
 #define IOCTL(a,b,c)		((-1==ioctl(a,b,&c))&&(perror("ioctl:"#b":"#c),0))
@@ -37,42 +36,43 @@ int MMSYSTEM_DevIDToIndex(UINT16);
 #define IOCTL(a,b,c)		(c = ioctl(a,b,c) )
 #endif
 
-#define MAX_WAVOUTDRV 	2
-#define MAX_WAVINDRV 	2
-#define MAX_MCIWAVDRV 	2
+#define MAX_WAVOUTDRV 	(1)
+#define MAX_WAVINDRV 	(1)
+#define MAX_MCIWAVDRV 	(1)
 
 typedef struct {
-	int				unixdev;
-	int				state;
-	DWORD			bufsize;
-	WAVEOPENDESC	waveDesc;
-	WORD			wFlags;
-	PCMWAVEFORMAT	Format;
-	LPWAVEHDR 		lpQueueHdr;
-	DWORD			dwTotalPlayed;
+	int		    unixdev;
+	int		    state;
+	DWORD		    bufsize;
+	WAVEOPENDESC        waveDesc;
+	WORD                wFlags;
+	PCMWAVEFORMAT	    Format;
+	LPWAVEHDR 	    lpQueueHdr;
+	DWORD		    dwTotalPlayed;
 	} LINUX_WAVEOUT;
 
 typedef struct {
-	int				unixdev;
-	int				state;
-	DWORD			bufsize;	/* Linux '/dev/dsp' give us that size */
-	WAVEOPENDESC	waveDesc;
-	WORD			wFlags;
-	PCMWAVEFORMAT	Format;
-	LPWAVEHDR 		lpQueueHdr;
-	DWORD			dwTotalRecorded;
+	int	            unixdev;
+	int	            state;
+	DWORD               bufsize;            /* Linux '/dev/dsp' give us that size */
+	WAVEOPENDESC        waveDesc;
+	WORD                wFlags;
+	PCMWAVEFORMAT       Format;
+	LPWAVEHDR           lpQueueHdr;
+	DWORD               dwTotalRecorded;
 	} LINUX_WAVEIN;
 
 typedef struct {
-    int     nUseCount;          /* Incremented for each shared open */
-    BOOL16  fShareable;         /* TRUE if first open was shareable */
-    WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
-    HANDLE16 hCallback;          /* Callback handle for pending notification */
-	HMMIO16	hFile;				/* mmio file handle open as Element		*/
+        int                 nUseCount;          /* Incremented for each shared open */
+	BOOL16              fShareable;         /* TRUE if first open was shareable */
+	WORD                wNotifyDeviceID;    /* MCI device ID with a pending notification */
+	HANDLE16            hCallback;          /* Callback handle for pending notification */
+	HMMIO16	            hFile;		/* mmio file handle open as Element */
 	MCI_WAVE_OPEN_PARMS openParms;
-	PCMWAVEFORMAT	WaveFormat;
-	WAVEHDR		WaveHdr;
-	} LINUX_MCIWAVE;
+	PCMWAVEFORMAT       WaveFormat;
+	WAVEHDR             WaveHdr;
+	BOOL16              fInput;             /* FALSE = Output, TRUE = Input */
+} LINUX_MCIWAVE;
 
 static LINUX_WAVEOUT	WOutDev[MAX_WAVOUTDRV];
 static LINUX_WAVEIN	WInDev[MAX_WAVOUTDRV];
@@ -85,12 +85,14 @@ static LINUX_MCIWAVE	MCIWavDev[MAX_MCIWAVDRV];
 static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg, 
 				DWORD dwParam1, DWORD dwParam2)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
+	dprintf_mciwave(stddeb,"WAVE_NotifyClient // wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
 
-	if (WInDev[index].wFlags != DCB_NULL && !DriverCallback(
-		WInDev[index].waveDesc.dwCallBack, WInDev[index].wFlags, 
-		WInDev[index].waveDesc.hWave, wMsg, 
-		WInDev[index].waveDesc.dwInstance, dwParam1, dwParam2)) {
+	if (wDevID > MAX_WAVOUTDRV) return MCIERR_INTERNAL;
+
+	if (WInDev[wDevID].wFlags != DCB_NULL && !DriverCallback(
+		WInDev[wDevID].waveDesc.dwCallBack, WInDev[wDevID].wFlags, 
+		WInDev[wDevID].waveDesc.hWave, wMsg, 
+		WInDev[wDevID].waveDesc.dwInstance, dwParam1, dwParam2)) {
 		dprintf_mciwave(stddeb,"WAVE_NotifyClient // can't notify client !\n");
 		return MMSYSERR_NOERROR;
 		}
@@ -99,11 +101,11 @@ static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg,
 
 
 /**************************************************************************
-* 				WAVE_mciOpen	*/
+ * 				WAVE_mciOpen	                        [internal]*/
 static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpParms)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
-	HLOCAL16	hFormat;
+	HLOCAL16        hFormat;
+	LPWAVEFORMAT    lpFormat;
 	LPPCMWAVEFORMAT	lpWaveFormat;
 	HLOCAL16	hDesc;
 	LPWAVEOPENDESC 	lpDesc;
@@ -115,23 +117,22 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lp
 				wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 
-	wDevID = lpParms->wDeviceID;
-	index = MMSYSTEM_DevIDToIndex(wDevID);
-
-	if (MCIWavDev[index].nUseCount > 0) {
+	if (MCIWavDev[wDevID].nUseCount > 0) {
 		/* The driver already open on this channel */
 		/* If the driver was opened shareable before and this open specifies */
 		/* shareable then increment the use count */
-		if (MCIWavDev[index].fShareable && (dwFlags & MCI_OPEN_SHAREABLE))
-			++MCIWavDev[index].nUseCount;
+		if (MCIWavDev[wDevID].fShareable && (dwFlags & MCI_OPEN_SHAREABLE))
+			++MCIWavDev[wDevID].nUseCount;
 		else
 			return MCIERR_MUST_USE_SHAREABLE;
 		}
 	else {
-		MCIWavDev[index].nUseCount = 1;
-		MCIWavDev[index].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
+		MCIWavDev[wDevID].nUseCount = 1;
+		MCIWavDev[wDevID].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
 		}
-	lpParms->wDeviceID = wDevID;
+
+	MCIWavDev[wDevID].fInput = FALSE;
+
 	dprintf_mciwave(stddeb,"WAVE_mciOpen // wDevID=%04X\n", wDevID);
 	dprintf_mciwave(stddeb,"WAVE_mciOpen // before OPEN_ELEMENT\n");
 	if (dwFlags & MCI_OPEN_ELEMENT) {
@@ -141,20 +142,20 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lp
 		if (strlen(lpstrElementName) > 0) {
 			strcpy(str, lpstrElementName);
 			CharUpper32A(str);
-			MCIWavDev[index].hFile = mmioOpen(str, NULL, 
+			MCIWavDev[wDevID].hFile = mmioOpen(str, NULL, 
 				MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
-			if (MCIWavDev[index].hFile == 0) {
+			if (MCIWavDev[wDevID].hFile == 0) {
 				dprintf_mciwave(stddeb,"WAVE_mciOpen // can't find file='%s' !\n", str);
 				return MCIERR_FILE_NOT_FOUND;
 				}
 			}
 		else 
-			MCIWavDev[index].hFile = 0;
+			MCIWavDev[wDevID].hFile = 0;
 		}
-	dprintf_mciwave(stddeb,"WAVE_mciOpen // hFile=%u\n", MCIWavDev[index].hFile);
-	memcpy(&MCIWavDev[index].openParms, lpParms, sizeof(MCI_WAVE_OPEN_PARMS));
-	MCIWavDev[index].wNotifyDeviceID = lpParms->wDeviceID;
-	lpWaveFormat = &MCIWavDev[index].WaveFormat;
+	dprintf_mciwave(stddeb,"WAVE_mciOpen // hFile=%u\n", MCIWavDev[wDevID].hFile);
+	memcpy(&MCIWavDev[wDevID].openParms, lpParms, sizeof(MCI_WAVE_OPEN_PARMS));
+	MCIWavDev[wDevID].wNotifyDeviceID = lpParms->wDeviceID;
+	lpWaveFormat = &MCIWavDev[wDevID].WaveFormat;
 	hDesc = USER_HEAP_ALLOC(sizeof(WAVEOPENDESC));
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hDesc);
 	lpDesc->hWave = 0;
@@ -166,10 +167,10 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lp
 	lpWaveFormat->wf.nAvgBytesPerSec = 11025;
 	lpWaveFormat->wf.nBlockAlign = 1;
 */
-	if (MCIWavDev[index].hFile != 0) {
+	if (MCIWavDev[wDevID].hFile != 0) {
 		MMCKINFO	mmckInfo;
 		MMCKINFO	ckMainRIFF;
-		if (mmioDescend(MCIWavDev[index].hFile, &ckMainRIFF, NULL, 0) != 0) {
+		if (mmioDescend(MCIWavDev[wDevID].hFile, &ckMainRIFF, NULL, 0) != 0) {
 			return MCIERR_INTERNAL;
 			}
 		dprintf_mciwave(stddeb,
@@ -181,19 +182,19 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lp
 			return MCIERR_INTERNAL;
 			}
 		mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
-		if (mmioDescend(MCIWavDev[index].hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) {
+		if (mmioDescend(MCIWavDev[wDevID].hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) {
 			return MCIERR_INTERNAL;
 			}
 		dprintf_mciwave(stddeb,
 				"WAVE_mciOpen // Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
 				(LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType,
 				mmckInfo.cksize);
-		if (mmioRead(MCIWavDev[index].hFile, (HPSTR) lpWaveFormat,
+		if (mmioRead(MCIWavDev[wDevID].hFile, (HPSTR) lpWaveFormat,
 		    (long) sizeof(PCMWAVEFORMAT)) != (long) sizeof(PCMWAVEFORMAT)) {
 			return MCIERR_INTERNAL;
 			}
 		mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
-		if (mmioDescend(MCIWavDev[index].hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) {
+		if (mmioDescend(MCIWavDev[wDevID].hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) != 0) {
 			return MCIERR_INTERNAL;
 			}
 		dprintf_mciwave(stddeb,
@@ -205,17 +206,83 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lp
 			lpWaveFormat->wf.nChannels, lpWaveFormat->wf.nSamplesPerSec);
 		lpWaveFormat->wBitsPerSample = 0;
 		}
+
 	lpWaveFormat->wf.nAvgBytesPerSec = 
 		lpWaveFormat->wf.nSamplesPerSec * lpWaveFormat->wf.nBlockAlign;
 	hFormat = USER_HEAP_ALLOC(sizeof(PCMWAVEFORMAT));
-	lpDesc->lpFormat = (LPWAVEFORMAT) USER_HEAP_LIN_ADDR(hFormat);
-	memcpy(lpDesc->lpFormat, lpWaveFormat, sizeof(PCMWAVEFORMAT));
+	lpFormat =  (LPWAVEFORMAT) USER_HEAP_LIN_ADDR(hFormat);
+	memcpy(lpFormat, lpWaveFormat, sizeof(PCMWAVEFORMAT));
+	lpDesc->lpFormat = (LPWAVEFORMAT)USER_HEAP_SEG_ADDR(hFormat);
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_SEG_ADDR(hDesc);
-	dwRet = wodMessage(index, WODM_OPEN, 0, (DWORD)lpDesc, CALLBACK_NULL);
-	dwRet = widMessage(index, WIDM_OPEN, 0, (DWORD)lpDesc, CALLBACK_NULL);
+
+/*
+   By default the device will be opened for output, the MCI_CUE function is there to
+   change from output to input and back
+*/
+
+	dwRet = wodMessage(wDevID, WODM_OPEN, 0, (DWORD)lpDesc, CALLBACK_NULL);
+
 	USER_HEAP_FREE(hFormat);
 	USER_HEAP_FREE(hDesc);
 	return 0;
+}
+
+/**************************************************************************
+*                               WAVE_mciCue             [internal]
+*/
+
+static DWORD WAVE_mciCue(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
+{
+/*
+   FIXME
+
+   This routine is far from complete. At the moment only a check is done on the
+   MCI_WAVE_INPUT flag. No explicit check on MCI_WAVE_OUTPUT is done since that
+   is the default.
+
+   The flags MCI_NOTIFY (and the callback parameter in lpParms) and MCI_WAIT are
+   ignored
+*/
+
+        DWORD          dwRet;
+        HLOCAL16       hDesc;
+        LPWAVEOPENDESC lpDesc;
+
+	dprintf_mciwave(stddeb,"WAVE_mciCue(%u, %08lX, %p);\n", wDevID, dwParam, lpParms);
+
+/* always close elements ? */
+
+	if (MCIWavDev[wDevID].hFile != 0) {
+	  mmioClose(MCIWavDev[wDevID].hFile, 0);
+	  MCIWavDev[wDevID].hFile = 0;
+	}
+
+	hDesc = USER_HEAP_ALLOC(sizeof(WAVEOPENDESC));
+	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hDesc);
+
+	dwRet = MMSYSERR_NOERROR;  /* assume success */
+
+	if ((dwParam & MCI_WAVE_INPUT) && !MCIWavDev[wDevID].fInput) {
+
+/* FIXME this is just a hack WOutDev should be hidden here */
+	        memcpy(lpDesc,&WOutDev[wDevID].waveDesc,sizeof(WAVEOPENDESC));
+
+	        dwRet = wodMessage(wDevID, WODM_CLOSE, 0, 0L, 0L);
+	        if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
+	        dwRet = widMessage(wDevID, WIDM_OPEN, 0, (DWORD)lpDesc, CALLBACK_NULL);
+	}
+	else if (MCIWavDev[wDevID].fInput) {
+/* FIXME this is just a hack WInDev should be hidden here */
+	        memcpy(lpDesc,&WInDev[wDevID].waveDesc,sizeof(WAVEOPENDESC));
+
+	        dwRet = widMessage(wDevID, WIDM_CLOSE, 0, 0L, 0L);
+	        if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
+	        dwRet = wodMessage(wDevID, WODM_OPEN, 0, (DWORD)lpDesc, CALLBACK_NULL);
+	}
+
+	USER_HEAP_FREE(hDesc);
+
+        return dwRet;
 }
 
 /**************************************************************************
@@ -223,21 +290,23 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lp
 */
 static DWORD WAVE_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	DWORD		dwRet;
+
 	dprintf_mciwave(stddeb,
-		"WAVE_mciClose(%u, %08lX, %p);\n", wDevID, dwParam, lpParms);
-	MCIWavDev[index].nUseCount--;
-	if (MCIWavDev[index].nUseCount == 0) {
-		if (MCIWavDev[index].hFile != 0) {
-			mmioClose(MCIWavDev[index].hFile, 0);
-			MCIWavDev[index].hFile = 0;
-			}
-		dwRet = wodMessage(index, WODM_CLOSE, 0, 0L, 0L);
-		if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
-		dwRet = widMessage(index, WIDM_CLOSE, 0, 0L, 0L);
-		if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
+			"WAVE_mciClose(%u, %08lX, %p);\n", wDevID, dwParam, lpParms);
+	MCIWavDev[wDevID].nUseCount--;
+	if (MCIWavDev[wDevID].nUseCount == 0) {
+	        if (MCIWavDev[wDevID].hFile != 0) {
+		        mmioClose(MCIWavDev[wDevID].hFile, 0);
+			MCIWavDev[wDevID].hFile = 0;
 		}
+		if (MCIWavDev[wDevID].fInput)
+		        dwRet = widMessage(wDevID, WIDM_CLOSE, 0, 0L, 0L);
+		else
+		        dwRet = wodMessage(wDevID, WODM_CLOSE, 0, 0L, 0L);
+	  
+		if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
+	}
 	return 0;
 }
 
@@ -247,7 +316,6 @@ static DWORD WAVE_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpP
 */
 static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	int				start, end;
 	LONG			bufsize, count;
 	HGLOBAL16		hData;
@@ -255,13 +323,20 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	LPWAVEHDR		lpWaveHdr;
 	LPWAVEHDR		lp16WaveHdr;
 	DWORD			dwRet;
+
 	dprintf_mciwave(stddeb,
 		 "WAVE_mciPlay(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-	if (MCIWavDev[index].hFile == 0) {
-        dprintf_mciwave(stddeb,"WAVE_mciPlay // can't find file='%08lx' !\n",
-                        MCIWavDev[index].openParms.lpstrElementName);
+
+	if (MCIWavDev[wDevID].fInput) {
+	        dprintf_mciwave(stddeb,"WAVE_mciPlay // cannot play on input device\n");
+		return MCIERR_NONAPPLICABLE_FUNCTION;
+	}
+
+	if (MCIWavDev[wDevID].hFile == 0) {
+                dprintf_mciwave(stddeb,"WAVE_mciPlay // can't find file='%08lx' !\n",
+                        MCIWavDev[wDevID].openParms.lpstrElementName);
 		return MCIERR_FILE_NOT_FOUND;
-		}
+	}
 	start = 1; 		end = 99999;
 	if (dwFlags & MCI_FROM) {
 		start = lpParms->dwFrom; 
@@ -290,7 +365,7 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 		}
 #endif
 	bufsize = 64000;
-	lpWaveHdr = &MCIWavDev[index].WaveHdr;
+	lpWaveHdr = &MCIWavDev[wDevID].WaveHdr;
 	hData = GlobalAlloc16(GMEM_MOVEABLE, bufsize);
 	lpWaveHdr->lpData = (LPSTR) WIN16_GlobalLock16(hData);
 	lpWaveHdr->dwUser = 0L;
@@ -300,9 +375,9 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	lp16WaveHdr = (LPWAVEHDR) USER_HEAP_SEG_ADDR(hWaveHdr);
 	memcpy(PTR_SEG_TO_LIN(lp16WaveHdr), lpWaveHdr, sizeof(WAVEHDR));
 	lpWaveHdr = PTR_SEG_TO_LIN(lp16WaveHdr);
-	dwRet = wodMessage(index, WODM_PREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+	dwRet = wodMessage(wDevID, WODM_PREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 	while(TRUE) {
-		count = mmioRead(MCIWavDev[index].hFile, 
+		count = mmioRead(MCIWavDev[wDevID].hFile, 
 			PTR_SEG_TO_LIN(lpWaveHdr->lpData), bufsize);
 		dprintf_mciwave(stddeb,"WAVE_mciPlay // mmioRead bufsize=%ld count=%ld\n", bufsize, count);
 		if (count < 1) break;
@@ -310,9 +385,9 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 /*		lpWaveHdr->dwBytesRecorded = count; */
 		dprintf_mciwave(stddeb,"WAVE_mciPlay // before WODM_WRITE lpWaveHdr=%p dwBufferLength=%lu dwBytesRecorded=%lu\n",
 				lpWaveHdr, lpWaveHdr->dwBufferLength, lpWaveHdr->dwBytesRecorded);
-		dwRet = wodMessage(index, WODM_WRITE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+		dwRet = wodMessage(wDevID, WODM_WRITE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 		}
-	dwRet = wodMessage(index, WODM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+	dwRet = wodMessage(wDevID, WODM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 	if (lpWaveHdr->lpData != NULL) {
 		GlobalUnlock16(hData);
 		GlobalFree16(hData);
@@ -322,7 +397,7 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	if (dwFlags & MCI_NOTIFY) {
 		dprintf_mciwave(stddeb,"WAVE_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIWavDev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
 }
@@ -333,8 +408,7 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 */
 static DWORD WAVE_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
-	int				start, end;
+	int		       	start, end;
 	LONG			bufsize;
 	HGLOBAL16		hData;
 	HLOCAL16		hWaveHdr;
@@ -344,11 +418,17 @@ static DWORD WAVE_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 
 	dprintf_mciwave(stddeb,
 		"WAVE_mciRecord(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-	if (MCIWavDev[index].hFile == 0) {
+
+	if (!MCIWavDev[wDevID].fInput) {
+	        dprintf_mciwave(stddeb,"WAVE_mciPlay // cannot record on output device\n");
+		return MCIERR_NONAPPLICABLE_FUNCTION;
+	}
+
+	if (MCIWavDev[wDevID].hFile == 0) {
 		dprintf_mciwave(stddeb,"WAVE_mciRecord // can't find file='%08lx' !\n", 
-				MCIWavDev[index].openParms.lpstrElementName);
+				MCIWavDev[wDevID].openParms.lpstrElementName);
 		return MCIERR_FILE_NOT_FOUND;
-		}
+	}
 	start = 1; 		end = 99999;
 	if (dwFlags & MCI_FROM) {
 		start = lpParms->dwFrom; 
@@ -360,7 +440,7 @@ static DWORD WAVE_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 		dprintf_mciwave(stddeb,"WAVE_mciRecord // MCI_TO=%d \n", end);
 		}
 	bufsize = 64000;
-	lpWaveHdr = &MCIWavDev[index].WaveHdr;
+	lpWaveHdr = &MCIWavDev[wDevID].WaveHdr;
 	hData = GlobalAlloc16(GMEM_MOVEABLE, bufsize);
 	lpWaveHdr->lpData = (LPSTR) WIN16_GlobalLock16(hData);
 	lpWaveHdr->dwBufferLength = bufsize;
@@ -371,18 +451,18 @@ static DWORD WAVE_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 	lp16WaveHdr = (LPWAVEHDR) USER_HEAP_SEG_ADDR(hWaveHdr);
 	memcpy(PTR_SEG_TO_LIN(lp16WaveHdr), lpWaveHdr, sizeof(WAVEHDR));
 	lpWaveHdr = PTR_SEG_TO_LIN(lp16WaveHdr);
-	dwRet = widMessage(index, WIDM_PREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+	dwRet = widMessage(wDevID, WIDM_PREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
     dprintf_mciwave(stddeb,"WAVE_mciRecord // after WIDM_PREPARE \n");
 	while(TRUE) {
 		lpWaveHdr->dwBytesRecorded = 0;
-		dwRet = widMessage(index, WIDM_START, 0, 0L, 0L);
+		dwRet = widMessage(wDevID, WIDM_START, 0, 0L, 0L);
 		dprintf_mciwave(stddeb,
                     "WAVE_mciRecord // after WIDM_START lpWaveHdr=%p dwBytesRecorded=%lu\n",
 					lpWaveHdr, lpWaveHdr->dwBytesRecorded);
 		if (lpWaveHdr->dwBytesRecorded == 0) break;
 		}
 	dprintf_mciwave(stddeb,"WAVE_mciRecord // before WIDM_UNPREPARE \n");
-	dwRet = widMessage(index, WIDM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
+	dwRet = widMessage(wDevID, WIDM_UNPREPARE, 0, (DWORD)lp16WaveHdr, sizeof(WAVEHDR));
 	dprintf_mciwave(stddeb,"WAVE_mciRecord // after WIDM_UNPREPARE \n");
 	if (lpWaveHdr->lpData != NULL) {
 		GlobalUnlock16(hData);
@@ -393,7 +473,7 @@ static DWORD WAVE_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 	if (dwFlags & MCI_NOTIFY) {
 	  dprintf_mciwave(stddeb,"WAVE_mciRecord // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIWavDev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
 }
@@ -509,7 +589,6 @@ static DWORD WAVE_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 */
 static DWORD WAVE_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,
 		"WAVE_mciStatus(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -597,7 +676,7 @@ static DWORD WAVE_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	if (dwFlags & MCI_NOTIFY) {
 		dprintf_mciwave(stddeb,"WAVE_mciStatus // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIWavDev[index].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
 }
@@ -658,7 +737,6 @@ static DWORD WAVE_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 */
 static DWORD WAVE_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 {
-	int index = MMSYSTEM_DevIDToIndex(wDevID);
 	dprintf_mciwave(stddeb,
 		"WAVE_mciInfo(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -669,7 +747,7 @@ static DWORD WAVE_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms
 			break;
 		case MCI_INFO_FILE:
 			lpParms->lpstrReturn = 
-				(LPSTR)MCIWavDev[index].openParms.lpstrElementName;
+				(LPSTR)MCIWavDev[wDevID].openParms.lpstrElementName;
 			break;
 		case MCI_WAVE_INPUT:
 			lpParms->lpstrReturn = "Linux Sound System 0.5";
@@ -704,8 +782,9 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS lpCaps, DWORD dwSize)
 	dprintf_mciwave(stddeb,
 		   "wodGetDevCaps(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 	if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
+	if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
 	audio = open (SOUND_DEV, O_WRONLY, 0);
-	if (audio == -1) return MMSYSERR_NOTENABLED;
+	if (audio == -1) return MMSYSERR_ALLOCATED ;
 #ifdef EMULATE_SB16
 	lpCaps->wMid = 0x0002;
 	lpCaps->wPid = 0x0104;
@@ -777,10 +856,11 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 		return MMSYSERR_ALLOCATED;
 		}
 	WOutDev[wDevID].unixdev = 0;
+	if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
 	audio = open (SOUND_DEV, O_WRONLY, 0);
 	if (audio == -1) {
 		dprintf_mciwave(stddeb,"Linux 'wodOpen' // can't open !\n");
-		return MMSYSERR_NOTENABLED;
+		return MMSYSERR_ALLOCATED ;
 		}
 	IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, abuf_size);
 	if (abuf_size < 1024 || abuf_size > 65536) {
@@ -810,7 +890,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WOutDev[wDevID].dwTotalPlayed = 0;
 	WOutDev[wDevID].bufsize = abuf_size;
 	memcpy(&WOutDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+	dprintf_mciwave(stddeb,"Linux 'wodOpen' // lpDesc->lpFormat = %p\n",lpDesc->lpFormat);
         lpFormat = (LPWAVEFORMAT) PTR_SEG_TO_LIN(lpDesc->lpFormat); 
+/*	lpFormat = lpDesc->lpFormat; */
+	dprintf_mciwave(stddeb,"Linux 'wodOpen' // lpFormat = %p\n",lpFormat);
 	if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
 		dprintf_mciwave(stddeb,"Linux 'wodOpen' // Bad format %04X !\n",
 				lpFormat->wFormatTag);
@@ -1042,7 +1125,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 	int		volume, left, right;
 	dprintf_mciwave(stddeb,"wodGetVolume(%u, %p);\n", wDevID, lpdwVol);
 	if (lpdwVol == NULL) return MMSYSERR_NOTENABLED;
-	if ((mixer = open("/dev/mixer", O_RDONLY)) < 0) {
+	if ((mixer = open(MIXER_DEV, O_RDONLY)) < 0) {
 		dprintf_mciwave(stddeb, "Linux 'wodGetVolume' // mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -1053,7 +1136,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 	close(mixer);
 	left = volume & 0x7F;
 	right = (volume >> 8) & 0x7F;
-	printf("Linux 'AUX_GetVolume' // left=%d right=%d !\n", left, right);
+	dprintf_mciwave(stddeb,"Linux 'wodGetVolume' // left=%d right=%d !\n", left, right);
 	*lpdwVol = MAKELONG(left << 9, right << 9);
 	return MMSYSERR_NOERROR;
 }
@@ -1069,7 +1152,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 	dprintf_mciwave(stddeb,"wodSetVolume(%u, %08lX);\n", wDevID, dwParam);
 	volume = (LOWORD(dwParam) >> 9 & 0x7F) + 
 		((HIWORD(dwParam) >> 9  & 0x7F) << 8);
-	if ((mixer = open("/dev/mixer", O_WRONLY)) < 0) {
+	if ((mixer = open(MIXER_DEV, O_WRONLY)) < 0) {
 		dprintf_mciwave(stddeb,	"Linux 'wodSetVolume' // mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
 		}
@@ -1114,13 +1197,13 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 		case WODM_GETNUMDEVS:
 			return 1L;
 		case WODM_GETPITCH:
-			return 0L;
+			return MMSYSERR_NOTSUPPORTED;
 		case WODM_SETPITCH:
-			return 0L;
+			return MMSYSERR_NOTSUPPORTED;
 		case WODM_GETPLAYBACKRATE:
-			return 0L;
+			return MMSYSERR_NOTSUPPORTED;
 		case WODM_SETPLAYBACKRATE:
-			return 0L;
+			return MMSYSERR_NOTSUPPORTED;
 		case WODM_GETVOLUME:
 			return wodGetVolume(wDevID, (LPDWORD)PTR_SEG_TO_LIN(dwParam1));
 		case WODM_SETVOLUME:
@@ -1156,12 +1239,13 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPS lpCaps, DWORD dwSize)
 	dprintf_mciwave(stddeb,
 		"widGetDevCaps(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 	if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
+	if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
 	audio = open (SOUND_DEV, O_RDONLY, 0);
-	if (audio == -1) return MMSYSERR_NOTENABLED;
+	if (audio == -1) return MMSYSERR_ALLOCATED ;
 #ifdef EMULATE_SB16
 	lpCaps->wMid = 0x0002;
 	lpCaps->wPid = 0x0004;
-	strcpy(lpCaps->szPname, "SB16 Wave Out");
+	strcpy(lpCaps->szPname, "SB16 Wave In");
 #else
 	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
 	lpCaps->wPid = 0x0001; 	/* Product ID */
@@ -1225,10 +1309,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 		return MMSYSERR_ALLOCATED;
 		}
 	WInDev[wDevID].unixdev = 0;
+	if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
 	audio = open (SOUND_DEV, O_RDONLY, 0);
 	if (audio == -1) {
 		dprintf_mciwave(stddeb,"Linux 'widOpen' // can't open !\n");
-		return MMSYSERR_NOTENABLED;
+		return MMSYSERR_ALLOCATED;
 		}
 	IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, abuf_size);
 	if (abuf_size < 1024 || abuf_size > 65536) {
@@ -1258,7 +1343,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WInDev[wDevID].bufsize = abuf_size;
 	WInDev[wDevID].dwTotalRecorded = 0;
 	memcpy(&WInDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
-        lpFormat = lpDesc->lpFormat;
+        lpFormat = (LPWAVEFORMAT) PTR_SEG_TO_LIN(lpDesc->lpFormat); 
+/*        lpFormat = lpDesc->lpFormat; */
 	if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
 		dprintf_mciwave(stddeb,"Linux 'widOpen' // Bad format %04X !\n",
 					lpFormat->wFormatTag);
@@ -1619,6 +1705,8 @@ LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		case MCI_OPEN_DRIVER:
 		case MCI_OPEN:
 			return WAVE_mciOpen(dwDevID, dwParam1, (LPMCI_WAVE_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2));
+		case MCI_CUE:
+			return WAVE_mciCue(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_CLOSE_DRIVER:
 		case MCI_CLOSE:
 			return WAVE_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));

@@ -311,6 +311,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	if (s!=NULL) {
 		*s++='\0';
 		pU->openParams.lpstrElementName=SEGPTR_GET(SEGPTR_STRDUP(s));
+		dwFlags |= MCI_OPEN_ELEMENT;
 	}
 	if (!STRCMP(dev,"cdaudio")) {
 		uDevTyp=MCI_DEVTYPE_CD_AUDIO;
@@ -338,7 +339,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 		}
 	}
 	GetDrv(wDevID)->wType		= uDevTyp;
-	GetDrv(wDevID)->wDeviceID	= wDevID;
+	GetDrv(wDevID)->wDeviceID	= 0;  /* FIXME? for multiple devices */
 	pU->openParams.dwCallback	= 0;
 	pU->openParams.wDeviceID	= wDevID;
 	pU->ovlyopenParams.dwStyle	= 0; 
