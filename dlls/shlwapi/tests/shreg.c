@@ -32,6 +32,12 @@
 #define REG_TEST_KEY        "Software\\Wine\\Test"
 #define REG_CURRENT_VERSION "Software\\Microsoft\\Windows NT\\CurrentVersion"
 
+static HMODULE hshlwapi;
+typedef DWORD (WINAPI *SHCopyKeyA_func)(HKEY,LPCSTR,HKEY,DWORD);
+static SHCopyKeyA_func pSHCopyKeyA;
+typedef DWORD (WINAPI *SHRegGetPathA_func)(HKEY,LPCSTR,LPCSTR,LPSTR,DWORD);
+static SHRegGetPathA_func pSHRegGetPathA;
+
 static char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
 static char * sTestpath2 = "%FOO%\\subdir1";
 
@@ -112,8 +118,11 @@ static void test_SHGetRegPath(void)
 {
 	char buf[MAX_PATH];
 
+	if (!pSHRegGetPathA)
+		return;
+
 	strcpy(buf, sEmptyBuffer);
-	ok(! SHRegGetPathA(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", buf, 0), "SHRegGetPathA failed");
+	ok(! (*pSHRegGetPathA)(HKEY_CURRENT_USER, REG_TEST_KEY, "Test1", buf, 0), "SHRegGetPathA failed");
 	ok( 0 == strcmp(sExpTestpath1, buf) , "(%s)", buf);
 }
 
@@ -214,7 +223,6 @@ static void test_SHQUeryValueEx(void)
 	RegCloseKey(hKey);
 }
 
-
 static void test_SHCopyKey(void)
 {
 	HKEY hKeySrc, hKeyDst;
@@ -242,7 +250,8 @@ static void test_SHCopyKey(void)
 	}
 
 
-	ok (!SHCopyKeyA(hKeyDst, NULL, hKeySrc, 0), "failed copy");
+	if (pSHCopyKeyA)
+		ok (!(*pSHCopyKeyA)(hKeyDst, NULL, hKeySrc, 0), "failed copy");
 
 	RegCloseKey(hKeySrc);
 	RegCloseKey(hKeyDst);
@@ -265,6 +274,12 @@ static void test_SHCopyKey(void)
 START_TEST(shreg)
 {
 	HKEY hkey = create_test_entries();
+	hshlwapi = GetModuleHandleA("shlwapi.dll");
+	if (hshlwapi)
+	{
+		pSHCopyKeyA=(SHCopyKeyA_func)GetProcAddress(hshlwapi,"SHCopyKeyA");
+		pSHRegGetPathA=(SHRegGetPathA_func)GetProcAddress(hshlwapi,"SHRegGetPathA");
+	}
 	test_SHGetValue();
 	test_SHQUeryValueEx();
 	test_SHGetRegPath();

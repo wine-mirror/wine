@@ -27,16 +27,24 @@
 #include "lmwksta.h"
 #include "lmapibuf.h"
 
-NET_API_STATUS WINAPI NetpGetComputerName(LPWSTR *Buffer);
+typedef NET_API_STATUS (WINAPI *NetpGetComputerName_func)(LPWSTR *Buffer);
 
 void run_get_comp_name_tests(void)
 {
-    WCHAR empty[] = {0};
-    LPWSTR ws = empty;
-
-    ok(NetpGetComputerName(&ws) == NERR_Success, "Computer name is retrieved");
-    ok(ws[0] != 0, "Some value is populated to the buffer");
-    NetApiBufferFree(ws);
+    HANDLE hnetapi32 = GetModuleHandleA("netapi32.dll");
+    if (hnetapi32)
+    {
+        WCHAR empty[] = {0};
+        LPWSTR ws = empty;
+        NetpGetComputerName_func pNetpGetComputerName;
+        pNetpGetComputerName = (NetpGetComputerName_func)GetProcAddress(hnetapi32,"NetpGetComputerName");
+        if (pNetpGetComputerName)
+        {
+            ok((*pNetpGetComputerName)(&ws) == NERR_Success, "Computer name is retrieved");
+            ok(ws[0] != 0, "Some value is populated to the buffer");
+            NetApiBufferFree(ws);
+        }
+    }
 }
 
 void run_usergetinfo_tests(void)
