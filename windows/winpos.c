@@ -403,17 +403,18 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
 
    *ppWnd = NULL;
     wndPtr = WIN_LockWndPtr(wndScope->child);
+
+    if( wndScope->dwStyle & WS_DISABLED )
+    {
+	    retvalue = HTERROR;
+	    goto end;
+    }
    
     if( wndScope->flags & WIN_MANAGED )
     {
 	/* In managed mode we have to check wndScope first as it is also
 	 * a window which received the mouse event. */
 
-	if( wndScope->dwStyle & WS_DISABLED )
-	{
-	    retvalue = HTERROR;
-	    goto end;
-	}
 	if( pt.x < wndScope->rectClient.left || pt.x >= wndScope->rectClient.right ||
 	    pt.y < wndScope->rectClient.top || pt.y >= wndScope->rectClient.bottom )
 	    goto hittest;
