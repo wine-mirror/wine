@@ -330,7 +330,6 @@ extern int  DEBUG_ReadLine(const char* pfx, char* buffer, int size);
   /* debugger/display.c */
 extern int DEBUG_DoDisplay(void);
 extern int DEBUG_AddDisplay(struct expr * exp, int count, char format);
-extern int DEBUG_DoDisplay(void);
 extern int DEBUG_DelDisplay(int displaynum);
 extern int DEBUG_InfoDisplay(void);
 
@@ -361,7 +360,6 @@ extern struct name_hash * DEBUG_AddSymbol( const char *name,
 					   const char *sourcefile,
 					   int flags);
 extern enum get_sym_val DEBUG_GetSymbolValue( const char * name, const int lineno, DBG_VALUE *addr, int );
-extern BOOL DEBUG_SetSymbolValue( const char * name, const DBG_VALUE *addr );
 extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 					     struct name_hash ** rtn,
 					     unsigned int ebp,

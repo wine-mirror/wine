@@ -160,8 +160,9 @@ DEBUG_ResortSymbols(void)
 	    if( (nh->flags & SYM_INVALID) == 0 )
 	       nsym++;
 	    else
-	       DEBUG_Printf( DBG_CHN_MESG, "Symbol %s is invalid\n", nh->name );
-	  }
+	       DEBUG_Printf( DBG_CHN_MESG, "Symbol %s (%04lx:%08lx) is invalid\n", 
+                             nh->name, nh->value.addr.seg, nh->value.addr.off );
+          }
     }
 
     sorttab_nsym = nsym;
@@ -209,39 +210,53 @@ DEBUG_AddSymbol( const char * name, const DBG_VALUE *value,
     hash = name_hash(name);
     for (nh = name_hash_table[hash]; nh; nh = nh->next)
     {
- 	if( ((nh->flags & SYM_INVALID) != 0) && strcmp(name, nh->name) == 0 )
+        if (name[0] == nh->name[0] && strcmp(name, nh->name) == 0)
         {
-#if 0
-	    DEBUG_Printf(DBG_CHN_MESG, "Changing address for symbol %s (%08lx:%08lx => %08lx:%08lx)\n",
-			 name, nh->value.addr.seg, nh->value.addr.off, value->addr.seg, value->addr.off);
-#endif
- 	    nh->value.addr = value->addr;
- 	    if( nh->value.type == NULL && value->type != NULL )
-            {
- 		nh->value.type = value->type;
-		nh->value.cookie = value->cookie;
-            }
-	    /* it may happen that the same symbol is defined in several compilation
-	     * units, but the linker decides to merge it into a single instance.
-	     * in that case, we don't clear the invalid flag for all the compilation
-	     * units (N_GSYM), and wait to get the symbol from the symtab
-	     */
- 	    if ((flags & SYM_INVALID) == 0)
-	       nh->flags &= ~SYM_INVALID;
+            int c = memcmp(&nh->value.addr, &value->addr, sizeof(value->addr));
 
- 	    return nh;
-        }
- 	if (nh->value.addr.seg == value->addr.seg &&
- 	    nh->value.addr.off == value->addr.off &&
- 	    strcmp(name, nh->name) == 0 )
-        {
-            return nh;
+            if ((nh->flags & SYM_INVALID) != 0)
+            {
+                /* this case happens in ELF files, where we don't get the
+                 * address of a symbol for the stabs part, but rather from
+                 * the ELF sections. in this case, we'll call this function
+                 * twice: 
+                 * - a first time while parsing the stabs, with a NULL
+                 * address
+                 * - a second time with the correct address
+                 * SYM_INVALID is set for the first pass, and cleared in the second
+                 * the code below gets most of information for both passes
+                 * latest GCC version seem to provide correct address in first pass,
+                 */
+                if (nh->value.addr.seg == 0 && nh->value.addr.off == 0 && c != 0)
+                {
+#if 0
+                    DEBUG_Printf(DBG_CHN_MESG, "Changing address for symbol %s (%04lx:%08lx => %04lx:%08lx)\n",
+                                 name, nh->value.addr.seg, nh->value.addr.off, value->addr.seg, value->addr.off);
+#endif
+                    nh->value.addr = value->addr;
+                }
+                if (nh->value.type == NULL && value->type != NULL)
+                {
+                    nh->value.type = value->type;
+                    nh->value.cookie = value->cookie;
+                }
+                /* it may happen that the same symbol is defined in several compilation
+                 * units, but the linker decides to merge it into a single instance.
+                 * in that case, we don't clear the invalid flag for all the compilation
+                 * units (N_GSYM), and wait to get the symbol from the symtab
+                 */
+                if ((flags & SYM_INVALID) == 0)
+                    nh->flags &= ~SYM_INVALID;
+                return nh;
+            }
+            /* don't define a symbol twice */
+            if (c == 0 && (flags & SYM_INVALID) == 0) return nh;
         }
     }
 
 #if 0
-    DEBUG_Printf(DBG_CHN_TRACE, "adding symbol (%s) from file '%s' at 0x%04lx:%08lx\n",
-		 name, source, value->addr.seg, value->addr.off);
+    DEBUG_Printf(DBG_CHN_TRACE, "adding %s symbol (%s) from file '%s' at %04lx:%08lx\n",
+		 (flags & SYM_INVALID) ? "invalid" : "  valid", name, source, value->addr.seg, value->addr.off);
 #endif
 
     /*
@@ -498,42 +513,6 @@ BOOL DEBUG_GetLineNumberAddr( const struct name_hash * nh, const int lineno,
 
     return TRUE;
 }
-
-
-/***********************************************************************
- *           DEBUG_SetSymbolValue
- *
- * Set the address of a named symbol.
- */
-BOOL DEBUG_SetSymbolValue( const char * name, const DBG_VALUE *value )
-{
-    char buffer[256];
-    struct name_hash *nh;
-
-    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
-
-    for(nh = name_hash_table[name_hash(name)]; nh; nh = nh->next)
-        if (!strcmp(nh->name, name)) break;
-
-    if (!nh && (name[0] != '_'))
-    {
-        buffer[0] = '_';
-        strcpy(buffer+1, name);
-        for(nh = name_hash_table[name_hash(buffer)]; nh; nh = nh->next)
-            if (!strcmp(nh->name, buffer)) break;
-    }
-
-    if (!nh) return FALSE;
-    nh->value = *value;
-    nh->flags &= ~SYM_INVALID;
-
-#ifdef __i386__
-    DEBUG_FixAddress( &nh->value.addr, DEBUG_context.SegDs );
-#endif
-
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           DEBUG_FindNearestSymbol
@@ -1394,6 +1373,12 @@ void DEBUG_InfoSymbols(const char* str)
                           array[i]->value.addr.off );
         else
             DEBUG_Printf( DBG_CHN_MESG, "%08lx  :", array[i]->value.addr.off );
+        if (array[i]->value.type)
+        {
+            DEBUG_Printf( DBG_CHN_MESG, " (");
+            DEBUG_PrintTypeCast(array[i]->value.type);
+            DEBUG_Printf( DBG_CHN_MESG, ")");
+        }
         if (name) DEBUG_Printf( DBG_CHN_MESG, " %s\n", name );
     }
     HeapFree(GetProcessHeap(), 0, array);
