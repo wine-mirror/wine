@@ -1062,7 +1062,8 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0300:  /* Simulate real mode interrupt */
-        TRACE( "Simulate real mode interrupt.\n" );
+
+        TRACE( "Simulate real mode interrupt %d.\n", BL_reg(context));
         DOSVM_CallRMInt( context );
         break;
 
