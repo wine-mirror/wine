@@ -109,10 +109,12 @@ void test_sid()
         ok( r, "failed to allocate sid\n" );
         r = pConvertSidToStringSidA( psid, &str );
         ok( r, "failed to convert sid\n" );
-        ok( !strcmp( str, refs[i].refStr ),
-         "incorrect sid, expected %s, got %s\n", refs[i].refStr, str );
-        if( str )
+        if (r)
+        {
+            ok( !strcmp( str, refs[i].refStr ),
+                "incorrect sid, expected %s, got %s\n", refs[i].refStr, str );
             LocalFree( str );
+        }
         if( psid )
             FreeSid( psid );
 
