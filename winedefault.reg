@@ -100,6 +100,55 @@
 "OEMCP"="437"
 
 #
+# Entries for OLE32 (COM/OLE base)
+#
+
+# OLE32's built-in marshaler, handles standard interfaces such as IClassFactory.
+# (PSFactoryBuffer = Proxy/Stub factory)
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00000320-0000-0000-C000-000000000046}]
+@="PSFactoryBuffer"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00000320-0000-0000-C000-000000000046}\InProcServer32]
+@="ole32.dll"
+"ThreadingModel"="Both"
+
+# IUnknown, the superclass for everything COM/OLE.
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000000-0000-0000-C000-000000000046}]
+@="IUnknown"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000000-0000-0000-C000-000000000046}\BaseInterface]
+@=""
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000000-0000-0000-C000-000000000046}\NumMethods]
+@="3"
+
+# IClassFactory, standard interface for creating instances of classes.
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000001-0000-0000-C000-000000000046}]
+@="IClassFactory"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000001-0000-0000-C000-000000000046}\NumMethods]
+@="5"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000001-0000-0000-C000-000000000046}\ProxyStubClsid32]
+@="{00000320-0000-0000-C000-000000000046}"
+
+#
+# Entries for OLEAUT32 (OLE Automation)
+#
+
+# The Universal Marshaler, also known as the Type Library Marshaler.
+# (PSOAInterface = Proxy/Stub OLE Automation interface)
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00020424-0000-0000-C000-000000000046}]
+@="PSOAInterface"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00020424-0000-0000-C000-000000000046}\InProcServer]
+@="ole2disp.dll"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{00020424-0000-0000-C000-000000000046}\InProcServer32]
+@="oleaut32.dll"
+"ThreadingModel"="Both"
+
+#
 # SHELL32 entries base classes of the desktop/ shelllinks
 # Used by common dialogs, programs creating and many others
 #
