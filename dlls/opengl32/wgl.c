@@ -233,17 +233,20 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
   return 0;
 }
 
+/***********************************************************************
+ *		wglGetProcAddress (OPENGL32.@)
+ */
 static int compar(const void *elt_a, const void *elt_b) {
   return strcmp(((OpenGL_extension *) elt_a)->name,
 		((OpenGL_extension *) elt_b)->name);
 }
 
-/***********************************************************************
- *		wglGetProcAddress (OPENGL32.@)
- */
 void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   void *local_func;
   static HMODULE hm = 0;
+  OpenGL_extension  ext;
+  OpenGL_extension *ext_ret;
+
 
   TRACE("(%s)\n", lpszProc);
 
@@ -256,44 +259,50 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     return local_func;
   }
 
-  /* After that, look at the extensions defined in the Linux OpenGL library */
-  if ((local_func = glXGetProcAddressARB(lpszProc)) == NULL) {
-    char buf[256];
-    void *ret = NULL;
-    
-    /* Remove the 3 last letters (EXT, ARB, ...).
-       
-       I know that some extensions have more than 3 letters (MESA, NV,
-       INTEL, ...), but this is only a stop-gap measure to fix buggy
-       OpenGL drivers (moreover, it is only useful for old 1.0 apps
-       that query the glBindTextureEXT extension).
-    */
-    strncpy(buf, lpszProc, strlen(lpszProc) - 3);
-    buf[strlen(lpszProc) - 3] = '\0';
-    TRACE(" extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
-    
-    ret = GetProcAddress(hm, buf);
-    if (ret != NULL) {
-      TRACE(" found function in main OpenGL library (%p) !\n", ret);
-    }
+  /* After that, search in the thunks to find the real name of the extension */
+  ext.name = (char *) lpszProc;
+  ext_ret = (OpenGL_extension *) bsearch(&ext, extension_registry,
+					 extension_registry_size, sizeof(OpenGL_extension), compar);
 
-    return ret;
-  } else {
-    OpenGL_extension  ext;
-    OpenGL_extension *ret;
-
-    ext.name = (char *) lpszProc;
-    ret = (OpenGL_extension *) bsearch(&ext, extension_registry,
-				       extension_registry_size, sizeof(OpenGL_extension), compar);
-
-    if (ret != NULL) {
-      TRACE(" returning function  (%p)\n", ret->func);
-      *(ret->func_ptr) = local_func;
-
-      return ret->func;
-    } else {
+  if (ext_ret == NULL) {
+    /* Some sanity checks :-) */
+    if (glXGetProcAddressARB(lpszProc) != NULL) {
       ERR("Extension %s defined in the OpenGL library but NOT in opengl_ext.c... Please report (lionel.ulmer@free.fr) !\n", lpszProc);
       return NULL;
+    }
+
+    WARN("Did not find extension %s in either Wine or your OpenGL library.\n", lpszProc);
+    return NULL;
+  } else {
+    /* After that, look at the extensions defined in the Linux OpenGL library */
+    if ((local_func = glXGetProcAddressARB(ext_ret->glx_name)) == NULL) {
+      char buf[256];
+      void *ret = NULL;
+      
+      /* Remove the 3 last letters (EXT, ARB, ...).
+	 
+	 I know that some extensions have more than 3 letters (MESA, NV,
+	 INTEL, ...), but this is only a stop-gap measure to fix buggy
+	 OpenGL drivers (moreover, it is only useful for old 1.0 apps
+	 that query the glBindTextureEXT extension).
+      */
+      strncpy(buf, ext_ret->glx_name, strlen(ext_ret->glx_name) - 3);
+      buf[strlen(ext_ret->glx_name) - 3] = '\0';
+      TRACE(" extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
+      
+      ret = GetProcAddress(hm, buf);
+      if (ret != NULL) {
+	TRACE(" found function in main OpenGL library (%p) !\n", ret);
+      } else {
+	WARN("Did not find function %s (%s) in your OpenGL library !\n", lpszProc, ext_ret->glx_name);
+      }	
+      
+      return ret;
+    } else {
+      TRACE(" returning function  (%p)\n", ext_ret->func);
+      *(ext_ret->func_ptr) = local_func;
+      
+      return ext_ret->func;
     }
   }
 }
