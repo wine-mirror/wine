@@ -170,6 +170,16 @@ static const char main_key_RU[MAIN_LEN][4] =
  "zZÑñ","xXÞþ","cCÓó","vVÍí","bBÉé","nNÔô","mMØø",",<Ââ",".>Àà","/?"
 };
 
+/*** Spanish keyboard layout (contributed by José Marcos López) */
+static const char main_key_ES[MAIN_LEN][4] =
+{
+ "ºª\\","1!|","2\"@","3·#","4$","5%","6&¬","7/","8(","9)","0=","'?","¡¿",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","`^[","+*]",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ñÑ","'¨{","çÇ}",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static struct {
  WORD lang, ansi_codepage, oem_codepage;
@@ -186,6 +196,7 @@ static struct {
  {MAKELANGID(LANG_PORTUGUESE,SUBLANG_DEFAULT),     1252, 860, &main_key_PT},
  {MAKELANGID(LANG_FINNISH,SUBLANG_DEFAULT),        1252, 850, &main_key_FI},
  {MAKELANGID(LANG_RUSSIAN,SUBLANG_DEFAULT),        1251, 866, &main_key_RU},
+ {MAKELANGID(LANG_SPANISH,SUBLANG_DEFAULT),        1252, 850, &main_key_ES},
 
  {0} /* sentinel */
 };
