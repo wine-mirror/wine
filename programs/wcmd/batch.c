@@ -30,6 +30,7 @@ extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
 extern DWORD errorlevel;
 
+#define MAXSTRING 1024
 
 /****************************************************************************
  * WCMD_batch
@@ -47,7 +48,7 @@ extern DWORD errorlevel;
 void WCMD_batch (char *file, char *command, int called) {
 
 HANDLE h;
-char string[MAX_PATH];
+char string[MAXSTRING];
 BATCH_CONTEXT *prev_context;
 
   strcpy (string, file);
@@ -77,6 +78,8 @@ BATCH_CONTEXT *prev_context;
  */
 
   while (WCMD_fgets (string, sizeof(string), h)) {
+    if (strlen(string) == MAXSTRING -1)
+      WCMD_output("Line in Batch processing possible truncated. Using:\n%s\n",string);
     if (string[0] != ':') {                      /* Skip over labels */
       WCMD_batch_command (string);
     }
@@ -108,7 +111,7 @@ BATCH_CONTEXT *prev_context;
 void WCMD_batch_command (char *line) {
 
 DWORD status;
-char cmd1[1024],cmd2[1024];
+char cmd1[MAXSTRING],cmd2[MAXSTRING];
 char *p, *s, *t;
 int i;
 
