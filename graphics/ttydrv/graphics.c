@@ -106,33 +106,12 @@ BOOL TTYDRV_DC_LineTo(DC *dc, INT x, INT y)
   }
   wrefresh(physDev->window);
 
-  dc->w.CursPosX = x;
-  dc->w.CursPosY = y;
-
   return TRUE;
 #else /* defined(HAVE_LIBCURSES) */
   FIXME("(%p, %d, %d): stub\n", dc, x, y);
 
   return TRUE;
 #endif /* defined(HAVE_LIBCURSES) */
-}
-
-/***********************************************************************
- *		TTYDRV_DC_MoveToEx
- */
-BOOL TTYDRV_DC_MoveToEx(DC *dc, INT x, INT y, LPPOINT pt)
-{
-  TRACE("(%p, %d, %d, %p)\n", dc, x, y, pt);
-
-  if(pt) {
-    pt->x = dc->w.CursPosX;
-    pt->y = dc->w.CursPosY;
-  }
-  
-  dc->w.CursPosX = x;
-  dc->w.CursPosY = y;
-
-  return TRUE;
 }
 
 /***********************************************************************
@@ -160,11 +139,9 @@ BOOL TTYDRV_DC_Pie(DC *dc, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *		TTYDRV_DC_PolyBezier
  */
-BOOL TTYDRV_DC_PolyBezier(DC *dc, POINT start,
-			  const POINT* BezierPoints, DWORD count)
+BOOL TTYDRV_DC_PolyBezier(DC *dc, const POINT* BezierPoints, DWORD count)
 {
-  FIXME("(%p, {%ld, %ld}, %p, %lu): stub\n",
-	dc, start.x, start.y, BezierPoints, count);
+  FIXME("(%p, %p, %lu): stub\n", dc, BezierPoints, count);
 
   return TRUE;
 }

@@ -170,10 +170,15 @@ typedef INT (*DEVICEFONTENUMPROC)(LPENUMLOGFONTEX16,LPNEWTEXTMETRIC16,UINT16,LPA
 typedef struct tagDC_FUNCS
 {
     INT      (*pAbortDoc)(DC*);
+    BOOL     (*pAbortPath)(DC*);
+    BOOL     (*pAngleArc)(DC*,INT,INT,DWORD,FLOAT,FLOAT);
     BOOL     (*pArc)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pArcTo)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);    
+    BOOL     (*pBeginPath)(DC*);
     BOOL     (*pBitBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,DWORD);
     LONG     (*pBitmapBits)(HBITMAP,void*,LONG,WORD);
     BOOL     (*pChord)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pCloseFigure)(DC*);
     BOOL     (*pCreateBitmap)(HBITMAP); 
     BOOL     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
     HBITMAP  (*pCreateDIBSection)(DC *,BITMAPINFO *,UINT,LPVOID *,HANDLE,
@@ -186,6 +191,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pEllipse)(DC*,INT,INT,INT,INT);
     INT      (*pEndDoc)(DC*);
     INT      (*pEndPage)(DC*);
+    BOOL     (*pEndPath)(DC*);
     BOOL     (*pEnumDeviceFonts)(DC*,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
     INT      (*pEscape)(DC*,INT,INT,SEGPTR,SEGPTR);
     INT      (*pExcludeClipRect)(DC*,INT,INT,INT,INT);
@@ -194,7 +200,9 @@ typedef struct tagDC_FUNCS
     BOOL     (*pExtFloodFill)(DC*,INT,INT,COLORREF,UINT);
     BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCSTR,UINT,
 			    const INT*);
+    BOOL     (*pFillPath)(DC*);
     BOOL     (*pFillRgn)(DC*,HRGN,HBRUSH);
+    BOOL     (*pFlattenPath)(DC*);
     BOOL     (*pFrameRgn)(DC*,HRGN,HBRUSH,INT,INT);
     BOOL     (*pGetCharWidth)(DC*,UINT,UINT,LPINT);
     COLORREF (*pGetPixel)(DC*,INT,INT);
@@ -211,11 +219,14 @@ typedef struct tagDC_FUNCS
     BOOL     (*pPaintRgn)(DC*,HRGN);
     BOOL     (*pPatBlt)(DC*,INT,INT,INT,INT,DWORD);
     BOOL     (*pPie)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pPolyBezier)(DC*,const POINT*,DWORD);
+    BOOL     (*pPolyBezierTo)(DC*,const POINT*,DWORD);
+    BOOL     (*pPolyDraw)(DC*,const POINT*,const BYTE *,DWORD);
     BOOL     (*pPolyPolygon)(DC*,const POINT*,const INT*,UINT);
     BOOL     (*pPolyPolyline)(DC*,const POINT*,const DWORD*,DWORD);
     BOOL     (*pPolygon)(DC*,const POINT*,INT);
     BOOL     (*pPolyline)(DC*,const POINT*,INT);
-    BOOL     (*pPolyBezier)(DC*,POINT, const POINT*,DWORD);
+    BOOL     (*pPolylineTo)(DC*,const POINT*,INT);
     UINT     (*pRealizePalette)(DC*);
     BOOL     (*pRectangle)(DC*,INT,INT,INT,INT);
     BOOL     (*pRestoreDC)(DC*,INT);
@@ -223,6 +234,7 @@ typedef struct tagDC_FUNCS
     INT      (*pSaveDC)(DC*);
     BOOL     (*pScaleViewportExt)(DC*,INT,INT,INT,INT);
     BOOL     (*pScaleWindowExt)(DC*,INT,INT,INT,INT);
+    BOOL     (*pSelectClipPath)(DC*,INT);
     INT      (*pSelectClipRgn)(DC*,HRGN);
     HANDLE   (*pSelectObject)(DC*,HANDLE);
     HPALETTE (*pSelectPalette)(DC*,HPALETTE,BOOL);
@@ -251,6 +263,9 @@ typedef struct tagDC_FUNCS
     BOOL     (*pStretchBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,INT,INT,DWORD);
     INT      (*pStretchDIBits)(DC*,INT,INT,INT,INT,INT,INT,INT,INT,
 			       const void *,const BITMAPINFO *,UINT,DWORD);
+    BOOL     (*pStrokeAndFillPath)(DC*);
+    BOOL     (*pStrokePath)(DC*);
+    BOOL     (*pWidenPath)(DC*);
 } DC_FUNCTIONS;
 
   /* LoadOEMResource types */

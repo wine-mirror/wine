@@ -298,22 +298,6 @@ BOOL X11DRV_SetupGCForText( DC * dc )
     return FALSE;
 }
 
-
-/**********************************************************************
- *	     X11DRV_MoveToEx
- */
-BOOL
-X11DRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt) {
-    if (pt)
-    {
-	pt->x = dc->w.CursPosX;
-	pt->y = dc->w.CursPosY;
-    }
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
-    return TRUE;
-}
-
 /***********************************************************************
  *           X11DRV_LineTo
  */
@@ -328,8 +312,6 @@ X11DRV_LineTo( DC *dc, INT x, INT y )
 		  dc->w.DCOrgY + YLPTODP( dc, dc->w.CursPosY ),
 		  dc->w.DCOrgX + XLPTODP( dc, x ),
 		  dc->w.DCOrgY + YLPTODP( dc, y ) );
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
     return TRUE;
 }
 
@@ -1364,8 +1346,11 @@ static void X11DRV_Bezier(int level, DC * dc, POINT *Points,
     }
 }
 
+
+    
+
 /***********************************************************************
- *           X11DRV_PolyBezier
+ *           X11DRV_InternalPolyBezier
  *      Implement functionality for PolyBezier and PolyBezierTo
  *      calls. 
  *      [i] dc pointer to device context
@@ -1374,8 +1359,9 @@ static void X11DRV_Bezier(int level, DC * dc, POINT *Points,
  *      [i] count, number of points in BezierPoints, must be a 
  *          multiple of 3.
  */
-BOOL
-X11DRV_PolyBezier(DC *dc, POINT start, const POINT* BezierPoints, DWORD count)
+static BOOL
+X11DRV_InternalPolyBezier(DC *dc, POINT start, const POINT* BezierPoints,
+DWORD count)
 {
     POINT Points[4]; 
     int i;
@@ -1412,6 +1398,28 @@ X11DRV_PolyBezier(DC *dc, POINT start, const POINT* BezierPoints, DWORD count)
 			  xpoints, ix, CoordModeOrigin );
     free(xpoints);
     return TRUE;
+}
+
+/**********************************************************************
+ *          X11DRV_PolyBezier
+ */
+BOOL
+X11DRV_PolyBezier(DC *dc, const POINT *Points, DWORD count)
+{
+    return X11DRV_InternalPolyBezier(dc, Points[0], Points+1, count-1);
+}
+
+/**********************************************************************
+ *          X11DRV_PolyBezierTo
+ */
+BOOL
+X11DRV_PolyBezierTo(DC *dc, const POINT *Points, DWORD count)
+{
+    POINT pt;
+
+    pt.x = dc->w.CursPosX;
+    pt.y = dc->w.CursPosY;
+    return X11DRV_InternalPolyBezier(dc, pt, Points, count);
 }
 
 /**********************************************************************

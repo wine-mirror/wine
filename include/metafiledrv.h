@@ -35,16 +35,20 @@ extern INT16 MFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush );
 
 /* Metafile driver functions */
 
+extern BOOL MFDRV_AbortPath( DC *dc );
 extern BOOL MFDRV_Arc( DC *dc, INT left, INT top, INT right, INT bottom,
 		       INT xstart, INT ystart, INT xend, INT yend );
+extern BOOL MFDRV_BeginPath( DC *dc );
 extern BOOL MFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst,  INT width,
 			  INT height, DC *dcSrc, INT xSrc, INT ySrc,
 			  DWORD rop );
 extern BOOL MFDRV_Chord( DC *dc, INT left, INT top, INT right,
 			 INT bottom, INT xstart, INT ystart, INT xend,
 			 INT yend );
+extern BOOL MFDRV_CloseFigure( DC *dc );
 extern BOOL MFDRV_Ellipse( DC *dc, INT left, INT top,
 			   INT right, INT bottom );
+extern BOOL MFDRV_EndPath( DC *dc );
 extern INT MFDRV_ExcludeClipRect( DC *dc, INT left, INT top, INT right, INT
 				  bottom );
 extern BOOL MFDRV_ExtFloodFill( DC *dc, INT x, INT y,
@@ -52,7 +56,9 @@ extern BOOL MFDRV_ExtFloodFill( DC *dc, INT x, INT y,
 extern BOOL MFDRV_ExtTextOut( DC *dc, INT x, INT y,
 			      UINT flags, const RECT *lprect, LPCSTR str,
 			      UINT count, const INT *lpDx );
+extern BOOL MFDRV_FillPath( DC *dc );
 extern BOOL MFDRV_FillRgn( DC *dc, HRGN hrgn, HBRUSH hbrush );
+extern BOOL MFDRV_FlattenPath( DC *dc );
 extern BOOL MFDRV_FrameRgn( DC *dc, HRGN hrgn, HBRUSH hbrush, INT x, INT y );
 extern INT MFDRV_IntersectClipRect( DC *dc, INT left, INT top, INT right, INT
 				    bottom );
@@ -83,6 +89,7 @@ extern BOOL MFDRV_ScaleViewportExt( DC *dc, INT xNum, INT xDenom, INT yNum,
 				    INT yDenom );
 extern BOOL MFDRV_ScaleWindowExt( DC *dc, INT xNum, INT xDenom, INT yNum,
 				  INT yDenom );
+extern BOOL MFDRV_SelectClipPath( DC *dc, INT iMode );
 extern HGDIOBJ MFDRV_SelectObject( DC *dc, HGDIOBJ handle );
 extern COLORREF MFDRV_SetBkColor( DC *dc, COLORREF color );
 extern INT MFDRV_SetBkMode( DC *dc, INT mode );
@@ -114,5 +121,9 @@ extern INT MFDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 				INT widthSrc, INT heightSrc, const void *bits,
 				const BITMAPINFO *info, UINT wUsage,
 				DWORD dwRop );
+extern BOOL MFDRV_StrokeAndFillPath( DC *dc );
+extern BOOL MFDRV_StrokePath( DC *dc );
+extern BOOL MFDRV_WidenPath( DC *dc );
 
 #endif  /* __WINE_METAFILEDRV_H */
+

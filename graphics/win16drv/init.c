@@ -45,10 +45,15 @@ static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput,
 static const DC_FUNCTIONS WIN16DRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
+    NULL,                            /* pAbortPath */
+    NULL,                            /* pAngleArc */
     NULL,                            /* pArc */
+    NULL,                            /* pArcTo */
+    NULL,                            /* pBeginPath */
     NULL,                            /* pBitBlt */
     NULL,                            /* pBitmapBits */
     NULL,                            /* pChord */
+    NULL,                            /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
     WIN16DRV_CreateDC,               /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
@@ -59,13 +64,16 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_Ellipse,                /* pEllipse */
     NULL,                            /* pEndDoc */
     NULL,                            /* pEndPage */
+    NULL,                            /* pEndPath */
     WIN16DRV_EnumDeviceFonts,        /* pEnumDeviceFonts */
     WIN16DRV_Escape,                 /* pEscape */
     NULL,                            /* pExcludeClipRect */
     WIN16DRV_ExtDeviceMode,          /* pExtDeviceMode */
     NULL,                            /* pExtFloodFill */
     WIN16DRV_ExtTextOut,             /* pExtTextOut */
+    NULL,                            /* pFillPath */
     NULL,                            /* pFillRgn */
+    NULL,                            /* pFlattenPath */
     NULL,                            /* pFrameRgn */
     WIN16DRV_GetCharWidth,           /* pGetCharWidth */
     NULL,                            /* pGetPixel */
@@ -82,11 +90,14 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pPaintRgn */
     WIN16DRV_PatBlt,                 /* pPatBlt */
     NULL,                            /* pPie */
+    NULL,                            /* pPolyBezier */
+    NULL,                            /* pPolyBezierTo */
+    NULL,                            /* pPolyDraw */
     NULL,                            /* pPolyPolygon */
     NULL,                            /* pPolyPolyline */
     WIN16DRV_Polygon,                /* pPolygon */
     WIN16DRV_Polyline,               /* pPolyline */
-    NULL,                            /* pPolyBezier */
+    NULL,                            /* pPolylineTo */
     NULL,                            /* pRealizePalette */
     WIN16DRV_Rectangle,              /* pRectangle */
     NULL,                            /* pRestoreDC */
@@ -94,6 +105,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSaveDC */
     NULL,                            /* pScaleViewportExtEx */
     NULL,                            /* pScaleWindowExtEx */
+    NULL,                            /* pSelectClipPath */
     NULL,                            /* pSelectClipRgn */
     WIN16DRV_SelectObject,           /* pSelectObject */
     NULL,                            /* pSelectPalette */
@@ -119,7 +131,10 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */
-    NULL                             /* pStretchDIBits */
+    NULL,                            /* pStretchDIBits */
+    NULL,                            /* pStrokeAndFillPath */
+    NULL,                            /* pStrokePath */
+    NULL                             /* pWidenPath */
 };
 
 

@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <malloc.h>
 #include <math.h>
 #include <string.h>
 #include "config.h"
@@ -92,19 +91,23 @@ BOOL16 WINAPI BeginPath16(HDC16 hdc)
 
 
 /***********************************************************************
- *           BeginPath32    (GDI32.9)
+ *           BeginPath    (GDI32.9)
  */
 BOOL WINAPI BeginPath(HDC hdc)
 {
+   DC *dc = DC_GetDCPtr( hdc );
    GdiPath *pPath;
    
-   /* Get pointer to path */
-   if(!PATH_GetPathFromHDC(hdc, &pPath))
-   {
-      SetLastError(ERROR_INVALID_HANDLE);
-      return FALSE;
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
    }
-   
+
+   if(dc->funcs->pBeginPath)
+     return dc->funcs->pBeginPath(dc);
+
+   pPath = &dc->w.path;
+
    /* If path is already open, do nothing */
    if(pPath->state==PATH_Open)
       return TRUE;
@@ -130,19 +133,23 @@ BOOL16 WINAPI EndPath16(HDC16 hdc)
 
 
 /***********************************************************************
- *           EndPath32    (GDI32.78)
+ *           EndPath    (GDI32.78)
  */
 BOOL WINAPI EndPath(HDC hdc)
 {
+   DC *dc = DC_GetDCPtr( hdc );
    GdiPath *pPath;
    
-   /* Get pointer to path */
-   if(!PATH_GetPathFromHDC(hdc, &pPath))
-   {
-      SetLastError(ERROR_INVALID_HANDLE);
-      return FALSE;
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
    }
-   
+
+   if(dc->funcs->pEndPath)
+     return dc->funcs->pEndPath(dc);
+
+   pPath = &dc->w.path;
+
    /* Check that path is currently being constructed */
    if(pPath->state!=PATH_Open)
    {
@@ -167,7 +174,7 @@ BOOL16 WINAPI AbortPath16(HDC16 hdc)
 
 
 /******************************************************************************
- * AbortPath32 [GDI32.1]
+ * AbortPath [GDI32.1]
  * Closes and discards paths from device context
  *
  * NOTES
@@ -180,14 +187,18 @@ BOOL16 WINAPI AbortPath16(HDC16 hdc)
  */
 BOOL WINAPI AbortPath( HDC hdc )
 {
+   DC *dc = DC_GetDCPtr( hdc );
    GdiPath *pPath;
    
-   /* Get pointer to path */
-   if(!PATH_GetPathFromHDC(hdc, &pPath))
-   {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      return FALSE;
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
    }
+
+   if(dc->funcs->pAbortPath)
+     return dc->funcs->pAbortPath(dc);
+
+   pPath = &dc->w.path;
    
    /* Remove all entries from the path */
    PATH_EmptyPath(pPath);
@@ -206,21 +217,25 @@ BOOL16 WINAPI CloseFigure16(HDC16 hdc)
 
 
 /***********************************************************************
- *           CloseFigure32    (GDI32.16)
+ *           CloseFigure    (GDI32.16)
  *
  * FIXME: Check that SetLastError is being called correctly 
  */
 BOOL WINAPI CloseFigure(HDC hdc)
 {
+   DC *dc = DC_GetDCPtr( hdc );
    GdiPath *pPath;
    
-   /* Get pointer to path */
-   if(!PATH_GetPathFromHDC(hdc, &pPath))
-   {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      return FALSE;
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
    }
-   
+
+   if(dc->funcs->pCloseFigure)
+     return dc->funcs->pCloseFigure(dc);
+
+   pPath = &dc->w.path;
+
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
    {
@@ -254,7 +269,7 @@ INT16 WINAPI GetPath16(HDC16 hdc, LPPOINT16 pPoints, LPBYTE pTypes,
 
 
 /***********************************************************************
- *           GetPath32    (GDI32.210)
+ *           GetPath    (GDI32.210)
  */
 INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
    INT nSize)
@@ -308,7 +323,7 @@ HRGN16 WINAPI PathToRegion16(HDC16 hdc)
 }
 
 /***********************************************************************
- *           PathToRegion32    (GDI32.261)
+ *           PathToRegion    (GDI32.261)
  *
  * FIXME 
  *   Check that SetLastError is being called correctly 
@@ -353,7 +368,7 @@ BOOL16 WINAPI FillPath16(HDC16 hdc)
 }
 
 /***********************************************************************
- *           FillPath32    (GDI32.100)
+ *           FillPath    (GDI32.100)
  *
  * FIXME
  *    Check that SetLastError is being called correctly 
@@ -366,14 +381,18 @@ BOOL WINAPI FillPath(HDC hdc)
    POINT ptViewportOrg, ptWindowOrg;
    XFORM   xform;
    HRGN  hrgn;
+   DC *dc = DC_GetDCPtr( hdc );
    
-   /* Get pointer to path */
-   if(!PATH_GetPathFromHDC(hdc, &pPath))
-   {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      return FALSE;
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
    }
-   
+
+   if(dc->funcs->pFillPath)
+     return dc->funcs->pFillPath(dc);
+
+   pPath = &dc->w.path;
+
    /* Check that path is closed */
    if(pPath->state!=PATH_Closed)
    {
@@ -409,7 +428,9 @@ BOOL WINAPI FillPath(HDC hdc)
       
       /* Set MM_TEXT */
       SetMapMode(hdc, MM_TEXT);
-      
+      SetViewportOrgEx(hdc, 0, 0, NULL);
+      SetWindowOrgEx(hdc, 0, 0, NULL);
+
       /* Paint the region */
       PaintRgn(hdc, hrgn);
 
@@ -447,7 +468,7 @@ BOOL16 WINAPI SelectClipPath16(HDC16 hdc, INT16 iMode)
 }
 
 /***********************************************************************
- *           SelectClipPath32    (GDI32.296)
+ *           SelectClipPath    (GDI32.296)
  * FIXME 
  *  Check that SetLastError is being called correctly 
  */
@@ -456,13 +477,17 @@ BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
    GdiPath *pPath;
    HRGN  hrgnPath;
    BOOL  success;
+   DC *dc = DC_GetDCPtr( hdc );
    
-   /* Get pointer to path */
-   if(!PATH_GetPathFromHDC(hdc, &pPath))
-   {
-      SetLastError(ERROR_INVALID_PARAMETER);
-      return FALSE;
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
    }
+
+   if(dc->funcs->pSelectClipPath)
+     return dc->funcs->pSelectClipPath(dc, iMode);
+
+   pPath = &dc->w.path;
    
    /* Check that path is closed */
    if(pPath->state!=PATH_Closed)
@@ -516,8 +541,8 @@ void PATH_DestroyGdiPath(GdiPath *pPath)
 {
    assert(pPath!=NULL);
 
-   free(pPath->pPoints);
-   free(pPath->pFlags);
+   HeapFree( GetProcessHeap(), 0, pPath->pPoints );
+   HeapFree( GetProcessHeap(), 0, pPath->pFlags );
 }
 
 /* PATH_AssignGdiPath
@@ -542,7 +567,8 @@ BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
    memcpy(pPathDest->pPoints, pPathSrc->pPoints,
       sizeof(POINT)*pPathSrc->numEntriesUsed);
    memcpy(pPathDest->pFlags, pPathSrc->pFlags,
-      sizeof(INT)*pPathSrc->numEntriesUsed);
+      sizeof(BYTE)*pPathSrc->numEntriesUsed);
+
    pPathDest->state=pPathSrc->state;
    pPathDest->numEntriesUsed=pPathSrc->numEntriesUsed;
    pPathDest->newStroke=pPathSrc->newStroke;
@@ -854,6 +880,38 @@ BOOL PATH_Arc(HDC hdc, INT x1, INT y1, INT x2, INT y2,
    return TRUE;
 }
 
+BOOL PATH_PolyBezierTo(HDC hdc, const POINT *pts, DWORD cbPoints)
+{
+   GdiPath     *pPath;
+   POINT       pt;
+   INT         i;
+
+   if(!PATH_GetPathFromHDC(hdc, &pPath))
+      return FALSE;
+   
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   /* Add a PT_MOVETO if necessary */
+   if(pPath->newStroke)
+   {
+      pPath->newStroke=FALSE;
+      if(!GetCurrentPositionEx(hdc, &pt) ||
+         !LPtoDP(hdc, &pt, 1))
+         return FALSE;
+      if(!PATH_AddEntry(pPath, &pt, PT_MOVETO))
+         return FALSE;
+   }
+   for(i = 0; i < cbPoints; i++) {
+       pt = pts[i];
+       if(!LPtoDP(hdc, &pt, 1))
+	   return FALSE;
+       PATH_AddEntry(pPath, &pt, PT_BEZIERTO);
+   }
+   return TRUE;
+}
+   
 /***********************************************************************
  * Internal functions
  */
@@ -886,7 +944,8 @@ static BOOL PATH_PathToRegion(const GdiPath *pPath, INT nPolyFillMode,
          numStrokes++;
 
    /* Allocate memory for number-of-points-in-stroke array */
-   pNumPointsInStroke=(int *)malloc(sizeof(int)*numStrokes);
+   pNumPointsInStroke=(int *)HeapAlloc( GetProcessHeap(), 0, 
+					sizeof(int) * numStrokes );
    if(!pNumPointsInStroke)
    {
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -917,7 +976,7 @@ static BOOL PATH_PathToRegion(const GdiPath *pPath, INT nPolyFillMode,
    }
 
    /* Free memory for number-of-points-in-stroke array */
-   free(pNumPointsInStroke);
+   HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
 
    /* Success! */
    *pHrgn=hrgn;
@@ -1001,16 +1060,18 @@ static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries)
 	       GROW_FACTOR_DENOM;
       }
       else
-         numEntriesToAllocate=NUM_ENTRIES_INITIAL;
+         numEntriesToAllocate=numEntries;
 
       /* Allocate new arrays */
-      pPointsNew=(POINT *)malloc(numEntriesToAllocate * sizeof(POINT));
+      pPointsNew=(POINT *)HeapAlloc( GetProcessHeap(), 0, 
+				     numEntriesToAllocate * sizeof(POINT) );
       if(!pPointsNew)
          return FALSE;
-      pFlagsNew=(BYTE *)malloc(numEntriesToAllocate * sizeof(BYTE));
+      pFlagsNew=(BYTE *)HeapAlloc( GetProcessHeap(), 0, 
+				   numEntriesToAllocate * sizeof(BYTE) );
       if(!pFlagsNew)
       {
-         free(pPointsNew);
+         HeapFree( GetProcessHeap(), 0, pPointsNew );
 	 return FALSE;
       }
 
@@ -1024,8 +1085,8 @@ static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries)
 	 memcpy(pFlagsNew, pPath->pFlags,
 	     sizeof(BYTE)*pPath->numEntriesUsed);
 
-	 free(pPath->pPoints);
-	 free(pPath->pFlags);
+	 HeapFree( GetProcessHeap(), 0, pPath->pPoints );
+	 HeapFree( GetProcessHeap(), 0, pPath->pFlags );
       }
       pPath->pPoints=pPointsNew;
       pPath->pFlags=pFlagsNew;
@@ -1157,14 +1218,24 @@ BOOL16 WINAPI FlattenPath16(HDC16 hdc)
 }
 
 /*******************************************************************
- *      FlattenPath32 [GDI32.103]
+ *      FlattenPath [GDI32.103]
  *
  *
  */
 BOOL WINAPI FlattenPath(HDC hdc)
 {
-        FIXME("FlattenPath, stub\n");
-        return 0;
+   DC *dc = DC_GetDCPtr( hdc );
+   
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
+   }
+
+   if(dc->funcs->pFlattenPath)
+     return dc->funcs->pFlattenPath(dc);
+
+   FIXME("stub\n");
+   return 0;
 }
 
 /*******************************************************************
@@ -1184,8 +1255,18 @@ BOOL16 WINAPI StrokeAndFillPath16(HDC16 hdc)
  */
 BOOL WINAPI StrokeAndFillPath(HDC hdc)
 {
-        FIXME("StrokeAndFillPath, stub\n");
-        return 0;
+   DC *dc = DC_GetDCPtr( hdc );
+   
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
+   }
+
+   if(dc->funcs->pStrokeAndFillPath)
+     return dc->funcs->pStrokeAndFillPath(dc);
+
+   FIXME("stub\n");
+   return StrokePath(hdc);
 }
 
 /*******************************************************************
@@ -1205,8 +1286,62 @@ BOOL16 WINAPI StrokePath16(HDC16 hdc)
  */
 BOOL WINAPI StrokePath(HDC hdc)
 {
-        FIXME("StrokePath, stub\n");
-        return 0;
+    DC *dc = DC_GetDCPtr( hdc );
+    GdiPath *pPath;
+    INT i;
+    POINT ptLastMove = {0,0};
+
+    TRACE("(%08x)\n", hdc);
+    if(!dc) {
+        SetLastError(ERROR_INVALID_HANDLE);
+	return FALSE;
+    }
+
+    if(dc->funcs->pStrokePath)
+        return dc->funcs->pStrokePath(dc);
+
+    pPath = &dc->w.path;
+    if(pPath->state != PATH_Closed)
+        return FALSE;
+
+    SaveDC(hdc);
+    SetMapMode(hdc, MM_TEXT);
+    SetViewportOrgEx(hdc, 0, 0, NULL);
+    SetWindowOrgEx(hdc, 0, 0, NULL);
+    for(i = 0; i < pPath->numEntriesUsed; i++) {
+	switch(pPath->pFlags[i]) {
+	case PT_MOVETO:
+	    TRACE("Got PT_MOVETO (%ld, %ld)\n",
+		  pPath->pPoints[i].x, pPath->pPoints[i].y);
+	    MoveToEx(hdc, pPath->pPoints[i].x, pPath->pPoints[i].y, NULL);
+	    ptLastMove = pPath->pPoints[i];
+	    break;
+	case PT_LINETO:
+	case (PT_LINETO | PT_CLOSEFIGURE):
+	    TRACE("Got PT_LINETO (%ld, %ld)\n",
+		  pPath->pPoints[i].x, pPath->pPoints[i].y);
+	    LineTo(hdc, pPath->pPoints[i].x, pPath->pPoints[i].y);
+	    break;
+	case PT_BEZIERTO:
+	    TRACE("Got PT_BEZIERTO\n");
+	    if(pPath->pFlags[i+1] != PT_BEZIERTO || 
+	       (pPath->pFlags[i+2] & ~PT_CLOSEFIGURE) != PT_BEZIERTO) {
+	        ERR("Path didn't contain 3 successive PT_BEZIERTOs\n");
+		return FALSE;
+	    }
+	    PolyBezierTo(hdc, &pPath->pPoints[i], 3);
+	    i += 2;
+	    break;
+	default:
+	    ERR("Got path flag %d\n", (INT)pPath->pFlags[i]);
+	    return FALSE;
+	}
+	if(pPath->pFlags[i] & PT_CLOSEFIGURE)
+	    LineTo(hdc, ptLastMove.x, ptLastMove.y);
+    }
+    RestoreDC(hdc, -1);
+    PATH_EmptyPath(pPath);
+    return TRUE;
 }
 
 /*******************************************************************
@@ -1226,7 +1361,16 @@ BOOL16 WINAPI WidenPath16(HDC16 hdc)
  */
 BOOL WINAPI WidenPath(HDC hdc)
 {
-        FIXME("WidenPath, stub\n");
-        return 0;
-}
+   DC *dc = DC_GetDCPtr( hdc );
    
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
+   }
+
+   if(dc->funcs->pWidenPath)
+     return dc->funcs->pWidenPath(dc);
+
+   FIXME("stub\n");
+   return 0;
+}

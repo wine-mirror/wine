@@ -50,5 +50,7 @@ extern BOOL PATH_Ellipse(HDC hdc, INT x1, INT y1,
    INT x2, INT y2);
 extern BOOL PATH_Arc(HDC hdc, INT x1, INT y1, INT x2, INT y2,
    INT xStart, INT yStart, INT xEnd, INT yEnd);
-
+extern BOOL PATH_PolyBezierTo(HDC hdc, const POINT *pt, DWORD cbCount);
 #endif /* __WINE_PATH_H */
+
+

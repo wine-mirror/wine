@@ -20,10 +20,15 @@ DEFAULT_DEBUG_CHANNEL(metafile)
 static const DC_FUNCTIONS MFDRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
+    MFDRV_AbortPath,                 /* pAbortPath */
+    NULL,                            /* pAngleArc */
     MFDRV_Arc,                       /* pArc */
+    NULL,                            /* pArcTo */
+    MFDRV_BeginPath,                 /* pBeginPath */
     MFDRV_BitBlt,                    /* pBitBlt */
     NULL,                            /* pBitmapBits */	
     MFDRV_Chord,                     /* pChord */
+    MFDRV_CloseFigure,               /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
     NULL, /* no implementation */    /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
@@ -34,13 +39,16 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_Ellipse,                   /* pEllipse */
     NULL,                            /* pEndDoc */
     NULL,                            /* pEndPage */
+    MFDRV_EndPath,                   /* pEndPath */
     NULL,                            /* pEnumDeviceFonts */
     NULL,                            /* pEscape */
     MFDRV_ExcludeClipRect,           /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
     MFDRV_ExtFloodFill,              /* pExtFloodFill */
     MFDRV_ExtTextOut,                /* pExtTextOut */
+    MFDRV_FillPath,                  /* pFillPath */
     MFDRV_FillRgn,                   /* pFillRgn */
+    MFDRV_FlattenPath,               /* pFlattenPath */
     MFDRV_FrameRgn,                  /* pFrameRgn */
     NULL,                            /* pGetCharWidth */
     NULL, /* no implementation */    /* pGetPixel */
@@ -57,11 +65,14 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_PaintRgn,                  /* pPaintRgn */
     MFDRV_PatBlt,                    /* pPatBlt */
     MFDRV_Pie,                       /* pPie */
+    NULL,                            /* pPolyBezier */
+    NULL,                            /* pPolyBezierTo */
+    NULL,                            /* pPolyDraw */
     MFDRV_PolyPolygon,               /* pPolyPolygon */
     NULL,                            /* pPolyPolyline */
     MFDRV_Polygon,                   /* pPolygon */
     MFDRV_Polyline,                  /* pPolyline */
-    NULL,                            /* pPolyBezier */
+    NULL,                            /* pPolylineTo */
     NULL,                            /* pRealizePalette */
     MFDRV_Rectangle,                 /* pRectangle */
     MFDRV_RestoreDC,                 /* pRestoreDC */
@@ -69,6 +80,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SaveDC,                    /* pSaveDC */
     MFDRV_ScaleViewportExt,          /* pScaleViewportExt */
     MFDRV_ScaleWindowExt,            /* pScaleWindowExt */
+    MFDRV_SelectClipPath,            /* pSelectClipPath */
     NULL,                            /* pSelectClipRgn */
     MFDRV_SelectObject,              /* pSelectObject */
     NULL,                            /* pSelectPalette */
@@ -94,7 +106,10 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     MFDRV_StretchBlt,                /* pStretchBlt */
-    MFDRV_StretchDIBits              /* pStretchDIBits */
+    MFDRV_StretchDIBits,             /* pStretchDIBits */
+    MFDRV_StrokeAndFillPath,         /* pStrokeAndFillPath */
+    MFDRV_StrokePath,                /* pStrokePath */
+    MFDRV_WidenPath                  /* pWidenPath */
 };
 
 

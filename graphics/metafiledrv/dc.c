@@ -81,3 +81,52 @@ DWORD MFDRV_SetMapperFlags( DC *dc, DWORD flags )
 			     LOWORD(flags) );
 }
 
+BOOL MFDRV_AbortPath( DC *dc )
+{
+    return FALSE;
+}
+
+BOOL MFDRV_BeginPath( DC *dc )
+{
+    return FALSE;
+}
+
+BOOL MFDRV_CloseFigure( DC *dc )
+{
+    return FALSE;
+}
+
+BOOL MFDRV_EndPath( DC *dc )
+{
+    return FALSE;
+}
+
+BOOL MFDRV_FillPath( DC *dc )
+{
+    return FALSE;
+}
+
+BOOL MFDRV_FlattenPath( DC *dc )
+{
+    return FALSE;
+}
+
+BOOL MFDRV_SelectClipPath( DC *dc, INT iMode )
+{
+    return FALSE;
+}
+
+BOOL MFDRV_StrokeAndFillPath( DC *dc )
+{
+    return FALSE;
+}
+
+BOOL MFDRV_StrokePath( DC *dc )
+{
+    return FALSE;
+}
+
+BOOL MFDRV_WidenPath( DC *dc )
+{
+    return FALSE;
+}

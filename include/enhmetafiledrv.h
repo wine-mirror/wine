@@ -24,17 +24,21 @@ extern void EMFDRV_UpdateBBox( DC *dc, RECTL *rect );
 extern DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush );
 
 /* Metafile driver functions */
+extern BOOL     EMFDRV_AbortPath( DC *dc );
 extern BOOL     EMFDRV_Arc( DC *dc, INT left, INT top, INT right,
 			    INT bottom, INT xstart, INT ystart, INT xend,
 			    INT yend );
+extern BOOL     EMFDRV_BeginPath( DC *dc );
 extern BOOL     EMFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
 			       INT width, INT height, DC *dcSrc,
 			       INT xSrc, INT ySrc, DWORD rop );
 extern BOOL     EMFDRV_Chord( DC *dc, INT left, INT top, INT right,
 			      INT bottom, INT xstart, INT ystart, INT xend,
 			      INT yend );
+extern BOOL     EMFDRV_CloseFigure( DC *dc );
 extern BOOL     EMFDRV_Ellipse( DC *dc, INT left, INT top,
 				INT right, INT bottom );
+extern BOOL     EMFDRV_EndPath( DC *dc );
 extern INT      EMFDRV_ExcludeClipRect( DC *dc, INT left, INT top, INT right,
 					INT bottom );
 extern BOOL     EMFDRV_ExtFloodFill( DC *dc, INT x, INT y,
@@ -42,7 +46,9 @@ extern BOOL     EMFDRV_ExtFloodFill( DC *dc, INT x, INT y,
 extern BOOL     EMFDRV_ExtTextOut( DC *dc, INT x, INT y,
 				   UINT flags, const RECT *lprect, LPCSTR str,
 				   UINT count, const INT *lpDx );
+extern BOOL     EMFDRV_FillPath( DC *dc );
 extern BOOL     EMFDRV_FillRgn( DC *dc, HRGN hrgn, HBRUSH hbrush );
+extern BOOL     EMFDRV_FlattenPath( DC *dc );
 extern BOOL     EMFDRV_FrameRgn( DC *dc, HRGN hrgn, HBRUSH hbrush, INT width,
 				 INT height );
 extern INT      EMFDRV_IntersectClipRect( DC *dc, INT left, INT top, INT right,
@@ -76,6 +82,7 @@ extern BOOL     EMFDRV_ScaleViewportExt( DC *dc, INT xNum,
 					 INT xDenom, INT yNum, INT yDenom );
 extern BOOL     EMFDRV_ScaleWindowExt( DC *dc, INT xNum, INT xDenom,
 				       INT yNum, INT yDenom );
+extern BOOL     EMFDRV_SelectClipPath( DC *dc, INT iMode );
 extern HGDIOBJ  EMFDRV_SelectObject( DC *dc, HGDIOBJ handle );
 extern COLORREF EMFDRV_SetBkColor( DC *dc, COLORREF color );
 extern INT      EMFDRV_SetBkMode( DC *dc, INT mode );
@@ -105,6 +112,9 @@ extern INT      EMFDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 				      INT widthSrc, INT heightSrc,
 				      const void *bits, const BITMAPINFO *info,
 				      UINT wUsage, DWORD dwRop );
+extern BOOL     EMFDRV_StrokeAndFillPath( DC *dc );
+extern BOOL     EMFDRV_StrokePath( DC *dc );
+extern BOOL     EMFDRV_WidenPath( DC *dc );
 
 
 #endif  /* __WINE_METAFILEDRV_H */

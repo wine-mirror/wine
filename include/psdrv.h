@@ -336,7 +336,6 @@ extern BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
 					LPSIZE size );
 extern BOOL PSDRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics );
 extern BOOL PSDRV_LineTo( DC *dc, INT x, INT y );
-extern BOOL PSDRV_MoveToEx( DC *dc, INT x, INT y, LPPOINT pt );
 extern BOOL PSDRV_PatBlt( DC *dc, INT x, INT y, INT width, INT height, DWORD
 			  dwRop);
 extern BOOL PSDRV_Pie( DC *dc, INT left, INT top, INT right,

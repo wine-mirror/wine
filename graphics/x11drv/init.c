@@ -33,10 +33,15 @@ static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
 static const DC_FUNCTIONS X11DRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
+    NULL,                            /* pAbortPath */
+    NULL,                            /* pAngleArc */
     X11DRV_Arc,                      /* pArc */
+    NULL,                            /* pArcTo */
+    NULL,                            /* pBeginPath */
     X11DRV_BitBlt,                   /* pBitBlt */
     X11DRV_BitmapBits,               /* pBitmapBits */
     X11DRV_Chord,                    /* pChord */
+    NULL,                            /* pCloseFigure */
     X11DRV_CreateBitmap,             /* pCreateBitmap */
     X11DRV_CreateDC,                 /* pCreateDC */
     X11DRV_DIB_CreateDIBSection,     /* pCreateDIBSection */
@@ -47,13 +52,16 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_Ellipse,                  /* pEllipse */
     NULL,                            /* pEndDoc */
     NULL,                            /* pEndPage */
+    NULL,                            /* pEndPath */
     X11DRV_EnumDeviceFonts,          /* pEnumDeviceFonts */
     X11DRV_Escape,                   /* pEscape */
     NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
     X11DRV_ExtFloodFill,             /* pExtFloodFill */
     X11DRV_ExtTextOut,               /* pExtTextOut */
+    NULL,                            /* pFillPath */
     NULL,                            /* pFillRgn */
+    NULL,                            /* pFlattenPath */
     NULL,                            /* pFrameRgn */
     X11DRV_GetCharWidth,             /* pGetCharWidth */
     X11DRV_GetPixel,                 /* pGetPixel */
@@ -63,18 +71,21 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pInvertRgn */
     X11DRV_LineTo,                   /* pLineTo */
     X11DRV_LoadOEMResource,          /* pLoadOEMResource */
-    X11DRV_MoveToEx,                 /* pMoveToEx */
+    NULL,                            /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrg (optional) */
     NULL,                            /* pOffsetWindowOrg (optional) */
     X11DRV_PaintRgn,                 /* pPaintRgn */
     X11DRV_PatBlt,                   /* pPatBlt */
     X11DRV_Pie,                      /* pPie */
+    X11DRV_PolyBezier,               /* pPolyBezier */
+    X11DRV_PolyBezierTo,             /* pPolyBezierTo */
+    NULL,                            /* pPolyDraw */
     X11DRV_PolyPolygon,              /* pPolyPolygon */
     X11DRV_PolyPolyline,             /* pPolyPolyline */
     X11DRV_Polygon,                  /* pPolygon */
     X11DRV_Polyline,                 /* pPolyline */
-    X11DRV_PolyBezier,               /* pPolyBezier */
+    NULL,                            /* pPolylineTo */
     NULL,                            /* pRealizePalette */
     X11DRV_Rectangle,                /* pRectangle */
     NULL,                            /* pRestoreDC */
@@ -82,6 +93,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSaveDC */
     NULL,                            /* pScaleViewportExt (optional) */
     NULL,                            /* pScaleWindowExt (optional) */
+    NULL,                            /* pSelectClipPath */
     NULL,                            /* pSelectClipRgn */
     X11DRV_SelectObject,             /* pSelectObject */
     NULL,                            /* pSelectPalette */
@@ -107,7 +119,10 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
     X11DRV_StretchBlt,               /* pStretchBlt */
-    NULL                             /* pStretchDIBits */
+    NULL,                            /* pStretchDIBits */
+    NULL,                            /* pStrokeAndFillPath */
+    NULL,                            /* pStrokePath */
+    NULL                             /* pWidenPath */
 };
 
 GDI_DRIVER X11DRV_GDI_Driver =

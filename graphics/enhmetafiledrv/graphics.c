@@ -28,16 +28,7 @@ EMFDRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt)
     emr.ptl.x = x;
     emr.ptl.y = y;
 
-    if(!EMFDRV_WriteRecord( dc, &emr.emr ))
-    	return FALSE;
-
-    if (pt) {
-	pt->x = dc->w.CursPosX;
-	pt->y = dc->w.CursPosY;
-    }
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
-    return TRUE;
+    return EMFDRV_WriteRecord( dc, &emr.emr );
 }
 
 /***********************************************************************
@@ -64,8 +55,6 @@ EMFDRV_LineTo( DC *dc, INT x, INT y )
 
     EMFDRV_UpdateBBox( dc, &bounds );
 
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
     return TRUE;
 }
 

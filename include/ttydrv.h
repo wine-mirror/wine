@@ -76,11 +76,10 @@ extern BOOL TTYDRV_DC_GetTextExtentPoint(struct tagDC *dc, LPCSTR str, INT count
 extern BOOL TTYDRV_DC_GetTextMetrics(struct tagDC *dc, TEXTMETRICA *metrics);
 extern BOOL TTYDRV_DC_LineTo(struct tagDC *dc, INT x, INT y);
 extern HANDLE TTYDRV_DC_LoadOEMResource(WORD resid, WORD type);
-extern BOOL TTYDRV_DC_MoveToEx(struct tagDC *dc, INT x, INT y, LPPOINT pt);
 extern BOOL TTYDRV_DC_PaintRgn(struct tagDC *dc, HRGN hrgn);
 extern BOOL TTYDRV_DC_PatBlt(struct tagDC *dc, INT left, INT top, INT width, INT height, DWORD rop);
 extern BOOL TTYDRV_DC_Pie(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
-extern BOOL TTYDRV_DC_PolyBezier(struct tagDC *dc, POINT start, const POINT* BezierPoints, DWORD count);
+extern BOOL TTYDRV_DC_PolyBezier(struct tagDC *dc, const POINT* BezierPoints, DWORD count);
 extern BOOL TTYDRV_DC_Polygon(struct tagDC *dc, const POINT* pt, INT count);
 extern BOOL TTYDRV_DC_Polyline(struct tagDC *dc, const POINT* pt, INT count);
 extern BOOL TTYDRV_DC_PolyPolygon(struct tagDC *dc, const POINT* pt, const INT* counts, UINT polygons);

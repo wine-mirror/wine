@@ -12,6 +12,7 @@
 #include "heap.h"
 #include "debugtools.h"
 #include "wine/winuser16.h"
+#include "cache.h"
 
 DECLARE_DEBUG_CHANNEL(nonclient)
 DECLARE_DEBUG_CHANNEL(win)
@@ -1221,6 +1222,411 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
     } 
     WIN_ReleaseWndPtr(wndPtr);
     return GetClipBox( hdc, &rect );
+}
+
+
+
+/***********************************************************************
+ *           FillRect16    (USER.81)
+ */
+INT16 WINAPI FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
+{
+    HBRUSH16 prevBrush;
+
+    /* coordinates are logical so we cannot fast-check 'rect',
+     * it will be done later in the PatBlt().
+     */
+
+    if (!(prevBrush = SelectObject16( hdc, hbrush ))) return 0;
+    PatBlt( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
+    SelectObject16( hdc, prevBrush );
+    return 1;
+}
+
+
+/***********************************************************************
+ *           FillRect    (USER32.197)
+ */
+INT WINAPI FillRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
+{
+    HBRUSH prevBrush;
+
+    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
+    PatBlt( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
+    SelectObject( hdc, prevBrush );
+    return 1;
+}
+
+
+/***********************************************************************
+ *           InvertRect16    (USER.82)
+ */
+void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
+{
+    PatBlt( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
+}
+
+
+/***********************************************************************
+ *           InvertRect    (USER32.330)
+ */
+BOOL WINAPI InvertRect( HDC hdc, const RECT *rect )
+{
+    return PatBlt( hdc, rect->left, rect->top,
+		     rect->right - rect->left, rect->bottom - rect->top, 
+		     DSTINVERT );
+}
+
+
+/***********************************************************************
+ *           FrameRect    (USER32.203)
+ */
+INT WINAPI FrameRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
+{
+    HBRUSH prevBrush;
+    RECT r = *rect;
+
+    LPtoDP(hdc, (POINT *)&r, 2);
+
+    if ( (r.right <= r.left) || (r.bottom <= r.top) ) return 0;
+    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
+    
+    PatBlt( hdc, r.left, r.top, 1,
+	      r.bottom - r.top, PATCOPY );
+    PatBlt( hdc, r.right - 1, r.top, 1,
+	      r.bottom - r.top, PATCOPY );
+    PatBlt( hdc, r.left, r.top,
+	      r.right - r.left, 1, PATCOPY );
+    PatBlt( hdc, r.left, r.bottom - 1,
+	      r.right - r.left, 1, PATCOPY );
+
+    SelectObject( hdc, prevBrush );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           FrameRect16    (USER.83)
+ */
+INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect16, HBRUSH16 hbrush )
+{
+    RECT rect;
+    CONV_RECT16TO32( rect16, &rect );
+    return FrameRect( hdc, &rect, hbrush );
+}
+
+
+/***********************************************************************
+ *           DrawFocusRect16    (USER.466)
+ */
+void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
+{
+    RECT rect32;
+    CONV_RECT16TO32( rc, &rect32 );
+    DrawFocusRect( hdc, &rect32 );
+}
+
+
+/***********************************************************************
+ *           DrawFocusRect    (USER32.156)
+ *
+ * FIXME: PatBlt(PATINVERT) with background brush.
+ */
+BOOL WINAPI DrawFocusRect( HDC hdc, const RECT* rc )
+{
+    HBRUSH hOldBrush;
+    HPEN hOldPen, hNewPen;
+    INT oldDrawMode, oldBkMode;
+
+    hOldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    hNewPen = CreatePen(PS_DOT, 1, GetSysColor(COLOR_WINDOWTEXT));
+    hOldPen = SelectObject(hdc, hNewPen);
+    oldDrawMode = SetROP2(hdc, R2_XORPEN);
+    oldBkMode = SetBkMode(hdc, TRANSPARENT);
+
+    Rectangle(hdc, rc->left, rc->top, rc->right, rc->bottom);
+
+    SetBkMode(hdc, oldBkMode);
+    SetROP2(hdc, oldDrawMode);
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hNewPen);
+    SelectObject(hdc, hOldBrush);
+
+    return TRUE;
+}
+
+/**********************************************************************
+ *          DrawAnimatedRects16  (USER.448)
+ */
+BOOL16 WINAPI DrawAnimatedRects16( HWND16 hwnd, INT16 idAni,
+                                   const RECT16* lprcFrom,
+                                   const RECT16* lprcTo )
+{
+    RECT rcFrom32, rcTo32;
+
+    rcFrom32.left	= (INT)lprcFrom->left;
+    rcFrom32.top	= (INT)lprcFrom->top;
+    rcFrom32.right	= (INT)lprcFrom->right;
+    rcFrom32.bottom	= (INT)lprcFrom->bottom;
+
+    rcTo32.left		= (INT)lprcTo->left;
+    rcTo32.top		= (INT)lprcTo->top;
+    rcTo32.right	= (INT)lprcTo->right;
+    rcTo32.bottom	= (INT)lprcTo->bottom;
+
+    return DrawAnimatedRects((HWND)hwnd, (INT)idAni, &rcFrom32, &rcTo32);
+}
+
+
+/**********************************************************************
+ *          DrawAnimatedRects  (USER32.153)
+ */
+BOOL WINAPI DrawAnimatedRects( HWND hwnd, int idAni,
+                                   const RECT* lprcFrom,
+                                   const RECT* lprcTo )
+{
+    FIXME_(win)("(0x%x,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *          PAINTING_DrawStateJam
+ *
+ * Jams in the requested type in the dc
+ */
+static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
+                                    DRAWSTATEPROC func, LPARAM lp, WPARAM wp, 
+                                    LPRECT rc, UINT dtflags,
+                                    BOOL unicode, BOOL _32bit)
+{
+    HDC memdc;
+    HBITMAP hbmsave;
+    BOOL retval;
+    INT cx = rc->right - rc->left;
+    INT cy = rc->bottom - rc->top;
+    
+    switch(opcode)
+    {
+    case DST_TEXT:
+    case DST_PREFIXTEXT:
+        if(unicode)
+            return DrawTextW(hdc, (LPWSTR)lp, (INT)wp, rc, dtflags);
+        else if(_32bit)
+            return DrawTextA(hdc, (LPSTR)lp, (INT)wp, rc, dtflags);
+        else
+            return DrawTextA(hdc, (LPSTR)PTR_SEG_TO_LIN(lp), (INT)wp, rc, dtflags);
+
+    case DST_ICON:
+        return DrawIcon(hdc, rc->left, rc->top, (HICON)lp);
+
+    case DST_BITMAP:
+        memdc = CreateCompatibleDC(hdc);
+        if(!memdc) return FALSE;
+        hbmsave = (HBITMAP)SelectObject(memdc, (HBITMAP)lp);
+        if(!hbmsave) 
+        {
+            DeleteDC(memdc);
+            return FALSE;
+        }
+        retval = BitBlt(hdc, rc->left, rc->top, cx, cy, memdc, 0, 0, SRCCOPY);
+        SelectObject(memdc, hbmsave);
+        DeleteDC(memdc);
+        return retval;
+            
+    case DST_COMPLEX:
+        if(func)
+            if(_32bit)
+                return func(hdc, lp, wp, cx, cy);
+            else
+                return (BOOL)((DRAWSTATEPROC16)func)((HDC16)hdc, (LPARAM)lp, (WPARAM16)wp, (INT16)cx, (INT16)cy);
+        else
+            return FALSE;
+    }
+    return FALSE;
+}
+
+/**********************************************************************
+ *      PAINTING_DrawState()
+ */
+static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr, 
+                                   DRAWSTATEPROC func, LPARAM lp, WPARAM wp,
+                                   INT x, INT y, INT cx, INT cy, 
+                                   UINT flags, BOOL unicode, BOOL _32bit)
+{
+    HBITMAP hbm, hbmsave;
+    HFONT hfsave;
+    HBRUSH hbsave;
+    HDC memdc;
+    RECT rc;
+    UINT dtflags = DT_NOCLIP;
+    COLORREF fg, bg;
+    UINT opcode = flags & 0xf;
+    INT len = wp;
+    BOOL retval, tmp;
+
+    if((opcode == DST_TEXT || opcode == DST_PREFIXTEXT) && !len)    /* The string is '\0' terminated */
+    {
+        if(unicode)
+            len = lstrlenW((LPWSTR)lp);
+        else if(_32bit)
+            len = lstrlenA((LPSTR)lp);
+        else
+            len = lstrlenA((LPSTR)PTR_SEG_TO_LIN(lp));
+    }
+
+    /* Find out what size the image has if not given by caller */
+    if(!cx || !cy)
+    {
+        SIZE s;
+        CURSORICONINFO *ici;
+	BITMAP bm;
+
+        switch(opcode)
+        {
+        case DST_TEXT:
+        case DST_PREFIXTEXT:
+            if(unicode)
+                retval = GetTextExtentPoint32W(hdc, (LPWSTR)lp, len, &s);
+            else if(_32bit)
+                retval = GetTextExtentPoint32A(hdc, (LPSTR)lp, len, &s);
+            else
+                retval = GetTextExtentPoint32A(hdc, PTR_SEG_TO_LIN(lp), len, &s);
+            if(!retval) return FALSE;
+            break;
+            
+        case DST_ICON:
+            ici = (CURSORICONINFO *)GlobalLock16((HGLOBAL16)lp);
+            if(!ici) return FALSE;
+            s.cx = ici->nWidth;
+            s.cy = ici->nHeight;
+            GlobalUnlock16((HGLOBAL16)lp);
+            break;            
+
+        case DST_BITMAP:
+	    if(!GetObjectA((HBITMAP)lp, sizeof(bm), &bm))
+	        return FALSE;
+            s.cx = bm.bmWidth;
+            s.cy = bm.bmHeight;
+            break;
+            
+        case DST_COMPLEX: /* cx and cy must be set in this mode */
+            return FALSE;
+	}
+	            
+        if(!cx) cx = s.cx;
+        if(!cy) cy = s.cy;
+    }
+
+    rc.left   = x;
+    rc.top    = y;
+    rc.right  = x + cx;
+    rc.bottom = y + cy;
+
+    if(flags & DSS_RIGHT)    /* This one is not documented in the win32.hlp file */
+        dtflags |= DT_RIGHT;
+    if(opcode == DST_TEXT)
+        dtflags |= DT_NOPREFIX;
+
+    /* For DSS_NORMAL we just jam in the image and return */
+    if((flags & 0x7ff0) == DSS_NORMAL)
+    {
+        return PAINTING_DrawStateJam(hdc, opcode, func, lp, len, &rc, dtflags, unicode, _32bit);
+    }
+
+    /* For all other states we need to convert the image to B/W in a local bitmap */
+    /* before it is displayed */
+    fg = SetTextColor(hdc, RGB(0, 0, 0));
+    bg = SetBkColor(hdc, RGB(255, 255, 255));
+    hbm = (HBITMAP)NULL; hbmsave = (HBITMAP)NULL;
+    memdc = (HDC)NULL; hbsave = (HBRUSH)NULL;
+    retval = FALSE; /* assume failure */
+    
+    /* From here on we must use "goto cleanup" when something goes wrong */
+    hbm     = CreateBitmap(cx, cy, 1, 1, NULL);
+    if(!hbm) goto cleanup;
+    memdc   = CreateCompatibleDC(hdc);
+    if(!memdc) goto cleanup;
+    hbmsave = (HBITMAP)SelectObject(memdc, hbm);
+    if(!hbmsave) goto cleanup;
+    rc.left = rc.top = 0;
+    rc.right = cx;
+    rc.bottom = cy;
+    if(!FillRect(memdc, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH))) goto cleanup;
+    SetBkColor(memdc, RGB(255, 255, 255));
+    SetTextColor(memdc, RGB(0, 0, 0));
+    hfsave  = (HFONT)SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
+    if(!hfsave && (opcode == DST_TEXT || opcode == DST_PREFIXTEXT)) goto cleanup;
+    tmp = PAINTING_DrawStateJam(memdc, opcode, func, lp, len, &rc, dtflags, unicode, _32bit);
+    if(hfsave) SelectObject(memdc, hfsave);
+    if(!tmp) goto cleanup;
+    
+    /* These states cause the image to be dithered */
+    if(flags & (DSS_UNION|DSS_DISABLED))
+    {
+        hbsave = (HBRUSH)SelectObject(memdc, CACHE_GetPattern55AABrush());
+        if(!hbsave) goto cleanup;
+        tmp = PatBlt(memdc, 0, 0, cx, cy, 0x00FA0089);
+        if(hbsave) SelectObject(memdc, hbsave);
+        if(!tmp) goto cleanup;
+    }
+
+    hbsave = (HBRUSH)SelectObject(hdc, hbr ? hbr : GetStockObject(WHITE_BRUSH));
+    if(!hbsave) goto cleanup;
+    
+    if(!BitBlt(hdc, x, y, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
+    
+    /* DSS_DEFAULT makes the image boldface */
+    if(flags & DSS_DEFAULT)
+    {
+        if(!BitBlt(hdc, x+1, y, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
+    }
+
+    retval = TRUE; /* We succeeded */
+    
+cleanup:    
+    SetTextColor(hdc, fg);
+    SetBkColor(hdc, bg);
+
+    if(hbsave)  SelectObject(hdc, hbsave);
+    if(hbmsave) SelectObject(memdc, hbmsave);
+    if(hbm)     DeleteObject(hbm);
+    if(memdc)   DeleteDC(memdc);
+
+    return retval;
+}
+
+/**********************************************************************
+ *      DrawStateA()   (USER32.162)
+ */
+BOOL WINAPI DrawStateA(HDC hdc, HBRUSH hbr,
+                   DRAWSTATEPROC func, LPARAM ldata, WPARAM wdata,
+                   INT x, INT y, INT cx, INT cy, UINT flags)
+{
+    return PAINTING_DrawState(hdc, hbr, func, ldata, wdata, x, y, cx, cy, flags, FALSE, TRUE);
+}
+
+/**********************************************************************
+ *      DrawStateW()   (USER32.163)
+ */
+BOOL WINAPI DrawStateW(HDC hdc, HBRUSH hbr,
+                   DRAWSTATEPROC func, LPARAM ldata, WPARAM wdata,
+                   INT x, INT y, INT cx, INT cy, UINT flags)
+{
+    return PAINTING_DrawState(hdc, hbr, func, ldata, wdata, x, y, cx, cy, flags, TRUE, TRUE);
+}
+
+/**********************************************************************
+ *      DrawState16()   (USER.449)
+ */
+BOOL16 WINAPI DrawState16(HDC16 hdc, HBRUSH16 hbr,
+                   DRAWSTATEPROC16 func, LPARAM ldata, WPARAM16 wdata,
+                   INT16 x, INT16 y, INT16 cx, INT16 cy, UINT16 flags)
+{
+    return PAINTING_DrawState(hdc, hbr, (DRAWSTATEPROC)func, ldata, wdata, x, y, cx, cy, flags, FALSE, FALSE);
 }
 
 

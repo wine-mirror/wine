@@ -5,6 +5,9 @@
  *
  */
 #include "enhmetafiledrv.h"
+#include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(enhmetafile)
 
 INT EMFDRV_SaveDC( DC *dc )
 {
@@ -118,6 +121,119 @@ DWORD EMFDRV_SetMapperFlags( DC *dc, DWORD flags )
     emr.emr.iType = EMR_SETMAPPERFLAGS;
     emr.emr.nSize = sizeof(emr);
     emr.dwFlags   = flags;
+
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_AbortPath( DC *dc )
+{
+    EMRABORTPATH emr;
+
+    emr.emr.iType = EMR_ABORTPATH;
+    emr.emr.nSize = sizeof(emr);
+
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_BeginPath( DC *dc )
+{
+    EMRBEGINPATH emr;
+
+    emr.emr.iType = EMR_BEGINPATH;
+    emr.emr.nSize = sizeof(emr);
+
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_CloseFigure( DC *dc )
+{
+    EMRCLOSEFIGURE emr;
+
+    emr.emr.iType = EMR_CLOSEFIGURE;
+    emr.emr.nSize = sizeof(emr);
+
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_EndPath( DC *dc )
+{
+    EMRENDPATH emr;
+
+    emr.emr.iType = EMR_ENDPATH;
+    emr.emr.nSize = sizeof(emr);
+
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_FillPath( DC *dc )
+{
+    EMRFILLPATH emr;
+
+    emr.emr.iType = EMR_FILLPATH;
+    emr.emr.nSize = sizeof(emr);
+    FIXME("Bounds\n");
+    emr.rclBounds.left = 0;
+    emr.rclBounds.top = 0;
+    emr.rclBounds.right = 0;
+    emr.rclBounds.bottom = 0;
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_FlattenPath( DC *dc )
+{
+    EMRFLATTENPATH emr;
+
+    emr.emr.iType = EMR_FLATTENPATH;
+    emr.emr.nSize = sizeof(emr);
+
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_SelectClipPath( DC *dc, INT iMode )
+{
+    EMRSELECTCLIPPATH emr;
+
+    emr.emr.iType = EMR_SELECTCLIPPATH;
+    emr.emr.nSize = sizeof(emr);
+    emr.iMode = iMode;
+
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_StrokeAndFillPath( DC *dc )
+{
+    EMRSTROKEANDFILLPATH emr;
+
+    emr.emr.iType = EMR_STROKEANDFILLPATH;
+    emr.emr.nSize = sizeof(emr);
+    FIXME("Bounds\n");
+    emr.rclBounds.left = 0;
+    emr.rclBounds.top = 0;
+    emr.rclBounds.right = 0;
+    emr.rclBounds.bottom = 0;
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_StrokePath( DC *dc )
+{
+    EMRSTROKEPATH emr;
+
+    emr.emr.iType = EMR_STROKEPATH;
+    emr.emr.nSize = sizeof(emr);
+    FIXME("Bounds\n");
+    emr.rclBounds.left = 0;
+    emr.rclBounds.top = 0;
+    emr.rclBounds.right = 0;
+    emr.rclBounds.bottom = 0;
+    return EMFDRV_WriteRecord( dc, &emr.emr );
+}
+
+BOOL EMFDRV_WidenPath( DC *dc )
+{
+    EMRWIDENPATH emr;
+
+    emr.emr.iType = EMR_WIDENPATH;
+    emr.emr.nSize = sizeof(emr);
 
     return EMFDRV_WriteRecord( dc, &emr.emr );
 }

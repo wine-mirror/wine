@@ -103,7 +103,6 @@ extern BOOL X11DRV_StretchBlt( struct tagDC *dcDst, INT xDst, INT yDst,
                                  INT widthDst, INT heightDst,
                                  struct tagDC *dcSrc, INT xSrc, INT ySrc,
                                  INT widthSrc, INT heightSrc, DWORD rop );
-extern BOOL X11DRV_MoveToEx( struct tagDC *dc, INT x, INT y,LPPOINT pt);
 extern BOOL X11DRV_LineTo( struct tagDC *dc, INT x, INT y);
 extern BOOL X11DRV_Arc( struct tagDC *dc, INT left, INT top, INT right,
 			  INT bottom, INT xstart, INT ystart, INT xend,
@@ -126,7 +125,10 @@ extern COLORREF X11DRV_SetPixel( struct tagDC *dc, INT x, INT y,
 extern COLORREF X11DRV_GetPixel( struct tagDC *dc, INT x, INT y);
 extern BOOL X11DRV_PaintRgn( struct tagDC *dc, HRGN hrgn );
 extern BOOL X11DRV_Polyline( struct tagDC *dc,const POINT* pt,INT count);
-extern BOOL X11DRV_PolyBezier( struct tagDC *dc, const POINT start, const POINT* lppt, DWORD cPoints);
+extern BOOL X11DRV_PolyBezier( struct tagDC *dc, const POINT* lppt,
+			       DWORD cPoints);
+extern BOOL X11DRV_PolyBezierTo( struct tagDC *dc, const POINT* lppt,
+				 DWORD cPoints);
 extern BOOL X11DRV_Polygon( struct tagDC *dc, const POINT* pt, INT count );
 extern BOOL X11DRV_PolyPolygon( struct tagDC *dc, const POINT* pt, 
 				  const INT* counts, UINT polygons);

@@ -21,10 +21,15 @@ DEFAULT_DEBUG_CHANNEL(ttydrv)
 static const DC_FUNCTIONS TTYDRV_DC_Driver =
 {
   NULL,                /* pAbortDoc */
+  NULL,                /* pAbortPath */
+  NULL,                /* pAngleArc */
   TTYDRV_DC_Arc,       /* pArc */
+  NULL,                /* pArcTo */
+  NULL,                /* pBeginPath */
   TTYDRV_DC_BitBlt,    /* pBitBlt */
   NULL,                /* pBitmapBits */
   TTYDRV_DC_Chord,     /* pChord */
+  NULL,                /* pCloseFigure */
   TTYDRV_DC_CreateBitmap, /* pCreateBitmap */
   TTYDRV_DC_CreateDC,  /* pCreateDC */
   NULL,                /* pCreateDIBSection */
@@ -35,13 +40,16 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   TTYDRV_DC_Ellipse,   /* pEllipse */
   NULL,                /* pEndDoc */
   NULL,                /* pEndPage */
+  NULL,                /* pEndPath */
   NULL,                /* pEnumDeviceFonts */
   TTYDRV_DC_Escape,    /* pEscape */
   NULL,                /* pExcludeClipRect */
   NULL,                /* pExtDeviceMode */
   TTYDRV_DC_ExtFloodFill, /* pExtFloodFill */
   TTYDRV_DC_ExtTextOut, /* pExtTextOut */
+  NULL,                /* pFillPath */
   NULL,                /* pFillRgn */
+  NULL,                /* pFlattenPath */
   NULL,                /* pFrameRgn */
   TTYDRV_DC_GetCharWidth, /* pGetCharWidth */
   TTYDRV_DC_GetPixel,  /* pGetPixel */
@@ -51,18 +59,21 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pIntersectVisRect */
   TTYDRV_DC_LineTo,    /* pLineTo */
   TTYDRV_DC_LoadOEMResource, /* pLoadOEMResource */
-  TTYDRV_DC_MoveToEx,  /* pMoveToEx */
+  NULL,                /* pMoveToEx */
   NULL,                /* pOffsetClipRgn */
   NULL,                /* pOffsetViewportOrg (optional) */
   NULL,                /* pOffsetWindowOrg (optional) */
   TTYDRV_DC_PaintRgn,  /* pPaintRgn */
   TTYDRV_DC_PatBlt,    /* pPatBlt */
   TTYDRV_DC_Pie,       /* pPie */
+  TTYDRV_DC_PolyBezier, /* pPolyBezier */
+  NULL,                /* pPolyBezierTo */
+  NULL,                /* pPolyDraw */
   TTYDRV_DC_PolyPolygon, /* pPolyPolygon */
   TTYDRV_DC_PolyPolyline, /* pPolyPolyline */
   TTYDRV_DC_Polygon,   /* pPolygon */
   TTYDRV_DC_Polyline,  /* pPolyline */
-  TTYDRV_DC_PolyBezier, /* pPolyBezier */
+  NULL,                /* pPolylineTo */
   NULL,                /* pRealizePalette */
   TTYDRV_DC_Rectangle, /* pRectangle */
   NULL,                /* pRestoreDC */
@@ -70,6 +81,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pSaveDC */
   NULL,                /* pScaleViewportExt (optional) */
   NULL,                /* pScaleWindowExt (optional) */
+  NULL,                /* pSelectClipPath */
   NULL,                /* pSelectClipRgn */
   TTYDRV_DC_SelectObject, /* pSelectObject */
   NULL,                /* pSelectPalette */
@@ -95,7 +107,10 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pStartDoc */
   NULL,                /* pStartPage */
   TTYDRV_DC_StretchBlt, /* pStretchBlt */
-  NULL                 /* pStretchDIBits */
+  NULL,                /* pStretchDIBits */
+  NULL,                /* pStrokeAndFillPath */
+  NULL,                /* pStrokePath */
+  NULL                 /* pWidenPath */
 };
 
 

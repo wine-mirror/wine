@@ -19,23 +19,6 @@
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
-/**********************************************************************
- *	     PSDRV_MoveToEx
- */
-BOOL PSDRV_MoveToEx(DC *dc, INT x, INT y, LPPOINT pt)
-{
-    TRACE("%d %d\n", x, y);
-    if (pt)
-    {
-	pt->x = dc->w.CursPosX;
-	pt->y = dc->w.CursPosY;
-    }
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
-
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           PSDRV_LineTo
@@ -50,8 +33,6 @@ BOOL PSDRV_LineTo(DC *dc, INT x, INT y)
     PSDRV_WriteLineTo(dc, XLPTODP(dc, x), YLPTODP(dc, y));
     PSDRV_DrawLine(dc);
 
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
     return TRUE;
 }
 

@@ -10,7 +10,6 @@
 #include "gdi.h"
 #include "dc.h"
 #include "region.h"
-#include "xmalloc.h"
 #include "metafiledrv.h"
 #include "heap.h"
 #include "debugtools.h"
@@ -23,17 +22,7 @@ DEFAULT_DEBUG_CHANNEL(metafile)
 BOOL
 MFDRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt)
 {
-    if (!MFDRV_MetaParam2(dc,META_MOVETO,x,y))
-    	return FALSE;
-
-    if (pt)
-    {
-	pt->x = dc->w.CursPosX;
-	pt->y = dc->w.CursPosY;
-    }
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
-    return TRUE;
+    return MFDRV_MetaParam2(dc,META_MOVETO,x,y);
 }
 
 /***********************************************************************
@@ -154,11 +143,12 @@ MFDRV_Polyline( DC *dc, const POINT* pt, INT count )
     LPPOINT16	pt16;
     BOOL16	ret;
 
-    pt16 = (LPPOINT16)xmalloc(sizeof(POINT16)*count);
+    pt16 = (LPPOINT16)HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
+    if(!pt16) return FALSE;
     for (i=count;i--;) CONV_POINT32TO16(&(pt[i]),&(pt16[i]));
     ret = MFDRV_MetaPoly(dc, META_POLYLINE, pt16, count); 
 
-    free(pt16);
+    HeapFree( GetProcessHeap(), 0, pt16 );
     return ret;
 }
 
@@ -173,11 +163,12 @@ MFDRV_Polygon( DC *dc, const POINT* pt, INT count )
     LPPOINT16	pt16;
     BOOL16	ret;
 
-    pt16 = (LPPOINT16)xmalloc(sizeof(POINT16)*count);
+    pt16 = (LPPOINT16) HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
+    if(!pt16) return FALSE;
     for (i=count;i--;) CONV_POINT32TO16(&(pt[i]),&(pt16[i]));
     ret = MFDRV_MetaPoly(dc, META_POLYGON, pt16, count); 
 
-    free(pt16);
+    HeapFree( GetProcessHeap(), 0, pt16 );
     return ret;
 }
 
@@ -194,10 +185,12 @@ MFDRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
     BOOL	ret;
 
     for (i=0;i<polygons;i++) {
-    	pt16=(LPPOINT16)xmalloc(sizeof(POINT16)*counts[i]);
+    	pt16=(LPPOINT16)HeapAlloc( GetProcessHeap(), 0, 
+				   sizeof(POINT16) * counts[i] );
+	if(!pt16) return FALSE;
 	for (j=counts[i];j--;) CONV_POINT32TO16(&(curpt[j]),&(pt16[j]));
 	ret = MFDRV_MetaPoly(dc, META_POLYGON, pt16, counts[i]);
-	free(pt16);
+	HeapFree( GetProcessHeap(), 0, pt16 );
 	if (!ret)
 	    return FALSE;
 	curpt+=counts[i];

@@ -24,10 +24,15 @@ static BOOL PSDRV_DeleteDC( DC *dc );
 static const DC_FUNCTIONS PSDRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
+    NULL,                            /* pAbortPath */
+    NULL,                            /* pAngleArc */
     PSDRV_Arc,                       /* pArc */
+    NULL,                            /* pArcTo */
+    NULL,                            /* pBeginPath */
     NULL,                            /* pBitBlt */
     NULL,                            /* pBitmapBits */
     PSDRV_Chord,                     /* pChord */
+    NULL,                            /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
     PSDRV_CreateDC,                  /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
@@ -38,13 +43,16 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     PSDRV_Ellipse,                   /* pEllipse */
     PSDRV_EndDoc,                    /* pEndDoc */
     PSDRV_EndPage,                   /* pEndPage */
+    NULL,                            /* pEndPath */
     PSDRV_EnumDeviceFonts,           /* pEnumDeviceFonts */
     PSDRV_Escape,                    /* pEscape */
     NULL,                            /* pExcludeClipRect */
     PSDRV_ExtDeviceMode,             /* pExtDeviceMode */
     NULL,                            /* pExtFloodFill */
     PSDRV_ExtTextOut,                /* pExtTextOut */
+    NULL,                            /* pFillPath */
     NULL,                            /* pFillRgn */
+    NULL,                            /* pFlattenPath */
     NULL,                            /* pFrameRgn */
     PSDRV_GetCharWidth,              /* pGetCharWidth */
     NULL,                            /* pGetPixel */
@@ -54,18 +62,21 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pInvertRgn */
     PSDRV_LineTo,                    /* pLineTo */
     NULL,                            /* pLoadOEMResource */
-    PSDRV_MoveToEx,                  /* pMoveToEx */
+    NULL,                            /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrg (optional) */
     NULL,                            /* pOffsetWindowOrg (optional) */
     NULL,                            /* pPaintRgn */
     PSDRV_PatBlt,                    /* pPatBlt */
     PSDRV_Pie,                       /* pPie */
+    NULL,                            /* pPolyBezier */
+    NULL,                            /* pPolyBezierTo */
+    NULL,                            /* pPolyDraw */
     PSDRV_PolyPolygon,               /* pPolyPolygon */
     PSDRV_PolyPolyline,              /* pPolyPolyline */
     PSDRV_Polygon,                   /* pPolygon */
     PSDRV_Polyline,                  /* pPolyline */
-    NULL,                            /* pPolyBezier */		     
+    NULL,                            /* pPolylineTo */
     NULL,                            /* pRealizePalette */
     PSDRV_Rectangle,                 /* pRectangle */
     NULL,                            /* pRestoreDC */
@@ -73,6 +84,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pSaveDC */
     NULL,                            /* pScaleViewportExt (optional) */
     NULL,                            /* pScaleWindowExt (optional) */
+    NULL,                            /* pSelectClipPath */
     NULL,                            /* pSelectClipRgn */
     PSDRV_SelectObject,              /* pSelectObject */
     NULL,                            /* pSelectPalette */
@@ -98,7 +110,10 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     PSDRV_StartDoc,                  /* pStartDoc */
     PSDRV_StartPage,                 /* pStartPage */
     NULL,                            /* pStretchBlt */
-    PSDRV_StretchDIBits              /* pStretchDIBits */
+    PSDRV_StretchDIBits,             /* pStretchDIBits */
+    NULL,                            /* pStrokeAndFillPath */
+    NULL,                            /* pStrokePath */
+    NULL                             /* pWidenPath */
 };
 
 
