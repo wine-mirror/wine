@@ -24,16 +24,7 @@
 #include "winnls.h"
 #include "setupapi_private.h"
 
-/*--------------------- FIXME --------------------------
- *
- * These must be separated into the language files
- * and translated. The language 0,0 is a hack to get it
- * loaded properly for all languages by pretending that
- * they are neutral.
- * The menus are not yet properly implemented.
- * Don't localize it yet. (js)
- */
-
 #include "En.rc"
+#include "Es.rc"
 #include "Fr.rc"
 #include "Ru.rc"

@@ -22,5 +22,6 @@
 #include "serialui.h"
 
 #include "En.rc"
+#include "Es.rc"
 #include "Fr.rc"
 #include "Ru.rc"
