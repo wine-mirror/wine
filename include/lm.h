@@ -27,5 +27,6 @@
 #include <lmaccess.h>
 #include <lmwksta.h>
 #include <lmapibuf.h>
+#include <lmstats.h>
 
 #endif

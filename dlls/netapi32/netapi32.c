@@ -34,7 +34,7 @@
 #include "wine/debug.h"
 #include "winerror.h"
 #include "nb30.h"
-#include "lmcons.h"
+#include "lm.h"
 #include "iphlpapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netbios);
@@ -121,7 +121,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-BOOL WINAPI Netbios(PNCB pncb)
+UCHAR WINAPI Netbios(PNCB pncb)
 {
     UCHAR ret = NRC_ILLCMD;
 
@@ -213,4 +213,16 @@ NET_API_STATUS  WINAPI NetServerEnum(
           prefmaxlen, entriesread, totalentries, servertype, debugstr_w(domain), resume_handle);
 
     return ERROR_NO_BROWSER_SERVERS_FOUND;
+}
+
+
+/************************************************************
+ *                NetStatisticsGet  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetStatisticsGet(LPWSTR *server, LPWSTR *service,
+                                       DWORD level, DWORD options,
+                                       LPBYTE *bufptr)
+{
+    TRACE("(%p, %p, %ld, %ld, %p)\n", server, service, level, options, bufptr);
+    return NERR_InternalError;
 }

@@ -178,7 +178,7 @@
 @ stub NetShareEnumSticky
 @ stub NetShareGetInfo
 @ stub NetShareSetInfo
-@ stub NetStatisticsGet
+@ stdcall NetStatisticsGet(wstr wstr long long ptr)
 @ stub NetUseAdd
 @ stub NetUseDel
 @ stub NetUseEnum
