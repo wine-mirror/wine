@@ -16,7 +16,8 @@ MOSTSRCS = \
 	license.c \
 	main.c \
 	dialog.c \
-	language.c
+	language.c \
+	search.c
 
 # Some strings need addresses >= 0x10000
 STRINGSRCS = \

@@ -1,3 +1,7 @@
+Fri Mar  5 22:14:13 1999  Marcel Baur <mbaur@g26.ethz.ch>
+        * NEW [search.c]
+        - Added Boyer-Moore text search
+        
 Sat Feb  6 20:25:25 1999  Marcel Baur <mbaur@g26.ethz.ch>
         - Added new IDS_NOTSAVED ressource (needs translation in *.rc)
         - Improved printing support (not yet complete)
@@ -6,20 +10,20 @@ Sat Feb  6 20:25:25 1999  Marcel Baur <mbaur@g26.ethz.ch>
 
 Thu Jan 28 18:17:08 1999  Jukka Iivonen  <iivonen@iki.fi>
 
-	* [Fi.rc] [main.c] [Makefile.in]
-	Added Finnish language support.
-	
+        * [Fi.rc] [main.c] [Makefile.in]
+        - Added Finnish language support.
+        
 Sun Oct 18 14:11:42 1998  Marcel Baur <mbaur@g26.ethz.ch>
 
         * [??.rc], [TODO], [dialog.c], [dialog.h], [language.c],
         [language.h], [license.c], [license.h], [main.c], [main.h],
         [notepad.rc]:
 
-	- Fixed GetOpenFileName and GetSaveFileName dialogs.
-	- Fixed Print dialog and introduced PrinterSetup dialog.
-	- Fixed PageSetup dialog: values are now correctly initialized
+        - Fixed GetOpenFileName and GetSaveFileName dialogs.
+        - Fixed Print dialog and introduced PrinterSetup dialog.
+        - Fixed PageSetup dialog: values are now correctly initialized
           (had to change all *.rc files)
-	- Preliminary file drag and drop support.
+        - Preliminary file drag and drop support.
 
 Fri Jun 12 23:29:44 1998  Marcel Baur  <mbaur@g26.ethz.ch>
         - Fixed GetDateFormat()->GetTimeFormat() for locale time.
@@ -72,4 +76,5 @@ Fri Dec 05 20:51:55 1997  Marcel Baur <mbaur@g26.ethz.ch>
           [license.c] [license.h] [License_En.c]
           [README] [TODO] [ChangeLog]
         - Originals by Marcel Baur
+
 
