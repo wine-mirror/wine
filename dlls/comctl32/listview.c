@@ -5647,15 +5647,11 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     NMLISTVIEW nmlv;
     LISTVIEW_ITEM *lpItem;
     BOOL is_sorted, has_changed;
+    LVITEMW item;
 
     TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
-    if (lStyle & LVS_OWNERDATA)
-    {
-	nItem = infoPtr->nItemCount;
-	infoPtr->nItemCount++;
-	return nItem;
-    }
+    if (lStyle & LVS_OWNERDATA) return infoPtr->nItemCount++;
 
     /* make sure it's an item, and not a subitem; cannot insert a subitem */
     if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iSubItem) return -1;
@@ -5674,17 +5670,17 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     is_sorted = (lStyle & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) &&
 	        !(lStyle & LVS_OWNERDRAWFIXED) && (LPSTR_TEXTCALLBACKW != lpLVItem->pszText);
 
-    nItem = is_sorted ? infoPtr->nItemCount + 1 : lpLVItem->iItem;
+    nItem = is_sorted ? infoPtr->nItemCount : min(lpLVItem->iItem, infoPtr->nItemCount);
     TRACE(" inserting at %d, sorted=%d, count=%d, iItem=%d\n", nItem, is_sorted, infoPtr->nItemCount, lpLVItem->iItem);
     nItem = DPA_InsertPtr( infoPtr->hdpaItems, nItem, hdpaSubItems );
-    TRACE(" result of insert is %d\n", nItem);
     if (nItem == -1) goto fail;
-    /* the array may be sparsly populated, we can't just increment the count here */
-    infoPtr->nItemCount = infoPtr->hdpaItems->nItemCount;
-    TRACE(" item count is %d\n", infoPtr->nItemCount);
+    infoPtr->nItemCount++;
   
     /* set the item attributes */ 
-    if (!set_main_item(infoPtr, lpLVItem, TRUE, isW, &has_changed)) goto undo;
+    item = *lpLVItem;
+    item.iItem = nItem;
+    item.state &= ~LVIS_STATEIMAGEMASK;
+    if (!set_main_item(infoPtr, &item, TRUE, isW, &has_changed)) goto undo;
 
     /* if we're sorted, sort the list, and update the index */
     if (is_sorted)
