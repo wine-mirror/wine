@@ -233,7 +233,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     static const WCHAR DebuggerW[] = {'D','e','b','u','g','g','e','r',0};
     static const WCHAR AutoW[] = {'A','u','t','o',0};
 
-    MESSAGE("wine: Unhandled exception, starting debugger...\n");
+    MESSAGE("wine: Unhandled exception (thread %04lx), starting debugger...\n", GetCurrentThreadId());
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
