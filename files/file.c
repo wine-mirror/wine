@@ -2693,12 +2693,6 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 
         if (flag & MOVEFILE_DELAY_UNTIL_REBOOT)
         {
-            /* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
-               Perhaps we should queue these command and execute it
-               when exiting... What about using on_exit(2)
-            */
-            FIXME("Please move existing file %s to file %s when Wine has finished\n",
-                  debugstr_w(fn1), debugstr_w(fn2));
             return FILE_AddBootRenameEntry( fn1, fn2, flag );
         }
 
@@ -2781,11 +2775,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
                 SetLastError( ERROR_GEN_FAILURE );
                 return FALSE;
             }
-            /* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
-               Perhaps we should queue these command and execute it
-               when exiting... What about using on_exit(2)
-            */
-            FIXME("Please delete file %s when Wine has finished\n", debugstr_w(fn1));
+
             return FILE_AddBootRenameEntry( fn1, NULL, flag );
         }
 
