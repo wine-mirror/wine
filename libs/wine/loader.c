@@ -428,7 +428,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
 }
 
 
-#if defined(__svr4__) || defined(__NetBSD__)
+#if (defined(__svr4__) || defined(__NetBSD__)) && !defined(MAP_TRYFIXED)
 /***********************************************************************
  *             try_mmap_fixed
  *
@@ -506,7 +506,7 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
 
     return result == addr;
 }
-#endif  /* __svr4__ || __NetBSD__ */
+#endif  /* (__svr4__ || __NetBSD__) && !MAP_TRYFIXED */
 
 
 /***********************************************************************
@@ -541,7 +541,10 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
     flags |= MAP_PRIVATE;
 #endif
 
-#if defined(__svr4__) || defined(__NetBSD__)
+#ifdef MAP_TRYFIXED
+    /* If available, this will attempt a fixed mapping in-kernel */
+    flags |= MAP_TRYFIXED;
+#elif defined(__svr4__) || defined(__NetBSD__)
     if ( try_mmap_fixed( start, size, prot, flags, fdzero, 0 ) )
         return start;
 #endif
