@@ -850,7 +850,7 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
             as = req->handle;
         }
         SERVER_END_REQ;
-	if( as >= 0 )
+	if( ((int)as) >= 0 )
 	{
 	    unsigned omask = _get_sock_mask( s );
 	    int fd = _get_sock_fd( as );
@@ -2232,7 +2232,7 @@ SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if ( ret >= 0)
+    if ( ((int) ret) >= 0)
     {
         TRACE("\tcreated %04x\n", ret );
         return ret;
