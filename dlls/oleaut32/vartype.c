@@ -3735,6 +3735,10 @@ HRESULT WINAPI VarCyAbs(const CY cyIn, CY* pCyOut)
  * RETURNS
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
+ *
+ * NOTES
+ *  - The difference between this function and VarCyInt() is that VarCyInt() rounds
+ *    negative numbers away from 0, while this function rounds them towards zero.
  */
 HRESULT WINAPI VarCyFix(const CY cyIn, CY* pCyOut)
 {
@@ -3755,14 +3759,20 @@ HRESULT WINAPI VarCyFix(const CY cyIn, CY* pCyOut)
  * RETURNS
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
+ *
+ * NOTES
+ *  - The difference between this function and VarCyFix() is that VarCyFix() rounds
+ *    negative numbers towards 0, while this function rounds them away from zero.
  */
 HRESULT WINAPI VarCyInt(const CY cyIn, CY* pCyOut)
 {
-  double d;
+  pCyOut->int64 = cyIn.int64 / CY_MULTIPLIER;
+  pCyOut->int64 *= CY_MULTIPLIER;
 
-  _VarR8FromCy(cyIn, &d);
-  d = floor(d) * CY_MULTIPLIER_F;
-  OLEAUT32_DutchRound(LONGLONG, d, pCyOut->int64);
+  if (cyIn.int64 < 0 && cyIn.int64 % CY_MULTIPLIER != 0)
+  {
+    pCyOut->int64 -= CY_MULTIPLIER;
+  }
   return S_OK;
 }
 
@@ -4557,6 +4567,10 @@ HRESULT WINAPI VarDecAbs(const DECIMAL* pDecIn, DECIMAL* pDecOut)
  * RETURNS
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
+ *
+ * NOTES
+ *  - The difference between this function and VarDecInt() is that VarDecInt() rounds
+ *    negative numbers away from 0, while this function rounds them towards zero.
  */
 HRESULT WINAPI VarDecFix(const DECIMAL* pDecIn, DECIMAL* pDecOut)
 {
@@ -4585,17 +4599,18 @@ HRESULT WINAPI VarDecFix(const DECIMAL* pDecIn, DECIMAL* pDecOut)
  * RETURNS
  *  Success: S_OK.
  *  Failure: DISP_E_OVERFLOW, if the value will not fit in the destination
+ *
+ * NOTES
+ *  - The difference between this function and VarDecFix() is that VarDecFix() rounds
+ *    negative numbers towards 0, while this function rounds them away from zero.
  */
 HRESULT WINAPI VarDecInt(const DECIMAL* pDecIn, DECIMAL* pDecOut)
 {
   if (DEC_SIGN(pDecOut) & ~DECIMAL_NEG)
     return E_INVALIDARG;
 
-  if (!DEC_SCALE(pDecIn))
-  {
-    *pDecOut = *pDecIn; /* Already an integer */
-    return S_OK;
-  }
+  if (!(DEC_SIGN(pDecOut) & DECIMAL_NEG) || !DEC_SCALE(pDecIn))
+    return VarDecFix(pDecIn, pDecOut); /* The same, if +ve or no fractionals */
 
   FIXME("semi-stub!\n");
   return DISP_E_OVERFLOW;
