@@ -231,6 +231,13 @@ void WINAPI DOSVM_Int2fHandler( CONTEXT86 *context )
             break;
         }
         break;
+    case 0xbc:
+	if (AL_reg(context) == 0x00 && BX_reg(context) == 0x3f3f) {
+	    /* MVSOUND.SYS - Install check: not installed */
+	} else { 
+	    INT_BARF( context, 0x2f );
+	}
+       break;
     case 0xbd:  /* some Novell network install check ??? */
         SET_AX( context, 0xa5a5 ); /* pretend to have Novell IPX installed */
        break;
