@@ -149,7 +149,7 @@ UINT WINAPI MsiOpenDatabaseA(
         MultiByteToWideChar( CP_ACP, 0, szDBPath, -1, szwDBPath, len );
     }
 
-    if( szPersist )
+    if( HIWORD(szPersist) )
     {
         len = MultiByteToWideChar( CP_ACP, 0, szPersist, -1, NULL, 0 );
         szwPersist = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
@@ -157,6 +157,8 @@ UINT WINAPI MsiOpenDatabaseA(
             goto end;
         MultiByteToWideChar( CP_ACP, 0, szPersist, -1, szwPersist, len );
     }
+    else
+        szwPersist = (LPWSTR) szPersist;
 
     r = MsiOpenDatabaseW( szwDBPath, szwPersist, phDB );
 
