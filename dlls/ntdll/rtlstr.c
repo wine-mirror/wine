@@ -1071,8 +1071,14 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToCountedOemString( STRING *oem,
 {
     NTSTATUS ret;
     UNICODE_STRING upcase;
+    WCHAR tmp[32];
 
-    if (!(ret = RtlUpcaseUnicodeString( &upcase, uni, TRUE )))
+    upcase.Buffer = tmp;
+    upcase.MaximumLength = sizeof(tmp);
+    ret = RtlUpcaseUnicodeString( &upcase, uni, FALSE );
+    if (ret == STATUS_BUFFER_OVERFLOW) ret = RtlUpcaseUnicodeString( &upcase, uni, TRUE );
+
+    if (!ret)
     {
         DWORD len = RtlUnicodeStringToOemSize( &upcase ) - 1;
         oem->Length = len;
@@ -1093,7 +1099,7 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToCountedOemString( STRING *oem,
         }
         RtlUnicodeToOemN( oem->Buffer, oem->Length, NULL, upcase.Buffer, upcase.Length );
     done:
-        RtlFreeUnicodeString( &upcase );
+        if (upcase.Buffer != tmp) RtlFreeUnicodeString( &upcase );
     }
     return ret;
 }
