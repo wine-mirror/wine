@@ -69,6 +69,7 @@ struct msg_queue
     unsigned int           wake_mask;     /* wakeup mask */
     unsigned int           changed_bits;  /* changed wakeup bits */
     unsigned int           changed_mask;  /* changed wakeup mask */
+    int                    paint_count;   /* pending paint messages count */
     struct message_list    msg_list[NB_MSG_KINDS];  /* lists of messages */
     struct message_result *send_result;   /* stack of sent messages waiting for result */
     struct message_result *recv_result;   /* stack of received messages waiting for result */
@@ -114,6 +115,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread )
         queue->wake_mask       = 0;
         queue->changed_bits    = 0;
         queue->changed_mask    = 0;
+        queue->paint_count     = 0;
         queue->send_result     = NULL;
         queue->recv_result     = NULL;
         queue->first_timer     = NULL;
@@ -581,18 +583,27 @@ DECL_HANDLER(get_msg_queue)
 }
 
 
-/* set the message queue wake bits */
-DECL_HANDLER(set_queue_bits)
+/* increment the message queue paint count */
+DECL_HANDLER(inc_queue_paint_count)
 {
-    struct msg_queue *queue = (struct msg_queue *)get_handle_obj( current->process, req->handle,
-                                                                  0, &msg_queue_ops );
-    if (queue)
+    struct msg_queue *queue;
+    struct thread *thread = get_thread_from_id( req->id );
+
+    if (!thread) return;
+
+    if ((queue = thread->queue))
     {
-        req->changed_mask = queue->changed_mask;
-        if (!req->mask_cond || (queue->changed_mask & req->mask_cond))
-            change_queue_bits( queue, req->set, req->clear );
-        release_object( queue );
+        if ((queue->paint_count += req->incr) < 0) queue->paint_count = 0;
+
+        if (queue->paint_count)
+            change_queue_bits( queue, QS_PAINT, 0 );
+        else
+            change_queue_bits( queue, 0, QS_PAINT );
     }
+    else set_error( STATUS_INVALID_PARAMETER );
+
+    release_object( thread );
+
 }
 
 

@@ -1414,17 +1414,10 @@ static void dump_get_msg_queue_reply( const struct get_msg_queue_request *req )
     fprintf( stderr, " handle=%d", req->handle );
 }
 
-static void dump_set_queue_bits_request( const struct set_queue_bits_request *req )
+static void dump_inc_queue_paint_count_request( const struct inc_queue_paint_count_request *req )
 {
-    fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " set=%08x,", req->set );
-    fprintf( stderr, " clear=%08x,", req->clear );
-    fprintf( stderr, " mask_cond=%08x", req->mask_cond );
-}
-
-static void dump_set_queue_bits_reply( const struct set_queue_bits_request *req )
-{
-    fprintf( stderr, " changed_mask=%08x", req->changed_mask );
+    fprintf( stderr, " id=%p,", req->id );
+    fprintf( stderr, " incr=%d", req->incr );
 }
 
 static void dump_set_queue_mask_request( const struct set_queue_mask_request *req )
@@ -1703,7 +1696,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_atom_name_request,
     (dump_func)dump_init_atom_table_request,
     (dump_func)dump_get_msg_queue_request,
-    (dump_func)dump_set_queue_bits_request,
+    (dump_func)dump_inc_queue_paint_count_request,
     (dump_func)dump_set_queue_mask_request,
     (dump_func)dump_get_queue_status_request,
     (dump_func)dump_wait_input_idle_request,
@@ -1824,7 +1817,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_atom_name_reply,
     (dump_func)0,
     (dump_func)dump_get_msg_queue_reply,
-    (dump_func)dump_set_queue_bits_reply,
+    (dump_func)0,
     (dump_func)dump_set_queue_mask_reply,
     (dump_func)dump_get_queue_status_reply,
     (dump_func)dump_wait_input_idle_reply,
@@ -1945,7 +1938,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_atom_name",
     "init_atom_table",
     "get_msg_queue",
-    "set_queue_bits",
+    "inc_queue_paint_count",
     "set_queue_mask",
     "get_queue_status",
     "wait_input_idle",

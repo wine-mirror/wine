@@ -349,7 +349,7 @@ BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
  *
  * Find a window that needs repaint.
  */
-HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
+HWND WIN_FindWinToRepaint( HWND hwnd )
 {
     HWND hwndRet;
     WND *pWnd;
@@ -369,12 +369,12 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
             TRACE("skipping window %04x\n",
                          pWnd->hwndSelf );
         }
-        else if ((pWnd->hmemTaskQ == hQueue) &&
-                 (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)))
+        else if ((pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)) &&
+                 GetWindowThreadProcessId( pWnd->hwndSelf, NULL ) == GetCurrentThreadId())
             break;
         
         else if (pWnd->child )
-            if ((hwndRet = WIN_FindWinToRepaint( pWnd->child->hwndSelf, hQueue )) )
+            if ((hwndRet = WIN_FindWinToRepaint( pWnd->child->hwndSelf )) )
             {
                 WIN_ReleaseWndPtr(pWnd);
                 return hwndRet;
@@ -430,15 +430,8 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
      * Clear the update region to make sure no WM_PAINT messages will be
      * generated for this window while processing the WM_NCDESTROY.
      */
-    if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
-    {
-        if (wndPtr->hrgnUpdate > 1)
-	  DeleteObject( wndPtr->hrgnUpdate );
-
-        QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
-
-	wndPtr->hrgnUpdate = 0;
-    }
+    RedrawWindow( wndPtr->hwndSelf, NULL, 0,
+                  RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_NOCHILDREN);
 
     /*
      * Send the WM_NCDESTROY to the window being destroyed.
@@ -484,58 +477,38 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 }
 
 /***********************************************************************
- *           WIN_ResetQueueWindows
+ *           WIN_DestroyThreadWindows
  *
- * Reset the queue of all the children of a given window.
+ * Destroy all children of 'wnd' owned by the current thread.
  * Return TRUE if something was done.
  */
-BOOL WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
+BOOL WIN_DestroyThreadWindows( HWND hwnd )
 {
     BOOL ret = FALSE;
+    WND *wnd = WIN_FindWndPtr( hwnd );
 
-    if (hNew)  /* Set a new queue */
+    if (!wnd) return FALSE;
+    while (wnd->child)
     {
-        for (wnd = WIN_LockWndPtr(wnd->child); (wnd);WIN_UpdateWndPtr(&wnd,wnd->next))
+        WND *tmp = WIN_LockWndPtr(wnd->child);
+        ret = FALSE;
+        while (tmp)
         {
-            if (wnd->hmemTaskQ == hQueue)
+            if (GetWindowThreadProcessId( tmp->hwndSelf, NULL ) == GetCurrentThreadId())
             {
-                wnd->hmemTaskQ = hNew;
+                DestroyWindow( tmp->hwndSelf );
                 ret = TRUE;
+                break;
             }
-            if (wnd->child)
-            {
-                ret |= WIN_ResetQueueWindows( wnd, hQueue, hNew );
+            if (tmp->child && WIN_DestroyThreadWindows( tmp->hwndSelf ))
+                ret = TRUE;
+            else
+                WIN_UpdateWndPtr(&tmp,tmp->next);
         }
+        WIN_ReleaseWndPtr(tmp);
+        if (!ret) break;
     }
-    }
-    else  /* Queue is being destroyed */
-    {
-        while (wnd->child)
-        {
-            WND *tmp = WIN_LockWndPtr(wnd->child);
-            WND *tmp2;
-            ret = FALSE;
-            while (tmp)
-            {
-                if (tmp->hmemTaskQ == hQueue)
-                {
-                    DestroyWindow( tmp->hwndSelf );
-                    ret = TRUE;
-                    break;
-                }
-                tmp2 = WIN_LockWndPtr(tmp->child);
-                if (tmp2 && WIN_ResetQueueWindows(tmp2,hQueue,0))
-                    ret = TRUE;
-                else
-                {
-                    WIN_UpdateWndPtr(&tmp,tmp->next);
-                }
-                WIN_ReleaseWndPtr(tmp2);
-            }
-            WIN_ReleaseWndPtr(tmp);
-            if (!ret) break;
-        }
-    }
+    WIN_ReleaseWndPtr( wnd );
     return ret;
 }
 
@@ -1938,11 +1911,9 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 	case GWL_STYLE:
 	       	style.styleOld = wndPtr->dwStyle;
 		style.styleNew = newval;
-		if (wndPtr->flags & WIN_ISWIN32)
-			SendMessageA(hwnd,WM_STYLECHANGING,GWL_STYLE,(LPARAM)&style);
+                SendMessageA(hwnd,WM_STYLECHANGING,GWL_STYLE,(LPARAM)&style);
 		wndPtr->dwStyle = style.styleNew;
-		if (wndPtr->flags & WIN_ISWIN32)
-			SendMessageA(hwnd,WM_STYLECHANGED,GWL_STYLE,(LPARAM)&style);
+                SendMessageA(hwnd,WM_STYLECHANGED,GWL_STYLE,(LPARAM)&style);
                 retval = style.styleOld;
                 goto end;
 		    
@@ -1952,11 +1923,9 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
         case GWL_EXSTYLE:  
 	        style.styleOld = wndPtr->dwExStyle;
 		style.styleNew = newval;
-		if (wndPtr->flags & WIN_ISWIN32)
-			SendMessageA(hwnd,WM_STYLECHANGING,GWL_EXSTYLE,(LPARAM)&style);
+                SendMessageA(hwnd,WM_STYLECHANGING,GWL_EXSTYLE,(LPARAM)&style);
 		wndPtr->dwExStyle = newval;
-		if (wndPtr->flags & WIN_ISWIN32)
-			SendMessageA(hwnd,WM_STYLECHANGED,GWL_EXSTYLE,(LPARAM)&style);
+                SendMessageA(hwnd,WM_STYLECHANGED,GWL_EXSTYLE,(LPARAM)&style);
                 retval = style.styleOld;
                 goto end;
 

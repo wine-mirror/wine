@@ -259,18 +259,13 @@ static void thread_detach(void)
 
     if (hQueue)
     {
-        WND* desktop = WIN_GetDesktop();
-
         TIMER_RemoveQueueTimers( hQueue );
 
         HOOK_FreeQueueHooks( hQueue );
 
         QUEUE_SetExitingQueue( hQueue );
-        WIN_ResetQueueWindows( desktop, hQueue, 0 );
-        QUEUE_SetExitingQueue( 0 );
+        WIN_DestroyThreadWindows( GetDesktopWindow() );
         QUEUE_DeleteMsgQueue( hQueue );
-
-        WIN_ReleaseDesktop();
         SetThreadQueue16( 0, 0 );
     }
 

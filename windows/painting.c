@@ -10,6 +10,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
+#include "server.h"
 #include "region.h"
 #include "user.h"
 #include "win.h"
@@ -44,6 +45,23 @@ DECLARE_DEBUG_CHANNEL(nonclient);
 
   /* Last CTLCOLOR id */
 #define CTLCOLOR_MAX   CTLCOLOR_STATIC
+
+
+/***********************************************************************
+ *           add_paint_count
+ *
+ * Add an increment (normally 1 or -1) to the current paint count of a window.
+ */
+static void add_paint_count( HWND hwnd, int incr )
+{
+    SERVER_START_REQ( inc_queue_paint_count )
+    {
+        req->id   = (void *)GetWindowThreadProcessId( hwnd, NULL );
+        req->incr = incr;
+        SERVER_CALL();
+    }
+    SERVER_END_REQ;
+}
 
 
 /***********************************************************************
@@ -210,7 +228,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 			DeleteObject( wnd->hrgnUpdate );
 			wnd->hrgnUpdate = 0;
 			if(!(wnd->flags & WIN_INTERNAL_PAINT))
-			    QUEUE_DecPaintCount( wnd->hmemTaskQ );
+			    add_paint_count( wnd->hwndSelf, -1 );
 
 			wnd->flags &= ~WIN_NEEDS_ERASEBKGND;
 		    }
@@ -325,7 +343,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     }
 
     if( ((hrgnUpdate = wndPtr->hrgnUpdate) != 0) || (wndPtr->flags & WIN_INTERNAL_PAINT))
-        QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+        add_paint_count( hwnd, -1 );
 
     wndPtr->hrgnUpdate = 0;
     wndPtr->flags &= ~WIN_INTERNAL_PAINT;
@@ -605,7 +623,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 	    hRgn = wndPtr->hrgnUpdate;	/* this is a trick that depends on code in PAINT_RedrawWindow() */
 
 	if( !bHadOne && !(wndPtr->flags & WIN_INTERNAL_PAINT) )
-            QUEUE_IncPaintCount( wndPtr->hmemTaskQ );
+            add_paint_count( wndPtr->hwndSelf, 1 );
 
 	if (flags & RDW_FRAME) wndPtr->flags |= WIN_NEEDS_NCPAINT;
 	if (flags & RDW_ERASE) wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
@@ -637,7 +655,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 	    {
 		wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
 		if( !(wndPtr->flags & WIN_INTERNAL_PAINT) )
-		    QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+                    add_paint_count( wndPtr->hwndSelf, -1 );
 	    }
 	}
 
@@ -711,13 +729,13 @@ end:
     if (flags & RDW_INTERNALPAINT)
     {
         if ( !wndPtr->hrgnUpdate && !(wndPtr->flags & WIN_INTERNAL_PAINT))
-            QUEUE_IncPaintCount( wndPtr->hmemTaskQ );
+            add_paint_count( wndPtr->hwndSelf, 1 );
         wndPtr->flags |= WIN_INTERNAL_PAINT;
     }
     else if (flags & RDW_NOINTERNALPAINT)
     {
         if ( !wndPtr->hrgnUpdate && (wndPtr->flags & WIN_INTERNAL_PAINT))
-            QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+            add_paint_count( wndPtr->hwndSelf, -1 );
         wndPtr->flags &= ~WIN_INTERNAL_PAINT;
     }
 }

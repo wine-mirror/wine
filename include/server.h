@@ -1297,15 +1297,12 @@ struct get_msg_queue_request
 };
 
 
-/* Set the message queue wake bits */
-struct set_queue_bits_request
+/* Increment the message queue paint count */
+struct inc_queue_paint_count_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  handle_t     handle;       /* handle to the queue */
-    IN  unsigned int set;          /* wake bits to set */
-    IN  unsigned int clear;        /* wake bits to clear */
-    IN  unsigned int mask_cond;    /* mask for conditional bit setting */
-    OUT unsigned int changed_mask; /* changed bits wake mask */
+    IN  void*           id;        /* thread id */
+    IN  int             incr;      /* increment (can be negative) */
 };
 
 
@@ -1600,7 +1597,7 @@ enum request
     REQ_get_atom_name,
     REQ_init_atom_table,
     REQ_get_msg_queue,
-    REQ_set_queue_bits,
+    REQ_inc_queue_paint_count,
     REQ_set_queue_mask,
     REQ_get_queue_status,
     REQ_wait_input_idle,
@@ -1725,7 +1722,7 @@ union generic_request
     struct get_atom_name_request get_atom_name;
     struct init_atom_table_request init_atom_table;
     struct get_msg_queue_request get_msg_queue;
-    struct set_queue_bits_request set_queue_bits;
+    struct inc_queue_paint_count_request inc_queue_paint_count;
     struct set_queue_mask_request set_queue_mask;
     struct get_queue_status_request get_queue_status;
     struct wait_input_idle_request wait_input_idle;
@@ -1743,7 +1740,7 @@ union generic_request
     struct create_async_request create_async;
 };
 
-#define SERVER_PROTOCOL_VERSION 46
+#define SERVER_PROTOCOL_VERSION 47
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

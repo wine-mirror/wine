@@ -767,7 +767,6 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
 {
     int mask;
     MESSAGEQUEUE *msgQueue;
-    HQUEUE16 hQueue = GetFastQueue16();
     int iWndsLocks;
     QMSG qmsg;
 
@@ -820,7 +819,7 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
             /* need to fill the window handle for WM_PAINT message */
             if (qmsg.msg.message == WM_PAINT)
             {
-                if ((qmsg.msg.hwnd = WIN_FindWinToRepaint( hwnd, hQueue )))
+                if ((qmsg.msg.hwnd = WIN_FindWinToRepaint( hwnd )))
                 {
                     if (IsIconic( qmsg.msg.hwnd ) && GetClassLongA( qmsg.msg.hwnd, GCL_HICON ))
                     {
@@ -856,7 +855,7 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
 
     WIN_RestoreWndsLock(iWndsLocks);
 
-    if ((msgQueue = QUEUE_Lock( hQueue )))
+    if ((msgQueue = QUEUE_Lock( GetFastQueue16() )))
     {
         msgQueue->GetMessageTimeVal      = qmsg.msg.time;
         msgQueue->GetMessagePosVal       = MAKELONG( qmsg.msg.pt.x, qmsg.msg.pt.y );
@@ -1992,7 +1991,8 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
 	    msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
-        ValidateRect( msg->hwnd, NULL );
+        RedrawWindow( wndPtr->hwndSelf, NULL, 0,
+                      RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
     }
 END:
     WIN_ReleaseWndPtr(wndPtr);
@@ -2079,7 +2079,7 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
         RedrawWindow( wndPtr->hwndSelf, NULL, 0,
-                      RDW_FRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
+                      RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
     }
 END:
     WIN_ReleaseWndPtr(wndPtr);
@@ -2161,7 +2161,8 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
 	    msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
-        ValidateRect( msg->hwnd, NULL );
+        RedrawWindow( wndPtr->hwndSelf, NULL, 0,
+                      RDW_NOFRAME | RDW_VALIDATE | RDW_NOCHILDREN | RDW_NOINTERNALPAINT );
     }
 END:
     WIN_ReleaseWndPtr(wndPtr);

@@ -580,38 +580,6 @@ static void process_sent_messages(void)
 
 
 /***********************************************************************
- *           QUEUE_SetWakeBit
- *
- * See "Windows Internals", p.449
- */
-void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD set, WORD clear )
-{
-    TRACE_(msg)("queue = %04x, set = %04x, clear = %04x\n",
-                queue->self, set, clear );
-    if (!queue->server_queue) return;
-
-    SERVER_START_REQ( set_queue_bits )
-    {
-        req->handle    = queue->server_queue;
-        req->set       = set;
-        req->clear     = clear;
-        req->mask_cond = 0;
-        SERVER_CALL();
-    }
-    SERVER_END_REQ;
-}
-
-
-/***********************************************************************
- *           QUEUE_ClearWakeBit
- */
-void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit )
-{
-    QUEUE_SetWakeBit( queue, 0, bit );
-}
-
-
-/***********************************************************************
  *           QUEUE_WaitBits
  *
  * See "Windows Internals", p.447
@@ -724,35 +692,6 @@ BOOL QUEUE_FindMsg( HWND hwnd, UINT first, UINT last, BOOL remove, QMSG *msg )
 
 
 /***********************************************************************
- *           QUEUE_RemoveMsg
- *
- * Remove a message from the queue (pos must be a valid position).
- */
-void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg )
-{
-    EnterCriticalSection( &msgQueue->cSection );
-
-    /* set the linked list */
-    if (qmsg->prevMsg)
-        qmsg->prevMsg->nextMsg = qmsg->nextMsg;
-
-    if (qmsg->nextMsg)
-        qmsg->nextMsg->prevMsg = qmsg->prevMsg;
-
-    if (msgQueue->firstMsg == qmsg)
-        msgQueue->firstMsg = qmsg->nextMsg;
-
-    if (msgQueue->lastMsg == qmsg)
-        msgQueue->lastMsg = qmsg->prevMsg;
-
-    /* deallocate the memory for the message */
-    HeapFree( GetProcessHeap(), 0, qmsg );
-
-    LeaveCriticalSection( &msgQueue->cSection );
-}
-
-
-/***********************************************************************
  *           QUEUE_CleanupWindow
  *
  * Cleanup the queue to account for a window being deleted.
@@ -784,39 +723,6 @@ HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue )
     }
 
     return hTask;
-}
-
-
-
-/***********************************************************************
- *           QUEUE_IncPaintCount
- */
-void QUEUE_IncPaintCount( HQUEUE16 hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = QUEUE_Lock( hQueue ))) return;
-    EnterCriticalSection( &queue->cSection );
-    queue->wPaintCount++;
-    LeaveCriticalSection( &queue->cSection );
-    QUEUE_SetWakeBit( queue, QS_PAINT, 0 );
-    QUEUE_Unlock( queue );
-}
-
-
-/***********************************************************************
- *           QUEUE_DecPaintCount
- */
-void QUEUE_DecPaintCount( HQUEUE16 hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = QUEUE_Lock( hQueue ))) return;
-    EnterCriticalSection( &queue->cSection );
-    queue->wPaintCount--;
-    if (!queue->wPaintCount) QUEUE_ClearWakeBit( queue, QS_PAINT );
-    LeaveCriticalSection( &queue->cSection );
-    QUEUE_Unlock( queue );
 }
 
 
