@@ -31,7 +31,6 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "ntddk.h"
-#include "wtypes.h"
 #include "msvcrt/excpt.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(tid);

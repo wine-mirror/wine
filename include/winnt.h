@@ -1120,36 +1120,6 @@ typedef CONTEXT *PCONTEXT;
 
 /* Macros to retrieve the current context */
 
-#ifdef NEED_UNDERSCORE_PREFIX
-# define __ASM_NAME(name) "_" name
-#else
-# define __ASM_NAME(name) name
-#endif
-
-#ifdef NEED_TYPE_IN_DEF
-# define __ASM_FUNC(name) ".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"
-#else
-# define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",@function"
-#endif
-
-#ifdef __GNUC__
-# define __ASM_GLOBAL_FUNC(name,code) \
-      __asm__( ".align 4\n\t" \
-               ".globl " __ASM_NAME(#name) "\n\t" \
-               __ASM_FUNC(#name) "\n" \
-               __ASM_NAME(#name) ":\n\t" \
-               code );
-#else  /* __GNUC__ */
-# define __ASM_GLOBAL_FUNC(name,code) \
-      void __asm_dummy_##name(void) { \
-          asm( ".align 4\n\t" \
-               ".globl " __ASM_NAME(#name) "\n\t" \
-               __ASM_FUNC(#name) "\n" \
-               __ASM_NAME(#name) ":\n\t" \
-               code ); \
-      }
-#endif  /* __GNUC__ */
-
 #ifdef __i386__
 
 #define _DEFINE_REGS_ENTRYPOINT( name, fn, args ) \

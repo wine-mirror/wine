@@ -738,3 +738,103 @@ char *gcvt (double number, size_t  ndigit,  char *buff)
     return buff;
 }
 #endif /* HAVE_ECVT */
+
+
+/***********************************************************************
+ *		interlocked functions
+ */
+#ifdef __i386__
+
+__ASM_GLOBAL_FUNC(interlocked_cmpxchg,
+                  "movl 12(%esp),%eax\n\t"
+                  "movl 8(%esp),%ecx\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; cmpxchgl %ecx,(%edx)\n\t"
+                  "ret");
+__ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
+                  "movl 12(%esp),%eax\n\t"
+                  "movl 8(%esp),%ecx\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; cmpxchgl %ecx,(%edx)\n\t"
+                  "ret");
+__ASM_GLOBAL_FUNC(interlocked_xchg,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xchgl %eax,(%edx)\n\t"
+                  "ret");
+__ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xchgl %eax,(%edx)\n\t"
+                  "ret");
+__ASM_GLOBAL_FUNC(interlocked_xchg_add,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xaddl %eax,(%edx)\n\t"
+                  "ret");
+
+#elif defined(__sparc__) && defined(__sun__)
+
+/*
+ * As the earlier Sparc processors lack necessary atomic instructions,
+ * I'm simply falling back to the library-provided _lwp_mutex routines
+ * to ensure mutual exclusion in a way appropriate for the current 
+ * architecture.  
+ *
+ * FIXME:  If we have the compare-and-swap instruction (Sparc v9 and above)
+ *         we could use this to speed up the Interlocked operations ...
+ */
+#include <synch.h>
+static lwp_mutex_t interlocked_mutex = DEFAULTMUTEX;
+
+long interlocked_cmpxchg( long *dest, long xchg, long compare )
+{
+    _lwp_mutex_lock( &interlocked_mutex );
+    if (*dest == compare) *dest = xchg;
+    else compare = *dest;
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return compare;
+}
+
+void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
+{
+    _lwp_mutex_lock( &interlocked_mutex );
+    if (*dest == compare) *dest = xchg;
+    else compare = *dest;
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return compare;
+}
+
+long interlocked_xchg( long *dest, long val )
+{
+    long retv;
+    _lwp_mutex_lock( &interlocked_mutex );
+    retv = *dest;
+    *dest = val;
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
+void *interlocked_xchg_ptr( void **dest, void *val )
+{
+    long retv;
+    _lwp_mutex_lock( &interlocked_mutex );
+    retv = *dest;
+    *dest = val;
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
+long interlocked_xchg_add( long *dest, long incr )
+{
+    long retv;
+    _lwp_mutex_lock( &interlocked_mutex );
+    retv = *dest;
+    *dest += incr;
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
+#else
+# error You must implement the interlocked* functions for your CPU
+#endif

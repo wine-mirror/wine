@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -150,35 +151,14 @@ __ASM_GLOBAL_FUNC(InterlockedDecrement,
                   "decl %eax\n\t"
                   "ret $4");
 
-#elif defined(__sparc__) && defined(__sun__)
-
-/*
- * As the earlier Sparc processors lack necessary atomic instructions,
- * I'm simply falling back to the library-provided _lwp_mutex routines
- * to ensure mutual exclusion in a way appropriate for the current 
- * architecture.  
- *
- * FIXME:  If we have the compare-and-swap instruction (Sparc v9 and above)
- *         we could use this to speed up the Interlocked operations ...
- */
-
-#include <synch.h>
-static lwp_mutex_t interlocked_mutex = DEFAULTMUTEX;
+#else  /* __i386__ */
 
 /***********************************************************************
  *		InterlockedCompareExchange (KERNEL32.@)
  */
 LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
 {
-    _lwp_mutex_lock( &interlocked_mutex );
-
-    if ( *dest == compare )
-        *dest = xchg;
-    else
-        compare = *dest;
-    
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return compare;
+    return interlocked_cmpxchg( dest, xchg, compare );
 }
 
 /***********************************************************************
@@ -186,14 +166,7 @@ LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
  */
 LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
 {
-    LONG retv;
-    _lwp_mutex_lock( &interlocked_mutex );
-
-    retv = *dest;
-    *dest = val;
-
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return retv;
+    return interlocked_xchg( dest, val );
 }
 
 /***********************************************************************
@@ -201,14 +174,7 @@ LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
  */
 LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
 {
-    LONG retv;
-    _lwp_mutex_lock( &interlocked_mutex );
-
-    retv = *dest;
-    *dest += incr;
-
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return retv;
+    return interlocked_xchg_add( dest, incr );
 }
 
 /***********************************************************************
@@ -216,13 +182,7 @@ LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
  */
 LONG WINAPI InterlockedIncrement( PLONG dest )
 {
-    LONG retv;
-    _lwp_mutex_lock( &interlocked_mutex );
-
-    retv = ++*dest;
-
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return retv;
+    return interlocked_xchg_add( dest, 1 ) + 1;
 }
 
 /***********************************************************************
@@ -230,15 +190,7 @@ LONG WINAPI InterlockedIncrement( PLONG dest )
  */
 LONG WINAPI InterlockedDecrement( PLONG dest )
 {
-    LONG retv;
-    _lwp_mutex_lock( &interlocked_mutex );
-
-    retv = --*dest;
-
-    _lwp_mutex_unlock( &interlocked_mutex );
-    return retv;
+    return interlocked_xchg_add( dest, -1 ) - 1;
 }
 
-#else
-#error You must implement the Interlocked* functions for your CPU
-#endif
+#endif  /* __i386__ */

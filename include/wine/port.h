@@ -200,6 +200,92 @@ extern int wine_dlclose( void *handle, char *error, int errorsize );
 #define RTLD_GLOBAL	0x100
 #endif
 
+/* Interlocked functions */
+
+#if defined(__i386__) && defined(__GNUC__)
+
+inline static long interlocked_cmpxchg( long *dest, long xchg, long compare )
+{
+    long ret;
+    __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+    return ret;
+}
+
+inline static void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
+{
+    void *ret;
+    __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+    return ret;
+}
+
+inline static long interlocked_xchg( long *dest, long val )
+{
+    long ret;
+    __asm__ __volatile__( "lock; xchgl %0,(%1)"
+                          : "=r" (ret) : "r" (dest), "0" (val) : "memory" );
+    return ret;
+}
+
+inline static void *interlocked_xchg_ptr( void **dest, void *val )
+{
+    void *ret;
+    __asm__ __volatile__( "lock; xchgl %0,(%1)"
+                          : "=r" (ret) : "r" (dest), "0" (val) : "memory" );
+    return ret;
+}
+
+inline static long interlocked_xchg_add( long *dest, long incr )
+{
+    long ret;
+    __asm__ __volatile__( "lock; xaddl %0,(%1)"
+                          : "=r" (ret) : "r" (dest), "0" (incr) : "memory" );
+    return ret;
+}
+
+#else  /* __i386___ && __GNUC__ */
+
+extern long interlocked_cmpxchg( long *dest, long xchg, long compare );
+extern void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
+extern long interlocked_xchg( long *dest, long val );
+extern void *interlocked_xchg_ptr( void **dest, void *val );
+extern long interlocked_xchg_add( long *dest, long incr );
+
+#endif  /* __i386___ && __GNUC__ */
+
+/* Macros to define assembler functions somewhat portably */
+
+#ifdef NEED_UNDERSCORE_PREFIX
+# define __ASM_NAME(name) "_" name
+#else
+# define __ASM_NAME(name) name
+#endif
+
+#ifdef NEED_TYPE_IN_DEF
+# define __ASM_FUNC(name) ".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"
+#else
+# define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",@function"
+#endif
+
+#ifdef __GNUC__
+# define __ASM_GLOBAL_FUNC(name,code) \
+      __asm__( ".align 4\n\t" \
+               ".globl " __ASM_NAME(#name) "\n\t" \
+               __ASM_FUNC(#name) "\n" \
+               __ASM_NAME(#name) ":\n\t" \
+               code );
+#else  /* __GNUC__ */
+# define __ASM_GLOBAL_FUNC(name,code) \
+      void __asm_dummy_##name(void) { \
+          asm( ".align 4\n\t" \
+               ".globl " __ASM_NAME(#name) "\n\t" \
+               __ASM_FUNC(#name) "\n" \
+               __ASM_NAME(#name) ":\n\t" \
+               code ); \
+      }
+#endif  /* __GNUC__ */
+
 
 /* Macros to access unaligned or wrong-endian WORDs and DWORDs. */
 

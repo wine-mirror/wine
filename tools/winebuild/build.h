@@ -23,66 +23,13 @@
 #ifndef __WINE_BUILD_H
 #define __WINE_BUILD_H
 
-#ifndef __WINE_CONFIG_H  
-# error You must include config.h to use this header  
-#endif  
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_DIRECT_H
-# include <direct.h>
-#endif
-#ifdef HAVE_IO_H
-# include <io.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#if !defined(HAVE_POPEN) && defined(HAVE__POPEN)
-#define popen _popen
-#endif
-
-#if !defined(HAVE_PCLOSE) && defined(HAVE__PCLOSE)
-#define pclose _pclose
-#endif
-
-#if !defined(HAVE_STRNCASECMP) && defined(HAVE__STRNICMP)
-# define strncasecmp _strnicmp
-#endif
-
-#if !defined(HAVE_STRCASECMP) && defined(HAVE__STRICMP)
-# define strcasecmp _stricmp
-#endif
-
-#define PUT_WORD(ptr, w)  (*(WORD *)(ptr) = (w))
-#define PUT_LE_WORD(ptr, w) \
-        do { ((BYTE *)(ptr))[0] = LOBYTE(w); \
-             ((BYTE *)(ptr))[1] = HIBYTE(w); } while (0)
-#define PUT_BE_WORD(ptr, w) \
-        do { ((BYTE *)(ptr))[1] = LOBYTE(w); \
-             ((BYTE *)(ptr))[0] = HIBYTE(w); } while (0)
-
-#if defined(ALLOW_UNALIGNED_ACCESS)
-#define PUT_UA_WORD(ptr, w)  PUT_WORD(ptr, w)
-#elif defined(WORDS_BIGENDIAN)
-#define PUT_UA_WORD(ptr, w)  PUT_BE_WORD(ptr, w)
-#else
-#define PUT_UA_WORD(ptr, w)  PUT_LE_WORD(ptr, w)
-#endif
-
-#ifdef NEED_UNDERSCORE_PREFIX
-# define __ASM_NAME(name) "_" name
-#else
-# define __ASM_NAME(name) name
-#endif
-
-#ifdef NEED_TYPE_IN_DEF
-# define __ASM_FUNC(name) ".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"
-#else
-# define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",@function"
-#endif
 
 #ifdef NEED_UNDERSCORE_PREFIX
 # define PREFIX "_"

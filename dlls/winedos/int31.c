@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include "windef.h"
 #include "wine/winbase16.h"
