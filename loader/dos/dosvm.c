@@ -24,10 +24,6 @@
 #include "msdos.h"
 #include "file.h"
 #include "miscemu.h"
-#include "debugger.h"
-#include "module.h"
-#include "task.h"
-#include "ldt.h"
 #include "dosexe.h"
 #include "dosmod.h"
 #include "stackframe.h"
@@ -39,8 +35,8 @@ DECLARE_DEBUG_CHANNEL(relay)
 
 #ifdef MZ_SUPPORTED
 
-#include <sys/mman.h>
 #include <sys/vm86.h>
+#include <sys/mman.h>
 
 #define IF_CLR(ctx) EFL_reg(ctx) &= ~VIF_MASK
 #define IF_ENABLED(ctx) (EFL_reg(ctx) & VIF_MASK)
