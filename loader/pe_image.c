@@ -521,7 +521,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
         {
             if (nt->OptionalHeader.AddressOfEntryPoint < sec->VirtualAddress)
                 continue;
-            if (nt->OptionalHeader.AddressOfEntryPoint < sec->VirtualAddress+sec->Misc.VirtualSize)
+            if (nt->OptionalHeader.AddressOfEntryPoint < sec->VirtualAddress+sec->SizeOfRawData)
                 break;
         }
         if (i == nt->FileHeader.NumberOfSections)
