@@ -562,7 +562,7 @@ CoGetInterfaceAndReleaseStream(LPSTREAM pStm,REFIID riid, LPVOID *ppv) {
   return IUnknown_QueryInterface(pUnk,riid,ppv);
 }
 
-static WINAPI HRESULT
+static HRESULT WINAPI
 SMCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppv) {
   *ppv = NULL;
   if (IsEqualIID(riid,&IID_IUnknown) || IsEqualIID(riid,&IID_IClassFactory)) {
@@ -571,10 +571,10 @@ SMCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppv) {
   }
   return E_NOINTERFACE;
 }
-static WINAPI ULONG SMCF_AddRef(LPCLASSFACTORY iface) { return 2; }
-static WINAPI ULONG SMCF_Release(LPCLASSFACTORY iface) { return 1; }
+static ULONG WINAPI SMCF_AddRef(LPCLASSFACTORY iface) { return 2; }
+static ULONG WINAPI SMCF_Release(LPCLASSFACTORY iface) { return 1; }
 
-static WINAPI HRESULT
+static HRESULT WINAPI
 SMCF_CreateInstance(
   LPCLASSFACTORY iface, LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv
 ) {
@@ -592,7 +592,7 @@ SMCF_CreateInstance(
   return E_NOINTERFACE;
 }
 
-static WINAPI HRESULT
+static HRESULT WINAPI
 SMCF_LockServer(LPCLASSFACTORY iface, BOOL fLock) {
     FIXME("(%d), stub!\n",fLock);
     return S_OK;
