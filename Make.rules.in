@@ -99,22 +99,6 @@ OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) \
 .res.h:
 	$(WRC) $(WRCFLAGS) $(WRCEXTRA) -bnh $<
 
-# Obsolete
-#.rc.c:
-#	echo "#include \"windows.h\"" >$*-tmp.c
-#	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
-#	cat $< >>$*-tmp.c
-#	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
-#	$(RM) $*-tmp.c
-#
-#.rc.h:
-#	echo "#include \"windows.h\"" >$*-tmp.c
-#	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
-#	cat $< >>$*-tmp.c
-#	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
-#	$(RM) $*-tmp.c
-#
-
 
 # Rule to rebuild the resource compiler
 
@@ -166,7 +150,7 @@ depend:: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 
 clean::
-	$(RM) *.o \#*\# *~ *% .#* *.bak *.orig *.rej *.flc *-tmp.c y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
+	$(RM) *.o \#*\# *~ *% .#* *.bak *.orig *.rej *.flc y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
 
 dummy:
 
