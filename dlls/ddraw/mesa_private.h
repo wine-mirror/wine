@@ -24,6 +24,8 @@
 
 #include "d3d_private.h"
 
+#ifdef HAVE_OPENGL
+
 #undef APIENTRY
 #undef CALLBACK
 #undef WINAPI
@@ -193,5 +195,7 @@ typedef struct {
 extern ICOM_VTABLE(IDirect3D) mesa_d3dvt;
 extern ICOM_VTABLE(IDirect3D2) mesa_d3d2vt;
 extern ICOM_VTABLE(IDirect3D3) mesa_d3d3vt;
+
+#endif /* HAVE_OPENGL */
 
 #endif /* __GRAPHICS_WINE_MESA_PRIVATE_H */
