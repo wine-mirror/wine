@@ -1330,6 +1330,7 @@ dlls/msacm/imaadp32/Makefile
 dlls/msacm/msg711/Makefile
 dlls/msdmo/Makefile
 dlls/msimg32/Makefile
+dlls/msisys/Makefile
 dlls/msnet32/Makefile
 dlls/msrle32/Makefile
 dlls/msvcrt/Makefile

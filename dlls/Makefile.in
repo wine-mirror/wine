@@ -42,6 +42,7 @@ SUBDIRS = \
 	msacm/msg711 \
 	msdmo \
 	msimg32 \
+	msisys \
 	msnet32 \
 	msrle32 \
 	msvcrt \
@@ -154,6 +155,7 @@ all: \
 	msdmo.dll$(DLLEXT) \
 	msg711.drv$(DLLEXT) \
 	msimg32.dll$(DLLEXT) \
+	msisys.ocx$(DLLEXT) \
 	msnet32.dll$(DLLEXT) \
 	msrle32.dll$(DLLEXT) \
 	msvcrt.dll$(DLLEXT) \
@@ -345,6 +347,9 @@ msg711.drv$(DLLEXT): msacm/msg711/msg711.drv$(DLLEXT)
 
 msimg32.dll$(DLLEXT): msimg32/msimg32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msimg32/msimg32.dll$(DLLEXT) $@
+
+msisys.ocx$(DLLEXT): msisys/msisys.ocx$(DLLEXT)
+	$(RM) $@ && $(LN_S) msisys/msisys.ocx$(DLLEXT) $@
 
 msnet32.dll$(DLLEXT): msnet32/msnet32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msnet32/msnet32.dll$(DLLEXT) $@
@@ -600,6 +605,9 @@ msdmo/msdmo.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 
 msimg32/msimg32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd msimg32 && $(MAKE) msimg32.dll$(DLLEXT)
+
+msisys/msisys.ocx$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+	@cd msisys && $(MAKE) msisys.ocx$(DLLEXT)
 
 msnet32/msnet32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd msnet32 && $(MAKE) msnet32.dll$(DLLEXT)
