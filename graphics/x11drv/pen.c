@@ -47,7 +47,7 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
     physDev->pen.linejoin = logpen.lopnStyle & PS_JOIN_MASK;
 
     physDev->pen.width = GDI_ROUND((FLOAT)logpen.lopnWidth.x *
-                                   dc->xformWorld2Vport.eM11 * 0.5);
+                                   dc->xformWorld2Vport.eM11);
     if (physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
     physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( physDev, logpen.lopnColor );
