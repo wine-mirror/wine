@@ -57,8 +57,14 @@
 /* Define if the struct statfs is defined by <sys/mount.h> */
 #undef STATFS_DEFINED_BY_SYS_MOUNT
 
-/* Define if we want to use ncurses instead of the TTY terminal */
-#undef WINE_NCURSES
+/* Define if we can use ncurses for full-screen access */
+#undef HAVE_LIBNCURSES
+
+/* Define if we can use curses (if no ncurses) for full-screen access */
+#undef HAVE_LIBCURSES
+
+/* Define if we can a compatible xterm program */
+#undef XTERM_PROGRAM
 
 /* Define if IPX should use netipx/ipx.h from libc */
 #undef HAVE_IPX_GNU

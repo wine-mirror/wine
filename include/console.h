@@ -1,4 +1,5 @@
-/* Console.H */
+/* console.h */
+/* Copyright 1998 - Joseph Pranevich */
 
 /* Include file for definitions pertaining to Wine's text-console
    interface. 
@@ -11,7 +12,18 @@
 
 #include "config.h"
 
+/* Which libs can be used for wine's curses implementation... */
+#ifdef HAVE_LIBNCURSES 
+#define WINE_NCURSES
+#else
+   #ifdef HAVE_LIBCURSES
+   #define WINE_NCURSES
+   #endif   
+#endif
+
 #define CONSOLE_DEFAULT_DRIVER "tty"
+/* If you have problems, try setting the next line to xterm */
+#define CONSOLE_XTERM_PROG "nxterm" /* We should check for this first... */
 
 typedef struct CONSOLE_DRIVER
 {
@@ -70,6 +82,7 @@ void CONSOLE_ClearScreen();
 char CONSOLE_GetCharacter();
 void CONSOLE_ResizeScreen();
 void CONSOLE_NotifyResizeScreen(); 
+void CONSOLE_WriteRawString(char *);
 
 /* Generic Defines */
 void GENERIC_Start();
@@ -97,6 +110,7 @@ void NCURSES_GetCursorPosition(char *, char *);
 void NCURSES_GetCharacterAtCursor(char *, int *, int *, int *);
 void NCURSES_Refresh();
 void NCURSES_ClearScreen();
+void NCURSES_NotifyResizeScreen(int x, int y);
 
 #endif /* WINE_NCURSES */
 
@@ -104,5 +118,6 @@ void NCURSES_ClearScreen();
 void XTERM_Start();
 void XTERM_Close();
 void XTERM_Init();
+void XTERM_ResizeScreen(int x, int y);
 
 #endif /* CONSOLE_H */

@@ -1,6 +1,7 @@
 /* ncurses.c */
 
 #include "config.h"
+#include "console.h"
 
 #ifdef WINE_NCURSES
 
@@ -18,7 +19,6 @@
    driver, it should make sure to perserve the old values. 
 */
 
-#include "console.h"
 #include "debug.h"
 #undef ERR /* Use ncurses's err() */
 #include <curses.h>
@@ -39,6 +39,7 @@ void NCURSES_Start()
    driver.getCursorPosition = NCURSES_GetCursorPosition;
    driver.getCharacterAtCursor = NCURSES_GetCharacterAtCursor;
    driver.clearScreen = NCURSES_ClearScreen;
+   driver.notifyResizeScreen = NCURSES_NotifyResizeScreen;
 
    driver.checkForKeystroke = NCURSES_CheckForKeystroke;
    driver.getKeystroke = NCURSES_GetKeystroke;
@@ -62,7 +63,8 @@ void NCURSES_Init()
 void NCURSES_Write(char output, int fg, int bg, int attribute)
 {
    /* We can discard all extended information. */
-   waddch(stdscr, output);
+   if (waddch(stdscr, output) == ERR)
+      FIXME(console, "NCURSES: waddch() failed.\n");
 }
 
 void NCURSES_Close()
@@ -101,7 +103,8 @@ int NCURSES_CheckForKeystroke(char *scan, char *ascii)
 
 void NCURSES_MoveCursor(char row, char col)
 {
-   wmove(stdscr, row, col);
+   if (wmove(stdscr, row, col) == ERR)
+      FIXME(console, "NCURSES: wmove() failed to %d, %d.\n", row, col);
 }
 
 void NCURSES_GetCursorPosition(char *row, char *col)
@@ -132,6 +135,15 @@ void NCURSES_Refresh()
 void NCURSES_ClearScreen()
 {
    werase(stdscr);
+}
+
+void NCURSES_NotifyResizeScreen(int x, int y)
+{
+   /* Note: This function gets called *after* another driver in the chain
+      calls ResizeScreen(). It is meant to resize the ncurses internal
+      data structures to know about the new window dimensions. */
+ 
+   resizeterm(y, x);
 }
 
 #endif /* WINE_NCURSES */

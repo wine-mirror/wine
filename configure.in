@@ -43,10 +43,6 @@ AC_ARG_ENABLE(trace,
 [  --disable-trace         compile out TRACE messages],
 [if test "$enableval" = "no"; then TRACE_MSGS="no"; fi])
 
-AC_ARG_WITH(ncurses,
-[  --with-ncurses          compile in the ncurses terminal (EXPERIMENTAL)],
-[if test "$withval" = "yes"; then LIBS="$LIBS -lncurses"; AC_DEFINE(WINE_NCURSES) fi])
-
 AC_ARG_WITH(reentrant-x,
 [  --without-reentrant-x   compile for use with non-reentrant X libraries])
 
@@ -114,6 +110,14 @@ else
     XLIB=""
     X_CFLAGS=""
     X_LIBS=""
+fi
+
+dnl **** Check which curses lib to use ***
+AC_CHECK_LIB(ncurses,waddch)
+if test "$ac_cv_lib_ncurses_waddch" = "yes"
+then :
+else
+    AC_CHECK_LIB(curses,waddch)
 fi
 
 dnl **** Check for IPX (currently Linux only) ****

@@ -69,9 +69,6 @@
 /* Define if the struct statfs is defined by <sys/mount.h> */
 #undef STATFS_DEFINED_BY_SYS_MOUNT
 
-/* Define if we want to use ncurses instead of the TTY terminal */
-#undef WINE_NCURSES
-
 /* Define if IPX should use netipx/ipx.h from libc */
 #undef HAVE_IPX_GNU
 
@@ -192,11 +189,17 @@
 /* Define if you have the <wctype.h> header file.  */
 #undef HAVE_WCTYPE_H
 
+/* Define if you have the curses library (-lcurses).  */
+#undef HAVE_LIBCURSES
+
 /* Define if you have the dl library (-ldl).  */
 #undef HAVE_LIBDL
 
 /* Define if you have the i386 library (-li386).  */
 #undef HAVE_LIBI386
+
+/* Define if you have the ncurses library (-lncurses).  */
+#undef HAVE_LIBNCURSES
 
 /* Define if you have the nsl library (-lnsl).  */
 #undef HAVE_LIBNSL
