@@ -43,24 +43,6 @@ typedef long RPC_STATUS;
 
 typedef void* I_RPC_HANDLE;
 
-#ifndef GUID_DEFINED
-#define GUID_DEFINED
-typedef struct _GUID
-{
-    DWORD Data1;
-    WORD  Data2;
-    WORD  Data3;
-    BYTE  Data4[8];
-} GUID;
-#endif
-
-#ifndef UUID_DEFINED
-#define UUID_DEFINED
-typedef GUID UUID;
-#endif
-
-RPC_STATUS RPC_ENTRY UuidCreate(UUID *Uuid);
-
 #include "rpcdce.h"
 /* #include "rpcnsi.h" */
 #include "rpcnterr.h"

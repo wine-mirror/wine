@@ -40,6 +40,11 @@
 #include "guiddef.h"
 #endif
 
+#ifndef UUID_DEFINED
+#define UUID_DEFINED
+typedef GUID UUID;
+#endif
+
 typedef void* RPC_AUTH_IDENTITY_HANDLE;
 typedef void* RPC_AUTHZ_HANDLE;
 typedef void* RPC_IF_HANDLE;
