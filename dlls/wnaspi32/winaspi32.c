@@ -372,6 +372,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     X(Status);X(HaId);X(Flags);X(Target);X(Lun);
 #undef X
     tmpsrb.cmd.SRB_BufLen	= sizeof(inqbuf);
+    tmpsrb.cmd.SRB_Flags	= 8;/*target->host data. FIXME: anything more?*/
     tmpsrb.cmd.SRB_BufPointer	= inqbuf;
     tmpsrb.cmd.CDBByte[0]	= 0x12; /* INQUIRY  */
     tmpsrb.cmd.CDBByte[4]	= sizeof(inqbuf);
@@ -380,8 +381,8 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 #define X(x) lpSRB->devtype.SRB_##x = tmpsrb.cmd.SRB_##x
     X(Status);
 #undef X
-    lpSRB->devtype.SRB_DeviceType = inqbuf[0]>>3;
-    FIXME("returning devicetype %d for target %d\n",inqbuf[0]>>3,tmpsrb.cmd.SRB_Target);
+    lpSRB->devtype.SRB_DeviceType = inqbuf[0]&0x1f;
+    TRACE("returning devicetype %d for target %d\n",inqbuf[0]&0x1f,tmpsrb.cmd.SRB_Target);
     break;
   }
   case SC_EXEC_SCSI_CMD:
