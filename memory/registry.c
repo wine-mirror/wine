@@ -388,7 +388,7 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
     DWORD total_size;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-    static const int info_size = info->Data - (UCHAR *)info;
+    static const int info_size = offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data );
 
     TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
           hkey, debugstr_a(name), reserved, type, data, count, count ? *count : 0 );
@@ -500,7 +500,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
     DWORD total_size;
     char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
-    static const int info_size = (char *)info->Name - (char *)info;
+    static const int info_size = offsetof( KEY_VALUE_FULL_INFORMATION, Name );
 
     TRACE("(%x,%ld,%p,%p,%p,%p,%p,%p)\n",
           hkey, index, value, val_count, reserved, type, data, count );
