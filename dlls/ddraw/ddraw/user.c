@@ -5,7 +5,7 @@
 
 #include "config.h"
 #include "debugtools.h"
-#include <ddraw.h>
+#include "ddraw.h"
 
 #include <assert.h>
 

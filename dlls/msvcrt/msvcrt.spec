@@ -525,7 +525,7 @@ debug_channels (msvcrt)
 @ stub _wfindnexti64 #(long ptr)
 @ cdecl _wfopen(wstr wstr) MSVCRT__wfopen
 @ stub _wfreopen #(wstr wstr ptr)
-@ cdecl _wfsopen(wstr wstr) MSVCRT__wfsopen
+@ cdecl _wfsopen(wstr wstr long) MSVCRT__wfsopen
 @ stub _wfullpath #(wstr wstr long)
 @ cdecl _wgetcwd(wstr long) MSVCRT__wgetcwd
 @ cdecl _wgetdcwd(long wstr long) MSVCRT__wgetdcwd
@@ -742,7 +742,7 @@ debug_channels (msvcrt)
 @ cdecl vprintf(str long) MSVCRT_vprintf
 @ cdecl vsprintf(ptr str ptr) vsprintf
 @ cdecl vswprintf(wstr wstr long) MSVCRT_vswprintf
-@ varargs vwprintf(wstr long) MSVCRT_vwprintf
+@ cdecl vwprintf(wstr long) MSVCRT_vwprintf
 @ forward -noimport wcscat ntdll.wcscat
 @ forward -noimport wcschr ntdll.wcschr
 @ forward -noimport wcscmp ntdll.wcscmp

@@ -12,7 +12,7 @@
 #include "ts_xlib.h"
 #include "ts_xf86vmode.h"
 #include "x11drv.h"
-#include <ddraw.h>
+#include "ddraw.h"
 
 #include <assert.h>
 #include <stdlib.h>

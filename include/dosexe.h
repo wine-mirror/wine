@@ -13,6 +13,8 @@
 
 struct _DOSEVENT;
 
+typedef void (*DOSRELAY)(CONTEXT86*,void*);
+
 typedef struct _DOSTASK {
  WORD psp_seg, retval;
  WORD dpmi_flag;
@@ -35,11 +37,11 @@ extern BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVO
 extern void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
 extern LPDOSTASK WINAPI MZ_Current( void );
 extern LPDOSTASK WINAPI MZ_AllocDPMITask( void );
-extern int WINAPI DOSVM_Enter( CONTEXT86 *context );
-extern void WINAPI DOSVM_Wait( int read_pipe, HANDLE hObject );
-extern void WINAPI DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data );
+extern INT WINAPI DOSVM_Enter( CONTEXT86 *context );
+extern void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject );
+extern void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data );
 extern void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val );
-extern void WINAPI DOSVM_SetTimer( unsigned ticks );
-extern unsigned WINAPI DOSVM_GetTimer( void );
+extern void WINAPI DOSVM_SetTimer( UINT ticks );
+extern UINT WINAPI DOSVM_GetTimer( void );
 
 #endif /* __WINE_DOSEXE_H */

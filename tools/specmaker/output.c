@@ -241,9 +241,9 @@ void  output_c_symbol (const parsed_symbol *sym)
   if (!sym->function_name)
   {
     /* #ifdef'd dummy */
-    fprintf (cfile, "#if 0\n%s %s_%s()\n{\n\t%s in .spec */\n}\n#endif\n\n\n",
+    fprintf (cfile, "#if 0\n%s %s_%s()\n{\n\t/* %s in .spec */\n}\n#endif\n\n\n",
              CALLING_CONVENTION, OUTPUT_UC_DLL_NAME, sym->symbol,
-             globals.forward_dll ? "/* @forward" : "/* @stub");
+             globals.forward_dll ? "@forward" : "@stub");
     return;
   }
 

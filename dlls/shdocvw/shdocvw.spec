@@ -21,7 +21,7 @@ debug_channels (shdocvw)
 134 stub DoOrganizeFavDlg
 144 stub DoOrganizeFavDlgW
 106 stub HlinkFindFrame
-155 stub HlinkFrameNavigate
+154 stub HlinkFrameNavigate
 155 stub HlinkFrameNavigateNHL
 156 stub IEWriteErrorLog
 157 stub OpenURL

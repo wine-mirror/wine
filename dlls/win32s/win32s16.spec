@@ -6,7 +6,7 @@ owner	w32skrnl
 2 pascal16 BootTask() BootTask16
 3 stub CREATEPROCESS
 4 stub WAITFORDEBUGEVENT
-5 pascal CONTINUEDEBUGEVENT(long long long) ContinueDebugEvent
+5 pascal ContinueDebugEvent(long long long) ContinueDebugEvent
 6 pascal READPROCESSMEMORY(long ptr ptr long ptr) ReadProcessMemory
 7 stub WRITEPROCESSMEMORY
 8 stub GETTHREADCONTEXT

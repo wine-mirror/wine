@@ -61,7 +61,7 @@ DECLARE_DEBUG_CHANNEL(relay);
 
 typedef struct _DOSEVENT {
   int irq,priority;
-  void (*relay)(CONTEXT86*,void*);
+  DOSRELAY relay;
   void *data;
   struct _DOSEVENT *next;
 } DOSEVENT, *LPDOSEVENT;
@@ -213,7 +213,7 @@ static void DOSVM_SendQueuedEvents(CONTEXT86 *context)
     DOSVM_SendQueuedEvent(context);
 }
 
-void WINAPI DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data)
+void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {
   LPDOSEVENT event, cur, prev;
 
@@ -413,7 +413,7 @@ static void DOSVM_ProcessMessage(MSG *msg)
   }
 }
 
-void WINAPI DOSVM_Wait( int read_pipe, HANDLE hObject )
+void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject )
 {
   MSG msg;
   DWORD waitret;
@@ -481,7 +481,7 @@ chk_console_input:
   } while (TRUE);
 }
 
-int WINAPI DOSVM_Enter( CONTEXT86 *context )
+INT WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
  struct vm86plus_struct VM86;
  int stat,len,sig;
@@ -584,7 +584,7 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
     }
 }
 
-void WINAPI DOSVM_SetTimer( unsigned ticks )
+void WINAPI DOSVM_SetTimer( UINT ticks )
 {
   int stat=DOSMOD_SET_TIMER;
   struct timeval tim;
@@ -608,7 +608,7 @@ void WINAPI DOSVM_SetTimer( unsigned ticks )
   }
 }
 
-unsigned WINAPI DOSVM_GetTimer( void )
+UINT WINAPI DOSVM_GetTimer( void )
 {
   int stat=DOSMOD_GET_TIMER;
   struct timeval tim;
@@ -632,17 +632,17 @@ unsigned WINAPI DOSVM_GetTimer( void )
 
 #else /* !MZ_SUPPORTED */
 
-int WINAPI DOSVM_Enter( CONTEXT86 *context )
+INT WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
  ERR_(module)("DOS realmode not supported on this architecture!\n");
  return -1;
 }
 
-void WINAPI DOSVM_Wait( int read_pipe, HANDLE hObject) {}
+void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject) {}
 void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
-void WINAPI DOSVM_SetTimer( unsigned ticks ) {}
-unsigned WINAPI DOSVM_GetTimer( void ) { return 0; }
-void WINAPI DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data)
+void WINAPI DOSVM_SetTimer( UINT ticks ) {}
+UINT WINAPI DOSVM_GetTimer( void ) { return 0; }
+void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {
   if (irq<0) {
     /* callback event, perform it with dummy context */

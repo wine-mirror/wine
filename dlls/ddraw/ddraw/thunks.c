@@ -1,7 +1,7 @@
 /* Direct Draw Thunks and old vtables
  * Copyright 2000 TransGaming Technologies Inc.
  */
-#include <ddraw.h>
+#include "ddraw.h"
 #include "ddraw_private.h"
 #include "ddcomimpl.h"
 

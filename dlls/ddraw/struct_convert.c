@@ -3,9 +3,9 @@
  * Copyright 2000 TransGaming Technologies Inc.
  */
 
-#include <ddraw.h>
-
 #include <string.h>
+
+#include "ddraw.h"
 
 #include "ddraw_private.h"
 
