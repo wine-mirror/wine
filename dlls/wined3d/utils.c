@@ -124,3 +124,19 @@ const char* debug_d3dresourcetype(D3DRESOURCETYPE res) {
     return "unrecognized";
   }
 }
+
+const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType) {
+  switch (PrimitiveType) {
+#define PRIM_TO_STR(prim) case prim: return #prim;
+    PRIM_TO_STR(D3DPT_POINTLIST);
+    PRIM_TO_STR(D3DPT_LINELIST);
+    PRIM_TO_STR(D3DPT_LINESTRIP);
+    PRIM_TO_STR(D3DPT_TRIANGLELIST);
+    PRIM_TO_STR(D3DPT_TRIANGLESTRIP);
+    PRIM_TO_STR(D3DPT_TRIANGLEFAN);
+#undef  PRIM_TO_STR
+  default:
+    FIXME("Unrecognized %u D3DPRIMITIVETYPE!\n", PrimitiveType);
+    return "unrecognized";
+  }
+}

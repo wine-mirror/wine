@@ -324,15 +324,12 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_MultiplyTransform(LPDIRECT3DDEVICE9 iface,
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetViewport(LPDIRECT3DDEVICE9 iface, CONST D3DVIEWPORT9* pViewport) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_SetViewport(This->WineD3DDevice, (WINED3DVIEWPORT *)pViewport);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetViewport(LPDIRECT3DDEVICE9 iface, D3DVIEWPORT9* pViewport) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p)\n", This);
-    memcpy(pViewport, &This->StateBlock->viewport, sizeof(D3DVIEWPORT9));
-    return D3D_OK;
+    return IWineD3DDevice_GetViewport(This->WineD3DDevice, (WINED3DVIEWPORT *)pViewport);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetMaterial(LPDIRECT3DDEVICE9 iface, CONST D3DMATERIAL9* pMaterial) {
@@ -506,31 +503,28 @@ float    WINAPI  IDirect3DDevice9Impl_GetNPatchMode(LPDIRECT3DDEVICE9 iface) {
     return 0.0f;
 }
 
-HRESULT  WINAPI  IDirect3DDevice9Impl_DrawPrimitive(LPDIRECT3DDEVICE9 iface, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount) {
+HRESULT WINAPI IDirect3DDevice9Impl_DrawPrimitive(LPDIRECT3DDEVICE9 iface, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_DrawPrimitive(This->WineD3DDevice, PrimitiveType, StartVertex, PrimitiveCount);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE9 iface, D3DPRIMITIVETYPE PrimitiveType,
                                                            INT BaseVertexIndex, UINT MinVertexIndex, UINT NumVertices, UINT startIndex, UINT primCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_DrawIndexedPrimitive(This->WineD3DDevice, PrimitiveType, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE9 iface, D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_DrawPrimitiveUP(This->WineD3DDevice, PrimitiveType, PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVICE9 iface, D3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex,
                                                              UINT NumVertexIndices, UINT PrimitiveCount, CONST void* pIndexData,
                                                              D3DFORMAT IndexDataFormat, CONST void* pVertexStreamZeroData, UINT VertexStreamZeroStride) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DDevice_DrawIndexedPrimitiveUP(This->WineD3DDevice, PrimitiveType, MinVertexIndex, NumVertexIndices, PrimitiveCount,
+                                                 pIndexData, IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_ProcessVertices(LPDIRECT3DDEVICE9 iface, UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IDirect3DVertexBuffer9* pDestBuffer, IDirect3DVertexDeclaration9* pVertexDecl, DWORD Flags) {
@@ -562,7 +556,10 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetStreamSource(LPDIRECT3DDEVICE9 iface, U
     HRESULT rc = D3D_OK;
 
     rc = IWineD3DDevice_GetStreamSource(This->WineD3DDevice, StreamNumber, (IWineD3DVertexBuffer **)&retStream, OffsetInBytes, pStride);
-    if (rc == D3D_OK && NULL != *pStream) IWineD3DVertexBuffer_GetParent(retStream, (IUnknown **)pStream);
+    if (rc == D3D_OK && NULL != *pStream) {
+        IWineD3DVertexBuffer_GetParent(retStream, (IUnknown **)pStream);
+        IWineD3DVertexBuffer_Release(retStream);
+    }
     return rc;
 }
 
@@ -580,35 +577,23 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetStreamSourceFreq(LPDIRECT3DDEVICE9 ifac
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetIndices(LPDIRECT3DDEVICE9 iface, IDirect3DIndexBuffer9* pIndexData) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    IDirect3DIndexBuffer9 *oldIdxs;
-
-    TRACE("(%p) : Setting to %p\n", This, pIndexData);
-    oldIdxs = This->StateBlock->pIndexData;
-
-    This->UpdateStateBlock->Changed.Indices = TRUE;
-    This->UpdateStateBlock->Set.Indices = TRUE;
-    This->UpdateStateBlock->pIndexData = pIndexData;
-
-    /* Handle recording of state blocks */
-    if (This->isRecordingState) {
-        TRACE("Recording... not performing anything\n");
-        return D3D_OK;
-    }
-
-    if (oldIdxs) IDirect3DIndexBuffer9Impl_Release(oldIdxs);
-    if (pIndexData) IDirect3DIndexBuffer9Impl_AddRef(This->StateBlock->pIndexData);
-    return D3D_OK;
+    return IWineD3DDevice_SetIndices(This->WineD3DDevice, 
+                                     pIndexData==NULL ? NULL:((IDirect3DIndexBuffer9Impl *)pIndexData)->wineD3DIndexBuffer, 
+                                     0);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetIndices(LPDIRECT3DDEVICE9 iface, IDirect3DIndexBuffer9** ppIndexData) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    IWineD3DIndexBuffer *retIndexData = NULL;
+    HRESULT rc = D3D_OK;
+    UINT tmp;
 
-    *ppIndexData = This->StateBlock->pIndexData;
-    /* up ref count on ppindexdata */
-    if (*ppIndexData) IDirect3DIndexBuffer9Impl_AddRef(*ppIndexData);
-
-    return D3D_OK;
+    rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData, &tmp);
+    if (rc == D3D_OK && NULL != *ppIndexData) {
+        IWineD3DVertexBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
+        IWineD3DVertexBuffer_Release(retIndexData);
+    }
+    return rc;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_DrawRectPatch(LPDIRECT3DDEVICE9 iface, UINT Handle,CONST float* pNumSegs,CONST D3DRECTPATCH_INFO* pRectPatchInfo) {

@@ -74,10 +74,12 @@ typedef struct _WINED3DPRESENT_PARAMETERS {
  #define WINED3DLIGHT           D3DLIGHT8
  #define WINED3DCLIPSTATUS      D3DCLIPSTATUS8
  #define WINED3DMATERIAL        D3DMATERIAL8
+ #define WINED3DVIEWPORT        D3DVIEWPORT8
 #else
  #define WINED3DLIGHT           D3DLIGHT9
  #define WINED3DCLIPSTATUS      D3DCLIPSTATUS9
  #define WINED3DMATERIAL        D3DMATERIAL9
+ #define WINED3DVIEWPORT        D3DVIEWPORT9
 #endif
 
 typedef struct IWineD3D               IWineD3D;
@@ -176,7 +178,15 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(GetClipStatus)(THIS_ WINED3DCLIPSTATUS * pClipStatus) PURE;
     STDMETHOD(SetMaterial)(THIS_ CONST WINED3DMATERIAL * pMaterial) PURE;
     STDMETHOD(GetMaterial)(THIS_ WINED3DMATERIAL *pMaterial) PURE;
+    STDMETHOD(SetIndices)(THIS_ IWineD3DIndexBuffer * pIndexData,UINT  BaseVertexIndex) PURE;
+    STDMETHOD(GetIndices)(THIS_ IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex) PURE;
+    STDMETHOD(SetViewport)(THIS_ CONST WINED3DVIEWPORT * pViewport) PURE;
+    STDMETHOD(GetViewport)(THIS_ WINED3DVIEWPORT * pViewport) PURE;
     STDMETHOD(BeginScene)(THIS) PURE;
+    STDMETHOD(DrawPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  StartVertex,UINT  PrimitiveCount) PURE;
+    STDMETHOD(DrawIndexedPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,INT baseVIdx, UINT  minIndex,UINT  NumVertices,UINT  startIndex,UINT  primCount) PURE;
+    STDMETHOD(DrawPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  PrimitiveCount,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
+    STDMETHOD(DrawIndexedPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  MinVertexIndex,UINT  NumVertexIndices,UINT  PrimitiveCount,CONST void * pIndexData,D3DFORMAT  IndexDataFormat,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
 };
 #undef INTERFACE
 
@@ -207,7 +217,15 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_GetClipStatus(p,a)                       (p)->lpVtbl->GetClipStatus(p,a)
 #define IWineD3DDevice_SetMaterial(p,a)                         (p)->lpVtbl->SetMaterial(p,a)
 #define IWineD3DDevice_GetMaterial(p,a)                         (p)->lpVtbl->GetMaterial(p,a)
+#define IWineD3DDevice_SetIndices(p,a,b)                        (p)->lpVtbl->SetIndices(p,a,b)
+#define IWineD3DDevice_GetIndices(p,a,b)                        (p)->lpVtbl->GetIndices(p,a,b)
+#define IWineD3DDevice_SetViewport(p,a)                         (p)->lpVtbl->SetViewport(p,a)
+#define IWineD3DDevice_GetViewport(p,a)                         (p)->lpVtbl->GetViewport(p,a)
 #define IWineD3DDevice_BeginScene(p)                            (p)->lpVtbl->BeginScene(p)
+#define IWineD3DDevice_DrawPrimitive(p,a,b,c)                   (p)->lpVtbl->DrawPrimitive(p,a,b,c)
+#define IWineD3DDevice_DrawIndexedPrimitive(p,a,b,c,d,e,f)      (p)->lpVtbl->DrawIndexedPrimitive(p,a,b,c,d,e,f)
+#define IWineD3DDevice_DrawPrimitiveUP(p,a,b,c,d)               (p)->lpVtbl->DrawPrimitiveUP(p,a,b,c,d)
+#define IWineD3DDevice_DrawIndexedPrimitiveUP(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->DrawIndexedPrimitiveUP(p,a,b,c,d,e,f,g,h)
 #endif
 
 /*****************************************************************************

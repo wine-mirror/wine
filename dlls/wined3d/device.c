@@ -993,7 +993,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED
 
     /* Only change material color if specular is enabled, otherwise it is set to black */
 #if 0 /* TODO */
-    if (This->StateBlock->renderstate[D3DRS_SPECULARENABLE]) {
+    if (This->stateBlock->renderstate[D3DRS_SPECULARENABLE]) {
        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
        checkGLcall("glMaterialfv");
     } else {
@@ -1024,6 +1024,90 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINED3DMATE
 }
 
 /*****
+ * Get / Set Indices
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DIndexBuffer* pIndexData, 
+                                             UINT BaseVertexIndex) {
+    IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DIndexBuffer *oldIdxs;
+
+    TRACE("(%p) : Setting to %p, base %d\n", This, pIndexData, BaseVertexIndex);
+    oldIdxs = This->updateStateBlock->pIndexData;
+
+    This->updateStateBlock->changed.indices = TRUE;
+    This->updateStateBlock->set.indices = TRUE;
+    This->updateStateBlock->pIndexData = pIndexData;
+    This->updateStateBlock->baseVertexIndex = BaseVertexIndex;
+
+    /* Handle recording of state blocks */
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return D3D_OK;
+    }
+
+    if (oldIdxs)    IWineD3DIndexBuffer_Release(oldIdxs);
+    if (pIndexData) IWineD3DIndexBuffer_AddRef(This->stateBlock->pIndexData);
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWineD3DIndexBuffer** ppIndexData, UINT* pBaseVertexIndex) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    *ppIndexData = This->stateBlock->pIndexData;
+    
+    /* up ref count on ppindexdata */
+    if (*ppIndexData) IWineD3DIndexBuffer_AddRef(*ppIndexData);
+    *pBaseVertexIndex = This->stateBlock->baseVertexIndex;
+
+    return D3D_OK;
+}
+
+/*****
+ * Get / Set Viewports
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONST WINED3DVIEWPORT* pViewport) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("(%p)\n", This);
+    This->updateStateBlock->changed.viewport = TRUE;
+    This->updateStateBlock->set.viewport = TRUE;
+    memcpy(&This->updateStateBlock->viewport, pViewport, sizeof(WINED3DVIEWPORT));
+
+    /* Handle recording of state blocks */
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return D3D_OK;
+    }
+
+    ENTER_GL();
+
+    TRACE("(%p) : x=%ld, y=%ld, wid=%ld, hei=%ld, minz=%f, maxz=%f\n", This,
+          pViewport->X, pViewport->Y, pViewport->Width, pViewport->Height, pViewport->MinZ, pViewport->MaxZ);
+
+    glDepthRange(pViewport->MinZ, pViewport->MaxZ);
+    checkGLcall("glDepthRange");
+
+#if 0 /* TODO */
+    /* Note: GL requires lower left, DirectX supplies upper left */
+    glViewport(pViewport->X, (This->renderTarget->myDesc.Height - (pViewport->Y + pViewport->Height)), 
+               pViewport->Width, pViewport->Height);
+    checkGLcall("glViewport");
+#endif
+
+    LEAVE_GL();
+
+    return D3D_OK;
+
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetViewport(IWineD3DDevice *iface, WINED3DVIEWPORT* pViewport) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p)\n", This);
+    memcpy(pViewport, &This->stateBlock->viewport, sizeof(WINED3DVIEWPORT));
+    return D3D_OK;
+}
+
+/*****
  * Scene related functions
  *****/
 HRESULT WINAPI IWineD3DDeviceImpl_BeginScene(IWineD3DDevice *iface) {
@@ -1031,6 +1115,115 @@ HRESULT WINAPI IWineD3DDeviceImpl_BeginScene(IWineD3DDevice *iface) {
        of a scene                                                          */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : stub\n", This);
+    return D3D_OK;
+}
+
+/*****
+ * Drawing functions
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, 
+                                                UINT PrimitiveCount) {
+
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    This->stateBlock->streamIsUP = FALSE;
+
+    TRACE("(%p) : Type=(%d,%s), Start=%d, Count=%d\n", This, PrimitiveType, 
+                               debug_d3dprimitivetype(PrimitiveType), 
+                               StartVertex, PrimitiveCount);
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, StartVertex, -1, 0, NULL, 0);
+
+    return D3D_OK;
+}
+
+/* TODO: baseVIndex needs to be provided from This->stateBlock->baseVertexIndex when called from d3d8 */
+HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface, 
+                                                           D3DPRIMITIVETYPE PrimitiveType,
+                                                           INT baseVIndex, UINT minIndex,
+                                                           UINT NumVertices,UINT startIndex,UINT primCount) {
+
+    IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
+    UINT                 idxStride = 2;
+    IWineD3DIndexBuffer *pIB;
+    D3DINDEXBUFFER_DESC  IdxBufDsc;
+    
+    pIB = This->stateBlock->pIndexData;
+    This->stateBlock->streamIsUP = FALSE;
+
+    TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, baseVidx=%d, countP=%d \n", This, 
+          PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
+          minIndex, NumVertices, startIndex, baseVIndex, primCount);
+
+    IWineD3DIndexBuffer_GetDesc(pIB, &IdxBufDsc);
+    if (IdxBufDsc.Format == D3DFMT_INDEX16) {
+        idxStride = 2;
+    } else {
+        idxStride = 4;
+    }
+
+    drawPrimitive(iface, PrimitiveType, primCount, baseVIndex, 
+                      startIndex, idxStride, 
+                      ((IWineD3DIndexBufferImpl *) pIB)->allocatedMemory,
+                      minIndex);
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType,
+                                                    UINT PrimitiveCount, CONST void* pVertexStreamZeroData,
+                                                    UINT VertexStreamZeroStride) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("(%p) : Type=(%d,%s), pCount=%d, pVtxData=%p, Stride=%d\n", This, PrimitiveType, 
+             debug_d3dprimitivetype(PrimitiveType), 
+             PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
+
+    if (This->stateBlock->stream_source[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->stream_source[0]);
+
+    /* Note in the following, its not this type, but thats the purpose of streamIsUP */
+    This->stateBlock->stream_source[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData; 
+    This->stateBlock->stream_stride[0] = VertexStreamZeroStride;
+    This->stateBlock->streamIsUP = TRUE;
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, NULL, 0);
+    This->stateBlock->stream_stride[0] = 0;
+    This->stateBlock->stream_source[0] = NULL;
+
+    /*stream zero settings set to null at end, as per the msdn */
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, D3DPRIMITIVETYPE PrimitiveType,
+                                                             UINT MinVertexIndex,
+                                                             UINT NumVertexIndices,UINT PrimitiveCount,CONST void* pIndexData,
+                                                             D3DFORMAT IndexDataFormat,CONST void* pVertexStreamZeroData,
+                                                             UINT VertexStreamZeroStride) {
+    int                 idxStride;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("(%p) : Type=(%d,%s), MinVtxIdx=%d, NumVIdx=%d, PCount=%d, pidxdata=%p, IdxFmt=%d, pVtxdata=%p, stride=%d\n", 
+             This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
+             MinVertexIndex, NumVertexIndices, PrimitiveCount, pIndexData,  
+             IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
+
+    if (This->stateBlock->stream_source[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->stream_source[0]);
+
+    if (IndexDataFormat == D3DFMT_INDEX16) {
+        idxStride = 2;
+    } else {
+        idxStride = 4;
+    }
+
+    /* Note in the following, its not this type, but thats the purpose of streamIsUP */
+    This->stateBlock->stream_source[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
+    This->stateBlock->streamIsUP = TRUE;
+    This->stateBlock->stream_stride[0] = VertexStreamZeroStride;
+
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, idxStride, pIndexData, MinVertexIndex);
+
+    /* stream zero settings set to null at end as per the msdn */
+    This->stateBlock->stream_source[0] = NULL;
+    This->stateBlock->stream_stride[0] = 0;
+    IWineD3DDevice_SetIndices(iface, NULL, 0);
+
     return D3D_OK;
 }
 
@@ -1075,6 +1268,7 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreateVertexBuffer,
     IWineD3DDeviceImpl_CreateIndexBuffer,
     IWineD3DDeviceImpl_CreateStateBlock,
+
     IWineD3DDeviceImpl_SetFVF,
     IWineD3DDeviceImpl_GetFVF,
     IWineD3DDeviceImpl_SetStreamSource,
@@ -1092,5 +1286,15 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetClipStatus,
     IWineD3DDeviceImpl_SetMaterial,
     IWineD3DDeviceImpl_GetMaterial,
-    IWineD3DDeviceImpl_BeginScene
+    IWineD3DDeviceImpl_SetIndices,
+    IWineD3DDeviceImpl_GetIndices,
+    IWineD3DDeviceImpl_SetViewport,
+    IWineD3DDeviceImpl_GetViewport,
+
+    IWineD3DDeviceImpl_BeginScene,
+
+    IWineD3DDeviceImpl_DrawPrimitive,
+    IWineD3DDeviceImpl_DrawIndexedPrimitive,
+    IWineD3DDeviceImpl_DrawPrimitiveUP,
+    IWineD3DDeviceImpl_DrawIndexedPrimitiveUP
 };

@@ -11,6 +11,7 @@ C_SRCS = \
 	basetexture.c \
 	device.c \
 	directx.c \
+	drawprim.c \
 	indexbuffer.c \
 	resource.c \
 	stateblock.c \
