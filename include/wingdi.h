@@ -423,9 +423,9 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define GetBValue(rgb)	    (((rgb) >> 16) & 0xff)
 
 #define GetKValue(cmyk)     ((BYTE)  (cmyk) )
-#define GetYValue(cmyk)     ((BYTE) ((cymk) >> 8))
-#define GetMValue(cmyk)     ((BYTE) ((cymk) >> 16))
-#define GetCValue(cmyk)     ((BYTE) ((cymk) >> 24))
+#define GetYValue(cmyk)     ((BYTE) ((cmyk) >> 8))
+#define GetMValue(cmyk)     ((BYTE) ((cmyk) >> 16))
+#define GetCValue(cmyk)     ((BYTE) ((cmyk) >> 24))
 
 #define CMYK(c,m,y,k)       ((COLORREF)((((BYTE)(k)|((WORD)((BYTE)(y))<<8))|(((DWORD)(BYTE)(m))<<16))|(((DWORD)(BYTE)(c))<<24)))
 
