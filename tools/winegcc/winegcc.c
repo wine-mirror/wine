@@ -345,6 +345,7 @@ static void build(struct options* opts)
     const char *output_name, *spec_file, *lang;
     const char* winebuild = getenv("WINEBUILD");
     int generate_app_loader = 1;
+    int old_processor;
     int j;
 
     /* NOTE: for the files array we'll use the following convention:
@@ -532,8 +533,12 @@ static void build(struct options* opts)
     spawn(opts->prefix, spec_args);
 
     /* compile the .spec.c file into a .spec.o file */
+    old_processor = opts->processor;
+    /* Always compile spec.c as c, even if linking with g++ */
+    opts->processor = proc_cc;
     spec_o_name = compile_to_object(opts, spec_c_name, 0);
-    
+    opts->processor = old_processor;
+
     /* link everything together now */
     link_args = strarray_alloc();
     strarray_addall(link_args, get_translator(opts));
