@@ -758,8 +758,10 @@ BOOL WINAPI CryptEnumProviderTypesA (DWORD dwIndex, DWORD *pdwReserved,
 	keylen++;
 	if ( !(keyname = CRYPT_Alloc(keylen)) )
 		CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
-	if ( RegEnumKeyA(hKey, dwIndex, keyname, keylen) )
+	if ( RegEnumKeyA(hKey, dwIndex, keyname, keylen) ) {
+                CRYPT_Free(keyname);
 		return FALSE;
+        }
 	RegOpenKeyA(hKey, keyname, &hSubkey);
 	ch = keyname + strlen(keyname);
 	/* Convert "Type 000" to 0, etc/ */

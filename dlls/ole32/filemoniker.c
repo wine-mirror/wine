@@ -323,8 +323,10 @@ HRESULT WINAPI FileMonikerImpl_Load(IMoniker* iface,IStream* pStm)
     filePathW=HeapAlloc(GetProcessHeap(),0,(length+1)*sizeof(WCHAR));
     filePathW[length]=0;
     res=IStream_Read(pStm,filePathW,doubleLenHex,&bread);
-    if (bread!=doubleLenHex)
+    if (bread!=doubleLenHex) {
+        HeapFree(GetProcessHeap(), 0, filePathW);
         return E_FAIL;
+    }
 
     if (This->filePathName!=NULL)
         HeapFree(GetProcessHeap(),0,This->filePathName);

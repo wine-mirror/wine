@@ -1582,8 +1582,10 @@ LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC a
 
   ef->posFmt = 0;
   ef->countFmt = cfmt;
-  if (FAILED(CoGetMalloc(MEMCTX_TASK, &pIMalloc)))
+  if (FAILED(CoGetMalloc(MEMCTX_TASK, &pIMalloc))) {
+    HeapFree(GetProcessHeap(), 0, ef);
     return NULL;
+  }
   ef->pFmt = (LPFORMATETC)IMalloc_Alloc(pIMalloc, size);
   IMalloc_Release(pIMalloc);
 

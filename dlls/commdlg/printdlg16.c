@@ -377,6 +377,7 @@ BOOL16 WINAPI PrintDlg16(
 	if (!GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
 	    ERR("GetPrinterDriverA failed for %s, le %ld, fix your config!\n",
 		    pbuf->pPrinterName,GetLastError());
+            HeapFree(GetProcessHeap(), 0, dbuf);
 	    COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);
 	    return FALSE;
 	}
