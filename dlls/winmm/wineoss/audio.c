@@ -32,7 +32,7 @@
 DEFAULT_DEBUG_CHANNEL(wave)
 
 /* Allow 1% deviation for sample rates (some ES137x cards) */
-#define NEAR_MATCH(rate1,rate2) (((100*(rate1-rate2))/rate1)==0)
+#define NEAR_MATCH(rate1,rate2) (((100*((int)(rate1)-(int)(rate2)))/(rate1))==0)
 
 #ifdef HAVE_OSS
 
