@@ -15,7 +15,6 @@ C_SRCS = \
 	lstr.c \
 	main.c \
 	options.c \
-	port.c \
 	registry.c \
 	system.c \
 	tweak.c \

@@ -12,7 +12,6 @@
 
 DEFS       = @DLLFLAGS@ -D__WINE__
 LIBEXT     = @LIBEXT@
-LDSHARED   = @LDSHARED@
 SONAME     = lib$(MODULE).so
 IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
 ALLNAMES   = lib$(MODULE).so $(ALTNAMES:%=lib%.so)
@@ -25,7 +24,7 @@ all: lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))
 # Rules for .so files
 
 lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDSHARED) $(OBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) $(EXTRALIBS)
+	$(LDSHARED) $(OBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) -L$(TOPOBJDIR) -lwine -lwine_unicode $(EXTRALIBS)
 
 $(ALLNAMES): lib$(MODULE).so.$(SOVERSION)
 	$(RM) $@ && $(LN_S) lib$(MODULE).so.$(SOVERSION) $@

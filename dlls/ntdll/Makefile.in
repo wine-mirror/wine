@@ -1,11 +1,9 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdll
-
-SPEC_SRCS = ntdll.spec
+SOVERSION = 1.0
 
 C_SRCS = \
 	critsection.c \
@@ -27,11 +25,39 @@ C_SRCS = \
 	time.c \
 	wcstring.c
 
-all: $(MODULE).o
+EXTRA_OBJS = \
+	$(TOPOBJDIR)/console/console.o \
+	$(TOPOBJDIR)/files/files.o \
+	$(TOPOBJDIR)/if1632/if1632.o \
+	$(TOPOBJDIR)/loader/loader.o \
+	$(TOPOBJDIR)/loader/ne/ne.o \
+	$(TOPOBJDIR)/loader/dos/dos.o \
+	$(TOPOBJDIR)/memory/memory.o \
+	$(TOPOBJDIR)/misc/misc.o \
+	$(TOPOBJDIR)/msdos/msdos.o \
+	$(TOPOBJDIR)/ole/ole.o \
+	$(TOPOBJDIR)/relay32/relay32.o \
+	$(TOPOBJDIR)/scheduler/scheduler.o \
+	$(TOPOBJDIR)/win32/win32.o
 
-@MAKE_RULES@
+SUBDIRS = \
+	$(TOPOBJDIR)/console \
+	$(TOPOBJDIR)/files \
+	$(TOPOBJDIR)/if1632 \
+	$(TOPOBJDIR)/loader \
+	$(TOPOBJDIR)/loader/ne \
+	$(TOPOBJDIR)/loader/dos \
+	$(TOPOBJDIR)/memory \
+	$(TOPOBJDIR)/misc \
+	$(TOPOBJDIR)/msdos \
+	$(TOPOBJDIR)/ole \
+	$(TOPOBJDIR)/relay32 \
+	$(TOPOBJDIR)/scheduler \
+	$(TOPOBJDIR)/win32
 
-$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDCOMBINE) $(OBJS) -o $@
+@MAKE_DLL_RULES@
+
+$(EXTRA_OBJS): dummy
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
 ### Dependencies:

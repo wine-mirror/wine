@@ -4,7 +4,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 YACCOPT   = #-v
-LIBEXT    = @LIBEXT@
 
 PROGRAMS = wmc
 MODULE   = none

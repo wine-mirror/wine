@@ -17,11 +17,9 @@ TOPOBJDIR = .
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
-LDSHARED  = @LDSHARED@
 LDCONFIG  = @LDCONFIG@
 MODULE    = wine
-SOVERSION = 1.0
-SONAME    = libwine.so
+IMPORTS   = ntdll
 
 # Stand-alone programs
 PROGRAMS = \
@@ -34,35 +32,22 @@ LIBPROGRAMS = \
 
 # Libraries (not dlls) to build
 LIBRARIES = \
+	library/libwine.$(LIBEXT) \
 	unicode/libwine_unicode.$(LIBEXT)
 
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
-	console \
 	debugger \
 	dlls \
-	dlls/ntdll \
 	documentation \
-	files \
-	if1632 \
 	include \
 	library \
 	libtest \
-	loader \
-	loader/dos \
-	loader/ne \
-	memory \
-	misc \
 	miscemu \
-	msdos \
-	ole \
 	programs \
-	relay32 \
-	scheduler \
 	server \
 	tools \
-	unicode \
-	win32
+	unicode
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = \
@@ -70,41 +55,18 @@ INSTALLSUBDIRS = \
 	dlls \
 	documentation \
 	include \
+	library \
 	server \
 	tools \
 	unicode
-
-LIBOBJS = \
-	console/console.o \
-	dlls/ntdll/ntdll.o \
-	files/files.o \
-	if1632/if1632.o \
-	loader/loader.o \
-	loader/ne/ne.o \
-	loader/dos/dos.o \
-	memory/memory.o \
-	misc/misc.o \
-	msdos/msdos.o \
-	ole/ole.o \
-	relay32/relay32.o \
-	scheduler/scheduler.o \
-	win32/win32.o
 
 EMUOBJS = \
 	miscemu/miscemu.o
 
 DLLOBJS = $(DLLS:%=dlls/lib%.@LIBEXT@)
 
-EXTRA_OBJS = $(LIBOBJS)
-
 all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) wine
 	@echo "Wine build complete."
-
-LIBLINTS = $(LIBOBJS:.o=.ln) 
-EMULINTS = $(EMUOBJS:.o=.ln)
-
-lint:: llib-lwine.ln $(EMULINTS)
-	$(LINT) $(ALLLINTFLAGS) -L. -lwine $(EMULINTS)
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
 
@@ -117,55 +79,33 @@ Make.rules: Make.rules.in configure
 wine: libwine.$(LIBEXT) libwine_unicode.$(LIBEXT) dlls $(EMUOBJS)
 	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LIBS) $(LDFLAGS)
 
-llib-lwine.ln : $(LIBLINTS)
-	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS)
-
-install_so: libwine.so.$(SOVERSION)
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	$(INSTALL_PROGRAM) libwine.so.$(SOVERSION) $(libdir)/libwine.so.$(SOVERSION)
-	cd $(libdir) && $(RM) libwine.so && $(LN_S) libwine.so.$(SOVERSION) libwine.so
-
-install_a: libwine.a
-	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	$(INSTALL_DATA) libwine.a $(libdir)/libwine.a
-
-install:: all $(LIBEXT:%=install_%) $(INSTALLSUBDIRS:%=%/__install__)
+install:: all $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
 	-$(LDCONFIG)
 
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
-	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION)
 	cd $(bindir) && $(RM) wine dosmod
 
-libwine.so.$(SOVERSION): $(OBJS) Makefile.in Make.rules.in
-	$(LDSHARED) $(OBJS) -o $@
-
-libwine.so: libwine.so.$(SOVERSION)
-	$(RM) $@ && $(LN_S) libwine.so.$(SOVERSION) $@
-
-libwine.a: $(OBJS) Makefile.in Make.rules.in
-	$(RM) $@
-	$(AR) $@ $(OBJS)
-	$(RANLIB) $@
-
-$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS) $(LIBRARIES): dummy
+$(EMUOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS) $(LIBRARIES): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
-# Dependencies between directories
-
-$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) dlls: tools
-
-$(LIBPROGRAMS): tools dlls libwine.$(LIBEXT) libwine_unicode.$(LIBEXT)
-
-server tools dlls: libwine_unicode.$(LIBEXT)
+libwine.$(LIBEXT): library/libwine.$(LIBEXT)
+	$(RM) $@ && $(LN_S) library/libwine.$(LIBEXT) $@
 
 libwine_unicode.$(LIBEXT): unicode/libwine_unicode.$(LIBEXT)
 	$(RM) $@ && $(LN_S) unicode/libwine_unicode.$(LIBEXT) $@
 
-$(LIBLINTS) $(EMULINTS): dummy
-	@cd `dirname $@` && $(MAKE) lint
+# Dependencies between directories
+
+$(EMUOBJS) $(DLLOBJS) $(PROGRAMS): tools
+
+$(LIBPROGRAMS): tools dlls libwine.$(LIBEXT) libwine_unicode.$(LIBEXT)
+
+server tools: libwine_unicode.$(LIBEXT)
+
+dlls: tools libwine.$(LIBEXT) libwine_unicode.$(LIBEXT)
 
 checklink::
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine -lwine_unicode $(LIBS) && $(RM) checklink
@@ -191,10 +131,10 @@ htmlpages:
 	for i in $(SUBDIRS); do (cd $$i && $(MAKE) html); done
 
 clean::
-	$(RM) wine libwine.so.$(SOVERSION) TAGS
+	$(RM) wine
 
 distclean: clean
-	$(RM) config.* Make.rules dlls/Makedll.rules include/config.h documentation/wine.man documentation/wine.conf.man
+	$(RM) config.* TAGS Make.rules dlls/Makedll.rules include/config.h documentation/wine.man documentation/wine.conf.man
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
 # We depend on configure above for checks, so we better don't use this rule.

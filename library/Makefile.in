@@ -1,14 +1,46 @@
-DEFS      = -D__WINE__
+DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
 MODULE    = none
+SOVERSION = 1.0
+SONAME    = libwine.so
 
-C_SRCS = winestub.c
+C_SRCS = \
+	port.c
 
-all: $(C_SRCS:.c=.o)
+all: libwine.$(LIBEXT)
 
 @MAKE_RULES@
+
+libwine.so.$(SOVERSION): $(OBJS)
+	$(LDSHARED) $(OBJS) -o $@
+
+libwine.so: libwine.so.$(SOVERSION)
+	$(RM) $@ && $(LN_S) libwine.so.$(SOVERSION) $@
+
+libwine.a: $(OBJS)
+	$(RM) $@
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+install_so: libwine.so.$(SOVERSION)
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_PROGRAM) libwine.so.$(SOVERSION) $(libdir)/libwine.so.$(SOVERSION)
+	cd $(libdir) && $(RM) libwine.so && $(LN_S) libwine.so.$(SOVERSION) libwine.so
+
+install_a: libwine.a
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_DATA) libwine.a $(libdir)/libwine.a
+
+install:: all $(LIBEXT:%=install_%)
+
+uninstall::
+	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION)
+
+clean::
+	$(RM) libwine.so.$(SOVERSION)
 
 ### Dependencies:

@@ -52,8 +52,8 @@ unsigned int usleep (unsigned int useconds)
 #elif defined(HAVE_SELECT)
     struct timeval delay;
 
-    delay.tv_sec = 0;
-    delay.tv_usec = useconds;
+    delay.tv_sec = useconds / 1000000;
+    delay.tv_usec = useconds % 1000000;
 
     select( 0, 0, 0, 0, &delay );
     return 0;
@@ -171,8 +171,8 @@ int strncasecmp( const char *str1, const char *str2, size_t n )
  * FIXME
  *   We should have a autoconf check for this.
  */
-int wine_openpty(int *master, int *slave, char *name, 
-			struct termios *term, struct winsize *winsize)
+int wine_openpty(int *master, int *slave, char *name,
+                 struct termios *term, struct winsize *winsize)
 {
 #ifdef HAVE_OPENPTY
     return openpty(master,slave,name,term,winsize);
@@ -200,11 +200,11 @@ int wine_openpty(int *master, int *slave, char *name,
             }
 
             if (term != NULL)
-	        tcsetattr(*slave, TCSANOW, term);
-	    if (winsize != NULL)
-	        ioctl(*slave, TIOCSWINSZ, winsize);
-	    if (name != NULL)
-	        strcpy(name, pts_name);
+                tcsetattr(*slave, TCSANOW, term);
+            if (winsize != NULL)
+                ioctl(*slave, TIOCSWINSZ, winsize);
+            if (name != NULL)
+                strcpy(name, pts_name);
             return *slave;
         }
     }
@@ -272,7 +272,7 @@ struct servent *getservbyport(int port, const char *proto)
  */
 #ifndef HAVE_GETSOCKOPT
 int getsockopt(int socket, int level, int option_name,
-	       void *option_value, size_t *option_len)
+               void *option_value, size_t *option_len)
 {
     errno = ENOSYS;
     return -1;
@@ -313,7 +313,7 @@ int statfs(const char *name, struct statfs *info)
 #ifdef __BEOS__
     dev_t mydev;
     fs_info fsinfo;
-    
+
     if(!info) {
         errno = ENOSYS;
         return -1;
@@ -321,18 +321,17 @@ int statfs(const char *name, struct statfs *info)
 
     if ((mydev = dev_for_path(name)) < 0) {
         errno = ENOSYS;
-	return -1;
+        return -1;
     }
 
     if (fs_stat_dev(mydev,&fsinfo) < 0) {
         errno = ENOSYS;
-	return -1;
+        return -1;
     }
 
     info->f_bsize = fsinfo.block_size;
     info->f_blocks = fsinfo.total_blocks;
     info->f_bfree = fsinfo.free_blocks;
-  
     return 0;
 #else /* defined(__BEOS__) */
     errno = ENOSYS;
