@@ -88,13 +88,24 @@ static DWORD fileio_get_async_status (const async_private *ovp);
 static DWORD fileio_get_async_count (const async_private *ovp);
 static void fileio_set_async_status (async_private *ovp, const DWORD status);
 static void CALLBACK fileio_call_completion_func (ULONG_PTR data);
+static void fileio_async_cleanup (async_private *ovp);
 
 static async_ops fileio_async_ops =
 {
     fileio_get_async_status,       /* get_status */
     fileio_set_async_status,       /* set_status */
     fileio_get_async_count,        /* get_count */
-    fileio_call_completion_func    /* call_completion */
+    fileio_call_completion_func,   /* call_completion */
+    fileio_async_cleanup           /* cleanup */
+};
+
+static async_ops fileio_nocomp_async_ops =
+{
+    fileio_get_async_status,       /* get_status */
+    fileio_set_async_status,       /* set_status */
+    fileio_get_async_count,        /* get_count */
+    NULL,                          /* call_completion */
+    fileio_async_cleanup           /* cleanup */
 };
 
 typedef struct async_fileio
@@ -128,12 +139,16 @@ static void CALLBACK fileio_call_completion_func (ULONG_PTR data)
     async_fileio *ovp = (async_fileio*) data;
     TRACE ("data: %p\n", ovp);
 
-    if (ovp->completion_func)
-        ovp->completion_func(ovp->lpOverlapped->Internal,
-                             ovp->lpOverlapped->InternalHigh,
-                             ovp->lpOverlapped);
+    ovp->completion_func( ovp->lpOverlapped->Internal,
+                          ovp->lpOverlapped->InternalHigh,
+                          ovp->lpOverlapped );
 
-    HeapFree(GetProcessHeap(), 0, ovp);
+    fileio_async_cleanup ( &ovp->async );
+}
+
+static void fileio_async_cleanup ( struct async_private *ovp )
+{
+    HeapFree ( GetProcessHeap(), 0, ovp );
 }
 
 /***********************************************************************
@@ -1478,6 +1493,8 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 {
     async_fileio *ovp;
     int fd;
+    int flags;
+    enum fd_type type;
 
     TRACE("file %d to buf %p num %ld %p func %p\n",
 	  hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
@@ -1489,10 +1506,11 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         return FALSE;
     }
 
-    fd = FILE_GetUnixHandle( hFile, GENERIC_READ );
-    if(fd<0)
+    fd = FILE_GetUnixHandleType ( hFile, GENERIC_READ, &type, &flags);
+    if ( fd < 0 )
     {
-        TRACE("Couldn't get FD\n");
+        WARN ( "Couldn't get FD\n" );
+        SetLastError ( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
@@ -1501,11 +1519,10 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     {
         TRACE("HeapAlloc Failed\n");
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        close(fd);
-        return FALSE;
+        goto error;
     }
 
-    ovp->async.ops = &fileio_async_ops;
+    ovp->async.ops = ( lpCompletionRoutine ? &fileio_async_ops : &fileio_nocomp_async_ops );
     ovp->async.handle = hFile;
     ovp->async.fd = fd;
     ovp->async.type = ASYNC_TYPE_READ;
@@ -1517,6 +1534,11 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     ovp->buffer = buffer;
 
     return !register_new_async (&ovp->async);
+
+error:
+    close (fd);
+    return FALSE;
+
 }
 
 /***********************************************************************
@@ -1710,6 +1732,8 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 {
     async_fileio *ovp;
     int fd;
+    int flags;
+    enum fd_type type;
 
     TRACE("file %d to buf %p num %ld %p func %p stub\n",
 	  hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
@@ -1720,7 +1744,7 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         return FALSE;
     }
 
-    fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
+    fd = FILE_GetUnixHandleType ( hFile, GENERIC_WRITE, &type, &flags );
     if ( fd < 0 )
     {
         TRACE( "Couldn't get FD\n" );
@@ -1732,8 +1756,7 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     {
         TRACE("HeapAlloc Failed\n");
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        close (fd);
-        return FALSE;
+        goto error;
     }
 
     ovp->async.ops = &fileio_async_ops;
@@ -1748,6 +1771,10 @@ static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     ovp->completion_func = lpCompletionRoutine;
 
     return !register_new_async (&ovp->async);
+
+error:
+    close (fd);
+    return FALSE;
 }
 
 /***********************************************************************

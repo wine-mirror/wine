@@ -99,14 +99,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(comm);
 static DWORD commio_get_async_status (const async_private *ovp);
 static DWORD commio_get_async_count (const async_private *ovp);
 static void commio_set_async_status (async_private *ovp, const DWORD status);
-static void CALLBACK commio_call_completion_func (ULONG_PTR data);
+static void commio_async_cleanup  (async_private *ovp);
 
 static async_ops commio_async_ops =
 {
     commio_get_async_status,       /* get_status */
     commio_set_async_status,       /* set_status */
     commio_get_async_count,        /* get_count */
-    commio_call_completion_func    /* call_completion */
+    NULL,                          /* call_completion */
+    commio_async_cleanup           /* cleanup */
 };
 
 typedef struct async_commio
@@ -131,9 +132,9 @@ static DWORD commio_get_async_count (const struct async_private *ovp)
     return 0;
 }
 
-static void CALLBACK commio_call_completion_func (ULONG_PTR data)
+static void commio_async_cleanup  (async_private *ovp)
 {
-    HeapFree(GetProcessHeap(), 0, (void*) data);
+    HeapFree(GetProcessHeap(), 0, ovp );
 }
 
 /***********************************************************************/

@@ -35,6 +35,7 @@ typedef void CALLBACK (*async_call_completion_func)(ULONG_PTR data);
 typedef DWORD (*async_get_status)(const struct async_private *ovp);
 typedef DWORD (*async_get_count)(const struct async_private *ovp);
 typedef void (*async_set_status)(struct async_private *ovp, const DWORD status);
+typedef void (*async_cleanup)(struct async_private *ovp);
 
 typedef struct async_ops
 {
@@ -42,6 +43,7 @@ typedef struct async_ops
     async_set_status            set_status;
     async_get_count             get_count;
     async_call_completion_func  call_completion;
+    async_cleanup               cleanup;
 } async_ops;
 
 typedef struct async_private
@@ -74,7 +76,10 @@ inline static void finish_async( async_private *ovp )
     if( ovp->event != INVALID_HANDLE_VALUE )
         NtSetEvent( ovp->event, NULL );
 
-    QueueUserAPC( ovp->ops->call_completion, GetCurrentThread(), (ULONG_PTR)ovp );
+    if ( ovp->ops->call_completion )
+        QueueUserAPC( ovp->ops->call_completion, GetCurrentThread(), (ULONG_PTR)ovp );
+    else
+        ovp->ops->cleanup ( ovp );
 }
 
 inline static BOOL __register_async( async_private *ovp, const DWORD status )
@@ -92,7 +97,11 @@ inline static BOOL __register_async( async_private *ovp, const DWORD status )
     }
     SERVER_END_REQ;
 
-    if ( ret ) ovp->ops->set_status ( ovp, GetLastError() );
+    if ( ret ) {
+        SetLastError( RtlNtStatusToDosError(ret) );
+        ovp->ops->set_status ( ovp, ret );
+    }
+
     if ( ovp->ops->get_status (ovp) != STATUS_PENDING )
         finish_async (ovp);
 
