@@ -146,14 +146,24 @@ typedef struct tagWINE_TIMERENTRY {
     struct tagWINE_TIMERENTRY*	lpNext;
 } WINE_TIMERENTRY, *LPWINE_TIMERENTRY;
 
+enum mmioProcType {MMIO_PROC_16,MMIO_PROC_32A,MMIO_PROC_32W};
+
+struct IOProcList
+{
+    struct IOProcList*pNext;       /* Next item in linked list */
+    FOURCC            fourCC;      /* four-character code identifying IOProc */
+    LPMMIOPROC	      pIOProc;     /* pointer to IProc */
+    enum mmioProcType type;        /* 16, 32A or 32W */
+    int		      count;	   /* number of objects linked to it */
+};
+
 typedef struct tagWINE_MMIO {
     MMIOINFO			info;
-    struct IOProcList*		ioProc;
-    BOOL			bTmpIOProc;
-    HANDLE			hMem;
-    SEGPTR			buffer16;
     struct tagWINE_MMIO*	lpNext;
-    BOOL			bBufferLoaded;
+    struct IOProcList*		ioProc;
+    BOOL			bTmpIOProc : 1,
+                                bBufferLoaded : 1;
+    SEGPTR                      segBuffer16;
     DWORD                       dwFileSize;
 } WINE_MMIO, *LPWINE_MMIO;
 
@@ -186,6 +196,7 @@ typedef struct tagWINE_MM_IDATA {
     /* LPWINE_MIXER		lpMixer; */
     /* mmio part */
     LPWINE_MMIO			lpMMIO;
+    LRESULT (CALLBACK*          pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
     /* playsound and sndPlaySound */
     WINE_PLAYSOUND*             lpPlaySound;
     HANDLE                      psLastEvent;
@@ -233,6 +244,13 @@ UINT                            MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID
                                                   DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
 WORD	                        timeSetEventInternal(UINT wDelay, UINT wResol,
                                                      FARPROC16 lpFunc, DWORD dwUser, UINT wFlags);
+HMMIO                           MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
+                                          DWORD dwOpenFlags, enum mmioProcType type);
+LPMMIOPROC                      MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
+                                                   DWORD dwFlags, enum mmioProcType type);
+LRESULT                         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1, 
+                                                 LPARAM lParam2, enum mmioProcType type);
+LPWINE_MMIO	                MMIO_Get(LPWINE_MM_IDATA iData, HMMIO h);
 
 BOOL				MULTIMEDIA_MciInit(void);
 LPWINE_MM_IDATA			MULTIMEDIA_GetIData(void);
