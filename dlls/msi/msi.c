@@ -33,6 +33,7 @@
 #include "msipriv.h"
 #include "objidl.h"
 #include "wincrypt.h"
+#include "objbase.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -853,28 +854,128 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+/******************************************************************
+ *		DllMain
+ *
+ * @todo: maybe we can check here if MsiServer service is declared no ?
+ */
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+  if (fdwReason == DLL_PROCESS_ATTACH) {
+    DisableThreadLibraryCalls(hinstDLL);
+    /* FIXME: Initialisation */
+  } else if (fdwReason == DLL_PROCESS_DETACH) {
+    /* FIXME: Cleanup */
+  }
+  /*
+  const WCHAR szMSIServerSvc[] = { 'M','S','I','S','e','r','v','e','r',0 };
+  const WCHAR szNull[] = { 0 };
+  if (!strcmpW(lpServiceName, szMSIServerSvc)) {
+    hKey = CreateServiceW(hSCManager, 
+			  szMSIServerSvc, 
+			  szMSIServerSvc, 
+			  SC_MANAGER_ALL_ACCESS, 
+			  SERVICE_WIN32_OWN_PROCESS|SERVICE_INTERACTIVE_PROCESS, 
+			  SERVICE_AUTO_START, 
+			  SERVICE_ERROR_IGNORE,
+			  szNull, 
+			  NULL, 
+			  NULL,
+			  NULL,
+			  NULL,
+			  szNull);
+  */
+  return TRUE;
+}
+
+typedef struct {
+  /* IUnknown fields */
+  ICOM_VFIELD(IClassFactory);
+  DWORD                       ref;
+} IClassFactoryImpl;
+
+static HRESULT WINAPI MsiCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
+  ICOM_THIS(IClassFactoryImpl,iface);
+  FIXME("(%p, %s, %p): stub\n",This,debugstr_guid(riid),ppobj);
+  return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MsiCF_AddRef(LPCLASSFACTORY iface) {
+  ICOM_THIS(IClassFactoryImpl,iface);
+  return ++(This->ref);
+}
+
+static ULONG WINAPI MsiCF_Release(LPCLASSFACTORY iface) {
+  ICOM_THIS(IClassFactoryImpl,iface);
+  /* static class, won't be  freed */
+  return --(This->ref);
+}
+
+static HRESULT WINAPI MsiCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
+  ICOM_THIS(IClassFactoryImpl,iface);
+  FIXME ("(%p, %p, %s, %p): to implement\n", This, pOuter, debugstr_guid(riid), ppobj);
+  return 0;
+}
+
+static HRESULT WINAPI MsiCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+  ICOM_THIS(IClassFactoryImpl,iface);
+  FIXME("(%p, %d): stub\n", This, dolock);
+  return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) MsiCF_Vtbl = {
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+  MsiCF_QueryInterface,
+  MsiCF_AddRef,
+  MsiCF_Release,
+  MsiCF_CreateInstance,
+  MsiCF_LockServer
+};
+
+static IClassFactoryImpl Msi_CF = {&MsiCF_Vtbl, 1 };
+
+HRESULT WINAPI MSI_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
+  FIXME("(%s, %s, %p): almost a stub.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+  if (IsEqualCLSID (rclsid, &CLSID_IMsiServer)) {
+    *ppv = (LPVOID) &Msi_CF;
+    IClassFactory_AddRef((IClassFactory*)*ppv);
+    return S_OK;
+  } else if (IsEqualCLSID (rclsid, &CLSID_IMsiServerMessage)) {
+    *ppv = (LPVOID) &Msi_CF;
+    IClassFactory_AddRef((IClassFactory*)*ppv);
+    return S_OK;
+  } else if (IsEqualCLSID (rclsid, &CLSID_IMsiServerX1)) {
+    *ppv = (LPVOID) &Msi_CF;
+    IClassFactory_AddRef((IClassFactory*)*ppv);
+    return S_OK;
+  } else if (IsEqualCLSID (rclsid, &CLSID_IMsiServerX2)) {
+    *ppv = (LPVOID) &Msi_CF;
+    IClassFactory_AddRef((IClassFactory*)*ppv);
+    return S_OK;
+  } else if (IsEqualCLSID (rclsid, &CLSID_IMsiServerX3)) {
+    *ppv = (LPVOID) &Msi_CF;
+    IClassFactory_AddRef((IClassFactory*)*ppv);
+    return S_OK;
+  }
+  WARN("(%s, %s, %p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+  return CLASS_E_CLASSNOTAVAILABLE;
+}
+
 HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
 {
-    TRACE("%p\n",pdvi);
-
-    if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
-        return E_INVALIDARG;
-
-    pdvi->dwMajorVersion = MSI_MAJORVERSION;
-    pdvi->dwMinorVersion = MSI_MINORVERSION;
-    pdvi->dwBuildNumber = MSI_BUILDNUMBER;
-    pdvi->dwPlatformID = 1;
-
-    return S_OK;
+  TRACE("%p\n",pdvi);
+  
+  if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
+    return E_INVALIDARG;
+  
+  pdvi->dwMajorVersion = MSI_MAJORVERSION;
+  pdvi->dwMinorVersion = MSI_MINORVERSION;
+  pdvi->dwBuildNumber = MSI_BUILDNUMBER;
+  pdvi->dwPlatformID = 1;
+  
+  return S_OK;
 }
 
 BOOL WINAPI MSI_DllCanUnloadNow(void)
 {
-    return FALSE;
-}
-
-HRESULT WINAPI MSI_DllRegisterServer(void)
-{
-    FIXME("Stub!\n");
-    return S_OK;
+  return S_FALSE;
 }

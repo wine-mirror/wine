@@ -1,7 +1,7 @@
 1 stdcall DllCanUnloadNow() MSI_DllCanUnloadNow
-2 stub DllGetClassObject
+2 stdcall DllGetClassObject() MSI_DllGetClassObject
 3 stdcall -private DllRegisterServer() MSI_DllRegisterServer
-4 stub DllUnregisterServer
+4 stdcall -private DllUnregisterServer() MSI_DllUnregisterServer
 5 stdcall MsiAdvertiseProductA(str str str long)
 6 stdcall MsiAdvertiseProductW(wstr wstr wstr long)
 7 stdcall MsiCloseAllHandles()

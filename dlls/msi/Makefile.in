@@ -15,6 +15,7 @@ C_SRCS = \
 	msiquery.c \
 	order.c \
 	record.c \
+	regsvr.c \
 	select.c \
 	string.c \
 	suminfo.c \
