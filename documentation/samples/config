@@ -293,13 +293,19 @@ WINE REGISTRY Version 2
 ; without any chance to switch to another X11 application.
 ; So just catch them in a desktop window.
 
-[AppDefaults\\_INS5576._MP\\x11drv]
+[AppDefaults\\_INS0432._MP\\x11drv]
+"Desktop" = "640x480"
+
+[AppDefaults\\_INS0466._MP\\x11drv]
+"Desktop" = "640x480"
+
+[AppDefaults\\_INS0576._MP\\x11drv]
 "Desktop" = "640x480"
 
 [AppDefaults\\_INS5176._MP\\x11drv]
 "Desktop" = "640x480"
 
-[AppDefaults\\_INS0466._MP\\x11drv]
+[AppDefaults\\_INS5576._MP\\x11drv]
 "Desktop" = "640x480"
 
 ;[AppDefaults\\iexplore.exe\\DllOverrides]
