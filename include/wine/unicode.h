@@ -251,6 +251,20 @@ static inline WCHAR *strpbrkW( const WCHAR *str, const WCHAR *accept )
     return NULL;
 }
 
+static inline size_t strspnW( const WCHAR *str, const WCHAR *accept )
+{
+    const WCHAR *ptr;
+    for (ptr = str; *ptr; ptr++) if (!strchrW( accept, *ptr )) break;
+    return ptr - str;
+}
+
+static inline size_t strcspnW( const WCHAR *str, const WCHAR *reject )
+{
+    const WCHAR *ptr;
+    for (ptr = str; *ptr; ptr++) if (strchrW( reject, *ptr )) break;
+    return ptr - str;
+}
+
 static inline WCHAR *strlwrW( WCHAR *str )
 {
     WCHAR *ret = str;
