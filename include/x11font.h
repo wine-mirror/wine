@@ -146,6 +146,7 @@ typedef struct
   Pixmap*               lpPixmap;		/* optional character bitmasks for synth fonts */
 
   XFONTTRANS		*lpX11Trans;		/* Info for X11R6 transform */
+  float                 rescale;                /* Rescale for large fonts */
   INT16			foInternalLeading;
   INT16			foAvgCharWidth;
   INT16			foMaxCharWidth;

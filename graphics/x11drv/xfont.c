@@ -822,13 +822,16 @@ static void XFONT_GetTextMetric( fontObject* pfo, LPTEXTMETRICA pTM )
       pTM->tmAscent = pfo->lpX11Trans->ascent;
       pTM->tmDescent = pfo->lpX11Trans->descent;
     }
+    pTM->tmAscent *= pfo->rescale;
+    pTM->tmDescent *= pfo->rescale;
+
     pTM->tmHeight = pTM->tmAscent + pTM->tmDescent;
 
-    pTM->tmAveCharWidth = pfo->foAvgCharWidth;
-    pTM->tmMaxCharWidth = pfo->foMaxCharWidth;
+    pTM->tmAveCharWidth = pfo->foAvgCharWidth * pfo->rescale;
+    pTM->tmMaxCharWidth = pfo->foMaxCharWidth * pfo->rescale;
 
-    pTM->tmInternalLeading = pfo->foInternalLeading;
-    pTM->tmExternalLeading = pdf->dfExternalLeading;
+    pTM->tmInternalLeading = pfo->foInternalLeading * pfo->rescale;
+    pTM->tmExternalLeading = pdf->dfExternalLeading * pfo->rescale;
 
     pTM->tmStruckOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT )
 			? 1 : pdf->dfStrikeOut;
@@ -2393,10 +2396,13 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
 
 		if(abs(plf->lfHeight) > MAX_FONT_SIZE) {
 		    ERR(
-	  "plf->lfHeight = %d, this is probably not right. Setting to 12\n", 
+  "plf->lfHeight = %d, Creating a 100 pixel font and rescaling metrics \n", 
 			plf->lfHeight);
-		    plf->lfHeight = 12;
-		}
+		    pfo->rescale = fabs(plf->lfHeight / 100.0);
+		    if(plf->lfHeight > 0) plf->lfHeight = 100;
+		    else plf->lfHeight = -100;
+		} else
+		    pfo->rescale = 1.0;
 
 		XFONT_MatchDeviceFont( fontList, &fm );
 
@@ -2643,6 +2649,8 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
 			     dc->wndExtX / dc->vportExtX);
 	    size->cy = fabs(y * dc->wndExtY / dc->vportExtY);
 	}
+	size->cx *= pfo->rescale;
+	size->cy *= pfo->rescale;
 	return TRUE;
     }
     return FALSE;
@@ -2684,9 +2692,9 @@ BOOL X11DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 	    for (i = firstChar; i <= lastChar; i++)
   	        if(pfo->lpX11Trans)
 		    *buffer++ = pfo->fs->min_bounds.attributes *
-		      pfo->lpX11Trans->pixelsize / 1000.0;
+		      pfo->lpX11Trans->pixelsize / 1000.0 * pfo->rescale;
 		else
-		    *buffer++ = pfo->fs->min_bounds.width;
+		    *buffer++ = pfo->fs->min_bounds.width * pfo->rescale;
 	else
 	{
 	    XCharStruct *cs, *def;
@@ -2705,9 +2713,9 @@ BOOL X11DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
   		} else cs = def;
 		if(pfo->lpX11Trans)
 		    *buffer++ = MAX(cs->attributes, 0) *
-		      pfo->lpX11Trans->pixelsize / 1000.0;
+		      pfo->lpX11Trans->pixelsize / 1000.0 * pfo->rescale;
 		else
-		    *buffer++ = MAX(cs->width, 0 );
+		    *buffer++ = MAX(cs->width, 0 ) * pfo->rescale;
 	    }
 	}
 
