@@ -221,7 +221,7 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 	    MENUFLAG(MFT_RADIOCHECK, "radio");
 	    MENUFLAG(MFT_RIGHTORDER, "rorder");
 	    MENUFLAG(MF_SYSMENU, "sys");
-	    MENUFLAG(MFT_RIGHTJUSTIFY, "right");
+	    MENUFLAG(MFT_RIGHTJUSTIFY, "right");	/* same as MF_HELP */
 
 	    if (flags)
 		dsprintf(menu, "+0x%x", flags);
@@ -672,7 +672,7 @@ static HBITMAP MENU_LoadMagicItem(UINT id, BOOL hilite, DWORD dwItemData)
      * bitmap buttons are pressed/selected/released.
      */
 
-    switch(id)
+    switch(id & 0xffff)
     {   case HBMMENU_SYSTEM:
 	    return (dwItemData) ?
 		(HBITMAP)dwItemData :
@@ -928,21 +928,20 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
     lprect->bottom = maxY;
     lppop->Height = lprect->bottom - lprect->top;
 
-      /* Flush right all items between the MF_HELP and the last item */
-      /* (if several lines, only move the last line) */
-    if (helpPos != -1)
+    /* Flush right all magic items and items between the MF_HELP and */
+    /* the last item (if several lines, only move the last line) */
+    lpitem = &lppop->items[lppop->nItems-1];
+    orgY = lpitem->rect.top;
+    orgX = lprect->right;
+    for (i = lppop->nItems - 1; i >= helpPos; i--, lpitem--)
     {
-	lpitem = &lppop->items[lppop->nItems-1];
-	orgY = lpitem->rect.top;
-	orgX = lprect->right;
-	for (i = lppop->nItems - 1; i >= helpPos; i--, lpitem--)
-	{
-	    if (lpitem->rect.top != orgY) break;    /* Other line */
-	    if (lpitem->rect.right >= orgX) break;  /* Too far right already */
-	    lpitem->rect.left += orgX - lpitem->rect.right;
-	    lpitem->rect.right = orgX;
-	    orgX = lpitem->rect.left;
-	}
+	if ( !IS_BITMAP_ITEM(lpitem->fType) && ((helpPos ==-1) ? TRUE : (helpPos>i) ))
+	    break;				/* done */
+	if (lpitem->rect.top != orgY) break;	/* Other line */
+	if (lpitem->rect.right >= orgX) break;	/* Too far right already */
+	lpitem->rect.left += orgX - lpitem->rect.right;
+	lpitem->rect.right = orgX;
+	orgX = lpitem->rect.left;
     }
 }
 
@@ -1215,9 +1214,14 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    if (lpitem->text[i] == '\t')
 	    {
 		rect.left = lpitem->xTab;
-		DrawTextA( hdc, lpitem->text + i + 1, -1, &rect, uFormat );
+		uFormat = DT_LEFT | DT_VCENTER | DT_SINGLELINE;
 	    }
-	    else DrawTextA( hdc, lpitem->text + i + 1, -1, &rect, uFormat );
+	    else 
+	    {
+		uFormat = DT_RIGHT | DT_VCENTER | DT_SINGLELINE;
+	    }
+
+	    DrawTextA( hdc, lpitem->text + i + 1, -1, &rect, uFormat );
 	}
     }
 }
