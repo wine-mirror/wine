@@ -498,8 +498,9 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
 
 	if (acmDriverID(had, &hadid, 0) != MMSYSERR_NOERROR)
 	    return MMSYSERR_INVALHANDLE;
-	return MSACM_FormatEnumHelper(MSACM_GetDriverID(hadid), had, pafd, &wfxRef, 
-				      fnCallback, dwInstance, fdwEnum);
+	MSACM_FormatEnumHelper(MSACM_GetDriverID(hadid), had, pafd, &wfxRef, 
+			       fnCallback, dwInstance, fdwEnum);
+	return MMSYSERR_NOERROR;
     }
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	    /* should check for codec only */
