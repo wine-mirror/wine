@@ -127,13 +127,6 @@ VOID LANGUAGE_SelectByNumber(UINT num)
   /* Destroy old menu */
   if (Globals.hMainMenu) DestroyMenu(Globals.hMainMenu);
   Globals.hMainMenu = hMainMenu;
-
-#ifdef WINELIB
-  /* Update system menus */
-  for (i = 0; Languages[i].name && lstrcmp(lang, Languages[i].name);) i++;
-  if (Languages[i].name) Options.language = i;
-
-#endif
 }
 
 VOID LANGUAGE_DefaultHandle(WPARAM wParam)
@@ -145,9 +138,6 @@ VOID LANGUAGE_DefaultHandle(WPARAM wParam)
 
 VOID LANGUAGE_Init(VOID)
 {
-  #ifdef WINELIB
-   Globals.lpszLanguage = Languages[Options.language].name;
-  #else
   CHAR buffer[MAX_PATHNAME_LEN], *p;
 
 #ifndef LCC
@@ -157,6 +147,5 @@ VOID LANGUAGE_Init(VOID)
   Globals.lpszLanguage = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
   strcpy(p, buffer);
   /* hmemcpy(p, buffer, 1 + lstrlen(buffer)); */
-  #endif
 }
 

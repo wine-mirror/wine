@@ -150,12 +150,6 @@ VOID LANGUAGE_SelectByNumber(UINT num)
   if (Globals.hMainMenu) DestroyMenu(Globals.hMainMenu);
   Globals.hMainMenu = hMainMenu;
 
-#ifdef WINELIB
-  /* Update system menus */
-  for (i = 0; Languages[i].name && lstrcmp(szLanguage, Languages[i].name);) i++;
-  if (Languages[i].name) Options.language = i;
-#endif
-
   /* specific for Clock: */
 
   LANGUAGE_UpdateMenuCheckmarks();
@@ -180,10 +174,6 @@ VOID LANGUAGE_Init(VOID)
 {
   CHAR szBuffer[MAX_PATHNAME_LEN];
 
-  #ifdef WINELIB
-   Globals.lpszLanguage = (LPSTR)Languages[Options.language].name;
-  #endif
-  
   if (Globals.lpszLanguage == "En") {
         PROFILE_GetWineIniString("programs", "language", "En", szBuffer, 
                                   sizeof(szBuffer));       

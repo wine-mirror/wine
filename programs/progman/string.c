@@ -70,7 +70,6 @@ VOID STRING_SelectLanguageByNumber(UINT num)
   CHAR   caption[MAX_STRING_LEN];
   CHAR   item[MAX_STRING_LEN];
   HMENU  hMainMenu;
-  HLOCAL hGroup;
 
   /* Select string table */
   Globals.wStringTableOffset = num * 0x100;
@@ -119,20 +118,6 @@ VOID STRING_SelectLanguageByNumber(UINT num)
   /* Destroy old menu */
   if (Globals.hMainMenu) DestroyMenu(Globals.hMainMenu);
   Globals.hMainMenu = hMainMenu;
-
-#ifdef WINELIB
-  /* Update system menus */
-  for (i = 0; Languages[i].name && lstrcmp(lang, Languages[i].name);) i++;
-  if (Languages[i].name) Options.language = i;
-
-  GetSystemMenu(Globals.hMainWnd, TRUE);
-  for (hGroup = GROUP_FirstGroup(); hGroup;
-       hGroup = GROUP_NextGroup(hGroup))
-    {
-      GROUP *group = LocalLock(hGroup);
-      GetSystemMenu(group->hWnd, TRUE);
-    }
-#endif
 }
 
 /* Local Variables:    */
