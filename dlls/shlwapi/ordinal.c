@@ -32,6 +32,45 @@ extern HMODULE SHLWAPI_hcomdlg32;
 extern HMODULE SHLWAPI_hmpr;
 extern HMODULE SHLWAPI_hmlang;
 
+typedef struct {
+    INT     size;      /* [in]  (always 0x18)                       */
+    LPCWSTR ap1;       /* [out] start of area (maybe after spaces)  */
+    INT     sizep1;    /* [out] size of first part (until colon)    */
+    LPCWSTR ap2;       /* [out] pointer following first colon       */
+    INT     sizep2;    /* [out] size of remainder                   */
+    INT     fcncde;    /* [out] function match of p1 (0 if unknown) */ 
+} UNKNOWN_SHLWAPI_2;
+
+typedef struct {
+    INT    protocol_number;
+    LPCSTR protocol_name;
+} SHL_2_inet_protocol;
+
+/* The following protocols were identified in the native version of
+ * SHLWAPI.DLL version 5.50
+ */
+static const SHL_2_inet_protocol shlwapi_protocols[] = {
+  {1, "ftp"},
+  {2, "http"},
+  {3, "gopher"},
+  {4, "mailto"},
+  {5, "news"},
+  {6, "nntp"},
+  {7, "telnet"},
+  {8, "wais"},
+  {9, "file"},
+  {10, "mk"},
+  {11, "https"},
+  {12, "shell"},
+  {13, "snews"},
+  {14, "local"},
+  {15, "javascript"},
+  {16, "vbscript"},
+  {17, "about"},
+  {18, "res"},
+  {0, 0}
+};
+
 /* Macro to get function pointer for a module*/
 #define GET_FUNC(module, name, fail) \
   if (!SHLWAPI_h##module) SHLWAPI_h##module = LoadLibraryA(#module ".dll"); \
@@ -62,11 +101,54 @@ DWORD WINAPI SHLWAPI_1 (
 
 /*************************************************************************
  *      @	[SHLWAPI.2]
+ *
+ * Identifies the Internet "protocol" requested in the passed string.
+ * Also determines start and length of item after the ':'
  */
-DWORD WINAPI SHLWAPI_2 (LPCWSTR x,LPVOID y)
+DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
 {
-	FIXME("(%s,%p)\n",debugstr_w(x),y);
-	return 0;
+    DWORD cnt;
+    const SHL_2_inet_protocol *inet_pro;
+    LPSTR cmpstr;
+    INT len;
+
+    if (y->size != 0x18) return E_INVALIDARG;
+    /* FIXME: leading white space generates error of 0x80041001 which 
+     *        is undefined
+     */
+    if (*x <= L' ') return 0x80041001;
+    cnt = 0;
+    y->sizep1 = 0;
+    y->ap1 = x;
+    while (*x) {
+	if (*x == L':') {
+	    y->sizep1 = cnt;
+	    cnt = -1;
+	    y->ap2 = x+1;
+	    break;
+	}
+	x++;
+	cnt++;
+    }
+    if (*x && y->sizep1) {
+	y->sizep2 = lstrlenW(y->ap2);
+    }
+
+    len = WideCharToMultiByte(0, 0, y->ap1, y->sizep1, 0, 0, 0, 0);
+    cmpstr = (LPSTR)HeapAlloc(GetProcessHeap(), 0, len+1);
+    WideCharToMultiByte(0, 0, y->ap1, y->sizep1, cmpstr, len+1, 0, 0);
+    y->fcncde = 0;
+    inet_pro = shlwapi_protocols;
+    while (inet_pro->protocol_number) {
+	if (!strncasecmp(inet_pro->protocol_name, cmpstr,
+		    min(len, lstrlenA(inet_pro->protocol_name)))) {
+	    y->fcncde = inet_pro->protocol_number;
+	    break;
+	}
+	inet_pro++;
+    }
+    HeapFree(GetProcessHeap(), 0, cmpstr);
+    return S_OK;
 }
 
 /*************************************************************************
@@ -177,11 +259,11 @@ DWORD WINAPI SHLWAPI_24 (
 /*************************************************************************
  *      SHLWAPI_25	[SHLWAPI.25]
  *
+ * Seems to be iswalpha
  */
-BOOL WINAPI SHLWAPI_25(DWORD dw1)
+BOOL WINAPI SHLWAPI_25(WCHAR wc)
 {
-    FIXME("(%08lx): stub\n", dw1);
-    return FALSE;
+    return (get_char_typeW(wc) & C1_ALPHA) != 0;
 }
 
 /*************************************************************************
@@ -231,12 +313,11 @@ BOOL WINAPI SHLWAPI_32(LPCWSTR lpcChar)
 /*************************************************************************
  *      SHLWAPI_33	[SHLWAPI.33]
  *
+ * Seems to be iswdigit
  */
-BOOL WINAPI SHLWAPI_33(DWORD dw1)
+BOOL WINAPI SHLWAPI_33(WCHAR wc)
 {
-    FIXME("(%08lx): stub\n", dw1);
-    if (HIWORD(dw1)) return TRUE;
-    return FALSE;
+    return (get_char_typeW(wc) & C1_DIGIT) != 0;
 }
 
 /*************************************************************************
