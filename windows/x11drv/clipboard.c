@@ -527,11 +527,10 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
       for(i=0; i <= nitems; i++)
           if( val[i] == '\n' ) inlcount++;
  
-      if( nitems )
-      {
         hText=GlobalAlloc16(GMEM_MOVEABLE, nitems + inlcount + 1);
         if( (lpstr = (char*)GlobalLock16(hText)) )
         {
+		  ZeroMemory(lpstr, nitems + inlcount + 1);
           for(i=0,inlcount=0; i <= nitems; i++)
           {
              if( val[i] == '\n' ) lpstr[inlcount++]='\r';
@@ -541,7 +540,6 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
         }
         else
             hText = 0;
-      }
       
       if( hText )
       {
