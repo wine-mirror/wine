@@ -150,15 +150,17 @@ void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn )
                 if (event.type == NoExpose) break;
                 if (event.type == GraphicsExpose)
                 {
+                    int x = event.xgraphicsexpose.x - dc->DCOrgX;
+                    int y = event.xgraphicsexpose.y - dc->DCOrgY;
+
                     TRACE( "got %d,%d %dx%d count %d\n",
-                         event.xgraphicsexpose.x, event.xgraphicsexpose.y,
-                         event.xgraphicsexpose.width, event.xgraphicsexpose.height,
-                         event.xgraphicsexpose.count );
+                           x, y, event.xgraphicsexpose.width, event.xgraphicsexpose.height,
+                           event.xgraphicsexpose.count );
 
                     if (!tmp) tmp = CreateRectRgn( 0, 0, 0, 0 );
-                    SetRectRgn( tmp, event.xgraphicsexpose.x, event.xgraphicsexpose.y,
-                                event.xgraphicsexpose.x + event.xgraphicsexpose.width,
-                                event.xgraphicsexpose.y + event.xgraphicsexpose.height );
+                    SetRectRgn( tmp, x, y,
+                                x + event.xgraphicsexpose.width,
+                                y + event.xgraphicsexpose.height );
                     CombineRgn( hrgn, hrgn, tmp, RGN_OR );
                     if (!event.xgraphicsexpose.count) break;
                 }
