@@ -169,8 +169,10 @@ int stub_manager_unref(struct stub_manager *m, int refs)
         EnterCriticalSection(&m->lock);
         if (!list_empty(&m->ifstubs))
         {
-            ERR("PANIC: Stub manager is being destroyed with outstanding interface stubs\n");
-            assert( FALSE );
+            ERR("PANIC: Stub manager %s is being destroyed with outstanding interface stubs\n", wine_dbgstr_longlong(m->oid));
+            
+            /* assert( FALSE ); */
+            /* fixme: this will happen sometimes until we do proper lifecycle management via IRemUnknown */
         }
 
         /* fixme: the lifecycle of table-weak marshals is not
