@@ -313,16 +313,20 @@ then {
 
       if ! su root -c "$sucommand"
       then {
-        echo
-        echo "Either you entered an incorrect password or we failed to run"
-        echo "'$sucommand' correctly."
-        echo "If you didn't enter an incorrect password then please report this"
-        echo "error and any steps to possibly reproduce it to"
-        echo "http://bugs.winehq.com/"
-        echo
-        echo "Installation failed, aborting."
-        exit 1
-      }
+      	if ! su root -c "$sucommand"
+        then {
+      	     echo
+             echo "Either you entered an incorrect password or we failed to"
+             echo "run '$sucommand' correctly."
+             echo "If you didn't enter an incorrect password then please"
+             echo "report this error and any steps to possibly reproduce it to"
+             echo "http://bugs.winehq.com/"
+             echo
+             echo "Installation failed, aborting."
+             exit 1
+         }
+         fi
+       }
       fi
 
       echo
