@@ -45,6 +45,7 @@
 int __wine_main_argc = 0;
 char **__wine_main_argv = NULL;
 WCHAR **__wine_main_wargv = NULL;
+char **__wine_main_environ = NULL;
 
 extern void init_argv0_path( const char *argv0 );  /* config.c */
 
@@ -414,6 +415,7 @@ void *wine_dll_load_main_exe( const char *name, char *error, int errorsize,
  */
 void wine_init( int argc, char *argv[], char *error, int error_size )
 {
+    extern char **environ;
     int file_exists;
     void *ntdll;
     void (*init_func)(void);
@@ -422,6 +424,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     init_argv0_path( argv[0] );
     __wine_main_argc = argc;
     __wine_main_argv = argv;
+    __wine_main_environ = environ;
 
     if (!(ntdll = dlopen_dll( "ntdll.dll", error, error_size, 0, &file_exists ))) return;
     if (!(init_func = wine_dlsym( ntdll, "__wine_process_init", error, error_size ))) return;

@@ -50,6 +50,7 @@ extern void wine_dll_unload( void *handle );
 extern int __wine_main_argc;
 extern char **__wine_main_argv;
 extern WCHAR **__wine_main_wargv;
+extern char **__wine_main_environ;
 
 /* debugging */
 

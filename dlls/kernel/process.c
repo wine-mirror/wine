@@ -325,13 +325,12 @@ static HMODULE load_pe_exe( const WCHAR *name, HANDLE file )
 }
 
 /***********************************************************************
- *           build_environment
+ *           build_initial_environment
  *
  * Build the Win32 environment from the Unix environment
  */
-static BOOL build_initial_environment(void)
+static BOOL build_initial_environment( char **environ )
 {
-    extern char **environ;
     ULONG size = 1;
     char **e;
     WCHAR *p, *endptr;
@@ -603,7 +602,7 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
  *
  * Main process initialisation code
  */
-static BOOL process_init( char *argv[] )
+static BOOL process_init( char *argv[], char **environ )
 {
     BOOL ret;
     size_t info_size = 0;
@@ -685,7 +684,7 @@ static BOOL process_init( char *argv[] )
     }
 
     /* Copy the parent environment */
-    if (!build_initial_environment()) return FALSE;
+    if (!build_initial_environment( environ )) return FALSE;
 
     /* Parse command line arguments */
     OPTIONS_ParseOptions( !info_size ? argv : NULL );
@@ -744,7 +743,7 @@ void __wine_kernel_init(void)
     PEB *peb = NtCurrentTeb()->Peb;
 
     /* Initialize everything */
-    if (!process_init( __wine_main_argv )) exit(1);
+    if (!process_init( __wine_main_argv, __wine_main_environ )) exit(1);
 
     __wine_main_argv++;  /* remove argv[0] (wine itself) */
     __wine_main_argc--;
@@ -976,6 +975,19 @@ static char **build_argv( const WCHAR *cmdlineW, int reserved )
 
 
 /***********************************************************************
+ *           alloc_env_string
+ *
+ * Allocate an environment string; helper for build_envp
+ */
+static char *alloc_env_string( const char *name, const char *value )
+{
+    char *ret = malloc( strlen(name) + strlen(value) + 1 );
+    strcpy( ret, name );
+    strcat( ret, value );
+    return ret;
+}
+
+/***********************************************************************
  *           build_envp
  *
  * Build the environment of a new child process.
@@ -1003,32 +1015,24 @@ static char **build_envp( const WCHAR *envW, const WCHAR *extra_envW )
     if (!(env = malloc( length ))) return NULL;
     WideCharToMultiByte( CP_UNIXCP, 0, envW, p - envW, env, length, NULL, NULL );
 
-    count += 3;
+    count += 4;
 
     if ((envp = malloc( count * sizeof(*envp) )))
     {
-        extern char **environ;
         char **envptr = envp;
-        char **unixptr = environ;
         char *p;
 
         /* first the extra strings */
         if (extra_env) for (p = extra_env; *p; p += strlen(p) + 1) *envptr++ = p;
         /* then put PATH, HOME and WINEPREFIX from the unix env */
-        for (unixptr = environ; unixptr && *unixptr; unixptr++)
-            if (!memcmp( *unixptr, "PATH=", 5 ) ||
-                !memcmp( *unixptr, "HOME=", 5 ) ||
-                !memcmp( *unixptr, "WINEPREFIX=", 11 )) *envptr++ = *unixptr;
+        if ((p = getenv("PATH"))) *envptr++ = alloc_env_string( "PATH=", p );
+        if ((p = getenv("HOME"))) *envptr++ = alloc_env_string( "HOME=", p );
+        if ((p = getenv("WINEPREFIX"))) *envptr++ = alloc_env_string( "WINEPREFIX=", p );
         /* now put the Windows environment strings */
         for (p = env; *p; p += strlen(p) + 1)
         {
             if (!memcmp( p, "PATH=", 5 ))  /* store PATH as WINEPATH */
-            {
-                char *winepath = malloc( strlen(p) + 5 );
-                strcpy( winepath, "WINE" );
-                strcpy( winepath + 4, p );
-                *envptr++ = winepath;
-            }
+                *envptr++ = alloc_env_string( "WINEPATH=", p + 5 );
             else if (memcmp( p, "HOME=", 5 ) &&
                      memcmp( p, "WINEPATH=", 9 ) &&
                      memcmp( p, "WINEPREFIX=", 11 )) *envptr++ = p;
