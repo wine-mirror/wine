@@ -228,8 +228,8 @@ type win32
 @ stub    PathIsUNCServerShareA
 @ stub    PathIsUNCServerShareW
 @ stub    PathIsUNCServerW
-@ stdcall PathIsUNCW (ptr) PathIsUNCW
-@ stub    PathIsURLA
+@ stdcall PathIsUNCW(wstr) PathIsUNCW
+@ stdcall PathIsURLA(str) PathIsURLA
 @ stub    PathIsURLW
 @ stub    PathMakePrettyA
 @ stub    PathMakePrettyW
