@@ -437,19 +437,19 @@ static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCSTR drvTyp, LPARAM lp)
     } else {
 	MCI_MapType 	res;
 
-	switch (res = MCI_MapMsg32ATo16(0, MCI_OPEN_DRIVER, 0, &lp)) {
+	switch (res = MCI_MapMsg32ATo16(0, DRV_OPEN, 0, &lp)) {
 	case MCI_MAP_MSGERROR:
-	    TRACE("Not handled yet (MCI_OPEN_DRIVER)\n");
+	    TRACE("Not handled yet (DRV_OPEN)\n");
 	    break;
 	case MCI_MAP_NOMEM:
-	    TRACE("Problem mapping msg=MCI_OPEN_DRIVER from 32a to 16\n");
+	    TRACE("Problem mapping msg=DRV_OPEN from 32a to 16\n");
 	    break;
 	case MCI_MAP_OK:
 	case MCI_MAP_OKMEM:
 	    if ((wmd->hDriver = OpenDriverA(drvTyp, "mci", lp)))
 		wmd->bIs32 = FALSE;
 	    if (res == MCI_MAP_OKMEM)
-		MCI_UnMapMsg32ATo16(0, MCI_OPEN_DRIVER, 0, lp);
+		MCI_UnMapMsg32ATo16(0, DRV_OPEN, 0, lp);
 	    break;
 	}
     }
@@ -843,6 +843,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     int			offset = 0;
     DWORD		data[MCI_DATA_SIZE];
     LPCSTR		lpCmd = 0;
+    LPSTR		devAlias = NULL;
     LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
     BOOL		bAutoOpen = FALSE;
 
@@ -906,6 +907,16 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	    dwFlags |= MCI_OPEN_ELEMENT;
 	    data[3] = (DWORD)dev;
 	}
+	if ((devAlias = strstr(args," alias "))) {
+	    devAlias += 7;
+	    tmp = strchr(devAlias,' ');
+	    if (tmp) *tmp = '\0';
+	    data[4] = (DWORD)HEAP_strdupA(GetProcessHeap(), 0, devAlias);
+	    if (tmp) *tmp = ' ';
+	    /* should be done in regular options parsing */
+	    /* dwFlags |= MCI_OPEN_ALIAS; */
+	}
+
 	dwRet = MCI_LoadMciDriver(iData, devType, &wmd);
 	HeapFree(GetProcessHeap(), 0, devType);
 	if (dwRet) {
@@ -992,13 +1003,12 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	dwRet = MCI_SendCommand(wmd->wDeviceID, MCI_GetMessage(lpCmd), dwFlags, (DWORD)data, TRUE);
     }
     TRACE("=> 1/ %lx (%s)\n", dwRet, lpstrRet);
-    if (dwRet)	goto errCleanUp;
-    
     dwRet = MCI_HandleReturnValues(iData, dwRet, wmd, lpCmd, data, lpstrRet, uRetLen);
     TRACE("=> 2/ %lx (%s)\n", dwRet, lpstrRet);
 
 errCleanUp:
     HeapFree(GetProcessHeap(), 0, verb);
+    HeapFree(GetProcessHeap(), 0, devAlias);
     return dwRet;
 }
 
@@ -1762,9 +1772,27 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	default:			size = sizeof(MCI_GENERIC_PARMS);	break;
 	}
 	break;
+    case DRV_OPEN:
+	{
+            LPMCI_OPEN_DRIVER_PARMSA	modp32a = (LPMCI_OPEN_DRIVER_PARMSA)(*lParam);
+	    char*			ptr    = SEGPTR_ALLOC(sizeof(LPMCI_OPEN_DRIVER_PARMSA) + sizeof(MCI_OPEN_DRIVER_PARMS16));
+	    LPMCI_OPEN_DRIVER_PARMS16	modp16;
+
+
+	    if (ptr) {
+		*(LPMCI_OPEN_DRIVER_PARMSA*)(ptr) = modp32a;
+		modp16 = (LPMCI_OPEN_DRIVER_PARMS16)(ptr + sizeof(LPMCI_OPEN_DRIVER_PARMSA));
+		modp16->wDeviceID = modp32a->wDeviceID;
+		modp16->lpstrParams = modp32a->lpstrParams ? SEGPTR_GET(SEGPTR_STRDUP(modp32a->lpstrParams)) : 0;
+		/* other fields are gonna be filled by the driver, don't copy them */
+ 	    } else {
+		return MCI_MAP_NOMEM;
+	    }
+	    *lParam = (LPARAM)SEGPTR_GET(ptr) + sizeof(LPMCI_OPEN_DRIVER_PARMSA);
+	}
+	return MCI_MAP_OKMEM;
     case DRV_LOAD:
     case DRV_ENABLE:
-    case DRV_OPEN:
     case DRV_CLOSE:
     case DRV_DISABLE:
     case DRV_FREE:
@@ -1946,9 +1974,20 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
 	/* FIXME: see map function */
 	break;
 
+    case DRV_OPEN:
+	if (lParam) {
+            LPMCI_OPEN_DRIVER_PARMS16	modp16  = (LPMCI_OPEN_DRIVER_PARMS16)MapSL(lParam);
+	    LPMCI_OPEN_DRIVER_PARMSA	modp32a = *(LPMCI_OPEN_DRIVER_PARMSA*)((char*)modp16 - sizeof(LPMCI_OPEN_DRIVER_PARMSA));
+	    
+	    modp32a->wCustomCommandTable = modp16->wCustomCommandTable;
+	    modp32a->wType = modp16->wType;
+
+	    if (modp16->lpstrParams && !SEGPTR_FREE(MapSL(modp16->lpstrParams)))
+		FIXME("bad free line=%d\n", __LINE__);
+	}
+	return MCI_MAP_OK;
     case DRV_LOAD:
     case DRV_ENABLE:
-    case DRV_OPEN:
     case DRV_CLOSE:
     case DRV_DISABLE:
     case DRV_FREE:
