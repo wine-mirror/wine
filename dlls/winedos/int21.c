@@ -246,6 +246,19 @@ typedef struct
 #define EL_Serial            0x04
 #define EL_Memory            0x05
 
+/* BIOS Keyboard Scancodes */
+#define KEY_LEFT        0x4B
+#define KEY_RIGHT       0x4D
+#define KEY_UP          0x48
+#define KEY_DOWN        0x50
+#define KEY_IC          0x52 /* insert char */
+#define KEY_DC          0x53 /* delete char */
+#define KEY_BACKSPACE   0x0E
+#define KEY_HOME        0x47
+#define KEY_END         0x4F
+#define KEY_NPAGE       0x49
+#define KEY_PPAGE       0x51
+
 
 struct magic_device
 {
@@ -1148,19 +1161,21 @@ static WORD INT21_BufferedInput( CONTEXT86 *context, BYTE *ptr, WORD capacity )
 
         if (ascii == '\r' || ascii == '\n')
         {
-            /*
-             * FIXME: What should be echoed here?
-             */
-            DOSVM_PutChar( '\r' );
-            DOSVM_PutChar( '\n' );
             ptr[length] = '\r';
             return length + 1;
         }
 
         /*
-         * FIXME: This function is supposed to support
-         *        DOS editing keys...
+         * DOS handles only backspace and KEY_LEFT
+         *        perhaps we should do more
          */
+        if (ascii == '\b' || scan == KEY_LEFT)
+        {
+            if (length==0) continue;
+            DOSVM_PutChar( '\b' );
+            length--;
+            continue;
+        }
 
         /*
          * If the buffer becomes filled to within one byte of

@@ -808,7 +808,10 @@ void VGA_PutChar(BYTE ascii)
     switch(ascii) {
     case '\b':
         if (vga_text_x)
+        {
             vga_text_x--;
+            VGA_PutCharAt(vga_text_x, vga_text_y, ' ', 0);
+        }
         break;
 
     case '\t':
