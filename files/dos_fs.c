@@ -291,7 +291,7 @@ static int DOSFS_MatchLong( const char *mask, const char *name,
             if (!*mask) return 1;
             if (case_sensitive) while (*name && (*name != *mask)) name++;
             else while (*name && (toupper(*name) != toupper(*mask))) name++;
-            if (!*name) return 0;
+            if (!*name) break;
         }
         else if (*mask != '?')
         {
@@ -304,6 +304,7 @@ static int DOSFS_MatchLong( const char *mask, const char *name,
         mask++;
         name++;
     }
+    if (*mask == '.') mask++;  /* Ignore trailing '.' in mask */
     return (!*name && !*mask);
 }
 
