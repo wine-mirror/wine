@@ -1,12 +1,12 @@
 /*
  * COMMDLG - File Open Dialogs Win95 look and feel
  *
- * FIXME: lpstrCustomFilter not handeled
+ * FIXME: lpstrCustomFilter not handled
  *
  * FIXME: if the size of lpstrFile (nMaxFile) is to small the first
  * two bytes of lpstrFile should contain the needed size
  *
- * FIXME: algorithm for selecting the initial directory is to simple
+ * FIXME: algorithm for selecting the initial directory is too simple
  *
  * FIXME: add to recent docs
  *
@@ -735,7 +735,7 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 {
   switch(uMsg)
   {
-    case WM_INITDIALOG :
+    case WM_INITDIALOG:
          /* Adds the FileOpenDlgInfos in the property list of the dialog 
             so it will be easily accessible through a GetPropA(...) */
       	 SetPropA(hwnd, FileOpenDlgInfosStr, (HANDLE) lParam);
@@ -761,9 +761,9 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     case WM_GETISHELLBROWSER:
       return FILEDLG95_OnWMGetIShellBrowser(hwnd);
 
-  case WM_DESTROY:
+    case WM_DESTROY:
       RemovePropA(hwnd, FileOpenDlgInfosStr);
-        return FALSE;
+      return FALSE;
 
     case WM_NOTIFY:
     {
@@ -1166,7 +1166,6 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   LPSHELLFOLDER lpsf = NULL;
   int nOpenAction;
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
-
 
   TRACE("hwnd=0x%04x\n", hwnd);
 
@@ -2312,7 +2311,7 @@ static HRESULT COMDLG32_StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPI
 /***********************************************************************
  * FILEDLG95_FILENAME_GetFileNames
  *
- * copys the filenames to a 0-delimited string
+ * copies the filenames to a 0-delimited string list (A\0B\0C\0\0)
  */
 int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPSTR * lpstrFileList, UINT * sizeUsed)
 {
@@ -2332,10 +2331,12 @@ int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPSTR * lpstrFileList, UINT * si
 
 	TRACE("nStrLen=%u str=%s\n", nStrLen, lpstrEdit);
 	
-	*lpstrFileList = MemAlloc(nStrLen);
+	/* we might get single filename without any '"',
+	 * so we need nStrLen + terminating \0 + end-of-list \0 */
+	*lpstrFileList = MemAlloc(nStrLen+2);
 	*sizeUsed = 0;
 
-	/* build 0-delimited file list from filenames*/
+	/* build 0-delimited file list from filenames */
 	while ( nStrCharCount <= nStrLen )
 	{
 	  if ( lpstrEdit[nStrCharCount]=='"' )
@@ -2369,7 +2370,7 @@ int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPSTR * lpstrFileList, UINT * si
 
 	MemFree(lpstrEdit);
 	return nFileCount;
- }
+}
 
 #define SETDefFormatEtc(fe,cf,med) \
 { \
