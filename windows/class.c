@@ -773,6 +773,7 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
         case GCW_CBCLSEXTRA:
         case GCW_HMODULE:
             retvalue = (WORD)GetClassLongA( hwnd, offset );
+            goto END;
     }
 
     WARN("Invalid offset %d\n", offset);
