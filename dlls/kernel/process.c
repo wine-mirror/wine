@@ -489,6 +489,7 @@ static void set_registry_environment(void)
 static void set_library_wargv( char **argv )
 {
     int argc;
+    char *q;
     WCHAR *p;
     WCHAR **wargv;
     DWORD total = 0;
@@ -507,6 +508,24 @@ static void set_library_wargv( char **argv )
         total -= reslen;
     }
     wargv[argc] = NULL;
+
+    /* convert argv back from Unicode since it has to be in the Ansi codepage not the Unix one */
+
+    for (argc = 0; wargv[argc]; argc++)
+        total += WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, NULL, 0, NULL, NULL );
+
+    argv = RtlAllocateHeap( GetProcessHeap(), 0, total + (argc + 1) * sizeof(*argv) );
+    q = (char *)(argv + argc + 1);
+    for (argc = 0; wargv[argc]; argc++)
+    {
+        DWORD reslen = WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, q, total, NULL, NULL );
+        argv[argc] = q;
+        q += reslen;
+        total -= reslen;
+    }
+    argv[argc] = NULL;
+
+    __wine_main_argv = argv;
     __wine_main_wargv = wargv;
 }
 
