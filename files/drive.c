@@ -32,8 +32,9 @@
 # endif
 #endif
 
-#include "windows.h"
 #include "winbase.h"
+#include "wine/winbase16.h"   /* for GetCurrentTask */
+#include "wine/winestring.h"  /* for lstrcpyAtoW */
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"

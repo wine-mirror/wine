@@ -4,7 +4,8 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#include "windows.h"
+#include "winbase.h"
+#include "wine/winbase16.h"
 #include "global.h"
 #include "options.h"
 #include "resource.h"

@@ -33,7 +33,8 @@
 #include <string.h>
 #include <time.h>
 #include <assert.h>
-#include "windows.h"
+#include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "winerror.h"
 #include "ole.h"
 #include "ole2.h"
