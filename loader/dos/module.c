@@ -35,6 +35,7 @@
 #include "dosmod.h"
 #include "options.h"
 #include "server.h"
+#include "vga.h"
 
 DEFAULT_DEBUG_CHANNEL(module)
 
@@ -515,6 +516,7 @@ void MZ_KillModule( LPDOSTASK lpDosTask )
   DOSSYSTEM *sys,*p_sys;
 
   TRACE("killing DOS task\n");
+  VGA_Clean();
   if (lpDosTask->mm_name[0]!=0) {
     munmap(lpDosTask->img,0x110000-START_OFFSET);
     close(lpDosTask->mm_fd);
