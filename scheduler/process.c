@@ -322,10 +322,11 @@ static void start_process(void)
     SERVER_START_REQ
     {
         struct init_process_done_request *req = server_alloc_req( sizeof(*req), 0 );
-        req->module = (void *)current_process.module;
-        req->entry  = entry;
-        req->name   = main_exe_name;
-        req->gui    = !console_app;
+        req->module   = (void *)current_process.module;
+        req->entry    = entry;
+        req->name     = main_exe_name;
+        req->exe_file = main_exe_file;
+        req->gui      = !console_app;
         server_call( REQ_INIT_PROCESS_DONE );
         debugged = req->debugged;
     }
@@ -337,7 +338,7 @@ static void start_process(void)
     if (!SIGNAL_Init()) goto error;
 
     /* create the main modref and load dependencies */
-    if (!(wm = PE_CreateModule( current_process.module, main_exe_name, 0, main_exe_file, FALSE )))
+    if (!(wm = PE_CreateModule( current_process.module, main_exe_name, 0, 0, FALSE )))
         goto error;
     wm->refCount++;
 

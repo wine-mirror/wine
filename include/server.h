@@ -194,6 +194,7 @@ struct init_process_done_request
     IN  void*        module;       /* main module base address */
     IN  void*        entry;        /* process entry point */
     IN  void*        name;         /* ptr to ptr to name (in process addr space) */
+    IN  handle_t     exe_file;     /* file handle for main exe */
     IN  int          gui;          /* is it a GUI process? */
     OUT int          debugged;     /* being debugged? */
 };
@@ -1575,7 +1576,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 32
+#define SERVER_PROTOCOL_VERSION 33
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
