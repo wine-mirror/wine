@@ -623,8 +623,6 @@ UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
                                   width,height,SWP_SHOWWINDOW);
                return TRUE;
           case ABM_WINDOWPOSCHANGED:
-               SetWindowPos(data->hWnd,HWND_TOP,rec.left,rec.top,
-                                        width,height,SWP_SHOWWINDOW);
                return TRUE;
           }
       return FALSE;
