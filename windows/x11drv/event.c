@@ -31,7 +31,6 @@
 #include "message.h"
 #include "mouse.h"
 #include "options.h"
-#include "queue.h"
 #include "win.h"
 #include "winpos.h"
 #include "file.h"
@@ -292,21 +291,8 @@ static void EVENT_ProcessEvent( XEvent *event )
     case ButtonRelease:
       EVENT_ButtonRelease( hWnd, (XButtonEvent*)event );
       break;
-      
+
     case MotionNotify:
-      /* Wine between two fast machines across the overloaded campus
-	 ethernet gets very boged down in MotionEvents. The following
-	 simply finds the last motion event in the queue and drops
-	 the rest. On a good link events are servered before they build
-	 up so this doesn't take place. On a slow link this may cause
-	 problems if the event order is important. I'm not yet seen
-	 of any problems. Jon 7/6/96.
-      */
-      if ((current_input_type == X11DRV_INPUT_ABSOLUTE) &&
-	  (in_transition == FALSE))
-	/* Only cumulate events if in absolute mode */
-	while (TSXCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
-					MotionNotify, event));    
       EVENT_MotionNotify( hWnd, (XMotionEvent*)event );
       break;
 
@@ -439,14 +425,14 @@ static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
     {
         get_coords( &hWnd, event->window, event->x, event->y, &pt );
         X11DRV_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, pt.x, pt.y,
-                          X11DRV_EVENT_XStateToKeyState( event->state ),
+                          X11DRV_EVENT_XStateToKeyState( event->state ), 0,
                           event->time - X11DRV_server_startticks, hWnd);
     }
     else
     {
         X11DRV_SendEvent( MOUSEEVENTF_MOVE,
                           event->x_root, event->y_root,
-                          X11DRV_EVENT_XStateToKeyState( event->state ),
+                          X11DRV_EVENT_XStateToKeyState( event->state ), 0,
                           event->time - X11DRV_server_startticks, hWnd);
     }
 }
@@ -495,8 +481,7 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
     }
 
     X11DRV_SendEvent( statusCodes[buttonNum], pt.x, pt.y,
-                      MAKEWPARAM(keystate,wData),
-                      event->time - X11DRV_server_startticks, hWnd);
+                      keystate, wData, event->time - X11DRV_server_startticks, hWnd);
 }
 
 
@@ -537,7 +522,7 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
         return;
     }
     X11DRV_SendEvent( statusCodes[buttonNum], pt.x, pt.y,
-                      keystate, event->time - X11DRV_server_startticks, hWnd);
+                      keystate, 0, event->time - X11DRV_server_startticks, hWnd);
 }
 
 
@@ -1523,10 +1508,9 @@ void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base)
 /* DGA2 event handlers */
 static void EVENT_DGAMotionEvent( XDGAMotionEvent *event )
 {
-  X11DRV_SendEvent( MOUSEEVENTF_MOVE, 
-		   event->dx, event->dy,
-		   X11DRV_EVENT_XStateToKeyState( event->state ), 
-		   event->time - X11DRV_server_startticks, DGAhwnd );
+  X11DRV_SendEvent( MOUSEEVENTF_MOVE, event->dx, event->dy,
+                    X11DRV_EVENT_XStateToKeyState( event->state ), 0,
+                    event->time - X11DRV_server_startticks, DGAhwnd );
 }
 
 static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
@@ -1554,7 +1538,8 @@ static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
       break;
   }
   
-  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time - X11DRV_server_startticks, DGAhwnd );
+  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, 0,
+                    event->time - X11DRV_server_startticks, DGAhwnd );
 }
 
 static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
@@ -1582,7 +1567,8 @@ static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
       break;
   }
   
-  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time - X11DRV_server_startticks, DGAhwnd );
+  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, 0,
+                    event->time - X11DRV_server_startticks, DGAhwnd );
 }
 
 #endif

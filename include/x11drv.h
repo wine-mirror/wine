@@ -387,7 +387,7 @@ extern void X11DRV_InitMouse(LPMOUSE_EVENT_PROC);
 extern void X11DRV_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void X11DRV_MoveCursor(WORD wAbsX, WORD wAbsY);
 extern void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
-                                    DWORD keyState, DWORD time, HWND hWnd );
+                              WORD keyState, DWORD data, DWORD time, HWND hWnd );
 
 /* X11 windows driver */
 

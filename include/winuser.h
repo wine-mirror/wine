@@ -147,6 +147,48 @@ typedef struct
 
 #define KL_NAMELENGTH      9
 
+typedef struct tagMOUSEINPUT
+{
+    LONG    dx;
+    LONG    dy;
+    DWORD   mouseData;
+    DWORD   dwFlags;
+    DWORD   time;
+    ULONG_PTR dwExtraInfo;
+} MOUSEINPUT, *PMOUSEINPUT, *LPMOUSEINPUT;
+
+typedef struct tagKEYBDINPUT
+{
+    WORD    wVk;
+    WORD    wScan;
+    DWORD   dwFlags;
+    DWORD   time;
+    ULONG_PTR dwExtraInfo;
+} KEYBDINPUT, *PKEYBDINPUT, *LPKEYBDINPUT;
+
+typedef struct tagHARDWAREINPUT
+{
+    DWORD   uMsg;
+    WORD    wParamL;
+    WORD    wParamH;
+} HARDWAREINPUT, *PHARDWAREINPUT, *LPHARDWAREINPUT;
+
+#define INPUT_MOUSE     0
+#define INPUT_KEYBOARD  1
+#define INPUT_HARDWARE  2
+
+typedef struct tagINPUT
+{
+    DWORD type;
+    union
+    {
+        MOUSEINPUT      mi;
+        KEYBDINPUT      ki;
+        HARDWAREINPUT   hi;
+    } DUMMYUNIONNAME;
+} INPUT, *PINPUT, *LPINPUT;
+
+
 /***** Dialogs *****/
 /* Gcc on Solaris has a version of this that we don't care about */
 #undef FSHIFT
@@ -3749,29 +3791,26 @@ BOOL      WINAPI RemoveMenu(HMENU,UINT,UINT);
 HANDLE    WINAPI RemovePropA(HWND,LPCSTR);
 HANDLE    WINAPI RemovePropW(HWND,LPCWSTR);
 #define     RemoveProp WINELIB_NAME_AW(RemoveProp)
-BOOL      WINAPI ReplyMessage(LRESULT);
-BOOL      WINAPI ScreenToClient(HWND,LPPOINT);
+BOOL        WINAPI ReplyMessage(LRESULT);
+BOOL        WINAPI ScreenToClient(HWND,LPPOINT);
 VOID        WINAPI ScrollChildren(HWND,UINT,WPARAM,LPARAM);
-BOOL      WINAPI ScrollDC(HDC,INT,INT,const RECT*,const RECT*,
-                      HRGN,LPRECT);
-BOOL      WINAPI ScrollWindow(HWND,INT,INT,const RECT*,const RECT*);
-INT       WINAPI ScrollWindowEx(HWND,INT,INT,const RECT*,
-                                    const RECT*,HRGN,LPRECT,UINT);
+BOOL        WINAPI ScrollDC(HDC,INT,INT,const RECT*,const RECT*,HRGN,LPRECT);
+BOOL        WINAPI ScrollWindow(HWND,INT,INT,const RECT*,const RECT*);
+INT         WINAPI ScrollWindowEx(HWND,INT,INT,const RECT*,const RECT*,HRGN,LPRECT,UINT);
 LRESULT     WINAPI SendDlgItemMessageA(HWND,INT,UINT,WPARAM,LPARAM);
 LRESULT     WINAPI SendDlgItemMessageW(HWND,INT,UINT,WPARAM,LPARAM);
 #define     SendDlgItemMessage WINELIB_NAME_AW(SendDlgItemMessage)
+UINT        WINAPI SendInput(UINT,LPINPUT,int);
 LRESULT     WINAPI SendMessageA(HWND,UINT,WPARAM,LPARAM);
 LRESULT     WINAPI SendMessageW(HWND,UINT,WPARAM,LPARAM);
 #define     SendMessage WINELIB_NAME_AW(SendMessage)
-LRESULT     WINAPI SendMessageTimeoutA(HWND,UINT,WPARAM,LPARAM,UINT,
-					 UINT,LPDWORD);
-LRESULT     WINAPI SendMessageTimeoutW(HWND,UINT,WPARAM,LPARAM,UINT,
-					 UINT,LPDWORD);
+LRESULT     WINAPI SendMessageTimeoutA(HWND,UINT,WPARAM,LPARAM,UINT,UINT,LPDWORD);
+LRESULT     WINAPI SendMessageTimeoutW(HWND,UINT,WPARAM,LPARAM,UINT,UINT,LPDWORD);
 #define     SendMessageTimeout WINELIB_NAME_AW(SendMessageTimeout)
-HWND      WINAPI SetActiveWindow(HWND);
-HWND      WINAPI SetCapture(HWND);
-BOOL      WINAPI SetCaretBlinkTime(UINT);
-BOOL      WINAPI SetCaretPos(INT,INT);
+HWND        WINAPI SetActiveWindow(HWND);
+HWND        WINAPI SetCapture(HWND);
+BOOL        WINAPI SetCaretBlinkTime(UINT);
+BOOL        WINAPI SetCaretPos(INT,INT);
 LONG        WINAPI SetClassLongA(HWND,INT,LONG);
 LONG        WINAPI SetClassLongW(HWND,INT,LONG);
 #define     SetClassLong WINELIB_NAME_AW(SetClassLong)

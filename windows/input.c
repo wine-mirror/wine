@@ -104,17 +104,174 @@ static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lPar
 
 
 /***********************************************************************
+ *           queue_kbd_event
+ *
+ * Put a keyboard event into a thread queue
+ */
+static void queue_kbd_event( const KEYBDINPUT *ki )
+{
+    UINT message;
+    KEYLP keylp;
+
+    keylp.lp2 = 0;
+    keylp.lp1.count = 1;
+    keylp.lp1.code = ki->wScan;
+    keylp.lp1.extended = (ki->dwFlags & KEYEVENTF_EXTENDEDKEY) != 0;
+    keylp.lp1.win_internal = 0; /* this has something to do with dialogs,
+                                * don't remember where I read it - AK */
+                                /* it's '1' under windows, when a dialog box appears
+                                 * and you press one of the underlined keys - DF*/
+
+    if (ki->dwFlags & KEYEVENTF_KEYUP )
+    {
+        BOOL sysKey = ((InputKeyStateTable[VK_MENU] & 0x80) &&
+                       !(InputKeyStateTable[VK_CONTROL] & 0x80) &&
+                       !(ki->dwFlags & KEYEVENTF_WINE_FORCEEXTENDED)); /* for Alt from AltGr */
+        InputKeyStateTable[ki->wVk] &= ~0x80;
+        keylp.lp1.previous = 1;
+        keylp.lp1.transition = 1;
+        message = sysKey ? WM_SYSKEYUP : WM_KEYUP;
+    }
+    else
+    {
+        keylp.lp1.previous = (InputKeyStateTable[ki->wVk] & 0x80) != 0;
+        keylp.lp1.transition = 0;
+        if (!(InputKeyStateTable[ki->wVk] & 0x80)) InputKeyStateTable[ki->wVk] ^= 0x01;
+        InputKeyStateTable[ki->wVk] |= 0x80;
+        AsyncKeyStateTable[ki->wVk] |= 0x80;
+
+        message = (InputKeyStateTable[VK_MENU] & 0x80) && !(InputKeyStateTable[VK_CONTROL] & 0x80)
+              ? WM_SYSKEYDOWN : WM_KEYDOWN;
+    }
+
+    if (message == WM_SYSKEYDOWN || message == WM_SYSKEYUP )
+        keylp.lp1.context = (InputKeyStateTable[VK_MENU] & 0x80) != 0; /* 1 if alt */
+
+    TRACE_(key)(" wParam=%04x, lParam=%08lx, InputKeyState=%x\n",
+                ki->wVk, keylp.lp2, InputKeyStateTable[ki->wVk] );
+
+    queue_raw_hardware_message( message, ki->wVk, keylp.lp2,
+                                PosX, PosY, ki->time, ki->dwExtraInfo );
+}
+
+
+/***********************************************************************
+ *		queue_mouse_event
+ */
+static void queue_mouse_event( const MOUSEINPUT *mi, WORD keystate )
+{
+    if (mi->dwFlags & MOUSEEVENTF_MOVE)
+    {
+        if (mi->dwFlags & MOUSEEVENTF_ABSOLUTE)
+        {
+            PosX = (mi->dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
+            PosY = (mi->dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
+        }
+        else
+        {
+            int width  = GetSystemMetrics(SM_CXSCREEN);
+            int height = GetSystemMetrics(SM_CYSCREEN);
+            long posX = (long) PosX, posY = (long) PosY;
+
+            /* dx and dy can be negative numbers for relative movements */
+            posX += (long)mi->dx;
+            posY += (long)mi->dy;
+
+            /* Clip to the current screen size */
+            if (posX < 0) PosX = 0;
+            else if (posX >= width) PosX = width - 1;
+            else PosX = posX;
+
+            if (posY < 0) PosY = 0;
+            else if (posY >= height) PosY = height - 1;
+            else PosY = posY;
+        }
+    }
+
+    if (mi->dwFlags & MOUSEEVENTF_MOVE)
+    {
+        queue_raw_hardware_message( WM_MOUSEMOVE, keystate, 0, PosX, PosY,
+                                    mi->time, mi->dwExtraInfo );
+    }
+    if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN))
+    {
+        MouseButtonsStates[0] = AsyncMouseButtonsStates[0] = TRUE;
+        queue_raw_hardware_message( WM_LBUTTONDOWN, keystate, 0, PosX, PosY,
+                                    mi->time, mi->dwExtraInfo );
+    }
+    if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP))
+    {
+        MouseButtonsStates[0] = FALSE;
+        queue_raw_hardware_message( WM_LBUTTONUP, keystate, 0, PosX, PosY,
+                                    mi->time, mi->dwExtraInfo );
+    }
+    if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_LEFTDOWN))
+    {
+        MouseButtonsStates[2] = AsyncMouseButtonsStates[2] = TRUE;
+        queue_raw_hardware_message( WM_RBUTTONDOWN, keystate, 0, PosX, PosY,
+                                    mi->time, mi->dwExtraInfo );
+    }
+    if (mi->dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP))
+    {
+        MouseButtonsStates[2] = FALSE;
+        queue_raw_hardware_message( WM_RBUTTONUP, keystate, 0, PosX, PosY,
+                                    mi->time, mi->dwExtraInfo );
+    }
+    if (mi->dwFlags & MOUSEEVENTF_MIDDLEDOWN)
+    {
+        MouseButtonsStates[1] = AsyncMouseButtonsStates[1] = TRUE;
+        queue_raw_hardware_message( WM_MBUTTONDOWN, keystate, 0, PosX, PosY,
+                                    mi->time, mi->dwExtraInfo );
+    }
+    if (mi->dwFlags & MOUSEEVENTF_MIDDLEUP)
+    {
+        MouseButtonsStates[1] = FALSE;
+        queue_raw_hardware_message( WM_MBUTTONUP, keystate, 0, PosX, PosY,
+                                    mi->time, mi->dwExtraInfo );
+    }
+    if (mi->dwFlags & MOUSEEVENTF_WHEEL)
+    {
+        queue_raw_hardware_message( WM_MOUSEWHEEL, MAKELONG( keystate, mi->mouseData), 0,
+                                    PosX, PosY, mi->time, mi->dwExtraInfo );
+    }
+}
+
+
+/***********************************************************************
+ *		SendInput  (USER32.@)
+ */
+UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
+{
+    UINT i;
+
+    if (!InputEnabled) return 0;
+
+    for (i = 0; i < count; i++, inputs++)
+    {
+        switch(inputs->type)
+        {
+        case INPUT_MOUSE:
+            queue_mouse_event( &inputs->u.mi, GET_KEYSTATE() );
+            break;
+        case INPUT_KEYBOARD:
+            queue_kbd_event( &inputs->u.ki );
+            break;
+        case INPUT_HARDWARE:
+            FIXME( "INPUT_HARDWARE not supported\n" );
+            break;
+        }
+    }
+    return count;
+}
+
+
+/***********************************************************************
  *		keybd_event (USER32.@)
  */
 void WINAPI keybd_event( BYTE bVk, BYTE bScan,
                          DWORD dwFlags, DWORD dwExtraInfo )
 {
-    DWORD time, extra;
-    WORD message;
-    KEYLP keylp;
-    keylp.lp2 = 0;
-
-    if (!InputEnabled) return;
+    INPUT input;
 
     /*
      * If we are called by the Wine keyboard driver, use the additional
@@ -126,64 +283,26 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
         && ((WINE_KEYBDEVENT *)dwExtraInfo)->magic == WINE_KEYBDEVENT_MAGIC )
     {
         WINE_KEYBDEVENT *wke = (WINE_KEYBDEVENT *)dwExtraInfo;
-        time = wke->time;
-        extra = 0;
+        input.u.ki.time = wke->time;
+        input.u.ki.dwExtraInfo = 0;
     }
     else
     {
-        time = GetTickCount();
-        extra = dwExtraInfo;
+        input.u.ki.time = GetTickCount();
+        input.u.ki.dwExtraInfo = dwExtraInfo;
     }
-
-
-    keylp.lp1.count = 1;
-    keylp.lp1.code = bScan;
-    keylp.lp1.extended = (dwFlags & KEYEVENTF_EXTENDEDKEY) != 0;
-    keylp.lp1.win_internal = 0; /* this has something to do with dialogs,
-                                * don't remember where I read it - AK */
-                                /* it's '1' under windows, when a dialog box appears
-                                 * and you press one of the underlined keys - DF*/
-
-    if ( dwFlags & KEYEVENTF_KEYUP )
-    {
-        BOOL sysKey = (InputKeyStateTable[VK_MENU] & 0x80)
-                && !(InputKeyStateTable[VK_CONTROL] & 0x80)
-                && !(dwFlags & KEYEVENTF_WINE_FORCEEXTENDED); /* for Alt from AltGr */
-
-        InputKeyStateTable[bVk] &= ~0x80;
-        keylp.lp1.previous = 1;
-        keylp.lp1.transition = 1;
-        message = sysKey ? WM_SYSKEYUP : WM_KEYUP;
-    }
-    else
-    {
-        keylp.lp1.previous = (InputKeyStateTable[bVk] & 0x80) != 0;
-        keylp.lp1.transition = 0;
-
-        if (!(InputKeyStateTable[bVk] & 0x80))
-            InputKeyStateTable[bVk] ^= 0x01;
-        InputKeyStateTable[bVk] |= 0x80;
-        AsyncKeyStateTable[bVk] |= 0x80;
-
-        message = (InputKeyStateTable[VK_MENU] & 0x80)
-              && !(InputKeyStateTable[VK_CONTROL] & 0x80)
-              ? WM_SYSKEYDOWN : WM_KEYDOWN;
-    }
-
-    if ( message == WM_SYSKEYDOWN || message == WM_SYSKEYUP )
-        keylp.lp1.context = (InputKeyStateTable[VK_MENU] & 0x80) != 0; /* 1 if alt */
-
-
-    TRACE_(key)("            wParam=%04X, lParam=%08lX\n", bVk, keylp.lp2 );
-    TRACE_(key)("            InputKeyState=%X\n", InputKeyStateTable[bVk] );
-
-    queue_raw_hardware_message( message, bVk, keylp.lp2, PosX, PosY, time, extra );
+    input.type = INPUT_KEYBOARD;
+    input.u.ki.wVk = bVk;
+    input.u.ki.wScan = bScan;
+    input.u.ki.dwFlags = dwFlags;
+    SendInput( 1, &input, sizeof(input) );
 }
+
 
 /***********************************************************************
  *		keybd_event (USER.289)
  */
-void WINAPI WIN16_keybd_event( CONTEXT86 *context )
+void WINAPI keybd_event16( CONTEXT86 *context )
 {
     DWORD dwFlags = 0;
 
@@ -194,44 +313,21 @@ void WINAPI WIN16_keybd_event( CONTEXT86 *context )
                  dwFlags, MAKELONG(SI_reg(context), DI_reg(context)) );
 }
 
+
 /***********************************************************************
  *		mouse_event (USER32.@)
  */
 void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
-                         DWORD cButtons, DWORD dwExtraInfo )
+                         DWORD dwData, DWORD dwExtraInfo )
 {
-    DWORD time, extra;
-    DWORD keyState;
-    
-    if (!InputEnabled) return;
+    INPUT input;
+    WORD keyState;
 
-    if ( dwFlags & MOUSEEVENTF_MOVE )
-      {
-	if ( dwFlags & MOUSEEVENTF_ABSOLUTE )
-	  {
-	    PosX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
-	    PosY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
-	  }
-	else
-	  {
-	    int width  = GetSystemMetrics(SM_CXSCREEN);
-	    int height = GetSystemMetrics(SM_CYSCREEN);
-	    long posX = (long) PosX, posY = (long) PosY;
-
-	    /* dx and dy can be negative numbers for relative movements */
-	    posX += (long) dx;
-	    posY += (long) dy;
-
-	    /* Clip to the current screen size */
-	    if (posX < 0) PosX = 0;
-	    else if (posX >= width) PosX = width - 1;
-	    else PosX = posX;
-
-	    if (posY < 0) PosY = 0;
-	    else if (posY >= height) PosY = height - 1;
-	    else PosY = posY;
-	  }
-      }
+    input.type = INPUT_MOUSE;
+    input.u.mi.dx = dx;
+    input.u.mi.dy = dy;
+    input.u.mi.mouseData = dwData;
+    input.u.mi.dwFlags = dwFlags;
 
     /*
      * If we are called by the Wine mouse driver, use the additional
@@ -243,77 +339,38 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
         && ((WINE_MOUSEEVENT *)dwExtraInfo)->magic == WINE_MOUSEEVENT_MAGIC )
     {
         WINE_MOUSEEVENT *wme = (WINE_MOUSEEVENT *)dwExtraInfo;
-        time = wme->time;
-        extra = (DWORD)wme->hWnd;
-	keyState = wme->keyState;
-	
-	if (keyState != GET_KEYSTATE()) {
-	  /* We need to update the keystate with what X provides us */
-	  MouseButtonsStates[SwappedButtons ? 2 : 0] = (keyState & MK_LBUTTON ? TRUE : FALSE);
-	  MouseButtonsStates[SwappedButtons ? 0 : 2] = (keyState & MK_RBUTTON ? TRUE : FALSE);
-	  MouseButtonsStates[1]                      = (keyState & MK_MBUTTON ? TRUE : FALSE);
-	  InputKeyStateTable[VK_SHIFT]               = (keyState & MK_SHIFT   ? 0x80 : 0);
-	  InputKeyStateTable[VK_CONTROL]             = (keyState & MK_CONTROL ? 0x80 : 0);
-	}
+
+        keyState = wme->keyState;
+
+        if (keyState != GET_KEYSTATE())
+        {
+            /* We need to update the keystate with what X provides us */
+            MouseButtonsStates[SwappedButtons ? 2 : 0] = (keyState & MK_LBUTTON ? TRUE : FALSE);
+            MouseButtonsStates[SwappedButtons ? 0 : 2] = (keyState & MK_RBUTTON ? TRUE : FALSE);
+            MouseButtonsStates[1]                      = (keyState & MK_MBUTTON ? TRUE : FALSE);
+            InputKeyStateTable[VK_SHIFT]               = (keyState & MK_SHIFT   ? 0x80 : 0);
+            InputKeyStateTable[VK_CONTROL]             = (keyState & MK_CONTROL ? 0x80 : 0);
+        }
+        input.u.mi.time = wme->time;
+        input.u.mi.dwExtraInfo = wme->hWnd;
+        queue_mouse_event( &input.u.mi, keyState );
     }
     else
     {
-        time = GetTickCount();
-        extra = dwExtraInfo;
-	keyState = GET_KEYSTATE();
-	
-	if ( dwFlags & MOUSEEVENTF_MOVE )
-	  {
-	    /* We have to actually move the cursor */
-	    SetCursorPos( PosX, PosY );
-	  }
-    }
+        if ( dwFlags & MOUSEEVENTF_MOVE ) /* we have to actually move the cursor */
+            SetCursorPos( PosX, PosY );
 
-
-    if ( dwFlags & MOUSEEVENTF_MOVE )
-    {
-        queue_raw_hardware_message( WM_MOUSEMOVE, keyState, 0, PosX, PosY, time, extra );
-    }
-    if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN) )
-    {
-        MouseButtonsStates[0] = AsyncMouseButtonsStates[0] = TRUE;
-        queue_raw_hardware_message( WM_LBUTTONDOWN, keyState, 0, PosX, PosY, time, extra );
-    }
-    if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP) )
-    {
-        MouseButtonsStates[0] = FALSE;
-        queue_raw_hardware_message( WM_LBUTTONUP, keyState, 0, PosX, PosY, time, extra );
-    }
-    if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_LEFTDOWN) )
-    {
-        MouseButtonsStates[2] = AsyncMouseButtonsStates[2] = TRUE;
-        queue_raw_hardware_message( WM_RBUTTONDOWN, keyState, 0, PosX, PosY, time, extra );
-    }
-    if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP) )
-    {
-        MouseButtonsStates[2] = FALSE;
-        queue_raw_hardware_message( WM_RBUTTONUP, keyState, 0, PosX, PosY, time, extra );
-    }
-    if ( dwFlags & MOUSEEVENTF_MIDDLEDOWN )
-    {
-        MouseButtonsStates[1] = AsyncMouseButtonsStates[1] = TRUE;
-        queue_raw_hardware_message( WM_MBUTTONDOWN, keyState, 0, PosX, PosY, time, extra );
-    }
-    if ( dwFlags & MOUSEEVENTF_MIDDLEUP )
-    {
-        MouseButtonsStates[1] = FALSE;
-        queue_raw_hardware_message( WM_MBUTTONUP, keyState, 0, PosX, PosY, time, extra );
-    }
-    if ( dwFlags & MOUSEEVENTF_WHEEL )
-    {
-        queue_raw_hardware_message( WM_MOUSEWHEEL, keyState, 0, PosX, PosY, time, extra );
+        input.u.mi.time = GetCurrentTime();
+        input.u.mi.dwExtraInfo = dwExtraInfo;
+        SendInput( 1, &input, sizeof(input) );
     }
 }
+
 
 /***********************************************************************
  *		mouse_event (USER.299)
  */
-void WINAPI WIN16_mouse_event( CONTEXT86 *context )
+void WINAPI mouse_event16( CONTEXT86 *context )
 {
     mouse_event( AX_reg(context), BX_reg(context), CX_reg(context),
                  DX_reg(context), MAKELONG(SI_reg(context), DI_reg(context)) );

@@ -298,13 +298,13 @@ rsrc	resources/version16.res
 286 pascal16 GetDesktopWindow() GetDesktopWindow16
 287 pascal16 GetLastActivePopup(word) GetLastActivePopup16
 288 pascal   GetMessageExtraInfo() GetMessageExtraInfo
-289 register keybd_event() WIN16_keybd_event
+289 register keybd_event() keybd_event16
 290 pascal16 RedrawWindow(word ptr word word) RedrawWindow16
 291 pascal   SetWindowsHookEx(s_word segptr word word) SetWindowsHookEx16
 292 pascal16 UnhookWindowsHookEx(segptr) UnhookWindowsHookEx16
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx16
 294 pascal16 LockWindowUpdate(word) LockWindowUpdate16
-299 register mouse_event() WIN16_mouse_event
+299 register mouse_event() mouse_event16
 300 stub UnloadInstalledDrivers # W1.1: USER_FARFRAME
 301 stub EDITWNDPROC # BOZOSLIVEHERE :-))
 302 stub STATICWNDPROC

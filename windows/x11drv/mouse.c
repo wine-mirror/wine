@@ -280,8 +280,8 @@ void X11DRV_InitMouse( LPMOUSE_EVENT_PROC proc )
         TSXQueryPointer( thread_display(), root_window, &root, &child,
                          &root_x, &root_y, &child_x, &child_y, &KeyState);
         X11DRV_SendEvent(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
-                               root_x, root_y, X11DRV_EVENT_XStateToKeyState(KeyState),
-                               GetTickCount(), 0 );
+                         root_x, root_y, X11DRV_EVENT_XStateToKeyState(KeyState),
+                         0, GetTickCount(), 0 );
     }
 }
 
@@ -289,8 +289,8 @@ void X11DRV_InitMouse( LPMOUSE_EVENT_PROC proc )
 /***********************************************************************
  *		X11DRV_SendEvent (internal)
  */
-void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY, 
-                             DWORD keyState, DWORD time, HWND hWnd )
+void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
+                       WORD keyState, DWORD data, DWORD time, HWND hWnd )
 {
     int width  = GetSystemMetrics( SM_CXSCREEN );
     int height = GetSystemMetrics( SM_CYSCREEN );
@@ -318,7 +318,7 @@ void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
     /* To avoid deadlocks, we have to suspend all locks on windows structures
        before the program control is passed to the mouse driver */
     iWndsLocks = WIN_SuspendWndsLock();
-    DefMouseEventProc( mouseStatus, posX, posY, 0, (DWORD)&wme );
+    DefMouseEventProc( mouseStatus, posX, posY, data, (DWORD)&wme );
     WIN_RestoreWndsLock(iWndsLocks);
     InterlockedIncrement( &X11DRV_MOUSE_WarpPointer );
 }

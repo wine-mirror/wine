@@ -662,6 +662,7 @@ debug_channels (accel caret class clipboard combo cursor dc dde ddeml dialog dri
 @ stdcall GetWindowModuleFileNameA(long ptr long) GetWindowModuleFileNameA
 @ stdcall GetWindowModuleFileNameW(long ptr long) GetWindowModuleFileNameW
 @ stdcall LockSetForegroundWindow (long) LockSetForegroundWindow
+@ stdcall SendInput(long ptr long) SendInput
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
