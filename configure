@@ -9188,7 +9188,8 @@ fi
 ALSALIBS=""
 
 
-for ac_header in sys/asoundlib.h
+
+for ac_header in alsa/asoundlib.h sys/asoundlib.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -9296,12 +9297,12 @@ if test `eval echo '${'$as_ac_Header'}'` = yes; then
   cat >>confdefs.h <<_ACEOF
 #define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
-
+ break
 fi
 
 done
 
-if test "$ac_cv_header_sys_asoundlib_h" = "yes"
+if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
 then
     echo "$as_me:$LINENO: checking for snd_pcm_open in -lasound" >&5
 echo $ECHO_N "checking for snd_pcm_open in -lasound... $ECHO_C" >&6

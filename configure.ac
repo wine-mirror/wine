@@ -588,8 +588,8 @@ fi
 
 dnl **** Check for ALSA ****
 AC_SUBST(ALSALIBS,"")
-AC_CHECK_HEADERS(sys/asoundlib.h)
-if test "$ac_cv_header_sys_asoundlib_h" = "yes"
+AC_CHECK_HEADERS(alsa/asoundlib.h sys/asoundlib.h, break)
+if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
 then
     AC_CHECK_LIB(asound,snd_pcm_open,
     	AC_DEFINE(HAVE_ALSA,1,[Define if you have ALSA including devel headers])
