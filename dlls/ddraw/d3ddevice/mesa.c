@@ -180,7 +180,7 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1)
     d1->dlcLightingCaps.dwNumLights = 16; /* glGetIntegerv(GL_MAX_LIGHTS, &maxlight); d1->dlcLightingCaps.dwNumLights = maxlight; */
     fill_opengl_primcaps(&(d1->dpcLineCaps));
     fill_opengl_primcaps(&(d1->dpcTriCaps));
-    d1->dwDeviceRenderBitDepth  = DDBD_16|DDBD_24;
+    d1->dwDeviceRenderBitDepth  = DDBD_16|DDBD_24|DDBD_32;
     d1->dwDeviceZBufferBitDepth = DDBD_16;
     d1->dwMaxBufferSize = 0;
     d1->dwMaxVertexCount = 65536;
@@ -1188,6 +1188,19 @@ GL_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
     return DD_OK;
 }
 
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_GetCaps(LPDIRECT3DDEVICE7 iface,
+				 LPD3DDEVICEDESC7 lpD3DHELDevDesc)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpD3DHELDevDesc);
+
+    fill_opengl_caps_7(lpD3DHELDevDesc);
+
+    TRACE(" returning caps : no dump function yet.\n");
+
+    return DD_OK;
+}
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)     (typeof(VTABLE_IDirect3DDevice7.fun))
@@ -1201,7 +1214,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(QueryInterface) Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface,
     XCAST(AddRef) Main_IDirect3DDeviceImpl_7_3T_2T_1T_AddRef,
     XCAST(Release) GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release,
-    XCAST(GetCaps) Main_IDirect3DDeviceImpl_7_GetCaps,
+    XCAST(GetCaps) GL_IDirect3DDeviceImpl_7_GetCaps,
     XCAST(EnumTextureFormats) GL_IDirect3DDeviceImpl_7_3T_EnumTextureFormats,
     XCAST(BeginScene) Main_IDirect3DDeviceImpl_7_3T_2T_1T_BeginScene,
     XCAST(EndScene) Main_IDirect3DDeviceImpl_7_3T_2T_1T_EndScene,

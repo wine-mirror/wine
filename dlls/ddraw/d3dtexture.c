@@ -407,12 +407,15 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
     
     TRACE("(%p/%p)->(%p)\n", This, iface, lpD3DTexture2);
 
-    mem_used = This->surface->surface_desc.dwHeight *
-               This->surface->surface_desc.dwHeight *
-	       This->surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount;
-    if (This->surface->ddraw_owner->allocate_memory(This->surface->ddraw_owner, mem_used) < 0) {
-        TRACE(" out of virtual memory... Warning application.\n");
-	return D3DERR_TEXTURE_LOAD_FAILED;
+    if (This->loaded == FALSE) {
+        /* Only check memory for not already loaded texture... */
+        mem_used = This->surface->surface_desc.dwHeight *
+	           This->surface->surface_desc.dwHeight *
+	           This->surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount;
+	if (This->surface->ddraw_owner->allocate_memory(This->surface->ddraw_owner, mem_used) < 0) {
+	    TRACE(" out of virtual memory... Warning application.\n");
+	    return D3DERR_TEXTURE_LOAD_FAILED;
+	}
     }
     This->loaded = TRUE;
     
