@@ -700,10 +700,34 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_IAT;
     if (dir->Size) TRACE( win32, "Import Address Table directory ignored\n" );
 
-    dir = nt->OptionalHeader.DataDirectory+13;
-    if (dir->Size) FIXME( win32, "Unknown directory 13 ignored\n" );
+    dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT;
+    if (dir->Size)
+    {
+		TRACE( win32, "Delayed import, stub calls LoadLibrary\n" );
+		/*
+		 * Nothing to do here.
+		 */
 
-    dir = nt->OptionalHeader.DataDirectory+14;
+#ifdef ImgDelayDescr
+		/*
+		 * This code is useful to observe what the heck is going on.
+		 */
+		{
+		ImgDelayDescr *pe_delay = NULL;
+        pe_delay = (PImgDelayDescr)RVA(dir->VirtualAddress);
+        TRACE(delayhlp,"pe_delay->grAttrs = %08x\n", pe_delay->grAttrs);
+        TRACE(delayhlp,"pe_delay->szName = %s\n", pe_delay->szName);
+        TRACE(delayhlp,"pe_delay->phmod = %08x\n", pe_delay->phmod);
+        TRACE(delayhlp,"pe_delay->pIAT = %08x\n", pe_delay->pIAT);
+        TRACE(delayhlp,"pe_delay->pINT = %08x\n", pe_delay->pINT);
+        TRACE(delayhlp,"pe_delay->pBoundIAT = %08x\n", pe_delay->pBoundIAT);
+        TRACE(delayhlp,"pe_delay->pUnloadIAT = %08x\n", pe_delay->pUnloadIAT);
+        TRACE(delayhlp,"pe_delay->dwTimeStamp = %08x\n", pe_delay->dwTimeStamp);
+        }
+#endif /* ImgDelayDescr */
+	}
+
+    dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR;
     if (dir->Size) FIXME( win32, "Unknown directory 14 ignored\n" );
 
     dir = nt->OptionalHeader.DataDirectory+15;
