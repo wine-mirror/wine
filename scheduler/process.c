@@ -229,20 +229,18 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
  */
 static void set_console_handles( HANDLE console )
 {
-    HANDLE in = FILE_DupUnixHandle( 0, GENERIC_READ );
-    HANDLE out = FILE_DupUnixHandle( 1, GENERIC_WRITE );
+    wine_server_send_fd( 0 );
+    wine_server_send_fd( 1 );
 
     SERVER_START_REQ( set_console_fd )
     {
-        req->handle     = console;
-        req->handle_in  = in;
-        req->handle_out = out;
-        req->pid = 0;
+        req->handle = console;
+        req->fd_in  = 0;
+        req->fd_out = 1;
+        req->pid    = 0;
         SERVER_CALL();
     }
     SERVER_END_REQ;
-    NtClose( in );
-    NtClose( out );
 }
 
 

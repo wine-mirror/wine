@@ -869,8 +869,8 @@ static void dump_open_console_reply( const struct open_console_request *req )
 static void dump_set_console_fd_request( const struct set_console_fd_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " handle_in=%d,", req->handle_in );
-    fprintf( stderr, " handle_out=%d,", req->handle_out );
+    fprintf( stderr, " fd_in=%d,", req->fd_in );
+    fprintf( stderr, " fd_out=%d,", req->fd_out );
     fprintf( stderr, " pid=%d", req->pid );
 }
 

@@ -477,36 +477,16 @@ DECL_HANDLER(get_console_info)
 /* set a console fd */
 DECL_HANDLER(set_console_fd)
 {
-    struct object *obj_in, *obj_out;
-    int fd_in, fd_out;
+    int fd_out, fd_in  = thread_get_inflight_fd( current, req->fd_in );
 
-    if (!(obj_in = get_handle_obj( current->process, req->handle_in, GENERIC_READ, NULL )))
-        return;
-    if ((fd_in = dup(obj_in->ops->get_fd( obj_in ))) == -1)
-    {
-        release_object( obj_in );
-        return;
-    }
-    release_object( obj_in );
+    if (req->fd_out == req->fd_in) fd_out = dup( fd_in );
+    else fd_out = thread_get_inflight_fd( current, req->fd_out );
 
-    if (!(obj_out = get_handle_obj( current->process, req->handle_out, GENERIC_WRITE, NULL )))
-    {
-        close( fd_in );
-        return;
-    }
-    if ((fd_out = dup(obj_out->ops->get_fd( obj_out ))) == -1)
-    {
-        release_object( obj_out );
-        close( fd_in );
-        return;
-    }
-    release_object( obj_out );
+    if (fd_in == -1 || fd_out == -1) set_error( STATUS_INVALID_HANDLE );
+    else if (set_console_fd( req->handle, fd_in, fd_out, req->pid )) return;
 
-    if (!set_console_fd( req->handle, fd_in, fd_out, req->pid ))
-    {
-        close( fd_out );
-        close( fd_in );
-    }
+    if (fd_in != -1) close( fd_in );
+    if (fd_out != -1) close( fd_out );
 }
 
 /* get a console mode (input or output) */

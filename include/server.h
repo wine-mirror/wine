@@ -757,8 +757,8 @@ struct set_console_fd_request
 {
     REQUEST_HEADER;                 /* request header */
     IN  handle_t     handle;        /* handle to the console */
-    IN  handle_t     handle_in;     /* handle of file to use as input */
-    IN  handle_t     handle_out;    /* handle of file to use as output */
+    IN  int          fd_in;         /* file descriptor to use as input */
+    IN  int          fd_out;        /* file descriptor to use as output */
     IN  int          pid;           /* pid of xterm (hack) */
 };
 
@@ -1611,7 +1611,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 42
+#define SERVER_PROTOCOL_VERSION 43
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

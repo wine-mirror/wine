@@ -42,7 +42,6 @@
 #include "wine/winuser16.h"
 #include "wine/keyboard16.h"
 #include "thread.h"
-#include "file.h"
 #include "winerror.h"
 #include "wincon.h"
 #include "heap.h"
@@ -580,7 +579,6 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
 	char buf[256];
 	char c = '\0';
 	int i,xpid,master,slave;
-        HANDLE pty_handle;
 
         if (CONSOLE_GetPid( handle )) return TRUE; /* already complex */
 
@@ -605,36 +603,37 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
 		ERR("error creating AllocConsole xterm\n");
 		exit(1);
 	}
-        pty_handle = FILE_DupUnixHandle( slave, GENERIC_READ | GENERIC_WRITE );
         close( master );
-        close( slave );
-        if (!pty_handle) return FALSE;
 
 	/* most xterms like to print their window ID when used with -S;
 	 * read it and continue before the user has a chance...
 	 */
         for (i = 0; i < 10000; i++)
         {
-            BOOL ok = ReadFile( pty_handle, &c, 1, NULL, NULL );
-            if (!ok && !c) usleep(100); /* wait for xterm to be created */
-            else if (c == '\n') break;
+            if (read( slave, &c, 1 ) == 1)
+            {
+                if (c == '\n') break;
+            }
+            else usleep(100); /* wait for xterm to be created */
         }
         if (i == 10000)
         {
             ERR("can't read xterm WID\n");
-            CloseHandle( pty_handle );
+            close( slave );
             return FALSE;
 	}
+
+        wine_server_send_fd( slave );
         SERVER_START_REQ( set_console_fd )
         {
-            req->handle     = handle;
-            req->handle_in  = pty_handle;
-            req->handle_out = pty_handle;
-            req->pid = xpid;
+            req->handle = handle;
+            req->fd_in  = slave;
+            req->fd_out = slave;
+            req->pid    = xpid;
             SERVER_CALL();
+            close( slave );
         }
         SERVER_END_REQ;
-        CloseHandle( pty_handle );
 
 	/* enable mouseclicks */
 	strcpy( buf, "\033[?1002h" );
