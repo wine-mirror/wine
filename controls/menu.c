@@ -16,9 +16,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "windows.h"
+
 #include "bitmap.h"
 #include "win.h"
+#include "wine/winbase16.h"
 #include "sysmetrics.h"
 #include "task.h"
 #include "heap.h"
@@ -94,6 +95,7 @@ typedef struct
 #define TPM_INTERNAL		0xF0000000
 #define TPM_ENTERIDLEEX	 	0x80000000		/* set owner window for WM_ENTERIDLE */
 #define TPM_BUTTONDOWN		0x40000000		/* menu was clicked before tracking */
+#define TPM_POPUPMENU           0x20000000              /* menu is a popup menu */
 
   /* popup menu shade thickness */
 #define POPUP_XSHADE		4
@@ -1909,19 +1911,19 @@ static HMENU32 MENU_PtMenu( HMENU32 hMenu, POINT16 pt )
    }
    return (HMENU32)ht;
 }
-
 /***********************************************************************
  *           MENU_ExecFocusedItem
  *
  * Execute a menu item (for instance when user pressed Enter).
- * Return TRUE if we can go on with menu tracking.
+ * Return the wID of the executed item. Otherwise, zero indicating
+ * that no menu item wase executed;
  */
-static BOOL32 MENU_ExecFocusedItem( MTRACKER* pmt, HMENU32 hMenu )
+static INT32 MENU_ExecFocusedItem( MTRACKER* pmt, HMENU32 hMenu )
 {
     MENUITEM *item;
     POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hMenu );
     if (!menu || !menu->nItems || 
-	(menu->FocusedItem == NO_SELECTED_ITEM)) return TRUE;
+	(menu->FocusedItem == NO_SELECTED_ITEM)) return 0;
 
     item = &menu->items[menu->FocusedItem];
 
@@ -1938,18 +1940,19 @@ static BOOL32 MENU_ExecFocusedItem( MTRACKER* pmt, HMENU32 hMenu )
 			       MAKELPARAM((INT16)pmt->pt.x, (INT16)pmt->pt.y) );
 	    }
 	    else
+            {
 		PostMessage16( pmt->hOwnerWnd, WM_COMMAND, item->wID, 0 );
-	    return FALSE;
+            }
+	    return item->wID;
 	}
-	else return TRUE;
+	else return 0;
     }
     else
     {
 	pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hMenu, TRUE );
-	return TRUE;
+	return 0;
     }
 }
-
 
 /***********************************************************************
  *           MENU_SwitchTracking
@@ -2028,9 +2031,13 @@ static BOOL32 MENU_ButtonDown( MTRACKER* pmt, HMENU32 hPtMenu )
 /***********************************************************************
  *           MENU_ButtonUp
  *
- * Return TRUE if we can go on with menu tracking.
+ * Return the the value of MENU_ExecFocusedItem if
+ * the selected item was not a popup
+ * 1 if the item was a popup
+ * 0 otherwise.
+ * A zero return value indicates that we can't go on with menu tracking.
  */
-static BOOL32 MENU_ButtonUp( MTRACKER* pmt, HMENU32 hPtMenu )
+static INT32 MENU_ButtonUp( MTRACKER* pmt, HMENU32 hPtMenu )
 {
     if (hPtMenu)
     {
@@ -2055,10 +2062,10 @@ static BOOL32 MENU_ButtonUp( MTRACKER* pmt, HMENU32 hPtMenu )
 	        MENU_SelectItem( pmt->hOwnerWnd, hPtMenu, NO_SELECTED_ITEM, FALSE );
 	        MENU_MoveSelection( pmt->hOwnerWnd, hPtMenu, ITEM_NEXT );
 	    }
-	    return TRUE;
+	    return 1;
 	}
     }
-    return FALSE;
+    return 0;
 }
 
 
@@ -2338,18 +2345,18 @@ static void MENU_KeyRight( MTRACKER* pmt )
     }
 }
 
-
 /***********************************************************************
  *           MENU_TrackMenu
  *
  * Menu tracking code.
  */
-static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
+static INT32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
                               HWND32 hwnd, const RECT32 *lprect )
 {
     MSG32 msg;
     POPUPMENU *menu;
     BOOL32 fRemove;
+    INT32 executedMenuId = 0;
     MTRACKER mt = { 0, hmenu, hmenu, hwnd, {x, y} };	/* control struct */
 
     fEndMenu = FALSE;
@@ -2398,12 +2405,25 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 		    if (!(wFlags & TPM_RIGHTBUTTON)) break;
 		    /* fall through */
 		case WM_LBUTTONUP:
-		    /* If outside all menus but inside lprect, ignore it */
-		    if (hmenu || !lprect || !PtInRect32(lprect, mt.pt))
+		    /* Check if a menu was selected by the mouse */
+		    if (hmenu)
 		    {
-			fEndMenu |= !MENU_ButtonUp( &mt, hmenu );
-			fRemove = TRUE; 
+                        executedMenuId = MENU_ButtonUp( &mt, hmenu );
+
+                        /* the executedMenuId higher than one means that it contains
+                         the id of the selected item so we have to put the fEndMenu to TRUE.
+                         Otherwise, it contains a continue
+                         flag returned by MENU_ButtonUp indicating if we can continue with
+                         menu tracking or not*/
+                        fEndMenu = ((executedMenuId > 1) ? TRUE : FALSE);
+                        
 		    }
+                    /* No menu was selected by the mouse */
+                    /* if the function was called by TrackPopupMenu, continue
+                       with the menu tracking. If not, stop it */
+                    else
+                        fEndMenu = ((wFlags & TPM_POPUPMENU) ? FALSE : TRUE);
+                    
 		    break;
 		
 		case WM_MOUSEMOVE:
@@ -2478,7 +2498,9 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 
 		    if (msg.wParam == '\r' || msg.wParam == ' ')
 		    {
-			fEndMenu |= !MENU_ExecFocusedItem( &mt, mt.hCurrentMenu );
+                        executedMenuId = MENU_ExecFocusedItem(&mt,mt.hCurrentMenu);
+                        fEndMenu = ((executedMenuId != 0) ? TRUE:FALSE);
+
 			break;
 		    }
 
@@ -2493,7 +2515,8 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 		    else
 		    {
 			MENU_SelectItem( mt.hOwnerWnd, mt.hCurrentMenu, pos, TRUE );
-			fEndMenu |= !MENU_ExecFocusedItem( &mt, mt.hCurrentMenu );
+                        executedMenuId = MENU_ExecFocusedItem(&mt,mt.hCurrentMenu);
+                        fEndMenu = ((executedMenuId != 0) ? TRUE:FALSE);
 		    }
 		}		    
 		break;
@@ -2527,8 +2550,10 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 	MENU_SelectItem( mt.hOwnerWnd, mt.hTopMenu, NO_SELECTED_ITEM, FALSE );
 	SendMessage16( mt.hOwnerWnd, WM_MENUSELECT, 0, MAKELONG( 0xffff, 0 ) );
     }
-    fEndMenu = FALSE;
-    return TRUE;
+
+    /* returning the id of the selected menu.
+      The return value is only used by TrackPopupMenu */
+    return executedMenuId;
 }
 
 /***********************************************************************
@@ -2651,7 +2676,7 @@ BOOL32 WINAPI TrackPopupMenu32( HMENU32 hMenu, UINT32 wFlags, INT32 x, INT32 y,
     HideCaret32(0);
     SendMessage16( hWnd, WM_INITMENUPOPUP, (WPARAM16)hMenu, 0);
     if (MENU_ShowPopup( hWnd, hMenu, 0, x, y, 0, 0 )) 
-	ret = MENU_TrackMenu( hMenu, wFlags & ~TPM_INTERNAL, 0, 0, hWnd, lpRect );
+	ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd, lpRect );
     ShowCaret32(0);
     return ret;
 }
