@@ -35,6 +35,10 @@ const char *winetest_platform = "windows";
 /* report successful tests (BOOL) */
 int winetest_report_success = 0;
 
+/* passing arguments around */
+static int winetest_argc;
+static char** winetest_argv;
+
 struct test
 {
     const char  *name;
@@ -192,6 +196,12 @@ void winetest_end_todo( const char* platform )
     }
 }
 
+int winetest_get_mainargs( char*** pargv )
+{
+    *pargv = winetest_argv;
+    return winetest_argc;
+}
+
 /* Find a test by name */
 static const struct test *find_test( const char *name )
 {
@@ -244,6 +254,9 @@ static int run_test( const char *name )
 int main( int argc, char **argv )
 {
     char *p;
+
+    winetest_argc = argc;
+    winetest_argv = argv;
 
     if ((p = getenv( "WINETEST_PLATFORM" ))) winetest_platform = p;
     if ((p = getenv( "WINETEST_DEBUG" ))) winetest_debug = atoi(p);

@@ -38,6 +38,7 @@ extern winetest_trace_funcptr winetest_set_trace_location( const char* file, int
 extern void winetest_start_todo( const char* platform );
 extern int winetest_loop_todo(void);
 extern void winetest_end_todo( const char* platform );
+extern int winetest_get_mainargs( char*** pargv );
 
 #define START_TEST(name) void func_##name(void)
 
