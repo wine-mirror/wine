@@ -18,9 +18,9 @@
 #include "debugstr.h"
 #include "debug.h"
 
-#ifdef __i386__
-
 char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
+
+#ifdef __i386__
 
 #ifdef NEED_UNDERSCORE_PREFIX
 # define PREFIX "_"

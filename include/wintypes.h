@@ -110,10 +110,8 @@ typedef long		SCODE;
 typedef long            LONG_PTR;
 typedef unsigned long   ULONG_PTR;
 typedef double          DOUBLE;
-#ifdef __i386__
 typedef double          LONGLONG;
 typedef double          ULONGLONG;
-#endif /*__i386__*/
 
 /* Integer types. These are the same for emulator and library. */
 
@@ -396,8 +394,18 @@ DECL_WINELIB_TYPE(HWND)
 #define OFFSETOF(ptr)       (LOWORD(ptr))
 
 /* Macros to access unaligned or wrong-endian WORDs and DWORDs. */
+/* Note: These macros are semantically broken, at least for wrc.  wrc
+   spits out data in the platform's current binary format, *not* in 
+   little-endian format.  These macros are used throughout the resource
+   code to load and store data to the resources.  Since it is unlikely 
+   that we'll ever be dealing with little-endian resource data, the 
+   byte-swapping nature of these macros has been disabled.  Rather than 
+   remove the use of these macros from the resource loading code, the
+   macros have simply been disabled.  In the future, someone may want 
+   to reactivate these macros for other purposes.  In that case, the
+   resource code will have to be modified to use different macros. */ 
 
-#ifdef __i386__
+#if 1
 #define PUT_WORD(ptr,w)   (*(WORD *)(ptr) = (w))
 #define GET_WORD(ptr)     (*(WORD *)(ptr))
 #define PUT_DWORD(ptr,dw) (*(DWORD *)(ptr) = (dw))
@@ -411,7 +419,7 @@ DECL_WINELIB_TYPE(HWND)
                            PUT_WORD((WORD *)(ptr)+1,HIWORD(dw)))
 #define GET_DWORD(ptr)    ((DWORD)(GET_WORD(ptr) | \
                                    ((DWORD)GET_WORD((WORD *)(ptr)+1) << 16)))
-#endif  /* __i386__ */
+#endif  /* 1 */
 
 /* MIN and MAX macros */
 

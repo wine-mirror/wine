@@ -239,6 +239,29 @@ static UINT32 WPRINTF_GetLen( WPRINTF_FORMAT *format, LPCVOID arg,
     return len;
 }
 
+/***********************************************************************
+ *           WPRINTF_ExtractVAPtr (Not a Windows API)
+ */
+static LPVOID WPRINTF_ExtractVAPtr( WPRINTF_FORMAT *format, va_list args )
+{
+    switch(format->type)
+    {
+        case WPR_WCHAR:
+            return (LPVOID)va_arg( args, WCHAR );
+        case WPR_CHAR:
+            return (LPVOID)va_arg( args, CHAR );
+        case WPR_STRING:
+            return (LPVOID)va_arg( args, LPCSTR);
+        case WPR_WSTRING:
+            return (LPVOID)va_arg( args, LPCWSTR);
+        case WPR_HEXA:
+        case WPR_SIGNED:
+        case WPR_UNSIGNED:
+            return (LPVOID)va_arg( args, INT32 ); 
+        default:
+            return NULL;
+    }
+}
 
 /***********************************************************************
  *           wvsnprintf16   (Not a Windows API)
@@ -344,6 +367,7 @@ INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
     LPSTR p = buffer;
     UINT32 i, len;
     CHAR number[20];
+    LPVOID argPtr = NULL;
 
     while (*spec && (maxlen > 1))
     {
@@ -351,29 +375,30 @@ INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
         spec++;
         if (*spec == '%') { *p++ = *spec++; maxlen--; continue; }
         spec += WPRINTF_ParseFormatA( spec, &format );
-        len = WPRINTF_GetLen( &format, args, number, maxlen - 1 );
+        argPtr = WPRINTF_ExtractVAPtr( &format, args );
+        len = WPRINTF_GetLen( &format, &argPtr, number, maxlen - 1 );
         if (!(format.flags & WPRINTF_LEFTALIGN))
             for (i = format.precision; i < format.width; i++, maxlen--)
                 *p++ = ' ';
         switch(format.type)
         {
         case WPR_WCHAR:
-            if ((*p = (CHAR)va_arg( args, WCHAR ))) p++;
+            if ((*p = (CHAR)argPtr)) p++;
             else if (format.width > 1) *p++ = ' ';
             else len = 0;
             break;
         case WPR_CHAR:
-            if ((*p = va_arg( args, CHAR ))) p++;
+            if ((*p = (CHAR)argPtr)) p++;
             else if (format.width > 1) *p++ = ' ';
             else len = 0;
             break;
         case WPR_STRING:
-            memcpy( p, va_arg( args, LPCSTR ), len );
+            memcpy( p, (LPCSTR)argPtr, len );
             p += len;
             break;
         case WPR_WSTRING:
             {
-                LPCWSTR ptr = va_arg( args, LPCWSTR );
+                LPCWSTR ptr = (LPCWSTR)argPtr;
                 for (i = 0; i < len; i++) *p++ = (CHAR)*ptr++;
             }
             break;
@@ -393,7 +418,7 @@ INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
             memcpy( p, number, len );
             p += len;
-            (void)va_arg( args, INT32 ); /* Go to the next arg */
+            /* Go to the next arg */
             break;
         case WPR_UNKNOWN:
             continue;

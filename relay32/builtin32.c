@@ -377,6 +377,7 @@ void BUILTIN32_SwitchRelayDebug(BOOL32 onoff) {
     HMODULE32 hModule;
     int i;
 
+#ifdef __i386__
     if (!(TRACE_ON(relay) || WARN_ON(relay)))
     	return;
     for (dll = BuiltinDLLs; dll->descr; dll++) {
@@ -402,6 +403,7 @@ void BUILTIN32_SwitchRelayDebug(BOOL32 onoff) {
 	    }
         }
     }
+#endif /* __i386__ */
     return;
 }
 

@@ -4,7 +4,6 @@
  * Copyright 1997 Alexandre Julliard
  */
 
-#ifdef __i386__
 
 #include <assert.h>
 #include <string.h>
@@ -18,6 +17,7 @@
 
 char **debug_relay_excludelist = NULL, **debug_relay_includelist = NULL;
 
+#ifdef __i386__
 /***********************************************************************
  *           RELAY_ShowDebugmsgRelay
  *

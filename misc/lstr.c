@@ -543,6 +543,8 @@ DWORD WINAPI FormatMessage32A(
 	DWORD	nSize,
 	LPDWORD	args /* va_list *args */
 ) {
+#ifdef __i386__
+/* This implementation is completely dependant on the format of the va_list on x86 CPUs */
 	LPSTR	target,t;
 	DWORD	talloced;
 	LPSTR	from,f;
@@ -698,6 +700,9 @@ DWORD WINAPI FormatMessage32A(
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
 			strlen(*(LPSTR*)lpBuffer):
 			strlen(lpBuffer);
+#else
+	return 0;
+#endif /* __i386__ */
 }
 #undef ADD_TO_T
 
@@ -714,6 +719,8 @@ DWORD WINAPI FormatMessage32W(
 	DWORD	nSize,
 	LPDWORD	args /* va_list *args */
 ) {
+#ifdef __i386__
+/* This implementation is completely dependant on the format of the va_list on x86 CPUs */
 	LPSTR	target,t;
 	DWORD	talloced;
 	LPSTR	from,f;
@@ -870,5 +877,8 @@ DWORD WINAPI FormatMessage32W(
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
 			lstrlen32W(*(LPWSTR*)lpBuffer):
 			lstrlen32W(lpBuffer);
+#else
+	return 0;
+#endif /* __i386__ */
 }
 #undef ADD_TO_T
