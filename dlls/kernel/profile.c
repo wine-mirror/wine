@@ -774,26 +774,35 @@ static BOOL PROFILE_Open( LPCWSTR filename )
 
     for(i=0;i<N_CACHED_PROFILES;i++)
     {
-       if ((MRUProfile[i]->filename && !strcmpiW( buffer, MRUProfile[i]->filename )))
-       {
-          TRACE("MRU Filename: %s, new filename: %s\n", debugstr_w(MRUProfile[i]->filename), debugstr_w(buffer));
-          if(i)
-          {
-             PROFILE_FlushFile();
-             tempProfile=MRUProfile[i];
-             for(j=i;j>0;j--)
-                MRUProfile[j]=MRUProfile[j-1];
-             CurProfile=tempProfile;
-          }
-          GetFileTime(hFile, NULL, NULL, &LastWriteTime);
-          if(memcmp(&CurProfile->LastWriteTime, &LastWriteTime, sizeof(FILETIME)))
-             TRACE("(%s): already opened (mru=%d)\n",
-                             debugstr_w(buffer), i );
-          else
-              TRACE("(%s): already opened, needs refreshing (mru=%d)\n",
-                             debugstr_w(buffer), i );
-          CloseHandle(hFile);
-          return TRUE;
+        if ((MRUProfile[i]->filename && !strcmpiW( buffer, MRUProfile[i]->filename )))
+        {
+            TRACE("MRU Filename: %s, new filename: %s\n", debugstr_w(MRUProfile[i]->filename), debugstr_w(buffer));
+            if(i)
+            {
+                PROFILE_FlushFile();
+                tempProfile=MRUProfile[i];
+                for(j=i;j>0;j--)
+                    MRUProfile[j]=MRUProfile[j-1];
+                CurProfile=tempProfile;
+            }
+
+            if (hFile != INVALID_HANDLE_VALUE)
+            {
+                if (TRACE_ON(profile))
+                {
+                    GetFileTime(hFile, NULL, NULL, &LastWriteTime);
+                    if (memcmp(&CurProfile->LastWriteTime, &LastWriteTime, sizeof(FILETIME)))
+                        TRACE("(%s): already opened (mru=%d)\n",
+                              debugstr_w(buffer), i);
+                    else
+                        TRACE("(%s): already opened, needs refreshing (mru=%d)\n",
+                              debugstr_w(buffer), i);
+                }
+                CloseHandle(hFile);
+            }
+            else TRACE("(%s): already opened, not yet created (mru=%d)\n",
+                       debugstr_w(buffer), i);
+            return TRUE;
         }
     }
 
