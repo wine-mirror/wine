@@ -1801,8 +1801,9 @@ static void TOOLBAR_Cust_MoveButton(PCUSTDLG_INFO custInfo, HWND hwnd, INT nInde
     if (nIndexFrom == nIndexTo)
         return;
 
-    /* send TBN_QUERYINSERT notification */
-    nmtb.iItem = nIndexFrom; /* FIXME: this doesn't look right */
+    /* MSDN states that iItem is the index of the button, rather than the
+     * command ID as used by every other NMTOOLBAR notification */
+    nmtb.iItem = nIndexFrom;
     if (TOOLBAR_SendNotify((NMHDR *)&nmtb, custInfo->tbInfo, TBN_QUERYINSERT))
     {
         PCUSTOMBUTTON btnInfo;
@@ -1841,8 +1842,9 @@ static void TOOLBAR_Cust_AddButton(PCUSTDLG_INFO custInfo, HWND hwnd, INT nIndex
 
     TRACE("Add: nIndexAvail %d, nIndexTo %d\n", nIndexAvail, nIndexTo);
 
-    /* send TBN_QUERYINSERT notification */
-    nmtb.iItem = nIndexAvail; /* FIXME: this doesn't look right */
+    /* MSDN states that iItem is the index of the button, rather than the
+     * command ID as used by every other NMTOOLBAR notification */
+    nmtb.iItem = nIndexAvail;
     if (TOOLBAR_SendNotify((NMHDR *)&nmtb, custInfo->tbInfo, TBN_QUERYINSERT))
     {
         PCUSTOMBUTTON btnInfo;
@@ -3191,16 +3193,23 @@ TOOLBAR_DeleteButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex = (INT)wParam;
     NMTOOLBARW nmtb;
+    TBUTTON_INFO *btnPtr = &infoPtr->buttons[nIndex];
 
     if ((nIndex < 0) || (nIndex >= infoPtr->nNumButtons))
-	return FALSE;
+        return FALSE;
 
     memset(&nmtb, 0, sizeof(nmtb));
-    nmtb.iItem = nIndex;
+    nmtb.iItem = btnPtr->idCommand;
+    nmtb.tbButton.iBitmap = btnPtr->iBitmap;
+    nmtb.tbButton.idCommand = btnPtr->idCommand;
+    nmtb.tbButton.fsState = btnPtr->fsState;
+    nmtb.tbButton.fsStyle = btnPtr->fsStyle;
+    nmtb.tbButton.dwData = btnPtr->dwData;
+    nmtb.tbButton.iString = btnPtr->iString;
     TOOLBAR_SendNotify((NMHDR *)&nmtb, infoPtr, TBN_DELETINGBUTTON);
 
     if ((infoPtr->hwndToolTip) &&
-	!(infoPtr->buttons[nIndex].fsStyle & BTNS_SEP)) {
+	!(btnPtr->fsStyle & BTNS_SEP)) {
 	TTTOOLINFOW ti;
 
 	ZeroMemory (&ti, sizeof(ti));
@@ -7167,10 +7176,12 @@ static BOOL TOOLBAR_GetButtonInfo(TOOLBAR_INFO *infoPtr, NMTOOLBARW *nmtb)
 static BOOL TOOLBAR_IsButtonRemovable(TOOLBAR_INFO *infoPtr,
 	int iItem, PCUSTOMBUTTON btnInfo)
 {
-    NMTOOLBARA nmtb;
+    NMTOOLBARW nmtb;
 
+    /* MSDN states that iItem is the index of the button, rather than the
+     * command ID as used by every other NMTOOLBAR notification */
     nmtb.iItem = iItem;
     memcpy(&nmtb.tbButton, &btnInfo->btn, sizeof(TBBUTTON));
 
-    return TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr, TBN_QUERYDELETE);
+    return TOOLBAR_SendNotify(&nmtb.hdr, infoPtr, TBN_QUERYDELETE);
 }
