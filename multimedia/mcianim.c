@@ -17,6 +17,8 @@
 #include "multimedia.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(mcianim)
+
 #define MAX_ANIMDRV 		2
 
 #define ANIMFRAMES_PERSEC 	30

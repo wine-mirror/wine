@@ -19,6 +19,8 @@
 #include "datetime.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(datetime)
+
 
 #define DATETIME_GetInfoPtr(hwnd) ((DATETIME_INFO *)GetWindowLongA (hwnd, 0))
 

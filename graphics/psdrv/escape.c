@@ -8,6 +8,8 @@
 #include "debug.h"
 #include "winspool.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 
 INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 
                               SEGPTR lpInData, SEGPTR lpOutData )

@@ -13,6 +13,8 @@
 #include "shlobj.h"
 #include "shell32_main.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
+
 /*************************************************************************
  * PathIsRoot [SHELL32.29]
  */

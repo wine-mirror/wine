@@ -32,6 +32,8 @@
 
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(menu)
+
 
 /* internal popup menu window messages */
 

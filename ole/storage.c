@@ -23,6 +23,9 @@
 #include "ldt.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(ole)
+DECLARE_DEBUG_CHANNEL(relay)
+
 struct storage_header {
 	BYTE	magic[8];	/* 00: magic */
 	BYTE	unknown1[36];	/* 08: unknown */

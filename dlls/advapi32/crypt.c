@@ -6,6 +6,8 @@
 #include "wincrypt.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(advapi)
+
 /******************************************************************************
  * CryptAcquireContextA
  * Acquire a crypto provider context handle.

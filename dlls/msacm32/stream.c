@@ -12,6 +12,8 @@
 #include "msacm.h"
 #include "msacmdrv.h"
 
+DEFAULT_DEBUG_CHANNEL(msacm)
+
 /***********************************************************************
  *           acmStreamClose (MSACM32.37)
  */

@@ -17,6 +17,8 @@
 #include "debug.h"
 #include "winproc.h"
 
+DEFAULT_DEBUG_CHANNEL(commdlg)
+
 
 #define COMDLG32_LAST_ERROR_NOT_ALLOCATED 0xF684F684
 static DWORD		COMDLG32_TlsIndex  = COMDLG32_LAST_ERROR_NOT_ALLOCATED;

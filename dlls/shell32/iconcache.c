@@ -17,6 +17,8 @@
 #include "pidl.h"
 #include "shell32_main.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
+
 #pragma pack(1)
 
 typedef struct

@@ -51,6 +51,8 @@ AJ 990101:
 #include "options.h"
 #include "winnls.h"
 
+DEFAULT_DEBUG_CHANNEL(crtdll)
+
 /* windows.h RAND_MAX is smaller than normal RAND_MAX */
 #define CRTDLL_RAND_MAX         0x7fff 
 

@@ -27,6 +27,8 @@
 #include "winerror.h"
 #include "parsedt.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>

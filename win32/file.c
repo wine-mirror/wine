@@ -22,6 +22,8 @@
 #include "heap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(file)
+
 DWORD ErrnoToLastError(int errno_num);
 
 /***********************************************************************

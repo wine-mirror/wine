@@ -8,6 +8,8 @@
 #include "ras.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ras)
+
 /**************************************************************************
  *                 RasEnumConnections32A			[RASAPI32.544]
  */

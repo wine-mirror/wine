@@ -17,6 +17,8 @@
 #include "winreg.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(reg)
+
 static BYTE PF[64] = {0,};
 
 /***********************************************************************

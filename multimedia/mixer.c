@@ -18,6 +18,8 @@
 #include "multimedia.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(mmaux)
+
 #ifdef HAVE_OSS
 #define MIXER_DEV "/dev/mixer"
 

@@ -32,6 +32,10 @@
 #include "dosmod.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(int)
+DECLARE_DEBUG_CHANNEL(module)
+DECLARE_DEBUG_CHANNEL(relay)
+
 #ifdef MZ_SUPPORTED
 
 #include <sys/mman.h>

@@ -27,6 +27,8 @@
 #include "heap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(mciwave)
+
 #define MAX_MCIWAVEDRV 	(1)
 
 typedef struct {

@@ -21,6 +21,8 @@
 #include "xmalloc.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(clipboard)
+
 #define  CF_REGFORMATBASE 	0xC000
 
 /**************************************************************************

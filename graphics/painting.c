@@ -18,6 +18,8 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(gdi)
+
 
 /***********************************************************************
  *           LineTo16    (GDI.19)

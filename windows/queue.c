@@ -21,6 +21,9 @@
 #include "debug.h"
 #include "spy.h"
 
+DECLARE_DEBUG_CHANNEL(msg)
+DECLARE_DEBUG_CHANNEL(sendmsg)
+
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
 static HQUEUE16 hFirstQueue = 0;

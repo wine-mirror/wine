@@ -18,6 +18,8 @@
 #include "debug.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(palette)
+
 PALETTE_DRIVER *PALETTE_Driver = NULL;
 
 FARPROC pfnSelectPalette = NULL;

@@ -13,6 +13,8 @@
 #include "ldt.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 /* This implementation of the BSTR API is 16-bit only. It
    represents BSTR as a 16:16 far pointer, and the strings
    as ISO-8859 */

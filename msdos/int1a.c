@@ -9,6 +9,8 @@
 #include "miscemu.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(int)
+
 #define	BCD_TO_BIN(x) ((x&15) + (x>>4)*10)
 #define BIN_TO_BCD(x) ((x%10) + ((x/10)<<4))
 

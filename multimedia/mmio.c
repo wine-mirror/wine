@@ -18,6 +18,8 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+DEFAULT_DEBUG_CHANNEL(mmio)
+
 /**************************************************************************
  *               mmioDosIOProc           [internal]
  */

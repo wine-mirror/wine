@@ -36,6 +36,8 @@
 #include "commctrl.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(imagelist)
+
 
 #define _MAX(a,b) (((a)>(b))?(a):(b))
 #define _MIN(a,b) (((a)>(b))?(b):(a))

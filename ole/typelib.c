@@ -17,6 +17,8 @@
 #include "debug.h"
 #include "winversion.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 /****************************************************************************
  *		QueryPathOfRegTypeLib16	[TYPELIB.14]
  *

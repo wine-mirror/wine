@@ -13,6 +13,8 @@
 #include "psdrv.h"
 #include "winspool.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 typedef struct {
 char	*key;
 char	*option;

@@ -27,6 +27,8 @@
 #include "storage32.h"
 #include "ole2.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 #define FILE_BEGIN 0
 
 static const char rootPropertyName[] = "Root Entry";

@@ -4,6 +4,8 @@
 
 #include "ntddk.h"
 
+DEFAULT_DEBUG_CHANNEL(ntdll)
+
 /**************************************************************************
  *                 NtOpenFile				[NTDLL.127]
  * FUNCTION: Opens a file

@@ -26,6 +26,8 @@
 #include "sysmetrics.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(rebar)
+
 
 /* fDraw flags */
 #define DRAW_GRIPPER    1

@@ -11,6 +11,8 @@
 #include "progress.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(progress)
+
 
 /* Control configuration constants */
 

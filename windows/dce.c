@@ -30,6 +30,8 @@
 #include "debug.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(dc)
+
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
 static DCE *firstDCE = 0;

@@ -15,6 +15,8 @@
 
 #include "ntddk.h"
 
+DEFAULT_DEBUG_CHANNEL(ntdll)
+
 /* move to winbase.h */
 typedef VOID (CALLBACK *PTIMERAPCROUTINE)(LPVOID lpArgToCompletionRoutine,DWORD dwTimerLowValue,DWORD dwTimerHighValue);   
 

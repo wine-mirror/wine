@@ -10,6 +10,8 @@
 #include "module.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(caret)
+
 typedef struct
 {
     HWND     hwnd;

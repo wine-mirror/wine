@@ -9,6 +9,8 @@
 #include "tapi.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(tapi)
+
 static LPPHONE PHONE_Alloc(void)
 {
     return 0;

@@ -18,6 +18,8 @@
 #include "hotkey.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(hotkey)
+
 
 #define HOTKEY_GetInfoPtr(hwnd) ((HOTKEY_INFO *)GetWindowLongA (hwnd, 0))
 

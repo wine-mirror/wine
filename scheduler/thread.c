@@ -25,6 +25,8 @@
 #include "queue.h"
 #include "hook.h"
 
+DEFAULT_DEBUG_CHANNEL(thread)
+
 #ifndef __i386__
 THDB *pCurrentThread;
 #endif

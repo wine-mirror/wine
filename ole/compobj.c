@@ -51,6 +51,8 @@
 
 #include "ifs.h"
 #include "compobj.h"
+
+DEFAULT_DEBUG_CHANNEL(ole)
 /****************************************************************************
  *  COM External Lock structures and methods declaration
  *

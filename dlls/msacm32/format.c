@@ -12,6 +12,8 @@
 #include "msacm.h"
 #include "msacmdrv.h"
 
+DEFAULT_DEBUG_CHANNEL(msacm)
+
 /***********************************************************************
  *           acmFormatChooseA (MSACM32.23)
  */

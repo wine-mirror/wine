@@ -10,6 +10,8 @@
 #include "windef.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(dll)
+
 void WINAPI BootTask16()
 {
 	MSG("BootTask(): should only be used by WIN32S.EXE.\n");

@@ -28,6 +28,8 @@
 #include "tweak.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(mdi)
+
 #define MDIF_NEEDUPDATE		0x0001
 
 static HBITMAP16 hBmpClose   = 0;

@@ -34,6 +34,8 @@
 #include "options.h"
 #include "server.h"
 
+DEFAULT_DEBUG_CHANNEL(module)
+
 #ifdef MZ_SUPPORTED
 
 #include <sys/mman.h>

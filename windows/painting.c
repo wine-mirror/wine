@@ -14,6 +14,9 @@
 #include "debug.h"
 #include "wine/winuser16.h"
 
+DECLARE_DEBUG_CHANNEL(nonclient)
+DECLARE_DEBUG_CHANNEL(win)
+
 /* client rect in window coordinates */
 
 #define GETCLIENTRECTW( wnd, r )	(r).left = (wnd)->rectClient.left - (wnd)->rectWindow.left; \

@@ -17,6 +17,8 @@
 #include "selectors.h"
 #include "miscemu.h"
 
+DEFAULT_DEBUG_CHANNEL(aspi)
+
 
 /* FIXME!
  * 1) Residual byte length reporting not handled

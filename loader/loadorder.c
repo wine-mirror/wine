@@ -15,6 +15,8 @@
 #include "heap.h"
 #include "options.h"
 
+DEFAULT_DEBUG_CHANNEL(module)
+
 
 /* #define DEBUG_LOADORDER */
 

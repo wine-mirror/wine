@@ -26,6 +26,10 @@
 #include "keyboard.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(relay)
+DECLARE_DEBUG_CHANNEL(system)
+DECLARE_DEBUG_CHANNEL(thunk)
+
 
 /* List of the 16-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/callto16.S */

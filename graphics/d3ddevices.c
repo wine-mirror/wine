@@ -16,6 +16,8 @@
 
 #include "d3d_private.h"
 
+DEFAULT_DEBUG_CHANNEL(ddraw)
+
 /* Define this variable if you have an unpatched Mesa 3.0 (patches are available
    on Mesa's home page) or version 3.1b.
 

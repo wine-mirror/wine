@@ -5,6 +5,8 @@
 #include "windef.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(relay)
+
 long WINAPI stub_GDI_379(HDC16 hdc) { FIXME(relay, "STARTPAGE: stub\n"); return 1; }
 long WINAPI stub_GDI_381(HDC16 hdc, SEGPTR proc) { FIXME(relay, "SETABORTPROC: stub\n"); return 1; }
 long WINAPI stub_GDI_382(void) { FIXME(relay, "ABORTPROC: stub\n"); return 1; }

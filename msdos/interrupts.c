@@ -10,6 +10,8 @@
 #include "msdos.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(int)
+
 static FARPROC16 INT_Vectors[256];
 
 

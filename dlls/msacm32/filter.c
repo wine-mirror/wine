@@ -11,6 +11,8 @@
 #include "msacmdrv.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(msacm)
+
 /***********************************************************************
  *           acmFilterChooseA (MSACM32.13)
  */

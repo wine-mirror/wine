@@ -16,6 +16,10 @@
 #include "digitalv.h"
 #include "options.h"
 
+DECLARE_DEBUG_CHANNEL(cdaudio)
+DECLARE_DEBUG_CHANNEL(mciavi)
+DECLARE_DEBUG_CHANNEL(mcimidi)
+
 typedef struct {
     int			nUseCount;          	/* Incremented for each shared open          */
     BOOL16  		fShareable;         	/* TRUE if first open was shareable 	     */

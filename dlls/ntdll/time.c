@@ -8,11 +8,12 @@
  * 
  */
 
-#include <ntddk.h>
-
 #include <string.h>
-#include <debug.h>
-#include <file.h>
+#include "ntddk.h"
+#include "debug.h"
+#include "file.h"
+
+DEFAULT_DEBUG_CHANNEL(ntdll)
 
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000

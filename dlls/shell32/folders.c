@@ -16,6 +16,8 @@
 #include "pidl.h"
 #include "shell32_main.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
+
 
 /***********************************************************************
 *   IExtractIconA implementation

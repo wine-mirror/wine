@@ -25,6 +25,9 @@
 #include "options.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(dosfs)
+DECLARE_DEBUG_CHANNEL(file)
+
 static DOS_FULL_NAME DIR_Windows;
 static DOS_FULL_NAME DIR_System;
 

@@ -21,6 +21,8 @@
 #include "winerror.h"
 #include "xmalloc.h"
 
+DEFAULT_DEBUG_CHANNEL(print)
+
 /**********************************************************************
  *           QueryAbort   (GDI.155)
  *

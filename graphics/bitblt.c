@@ -7,6 +7,10 @@
 #include "dc.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(bitblt)
+DECLARE_DEBUG_CHANNEL(bitmap)
+DECLARE_DEBUG_CHANNEL(gdi)
+
 
 /***********************************************************************
  *           PatBlt16    (GDI.29)

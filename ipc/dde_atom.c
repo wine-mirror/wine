@@ -17,6 +17,8 @@
 #include "ldt.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(atom)
+
 typedef struct
 {
 	WORD        count;

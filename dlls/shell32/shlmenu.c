@@ -14,6 +14,8 @@
 
 #include "pidl.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
+
 BOOL WINAPI FileMenu_DeleteAllItems (HMENU hMenu);
 
 /*************************************************************************

@@ -23,6 +23,8 @@
 #include "winproc.h"
 #include "cderr.h"
 
+DEFAULT_DEBUG_CHANNEL(commdlg)
+
 /***********************************************************************
  *           PrintDlg16   (COMMDLG.20)
  */

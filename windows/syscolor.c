@@ -16,6 +16,8 @@
 #include "winreg.h"
 #include "winversion.h"
 
+DEFAULT_DEBUG_CHANNEL(syscolor)
+
 static const char * const DefSysColors[] =
 {
     "Scrollbar", "224 224 224",      /* COLOR_SCROLLBAR           */

@@ -80,6 +80,10 @@ typedef unsigned long Pixel;
 #include "bitmaps/obm_restore_95"
 #include "bitmaps/obm_restored_95"
 
+DECLARE_DEBUG_CHANNEL(bitmap)
+DECLARE_DEBUG_CHANNEL(cursor)
+DECLARE_DEBUG_CHANNEL(x11drv)
+
 
 #define OBM_FIRST  OBM_CLOSED  /* First OEM bitmap */
 #define OBM_LAST   OBM_OLD_CLOSE   /* Last OEM bitmap */

@@ -20,6 +20,9 @@
 #include "monitor.h"
 #include "wine/winuser16.h"
 
+DECLARE_DEBUG_CHANNEL(bitmap)
+DECLARE_DEBUG_CHANNEL(resource)
+
 BITMAP_DRIVER *BITMAP_Driver = NULL;
 
 

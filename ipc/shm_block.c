@@ -24,6 +24,8 @@
 #include "dde_proc.h"
 #include "xmalloc.h"
 
+DEFAULT_DEBUG_CHANNEL(shm)
+
 /* How each shmid is maped to local pointer */
 /* Only attached shm blocks are in this construct */
 struct local_shm_map *shm_map=NULL;

@@ -8,6 +8,8 @@
 #include "miscemu.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(int)
+
 
 /***********************************************************************
  *           NetBIOSCall  (KERNEL.103)

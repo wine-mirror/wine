@@ -10,6 +10,8 @@
 #include "status.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(statusbar)
+
 /*
  * Run tests using Waite Group Windows95 API Bible Vol. 1&2
  * The second cdrom contains executables drawstat.exe,gettext.exe,

@@ -15,6 +15,8 @@
 #include "wine/obj_inplace.h"
 #include "ole2.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 #define  BLOCK_TAB_SIZE 5 /* represent the first size table and it's increment block size */
 
 /* CompositeMoniker data structure */

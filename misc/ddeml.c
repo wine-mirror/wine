@@ -19,6 +19,8 @@
 #include "debug.h"
 #include "winnt.h"
 
+DEFAULT_DEBUG_CHANNEL(ddeml)
+
 /* Has defined in atom.c file.
  */
 #define MAX_ATOM_LEN              255

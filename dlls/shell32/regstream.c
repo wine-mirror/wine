@@ -14,6 +14,8 @@
 #include "pidl.h"
 #include "shell32_main.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
+
 typedef struct 
 {	ICOM_VTABLE(IStream)* lpvtbl;
 	DWORD		ref;

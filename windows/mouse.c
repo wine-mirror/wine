@@ -11,6 +11,8 @@
 #include "winuser.h"
 #include "win.h"
 
+DEFAULT_DEBUG_CHANNEL(event)
+
 /**********************************************************************/
 
 MOUSE_DRIVER *MOUSE_Driver = NULL;

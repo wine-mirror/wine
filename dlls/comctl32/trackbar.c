@@ -29,6 +29,8 @@
 #include "trackbar.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(trackbar)
+
 
 #define TRACKBAR_GetInfoPtr(wndPtr) ((TRACKBAR_INFO *)GetWindowLongA (hwnd,0))
 

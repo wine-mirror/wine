@@ -15,6 +15,8 @@
 #include "task.h"
 #include "debug.h"
 #include "process.h"
+
+DEFAULT_DEBUG_CHANNEL(win32)
   
 /***********************************************************************
  *              GetStartupInfoA         (KERNEL32.273)

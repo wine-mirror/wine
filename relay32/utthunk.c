@@ -13,6 +13,8 @@
 #include "debug.h"
 #include "debugstr.h"
 
+DEFAULT_DEBUG_CHANNEL(thunk)
+
 #pragma pack(1)
 
 typedef struct

@@ -12,6 +12,9 @@
 #include "dc.h"
 #include <debug.h>
 
+DECLARE_DEBUG_CHANNEL(driver)
+DECLARE_DEBUG_CHANNEL(gdi)
+
 
 INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
                        SEGPTR lpszInData, SEGPTR lpvOutData )

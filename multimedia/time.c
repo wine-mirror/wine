@@ -17,6 +17,9 @@
 #include "options.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(mmsys)
+DECLARE_DEBUG_CHANNEL(mmtime)
+
 #define USE_FAKE_MM_TIMERS
 
 static MMTIME16 mmSysTimeMS;

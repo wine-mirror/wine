@@ -20,6 +20,8 @@
 #include "monitor.h"
 #include "local.h"
 
+DEFAULT_DEBUG_CHANNEL(gdi)
+
 static const char HatchBrushes[NB_HATCH_STYLES + 1][8] =
 {
     { 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00 }, /* HS_HORIZONTAL */

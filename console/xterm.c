@@ -21,6 +21,8 @@
 #include "options.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(console)
+
 char console_xterm_prog[80];
 
 static BOOL wine_create_console(FILE **master, FILE **slave, int *pid);

@@ -44,6 +44,9 @@
 #include "winreg.h"
 #include "winversion.h"
 
+DECLARE_DEBUG_CHANNEL(reg)
+DECLARE_DEBUG_CHANNEL(string)
+
 static void REGISTRY_Init(void);
 /* FIXME: following defines should be configured global ... */
 

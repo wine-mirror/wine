@@ -25,6 +25,10 @@
 #include "callback.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(process)
+DECLARE_DEBUG_CHANNEL(relay)
+DECLARE_DEBUG_CHANNEL(win32)
+
 
 /* The initial process PDB */
 static PDB initial_pdb;

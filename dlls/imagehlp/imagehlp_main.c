@@ -10,6 +10,8 @@
 #include "windef.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(imagehlp)
+
 /**********************************************************************/
 
 HANDLE IMAGEHLP_hHeap = (HANDLE) NULL;

@@ -17,6 +17,9 @@
 #include "debug.h"
 #include "tweak.h"
 
+DECLARE_DEBUG_CHANNEL(combo)
+DECLARE_DEBUG_CHANNEL(listbox)
+
 /* Unimplemented yet:
  * - LBS_NOSEL
  * - LBS_USETABSTOPS

@@ -22,6 +22,8 @@
 #include "winproc.h"
 #include "cderr.h"
 
+DEFAULT_DEBUG_CHANNEL(commdlg)
+
 /***********************************************************************
  *           ChooseColor   (COMMDLG.5)
  */

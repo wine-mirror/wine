@@ -17,6 +17,11 @@
 #include "stackframe.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(dosmem)
+DECLARE_DEBUG_CHANNEL(thread)
+DECLARE_DEBUG_CHANNEL(win)
+DECLARE_DEBUG_CHANNEL(win32)
+
 /**********************************************************************
  *           WOWGetDescriptor        (KERNEL32.88) (WOW32.1)
  */

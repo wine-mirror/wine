@@ -11,6 +11,9 @@
 #include "debug.h"
 #include "wine/winuser16.h"
 
+DECLARE_DEBUG_CHANNEL(clipping)
+DECLARE_DEBUG_CHANNEL(region)
+
 #define UPDATE_DIRTY_DC(dc) \
  do { \
    if ((dc)->hookProc && !((dc)->w.flags & (DC_SAVED | DC_MEMORY))) \

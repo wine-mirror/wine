@@ -19,6 +19,8 @@
 #include "tweak.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(win)
+
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_BTNHIGHLIGHT
 

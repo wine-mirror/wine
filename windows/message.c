@@ -30,6 +30,10 @@
 #include "struct32.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(key)
+DECLARE_DEBUG_CHANNEL(msg)
+DECLARE_DEBUG_CHANNEL(sendmsg)
+
 #define WM_NCMOUSEFIRST         WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST          WM_NCMBUTTONDBLCLK
 

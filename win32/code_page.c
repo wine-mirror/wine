@@ -10,6 +10,8 @@
 #include "heap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(win32)
+
 
 /******************************************************************************
  * GetACP [KERNEL32.276]  Gets current ANSI code-page identifier.

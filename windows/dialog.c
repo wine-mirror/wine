@@ -23,6 +23,8 @@
 #include "sysmetrics.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(dialog)
+
 
   /* Dialog control information */
 typedef struct

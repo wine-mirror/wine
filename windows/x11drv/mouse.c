@@ -17,6 +17,8 @@
 #include "windef.h"
 #include "x11drv.h"
 
+DEFAULT_DEBUG_CHANNEL(cursor)
+
 /**********************************************************************/
 
 Cursor X11DRV_MOUSE_XCursor = None;    /* Current X cursor */

@@ -43,6 +43,8 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+DEFAULT_DEBUG_CHANNEL(graphics)
+
 #define ABS(x)    ((x)<0?(-(x)):(x))
 
   /* ROP code to GC function conversion */

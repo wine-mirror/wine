@@ -58,6 +58,13 @@
 #include "snoop.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(delayhlp)
+DECLARE_DEBUG_CHANNEL(fixup)
+DECLARE_DEBUG_CHANNEL(module)
+DECLARE_DEBUG_CHANNEL(relay)
+DECLARE_DEBUG_CHANNEL(segment)
+DECLARE_DEBUG_CHANNEL(win32)
+
 
 /* convert PE image VirtualAddress to Real Address */
 #define RVA(x) ((unsigned int)load_addr+(unsigned int)(x))

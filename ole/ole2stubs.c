@@ -7,6 +7,8 @@
 #include "ole2.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 /******************************************************************************
  *               OleCreateFromData        [OLE32.92]
  */

@@ -12,6 +12,8 @@
 
 #include "d3d_private.h"
 
+DEFAULT_DEBUG_CHANNEL(ddraw)
+
 #ifdef HAVE_MESAGL
 
 static void _dump_renderstate(D3DRENDERSTATETYPE type,

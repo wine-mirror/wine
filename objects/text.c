@@ -16,6 +16,8 @@
 #include "cache.h"
 #include "debugstr.h"
 
+DEFAULT_DEBUG_CHANNEL(text)
+
 #define TAB     9
 #define LF     10
 #define CR     13

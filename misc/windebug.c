@@ -10,6 +10,8 @@
 #include "module.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(dll)
+
 /***********************************************************************
  *           WinNotify       (WINDEBUG.3)
  *  written without _any_ docu

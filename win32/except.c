@@ -41,6 +41,9 @@
 #include "except.h"
 #include "stackframe.h"
 
+DECLARE_DEBUG_CHANNEL(relay)
+DECLARE_DEBUG_CHANNEL(win32)
+
 #define TEB_EXCEPTION_FRAME(pcontext) \
     ((PEXCEPTION_FRAME)((TEB *)GET_SEL_BASE((pcontext)->SegFs))->except)
 

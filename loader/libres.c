@@ -12,6 +12,8 @@
 #include "heap.h"
 #include "xmalloc.h"
 
+DEFAULT_DEBUG_CHANNEL(resource)
+
 typedef struct RLE
 {
     const wrc_resource32_t * const * Resources;  /* NULL-terminated array of pointers */

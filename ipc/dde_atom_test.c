@@ -13,6 +13,10 @@
 #include "dde_atom.h"
 #include "shm_main_blk.h"
 #include <debug.h>
+
+DECLARE_DEBUG_CHANNEL(atom)
+DECLARE_DEBUG_CHANNEL(sem)
+DECLARE_DEBUG_CHANNEL(shm)
 #define TOGETHER (DDE_ATOMS/5)
 
 

@@ -19,6 +19,8 @@
 #include "debugstr.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(snoop)
+
 char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
 
 #ifdef __i386__

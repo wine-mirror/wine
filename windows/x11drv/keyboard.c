@@ -28,6 +28,9 @@
 #include "x11drv.h"
 #include "winnls.h"
 
+DECLARE_DEBUG_CHANNEL(key)
+DECLARE_DEBUG_CHANNEL(keyboard)
+
 extern LPBYTE pKeyStateTable;
 
 int min_keycode, max_keycode, keysyms_per_keycode;

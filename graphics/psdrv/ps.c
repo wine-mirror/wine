@@ -11,6 +11,8 @@
 #include "winspool.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 static char psheader[] = /* title llx lly urx ury orientation */
 "%%!PS-Adobe-3.0\n"
 "%%%%Creator: Wine PostScript Driver\n"

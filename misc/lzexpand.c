@@ -18,6 +18,8 @@
 #include "lzexpand.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(file)
+
 
 /* The readahead length of the decompressor. Reading single bytes
  * using _lread() would be SLOW.

@@ -22,6 +22,10 @@
 #include "callback.h"
 #include "tweak.h"
 
+DECLARE_DEBUG_CHANNEL(combo)
+DECLARE_DEBUG_CHANNEL(edit)
+DECLARE_DEBUG_CHANNEL(relay)
+
 #define BUFLIMIT_MULTI		65534	/* maximum buffer size (not including '\0')
 					   FIXME: BTW, new specs say 65535 (do you dare ???) */
 #define BUFLIMIT_SINGLE		32766	/* maximum buffer size (not including '\0') */

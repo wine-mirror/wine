@@ -69,6 +69,8 @@
 #include "miscemu.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(winsock)
+
 #pragma pack(4)
 
 /* ----------------------------------- helper functions - */

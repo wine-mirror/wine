@@ -16,6 +16,9 @@
 #include "options.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(mci)
+DECLARE_DEBUG_CHANNEL(midi)
+
 #ifdef HAVE_OSS
 
 extern int 		MODM_NUMDEVS;

@@ -13,6 +13,8 @@
 #include "debug.h"
 #include "cdrom.h"
 
+DEFAULT_DEBUG_CHANNEL(cdaudio)
+
 typedef struct {
     int     		nUseCount;          /* Incremented for each shared open */
     BOOL16  		fShareable;         /* TRUE if first open was shareable */

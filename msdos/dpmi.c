@@ -22,6 +22,8 @@
 #include "callback.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(int31)
+
 #define DOS_GET_DRIVE(reg) ((reg) ? (reg) - 1 : DRIVE_GetCurrentDrive())
 
 void CreateBPB(int drive, BYTE *data, BOOL16 limited);  /* defined in int21.c */

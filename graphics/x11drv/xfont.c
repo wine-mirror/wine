@@ -33,6 +33,8 @@
 #include "debug.h"
 #include "ldt.h"
 
+DEFAULT_DEBUG_CHANNEL(font)
+
 #ifndef X_DISPLAY_MISSING
 
 #define X_PFONT_MAGIC		(0xFADE0000)

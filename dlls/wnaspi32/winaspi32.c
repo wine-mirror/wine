@@ -15,6 +15,8 @@
 #include "heap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(aspi)
+
 
 /* FIXME!
  * 1) Residual byte length reporting not handled

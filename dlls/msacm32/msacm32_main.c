@@ -12,6 +12,8 @@
 #include "msacmdrv.h"
 #include "winversion.h"
 
+DEFAULT_DEBUG_CHANNEL(msacm)
+
 /**********************************************************************/
 
 static DWORD MSACM_dwProcessesAttached = 0;

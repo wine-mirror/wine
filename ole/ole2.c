@@ -18,6 +18,8 @@
 #include "debug.h"
 #include "ole2ver.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 /******************************************************************************
  * These are static/global variables and internal data structures that the 
  * OLE module uses to maintain it's state.

@@ -10,6 +10,8 @@
 #include "ver.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ver)
+
 
 /*************************************************************************
  * GetFileResourceSize16                     [VER.2]

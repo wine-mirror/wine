@@ -12,6 +12,8 @@
 #include "winversion.h"
 #include "imm.h"
 
+DEFAULT_DEBUG_CHANNEL(imm)
+
 /***********************************************************************
  *           ImmAssociateContext32 (IMM32.1)
  */

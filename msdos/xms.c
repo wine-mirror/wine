@@ -16,6 +16,8 @@
 #include "debug.h"
 #include "selectors.h"
 
+DEFAULT_DEBUG_CHANNEL(int31)
+
 typedef struct {
  WORD Handle;
  DWORD Offset;

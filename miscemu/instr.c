@@ -14,6 +14,9 @@
 #include "selectors.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(int)
+DECLARE_DEBUG_CHANNEL(io)
+
 
 #define IS_V86(context) (EFL_sig(context)&V86_FLAG)
 #define IS_SEL_32(context,seg) \

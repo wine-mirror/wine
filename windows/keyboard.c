@@ -24,6 +24,9 @@
 #include "struct32.h"
 #include "winerror.h"
 
+DECLARE_DEBUG_CHANNEL(event)
+DECLARE_DEBUG_CHANNEL(keyboard)
+
 /**********************************************************************/
 
 KEYBOARD_DRIVER *KEYBOARD_Driver = NULL;

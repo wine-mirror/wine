@@ -11,6 +11,8 @@
 #include "debug.h"
 #include "heap.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 #define  BLOCK_TAB_SIZE 20 /* represent the first size table and it's increment block size */
 
 /* define the structure of the running object table elements */

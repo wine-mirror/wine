@@ -21,6 +21,8 @@
 #include "tooltips.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(tooltips)
+
 #define ID_TIMERSHOW   1    /* show delay timer */
 #define ID_TIMERPOP    2    /* auto pop timer */
 #define ID_TIMERLEAVE  3    /* tool leave timer */

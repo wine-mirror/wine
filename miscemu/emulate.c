@@ -2,6 +2,8 @@
 #include "miscemu.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(int)
+
 struct Win87EmInfoStruct
 {
     unsigned short Version;

@@ -32,6 +32,9 @@
 #include "winerror.h"
 #include "debugstr.h"
 
+DECLARE_DEBUG_CHANNEL(accel)
+DECLARE_DEBUG_CHANNEL(resource)
+
 extern WORD WINE_LanguageId;
 
 #define HRSRC_MAP_BLOCKSIZE 16

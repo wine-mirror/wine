@@ -21,6 +21,8 @@
 #include "debug.h"
 #include "winproc.h"
 
+DEFAULT_DEBUG_CHANNEL(commdlg)
+
 
 /***********************************************************************
  *           FindText16   (COMMDLG.11)

@@ -28,6 +28,10 @@
 #include "syslevel.h"
 #include "winerror.h"
 
+DECLARE_DEBUG_CHANNEL(dosmem)
+DECLARE_DEBUG_CHANNEL(thunk)
+DECLARE_DEBUG_CHANNEL(win32)
+
 
 /***********************************************************************
  *                                                                     *

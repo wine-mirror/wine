@@ -109,6 +109,8 @@ $pre_file
 $x11_incl#include <X11/$extensions_dir$name.h>
 #include "debug.h"
 #include "x11drv.h"
+
+DEFAULT_DEBUG_CHANNEL(x11)
 END
 
     if($name eq "xpm") {	# Handle as special case.

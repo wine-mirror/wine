@@ -13,6 +13,8 @@
 #include "debug.h"
 #include "heap.h"
 
+DEFAULT_DEBUG_CHANNEL(gdi)
+
 typedef struct {
         ATOM atom;
 	HGLOBAL16 handle;

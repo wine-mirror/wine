@@ -12,6 +12,8 @@
 #include "options.h"
 #include "debug.h"
 #include "heap.h"
+
+DEFAULT_DEBUG_CHANNEL(psdrv)
 #include <ctype.h>
 
 /* ptr to fonts for which we have afm files */

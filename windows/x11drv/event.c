@@ -35,6 +35,9 @@
 #include "winsock.h"
 #include "windef.h"
 #include "x11drv.h"
+
+DECLARE_DEBUG_CHANNEL(event)
+DECLARE_DEBUG_CHANNEL(win)
   
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;

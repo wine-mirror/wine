@@ -8,6 +8,8 @@
 #include "pen.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(gdi)
+
 
 
 /***********************************************************************

@@ -17,6 +17,9 @@
 #include "snoop.h"
 #include "winerror.h"
 
+DECLARE_DEBUG_CHANNEL(relay)
+DECLARE_DEBUG_CHANNEL(win32)
+
 typedef struct
 {
     BYTE  call;                    /* 0xe8 call callfrom32 (relative) */

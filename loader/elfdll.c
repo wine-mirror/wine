@@ -19,6 +19,9 @@
 #include "debug.h"
 #include "winerror.h"
 
+DECLARE_DEBUG_CHANNEL(elfdll)
+DECLARE_DEBUG_CHANNEL(win32)
+
 #if defined(HAVE_LIBDL) && defined(HAVE_DLFCN_H)
 #include <dlfcn.h>
 

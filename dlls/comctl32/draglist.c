@@ -15,6 +15,8 @@
 #include "commctrl.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(commctrl)
+
 
 BOOL WINAPI MakeDragList (HWND hwndLB)
 {

@@ -67,6 +67,8 @@ typedef int INT32;
 #include "ddraw_private.h"
 #include "d3d_private.h"
 
+DEFAULT_DEBUG_CHANNEL(ddraw)
+
 /* define this if you want to play Diablo using XF86DGA. (bug workaround) */
 #undef DIABLO_HACK
 

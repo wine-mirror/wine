@@ -28,6 +28,11 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+DECLARE_DEBUG_CHANNEL(dll)
+DECLARE_DEBUG_CHANNEL(fixup)
+DECLARE_DEBUG_CHANNEL(module)
+DECLARE_DEBUG_CHANNEL(segment)
+
 #define SEL(x) GlobalHandleToSel16(x)
 
 /***********************************************************************

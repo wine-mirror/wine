@@ -17,6 +17,8 @@
 #include "debug.h"
 #include "dc.h"
 
+DEFAULT_DEBUG_CHANNEL(win16drv)
+
 #define SUPPORT_REALIZED_FONTS 1
 #pragma pack(1)
 typedef struct

@@ -30,6 +30,8 @@
 #include "x11drv.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(win)
+
 /**********************************************************************/
 
 extern Cursor X11DRV_MOUSE_XCursor;  /* Current X cursor */

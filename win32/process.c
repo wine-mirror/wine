@@ -18,6 +18,8 @@
 #include "toolhelp.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(win32)
+
 
 /**********************************************************************
  *  ContinueDebugEvent [KERNEL32.146]

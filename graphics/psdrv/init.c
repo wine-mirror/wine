@@ -14,6 +14,8 @@
 #include "winspool.h"
 #include "winerror.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
 static BOOL PSDRV_DeleteDC( DC *dc );

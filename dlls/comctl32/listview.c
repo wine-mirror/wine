@@ -53,6 +53,8 @@
 #include "listview.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(listview)
+
 /*
  * constants 
  */

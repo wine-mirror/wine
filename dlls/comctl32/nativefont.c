@@ -18,6 +18,8 @@
 #include "nativefont.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(nativefont)
+
 
 #define NATIVEFONT_GetInfoPtr(hwnd) ((NATIVEFONT_INFO *)GetWindowLongA (hwnd, 0))
 

@@ -11,6 +11,8 @@
 #include "ldt.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ldt)
+
 #ifdef __i386__
 
 #ifdef linux

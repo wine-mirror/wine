@@ -7,6 +7,8 @@
 #include "gdi.h"
 #include "heap.h"
 #include "debug.h"
+
+DEFAULT_DEBUG_CHANNEL(driver)
 #include <string.h>
 
 typedef struct tagGRAPHICS_DRIVER

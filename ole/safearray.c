@@ -16,6 +16,8 @@
 #include "wine/obj_base.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 /* Localy used methods */
 static INT  
 endOfDim(LONG *coor, SAFEARRAYBOUND *mat, LONG dim, LONG realDim);

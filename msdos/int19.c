@@ -6,6 +6,8 @@
 #include "miscemu.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(int19)
+
 
 /**********************************************************************
  *          INT_Int19Handler

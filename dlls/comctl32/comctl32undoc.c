@@ -22,6 +22,8 @@
 #include "heap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(commctrl)
+
 
 extern HANDLE COMCTL32_hHeap; /* handle to the private heap */
 

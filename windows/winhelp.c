@@ -12,6 +12,8 @@
 #include "heap.h"
 #include "ldt.h"
 
+DEFAULT_DEBUG_CHANNEL(win)
+
 
 /**********************************************************************
  *             WinHelp16   (USER.171)

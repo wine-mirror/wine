@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "debugtools.h"
 
+DEFAULT_DEBUG_CHANNEL(resource)
+
 /**********************************************************************
  *	    ConvertDialog32To16   (KERNEL.615)
  */

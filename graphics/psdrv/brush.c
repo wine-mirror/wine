@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "gdi.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 /***********************************************************************
  *           PSDRV_BRUSH_SelectObject
  */

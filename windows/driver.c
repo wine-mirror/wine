@@ -18,6 +18,8 @@
 #include "debug.h"
 #include "mmsystem.h"
 
+DEFAULT_DEBUG_CHANNEL(driver)
+
 static LPWINE_DRIVER	lpDrvItemList = NULL;
 
 /* TODO list :

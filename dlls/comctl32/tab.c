@@ -18,6 +18,8 @@
 #include "tab.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(tab)
+
 /******************************************************************************
  * Positioning constants
  */

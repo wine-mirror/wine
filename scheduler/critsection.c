@@ -15,6 +15,8 @@
 #include "debug.h"
 #include "thread.h"
 
+DEFAULT_DEBUG_CHANNEL(win32)
+
 
 /***********************************************************************
  *           InitializeCriticalSection   (KERNEL32.472) (NTDLL.406)

@@ -11,6 +11,9 @@
 #include "ntddk.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(advapi)
+DECLARE_DEBUG_CHANNEL(security)
+
 #define CallWin32ToNt(func) \
 	{ NTSTATUS ret; \
 	  ret = (func); \

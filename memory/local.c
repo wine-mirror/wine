@@ -27,6 +27,9 @@
 #include "debug.h"
 #include "callback.h"
 
+DECLARE_DEBUG_CHANNEL(heap)
+DECLARE_DEBUG_CHANNEL(local)
+
 typedef struct
 {
 /* Arena header */

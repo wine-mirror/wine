@@ -10,6 +10,8 @@
 #include "stackframe.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(win32)
+
 static CRITICAL_SECTION Win16Mutex;
 static SEGPTR segpWin16Mutex;
 

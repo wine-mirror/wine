@@ -21,6 +21,8 @@
 #include "debug.h"
 #include "path.h"
 
+DEFAULT_DEBUG_CHANNEL(gdi)
+
 /* Notes on the implementation
  *
  * The implementation is based on dynamically resizable arrays of points and

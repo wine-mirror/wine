@@ -13,6 +13,8 @@
 #include "palette.h"
 #include "ttydrv.h"
 
+DEFAULT_DEBUG_CHANNEL(ttydrv)
+
 static const DC_FUNCTIONS TTYDRV_DC_Driver =
 {
   NULL,                /* pArc */

@@ -11,6 +11,8 @@
 
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(advapi)
+
 /******************************************************************************
  * BackupEventLog32A [ADVAPI32.15]
  */

@@ -11,6 +11,8 @@
 #include "oleidl.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 
 /**************************************************************************
  *  IOleAdviseHolder Implementation

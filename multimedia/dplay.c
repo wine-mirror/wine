@@ -14,6 +14,8 @@
 #include "heap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(dplay)
+
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */

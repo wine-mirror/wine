@@ -46,6 +46,8 @@
 #include "server/request.h"
 #include "server.h"
 
+DEFAULT_DEBUG_CHANNEL(file)
+
 #if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
 #define MAP_ANON MAP_ANONYMOUS
 #endif

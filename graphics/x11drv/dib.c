@@ -22,6 +22,9 @@
 #include "global.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
 
+DECLARE_DEBUG_CHANNEL(bitmap)
+DECLARE_DEBUG_CHANNEL(x11drv)
+
 static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
 static int ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
 

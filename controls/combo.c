@@ -20,6 +20,8 @@
 #include "debug.h"
 #include "tweak.h"
 
+DEFAULT_DEBUG_CHANNEL(combo)
+
   /* bits in the dwKeyData */
 #define KEYDATA_ALT             0x2000
 #define KEYDATA_PREVSTATE       0x4000

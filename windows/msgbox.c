@@ -16,6 +16,8 @@
 #include "debugstr.h"
 #include "tweak.h"
 
+DEFAULT_DEBUG_CHANNEL(dialog)
+
 /**************************************************************************
  *           MSGBOX_DlgProc
  *

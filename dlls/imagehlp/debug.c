@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "imagehlp.h"
 
+DEFAULT_DEBUG_CHANNEL(imagehlp)
+
 /***********************************************************************
  *           FindDebugInfoFile32 (IMAGEHLP.5)
  */

@@ -11,6 +11,8 @@
 #include "windef.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(cursor)
+
 /***********************************************************************
  *           DISPLAY_Inquire			(DISPLAY.101)
  */

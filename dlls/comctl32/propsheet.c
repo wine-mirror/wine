@@ -14,6 +14,8 @@
 #include "propsheet.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(propsheet)
+
 
 LRESULT WINAPI
 PROPSHEET_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

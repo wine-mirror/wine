@@ -29,6 +29,9 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+DECLARE_DEBUG_CHANNEL(dde)
+DECLARE_DEBUG_CHANNEL(msg)
+
 int curr_proc_idx= -1;
 
 enum stop_wait_op stop_wait_op=CONT;

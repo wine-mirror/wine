@@ -33,6 +33,8 @@
 #include "debug.h"
 #include "winerror.h"
 
+DEFAULT_DEBUG_CHANNEL(commctrl)
+
 
 HANDLE COMCTL32_hHeap = (HANDLE)NULL;
 DWORD    COMCTL32_dwProcessesAttached = 0;

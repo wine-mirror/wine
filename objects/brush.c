@@ -10,6 +10,8 @@
 #include "bitmap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(gdi)
+
 
 /***********************************************************************
  *           CreateBrushIndirect16    (GDI.50)

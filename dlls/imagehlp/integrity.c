@@ -10,6 +10,8 @@
 #include "imagehlp.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(imagehlp)
+
 /***********************************************************************
  *           ImageAddCertificate32 (IMAGEHLP.10)
  */

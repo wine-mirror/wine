@@ -60,6 +60,8 @@
 #include "miscemu.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(winsock)
+
 #define DEBUG_SOCKADDR 0
 #define dump_sockaddr(a) \
         DUMP("sockaddr_in: family %d, address %s, port %d\n", \

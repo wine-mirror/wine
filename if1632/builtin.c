@@ -23,6 +23,8 @@
 #include "task.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(module)
+
 /* Built-in modules descriptors */
 /* Don't change these structures! (see tools/build.c) */
 

@@ -20,6 +20,8 @@
 #include "digitalv.h"
 #include "wine/winbase16.h"
 
+DEFAULT_DEBUG_CHANNEL(mci)
+
 WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 
 int	mciInstalledCount;

@@ -19,6 +19,8 @@
 #include "animate.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(animate)
+
 #define ANIMATE_GetInfoPtr(hwnd) ((ANIMATE_INFO *)GetWindowLongA (hwnd, 0))
 
 

@@ -11,6 +11,8 @@
 #include "vga.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ddraw)
+
 static int dispdib_multi = 0;
 
 static WORD DISPDIB_Begin(WORD wFlags)

@@ -26,6 +26,8 @@
 #include "debug.h"
 #include "winerror.h"
 
+DEFAULT_DEBUG_CHANNEL(win32)
+
 WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 {
 	PIMAGE_DOS_HEADER	dh;

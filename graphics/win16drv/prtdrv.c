@@ -19,6 +19,8 @@
 #include "bitmap.h"
 #include "pen.h"
 
+DEFAULT_DEBUG_CHANNEL(win16drv)
+
 #define MAX_PRINTER_DRIVERS 	16
 static LOADED_PRINTER_DRIVER *gapLoadedPrinterDrivers[MAX_PRINTER_DRIVERS];
 

@@ -30,6 +30,8 @@
 #include "loadorder.h"
 #include "elfdll.h"
 
+DEFAULT_DEBUG_CHANNEL(module)
+
 FARPROC16 (*fnSNOOP16_GetProcAddress16)(HMODULE16,DWORD,FARPROC16) = NULL;
 void (*fnSNOOP16_RegisterDLL)(NE_MODULE*,LPCSTR) = NULL;
 

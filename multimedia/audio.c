@@ -26,6 +26,8 @@
 #include "ldt.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(wave)
+
 #ifdef HAVE_OSS
 
 #define SOUND_DEV "/dev/dsp"
@@ -1234,7 +1236,6 @@ static DWORD widStart(WORD wDevID)
 
 	TRACE(wave, "recording buf#%u=%p size=%lu \n",
 	      count, lpData, (*lpWaveHdr)->dwBufferLength);
-	fflush(stddeb);
 
 	bytesRead = read(WInDev[wDevID].unixdev, lpData, (*lpWaveHdr)->dwBufferLength);
 
@@ -1256,7 +1257,6 @@ static DWORD widStart(WORD wDevID)
 	count++;
     }
     TRACE(wave, "end of recording !\n");
-    fflush(stddeb);
     return MMSYSERR_NOERROR;
 }
 
@@ -1304,7 +1304,6 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
     TRACE(wave, "nSamplesPerSec=%lu\n", WInDev[wDevID].format.wf.nSamplesPerSec); 
     TRACE(wave, "nChannels=%u\n", WInDev[wDevID].format.wf.nChannels); 
     TRACE(wave, "nAvgBytesPerSec=%lu\n", WInDev[wDevID].format.wf.nAvgBytesPerSec); 
-    fflush(stddeb);
     switch (lpTime->wType) {
     case TIME_BYTES:
 	lpTime->u.cb = WInDev[wDevID].dwTotalRecorded;

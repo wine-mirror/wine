@@ -44,6 +44,9 @@
 #include "task.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(dosfs)
+DECLARE_DEBUG_CHANNEL(file)
+
 typedef struct
 {
     char     *root;      /* root dir in Unix format without trailing / */

@@ -30,6 +30,12 @@
 #include "process.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(hook)
+DECLARE_DEBUG_CHANNEL(local)
+DECLARE_DEBUG_CHANNEL(system)
+DECLARE_DEBUG_CHANNEL(win)
+DECLARE_DEBUG_CHANNEL(win32)
+
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
  */

@@ -89,6 +89,8 @@ SOFTWARE.
 #include "heap.h"
 #include "dc.h"
 
+DEFAULT_DEBUG_CHANNEL(region)
+
 typedef void (*voidProcp)();
 
 /* Note the parameter order is different from the X11 equivalents */

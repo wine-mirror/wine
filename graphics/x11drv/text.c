@@ -20,6 +20,8 @@
 #include "x11font.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(text)
+
 #define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
 #define IROUND(x) (int)((x)>0? (x)+0.5 : (x) - 0.5)
 

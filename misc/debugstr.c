@@ -1,7 +1,10 @@
-#include "debugstr.h"
-#include "xmalloc.h"
-#include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#include "debugstr.h"
+#include "debugtools.h"
+#include "xmalloc.h"
 
 /* ---------------------------------------------------------------------- */
 
@@ -180,5 +183,18 @@ void debug_dumpstr (LPCSTR s)
       s++;
     }
   fputc ('"', stderr);
+}
+
+/* ---------------------------------------------------------------------- */
+
+int dbg_printf(const char *format, ...)
+{
+    int ret;
+    va_list valist;
+
+    va_start(valist, format);
+    ret = vfprintf(stderr, format, valist);
+    va_end(valist);
+    return ret;
 }
 

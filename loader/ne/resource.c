@@ -23,6 +23,8 @@
 #include "callback.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(resource)
+
 #define NEXT_TYPEINFO(pTypeInfo) ((NE_TYPEINFO *)((char*)((pTypeInfo) + 1) + \
                                    (pTypeInfo)->count * sizeof(NE_NAMEINFO)))
 

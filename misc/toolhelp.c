@@ -19,6 +19,8 @@
 #include "server.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(toolhelp)
+
 
 /* FIXME: to make this working, we have to callback all these registered 
  * functions from all over the WINE code. Someone with more knowledge than

@@ -16,6 +16,8 @@
 #include "multimedia.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(mmaux)
+
 #define MIXER_DEV "/dev/mixer"
 
 static int	NumDev = 6;

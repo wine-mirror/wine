@@ -19,6 +19,8 @@
 #include "sysmetrics.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(scroll)
+
 /*************************************************************************
  *             ScrollWindow16   (USER.61)
  */

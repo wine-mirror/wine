@@ -26,6 +26,9 @@
 #include "winreg.h"
 #include "imagelist.h"
 
+DECLARE_DEBUG_CHANNEL(exec)
+DECLARE_DEBUG_CHANNEL(shell)
+
 /* .ICO file ICONDIR definitions */
 
 #pragma pack(1)

@@ -24,6 +24,8 @@
 #include "debug.h"
 #include "miscemu.h"
 
+DEFAULT_DEBUG_CHANNEL(int)
+
 static WORD tmr_8253_countmax[3] = {0xffff, 0x12, 1}; /* [2] needs to be 1 ! */
 /* if byte_toggle is TRUE, then hi byte has already been written */
 static BOOL16 tmr_8253_byte_toggle[3] = {FALSE, FALSE, FALSE};

@@ -9,6 +9,8 @@
 #include "psdrv.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 
 
 /***********************************************************************

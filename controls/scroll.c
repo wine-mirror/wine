@@ -12,6 +12,8 @@
 #include "win.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(scroll)
+
 
 static HBITMAP hUpArrow = 0;
 static HBITMAP hDnArrow = 0;

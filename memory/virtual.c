@@ -23,6 +23,8 @@
 #include "server.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(virtual)
+
 #ifndef MS_SYNC
 #define MS_SYNC 0
 #endif

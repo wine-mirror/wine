@@ -34,6 +34,8 @@
 #include "module.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(resource)
+
 extern const WORD OLE2NLS_CT_CType3_LUT[]; /* FIXME: does not belong here */
 
 

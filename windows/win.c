@@ -34,6 +34,9 @@
 #include "local.h"
 #include "desktop.h"
 
+DECLARE_DEBUG_CHANNEL(msg)
+DECLARE_DEBUG_CHANNEL(win)
+
 /**********************************************************************/
 
 WND_DRIVER *WND_Driver = NULL;

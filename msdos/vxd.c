@@ -19,6 +19,8 @@
 #include "file.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(vxd)
+
 
 #define VXD_BARF(context,name) \
     DUMP( "vxd %s: unknown/not implemented parameters:\n" \

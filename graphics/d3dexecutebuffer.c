@@ -16,6 +16,8 @@
 
 #include "d3d_private.h"
 
+DEFAULT_DEBUG_CHANNEL(ddraw)
+
 #ifdef HAVE_MESAGL
 
 /* Structure to store the 'semi transformed' vertices */

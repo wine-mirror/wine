@@ -8,6 +8,8 @@
 
 #include "ntddk.h"
 
+DEFAULT_DEBUG_CHANNEL(ntdll)
+
 /* move to somewhere */
 typedef void * POBJDIR_INFORMATION;
 

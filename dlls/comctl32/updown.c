@@ -38,6 +38,8 @@
 #include "updown.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(updown)
+
 /* Control configuration constants */
 
 #define INITIAL_DELAY    500 /* initial timer until auto-increment kicks in */

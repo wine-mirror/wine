@@ -22,6 +22,8 @@
 #include "debug.h"
 #include "winerror.h"
 
+DEFAULT_DEBUG_CHANNEL(global)
+
   /* Global arena block */
 typedef struct
 {

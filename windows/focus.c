@@ -14,6 +14,8 @@
 #include "task.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(win)
+
 
 /*****************************************************************
  *	         FOCUS_SwitchFocus 

@@ -34,6 +34,8 @@
 #include "options.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(tweak)
+
 /* General options */
 
 WINE_LOOK TWEAK_WineLook = WIN31_LOOK;

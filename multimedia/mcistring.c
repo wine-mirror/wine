@@ -27,6 +27,8 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+DEFAULT_DEBUG_CHANNEL(mci)
+
 /* The reason why I just don't lowercase the keywords array in 
  * mciSendString is left as an exercise to the reader.
  */

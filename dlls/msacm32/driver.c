@@ -16,6 +16,8 @@
 #include "msacmdrv.h"
 #include "winreg.h"
 
+DEFAULT_DEBUG_CHANNEL(msacm)
+
 /***********************************************************************
  *           acmDriverAddA (MSACM32.2)
  */

@@ -19,6 +19,10 @@
 #include "task.h"
 #include "thread.h"
 
+DECLARE_DEBUG_CHANNEL(msg)
+DECLARE_DEBUG_CHANNEL(relay)
+DECLARE_DEBUG_CHANNEL(win)
+
 /* Window procedure 16-to-32-bit thunk,
  * see BuildSpec16Files() in tools/build.c */
 

@@ -48,6 +48,8 @@
 #include "cursoricon.h"
 #include "loadorder.h"
 
+DEFAULT_DEBUG_CHANNEL(server)
+
 int __winelib = 1;  /* Winelib run-time flag */
 
 /***********************************************************************

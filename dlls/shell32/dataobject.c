@@ -13,6 +13,8 @@
 #include "shell32_main.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
+
 UINT cfShellIDList=0;
 UINT cfFileGroupDesc=0;
 UINT cfFileContents=0;

@@ -18,6 +18,9 @@
 #include "task.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(dosmem)
+DECLARE_DEBUG_CHANNEL(selector)
+
 HANDLE16 DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
 HANDLE16 DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 

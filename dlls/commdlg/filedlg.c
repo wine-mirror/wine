@@ -24,6 +24,8 @@
 #include "winproc.h"
 #include "cderr.h"
 
+DEFAULT_DEBUG_CHANNEL(commdlg)
+
 static HICON16 hFolder = 0;
 static HICON16 hFolder2 = 0;
 static HICON16 hFloppy = 0;

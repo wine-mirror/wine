@@ -1,90 +1,72 @@
-#!/bin/bash
+#!/bin/sh
 #
-# This script generates the required files for supporting the debug
+# This script generates the required file for supporting the debug
 # channels used throught the code.
-# The generated files are 
+# The generated file is
 #   include/debugdefs.h
-#   include/debug.h
 # The script must be run in the root directory of the project.
 #
 # Dimitrie O. Paun <dimi@cs.toronto.edu>
+# Patrik Stridvall <ps@leissner.se>
 #
-DEBUG_H="include/debug.h"
-DEBUG_DEFS_H="include/debugdefs.h"
 
-DEBUG_CHANNELS="$( tools/find_debug_channels )"
-DEBUG_CLASSES="fixme err warn trace"
+DEBUG_CHANNELS=`tools/find_debug_channels`
 
-{
-    cat <<EOF
+exec > include/debugdefs.h
+
+cat <<EOF
 /* Do not modify this file -- it is automatically generated! */
 
-#ifndef __WINE_DEBUGTOOLS_H
 #include "debugtools.h"
-#endif
 
-EOF
-    echo "/* Definitions for channels identifiers */"
+#define DEBUG_CLASS_COUNT __DBCL_COUNT
 
-    chno=0
-    for ch in $DEBUG_CHANNELS
-    do
-	echo "#define dbch_${ch} $chno"
-	let chno=$chno+1
-    done
-
-    echo "/* Definitions for classes identifiers */"
-    clno=0
-    for cl in $DEBUG_CLASSES
-    do
-	echo "#define dbcl_${cl} $clno"
-	let clno=$clno+1
-    done
-} > $DEBUG_H
-
-# Now, on the last step, we proceed to construct
-# the definitions to be used by the main function.
-# These will be stored in include/debugdefs.h
-{
-    cat <<EOF
-/* Do not modify this file -- it is automatically generated! */
-
-#ifndef __WINE_DEBUGTOOLS_H
-#include "debugtools.h"
-#endif
-
-#define DEBUG_CHANNEL_COUNT $chno
 #ifdef DEBUG_RUNTIME
-short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
+
+const char * const debug_cl_name[] = { "fixme", "err", "warn", "trace" };
+
 EOF
 
-    for ch in $DEBUG_CHANNELS
-    do
+chno=0
+for ch in $DEBUG_CHANNELS
+do
+    echo "int dbch_$ch = $chno;"
+    chno=`expr $chno + 1`
+done
+echo
+echo "#define DEBUG_CHANNEL_COUNT $chno"
+
+count=1
+echo
+echo 'char debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {'
+for ch in $DEBUG_CHANNELS
+do
+    if [ "${count}" != "${chno}" ]; then
 	echo "{1, 1, 0, 0},"
-    done
-    echo '};'
+    else
+	echo "{1, 1, 0, 0}"
+    fi
+    count=`expr $count + 1`
+done
+echo '};'
 
-    echo 'const char* debug_ch_name[] = {'
-    for ch in $DEBUG_CHANNELS
-    do
-	echo "\"${ch}\","
-    done
-    echo '};'
-    
-    echo 'const char* debug_cl_name[] = {'
-    for ch in $DEBUG_CLASSES
-    do
-	echo "\"${ch}\","
-    done
-    echo '};'
+count=1
+echo
+echo 'const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {'
+for ch in $DEBUG_CHANNELS
+do
+    if [ "${count}" != "${chno}" ]; then
+	echo "\"${ch}\",";
+    else
+    echo "\"${ch}\"";
+    fi
+    count=`expr $count + 1`
+done
+echo '};'
 
-    cat <<EOF
+cat <<EOF
 
 #endif /*DEBUG_RUNTIME*/
 
 /* end of automatically generated debug.h */
 EOF
-
-} > $DEBUG_DEFS_H
-
-

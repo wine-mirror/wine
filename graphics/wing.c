@@ -19,6 +19,8 @@
 #include "windef.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(wing)
+
 
 typedef enum WING_DITHER_TYPE
 {

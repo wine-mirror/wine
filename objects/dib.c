@@ -12,6 +12,8 @@
 #include "monitor.h"
 #include "palette.h"
 
+DEFAULT_DEBUG_CHANNEL(bitmap)
+
 /***********************************************************************
  *           DIB_GetDIBWidthBytes
  *

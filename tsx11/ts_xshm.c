@@ -15,6 +15,8 @@
 #include "debug.h"
 #include "x11drv.h"
 
+DEFAULT_DEBUG_CHANNEL(x11)
+
 Bool TSXShmQueryExtension(Display *a0)
 {
   Bool r;

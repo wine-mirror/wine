@@ -12,6 +12,8 @@
 #include "bitmap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 /***********************************************************************
  *           PSDRV_BITMAP_SelectObject
  */

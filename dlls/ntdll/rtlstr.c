@@ -18,6 +18,8 @@
 #include "debug.h"
 
 #include "ntddk.h"
+
+DEFAULT_DEBUG_CHANNEL(ntdll)
 /*
  *	STRING FUNCTIONS
  */

@@ -18,6 +18,8 @@
 #include "heap.h"
 #include "local.h"
 
+DEFAULT_DEBUG_CHANNEL(x11drv)
+
 /***********************************************************************
  *           X11DRV_SetDeviceClipping
  *           Copy RECT32s to a temporary buffer of XRectangles and call

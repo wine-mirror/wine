@@ -33,6 +33,9 @@
 #include "options.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(dosfs)
+DECLARE_DEBUG_CHANNEL(file)
+
 /* Define the VFAT ioctl to get both short and long file names */
 /* FIXME: is it possible to get this to work on other systems? */
 #ifdef linux

@@ -48,6 +48,8 @@
 #include "server/request.h"
 #include "server.h"
 
+DEFAULT_DEBUG_CHANNEL(console)
+
 
 /* FIXME:  Should be in an internal header file.  OK, so which one?
    Used by CONSOLE_makecomplex. */

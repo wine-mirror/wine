@@ -27,6 +27,9 @@
 
 #include "shlguid.h"
 
+DECLARE_DEBUG_CHANNEL(exec)
+DECLARE_DEBUG_CHANNEL(shell)
+
 /*************************************************************************
  * CommandLineToArgvW			[SHELL32.7]
  */

@@ -15,6 +15,8 @@
 #include "wine/obj_storage.h"
 #include "wine/obj_base.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 /* filemoniker data structure */
 typedef struct FileMonikerImpl{
 

@@ -24,6 +24,9 @@
 
 #include "pidl.h"
 
+DECLARE_DEBUG_CHANNEL(pidl)
+DECLARE_DEBUG_CHANNEL(shell)
+
 void pdump (LPCITEMIDLIST pidl)
 {	DWORD type;
 	CHAR * szData;

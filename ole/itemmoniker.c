@@ -14,6 +14,8 @@
 #include "objbase.h"
 #include "wine/obj_inplace.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 /* ItemMoniker data structure */
 typedef struct ItemMonikerImpl{
 

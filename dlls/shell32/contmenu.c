@@ -16,6 +16,8 @@
 
 #include "shell32_main.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
+
 /**************************************************************************
 *  IContextMenu Implementation
 */

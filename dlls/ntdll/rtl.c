@@ -18,6 +18,8 @@
 #include "ntddk.h"
 #include "winreg.h"
 
+DEFAULT_DEBUG_CHANNEL(ntdll)
+
 
 /*
  *	resource functions

@@ -15,6 +15,9 @@
 #include "winreg.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(gdi)
+DECLARE_DEBUG_CHANNEL(print)
+
 CRITICAL_SECTION PRINT32_RegistryBlocker;
 
 static char PrinterModel[]	= "Printer Model";

@@ -27,6 +27,9 @@
 #include "shellapi.h"
 #include "cache.h"
 
+DECLARE_DEBUG_CHANNEL(nonclient)
+DECLARE_DEBUG_CHANNEL(shell)
+
 static HBITMAP16 hbitmapClose = 0;
 static HBITMAP16 hbitmapCloseD = 0;
 static HBITMAP16 hbitmapMinimize = 0;

@@ -14,6 +14,8 @@
 #include "debug.h"
 #include "main.h"
 
+DEFAULT_DEBUG_CHANNEL(relay)
+
 char **debug_relay_excludelist = NULL, **debug_relay_includelist = NULL;
 
 #ifdef __i386__

@@ -24,6 +24,8 @@
 #include "debug.h"
 #include "cdrom.h"
 
+DEFAULT_DEBUG_CHANNEL(int)
+
 /* base WPROCS.DLL ordinal number for VxDs */
 #define VXD_BASE 400
 

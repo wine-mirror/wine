@@ -34,6 +34,9 @@
 #include "debugstr.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(mmaux)
+DECLARE_DEBUG_CHANNEL(mmsys)
+
 UINT16 WINAPI midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
 static UINT16 waveGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
 LONG   WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg, 

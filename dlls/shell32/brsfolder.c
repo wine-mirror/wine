@@ -23,6 +23,8 @@
 #include "pidl.h"
 #include "shell32_main.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
+
 #define		IDD_TREEVIEW 99
 
 static HWND		hwndTreeView;

@@ -20,6 +20,9 @@
 #include "flatsb.h" 
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(commctrl)
+DECLARE_DEBUG_CHANNEL(datetime)
+
 
 #define FlatSB_GetInfoPtr(hwnd) ((FLATSB_INFO*)GetWindowLongA (hwnd, 0))
 

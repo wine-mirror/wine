@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "heap.h"
 
+DEFAULT_DEBUG_CHANNEL(metafile)
+
 
 /******************************************************************
  *         MFDRV_MetaExtTextOut

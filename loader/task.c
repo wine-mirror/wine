@@ -38,6 +38,10 @@
 #include "dde_proc.h"
 #include "server.h"
 
+DECLARE_DEBUG_CHANNEL(relay)
+DECLARE_DEBUG_CHANNEL(task)
+DECLARE_DEBUG_CHANNEL(toolhelp)
+
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
 

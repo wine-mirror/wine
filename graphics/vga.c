@@ -14,6 +14,8 @@
 #include "ddraw.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ddraw)
+
 static IDirectDraw *lpddraw = NULL;
 static IDirectDrawSurface *lpddsurf;
 static IDirectDrawPalette *lpddpal;

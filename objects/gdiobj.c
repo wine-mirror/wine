@@ -24,6 +24,8 @@
 #include "debug.h"
 #include "gdi.h"
 
+DEFAULT_DEBUG_CHANNEL(gdi)
+
 /**********************************************************************/
 
 GDI_DRIVER *GDI_Driver = NULL;

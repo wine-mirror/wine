@@ -2,6 +2,8 @@
 #include "stress.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(stress)
+
 
 int WINAPI AllocDiskSpace(long lLeft, UINT16 uDrive)
 {

@@ -9,6 +9,8 @@
 #include "psdrv.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 static char PEN_dash[]       = "50 30";     /* -----   -----   -----  */
 static char PEN_dot[]        = "20";      /* --  --  --  --  --  -- */
 static char PEN_dashdot[]    = "40 30 20 30";  /* ----   --   ----   --  */

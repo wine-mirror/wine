@@ -17,6 +17,8 @@
 #include "local.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(gdi)
+
 
 extern HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
                                              BITMAPOBJ * bmp );

@@ -10,6 +10,8 @@
 #include "heap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(win16drv)
+
 HBRUSH WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
                                       BRUSHOBJ * brush )
 {

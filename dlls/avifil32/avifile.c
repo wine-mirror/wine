@@ -14,6 +14,10 @@
 #include "debugstr.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(avifile)
+DECLARE_DEBUG_CHANNEL(msvideo)
+DECLARE_DEBUG_CHANNEL(relay)
+
 typedef struct IAVIStreamImpl {
 	/* IUnknown stuff */
 	ICOM_VTABLE(IAVIStream)*	lpvtbl;

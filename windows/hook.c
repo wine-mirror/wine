@@ -26,6 +26,8 @@
 #include "winproc.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(hook)
+
 #pragma pack(1)
 
   /* Hook data (pointed to by a HHOOK) */

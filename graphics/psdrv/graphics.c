@@ -17,6 +17,8 @@
 #include "debug.h"
 #include "winspool.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 /**********************************************************************
  *	     PSDRV_MoveToEx
  */

@@ -10,6 +10,8 @@
 #include "oledlg.h"
 #include "debug.h"
 #include "ole2.h"
+
+DEFAULT_DEBUG_CHANNEL(ole)
 /***********************************************************************
  *           OleUIAddVerbMenu32A (OLEDLG.1)
  */

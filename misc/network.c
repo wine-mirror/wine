@@ -21,6 +21,9 @@
 #include "debug.h"
 #include "heap.h"
 
+DECLARE_DEBUG_CHANNEL(mpr)
+DECLARE_DEBUG_CHANNEL(wnet)
+
 /********************************************************************
  *  WNetAddConnection16 [USER.517]  Directs a local device to net
  * 

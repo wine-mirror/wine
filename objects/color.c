@@ -10,6 +10,8 @@
 #include "palette.h"
 #include "windef.h"
 
+DEFAULT_DEBUG_CHANNEL(palette)
+
 
 /***********************************************************************
  * System color space. 

@@ -16,6 +16,8 @@
 #include "winuser.h"
 #include "winspool.h"
 
+DEFAULT_DEBUG_CHANNEL(psdrv)
+
 static LONG Resolutions[][2] = { {600,600} };
 
 

@@ -11,6 +11,8 @@
 #include "heap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(advapi)
+
 /* FIXME: Where do these belong? */
 typedef DWORD	SERVICE_STATUS_HANDLE;
 typedef VOID (WINAPI *LPHANDLER_FUNCTION)( DWORD dwControl);

@@ -21,6 +21,8 @@
 #include "winnt.h"
 #include "x11drv.h"
 
+DEFAULT_DEBUG_CHANNEL(x11drv)
+
 static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
 static BOOL X11DRV_DeleteDC( DC *dc );

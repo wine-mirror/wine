@@ -13,6 +13,8 @@
 #include "cdrom.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(cdaudio)
+
 #if defined(__NetBSD__)
 # define CDAUDIO_DEV "/dev/rcd0d"
 #elif defined(__FreeBSD__)

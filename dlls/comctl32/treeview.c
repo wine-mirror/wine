@@ -46,6 +46,8 @@
 #include "treeview.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(treeview)
+
 /* ffs should be in <string.h>. */
 
 /* Defines, since they do not need to return previous state, and nr

@@ -26,6 +26,8 @@
 #include "header.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(header)
+
 
 #define __HDM_LAYOUT_HACK__
 

@@ -7,6 +7,8 @@
 #include "wine/winesound.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(sound)
+
 INT16 WINAPI OpenSound16(void)
 {
   FIXME(sound, "(void): stub\n");

@@ -11,6 +11,8 @@
 #include "winerror.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(metafile)
+
 /*****************************************************************************
  *          GetEnhMetaFile32A (GDI32.174)
  *

@@ -9,6 +9,8 @@
 #include "tapi.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(tapi)
+
 DWORD WINAPI tapiGetLocationInfo(LPSTR lpszCountryCode, LPSTR lpszCityCode)
 {
     char temp[30];

@@ -20,6 +20,8 @@
 #include "windef.h"
 #include "x11drv.h"
 
+DEFAULT_DEBUG_CHANNEL(clipboard)
+
 extern HWND hWndClipOwner;
 extern HWND hWndClipWindow;
 extern WINE_CLIPFORMAT ClipFormats[];

@@ -26,6 +26,8 @@
 #include "winerror.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(class)
+
 
 static CLASS *firstClass = NULL;
 

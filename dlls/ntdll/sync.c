@@ -10,6 +10,8 @@
 
 #include "ntddk.h"
 
+DEFAULT_DEBUG_CHANNEL(ntdll)
+
 /*
  *	Semaphore
  */

@@ -13,6 +13,8 @@
 #include "heap.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(win16drv)
+
 
 /***********************************************************************
  *           WIN16DRV_GetTextExtentPoint

@@ -15,6 +15,8 @@
 #include "debug.h"
 #include "win.h"
 
+DEFAULT_DEBUG_CHANNEL(relay)
+
 
 /**********************************************************************
  *	     CALLBACK_CallWndProc

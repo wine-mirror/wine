@@ -17,6 +17,11 @@
 #include "debug.h"
 #include "main.h"
 
+DECLARE_DEBUG_CHANNEL(file)
+DECLARE_DEBUG_CHANNEL(ole)
+DECLARE_DEBUG_CHANNEL(string)
+DECLARE_DEBUG_CHANNEL(win32)
+
 struct NLS_langlocale {
 	const int lang;
 	struct NLS_localevar {

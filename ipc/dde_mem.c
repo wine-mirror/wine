@@ -18,6 +18,9 @@
 #include "dde_mem.h"
 #include "bit_array.h"
 
+DECLARE_DEBUG_CHANNEL(dde)
+DECLARE_DEBUG_CHANNEL(global)
+
 #define SEGPTR2HANDLE_INFO(sptr) ( (struct handle_info*)PTR_SEG_TO_LIN(sptr) )
 
 #define HINFO2DATAPTR(h_info_ptr) ( (void*) ( (char*)h_info_ptr +           \

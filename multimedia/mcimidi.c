@@ -31,6 +31,9 @@
 #include "debug.h"
 #include "heap.h"
 
+DECLARE_DEBUG_CHANNEL(mcimidi)
+DECLARE_DEBUG_CHANNEL(midi)
+
 typedef struct {
     DWORD		dwFirst;		/* offset in file of track */
     DWORD		dwLast;			/* number of bytes in file of track */

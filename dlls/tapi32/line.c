@@ -12,6 +12,9 @@
 #include "tapi.h"
 #include "debug.h"
 
+DECLARE_DEBUG_CHANNEL(comm)
+DECLARE_DEBUG_CHANNEL(tapi)
+
 DWORD WINAPI lineAccept(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
 {
     FIXME(tapi, "(%04x, %s, %ld): stub.\n", hCall, lpsUserUserInfo, dwSize);

@@ -19,6 +19,8 @@
 
 #include "ifs.h"
 
+DEFAULT_DEBUG_CHANNEL(relay)
+
 /* --- IUnknown implementation */
 
 typedef struct

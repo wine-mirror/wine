@@ -9,6 +9,8 @@
 #include "services.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(system)
+
 typedef struct
 {
     SYSTEMTIMERPROC callback;  /* NULL if not in use */

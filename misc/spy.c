@@ -15,6 +15,8 @@
 #include "debug.h"
 #include "spy.h"
 
+DEFAULT_DEBUG_CHANNEL(message)
+
 #define SPY_MAX_MSGNUM   WM_USER
 #define SPY_INDENT_UNIT  4  /* 4 spaces */
 

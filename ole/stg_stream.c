@@ -20,6 +20,8 @@
 
 #include "storage32.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 
 /*
  * Virtual function table for the StgStreamImpl class.

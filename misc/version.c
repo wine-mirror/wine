@@ -18,6 +18,8 @@
 #include "neexe.h"
 #include "winversion.h"
 
+DEFAULT_DEBUG_CHANNEL(ver)
+
 typedef struct
 {
     LONG             getVersion16; 

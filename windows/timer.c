@@ -10,6 +10,8 @@
 #include "winproc.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(timer)
+
 
 typedef struct tagTIMER
 {

@@ -69,6 +69,8 @@
 #include "thread.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(dsound)
+
 
 /*****************************************************************************
  * Predeclare the interface implementation structures

@@ -15,6 +15,9 @@
 #include "debug.h"
 #include "winerror.h"
 
+DECLARE_DEBUG_CHANNEL(font)
+DECLARE_DEBUG_CHANNEL(gdi)
+
 #define ENUM_UNICODE	0x00000001
 
 typedef struct

@@ -19,6 +19,8 @@
 #include "monthcal.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(monthcal)
+
 
 #define MONTHCAL_GetInfoPtr(hwnd) ((MONTHCAL_INFO *)GetWindowLongA (hwnd, 0))
 

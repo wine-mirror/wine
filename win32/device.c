@@ -32,6 +32,8 @@
 #include "miscemu.h"
 #include "server.h"
 
+DEFAULT_DEBUG_CHANNEL(win32)
+
 
 static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,

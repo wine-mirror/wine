@@ -29,6 +29,8 @@
 #include "dde_atom.h"
 #endif
 
+DEFAULT_DEBUG_CHANNEL(atom)
+
 #define DEFAULT_ATOMTABLE_SIZE    37
 #define MIN_STR_ATOM              0xc000
 #define MAX_ATOM_LEN              255

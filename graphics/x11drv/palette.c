@@ -24,6 +24,8 @@
 #include "xmalloc.h"
 #include "x11drv.h"
 
+DEFAULT_DEBUG_CHANNEL(palette)
+
 /* Palette indexed mode:
  *	logical palette -> mapping -> pixel
  *				     

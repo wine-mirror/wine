@@ -16,6 +16,8 @@
 #include <errno.h>
 #include "debug.h"
 #include "shm_semaph.h"
+
+DEFAULT_DEBUG_CHANNEL(sem)
 #define SEM_READ  0
 #define SEM_WRITE 1
 

@@ -16,6 +16,9 @@ at a later date. */
 #include "debug.h"
 #include "debugstr.h"
 
+DECLARE_DEBUG_CHANNEL(debug)
+DECLARE_DEBUG_CHANNEL(win32)
+
 
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.564)

@@ -25,6 +25,8 @@
 #include "x11drv.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(x11drv)
+
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 

@@ -35,6 +35,8 @@
 #include "toolbar.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(toolbar)
+
 /* #define __NEW_WRAP_CODE__ */
 
 #define SEPARATOR_WIDTH    8

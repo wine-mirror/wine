@@ -13,6 +13,8 @@
 #include "objidl.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 
 extern LONG	OLE_current_handle;
 

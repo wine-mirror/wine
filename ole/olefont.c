@@ -15,6 +15,8 @@
 #include "debug.h"
 #include "heap.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 /***********************************************************************
  * Declaration of constants used when serializing the font object.
  */

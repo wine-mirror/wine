@@ -9,6 +9,8 @@
 #include "msacm.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(msacm)
+
 /***********************************************************************
  *           ACMGETVERSION (MSACM.7)
  */

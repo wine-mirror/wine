@@ -13,6 +13,8 @@
 #include "debug.h"
 #include "winuser.h"
 
+DEFAULT_DEBUG_CHANNEL(int16)
+
 /**********************************************************************
  *	    INT_Int16Handler
  *

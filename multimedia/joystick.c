@@ -23,6 +23,8 @@
 #include "mmsystem.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(mmsys)
+
 #define MAXJOYDRIVERS	4
 
 static int count_use[MAXJOYDRIVERS] = {0, 0, 0, 0};

@@ -16,6 +16,8 @@
 #include "debugstr.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(snoop)
+
 #ifdef __i386__
 
 #pragma pack(1)

@@ -41,6 +41,8 @@
 #include "debug.h"
 #include "global.h"
 
+DEFAULT_DEBUG_CHANNEL(metafile)
+
 /******************************************************************
  *         MF_AddHandle
  *

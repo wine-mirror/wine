@@ -12,6 +12,8 @@
 #include "driver.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(msvideo)
+
 /****************************************************************************
  *		VideoForWindowsVersion		[MSVFW.2][MSVIDEO.2]
  * Returns the version in major.minor form.

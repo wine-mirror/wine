@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # This script scans the whole source code for symbols of the form 
 # 'xxx(yyy' where:
@@ -28,23 +28,20 @@
 # or add /dev/null as another argument.
 #
 # Dimitrie O. Paun <dimi@cs.toronto.edu>
+# Patrik Stridvall <ps@leissner.se>
 #
 
 case "$#" in
     0 | 1)  files=${1:-'*.c'}
-	    if [ ${files#*/} = "$files" ]; then
-		files=$(find . -name "$files" -print)
+	    if [ `echo $files | sed 's/^\(.*\)\/$/\1/g'` = "$files" ]; then
+		files=`find . -name "$files" -print`
 	    fi;;
     *    )  files="$@";;
 esac
 
 (
-grep -h "TRACE *(" $files /dev/null | \
-    sed 's/.*TRACE *( *\([A-Za-z0-9_]*\).*/\1/g'
-grep -h "ERR *(" $files /dev/null | \
-    sed 's/.*ERR *( *\([A-Za-z0-9_]*\).*/\1/g'
-grep -h "FIXME *(" $files /dev/null | \
-    sed 's/.*FIXME *( *\([A-Za-z0-9_]*\).*/\1/g'
-grep -h "WARN *(" $files /dev/null | \
-    sed 's/.*WARN *( *\([A-Za-z0-9_]*\).*/\1/g'
+grep -h "DECLARE_DEBUG_CHANNEL *(" $files /dev/null | \
+    sed 's/.*DECLARE_DEBUG_CHANNEL( *\([A-Za-z0-9_]*\) *).*/\1/g'
+grep -h "DEFAULT_DEBUG_CHANNEL *(" $files /dev/null | \
+    sed 's/.*DEFAULT_DEBUG_CHANNEL( *\([A-Za-z0-9_]*\) *).*/\1/g'
 ) | sort | uniq

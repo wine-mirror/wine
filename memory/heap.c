@@ -19,6 +19,8 @@
 #include "toolhelp.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(heap)
+
 /* Note: the heap data structures are based on what Pietrek describes in his
  * book 'Windows 95 System Programming Secrets'. The layout is not exactly
  * the same, but could be easily adapted if it turns out some programs

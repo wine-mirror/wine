@@ -51,6 +51,9 @@
 #include "message.h"
 #include "winerror.h"
 
+DECLARE_DEBUG_CHANNEL(cursor)
+DECLARE_DEBUG_CHANNEL(icon)
+
 static HCURSOR hActiveCursor = 0;  /* Active cursor */
 static INT CURSOR_ShowCount = 0;   /* Cursor display count */
 static RECT CURSOR_ClipRect;       /* Cursor clipping rect */

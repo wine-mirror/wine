@@ -69,6 +69,8 @@
 
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(comm)
+
 #ifndef TIOCINQ
 #define	TIOCINQ FIONREAD
 #endif

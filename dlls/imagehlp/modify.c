@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "imagehlp.h"
 
+DEFAULT_DEBUG_CHANNEL(imagehlp)
+
 /***********************************************************************
  *           BindImage32 (IMAGEHLP.1)
  */

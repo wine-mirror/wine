@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "dosexe.h"
 
+DEFAULT_DEBUG_CHANNEL(int)
+
 typedef struct {
   BYTE queuelen,queue[15];
 } KBDSYSTEM;

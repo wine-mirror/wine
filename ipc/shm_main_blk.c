@@ -23,6 +23,8 @@
 #include "shm_main_blk.h"
 #include "shm_semaph.h"
 
+DEFAULT_DEBUG_CHANNEL(shm)
+
 #define WineKey (   'W'+((int)'i'<<8)+((int)'n'<<16)+((int)'e'<<24)  )
 #define SHM_KEY_RANGE 8
 

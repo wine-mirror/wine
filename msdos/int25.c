@@ -12,6 +12,8 @@
 #include "drive.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(int)
+
 
 /**********************************************************************
  *	    INT_Int25Handler

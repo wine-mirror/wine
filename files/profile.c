@@ -19,6 +19,8 @@
 #include "debug.h"
 #include "options.h"
 
+DEFAULT_DEBUG_CHANNEL(profile)
+
 typedef struct tagPROFILEKEY
 {
     char                  *name;

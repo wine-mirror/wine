@@ -13,6 +13,8 @@
 #include "debug.h"
 #include "x11drv.h"
 
+DEFAULT_DEBUG_CHANNEL(x11)
+
 XFontStruct * TSXLoadQueryFont(Display* a0, const  char* a1)
 {
   XFontStruct * r;

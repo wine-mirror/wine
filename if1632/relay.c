@@ -17,6 +17,8 @@
 #include "debug.h"
 #include "main.h"
 
+DEFAULT_DEBUG_CHANNEL(relay)
+
 
 /***********************************************************************
  *           RELAY_Init

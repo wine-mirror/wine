@@ -8,6 +8,8 @@
 #include "dosexe.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(int)
+
 typedef struct {
   DWORD x, y, but;
   FARPROC16 callback;

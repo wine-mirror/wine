@@ -15,6 +15,8 @@
 
 #include "d3d_private.h"
 
+DEFAULT_DEBUG_CHANNEL(ddraw)
+
 #ifdef HAVE_MESAGL
 
 static ICOM_VTABLE(IDirect3DLight) light_vtable;

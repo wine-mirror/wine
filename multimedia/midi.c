@@ -30,6 +30,8 @@
 #include "heap.h"
 #include "ldt.h"
 
+DEFAULT_DEBUG_CHANNEL(midi)
+
 typedef struct {
 #ifndef HAVE_OSS
     int			unixdev;

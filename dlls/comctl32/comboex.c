@@ -21,6 +21,8 @@
 #include "comboex.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(comboex)
+
 #define ID_CB_EDIT    1001
 
 #define COMBOEX_GetInfoPtr(wndPtr) ((COMBOEX_INFO *)GetWindowLongA (hwnd, 0))

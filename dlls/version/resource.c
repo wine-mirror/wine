@@ -19,6 +19,8 @@
 #include "peexe.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ver)
+
 
 /***********************************************************************
  *           read_xx_header         [internal]

@@ -10,6 +10,8 @@
 #include "services.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(timer)
+
 
 #define SERVICE_USE_OBJECT      0x0001
 #define SERVICE_USE_TIMEOUT     0x0002

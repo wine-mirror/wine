@@ -32,6 +32,9 @@
 #include "loadorder.h"
 #include "elfdll.h"
 
+DECLARE_DEBUG_CHANNEL(module)
+DECLARE_DEBUG_CHANNEL(win32)
+
 
 /*************************************************************************
  *		MODULE32_LookupHMODULE

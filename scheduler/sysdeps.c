@@ -30,6 +30,8 @@ static int *ph_errno = &h_errno;
 #include "winbase.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(thread)
+
 #ifdef linux
 #define HAVE_CLONE_SYSCALL
 #endif

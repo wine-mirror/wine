@@ -19,6 +19,8 @@
 #include "shell32_main.h"
 #include "shlguid.h"
 
+DEFAULT_DEBUG_CHANNEL(shell)
+
 /* link file formats */
 
 #pragma (1);

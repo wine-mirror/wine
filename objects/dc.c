@@ -21,6 +21,8 @@
 #include "winerror.h"
 #include "wine/winuser16.h"
 
+DEFAULT_DEBUG_CHANNEL(dc)
+
 /***********************************************************************
  *           DC_Init_DC_INFO
  *

@@ -24,6 +24,8 @@
 #include "debug.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
 
+DEFAULT_DEBUG_CHANNEL(bitblt)
+
 
 #define DST 0   /* Destination drawable */
 #define SRC 1   /* Source drawable */

@@ -10,6 +10,8 @@
 #include "ole.h"
 #include "debug.h"
 
+DEFAULT_DEBUG_CHANNEL(ole)
+
 LONG	OLE_current_handle;
 
 /******************************************************************************

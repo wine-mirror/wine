@@ -16,6 +16,8 @@
 #include "options.h"
 #include "file.h"
 
+DEFAULT_DEBUG_CHANNEL(profile)
+
 
 static int DOSCONF_Device(char **confline);
 static int DOSCONF_Dos(char **confline);
