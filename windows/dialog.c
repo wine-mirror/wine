@@ -207,8 +207,19 @@ BOOL DIALOG_Init(void)
 
       /* Calculate the dialog base units */
 
-    if (!(hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
-    if (!DIALOG_GetCharSizeFromDC( hdc, 0, &size )) return FALSE;
+    if (!(hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL )))
+    {
+	ERR("Could not create Display DC\n");
+	return FALSE;
+    }
+
+    if (!DIALOG_GetCharSizeFromDC( hdc, 0, &size ))
+    {
+	DeleteDC( hdc );
+	ERR("Could not initialize base dialog units\n");
+	return FALSE;
+    }
+
     DeleteDC( hdc );
     xBaseUnit = size.cx;
     yBaseUnit = size.cy;
