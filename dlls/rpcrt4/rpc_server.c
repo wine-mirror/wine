@@ -375,6 +375,8 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
   RpcConnection* conn;
   RpcConnection* cconn;
 
+  TRACE("(the_arg == ^%p)\n", the_arg);
+
   for (;;) {
     EnterCriticalSection(&server_cs);
     /* open and count connections */
@@ -516,7 +518,7 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
   if (BindingVector)
     TRACE("(*BindingVector == ^%p)\n", *BindingVector);
   else
-    ERR("(BindingVector == ^null!!?)\n");
+    ERR("(BindingVector == NULL!!?)\n");
 
   EnterCriticalSection(&server_cs);
   /* count connections */
@@ -625,7 +627,6 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWST
 
   ps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcServerProtseq));
   ps->MaxCalls = MaxCalls;
-  /* FIXME: Did Ove have these next two as RPCRT4_strdupW for a reason? */
   ps->Protseq = RPCRT4_strdupWtoA(Protseq);
   ps->Endpoint = RPCRT4_strdupWtoA(Endpoint);
 
