@@ -86,7 +86,7 @@ void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 /***********************************************************************
  *		InterlockedCompareExchange (KERNEL32.@)
  */
-/* PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare ); */
+/* LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare ); */
 __ASM_GLOBAL_FUNC(InterlockedCompareExchange,
                   "movl 12(%esp),%eax\n\t"
                   "movl 8(%esp),%ecx\n\t"

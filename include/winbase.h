@@ -1952,24 +1952,6 @@ extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
     return ret;
 }
 
-extern inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID *dest, PVOID xchg, PVOID compare );
-extern inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID *dest, PVOID xchg, PVOID compare )
-{
-    PVOID ret;
-    __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
-                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
-    return ret;
-}
-
-extern inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val );
-extern inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val )
-{
-    PVOID ret;
-    __asm__ __volatile__( "lock; xchgl %0,(%1)"
-                          : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
-    return ret;
-}
-
 extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr );
 extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
 {
@@ -2040,12 +2022,18 @@ LONG        WINAPI InterlockedExchange(PLONG,LONG);
 LONG        WINAPI InterlockedExchangeAdd(PLONG,LONG);
 LONG        WINAPI InterlockedIncrement(PLONG);
 VOID        WINAPI SetLastError(DWORD);
-/* FIXME: should handle platforms where sizeof(void*) != sizeof(long) */
-#define InterlockedCompareExchangePointer(a,b,c) \
-    ((PVOID)InterlockedCompareExchange((PLONG)(a),(LONG)(b),(LONG)(c)))
-#define InterlockedExchangePointer(a,b) \
-    ((PVOID)InterlockedExchange((PLONG)(a),(LONG)(b)))
 #endif  /* __i386__ && __GNUC__ */
+
+/* FIXME: should handle platforms where sizeof(void*) != sizeof(long) */
+static inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID *dest, PVOID xchg, PVOID compare )
+{
+    return (PVOID)InterlockedCompareExchange( (PLONG)dest, (LONG)xchg, (LONG)compare );
+}
+
+static inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val )
+{
+    return (PVOID)InterlockedExchange( (PLONG)dest, (LONG)val );
+}
 
 #ifdef __WINE__
 #define GetCurrentProcess() ((HANDLE)0xffffffff)
