@@ -293,8 +293,9 @@ includelogicentry_t *includelogiclist = NULL;
 	 * Note: Gcc keeps the line-continuations in, for example, strings
 	 * intact. However, I prefer to remove them all so that the next
 	 * scanner will not need to reduce the continuation state.
+	 *
+	 * <*>\\\n		newline(0);
 	 */
-<*>\\\n		newline(0);
 
 	/*
 	 * Detect the leading # of a preprocessor directive.
@@ -320,7 +321,9 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_pp>{ws}*line{ws}*		if(yy_top_state() != pp_ignore) {yy_pp_state(pp_line); return tLINE;} else {yy_pp_state(pp_eol);}
 <pp_pp>{ws}+			if(yy_top_state() != pp_ignore) {yy_pp_state(pp_line); return tGCCLINE;} else {yy_pp_state(pp_eol);}
 <pp_pp>{ws}*[a-z]+		pperror("Invalid preprocessor token '%s'", pptext);
-<pp_pp>\n			newline(1); yy_pop_state(); return tNL;	/* This could be the null-token */
+<pp_pp>\r?\n			newline(1); yy_pop_state(); return tNL;	/* This could be the null-token */
+<pp_pp>\\\r?\n			newline(0);
+<pp_pp>\\\r?			pperror("Preprocessor junk '%s'", pptext);
 <pp_pp>.			return *pptext;
 
 	/*
@@ -331,14 +334,16 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_inc,pp_line>\"		new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
 <pp_inc,pp_line>{ws}+		;
 <pp_inc,pp_line>\n		newline(1); yy_pop_state(); return tNL;
-<pp_inc,pp_line>.		pperror(yy_current_state() == pp_inc ? "Trailing junk in #include" : "Trailing junk in #line");
+<pp_inc,pp_line>\\\r?\n		newline(0);
+<pp_inc,pp_line>(\\\r?)|(.)	pperror(yy_current_state() == pp_inc ? "Trailing junk in #include" : "Trailing junk in #line");
 
 	/*
 	 * Ignore all input when a false clause is parsed
 	 */
 <pp_ignore>[^#/\\\n]+		;
 <pp_ignore>\n			newline(1);
-<pp_ignore>.			;
+<pp_ignore>\\\r?\n		newline(0);
+<pp_ignore>(\\\r?)|(.)		;
 
 	/*
 	 * Handle #if and #elif.
@@ -362,6 +367,8 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_if>"<="			return tLTE;
 <pp_if>">="			return tGTE;
 <pp_if>\n			newline(1); yy_pop_state(); return tNL;
+<pp_if>\\\r?\n			newline(0);
+<pp_if>\\\r?			pperror("Junk in conditional expression");
 <pp_if>{ws}+			;
 <pp_if>\'			new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
 <pp_if>\"			pperror("String constants not allowed in conditionals");
@@ -374,7 +381,8 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_ifd>{cident}	pplval.cptr = xstrdup(pptext); return tIDENT;
 <pp_ifd>{ws}+		;
 <pp_ifd>\n		newline(1); yy_pop_state(); return tNL;
-<pp_ifd>.		pperror("Identifier expected");
+<pp_ifd>\\\r?\n		newline(0);
+<pp_ifd>(\\\r?)|(.)	pperror("Identifier expected");
 
 	/*
 	 * Handle the special 'defined' keyword.
@@ -384,6 +392,7 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_defined>{cident}		yy_pop_state(); pplval.cptr = xstrdup(pptext); return tIDENT;
 <pp_defined>{ws}+		;
 <pp_defined>(\()|(\))		return *pptext;
+<pp_defined>\\\r?\n		newline(0);
 <pp_defined>(\\.)|(\n)|(.)	pperror("Identifier expected");
 
 	/*
@@ -394,8 +403,9 @@ includelogicentry_t *includelogiclist = NULL;
 	 */
 <pp_eol>[^/\\\n]+		if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
 <pp_eol>\/[^/\\\n*]*		if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
-<pp_eol>(\\)|(\/[^/*])		if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
+<pp_eol>(\\\r?)|(\/[^/*])	if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
 <pp_eol>\n			newline(1); yy_pop_state(); if(yy_current_state() != pp_ignore) { return tNL; }
+<pp_eol>\\\r?\n			newline(0);
 
 	/*
 	 * Handle left side of #define
@@ -403,14 +413,16 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_def>{cident}\(		pplval.cptr = xstrdup(pptext); pplval.cptr[ppleng-1] = '\0'; yy_pp_state(pp_macro);  return tMACRO;
 <pp_def>{cident}		pplval.cptr = xstrdup(pptext); yy_pp_state(pp_define); return tDEFINE;
 <pp_def>{ws}+			;
-<pp_def>(\n)|(.)		perror("Identifier expected");
+<pp_def>\\\r?\n			newline(0);
+<pp_def>(\\\r?)|(\n)|(.)	perror("Identifier expected");
 
 	/*
 	 * Scan the substitution of a define
 	 */
 <pp_define>[^'"/\\\n]+		pplval.cptr = xstrdup(pptext); return tLITERAL;
-<pp_define>(\\)|(\/[^/*])	pplval.cptr = xstrdup(pptext); return tLITERAL;
-<pp_define>\\\n{ws}+		newline(0); pplval.cptr = xstrdup(" "); return tLITERAL;
+<pp_define>(\\\r?)|(\/[^/*])	pplval.cptr = xstrdup(pptext); return tLITERAL;
+<pp_define>\\\r?\n{ws}+		newline(0); pplval.cptr = xstrdup(" "); return tLITERAL;
+<pp_define>\\\r?\n		newline(0);
 <pp_define>\n			newline(1); yy_pop_state(); return tNL;
 <pp_define>\'			new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
 <pp_define>\"			new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
@@ -423,7 +435,8 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_macro>{cident}		pplval.cptr = xstrdup(pptext); return tIDENT;
 <pp_macro>,			return ',';
 <pp_macro>"..."			return tELIPSIS;
-<pp_macro>(\n)|(.)|(\.\.?)	pperror("Argument identifier expected");
+<pp_macro>(\\\r?)|(\n)|(.)|(\.\.?)	pperror("Argument identifier expected");
+<pp_macro>\\\r?\n		newline(0);
 
 	/*
 	 * Scan the substitution of a macro
@@ -433,8 +446,9 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_mbody>\#\#			return tCONCAT;
 <pp_mbody>\#			return tSTRINGIZE;
 <pp_mbody>[0-9][^'"#/\\\n]*	pplval.cptr = xstrdup(pptext); return tLITERAL;
-<pp_mbody>(\\)|(\/[^/*'"#\\\n]*)	pplval.cptr = xstrdup(pptext); return tLITERAL;
-<pp_mbody>\\\n{ws}+		newline(0); pplval.cptr = xstrdup(" "); return tLITERAL;
+<pp_mbody>(\\\r?)|(\/[^/*'"#\\\n]*)	pplval.cptr = xstrdup(pptext); return tLITERAL;
+<pp_mbody>\\\r?\n{ws}+		newline(0); pplval.cptr = xstrdup(" "); return tLITERAL;
+<pp_mbody>\\\r?\n		newline(0);
 <pp_mbody>\n			newline(1); yy_pop_state(); return tNL;
 <pp_mbody>\'			new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
 <pp_mbody>\"			new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
@@ -453,8 +467,8 @@ includelogicentry_t *includelogiclist = NULL;
 		if(yy_top_state() != pp_macscan)
 			newline(0);
 	}
-<pp_macign>{ws}*\\\n	newline(0);
-<pp_macign>{ws}+|{ws}*\\|.	{
+<pp_macign>{ws}*\\\r?\n	newline(0);
+<pp_macign>{ws}+|{ws}*\\\r?|.	{
 		macexpstackentry_t *mac = pop_macro();
 		yy_pop_state();
 		put_buffer(mac->ppp->ident, strlen(mac->ppp->ident));
@@ -489,7 +503,8 @@ includelogicentry_t *includelogiclist = NULL;
 <pp_macscan>\'		new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
 <pp_macscan>"/*"	yy_push_state(pp_comment); add_text_to_macro(" ", 1);
 <pp_macscan>\n		line_number++; char_number = 1; add_text_to_macro(pptext, ppleng);
-<pp_macscan>([^/(),\\\n"']+)|(\/[^/*(),\\\n'"]*)|(.)	add_text_to_macro(pptext, ppleng);
+<pp_macscan>([^/(),\\\n"']+)|(\/[^/*(),\\\n'"]*)|(\\\r?)|(.)	add_text_to_macro(pptext, ppleng);
+<pp_macscan>\\\r?\n	newline(0);
 
 	/*
 	 * Comment handling (almost all start-conditions)
@@ -551,6 +566,30 @@ includelogicentry_t *includelogiclist = NULL;
 		pplval.cptr = get_string();
 		return tIQSTRING;
 	}
+<pp_dqs>\\\r?\n		{
+		/*
+		 * This is tricky; we need to remove the line-continuation
+		 * from preprocessor strings, but OTOH retain them in all
+		 * other strings. This is because the resource grammar is
+		 * even more braindead than initially analysed and line-
+		 * continuations in strings introduce, sigh, newlines in
+		 * the output. There goes the concept of non-breaking, non-
+		 * spacing whitespace.
+		 */
+		switch(yy_top_state())
+		{
+		case pp_pp:
+		case pp_define:
+		case pp_mbody:
+		case pp_inc:
+		case pp_line:
+			newline(0);
+			break;
+		default:
+			add_string(pptext, ppleng);
+			newline(-1);
+		}
+	}
 <pp_iqs,pp_dqs,pp_sqs>\\.	add_string(pptext, ppleng);
 <pp_iqs,pp_dqs,pp_sqs>\n	{
 		newline(1);
@@ -604,12 +643,14 @@ includelogicentry_t *includelogiclist = NULL;
 <INITIAL,pp_macexp>[^a-zA-Z_#'"/\\\n \r\t\f\v]+|(\/|\\)[^a-zA-Z_/*'"\\\n \r\t\v\f]*	seen_junk++; put_buffer(pptext, ppleng);
 <INITIAL,pp_macexp>{ws}+	put_buffer(pptext, ppleng);
 <INITIAL>\n			newline(1);
+<INITIAL>\\\r?\n		newline(0);
+<INITIAL>\\\r?			seen_junk++; put_buffer(pptext, ppleng);
 
 	/*
 	 * Special catcher for macro argmument expansion to prevent
 	 * newlines to propagate to the output or admin.
 	 */
-<pp_macexp>(\n)|(.)		put_buffer(pptext, ppleng);
+<pp_macexp>(\n)|(.)|(\\\r?(\n|.))	put_buffer(pptext, ppleng);
 
 	/*
 	 * This is a 'catch-all' rule to discover errors in the scanner
@@ -657,12 +698,20 @@ int ppwrap(void)
 /*
  *-------------------------------------------------------------------------
  * Output newlines or set them as continuations
+ *
+ * Input: -1 - Don't count this one, but update local position (see pp_dqs)
+ *	   0 - Line-continuation seen and cache output
+ *	   1 - Newline seen and flush output
  *-------------------------------------------------------------------------
  */
 static void newline(int dowrite)
 {
 	line_number++;
 	char_number = 1;
+
+	if(dowrite == -1)
+		return;
+
 	ncontinuations++;
 	if(dowrite)
 	{

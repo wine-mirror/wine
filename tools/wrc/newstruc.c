@@ -617,10 +617,10 @@ cursor_group_t *new_cursor_group(raw_data_t *rd, int *memopt)
  * number of steps specified in the aniheader_t structure). The "seq "uence
  * tag can be ommitted, in which case the sequence is equal to the sequence
  * of "icon"s found in the file. Also "rate" may be ommitted, in which case
- * the deafult from the aniheader_t structure is used.
+ * the default from the aniheader_t structure is used.
  *
- * A animated cursor puts `.cur' formatted files into each "icon" tag, whereas
- * animated icons contain `.ico' formatted files.
+ * An animated cursor puts `.cur' formatted files into each "icon" tag,
+ * whereas animated icons contain `.ico' formatted files.
  *
  * Note about the code: Yes, it can be shorter/compressed. Some tags can be
  * dealt with in the same code. However, this version shows what is going on
@@ -903,10 +903,72 @@ ver_words_t *add_ver_words(ver_words_t *w, int i)
 	return w;
 }
 
-messagetable_t *new_messagetable(raw_data_t *rd)
+messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 {
 	messagetable_t *msg = (messagetable_t *)xmalloc(sizeof(messagetable_t));
+	DWORD nblk;
+	DWORD i;
+	WORD lo;
+	WORD hi;
+
 	msg->data = rd;
+	msg->memopt = *memopt;
+	free(memopt);
+	nblk = *(DWORD *)rd->data;
+	lo = WRC_LOWORD(nblk);
+	hi = WRC_HIWORD(nblk);
+
+	/* FIXME:
+	 * This test will fail for all n*2^16 blocks in the messagetable.
+	 * However, no sane person would want to have so many blocks
+	 * and have a table of megabytes attached.
+	 * So, I will assume that we have less than 2^16 blocks in the table
+	 * and all will just work out fine. Otherwise, we would need to test
+	 * the ID, offset and length (and flag) fields to be very sure.
+	 */
+	if(hi && lo)
+		internal_error(__FILE__, __LINE__, "Messagetable contains more than 65535 blocks; cannot determine endian");
+	if(!hi && !lo)
+		yyerror("Invalid messagetable block count 0");
+
+#ifdef WORDS_BIGENDIAN
+	if(!hi && lo && byteorder != WRC_BO_LITTLE)
+#else
+	if(hi && !lo && byteorder != WRC_BO_BIG)
+#endif
+	{
+		msgtab_block_t *mbp = (msgtab_block_t *)&(((DWORD *)rd->data)[1]);
+		nblk = BYTESWAP_DWORD(nblk);
+		for(i = 0; i < nblk; i++)
+		{
+			msgtab_entry_t *mep;
+			DWORD id;
+
+			mbp[i].idlo   = BYTESWAP_DWORD(mbp[i].idlo);
+			mbp[i].idhi   = BYTESWAP_DWORD(mbp[i].idhi);
+			mbp[i].offset = BYTESWAP_DWORD(mbp[i].offset);
+			mep = (msgtab_entry_t *)(((char *)rd->data) + mbp[i].offset);
+			for(id = mbp[i].idlo; id <= mbp[i].idhi; id++)
+			{
+				mep->length = BYTESWAP_WORD(mep->length);
+				mep->flags  = BYTESWAP_WORD(mep->flags);
+				if(mep->flags & 1)
+				{
+					WORD *wp = (WORD *)&mep[1];
+					int l = mep->length/2 - 2; /* Length included header */
+					int n;
+
+					if(mep->length & 1)
+						yyerror("Message 0x%08lx is unicode (block %d), but has odd length (%d)", id, (int)i, mep->length);
+					for(n = 0; n < l; n++)
+						wp[n] = BYTESWAP_WORD(wp[n]);
+						
+				}
+				mep = (msgtab_entry_t *)(((char *)mep) + mep->length);
+			}
+		}
+	}
+
 	return msg;
 }
 

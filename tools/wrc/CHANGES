@@ -1,4 +1,22 @@
 ---------------------------------------------------------------------------
+Version 1.1.4 (07-Jun-2000)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Implemented MESSAGETABLE resource type.
+- Usertype resources that cause a type-clash with defined resources
+  are now detected and a warning is generated. Some types should be
+  rerouted through other code so that they will be (re-)interpreted.
+- Bugfix: Line-continuation in strings in resources include a newline.
+  This `feature' got deleted with the builtin preprocessor, but has been
+  put back into place (see last changes comment from version 1.1.0).
+- Bugfix: The preprocessor now correctly will see "\\\r\n" as a line-
+  continuation.
+- Bugfix: Assemblers on some platforms do not use 16bit quantities
+  for `.word'. This directive is now changed into `.short'.
+- All types that accept inline data definitions (a la RCDATA) now
+  also accept a file specification. This unifies the structure a bit.
+
+---------------------------------------------------------------------------
 Version 1.1.3 (21-May-2000)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

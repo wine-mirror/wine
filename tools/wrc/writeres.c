@@ -531,7 +531,7 @@ static void write_pe_segment(FILE *fp, resource_t *top)
 	/* Version */
 	fprintf(fp, "\t.long\t0\n");	/* FIXME: must version be filled out? */
 	/* # of id entries, # of name entries */
-	fprintf(fp, "\t.word\t%d, %d\n", n_name_entries, n_id_entries);
+	fprintf(fp, "\t.short\t%d, %d\n", n_name_entries, n_id_entries);
 
 	/* Write the type level of the tree */
 	for(i = 0; i < rccount; i++)
@@ -578,7 +578,7 @@ static void write_pe_segment(FILE *fp, resource_t *top)
 		fprintf(fp, "\t.long\t0\n");		/* Flags */
 		fprintf(fp, "\t.long\t0x%08lx\n", (long)now);	/* TimeDate */
 		fprintf(fp, "\t.long\t0\n");	/* FIXME: must version be filled out? */
-		fprintf(fp, "\t.word\t%d, %d\n", rcp->n_name_entries, rcp->n_id_entries);
+		fprintf(fp, "\t.short\t%d, %d\n", rcp->n_name_entries, rcp->n_id_entries);
 		for(j = 0; j < rcp->count32; j++)
 		{
 			resource_t *rsc = rcp->rsc32array[j].rsc[0];
@@ -631,7 +631,7 @@ static void write_pe_segment(FILE *fp, resource_t *top)
 			fprintf(fp, "\t.long\t0\n");		/* Flags */
 			fprintf(fp, "\t.long\t0x%08lx\n", (long)now);	/* TimeDate */
 			fprintf(fp, "\t.long\t0\n");	/* FIXME: must version be filled out? */
-			fprintf(fp, "\t.word\t0, %d\n", r32cp->count);
+			fprintf(fp, "\t.short\t0, %d\n", r32cp->count);
 
 			for(k = 0; k < r32cp->count; k++)
 			{
@@ -726,7 +726,7 @@ static void write_ne_segment(FILE *fp, resource_t *top)
 	fprintf(fp, "\t.globl\t%s%s\n", prefix, _NEResTab);
 
 	/* AlignmentShift */
-	fprintf(fp, "\t.word\t%d\n", alignment_pwr);
+	fprintf(fp, "\t.short\t%d\n", alignment_pwr);
 
 	/* TypeInfo */
 	for(i = 0; i < rccount; i++)
@@ -735,15 +735,15 @@ static void write_ne_segment(FILE *fp, resource_t *top)
 
 		/* TypeId */
 		if(rcp->type.type == name_ord)
-			fprintf(fp, "\t.word\t0x%04x\n", rcp->type.name.i_name | 0x8000);
+			fprintf(fp, "\t.short\t0x%04x\n", rcp->type.name.i_name | 0x8000);
 		else
-			fprintf(fp, "\t.word\t%s_%s_typename - %s%s\n",
+			fprintf(fp, "\t.short\t%s_%s_typename - %s%s\n",
 				prefix,
 				rcp->type.name.s_name->str.cstr,
 				prefix,
 				_NEResTab);
 		/* ResourceCount */
-		fprintf(fp, "\t.word\t%d\n", rcp->count);
+		fprintf(fp, "\t.short\t%d\n", rcp->count);
 		/* Reserved */
 		fprintf(fp, "\t.long\t0\n");
 		/* NameInfo */
@@ -758,32 +758,32 @@ static void write_ne_segment(FILE *fp, resource_t *top)
  * All other things are as the MS doc describes (alignment etc.)
  */
 			/* Offset */
-			fprintf(fp, "\t.word\t(%s%s_data - %s%s) >> %d\n",
+			fprintf(fp, "\t.short\t(%s%s_data - %s%s) >> %d\n",
 				prefix,
 				rcp->rscarray[j]->c_name,
 				prefix,
 				_NEResTab,
 				alignment_pwr);
 			/* Length */
-			fprintf(fp, "\t.word\t%d\n",
+			fprintf(fp, "\t.short\t%d\n",
 				rcp->rscarray[j]->binres->size - rcp->rscarray[j]->binres->dataidx);
 			/* Flags */
-			fprintf(fp, "\t.word\t0x%04x\n", (WORD)rcp->rscarray[j]->memopt);
+			fprintf(fp, "\t.short\t0x%04x\n", (WORD)rcp->rscarray[j]->memopt);
 			/* Id */
 			if(rcp->rscarray[j]->name->type == name_ord)
-				fprintf(fp, "\t.word\t0x%04x\n", rcp->rscarray[j]->name->name.i_name | 0x8000);
+				fprintf(fp, "\t.short\t0x%04x\n", rcp->rscarray[j]->name->name.i_name | 0x8000);
 			else
-				fprintf(fp, "\t.word\t%s%s_name - %s%s\n",
+				fprintf(fp, "\t.short\t%s%s_name - %s%s\n",
 				prefix,
 				rcp->rscarray[j]->c_name,
 				prefix,
 				_NEResTab);
 			/* Handle and Usage */
-			fprintf(fp, "\t.word\t0, 0\n");
+			fprintf(fp, "\t.short\t0, 0\n");
 		}
 	}
 	/* EndTypes */
-	fprintf(fp, "\t.word\t0\n");
+	fprintf(fp, "\t.short\t0\n");
 }
 
 /*

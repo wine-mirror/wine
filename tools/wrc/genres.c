@@ -1361,15 +1361,25 @@ static res_t *rcdata2res(name_id_t *name, rcdata_t *rdt)
  *	msg	- The messagetable descriptor
  * Output	: New .res format structure
  * Description	:
- * Remarks	:
+ * Remarks	: The data has been converted to the appropriate endian
+ *		  after is was parsed.
  *****************************************************************************
 */
 static res_t *messagetable2res(name_id_t *name, messagetable_t *msg)
 {
+	int restag;
+	res_t *res;
 	assert(name != NULL);
 	assert(msg != NULL);
-	warning("Messagetable not yet implemented");
-	return NULL;
+
+	res = new_res();
+	restag = put_res_header(res, WRC_RT_MESSAGETABLE, NULL, name, msg->memopt, &(msg->data->lvc));
+	put_raw_data(res, msg->data, 0);
+	/* Set ResourceSize */
+	SetResSize(res, restag);
+	if(win32)
+		put_pad(res);
+	return res;
 }
 
 /*

@@ -1,4 +1,4 @@
-Release 1.1.3 of wrc (21-May-2000), the wine resource compiler.
+Release 1.1.4 of wrc (07-Jun-2000), the wine resource compiler.
 
 See the file CHANGES for differences between the version and what has been
 corrected in the current version.
@@ -165,10 +165,10 @@ CHARACTERISTICS 876
 Resource types supported
 ------------------------
 All types are supported except for:
-- MESSAGETABLE (RT_MESSAGETABLE)
 - RT_VXD
 - RT_PLUGPLAY
 - RT_HTML
+- RT_DLGINCLUDE
 
 These types will be implemented as soon as I get a proper specification of
 the layout.
@@ -283,6 +283,8 @@ though):
   different action for win32 and win16
 - PUSHBOX control is unsupported. The MS docs use it plenty, but neither
   MS' nor Borland's compiler supports it.
+- Usertype resources with a type-clash are not handled correctly. These
+  should map onto other resources.
 
 Reporting bugs and patches
 --------------------------

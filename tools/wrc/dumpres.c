@@ -469,6 +469,7 @@ static void dump_user(user_t *usr)
 */
 static void dump_messagetable(messagetable_t *msg)
 {
+	dump_memopt(msg->memopt);
 	dump_lvc(&(msg->data->lvc));
 	dump_raw_data(msg->data);
 }

@@ -437,7 +437,23 @@ typedef struct user {
 	raw_data_t	*data;
 } user_t;
 
+/*
+ * Messagetables
+ */
+typedef struct msgtab_block {
+	DWORD	idlo;		/* Lowest id in the set */
+	DWORD	idhi;		/* Highest is in the set */
+	DWORD	offset;		/* Offset from resource start to first entry */
+} msgtab_block_t;
+
+typedef struct msgtab_entry {
+	WORD	length;		/* Length of the data in bytes */
+	WORD	flags;		/* 0 for char, 1 for WCHAR */
+/*	{char}|{WCHAR} data[...]; */
+} msgtab_entry_t;
+
 typedef struct messagetable {
+	DWORD		memopt;
 	raw_data_t	*data;
 } messagetable_t;
 

@@ -394,7 +394,8 @@ L\"			{
 <yylstr>\\r		addwchar('\r');
 <yylstr>\\t		addwchar('\t');
 <yylstr>\\v		addwchar('\v');
-<yylstr>\\.		if(yytext[1] != '\n') addwchar(yytext[1]);
+<yylstr>\\(\n|.)	addwchar(yytext[1]);
+<yylstr>\\\r\n		addwchar(yytext[2]);
 <yylstr>\"\"		addcchar('\"');		/* "bla""bla"  -> "bla\"bla" */
 <yylstr>\\\"\"		addcchar('\"');		/* "bla\""bla" -> "bla\"bla" */
 <yylstr>\"{ws}+\"	;			/* "bla" "bla" -> "blabla" */
@@ -437,7 +438,8 @@ L\"			{
 <yystr>\\r		addcchar('\r');
 <yystr>\\t		addcchar('\t');
 <yystr>\\v		addcchar('\v');
-<yystr>\\.		if(yytext[1] != '\n') addcchar(yytext[1]);
+<yystr>\\(\n|.)		addcchar(yytext[1]);
+<yystr>\\\r\n		addcchar(yytext[2]);
 <yystr>[^\\\n\"]+	{
 				char *yptr = yytext;
 				while(*yptr)

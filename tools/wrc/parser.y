@@ -637,7 +637,7 @@ font	: tFONT loadmemopts file_raw	{ $$ = new_font($3, $2); }
 	 * The fontdir is generated if it was not present and
 	 * fonts are defined in the source.
 	 */
-fontdir	: tFONTDIR loadmemopts raw_data	{ $$ = new_fontdir($3, $2); }
+fontdir	: tFONTDIR loadmemopts file_raw	{ $$ = new_fontdir($3, $2); }
 	;
 
 /* ------------------------------ MessageTable ------------------------------ */
@@ -645,23 +645,74 @@ fontdir	: tFONTDIR loadmemopts raw_data	{ $$ = new_fontdir($3, $2); }
  * to get everything in one source. Might be a future project.
  */
 messagetable
-	: tMESSAGETABLE filename	{
+	: tMESSAGETABLE loadmemopts file_raw	{
 		if(!win32)
 			yywarning("MESSAGETABLE not supported in 16-bit mode");
-		$$ = new_messagetable(load_file($2));
+		$$ = new_messagetable($3, $2);
 		}
 	;
 
 /* ------------------------------ RCData ------------------------------ */
-rcdata	: tRCDATA loadmemopts raw_data	{ $$ = new_rcdata($3, $2); }
+rcdata	: tRCDATA loadmemopts file_raw	{ $$ = new_rcdata($3, $2); }
 	;
 
 /* ------------------------------ DLGINIT ------------------------------ */
-dlginit	: tDLGINIT loadmemopts raw_data	{ $$ = new_dlginit($3, $2); }
+dlginit	: tDLGINIT loadmemopts file_raw	{ $$ = new_dlginit($3, $2); }
 	;	  
 
 /* ------------------------------ UserType ------------------------------ */
-userres	: usertype loadmemopts file_raw		{ $$ = new_user($1, $3, $2); }
+userres	: usertype loadmemopts file_raw		{
+		if($1->type == name_ord)
+		{
+			switch($1->name.i_name)
+			{
+			case WRC_RT_CURSOR:	/* Bad idea; cursors should generate directories */
+			case WRC_RT_ANICURSOR:
+			case WRC_RT_ICON:
+			case WRC_RT_ANIICON:	/* Bad idea; icons should generate directories */
+			case WRC_RT_BITMAP:
+			case WRC_RT_FONT:	/* Bad idea; fonts should generate directories */
+			case WRC_RT_FONTDIR:
+			case WRC_RT_RCDATA:	/* This cannot be interpreted anyway */
+			case WRC_RT_MESSAGETABLE:	/* This case is involked by mc.exe */
+			case WRC_RT_DLGINIT:	/* No real layout available */
+
+			/* These should never be invoked because they have their own layout */
+			case WRC_RT_ACCELERATOR:
+			case WRC_RT_MENU:
+			case WRC_RT_DIALOG:
+			case WRC_RT_STRING:
+			case WRC_RT_TOOLBAR:
+			case WRC_RT_VERSION:
+				yywarning("Usertype uses special type-ID %d (wrc cannot yet re-interpret the data)", $1->name.i_name);
+				goto douser;
+
+			case WRC_RT_GROUP_CURSOR:
+			case WRC_RT_GROUP_ICON:
+				yywarning("Usertype uses reserved type-ID %d, which is auto-generated", $1->name.i_name);
+				goto douser;
+
+			case WRC_RT_DLGINCLUDE:
+			case WRC_RT_PLUGPLAY:
+			case WRC_RT_VXD:
+			case WRC_RT_HTML:
+				yywarning("Usertype uses reserved type-ID %d, which is not supported by wrc", $1->name.i_name);
+			default:
+				goto douser;
+			}
+		}
+		else
+		{
+	douser:
+		#ifdef WORDS_BIGENDIAN
+			if(pedantic && byteorder != WRC_BO_LITTLE)
+		#else
+			if(pedantic && byteorder == WRC_BO_BIG)
+		#endif
+				yywarning("Byteordering is not little-endian and type cannot be interpreted");
+			$$ = new_user($1, $3, $2);
+		}
+		}
 	;
 
 usertype: tNUMBER {

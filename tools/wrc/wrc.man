@@ -1,4 +1,4 @@
-.TH WRC 1 "May 21, 2000" "Version 1.1.3" "Wine Resource Compiler"
+.TH WRC 1 "June 07, 2000" "Version 1.1.4" "Wine Resource Compiler"
 .SH NAME
 wrc \- Wine Resource Compiler
 .SH SYNOPSIS
@@ -187,15 +187,18 @@ expanded them correctly
 .PP
 There is no support for:
 .br
-\- MESSAGETABLE (parsed, but not generated)
-.br
-\- RT_VXD, RT_PLUGPLAY and RT_HTML (unknown format)
+\- RT_DLGINCLUDE, RT_VXD, RT_PLUGPLAY and RT_HTML (unknown format)
 .br
 \- PUSHBOX control is unsupported due to lack of original functionality.
 .PP
 Fonts are parsed and generated, but there is no support for the
 generation of the FONTDIR yet. The user must supply the FONTDIR
 resource in the source to match the FONT resources.
+.PP
+Usertype resources that have a type-clash with other resources are not
+handled correctly. These should map onto the builtin resources as much
+as possible (especially icons, cursors and fonts because of directory
+generation and everything else that would require byte-order swapping).
 .PP
 See the CHANGES and README.wrc files in the distribution for more
 comments on bugs and fixes across the versions.
