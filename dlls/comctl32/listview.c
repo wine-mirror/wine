@@ -22,29 +22,94 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * NOTES
- * Listview control implementation.
  *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Oct. 21, 2002, by Dimitrie O. Paun.
+ * 
+ * Unless otherwise noted, we belive this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features, or bugs, please note them below.
+ * 
  * TODO:
  *   -- Hot item handling.
  *   -- Expand large item in ICON mode when the cursor is flying over the icon or text.
  *   -- Support CustonDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs)
+ *   -- work areas
+ *   -- tilemode
+ *   -- groups
+ *   -- FIXMEs (search for them)
+ *   
+ * States
+ *   -- LVIS_ACTIVATING (not currently supported my comctl32.dll version 6.0)
+ *   -- LVIS_CUT
+ *   -- LVIS_DROPHILITED
+ *   -- LVIS_OVERLAYMASK
  *
+ * Styles
+ *   -- LVS_NOLABELWRAP
+ *   -- LVS_NOSCROLL (see Q137520)
+ *   -- LVS_SORTASCENDING, LVS_SORTDESCENDING
+ *
+ * Extended Styles
+ *   -- LVS_EX_BORDERSELECT
+ *   -- LVS_EX_CHECKBOXES
+ *   -- LVS_EX_FLATSB
+ *   -- LVS_EX_GRIDLINES
+ *   -- LVS_EX_HEADERDRAGDROP
+ *   -- LVS_EX_INFOTIP
+ *   -- LVS_EX_LABELTIP
+ *   -- LVS_EX_MULTIWORKAREAS
+ *   -- LVS_EX_ONECLICKACTIVATE
+ *   -- LVS_EX_REGIONAL
+ *   -- LVS_EX_SIMPLESELECT
+ *   -- LVS_EX_SUBITEMIMAGES
+ *   -- LVS_EX_TRACKSELECT
+ *   -- LVS_EX_TWOCLICKACTIVATE
+ *   -- LVS_EX_UNDERLINECOLD
+ *   -- LVS_EX_UNDERLINEHOT
+ *   
  * Notifications:
- *   LISTVIEW_Notify : most notifications from editbox
+ *   -- LVN_BEGINDRAG, LVN_BEGINRDRAG
+ *   -- LVN_BEGINSCROLL, LVN_ENDSCROLL
+ *   -- LVN_GETINFOTIP
+ *   -- LVN_HOTTRACK
+ *   -- LVN_MARQUEEBEGIN
+ *   -- LVN_ODFINDITEM
+ *   -- LVN_ODSTATECHANGED
+ *   -- LVN_SETDISPINFO
+ *   -- NM_HOVER
  *
- * Data structure:
- *   LISTVIEW_SetItemCount : not completed for non OWNERDATA
- *
- * Advanced functionality:
- *   LISTVIEW_GetNumberOfWorkAreas : not implemented
- *   LISTVIEW_GetISearchString : not implemented
- *   LISTVIEW_GetBkImage : not implemented
- *   LISTVIEW_SetBkImage : not implemented
- *   LISTVIEW_GetColumnOrderArray : simple hack only
- *   LISTVIEW_SetColumnOrderArray : simple hack only
- *   LISTVIEW_Arrange : empty stub
- *   LISTVIEW_ApproximateViewRect : incomplete
- *   LISTVIEW_Update : not completed
+ * Messages:
+ *   -- LVM_CANCELEDITLABEL
+ *   -- LVM_CREATEDRAGIMAGE
+ *   -- LVM_ENABLEGROUPVIEW
+ *   -- LVM_GETBKIMAGE, LVM_SETBKIMAGE
+ *   -- LVM_GETGROUPINFO, LVM_SETGROUPINFO
+ *   -- LVM_GETGROUPMETRICS, LVM_SETGROUPMETRICS
+ *   -- LVM_GETINSERTMARK, LVM_SETINSERTMARK
+ *   -- LVM_GETINSERTMARKCOLOR, LVM_SETINSERTMARKCOLOR
+ *   -- LVM_GETINSERTMARKRECT
+ *   -- LVM_GETNUMBEROFWORKAREAS
+ *   -- LVM_GETOUTLINECOLOR, LVM_SETOUTLINECOLOR
+ *   -- LVM_GETSELECTEDCOLUMN, LVM_SETSELECTEDCOLUMN
+ *   -- LVM_GETISEARCHSTRINGW, LVM_GETISEARCHSTRINGA
+ *   -- LVM_GETTILEINFO, LVM_SETTILEINFO
+ *   -- LVM_GETTILEVIEWINFO, LVM_SETTILEVIEWINFO
+ *   -- LVM_GETTOOLTIPS, LVM_SETTOOLTIPS
+ *   -- LVM_GETUNICODEFORMAT, LVM_SETUNICODEFORMAT
+ *   -- LVM_GETVIEW, LVM_SETVIEW
+ *   -- LVM_GETWORKAREAS, LVM_SETWORKAREAS
+ *   -- LVM_HASGROUP, LVM_INSERTGROUP, LVM_REMOVEGROUP, LVM_REMOVEALLGROUPS
+ *   -- LVM_INSERTGROUPSORTED
+ *   -- LVM_INSERTMARKHITTEST
+ *   -- LVM_ISGROUPVIEWENABLED
+ *   -- LVM_MAPIDTOINDEX, LVM_MAPINDEXTOID
+ *   -- LVM_MOVEGROUP
+ *   -- LVM_MOVEITEMTOGROUP
+ *   -- LVM_SETINFOTIP
+ *   -- LVM_SETTILEWIDTH
+ *   -- LVM_SORTGROUPS
+ *   -- LVM_SORTITEMSEX
  *
  * Known differences in message stream from native control (not known if
  * these differences cause problems):
@@ -53,7 +118,6 @@
  *   WM_CREATE does not issue WM_QUERYUISTATE and associated registry
  *     processing for "USEDOUBLECLICKTIME".
  */
-
 
 #include "config.h"
 #include "wine/port.h"
@@ -8129,7 +8193,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_ARRANGE:
     return LISTVIEW_Arrange(infoPtr, (INT)wParam);
 
-/* case LVN_CANCELEDITLABEL */
+/* case LVM_CANCELEDITLABEL: */
 
 /* case LVM_CREATEDRAGIMAGE: */
 
@@ -8148,7 +8212,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_EDITLABELA:
     return (LRESULT)LISTVIEW_EditLabelT(infoPtr, (INT)wParam, FALSE);
 
-  /* case LVN_ENABLEGROUPVIEW: */
+  /* case LVM_ENABLEGROUPVIEW: */
 
   case LVM_ENSUREVISIBLE:
     return LISTVIEW_EnsureVisible(infoPtr, (INT)wParam, (BOOL)lParam);
@@ -8188,6 +8252,10 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_GETEXTENDEDLISTVIEWSTYLE:
     return infoPtr->dwLvExStyle;
 
+  /* case LVM_GETGROUPINFO: */
+
+  /* case LVM_GETGROUPMETRICS: */
+
   case LVM_GETHEADER:
     return (LRESULT)infoPtr->hwndHeader;
 
@@ -8203,11 +8271,11 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_GETIMAGELIST:
     return (LRESULT)LISTVIEW_GetImageList(infoPtr, (INT)wParam);
 
-  /* case LVN_GETINSERTMARK: */
+  /* case LVM_GETINSERTMARK: */
 
-  /* case LVN_GETINSERTMARKCOLOR: */
+  /* case LVM_GETINSERTMARKCOLOR: */
 
-  /* case LVN_GETINSERTMARKRECT: */
+  /* case LVM_GETINSERTMARKRECT: */
 
   case LVM_GETISEARCHSTRINGA:
   case LVM_GETISEARCHSTRINGW:
@@ -8253,7 +8321,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     LISTVIEW_GetOrigin(infoPtr, (LPPOINT)lParam);
     return TRUE;
 
-  /* case LVN_GETOUTLINECOLOR: */
+  /* case LVM_GETOUTLINECOLOR: */
 
   /* case LVM_GETSELECTEDCOLUMN: */
 
@@ -8278,9 +8346,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_GETTEXTCOLOR:
     return infoPtr->clrText;
 
-  /* case LVN_GETTILEINFO: */
+  /* case LVM_GETTILEINFO: */
 
-  /* case LVN_GETTILEVIEWINFO: */
+  /* case LVM_GETTILEVIEWINFO: */
 
   case LVM_GETTOOLTIPS:
     FIXME("LVM_GETTOOLTIPS: unimplemented\n");
@@ -8293,6 +8361,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     FIXME("LVM_GETUNICODEFORMAT: unimplemented\n");
     return FALSE;*/
 
+  /* case LVM_GETVIEW: */
+
   case LVM_GETVIEWRECT:
     return LISTVIEW_GetViewRect(infoPtr, (LPRECT)lParam);
 
@@ -8300,7 +8370,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     FIXME("LVM_GETWORKAREAS: unimplemented\n");
     return FALSE;
 
-  /* case LVN_HASGROUP: */
+  /* case LVM_HASGROUP: */
 
   case LVM_HITTEST:
     return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, FALSE, FALSE);
@@ -8311,9 +8381,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_INSERTCOLUMNW:
     return LISTVIEW_InsertColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam, TRUE);
 
-  /* case LVN_INSERTGROUP: */
+  /* case LVM_INSERTGROUP: */
 
-  /* case LVN_INSERTGROUPSORTED: */
+  /* case LVM_INSERTGROUPSORTED: */
 
   case LVM_INSERTITEMA:
     return LISTVIEW_InsertItemT(infoPtr, (LPLVITEMW)lParam, FALSE);
@@ -8321,24 +8391,24 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_INSERTITEMW:
     return LISTVIEW_InsertItemT(infoPtr, (LPLVITEMW)lParam, TRUE);
 
-  /* case LVN_INSERTMARKHITTEST: */
+  /* case LVM_INSERTMARKHITTEST: */
 
-  /* case LVN_ISGROUPVIEWENABLED: */
+  /* case LVM_ISGROUPVIEWENABLED: */
 
-  /* case LVN_MAPIDTOINDEX: */
+  /* case LVM_MAPIDTOINDEX: */
 
-  /* case LVN_INEDXTOID: */
+  /* case LVM_MAPINDEXTOID: */
 
-  /* case LVN_MOVEGROUP: */
+  /* case LVM_MOVEGROUP: */
 
-  /* case LVN_MOVEITEMTOGROUP: */
+  /* case LVM_MOVEITEMTOGROUP: */
 
   case LVM_REDRAWITEMS:
     return LISTVIEW_RedrawItems(infoPtr, (INT)wParam, (INT)lParam);
 
-  /* case LVN_REMOVEALLGROUPS: */
+  /* case LVM_REMOVEALLGROUPS: */
 
-  /* case LVN_REMOVEGROUP: */
+  /* case LVM_REMOVEGROUP: */
 
   case LVM_SCROLL:
     return LISTVIEW_Scroll(infoPtr, (INT)wParam, (INT)lParam);
@@ -8367,9 +8437,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_SETEXTENDEDLISTVIEWSTYLE:
     return LISTVIEW_SetExtendedListViewStyle(infoPtr, (DWORD)wParam, (DWORD)lParam);
 
-  /* case LVN_SETGROUPINFO: */
+  /* case LVM_SETGROUPINFO: */
 
-  /* case LVN_SETGROUPMETRICS: */
+  /* case LVM_SETGROUPMETRICS: */
 
   case LVM_SETHOTCURSOR:
     return (LRESULT)LISTVIEW_SetHotCursor(infoPtr, (HCURSOR)lParam);
@@ -8386,11 +8456,11 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_SETIMAGELIST:
     return (LRESULT)LISTVIEW_SetImageList(infoPtr, (INT)wParam, (HIMAGELIST)lParam);
 
-  /* case LVN_SETINFOTIP: */
+  /* case LVM_SETINFOTIP: */
 
-  /* case LVN_SETINSERTMARK: */
+  /* case LVM_SETINSERTMARK: */
 
-  /* case LVN_SETINSERTMARKCOLOR: */
+  /* case LVM_SETINSERTMARKCOLOR: */
 
   case LVM_SETITEMA:
     return LISTVIEW_SetItemT(infoPtr, (LPLVITEMW)lParam, FALSE);
@@ -8420,9 +8490,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_SETITEMTEXTW:
     return LISTVIEW_SetItemTextT(infoPtr, (INT)wParam, (LPLVITEMW)lParam, TRUE);
 
-  /* case LVN_SETOUTLINECOLOR: */
+  /* case LVM_SETOUTLINECOLOR: */
 
-  /* case LVN_SETSELECTEDCOLUMN: */
+  /* case LVM_SETSELECTEDCOLUMN: */
 
   case LVM_SETSELECTIONMARK:
     return LISTVIEW_SetSelectionMark(infoPtr, (INT)lParam);
@@ -8433,24 +8503,26 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_SETTEXTCOLOR:
     return LISTVIEW_SetTextColor(infoPtr, (COLORREF)lParam);
 
-  /* case LVN_SETTILEINFO: */
+  /* case LVM_SETTILEINFO: */
 
-  /* case LVN_SETTILEVIEWINFO: */
+  /* case LVM_SETTILEVIEWINFO: */
 
-  /* case LVN_SETTILEWIDTH: */
+  /* case LVM_SETTILEWIDTH: */
 
   /* case LVM_SETTOOLTIPS: */
 
   /* case LVM_SETUNICODEFORMAT: */
 
-  /* case LVN_SETVIEW: */
+  /* case LVM_SETVIEW: */
 
   /* case LVM_SETWORKAREAS: */
 
-  /* case LVN_SORTGROUPS: */
+  /* case LVM_SORTGROUPS: */
 
   case LVM_SORTITEMS:
     return LISTVIEW_SortItems(infoPtr, (PFNLVCOMPARE)lParam, (LPARAM)wParam);
+
+  /* LVM_SORTITEMSEX: */
 
   case LVM_SUBITEMHITTEST:
     return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, TRUE, FALSE);
