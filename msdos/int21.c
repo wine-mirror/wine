@@ -1808,7 +1808,8 @@ void WINAPI DOS3Call( CONTEXT *context )
                 DosDateTimeToFileTime( DX_reg(context), CX_reg(context),
                                        &filetime );
                 bSetDOSExtendedError = 
-			(!SetFileTime( BX_reg(context), NULL, NULL, &filetime ));
+			(!SetFileTime( HFILE16_TO_HFILE32(BX_reg(context)),
+                                      NULL, NULL, &filetime ));
             }
             break;
         }
