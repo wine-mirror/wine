@@ -21,11 +21,10 @@
  *     write (rwflag == 0)
  ************************************************************/
 
-#if defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__)
 BOOL DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
 {
   FILE *fp;
-  char buf[80];      /* temporary line buffer */
+  char buf[200];      /* temporary line buffer */
   char prot[5];      /* protection string */
   char *start, *end;
   int ret = TRUE;
@@ -55,22 +54,32 @@ BOOL DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
     0xefbde000 0xefbfe000         1         1 rwx     default
     
     COW = "copy on write"
+
+
+    % cat /proc/curproc/map on FreeBSD 3.0
+    start     end       ?  ?  ?      prot ? ? ?   ?   ?  ?
+    0x8048000 0x8054000 12 14 114770 r-x  2 1 0x0 COW NC vnode
+    0x8054000 0x8055000 1 0 166664 rwx 1 0 0x2180 COW NNC vnode
+    0x8055000 0x806a000 5 0 166662 rwx 1 0 0x2180 NCOW NNC default
+    0x28054000 0x28055000 1 0 166666 rwx 1 0 0x2180 NCOW NNC default
+    0xefbde000 0xefbfe000 1 0 166663 rwx 1 0 0x2180 NCOW NNC default
+
 */
 #endif
 
   
-#ifdef linux
-  if (!(fp = fopen("/proc/self/maps", "r")))
-#else
-  if (!(fp = fopen("/proc/curproc/map", "r")))
-#endif
+  if (!(fp = fopen("/proc/self/maps","r")) && 
+      !(fp = fopen("/proc/curproc/map","r"))
+  )
     return FALSE; 
 
-  while (fgets( buf, 79, fp)) {
+  while (fgets( buf, sizeof(buf)-1, fp)) {
 #ifdef linux
     sscanf(buf, "%x-%x %3s", (int *) &start, (int *) &end, prot);
 #else
     sscanf(buf, "%x %x %*d %*d %3s", (int *) &start, (int *) &end, prot);
+    if (prot[0]!='r' && prot[0]!='-') /* FreeBSD 3.0 format */
+       sscanf(buf, "%x %x %*d %*d %*d %3s", (int *) &start, (int *) &end, prot);
 #endif
     if ( end <= addr)
       continue;
@@ -85,13 +94,6 @@ BOOL DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
   fclose( fp);
   return ret;
 }
-#else  /* linux || FreeBSD */
-/* FIXME: code needed for BSD et al. */
-BOOL DEBUG_checkmap_bad(char *addr, size_t size, int rwflag)
-{
-    return FALSE;
-}
-#endif  /* linux || FreeBSD */
 
 
 /***********************************************************************
