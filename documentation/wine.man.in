@@ -108,7 +108,7 @@ file contained in the source distribution.
 .TP
 .I --config filename
 Use the named configuration file rather than the default
-(@sysconfdir@/wine.conf or ~/.winerc).
+(@sysconfdir@/wine.conf or ~/.wine/config).
 .TP
 .I --debugmsg [xxx]#name[,[xxx1]#name1][,<+|->relay=yyy1[:yyy2]]
 Turn debugging messages on or off.  
@@ -181,10 +181,10 @@ Use a desktop window of the given geometry, e.g. "640x480"
 Use the specified X display
 .TP
 .I --dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]][+...]
-Selects the override type and load order of dll used in the loading process
-for any dll. The default is set in @sysconfdir@/wine.conf or ~/.winerc. There
-are currently three types of libraries that can be loaded into a process' address
-space: Native windows dlls (
+Selects the override type and load order of dll used in the loading
+process for any dll. The default is set in the configuration
+file. There are currently three types of libraries that can be loaded
+into a process' address space: Native windows dlls (
 .I native
 ), native ELF libraries (
 .I so
@@ -357,8 +357,8 @@ expects a configuration file (
 man page. A sample configuration file is wine.ini in the base directory of the 
 .B wine 
 source archive. Alternatively a configuration file with the name
-.I .winerc 
-in the home directory of the user running 
+.I config
+in the ~/.wine directory of the user running 
 .B wine 
 can be used. The third option is to specify the name of the 
 configuration file with the 
@@ -460,7 +460,7 @@ shared libraries
 Global configuration file for 
 .B wine.
 .TP
-.I ~/.winerc
+.I ~/.wine/config
 User-specific configuration file
 .TP 
 .I ~/.wine

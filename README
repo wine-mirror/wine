@@ -97,14 +97,16 @@ Once Wine has been built correctly, you can do "make install"; this
 will install the wine executable, the Wine man page, and a few other
 needed files.
 
-Wine requires a configuration file named wine.conf. Its default location is
-/usr/local/etc, but you can supply a different name when configuring wine by
-using the --prefix or --sysconfdir options to ./configure. You can also override
-the global configuration file with a .winerc file in your home directory.
+Wine requires a configuration file named wine.conf. Its default
+location is /usr/local/etc, but you can supply a different name when
+configuring wine by using the --prefix or --sysconfdir options to
+./configure. You can also override the global configuration file with
+a file named "config" in your ~/.wine directory.
 
 The format of this file is explained in the man page. The file
-wine.ini contains an example configuration file which has to be adapted
-and copied to one of the two locations mentioned above.
+documentation/samples/config contains an example configuration file
+which has to be adapted and copied to one of the two locations
+mentioned above.
 
 See http://www.winehq.com/config.html for further configuration hints.
 

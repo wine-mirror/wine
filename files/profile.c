@@ -6,6 +6,7 @@
  */
 
 #include <ctype.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -267,6 +268,78 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
         }
     }
     return first_section;
+}
+
+/* convert the .winerc file to the new format */
+static int convert_config( FILE *in, const char *output_name )
+{
+    char buffer[PROFILE_MAX_LINE_LEN];
+    char *p, *p2;
+    FILE *out;
+
+    /* create the output file, only if it doesn't exist already */
+    int fd = open( output_name, O_WRONLY|O_CREAT|O_EXCL, 0666 );
+    if (fd == -1) return 0;
+
+    out = fdopen( fd, "w" );
+    fprintf( out, "WINE REGISTRY Version 2\n" );
+    fprintf( out, ";; All keys relative to \\\\Machine\\\\Software\\\\Wine\\\\Wine\\\\Config\n\n" );
+    while (fgets( buffer, PROFILE_MAX_LINE_LEN, in ))
+    {
+        if (buffer[strlen(buffer)-1] == '\n') buffer[strlen(buffer)-1] = 0;
+        p = buffer;
+        while (*p && PROFILE_isspace(*p)) p++;
+        if (*p == '[')  /* section start */
+        {
+            if ((p2 = strrchr( p, ']' )))
+            {
+                *p2 = '\0';
+                p++;
+                fprintf( out, "[%s]\n", p );
+            }
+            continue;
+        }
+
+        if (*p == ';' || *p == '#')
+        {
+            fprintf( out, "%s\n", p );
+            continue;
+        }
+
+        p2=p+strlen(p) - 1;
+        while ((p2 > p) && ((*p2 == '\n') || PROFILE_isspace(*p2))) *p2--='\0';
+
+        if ((p2 = strchr( p, '=' )) != NULL)
+        {
+            char *p3 = p2 - 1;
+            while ((p3 > p) && PROFILE_isspace(*p3)) *p3-- = '\0';
+            *p2++ = '\0';
+            while (*p2 && PROFILE_isspace(*p2)) p2++;
+        }
+
+        if (!*p)
+        {
+            fprintf( out, "\n" );
+            continue;
+        }
+        fputc( '"', out );
+        while (*p)
+        {
+            if (*p == '\\') fputc( '\\', out );
+            fputc( *p, out );
+            p++;
+        }
+        fprintf( out, "\" = \"" );
+        while (*p2)
+        {
+            if (*p2 == '\\') fputc( '\\', out );
+            fputc( *p2, out );
+            p2++;
+        }
+        fprintf( out, "\"\n" );
+    }
+    fclose( out );
+    return 1;
 }
 
 
@@ -1040,8 +1113,8 @@ int PROFILE_LoadWineIni(void)
 
     if (disp == REG_OPENED_EXISTING_KEY) return 1;  /* loaded by the server */
 
-    MESSAGE( "Can't open configuration file %s or $HOME%s\n",
-	     WINE_INI_GLOBAL, PROFILE_WineIniName );
+    MESSAGE( "Can't open configuration file %s or %s/config\n",
+	     WINE_INI_GLOBAL, get_config_dir() );
     return 0;
 
  found:
@@ -1052,6 +1125,17 @@ int PROFILE_LoadWineIni(void)
                  "         file %s was ignored.\n", get_config_dir(), PROFILE_WineIniUsed );
         fclose( f );
         return 1;
+    }
+
+    /* convert to the new format */
+    sprintf( buffer, "%s/config", get_config_dir() );
+    if (convert_config( f, buffer ))
+    {
+        MESSAGE( "The '%s' configuration file has been converted\n"
+                 "to the new format and saved as '%s'.\n", PROFILE_WineIniUsed, buffer );
+        MESSAGE( "You should verify that the contents of the new file are correct,\n"
+                 "and then remove the old one and restart Wine.\n" );
+        ExitProcess(0);
     }
 
     PROFILE_RegistryLoad( wine_profile_key, f );
