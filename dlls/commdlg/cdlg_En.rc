@@ -363,7 +363,7 @@ STRINGTABLE DISCARDABLE
     IDS_SYSTEMFOLDERS       "System Folders"
     IDS_LOCALHARDRIVES      "Local Hard Drives"
     IDS_FILENOTFOUND        "File not found"
-    IDS_VERIFYFILE          "Please verify if the correct file name was given"
+    IDS_VERIFYFILE          "Please verify that the correct file name was given"
     IDS_CREATEFILE          "File does not exist\nDo you want to create file"
     IDL_OVERWRITEFILE       "File does already exist.\nDo you want to replace it?"
     IDS_INVALID_FILENAME_TITLE "Invalid character(s) in path"
@@ -394,13 +394,13 @@ Please enter a value between %d and %d."
 Paper boundaries.\nPlease reenter margins."
     PD32_NR_OF_COPIES_EMPTY               "The number of 'Number of copies' \
 value cannot be empty."
-    PD32_TOO_LARGE_COPIES                 "This large nmuber of copies is not \
+    PD32_TOO_LARGE_COPIES                 "This large number of copies is not \
 supported by your printer.\nPlease enter a value between 1 and %d."
     PD32_PRINT_ERROR                      "A printer error occurred."
-    PD32_NO_DEFAULT_PRINTER               "There is not default printer."
+    PD32_NO_DEFAULT_PRINTER               "No default printer defined."
     PD32_CANT_FIND_PRINTER                "Cannot find the printer."
     PD32_OUT_OF_MEMORY                    "Out of memory."
-    PD32_GENERIC_ERROR                    "Some error occurred."
+    PD32_GENERIC_ERROR                    "An error occurred."
     PD32_DRIVER_UNKNOWN                   "Unknown printer driver."
 
     PD32_DEFAULT_PRINTER                  "Default Printer; "
@@ -435,7 +435,7 @@ supported by your printer.\nPlease enter a value between 1 and %d."
     PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Out of memory; "
     PD32_PRINTER_STATUS_DOOR_OPEN         "The printer door is open; "
     PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Print server unknown; "
-    PD32_PRINTER_STATUS_POWER_SAVE        "Power safe mode; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "Power save mode; "
 }
 
 STRINGTABLE DISCARDABLE /* Color names */
