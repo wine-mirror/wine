@@ -95,6 +95,7 @@ typedef struct
     INT      nButtonDown;
     INT      nOldHit;
     INT      nHotItem;        /* index of the "hot" item */
+    HFONT    hDefaultFont;
     HFONT    hFont;           /* text font */
     HIMAGELIST himlInt;         /* image list created internally */
     HIMAGELIST himlDef;         /* default image list */
@@ -4048,7 +4049,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hwndSelf = hwnd;
 
     SystemParametersInfoA (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
-    infoPtr->hFont = CreateFontIndirectA (&logFont);
+    infoPtr->hFont = infoPtr->hDefaultFont = CreateFontIndirectA (&logFont);
 
     if (dwStyle & TBSTYLE_TOOLTIPS) {
 	/* Create tooltip control */
@@ -4106,7 +4107,7 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* delete default font */
     if (infoPtr->hFont)
-	DeleteObject (infoPtr->hFont);
+	DeleteObject (infoPtr->hDefaultFont);
 
     /* free toolbar info data */
     COMCTL32_Free (infoPtr);

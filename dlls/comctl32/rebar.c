@@ -200,6 +200,7 @@ typedef struct
     HWND     hwndSelf;    /* handle of REBAR window itself */
     HWND     hwndToolTip; /* handle to the tool tip control */
     HWND     hwndNotify;  /* notification window (parent) */
+    HFONT    hDefaultFont;
     HFONT    hFont;       /* handle to the rebar's font */
     SIZE     imageSize;   /* image size (image list) */
     DWORD    dwStyle;     /* window style */
@@ -3624,7 +3625,7 @@ REBAR_Destroy (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     DeleteObject (infoPtr->hcurHorz);
     DeleteObject (infoPtr->hcurVert);
     DeleteObject (infoPtr->hcurDrag);
-    DeleteObject (infoPtr->hFont);
+    if(infoPtr->hDefaultFont) DeleteObject (infoPtr->hDefaultFont);
     SetWindowLongA (infoPtr->hwndSelf, 0, 0);
 
     /* free rebar info data */
@@ -3834,7 +3835,7 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     tfont = CreateFontIndirectA (&ncm.lfCaptionFont);
     if (tfont) {
-	infoPtr->hFont = tfont;
+        infoPtr->hFont = infoPtr->hDefaultFont = tfont;
     }
 
 /* native does:

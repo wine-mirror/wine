@@ -120,6 +120,7 @@ typedef struct
     DWORD        dwExtStyle;
     INT          selected;         /* index of selected item */
     DWORD        flags;            /* WINE internal flags */
+    HFONT        hDefaultFont;
     HFONT        font;
     INT          nb_items;         /* Number of items */
     BOOL         bUnicode;        /* TRUE if this window is Unicode   */
@@ -1209,7 +1210,7 @@ COMBOEX_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (!infoPtr->font) {
 	SystemParametersInfoA (SPI_GETICONTITLELOGFONT, sizeof(mylogfont), 
 			       &mylogfont, 0);
-	infoPtr->font = CreateFontIndirectA (&mylogfont);
+	infoPtr->font = infoPtr->hDefaultFont = CreateFontIndirectA (&mylogfont);
     }
     SendMessageW (infoPtr->hwndCombo, WM_SETFONT, (WPARAM)infoPtr->font, 0);
     if (infoPtr->hwndEdit) {
@@ -1750,7 +1751,7 @@ COMBOEX_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
 
-    DeleteObject (infoPtr->font);
+    if (infoPtr->hDefaultFont) DeleteObject (infoPtr->hDefaultFont);
 
     /* free comboex info data */
     COMCTL32_Free (infoPtr);
