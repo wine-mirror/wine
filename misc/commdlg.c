@@ -825,7 +825,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       lpofn->nFileExtension = 0;
       while(tmpstr2[lpofn->nFileExtension] != '.' && tmpstr2[lpofn->nFileExtension] != '\0')
         lpofn->nFileExtension++;
-      if (lpofn->nFileExtension == '\0')
+      if (tmpstr2[lpofn->nFileExtension] == '\0')
 	lpofn->nFileExtension = 0;
       else
 	lpofn->nFileExtension++;
