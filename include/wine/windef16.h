@@ -22,6 +22,8 @@ typedef UINT16          WPARAM16;
 typedef INT16          *LPINT16;
 typedef UINT16         *LPUINT16;
 
+#define HFILE_ERROR16   ((HFILE16)-1)
+
 #define DECLARE_HANDLE16(a) \
 	typedef HANDLE16 a##16; \
 	typedef a##16 *P##a##16; \
@@ -81,6 +83,7 @@ typedef HANDLE16 HGLOBAL16;
 typedef HANDLE16 HLOCAL16;
 
 /* The SIZE structure */
+
 typedef struct
 {
     INT16  cx;
@@ -104,6 +107,23 @@ typedef struct
     INT16  right;
     INT16  bottom;
 } RECT16, *LPRECT16;
+
+#define CONV_SIZE16TO32(s16,s32) \
+            ((s32)->cx = (INT)(s16)->cx, (s32)->cy = (INT)(s16)->cy)
+#define CONV_SIZE32TO16(s32,s16) \
+            ((s16)->cx = (INT16)(s32)->cx, (s16)->cy = (INT16)(s32)->cy)
+
+#define CONV_POINT16TO32(p16,p32) \
+            ((p32)->x = (INT)(p16)->x, (p32)->y = (INT)(p16)->y)
+#define CONV_POINT32TO16(p32,p16) \
+            ((p16)->x = (INT16)(p32)->x, (p16)->y = (INT16)(p32)->y)
+
+#define CONV_RECT16TO32(r16,r32) \
+    ((r32)->left  = (INT)(r16)->left,  (r32)->top    = (INT)(r16)->top, \
+     (r32)->right = (INT)(r16)->right, (r32)->bottom = (INT)(r16)->bottom)
+#define CONV_RECT32TO16(r32,r16) \
+    ((r16)->left  = (INT16)(r32)->left,  (r16)->top    = (INT16)(r32)->top, \
+     (r16)->right = (INT16)(r32)->right, (r16)->bottom = (INT16)(r32)->bottom)
 
 /* Callback function pointers types */
 

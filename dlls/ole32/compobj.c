@@ -32,6 +32,7 @@
 #include "wine/obj_storage.h"
 #include "wine/obj_clientserver.h"
 
+#include "ole.h"
 #include "ifs.h"
 #include "compobj.h"
 

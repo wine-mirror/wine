@@ -229,7 +229,12 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	return NC_HandleNCPaint( wndPtr->hwndSelf, (HRGN)wParam );
 
     case WM_NCHITTEST:
-        return NC_HandleNCHitTest( wndPtr->hwndSelf, MAKEPOINT16(lParam) );
+        {
+            POINT pt;
+            pt.x = SLOWORD(lParam);
+            pt.y = SHIWORD(lParam);
+            return NC_HandleNCHitTest( wndPtr->hwndSelf, pt );
+        }
 
     case WM_NCLBUTTONDOWN:
 	return NC_HandleNCLButtonDown( wndPtr, wParam, lParam );
@@ -254,9 +259,11 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	else if (wndPtr->hSysMenu)
         {
             LONG hitcode;
-            POINT16 pt = MAKEPOINT16(lParam);
+            POINT pt;
+            pt.x = SLOWORD(lParam);
+            pt.y = SHIWORD(lParam);
 
-            ScreenToClient16(wndPtr->hwndSelf, &pt);
+            ScreenToClient(wndPtr->hwndSelf, &pt);
             hitcode = NC_HandleNCHitTest(wndPtr->hwndSelf, pt);
 
             /* Track system popup if click was in the caption area. */
@@ -396,8 +403,12 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	return NC_HandleSetCursor( wndPtr->hwndSelf, wParam, lParam );
 
     case WM_SYSCOMMAND:
-        return NC_HandleSysCommand( wndPtr->hwndSelf, wParam,
-                                    MAKEPOINT16(lParam) );
+        {
+            POINT pt;
+            pt.x = SLOWORD(lParam);
+            pt.y = SHIWORD(lParam);
+            return NC_HandleSysCommand( wndPtr->hwndSelf, wParam, pt );
+        }
 
     case WM_KEYDOWN:
 	if(wParam == VK_F10) iF10Key = VK_F10;

@@ -1,8 +1,8 @@
 #include "config.h"
 
 #include "winbase.h"
-#include "winaspi.h"
-#include "wnaspi32.h"
+#include "wine/windef16.h"
+#include "wine/winaspi.h"
 #include "heap.h"
 #include "debugtools.h"
 #include "selectors.h"

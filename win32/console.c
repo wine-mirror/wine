@@ -544,30 +544,6 @@ BOOL WINAPI FreeConsole(VOID)
 
 
 /*************************************************************************
- * 		CONSOLE_OpenHandle
- *
- * Open a handle to the current process console.
- */
-HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
-{
-    int ret = -1;
-
-    SERVER_START_REQ
-    {
-        struct open_console_request *req = server_alloc_req( sizeof(*req), 0 );
-
-        req->output  = output;
-        req->access  = access;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        SetLastError(0);
-        if (!server_call( REQ_OPEN_CONSOLE )) ret = req->handle;
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/*************************************************************************
  * 		CONSOLE_make_complex			[internal]
  *
  * Turns a CONSOLE kernel object into a complex one.

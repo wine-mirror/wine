@@ -1136,7 +1136,8 @@ LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
     case WM_SYSTIMER:
         {
             POINT pt;
-            CONV_POINT16TO32( (POINT16 *)&lParam, &pt );
+            pt.x = SLOWORD(lParam);
+            pt.y = SHIWORD(lParam);
             SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, pt );
         }
         break;

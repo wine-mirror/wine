@@ -6,7 +6,8 @@
  * FIXME: Rather non-functional functions for now.
  */
 
-#include "windows.h"
+#include "winreg.h"
+#include "wine/winuser16.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(setupx);

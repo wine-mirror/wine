@@ -262,7 +262,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	UNKNOWN_PARAM(PBM_DELTAPOS, wParam, lParam);
       temp = infoPtr->CurVal;
       if(wParam != 0){
-	infoPtr->CurVal += (UINT16)wParam;
+	infoPtr->CurVal += (WORD)wParam;
 	PROGRESS_CoercePos (hwnd);
 	PROGRESS_Refresh (hwnd);
       }
@@ -273,7 +273,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	UNKNOWN_PARAM(PBM_SETPOS, wParam, lParam);
       temp = infoPtr->CurVal;
       if(temp != wParam){
-	infoPtr->CurVal = (UINT16)wParam;
+	infoPtr->CurVal = (WORD)wParam;
 	PROGRESS_CoercePos(hwnd);
 	PROGRESS_Refresh (hwnd);
       }
@@ -297,7 +297,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
       if (lParam)
 	UNKNOWN_PARAM(PBM_SETSTEP, wParam, lParam);
       temp = infoPtr->Step;   
-      infoPtr->Step = (UINT16)wParam;   
+      infoPtr->Step = (WORD)wParam;   
       return temp;
 
     case PBM_STEPIT:

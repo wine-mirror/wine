@@ -8,6 +8,7 @@
 #define __WINE_GLOBAL_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 
 /* memory/global.c */
 extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, const void *ptr, DWORD size,

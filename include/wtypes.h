@@ -11,19 +11,18 @@
 
 typedef WORD CLIPFORMAT, *LPCLIPFORMAT;
 
+/* FIXME: does not belong here */
 typedef CHAR		OLECHAR16;
-typedef WCHAR		OLECHAR;
-
 typedef LPSTR		LPOLESTR16;
-typedef LPWSTR		LPOLESTR;
-
 typedef LPCSTR		LPCOLESTR16;
-typedef LPCWSTR		LPCOLESTR;
-
 typedef OLECHAR16	*BSTR16;
-typedef OLECHAR	*BSTR;
-
 typedef BSTR16		*LPBSTR16;
+#define OLESTR16(x) x
+
+typedef WCHAR		OLECHAR;
+typedef LPWSTR		LPOLESTR;
+typedef LPCWSTR		LPCOLESTR;
+typedef OLECHAR	*BSTR;
 typedef BSTR		*LPBSTR;
 
 #ifndef _DWORDLONG_
@@ -37,7 +36,6 @@ typedef __int64 LONGLONG, *PLONGLONG;
 typedef __uint64 ULONGLONG, *PULONGLONG;
 #endif
 
-#define OLESTR16(x) x
 #define OLESTR(x) L##x
 
 typedef enum tagDVASPECT

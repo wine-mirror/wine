@@ -74,6 +74,15 @@
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif
+#ifdef HAVE_IPX_GNU
+# include <netipx/ipx.h>
+# define HAVE_IPX
+#endif
+#ifdef HAVE_IPX_LINUX
+# include <asm/types.h>
+# include <linux/ipx.h>
+# define HAVE_IPX
+#endif
 
 #include "wine/winbase16.h"
 #include "wingdi.h"

@@ -6,10 +6,13 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "mmsystem.h"
 #include "msacm.h"
+#include "msacmdrv.h"
+#include "wineacm.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(msacm)
+DEFAULT_DEBUG_CHANNEL(msacm);
 
 /***********************************************************************
  *		acmGetVersion (MSACM.7)

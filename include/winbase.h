@@ -253,7 +253,6 @@ typedef struct
 #define PROCESS_HEAP_ENTRY_MOVEABLE           0x0010
 #define PROCESS_HEAP_ENTRY_DDESHARE           0x0020
 
-#define INVALID_HANDLE_VALUE16  ((HANDLE16) -1)
 #define INVALID_HANDLE_VALUE  ((HANDLE) -1)
 
 #define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
@@ -288,7 +287,6 @@ typedef struct
 #define TWOSTOPBITS	2
 
 #define IGNORE		0
-#define INFINITE16      0xFFFF
 #define INFINITE      0xFFFFFFFF
 
 #define CE_RXOVER	0x0001
@@ -981,15 +979,6 @@ typedef DWORD CALLBACK (*LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE
 #endif
 
 typedef struct {
-        DWORD dwOSVersionInfoSize;
-        DWORD dwMajorVersion;
-        DWORD dwMinorVersion;
-        DWORD dwBuildNumber;
-        DWORD dwPlatformId;
-        CHAR szCSDVersion[128];
-} OSVERSIONINFO16;
-
-typedef struct {
 	DWORD dwOSVersionInfoSize;
 	DWORD dwMajorVersion;
 	DWORD dwMinorVersion;
@@ -1208,7 +1197,6 @@ typedef void CALLBACK (*PAPCFUNC)(ULONG_PTR);
 typedef void CALLBACK (*PTIMERAPCROUTINE)(LPVOID,DWORD,DWORD);
   
 /*DWORD WINAPI GetVersion( void );*/
-BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16*);
 BOOL WINAPI GetVersionExA(OSVERSIONINFOA*);
 BOOL WINAPI GetVersionExW(OSVERSIONINFOW*);
 #define GetVersionEx WINELIB_NAME_AW(GetVersionEx)
@@ -1243,10 +1231,7 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType );
 BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType );
 #define GetBinaryType WINELIB_NAME_AW(GetBinaryType)
 
-BOOL16      WINAPI GetWinDebugInfo16(LPWINDEBUGINFO,UINT16);
-BOOL16      WINAPI SetWinDebugInfo16(LPWINDEBUGINFO);
 /* Declarations for functions that exist only in Win32 */
-
 
 BOOL        WINAPI AddAccessAllowedAce(PACL,DWORD,DWORD,PSID);
 BOOL        WINAPI AttachThreadInput(DWORD,DWORD,BOOL);
@@ -1516,8 +1501,8 @@ BOOL        WINAPI LookupPrivilegeValueA(LPCSTR,LPCSTR,LPVOID);
 BOOL        WINAPI LookupPrivilegeValueW(LPCWSTR,LPCWSTR,LPVOID);
 #define     LookupPrivilegeValue WINELIB_NAME_AW(LookupPrivilegeValue)
 BOOL        WINAPI MakeSelfRelativeSD(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDWORD);
-HMODULE   WINAPI MapHModuleSL(HMODULE16);
-HMODULE16   WINAPI MapHModuleLS(HMODULE);
+HMODULE     WINAPI MapHModuleSL(WORD);
+WORD        WINAPI MapHModuleLS(HMODULE);
 SEGPTR      WINAPI MapLS(LPVOID);
 LPVOID      WINAPI MapSL(SEGPTR);
 LPVOID      WINAPI MapViewOfFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
@@ -1693,17 +1678,15 @@ void        WINAPI FatalAppExitW(UINT,LPCWSTR);
 ATOM        WINAPI FindAtomA(LPCSTR);
 ATOM        WINAPI FindAtomW(LPCWSTR);
 #define     FindAtom WINELIB_NAME_AW(FindAtom)
-BOOL      WINAPI FindClose(HANDLE);
-HANDLE16    WINAPI FindFirstFile16(LPCSTR,LPWIN32_FIND_DATAA);
-HANDLE    WINAPI FindFirstFileA(LPCSTR,LPWIN32_FIND_DATAA);
-HANDLE    WINAPI FindFirstFileW(LPCWSTR,LPWIN32_FIND_DATAW);
+BOOL        WINAPI FindClose(HANDLE);
+HANDLE      WINAPI FindFirstFileA(LPCSTR,LPWIN32_FIND_DATAA);
+HANDLE      WINAPI FindFirstFileW(LPCWSTR,LPWIN32_FIND_DATAW);
 #define     FindFirstFile WINELIB_NAME_AW(FindFirstFile)
 HANDLE      WINAPI FindFirstFileExA(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
 HANDLE      WINAPI FindFirstFileExW(LPCWSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
 #define     FindFirstFileEx WINELIB_NAME_AW(FindFirstFileEx)
-BOOL16      WINAPI FindNextFile16(HANDLE16,LPWIN32_FIND_DATAA);
-BOOL      WINAPI FindNextFileA(HANDLE,LPWIN32_FIND_DATAA);
-BOOL      WINAPI FindNextFileW(HANDLE,LPWIN32_FIND_DATAW);
+BOOL        WINAPI FindNextFileA(HANDLE,LPWIN32_FIND_DATAA);
+BOOL        WINAPI FindNextFileW(HANDLE,LPWIN32_FIND_DATAW);
 #define     FindNextFile WINELIB_NAME_AW(FindNextFile)
 HRSRC     WINAPI FindResourceA(HMODULE,LPCSTR,LPCSTR);
 HRSRC     WINAPI FindResourceW(HMODULE,LPCWSTR,LPCWSTR);
@@ -1796,7 +1779,6 @@ UINT      WINAPI GetWindowsDirectoryW(LPWSTR,UINT);
 ATOM        WINAPI GlobalAddAtomA(LPCSTR);
 ATOM        WINAPI GlobalAddAtomW(LPCWSTR);
 #define     GlobalAddAtom WINELIB_NAME_AW(GlobalAddAtom)
-HGLOBAL16   WINAPI GlobalAlloc16(UINT16,DWORD);
 HGLOBAL     WINAPI GlobalAlloc(UINT,DWORD);
 DWORD       WINAPI GlobalCompact(DWORD);
 ATOM        WINAPI GlobalDeleteAtom(ATOM);
@@ -1804,26 +1786,18 @@ ATOM        WINAPI GlobalFindAtomA(LPCSTR);
 ATOM        WINAPI GlobalFindAtomW(LPCWSTR);
 #define     GlobalFindAtom WINELIB_NAME_AW(GlobalFindAtom)
 UINT        WINAPI GlobalFlags(HGLOBAL);
-HGLOBAL16   WINAPI GlobalFree16(HGLOBAL16);
 HGLOBAL     WINAPI GlobalFree(HGLOBAL);
 UINT        WINAPI GlobalGetAtomNameA(ATOM,LPSTR,INT);
 UINT        WINAPI GlobalGetAtomNameW(ATOM,LPWSTR,INT);
 #define     GlobalGetAtomName WINELIB_NAME_AW(GlobalGetAtomName)
-HGLOBAL   WINAPI GlobalHandle(LPCVOID);
-WORD        WINAPI GlobalFix16(HGLOBAL16);
+HGLOBAL     WINAPI GlobalHandle(LPCVOID);
 VOID        WINAPI GlobalFix(HGLOBAL);
-LPVOID      WINAPI GlobalLock16(HGLOBAL16);
 LPVOID      WINAPI GlobalLock(HGLOBAL);
-HGLOBAL   WINAPI GlobalReAlloc(HGLOBAL,DWORD,UINT);
-DWORD       WINAPI GlobalSize16(HGLOBAL16);
+HGLOBAL     WINAPI GlobalReAlloc(HGLOBAL,DWORD,UINT);
 DWORD       WINAPI GlobalSize(HGLOBAL);
-VOID        WINAPI GlobalUnfix16(HGLOBAL16);
 VOID        WINAPI GlobalUnfix(HGLOBAL);
-BOOL16      WINAPI GlobalUnlock16(HGLOBAL16);
-BOOL      WINAPI GlobalUnlock(HGLOBAL);
-BOOL16      WINAPI GlobalUnWire16(HGLOBAL16);
-BOOL      WINAPI GlobalUnWire(HGLOBAL);
-SEGPTR      WINAPI GlobalWire16(HGLOBAL16);
+BOOL        WINAPI GlobalUnlock(HGLOBAL);
+BOOL        WINAPI GlobalUnWire(HGLOBAL);
 LPVOID      WINAPI GlobalWire(HGLOBAL);
 BOOL      WINAPI InitAtomTable(DWORD);
 BOOL      WINAPI IsBadCodePtr(FARPROC);
@@ -1857,8 +1831,7 @@ BOOL      WINAPI LocalUnlock(HLOCAL);
 LPVOID      WINAPI LockResource(HGLOBAL);
 #define     LockSegment(handle) GlobalFix((HANDLE)(handle))
 #define     MakeProcInstance(proc,inst) (proc)
-HFILE16     WINAPI OpenFile16(LPCSTR,OFSTRUCT*,UINT16);
-HFILE     WINAPI OpenFile(LPCSTR,OFSTRUCT*,UINT);
+HFILE       WINAPI OpenFile(LPCSTR,OFSTRUCT*,UINT);
 VOID        WINAPI OutputDebugStringA(LPCSTR);
 VOID        WINAPI OutputDebugStringW(LPCWSTR);
 #define     OutputDebugString WINELIB_NAME_AW(OutputDebugString)
@@ -1919,7 +1892,6 @@ LONG        WINAPI _llseek(HFILE,LONG,INT);
 HFILE     WINAPI _lopen(LPCSTR,INT);
 UINT      WINAPI _lread(HFILE,LPVOID,UINT);
 UINT      WINAPI _lwrite(HFILE,LPCSTR,UINT);
-SEGPTR      WINAPI WIN16_GlobalLock16(HGLOBAL16);
 INT       WINAPI lstrcmpA(LPCSTR,LPCSTR);
 INT       WINAPI lstrcmpW(LPCWSTR,LPCWSTR);
 #define     lstrcmp WINELIB_NAME_AW(lstrcmp)

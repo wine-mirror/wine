@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include "ntdef.h" /* UNICODE_STRING */
+#include "wine/windef16.h"
 
 struct _PDB;
 struct __EXCEPTION_FRAME;

@@ -18,18 +18,11 @@ struct tagVARIANT;
 extern "C" {
 #endif 
 
-
-BSTR16 WINAPI SysAllocString16(LPCOLESTR16);
 BSTR WINAPI SysAllocString(const OLECHAR*);
-INT16 WINAPI SysReAllocString16(LPBSTR16,LPCOLESTR16);
 INT WINAPI SysReAllocString(LPBSTR,const OLECHAR*);
-VOID WINAPI SysFreeString16(BSTR16);
 VOID WINAPI SysFreeString(BSTR);
-BSTR16 WINAPI SysAllocStringLen16(const char*, int);
 BSTR WINAPI SysAllocStringLen(const OLECHAR*, UINT);
-int WINAPI SysReAllocStringLen16(BSTR16*, const char*,  int);
 int WINAPI SysReAllocStringLen(BSTR*, const OLECHAR*, UINT);
-int WINAPI SysStringLen16(BSTR16);
 int WINAPI SysStringLen(BSTR);
 
 /*****************************************************************
@@ -486,24 +479,24 @@ HRESULT WINAPI VarDecFromDisp32(IDispatch*pdispIn, LCID lcid, DECIMAL*pdecOut);
 #endif 
 
 typedef struct tagPARAMDATA {
-    OLECHAR16 * szName;    /* parameter name */
+    OLECHAR * szName;   /* parameter name */
     VARTYPE vt;         /* parameter type */
 } PARAMDATA, * LPPARAMDATA;
 
 typedef struct tagMETHODDATA {
-    OLECHAR16 * szName;    /* method name */
-    PARAMDATA * ppdata;  /* pointer to an array of PARAMDATAs */
+    OLECHAR * szName;   /* method name */
+    PARAMDATA * ppdata; /* pointer to an array of PARAMDATAs */
     DISPID dispid;      /* method ID */
-    UINT16 iMeth;         /* method index */
+    UINT iMeth;         /* method index */
     CALLCONV cc;        /* calling convention */
-    UINT16 cArgs;         /* count of arguments */
+    UINT cArgs;         /* count of arguments */
     WORD wFlags;        /* same wFlags as on IDispatch::Invoke() */
     VARTYPE vtReturn;
 } METHODDATA, * LPMETHODDATA;
 
 typedef struct tagINTERFACEDATA {
     METHODDATA * pmethdata;  /* pointer to an array of METHODDATAs */
-    UINT16 cMembers;      /* count of members */
+    UINT         cMembers;   /* count of members */
 } INTERFACEDATA, * LPINTERFACEDATA;
 
 typedef enum tagREGKIND

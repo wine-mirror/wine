@@ -5,7 +5,6 @@
  */
 
 #include "wine/winbase16.h"
-#include "windef.h"
 #include "heap.h"
 #include "module.h"
 #include "selectors.h"

@@ -8,6 +8,7 @@
 #define __WINE_WINPROC_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 
 typedef enum
 {

@@ -719,7 +719,7 @@ static char *GetLocaleSubkeyName( DWORD lctype )
 /******************************************************************************
  *		SetLocaleInfoA	[KERNEL32.656]
  */
-BOOL16 WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
+BOOL WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
 {
     HKEY    hKey;
     char    *pacKey;
@@ -2063,7 +2063,7 @@ INT WINAPI LCMapStringA(
 	type &= 15;
 	if (!flag_stringsort && OLE2NLS_isPunctuation(source_char)) 
 	{
-	  UINT16 encrypted_location = (1<<15) + 7 + 4*count;
+	  WORD encrypted_location = (1<<15) + 7 + 4*count;
 	  *delayed_punctuation_component++ = (unsigned char) (encrypted_location>>8);
 	  *delayed_punctuation_component++ = (unsigned char) (encrypted_location&255);
                      /* big-endian is used here because it lets string comparison be

@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "windef.h"
+#include "wine/windef16.h"
 
 #ifdef HAVE_LINUX_CDROM_H
 # include <linux/cdrom.h>

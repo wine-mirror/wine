@@ -5,11 +5,12 @@
  */
 
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "winver.h"
 #include "ldt.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ver)
+DEFAULT_DEBUG_CHANNEL(ver);
 
 
 /*************************************************************************

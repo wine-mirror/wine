@@ -14,6 +14,7 @@
 #include "wine/obj_shellview.h"
 #include "wine/obj_shelllink.h"
 #include "wine/obj_extracticon.h"
+#include "wine/windef16.h"
 
 /*******************************************
 *  global SHELL32.DLL variables
@@ -160,9 +161,20 @@ void FreeChangeNotifications(void);
 /* file operation */
 BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI);
 
-HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16,LPCSTR,UINT16,WORD);
-
 extern HINSTANCE SHELL_FindExecutable(LPCSTR,LPCSTR ,LPSTR);
+
+/* 16-bit functions */
+void        WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b);
+UINT16      WINAPI DragQueryFile16(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength);
+void        WINAPI DragFinish16(HDROP16 h);
+BOOL16      WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p);
+HINSTANCE16 WINAPI ShellExecute16(HWND16,LPCSTR,LPCSTR,LPCSTR,LPCSTR,INT16);
+HICON16     WINAPI ExtractIcon16(HINSTANCE16,LPCSTR,UINT16);
+HICON16     WINAPI ExtractAssociatedIcon16(HINSTANCE16,LPSTR,LPWORD);
+HICON16     WINAPI ExtractIconEx16 ( LPCSTR, INT16, HICON16 *, HICON16 *, UINT16 );
+HINSTANCE16 WINAPI FindExecutable16(LPCSTR,LPCSTR,LPSTR);
+HGLOBAL16   WINAPI InternalExtractIcon16(HINSTANCE16,LPCSTR,UINT16,WORD);
+BOOL16      WINAPI ShellAbout16(HWND16,LPCSTR,LPCSTR,HICON16);
 
 inline static BOOL SHELL_OsIsUnicode(void)
 {

@@ -553,7 +553,6 @@ DEFINE_OLEGUID(IID_IClassFactory,	0x00000001L, 0, 0);
 typedef struct IClassFactory IClassFactory, *LPCLASSFACTORY;
 
 DEFINE_OLEGUID(IID_IMalloc,		0x00000002L, 0, 0);
-typedef struct IMalloc16 IMalloc16,*LPMALLOC16;
 typedef struct IMalloc IMalloc,*LPMALLOC;
 
 DEFINE_OLEGUID(IID_IUnknown,		0x00000000L, 0, 0);
@@ -630,33 +629,6 @@ ICOM_DEFINE(IClassFactory,IUnknown)
 /*****************************************************************************
  * IMalloc interface
  */
-#define ICOM_INTERFACE IMalloc16
-#define IMalloc16_METHODS \
-    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb) \
-    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb) \
-    ICOM_VMETHOD1(       Free,        LPVOID,pv) \
-    ICOM_METHOD1(DWORD, GetSize,     LPVOID,pv) \
-    ICOM_METHOD1(INT16, DidAlloc,    LPVOID,pv) \
-    ICOM_METHOD  (LPVOID,HeapMinimize)
-#define IMalloc16_IMETHODS \
-    IUnknown_IMETHODS \
-    IMalloc16_METHODS
-ICOM_DEFINE(IMalloc16,IUnknown)
-#undef ICOM_INTERFACE
-
-/*** IUnknown methods ***/
-#define IMalloc16_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IMalloc16_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IMalloc16_Release(p)            ICOM_CALL (Release,p)
-/*** IMalloc16 methods ***/
-#define IMalloc16_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
-#define IMalloc16_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)
-#define IMalloc16_Free(p,a)       ICOM_CALL1(Free,p,a)
-#define IMalloc16_GetSize(p,a)    ICOM_CALL1(GetSize,p,a)
-#define IMalloc16_DidAlloc(p,a)   ICOM_CALL1(DidAlloc,p,a)
-#define IMalloc16_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
-
-
 #define ICOM_INTERFACE IMalloc
 #define IMalloc_METHODS \
     ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb) \
@@ -688,9 +660,6 @@ ICOM_DEFINE(IMalloc,IUnknown)
 extern "C" {
 #endif
 
-HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext, LPMALLOC16* lpMalloc);
-
-HRESULT WINAPI CoGetMalloc16(DWORD dwMemContext,LPMALLOC16* lpMalloc);
 HRESULT WINAPI CoGetMalloc(DWORD dwMemContext,LPMALLOC* lpMalloc);
 
 LPVOID WINAPI CoTaskMemAlloc(ULONG size);
@@ -719,11 +688,9 @@ HRESULT WINAPI CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwCl
 
 HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext, LPVOID pvReserved, REFIID iid, LPVOID *ppv);
 
-HRESULT WINAPI CoInitialize16(LPVOID lpReserved);
 HRESULT WINAPI CoInitialize(LPVOID lpReserved);
 HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit);
 
-void WINAPI CoUninitialize16(void);
 void WINAPI CoUninitialize(void);
 
 typedef enum tagCOINIT
@@ -738,7 +705,6 @@ typedef enum tagCOINIT
 /* FIXME: not implemented */
 BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
 
-HRESULT WINAPI CoLockObjectExternal16(LPUNKNOWN pUnk, BOOL16 fLock, BOOL16 fLastUnlockReleases);
 HRESULT WINAPI CoLockObjectExternal(LPUNKNOWN pUnk, BOOL fLock, BOOL fLastUnlockReleases);
 
 /* class registration flags; passed to CoRegisterClassObject */
@@ -750,13 +716,9 @@ typedef enum tagREGCLS
     REGCLS_SUSPENDED = 4
 } REGCLS;
 
-HRESULT WINAPI CoRegisterClassObject16(REFCLSID rclsid, LPUNKNOWN pUnk, DWORD dwClsContext, DWORD flags, LPDWORD lpdwRegister);
 HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,LPDWORD lpdwRegister);
 
 HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
-
-void WINAPI CoUninitialize16(void);
-void WINAPI CoUninitialize(void);
 
 /*****************************************************************************
  *	COM Server dll - exports

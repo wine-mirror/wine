@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include "ldt.h"
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "wine/wingdi16.h"
 #include "winspool.h"
 #include "winerror.h"

@@ -343,6 +343,30 @@ int FILE_GetUnixHandle( HANDLE handle, DWORD access )
 }
 
 
+/*************************************************************************
+ * 		FILE_OpenConsole
+ *
+ * Open a handle to the current process console.
+ */
+static HANDLE FILE_OpenConsole( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
+{
+    int ret = -1;
+
+    SERVER_START_REQ
+    {
+        struct open_console_request *req = server_alloc_req( sizeof(*req), 0 );
+
+        req->output  = output;
+        req->access  = access;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        SetLastError(0);
+        if (!server_call( REQ_OPEN_CONSOLE )) ret = req->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
 /***********************************************************************
  *           FILE_CreateFile
  *
@@ -508,8 +532,8 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
         return HFILE_ERROR;
 
     /* Open a console for CONIN$ or CONOUT$ */
-    if (!strcasecmp(filename, "CONIN$")) return CONSOLE_OpenHandle( FALSE, access, sa );
-    if (!strcasecmp(filename, "CONOUT$")) return CONSOLE_OpenHandle( TRUE, access, sa );
+    if (!strcasecmp(filename, "CONIN$")) return FILE_OpenConsole( FALSE, access, sa );
+    if (!strcasecmp(filename, "CONOUT$")) return FILE_OpenConsole( TRUE, access, sa );
 
     if (DOSFS_GetDevice( filename ))
     {

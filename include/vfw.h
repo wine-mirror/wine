@@ -1,8 +1,6 @@
 #ifndef __WINE_VFW_H
 #define __WINE_VFW_H
 
-#include "config.h"	/* for inline */
-
 #include "windef.h"
 #include "mmsystem.h"
 #include "wingdi.h"
@@ -15,7 +13,6 @@
 extern "C" {
 #endif  /* __cplusplus */
 
-typedef HANDLE16 HDRAWDIB16;
 typedef HANDLE HDRAWDIB;
 
 HWND        VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance, DWORD dwStyle, LPCSTR szFile);
@@ -299,25 +296,6 @@ typedef struct {
 					/* 238: */
 } ICINFO;
 
-#include "pshpack1.h"
-
-typedef struct {
-	DWORD dwSize;
-	DWORD fccType;
-	DWORD fccHandler;
-	DWORD dwFlags;
-	DWORD dwVersion;
-	DWORD dwVersionICM;
-	/*
-	 * under Win16, normal chars are used
-	 */
-	CHAR szName[16];
-	CHAR szDescription[128];
-	CHAR szDriver[128];
-} ICINFO16;
-
-#include "poppack.h"
-
 /* ICINFO.dwFlags */
 #define	VIDCF_QUALITY		0x0001  /* supports quality */
 #define	VIDCF_CRUNCH		0x0002  /* supports crunching to a frame size */
@@ -383,28 +361,6 @@ typedef struct {
     INT			dySrc;
 } ICDECOMPRESSEX;
 
-#include "pshpack1.h"
-
-typedef struct {
-    DWORD		dwFlags;
-    LPBITMAPINFOHEADER	lpbiSrc;
-    LPVOID		lpSrc;
-    LPBITMAPINFOHEADER	lpbiDst;
-    LPVOID		lpDst;
-
-    INT16  		xDst;       /* destination rectangle */
-    INT16		yDst;
-    INT16  		dxDst;
-    INT16  		dyDst;
-
-    INT16		xSrc;       /* source rectangle */
-    INT16  		ySrc;
-    INT16		dxSrc;
-    INT16  		dySrc;
-} ICDECOMPRESSEX16;
-
-#include "poppack.h"
-
 DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,LPVOID lpData,LPBITMAPINFOHEADER lpbi,LPVOID lpBits);
 
 #define ICDecompressBegin(hic, lpbiInput, lpbiOutput) 	\
@@ -443,7 +399,6 @@ DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,L
 #define ICDecompressEnd(hic) ICSendMessage(hic, ICM_DECOMPRESS_END, 0, 0)
 
 LRESULT	VFWAPI	ICSendMessage(HIC hic, UINT msg, DWORD dw1, DWORD dw2);
-LRESULT VFWAPI	ICSendMessage16(HIC16 hic, UINT16 msg, DWORD dw1, DWORD dw2);
 
 inline static LRESULT VFWAPI ICDecompressEx(HIC hic, DWORD dwFlags, 
 					    LPBITMAPINFOHEADER lpbiSrc, LPVOID lpSrc,
@@ -557,12 +512,10 @@ BOOL    VFWAPI  ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR 
 BOOL    VFWAPI  ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags);
 LRESULT	VFWAPI	ICGetInfo(HIC hic,ICINFO *picinfo, DWORD cb);
 HIC	VFWAPI	ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode);
-HIC16   VFWAPI	ICOpen16(DWORD fccType, DWORD fccHangler, UINT16 wMode);
 HIC	VFWAPI	ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHandler);
 
 LRESULT VFWAPI	ICClose(HIC hic);
 HIC	VFWAPI	ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut, WORD wFlags);
-HIC16	VFWAPI	ICLocate16(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut, WORD wFlags);
 HIC	VFWAPI	ICGetDisplayFormat(HIC hic, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut, int BitDepth, int dx, int dy);
 
 /* Values for wFlags of ICInstall() */
@@ -609,17 +562,6 @@ typedef struct {
 } ICDRAWSUGGEST;
 
 typedef struct {
-	DWORD dwFlags;
-	LPBITMAPINFOHEADER lpbiIn;
-	LPBITMAPINFOHEADER lpbiSuggest;
-	INT16 dxSrc;
-	INT16 dySrc;
-	INT16 dxDst;
-	INT16 dyDst;
-	HIC16 hicDecompressor;
-} ICDRAWSUGGEST16;
-
-typedef struct {
     DWORD               dwFlags;
     int                 iStart;
     int                 iLen;
@@ -645,25 +587,6 @@ DWORD	VFWAPIV	ICDrawBegin(
         DWORD			dwScale
 );
 
-DWORD	VFWAPIV	ICDrawBegin16(
-        HIC16			hic,
-        DWORD			dwFlags,/* flags */
-        HPALETTE16		hpal,	/* palette to draw with */
-        HWND16			hwnd,	/* window to draw to */
-        HDC16			hdc,	/* HDC to draw to */
-	INT16			xDst,	/* destination rectangle */
-        INT16			yDst,
-        INT16			dxDst,
-        INT16			dyDst,
-        LPBITMAPINFOHEADER	lpbi,	/* format of frame to draw */
-        INT16			xSrc,	/* source rectangle */
-        INT16			ySrc,
-        INT16			dxSrc,
-        INT16			dySrc,
-        DWORD			dwRate,	/* frames/second = (dwRate/dwScale) */
-        DWORD			dwScale
-);
-
 /* as passed to ICM_DRAW_BEGIN */
 typedef struct {
 	DWORD		dwFlags;
@@ -682,28 +605,6 @@ typedef struct {
 	DWORD		dwRate;
 	DWORD		dwScale;
 } ICDRAWBEGIN;
-
-#include "pshpack1.h"
-
-typedef struct {
-	DWORD		dwFlags;
-	HPALETTE16	hpal;
-	HWND16		hwnd;
-	HDC16		hdc;
-	INT16		xDst;
-	INT16		yDst;
-	INT16		dxDst;
-	INT16		dyDst;
-	LPBITMAPINFOHEADER	lpbi;
-	INT16		xSrc;
-	INT16		ySrc;
-	INT16		dxSrc;
-	INT16		dySrc;
-	DWORD		dwRate;
-	DWORD		dwScale;
-} ICDRAWBEGIN16;
-
-#include "poppack.h"
 
 #define ICDRAW_HURRYUP      0x80000000L   /* don't draw just buffer (hurry up!) */
 #define ICDRAW_UPDATE       0x40000000L   /* don't draw just update screen */
@@ -899,7 +800,7 @@ typedef struct {
     DWORD	dwSuggestedBufferSize;
     DWORD	dwQuality;
     DWORD	dwSampleSize;
-    RECT16	rcFrame;	/* word.word - word.word in file */
+    struct { SHORT left, top, right, bottom; } rcFrame; /* word.word - word.word in file */
 } AVIStreamHeader;
 
 /* AVIINDEXENTRY.dwFlags */

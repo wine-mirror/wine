@@ -8,7 +8,6 @@
 #define __WINE_WINDEF_H
 
 #ifdef __WINE__
-# include "config.h"
 # undef UNICODE
 #endif  /* __WINE__ */
 
@@ -337,12 +336,6 @@ typedef VOID    CALLBACK (*TIMERPROC)(HWND,UINT,UINT,DWORD);
 typedef BOOL CALLBACK (*WNDENUMPROC)(HWND,LPARAM);
 typedef LRESULT CALLBACK (*WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 
-/*----------------------------------------------------------------------------
-** FIXME:  Better isolate Wine's reliance on the xxx16 type definitions.
-**         For now, we just isolate them to make the situation clear.
-**--------------------------------------------------------------------------*/
-#include "wine/windef16.h"
-
 /* Define some empty macros for compatibility with Windows code. */
 
 #ifndef __WINE__
@@ -377,8 +370,8 @@ typedef LRESULT CALLBACK (*WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 #define LOWORD(l)              ((WORD)(DWORD)(l))
 #define HIWORD(l)              ((WORD)((DWORD)(l) >> 16))
 
-#define SLOWORD(l)             ((INT16)(LONG)(l))
-#define SHIWORD(l)             ((INT16)((LONG)(l) >> 16))
+#define SLOWORD(l)             ((SHORT)(LONG)(l))
+#define SHIWORD(l)             ((SHORT)((LONG)(l) >> 16))
 
 #define MAKEWORD(low,high)     ((WORD)(((BYTE)(low)) | ((WORD)((BYTE)(high))) << 8))
 #define MAKELONG(low,high)     ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
@@ -443,7 +436,6 @@ typedef LRESULT CALLBACK (*WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 #define _MAX_FNAME 255
 #define _MAX_EXT   256
 
-#define HFILE_ERROR16   ((HFILE16)-1)
 #define HFILE_ERROR     ((HFILE)-1)
 
 /* The SIZE structure */
@@ -454,11 +446,6 @@ typedef struct tagSIZE
 } SIZE, *PSIZE, *LPSIZE;
 
 typedef SIZE SIZEL, *PSIZEL, *LPSIZEL;
-
-#define CONV_SIZE16TO32(s16,s32) \
-            ((s32)->cx = (INT)(s16)->cx, (s32)->cy = (INT)(s16)->cy)
-#define CONV_SIZE32TO16(s32,s16) \
-            ((s16)->cx = (INT16)(s32)->cx, (s16)->cy = (INT16)(s32)->cy)
 
 /* The POINT structure */
 typedef struct tagPOINT
@@ -473,24 +460,13 @@ typedef struct _POINTL
     LONG y;
 } POINTL;
 
-#define CONV_POINT16TO32(p16,p32) \
-            ((p32)->x = (INT)(p16)->x, (p32)->y = (INT)(p16)->y)
-#define CONV_POINT32TO16(p32,p16) \
-            ((p16)->x = (INT16)(p32)->x, (p16)->y = (INT16)(p32)->y)
-
-#define MAKEPOINT16(l) (*((POINT16 *)&(l)))
-
 /* The POINTS structure */
 
 typedef struct tagPOINTS
 {
-	SHORT x;
-	SHORT y;
+    SHORT x;
+    SHORT y;
 } POINTS, *PPOINTS, *LPPOINTS;
-
-
-#define MAKEPOINTS(l)  (*((POINTS *)&(l)))
-
 
 /* The RECT structure */
 typedef struct tagRECT
@@ -512,13 +488,6 @@ typedef struct tagRECTL
 } RECTL, *PRECTL, *LPRECTL;
 
 typedef const RECTL *LPCRECTL;
-
-#define CONV_RECT16TO32(r16,r32) \
-    ((r32)->left  = (INT)(r16)->left,  (r32)->top    = (INT)(r16)->top, \
-     (r32)->right = (INT)(r16)->right, (r32)->bottom = (INT)(r16)->bottom)
-#define CONV_RECT32TO16(r32,r16) \
-    ((r16)->left  = (INT16)(r32)->left,  (r16)->top    = (INT16)(r32)->top, \
-     (r16)->right = (INT16)(r32)->right, (r16)->bottom = (INT16)(r32)->bottom)
 
 #ifdef __cplusplus
 }

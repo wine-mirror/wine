@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "global.h"
 #include "module.h"
 #include "miscemu.h"
@@ -16,7 +17,7 @@
 #include "debugtools.h"
 #include "selectors.h"
 
-DEFAULT_DEBUG_CHANNEL(int31)
+DEFAULT_DEBUG_CHANNEL(int31);
 
 typedef struct {
  WORD Handle;

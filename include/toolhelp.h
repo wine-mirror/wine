@@ -2,6 +2,7 @@
 #define __WINE_TOOLHELP_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 
 #define MAX_DATA	11
 #define MAX_MODULE_NAME	9

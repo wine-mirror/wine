@@ -15,6 +15,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "ddeml.h"
+#include "ddeml16.h"
 #include "winerror.h"
 #include "heap.h"
 #include "debugtools.h"

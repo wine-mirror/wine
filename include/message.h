@@ -8,6 +8,7 @@
 #define __WINE_MESSAGE_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 
 struct tagMSG;
 

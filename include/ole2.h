@@ -38,11 +38,8 @@ extern "C" {
 /*
  * API declarations
  */
-HRESULT     WINAPI RegisterDragDrop16(HWND16,LPDROPTARGET);
 HRESULT     WINAPI RegisterDragDrop(HWND,LPDROPTARGET);
-HRESULT     WINAPI RevokeDragDrop16(HWND16);
 HRESULT     WINAPI RevokeDragDrop(HWND);
-HRESULT     WINAPI DoDragDrop16(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
 HRESULT     WINAPI DoDragDrop(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
 HRESULT  WINAPI OleLoadFromStream(IStream *pStm,REFIID iidInterface,void** ppvObj);
 HRESULT  WINAPI OleSaveToStream(IPersistStream *pPStm,IStream *pStm);

@@ -34,9 +34,8 @@ DEFAULT_DEBUG_CHANNEL(commdlg);
 
 static LRESULT WINAPI ColorDlgProc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam );
 
-#define CONV_POINTSTOPOINT( ps, p ) \
-            ((p)->x = (LONG)(ps)->x, (p)->y = (LONG)(ps)->y)
- 
+#define CONV_LPARAMTOPOINT(lp,p) do { (p)->x = SLOWORD(lp); (p)->y = SHIWORD(lp); } while(0)
+
 static const COLORREF predefcolors[6][8]=
 {
  { 0x008080FFL, 0x0080FFFFL, 0x0080FF80L, 0x0080FF00L,
@@ -243,7 +242,7 @@ static int CC_MouseCheckPredefColorArray( LCCPRIV lpp, HWND hDlg, int dlgitem, i
  RECT rect;
  int dx, dy, x, y;
 
- CONV_POINTSTOPOINT(&(MAKEPOINTS(lParam)) , &point);
+ CONV_LPARAMTOPOINT(lParam, &point);
  ClientToScreen(hDlg, &point);
  hwnd = GetDlgItem(hDlg, dlgitem);
  GetWindowRect(hwnd, &rect);
@@ -278,7 +277,7 @@ static int CC_MouseCheckUserColorArray( LCCPRIV lpp, HWND hDlg, int dlgitem, int
  int dx, dy, x, y;
  COLORREF *crarr = lpp->lpcc->lpCustColors;
 
- CONV_POINTSTOPOINT(&(MAKEPOINTS(lParam)), &point);
+ CONV_LPARAMTOPOINT(lParam, &point);
  ClientToScreen(hDlg, &point);
  hwnd = GetDlgItem(hDlg, dlgitem);
  GetWindowRect(hwnd, &rect);
@@ -320,7 +319,7 @@ static int CC_MouseCheckColorGraph( HWND hDlg, int dlgitem, int *hori, int *vert
  RECT rect;
  long x,y;
 
- CONV_POINTSTOPOINT(&(MAKEPOINTS(lParam)), &point);
+ CONV_LPARAMTOPOINT(lParam, &point);
  ClientToScreen(hDlg, &point);
  hwnd = GetDlgItem( hDlg, dlgitem );
  GetWindowRect(hwnd, &rect);
@@ -353,7 +352,7 @@ static int CC_MouseCheckResultWindow( HWND hDlg, LPARAM lParam )
  POINT point;
  RECT rect;
 
- CONV_POINTSTOPOINT(&(MAKEPOINTS(lParam)), &point);
+ CONV_LPARAMTOPOINT(lParam, &point);
  ClientToScreen(hDlg, &point);
  hwnd = GetDlgItem(hDlg, 0x2c5);
  GetWindowRect(hwnd, &rect);

@@ -8,6 +8,7 @@
 #define _WINE_DLL_CDLG_H
 
 #include "dlgs.h"
+#include "wine/windef16.h"
 
 /*---------------- 16-bit ----------------*/
 extern HINSTANCE16	COMMDLG_hInstance;

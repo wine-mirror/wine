@@ -15,6 +15,7 @@
 
 #include "mmsystem.h"
 #include "winbase.h"
+#include "wine/mmsystem16.h"
 
 #define MAX_MIDIINDRV 	(16)
 /* For now I'm making 16 the maximum number of midi devices one can

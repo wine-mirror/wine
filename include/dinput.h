@@ -3,7 +3,6 @@
 
 #include "windef.h" /* for MAX_PATH */
 #include "unknwn.h"
-#include "mouse.h"
 
 #define DIRECTINPUT_VERSION	0x0500
 

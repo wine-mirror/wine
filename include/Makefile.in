@@ -14,6 +14,7 @@ INSTALLED_INCLUDES = \
 	d3d.h \
 	d3dcaps.h \
 	d3dtypes.h \
+	d3dvec.inl \
 	dde.h \
 	ddeml.h \
 	ddraw.h \
@@ -54,7 +55,6 @@ INSTALLED_INCLUDES = \
 	pshpack2.h \
 	pshpack4.h \
 	pshpack8.h \
-	queue.h \
 	ras.h \
 	regstr.h \
 	richedit.h \
@@ -116,7 +116,6 @@ INSTALLED_INCLUDES = \
 	wine/obj_shelllink.h \
 	wine/obj_shellview.h \
 	wine/obj_storage.h \
-	wine/port.h \
 	wine/unicode.h \
 	winerror.h \
 	wingdi.h \
@@ -133,6 +132,7 @@ INSTALLED_INCLUDES = \
 	winsvc.h \
 	winuser.h \
 	winver.h \
+	wnaspi32.h \
 	wownt32.h \
 	wtypes.h
 

@@ -1628,6 +1628,8 @@ typedef struct
     DWORD   bfOffBits;
 } BITMAPFILEHEADER;
 
+#define MAKEPOINTS(l)  (*((POINTS *)&(l)))
+
 typedef struct
 {
     DWORD 	biSize;

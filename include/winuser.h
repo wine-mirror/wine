@@ -138,30 +138,11 @@ typedef struct
 
 typedef struct
 {
-   LPARAM   lParam;
-   WPARAM16 wParam;
-   UINT16   message;
-   HWND16   hwnd;
-} CWPSTRUCT16, *LPCWPSTRUCT16;
-
-typedef struct
-{
   LPARAM        lParam;
   WPARAM      wParam;
   UINT        message;
   HWND        hwnd;
 } CWPSTRUCT, *LPCWPSTRUCT;
-
-
-
-typedef struct
-{
-  LRESULT       lResult;
-  LPARAM        lParam;
-  WPARAM16      wParam;
-  DWORD         message;
-  HWND16        hwnd;
-} CWPRETSTRUCT16, *LPCWPRETSTRUCT16;
 
 typedef struct
 {
@@ -1296,7 +1277,7 @@ typedef struct {
 
 typedef struct
 {
-    UINT16  mkSize;
+    WORD    mkSize;
     BYTE    mkKeyList;
     BYTE    szKeyphrase[1];
 } MULTIKEYHELP, *LPMULTIKEYHELP;
@@ -3019,28 +3000,6 @@ typedef struct
 #define CF_GDIOBJLAST       0x03FF
 
 
-/* DragObject stuff */
-
-typedef struct
-{
-    HWND16     hWnd;
-    HANDLE16   hScope;
-    WORD       wFlags;
-    HANDLE16   hList;
-    HANDLE16   hOfStruct;
-    POINT16 pt WINE_PACKED;
-    LONG       l WINE_PACKED;
-} DRAGINFO, *LPDRAGINFO;
-
-#define DRAGOBJ_PROGRAM		0x0001
-#define DRAGOBJ_DATA		0x0002
-#define DRAGOBJ_DIRECTORY	0x0004
-#define DRAGOBJ_MULTIPLE	0x0008
-#define DRAGOBJ_EXTERNAL	0x8000
-
-#define DRAG_PRINT		0x544E5250
-#define DRAG_FILE		0x454C4946
-
 /* types of LoadImage */
 #define IMAGE_BITMAP	0
 #define IMAGE_ICON	1
@@ -3487,7 +3446,7 @@ INT       WINAPI GetKeyNameTextW(LONG,LPWSTR,INT);
 INT       WINAPI GetKeyboardLayoutNameA(LPSTR);
 INT       WINAPI GetKeyboardLayoutNameW(LPWSTR);
 #define     GetKeyboardLayoutName WINELIB_NAME_AW(GetKeyboardLayoutName)
-INT16       WINAPI GetKeyState(INT);
+SHORT       WINAPI GetKeyState(INT);
 HWND      WINAPI GetLastActivePopup(HWND);
 HMENU     WINAPI GetMenu(HWND);
 INT       WINAPI GetMenuItemCount(HMENU);
@@ -3806,14 +3765,12 @@ INT       WINAPI wvsprintfA(LPSTR,LPCSTR,va_list);
 INT       WINAPI wvsprintfW(LPWSTR,LPCWSTR,va_list);
 #define     wvsprintf WINELIB_NAME_AW(wvsprintf)
 
-BOOL      WINAPI RegisterShellHook16(HWND16,UINT16);
 /* NOTE: This is SYSTEM.3, not USER.182, which is also named KillSystemTimer */
 WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
 
 /* Extra functions that don't exist in the Windows API */
 
 HPEN        WINAPI GetSysColorPen(INT);
-VOID        WINAPI ScreenSwitchEnable16(WORD);
 INT         WINAPIV wsnprintfA(LPSTR,UINT,LPCSTR,...);
 INT         WINAPIV wsnprintfW(LPWSTR,UINT,LPCWSTR,...);
 #define     wsnprintf WINELIB_NAME_AW(wsnprintf)

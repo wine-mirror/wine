@@ -8,6 +8,7 @@
 #define __WINE_BUILTIN16_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 #include "ldt.h"
 
 struct _CONTEXT86;

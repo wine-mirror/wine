@@ -11,6 +11,7 @@
 #include "wingdi.h"
 #include "winproc.h"
 #include "winuser.h"
+#include "wine/windef16.h"
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 

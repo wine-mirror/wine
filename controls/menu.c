@@ -2205,7 +2205,7 @@ BOOL MENU_IsMenuActive(void)
  *
  * Walks menu chain trying to find a menu pt maps to.
  */
-static HMENU MENU_PtMenu( HMENU hMenu, POINT16 pt )
+static HMENU MENU_PtMenu( HMENU hMenu, POINT pt )
 {
    POPUPMENU *menu = MENU_GetMenu( hMenu );
    register UINT ht = menu->FocusedItem;
@@ -2749,9 +2749,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	if ((msg.message >= WM_MOUSEFIRST) && (msg.message <= WM_MOUSELAST))
 	{
 	    /* Find a menu for this mouse event */
-            POINT16 pt16;
-            CONV_POINT32TO16( &msg.pt, &pt16 );
-	    hmenu = MENU_PtMenu( mt.hTopMenu, pt16 );
+	    hmenu = MENU_PtMenu( mt.hTopMenu, msg.pt );
 
 	    switch(msg.message)
 	    {

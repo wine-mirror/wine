@@ -2,6 +2,7 @@
 #define __WINE_CLIPBOARD_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 
 struct tagWND;
 

@@ -155,7 +155,7 @@ extern UINT			MCI_GetDriverFromString(LPCSTR str);
 extern DWORD			MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
 extern const char* 		MCI_MessageToString(UINT16 wMsg);
 
-extern UINT16		WINAPI	MCI_DefYieldProc(UINT16 wDevID, DWORD data);
+extern UINT		WINAPI	MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data);
 
 extern LRESULT			MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32);
 

@@ -4,7 +4,7 @@
  */
 
 #include "windef.h"
-#include "wingdi.h"
+#include "wine/wingdi16.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);

@@ -810,7 +810,8 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
     case WM_MOUSEMOVE:
       if(UPDOWN_IsEnabled(hwnd)){
 	POINT pt;
-	CONV_POINT16TO32( (POINT16 *)&lParam, &pt );
+        pt.x = SLOWORD(lParam);
+        pt.y = SHIWORD(lParam);
 	UPDOWN_HandleMouseEvent (hwnd, message, pt );
       }
     break;

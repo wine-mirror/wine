@@ -3138,7 +3138,7 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
 {
  BOOL16		wParam, bResult = 0;
  POINT        pt;
- LPDRAGINFO	ptrDragInfo = (LPDRAGINFO) PTR_SEG_TO_LIN(spDragInfo);
+ LPDRAGINFO16	ptrDragInfo = (LPDRAGINFO16) PTR_SEG_TO_LIN(spDragInfo);
  WND 	       *ptrQueryWnd = WIN_FindWndPtr(hQueryWnd),*ptrWnd;
  RECT		tempRect;
 
@@ -3267,15 +3267,15 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
                            HANDLE16 hOfStruct, WORD szList, HCURSOR16 hCursor )
 {
     MSG	msg;
-    LPDRAGINFO	lpDragInfo;
+    LPDRAGINFO16 lpDragInfo;
     SEGPTR	spDragInfo;
     HCURSOR16 	hDragCursor=0, hOldCursor=0, hBummer=0;
-    HGLOBAL16	hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO));
+    HGLOBAL16	hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO16));
     WND        *wndPtr = WIN_FindWndPtr(hWnd);
     HCURSOR16	hCurrentCursor = 0;
     HWND16	hCurrentWnd = 0;
 
-    lpDragInfo = (LPDRAGINFO) GlobalLock16(hDragInfo);
+    lpDragInfo = (LPDRAGINFO16) GlobalLock16(hDragInfo);
     spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
 
     if( !lpDragInfo || !spDragInfo )
@@ -3349,7 +3349,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	{
 	    if( hCurrentWnd )
 	        SendMessage16( hCurrentWnd, WM_DRAGSELECT, 0, 
-		       (LPARAM)MAKELONG(LOWORD(spDragInfo)+sizeof(DRAGINFO),
+		       (LPARAM)MAKELONG(LOWORD(spDragInfo)+sizeof(DRAGINFO16),
 				        HIWORD(spDragInfo)) );
 	    hCurrentWnd = lpDragInfo->hScope;
 	    if( hCurrentWnd )

@@ -38,6 +38,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
+#include "wine/windef16.h"
 #include "debugtools.h"
 
 #include "initguid.h"

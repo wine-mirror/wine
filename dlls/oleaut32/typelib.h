@@ -8,9 +8,8 @@
 #ifndef _WINE_TYPELIB_H
 #define _WINE_TYPELIB_H
 
-
 #include "oleauto.h"
-
+#include "wine/windef16.h"
 
 #define TLBMAGIC2 "MSFT"
 #define TLBMAGIC1 "SLTG"

@@ -176,8 +176,4 @@ BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput,
 BOOL WINAPI SetConsoleScreenBufferSize(HANDLE hConsoleOutput,
 					   COORD dwSize);
 
-#ifdef __WINE__
-extern HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa );
-#endif
-
 #endif  /* __WINE_WINCON_H */

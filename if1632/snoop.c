@@ -10,6 +10,7 @@
 #include "winbase.h"
 #include "windef.h"
 #include "winnt.h"
+#include "wine/winbase16.h"
 #include "heap.h"
 #include "global.h"
 #include "selectors.h"

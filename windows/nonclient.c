@@ -670,14 +670,14 @@ END:
  * Handle a WM_NCHITTEST message. Called from NC_HandleNCHitTest().
  */
 
-static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
+static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
 {
-    RECT16 rect;
+    RECT rect;
 
-    TRACE("hwnd=%04x pt=%d,%d\n", wndPtr->hwndSelf, pt.x, pt.y );
+    TRACE("hwnd=%04x pt=%ld,%ld\n", wndPtr->hwndSelf, pt.x, pt.y );
 
-    GetWindowRect16 (wndPtr->hwndSelf, &rect );
-    if (!PtInRect16( &rect, pt )) return HTNOWHERE;
+    GetWindowRect(wndPtr->hwndSelf, &rect );
+    if (!PtInRect( &rect, pt )) return HTNOWHERE;
 
     if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
 
@@ -686,8 +686,8 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
         /* Check borders */
         if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
         {
-            InflateRect16( &rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
-            if (!PtInRect16( &rect, pt ))
+            InflateRect( &rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
+            if (!PtInRect( &rect, pt ))
             {
                 /* Check top sizing border */
                 if (pt.y < rect.top)
@@ -722,10 +722,10 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
         else  /* No thick frame */
         {
             if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
-                InflateRect16(&rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
+                InflateRect(&rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
             else if (HAS_THINFRAME( wndPtr->dwStyle ))
-                InflateRect16(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
-            if (!PtInRect16( &rect, pt )) return HTBORDER;
+                InflateRect(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
+            if (!PtInRect( &rect, pt )) return HTBORDER;
         }
 
         /* Check caption */
@@ -733,7 +733,7 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
             rect.top += GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYBORDER);
-            if (!PtInRect16( &rect, pt ))
+            if (!PtInRect( &rect, pt ))
             {
                 /* Check system menu */
                 if ((wndPtr->dwStyle & WS_SYSMENU) && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
@@ -756,16 +756,16 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
 
       /* Check client area */
 
-    ScreenToClient16( wndPtr->hwndSelf, &pt );
-    GetClientRect16( wndPtr->hwndSelf, &rect );
-    if (PtInRect16( &rect, pt )) return HTCLIENT;
+    ScreenToClient( wndPtr->hwndSelf, &pt );
+    GetClientRect( wndPtr->hwndSelf, &rect );
+    if (PtInRect( &rect, pt )) return HTCLIENT;
 
       /* Check vertical scroll bar */
 
     if (wndPtr->dwStyle & WS_VSCROLL)
     {
 	rect.right += GetSystemMetrics(SM_CXVSCROLL);
-	if (PtInRect16( &rect, pt )) return HTVSCROLL;
+	if (PtInRect( &rect, pt )) return HTVSCROLL;
     }
 
       /* Check horizontal scroll bar */
@@ -773,7 +773,7 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
     if (wndPtr->dwStyle & WS_HSCROLL)
     {
 	rect.bottom += GetSystemMetrics(SM_CYHSCROLL);
-	if (PtInRect16( &rect, pt ))
+	if (PtInRect( &rect, pt ))
 	{
 	      /* Check size box */
 	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
@@ -805,15 +805,14 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
  * FIXME:  Just a modified copy of the Win 3.1 version.
  */
 
-static LONG
-NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
+static LONG NC_DoNCHitTest95 (WND *wndPtr, POINT pt )
 {
-    RECT16 rect;
+    RECT rect;
 
-    TRACE("hwnd=%04x pt=%d,%d\n", wndPtr->hwndSelf, pt.x, pt.y );
+    TRACE("hwnd=%04x pt=%ld,%ld\n", wndPtr->hwndSelf, pt.x, pt.y );
 
-    GetWindowRect16 (wndPtr->hwndSelf, &rect );
-    if (!PtInRect16( &rect, pt )) return HTNOWHERE;
+    GetWindowRect(wndPtr->hwndSelf, &rect );
+    if (!PtInRect( &rect, pt )) return HTNOWHERE;
 
     if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
 
@@ -822,8 +821,8 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
         /* Check borders */
         if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
         {
-            InflateRect16( &rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
-            if (!PtInRect16( &rect, pt ))
+            InflateRect( &rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
+            if (!PtInRect( &rect, pt ))
             {
                 /* Check top sizing border */
                 if (pt.y < rect.top)
@@ -858,10 +857,10 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
         else  /* No thick frame */
         {
             if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
-                InflateRect16(&rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
+                InflateRect(&rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
             else if (HAS_THINFRAME( wndPtr->dwStyle ))
-                InflateRect16(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
-            if (!PtInRect16( &rect, pt )) return HTBORDER;
+                InflateRect(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
+            if (!PtInRect( &rect, pt )) return HTBORDER;
         }
 
         /* Check caption */
@@ -872,7 +871,7 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
 	        rect.top += GetSystemMetrics(SM_CYSMCAPTION) - 1;
 	    else
 	        rect.top += GetSystemMetrics(SM_CYCAPTION) - 1;
-            if (!PtInRect16( &rect, pt ))
+            if (!PtInRect( &rect, pt ))
             {
                 /* Check system menu */
                 if ((wndPtr->dwStyle & WS_SYSMENU) && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
@@ -906,16 +905,16 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
 
       /* Check client area */
 
-    ScreenToClient16( wndPtr->hwndSelf, &pt );
-    GetClientRect16( wndPtr->hwndSelf, &rect );
-    if (PtInRect16( &rect, pt )) return HTCLIENT;
+    ScreenToClient( wndPtr->hwndSelf, &pt );
+    GetClientRect( wndPtr->hwndSelf, &rect );
+    if (PtInRect( &rect, pt )) return HTCLIENT;
 
       /* Check vertical scroll bar */
 
     if (wndPtr->dwStyle & WS_VSCROLL)
     {
 	rect.right += GetSystemMetrics(SM_CXVSCROLL);
-	if (PtInRect16( &rect, pt )) return HTVSCROLL;
+	if (PtInRect( &rect, pt )) return HTVSCROLL;
     }
 
       /* Check horizontal scroll bar */
@@ -923,7 +922,7 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
     if (wndPtr->dwStyle & WS_HSCROLL)
     {
 	rect.bottom += GetSystemMetrics(SM_CYHSCROLL);
-	if (PtInRect16( &rect, pt ))
+	if (PtInRect( &rect, pt ))
 	{
 	      /* Check size box */
 	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
@@ -952,8 +951,7 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
  *
  * Handle a WM_NCHITTEST message. Called from DefWindowProc().
  */
-LONG
-NC_HandleNCHitTest (HWND hwnd , POINT16 pt)
+LONG NC_HandleNCHitTest (HWND hwnd , POINT pt)
 {
     LONG retvalue;
     WND *wndPtr = WIN_FindWndPtr (hwnd);
@@ -2031,10 +2029,10 @@ BOOL NC_GetSysPopupPos( WND* wndPtr, RECT* rect )
  * Return hit test code for caption or sizing border.
  */
 static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
-                              POINT16 *capturePoint )
+                              POINT *capturePoint )
 {
     LONG hittest = 0;
-    POINT16 pt;
+    POINT pt;
     MSG msg;
     RECT rectWindow;
 
@@ -2067,8 +2065,7 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
 	    switch(msg.message)
 	    {
 	    case WM_MOUSEMOVE:
-                CONV_POINT32TO16(&msg.pt, &pt);
-                hittest = NC_HandleNCHitTest( wndPtr->hwndSelf, pt );
+                hittest = NC_HandleNCHitTest( wndPtr->hwndSelf, msg.pt );
 		if ((hittest < HTLEFT) || (hittest > HTBOTTOMRIGHT))
 		    hittest = 0;
 		break;
@@ -2126,7 +2123,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
     LONG hittest = (LONG)(wParam & 0x0f);
     HCURSOR16 hDragCursor = 0, hOldCursor = 0;
     POINT minTrack, maxTrack;
-    POINT16 capturePoint, pt;
+    POINT capturePoint, pt;
     WND *     wndPtr = WIN_FindWndPtr( hwnd );
     BOOL    thickframe = HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle );
     BOOL    iconic = wndPtr->dwStyle & WS_MINIMIZE;
@@ -2137,7 +2134,9 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
     
     SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
 
-    capturePoint = pt = *(POINT16*)&dwPoint;
+    pt.x = SLOWORD(dwPoint);
+    pt.y = SHIWORD(dwPoint);
+    capturePoint = pt;
 
     if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
         (wndPtr->flags & WIN_MANAGED)) goto END;
@@ -2198,7 +2197,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	MapWindowPoints( wndPtr->parent->hwndSelf, 0, 
 		(LPPOINT)&mouseRect, 2 );
     }
-    SendMessage16( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
+    SendMessageA( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
 
     if (GetCapture() != hwnd) SetCapture( hwnd );    
 
@@ -2249,7 +2248,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	if ((msg.message != WM_KEYDOWN) && (msg.message != WM_MOUSEMOVE))
 	    continue;  /* We are not interested in other messages */
 
-	CONV_POINT32TO16(&msg.pt, &pt);
+        pt = msg.pt;
 	
 	if (msg.message == WM_KEYDOWN) switch(msg.wParam)
 	{
@@ -2359,8 +2358,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	    SEGPTR_FREE(pr);
 	}
     }
-    SendMessage16( hwnd, WM_EXITSIZEMOVE, 0, 0 );
-    SendMessage16( hwnd, WM_SETVISIBLE, !IsIconic16(hwnd), 0L);
+    SendMessageA( hwnd, WM_EXITSIZEMOVE, 0, 0 );
+    SendMessageA( hwnd, WM_SETVISIBLE, !IsIconic16(hwnd), 0L);
 
     /* window moved or resized */
     if (moved)
@@ -2400,8 +2399,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	    if( !moved ) 
 	    {
 		 if( wndPtr->dwStyle & WS_SYSMENU ) 
-		     SendMessage16( hwnd, WM_SYSCOMMAND,
-				    SC_MOUSEMENU + HTSYSMENU, *((LPARAM*)&pt));
+                     SendMessageA( hwnd, WM_SYSCOMMAND,
+                                   SC_MOUSEMENU + HTSYSMENU, MAKELONG(pt.x,pt.y));
 	    }
 	    else WINPOS_ShowIconTitle( wndPtr, TRUE );
 	}
@@ -2424,7 +2423,6 @@ END:
 static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
 {
     MSG msg;
-    POINT16 pt16;
     HDC hdc = GetWindowDC( hwnd );
     BOOL pressed = TRUE;
     UINT state;
@@ -2464,9 +2462,8 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
     {
 	BOOL oldstate = pressed;
         MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, 0, PM_REMOVE, FALSE, NULL );
-        CONV_POINT32TO16( &msg.pt, &pt16 );
 
-	pressed = (NC_HandleNCHitTest( hwnd, pt16 ) == wParam);
+	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)
 	   (*paintButton)( hwnd, hdc, pressed, FALSE);
     } while (msg.message != WM_LBUTTONUP);
@@ -2482,10 +2479,10 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
 	return;
 
     if (wParam == HTMINBUTTON) 
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&pt16 );
+        SendMessageA( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
     else
-	SendMessage16( hwnd, WM_SYSCOMMAND, 
-		  IsZoomed(hwnd) ? SC_RESTORE:SC_MAXIMIZE, *(LONG*)&pt16 );
+        SendMessageA( hwnd, WM_SYSCOMMAND,
+                      IsZoomed(hwnd) ? SC_RESTORE:SC_MAXIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
 }
 
 /***********************************************************************
@@ -2496,7 +2493,6 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
 static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 {
     MSG msg;
-    POINT16 pt16;
     HDC hdc = GetWindowDC( hwnd );
     BOOL pressed = TRUE;
     void  (*paintButton)(HWND, HDC16, BOOL);
@@ -2514,9 +2510,8 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     {
 	BOOL oldstate = pressed;
         MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, 0, PM_REMOVE, FALSE, NULL );
-        CONV_POINT32TO16( &msg.pt, &pt16 );
 
-	pressed = (NC_HandleNCHitTest( hwnd, pt16 ) == wParam);
+	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)
 	   (*paintButton)( hwnd, hdc, pressed);
     } while (msg.message != WM_LBUTTONUP);
@@ -2529,10 +2524,10 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     if (!pressed) return;
 
     if (wParam == HTMINBUTTON) 
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&pt16 );
+        SendMessageA( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
     else
-	SendMessage16( hwnd, WM_SYSCOMMAND, 
-		  IsZoomed(hwnd) ? SC_RESTORE:SC_MAXIMIZE, *(LONG*)&pt16 );
+        SendMessageA( hwnd, WM_SYSCOMMAND,
+                      IsZoomed(hwnd) ? SC_RESTORE:SC_MAXIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
 }
 
 
@@ -2545,7 +2540,6 @@ static void
 NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
 {
     MSG msg;
-    POINT16 pt16;
     HDC hdc;
     BOOL pressed = TRUE;
     HMENU hSysMenu = GetSystemMenu(hwnd, FALSE);
@@ -2570,9 +2564,8 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
     {
 	BOOL oldstate = pressed;
         MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, 0, PM_REMOVE, FALSE, NULL );
-        CONV_POINT32TO16( &msg.pt, &pt16 );
 
-	pressed = (NC_HandleNCHitTest( hwnd, pt16 ) == wParam);
+	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)
 	   NC_DrawCloseButton95 (hwnd, hdc, pressed, FALSE);
     } while (msg.message != WM_LBUTTONUP);
@@ -2583,7 +2576,7 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
     ReleaseDC( hwnd, hdc );
     if (!pressed) return;
 
-    SendMessage16( hwnd, WM_SYSCOMMAND, SC_CLOSE, *(LONG*)&pt16 );
+    SendMessageA( hwnd, WM_SYSCOMMAND, SC_CLOSE, MAKELONG(msg.pt.x,msg.pt.y) );
 }
 
 
@@ -2774,16 +2767,15 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
  *
  * Handle a WM_SYSCOMMAND message. Called from DefWindowProc().
  */
-LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
+LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    POINT pt32;
     UINT16 uCommand = wParam & 0xFFF0;
 
-    TRACE("Handling WM_SYSCOMMAND %x %d,%d\n", wParam, pt.x, pt.y );
+    TRACE("Handling WM_SYSCOMMAND %x %ld,%ld\n", wParam, pt.x, pt.y );
 
     if (wndPtr->dwStyle & WS_CHILD && uCommand != SC_KEYMENU )
-        ScreenToClient16( wndPtr->parent->hwndSelf, &pt );
+        ScreenToClient( wndPtr->parent->hwndSelf, &pt );
 
     switch (uCommand)
     {
@@ -2812,17 +2804,15 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
 
     case SC_CLOSE:
         WIN_ReleaseWndPtr(wndPtr);
-	return SendMessage16( hwnd, WM_CLOSE, 0, 0 );
+	return SendMessageA( hwnd, WM_CLOSE, 0, 0 );
 
     case SC_VSCROLL:
     case SC_HSCROLL:
-        CONV_POINT16TO32( &pt, &pt32 );
-	NC_TrackScrollBar( hwnd, wParam, pt32 );
+	NC_TrackScrollBar( hwnd, wParam, pt );
 	break;
 
     case SC_MOUSEMENU:
-        CONV_POINT16TO32( &pt, &pt32 );
-        MENU_TrackMouseMenuBar( wndPtr, wParam & 0x000F, pt32 );
+        MENU_TrackMouseMenuBar( wndPtr, wParam & 0x000F, pt );
 	break;
 
     case SC_KEYMENU:

@@ -9,6 +9,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wine/windef16.h"
 
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE

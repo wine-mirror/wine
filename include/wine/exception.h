@@ -9,7 +9,6 @@
 
 #include <setjmp.h>
 #include "winnt.h"
-#include "thread.h"
 
 /* The following definitions allow using exceptions in Wine and Winelib code
  *
@@ -145,9 +144,9 @@ static inline EXCEPTION_FRAME * WINE_UNUSED __wine_push_frame( EXCEPTION_FRAME *
                          : "=&r" (prev) : "r" (frame) : "memory" );
     return prev;
 #else
-    TEB *teb = NtCurrentTeb();
-    frame->Prev = teb->except;
-    teb->except = frame;
+    NT_TIB *teb = (NT_TIB *)NtCurrentTeb();
+    frame->Prev = (void *)teb->ExceptionList;
+    teb->ExceptionList = (void *)frame;
     return frame->Prev;
 #endif
 }
@@ -160,7 +159,8 @@ static inline EXCEPTION_FRAME * WINE_UNUSED __wine_pop_frame( EXCEPTION_FRAME *f
     return frame->Prev;
 
 #else
-    NtCurrentTeb()->except = frame->Prev;
+    NT_TIB *teb = (NT_TIB *)NtCurrentTeb();
+    teb->ExceptionList = (void *)frame->Prev;
     return frame->Prev;
 #endif
 }

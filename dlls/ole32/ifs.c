@@ -17,9 +17,10 @@
 #include "module.h"
 #include "debugtools.h"
 
+#include "ole.h"
 #include "ifs.h"
 
-DEFAULT_DEBUG_CHANNEL(relay)
+DEFAULT_DEBUG_CHANNEL(relay);
 
 /* --- IUnknown implementation */
 

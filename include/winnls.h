@@ -1,13 +1,6 @@
 #ifndef __WINE_WINNLS_H
 #define __WINE_WINNLS_H
 
-#ifdef HAVE_WCTYPE_H
-
-/* Sun Bug Workaround */
-#ifdef __WINE__ 
-# undef wsprintf
-#endif
-#endif
 #include "windef.h"
 
 #define MB_PRECOMPOSED              0x00000001 
@@ -520,11 +513,6 @@ DECL_WINELIB_TYPE_AW(CALINFO_ENUMPROC)
 BOOL	WINAPI EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc,LCID Locale,CALID Calendar,CALTYPE CalType);
 BOOL	WINAPI EnumCalendarInfoW(CALINFO_ENUMPROCW lpCalInfoEnumProc,LCID Locale,CALID Calendar,CALTYPE CalType);
 #define EnumCalendarInfo WINELIB_NAME_AW(EnumCalendarInfo)
-
-        /* FIXME: This does not belong to an interface file */
-UINT16      WINAPI CompareString16(DWORD,DWORD,LPCSTR,DWORD,LPCSTR,DWORD);
-INT16       WINAPI GetLocaleInfo16(LCID,LCTYPE,LPSTR,INT16);
-BOOL16      WINAPI GetStringType16(LCID,DWORD,LPCSTR,INT16,LPWORD);
 
 LCID WINAPI ConvertDefaultLocale(LCID   Locale);
 

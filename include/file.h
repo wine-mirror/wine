@@ -9,6 +9,7 @@
 
 #include <time.h> /* time_t */
 #include "winbase.h"
+#include "wine/windef16.h"  /* HFILE16 */
 
 #define MAX_PATHNAME_LEN   1024
 

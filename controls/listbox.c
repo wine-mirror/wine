@@ -2830,7 +2830,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
     case WM_DRAGMOVE:
 	if( !descr->lphc )
         {
-            LPDRAGINFO dragInfo = (LPDRAGINFO)PTR_SEG_TO_LIN( (SEGPTR)lParam );
+            LPDRAGINFO16 dragInfo = (LPDRAGINFO16)PTR_SEG_TO_LIN( (SEGPTR)lParam );
             dragInfo->l = LISTBOX_GetItemFromPoint( wnd, descr, dragInfo->pt.x,
                                                 dragInfo->pt.y );
             return SendMessageA( descr->owner, msg, wParam, lParam );

@@ -8,7 +8,6 @@
 #define __WINSOCK2API__
 
 #include "winsock.h"
-#include "wtypes.h"
 
 /* proper 4-byte packing */
 #include "pshpack4.h"
@@ -143,6 +142,10 @@ typedef struct _INTERFACE_INFO
 #  define IFF_LOOPBACK          0x00000004 /* this is loopback interface */
 #  define IFF_POINTTOPOINT      0x00000008 /* this is point-to-point interface */
 #  define IFF_MULTICAST         0x00000010 /* multicast is supported */
+#endif
+
+#ifndef GUID_DEFINED
+#include "guiddef.h"
 #endif
 
 #define MAX_PROTOCOL_CHAIN 7

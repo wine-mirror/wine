@@ -52,6 +52,23 @@ typedef struct tagDCB16
 } DCB16, *LPDCB16;
 
 
+typedef struct
+{
+   LPARAM   lParam;
+   WPARAM16 wParam;
+   UINT16   message;
+   HWND16   hwnd;
+} CWPSTRUCT16, *LPCWPSTRUCT16;
+
+typedef struct
+{
+  LRESULT       lResult;
+  LPARAM        lParam;
+  WPARAM16      wParam;
+  DWORD         message;
+  HWND16        hwnd;
+} CWPRETSTRUCT16, *LPCWPRETSTRUCT16;
+
   /* SetWindowPlacement() struct */
 typedef struct
 {
@@ -843,6 +860,7 @@ BOOL16      WINAPI RedrawWindow16(HWND16,const RECT16*,HRGN16,UINT16);
 ATOM        WINAPI RegisterClass16(const WNDCLASS16*);
 ATOM        WINAPI RegisterClassEx16(const WNDCLASSEX16*);
 UINT16      WINAPI RegisterClipboardFormat16(LPCSTR);
+BOOL        WINAPI RegisterShellHook16(HWND16,UINT16);
 INT16       WINAPI ReleaseDC16(HWND16,HDC16);
 BOOL16      WINAPI RemoveMenu16(HMENU16,UINT16,UINT16);
 HANDLE16    WINAPI RemoveProp16(HWND16,LPCSTR);
@@ -947,5 +965,27 @@ DWORD       WINAPI GetFileResource16(LPCSTR,SEGPTR,SEGPTR,DWORD,DWORD,LPVOID);
 BYTE        WINAPI GetTempDrive(BYTE);
 FARPROC16   WINAPI SetTaskSignalProc(HTASK16,FARPROC16);
 
+
+/* DragObject stuff */
+
+typedef struct
+{
+    HWND16     hWnd;
+    HANDLE16   hScope;
+    WORD       wFlags;
+    HANDLE16   hList;
+    HANDLE16   hOfStruct;
+    POINT16 pt WINE_PACKED;
+    LONG       l WINE_PACKED;
+} DRAGINFO16, *LPDRAGINFO16;
+
+#define DRAGOBJ_PROGRAM		0x0001
+#define DRAGOBJ_DATA		0x0002
+#define DRAGOBJ_DIRECTORY	0x0004
+#define DRAGOBJ_MULTIPLE	0x0008
+#define DRAGOBJ_EXTERNAL	0x8000
+
+#define DRAG_PRINT		0x544E5250
+#define DRAG_FILE		0x454C4946
 
 #endif /* __WINE_WINE_WINUSER16_H */

@@ -2,7 +2,9 @@
 #define __WINE_WINE_KEYBOARD16_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 
+VOID        WINAPI ScreenSwitchEnable16(WORD);
 INT16       WINAPI ToAscii16(UINT16,UINT16,LPBYTE,LPVOID,UINT16);
 WORD        WINAPI VkKeyScan16(CHAR);
 INT16       WINAPI AnsiToOem16(LPCSTR,LPSTR);

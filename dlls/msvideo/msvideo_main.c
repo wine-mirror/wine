@@ -15,6 +15,8 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "vfw.h"
+#include "vfw16.h"
+#include "wine/winbase16.h"
 #include "wine/winestring.h"
 #include "debugtools.h"
 #include "ldt.h"

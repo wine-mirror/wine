@@ -1369,10 +1369,13 @@ LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, WPARAM wParam,
       case WM_PARENTNOTIFY:
         if (LOWORD(wParam) == WM_LBUTTONDOWN)
         {
-            POINT16  pt = MAKEPOINT16(lParam);
-            HWND16 child = ChildWindowFromPoint16(hwnd, pt);
+            HWND child;
+            POINT pt;
+            pt.x = SLOWORD(lParam);
+            pt.y = SHIWORD(lParam);
+            child = ChildWindowFromPoint(hwnd, pt);
 
-	    TRACE("notification from %04x (%i,%i)\n",child,pt.x,pt.y);
+	    TRACE("notification from %04x (%li,%li)\n",child,pt.x,pt.y);
 
             if( child && child != hwnd && child != ci->hwndActiveChild )
                 SetWindowPos(child, 0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE );

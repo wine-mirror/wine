@@ -15,6 +15,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "wine/windef16.h"
 #include "wine/unicode.h"
 #include "debugtools.h"
 #include "heap.h"

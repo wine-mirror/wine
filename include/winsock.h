@@ -25,19 +25,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
-#ifdef HAVE_IPX_GNU
-# include <netipx/ipx.h>
-# define HAVE_IPX
-#endif
-
-#ifdef HAVE_IPX_LINUX
-# include <asm/types.h>
-# include <linux/ipx.h>
-# define HAVE_IPX
-#endif
-
 #include "windef.h"
-#include "task.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,19 +67,9 @@ typedef struct ws_netent
 
 #include "pshpack1.h"
 
-/* Win16 socket-related types */
-
-typedef UINT16		SOCKET16;
 typedef UINT		SOCKET;
 
 typedef struct sockaddr		ws_sockaddr;
-
-typedef struct
-{
-        UINT16    fd_count;               /* how many are SET? */
-        SOCKET16  fd_array[FD_SETSIZE];   /* an array of SOCKETs */
-} ws_fd_set16;
-
 
 typedef struct ws_fd_set32_struct
 {
@@ -102,11 +80,10 @@ typedef struct ws_fd_set32_struct
 
 /* ws_fd_set operations */
 
-INT16 WINAPI __WSAFDIsSet16( SOCKET16, ws_fd_set16 * );
 INT WINAPI __WSAFDIsSet( SOCKET, ws_fd_set32 * );
 
 #define __WS_FD_CLR(fd, set, cast) do { \
-    UINT16 __i; \
+    UINT __i; \
     for (__i = 0; __i < ((cast*)(set))->fd_count ; __i++) \
     { \
         if (((cast*)(set))->fd_array[__i] == fd) \
@@ -122,20 +99,14 @@ INT WINAPI __WSAFDIsSet( SOCKET, ws_fd_set32 * );
         } \
     } \
 } while(0)
-#define WS_FD_CLR16(fd, set)	__WS_FD_CLR((fd),(set), ws_fd_set16)
 #define WS_FD_CLR(fd, set)	__WS_FD_CLR((fd),(set), ws_fd_set32)
 
 #define __WS_FD_SET(fd, set, cast) do { \
     if (((cast*)(set))->fd_count < FD_SETSIZE) \
         ((cast*)(set))->fd_array[((cast*)(set))->fd_count++]=(fd);\
 } while(0)
-#define WS_FD_SET16(fd, set)    __WS_FD_SET((fd),(set), ws_fd_set16)
 #define WS_FD_SET(fd, set)    __WS_FD_SET((fd),(set), ws_fd_set32)
-
-#define WS_FD_ZERO16(set) (((ws_fd_set16*)(set))->fd_count=0)
 #define WS_FD_ZERO(set) (((ws_fd_set32*)(set))->fd_count=0)
-
-#define WS_FD_ISSET16(fd, set) __WSAFDIsSet16((SOCKET16)(fd), (ws_fd_set16*)(set))
 #define WS_FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (ws_fd_set32*)(set))
 
 /* 
@@ -146,7 +117,7 @@ struct ws_in_addr
 {
         union {
                 struct { BYTE   s_b1,s_b2,s_b3,s_b4; } S_un_b;
-                struct { UINT16 s_w1,s_w2; } S_un_w;
+                struct { WORD   s_w1,s_w2; } S_un_w;
                 UINT S_addr;
         } S_un;
 #define ws_addr  S_un.S_addr		/* can be used for most tcp & ip code */
@@ -159,8 +130,8 @@ struct ws_in_addr
 
 struct ws_sockaddr_in
 {
-        INT16		sin_family;
-        UINT16 		sin_port;
+        SHORT		sin_family;
+        WORD 		sin_port;
         struct ws_in_addr sin_addr;
         BYTE    	sin_zero[8];
 };
@@ -173,20 +144,17 @@ typedef struct WSAData {
         WORD                    wHighVersion;
         char                    szDescription[WSADESCRIPTION_LEN+1];
         char                    szSystemStatus[WSASYS_STATUS_LEN+1];
-        UINT16			iMaxSockets;
-        UINT16			iMaxUdpDg;
+        WORD                    iMaxSockets;
+        WORD                    iMaxUdpDg;
         SEGPTR			lpVendorInfo;
 } WSADATA, *LPWSADATA;
 
 #include "poppack.h"
 
-/* ------ no Win16 structure defs (1-byte alignment) beyond this line! ------ */
-
 /*
  * This is used instead of -1, since the
  * SOCKET type is unsigned.
  */
-#define INVALID_SOCKET16 	   (~0)
 #define INVALID_SOCKET 	   (~0)
 #define SOCKET_ERROR               (-1)
 
@@ -394,56 +362,28 @@ extern "C" {
 
 /* Microsoft Windows Extension function prototypes */
 
-INT16     WINAPI WSAStartup16(UINT16 wVersionRequired, LPWSADATA lpWSAData);
 INT     WINAPI WSAStartup(UINT wVersionRequired, LPWSADATA lpWSAData);
-void      WINAPI WSASetLastError16(INT16 iError);
 void      WINAPI WSASetLastError(INT iError);
 INT     WINAPI WSACleanup(void);
 INT     WINAPI WSAGetLastError(void);
 BOOL    WINAPI WSAIsBlocking(void);
 INT     WINAPI WSACancelBlockingCall(void);
-INT16     WINAPI WSAUnhookBlockingHook16(void);
 INT     WINAPI WSAUnhookBlockingHook(void);
-FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc);
 FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc);
-
-HANDLE16  WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 wMsg, LPCSTR name, LPCSTR proto,
-                                         SEGPTR buf, INT16 buflen);
 HANDLE  WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name, LPCSTR proto,
 					 LPSTR sbuf, INT buflen);
-
-HANDLE16  WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 wMsg, INT16 port,
-                                         LPCSTR proto, SEGPTR buf, INT16 buflen);
 HANDLE  WINAPI WSAAsyncGetServByPort(HWND hWnd, UINT uMsg, INT port,
 					 LPCSTR proto, LPSTR sbuf, INT buflen);
-
-HANDLE16  WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 wMsg,
-                                          LPCSTR name, SEGPTR buf, INT16 buflen);
 HANDLE  WINAPI WSAAsyncGetProtoByName(HWND hWnd, UINT uMsg,
 					  LPCSTR name, LPSTR sbuf, INT buflen);
-
-HANDLE16  WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd, UINT16 wMsg,
-                                            INT16 number, SEGPTR buf, INT16 buflen);
 HANDLE  WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg,
 					    INT number, LPSTR sbuf, INT buflen);
-
-HANDLE16  WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 wMsg,
-                                         LPCSTR name, SEGPTR buf, INT16 buflen);
 HANDLE  WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg,
 					 LPCSTR name, LPSTR sbuf, INT buflen);
-
-HANDLE16  WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 wMsg, LPCSTR addr,
-                              INT16 len, INT16 type, SEGPTR buf, INT16 buflen);
 HANDLE  WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
 			      INT len, INT type, LPSTR sbuf, INT buflen);
-
-INT16 	  WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle);
 INT     WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle);
-
-INT16     WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent);
 INT     WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent);
-
-INT16     WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags);
 INT     WINAPI   WSARecvEx(SOCKET s, char *buf, INT len, INT *flags);
 
 /*
@@ -485,10 +425,10 @@ INT     WINAPI   WSARecvEx(SOCKET s, char *buf, INT len, INT *flags);
 
 struct ws_sockaddr_ipx
 {
-	INT16		sipx_family;
+	SHORT		sipx_family;
 	UINT		sipx_network;
 	CHAR		sipx_node[6];
-	UINT16		sipx_port;
+	WORD		sipx_port;
 };
 
 #include "poppack.h"

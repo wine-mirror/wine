@@ -9,6 +9,7 @@
 
 #include "winnt.h"
 #include "ldt.h"
+#include "wine/windef16.h"
 
 /* msdos/dosconf.c */
 extern int DOSCONF_ReadConfig(void);
@@ -121,8 +122,8 @@ typedef struct
 
 #include "poppack.h"
 
-extern HANDLE16 DOSMEM_BiosDataSeg;
-extern HANDLE16 DOSMEM_BiosSysSeg;
+extern WORD DOSMEM_BiosDataSeg;
+extern WORD DOSMEM_BiosSysSeg;
 extern BIOSDATA * DOSMEM_BiosData();
 extern BYTE     * DOSMEM_BiosSys();
 
@@ -141,9 +142,9 @@ extern BOOL DOSMEM_Init(BOOL);
 extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
 extern char * DOSMEM_MemoryBase(void);
-extern LPVOID DOSMEM_GetBlock(UINT size, UINT16* p);
+extern LPVOID DOSMEM_GetBlock(UINT size, WORD* p);
 extern BOOL DOSMEM_FreeBlock(void* ptr);
-extern LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, UINT16* p);
+extern LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, WORD* p);
 extern UINT DOSMEM_Available(void);
 extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT); /* linear DOS to Wine */

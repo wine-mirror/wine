@@ -6,7 +6,7 @@
 
 /*	At the moment, these are only empty stubs.
  */
-#include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wtypes.h"
 #include "ldt.h"

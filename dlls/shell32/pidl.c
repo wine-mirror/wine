@@ -1225,11 +1225,11 @@ LPITEMIDLIST _ILCreateSpecial(LPCSTR szGUID)
  *  uInSize = size of data (raw)
  */
 
-LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
+LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT uInSize)
 {
 	LPITEMIDLIST   pidlOut = NULL, pidlTemp = NULL;
 	LPPIDLDATA     pData;
-	UINT16         uSize = 0;
+	UINT           uSize = 0;
 	LPSTR	pszDest;
 	
 	TRACE("(0x%02x %p %i)\n",type,pIn,uInSize);
@@ -1307,7 +1307,7 @@ LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
  * RETURNS
  *  strlen (lpszText)
  */
-DWORD _ILGetDrive(LPCITEMIDLIST pidl,LPSTR pOut, UINT16 uSize)
+DWORD _ILGetDrive(LPCITEMIDLIST pidl,LPSTR pOut, UINT uSize)
 {	TRACE("(%p,%p,%u)\n",pidl,pOut,uSize);
 
 	if(_ILIsMyComputer(pidl))

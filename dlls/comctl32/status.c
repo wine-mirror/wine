@@ -29,8 +29,8 @@ typedef struct
 
 typedef struct
 {
-    UINT16              numParts;
-    UINT16              textHeight;
+    WORD              numParts;
+    WORD              textHeight;
     UINT              height;
     BOOL              simple;
     HWND              hwndToolTip;

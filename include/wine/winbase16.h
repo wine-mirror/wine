@@ -2,6 +2,9 @@
 #define __WINE_WINE_WINBASE16_H
 
 #include "windef.h"
+#include "winbase.h"
+#include "wine/windef16.h"
+
 #include "pshpack1.h"
 typedef struct _SEGINFO {
     UINT16    offSegment;
@@ -12,7 +15,6 @@ typedef struct _SEGINFO {
     UINT16    alignShift;
     UINT16    reserved[2];
 } SEGINFO;
-
 
 /* GetWinFlags */
 
@@ -35,6 +37,19 @@ typedef struct _SEGINFO {
 #define	WF_WLO          0x8000
 
 #include "poppack.h"
+
+#define INVALID_HANDLE_VALUE16  ((HANDLE16) -1)
+#define INFINITE16      0xFFFF
+
+typedef struct {
+        DWORD dwOSVersionInfoSize;
+        DWORD dwMajorVersion;
+        DWORD dwMinorVersion;
+        DWORD dwBuildNumber;
+        DWORD dwPlatformId;
+        CHAR szCSDVersion[128];
+} OSVERSIONINFO16;
+
 
 /* undocumented functions */
 WORD        WINAPI AllocCStoDSAlias16(WORD);
@@ -105,6 +120,7 @@ VOID        WINAPI hmemcpy16(LPVOID,LPCVOID,LONG);
 
 INT16       WINAPI AccessResource16(HINSTANCE16,HRSRC16);
 ATOM        WINAPI AddAtom16(LPCSTR);
+UINT16      WINAPI CompareString16(DWORD,DWORD,LPCSTR,DWORD,LPCSTR,DWORD);
 BOOL16      WINAPI CreateDirectory16(LPCSTR,LPVOID);
 BOOL16      WINAPI DefineHandleTable16(WORD);
 ATOM        WINAPI DeleteAtom16(ATOM);
@@ -114,6 +130,8 @@ void        WINAPI FatalAppExit16(UINT16,LPCSTR);
 ATOM        WINAPI FindAtom16(LPCSTR);
 BOOL16      WINAPI FindClose16(HANDLE16);
 VOID        WINAPI FreeLibrary16(HINSTANCE16);
+HANDLE16    WINAPI FindFirstFile16(LPCSTR,LPWIN32_FIND_DATAA);
+BOOL16      WINAPI FindNextFile16(HANDLE16,LPWIN32_FIND_DATAA);
 HRSRC16     WINAPI FindResource16(HINSTANCE16,SEGPTR,SEGPTR);
 BOOL16      WINAPI FreeModule16(HMODULE16);
 void        WINAPI FreeProcInstance16(FARPROC16);
@@ -122,6 +140,7 @@ UINT16      WINAPI GetAtomName16(ATOM,LPSTR,INT16);
 UINT16      WINAPI GetCurrentDirectory16(UINT16,LPSTR);
 BOOL16      WINAPI GetDiskFreeSpace16(LPCSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
 UINT16      WINAPI GetDriveType16(UINT16); /* yes, the arguments differ */
+INT16       WINAPI GetLocaleInfo16(LCID,LCTYPE,LPSTR,INT16);
 DWORD       WINAPI GetFileAttributes16(LPCSTR);
 DWORD       WINAPI GetFreeSpace16(UINT16);
 INT16       WINAPI GetModuleFileName16(HINSTANCE16,LPSTR,INT16);
@@ -136,14 +155,27 @@ UINT16      WINAPI GetProfileInt16(LPCSTR,LPCSTR,INT16);
 INT16       WINAPI GetProfileSection16(LPCSTR,LPSTR,UINT16);
 WORD        WINAPI GetProfileSectionNames16(LPSTR,WORD);
 INT16       WINAPI GetProfileString16(LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT16);
+DWORD       WINAPI GetSelectorBase(WORD);
+BOOL16      WINAPI GetStringType16(LCID,DWORD,LPCSTR,INT16,LPWORD);
 UINT16      WINAPI GetSystemDirectory16(LPSTR,UINT16);
 UINT16      WINAPI GetTempFileName16(BYTE,LPCSTR,UINT16,LPSTR);
 LONG        WINAPI GetVersion16(void);
+BOOL16      WINAPI GetVersionEx16(OSVERSIONINFO16*);
+BOOL16      WINAPI GetWinDebugInfo16(LPWINDEBUGINFO,UINT16);
 UINT16      WINAPI GetWindowsDirectory16(LPSTR,UINT16);
+HGLOBAL16   WINAPI GlobalAlloc16(UINT16,DWORD);
 DWORD       WINAPI GlobalCompact16(DWORD);
+LPVOID      WINAPI GlobalLock16(HGLOBAL16);
+WORD        WINAPI GlobalFix16(HGLOBAL16);
 UINT16      WINAPI GlobalFlags16(HGLOBAL16);
+HGLOBAL16   WINAPI GlobalFree16(HGLOBAL16);
 DWORD       WINAPI GlobalHandle16(WORD);
 HGLOBAL16   WINAPI GlobalReAlloc16(HGLOBAL16,DWORD,UINT16);
+DWORD       WINAPI GlobalSize16(HGLOBAL16);
+VOID        WINAPI GlobalUnfix16(HGLOBAL16);
+BOOL16      WINAPI GlobalUnlock16(HGLOBAL16);
+BOOL16      WINAPI GlobalUnWire16(HGLOBAL16);
+SEGPTR      WINAPI GlobalWire16(HGLOBAL16);
 WORD        WINAPI InitAtomTable16(WORD);
 BOOL16      WINAPI IsBadCodePtr16(SEGPTR);
 BOOL16      WINAPI IsBadHugeReadPtr16(SEGPTR,DWORD);
@@ -168,6 +200,7 @@ BOOL16      WINAPI LocalUnlock16(HLOCAL16);
 LPVOID      WINAPI LockResource16(HGLOBAL16);
 HGLOBAL16   WINAPI LockSegment16(HGLOBAL16);
 FARPROC16   WINAPI MakeProcInstance16(FARPROC16,HANDLE16);
+HFILE16     WINAPI OpenFile16(LPCSTR,OFSTRUCT*,UINT16);
 DWORD       WINAPI RegCloseKey16(HKEY);
 DWORD       WINAPI RegCreateKey16(HKEY,LPCSTR,LPHKEY);
 DWORD       WINAPI RegDeleteKey16(HKEY,LPCSTR);
@@ -184,7 +217,9 @@ BOOL16      WINAPI SetCurrentDirectory16(LPCSTR);
 UINT16      WINAPI SetErrorMode16(UINT16);
 BOOL16      WINAPI SetFileAttributes16(LPCSTR,DWORD);
 UINT16      WINAPI SetHandleCount16(UINT16);
+WORD        WINAPI SetSelectorBase(WORD,DWORD);
 LONG        WINAPI SetSwapAreaSize16(WORD);
+BOOL16      WINAPI SetWinDebugInfo16(LPWINDEBUGINFO);
 DWORD       WINAPI SizeofResource16(HMODULE16,HRSRC16);
 void        WINAPI UnlockSegment16(HGLOBAL16);
 BOOL16      WINAPI WritePrivateProfileString16(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
@@ -207,13 +242,12 @@ UINT16      WINAPI _lwrite16(HFILE16,LPCSTR,UINT16);
 BOOL16      WINAPI WritePrivateProfileSection16(LPCSTR,LPCSTR,LPCSTR);
 BOOL16      WINAPI WritePrivateProfileStruct16(LPCSTR,LPCSTR,LPVOID,UINT16,LPCSTR);
 BOOL16      WINAPI WriteProfileSection16(LPCSTR,LPCSTR);
-DWORD       WINAPI GetSelectorBase(WORD);
-WORD        WINAPI SetSelectorBase(WORD,DWORD);
 
 /* Extra functions that don't exist in the Windows API */
 
 HPEN16      WINAPI GetSysColorPen16(INT16);
 UINT      WINAPI WIN16_GetTempDrive(BYTE);
+SEGPTR      WINAPI WIN16_GlobalLock16(HGLOBAL16);
 SEGPTR      WINAPI WIN16_LockResource16(HGLOBAL16);
 LONG        WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
 UINT16      WINAPI WIN16_lread(HFILE16,SEGPTR,UINT16);

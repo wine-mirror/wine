@@ -127,7 +127,7 @@ void	_ILGetFileType		(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
 DWORD	_ILGetFileAttributes	(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
 
 BOOL	_ILGetFileDateTime	(LPCITEMIDLIST pidl, FILETIME *ft);
-DWORD	_ILGetDrive		(LPCITEMIDLIST, LPSTR, UINT16);
+DWORD	_ILGetDrive		(LPCITEMIDLIST, LPSTR, UINT);
 
 /*
  * testing simple pidls
@@ -143,7 +143,7 @@ BOOL	_ILIsPidlSimple		(LPCITEMIDLIST pidl);
 /*
  * simple pidls from strings
  */
-LPITEMIDLIST	_ILCreate	(PIDLTYPE,LPCVOID,UINT16);
+LPITEMIDLIST	_ILCreate	(PIDLTYPE,LPCVOID,UINT);
 
 LPITEMIDLIST	_ILCreateDesktop	(void);
 LPITEMIDLIST	_ILCreateMyComputer	(void);

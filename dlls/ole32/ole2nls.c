@@ -13,6 +13,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/windef16.h"
 #include "heap.h"
 #include "options.h"
 #include "winver.h"

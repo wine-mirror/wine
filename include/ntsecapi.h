@@ -1,7 +1,6 @@
 #ifndef __WINE_NTSECAPI_H
 #define __WINE_NTSECAPI_H
 
-#include "ntdef.h"
 #include "winnt.h"
 
 #ifdef __cplusplus

@@ -6,6 +6,7 @@
 #include "config.h"
 
 #include "windef.h"
+#include "wine/windef16.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "rpc.h"

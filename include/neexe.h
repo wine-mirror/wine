@@ -5,6 +5,7 @@
 #define __WINE_NEEXE_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 
 /*
  * NE Header FORMAT FLAGS

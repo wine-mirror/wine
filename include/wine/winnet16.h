@@ -9,6 +9,7 @@
 #define __WINE_WINNET16_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 
 /*
  * Remote printing

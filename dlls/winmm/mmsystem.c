@@ -1733,7 +1733,7 @@ UINT WINAPI mciGetDeviceIDW(LPCWSTR lpwstrName)
 /**************************************************************************
  * 				MCI_DefYieldProc	       	[internal]
  */
-UINT16	WINAPI MCI_DefYieldProc(UINT16 wDevID, DWORD data)
+UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data)
 {
     INT16	ret;
     
@@ -1756,7 +1756,7 @@ UINT16	WINAPI MCI_DefYieldProc(UINT16 wDevID, DWORD data)
 /**************************************************************************
  * 				mciSetYieldProc			[MMSYSTEM.714]
  */
-BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC fpYieldProc, DWORD dwYieldData)
+BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC16 fpYieldProc, DWORD dwYieldData)
 {
     LPWINE_MCIDRIVER	wmd;
 
@@ -1767,7 +1767,7 @@ BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC fpYieldProc, DWORD d
 	return FALSE;
     }
     
-    wmd->lpfnYieldProc = fpYieldProc;
+    wmd->lpfnYieldProc = (YIELDPROC)fpYieldProc;
     wmd->dwYieldData   = dwYieldData;
     wmd->bIs32         = FALSE;
 
@@ -1819,7 +1819,7 @@ UINT WINAPI mciGetDeviceIDFromElementIDW(DWORD dwElementID, LPCWSTR lpstrType)
 /**************************************************************************
  * 				mciGetYieldProc			[MMSYSTEM.716]
  */
-YIELDPROC WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
+YIELDPROC16 WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
 {
     LPWINE_MCIDRIVER	wmd;
 
@@ -1837,7 +1837,7 @@ YIELDPROC WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
 	WARN("Proc is 32 bit\n");
 	return NULL;
     }
-    return wmd->lpfnYieldProc;
+    return (YIELDPROC16)wmd->lpfnYieldProc;
 }
     
 /**************************************************************************

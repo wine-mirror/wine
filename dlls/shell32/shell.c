@@ -965,17 +965,6 @@ HICON16 WINAPI ExtractIconEx16(
 }
 
 /*************************************************************************
- *				ExtractAssociatedIconA
- * 
- * Return icon for given file (either from file itself or from associated
- * executable) and patch parameters if needed.
- */
-HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lpiIcon)
-{	TRACE("\n");
-	return ExtractAssociatedIcon16(hInst,lpIconPath,lpiIcon);
-}
-
-/*************************************************************************
  *				ExtractAssociatedIcon	[SHELL.36]
  * 
  * Return icon for given file (either from file itself or from associated
@@ -1015,6 +1004,17 @@ HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst, LPSTR lpIconPath, LPWO
 	  hIcon = LoadIcon16( hInst, MAKEINTRESOURCE16(*lpiIcon));
 	}
 	return hIcon;
+}
+
+/*************************************************************************
+ *				ExtractAssociatedIconA
+ * 
+ * Return icon for given file (either from file itself or from associated
+ * executable) and patch parameters if needed.
+ */
+HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lpiIcon)
+{	TRACE("\n");
+	return ExtractAssociatedIcon16(hInst,lpIconPath,lpiIcon);
 }
 
 /*************************************************************************

@@ -10,8 +10,10 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "debugtools.h"
 #include "vfw.h"
+#include "vfw16.h"
 #include "windef.h"
 
 DEFAULT_DEBUG_CHANNEL(msvideo);

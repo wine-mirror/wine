@@ -612,7 +612,7 @@ static void DCE_OffsetVisRgn( HDC hDC, HRGN hVisRgn )
  *  Translate given region from the wnd client to the DC coordinates
  *  and add it to the clipping region.
  */
-INT16 DCE_ExcludeRgn( HDC hDC, WND* wnd, HRGN hRgn )
+INT DCE_ExcludeRgn( HDC hDC, WND* wnd, HRGN hRgn )
 {
   POINT  pt = {0, 0};
   DCE     *dce = firstDCE;

@@ -11,9 +11,10 @@
 #include <stdio.h>
 
 #include "winbase.h"
+#include "wine/windef16.h"
 #include "aspi.h"
 #include "winescsi.h"
-#include "winaspi.h"
+#include "wine/winaspi.h"
 #include "options.h"
 #include "heap.h"
 #include "debugtools.h"
@@ -391,7 +392,7 @@ error_exit:
  *             GetASPISupportInfo16   (WINASPI.1)
  */
 
-WORD WINAPI GetASPISupportInfo16()
+WORD WINAPI GetASPISupportInfo16(void)
 {
 #ifdef linux
     TRACE("GETASPISupportInfo16\n");

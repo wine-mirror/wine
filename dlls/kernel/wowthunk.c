@@ -18,6 +18,24 @@
 DEFAULT_DEBUG_CHANNEL(thunk);
 
 /*
+ * These are the 16-bit side WOW routines.  They reside in wownt16.h 
+ * in the SDK; since we don't support Win16 source code anyway, I've 
+ * placed them here for compilation with Wine ...
+ */
+
+DWORD WINAPI GetVDMPointer32W16(SEGPTR,UINT16);
+
+DWORD WINAPI LoadLibraryEx32W16(LPCSTR,DWORD,DWORD);
+DWORD WINAPI GetProcAddress32W16(DWORD,LPCSTR);
+DWORD WINAPI FreeLibrary32W16(DWORD);
+
+#define CPEX_DEST_STDCALL   0x00000000L
+#define CPEX_DEST_CDECL     0x80000000L
+
+DWORD WINAPI CallProcExW16(VOID);
+DWORD WINAPI CallProcEx32W16(VOID);
+
+/*
  *  32-bit WOW routines (in WOW32, but actually forwarded to KERNEL32)
  */
 

@@ -6,6 +6,7 @@
 #define __WINE_MSACMDRV_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 #include "msacm.h"
 
 /***********************************************************************
@@ -113,7 +114,6 @@ typedef struct _ACMDRVSTREAMINSTANCE
   DWORD           dwDriver;
   HACMSTREAM    has;
 } ACMDRVSTREAMINSTANCE, *PACMDRVSTREAMINSTANCE;
-
 
 typedef struct _ACMDRVSTREAMHEADER16 *LPACMDRVSTREAMHEADER16;
 typedef struct _ACMDRVSTREAMHEADER16 {

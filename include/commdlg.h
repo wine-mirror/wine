@@ -9,9 +9,7 @@
 extern "C" {
 #endif
 
-#include "windef.h"		/* needed for CHOOSEFONT structure */
-#include "wingdi.h"
-#include "winuser.h"
+#include "prsht.h"
 #include "pshpack1.h"
 
 #define OFN_READONLY                 0x00000001
@@ -223,8 +221,8 @@ typedef struct
 	LPCSTR		lpTemplateName; 
 	HINSTANCE	hInstance; 
 	LPSTR		lpszStyle; 
-	UINT16		nFontType; 
-	UINT16	___MISSING_ALIGNMENT__; 
+	WORD		nFontType; 
+	WORD	___MISSING_ALIGNMENT__; 
 	INT   	nSizeMin; 
 	INT		nSizeMax; 
 } CHOOSEFONTA, *LPCHOOSEFONTA;
@@ -243,8 +241,8 @@ typedef struct
 	LPCWSTR		lpTemplateName; 
 	HINSTANCE	hInstance; 
 	LPWSTR		lpszStyle; 
-	UINT16		nFontType; 
-	UINT16	___MISSING_ALIGNMENT__; 
+	WORD		nFontType; 
+	WORD	___MISSING_ALIGNMENT__; 
 	INT   	nSizeMin; 
 	INT		nSizeMax; 
 } CHOOSEFONTW, *LPCHOOSEFONTW;
@@ -468,12 +466,13 @@ DECL_WINELIB_TYPE_AW(LPPRINTDLG)
 #define PD_HIDEPRINTTOFILE           0x00100000
 #define PD_NONETWORKBUTTON           0x00200000
 
-typedef struct {
-	UINT16 	wDriverOffset;
-	UINT16 	wDeviceOffset;
-	UINT16 	wOutputOffset;
-	UINT16 	wDefault;
-	} DEVNAMES;
+typedef struct
+{
+    WORD  wDriverOffset;
+    WORD  wDeviceOffset;
+    WORD  wOutputOffset;
+    WORD  wDefault;
+} DEVNAMES;
 typedef DEVNAMES * LPDEVNAMES;
 
 #define DN_DEFAULTPRN      0x0001

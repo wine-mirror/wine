@@ -8,6 +8,7 @@
 #define __WINE_TASK_H
 
 #include "windef.h"
+#include "wine/windef16.h"
 
 #include "pshpack1.h"
 

@@ -3526,8 +3526,8 @@ TREEVIEW_TrackMouse(TREEVIEW_INFO *infoPtr, POINT pt)
 	{
 	    if (msg.message == WM_MOUSEMOVE)
 	    {
-		pt.x = (LONG)(INT16)LOWORD(msg.lParam);
-		pt.y = (LONG)(INT16)HIWORD(msg.lParam);
+		pt.x = SLOWORD(msg.lParam);
+		pt.y = SHIWORD(msg.lParam);
 		if (PtInRect(&r, pt))
 		    continue;
 		else
@@ -3571,8 +3571,8 @@ TREEVIEW_LButtonDoubleClick(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	KillTimer(infoPtr->hwnd, TV_EDIT_TIMER);
     }
 
-    hit.pt.x = (LONG)(INT16)LOWORD(lParam);
-    hit.pt.y = (LONG)(INT16)HIWORD(lParam);
+    hit.pt.x = SLOWORD(lParam);
+    hit.pt.y = SHIWORD(lParam);
 
     wineItem = (TREEVIEW_ITEM *)TREEVIEW_HitTest(infoPtr, &hit);
     if (!wineItem)
@@ -3642,8 +3642,8 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	return 0;
     }
 
-    ht.pt.x = (LONG)(INT16)LOWORD(lParam);
-    ht.pt.y = (LONG)(INT16)HIWORD(lParam);
+    ht.pt.x = SLOWORD(lParam);
+    ht.pt.y = SHIWORD(lParam);
 
     TREEVIEW_HitTest(infoPtr, &ht);
     TRACE("item %d \n", TREEVIEW_GetItemIndex(infoPtr, ht.hItem));
@@ -3791,8 +3791,8 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	return 0;
     }
 
-    ht.pt.x = (LONG)(INT16)LOWORD(lParam);
-    ht.pt.y = (LONG)(INT16)HIWORD(lParam);
+    ht.pt.x = SLOWORD(lParam);
+    ht.pt.y = SHIWORD(lParam);
 
     TREEVIEW_HitTest(infoPtr, &ht);
 
@@ -4205,7 +4205,7 @@ TREEVIEW_VScroll(TREEVIEW_INFO *infoPtr, WPARAM wParam)
     case SB_THUMBPOSITION:
 	newFirstVisible = TREEVIEW_GetListItem(infoPtr,
 					       infoPtr->root->firstChild,
-					       (LONG)(INT16)HIWORD(wParam));
+					       (LONG)(SHORT)HIWORD(wParam));
 	break;
 
     case SB_ENDSCROLL:
@@ -4265,7 +4265,7 @@ TREEVIEW_HScroll(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 
     case SB_THUMBTRACK:
     case SB_THUMBPOSITION:
-	scrollX = (int)(INT16)HIWORD(wParam);
+	scrollX = (int)(SHORT)HIWORD(wParam);
 	break;
 
     case SB_ENDSCROLL:
@@ -4655,8 +4655,8 @@ TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     if (wParam == SIZE_RESTORED)
     {
-	infoPtr->clientWidth  = (LONG)(INT16)LOWORD(lParam);
-	infoPtr->clientHeight = (LONG)(INT16)HIWORD(lParam);
+	infoPtr->clientWidth  = SLOWORD(lParam);
+	infoPtr->clientHeight = SHIWORD(lParam);
 
 	TREEVIEW_RecalculateVisibleOrder(infoPtr, NULL);
 	TREEVIEW_SetFirstVisible(infoPtr, infoPtr->firstVisible, TRUE);
