@@ -470,7 +470,7 @@ static const struct {
  {"Czech keyboard layout", 28592, &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Latin American keyboard layout", 28591, &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Lithuanian (Baltic) keyboard layout", 28603, &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {"Turkish keyboard layout", 28591, &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Turkish keyboard layout", 28599, &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
  {NULL, 0, NULL, NULL, NULL} /* sentinel */
 };
