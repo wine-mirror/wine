@@ -1151,10 +1151,8 @@
                     <listitem>
                     <para>
                     This directory contains files used by Wine and the Wineserver
-                    to communicate.  A packager may want to have a facility
-                    for the user to erase files in this directory,
-                    as a crash in the wineserver resulting in a bogus lock
-                    file can render wine unusable.
+                    to communicate. A packager may want to have a facility for the user to erase files in this directory, as a crash in the 
+                    wineserver resulting in a bogus lock file can render wine unusable.
                     </para>
                     </listitem>
                   </varlistentry>
@@ -1164,6 +1162,7 @@
                     <para>
                     This file contains font metrics for the given X display.
                     Generally, this cache is generated once at Wine start time.
+                    cachedmetrics can be generated if absent.You should note this can be long.
                     </para>
                     </listitem>
                   </varlistentry>
@@ -1285,35 +1284,35 @@
             <listitem>
             <para>
             all <link linkend=binfiles>binary files</link> go into
-            <link linkend=PREFIX endterm=prefix.id></link>/bin,
+            <link linkend=PREFIX endterm=prefix.id></link>$PREFIX/bin,
             </para>
             </listitem>
 
             <listitem>
             <para>
             all <link linkend=libfiles>library files</link> go into
-            <link linkend=PREFIX endterm=prefix.id></link>/lib,
+            <link linkend=PREFIX endterm=prefix.id></link>$PREFIX/lib/wine,
             </para>
             </listitem>
 
             <listitem>
             <para>
             all <link linkend=includefiles>include files</link> go into
-            <link linkend=PREFIX endterm=prefix.id></link>/include,
+            <link linkend=PREFIX endterm=prefix.id></link>$PREFIX/include/wine,
             </para>
             </listitem>
 
             <listitem>
             <para>
             all <link linkend=docfiles>documentation files</link> go into
-            <link linkend=PREFIX endterm=prefix.id></link>/doc/wine,
+            <link linkend=PREFIX endterm=prefix.id></link>$PREFIX/share/doc/wine-VERSION,
             </para>
             </listitem>
 
             <listitem>
             <para>
             and <link linkend=manfiles>man pages</link> go into
-            <link linkend=PREFIX endterm=prefix.id></link>/man,
+            <link linkend=PREFIX endterm=prefix.id></link>$PREFIX/share/man,
             </para>
             </listitem>
 
@@ -1334,7 +1333,7 @@
 
         <sect2 id=opt><title>The question of /opt/wine</title>
         <para>
-        The FHS 2.1 specification suggests that Wine as a package
+        The FHS 2.2 specification suggests that Wine as a package
         should be installed to /opt/wine.  None of the
         existing packages follow this guideline (today;
         check again tomorrow).
@@ -1440,12 +1439,311 @@
 
         <sect1 id="pkg-wineconf"><title>What to put into the wine config file</title>
         <para>
-        The next hard question is what the Wine config should look like.
-        The current best practices seems to involve using drives from M to Z.
+          This is the sample config file provided with wine 20030115. You can edit this file
+          to best suit the needs of your intended user.
         </para>
-        <caution><para>This isn't done yet!  Fix it, Jer!</para></caution>
-        </sect1>
+        <para>
+WINE REGISTRY Version 2
+;; All keys relative to \\Machine\\Software\\Wine\\Wine\\Config
 
+;; If you think it is necessary to show others your complete config for a
+;; bug report, filter out empty lines and comments with
+;; grep -v "^;" ~/.wine/config | grep '.'
+;;
+;; MS-DOS drives configuration
+;;
+;; Each section has the following format:
+;; [Drive X]
+;; "Path"="xxx"       (Unix path for drive root)
+;; "Type"="xxx"       (supported types are 'floppy', 'hd', 'cdrom' and 'network')
+;; "Label"="xxx"      (drive label, at most 11 characters)
+;; "Serial"="xxx"     (serial number, 8 characters hexadecimal number)
+;; "Filesystem"="xxx" (supported types are 'msdos'/'dos'/'fat', 'win95'/'vfat', 'unix')
+;;   This is the FS Wine is supposed to emulate on a certain
+;;   directory structure.
+;;   Recommended:
+;;   - "win95" for ext2fs, VFAT and FAT32
+;;   - "msdos" for FAT16 (ugly, upgrading to VFAT driver strongly recommended)
+;;   DON'T use "unix" unless you intend to port programs using Winelib !
+;; "Device"="/dev/xx" (only if you want to allow raw device access)
+;;
+[Drive A]
+"Path" = "/mnt/fd0"
+"Type" = "floppy"
+"Label" = "Floppy"
+"Filesystem" = "win95"
+"Serial" = "87654321"
+"Device" = "/dev/fd0"
+
+[Drive C]
+"Path" = "/c"
+"Type" = "hd"
+"Label" = "MS-DOS"
+"Filesystem" = "win95"
+
+[Drive D]
+"Path" = "/cdrom"
+"Type" = "cdrom"
+"Label" = "CD-Rom"
+"Filesystem" = "win95"
+; make sure that device is correct and has proper permissions !
+"Device" = "/dev/cdrom"
+
+[Drive E]
+"Path" = "/tmp"
+"Type" = "hd"
+"Label" = "Tmp Drive"
+"Filesystem" = "win95"
+
+[Drive F]
+"Path" = "${HOME}"
+"Type" = "network"
+"Label" = "Home"
+"Filesystem" = "win95"
+
+[wine]
+"Windows" = "c:\\windows"
+"System" = "c:\\windows\\system"
+"Temp" = "e:\\"
+"Path" = "c:\\windows;c:\\windows\\system;e:\\;e:\\test;f:\\"
+"Profile" = "c:\\windows\\Profiles\\Administrator"
+"GraphicsDriver" = "x11drv"
+;"ShowDirSymlinks" = "1"
+;"ShowDotFiles" = "1"
+"ShellLinker" = "wineshelllink"
+
+[Version]
+; Windows version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win20,win30,win31)
+;"Windows" = "win98"
+; DOS version to imitate
+;"DOS" = "6.22"
+
+; Be careful here, wrong DllOverrides settings have the potential
+; to pretty much kill your setup.
+[DllOverrides]
+; some dlls you may want to change
+"oleaut32"     = "builtin, native"
+"ole32"        = "builtin, native"
+"commdlg"      = "builtin, native"
+"comdlg32"     = "builtin, native"
+"shell"        = "builtin, native"
+"shell32"      = "builtin, native"
+"shfolder"     = "builtin, native"
+"shlwapi"      = "builtin, native"
+"shdocvw"      = "builtin, native"
+"advapi32"     = "builtin, native"
+"msvcrt"       = "native, builtin"
+"mciavi.drv"   = "native, builtin"
+"mcianim.drv"  = "native, builtin"
+; you can specify applications too
+; this one will apply for all notepad.exe
+;"*notepad.exe" = "native, builtin"
+; this one will apply only for a particular file
+;"C:\\windows\\regedit.exe" = "native, builtin"
+; default for all other dlls
+"*" = "builtin, native"
+
+[x11drv]
+; Number of colors to allocate from the system palette
+"AllocSystemColors" = "100"
+; Use a private color map
+"PrivateColorMap" = "N"
+; Favor correctness over speed in some graphics operations
+"PerfectGraphics" = "N"
+; Color depth to use on multi-depth screens
+;;"ScreenDepth" = "16"
+; Name of X11 display to use
+;;"Display" = ":0.0"
+; Allow the window manager to manage created windows
+"Managed" = "Y"
+; Use a desktop window of 640x480 for Wine
+;"Desktop" = "640x480"
+; Use XFree86 DGA extension if present
+; (make sure /dev/mem is accessible by you !)
+"UseDGA" = "Y"
+; Use XShm extension if present
+"UseXShm" = "Y"
+; Use XVidMode extension if present
+"UseXVidMode" = "Y"
+; Use the take focus protocol
+"UseTakeFocus" = "Y"
+; Enable DirectX mouse grab
+"DXGrab" = "N"
+; Create the desktop window with a double-buffered visual
+; (useful to play OpenGL games)
+"DesktopDoubleBuffered" = "N"
+; Code page used for captions in managed mode
+; 0 means default ANSI code page (CP_ACP == 0)
+"TextCP" = "0"
+; Use this if you have more than one port for video on your setup
+; (Wine uses for now the first 'input image' it finds).
+;; "XVideoPort" = "43"
+; Run in synchronous mode (useful for debugging X11 problems)
+;;"Synchronous" = "Y"
+;
+; Use the Render extension to render client side fonts (default "Y")
+;;"ClientSideWithRender" = "Y"
+; Fallback on X core requests to render client side fonts (default "Y")
+;;"ClientSideWithCore" = "Y"
+; Set both of the previous two to "N" in order to force X11 server side fonts
+;
+; Anti-alias fonts if using the Render extension (default "Y")
+;;"ClientSideAntiAliasWithRender" = "Y"
+; Anti-alias fonts if using core requests fallback (default "Y")
+;;"ClientSideAntiAliasWithCore" = "Y"
+;
+
+[fonts]
+;Read the Fonts topic in the Wine User Guide before adding aliases
+;See a couple of examples for russian users below
+"Resolution" = "96"
+"Default" = "-adobe-helvetica-"
+"DefaultFixed" = "fixed"
+"DefaultSerif" = "-adobe-times-"
+"DefaultSansSerif" = "-adobe-helvetica-"
+
+;; default TrueType fonts with russian koi8-r encoding
+;"Default" = "-monotype-arial-*-*-*--*-*-*-*-*-*-koi8-r"
+;"DefaultFixed" = "-monotype-courier new-*-*-*--*-*-*-*-*-*-koi8-r"
+;"DefaultSerif" = "-monotype-times new roman-*-*-*--*-*-*-*-*-*-koi8-r"
+;"DefaultSansSerif" = "-monotype-arial-*-*-*--*-*-*-*-*-*-koi8-r"
+;; default cyrillic bitmap X fonts
+;"Default" = "-cronyx-helvetica-"
+;"DefaultFixed" = "fixed"
+;"DefaultSerif" = "-cronyx-times-"
+;"DefaultSansSerif" = "-cronyx-helvetica-"
+
+; the TrueType font dirs you want to make accessible to wine
+[FontDirs]
+;"dir1" = "/usr/X11R6/lib/X11/fonts/TrueType"
+;"dir2" = "/usr/share/fonts/truetype"
+;"dir3" = "/usr/X11R6/lib/X11/fonts/TT"
+;"dir4" = "/usr/share/fonts/TT"
+
+[serialports]
+"Com1" = "/dev/ttyS0"
+"Com2" = "/dev/ttyS1"
+"Com3" = "/dev/ttyS2"
+"Com4" = "/dev/modem"
+
+[parallelports]
+"Lpt1" = "/dev/lp0"
+
+[ppdev]
+;; key:  io-base of the emulated port
+;; value : parport-device{,timeout}
+;; timeout for auto closing an open device ( not yet implemented)
+;"378" = "/dev/parport0"
+;"278" = "/dev/parport1"
+;"3bc" = "/dev/parport2"
+
+[spooler]
+"FILE:" = "tmp.ps"
+"LPT1:" = "|lpr"
+"LPT2:" = "|gs -sDEVICE=bj200 -sOutputFile=/tmp/fred -q -"
+"LPT3:" = "/dev/lp3"
+
+[ports]
+;"read"  = "0x779,0x379,0x280-0x2a0"
+;"write" = "0x779,0x379,0x280-0x2a0"
+
+[Debug]
+;"RelayExclude" = "RtlEnterCriticalSection;RtlLeaveCriticalSection"
+;"RelayInclude" = "user32.CreateWindowA"
+;"SnoopExclude" = "RtlEnterCriticalSection;RtlLeaveCriticalSection"
+;"SpyExclude" = "WM_SIZE;WM_TIMER;"
+
+[registry]
+;These are all booleans.  Y/y/T/t/1 are true, N/n/F/f/0 are false.
+;Defaults are read all, write to Home
+; Where to find the global registries
+;"GlobalRegistryDir" = "/etc";
+; Global registries (stored in /etc)
+"LoadGlobalRegistryFiles" = "Y"
+; Home registries (stored in ~user/.wine/)
+"LoadHomeRegistryFiles" = "Y"
+; Load Windows registries from the Windows directory
+"LoadWindowsRegistryFiles" = "Y"
+; TRY to write all changes to home registries
+"WritetoHomeRegistryFiles" = "Y"
+; Registry periodic save timeout in seconds
+; "PeriodicSave" = "600"
+; Save only modified keys
+"SaveOnlyUpdatedKeys" = "Y"
+
+[Tweak.Layout]
+;; supported styles are 'Win31'(default), 'Win95', 'Win98'
+;; this has *nothing* to do with the windows version Wine returns:
+;; set the "Windows" value in the [Version] section if you want that.
+"WineLook" = "Win95"
+
+[Console]
+;"Drivers" = "tty"
+;"XtermProg" = "nxterm"
+;"InitialRows" = "25"
+;"InitialColumns" = "80"
+;"TerminalType" = "nxterm"
+
+[Clipboard]
+"ClearAllSelections" = "0"
+"PersistentSelection" = "1"
+
+; List of all directories directly contain .AFM files
+[afmdirs]
+"1" = "/usr/share/ghostscript/fonts"
+"2" = "/usr/share/a2ps/afm"
+"3" = "/usr/share/enscript"
+"4" = "/usr/X11R6/lib/X11/fonts/Type1"
+
+[WinMM]
+#"Drivers" = "winearts.drv"
+#"Drivers" = "winejack.drv"
+"Drivers" = "wineoss.drv"
+"WaveMapper" = "msacm.drv"
+"MidiMapper" = "midimap.drv"
+
+[dsound]
+;; HEL only: Number of waveOut fragments ahead to mix in new buffers.
+;"HELmargin" = "5"
+;; HEL only: Number of waveOut fragments ahead to queue to driver.
+;"HELqueue" = "5"
+;; Max number of fragments to prebuffer
+;"SndQueueMax" = "28"
+;; Min number of fragments to prebuffer
+;"SndQueueMin" = "12"
+
+[Network]
+;; Use the DNS (Unix) host name always as NetBIOS "ComputerName" (boolean, default "Y").
+;; Set to N if you need a persistent NetBIOS ComputerName that possibly differs 
+;; from the Unix host name. You'll need to set ComputerName in 
+;; HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\ComputerName\ComputerName, too.
+;"UseDnsComputerName" = "N"
+
+;; sample AppDefaults entries
+;[AppDefaults\\iexplore.exe\\DllOverrides]
+;"shlwapi" = "native"
+;"rpcrt4" = "native"
+;"ole32" = "native"
+;"shdocvw" = "native"
+;"wininet" = "native"
+;"shfolder" = "native"
+;"shell32" = "native"
+;"shell" = "native"
+;"comctl32" = "native"
+;
+;[AppDefaults\\setup.exe\\x11drv]
+;"Desktop" = "800x600"
+;
+;[AppDefaults\\sol.exe\\Version]
+;"Windows" = "nt40"
+;
+;; Some games (Quake 2, UT) refuse to accept emulated dsound devices.
+;; You can add an AppDefault entry like this for such cases.
+;[AppDefaults\\pickygame.exe\\dsound]
+;"EmulDriver" = "N"
+
+        </para>
+        </sect1>
 
     </chapter>
 
