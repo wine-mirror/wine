@@ -596,7 +596,8 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
         return 0;
     }
 
-    dc->flags = 0;
+    dc->flags   = 0;
+    dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
 
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
           debugstr_a(driver), debugstr_a(device), debugstr_a(output), dc->hSelf );
