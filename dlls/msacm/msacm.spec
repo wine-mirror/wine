@@ -41,3 +41,4 @@ owner	msacm32
 201 stub     ACMCLOSECONVERSION
 202 stub     ACMCONVERT
 203 stub     ACMCHOOSEFORMAT
+255 pascal   DllEntryPoint(long word word word long word) MSACM_DllEntryPoint

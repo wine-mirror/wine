@@ -14,14 +14,43 @@
 
 DEFAULT_DEBUG_CHANNEL(msacm);
 
+/**************************************************************************
+ * 			MSACM_LibMain			[EntryPoint]
+ *
+ * MSACM DLL entry point
+ *
+ */
+BOOL WINAPI MSACM_DllEntryPoint(DWORD fdwReason, HINSTANCE16 hinstDLL, WORD ds, 
+				WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
+{
+    static HANDLE	hndl;
+
+    TRACE("0x%x 0x%lx\n", hinstDLL, fdwReason);
+
+    switch (fdwReason) {
+    case DLL_PROCESS_ATTACH:
+        if (!hndl && !(hndl = LoadLibraryA("MSACM32.DLL"))) {
+	    ERR("Could not load sibling MsAcm32.dll\n");
+	    return FALSE;
+	}
+	break;
+    case DLL_PROCESS_DETACH:
+	FreeLibrary(hndl);
+	hndl = 0;
+	break;
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+	break;
+    }
+    return TRUE;
+}
+
 /***********************************************************************
  *		acmGetVersion (MSACM.7)
  */
-DWORD WINAPI acmGetVersion16()
+DWORD WINAPI acmGetVersion16(void)
 {
-  FIXME("(): stub\n");
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0; /* FIXME */
+  return acmGetVersion();
 }
 
 /***********************************************************************
@@ -31,9 +60,9 @@ DWORD WINAPI acmGetVersion16()
 MMRESULT16 WINAPI acmMetrics16(
   HACMOBJ16 hao, UINT16 uMetric, LPVOID pMetric)
 {
-  FIXME("(0x%04x, %d, %p): stub\n", hao, uMetric, pMetric);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return MMSYSERR_ERROR;
+  FIXME("(0x%04x, %d, %p): semi-stub\n", hao, uMetric, pMetric);
+
+  return acmMetrics(hao, uMetric, pMetric);
 }
 
 /***********************************************************************

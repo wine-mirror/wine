@@ -60,6 +60,7 @@ static struct tagDllOverride {
 	{"mciwave.drv",			"builtin,native"},
 	{"mciavi.drv,mcianim.drv",	"native,builtin"},
 	{"msacm.drv,midimap.drv",       "builtin,native"},
+	{"msacm,msacm32",               "builtin,native"},
 	{"opengl32",                    "builtin,native"},
 	/* we have to use libglideXx.so instead of glideXx.dll ... */
 	{"glide2x,glide3x",		"so,native"},
@@ -86,6 +87,7 @@ static const struct tagDllPair {
     { "lzexpand", "lz32" },
     { "mmsystem", "winmm" },
     { "msvideo",  "msvfw32" },
+    { "msacm",    "msacm32" },
     { "winsock",  "wsock32" },
     { NULL,       NULL }
 };

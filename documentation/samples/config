@@ -101,6 +101,8 @@ WINE REGISTRY Version 2
 "mciavi.drv"   = "native, builtin"
 "mcianim.drv"  = "native, builtin"
 "msacm.drv"    = "builtin, native"
+"msacm"        = "builtin, native"
+"msacm32"      = "builtin, native"
 "midimap.drv"  = "builtin, native"
 "wnaspi32"     = "builtin"
 "icmp"         = "builtin"
