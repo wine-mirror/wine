@@ -62,6 +62,13 @@ int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
 
 BOOL WINAPI SHObjectProperties(HWND,UINT,LPCWSTR,LPCWSTR);
 
+#define PCS_FATAL           0x80000000
+#define PCS_REPLACEDCHAR    0x00000001
+#define PCS_REMOVEDCHAR     0x00000002
+#define PCS_TRUNCATED       0x00000004
+#define PCS_PATHTOOLONG     0x00000008
+
+int WINAPI PathCleanupSpec(LPCWSTR pszDir, LPWSTR pszSpec);
 
 /*****************************************************************************
  * Predeclare interfaces

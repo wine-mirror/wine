@@ -558,11 +558,76 @@ BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs)
 
 /*************************************************************************
  * PathCleanupSpec	[SHELL32.171]
+ *
+ * lpszFile is changed in place.
  */
-DWORD WINAPI PathCleanupSpecAW (LPCVOID x, LPVOID y)
+int WINAPI PathCleanupSpec( LPCWSTR lpszPathW, LPWSTR lpszFileW )
 {
-    FIXME("(%p, %p) stub\n",x,y);
-    return TRUE;
+    int i = 0;
+    DWORD rc = 0;
+    int length = 0;
+
+    if (SHELL_OsIsUnicode())
+    {
+        LPWSTR p = lpszFileW;
+
+        TRACE("Cleanup %s\n",debugstr_w(lpszFileW));
+
+        if (lpszPathW)
+            length = strlenW(lpszPathW);
+
+        while (*p)
+        {
+            int gct = PathGetCharTypeW(*p);
+            if (gct == GCT_INVALID || gct == GCT_WILD || gct == GCT_SEPARATOR)
+            {
+                lpszFileW[i]='-';
+                rc |= PCS_REPLACEDCHAR;
+            }
+            else
+                lpszFileW[i]=*p;
+            i++;
+            p++;
+            if (length + i == MAX_PATH)
+            {
+                rc |= PCS_FATAL | PCS_PATHTOOLONG;
+                break;
+            }
+        }
+        lpszFileW[i]=0;
+    }
+    else
+    {
+        LPSTR lpszFileA = (LPSTR)lpszFileW;
+        LPCSTR lpszPathA = (LPSTR)lpszPathW;
+        LPSTR p = lpszFileA;
+
+        TRACE("Cleanup %s\n",debugstr_a(lpszFileA));
+
+        if (lpszPathA)
+            length = strlen(lpszPathA);
+
+        while (*p)
+        {
+            int gct = PathGetCharTypeA(*p);
+            if (gct == GCT_INVALID || gct == GCT_WILD || gct == GCT_SEPARATOR)
+            {
+                lpszFileA[i]='-';
+                rc |= PCS_REPLACEDCHAR;
+            }
+            else
+                lpszFileA[i]=*p;
+            i++;
+            p++;
+            if (length + i == MAX_PATH)
+            {
+                rc |= PCS_FATAL | PCS_PATHTOOLONG;
+                break;
+            }
+        }
+        lpszFileA[i]=0;
+    }
+    return rc;
 }
 
 /*************************************************************************
@@ -1182,7 +1247,7 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
 {
     HRESULT hr;
     WCHAR resourcePath[MAX_PATH];
-    LPCWSTR pDefaultPath;
+    LPCWSTR pDefaultPath = NULL;
 
     TRACE("0x%02x,%p\n", folder, pszPath);
 
