@@ -2256,10 +2256,14 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
     memcpy(&resultsW, lpResults, sizeof(resultsW));
 
     lpStringW = FONT_mbtowc(hdc, lpString, uCount, &uCountW, &font_cp);
-    if(lpResults->lpOutString)
-	resultsW.lpOutString = HeapAlloc(GetProcessHeap(), 0, uCountW);
-    else
-	resultsW.lpOutString = NULL;
+    if( dwFlags&GCP_REORDER )
+    {
+        /* If the REORDER flag is not set, this field is ignored anyways */
+        if(lpResults->lpOutString)
+            resultsW.lpOutString = HeapAlloc(GetProcessHeap(), 0, uCountW);
+        else
+            resultsW.lpOutString = NULL;
+    }
 
     ret = GetCharacterPlacementW(hdc, lpStringW, uCountW, nMaxExtent, &resultsW, dwFlags);
 
@@ -2330,21 +2334,9 @@ GetCharacterPlacementW(
 	/* return number of initialized fields */
 	lpResults->nGlyphs = nSet;
 
-	if(dwFlags==0)
+	if((dwFlags&GCP_REORDER)!=0)
 	{
-		/* Treat the case where no special handling was requested in a fastpath way */
-		/* copy will do if the GCP_REORDER flag is not set */
-		if(lpResults->lpOutString)
-			lstrcpynW(lpResults->lpOutString, lpString, uCount);
-
-		if(lpResults->lpOrder)
-		{
-			for(i = 0; i < nSet; i++)
-				lpResults->lpOrder[i] = i;
-		}
-
-	} else
-	{
+		/* MSDN says lpOutString and lpOrder are ignored if GCP_REORDER not set */
 		WORD *pwCharType;
 		int run_end;
 		/* Keep a static table that translates the C2 types to something meaningful */
@@ -2365,7 +2357,7 @@ GetCharacterPlacementW(
 		/* Fill in the order array with directionality values */
 		GetStringTypeW(CT_CTYPE2, lpString, uCount, pwCharType);
 
-		/* The complete and correct (at list according to MS) BiDi algorythm is not
+		/* The complete and correct (at least according to MS) BiDi algorythm is not
 		 * yet implemented here. Instead, we just make sure that consecutive runs of
 		 * the same direction (or neutral) are ordered correctly
 		 */
