@@ -281,7 +281,7 @@ static void THREAD_Start(void)
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );
     PE_InitTls();
-    MODULE_InitializeDLLs( 0, DLL_THREAD_ATTACH, NULL );
+    MODULE_DllThreadAttach( NULL );
     ExitThread( func( thdb->entry_arg ) );
 }
 
@@ -318,7 +318,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
  */
 void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
 {
-    MODULE_InitializeDLLs( 0, DLL_THREAD_DETACH, NULL );
+    MODULE_DllThreadDetach( NULL );
     TerminateThread( GetCurrentThread(), code );
 }
 

@@ -812,10 +812,6 @@ BOOL MAIN_WineInit( int *argc, char *argv[] )
 
     MONITOR_Initialize(&MONITOR_PrimaryMonitor);
 
-    if (Options.dllFlags)
-	BUILTIN32_ParseDLLOptions( Options.dllFlags );
-	/* if (__winelib && errors ) print_error_message_like_misc_main(); */
-
     atexit(called_at_exit);
     return TRUE;
 }

@@ -27,6 +27,8 @@
 #include "stackframe.h"
 #include "debug.h"
 #include "file.h"
+#include "loadorder.h"
+#include "elfdll.h"
 
 FARPROC16 (*fnSNOOP16_GetProcAddress16)(HMODULE16,DWORD,FARPROC16) = NULL;
 void (*fnSNOOP16_RegisterDLL)(NE_MODULE*,LPCSTR) = NULL;
@@ -755,7 +757,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
             /* its handle in the list of DLLs to initialize.   */
             HMODULE16 hDLL;
 
-            if ((hDLL = NE_LoadModule( buffer, TRUE )) == 2)
+            if ((hDLL = MODULE_LoadModule16( buffer, TRUE )) == 2)
             {
                 /* file not found */
                 char *p;
@@ -765,7 +767,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
                 if (!(p = strrchr( buffer, '\\' ))) p = buffer;
                 memcpy( p + 1, pstr + 1, *pstr );
                 strcpy( p + 1 + *pstr, ".dll" );
-                hDLL = NE_LoadModule( buffer, TRUE );
+                hDLL = MODULE_LoadModule16( buffer, TRUE );
             }
             if (hDLL < 32)
             {
@@ -857,23 +859,11 @@ static HINSTANCE16 NE_LoadFileModule( HFILE16 hFile, OFSTRUCT *ofs,
 HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit )
 {
     HINSTANCE16 hInstance;
-    HMODULE16 hModule;
     HFILE16 hFile;
     OFSTRUCT ofs;
 
-    /* Try to load the built-in first if not disabled */
-
-    if ((hModule = fnBUILTIN_LoadModule( name, FALSE ))) return hModule;
-
     if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
     {
-        /* Now try the built-in even if disabled */
-        if ((hModule = fnBUILTIN_LoadModule( name, TRUE )))
-        {
-            MSG( "Could not load Windows DLL '%s', using built-in module.\n",
-                 name );
-            return hModule;
-        }
         return 2;  /* File not found */
     }
 
@@ -882,6 +872,67 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit )
 
     return hInstance;
 }
+
+
+/**********************************************************************
+ *	    MODULE_LoadModule16
+ *
+ * Load a NE module in the order of the loadorder specification.
+ * The caller is responsible that the module is not loaded already.
+ *
+ */
+HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit )
+{
+	HINSTANCE16 hinst;
+	int i;
+	module_loadorder_t *plo;
+
+	plo = MODULE_GetLoadOrder(libname);
+
+	for(i = 0; i < MODULE_LOADORDER_NTYPES; i++)
+	{
+		switch(plo->loadorder[i])
+		{
+		case MODULE_LOADORDER_DLL:
+			TRACE(module, "Trying native dll '%s'\n", libname);
+			hinst = NE_LoadModule(libname, implicit);
+			break;
+
+		case MODULE_LOADORDER_ELFDLL:
+			TRACE(module, "Trying elfdll '%s'\n", libname);
+			hinst = ELFDLL_LoadModule16(libname, implicit);
+			break;
+
+		case MODULE_LOADORDER_BI:
+			TRACE(module, "Trying built-in '%s'\n", libname);
+			hinst = fnBUILTIN_LoadModule(libname, TRUE);
+			break;
+
+		default:
+			ERR(module, "Got invalid loadorder type %d (%s index %d)\n", plo->loadorder[i], plo->modulename, i);
+		/* Fall through */
+
+		case MODULE_LOADORDER_SO:	/* This is not supported for NE modules */
+		case MODULE_LOADORDER_INVALID:	/* We ignore this as it is an empty entry */
+			hinst = 2;
+			break;
+		}
+
+		if(hinst >= 32)
+		{
+			TRACE(module, "Loaded module '%s' at 0x%04x, \n", libname, hinst);
+			return hinst;
+		}
+
+		if(hinst != 2)
+		{
+			/* We quit searching when we get another error than 'File not found' */
+			break;
+		}
+	}
+	return hinst;	/* The last error that occured */
+}
+
 
 /**********************************************************************
  *          LoadModule16    (KERNEL.45)
@@ -918,7 +969,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     {
         /* Main case: load first instance of NE module */
 
-        if ( (hInstance = NE_LoadModule( name, FALSE )) < 32 )
+        if ( (hInstance = MODULE_LoadModule16( name, FALSE )) < 32 )
             return hInstance;
 
         if ( !(pModule = NE_GetPtr( hInstance )) )

@@ -7,7 +7,9 @@ MODULE    = loader
 
 C_SRCS = \
 	elf.c \
+	elfdll.c \
 	libres.c \
+	loadorder.c \
 	main.c \
 	module.c \
 	pe_image.c \

@@ -29,6 +29,8 @@
 #include "task.h"
 #include "debug.h"
 #include "callback.h"
+#include "loadorder.h"
+#include "elfdll.h"
 
 
 /*************************************************************************
@@ -53,10 +55,55 @@ WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 }
 
 /*************************************************************************
- *		MODULE_InitializeDLLs
+ *		MODULE_InitDll
+ */
+static BOOL MODULE_InitDll( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
+{
+    BOOL retv = TRUE;
+
+    static LPCSTR typeName[] = { "PROCESS_DETACH", "PROCESS_ATTACH", 
+                                 "THREAD_ATTACH", "THREAD_DETACH" };
+    assert( wm );
+
+
+    /* Skip calls for modules loaded with special load flags */
+
+    if (    ( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS )
+         || ( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE ) )
+        return TRUE;
+
+
+    TRACE( module, "(%s,%s,%p) - CALL\n", 
+           wm->modname, typeName[type], lpReserved );
+
+    /* Call the initialization routine */
+    switch ( wm->type )
+    {
+    case MODULE32_PE:
+        retv = PE_InitDLL( wm, type, lpReserved );
+        break;
+
+    case MODULE32_ELF:
+        /* no need to do that, dlopen() already does */
+        break;
+
+    default:
+        ERR( module, "wine_modref type %d not handled.\n", wm->type );
+        retv = FALSE;
+        break;
+    }
+
+    TRACE( module, "(%s,%s,%p) - RETURN %d\n", 
+           wm->modname, typeName[type], lpReserved, retv );
+
+    return retv;
+}
+
+/*************************************************************************
+ *		MODULE_DllProcessAttach
  * 
- * Call the initialization routines of all DLLs belonging to the
- * current process. This is somewhat complicated due to the fact that
+ * Send the process attach notification to all DLLs the given module
+ * depends on (recursively). This is somewhat complicated due to the fact that
  *
  * - we have to respect the module dependencies, i.e. modules implicitly
  *   referenced by another module have to be initialized before the module
@@ -69,171 +116,159 @@ WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
  * (Note that this routine can be recursively entered not only directly
  *  from itself, but also via LoadLibrary from one of the called initialization
  *  routines.)
+ *
+ * Furthermore, we need to rearrange the main WINE_MODREF list to allow
+ * the process *detach* notifications to be sent in the correct order.
+ * This must not only take into account module dependencies, but also 
+ * 'hidden' dependencies created by modules calling LoadLibrary in their
+ * attach notification routine.
+ *
+ * The strategy is rather simple: we move a WINE_MODREF to the head of the
+ * list after the attach notification has returned.  This implies that the
+ * detach notifications are called in the reverse of the sequence the attach
+ * notifications *returned*.
+ *
+ * NOTE: Assumes that the process critical section is held!
+ *
  */
-static void MODULE_DoInitializeDLLs( WINE_MODREF *wm,
-                                     DWORD type, LPVOID lpReserved )
+BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
 {
-    WINE_MODREF *xwm;
-    int i, skip = FALSE;
+    BOOL retv = TRUE;
+    int i;
+    assert( wm );
 
-    assert( wm && !(wm->flags & WINE_MODREF_MARKER) );
-    TRACE( module, "(%s,%08x,%ld,%p) - START\n", 
-           wm->modname, wm->module, type, lpReserved );
+    /* prevent infinite recursion in case of cyclical dependencies */
+    if (    ( wm->flags & WINE_MODREF_MARKER )
+         || ( wm->flags & WINE_MODREF_PROCESS_ATTACHED ) )
+        return retv;
+
+    TRACE( module, "(%s,%p) - START\n", 
+           wm->modname, lpReserved );
 
     /* Tag current MODREF to prevent recursive loop */
     wm->flags |= WINE_MODREF_MARKER;
 
-    switch ( type )
+    /* Recursively attach all DLLs this one depends on */
+    for ( i = 0; retv && i < wm->nDeps; i++ )
+        if ( wm->deps[i] )
+            retv = MODULE_DllProcessAttach( wm->deps[i], lpReserved );
+
+    /* Call DLL entry point */
+    if ( retv )
     {
-    default:
-    case DLL_PROCESS_ATTACH:
-    case DLL_THREAD_ATTACH:
-        /* Recursively attach all DLLs this one depends on */
-        for ( i = 0; i < wm->nDeps; i++ )
-            if ( wm->deps[i] && !(wm->deps[i]->flags & WINE_MODREF_MARKER) )
-                MODULE_DoInitializeDLLs( wm->deps[i], type, lpReserved );
-        break;
-
-    case DLL_PROCESS_DETACH:
-    case DLL_THREAD_DETACH:
-        /* Recursively detach all DLLs that depend on this one */
-        for ( xwm = PROCESS_Current()->modref_list; xwm; xwm = xwm->next )
-            if ( !(xwm->flags & WINE_MODREF_MARKER) )
-                for ( i = 0; i < xwm->nDeps; i++ )
-                    if ( xwm->deps[i] == wm )
-                    {
-                        MODULE_DoInitializeDLLs( xwm, type, lpReserved );
-                        break;
-                    }
-        break;
-    }
-
-    /* Evaluate module flags */
-
-    if (    ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
-         || ( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS )
-         || ( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE ) )
-        skip = TRUE;
-
-    if ( type == DLL_PROCESS_ATTACH )
-    {
-        if ( wm->flags & WINE_MODREF_PROCESS_ATTACHED )
-            skip = TRUE;
-        else
+        retv = MODULE_InitDll( wm, DLL_PROCESS_ATTACH, lpReserved );
+        if ( retv )
             wm->flags |= WINE_MODREF_PROCESS_ATTACHED;
     }
 
-    if ( type == DLL_PROCESS_DETACH )
+    /* Re-insert MODREF at head of list */
+    if ( retv && wm->prev )
     {
-        if ( wm->flags & WINE_MODREF_PROCESS_DETACHED )
-            skip = TRUE;
-        else
-            wm->flags |= WINE_MODREF_PROCESS_DETACHED;
+        wm->prev->next = wm->next;
+        if ( wm->next ) wm->next->prev = wm->prev;
+
+        wm->prev = NULL;
+        wm->next = PROCESS_Current()->modref_list;
+        PROCESS_Current()->modref_list = wm->next->prev = wm;
     }
 
-    if ( !skip )
-    {
-        /* Now we can call the initialization routine */
-        TRACE( module, "(%s,%08x,%ld,%p) - CALL\n", 
-               wm->modname, wm->module, type, lpReserved );
+    /* Remove recursion flag */
+    wm->flags &= ~WINE_MODREF_MARKER;
 
-        switch ( wm->type )
-        {
-        case MODULE32_PE:
-            PE_InitDLL( wm, type, lpReserved );
-            break;
+    TRACE( module, "(%s,%p) - END\n", 
+           wm->modname, lpReserved );
 
-        case MODULE32_ELF:
-            /* no need to do that, dlopen() already does */
-            break;
-
-        default:
-           ERR(module, "wine_modref type %d not handled.\n", wm->type);
-           break;
-        }
-    }
-
-    TRACE( module, "(%s,%08x,%ld,%p) - END\n", 
-           wm->modname, wm->module, type, lpReserved );
+    return retv;
 }
 
-void MODULE_InitializeDLLs( HMODULE root, DWORD type, LPVOID lpReserved )
+/*************************************************************************
+ *		MODULE_DllProcessDetach
+ * 
+ * Send DLL process detach notifications.  See the comment about calling 
+ * sequence at MODULE_DllProcessAttach.  Unless the bForceDetach flag
+ * is set, only DLLs with zero refcount are notified.
+ *
+ * NOTE: Assumes that the process critical section is held!
+ *
+ */
+void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
 {
-    BOOL inProgress = FALSE;
     WINE_MODREF *wm;
 
-    /* Grab the process critical section to protect the recursion flags */
-    /* FIXME: This is probably overkill! */
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
-
-    TRACE( module, "(%08x,%ld,%p) - START\n", root, type, lpReserved );
-
-    /* First, check whether initialization is currently in progress */
-    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
-        if ( wm->flags & WINE_MODREF_MARKER )
+    do
+    {
+        for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
         {
-            inProgress = TRUE;
+            /* Check whether to detach this DLL */
+            if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
+                continue;
+            if ( wm->refCount > 0 && !bForceDetach )
+                continue;
+
+            /* Call detach notification */
+            wm->flags &= ~WINE_MODREF_PROCESS_ATTACHED;
+            MODULE_InitDll( wm, DLL_PROCESS_DETACH, lpReserved );
+
+            /* Restart at head of WINE_MODREF list, as entries might have
+               been added and/or removed while performing the call ... */
             break;
         }
+    } while ( wm );
+}
 
-    if ( inProgress )
+/*************************************************************************
+ *		MODULE_DllThreadAttach
+ * 
+ * Send DLL thread attach notifications. These are sent in the
+ * reverse sequence of process detach notification.
+ *
+ */
+void MODULE_DllThreadAttach( LPVOID lpReserved )
+{
+    WINE_MODREF *wm;
+
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
+
+    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+        if ( !wm->next )
+            break;
+
+    for ( ; wm; wm = wm->prev )
     {
-        /* 
-         * If this a LoadLibrary call from within an initialization routine,
-         * treat it analogously to an implicitly referenced DLL.
-         * Anything else may not happen at this point!
-         */
-        if ( root )
-        {
-            wm = MODULE32_LookupHMODULE( root );
-            if ( wm && !(wm->flags & WINE_MODREF_MARKER) )
-                MODULE_DoInitializeDLLs( wm, type, lpReserved );
-        }
-        else
-            FIXME(module, "Invalid recursion!\n");
-    }
-    else
-    {
-        /* If we arrive here, this is the start of an initialization run */
-        if ( !root )
-        {
-            /* If called for main EXE, initialize all DLLs */
-            switch ( type )
-            {
-            default:  /* Hmmm. */
-            case DLL_PROCESS_ATTACH:
-            case DLL_THREAD_ATTACH:
-                for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
-                    if ( !wm->next )
-                        break;
-                for ( ; wm; wm = wm->prev )
-                    if ( !(wm->flags & WINE_MODREF_MARKER) )
-                        MODULE_DoInitializeDLLs( wm, type, lpReserved );
-                break;
+        if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
+            continue;
+        if ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
+            continue;
 
-            case DLL_PROCESS_DETACH:
-            case DLL_THREAD_DETACH:
-                for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
-                    if ( !(wm->flags & WINE_MODREF_MARKER) )
-                        MODULE_DoInitializeDLLs( wm, type, lpReserved );
-                break;
-            }
-        }
-        else
-        {
-            /* If called for a specific DLL, initialize only it and its children */
-            wm = MODULE32_LookupHMODULE( root );
-            if (wm) MODULE_DoInitializeDLLs( wm, type, lpReserved );
-        }
-
-        /* We're finished, so we reset all recursion flags */
-        for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
-            wm->flags &= ~WINE_MODREF_MARKER;
+        MODULE_InitDll( wm, DLL_THREAD_ATTACH, lpReserved );
     }
 
-    TRACE( module, "(%08x,%ld,%p) - END\n", root, type, lpReserved );
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+}
 
-    /* Release critical section */
+/*************************************************************************
+ *		MODULE_DllThreadDetach
+ * 
+ * Send DLL thread detach notifications. These are sent in the
+ * same sequence as process detach notification.
+ *
+ */
+void MODULE_DllThreadDetach( LPVOID lpReserved )
+{
+    WINE_MODREF *wm;
+
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
+
+    for ( wm = PROCESS_Current()->modref_list; wm; wm = wm->next )
+    {
+        if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
+            continue;
+        if ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
+            continue;
+
+        MODULE_InitDll( wm, DLL_THREAD_DETACH, lpReserved );
+    }
+
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
 }
 
@@ -244,48 +279,20 @@ void MODULE_InitializeDLLs( HMODULE root, DWORD type, LPVOID lpReserved )
  */
 BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
 {
-    WINE_MODREF *wm = MODULE32_LookupHMODULE( hModule );
-    if ( !wm ) return FALSE;
-
-    wm->flags |= WINE_MODREF_NO_DLL_CALLS;
-    return TRUE;
-}
-
-/****************************************************************************
- *              MODULE_IncRefCount
- */
-static void MODULE_IncRefCount( HMODULE hModule )
-{
     WINE_MODREF *wm;
+    BOOL retval = TRUE;
 
     EnterCriticalSection( &PROCESS_Current()->crit_section );
-    wm = MODULE32_LookupHMODULE( hModule );
-    if( wm )
-    {
-        wm->refCount++;
-        TRACE(module, "(%08x) count now %d\n", hModule, wm->refCount);
-    }
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
-}
 
-/****************************************************************************
- *              MODULE_DecRefCount
- */
-static int MODULE_DecRefCount( HMODULE hModule )
-{
-    int retv = 0;
-    WINE_MODREF *wm;
-
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
     wm = MODULE32_LookupHMODULE( hModule );
-    if( wm && ( retv = wm->refCount ) > 0 )
-    {
-        wm->refCount--;
-        TRACE(module, "(%08x) count now %d\n", hModule, wm->refCount);
-    }
+    if ( !wm )
+        retval = FALSE;
+    else
+        wm->flags |= WINE_MODREF_NO_DLL_CALLS;
+
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
-    return retv;
+    return retval;
 }
 
 
@@ -449,7 +456,7 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
  *	the module handle if found
  * 	0 if not
  */
-HMODULE MODULE_FindModule(
+WINE_MODREF *MODULE_FindModule(
 	LPCSTR path	/* [in] pathname of module/library to be found */
 ) {
     LPSTR	filename;
@@ -477,7 +484,7 @@ HMODULE MODULE_FindModule(
 	if (!strcasecmp( filename, xmodname)) {
 	    HeapFree( GetProcessHeap(), 0, filename );
 	    HeapFree( GetProcessHeap(), 0, xmodname );
-	    return wm->module;
+	    return wm;
 	}
 	if (dotptr) *dotptr='.';
 	/* FIXME: add paths, shortname */
@@ -504,14 +511,14 @@ HMODULE MODULE_FindModule(
 	if (!strcasecmp( filename, xlname)) {
 	    HeapFree( GetProcessHeap(), 0, filename );
 	    HeapFree( GetProcessHeap(), 0, xlname );
-	    return wm->module;
+	    return wm;
 	}
 	if (dotptr) *dotptr='.';
 	/* FIXME: add paths, shortname */
 	HeapFree( GetProcessHeap(), 0, xlname );
     }
     HeapFree( GetProcessHeap(), 0, filename );
-    return 0;
+    return NULL;
 }
 
 /***********************************************************************
@@ -1121,10 +1128,14 @@ BOOL WINAPI CreateProcessW( LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
  */
 HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
-    if (module == NULL)
-    	return PROCESS_Current()->exe_modref->module;
+    WINE_MODREF *wm;
+
+    if ( module == NULL )
+        wm = PROCESS_Current()->exe_modref;
     else
-	return MODULE_FindModule( module );
+        wm = MODULE_FindModule( module );
+
+    return wm? wm->module : 0;
 }
 
 HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
@@ -1186,43 +1197,116 @@ HMODULE WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
 }
 
 /***********************************************************************
- *           LoadLibraryEx32A   (KERNEL32)
+ *           LoadLibraryExA   (KERNEL32)
  */
-HMODULE WINAPI LoadLibraryExA(LPCSTR libname,HFILE hfile,DWORD flags)
+HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HFILE hfile, DWORD flags)
 {
-    HMODULE hmod;
+	WINE_MODREF *wm;
 
-    if (!libname) {
-    	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
-    }
-    hmod = MODULE_LoadLibraryExA( libname, hfile, flags );
+	if(!libname)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return 0;
+	}
 
-    if ( hmod >= 32 )
-    {
-        /* Initialize DLL just loaded */
-        MODULE_InitializeDLLs( hmod, DLL_PROCESS_ATTACH, NULL );
-	/* FIXME: check for failure, SLE(ERROR_DLL_INIT_FAILED) */
-    }
+	wm = MODULE_LoadLibraryExA( libname, hfile, flags );
 
-    return hmod;
+	return wm ? wm->module : 0;
 }
 
-HMODULE MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
+/***********************************************************************
+ *	MODULE_LoadLibraryExA	(internal)
+ *
+ * Load a PE style module according to the load order.
+ *
+ * The HFILE parameter is not used and marked reserved in the SDK. I can
+ * only guess that it should force a file to be mapped, but I rather
+ * ignore the parameter because it would be extremely difficult to
+ * integrate this with different types of module represenations.
+ *
+ */
+WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 {
-    HMODULE hmod;
-    
-    hmod = ELF_LoadLibraryExA( libname, hfile, flags );
-    if(hmod < (HMODULE)32)
-        hmod = PE_LoadLibraryExA( libname, hfile, flags );
+	DWORD err;
+	WINE_MODREF *pwm;
+	int i;
+	module_loadorder_t *plo;
 
-    if(hmod >= (HMODULE)32)
-    {
-        /* Increment RefCount */
-        MODULE_IncRefCount( hmod );
-    }
+	EnterCriticalSection(&PROCESS_Current()->crit_section);
 
-    return hmod;
+	/* Check for already loaded module */
+	if((pwm = MODULE_FindModule(libname))) 
+	{
+		pwm->refCount++;
+		TRACE(module, "Already loaded module '%s' at 0x%08x, count=%d, \n", libname, pwm->module, pwm->refCount);
+		LeaveCriticalSection(&PROCESS_Current()->crit_section);
+		return pwm;
+	}
+
+	plo = MODULE_GetLoadOrder(libname);
+
+	for(i = 0; i < MODULE_LOADORDER_NTYPES; i++)
+	{
+		switch(plo->loadorder[i])
+		{
+		case MODULE_LOADORDER_DLL:
+			TRACE(module, "Trying native dll '%s'\n", libname);
+			pwm = PE_LoadLibraryExA(libname, flags, &err);
+			break;
+
+		case MODULE_LOADORDER_ELFDLL:
+			TRACE(module, "Trying elfdll '%s'\n", libname);
+			pwm = ELFDLL_LoadLibraryExA(libname, flags, &err);
+			break;
+
+		case MODULE_LOADORDER_SO:
+			TRACE(module, "Trying so-library '%s'\n", libname);
+			pwm = ELF_LoadLibraryExA(libname, flags, &err);
+			break;
+
+		case MODULE_LOADORDER_BI:
+			TRACE(module, "Trying built-in '%s'\n", libname);
+			pwm = BUILTIN32_LoadLibraryExA(libname, flags, &err);
+			break;
+
+		default:
+			ERR(module, "Got invalid loadorder type %d (%s index %d)\n", plo->loadorder[i], plo->modulename, i);
+		/* Fall through */
+
+		case MODULE_LOADORDER_INVALID:	/* We ignore this as it is an empty entry */
+			pwm = NULL;
+			break;
+		}
+
+		if(pwm)
+		{
+			/* Initialize DLL just loaded */
+			TRACE(module, "Loaded module '%s' at 0x%08x, \n", libname, pwm->module);
+
+			/* Set the refCount here so that an attach failure will */
+			/* decrement the dependencies through the MODULE_FreeLibrary call. */
+			pwm->refCount++;
+
+			if(!MODULE_DllProcessAttach(pwm, NULL))
+			{
+				WARN(module, "Attach failed for module '%s', \n", libname);
+				MODULE_FreeLibrary(pwm);
+				SetLastError(ERROR_DLL_INIT_FAILED);
+				pwm = NULL;
+			}
+
+			LeaveCriticalSection(&PROCESS_Current()->crit_section);
+			return pwm;
+		}
+
+		if(err != ERROR_FILE_NOT_FOUND)
+			break;
+	}
+
+	ERR(module, "Failed to load module '%s'; error=0x%08lx, \n", libname, err);
+	SetLastError(err);
+	LeaveCriticalSection(&PROCESS_Current()->crit_section);
+	return NULL;
 }
 
 /***********************************************************************
@@ -1252,97 +1336,121 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW,HFILE hfile,DWORD flags)
     return ret;
 }
 
-
 /***********************************************************************
- *	MODULE_FreeLibrary		(internal)
+ *           MODULE_FlushModrefs
  *
- * Decrease the loadcount of the dll.
- * If the count reaches 0, then notify the dll and free all dlls
- * that depend on this one.
+ * NOTE: Assumes that the process critical section is held!
  *
+ * Remove all unused modrefs and call the internal unloading routines
+ * for the library type.
  */
-static void MODULE_FreeLibrary(WINE_MODREF *wm, BOOL first)
+static void MODULE_FlushModrefs(void)
 {
-    int i;
+	WINE_MODREF *wm, *next;
 
-    assert(wm != NULL);
+	for(wm = PROCESS_Current()->modref_list; wm; wm = next)
+	{
+		next = wm->next;
 
-    /* Don't do anything if there still are references */
-    if( MODULE_DecRefCount(wm->module) > 1 )
-        return;
+		if(wm->refCount)
+			continue;
 
-    TRACE( module, "(%s, %08x, %d) - START\n", wm->modname, wm->module, first);
+		/* Unlink this modref from the chain */
+		if(wm->next)
+                        wm->next->prev = wm->prev;
+		if(wm->prev)
+                        wm->prev->next = wm->next;
+		if(wm == PROCESS_Current()->modref_list)
+			PROCESS_Current()->modref_list = wm->next;
 
-    /* Evaluate module flags */
-    if(!(    ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
-          || ( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS )
-          || ( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE ) ))
-    {
-        /* Now we can call the initialization routine */
-        TRACE( module, "(%s, %08x, %d) - CALL\n", wm->modname, wm->module, first);
+		/* 
+		 * The unloaders are also responsible for freeing the modref itself
+		 * because the loaders were responsible for allocating it.
+		 */
+		switch(wm->type)
+		{
+		case MODULE32_PE:	PE_UnloadLibrary(wm);		break;
+		case MODULE32_ELF:	ELF_UnloadLibrary(wm);		break;
+		case MODULE32_ELFDLL:	ELFDLL_UnloadLibrary(wm);	break;
+		case MODULE32_BI:	BUILTIN32_UnloadLibrary(wm);	break;
 
-        switch ( wm->type )
-        {
-        case MODULE32_PE:
-            PE_InitDLL(wm, DLL_PROCESS_DETACH, (LPVOID)(first ? 0 : 1));
-            break;
-
-        case MODULE32_ELF:
-            FIXME(module, "FreeLibrary requested on ELF module '%s'\n", wm->modname);
-            break;
-
-        default:
-           ERR(module, "wine_modref type %d not handled.\n", wm->type);
-           break;
-        }
-    }
-
-    /* Recursively free all DLLs that depend on this one */
-    for( i = 0; i < wm->nDeps; i++ )
-    {
-        if(wm->deps[i])
-        {
-            MODULE_FreeLibrary(wm->deps[i], FALSE);
-            break;
-        }
-    }
-
-    /* Be sure that the freed library and the list head are unlinked properly */
-    if(PROCESS_Current()->modref_list == wm)
-        PROCESS_Current()->modref_list = wm->next;
-    if(wm->next)
-        wm->next->prev = wm->prev;
-    if(wm->prev)
-        wm->prev->next = wm->next;
-
-    FIXME(module,"should free memory of module %08x '%s'\n", wm->module, wm->modname);
-
-    TRACE( module, "(%s, %08x, %d) - END\n", wm->modname, wm->module, first);
+		default:
+			ERR(module, "Invalid or unhandled MODREF type %d encountered (wm=%p)\n", wm->type, wm);
+		}
+	}
 }
-
 
 /***********************************************************************
  *           FreeLibrary
  */
 BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 {
+    BOOL retv = TRUE;
     WINE_MODREF *wm;
-    BOOL retval = TRUE;
 
-    EnterCriticalSection(&PROCESS_Current()->crit_section);
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
 
-    wm = MODULE32_LookupHMODULE(hLibModule);
-    if(!wm)
-    {
-        ERR(module, "(%08x) module not found in process' modref_list. Freed too many times?\n", hLibModule);
-        retval = FALSE;
-    }
+    wm = MODULE32_LookupHMODULE( hLibModule );
+    if ( !wm )
+        SetLastError( ERROR_INVALID_HANDLE );
     else
-        MODULE_FreeLibrary(wm, TRUE);	/* This always succeeds */
+        retv = MODULE_FreeLibrary( wm );
 
-    LeaveCriticalSection(&PROCESS_Current()->crit_section);
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
-    return retval;
+    return retv;
+}
+
+/***********************************************************************
+ *           MODULE_DecRefCount
+ *
+ * NOTE: Assumes that the process critical section is held!
+ */
+static void MODULE_DecRefCount( WINE_MODREF *wm )
+{
+    int i;
+
+    if ( wm->flags & WINE_MODREF_MARKER )
+        return;
+
+    if ( wm->refCount <= 0 )
+        return;
+
+    --wm->refCount;
+    TRACE( module, "(%s) refCount: %d\n", wm->modname, wm->refCount );
+
+    if ( wm->refCount == 0 )
+    {
+        wm->flags |= WINE_MODREF_MARKER;
+
+        for ( i = 0; i < wm->nDeps; i++ )
+            if ( wm->deps[i] )
+                MODULE_DecRefCount( wm->deps[i] );
+
+        wm->flags &= ~WINE_MODREF_MARKER;
+    }
+}
+
+/***********************************************************************
+ *           MODULE_FreeLibrary
+ *
+ * NOTE: Assumes that the process critical section is held!
+ */
+BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
+{
+    TRACE( module, "(%s) - START\n", wm->modname );
+
+    /* Recursively decrement reference counts */
+    MODULE_DecRefCount( wm );
+
+    /* Call process detach notifications */
+    MODULE_DllProcessDetach( FALSE, NULL );
+
+    MODULE_FlushModrefs();
+
+    TRACE( module, "(%s) - END\n", wm->modname );
+
+    return FALSE;
 }
 
 

@@ -25,7 +25,8 @@ extern BOOL PE_EnumResourceLanguagesA(HMODULE,LPCSTR,LPCSTR,ENUMRESLANGPROCA,LON
 extern BOOL PE_EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,ENUMRESLANGPROCW,LONG);
 extern HRSRC PE_FindResourceExW(struct _wine_modref*,LPCWSTR,LPCWSTR,WORD);
 extern DWORD PE_SizeofResource(HMODULE,HRSRC);
-extern HMODULE PE_LoadLibraryExA(LPCSTR,HFILE,DWORD);
+extern struct _wine_modref *PE_LoadLibraryExA(LPCSTR, DWORD, DWORD *);
+extern void PE_UnloadLibrary(struct _wine_modref *);
 extern HGLOBAL PE_LoadResource(struct _wine_modref *wm,HRSRC);
 extern HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName );
 extern struct _wine_modref *PE_CreateModule( HMODULE hModule, OFSTRUCT *ofs, 
@@ -36,7 +37,7 @@ extern BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCST
                               LPPROCESS_INFORMATION info );
 
 extern void PE_InitTls(void);
-extern void PE_InitDLL(struct _wine_modref *wm, DWORD type, LPVOID lpReserved);
+extern BOOL PE_InitDLL(struct _wine_modref *wm, DWORD type, LPVOID lpReserved);
 
 extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY,LPCSTR,DWORD,BOOL);
 extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL);
@@ -64,7 +65,8 @@ typedef struct {
 } ELF_MODREF;
 
 extern struct _wine_modref *ELF_CreateDummyModule(LPCSTR,LPCSTR);
-extern HMODULE ELF_LoadLibraryExA(LPCSTR,HFILE,DWORD);
+extern struct _wine_modref *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err);
+extern void ELF_UnloadLibrary(struct _wine_modref *);
 extern FARPROC ELF_FindExportedFunction(struct _wine_modref *wm, LPCSTR funcName);
 
 #endif /* __WINE_PE_IMAGE_H */

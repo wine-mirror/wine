@@ -45,6 +45,8 @@
 #include "debug.h"
 #include "psdrv.h"
 #include "server.h"
+#include "cursoricon.h"
+#include "loadorder.h"
 
 int __winelib = 1;  /* Winelib run-time flag */
 
@@ -68,6 +70,9 @@ BOOL MAIN_MainInit(void)
 
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return FALSE;
+
+    /* Initialize module loadorder */
+    if (!MODULE_InitLoadOrder()) return FALSE;
 
       /* Initialize DOS memory */
     if (!DOSMEM_Init(0)) return FALSE;

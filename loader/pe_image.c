@@ -196,7 +196,7 @@ FARPROC PE_FindExportedFunction(
 	}
 	if (forward)
         {
-                HMODULE hMod;
+                WINE_MODREF *wm;
 		char module[256];
 		char *end = strchr(forward, '.');
 
@@ -204,9 +204,9 @@ FARPROC PE_FindExportedFunction(
 		assert(end-forward<256);
 		strncpy(module, forward, (end - forward));
 		module[end-forward] = 0;
-                hMod = MODULE_FindModule( module );
-		assert(hMod);
-		return MODULE_GetProcAddress( hMod, end + 1, snoop );
+                wm = MODULE_FindModule( module );
+		assert(wm);
+		return MODULE_GetProcAddress( wm->module, end + 1, snoop );
 	}
 	return NULL;
 }
@@ -214,7 +214,6 @@ FARPROC PE_FindExportedFunction(
 DWORD fixup_imports( WINE_MODREF *wm )
 {
     IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
-    WINE_MODREF			*xwm;
     PE_MODREF			*pem;
     unsigned int load_addr	= wm->module;
     int				i,characteristics_detection=1;
@@ -256,7 +255,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
      */
  
     for (i = 0, pe_imp = pem->pe_import; pe_imp->Name ; pe_imp++) {
-    	HMODULE		hImpModule;
+    	WINE_MODREF		*wmImp;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	PIMAGE_THUNK_DATA	import_list,thunk_list;
  	char			*name = (char *) RVA(pe_imp->Name);
@@ -265,8 +264,8 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		break;
 
 	/* don't use MODULE_Load, Win32 creates new task differently */
-	hImpModule = MODULE_LoadLibraryExA( name, 0, 0 );
-	if (!hImpModule) {
+	wmImp = MODULE_LoadLibraryExA( name, 0, 0 );
+	if (!wmImp) {
 	    char *p,buffer[2000];
 	    
 	    /* GetModuleFileName would use the wrong process, so don't use it */
@@ -274,15 +273,13 @@ DWORD fixup_imports( WINE_MODREF *wm )
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
-	    hImpModule = MODULE_LoadLibraryExA( buffer, 0, 0 );
+	    wmImp = MODULE_LoadLibraryExA( buffer, 0, 0 );
 	}
-	if (!hImpModule) {
+	if (!wmImp) {
 	    ERR (module, "Module %s not found\n", name);
 	    return 1;
 	}
-        xwm = MODULE32_LookupHMODULE( hImpModule );
-        assert( xwm );
-        wm->deps[i++] = xwm;
+        wm->deps[i++] = wmImp;
 
 	/* FIXME: forwarder entries ... */
 
@@ -297,7 +294,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 
 		    TRACE(win32, "--- Ordinal %s,%d\n", name, ordinal);
 		    thunk_list->u1.Function=MODULE_GetProcAddress(
-                        hImpModule, (LPCSTR)ordinal, TRUE
+                        wmImp->module, (LPCSTR)ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32,"No implementation for %s.%d, setting to 0xdeadbeef\n",
@@ -308,7 +305,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		    pe_name = (PIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    TRACE(win32, "--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress(
-                        hImpModule, pe_name->Name, TRUE
+                        wmImp->module, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32,"No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
@@ -329,7 +326,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 
 		    TRACE(win32,"--- Ordinal %s.%d\n",name,ordinal);
 		    thunk_list->u1.Function=MODULE_GetProcAddress(
-                        hImpModule, (LPCSTR) ordinal, TRUE
+                        wmImp->module, (LPCSTR) ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
@@ -341,7 +338,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		    TRACE(win32,"--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress(
-                        hImpModule, pe_name->Name, TRUE
+                        wmImp->module, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 		    	ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
@@ -829,68 +826,76 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
  * The PE Library Loader frontend. 
  * FIXME: handle the flags.
  */
-HMODULE PE_LoadLibraryExA (LPCSTR name, 
-                               HFILE hFile, DWORD flags)
+WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 {
-    LPCSTR	modName = NULL;
-    OFSTRUCT	ofs;
-    HMODULE	hModule32;
-    HMODULE16	hModule16;
-    NE_MODULE	*pModule;
-    WINE_MODREF	*wm;
-    BOOL	builtin = TRUE;
-    char        dllname[256], *p;
+	LPCSTR		modName = NULL;
+	OFSTRUCT	ofs;
+	HMODULE		hModule32;
+	HMODULE16	hModule16;
+	NE_MODULE	*pModule;
+	WINE_MODREF	*wm;
+	BOOL		builtin = TRUE;
+	char        	dllname[256], *p;
+	HFILE		hFile;
 
-    /* Check for already loaded module */
-    if ((hModule32 = MODULE_FindModule( name ))) 
-        return hModule32;
+	/* Append .DLL to name if no extension present */
+	strcpy( dllname, name );
+	if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
+		strcat( dllname, ".DLL" );
 
-    /* Append .DLL to name if no extension present */
-    strcpy( dllname, name );
-    if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-        strcat( dllname, ".DLL" );
+	/* Load PE module */
+	hFile = OpenFile( dllname, &ofs, OF_READ | OF_SHARE_DENY_WRITE );
+	if ( hFile != HFILE_ERROR )
+	{
+		hModule32 = PE_LoadImage( hFile, &ofs, &modName );
+		CloseHandle( hFile );
+		if(!hModule32)
+		{
+			*err = ERROR_OUTOFMEMORY;	/* Not entirely right, but good enough */
+			return NULL;
+		}
+	}
+	else
+	{
+		*err = ERROR_FILE_NOT_FOUND;
+		return NULL;
+	}
 
-    /* Try to load builtin enabled modules first */
-    if ( !(hModule32 = BUILTIN32_LoadImage( name, &ofs, FALSE )) )
-    {
-        /* Load PE module */
+	/* Create 16-bit dummy module */
+	if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32)
+	{
+		*err = (DWORD)hModule16;	/* This should give the correct error */
+		return NULL;
+	}
+	pModule = (NE_MODULE *)GlobalLock16( hModule16 );
+	pModule->flags    = NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA | NE_FFLAGS_WIN32;
+	pModule->module32 = hModule32;
 
-        hFile = OpenFile( dllname, &ofs, OF_READ | OF_SHARE_DENY_WRITE );
-        if ( hFile != HFILE_ERROR )
-            if ( (hModule32 = PE_LoadImage( hFile, &ofs, &modName )) >= 32 )
-                builtin = FALSE;
+	/* Create 32-bit MODREF */
+	if ( !(wm = PE_CreateModule( hModule32, &ofs, flags, builtin )) )
+	{
+		ERR(win32,"can't load %s\n",ofs.szPathName);
+		FreeLibrary16( hModule16 );
+		*err = ERROR_OUTOFMEMORY;
+		return NULL;
+	}
 
-        CloseHandle( hFile );
-    }
+	if (wm->binfmt.pe.pe_export)
+		SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
 
-    /* Now try the built-in even if disabled */
-    if ( builtin ) {
-        if ( (hModule32 = BUILTIN32_LoadImage( name, &ofs, TRUE )) )
-            WARN( module, "Could not load external DLL '%s', using built-in module.\n", name );
-        else
-            return 0;
-    }
+	*err = 0;
+	return wm;
+}
 
 
-    /* Create 16-bit dummy module */
-    if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32) return hModule16;
-    pModule = (NE_MODULE *)GlobalLock16( hModule16 );
-    pModule->flags    = NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA |
-                        NE_FFLAGS_WIN32 | (builtin? NE_FFLAGS_BUILTIN : 0);
-    pModule->module32 = hModule32;
-
-    /* Create 32-bit MODREF */
-    if ( !(wm = PE_CreateModule( hModule32, &ofs, flags, builtin )) )
-    {
-        ERR(win32,"can't load %s\n",ofs.szPathName);
-        FreeLibrary16( hModule16 );
-        return 0;
-    }
-
-    if (wm->binfmt.pe.pe_export)
-        SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
-
-    return wm->module;
+/*****************************************************************************
+ *	PE_UnloadLibrary
+ *
+ * Unload the library unmapping the image and freeing the modref structure.
+ */
+void PE_UnloadLibrary(WINE_MODREF *wm)
+{
+	/* FIXME, do something here */
 }
 
 /*****************************************************************************
@@ -958,18 +963,11 @@ int PE_UnloadImage( HMODULE hModule )
  * DLL_PROCESS_ATTACH. Only new created threads do DLL_THREAD_ATTACH
  * (SDK)
  */
-void PE_InitDLL(WINE_MODREF *wm, DWORD type, LPVOID lpReserved)
+BOOL PE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
 {
-    if (wm->type!=MODULE32_PE)
-    	return;
+    BOOL retv = TRUE;
+    assert( wm->type == MODULE32_PE );
 
-    /*  DLL_ATTACH_PROCESS:
-     *		lpreserved is NULL for dynamic loads, not-NULL for static loads
-     *  DLL_DETACH_PROCESS:
-     *		lpreserved is NULL if called by FreeLibrary, not-NULL otherwise
-     *  the SDK doesn't mention anything for DLL_THREAD_*
-     */
-        
     /* Is this a library? And has it got an entrypoint? */
     if ((PE_HEADER(wm->module)->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
         (PE_HEADER(wm->module)->OptionalHeader.AddressOfEntryPoint)
@@ -978,8 +976,10 @@ void PE_InitDLL(WINE_MODREF *wm, DWORD type, LPVOID lpReserved)
         TRACE(relay, "CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
                        entry, wm->module, type, lpReserved );
 
-        entry( wm->module, type, lpReserved );
+        retv = entry( wm->module, type, lpReserved );
     }
+
+    return retv;
 }
 
 /************************************************************************

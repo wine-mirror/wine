@@ -388,7 +388,11 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     TRACE(global,"oldsize %08lx\n",oldsize);
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
-    ptr = HeapReAlloc( SystemHeap, 0, ptr, size );
+    if (((char *)ptr >= DOSMEM_MemoryBase(0)) &&
+        ((char *)ptr <= DOSMEM_MemoryBase(0) + 0x100000))
+        ptr = DOSMEM_ResizeBlock(0, ptr, size, NULL);
+    else
+        ptr = HeapReAlloc( SystemHeap, 0, ptr, size );
     if (!ptr)
     {
         SELECTOR_FreeBlock( sel, (oldsize + 0xffff) / 0x10000 );

@@ -21,9 +21,10 @@
 #include "neexe.h"
 #include "peexe.h"
 #include "heap.h"
-#include "pe_image.h"
 #include "module.h"
+#include "pe_image.h"
 #include "debug.h"
+#include "winerror.h"
 
 WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 {
@@ -96,7 +97,7 @@ WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 
 #include <dlfcn.h>
 
-HMODULE ELF_LoadLibraryExA( LPCSTR libname, HANDLE hf, DWORD flags )
+WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err)
 {
 	WINE_MODREF	*wm;
 	char		*modname,*s,*t,*x;
@@ -138,14 +139,16 @@ HMODULE ELF_LoadLibraryExA( LPCSTR libname, HANDLE hf, DWORD flags )
 	dlhandle = dlopen(t,RTLD_NOW);
 	if (!dlhandle) {
 		HeapFree( GetProcessHeap(), 0, t );
-		return 0;
+		*err = ERROR_FILE_NOT_FOUND;
+		return NULL;
 	}
 
 	wm = ELF_CreateDummyModule( t, modname );
 	wm->binfmt.elf.dlhandle = dlhandle;
 
 	SNOOP_RegisterDLL(wm->module,libname,STUBSIZE/sizeof(ELF_STDCALL_STUB));
-	return wm->module;
+	*err = 0;
+	return wm;
 }
 
 FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
@@ -247,12 +250,29 @@ FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName)
 	fun = SNOOP_GetProcAddress(wm->module,funcName,stub-wm->binfmt.elf.stubs,fun);
 	return (FARPROC)fun;
 }
+
+
+/***************************************************************************
+ *	ELF_UnloadLibrary
+ *
+ * Unload the elf library and free the modref
+ */
+void ELF_UnloadLibrary(WINE_MODREF *wm)
+{
+	/* FIXME: do something here */
+}
+
 #else
 
-HMODULE ELF_LoadLibraryExA( LPCSTR libname, HANDLE hf, DWORD flags)
+WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, HANDLE hf, DWORD flags)
 {
-	return 0;
+	return NULL;
 }
+
+void ELF_UnloadLibrary(WINE_MODREF *wm)
+{
+}
+
 FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
 {
 	return (FARPROC)0;

@@ -245,6 +245,7 @@ extern int WIN32_LastError;
 #define ERROR_BADKEY                1010 /* Config reg key invalid */
 #define ERROR_CANTREAD              1012 /* Config reg key couldn't be read */
 #define ERROR_CANTWRITE             1013 /* Config reg key couldn't be written */
+#define ERROR_DLL_INIT_FAILED       1114
 #define ERROR_IO_DEVICE             1117
 #define ERROR_POSSIBLE_DEADLOCK     1131
 #define ERROR_BAD_DEVICE            1200

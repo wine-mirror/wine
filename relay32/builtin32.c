@@ -14,6 +14,8 @@
 #include "heap.h"
 #include "debug.h"
 #include "main.h"
+#include "snoop.h"
+#include "winerror.h"
 
 typedef struct
 {
@@ -321,6 +323,77 @@ HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL force )
 
 
 /***********************************************************************
+ *           BUILTIN32_LoadLibraryExA
+ *
+ * Partly copied from the original PE_ version.
+ *
+ * Note: This implementation is not very nice and should be one with
+ * the BUILTIN32_LoadImage function. But, we don't care too much
+ * because this code will obsolete itself shortly when we get the
+ * modularization of wine implemented (BS 05-Mar-1999).
+ */
+WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
+{
+	LPCSTR		modName = NULL;
+	OFSTRUCT	ofs;
+	HMODULE		hModule32;
+	HMODULE16	hModule16;
+	NE_MODULE	*pModule;
+	WINE_MODREF	*wm;
+	char		dllname[256], *p;
+
+	/* Append .DLL to name if no extension present */
+	strcpy( dllname, path );
+	if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
+		strcat( dllname, ".DLL" );
+
+	hModule32 = BUILTIN32_LoadImage( path, &ofs, TRUE );
+	if(!hModule32)
+	{
+		*err = ERROR_FILE_NOT_FOUND;
+		return NULL;
+	}
+
+	/* Create 16-bit dummy module */
+	if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32)
+	{
+		*err = (DWORD)hModule16;
+		return NULL;	/* FIXME: Should unload the builtin module */
+	}
+
+	pModule = (NE_MODULE *)GlobalLock16( hModule16 );
+	pModule->flags = NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA | NE_FFLAGS_WIN32 | NE_FFLAGS_BUILTIN;
+	pModule->module32 = hModule32;
+
+	/* Create 32-bit MODREF */
+	if ( !(wm = PE_CreateModule( hModule32, &ofs, flags, TRUE )) )
+	{
+		ERR(win32,"can't load %s\n",ofs.szPathName);
+		FreeLibrary16( hModule16 );	/* FIXME: Should unload the builtin module */
+		*err = ERROR_OUTOFMEMORY;
+		return NULL;
+	}
+
+	if (wm->binfmt.pe.pe_export)
+		SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
+
+	*err = 0;
+	return wm;
+}
+
+
+/***********************************************************************
+ *	BUILTIN32_UnloadLibrary
+ *
+ * Unload the built-in library and free the modref.
+ */
+void BUILTIN32_UnloadLibrary(WINE_MODREF *wm)
+{
+	/* FIXME: do something here */
+}
+
+
+/***********************************************************************
  *           BUILTIN32_GetEntryPoint
  *
  * Return the name of the DLL entry point corresponding
@@ -435,74 +508,3 @@ void BUILTIN32_Unimplemented( const BUILTIN32_DESCRIPTOR *descr, int ordinal )
     ExitProcess(1);
 }
 
-/***********************************************************************
- *           BUILTIN32_ParseDLLOptions
- *
- * Set runtime DLL usage flags
- */
-BOOL BUILTIN32_ParseDLLOptions( char *str )
-{
-    BUILTIN32_DLL *dll;
-    char *p,*last;
-
-    last = str;
-    while (*str)
-    {
-        while (*str && (*str==',' || isspace(*str))) str++;
-        if (!*str) {
-	    *last = '\0'; /* cut off garbage at end at */
-	    return TRUE;
-	}
-        if ((*str != '+') && (*str != '-')) return FALSE;
-        str++;
-        if (!(p = strchr( str, ',' ))) p = str + strlen(str);
-        while ((p > str) && isspace(p[-1])) p--;
-        if (p == str) return FALSE;
-	for (dll = BuiltinDLLs; dll->descr; dll++)
-	{
-	    if (!lstrncmpiA( dll->descr->name, str, (int)(p-str) ))
-	    {
-	        if (dll->descr->name[p-str]) /* partial match - skip */
-			continue;
-		dll->used = (str[-1]!='-');
-		break;
-	    }
-	}
-        if (!dll->descr) {
-	    /* not found, but could get handled by BUILTIN_, so move last */
-	    last = p;
-	    str = p;
-	} else {
-	    /* handled. cut out the "[+-]DLL," string, so it isn't handled
-	     * by BUILTIN
-	     */
-	    if (*p) {
-		memcpy(last,p,strlen(p)+1);
-		str = last;
-	    } else {
-	    	*last = '\0';
-		break;
-	    }
-	}
-    }
-    return TRUE;
-}
-
-
-
-/***********************************************************************
- *           BUILTIN32_PrintDLLs
- *
- * Print the list of built-in DLLs that can be disabled.
- */
-void BUILTIN32_PrintDLLs(void)
-{
-    int i;
-    BUILTIN32_DLL *dll;
-
-    MSG("Available Win32 DLLs:\n");
-    for (i = 0, dll = BuiltinDLLs; dll->descr; dll++)
-        MSG("%-9s%c", dll->descr->name,
-                 ((++i) % 8) ? ' ' : '\n' );
-    MSG("\n");
-}

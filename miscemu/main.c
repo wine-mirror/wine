@@ -140,18 +140,6 @@ int main( int argc, char *argv[] )
     if (!MAIN_WineInit( &argc, argv )) return 1;
     MAIN_argc = argc; MAIN_argv = argv;
 
-    /* Handle -dll option (hack) */
-    if (Options.dllFlags)
-    {
-	/* If there are options left, or if the parser had errors, report it */
-        if (!BUILTIN_ParseDLLOptions( Options.dllFlags )||Options.dllFlags[0]) {
-            MSG("%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",
-                     argv[0] );
-            BUILTIN_PrintDLLs();
-            exit(1);
-        }
-    }
-
     /* Set up debugger/instruction emulation callback routines */
     ctx_debug_call		= ctx_debug;
     fnWINE_Debugger		= wine_debug;

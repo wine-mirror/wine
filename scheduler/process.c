@@ -486,6 +486,10 @@ void PROCESS_Start(void)
     /* Create 32-bit MODREF */
     if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
 
+    /* Increment EXE refcount */
+    assert( PROCESS_Current()->exe_modref );
+    PROCESS_Current()->exe_modref->refCount++;
+
     PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );   /* FIXME: correct location? */
 
     /* Initialize thread-local storage */
@@ -497,7 +501,9 @@ void PROCESS_Start(void)
 
     /* Now call the entry point */
 
-    MODULE_InitializeDLLs( 0, DLL_PROCESS_ATTACH, (LPVOID)1 );
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    MODULE_DllProcessAttach( PROCESS_Current()->exe_modref, (LPVOID)1 );
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
     PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0, 0 );
 
@@ -651,7 +657,9 @@ error:
  */
 void WINAPI ExitProcess( DWORD status )
 {
-    MODULE_InitializeDLLs( 0, DLL_PROCESS_DETACH, (LPVOID)1 );
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
     if ( THREAD_IsWin16( THREAD_Current() ) )
         TASK_KillCurrentTask( status );
