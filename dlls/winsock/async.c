@@ -17,6 +17,8 @@
  *	  (not sure why)
  *	- This implementation did ignore the "NOTE:" section above (since the
  *	  whole stuff did not work anyway to other changes).
+ *	- (Rein Klazes) Some structures returned (eg servent) are NOT correct in 
+ *	  win32. The packing should be at 4 byte bounds. Same problem in socket.c
  */
  
 #include "config.h"
@@ -280,7 +282,9 @@ typedef struct _async_query {
 #define AQ_GETSERV	2
 #define AQ_GETMASK	3
 	int		qt;
+    char xbuf[1];
 } async_query;
+
 
 /****************************************************************************
  * The async query function.
@@ -381,9 +385,43 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 static HANDLE16	__WSAsyncDBQuery(
 	HWND hWnd, UINT uMsg,INT int1,LPCSTR ptr1, INT int2, LPCSTR ptr2,
 	void *sbuf, INT sbuflen, UINT flags
-) {
-	async_query	*aq = HeapAlloc(GetProcessHeap(),0,sizeof(async_query));
+) 
+{
+	async_query	*aq;
 	HANDLE	hthread;
+
+    int xbuflen=0;
+    /* allocate buffer to copy protocol- and service name to */
+    /* note: this is done in the calling thread so we can return */
+    /* a decent error code if the Alloc fails */
+    
+    if( flags & (AQ_GETPROTO | AQ_GETSERV)) {
+        if(ptr1) xbuflen += strlen(ptr1)+1; 
+        if(ptr2) xbuflen += strlen(ptr2)+1; 
+    }
+    
+    aq = HeapAlloc(GetProcessHeap(),0,sizeof(async_query) + xbuflen);
+    if(!aq) {
+        SetLastError(WSAEWOULDBLOCK); /* insufficient resources */
+        return 0;
+    }
+    /* convert protocol- and service names to lower case */
+    if( flags & (AQ_GETPROTO | AQ_GETSERV)) {
+        const char *pfrom;
+        char *pto=aq->xbuf;
+        if(ptr1) {
+            pfrom=ptr1;
+            ptr1=pto;
+            do *pto++ = tolower(*pfrom);
+            while (*pfrom++);
+        }
+        if(ptr2) {
+            pfrom=ptr2; 
+            ptr2=pto;  
+            do *pto++ = tolower(*pfrom); 
+            while (*pfrom++);
+        }
+    }
 
 	aq->hWnd	= hWnd;
 	aq->uMsg	= uMsg;
