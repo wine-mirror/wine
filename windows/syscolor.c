@@ -79,7 +79,7 @@ static const char * const DefSysColors95[] =
     "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
     "ButtonHilight", "255 255 255",  /* COLOR_BTNHIGHLIGHT        */
     "3DDarkShadow", "0 0 0",         /* COLOR_3DDKSHADOW          */
-    "3DLight", "223 223 223",        /* COLOR_3DLIGHT             */
+    "3DLight", "192 192 192",        /* COLOR_3DLIGHT             */
     "InfoText", "0 0 0",             /* COLOR_INFOTEXT            */
     "InfoBackground", "255 255 192", /* COLOR_INFOBK              */
     "AlternateButtonFace", "184 180 184",  /* COLOR_ALTERNATEBTNFACE */
