@@ -232,9 +232,6 @@ ICOM_DEFINE(IDataAdviseHolder,IUnknown)
 #define IDataAdviseHolder_EnumAdvise(p,a)           ICOM_CALL1(EnumAdvise,p,a)
 #define IDataAdviseHolder_SendOnDataChange(p,a,b,c) ICOM_CALL3(SendOnDataChange,p,a,b,c)
 
-/* FIXME: not implemented */
-HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder);
-
 
 /*****************************************************************************
  * IDataObject interface
@@ -323,13 +320,6 @@ ICOM_DEFINE(IEnumSTATDATA,IUnknown)
 #define IEnumSTATDATA_Reset(p)      ICOM_CALL (Reset,p)
 #define IEnumSTATDATA_Clone(p,a)    ICOM_CALL1(Clone,p,a)
 
-
-/*****************************************************************************
- * Additional API
- */
-
-/* FIXME: not implemented */
-HRESULT WINAPI CreateDataCache(LPUNKNOWN pUnkOuter, REFCLSID rclsid, REFIID iid, LPVOID* ppv);
 
 #ifdef __cplusplus
 } /* extern "C"  */

@@ -140,15 +140,6 @@ ICOM_DEFINE(IMalloc,IUnknown)
 #define	MEMCTX_UNKNOWN		-1
 #define	MEMCTX_SAME		-2
 
-HRESULT WINAPI CoGetMalloc(DWORD dwMemContext,LPMALLOC* lpMalloc);
-
-LPVOID WINAPI CoTaskMemAlloc(ULONG size);
-
-void WINAPI CoTaskMemFree(LPVOID ptr);
-
-/* FIXME: unimplemented */
-LPVOID WINAPI CoTaskMemRealloc(LPVOID ptr, ULONG size);
-
 
 /*****************************************************************************
  * IMallocSpy interface
@@ -191,8 +182,6 @@ ICOM_DEFINE(IMallocSpy,IUnknown)
 #define IMallocSpy_PreHeapMinimize(p)    ICOM_CALL (PreHeapMinimize,p)
 #define IMallocSpy_PostHeapMinimize(p)   ICOM_CALL (PostHeapMinimize,p)
 
-HRESULT WINAPI CoFileTimeNow(FILETIME* lpFileTime);
-
 
 /*****************************************************************************
  * IMultiQI interface
@@ -221,26 +210,6 @@ ICOM_DEFINE(IMultiQI,IUnknown)
 #define IMultiQI_QueryMultipleInterfaces(p,a,b) ICOM_CALL2(QueryMultipleInterfaces,p,a,b)
 
 
-/*****************************************************************************
- * Additional API
- */
-
-DWORD WINAPI CoBuildVersion(void);
-
-DWORD WINAPI CoGetCurrentProcess(void);
-
-/* FIXME: unimplemented */
-HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID pClsidNew);
-
-/* FIXME: unimplemented */
-HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew);
-
-HRESULT WINAPI CoCreateInstanceEx(REFCLSID      rclsid,
-				  LPUNKNOWN     pUnkOuter,
-				  DWORD         dwClsContext,
-				  COSERVERINFO* pServerInfo,
-				  ULONG         cmq,
-				  MULTI_QI*     pResults);
 #ifdef __cplusplus
 } /*  extern "C" */
 #endif /* defined(__cplusplus) */

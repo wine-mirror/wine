@@ -122,29 +122,6 @@ typedef struct IStream IStream,*LPSTREAM;
 
 
 /*****************************************************************************
- * STGM enumeration
- *
- * See IStorage and IStream
- */
-#define STGM_DIRECT		0x00000000
-#define STGM_TRANSACTED		0x00010000
-#define STGM_SIMPLE		0x08000000
-#define STGM_READ		0x00000000
-#define STGM_WRITE		0x00000001
-#define STGM_READWRITE		0x00000002
-#define STGM_SHARE_DENY_NONE	0x00000040
-#define STGM_SHARE_DENY_READ	0x00000030
-#define STGM_SHARE_DENY_WRITE	0x00000020
-#define STGM_SHARE_EXCLUSIVE	0x00000010
-#define STGM_PRIORITY		0x00040000
-#define STGM_DELETEONRELEASE	0x04000000
-#define STGM_CREATE		0x00001000
-#define STGM_CONVERT		0x00020000
-#define STGM_FAILIFTHERE	0x00000000
-#define STGM_NOSCRATCH		0x00100000
-#define STGM_NOSNAPSHOT		0x00200000
-
-/*****************************************************************************
  * STGTY enumeration
  *
  * See IStorage
@@ -622,36 +599,6 @@ ICOM_DEFINE(IStream,ISequentialStream)
 #define IStream_Stat(p,a,b)           ICOM_CALL2(Stat,p,a,b)
 #define IStream_Clone(p,a)            ICOM_CALL1(Clone,p,a)
 
-
-/*****************************************************************************
- * StgXXX API
- */
-/* FIXME: many functions are missing */
-HRESULT WINAPI StgCreateDocFile16(LPCOLESTR16 pwcsName,DWORD grfMode,DWORD reserved,IStorage16 **ppstgOpen);
-HRESULT WINAPI StgCreateDocfile(LPCOLESTR pwcsName,DWORD grfMode,DWORD reserved,IStorage **ppstgOpen);
-
-HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn);
-HRESULT WINAPI StgIsStorageFile(LPCOLESTR fn);
-HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt);
-
-HRESULT WINAPI StgOpenStorage16(const OLECHAR16* pwcsName,IStorage16* pstgPriority,DWORD grfMode,SNB16 snbExclude,DWORD reserved,IStorage16**ppstgOpen);
-HRESULT WINAPI StgOpenStorage(const OLECHAR* pwcsName,IStorage* pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage**ppstgOpen);
-
-HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid);
-HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid);
-
-HRESULT WINAPI StgCreateDocfileOnILockBytes(ILockBytes *plkbyt,DWORD grfMode, DWORD reserved, IStorage** ppstgOpen);
-HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPriority, DWORD grfMode, SNB snbExclude, DWORD reserved, IStorage **ppstgOpen);
-
-/*****************************************************************************
- * Other storage API
- */
-
-/* FIXME: not implemented */
-BOOL WINAPI CoDosDateTimeToFileTime(WORD nDosDate, WORD nDosTime, FILETIME* lpFileTime);
-
-/* FIXME: not implemented */
-BOOL WINAPI CoFileTimeToDosDateTime(FILETIME* lpFileTime, WORD* lpDosDate, WORD* lpDosTime);
 
 #ifdef __cplusplus
 } /* extern "C" */

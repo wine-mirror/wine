@@ -88,40 +88,6 @@ ICOM_DEFINE(IStdMarshalInfo,IUnknown)
 #define IStdMarshalInfo_GetClassForHandler(p,a,b,c) ICOM_CALL3(GetClassForHandler,p,a,b,c)
 
 
-/*****************************************************************************
- * Additional marshalling API
- */
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoCreateFreeThreadedMarshaler(LPUNKNOWN punkOuter, LPUNKNOWN* ppunkMarshal);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoGetInterfaceAndReleaseStream(LPSTREAM pStm, REFIID iid, LPVOID* ppv);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoGetMarshalSizeMax(ULONG* pulSize, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoGetStandardMarshal(REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags, LPMARSHAL* ppMarshal);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoMarshalHresult(LPSTREAM pstm, HRESULT hresult);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoMarshalInterface(LPSTREAM pStm, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(REFIID riid, LPUNKNOWN pUnk, LPSTREAM* ppStm);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoReleaseMarshalData(LPSTREAM pStm);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoUnmarshalHresult(LPSTREAM pstm, HRESULT* phresult);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoUnmarshalInterface(LPSTREAM pStm, REFIID riid, LPVOID* ppv);
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

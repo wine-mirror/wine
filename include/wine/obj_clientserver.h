@@ -203,68 +203,6 @@ ICOM_DEFINE(IServerSecurity,IUnknown)
 #define IServerSecurity_IsImpersonating(p)            ICOM_CALL (IsImpersonating,p)
 
 
-/*****************************************************************************
- * Additional client API
- */
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoCopyProxy(IUnknown* pProxy, IUnknown** ppCopy);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoQueryProxyBlanket(IUnknown* pProxy, DWORD* pwAuthnSvc, DWORD* pAuthzSvc, OLECHAR** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTH_IDENTITY_HANDLE* pAuthInfo, DWORD* pCapabilites);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoSetProxyBlanket(IUnknown* pProxy, DWORD dwAuthnSvc, DWORD dwAuthzSvc, OLECHAR* pServerPrincName, DWORD dwAuthnLevel, DWORD dwImpLevel, RPC_AUTH_IDENTITY_HANDLE pAuthInfo, DWORD dwCapabilities);
-
-
-/*****************************************************************************
- * Additional server API
- */
-
-/* FIXME: not implemented */
-ULONG WINAPI CoAddRefServerProcess(void);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoImpersonateClient(void);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoQueryClientBlanket(DWORD* pAuthnSvc, DWORD* pAuthzSvc, OLECHAR16** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTHZ_HANDLE* pPrivs, DWORD* pCapabilities);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoReleaseServerProcess(void);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoRevertToSelf(void);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoSuspendClassObjects(void);
-
-
-/*****************************************************************************
- * Additional API
- */
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoGetCallContext(REFIID riid, void** ppInterface);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID* pClsid);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc, SOLE_AUTHENTICATION_SERVICE* asAuthSvc, void* pReserved1, DWORD dwAuthnLevel, DWORD dwImpLevel, void* pReserved2, DWORD dwCapabilities, void* pReserved3);
-
-/* FIXME: not implemented */
-BOOL WINAPI CoIsHandlerConnected(LPUNKNOWN pUnk);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoQueryAuthenticationServices(DWORD* pcAuthSvc, SOLE_AUTHENTICATION_SERVICE** asAuthSvc);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoResumeClassObjects(void);
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

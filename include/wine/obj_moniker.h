@@ -119,8 +119,6 @@ ICOM_DEFINE(IBindCtx,IUnknown)
 #define IBindCtx_EnumObjectParam(p,a)       ICOM_CALL1(EnumObjectParam,p,a)
 #define IBindCtx_RevokeObjectParam(p,a)     ICOM_CALL1(RevokeObjectParam,p,a)
 
-HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC* ppbc);
-HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
 
 /*****************************************************************************
  * IClassActivator interface
@@ -242,27 +240,7 @@ ICOM_DEFINE(IMoniker,IPersistStream)
 #define IMoniker_ParseDisplayName(p,a,b,c,d,e)      ICOM_CALL5(ParseDisplayName,p,a,b,c,d,e)
 #define IMoniker_IsSystemMoniker(p,a)               ICOM_CALL1(IsSystemMoniker,p,a)
 
-HRESULT WINAPI CreateFileMoniker16(LPCOLESTR16 lpszPathName, LPMONIKER* ppmk);
-HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
 
-HRESULT WINAPI CreateItemMoniker16(LPCOLESTR16 lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
-HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
-
-HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk);
-
-HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPMONIKER* ppmkComposite);
-
-/* FIXME: not implemented */
-HRESULT WINAPI  BindMoniker(LPMONIKER pmk, DWORD grfOpt, REFIID iidResult, LPVOID* ppvResult);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, LPMONIKER* ppmk);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER* ppmk);
-
-/* FIXME: not implemented */
-HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMoniker** ppmkCommon);
 /*****************************************************************************
  * IROTData interface
  */
@@ -347,18 +325,6 @@ ICOM_DEFINE(IRunningObjectTable,IUnknown)
 #define IRunningObjectTable_GetTimeOfLastChange(p,a,b) ICOM_CALL2(GetTimeOfLastChange,p,a,b)
 #define IRunningObjectTable_EnumRunning(p,a)           ICOM_CALL1(EnumRunning,p,a)
 
-HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
-HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
-
-/*****************************************************************************
- * Additional API
- */
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoGetInstanceFromFile(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, DWORD grfMode, OLECHAR* pwszName, DWORD dwCount, MULTI_QI* pResults);
-
-/* FIXME: not implemented */
-HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, IStorage* pstg, DWORD dwCount, MULTI_QI* pResults);
 
 #ifdef __cplusplus
 } /* extern "C" */
