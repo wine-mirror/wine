@@ -1278,7 +1278,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
     GUID     serviceProviderGUID;
     DWORD    returnTypeGUID, returnTypeReserved1, sizeOfReturnBuffer=50;
     char     returnBuffer[51];
-    DWORD    majVersionNum, minVersionNum;
+    DWORD    majVersionNum /*, minVersionNum */;
     LPWSTR   lpWGUIDString; 
 
     TRACE( dplay, " this time through: %s\n", subKeyName );

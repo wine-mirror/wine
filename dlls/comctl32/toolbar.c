@@ -885,7 +885,8 @@ TOOLBAR_AutoSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
     RECT32 parent_rect;
     HWND32 parent;
-    INT32  x, y, cx, cy;
+    /* INT32  x, y; */
+    INT32  cx, cy;
     UINT32 uPosFlags = 0;
 
     TRACE (toolbar, "resize forced!\n");
@@ -2534,7 +2535,8 @@ TOOLBAR_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
     RECT32 parent_rect;
     HWND32 parent;
-    INT32  x, y, cx, cy;
+    /* INT32  x, y; */
+    INT32  cx, cy;
     INT32  flags;
     UINT32 uPosFlags = 0;
 

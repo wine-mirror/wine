@@ -64,7 +64,7 @@ PAGER_GetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 PAGER_GetButtonState (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr); */
 
     FIXME (pager, "empty stub!\n");
 
@@ -259,7 +259,7 @@ PAGER_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 PAGER_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    /* PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr); */
 
     TRACE (pager, "stub!\n");
 

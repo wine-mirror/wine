@@ -260,14 +260,16 @@ static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
 int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
 {
     LPWORD stack16;
+#ifndef MZ_SUPPORTED
     THDB *thdb = THREAD_Current();
+    WORD sel;
+    SEGPTR seg_addr;
+#endif /* !MZ_SUPPORTED */
     LPVOID addr = NULL; /* avoid gcc warning */
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
     RMCB *CurrRMCB;
     int alloc = 0, already = 0;
-    WORD sel;
-    SEGPTR seg_addr;
 
     GlobalUnlock16( GetCurrentTask() );
 

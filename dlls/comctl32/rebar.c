@@ -571,7 +571,7 @@ static LRESULT
 REBAR_GetBandBorders (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (wndPtr);
-    LPRECT32 lpRect = (LPRECT32)lParam;
+    /* LPRECT32 lpRect = (LPRECT32)lParam; */
     REBAR_BAND *lpBand;
 
     if (!lParam)
@@ -889,7 +889,7 @@ REBAR_GetUnicodeFormat (WND *wndPtr)
 static LRESULT
 REBAR_HitTest (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    REBAR_INFO *infoPtr = REBAR_GetInfoPtr (wndPtr);
+    /* REBAR_INFO *infoPtr = REBAR_GetInfoPtr (wndPtr); */
     LPRBHITTESTINFO lprbht = (LPRBHITTESTINFO)lParam; 
 
     if (!lprbht)
@@ -1761,9 +1761,10 @@ static LRESULT
 REBAR_SetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr(wndPtr);
-    TEXTMETRIC32A tm;
-    HFONT32 hFont, hOldFont;
-    HDC32 hdc;
+    
+    /* TEXTMETRIC32A tm; */
+    HFONT32 hFont /*, hOldFont */;
+    /* HDC32 hdc; */
 
     infoPtr->hFont = (HFONT32)wParam;
 
@@ -1793,7 +1794,7 @@ REBAR_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr(wndPtr);
     RECT32 rcParent;
-    INT32 x, y, cx, cy;
+    /* INT32 x, y, cx, cy; */
 
     /* auto resize deadlock check */
     if (infoPtr->bAutoResize) {

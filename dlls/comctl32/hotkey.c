@@ -83,7 +83,7 @@ HOTKEY_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr);
+    /* HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr); */
     HBRUSH32 hBrush;
     RECT32   rc;
 
@@ -112,7 +112,7 @@ HOTKEY_GetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_KeyDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr);
+    /* HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr); */
 
     switch (wParam) {
 	case VK_RETURN:
@@ -141,7 +141,7 @@ HOTKEY_KeyDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_KeyUp (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr);
+    /* HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr); */
 
     FIXME (hotkey, " %d\n", wParam);
 
@@ -237,7 +237,7 @@ HOTKEY_SetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_SysKeyDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr);
+    /* HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr); */
 
     switch (wParam) {
 	case VK_RETURN:
@@ -266,7 +266,7 @@ HOTKEY_SysKeyDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_SysKeyUp (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr);
+    /* HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr); */
 
     FIXME (hotkey, " %d\n", wParam);
 

@@ -348,7 +348,7 @@ TREEVIEW_DrawItem (WND *wndPtr, HDC32 hdc, TREEVIEW_ITEM *wineItem,
   INT32  oldBkMode,center,xpos;
   COLORREF oldBkColor;
   UINT32 uTextJustify = DT_LEFT;
-  HPEN32 hOldPen, hnewPen,hRootPen;
+  HPEN32 hOldPen, hnewPen /* ,hRootPen */ ;
   RECT32 r,upper;
   
   hnewPen = CreatePen32(PS_DOT, 0, GetSysColor32(COLOR_WINDOWTEXT) );

@@ -54,7 +54,7 @@ BOOL32 WINAPI
 DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	   PFNDPACOMPARE pfnCompare, LPVOID pfnParam5, LPARAM lParam)
 {
-    LPVOID *pWork1, *pWork2;
+    /* LPVOID *pWork1, *pWork2; */
     INT32  nCount1, nCount2;
 
     TRACE (commctrl, "(%p %p %08lx %p %p %08lx): stub!\n",
@@ -318,14 +318,14 @@ FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 LPVOID WINAPI
 CreateMRUListLazy32A (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 {
-    DWORD  dwLocal1;
-    HKEY   hkeyResult;
-    DWORD  dwLocal3;
-    LPVOID lMRU;
-    DWORD  dwLocal5;
-    DWORD  dwLocal6;
-    DWORD  dwLocal7;
-    DWORD  dwDisposition;
+    /* DWORD  dwLocal1;   *
+     * HKEY   hkeyResult; *
+     * DWORD  dwLocal3;   *
+     * LPVOID lMRU;       *
+     * DWORD  dwLocal5;   *
+     * DWORD  dwLocal6;   *
+     * DWORD  dwLocal7;   *
+     * DWORD  dwDisposition; */
 
     /* internal variables */
     LPVOID ptr;

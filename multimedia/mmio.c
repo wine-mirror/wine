@@ -197,8 +197,8 @@ static LRESULT mmioMemIOProc(LPMMIOINFO16 lpmmioinfo, UINT16 uMessage, LPARAM lP
 			 * NOTE: lDiskOffset should be updated
 			 */
 
-			HPSTR pch = (HPSTR) lParam1;
-			LONG cch = (LONG) lParam2;
+			/* HPSTR pch = (HPSTR) lParam1; */
+			/* LONG cch = (LONG) lParam2; */
 
 			FIXME(mmio,"MMIOM_READ on memory files should not occur, buffer may be lost!\n");
 			return 0;
@@ -216,8 +216,8 @@ static LRESULT mmioMemIOProc(LPMMIOINFO16 lpmmioinfo, UINT16 uMessage, LPARAM lP
 			 * NOTE: lDiskOffset should be updated
 			 */
 
-			HPSTR pch = (HPSTR) lParam1;
-			LONG cch = (LONG) lParam2;
+			/* HPSTR pch = (HPSTR) lParam1; */
+			/* LONG cch = (LONG) lParam2; */
 
 			FIXME(mmio,"MMIOM_WRITE on memory files should not occur, buffer may be lost!\n");
 			return 0;
@@ -231,8 +231,8 @@ static LRESULT mmioMemIOProc(LPMMIOINFO16 lpmmioinfo, UINT16 uMessage, LPARAM lP
 			 * NOTE: lDiskOffset should be updated
 			 */
 
-			LONG Offset = (LONG) lParam1; 
-			LONG Whence = (LONG) lParam2; 
+			/* LONG Offset = (LONG) lParam1; */
+			/* LONG Whence = (LONG) lParam2; */
 
 			FIXME(mmio,"MMIOM_SEEK on memory files should not occur, buffer may be lost!\n");
 			return -1;

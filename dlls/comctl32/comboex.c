@@ -80,7 +80,7 @@ COMBOEX_GetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 COMBOEX_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
+    /* COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr); */
 
     FIXME (comboex, "(0x%08x 0x%08lx)\n", wParam, lParam);
 
@@ -129,7 +129,7 @@ COMBOEX_SetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 COMBOEX_SetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr);
+    /* COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr(wndPtr); */
 
     FIXME (comboex, "(%p): stub\n", (LPVOID)lParam);
 

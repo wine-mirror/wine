@@ -404,7 +404,7 @@ TAB_GetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT 
 TAB_DeleteItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-   TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+    /* TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr); */
 
 	FIXME (tab,"stub \n");
 	return TRUE;

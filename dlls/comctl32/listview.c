@@ -96,7 +96,7 @@ static LRESULT
 LISTVIEW_DeleteColumn (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
-    INT32 nColumn = (INT32)wParam;
+    /* INT32 nColumn = (INT32)wParam; */
 
     /* FIXME ??? */
     if (infoPtr->nItemCount > 0)
@@ -445,7 +445,7 @@ LISTVIEW_GetNextItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 LISTVIEW_GetSelectedCount (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+    /* LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr); */
 
     TRACE (listview, ": empty stub (returns 0)!\n");
 
@@ -1116,7 +1116,7 @@ LISTVIEW_KillFocus (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 LISTVIEW_LButtonDblClk (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+    /* LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr); */
     NMLISTVIEW nmlv;
 
     FIXME (listview, "semi stub!\n");
@@ -1238,7 +1238,7 @@ LISTVIEW_Paint (WND *wndPtr, WPARAM32 wParam)
 static LRESULT
 LISTVIEW_RButtonDblClk (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+    /* LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr); */
     NMLISTVIEW nmlv;
 
     FIXME (listview, "semi stub!\n");
@@ -1262,7 +1262,7 @@ LISTVIEW_RButtonDblClk (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 LISTVIEW_RButtonDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+    /* LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr); */
     NMLISTVIEW nmlv;
 
     FIXME (listview, "semi stub!\n");

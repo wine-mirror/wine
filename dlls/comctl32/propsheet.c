@@ -94,7 +94,7 @@ BOOL32 WINAPI DestroyPropertySheetPage32(HPROPSHEETPAGE hPropPage)
 LRESULT WINAPI
 PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    /* WND *wndPtr = WIN_FindWndPtr(hwnd); */
 
     switch (uMsg) {
        case PSM_SETCURSEL:

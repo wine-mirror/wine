@@ -129,7 +129,8 @@ void VGA_Poll( WORD timer )
     char *dat;
     unsigned Pitch,Height,Width;
     char *surf;
-    int Y,X;
+    int Y;
+    /* int X; */
 
     EnterCriticalSection(&vga_crit);
     if (!vga_polling) {

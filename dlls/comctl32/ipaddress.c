@@ -207,7 +207,7 @@ IPADDRESS_SetFocus (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 IPADDRESS_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr);
+    /* IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr); */
 	TRACE (ipaddress,"\n");
     return 0;
 }
@@ -371,7 +371,7 @@ IPADDRESS_SetAddress (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 IPADDRESS_SetFocusToField (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr);
+    /* IPADDRESS_INFO *infoPtr = IPADDRESS_GetInfoPtr(wndPtr); */
 	LPIP_SUBCLASS_INFO lpipsi=(LPIP_SUBCLASS_INFO)
             GetProp32A ((HWND32)wndPtr->hwndSelf,IP_SUBCLASS_PROP);
 	INT32 index;

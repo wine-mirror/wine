@@ -158,7 +158,7 @@ ANIMATE_Open32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 ANIMATE_Play (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
+    /* ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr); */
     INT32 nFrom   = (INT32)LOWORD(lParam);
     INT32 nTo     = (INT32)HIWORD(lParam);
     INT32 nRepeat = (INT32)wParam;
@@ -190,7 +190,7 @@ ANIMATE_Play (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 ANIMATE_Stop (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
+    /* ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr); */
 
 #if 0
     /* nothing opened */
