@@ -35,9 +35,11 @@ static const char szBadKeySet[] = "wine_test_bad_keyset";
 #define NON_DEF_PROV_TYPE 999
 
 static HMODULE hadvapi32;
+static BOOL (WINAPI *pCryptAcquireContextA)(HCRYPTPROV*,LPCSTR,LPCSTR,DWORD,DWORD);
 static BOOL (WINAPI *pCryptEnumProviderTypesA)(DWORD, DWORD*, DWORD, DWORD*, LPSTR, DWORD*);
 static BOOL (WINAPI *pCryptEnumProvidersA)(DWORD, DWORD*, DWORD, DWORD*, LPSTR, DWORD*);
 static BOOL (WINAPI *pCryptGetDefaultProviderA)(DWORD, DWORD*, DWORD, LPSTR, DWORD*);
+static BOOL (WINAPI *pCryptReleaseContext)(HCRYPTPROV, DWORD);
 static BOOL (WINAPI *pCryptSetProviderExA)(LPCSTR, DWORD, DWORD*, DWORD);
 
 static void init_function_pointers(void)
@@ -46,9 +48,11 @@ static void init_function_pointers(void)
 
     if(hadvapi32)
     {
+	pCryptAcquireContextA = (void*)GetProcAddress(hadvapi32, "CryptAcquireContextA");
 	pCryptEnumProviderTypesA = (void*)GetProcAddress(hadvapi32, "CryptEnumProviderTypesA");
 	pCryptEnumProvidersA = (void*)GetProcAddress(hadvapi32, "CryptEnumProvidersA");
 	pCryptGetDefaultProviderA = (void*)GetProcAddress(hadvapi32, "CryptGetDefaultProviderA");
+	pCryptReleaseContext = (void*)GetProcAddress(hadvapi32, "CryptReleaseContext");
 	pCryptSetProviderExA = (void*)GetProcAddress(hadvapi32, "CryptSetProviderExA");
     }
 }
@@ -59,24 +63,24 @@ static void init_environment(void)
 	HCRYPTPROV hProv;
 	
 	/* Ensure that container "wine_test_keyset" does exist */
-	if (!CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
+	if (!pCryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
 	{
-		CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_NEWKEYSET);
+		pCryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_NEWKEYSET);
 	}
-	CryptReleaseContext(hProv, 0);
+	pCryptReleaseContext(hProv, 0);
 
 	/* Ensure that container "wine_test_keyset" does exist in default PROV_RSA_FULL type provider */
-	if (!CryptAcquireContext(&hProv, szKeySet, NULL, PROV_RSA_FULL, 0))
+	if (!pCryptAcquireContextA(&hProv, szKeySet, NULL, PROV_RSA_FULL, 0))
 	{
-		CryptAcquireContext(&hProv, szKeySet, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET);
+		pCryptAcquireContextA(&hProv, szKeySet, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET);
 	}
-	CryptReleaseContext(hProv, 0);
+	pCryptReleaseContext(hProv, 0);
 
 	/* Ensure that container "wine_test_bad_keyset" does not exist. */
-	if (CryptAcquireContext(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
+	if (pCryptAcquireContextA(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
 	{
-		CryptReleaseContext(hProv, 0);
-		CryptAcquireContext(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+		pCryptReleaseContext(hProv, 0);
+		pCryptAcquireContextA(&hProv, szBadKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 	}
 }
 
@@ -85,17 +89,17 @@ static void clean_up_environment(void)
 	HCRYPTPROV hProv;
 
 	/* Remove container "wine_test_keyset" */
-	if (CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
+	if (pCryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0))
 	{
-		CryptReleaseContext(hProv, 0);
-		CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+		pCryptReleaseContext(hProv, 0);
+		pCryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 	}
 
 	/* Remove container "wine_test_keyset" from default PROV_RSA_FULL type provider */
-	if (CryptAcquireContext(&hProv, szKeySet, NULL, PROV_RSA_FULL, 0))
+	if (pCryptAcquireContextA(&hProv, szKeySet, NULL, PROV_RSA_FULL, 0))
 	{
-		CryptReleaseContext(hProv, 0);
-		CryptAcquireContext(&hProv, szKeySet, NULL, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+		pCryptReleaseContext(hProv, 0);
+		pCryptAcquireContextA(&hProv, szKeySet, NULL, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 	}
 }
 
@@ -108,45 +112,45 @@ static void test_acquire_context(void)
 	 * The order of the error tests seems to match Windows XP's rsaenh.dll CSP,
 	 * but since this is likely to change between CSP versions, we don't check
 	 * this. Please don't change the order of tests. */
-	result = CryptAcquireContext(&hProv, NULL, NULL, 0, 0);
+	result = pCryptAcquireContextA(&hProv, NULL, NULL, 0, 0);
 	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "%ld\n", GetLastError());
 	
-	result = CryptAcquireContext(&hProv, NULL, NULL, 1000, 0);
+	result = pCryptAcquireContextA(&hProv, NULL, NULL, 1000, 0);
 	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "%ld\n", GetLastError());
 
-	result = CryptAcquireContext(&hProv, NULL, NULL, NON_DEF_PROV_TYPE, 0);
+	result = pCryptAcquireContextA(&hProv, NULL, NULL, NON_DEF_PROV_TYPE, 0);
 	ok(!result && GetLastError()==NTE_PROV_TYPE_NOT_DEF, "%ld\n", GetLastError());
 	
-	result = CryptAcquireContext(&hProv, szKeySet, szNonExistentProv, PROV_RSA_FULL, 0);
+	result = pCryptAcquireContextA(&hProv, szKeySet, szNonExistentProv, PROV_RSA_FULL, 0);
 	ok(!result && GetLastError()==NTE_KEYSET_NOT_DEF, "%ld\n", GetLastError());
 
-	result = CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, NON_DEF_PROV_TYPE, 0);
+	result = pCryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, NON_DEF_PROV_TYPE, 0);
 	ok(!result && GetLastError()==NTE_PROV_TYPE_NO_MATCH, "%ld\n", GetLastError());
 	
 	/* This test fails under Win2k SP4:
 	   result = TRUE, GetLastError() == ERROR_INVALID_PARAMETER
 	SetLastError(0xdeadbeef);
-	result = CryptAcquireContext(NULL, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
+	result = pCryptAcquireContextA(NULL, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
 	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%d/%ld\n", result, GetLastError());
 	*/
 	
 	/* Last not least, try to really acquire a context. */
 	hProv = 0;
 	SetLastError(0xdeadbeef);
-	result = CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
+	result = pCryptAcquireContextA(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
 	ok(result && (GetLastError() == ERROR_SUCCESS  || GetLastError() == ERROR_RING2_STACK_IN_USE), "%d/%ld\n", result, GetLastError());
 
 	if (hProv) 
-		CryptReleaseContext(hProv, 0);
+		pCryptReleaseContext(hProv, 0);
 
 	/* Try again, witch an empty ("\0") szProvider parameter */
 	hProv = 0;
 	SetLastError(0xdeadbeef);
-	result = CryptAcquireContext(&hProv, szKeySet, "", PROV_RSA_FULL, 0);
+	result = pCryptAcquireContextA(&hProv, szKeySet, "", PROV_RSA_FULL, 0);
 	ok(result && (GetLastError() == ERROR_SUCCESS  || GetLastError() == ERROR_RING2_STACK_IN_USE), "%d/%ld\n", result, GetLastError());
 
 	if (hProv) 
-		CryptReleaseContext(hProv, 0);
+		pCryptReleaseContext(hProv, 0);
 }
 
 static BOOL FindProvRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszProvName, 
@@ -558,9 +562,11 @@ static void test_set_provider_ex()
 START_TEST(crypt)
 {
 	init_function_pointers();
+	if(pCryptAcquireContextA && pCryptReleaseContext) {
 	init_environment();
 	test_acquire_context();
 	clean_up_environment();
+	}
 	
 	test_enum_providers();
 	test_enum_provider_types();

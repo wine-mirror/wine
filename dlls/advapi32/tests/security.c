@@ -27,11 +27,15 @@
 #include "aclapi.h"
 #include "winnt.h"
 
+typedef BOOL (WINAPI *fnBuildTrusteeWithSidA)( TRUSTEE *trustee, PSID psid );
+typedef BOOL (WINAPI *fnBuildTrusteeWithNameA)( TRUSTEE *trustee, LPSTR str );
 typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 
 static HMODULE hmod;
 
+fnBuildTrusteeWithSidA   pBuildTrusteeWithSidA;
+fnBuildTrusteeWithNameA  pBuildTrusteeWithNameA;
 fnConvertSidToStringSidA pConvertSidToStringSidA;
 fnConvertStringSidToSidA pConvertStringSidToSidA;
 
@@ -143,6 +147,13 @@ void test_trustee()
 
     SID_IDENTIFIER_AUTHORITY auth = { {0x11,0x22,0,0,0, 0} };
 
+    pBuildTrusteeWithSidA = (fnBuildTrusteeWithSidA)
+                    GetProcAddress( hmod, "BuildTrusteeWithSidA" );
+    pBuildTrusteeWithNameA = (fnBuildTrusteeWithNameA)
+                    GetProcAddress( hmod, "BuildTrusteeWithNameA" );
+    if( !pBuildTrusteeWithSidA || !pBuildTrusteeWithNameA)
+        return;
+
     if ( ! AllocateAndInitializeSid( &auth, 1, 42, 0,0,0,0,0,0,0,&psid ) )
     {
         trace( "failed to init SID\n" );
@@ -150,7 +161,7 @@ void test_trustee()
     }
 
     memset( &trustee, 0xff, sizeof trustee );
-    BuildTrusteeWithSidA( &trustee, psid );
+    pBuildTrusteeWithSidA( &trustee, psid );
 
     ok( trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
     ok( trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, 
@@ -162,7 +173,7 @@ void test_trustee()
 
     /* test BuildTrusteeWithNameA */
     memset( &trustee, 0xff, sizeof trustee );
-    BuildTrusteeWithNameA( &trustee, str );
+    pBuildTrusteeWithNameA( &trustee, str );
 
     ok( trustee.pMultipleTrustee == NULL, "pMultipleTrustee wrong\n");
     ok( trustee.MultipleTrusteeOperation == NO_MULTIPLE_TRUSTEE, 
