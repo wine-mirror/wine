@@ -6,10 +6,6 @@
       <title>Basic Overview</title>
 
       <para>
-        Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
-      </para>
-
-      <para>
         With the fundamental architecture of Wine stabilizing, and
         people starting to think that we might soon be ready to
         actually release this thing, it may be time to take a look at
@@ -145,41 +141,6 @@
       </sect2>
 
       <sect2>
-        <title>The Service Thread</title>
-        <para>
-          The Wine server cannot do everything that needs to be done
-          behind the application's back, considering that it's not
-          threaded (so cannot do anything that would block or take any
-          significant amount of time), nor does it share the address
-          space of its client threads. Thus, a special event loop also
-          exists in each Win32 process' own address space, but handled
-          like one of the process' own threads. This special thread is
-          called the <firstterm>service thread</firstterm>, and does
-          things that it wouldn't be appropriate for the wineserver to
-          do. For example, it can call the application's asynchronous
-          system timer callbacks every time a timer event is signalled
-          (the wineserver handles the signalling, of course).
-        </para>
-        <para>
-          One important function of the service thread is to support
-          the X11 driver's event loop. Whenever an event arrives from
-          the X server, the service thread wakes up and sees the
-          event, processes it, and posts messages into the
-          application's message queues as appropriate. But this
-          function is not unique - any number of Wine core components
-          can install their own handlers into the service thread as
-          necessary, whenever they need to do something independent of
-          the application's own event loop. (At the moment, this
-          includes, but is not limited to, multimedia timers, serial
-          comms, and winsock async selects.)
-        </para>
-        <para>
-          The implementation of the service thread is in
-          <filename>scheduler/services.c</filename>.
-        </para>
-      </sect2>
-
-      <sect2>
         <title>Relays, Thunks, and DLL descriptors</title>
         <para>
           Loading a Windows binary into memory isn't that hard by
@@ -288,13 +249,6 @@ FIXME -->
     <sect1 id="module-overview">
       <title>Module Overview</title>
 
-      <para>
-        written by (???)
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/internals</filename>)
-      </para>
-
       <sect2>
         <title>KERNEL Module</title>
 
@@ -314,46 +268,20 @@ FIXME -->
             libraries to perform their own synchronization (initiated
             by calling <function>XInitThreads()</function>). However,
             Wine does not use this approach. Instead Wine performs its
-            own synchronization by putting a wrapper around every X
-            call that is used. This wrapper protects library access
+            own synchronization using the
+            <function>wine_tsx11_lock()</function> / <function>wine_tsx11_unlock()</function>
+	    functions.  This locking protects library access
             with a critical section, and also arranges things so that
             X libraries compiled without <option>-D_REENTRANT</option>
             (eg. with global <varname>errno</varname> variable) will
             work with Wine.
           </para>
           <para>
-            To make this scheme work, all calls to X must use the
-            proper wrapper functions (or do their own synchronization
-            that is compatible with the wrappers). The wrapper for a
-            function <function>X...()</function> is calles
-            <function>TSX...()</function> (for "Thread Safe X ...").
-            So for example, instead of calling
-            <function>XOpenDisplay()</function> in the code,
-            <function>TSXOpenDisplay()</function> must be used.
-            Likewise, X header files that contain function prototypes
-            are wrapped, so that eg. <filename>"ts_xutil.h"</filename>
-            must be included rather than
-            <filename>&lt;X11/Xutil.h&gt;</filename>. It is important
-            that this scheme is used everywhere to avoid the
-            introduction of nondeterministic and hard-to-find errors
-            in Wine.
-          </para>
-          <para>
-            The code for the thread safe X wrappers is contained in
-            the <filename>tsx11/</filename> directory and in
-            <filename>include/ts*.h</filename>. To use a new (ie. not
-            previously used) X function in Wine, a new wrapper must be
-            created. The wrappers are generated (semi-)automatically
-            from the X11R6 includes using the
-            <filename>tools/make_X11wrappers</filename> perl script.
-            In simple cases it should be enough to add the name of the
-            new function to the list in
-            <filename>tsx11/X11_calls</filename>; if this does not
-            work the wrapper must be added manually to the
-            <filename>make_X11wrappers</filename> script. See comments
-            in <filename>tsx11/X11_calls</filename> and
-            <filename>tools/make_X11wrappers</filename> for further
-            details.
+            In the past, all calls to X used to go through a wrapper called
+             <function>TSX...()</function> (for "Thread Safe X ...").
+	    While it is still being used in the code, it's inefficient
+	    as the lock is potentially aquired and released unnecessarily.
+	    New code should explicitly aquire the lock.
           </para>
         </sect3>
       </sect2>
@@ -821,15 +749,6 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
       <title>Wine/Windows DLLs</title>
 
       <para>
-        Based upon various messages on wine-devel especially by Ulrich
-        Weigand. Adapted by Michele Petrovski and Klaas van Gend.
-      </para>
-
-      <para>
-        (Extracted from <filename>wine/documentation/dlls</filename>)
-      </para>
-
-      <para>
         This document mainly deals with the status of current DLL
         support by Wine.  The Wine ini file currently supports
         settings to change the load order of DLLs.  The load order
@@ -892,24 +811,12 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
 
         <para>
           Clearly, there is no one rule-of-thumb regarding which
-          load-order to use. So, you must become familiar with:
+          load-order to use. So, you must become familiar with
+	  what specific DLLs do and which other DLLs or features 
+	  a given library interacts with, and use this information 
+	  to make a case-by-case decision.
         </para>
 
-        <itemizedlist>
-          <listitem>
-            <para>
-              what specific DLLs do
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              which other DLLs or features a given library interacts with
-            </para>
-          </listitem>
-        </itemizedlist>
-        <para>
-          and use this information to make a case-by-case decision.
-        </para>
       </sect2>
 
       <sect2>
@@ -952,8 +859,8 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
           For the future, the Wine implementation of Windows DLL seems
           to head towards unifying the 16 and 32 bit DLLs wherever
           possible, resulting in larger DLLs.  They are stored in the
-          <filename>dlls/</filename> subdirectory using the 16-bit
-          name.  For large DLLs, a split might be discussed.
+          <filename>dlls/</filename> subdirectory using the 32-bit
+          name.
         </para>
       </sect2>
 
