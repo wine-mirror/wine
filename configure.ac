@@ -974,7 +974,10 @@ AC_HEADER_STAT()
 
 dnl *** Check for net/if.h
 AC_CHECK_HEADERS(net/if.h,,,
-    [#if HAVE_SYS_SOCKET_H
+    [#if HAVE_SYS_TYPES_H
+     # include <sys/types.h>
+     #endif
+     #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif])
 

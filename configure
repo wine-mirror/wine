@@ -11634,7 +11634,10 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-#if HAVE_SYS_SOCKET_H
+#if HAVE_SYS_TYPES_H
+     # include <sys/types.h>
+     #endif
+     #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
 
