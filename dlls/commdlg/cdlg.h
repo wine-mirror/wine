@@ -105,6 +105,43 @@ typedef struct {
 #define PD32_MARGINS_IN_MILIMETERS            1586
 #define PD32_MILIMETERS                       1587
 
+/* Charset names string IDs */
+
+#define IDS_CHARSET_ANSI        200
+#define IDS_CHARSET_SYMBOL      201
+#define IDS_CHARSET_SHIFTJIS    202
+#define IDS_CHARSET_HANGUL      203
+#define IDS_CHARSET_GREEK       204
+#define IDS_CHARSET_TURKISH     205
+#define IDS_CHARSET_HEBREW      206
+#define IDS_CHARSET_ARABIC      207
+#define IDS_CHARSET_BALTIC      208
+#define IDS_CHARSET_VIETNAMESE  209
+#define IDS_CHARSET_RUSSIAN     210
+#define IDS_CHARSET_EE          211
+#define IDS_CHARSET_THAI        212
+#define IDS_CHARSET_JOHAB       213
+#define IDS_CHARSET_OEM         214
+
+/* Color names string IDs */
+
+#define IDS_COLOR_BLACK                 1040
+#define IDS_COLOR_MAROON                1041
+#define IDS_COLOR_GREEN                 1042
+#define IDS_COLOR_OLIVE                 1043
+#define IDS_COLOR_NAVY                  1044
+#define IDS_COLOR_PURPLE                1045
+#define IDS_COLOR_TEAL                  1046
+#define IDS_COLOR_GRAY                  1047
+#define IDS_COLOR_SILVER                1048
+#define IDS_COLOR_RED                   1049
+#define IDS_COLOR_LIME                  1050
+#define IDS_COLOR_YELLOW                1051
+#define IDS_COLOR_BLUE                  1052
+#define IDS_COLOR_FUCHSIA               1053
+#define IDS_COLOR_AQUA                  1054
+#define IDS_COLOR_WHITE                 1055
+
 #include "commctrl.h"
 #include "shlobj.h"
 #include "shellapi.h"

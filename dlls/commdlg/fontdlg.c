@@ -722,7 +722,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
                          LPCHOOSEFONTA lpcf)
 {
   HDC hdc;
-  int i,j,res,init=0;
+  int i,j,init=0;
   long l;
   LPLOGFONTA lpxx;
   HCURSOR hcursor=SetCursor(LoadCursorA(0,IDC_WAITA));
@@ -750,11 +750,15 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     ShowWindow(GetDlgItem(hDlg,psh3),SW_HIDE);
   if (lpcf->Flags & CF_EFFECTS)
   {
-    for (res=1,i=0;res && i<TEXT_COLORS;i++)
+    for (i=0;i<TEXT_COLORS;i++)
     {
-      /* FIXME: load color name from resource:  res=LoadString(...,i+....,buffer,.....); */
-      char name[20];
-      strcpy( name, "[color name]" );
+      char name[30];
+
+      if( LoadStringA(COMMDLG_hInstance32, IDS_COLOR_BLACK+i, name,
+              sizeof(name)/sizeof(*name) )==0 )
+      {
+          strcpy( name, "[color name]" );
+      }
       j=SendDlgItemMessageA(hDlg, cmb4, CB_ADDSTRING, 0, (LPARAM)name);
       SendDlgItemMessageA(hDlg, cmb4, CB_SETITEMDATA16, j, textcolors[j]);
       /* look for a fitting value in color combobox */
