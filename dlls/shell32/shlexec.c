@@ -582,8 +582,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
     if (sei->lpParameters)
         strcpy(szCommandline, sei->lpParameters);
 
-    if (sei->fMask & ((SEE_MASK_CLASSKEY & ~SEE_MASK_CLASSNAME) |
-        SEE_MASK_INVOKEIDLIST | SEE_MASK_ICON | SEE_MASK_HOTKEY |
+    if (sei->fMask & (SEE_MASK_INVOKEIDLIST | SEE_MASK_ICON | SEE_MASK_HOTKEY |
         SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT |
         SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI | SEE_MASK_UNICODE |
         SEE_MASK_NO_CONSOLE | SEE_MASK_ASYNCOK | SEE_MASK_HMONITOR ))
@@ -618,12 +617,19 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
         }
     }
 
-    if (sei->fMask & SEE_MASK_CLASSNAME)
+    if (sei->fMask & (SEE_MASK_CLASSNAME | SEE_MASK_CLASSKEY))
     {
 	/* launch a document by fileclass like 'WordPad.Document.1' */
         /* the Commandline contains 'c:\Path\wordpad.exe "%1"' */
         /* FIXME: szCommandline should not be of a fixed size. Plus MAX_PATH is way too short! */
-        HCR_GetExecuteCommandA(sei->lpClass, (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, sizeof(szCommandline));
+        if (sei->fMask & SEE_MASK_CLASSKEY)
+            HCR_GetExecuteCommandEx(sei->hkeyClass,
+                                    (sei->fMask & SEE_MASK_CLASSNAME) ? sei->lpClass: NULL,
+                                    (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, sizeof(szCommandline));
+        else if (sei->fMask & SEE_MASK_CLASSNAME)
+            HCR_GetExecuteCommandA(sei->lpClass, (sei->lpVerb) ? sei->lpVerb :
+                                  "open", szCommandline, sizeof(szCommandline));
+
         /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
         TRACE("SEE_MASK_CLASSNAME->'%s', doc->'%s'\n", szCommandline, szApplicationName);
 

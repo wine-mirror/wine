@@ -68,6 +68,7 @@ BOOL HCR_GetExecuteCommandA(LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD l
 BOOL HCR_GetDefaultIconA(LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr);
 BOOL HCR_GetClassNameA(REFIID riid, LPSTR szDest, DWORD len);
 
+BOOL HCR_GetExecuteCommandEx ( HKEY hkeyClass, LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len );
 BOOL HCR_GetFolderAttributes(REFIID riid, LPDWORD szDest);
 
 INT_PTR CALLBACK AboutDlgProc(HWND,UINT,WPARAM,LPARAM);

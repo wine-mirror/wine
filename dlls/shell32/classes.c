@@ -144,6 +144,31 @@ BOOL HCR_GetExecuteCommandA(LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD l
 	return FALSE;
 }
 
+BOOL HCR_GetExecuteCommandEx( HKEY hkeyClass, LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len )
+{
+	BOOL	ret = FALSE;
+
+	TRACE("%p %s %s\n", hkeyClass, szClass, szVerb );
+
+	if (szClass)
+            RegOpenKeyExA(hkeyClass,szClass,0,0x02000000,&hkeyClass);
+
+        if (hkeyClass)
+	{
+	    char sTemp[MAX_PATH];
+
+	    snprintf(sTemp, MAX_PATH, "shell\\%s\\command", szVerb);
+
+            ret = (ERROR_SUCCESS == SHGetValueA(hkeyClass, sTemp, NULL, NULL, szDest, &len));
+
+	    if (szClass)
+	       RegCloseKey(hkeyClass);
+	}
+
+	TRACE("-- %s\n", szDest );
+	return ret;
+}
+
 /***************************************************************************************
 *	HCR_GetDefaultIcon	[internal]
 *
