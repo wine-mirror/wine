@@ -11,7 +11,11 @@ extern "C" {
 
 #include "wintypes.h"
 
+/* FIXME: Maybe we should try to get something from the Unix headers instead, this should be in windef.h by the way */
+#define MAX_PATH 260
+
 #ifndef DONT_INCLUDE_WINGDI
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #endif /* DONT_INCLUDE_WINGDI */
@@ -1163,11 +1167,6 @@ DECL_WINELIB_TYPE_AW(LPWIN32_FIND_DATA)
 #define MS_DSR_ON           ((DWORD)0x0020)
 #define MS_RING_ON          ((DWORD)0x0040)
 #define MS_RLSD_ON          ((DWORD)0x0080)
-
-
-#define CN_RECEIVE	0x0001
-#define CN_TRANSMIT	0x0002
-/*#define CN_EVENT	0x0004*/
 
 typedef struct tagDCB16
 {
