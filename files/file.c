@@ -415,7 +415,7 @@ static BOOL32 FILE_ShareDeny( int mode, int oldmode)
   return TRUE;
   
 test_ro_int24:
-  if (oldmode & OF_READ)
+  if (oldmode == OF_READ)
     return FALSE;
   /* Fall through */
 fail_int24:
@@ -425,7 +425,7 @@ fail_int24:
   return TRUE;
   
 test_ro_err05:
-  if (oldmode & OF_READ)
+  if (oldmode == OF_READ)
     return FALSE;
   /* fall through */
 fail_error05:
