@@ -1197,6 +1197,12 @@ typedef struct
 #define HTSIZEFIRST         HTLEFT
 #define HTSIZELAST          HTBOTTOMRIGHT
 
+/* SendMessageTimeout flags */
+#define SMTO_NORMAL              0x0000
+#define SMTO_BLOCK               0x0001
+#define SMTO_ABORTIFHUNG         0x0002
+#define SMTO_NOTIMEOUTIFNOTHUNG  0x0008
+
   /* WM_SYSCOMMAND parameters */
 #ifdef SC_SIZE /* at least HP-UX: already defined in /usr/include/sys/signal.h */
 #undef SC_SIZE
@@ -1313,7 +1319,7 @@ typedef struct
 #define MSGF_SIZE           4
 #define MSGF_SCROLLBAR      5
 #define MSGF_NEXTWINDOW     6
-#define MSGF_MAINLOOP       8
+#define MSGF_MAX            8
 #define MSGF_USER           0x1000
 #define MSGF_DDEMGR         0x8001
 
