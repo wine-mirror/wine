@@ -137,12 +137,12 @@ QueryPathOfRegTypeLib(
 
     HRESULT hr        = E_FAIL;
 
-    DWORD   dwPathLen = _MAX_PATH;
     LCID    myLCID    = lcid;
 
     char    szXGUID[80];
     char    szTypeLibKey[100];
-    char    szPath[dwPathLen];
+    char    szPath[MAX_PATH];
+    DWORD   dwPathLen = sizeof(szPath);
 
     if ( !HIWORD(guid) )
     {

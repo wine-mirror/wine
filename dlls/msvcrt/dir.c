@@ -215,7 +215,7 @@ int _wfindnext(long hand, struct _wfinddata_t * ft)
  */
 char* _getcwd(char * buf, int size)
 {
-  char dir[_MAX_PATH];
+  char dir[MAX_PATH];
   int dir_len = GetCurrentDirectoryA(MAX_PATH,dir);
 
   if (dir_len < 1)
@@ -241,7 +241,7 @@ char* _getcwd(char * buf, int size)
  */
 WCHAR* _wgetcwd(WCHAR * buf, int size)
 {
-  WCHAR dir[_MAX_PATH];
+  WCHAR dir[MAX_PATH];
   int dir_len = GetCurrentDirectoryW(MAX_PATH,dir);
 
   if (dir_len < 1)
@@ -286,7 +286,7 @@ char* _getdcwd(int drive, char * buf, int size)
     return _getcwd(buf,size); /* current */
   else
   {
-    char dir[_MAX_PATH];
+    char dir[MAX_PATH];
     char drivespec[4] = {'A', ':', '\\', 0};
     int dir_len;
 
@@ -297,7 +297,7 @@ char* _getdcwd(int drive, char * buf, int size)
       return NULL;
     }
 
-    dir_len = GetFullPathNameA(drivespec,_MAX_PATH,dir,&dummy);
+    dir_len = GetFullPathNameA(drivespec,MAX_PATH,dir,&dummy);
     if (dir_len >= size || dir_len < 1)
     {
       SET_THREAD_VAR(errno,MSVCRT_ERANGE);
@@ -326,7 +326,7 @@ WCHAR* _wgetdcwd(int drive, WCHAR * buf, int size)
     return _wgetcwd(buf,size); /* current */
   else
   {
-    WCHAR dir[_MAX_PATH];
+    WCHAR dir[MAX_PATH];
     WCHAR drivespec[4] = {'A', ':', '\\', 0};
     int dir_len;
 
@@ -337,7 +337,7 @@ WCHAR* _wgetdcwd(int drive, WCHAR * buf, int size)
       return NULL;
     }
 
-    dir_len = GetFullPathNameW(drivespec,_MAX_PATH,dir,&dummy);
+    dir_len = GetFullPathNameW(drivespec,MAX_PATH,dir,&dummy);
     if (dir_len >= size || dir_len < 1)
     {
       SET_THREAD_VAR(errno,MSVCRT_ERANGE);

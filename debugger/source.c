@@ -32,7 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 #ifndef PATH_MAX
-#define PATH_MAX _MAX_PATH
+#define PATH_MAX MAX_PATH
 #endif
 
 #include "debugger.h"
