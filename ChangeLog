@@ -1,4 +1,1339 @@
 ----------------------------------------------------------------
+2004-07-16  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/shlwapi/ordinal.c, dlls/shlwapi/shlwapi.spec:
+	Implemented GetUIVersion (based on a patch by Stefan Leichter).
+
+	* dlls/dsound/tests/dsound.c: Francois Gouget <fgouget@codeweavers.com>
+	Don't try to create a IDirectSound3DBuffer, partly to keep this test
+	simple and partly because it's going to fail since we did not request
+	DSBCAPS_CTRL3D. Fixes a crash on Windows.
+	Don't request unneeded caps.
+
+	* dlls/kernel/locale.c: Shachar Shemesh <wine-patches@shemesh.biz>
+	System default locale in Windows determines the ANSI encoding
+	(LC_CTYPE on Unix).
+
+	* dlls/commdlg/printdlg.c: James Hawkins <truiken@gmail.com>
+	Fixed collate icon behavior.
+
+	* dlls/dsound/tests/dsound.c: Francois Gouget <fgouget@codeweavers.com>
+	Get and print the DirectSound primary buffer volume.
+
+	* dlls/dsound/tests/ds3d.c, dlls/dsound/tests/dsound_test.h:
+	Francois Gouget <fgouget@codeweavers.com>
+	Keep track of how much has been played and get rid of last_pos. This
+	fixes a bug where buffer_service() would not detect that everything
+	had been played.
+	Check that the actual sound duration was within 10% of the expected
+	value.
+	Make BUFFER_LEN and TIME_SLICE independent, make sure TIME_SLICE does
+	not divide BUFFER_LEN to spice things up a bit.
+
+	* dlls/user/tests/dialog.c:
+	Krishna Murthy <Krishna.Murthy@guptaworldwide.com>
+	Added regression test for WM_NEXTDLGCTL and default button ID
+	behavior.
+
+	* misc/registry.c: Kevin Koltzau <kevin@plop.org>
+	Prevent garbage being passed for windows directory.
+
+	* dlls/dsound/tests/dsound.c: Francois Gouget <fgouget@codeweavers.com>
+	Call IDirectSound::Initialize() as per MSDN before using the
+	DirectSound object. Fixes a crash on Windows.
+
+	* dlls/dsound/tests/ds3d.c: Francois Gouget <fgouget@codeweavers.com>
+	On Windows GetPan() may not return the value that was just set with
+	SetPan().
+
+	* dlls/mshtml/main.c, dlls/mshtml/mshtml.spec:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Added stubs for DllInstall and DllRegisterServer.
+
+	* dlls/comctl32/toolbar.c: Filip Navara <xnavara@volny.cz>
+	Make the pattern drawing in TOOLBAR_DrawPattern look better.
+
+	* dlls/msrle32/msrle32.c: Marcus Meissner <marcus@jet.franken.de>
+	Fixed lvalue casts for new compiler.
+
+	* dlls/advapi32/crypt.c:
+	Fixed some duplicate CRYPT_Free calls (spotted by Michael Jung).
+
+	* include/wincrypt.h: Michael Jung <mjung@iss.tu-darmstadt.de>
+	Added PROV_ENUMALGS[_EX] structs and typedefs.
+	Added some defines.
+
+	* dlls/msi/action.c, dlls/wininet/http.c, include/mmsystem.h:
+	Francois Gouget <fgouget@free.fr>
+	Assorted spelling fixes.
+
+	* tools/make_ctests, tools/winapi/msvcmaker:
+	Francois Gouget <fgouget@codeweavers.com>
+	Fix msvcmaker so the generated testlist.c files include stdarg.h.
+	Add comments pointing out the relation between msvcmaker and
+	make_ctests.
+
+	* dlls/commdlg/printdlg.c: James Hawkins <truiken@gmail.com>
+	Check for empty PrinterName in PRINTDLG_WMCommandW.
+
+	* dlls/shell32/shlview.c: Martin Fuchs <martin-fuchs@gmx.net>
+	Distinguish between Open and Explore commands.
+	Execute items by default.
+
+	* dlls/kernel/process.c, include/wine/server_protocol.h,
+	  server/protocol.def, server/trace.c:
+	Pass the environment for a child process through the server instead of
+	relying on the Unix environment.
+
+	* tools/wine.inf:
+	Specify the PATH variable in uppercase to avoid getting two flavors of
+	PATH when converting the Unix environment.
+
+	* dlls/msvcrt/process.c: Implemented _spawnle and _spawnlpe.
+
+	* tools/winewrapper:
+	Invoke wineprefixcreate if the .wine directory does not exist.
+
+	* dlls/kernel/profile.c:
+	Support for large profile values (based on a patch by Robert
+	Shearman).
+	Fixed PROFILE_FlushFile to correctly truncate the file before saving
+	it.
+
+	* programs/winedbg/winedbg.c: Pierre d'Herbemont <stegefin@free.fr>
+	Define the backend_cpu regarding the host processor.
+
+	* dlls/shlwapi/ordinal.c, dlls/shlwapi/tests/ordinal.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Removed the crosscalls (unicode to ascii) from GetAcceptLanguagesW.
+	Removed todo_wine from GetAcceptLanguagesA tests.
+
+	* dlls/comctl32/tab.c: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Don't crash on NULL tab text.
+
+2004-07-15  Alexandre Julliard  <julliard@winehq.com>
+
+	* programs/wineconsole/curses.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Fixed one lvalue casted assignment for the new compiler.
+
+	* dlls/shlwapi/msgbox.c: Marcus Meissner <marcus@jet.franken.de>
+	Do not assign to casted values.
+
+	* dlls/ole32/compobj.c, dlls/ole32/rpc.c:
+	Mike McCormack <mike@codeweavers.com>
+	Fix a few serious race conditions in the OLE object pipe server.
+
+	* dlls/kernel/process.c, dlls/ntdll/loader.c, dlls/ntdll/loadorder.c,
+	  dlls/ntdll/ntdll.spec, dlls/ntdll/ntdll_misc.h:
+	Set the system directory in ntdll as soon as we have determined it.
+
+	* dlls/win32s/w32skernel.c:
+	Don't get system directory from the environment, use
+	GetSystemDirectory instead.
+
+	* server/named_pipe.c: Mike McCormack <mike@codeweavers.com>
+	Fix a double free in the named pipe code.
+
+	* dlls/advapi32/crypt.c: Michael Jung <mjung@iss.tu-darmstadt.de>
+	Use RegQueryValueExA instead of RegQueryValueA in
+	CryptEnumProviderTypes.
+
+	* tools/winebuild/spec32.c: Pierre d'Herbemont <stegefin@free.fr>
+	Darwin/Mac OS X Weak import workaround.
+
+	* tools/winebuild/import.c: Pierre d'Herbemont <stegefin@free.fr>
+	- Be more accurate on Darwin stack size.
+	- Delay import fix on PowerPC hosts.
+
+	* dlls/wininet/http.c: Mike McCormack <mike@codeweavers.com>
+	Robert Shearman <rob@codeweavers.com>
+	- Change the way that the response headers are reconstructed to reduce
+	  the chance of memory being incorrectly allocated.
+	- Return the correct error when a header is not found.
+	- remove all the response headers before receiving new ones so that we
+	  don't merge headers from two responses.
+	- Add extra standard fields.
+	- Split the status line into http version, status code and status text
+	  and store those in the response data, without using use a fake
+	  field.
+
+2004-07-14  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/commdlg/filedlg.c:
+	Krishna Murthy <Krishna.Murthy@guptaworldwide.com>
+	Add the selected extension from file type filter if file name does not
+	contain the file extension.
+
+	* dlls/user/dde/client.c: Eric Frias <efrias@syncad.com>
+	Fixed memory allocation bug.
+
+	* dlls/winmm/wineoss/audio.c: Francois Gouget <fgouget@free.fr>
+	An SNDCTL_DSP_SETDUPLEX failure should be a WARN(), not an ERR(),
+	since the OSS specifications say we have to call it before knowing if
+	the sound card is full-duplex capable.
+
+	* include/winreg.h: Michael Jung <mjung@iss.tu-darmstadt.de>
+	Added RegOpenCurrentUser prototype.
+
+	* dlls/ntdll/version.c: Aric Stewart <aric@codeweavers.com>
+	Report win2k service pack 4 instead of 3.
+
+	* dlls/msi/package.c: Aric Stewart <aric@codeweavers.com>
+	Implement the functionality that allows one to call MsiOpenPackage
+	with #nnn where nnn is a string representing the handle to an open
+	database.
+
+	* tools/wine.inf: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Uncomment implemented in Wine msvidc32 (MSVC/CRAM) codec.
+
+	* dlls/winmm/mciavi/mciavi.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Make it possible to open read-only AVI files for a playback.
+
+	* dlls/msi/version.rc: Aric Stewart <aric@codeweavers.com>
+	Update the MSI version to be the same as on win2k.
+
+	* dlls/gdi/freetype.c: Huw Davies <huw@codeweavers.com>
+	Fix font replacements to work with bitmap fonts.
+	Enumerate System, Terminal, FixedSys in that order.
+
+	* tools/winebuild/import.c: Pierre d'Herbemont <stegefin@free.fr>
+	Delayed import fix for Darwin and PowerPC Host.
+
+	* dlls/user/tests/class.c, dlls/user/tests/resource.rc:
+	Sami Aario <sami.aario@surfeu.fi>
+	Added tests for registering a dialog box created by using the CLASS
+	directive in a resource file, then creating the dialog using
+	CreateDialogParam.
+
+	* dlls/user/controls.h, dlls/user/dialog16.c, windows/defdlg.c,
+	  windows/dialog.c:
+	Allocate the dialog info in DIALOG_CreateIndirect if this wasn't
+	already done by the dialog procedure.
+
+	* dlls/dbghelp/stabs.c: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Prevent the debug buffer from overflowing on long stabs.
+
+	* dlls/dbghelp/stabs.c: Fixed handling of includes stack.
+
+	* dlls/commdlg/Makefile.in, dlls/commdlg/filedlg.c,
+	  dlls/commdlg/filedlg16.c, dlls/commdlg/filedlg31.c,
+	  dlls/commdlg/filedlg31.h:
+	Ge van Geldorp <gvg@reactos.com>
+	Fix 16/32 bit separation.
+
+2004-07-13  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/oledlg/oledlg_De.rc, dlls/serialui/De.rc,
+	  dlls/winmm/winmm_De.rc, dlls/winmm/winmm_res.rc,
+	  programs/cmdlgtst/De.rc, programs/cmdlgtst/cmdlgr.rc,
+	  programs/start/De.rc, programs/start/rsrc.rc, programs/view/De.rc,
+	  programs/view/viewrc.rc:
+	Henning Gerhardt <henning.gerhardt@web.de>
+	More German translations.
+
+	* dlls/dsound/buffer.c, dlls/dsound/dsound.c,
+	  dlls/dsound/dsound_private.h, dlls/dsound/primary.c,
+	  dlls/dsound/propset.c, dlls/dsound/sound3d.c,
+	  dlls/dsound/tests/dsound.c:
+	Robert Reif <reif@earthlink.net>
+	Remove DirectSound reference counts by buffers and add Destroy
+	functions to buffer components and DirectSound to allow proper
+	destruction even with outstanding references.
+	Remove trailing white space.
+	Add tests for proper release even with active buffers.
+
+	* dlls/wininet/http.c: Robert Shearman <rob@codeweavers.com>
+	Accept headers without \r\n ending in HttpAddRequestHeaders.
+
+	* dlls/advapi32/crypt.c, dlls/advapi32/crypt.h:
+	Michael Jung <mjung@iss.tu-darmstadt.de>
+	Reference counting for CRYPTPROV objects.
+	Implemented CryptContextAddRef.
+
+	* dlls/kernel/volume.c: Rein Klazes <rklazes@xs4all.nl>
+	In GetVolumeInformationW handle the case when there are no permissions
+	accessing the device the same way as when no device is found.
+
+	* dlls/advapi32/registry.c: James Hawkins <truiken@gmail.com>
+	Added and cleaned API docs.
+
+	* dlls/gdi/driver.c, dlls/user/user_main.c:
+	Allow specifying multiple graphics drivers and use the first one that
+	loads successfully.
+
+	* dlls/x11drv/bitmap.c, dlls/x11drv/init.c, dlls/x11drv/x11drv.h,
+	  dlls/x11drv/x11drv_main.c:
+	Make x11drv fail to load when it can't open the display, instead of
+	killing the whole process.
+
+	* tools/winedump/ne.c:
+	Added support for dumping exported entry points in NE modules.
+
+	* dlls/Makefile.in, dlls/twain/.cvsignore, dlls/twain/Makefile.in,
+	  dlls/twain/twain.spec, dlls/twain/twain16_main.c:
+	Mike Hearn <mh@codeweavers.com>
+	Add a 16 bit pair DLL for TWAIN.
+
+2004-07-12  Alexandre Julliard  <julliard@winehq.com>
+
+	* controls/combo.c, windows/nonclient.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Fixed switch (unsigned int) { case -1 / -2: } problems.
+
+	* dlls/msvcrt/tests/headers.c: Pierre d'Herbemont <stegefin@free.fr>
+	Don't test i386 types on non i386.
+
+	* dlls/urlmon/umon.c, dlls/urlmon/urlmon.spec:
+	Mike McCormack <mike@codeweavers.com>
+	Added a few stub implementations.
+
+	* dlls/comctl32/propsheet.c: Robert Shearman <rob@codeweavers.com>
+	Implemented PSM_HWNDTOINDEX.
+
+	* dlls/advapi32/advapi.c, dlls/advapi32/crypt.c,
+	  dlls/advapi32/eventlog.c:
+	James Hawkins <truiken@gmail.com>
+	Added some more API docs.
+
+	* dlls/msi/cond.y: Aric Stewart <aric@codeweavers.com>
+	Properly handle quoted number literals in MSI condition statements.
+
+	* dlls/comctl32/propsheet.c: Robert Shearman <rob@codeweavers.com>
+	Add stubs for some new property sheet messages.
+
+	* dlls/user/tests/resource.c: Mike McCormack <mike@codeweavers.com>
+	Add a regression test for accelerators.
+
+	* dlls/user/resource.c: Mike McCormack <mike@codeweavers.com>
+	- Windows always strips the high bit (0x80) of the fVirt member in the
+	  accelerator structure.
+	- If the FVIRTKEY bit of fVirt is set, the value of the key field is
+	  limited to the range of one byte.
+	- Remove annoying fixmes about accelerator table checking.  Windows
+	  appears to do no more checking than the above.
+
+	* dlls/msrle32/msrle_Ja.rc, dlls/msrle32/rsrc.rc, dlls/wininet/rsrc.rc,
+	  dlls/wininet/wininet_Ja.rc, programs/regedit/Ja.rc,
+	  programs/wcmd/Ja.rc, programs/wcmd/wcmdrc.rc:
+	Hajime Segawa <winetips@sidenet.ddo.jp>
+	Added Japanese translation for msrle32, wininet, wcmd.
+	Fixed untranslated messages of regedit.
+
+	* dlls/shell32/shell32_En.rc, dlls/shell32/shell32_Es.rc,
+	  dlls/shell32/shell32_Fr.rc, dlls/shell32/shell32_It.rc,
+	  dlls/shell32/shell32_Pt.rc, dlls/shell32/shell32_Uk.rc,
+	  dlls/shell32/shres.rc:
+	José Manuel Ferrer Ortiz <jmfo1982@yahoo.es>
+	Updated the Spanish shell32 translation and made some corrections to
+	other language files.
+
+	* include/prsht.h: Robert Shearman <rob@codeweavers.com>
+	Add definitions for v5.80 messages.
+
+	* dlls/msi/action.c: Hans Leidekker <hans@it.vu.nl>
+	Fix command line parsing.
+
+	* dlls/user/resource.c: Mike McCormack <mike@codeweavers.com>
+	- CopyAcceleratorTable can cause a buffer overflow because it uses an
+	  incorrect comparison between the number of accelerator entries
+	  available and the number of accelerator entries in the output buffer.
+	- My tests show that CopyAcceleratorTable always strips the high bit
+	  of the fVirt member of the accel struct.
+	- Calling DestroyAcceleratorTable with a NULL accelerator should
+	  return FALSE.
+
+	* dlls/mpr/mpr.rc, dlls/mpr/mpr_De.rc, dlls/msacm/msacm.rc,
+	  dlls/msacm/msacm_De.rc, dlls/oleaut32/oleaut32_De.rc,
+	  dlls/oledlg/oledlg_De.rc, dlls/oledlg/rsrc.rc, dlls/serialui/De.rc,
+	  dlls/serialui/serialui_rc.rc, dlls/setupapi/De.rc,
+	  dlls/setupapi/setupapi.rc, dlls/shlwapi/shlwapi.rc,
+	  dlls/shlwapi/shlwapi_De.rc, dlls/wininet/rsrc.rc,
+	  dlls/wininet/wininet_De.rc:
+	Henning Gerhardt <henning.gerhardt@web.de>
+	Translated some English resource files into German.
+
+	* dlls/dmloader/loaderstream.c: Marcus Meissner <marcus@jet.franken.de>
+	Fixed (LPDIRECTMUSICLOADER8) cast.
+
+	* objects/region.c: Robert Shearman <rob@codeweavers.com>
+	Fix a few region debug messages.
+
+	* dlls/msi/msi.c: Mike McCormack <mike@codeweavers.com>
+	Minor spelling fix.
+
+	* dlls/user/exticon.c: Mike McCormack <mike@codeweavers.com>
+	Stop PrivateExtractIcons from crashing given an invalid icon index.
+
+	* dlls/winedos/int21.c: Marcus Meissner <marcus@jet.franken.de>
+	Remove lvalue casts that are no longer supported.
+
+	* dlls/msi/table.c: Mike McCormack <mike@codeweavers.com>
+	Remove a piece of dead code causing a warning.
+
+	* dlls/secur32/secur32.c, dlls/secur32/secur32.spec:
+	Mike McCormack <mike@codeweavers.com>
+	Add stub implementation for GetComputerObjectName.
+
+	* include/Makefile.in, include/secext.h:
+	Mike McCormack <mike@codeweavers.com>
+	Add secext.h.
+
+	* dlls/shell32/control.c, dlls/shell32/shell32_main.h,
+	  dlls/shell32/shellole.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Fixed double applet = applet = assignment.
+	Removed sic_hdpa only used in 1 C file as static var.
+	Make VT_Shell_IMalloc32 and related variables static.
+
+	* dlls/ole32/regsvr.c: Marcus Meissner <marcus@jet.franken.de>
+	IID_IObjectWithSite is already in libuuid, no need to declare here.
+
+	* dlls/ole32/ifs.c: Marcus Meissner <marcus@jet.franken.de>
+	IMalloc vtables are static.
+
+	* dlls/dplayx/dplay.c, dlls/dplayx/dplay_global.h:
+	Marcus Meissner <marcus@jet.franken.de>
+	Move definitions of static vtables from header to dplay.c.
+
+	* misc/registry.c: Robert Reif <reif@earthlink.net>
+	Add HKEY_DYN_DATA\Config Manager\Enum to registry.
+
+	* programs/winedbg/stack.c: Eric Pouech <pouech-eric@wanadoo.fr>
+	Fixed regression on 'bt <tid>' command.
+
+	* dlls/ddraw/d3ddevice/mesa.c: Lionel Ulmer <lionel.ulmer@free.fr>
+	Better handle the frame-buffer locking case.
+
+	* dlls/psapi/tests/module.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Fix tests of GetModuleFileNameA on 98/XP.
+
+	* dlls/x11drv/dib_convert.c, dlls/x11drv/dib_src_swap.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Replaced lvalue casts / postincrement mixes.
+
+	* dlls/dsound/tests/Makefile.in, dlls/dsound/tests/dsound.c:
+	Robert Reif <reif@earthlink.net>
+	- Create IDirectSound and IDirectSound8 objects using the
+	  CoCreateInstance COM function to test the Class Factory interfaces.
+	- Create IDirectSound and IDirectSound8 objects using CreateDirectSound
+	  and CreateDirectSound8 using a NULL device GUID.
+
+2004-07-09  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/msi/action.c, dlls/msi/cond.y, dlls/msi/msi.c, dlls/msi/package.c:
+	Mike McCormack <mike@codeweavers.com>
+	Implement MsiVerifyPackage, cosmetic fixes.
+
+	* dlls/shell32/dialogs.c, dlls/shell32/shell32.spec,
+	  dlls/shell32/shell32_En.rc, dlls/shell32/shresdef.h,
+	  dlls/shell32/undocshell.h, include/shlobj.h:
+	Martin Fuchs <martin-fuchs@gmx.net>
+	Ge van Geldorp <gvg@reactos.com>
+	Implement MessageBox-based RestartDialog() and RestartDialogEx(), use
+	string resources for ExitWindowsDialog() to allow
+	internationalization.
+
+	* dlls/msi/action.c, dlls/msi/cond.y, dlls/msi/create.c,
+	  dlls/msi/distinct.c, dlls/msi/handle.c, dlls/msi/insert.c,
+	  dlls/msi/msi.c, dlls/msi/msipriv.h, dlls/msi/msiquery.c,
+	  dlls/msi/order.c, dlls/msi/package.c, dlls/msi/record.c,
+	  dlls/msi/select.c, dlls/msi/suminfo.c, dlls/msi/table.c,
+	  dlls/msi/update.c, dlls/msi/where.c:
+	Mike McCormack <mike@codeweavers.com>
+	Aric Stewart <aric@codeweavers.com>
+	Refcount all objects, and use pointers internally.
+
+	* dlls/kernel/file.c: Rob Shearman <rob@codeweavers.com>
+	Add TRACE to ReadFileEx.
+
+	* dlls/msi/action.c, dlls/msi/msi.c, dlls/msi/msipriv.h:
+	Aric Stewart <aric@codeweavers.com>
+	Mike McCormack <mike@codeweavers.com>
+	Write the encoded GUIDs for product registration in the Installer
+	registry.
+
+	* dlls/msi/action.c, dlls/msi/msi.c, dlls/msi/msi.spec,
+	  dlls/msi/msiquery.c:
+	Aric Stewart <aric@codeweavers.com>
+	Cleanup of actions.
+
+	* dlls/msi/msi.spec, dlls/msi/msiquery.c, dlls/msi/record.c:
+	Aric Stewart <aric@codeweavers.com>
+	Add a stub for MsiModifyView, fix a couple of bugs.
+
+	* dlls/msi/action.c: Mike McCormack <mike@codeweavers.com>
+	Cosmetic fixes.
+
+	* dlls/msi/action.c, dlls/msi/msi.c, dlls/msi/msipriv.h,
+	  dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Implement logging.
+
+	* dlls/x11drv/x11drv_main.c: Mike Hearn <mh@codeweavers.com>
+	Output X11 protocol errors before breaking into debugger.
+
+	* dlls/dsound/dsound.c: Robert Reif <reif@earthlink.net>
+	Better error checking and recovery.
+
+	* controls/scroll.c, dlls/user/tests/msg.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Add a test case for scroll APIs, fix a few bugs spotted by it.
+
+2004-07-08  Alexandre Julliard  <julliard@winehq.com>
+
+	* programs/notepad/main.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Add WS_HSCROLL style to the notepad's edit control.
+
+	* include/wingdi.h, objects/gdiobj.c:
+	Andreas Mohr <andi@rhlx01.fht-esslingen.de>
+	Several GDI object handling functions are defined to take a HGDIOBJ
+	instead of a HANDLE.
+
+	* dlls/dsound/dsound.c, dlls/ole32/compobj.c, include/shlwapi.h:
+	Francois Gouget <fgouget@free.fr>
+	Assorted spelling fixes.
+
+	* controls/scroll.c: Troy Rollo <wine@troy.rollo.name>
+	- Setting the scroll range with the "bRedraw" flag set to true on a
+	  non-control scrollbar resulted in the scrollbar being drawn over the
+	  whole window area.
+	- If you don't set WS_HSCROLL/WS_VSCROLL on window creation, setting a scroll
+	  range does nothing. Setting the scroll range to a non-zero range should cause
+	  scroll bars to be displayed. Setting the range to a zero range
+	  should cause the relevant scroll bar to be hidden.
+
+	* dlls/x11drv/clipboard.c: Ulrich Czekalla <ulrich@codeweavers.com>
+	If the selection owner doesn't understand TARGETS, try retrieving
+	XA_STRING.
+
+	* dlls/x11drv/event.c: Ulrich Czekalla <ulrich@codeweavers.com>
+	Handle case when data type is not registered.
+
+	* programs/regedit/childwnd.c, programs/regedit/regproc.c,
+	  programs/regedit/treeview.c:
+	Robert Reif <reif@earthlink.net>
+	Added HKEY_DYN_DATA support.
+
+2004-07-07  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/kernel/kernel32.spec, dlls/kernel/thread.c:
+	Roger Olson <u60@comcast.net>
+	Added stub for CreateRemoteThread().
+
+	* include/dsound.h: Robert Reif <reif@earthlink.net>
+	Number of arguments to IDirectSoundBuffer8_GetObjectInPath was wrong.
+
+	* dlls/advapi32/security.c, include/winnt.h:
+	Ge van Geldorp <gvg@reactos.com>
+	Add missing privilege names.
+
+	* dlls/kernel/locale.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Initialize also ACP, OEMCP and MACCP in registry on locale change.
+
+	* dlls/ntdll/directory.c: Emmanuel Maillard <e.rsz@libertysurf.fr>
+	Added Darwin support in get_default_drive_device.
+
+2004-07-06  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/x11drv/winpos.c: Fixed X11DRV_GetDC for the desktop window.
+	Use the client window as drawable when possible.
+
+	* server/window.c:
+	get_visible_region: do not clip out siblings of the top-level window.
+
+	* dlls/kernel/tests/file.c, dlls/kernel/vxd.c:
+	Mike Hearn <mike@navi.cx>
+	Correct error code returned by CreateFile when given a non-existent
+	VxD on NT, add a test case.
+
+	* dlls/oleaut32/typelib.c: Mike McCormack <mike@codeweavers.com>
+	Refcounting fixes.
+
+	* dlls/ole32/compobj.c: Mike Hearn <mh@codeweavers.com>
+	Add some explanations to compobj.c, implement flushing message queue
+	on shutdown.
+
+	* dlls/comctl32/listview.c: Mike McCormack <mike@codeweavers.com>
+	Create a tooltip on demand in the Listview.
+
+	* documentation/configuring.sgml:
+	Richard Stonehouse <richard@rstonehouse.co.uk>
+	Updated for the new 'dosdevices' directory system.
+
+	* programs/winetest/main.c, programs/winetest/send.c:
+	Ferenc Wagner <wferi@afavant.elte.hu>
+	Suppress some more error message boxes.
+	Truncate report file if too big.
+
+	* dlls/mapi32/tests/prop.c: Ferenc Wagner <wferi@afavant.elte.hu>
+	Avoid segfaults on uninitialized data.
+
+	* include/commctrl.h: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Fix a typo in the TabCtrl_SetItem macro.
+
+	* configure, configure.ac, dlls/Makefile.in, dlls/atl/.cvsignore,
+	  dlls/atl/Makefile.in, dlls/atl/atl.spec, dlls/atl/atl_main.c,
+	  dlls/atl/atlbase.h:
+	Aric Stewart <aric@codeweavers.com>
+	First implementation of the Advanced Template Library, with just a few
+	functions implemented.
+
+	* dlls/ntdll/nt.c: Aric Stewart <aric@codeweavers.com>
+	Report NOT_IMPLEMENTED for not implemented token classes.
+
+	* server/file.c: Mike McCormack <mike@codeweavers.com>
+	Translate ENODEV and ENXIO error codes to NT status codes.
+
+	* include/dsound.h: Robert Reif <reif@earthlink.net>
+	Added some missing **LPLP typedefs.
+
+	* configure, configure.ac: Emmanuel Maillard <e.rsz@libertysurf.fr>
+	Check for -lresolv for Darwin.
+
+	* include/Makefile.in, include/mlang.h, include/mlang.idl:
+	Mike McCormack <mike@codeweavers.com>
+	Add Multi Language support IDL and headers.
+
+	* dlls/dsound/buffer.c, dlls/dsound/primary.c, include/dsound.h:
+	Robert Reif <reif@earthlink.net>
+	Fix IDirectSoundBuffer8_Initialize function prototype and use.
+
+	* tools/wrc/newstruc.c: Marcus Meissner <marcus@jet.franken.de>
+	Generic SKIP_TAG to skip a number of bytes, use it where applicable.
+
+	* windows/winproc.c: Marcus Meissner <marcus@jet.franken.de>
+	Replace lvalue casts of post increments for newer compiler.
+
+	* dlls/dsound/dsound_main.c: Robert Reif <reif@earthlink.net>
+	Create DirectSound or DirectSound8 depending on riid.
+
+	* dlls/msi/table.c: Mike McCormack <mike@codeweavers.com>
+	Allow binary fields with stream names longer than table names.
+
+	* dlls/msi/action.c, dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Implemented CreateShortcut and PublishProduct.
+
+	* dlls/msi/action.c, dlls/msi/create.c, dlls/msi/distinct.c,
+	  dlls/msi/insert.c, dlls/msi/msipriv.h, dlls/msi/msiquery.c,
+	  dlls/msi/order.c, dlls/msi/select.c, dlls/msi/table.c,
+	  dlls/msi/update.c, dlls/msi/where.c:
+	Mike McCormack <mike@codeweavers.com>
+	Fetch binary streams at the table level.
+
+	* dlls/msi/package.c: Aric Stewart <aric@codeweavers.com>
+	MsiGetProperty should return empty strings on error.
+
+	* dlls/msi/action.c: Aric Stewart <aric@codeweavers.com>
+	Implemented registering Classes and ProgID.
+
+	* dlls/msi/action.c: Aric Stewart <aric@codeweavers.com>
+	Implemented RegisterTypeLibraries.
+
+	* dlls/msi/action.c, dlls/msi/cond.y, dlls/msi/msipriv.h,
+	  dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Implemented ProcessComponents.
+
+	* dlls/msi/action.c, dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Send progress and action messages.
+
+	* dlls/msi/action.c: Aric Stewart <aric@codeweavers.com>
+	Allow ADDLOCAL to override INSTALLLEVEL, implement LaunchConditions.
+
+	* loader/preloader.c: Avoid using strlen.
+
+	* dlls/msvcrt/tests/headers.c: Added tests for div_t and ldiv_t.
+
+	* dlls/msvcrt/msvcrt.h: Pierre d'Herbemont <stegefin@free.fr>
+	Define MSVCRT_div_t and MSVCRT_ldiv_t.
+
+	* include/aclapi.h: Mike McCormack <mike@codeweavers.com>
+	Add trustee functions.
+
+	* dlls/dsound/dsound.c, dlls/winmm/wineoss/audio.c:
+	Robert Reif <reif@earthlink.net>
+	Get certification for VerifyCertification from driver to match
+	GetCaps.
+	Change OSS driver to report certified.
+	Change OSS driver to show message name rather than number in traces.
+
+	* dlls/ddraw/dsurface/dib.c: Marcus Meissner <marcus@jet.franken.de>
+	COPY_COLORKEY_FX: Do not use lvalue casts.
+
+	* dlls/msi/action.c: Aric Stewart <aric@codeweavers.com>
+	Fix bugs in resolve_folder.
+
+2004-07-04  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/msi/action.c, dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Activate features and components based on their various conditions.
+
+	* dlls/msi/Makefile.in, dlls/msi/action.c, dlls/msi/cond.y,
+	  dlls/msi/msipriv.h, dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Beginnings of costing and organizing into components and features.
+
+	* dlls/msi/action.c: Aric Stewart <aric@codeweavers.com>
+	Fix command line processing and folder paths.
+
+	* dlls/msi/action.c, dlls/msi/msipriv.h, dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Fix MsiGetTargetPath, MsiGetSourcePath and MsiSetTargetPath.
+
+	* dlls/msi/action.c, dlls/msi/msi.c, dlls/msi/msipriv.h,
+	  dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Use the newly implemented UPDATE code to set properties.
+
+	* dlls/msi/Makefile.in, dlls/msi/query.h, dlls/msi/sql.y,
+	  dlls/msi/update.c, dlls/msi/where.c:
+	Mike McCormack <mike@codeweavers.com>
+	Implement the UPDATE query.
+
+	* dlls/msi/query.h, dlls/msi/sql.y, dlls/msi/where.c:
+	Mike McCormack <mike@codeweavers.com>
+	Create the WHERE part of a query in one function call.
+
+	* dlls/msi/action.c, dlls/msi/msi.c, dlls/msi/msi.spec,
+	  dlls/msi/msipriv.h, dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Implement SetTargetPath, start the basics for tracking UI level.
+
+	* programs/winedbg/info.c, programs/winedbg/symbol.c,
+	  programs/winedbg/winedbg.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	- enhanced 'info share' output
+	- made use of new dbghelp pure ELF symbol lookup
+
+	* dlls/msi/action.c, dlls/msi/package.c:
+	Mike McCormack <mike@codeweavers.com>
+	Cosmetic fixes.
+
+	* dlls/wininet/http.c: Mike McCormack <mike@codeweavers.com>
+	Build http requests in a more consistent way.
+	Fix the size of the request buffer.
+	Don't try converting the optional information from W to A.
+
+	* dlls/dmime/performance.c: Fixed a warning.
+
+	* dlls/dsound/Makefile.in, dlls/dsound/dsound.c,
+	  dlls/dsound/dsound.spec, dlls/dsound/dsound_main.c,
+	  dlls/dsound/dsound_private.h, dlls/dsound/tests/dsound.c,
+	  include/dsound.h:
+	Robert Reif <reif@earthlink.net>
+	Separated DirectSoundCreate8 into two functions and added a
+	IDirectSound implementation.
+	Added proper COM behavior for QueryInterface for IDirectSound and
+	IDirectSound8.
+	Fixed a bug in the dsound.h header file for IDirectSound8
+	CreateSoundBuffer and DuplicateSoundBuffer.
+	Added new tests for proper COM behavior and enables some commented out
+	code for tests that work on windows.  Added new tests for
+	IDirectSound8.
+
+	* dlls/avifil32/api.c, dlls/avifil32/avifile.c, dlls/avifil32/wavfile.c:
+	Mike McCormack <mike@codeweavers.com>
+	Fix string conversion bugs.
+
+	* dlls/shell32/autocomplete.c: Mike McCormack <mike@codeweavers.com>
+	Fix a buffer overrun in autocomplete.
+
+	* dlls/dbghelp/dbghelp.c, dlls/dbghelp/dbghelp_private.h,
+	  dlls/dbghelp/elf_module.c, dlls/dbghelp/module.c,
+	  dlls/dbghelp/stabs.c, dlls/dbghelp/symbol.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	- added support for GCC static local variables
+	- fixed some bugs in SYMOPT_NO_PUBLICS and SYMOPT_PUBLICS_ONLY
+	  handling
+	- in stabs parsing, just drop any debug info for a module if stabs
+	  parsing fails (instead of assert()'ing)
+	- symbol lookup now allows lookup in pure ELF modules
+	- fixed some bugs in symbol enumeration
+
+	* dlls/oleaut32/safearray.c, dlls/oleaut32/varformat.c,
+	  dlls/oleaut32/variant.c, dlls/oleaut32/vartype.c:
+	Mike Hearn <mh@codeweavers.com>
+	Move variant code to its own debug channel.
+
+	* dlls/mpr/mpr.rc, dlls/mpr/mpr_Es.rc:
+	José Manuel Ferrer Ortiz <jmfo1982@yahoo.es>
+	Added Spanish translation.
+
+	* dlls/kernel/locale.c: Vitaly Lipatov <lav@altlinux.ru>
+	Return proper codepage value in GetCPInfoEx.
+
+	* dlls/msi/action.c: Aric Stewart <aric@codeweavers.com>
+	Start implementing Feature and Component level install control.
+
+	* dlls/wininet/internet.c: Mike McCormack <mike@codeweavers.com>
+	Allocate the correct size string in InternetCrackUrl.
+
+	* dlls/shlwapi/assoc.c, dlls/shlwapi/reg.c, dlls/shlwapi/url.c:
+	Mike McCormack <mike@codeweavers.com>
+	Fix memory allocation problems.
+
+2004-06-30  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/msi/record.c: Mike McCormack <mike@codeweavers.com>
+	Fix retrieval of nul records as strings.
+
+	* dlls/msi/insert.c: Mike McCormack <mike@codeweavers.com>
+	Fix the INSERT query when inserting integers into a table.
+
+	* dlls/msi/Makefile.in, dlls/msi/action.c, dlls/msi/cond.y,
+	  dlls/msi/msi.c, dlls/msi/msipriv.h, dlls/msi/package.c:
+	Aric Stewart <aric@codeweavers.com>
+	Start implementing MsiOpenPackage.
+
+	* dlls/msi/msi.c, dlls/msi/record.c, dlls/msi/string.c:
+	Mike McCormack <mike@codeweavers.com>
+	Set the storage file's GUID so native MSI recognizes it.
+	Fix crash when inserting multiple columns that are invalid.
+
+	* dlls/msi/create.c, dlls/msi/sql.y:
+	Mike McCormack <mike@codeweavers.com>
+	Hack field types, fix ref counting.
+
+	* dlls/msi/record.c: Mike McCormack <mike@codeweavers.com>
+	Fix buffer overflow.
+
+	* dlls/msi/msipriv.h, dlls/msi/sql.y, dlls/msi/string.c,
+	  dlls/msi/table.c:
+	Mike McCormack <mike@codeweavers.com>
+	Fix the UPDATE query.
+
+	* dlls/msi/create.c: Aric Stewart <aric@codeweavers.com>
+	Fix field numbering so the CREATE query works for multiple columns.
+
+	* dlls/msi/insert.c: Aric Stewart <aric@codeweavers.com>
+	Fix the INSERT query.
+
+	* dlls/msi/insert.c, dlls/msi/msipriv.h, dlls/msi/query.h,
+	  dlls/msi/record.c, dlls/msi/select.c, dlls/msi/sql.y,
+	  dlls/msi/string.c, dlls/msi/table.c, dlls/msi/tokenize.c,
+	  dlls/msi/where.c:
+	Mike McCormack <mike@codeweavers.com>
+	Make the SQL insert query work.
+
+	* dlls/hhctrl.ocx/hhctrl.c, dlls/imm32/imm.c, dlls/mpr/wnet.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	HeapAlloc for WSTR must allocate len* sizeof(WCHARS).
+
+	* dlls/msi/action.c: Steven Edwards <steven_ed4153@yahoo.com>
+	Fixed Extract prototype.
+
+	* dlls/user/tests/msg.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Add more MDI message tests.
+
+	* windows/mdi.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Do not do SetWindowPos(SWP_FRAMECHANGED) in the
+	DefFrameProc(WM_SETTEXT) handler, DefWindowProc already takes care of
+	it.
+
+	* dlls/commdlg/cdlg_Ca.rc, dlls/commdlg/cdlg_De.rc,
+	  dlls/commdlg/cdlg_Fr.rc, dlls/commdlg/cdlg_Ru.rc,
+	  dlls/commdlg/cdlg_Uk.rc:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Fix control coordinates in German and French versions of open file
+	dialog.
+	Remove duplicate control ids in Catalan, Russian and Ukrainian
+	dialogs.
+
+	* dlls/odbc32/proxyodbc.c: Bill Medland <billmedland@mercuryspeed.com>
+	Set RTLD_GLOBAL when loading the odbc driver manager so that when it
+	loads  its own driver that driver can call back into the manager (as
+	the Oracle Beta driver does, for example).
+
+	* dlls/ole32/marshal.c: Aric Stewart <aric@codeweavers.com>
+	Return an error in CoMarshalInterface if the IUnknown pointer is NULL
+	and don't crash.
+
+	* dlls/shell32/shlfsbind.c, include/shlobj.h:
+	Ge van Geldorp <gvg@reactos.com>
+	Fix IFileSystemBindData method order.
+
+	* dlls/winmm/driver.c, dlls/winmm/mci.c, dlls/winmm/winemm.h,
+	  dlls/winmm/winmm.c:
+	Dimitrie O. Paun <dpaun@rogers.com>
+	Lookup driver information in registry and system.ini.
+	Make the code inspect the registry/system.ini at call time, rather
+	then initialization time.
+	Code cleanups.
+
+	* dlls/msacm/Makefile.in, dlls/msacm/internal.c:
+	Dimitrie O. Paun <dpaun@rogers.com>
+	Look up driver info in the registry as well as in system.ini.
+
+	* windows/driver.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Small documentation cleanup.
+
+2004-06-29  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/msvideo/Makefile.in, dlls/msvideo/msvideo16.c,
+	  dlls/msvideo/msvideo_main.c:
+	Dimitrie O. Paun <dpaun@rogers.com>
+	Look up driver info in the registry as well as in system.ini.
+	Cleanup handling of driver enumeration and fourCC.
+
+	* dlls/msi/action.c, dlls/msi/msi.spec:
+	Aric Stewart <aric@codeweavers.com>
+	Implement MsiGetSourcePath.
+	Implement Binary and Dword data type for registry writing.
+
+	* dlls/msi/action.c, dlls/msi/msi.c, dlls/msi/msi.spec:
+	Aric Stewart <aric@codeweavers.com>
+	Handle custom actions type 1 and 2.
+
+	* dlls/msi/msi.c, dlls/msi/msipriv.h, dlls/msi/table.c:
+	Mike McCormack <mike@codeweavers.com>
+	Dump database table names on startup.
+
+	* dlls/x11drv/winpos.c, include/wine/server_protocol.h,
+	  server/protocol.def, server/region.c, server/request.h,
+	  server/trace.c, server/user.h, server/window.c, windows/winpos.c:
+	Added support for window regions in the server.
+
+	* dlls/msi/msiquery.c, dlls/msi/record.c:
+	Mike McCormack <mike@codeweavers.com>
+	Fix refcounting of streams.
+
+	* objects/region.c: Ignore empty rectangles in ExtCreateRegion.
+
+	* dlls/msi/action.c, dlls/msi/cond.y, dlls/msi/msi.spec,
+	  dlls/msi/msipriv.h, dlls/msi/msiquery.c:
+	Aric Stewart <aric@codeweavers.com>
+	Implement MsiGetTargetPathA/W.
+
+	* dlls/msi/msipriv.h, dlls/msi/msiquery.c, dlls/msi/record.c,
+	  dlls/msi/table.c:
+	Mike McCormack <mike@codeweavers.com>
+	Allow reading records containing streams.
+
+2004-06-28  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/msi/cond.y: Mike McCormack <mike@codeweavers.com>
+	Fixed the way the parser takes input strings.
+
+	* dlls/x11drv/winpos.c:
+	Use X11DRV_GetRegionData to implement X11DRV_SetWindowRgn instead of
+	duplicating that functionality.
+
+	* dlls/comctl32/imagelist.c: Filip Navara <xnavara@volny.cz>
+	Set the palette for image list DIBs that has 8 or less bits per
+	pixel.
+
+	* dlls/comctl32/tooltips.c, include/commctrl.h:
+	Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	Start of balloon tip support.
+
+	* programs/uninstaller/main.c: Hannu Valtonen <Hannu.Valtonen@hut.fi>
+	Don't display the commandline text (A trace still gives it).
+	Set a few fonts to avoid using the horrible system font on native
+	Windows.
+
+	* dlls/version/tests/info.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Fixed tests of GetFileVersionInfoSizeA for win98 / XP.
+
+	* dlls/oleaut32/tmarshal.c: Mike Hearn <mh@codeweavers.com>
+	Make typelib marshaller safe for systems that don't allow executable
+	code on the heap, plug a leak of the assembly stub block.
+
+	* programs/clock/Es.rc, programs/wineconsole/wineconsole_Es.rc,
+	  programs/wineconsole/wineconsole_res.rc, programs/winefile/Es.rc,
+	  programs/winefile/rsrc.rc:
+	José Manuel Ferrer Ortiz <jmfo1982@yahoo.es>
+	Added some Spanish translations.
+
+	* dlls/avifil32/avifile_Ja.rc, dlls/avifil32/rsrc.rc, dlls/mpr/mpr.rc,
+	  dlls/mpr/mpr_Ja.rc, dlls/msacm/msacm.rc, dlls/msacm/msacm_Ja.rc,
+	  dlls/oledlg/oledlg_Ja.rc, dlls/oledlg/rsrc.rc, dlls/serialui/Ja.rc,
+	  dlls/serialui/serialui_rc.rc, dlls/setupapi/Ja.rc,
+	  dlls/setupapi/setupapi.rc, dlls/shlwapi/shlwapi.rc,
+	  dlls/shlwapi/shlwapi_Ja.rc, dlls/wineps/rsrc.rc,
+	  dlls/wineps/wps_Ja.rc, dlls/winmm/winmm_Ja.rc,
+	  dlls/winmm/winmm_res.rc, programs/notepad/Ja.rc,
+	  programs/notepad/rsrc.rc, programs/regedit/Ja.rc,
+	  programs/regedit/rsrc.rc:
+	Hajime Segawa <winetips@sidenet.ddo.jp>
+	Added some Japanese translations.
+
+	* dlls/msi/Makefile.in, dlls/msi/action.c, dlls/msi/cond.y,
+	  dlls/msi/handle.c, dlls/msi/msi.c, dlls/msi/msi.spec,
+	  dlls/msi/msipriv.h, dlls/msi/sql.y, dlls/msi/table.c:
+	Aric Stewart <aric@codeweavers.com>
+	Start implementing actions.
+
+	* dlls/shell32/pidl.c, dlls/shell32/shell32_main.c,
+	  dlls/shell32/shellole.c, dlls/shell32/shellord.c,
+	  dlls/shell32/shlfileop.c, include/shlobj.h:
+	Ge van Geldorp <gvg@reactos.com>
+	Match prototypes to Platform SDK.
+
+	* dlls/oleaut32/typelib.c: Mike Hearn <mh@codeweavers.com>
+	Dump function return type in typelib traces, add trace support for
+	VT_HRESULT.
+
+	* dlls/oleaut32/oaidl_p.c: Mike Hearn <mh@codeweavers.com>
+	Change REFIID to IID* for stack declarations to avoid initializers
+	being discarded.
+
+	* dlls/shlwapi/tests/ordinal.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Skip tests of GetAcceptLanguagesA if a correct call to the function
+	does not return anything useful.
+
+	* dlls/psapi/tests/module.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Skip tests without error if psapi.dll could not be loaded.
+
+	* documentation/samples/config:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Change desktop size for _INS5576._MP.
+
+	* dlls/comctl32/toolbar.c: Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	- Clean up the mask drawing code.
+	- Improve bitmap not found message.
+
+	* dlls/wininet/http.c, dlls/wininet/internet.c:
+	Dimitrie O. Paun <dpaun@rogers.com>
+	Fix the function names in some of the comments.
+
+	* loader/preloader.c: Mike McCormack <mike@codeweavers.com>
+	Define AT_SYSINFO_* if it's missing.
+
+	* include/commctrl.h: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Correct struct tag name for UDACCEL.
+	Add missing TCITEMHEADER and old names TC_ITEMHEADER/TC_ITEM.
+
+2004-06-26  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/msi/msipriv.h, dlls/msi/string.c, dlls/msi/table.c:
+	Mike McCormack <mike@codeweavers.com>
+	Pull the codepage from the string table.
+
+	* dlls/msi/sql.y, dlls/msi/where.c:
+	Mike McCormack <mike@codeweavers.com>
+	Fix crash that occurred when an invalid query string was deleted
+	twice.
+
+	* loader/preloader.c:
+	Remove the AT_SYSINFO and AT_SYSINFO_EHDR values if the sysinfo page
+	is in one of our reserved ranges.
+
+	* dlls/msi/msipriv.h, dlls/msi/query.h, dlls/msi/sql.y,
+	  dlls/msi/string.c, dlls/msi/where.c:
+	Mike McCormack <mike@codeweavers.com>
+	Implement queries by string value.
+
+	* include/msi.h, include/msiquery.h:
+	Mike McCormack <mike@codeweavers.com>
+	Aric Stewart <aric@codeweavers.com>
+	Update header declarations for msi.
+
+2004-06-25  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/user/tests/.cvsignore, dlls/user/tests/Makefile.in,
+	  dlls/user/tests/clipboard.c, dlls/x11drv/clipboard.c,
+	  server/clipboard.c, windows/clipboard.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Add a test case for clipboard functionality and fix some bugs revealed
+	by it.
+
+	* dlls/msvcrt/Makefile.in, dlls/msvcrt/console.c, dlls/msvcrt/cpp.c,
+	  dlls/msvcrt/cppexcept.c, dlls/msvcrt/ctype.c, dlls/msvcrt/data.c,
+	  dlls/msvcrt/dir.c, dlls/msvcrt/environ.c, dlls/msvcrt/errno.c,
+	  dlls/msvcrt/except.c, dlls/msvcrt/exit.c, dlls/msvcrt/file.c,
+	  dlls/msvcrt/heap.c, dlls/msvcrt/locale.c, dlls/msvcrt/main.c,
+	  dlls/msvcrt/math.c, dlls/msvcrt/mbcs.c, dlls/msvcrt/misc.c,
+	  dlls/msvcrt/msvcrt.h, dlls/msvcrt/msvcrt.spec, dlls/msvcrt/process.c,
+	  dlls/msvcrt/scanf.c, dlls/msvcrt/string.c,
+	  dlls/msvcrt/tests/.cvsignore, dlls/msvcrt/tests/Makefile.in,
+	  dlls/msvcrt/tests/headers.c, dlls/msvcrt/thread.c,
+	  dlls/msvcrt/time.c, dlls/msvcrt/wcs.c, include/msvcrt/conio.h,
+	  include/msvcrt/ctype.h, include/msvcrt/direct.h,
+	  include/msvcrt/dos.h, include/msvcrt/eh.h, include/msvcrt/errno.h,
+	  include/msvcrt/fcntl.h, include/msvcrt/float.h, include/msvcrt/io.h,
+	  include/msvcrt/locale.h, include/msvcrt/malloc.h,
+	  include/msvcrt/math.h, include/msvcrt/mbctype.h,
+	  include/msvcrt/mbstring.h, include/msvcrt/process.h,
+	  include/msvcrt/search.h, include/msvcrt/setjmp.h,
+	  include/msvcrt/stddef.h, include/msvcrt/stdio.h,
+	  include/msvcrt/stdlib.h, include/msvcrt/string.h,
+	  include/msvcrt/sys/stat.h, include/msvcrt/sys/timeb.h,
+	  include/msvcrt/sys/types.h, include/msvcrt/sys/utime.h,
+	  include/msvcrt/time.h, include/msvcrt/wchar.h,
+	  include/msvcrt/wctype.h, include/winsock.h:
+	Dimitrie O. Paun <dpaun@rogers.com>
+	Split the MSVCRT implementation headers from the public headers.
+	Fix some naming conventions aberrations.
+	Add tests to ensure consistency between the two sets of symbols.
+
+	* include/windef.h, include/winuser.h:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Correct tag names for RECTL and SCROLLINFO structs.
+
+	* dlls/rsabase/main.c:
+	Michael Jung <mjung@rbg.informatik.tu-darmstadt.de>
+	Changed type of "Signature" registry key value to REG_BINARY.
+
+2004-06-24  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/kernel/heap.c:
+	In GlobalMemoryStatus, also cap the sum of dwAvailPhys and
+	dwAvailPageFile at 2Gb to avoid a bug in Photoshop 4.
+
+	* loader/kthread.c:
+	Use wine_dlsym instead of dlsym to avoid the glibc dlerror bug.
+	Call dlsym with RTLD_DEFAULT for symbols that we don't redefine to
+	work around another glibc bug.
+
+	* dlls/x11drv/winpos.c: Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	Fix small mistake in the previous visible region patch.
+
+2004-06-23  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/user/tests/msg.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Add a prototype for MDI message tests.
+
+	* windows/mdi.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Make sure that both deactivated and activated MDI children receive
+	WM_MDIACTIVATE message in all cases.
+
+	* dlls/x11drv/winpos.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	WM_WINDOWPOSCHANGED should always contain a final window position.
+
+	* dlls/x11drv/winpos.c, include/wine/server_protocol.h,
+	  server/Makefile.in, server/protocol.def, server/region.c,
+	  server/request.h, server/trace.c, server/user.h, server/window.c:
+	Moved visible region calculation to the server.
+
+	* windows/multimon.c:
+	Fixed wrong Unicode string syntax in GetMonitorInfoW.
+
+	* dlls/oleaut32/tmarshal.c, dlls/rpcrt4/rpc_binding.c:
+	Mike Hearn <mh@codeweavers.com>
+	- Don't ERR on a used connection being destroyed.
+	- Don't print an extra newline in the olerelay code.
+
+	* programs/winedbg/dbg.y, programs/winedbg/debug.l,
+	  programs/winedbg/debugger.h, programs/winedbg/stack.c,
+	  programs/winedbg/winedbg.c:
+	Mike Hearn <mike@navi.cx>
+	Add a --command option to winedbg, add an "all" option to the
+	backtrace command.
+
+2004-06-22  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ntdll/virtual.c:
+	We no longer need to make the import directory writable, the loader
+	takes care of that now.
+
+	* configure, configure.ac, loader/Makefile.in, loader/preloader.c:
+	Do direct Linux system calls in the preloader to avoid trouble with
+	some broken static libcs.
+
+	* dlls/ntdll/loader.c: Filip Navara <navaraf@reactos.com>
+	Unprotect Import Address Table while filling it.
+
+	* programs/winedbg/stack.c: Eric Pouech <pouech-eric@wanadoo.fr>
+	Fix compile error on non-i386.
+
+2004-06-21  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/setupapi/setupcab.c, dlls/x11drv/keyboard.c,
+	  programs/winelauncher.in, windows/msgbox.c:
+	Vincent Béron <vberon@mecano.gme.usherb.ca>
+	Replace some more -debugmsg references for WINEDEBUG.
+
+	* dlls/ntdll/version.c: Mike Hearn <mike@navi.cx>
+	Default to Win98 in DLL linkage heuristics.
+
+	* dlls/shell32/shell32_Ca.rc, dlls/shell32/shell32_Cn.rc,
+	  dlls/shell32/shell32_Cs.rc, dlls/shell32/shell32_Da.rc,
+	  dlls/shell32/shell32_De.rc, dlls/shell32/shell32_En.rc,
+	  dlls/shell32/shell32_Eo.rc, dlls/shell32/shell32_Es.rc,
+	  dlls/shell32/shell32_Fi.rc, dlls/shell32/shell32_Fr.rc,
+	  dlls/shell32/shell32_Hu.rc, dlls/shell32/shell32_It.rc,
+	  dlls/shell32/shell32_Ja.rc, dlls/shell32/shell32_Ko.rc,
+	  dlls/shell32/shell32_Nl.rc, dlls/shell32/shell32_No.rc,
+	  dlls/shell32/shell32_Pl.rc, dlls/shell32/shell32_Pt.rc,
+	  dlls/shell32/shell32_Ru.rc, dlls/shell32/shell32_Si.rc,
+	  dlls/shell32/shell32_Sk.rc, dlls/shell32/shell32_Sv.rc,
+	  dlls/shell32/shell32_Uk.rc, dlls/shell32/shell32_Wa.rc,
+	  dlls/shell32/shell32_Zh.rc:
+	Royce Mitchell III <royce3@ev1.net>
+	Shell32 run dialog combobox should also have WS_TABSTOP style.
+
+	* dlls/d3d8/utils.c: Christian Costa <titan.costa@wanadoo.fr>
+	Some more texture ops fixes.
+
+2004-06-18  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/x11drv/winpos.c:
+	Only unmap the window when it gets moved off-screen by the app, not by
+	the window manager.
+
+	* documentation/samples/config,
+	  programs/winemenubuilder/winemenubuilder.c:
+	Chris Morgan <cmorgan@alum.wpi.edu>
+	Hardcode "wineshelllink" in winemenubuilder, remove it from the config
+	file.
+
+	* controls/edit.c: Krishna Murthy <Krishna.Murthy@guptaworldwide.com>
+	Modified EDIT_EM_Undo(): Removed undo buffer length check for
+	empty. EDIT_EM_ReplaceSel() is called with send_update parameter set
+	to TRUE.
+
+	* windows/msgbox.c: Mike Hearn <mike@navi.cx>
+	Add a dedicated debug channel for message boxes which outputs the
+	contents of the message.
+
+	* dlls/x11drv/winpos.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	ShowWindow shouldn't fix SWP_ flags, it's the job of SetWindowPos.
+
+	* configure, configure.ac, include/config.h.in,
+	  tools/winebuild/import.c:
+	Pierre d'Herbemont <stegefin@free.fr>
+	- Detection of .size instruction.
+	- Detection of the assembler name prefix.
+
+	* dlls/ntdll/relay.c: Pierre d'Herbemont <stegefin@free.fr>
+	Fix a compile error for SNOOP_GetProcAddress and RELAY_GetProcAddress
+	on non-i386.
+
+	* dlls/user/tests/msg.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Add tests for child activation by ShowWindow/SetWindowPos.
+
+	* dlls/gdi/enhmfdrv/init.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Do not allow creation of not aligned EMF records by GDI code.
+
+	* controls/menu.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Use better dimensions for MDI system menu buttons to avoid MDI client
+	window resizing.
+
+	* dlls/shlwapi/tests/ordinal.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Add logging to the GetAcceptLanguagesA tests.
+
+	* dlls/ntdll/loader.c, dlls/ntdll/ntdll_misc.h, dlls/ntdll/virtual.c:
+	Added support for the IMAGE_FILE_LARGE_ADDRESS_AWARE flag.
+
+	* dlls/shell32/Makefile.in, dlls/shell32/clipboard.c,
+	  dlls/shell32/shell32_main.h, dlls/shell32/shellole.c,
+	  dlls/shell32/shellord.c, dlls/shell32/shlview.c,
+	  dlls/shell32/shv_bg_cmenu.c, dlls/shell32/shv_item_cmenu.c:
+	Robert Shearman <R.J.Shearman@warwick.ac.uk>
+	Make ole32 a delay-load import of shell32.
+
+2004-06-17  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ntdll/critsection.c:
+	Take spin count into account in RtlEnterCriticalSection.
+
+	* dlls/ntdll/file.c:
+	Don't use lseek when truncating a file to avoid corrupting the current
+	file position.
+
+	* dlls/oleaut32/tmarshal.c: Mike Hearn <mh@codeweavers.com>
+	Fix typelib marshaller relaying, add a comment describing what it is,
+	don't print the ugly L"" parts of Unicode strings in the relay trace.
+
+	* dlls/dsound/tests/.cvsignore, dlls/dsound/tests/Makefile.in,
+	  dlls/dsound/tests/capture.c, dlls/dsound/tests/ds3d.c,
+	  dlls/dsound/tests/dsound.c, dlls/dsound/tests/dsound_test.h:
+	Francois Gouget <fgouget@codeweavers.com>
+	Split the 'dsound' test into two parts:
+	- the sound format test. Plays a 5 second reference tone to help
+	  debug issues with the tone duration and help detect stutter issues.
+	  Prints explanations describing the sound format interactive
+	  test. Then plays a 1 second test tone for each supported sound
+	  format.
+	- the 3D sound tests. Performs the volume, panning, moving listener
+	  tests, etc.
+
+	* programs/winetest/Makefile.in: Ferenc Wagner <wferi@afavant.elte.hu>
+	Include new or forgotten tests.
+
+	* dlls/kernel/tests/profile.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Fix the GetPrivateProfileIntA tests for the win9x platform.
+
+	* dlls/user/tests/win.c: Dmitry Timoshkov <dmitry@codeweavers.com>
+	Make user/tests/win.c tests pass under Windows98.
+
+	* server/queue.c:
+	Properly reset msg_thread when releasing the thread input structure.
+
+	* tools/winebuild/spec32.c: Pierre d'Herbemont <stegefin@free.fr>
+	Hide the _init and _fini wrappers on darwin.
+
+	* dlls/ole32/marshal.c: Ivan Leo Puoti <puoti@inwind.it>
+	Removed the winedefault.reg message.
+
+	* dlls/rpcrt4/rpc_binding.c, dlls/rpcrt4/rpc_server.c:
+	Mike Hearn <mike@navi.cx>
+	Remove the RPC connection cache as Windows does not allow multiple
+	binds on the same connection.
+
+	* include/winuser.h: Andreas Mohr <andi@rhlx01.fht-esslingen.de>
+	Added some missing static control styles.
+
+	* dlls/kernel/tests/directory.c:
+	Added a couple of tests for SetCurrentDirectoryA.
+
+	* dlls/winedos/int21.c:
+	Check for non-existent directory in INT21_SetCurrentDirectory to
+	return a proper error when the directory is not on the current drive.
+
+	* dlls/shlwapi/ordinal.c, dlls/shlwapi/tests/ordinal.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Added tests for GetAcceptLanguagesA.
+
+2004-06-16  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/rpcrt4/rpc_binding.c: Mike Hearn <mike@navi.cx>
+	Correct connection releases on error path in RPCRT4_OpenBinding.
+
+	* dlls/winspool/tests/info.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Added some logging to the GetPrinterDriverDirectoryA tests.
+
+	* dlls/winmm/wineoss/audio.c: Francois Gouget <fgouget@codeweavers.com>
+	Log the format when mapping the sound device (or failing to).
+
+	* configure, configure.ac, dlls/gdi/freetype.c, include/config.h.in,
+	  objects/font.c:
+	Huw Davies <huw@codeweavers.com>
+	Add support for bitmap fonts.
+
+	* programs/winetest/Makefile.in: Added missing dependency.
+
+	* dlls/ntdll/cdrom.c: Gerald Pfeifer <gerald@pfeifer.com>
+	Remove incorrect support for FreeBSD and NetBSD in
+	DVD_StartSession().
+
+	* dlls/rsabase/main.c: Gerald Pfeifer <gerald@pfeifer.com>
+	Avoid unused variable warning.
+
+	* dlls/x11drv/xrender.c: Huw Davies <huw@codeweavers.com>
+	Remove an incorrect LeaveCriticalSection.
+
+	* dlls/kernel/ne_module.c, dlls/kernel/ne_segment.c,
+	  dlls/kernel/thunk.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Fixed some illegal lvalue casts / increments.
+
+2004-06-15  Alexandre Julliard  <julliard@winehq.com>
+
+	* VERSION, configure, ANNOUNCE, ChangeLog: Release 20040615.
+
+----------------------------------------------------------------
 2004-06-15  Alexandre Julliard  <julliard@winehq.com>
 
 	* AUTHORS: Updated authors list.
