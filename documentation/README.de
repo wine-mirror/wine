@@ -94,9 +94,6 @@ Optionale Support-Libraries:
   Wenn Sie CUPS Drucker-Unterstützung haben wollen, installieren Sie bitte
   die Pakete cups und cups-devel.
 
-  Für die automatische Verarbeitung der Test-Skripte brauchen Sie auch den
-  Entwicklungs-Headersupport aus libperl (in Debian das Paket libperl-dev).
-
 Die Voraussetzungen für das selbständige Durchführen des Builds der
 Dokumentation entnehmen Sie bitte dem Abschnitt "DOKUMENTATION".
 

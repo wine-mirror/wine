@@ -96,10 +96,6 @@ Librairies optionnelles :
   Si vous voulez un support d'impression à l'aide de CUPS, SVP installez à la
   fois les packages cups et cups-devel.
 
-Pour le traitement automatique des scripts de la série de tests, vous aurez
-également besoin des en-têtes de développement de libperl (package libperl-dev
-sous Debian).
-
 Pour la configuration nécessaire si vous avez l'intention de construire la
 documentation vous-même voyez la section "DOCUMENTATION".
 

@@ -94,9 +94,6 @@ Librerie per supporti opzionali:
 Se vuoi il supporto alla stampa CUPS, installa i pacchetti sia cups che
 cups-devel.
 
-Per l'esecuzione automatica della suite di script test, avrai bisogno del
-supporto della Libperl development header (pacchetto libperl-dev su Debian).
-
 Nel caso in cui volessi compilare la documentazione da solo, leggi la sezione
 "DOCUMENTAZIONE".
 

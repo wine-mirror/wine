@@ -89,9 +89,6 @@ Bibliotecas de suporte opcionais:
 Se desejar o suporte de impressão do CUPS, por favor instale os pacotes
 cups e cups-devel.
 
-Para o processamento automático dos scripts de teste, também precisará
-do suporte a cabeçalhos do libperl (pacote libperl-dev no Debian).
-
 Para os requesitos no caso de ter a intenção de contruir a documentação, veja 
 a seção "DOCUMENTAÇÃO".
 
