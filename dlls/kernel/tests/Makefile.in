@@ -13,6 +13,7 @@ CTESTS = \
 	environ.c \
 	file.c \
 	format_msg.c \
+	generated.c \
 	locale.c \
 	path.c \
 	process.c \

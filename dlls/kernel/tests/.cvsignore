@@ -6,6 +6,7 @@ drive.ok
 environ.ok
 file.ok
 format_msg.ok
+generated.ok
 kernel32_test.exe.spec.c
 locale.ok
 path.ok
