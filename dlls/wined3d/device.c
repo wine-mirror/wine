@@ -360,9 +360,9 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANS
          * NOTE2: Apparently texture transforms do NOT need reapplying
          */
         
+        PLIGHTINFOEL *lightChain = NULL;
         This->modelview_valid = FALSE;
         This->view_ident = !memcmp(lpmatrix, identity, 16*sizeof(float));
-        PLIGHTINFOEL *lightChain = NULL;
 
         glMatrixMode(GL_MODELVIEW);
         checkGLcall("glMatrixMode(GL_MODELVIEW)");
