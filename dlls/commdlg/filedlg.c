@@ -972,6 +972,14 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
          break;
        }
       }
+      if ((lpofn->Flags & OFN_ALLOWMULTISELECT) && (lpofn->Flags & OFN_EXPLORER)) {
+	 if (lpofn->lpstrFile) {
+	    LPSTR str = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile);
+	    LPSTR ptr = strrchr(str, '\\');
+	    str[strlen(str) + 1] = '\0';
+	    *ptr = 0;
+	 }
+      }
       EndDialog(hWnd, TRUE);
       return TRUE;
     case IDCANCEL:
@@ -1151,7 +1159,24 @@ static BOOL Commdlg_GetFileNameA( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 
 	if (ofn16->lpstrFile) 
 	  {
-	    strcpy(ofn->lpstrFile,PTR_SEG_TO_LIN(ofn16->lpstrFile));
+	    LPCSTR	src = PTR_SEG_TO_LIN(ofn16->lpstrFile);
+	    LPSTR	dst = ofn->lpstrFile;
+
+	    if ((ofn->Flags & OFN_ALLOWMULTISELECT) && (ofn->Flags & OFN_EXPLORER)) {
+	       /* FIXME(EPP): I tried to use:
+		* memcpy(ofn->lpstrFile, PTR_SEG_TO_LIN(ofn16->lpstrFile, ofn->nMaxFile)
+		* but it did crash with winamp 2.21, so copy string by string
+		*/
+	       int	len;
+	       do {
+		  strcpy(dst, src);
+		  len = strlen(dst) + 1;	/* strlen(dst) == strlen(src) */
+		  dst += len;
+		  src += len;
+	       } while (len > 1);
+	    } else {
+	       strcpy(dst, src);
+	    }
 	    SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFile));
 	  }
 
@@ -1256,10 +1281,23 @@ static BOOL Commdlg_GetFileNameW( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 	if (ofn16->lpstrCustomFilter)
 		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrCustomFilter));
 
-	if (ofn16->lpstrFile) {
-	lstrcpyAtoW(ofn->lpstrFile,PTR_SEG_TO_LIN(ofn16->lpstrFile));
-	SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFile));
-	}
+	if (ofn16->lpstrFile)
+	  {
+	    LPCSTR	src = PTR_SEG_TO_LIN(ofn16->lpstrFile);
+	    LPWSTR	dst = ofn->lpstrFile;
+
+	    if ((ofn->Flags & OFN_ALLOWMULTISELECT) && (ofn->Flags & OFN_EXPLORER)) {
+	       int	len;
+	       do {
+		  lstrcpyAtoW(dst, src);
+		  dst += lstrlenW(dst) + 1;
+		  src += (len = strlen(src) + 1);
+	       } while (len > 1);
+	    } else {
+	       lstrcpyAtoW(ofn->lpstrFile,PTR_SEG_TO_LIN(ofn16->lpstrFile));
+	    }
+	    SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFile));
+	  }
 
 	if (ofn16->lpstrFileTitle) {
 	    if (ofn->lpstrFileTitle)
