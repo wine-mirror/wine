@@ -989,7 +989,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
           ReplyMessage */
         QUEUE_RemoveSMSG( queue, SM_WAITING_LIST, smsg );
         
-        EnterCriticalSection(&senderQ->cSection);
+        if (senderQ) EnterCriticalSection(&senderQ->cSection);
         
         /* tell the sender we're all done with smsg structure */
         smsg->flags |= SMSG_RECEIVED;
@@ -1002,8 +1002,8 @@ BOOL WINAPI ReplyMessage( LRESULT result )
             TRACE_(sendmsg)("Receiver cleans up!\n" );
             HeapFree( SystemHeap, 0, smsg );
         }
-        
-        LeaveCriticalSection(&senderQ->cSection);
+
+        if (senderQ) LeaveCriticalSection(&senderQ->cSection);
     }
 
 ReplyMessageEnd:
