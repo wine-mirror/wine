@@ -819,17 +819,17 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
     WCHAR bufferW[MAX_PATH];
     DWORD ret;
 
-    if (!(pathW = FILE_name_AtoW( path, FALSE ))) return 0;
-    if (name && !(nameW = FILE_name_AtoW( name, TRUE ))) return 0;
+    if (name && !(nameW = FILE_name_AtoW( name, FALSE ))) return 0;
+    if (!(pathW = FILE_name_AtoW( path, TRUE ))) return 0;
     if (ext && !(extW = FILE_name_AtoW( ext, TRUE )))
     {
-        if (nameW) HeapFree( GetProcessHeap(), 0, nameW );
+        HeapFree( GetProcessHeap(), 0, pathW );
         return 0;
     }
 
     ret = SearchPathW(pathW, nameW, extW, MAX_PATH, bufferW, NULL);
 
-    if (nameW) HeapFree( GetProcessHeap(), 0, nameW );
+    HeapFree( GetProcessHeap(), 0, pathW );
     if (extW) HeapFree( GetProcessHeap(), 0, extW );
 
     if (!ret) return 0;
