@@ -502,6 +502,9 @@ static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
 {
     IMAGE_BASE_RELOCATION *rel;
 
+    TRACE_(module)( "relocating from %p-%p to %p-%p\n",
+                    base - delta, base - delta + total_size, base, base + total_size );
+
     for (rel = (IMAGE_BASE_RELOCATION *)(base + dir->VirtualAddress);
          ((char *)rel < base + dir->VirtualAddress + dir->Size) && rel->SizeOfBlock;
          rel = (IMAGE_BASE_RELOCATION*)((char*)rel + rel->SizeOfBlock) )
@@ -576,9 +579,9 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 
     /* zero-map the whole range */
 
-    if (base < (char *)0x110000) base = 0;  /* make sure the DOS area remains free */
-    if ((ptr = wine_anon_mmap( base, total_size,
-                             PROT_READ | PROT_WRITE | PROT_EXEC, 0 )) == (char *)-1)
+    if (base < (char *)0x110000 ||  /* make sure the DOS area remains free */
+        (ptr = wine_anon_mmap( base, total_size,
+                               PROT_READ | PROT_WRITE | PROT_EXEC, 0 )) == (char *)-1)
     {
         ptr = wine_anon_mmap( NULL, total_size,
                             PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
@@ -680,13 +683,13 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
             continue;
         }
 
-    	if (sec->Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) continue;
-        if (!sec->PointerToRawData || !sec->SizeOfRawData) continue;
-
         TRACE_(module)( "mapping section %.8s at %p off %lx size %lx flags %lx\n",
                         sec->Name, ptr + sec->VirtualAddress,
                         sec->PointerToRawData, sec->SizeOfRawData,
                         sec->Characteristics );
+
+        if (sec->Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) continue;
+        if (!sec->PointerToRawData || !sec->SizeOfRawData) continue;
 
         /* Note: if the section is not aligned properly VIRTUAL_mmap will magically
          *       fall back to read(), so we don't need to check anything here.
