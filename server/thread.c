@@ -116,7 +116,6 @@ inline static void init_thread_structure( struct thread *thread )
     thread->debug_event     = NULL;
     thread->queue           = NULL;
     thread->hooks           = NULL;
-    thread->info            = NULL;
     thread->wait            = NULL;
     thread->system_apc.head = NULL;
     thread->system_apc.tail = NULL;
@@ -243,7 +242,6 @@ static void destroy_thread( struct object *obj )
     if (thread->prev) thread->prev->next = thread->next;
     else first_thread = thread->next;
     while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
-    if (thread->info) release_object( thread->info );
     cleanup_thread( thread );
     release_object( thread->process );
     if (thread->id) free_ptid( thread->id );

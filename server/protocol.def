@@ -199,6 +199,7 @@ typedef struct
     int          inherit_all;  /* inherit all handles from parent */
     int          use_handles;  /* use stdio handles */
     int          create_flags; /* creation flags */
+    int          unix_pid;     /* Unix pid of new process */
     obj_handle_t exe_file;     /* file handle for main exe */
     obj_handle_t hstdin;       /* handle for stdin */
     obj_handle_t hstdout;      /* handle for stdout */
@@ -243,7 +244,6 @@ typedef struct
 /* Initialize a process; called from the new process context */
 @REQ(init_process)
     void*        ldt_copy;     /* addr of LDT copy */
-    int          ppid;         /* parent Unix pid */
 @REPLY
     int          create_flags; /* creation flags */
     unsigned int server_start; /* server start time (GetTickCount) */

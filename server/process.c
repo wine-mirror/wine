@@ -81,9 +81,11 @@ static const struct fd_ops process_fd_ops =
 struct startup_info
 {
     struct object       obj;          /* object header */
+    struct list         entry;        /* entry in list of startup infos */
     int                 inherit_all;  /* inherit all handles from parent */
     int                 use_handles;  /* use stdio handles */
     int                 create_flags; /* creation flags */
+    pid_t               unix_pid;     /* Unix pid of new process */
     obj_handle_t        hstdin;       /* handle for stdin */
     obj_handle_t        hstdout;      /* handle for stdout */
     obj_handle_t        hstderr;      /* handle for stderr */
@@ -111,6 +113,8 @@ static const struct object_ops startup_info_ops =
     startup_info_destroy           /* destroy */
 };
 
+
+static struct list startup_info_list = LIST_INIT(startup_info_list);
 
 struct ptid_entry
 {
@@ -326,23 +330,36 @@ struct thread *create_process( int fd )
     return NULL;
 }
 
+/* find the startup info for a given Unix process */
+inline static struct startup_info *find_startup_info( pid_t unix_pid )
+{
+    struct list *ptr;
+
+    LIST_FOR_EACH( ptr, &startup_info_list )
+    {
+        struct startup_info *info = LIST_ENTRY( ptr, struct startup_info, entry );
+        if (info->unix_pid == unix_pid) return info;
+    }
+    return NULL;
+}
+
 /* initialize the current process and fill in the request */
-static struct startup_info *init_process( int ppid, struct init_process_reply *reply )
+static struct startup_info *init_process( struct init_process_reply *reply )
 {
     struct process *process = current->process;
-    struct thread *parent_thread = get_thread_from_pid( ppid );
+    struct thread *parent_thread = NULL;
     struct process *parent = NULL;
-    struct startup_info *info = NULL;
+    struct startup_info *info = find_startup_info( current->unix_pid );
 
-    if (parent_thread)
+    if (info)
     {
-        parent = parent_thread->process;
-        info = parent_thread->info;
-        if (info && info->thread)
+        if (info->thread)
         {
             fatal_protocol_error( current, "init_process: called twice?\n" );
             return NULL;
         }
+        parent_thread = info->owner;
+        parent = parent_thread->process;
         process->parent = (struct process *)grab_object( parent );
     }
 
@@ -447,15 +464,12 @@ static void startup_info_destroy( struct object *obj )
 {
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
+    list_remove( &info->entry );
     if (info->data) free( info->data );
     if (info->exe_file) release_object( info->exe_file );
     if (info->process) release_object( info->process );
     if (info->thread) release_object( info->thread );
-    if (info->owner)
-    {
-        info->owner->info = NULL;
-        release_object( info->owner );
-    }
+    if (info->owner) release_object( info->owner );
 }
 
 static void startup_info_dump( struct object *obj, int verbose )
@@ -878,17 +892,13 @@ DECL_HANDLER(new_process)
 {
     struct startup_info *info;
 
-    if (current->info)
-    {
-        fatal_protocol_error( current, "new_process: another process is being created\n" );
-        return;
-    }
-
     /* build the startup info for a new process */
     if (!(info = alloc_object( &startup_info_ops ))) return;
+    list_add_head( &startup_info_list, &info->entry );
     info->inherit_all  = req->inherit_all;
     info->use_handles  = req->use_handles;
     info->create_flags = req->create_flags;
+    info->unix_pid     = req->unix_pid;
     info->hstdin       = req->hstdin;
     info->hstdout      = req->hstdout;
     info->hstderr      = req->hstderr;
@@ -905,7 +915,6 @@ DECL_HANDLER(new_process)
 
     if (!(info->data = mem_alloc( info->data_size ))) goto done;
     memcpy( info->data, get_req_data(), info->data_size );
-    current->info = info;
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, FALSE );
 
  done:
@@ -972,7 +981,7 @@ DECL_HANDLER(init_process)
     }
     reply->info_size = 0;
     current->process->ldt_copy = req->ldt_copy;
-    current->process->startup_info = init_process( req->ppid, reply );
+    current->process->startup_info = init_process( reply );
 }
 
 /* signal the end of the process initialization */

@@ -416,7 +416,6 @@ static BOOL process_init( char *argv[] )
     SERVER_START_REQ( init_process )
     {
         req->ldt_copy  = &wine_ldt_copy;
-        req->ppid      = getppid();
         if ((ret = !wine_server_call_err( req )))
         {
             main_exe_file     = reply->exe_file;
@@ -888,20 +887,15 @@ static void exec_wine_binary( char **argv, char **envp )
 /***********************************************************************
  *           fork_and_exec
  *
- * Fork and exec a new Unix process, checking for errors.
+ * Fork and exec a new Unix binary, checking for errors.
  */
 static int fork_and_exec( const char *filename, char *cmdline,
                           const char *env, const char *newdir )
 {
     int fd[2];
     int pid, err;
-    char *extra_env = NULL;
 
-    if (!env)
-    {
-        env = GetEnvironmentStringsA();
-        extra_env = DRIVE_BuildEnv();
-    }
+    if (!env) env = GetEnvironmentStringsA();
 
     if (pipe(fd) == -1)
     {
@@ -911,8 +905,8 @@ static int fork_and_exec( const char *filename, char *cmdline,
     fcntl( fd[1], F_SETFD, 1 );  /* set close on exec */
     if (!(pid = fork()))  /* child */
     {
-        char **argv = build_argv( cmdline, filename ? 0 : 1 );
-        char **envp = build_envp( env, extra_env );
+        char **argv = build_argv( cmdline, 0 );
+        char **envp = build_envp( env, NULL );
         close( fd[0] );
 
         /* Reset signals that we previously set to SIG_IGN */
@@ -921,11 +915,7 @@ static int fork_and_exec( const char *filename, char *cmdline,
 
         if (newdir) chdir(newdir);
 
-        if (argv && envp)
-        {
-            if (!filename) exec_wine_binary( argv, envp );
-            else execve( filename, argv, envp );
-        }
+        if (argv && envp) execve( filename, argv, envp );
         err = errno;
         write( fd[1], &err, sizeof(err) );
         _exit(1);
@@ -938,7 +928,6 @@ static int fork_and_exec( const char *filename, char *cmdline,
     }
     if (pid == -1) FILE_SetDosError();
     close( fd[0] );
-    if (extra_env) HeapFree( GetProcessHeap(), 0, extra_env );
     return pid;
 }
 
@@ -957,6 +946,74 @@ static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCST
     BOOL ret, success = FALSE;
     HANDLE process_info;
     startup_info_t startup_info;
+    char *extra_env = NULL;
+    int startfd[2];
+    int execfd[2];
+    pid_t pid;
+    int err;
+    char dummy;
+
+    if (!env)
+    {
+        env = GetEnvironmentStringsA();
+        extra_env = DRIVE_BuildEnv();
+    }
+
+    /* create the synchronization pipes */
+
+    if (pipe( startfd ) == -1)
+    {
+        FILE_SetDosError();
+        return FALSE;
+    }
+    if (pipe( execfd ) == -1)
+    {
+        close( startfd[0] );
+        close( startfd[1] );
+        FILE_SetDosError();
+        return FALSE;
+    }
+    fcntl( execfd[1], F_SETFD, 1 );  /* set close on exec */
+
+    /* create the child process */
+
+    if (!(pid = fork()))  /* child */
+    {
+        char **argv = build_argv( cmd_line, 1 );
+        char **envp = build_envp( env, extra_env );
+
+        close( startfd[1] );
+        close( execfd[0] );
+
+        /* wait for parent to tell us to start */
+        if (read( startfd[0], &dummy, 1 ) != 1) _exit(1);
+
+        close( startfd[0] );
+        /* Reset signals that we previously set to SIG_IGN */
+        signal( SIGPIPE, SIG_DFL );
+        signal( SIGCHLD, SIG_DFL );
+
+        if (unixdir) chdir(unixdir);
+
+        if (argv && envp) exec_wine_binary( argv, envp );
+
+        err = errno;
+        write( execfd[1], &err, sizeof(err) );
+        _exit(1);
+    }
+
+    /* this is the parent */
+
+    close( startfd[0] );
+    close( execfd[1] );
+    if (extra_env) HeapFree( GetProcessHeap(), 0, extra_env );
+    if (pid == -1)
+    {
+        close( startfd[1] );
+        close( execfd[0] );
+        FILE_SetDosError();
+        return FALSE;
+    }
 
     /* fill the startup info structure */
 
@@ -985,6 +1042,7 @@ static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCST
         req->inherit_all  = inherit;
         req->create_flags = flags;
         req->use_handles  = (startup->dwFlags & STARTF_USESTDHANDLES) != 0;
+        req->unix_pid     = pid;
         req->exe_file     = hFile;
         if (startup->dwFlags & STARTF_USESTDHANDLES)
         {
@@ -1015,12 +1073,24 @@ static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCST
         process_info = reply->info;
     }
     SERVER_END_REQ;
-    if (!ret) return FALSE;
 
-    /* fork and execute */
-
-    if (fork_and_exec( NULL, cmd_line, env, unixdir ) == -1)
+    if (!ret)
     {
+        close( startfd[1] );
+        close( execfd[0] );
+        return FALSE;
+    }
+
+    /* tell child to start and wait for it to exec */
+
+    write( startfd[1], &dummy, 1 );
+    close( startfd[1] );
+
+    if (read( execfd[0], &err, sizeof(err) ) > 0) /* exec failed */
+    {
+        errno = err;
+        FILE_SetDosError();
+        close( execfd[0] );
         CloseHandle( process_info );
         return FALSE;
     }

@@ -354,6 +354,7 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, " inherit_all=%d,", req->inherit_all );
     fprintf( stderr, " use_handles=%d,", req->use_handles );
     fprintf( stderr, " create_flags=%d,", req->create_flags );
+    fprintf( stderr, " unix_pid=%d,", req->unix_pid );
     fprintf( stderr, " exe_file=%p,", req->exe_file );
     fprintf( stderr, " hstdin=%p,", req->hstdin );
     fprintf( stderr, " hstdout=%p,", req->hstdout );
@@ -403,8 +404,7 @@ static void dump_boot_done_request( const struct boot_done_request *req )
 
 static void dump_init_process_request( const struct init_process_request *req )
 {
-    fprintf( stderr, " ldt_copy=%p,", req->ldt_copy );
-    fprintf( stderr, " ppid=%d", req->ppid );
+    fprintf( stderr, " ldt_copy=%p", req->ldt_copy );
 }
 
 static void dump_init_process_reply( const struct init_process_reply *req )

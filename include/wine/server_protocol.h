@@ -185,6 +185,7 @@ struct new_process_request
     int          inherit_all;
     int          use_handles;
     int          create_flags;
+    int          unix_pid;
     obj_handle_t exe_file;
     obj_handle_t hstdin;
     obj_handle_t hstdout;
@@ -250,7 +251,6 @@ struct init_process_request
 {
     struct request_header __header;
     void*        ldt_copy;
-    int          ppid;
 };
 struct init_process_reply
 {
@@ -3551,6 +3551,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 97
+#define SERVER_PROTOCOL_VERSION 98
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
