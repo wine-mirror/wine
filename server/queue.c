@@ -98,7 +98,9 @@ struct thread_input
     user_handle_t          menu_owner;    /* current menu owner window */
     user_handle_t          move_size;     /* current moving/resizing window */
     user_handle_t          caret;         /* caret window */
-    rectangle_t            rect;          /* caret rectangle */
+    rectangle_t            caret_rect;    /* caret rectangle */
+    int                    caret_hide;    /* caret hide count */
+    int                    caret_state;   /* caret on/off state */
     unsigned char          keystate[256]; /* state of each key */
 };
 
@@ -167,6 +169,19 @@ static const struct object_ops thread_input_ops =
     thread_input_destroy          /* destroy */
 };
 
+
+/* set the caret window in a given thread input */
+static void set_caret_window( struct thread_input *input, user_handle_t win )
+{
+    input->caret             = win;
+    input->caret_rect.left   = 0;
+    input->caret_rect.top    = 0;
+    input->caret_rect.right  = 0;
+    input->caret_rect.bottom = 0;
+    input->caret_hide        = 1;
+    input->caret_state       = 0;
+}
+
 /* create a thread input object */
 static struct thread_input *create_thread_input(void)
 {
@@ -179,11 +194,7 @@ static struct thread_input *create_thread_input(void)
         input->active      = 0;
         input->menu_owner  = 0;
         input->move_size   = 0;
-        input->caret       = 0;
-        input->rect.left   = 0;
-        input->rect.top    = 0;
-        input->rect.right  = 0;
-        input->rect.bottom = 0;
+        set_caret_window( input, 0 );
         memset( input->keystate, 0, sizeof(input->keystate) );
     }
     return input;
@@ -618,7 +629,7 @@ inline static void thread_input_cleanup_window( struct msg_queue *queue, user_ha
     if (window == input->active) input->active = 0;
     if (window == input->menu_owner) input->menu_owner = 0;
     if (window == input->move_size) input->move_size = 0;
-    if (window == input->caret) input->caret = 0;
+    if (window == input->caret) set_caret_window( input, 0 );
 }
 
 /* check if the specified window can be set in the input data of a given queue */
@@ -1295,7 +1306,7 @@ DECL_HANDLER(get_thread_input)
         reply->menu_owner = input->menu_owner;
         reply->move_size  = input->move_size;
         reply->caret      = input->caret;
-        reply->rect       = input->rect;
+        reply->rect       = input->caret_rect;
     }
     else
     {
@@ -1386,5 +1397,65 @@ DECL_HANDLER(set_capture_window)
         input->menu_owner = (req->flags & CAPTURE_MENU) ? input->capture : 0;
         input->move_size = (req->flags & CAPTURE_MOVESIZE) ? input->capture : 0;
         reply->full_handle = input->capture;
+    }
+}
+
+
+/* Set the current thread caret window */
+DECL_HANDLER(set_caret_window)
+{
+    struct msg_queue *queue = get_current_queue();
+
+    reply->previous = 0;
+    if (queue && check_queue_input_window( queue, req->handle ))
+    {
+        struct thread_input *input = queue->input;
+
+        reply->previous  = input->caret;
+        reply->old_rect  = input->caret_rect;
+        reply->old_hide  = input->caret_hide;
+        reply->old_state = input->caret_state;
+
+        set_caret_window( input, get_user_full_handle(req->handle) );
+        input->caret_rect.right  = req->width;
+        input->caret_rect.bottom = req->height;
+    }
+}
+
+
+/* Set the current thread caret information */
+DECL_HANDLER(set_caret_info)
+{
+    struct msg_queue *queue = get_current_queue();
+    struct thread_input *input;
+
+    if (!queue) return;
+    input = queue->input;
+    reply->full_handle = input->caret;
+    reply->old_rect    = input->caret_rect;
+    reply->old_hide    = input->caret_hide;
+    reply->old_state   = input->caret_state;
+
+    if (req->handle && get_user_full_handle(req->handle) != input->caret)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    if (req->flags & SET_CARET_POS)
+    {
+        input->caret_rect.right  += req->x - input->caret_rect.left;
+        input->caret_rect.bottom += req->y - input->caret_rect.top;
+        input->caret_rect.left = req->x;
+        input->caret_rect.top  = req->y;
+    }
+    if (req->flags & SET_CARET_HIDE)
+    {
+        input->caret_hide += req->hide;
+        if (input->caret_hide < 0) input->caret_hide = 0;
+    }
+    if (req->flags & SET_CARET_STATE)
+    {
+        if (req->state == -1) input->caret_state = !input->caret_state;
+        else input->caret_state = !!req->state;
     }
 }

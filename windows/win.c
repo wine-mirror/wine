@@ -1392,7 +1392,12 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
  */
 static void WIN_SendDestroyMsg( HWND hwnd )
 {
-    if( CARET_GetHwnd() == hwnd) DestroyCaret();
+    GUITHREADINFO info;
+
+    if (GetGUIThreadInfo( GetCurrentThreadId(), &info ))
+    {
+        if (hwnd == info.hwndCaret) DestroyCaret();
+    }
     if (USER_Driver.pResetSelectionOwner)
         USER_Driver.pResetSelectionOwner( hwnd, TRUE );
 

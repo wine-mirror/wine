@@ -2245,6 +2245,43 @@ static void dump_set_capture_window_reply( const struct set_capture_window_reply
     fprintf( stderr, " full_handle=%08x", req->full_handle );
 }
 
+static void dump_set_caret_window_request( const struct set_caret_window_request *req )
+{
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " width=%d,", req->width );
+    fprintf( stderr, " height=%d", req->height );
+}
+
+static void dump_set_caret_window_reply( const struct set_caret_window_reply *req )
+{
+    fprintf( stderr, " previous=%08x,", req->previous );
+    fprintf( stderr, " old_rect=" );
+    dump_rectangle( &req->old_rect );
+    fprintf( stderr, "," );
+    fprintf( stderr, " old_hide=%d,", req->old_hide );
+    fprintf( stderr, " old_state=%d", req->old_state );
+}
+
+static void dump_set_caret_info_request( const struct set_caret_info_request *req )
+{
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " x=%d,", req->x );
+    fprintf( stderr, " y=%d,", req->y );
+    fprintf( stderr, " hide=%d,", req->hide );
+    fprintf( stderr, " state=%d", req->state );
+}
+
+static void dump_set_caret_info_reply( const struct set_caret_info_reply *req )
+{
+    fprintf( stderr, " full_handle=%08x,", req->full_handle );
+    fprintf( stderr, " old_rect=" );
+    dump_rectangle( &req->old_rect );
+    fprintf( stderr, "," );
+    fprintf( stderr, " old_hide=%d,", req->old_hide );
+    fprintf( stderr, " old_state=%d", req->old_state );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2408,6 +2445,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_focus_window_request,
     (dump_func)dump_set_active_window_request,
     (dump_func)dump_set_capture_window_request,
+    (dump_func)dump_set_caret_window_request,
+    (dump_func)dump_set_caret_info_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2573,6 +2612,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_focus_window_reply,
     (dump_func)dump_set_active_window_reply,
     (dump_func)dump_set_capture_window_reply,
+    (dump_func)dump_set_caret_window_reply,
+    (dump_func)dump_set_caret_info_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -2738,6 +2779,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_focus_window",
     "set_active_window",
     "set_capture_window",
+    "set_caret_window",
+    "set_caret_info",
 };
 
 /* ### make_requests end ### */

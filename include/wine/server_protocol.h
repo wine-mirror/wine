@@ -2818,6 +2818,48 @@ struct set_capture_window_reply
 #define CAPTURE_MOVESIZE 0x02
 
 
+
+struct set_caret_window_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    int            width;
+    int            height;
+};
+struct set_caret_window_reply
+{
+    struct reply_header __header;
+    user_handle_t  previous;
+    rectangle_t    old_rect;
+    int            old_hide;
+    int            old_state;
+};
+
+
+
+struct set_caret_info_request
+{
+    struct request_header __header;
+    unsigned int   flags;
+    user_handle_t  handle;
+    int            x;
+    int            y;
+    int            hide;
+    int            state;
+};
+struct set_caret_info_reply
+{
+    struct reply_header __header;
+    user_handle_t  full_handle;
+    rectangle_t    old_rect;
+    int            old_hide;
+    int            old_state;
+};
+#define SET_CARET_POS        0x01
+#define SET_CARET_HIDE       0x02
+#define SET_CARET_STATE      0x04
+
+
 enum request
 {
     REQ_new_process,
@@ -2982,6 +3024,8 @@ enum request
     REQ_set_focus_window,
     REQ_set_active_window,
     REQ_set_capture_window,
+    REQ_set_caret_window,
+    REQ_set_caret_info,
     REQ_NB_REQUESTS
 };
 
@@ -3151,6 +3195,8 @@ union generic_request
     struct set_focus_window_request set_focus_window_request;
     struct set_active_window_request set_active_window_request;
     struct set_capture_window_request set_capture_window_request;
+    struct set_caret_window_request set_caret_window_request;
+    struct set_caret_info_request set_caret_info_request;
 };
 union generic_reply
 {
@@ -3318,8 +3364,10 @@ union generic_reply
     struct set_focus_window_reply set_focus_window_reply;
     struct set_active_window_reply set_active_window_reply;
     struct set_capture_window_reply set_capture_window_reply;
+    struct set_caret_window_reply set_caret_window_reply;
+    struct set_caret_info_reply set_caret_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 87
+#define SERVER_PROTOCOL_VERSION 88
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

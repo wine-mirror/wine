@@ -682,7 +682,6 @@ init	UserClientDllInitialize
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #
-@ cdecl CARET_GetHwnd() CARET_GetHwnd
 @ cdecl CLIPBOARD_DeleteRecord(ptr long) CLIPBOARD_DeleteRecord
 @ cdecl CLIPBOARD_EmptyCache(long) CLIPBOARD_EmptyCache
 @ cdecl CLIPBOARD_GetFormatName(long ptr long) CLIPBOARD_GetFormatName

@@ -265,6 +265,8 @@ DECL_HANDLER(set_foreground_window);
 DECL_HANDLER(set_focus_window);
 DECL_HANDLER(set_active_window);
 DECL_HANDLER(set_capture_window);
+DECL_HANDLER(set_caret_window);
+DECL_HANDLER(set_caret_info);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -433,6 +435,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_focus_window,
     (req_handler)req_set_active_window,
     (req_handler)req_set_capture_window,
+    (req_handler)req_set_caret_window,
+    (req_handler)req_set_caret_info,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

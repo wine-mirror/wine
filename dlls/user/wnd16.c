@@ -879,6 +879,24 @@ void WINAPI CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap, INT16 width, INT16 hei
 }
 
 
+/*****************************************************************
+ *		DestroyCaret (USER.164)
+ */
+void WINAPI DestroyCaret16(void)
+{
+    DestroyCaret();
+}
+
+
+/*****************************************************************
+ *		SetCaretPos (USER.165)
+ */
+void WINAPI SetCaretPos16( INT16 x, INT16 y )
+{
+    SetCaretPos( x, y );
+}
+
+
 /**************************************************************************
  *              HideCaret   (USER.166)
  */
@@ -894,6 +912,24 @@ void WINAPI HideCaret16( HWND16 hwnd )
 void WINAPI ShowCaret16( HWND16 hwnd )
 {
     ShowCaret( WIN_Handle32(hwnd) );
+}
+
+
+/*****************************************************************
+ *		SetCaretBlinkTime (USER.168)
+ */
+void WINAPI SetCaretBlinkTime16( UINT16 msecs )
+{
+    SetCaretBlinkTime( msecs );
+}
+
+
+/*****************************************************************
+ *		GetCaretBlinkTime (USER.169)
+ */
+UINT16 WINAPI GetCaretBlinkTime16(void)
+{
+    return GetCaretBlinkTime();
 }
 
 
@@ -921,6 +957,20 @@ void WINAPI SwitchToThisWindow16( HWND16 hwnd, BOOL16 restore )
 BOOL16 WINAPI KillSystemTimer16( HWND16 hwnd, UINT16 id )
 {
     return KillSystemTimer( WIN_Handle32(hwnd), id );
+}
+
+
+/*****************************************************************
+ *		GetCaretPos (USER.183)
+ */
+void WINAPI GetCaretPos16( LPPOINT16 pt16 )
+{
+    POINT pt;
+    if (GetCaretPos( &pt ))
+    {
+        pt16->x = pt.x;
+        pt16->y = pt.y;
+    }
 }
 
 

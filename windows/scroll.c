@@ -36,29 +36,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(scroll);
  */
 static HWND fix_caret(HWND hWnd, LPRECT lprc, UINT flags)
 {
-   HWND hCaret = CARET_GetHwnd();
+    GUITHREADINFO info;
 
-   if( hCaret )
-   {
-       RECT rc;
-       CARET_GetRect( &rc );
-       if( hCaret == hWnd ||
-          (flags & SW_SCROLLCHILDREN && IsChild(hWnd, hCaret)) )
-       {
-           POINT pt;
-           pt.x = rc.left;
-           pt.y = rc.top;
-           MapWindowPoints( hCaret, hWnd, (LPPOINT)&rc, 2 );
-           if( IntersectRect(lprc, lprc, &rc) )
-           {
-               HideCaret(hCaret);
-               lprc->left = pt.x;
-               lprc->top = pt.y;
-               return hCaret;
-           }
-       }
-   }
-   return 0;
+    if (!GetGUIThreadInfo( GetCurrentThreadId(), &info )) return 0;
+    if (!info.hwndCaret) return 0;
+    if (info.hwndCaret == hWnd ||
+        ((flags & SW_SCROLLCHILDREN) && IsChild(hWnd, info.hwndCaret)))
+    {
+        POINT pt;
+        pt.x = info.rcCaret.left;
+        pt.y = info.rcCaret.top;
+        MapWindowPoints( info.hwndCaret, hWnd, (LPPOINT)&info.rcCaret, 2 );
+        if( IntersectRect(lprc, lprc, &info.rcCaret) )
+        {
+            HideCaret(0);
+            lprc->left = pt.x;
+            lprc->top = pt.y;
+            return info.hwndCaret;
+        }
+    }
+    return 0;
 }
 
 

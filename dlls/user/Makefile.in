@@ -22,7 +22,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/controls/scroll.c \
 	$(TOPOBJDIR)/controls/static.c \
 	$(TOPOBJDIR)/controls/uitools.c \
-	$(TOPOBJDIR)/windows/caret.c \
 	$(TOPOBJDIR)/windows/class.c \
 	$(TOPOBJDIR)/windows/clipboard.c \
 	$(TOPOBJDIR)/windows/cursoricon.c \
@@ -55,6 +54,7 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/winpos.c \
 	$(TOPOBJDIR)/windows/winproc.c \
 	cache.c \
+	caret.c \
 	comm16.c \
 	dde/client.c \
 	dde/ddeml16.c \

@@ -1012,13 +1012,10 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     if (wvrFlags & WVR_REDRAW) RedrawWindow( winpos->hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
 
-    if (winpos->hwnd == CARET_GetHwnd())
-    {
-        if( winpos->flags & SWP_HIDEWINDOW )
-            HideCaret(winpos->hwnd);
-        else if (winpos->flags & SWP_SHOWWINDOW)
-            ShowCaret(winpos->hwnd);
-    }
+    if( winpos->flags & SWP_HIDEWINDOW )
+        HideCaret(winpos->hwnd);
+    else if (winpos->flags & SWP_SHOWWINDOW)
+        ShowCaret(winpos->hwnd);
 
     if (!(winpos->flags & SWP_NOACTIVATE))
     {

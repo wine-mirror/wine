@@ -137,9 +137,6 @@ inline static void WIN_ReleasePtr( WND *ptr )
 
 #define WND_OTHER_PROCESS ((WND *)1)  /* returned by WIN_GetPtr on unknown window handles */
 
-extern HWND CARET_GetHwnd(void);
-extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
-
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
 
 extern BOOL FOCUS_MouseActivate( HWND hwnd );
