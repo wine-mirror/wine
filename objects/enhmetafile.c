@@ -2213,7 +2213,9 @@ BOOL WINAPI DeleteEnhMetaFile(HENHMETAFILE hmf)
 }
 
 /*****************************************************************************
- *  CopyEnhMetaFileA (GDI32.@)  Duplicate an enhanced metafile
+ *  CopyEnhMetaFileA (GDI32.@)
+ *
+ * Duplicate an enhanced metafile.
  *
  *
  */
@@ -2250,7 +2252,9 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
 }
 
 /*****************************************************************************
- *  CopyEnhMetaFileW (GDI32.@)  Duplicate an enhanced metafile
+ *  CopyEnhMetaFileW (GDI32.@)
+ *
+ * See CopyEnhMetaFileA.
  *
  *
  */

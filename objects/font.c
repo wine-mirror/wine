@@ -989,7 +989,9 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
 
 
 /***********************************************************************
- * GetTextExtentPoint32W [GDI32.@]  Computes width/height for a string
+ * GetTextExtentPoint32W [GDI32.@]
+ *
+ * Computes width/height for a string.
  *
  * Computes width and height of the specified string.
  *
@@ -1645,7 +1647,9 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
 
 
 /******************************************************************************
- * GetCharABCWidthsW [GDI32.@]  Retrieves widths of characters in range
+ * GetCharABCWidthsW [GDI32.@]
+ *
+ * Retrieves widths of characters in range.
  *
  * PARAMS
  *    hdc       [I] Handle of device context
@@ -1691,7 +1695,7 @@ DWORD WINAPI GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
 {
     FIXME("(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
-    return (DWORD)-1; /* failure */
+    return ~0UL; /* failure */
 }
 
 
@@ -1842,8 +1846,8 @@ BOOL WINAPI TranslateCharsetInfo(
        if flags == TCI_SRCCODEPAGE: a code page value
 		 */
   LPCHARSETINFO lpCs, /* [out] structure to receive charset information */
-  DWORD flags /* [in] determines interpretation of lpSrc */
-) {
+  DWORD flags /* [in] determines interpretation of lpSrc */)
+{
     int index = 0;
     switch (flags) {
     case TCI_SRCFONTSIG:
@@ -1912,7 +1916,9 @@ DWORD WINAPI GetFontLanguageInfo(HDC hdc)
 
 
 /*************************************************************************
- * GetFontData [GDI32.@] Retrieve data for TrueType font
+ * GetFontData [GDI32.@]
+ *
+ * Retrieve data for TrueType font.
  *
  * RETURNS
  *

@@ -224,7 +224,9 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 
 
 /******************************************************************************
- * SetDIBits [GDI32.@]  Sets pixels in a bitmap using colors from DIB
+ * SetDIBits [GDI32.@]
+ *
+ * Sets pixels in a bitmap using colors from DIB.
  *
  * PARAMS
  *    hdc       [I] Handle to device context
@@ -385,7 +387,9 @@ static RGBQUAD DefLogPalette[20] = { /* Copy of Default Logical Palette */
 
 
 /******************************************************************************
- * GetDIBits [GDI32.@]  Retrieves bits of bitmap and copies to buffer
+ * GetDIBits [GDI32.@]
+ *
+ * Retrieves bits of bitmap and copies to buffer.
  *
  * RETURNS
  *    Success: Number of scan lines copied from bitmap

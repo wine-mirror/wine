@@ -1092,7 +1092,9 @@ BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
  *                 Multiplies xform into the world transformation matrix from
  *                 the right.
  *
- * RETURNS STD
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform,
     DWORD iMode )
@@ -1155,7 +1157,9 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform,
  * REMARKS
  *    The same matrix can be passed in for more than one of the parameters.
  *
- * RETURNS STD
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
  */
 BOOL WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
     const XFORM *xform2 )

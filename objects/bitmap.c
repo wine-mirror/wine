@@ -83,7 +83,9 @@ static INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
 
 
 /******************************************************************************
- * CreateBitmap [GDI32.@]  Creates a bitmap with the specified info
+ * CreateBitmap [GDI32.@]
+ *
+ * Creates a bitmap with the specified info.
  *
  * PARAMS
  *    width  [I] bitmap width
@@ -152,7 +154,9 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
 
 
 /******************************************************************************
- * CreateCompatibleBitmap [GDI32.@]  Creates a bitmap compatible with the DC
+ * CreateCompatibleBitmap [GDI32.@]
+ *
+ * Creates a bitmap compatible with the DC.
  *
  * PARAMS
  *    hdc    [I] Handle to device context
@@ -199,7 +203,9 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 
 
 /******************************************************************************
- * CreateBitmapIndirect [GDI32.@]  Creates a bitmap with the specifies info
+ * CreateBitmapIndirect [GDI32.@]
+ *
+ * Creates a bitmap with the specifies info.
  *
  * RETURNS
  *    Success: Handle to bitmap
@@ -214,7 +220,9 @@ HBITMAP WINAPI CreateBitmapIndirect(
 
 
 /***********************************************************************
- * GetBitmapBits [GDI32.@]  Copies bitmap bits of bitmap to buffer
+ * GetBitmapBits [GDI32.@]
+ *
+ * Copies bitmap bits of bitmap to buffer.
  *
  * RETURNS
  *    Success: Number of bytes copied
@@ -286,7 +294,9 @@ LONG WINAPI GetBitmapBits(
 
 
 /******************************************************************************
- * SetBitmapBits [GDI32.@]  Sets bits of color data for a bitmap
+ * SetBitmapBits [GDI32.@]
+ *
+ * Sets bits of color data for a bitmap.
  *
  * RETURNS
  *    Success: Number of bytes used in setting the bitmap bits
@@ -580,7 +590,9 @@ static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer
 
 
 /******************************************************************************
- * CreateDiscardableBitmap [GDI32.@]  Creates a discardable bitmap
+ * CreateDiscardableBitmap [GDI32.@]
+ *
+ * Creates a discardable bitmap.
  *
  * RETURNS
  *    Success: Handle to bitmap
@@ -596,7 +608,9 @@ HBITMAP WINAPI CreateDiscardableBitmap(
 
 
 /******************************************************************************
- * GetBitmapDimensionEx [GDI32.@]  Retrieves dimensions of a bitmap
+ * GetBitmapDimensionEx [GDI32.@]
+ *
+ * Retrieves dimensions of a bitmap.
  *
  * RETURNS
  *    Success: TRUE
@@ -615,7 +629,9 @@ BOOL WINAPI GetBitmapDimensionEx(
 
 
 /******************************************************************************
- * SetBitmapDimensionEx [GDI32.@]  Assignes dimensions to a bitmap
+ * SetBitmapDimensionEx [GDI32.@]
+ *
+ * Assigns dimensions to a bitmap.
  *
  * RETURNS
  *    Success: TRUE

@@ -1389,7 +1389,7 @@ DWORD WINAPI GdiSeeGdiDo16( WORD wReqType, WORD wParam1, WORD wParam2,
         return GDI_HeapSel;
     default:
         WARN("(wReqType=%04x): Unknown\n", wReqType);
-        return (DWORD)-1;
+        return ~0UL;
     }
 }
 

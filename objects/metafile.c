@@ -437,8 +437,8 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
  */
 HMETAFILE WINAPI CopyMetaFileW(
 		   HMETAFILE hSrcMetaFile, /* [in] handle of metafile to copy */
-		   LPCWSTR lpFilename      /* [in] filename if copying to a file */
-) {
+		   LPCWSTR lpFilename      /* [in] filename if copying to a file */)
+{
     METAHEADER *mh = MF_GetMetaHeader( hSrcMetaFile );
     METAHEADER *mh2 = NULL;
     HANDLE hFile;
@@ -731,8 +731,8 @@ BOOL WINAPI EnumMetaFile(
 			     HDC hdc,
 			     HMETAFILE hmf,
 			     MFENUMPROC lpEnumFunc,
-			     LPARAM lpData
-) {
+			     LPARAM lpData)
+{
     METAHEADER *mhTemp = NULL, *mh = MF_GetMetaHeader(hmf);
     METARECORD *mr;
     HANDLETABLE *ht;
@@ -1364,7 +1364,9 @@ HMETAFILE WINAPI SetMetaFileBitsEx(
 }
 
 /*****************************************************************
- *  GetMetaFileBitsEx     (GDI32.@)  Get raw metafile data
+ *  GetMetaFileBitsEx     (GDI32.@)
+ *
+ * Get raw metafile data.
  *
  *  Copies the data from metafile _hmf_ into the buffer _buf_.
  *  If _buf_ is zero, returns size of buffer required. Otherwise,
@@ -1373,8 +1375,8 @@ HMETAFILE WINAPI SetMetaFileBitsEx(
 UINT WINAPI GetMetaFileBitsEx(
      HMETAFILE hmf, /* [in] metafile */
      UINT nSize,    /* [in] size of buf */
-     LPVOID buf     /* [out] buffer to receive raw metafile data */
-) {
+     LPVOID buf     /* [out] buffer to receive raw metafile data */)
+{
     METAHEADER *mh = MF_GetMetaHeader(hmf);
     UINT mfSize;
 
