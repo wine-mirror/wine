@@ -749,7 +749,7 @@ static HRESULT CParserImpl_OnStop( CBaseFilterImpl* pImpl )
 {
 	CParserImpl_THIS(pImpl,basefilter);
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	This->basefilter.bIntermediateState = TRUE;
 	if ( !CParserImpl_EndThread(This,TRUE) )

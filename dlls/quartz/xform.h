@@ -31,6 +31,14 @@ typedef struct CTransformBaseInPinImpl CTransformBaseInPinImpl;
 typedef struct CTransformBaseOutPinImpl CTransformBaseOutPinImpl;
 typedef struct TransformBaseHandlers	TransformBaseHandlers;
 
+/* {301056D0-6DFF-11D2-9EEB-006008039E37} */
+DEFINE_GUID(CLSID_quartzMJPGDecompressor,
+0x301056D0,0x6DFF,0x11D2,0x9E,0xEB,0x00,0x60,0x08,0x03,0x9E,0x37);
+/* {FDFE9681-74A3-11D0-AFA7-00AA00B67A42} */
+DEFINE_GUID(CLSID_quartzQuickTimeDecompressor,
+0xFDFE9681,0x74A3,0x11D0,0xAF,0xA7,0x00,0xAA,0x00,0xB6,0x7A,0x42);
+
+
 struct CTransformBaseImpl
 {
 	QUARTZ_IUnkImpl	unk;
@@ -124,5 +132,8 @@ HRESULT QUARTZ_CreateColour(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateACMWrapper(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateCMpegAudioCodec(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateCMpegVideoCodec(IUnknown* punkOuter,void** ppobj);
+HRESULT QUARTZ_CreateMJPGDecompressor(IUnknown* punkOuter,void** ppobj);
+HRESULT QUARTZ_CreateQuickTimeDecompressor(IUnknown* punkOuter,void** ppobj);
+
 
 #endif	/* WINE_DSHOW_XFORM_H */

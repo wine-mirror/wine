@@ -321,7 +321,7 @@ static HRESULT CVideoRendererImpl_OnActive( CBaseFilterImpl* pImpl )
 {
 	CVideoRendererImpl_THIS(pImpl,basefilter);
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	This->m_bSampleIsValid = FALSE;
 
@@ -332,7 +332,7 @@ static HRESULT CVideoRendererImpl_OnInactive( CBaseFilterImpl* pImpl )
 {
 	CVideoRendererImpl_THIS(pImpl,basefilter);
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	EnterCriticalSection( &This->m_csReceive );
 	This->m_bSampleIsValid = FALSE;
@@ -534,7 +534,7 @@ static HRESULT CVideoRendererPinImpl_BeginFlush( CPinBaseImpl* pImpl )
 {
 	CVideoRendererPinImpl_THIS(pImpl,pin);
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	This->pRender->m_fInFlush = TRUE;
 	EnterCriticalSection( &This->pRender->m_csReceive );
@@ -548,7 +548,7 @@ static HRESULT CVideoRendererPinImpl_EndFlush( CPinBaseImpl* pImpl )
 {
 	CVideoRendererPinImpl_THIS(pImpl,pin);
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	This->pRender->m_fInFlush = FALSE;
 

@@ -29,9 +29,20 @@ typedef struct CParserInPinImpl CParserInPinImpl;
 typedef struct CParserOutPinImpl CParserOutPinImpl;
 typedef struct ParserHandlers ParserHandlers;
 
+/* {D51BD5A0-7548-11CF-A520-0080C77EF58A} */
+DEFINE_GUID(CLSID_quartzQuickTimeMovieParser,
+0xD51BD5A0,0x7548,0x11CF,0xA5,0x20,0x00,0x80,0xC7,0x7E,0xF5,0x8A);
 /* {D51BD5A1-7548-11CF-A520-0080C77EF58A} */
 DEFINE_GUID(CLSID_quartzWaveParser,
 0xD51BD5A1,0x7548,0x11CF,0xA5,0x20,0x00,0x80,0xC7,0x7E,0xF5,0x8A);
+/* {D51BD5A2-7548-11CF-A520-0080C77EF58A} */
+DEFINE_GUID(CLSID_quartzMIDIParser,
+0xD51BD5A2,0x7548,0x11CF,0xA5,0x20,0x00,0x80,0xC7,0x7E,0xF5,0x8A);
+/* {D51BD5A3-7548-11CF-A520-0080C77EF58A} */
+DEFINE_GUID(CLSID_quartzMultifileParser,
+0xD51BD5A3,0x7548,0x11CF,0xA5,0x20,0x00,0x80,0xC7,0x7E,0xF5,0x8A);
+
+
 
 struct CParserImpl
 {
@@ -182,6 +193,8 @@ HRESULT QUARTZ_CreateParserOutPin(
 HRESULT QUARTZ_CreateWaveParser(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateAVISplitter(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateMPEG1Splitter(IUnknown* punkOuter,void** ppobj);
+HRESULT QUARTZ_CreateQuickTimeMovieParser(IUnknown* punkOuter,void** ppobj);
+HRESULT QUARTZ_CreateMIDIParser(IUnknown* punkOuter,void** ppobj);
 
 
 HRESULT RIFF_GetNext(

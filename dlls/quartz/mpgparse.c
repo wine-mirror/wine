@@ -100,6 +100,7 @@ struct CMPGParsePayload
 	BOOL	bDataDiscontinuity;
 };
 
+static HRESULT CMPGParseImpl_GetStreamType( CParserImpl* pImpl, ULONG nStreamIndex, AM_MEDIA_TYPE* pmt );
 
 static HRESULT CMPGParseImpl_SyncReadPayload(
 	CParserImpl* pImpl, CMPGParseImpl* This,
@@ -129,6 +130,8 @@ static HRESULT CMPGParseImpl_InitParser( CParserImpl* pImpl, ULONG* pcStreams )
 {
 	CMPGParseImpl*	This = NULL;
 	HRESULT hr;
+	DWORD	n;
+	AM_MEDIA_TYPE	mt;
 	BYTE	hdrbuf[8];
 
 	TRACE("(%p,%p)\n",pImpl,pcStreams);
@@ -188,6 +191,14 @@ static HRESULT CMPGParseImpl_InitParser( CParserImpl* pImpl, ULONG* pcStreams )
 	else
 	{
 		return E_FAIL;
+	}
+
+	/* To determine block size, scan all payloads. */
+	ZeroMemory( &mt, sizeof(mt) );
+	for ( n = 0; n < This->cPayloads; n++ )
+	{
+		CMPGParseImpl_GetStreamType(pImpl,n,&mt);
+		QUARTZ_MediaType_Free(&mt);
 	}
 
 	return S_OK;
@@ -494,6 +505,7 @@ static HRESULT CMPGParseImpl_GetStreamType( CParserImpl* pImpl, ULONG nStreamInd
 			dwPayloadBlockSize = (pmpg1wav->wfx.nAvgBytesPerSec + pmpg1wav->wfx.nBlockAlign - 1) / pmpg1wav->wfx.nBlockAlign;
 			if ( dwPayloadBlockSize > This->dwPayloadBlockSizeMax )
 				This->dwPayloadBlockSizeMax = dwPayloadBlockSize;
+			TRACE("payload block size = %lu\n",dwPayloadBlockSize);
 		}
 
 		return S_OK;
@@ -637,6 +649,10 @@ static HRESULT CMPGParseImpl_GetAllocProp( CParserImpl* pImpl, ALLOCATOR_PROPERT
 	ZeroMemory( pReqProp, sizeof(ALLOCATOR_PROPERTIES) );
 	pReqProp->cBuffers = This->cPayloads;
 	pReqProp->cbBuffer = This->dwPayloadBlockSizeMax;
+
+	TRACE("buf %d size %d\n",
+		(int)This->cPayloads,
+		(int)This->dwPayloadBlockSizeMax);
 
 	return S_OK;
 }

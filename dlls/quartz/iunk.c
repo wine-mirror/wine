@@ -79,7 +79,7 @@ IUnknown_fnQueryInterface(IUnknown* iface,REFIID riid,LPVOID *ppobj)
 
 			if ( hr == E_NOINTERFACE )
 			{
-				FIXME("(%p) unknown interface: %s\n",This,debugstr_guid(riid));
+				WARN("(%p) unknown interface: %s\n",This,debugstr_guid(riid));
 			}
 
 			return hr;

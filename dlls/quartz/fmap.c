@@ -882,7 +882,13 @@ IFilterMapper2_fnEnumMatchingFilters(IFilterMapper2* iface,
 	BOOL	bMatch;
 	HRESULT hr;
 
-	FIXME("(%p)->(%p,%08lx,%d,%08lx,%d,%lu,%p,%p,%p,%d,%d,%lu,%p,%p,%p)\n",This,ppEnumMoniker,dwFlags,bExactMatch,dwMerit,bInputNeeded,cInputTypes,pguidInputTypes,pPinMediumIn,pPinCategoryIn,bRender,bOutputNeeded,cOutputTypes,pguidOutputTypes,pPinMediumOut,pPinCategoryOut);
+	WARN("(%p)->(%p,%08lx,%d,%08lx,%d,%lu,%p,%p,%p,%d,%d,%lu,%p,%p,%p) some features are not implemented\n",
+		This,ppEnumMoniker,dwFlags,bExactMatch,dwMerit,
+		bInputNeeded,cInputTypes,pguidInputTypes,
+		pPinMediumIn,pPinCategoryIn,
+		bRender,
+		bOutputNeeded,cOutputTypes,pguidOutputTypes,
+		pPinMediumOut,pPinCategoryOut);
 
 	if ( ppEnumMoniker == NULL )
 		return E_POINTER;

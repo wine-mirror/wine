@@ -435,7 +435,7 @@ CAsyncReaderImpl_fnWaitForNext(IAsyncReader* iface,DWORD dwTimeout,IMediaSample*
 	REFERENCE_TIME	rtStart;
 	REFERENCE_TIME	rtEnd;
 
-	TRACE("(%p)->(%lu,%p,%p)\n",This,dwTimeout,ppSample,pdwContext);
+	/*TRACE("(%p)->(%lu,%p,%p)\n",This,dwTimeout,ppSample,pdwContext);*/
 
 	EnterCriticalSection( &This->m_csRequest );
 	if ( This->m_bInFlushing )
@@ -498,6 +498,11 @@ CAsyncReaderImpl_fnSyncReadAligned(IAsyncReader* iface,IMediaSample* pSample)
 	llStart = rtStart / QUARTZ_TIMEUNITS;
 	lLength = (LONG)(rtEnd / QUARTZ_TIMEUNITS - rtStart / QUARTZ_TIMEUNITS);
 	lActual = 0;
+	if ( lLength > IMediaSample_GetSize(pSample) )
+	{
+		FIXME("invalid length\n");
+		return E_FAIL;
+	}
 
 	EnterCriticalSection( &This->m_csReader );
 	hr = This->pSource->m_pHandler->pRead( This->pSource, llStart, lLength, pData, &lActual, (HANDLE)NULL );

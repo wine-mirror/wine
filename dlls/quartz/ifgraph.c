@@ -612,7 +612,7 @@ IFilterGraph2_fnRemoveFilter(IFilterGraph2* iface,IBaseFilter* pFilter)
 				pFilter, NULL, This->m_pActiveFilters[n].pwszName );
 
 			if ( This->m_pActiveFilters[n].pFilter != NULL )
-				IMediaPosition_Release(This->m_pActiveFilters[n].pFilter);
+				IBaseFilter_Release(This->m_pActiveFilters[n].pFilter);
 			if ( This->m_pActiveFilters[n].pPosition != NULL )
 				IMediaPosition_Release(This->m_pActiveFilters[n].pPosition);
 			if ( This->m_pActiveFilters[n].pSeeking != NULL )
@@ -907,7 +907,7 @@ IFilterGraph2_fnConnect(IFilterGraph2* iface,IPin* pOut,IPin* pIn)
 		return NOERROR;
 
 	/* FIXME - try to connect indirectly. */
-	FIXME( "(%p)->(%p,%p) stub!\n",This,pOut,pIn );
+	FIXME( "(%p)->(%p,%p) not fully implemented\n",This,pOut,pIn );
 
 	info.pFilter = NULL;
 	hr = IPin_QueryPinInfo(pOut,&info);
@@ -1142,7 +1142,7 @@ IFilterGraph2_fnAddSourceFilter(IFilterGraph2* iface,LPCWSTR lpFileName,LPCWSTR 
 	CLSID	clsidSource;
 	IFileSourceFilter*	pSource;
 
-	FIXME( "(%p)->(%s,%s,%p)\n",This,
+	TRACE( "(%p)->(%s,%s,%p)\n",This,
 		debugstr_w(lpFileName),debugstr_w(lpFilterName),ppBaseFilter );
 
 	if ( lpFileName == NULL || ppBaseFilter == NULL )
@@ -1271,14 +1271,14 @@ IFilterGraph2_fnRenderEx(IFilterGraph2* iface,IPin* pOut,DWORD dwFlags,DWORD* pd
 	BOOL	bRendered = FALSE;
 	ULONG	cReturned;
 
-	FIXME( "(%p)->(%p,%08lx,%p) stub!\n",This,pPin,dwFlags,pdwReserved);
+	TRACE( "(%p)->(%p,%08lx,%p)\n",This,pPin,dwFlags,pdwReserved);
 
 	if ( pdwReserved != NULL )
 		return E_INVALIDARG;
 
 	if ( dwFlags != 0 )
 	{
-		FIXME( "dwFlags != 0...\n" );
+		FIXME( "dwFlags != 0 (0x%08lx)\n", dwFlags );
 		return E_INVALIDARG;
 	}
 

@@ -396,7 +396,7 @@ static HRESULT CAudioRendererImpl_OnActive( CBaseFilterImpl* pImpl )
 	CAudioRendererImpl_THIS(pImpl,basefilter);
 	HRESULT hr;
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	if ( This->pPin->pin.pmtConn == NULL )
 		return NOERROR;
@@ -416,7 +416,7 @@ static HRESULT CAudioRendererImpl_OnInactive( CBaseFilterImpl* pImpl )
 	WAVEFORMATEX*	pwfx;
 	HRESULT hr;
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	if ( This->pPin->pin.pmtConn == NULL )
 		return NOERROR;
@@ -442,7 +442,7 @@ static HRESULT CAudioRendererImpl_OnStop( CBaseFilterImpl* pImpl )
 {
 	CAudioRendererImpl_THIS(pImpl,basefilter);
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	This->m_fInFlush = TRUE;
 
@@ -602,7 +602,7 @@ static HRESULT CAudioRendererPinImpl_BeginFlush( CPinBaseImpl* pImpl )
 {
 	CAudioRendererPinImpl_THIS(pImpl,pin);
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	This->pRender->m_fInFlush = TRUE;
 	CAudioRendererImpl_waveOutReset(This->pRender);
@@ -614,7 +614,7 @@ static HRESULT CAudioRendererPinImpl_EndFlush( CPinBaseImpl* pImpl )
 {
 	CAudioRendererPinImpl_THIS(pImpl,pin);
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	This->pRender->m_fInFlush = FALSE;
 
@@ -946,7 +946,7 @@ IBasicAudio_fnput_Volume(IBasicAudio* iface,long lVol)
 	CAudioRendererImpl_THIS(iface,basaud);
 	HRESULT hr;
 
-	FIXME("(%p)->(%ld)\n",This,lVol);
+	TRACE("(%p)->(%ld)\n",This,lVol);
 
 	if ( lVol > 0 || lVol < -10000 )
 		return E_INVALIDARG;
@@ -964,7 +964,7 @@ IBasicAudio_fnget_Volume(IBasicAudio* iface,long* plVol)
 {
 	CAudioRendererImpl_THIS(iface,basaud);
 
-	FIXME("(%p)->(%p)\n",This,plVol);
+	TRACE("(%p)->(%p)\n",This,plVol);
 
 	if ( plVol == NULL )
 		return E_POINTER;
@@ -982,7 +982,7 @@ IBasicAudio_fnput_Balance(IBasicAudio* iface,long lBalance)
 	CAudioRendererImpl_THIS(iface,basaud);
 	HRESULT hr;
 
-	FIXME("(%p)->(%ld)\n",This,lBalance);
+	TRACE("(%p)->(%ld)\n",This,lBalance);
 
 	if ( lBalance > 0 || lBalance < -10000 )
 		return E_INVALIDARG;
@@ -1000,7 +1000,7 @@ IBasicAudio_fnget_Balance(IBasicAudio* iface,long* plBalance)
 {
 	CAudioRendererImpl_THIS(iface,basaud);
 
-	FIXME("(%p)->(%p)\n",This,plBalance);
+	TRACE("(%p)->(%p)\n",This,plBalance);
 
 	if ( plBalance == NULL )
 		return E_POINTER;

@@ -79,10 +79,14 @@ ISeekingPassThru_fnInit(ISeekingPassThru* iface,BOOL bRendering,IPin* pPin)
 {
 	CSeekingPassThru_THIS(iface,seekpass);
 
-	FIXME("(%p)->(%d,%p) not tested!\n",This,bRendering,pPin);
+	TRACE("(%p)->(%d,%p)\n",This,bRendering,pPin);
 
 	if ( pPin == NULL )
 		return E_POINTER;
+	if ( bRendering )
+	{
+		WARN("bRendering != FALSE\n");
+	}
 
 	/* Why is 'bRendering' given as an argument?? */
 	EnterCriticalSection( &This->cs );

@@ -266,7 +266,7 @@ static HRESULT ACMWrapper_CheckMediaType( CTransformBaseImpl* pImpl, const AM_ME
 	const WAVEFORMATEX*	pwfxOut;
 	WAVEFORMATEX	wfx;
 
-	FIXME("(%p)\n",This);
+	TRACE("(%p)\n",This);
 	if ( This == NULL )
 		return E_UNEXPECTED;
 

@@ -112,6 +112,10 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_FileWriter, &QUARTZ_CreateFileWriter },
 	{ &CLSID_CMpegAudioCodec, &QUARTZ_CreateCMpegAudioCodec },
 	{ &CLSID_CMpegVideoCodec, &QUARTZ_CreateCMpegVideoCodec },
+	{ &CLSID_quartzQuickTimeMovieParser, &QUARTZ_CreateQuickTimeMovieParser },
+	{ &CLSID_quartzMIDIParser, &QUARTZ_CreateMIDIParser },
+	{ &CLSID_quartzMJPGDecompressor, QUARTZ_CreateMJPGDecompressor },
+	{ &CLSID_quartzQuickTimeDecompressor, QUARTZ_CreateQuickTimeDecompressor },
 	{ NULL, NULL },
 };
 

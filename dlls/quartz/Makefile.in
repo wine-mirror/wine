@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = quartz.dll
-EXTRALIBS = $(LIBUUID)
+EXTRALIBS = $(LIBUUID) @JPEGLIB@
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
@@ -36,11 +36,15 @@ C_SRCS = \
 	iunk.c \
 	main.c \
 	memalloc.c \
+	midparse.c \
+	mjpgdec.c \
 	mpadec.c \
 	mpgparse.c \
 	mpvdec.c \
 	mtype.c \
 	parser.c \
+	qtdec.c \
+	qtparse.c \
 	regsvr.c \
 	sample.c \
 	seekpass.c \

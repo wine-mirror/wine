@@ -448,7 +448,7 @@ static HRESULT CTransformBaseOutPinImpl_OnDisconnect( CPinBaseImpl* pImpl )
 {
 	CTransformBaseOutPinImpl_THIS(pImpl,pin);
 
-	FIXME( "(%p)\n", This );
+	TRACE( "(%p)\n", This );
 
 	if ( This->pFilter->m_pOutPinAllocator != NULL )
 	{

@@ -217,8 +217,8 @@ IMemAllocator_fnSetProperties(IMemAllocator* iface,ALLOCATOR_PROPERTIES* pPropRe
 
 	if ( pPropReq == NULL || pPropActual == NULL )
 		return E_POINTER;
-	if ( pPropReq->cBuffers < 0 ||
-	     pPropReq->cbBuffer < 0 ||
+	if ( pPropReq->cBuffers <= 0 ||
+	     pPropReq->cbBuffer <= 0 ||
 	     pPropReq->cbAlign < 0 ||
 	     pPropReq->cbPrefix < 0 )
 	{
