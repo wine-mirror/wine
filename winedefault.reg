@@ -1,5 +1,7 @@
-# These entries must apparently exist in any win95-compatible registry.
-# (feed this to 'regedit' to install)
+# You should use this file to initialize or update your Wine registry.
+# To do so, use the following command (note that existing settings, if any,
+# will be overriden):
+# regedit winedefault.reg
 
 # Shell Folders. The purpose of these are pretty self-evident.
 # Primarily used by installation programs and the Explorer.
@@ -148,7 +150,7 @@
 
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Print\Printers\Wine PostScript Driver]
 "Attributes"=dword:00000000
-"Default Devmode"=
+"Default Devmode"=""
 "Name"="Wine PostScript Driver"
 "Port"="LPT1:"
 "Print Processor"="WinPrint"
@@ -1483,7 +1485,7 @@
 
 # The Component Category Manager
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{0002E005-0000-0000-C000-000000000046}]
-@="StdComponentCategoriesMgr"
+@="Component Categories Manager"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{0002E005-0000-0000-C000-000000000046}\InProcServer32]
 @="comcat.dll"
