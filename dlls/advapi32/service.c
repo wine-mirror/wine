@@ -526,6 +526,8 @@ static inline LPWSTR SERV_dupmulti( LPCSTR str )
     UINT len = 0, n = 0;
     LPWSTR wstr;
 
+    if( !str )
+        return NULL;
     do {
         len += MultiByteToWideChar( CP_ACP, 0, &str[n], -1, NULL, 0 );
         n += (strlen( &str[n] ) + 1);
