@@ -1558,6 +1558,9 @@ SIZE_T WINAPI GlobalCompact( DWORD minfree )
 
 /***********************************************************************
  *           GlobalMemoryStatus   (KERNEL32.@)
+ * Provides information about the status of the memory, so apps can tell
+ * roughly how much they are able to allocate
+ * 
  * RETURNS
  *	None
  */
@@ -1690,6 +1693,38 @@ VOID WINAPI GlobalMemoryStatus(
           lpmem->dwLength, lpmem->dwMemoryLoad, lpmem->dwTotalPhys, lpmem->dwAvailPhys,
           lpmem->dwTotalPageFile, lpmem->dwAvailPageFile, lpmem->dwTotalVirtual,
           lpmem->dwAvailVirtual);
+}
+
+/***********************************************************************
+ *           GlobalMemoryStatusEx   (KERNEL32.@)
+ * A version of GlobalMemoryStatus that can deal with memory over 4GB
+ *
+ * RETURNS
+ *	None
+ */
+BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpBuffer ) {
+  MEMORYSTATUS memstatus;
+  
+  /* Because GlobalMemoryStatusEx is identical to GlobalMemoryStatus save
+     for one extra field in the struct, and the lack of a bug, we simply
+     call GlobalMemoryStatus and copy the values across. */
+  FIXME("we should emulate the 4GB bug here, as per MSDN\n");
+  GlobalMemoryStatus(&memstatus);
+  lpBuffer->dwMemoryLoad = memstatus.dwMemoryLoad;
+  lpBuffer->ullTotalPhys = memstatus.dwTotalPhys;
+  lpBuffer->ullAvailPhys = memstatus.dwAvailPhys;
+  lpBuffer->ullTotalPageFile = memstatus.dwTotalPageFile;
+  lpBuffer->ullAvailPageFile = memstatus.dwAvailPageFile;
+  lpBuffer->ullTotalVirtual = memstatus.dwTotalVirtual;
+  lpBuffer->ullAvailVirtual = memstatus.dwAvailVirtual;
+  /* MSDN says about AvailExtendedVirtual: Size of unreserved and uncommitted
+     memory in the extended portion of the virtual address space of the calling
+     process, in bytes.
+     
+     However, I don't know what this means, so set it to zero :(
+  */
+  lpBuffer->ullAvailExtendedVirtual = 0;
+  return 1;
 }
 
 /***********************************************************************

@@ -460,6 +460,18 @@ typedef struct tagMEMORYSTATUS
     SIZE_T   dwAvailVirtual;
 } MEMORYSTATUS, *LPMEMORYSTATUS;
 
+typedef struct tagMEMORYSTATUSEX {
+  DWORD dwLength;
+  DWORD dwMemoryLoad;
+  DWORDLONG ullTotalPhys;
+  DWORDLONG ullAvailPhys;
+  DWORDLONG ullTotalPageFile;
+  DWORDLONG ullAvailPageFile;
+  DWORDLONG ullTotalVirtual;
+  DWORDLONG ullAvailVirtual;
+  DWORDLONG ullAvailExtendedVirtual;
+} MEMORYSTATUSEX, *LPMEMORYSTATUSEX;
+
 
 typedef struct _SYSTEMTIME{
         WORD wYear;

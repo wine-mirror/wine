@@ -533,7 +533,7 @@
 @ stdcall GlobalHandle(ptr) GlobalHandle
 @ stdcall GlobalLock(long) GlobalLock
 @ stdcall GlobalMemoryStatus(ptr) GlobalMemoryStatus
-@ stub GlobalMemoryStatusEx
+@ stdcall GlobalMemoryStatusEx(ptr) GlobalMemoryStatusEx
 @ stdcall GlobalReAlloc(long long long) GlobalReAlloc
 @ stdcall GlobalSize(long) GlobalSize
 @ stdcall GlobalUnWire(long) GlobalUnWire
