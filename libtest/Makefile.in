@@ -29,25 +29,25 @@ expand: expand.o expand.spec.o
 	$(CC) -o expand $+ -L$(DLLDIR) -llz32 $(DLL_LINK) $(LIBS)
 
 hello: hello.o hello.spec.o
-	$(CC) -o hello $+ $(DLL_LINK) $(LIBS)
+	$(CC) -o hello $+ -L$(DLLDIR) -luser32 $(DLL_LINK) $(LIBS)
 
 hello2: hello2.o hello2.spec.o
-	$(CC) -o hello2 $+ $(DLL_LINK) $(LIBS)
+	$(CC) -o hello2 $+ -L$(DLLDIR) -luser32 $(DLL_LINK) $(LIBS)
 
 hello3: hello3.o hello3.spec.o hello3res.o
 	$(CC) -o hello3 $+  -L$(DLLDIR) -lcomdlg32 -lwinspool.drv $(DLL_LINK) $(LIBS)
 
 hello4: hello4.o hello4.spec.o
-	$(CC) -o hello4 $+ $(DLL_LINK) $(LIBS)
+	$(CC) -o hello4 $+ -L$(DLLDIR) -luser32 $(DLL_LINK) $(LIBS)
 
 hello5: hello5.o hello5.spec.o
 	$(CC) -o hello5 $+ $(DLL_LINK) $(LIBS)
 
 new: new.o new.spec.o
-	$(CC) -o new $+ $(DLL_LINK) $(LIBS)
+	$(CC) -o new $+ -L$(DLLDIR) -luser32 $(DLL_LINK) $(LIBS)
 
 rolex: rolex.o rolex.spec.o
-	$(CC) -o rolex $+ $(DLL_LINK) $(LIBS)
+	$(CC) -o rolex $+ -L$(DLLDIR) -luser32 $(DLL_LINK) $(LIBS)
 
 vartest: vartest.o vartest.spec.o
 	$(CC) -o vartest $+ -L$(DLLDIR) -lkernel32 -loleaut32 -lcomctl32 -lole32 -lrpcrt4 $(DLL_LINK) $(LIBS)
