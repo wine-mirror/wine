@@ -74,32 +74,34 @@
 @ cdecl SetScreenSaveActive(long) X11DRV_SetScreenSaveActive
 @ cdecl ChangeDisplaySettingsExW (ptr ptr long long long) X11DRV_ChangeDisplaySettingsExW
 @ cdecl EnumDisplaySettingsExW (ptr long ptr long) X11DRV_EnumDisplaySettingsExW
+@ cdecl AcquireClipboard() X11DRV_AcquireClipboard
+@ cdecl CountClipboardFormats() X11DRV_CountClipboardFormats
 @ cdecl CreateWindow(long ptr long) X11DRV_CreateWindow
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
-@ cdecl GetDC(long long long long) X11DRV_GetDC
+@ cdecl EmptyClipboard() X11DRV_EmptyClipboard
+@ cdecl EndClipboardUpdate(long) X11DRV_EndClipboardUpdate
+@ cdecl EnumClipboardFormats(long) X11DRV_EnumClipboardFormats
 @ cdecl ForceWindowRaise(long) X11DRV_ForceWindowRaise
+@ cdecl GetClipboardData(long ptr ptr) X11DRV_GetClipboardData
+@ cdecl GetClipboardFormatName(long str long) X11DRV_GetClipboardFormatName
+@ cdecl GetDC(long long long long) X11DRV_GetDC
+@ cdecl IsClipboardFormatAvailable(long) X11DRV_IsClipboardFormatAvailable
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) X11DRV_MsgWaitForMultipleObjectsEx
+@ cdecl RegisterClipboardFormat(str) X11DRV_RegisterClipboardFormat
 @ cdecl ReleaseDC(long long) X11DRV_ReleaseDC
+@ cdecl ResetSelectionOwner(long long) X11DRV_ResetSelectionOwner
 @ cdecl ScrollDC(long long long ptr ptr long ptr) X11DRV_ScrollDC
 @ cdecl ScrollWindowEx(long long long ptr ptr long ptr long) X11DRV_ScrollWindowEx
+@ cdecl SetClipboardData(long long long) X11DRV_SetClipboardData
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long) X11DRV_SetParent
+@ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
 @ cdecl SetWindowPos(ptr) X11DRV_SetWindowPos
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
-@ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
 @ cdecl SetWindowStyle(ptr long) X11DRV_SetWindowStyle
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
 @ cdecl ShowWindow(long long) X11DRV_ShowWindow
 @ cdecl SysCommandSizeMove(long long) X11DRV_SysCommandSizeMove
-@ cdecl AcquireClipboard() X11DRV_AcquireClipboard
-@ cdecl ReleaseClipboard() X11DRV_ReleaseClipboard
-@ cdecl SetClipboardData(long) X11DRV_SetClipboardData
-@ cdecl GetClipboardData(long) X11DRV_GetClipboardData
-@ cdecl IsClipboardFormatAvailable(long) X11DRV_IsClipboardFormatAvailable
-@ cdecl RegisterClipboardFormat(str) X11DRV_RegisterClipboardFormat
-@ cdecl GetClipboardFormatName(long str long) X11DRV_GetClipboardFormatName
-@ cdecl IsSelectionOwner() X11DRV_IsSelectionOwner
-@ cdecl ResetSelectionOwner(ptr long) X11DRV_ResetSelectionOwner
 
 # X11 locks
 @ cdecl -norelay wine_tsx11_lock()

@@ -1515,6 +1515,9 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     WIN_SendDestroyMsg( hwnd );
     if (!IsWindow( hwnd )) return TRUE;
 
+    if (GetClipboardOwner() == hwnd)
+        CLIPBOARD_ReleaseOwner();
+
       /* Unlink now so we won't bother with the children later on */
 
     WIN_UnlinkWindow( hwnd );

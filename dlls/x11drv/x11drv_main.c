@@ -362,6 +362,13 @@ static void process_attach(void)
         ExitProcess(1);
     }
 
+    /* Initialize clipboard */
+    if (!X11DRV_InitClipboard( display ))
+    {
+        ERR( "Couldn't Initialize clipboard.\n" );
+        ExitProcess(1);
+    }
+
 #ifdef HAVE_LIBXXF86VM
     /* initialize XVidMode */
     X11DRV_XF86VM_Init();

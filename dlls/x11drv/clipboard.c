@@ -4,6 +4,7 @@
  * Copyright 1994 Martin Ayotte
  *	     1996 Alex Korobka
  *	     1999 Noel Borthwick
+ *           2003 Ulrich Czekalla for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -76,416 +77,1273 @@
 #include "win.h"
 #include "x11drv.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
+#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
+#define HGDIOBJ_32(handle16)  ((HGDIOBJ)(ULONG_PTR)(handle16))
+
 /* Maximum wait time for slection notify */
-#define MAXSELECTIONNOTIFYWAIT 5
+#define SELECTION_RETRIES 500  /* wait for .1 seconds */
+#define SELECTION_WAIT    1000 /* us */
+/* Minium seconds that must lapse between owner queries */
+#define OWNERQUERYLAPSETIME 1
 
 /* Selection masks */
-
 #define S_NOSELECTION    0
 #define S_PRIMARY        1
 #define S_CLIPBOARD      2
 
-/* X selection context info */
+#define _CLIPBOARD    "CLIPBOARD"              /* CLIPBOARD atom name */
+#define _TARGETS      "TARGETS"
+#define _MULTIPLE     "MULTIPLE"
+#define _SELECTIONDATA "SELECTION_DATA"
 
-static char _CLIPBOARD[] = "CLIPBOARD";        /* CLIPBOARD atom name */
-static char FMT_PREFIX[] = "<WCF>";            /* Prefix for windows specific formats */
+Atom xaClipboard = None;
+Atom xaTargets = None;
+Atom xaMultiple = None;
+Atom xaSelectionData = None;
+
 static int selectionAcquired = 0;              /* Contains the current selection masks */
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
-static Window selectionPrevWindow = None;      /* The last X window that owned the selection */
+static BOOL clearAllSelections = FALSE;        /* Always lose all selections */
+static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
 static Window PrimarySelectionOwner = None;    /* The window which owns the primary selection */
 static Window ClipboardSelectionOwner = None;  /* The window which owns the clipboard selection */
-static unsigned long cSelectionTargets = 0;    /* Number of target formats reported by TARGETS selection */
-static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
-static HANDLE selectionClearEvent = 0;/* Synchronization object used to block until server is started */
 
-typedef struct tagPROPERTY
+INT X11DRV_RegisterClipboardFormat(LPCSTR FormatName);
+void X11DRV_EmptyClipboard(void);
+void X11DRV_EndClipboardUpdate(void);
+HANDLE X11DRV_CLIPBOARD_ImportClipboardData(LPBYTE lpdata, UINT cBytes);
+HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(LPBYTE lpdata, UINT cBytes);
+HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(LPBYTE lpdata, UINT cBytes);
+HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(LPBYTE lpdata, UINT cBytes);
+HANDLE X11DRV_CLIPBOARD_ImportXAString(LPBYTE lpdata, UINT cBytes);
+HANDLE X11DRV_CLIPBOARD_ExportClipboardData(LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, LPCSTR PropertyName);
+static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, Atom prop);
+static BOOL X11DRV_CLIPBOARD_RenderText(UINT wFormatID);
+static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
+static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void);
+static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo);
+static BOOL X11DRV_CLIPBOARD_ReadClipboardData(UINT wFormat);
+static BOOL X11DRV_CLIPBOARD_RenderFormat(LPWINE_CLIPDATA lpData);
+static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDWORD lpcbytes, BOOL out);
+static BOOL X11DRV_CLIPBOARD_SynthesizeData(UINT wFormatID);
+static BOOL X11DRV_CLIPBOARD_RenderSynthesizedFormat(LPWINE_CLIPDATA lpData);
+
+/* Clipboard formats
+ * WARNING: This data ordering is dependent on the WINE_CLIPFORMAT structure
+ * declared in clipboard.h
+ */
+WINE_CLIPFORMAT ClipFormats[]  =
 {
-    struct tagPROPERTY *next;
-    Atom                atom;
-    Pixmap              pixmap;
-} PROPERTY;
+    { CF_TEXT, "WCF_TEXT",  0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, NULL, &ClipFormats[1]},
 
-static PROPERTY *prop_head;
+    { CF_BITMAP, "WCF_BITMAP", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[0], &ClipFormats[2]},
 
+    { CF_METAFILEPICT, "WCF_METAFILEPICT", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportMetaFilePict,
+        X11DRV_CLIPBOARD_ExportMetaFilePict, &ClipFormats[1], &ClipFormats[3]},
+
+    { CF_SYLK, "WCF_SYLK", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[2], &ClipFormats[4]},
+
+    { CF_DIF, "WCF_DIF", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[3], &ClipFormats[5]},
+
+    { CF_TIFF, "WCF_TIFF", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[4], &ClipFormats[6]},
+
+    { CF_OEMTEXT, "WCF_OEMTEXT", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[5], &ClipFormats[7]},
+
+    { CF_DIB, "WCF_DIB", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportXAPIXMAP,
+	X11DRV_CLIPBOARD_ExportXAPIXMAP, &ClipFormats[6], &ClipFormats[8]},
+
+    { CF_PALETTE, "WCF_PALETTE", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[7], &ClipFormats[9]},
+
+    { CF_PENDATA, "WCF_PENDATA", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[8], &ClipFormats[10]},
+
+    { CF_RIFF, "WCF_RIFF", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[9], &ClipFormats[11]},
+
+    { CF_WAVE, "WCF_WAVE", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[10], &ClipFormats[12]},
+
+    { CF_UNICODETEXT, "WCF_UNICODETEXT", XA_STRING, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportXAString,
+	X11DRV_CLIPBOARD_ExportXAString, &ClipFormats[11], &ClipFormats[13]},
+
+    { CF_ENHMETAFILE, "WCF_ENHMETAFILE", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportEnhMetaFile,
+        X11DRV_CLIPBOARD_ExportEnhMetaFile, &ClipFormats[12], &ClipFormats[14]},
+
+    { CF_HDROP, "WCF_HDROP", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[13], &ClipFormats[15]},
+
+    { CF_LOCALE, "WCF_LOCALE", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[14], &ClipFormats[16]},
+
+    { CF_DIBV5, "WCF_DIBV5", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[15], &ClipFormats[17]},
+
+    { CF_OWNERDISPLAY, "WCF_OWNERDISPLAY", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[16], &ClipFormats[18]},
+
+    { CF_DSPTEXT, "WCF_DSPTEXT", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[17], &ClipFormats[19]},
+
+    { CF_DSPBITMAP, "WCF_DSPBITMAP", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[18], &ClipFormats[20]},
+
+    { CF_DSPMETAFILEPICT, "WCF_DSPMETAFILEPICT", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[19], &ClipFormats[21]},
+
+    { CF_DSPENHMETAFILE, "WCF_DSPENHMETAFILE", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[20], NULL}
+};
+
+
+/* Maps X properties to Windows formats */
+PROPERTYFORMATMAP PropertyFormatMap[] =
+{ 
+    { "text/rtf", "Rich Text Format" },
+    /* Temporarily disable text/html because Evolution incorrectly pastes strings with extra nulls */
+    /*{ "text/html", "HTML Format" },*/
+    { "image/gif", "GIF" },
+};
+
+
+/* Maps equivalent X properties. It is assumed that lpszProperty must already 
+   be in ClipFormats or PropertyFormatMap. */
+PROPERTYALIASMAP PropertyAliasMap[] =
+{ 
+    /* lpszProperty, Alias */
+    { "text/rtf", 0, "text/richtext", 0 },
+};
+
+
+/*
+ * Cached clipboard data.
+ */
+static LPWINE_CLIPDATA ClipData = NULL;
+static UINT ClipDataCount = 0;
+
+/*
+ * Clipboard sequence number
+ */
+UINT wSeqNo = 0;
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_MapPropertyToFormat
- *
- *  Map an X selection property type atom name to a windows clipboard format ID
- */
-UINT X11DRV_CLIPBOARD_MapPropertyToFormat(char *itemFmtName)
-{
-    /*
-     * If the property name starts with FMT_PREFIX strip this off and
-     * get the ID for a custom Windows registered format with this name.
-     * We can also understand STRING, PIXMAP and BITMAP.
-     */
-    if ( NULL == itemFmtName )
-        return 0;
-    else if ( 0 == strncmp(itemFmtName, FMT_PREFIX, strlen(FMT_PREFIX)) )
-        return RegisterClipboardFormatA(itemFmtName + strlen(FMT_PREFIX));
-    else if ( 0 == strcmp(itemFmtName, "STRING") )
-        return CF_UNICODETEXT;
-    else if ( 0 == strcmp(itemFmtName, "PIXMAP")
-                ||  0 == strcmp(itemFmtName, "BITMAP") )
-    {
-        /*
-         * Return CF_DIB as first preference, if WINE is the selection owner
-         * and if CF_DIB exists in the cache.
-         * If wine dowsn't own the selection we always return CF_DIB
-         */
-        if ( !X11DRV_IsSelectionOwner() )
-            return CF_DIB;
-        else if ( CLIPBOARD_IsPresent(CF_DIB) )
-            return CF_DIB;
-        else
-            return CF_BITMAP;
-    }
-
-    WARN("\tNo mapping to Windows clipboard format for property %s\n", itemFmtName);
-    return 0;
-}
+ *                Internal Clipboard implementation methods
+ **************************************************************************/
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_MapFormatToProperty
- *
- *  Map a windows clipboard format ID to an X selection property atom
+ *		X11DRV_InitClipboard
  */
-Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT wFormat)
+BOOL X11DRV_InitClipboard(Display *display)
 {
-    Atom prop = None;
-
-    switch (wFormat)
-    {
-	/* We support only CF_UNICODETEXT, other formats are synthesized */
-        case CF_OEMTEXT:
-        case CF_TEXT:
-	    return None;
-
-        case CF_UNICODETEXT:
-            prop = XA_STRING;
-            break;
-
-        case CF_DIB:
-        case CF_BITMAP:
-        {
-            /*
-             * Request a PIXMAP, only if WINE is NOT the selection owner,
-             * AND the requested format is not in the cache.
-             */
-            if ( !X11DRV_IsSelectionOwner() && !CLIPBOARD_IsPresent(wFormat) )
-            {
-              prop = XA_PIXMAP;
-              break;
-            }
-            /* Fall through to the default case in order to use the native format */
-        }
-
-        default:
-        {
-            /*
-             * If an X atom is registered for this format, return that
-             * Otherwise register a new atom.
-             */
-            char str[256];
-            int plen = strlen(FMT_PREFIX);
-
-            strcpy(str, FMT_PREFIX);
-
-            if (CLIPBOARD_GetFormatName(wFormat, str + plen, sizeof(str) - plen))
-                prop = TSXInternAtom(thread_display(), str, False);
-
-            break;
-        }
-    }
-
-    if (prop == None)
-        TRACE("\tNo mapping to X property for Windows clipboard format %d(%s)\n",
-              wFormat, CLIPBOARD_GetFormatName(wFormat, NULL, 0));
-
-    return prop;
-}
-
-/**************************************************************************
- *	        X11DRV_CLIPBOARD_IsNativeProperty
- *
- *  Checks if a property is a native Wine property type
- */
-BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop)
-{
-    char *itemFmtName = TSXGetAtomName(thread_display(), prop);
-    BOOL bRet = FALSE;
-
-    if ( 0 == strncmp(itemFmtName, FMT_PREFIX, strlen(FMT_PREFIX)) )
-        bRet = TRUE;
-
-    TSXFree(itemFmtName);
-    return bRet;
-}
-
-
-/**************************************************************************
- *		X11DRV_CLIPBOARD_LaunchServer
- * Launches the clipboard server. This is called from X11DRV_CLIPBOARD_ResetOwner
- * when the selection can no longer be recyled to another top level window.
- * In order to make the selection persist after Wine shuts down a server
- * process is launched which services subsequent selection requests.
- */
-BOOL X11DRV_CLIPBOARD_LaunchServer()
-{
-    int iWndsLocks;
-    char clearSelection[8] = "0";
-    int persistent_selection = 1;
+    INT i;
     HKEY hkey;
-    int fd[2], err;
+    PROPERTYALIASMAP *lpalias;
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
 
-    /* If persistant selection has been disabled in the .winerc Clipboard section,
-     * don't launch the server
-     */
+    xaClipboard = TSXInternAtom( display, _CLIPBOARD, FALSE );
+    xaTargets = TSXInternAtom( display, _TARGETS, FALSE );
+    xaMultiple = TSXInternAtom(display, _MULTIPLE, False);
+    xaSelectionData = TSXInternAtom(display, _SELECTIONDATA, False);
+
     if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Clipboard", &hkey))
     {
 	char buffer[20];
 	DWORD type, count = sizeof(buffer);
-	if(!RegQueryValueExA(hkey, "PersistentSelection", 0, &type, buffer, &count))
-	    persistent_selection = atoi(buffer);
-
-	/* Get the clear selection preference */
-	count = sizeof(clearSelection);
-	RegQueryValueExA(hkey, "ClearAllSelections", 0, &type, clearSelection, &count);
-	RegCloseKey(hkey);
+	if(!RegQueryValueExA(hkey, "ClearAllSelections", 0, &type, buffer, &count))
+	    clearAllSelections = atoi(buffer);
+        RegCloseKey(hkey);
     }
-    if ( !persistent_selection )
-        return FALSE;
 
-    /*  Start up persistant WINE X clipboard server process which will
-     *  take ownership of the X selection and continue to service selection
-     *  requests from other apps.
-     */
-
-    if(pipe(fd) == -1) return FALSE;
-    fcntl(fd[1], F_SETFD, 1); /* set close on exec */
-
-    selectionWindow = selectionPrevWindow;
-    if ( !fork() )
+    /* Register known formats */
+    while (lpFormat)
     {
-        /* NOTE: This code only executes in the context of the child process
-         * Do note make any Wine specific calls here.
-         */
-        int dbgClasses = 0;
-        char selMask[8], dbgClassMask[8];
+        if (!lpFormat->wFormatID)
+            lpFormat->wFormatID = GlobalAddAtomA(lpFormat->Name);
 
-	close(fd[0]);
-        sprintf(selMask, "%d", selectionAcquired);
+        if (!lpFormat->drvData)
+            lpFormat->drvData = TSXInternAtom(display, lpFormat->Name, False);
 
-        /* Build the debug class mask to pass to the server, by inheriting
-         * the settings for the clipboard debug channel.
-         */
-        dbgClasses |= FIXME_ON(clipboard) ? 1 : 0;
-        dbgClasses |= ERR_ON(clipboard) ? 2 : 0;
-        dbgClasses |= WARN_ON(clipboard) ? 4 : 0;
-        dbgClasses |= TRACE_ON(clipboard) ? 8 : 0;
-        sprintf(dbgClassMask, "%d", dbgClasses);
-
-        /* Exec the clipboard server passing it the selection and debug class masks */
-        execl( BINDIR "/wineclipsrv", "wineclipsrv",
-               selMask, dbgClassMask, clearSelection, NULL );
-        execlp( "wineclipsrv", "wineclipsrv", selMask, dbgClassMask, clearSelection, NULL );
-
-        /* Exec Failed! */
-        perror("Could not start Wine clipboard server");
-	write(fd[1], &err, sizeof(err));
-        _exit( 1 ); /* Exit the child process */
+	lpFormat = lpFormat->NextFormat;
     }
-    close(fd[1]);
 
-    if(read(fd[0], &err, sizeof(err)) > 0) { /* exec failed */
-        close(fd[0]);
-        return FALSE;
-    }
-    close(fd[0]);
+    /* Register known mapping between window formats and X properties */
+    for (i = 0; i < sizeof(PropertyFormatMap)/sizeof(PROPERTYFORMATMAP); i++)
+        X11DRV_CLIPBOARD_InsertClipboardFormat(PropertyFormatMap[i].lpszFormat, 
+            PropertyFormatMap[i].lpszProperty);
 
-    /* Wait until the clipboard server acquires the selection.
-     * We must release the windows lock to enable Wine to process
-     * selection messages in response to the servers requests.
-     */
-
-    iWndsLocks = WIN_SuspendWndsLock();
-
-    /* We must wait until the server finishes acquiring the selection,
-     * before proceeding, otherwise the window which owns the selection
-     * will be destroyed prematurely!
-     * Create a non-signalled, auto-reset event which will be set by
-     * X11DRV_CLIPBOARD_ReleaseSelection, and wait until this gets
-     * signalled before proceeding.
-     */
-
-    if ( !(selectionClearEvent = CreateEventA(NULL, FALSE, FALSE, NULL)) )
-        ERR("Could not create wait object. Clipboard server won't start!\n");
-    else
+    /* Register known mapping between X properties */
+    for (i = 0; i < sizeof(PropertyAliasMap)/sizeof(PROPERTYALIASMAP); i++)
     {
-        /* Wait until we lose the selection, timing out after a minute */
-        DWORD start_time, timeout, elapsed, ret;
-
-        TRACE("Waiting for clipboard server to acquire selection\n");
-
-        timeout = 60000;
-        start_time = GetTickCount();
-        elapsed=0;
-        do
-        {
-            ret = MsgWaitForMultipleObjects( 1, &selectionClearEvent, FALSE, timeout - elapsed, QS_ALLINPUT );
-            if (ret != WAIT_OBJECT_0+1)
-                break;
-            elapsed = GetTickCount() - start_time;
-            if (elapsed > timeout)
-                break;
-        }
-        while (1);
-        if ( ret != WAIT_OBJECT_0 )
-            TRACE("Server could not acquire selection, or a timeout occurred!\n");
-        else
-            TRACE("Server successfully acquired selection\n");
-
-        /* Release the event */
-        CloseHandle(selectionClearEvent);
-        selectionClearEvent = 0;
+        lpalias = &PropertyAliasMap[i];
+        lpalias->drvDataProperty = TSXInternAtom(display, lpalias->lpszProperty, False);
+        lpalias->drvDataAlias = TSXInternAtom(display, lpalias->lpszAlias, False);
     }
-
-    WIN_RestoreWndsLock(iWndsLocks);
 
     return TRUE;
 }
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_CacheDataFormats
+ *                X11DRV_CLIPBOARD_LookupFormat
+ */
+LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID)
+{
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+
+    while(lpFormat)
+    {
+        if (lpFormat->wFormatID == wID) 
+            break;
+
+	lpFormat = lpFormat->NextFormat;
+    }
+
+    return lpFormat;
+}
+
+
+/**************************************************************************
+ *                X11DRV_CLIPBOARD_LookupProperty
+ */
+LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(UINT drvData)
+{
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+
+    while(lpFormat)
+    {
+        if (lpFormat->drvData == drvData) 
+            break;
+
+	lpFormat = lpFormat->NextFormat;
+    }
+
+    return lpFormat;
+}
+
+
+/**************************************************************************
+ *                X11DRV_CLIPBOARD_LookupAliasProperty
+ */
+LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupAliasProperty(UINT drvDataAlias)
+{
+    unsigned int i;
+    LPWINE_CLIPFORMAT lpFormat = NULL;
+
+    for (i = 0; i < sizeof(PropertyAliasMap)/sizeof(PROPERTYALIASMAP); i++)
+    {
+        if (PropertyAliasMap[i].drvDataAlias == drvDataAlias)
+        {
+            lpFormat = X11DRV_CLIPBOARD_LookupProperty(PropertyAliasMap[i].drvDataProperty);
+            break;
+        }
+   }
+
+    return lpFormat;
+}
+
+
+/**************************************************************************
+ *                X11DRV_CLIPBOARD_LookupPropertyAlias
+ */
+UINT  X11DRV_CLIPBOARD_LookupPropertyAlias(UINT drvDataProperty)
+{
+    unsigned int i;
+    UINT alias = 0;
+
+    for (i = 0; i < sizeof(PropertyAliasMap)/sizeof(PROPERTYALIASMAP); i++)
+    {
+        if (PropertyAliasMap[i].drvDataProperty == drvDataProperty)
+        {
+            alias = PropertyAliasMap[i].drvDataAlias;
+            break;
+        }
+   }
+
+    return alias;
+}
+
+
+/**************************************************************************
+ *               X11DRV_CLIPBOARD_LookupData
+ */
+LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID)
+{
+    LPWINE_CLIPDATA lpData = ClipData;
+
+    if (lpData)
+    {
+        do
+        {
+            if (lpData->wFormatID == wID) 
+                break;
+
+	    lpData = lpData->NextData;
+        }
+        while(lpData != ClipData);
+
+        if (lpData->wFormatID != wID)
+            lpData = NULL;
+    }
+
+    return lpData;
+}
+
+
+/**************************************************************************
+ *		InsertClipboardFormat
+ */
+UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, LPCSTR PropertyName)
+{
+    LPWINE_CLIPFORMAT lpFormat;
+    LPWINE_CLIPFORMAT lpNewFormat;
+   
+    /* allocate storage for new format entry */
+    lpNewFormat = (LPWINE_CLIPFORMAT) HeapAlloc(GetProcessHeap(), 
+        0, sizeof(WINE_CLIPFORMAT));
+
+    if(lpNewFormat == NULL) 
+    {
+        WARN("No more memory for a new format!\n");
+        return 0;
+    }
+
+    if (!(lpNewFormat->Name = HeapAlloc(GetProcessHeap(), 0, strlen(FormatName)+1)))
+    {
+        WARN("No more memory for the new format name!\n");
+        HeapFree(GetProcessHeap(), 0, lpNewFormat);
+        return 0;
+    }
+
+    strcpy(lpNewFormat->Name, FormatName);
+    lpNewFormat->wFlags = 0;
+    lpNewFormat->wFormatID = GlobalAddAtomA(lpNewFormat->Name);
+    lpNewFormat->drvData = TSXInternAtom(thread_display(), PropertyName, False);
+    lpNewFormat->lpDrvImportFunc = X11DRV_CLIPBOARD_ImportClipboardData;
+    lpNewFormat->lpDrvExportFunc = X11DRV_CLIPBOARD_ExportClipboardData;
+
+    /* Link Format */
+    lpFormat = ClipFormats;
+
+    while(lpFormat->NextFormat) /* Move to last entry */
+	lpFormat = lpFormat->NextFormat;
+
+    lpNewFormat->NextFormat = NULL;
+    lpFormat->NextFormat = lpNewFormat;
+    lpNewFormat->PrevFormat = lpFormat;
+
+    TRACE("Registering format(%d): %s drvData(%d): %s\n", 
+        lpNewFormat->wFormatID, 
+        FormatName,
+        lpNewFormat->drvData, 
+        PropertyName);
+
+    return lpNewFormat->wFormatID;
+}
+
+
+
+
+/**************************************************************************
+ *                      X11DRV_CLIPBOARD_GetClipboardInfo
+ */
+static BOOL X11DRV_CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
+{
+    BOOL bRet = FALSE;
+
+    SERVER_START_REQ( set_clipboard_info )
+    {
+        req->flags = 0;
+
+        if (wine_server_call_err( req ))
+        {
+            ERR("Failed to get clipboard owner.\n");
+        }
+        else
+        {
+            cbInfo->hWndOpen = reply->old_clipboard;
+            cbInfo->hWndOwner = reply->old_owner;
+            cbInfo->hWndViewer = reply->old_viewer;
+            cbInfo->seqno = reply->seqno;
+            cbInfo->flags = reply->flags;
+
+            bRet = TRUE;
+        }
+    }
+    SERVER_END_REQ;
+
+    return bRet;
+}
+
+
+/**************************************************************************
+ *	X11DRV_CLIPBOARD_ReleaseOwnership
+ */
+static BOOL X11DRV_CLIPBOARD_ReleaseOwnership(void)
+{
+    BOOL bRet = FALSE;
+
+    SERVER_START_REQ( set_clipboard_info )
+    {
+        req->flags = SET_CB_RELOWNER | SET_CB_SEQNO;
+
+        if (wine_server_call_err( req ))
+        {
+            ERR("Failed to set clipboard.\n");
+        }
+        else
+        {
+            bRet = TRUE;
+        }
+    }
+    SERVER_END_REQ;
+
+    return bRet;
+}
+
+
+
+/**************************************************************************
+ *                      X11DRV_CLIPBOARD_InsertClipboardData
+ *
+ * Caller *must* have the clipboard open and be the owner.
+ */
+static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormat, HANDLE16 hData16, HANDLE hData32, DWORD flags)
+{
+    LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(wFormat);
+
+    TRACE("format=%d lpData=%p hData16=%08x hData32=%08x flags=0x%08lx\n", 
+        wFormat, lpData, hData16, (unsigned int)hData32, flags);
+
+    if (lpData)
+    {
+        X11DRV_CLIPBOARD_FreeData(lpData);
+
+        lpData->hData16 = hData16;  /* 0 is legal, see WM_RENDERFORMAT */
+        lpData->hData32 = hData32;
+    }
+    else
+    {
+        lpData = (LPWINE_CLIPDATA) HeapAlloc(GetProcessHeap(), 
+            0, sizeof(WINE_CLIPDATA));
+
+        lpData->wFormatID = wFormat;
+        lpData->hData16 = hData16;  /* 0 is legal, see WM_RENDERFORMAT */
+        lpData->hData32 = hData32;
+
+	if (ClipData)
+        {
+            LPWINE_CLIPDATA lpPrevData = ClipData->PrevData;
+
+            lpData->PrevData = lpPrevData;
+            lpData->NextData = ClipData;
+
+            lpPrevData->NextData = lpData;
+            ClipData->PrevData = lpData;
+        }
+        else
+        {
+            lpData->NextData = lpData;
+            lpData->PrevData = lpData;
+            ClipData = lpData;
+        }
+
+	ClipDataCount++;
+    }
+
+    lpData->wFlags = flags;
+
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *			X11DRV_CLIPBOARD_FreeData
+ *
+ * Free clipboard data handle.
+ */
+static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
+{
+    TRACE("%d\n", lpData->wFormatID);
+
+    if ((lpData->wFormatID >= CF_GDIOBJFIRST &&
+        lpData->wFormatID <= CF_GDIOBJLAST) || 
+        lpData->wFormatID == CF_BITMAP || 
+        lpData->wFormatID == CF_DIB || 
+        lpData->wFormatID == CF_PALETTE)
+    {
+      if (lpData->hData32)
+	DeleteObject(lpData->hData32);
+
+      if (lpData->hData16)
+	DeleteObject(HGDIOBJ_32(lpData->hData16));
+    }
+    else if (lpData->wFormatID == CF_METAFILEPICT)
+    {
+      if (lpData->hData32)
+      {
+        DeleteMetaFile(((METAFILEPICT *)GlobalLock( lpData->hData32 ))->hMF );
+        GlobalFree(lpData->hData32);
+
+	if (lpData->hData16)
+	  /* HMETAFILE16 and HMETAFILE32 are apparently the same thing,
+	     and a shallow copy is enough to share a METAFILEPICT
+	     structure between 16bit and 32bit clipboards.  The MetaFile
+	     should of course only be deleted once. */
+	  GlobalFree16(lpData->hData16);
+      }
+
+      if (lpData->hData16)
+      {
+        METAFILEPICT16* lpMetaPict = (METAFILEPICT16 *) GlobalLock16(lpData->hData16);
+
+        if (lpMetaPict)
+        {
+            DeleteMetaFile16(lpMetaPict->hMF);
+            lpMetaPict->hMF = 0;
+        }
+
+	GlobalFree16(lpData->hData16);
+      }
+    }
+    else if (lpData->wFormatID == CF_ENHMETAFILE)
+    {
+        if (lpData->hData32)
+            DeleteEnhMetaFile(lpData->hData32);
+    }
+    else if (lpData->wFormatID < CF_PRIVATEFIRST ||
+             lpData->wFormatID > CF_PRIVATELAST)
+    {
+      if (lpData->hData32)
+        GlobalFree(lpData->hData32);
+
+      if (lpData->hData16)
+	GlobalFree16(lpData->hData16);
+    }
+
+    lpData->hData16 = 0;
+    lpData->hData32 = 0;
+}
+
+
+/**************************************************************************
+ *			X11DRV_CLIPBOARD_UpdateCache
+ */
+static BOOL X11DRV_CLIPBOARD_UpdateCache(LPCLIPBOARDINFO lpcbinfo)
+{
+    BOOL bret = TRUE;
+
+    if (!X11DRV_CLIPBOARD_IsSelectionOwner())
+    {
+        if (!X11DRV_CLIPBOARD_GetClipboardInfo(lpcbinfo))
+        {
+            ERR("Failed to retrieve clipboard information.\n");
+            bret = FALSE;
+        }
+        else if (wSeqNo < lpcbinfo->seqno)
+        {
+            X11DRV_EmptyClipboard();
+
+            if (!X11DRV_CLIPBOARD_QueryAvailableData(lpcbinfo))
+            {
+                ERR("Failed to cache clipboard data owned by another process.\n");
+                bret = FALSE;
+            }
+            else
+            {
+                X11DRV_EndClipboardUpdate();
+            }
+
+            wSeqNo = lpcbinfo->seqno;
+        }
+    }
+
+    return bret;
+}
+
+
+/**************************************************************************
+ *			X11DRV_CLIPBOARD_RenderFormat
+ */
+static BOOL X11DRV_CLIPBOARD_RenderFormat(LPWINE_CLIPDATA lpData)
+{
+    BOOL bret = TRUE;
+
+    TRACE(" 0x%04x hData32(0x%08x) hData16(0x%08x)\n", 
+        lpData->wFormatID, (unsigned int)lpData->hData32, lpData->hData16);
+
+    if (lpData->hData32 || lpData->hData16)
+        return bret; /* Already rendered */
+
+    if (!X11DRV_CLIPBOARD_IsSelectionOwner())
+    {
+        if (!X11DRV_CLIPBOARD_ReadClipboardData(lpData->wFormatID))
+        {
+            ERR("Failed to cache clipboard data owned by another process. Format=%d\n", 
+                lpData->wFormatID);
+            bret = FALSE;
+        }
+    }
+    else
+    {
+        if (lpData->wFlags & CF_FLAG_SYNTHESIZED)
+            bret = X11DRV_CLIPBOARD_RenderSynthesizedFormat(lpData);
+        else
+        {
+            CLIPBOARDINFO cbInfo;
+
+            if (X11DRV_CLIPBOARD_GetClipboardInfo(&cbInfo) &&
+                cbInfo.hWndOwner)
+            {
+                /* Send a WM_RENDERFORMAT message to notify the owner to render the
+                 * data requested into the clipboard.
+                 */
+                TRACE("Sending WM_RENDERFORMAT message to hwnd(%p)\n", cbInfo.hWndOwner);
+                SendMessageW(cbInfo.hWndOwner, WM_RENDERFORMAT, (WPARAM)lpData->wFormatID, 0);
+
+	        if (!lpData->hData32 && !lpData->hData16)
+                    bret = FALSE;
+            }
+            else
+            {
+                ERR("hWndClipOwner is lost!\n");
+                bret = FALSE;
+            }
+        }
+    }
+
+    return bret;
+}
+
+
+/**************************************************************************
+ *                      CLIPBOARD_ConvertText
+ * Returns number of required/converted characters - not bytes!
+ */
+static INT CLIPBOARD_ConvertText(WORD src_fmt, void const *src, INT src_size,
+				 WORD dst_fmt, void *dst, INT dst_size)
+{
+    UINT cp;
+
+    if(src_fmt == CF_UNICODETEXT)
+    {
+	switch(dst_fmt)
+	{
+	case CF_TEXT:
+	    cp = CP_ACP;
+	    break;
+	case CF_OEMTEXT:
+	    cp = CP_OEMCP;
+	    break;
+	default:
+	    return 0;
+	}
+	return WideCharToMultiByte(cp, 0, src, src_size, dst, dst_size, NULL, NULL);
+    }
+
+    if(dst_fmt == CF_UNICODETEXT)
+    {
+	switch(src_fmt)
+	{
+	case CF_TEXT:
+	    cp = CP_ACP;
+	    break;
+	case CF_OEMTEXT:
+	    cp = CP_OEMCP;
+	    break;
+	default:
+	    return 0;
+	}
+	return MultiByteToWideChar(cp, 0, src, src_size, dst, dst_size);
+    }
+
+    if(!dst_size) return src_size;
+
+    if(dst_size > src_size) dst_size = src_size;
+
+    if(src_fmt == CF_TEXT )
+	CharToOemBuffA(src, dst, dst_size);
+    else
+	OemToCharBuffA(src, dst, dst_size);
+
+    return dst_size;
+}
+
+
+/**************************************************************************
+ *                      X11DRV_CLIPBOARD_RenderSynthesizedFormat
+ */
+static BOOL X11DRV_CLIPBOARD_RenderSynthesizedFormat(LPWINE_CLIPDATA lpData)
+{
+    BOOL bret = FALSE;
+
+    if (lpData->wFlags & CF_FLAG_SYNTHESIZED)
+    {
+        UINT wFormatID = lpData->wFormatID;
+
+        if (wFormatID == CF_UNICODETEXT || wFormatID == CF_TEXT || wFormatID == CF_OEMTEXT)
+            bret = X11DRV_CLIPBOARD_RenderText(wFormatID);
+        else 
+        {
+            switch (wFormatID)
+	    {
+                case CF_ENHMETAFILE:
+                case CF_METAFILEPICT:
+                case CF_DIB:
+                case CF_BITMAP:
+		    FIXME("Synthesizing wFormatID(0x%08x) not implemented\n", wFormatID);
+                    break;
+
+                default:
+		    FIXME("Called to synthesize unknown format\n");
+                    break;
+            }
+        }
+
+        lpData->wFlags &= ~CF_FLAG_SYNTHESIZED;
+    }
+
+    return bret;
+}
+
+
+/**************************************************************************
+ *                      X11DRV_CLIPBOARD_RenderText
+ *
+ * Renders text to the clipboard buffer converting between UNIX and DOS formats.
+ *
+ * FIXME: Should be a pair of driver functions that convert between OEM text and Windows.
+ *
+ */
+static BOOL X11DRV_CLIPBOARD_RenderText(UINT wFormatID)
+{
+    LPCSTR lpstrS;
+    LPSTR  lpstrT;
+    HANDLE hData32;
+    INT src_chars, dst_chars, alloc_size;
+    LPWINE_CLIPDATA lpSource = NULL;
+
+    TRACE(" %d\n", wFormatID);
+
+    if (X11DRV_CLIPBOARD_LookupData(wFormatID))
+        return TRUE;
+
+    if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_UNICODETEXT)))
+    {
+        TRACE("UNICODETEXT -> %d\n", wFormatID);
+    }
+    else if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_TEXT)))
+    {
+        TRACE("TEXT -> %d\n", wFormatID);
+    }
+    else if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_OEMTEXT)))
+    {
+        TRACE("OEMTEXT -> %d\n", wFormatID);
+    }
+
+    if (!lpSource)
+        return FALSE;
+
+    /* First render the source text format */
+    if (!X11DRV_CLIPBOARD_RenderFormat(lpSource))
+        return FALSE;
+
+    if (lpSource->hData32)
+    {
+        lpstrS = (LPSTR)GlobalLock(lpSource->hData32);
+    }
+    else
+    {
+        lpstrS = (LPSTR)GlobalLock16(lpSource->hData16);
+    }
+
+    if (!lpstrS)
+        return FALSE;
+
+    /* Text always NULL terminated */
+    if(lpSource->wFormatID == CF_UNICODETEXT)
+        src_chars = strlenW((LPCWSTR)lpstrS) + 1;
+    else
+        src_chars = strlen(lpstrS) + 1;
+
+    /* Calculate number of characters in the destination buffer */
+    dst_chars = CLIPBOARD_ConvertText(lpSource->wFormatID, lpstrS, 
+        src_chars, wFormatID, NULL, 0);
+
+    if (!dst_chars)
+        return FALSE;
+
+    TRACE("Converting from '%d' to '%d', %i chars\n",
+    	lpSource->wFormatID, wFormatID, src_chars);
+
+    /* Convert characters to bytes */
+    if(wFormatID == CF_UNICODETEXT)
+        alloc_size = dst_chars * sizeof(WCHAR);
+    else
+        alloc_size = dst_chars;
+
+    hData32 = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE | 
+        GMEM_DDESHARE, alloc_size);
+
+    lpstrT = (LPSTR)GlobalLock(hData32);
+
+    if (lpstrT)
+    {
+        CLIPBOARD_ConvertText(lpSource->wFormatID, lpstrS, src_chars,
+            wFormatID, lpstrT, dst_chars);
+        GlobalUnlock(hData32);
+    }
+
+    /* Unlock source */
+    if (lpSource->hData32)
+        GlobalUnlock(lpSource->hData32);
+    else
+        GlobalUnlock16(lpSource->hData16);
+
+    return X11DRV_CLIPBOARD_InsertClipboardData(wFormatID, 0, hData32, 0);
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ImportXAString
+ *
+ *  Import XA_STRING, converting the string to CF_UNICODE.
+ */
+HANDLE X11DRV_CLIPBOARD_ImportXAString(LPBYTE lpdata, UINT cBytes)
+{
+    LPSTR lpstr;
+    UINT i, inlcount = 0;
+    HANDLE hUnicodeText = 0;
+
+    for (i = 0; i <= cBytes; i++)
+    {
+        if (lpdata[i] == '\n')
+            inlcount++;
+    }
+
+    if ((lpstr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cBytes + inlcount + 1)))
+    {
+        UINT count;
+        UINT text_cp = CP_ACP;
+
+        for (i = 0, inlcount = 0; i <= cBytes; i++)
+        {
+            if (lpdata[i] == '\n')
+                lpstr[inlcount++] = '\r';
+
+            lpstr[inlcount++] = lpdata[i];
+        }
+
+        GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTUNIXCODEPAGE | 
+            LOCALE_RETURN_NUMBER, (WCHAR *)&text_cp, (sizeof(UINT)/sizeof(WCHAR)));
+
+	count = MultiByteToWideChar(text_cp, 0, lpstr, -1, NULL, 0);
+	hUnicodeText = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, count * sizeof(WCHAR));
+
+	if(hUnicodeText)
+	{
+            WCHAR *textW = GlobalLock(hUnicodeText);
+            MultiByteToWideChar(text_cp, 0, lpstr, -1, textW, count);
+            GlobalUnlock(hUnicodeText);
+        }
+
+        HeapFree(GetProcessHeap(), 0, lpstr);
+    }
+
+    return hUnicodeText;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ImportXAPIXMAP
+ *
+ *  Import XA_PIXMAP, converting the image to CF_DIB.
+ */
+HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(LPBYTE lpdata, UINT cBytes)
+{
+    HANDLE hTargetImage = 0;  /* Handle to store the converted DIB */
+    Pixmap *pPixmap = (Pixmap *) lpdata;
+    HWND hwnd = GetOpenClipboardWindow();
+    HDC hdc = GetDC(hwnd);
+
+    hTargetImage = X11DRV_DIB_CreateDIBFromPixmap(*pPixmap, hdc, TRUE);
+
+    ReleaseDC(hwnd, hdc);
+
+    return hTargetImage;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ImportMetaFilePict
+ *
+ *  Import MetaFilePict.
+ */
+HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(LPBYTE lpdata, UINT cBytes)
+{
+    return X11DRV_CLIPBOARD_SerializeMetafile(CF_METAFILEPICT, (HANDLE)lpdata, (LPDWORD)&cBytes, FALSE);
+}
+
+
+/**************************************************************************
+ *		X11DRV_ImportEnhMetaFile
+ *
+ *  Import EnhMetaFile.
+ */
+HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(LPBYTE lpdata, UINT cBytes)
+{
+    return X11DRV_CLIPBOARD_SerializeMetafile(CF_ENHMETAFILE, (HANDLE)lpdata, (LPDWORD)&cBytes, FALSE);
+}
+
+
+/**************************************************************************
+ *		X11DRV_ImportClipbordaData
+ *
+ *  Generic import clipboard data routine.
+ */
+HANDLE X11DRV_CLIPBOARD_ImportClipboardData(LPBYTE lpdata, UINT cBytes)
+{
+    LPVOID lpClipData;
+    HANDLE hClipData = 0;
+
+    if (cBytes)
+    {
+        /* Turn on the DDESHARE flag to enable shared 32 bit memory */
+        hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cBytes);
+        if ((lpClipData = GlobalLock(hClipData)))
+        {
+            memcpy(lpClipData, lpdata, cBytes);
+            GlobalUnlock(hClipData);
+        }
+        else
+            hClipData = 0;
+    }
+
+    return hClipData;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ExportClipboardData
+ *
+ *  Generic export clipboard data routine.
+ */
+HANDLE X11DRV_CLIPBOARD_ExportClipboardData(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+{
+    LPVOID lpClipData;
+    UINT cBytes = 0;
+    HANDLE hClipData = 0;
+
+    *lpBytes = 0; /* Assume failure */
+
+    if (!X11DRV_CLIPBOARD_RenderFormat(lpData))
+        ERR("Failed to export %d format\n", lpData->wFormatID);
+    else
+    {
+        cBytes = GlobalSize(lpData->hData32);
+
+        hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cBytes);
+
+        if ((lpClipData = GlobalLock(hClipData)))
+        {
+            LPVOID lpdata = GlobalLock(lpData->hData32);
+
+            memcpy(lpClipData, lpdata, cBytes);
+	    *lpBytes = cBytes;
+
+            GlobalUnlock(lpData->hData32);
+            GlobalUnlock(hClipData);
+        }
+    }
+
+    return hClipData;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ExportXAString
+ *
+ *  Export CF_UNICODE converting the string to XA_STRING
+ */
+HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+{
+    INT i, j;
+    UINT size;
+    LPWSTR uni_text;
+    LPSTR text, lpstr;
+    UINT text_cp = CP_ACP;
+
+    *lpBytes = 0; /* Assume return has zero bytes */
+
+    GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTUNIXCODEPAGE | 
+        LOCALE_RETURN_NUMBER, (WCHAR *)&text_cp, (sizeof(UINT)/sizeof(WCHAR)));
+
+    if (!X11DRV_CLIPBOARD_RenderFormat(lpData))
+    {
+        ERR("Failed to export %d format\n", lpData->wFormatID);
+        return 0;
+    }
+
+    uni_text = GlobalLock(lpData->hData32);
+
+    size = WideCharToMultiByte(text_cp, 0, uni_text, -1, NULL, 0, NULL, NULL);
+
+    text = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!text)
+       return None;
+    WideCharToMultiByte(text_cp, 0, uni_text, -1, text, size, NULL, NULL);
+
+    /* remove carriage returns */
+
+    lpstr = (char*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size-- );
+    if(lpstr == NULL) return None;
+    for(i = 0,j = 0; i < size && text[i]; i++ )
+    {
+        if( text[i] == '\r' &&
+            (text[i+1] == '\n' || text[i+1] == '\0') ) continue;
+        lpstr[j++] = text[i];
+    }
+    lpstr[j]='\0';
+
+    *lpBytes = j; /* Number of bytes in string */
+
+    HeapFree(GetProcessHeap(), 0, text);
+    GlobalUnlock(lpData->hData32);
+
+    return lpstr;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ExportXAPIXMAP
+ *
+ *  Export CF_DIB to XA_PIXMAP.
+ */
+HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+{
+    HDC hdc;
+    Pixmap pixmap;
+
+    if (!X11DRV_CLIPBOARD_RenderFormat(lpdata))
+    {
+        ERR("Failed to export %d format\n", lpdata->wFormatID);
+        return 0;
+    }
+
+    hdc = GetDC(0);
+
+    /* For convert from packed DIB to Pixmap */
+    pixmap = X11DRV_DIB_CreatePixmapFromDIB(lpdata, hdc);
+    *lpBytes = 4; /* pixmap is a 32bit value */
+
+    ReleaseDC(0, hdc);
+
+    return (HANDLE) pixmap;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ExportMetaFilePict
+ *
+ *  Export MetaFilePict.
+ */
+HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+{
+    if (!X11DRV_CLIPBOARD_RenderFormat(lpdata))
+    {
+        ERR("Failed to export %d format\n", lpdata->wFormatID);
+        return 0;
+    }
+
+    return X11DRV_CLIPBOARD_SerializeMetafile(CF_METAFILEPICT, (HANDLE)lpdata->hData32, 
+        lpBytes, TRUE);
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ExportEnhMetaFile
+ *
+ *  Export EnhMetaFile.
+ */
+HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+{
+    if (!X11DRV_CLIPBOARD_RenderFormat(lpdata))
+    {
+        ERR("Failed to export %d format\n", lpdata->wFormatID);
+        return 0;
+    }
+
+    return X11DRV_CLIPBOARD_SerializeMetafile(CF_ENHMETAFILE, (HANDLE)lpdata->hData32, 
+        lpBytes, TRUE);
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_QueryTargets
+ */
+static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selection, XEvent *xe)
+{
+    INT i;
+    Bool res;
+
+    wine_tsx11_lock();
+    XConvertSelection(display, selection, xaTargets, xaSelectionData, w, CurrentTime);
+    wine_tsx11_unlock();
+
+    /*
+     * Wait until SelectionNotify is received
+     */
+    for (i = 0; i < SELECTION_RETRIES; i++)
+    {
+        wine_tsx11_lock();
+        res = XCheckTypedWindowEvent(display, w, SelectionNotify, xe);
+        wine_tsx11_unlock();
+        if (res && xe->xselection.selection == selection) break;
+
+        usleep(SELECTION_WAIT);
+    }
+
+    /* Verify that the selection returned a valid TARGETS property */
+    if ((xe->xselection.target != xaTargets) || (xe->xselection.property == None))
+    {
+        /* Selection owner failed to respond or we missed the SelectionNotify */
+        WARN("Failed to retrieve TARGETS for selection %ld.\n", selection);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_QueryAvailableData
  *
  * Caches the list of data formats available from the current selection.
  * This queries the selection owner for the TARGETS property and saves all
  * reported property types.
  */
-int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
+static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
 {
     Display *display = thread_display();
-    HWND           hWnd = 0;
-    HWND           hWndClipWindow = GetOpenClipboardWindow();
     XEvent         xe;
-    Atom           aTargets;
     Atom           atype=AnyPropertyType;
     int		   aformat;
     unsigned long  remain;
     Atom*	   targetList=NULL;
     Window         w;
-    Window         ownerSelection = 0;
-    time_t         maxtm;
+    HWND           hWndClipWindow; 
+    unsigned long  cSelectionTargets = 0;
 
-    TRACE("enter\n");
-    /*
-     * Empty the clipboard cache
-     */
-    CLIPBOARD_EmptyCache(TRUE);
+    if (selectionAcquired & (S_PRIMARY | S_CLIPBOARD))
+    {
+        ERR("Received request to cache selection but process is owner=(%08x)\n", 
+            (unsigned) selectionWindow);
 
-    cSelectionTargets = 0;
-    selectionCacheSrc = SelectionName;
+        selectionAcquired  = S_NOSELECTION;
 
-    hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
+        if (TSXGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
+	    selectionAcquired |= S_PRIMARY;
 
-    ownerSelection = TSXGetSelectionOwner(display, SelectionName);
-    if ( !hWnd || (ownerSelection == None) )
-        return cSelectionTargets;
+        if (TSXGetSelectionOwner(display,xaClipboard) == selectionWindow)
+	    selectionAcquired |= S_CLIPBOARD;
+
+        if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
+        {
+            WARN("Lost selection but process didn't process SelectClear\n");
+            selectionWindow = None;
+        }
+	else
+	{
+            return 0; /* Prevent self request */
+	}
+    }
+
+    if (lpcbinfo->flags & CB_OWNER)
+        hWndClipWindow = lpcbinfo->hWndOwner;
+    else if (lpcbinfo->flags & CB_OPEN)
+        hWndClipWindow = lpcbinfo->hWndOpen;
+    else
+        hWndClipWindow = GetActiveWindow();
+
+    if (!hWndClipWindow)
+    {
+        WARN("No window available to retrieve selection!n");
+        return 0;
+    }
+
+    w = X11DRV_get_whole_window(GetAncestor(hWndClipWindow, GA_ROOT));
 
     /*
      * Query the selection owner for the TARGETS property
      */
-    w = X11DRV_get_whole_window( GetAncestor(hWnd,GA_ROOT) );
-
-    aTargets = TSXInternAtom(display, "TARGETS", False);
-
-    TRACE("Requesting TARGETS selection for '%s' (owner=%08x)...\n",
-          TSXGetAtomName(display, selectionCacheSrc), (unsigned)ownerSelection );
-    wine_tsx11_lock();
-    XConvertSelection(display, selectionCacheSrc, aTargets,
-                    TSXInternAtom(display, "SELECTION_DATA", False),
-                    w, CurrentTime);
-
-    /*
-     * Wait until SelectionNotify is received
-     */
-    maxtm = time(NULL) + MAXSELECTIONNOTIFYWAIT; /* Timeout after a maximum wait */
-    while( maxtm - time(NULL) > 0 )
-    {
-       if( XCheckTypedWindowEvent(display, w, SelectionNotify, &xe) )
-           if( xe.xselection.selection == selectionCacheSrc )
-               break;
-    }
-    wine_tsx11_unlock();
-
-    /* Verify that the selection returned a valid TARGETS property */
-    if ( (xe.xselection.target != aTargets)
-          || (xe.xselection.property == None) )
-    {
-        TRACE("\tExit, could not retrieve TARGETS\n");
-        return cSelectionTargets;
-    }
+    if (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, &xe))
+        selectionCacheSrc = XA_PRIMARY;
+    else if (X11DRV_CLIPBOARD_QueryTargets(display, w, xaClipboard, &xe))
+        selectionCacheSrc = xaClipboard;
+    else
+        return 0;
 
     /* Read the TARGETS property contents */
     if(TSXGetWindowProperty(display, xe.xselection.requestor, xe.xselection.property,
-                            0, 0x3FFF, True, AnyPropertyType/*XA_ATOM*/, &atype, &aformat,
-                            &cSelectionTargets, &remain, (unsigned char**)&targetList) != Success)
-        TRACE("\tCouldn't read TARGETS property\n");
+        0, 0x3FFF, True, AnyPropertyType/*XA_ATOM*/, &atype, &aformat, &cSelectionTargets, 
+        &remain, (unsigned char**)&targetList) != Success)
+    {
+        WARN("Failed to read TARGETS property\n");
+    }
     else
     {
-       TRACE("\tType %s,Format %d,nItems %ld, Remain %ld\n",
+       TRACE("Type %s,Format %d,nItems %ld, Remain %ld\n",
              TSXGetAtomName(display,atype),aformat,cSelectionTargets, remain);
        /*
         * The TARGETS property should have returned us a list of atoms
         * corresponding to each selection target format supported.
         */
-       if( (atype == XA_ATOM || atype == aTargets) && aformat == 32 )
+       if ((atype == XA_ATOM || atype == xaTargets) && aformat == 32)
        {
-          int i;
-          LPWINE_CLIPFORMAT lpFormat;
+          INT i;
 
           /* Cache these formats in the clipboard cache */
-
           for (i = 0; i < cSelectionTargets; i++)
           {
-              char *itemFmtName = TSXGetAtomName(display, targetList[i]);
-              UINT wFormat = X11DRV_CLIPBOARD_MapPropertyToFormat(itemFmtName);
+              LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupProperty(targetList[i]);
 
-              /*
-               * If the clipboard format maps to a Windows format, simply store
-               * the atom identifier and record its availablity status
-               * in the clipboard cache.
-               */
-              if (wFormat)
+              if (!lpFormat)
+                  lpFormat = X11DRV_CLIPBOARD_LookupAliasProperty(targetList[i]);
+
+              if (!lpFormat)
               {
-                  lpFormat = CLIPBOARD_LookupFormat( wFormat );
+                  LPSTR lpName = TSXGetAtomName(display, targetList[i]); 
+                  X11DRV_RegisterClipboardFormat(lpName);
 
-                  /* Don't replace if the property already cached is a native format,
-                   * or if a PIXMAP is being replaced by a BITMAP.
-                   */
-                  if (lpFormat->wDataPresent &&
-                        ( X11DRV_CLIPBOARD_IsNativeProperty(lpFormat->drvData)
-                          || (lpFormat->drvData == XA_PIXMAP && targetList[i] == XA_BITMAP) )
-                     )
+                  lpFormat = X11DRV_CLIPBOARD_LookupProperty(targetList[i]);
+
+		  if (!lpFormat)
                   {
-                      TRACE("\tAtom# %d: '%s' --> FormatID(%d) %s (Skipped)\n",
-                            i, itemFmtName, wFormat, lpFormat->Name);
+                      ERR("Failed to cache %s property\n", lpName);
+                      continue;
                   }
-                  else
-                  {
-                      lpFormat->wDataPresent = 1;
-                      lpFormat->drvData = targetList[i];
-                      TRACE("\tAtom# %d: '%s' --> FormatID(%d) %s\n",
-                            i, itemFmtName, wFormat, lpFormat->Name);
-                  }
+
+                  TSXFree(lpName);
               }
 
-              TSXFree(itemFmtName);
+              TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
+                  i, lpFormat->drvData, lpFormat->wFormatID, lpFormat->Name);
+
+              X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0);
           }
        }
 
@@ -496,6 +1354,109 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
     return cSelectionTargets;
 }
 
+
+/**************************************************************************
+ *	X11DRV_CLIPBOARD_ReadClipboardData
+ *
+ * This method is invoked only when we DO NOT own the X selection
+ *
+ * We always get the data from the selection client each time,
+ * since we have no way of determining if the data in our cache is stale.
+ */
+static BOOL X11DRV_CLIPBOARD_ReadClipboardData(UINT wFormat)
+{
+    Display *display = thread_display();
+    BOOL bRet = FALSE;
+    Bool res;
+
+    HWND hWndClipWindow = GetOpenClipboardWindow();
+    HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
+
+    LPWINE_CLIPFORMAT lpFormat;
+
+    TRACE("%d\n", wFormat);
+
+    if (!selectionAcquired)
+    {
+        Window w = X11DRV_get_whole_window(GetAncestor(hWnd, GA_ROOT));
+        if(!w)
+        {
+            FIXME("No parent win found %p %p\n", hWnd, hWndClipWindow);
+            return FALSE;
+        }
+
+        lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
+
+        if (lpFormat->drvData)
+        {
+    	    DWORD i;
+	    UINT alias;
+            XEvent xe;
+
+            TRACE("Requesting %s selection (%d) from win(%08x)\n", 
+                lpFormat->Name, lpFormat->drvData, (UINT)selectionCacheSrc);
+
+            wine_tsx11_lock();
+            XConvertSelection(display, selectionCacheSrc, lpFormat->drvData,
+                              xaSelectionData, w, CurrentTime);
+            wine_tsx11_unlock();
+
+            /* wait until SelectionNotify is received */
+            for (i = 0; i < SELECTION_RETRIES; i++)
+            {
+                wine_tsx11_lock();
+                res = XCheckTypedWindowEvent(display, w, SelectionNotify, &xe);
+                wine_tsx11_unlock();
+                if (res && xe.xselection.selection == selectionCacheSrc) break;
+
+                usleep(SELECTION_WAIT);
+            }
+
+            /* If the property wasn't available check for aliases */
+	    if (xe.xselection.property == None &&
+                (alias = X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData)))
+	    {
+                wine_tsx11_lock();
+                XConvertSelection(display, selectionCacheSrc, alias,
+                                  xaSelectionData, w, CurrentTime);
+                wine_tsx11_unlock();
+
+                /* wait until SelectionNotify is received */
+                for (i = 0; i < SELECTION_RETRIES; i++)
+                {
+                    wine_tsx11_lock();
+                    res = XCheckTypedWindowEvent(display, w, SelectionNotify, &xe);
+                    wine_tsx11_unlock();
+                    if (res && xe.xselection.selection == selectionCacheSrc) break;
+
+                    usleep(SELECTION_WAIT);
+                }
+	    }
+
+            /* Verify that the selection returned a valid TARGETS property */
+            if (xe.xselection.property != None)
+            {
+                /*
+                 *  Read the contents of the X selection property 
+                 *  into WINE's clipboard cache converting the 
+                 *  selection to be compatible if possible.
+                 */
+                bRet = X11DRV_CLIPBOARD_ReadSelection(lpFormat, xe.xselection.requestor, 
+                    xe.xselection.property);
+            }
+        }
+    }
+    else
+    {
+        ERR("Received request to cache selection data but process is owner\n");
+    }
+
+    TRACE("Returning %d\n", bRet);
+
+    return bRet;
+}
+
+
 /**************************************************************************
  *		X11DRV_CLIPBOARD_ReadSelection
  *  Reads the contents of the X selection property into the WINE clipboard cache
@@ -504,7 +1465,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
  *  This method is invoked only to read the contents of a the selection owned
  *  by an external application. i.e. when we do not own the X selection.
  */
-static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, Atom reqType)
+static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, Atom prop)
 {
     Display *display = thread_display();
     Atom	      atype=AnyPropertyType;
@@ -513,235 +1474,152 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
     long              lRequestLength,bwc;
     unsigned char*    val;
     unsigned char*    buffer;
-    LPWINE_CLIPFORMAT lpFormat;
     BOOL              bRet = FALSE;
-    HWND              hWndClipWindow = GetOpenClipboardWindow();
-
 
     if(prop == None)
         return bRet;
 
-    TRACE("Reading X selection...\n");
-
-    TRACE("\tretrieving property %s from window %ld into %s\n",
-          TSXGetAtomName(display,reqType), (long)w, TSXGetAtomName(display,prop) );
+    TRACE("Reading X selection type %s\n", lpData->Name);
 
     /*
      * First request a zero length in order to figure out the request size.
      */
-    if(TSXGetWindowProperty(display,w,prop,0,0,False, AnyPropertyType/*reqType*/,
-                            &atype, &aformat, &nitems, &itemSize, &val) != Success)
+    if(TSXGetWindowProperty(display,w,prop,0,0,False, AnyPropertyType,
+        &atype, &aformat, &nitems, &itemSize, &val) != Success)
     {
-        WARN("\tcouldn't get property size\n");
+        WARN("Failed to get property size\n");
         return bRet;
     }
 
     /* Free zero length return data if any */
-    if ( val )
+    if (val)
     {
        TSXFree(val);
        val = NULL;
     }
 
-    TRACE("\tretrieving %ld bytes...\n", itemSize * aformat/8);
+    TRACE("Retrieving %ld bytes\n", itemSize * aformat/8);
+
     lRequestLength = (itemSize * aformat/8)/4  + 1;
+    bwc = aformat/8;
 
-   bwc = aformat/8;
-   /* we want to read the property, but not it too large of chunks or
-      we could hang the cause problems. Lets go for 4k blocks */
-
-    if(TSXGetWindowProperty(display,w,prop,0,4096,False,
-                            AnyPropertyType/*reqType*/,
-                            &atype, &aformat, &nitems, &remain, &buffer)
-        != Success)
+    /* Read property in 4K blocks */
+    if (TSXGetWindowProperty(display,w,prop,0,4096,False, AnyPropertyType/*reqType*/, 
+        &atype, &aformat, &nitems, &remain, &buffer) != Success)
     {
-        WARN("\tcouldn't read property\n");
+        WARN("Failed to read property\n");
         return bRet;
     }
-   val = (char*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-                          nitems*bwc);
-   memcpy(val,buffer,nitems*bwc);
-   TSXFree(buffer);
 
-   for (total = nitems*bwc,val_cnt=0; remain;)
-   {
+    val = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nitems*bwc);
+    memcpy(val,buffer,nitems*bwc);
+
+    TSXFree(buffer);
+
+    for (total = nitems*bwc, val_cnt = 0; remain;)
+    {
        val_cnt +=nitems*bwc;
-       TSXGetWindowProperty(display, w, prop,
-                          (total / 4), 4096, False,
-                          AnyPropertyType, &atype,
-                          &aformat, &nitems, &remain,
-                          &buffer);
+       if (TSXGetWindowProperty(display, w, prop, (total / 4), 4096, False,
+           AnyPropertyType, &atype, &aformat, &nitems, &remain, &buffer) != Success)
+       {
+           WARN("Failed to read property\n");
+           HeapFree(GetProcessHeap(), 0, val);
+           return bRet;
+       }
 
        total += nitems*bwc;
        HeapReAlloc(GetProcessHeap(),0,val, total);
        memcpy(&val[val_cnt], buffer, nitems*(aformat/8));
        TSXFree(buffer);
-   }
-   nitems = total;
-
-    /*
-     * Translate the X property into the appropriate Windows clipboard
-     * format, if possible.
-     */
-    if ( (reqType == XA_STRING)
-         && (atype == XA_STRING) && (aformat == 8) )
-    /* convert Unix text to CF_UNICODETEXT */
-    {
-      int 	   i,inlcount = 0;
-      char*      lpstr;
-
-      for(i=0; i <= nitems; i++)
-          if( val[i] == '\n' ) inlcount++;
-
-      if( (lpstr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nitems + inlcount + 1)) )
-      {
-	  static UINT text_cp = (UINT)-1;
-	  UINT count;
-	  HANDLE hUnicodeText;
-
-          for(i=0,inlcount=0; i <= nitems; i++)
-          {
-             if( val[i] == '\n' ) lpstr[inlcount++]='\r';
-             lpstr[inlcount++]=val[i];
-          }
-
-	  if(text_cp == (UINT)-1)
-	  {
-	      HKEY hkey;
-	      /* default value */
-	      text_cp = CP_ACP;
-	      if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
-	      {
-	          char buf[20];
-		  DWORD type, count = sizeof(buf);
-		  if(!RegQueryValueExA(hkey, "TextCP", 0, &type, buf, &count))
-		      text_cp = atoi(buf);
-		  RegCloseKey(hkey);
-	      }
-	  }
-
-	  count = MultiByteToWideChar(text_cp, 0, lpstr, -1, NULL, 0);
-	  hUnicodeText = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, count * sizeof(WCHAR));
-	  if(hUnicodeText)
-	  {
-	      WCHAR *textW = GlobalLock(hUnicodeText);
-	      MultiByteToWideChar(text_cp, 0, lpstr, -1, textW, count);
-	      GlobalUnlock(hUnicodeText);
-	      if (!SetClipboardData(CF_UNICODETEXT, hUnicodeText))
-	      {
-                  ERR("Not SET! Need to free our own block\n");
-                  GlobalFree(hUnicodeText);
-              }
-	      bRet = TRUE;
-	  }
-	  HeapFree(GetProcessHeap(), 0, lpstr);
-      }
-    }
-    else if ( reqType == XA_PIXMAP || reqType == XA_BITMAP ) /* treat PIXMAP as CF_DIB or CF_BITMAP */
-    {
-      /* Get the first pixmap handle passed to us */
-      Pixmap *pPixmap = (Pixmap *)val;
-      HANDLE hTargetImage = 0;  /* Handle to store the converted bitmap or DIB */
-
-      if (aformat != 32 || nitems < 1 || atype != XA_PIXMAP
-          || (wFormat != CF_BITMAP && wFormat != CF_DIB))
-      {
-          WARN("\tUnimplemented format conversion request\n");
-          goto END;
-      }
-
-      if ( wFormat == CF_BITMAP )
-      {
-        /* For CF_BITMAP requests we must return an HBITMAP */
-        hTargetImage = X11DRV_BITMAP_CreateBitmapFromPixmap(*pPixmap, TRUE);
-      }
-      else if (wFormat == CF_DIB)
-      {
-        HWND hwnd = GetOpenClipboardWindow();
-        HDC hdc = GetDC(hwnd);
-
-        /* For CF_DIB requests we must return an HGLOBAL storing a packed DIB */
-        hTargetImage = X11DRV_DIB_CreateDIBFromPixmap(*pPixmap, hdc, TRUE);
-
-        ReleaseDC(hwnd, hdc);
-      }
-
-      if (!hTargetImage)
-      {
-          WARN("PIXMAP conversion failed!\n" );
-          goto END;
-      }
-
-      /* Delete previous clipboard data */
-      lpFormat = CLIPBOARD_LookupFormat(wFormat);
-      if (lpFormat->wDataPresent && (lpFormat->hData16 || lpFormat->hData32))
-          CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
-
-      /* Update the clipboard record */
-      lpFormat->wDataPresent = 1;
-      lpFormat->hData32 = hTargetImage;
-      lpFormat->hData16 = 0;
-
-      bRet = TRUE;
     }
 
-    /* For native properties simply copy the X data without conversion */
-    else if (X11DRV_CLIPBOARD_IsNativeProperty(reqType)) /* <WCF>* */
-    {
-      HANDLE hClipData = 0;
-      void*  lpClipData;
-      int cBytes = nitems * aformat/8;
+    bRet = X11DRV_CLIPBOARD_InsertClipboardData(lpData->wFormatID, 0, lpData->lpDrvImportFunc(val, total), 0);
 
-      if( cBytes )
-      {
-          if (wFormat == CF_METAFILEPICT || wFormat == CF_ENHMETAFILE)
-          {
-              hClipData = X11DRV_CLIPBOARD_SerializeMetafile(wFormat, (HANDLE)val, cBytes, FALSE);
-          }
-          else
-          {
-              /* Turn on the DDESHARE flag to enable shared 32 bit memory */
-              hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cBytes );
-              if( (lpClipData = GlobalLock(hClipData)) )
-              {
-                  memcpy(lpClipData, val, cBytes);
-                  GlobalUnlock(hClipData);
-              }
-              else
-                  hClipData = 0;
-          }
-      }
-
-      if( hClipData )
-      {
-          /* delete previous clipboard record if any */
-          lpFormat = CLIPBOARD_LookupFormat(wFormat);
-          if (lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32)
-              CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
-
-          /* Update the clipboard record */
-          lpFormat->wDataPresent = 1;
-          lpFormat->hData32 = hClipData;
-          lpFormat->hData16 = 0;
-
-          bRet = TRUE;
-      }
-    }
-    else
-    {
-        WARN("\tUnimplemented format conversion request\n");
-        goto END;
-    }
-
-END:
     /* Delete the property on the window now that we are done
      * This will send a PropertyNotify event to the selection owner. */
     TSXDeleteProperty(display,w,prop);
 
     /* Free the retrieved property data */
     HeapFree(GetProcessHeap(),0,val);
+
     return bRet;
 }
+
+
+/**************************************************************************
+ *		CLIPBOARD_SerializeMetafile
+ */
+static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDWORD lpcbytes, BOOL out)
+{
+    HANDLE h = 0;
+
+    TRACE(" wFormat=%d hdata=%08x out=%d\n", wformat, (unsigned int) hdata, out);
+
+    if (out) /* Serialize out, caller should free memory */
+    {
+        *lpcbytes = 0; /* Assume failure */
+
+        if (wformat == CF_METAFILEPICT)
+        {
+            LPMETAFILEPICT lpmfp = (LPMETAFILEPICT) GlobalLock(hdata);
+            int size = GetMetaFileBitsEx(lpmfp->hMF, 0, NULL);
+
+            h = GlobalAlloc(0, size + sizeof(METAFILEPICT));
+            if (h)
+            {
+                char *pdata = GlobalLock(h);
+
+                memcpy(pdata, lpmfp, sizeof(METAFILEPICT));
+                GetMetaFileBitsEx(lpmfp->hMF, size, pdata + sizeof(METAFILEPICT));
+
+                *lpcbytes = size + sizeof(METAFILEPICT);
+
+                GlobalUnlock(h);
+            }
+
+            GlobalUnlock(hdata);
+        }
+        else if (wformat == CF_ENHMETAFILE)
+        {
+            int size = GetEnhMetaFileBits(hdata, 0, NULL);
+
+            h = GlobalAlloc(0, size);
+            if (h)
+            {
+                LPVOID pdata = GlobalLock(h);
+
+                GetEnhMetaFileBits(hdata, size, pdata);
+                *lpcbytes = size;
+
+                GlobalUnlock(h);
+            }
+        }
+    }
+    else
+    {
+        if (wformat == CF_METAFILEPICT)
+        {
+            h = GlobalAlloc(0, sizeof(METAFILEPICT));
+            if (h)
+            {
+                LPMETAFILEPICT pmfp = (LPMETAFILEPICT) GlobalLock(h);
+
+                memcpy(pmfp, (LPVOID)hdata, sizeof(METAFILEPICT));
+                pmfp->hMF = SetMetaFileBitsEx(*lpcbytes - sizeof(METAFILEPICT),
+                                              (char *)hdata + sizeof(METAFILEPICT));
+
+                GlobalUnlock(h);
+            }
+        }
+        else if (wformat == CF_ENHMETAFILE)
+        {
+            h = SetEnhMetaFileBits(*lpcbytes, (LPVOID)hdata);
+        }
+    }
+
+    return h;
+}
+
 
 /**************************************************************************
  *		X11DRV_CLIPBOARD_ReleaseSelection
@@ -754,87 +1632,92 @@ END:
 void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
 {
     Display *display = thread_display();
-    Atom xaClipboard = TSXInternAtom(display, "CLIPBOARD", False);
-    int clearAllSelections = 0;
-    HKEY hkey;
-
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Clipboard", &hkey))
-    {
-	char buffer[20];
-	DWORD type, count = sizeof(buffer);
-	if(!RegQueryValueExA(hkey, "ClearAllSelections", 0, &type, buffer, &count))
-	    clearAllSelections = atoi(buffer);
-        RegCloseKey(hkey);
-    }
 
     /* w is the window that lost the selection
-     * selectionPrevWindow is nonzero if CheckSelection() was called.
      */
+    TRACE("event->window = %08x (selectionWindow = %08x) selectionAcquired=0x%08x\n",
+	  (unsigned)w, (unsigned)selectionWindow, (unsigned)selectionAcquired);
 
-    TRACE("\tevent->window = %08x (sw = %08x, spw=%08x)\n",
-	  (unsigned)w, (unsigned)selectionWindow, (unsigned)selectionPrevWindow );
-
-    if( selectionAcquired )
+    if (selectionAcquired)
     {
-	if( w == selectionWindow || selectionPrevWindow == None)
-	{
+	if (w == selectionWindow)
+        {
             /* If we're losing the CLIPBOARD selection, or if the preferences in .winerc
              * dictate that *all* selections should be cleared on loss of a selection,
              * we must give up all the selections we own.
              */
-            if ( clearAllSelections || (selType == xaClipboard) )
+            if (clearAllSelections || (selType == xaClipboard))
             {
-              /* completely give up the selection */
-              TRACE("Lost CLIPBOARD (+PRIMARY) selection\n");
+                CLIPBOARDINFO cbinfo;
 
-              /* We are completely giving up the selection.
-               * Make sure we can open the windows clipboard first. */
+                /* completely give up the selection */
+                TRACE("Lost CLIPBOARD (+PRIMARY) selection\n");
 
-              if ( !OpenClipboard(hwnd) )
-              {
-                  /*
-                   * We can't empty the clipboard if we cant open it so abandon.
-                   * Wine will think that it still owns the selection but this is
-                   * safer than losing the selection without properly emptying
-                   * the clipboard. Perhaps we should forcibly re-assert ownership
-                   * of the CLIPBOARD selection in this case...
-                   */
-                  ERR("\tClipboard is busy. Could not give up selection!\n");
-                  return;
-              }
-
-              /* We really lost CLIPBOARD but want to voluntarily lose PRIMARY */
-              if ( (selType == xaClipboard)
-                   && (selectionAcquired & S_PRIMARY) )
-              {
-                  XSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
-              }
-
-              /* We really lost PRIMARY but want to voluntarily lose CLIPBOARD  */
-              if ( (selType == XA_PRIMARY)
-                   && (selectionAcquired & S_CLIPBOARD) )
-              {
-                  XSetSelectionOwner(display, xaClipboard, None, CurrentTime);
-              }
-
-              selectionWindow = None;
-              PrimarySelectionOwner = ClipboardSelectionOwner = 0;
-
-              /* Empty the windows clipboard.
-               * We should pretend that we still own the selection BEFORE calling
-               * EmptyClipboard() since otherwise this has the side effect of
-               * triggering X11DRV_CLIPBOARD_Acquire() and causing the X selection
-               * to be re-acquired by us!
+              /* We are completely giving up the selection. There is a
+               * potential race condition where the apps that now owns
+	       * the selection has already grabbed both selections. In
+	       * this case, if we clear any selection we may clear the
+	       * new owners selection. To prevent this common case we
+	       * try to open the clipboard. If we can't, we assume it
+	       * was a wine apps that took it and has taken both selectons.
+	       * In this case, don't bother releasing the other selection.
+	       * Otherwise only release the selection if we still own it.
                */
-              selectionAcquired = (S_PRIMARY | S_CLIPBOARD);
-              EmptyClipboard();
-              CloseClipboard();
+                X11DRV_CLIPBOARD_GetClipboardInfo(&cbinfo);
 
-              /* Give up ownership of the windows clipboard */
-              CLIPBOARD_ReleaseOwner();
+                if (cbinfo.flags & CB_OWNER)
+                {
+                    /* Since we're still the owner, this wasn't initiated by 
+		       another Wine process */
+                    if (OpenClipboard(hwnd))
+                    {
+                      /* We really lost CLIPBOARD but want to voluntarily lose PRIMARY */
+                      if ((selType == xaClipboard) && (selectionAcquired & S_PRIMARY))
+                      {
+		          TRACE("Lost clipboard. Check if we need to release PRIMARY\n");
+                          if (selectionWindow == TSXGetSelectionOwner(display,XA_PRIMARY))
+                          {
+		             TRACE("We still own PRIMARY. Releasing PRIMARY.\n");
+                             XSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
+                          }
+		          else
+		             TRACE("We no longer own PRIMARY\n");
+                      }
 
-              /* Reset the selection flags now that we are done */
-              selectionAcquired = S_NOSELECTION;
+                      /* We really lost PRIMARY but want to voluntarily lose CLIPBOARD  */
+                      if ((selType == XA_PRIMARY) && (selectionAcquired & S_CLIPBOARD))
+                      {
+		          TRACE("Lost PRIMARY. Check if we need to release CLIPBOARD\n");
+                          if (selectionWindow == TSXGetSelectionOwner(display,xaClipboard))
+                          {
+		              TRACE("We still own CLIPBOARD. Releasing CLIPBOARD.\n");
+                              XSetSelectionOwner(display, xaClipboard, None, CurrentTime);
+                          }
+		          else
+		              TRACE("We no longer own CLIPBOARD\n");
+                      }
+
+                      /* Destroy private objects */
+                      SendMessageW(cbinfo.hWndOwner, WM_DESTROYCLIPBOARD, 0, 0);
+   
+                      /* Give up ownership of the windows clipboard */
+                      X11DRV_CLIPBOARD_ReleaseOwnership();
+
+                      CloseClipboard();
+                    }
+                }
+	        else
+                {
+                    TRACE("Lost selection to other Wine process.\n");
+                }
+
+                selectionWindow = None;
+                PrimarySelectionOwner = ClipboardSelectionOwner = 0;
+
+                X11DRV_EmptyClipboard();
+
+                /* Reset the selection flags now that we are done */
+                selectionAcquired = S_NOSELECTION;
             }
             else if ( selType == XA_PRIMARY ) /* Give up only PRIMARY selection */
             {
@@ -842,94 +1725,92 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
                 PrimarySelectionOwner = 0;
                 selectionAcquired &= ~S_PRIMARY;  /* clear S_PRIMARY mask */
             }
-
-            cSelectionTargets = 0;
 	}
-        /* but we'll keep existing data for internal use */
-	else if( w == selectionPrevWindow )
-	{
-            Atom xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
-
-	    w = TSXGetSelectionOwner(display, XA_PRIMARY);
-	    if( w == None )
-		TSXSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
-
-	    w = TSXGetSelectionOwner(display, xaClipboard);
-	    if( w == None )
-		TSXSetSelectionOwner(display, xaClipboard, selectionWindow, CurrentTime);
-        }
     }
-
-    /* Signal to a selectionClearEvent listener if the selection is completely lost */
-    if (selectionClearEvent && !selectionAcquired)
-    {
-        TRACE("Lost all selections, signalling to selectionClearEvent listener\n");
-        SetEvent(selectionClearEvent);
-    }
-
-    selectionPrevWindow = None;
 }
+
 
 /**************************************************************************
- *		ReleaseClipboard (X11DRV.@)
- *  Voluntarily release all currently owned X selections
+ *		IsSelectionOwner (X11DRV.@)
+ *
+ * Returns: TRUE if the selection is owned by this process, FALSE otherwise
  */
-void X11DRV_ReleaseClipboard(void)
+static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void)
 {
-    Display *display = thread_display();
-    if( selectionAcquired )
-    {
-	XEvent xe;
-        Window savePrevWindow = selectionWindow;
-        Atom xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
-        BOOL bHasPrimarySelection = selectionAcquired & S_PRIMARY;
-
-	selectionAcquired   = S_NOSELECTION;
-	selectionPrevWindow = selectionWindow;
-	selectionWindow     = None;
-
-	TRACE("\tgiving up selection (spw = %08x)\n",
-	     (unsigned)selectionPrevWindow);
-
-        wine_tsx11_lock();
-
-        TRACE("Releasing CLIPBOARD selection\n");
-        XSetSelectionOwner(display, xaClipboard, None, CurrentTime);
-	if( selectionPrevWindow )
-	    while( !XCheckTypedWindowEvent( display, selectionPrevWindow,
-                                            SelectionClear, &xe ) );
-
-        if ( bHasPrimarySelection )
-        {
-            TRACE("Releasing XA_PRIMARY selection\n");
-            selectionPrevWindow = savePrevWindow; /* May be cleared in X11DRV_CLIPBOARD_ReleaseSelection */
-            XSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
-
-            if( selectionPrevWindow )
-                while( !XCheckTypedWindowEvent( display, selectionPrevWindow,
-                                                SelectionClear, &xe ) );
-        }
-        wine_tsx11_unlock();
-    }
-
-    /* Get rid of any Pixmap resources we may still have */
-    while (prop_head)
-    {
-        PROPERTY *prop = prop_head;
-        prop_head = prop->next;
-        XFreePixmap( gdi_display, prop->pixmap );
-        HeapFree( GetProcessHeap(), 0, prop );
-    }
+    return selectionAcquired;
 }
+
+
+/**************************************************************************
+ *                X11DRV Clipboard Exports
+ **************************************************************************/
+
+
+/**************************************************************************
+ *		RegisterClipboardFormat (X11DRV.@)
+ *
+ * Registers a custom X clipboard format
+ * Returns: Format id or 0 on failure
+ */
+INT X11DRV_RegisterClipboardFormat(LPCSTR FormatName)
+{
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+
+    if (FormatName == NULL) 
+        return 0;
+
+    TRACE("('%s') !\n", FormatName);
+
+    /* walk format chain to see if it's already registered */
+    while(TRUE)
+    {
+	if ( !strcasecmp(lpFormat->Name, FormatName) && 
+	     (lpFormat->wFlags & CF_FLAG_BUILTINFMT) == 0)
+	     return lpFormat->wFormatID;
+
+        if (!lpFormat->NextFormat)
+            break;
+
+	lpFormat = lpFormat->NextFormat;
+    }
+
+    return X11DRV_CLIPBOARD_InsertClipboardFormat(FormatName, FormatName);
+}
+
+
+/**************************************************************************
+ *		X11DRV_GetClipboardFormatName
+ */
+INT X11DRV_GetClipboardFormatName(UINT wFormat, LPSTR retStr, INT maxlen)
+{
+    INT len = 0;
+    LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
+
+    TRACE("(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
+
+    if (!lpFormat || (lpFormat->wFlags & CF_FLAG_BUILTINFMT))
+    {
+        TRACE("Unknown format 0x%08x!\n", wFormat);
+        SetLastError(ERROR_INVALID_PARAMETER);
+    }
+    else
+    {
+        strncpy(retStr, lpFormat->Name, maxlen - 1);
+        retStr[maxlen - 1] = 0;
+
+        len = strlen(retStr);
+    }
+
+    return len;
+}
+
 
 /**************************************************************************
  *		AcquireClipboard (X11DRV.@)
  */
-void X11DRV_AcquireClipboard(void)
+void X11DRV_AcquireClipboard(HWND hWndClipWindow)
 {
     Display *display = thread_display();
-    Window       owner;
-    HWND         hWndClipWindow = GetOpenClipboardWindow();
 
     /*
      * Acquire X selection if we don't already own it.
@@ -943,24 +1824,22 @@ void X11DRV_AcquireClipboard(void)
      * re-cycled to another top level X window in X11DRV_CLIPBOARD_ResetOwner.
      *
      */
-
-    if ( !(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)) )
+    if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
     {
-        Atom xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
-        owner = X11DRV_get_whole_window( GetAncestor( hWndClipWindow, GA_ROOT ) );
+        Window owner = X11DRV_get_whole_window(GetAncestor(hWndClipWindow, GA_ROOT));
 
         /* Grab PRIMARY selection if not owned */
-        if ( !(selectionAcquired & S_PRIMARY) )
+        if (!(selectionAcquired & S_PRIMARY))
             TSXSetSelectionOwner(display, XA_PRIMARY, owner, CurrentTime);
 
         /* Grab CLIPBOARD selection if not owned */
-        if ( !(selectionAcquired & S_CLIPBOARD) )
+        if (!(selectionAcquired & S_CLIPBOARD))
             TSXSetSelectionOwner(display, xaClipboard, owner, CurrentTime);
 
-        if( TSXGetSelectionOwner(display,XA_PRIMARY) == owner )
+        if (TSXGetSelectionOwner(display,XA_PRIMARY) == owner)
 	    selectionAcquired |= S_PRIMARY;
 
-        if( TSXGetSelectionOwner(display,xaClipboard) == owner)
+        if (TSXGetSelectionOwner(display,xaClipboard) == owner)
 	    selectionAcquired |= S_CLIPBOARD;
 
         if (selectionAcquired)
@@ -969,196 +1848,235 @@ void X11DRV_AcquireClipboard(void)
 	    TRACE("Grabbed X selection, owner=(%08x)\n", (unsigned) owner);
         }
     }
+    else
+    {
+        WARN("Received request to acquire selection but process is already owner=(%08x)\n", (unsigned) selectionWindow);
+
+        selectionAcquired  = S_NOSELECTION;
+
+        if (TSXGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
+	    selectionAcquired |= S_PRIMARY;
+
+        if (TSXGetSelectionOwner(display,xaClipboard) == selectionWindow)
+	    selectionAcquired |= S_CLIPBOARD;
+
+        if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
+	{
+            WARN("Lost selection but process didn't process SelectClear\n");
+            selectionWindow = None;
+	}
+    }
 }
 
+
 /**************************************************************************
- *		IsClipboardFormatAvailable (X11DRV.@)
- *
- * Checks if the specified format is available in the current selection
- * Only invoked when WINE is not the selection owner
+ *	X11DRV_EmptyClipboard
+ */
+void X11DRV_EmptyClipboard(void)
+{
+    if (ClipData)
+    {
+        LPWINE_CLIPDATA lpData;
+        LPWINE_CLIPDATA lpNext = ClipData;
+
+        do
+        {
+            lpData = lpNext;
+            lpNext = lpData->NextData;
+            lpData->PrevData->NextData = lpData->NextData;
+            lpData->NextData->PrevData = lpData->PrevData;
+            X11DRV_CLIPBOARD_FreeData(lpData);
+            HeapFree(GetProcessHeap(), 0, lpData);
+        } while (lpNext != lpData);
+    }
+
+    TRACE(" %d entries deleted from cache.\n", ClipDataCount);
+
+    ClipData = NULL;
+    ClipDataCount = 0;
+}
+
+
+
+/**************************************************************************
+ *		X11DRV_SetClipboardData
+ */
+BOOL X11DRV_SetClipboardData(UINT wFormat, HANDLE16 hData16, HANDLE hData32)
+{
+    BOOL bResult = FALSE;
+
+    if (X11DRV_CLIPBOARD_InsertClipboardData(wFormat, hData16, hData32, 0))
+        bResult = TRUE;
+
+    return bResult;
+}
+
+
+/**************************************************************************
+ *		CountClipboardFormats
+ */
+INT X11DRV_CountClipboardFormats(void)
+{
+    CLIPBOARDINFO cbinfo;
+
+    X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
+
+    TRACE(" count=%d\n", ClipDataCount);
+
+    return ClipDataCount;
+}
+
+
+/**************************************************************************
+ *		X11DRV_EnumClipboardFormats
+ */
+UINT X11DRV_EnumClipboardFormats(UINT wFormat)
+{
+    CLIPBOARDINFO cbinfo;
+    UINT wNextFormat = 0;
+
+    TRACE("(%04X)\n", wFormat);
+
+    X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
+
+    if (!wFormat)
+    {
+        if (ClipData)
+            wNextFormat = ClipData->wFormatID;
+    }
+    else
+    {
+        LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(wFormat);
+
+	if (lpData && lpData->NextData != ClipData)
+            wNextFormat = lpData->NextData->wFormatID;
+    }
+
+    return wNextFormat;
+}
+
+
+/**************************************************************************
+ *		X11DRV_IsClipboardFormatAvailable
  */
 BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
 {
-    Display *display = thread_display();
-    Atom xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
-    Window ownerPrimary = TSXGetSelectionOwner(display,XA_PRIMARY);
-    Window ownerClipboard = TSXGetSelectionOwner(display,xaClipboard);
+    BOOL bRet = FALSE;
+    CLIPBOARDINFO cbinfo;
 
-    TRACE("enter for %d\n", wFormat);
+    TRACE("(%04X)\n", wFormat);
 
-    /*
-     * If the selection has not been previously cached, or the selection has changed,
-     * try and cache the list of available selection targets from the current selection.
-     */
-    if ( !cSelectionTargets || (PrimarySelectionOwner != ownerPrimary)
-                         || (ClipboardSelectionOwner != ownerClipboard) )
-    {
-        /*
-         * First try caching the CLIPBOARD selection.
-         * If unavailable try PRIMARY.
-         */
-        if ( X11DRV_CLIPBOARD_CacheDataFormats(xaClipboard) == 0 )
-        {
-            X11DRV_CLIPBOARD_CacheDataFormats(XA_PRIMARY);
-        }
+    X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
 
-        ClipboardSelectionOwner = ownerClipboard;
-        PrimarySelectionOwner = ownerPrimary;
-    }
+    if (wFormat != 0 && X11DRV_CLIPBOARD_LookupData(wFormat))
+        bRet = TRUE;
 
-    /* Exit if there is no selection */
-    if ( !ownerClipboard && !ownerPrimary )
-    {
-	TRACE("There is no selection owner\n");
-        return FALSE;
-    }
-
-    /* Check if the format is available in the clipboard cache */
-    if ( CLIPBOARD_IsPresent(wFormat) )
-        return TRUE;
-
-    /*
-     * Many X client apps (such as XTerminal) don't support being queried
-     * for the "TARGETS" target atom. To handle such clients we must actually
-     * try to convert the selection to the requested type.
-     */
-    if ( !cSelectionTargets )
-        return X11DRV_GetClipboardData( wFormat );
-
-    TRACE("There is no selection\n");
-    return FALSE;
-}
-
-/**************************************************************************
- *		RegisterClipboardFormat (X11DRV.@)
- *
- * Registers a custom X clipboard format
- * Returns: Format id or 0 on failure
- */
-INT X11DRV_RegisterClipboardFormat( LPCSTR FormatName )
-{
-    Display *display = thread_display();
-    Atom prop = None;
-    char str[256];
-
-    /*
-     * If an X atom is registered for this format, return that
-     * Otherwise register a new atom.
-     */
-    if (FormatName)
-    {
-        /* Add a WINE specific prefix to the format */
-        strcpy(str, FMT_PREFIX);
-        strncat(str, FormatName, sizeof(str) - strlen(FMT_PREFIX));
-        prop = TSXInternAtom(display, str, False);
-    }
-
-    return prop;
-}
-
-/**************************************************************************
- *		IsSelectionOwner (X11DRV.@)
- *
- * Returns: TRUE - We(WINE) own the selection, FALSE - Selection not owned by us
- */
-BOOL X11DRV_IsSelectionOwner(void)
-{
-    return selectionAcquired;
-}
-
-/**************************************************************************
- *		SetClipboardData (X11DRV.@)
- *
- * We don't need to do anything special here since the clipboard code
- * maintains the cache.
- *
- */
-void X11DRV_SetClipboardData(UINT wFormat)
-{
-    /* Make sure we have acquired the X selection */
-    X11DRV_AcquireClipboard();
-}
-
-/**************************************************************************
- *		GetClipboardData (X11DRV.@)
- *
- * This method is invoked only when we DO NOT own the X selection
- *
- * NOTE: Clipboard driver get requests only for CF_UNICODETEXT data.
- * We always get the data from the selection client each time,
- * since we have no way of determining if the data in our cache is stale.
- */
-BOOL X11DRV_GetClipboardData(UINT wFormat)
-{
-    Display *display = thread_display();
-    BOOL bRet = selectionAcquired;
-    HWND hWndClipWindow = GetOpenClipboardWindow();
-    HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
-    LPWINE_CLIPFORMAT lpFormat;
-
-    TRACE("%d\n", wFormat);
-
-    if (!selectionAcquired)
-    {
-        XEvent xe;
-        Atom propRequest;
-        Window w = X11DRV_get_whole_window( GetAncestor( hWnd, GA_ROOT ));
-        if(!w)
-        {
-            FIXME("No parent win found %p %p\n", hWnd, hWndClipWindow);
-            return FALSE;
-        }
-
-        /* Map the format ID requested to an X selection property.
-         * If the format is in the cache, use the atom associated
-         * with it.
-         */
-
-        lpFormat = CLIPBOARD_LookupFormat( wFormat );
-        if (lpFormat && lpFormat->wDataPresent && lpFormat->drvData)
-            propRequest = (Atom)lpFormat->drvData;
-        else
-            propRequest = X11DRV_CLIPBOARD_MapFormatToProperty(wFormat);
-
-        if (propRequest)
-        {
-            TRACE("Requesting %s selection from %s...\n",
-                  TSXGetAtomName(display, propRequest),
-                  TSXGetAtomName(display, selectionCacheSrc) );
-            wine_tsx11_lock();
-            XConvertSelection(display, selectionCacheSrc, propRequest,
-                            TSXInternAtom(display, "SELECTION_DATA", False),
-                            w, CurrentTime);
-
-            /* wait until SelectionNotify is received */
-
-            while( TRUE )
-            {
-               if( XCheckTypedWindowEvent(display, w, SelectionNotify, &xe) )
-                   if( xe.xselection.selection == selectionCacheSrc )
-                       break;
-            }
-            wine_tsx11_unlock();
-
-            /*
-             *  Read the contents of the X selection property into WINE's
-             *  clipboard cache converting the selection to be compatible if possible.
-             */
-            bRet = X11DRV_CLIPBOARD_ReadSelection( wFormat,
-                                                   xe.xselection.requestor,
-                                                   xe.xselection.property,
-                                                   xe.xselection.target);
-        }
-        else
-            bRet = FALSE;
-
-        TRACE("\tpresent %s = %i\n", CLIPBOARD_GetFormatName(wFormat, NULL, 0), bRet );
-    }
-
-    TRACE("Returning %d\n", bRet);
+    TRACE("(%04X)- ret(%d)\n", wFormat, bRet);
 
     return bRet;
 }
+
+
+/**************************************************************************
+ *		GetClipboardData (USER.142)
+ */
+BOOL X11DRV_GetClipboardData(UINT wFormat, HANDLE16* phData16, HANDLE* phData32)
+{
+    CLIPBOARDINFO cbinfo;
+    LPWINE_CLIPDATA lpRender;
+
+    TRACE("(%04X)\n", wFormat);
+
+    X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
+
+    if ((lpRender = X11DRV_CLIPBOARD_LookupData(wFormat)))
+    {
+        if ( !lpRender->hData32 )
+            X11DRV_CLIPBOARD_RenderFormat(lpRender);
+
+        /* Convert between 32 -> 16 bit data, if necessary */
+        if (lpRender->hData32 && !lpRender->hData16)
+        {
+            int size;
+
+            if (lpRender->wFormatID == CF_METAFILEPICT)
+                size = sizeof(METAFILEPICT16);
+            else
+                size = GlobalSize(lpRender->hData32);
+
+            lpRender->hData16 = GlobalAlloc16(GMEM_ZEROINIT, size);
+
+            if (!lpRender->hData16)
+                ERR("(%04X) -- not enough memory in 16b heap\n", wFormat);
+            else
+            {
+                if (lpRender->wFormatID == CF_METAFILEPICT)
+                {
+                    FIXME("\timplement function CopyMetaFilePict32to16\n");
+                    FIXME("\tin the appropriate file.\n");
+  #ifdef SOMEONE_IMPLEMENTED_ME
+                    CopyMetaFilePict32to16(GlobalLock16(lpRender->hData16),
+                        GlobalLock(lpRender->hData32));
+  #endif
+                }
+                else
+                {
+                    memcpy(GlobalLock16(lpRender->hData16),
+                        GlobalLock(lpRender->hData32), size);
+                }
+
+                GlobalUnlock16(lpRender->hData16);
+                GlobalUnlock(lpRender->hData32);
+            }
+        }
+
+        /* Convert between 32 -> 16 bit data, if necessary */
+        if (lpRender->hData16 && !lpRender->hData32)
+        {
+            int size;
+
+            if (lpRender->wFormatID == CF_METAFILEPICT)
+                size = sizeof(METAFILEPICT16);
+            else
+                size = GlobalSize(lpRender->hData32);
+
+            lpRender->hData32 = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE | 
+                GMEM_DDESHARE, size);
+
+            if (lpRender->wFormatID == CF_METAFILEPICT)
+            {
+                FIXME("\timplement function CopyMetaFilePict16to32\n");
+                FIXME("\tin the appropriate file.\n");
+#ifdef SOMEONE_IMPLEMENTED_ME
+                CopyMetaFilePict16to32(GlobalLock16(lpRender->hData32),
+                    GlobalLock(lpRender->hData16));
+#endif
+            }
+            else
+            {
+                memcpy(GlobalLock(lpRender->hData32),
+                    GlobalLock16(lpRender->hData16), size);
+            }
+
+            GlobalUnlock(lpRender->hData32);
+            GlobalUnlock16(lpRender->hData16);
+        }
+
+        if (phData16)
+            *phData16 = lpRender->hData16;
+
+        if (phData32)
+            *phData32 = lpRender->hData32;
+
+        TRACE(" returning hData16(%04x) hData32(%04x) (type %d)\n", 
+            lpRender->hData16, (unsigned int) lpRender->hData32, lpRender->wFormatID);
+
+        return lpRender->hData16 || lpRender->hData32;
+    }
+
+    return 0;
+}
+
 
 /**************************************************************************
  *		ResetSelectionOwner (X11DRV.@)
@@ -1175,50 +2093,51 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
     HWND hWndClipOwner = 0;
     HWND tmp;
     Window XWnd = X11DRV_get_whole_window(hwnd);
-    Atom xaClipboard;
     BOOL bLostSelection = FALSE;
+    Window selectionPrevWindow;
 
     /* There is nothing to do if we don't own the selection,
      * or if the X window which currently owns the selecion is different
      * from the one passed in.
      */
-    if ( !selectionAcquired || XWnd != selectionWindow
+    if (!selectionAcquired || XWnd != selectionWindow
          || selectionWindow == None )
        return;
 
-    if ( (bFooBar && XWnd) || (!bFooBar && !XWnd) )
+    if ((bFooBar && XWnd) || (!bFooBar && !XWnd))
        return;
 
     hWndClipOwner = GetClipboardOwner();
-    xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
 
     TRACE("clipboard owner = %p, selection window = %08x\n",
           hWndClipOwner, (unsigned)selectionWindow);
 
     /* now try to salvage current selection from being destroyed by X */
-
-    TRACE("\tchecking %08x\n", (unsigned) XWnd);
+    TRACE("checking %08x\n", (unsigned) XWnd);
 
     selectionPrevWindow = selectionWindow;
     selectionWindow = None;
 
-    if (!(tmp = GetWindow( hwnd, GW_HWNDNEXT ))) tmp = GetWindow( hwnd, GW_HWNDFIRST );
-    if (tmp && tmp != hwnd) selectionWindow = X11DRV_get_whole_window(tmp);
+    if (!(tmp = GetWindow(hwnd, GW_HWNDNEXT)))
+        tmp = GetWindow(hwnd, GW_HWNDFIRST);
 
-    if( selectionWindow != None )
+    if (tmp && tmp != hwnd) 
+        selectionWindow = X11DRV_get_whole_window(tmp);
+
+    if (selectionWindow != None)
     {
         /* We must pretend that we don't own the selection while making the switch
          * since a SelectionClear event will be sent to the last owner.
          * If there is no owner X11DRV_CLIPBOARD_ReleaseSelection will do nothing.
          */
         int saveSelectionState = selectionAcquired;
-        selectionAcquired = False;
+        selectionAcquired = S_NOSELECTION;
 
         TRACE("\tswitching selection from %08x to %08x\n",
                     (unsigned)selectionPrevWindow, (unsigned)selectionWindow);
 
         /* Assume ownership for the PRIMARY and CLIPBOARD selection */
-        if ( saveSelectionState & S_PRIMARY )
+        if (saveSelectionState & S_PRIMARY)
             TSXSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
 
         TSXSetSelectionOwner(display, xaClipboard, selectionWindow, CurrentTime);
@@ -1227,12 +2146,11 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
         selectionAcquired = saveSelectionState;
 
         /* Lose the selection if something went wrong */
-        if ( ( (saveSelectionState & S_PRIMARY) &&
-               (TSXGetSelectionOwner(display, XA_PRIMARY) != selectionWindow) )
-             || (TSXGetSelectionOwner(display, xaClipboard) != selectionWindow) )
+        if (((saveSelectionState & S_PRIMARY) &&
+           (TSXGetSelectionOwner(display, XA_PRIMARY) != selectionWindow)) || 
+           (TSXGetSelectionOwner(display, xaClipboard) != selectionWindow))
         {
             bLostSelection = TRUE;
-            goto END;
         }
         else
         {
@@ -1246,167 +2164,93 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
     else
     {
         bLostSelection = TRUE;
-        goto END;
     }
 
-END:
     if (bLostSelection)
     {
-      /* Launch the clipboard server if the selection can no longer be recyled
-       * to another top level window. */
+        TRACE("Lost the selection!\n");
 
-      if ( !X11DRV_CLIPBOARD_LaunchServer() )
-      {
-         /* Empty the windows clipboard if the server was not launched.
-          * We should pretend that we still own the selection BEFORE calling
-          * EmptyClipboard() since otherwise this has the side effect of
-          * triggering X11DRV_CLIPBOARD_Acquire() and causing the X selection
-          * to be re-acquired by us!
-          */
-
-         TRACE("\tLost the selection! Emptying the clipboard...\n");
-
-         OpenClipboard( 0 );
-         selectionAcquired = (S_PRIMARY | S_CLIPBOARD);
-         EmptyClipboard();
-
-         CloseClipboard();
-
-         /* Give up ownership of the windows clipboard */
-         CLIPBOARD_ReleaseOwner();
-      }
-
-      selectionAcquired = S_NOSELECTION;
-      ClipboardSelectionOwner = PrimarySelectionOwner = 0;
-      selectionWindow = 0;
+        X11DRV_CLIPBOARD_ReleaseOwnership();
+        selectionAcquired = S_NOSELECTION;
+        ClipboardSelectionOwner = PrimarySelectionOwner = 0;
+        selectionWindow = 0;
     }
-}
-
-/**************************************************************************
- *		X11DRV_CLIPBOARD_RegisterPixmapResource
- * Registers a Pixmap resource which is to be associated with a property Atom.
- * When the property is destroyed we also destroy the Pixmap through the
- * PropertyNotify event.
- */
-BOOL X11DRV_CLIPBOARD_RegisterPixmapResource( Atom property, Pixmap pixmap )
-{
-    PROPERTY *prop = HeapAlloc( GetProcessHeap(), 0, sizeof(*prop) );
-    if (!prop) return FALSE;
-    prop->atom = property;
-    prop->pixmap = pixmap;
-    prop->next = prop_head;
-    prop_head = prop;
-    return TRUE;
-}
-
-/**************************************************************************
- *		X11DRV_CLIPBOARD_FreeResources
- *
- * Called from EVENT_PropertyNotify() to give us a chance to destroy
- * any resources associated with this property.
- */
-void X11DRV_CLIPBOARD_FreeResources( Atom property )
-{
-    /* Do a simple linear search to see if we have a Pixmap resource
-     * associated with this property and release it.
-     */
-    PROPERTY **prop = &prop_head;
-
-    while (*prop)
-    {
-        if ((*prop)->atom == property)
-        {
-            PROPERTY *next = (*prop)->next;
-            XFreePixmap( gdi_display, (*prop)->pixmap );
-            HeapFree( GetProcessHeap(), 0, *prop );
-            *prop = next;
-        }
-        else prop = &(*prop)->next;
-    }
-}
-
-/**************************************************************************
- *		X11DRV_GetClipboardFormatName
- */
-BOOL X11DRV_GetClipboardFormatName( UINT wFormat, LPSTR retStr, UINT maxlen )
-{
-    BOOL bRet = FALSE;
-    char *itemFmtName = TSXGetAtomName(thread_display(), wFormat);
-    INT prefixlen = strlen(FMT_PREFIX);
-
-    if ( 0 == strncmp(itemFmtName, FMT_PREFIX, prefixlen ) )
-    {
-        strncpy(retStr, itemFmtName + prefixlen, maxlen);
-        bRet = TRUE;
-    }
-
-    TSXFree(itemFmtName);
-
-    return bRet;
 }
 
 
 /**************************************************************************
- *		CLIPBOARD_SerializeMetafile
+ *                      X11DRV_CLIPBOARD_SynthesizeData
  */
-HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, INT cbytes, BOOL out)
+static BOOL X11DRV_CLIPBOARD_SynthesizeData(UINT wFormatID)
 {
-    HANDLE h = 0;
+    BOOL bsyn = TRUE;
+    LPWINE_CLIPDATA lpSource = NULL;
 
-    if (out) /* Serialize out, caller should free memory */
+    TRACE(" %d\n", wFormatID);
+
+    /* Don't need to synthesize if it already exists */
+    if (X11DRV_CLIPBOARD_LookupData(wFormatID))
+        return TRUE;
+
+    if (wFormatID == CF_UNICODETEXT || wFormatID == CF_TEXT || wFormatID == CF_OEMTEXT)
     {
-        if (wformat == CF_METAFILEPICT)
-        {
-            LPMETAFILEPICT lpmfp = (LPMETAFILEPICT) GlobalLock(hdata);
-            int size = GetMetaFileBitsEx(lpmfp->hMF, 0, NULL);
-
-            h = GlobalAlloc(0, size + sizeof(METAFILEPICT));
-            if (h)
-            {
-                METAFILEPICT *pdata = GlobalLock(h);
-
-                memcpy(pdata, lpmfp, sizeof(METAFILEPICT));
-                GetMetaFileBitsEx(lpmfp->hMF, size, pdata + 1);
-
-                GlobalUnlock(h);
-            }
-
-            GlobalUnlock(hdata);
-        }
-        else if (wformat == CF_ENHMETAFILE)
-        {
-            int size = GetEnhMetaFileBits(hdata, 0, NULL);
-
-            h = GlobalAlloc(0, size);
-            if (h)
-            {
-                LPVOID pdata = GlobalLock(h);
-                GetEnhMetaFileBits(hdata, size, pdata);
-                GlobalUnlock(h);
-            }
-        }
+        bsyn = ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_UNICODETEXT)) &&
+            ~lpSource->wFlags & CF_FLAG_SYNTHESIZED) ||
+            ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_TEXT)) &&
+            ~lpSource->wFlags & CF_FLAG_SYNTHESIZED) ||
+            ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_OEMTEXT)) &&
+            ~lpSource->wFlags & CF_FLAG_SYNTHESIZED);
     }
-    else
+    else if (wFormatID == CF_ENHMETAFILE)
     {
-        if (wformat == CF_METAFILEPICT)
-        {
-            h = GlobalAlloc(0, sizeof(METAFILEPICT));
-            if (h)
-            {
-                LPMETAFILEPICT pmfp = (LPMETAFILEPICT) GlobalLock(h);
-
-                memcpy(pmfp, (LPVOID)hdata, sizeof(METAFILEPICT));
-                pmfp->hMF = SetMetaFileBitsEx(cbytes - sizeof(METAFILEPICT),
-                                              (char *)hdata + sizeof(METAFILEPICT));
-
-                GlobalUnlock(h);
-            }
-        }
-        else if (wformat == CF_ENHMETAFILE)
-        {
-            h = SetEnhMetaFileBits(cbytes, (LPVOID)hdata);
-        }
+        bsyn = (lpSource = X11DRV_CLIPBOARD_LookupData(CF_METAFILEPICT)) &&
+            ~lpSource->wFlags & CF_FLAG_SYNTHESIZED;
+    }
+    else if (wFormatID == CF_METAFILEPICT)
+    {
+        bsyn = (lpSource = X11DRV_CLIPBOARD_LookupData(CF_METAFILEPICT)) &&
+            ~lpSource->wFlags & CF_FLAG_SYNTHESIZED;
+    }
+    else if (wFormatID == CF_DIB)
+    {
+        bsyn = (lpSource = X11DRV_CLIPBOARD_LookupData(CF_BITMAP)) &&
+            ~lpSource->wFlags & CF_FLAG_SYNTHESIZED;
+    }
+    else if (wFormatID == CF_BITMAP)
+    {
+        bsyn = (lpSource = X11DRV_CLIPBOARD_LookupData(CF_DIB)) &&
+            ~lpSource->wFlags & CF_FLAG_SYNTHESIZED;
     }
 
-    return h;
+    if (bsyn)
+        X11DRV_CLIPBOARD_InsertClipboardData(wFormatID, 0, 0, CF_FLAG_SYNTHESIZED);
+
+    return bsyn;
+}
+
+
+
+/**************************************************************************
+ *              X11DRV_EndClipboardUpdate
+ * TODO:
+ *  Add locale if it hasn't already been added
+ */
+void X11DRV_EndClipboardUpdate(void)
+{
+    INT count = ClipDataCount;
+
+    /* Do Unicode <-> Text <-> OEM mapping */
+    X11DRV_CLIPBOARD_SynthesizeData(CF_UNICODETEXT);
+    X11DRV_CLIPBOARD_SynthesizeData(CF_TEXT);
+    X11DRV_CLIPBOARD_SynthesizeData(CF_OEMTEXT);
+
+    /* Enhmetafile <-> MetafilePict mapping */
+    X11DRV_CLIPBOARD_SynthesizeData(CF_ENHMETAFILE);
+    X11DRV_CLIPBOARD_SynthesizeData(CF_METAFILEPICT);
+
+    /* DIB <-> Bitmap mapping */
+    X11DRV_CLIPBOARD_SynthesizeData(CF_DIB);
+    X11DRV_CLIPBOARD_SynthesizeData(CF_BITMAP);
+
+    TRACE("%d formats added to cached data\n", ClipDataCount - count);
 }

@@ -715,12 +715,6 @@
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #
-@ cdecl CLIPBOARD_DeleteRecord(ptr long)
-@ cdecl CLIPBOARD_EmptyCache(long)
-@ cdecl CLIPBOARD_GetFormatName(long ptr long)
-@ cdecl CLIPBOARD_IsPresent(long)
-@ cdecl CLIPBOARD_LookupFormat(long)
-@ cdecl CLIPBOARD_ReleaseOwner()
 @ cdecl DCE_InvalidateDCE(long ptr)
 @ cdecl HOOK_CallHooks(long long long long long)
 @ cdecl NC_GetInsideRect(long ptr)

@@ -89,13 +89,15 @@ static BOOL load_driver(void)
     GET_USER_FUNC(GetScreenSaveActive);
     GET_USER_FUNC(SetScreenSaveActive);
     GET_USER_FUNC(AcquireClipboard);
-    GET_USER_FUNC(ReleaseClipboard);
+    GET_USER_FUNC(EmptyClipboard);
     GET_USER_FUNC(SetClipboardData);
     GET_USER_FUNC(GetClipboardData);
+    GET_USER_FUNC(CountClipboardFormats);
+    GET_USER_FUNC(EnumClipboardFormats);
     GET_USER_FUNC(IsClipboardFormatAvailable);
     GET_USER_FUNC(RegisterClipboardFormat);
     GET_USER_FUNC(GetClipboardFormatName);
-    GET_USER_FUNC(IsSelectionOwner);
+    GET_USER_FUNC(EndClipboardUpdate);
     GET_USER_FUNC(ResetSelectionOwner);
     GET_USER_FUNC(ChangeDisplaySettingsExW);
     GET_USER_FUNC(EnumDisplaySettingsExW);

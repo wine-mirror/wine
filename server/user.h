@@ -42,6 +42,10 @@ extern user_handle_t get_user_full_handle( user_handle_t handle );
 extern void *free_user_handle( user_handle_t handle );
 extern void *next_user_handle( user_handle_t *handle, enum user_object type );
 
+/* clipboard functions */
+
+extern void cleanup_clipboard_thread( struct thread *thread );
+
 /* hook functions */
 
 extern void close_global_hooks(void);

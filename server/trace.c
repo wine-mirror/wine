@@ -2458,6 +2458,24 @@ static void dump_get_next_hook_reply( const struct get_next_hook_reply *req )
     dump_varargs_unicode_str( cur_size );
 }
 
+static void dump_set_clipboard_info_request( const struct set_clipboard_info_request *req )
+{
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " clipboard=%p,", req->clipboard );
+    fprintf( stderr, " owner=%p,", req->owner );
+    fprintf( stderr, " viewer=%p,", req->viewer );
+    fprintf( stderr, " seqno=%08x", req->seqno );
+}
+
+static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply *req )
+{
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " old_clipboard=%p,", req->old_clipboard );
+    fprintf( stderr, " old_owner=%p,", req->old_owner );
+    fprintf( stderr, " old_viewer=%p,", req->old_viewer );
+    fprintf( stderr, " seqno=%08x", req->seqno );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2634,6 +2652,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_start_hook_chain_request,
     (dump_func)dump_finish_hook_chain_request,
     (dump_func)dump_get_next_hook_request,
+    (dump_func)dump_set_clipboard_info_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2812,6 +2831,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_start_hook_chain_reply,
     (dump_func)0,
     (dump_func)dump_get_next_hook_reply,
+    (dump_func)dump_set_clipboard_info_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -2990,6 +3010,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "start_hook_chain",
     "finish_hook_chain",
     "get_next_hook",
+    "set_clipboard_info",
 };
 
 /* ### make_requests end ### */

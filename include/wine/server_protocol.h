@@ -3041,6 +3041,36 @@ struct get_next_hook_reply
 };
 
 
+
+struct set_clipboard_info_request
+{
+    struct request_header __header;
+    unsigned int   flags;
+    user_handle_t  clipboard;
+    user_handle_t  owner;
+    user_handle_t  viewer;
+    unsigned int   seqno;
+};
+struct set_clipboard_info_reply
+{
+    struct reply_header __header;
+    unsigned int   flags;
+    user_handle_t  old_clipboard;
+    user_handle_t  old_owner;
+    user_handle_t  old_viewer;
+    unsigned int   seqno;
+};
+
+#define SET_CB_OPEN      0x001
+#define SET_CB_OWNER     0x002
+#define SET_CB_VIEWER    0x004
+#define SET_CB_SEQNO     0x008
+#define SET_CB_RELOWNER  0x010
+#define SET_CB_CLOSE     0x020
+#define CB_OPEN          0x040
+#define CB_OWNER         0x080
+
+
 enum request
 {
     REQ_new_process,
@@ -3218,6 +3248,7 @@ enum request
     REQ_start_hook_chain,
     REQ_finish_hook_chain,
     REQ_get_next_hook,
+    REQ_set_clipboard_info,
     REQ_NB_REQUESTS
 };
 
@@ -3400,6 +3431,7 @@ union generic_request
     struct start_hook_chain_request start_hook_chain_request;
     struct finish_hook_chain_request finish_hook_chain_request;
     struct get_next_hook_request get_next_hook_request;
+    struct set_clipboard_info_request set_clipboard_info_request;
 };
 union generic_reply
 {
@@ -3580,8 +3612,9 @@ union generic_reply
     struct start_hook_chain_reply start_hook_chain_reply;
     struct finish_hook_chain_reply finish_hook_chain_reply;
     struct get_next_hook_reply get_next_hook_reply;
+    struct set_clipboard_info_reply set_clipboard_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 111
+#define SERVER_PROTOCOL_VERSION 112
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

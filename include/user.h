@@ -82,15 +82,17 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pGetScreenSaveActive)(void);
     void   (*pSetScreenSaveActive)(BOOL);
     /* clipboard functions */
-    void   (*pAcquireClipboard)(void);            /* Acquire selection */
-    void   (*pReleaseClipboard)(void);            /* Release selection */
-    void   (*pSetClipboardData)(UINT);            /* Set specified selection data */
-    BOOL   (*pGetClipboardData)(UINT);            /* Get specified selection data */
-    BOOL   (*pIsClipboardFormatAvailable)(UINT);  /* Check if specified format is available */
-    INT    (*pRegisterClipboardFormat)(LPCSTR);   /* Register a clipboard format */
-    BOOL   (*pGetClipboardFormatName)(UINT, LPSTR, UINT); /* Get a clipboard format name */
-    BOOL   (*pIsSelectionOwner)(void);            /* Check if we own the selection */
+    void   (*pAcquireClipboard)(HWND);                     /* Acquire selection */
+    BOOL   (*pCountClipboardFormats)(void);                /* Count available clipboard formats */
+    void   (*pEmptyClipboard)(void);                       /* Empty clipboard data */
+    BOOL   (*pEndClipboardUpdate)(void);                   /* End clipboard update */
+    BOOL   (*pEnumClipboardFormats)(UINT);                 /* Enumerate clipboard formats */
+    BOOL   (*pGetClipboardData)(UINT, HANDLE16*, HANDLE*); /* Get specified selection data */
+    BOOL   (*pGetClipboardFormatName)(UINT, LPSTR, UINT);  /* Get a clipboard format name */
+    BOOL   (*pIsClipboardFormatAvailable)(UINT);           /* Check if specified format is available */
+    INT    (*pRegisterClipboardFormat)(LPCSTR);            /* Register a clipboard format */
     void   (*pResetSelectionOwner)(HWND, BOOL);
+    BOOL   (*pSetClipboardData)(UINT, HANDLE16, HANDLE);   /* Set specified selection data */
     /* display modes */
     LONG   (*pChangeDisplaySettingsExW)(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);
     BOOL   (*pEnumDisplaySettingsExW)(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
@@ -162,6 +164,8 @@ extern void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height );
 extern INT SYSPARAMS_GetMouseButtonSwap( void );
 
 extern HPALETTE WINAPI SelectPalette( HDC hDC, HPALETTE hPal, BOOL bForceBackground );
+
+extern BOOL CLIPBOARD_ReleaseOwner(void);
 
 extern DWORD USER16_AlertableWait;
 

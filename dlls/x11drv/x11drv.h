@@ -373,15 +373,59 @@ extern Atom _kde_net_wm_system_tray_window_for;
 
 /* X11 clipboard driver */
 
-extern void X11DRV_CLIPBOARD_FreeResources( Atom property );
-extern BOOL X11DRV_CLIPBOARD_RegisterPixmapResource( Atom property, Pixmap pixmap );
-extern BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop);
-extern UINT X11DRV_CLIPBOARD_MapPropertyToFormat(char *itemFmtName);
-extern Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT id);
+typedef struct tagPROPERTYFORMATMAP
+{
+    LPCSTR lpszProperty;
+    LPCSTR lpszFormat;
+} PROPERTYFORMATMAP;
+
+typedef struct tagPROPERTYALIASMAP
+{
+    LPCSTR lpszProperty;
+    UINT drvDataProperty;
+    LPCSTR lpszAlias;
+    UINT drvDataAlias;
+} PROPERTYALIASMAP;
+
+typedef struct tagWINE_CLIPDATA {
+    UINT        wFormatID;
+    HANDLE16    hData16;
+    HANDLE      hData32;
+    UINT        wFlags;
+    struct tagWINE_CLIPDATA *PrevData;
+    struct tagWINE_CLIPDATA *NextData;
+} WINE_CLIPDATA, *LPWINE_CLIPDATA;
+
+typedef HANDLE (*DRVEXPORTFUNC)(LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+typedef HANDLE (*DRVIMPORTFUNC)(LPBYTE hData, UINT cBytes);
+
+typedef struct tagWINE_CLIPFORMAT {
+    UINT        wFormatID;
+    LPSTR       Name;
+    UINT        drvData;
+    UINT        wFlags;
+    DRVIMPORTFUNC  lpDrvImportFunc;
+    DRVEXPORTFUNC  lpDrvExportFunc;
+    struct tagWINE_CLIPFORMAT *PrevFormat;
+    struct tagWINE_CLIPFORMAT *NextFormat;
+} WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
+
+#define CF_FLAG_BUILTINFMT   1 /* Built-in windows format */
+#define CF_FLAG_SYNTHESIZED  8 /* Implicitly converted data */
+
+extern Atom xaClipboard;
+extern Atom xaTargets;
+extern Atom xaMultiple;
+
+extern BOOL X11DRV_InitClipboard(Display *display);
 extern void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd);
-extern BOOL X11DRV_IsSelectionOwner(void);
-extern BOOL X11DRV_GetClipboardData(UINT wFormat);
-extern HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, INT cbytes, BOOL out);
+extern INT X11DRV_CountClipboardFormats(void);
+extern UINT X11DRV_EnumClipboardFormats(UINT wFormat);
+extern LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID);
+extern LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(UINT drvData);
+extern LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID);
+extern UINT X11DRV_CLIPBOARD_LookupPropertyAlias(UINT drvDataProperty);
+extern LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupAliasProperty(UINT drvDataAlias);
 
 /* X11 event driver */
 

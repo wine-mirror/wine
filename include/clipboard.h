@@ -2,6 +2,7 @@
  * Copyright 1994 Martin Ayotte
  * Copyright 1996 Alex Korobka
  * Copyright 1999 Noel Borthwick
+ * Copyright 2003 Ulrich Czekalla for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,29 +23,14 @@
 #define __WINE_CLIPBOARD_H
 
 #include "windef.h"
-#include "wine/windef16.h"
 
-struct tagWND;
-
-typedef struct tagWINE_CLIPFORMAT {
-    UINT	wFormatID;
-    UINT	wRefCount;
-    BOOL	wDataPresent;
-    LPSTR	Name;
-    HANDLE16    hData16;
-    HANDLE	hDataSrc32;
-    HANDLE	hData32;
-    ULONG       drvData;
-    struct tagWINE_CLIPFORMAT *PrevFormat;
-    struct tagWINE_CLIPFORMAT *NextFormat;
-} WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
-
-extern LPWINE_CLIPFORMAT CLIPBOARD_LookupFormat( WORD wID );
-extern BOOL CLIPBOARD_IsCacheRendered();
-extern void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange);
-extern void CLIPBOARD_EmptyCache( BOOL bChange );
-extern BOOL CLIPBOARD_IsPresent(WORD wFormat);
-extern char * CLIPBOARD_GetFormatName(UINT wFormat, LPSTR buf, INT size);
-extern void CLIPBOARD_ReleaseOwner();
+typedef struct tagCLIPBOARDINFO
+{
+    HWND hWndOpen;
+    HWND hWndOwner;
+    HWND hWndViewer;
+    UINT seqno;
+    UINT flags;
+} CLIPBOARDINFO, *LPCLIPBOARDINFO;
 
 #endif /* __WINE_CLIPBOARD_H */

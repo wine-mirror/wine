@@ -47,6 +47,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(event);
+WINE_DECLARE_DEBUG_CHANNEL(clipboard);
 
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
@@ -272,10 +273,9 @@ static void EVENT_ProcessEvent( XEvent *event )
   if (XFindContext( display, event->xany.window, winContext, (char **)&hWnd ) != 0)
       hWnd = 0;  /* Not for a registered window */
   wine_tsx11_unlock();
+  if (!hWnd && event->xany.window == root_window) hWnd = GetDesktopWindow();
 
-  if ( !hWnd && event->xany.window != root_window
-             && event->type != PropertyNotify
-             && event->type != MappingNotify)
+  if (!hWnd && event->type != PropertyNotify && event->type != MappingNotify)
       WARN( "Got event %s for unknown Window %08lx\n",
             event_names[event->type], event->xany.window );
   else
@@ -575,68 +575,76 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
 
 
 /***********************************************************************
+ *           EVENT_SelectionRequest_AddTARGETS
+ *  Utility function for EVENT_SelectionRequest_TARGETS.
+ */
+static void EVENT_SelectionRequest_AddTARGETS(Atom* targets, unsigned long* cTargets, Atom prop)
+{
+    int i;
+    BOOL bExists;
+
+    /* Scan through what we have so far to avoid duplicates */
+    for (i = 0, bExists = FALSE; i < *cTargets; i++)
+    {
+        if (targets[i] == prop)
+        {
+            bExists = TRUE;
+            break;
+        }
+    }
+
+    if (!bExists)
+        targets[(*cTargets)++] = prop;
+}
+
+
+/***********************************************************************
  *           EVENT_SelectionRequest_TARGETS
  *  Service a TARGETS selection request event
  */
 static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
                                             Atom target, Atom rprop )
 {
-    Atom xaTargets = TSXInternAtom(display, "TARGETS", False);
     Atom* targets;
-    Atom prop;
     UINT wFormat;
-    unsigned long cTargets;
-    BOOL bHavePixmap;
-    int xRc;
-
-    TRACE("Request for %s\n", TSXGetAtomName(display, target));
+    UINT alias;
+    ULONG cTargets;
 
     /*
      * Count the number of items we wish to expose as selection targets.
-     * We include the TARGETS item, and a PIXMAP if we have CF_DIB or CF_BITMAP
+     * We include the TARGETS item, and propery aliases
      */
-    cTargets = CountClipboardFormats() + 1;
-    if ( CLIPBOARD_IsPresent(CF_DIB) ||  CLIPBOARD_IsPresent(CF_BITMAP) )
-       cTargets++;
+    cTargets = X11DRV_CountClipboardFormats() + 1;
+
+    for (wFormat = 0; (wFormat = X11DRV_EnumClipboardFormats(wFormat));)
+    {
+        LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
+        if (lpFormat && X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData))
+            cTargets++;
+    }
+
+    TRACE_(clipboard)(" found %ld formats\n", cTargets);
 
     /* Allocate temp buffer */
     targets = (Atom*)HeapAlloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
-    if(targets == NULL) return None;
+    if(targets == NULL) 
+        return None;
 
     /* Create TARGETS property list (First item in list is TARGETS itself) */
-
-    for ( targets[0] = xaTargets, cTargets = 1, wFormat = 0, bHavePixmap = FALSE;
-          (wFormat = EnumClipboardFormats( wFormat )); )
+    for (targets[0] = xaTargets, cTargets = 1, wFormat = 0;
+          (wFormat = X11DRV_EnumClipboardFormats(wFormat));)
     {
-        if ( (prop = X11DRV_CLIPBOARD_MapFormatToProperty(wFormat)) != None )
-        {
-            /* Scan through what we have so far to avoid duplicates */
-            int i;
-            BOOL bExists;
-            for (i = 0, bExists = FALSE; i < cTargets; i++)
-            {
-                if (targets[i] == prop)
-                {
-                    bExists = TRUE;
-                    break;
-                }
-            }
-            if (!bExists)
-            {
-                targets[cTargets++] = prop;
+        LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
 
-                /* Add PIXMAP prop for bitmaps additionally */
-                if ( (wFormat == CF_DIB || wFormat == CF_BITMAP )
-                     && !bHavePixmap )
-                {
-                    targets[cTargets++] = XA_PIXMAP;
-                    bHavePixmap = TRUE;
-                }
-            }
-        }
+        EVENT_SelectionRequest_AddTARGETS(targets, &cTargets, lpFormat->drvData);
+
+	/* Check if any alias should be listed */
+	alias = X11DRV_CLIPBOARD_LookupPropertyAlias(lpFormat->drvData);
+	if (alias)
+            EVENT_SelectionRequest_AddTARGETS(targets, &cTargets, alias);
     }
 
-    if (TRACE_ON(event))
+    if (TRACE_ON(clipboard))
     {
         int i;
         for ( i = 0; i < cTargets; i++)
@@ -644,260 +652,18 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
             if (targets[i])
             {
                 char *itemFmtName = TSXGetAtomName(display, targets[i]);
-                TRACE("\tAtom# %d:  Type %s\n", i, itemFmtName);
+                TRACE_(clipboard)("\tAtom# %d:  Property %ld Type %s\n", i, targets[i], itemFmtName);
                 TSXFree(itemFmtName);
             }
         }
     }
 
-    /* Update the X property */
-    TRACE("\tUpdating property %s...\n", TSXGetAtomName(display, rprop));
-
     /* We may want to consider setting the type to xaTargets instead,
      * in case some apps expect this instead of XA_ATOM */
-    xRc = TSXChangeProperty(display, requestor, rprop,
-                            XA_ATOM, 32, PropModeReplace,
-                            (unsigned char *)targets, cTargets);
-    TRACE("(Rc=%d)\n", xRc);
+    TSXChangeProperty(display, requestor, rprop, XA_ATOM, 32, 
+        PropModeReplace, (unsigned char *)targets, cTargets);
 
-    HeapFree( GetProcessHeap(), 0, targets );
-
-    return rprop;
-}
-
-
-/***********************************************************************
- *           EVENT_SelectionRequest_STRING
- *  Service a STRING selection request event
- */
-static Atom EVENT_SelectionRequest_STRING( Display *display, Window requestor,
-                                           Atom target, Atom rprop )
-{
-    static UINT text_cp = (UINT)-1;
-    HANDLE hUnicodeText;
-    LPWSTR uni_text;
-    LPSTR  text;
-    int    size,i,j;
-    char* lpstr = 0;
-    char *itemFmtName;
-    int xRc;
-
-    if(text_cp == (UINT)-1)
-    {
-	HKEY hkey;
-	/* default value */
-	text_cp = CP_ACP;
-	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
-	{
-	    char buf[20];
-	    DWORD type, count = sizeof(buf);
-	    if(!RegQueryValueExA(hkey, "TextCP", 0, &type, buf, &count))
-		text_cp = atoi(buf);
-	    RegCloseKey(hkey);
-	  }
-    }
-
-    /*
-     * Map the requested X selection property type atom name to a
-     * windows clipboard format ID.
-     */
-    itemFmtName = TSXGetAtomName(display, target);
-    TRACE("Request for %s (wFormat=%x %s)\n",
-	itemFmtName, CF_UNICODETEXT, CLIPBOARD_GetFormatName(CF_UNICODETEXT, NULL, 0));
-    TSXFree(itemFmtName);
-
-    hUnicodeText = GetClipboardData(CF_UNICODETEXT);
-    if(!hUnicodeText)
-       return None;
-    uni_text = GlobalLock(hUnicodeText);
-    if(!uni_text)
-       return None;
-
-    size = WideCharToMultiByte(text_cp, 0, uni_text, -1, NULL, 0, NULL, NULL);
-    text = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!text)
-       return None;
-    WideCharToMultiByte(text_cp, 0, uni_text, -1, text, size, NULL, NULL);
-
-    /* remove carriage returns */
-
-    lpstr = (char*)HeapAlloc( GetProcessHeap(), 0, size-- );
-    if(lpstr == NULL) return None;
-    for(i=0,j=0; i < size && text[i]; i++ )
-    {
-        if( text[i] == '\r' &&
-            (text[i+1] == '\n' || text[i+1] == '\0') ) continue;
-        lpstr[j++] = text[i];
-    }
-    lpstr[j]='\0';
-
-    /* Update the X property */
-    TRACE("\tUpdating property %s...\n", TSXGetAtomName(display, rprop));
-    xRc = TSXChangeProperty(display, requestor, rprop,
-                            XA_STRING, 8, PropModeReplace,
-                            lpstr, j);
-    TRACE("(Rc=%d)\n", xRc);
-
-    GlobalUnlock(hUnicodeText);
-    HeapFree(GetProcessHeap(), 0, text);
-    HeapFree( GetProcessHeap(), 0, lpstr );
-
-    return rprop;
-}
-
-/***********************************************************************
- *           EVENT_SelectionRequest_PIXMAP
- *  Service a PIXMAP selection request event
- */
-static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
-                                           Atom target, Atom rprop )
-{
-    HANDLE hClipData = 0;
-    Pixmap pixmap = 0;
-    UINT   wFormat;
-    char * itemFmtName;
-    int xRc;
-#if(0)
-    XSetWindowAttributes win_attr;
-    XWindowAttributes win_attr_src;
-#endif
-
-    /*
-     * Map the requested X selection property type atom name to a
-     * windows clipboard format ID.
-     */
-    itemFmtName = TSXGetAtomName(display, target);
-    wFormat = X11DRV_CLIPBOARD_MapPropertyToFormat(itemFmtName);
-    TRACE("Request for %s (wFormat=%x %s)\n",
-                  itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat, NULL, 0 ));
-    TSXFree(itemFmtName);
-
-    hClipData = GetClipboardData(wFormat);
-    if ( !hClipData )
-    {
-        TRACE("Could not retrieve a Pixmap compatible format from clipboard!\n");
-        rprop = None; /* Fail the request */
-        goto END;
-    }
-
-    if (wFormat == CF_DIB)
-    {
-        HWND hwnd = GetOpenClipboardWindow();
-        HDC hdc = GetDC(hwnd);
-
-        /* For convert from packed DIB to Pixmap */
-        pixmap = X11DRV_DIB_CreatePixmapFromDIB(hClipData, hdc);
-
-        ReleaseDC(hwnd, hdc);
-    }
-    else if (wFormat == CF_BITMAP)
-    {
-        HWND hwnd = GetOpenClipboardWindow();
-        HDC hdc = GetDC(hwnd);
-
-        pixmap = X11DRV_BITMAP_CreatePixmapFromBitmap(hClipData, hdc);
-
-        ReleaseDC(hwnd, hdc);
-    }
-    else
-    {
-        FIXME("%s to PIXMAP conversion not yet implemented!\n",
-                      CLIPBOARD_GetFormatName(wFormat, NULL, 0));
-        rprop = None;
-        goto END;
-    }
-
-    TRACE("\tUpdating property %s on Window %ld with %s %ld...\n",
-          TSXGetAtomName(display, rprop), (long)requestor,
-          TSXGetAtomName(display, target), pixmap);
-
-    /* Store the Pixmap handle in the property */
-    xRc = TSXChangeProperty(display, requestor, rprop, target,
-                            32, PropModeReplace,
-                            (unsigned char *)&pixmap, 1);
-    TRACE("(Rc=%d)\n", xRc);
-
-    /* Enable the code below if you want to handle destroying Pixmap resources
-     * in response to property notify events. Clients like XPaint don't
-     * appear to be duplicating Pixmaps so they don't like us deleting,
-     * the resource in response to the property being deleted.
-     */
-#if(0)
-    /* Express interest in property notify events so that we can delete the
-     * pixmap when the client deletes the property atom.
-     */
-    xRc = TSXGetWindowAttributes(display, requestor, &win_attr_src);
-    TRACE("Turning on PropertyChangeEvent notifications from window %ld\n",
-          (long)requestor);
-    win_attr.event_mask = win_attr_src.your_event_mask | PropertyChangeMask;
-    TSXChangeWindowAttributes(display, requestor, CWEventMask, &win_attr);
-
-    /* Register the Pixmap we created with the request property Atom.
-     * When this property is destroyed we also destroy the Pixmap in
-     * response to the PropertyNotify event.
-     */
-    X11DRV_CLIPBOARD_RegisterPixmapResource( rprop, pixmap );
-#endif
-
-END:
-    return rprop;
-}
-
-
-/***********************************************************************
- *           EVENT_SelectionRequest_WCF
- *  Service a Wine Clipboard Format selection request event.
- *  For <WCF>* data types we simply copy the data to X without conversion.
- */
-static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
-                                        Atom target, Atom rprop )
-{
-    HANDLE hClipData = 0;
-    void*  lpClipData;
-    UINT   wFormat;
-    char * itemFmtName;
-    int cBytes;
-    int xRc;
-    int bemf;
-
-    /*
-     * Map the requested X selection property type atom name to a
-     * windows clipboard format ID.
-     */
-    itemFmtName = TSXGetAtomName(display, target);
-    wFormat = X11DRV_CLIPBOARD_MapPropertyToFormat(itemFmtName);
-    TRACE("Request for %s (wFormat=%x %s)\n",
-          itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat, NULL, 0));
-    TSXFree(itemFmtName);
-
-    hClipData = GetClipboardData(wFormat);
-
-    bemf = wFormat == CF_METAFILEPICT || wFormat == CF_ENHMETAFILE;
-    if (bemf)
-        hClipData = X11DRV_CLIPBOARD_SerializeMetafile(wFormat, hClipData, sizeof(hClipData), TRUE);
-
-    if( hClipData && (lpClipData = GlobalLock(hClipData)) )
-    {
-        cBytes = GlobalSize(hClipData);
-
-        TRACE("\tUpdating property %s, %d bytes...\n",
-              TSXGetAtomName(display, rprop), cBytes);
-
-        xRc = TSXChangeProperty(display, requestor, rprop,
-                                target, 8, PropModeReplace,
-                                (unsigned char *)lpClipData, cBytes);
-        TRACE("(Rc=%d)\n", xRc);
-
-        GlobalUnlock(hClipData);
-    }
-    else
-    {
-        TRACE("\tCould not retrieve native format!\n");
-        rprop = None; /* Fail the request */
-    }
-
-    if (bemf) /* We must free serialized metafile data */
-        GlobalFree(hClipData);
+    HeapFree(GetProcessHeap(), 0, targets);
 
     return rprop;
 }
@@ -1016,10 +782,8 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
   XSelectionEvent result;
   Atom 	          rprop = None;
   Window          request = event->requestor;
-  BOOL            couldOpen = FALSE;
-  Atom            xaClipboard = TSXInternAtom(display, "CLIPBOARD", False);
-  Atom            xaTargets = TSXInternAtom(display, "TARGETS", False);
-  Atom            xaMultiple = TSXInternAtom(display, "MULTIPLE", False);
+
+  TRACE_(clipboard)("\n");
 
   /*
    * We can only handle the selection request if :
@@ -1029,8 +793,7 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
    */
   if ( !bIsMultiple )
   {
-    if ( ( (event->selection != XA_PRIMARY) && (event->selection != xaClipboard) )
-        || !(couldOpen = OpenClipboard(hWnd)) )
+    if (((event->selection != XA_PRIMARY) && (event->selection != xaClipboard)))
        goto END;
   }
 
@@ -1051,36 +814,48 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
       /* MULTIPLE selection request */
       rprop = EVENT_SelectionRequest_MULTIPLE( hWnd, event );
   }
-  else if(event->target == XA_STRING)  /* treat CF_TEXT as Unix text */
-  {
-      /* XA_STRING selection request */
-      rprop = EVENT_SelectionRequest_STRING( display, request, event->target, rprop );
-  }
-  else if(event->target == XA_PIXMAP)  /*  Convert DIB's to Pixmaps */
-  {
-      /* XA_PIXMAP selection request */
-      rprop = EVENT_SelectionRequest_PIXMAP( display, request, event->target, rprop );
-  }
-  else if(event->target == XA_BITMAP)  /*  Convert DIB's to 1-bit Pixmaps */
-  {
-      /* XA_BITMAP selection request - TODO: create a monochrome Pixmap */
-      rprop = EVENT_SelectionRequest_PIXMAP( display, request, XA_PIXMAP, rprop );
-  }
-  else if(X11DRV_CLIPBOARD_IsNativeProperty(event->target)) /* <WCF>* */
-  {
-      /* All <WCF> selection requests */
-      rprop = EVENT_SelectionRequest_WCF( display, request, event->target, rprop );
-  }
   else
-      rprop = None;  /* Don't support this format */
+  {
+      LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupProperty(event->target);
+
+      if (!lpFormat)
+          lpFormat = X11DRV_CLIPBOARD_LookupAliasProperty(event->target);
+
+      if (lpFormat)
+      {
+          LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(lpFormat->wFormatID);
+
+          if (lpData)
+          {
+              unsigned char* lpClipData;
+              DWORD cBytes;
+              HANDLE hClipData = lpFormat->lpDrvExportFunc(lpData, &cBytes);
+
+              if (hClipData && (lpClipData = GlobalLock(hClipData)))
+              {
+
+                  TRACE_(clipboard)("\tUpdating property %s, %ld bytes\n",
+                      lpFormat->Name, cBytes);
+
+                  TSXChangeProperty(display, request, rprop, event->target, 
+                      8, PropModeReplace, (unsigned char *)lpClipData, cBytes);
+
+                  GlobalUnlock(hClipData);
+		  GlobalFree(hClipData);
+              }
+          }
+      }
+      else
+      {
+          if (TRACE_ON(clipboard))
+	  {
+              TRACE_(clipboard)("Request for property %s (%ld) failed\n", 
+                  TSXGetAtomName(display, event->target), event->target);
+          }
+      }
+  }
 
 END:
-  /* close clipboard only if we opened before */
-  if(couldOpen) CloseClipboard();
-
-  if( rprop == None)
-      TRACE("\tRequest ignored\n");
-
   /* reply to sender
    * SelectionNotify should be sent only at the end of a MULTIPLE request
    */
@@ -1103,8 +878,6 @@ END:
  */
 static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
 {
-  Atom xaClipboard = TSXInternAtom(event->display, "CLIPBOARD", False);
-
   if (event->selection == XA_PRIMARY || event->selection == xaClipboard)
       X11DRV_CLIPBOARD_ReleaseSelection( event->selection, event->window, hWnd );
 }
@@ -1125,9 +898,6 @@ static void EVENT_PropertyNotify( XPropertyEvent *event )
     {
       TRACE("\tPropertyDelete for atom %s on window %ld\n",
             TSXGetAtomName(event->display, event->atom), (long)event->window);
-
-      if (X11DRV_IsSelectionOwner())
-          X11DRV_CLIPBOARD_FreeResources( event->atom );
       break;
     }
 

@@ -210,6 +210,7 @@ static void cleanup_thread( struct thread *thread )
     if (thread->wait_fd) release_object( thread->wait_fd );
     if (thread->hooks) release_object( thread->hooks );
     free_msg_queue( thread );
+    cleanup_clipboard_thread(thread);
     destroy_thread_windows( thread );
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
     {
