@@ -21,16 +21,15 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include "windows.h"
 
 #ifdef HAVE_LIBXXF86VM
-/* X is retarted and insists on declaring INT32, INT16 etc in Xmd.h, this is a crude hack to get around it */
-/* Anywhere ts_xf86vmode.h is included you must define LONG64 also, see include/wintypes.h  */
-#define LONG64
+/* X is retarted and insists on declaring INT32, INT16 etc in Xmd.h,
+   this is a crude hack to get around it */
+#define XMD_H
 #include "ts_xf86vmode.h"
-#undef LONG64
 #endif
 
-#include "windows.h"
 #include "winerror.h"
 #include "interfaces.h"
 #include "gdi.h"

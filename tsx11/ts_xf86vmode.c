@@ -3,8 +3,9 @@
  * This file was generated automatically by tools/make_X11wrappers
  * DO NOT EDIT!
  */
-#include "config.h"
+#include "wintypes.h"
 #ifdef HAVE_LIBXXF86VM
+#define XMD_H
 
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86vmode.h>

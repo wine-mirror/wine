@@ -63,7 +63,7 @@ foreach $name (@dolist) {
     if($name eq "xf86vmode") {
      	$x11_incl = "#include <X11/Xlib.h>\n";
 	$extensions_dir = "extensions/";
-	$pre_file = "#include \"config.h\"\n#ifdef HAVE_LIBXXF86VM\n";
+	$pre_file = "#include \"wintypes.h\"\n#ifdef HAVE_LIBXXF86VM\n#define XMD_H\n";
 	$post_file = "#endif";
     }
 
