@@ -540,12 +540,12 @@ INT WINAPI GetDIBits(
             /*FIXME: Only RGB dibs supported for now */
             int srcwidth = bmp->dib->dsBm.bmWidth, srcwidthb = bmp->dib->dsBm.bmWidthBytes;
             int dstwidthb = DIB_GetDIBWidthBytes( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
-            LPVOID dbits = bits, sbits = bmp->dib->dsBm.bmBits + (startscan * srcwidthb);
+            LPBYTE dbits = bits, sbits = bmp->dib->dsBm.bmBits + (startscan * srcwidthb);
             int x, y;
 
             if ((info->bmiHeader.biHeight < 0) ^ (bmp->dib->dsBmih.biHeight < 0))
             {
-                dbits = bits + (dstwidthb * (lines-1));
+                dbits = (LPBYTE)bits + (dstwidthb * (lines-1));
                 dstwidthb = -dstwidthb;
             }
 
@@ -571,7 +571,7 @@ INT WINAPI GetDIBits(
 
                     case 24: /* 24 bpp srcDIB -> 16 bpp dstDIB */
                         {
-                            LPBYTE srcbits = (LPBYTE)sbits;
+                            LPBYTE srcbits = sbits;
 
                             for( y = 0; y < lines; y++) {
                                 for( x = 0; x < srcwidth; x++ )
@@ -579,7 +579,7 @@ INT WINAPI GetDIBits(
                                                  (((WORD)*srcbits++ << 2) & gmask) |
                                                  (((WORD)*srcbits++ << 7) & rmask);
                                 dstbits = (LPWORD)(dbits+=dstwidthb);
-                                srcbits = (LPBYTE)(sbits += srcwidthb);
+                                srcbits = (sbits += srcwidthb);
                             }
                         }
                         break;
@@ -595,8 +595,8 @@ INT WINAPI GetDIBits(
                                     *dstbits++ = (WORD)(((val >> 19) & bmask) | ((val >> 6) & gmask) |
                                                        ((val << 7) & rmask));
                                 }
-                                dstbits=(LPWORD)(dbits+=dstwidthb);
-                                srcbits = (LPDWORD)(sbits += srcwidthb);
+                                dstbits = (LPWORD)(dbits+=dstwidthb);
+                                srcbits = (LPDWORD)(sbits+=srcwidthb);
                             }
                         }
                         break;
@@ -611,7 +611,7 @@ INT WINAPI GetDIBits(
 
             case 24: /* 24 bpp dstDIB */
                 {
-                    LPBYTE dstbits = (LPBYTE)dbits;
+                    LPBYTE dstbits = dbits;
 
                     switch(bmp->dib->dsBm.bmBitsPixel) {
 
@@ -628,7 +628,7 @@ INT WINAPI GetDIBits(
                                     *dstbits++ = (BYTE)(((val >> 2) & 0xf8) | ((val >> 7) & 0x07));
                                     *dstbits++ = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x07));
                                 }
-                                dstbits=(LPBYTE)(dbits+=dstwidthb);
+                                dstbits = (LPBYTE)(dbits+=dstwidthb);
                                 srcbits = (LPWORD)(sbits+=srcwidthb);
                             }
                         }
@@ -686,22 +686,22 @@ INT WINAPI GetDIBits(
                                                  ((val << 6) & 0xf800) | ((val << 1) & 0x0700) |
                                                  ((val << 19) & 0xf800) | ((val << 14) & 0x070000);
                                 }
-                                dstbits=(dbits+=dstwidthb);
-                                srcbits=(sbits+=srcwidthb);
+                                dstbits=(LPDWORD)(dbits+=dstwidthb);
+                                srcbits=(LPWORD)(sbits+=srcwidthb);
                             }
                         }
                         break;
 
                     case 24: /* 24 bpp srcDIB -> 32 bpp dstDIB */
                         {
-                            LPBYTE srcbits = (LPBYTE)sbits;
+                            LPBYTE srcbits = sbits;
 
                             for( y = 0; y < lines; y++) {
                                 for( x = 0; x < srcwidth; x++ )
                                     *dstbits++ = ((DWORD)*srcbits++ & rmask) |
                                                  (((DWORD)*srcbits++ << 8) & gmask) |
                                                  (((DWORD)*srcbits++ << 7) & bmask);
-                                dstbits=(dbits+=dstwidthb);
+                                dstbits=(LPDWORD)(dbits+=dstwidthb);
                                 srcbits=(sbits+=srcwidthb);
                             }
                         }

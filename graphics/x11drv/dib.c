@@ -278,19 +278,18 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
 				       RGBQUAD *colors, PALETTEENTRY *srccolors, 
                                 XImage *bmpImage )
 {
-       DWORD x;
-       int h;
-       BYTE *bits;
+    DWORD x;
+    int h;
+    BYTE *bits;
 
        /* 32 bit aligned */
     DWORD linebytes = ((dstwidth + 31) & ~31) / 8;
 
-       if (lines < 0 )
-       {
-               lines = -lines;
-               dstbits = dstbits + ( linebytes * lines-1 );
-               linebytes = -linebytes;
-       }
+    if (lines < 0 ) {
+        lines = -lines;
+	dstbits = dstbits + linebytes * (lines - 1);
+	linebytes = -linebytes;
+    }
 
     bits = dstbits;
 
@@ -1666,7 +1665,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
     if (lines < 0 )
     {
         lines = -lines;
-        srcbits = srcbits + ( linebytes * lines-1 );
+        srcbits = srcbits + linebytes * (lines - 1);
         linebytes = -linebytes;
     }
 
@@ -2853,7 +2852,6 @@ INT X11DRV_DIB_GetDIBits(
   X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
   X11DRV_DIB_IMAGEBITS_DESCR descr;
   PALETTEOBJ * palette;
-  BYTE    *bbits = (BYTE*)bits;
   
   TRACE_(bitmap)("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
 	lines, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
@@ -2906,16 +2904,12 @@ INT X11DRV_DIB_GetDIBits(
   descr.yDest     = 0;
   descr.width     = bmp->bitmap.bmWidth;
   descr.height    = bmp->bitmap.bmHeight;
-  descr.colorMap = info->bmiColors;
+  descr.colorMap  = info->bmiColors;
 
   if (dib)
-  {
-  descr.useShm    = (dib->shminfo.shmid != -1);
-  }
+    descr.useShm = (dib->shminfo.shmid != -1);
   else
-  {
     descr.useShm = FALSE;
-  }
 
   EnterCriticalSection( &X11DRV_CritSection );
 
@@ -2925,13 +2919,10 @@ INT X11DRV_DIB_GetDIBits(
   LeaveCriticalSection( &X11DRV_CritSection );
   
   if(info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
-    info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(
+      info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(
 					 info->bmiHeader.biWidth,
 					 info->bmiHeader.biHeight,
 					 info->bmiHeader.biBitCount );
-
-  if(bbits - (BYTE *)bits > info->bmiHeader.biSizeImage)
-    ERR_(bitmap)("Buffer overrun. Please investigate.\n");
 
   info->bmiHeader.biCompression = 0;
 
