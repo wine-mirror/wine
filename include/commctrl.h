@@ -362,6 +362,7 @@ typedef struct tagUDACCEL
 #define UDS_ARROWKEYS      0x0020
 #define UDS_HORZ           0x0040
 #define UDS_NOTHOUSANDS    0x0080
+#define UDS_HOTTRACK       0x0100
 
 #define UDN_FIRST          (0U-721)
 #define UDN_LAST           (0U-740)
@@ -474,7 +475,7 @@ typedef struct _IMAGEINFO
     INT     Unused1;
     INT     Unused2;
     RECT    rcImage;
-} IMAGEINFO;
+} IMAGEINFO, *LPIMAGEINFO;
 
 
 typedef struct _IMAGELISTDRAWPARAMS
@@ -721,8 +722,8 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDN_GETDISPINFOA      (HDN_FIRST-9)
 #define HDN_GETDISPINFOW      (HDN_FIRST-29)
 #define HDN_GETDISPINFO WINELIB_NAME_AW(HDN_GETDISPINFO)
-#define HDN_BEGINDRACK          (HDN_FIRST-10)
-#define HDN_ENDDRACK            (HDN_FIRST-11)
+#define HDN_BEGINDRAG         (HDN_FIRST-10)
+#define HDN_ENDDRAG           (HDN_FIRST-11)
 
 typedef struct _HD_LAYOUT
 {
@@ -1107,6 +1108,13 @@ typedef struct tagTBADDBITMAP {
 #define VIEW_NETCONNECT         9
 #define VIEW_NETDISCONNECT      10
 #define VIEW_NEWFOLDER          11
+#define VIEW_VIEWMENU           12
+
+#define HIST_BACK               0
+#define HIST_FORWARD            1
+#define HIST_FAVORITES          2
+#define HIST_ADDTOFAVORITES     3
+#define HIST_VIEWTREE           4
 
 typedef struct tagTBSAVEPARAMSA {
     HKEY   hkr;
@@ -1359,6 +1367,7 @@ typedef struct _TT_HITTESTINFOA
     POINT       pt;
     TTTOOLINFOA ti;
 } TTHITTESTINFOA, *LPTTHITTESTINFOA;
+#define LPHITTESTINFOA LPTTHITTESTINFOA
 
 typedef struct _TT_HITTESTINFOW
 {
@@ -1366,9 +1375,11 @@ typedef struct _TT_HITTESTINFOW
     POINT       pt;
     TTTOOLINFOW ti;
 } TTHITTESTINFOW, *LPTTHITTESTINFOW;
+#define LPHITTESTINFOW LPTTHITTESTINFOW
 
 #define TTHITTESTINFO WINELIB_NAME_AW(TTHITTESTINFO)
 #define LPTTHITTESTINFO WINELIB_NAME_AW(LPTTHITTESTINFO)
+#define LPHITTESTINFO WINELIB_NAME_AW(LPHITTESTINFO)
 
 typedef struct tagNMTTDISPINFOA
 {
@@ -1915,6 +1926,7 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVIS_BOLD             0x0010
 #define TVIS_EXPANDED         0x0020
 #define TVIS_EXPANDEDONCE     0x0040
+#define TVIS_EXPANDPARTIAL    0x0080
 #define TVIS_OVERLAYMASK      0x0f00
 #define TVIS_STATEIMAGEMASK   0xf000
 #define TVIS_USERMASK         0xf000
@@ -2297,10 +2309,10 @@ typedef struct tagNMTVGETINFOTIPW
 							(LPARAM)(LPTSTR)lpsz)
 
 #define TreeView_SetToolTips(hwnd,  hwndTT) \
-    (BOOL)SendMessageA((hwnd), TVM_SETTOOLTIPS, (WPARAM)(hwndTT), 0)
+    (HWND)SendMessageA((hwnd), TVM_SETTOOLTIPS, (WPARAM)(hwndTT), 0)
 
 #define TreeView_GetToolTips(hwnd) \
-    (BOOL)SendMessageA((hwnd), TVM_GETTOOLTIPS, 0, 0)
+    (HWND)SendMessageA((hwnd), TVM_GETTOOLTIPS, 0, 0)
 
 #define TreeView_SetItemHeight(hwnd,  iHeight) \
     (INT)SendMessageA((hwnd), TVM_SETITEMHEIGHT, (WPARAM)iHeight, 0)
@@ -2630,6 +2642,10 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVN_SETDISPINFOW      (LVN_FIRST-78)
 #define LVN_SETDISPINFO WINELIB_NAME_AW(LVN_SETDISPINFO)
 #define LVN_KEYDOWN             (LVN_FIRST-55)
+#define LVN_MARQUEEBEGIN        (LVN_FIRST-56)
+#define LVN_GETINFOTIPA         (LVN_FIRST-57)
+#define LVN_GETINFOTIPW         (LVN_FIRST-58)
+#define LVN_GETINFOTIP WINELIB_NAME_AW(LVN_GETINFOTIP)
 
 #define LVA_ALIGNLEFT           0x0000
 #define LVA_DEFAULT             0x0001
@@ -2850,8 +2866,14 @@ typedef struct tagNMLVCUSTOMDRAW
     (LRESULT)SendMessageA((hwnd),LVM_DELETECOLUMN,0,(LPARAM)(INT)(col))
 #define ListView_GetColumnA(hwnd,x,col)\
     (LRESULT)SendMessageA((hwnd),LVM_GETCOLUMNA,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNA)(col))
+#define ListView_GetColumnW(hwnd,x,col)\
+    (LRESULT)SendMessageW((hwnd),LVM_GETCOLUMNW,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNW)(col))
+#define ListView_GetColumn WINELIB_NAME_AW(ListView_GetColumn)
 #define ListView_SetColumnA(hwnd,x,col)\
     (LRESULT)SendMessageA((hwnd),LVM_SETCOLUMNA,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNA)(col))
+#define ListView_SetColumnW(hwnd,x,col)\
+    (LRESULT)SendMessageW((hwnd),LVM_SETCOLUMNW,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNW)(col))
+#define ListView_SetColumn WINELIB_NAME_AW(ListView_SetColumn)
 
 
 #define ListView_GetNextItem(hwnd,nItem,flags) \
@@ -2866,6 +2888,9 @@ typedef struct tagNMLVCUSTOMDRAW
     (INT)SendMessageA((hwnd),LVM_GETITEMRECT,(WPARAM)(INT)(i),(LPARAM)(LPRECT)(prc))
 #define ListView_SetItemA(hwnd,pitem) \
     (INT)SendMessageA((hwnd),LVM_SETITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
+#define ListView_SetItemW(hwnd,pitem) \
+    (INT)SendMessageW((hwnd),LVM_SETITEMW,0,(LPARAM)(const LVITEMW *)(pitem))
+#define ListView_SetItem WINELIB_NAME_AW(ListView_SetItem)
 #define ListView_SetItemState(hwnd,i,pitem) \
     (BOOL)SendMessageA((hwnd),LVM_SETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(LPLVITEMA)(pitem))
 #define ListView_GetItemState(hwnd,i,mask) \
@@ -2876,6 +2901,9 @@ typedef struct tagNMLVCUSTOMDRAW
     (HIMAGELIST)SendMessageA((hwnd),LVM_GETIMAGELIST,(WPARAM)(INT)(iImageList),0L)
 #define ListView_GetStringWidthA(hwnd,pstr) \
     (INT)SendMessageA((hwnd),LVM_GETSTRINGWIDTHA,0,(LPARAM)(LPCSTR)(pstr))
+#define ListView_GetStringWidthW(hwnd,pstr) \
+    (INT)SendMessageW((hwnd),LVM_GETSTRINGWIDTHW,0,(LPARAM)(LPCWSTR)(pstr))
+#define ListView_GetStringWidth WINELIB_NAME_AW(ListView_GetStringWidth)
 #define ListView_GetTopIndex(hwnd) \
     (BOOL)SendMessageA((hwnd),LVM_GETTOPINDEX,0,0L)
 #define ListView_Scroll(hwnd,dx,dy) \
@@ -2938,6 +2966,37 @@ typedef struct tagNMLVCUSTOMDRAW
     (BOOL)SendMessageA(hwndLV, LVM_DELETEITEM, (WPARAM)(int)(i), 0L)
 #define ListView_Update(hwndLV, i) \
     (BOOL)SendMessageA((hwndLV), LVM_UPDATE, (WPARAM)(i), 0L)
+#define ListView_GetColumnOrderArray(hwndLV, iCount, pi) \
+    (BOOL)SendMessageA((hwndLV), LVM_GETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
+#define ListView_GetExtendedListViewStyle(hwndLV) \
+    (DWORD)SendMessageA((hwndLV), LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0L)
+#define ListView_GetHotCursor(hwndLV) \
+    (HCURSOR)SendMessageA((hwndLV), LVM_GETHOTCURSOR, 0, 0L)
+#define ListView_GetHotItem(hwndLV) \
+    (int)SendMessageA((hwndLV), LVM_GETHOTITEM, 0, 0L)
+#define ListView_GetItemSpacing(hwndLV, fSmall) \
+    (DWORD)SendMessageA((hwndLV), LVM_GETITEMSPACING, (WPARAM)fSmall, 0L)
+#define ListView_GetSubItemRect(hwndLV, iItem, iSubItem, code, prc) \
+    (BOOL)SendMessageA((hwndLV), LVM_GETSUBITEMRECT, (WPARAM)(int)(iItem), \
+                       ((prc) ? (((LPRECT)(prc))->top = iSubItem), (((LPRECT)(prc))->left = code):0), (LPARAM)prc)
+#define ListView_GetToolTips(hwndLV) \
+    (HWND)SendMessageA((hwndLV), LVM_GETTOOLTIPS, 0, 0L)
+#define ListView_SetColumnOrderArray(hwndLV, iCount, pi) \
+    (BOOL)SendMessageA((hwndLV), LVM_SETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
+#define ListView_SetExtendedListViewStyle(hwndLV, dw) \
+    (DWORD)SendMessageA((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)dw)
+#define ListView_SetExtendedListViewStyleEx(hwndLV, dwMask, dw) \
+    (DWORD)SendMessageA((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, (WPARAM)dwMask, (LPARAM)dw)
+#define ListView_SetHotCursor(hwndLV, hcur) \
+    (HCURSOR)SendMessageA((hwndLV), LVM_SETHOTCURSOR, 0, (LPARAM)hcur)
+#define ListView_SetHotItem(hwndLV, i) \
+    (int)SendMessageA((hwndLV), LVM_SETHOTITEM, (WPARAM)i, 0L)
+#define ListView_SetIconSpacing(hwndLV, cx, cy) \
+    (DWORD)SendMessageA((hwndLV), LVM_SETICONSPACING, 0, MAKELONG(cx,cy))
+#define ListView_SetToolTips(hwndLV, hwndNewHwnd) \
+    (HWND)SendMessageA((hwndLV), LVM_SETTOOLTIPS, (WPARAM)hwndNewHwnd, 0L)
+#define ListView_SubItemHitTest(hwndLV, plvhti) \
+    (int)SendMessageA((hwndLV), LVM_SUBITEMHITTEST, 0, (LPARAM)(LPLVHITTESTINFO)(plvhti))
 
 
 /* Tab Control */
@@ -3510,7 +3569,7 @@ typedef struct tagNMDAYSTATE
 #define MonthCal_GetMinReqRect(hmc, prc) \
 		SendMessageA(hmc, MCM_GETMINREQRECT, 0, (LPARAM)(prc))
 #define MonthCal_SetColor(hmc, iColor, clr)\
-		SendMessageA(hmc, MCM_SETCOLOR, iColor, clr
+        SendMessageA(hmc, MCM_SETCOLOR, iColor, clr)
 #define MonthCal_GetColor(hmc, iColor) \
 		SendMessageA(hmc, MCM_SETCOLOR, iColor, 0)
 #define MonthCal_GetToday(hmc, pst)\
