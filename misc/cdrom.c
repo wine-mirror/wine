@@ -360,8 +360,9 @@ BOOL CDROM_Audio_GetCDStatus(WINE_CDAUDIO* wcda, int parentdev)
 #else
     case CD_AS_AUDIO_INVALID:
 #endif
-	WARN("device doesn't support status.\n");
-	wcda->cdaMode = WINE_CDA_DONTKNOW;
+	/* seems that this means stop for ide drives */
+	wcda->cdaMode = WINE_CDA_STOP;
+	TRACE("AUDIO_INVALID -> WINE_CDA_STOP\n");
 	break;
 #ifdef linux
     case CDROM_AUDIO_NO_STATUS: 
