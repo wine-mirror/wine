@@ -899,6 +899,8 @@ static void get_executable_name( LPCSTR line, LPSTR name, int namelen,
     LPCSTR pcmd = NULL;
     LPCSTR from;
     LPSTR to, to_end, to_old;
+    HFILE hFile;
+    OFSTRUCT ofs;
 
     to = name;
     to_end = to + namelen - 1;
@@ -946,8 +948,11 @@ static void get_executable_name( LPCSTR line, LPSTR name, int namelen,
 
         TRACE_(module)("checking if file exists '%s'\n", name);
 
-        if (GetFileAttributesA(name)!=-1)
-	  break;      /* if file exists then all done */
+        if ((hFile = OpenFile( name, &ofs, OF_READ )) != HFILE_ERROR)
+        {
+            CloseHandle( hFile );
+            break;      /* if file exists then all done */
+        }
 	
 	/* loop around keeping the blank as part of file name */
         if (!*from)
