@@ -133,7 +133,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CXMENUSIZE];
 
     /* FIXME: What do these mean? */
-    sysMetrics[SM_ARRANGE] = 8;
+    sysMetrics[SM_ARRANGE] = ARW_HIDE;
     sysMetrics[SM_CXMINIMIZED] = 160;
     sysMetrics[SM_CYMINIMIZED] = 24;
 
