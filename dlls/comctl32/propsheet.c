@@ -3156,7 +3156,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 
 	if (ppshpage->dwFlags & PSP_USEHEADERSUBTITLE) {
 	    SelectObject(hdc, psInfo->hFont);
-	    SetRect(&r, 40, 25, 0, 0);
+	    SetRect(&r, 40, 25, rzone.right - 69, rzone.bottom);
 	    if (HIWORD(ppshpage->pszHeaderTitle))
 	    {
 		if (psInfo->unicode)
@@ -3173,7 +3173,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 		if (nLength != 0)
 		{
 		    DrawTextW(hdc, szBuffer, nLength,
-			      &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
+			      &r, DT_LEFT | DT_SINGLELINE);
 		}
 	    }
 	}
