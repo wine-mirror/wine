@@ -9,8 +9,8 @@
       </question>
       <answer>
         <para>Dave Gardner maintained it from 1995-1998.</para>
-        <para>Douglas Ridgway (ridgway@winehq.org) took it over in 1999.</para>
-        <para>Andreas Mohr (amohr@codeweavers.com) converted it to FAQ-O-Matic in 2000.</para>
+        <para>Douglas Ridgway took it over in 1999.</para>
+        <para>Andreas Mohr converted it to FAQ-O-Matic in 2000.</para>
         <para>Dimitrie O. Paun, Keith Matthews and Tom Wickline (in alphabetical order) reorganized it in 2002.</para>
         <para>For suggestions/additions/complaints regarding this FAQ, please send an email to
         <ulink url="mailto:wine-faq@winehq.org">wine-faq@winehq.org</ulink></para>
@@ -18,7 +18,7 @@
       </qandaentry>
       <qandaentry>
       <question id="What-is-the-copyright-on-the-FAQ-And">
-        <para>What is the copyright on the FAQ? And how may I use it?</para>
+        <para>What is the copyright of this FAQ? And how may I use it?</para>
       </question>
       <answer>
         <para>The original Wine FAQ, which this FAQ was based on, was copyright &copy; 1995-1998 David Gardner.</para>
@@ -60,7 +60,7 @@
           advantage is that, unlike solutions that rely on CPU emulation, Wine
           runs applications at full speed. Sometimes a program run under
 	  Wine will be slower than when run on a copy of Microsoft Windows, but
-	  this is more due to the fact that Microsoft have heavily optimized parts of their
+	  this is more due to the fact that Microsoft has heavily optimized parts of their
 	  code, whereas mostly Wine is not well optimized (yet). Occasionally, an app
 	  may run faster under Wine than on Windows. Most apps run at roughly the same speed.
        </para>
@@ -83,6 +83,7 @@
          Note that, like Wine, they can only use the hardware platform that
          the target programs were originally compiled for (see below).
        </para>
+
       </answer>
       </qandaentry>
        
@@ -123,7 +124,7 @@
           impact on performance. Wine also gives much better desktop integration - for
 	  instance, programs use your standard window manager, system tray icons will
 	  appear in your tray area (if you have one), and you can run programs direct from the
-	  command line and the menus. The clipboard also works seamlessly.
+	  command line as well as menus. The clipboard also works seamlessly at this time.
        </para>
 
       </answer>
@@ -172,10 +173,7 @@
           open-source project, and <ulink
           url="http://www.transitives.com/tech_overview.htm">Dynamite</>,
           a commercial CPU emulator environment from
-          <ulink url="http://www.transitives.com/">Transitives Technologies</>
-          which has been <ulink
-          url="http://www.transgaming.com/news.php?newsid=37">paired
-          with Wine</>.
+          <ulink url="http://www.transitives.com/">Transitives Technologies</>.
         </para>
 
       </answer>
@@ -235,6 +233,7 @@
           It is also a pretty vital part of migrating a large organization,
           you can't change a 5000 desktop setup overnight without a lot of risk.
        </para>
+
       </answer>
       </qandaentry>
 
@@ -253,7 +252,7 @@
           Applications run in user mode and use the APIs provided by
           the kernel and the other user mode dlls. In contrast, drivers
           are loaded in the Windows kernel, i.e. in ring 0 instead of ring
-          3, have to deal with specific memory management issues, and use
+          3, drivers have to deal with specific memory management issues, and use
           instructions not available to regular applications. This means
           they would not be able to run in Wine since Wine runs entirely
           in user mode. Rather you would have to modify the Linux kernel.
@@ -300,7 +299,7 @@
               This is a forked Wine tree that got created when Wine changed its
               license from X11 to the more restrictive LGPL, in order to let 
               people continue to maintain an X11 licensed Wine version. Its 
-              license is X11, it can be downloaded for free. 
+              license is X11, and it can be downloaded for free. 
             </para>
           </listitem>
           </varlistentry>
@@ -324,45 +323,23 @@
             </para>
          </listitem>
           </varlistentry>
- 
-	  <varlistentry>
-          <term><ulink url="http://wine.codeweavers.com">CodeWeavers' Wine preview</ulink></term>
-          <listitem>
-            <para>
-              This is a special packaged version of the standard Wine tree
-              which has a nice setup for easy installation. License LGPL, free
-              download. It's pretty old now, and not recommended for general use.
-            </para>
-         </listitem>
-          </varlistentry>
- 
-	  <varlistentry>
-          <term><ulink url="http://www.codeweavers.com/products/crossover/">CodeWeavers' CrossOver Plugin</ulink></term>
-          <listitem>
-            <para>
-              Special Wine installation to be used for running Windows
-              Netscape browser plugins such as e.g. QuickTime in Linux
-              browsers. Costs $34.95.
-              Well worth it (very stable and useful packaging). 
-            </para>
-          </listitem>
-          </varlistentry>
 
 	  <varlistentry>
-          <term><ulink url="http://www.codeweavers.com/products/office/">CodeWeavers' CrossOver Office</ulink></term>
+          <term><ulink url="http://www.codeweavers.com/site/products/cxoffice/">CodeWeavers' CrossOver Office</ulink></term>
           <listitem>
             <para>
               Wine version with special packaging to make sure almost all 
-              important Office type programs work pretty well. Costs $54.95. 
+              important Office type programs work pretty well. Costs $74.95 
+              for the Pro version and $39.95 for the Standard version.
               Seems to be well worth it so far according to some comments. 
               (note: you're supporting a company actively contributing to Wine
-              if you decide to buy either Plugin or Office.)
+              if you decide to buy CrossOver.)
             </para>
           </listitem>
           </varlistentry>
           
           <varlistentry>
-          <term><ulink url="http://www.codeweavers.com/products/cxofficeserver/">CodeWeavers' CrossOver Office Server Edition</ulink></term>
+          <term><ulink url="http://www.codeweavers.com/site/products/cxserver/">CodeWeavers' CrossOver Office Server Edition</ulink></term>
           <listitem>
             <para>
              Allows you to run your favorite Windows productivity applications in 
@@ -370,7 +347,7 @@
              also a great addition to Solaris environments, since there built-in 
              support for Solaris desktops makes running Windows applications a 
              possibility on Sun workstations as well. For pricing just follow this link: 
-          <ulink url="http://www.codeweavers.com/products/pricing.php">CrossOver Office Server Edition Pricing</ulink>
+          <ulink url="http://www.codeweavers.com/site/products/pricing/">CrossOver Office Server Edition Pricing</ulink>
             </para>
           </listitem>
           </varlistentry>          
@@ -412,11 +389,11 @@
           comp.emulators.ms-windows.wine</ulink>, or by visiting the
           <ulink url="http://www.winehq.org">Wine HQ homepage</ulink>. When
           downloading Wine from your FTP site of choice (see
-          <ulink url="http://www.winehq.org/download.shtml">the Download page</ulink>
+          <ulink url="http://www.winehq.org/site/download">the Download page</ulink>
           for some of these choices), you can make sure that you are getting 
           the latest version by watching the version numbers in the distribution
-          file name. For instance, the distribution released on August 13, 2003
-          was called Wine-20030813.tar.gz. Patch files are also available. If
+          file name. For instance, the distribution released on May 5, 2004
+          was called Wine-20040505.tar.gz. Patch files are also available. If
           you are current to the previous version, you can download and apply 
           just the current patch file rather than the entire new distribution.
           The patch file names follow the same conventions as the monthly 
@@ -432,8 +409,8 @@
       </question>
       <answer>
         <para>
-          As of mid 2003, Wine consists of about 1.4 million lines of code,
-          written by more than 550 developers from dozens of countries around
+          As of mid 2004, Wine consists of about 1.6 million lines of code,
+          written by more than 600 developers from dozens of countries around
           the world. Wine is in active use by an estimated 100K people. Wine
           implements more than 90% of the calls in popular Windows 
           specifications such as ECMA-234 and Open32.
@@ -570,7 +547,7 @@
           express permission by TransGaming. They have submitted some
           of their work for integration into Wine, most notably DirectDraw
           and some DirectSound work, and such work has been integrated into
-          the Wine tree. However it seems unlikely they will submit their
+          the Wine tree. However it seems highly unlikely they will ever submit their
           Direct3D work.
         </para>
       </answer>
