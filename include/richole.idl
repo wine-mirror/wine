@@ -105,3 +105,25 @@ interface IRichEditOle : IUnknown
     HRESULT GetClipboardData(CHARRANGE* lpchrg, DWORD reco, LPDATAOBJECT *lplpdataobj);
     HRESULT ImportDataObject(LPDATAOBJECT lpdataobj, CLIPFORMAT cf, HGLOBAL hMetaPict);
 }
+
+/*****************************************************************************
+ * IRichEditOleCallback
+ */
+[
+  object,
+  uuid(00020d03-0000-0000-c000-000000000046),
+  pointer_default(unique)
+]
+interface IRichEditOleCallback : IUnknown
+{
+    HRESULT GetNewStorage(LPSTORAGE *lplpstg);
+    HRESULT GetInPlaceContext(LPOLEINPLACEFRAME *lplpFrame, LPOLEINPLACEUIWINDOW *lplpDoc, LPOLEINPLACEFRAMEINFO lpFrameInfo);
+    HRESULT ShowContainerUI(BOOL fShow);
+    HRESULT QueryInsertObject(LPCLSID lpclsid, LPSTORAGE lpstg, LONG cp);
+    HRESULT DeleteObject(LPOLEOBJECT lpoleobj);
+    HRESULT QueryAcceptData(LPDATAOBJECT lpdataobj, CLIPFORMAT *lpcfFormat, DWORD reco, BOOL fReally, HGLOBAL hMetaPict);
+    HRESULT ContextSensitiveHelp(BOOL fEnterMode);
+    HRESULT GetClipboardData(CHARRANGE *lpchrg, DWORD reco, LPDATAOBJECT *lplpdataobj);
+    HRESULT GetDragDropEffect(BOOL fDrag, DWORD grfKeyState, LPDWORD pdwEffect);
+    HRESULT GetContextMenu(WORD seltype, LPOLEOBJECT lpoleobj, CHARRANGE *lpchrg, HMENU *lphmenu);
+}
