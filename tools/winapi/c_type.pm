@@ -264,14 +264,14 @@ sub _refresh {
 	    my $bits = $3;
 	}
 	my $base_size = &$$find_size($base_type_name);
-	my $align = &$$find_align($base_type_name);
+	$$align = &$$find_align($base_type_name);
 
-	if (defined($align)) { 
-	    $align = $pack if $align > $pack;
-	    $max_field_align = $align if $align > $max_field_align;
+	if (defined($$align)) { 
+	    $$align = $pack if $$align > $pack;
+	    $max_field_align = $$align if $$align > $max_field_align;
 
-	    if ($offset % $align != 0) {
-		$offset = (int($offset / $align) + 1) * $align;
+	    if ($offset % $$align != 0) {
+		$offset = (int($offset / $$align) + 1) * $$align;
 	    }
 	}
 
@@ -289,14 +289,14 @@ sub _refresh {
 		$offset_bits = 0;
 	    }
 
-	    $$$field_aligns[$n] = $align;
+	    $$$field_aligns[$n] = $$align;
 	    $$$field_base_sizes[$n] = $base_size;
 	    $$$field_offsets[$n] = $offset;
 	    $$$field_sizes[$n] = $type_size;
 
 	    $offset += $type_size;
 	} else {
-	    $$$field_aligns[$n] = $align;
+	    $$$field_aligns[$n] = $$align;
 	    $$$field_base_sizes[$n] = $base_size;
 	    $$$field_offsets[$n] = $offset;
 	    $$$field_sizes[$n] = $type_size;
