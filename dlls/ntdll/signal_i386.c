@@ -443,6 +443,8 @@ static void inline save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
  */
 static void inline restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
+    /* reset the current interrupt status */
+    context->FloatSave.StatusWord &= context->FloatSave.ControlWord | 0xffffff80;
 #ifdef FPU_sig
     if (FPU_sig(sigcontext))
     {
@@ -452,7 +454,6 @@ static void inline restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 #endif  /* FPU_sig */
 #ifdef __GNUC__
     /* avoid nested exceptions */
-    context->FloatSave.StatusWord &= context->FloatSave.ControlWord | 0xffffff80;
     __asm__ __volatile__( "frstor %0; fwait" : : "m" (context->FloatSave) );
 #endif  /* __GNUC__ */
 }
