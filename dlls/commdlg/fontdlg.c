@@ -352,12 +352,19 @@ static BOOL CFn_HookCallChk32(LPCHOOSEFONTA lpcf)
  return FALSE;
 }
 
+typedef struct
+{
+  HWND hWnd1;
+  HWND hWnd2;
+  LPCHOOSEFONTA lpcf32a;
+  int  added;
+} CFn_ENUMSTRUCT, *LPCFn_ENUMSTRUCT;
 
 /*************************************************************************
  *              AddFontFamily                               [internal]
  */
 static INT AddFontFamily(const LOGFONTA *lplf, UINT nFontType, 
-                           LPCHOOSEFONTA lpcf, HWND hwnd)
+                           LPCHOOSEFONTA lpcf, HWND hwnd, LPCFn_ENUMSTRUCT e)
 {
   int i;
   WORD w;
@@ -374,6 +381,8 @@ static INT AddFontFamily(const LOGFONTA *lplf, UINT nFontType,
    if (!(nFontType & TRUETYPE_FONTTYPE))
      return 1;   
 
+  if (e) e->added++;
+
   i=SendMessageA(hwnd, CB_ADDSTRING, 0, (LPARAM)lplf->lfFaceName);
   if (i!=CB_ERR)
   {
@@ -385,13 +394,6 @@ static INT AddFontFamily(const LOGFONTA *lplf, UINT nFontType,
     return 0;
 }
 
-typedef struct
-{
-  HWND hWnd1;
-  HWND hWnd2;
-  LPCHOOSEFONTA lpcf32a;
-} CFn_ENUMSTRUCT, *LPCFn_ENUMSTRUCT;
-
 /*************************************************************************
  *              FontFamilyEnumProc32                           [internal]
  */
@@ -400,7 +402,7 @@ static INT WINAPI FontFamilyEnumProc(const LOGFONTA *lpLogFont,
 {
   LPCFn_ENUMSTRUCT e;
   e=(LPCFn_ENUMSTRUCT)lParam;
-  return AddFontFamily(lpLogFont, dwFontType, e->lpcf32a, e->hWnd1);
+  return AddFontFamily(lpLogFont, dwFontType, e->lpcf32a, e->hWnd1, e);
 }
 
 /***********************************************************************
@@ -416,7 +418,7 @@ INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
   LOGFONTA lf32a;
   FONT_LogFont16To32A(lplf, &lf32a);
   return AddFontFamily(&lf32a, nFontType, (LPCHOOSEFONTA)lpcf->lpTemplateName,
-                       hwnd);
+                       hwnd,NULL);
 }
 
 /*************************************************************************
@@ -626,8 +628,27 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     CFn_ENUMSTRUCT s;
     s.hWnd1=GetDlgItem(hDlg,cmb1);
     s.lpcf32a=lpcf;
-    if (!EnumFontFamiliesA(hdc, NULL, FontFamilyEnumProc, (LPARAM)&s))
-      TRACE("EnumFontFamilies returns 0\n");
+    do {
+	s.added = 0;
+	if (!EnumFontFamiliesA(hdc, NULL, FontFamilyEnumProc, (LPARAM)&s)) {
+	  TRACE("EnumFontFamilies returns 0\n");
+	  break;
+	}
+	if (s.added) break;
+	if (lpcf->Flags & CF_FIXEDPITCHONLY) {
+	    FIXME("No founds found with fixed pitch only, dropping flag.\n");
+	    lpcf->Flags &= ~CF_FIXEDPITCHONLY;
+	    continue;
+	}
+	if (lpcf->Flags & CF_TTONLY) {
+	    FIXME("No founds found with truetype only, dropping flag.\n");
+	    lpcf->Flags &= ~CF_TTONLY;
+	    continue;
+	}
+	break;
+     } while (1);
+
+
     if (lpcf->Flags & CF_INITTOLOGFONTSTRUCT)
     {
       /* look for fitting font name in combobox1 */
