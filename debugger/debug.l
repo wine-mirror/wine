@@ -135,6 +135,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INITIAL>where|wher|whe                  { BEGIN(NOCMD); return tBACKTRACE; }
 
 <INITIAL>cont|con|co|c   		{ BEGIN(NOCMD); return tCONT; }
+<INITIAL>pass|pas|pa   			{ BEGIN(NOCMD); return tPASS; }
 <INITIAL>condition|conditio|conditi|condit|condi|cond	{ BEGIN(NOCMD); return tCOND; }
 <INITIAL>step|ste|st|s   		{ BEGIN(NOCMD); return tSTEP; }
 <INITIAL>next|nex|ne|n   		{ BEGIN(NOCMD); return tNEXT; }

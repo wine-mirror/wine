@@ -70,7 +70,7 @@ extern void VIRTUAL_Dump(void);  /* memory/virtual.c */
     struct datatype * type;
 }
 
-%token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
+%token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tABORT tDEBUGMSG
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
 %token tPROCESS tMODREF
@@ -128,6 +128,8 @@ command:
     | tHELP tINFO tEOL         { DEBUG_HelpInfo(); }
     | tCONT tEOL               { dbg_exec_count = 1; 
 				 dbg_exec_mode = EXEC_CONT; return 0; }
+    | tPASS tEOL               { dbg_exec_count = 1; 
+				 dbg_exec_mode = EXEC_PASS; return 0; }
     | tCONT tNUM tEOL          { dbg_exec_count = $2; 
 				 dbg_exec_mode = EXEC_CONT; return 0; }
     | tSTEP tEOL               { dbg_exec_count = 1; 
@@ -435,7 +437,7 @@ void mode_command(int newmode)
  *
  * Debugger main loop.
  */
-static void DEBUG_Main( int signal )
+static void DEBUG_Main( BOOL is_debug )
 {
     static int loaded_symbols = 0;
     static BOOL frozen = FALSE;
@@ -449,13 +451,22 @@ static void DEBUG_Main( int signal )
 
     if (in_debugger)
     {
-        fprintf( stderr, "Segmentation fault inside debugger, exiting.\n" );
+        fprintf( stderr, " inside debugger, exiting.\n" );
         exit(1);
     }
     in_debugger = TRUE;
     yyin = stdin;
 
     DEBUG_SetBreakpoints( FALSE );
+
+    if (!is_debug)
+    {
+        if (IS_SELECTOR_SYSTEM(CS_reg(&DEBUG_context)))
+            fprintf( stderr, " in 32-bit code (0x%08lx).\n", EIP_reg(&DEBUG_context));
+        else
+            fprintf( stderr, " in 16-bit code (%04x:%04lx).\n",
+                     (WORD)CS_reg(&DEBUG_context), EIP_reg(&DEBUG_context) );
+    }
 
     if (!loaded_symbols)
     {
@@ -516,8 +527,7 @@ static void DEBUG_Main( int signal )
     sleep(1);
 #endif
 
-    if ((signal != SIGTRAP) || !DEBUG_ShouldContinue( dbg_exec_mode, 
-						      &dbg_exec_count ))
+    if (!is_debug || !DEBUG_ShouldContinue( dbg_exec_mode, &dbg_exec_count ))
     {
         DBG_ADDR addr;
         TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
@@ -548,7 +558,7 @@ static void DEBUG_Main( int signal )
 
 	DEBUG_DoDisplay();
 
-        if (signal != SIGTRAP)  /* This is a real crash, dump some info */
+        if (!is_debug)  /* This is a real crash, dump some info */
         {
             DEBUG_InfoRegisters();
             DEBUG_InfoStack();
@@ -558,6 +568,7 @@ static void DEBUG_Main( int signal )
                 if (ES_reg(&DEBUG_context) != DS_reg(&DEBUG_context))
                     LDT_Print( SELECTOR_TO_ENTRY(ES_reg(&DEBUG_context)), 1 );
             }
+            LDT_Print( SELECTOR_TO_ENTRY(FS_reg(&DEBUG_context)), 1 );
             DEBUG_BackTrace();
         }
 	else
@@ -569,7 +580,7 @@ static void DEBUG_Main( int signal )
 	    DEBUG_SilentBackTrace();
 	}
 
-	if ((signal != SIGTRAP) ||
+	if (!is_debug ||
             (dbg_exec_mode == EXEC_STEPI_OVER) ||
             (dbg_exec_mode == EXEC_STEPI_INSTR))
         {
@@ -604,7 +615,7 @@ static void DEBUG_Main( int signal )
      * if it was used.  Otherwise it would have been ignored.
      * In any case, we don't mess with it any more.
      */
-    if( dbg_exec_mode == EXEC_CONT )
+    if ((dbg_exec_mode == EXEC_CONT) || (dbg_exec_mode == EXEC_PASS))
       {
 	dbg_exec_count = 0;
 
@@ -621,44 +632,72 @@ static void DEBUG_Main( int signal )
 }
 
 
-
-/***********************************************************************
- *           DebugBreak   (KERNEL.203) (KERNEL32.181)
- */
-void DebugBreak16( CONTEXT *regs )
+DWORD wine_debugger( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
-    char module[10];
-    if (!GetModuleName16( GetCurrentTask(), module, sizeof(module) ))
-        strcpy( module, "???" );
-    fprintf( stderr, "%s called DebugBreak\n", module );
-    DEBUG_context = *regs;
-    DEBUG_Main( SIGTRAP );
-}
+    BOOL is_debug = FALSE;
 
+    if (first_chance && !Options.debug) return 0;  /* pass to app first */
 
-void ctx_debug( int signal, CONTEXT *regs )
-{
-    DEBUG_context = *regs;
-    DEBUG_Main( signal );
-    *regs = DEBUG_context;
-}
+    switch(rec->ExceptionCode)
+    {
+    case EXCEPTION_BREAKPOINT:
+    case EXCEPTION_SINGLE_STEP:
+        is_debug = TRUE;
+        break;
+    case CONTROL_C_EXIT:
+        if (!Options.debug) exit(0);
+        break;
+    }
 
-void wine_debug( int signal, SIGCONTEXT *regs )
-{
-#if 0
-    DWORD *stack = (DWORD *)ESP_sig(regs);
-    *(--stack) = 0;
-    *(--stack) = 0;
-    *(--stack) = EH_NONCONTINUABLE;
-    *(--stack) = EXCEPTION_ACCESS_VIOLATION;
-    *(--stack) = EIP_sig(regs);
-    ESP_sig(regs) = (DWORD)stack;
-    EIP_sig(regs) = (DWORD)RaiseException;
-#else
-    DEBUG_SetSigContext( regs );
-    DEBUG_Main( signal );
-    DEBUG_GetSigContext( regs );
-#endif
+    if (!is_debug)
+    {
+        /* print some infos */
+        fprintf( stderr, "%s: ",
+                 first_chance ? "First chance exception" : "Unhandled exception" );
+        switch(rec->ExceptionCode)
+        {
+        case EXCEPTION_INT_DIVIDE_BY_ZERO:
+            fprintf( stderr, "divide by zero" );
+            break;
+        case EXCEPTION_INT_OVERFLOW:
+            fprintf( stderr, "overflow" );
+            break;
+        case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+            fprintf( stderr, "array bounds " );
+            break;
+        case EXCEPTION_ILLEGAL_INSTRUCTION:
+            fprintf( stderr, "illegal instruction" );
+            break;
+        case EXCEPTION_STACK_OVERFLOW:
+            fprintf( stderr, "stack overflow" );
+            break;
+        case EXCEPTION_PRIV_INSTRUCTION:
+            fprintf( stderr, "priviledged instruction" );
+            break;
+        case EXCEPTION_ACCESS_VIOLATION:
+            if (rec->NumberParameters == 2)
+                fprintf( stderr, "page fault on %s access to 0x%08lx", 
+                         rec->ExceptionInformation[0] ? "write" : "read",
+                         rec->ExceptionInformation[1] );
+            else
+                fprintf( stderr, "page fault" );
+            break;
+        case EXCEPTION_DATATYPE_MISALIGNMENT:
+            fprintf( stderr, "Alignment" );
+            break;
+        case CONTROL_C_EXIT:
+            fprintf( stderr, "^C" );
+            break;
+        default:
+            fprintf( stderr, "%08lx", rec->ExceptionCode );
+            break;
+        }
+    }
+
+    DEBUG_context = *context;
+    DEBUG_Main( is_debug );
+    *context = DEBUG_context;
+    return (dbg_exec_mode == EXEC_PASS) ? 0 : DBG_CONTINUE;
 }
 
 int yyerror(char * s)

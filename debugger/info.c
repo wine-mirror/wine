@@ -124,11 +124,10 @@ void DEBUG_Help(void)
 "The commands accepted by the Wine debugger are a reasonable",
 "subset of the commands that gdb accepts.",
 "The commands currently are:",
+"  help                                   quit",
 "  break [*<addr>]                        delete break bpnum",
 "  disable bpnum                          enable bpnum",
-"  condition <bpnum> [<expr>]",
-
-"  help                                   quit",
+"  condition <bpnum> [<expr>]             pass",
 "  bt                                     cont [N]",
 "  step [N]                               next [N]",
 "  stepi [N]                              nexti [N]",
@@ -140,8 +139,6 @@ void DEBUG_Help(void)
 "  show dir                               dir <path>",
 "  display <expr>                         undisplay <disnum>",
 "  delete display <disnum>                debugmsg <class>[-+]<type>\n",
-
-"Wine-specific commands:",
 "  mode [16,32]                           walk [wnd,class,queue,module,",
 "                                               process,modref <pid>]",
 "  info (see 'help info' for options)\n",

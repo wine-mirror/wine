@@ -129,6 +129,7 @@ enum debug_regs
 enum exec_mode
 {
     EXEC_CONT,       /* Continuous execution */
+    EXEC_PASS,       /* Continue, passing exception to app */
     EXEC_STEP_OVER,  /* Stepping over a call to next source line */
     EXEC_STEP_INSTR,  /* Step to next source line, stepping in if needed */
     EXEC_STEPI_OVER,  /* Stepping over a call */
@@ -255,8 +256,6 @@ extern void DEBUG_SetRegister( enum debug_regs reg, int val );
 extern int DEBUG_GetRegister( enum debug_regs reg );
 extern void DEBUG_InfoRegisters(void);
 extern BOOL DEBUG_ValidateRegisters(void);
-extern void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext );
-extern void DEBUG_GetSigContext( SIGCONTEXT *sigcontext );
 extern int DEBUG_PrintRegister(enum debug_regs reg);
 
   /* debugger/stack.c */
@@ -318,16 +317,7 @@ extern void DEBUG_NukePath(void);
 extern void DEBUG_Disassemble( const DBG_ADDR *, const DBG_ADDR*, int offset );
 
   /* debugger/dbg.y */
-extern void ctx_debug( int signal, CONTEXT *regs );
-extern void wine_debug( int signal, SIGCONTEXT *regs );
-
-  /* miscemu/instr.c */
-extern BOOL INSTR_EmulateInstruction( SIGCONTEXT* );
-
-  /* loader/signal.c */
-extern void (*fnWINE_Debugger)(int,SIGCONTEXT*);
-extern void (*ctx_debug_call)( int, CONTEXT* );
-extern BOOL (*fnINSTR_EmulateInstruction)( SIGCONTEXT* );
+extern DWORD wine_debugger( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
 
   /* Choose your allocator! */
 #if 1

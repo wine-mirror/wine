@@ -17,6 +17,7 @@
 #include "thread.h"
 #include "task.h"
 #include "stackframe.h"
+#include "wine/exception.h"
 #include "debug.h"
 
 static int MAIN_argc;
@@ -139,10 +140,8 @@ int main( int argc, char *argv[] )
     if (!MAIN_WineInit( &argc, argv )) return 1;
     MAIN_argc = argc; MAIN_argv = argv;
 
-    /* Set up debugger/instruction emulation callback routines */
-    ctx_debug_call		= ctx_debug;
-    fnWINE_Debugger		= wine_debug;
-    fnINSTR_EmulateInstruction	= INSTR_EmulateInstruction;
+    /* Set up debugger hook */
+    EXC_SetDebugEventHook( wine_debugger );
 
     if (Options.debug) 
         TASK_AddTaskEntryBreakpoint = DEBUG_AddTaskEntryBreakpoint;

@@ -482,7 +482,7 @@ BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count )
      * If we are about to stop, then print out the source line if we
      * have it.
      */
-    if( (mode != EXEC_CONT && mode != EXEC_FINISH) )
+    if ((mode != EXEC_CONT && mode != EXEC_PASS && mode != EXEC_FINISH))
       {
 	DEBUG_FindNearestSymbol( &addr, TRUE, NULL, 0, &list);
 	if( list.sourcefile != NULL )
@@ -497,7 +497,7 @@ BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count )
         EIP_reg(&DEBUG_context)++;
 
       /* no breakpoint, continue if in continuous mode */
-    return (mode == EXEC_CONT || mode == EXEC_FINISH);
+    return (mode == EXEC_CONT || mode == EXEC_PASS || mode == EXEC_FINISH);
 }
 
 
@@ -612,6 +612,7 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
     switch(mode)
     {
     case EXEC_CONT: /* Continuous execution */
+    case EXEC_PASS: /* Continue, passing exception */
         EFL_reg(&DEBUG_context) &= ~STEP_FLAG;
         DEBUG_SetBreakpoints( TRUE );
         break;
