@@ -84,7 +84,6 @@ struct key
 #define KEY_VOLATILE 0x0001  /* key is volatile (not saved to disk) */
 #define KEY_DELETED  0x0002  /* key has been deleted */
 #define KEY_DIRTY    0x0004  /* key has been modified */
-#define KEY_ROOT     0x0008  /* key is a root key */
 
 /* a key value */
 struct key_value
@@ -99,30 +98,8 @@ struct key_value
 #define MIN_VALUES   8   /* min. number of allocated values per key */
 
 
-/* the special root keys */
-#define HKEY_SPECIAL_ROOT_FIRST   ((unsigned int)HKEY_CLASSES_ROOT)
-#define HKEY_SPECIAL_ROOT_LAST    ((unsigned int)HKEY_DYN_DATA)
-#define NB_SPECIAL_ROOT_KEYS      (HKEY_SPECIAL_ROOT_LAST - HKEY_SPECIAL_ROOT_FIRST + 1)
-#define IS_SPECIAL_ROOT_HKEY(h)   (((unsigned int)(h) >= HKEY_SPECIAL_ROOT_FIRST) && \
-                                   ((unsigned int)(h) <= HKEY_SPECIAL_ROOT_LAST))
-
-static struct key *special_root_keys[NB_SPECIAL_ROOT_KEYS];
-
-/* the real root key */
+/* the root of the registry tree */
 static struct key *root_key;
-
-/* the special root key names */
-static const char * const special_root_names[NB_SPECIAL_ROOT_KEYS] =
-{
-    "Machine\\Software\\Classes",                                    /* HKEY_CLASSES_ROOT */
-    "User\\",    /* we append the user name dynamically */           /* HKEY_CURRENT_USER */
-    "Machine",                                                       /* HKEY_LOCAL_MACHINE */
-    "User",                                                          /* HKEY_USERS */
-    "PerfData",                                                      /* HKEY_PERFORMANCE_DATA */
-    "Machine\\System\\CurrentControlSet\\HardwareProfiles\\Current", /* HKEY_CURRENT_CONFIG */
-    "DynData"                                                        /* HKEY_DYN_DATA */
-};
-
 
 /* keys saving level */
 /* current_level is the level that is put into all newly created or modified keys */
@@ -777,7 +754,7 @@ static int delete_key( struct key *key, int recurse )
     struct key *parent;
 
     /* must find parent and index */
-    if (key->flags & KEY_ROOT)
+    if (key == root_key)
     {
         set_error( STATUS_ACCESS_DENIED );
         return -1;
@@ -796,8 +773,8 @@ static int delete_key( struct key *key, int recurse )
         if (parent->subkeys[index] == key) break;
     assert( index <= parent->last_subkey );
 
-    /* we can only delete a key that has no subkeys (FIXME) */
-    if ((key->flags & KEY_ROOT) || (key->last_subkey >= 0))
+    /* we can only delete a key that has no subkeys */
+    if (key->last_subkey >= 0)
     {
         set_error( STATUS_ACCESS_DENIED );
         return -1;
@@ -1015,49 +992,11 @@ static void delete_value( struct key *key, const WCHAR *name )
     }
 }
 
-static struct key *create_root_key( obj_handle_t hkey )
-{
-    WCHAR keyname[80];
-    int i, dummy;
-    struct key *key;
-    const char *p;
-
-    p = special_root_names[(unsigned int)hkey - HKEY_SPECIAL_ROOT_FIRST];
-    i = 0;
-    while (*p) keyname[i++] = *p++;
-
-    if (hkey == (obj_handle_t)HKEY_CURRENT_USER)  /* this one is special */
-    {
-        /* get the current user name */
-        p = wine_get_user_name();
-        while (*p && i < sizeof(keyname)/sizeof(WCHAR)-1) keyname[i++] = *p++;
-    }
-    keyname[i++] = 0;
-
-    if ((key = create_key( root_key, keyname, NULL, 0, time(NULL), &dummy )))
-    {
-        special_root_keys[(unsigned int)hkey - HKEY_SPECIAL_ROOT_FIRST] = key;
-        key->flags |= KEY_ROOT;
-    }
-    return key;
-}
-
 /* get the registry key corresponding to an hkey handle */
 static struct key *get_hkey_obj( obj_handle_t hkey, unsigned int access )
 {
-    struct key *key;
-
     if (!hkey) return (struct key *)grab_object( root_key );
-    if (IS_SPECIAL_ROOT_HKEY(hkey))
-    {
-        if (!(key = special_root_keys[(unsigned int)hkey - HKEY_SPECIAL_ROOT_FIRST]))
-            key = create_root_key( hkey );
-        else
-            grab_object( key );
-    }
-    else
-        key = (struct key *)get_handle_obj( current->process, hkey, access, &key_ops );
-    return key;
+    return (struct key *)get_handle_obj( current->process, hkey, access, &key_ops );
 }
 
 /* read a line from the input file */
@@ -1487,7 +1426,6 @@ void init_registry(void)
     /* create the root key */
     root_key = alloc_key( root_name, time(NULL) );
     assert( root_key );
-    root_key->flags |= KEY_ROOT;
 
     /* load the config file */
     config = wine_get_config_dir();
