@@ -38,6 +38,7 @@ AR        = ar rc
 RM        = rm -f
 MKDIR     = mkdir -p
 C2MAN     = @C2MAN@
+LDCONFIG  = @LDCONFIG@
 MANSPECS  = -w $(TOPSRCDIR)/relay32/gdi32.spec \
 	    -w $(TOPSRCDIR)/relay32/user32.spec \
 	    -w $(TOPSRCDIR)/relay32/comctl32.spec \

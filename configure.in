@@ -74,6 +74,7 @@ AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_CHECK_PROG(C2MAN,c2man,c2man,true)
+AC_PATH_PROG(LDCONFIG, ldconfig, false, /sbin:/usr/sbin:$PATH)
 
 dnl **** Check for some libraries ****
 
