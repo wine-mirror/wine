@@ -32,6 +32,7 @@ C_SRCS = \
 	string.c \
 	thread.c \
 	time.c \
+	undname.c \
 	wcs.c
 
 SUBDIRS = tests
