@@ -34,6 +34,8 @@ extern "C" {
 #define OFN_EXPLORER                 0x00080000
 #define OFN_NODEREFERENCELINKS       0x00100000
 #define OFN_LONGNAMES                0x00200000
+#define OFN_ENABLEINCLUDENOTIFY      0x00400000
+#define OFN_ENABLESIZING             0x00800000
 
 /* WINE internal flags */
 #define OFN_UNICODE		     0x40000000	/*to differ between 32W/A hook*/

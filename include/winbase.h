@@ -432,6 +432,9 @@ typedef struct
 #define LPTR (LMEM_FIXED | LMEM_ZEROINIT)
 #define LHND (LMEM_MOVEABLE | LMEM_ZEROINIT)
 
+#define NONZEROLHND         (LMEM_MOVEABLE)
+#define NONZEROLPTR         (LMEM_FIXED)
+
 #define GMEM_FIXED          0x0000
 #define GMEM_MOVEABLE       0x0002
 #define GMEM_NOCOMPACT      0x0010

@@ -32,6 +32,10 @@ extern int WIN32_LastError;
 #define HRESULT_FACILITY(hr)  (((hr) >> 16) & 0x1FFF)
 #define SCODE_FACILITY(sc)  (((sc) >> 16) & 0x1FFF)
 
+#define FACILITY_NT_BIT         0x10000000
+#define HRESULT_FROM_WIN32(x)   ((x) ? ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)) : 0 )
+#define HRESULT_FROM_NT(x)      ((HRESULT) ((x) | FACILITY_NT_BIT))
+
 /* SCODE <-> HRESULT functions */
 /* This macros is obsolete and should not be used in new apps. */
 #define GetScode(hr)         ((SCODE)(hr))
