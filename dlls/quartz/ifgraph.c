@@ -14,7 +14,9 @@
 #include "wingdi.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
+#include "wine/obj_oleaut.h"
 #include "strmif.h"
+#include "control.h"
 #include "uuids.h"
 
 #include "debugtools.h"
@@ -30,7 +32,7 @@ IFilterGraph2_fnQueryInterface(IFilterGraph2* iface,REFIID riid,void** ppobj)
 
 	TRACE("(%p)->()\n",This);
 
-	return IUnknown_QueryInterface((IUnknown*)(&This->unk),riid,ppobj);
+	return IUnknown_QueryInterface(This->unk.punkControl,riid,ppobj);
 }
 
 static ULONG WINAPI
@@ -40,7 +42,7 @@ IFilterGraph2_fnAddRef(IFilterGraph2* iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return IUnknown_AddRef((IUnknown*)(&This->unk));
+	return IUnknown_AddRef(This->unk.punkControl);
 }
 
 static ULONG WINAPI
@@ -50,7 +52,7 @@ IFilterGraph2_fnRelease(IFilterGraph2* iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return IUnknown_Release((IUnknown*)(&This->unk));
+	return IUnknown_Release(This->unk.punkControl);
 }
 
 static HRESULT WINAPI

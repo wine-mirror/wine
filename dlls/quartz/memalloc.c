@@ -39,13 +39,13 @@ HRESULT QUARTZ_CreateMemoryAllocator(IUnknown* punkOuter,void** ppobj)
 	if ( pma == NULL )
 		return E_OUTOFMEMORY;
 
-	QUARTZ_IUnkInit( &pma->unk );
+	QUARTZ_IUnkInit( &pma->unk, punkOuter );
 	CMemoryAllocator_InitIMemAllocator( pma );
 
 	pma->unk.pEntries = IFEntries;
 	pma->unk.dwEntries = sizeof(IFEntries)/sizeof(IFEntries[0]);
 
-	*ppobj = (void*)pma;
+	*ppobj = (void*)(&pma->unk);
 
 	return S_OK;
 }

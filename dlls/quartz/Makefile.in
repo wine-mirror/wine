@@ -9,11 +9,19 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	complist.c \
 	fgraph.c \
+	ibasaud.c \
+	ibasvid.c \
 	ifgraph.c \
+	imcntl.c \
 	imem.c \
+	imevent.c \
+	impos.c \
+	imseek.c \
 	irclock.c \
 	iunk.c \
+	ividwin.c \
 	main.c \
 	memalloc.c \
 	sysclock.c

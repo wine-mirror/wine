@@ -30,7 +30,7 @@ IReferenceClock_fnQueryInterface(IReferenceClock* iface,REFIID riid,void** ppobj
 
 	TRACE("(%p)->()\n",This);
 
-	return IUnknown_QueryInterface((IUnknown*)(&This->unk),riid,ppobj);
+	return IUnknown_QueryInterface(This->unk.punkControl,riid,ppobj);
 }
 
 static ULONG WINAPI
@@ -40,7 +40,7 @@ IReferenceClock_fnAddRef(IReferenceClock* iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return IUnknown_AddRef((IUnknown*)(&This->unk));
+	return IUnknown_AddRef(This->unk.punkControl);
 }
 
 static ULONG WINAPI
@@ -50,7 +50,7 @@ IReferenceClock_fnRelease(IReferenceClock* iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return IUnknown_Release((IUnknown*)(&This->unk));
+	return IUnknown_Release(This->unk.punkControl);
 }
 
 static HRESULT WINAPI

@@ -39,13 +39,13 @@ HRESULT QUARTZ_CreateSystemClock(IUnknown* punkOuter,void** ppobj)
 	if ( psc == NULL )
 		return E_OUTOFMEMORY;
 
-	QUARTZ_IUnkInit( &psc->unk );
+	QUARTZ_IUnkInit( &psc->unk, punkOuter );
 	CSystemClock_InitIReferenceClock( psc );
 
 	psc->unk.pEntries = IFEntries;
 	psc->unk.dwEntries = sizeof(IFEntries)/sizeof(IFEntries[0]);
 
-	*ppobj = (void*)psc;
+	*ppobj = (void*)(&psc->unk);
 
 	return S_OK;
 }

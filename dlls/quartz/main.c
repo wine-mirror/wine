@@ -5,7 +5,9 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "ole2.h"
+#include "wine/obj_oleaut.h"
 #include "strmif.h"
+#include "control.h"
 #include "uuids.h"
 
 #include "debugtools.h"
@@ -145,6 +147,8 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,LPUNKN
 
 	if ( ppobj == NULL )
 		return E_POINTER;
+	if ( pOuter != NULL && !IsEqualGUID( riid, &IID_IUnknown ) )
+		return CLASS_E_NOAGGREGATION;
 
 	*ppobj = NULL;
 

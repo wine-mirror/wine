@@ -41,10 +41,11 @@ typedef struct QUARTZ_IUnkImpl
 
 	/* IUnknown fields. */
 	ULONG	ref;
+	IUnknown*	punkControl;
 } QUARTZ_IUnkImpl;
 
 
-void QUARTZ_IUnkInit( QUARTZ_IUnkImpl* pImpl );
+void QUARTZ_IUnkInit( QUARTZ_IUnkImpl* pImpl, IUnknown* punkOuter );
 
 
 #endif	/* WINE_DSHOW_IUNK_H */

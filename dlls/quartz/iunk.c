@@ -31,26 +31,30 @@ IUnknown_fnQueryInterface(IUnknown* iface,REFIID riid,LPVOID *ppobj)
 	*ppobj = NULL;
 
 	ofs = 0;
-	for ( dwIndex = 0; dwIndex < This->dwEntries; dwIndex++ )
-	{
-		if ( IsEqualGUID( This->pEntries[dwIndex].piid, riid ) )
-		{
-			ofs = This->pEntries[dwIndex].ofsVTPtr;
-			break;
-		}
-	}
 
-	if ( dwIndex == This->dwEntries )
+	if ( IsEqualGUID( &IID_IUnknown, riid ) )
 	{
-		if ( !IsEqualGUID( &IID_IUnknown, riid ) )
+		TRACE("IID_IUnknown - returns inner object.\n");
+	}
+	else
+	{
+		for ( dwIndex = 0; dwIndex < This->dwEntries; dwIndex++ )
 		{
-			TRACE("unknown interface: %s\n",debugstr_guid(riid));
+			if ( IsEqualGUID( This->pEntries[dwIndex].piid, riid ) )
+			{
+				ofs = This->pEntries[dwIndex].ofsVTPtr;
+				break;
+			}
+		}
+		if ( dwIndex == This->dwEntries )
+		{
+			FIXME("unknown interface: %s\n",debugstr_guid(riid));
 			return E_NOINTERFACE;
 		}
 	}
 
 	*ppobj = (LPVOID)(((char*)This) + ofs);
-	IUnknown_AddRef(iface);
+	IUnknown_AddRef((IUnknown*)(*ppobj));
 
 	return S_OK;
 }
@@ -89,7 +93,7 @@ static ICOM_VTABLE(IUnknown) iunknown =
 };
 
 
-void QUARTZ_IUnkInit( QUARTZ_IUnkImpl* pImpl )
+void QUARTZ_IUnkInit( QUARTZ_IUnkImpl* pImpl, IUnknown* punkOuter )
 {
 	TRACE("(%p)\n",pImpl);
 
@@ -97,4 +101,10 @@ void QUARTZ_IUnkInit( QUARTZ_IUnkImpl* pImpl )
 	pImpl->pEntries = NULL;
 	pImpl->dwEntries = 0;
 	pImpl->ref = 1;
+	pImpl->punkControl = (IUnknown*)pImpl;
+
+	/* for delegation. */
+	if ( punkOuter != NULL )
+		pImpl->punkControl = punkOuter;
 }
+
