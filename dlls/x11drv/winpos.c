@@ -1901,7 +1901,8 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     else  /* SC_SIZE */
     {
         if (!thickframe) return;
-        if ( hittest && hittest != HTSYSMENU ) hittest += 2;
+        if ( hittest && ((wParam & 0xfff0) != SC_MOUSEMENU) )
+            hittest += (HTLEFT - WMSZ_LEFT);
         else
         {
             set_movesize_capture( hwnd );

@@ -2071,8 +2071,15 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case HTBOTTOM:
     case HTBOTTOMLEFT:
     case HTBOTTOMRIGHT:
-	/* make sure hittest fits into 0xf and doesn't overlap with HTSYSMENU */
-	SendMessageW( hwnd, WM_SYSCOMMAND, SC_SIZE + wParam - 2, lParam);
+        /* Old comment:
+         * "make sure hittest fits into 0xf and doesn't overlap with HTSYSMENU"
+         * This was previously done by setting wParam=SC_SIZE + wParam - 2
+         */
+        /* But that is not what WinNT does. Instead it sends this. This
+         * is easy to differentiate from HTSYSMENU, because HTSYSMENU adds
+         * SC_MOUSEMENU into wParam.
+         */
+        SendMessageW( hwnd, WM_SYSCOMMAND, SC_SIZE + wParam - (HTLEFT-WMSZ_LEFT), lParam);
 	break;
 
     case HTBORDER:
