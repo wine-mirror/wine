@@ -27,7 +27,7 @@ type	win16
 203    pascal  midiOutGetErrorText(word ptr word) midiOutGetErrorText16
 204    pascal  midiOutOpen(ptr word long long long) midiOutOpen16
 205    pascal  midiOutClose(word) midiOutClose16
-206    pascal  midiOutPrepareHeader(word ptr word) midiOutPrepareHeader16
+206    pascal  midiOutPrepareHeader(word long word) midiOutPrepareHeader16
 207    pascal  midiOutUnprepareHeader(word ptr word) midiOutUnprepareHeader16
 208    pascal  midiOutShortMsg(word long) midiOutShortMsg16
 209    pascal  midiOutLongMsg(word ptr word) midiOutLongMsg16
@@ -51,7 +51,7 @@ type	win16
 303    pascal  midiInGetErrorText(word ptr word) midiInGetErrorText16
 304    pascal  midiInOpen(ptr word long long long) midiInOpen16
 305    pascal  midiInClose(word) midiInClose16
-306    pascal  midiInPrepareHeader(word ptr word) midiInPrepareHeader16
+306    pascal  midiInPrepareHeader(word long word) midiInPrepareHeader16
 307    pascal  midiInUnprepareHeader(word ptr word) midiInUnprepareHeader16
 308    pascal  midiInAddBuffer(word ptr word) midiInAddBuffer16
 309    pascal  midiInStart(word) midiInStart16
@@ -69,7 +69,7 @@ type	win16
 403    pascal  waveOutGetErrorText(word ptr word) waveOutGetErrorText16
 404    pascal  waveOutOpen(ptr word ptr long long long) waveOutOpen16
 405    pascal  waveOutClose(word) waveOutClose16
-406    pascal  waveOutPrepareHeader(word ptr word) waveOutPrepareHeader16
+406    pascal  waveOutPrepareHeader(word long word) waveOutPrepareHeader16
 407    pascal  waveOutUnprepareHeader(word ptr word) waveOutUnprepareHeader16
 408    pascal  waveOutWrite(word ptr word) waveOutWrite16
 409    pascal  waveOutPause(word) waveOutPause16
@@ -90,7 +90,7 @@ type	win16
 503    pascal  waveInGetErrorText(word ptr word) waveInGetErrorText16
 504    pascal  waveInOpen(ptr word ptr long long long) waveInOpen16
 505    pascal  waveInClose(word) waveInClose16
-506    pascal  waveInPrepareHeader(word ptr word) waveInPrepareHeader16
+506    pascal  waveInPrepareHeader(word long word) waveInPrepareHeader16
 507    pascal  waveInUnprepareHeader(word ptr word) waveInUnprepareHeader16
 508    pascal  waveInAddBuffer(word ptr word) waveInAddBuffer16
 509    pascal  waveInStart(word) waveInStart16
@@ -141,7 +141,7 @@ type	win16
 1102   pascal  DrvSendMessage(word word long long) DrvSendMessage
 1103   pascal  DrvGetModuleHandle(word) DrvGetModuleHandle16
 1104   pascal  DrvDefDriverProc(long word word long long) DrvDefDriverProc
-1120   pascal  mmThreadCreate(ptr ptr long long) mmThreadCreate16
+1120   pascal  mmThreadCreate(segptr ptr long long) mmThreadCreate16
 1121   pascal  mmThreadSignal(word) mmThreadSignal16
 1122   pascal  mmThreadBlock(word) mmThreadBlock16
 1123   pascal  mmThreadIsCurrent(word) mmThreadIsCurrent16
@@ -173,3 +173,6 @@ type	win16
 #2003   stub    WINMMUNTILEBUFFER
 #2005   stub    MCIGETTHUNKTABLE
 #2006   stub    WINMMSL_THUNKDATA16
+
+# this is a wine only exported function. Is there another way to do it ?
+2047   pascal  WINE_mmThreadingEntryPoint(long) WINE_mmThreadingEntryPoint 
