@@ -20,6 +20,7 @@
 #define __SETUPAPI_PRIVATE_H
 
 #include "wine/windef16.h"
+#include "setupx16.h"
 
 #define COPYFILEDLGORD	1000
 #define SOURCESTRORD	500
@@ -53,5 +54,25 @@ extern INF_FILE *InfList;
 extern WORD InfNumEntries;
 
 extern LPCSTR IP_GetFileName(HINF16 hInf);
+
+/* string substitutions */
+
+struct inf_file;
+extern const WCHAR *DIRID_get_string( HINF hinf, int dirid );
+extern unsigned int PARSER_string_substA( struct inf_file *file, const WCHAR *text,
+                                          char *buffer, unsigned int size );
+extern unsigned int PARSER_string_substW( struct inf_file *file, const WCHAR *text,
+                                          WCHAR *buffer, unsigned int size );
+extern const WCHAR *PARSER_get_src_root( HINF hinf );
+
+/* support for Ascii queue callback functions */
+
+struct callback_WtoA_context
+{
+    void               *orig_context;
+    PSP_FILE_CALLBACK_A orig_handler;
+};
+
+UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification, UINT_PTR, UINT_PTR );
 
 #endif /* __SETUPAPI_PRIVATE_H */

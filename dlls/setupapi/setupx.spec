@@ -59,8 +59,8 @@ owner	setupapi
 55   stub     SURegLoadKey #(word str str)
 56   stub     SURegUnLoadKey #(word str)
 60   stub     DiskInfoFromLdid #(word ptr)
-61   stub     suErrorToIds #(word word)
-62   stub     TPWriteProfileString #(str str str)
+61   pascal   suErrorToIds(word word) suErrorToIds16
+62   pascal16 TPWriteProfileString(str str str) TPWriteProfileString16
 63   stub     SURPLSETUP
 # does SUSTORELDIDPATH set the path of an LDID in the registry ?
 64   stub     SUSTORELDIDPATH

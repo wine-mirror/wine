@@ -5,13 +5,18 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = setupapi.dll
 ALTNAMES  = setupx.dll
+EXTRALIBS = $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	devinst.c \
+	dirid.c \
 	infparse.c \
+	install.c \
+	parser.c \
+	queue.c \
 	setupx_main.c \
 	stubs.c \
 	virtcopy.c

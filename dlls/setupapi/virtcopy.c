@@ -24,8 +24,9 @@
 #include <string.h>
 #include "winbase.h"
 #include "winuser.h"
-#include "setupx16.h"
 #include "winreg.h"
+#include "setupapi.h"
+#include "setupx16.h"
 #include "setupapi_private.h"
 #include "wine/debug.h"
 
@@ -660,12 +661,15 @@ RETERR16 VCP_UI_CopyStart(void)
     if (!(VCP_UI_GetDialogTemplate(&template32)))
 	return VCPN_FAIL;
 
-    hDlgCopy = CreateDialogIndirectParamA(SETUPAPI_hInstance, template32, 0,
-		    				VCP_UI_FileCopyDlgProc, 0);
-    if (!hDlgCopy)
-	return VCPN_FAIL;
-    SetDlgItemTextA(hDlgCopy, SOURCESTRORD, "Scanning ...");
-    SetDlgItemTextA(hDlgCopy, DESTSTRORD, "NOT_IMPLEMENTED_YET");
+    if (vn_num > 10)  /* hack */
+    {
+        hDlgCopy = CreateDialogIndirectParamA(SETUPAPI_hInstance, template32, 0,
+                                              VCP_UI_FileCopyDlgProc, 0);
+        if (!hDlgCopy)
+            return VCPN_FAIL;
+        SetDlgItemTextA(hDlgCopy, SOURCESTRORD, "Scanning ...");
+        SetDlgItemTextA(hDlgCopy, DESTSTRORD, "NOT_IMPLEMENTED_YET");
+    }
     strcpy(buf, REG_INSTALLEDFILES);
     if (RegCreateKeyA(HKEY_LOCAL_MACHINE, buf, &hKeyFiles))
 	return VCPN_FAIL;
@@ -749,7 +753,7 @@ RETERR16 WINAPI vcpUICallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
 	    res = VCP_UI_CopyStart();
 	    break;
 	case VCPM_VSTATCOPYEND:
-	    DestroyWindow(hDlgCopy);
+	    if (hDlgCopy) DestroyWindow(hDlgCopy);
 	    break;
 	default:
 	    FIXME("unhandled msg 0x%04x\n", uMsg);

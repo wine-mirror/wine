@@ -26,46 +26,175 @@
  */
 
 #include <string.h>
-#include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"
+#include "ntddk.h"
 #include "wine/winbase16.h"
+#include "setupapi.h"
 #include "setupx16.h"
 #include "setupapi_private.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
+
+#define MAX_HANDLES 16384
+#define FIRST_HANDLE 32
+
+static HINF handles[MAX_HANDLES];
+
+
+static RETERR16 alloc_hinf16( HINF hinf, HINF16 *hinf16 )
+{
+    int i;
+    for (i = 0; i < MAX_HANDLES; i++)
+    {
+        if (!handles[i])
+        {
+            handles[i] = hinf;
+            *hinf16 = i + FIRST_HANDLE;
+            return OK;
+        }
+    }
+    return ERR_IP_OUT_OF_HANDLES;
+}
+
+static HINF get_hinf( HINF16 hinf16 )
+{
+    int idx = hinf16 - FIRST_HANDLE;
+    if (idx < 0 || idx >= MAX_HANDLES) return 0;
+    return handles[idx];
+}
+
+
+static HINF free_hinf16( HINF16 hinf16 )
+{
+    HINF ret;
+    int idx = hinf16 - FIRST_HANDLE;
+
+    if (idx < 0 || idx >= MAX_HANDLES) return 0;
+    ret = handles[idx];
+    handles[idx] = 0;
+    return ret;
+}
+
+/* convert last error code to a RETERR16 value */
+static RETERR16 get_last_error(void)
+{
+    switch(GetLastError())
+    {
+    case ERROR_EXPECTED_SECTION_NAME:
+    case ERROR_BAD_SECTION_NAME_LINE:
+    case ERROR_SECTION_NAME_TOO_LONG: return ERR_IP_INVALID_SECT_NAME;
+    case ERROR_SECTION_NOT_FOUND: return ERR_IP_SECT_NOT_FOUND;
+    case ERROR_LINE_NOT_FOUND: return ERR_IP_LINE_NOT_FOUND;
+    default: return IP_ERROR;  /* FIXME */
+    }
+}
+
+
+/***********************************************************************
+ *		IpOpen (SETUPX.2)
+ *
+ */
+RETERR16 WINAPI IpOpen16( LPCSTR filename, HINF16 *hinf16 )
+{
+    HINF hinf = SetupOpenInfFileA( filename, NULL, INF_STYLE_WIN4, NULL );
+    if (hinf == (HINF)INVALID_HANDLE_VALUE) return get_last_error();
+    return alloc_hinf16( hinf, hinf16 );
+}
+
+
+/***********************************************************************
+ *		IpClose (SETUPX.4)
+ */
+RETERR16 WINAPI IpClose16( HINF16 hinf16 )
+{
+    HINF hinf = free_hinf16( hinf16 );
+    if (!hinf) return ERR_IP_INVALID_HINF;
+    SetupCloseInfFile( hinf );
+    return OK;
+}
+
+
+/***********************************************************************
+ *		IpGetProfileString (SETUPX.210)
+ */
+RETERR16 WINAPI IpGetProfileString16( HINF16 hinf16, LPCSTR section, LPCSTR entry,
+                                      LPSTR buffer, WORD buflen )
+{
+    DWORD required_size;
+    HINF hinf = get_hinf( hinf16 );
+
+    if (!hinf) return ERR_IP_INVALID_HINF;
+    if (!SetupGetLineTextA( NULL, hinf, section, entry, buffer, buflen, &required_size ))
+        return get_last_error();
+    TRACE("%p: section %s entry %s ret %s\n",
+          hinf, debugstr_a(section), debugstr_a(entry), debugstr_a(buffer) );
+    return OK;
+}
+
+
+/***********************************************************************
+ *		GenFormStrWithoutPlaceHolders (SETUPX.103)
+ *
+ * ought to be pretty much implemented, I guess...
+ */
+void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR dst, LPCSTR src, HINF16 hinf16 )
+{
+    UNICODE_STRING srcW;
+    HINF hinf = get_hinf( hinf16 );
+
+    if (!hinf) return;
+
+    if (!RtlCreateUnicodeStringFromAsciiz( &srcW, src )) return;
+    PARSER_string_substA( hinf, srcW.Buffer, dst, MAX_INF_STRING_LENGTH );
+    RtlFreeUnicodeString( &srcW );
+    TRACE( "%s -> %s\n", debugstr_a(src), debugstr_a(dst) );
+}
+
+/***********************************************************************
+ *		GenInstall (SETUPX.101)
+ *
+ * generic installer function for .INF file sections
+ *
+ * This is not perfect - patch whenever you can !
+ *
+ * wFlags == GENINSTALL_DO_xxx
+ * e.g. NetMeeting:
+ * first call GENINSTALL_DO_REGSRCPATH | GENINSTALL_DO_FILES,
+ * second call GENINSTALL_DO_LOGCONFIG | CFGAUTO | INI2REG | REG | INI
+ */
+RETERR16 WINAPI GenInstall16( HINF16 hinf16, LPCSTR section, WORD genflags )
+{
+    UINT flags = 0;
+    HINF hinf = get_hinf( hinf16 );
+    RETERR16 ret = OK;
+    void *context;
+
+    if (!hinf) return ERR_IP_INVALID_HINF;
+
+    if (genflags & GENINSTALL_DO_FILES) flags |= SPINST_FILES;
+    if (genflags & GENINSTALL_DO_INI) flags |= SPINST_INIFILES;
+    if (genflags & GENINSTALL_DO_REG) flags |= SPINST_REGISTRY;
+    if (genflags & GENINSTALL_DO_INI2REG) flags |= SPINST_INI2REG;
+    if (genflags & GENINSTALL_DO_LOGCONFIG) flags |= SPINST_LOGCONFIG;
+    if (genflags & (GENINSTALL_DO_REGSRCPATH|GENINSTALL_DO_CFGAUTO|GENINSTALL_DO_PERUSER))
+        FIXME( "unsupported flags %x\n", genflags );
+
+    context = SetupInitDefaultQueueCallback( 0 );
+    if (!SetupInstallFromInfSectionA( 0, hinf, section, flags, 0, NULL, 0,
+                                      SetupDefaultQueueCallbackA, context, 0, 0 ))
+        ret = get_last_error();
+
+    SetupTermDefaultQueueCallback( context );
+    return ret;
+}
+
 
 WORD InfNumEntries = 0;
 INF_FILE *InfList = NULL;
 HINF16 IP_curr_handle = 0;
 
-RETERR16 IP_OpenInf(LPCSTR lpInfFileName, HINF16 *lphInf)
-{
-    HFILE hFile = _lopen(lpInfFileName, OF_READ);
-
-    if (!lphInf)
-	return IP_ERROR;
-
-    /* this could be improved by checking for already freed handles */
-    if (IP_curr_handle == 0xffff) 
-	return ERR_IP_OUT_OF_HANDLES; 
-
-    if (hFile != HFILE_ERROR)
-    {
-	InfList = HeapReAlloc(GetProcessHeap(), 0, InfList, InfNumEntries+1);
-	InfList[InfNumEntries].hInf = IP_curr_handle++;
-	InfList[InfNumEntries].hInfFile = hFile;
-	InfList[InfNumEntries].lpInfFileName = HeapAlloc( GetProcessHeap(), 0,
-                                                          strlen(lpInfFileName)+1);
-        strcpy( InfList[InfNumEntries].lpInfFileName, lpInfFileName );
-        *lphInf = InfList[InfNumEntries].hInf;
-	InfNumEntries++;
-	TRACE("ret handle %d.\n", *lphInf);
-	return OK;
-    }
-    *lphInf = 0xffff;
-    return ERR_IP_INVALID_INFFILE;
-}
 
 BOOL IP_FindInf(HINF16 hInf, WORD *ret)
 {
@@ -91,49 +220,4 @@ LPCSTR IP_GetFileName(HINF16 hInf)
     return NULL;
 }
 
-RETERR16 IP_CloseInf(HINF16 hInf)
-{
-    int i;
-    WORD n;
-    RETERR16 res = ERR_IP_INVALID_HINF;
 
-    if (IP_FindInf(hInf, &n))
-    {
-	_lclose(InfList[n].hInfFile);
-	HeapFree(GetProcessHeap(), 0, InfList[n].lpInfFileName);
-	for (i=n; i < InfNumEntries-1; i++)
-	    InfList[i] = InfList[i+1];
-	InfNumEntries--;
-	InfList = HeapReAlloc(GetProcessHeap(), 0, InfList, InfNumEntries);
-	res = OK;
-    }
-    return res;
-}
-
-/***********************************************************************
- *		IpOpen (SETUPX.2)
- *
- */
-RETERR16 WINAPI IpOpen16(LPCSTR lpInfFileName, HINF16 *lphInf)
-{
-    TRACE("('%s', %p)\n", lpInfFileName, lphInf);
-    return IP_OpenInf(lpInfFileName, lphInf);
-}
-
-/***********************************************************************
- *		IpClose (SETUPX.4)
- */
-RETERR16 WINAPI IpClose16(HINF16 hInf)
-{
-    return IP_CloseInf(hInf);
-}
-
-/***********************************************************************
- *		IpGetProfileString (SETUPX.210)
- */
-RETERR16 WINAPI IpGetProfileString16(HINF16 hInf, LPCSTR section, LPCSTR entry, LPSTR buffer, WORD buflen) 
-{
-    TRACE("'%s': section '%s' entry '%s'\n", IP_GetFileName(hInf), section, entry);
-    GetPrivateProfileStringA(section, entry, "", buffer, buflen, IP_GetFileName(hInf));
-    return 0;
-}

@@ -212,6 +212,13 @@
 #define OPTIONAL
 #endif
 
+/* Error Masks */
+#define APPLICATION_ERROR_MASK       0x20000000
+#define ERROR_SEVERITY_SUCCESS       0x00000000
+#define ERROR_SEVERITY_INFORMATIONAL 0x40000000
+#define ERROR_SEVERITY_WARNING       0x80000000
+#define ERROR_SEVERITY_ERROR         0xC0000000
+
 /* Standard data types */
 typedef const void                  *PCVOID,   *LPCVOID;
 typedef int             BOOL,       *PBOOL,    *LPBOOL;
