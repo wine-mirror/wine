@@ -33,8 +33,7 @@
 #include <linux/ppdev.h>
 
 #include "winerror.h"
-#include "winreg.h"
-
+#include "winternl.h"
 #include "miscemu.h"
 
 #include "wine/debug.h"
@@ -66,24 +65,49 @@ static int IO_pp_sort(const void *p1,const  void *p2)
 char IO_pp_init(void)
 {
     char name[80];
-    char buffer[1024];
+    char buffer[256];
     HKEY hkey;
-    char temp[256];
     int i,idx=0,fd,res,userbase,nports=0;
     char * timeout;
     char ret=1;
     int lasterror;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+
+    static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
+                                    'S','o','f','t','w','a','r','e','\\',
+                                    'W','i','n','e','\\',
+                                    'W','i','n','e','\\',
+                                    'C','o','n','f','i','g','\\',
+                                    'p','p','d','e','v',0};
 
     TRACE("\n");
-    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ppdev", &hkey ) != ERROR_SUCCESS)
-      return 1;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, configW );
+
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return 1;
 
     for (;;)
     {
-        DWORD type, count = sizeof(buffer), name_len = sizeof(name);
+        DWORD total_size, len;
+        char temp[256];
+        KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)temp;
 
-        if (RegEnumValueA( hkey, idx, name, &name_len, NULL, &type, buffer, &count )!= ERROR_SUCCESS)
-	  break;
+        if (NtEnumerateValueKey( hkey, idx, KeyValueFullInformation,
+                                 temp, sizeof(temp), &total_size )) break;
+        if (info->Type != REG_SZ) break;
+
+        RtlUnicodeToMultiByteN( name, sizeof(name)-1, &len, info->Name, info->NameLength );
+        name[len] = 0;
+        RtlUnicodeToMultiByteN( buffer, sizeof(buffer)-1, &len,
+                                (WCHAR *)(temp + info->DataOffset), total_size-info->DataOffset );
+        buffer[len] = 0;
 
 	idx++;
 	if(nports >4)
@@ -138,7 +162,7 @@ char IO_pp_init(void)
 	    (ioctl(fd,PPRCONTROL,&res))||
 	    (ioctl(fd,PPRCONTROL,&res)))
 	  {
-	    ERR("PPUSER IOCTL not available for parport device %s\n",temp);
+	    ERR("PPUSER IOCTL not available for parport device %s\n",buffer);
 	    continue;
 	  }
 	if (ioctl (fd,PPRELEASE,0))
@@ -172,7 +196,7 @@ char IO_pp_init(void)
 	nports++;
     }
     TRACE("found %d ports\n",nports);
-    RegCloseKey( hkey );
+    NtClose( hkey );
 
     PPDeviceNum= nports;
     if (nports > 1)

@@ -26,8 +26,8 @@
 #include <assert.h>
 
 #include "windef.h"
-#include "winreg.h"
 #include "winerror.h"
+#include "winternl.h"
 #include "file.h"
 #include "module.h"
 #include "wine/debug.h"
@@ -379,8 +379,16 @@ static BOOL get_list_load_order( const char *module, const struct loadorder_list
  */
 static HKEY open_app_key( const char *module )
 {
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
     HKEY hkey, appkey;
     char buffer[MAX_PATH+16], *appname;
+    static const WCHAR AppDefaultsW[] = {'M','a','c','h','i','n','e','\\',
+                                         'S','o','f','t','w','a','r','e','\\',
+                                         'W','i','n','e','\\',
+                                         'W','i','n','e','\\',
+                                         'C','o','n','f','i','g','\\',
+                                         'A','p','p','D','e','f','a','u','l','t','s',0};
 
     if (!GetModuleFileNameA( 0, buffer, MAX_PATH ))
     {
@@ -391,13 +399,23 @@ static HKEY open_app_key( const char *module )
 
     TRACE( "searching '%s' in AppDefaults\\%s\\DllOverrides\n", module, appname );
 
-    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &hkey ))
-        return 0;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, AppDefaultsW );
+
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return 0;
+    attr.RootDirectory = hkey;
 
     /* open AppDefaults\\appname\\DllOverrides key */
     strcat( appname, "\\DllOverrides" );
-    if (RegOpenKeyA( hkey, appname, &appkey )) appkey = 0;
-    RegCloseKey( hkey );
+    RtlCreateUnicodeStringFromAsciiz( &nameW, appname );
+    if (NtOpenKey( &appkey, KEY_ALL_ACCESS, &attr )) appkey = 0;
+    RtlFreeUnicodeString( &nameW );
+    NtClose( hkey );
     return appkey;
 }
 
@@ -409,12 +427,47 @@ static HKEY open_app_key( const char *module )
  */
 static BOOL get_registry_value( HKEY hkey, const char *module, enum loadorder_type lo[] )
 {
+    UNICODE_STRING valueW;
     char buffer[80];
-    DWORD count, type;
+    DWORD count;
+    BOOL ret;
 
-    count = sizeof(buffer);
-    if (RegQueryValueExA( hkey, module, NULL, &type, buffer, &count )) return FALSE;
-    return ParseLoadOrder( buffer, lo );
+    RtlCreateUnicodeStringFromAsciiz( &valueW, module );
+
+    if ((ret = !NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation,
+                                 buffer, sizeof(buffer), &count )))
+    {
+        int i, n = 0;
+        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)buffer)->Data;
+
+        while (*str)
+        {
+            enum loadorder_type type = LOADORDER_INVALID;
+
+            while (*str == ',' || isspaceW(*str)) str++;
+            if (!*str) break;
+
+            switch(tolowerW(*str))
+            {
+            case 'n': type = LOADORDER_DLL; break;
+            case 's': type = LOADORDER_SO; break;
+            case 'b': type = LOADORDER_BI; break;
+            case 0:   break;  /* end of string */
+            default:
+                ERR("Invalid load order module-type %s, ignored\n", debugstr_w(str));
+                break;
+            }
+            if (type != LOADORDER_INVALID)
+            {
+                for (i = 0; i < n; i++) if (lo[i] == type) break;  /* already specified */
+                if (i == n) lo[n++] = type;
+            }
+            while (*str && *str != ',' && !isspaceW(*str)) str++;
+        }
+        lo[n] = LOADORDER_INVALID;
+    }
+    RtlFreeUnicodeString( &valueW );
+    return ret;
 }
 
 
@@ -484,6 +537,13 @@ BOOL MODULE_GetBuiltinPath( const char *libname, const char *ext, char *filename
  */
 void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOOL win32 )
 {
+    static const WCHAR DllOverridesW[] = {'M','a','c','h','i','n','e','\\',
+                                          'S','o','f','t','w','a','r','e','\\',
+                                          'W','i','n','e','\\',
+                                          'W','i','n','e','\\',
+                                          'C','o','n','f','i','g','\\',
+                                          'D','l','l','O','v','e','r','r','i','d','e','s',0};
+
     static HKEY std_key = (HKEY)-1;  /* key to standard section, cached */
     HKEY app_key = 0;
     char *module, *basename;
@@ -547,7 +607,20 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
 
     /* then explicit module name in standard section */
     if (std_key == (HKEY)-1)
-        RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\DllOverrides", &std_key );
+    {
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING nameW;
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.ObjectName = &nameW;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        RtlInitUnicodeString( &nameW, DllOverridesW );
+
+        if (NtOpenKey( &std_key, KEY_ALL_ACCESS, &attr )) std_key = 0;
+    }
 
     if (std_key && get_registry_value( std_key, module+1, loadorder ))
     {
@@ -608,6 +681,6 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
 
 
  done:
-    if (app_key) RegCloseKey( app_key );
+    if (app_key) NtClose( app_key );
     HeapFree( GetProcessHeap(), 0, module );
 }

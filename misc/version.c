@@ -29,14 +29,14 @@
 #include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winternl.h"
+#include "winerror.h"
 #include "wine/winbase16.h"
 #include "module.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
-#include "winerror.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
 
@@ -271,76 +271,114 @@ static void VERSION_ParseDosVersion( const char *arg )
 
 
 /**********************************************************************
+ *         VERSION_ParseVersion
+ *
+ * Parse the contents of the Version key.
+ */
+static void VERSION_ParseVersion( HKEY hkey, BOOL *got_win_ver, BOOL *got_dos_ver )
+{
+    static const WCHAR WindowsW[] = {'W','i','n','d','o','w','s',0};
+    static const WCHAR DosW[] = {'D','O','S',0};
+
+    UNICODE_STRING valueW;
+    char tmp[64], buffer[50];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)tmp;
+    DWORD count, len;
+
+    if (!*got_win_ver)
+    {
+        RtlInitUnicodeString( &valueW, WindowsW );
+        if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+        {
+            RtlUnicodeToMultiByteN( buffer, sizeof(buffer)-1, &len,
+                                    (WCHAR *)info->Data, info->DataLength );
+            buffer[len] = 0;
+            VERSION_ParseWinVersion( buffer );
+            TRACE( "got win version %s\n", WinVersionNames[forcedWinVersion] );
+            *got_win_ver = TRUE;
+        }
+    }
+    if (!*got_dos_ver)
+    {
+        RtlInitUnicodeString( &valueW, DosW );
+        if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+        {
+            RtlUnicodeToMultiByteN( buffer, sizeof(buffer)-1, &len,
+                                    (WCHAR *)info->Data, info->DataLength );
+            buffer[len] = 0;
+            VERSION_ParseDosVersion( buffer );
+            TRACE( "got dos version %lx\n", VersionData[WIN31].getVersion16 );
+            *got_dos_ver = TRUE;
+        }
+    }
+}
+
+
+/**********************************************************************
  *         VERSION_Init
  */
 static void VERSION_Init(void)
 {
-    HKEY hkey, appkey;
-    DWORD count, type;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HKEY hkey, config_key;
     BOOL got_win_ver = FALSE, got_dos_ver = FALSE;
-    char buffer[MAX_PATH+16], *appname, *p;
+    WCHAR buffer[MAX_PATH], appversion[MAX_PATH+20], *appname, *p;
     static BOOL init_done;
+    static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
+                                    'S','o','f','t','w','a','r','e','\\',
+                                    'W','i','n','e','\\',
+                                    'W','i','n','e','\\',
+                                    'C','o','n','f','i','g',0};
+    static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
+    static const WCHAR versionW[] = {'\\','V','e','r','s','i','o','n',0};
 
     if (init_done) return;
-    if (!GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    if (!GetModuleFileNameW( 0, buffer, MAX_PATH ))
     {
         WARN( "could not get module file name\n" );
         return;
     }
     init_done = TRUE;
     appname = buffer;
-    if ((p = strrchr( appname, '/' ))) appname = p + 1;
-    if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+    if ((p = strrchrW( appname, '/' ))) appname = p + 1;
+    if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
 
-    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &hkey ))
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, configW );
+
+    if (NtOpenKey( &config_key, KEY_ALL_ACCESS, &attr )) return;
+    attr.RootDirectory = config_key;
+
+    /* open AppDefaults\\appname\\Version key */
+
+    strcpyW( appversion, appdefaultsW );
+    strcatW( appversion, appname );
+    strcatW( appversion, versionW );
+    RtlInitUnicodeString( &nameW, appversion );
+
+    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
-        /* open AppDefaults\\appname\\Version key */
-        strcat( appname, "\\Version" );
-        if (!RegOpenKeyA( hkey, appname, &appkey ))
-        {
-            count = sizeof(buffer);
-            if (!RegQueryValueExA( appkey, "Windows", NULL, &type, buffer, &count ))
-            {
-                VERSION_ParseWinVersion( buffer );
-                TRACE( "got app win version %s\n", WinVersionNames[forcedWinVersion] );
-                got_win_ver = TRUE;
-            }
-            count = sizeof(buffer);
-            if (!RegQueryValueExA( appkey, "DOS", NULL, &type, buffer, &count ))
-            {
-                VERSION_ParseDosVersion( buffer );
-                TRACE( "got app dos version %lx\n", VersionData[WIN31].getVersion16 );
-                got_dos_ver = TRUE;
-            }
-            RegCloseKey( appkey );
-        }
-        RegCloseKey( hkey );
+        VERSION_ParseVersion( hkey, &got_win_ver, &got_dos_ver );
+        NtClose( hkey );
     }
 
-    if (got_win_ver && got_dos_ver) return;
+    if (got_win_ver && got_dos_ver) goto done;
 
-    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Version", &hkey ))
+    RtlInitUnicodeString( &nameW, versionW + 1 );
+    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
-        if (!got_win_ver)
-        {
-            count = sizeof(buffer);
-            if (!RegQueryValueExA( hkey, "Windows", NULL, &type, buffer, &count ))
-            {
-                VERSION_ParseWinVersion( buffer );
-                TRACE( "got default win version %s\n", WinVersionNames[forcedWinVersion] );
-            }
-        }
-        if (!got_dos_ver)
-        {
-            count = sizeof(buffer);
-            if (!RegQueryValueExA( hkey, "DOS", NULL, &type, buffer, &count ))
-            {
-                VERSION_ParseDosVersion( buffer );
-                TRACE( "got default dos version %lx\n", VersionData[WIN31].getVersion16 );
-            }
-        }
-        RegCloseKey( hkey );
+        VERSION_ParseVersion( hkey, &got_win_ver, &got_dos_ver );
+        NtClose( hkey );
     }
+
+ done:
+    NtClose( config_key );
 }
 
 

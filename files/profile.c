@@ -40,7 +40,6 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
-#include "winreg.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -972,19 +971,34 @@ static BOOL PROFILE_SetString( LPCWSTR section_name, LPCWSTR key_name,
 int PROFILE_GetWineIniString( LPCWSTR section, LPCWSTR key_name,
                               LPCWSTR def, LPWSTR buffer, int len )
 {
-    WCHAR tmp[PROFILE_MAX_LINE_LEN];
     HKEY hkey;
-    DWORD err;
+    NTSTATUS err;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
 
-    if (!(err = RegOpenKeyW( wine_profile_key, section, &hkey )))
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = wine_profile_key;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, section );
+    if (!(err = NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )))
     {
-        DWORD type;
-        DWORD count = sizeof(tmp);
-        err = RegQueryValueExW( hkey, key_name, 0, &type, (LPBYTE)tmp, &count );
-        RegCloseKey( hkey );
+        char tmp[PROFILE_MAX_LINE_LEN*sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
+        DWORD count;
+
+        RtlInitUnicodeString( &nameW, key_name );
+        if (!(err = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                                     tmp, sizeof(tmp), &count )))
+        {
+            WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+            PROFILE_CopyEntry( buffer, str, len, TRUE, TRUE );
+        }
+        NtClose( hkey );
     }
 
-    PROFILE_CopyEntry( buffer, err ? def : tmp, len, TRUE, TRUE );
+    if (err) PROFILE_CopyEntry( buffer, def, len, TRUE, TRUE );
     TRACE( "(%s,%s,%s): returning %s\n", debugstr_w(section),
            debugstr_w(key_name), debugstr_w(def), debugstr_w(buffer) );
     return strlenW(buffer);

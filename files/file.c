@@ -58,7 +58,6 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "wine/server.h"
@@ -947,7 +946,7 @@ BOOL WINAPI SetFileAttributesW(LPCWSTR lpFileName, DWORD attributes)
 BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 {
     UNICODE_STRING filenameW;
-    HANDLE ret = FALSE;
+    BOOL ret = FALSE;
 
     if (!lpFileName)
     {
@@ -2495,15 +2494,32 @@ static BOOL FILE_AddBootRenameEntry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
     static const WCHAR ValueName[] = {'P','e','n','d','i','n','g',
                                       'F','i','l','e','R','e','n','a','m','e',
                                       'O','p','e','r','a','t','i','o','n','s',0};
+    static const WCHAR SessionW[] = {'M','a','c','h','i','n','e','\\',
+                                     'S','y','s','t','e','m','\\',
+                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                     'C','o','n','t','r','o','l','\\',
+                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
+    static const int info_size = FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data );
+
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    KEY_VALUE_PARTIAL_INFORMATION *info;
     BOOL rc = FALSE;
     HKEY Reboot = 0;
-    DWORD Type, len0, len1, len2;
+    DWORD len0, len1, len2;
     DWORD DataSize = 0;
     BYTE *Buffer = NULL;
     WCHAR *p;
 
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
-                     &Reboot) != ERROR_SUCCESS)
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, SessionW );
+
+    if (NtCreateKey( &Reboot, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS)
     {
         WARN("Error creating key for reboot managment [%s]\n",
              "SYSTEM\\CurrentControlSet\\Control\\Session Manager");
@@ -2524,19 +2540,25 @@ static BOOL FILE_AddBootRenameEntry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
     len1 *= sizeof(WCHAR);
     len2 *= sizeof(WCHAR);
 
+    RtlInitUnicodeString( &nameW, ValueName );
+
     /* First we check if the key exists and if so how many bytes it already contains. */
-    if (RegQueryValueExW(Reboot, ValueName, NULL, &Type, NULL, &DataSize) == ERROR_SUCCESS)
+    if (NtQueryValueKey( Reboot, &nameW, KeyValuePartialInformation,
+                         NULL, 0, &DataSize ) == STATUS_BUFFER_OVERFLOW)
     {
-        if (Type != REG_MULTI_SZ) goto Quit;
-        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, DataSize + len1 + len2 + sizeof(WCHAR) ))) goto Quit;
-        if (RegQueryValueExW(Reboot, ValueName, NULL, &Type, Buffer, &DataSize) != ERROR_SUCCESS)
+        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, DataSize + len1 + len2 + sizeof(WCHAR) )))
             goto Quit;
-        if (DataSize) DataSize -= sizeof(WCHAR);  /* remove terminating null (will be added back later) */
+        if (NtQueryValueKey( Reboot, &nameW, KeyValuePartialInformation,
+                             Buffer, DataSize, &DataSize )) goto Quit;
+        info = (KEY_VALUE_PARTIAL_INFORMATION *)Buffer;
+        if (info->Type != REG_MULTI_SZ) goto Quit;
+        if (DataSize > sizeof(info)) DataSize -= sizeof(WCHAR);  /* remove terminating null (will be added back later) */
     }
     else
     {
-        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, len1 + len2 + sizeof(WCHAR) ))) goto Quit;
-        DataSize = 0;
+        DataSize = info_size;
+        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, DataSize + len1 + len2 + sizeof(WCHAR) )))
+            goto Quit;
     }
 
     p = (WCHAR *)(Buffer + DataSize);
@@ -2563,10 +2585,11 @@ static BOOL FILE_AddBootRenameEntry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
     p = (WCHAR *)(Buffer + DataSize);
     *p = 0;
     DataSize += sizeof(WCHAR);
-    rc = !RegSetValueExW( Reboot, ValueName, 0, REG_MULTI_SZ, Buffer, DataSize );
+
+    rc = !NtSetValueKey(Reboot, &nameW, 0, REG_MULTI_SZ, Buffer + info_size, DataSize - info_size);
 
  Quit:
-    if (Reboot) RegCloseKey(Reboot);
+    if (Reboot) NtClose(Reboot);
     if (Buffer) HeapFree( GetProcessHeap(), 0, Buffer );
     return(rc);
 }

@@ -27,9 +27,9 @@
 
 #include "winnt.h"
 #include "winternl.h"
-#include "winreg.h"
 #include "stackframe.h"
 #include "module.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
@@ -45,11 +45,15 @@ const char **debug_snoop_includelist = NULL;
  *
  * Build a function list from a ';'-separated string.
  */
-static const char **build_list( const char *buffer )
+static const char **build_list( const WCHAR *bufferW )
 {
     int count = 1;
+    char buffer[1024];
     const char *p = buffer;
     const char **ret;
+
+    RtlUnicodeToMultiByteN( buffer, sizeof(buffer), NULL,
+                            bufferW, (strlenW(bufferW)+1) * sizeof(WCHAR) );
 
     while ((p = strchr( p, ';' )))
     {
@@ -83,41 +87,63 @@ static const char **build_list( const char *buffer )
  */
 void RELAY_InitDebugLists(void)
 {
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name;
     char buffer[1024];
     HKEY hkey;
-    DWORD count, type;
+    DWORD count;
+    WCHAR *str;
+    static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
+                                    'S','o','f','t','w','a','r','e','\\',
+                                    'W','i','n','e','\\',
+                                    'W','i','n','e','\\',
+                                    'C','o','n','f','i','g','\\',
+                                    'D','e','b','u','g',0};
+    static const WCHAR RelayIncludeW[] = {'R','e','l','a','y','I','n','c','l','u','d','e',0};
+    static const WCHAR RelayExcludeW[] = {'R','e','l','a','y','E','x','c','l','u','d','e',0};
+    static const WCHAR SnoopIncludeW[] = {'S','n','o','o','p','I','n','c','l','u','d','e',0};
+    static const WCHAR SnoopExcludeW[] = {'S','n','o','o','p','E','x','c','l','u','d','e',0};
 
-    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Debug", &hkey )) return;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &name;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &name, configW );
 
-    count = sizeof(buffer);
-    if (!RegQueryValueExA( hkey, "RelayInclude", NULL, &type, buffer, &count ))
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return;
+
+    str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)buffer)->Data;
+    RtlInitUnicodeString( &name, RelayIncludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
     {
-        TRACE("RelayInclude = %s\n", buffer );
-        debug_relay_includelist = build_list( buffer );
+        TRACE("RelayInclude = %s\n", debugstr_w(str) );
+        debug_relay_includelist = build_list( str );
     }
 
-    count = sizeof(buffer);
-    if (!RegQueryValueExA( hkey, "RelayExclude", NULL, &type, buffer, &count ))
+    RtlInitUnicodeString( &name, RelayExcludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
     {
-        TRACE( "RelayExclude = %s\n", buffer );
-        debug_relay_excludelist = build_list( buffer );
+        TRACE( "RelayExclude = %s\n", debugstr_w(str) );
+        debug_relay_excludelist = build_list( str );
     }
 
-    count = sizeof(buffer);
-    if (!RegQueryValueExA( hkey, "SnoopInclude", NULL, &type, buffer, &count ))
+    RtlInitUnicodeString( &name, SnoopIncludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
     {
-        TRACE_(snoop)( "SnoopInclude = %s\n", buffer );
-        debug_snoop_includelist = build_list( buffer );
+        TRACE_(snoop)( "SnoopInclude = %s\n", debugstr_w(str) );
+        debug_snoop_includelist = build_list( str );
     }
 
-    count = sizeof(buffer);
-    if (!RegQueryValueExA( hkey, "SnoopExclude", NULL, &type, buffer, &count ))
+    RtlInitUnicodeString( &name, SnoopExcludeW );
+    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
     {
-        TRACE_(snoop)( "SnoopExclude = %s\n", buffer );
-        debug_snoop_excludelist = build_list( buffer );
+        TRACE_(snoop)( "SnoopExclude = %s\n", debugstr_w(str) );
+        debug_snoop_excludelist = build_list( str );
     }
 
-    RegCloseKey( hkey );
+    NtClose( hkey );
 }
 
 
