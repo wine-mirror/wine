@@ -361,7 +361,53 @@ END:
     return retvalue;
 }
 
-int i;
+
+/***********************************************************************
+ * 		RDW_ValidateParent [RDW_UpdateRgns() helper] 
+ *
+ *  Validate the portions of parent that are covered by a validated child
+ *  wndPtr = child
+ */
+void  RDW_ValidateParent(WND *wndChild)  
+{
+    WND *wndParent = WIN_LockWndPtr(wndChild->parent);
+    WND *wndDesktop = WIN_GetDesktop();
+
+    if ((wndParent) && (wndParent != wndDesktop) && !(wndParent->dwStyle & WS_CLIPCHILDREN))
+    {
+        HRGN hrg;
+        if (wndChild->hrgnUpdate == 1 )
+        {
+            RECT r = {0, 0, wndChild->rectWindow.right - wndChild->rectWindow.left,
+                            wndChild->rectWindow.bottom - wndChild->rectWindow.top };
+            hrg = CreateRectRgnIndirect( &r );
+        }
+        else
+	   hrg = wndChild->hrgnUpdate;
+        if (wndParent->hrgnUpdate != 0)
+        {
+            POINT ptOffset;
+            RECT rect, rectParent;
+            if( wndParent->hrgnUpdate == 1 )
+            {
+               RECT r = {0, 0, wndParent->rectWindow.right - wndParent->rectWindow.left,
+	         	    wndParent->rectWindow.bottom - wndParent->rectWindow.top };
+               wndParent->hrgnUpdate = CreateRectRgnIndirect( &r );
+            }
+            /* we must offset the child region by the offset of the child rect in the parent */
+            GetWindowRect(wndParent->hwndSelf, &rectParent);
+            GetWindowRect(wndChild->hwndSelf, &rect);
+            ptOffset.x = rect.left - rectParent.left;
+            ptOffset.y = rect.top - rectParent.top;
+            OffsetRgn( hrg, ptOffset.x, ptOffset.y );
+            CombineRgn( wndParent->hrgnUpdate, wndParent->hrgnUpdate, hrg, RGN_DIFF );
+            OffsetRgn( hrg, -ptOffset.x, -ptOffset.y );
+        }
+        if (hrg != wndChild->hrgnUpdate) DeleteObject( hrg );
+    }
+    WIN_ReleaseWndPtr(wndParent);
+    WIN_ReleaseDesktop();
+}
 
 /***********************************************************************
  * 		RDW_UpdateRgns [RedrawWindow() helper] 
@@ -372,7 +418,7 @@ int i;
  *  NOTE: Walks the window tree so the caller must lock it.
  *	  MUST preserve hRgn (can modify but then has to restore).
  */
-static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags )
+static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecursLevel )
 {
     /* 
      * Called only when one of the following is set:
@@ -468,7 +514,11 @@ EMPTY:
 
 	if (flags & RDW_NOFRAME) wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
 	if (flags & RDW_NOERASE) wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+
     }
+
+    if ((firstRecursLevel) && (wndPtr->hrgnUpdate != 0) && (flags & RDW_UPDATENOW))
+        RDW_ValidateParent(wndPtr); /* validate parent covered by region */
 
     /* in/validate child windows that intersect with the region if it
      * is a valid handle. */
@@ -502,7 +552,7 @@ EMPTY:
                     if( RectInRegion( hRgn, &r ) )
                     {
                         OffsetRgn( hRgn, -ptOffset.x, -ptOffset.y );
-                        RDW_UpdateRgns( wnd, hRgn, flags );
+                        RDW_UpdateRgns( wnd, hRgn, flags, FALSE );
 			prevOrigin.x = r.left + ptTotal.x;
 			prevOrigin.y = r.top + ptTotal.y;
                         ptTotal.x += ptOffset.x;
@@ -522,7 +572,7 @@ EMPTY:
 	WND* wnd;
 	for( wnd = wndPtr->child; wnd; wnd = wnd->next )
 	     if( wnd->dwStyle & WS_VISIBLE )
-		 RDW_UpdateRgns( wnd, hRgn, flags );
+		 RDW_UpdateRgns( wnd, hRgn, flags, FALSE );
     }
 
 OUT:
@@ -770,7 +820,7 @@ rect2v:
 
     /* At this point hRgn is either an update region in window coordinates or 1 or 0 */
 
-    RDW_UpdateRgns( wndPtr, hRgn, flags );
+    RDW_UpdateRgns( wndPtr, hRgn, flags, TRUE );
 
     /* Erase/update windows, from now on hRgn is a scratch region */
 
