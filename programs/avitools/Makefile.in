@@ -6,7 +6,7 @@ SRCDIR     = @srcdir@
 VPATH      = @srcdir@
 MODULE     = none
 PROGRAMS   = icinfo aviinfo aviplay
-ALL_LIBS   = -L$(TOPOBJDIR) -lwine $(LIBS)
+ALL_LIBS   = $(LIBWINE) $(LIBS)
 
 SPEC_SRCS = \
 	icinfo.spec \

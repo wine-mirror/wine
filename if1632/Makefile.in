@@ -24,6 +24,6 @@ $(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
 	$(LDCOMBINE) $(OBJS) -o $@
 
 asmrelay.s: $(WINEBUILD)
-	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WINEBUILD) @DLLFLAGS@ -o $@ -relay
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -relay
 
 ### Dependencies:

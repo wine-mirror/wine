@@ -6,7 +6,7 @@ SRCDIR     = @srcdir@
 VPATH      = @srcdir@
 MODULE     = none
 PROGRAMS   = expand hello hello2 hello3 hello4 hello5 new rolex vartest volinfo
-ALL_LIBS   = -L$(TOPOBJDIR) -lwine $(LIBS)
+ALL_LIBS   = $(LIBWINE) $(LIBS)
 
 C_SRCS = \
 	expand.c \
