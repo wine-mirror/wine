@@ -329,6 +329,7 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   HINSTANCE hInstance;
   LPCSTR lpstrFilter = NULL;
   LPSTR lpstrCustomFilter = NULL;
+  LPWSTR lpstrFile = NULL;
   DWORD dwFlags;
 
   /* Initialise FileOpenDlgInfos structure*/
@@ -399,6 +400,10 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   /* Initialise the dialog property */
   fodInfos->DlgInfos.dwDlgProp = 0;
   
+  /* allocate ansi filename buffer */
+  lpstrFile = ofn->lpstrFile;  
+  ofn->lpstrFile = MemAlloc(ofn->nMaxFile);
+  
   switch(iDlgType)
   {
   case OPEN_DIALOG :
@@ -431,6 +436,12 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   /* Restore hInstance */
   fodInfos->ofnInfos->hInstance = hInstance;
   MemFree((LPVOID)(fodInfos));
+
+  /* filename */
+  lstrcpynAtoW(lpstrFile, (LPCSTR)ofn->lpstrFile, ofn->nMaxFile);
+  MemFree(ofn->lpstrFile);
+  ofn->lpstrFile = lpstrFile;
+
   return ret;
 }
 
