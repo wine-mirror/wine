@@ -91,7 +91,7 @@ static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
  * SIC_IconAppend			[internal]
  *
  * NOTES
- *  appends a icon pair to the end of the cache
+ *  appends an icon pair to the end of the cache
  */
 static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIcon, HICON hBigIcon)
 {	LPSIC_ENTRY lpsice;
@@ -101,9 +101,9 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 
 	lpsice = (LPSIC_ENTRY) SHAlloc (sizeof (SIC_ENTRY));
 
-        path = PathFindFileNameA(sSourceFile);
-        lpsice->sSourceFile = HeapAlloc( GetProcessHeap(), 0, strlen(path)+1 );
-        strcpy( lpsice->sSourceFile, path );
+	path = PathFindFileNameA(sSourceFile);
+	lpsice->sSourceFile = HeapAlloc( GetProcessHeap(), 0, strlen(path)+1 );
+	strcpy( lpsice->sSourceFile, path );
 
 	lpsice->dwSourceIndex = dwSourceIndex;
 
@@ -112,6 +112,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 	index = DPA_InsertPtr(sic_hdpa, 0x7fff, lpsice);
 	if ( INVALID_INDEX == index )
 	{
+	  HeapFree(GetProcessHeap(), 0, lpsice->sSourceFile);
 	  SHFree(lpsice);
 	  ret = INVALID_INDEX;
 	}
@@ -269,8 +270,9 @@ BOOL SIC_Initialize(void)
  */
 static INT CALLBACK sic_free( LPVOID ptr, LPVOID lparam )
 {
-    SHFree(ptr);
-    return TRUE;
+	HeapFree(GetProcessHeap(), 0, ((LPSIC_ENTRY)ptr)->sSourceFile);
+	SHFree(ptr);
+	return TRUE;
 }
 
 void SIC_Destroy(void)
