@@ -246,6 +246,47 @@ void HEAP_Dump( HEAP *heap )
 }
 
 
+void HEAP_DumpEntry( LPPROCESS_HEAP_ENTRY entry )
+{
+    WORD rem_flags;
+    TRACE( "Dumping entry %p\n", entry );
+    TRACE( "lpData\t\t: %p\n", entry->lpData );
+    TRACE( "cbData\t\t: %08lx\n", entry->cbData);
+    TRACE( "cbOverhead\t: %08x\n", entry->cbOverhead);
+    TRACE( "iRegionIndex\t: %08x\n", entry->iRegionIndex);
+    TRACE( "WFlags\t\t: ");
+    if (entry->wFlags & PROCESS_HEAP_REGION)
+        TRACE( "PROCESS_HEAP_REGION ");
+    if (entry->wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
+        TRACE( "PROCESS_HEAP_UNCOMMITTED_RANGE ");
+    if (entry->wFlags & PROCESS_HEAP_ENTRY_BUSY)
+        TRACE( "PROCESS_HEAP_ENTRY_BUSY ");
+    if (entry->wFlags & PROCESS_HEAP_ENTRY_MOVEABLE)
+        TRACE( "PROCESS_HEAP_ENTRY_MOVEABLE ");
+    if (entry->wFlags & PROCESS_HEAP_ENTRY_DDESHARE)
+        TRACE( "PROCESS_HEAP_ENTRY_DDESHARE ");
+    rem_flags = entry->wFlags &
+        ~(PROCESS_HEAP_REGION | PROCESS_HEAP_UNCOMMITTED_RANGE |
+          PROCESS_HEAP_ENTRY_BUSY | PROCESS_HEAP_ENTRY_MOVEABLE|
+          PROCESS_HEAP_ENTRY_DDESHARE);
+    if (rem_flags)
+        TRACE( "Unknown %08x", rem_flags);
+    TRACE( "\n");
+    if ((entry->wFlags & PROCESS_HEAP_ENTRY_BUSY )
+        && (entry->wFlags & PROCESS_HEAP_ENTRY_MOVEABLE))
+    {
+        /* Treat as block */
+        TRACE( "BLOCK->hMem\t\t:%p\n", entry->u.Block.hMem);
+    }
+    if (entry->wFlags & PROCESS_HEAP_REGION)
+    {
+        TRACE( "Region.dwCommittedSize\t:%08lx\n",entry->u.Region.dwCommittedSize);
+        TRACE( "Region.dwUnCommittedSize\t:%08lx\n",entry->u.Region.dwUnCommittedSize);
+        TRACE( "Region.lpFirstBlock\t:%p\n",entry->u.Region.lpFirstBlock);
+        TRACE( "Region.lpLastBlock\t:%p\n",entry->u.Region.lpLastBlock);
+    }
+}
+
 /***********************************************************************
  *           HEAP_GetPtr
  * RETURNS
@@ -1487,8 +1528,6 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
     char *ptr;
     int region_index = 0;
 
-    FIXME( "not fully compatible\n" );
-
     if (!heapPtr || !entry) return STATUS_INVALID_PARAMETER;
 
     if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
@@ -1577,6 +1616,7 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
                 currentheap + currentheap->size;
     }
     ret = STATUS_SUCCESS;
+    if (TRACE_ON(heap)) HEAP_DumpEntry(entry);
 
 HW_end:
     if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
