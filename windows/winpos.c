@@ -309,7 +309,7 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
     }
 
     if (wndScope->parent)
-        MapWindowPoints( GetDesktopWindow(), wndScope->parent->hwndSelf, &xy, 1 );
+        MapWindowPoints( GetDesktopWindow(), wndScope->parent, &xy, 1 );
 
     if (xy.x < wndScope->rectClient.left || pt.x >= wndScope->rectClient.right ||
         xy.y < wndScope->rectClient.top || pt.y >= wndScope->rectClient.bottom ||
@@ -401,7 +401,7 @@ hittest:
 
         /* Restart the search from the next sibling */
         WIN_UpdateWndPtr(&wndPtr,wndTmp->next);
-        hwnd_ret = wndTmp->parent ? wndTmp->parent->hwndSelf : 0;
+        hwnd_ret = wndTmp->parent;
         WIN_ReleaseWndPtr( wndTmp );
     }
 
@@ -477,6 +477,8 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo,
                                  POINT *offset )
 {
     WND * wndPtr = 0;
+    HWND *list;
+    int i;
 
     offset->x = offset->y = 0;
     if (hwndFrom == hwndTo ) return;
@@ -489,11 +491,16 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo,
             ERR("bad hwndFrom = %04x\n",hwndFrom);
             return;
         }
-        while (wndPtr->parent)
+        if ((list = WIN_ListParents( hwndFrom )))
         {
-            offset->x += wndPtr->rectClient.left;
-            offset->y += wndPtr->rectClient.top;
-            WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
+            for (i = 0; list[i]; i++)
+            {
+                offset->x += wndPtr->rectClient.left;
+                offset->y += wndPtr->rectClient.top;
+                WIN_ReleaseWndPtr( wndPtr );
+                if (!(wndPtr = WIN_FindWndPtr( list[i] ))) break;
+            }
+            HeapFree( GetProcessHeap(), 0, list );
         }
         WIN_ReleaseWndPtr(wndPtr);
     }
@@ -506,12 +513,17 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo,
             ERR("bad hwndTo = %04x\n", hwndTo );
             return;
         }
-        while (wndPtr->parent)
+        if ((list = WIN_ListParents( hwndTo )))
         {
-            offset->x -= wndPtr->rectClient.left;
-            offset->y -= wndPtr->rectClient.top;
-            WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
-        }    
+            for (i = 0; list[i]; i++)
+            {
+                offset->x -= wndPtr->rectClient.left;
+                offset->y -= wndPtr->rectClient.top;
+                WIN_ReleaseWndPtr( wndPtr );
+                if (!(wndPtr = WIN_FindWndPtr( list[i] ))) break;
+            }
+            HeapFree( GetProcessHeap(), 0, list );
+        }
         WIN_ReleaseWndPtr(wndPtr);
     }
 }

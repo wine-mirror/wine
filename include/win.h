@@ -24,7 +24,7 @@ typedef struct tagWND
 {
     struct tagWND *next;          /* Next sibling */
     struct tagWND *child;         /* First child */
-    struct tagWND *parent;        /* Window parent (from CreateWindow) */
+    HWND           parent;        /* Window parent */
     HWND           owner;         /* Window owner */
     struct tagCLASS *class;       /* Window class */
     HWINDOWPROC    winproc;       /* Window procedure */

@@ -127,7 +127,7 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
         INT xoffset = lprect->left;
         INT yoffset = lprect->top;
 
-        while ((wndPtr = WIN_LockWndPtr(wndPtr->parent)))
+        while ((wndPtr = WIN_FindWndPtr( GetAncestor(wndPtr->hwndSelf,GA_PARENT) )))
         {
             if ( (wndPtr->dwStyle & (WS_ICONIC | WS_VISIBLE)) != WS_VISIBLE )
             {
@@ -175,27 +175,28 @@ fail:
  * adding to the clip region the intersection of the target rectangle
  * with an offset window rectangle.
  */
-static BOOL DCE_AddClipRects( WND *pWndStart, WND *pWndEnd,
-                              HRGN hrgnClip, LPRECT lpRect, int x, int y )
+static BOOL DCE_AddClipRects( HWND start, HWND end, HRGN hrgnClip, LPRECT lpRect, int x, int y )
 {
     RECT rect;
+    WND *pWnd;
 
-    for (WIN_LockWndPtr(pWndStart); (pWndStart && (pWndStart != pWndEnd)); WIN_UpdateWndPtr(&pWndStart,pWndStart->next))
+    for (pWnd = WIN_FindWndPtr(start); (pWnd && (pWnd->hwndSelf != end)); WIN_UpdateWndPtr(&pWnd,pWnd->next))
     {
-        if( !(pWndStart->dwStyle & WS_VISIBLE) ) continue;
+        if( !(pWnd->dwStyle & WS_VISIBLE) ) continue;
 
-        rect.left = pWndStart->rectWindow.left + x;
-        rect.top = pWndStart->rectWindow.top + y;
-        rect.right = pWndStart->rectWindow.right + x;
-        rect.bottom = pWndStart->rectWindow.bottom + y;
+        rect.left = pWnd->rectWindow.left + x;
+        rect.top = pWnd->rectWindow.top + y;
+        rect.right = pWnd->rectWindow.right + x;
+        rect.bottom = pWnd->rectWindow.bottom + y;
 
         if( IntersectRect( &rect, &rect, lpRect ))
         {
             if(!REGION_UnionRectWithRgn( hrgnClip, &rect )) break;
         }
     }
-    WIN_ReleaseWndPtr(pWndStart);
-    return (pWndStart == pWndEnd);
+    start = pWnd->hwndSelf;
+    WIN_ReleaseWndPtr(pWnd);
+    return (start == end);
 }
 
 
@@ -242,7 +243,7 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
                     else
                         xoffset = yoffset = 0;
 
-                    DCE_AddClipRects( wndPtr->child, NULL, hrgnClip, &rect, xoffset, yoffset );
+                    DCE_AddClipRects( wndPtr->child->hwndSelf, 0, hrgnClip, &rect, xoffset, yoffset );
                 }
 
                 /* We may need to clip children of child window, if a window with PARENTDC
@@ -267,7 +268,7 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
                     xoffset += childWnd->rectClient.left;
                     yoffset += childWnd->rectClient.top;
 
-                    DCE_AddClipRects( childWnd->child, NULL, hrgnClip,
+                    DCE_AddClipRects( childWnd->child->hwndSelf, 0, hrgnClip,
                                       &rect, xoffset, yoffset );
                 }
 
@@ -286,8 +287,8 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
                 }
 
                 if (flags & DCX_CLIPSIBLINGS && wndPtr->parent )
-                    DCE_AddClipRects( wndPtr->parent->child,
-                                      wndPtr, hrgnClip, &rect, xoffset, yoffset );
+                    DCE_AddClipRects( GetWindow( wndPtr->hwndSelf, GW_HWNDFIRST ),
+                                      wndPtr->hwndSelf, hrgnClip, &rect, xoffset, yoffset );
 
                 /* Clip siblings of all ancestors that have the
                  * WS_CLIPSIBLINGS style
@@ -295,13 +296,15 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
 
                 while (wndPtr->parent)
                 {
-                    WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
+                    WND *ptr = WIN_FindWndPtr( wndPtr->parent );
+                    WIN_ReleaseWndPtr( wndPtr );
+                    wndPtr = ptr;
                     xoffset -= wndPtr->rectClient.left;
                     yoffset -= wndPtr->rectClient.top;
                     if(wndPtr->dwStyle & WS_CLIPSIBLINGS && wndPtr->parent)
                     {
-                        DCE_AddClipRects( wndPtr->parent->child, wndPtr,
-                                          hrgnClip, &rect, xoffset, yoffset );
+                        DCE_AddClipRects( GetWindow( wndPtr->hwndSelf, GW_HWNDFIRST ),
+                                          wndPtr->hwndSelf, hrgnClip, &rect, xoffset, yoffset );
                     }
                 }
 
@@ -364,7 +367,7 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     {
         if (flags & DCX_PARENTCLIP)
         {
-            WND *parentPtr = WIN_LockWndPtr(wndPtr->parent);
+            WND *parentPtr = WIN_FindWndPtr( wndPtr->parent );
 
             if( wndPtr->dwStyle & WS_VISIBLE && !(parentPtr->dwStyle & WS_MINIMIZE) )
             {
@@ -534,7 +537,10 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
     }
 
     if( winpos->hwndInsertAfter == HWND_TOP )
-        winpos->flags |= ( wndPtr->parent->child == wndPtr)? SWP_NOZORDER: 0;
+    {
+        if (GetWindow( wndPtr->hwndSelf, GW_HWNDFIRST ) == wndPtr->hwndSelf)
+            winpos->flags |= SWP_NOZORDER;
+    }
     else
         if( winpos->hwndInsertAfter == HWND_BOTTOM )
             winpos->flags |= ( wndPtr->next )? 0: SWP_NOZORDER;
@@ -583,14 +589,11 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
 
     if( !(winpos->flags & SWP_NOREDRAW) )
     {
-        RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0,
+        RedrawWindow( wndPtr->parent, NULL, 0,
                       RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN );
-        if (wndPtr->parent->hwndSelf == GetDesktopWindow() ||
-            wndPtr->parent->parent->hwndSelf == GetDesktopWindow())
-        {
-            RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0,
+        if (wndPtr->parent == GetDesktopWindow())
+            RedrawWindow( wndPtr->parent, NULL, 0,
                           RDW_ERASENOW | RDW_NOCHILDREN );
-        }
     }
 
     if (!(winpos->flags & SWP_NOACTIVATE))

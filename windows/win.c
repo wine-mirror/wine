@@ -406,14 +406,16 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
     /* first unlink it if it is linked */
     if (wndPtr->parent)
     {
-        ppWnd = &wndPtr->parent->child;
+        WND *ptr = WIN_FindWndPtr( wndPtr->parent );
+        ppWnd = &ptr->child;
         while (*ppWnd && *ppWnd != wndPtr) ppWnd = &(*ppWnd)->next;
         if (*ppWnd) *ppWnd = wndPtr->next;
+        WIN_ReleaseWndPtr( ptr );
     }
 
     if (parentPtr)
     {
-        wndPtr->parent = parentPtr;
+        wndPtr->parent = parentPtr->hwndSelf;
         if ((hwndInsertAfter == HWND_TOP) || (hwndInsertAfter == HWND_BOTTOM))
         {
             ppWnd = &parentPtr->child;  /* Point to first sibling hwnd */
@@ -622,7 +624,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->tid               = 0;  /* nobody owns the desktop */
     pWndDesktop->next              = NULL;
     pWndDesktop->child             = NULL;
-    pWndDesktop->parent            = NULL;
+    pWndDesktop->parent            = 0;
     pWndDesktop->owner             = 0;
     pWndDesktop->class             = class;
     pWndDesktop->hInstance         = 0;
@@ -777,7 +779,16 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             WARN("Bad parent %04x\n", cs->hwndParent );
 	    return 0;
 	}
-        if (cs->style & WS_CHILD) parent = cs->hwndParent;
+        if (cs->style & WS_CHILD)
+        {
+            parent = WIN_GetFullHandle(cs->hwndParent);
+            if (!WIN_IsCurrentProcess(parent))
+            {
+                FIXME( "creating child window of %x in other process not supported yet\n",
+                       parent );
+                return 0;
+            }
+        }
         else owner = GetAncestor( cs->hwndParent, GA_ROOT );
     }
     else if ((cs->style & WS_CHILD) && !(cs->style & WS_POPUP))
@@ -831,9 +842,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->next  = NULL;
     wndPtr->child = NULL;
     wndPtr->owner = owner;
-    wndPtr->parent = WIN_FindWndPtr( parent );
-    WIN_ReleaseWndPtr(wndPtr->parent);
-
+    wndPtr->parent         = parent;
     wndPtr->class          = classPtr;
     wndPtr->winproc        = winproc;
     wndPtr->hInstance      = cs->hInstance;
@@ -964,7 +973,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     {
         /* Notify the parent window only */
 
-        SendMessageA( wndPtr->parent->hwndSelf, WM_PARENTNOTIFY,
+        SendMessageA( wndPtr->parent, WM_PARENTNOTIFY,
                       MAKEWPARAM(WM_CREATE, wndPtr->wIDmenu), (LPARAM)hwnd );
         if( !IsWindow(hwnd) )
         {
@@ -1262,8 +1271,8 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 	if( wndPtr->dwStyle & WS_CHILD && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
 	{
 	    /* Notify the parent window only */
-	    SendMessageA( wndPtr->parent->hwndSelf, WM_PARENTNOTIFY,
-			    MAKEWPARAM(WM_DESTROY, wndPtr->wIDmenu), (LPARAM)hwnd );
+            SendMessageA( wndPtr->parent, WM_PARENTNOTIFY,
+                          MAKEWPARAM(WM_DESTROY, wndPtr->wIDmenu), (LPARAM)hwnd );
             if( !IsWindow(hwnd) )
             {
                 retvalue = TRUE;
@@ -1292,7 +1301,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
       for (;;)
       {
           int i, got_one = 0;
-          HWND *list = WIN_ListChildren( wndPtr->parent->hwndSelf );
+          HWND *list = WIN_ListChildren( wndPtr->parent );
           if (list)
           {
               for (i = 0; list[i]; i++)
@@ -2092,7 +2101,7 @@ HWND WINAPI GetParent( HWND hwnd )
     if ((wndPtr = WIN_FindWndPtr(hwnd)))
     {
         if (wndPtr->dwStyle & WS_CHILD)
-            retvalue = wndPtr->parent->hwndSelf;
+            retvalue = wndPtr->parent;
         else if (wndPtr->dwStyle & WS_POPUP)
             retvalue = wndPtr->owner;
         WIN_ReleaseWndPtr(wndPtr);
@@ -2107,34 +2116,42 @@ HWND WINAPI GetParent( HWND hwnd )
 HWND WINAPI GetAncestor( HWND hwnd, UINT type )
 {
     HWND ret = 0;
-    WND *wndPtr;
+    size_t size = (type == GA_PARENT) ? sizeof(user_handle_t) : REQUEST_MAX_VAR_SIZE;
 
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-    if (wndPtr->hwndSelf == GetDesktopWindow()) goto done;
-
-    switch(type)
+    SERVER_START_VAR_REQ( get_window_parents, size )
     {
-    case GA_PARENT:
-        WIN_UpdateWndPtr( &wndPtr, wndPtr->parent );
-        break;
-    case GA_ROOT:
-        while (wndPtr->parent->hwndSelf != GetDesktopWindow())
-            WIN_UpdateWndPtr( &wndPtr, wndPtr->parent );
-        break;
-    case GA_ROOTOWNER:
-        while (wndPtr->parent->hwndSelf != GetDesktopWindow())
-            WIN_UpdateWndPtr( &wndPtr, wndPtr->parent );
-        while (wndPtr && wndPtr->owner)
+        req->handle = hwnd;
+        if (!SERVER_CALL())
         {
-            WND *ptr = WIN_FindWndPtr( wndPtr->owner );
-            WIN_ReleaseWndPtr( wndPtr );
-            wndPtr = ptr;
+            user_handle_t *data = server_data_ptr(req);
+            int count = server_data_size(req) / sizeof(*data);
+            if (count)
+            {
+                switch(type)
+                {
+                case GA_PARENT:
+                    ret = data[0];
+                    break;
+                case GA_ROOT:
+                case GA_ROOTOWNER:
+                    if (count > 1) ret = data[count - 2];  /* get the one before the desktop */
+                    else ret = WIN_GetFullHandle( hwnd );
+                    break;
+                }
+            }
         }
-        break;
     }
-    ret = wndPtr ? wndPtr->hwndSelf : 0;
- done:
-    WIN_ReleaseWndPtr( wndPtr );
+    SERVER_END_VAR_REQ;
+
+    if (ret && type == GA_ROOTOWNER)
+    {
+        for (;;)
+        {
+            HWND owner = GetWindow( ret, GW_OWNER );
+            if (!owner) break;
+            ret = owner;
+        }
+    }
     return ret;
 }
 
@@ -2169,7 +2186,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
      * including the WM_SHOWWINDOW messages and all */
     if (dwStyle & WS_VISIBLE) ShowWindow( hwnd, SW_HIDE );
 
-    retvalue = wndPtr->parent->hwndSelf;  /* old parent */
+    retvalue = wndPtr->parent;  /* old parent */
     if (parent != retvalue)
     {
         WIN_LinkWindow( hwnd, parent, HWND_TOP );

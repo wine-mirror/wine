@@ -59,37 +59,48 @@ DEFAULT_DEBUG_CHANNEL(x11drv);
  *
  * Clip all children of a given window out of the visible region
  */
-static int clip_children( WND *win, WND *last, HRGN hrgn, int whole_window )
+static int clip_children( HWND parent, HWND last, HRGN hrgn, int whole_window )
 {
+    HWND *list;
     WND *ptr;
     HRGN rectRgn;
-    int x, y, ret = SIMPLEREGION;
+    int i, x, y, ret = SIMPLEREGION;
 
     /* first check if we have anything to do */
-    for (ptr = win->child; ptr && ptr != last; ptr = ptr->next)
-        if (ptr->dwStyle & WS_VISIBLE) break;
-    if (!ptr || ptr == last) return ret; /* no children to clip */
+    if (!(list = WIN_ListChildren( parent ))) return ret;
+    for (i = 0; list[i] && list[i] != last; i++)
+        if (GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE) break;
+    if (!list[i] || list[i] == last) goto done; /* no children to clip */
 
     if (whole_window)
     {
+        WND *win = WIN_FindWndPtr( parent );
         x = win->rectWindow.left - win->rectClient.left;
         y = win->rectWindow.top - win->rectClient.top;
+        WIN_ReleaseWndPtr( win );
     }
     else x = y = 0;
 
     rectRgn = CreateRectRgn( 0, 0, 0, 0 );
-    while (ptr && ptr != last)
+
+    for ( ; list[i] && list[i] != last; i++)
     {
+        if (!(ptr = WIN_FindWndPtr( list[i] ))) continue;
         if (ptr->dwStyle & WS_VISIBLE)
         {
             SetRectRgn( rectRgn, ptr->rectWindow.left + x, ptr->rectWindow.top + y,
                         ptr->rectWindow.right + x, ptr->rectWindow.bottom + y );
             if ((ret = CombineRgn( hrgn, hrgn, rectRgn, RGN_DIFF )) == NULLREGION)
+            {
+                WIN_ReleaseWndPtr( ptr );
                 break;  /* no need to go on, region is empty */
+            }
         }
-        ptr = ptr->next;
+        WIN_ReleaseWndPtr( ptr );
     }
     DeleteObject( rectRgn );
+ done:
+    HeapFree( GetProcessHeap(), 0, list );
     return ret;
 }
 
@@ -99,7 +110,7 @@ static int clip_children( WND *win, WND *last, HRGN hrgn, int whole_window )
  *
  * Compute the visible region of a window
  */
-static HRGN get_visible_region( WND *win, WND *top, UINT flags, int mode )
+static HRGN get_visible_region( WND *win, HWND top, UINT flags, int mode )
 {
     HRGN rgn;
     RECT rect;
@@ -118,7 +129,7 @@ static HRGN get_visible_region( WND *win, WND *top, UINT flags, int mode )
     }
 
     if (flags & DCX_PARENTCLIP)
-        GetClientRect( win->parent->hwndSelf, &rect );
+        GetClientRect( win->parent, &rect );
     else if (flags & DCX_WINDOW)
         rect = data->whole_rect;
     else
@@ -132,12 +143,12 @@ static HRGN get_visible_region( WND *win, WND *top, UINT flags, int mode )
     if ((flags & DCX_CLIPCHILDREN) && (mode != ClipByChildren))
     {
         /* we need to clip children by hand */
-        if (clip_children( win, NULL, rgn, (flags & DCX_WINDOW) ) == NULLREGION) return rgn;
+        if (clip_children( win->hwndSelf, 0, rgn, (flags & DCX_WINDOW) ) == NULLREGION) return rgn;
     }
 
-    if (top && top != win)  /* need to clip siblings of ancestors */
+    if (top && top != win->hwndSelf)  /* need to clip siblings of ancestors */
     {
-        WND *ptr = win;
+        WND *parent, *ptr = WIN_LockWndPtr( win );
         HRGN tmp = 0;
 
         OffsetRgn( rgn, xoffset, yoffset );
@@ -145,10 +156,12 @@ static HRGN get_visible_region( WND *win, WND *top, UINT flags, int mode )
         {
             if (ptr->dwStyle & WS_CLIPSIBLINGS)
             {
-                if (clip_children( ptr->parent, ptr, rgn, FALSE ) == NULLREGION) break;
+                if (clip_children( ptr->parent, ptr->hwndSelf, rgn, FALSE ) == NULLREGION) break;
             }
-            if (ptr == top) break;
-            ptr = ptr->parent;
+            if (ptr->hwndSelf == top) break;
+            if (!(parent = WIN_FindWndPtr( ptr->parent ))) break;
+            WIN_ReleaseWndPtr( ptr );
+            ptr = parent;
             /* clip to parent client area */
             if (tmp) SetRectRgn( tmp, 0, 0, ptr->rectClient.right - ptr->rectClient.left,
                                  ptr->rectClient.bottom - ptr->rectClient.top );
@@ -159,6 +172,7 @@ static HRGN get_visible_region( WND *win, WND *top, UINT flags, int mode )
             xoffset += ptr->rectClient.left;
             yoffset += ptr->rectClient.top;
         }
+        WIN_ReleaseWndPtr( ptr );
         /* make it relative to the target window again */
         OffsetRgn( rgn, -xoffset, -yoffset );
         if (tmp) DeleteObject( tmp );
@@ -180,7 +194,7 @@ static int get_covered_region( WND *win, HRGN rgn )
 {
     HRGN tmp;
     int ret;
-    WND *ptr = win;
+    WND *parent, *ptr = WIN_LockWndPtr( win );
     int xoffset = 0, yoffset = 0;
 
     tmp = CreateRectRgn( 0, 0, 0, 0 );
@@ -193,13 +207,16 @@ static int get_covered_region( WND *win, HRGN rgn )
     {
         if (!(ptr->dwStyle & WS_CLIPSIBLINGS))
         {
-            if (clip_children( ptr->parent, ptr, tmp, FALSE ) == NULLREGION) break;
+            if (clip_children( ptr->parent, ptr->hwndSelf, tmp, FALSE ) == NULLREGION) break;
         }
-        if (!(ptr = ptr->parent)) break;
+        if (!(parent = WIN_FindWndPtr( ptr->parent ))) break;
+        WIN_ReleaseWndPtr( ptr );
+        ptr = parent;
         OffsetRgn( tmp, ptr->rectClient.left, ptr->rectClient.top );
         xoffset += ptr->rectClient.left;
         yoffset += ptr->rectClient.top;
     }
+    WIN_ReleaseWndPtr( ptr );
     /* make it relative to the target window again */
     OffsetRgn( tmp, -xoffset, -yoffset );
 
@@ -215,44 +232,58 @@ static int get_covered_region( WND *win, HRGN rgn )
  *
  * Expose a region of a given window.
  */
-static void expose_window( WND *win, RECT *rect, HRGN rgn, int flags )
+static void expose_window( HWND hwnd, RECT *rect, HRGN rgn, int flags )
 {
-    WND *ptr, *top;
-    int xoffset = 0, yoffset = 0;
+    POINT offset;
+    HWND top = 0;
+    HWND *list;
+    int i;
 
     /* find the top most parent that doesn't clip children or siblings and
      * invalidate the area on its parent, including all children */
-    top = NULL;
-    for (ptr = win; ptr && ptr->parent; ptr = ptr->parent)
+    if ((list = WIN_ListParents( hwnd )))
     {
-        if (!(ptr->dwStyle & WS_CLIPSIBLINGS)) top = ptr;
-        if (!(ptr->parent->dwStyle & WS_CLIPCHILDREN)) top = ptr;
+        HWND current = hwnd;
+        LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+        for (i = 0; list[i] && list[i] != GetDesktopWindow(); i++)
+        {
+            if (!(style & WS_CLIPSIBLINGS)) top = current;
+            style = GetWindowLongW( list[i], GWL_STYLE );
+            if (!(style & WS_CLIPCHILDREN)) top = current;
+            current = list[i];
+        }
+
+        if (top)
+        {
+            /* find the parent of the top window, reusing the parent list */
+            if (top == hwnd) i = 0;
+            else
+            {
+                for (i = 0; list[i]; i++) if (list[i] == top) break;
+                if (list[i] && list[i+1]) i++;
+            }
+            if (list[i] != GetDesktopWindow()) top = list[i];
+            flags &= ~RDW_FRAME;  /* parent will invalidate children frame anyway */
+            flags |= RDW_ALLCHILDREN;
+        }
+        HeapFree( GetProcessHeap(), 0, list );
     }
 
-    if (top)
-    {
-        if (top->parent && top->parent->hwndSelf != GetDesktopWindow()) top = top->parent;
-        flags &= ~RDW_FRAME;  /* parent will invalidate children frame anyway */
-        flags |= RDW_ALLCHILDREN;
-    }
-    else top = win;
+    if (!top) top = hwnd;
 
     /* make coords relative to top */
-    for (ptr = win; ptr != top; ptr = ptr->parent)
-    {
-        xoffset += ptr->rectClient.left;
-        yoffset += ptr->rectClient.top;
-    }
+    offset.x = offset.y = 0;
+    MapWindowPoints( hwnd, top, &offset, 1 );
 
     if (rect)
     {
-        OffsetRect( rect, xoffset, yoffset );
-        RedrawWindow( top->hwndSelf, rect, 0, flags );
+        OffsetRect( rect, offset.x, offset.y );
+        RedrawWindow( top, rect, 0, flags );
     }
     else
     {
-        OffsetRgn( rgn, xoffset, yoffset );
-        RedrawWindow( top->hwndSelf, NULL, rgn, flags );
+        OffsetRgn( rgn, offset.x, offset.y );
+        RedrawWindow( top, NULL, rgn, flags );
     }
 }
 
@@ -327,7 +358,7 @@ static void expose_covered_window_area( WND *win, const RECT *old_client_rect, B
     if (ret != NULLREGION)
     {
         if (get_covered_region( win, hrgn ) != NULLREGION)
-            expose_window( win, NULL, hrgn,
+            expose_window( win->hwndSelf, NULL, hrgn,
                            RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
     }
 
@@ -362,9 +393,9 @@ void X11DRV_Expose( HWND hwnd, XExposeEvent *event )
         /* make position relative to client area instead of window */
         OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
     }
-
-    expose_window( win, &rect, 0, flags );
     WIN_ReleaseWndPtr( win );
+
+    expose_window( hwnd, &rect, 0, flags );
 }
 
 
@@ -377,49 +408,53 @@ void X11DRV_Expose( HWND hwnd, XExposeEvent *event )
 BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 {
     WND *win = WIN_FindWndPtr( hwnd );
-    WND *ptr, *top;
+    HWND top = 0;
     X11DRV_WND_DATA *data = win->pDriverData;
     Drawable drawable;
     BOOL visible;
-    int org_x, org_y, mode = IncludeInferiors;
+    POINT org;
+    int mode = IncludeInferiors;
 
     /* don't clip siblings if using parent clip region */
     if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
 
     /* find the top parent in the hierarchy that isn't clipping siblings */
-    top = NULL;
     visible = (win->dwStyle & WS_VISIBLE) != 0;
 
     if (visible)
     {
-        for (ptr = win->parent; ptr && ptr->parent; ptr = ptr->parent)
+        HWND *list = WIN_ListParents( hwnd );
+        if (list)
         {
-            if (!(ptr->dwStyle & WS_VISIBLE))
+            int i;
+            for (i = 0; list[i] != GetDesktopWindow(); i++)
             {
-                visible = FALSE;
-                top = NULL;
-                break;
+                LONG style = GetWindowLongW( list[i], GWL_STYLE );
+                if (!(style & WS_VISIBLE))
+                {
+                    visible = FALSE;
+                    top = 0;
+                    break;
+                }
+                if (!(style & WS_CLIPSIBLINGS)) top = list[i];
             }
-            if (!(ptr->dwStyle & WS_CLIPSIBLINGS)) top = ptr;
+            HeapFree( GetProcessHeap(), 0, list );
         }
-        if (!top && visible && !(flags & DCX_CLIPSIBLINGS)) top = win;
+        if (!top && visible && !(flags & DCX_CLIPSIBLINGS)) top = hwnd;
     }
 
     if (top)
     {
-        org_x = org_y = 0;
+        HWND parent = GetAncestor( top, GA_PARENT );
+        org.x = org.y = 0;
         if (flags & DCX_WINDOW)
         {
-            org_x = win->rectWindow.left - win->rectClient.left;
-            org_y = win->rectWindow.top - win->rectClient.top;
+            org.x = win->rectWindow.left - win->rectClient.left;
+            org.y = win->rectWindow.top - win->rectClient.top;
         }
-        for (ptr = win; ptr != top->parent; ptr = ptr->parent)
-        {
-            org_x += ptr->rectClient.left;
-            org_y += ptr->rectClient.top;
-        }
+        MapWindowPoints( hwnd, parent, &org, 1 );
         /* have to use the parent so that we include siblings */
-        if (top->parent) drawable = get_client_window( top->parent );
+        if (parent) drawable = X11DRV_get_client_window( parent );
         else drawable = root_window;
     }
     else
@@ -427,25 +462,25 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         if (IsIconic( hwnd ))
         {
             drawable = data->icon_window ? data->icon_window : data->whole_window;
-            org_x = 0;
-            org_y = 0;
+            org.x = 0;
+            org.y = 0;
         }
         else if (flags & DCX_WINDOW)
         {
             drawable = data->whole_window;
-            org_x = win->rectWindow.left - data->whole_rect.left;
-            org_y = win->rectWindow.top - data->whole_rect.top;
+            org.x = win->rectWindow.left - data->whole_rect.left;
+            org.y = win->rectWindow.top - data->whole_rect.top;
         }
         else
         {
             drawable = data->client_window;
-            org_x = 0;
-            org_y = 0;
+            org.x = 0;
+            org.y = 0;
             if (flags & DCX_CLIPCHILDREN) mode = ClipByChildren;  /* can use X11 clipping */
         }
     }
 
-    X11DRV_SetDrawable( hdc, drawable, mode, org_x, org_y );
+    X11DRV_SetDrawable( hdc, drawable, mode, org.x, org.y );
 
     if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ||
         SetHookFlags16( hdc, DCHF_VALIDATEVISRGN ))  /* DC was dirty */
@@ -462,7 +497,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
                             (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
             /* make it relative to the drawable origin */
-            OffsetRgn( visRgn, org_x, org_y );
+            OffsetRgn( visRgn, org.x, org.y );
         }
         else visRgn = CreateRectRgn( 0, 0, 0, 0 );
 
@@ -893,9 +928,10 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 static POINT WINPOS_FindIconPos( WND* wndPtr, POINT pt )
 {
     RECT rectParent;
+    HWND *list;
     short x, y, xspacing, yspacing;
 
-    GetClientRect( wndPtr->parent->hwndSelf, &rectParent );
+    GetClientRect( wndPtr->parent, &rectParent );
     if ((pt.x >= rectParent.left) && (pt.x + GetSystemMetrics(SM_CXICON) < rectParent.right) &&
         (pt.y >= rectParent.top) && (pt.y + GetSystemMetrics(SM_CYICON) < rectParent.bottom))
         return pt;  /* The icon already has a suitable position */
@@ -903,34 +939,48 @@ static POINT WINPOS_FindIconPos( WND* wndPtr, POINT pt )
     xspacing = GetSystemMetrics(SM_CXICONSPACING);
     yspacing = GetSystemMetrics(SM_CYICONSPACING);
 
+    list = WIN_ListChildren( wndPtr->parent );
     y = rectParent.bottom;
     for (;;)
     {
         x = rectParent.left;
         do
         {
-              /* Check if another icon already occupies this spot */
-            WND *childPtr = WIN_LockWndPtr(wndPtr->parent->child);
-            while (childPtr)
+            /* Check if another icon already occupies this spot */
+            /* FIXME: this is completely inefficient */
+            if (list)
             {
-                if ((childPtr->dwStyle & WS_MINIMIZE) && (childPtr != wndPtr))
+                int i;
+                WND *childPtr;
+
+                for (i = 0; list[i]; i++)
                 {
+                    if (list[i] == wndPtr->hwndSelf) continue;
+                    if (!IsIconic( list[i] )) continue;
+                    if (!(childPtr = WIN_FindWndPtr( list[i] ))) continue;
                     if ((childPtr->rectWindow.left < x + xspacing) &&
                         (childPtr->rectWindow.right >= x) &&
                         (childPtr->rectWindow.top <= y) &&
                         (childPtr->rectWindow.bottom > y - yspacing))
+                    {
+                        WIN_ReleaseWndPtr( childPtr );
                         break;  /* There's a window in there */
+                    }
+                    WIN_ReleaseWndPtr( childPtr );
                 }
-                WIN_UpdateWndPtr(&childPtr,childPtr->next);
+                if (list[i])
+                {
+                    /* found something here, try next spot */
+                    x += xspacing;
+                    continue;
+                }
             }
-            WIN_ReleaseWndPtr(childPtr);
-            if (!childPtr) /* No window was found, so it's OK for us */
-            {
-                pt.x = x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2;
-                pt.y = y - (yspacing + GetSystemMetrics(SM_CYICON)) / 2;
-                return pt;
-            }
-            x += xspacing;
+
+            /* No window was found, so it's OK for us */
+            pt.x = x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2;
+            pt.y = y - (yspacing + GetSystemMetrics(SM_CYICON)) / 2;
+            return pt;
+
         } while(x <= rectParent.right-xspacing);
         y -= yspacing;
     }
@@ -1990,35 +2040,42 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
  */
 void X11DRV_ForceWindowRaise( HWND hwnd )
 {
+    int i = 0;
+    HWND *list;
     XWindowChanges winChanges;
     Display *display = thread_display();
-    WND *wndPrev, *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return;
 
     if ((wndPtr->dwExStyle & WS_EX_MANAGED) ||
-        wndPtr->parent->hwndSelf != GetDesktopWindow() ||
+        wndPtr->parent != GetDesktopWindow() ||
         IsRectEmpty( &wndPtr->rectWindow ) ||
         !get_whole_window(wndPtr))
     {
         WIN_ReleaseWndPtr( wndPtr );
         return;
     }
+    WIN_ReleaseWndPtr( wndPtr );
 
     /* Raise all windows up to wndPtr according to their Z order.
      * (it would be easier with sibling-related Below but it doesn't
      * work very well with SGI mwm for instance)
      */
     winChanges.stack_mode = Above;
-    while (wndPtr)
+    if (!(list = WIN_ListChildren( GetDesktopWindow() ))) return;
+    while (list[i] && list[i] != hwnd) i++;
+    if (list[i])
     {
-        if (!IsRectEmpty( &wndPtr->rectWindow ) && get_whole_window(wndPtr))
-            TSXReconfigureWMWindow( display, get_whole_window(wndPtr), 0,
-                                    CWStackMode, &winChanges );
-        wndPrev = wndPtr->parent->child;
-        if (wndPrev == wndPtr) break;
-        while (wndPrev && (wndPrev->next != wndPtr)) wndPrev = wndPrev->next;
-        WIN_UpdateWndPtr( &wndPtr, wndPrev );
+        for ( ; i >= 0; i--)
+        {
+            WND *ptr = WIN_FindWndPtr( list[i] );
+            if (!ptr) continue;
+            if (!IsRectEmpty( &ptr->rectWindow ) && get_whole_window(ptr))
+                TSXReconfigureWMWindow( display, get_whole_window(ptr), 0,
+                                        CWStackMode, &winChanges );
+            WIN_ReleaseWndPtr( ptr );
+        }
     }
-    WIN_ReleaseWndPtr( wndPtr );
+    HeapFree( GetProcessHeap(), 0, list );
 }

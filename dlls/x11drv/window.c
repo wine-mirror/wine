@@ -76,8 +76,7 @@ inline static BOOL is_window_managed( WND *win )
  */
 inline static BOOL is_window_top_level( WND *win )
 {
-    return (root_window == DefaultRootWindow(gdi_display) &&
-            win->parent->hwndSelf == GetDesktopWindow());
+    return (root_window == DefaultRootWindow(gdi_display) && win->parent == GetDesktopWindow());
 }
 
 
@@ -633,7 +632,7 @@ static Window create_whole_window( Display *display, WND *win )
     if (!(cx = rect.right - rect.left)) cx = 1;
     if (!(cy = rect.bottom - rect.top)) cy = 1;
 
-    parent = get_client_window( win->parent );
+    parent = X11DRV_get_client_window( win->parent );
 
     wine_tsx11_lock();
 
@@ -887,9 +886,9 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
            (unsigned int)data->whole_window, (unsigned int)data->client_window );
 
     if ((wndPtr->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
-        WIN_LinkWindow( hwnd, wndPtr->parent->hwndSelf, HWND_BOTTOM );
+        WIN_LinkWindow( hwnd, wndPtr->parent, HWND_BOTTOM );
     else
-        WIN_LinkWindow( hwnd, wndPtr->parent->hwndSelf, HWND_TOP );
+        WIN_LinkWindow( hwnd, wndPtr->parent, HWND_TOP );
 
     WIN_ReleaseWndPtr( wndPtr );
 
@@ -1009,7 +1008,7 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
      * including the WM_SHOWWINDOW messages and all */
     if (dwStyle & WS_VISIBLE) ShowWindow( hwnd, SW_HIDE );
 
-    retvalue = wndPtr->parent->hwndSelf;  /* old parent */
+    retvalue = wndPtr->parent;  /* old parent */
     if (parent != retvalue)
     {
         struct x11drv_win_data *data = wndPtr->pDriverData;
