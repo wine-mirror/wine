@@ -43,6 +43,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "winreg.h"
 #include "wine/winuser16.h"
 #include "setupx16.h"

@@ -8,6 +8,8 @@
 #include "winerror.h"
 #include "winnls.h"
 #include <stdarg.h>
+#include <ctype.h>
+#include <string.h>
 
 /* Files */
 #define MSVCRT_EOF   -1

@@ -31,6 +31,7 @@ HKEY_DYN_DATA
 #include <dirent.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 #include "debugtools.h"
 #include "winreg.h"

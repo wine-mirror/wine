@@ -2,6 +2,7 @@
  * NTDLL string functions
  *
  * Copyright 2000 Alexandre Julliard
+ * Copyright 2000 Jon Griffiths
  */
 
 #include "config.h"
@@ -91,4 +92,91 @@ LPSTR  __cdecl _ltoa( long x, LPSTR buf, INT radix )
 LPSTR  __cdecl _itoa( int x, LPSTR buf, INT radix )
 {
     return _ltoa( x, buf, radix );
+}
+
+
+/*********************************************************************
+ *		_splitpath (NTDLL)
+ */
+void __cdecl _splitpath(const char* inpath, char * drv, char * dir,
+                        char* fname, char * ext )
+{
+  /* Modified PD code from 'snippets' collection. */
+  char ch, *ptr, *p;
+  char pathbuff[MAX_PATH], *path=pathbuff;
+
+  strcpy(pathbuff, inpath);
+
+  /* convert slashes to backslashes for searching */
+  for (ptr = (char*)path; *ptr; ++ptr)
+    if ('/' == *ptr)
+      *ptr = '\\';
+
+  /* look for drive spec */
+  if ('\0' != (ptr = strchr(path, ':')))
+  {
+    ++ptr;
+    if (drv)
+    {
+      strncpy(drv, path, ptr - path);
+      drv[ptr - path] = '\0';
+    }
+    path = ptr;
+  }
+  else if (drv)
+    *drv = '\0';
+
+  /* find rightmost backslash or leftmost colon */
+  if (NULL == (ptr = strrchr(path, '\\')))
+    ptr = (strchr(path, ':'));
+
+  if (!ptr)
+  {
+    ptr = (char *)path; /* no path */
+    if (dir)
+      *dir = '\0';
+  }
+  else
+  {
+    ++ptr; /* skip the delimiter */
+    if (dir)
+    {
+      ch = *ptr;
+      *ptr = '\0';
+      strcpy(dir, path);
+      *ptr = ch;
+    }
+  }
+
+  if (NULL == (p = strrchr(ptr, '.')))
+  {
+    if (fname)
+      strcpy(fname, ptr);
+    if (ext)
+      *ext = '\0';
+  }
+  else
+  {
+    *p = '\0';
+    if (fname)
+      strcpy(fname, ptr);
+    *p = '.';
+    if (ext)
+      strcpy(ext, p);
+  }
+
+  /* Fix pathological case - Win returns ':' as part of the
+   * directory when no drive letter is given.
+   */
+  if (drv && drv[0] == ':')
+  {
+    *drv = '\0';
+    if (dir)
+    {
+      pathbuff[0] = ':';
+      pathbuff[1] = '\0';
+      strcat(pathbuff,dir);
+      strcpy(dir,pathbuff);
+    }
+  }
 }

@@ -29,6 +29,7 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#include <string.h>
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "snoop.h"

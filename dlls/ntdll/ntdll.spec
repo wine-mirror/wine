@@ -884,11 +884,11 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl _ftol() NTDLL__ftol
 @ cdecl _itoa(long ptr long) _itoa
 @ cdecl _ltoa(long ptr long) _ltoa
-@ stub _memccpy
+@ cdecl _memccpy(ptr ptr long long) memccpy
 @ cdecl _memicmp(str str long) _memicmp
 @ varargs _snprintf(ptr long ptr) snprintf
-@ stub _snwprintf
-@ stub _splitpath
+@ varargs _snwprintf(wstr long wstr) _snwprintf
+@ cdecl _splitpath(str str str str str) _splitpath
 @ cdecl _strcmpi(str str) strcasecmp
 @ cdecl _stricmp(str str) strcasecmp
 @ cdecl _strlwr(str) _strlwr
@@ -901,14 +901,14 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr
 @ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
 @ cdecl _wcsupr(wstr) NTDLL__wcsupr
-@ stub abs
-@ stub atan
+@ cdecl -noimport abs(long) abs
+@ cdecl -noimport atan(double) atan
 @ cdecl -noimport atoi(str) atoi
 @ cdecl -noimport atol(str) atol
-@ stub ceil
+@ cdecl -noimport ceil(double) ceil
 @ cdecl -noimport cos(double) cos
-@ stub fabs
-@ stub floor
+@ cdecl -noimport fabs(double) fabs
+@ cdecl -noimport floor(double) floor
 @ cdecl isalpha(long) isalpha
 @ cdecl isdigit(long) isdigit
 @ cdecl islower(long) islower
@@ -918,8 +918,8 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl iswalpha(long) NTDLL_iswalpha
 @ cdecl iswctype(long long) NTDLL_iswctype
 @ cdecl isxdigit(long) isxdigit
-@ stub labs
-@ stub log
+@ cdecl -noimport labs(long) labs
+@ cdecl -noimport log(double) log
 @ cdecl mbstowcs(ptr str long) NTDLL_mbstowcs
 @ cdecl -noimport memchr(ptr long long) memchr
 @ cdecl -noimport memcmp(ptr ptr long) memcmp
@@ -929,9 +929,9 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl -noimport pow(double double) pow
 @ cdecl -noimport qsort(ptr long long ptr) qsort
 @ cdecl -noimport sin(double) sin
-@ varargs sprintf(str str) sprintf
-@ stub sqrt
-@ varargs sscanf() sscanf
+@ varargs -noimport sprintf(str str) sprintf
+@ cdecl -noimport sqrt(double) sqrt
+@ varargs -noimport sscanf(str str) sscanf
 @ cdecl -noimport strcat(str str) strcat
 @ cdecl -noimport strchr(str long) strchr
 @ cdecl -noimport strcmp(str str) strcmp
@@ -946,13 +946,13 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl -noimport strspn(str str) strspn
 @ cdecl -noimport strstr(str str) strstr
 @ cdecl -noimport strtol(str ptr long) strtol
-@ stub swprintf
-@ stub tan
+@ varargs swprintf(wstr wstr) NTDLL_swprintf
+@ cdecl -noimport tan(double) tan
 @ cdecl tolower(long) tolower
 @ cdecl toupper(long) toupper
 @ cdecl towlower(long) NTDLL_towlower
 @ cdecl towupper(long) NTDLL_towupper
-@ cdecl vsprintf(ptr str ptr) vsprintf
+@ cdecl -noimport vsprintf(ptr str ptr) vsprintf
 @ cdecl wcscat(wstr wstr) NTDLL_wcscat
 @ cdecl wcschr(wstr long) NTDLL_wcschr
 @ cdecl wcscmp(wstr wstr) NTDLL_wcscmp

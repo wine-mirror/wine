@@ -2,6 +2,7 @@
  * USER initialization code
  */
 
+#include <string.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

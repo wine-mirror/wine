@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "config.h"
 #include "winnt.h"

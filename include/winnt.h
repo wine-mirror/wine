@@ -11,7 +11,6 @@
 
 #ifndef RC_INVOKED
 #include <ctype.h>
-#include <string.h>
 #include <stddef.h>
 #endif
 
