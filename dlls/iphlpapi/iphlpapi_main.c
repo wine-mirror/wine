@@ -26,6 +26,9 @@
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
 #ifdef HAVE_ARPA_NAMESER_H
 # include <arpa/nameser.h>
 #endif
@@ -104,6 +107,8 @@ DWORD WINAPI AllocateAndGetIfTableFromStack(PMIB_IFTABLE *ppIfTable,
 {
   DWORD ret;
 
+  TRACE("ppIfTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n", ppIfTable,
+   (DWORD)bOrder, (DWORD)heap, flags);
   if (!ppIfTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -115,6 +120,7 @@ DWORD WINAPI AllocateAndGetIfTableFromStack(PMIB_IFTABLE *ppIfTable,
       ret = GetIfTable(*ppIfTable, &dwSize, bOrder);
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -140,6 +146,8 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
 {
   DWORD ret;
 
+  TRACE("ppIpAddrTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
+   ppIpAddrTable, (DWORD)bOrder, (DWORD)heap, flags);
   if (!ppIpAddrTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -151,6 +159,7 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
       ret = GetIpAddrTable(*ppIpAddrTable, &dwSize, bOrder);
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -174,6 +183,8 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *
 {
   DWORD ret;
 
+  TRACE("ppIpForwardTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
+   ppIpForwardTable, (DWORD)bOrder, (DWORD)heap, flags);
   if (!ppIpForwardTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -185,6 +196,7 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *
       ret = GetIpForwardTable(*ppIpForwardTable, &dwSize, bOrder);
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -210,6 +222,8 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable,
 {
   DWORD ret;
 
+  TRACE("ppIpNetTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
+   ppIpNetTable, (DWORD)bOrder, (DWORD)heap, flags);
   if (!ppIpNetTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -221,6 +235,7 @@ DWORD WINAPI AllocateAndGetIpNetTableFromStack(PMIB_IPNETTABLE *ppIpNetTable,
       ret = GetIpNetTable(*ppIpNetTable, &dwSize, bOrder);
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -246,6 +261,8 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable,
 {
   DWORD ret;
 
+  TRACE("ppTcpTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
+   ppTcpTable, (DWORD)bOrder, (DWORD)heap, flags);
   if (!ppTcpTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -257,6 +274,7 @@ DWORD WINAPI AllocateAndGetTcpTableFromStack(PMIB_TCPTABLE *ppTcpTable,
       ret = GetTcpTable(*ppTcpTable, &dwSize, bOrder);
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -282,6 +300,8 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable,
 {
   DWORD ret;
 
+  TRACE("ppUdpTable %p, bOrder %ld, heap 0x%08lx, flags 0x%08lx\n",
+   ppUdpTable, (DWORD)bOrder, (DWORD)heap, flags);
   if (!ppUdpTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -293,6 +313,7 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable,
       ret = GetUdpTable(*ppUdpTable, &dwSize, bOrder);
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -312,6 +333,7 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable,
  */
 DWORD WINAPI CreateIpForwardEntry(PMIB_IPFORWARDROW pRoute)
 {
+  TRACE("pRoute %p\n", pRoute);
   /* could use SIOCADDRT, not sure I want to */
   FIXME(":stub\n");
   return (DWORD) 0;
@@ -333,6 +355,7 @@ DWORD WINAPI CreateIpForwardEntry(PMIB_IPFORWARDROW pRoute)
  */
 DWORD WINAPI CreateIpNetEntry(PMIB_IPNETROW pArpEntry)
 {
+  TRACE("pArpEntry %p\n", pArpEntry);
   /* could use SIOCSARP on systems that support it, not sure I want to */
   FIXME(":stub\n");
   return (DWORD) 0;
@@ -356,6 +379,8 @@ DWORD WINAPI CreateIpNetEntry(PMIB_IPNETROW pArpEntry)
  */
 DWORD WINAPI CreateProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
 {
+  TRACE("dwAddress 0x%08lx, dwMask 0x%08lx, dwIfIndex 0x%08lx\n", dwAddress,
+   dwMask, dwIfIndex);
   FIXME(":stub\n");
   /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
@@ -377,6 +402,7 @@ DWORD WINAPI CreateProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
  */
 DWORD WINAPI DeleteIPAddress(ULONG NTEContext)
 {
+  TRACE("NTEContext %ld\n", NTEContext);
   FIXME(":stub\n");
   /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
@@ -398,6 +424,7 @@ DWORD WINAPI DeleteIPAddress(ULONG NTEContext)
  */
 DWORD WINAPI DeleteIpForwardEntry(PMIB_IPFORWARDROW pRoute)
 {
+  TRACE("pRoute %p\n", pRoute);
   /* could use SIOCDELRT, not sure I want to */
   FIXME(":stub\n");
   return (DWORD) 0;
@@ -419,6 +446,7 @@ DWORD WINAPI DeleteIpForwardEntry(PMIB_IPFORWARDROW pRoute)
  */
 DWORD WINAPI DeleteIpNetEntry(PMIB_IPNETROW pArpEntry)
 {
+  TRACE("pArpEntry %p\n", pArpEntry);
   /* could use SIOCDARP on systems that support it, not sure I want to */
   FIXME(":stub\n");
   return (DWORD) 0;
@@ -442,6 +470,8 @@ DWORD WINAPI DeleteIpNetEntry(PMIB_IPNETROW pArpEntry)
  */
 DWORD WINAPI DeleteProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
 {
+  TRACE("dwAddress 0x%08lx, dwMask 0x%08lx, dwIfIndex 0x%08lx\n", dwAddress,
+   dwMask, dwIfIndex);
   FIXME(":stub\n");
   /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
@@ -464,6 +494,7 @@ DWORD WINAPI DeleteProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
  */
 DWORD WINAPI EnableRouter(HANDLE * pHandle, OVERLAPPED * pOverlapped)
 {
+  TRACE("pHandle %p, pOverlapped %p\n", pHandle, pOverlapped);
   FIXME(":stub\n");
   /* could echo "1" > /proc/net/sys/net/ipv4/ip_forward, not sure I want to
      could map EACCESS to ERROR_ACCESS_DENIED, I suppose
@@ -487,6 +518,7 @@ DWORD WINAPI EnableRouter(HANDLE * pHandle, OVERLAPPED * pOverlapped)
  */
 DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
 {
+  TRACE("dwIfIndex 0x%08lx\n", dwIfIndex);
   FIXME(":stub\n");
   /* this flushes the arp cache of the given index
      marking Win2K+ functions not supported */
@@ -510,6 +542,7 @@ DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
  */
 DWORD WINAPI GetAdapterIndex(LPWSTR AdapterName, PULONG IfIndex)
 {
+  TRACE("AdapterName %p, IfIndex %p\n", AdapterName, IfIndex);
   FIXME(":stub\n");
   /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
@@ -534,6 +567,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
 {
   DWORD ret;
 
+  TRACE("pAdapterInfo %p, pOutBufLen %p\n", pAdapterInfo, pOutBufLen);
   if (!pOutBufLen)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -544,7 +578,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
          that's okay, because:
          - we don't get multiple addresses per adapter anyway
          - we don't know about per-adapter gateways
-         - we don't know about DHCP or WINS (and these must be single anyway) */
+         - DHCP and WINS servers can have max one entry per list */
       ULONG size = sizeof(IP_ADAPTER_INFO) * numNonLoopbackInterfaces;
 
       if (!pAdapterInfo || *pOutBufLen < size) {
@@ -562,8 +596,30 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
           }
           else {
             DWORD ndx;
+            HKEY hKey;
+            BOOL winsEnabled = FALSE;
+            IP_ADDRESS_STRING primaryWINS, secondaryWINS;
 
             memset(pAdapterInfo, 0, size);
+            if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+             "\\Software\\Wine\\Wine\\Config\\Network", 0, KEY_READ,
+             &hKey) == ERROR_SUCCESS) {
+              DWORD size = sizeof(primaryWINS.String);
+              unsigned long addr;
+
+              RegQueryValueExA(hKey, "WinsServer", NULL, NULL,
+               primaryWINS.String, &size);
+              addr = inet_addr(primaryWINS.String);
+              if (addr != INADDR_NONE && addr != INADDR_ANY)
+                winsEnabled = TRUE;
+              size = sizeof(secondaryWINS.String);
+              RegQueryValueExA(hKey, "BackupWinsServer", NULL, NULL,
+               secondaryWINS.String, &size);
+              addr = inet_addr(secondaryWINS.String);
+              if (addr != INADDR_NONE && addr != INADDR_ANY)
+                winsEnabled = TRUE;
+              RegCloseKey(hKey);
+            }
             for (ndx = 0; ndx < table->numIndexes; ndx++) {
               PIP_ADAPTER_INFO ptr = &pAdapterInfo[ndx];
               DWORD addrLen = sizeof(ptr->Address), type;
@@ -585,6 +641,13 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                ptr->IpAddressList.IpAddress.String);
               toIPAddressString(getInterfaceMaskByIndex(table->indexes[ndx]),
                ptr->IpAddressList.IpMask.String);
+              if (winsEnabled) {
+                ptr->HaveWins = TRUE;
+                memcpy(ptr->PrimaryWinsServer.IpAddress.String,
+                 primaryWINS.String, sizeof(primaryWINS.String));
+                memcpy(ptr->SecondaryWinsServer.IpAddress.String,
+                 secondaryWINS.String, sizeof(secondaryWINS.String));
+              }
               if (ndx < table->numIndexes - 1)
                 ptr->Next = &pAdapterInfo[ndx + 1];
               else
@@ -601,6 +664,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
     else
       ret = ERROR_NO_DATA;
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -623,6 +687,7 @@ DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex)
 {
   DWORD ret;
 
+  TRACE("dwDestAddr 0x%08lx, pdwBestIfIndex %p\n", dwDestAddr, pdwBestIfIndex);
   if (!pdwBestIfIndex)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -632,6 +697,7 @@ DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex)
     if (ret == ERROR_SUCCESS)
       *pdwBestIfIndex = ipRow.dwForwardIfIndex;
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -656,6 +722,8 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
   PMIB_IPFORWARDTABLE table;
   DWORD ret;
 
+  TRACE("dwDestAddr 0x%08lx, dwSourceAddr 0x%08lx, pBestRoute %p\n", dwDestAddr,
+   dwSourceAddr, pBestRoute);
   if (!pBestRoute)
     return ERROR_INVALID_PARAMETER;
 
@@ -683,6 +751,7 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
   }
   else
     ret = ERROR_OUTOFMEMORY;
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -705,6 +774,7 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
   /* windows doesn't validate these, either, just makes sure the top byte is
      cleared.  I assume my ifenum module never gives an index with the top
      byte set. */
+  TRACE("returning %ld\n", IfIndex);
   return IfIndex;
 }
 
@@ -724,7 +794,12 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
  */
 DWORD WINAPI GetIcmpStatistics(PMIB_ICMP pStats)
 {
-  return getICMPStats(pStats);
+  DWORD ret;
+
+  TRACE("pStats %p\n", pStats);
+  ret = getICMPStats(pStats);
+  TRACE("returning %ld\n", ret);
+  return ret;
 }
 
 
@@ -746,6 +821,7 @@ DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
   DWORD ret;
   const char *name;
 
+  TRACE("pIfRow %p\n", pIfRow);
   if (!pIfRow)
     return ERROR_INVALID_PARAMETER;
 
@@ -757,6 +833,7 @@ DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
   }
   else
     ret = ERROR_INVALID_DATA;
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -792,6 +869,8 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
 {
   DWORD ret;
 
+  TRACE("pIfTable %p, pdwSize %p, bOrder %ld\n", pdwSize, pdwSize,
+   (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -832,6 +911,7 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
         ret = ERROR_OUTOFMEMORY;
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -854,6 +934,7 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
 {
   DWORD ret;
 
+  TRACE("pIfTable %p, dwOutBufLen %p\n", pIfTable, dwOutBufLen);
   if (!dwOutBufLen)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -901,6 +982,7 @@ DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
         ret = ERROR_OUTOFMEMORY;
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -936,6 +1018,8 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
 {
   DWORD ret;
 
+  TRACE("pIpAddrTable %p, pdwSize %p, bOrder %ld\n", pIpAddrTable, pdwSize,
+   (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -986,6 +1070,7 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
         ret = ERROR_OUTOFMEMORY;
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -1032,6 +1117,8 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
 {
   DWORD ret;
 
+  TRACE("pIpForwardTable %p, pdwSize %p, bOrder %ld\n", pIpForwardTable,
+   pdwSize, (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -1094,6 +1181,7 @@ DWORD WINAPI GetIpForwardTable(PMIB_IPFORWARDTABLE pIpForwardTable, PULONG pdwSi
         ret = ERROR_OUTOFMEMORY;
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -1129,6 +1217,8 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
 {
   DWORD ret;
 
+  TRACE("pIpNetTable %p, pdwSize %p, bOrder %ld\n", pIpNetTable, pdwSize,
+   (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -1163,6 +1253,7 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
         ret = ERROR_OUTOFMEMORY;
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -1182,7 +1273,12 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
  */
 DWORD WINAPI GetIpStatistics(PMIB_IPSTATS pStats)
 {
-  return getIPStats(pStats);
+  DWORD ret;
+
+  TRACE("pStats %p\n", pStats);
+  ret = getIPStats(pStats);
+  TRACE("returning %ld\n", ret);
+  return ret;
 }
 
 
@@ -1202,9 +1298,11 @@ DWORD WINAPI GetIpStatistics(PMIB_IPSTATS pStats)
  */
 DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
 {
-  DWORD size;
+  DWORD ret, size;
+  LONG regReturn;
   HKEY hKey;
 
+  TRACE("pFixedInfo %p, pOutBufLen %p\n", pFixedInfo, pOutBufLen);
   if (!pOutBufLen)
     return ERROR_INVALID_PARAMETER;
 
@@ -1238,9 +1336,13 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
     }
   }
   pFixedInfo->NodeType = HYBRID_NODETYPE;
-  if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-   "\\SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &hKey)
-   == ERROR_SUCCESS)
+  regReturn = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+   "SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &hKey);
+  if (regReturn != ERROR_SUCCESS)
+    regReturn = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+     "SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters", 0, KEY_READ,
+     &hKey);
+  if (regReturn == ERROR_SUCCESS)
   {
     DWORD size = sizeof(pFixedInfo->ScopeId);
 
@@ -1250,7 +1352,9 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
 
   /* FIXME: can check whether routing's enabled in /proc/sys/net/ipv4/ip_forward
      I suppose could also check for a listener on port 53 to set EnableDns */
-  return NO_ERROR;
+  ret = NO_ERROR;
+  TRACE("returning %ld\n", ret);
+  return ret;
 }
 
 
@@ -1271,12 +1375,14 @@ DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
 {
   DWORD ret;
 
+  TRACE("pdwNumIf %p\n", pdwNumIf);
   if (!pdwNumIf)
     ret = ERROR_INVALID_PARAMETER;
   else {
     *pdwNumIf = getNumInterfaces();
     ret = NO_ERROR;
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -1298,6 +1404,8 @@ DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
  */
 DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterInfo, PULONG pOutBufLen)
 {
+  TRACE("IfIndex %ld, pPerAdapterInfo %p, pOutBufLen %p\n", IfIndex,
+   pPerAdapterInfo, pOutBufLen);
   FIXME(":stub\n");
   /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
@@ -1322,6 +1430,8 @@ DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterIn
  */
 BOOL WINAPI GetRTTAndHopCount(IPAddr DestIpAddress, PULONG HopCount, ULONG MaxHops, PULONG RTT)
 {
+  TRACE("DestIpAddress 0x%08lx, HopCount %p, MaxHops %ld, RTT %p\n",
+   DestIpAddress, HopCount, MaxHops, RTT);
   FIXME(":stub\n");
   return (BOOL) 0;
 }
@@ -1342,7 +1452,12 @@ BOOL WINAPI GetRTTAndHopCount(IPAddr DestIpAddress, PULONG HopCount, ULONG MaxHo
  */
 DWORD WINAPI GetTcpStatistics(PMIB_TCPSTATS pStats)
 {
-  return getTCPStats(pStats);
+  DWORD ret;
+
+  TRACE("pStats %p\n", pStats);
+  ret = getTCPStats(pStats);
+  TRACE("returning %ld\n", ret);
+  return ret;
 }
 
 
@@ -1388,6 +1503,8 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
 {
   DWORD ret;
 
+  TRACE("pTcpTable %p, pdwSize %p, bOrder %ld\n", pTcpTable, pdwSize,
+   (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -1421,6 +1538,7 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
         ret = ERROR_OUTOFMEMORY;
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -1440,7 +1558,12 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
  */
 DWORD WINAPI GetUdpStatistics(PMIB_UDPSTATS pStats)
 {
-  return getUDPStats(pStats);
+  DWORD ret;
+
+  TRACE("pStats %p\n", pStats);
+  ret = getUDPStats(pStats);
+  TRACE("returning %ld\n", ret);
+  return ret;
 }
 
 
@@ -1480,6 +1603,8 @@ DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
 {
   DWORD ret;
 
+  TRACE("pUdpTable %p, pdwSize %p, bOrder %ld\n", pUdpTable, pdwSize,
+   (DWORD)bOrder);
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -1513,6 +1638,7 @@ DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
         ret = ERROR_OUTOFMEMORY;
     }
   }
+  TRACE("returning %ld\n", ret);
   return ret;
 }
 
@@ -1533,6 +1659,7 @@ DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
  */
 DWORD WINAPI GetUniDirectionalAdapterInfo(PIP_UNIDIRECTIONAL_ADAPTER_ADDRESS pIPIfInfo, PULONG dwOutBufLen)
 {
+  TRACE("pIPIfInfo %p, dwOutBufLen %p\n", pIPIfInfo, dwOutBufLen);
   /* a unidirectional adapter?? not bloody likely! */
   return ERROR_NOT_SUPPORTED;
 }
@@ -1553,6 +1680,7 @@ DWORD WINAPI GetUniDirectionalAdapterInfo(PIP_UNIDIRECTIONAL_ADAPTER_ADDRESS pIP
  */
 DWORD WINAPI IpReleaseAddress(PIP_ADAPTER_INDEX_MAP AdapterInfo)
 {
+  TRACE("AdapterInfo %p\n", AdapterInfo);
   /* not a stub, never going to support this (and I never mark an adapter as
      DHCP enabled, see GetAdaptersInfo, so this should never get called) */
   return ERROR_NOT_SUPPORTED;
@@ -1574,6 +1702,7 @@ DWORD WINAPI IpReleaseAddress(PIP_ADAPTER_INDEX_MAP AdapterInfo)
  */
 DWORD WINAPI IpRenewAddress(PIP_ADAPTER_INDEX_MAP AdapterInfo)
 {
+  TRACE("AdapterInfo %p\n", AdapterInfo);
   /* not a stub, never going to support this (and I never mark an adapter as
      DHCP enabled, see GetAdaptersInfo, so this should never get called) */
   return ERROR_NOT_SUPPORTED;
@@ -1596,6 +1725,7 @@ DWORD WINAPI IpRenewAddress(PIP_ADAPTER_INDEX_MAP AdapterInfo)
  */
 DWORD WINAPI NotifyAddrChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 {
+  TRACE("Handle %p, overlapped %p\n", Handle, overlapped);
   FIXME(":stub\n");
   /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
@@ -1618,6 +1748,7 @@ DWORD WINAPI NotifyAddrChange(PHANDLE Handle, LPOVERLAPPED overlapped)
  */
 DWORD WINAPI NotifyRouteChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 {
+  TRACE("Handle %p, overlapped %p\n", Handle, overlapped);
   FIXME(":stub\n");
   /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
@@ -1642,6 +1773,8 @@ DWORD WINAPI NotifyRouteChange(PHANDLE Handle, LPOVERLAPPED overlapped)
  */
 DWORD WINAPI SendARP(IPAddr DestIP, IPAddr SrcIP, PULONG pMacAddr, PULONG PhyAddrLen)
 {
+  TRACE("DestIP 0x%08lx, SrcIP 0x%08lx, pMacAddr %p, PhyAddrLen %p\n", DestIP,
+   SrcIP, pMacAddr, PhyAddrLen);
   FIXME(":stub\n");
   /* marking Win2K+ functions not supported */
   return ERROR_NOT_SUPPORTED;
@@ -1663,6 +1796,7 @@ DWORD WINAPI SendARP(IPAddr DestIP, IPAddr SrcIP, PULONG pMacAddr, PULONG PhyAdd
  */
 DWORD WINAPI SetIfEntry(PMIB_IFROW pIfRow)
 {
+  TRACE("pIfRow %p\n", pIfRow);
   /* this is supposed to set an administratively interface up or down.
      Could do SIOCSIFFLAGS and set/clear IFF_UP, but, not sure I want to, and
      this sort of down is indistinguishable from other sorts of down (e.g. no
@@ -1687,6 +1821,7 @@ DWORD WINAPI SetIfEntry(PMIB_IFROW pIfRow)
  */
 DWORD WINAPI SetIpForwardEntry(PMIB_IPFORWARDROW pRoute)
 {
+  TRACE("pRoute %p\n", pRoute);
   /* this is to add a route entry, how's it distinguishable from
      CreateIpForwardEntry?
      could use SIOCADDRT, not sure I want to */
@@ -1710,6 +1845,7 @@ DWORD WINAPI SetIpForwardEntry(PMIB_IPFORWARDROW pRoute)
  */
 DWORD WINAPI SetIpNetEntry(PMIB_IPNETROW pArpEntry)
 {
+  TRACE("pArpEntry %p\n", pArpEntry);
   /* same as CreateIpNetEntry here, could use SIOCSARP, not sure I want to */
   FIXME(":stub\n");
   return (DWORD) 0;
@@ -1731,6 +1867,7 @@ DWORD WINAPI SetIpNetEntry(PMIB_IPNETROW pArpEntry)
  */
 DWORD WINAPI SetIpStatistics(PMIB_IPSTATS pIpStats)
 {
+  TRACE("pIpStats %p\n", pIpStats);
   FIXME(":stub\n");
   return (DWORD) 0;
 }
@@ -1751,6 +1888,7 @@ DWORD WINAPI SetIpStatistics(PMIB_IPSTATS pIpStats)
  */
 DWORD WINAPI SetIpTTL(UINT nTTL)
 {
+  TRACE("nTTL %d\n", nTTL);
   /* could echo nTTL > /proc/net/sys/net/ipv4/ip_default_ttl, not sure I
      want to.  Could map EACCESS to ERROR_ACCESS_DENIED, I suppose */
   FIXME(":stub\n");
@@ -1773,6 +1911,7 @@ DWORD WINAPI SetIpTTL(UINT nTTL)
  */
 DWORD WINAPI SetTcpEntry(PMIB_TCPROW pTcpRow)
 {
+  TRACE("pTcpRow %p\n", pTcpRow);
   FIXME(":stub\n");
   return (DWORD) 0;
 }
@@ -1794,6 +1933,7 @@ DWORD WINAPI SetTcpEntry(PMIB_TCPROW pTcpRow)
  */
 DWORD WINAPI UnenableRouter(OVERLAPPED * pOverlapped, LPDWORD lpdwEnableCount)
 {
+  TRACE("pOverlapped %p, lpdwEnableCount %p\n", pOverlapped, lpdwEnableCount);
   FIXME(":stub\n");
   /* could echo "0" > /proc/net/sys/net/ipv4/ip_forward, not sure I want to
      could map EACCESS to ERROR_ACCESS_DENIED, I suppose
