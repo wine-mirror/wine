@@ -73,8 +73,8 @@ HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid);
 #else
 
 #define interface               struct
-#define STDMETHOD(method)       HRESULT (STDMETHODCALLTYPE * method)
-#define STDMETHOD_(type,method) type (STDMETHODCALLTYPE * method)
+#define STDMETHOD(method)       HRESULT STDMETHODCALLTYPE (*method)
+#define STDMETHOD_(type,method) type STDMETHODCALLTYPE (*method)
 #define PURE
 #define THIS_                   INTERFACE FAR* This,
 #define THIS                    INTERFACE FAR* This
