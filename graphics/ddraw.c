@@ -282,6 +282,42 @@ static void _dump_DDSD(DWORD flagmask) {
 	DUMP("\n");
 }
 
+static void _dump_DDCOLORKEY(DWORD flagmask) {
+	int	i;
+	const struct {
+		DWORD	mask;
+		char	*name;
+	} flags[] = {
+#define FE(x) { x, #x},
+	        FE(DDPF_ALPHAPIXELS)
+		FE(DDPF_ALPHA)
+		FE(DDPF_FOURCC)
+		FE(DDPF_PALETTEINDEXED4)
+		FE(DDPF_PALETTEINDEXEDTO8)
+		FE(DDPF_PALETTEINDEXED8)
+		FE(DDPF_RGB)
+		FE(DDPF_COMPRESSED)
+		FE(DDPF_RGBTOYUV)
+		FE(DDPF_YUV)
+		FE(DDPF_ZBUFFER)
+		FE(DDPF_PALETTEINDEXED1)
+		FE(DDPF_PALETTEINDEXED2)
+		FE(DDPF_ZPIXELS)
+	};
+	for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
+		if (flags[i].mask & flagmask)
+			DUMP("%s ",flags[i].name);
+	DUMP("\n");
+}
+
+static void _dump_pixelformat(LPDDPIXELFORMAT pf) {
+  _dump_DDCOLORKEY(pf->dwFlags);
+  DUMP("dwFourCC : %ld\n", pf->dwFourCC);
+  DUMP("RBG bit cbout : %ld\n", pf->x.dwRGBBitCount);
+  DUMP("Masks : R %08lx  G %08lx  B %08lx  A %08lx\n",
+       pf->y.dwRBitMask, pf->z.dwGBitMask, pf->xx.dwBBitMask, pf->xy.dwRGBAlphaBitMask);
+}
+
 static int _getpixelformat(LPDIRECTDRAW2 ddraw,LPDDPIXELFORMAT pf) {
 	static XVisualInfo	*vi;
 	XVisualInfo		vt;
@@ -329,22 +365,20 @@ static HRESULT WINAPI IDirectDrawSurface3_Lock(
 	    WARN(ddraw, "(%p)->Lock(%p,%p,%08lx,%08lx)\n",
 			 this,lprect,lpddsd,flags,(DWORD)hnd);
 
+	/* First, copy the Surface description */
+	*lpddsd = this->s.surface_desc;
+
+	/* If asked only for a part, change the surface pointer */
 	if (lprect) {
 		FIXME(ddraw,"	lprect: %dx%d-%dx%d\n",
 			lprect->top,lprect->left,lprect->bottom,lprect->right
 		);
-		lpddsd->y.lpSurface = this->s.surface +
-			(lprect->top*this->s.lpitch) +
-			(lprect->left*(this->s.ddraw->d.depth/8));
+		lpddsd->y.lpSurface = this->s.surface_desc.y.lpSurface +
+			(lprect->top*this->s.surface_desc.lPitch) +
+			(lprect->left*(this->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8));
 	} else {
-		assert(this->s.surface);
-		lpddsd->y.lpSurface = this->s.surface;
+		assert(this->s.surface_desc.y.lpSurface);
 	}
-	lpddsd->dwFlags = DDSD_WIDTH|DDSD_HEIGHT|DDSD_PIXELFORMAT|DDSD_PITCH|DDSD_LPSURFACE;
-	lpddsd->dwWidth		= this->s.width;
-	lpddsd->dwHeight	= this->s.height;
-	lpddsd->lPitch		= this->s.lpitch;
-	_getpixelformat(this->s.ddraw,&(lpddsd->ddpfPixelFormat));
 	return 0;
 }
 
@@ -364,7 +398,8 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 		return DD_OK;
 
   /* Only redraw the screen when unlocking the buffer that is on screen */
-  if ((this->t.xlib.image != NULL) && (this->t.xlib.on_screen)) {
+	if ((this->t.xlib.image != NULL) &&
+	    (this->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_VISIBLE)) {
 #ifdef HAVE_LIBXXSHM
     if (this->s.ddraw->e.xlib.xshm_active)
       TSXShmPutImage(display,
@@ -384,10 +419,10 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 				0, 0, 0, 0,
 				this->t.xlib.image->width,
 		  this->t.xlib.image->height);
-  }
   
 	if (this->s.palette && this->s.palette->cm)
 		TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
+	}
 
 	return DD_OK;
 }
@@ -418,9 +453,9 @@ static HRESULT WINAPI DGA_IDirectDrawSurface3_Flip(
 		this->t.dga.fb_height = flipto->t.dga.fb_height;
 		flipto->t.dga.fb_height = tmp;
 
-		ptmp = this->s.surface;
-		this->s.surface = flipto->s.surface;
-		flipto->s.surface = ptmp;
+		ptmp = this->s.surface_desc.y.lpSurface;
+		this->s.surface_desc.y.lpSurface = flipto->s.surface_desc.y.lpSurface;
+		flipto->s.surface_desc.y.lpSurface = ptmp;
 	}
 	return 0;
 #else /* defined(HAVE_LIBXXF86DGA) */
@@ -471,9 +506,9 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 		tmp = this->t.xlib.image;
 		this->t.xlib.image = flipto->t.xlib.image;
 		flipto->t.xlib.image = tmp;
-		surf = this->s.surface;
-		this->s.surface = flipto->s.surface;
-		flipto->s.surface = surf;
+		surf = this->s.surface_desc.y.lpSurface;
+		this->s.surface_desc.y.lpSurface = flipto->s.surface_desc.y.lpSurface;
+		flipto->s.surface_desc.y.lpSurface = surf;
 	}
 	return 0;
 }
@@ -552,11 +587,17 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	LPDIRECTDRAWSURFACE3 this,LPRECT32 rdst,LPDIRECTDRAWSURFACE3 src,LPRECT32 rsrc,DWORD dwFlags,LPDDBLTFX lpbltfx
 ) {
 	RECT32	xdst,xsrc;
+	DDSURFACEDESC	ddesc,sdesc;
 	int	i,j;
 
-	if (TRACE_ON(ddraw)) {
 	  TRACE(ddraw,"(%p)->(%p,%p,%p,%08lx,%p)\n",
 		this,rdst,src,rsrc,dwFlags,lpbltfx);
+
+	if (src != NULL)
+	  src ->lpvtbl->fnLock(src, NULL,&sdesc,0,0);
+	this->lpvtbl->fnLock(this,NULL,&ddesc,0,0);
+	
+	if (TRACE_ON(ddraw)) {
 	  if (rdst) TRACE(ddraw,"	destrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
 	  if (rsrc) TRACE(ddraw,"	srcrect  :%dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
 	  TRACE(ddraw,"\tflags: ");_dump_DDBLT(dwFlags);fprintf(stderr,"\n");
@@ -569,9 +610,9 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 		memcpy(&xdst,rdst,sizeof(xdst));
 	} else {
 		xdst.top	= 0;
-		xdst.bottom	= this->s.height;
+		xdst.bottom	= ddesc.dwHeight;
 		xdst.left	= 0;
-		xdst.right	= this->s.width;
+		xdst.right	= ddesc.dwWidth;
 	}
 
 	if (rsrc) {
@@ -579,9 +620,9 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	} else {
 		if (src) {
 		xsrc.top	= 0;
-		xsrc.bottom	= src->s.height;
+		xsrc.bottom	= sdesc.dwHeight;
 		xsrc.left	= 0;
-		xsrc.right	= src->s.width;
+		xsrc.right	= sdesc.dwWidth;
 		} else {
 		    memset(&xsrc,0,sizeof(xsrc));
 		}
@@ -590,10 +631,10 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);/* FIXME: can't handle right now */
 	
 	if (dwFlags & DDBLT_COLORFILL) {
-		int	bpp = this->s.ddraw->d.depth/8;
+		int	bpp = ddesc.ddpfPixelFormat.x.dwRGBBitCount / 8;
 		LPBYTE	xline,xpixel;
 
-		xline = (LPBYTE)this->s.surface+xdst.top*this->s.lpitch;
+		xline = (LPBYTE) ddesc.y.lpSurface + xdst.top * ddesc.lPitch;
 		for (i=xdst.top;i<xdst.bottom;i++) {
 			xpixel = xline+bpp*xdst.left;
 
@@ -605,7 +646,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 				memcpy(xpixel,&(lpbltfx->b.dwFillColor),bpp);
 				xpixel += bpp;
 			}
-			xline += this->s.lpitch;
+			xline += ddesc.lPitch;
 		}
 		dwFlags &= ~(DDBLT_COLORFILL);
 	}
@@ -617,22 +658,24 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	    return 0;
 	}
 
-	if (	(xsrc.top ==0) && (xsrc.bottom ==this->s.height) &&
-		(xsrc.left==0) && (xsrc.right  ==this->s.width) &&
-		(xdst.top ==0) && (xdst.bottom ==this->s.height) &&
-		(xdst.left==0) && (xdst.right  ==this->s.width)  &&
+	if (	(xsrc.top ==0) && (xsrc.bottom ==ddesc.dwHeight) &&
+		(xsrc.left==0) && (xsrc.right  ==ddesc.dwWidth) &&
+		(xdst.top ==0) && (xdst.bottom ==ddesc.dwHeight) &&
+		(xdst.left==0) && (xdst.right  ==ddesc.dwWidth)  &&
 		!dwFlags
 	) {
-		memcpy(this->s.surface,src->s.surface,this->s.height*this->s.lpitch);
+		memcpy(ddesc.y.lpSurface,
+		       sdesc.y.lpSurface,
+		       ddesc.dwHeight * ddesc.lPitch);
 	} else {
-	  int bpp = this->s.ddraw->d.depth / 8;
+	  int bpp = ddesc.ddpfPixelFormat.x.dwRGBBitCount / 8;
 	  int height = xsrc.bottom - xsrc.top;
 	  int width = (xsrc.right - xsrc.left) * bpp;
 	  int h;
 
 	  for (h = 0; h < height; h++) {
-	    memcpy(this->s.surface + ((h + xdst.top) * this->s.lpitch) + xdst.left * bpp,
-		   src->s.surface + ((h + xsrc.top) * src->s.lpitch) + xsrc.left * bpp,
+	    memcpy(ddesc.y.lpSurface + ((h + xdst.top) * ddesc.lPitch) + xdst.left * bpp,
+		   sdesc.y.lpSurface + ((h + xsrc.top) * sdesc.lPitch) + xsrc.left * bpp,
 		   width);
 	  }
 	}
@@ -640,46 +683,11 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	if (dwFlags && FIXME_ON(ddraw)) {
 	  FIXME(ddraw,"\tUnsupported flags: ");_dump_DDBLT(dwFlags);
 	}
+
+	this->lpvtbl->fnUnlock(this,ddesc.y.lpSurface);
+	src ->lpvtbl->fnUnlock(src,sdesc.y.lpSurface);
+
 	return 0;
-}
-
-static HRESULT WINAPI Xlib_IDirectDrawSurface3_Blt(
-	LPDIRECTDRAWSURFACE3 this,LPRECT32 rdst,LPDIRECTDRAWSURFACE3 src,LPRECT32 rsrc,DWORD dwFlags,LPDDBLTFX lpbltfx
-) {
-  HRESULT ret;
-  
-  /* First, call the "common" blit function */
-  ret = IDirectDrawSurface3_Blt(this, rdst, src, rsrc, dwFlags, lpbltfx);
-
-  /* Then put the result on screen if blited on main screen buffer */
-  if (!this->s.ddraw->e.xlib.paintable)
-    return ret;
-
-  if ((this->t.xlib.image != NULL) && (this->t.xlib.on_screen)) {
-#ifdef HAVE_LIBXXSHM
-    if (this->s.ddraw->e.xlib.xshm_active)
-      TSXShmPutImage(display,
-		     this->s.ddraw->e.xlib.drawable,
-		     DefaultGCOfScreen(screen),
-		     this->t.xlib.image,
-		     0, 0, 0, 0,
-		     this->t.xlib.image->width,
-		     this->t.xlib.image->height,
-		     False);
-    else
-#endif
-      TSXPutImage(display,
-		  this->s.ddraw->e.xlib.drawable,
-		  DefaultGCOfScreen(screen),
-		  this->t.xlib.image,
-		  0, 0, 0, 0,
-		  this->t.xlib.image->width,
-		  this->t.xlib.image->height);
-  }
-  if (this->s.palette && this->s.palette->cm)
-    TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
-
-  return ret;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_BltFast(
@@ -698,7 +706,7 @@ static HRESULT WINAPI IDirectDrawSurface3_BltFast(
 	/* We need to lock the surfaces, or we won't get refreshes when done */
 	src ->lpvtbl->fnLock(src, NULL,&sdesc,0,0);
 	this->lpvtbl->fnLock(this,NULL,&ddesc,0,0);
-	bpp = this->s.ddraw->d.depth/8;
+	bpp = this->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8;
 	for (i=0;i<rsrc->bottom-rsrc->top;i++) {
 		memcpy(	ddesc.y.lpSurface+(dsty     +i)*ddesc.lPitch+dstx*bpp,
 			sdesc.y.lpSurface+(rsrc->top+i)*sdesc.lPitch+rsrc->left*bpp,
@@ -730,24 +738,22 @@ static HRESULT WINAPI IDirectDrawSurface3_GetCaps(
 static HRESULT WINAPI IDirectDrawSurface3_GetSurfaceDesc(
 	LPDIRECTDRAWSURFACE3 this,LPDDSURFACEDESC ddsd
 ) { 
-	if (TRACE_ON(ddraw)) {
 		TRACE(ddraw, "(%p)->GetSurfaceDesc(%p)\n",
 			     this,ddsd);
+  
+  /* Simply copy the surface description stored in the object */
+  *ddsd = this->s.surface_desc;
+  
+  if (TRACE_ON(ddraw)) {
 		fprintf(stderr,"	flags: ");
 		_dump_DDSD(ddsd->dwFlags);
+    if (ddsd->dwFlags & DDSD_CAPS) {
+      fprintf(stderr, "  caps:  ");
+      _dump_DDSCAPS(ddsd->ddsCaps.dwCaps);
+    }
 		fprintf(stderr,"\n");
 	}
 
-	ddsd->dwFlags |= DDSD_PIXELFORMAT|DDSD_CAPS|DDSD_BACKBUFFERCOUNT|DDSD_HEIGHT|DDSD_WIDTH;
-	ddsd->ddsCaps.dwCaps	= DDSCAPS_PALETTE;
-	ddsd->dwBackBufferCount	= 1;
-	ddsd->dwHeight		= this->s.height;
-	ddsd->dwWidth		= this->s.width;
-	ddsd->lPitch		= this->s.lpitch;
-	if (this->s.backbuffer)
-		ddsd->ddsCaps.dwCaps |= DDSCAPS_PRIMARYSURFACE|DDSCAPS_FLIP;
-	_getpixelformat(this->s.ddraw,&(ddsd->ddpfPixelFormat));
-	
 	return 0;
 }
 
@@ -765,7 +771,7 @@ static ULONG WINAPI DGA_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) {
 		this->s.ddraw->lpvtbl->fnRelease(this->s.ddraw);
 		/* clear out of surface list */
 		if (this->t.dga.fb_height == -1) {
-			HeapFree(GetProcessHeap(),0,this->s.surface);
+			HeapFree(GetProcessHeap(),0,this->s.surface_desc.y.lpSurface);
 		} else {
 			this->s.ddraw->e.dga.vpmask &= ~(1<<(this->t.dga.fb_height/this->s.ddraw->e.dga.fb_height));
 		}
@@ -795,7 +801,7 @@ static ULONG WINAPI Xlib_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) 
 	shmdt(this->t.xlib.shminfo.shmaddr);
       } else {
 #endif
-	HeapFree(GetProcessHeap(),0,this->s.surface);
+	      HeapFree(GetProcessHeap(),0,this->s.surface_desc.y.lpSurface);
 	TSXDestroyImage(this->t.xlib.image);
 #ifdef HAVE_LIBXXSHM	
       }
@@ -803,7 +809,7 @@ static ULONG WINAPI Xlib_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) 
       
 		this->t.xlib.image = 0;
     } else {
-      HeapFree(GetProcessHeap(),0,this->s.surface);
+	    HeapFree(GetProcessHeap(),0,this->s.surface_desc.y.lpSurface);
     }
 
 		if (this->s.palette)
@@ -844,6 +850,8 @@ static HRESULT WINAPI IDirectDrawSurface3_GetAttachedSurface(
 static HRESULT WINAPI IDirectDrawSurface3_Initialize(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAW ddraw,LPDDSURFACEDESC lpdsfd
 ) {
+	TRACE(ddraw,"(%p)->(%p, %p)\n",this,ddraw,lpdsfd);
+
 	return DDERR_ALREADYINITIALIZED;
 }
 
@@ -851,7 +859,10 @@ static HRESULT WINAPI IDirectDrawSurface3_GetPixelFormat(
 	LPDIRECTDRAWSURFACE3 this,LPDDPIXELFORMAT pf
 ) {
 	TRACE(ddraw,"(%p)->(%p)\n",this,pf);
-	return _getpixelformat(this->s.ddraw,pf);
+
+	*pf = this->s.surface_desc.ddpfPixelFormat;
+	
+	return 0;
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_GetBltStatus(LPDIRECTDRAWSURFACE3 this,DWORD dwFlags) {
@@ -877,6 +888,9 @@ static HRESULT WINAPI IDirectDrawSurface3_AddAttachedSurface(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWSURFACE3 surf
 ) {
 	FIXME(ddraw,"(%p)->(%p),stub!\n",this,surf);
+
+	/* This hack will be enough for the moment */
+	if (this->s.backbuffer == NULL)
 	this->s.backbuffer = surf;
 	return 0;
 }
@@ -1140,7 +1154,7 @@ static struct IDirectDrawSurface3_VTable xlib_dds3vt = {
 	Xlib_IDirectDrawSurface3_Release,
 	IDirectDrawSurface3_AddAttachedSurface,
 	IDirectDrawSurface3_AddOverlayDirtyRect,
-	Xlib_IDirectDrawSurface3_Blt,
+	IDirectDrawSurface3_Blt,
 	IDirectDrawSurface3_BltBatch,
 	IDirectDrawSurface3_BltFast,
 	IDirectDrawSurface3_DeleteAttachedSurface,
@@ -1177,6 +1191,21 @@ static struct IDirectDrawSurface3_VTable xlib_dds3vt = {
 	IDirectDrawSurface3_SetSurfaceDesc,
 };
 
+/******************************************************************************
+ *			DirectDrawCreateClipper (DDRAW.7)
+ */
+HRESULT WINAPI DirectDrawCreateClipper( DWORD dwFlags,
+				        LPDIRECTDRAWCLIPPER *lplpDDClipper,
+				        LPUNKNOWN pUnkOuter)
+{
+  TRACE(ddraw, "(%08lx,%p,%p)\n", dwFlags, lplpDDClipper, pUnkOuter);
+
+  *lplpDDClipper = (LPDIRECTDRAWCLIPPER)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawClipper));
+  (*lplpDDClipper)->lpvtbl = &ddclipvt;
+  (*lplpDDClipper)->ref = 1;
+
+  return 0;
+}
 
 /******************************************************************************
  *			IDirectDrawClipper
@@ -1232,6 +1261,9 @@ static HRESULT WINAPI IDirectDrawPalette_GetEntries(
 	LPDIRECTDRAWPALETTE this,DWORD x,DWORD start,DWORD count,LPPALETTEENTRY palent
 ) {
 	int	i;
+
+	TRACE(ddraw,"(%p)->GetEntries(%08lx,%ld,%ld,%p)\n",
+	      this,x,start,count,palent);
 
 	if (!this->cm) /* should not happen */ {
 		FIXME(ddraw,"app tried to read colormap for non-palettized mode\n");
@@ -1342,6 +1374,8 @@ static ULONG WINAPI IDirectDrawPalette_AddRef(LPDIRECTDRAWPALETTE this) {
 static HRESULT WINAPI IDirectDrawPalette_Initialize(
 	LPDIRECTDRAWPALETTE this,LPDIRECTDRAW ddraw,DWORD x,LPPALETTEENTRY palent
 ) {
+        TRACE(ddraw,"(%p)->(%p,%ld,%p)\n", this, ddraw, x, palent);
+
 	return DDERR_ALREADYINITIALIZED;
 }
 
@@ -1383,6 +1417,9 @@ static struct IDirectDrawPalette_VTable xlib_ddpalvt = {
 	Xlib_IDirectDrawPalette_SetEntries
 };
 
+/*******************************************************************************
+ *				IDirect3D
+ */
 static HRESULT WINAPI IDirect3D_QueryInterface(
         LPDIRECT3D this,REFIID refiid,LPVOID *obj
 ) {
@@ -1519,6 +1556,38 @@ static struct IDirect3D2_VTable d3d2vt = {
  */
 static INT32 ddrawXlibThisOffset = 0;
 
+static HRESULT common_off_screen_CreateSurface(LPDIRECTDRAW2 this,
+					       LPDDSURFACEDESC lpddsd,
+					       LPDIRECTDRAWSURFACE lpdsf)
+{
+  int bpp;
+  
+  /* The surface was already allocated when entering in this function */
+  if (!(lpddsd->dwFlags & DDSD_PIXELFORMAT)) {
+    /* No pixel format => use DirectDraw's format */
+    _getpixelformat(this,&(lpddsd->ddpfPixelFormat));
+    lpddsd->dwFlags |= DDSD_PIXELFORMAT;
+  }  else {
+    /* To check what the program wants */
+    if (TRACE_ON(ddraw)) {
+      _dump_pixelformat(&(lpddsd->ddpfPixelFormat));
+    }
+  }
+
+  bpp = lpddsd->ddpfPixelFormat.x.dwRGBBitCount / 8;
+
+  /* Copy the surface description */
+  lpdsf->s.surface_desc = *lpddsd;
+  
+  lpdsf->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE;
+  lpdsf->s.surface_desc.y.lpSurface = (LPBYTE)HeapAlloc(GetProcessHeap(),0,lpddsd->dwWidth * lpddsd->dwHeight * bpp);
+  lpdsf->s.surface_desc.lPitch = lpddsd->dwWidth * bpp;
+  
+  TRACE(ddraw,"using system memory for a surface (%p)\n", lpdsf);
+
+  return 0;
+}
+
 static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 	LPDIRECTDRAW2 this,LPDDSURFACEDESC lpddsd,LPDIRECTDRAWSURFACE *lpdsf,IUnknown *lpunk
 ) {
@@ -1538,42 +1607,52 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 	this->lpvtbl->fnAddRef(this);
 	(*lpdsf)->ref = 1;
 	(*lpdsf)->lpvtbl = (LPDIRECTDRAWSURFACE_VTABLE)&dga_dds3vt;
-	if (	(lpddsd->dwFlags & DDSD_CAPS) && 
-		(lpddsd->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)
-	) {
+	(*lpdsf)->s.ddraw = this;
+	(*lpdsf)->s.palette = NULL;
+	(*lpdsf)->t.dga.fb_height = -1; /* This is to have non-on screen surfaces freed */
+
 		if (!(lpddsd->dwFlags & DDSD_WIDTH))
-			lpddsd->dwWidth = this->e.dga.fb_width;
+	  lpddsd->dwWidth  = this->d.width;
 		if (!(lpddsd->dwFlags & DDSD_HEIGHT))
-			lpddsd->dwHeight = this->e.dga.fb_height;
-		(*lpdsf)->s.surface = (LPBYTE)HeapAlloc(GetProcessHeap(),0,lpddsd->dwWidth*lpddsd->dwHeight*this->d.depth/8);
-		(*lpdsf)->t.dga.fb_height = -1;
-		(*lpdsf)->s.lpitch = lpddsd->dwWidth*this->d.depth/8;
-		TRACE(ddraw,"using system memory for a primary surface\n");
-	} else {
+	  lpddsd->dwHeight = this->d.height;
+	
+	/* Check if this a 'primary surface' or not */
+	if ((lpddsd->dwFlags & DDSD_CAPS) &&
+	    (lpddsd->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)) {
+
+	  /* This is THE primary surface => there is DGA-specific code */
+	  /* First, store the surface description */
+	  (*lpdsf)->s.surface_desc = *lpddsd;
+	  
+	  /* Find a viewport */
 		for (i=0;i<32;i++)
 			if (!(this->e.dga.vpmask & (1<<i)))
 				break;
 		TRACE(ddraw,"using viewport %d for a primary surface\n",i);
 		/* if i == 32 or maximum ... return error */
 		this->e.dga.vpmask|=(1<<i);
-		(*lpdsf)->s.surface = this->e.dga.fb_addr+((i*this->e.dga.fb_height)*this->e.dga.fb_width*this->d.depth/8);
+	  (*lpdsf)->s.surface_desc.y.lpSurface =
+	    this->e.dga.fb_addr+((i*this->e.dga.fb_height)*this->e.dga.fb_width*this->d.depth/8);
 		(*lpdsf)->t.dga.fb_height = i*this->e.dga.fb_height;
-		(*lpdsf)->s.lpitch = this->e.dga.fb_width*this->d.depth/8;
-	}
+	  (*lpdsf)->s.surface_desc.lPitch = this->e.dga.fb_width*this->d.depth/8;
+	  lpddsd->lPitch = (*lpdsf)->s.surface_desc.lPitch;
 
-	lpddsd->lPitch = (*lpdsf)->s.lpitch;
-
-	(*lpdsf)->s.width = this->d.width;
-	(*lpdsf)->s.height = this->d.height;
-	(*lpdsf)->s.ddraw = this;
+	  /* Add flags if there were not present */
+	  (*lpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE;
+	  (*lpdsf)->s.surface_desc.dwWidth = this->d.width;
+	  (*lpdsf)->s.surface_desc.dwHeight = this->d.height;
+	  (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
+	  _getpixelformat(this,&((*lpdsf)->s.surface_desc.ddpfPixelFormat));
 	(*lpdsf)->s.backbuffer = NULL;
+	  
 	if (lpddsd->dwFlags & DDSD_BACKBUFFERCOUNT) {
 		LPDIRECTDRAWSURFACE3	back;
 
 		if (lpddsd->dwBackBufferCount>1)
 			FIXME(ddraw,"urks, wants to have more than one backbuffer (%ld)!\n",lpddsd->dwBackBufferCount);
 
-		(*lpdsf)->s.backbuffer = back = (LPDIRECTDRAWSURFACE3)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawSurface3));
+	    (*lpdsf)->s.backbuffer = back =
+	      (LPDIRECTDRAWSURFACE3)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawSurface3));
 		this->lpvtbl->fnAddRef(this);
 		back->ref = 1;
 		back->lpvtbl = (LPDIRECTDRAWSURFACE3_VTABLE)&dga_dds3vt;
@@ -1583,16 +1662,29 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 		TRACE(ddraw,"using viewport %d for backbuffer\n",i);
 		/* if i == 32 or maximum ... return error */
 		this->e.dga.vpmask|=(1<<i);
-		back->s.surface = this->e.dga.fb_addr+((i*this->e.dga.fb_height)*this->e.dga.fb_width*this->d.depth/8);
 		back->t.dga.fb_height = i*this->e.dga.fb_height;
 
-		back->s.width = this->d.width;
-		back->s.height = this->d.height;
+	    /* Copy the surface description from the front buffer */
+	    back->s.surface_desc = (*lpdsf)->s.surface_desc;
+	    /* Change the parameters that are not the same */
+	    back->s.surface_desc.y.lpSurface = this->e.dga.fb_addr+
+	      ((i*this->e.dga.fb_height)*this->e.dga.fb_width*this->d.depth/8);
 		back->s.ddraw = this;
-		back->s.lpitch = this->e.dga.fb_width*this->d.depth/8;
 		back->s.backbuffer = NULL; /* does not have a backbuffer, it is
 					    * one! */
+
+	    /* Add relevant info to front and back buffers */
+	    (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_FRONTBUFFER;
+	    back->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
+	    back->s.surface_desc.dwFlags &= ~DDSD_BACKBUFFERCOUNT;
+	    back->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_VISIBLE;
+	  }
+	} else {
+	  /* There is no DGA-specific code here...
+	     Go to the common surface creation function */
+	  return common_off_screen_CreateSurface(this, lpddsd, *lpdsf);
 	}
+	
 	return 0;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return E_UNEXPECTED;
@@ -1610,8 +1702,8 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE3 lpdsf) {
 			    ZPixmap,
 			    NULL,
 			    &(lpdsf->t.xlib.shminfo),
-			    lpdsf->s.width,
-			    lpdsf->s.height);
+			    lpdsf->s.surface_desc.dwWidth,
+			    lpdsf->s.surface_desc.dwHeight);
     
     if (img == NULL)
       return NULL;
@@ -1636,11 +1728,14 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE3 lpdsf) {
 
     shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
 
-    lpdsf->s.surface = img->data;
+    lpdsf->s.surface_desc.y.lpSurface = img->data;
   } else {
 #endif
     /* Allocate surface memory */
-    lpdsf->s.surface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpdsf->s.width * lpdsf->s.height *this->d.depth/8);
+    lpdsf->s.surface_desc.y.lpSurface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+						  lpdsf->s.surface_desc.dwWidth *
+						  lpdsf->s.surface_desc.dwHeight *
+						  (this->d.depth / 8));
     
     /* In this case, create an XImage */
     img =
@@ -1649,17 +1744,17 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE3 lpdsf) {
 		     this->d.depth,
 		     ZPixmap,
 		     0,
-		     lpdsf->s.surface,
-		     lpdsf->s.width,
-		     lpdsf->s.height,
+		     lpdsf->s.surface_desc.y.lpSurface,
+		     lpdsf->s.surface_desc.dwWidth,
+		     lpdsf->s.surface_desc.dwHeight,
 		     32,
-		     lpdsf->s.width * (this->d.depth / 8)
+		     lpdsf->s.surface_desc.dwWidth * (this->d.depth / 8)
 		     );
     
 #ifdef HAVE_LIBXXSHM
   }
 #endif
-  lpdsf->s.lpitch = img->bytes_per_line;
+  lpdsf->s.surface_desc.lPitch = img->bytes_per_line;
   
   return img;
 }
@@ -1684,39 +1779,37 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 	(*lpdsf)->s.ddraw             = this;
 	(*lpdsf)->ref                 = 1;
 	(*lpdsf)->lpvtbl              = (LPDIRECTDRAWSURFACE_VTABLE)&xlib_dds3vt;
+	(*lpdsf)->s.palette = NULL;
+	(*lpdsf)->t.xlib.image = NULL; /* This is for off-screen buffers */
 
 		if (!(lpddsd->dwFlags & DDSD_WIDTH))
 			lpddsd->dwWidth	 = this->d.width;
 		if (!(lpddsd->dwFlags & DDSD_HEIGHT))
 			lpddsd->dwHeight = this->d.height;
 
-	(*lpdsf)->s.width	= lpddsd->dwWidth;
-	(*lpdsf)->s.height	= lpddsd->dwHeight;
-
+	/* Check if this a 'primary surface' or not */
   if ((lpddsd->dwFlags & DDSD_CAPS) && 
-      (lpddsd->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)) {
-
-    /* Allocate surface memory */
-    (*lpdsf)->s.surface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpddsd->dwWidth*lpddsd->dwHeight*this->d.depth/8);
-    
-    /* No XImage for a offscreen buffer */
-    (*lpdsf)->t.xlib.image = NULL;
-    (*lpdsf)->t.xlib.on_screen = FALSE;
-    (*lpdsf)->s.lpitch = lpddsd->dwWidth * (this->d.depth / 8);
-    
-    TRACE(ddraw,"using system memory for a primary surface (%p)\n", *lpdsf);
-  } else {
+	    (lpddsd->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)) {
     XImage *img;
       
     TRACE(ddraw,"using standard XImage for a primary surface (%p)\n", *lpdsf);
 
+	  /* First, store the surface description */
+	  (*lpdsf)->s.surface_desc = *lpddsd;
+	  
     /* Create the XImage */
     img = create_ximage(this, (LPDIRECTDRAWSURFACE3) *lpdsf);
     if (img == NULL)
       return DDERR_OUTOFMEMORY;
-    
     (*lpdsf)->t.xlib.image = img;
-    (*lpdsf)->t.xlib.on_screen = TRUE;
+
+	  /* Add flags if there were not present */
+	  (*lpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE;
+	  (*lpdsf)->s.surface_desc.dwWidth = this->d.width;
+	  (*lpdsf)->s.surface_desc.dwHeight = this->d.height;
+	  (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
+	  _getpixelformat(this,&((*lpdsf)->s.surface_desc.ddpfPixelFormat));
+	  (*lpdsf)->s.backbuffer = NULL;
     
     /* Check for backbuffers */
 	if (lpddsd->dwFlags & DDSD_BACKBUFFERCOUNT) {
@@ -1736,9 +1829,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 
 		back->ref = 1;
 		back->lpvtbl = (LPDIRECTDRAWSURFACE3_VTABLE)&xlib_dds3vt;
-
-      back->s.width = lpddsd->dwWidth;
-      back->s.height = lpddsd->dwHeight;
+	    /* Copy the surface description from the front buffer */
+	    back->s.surface_desc = (*lpdsf)->s.surface_desc;
 
       /* Create the XImage */
       img = create_ximage(this, back);
@@ -1746,10 +1838,19 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 	return DDERR_OUTOFMEMORY;
       back->t.xlib.image = img;
       
-      back->t.xlib.on_screen = FALSE;
 		back->s.backbuffer = NULL; /* does not have a backbuffer, it is
 					    * one! */
+
+	    /* Add relevant info to front and back buffers */
+	    (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_FRONTBUFFER;
+	    back->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
+	    back->s.surface_desc.dwFlags &= ~DDSD_BACKBUFFERCOUNT;
+	    back->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_VISIBLE;
 	}
+	} else {
+	  /* There is no Xlib-specific code here...
+	     Go to the common surface creation function */
+	  return common_off_screen_CreateSurface(this, lpddsd, *lpdsf);
   }
   
 	return 0;
@@ -2557,7 +2658,9 @@ LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lPar
         ret = DefWindowProc32A(hwnd, msg, wParam, lParam );
       } 
 
-    } else {
+    }
+    else
+    {
 	ret = DefWindowProc32A(hwnd,msg,wParam,lParam);
     }
 

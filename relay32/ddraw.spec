@@ -7,7 +7,7 @@ type win32
    4  stub DDInternalUnlock
    5  stdcall DSoundHelp(long long long) DSoundHelp
    6  stdcall DirectDrawCreate(ptr ptr ptr) DirectDrawCreate
-   7  stub DirectDrawCreateClipper
+   7  stdcall DirectDrawCreateClipper(long ptr ptr) DirectDrawCreateClipper
    8  stdcall DirectDrawEnumerateA(ptr ptr) DirectDrawEnumerate32A
    9  stub DirectDrawEnumerateW
   10  stub DllCanUnloadNow

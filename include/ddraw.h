@@ -985,8 +985,8 @@ struct _common_directdrawsurface {
     LPDIRECTDRAWPALETTE		palette;
     LPDIRECTDRAW2		ddraw;
     LPDIRECTDRAWSURFACE3	backbuffer;
-    LPVOID			surface;
-    DWORD			lpitch,width,height;
+
+    DDSURFACEDESC               surface_desc;
 };
 
 struct _dga_directdrawsurface {
@@ -995,7 +995,6 @@ struct _dga_directdrawsurface {
 
 struct _xlib_directdrawsurface {
     XImage		*image;
-    int                 on_screen;
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo	shminfo;
 #endif
@@ -1013,7 +1012,8 @@ typedef struct IDirectDrawSurface_VTable {
     STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH, DWORD, DWORD ) PURE;
     STDMETHOD(BltFast)(THIS_ DWORD,DWORD,LPDIRECTDRAWSURFACE, LPRECT32,DWORD) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD,LPDIRECTDRAWSURFACE) PURE;
-    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID,LPDDENUMSURFACESCALLBACK) PURE;    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD,LPVOID,LPDDENUMSURFACESCALLBACK) PURE;
+    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID,LPDDENUMSURFACESCALLBACK) PURE;
+    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD,LPVOID,LPDDENUMSURFACESCALLBACK) PURE;
     STDMETHOD(Flip)(THIS_ LPDIRECTDRAWSURFACE, DWORD) PURE;
     STDMETHOD(GetAttachedSurface)(THIS_ LPDDSCAPS, LPDIRECTDRAWSURFACE FAR *) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD) PURE;
@@ -1196,5 +1196,6 @@ struct IDirectDrawColorControl  {
 HRESULT WINAPI DirectDrawCreate(LPGUID,LPDIRECTDRAW*,LPUNKNOWN);
 HRESULT WINAPI DirectDrawEnumerate32A(LPDDENUMCALLBACK32A,LPVOID);
 HRESULT WINAPI DirectDrawEnumerate32W(LPDDENUMCALLBACK32W,LPVOID);
+HRESULT WINAPI DirectDrawCreateClipper(DWORD,LPDIRECTDRAWCLIPPER*,LPUNKNOWN);
 #define DirectDrawEnumerate WINELIB_NAME_AW(DirectDrawEnumerate)
 #endif
