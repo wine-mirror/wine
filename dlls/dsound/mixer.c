@@ -1030,7 +1030,7 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 		/* queue new buffer if we have data for it */
 		if (inq>1) DSOUND_WaveQueue(This, inq-1);
 #ifdef SYNC_CALLBACK
-		LeaveCriticalSection(&(This->lock));
+		LeaveCriticalSection(&(This->mixlock));
 #endif
 	}
 	TRACE("completed\n");
