@@ -216,9 +216,19 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODEA* initData )
 {
     PSDRV_PDEVICE *physDev;
-    PRINTERINFO *pi = PSDRV_FindPrinterInfo(device);
+    PRINTERINFO *pi;
     DeviceCaps *devCaps;
 
+    /* If no device name was specified, retrieve the device name
+     * from the DEVMODE structure from the DC's physDev.
+     * (See CreateCompatibleDC) */
+    if ( !device && dc->physDev )
+    {
+        physDev = (PSDRV_PDEVICE *)dc->physDev;
+        device = physDev->Devmode->dmPublic.dmDeviceName;
+    }
+    pi = PSDRV_FindPrinterInfo(device);
+        
     TRACE(psdrv, "(%s %s %s %p)\n", driver, device, output, initData);
 
     if(!pi) return FALSE;

@@ -634,6 +634,12 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     dc->w.hBitmap      = hbitmap;
     dc->w.hFirstBitmap = hbitmap;
 
+    /* Copy the driver-specific physical device info into
+     * the new DC. The driver may use this read-only info
+     * while creating the compatible DC below. */
+    if (origDC)
+        dc->physDev = origDC->physDev;
+
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, NULL, NULL, NULL, NULL ))
     {
