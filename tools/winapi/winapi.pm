@@ -271,7 +271,7 @@ sub parse_spec_file {
 	my $ordinal;
 	if(/^(\d+|@)\s+
 	   (pascal|pascal16|stdcall|cdecl|varargs)\s+
-	   ((?:(?:-noimport|-noname|-norelay|-i386|-ret64|-register|-interrupt)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S+)$/x)
+	   ((?:(?:-noimport|-noname|-norelay|-i386|-ret64|-register|-interrupt)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
 	{
 	    my $calling_convention = $2;
 	    my $flags = $3;
@@ -440,7 +440,7 @@ sub parse_spec_file {
                 $$module_external_calling_convention{$module}{"\@$ordinal"} = "forward";
             }
 	    $$function_forward{$module}{$external_name} = [$forward_module, $forward_name];
-	} elsif(/^(\d+|@)\s+extern\s+(\S+)\s+(\S+)$/) {
+	} elsif(/^(\d+|@)\s+extern\s+(\S+)\s*(\S*)$/) {
 	    $ordinal = $1;
 
 	    my $external_name = $2;
