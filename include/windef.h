@@ -295,7 +295,6 @@ DECLARE_HANDLE(HWND);
 DECLARE_HANDLE(HKL);
 DECLARE_HANDLE(HIC);
 DECLARE_HANDLE(HRASCONN);
-#undef DECLARE_HANDLE
 
 /* Handle types that must remain interchangeable even with strict on */
 
