@@ -968,8 +968,12 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     else
         himl->hbmImage = 0;
 
-    if ( (himl->cMaxImage > 0) && (himl->flags & ILC_MASK)) {
-        himl->hbmMask = CreateBitmap (himl->cx * himl->cMaxImage, himl->cy,
+    if ( (himl->flags & ILC_MASK)) {
+        int images = himl->cMaxImage;
+        if (images <= 0)
+            images = 1;
+
+        himl->hbmMask = CreateBitmap (himl->cx * images, himl->cy,
 					1, 1, NULL);
         if (himl->hbmMask == 0) {
             ERR("Error creating mask bitmap!\n");
@@ -1409,6 +1413,10 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     /*
         Draw the image
     */
+
+    TRACE("hbmMask(0x%08x) iImage(%d) x(%d) y(%d) cx(%d) cy(%d)\n",
+        pimldp->himl->hbmMask, pimldp->i, pimldp->x, pimldp->y, cx, cy);
+
     if(pimldp->himl->hbmMask != 0)
     {
         IMAGELIST_InternalDrawMask(pimldp, cx, cy);
@@ -2428,6 +2436,8 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
     HDC hdcImageList, hdcImage;
     BITMAP bmp;
 
+    TRACE("%p %d %04x %04x\n", himl, i, hbmImage, hbmMask);
+
     if (himl == NULL) {
         ERR("Invalid image list handle!\n");
         return FALSE;
@@ -2796,12 +2806,17 @@ ImageList_SetImageCount (HIMAGELIST himl, INT iImageCount)
     HBITMAP hbmNewBitmap;
     INT     nNewCount, nCopyCount;
 
+    TRACE("%p %d\n",himl,iImageCount);
+
     if (!himl)
 	return FALSE;
     if (himl->cCurImage >= iImageCount)
 	return FALSE;
     if (himl->cMaxImage > iImageCount)
+    {
+        himl->cCurImage = iImageCount;
 	return TRUE;
+    }
 
     nNewCount = iImageCount + himl->cGrow;
     nCopyCount = min(himl->cCurImage, iImageCount);
@@ -2863,8 +2878,7 @@ ImageList_SetImageCount (HIMAGELIST himl, INT iImageCount)
 
     /* Update max image count and current image count */
     himl->cMaxImage = nNewCount;
-    if (himl->cCurImage > nCopyCount)
-        himl->cCurImage = nCopyCount;
+    himl->cCurImage = iImageCount;
 
     return TRUE;
 }
