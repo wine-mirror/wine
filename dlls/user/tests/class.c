@@ -523,6 +523,54 @@ static void test_instances(void)
     check_thread_instance( "EDIT", (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0xdeadbeef );
 }
 
+LRESULT WINAPI TestDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+BOOL RegisterTestDialog(HINSTANCE hInstance)
+{
+    WNDCLASSEX wcx;
+    ATOM atom = 0;
+
+    ZeroMemory(&wcx, sizeof(WNDCLASSEX));
+    wcx.cbSize = sizeof(wcx);
+    wcx.lpfnWndProc = TestDlgProc;
+    wcx.cbClsExtra = 0;
+    wcx.cbWndExtra = DLGWINDOWEXTRA;
+    wcx.hInstance = hInstance;
+    wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wcx.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wcx.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    wcx.lpszClassName = "TestDialog";
+    wcx.lpszMenuName =  "TestDialog";
+    wcx.hIconSm = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(5),
+        IMAGE_ICON,
+        GetSystemMetrics(SM_CXSMICON),
+        GetSystemMetrics(SM_CYSMICON),
+        LR_DEFAULTCOLOR);
+
+    atom = RegisterClassEx(&wcx);
+    ok(atom != 0, "RegisterClassEx returned 0\n");
+
+    return atom;
+}
+
+/* test registering a dialog box created by using the CLASS directive in a
+   resource file, then test creating the dialog using CreateDialogParam. */
+void WINAPI CreateDialogParamTest(HINSTANCE hInstance)
+{
+    HWND hWndMain;
+
+    if (RegisterTestDialog(hInstance))
+    {
+        hWndMain = CreateDialogParam(hInstance, "CLASS_TEST_DIALOG", NULL, 0, 0);
+        ok(hWndMain != NULL, "CreateDialogParam returned NULL\n");
+        ShowWindow(hWndMain, SW_SHOW);
+        DestroyWindow(hWndMain);
+    }
+}
+
 START_TEST(class)
 {
     HANDLE hInstance = GetModuleHandleA( NULL );
@@ -535,6 +583,7 @@ START_TEST(class)
 
     ClassTest(hInstance,FALSE);
     ClassTest(hInstance,TRUE);
+    CreateDialogParamTest(hInstance);
     test_styles();
     test_instances();
 }
