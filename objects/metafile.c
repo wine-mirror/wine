@@ -722,6 +722,10 @@ BOOL WINAPI EnumMetaFile(
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
+	if(mr->rdFunction == META_EOF) {
+	    TRACE("Got META_EOF so stopping\n");
+	    break;
+	}
 	TRACE("Calling EnumFunc with record type %x\n",
 	      mr->rdFunction);
         if (!lpEnumFunc( hdc, ht, mr, mh->mtNoObjects, (LONG)lpData ))
