@@ -308,6 +308,10 @@ static inline void EDIT_WM_Clear(WND *wnd, EDITSTATE *es)
 {
 	static const WCHAR empty_stringW[] = {0};
 
+	/* Protect read-only edit control from modification */
+	if(es->style & ES_READONLY)
+	    return;
+
 	EDIT_EM_ReplaceSel(wnd, es, TRUE, empty_stringW, TRUE);
 
 	if (es->flags & EF_UPDATE) {
@@ -3400,8 +3404,15 @@ static void EDIT_EM_SetWordBreakProc16(WND *wnd, EDITSTATE *es, EDITWORDBREAKPRO
  */
 static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 {
-	INT ulength = strlenW(es->undo_text);
-	LPWSTR utext = HeapAlloc(GetProcessHeap(), 0, (ulength + 1) * sizeof(WCHAR));
+	INT ulength;
+	LPWSTR utext;
+
+	/* Protect read-only edit control from modification */
+	if(es->style & ES_READONLY)
+	    return FALSE;
+
+	ulength = strlenW(es->undo_text);
+	utext = HeapAlloc(GetProcessHeap(), 0, (ulength + 1) * sizeof(WCHAR));
 
 	strcpyW(utext, es->undo_text);
 
@@ -3434,7 +3445,14 @@ static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
  */
 static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, WCHAR c)
 {
-        BOOL control = GetKeyState(VK_CONTROL) & 0x8000;
+        BOOL control;
+
+	/* Protect read-only edit control from modification */
+	if(es->style & ES_READONLY)
+	    return;
+
+	control = GetKeyState(VK_CONTROL) & 0x8000;
+
 	switch (c) {
 	case '\r':
 	    /* If the edit doesn't want the return and it's not a multiline edit, do nothing */
@@ -3567,15 +3585,15 @@ static void EDIT_WM_ContextMenu(WND *wnd, EDITSTATE *es, INT x, INT y)
 	ORDER_UINT(start, end);
 
 	/* undo */
-	EnableMenuItem(popup, 0, MF_BYPOSITION | (EDIT_EM_CanUndo(es) ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(popup, 0, MF_BYPOSITION | (EDIT_EM_CanUndo(es) && !(es->style & ES_READONLY) ? MF_ENABLED : MF_GRAYED));
 	/* cut */
-	EnableMenuItem(popup, 2, MF_BYPOSITION | ((end - start) && !(es->style & ES_PASSWORD) ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(popup, 2, MF_BYPOSITION | ((end - start) && !(es->style & ES_PASSWORD) && !(es->style & ES_READONLY) ? MF_ENABLED : MF_GRAYED));
 	/* copy */
 	EnableMenuItem(popup, 3, MF_BYPOSITION | ((end - start) && !(es->style & ES_PASSWORD) ? MF_ENABLED : MF_GRAYED));
 	/* paste */
-	EnableMenuItem(popup, 4, MF_BYPOSITION | (IsClipboardFormatAvailable(CF_UNICODETEXT) ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(popup, 4, MF_BYPOSITION | (IsClipboardFormatAvailable(CF_UNICODETEXT) && !(es->style & ES_READONLY) ? MF_ENABLED : MF_GRAYED));
 	/* delete */
-	EnableMenuItem(popup, 5, MF_BYPOSITION | ((end - start) ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(popup, 5, MF_BYPOSITION | ((end - start) && !(es->style & ES_READONLY) ? MF_ENABLED : MF_GRAYED));
 	/* select all */
 	EnableMenuItem(popup, 7, MF_BYPOSITION | (start || (end != strlenW(es->text)) ? MF_ENABLED : MF_GRAYED));
 
@@ -4348,6 +4366,10 @@ static void EDIT_WM_Paste(WND *wnd, EDITSTATE *es)
 {
 	HGLOBAL hsrc;
 	LPWSTR src;
+
+	/* Protect read-only edit control from modification */
+	if(es->style & ES_READONLY)
+	    return;
 
 	OpenClipboard(wnd->hwndSelf);
 	if ((hsrc = GetClipboardData(CF_UNICODETEXT))) {
