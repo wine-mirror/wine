@@ -380,6 +380,7 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 	ddsd.u4.ddpfPixelFormat = This->pixelformat;
     }
 
+#ifdef HAVE_OPENGL
     /* We support for now only DXT1, DXT3 & DXT5 compressed texture formats... */
     if ((ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) &&
         (ddsd.u4.ddpfPixelFormat.dwFourCC != MAKE_FOURCC('D','X','T','1')) &&
@@ -392,10 +393,20 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
     /* Check if we can really support DXT1, DXT3 & DXT5 */
     if ((ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) &&
 	!GL_extensions.s3tc_compressed_texture && !s3tc_initialized) {
-	ERR("Trying to create DXT1, DXT3 or DXT5 texture which is not supported by the video card!!!\n");
-	ERR("However there is a library libtxc_dxtn.so that can be used to do the software decompression...\n");
+	static BOOLEAN user_warned = 0;
+	if (user_warned == 0) {
+	    ERR("Trying to create DXT1, DXT3 or DXT5 texture which is not supported by the video card!!!\n");
+	    ERR("However there is a library libtxc_dxtn.so that can be used to do the software decompression...\n");
+	    user_warned = 1;
+	}
         return DDERR_INVALIDPIXELFORMAT;
     }
+#else
+    if (ddsd.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
+    {
+	return DDERR_INVALIDPIXELFORMAT;
+    }
+#endif
 
     if (!(ddsd.dwFlags & DDSD_PITCH))
     {
