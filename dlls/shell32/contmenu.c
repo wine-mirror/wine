@@ -15,51 +15,70 @@
 #include "shell32_main.h"
 #include "shresdef.h"
 
-static HRESULT WINAPI IContextMenu_QueryInterface(LPCONTEXTMENU ,REFIID , LPVOID *);
-static ULONG WINAPI IContextMenu_AddRef(LPCONTEXTMENU);
-static ULONG WINAPI IContextMenu_Release(LPCONTEXTMENU);
-static HRESULT WINAPI IContextMenu_QueryContextMenu(LPCONTEXTMENU , HMENU32 ,UINT32 ,UINT32 ,UINT32 ,UINT32);
-static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU, LPCMINVOKECOMMANDINFO32);
-static HRESULT WINAPI IContextMenu_GetCommandString(LPCONTEXTMENU , UINT32 ,UINT32 ,LPUINT32 ,LPSTR ,UINT32);
-static HRESULT WINAPI IContextMenu_HandleMenuMsg(LPCONTEXTMENU, UINT32, WPARAM32, LPARAM);
+/**************************************************************************
+*  IContextMenu Implementation
+*/
+typedef struct 
+{ ICOM_VTABLE(IContextMenu)* lpvtbl;
+  DWORD     ref;
+  LPSHELLFOLDER pSFParent;
+  LPITEMIDLIST  *aPidls;
+  BOOL32    bAllValues;
+} IContextMenuImpl;
 
-BOOL32 IContextMenu_AllocPidlTable(LPCONTEXTMENU, DWORD);
-void IContextMenu_FreePidlTable(LPCONTEXTMENU);
-BOOL32 IContextMenu_CanRenameItems(LPCONTEXTMENU);
-BOOL32 IContextMenu_FillPidlTable(LPCONTEXTMENU, LPCITEMIDLIST *, UINT32);
+static HRESULT WINAPI IContextMenu_fnQueryInterface(IContextMenu *,REFIID , LPVOID *);
+static ULONG WINAPI IContextMenu_fnAddRef(IContextMenu *);
+static ULONG WINAPI IContextMenu_fnRelease(IContextMenu *);
+static HRESULT WINAPI IContextMenu_fnQueryContextMenu(IContextMenu *, HMENU32 ,UINT32 ,UINT32 ,UINT32 ,UINT32);
+static HRESULT WINAPI IContextMenu_fnInvokeCommand(IContextMenu *, LPCMINVOKECOMMANDINFO32);
+static HRESULT WINAPI IContextMenu_fnGetCommandString(IContextMenu *, UINT32 ,UINT32 ,LPUINT32 ,LPSTR ,UINT32);
+static HRESULT WINAPI IContextMenu_fnHandleMenuMsg(IContextMenu *, UINT32, WPARAM32, LPARAM);
 
-static struct IContextMenu_VTable cmvt = 
-{	IContextMenu_QueryInterface,
-	IContextMenu_AddRef,
-	IContextMenu_Release,
-	IContextMenu_QueryContextMenu,
-	IContextMenu_InvokeCommand,
-	IContextMenu_GetCommandString,
-	IContextMenu_HandleMenuMsg,
+/* Private Methods */
+BOOL32 IContextMenu_AllocPidlTable(IContextMenuImpl*, DWORD);
+void IContextMenu_FreePidlTable(IContextMenuImpl*);
+BOOL32 IContextMenu_CanRenameItems(IContextMenuImpl*);
+BOOL32 IContextMenu_FillPidlTable(IContextMenuImpl*, LPCITEMIDLIST *, UINT32);
+
+/**************************************************************************
+* IContextMenu VTable
+* 
+*/
+static struct ICOM_VTABLE(IContextMenu) cmvt = {	
+	IContextMenu_fnQueryInterface,
+	IContextMenu_fnAddRef,
+	IContextMenu_fnRelease,
+	IContextMenu_fnQueryContextMenu,
+	IContextMenu_fnInvokeCommand,
+	IContextMenu_fnGetCommandString,
+	IContextMenu_fnHandleMenuMsg,
 	(void *) 0xdeadbabe	/* just paranoia */
 };
+
 /**************************************************************************
-*  IContextMenu_QueryInterface
+*  IContextMenu_fnQueryInterface
 */
-static HRESULT WINAPI IContextMenu_QueryInterface(LPCONTEXTMENU this,REFIID riid, LPVOID *ppvObj)
-{ char    xriid[50];
+static HRESULT WINAPI IContextMenu_fnQueryInterface(IContextMenu *iface, REFIID riid, LPVOID *ppvObj)
+{ ICOM_THIS(IContextMenuImpl, iface);
+	char    xriid[50];
   WINE_StringFromCLSID((LPCLSID)riid,xriid);
-  TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",this,xriid,ppvObj);
+  TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
 
   *ppvObj = NULL;
 
   if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-  { *ppvObj = (LPUNKNOWN)(LPCONTEXTMENU)this; 
+  { *ppvObj = This; 
   }
   else if(IsEqualIID(riid, &IID_IContextMenu))  /*IContextMenu*/
-  { *ppvObj = (LPCONTEXTMENU)this;
+  { *ppvObj = This;
   }   
   else if(IsEqualIID(riid, &IID_IShellExtInit))  /*IShellExtInit*/
   { FIXME (shell,"-- LPSHELLEXTINIT pointer requested\n");
   }   
 
   if(*ppvObj)
-  { (*(LPCONTEXTMENU *)ppvObj)->lpvtbl->fnAddRef(this);      
+  { 
+    (*(IContextMenuImpl**)ppvObj)->lpvtbl->fnAddRef(iface);      
     TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
     return S_OK;
   }
@@ -68,46 +87,48 @@ static HRESULT WINAPI IContextMenu_QueryInterface(LPCONTEXTMENU this,REFIID riid
 }   
 
 /**************************************************************************
-*  IContextMenu_AddRef
+*  IContextMenu_fnAddRef
 */
-static ULONG WINAPI IContextMenu_AddRef(LPCONTEXTMENU this)
-{	TRACE(shell,"(%p)->(count=%lu)\n",this,(this->ref)+1);
+static ULONG WINAPI IContextMenu_fnAddRef(IContextMenu *iface)
+{ ICOM_THIS(IContextMenuImpl, iface);
+	TRACE(shell,"(%p)->(count=%lu)\n",This,(This->ref)+1);
 	shell32_ObjCount++;
-	return ++(this->ref);
+	return ++(This->ref);
 }
 /**************************************************************************
-*  IContextMenu_Release
+*  IContextMenu_fnRelease
 */
-static ULONG WINAPI IContextMenu_Release(LPCONTEXTMENU this)
-{	TRACE(shell,"(%p)->()\n",this);
+static ULONG WINAPI IContextMenu_fnRelease(IContextMenu *iface)
+{	ICOM_THIS(IContextMenuImpl, iface);
+	TRACE(shell,"(%p)->()\n",This);
 
 	shell32_ObjCount--;
 
-	if (!--(this->ref)) 
-	{ TRACE(shell," destroying IContextMenu(%p)\n",this);
+	if (!--(This->ref)) 
+	{ TRACE(shell," destroying IContextMenu(%p)\n",This);
 
-	  if(this->pSFParent)
-	    this->pSFParent->lpvtbl->fnRelease(this->pSFParent);
+	  if(This->pSFParent)
+	    This->pSFParent->lpvtbl->fnRelease(This->pSFParent);
 
 	  /*make sure the pidl is freed*/
-	  if(this->aPidls)
-	  { IContextMenu_FreePidlTable(this);
+	  if(This->aPidls)
+	  { IContextMenu_FreePidlTable(This);
 	  }
 
-	  HeapFree(GetProcessHeap(),0,this);
+	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
 	}
-	return this->ref;
+	return This->ref;
 }
 
 /**************************************************************************
 *   IContextMenu_Constructor()
 */
-LPCONTEXTMENU IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST *aPidls, UINT32 uItemCount)
-{	LPCONTEXTMENU cm;
+IContextMenu *IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST *aPidls, UINT32 uItemCount)
+{	IContextMenuImpl* cm;
 	UINT32  u;
-    
-	cm = (LPCONTEXTMENU)HeapAlloc(GetProcessHeap(),0,sizeof(IContextMenu));
+  FIXME(shell, "HELLO age\n")  ;
+	cm = (IContextMenuImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IContextMenuImpl));
 	cm->lpvtbl=&cmvt;
 	cm->ref = 1;
 
@@ -129,7 +150,7 @@ LPCONTEXTMENU IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST *a
 	}
 	TRACE(shell,"(%p)->()\n",cm);
 	shell32_ObjCount++;
-	return cm;
+	return (IContextMenu*)cm;
 }
 /**************************************************************************
 *  ICM_InsertItem()
@@ -153,17 +174,18 @@ void WINAPI _InsertMenuItem (HMENU32 hmenu, UINT32 indexMenu, BOOL32 fByPosition
 	InsertMenuItem32A( hmenu, indexMenu, fByPosition, &mii);
 }
 /**************************************************************************
-* IContextMenu_QueryContextMenu()
+* IContextMenu_fnQueryContextMenu()
 */
 
-static HRESULT WINAPI IContextMenu_QueryContextMenu( LPCONTEXTMENU this, HMENU32 hmenu, UINT32 indexMenu,
+static HRESULT WINAPI IContextMenu_fnQueryContextMenu(IContextMenu *iface, HMENU32 hmenu, UINT32 indexMenu,
 							UINT32 idCmdFirst,UINT32 idCmdLast,UINT32 uFlags)
-{	BOOL32	fExplore ;
+{	ICOM_THIS(IContextMenuImpl, iface);
+	BOOL32	fExplore ;
 
-	TRACE(shell,"(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",this, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
+	TRACE(shell,"(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
 	if(!(CMF_DEFAULTONLY & uFlags))
-	{ if(!this->bAllValues)	
+	{ if(!This->bAllValues)	
 	  { /* folder menu */
 	    fExplore = uFlags & CMF_EXPLORE;
 	    if(fExplore) 
@@ -177,14 +199,14 @@ static HRESULT WINAPI IContextMenu_QueryContextMenu( LPCONTEXTMENU this, HMENU32
 
             if(uFlags & CMF_CANRENAME)
             { _InsertMenuItem(hmenu, indexMenu++, TRUE, 0, MFT_SEPARATOR, NULL, 0);
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, "&Rename", (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED));
+	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, "&Rename", (IContextMenu_CanRenameItems(This) ? MFS_ENABLED : MFS_DISABLED));
 	    }
 	  }
 	  else	/* file menu */
 	  { _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_OPEN, MFT_STRING, "&Open", MFS_ENABLED|MFS_DEFAULT);
             if(uFlags & CMF_CANRENAME)
             { _InsertMenuItem(hmenu, indexMenu++, TRUE, 0, MFT_SEPARATOR, NULL, 0);
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, "&Rename", (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED));
+	      _InsertMenuItem(hmenu, indexMenu++, TRUE, idCmdFirst+IDM_RENAME, MFT_STRING, "&Rename", (IContextMenu_CanRenameItems(This) ? MFS_ENABLED : MFS_DISABLED));
 	    }
 	  }
 	  return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (IDM_LAST + 1));
@@ -193,17 +215,18 @@ static HRESULT WINAPI IContextMenu_QueryContextMenu( LPCONTEXTMENU this, HMENU32
 }
 
 /**************************************************************************
-* IContextMenu_InvokeCommand()
+* IContextMenu_fnInvokeCommand()
 */
-static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU this, LPCMINVOKECOMMANDINFO32 lpcmi)
-{	LPITEMIDLIST	pidlTemp,pidlFQ;
+static HRESULT WINAPI IContextMenu_fnInvokeCommand(IContextMenu *iface, LPCMINVOKECOMMANDINFO32 lpcmi)
+{	ICOM_THIS(IContextMenuImpl, iface);
+	LPITEMIDLIST	pidlTemp,pidlFQ;
 	LPSHELLBROWSER	lpSB;
 	LPSHELLVIEW	lpSV;
 	HWND32	hWndSV;
 	SHELLEXECUTEINFO32A	sei;
 	int   i;
 
- 	TRACE(shell,"(%p)->(invcom=%p verb=%p wnd=%x)\n",this,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);    
+ 	TRACE(shell,"(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);    
 
 	if(HIWORD(lpcmi->lpVerb))
 	{ /* get the active IShellView */
@@ -238,13 +261,13 @@ static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU this, LPCMINVOKEC
             /* Find the first item in the list that is not a value. These commands 
       	    should never be invoked if there isn't at least one folder item in the list.*/
 
-	    for(i = 0; this->aPidls[i]; i++)
-	    { if(!_ILIsValue(this->aPidls[i]))
+	    for(i = 0; This->aPidls[i]; i++)
+	    { if(!_ILIsValue(This->aPidls[i]))
                 break;
 	    }
       
-	    pidlTemp = ILCombine(this->pSFParent->mpidl, this->aPidls[i]);
-	    pidlFQ = ILCombine(this->pSFParent->pMyPidl, pidlTemp);
+	    pidlTemp = ILCombine(This->pSFParent->mpidl, This->aPidls[i]);
+	    pidlFQ = ILCombine(This->pSFParent->pMyPidl, pidlTemp);
 	    SHFree(pidlTemp);
       
 	    ZeroMemory(&sei, sizeof(sei));
@@ -274,13 +297,14 @@ static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU this, LPCMINVOKEC
 }
 
 /**************************************************************************
-*  IContextMenu_GetCommandString()
+*  IContextMenu_fnGetCommandString()
 */
-static HRESULT WINAPI IContextMenu_GetCommandString( LPCONTEXTMENU this, UINT32 idCommand,
+static HRESULT WINAPI IContextMenu_fnGetCommandString(IContextMenu *iface, UINT32 idCommand,
 		UINT32 uFlags,LPUINT32 lpReserved,LPSTR lpszName,UINT32 uMaxNameLen)
-{	HRESULT  hr = E_INVALIDARG;
+{	ICOM_THIS(IContextMenuImpl, iface);
+	HRESULT  hr = E_INVALIDARG;
 
-	TRACE(shell,"(%p)->(idcom=%x flags=%x %p name=%p len=%x)\n",this, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
+	TRACE(shell,"(%p)->(idcom=%x flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
 
 	switch(uFlags)
 	{ case GCS_HELPTEXT:
@@ -296,7 +320,7 @@ static HRESULT WINAPI IContextMenu_GetCommandString( LPCONTEXTMENU this, UINT32 
 	    }
 	    break;
 
-	     /* NT 4.0 with IE 3.0x or no IE will always call this with GCS_VERBW. In this 
+	     /* NT 4.0 with IE 3.0x or no IE will always call This with GCS_VERBW. In This 
 	     case, you need to do the lstrcpyW to the pointer passed.*/
 	  case GCS_VERBW:
 	    switch(idCommand)
@@ -311,63 +335,68 @@ static HRESULT WINAPI IContextMenu_GetCommandString( LPCONTEXTMENU this, UINT32 
 	    hr = NOERROR;
 	    break;
 	}
-	TRACE(shell,"-- (%p)->(name=%s)\n",this, lpszName);
+	TRACE(shell,"-- (%p)->(name=%s)\n",This, lpszName);
 	return hr;
 }
+
 /**************************************************************************
-* IContextMenu_HandleMenuMsg()
+* IContextMenu_fnHandleMenuMsg()
 * NOTES
 *  should be only in IContextMenu2 and IContextMenu3
 *  is nevertheless called from word95
 */
-static HRESULT WINAPI IContextMenu_HandleMenuMsg(LPCONTEXTMENU this, UINT32 uMsg,WPARAM32 wParam,LPARAM lParam)
-{	TRACE(shell,"(%p)->(msg=%x wp=%x lp=%lx)\n",this, uMsg, wParam, lParam);
+static HRESULT WINAPI IContextMenu_fnHandleMenuMsg(IContextMenu *iface, UINT32 uMsg,WPARAM32 wParam,LPARAM lParam)
+{	ICOM_THIS(IContextMenuImpl, iface);
+	TRACE(shell,"(%p)->(msg=%x wp=%x lp=%lx)\n",This, uMsg, wParam, lParam);
 	return E_NOTIMPL;
 }
+
+
+
 /**************************************************************************
 *  IContextMenu_AllocPidlTable()
 */
-BOOL32 IContextMenu_AllocPidlTable(LPCONTEXTMENU this, DWORD dwEntries)
-{	TRACE(shell,"(%p)->(entrys=%lu)\n",this, dwEntries);
+BOOL32 IContextMenu_AllocPidlTable(IContextMenuImpl *This, DWORD dwEntries)
+{	TRACE(shell,"(%p)->(entrys=%lu)\n",This, dwEntries);
 
 	/*add one for NULL terminator */
 	dwEntries++;
 
-	this->aPidls = (LPITEMIDLIST*)SHAlloc(dwEntries * sizeof(LPITEMIDLIST));
+	This->aPidls = (LPITEMIDLIST*)SHAlloc(dwEntries * sizeof(LPITEMIDLIST));
 
-	if(this->aPidls)
-	{ ZeroMemory(this->aPidls, dwEntries * sizeof(LPITEMIDLIST));	/*set all of the entries to NULL*/
+	if(This->aPidls)
+	{ ZeroMemory(This->aPidls, dwEntries * sizeof(LPITEMIDLIST));	/*set all of the entries to NULL*/
 	}
-	return (this->aPidls != NULL);
+	return (This->aPidls != NULL);
 }
 
 /**************************************************************************
 * IContextMenu_FreePidlTable()
 */
-void IContextMenu_FreePidlTable(LPCONTEXTMENU this)
+void IContextMenu_FreePidlTable(IContextMenuImpl *This)
 {	int   i;
 
-	TRACE(shell,"(%p)->()\n",this);
+	TRACE(shell,"(%p)->()\n",This);
 
-	if(this->aPidls)
-	{ for(i = 0; this->aPidls[i]; i++)
-	  { SHFree(this->aPidls[i]);
+	if(This->aPidls)
+	{ for(i = 0; This->aPidls[i]; i++)
+	  { SHFree(This->aPidls[i]);
 	  }
    
-	  SHFree(this->aPidls);
-	  this->aPidls = NULL;
+	  SHFree(This->aPidls);
+	  This->aPidls = NULL;
 	}
 }
 
 /**************************************************************************
 * IContextMenu_FillPidlTable()
 */
-BOOL32 IContextMenu_FillPidlTable(LPCONTEXTMENU this, LPCITEMIDLIST *aPidls, UINT32 uItemCount)
+BOOL32 IContextMenu_FillPidlTable(IContextMenuImpl *This, LPCITEMIDLIST *aPidls, UINT32 uItemCount)
 {   UINT32  i;
-	TRACE(shell,"(%p)->(apidl=%p count=%u)\n",this, aPidls, uItemCount);
-	if(this->aPidls)
+	TRACE(shell,"(%p)->(apidl=%p count=%u)\n",This, aPidls, uItemCount);
+	if(This->aPidls)
 	{ for(i = 0; i < uItemCount; i++)
-	  { this->aPidls[i] = ILClone(aPidls[i]);
+	  { This->aPidls[i] = ILClone(aPidls[i]);
 	  }
 	  return TRUE;
  	}
@@ -377,20 +406,20 @@ BOOL32 IContextMenu_FillPidlTable(LPCONTEXTMENU this, LPCITEMIDLIST *aPidls, UIN
 /**************************************************************************
 * IContextMenu_CanRenameItems()
 */
-BOOL32 IContextMenu_CanRenameItems(LPCONTEXTMENU this)
+BOOL32 IContextMenu_CanRenameItems(IContextMenuImpl *This)
 {	UINT32  i;
 	DWORD dwAttributes;
 
-	TRACE(shell,"(%p)->()\n",this);
+	TRACE(shell,"(%p)->()\n",This);
 
-	if(this->aPidls)
-	{ for(i = 0; this->aPidls[i]; i++){} /*get the number of items assigned to this object*/
+	if(This->aPidls)
+	{ for(i = 0; This->aPidls[i]; i++){} /*get the number of items assigned to This object*/
 	    if(i > 1)	/*you can't rename more than one item at a time*/
 	    { return FALSE;
 	    }
 	    dwAttributes = SFGAO_CANRENAME;
-	    this->pSFParent->lpvtbl->fnGetAttributesOf(this->pSFParent, i,
-        						 (LPCITEMIDLIST*)this->aPidls, &dwAttributes);
+	    This->pSFParent->lpvtbl->fnGetAttributesOf(This->pSFParent, i,
+        						 (LPCITEMIDLIST*)This->aPidls, &dwAttributes);
       
 	    return dwAttributes & SFGAO_CANRENAME;
 	}

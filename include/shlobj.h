@@ -23,7 +23,7 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID,REFIID,LPVOID*);
 
 
 /* foreward declaration of the objects*/
-typedef struct tagCONTEXTMENU	*LPCONTEXTMENU,	IContextMenu;
+typedef struct IContextMenu IContextMenu, *LPCONTEXTMENU;
 typedef struct tagSHELLEXTINIT	*LPSHELLEXTINIT,IShellExtInit;
 typedef struct tagENUMIDLIST	*LPENUMIDLIST,	IEnumIDList;
 typedef struct tagSHELLFOLDER	*LPSHELLFOLDER,	IShellFolder;
@@ -148,34 +148,34 @@ typedef struct tagCMInvokeCommandInfoEx
     POINT32 ptInvoke;      /* Point where it's invoked */
 
 } CMINVOKECOMMANDINFOEX32,  *LPCMINVOKECOMMANDINFOEX32;
-
-
-typedef struct IContextMenu_VTable
-{   /* *** IUnknown methods *** */
-    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
-    STDMETHOD_(ULONG,Release) (THIS) PURE;
-
-    STDMETHOD(QueryContextMenu)(THIS_ HMENU32 hmenu,UINT32 indexMenu,UINT32 idCmdFirst, UINT32 idCmdLast,UINT32 uFlags) PURE;
-    STDMETHOD(InvokeCommand)(THIS_ LPCMINVOKECOMMANDINFO32 lpici) PURE;
-    STDMETHOD(GetCommandString)(THIS_ UINT32 idCmd,UINT32 uType,UINT32 * pwReserved,LPSTR pszName,UINT32 cchMax) PURE;
-
-    /* undocumented not only in ContextMenu2 */
-    STDMETHOD(HandleMenuMsg)(THIS_  UINT32 uMsg,WPARAM32 wParam,LPARAM lParam) PURE;
-
-    /* possibly another nasty entry from ContextMenu3 ?*/    
-    void * guard;
-} IContextMenu_VTable,*LPCONTEXTMENU_VTABLE;
-
-struct tagCONTEXTMENU
-{ LPCONTEXTMENU_VTABLE	lpvtbl;
-  DWORD			ref;
-  LPSHELLFOLDER	pSFParent;
-  LPITEMIDLIST	*aPidls;
-  BOOL32		bAllValues;
-};
-
 #undef THIS
+
+
+#define ICOM_INTERFACE IContextMenu
+#define IContextMenu_METHODS \
+    ICOM_METHOD5(HRESULT,QueryContextMenu,       HMENU32,hmenu, UINT32,indexMenu, UINT32,idCmdFirst, UINT32,idCmdLast, UINT32,uFlags) \
+    ICOM_METHOD1(HRESULT,InvokeCommand,       LPCMINVOKECOMMANDINFO32,lpici) \
+    ICOM_METHOD5(HRESULT,GetCommandString,       UINT32,idCmd, UINT32,uType, UINT32*,pwReserved, LPSTR,pszName, UINT32,cchMax) \
+    ICOM_METHOD3(HRESULT,HandleMenuMsg,        UINT32,uMsg,WPARAM32,wParam,LPARAM,lParam) \
+    void * guard;   /*possibly another nasty entry from ContextMenu3 ?*/
+#define IContextMenu_IMETHODS \
+		IUnknown_IMETHODS \
+    IContextMenu_METHODS
+ICOM_DEFINE(IContextMenu, IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+// *** IUnknown methods *** //
+#define IContextMenu_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IContextMenu_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IContextMenu_Release(p)            ICOM_CALL (Release,p)
+// *** IContextMenu methods *** //
+#define IContextMenu_QueryContextMenu(p,a,b,c,d,e)     ICOM_CALL5(QueryContextMenu,p,a,b,c,d,e)
+#define IContextMenu_InvokeCommand(p,a)                ICOM_CALL1(InvokeCommand,p,a)
+#define IContextMenu_GetCommandString(p,a,b,c,d,e)     ICOM_CALL5(GetCommandString,p,a,b,c,d,e)
+#define IContextMenu_HandleMenuMsg(p,a,b,c)            ICOM_CALL3(HandleMenuMsg,p,a,b,c)
+#endif
+
 /*****************************************************************************
  * structures for shell clipboard formats
  */
