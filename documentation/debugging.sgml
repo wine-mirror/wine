@@ -242,7 +242,7 @@ HANDLE32 WINAPI YourFunc(LPCSTR s)
 	  and then to run wine like that:
 	</para>
 	<screen>
-	<prompt>$</prompt> <userinput>wine --debugmsg +relay,+snoop setup.exe &>/tmp/debug_pipe</userinput>
+	<prompt>$</prompt> <userinput>WINEDEBUG=+relay,+snoop wine setup.exe &>/tmp/debug_pipe</userinput>
 	</screen>
 
 	<para>
