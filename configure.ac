@@ -1305,6 +1305,7 @@ dlls/shdocvw/Makefile
 dlls/shell32/Makefile
 dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
+dlls/snmpapi/Makefile
 dlls/sti/Makefile
 dlls/tapi32/Makefile
 dlls/ttydrv/Makefile

@@ -69,6 +69,7 @@ SUBDIRS = \
 	shell32 \
 	shfolder \
 	shlwapi \
+	snmpapi \
 	sti \
 	tapi32 \
 	ttydrv \
@@ -194,6 +195,7 @@ all: \
 	shell32.dll$(DLLEXT) \
 	shfolder.dll$(DLLEXT) \
 	shlwapi.dll$(DLLEXT) \
+	snmpapi.dll$(DLLEXT) \
 	sound.dll$(DLLEXT) \
 	sti.dll$(DLLEXT) \
 	storage.dll$(DLLEXT) \
@@ -433,6 +435,9 @@ shfolder.dll$(DLLEXT): shfolder/shfolder.dll$(DLLEXT)
 
 shlwapi.dll$(DLLEXT): shlwapi/shlwapi.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) shlwapi/shlwapi.dll$(DLLEXT) $@
+
+snmpapi.dll$(DLLEXT): snmpapi/snmpapi.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) snmpapi/snmpapi.dll$(DLLEXT) $@
 
 sti.dll$(DLLEXT): sti/sti.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) sti/sti.dll$(DLLEXT) $@
@@ -707,6 +712,9 @@ shfolder/shfolder.dll$(DLLEXT): dummy shell32.dll$(DLLEXT)
 shlwapi/shlwapi.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) user32.dll$(DLLEXT) \
   gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd shlwapi && $(MAKE) shlwapi.dll$(DLLEXT)
+
+snmpapi/snmpapi.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
+	@cd snmpapi && $(MAKE) snmpapi.dll$(DLLEXT)
 
 sti/sti.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd sti && $(MAKE) sti.dll$(DLLEXT)
