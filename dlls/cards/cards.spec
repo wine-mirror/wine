@@ -1,0 +1,5 @@
+@ stdcall cdtInit(ptr ptr)
+@ stdcall cdtDraw(long long long long long long)
+@ stdcall cdtDrawExt(long long long long long long long long)
+@ stdcall cdtAnimate(long long long long long)
+@ stdcall cdtTerm()

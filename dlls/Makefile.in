@@ -22,6 +22,7 @@ BASEDIRS = \
 	avifil32 \
 	cabinet \
 	capi2032 \
+	cards \
 	cfgmgr32 \
 	comcat \
 	comctl32 \
@@ -233,6 +234,7 @@ SYMLINKS_SO = \
 	avifil32.dll.so \
 	cabinet.dll.so \
 	capi2032.dll.so \
+	cards.dll.so \
 	cfgmgr32.dll.so \
 	comcat.dll.so \
 	comctl32.dll.so \
@@ -398,6 +400,9 @@ cabinet.dll.so: cabinet/cabinet.dll.so
 
 capi2032.dll.so: capi2032/capi2032.dll.so
 	$(RM) $@ && $(LN_S) capi2032/capi2032.dll.so $@
+
+cards.dll.so: cards/cards.dll.so
+	$(RM) $@ && $(LN_S) cards/cards.dll.so $@
 
 cfgmgr32.dll.so: cfgmgr32/cfgmgr32.dll.so
 	$(RM) $@ && $(LN_S) cfgmgr32/cfgmgr32.dll.so $@
@@ -909,6 +914,7 @@ IMPORT_LIBS = \
 	libavifil32 \
 	libcabinet \
 	libcapi2032 \
+	libcards \
 	libcfgmgr32 \
 	libcomcat \
 	libcomctl32 \
@@ -1056,6 +1062,11 @@ libcapi2032.def: capi2032/capi2032.spec.def
 	$(RM) $@ && $(LN_S) capi2032/capi2032.spec.def $@
 libcapi2032.a: capi2032/capi2032.spec.def
 	$(DLLTOOL) -k -l $@ -d capi2032/capi2032.spec.def
+
+libcards.def: cards/cards.spec.def
+	$(RM) $@ && $(LN_S) cards/cards.spec.def $@
+libcards.a: cards/cards.spec.def
+	$(DLLTOOL) -k -l $@ -d cards/cards.spec.def
 
 libcfgmgr32.def: cfgmgr32/cfgmgr32.spec.def
 	$(RM) $@ && $(LN_S) cfgmgr32/cfgmgr32.spec.def $@
@@ -1603,6 +1614,7 @@ avicap32/avicap32.spec.def: $(WINEBUILD)
 avifil32/avifil32.spec.def: $(WINEBUILD)
 cabinet/cabinet.spec.def: $(WINEBUILD)
 capi2032/capi2032.spec.def: $(WINEBUILD)
+cards/cards.spec.def: $(WINEBUILD)
 cfgmgr32/cfgmgr32.spec.def: $(WINEBUILD)
 comcat/comcat.spec.def: $(WINEBUILD)
 comctl32/comctl32.spec.def: $(WINEBUILD)
@@ -1723,6 +1735,7 @@ avicap32/avicap32.dll.so: avicap32
 avifil32/avifil32.dll.so: avifil32
 cabinet/cabinet.dll.so: cabinet
 capi2032/capi2032.dll.so: capi2032
+cards/cards.dll.so: cards
 cfgmgr32/cfgmgr32.dll.so: cfgmgr32
 comcat/comcat.dll.so: comcat
 comctl32/comctl32.dll.so: comctl32
