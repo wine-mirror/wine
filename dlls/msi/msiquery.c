@@ -38,30 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-#if 0
-typedef struct tagMSIQUERY
-{
-    MSIOBJECTHDR hdr;
-    MSIVIEW *view;
-    UINT row;
-    MSIDATABASE *db;
-} MSIQUERY;
-#endif
-
-UINT WINAPI MsiDatabaseIsTablePersistentA(
-              MSIHANDLE hDatabase, LPSTR szTableName)
-{
-    FIXME("%lx %s\n", hDatabase, debugstr_a(szTableName));
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-UINT WINAPI MsiDatabaseIsTablePersistentW(
-              MSIHANDLE hDatabase, LPWSTR szTableName)
-{
-    FIXME("%lx %s\n", hDatabase, debugstr_w(szTableName));
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
 void MSI_CloseView( MSIOBJECTHDR *arg )
 {
     MSIQUERY *query = (MSIQUERY*) arg;
@@ -358,7 +334,10 @@ UINT WINAPI MsiViewExecute(MSIHANDLE hView, MSIHANDLE hRec)
         }
     }
 
+    msiobj_lock( &rec->hdr );
     ret = MSI_ViewExecute( query, rec );
+    msiobj_unlock( &rec->hdr );
+
 out:
     if( query )
         msiobj_release( &query->hdr );
@@ -484,5 +463,19 @@ UINT WINAPI MsiViewModify(MSIHANDLE hView, MSIMODIFY eModifyMode, MSIHANDLE
 hRecord)
 {
     FIXME("%ld %x %ld\n",hView, eModifyMode, hRecord);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiDatabaseIsTablePersistentA(
+              MSIHANDLE hDatabase, LPSTR szTableName)
+{
+    FIXME("%lx %s\n", hDatabase, debugstr_a(szTableName));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiDatabaseIsTablePersistentW(
+              MSIHANDLE hDatabase, LPWSTR szTableName)
+{
+    FIXME("%lx %s\n", hDatabase, debugstr_w(szTableName));
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
