@@ -284,6 +284,7 @@ void SYSDEPS_ExitThread( int status )
     info.stack_size = meminfo.RegionSize + ((char *)teb->stack_top - (char *)meminfo.AllocationBase);
     info.status     = status;
 
+    SIGNAL_Block();
     SIGNAL_Reset();
 
     VirtualFree( teb->stack_base, 0, MEM_RELEASE | MEM_SYSTEM );
@@ -304,6 +305,7 @@ void SYSDEPS_ExitThread( int status )
  */
 void SYSDEPS_AbortThread( int status )
 {
+    SIGNAL_Block();
     SIGNAL_Reset();
     close( NtCurrentTeb()->wait_fd[0] );
     close( NtCurrentTeb()->wait_fd[1] );

@@ -76,8 +76,6 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
-static sigset_t all_sigs;
-
 extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 
 /***********************************************************************
@@ -189,16 +187,6 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
     return EXCEPTION_FLT_INVALID_OPERATION;  /* generic error */
 }
 
-
-/***********************************************************************
- *           SIGNAL_Unblock
- *
- * Unblock signals. Called from EXC_RtlRaiseException.
- */
-void SIGNAL_Unblock( void )
-{
-    sigprocmask( SIG_UNBLOCK, &all_sigs, NULL );
-}
 
 /**********************************************************************
  *		segv_handler
@@ -404,6 +392,17 @@ static HANDLER_DEF(abrt_handler)
 
 
 /**********************************************************************
+ *		term_handler
+ *
+ * Handler for SIGTERM.
+ */
+static HANDLER_DEF(term_handler)
+{
+    SYSDEPS_AbortThread(0);
+}
+
+
+/**********************************************************************
  *		usr1_handler
  *
  * Handler for SIGUSR1, used to signal a thread that it got suspended.
@@ -474,6 +473,7 @@ BOOL SIGNAL_Init(void)
     if (set_handler( SIGSEGV, have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
     if (set_handler( SIGILL,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
     if (set_handler( SIGABRT, have_sigaltstack, (void (*)())abrt_handler ) == -1) goto error;
+    if (set_handler( SIGTERM, have_sigaltstack, (void (*)())term_handler ) == -1) goto error;
     if (set_handler( SIGUSR1, have_sigaltstack, (void (*)())usr1_handler ) == -1) goto error;
 #ifdef SIGBUS
     if (set_handler( SIGBUS,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
@@ -491,13 +491,14 @@ BOOL SIGNAL_Init(void)
 
 
 /**********************************************************************
- *		SIGNAL_Reset
+ *		SIGNAL_Block
+ *
+ * Block the async signals.
  */
-void SIGNAL_Reset(void)
+void SIGNAL_Block(void)
 {
     sigset_t block_set;
 
-    /* block the async signals */
     sigemptyset( &block_set );
     sigaddset( &block_set, SIGALRM );
     sigaddset( &block_set, SIGIO );
@@ -505,12 +506,36 @@ void SIGNAL_Reset(void)
     sigaddset( &block_set, SIGUSR1 );
     sigaddset( &block_set, SIGUSR2 );
     sigprocmask( SIG_BLOCK, &block_set, NULL );
+}
 
-    /* restore default handlers */
+
+/***********************************************************************
+ *           SIGNAL_Unblock
+ *
+ * Unblock signals. Called from EXC_RtlRaiseException.
+ */
+void SIGNAL_Unblock(void)
+{
+    sigset_t all_sigs;
+
+    sigfillset( &all_sigs );
+    sigprocmask( SIG_UNBLOCK, &all_sigs, NULL );
+}
+
+
+/**********************************************************************
+ *		SIGNAL_Reset
+ *
+ * Restore the default handlers.
+ */
+void SIGNAL_Reset(void)
+{
     signal( SIGINT, SIG_DFL );
     signal( SIGFPE, SIG_DFL );
     signal( SIGSEGV, SIG_DFL );
     signal( SIGILL, SIG_DFL );
+    signal( SIGABRT, SIG_DFL );
+    signal( SIGTERM, SIG_DFL );
 #ifdef SIGBUS
     signal( SIGBUS, SIG_DFL );
 #endif
@@ -518,6 +543,7 @@ void SIGNAL_Reset(void)
     signal( SIGTRAP, SIG_DFL );
 #endif
 }
+
 
 /**********************************************************************
  *              __wine_enter_vm86   (NTDLL.@)

@@ -54,8 +54,6 @@ typedef struct
 # error You must define GET_IP for this CPU
 #endif
 
-extern void SIGNAL_Unblock(void);
-
 void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME, LPVOID,
                            PEXCEPTION_RECORD, DWORD, PCONTEXT );
