@@ -442,8 +442,7 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
     if(len == 0xFFFFFFFF) return 0;
     if(len) return len;
-    /* Temporary workaround a broken behaviour of the 16-bit loader */
-    len = 0; /* VERSION_GetFileVersionInfo_16(filename, handle, 0, NULL); */
+    len = VERSION_GetFileVersionInfo_16(filename, handle, 0, NULL);
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
     if(len == 0xFFFFFFFF) return 0;
     if(len) return len;
@@ -512,8 +511,7 @@ BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
     if(len == 0xFFFFFFFF) return FALSE;
     if(len)
 	goto DO_CONVERT;
-    /* Temporary workaround a broken behaviour of the 16-bit loader */
-    len = 0; /* VERSION_GetFileVersionInfo_16(filename, &handle, datasize, data); */
+    len = VERSION_GetFileVersionInfo_16(filename, &handle, datasize, data);
     /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
     if(len == 0xFFFFFFFF) return FALSE;
     if(len)
@@ -715,4 +713,3 @@ DWORD WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
 
     return TRUE;
 }
-
