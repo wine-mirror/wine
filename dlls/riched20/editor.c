@@ -399,6 +399,7 @@ void ME_RTFReadHook(RTF_Info *info) {
           if (info->formatStackTop < maxCharFormatStack) {
             info->formatStack[info->formatStackTop].cbSize = sizeof(info->formatStack[0]);
             memcpy(&info->formatStack[info->formatStackTop], &info->style->fmt, sizeof(CHARFORMAT2W));
+            info->codePageStack[info->formatStackTop] = info->codePage;
           }
           info->formatStackTop++;
           break;
@@ -411,6 +412,7 @@ void ME_RTFReadHook(RTF_Info *info) {
           s = ME_ApplyStyle(info->style, &info->formatStack[info->formatStackTop]);
           ME_ReleaseStyle(info->style);
           info->style = s;
+          info->codePage = info->codePageStack[info->formatStackTop];
           break;
         }
       }

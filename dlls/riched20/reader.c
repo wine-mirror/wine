@@ -67,871 +67,12 @@ static void	LookupInit (void);
 static void	Lookup (RTF_Info *, char *);
 static int	Hash (char*);
 
-static void	CharSetInit (RTF_Info *);
-static void	ReadCharSetMaps (RTF_Info *);
 static void	RTFOutputUnicodeString( RTF_Info *info, WCHAR *str, int len );
 
+static void	CharAttr(RTF_Info *info);
+static void	CharSet(RTF_Info *info);
+static void	DocAttr(RTF_Info *info);
 
-/*
- RTF ANSI character set (\ansi) general map
- These are taken from the ISO-Latin-1 (ISO-8859-1) encodings, with
- a few additions
-
- Field 1 is the standard character name which the character value in
- field 2 maps onto.  (It doesn't mean "to produce the character in field 1,
- use the value in field 2.)
-
- The character value may be given either as a single character (which will be
- converted to the ASCII value of the character), or in numeric format, either
- in decimal or 0xyy as hex yy.  Single or double quotes may be used to quote
- characters.*/
-
-int ansi_gen[] =
-{
-  rtfSC_formula 	 ,0x06,
-  rtfSC_nobrkhyphen	 ,0x1e,
-  rtfSC_opthyphen	 ,0x1f,
-  rtfSC_space		 ,' ',
-  rtfSC_exclam  	 ,'!',
-  rtfSC_quotedbl	 ,'"',
-  rtfSC_numbersign	 ,'#',
-  rtfSC_dollar  	 ,'$',
-  rtfSC_percent 	 ,'%',
-  rtfSC_ampersand	 ,'&',
-  rtfSC_quoteright	 ,'\'',
-  rtfSC_parenleft	 ,'(',
-  rtfSC_parenright	 ,')',
-  rtfSC_asterisk	 ,'*',
-  rtfSC_plus		 ,'+',
-  rtfSC_comma		 ,',',
-  rtfSC_hyphen  	 ,'-',
-  rtfSC_period  	 ,'.',
-  rtfSC_slash		 ,'/',
-  rtfSC_zero		 ,'0',
-  rtfSC_one		 ,'1',
-  rtfSC_two		 ,'2',
-  rtfSC_three		 ,'3',
-  rtfSC_four		 ,'4',
-  rtfSC_five		 ,'5',
-  rtfSC_six		 ,'6',
-  rtfSC_seven		 ,'7',
-  rtfSC_eight		 ,'8',
-  rtfSC_nine		 ,'9',
-  rtfSC_colon		 ,':',
-  rtfSC_semicolon	 ,';',
-  rtfSC_less		 ,'<',
-  rtfSC_equal		 ,'=',
-  rtfSC_greater 	 ,'>',
-  rtfSC_question	 ,'?',
-  rtfSC_at		 ,'@',
-  rtfSC_A		 ,'A',
-  rtfSC_B		 ,'B',
-  rtfSC_C		 ,'C',
-  rtfSC_D		 ,'D',
-  rtfSC_E		 ,'E',
-  rtfSC_F		 ,'F',
-  rtfSC_G		 ,'G',
-  rtfSC_H		 ,'H',
-  rtfSC_I		 ,'I',
-  rtfSC_J		 ,'J',
-  rtfSC_K		 ,'K',
-  rtfSC_L		 ,'L',
-  rtfSC_M		 ,'M',
-  rtfSC_N		 ,'N',
-  rtfSC_O		 ,'O',
-  rtfSC_P		 ,'P',
-  rtfSC_Q		 ,'Q',
-  rtfSC_R		 ,'R',
-  rtfSC_S		 ,'S',
-  rtfSC_T		 ,'T',
-  rtfSC_U		 ,'U',
-  rtfSC_V		 ,'V',
-  rtfSC_W		 ,'W',
-  rtfSC_X		 ,'X',
-  rtfSC_Y		 ,'Y',
-  rtfSC_Z		 ,'Z',
-  rtfSC_bracketleft	 ,'[',
-  rtfSC_backslash	 ,'\\',
-  rtfSC_bracketright	 ,']',
-  rtfSC_asciicircum	 ,'^',
-  rtfSC_underscore	 ,'_',
-  rtfSC_quoteleft	 ,'`',
-  rtfSC_a		 ,'a',
-  rtfSC_b		 ,'b',
-  rtfSC_c		 ,'c',
-  rtfSC_d		 ,'d',
-  rtfSC_e		 ,'e',
-  rtfSC_f		 ,'f',
-  rtfSC_g		 ,'g',
-  rtfSC_h		 ,'h',
-  rtfSC_i		 ,'i',
-  rtfSC_j		 ,'j',
-  rtfSC_k		 ,'k',
-  rtfSC_l		 ,'l',
-  rtfSC_m		 ,'m',
-  rtfSC_n		 ,'n',
-  rtfSC_o		 ,'o',
-  rtfSC_p		 ,'p',
-  rtfSC_q		 ,'q',
-  rtfSC_r		 ,'r',
-  rtfSC_s		 ,'s',
-  rtfSC_t		 ,'t',
-  rtfSC_u		 ,'u',
-  rtfSC_v		 ,'v',
-  rtfSC_w		 ,'w',
-  rtfSC_x		 ,'x',
-  rtfSC_y		 ,'y',
-  rtfSC_z		 ,'z',
-  rtfSC_braceleft	 ,'{',
-  rtfSC_bar		 ,'|',
-  rtfSC_braceright	 ,'}',
-  rtfSC_asciitilde	 ,'~',
-  rtfSC_nobrkspace	 ,0xa0,
-  rtfSC_exclamdown	 ,0xa1,
-  rtfSC_cent		 ,0xa2,
-  rtfSC_sterling	 ,0xa3,
-  rtfSC_currency	 ,0xa4,
-  rtfSC_yen		 ,0xa5,
-  rtfSC_brokenbar	 ,0xa6,
-  rtfSC_section 	 ,0xa7,
-  rtfSC_dieresis	 ,0xa8,
-  rtfSC_copyright	 ,0xa9,
-  rtfSC_ordfeminine	 ,0xaa,
-  rtfSC_guillemotleft	 ,0xab,
-  rtfSC_logicalnot	 ,0xac,
-  rtfSC_opthyphen	 ,0xad,
-  rtfSC_registered	 ,0xae,
-  rtfSC_macron  	 ,0xaf,
-  rtfSC_degree  	 ,0xb0,
-  rtfSC_plusminus	 ,0xb1,
-  rtfSC_twosuperior	 ,0xb2,
-  rtfSC_threesuperior	 ,0xb3,
-  rtfSC_acute		 ,0xb4,
-  rtfSC_mu		 ,0xb5,
-  rtfSC_paragraph	 ,0xb6,
-  rtfSC_periodcentered   ,0xb7,
-  rtfSC_cedilla 	 ,0xb8,
-  rtfSC_onesuperior	 ,0xb9,
-  rtfSC_ordmasculine	 ,0xba,
-  rtfSC_guillemotright   ,0xbb,
-  rtfSC_onequarter	 ,0xbc,
-  rtfSC_onehalf 	 ,0xbd,
-  rtfSC_threequarters	 ,0xbe,
-  rtfSC_questiondown	 ,0xbf,
-  rtfSC_Agrave  	 ,0xc0,
-  rtfSC_Aacute  	 ,0xc1,
-  rtfSC_Acircumflex	 ,0xc2,
-  rtfSC_Atilde  	 ,0xc3,
-  rtfSC_Adieresis	 ,0xc4,
-  rtfSC_Aring		 ,0xc5,
-  rtfSC_AE		 ,0xc6,
-  rtfSC_Ccedilla	 ,0xc7,
-  rtfSC_Egrave  	 ,0xc8,
-  rtfSC_Eacute  	 ,0xc9,
-  rtfSC_Ecircumflex	 ,0xca,
-  rtfSC_Edieresis	 ,0xcb,
-  rtfSC_Igrave  	 ,0xcc,
-  rtfSC_Iacute  	 ,0xcd,
-  rtfSC_Icircumflex	 ,0xce,
-  rtfSC_Idieresis	 ,0xcf,
-  rtfSC_Eth		 ,0xd0,
-  rtfSC_Ntilde  	 ,0xd1,
-  rtfSC_Ograve  	 ,0xd2,
-  rtfSC_Oacute  	 ,0xd3,
-  rtfSC_Ocircumflex	 ,0xd4,
-  rtfSC_Otilde  	 ,0xd5,
-  rtfSC_Odieresis	 ,0xd6,
-  rtfSC_multiply	 ,0xd7,
-  rtfSC_Oslash  	 ,0xd8,
-  rtfSC_Ugrave  	 ,0xd9,
-  rtfSC_Uacute  	 ,0xda,
-  rtfSC_Ucircumflex	 ,0xdb,
-  rtfSC_Udieresis	 ,0xdc,
-  rtfSC_Yacute  	 ,0xdd,
-  rtfSC_Thorn		 ,0xde,
-  rtfSC_germandbls	 ,0xdf,
-  rtfSC_agrave  	 ,0xe0,
-  rtfSC_aacute  	 ,0xe1,
-  rtfSC_acircumflex	 ,0xe2,
-  rtfSC_atilde  	 ,0xe3,
-  rtfSC_adieresis	 ,0xe4,
-  rtfSC_aring		 ,0xe5,
-  rtfSC_ae		 ,0xe6,
-  rtfSC_ccedilla	 ,0xe7,
-  rtfSC_egrave  	 ,0xe8,
-  rtfSC_eacute  	 ,0xe9,
-  rtfSC_ecircumflex	 ,0xea,
-  rtfSC_edieresis	 ,0xeb,
-  rtfSC_igrave  	 ,0xec,
-  rtfSC_iacute  	 ,0xed,
-  rtfSC_icircumflex	 ,0xee,
-  rtfSC_idieresis	 ,0xef,
-  rtfSC_eth		 ,0xf0,
-  rtfSC_ntilde  	 ,0xf1,
-  rtfSC_ograve  	 ,0xf2,
-  rtfSC_oacute  	 ,0xf3,
-  rtfSC_ocircumflex	 ,0xf4,
-  rtfSC_otilde  	 ,0xf5,
-  rtfSC_odieresis	 ,0xf6,
-  rtfSC_divide  	 ,0xf7,
-  rtfSC_oslash  	 ,0xf8,
-  rtfSC_ugrave  	 ,0xf9,
-  rtfSC_uacute  	 ,0xfa,
-  rtfSC_ucircumflex	 ,0xfb,
-  rtfSC_udieresis	 ,0xfc,
-  rtfSC_yacute  	 ,0xfd,
-  rtfSC_thorn		 ,0xfe,
-  rtfSC_ydieresis	 ,0xff
-};
-
-/*
- * RTF ANSI character set (\ansi) Symbol font map
- *
- * Field 1 is the standard character name which the character value in
- * field 2 maps onto.  (It doesn't mean "to produce the character in field 1,
- * use the value in field 2.)
- *
- * The character value may be given either as a single character (which will be
- * converted to the ASCII value of the character), or in numeric format, either
- * in decimal or 0xyy as hex yy.  Single or double quotes may be used to quote
- * characters.
- *
- */
-
-int ansi_sym[] =
-{
-  rtfSC_formula        ,0x06,
-  rtfSC_nobrkhyphen    ,0x1e,
-  rtfSC_opthyphen      ,0x1f,
-  rtfSC_space	       ,' ',
-  rtfSC_exclam         ,'!',
-  rtfSC_universal      ,'"',
-  rtfSC_mathnumbersign ,'#',
-  rtfSC_existential    ,'$',
-  rtfSC_percent        ,'%',
-  rtfSC_ampersand      ,'&',
-  rtfSC_suchthat       ,'\\',
-  rtfSC_parenleft      ,'(',
-  rtfSC_parenright     ,')',
-  rtfSC_mathasterisk   ,'*',
-  rtfSC_mathplus       ,'+',
-  rtfSC_comma	       ,',',
-  rtfSC_mathminus      ,'-',
-  rtfSC_period         ,'.',
-  rtfSC_slash	       ,'/',
-  rtfSC_zero	       ,'0',
-  rtfSC_one	       ,'1',
-  rtfSC_two	       ,'2',
-  rtfSC_three	       ,'3',
-  rtfSC_four	       ,'4',
-  rtfSC_five	       ,'5',
-  rtfSC_six	       ,'6',
-  rtfSC_seven	       ,'7',
-  rtfSC_eight	       ,'8',
-  rtfSC_nine	       ,'9',
-  rtfSC_colon	       ,':',
-  rtfSC_semicolon      ,';',
-  rtfSC_less	       ,'<',
-  rtfSC_mathequal      ,'=',
-  rtfSC_greater        ,'>',
-  rtfSC_question       ,'?',
-  rtfSC_congruent      ,'@',
-  rtfSC_Alpha	       ,'A',
-  rtfSC_Beta	       ,'B',
-  rtfSC_Chi	       ,'C',
-  rtfSC_Delta	       ,'D',
-  rtfSC_Epsilon        ,'E',
-  rtfSC_Phi	       ,'F',
-  rtfSC_Gamma	       ,'G',
-  rtfSC_Eta	       ,'H',
-  rtfSC_Iota	       ,'I',
-  rtfSC_Kappa	       ,'K',
-  rtfSC_Lambda         ,'L',
-  rtfSC_Mu	       ,'M',
-  rtfSC_Nu	       ,'N',
-  rtfSC_Omicron        ,'O',
-  rtfSC_Pi	       ,'P',
-  rtfSC_Theta	       ,'Q',
-  rtfSC_Rho	       ,'R',
-  rtfSC_Sigma	       ,'S',
-  rtfSC_Tau	       ,'T',
-  rtfSC_Upsilon        ,'U',
-  rtfSC_varsigma       ,'V',
-  rtfSC_Omega	       ,'W',
-  rtfSC_Xi	       ,'X',
-  rtfSC_Psi	       ,'Y',
-  rtfSC_Zeta	       ,'Z',
-  rtfSC_bracketleft    ,'[',
-  rtfSC_backslash      ,'\\',
-  rtfSC_bracketright   ,']',
-  rtfSC_asciicircum    ,'^',
-  rtfSC_underscore     ,'_',
-  rtfSC_quoteleft      ,'`',
-  rtfSC_alpha	       ,'a',
-  rtfSC_beta	       ,'b',
-  rtfSC_chi	       ,'c',
-  rtfSC_delta	       ,'d',
-  rtfSC_epsilon        ,'e',
-  rtfSC_phi	       ,'f',
-  rtfSC_gamma	       ,'g',
-  rtfSC_eta	       ,'h',
-  rtfSC_iota	       ,'i',
-  rtfSC_kappa	       ,'k',
-  rtfSC_lambda         ,'l',
-  rtfSC_mu	       ,'m',
-  rtfSC_nu	       ,'n',
-  rtfSC_omicron        ,'o',
-  rtfSC_pi	       ,'p',
-  rtfSC_theta	       ,'q',
-  rtfSC_rho	       ,'r',
-  rtfSC_sigma	       ,'s',
-  rtfSC_tau	       ,'t',
-  rtfSC_upsilon        ,'u',
-  rtfSC_omega	       ,'w',
-  rtfSC_xi	       ,'x',
-  rtfSC_psi	       ,'y',
-  rtfSC_zeta	       ,'z',
-  rtfSC_braceleft      ,'{',
-  rtfSC_bar	       ,'|',
-  rtfSC_braceright     ,'}',
-  rtfSC_mathtilde      ,'~'
-};
-
-/*
- *  Output sequence map for rtf2text
- *
- *  Field 1 is the standard character name.  Field 2 is the output sequence
- *  to produce for that character.
- *
- *  The output sequence is simply a string of characters.  If it contains
- *  whitespace, it may be quoted.  If it contains quotes, it may be quoted
- *  with a different quote character.
- *
- *  characters in ASCII range (32-127
- */
-
-const char *text_map[] = {
-  "space"	      ," ",
-  "exclam"	      ,"!",
-  "quotedbl"	      ,"\"",
-  "numbersign"        ,"#",
-  "dollar"	      ,"$",
-  "percent"	      ,"%",
-  "ampersand"	      ,"&",
-  "quoteright"        ,"'",
-  "parenleft"	      ,"(",
-  "parenright"        ,")",
-  "asterisk"	      ,"*",
-  "plus"	      ,"+",
-  "comma"	      ,",",
-  "hyphen"	      ,"-",
-  "period"	      ,".",
-  "slash"	      ,"/",
-  "zero"	      ,"0",
-  "one" 	      ,"1",
-  "two" 	      ,"2",
-  "three"	      ,"3",
-  "four"	      ,"4",
-  "five"	      ,"5",
-  "six" 	      ,"6",
-  "seven"	      ,"7",
-  "eight"	      ,"8",
-  "nine"	      ,"9",
-  "colon"	      ,":",
-  "semicolon"	      ,";",
-  "less"	      ,"<",
-  "equal"	      ,"=",
-  "greater"	      ,">",
-  "question"	      ,"?",
-  "at"  	      ,"@",
-  "A"		      ,"A",
-  "B"		      ,"B",
-  "C"		      ,"C",
-  "D"		      ,"D",
-  "E"		      ,"E",
-  "F"		      ,"F",
-  "G"		      ,"G",
-  "H"		      ,"H",
-  "I"		      ,"I",
-  "J"		      ,"J",
-  "K"		      ,"K",
-  "L"		      ,"L",
-  "M"		      ,"M",
-  "N"		      ,"N",
-  "O"		      ,"O",
-  "P"		      ,"P",
-  "Q"		      ,"Q",
-  "R"		      ,"R",
-  "S"		      ,"S",
-  "T"		      ,"T",
-  "U"		      ,"U",
-  "V"		      ,"V",
-  "W"		      ,"W",
-  "X"		      ,"X",
-  "Y"		      ,"Y",
-  "Z"		      ,"Z",
-  "bracketleft"       ,"[",
-  "backslash"	      ,"\\",
-  "bracketright"      ,"]",
-  "asciicircum"       ,"^",
-  "underscore"        ,"_",
-  "quoteleft"	      ,"`",
-  "a"		      ,"a",
-  "b"		      ,"b",
-  "c"		      ,"c",
-  "d"		      ,"d",
-  "e"		      ,"e",
-  "f"		      ,"f",
-  "g"		      ,"g",
-  "h"		      ,"h",
-  "i"		      ,"i",
-  "j"		      ,"j",
-  "k"		      ,"k",
-  "l"		      ,"l",
-  "m"		      ,"m",
-  "n"		      ,"n",
-  "o"		      ,"o",
-  "p"		      ,"p",
-  "q"		      ,"q",
-  "r"		      ,"r",
-  "s"		      ,"s",
-  "t"		      ,"t",
-  "u"		      ,"u",
-  "v"		      ,"v",
-  "w"		      ,"w",
-  "x"		      ,"x",
-  "y"		      ,"y",
-  "z"		      ,"z",
-  "braceleft"	      ,"{",
-  "bar" 	      ,"|",
-  "braceright"        ,"}",
-  "asciitilde"        ,"~",
-  "AE"  	      ,"AE",
-  "OE"  	      ,"OE",
-  "acute"	      ,"'",
-  "ae"  	      ,"ae",
-  "angleleft"	      ,"<",
-  "angleright"        ,">",
-  "arrowboth"	      ,"<->",
-  "arrowdblboth"      ,"<=>",
-  "arrowdblleft"      ,"<=",
-  "arrowdblright"     ,"=>",
-  "arrowleft"	      ,"<-",
-  "arrowright"        ,"->",
-  "bullet"	      ,"o",
-  "cent"	      ,"cent",
-  "circumflex"        ,"^",
-  "copyright"	      ,"(c)",
-  "copyrightsans"     ,"(c)",
-  "degree"	      ,"deg.",
-  "divide"	      ,"/",
-  "dotlessi"	      ,"i",
-  "ellipsis"	      ,"...",
-  "emdash"	      ,"--",
-  "endash"	      ,"-",
-  "fi"  	      ,"fi",
-  "fl"  	      ,"fl",
-  "fraction"	      ,"/",
-  "germandbls"        ,"ss",
-  "grave"	      ,"`",
-  "greaterequal"      ,">=",
-  "guillemotleft"     ,"<<",
-  "guillemotright"    ,">>",
-  "guilsinglleft"     ,"<",
-  "guilsinglright"    ,">",
-  "lessequal"	      ,"<=",
-  "logicalnot"        ,"~",
-  "mathasterisk"      ,"*",
-  "mathequal"	      ,"=",
-  "mathminus"	      ,"-",
-  "mathnumbersign"    ,"#",
-  "mathplus"	      ,"+",
-  "mathtilde"	      ,"~",
-  "minus"	      ,"-",
-  "mu"  	      ,"u",
-  "multiply"	      ,"x",
-  "nobrkhyphen"       ,"-",
-  "nobrkspace"        ," ",
-  "notequal"	      ,"!=",
-  "oe"  	      ,"oe",
-  "onehalf"	      ,"1/2",
-  "onequarter"        ,"1/4",
-  "periodcentered"    ,".",
-  "plusminus"	      ,"+/-",
-  "quotedblbase"      ,",,",
-  "quotedblleft"      ,"\"",
-  "quotedblright"     ,"\"",
-  "quotesinglbase"    ,",",
-  "registered"        ,"reg.",
-  "registersans"      ,"reg.",
-  "threequarters"     ,"3/4",
-  "tilde"	      ,"~",
-  "trademark"	      ,"(TM)",
-  "trademarksans"     ,"(TM)"
-};
-
-/*
- * This array is used to map standard character names onto their numeric codes.
- * The position of the name within the array is the code.
- * stdcharnames.h is generated in the ../h directory.
- */
-
-const char *stdCharName[] =
-{
-	"nothing",
-	"space",
-	"exclam",
-	"quotedbl",
-	"numbersign",
-	"dollar",
-	"percent",
-	"ampersand",
-	"quoteright",
-	"parenleft",
-	"parenright",
-	"asterisk",
-	"plus",
-	"comma",
-	"hyphen",
-	"period",
-	"slash",
-	"zero",
-	"one",
-	"two",
-	"three",
-	"four",
-	"five",
-	"six",
-	"seven",
-	"eight",
-	"nine",
-	"colon",
-	"semicolon",
-	"less",
-	"equal",
-	"greater",
-	"question",
-	"at",
-	"A",
-	"B",
-	"C",
-	"D",
-	"E",
-	"F",
-	"G",
-	"H",
-	"I",
-	"J",
-	"K",
-	"L",
-	"M",
-	"N",
-	"O",
-	"P",
-	"Q",
-	"R",
-	"S",
-	"T",
-	"U",
-	"V",
-	"W",
-	"X",
-	"Y",
-	"Z",
-	"bracketleft",
-	"backslash",
-	"bracketright",
-	"asciicircum",
-	"underscore",
-	"quoteleft",
-	"a",
-	"b",
-	"c",
-	"d",
-	"e",
-	"f",
-	"g",
-	"h",
-	"i",
-	"j",
-	"k",
-	"l",
-	"m",
-	"n",
-	"o",
-	"p",
-	"q",
-	"r",
-	"s",
-	"t",
-	"u",
-	"v",
-	"w",
-	"x",
-	"y",
-	"z",
-	"braceleft",
-	"bar",
-	"braceright",
-	"asciitilde",
-	"exclamdown",
-	"cent",
-	"sterling",
-	"fraction",
-	"yen",
-	"florin",
-	"section",
-	"currency",
-	"quotedblleft",
-	"guillemotleft",
-	"guilsinglleft",
-	"guilsinglright",
-	"fi",
-	"fl",
-	"endash",
-	"dagger",
-	"daggerdbl",
-	"periodcentered",
-	"paragraph",
-	"bullet",
-	"quotesinglbase",
-	"quotedblbase",
-	"quotedblright",
-	"guillemotright",
-	"ellipsis",
-	"perthousand",
-	"questiondown",
-	"grave",
-	"acute",
-	"circumflex",
-	"tilde",
-	"macron",
-	"breve",
-	"dotaccent",
-	"dieresis",
-	"ring",
-	"cedilla",
-	"hungarumlaut",
-	"ogonek",
-	"caron",
-	"emdash",
-	"AE",
-	"ordfeminine",
-	"Lslash",
-	"Oslash",
-	"OE",
-	"ordmasculine",
-	"ae",
-	"dotlessi",
-	"lslash",
-	"oslash",
-	"oe",
-	"germandbls",
-	"Aacute",
-	"Acircumflex",
-	"Adieresis",
-	"Agrave",
-	"Aring",
-	"Atilde",
-	"Ccedilla",
-	"Eacute",
-	"Ecircumflex",
-	"Edieresis",
-	"Egrave",
-	"Eth",
-	"Iacute",
-	"Icircumflex",
-	"Idieresis",
-	"Igrave",
-	"Ntilde",
-	"Oacute",
-	"Ocircumflex",
-	"Odieresis",
-	"Ograve",
-	"Otilde",
-	"Scaron",
-	"Thorn",
-	"Uacute",
-	"Ucircumflex",
-	"Udieresis",
-	"Ugrave",
-	"Yacute",
-	"Ydieresis",
-	"aacute",
-	"acircumflex",
-	"adieresis",
-	"agrave",
-	"aring",
-	"atilde",
-	"brokenbar",
-	"ccedilla",
-	"copyright",
-	"degree",
-	"divide",
-	"eacute",
-	"ecircumflex",
-	"edieresis",
-	"egrave",
-	"eth",
-	"iacute",
-	"icircumflex",
-	"idieresis",
-	"igrave",
-	"logicalnot",
-	"minus",
-	"multiply",
-	"ntilde",
-	"oacute",
-	"ocircumflex",
-	"odieresis",
-	"ograve",
-	"onehalf",
-	"onequarter",
-	"onesuperior",
-	"otilde",
-	"plusminus",
-	"registered",
-	"thorn",
-	"threequarters",
-	"threesuperior",
-	"trademark",
-	"twosuperior",
-	"uacute",
-	"ucircumflex",
-	"udieresis",
-	"ugrave",
-	"yacute",
-	"ydieresis",
-	"Alpha",
-	"Beta",
-	"Chi",
-	"Delta",
-	"Epsilon",
-	"Phi",
-	"Gamma",
-	"Eta",
-	"Iota",
-	"Kappa",
-	"Lambda",
-	"Mu",
-	"Nu",
-	"Omicron",
-	"Pi",
-	"Theta",
-	"Rho",
-	"Sigma",
-	"Tau",
-	"Upsilon",
-	"varUpsilon",
-	"Omega",
-	"Xi",
-	"Psi",
-	"Zeta",
-	"alpha",
-	"beta",
-	"chi",
-	"delta",
-	"epsilon",
-	"phi",
-	"varphi",
-	"gamma",
-	"eta",
-	"iota",
-	"kappa",
-	"lambda",
-	"mu",
-	"nu",
-	"omicron",
-	"pi",
-	"varpi",
-	"theta",
-	"vartheta",
-	"rho",
-	"sigma",
-	"varsigma",
-	"tau",
-	"upsilon",
-	"omega",
-	"xi",
-	"psi",
-	"zeta",
-	"nobrkspace",
-	"nobrkhyphen",
-	"lessequal",
-	"greaterequal",
-	"infinity",
-	"integral",
-	"notequal",
-	"radical",
-	"radicalex",
-	"approxequal",
-	"apple",
-	"partialdiff",
-	"opthyphen",
-	"formula",
-	"lozenge",
-	"universal",
-	"existential",
-	"suchthat",
-	"congruent",
-	"therefore",
-	"perpendicular",
-	"minute",
-	"club",
-	"diamond",
-	"heart",
-	"spade",
-	"arrowboth",
-	"arrowleft",
-	"arrowup",
-	"arrowright",
-	"arrowdown",
-	"second",
-	"proportional",
-	"equivalence",
-	"arrowvertex",
-	"arrowhorizex",
-	"carriagereturn",
-	"aleph",
-	"Ifraktur",
-	"Rfraktur",
-	"weierstrass",
-	"circlemultiply",
-	"circleplus",
-	"emptyset",
-	"intersection",
-	"union",
-	"propersuperset",
-	"reflexsuperset",
-	"notsubset",
-	"propersubset",
-	"reflexsubset",
-	"element",
-	"notelement",
-	"angle",
-	"gradient",
-	"product",
-	"logicaland",
-	"logicalor",
-	"arrowdblboth",
-	"arrowdblleft",
-	"arrowdblup",
-	"arrowdblright",
-	"arrowdbldown",
-	"angleleft",
-	"registersans",
-	"copyrightsans",
-	"trademarksans",
-	"angleright",
-	"mathplus",
-	"mathminus",
-	"mathasterisk",
-	"mathnumbersign",
-	"dotmath",
-	"mathequal",
-	"mathtilde",
-        (char *) NULL
-};
 
 int _RTFGetChar(RTF_Info *info)
 {
@@ -1052,6 +193,10 @@ void RTFInit(RTF_Info *info)
 		info->styleList = sp;
 	}
 
+        info->ansiCodePage = 1252; /* Latin-1 */
+        info->unicodeLength = 1; /* \uc1 is the default */
+        info->codePage = info->ansiCodePage;
+
 	info->rtfClass = -1;
 	info->pushedClass = -1;
 	info->pushedChar = EOF;
@@ -1060,9 +205,6 @@ void RTFInit(RTF_Info *info)
 	info->rtfLinePos = 0;
 	info->prevChar = EOF;
 	info->bumpLine = 0;
-
-	CharSetInit (info);
-	info->csTop = 0;
 }
 
 /*
@@ -1296,13 +438,11 @@ int RTFPeekToken(RTF_Info *info)
 
 static void _RTFGetToken(RTF_Info *info)
 {
-	RTFFont	*fp;
-
 	TRACE("\n");
 
         if (info->rtfFormat == SF_TEXT) {
             info->rtfMajor = GetChar (info);
-            info->rtfMinor = rtfSC_nothing;
+            info->rtfMinor = 0;
             info->rtfParam = rtfNoParam;
             info->rtfTextBuf[info->rtfTextLen = 0] = '\0';
             if (info->rtfMajor == EOF)
@@ -1332,61 +472,76 @@ static void _RTFGetToken(RTF_Info *info)
 	 */
 
 	_RTFGetToken2 (info);
-	if (info->rtfClass == rtfText)	/* map RTF char to standard code */
-		info->rtfMinor = RTFMapChar (info, info->rtfMajor);
+}
 
-	/*
-	 * If auto-charset stuff is activated, see if anything needs doing,
-	 * like reading the charset maps or switching between them.
-	 */
 
-	if (info->autoCharSetFlags == 0)
-		return;
+static WCHAR
+RTFANSIToUnicode(RTF_Info *info, char c)
+{
+        WCHAR buffer[2] = { 0, 0 };
 
-	if ((info->autoCharSetFlags & rtfReadCharSet)
-		&& RTFCheckCM (info, rtfControl, rtfCharSet))
-	{
-		ReadCharSetMaps (info);
-	}
-	else if ((info->autoCharSetFlags & rtfSwitchCharSet)
-		&& RTFCheckCMM (info, rtfControl, rtfCharAttr, rtfFontNum))
-	{
-		if ((fp = RTFGetFont (info, info->rtfParam)) != (RTFFont *) NULL)
+        /* TODO: Probably caching codepage conversion tables would be faster... */
+        MultiByteToWideChar(info->codePage, 0, &c, 1, buffer, 2);
+        return buffer[0];
+}
+
+
+static int
+RTFCharSetToCodePage(RTF_Info *info, int charset)
+{
+        switch (charset)
+        {
+                case ANSI_CHARSET:
+                case DEFAULT_CHARSET:
+                        return 0;
+                case SYMBOL_CHARSET:
+                        return CP_SYMBOL;
+                case MAC_CHARSET:
+                        return CP_MACCP;
+                case SHIFTJIS_CHARSET:
+                        return 932;
+                case HANGEUL_CHARSET:
+                        return 949;
+                case JOHAB_CHARSET:
+                        return 1361;
+                case GB2312_CHARSET:
+                        return 936;
+                case CHINESEBIG5_CHARSET:
+                        return 950;
+                case GREEK_CHARSET:
+                        return 1253;
+                case TURKISH_CHARSET:
+                        return 1254;
+                case VIETNAMESE_CHARSET:
+                        return 1258;
+                case HEBREW_CHARSET:
+                        return 1255;
+                case ARABIC_CHARSET:
+                        return 1256;
+                case BALTIC_CHARSET:
+                        return 1257;
+                case RUSSIAN_CHARSET:
+                        return 1251;
+                case THAI_CHARSET:
+                        return 874;
+                case EASTEUROPE_CHARSET:
+                        return 1250;
+                case OEM_CHARSET:
+                        return CP_OEMCP;
+                default:
 		{
-			if (strncmp (fp->rtfFName, "Symbol", 6) == 0)
-				info->curCharSet = rtfCSSymbol;
+                        CHARSETINFO csi;
+                        DWORD n = (DWORD)charset;
+                        
+                        /* FIXME: TranslateCharsetInfo does not work as good as it
+                         * should, so let's use it only when all else fails */
+                        if (!TranslateCharsetInfo(&n, &csi, TCI_SRCCHARSET))
+				RTFMsg(info,"%s: unknown charset %u\n", __FUNCTION__, charset);
 			else
-				info->curCharSet = rtfCSGeneral;
-			RTFSetCharSet (info, info->curCharSet);
+                                return csi.ciACP;
 		}
 	}
-	else if ((info->autoCharSetFlags & rtfSwitchCharSet) && info->rtfClass == rtfGroup)
-	{
-		switch (info->rtfMajor)
-		{
-		case rtfBeginGroup:
-			if (info->csTop >= maxCSStack)
-				RTFPanic (info, "_RTFGetToken: stack overflow");
-			info->csStack[info->csTop++] = info->curCharSet;
-			break;
-		case rtfEndGroup:
-			/*
-			 * If stack top is 1 at this point, we are ending the
-			 * group started by the initial {, which ends the
-			 * RTF stream
-			 */
-			if (info->csTop <= 0)
-				RTFPanic (info,"_RTFGetToken: stack underflow");
-			else if (info->csTop == 1)
-				info->rtfClass = rtfEOF;
-			else
-			{
-				info->curCharSet = info->csStack[--info->csTop];
-				RTFSetCharSet (info, info->curCharSet);
-			}
-			break;
-		}
-	}
+        return 0;
 }
 
 
@@ -1448,6 +603,10 @@ static void _RTFGetToken2(RTF_Info *info)
 		else
 		{
 			info->rtfClass = rtfText;
+
+                        if (c & 0x80)
+                                info->rtfMajor = RTFANSIToUnicode(info, c);
+                        else
 			info->rtfMajor = c;
 		}
 		return;
@@ -1473,8 +632,7 @@ static void _RTFGetToken2(RTF_Info *info)
 			{
 				/* should do isxdigit check! */
 				info->rtfClass = rtfText;
-				info->rtfMajor = RTFCharToHex (c) * 16
-						+ RTFCharToHex (c2);
+				info->rtfMajor = RTFANSIToUnicode(info, RTFCharToHex (c) * 16 + RTFCharToHex (c2));
 				return;
 			}
 			/* early eof, whoops (class is rtfUnknown) */
@@ -1627,247 +785,6 @@ void RTFSetToken(RTF_Info *info, int class, int major, int minor, int param, con
 /* ---------------------------------------------------------------------- */
 
 /*
- * Routines to handle mapping of RTF character sets
- * onto standard characters.
- *
- * RTFStdCharCode(name)	given char name, produce numeric code
- * RTFStdCharName(code)	given char code, return name
- * RTFMapChar(c)	map input (RTF) char code to std code
- * RTFSetCharSet(id)	select given charset map
- * RTFGetCharSet()	get current charset map
- *
- * See ../h/README for more information about charset names and codes.
- */
-
-
-/*
- * Initialize charset stuff.
- */
-
-static void CharSetInit(RTF_Info *info)
-{
-	TRACE("\n");
-
-	info->autoCharSetFlags = (rtfReadCharSet | rtfSwitchCharSet);
-	RTFFree (info->genCharSetFile);
-	info->genCharSetFile = (char *) NULL;
-	info->haveGenCharSet = 0;
-	RTFFree (info->symCharSetFile);
-	info->symCharSetFile = (char *) NULL;
-	info->haveSymCharSet = 0;
-	info->curCharSet = rtfCSGeneral;
-	info->curCharCode = info->genCharCode;
-}
-
-
-/*
- * Specify the name of a file to be read when auto-charset-file reading is
- * done.
- */
-
-void RTFSetCharSetMap (RTF_Info *info, char *name, int csId)
-{
-	TRACE("\n");
-
-	if ((name = RTFStrSave (name)) == (char *) NULL)	/* make copy */
-		RTFPanic (info,"RTFSetCharSetMap: out of memory");
-	switch (csId)
-	{
-	case rtfCSGeneral:
-		RTFFree (info->genCharSetFile);	/* free any previous value */
-		info->genCharSetFile = name;
-		break;
-	case rtfCSSymbol:
-		RTFFree (info->symCharSetFile);	/* free any previous value */
-		info->symCharSetFile = name;
-		break;
-	}
-}
-
-
-/*
- * Do auto-charset-file reading.
- * will always use the ansi charset no mater what the value
- * of the rtfTextBuf is.
- *
- * TODO: add support for other charset in the future.
- *
- */
-
-static void ReadCharSetMaps(RTF_Info *info)
-{
-	char	buf[rtfBufSiz];
-
-	TRACE("\n");
-
-	if (info->genCharSetFile != (char *) NULL)
-		(void) strcpy (buf, info->genCharSetFile);
-	else
-		sprintf (buf, "%s-gen", &info->rtfTextBuf[1]);
-	if (RTFReadCharSetMap (info, rtfCSGeneral) == 0)
-		RTFPanic (info,"ReadCharSetMaps: Cannot read charset map %s", buf);
-	if (info->symCharSetFile != (char *) NULL)
-            (void) strcpy (buf, info->symCharSetFile);
-	else
-		sprintf (buf, "%s-sym", &info->rtfTextBuf[1]);
-	if (RTFReadCharSetMap (info, rtfCSSymbol) == 0)
-		RTFPanic (info,"ReadCharSetMaps: Cannot read charset map %s", buf);
-}
-
-
-
-/*
- * Convert a CharSetMap (character_name, character) into
- * this form : array[character_ident] = character;
- */
-
-int RTFReadCharSetMap(RTF_Info *info, int csId)
-{
-        int	*stdCodeArray;
-        unsigned int i;
-
-	TRACE("\n");
-
-	switch (csId)
-	{
-	default:
-		return (0);	/* illegal charset id */
-	case rtfCSGeneral:
-
-		info->haveGenCharSet = 1;
-		stdCodeArray = info->genCharCode;
-		for (i = 0; i < charSetSize; i++)
-		{
-		    stdCodeArray[i] = rtfSC_nothing;
-		}
-
-		for ( i = 0 ; i< sizeof(ansi_gen)/(sizeof(int));i+=2)
-		{
-		    stdCodeArray[ ansi_gen[i+1] ] = ansi_gen[i];
-		}
-		break;
-
-	case rtfCSSymbol:
-
-		info->haveSymCharSet = 1;
-		stdCodeArray = info->symCharCode;
-		for (i = 0; i < charSetSize; i++)
-		{
-		    stdCodeArray[i] = rtfSC_nothing;
-		}
-
-		for ( i = 0 ; i< sizeof(ansi_sym)/(sizeof(int));i+=2)
-		{
-		    stdCodeArray[ ansi_sym[i+1] ] = ansi_sym[i];
-		}
-		break;
-	}
-
-	return (1);
-}
-
-
-/*
- * Given a standard character name (a string), find its code (a number).
- * Return -1 if name is unknown.
- */
-
-int RTFStdCharCode(RTF_Info *info, const char *name)
-{
-	int	i;
-
-	TRACE("\n");
-
-	for (i = 0; i < rtfSC_MaxChar; i++)
-	{
-		if (strcmp (name, stdCharName[i]) == 0)
-			return (i);
-	}
-	return (-1);
-}
-
-
-/*
- * Given a standard character code (a number), find its name (a string).
- * Return NULL if code is unknown.
- */
-
-const char *RTFStdCharName(RTF_Info *info, int code)
-{
-	if (code < 0 || code >= rtfSC_MaxChar)
-		return ((char *) NULL);
-	return (stdCharName[code]);
-}
-
-
-/*
- * Given an RTF input character code, find standard character code.
- * The translator should read the appropriate charset maps when it finds a
- * charset control.  However, the file might not contain one.  In this
- * case, no map will be available.  When the first attempt is made to
- * map a character under these circumstances, RTFMapChar() assumes ANSI
- * and reads the map as necessary.
- */
-
-int RTFMapChar(RTF_Info *info, int c)
-{
-	TRACE("\n");
-
-	switch (info->curCharSet)
-	{
-	case rtfCSGeneral:
-		if (!info->haveGenCharSet)
-		{
-			if (RTFReadCharSetMap (info, rtfCSGeneral) == 0)
-				RTFPanic (info,"RTFMapChar: cannot read ansi-gen");
-		}
-		break;
-	case rtfCSSymbol:
-		if (!info->haveSymCharSet)
-		{
-			if (RTFReadCharSetMap (info, rtfCSSymbol) == 0)
-				RTFPanic (info,"RTFMapChar: cannot read ansi-sym");
-		}
-		break;
-	}
-	if (c < 0 || c >= charSetSize)
-		return (rtfSC_nothing);
-	return (info->curCharCode[c]);
-}
-
-
-/*
- * Set the current character set.  If csId is illegal, uses general charset.
- */
-
-void RTFSetCharSet(RTF_Info *info, int csId)
-{
-	TRACE("\n");
-
-	switch (csId)
-	{
-	default:		/* use general if csId unknown */
-	case rtfCSGeneral:
-		info->curCharCode = info->genCharCode;
-		info->curCharSet = csId;
-		break;
-	case rtfCSSymbol:
-		info->curCharCode = info->symCharCode;
-		info->curCharSet = csId;
-		break;
-	}
-}
-
-
-int RTFGetCharSet(RTF_Info *info)
-{
-	return (info->curCharSet);
-}
-
-
-/* ---------------------------------------------------------------------- */
-
-/*
  * Special destination readers.  They gobble the destination so the
  * writer doesn't have to deal with them.  That's wrong for any
  * translator that wants to process any of these itself.  In that
@@ -1970,6 +887,8 @@ static void ReadFontTbl(RTF_Info *info)
 						break;	/* ignore unknown? */
 					case rtfFontCharSet:
 						fp->rtfFCharSet = info->rtfParam;
+                                                if (!fp->rtfFCodePage)
+                                                        fp->rtfFCodePage = RTFCharSetToCodePage(info, info->rtfParam);
 						break;
 					case rtfFontPitch:
 						fp->rtfFPitch = info->rtfParam;
@@ -2786,6 +1705,9 @@ static RTFKey	rtfKey[] =
 	{ rtfDocAttr,	rtfRTLDoc,		"rtldoc",	0 },
 	{ rtfDocAttr,	rtfLTRDoc,		"ltrdoc",	0 },
 
+        { rtfDocAttr,	rtfAnsiCodePage,	"ansicpg",	0 },
+        { rtfDocAttr,	rtfUnicodeLength,	"uc",		0 },
+
 	/*
 	 * Style attributes
 	 */
@@ -3284,7 +2206,7 @@ typedef struct tagRTFHashTableEntry {
   RTFKey **value;
 } RTFHashTableEntry;
 
-static RTFHashTableEntry rtfHashTable[RTF_KEY_COUNT];
+static RTFHashTableEntry rtfHashTable[RTF_KEY_COUNT * 2];
 
 
 /*
@@ -3298,12 +2220,12 @@ static void LookupInit(void)
 
 	if (inited == 0)
 	{
-                memset(rtfHashTable, 0, RTF_KEY_COUNT * sizeof(*rtfHashTable));
+                memset(rtfHashTable, 0, RTF_KEY_COUNT * 2 * sizeof(*rtfHashTable));
 		for (rp = rtfKey; rp->rtfKStr != (char *) NULL; rp++) {
                         int index;
                         
 			rp->rtfKHash = Hash ((char*)rp->rtfKStr);
-                        index = rp->rtfKHash % RTF_KEY_COUNT;
+                        index = rp->rtfKHash % (RTF_KEY_COUNT * 2);
                         if (!rtfHashTable[index].count)
                                 rtfHashTable[index].value = (void *)RTFAlloc(sizeof(RTFKey *));
                         else
@@ -3330,7 +2252,7 @@ static void Lookup(RTF_Info *info, char *s)
 	TRACE("\n");
 	++s;			/* skip over the leading \ character */
 	hash = Hash (s);
-        entry = &rtfHashTable[hash % RTF_KEY_COUNT];
+        entry = &rtfHashTable[hash % (RTF_KEY_COUNT * 2)];
 	for (i = 0; i < entry->count; i++)
 	{
                 rp = entry->value[i];
@@ -3460,51 +2382,6 @@ int RTFHexToChar(int i)
 /* ---------------------------------------------------------------------- */
 
 /*
- * RTFReadOutputMap() -- Read output translation map
- */
-
-/*
- * Read in an array describing the relation between the standard character set
- * and an RTF translator's corresponding output sequences.  Each line consists
- * of a standard character name and the output sequence for that character.
- *
- * outMap is an array of strings into which the sequences should be placed.
- * It should be declared like this in the calling program:
- *
- *	char *outMap[rtfSC_MaxChar];
- *
- * reinit should be non-zero if outMap should be initialized
- * zero otherwise.
- *
- */
-
-int RTFReadOutputMap(RTF_Info *info, char *outMap[], int reinit)
-{
-	unsigned int  i;
-	int  stdCode;
-
-	if (reinit)
-	{
-		for (i = 0; i < rtfSC_MaxChar; i++)
-		{
-			outMap[i] = (char *) NULL;
-		}
-	}
-
-	for (i=0 ;i< sizeof(text_map)/sizeof(char*); i+=2)
-	{
-		const char *name = text_map[i];
-		const char *seq  = text_map[i+1];
-		stdCode = RTFStdCharCode( info, name );
-		outMap[stdCode] = (char*)seq;
-	}
-
-	return (1);
-}
-
-/* ---------------------------------------------------------------------- */
-
-/*
  * Open a library file.
  */
 
@@ -3598,9 +2475,7 @@ static void	TextClass (RTF_Info *info);
 static void	ControlClass (RTF_Info *info);
 static void	Destination (RTF_Info *info);
 static void	SpecialChar (RTF_Info *info);
-static void	PutStdChar (RTF_Info *info, int stdCode);
 static void	PutLitChar (RTF_Info *info, int c);
-static void	PutLitStr (RTF_Info *info, char	*s);
 
 /*
  * Initialize the writer.
@@ -3609,7 +2484,6 @@ static void	PutLitStr (RTF_Info *info, char	*s);
 void
 WriterInit (RTF_Info *info )
 {
-	RTFReadOutputMap (info, info->outMap,1);
 }
 
 
@@ -3635,40 +2509,6 @@ TextClass (RTF_Info *info)
 	PutLitChar (info, info->rtfMajor);
 }
 
-/*
- * Write out a character.  rtfMajor contains the input character, rtfMinor
- * contains the corresponding standard character code.
- *
- * If the input character isn't in the charset map, try to print some
- * representation of it.
- * 
- * I'm not removing it, because it may be helpful if someone else decides
- * to rewrite the character handler in a i18n-friendly way 
- */
-#if 0
-static void
-TextClass_orig (RTF_Info *info)
-{
-	char	buf[rtfBufSiz];
-
-	TRACE("\n");
-
-	if (info->rtfFormat == SF_TEXT)
-	        PutLitChar (info, info->rtfMajor);
-	else if (info->rtfMinor != rtfSC_nothing)
-		PutStdChar (info, info->rtfMinor);
-	else
-	{
-		if (info->rtfMajor < 256)	/* in ASCII range */
-			PutLitChar(info, info->rtfMajor);
-		else {
-			sprintf (buf, "[[\\'%02x]]", info->rtfMajor);
-			PutLitStr (info, buf);
-		}
-	}
-}
-#endif
-
 
 static void
 ControlClass (RTF_Info *info)
@@ -3677,15 +2517,56 @@ ControlClass (RTF_Info *info)
 
 	switch (info->rtfMajor)
 	{
+        case rtfCharAttr:
+                CharAttr(info);
+                break;
+        case rtfCharSet:
+                CharSet(info);
+                break;
 	case rtfDestination:
 		Destination (info);
 		break;
+        case rtfDocAttr:
+                DocAttr(info);
+                break;
 	case rtfSpecialChar:
 		SpecialChar (info);
 		break;
 	}
 }
 
+
+static void
+CharAttr(RTF_Info *info)
+{
+        switch (info->rtfMinor)
+        {
+        case rtfFontNum:
+                info->codePage = RTFGetFont(info, info->rtfParam)->rtfFCodePage;
+                break;
+        }
+}
+
+
+static void
+CharSet(RTF_Info *info)
+{
+        switch (info->rtfMinor)
+        {
+        case rtfAnsiCharSet:
+                info->ansiCodePage = 1252; /* Latin-1 */
+                break;
+        case rtfMacCharSet:
+                info->ansiCodePage = 10000; /* MacRoman */
+                break;
+        case rtfPcCharSet:
+                info->ansiCodePage = 437;
+                break;
+        case rtfPcaCharSet:
+                info->ansiCodePage = 850;
+                break;
+        }
+}
 
 /*
  * This function notices destinations that aren't explicitly handled
@@ -3701,13 +2582,23 @@ Destination (RTF_Info *info)
 		RTFSkipGroup (info);    
 }
 
-/*
- * The reason these use the rtfSC_xxx thingies instead of just writing
- * out ' ', '-', '"', etc., is so that the mapping for these characters
- * can be controlled by the text-map file.
- */
 
-void SpecialChar (RTF_Info *info)
+static void
+DocAttr(RTF_Info *info)
+{
+        switch (info->rtfMinor)
+        {
+        case rtfAnsiCodePage:
+                info->ansiCodePage = info->rtfParam;
+                break;
+        case rtfUnicodeLength:
+                info->unicodeLength = info->rtfParam;
+                break;
+        }
+}
+
+
+static void SpecialChar (RTF_Info *info)
 {
 
 	TRACE("\n");
@@ -3726,16 +2617,23 @@ void SpecialChar (RTF_Info *info)
 	case rtfUnicode:
 	{
 		WCHAR buf[2];
+                int i;
+                
 		buf[0] = info->rtfParam;
 		buf[1] = 0;
 		RTFFlushOutputBuffer(info);
 		RTFOutputUnicodeString(info, buf, 1);
 		
+                /* After \u we must skip number of character tokens set by \ucN */
+                for (i = 0; i < info->unicodeLength; i++)
+                {
 		RTFGetToken(info);
-		if (info->rtfClass != rtfText && info->rtfMajor != '?')
+                        if (info->rtfClass != rtfText)
 		{
-			ERR("The character behind \\u is not a question mark, but (%d,%d,%d)\n",
+                                ERR("The token behind \\u is not text, but (%d,%d,%d)\n",
 				info->rtfClass, info->rtfMajor, info->rtfMinor);
+                                RTFUngetToken(info);
+                        }
 		}
 		break;
 	}
@@ -3747,99 +2645,50 @@ void SpecialChar (RTF_Info *info)
 		PutLitChar (info, '\n');
 		break;
 	case rtfCell:
-		PutStdChar (info, rtfSC_space);	/* make sure cells are separated */
+                PutLitChar (info, ' ');	/* make sure cells are separated */
 		break;
 	case rtfNoBrkSpace:
-		PutStdChar (info, rtfSC_nobrkspace);
+		PutLitChar (info, 0x00A0);
 		break;
 	case rtfTab:
 		PutLitChar (info, '\t');
 		break;
 	case rtfNoBrkHyphen:
-		PutStdChar (info, rtfSC_nobrkhyphen);
+		PutLitChar (info, 0x2011);
 		break;
 	case rtfBullet:
-		PutStdChar (info, rtfSC_bullet);
+		PutLitChar (info, 0x2022);
 		break;
 	case rtfEmDash:
-		PutStdChar (info, rtfSC_emdash);
+		PutLitChar (info, 0x2014);
 		break;
 	case rtfEnDash:
-		PutStdChar (info, rtfSC_endash);
+		PutLitChar (info, 0x2013);
 		break;
 	case rtfLQuote:
-		PutStdChar (info, rtfSC_quoteleft);
+		PutLitChar (info, 0x2018);
 		break;
 	case rtfRQuote:
-		PutStdChar (info, rtfSC_quoteright);
+		PutLitChar (info, 0x2019);
 		break;
 	case rtfLDblQuote:
-		PutStdChar (info, rtfSC_quotedblleft);
+		PutLitChar (info, 0x201C);
 		break;
 	case rtfRDblQuote:
-		PutStdChar (info, rtfSC_quotedblright);
+		PutLitChar (info, 0x201D);
 		break;
 	}
 }
 
 
-/*
- * Eventually this should keep track of the destination of the
- * current state and only write text when in the initial state.
- *
- * If the output sequence is unspecified in the output map, write
- * the character's standard name instead.  This makes map deficiencies
- * obvious and provides incentive to fix it. :-)
- */
-
-void PutStdChar (RTF_Info *info, int stdCode)
-{
-
-	char	*oStr = (char *) NULL;
-	char	buf[rtfBufSiz];
-
-/*	if (stdCode == rtfSC_nothing)
-		RTFPanic ("Unknown character code, logic error\n");
-*/
-	TRACE("\n");
-
-	oStr = info->outMap[stdCode];
-	if (oStr == (char *) NULL)	/* no output sequence in map */
-	{
-		sprintf (buf, "[[%s]]", RTFStdCharName (info, stdCode));
-		oStr = buf;
-	}
-	PutLitStr (info, oStr);
-}
-
-void PutLitChar (RTF_Info *info, int c)
+static void PutLitChar (RTF_Info *info, int c)
 {
 	if( info->dwOutputCount >= ( sizeof info->OutputBuffer - 1 ) )
 		RTFFlushOutputBuffer( info );
 	info->OutputBuffer[info->dwOutputCount++] = c;
 }
 
-void RTFOutputANSIStringOrig( RTF_Info *info, char *str, int len )
-{
-	assert(str[len] == '\0');
-	if (len) {
-		SendMessageA( info->hwndEdit, EM_REPLACESEL, FALSE, (LPARAM) str);
-	}
-}
-
-void RTFOutputANSIString( RTF_Info *info, char *str, int len )
-{
-	assert(str[len] == '\0');
-	if (len) {
-		WCHAR *buf = ALLOC_N_OBJ(WCHAR, len);
-
-		len = MultiByteToWideChar(CP_ACP, 0, str, len, buf, len);
-		ME_InsertTextFromCursor( info->editor, 0, buf, len, info->style );	  
-		FREE_OBJ(buf);
-	}
-}
-
-void RTFOutputUnicodeString( RTF_Info *info, WCHAR *str, int len )
+static void RTFOutputUnicodeString( RTF_Info *info, WCHAR *str, int len )
 {
 	assert(str[len] == '\0');
 	if (len) {
@@ -3847,24 +2696,10 @@ void RTFOutputUnicodeString( RTF_Info *info, WCHAR *str, int len )
 	}
 }
 
+
 void RTFFlushOutputBuffer( RTF_Info *info )
 {
 	info->OutputBuffer[info->dwOutputCount] = 0;
-	RTFOutputANSIString(info, info->OutputBuffer, info->dwOutputCount);
+	RTFOutputUnicodeString(info, info->OutputBuffer, info->dwOutputCount);
 	info->dwOutputCount = 0;
-}
-
-static void PutLitStr (RTF_Info *info, char *str )
-{
-	int len = strlen( str );
-
-	if( ( len + info->dwOutputCount + 1 ) > sizeof info->OutputBuffer )
-		RTFFlushOutputBuffer( info );
-	if( ( len + 1 ) >= sizeof info->OutputBuffer )
-	{
-                RTFOutputANSIString(info, str, len);
-		return;
-	}
-	strcpy( &info->OutputBuffer[info->dwOutputCount], str );
-	info->dwOutputCount += len;
 }
