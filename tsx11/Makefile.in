@@ -27,7 +27,7 @@ all: libwine_tsx11.$(LIBEXT)
 @MAKE_RULES@
 
 libwine_tsx11.so.$(SOVERSION): $(OBJS)
-	$(LDSHARED) $(OBJS) -o $@
+	$(LDSHARED) $(OBJS) -o $@ $(EXTRALIBS)
 
 libwine_tsx11.so: libwine_tsx11.so.$(SOVERSION)
 	$(RM) $@ && $(LN_S) libwine_tsx11.so.$(SOVERSION) $@
