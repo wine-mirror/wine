@@ -229,19 +229,26 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 	p += strlen(p) + 1;
     }
 
-    info->data = (LPVOID)(*p ? p + 1 : NULL);  /* FIXME: should be a segptr */
+    if (*p)
+    {
+        /* Additional CTLDATA available for this control. */
+        info->data = SEGPTR_ALLOC(*p);
+        memcpy( info->data, p + 1, *p );
+    }
+    else info->data = NULL;
+
     p += *p + 1;
 
     if(int_id)
       TRACE("   %s %04x %d, %d, %d, %d, %d, %08lx, %08lx\n", 
 		      info->className,  LOWORD(info->windowName),
 		      info->id, info->x, info->y, info->cx, info->cy,
-		      info->style, (DWORD)info->data);
+		      info->style, (DWORD)SEGPTR_GET(info->data) );
     else
       TRACE("   %s '%s' %d, %d, %d, %d, %d, %08lx, %08lx\n", 
 		      info->className,  info->windowName,
 		      info->id, info->x, info->y, info->cx, info->cy,
-		      info->style, (DWORD)info->data);
+		      info->style, (DWORD)SEGPTR_GET(info->data) );
 
     return p;
 }
@@ -397,7 +404,9 @@ static BOOL DIALOG_CreateControls( WND *pWnd, LPCSTR template,
                                          MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
                                          MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
                                          pWnd->hwndSelf, (HMENU16)info.id,
-                                         instance, info.data );
+                                         instance, (LPVOID)SEGPTR_GET(info.data) );
+
+	    if (info.data) SEGPTR_FREE(info.data);
         }
         else
         {
