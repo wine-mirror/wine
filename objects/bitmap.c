@@ -20,50 +20,8 @@
 #include "monitor.h"
 #include "wine/winuser16.h"
 
-/**********************************************************************/
-
 BITMAP_DRIVER *BITMAP_Driver = NULL;
 
-/***********************************************************************
- *           BITMAP_GetPadding
- *
- * Return number of bytes to pad a scanline of 16-bit aligned Windows DDB data.
- */
-INT BITMAP_GetPadding( int bmWidth, int bpp )
-{
-    INT pad;
-
-    switch (bpp) 
-    {
-    case 1:
-        pad = ((bmWidth-1) & 8) ? 0 : 1;
-	break;
-
-    case 8:
-	pad = (2 - (bmWidth & 1)) & 1;
-	break;
-
-    case 24:
-	pad = (bmWidth*3) & 1;
-	break;
-
-    case 32:
-    case 16:
-    case 15:
-	pad = 0; /* we have 16bit alignment already */
-	break;
-
-    case 4:
-	if (!(bmWidth & 3)) pad = 0;
-	else pad = ((4 - (bmWidth & 3)) + 1) / 2;
-	break;
-
-    default:
-	WARN(bitmap,"Unknown depth %d, please report.\n", bpp );
-        return -1;
-    }
-    return pad;
-}
 
 /***********************************************************************
  *           BITMAP_GetWidthBytes
@@ -613,10 +571,15 @@ HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
       pix = *((LPBYTE)info+DIB_BitmapInfoSize(info, DIB_RGB_COLORS));
       DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
       if ((hdc = GetDC(0)) != 0) {
-	if (loadflags & LR_CREATEDIBSECTION)
+        char *bits = (char *)info + size;
+	if (loadflags & LR_CREATEDIBSECTION) {
+          DIBSECTION dib;
 	  hbitmap = CreateDIBSection(hdc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
+          GetObjectA(hbitmap, sizeof(DIBSECTION), &dib);
+          SetDIBits(hdc, hbitmap, 0, dib.dsBm.bmHeight, bits, info, 
+                    DIB_RGB_COLORS);
+        }
         else {
-          char *bits = (char *)info + size;;
           hbitmap = CreateDIBitmap( hdc, &fix_info->bmiHeader, CBM_INIT,
                                       bits, fix_info, DIB_RGB_COLORS );
 	}
