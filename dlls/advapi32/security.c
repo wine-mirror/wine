@@ -1323,6 +1323,9 @@ GetFileSecurityW( LPCWSTR lpFileName,
     DWORD		iLocNow;
     SECURITY_DESCRIPTOR_RELATIVE *pSDRelative;
 
+    if(INVALID_FILE_ATTRIBUTES == GetFileAttributesW(lpFileName))
+        return FALSE;
+
     FIXME("(%s) : returns fake SECURITY_DESCRIPTOR\n", debugstr_w(lpFileName) );
 
     nNeeded = sizeof(SECURITY_DESCRIPTOR_RELATIVE);

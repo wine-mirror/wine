@@ -425,8 +425,9 @@ static void test_FileSecurity(void)
 
     SetLastError(NO_ERROR);
     result = pGetFileSecurityA( directory,OWNER_SECURITY_INFORMATION,buffer,0x40,&outSize);
-    todo_wine ok(!result, "GetFileSecurityA should fail for not existing directories\n"); 
-    todo_wine ok( GetLastError() == ERROR_FILE_NOT_FOUND, "ERROR_FILE_NOT_FOUND expected\n");
+    ok(!result, "GetFileSecurityA should fail for not existing directories/files\n"); 
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, 
+        "last error ERROR_FILE_NOT_FOUND expected, got %ld\n", GetLastError());
 }
 
 START_TEST(security)
