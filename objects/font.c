@@ -1154,7 +1154,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
         else break;
     }
     size->cx = extent;
-    *lpnFit = nFit;
+    if(lpnFit) *lpnFit = nFit;
     ret = TRUE;
 
     TRACE("(%08x %s %d) returning %d %ld x %ld\n",
