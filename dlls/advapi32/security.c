@@ -1334,3 +1334,19 @@ DWORD WINAPI GetSecurityInfoExW(
   FIXME("stub!\n");
   return ERROR_BAD_PROVIDER; 
 }
+
+/******************************************************************************
+ * BuildTrusteeWithSidA [ADVAPI32.@]
+ */
+VOID WINAPI BuildTrusteeWithSidA(PTRUSTEEA pTrustee, PSID pSid)
+{
+    FIXME("%p %p\n", pTrustee, pSid);
+}
+
+/******************************************************************************
+ * BuildTrusteeWithSidW [ADVAPI32.@]
+ */
+VOID WINAPI BuildTrusteeWithSidW(PTRUSTEEW pTrustee, PSID pSid)
+{
+    FIXME("%p %p\n", pTrustee, pSid);
+}

@@ -18,6 +18,8 @@
 @ stub AreAnyAccessesGranted
 @ stdcall BackupEventLogA (long str)
 @ stdcall BackupEventLogW (long wstr)
+@ stdcall BuildTrusteeWithSidA(ptr ptr)
+@ stdcall BuildTrusteeWithSidW(ptr ptr)
 @ stub ChangeServiceConfigA
 @ stub ChangeServiceConfigW
 @ stdcall ClearEventLogA (long str)
