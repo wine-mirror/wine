@@ -5,7 +5,10 @@ VPATH     = @srcdir@
 MODULE    = wine
 
 C_SRCS = \
+	$(TOPOBJDIR)/scheduler/pthread.c \
 	main.c
+
+EXTRASUBDIRS = $(TOPOBJDIR)/scheduler
 
 all: $(MODULE)
 
@@ -13,8 +16,8 @@ all: $(MODULE)
 
 LDEXECFLAGS = @LDEXECFLAGS@
 
-$(MODULE): $(OBJS) Makefile.in $(DLLDIR)/libntdll.dll.$(LIBEXT)
-	$(CC) -o $@ $(LDEXECFLAGS) $(OBJS) -L$(DLLDIR) -lntdll.dll $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LDFLAGS)
+$(MODULE): $(OBJS) Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS)
 
 install:: $(MODULE)
 	$(MKINSTALLDIRS) $(bindir)

@@ -7,7 +7,6 @@ MODULE    = ntdll.dll
 EXTRALIBS = $(LIBUNICODE) @LIBPTHREAD@
 
 C_SRCS = \
-	$(TOPOBJDIR)/scheduler/pthread.c \
 	cdrom.c \
 	critsection.c \
 	debugtools.c \
@@ -49,8 +48,6 @@ ASM_SRCS = relay32.s
 EXTRA_OBJS = $(ASM_SRCS:.s=.o)
 
 SUBDIRS = tests
-
-EXTRASUBDIRS = $(TOPOBJDIR)/scheduler
 
 @MAKE_DLL_RULES@
 
