@@ -601,9 +601,9 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   Window win;
   
   /* Only mess with the X focus if there's */
-  /* no desktop window and no window manager. */
+  /* no desktop window and if the window is not managed by the WM. */
   if ((X11DRV_WND_GetXRootWindow(wndPtr) != DefaultRootWindow(display))
-      || Options.managed) return;
+      || (wndPtr->flags & WIN_MANAGED)) return;
   
   if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
     {
