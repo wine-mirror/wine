@@ -1493,10 +1493,10 @@ DWORD       WINAPI SetFilePointer(HFILE,LONG,LPLONG,DWORD);
 BOOL        WINAPI SetFileSecurityA(LPCSTR,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
 BOOL        WINAPI SetFileSecurityW(LPCWSTR,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
 #define     SetFileSecurity WINELIB_NAME_AW(SetFileSecurity)
-BOOL      WINAPI SetFileTime(HFILE,const FILETIME*,const FILETIME*,
-                               const FILETIME*);
-BOOL      WINAPI SetHandleInformation(HANDLE,DWORD,DWORD);
-BOOL      WINAPI SetPriorityClass(HANDLE,DWORD);
+BOOL        WINAPI SetFileTime(HFILE,const FILETIME*,const FILETIME*,const FILETIME*);
+BOOL        WINAPI SetHandleInformation(HANDLE,DWORD,DWORD);
+BOOL        WINAPI SetLocalTime(const SYSTEMTIME*);
+BOOL        WINAPI SetPriorityClass(HANDLE,DWORD);
 BOOL        WINAPI SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR,BOOL,PACL,BOOL);
 BOOL        WINAPI SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR,PSID,BOOL);
 BOOL        WINAPI SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR,PSID,BOOL);
@@ -1766,9 +1766,6 @@ BOOL      WINAPI WriteProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR);
 LPSTR       WINAPI lstrcatA(LPSTR,LPCSTR);
 LPWSTR      WINAPI lstrcatW(LPWSTR,LPCWSTR);
 #define     lstrcat WINELIB_NAME_AW(lstrcat)
-LPSTR       WINAPI lstrcatnA(LPSTR,LPCSTR,INT);
-LPWSTR      WINAPI lstrcatnW(LPWSTR,LPCWSTR,INT);
-#define     lstrcatn WINELIB_NAME_AW(lstrcatn)
 LPSTR       WINAPI lstrcpyA(LPSTR,LPCSTR);
 LPWSTR      WINAPI lstrcpyW(LPWSTR,LPCWSTR);
 #define     lstrcpy WINELIB_NAME_AW(lstrcpy)

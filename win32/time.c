@@ -44,7 +44,7 @@ VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
  * FIXME: correct ? Is the timezone param of settimeofday() needed ?
  * I don't have any docu about SetLocal/SystemTime(), argl...
  */
-VOID WINAPI SetLocalTime(LPSYSTEMTIME systime)
+BOOL WINAPI SetLocalTime(const SYSTEMTIME *systime)
 {
     struct timeval tv;
     struct tm t;
