@@ -340,7 +340,8 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	IDirectSoundImpl* dsound = This->dsound;
 	HRESULT err = DS_OK;
-	int			i;
+	int i;
+	DWORD nSamplesPerSec; 
 	TRACE("(%p,%p)\n",This,wfex);
 
 	if (This->dsound->priolevel == DSSCL_NORMAL) {
@@ -370,6 +371,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 	/* **** */
 	RtlAcquireResourceExclusive(&(dsound->lock), TRUE);
 
+	nSamplesPerSec = dsound->wfx.nSamplesPerSec;
 	dsound->wfx.nSamplesPerSec = wfex->nSamplesPerSec;
 	dsound->wfx.nChannels = wfex->nChannels;
 	dsound->wfx.wBitsPerSample = wfex->wBitsPerSample;
@@ -425,7 +427,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 	}
 	DSOUND_RecalcPrimary(dsound);
 
-	if (dsound->wfx.nSamplesPerSec != wfex->nSamplesPerSec) {
+	if (nSamplesPerSec != dsound->wfx.nSamplesPerSec) {
 		IDirectSoundBufferImpl** dsb = dsound->buffers;
 		for (i = 0; i < dsound->nrofbuffers; i++, dsb++) {
 			/* **** */
