@@ -30,6 +30,23 @@
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif
+#ifdef HAVE_SYS_STATVFS_H
+# include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef STATFS_DEFINED_BY_SYS_VFS
+# include <sys/vfs.h>
+#else
+# ifdef STATFS_DEFINED_BY_SYS_MOUNT
+#  include <sys/mount.h>
+# else
+#  ifdef STATFS_DEFINED_BY_SYS_STATFS
+#   include <sys/statfs.h>
+#  endif
+# endif
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -923,6 +940,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
     return status;
 }
 
+
 /******************************************************************************
  *  NtQueryVolumeInformationFile		[NTDLL.@]
  *  ZwQueryVolumeInformationFile		[NTDLL.@]
@@ -930,105 +948,132 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
  * Get volume information for an open file handle.
  *
  * PARAMS
- *  FileHandle         [I] Handle returned from ZwOpenFile() or ZwCreateFile()
- *  IoStatusBlock      [O] Receives information about the operation on return
- *  FsInformation      [O] Destination for volume information
- *  Length             [I] Size of FsInformation
- *  FsInformationClass [I] Type of volume information to set
+ *  handle      [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  io          [O] Receives information about the operation on return
+ *  buffer      [O] Destination for volume information
+ *  length      [I] Size of FsInformation
+ *  info_class  [I] Type of volume information to set
  *
  * RETURNS
- *  Success: 0. IoStatusBlock and FsInformation are updated.
+ *  Success: 0. io and buffer are updated.
  *  Failure: An NTSTATUS error code describing the error.
  */
-NTSTATUS WINAPI NtQueryVolumeInformationFile (
-	IN HANDLE FileHandle,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	OUT PVOID FSInformation,
-	IN ULONG Length,
-	IN FS_INFORMATION_CLASS FSInformationClass)
+NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io,
+                                              PVOID buffer, ULONG length,
+                                              FS_INFORMATION_CLASS info_class )
 {
-	ULONG len = 0;
+    int fd;
 
-	FIXME("(%p %p %p 0x%08lx 0x%08x) stub!\n",
-	FileHandle, IoStatusBlock, FSInformation, Length, FSInformationClass);
+    if ((io->u.Status = wine_server_handle_to_fd( handle, GENERIC_READ,
+                                                  &fd, NULL, NULL )) != STATUS_SUCCESS)
+        return io->u.Status;
 
-	switch ( FSInformationClass )
-	{
-	  case FileFsVolumeInformation:
-	    len = sizeof( FILE_FS_VOLUME_INFORMATION );
-	    break;
-	  case FileFsLabelInformation:
-	    len = 0;
-	    break;
+    io->u.Status = STATUS_NOT_IMPLEMENTED;
+    io->Information = 0;
 
-	  case FileFsSizeInformation:
-	    len = sizeof( FILE_FS_SIZE_INFORMATION );
-	    break;
+    switch( info_class )
+    {
+    case FileFsVolumeInformation:
+        FIXME( "%p: volume info not supported\n", handle );
+        break;
+    case FileFsLabelInformation:
+        FIXME( "%p: label info not supported\n", handle );
+        break;
+    case FileFsSizeInformation:
+        if (length < sizeof(FILE_FS_SIZE_INFORMATION))
+            io->u.Status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            FILE_FS_SIZE_INFORMATION *info = buffer;
+            struct statvfs st;
 
-	  case FileFsDeviceInformation:
-	    len = sizeof( FILE_FS_DEVICE_INFORMATION );
-	    break;
-	  case FileFsAttributeInformation:
-	    len = sizeof( FILE_FS_ATTRIBUTE_INFORMATION );
-	    break;
+            if (fstatvfs( fd, &st ) < 0) io->u.Status = FILE_GetNtStatus();
+            else
+            {
+                info->TotalAllocationUnits.QuadPart = st.f_blocks;
+                info->AvailableAllocationUnits.QuadPart = st.f_bavail;
+                info->SectorsPerAllocationUnit = 1;
+                info->BytesPerSector = st.f_frsize;
+                io->Information = sizeof(*info);
+                io->u.Status = STATUS_SUCCESS;
+            }
+        }
+        break;
+    case FileFsDeviceInformation:
+        if (length < sizeof(FILE_FS_DEVICE_INFORMATION))
+            io->u.Status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            FILE_FS_DEVICE_INFORMATION *info = buffer;
 
-	  case FileFsControlInformation:
-	    len = 0;
-	    break;
+#if defined(linux) && defined(HAVE_FSTATFS)
+            struct stat st;
+            struct statfs stfs;
 
-	  case FileFsFullSizeInformation:
-	    len = 0;
-	    break;
-
-	  case FileFsObjectIdInformation:
-	    len = 0;
-	    break;
-
-	  case FileFsMaximumInformation:
-	    len = 0;
-	    break;
-	}
-
-	if (Length < len)
-	  return STATUS_BUFFER_TOO_SMALL;
-
-	switch ( FSInformationClass )
-	{
-	  case FileFsVolumeInformation:
-	    break;
-	  case FileFsLabelInformation:
-	    break;
-
-	  case FileFsSizeInformation:
-	    break;
-
-	  case FileFsDeviceInformation:
-	    if (FSInformation)
-	    {
-	      FILE_FS_DEVICE_INFORMATION * DeviceInfo = FSInformation;
-	      DeviceInfo->DeviceType = FILE_DEVICE_DISK;
-	      DeviceInfo->Characteristics = 0;
-	      break;
-	    };
-	  case FileFsAttributeInformation:
-	    break;
-
-	  case FileFsControlInformation:
-	    break;
-
-	  case FileFsFullSizeInformation:
-	    break;
-
-	  case FileFsObjectIdInformation:
-	    break;
-
-	  case FileFsMaximumInformation:
-	    break;
-	}
-	IoStatusBlock->u.Status = STATUS_SUCCESS;
-	IoStatusBlock->Information = len;
-	return STATUS_SUCCESS;
+            info->DeviceType = FILE_DEVICE_DISK;
+            info->Characteristics = 0;
+            if (fstatfs( fd, &stfs ) < 0) stfs.f_type = 0;
+            switch (stfs.f_type)
+            {
+            case 0x9660:      /* iso9660 */
+            case 0x15013346:  /* udf */
+                info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+                info->Characteristics = FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
+                break;
+            case 0x6969:  /* nfs */
+            case 0x517B:  /* smbfs */
+            case 0x564c:  /* ncpfs */
+                info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+                info->Characteristics = FILE_REMOTE_DEVICE;
+                break;
+            case 0x01021994:  /* tmpfs */
+            case 0x28cd3d45:  /* cramfs */
+            case 0x1373:      /* devfs */
+            case 0x9fa0:      /* procfs */
+                info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+                info->Characteristics = 0;
+                break;
+            default:
+                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+                info->Characteristics = 0;
+                break;
+            }
+            /* check for floppy disk */
+            if (!fstat( fd, &st ) && major(st.st_dev) == 2 /*FLOPPY_MAJOR*/)
+                info->Characteristics |= FILE_REMOVABLE_MEDIA;
+#else
+            static int warned;
+            if (!warned++) FIXME( "device info not supported on this platform\n" );
+            info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+            info->Characteristics = 0;
+#endif
+            io->Information = sizeof(*info);
+            io->u.Status = STATUS_SUCCESS;
+        }
+        break;
+    case FileFsAttributeInformation:
+        FIXME( "%p: attribute info not supported\n", handle );
+        break;
+    case FileFsControlInformation:
+        FIXME( "%p: control info not supported\n", handle );
+        break;
+    case FileFsFullSizeInformation:
+        FIXME( "%p: full size info not supported\n", handle );
+        break;
+    case FileFsObjectIdInformation:
+        FIXME( "%p: object id info not supported\n", handle );
+        break;
+    case FileFsMaximumInformation:
+        FIXME( "%p: maximum info not supported\n", handle );
+        break;
+    default:
+        io->u.Status = STATUS_INVALID_PARAMETER;
+        break;
+    }
+    wine_server_release_fd( handle, fd );
+    return io->u.Status;
 }
+
 
 /******************************************************************
  *		NtFlushBuffersFile  (NTDLL.@)
