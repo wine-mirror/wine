@@ -738,6 +738,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
 
     /* set the image protections */
 
+    VIRTUAL_SetProt( view, ptr, header_size, VPROT_COMMITTED | VPROT_READ );
     sec = (IMAGE_SECTION_HEADER*)((char *)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
     {
