@@ -112,7 +112,7 @@ file	gdi.exe
 101 pascal16 OffsetRgn(word s_word s_word) OffsetRgn16
 102 pascal16 OffsetVisRgn(word s_word s_word) OffsetVisRgn16
 103 pascal16 PtVisible(word s_word s_word) PtVisible16
-104 pascal16 RectVisibleOld(word ptr) RectVisible16
+104 pascal16 RectVisibleOld(word ptr) RectVisible16 # also named RECTVISIBLE
 105 pascal16 SelectVisRgn(word word) SelectVisRgn16
 106 pascal SetBitmapBits(word long ptr) SetBitmapBits16
 117 pascal SetDCOrg(word s_word s_word) SetDCOrg16
@@ -155,7 +155,7 @@ file	gdi.exe
 176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord16
 179 pascal16 GetDCState(word) GetDCState16
 180 pascal16 SetDCState(word word) SetDCState16
-181 pascal16 RectInRegionOld(word ptr) RectInRegion16
+181 pascal16 RectInRegionOld(word ptr) RectInRegion16 # also named RECTINREGION
 188 stub GetTextExtentEx
 190 pascal16 SetDCHook(word segptr long) SetDCHook
 191 pascal   GetDCHook(word ptr) GetDCHook
@@ -291,8 +291,8 @@ file	gdi.exe
 462 pascal16 IsGDIObject(word) IsGDIObject16
 463 pascal16 MakeObjectPrivate(word word) MakeObjectPrivate16
 464 stub FIXUPBOGUSPUBLISHERMETAFILE
-465 pascal16 RectVisible(word ptr) RectVisible16
-466 pascal16 RectInRegion(word ptr) RectInRegion16
+465 pascal16 RectVisible(word ptr) RectVisible16 # RECTVISIBLE_EHH ??
+466 pascal16 RectInRegion(word ptr) RectInRegion16 # RECTINREGION_EHH ??
 467 stub UNICODETOANSI
 468 pascal16 GetBitmapDimensionEx(word ptr) GetBitmapDimensionEx16
 469 pascal16 GetBrushOrgEx(word ptr) GetBrushOrgEx16
@@ -317,6 +317,7 @@ file	gdi.exe
 486 pascal16 GetAspectRatioFilterEx(word ptr) GetAspectRatioFilterEx16
 489 pascal16 CreateDIBSection(word ptr word ptr long long) CreateDIBSection16
 490 stub CloseEnhMetafile
+#490 stub POLYLINEWOW # conflicts with CloseEnhMetaFile !!
 491 stub CopyEnhMetafile
 492 stub CreateEnhMetafile
 493 stub DeleteEnhMetafile

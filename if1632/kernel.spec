@@ -312,8 +312,8 @@ file	krnl386.exe
 
 # 403-404 are common to all versions
 
-403 pascal16 FarSetOwner(word word) FarSetOwner16
-404 pascal16 FarGetOwner(word) FarGetOwner16
+403 pascal16 FarSetOwner(word word) FarSetOwner16 # aka K403
+404 pascal16 FarGetOwner(word) FarGetOwner16 # aka K404
 
 
 # 406-494 are present only in Win95
@@ -412,8 +412,11 @@ file	krnl386.exe
 504 stub WOWLOADMODULE
 505 stub WOWQUERYPERFORMANCECOUNTER
 506 stub WOWCURSORICONOP
+#507 stub WOWCURSORICONOP # conflict with 506 !
 507 stub WOWFAILEDEXEC
+#508 stub WOWFAILEDEXEC # conflict with 507 ! (something broken here ?)
 508 stub WOWCLOSECOMPORT
+#509 stub WOWCLOSECOMPORT # conflict with 508 !
 509 stub WOWKILLREMOTETASK
 511 stub WOWKILLREMOTETASK
 512 stub WOWQUERYDEBUG

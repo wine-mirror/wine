@@ -11,7 +11,7 @@ file	user.exe
 6   pascal16 PostQuitMessage(word) PostQuitMessage16
 7   pascal16 ExitWindows(long word) ExitWindows16
 10  pascal16 SetTimer(word word word segptr) SetTimer16
-11  pascal16 SetSystemTimer(word word word segptr) SetSystemTimer16
+11  pascal16 SetSystemTimer(word word word segptr) SetSystemTimer16 # BEAR11
 12  pascal16 KillTimer(word word) KillTimer16
 13  pascal   GetTickCount() GetTickCount
 14  pascal   GetTimerResolution() GetTimerResolution16
@@ -118,8 +118,8 @@ file	user.exe
 114 pascal   DispatchMessage(ptr) DispatchMessage16
 115 pascal16 ReplyMessage(long) ReplyMessage16
 116 pascal16 PostAppMessage(word word word long) PostAppMessage16
-118 pascal16 RegisterWindowMessage(str) RegisterWindowMessageA
 117 pascal16 WindowFromDC(word) WindowFromDC16
+118 pascal16 RegisterWindowMessage(str) RegisterWindowMessageA
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
 121 pascal   SetWindowsHook(s_word segptr) SetWindowsHook16
@@ -183,7 +183,7 @@ file	user.exe
 179 pascal16 GetSystemMetrics(s_word) GetSystemMetrics16
 180 pascal   GetSysColor(word) GetSysColor16
 181 pascal16 SetSysColors(word ptr ptr) SetSysColors16
-182 pascal16 KillSystemTimer(word word) KillSystemTimer16
+182 pascal16 KillSystemTimer(word word) KillSystemTimer16 # BEAR182
 183 pascal16 GetCaretPos(ptr) GetCaretPos16
 184 stub QuerySendMessage
 185 pascal16 GrayString(word word segptr segptr s_word s_word s_word s_word s_word) THUNK_GrayString16
@@ -290,7 +290,7 @@ file	user.exe
 282 pascal16 SelectPalette(word word word) SelectPalette16
 283 pascal16 RealizePalette(word) RealizePalette16
 284 pascal16 GetFreeSystemResources(word) GetFreeSystemResources16
-285 pascal16 SetDeskWallPaper(ptr) SetDeskWallPaper16
+285 pascal16 SetDeskWallPaper(ptr) SetDeskWallPaper16 # BEAR285
 286 pascal16 GetDesktopWindow() GetDesktopWindow16
 287 pascal16 GetLastActivePopup(word) GetLastActivePopup16
 288 pascal   GetMessageExtraInfo() GetMessageExtraInfo
@@ -303,7 +303,12 @@ file	user.exe
 299 register mouse_event() WIN16_mouse_event
 300 stub UnloadInstalledDrivers
 #301 BOZOSLIVEHERE :-))	<- this is actually EditWndProc
+302 stub STATICWNDPROC
+303 stub BUTTONWNDPROC
+304 stub SBWNDPROC
+305 stub DESKTOPWNDPROC
 #306 BEAR306
+307 stub LBOXCTLWNDPROC
 308 pascal   DefDlgProc(word word word long) DefDlgProc16
 309 pascal16 GetClipCursor(ptr) GetClipCursor16
 #310 ContScroll
@@ -335,6 +340,8 @@ file	user.exe
 #340 WinFarFrame
 #341 _FFFE_FARFRAME
 343 stub GetFilePortName
+344 stub COMBOBOXCTLWNDPROC
+345 stub BEAR345
 #354 TabTheTextOutForWimps
 #355 BroadcastMessage
 356 pascal16 LoadDIBCursorHandler(word word word) LoadDIBCursorHandler16
@@ -386,7 +393,7 @@ file	user.exe
 416 pascal16 TrackPopupMenu(word word s_word s_word s_word word ptr) TrackPopupMenu16
 417 pascal   GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
 418 pascal16 SetMenuItemBitmaps(word word word word word) SetMenuItemBitmaps16
-420 pascal16 wsprintf() WIN16_wsprintf16
+420 pascal16 _wsprintf() WIN16_wsprintf16
 421 pascal16 wvsprintf(ptr str ptr) wvsprintf16
 422 pascal16 DlgDirSelectEx(word ptr word word) DlgDirSelectEx16
 423 pascal16 DlgDirSelectComboBoxEx(word ptr word word) DlgDirSelectComboBoxEx16
@@ -445,6 +452,7 @@ file	user.exe
 490 pascal16 USER_490() stub_USER_490
 492 pascal16 USER_492() stub_USER_492
 496 pascal16 USER_496() stub_USER_496
+498 stub BEAR498
 499 pascal16 WNetErrorText(word ptr word) WNetErrorText16
 500 stub FARCALLNETDRIVER 			# Undocumented Windows
 501 pascal16 WNetOpenJob(ptr ptr word ptr)  WNetOpenJob16
@@ -480,7 +488,13 @@ file	user.exe
 531 pascal16 WNetDirectoryNotify(word ptr word) WNetDirectoryNotify16
 532 pascal16 WNetGetPropertyText(word word str str word word) WNetGetPropertyText16
 533 stub WNetInitialize
+#533 stub NOTIFYWOW # ordinal conflict with WNetInitialize !!
 534 stub WNetLogon
+#534 stub DEFDLGPROCTHUNK # ordinal conflict with WNetLogon !!
+535 stub WOWWORDBREAKPROC
+537 stub MOUSEEVENT
+538 stub KEYBDEVENT
+595 stub OLDEXITWINDOWS
 600 pascal16 GetShellWindow() GetShellWindow16
 601 stub DoHotkeyStuff
 602 stub SetCheckCursorTimer
