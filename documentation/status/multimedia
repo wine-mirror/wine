@@ -8,6 +8,10 @@ can be found in the multimedia/ subdirectory.
 The multimedia stuff is split into 3 layers. The lowlevel (device drivers),
 midlevel (MCI commands) and highlevel abstraction layers.
 
+The lowlevel may depend on current hardware and OS services (like OSS). 
+Mid-level and high-level must be written independantly from the hardware and OS
+services.
+
 1. Lowlevel layers
 
    Following lowlevel layers are implemented:
@@ -73,7 +77,7 @@ midlevel (MCI commands) and highlevel abstraction layers.
         - have a look at OPL/3 ?
 	- a hack is used in mmsystem.c (setting reserved to the 32 bit linear
 	  address of the block whatever the call is made from 16 or 32 bits 
-	  code...). this should be in midi.c I think
+	  code...). this should be made in midi.c I think
 
 1.4 Timers
 
@@ -131,16 +135,16 @@ midlevel (MCI commands) and highlevel abstraction layers.
    The functions there (mciOpen,mciSysInfo) handle midlevel driver
    allocation and calls.
 
-   The implementation is not complete, but works for most cases.
-   Win32 support for mciSendCommand is missing (mciSendString works
-   in the Win32 case, since the use of strings doesn't differ between
-   win16 and win32).
+   The implementation is not complete.
 
    TODO:
-   	- Win32 support
 	- support windows MCI drivers (should be possible for they usually 
 	  do not use lowlevel calls)
 	- MCI command loading support
+	- better implement non waiting command (without the MCI_WAIT flag). 
+	  First shot is present in midi.c but requires much more work (and
+	  will impact sndPlaySound() as well which shall be written as
+	  as set of MCI commands).
 	- implement other stuff as yet unknown
 
    WINE implements several MCI midlevel drivers:
@@ -161,7 +165,8 @@ midlevel (MCI commands) and highlevel abstraction layers.
 
 2.2 MCIWAVE
    
-   The implementation is rather complete and can be found in multimedia/audio.c.
+   The implementation is rather complete and can be found in 
+   multimedia/audio.c.
    It uses the lowlevel audio API (although not abstracted correctly).
    FIXME: The MCI_STATUS command is broken.
 
@@ -169,12 +174,13 @@ midlevel (MCI commands) and highlevel abstraction layers.
 
 2.3 MIDI/SEQUENCER
    
-   The implementation can be found in multimedia/midi.c. I am not sure
-   about the completeness.
-   It uses the lowlevel midi driver and is probably broken too.
+   The implementation can be found in multimedia/midi.c. Except from the
+   Record command, should be close to completion (except for non blocking
+   commands).
 
    TODO: 
    	- implement it correctly
+	- finish asynchronous commands
 
 2.4 MCIANIM
 
@@ -183,3 +189,7 @@ midlevel (MCI commands) and highlevel abstraction layers.
    TODO: 
    	- implement it, probably using xanim or something similair. Could
 	  also be implemented by using the Windows MCI video drivers.
+
+3 High-level layers
+
+   The rest (basically the MMSYSTEM and WINMM DLLs entry points.
