@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "windef.h"
-#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
@@ -21,16 +20,12 @@
 #include "hook.h"
 #include "menu.h"
 #include "message.h"
-#include "nonclient.h"
 #include "queue.h"
 #include "winpos.h"
-#include "clipboard.h"
-#include "winproc.h"
 #include "task.h"
 #include "thread.h"
 #include "winerror.h"
 #include "mdi.h"
-#include "local.h"
 #include "stackframe.h"
 #include "debugtools.h"
 
@@ -643,7 +638,7 @@ BOOL WIN_CreateDesktopWindow(void)
 
 
 /***********************************************************************
- *           WIN_CreateWindowEx
+ *           WIN_FixCoordinates
  *
  * Fix the coordinates - Helper for WIN_CreateWindowEx.
  * returns default show mode in sw.
@@ -713,7 +708,7 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
  * Implementation of CreateWindowEx().
  */
 static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
-                                  BOOL win32, BOOL unicode )
+				WINDOWPROCTYPE type )
 {
     INT sw = SW_SHOW; 
     CLASS *classPtr;
@@ -724,10 +719,13 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     LRESULT (CALLBACK *localSend32)(HWND, UINT, WPARAM, LPARAM);
 
     TRACE("%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
-          unicode ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName), 
-          unicode ? debugres_w((LPWSTR)cs->lpszClass) : debugres_a(cs->lpszClass),
+          (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName), 
+          (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszClass) : debugres_a(cs->lpszClass),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
           cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams );
+
+    TRACE("winproc type is %d (%s)\n", type, (type == WIN_PROC_16) ? "WIN_PROC_16" :
+	    ((type == WIN_PROC_32A) ? "WIN_PROC_32A" : "WIN_PROC_32W") );
 
     /* Find the parent window */
 
@@ -745,7 +743,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     }
 
     /* Find the window class */
-    if (!(classPtr = CLASS_FindClassByAtom( classAtom, win32?cs->hInstance:GetExePtr(cs->hInstance) )))
+    if (!(classPtr = CLASS_FindClassByAtom( classAtom, (type == WIN_PROC_16) ? GetExePtr(cs->hInstance) : cs->hInstance )))
     {
         WARN("Bad class '%s'\n", cs->lpszClass );
         return 0;
@@ -806,7 +804,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->dwExStyle      = cs->dwExStyle;
     wndPtr->wIDmenu        = 0;
     wndPtr->helpContext    = 0;
-    wndPtr->flags          = win32 ? WIN_ISWIN32 : 0;
+    wndPtr->flags          = (type == WIN_PROC_16) ? 0 : WIN_ISWIN32;
     wndPtr->pVScroll       = NULL;
     wndPtr->pHScroll       = NULL;
     wndPtr->pProp          = NULL;
@@ -829,7 +827,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
 	cbtc.lpcs = cs;
 	cbtc.hwndInsertAfter = hwndLinkAfter;
-        ret = unicode ? HOOK_CallHooksW(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc)
+        ret = (type == WIN_PROC_32W) ? HOOK_CallHooksW(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc)
                       : HOOK_CallHooksA(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc);
         if (ret)
 	{
@@ -891,7 +889,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->rectWindow.bottom = cs->y + cs->cy;
     wndPtr->rectClient        = wndPtr->rectWindow;
 
-    if(!wndPtr->pDriver->pCreateWindow(wndPtr, classPtr, cs, unicode))
+    if(!wndPtr->pDriver->pCreateWindow(wndPtr, classPtr, cs, type == WIN_PROC_32W))
     {
         retvalue = FALSE;
         goto end;
@@ -926,7 +924,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     maxPos.x = wndPtr->rectWindow.left; maxPos.y = wndPtr->rectWindow.top;
 
-    localSend32 = unicode ? SendMessageW : SendMessageA;
+    localSend32 = (type == WIN_PROC_32W) ? SendMessageW : SendMessageA;
     if( (*localSend32)( hwnd, WM_NCCREATE, 0, (LPARAM)cs) )
     {
         /* Insert the window in the linked list */
@@ -949,10 +947,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 		  WARN("sending bogus WM_SIZE message 0x%08lx\n",
 			MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
 				 wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-                SendMessageA( hwnd, WM_SIZE, SIZE_RESTORED,
+                (*localSend32)( hwnd, WM_SIZE, SIZE_RESTORED,
                                 MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
                                          wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-                SendMessageA( hwnd, WM_MOVE, 0,
+                (*localSend32)( hwnd, WM_MOVE, 0,
                                 MAKELONG( wndPtr->rectClient.left,
                                           wndPtr->rectClient.top ) );
             }
@@ -1076,7 +1074,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return WIN_CreateWindowEx( &cs, classAtom, FALSE, FALSE );
+    return WIN_CreateWindowEx( &cs, classAtom, WIN_PROC_16 );
 }
 
 
@@ -1135,7 +1133,7 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
     cs.lpszClass      = className;
     cs.dwExStyle      = exStyle;
 
-    return WIN_CreateWindowEx( &cs, classAtom, TRUE, FALSE );
+    return WIN_CreateWindowEx( &cs, classAtom, WIN_PROC_32A );
 }
 
 
@@ -1196,7 +1194,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
 
     /* Note: we rely on the fact that CREATESTRUCTA and */
     /* CREATESTRUCTW have the same layout. */
-    return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, classAtom, TRUE, TRUE );
+    return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, classAtom, WIN_PROC_32W );
 }
 
 /***********************************************************************
@@ -2020,7 +2018,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
                 retval = SetWindowWord( hwnd, offset, newval );
                 goto end;
 	case GWL_WNDPROC:
-					retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
+		retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
 		WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, 
 						type, WIN_PROC_WINDOW );
 		goto end;
