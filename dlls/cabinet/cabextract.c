@@ -2564,6 +2564,7 @@ BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower, EXTRACTde
 {
   struct cabinet *basecab, *cab, *cab1, *cab2;
   struct cab_file *filelist, *fi;
+  struct ExtractFileList **destlistptr = &(dest->filelist);
 
   /* The first result of a search will be returned, and
    * the remaining results will be chained to it via the cab->next structure
@@ -2632,6 +2633,16 @@ BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower, EXTRACTde
                 strlen(dest->directory) ? dest->directory : "",
                 strlen(dest->directory) ? "\\": "",
                 fi->filename);
+	*destlistptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+				sizeof(struct ExtractFileList));
+	if(*destlistptr) {
+	   (*destlistptr)->unknown = TRUE; /* FIXME: were do we get the value? */
+	   (*destlistptr)->filename = HeapAlloc(GetProcessHeap(), 0, (
+						strlen(fi->filename)+1));
+	   if((*destlistptr)->filename) 
+		lstrcpyA((*destlistptr)->filename, fi->filename);
+	   destlistptr = &((*destlistptr)->next);
+	}
     }
   }
 

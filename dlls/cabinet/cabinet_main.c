@@ -76,8 +76,10 @@ HRESULT WINAPI CABINET_DllGetVersion (DLLVERSIONINFO *pdvi)
  *   dest         pointer to a buffer of 0x32c bytes containing
  *           [I]  - number with value 1 at index 0x18
  *                - the dest path starting at index 0x1c
- *           [O]  - the number of files inside the CAB file at index 0x14
- *                - the name of the last file with dest path at idx 0x12
+ *           [O]  - a linked list with the filename existing inside the
+ *                  CAB file at idx 0x10
+ *                - the number of files inside the CAB file at index 0x14
+ *                - the name of the last file with dest path at idx 0x120
  *   what    [I]  char* describing what to uncompress, I guess.
  *
  * RETURNS
@@ -114,21 +116,13 @@ HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR what)
   if (!dir) return E_OUTOFMEMORY;
   lstrcpyA(dir, dest->directory);
   dest->filecount=0;
+  dest->filelist = NULL;
 
   TRACE("extracting to dir: %s\n", debugstr_a(dir));
 
   /* FIXME: what to do on failure? */
   if (!process_cabinet(what, dir, FALSE, FALSE, dest))
     return E_OUTOFMEMORY;
-
-  /* the magic 13 is returned by all cab files tested so far:
-   * DXDDEX.CAB, DXMINI.CAB, SWFLASH.CAB on win2k
-   * but it crashes the ie5.5 installer :-( . The native dll does not return
-   * the four zeros. The value depends on the combination of the cab file and
-   * the destination path. It appears to be a pointer to an optional return struct.
-   * The IE6 installer derefs this value + 4. Contents currently unknown.
-   */
-  dest->result2 = 0;
 
   LocalFree(dir);
 
