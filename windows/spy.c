@@ -1798,8 +1798,6 @@ inline static void set_indent_level( int level )
  */
 static const char *SPY_GetMsgInternal( UINT msg )
 {
-    static char msg_buffer[20];
-
     if (msg <= SPY_MAX_MSGNUM)
     {
         if (!MessageTypeNames[msg]) return "???";
@@ -1847,9 +1845,7 @@ static const char *SPY_GetMsgInternal( UINT msg )
         if (!WINEMessageTypeNames[msg-WM_WINE_DESTROYWINDOW]) return "???";
         return WINEMessageTypeNames[msg-WM_WINE_DESTROYWINDOW];
     }
-
-    sprintf( msg_buffer, "WM_USER+%04x", msg - WM_USER );
-    return msg_buffer;
+    return "";
 }
 
 /***********************************************************************
@@ -1900,9 +1896,19 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 	     sizeof(sp_e->msg_name)-1);
 
     sp_e->data_len = 0;
-    if (strncmp(sp_e->msg_name, "WM_USER+", 8) == 0) {
+    if (!sp_e->msg_name[0])
+    {
 	INT i = 0;
 
+        if (sp_e->msgnum >= 0xc000)
+        {
+            if (GlobalGetAtomNameA( sp_e->msgnum, sp_e->msg_name+1, sizeof(sp_e->msg_name)-2 ))
+            {
+                sp_e->msg_name[0] = '\"';
+                strcat( sp_e->msg_name, "\"" );
+                return;
+            }
+        }
 #if DEBUG_SPY
 	TRACE("looking class %s\n", sp_e->wnd_class);
 #endif
@@ -1910,18 +1916,22 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 	while (cc_array[i].classname &&
 	       strcmpW(cc_array[i].classname, sp_e->wnd_class) !=0) i++;
 
-	if (!cc_array[i].classname) return;
+	if (cc_array[i].classname)
+        {
 #if DEBUG_SPY
-	TRACE("process class %s, first %p, last %p\n",
-	      debugstr_w(cc_array[i].classname), cc_array[i].classmsg,
-	      cc_array[i].lastmsg);
+            TRACE("process class %s, first %p, last %p\n",
+                  debugstr_w(cc_array[i].classname), cc_array[i].classmsg,
+                  cc_array[i].lastmsg);
 #endif
-	p = SPY_Bsearch_Msg (cc_array[i].classmsg, cc_array[i].lastmsg,
-			 sp_e->msgnum);
-	if (p) {
-	    strncpy (sp_e->msg_name, p->name, sizeof(sp_e->msg_name)-1);
-	    sp_e->data_len = p->len;
-	}
+            p = SPY_Bsearch_Msg (cc_array[i].classmsg, cc_array[i].lastmsg,
+                                 sp_e->msgnum);
+            if (p) {
+                strncpy (sp_e->msg_name, p->name, sizeof(sp_e->msg_name)-1);
+                sp_e->data_len = p->len;
+                return;
+            }
+        }
+        sprintf( sp_e->msg_name, "WM_USER+%04x", sp_e->msgnum - WM_USER );
     }
 }
 
