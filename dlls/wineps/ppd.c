@@ -42,8 +42,8 @@ char	*valtrans;
 
 /* map of page names in ppd file to Windows paper constants */
 
-static struct {
-  char *PSName;
+static const struct {
+  const char *PSName;
   WORD WinPage;
 } PageTrans[] = {
   {"10x11",                   DMPAPER_10X11},

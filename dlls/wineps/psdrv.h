@@ -449,7 +449,7 @@ extern BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, int numb
 extern BOOL PSDRV_WriteDIBits16(PSDRV_PDEVICE *physDev, const WORD *words, int number);
 extern BOOL PSDRV_WriteDIBits24(PSDRV_PDEVICE *physDev, const BYTE *bits, int number);
 extern BOOL PSDRV_WriteDIBits32(PSDRV_PDEVICE *physDev, const BYTE *bits, int number);
-extern int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPSTR lpData, WORD cch);
+extern int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, WORD cch);
 extern BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits);
 extern BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage);
 extern BOOL PSDRV_WriteArrayPut(PSDRV_PDEVICE *physDev, CHAR *pszArrayName, INT nIndex, LONG lCoord);

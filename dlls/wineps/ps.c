@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-static char psheader[] = /* title llx lly urx ury */
+static const char psheader[] = /* title llx lly urx ury */
 "%%!PS-Adobe-3.0\n"
 "%%%%Creator: Wine PostScript Driver\n"
 "%%%%Title: %s\n"
@@ -39,13 +39,13 @@ static char psheader[] = /* title llx lly urx ury */
 "%%%%Pages: (atend)\n"
 "%%%%EndComments\n";
 
-static char psbeginprolog[] =
+static const char psbeginprolog[] =
 "%%BeginProlog\n";
 
-static char psendprolog[] =
+static const char psendprolog[] =
 "%%EndProlog\n";
 
-static char psprolog[] =
+static const char psprolog[] =
 "/tmpmtrx matrix def\n"
 "/hatch {\n"
 "  pathbbox\n"
@@ -59,21 +59,21 @@ static char psprolog[] =
 "/B {pop pop pop pop} def\n"
 "/havetype42gdir {version cvi 2015 ge} bind def\n";
 
-static char psbeginsetup[] =
+static const char psbeginsetup[] =
 "%%BeginSetup\n";
 
-static char psendsetup[] =
+static const char psendsetup[] =
 "%%EndSetup\n";
 
-static char psbeginfeature[] = /* feature, value */
+static const char psbeginfeature[] = /* feature, value */
 "mark {\n"
 "%%%%BeginFeature: %s %s\n";
 
-static char psendfeature[] =
+static const char psendfeature[] =
 "\n%%EndFeature\n"
 "} stopped cleartomark\n";
 
-static char psnewpage[] = /* name, number, xres, yres, xtrans, ytrans, rot */
+static const char psnewpage[] = /* name, number, xres, yres, xtrans, ytrans, rot */
 "%%%%Page: %s %d\n"
 "%%%%BeginPageSetup\n"
 "/pgsave save def\n"
@@ -83,32 +83,32 @@ static char psnewpage[] = /* name, number, xres, yres, xtrans, ytrans, rot */
 "%d rotate\n"
 "%%%%EndPageSetup\n";
 
-static char psendpage[] =
+static const char psendpage[] =
 "pgsave restore\n"
 "showpage\n";
 
-static char psfooter[] = /* pages */
+static const char psfooter[] = /* pages */
 "%%%%Trailer\n"
 "%%%%Pages: %d\n"
 "%%%%EOF\n";
 
-static char psmoveto[] = /* x, y */
+static const char psmoveto[] = /* x, y */
 "%d %d moveto\n";
 
-static char pslineto[] = /* x, y */
+static const char pslineto[] = /* x, y */
 "%d %d lineto\n";
 
-static char psstroke[] =
+static const char psstroke[] =
 "stroke\n";
 
-static char psrectangle[] = /* x, y, width, height, -width */
+static const char psrectangle[] = /* x, y, width, height, -width */
 "%d %d moveto\n"
 "%d 0 rlineto\n"
 "0 %d rlineto\n"
 "%d 0 rlineto\n"
 "closepath\n";
 
-static char psrrectangle[] = /* x, y, width, height, -width */
+static const char psrrectangle[] = /* x, y, width, height, -width */
 "%d %d rmoveto\n"
 "%d 0 rlineto\n"
 "0 %d rlineto\n"
@@ -118,82 +118,82 @@ static char psrrectangle[] = /* x, y, width, height, -width */
 static const char psglyphshow[] = /* glyph name */
 "/%s glyphshow\n";
 
-static char pssetfont[] = /* fontname, xscale, yscale, ascent, escapement */
+static const char pssetfont[] = /* fontname, xscale, yscale, ascent, escapement */
 "/%s findfont\n"
 "[%d 0 0 %d 0 0]\n"
 "%d 10 div matrix rotate\n"
 "matrix concatmatrix\n"
 "makefont setfont\n";
 
-static char pssetlinewidth[] = /* width */
+static const char pssetlinewidth[] = /* width */
 "%d setlinewidth\n";
 
-static char pssetdash[] = /* dash, offset */
+static const char pssetdash[] = /* dash, offset */
 "[%s] %d setdash\n";
 
-static char pssetgray[] = /* gray */
+static const char pssetgray[] = /* gray */
 "%.2f setgray\n";
 
-static char pssetrgbcolor[] = /* r, g, b */
+static const char pssetrgbcolor[] = /* r, g, b */
 "%.2f %.2f %.2f setrgbcolor\n";
 
-static char psarc[] = /* x, y, w, h, ang1, ang2 */
+static const char psarc[] = /* x, y, w, h, ang1, ang2 */
 "tmpmtrx currentmatrix pop\n"
 "%d %d translate\n"
 "%d %d scale\n"
 "0 0 0.5 %.1f %.1f arc\n"
 "tmpmtrx setmatrix\n";
 
-static char psgsave[] =
+static const char psgsave[] =
 "gsave\n";
 
-static char psgrestore[] =
+static const char psgrestore[] =
 "grestore\n";
 
-static char psfill[] =
+static const char psfill[] =
 "fill\n";
 
-static char pseofill[] =
+static const char pseofill[] =
 "eofill\n";
 
-static char psnewpath[] =
+static const char psnewpath[] =
 "newpath\n";
 
-static char psclosepath[] =
+static const char psclosepath[] =
 "closepath\n";
 
-static char psclip[] =
+static const char psclip[] =
 "clip\n";
 
-static char psinitclip[] =
+static const char psinitclip[] =
 "initclip\n";
 
-static char pseoclip[] =
+static const char pseoclip[] =
 "eoclip\n";
 
-static char psrectclip[] =
+static const char psrectclip[] =
 "%d %d %d %d rectclip\n";
 
-static char psrectclip2[] =
+static const char psrectclip2[] =
 "%s rectclip\n";
 
-static char pshatch[] =
+static const char pshatch[] =
 "hatch\n";
 
-static char psrotate[] = /* ang */
+static const char psrotate[] = /* ang */
 "%.1f rotate\n";
 
-static char psarrayget[] =
+static const char psarrayget[] =
 "%s %d get\n";
 
-static char psarrayput[] =
+static const char psarrayput[] =
 "%s %d %ld put\n";
 
-static char psarraydef[] =
+static const char psarraydef[] =
 "/%s %d array def\n";
 
 
-int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPSTR lpData, WORD cch)
+int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, WORD cch)
 {
     if(physDev->job.quiet) {
         TRACE("ignoring output\n");
@@ -204,7 +204,7 @@ int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPSTR lpData, WORD cch)
         if( !PSDRV_StartPage(physDev) )
 	    return 0;
     }
-    return WriteSpool16( physDev->job.hJob, lpData, cch );
+    return WriteSpool16( physDev->job.hJob, (LPSTR)lpData, cch );
 }
 
 
@@ -221,7 +221,7 @@ INT PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
 
     WriteSpool16( hJob, invocation, strlen(invocation) );
 
-    WriteSpool16( hJob, psendfeature, strlen(psendfeature) );
+    WriteSpool16( hJob, (LPSTR)psendfeature, strlen(psendfeature) );
 
     HeapFree( PSDRV_Heap, 0, buf );
     return 1;
@@ -265,11 +265,11 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
     }
     HeapFree( PSDRV_Heap, 0, buf );
 
-    WriteSpool16( physDev->job.hJob, psbeginprolog, strlen(psbeginprolog) );
-    WriteSpool16( physDev->job.hJob, psprolog, strlen(psprolog) );
-    WriteSpool16( physDev->job.hJob, psendprolog, strlen(psendprolog) );
+    WriteSpool16( physDev->job.hJob, (LPSTR)psbeginprolog, strlen(psbeginprolog) );
+    WriteSpool16( physDev->job.hJob, (LPSTR)psprolog, strlen(psprolog) );
+    WriteSpool16( physDev->job.hJob, (LPSTR)psendprolog, strlen(psendprolog) );
 
-    WriteSpool16( physDev->job.hJob, psbeginsetup, strlen(psbeginsetup) );
+    WriteSpool16( physDev->job.hJob, (LPSTR)psbeginsetup, strlen(psbeginsetup) );
 
     for(slot = physDev->pi->ppd->InputSlots; slot; slot = slot->next) {
         if(slot->WinBin == physDev->Devmode->dmPublic.dmDefaultSource) {
@@ -303,7 +303,7 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
 	}
     }
 
-    WriteSpool16( physDev->job.hJob, psendsetup, strlen(psendsetup) );
+    WriteSpool16( physDev->job.hJob, (LPSTR)psendsetup, strlen(psendsetup) );
 
 
     return 1;
@@ -336,7 +336,7 @@ INT PSDRV_WriteFooter( PSDRV_PDEVICE *physDev )
 
 INT PSDRV_WriteEndPage( PSDRV_PDEVICE *physDev )
 {
-    if( WriteSpool16( physDev->job.hJob, psendpage, sizeof(psendpage)-1 ) !=
+    if( WriteSpool16( physDev->job.hJob, (LPSTR)psendpage, sizeof(psendpage)-1 ) !=
 	                                             sizeof(psendpage)-1 ) {
         WARN("WriteSpool error\n");
 	return 0;
@@ -612,17 +612,17 @@ BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst
 			  INT widthDst, INT heightDst, INT widthSrc,
 			  INT heightSrc, char *bits, BOOL mask)
 {
-    char start[] = "%d %d translate\n%d %d scale\n<<\n"
+    const char start[] = "%d %d translate\n%d %d scale\n<<\n"
       " /ImageType 1\n /Width %d\n /Height %d\n /BitsPerComponent %d\n"
       " /ImageMatrix [%d 0 0 %d 0 %d]\n";
 
-    char decode1[] = " /Decode [0 %d]\n";
-    char decode3[] = " /Decode [0 1 0 1 0 1]\n";
+    const char decode1[] = " /Decode [0 %d]\n";
+    const char decode3[] = " /Decode [0 1 0 1 0 1]\n";
 
-    char end[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> image\n";
-    char endmask[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> imagemask\n";
+    const char end[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> image\n";
+    const char endmask[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> imagemask\n";
 
-    char endbits[] = " /DataSource <%s>\n>> image\n";
+    const char endbits[] = " /DataSource <%s>\n>> image\n";
 
     char *buf = HeapAlloc(PSDRV_Heap, 0, 1000);
 
@@ -807,10 +807,10 @@ BOOL PSDRV_WriteRectClip2(PSDRV_PDEVICE *physDev, CHAR *pszArrayName)
 
 BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits)
 {
-    char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
+    const char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
       "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n";
 
-    char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
+    const char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
     char *buf, *ptr;
     INT w, h, x, y;
     COLORREF map[2];
@@ -841,10 +841,10 @@ BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits)
 
 BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage)
 {
-    char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
+    const char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
       "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n";
 
-    char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
+    const char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
     char *buf, *ptr;
     BYTE *bits;
     INT w, h, x, y, colours;
