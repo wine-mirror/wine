@@ -64,7 +64,7 @@ void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
 {
     int i,tic,nrTics;
 
-	if (infoPtr->uTicFreq) 
+	if (infoPtr->uTicFreq && infoPtr->nRangeMax >= infoPtr->nRangeMin) 
     	nrTics=(infoPtr->nRangeMax - infoPtr->nRangeMin)/infoPtr->uTicFreq;
 	else {
 		nrTics=0;
