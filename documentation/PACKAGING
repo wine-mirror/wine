@@ -187,7 +187,7 @@ WINE COMPONENTS
 	- notepad : The windows Notepad replacement.
 	- progman : A Program Manager replacement.
 	- regedit : A graphical tool to edit your registry or for 
-		important a windows registry to Wine.
+		importing a windows registry to Wine.
 	- regsvr32 : A program to register/unregister .DLL's and .OCX files. 
 		Only works on those dlls that can self-register.
 	- taskmgr : A clone of the windows taskmgr, used for debugging and
@@ -336,7 +336,7 @@ WINE COMPONENTS
 
         This is probably the most important configuration detail.
         The use of Windows registry and DLL files dramatically alters the 
-	behavior of Wine. If nothing else, packager have to make this 
+	behavior of Wine. If nothing else, packagers have to make this 
 	distinction clear to the end user, so that they can intelligently
         choose their configuration.
 
@@ -468,7 +468,7 @@ You will need to package the files:
 2. Creating a good default configuration file. 
 
 This is no longer necessary, most of this work is now done
-by wineprefixcreate itself
+by wineprefixcreate itself.
 
 
 3. Installing Wine for the system administrator
