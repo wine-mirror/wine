@@ -23,7 +23,6 @@
  *  1. Implement following extended styles:
  *	     CBES_EX_PATHWORDBREAKPROC
  *	     CBES_EX_NOSIZELIMIT
- *	     CBES_EX_CASESENSITIVE
  *  2. Notify CBEN_DRAGBEGIN is not implemented.
  *
  */
@@ -121,6 +120,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT WINAPI
 COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr);
+typedef INT (WINAPI *cmp_func_t)(LPCWSTR, LPCWSTR);
 
 inline static BOOL is_textW(LPCWSTR str)
 {
@@ -167,6 +167,10 @@ inline static CBE_ITEMDATA *get_item_data(COMBOEX_INFO *infoPtr, INT index)
 		                         (WPARAM)index, 0);
 }
 
+inline static cmp_func_t get_cmp_func(COMBOEX_INFO *infoPtr)
+{
+    return infoPtr->dwExtStyle & CBES_EX_CASESENSITIVE ? lstrcmpW : lstrcmpiW;
+}
 
 static INT COMBOEX_Notify (COMBOEX_INFO *infoPtr, INT code, NMHDR *hdr)
 {
@@ -619,8 +623,7 @@ COMBOEX_SetExtendedStyle (COMBOEX_INFO *infoPtr, DWORD mask, DWORD style)
     dwTemp = infoPtr->dwExtStyle;
 
     if (style &  (CBES_EX_PATHWORDBREAKPROC |
-		  CBES_EX_NOSIZELIMIT |
-		  CBES_EX_CASESENSITIVE))
+		  CBES_EX_NOSIZELIMIT))
 	FIXME("Extended style not implemented %08lx\n", style);
 
     if (mask)
@@ -748,37 +751,21 @@ static BOOL COMBOEX_SetUnicodeFormat (COMBOEX_INFO *infoPtr, BOOL value)
 /* ***  CB_xxx message support  *** */
 
 static INT
-COMBOEX_FindStringExact (COMBOEX_INFO *infoPtr, INT start, LPCSTR str)
+COMBOEX_FindStringExact (COMBOEX_INFO *infoPtr, INT start, LPCWSTR str)
 {
-    INT i, count;
-    CBE_ITEMDATA *item;
-    LPWSTR desired = NULL;
-
-    i = MultiByteToWideChar (CP_ACP, 0, str, -1, NULL, 0);
-    if (i > 0) {
-	desired = (LPWSTR)COMCTL32_Alloc ((i + 1)*sizeof(WCHAR));
-	if (!desired) return CB_ERR;
-	MultiByteToWideChar (CP_ACP, 0, str, -1, desired, i);
-    }
-
-    count = SendMessageW (infoPtr->hwndCombo, CB_GETCOUNT, 0, 0);
+    INT i;
+    cmp_func_t cmptext = get_cmp_func(infoPtr);
+    INT count = SendMessageW (infoPtr->hwndCombo, CB_GETCOUNT, 0, 0);
 
     /* now search from after starting loc and wrapping back to start */
     for(i=start+1; i<count; i++) {
-	item = get_item_data(infoPtr, i);
-	if (lstrcmpiW(COMBOEX_GetText(infoPtr, item), desired) == 0) {
-	    COMCTL32_Free (desired);
-	    return i;
-	}
+	CBE_ITEMDATA *item = get_item_data(infoPtr, i);
+	if (cmptext(COMBOEX_GetText(infoPtr, item), str) == 0) return i;
     }
     for(i=0; i<=start; i++) {
-	item = get_item_data(infoPtr, i);
-	if (lstrcmpiW(COMBOEX_GetText(infoPtr, item), desired) == 0) {
-	    COMCTL32_Free (desired);
-	    return i;
-	}
+	CBE_ITEMDATA *item = get_item_data(infoPtr, i);
+	if (cmptext(COMBOEX_GetText(infoPtr, item), str) == 0) return i;
     }
-    COMCTL32_Free(desired);
     return CB_ERR;
 }
 
@@ -883,7 +870,6 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
     WCHAR EDIT[] = { 'E', 'D', 'I', 'T', 0 };
     WCHAR NIL[] = { 0 };
     COMBOEX_INFO *infoPtr;
-    DWORD dwComboStyle;
     LOGFONTW mylogfont;
     RECT wnrc1, clrc1, cmbwrc;
     INT i;
@@ -910,18 +896,11 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
     SetWindowLongW (hwnd, 0, (DWORD)infoPtr);
 
     /* create combo box */
-    dwComboStyle = GetWindowLongW (hwnd, GWL_STYLE) &
-			(CBS_SIMPLE|CBS_DROPDOWN|CBS_DROPDOWNLIST|WS_CHILD);
-
     GetWindowRect(hwnd, &wnrc1);
     GetClientRect(hwnd, &clrc1);
     TRACE("EX window=(%d,%d)-(%d,%d) client=(%d,%d)-(%d,%d)\n",
 	  wnrc1.left, wnrc1.top, wnrc1.right, wnrc1.bottom,
 	  clrc1.left, clrc1.top, clrc1.right, clrc1.bottom);
-    TRACE("combo style=%08lx, adding style=%08lx\n", dwComboStyle,
-          WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VSCROLL |
-          CBS_NOINTEGRALHEIGHT | CBS_DROPDOWNLIST |
-	  WS_CHILD | WS_VISIBLE | CBS_OWNERDRAWFIXED);
 
     /* Native version of ComboEx creates the ComboBox with DROPDOWNLIST */
     /* specified. It then creates it's own version of the EDIT control  */
@@ -935,7 +914,8 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
                          WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VSCROLL |
                          CBS_NOINTEGRALHEIGHT | CBS_DROPDOWNLIST |
 			 /* was base and is necessary */
-			 WS_CHILD | WS_VISIBLE | CBS_OWNERDRAWFIXED | dwComboStyle,
+			 WS_CHILD | WS_VISIBLE | CBS_OWNERDRAWFIXED |
+			 GetWindowLongW (hwnd, GWL_STYLE),
 			 cs->y, cs->x, cs->cx, cs->cy, hwnd,
 			 (HMENU) GetWindowLongW (hwnd, GWL_ID),
 			 GetWindowLongW (hwnd, GWL_HINSTANCE), NULL);
@@ -1081,13 +1061,14 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam, LPARAM lPa
 	InvalidateRect (infoPtr->hwndEdit, 0, TRUE);
 	cursel = SendMessageW (infoPtr->hwndCombo, CB_GETCURSEL, 0, 0);
 	if (cursel == -1) {
+            cmp_func_t cmptext = get_cmp_func(infoPtr);
 	    /* find match from edit against those in Combobox */
 	    GetWindowTextW (infoPtr->hwndEdit, wintext, 520);
 	    n = SendMessageW (infoPtr->hwndCombo, CB_GETCOUNT, 0, 0);
 	    for (cursel = 0; cursel < n; cursel++){
                 item = get_item_data(infoPtr, cursel);
 		if ((INT)item == CB_ERR) break;
-		if (!lstrcmpiW(COMBOEX_GetText(infoPtr, item), wintext)) break;
+		if (!cmptext(COMBOEX_GetText(infoPtr, item), wintext)) break;
 	    }
 	    if ((cursel == n) || ((INT)item == CB_ERR)) {
 		TRACE("failed to find match??? item=%p cursel=%d\n",
@@ -1737,12 +1718,13 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					 CB_GETCURSEL, 0, 0);
 
 		if (selected != -1) {
+                    cmp_func_t cmptext = get_cmp_func(infoPtr);
 		    item = COMBOEX_FindItem (infoPtr, selected);
 		    TRACE("handling VK_RETURN, selected = %d, selected_text=%s\n",
 			  selected, debugstr_txt(item->pszText));
 		    TRACE("handling VK_RETURN, edittext=%s\n",
 			  debugstr_w(edit_text));
-		    if (lstrcmpiW (COMBOEX_GetText(infoPtr, item), edit_text)) {
+		    if (cmptext (COMBOEX_GetText(infoPtr, item), edit_text)) {
 			/* strings not equal -- indicate edit has changed */
 			selected = -1;
 		    }
@@ -1837,9 +1819,6 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch (uMsg)
     {
-
-    case CB_FINDSTRINGEXACT:
-	    return COMBOEX_FindStringExact (infoPtr, (INT)wParam, (LPCSTR)lParam);
 
     case WM_DRAWITEM:
 	    /*
@@ -1953,11 +1932,10 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		 */
 		WCHAR edit_text[260];
 		LPCWSTR lastwrk;
-		INT selected;
-		CBE_ITEMDATA *item;
+                cmp_func_t cmptext = get_cmp_func(infoPtr);
 
-		selected = SendMessageW (infoPtr->hwndCombo,
-					 CB_GETCURSEL, 0, 0);
+		INT selected = SendMessageW (infoPtr->hwndCombo,
+					     CB_GETCURSEL, 0, 0);
 
 		/* lstrlenA( lastworkingURL ) */
 
@@ -1966,7 +1944,7 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    lastwrk = infoPtr->edit->pszText;
 		}
 		else {
-		    item = COMBOEX_FindItem (infoPtr, selected);
+		    CBE_ITEMDATA *item = COMBOEX_FindItem (infoPtr, selected);
 		    lastwrk = COMBOEX_GetText(infoPtr, item);
 		}
 
@@ -1975,8 +1953,8 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		TRACE("handling EN_CHANGE, edittext=%s\n",
 		      debugstr_w(edit_text));
 
-		/* lstrcmpiW is between lastworkingURL and GetWindowText */
-		if (lstrcmpiW (lastwrk, edit_text)) {
+		/* cmptext is between lastworkingURL and GetWindowText */
+		if (cmptext (lastwrk, edit_text)) {
 		    /* strings not equal -- indicate edit has changed */
 		    infoPtr->flags |= WCBE_EDITCHG;
 		}
@@ -2126,7 +2104,7 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 /*   Combo messages we need to process specially */
         case CB_FINDSTRINGEXACT:
-	    return COMBOEX_FindStringExact (infoPtr, (INT)wParam, (LPCSTR)lParam);
+	    return COMBOEX_FindStringExact (infoPtr, (INT)wParam, (LPCWSTR)lParam);
 
 	case CB_GETITEMDATA:
 	    return COMBOEX_GetItemData (infoPtr, (INT)wParam);
