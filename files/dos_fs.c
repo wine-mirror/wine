@@ -1027,6 +1027,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
     DWORD sp = 0, lp = 0;
     int tmplen, drive;
     UINT flags;
+    BOOL unixabsolute = *longpath == '/';
 
     TRACE("%s\n", debugstr_a(longpath));
 
@@ -1044,12 +1045,21 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
       return 0;
     }
 
+    /* check for drive letter */
+    if (!unixabsolute && longpath[1] == ':' ) {
+      tmpshortpath[0] = longpath[0];
+      tmpshortpath[1] = ':';
+      sp = 2;
+    }
+
     if ( ( drive = DOSFS_GetPathDrive ( &longpath )) == -1 ) return 0;
     flags = DRIVE_GetFlags ( drive );
 
-    tmpshortpath[0] = drive + 'A';
-    tmpshortpath[1] = ':';
-    sp = 2;
+    if (unixabsolute && drive != DRIVE_GetCurrentDrive()) {
+      tmpshortpath[0] = drive + 'A';
+      tmpshortpath[1] = ':';
+      sp = 2;
+    }
 
     while ( longpath[lp] ) {
 
