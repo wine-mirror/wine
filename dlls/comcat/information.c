@@ -21,6 +21,7 @@
 #include <string.h>
 #include "comcat.h"
 
+#include "winuser.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -389,7 +390,7 @@ static HRESULT COMCAT_GetCategoryDesc(HKEY key, LCID lcid, PWCHAR pszDesc,
     if (pszDesc == NULL) return E_INVALIDARG;
 
     /* FIXME: lcid comparisons are more complex than this! */
-    swprintf(valname, fmt, lcid);
+    wsprintfW(valname, fmt, lcid);
     res = RegQueryValueExW(key, valname, 0, &type, (LPBYTE)pszDesc, &size);
     if (res != ERROR_SUCCESS || type != REG_SZ) return CAT_E_NODESCRIPTION;
     pszDesc[size / sizeof(WCHAR)] = (WCHAR)0;

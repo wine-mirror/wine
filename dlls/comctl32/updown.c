@@ -29,7 +29,6 @@
 #include "winuser.h"
 #include "commctrl.h"
 #include "winnls.h"
-#include "ntddk.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -310,7 +309,7 @@ static BOOL UPDOWN_SetBuddyInt (UPDOWN_INFO *infoPtr)
    
     /* Regular window, so set caption to the number */
     if (infoPtr->Base == 16) fmt[1] = 'X';
-    len = swprintf(txt, fmt, infoPtr->CurVal);
+    len = wsprintfW(txt, fmt, infoPtr->CurVal);
 
 
     /* Do thousands seperation if necessary */

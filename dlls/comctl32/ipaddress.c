@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ntddk.h"
 #include "winbase.h"
 #include "commctrl.h"
 #include "wine/unicode.h"
@@ -284,7 +283,7 @@ static LRESULT IPADDRESS_SetAddress (IPADDRESS_INFO *infoPtr, DWORD ip_address)
 	IPPART_INFO* part = &infoPtr->Part[i];
         int value = ip_address & 0xff;
 	if ( (value >= part->LowerLimit) && (value <= part->UpperLimit) ) {
-	    swprintf (buf, fmt, value);
+	    wsprintfW (buf, fmt, value);
 	    SetWindowTextW (part->EditHwnd, buf);
 	    IPADDRESS_Notify (infoPtr, EN_CHANGE);
         }
@@ -332,7 +331,7 @@ static BOOL IPADDRESS_ConstrainField (IPADDRESS_INFO *infoPtr, int currentfield)
     
     if (newValue == curValue) return FALSE;
     
-    swprintf (field, fmt, newValue);
+    wsprintfW (field, fmt, newValue);
     TRACE("  field='%s'\n", debugstr_w(field));
     return SetWindowTextW (part->EditHwnd, field);
 }
