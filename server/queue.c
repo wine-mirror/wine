@@ -985,13 +985,6 @@ DECL_HANDLER(get_message_reply)
 }
 
 
-/* cleanup a queue when a window is deleted */
-DECL_HANDLER(cleanup_window_queue)
-{
-    queue_cleanup_window( current, get_user_full_handle(req->win) );
-}
-
-
 /* set a window timer */
 DECL_HANDLER(set_win_timer)
 {

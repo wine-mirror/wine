@@ -72,6 +72,5 @@ extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_SetExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_DeleteMsgQueue(void);
-extern void QUEUE_CleanupWindow( HWND hwnd );
 
 #endif  /* __WINE_QUEUE_H */

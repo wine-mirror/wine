@@ -1272,12 +1272,6 @@ enum message_type
 @END
 
 
-/* Cleanup a queue when a window is deleted */
-@REQ(cleanup_window_queue)
-    user_handle_t   win;       /* window handle */
-@END
-
-
 /* Set a window timer */
 @REQ(set_win_timer)
     user_handle_t   win;       /* window handle */

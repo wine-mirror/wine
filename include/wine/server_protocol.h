@@ -1420,14 +1420,6 @@ struct get_message_reply_request
 
 
 
-struct cleanup_window_queue_request
-{
-    struct request_header __header;
-    user_handle_t   win;
-};
-
-
-
 struct set_win_timer_request
 {
     struct request_header __header;
@@ -1763,7 +1755,6 @@ enum request
     REQ_get_message,
     REQ_reply_message,
     REQ_get_message_reply,
-    REQ_cleanup_window_queue,
     REQ_set_win_timer,
     REQ_kill_win_timer,
     REQ_create_serial,
@@ -1900,7 +1891,6 @@ union generic_request
     struct get_message_request get_message;
     struct reply_message_request reply_message;
     struct get_message_reply_request get_message_reply;
-    struct cleanup_window_queue_request cleanup_window_queue;
     struct set_win_timer_request set_win_timer;
     struct kill_win_timer_request kill_win_timer;
     struct create_serial_request create_serial;
@@ -1922,6 +1912,6 @@ union generic_request
     struct get_window_tree_request get_window_tree;
 };
 
-#define SERVER_PROTOCOL_VERSION 56
+#define SERVER_PROTOCOL_VERSION 57
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1531,11 +1531,6 @@ static void dump_get_message_reply_reply( const struct get_message_reply_request
     cur_pos += dump_varargs_bytes( req );
 }
 
-static void dump_cleanup_window_queue_request( const struct cleanup_window_queue_request *req )
-{
-    fprintf( stderr, " win=%08x", req->win );
-}
-
 static void dump_set_win_timer_request( const struct set_win_timer_request *req )
 {
     fprintf( stderr, " win=%08x,", req->win );
@@ -1859,7 +1854,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_message_request,
     (dump_func)dump_reply_message_request,
     (dump_func)dump_get_message_reply_request,
-    (dump_func)dump_cleanup_window_queue_request,
     (dump_func)dump_set_win_timer_request,
     (dump_func)dump_kill_win_timer_request,
     (dump_func)dump_create_serial_request,
@@ -1994,7 +1988,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_message_reply_reply,
     (dump_func)0,
     (dump_func)0,
-    (dump_func)0,
     (dump_func)dump_create_serial_reply,
     (dump_func)dump_get_serial_info_reply,
     (dump_func)0,
@@ -2125,7 +2118,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_message",
     "reply_message",
     "get_message_reply",
-    "cleanup_window_queue",
     "set_win_timer",
     "kill_win_timer",
     "create_serial",

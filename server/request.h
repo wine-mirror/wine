@@ -175,7 +175,6 @@ DECL_HANDLER(send_message);
 DECL_HANDLER(get_message);
 DECL_HANDLER(reply_message);
 DECL_HANDLER(get_message_reply);
-DECL_HANDLER(cleanup_window_queue);
 DECL_HANDLER(set_win_timer);
 DECL_HANDLER(kill_win_timer);
 DECL_HANDLER(create_serial);
@@ -311,7 +310,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_message,
     (req_handler)req_reply_message,
     (req_handler)req_get_message_reply,
-    (req_handler)req_cleanup_window_queue,
     (req_handler)req_set_win_timer,
     (req_handler)req_kill_win_timer,
     (req_handler)req_create_serial,

@@ -440,22 +440,6 @@ void QUEUE_DeleteMsgQueue(void)
 
 
 /***********************************************************************
- *           QUEUE_CleanupWindow
- *
- * Cleanup the queue to account for a window being deleted.
- */
-void QUEUE_CleanupWindow( HWND hwnd )
-{
-    SERVER_START_REQ( cleanup_window_queue )
-    {
-        req->win = hwnd;
-        SERVER_CALL();
-    }
-    SERVER_END_REQ;
-}
-
-
-/***********************************************************************
  *		GetWindowTask (USER.224)
  */
 HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
