@@ -1932,17 +1932,27 @@ HWND16 WINAPI SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
 HWND32 WINAPI SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
 {
   WND *wndPtr = WIN_FindWndPtr( hwndChild );
+  DWORD dwStyle = (wndPtr)?(wndPtr->dwStyle):0;
   WND *pWndNewParent = 
     (hwndNewParent) ? WIN_FindWndPtr( hwndNewParent ) : pWndDesktop;
-  WND *pWndOldParent =
-    (wndPtr)?(*wndPtr->pDriver->pSetParent)(wndPtr, pWndNewParent):NULL;
+  WND *pWndOldParent;
+
+  /* Windows hides the window first, then shows it again
+   * including the WM_SHOWWINDOW messages and all */
+  if (dwStyle & WS_VISIBLE)
+      ShowWindow32( hwndChild, SW_HIDE );
+
+  pWndOldParent = (wndPtr)?(*wndPtr->pDriver->pSetParent)(wndPtr, pWndNewParent):NULL;
 
   /* SetParent32 additionally needs to make hwndChild the topmost window
      in the x-order and send the expected WM_WINDOWPOSCHANGING and
      WM_WINDOWPOSCHANGED notification messages. 
   */
-  SetWindowPos32( hwndChild, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
-                              
+  SetWindowPos32( hwndChild, HWND_TOPMOST, 0, 0, 0, 0,
+      SWP_NOMOVE|SWP_NOSIZE|((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
+  /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
+   * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
+
   return pWndOldParent?pWndOldParent->hwndSelf:0;
 }
 
