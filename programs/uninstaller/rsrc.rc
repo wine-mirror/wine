@@ -3,6 +3,7 @@
  *
  * Copyright 2000 Andreas Mohr <andi@lisas.de>
  * Copyright 2003 Vincent Béron
+ * Copyright 2003 Ivan Leo Murray-Smith
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -92,6 +93,15 @@ STRINGTABLE {
 
 }
 /* End of French Resources */
+
+/* Italian Resources */
+LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
+
+STRINGTABLE {
+     IDS_APPNAME, "Disinstallatore"
+
+}
+/* End of Italian Resources */
 
 /* Portuguese Resources */
 LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL

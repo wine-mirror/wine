@@ -42,8 +42,8 @@ BEGIN
       MENUITEM SEPARATOR
       MENUITEM "&Sinistra",				IDM_LEFT
       MENUITEM "&Destra",			IDM_RIGHT
-      MENUITEM "&Su",				IDM_UP
-      MENUITEM "&Giù",				IDM_DOWN
+      MENUITEM "&Alto",				IDM_UP
+      MENUITEM "&Basso",				IDM_DOWN
     END
     POPUP "&Informazioni"
     BEGIN

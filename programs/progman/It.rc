@@ -26,11 +26,11 @@ MAIN_MENU MENU LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
 {
  POPUP "&File" {
    MENUITEM "&Nuovo...",              PM_NEW
-   MENUITEM "&Apri\tEnter",             PM_OPEN
+   MENUITEM "&Apri\tInvio",             PM_OPEN
    MENUITEM "&Sposta...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Copia...\tF8",             PM_COPY,      GRAYED
    MENUITEM "&Elimina\tEntf",           PM_DELETE
-   MENUITEM "&Proprietà...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM "&Proprietà...\tAlt+Invio",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
    MENUITEM "&Esegui...",          PM_EXECUTE
    MENUITEM SEPARATOR
