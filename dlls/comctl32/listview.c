@@ -2557,7 +2557,9 @@ static inline BOOL LISTVIEW_SetItemFocus(LISTVIEW_INFO *infoPtr, INT nItem)
     INT oldFocus = infoPtr->nFocusedItem;
     LVITEMW lvItem;
 
-    lvItem.state =  LVIS_FOCUSED;
+    if (nItem == infoPtr->nFocusedItem) return FALSE;
+    
+    lvItem.state =  nItem == -1 ? 0 : LVIS_FOCUSED;
     lvItem.stateMask = LVIS_FOCUSED;
     LISTVIEW_SetItemState(infoPtr, nItem, &lvItem);
 
@@ -2979,6 +2981,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
 	{
 	    if (lpLVItem->state & LVIS_FOCUSED)
 	    {
+		LISTVIEW_SetItemFocus(infoPtr, -1);
 		infoPtr->nFocusedItem = lpLVItem->iItem;
     	        LISTVIEW_EnsureVisible(infoPtr, lpLVItem->iItem, FALSE);
 	    }
@@ -3087,7 +3090,6 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, B
 static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    INT nOldFocus = infoPtr->nFocusedItem;
     LPWSTR pszText = NULL;
     BOOL bResult, bChanged = FALSE;
     
@@ -3116,9 +3118,6 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     /* redraw item, if necessary */
     if (bChanged && !infoPtr->bIsDrawing)
     {
-	if (nOldFocus != infoPtr->nFocusedItem && infoPtr->bFocus)
-	    LISTVIEW_InvalidateRect(infoPtr, &infoPtr->rcFocus);
-	
 	/* this little optimization eliminates some nasty flicker */
 	if ( uView == LVS_REPORT && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
 	     (!(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) || lpLVItem->iSubItem) )
