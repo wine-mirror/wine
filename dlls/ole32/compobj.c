@@ -1377,6 +1377,17 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 }
 
 /****************************************************************************************
+ *        CoResumeClassObjects
+ *
+ * Resumes classobjects registered with REGCLS suspended
+ */
+HRESULT WINAPI CoResumeClassObjects(void)
+{
+	FIXME("\n");
+	return S_OK;
+}
+
+/****************************************************************************************
  *        GetClassFile
  *
  * This function supplies the CLSID associated with the given filename.

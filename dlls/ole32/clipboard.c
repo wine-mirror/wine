@@ -1091,11 +1091,11 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
    * Declare "This" pointer 
    */
   ICOM_THIS(OLEClipbrd, iface);
+ 
+  TRACE("(%p,%p,%p)\n", iface, pformatetcIn, pmedium);
 
-  if ( !pformatetcIn || !pformatetcIn || !pmedium )
+  if ( !pformatetcIn || !pmedium )
     return E_INVALIDARG;
-
-  TRACE("(%p, %p)\n", iface, pformatetcIn);
 
   /*
    * If we have a data source placed on the clipboard (via OleSetClipboard)
@@ -1238,6 +1238,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_SetData(
 	    STGMEDIUM*       pmedium, 
 	    BOOL             fRelease)
 {
+  TRACE("\n");
   return E_NOTIMPL;
 }
 
@@ -1363,6 +1364,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_DAdvise(
 	    IAdviseSink*     pAdvSink, 
 	    DWORD*           pdwConnection)
 {
+  TRACE("\n");
   return E_NOTIMPL;
 }
 
@@ -1377,6 +1379,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_DUnadvise(
 	    IDataObject*     iface,
 	    DWORD            dwConnection)
 {
+  TRACE("\n");
   return E_NOTIMPL;
 }
 
@@ -1391,6 +1394,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_EnumDAdvise(
 	    IDataObject*     iface,
 	    IEnumSTATDATA**  ppenumAdvise)
 {
+  TRACE("\n");
   return E_NOTIMPL;
 }
 

@@ -173,7 +173,7 @@ type	win32
 170 stub CoGetInstanceFromIStorage  # stdcall (ptr ptr ptr long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
 171 stub CoRegisterPSClsid          # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
 172 stub CoReleaseServerProcess     # stdcall () return 0,ERR_NOTIMPLEMENTED
-173 stub CoResumeClassObjects       # stdcall () return 0,ERR_NOTIMPLEMENTED
+173 stdcall CoResumeClassObjects() CoResumeClassObjects
 174 stub CoRevertToSelf             # stdcall () return 0,ERR_NOTIMPLEMENTED
 175 stub CoSetProxyBlanket          # stdcall (ptr long long wstr long long ptr long) return 0,ERR_NOTIMPLEMENTED
 176 stub CoSuspendClassObjects      # stdcall () return 0,ERR_NOTIMPLEMENTED
