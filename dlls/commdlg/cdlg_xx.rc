@@ -312,3 +312,54 @@ PD32_NOCOLLATE ICON
  'FF FF F0 FF FF FC 3F FF FF FF FF E7 FF FF F9 FF'
  'FF FE 7F F0 00 00'
 }
+
+/******************
+ * Bitmap
+ */
+
+IDB_TOOLBAR 	BITMAP DISCARDABLE
+{'
+42 4d b6 02 00 00 00 00 00 00 76 00 00 00 28 00
+00 00 41 00 00 00 10 00 00 00 01 00 04 00 00 00
+00 00 40 02 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 80
+00 00 00 80 80 00 80 00 00 00 80 00 80 00 80 80
+00 00 c0 c0 c0 00 80 80 80 00 00 00 ff 00 00 ff
+00 00 00 ff ff 00 ff 00 00 00 ff 00 ff 00 ff ff
+00 00 ff ff ff 00 aa aa aa aa aa aa aa aa aa aa
+aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa
+aa aa aa aa aa aa a3 00 b6 01 aa aa aa 88 88 8a
+aa aa 00 00 00 00 00 0a aa aa 44 4a aa aa aa aa
+aa aa 88 80 00 0f 00 0f 00 0f ab 00 db 02 aa aa
+a0 00 00 8a aa aa 0b bb bb bb bb 0a aa aa 4f 4a
+00 0a aa aa aa aa f7 8f ff ff ff ff ff ff a9 02
+2a 02 aa aa a0 77 70 8a aa aa 0b bb bb bb bb 9a
+aa aa 44 aa aa aa aa aa aa aa f7 80 00 0f 00 0f
+00 0f a2 00 02 00 aa aa a0 77 70 8a aa aa 0b bb
+bb bb bb 9a aa aa aa aa aa aa aa aa aa aa f7 8f
+ff ff ff ff ff ff a4 f8 15 00 aa aa a0 77 70 8a
+aa aa 0b bb bb b9 bb 9a a9 aa aa aa aa aa aa aa
+aa aa f7 80 00 0f 00 0f 00 0f a2 00 02 00 aa aa
+a0 77 70 8a aa aa 0b bb bb bb 9b 9a 9a aa 44 4a
+aa aa 44 4a aa aa f7 8f ff ff ff ff ff ff a0 00
+ad 00 aa aa a0 77 70 8a aa aa 0b bb bb bb b9 99
+aa aa 4f 4a 00 0a 4f 4a 00 0a f7 80 00 0f 00 0f
+00 0f a1 00 b5 00 aa aa a0 77 70 88 8a aa 00 00
+00 99 99 99 99 9a 44 aa aa aa 44 aa aa aa f7 8f
+ff ff ff ff ff ff ad 01 0b 02 aa 00 00 77 70 00
+0a aa a0 bb bb 0a a9 99 aa aa aa aa aa aa aa aa
+aa aa f7 80 00 0f 00 0f 00 0f a9 01 5d 01 aa a0
+f7 77 77 70 aa aa aa 00 00 aa 9a 9a 9a aa aa aa
+aa aa aa aa aa aa f7 8f ff ff ff ff ff ff a0 01
+63 01 aa aa 0f 77 77 0a aa aa aa aa aa a9 aa 9a
+a9 aa 44 4a aa aa 44 4a aa aa 88 88 88 88 88 88
+88 88 ab 01 0f 01 aa aa a0 f7 70 aa aa aa aa aa
+aa aa aa 9a aa aa 4f 4a 00 0a 4f 4a 00 0a f7 8f
+77 78 f7 78 f7 78 a8 01 7d 01 aa aa aa 0f 0a aa
+aa aa aa aa aa aa aa 9a aa aa 44 aa aa aa 44 aa
+aa aa f7 8f 77 78 f7 78 f7 78 ae 01 62 02 aa aa
+aa a0 aa aa aa aa aa aa aa aa aa 9a aa aa aa aa
+aa aa aa aa aa aa ff ff ff ff ff ff ff f7 a2 01
+b9 01 aa aa aa aa aa aa aa aa aa aa aa aa aa aa
+aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa
+aa aa a2 00 43 02'}
