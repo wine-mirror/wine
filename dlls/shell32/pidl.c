@@ -1940,7 +1940,7 @@ LPSTR _ILGetSTextPointer(LPCITEMIDLIST pidl)
  *
  * returns reference to guid stored in some pidls
  */
-REFIID _ILGetGUIDPointer(LPCITEMIDLIST pidl)
+IID* _ILGetGUIDPointer(LPCITEMIDLIST pidl)
 {
 	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
 
@@ -1953,7 +1953,7 @@ REFIID _ILGetGUIDPointer(LPCITEMIDLIST pidl)
 	  {
 	    case PT_SHELLEXT:
 	    case PT_GUID:
-	      return (REFIID) &(pdata->u.guid.guid);
+	      return &(pdata->u.guid.guid);
 
 	    default:
 		TRACE("Unknown pidl type 0x%04x\n", pdata->type);
