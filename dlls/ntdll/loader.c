@@ -123,7 +123,8 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward )
 
     if (!(wm = MODULE_FindModule( mod_name )))
     {
-        ERR("module not found for forward '%s' used by '%s'\n", forward, current_modref->filename );
+        ERR("module not found for forward '%s' used by '%s'\n",
+            forward, get_modref(module)->filename );
         return NULL;
     }
     if ((exports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
@@ -134,7 +135,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward )
     {
         ERR("function not found for forward '%s' used by '%s'."
             " If you are using builtin '%s', try using the native one instead.\n",
-            forward, current_modref->filename, current_modref->modname );
+            forward, get_modref(module)->filename, get_modref(module)->modname );
     }
     return proc;
 }
