@@ -527,13 +527,13 @@ static DummyDispatch dispatch;
 static ULONG WINAPI DummyDispatch_AddRef(LPDISPATCH iface)
 {
   trace("AddRef(%p)\n", iface);
-  return ++((DummyDispatch*)iface)->ref;
+  return InterlockedIncrement(&((DummyDispatch*)iface)->ref);
 }
 
 static ULONG WINAPI DummyDispatch_Release(LPDISPATCH iface)
 {
   trace("Release(%p)\n", iface);
-  return ((DummyDispatch*)iface)->ref--;
+  return InterlockedDecrement(&((DummyDispatch*)iface)->ref);
 }
 
 static HRESULT WINAPI DummyDispatch_QueryInterface(LPDISPATCH iface,

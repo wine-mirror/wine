@@ -284,17 +284,19 @@ static ULONG WINAPI IAVIFile_fnAddRef(IAVIFile *iface)
   IAVIFileImpl *This = (IAVIFileImpl *)iface;
 
   TRACE("(%p) -> %ld\n", iface, This->ref + 1);
-  return ++(This->ref);
+  return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
 {
   IAVIFileImpl *This = (IAVIFileImpl *)iface;
   UINT i;
+  ULONG ret;
 
   TRACE("(%p) -> %ld\n", iface, This->ref - 1);
 
-  if (!--(This->ref)) {
+  ret = InterlockedDecrement(&This->ref);
+  if (!ret) {
     if (This->fDirty) {
       /* need to write headers to file */
       AVIFILE_SaveFile(This);
@@ -334,9 +336,8 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
     }
 
     LocalFree((HLOCAL)This);
-    return 0;
   }
-  return This->ref;
+  return ret;
 }
 
 static HRESULT WINAPI IAVIFile_fnInfo(IAVIFile *iface, LPAVIFILEINFOW afi,
@@ -743,27 +744,20 @@ static ULONG WINAPI IAVIStream_fnAddRef(IAVIStream *iface)
   if (This->paf != NULL)
     IAVIFile_AddRef((PAVIFILE)This->paf);
 
-  return ++(This->ref);
+  return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IAVIStream_fnRelease(IAVIStream* iface)
 {
   IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
+  ULONG ret = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref - 1);
-
-  /* we belong to the AVIFile, which must free us! */
-  if (This->ref == 0) {
-    ERR(": already released!\n");
-    return 0;
-  }
-
-  This->ref--;
+  TRACE("(%p) -> %ld\n", iface, ret);
 
   if (This->paf != NULL)
     IAVIFile_Release((PAVIFILE)This->paf);
 
-  return This->ref;
+  return ret;
 }
 
 static HRESULT WINAPI IAVIStream_fnCreate(IAVIStream *iface, LPARAM lParam1,
