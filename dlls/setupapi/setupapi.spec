@@ -195,7 +195,7 @@
 @ stdcall SetupGetFileQueueFlags(long ptr)
 @ stub SetupGetInfFileListA
 @ stub SetupGetInfFileListW
-@ stub SetupGetInfInformationA
+@ stdcall SetupGetInfInformationA(ptr long ptr long ptr)
 @ stub SetupGetInfInformationW
 @ stdcall SetupGetIntField(ptr long ptr)
 @ stdcall SetupGetLineByIndexA(long str long ptr)

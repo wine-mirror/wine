@@ -834,3 +834,9 @@ BOOL WINAPI MSI_DllCanUnloadNow(void)
 {
     return FALSE;
 }
+
+HRESULT WINAPI MSI_DllRegisterServer(void)
+{
+    FIXME("Stub!\n");
+    return S_OK;
+}

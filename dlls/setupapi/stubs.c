@@ -195,3 +195,14 @@ void WINAPI InstallHinfSection(HWND hwnd, HINSTANCE handle, LPCSTR cmdline, INT 
 {
     FIXME("stub, hwnd %p, handle %p, cmdline %s\n", hwnd, handle, debugstr_a(cmdline));
 }
+
+/***********************************************************************
+ *		SetupGetInfInformationA    (SETUPAPI.@)
+ */
+BOOL WINAPI SetupGetInfInformationA( LPCVOID InfSpec, DWORD SearchControl,
+                                     PSP_INF_INFORMATION ReturnBuffer,
+                                     DWORD ReturnBufferSize, PDWORD RequiredSize)
+{
+    FIXME("(%p, %d, %p, %d, %p) Stub!\n");
+    return TRUE;
+}
