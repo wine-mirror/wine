@@ -973,8 +973,12 @@ void WINAPI DirectedYield( HTASK16 hTask )
         return;
     }
 
+    TRACE(task, "%04x: DirectedYield(%04x)\n", pCurTask->hSelf, hTask );
+
     pCurTask->hYieldTo = hTask;
     OldYield();
+
+    TRACE(task, "%04x: back from DirectedYield(%04x)\n", pCurTask->hSelf, hTask );
 }
 
 
