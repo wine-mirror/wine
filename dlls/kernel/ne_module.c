@@ -2268,7 +2268,7 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod)
  *		MapHInstLS			(KERNEL32.@)
  *		MapHInstLS			(KERNEL.472)
  */
-void WINAPI MapHInstLS( CONTEXT86 *context )
+void MapHInstLS( CONTEXT86 *context )
 {
     context->Eax = MapHModuleLS( (HMODULE)context->Eax );
 }
@@ -2277,7 +2277,7 @@ void WINAPI MapHInstLS( CONTEXT86 *context )
  *		MapHInstSL			(KERNEL32.@)
  *		MapHInstSL			(KERNEL.473)
  */
-void WINAPI MapHInstSL( CONTEXT86 *context )
+void MapHInstSL( CONTEXT86 *context )
 {
     context->Eax = (DWORD)MapHModuleSL( context->Eax );
 }
@@ -2285,7 +2285,7 @@ void WINAPI MapHInstSL( CONTEXT86 *context )
 /***************************************************************************
  *		MapHInstLS_PN			(KERNEL32.@)
  */
-void WINAPI MapHInstLS_PN( CONTEXT86 *context )
+void MapHInstLS_PN( CONTEXT86 *context )
 {
     if (context->Eax) context->Eax = MapHModuleLS( (HMODULE)context->Eax );
 }
@@ -2293,7 +2293,7 @@ void WINAPI MapHInstLS_PN( CONTEXT86 *context )
 /***************************************************************************
  *		MapHInstSL_PN			(KERNEL32.@)
  */
-void WINAPI MapHInstSL_PN( CONTEXT86 *context )
+void MapHInstSL_PN( CONTEXT86 *context )
 {
     if (context->Eax) context->Eax = (DWORD)MapHModuleSL( context->Eax );
 }

@@ -980,7 +980,7 @@ BOOL WINAPI LocalUnlock(
  *
  *       The SEGPTR is used by the caller!
  */
-void WINAPI AllocMappedBuffer( CONTEXT86 *context )
+void AllocMappedBuffer( CONTEXT86 *context )
 {
     HGLOBAL handle = GlobalAlloc(0, context->Edi + 8);
     DWORD *buffer = (DWORD *)GlobalLock(handle);
@@ -1013,7 +1013,7 @@ void WINAPI AllocMappedBuffer( CONTEXT86 *context )
  *
  * Input: EDI register: pointer to buffer
  */
-void WINAPI FreeMappedBuffer( CONTEXT86 *context )
+void FreeMappedBuffer( CONTEXT86 *context )
 {
     if (context->Edi)
     {
