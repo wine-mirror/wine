@@ -82,19 +82,19 @@ static BRUSHOBJ NullBrush =
 static PENOBJ WhitePen =
 {
     { 0, PEN_MAGIC, 1 },                     /* header */
-    { PS_SOLID, { 1, 0 }, RGB(255,255,255) } /* logpen */
+    { PS_SOLID, { 0, 0 }, RGB(255,255,255) } /* logpen */
 };
 
 static PENOBJ BlackPen =
 {
     { 0, PEN_MAGIC, 1 },               /* header */
-    { PS_SOLID, { 1, 0 }, RGB(0,0,0) } /* logpen */
+    { PS_SOLID, { 0, 0 }, RGB(0,0,0) } /* logpen */
 };
 
 static PENOBJ NullPen =
 {
     { 0, PEN_MAGIC, 1 },      /* header */
-    { PS_NULL, { 1, 0 }, 0 }  /* logpen */
+    { PS_NULL, { 0, 0 }, 0 }  /* logpen */
 };
 
 static FONTOBJ OEMFixedFont =
