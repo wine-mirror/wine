@@ -22,8 +22,6 @@
 #include "keyboard.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(relay)
-DECLARE_DEBUG_CHANNEL(system)
 DECLARE_DEBUG_CHANNEL(thunk)
 
 
@@ -43,18 +41,15 @@ extern LONG CALLBACK THUNK_CallTo16_long_ll   (FARPROC16,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
-extern LONG CALLBACK THUNK_CallTo16_long_wwl  (FARPROC16,WORD,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern LONG CALLBACK THUNK_CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
 extern LONG CALLBACK THUNK_CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
 /* ### stop build ### */
 
 
@@ -129,7 +124,38 @@ BOOL THUNK_Init(void)
  */
 FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay )
 {
-    THUNK *thunk = HeapAlloc( GetProcessHeap(), 0, sizeof(*thunk) );
+    HANDLE16 hSeg;
+    NE_MODULE *pModule;
+    THUNK *thunk;
+
+    /* NULL maps to NULL */
+    if ( !func ) return NULL;
+
+    /* 
+     * If we got an 16-bit built-in API entry point, retrieve the Wine
+     * 32-bit handler for that API routine.
+     *
+     * NOTE: For efficiency reasons, we only check whether the selector
+     *       of 'func' points to the code segment of a built-in module.
+     *       It might be theoretically possible that the offset is such
+     *       that 'func' does not point, in fact, to an API entry point.
+     *       In this case, however, the pointer is corrupt anyway.
+     */
+    hSeg = GlobalHandle16( SELECTOROF( func ) );
+    pModule = NE_GetPtr( FarGetOwner16( hSeg ) );
+
+    if ( pModule && (pModule->flags & NE_FFLAGS_BUILTIN) 
+                 && NE_SEG_TABLE(pModule)[0].hSeg == hSeg )
+    {
+        FARPROC proc = (FARPROC)((ENTRYPOINT16 *)PTR_SEG_TO_LIN( func ))->target;
+
+        TRACE_(thunk)( "(%04x:%04x, %p) -> built-in API %p\n",
+                       SELECTOROF( func ), OFFSETOF( func ), relay, proc );
+        return proc;
+    }
+
+    /* Otherwise, we need to alloc a thunk */
+    thunk = HeapAlloc( SystemHeap, 0, sizeof(*thunk) );
     if (thunk)
     {
         thunk->popl_eax   = 0x58;
@@ -142,20 +168,11 @@ FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay )
         thunk->next       = firstThunk;
         firstThunk = thunk;
     }
+
+    TRACE_(thunk)( "(%04x:%04x, %p) -> allocated thunk %p\n",
+                   SELECTOROF( func ), OFFSETOF( func ), relay, thunk );
     return (FARPROC)thunk;
 }
-
-
-/***********************************************************************
- *           THUNK_Find
- */
-FARPROC THUNK_Find( FARPROC16 func )
-{
-    THUNK *thunk = firstThunk;
-    while (thunk && (thunk->proc != func)) thunk = thunk->next;
-    return (FARPROC)thunk;
-}
-
 
 /***********************************************************************
  *           THUNK_Free
@@ -163,18 +180,18 @@ FARPROC THUNK_Find( FARPROC16 func )
 void THUNK_Free( FARPROC thunk )
 {
     THUNK *t = (THUNK*)thunk;
-    if(IsBadReadPtr(&(t->magic), sizeof(t->magic)) ||
-       t->magic != CALLTO16_THUNK_MAGIC)
+    if ( !t || IsBadReadPtr( t, sizeof(*t) ) 
+            || t->magic != CALLTO16_THUNK_MAGIC )
          return;
 
-    if (HEAP_IsInsideHeap( GetProcessHeap(), 0, t ))
+    if (HEAP_IsInsideHeap( SystemHeap, 0, t ))
     {
         THUNK **prev = &firstThunk;
         while (*prev && (*prev != t)) prev = &(*prev)->next;
         if (*prev)
         {
             *prev = t->next;
-            HeapFree( GetProcessHeap(), 0, t );
+            HeapFree( SystemHeap, 0, t );
             return;
         }
     }
@@ -182,14 +199,6 @@ void THUNK_Free( FARPROC thunk )
     return;
 }
 
-
-/***********************************************************************
- *           THUNK_GetProc
- */
-FARPROC16 THUNK_GetProc( FARPROC thunk )
-{
-    return ((THUNK *)thunk)->proc;
-}
 
 /***********************************************************************
  *           THUNK_EnumObjects16   (GDI.71)
@@ -316,313 +325,6 @@ BOOL16 WINAPI THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr,
                              x, y, cx, cy );
 }
 
-
-/***********************************************************************
- *           THUNK_SetWindowsHook16   (USER.121)
- */
-FARPROC16 WINAPI THUNK_SetWindowsHook16( INT16 id, HOOKPROC16 proc )
-{
-    HINSTANCE16 hInst = FarGetOwner16( HIWORD(proc) );
-    HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
-    FARPROC thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)THUNK_CallTo16_long_wwl );
-    if (!thunk) return 0;
-    return (FARPROC16)SetWindowsHookEx16( id, (HOOKPROC16)thunk, hInst, hTask);
-}
-
-
-/***********************************************************************
- *           THUNK_UnhookWindowsHook16   (USER.234)
- */
-BOOL16 WINAPI THUNK_UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
-{
-    BOOL16 ret;
-    FARPROC thunk = THUNK_Find( (FARPROC16)proc );
-    if (!thunk) return FALSE;
-    ret = UnhookWindowsHook16( id, (HOOKPROC16)thunk );
-    THUNK_Free( thunk );
-    return ret;
-}
-
-
-/***********************************************************************
- *           THUNK_SetWindowsHookEx16   (USER.291)
- */
-HHOOK WINAPI THUNK_SetWindowsHookEx16( INT16 id, HOOKPROC16 proc,
-                                       HINSTANCE16 hInst, HTASK16 hTask )
-{
-    FARPROC thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)THUNK_CallTo16_long_wwl );
-    if (!thunk) return 0;
-    return SetWindowsHookEx16( id, (HOOKPROC16)thunk, hInst, hTask );
-}
-
-
-/***********************************************************************
- *           THUNK_UnhookWindowHookEx16   (USER.292)
- */
-BOOL16 WINAPI THUNK_UnhookWindowsHookEx16( HHOOK hhook )
-{
-    FARPROC thunk = (FARPROC)HOOK_GetProc16( hhook );
-    BOOL16 ret = UnhookWindowsHookEx16( hhook );
-    if (thunk) THUNK_Free( thunk );
-    return ret;
-}
-
-
-
-static FARPROC16 defDCHookProc = NULL;
-
-/***********************************************************************
- *           THUNK_SetDCHook   (GDI.190)
- */
-BOOL16 WINAPI THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
-{
-    FARPROC thunk, oldThunk;
-
-    if (!defDCHookProc)  /* Get DCHook Win16 entry point */
-    {
-        HMODULE16 hModule = GetModuleHandle16( "USER" );
-        NE_MODULE *pModule = NE_GetPtr( hModule );
-
-        if ( pModule && (pModule->flags & NE_FFLAGS_BUILTIN) )
-            defDCHookProc = NE_GetEntryPoint( hModule, 362 );
-        else
-            defDCHookProc = (FARPROC16)-1;
-    }
-
-    if (!proc)
-        thunk = NULL;
-    else if (proc != defDCHookProc)
-    {
-        thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallTo16_word_wwll );
-        if (!thunk) return FALSE;
-    }
-    else thunk = (FARPROC)DCHook16;
-
-    /* Free the previous thunk */
-    GetDCHook( hdc, (FARPROC16 *)&oldThunk );
-    if (oldThunk && (oldThunk != (FARPROC)DCHook16)) THUNK_Free( oldThunk );
-
-    return SetDCHook( hdc, thunk, dwHookData );
-}
-
-
-/***********************************************************************
- *           THUNK_GetDCHook   (GDI.191)
- */
-DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
-{
-    FARPROC thunk = NULL;
-    DWORD ret = GetDCHook( hdc, &thunk );
-    if (thunk)
-    {
-        if (thunk == (FARPROC)DCHook16)
-        {
-	    /* Note: we can only get here when running built-in USER */
-
-            if (!defDCHookProc)  /* Get DCHook Win16 entry point */
-                defDCHookProc = NE_GetEntryPoint(GetModuleHandle16("USER"),362);
-
-            *phookProc = defDCHookProc;
-        }
-        else *phookProc = THUNK_GetProc(thunk);
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *           THUNK_SetTaskSignalProc (KERNEL.38)
- */
-FARPROC16 WINAPI THUNK_SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
-{
-    FARPROC thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallTo16_word_wwwww );
-    if ( !thunk ) return NULL;
-
-    thunk = (FARPROC)SetTaskSignalProc( hTask, (FARPROC16)thunk );
-    if ( !thunk ) return NULL;
-
-    proc = THUNK_GetProc(thunk);
-    THUNK_Free( thunk );
-    return proc;
-}
-
-/***********************************************************************
- *           THUNK_CreateThread16   (KERNEL.441)
- */
-static DWORD CALLBACK THUNK_StartThread16( LPVOID threadArgs )
-{
-    FARPROC16 start = ((FARPROC16 *)threadArgs)[0];
-    DWORD     param = ((DWORD *)threadArgs)[1];
-    HeapFree( GetProcessHeap(), 0, threadArgs );
-
-    return THUNK_CallTo16_long_l( start, param );
-}
-HANDLE WINAPI THUNK_CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
-                                      FARPROC16 start, SEGPTR param,
-                                      DWORD flags, LPDWORD id )
-{
-    DWORD *threadArgs = HeapAlloc( GetProcessHeap(), 0, 2*sizeof(DWORD) );
-    if (!threadArgs) return INVALID_HANDLE_VALUE;
-    threadArgs[0] = (DWORD)start;
-    threadArgs[1] = (DWORD)param;
-
-    return CreateThread( sa, stack, THUNK_StartThread16, threadArgs, flags, id );
-}
-
-/***********************************************************************
- *           THUNK_MOUSE_Enable   (MOUSE.2)
- */
-static VOID WINAPI THUNK_CallMouseEventProc( FARPROC16 proc, 
-                                             DWORD dwFlags, DWORD dx, DWORD dy,
-                                             DWORD cButtons, DWORD dwExtraInfo )
-{
-    CONTEXT86 context;
-
-    memset( &context, 0, sizeof(context) );
-    CS_reg(&context)  = SELECTOROF( proc );
-    EIP_reg(&context) = OFFSETOF( proc );
-    AX_reg(&context)  = (WORD)dwFlags;
-    BX_reg(&context)  = (WORD)dx;
-    CX_reg(&context)  = (WORD)dy;
-    DX_reg(&context)  = (WORD)cButtons;
-    SI_reg(&context)  = LOWORD( dwExtraInfo );
-    DI_reg(&context)  = HIWORD( dwExtraInfo );
-
-    CallTo16RegisterShort( &context, 0 );
-}
-VOID WINAPI THUNK_MOUSE_Enable( FARPROC16 proc )
-{
-    static FARPROC lastThunk = NULL;
-    static FARPROC16 lastProc = NULL;
-
-    if ( lastProc != proc )
-    {
-        if ( lastThunk ) 
-            THUNK_Free( lastThunk );
-
-        if ( !proc )
-            lastThunk = NULL;
-        else
-            lastThunk = THUNK_Alloc( proc, (RELAY)THUNK_CallMouseEventProc );
-
-        lastProc = proc;
-    }
-
-    MOUSE_Enable( (LPMOUSE_EVENT_PROC)lastThunk );
-}
-
-/***********************************************************************
- *           GetMouseEventProc   (USER.337)
- */
-FARPROC16 WINAPI GetMouseEventProc16(void)
-{
-    HMODULE16 hmodule = GetModuleHandle16("USER");
-    return NE_GetEntryPoint( hmodule, NE_GetOrdinal( hmodule, "mouse_event" ));
-}
-
-
-/***********************************************************************
- *           WIN16_mouse_event   (USER.299)
- */
-void WINAPI WIN16_mouse_event( CONTEXT86 *context )
-{
-    mouse_event( AX_reg(context), BX_reg(context), CX_reg(context),
-                 DX_reg(context), MAKELONG(SI_reg(context), DI_reg(context)) );
-}
-
-
-/***********************************************************************
- *           THUNK_KEYBD_Enable   (KEYBOARD.2)
- */
-static VOID WINAPI THUNK_CallKeybdEventProc( FARPROC16 proc, 
-                                             BYTE bVk, BYTE bScan,
-                                             DWORD dwFlags, DWORD dwExtraInfo )
-{
-    CONTEXT86 context;
-
-    memset( &context, 0, sizeof(context) );
-    CS_reg(&context)  = SELECTOROF( proc );
-    EIP_reg(&context) = OFFSETOF( proc );
-    AH_reg(&context)  = (dwFlags & KEYEVENTF_KEYUP)? 0x80 : 0;
-    AL_reg(&context)  = bVk;
-    BH_reg(&context)  = (dwFlags & KEYEVENTF_EXTENDEDKEY)? 1 : 0;
-    BL_reg(&context)  = bScan;
-    SI_reg(&context)  = LOWORD( dwExtraInfo );
-    DI_reg(&context)  = HIWORD( dwExtraInfo );
-
-    CallTo16RegisterShort( &context, 0 );
-}
-VOID WINAPI THUNK_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
-{
-    static FARPROC lastThunk = NULL;
-    static FARPROC16 lastProc = NULL;
-
-    if ( lastProc != proc )
-    {
-        if ( lastThunk ) 
-            THUNK_Free( lastThunk );
-
-        if ( !proc )
-            lastThunk = NULL;
-        else
-            lastThunk = THUNK_Alloc( proc, (RELAY)THUNK_CallKeybdEventProc );
-
-        lastProc = proc;
-    }
-
-    KEYBOARD_Enable( (LPKEYBD_EVENT_PROC)lastThunk, lpKeyState );
-}
-
-/***********************************************************************
- *           WIN16_keybd_event   (USER.289)
- */
-void WINAPI WIN16_keybd_event( CONTEXT86 *context )
-{
-    DWORD dwFlags = 0;
-    
-    if (AH_reg(context) & 0x80) dwFlags |= KEYEVENTF_KEYUP;
-    if (BH_reg(context) & 1   ) dwFlags |= KEYEVENTF_EXTENDEDKEY;
-
-    keybd_event( AL_reg(context), BL_reg(context), 
-                 dwFlags, MAKELONG(SI_reg(context), DI_reg(context)) );
-}
-
-
-/***********************************************************************
- *           WIN16_CreateSystemTimer   (SYSTEM.2)
- */
-static void THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
-{
-    CONTEXT86 context;
-    memset( &context, '\0', sizeof(context) );
-
-    CS_reg( &context )  = SELECTOROF( proc );
-    EIP_reg( &context ) = OFFSETOF( proc );
-    EBP_reg( &context ) = OFFSETOF( NtCurrentTeb()->cur_stack )
-                          + (WORD)&((STACK16FRAME*)0)->bp;
-
-    AX_reg( &context ) = timer;
-
-    if ( _ConfirmWin16Lock() )
-    {
-        FIXME_(system)("Skipping timer %d callback because timer signal "
-                       "arrived while we own the Win16Lock!\n", timer );
-        return;
-    }
-
-    CallTo16RegisterShort( &context, 0 ); 
-
-    /* FIXME: This does not work if the signal occurs while this thread
-              is currently in 16-bit code. With the current structure
-              of the Wine thunking code, this seems to be hard to fix ... */
-}
-WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
-{
-    FARPROC thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallSystemTimerProc );
-    WORD timer = CreateSystemTimer( rate, (SYSTEMTIMERPROC)thunk );
-    if (!timer) THUNK_Free( thunk );
-    return timer;
-}
 
 /***********************************************************************
  *           THUNK_GetCalloutThunk

@@ -21,8 +21,6 @@ extern int (*IF1632_CallLargeStack)( int (*func)(void), void *arg );
 typedef void (*RELAY)();
 extern FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay );
 extern void THUNK_Free( FARPROC thunk );
-extern FARPROC16 THUNK_GetProc( FARPROC thunk );
-extern FARPROC THUNK_Find( FARPROC16 func );
 
 typedef struct
 {
