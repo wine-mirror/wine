@@ -133,119 +133,6 @@ static struct
 };
 
 
-  /* Include OEM icons */
-#include "bitmaps/oic_sample"
-#include "bitmaps/oic_hand"
-#include "bitmaps/oic_ques"
-#include "bitmaps/oic_bang"
-#include "bitmaps/oic_note"
-#include "bitmaps/oic_portrait"
-#include "bitmaps/oic_landscape"
-#include "bitmaps/oic_wineicon"
-#include "bitmaps/oic_hand_95"
-#include "bitmaps/oic_ques_95"
-#include "bitmaps/oic_bang_95"
-#include "bitmaps/oic_note_95"
-#include "bitmaps/oic_folder"
-#include "bitmaps/oic_folder2"
-#include "bitmaps/oic_floppy"
-#include "bitmaps/oic_cdrom"
-#include "bitmaps/oic_hdisk"
-#include "bitmaps/oic_network"
-
-#define OIC_FIRST  OIC_SAMPLE      /* First OEM icon */
-#define OIC_LAST   OIC_NETWORK     /* Last OEM icon */
-
-static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
-{
-    oic_sample,    /* OIC_SAMPLE */
-    oic_hand,      /* OIC_HAND */
-    oic_ques,      /* OIC_QUES */
-    oic_bang,      /* OIC_BANG */
-    oic_note,      /* OIC_NOTE */
-    oic_portrait,  /* OIC_PORTRAIT */
-    oic_landscape, /* OIC_LANDSCAPE */
-    oic_wineicon,  /* OIC_WINEICON */
-    oic_folder,    /* OIC_FOLDER */
-    oic_folder2,   /* OIC_FOLDER2 */
-    oic_floppy,    /* OIC_FLOPPY */
-    oic_cdrom,     /* OIC_CDROM */
-    oic_hdisk,     /* OIC_HDISK */
-    oic_network    /* OIC_NETWORK */
-};
-
-
-  /* Include OEM cursors */
-#include "bitmaps/ocr_normal"
-#include "bitmaps/ocr_ibeam"
-#include "bitmaps/ocr_wait"
-#include "bitmaps/ocr_cross"
-#include "bitmaps/ocr_up"
-#include "bitmaps/ocr_size"
-#include "bitmaps/ocr_icon"
-#include "bitmaps/ocr_sizenwse"
-#include "bitmaps/ocr_sizenesw"
-#include "bitmaps/ocr_sizewe"
-#include "bitmaps/ocr_sizens"
-#include "bitmaps/ocr_bummer"
-#include "bitmaps/ocr_dragobject"
-#include "bitmaps/ocr_hand"
-/*#include "bitmaps/ocr_sizeall"*/
-/*#include "bitmaps/ocr_icocur"*/
-#include "bitmaps/ocr_no"
-#include "bitmaps/ocr_appstarting"
-#include "bitmaps/ocr_help"
-
-/* Cursor are not all contiguous (go figure...) */
-#define OCR_FIRST0 OCR_BUMMER
-#define OCR_LAST0  OCR_DRAGOBJECT
-#define OCR_BASE0	0
-
-#define OCR_FIRST1 OCR_NORMAL
-#define OCR_LAST1  OCR_UP
-#define OCR_BASE1	(OCR_BASE0 + OCR_LAST0 - OCR_FIRST0 + 1)
-
-#define OCR_FIRST2 OCR_SIZE
-#define OCR_LAST2  OCR_SIZEALL
-#define OCR_BASE2	(OCR_BASE1 + OCR_LAST1 - OCR_FIRST1 + 1)
-
-#define OCR_FIRST3 OCR_NO
-#define OCR_LAST3  OCR_APPSTARTING
-#define OCR_BASE3       (OCR_BASE2 + OCR_LAST2 - OCR_FIRST2 + 1)
-
-#define OCR_FIRST4 OCR_HELP
-#define OCR_LAST4  OCR_HELP
-#define OCR_BASE4       (OCR_BASE3 + OCR_LAST3 - OCR_FIRST3 + 1)
-
-#define NB_CURSORS (OCR_BASE4 + OCR_LAST4 - OCR_FIRST4 + 1)
-static char **OBM_Cursors_Data[NB_CURSORS] = 
-{
-    ocr_bummer,	     /* OCR_BUMMER */
-    ocr_dragobject,  /* OCR_DRAGOBJECT */ 
-    ocr_normal,      /* OCR_NORMAL */
-    ocr_ibeam,       /* OCR_IBEAM */
-    ocr_wait,        /* OCR_WAIT */
-    ocr_cross,       /* OCR_CROSS */
-    ocr_up,          /* OCR_UP */
-    ocr_size,        /* OCR_SIZE */
-    ocr_icon,        /* OCR_ICON */
-    ocr_sizenwse,    /* OCR_SIZENWSE */
-    ocr_sizenesw,    /* OCR_SIZENESW */
-    ocr_sizewe,      /* OCR_SIZEWE */
-    ocr_sizens,      /* OCR_SIZENS */
-    ocr_size,        /* OCR_SIZEALL */ /* Re-used the same one as OCR_SIZE for now */
-#if 0
-    ocr_icocur       /* OCR_ICOCUR */
-#endif
-    ocr_no,          /* OCR_NO */
-    ocr_hand,        /* OCR_HAND */
-    ocr_appstarting, /* OCR_APPSTARTING */
-    ocr_help         /* OCR_HELP */
-};
-
-static HGLOBAL16 OBM_Cursors[NB_CURSORS];
-
-
   /* All the colors used in the xpm files must be included in this   */
   /* list, to make sure that the loaded bitmaps only use colors from */
   /* the Windows colormap. Note: the PALETTEINDEX() are not really   */
@@ -444,103 +331,6 @@ static HBITMAP16 OBM_LoadBitmap( WORD id )
 
 
 /***********************************************************************
- *           OBM_LoadCursorIcon
- */
-static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
-{
-    HBITMAP16 bitmap, mask;
-    POINT hotspot;
-    HGLOBAL16 handle;
-    CURSORICONINFO *pInfo;
-    BITMAPOBJ *bmpXor, *bmpAnd;
-    int sizeXor, sizeAnd;
-
-    if (fCursor)
-    {
-        if ((id >= OCR_FIRST1) && (id <= OCR_LAST1))
-             id = OCR_BASE1 + id - OCR_FIRST1;
-        else if ((id >= OCR_FIRST2) && (id <= OCR_LAST2))
-                  id = OCR_BASE2 + id - OCR_FIRST2;
-	     else if ((id >= OCR_FIRST0) && (id <= OCR_LAST0))
-		       id = OCR_BASE0 + id - OCR_FIRST0;
-		  else if ((id >= OCR_FIRST3) && (id <= OCR_LAST3))
-			    id = OCR_BASE3 + id - OCR_FIRST3;
-		       else if ((id >= OCR_FIRST4) && (id <= OCR_LAST4))
-				 id = OCR_BASE4 + id - OCR_FIRST4;
-        else return 0;
-        if (OBM_Cursors[id]) return OBM_Cursors[id];
-    }
-    else
-    {
-        if ((id < OIC_FIRST) || (id > OIC_LAST)) return 0;
-        id -= OIC_FIRST;
-    }
-
-    if (!OBM_InitColorSymbols()) return 0;
-    
-    if (!OBM_CreateBitmaps( fCursor ? OBM_Cursors_Data[id] : OBM_Icons_Data[id],
-                            !fCursor, &bitmap, &mask, &hotspot ))
-    {
-        WARN_(cursor)("Error creating OEM cursor/icon %d\n", id );
-        return 0;
-    }
-
-    bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( bitmap, BITMAP_MAGIC );
-    bmpAnd = (BITMAPOBJ *) GDI_GetObjPtr( mask, BITMAP_MAGIC );
-    sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
-    sizeAnd = bmpXor->bitmap.bmHeight * 
-			BITMAP_GetWidthBytes( bmpXor->bitmap.bmWidth, 1 );
-
-    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
-                                  sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
-        goto done;
-
-    pInfo = (CURSORICONINFO *)GlobalLock16( handle );
-    pInfo->ptHotSpot.x   = hotspot.x;
-    pInfo->ptHotSpot.y   = hotspot.y;
-    pInfo->nWidth        = bmpXor->bitmap.bmWidth;
-    pInfo->nHeight       = bmpXor->bitmap.bmHeight;
-    pInfo->nWidthBytes   = bmpXor->bitmap.bmWidthBytes;
-    pInfo->bPlanes       = bmpXor->bitmap.bmPlanes;
-    pInfo->bBitsPerPixel = bmpXor->bitmap.bmBitsPixel;
-
-    if (mask)
-    {
-          /* Invert the mask */
-
-        TSXSetFunction( display, BITMAP_monoGC, GXinvert );
-        TSXFillRectangle( display, (Pixmap)bmpAnd->physBitmap, BITMAP_monoGC, 0, 0,
-                        bmpAnd->bitmap.bmWidth, bmpAnd->bitmap.bmHeight );
-        TSXSetFunction( display, BITMAP_monoGC, GXcopy );
-
-          /* Set the masked pixels to black */
-
-        if (bmpXor->bitmap.bmBitsPixel != 1)
-        {
-            TSXSetForeground( display, BITMAP_colorGC,
-                            X11DRV_PALETTE_ToPhysical( NULL, RGB(0,0,0) ));
-            TSXSetBackground( display, BITMAP_colorGC, 0 );
-            TSXSetFunction( display, BITMAP_colorGC, GXor );
-            TSXCopyPlane(display, (Pixmap)bmpAnd->physBitmap, (Pixmap)bmpXor->physBitmap,
-                         BITMAP_colorGC, 0, 0, bmpXor->bitmap.bmWidth, bmpXor->bitmap.bmHeight,
-                         0, 0, 1 );
-            TSXSetFunction( display, BITMAP_colorGC, GXcopy );
-        }
-    }
-
-    if (mask) GetBitmapBits( mask, sizeAnd, (char *)(pInfo + 1));
-    else memset( (char *)(pInfo + 1), 0xff, sizeAnd );
-    GetBitmapBits( bitmap, sizeXor, (char *)(pInfo + 1) + sizeAnd );
-    if (fCursor) OBM_Cursors[id] = handle;
- done:
-    GDI_ReleaseObj( mask );
-    GDI_ReleaseObj( bitmap );
-    DeleteObject( bitmap );
-    DeleteObject( mask );
-    return handle;
-}
-
-/***********************************************************************
  *           X11DRV_LoadOEMResource
  *
  */
@@ -549,12 +339,6 @@ HANDLE X11DRV_LoadOEMResource(WORD resid, WORD type)
     switch(type) {
     case OEM_BITMAP:
         return OBM_LoadBitmap(resid);
-
-    case OEM_CURSOR:
-        return OBM_LoadCursorIcon(resid, TRUE);
-
-    case OEM_ICON:
-        return OBM_LoadCursorIcon(resid, FALSE);
 
     default:
         ERR_(x11drv)("Unknown type\n");
@@ -578,11 +362,6 @@ BOOL X11DRV_OBM_Init(void)
 	OBM_Pixmaps_Data[OBM_CLOSE - OBM_FIRST].data = obm_close;
         OBM_Pixmaps_Data[OBM_RESTORE - OBM_FIRST].data = obm_restore;
         OBM_Pixmaps_Data[OBM_RESTORED - OBM_FIRST].data = obm_restored;
-
-        OBM_Icons_Data[OIC_HAND - OIC_FIRST] = oic_hand;
-        OBM_Icons_Data[OIC_QUES - OIC_FIRST] = oic_ques;
-        OBM_Icons_Data[OIC_BANG - OIC_FIRST] = oic_bang;
-        OBM_Icons_Data[OIC_NOTE - OIC_FIRST] = oic_note;
     }
     else {
 	OBM_Pixmaps_Data[OBM_ZOOMD - OBM_FIRST].data = obm_zoomd_95;
@@ -592,11 +371,6 @@ BOOL X11DRV_OBM_Init(void)
 	OBM_Pixmaps_Data[OBM_CLOSE - OBM_FIRST].data = obm_close_95;
         OBM_Pixmaps_Data[OBM_RESTORE - OBM_FIRST].data = obm_restore_95;
         OBM_Pixmaps_Data[OBM_RESTORED - OBM_FIRST].data = obm_restored_95;
-
-        OBM_Icons_Data[OIC_HAND - OIC_FIRST] = oic_hand_95;
-        OBM_Icons_Data[OIC_QUES - OIC_FIRST] = oic_ques_95;
-        OBM_Icons_Data[OIC_BANG - OIC_FIRST] = oic_bang_95;
-        OBM_Icons_Data[OIC_NOTE - OIC_FIRST] = oic_note_95;
     }
 
     return 1;

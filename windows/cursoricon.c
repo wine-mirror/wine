@@ -55,6 +55,7 @@ static HCURSOR hActiveCursor = 0;  /* Active cursor */
 static INT CURSOR_ShowCount = 0;   /* Cursor display count */
 static RECT CURSOR_ClipRect;       /* Cursor clipping rect */
 
+static HDC screen_dc;
 
 /**********************************************************************
  * ICONCACHE for cursors/icons loaded with LR_SHARED.
@@ -452,12 +453,12 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	 					UINT cbSize, BOOL bIcon, DWORD dwVersion, 
 						INT width, INT height, UINT loadflags )
 {
+    static HDC hdcMem;
     int sizeAnd, sizeXor;
     HBITMAP hAndBits = 0, hXorBits = 0; /* error condition for later */
     BITMAP bmpXor, bmpAnd;
     POINT16 hotspot;
     BITMAPINFO *bmi;
-    HDC hdc;
     BOOL DoStretch;
     INT size;
 
@@ -498,7 +499,8 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
           return 0;
     }
 
-    if( (hdc = GetDC( 0 )) )
+    if (!screen_dc) screen_dc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+    if (screen_dc)
     {
 	BITMAPINFO* pInfo;
 
@@ -524,7 +526,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	    if (DoStretch) {
                 if(bIcon)
                 {
-                    hXorBits = CreateCompatibleBitmap(hdc, width, height);
+                    hXorBits = CreateCompatibleBitmap(screen_dc, width, height);
                 }
                 else
                 {
@@ -533,20 +535,19 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
                 if(hXorBits)
                 {
 		HBITMAP hOld;
-		HDC hMem = CreateCompatibleDC(hdc);
-		BOOL res;
+                BOOL res = FALSE;
 
-		if (hMem) {
-		  hOld = SelectObject(hMem, hXorBits);
-	          res = StretchDIBits(hMem, 0, 0, width, height, 0, 0,
-		    bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight/2,
-		    (char*)bmi + size, pInfo, DIB_RGB_COLORS, SRCCOPY);
-		  SelectObject(hMem, hOld);
-		  DeleteDC(hMem);
-	        } else res = FALSE;
+                if (!hdcMem) hdcMem = CreateCompatibleDC(screen_dc);
+                if (hdcMem) {
+                    hOld = SelectObject(hdcMem, hXorBits);
+                    res = StretchDIBits(hdcMem, 0, 0, width, height, 0, 0,
+                                        bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight/2,
+                                        (char*)bmi + size, pInfo, DIB_RGB_COLORS, SRCCOPY);
+                    SelectObject(hdcMem, hOld);
+                }
 		if (!res) { DeleteObject(hXorBits); hXorBits = 0; }
 	      }
-	    } else hXorBits = CreateDIBitmap( hdc, &pInfo->bmiHeader,
+	    } else hXorBits = CreateDIBitmap( screen_dc, &pInfo->bmiHeader,
 		CBM_INIT, (char*)bmi + size, pInfo, DIB_RGB_COLORS );
 	    if( hXorBits )
 	    {
@@ -578,27 +579,25 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	    if (DoStretch) {
 	      if ((hAndBits = CreateBitmap(width, height, 1, 1, NULL))) {
 		HBITMAP hOld;
-		HDC hMem = CreateCompatibleDC(hdc);
-		BOOL res;
+                BOOL res = FALSE;
 
-		if (hMem) {
-		  hOld = SelectObject(hMem, hAndBits);
-	          res = StretchDIBits(hMem, 0, 0, width, height, 0, 0,
-		    pInfo->bmiHeader.biWidth, pInfo->bmiHeader.biHeight,
-		    xbits, pInfo, DIB_RGB_COLORS, SRCCOPY);
-		  SelectObject(hMem, hOld);
-		  DeleteDC(hMem);
-	        } else res = FALSE;
+                if (!hdcMem) hdcMem = CreateCompatibleDC(screen_dc);
+                if (hdcMem) {
+                    hOld = SelectObject(hdcMem, hAndBits);
+                    res = StretchDIBits(hdcMem, 0, 0, width, height, 0, 0,
+                                        pInfo->bmiHeader.biWidth, pInfo->bmiHeader.biHeight,
+                                        xbits, pInfo, DIB_RGB_COLORS, SRCCOPY);
+                    SelectObject(hdcMem, hOld);
+                }
 		if (!res) { DeleteObject(hAndBits); hAndBits = 0; }
 	      }
-	    } else hAndBits = CreateDIBitmap( hdc, &pInfo->bmiHeader,
+	    } else hAndBits = CreateDIBitmap( screen_dc, &pInfo->bmiHeader,
 	      CBM_INIT, xbits, pInfo, DIB_RGB_COLORS );
 
 		if( !hAndBits ) DeleteObject( hXorBits );
 	    }
 	    HeapFree( GetProcessHeap(), 0, pInfo ); 
 	}
-	ReleaseDC( 0, hdc );
     }
 
     if( !hXorBits || !hAndBits ) 
@@ -712,34 +711,16 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
         HeapFree( GetProcessHeap(), 0, dir );
         HeapFree( GetProcessHeap(), 0, ptr );
     }
-
-    else if ( !hInstance )  /* Load OEM cursor/icon */
-    {
-        WORD resid;
-
-        if ( HIWORD(name) )
-        {
-            LPSTR ansi = HEAP_strdupWtoA(GetProcessHeap(),0,name);
-            if( ansi[0]=='#')        /*Check for '#xxx' name */
-            {
-                resid = atoi(ansi+1);
-                HeapFree( GetProcessHeap(), 0, ansi );
-            }
-            else
-            {
-                HeapFree( GetProcessHeap(), 0, ansi );
-                return 0;
-            }
-        }
-        else resid = LOWORD(name);
-        h = USER_Driver.pLoadOEMResource( resid, fCursor ? OEM_CURSOR : OEM_ICON );
-    }
-
     else  /* Load from resource */
     {
         HANDLE hGroupRsrc;
         WORD wResId;
         DWORD dwBytesInRes;
+
+        if (!hInstance)  /* Load OEM cursor/icon */
+        {
+            if (!(hInstance = GetModuleHandleA( "user32.dll" ))) return 0;
+        }
 
         /* Normalize hInstance (must be uniquely represented for icon cache) */
         
@@ -2067,7 +2048,6 @@ static void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix)
 static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
 {
     HBITMAP hbitmap = 0;
-    HDC hdc;
     HRSRC hRsrc;
     HGLOBAL handle;
     char *ptr = NULL;
@@ -2100,20 +2080,21 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
       memcpy(fix_info, info, size);
       pix = *((LPBYTE)info+DIB_BitmapInfoSize(info, DIB_RGB_COLORS));
       DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
-      if ((hdc = GetDC(0)) != 0) {
+      if (!screen_dc) screen_dc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+      if (screen_dc)
+      {
         char *bits = (char *)info + size;
 	if (loadflags & LR_CREATEDIBSECTION) {
           DIBSECTION dib;
-	  hbitmap = CreateDIBSection(hdc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
+	  hbitmap = CreateDIBSection(screen_dc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
           GetObjectA(hbitmap, sizeof(DIBSECTION), &dib);
-          SetDIBits(hdc, hbitmap, 0, dib.dsBm.bmHeight, bits, info, 
+          SetDIBits(screen_dc, hbitmap, 0, dib.dsBm.bmHeight, bits, info,
                     DIB_RGB_COLORS);
         }
         else {
-          hbitmap = CreateDIBitmap( hdc, &fix_info->bmiHeader, CBM_INIT,
+          hbitmap = CreateDIBitmap( screen_dc, &fix_info->bmiHeader, CBM_INIT,
                                       bits, fix_info, DIB_RGB_COLORS );
 	}
-        ReleaseDC( 0, hdc );
       }
       GlobalUnlock(hFix);
       GlobalFree(hFix);
@@ -2195,16 +2176,15 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
         return BITMAP_Load( hinst, name, loadflags );
 
     case IMAGE_ICON:
+        if (!screen_dc) screen_dc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+        if (screen_dc)
         {
-	HDC hdc = GetDC(0);
-	UINT palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
-	if (palEnts == 0)
-	    palEnts = 256;
-	ReleaseDC(0, hdc);
-
-	return CURSORICON_Load(hinst, name, desiredx, desiredy,
-				 palEnts, FALSE, loadflags);
-	}
+            UINT palEnts = GetSystemPaletteEntries(screen_dc, 0, 0, NULL);
+            if (palEnts == 0) palEnts = 256;
+            return CURSORICON_Load(hinst, name, desiredx, desiredy,
+                                   palEnts, FALSE, loadflags);
+        }
+        break;
 
     case IMAGE_CURSOR:
         return CURSORICON_Load(hinst, name, desiredx, desiredy,

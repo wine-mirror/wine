@@ -357,9 +357,6 @@ typedef struct
 #define OBM_SIZE            32766
 #define OBM_OLD_CLOSE       32767
 
-#define OCR_BUMMER	    100
-#define OCR_DRAGOBJECT	    101
-
 #define OCR_NORMAL          32512
 #define OCR_IBEAM           32513
 #define OCR_WAIT            32514
@@ -376,7 +373,11 @@ typedef struct
 #define OCR_NO              32648
 #define OCR_HAND            32649
 #define OCR_APPSTARTING     32650
+#ifdef __WINE__
 #define OCR_HELP            32651  /* only defined in wine */
+#define OCR_BUMMER          32652
+#define OCR_DRAGOBJECT      32653
+#endif
 
 #define OIC_SAMPLE          32512
 #define OIC_HAND            32513
