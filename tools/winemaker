@@ -1228,6 +1228,20 @@ sub get_real_include_name
   return $filename;
 }
 
+sub print_pack
+{
+  my $indent=$_[0];
+  my $size=$_[1];
+  my $trailer=$_[2];
+
+  if ($size =~ /^(1|2|4|8)$/) {
+    print FILEO "$indent#include <pshpack$size.h>$trailer";
+  } else {
+    print FILEO "$indent/* winemaker:warning: Unknown size \"$size\". Defaulting to 4 */\n";
+    print FILEO "$indent#include <pshpack4.h>$trailer";
+  }
+}
+
 ##
 # 'Parses' a source file and fixes constructs that would not work with 
 # Winelib. The parsing is rather simple and not all non-portable features 
@@ -1278,6 +1292,7 @@ sub fix_file
   my $modified=0;
   my $rc_block_depth=0;
   my $rc_textinclude_state=0;
+  my @pack_stack;
   while (<FILEI>) {
     $line++;
     s/\r\n$/\n/;
@@ -1285,7 +1300,7 @@ sub fix_file
       # Make sure all files are '\n' terminated
       $_ .= "\n";
     }
-    if ($is_rc and !$is_mfc and /^(\s*\#\s*include\s*)\"afxres\.h\"/) {
+    if ($is_rc and !$is_mfc and /^(\s*)(\#\s*include\s*)\"afxres\.h\"/) {
       # VC6 automatically includes 'afxres.h', an MFC specific header, in 
       # the RC files it generates (even in non-MFC projects). So we replace 
       # it with 'winres.h' its very close standard cousin so that non MFC 
@@ -1296,77 +1311,194 @@ sub fix_file
 	print STDERR "warning: In non-MFC projects, winemaker replaces the MFC specific header 'afxres.h' with 'winres.h'\n";
 	print STDERR "warning: the above warning is issued only once\n";
       }
-      print FILEO "/* winemaker: $1\"afxres.h\" */\n";
-      print FILEO "$1\"winres.h\"$'";
+      print FILEO "$1/* winemaker: $2\"afxres.h\" */\n";
+      print FILEO "$1/* winemaker:warning: 'afxres.h' is an MFC specific header. Replacing it with 'winres.h' */\n";
+      print FILEO "$1$2\"winres.h\"$'";
       $modified=1;
+
     } elsif (/^(\s*\#\s*include\s*)([\"<])([^\"]+)([\">])/) {
       my $from_file=($2 eq "<"?"":$dirname);
       my $real_include_name=get_real_include_name($line,$3,$from_file,$project,$target);
       print FILEO "$1$2$real_include_name$4$'";
       $modified|=($real_include_name ne $3);
-    } elsif (/^(\s*\#\s*pragma\s*pack\s*\((\s*push\s*,?)?\s*)(\w*)(\s*\))/) {
-      my $pragma_header=$1;
-      my $size=$3;
-      my $pragma_trailer=$4;
-      #print "$pragma_header$size$pragma_trailer$'";
-      #print "pragma push: size=$size\n";
-      print FILEO "/* winemaker: $pragma_header$size$pragma_trailer */\n";
-      $line++;
-      if ($size eq "pop") {
-	print FILEO "#include <poppack.h>$'";
-      } elsif ($size eq "1") {
-	print FILEO "#include <pshpack1.h>$'";
-      } elsif ($size eq "2") {
-	print FILEO "#include <pshpack2.h>$'";
-      } elsif ($size eq "8") {
-	print FILEO "#include <pshpack8.h>$'";
-      } elsif ($size eq "4" or $size eq "") {
-	print FILEO "#include <pshpack4.h>$'";
+
+    } elsif (s/^(\s*)(\#\s*pragma\s+pack\s*\(\s*)//) {
+      # Pragma pack handling
+      #
+      # pack_stack is an array of references describing the stack of 
+      # pack directives currently in effect. Each directive if described 
+      # by a reference to an array containing:
+      # - "push" for pack(push,...) directives, "" otherwise
+      # - the directive's identifier at index 1
+      # - the directive's alignement value at index 2
+      #
+      # Don't believe a word of what the documentation says: it's all wrong.
+      # The code below is based on the actual behavior of Visual C/C++ 6.
+      my $pack_indent=$1;
+      my $pack_header=$2;
+      if (/^(\))/) {
+        # pragma pack()
+        # Pushes the default stack alignment
+        print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
+        print FILEO "$pack_indent/* winemaker:warning: Using 4 as the default alignment */\n";
+        print_pack($pack_indent,4,$');
+        push @pack_stack, [ "", "", 4 ];
+
+      } elsif (/^(pop\s*(,\s*\d+\s*)?\))/) {
+        # pragma pack(pop)
+        # pragma pack(pop,n)
+        # Goes up the stack until it finds a pack(push,...), and pops it
+        # Ignores any pack(n) entry
+        # Issues a warning if the pack is of the form pack(push,label)
+        print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
+        my $pack_comment=$';
+	$pack_comment =~ s/^\s*//;
+        if ($pack_comment ne "") {
+          print FILEO "$pack_indent$pack_comment";
+        }
+        while (1) {
+          my $alignment=pop @pack_stack;
+          if (!defined $alignment) {
+            print FILEO "$pack_indent/* winemaker:warning: No pack(push,...) found. All the stack has been popped */\n";
+            last;
+          }
+          if (@$alignment[1]) {
+            print FILEO "$pack_indent/* winemaker:warning: Anonymous pop of pack(push,@$alignment[1]) (@$alignment[2]) */\n";
+          }
+          print FILEO "$pack_indent#include <poppack.h>\n";
+          if (@$alignment[0]) {
+            last;
+          }
+        }
+
+      } elsif (/^(pop\s*,\s*(\w+)\s*(,\s*\d+\s*)?\))/) {
+        # pragma pack(pop,label[,n])
+        # Goes up the stack until finding a pack(push,...) and pops it.
+        # 'n', if specified, is ignored.
+        # Ignores any pack(n) entry
+        # Issues a warning if the label of the pack does not match,
+        # or if it is in fact a pack(push,n)
+        my $label=$2;
+        print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
+        my $pack_comment=$';
+	$pack_comment =~ s/^\s*//;
+        if ($pack_comment ne "") {
+          print FILEO "$pack_indent$pack_comment";
+        }
+        while (1) {
+          my $alignment=pop @pack_stack;
+          if (!defined $alignment) {
+            print FILEO "$pack_indent/* winemaker:warning: No pack(push,$label) found. All the stack has been popped */\n";
+            last;
+          }
+          if (@$alignment[1] and @$alignment[1] ne $label) {
+            print FILEO "$pack_indent/* winemaker:warning: Push/pop mismatch: \"@$alignment[1]\" (@$alignment[2]) != \"$label\" */\n";
+          }
+          print FILEO "$pack_indent#include <poppack.h>\n";
+          if (@$alignment[0]) {
+            last;
+          }
+        }
+
+      } elsif (/^(push\s*\))/) {
+        # pragma pack(push)
+        # Push the current alignment
+        print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
+        if (@pack_stack > 0) {
+          my $alignment=$pack_stack[$#pack_stack];
+          print_pack($pack_indent,@$alignment[2],$');
+          push @pack_stack, [ "push", "", @$alignment[2] ];
+        } else {
+          print FILEO "$pack_indent/* winemaker:warning: Using 4 as the default alignment */\n";
+          print_pack($pack_indent,4,$');
+          push @pack_stack, [ "push", "", 4 ];
+        }
+
+      } elsif (/^((push\s*,\s*)?(\d+)\s*\))/) {
+        # pragma pack([push,]n)
+        # Push new alignment n
+        print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
+        print_pack($pack_indent,$3,"$'");
+        push @pack_stack, [ ($2 ? "push" : ""), "", $3 ];
+
+      } elsif (/^((\w+)\s*\))/) {
+        # pragma pack(label)
+        # label must in fact be a macro that resolves to an integer
+        # Then behaves like 'pragma pack(n)'
+        print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
+        print FILEO "$pack_indent/* winemaker:warning: Assuming $2 == 4 */\n";
+        print_pack($pack_indent,4,$');
+        push @pack_stack, [ "", "", 4 ];
+
+      } elsif (/^(push\s*,\s*(\w+)\s*(,\s*(\d+)\s*)?\))/) {
+        # pragma pack(push,label[,n])
+        # Pushes a new label on the stack. It is possible to push the same
+        # label multiple times. If 'n' is omitted then the alignment is 
+        # unchanged. Otherwise it becomes 'n'.
+        print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
+        my $size;
+        if (defined $4) {
+          $size=$4;
+        } elsif (@pack_stack > 0) {
+          my $alignment=$pack_stack[$#pack_stack];
+          $size=@$alignment[2];
+        } else {
+          print FILEO "$pack_indent/* winemaker:warning: Using 4 as the default alignment */\n";
+          $size=4;
+        }
+        print_pack($pack_indent,$size,$');
+        push @pack_stack, [ "push", $2, $size ];
+
       } else {
-	my $warning="pack:$size";
-	if (!defined $warnings{$warning}) {
-	  $warnings{$warning}="1";
-	  print STDERR "warning: assuming that the value of $size is 4 in\n";
-	  print STDERR "$line:   $pragma_header$size$pragma_trailer\n"; 
-	  print STDERR "warning: the above warning is issued only once\n";
-	}
-	print FILEO "#include <pshpack4.h>$'";
-	$modified=1;
+        # pragma pack(???               -> What's that?
+        print FILEO "$pack_indent/* winemaker:warning: Unknown type of pragma pack directive */\n";
+        print FILEO "$pack_indent$pack_header$_";
+
       }
+      $modified=1;
+
     } elsif ($is_rc) {
       if ($rc_block_depth == 0 and /^(\w+\s+(BITMAP|CURSOR|FONT|FONTDIR|ICON|MESSAGETABLE|TEXT)\s+((DISCARDABLE|FIXED|IMPURE|LOADONCALL|MOVEABLE|PRELOAD|PURE|RTF)\s+)*)([\"<]?)([^\">\r\n]+)([\">]?)/) {
 	my $from_file=($5 eq "<"?"":$dirname);
 	my $real_include_name=get_real_include_name($line,$6,$from_file,$project,$target);
 	print FILEO "$1$5$real_include_name$7$'";
 	$modified|=($real_include_name ne $6);
+
       } elsif (/^(\s*RCINCLUDE\s*)([\"<]?)([^\">\r\n]+)([\">]?)/) {
 	my $from_file=($2 eq "<"?"":$dirname);
 	my $real_include_name=get_real_include_name($line,$3,$from_file,$project,$target);
 	print FILEO "$1$2$real_include_name$4$'";
 	$modified|=($real_include_name ne $3);
+
       } elsif ($is_rc and !$is_mfc and $rc_block_depth == 0 and /^\s*\d+\s+TEXTINCLUDE\s*/) {
 	$rc_textinclude_state=1;
 	print FILEO;
+
       } elsif ($rc_textinclude_state == 3 and /^(\s*\"\#\s*include\s*\"\")afxres\.h(\"\"\\r\\n\")/) {
 	print FILEO "$1winres.h$2$'";
 	$modified=1;
+
       } elsif (/^\s*BEGIN(\W.*)?$/) {
 	$rc_textinclude_state|=2;
 	$rc_block_depth++;
 	print FILEO;
+
       } elsif (/^\s*END(\W.*)?$/) {
 	$rc_textinclude_state=0;
 	if ($rc_block_depth>0) {
 	  $rc_block_depth--;
 	}
 	print FILEO;
+
       } else {
 	print FILEO;
       }
+
     } else {
       print FILEO;
     }
   }
+
   close(FILEI);
   close(FILEO);
   if ($opt_backup == 0 or $modified == 0) {
@@ -2798,7 +2930,7 @@ ALLCXXFLAGS=$(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(X_CFLAGS) $(ALLFLAGS)
 ALLWRCFLAGS=$(WRCFLAGS) $(WRCEXTRA) $(OPTIONS) $(ALLFLAGS)
 LDCOMBINE = ld -r
 LDSHARED  = @LDSHARED@
-LDXXSHARED  = @LDXXSHARED@
+LDXXSHARED= @LDXXSHARED@
 LDDLLFLAGS= @LDDLLFLAGS@
 STRIP     = strip
 STRIPFLAGS= --strip-unneeded
