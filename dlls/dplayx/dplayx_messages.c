@@ -126,13 +126,7 @@ static DWORD CALLBACK DPL_MSG_ThreadMain( LPVOID lpContext )
   for ( ;; )
   {
     MSG lobbyMsg;
-#ifdef STRICT
-    HANDLE hNullHandle = NULL;
-#else
-    HANDLE hNullHandle = 0;
-#endif
-
-    GetMessageW( &lobbyMsg, hNullHandle, 0, 0 );
+    GetMessageW( &lobbyMsg, 0, 0, 0 );
   }
 
 end_of_thread:
