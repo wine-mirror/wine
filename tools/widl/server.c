@@ -142,6 +142,7 @@ unsigned int get_required_stack_size(type_t *type)
 
         default:
             error("Unknown/unsupported type: %s\n", type->name);
+            return 0;
     }
 }
 
@@ -424,8 +425,6 @@ static void init_server(void)
 void write_server(ifref_t *ifaces)
 {
     ifref_t *lcur = ifaces;
-    char *file_id = server_token;
-    int c;
 
     if (!do_server)
         return;

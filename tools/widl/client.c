@@ -414,8 +414,6 @@ static void init_client(void)
 void write_client(ifref_t *ifaces)
 {
     ifref_t *lcur = ifaces;
-    char *file_id = client_token;
-    int c;
 
     if (!do_client)
         return;

@@ -37,7 +37,6 @@
 #include "utils.h"
 #include "parser.h"
 #include "header.h"
-#include "proxy.h"
 #include "typelib.h"
 
 #if defined(YYBYACC)
