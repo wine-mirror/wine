@@ -130,7 +130,9 @@ static HGLOBAL16 WINAPI CALLBACK_CallResourceHandlerProc( FARPROC16 proc,
                                                           HMODULE16 hModule,
                                                           HRSRC16 hRsrc )
 {
-    return proc( hMemObj, hModule, hRsrc );
+    ERR( relay, "Cannot call a 16-bit resource handler in Winelib\n" );
+    assert( FALSE );
+    return 0;
 }
 
 

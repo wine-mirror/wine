@@ -26,6 +26,8 @@
 #define NEXT_TYPEINFO(pTypeInfo) ((NE_TYPEINFO *)((char*)((pTypeInfo) + 1) + \
                                    (pTypeInfo)->count * sizeof(NE_NAMEINFO)))
 
+static FARPROC16 DefResourceHandlerProc = (FARPROC16)0xffffffff;
+
 /***********************************************************************
  *           NE_FindNameTableId
  *
@@ -221,13 +223,22 @@ BOOL NE_InitResourceHandler( HMODULE16 hModule )
     NE_MODULE *pModule = NE_GetPtr( hModule );
     NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
 
-    FARPROC16 handler = MODULE_GetWndProcEntry16("DefResourceHandler");
+    if ( DefResourceHandlerProc == (FARPROC16)0xffffffff )
+    {
+        HMODULE16 hModule = GetModuleHandle16( "KERNEL" );
+        int ordinal = hModule? NE_GetOrdinal( hModule, "DefResourceHandler" ) : 0;
+
+        if ( ordinal )
+            DefResourceHandlerProc = NE_GetEntryPointEx( hModule, ordinal, FALSE );
+        else
+            DefResourceHandlerProc = NULL;
+    }
 
     TRACE(resource,"InitResourceHandler[%04x]\n", hModule );
 
     while(pTypeInfo->type_id)
     {
-	pTypeInfo->resloader = handler;
+	pTypeInfo->resloader = DefResourceHandlerProc;
 	pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
     }
     return TRUE;
@@ -453,15 +464,13 @@ HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 	}
 	else
 	{
-	    if (pTypeInfo->resloader)
+	    if (    pTypeInfo->resloader 
+                 && pTypeInfo->resloader != DefResourceHandlerProc )
                 pNameInfo->handle = Callbacks->CallResourceHandlerProc(
                     pTypeInfo->resloader, pNameInfo->handle, pModule->self, hRsrc );
-	    else /* this is really bad */
-	    {
-		ERR(resource, "[%04x]: Missing resource handler!\n", pModule->self);
+	    else
                 pNameInfo->handle = NE_DefResourceHandler(
                                          pNameInfo->handle, pModule->self, hRsrc );
-	    }
 
 	    if (pNameInfo->handle)
 	    {

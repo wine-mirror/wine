@@ -12,10 +12,7 @@ type	win16
 24 pascal16 TASK_Reschedule() TASK_Reschedule
 27 pascal EntryAddrProc(word word) NE_GetEntryPoint
 28 pascal MyAlloc(word word word) NE_AllocateSegment
-29 pascal DefResourceHandler(word word word) NE_DefResourceHandler
 30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc16
-31 pascal LoadDIBIconHandler(word word word) LoadDIBIconHandler16
-32 pascal LoadDIBCursorHandler(word word word) LoadDIBCursorHandler16
  
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'word' parameter are the flags pushed on the stack by the interrupt

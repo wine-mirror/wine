@@ -404,8 +404,6 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
             return (FARPROC16)PrintSetupDlgProc16;
         if (!strcmp(name,"ReplaceTextDlgProc"))
             return (FARPROC16)ReplaceTextDlgProc16;
-        if (!strcmp(name,"DefResourceHandler"))
-            return (FARPROC16)NE_DefResourceHandler;
         FIXME(module,"No mapping for %s(), add one in library/miscstubs.c\n",name);
         assert( FALSE );
         return NULL;
