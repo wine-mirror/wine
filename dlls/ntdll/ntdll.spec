@@ -443,7 +443,7 @@
 @ stdcall RtlIntegerToUnicodeString(long long ptr)
 @ stdcall RtlIsDosDeviceName_U(wstr) RtlIsDosDeviceName_U
 @ stub RtlIsGenericTableEmpty
-@ stub RtlIsNameLegalDOS8Dot3
+@ stdcall RtlIsNameLegalDOS8Dot3(ptr ptr ptr)
 @ stdcall RtlIsTextUnicode(ptr long ptr)
 @ stdcall -ret64 RtlLargeIntegerAdd(long long long long)
 @ stdcall -ret64 RtlLargeIntegerArithmeticShift(long long long)
@@ -552,7 +552,7 @@
 @ stdcall RtlUpcaseUnicodeChar(long)
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long)
 @ stdcall RtlUpcaseUnicodeStringToAnsiString(ptr ptr long)
-@ stub RtlUpcaseUnicodeStringToCountedOemString
+@ stdcall RtlUpcaseUnicodeStringToCountedOemString(ptr ptr long)
 @ stdcall RtlUpcaseUnicodeStringToOemString(ptr ptr long)
 @ stub RtlUpcaseUnicodeToCustomCPN
 @ stdcall RtlUpcaseUnicodeToMultiByteN(ptr long ptr ptr long)

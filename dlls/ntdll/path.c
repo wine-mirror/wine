@@ -1,7 +1,8 @@
 /*
  * Ntdll path functions
  *
- * Copyright 2002 Alexandre Julliard
+ * Copyright 2002, 2003 Alexandre Julliard
+ * Copyright 2003 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,9 @@
 
 #include "winternl.h"
 #include "wine/unicode.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 #define IS_SEPARATOR(ch)  ((ch) == '\\' || (ch) == '/')
 
@@ -122,4 +126,74 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
         break;
     }
     return 0;
+}
+
+
+/******************************************************************
+ *             RtlIsNameLegalDOS8Dot3   (NTDLL.@)
+ *
+ * Returns TRUE iff unicode is a valid DOS (8+3) name.
+ * If the name is valid, oem gets filled with the corresponding OEM string
+ * spaces is set to TRUE if unicode contains spaces
+ */
+BOOLEAN WINAPI RtlIsNameLegalDOS8Dot3( const UNICODE_STRING *unicode,
+                                       OEM_STRING *oem, BOOLEAN *spaces )
+{
+    int dot = -1;
+    unsigned int i;
+    char buffer[12];
+    OEM_STRING oem_str;
+    BOOLEAN got_space = FALSE;
+
+    if (!oem)
+    {
+        oem_str.Length = sizeof(buffer);
+        oem_str.MaximumLength = sizeof(buffer);
+        oem_str.Buffer = buffer;
+        oem = &oem_str;
+    }
+    if (RtlUpcaseUnicodeStringToCountedOemString( oem, unicode, FALSE ) != STATUS_SUCCESS)
+        return FALSE;
+
+    if (oem->Length > 12) return FALSE;
+
+    /* a starting . is invalid, except for . and .. */
+    if (oem->Buffer[0] == '.')
+    {
+        if (oem->Length != 1 && (oem->Length != 2 || oem->Buffer[1] != '.')) return FALSE;
+        if (spaces) *spaces = FALSE;
+        return TRUE;
+    }
+
+    for (i = 0; i < oem->Length; i++)
+    {
+        switch (oem->Buffer[i])
+        {
+        case ' ':
+            /* leading/trailing spaces not allowed */
+            if (!i || i == oem->Length-1 || oem->Buffer[i+1] == '.') return FALSE;
+            got_space = TRUE;
+            break;
+        case '.':
+            if (dot != -1) return FALSE;
+            dot = i;
+            break;
+        default:
+            /* FIXME: check for invalid chars */
+            break;
+        }
+    }
+    /* check file part is shorter than 8, extension shorter than 3
+     * dot cannot be last in string
+     */
+    if (dot == -1)
+    {
+        if (oem->Length > 8) return FALSE;
+    }
+    else
+    {
+        if (dot > 8 || (oem->Length - dot > 4) || dot == oem->Length - 1) return FALSE;
+    }
+    if (spaces) *spaces = got_space;
+    return TRUE;
 }

@@ -26,6 +26,8 @@ static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPD
                                                    LPCSTR src, DWORD srclen );
 static UINT (WINAPI *pRtlDetermineDosPathNameType_U)( PCWSTR path );
 static ULONG (WINAPI *pRtlIsDosDeviceName_U)( PCWSTR dos_name );
+static NTSTATUS (WINAPI *pRtlOemStringToUnicodeString)(UNICODE_STRING *, const STRING *, BOOLEAN );
+static BOOLEAN (WINAPI *pRtlIsNameLegalDOS8Dot3)(const UNICODE_STRING*,POEM_STRING,PBOOLEAN);
 
 static void test_RtlDetermineDosPathNameType(void)
 {
@@ -145,6 +147,75 @@ static void test_RtlIsDosDeviceName(void)
     }
 }
 
+static void test_RtlIsNameLegalDOS8Dot3(void)
+{
+    struct test
+    {
+        char *path;
+        BOOLEAN result;
+        BOOLEAN spaces;
+    };
+
+    static const struct test tests[] =
+    {
+        { "12345678",     TRUE,  FALSE },
+        { "123 5678",     TRUE,  TRUE  },
+        { "12345678.",    FALSE, 2 /*not set*/ },
+        { "1234 678.",    FALSE, 2 /*not set*/ },
+        { "12345678.a",   TRUE,  FALSE },
+        { "12345678.a ",  FALSE, 2 /*not set*/ },
+        { "12345678.a c", TRUE,  TRUE  },
+        { " 2345678.a ",  FALSE, 2 /*not set*/ },
+        { "1 345678.abc", TRUE,  TRUE },
+        { "1      8.a c", TRUE,  TRUE },
+        { "1 3 5 7 .abc", FALSE, 2 /*not set*/ },
+        { "12345678.  c", TRUE,  TRUE },
+        { "123456789.a",  FALSE, 2 /*not set*/ },
+        { "12345.abcd",   FALSE, 2 /*not set*/ },
+        { "12345.ab d",   FALSE, 2 /*not set*/ },
+        { ".abc",         FALSE, 2 /*not set*/ },
+        { "12.abc.d",     FALSE, 2 /*not set*/ },
+        { ".",            TRUE,  FALSE },
+        { "..",           TRUE,  FALSE },
+        { "...",          FALSE, 2 /*not set*/ },
+        { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", FALSE, 2 /*not set*/ },
+        { NULL, 0 }
+    };
+
+    const struct test *test;
+    UNICODE_STRING ustr;
+    OEM_STRING oem, oem_ret;
+    WCHAR buffer[200];
+    char buff2[12];
+    BOOLEAN ret, spaces;
+
+    ustr.MaximumLength = sizeof(buffer);
+    ustr.Buffer = buffer;
+    for (test = tests; test->path; test++)
+    {
+        oem.Buffer = test->path;
+        oem.Length = strlen(test->path);
+        oem.MaximumLength = oem.Length + 1;
+        pRtlOemStringToUnicodeString( &ustr, &oem, FALSE );
+        spaces = 2;
+        oem_ret.Length = oem_ret.MaximumLength = sizeof(buff2);
+        oem_ret.Buffer = buff2;
+        ret = pRtlIsNameLegalDOS8Dot3( &ustr, &oem_ret, &spaces );
+        ok( ret == test->result, "Wrong result %d/%d for '%s'", ret, test->result, test->path );
+        ok( spaces == test->spaces, "Wrong spaces value %d/%d for '%s'", spaces, test->spaces, test->path );
+        if (strlen(test->path) <= 12)
+        {
+            char str[13];
+            int i;
+            strcpy( str, test->path );
+            for (i = 0; str[i]; i++) str[i] = toupper(str[i]);
+            ok( oem_ret.Length == strlen(test->path), "Wrong length %d/%d for '%s'",
+                oem_ret.Length, strlen(test->path), test->path );
+            ok( !memcmp( oem_ret.Buffer, str, oem_ret.Length ),
+                "Wrong string '%.*s'/'%s'", oem_ret.Length, oem_ret.Buffer, str );
+        }
+    }
+}
 
 
 START_TEST(path)
@@ -153,6 +224,9 @@ START_TEST(path)
     pRtlMultiByteToUnicodeN = (void *)GetProcAddress(mod,"RtlMultiByteToUnicodeN");
     pRtlDetermineDosPathNameType_U = (void *)GetProcAddress(mod,"RtlDetermineDosPathNameType_U");
     pRtlIsDosDeviceName_U = (void *)GetProcAddress(mod,"RtlIsDosDeviceName_U");
+    pRtlOemStringToUnicodeString = (void *)GetProcAddress(mod,"RtlOemStringToUnicodeString");
+    pRtlIsNameLegalDOS8Dot3 = (void *)GetProcAddress(mod,"RtlIsNameLegalDOS8Dot3");
     test_RtlDetermineDosPathNameType();
     test_RtlIsDosDeviceName();
+    test_RtlIsNameLegalDOS8Dot3();
 }

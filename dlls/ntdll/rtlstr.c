@@ -836,6 +836,46 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToOemString( STRING *dst,
 
 
 /**************************************************************************
+ *	RtlUpcaseUnicodeStringToCountedOemString   (NTDLL.@)
+ *
+ * NOTES
+ *  Same as RtlUpcaseUnicodeStringToOemString but doesn't write terminating null
+ */
+NTSTATUS WINAPI RtlUpcaseUnicodeStringToCountedOemString( STRING *oem,
+                                                          const UNICODE_STRING *uni,
+                                                          BOOLEAN doalloc )
+{
+    NTSTATUS ret;
+    UNICODE_STRING upcase;
+
+    if (!(ret = RtlUpcaseUnicodeString( &upcase, uni, TRUE )))
+    {
+        DWORD len = RtlUnicodeStringToOemSize( &upcase ) - 1;
+        oem->Length = len;
+        if (doalloc)
+        {
+            oem->MaximumLength = len;
+            if (!(oem->Buffer = RtlAllocateHeap( ntdll_get_process_heap(), 0, len )))
+            {
+                ret = STATUS_NO_MEMORY;
+                goto done;
+            }
+        }
+        else if (oem->MaximumLength < len)
+        {
+            ret = STATUS_BUFFER_OVERFLOW;
+            oem->Length = oem->MaximumLength;
+            if (!oem->MaximumLength) goto done;
+        }
+        RtlUnicodeToOemN( oem->Buffer, oem->Length, NULL, upcase.Buffer, upcase.Length );
+    done:
+        RtlFreeUnicodeString( &upcase );
+    }
+    return ret;
+}
+
+
+/**************************************************************************
  *	RtlUpcaseUnicodeToMultiByteN   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlUpcaseUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
