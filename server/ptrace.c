@@ -93,7 +93,7 @@ static int handle_child_status( struct thread *thread, int pid, int status )
     if (thread && (WIFSIGNALED(status) || WIFEXITED(status)))
     {
         thread->attached = 0;
-        thread->unix_pid = 0;
+        thread->unix_pid = -1;
         if (debug_level)
         {
             if (WIFSIGNALED(status))
@@ -136,6 +136,23 @@ void wait4_thread( struct thread *thread, int signal )
     } while (res && res != signal);
 }
 
+/* send a Unix signal to a specific thread */
+int send_thread_signal( struct thread *thread, int sig )
+{
+    int ret = -1;
+
+    if (thread->unix_pid != -1)
+    {
+        ret = kill( thread->unix_pid, sig );
+        if (ret == -1 && errno == ESRCH) /* thread got killed */
+        {
+            thread->unix_pid = -1;
+            thread->attached = 0;
+        }
+    }
+    return (ret != -1);
+}
+
 /* attach to a Unix thread */
 static int attach_thread( struct thread *thread )
 {
@@ -143,7 +160,7 @@ static int attach_thread( struct thread *thread )
     if (!use_ptrace) return 0;
     if (ptrace( PTRACE_ATTACH, thread->unix_pid, 0, 0 ) == -1)
     {
-        if (errno == ESRCH) thread->unix_pid = 0;  /* process got killed */
+        if (errno == ESRCH) thread->unix_pid = -1;  /* thread got killed */
         return 0;
     }
     if (debug_level) fprintf( stderr, "%04x: *attached*\n", thread->id );
@@ -155,12 +172,13 @@ static int attach_thread( struct thread *thread )
 /* detach from a Unix thread and kill it */
 void detach_thread( struct thread *thread, int sig )
 {
-    if (!thread->unix_pid) return;
+    if (thread->unix_pid == -1) return;
     if (thread->attached)
     {
         /* make sure it is stopped */
         suspend_thread( thread, 0 );
-        if (sig) kill( thread->unix_pid, sig );
+        if (sig) send_thread_signal( thread, sig );
+        if (thread->unix_pid == -1) return;
         if (debug_level) fprintf( stderr, "%04x: *detached*\n", thread->id );
         ptrace( PTRACE_DETACH, thread->unix_pid, (caddr_t)1, sig );
         thread->suspend = 0;  /* detach makes it continue */
@@ -168,7 +186,7 @@ void detach_thread( struct thread *thread, int sig )
     }
     else
     {
-        if (sig) kill( thread->unix_pid, sig );
+        if (sig) send_thread_signal( thread, sig );
         if (thread->suspend + thread->process->suspend) continue_thread( thread );
     }
 }
@@ -177,21 +195,21 @@ void detach_thread( struct thread *thread, int sig )
 void stop_thread( struct thread *thread )
 {
     /* can't stop a thread while initialisation is in progress */
-    if (!thread->unix_pid || !is_process_init_done(thread->process)) return;
+    if (thread->unix_pid == -1 || !is_process_init_done(thread->process)) return;
     /* first try to attach to it */
     if (!thread->attached)
         if (attach_thread( thread )) return;  /* this will have stopped it */
     /* attached already, or attach failed -> send a signal */
-    if (!thread->unix_pid) return;
-    kill( thread->unix_pid, SIGSTOP );
+    if (thread->unix_pid == -1) return;
+    send_thread_signal( thread, SIGSTOP );
     if (thread->attached) wait4_thread( thread, SIGSTOP );
 }
 
 /* make a thread continue (at the Unix level) */
 void continue_thread( struct thread *thread )
 {
-    if (!thread->unix_pid) return;
-    if (!thread->attached) kill( thread->unix_pid, SIGCONT );
+    if (thread->unix_pid == -1) return;
+    if (!thread->attached) send_thread_signal( thread, SIGCONT );
     else ptrace( get_thread_single_step(thread) ? PTRACE_SINGLESTEP : PTRACE_CONT,
                  thread->unix_pid, (caddr_t)1, SIGSTOP );
 }
@@ -206,7 +224,7 @@ int suspend_for_ptrace( struct thread *thread )
         return 1;
     }
     /* can't stop a thread while initialisation is in progress */
-    if (!thread->unix_pid || !is_process_init_done(thread->process)) goto error;
+    if (thread->unix_pid == -1 || !is_process_init_done(thread->process)) goto error;
     thread->suspend++;
     if (attach_thread( thread )) return 1;
     thread->suspend--;

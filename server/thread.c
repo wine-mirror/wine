@@ -108,7 +108,7 @@ inline static void init_thread_structure( struct thread *thread )
 {
     int i;
 
-    thread->unix_pid        = 0;  /* not known yet */
+    thread->unix_pid        = -1;  /* not known yet */
     thread->context         = NULL;
     thread->teb             = NULL;
     thread->mutex           = NULL;
@@ -814,7 +814,7 @@ DECL_HANDLER(init_thread)
     int reply_fd = thread_get_inflight_fd( current, req->reply_fd );
     int wait_fd = thread_get_inflight_fd( current, req->wait_fd );
 
-    if (current->unix_pid)
+    if (current->unix_pid != -1)
     {
         fatal_protocol_error( current, "init_thread: already running\n" );
         goto error;

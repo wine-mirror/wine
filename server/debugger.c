@@ -720,11 +720,7 @@ DECL_HANDLER(debug_break)
         struct thread *thread;
         for (thread = process->thread_list; thread; thread = thread->proc_next)
         {
-            if (thread->unix_pid)
-            {
-                kill( thread->unix_pid, SIGTRAP );
-                break;
-            }
+            if (send_thread_signal( thread, SIGTRAP )) break;
         }
         if (!thread) set_error( STATUS_ACCESS_DENIED );
     }

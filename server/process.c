@@ -969,7 +969,7 @@ DECL_HANDLER(get_startup_info)
 /* initialize a new process */
 DECL_HANDLER(init_process)
 {
-    if (!current->unix_pid)
+    if (current->unix_pid == -1)
     {
         fatal_protocol_error( current, "init_process: init_thread not called yet\n" );
         return;

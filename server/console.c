@@ -416,7 +416,7 @@ static int propagate_console_signal_cb(struct process *process, void *user)
         while (thread)
         {
             struct thread *next = thread->proc_next;
-            kill( thread->unix_pid, csi->signal );
+            send_thread_signal( thread, csi->signal );
             thread = next;
         }
     }
