@@ -196,11 +196,13 @@ BOOL ODBC_LoadDriverManager()
    else
           strcpy(gProxyHandle.dmLibName, "libodbc.so");
 
+    dlerror();  /* clear dlerror first */
    gProxyHandle.dmHandle = dlopen(gProxyHandle.dmLibName, RTLD_LAZY);
 
    if (gProxyHandle.dmHandle == NULL)           /* fail to load unixODBC driver manager */
    {
-           WARN("failed to open library %s\n", gProxyHandle.dmLibName);
+           const char *err = dlerror();
+           WARN("failed to open library %s: %s\n", gProxyHandle.dmLibName, err);
            gProxyHandle.dmLibName[0] = '\0';
            gProxyHandle.nErrorType = ERROR_LIBRARY_NOT_FOUND;
            return FALSE;
@@ -230,6 +232,7 @@ BOOL ODBC_LoadDMFunctions()
     if (gProxyHandle.dmHandle == NULL)
         return FALSE;
 
+    dlerror();  /* clear dlerror first */
     for ( i = 0; i < NUM_SQLFUNC; i ++ )
     {
         gProxyHandle.functions[i] = template_func[i];

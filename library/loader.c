@@ -83,23 +83,25 @@ static void *dlopen_dll( const char *name )
 {
 #ifdef HAVE_DL_API
     int i, namelen = strlen(name);
-    char *buffer, *p;
+    char *buffer, *p, *ext;
     void *ret = NULL;
 
     if (!init_done) build_dll_path();
 
-    /* check for .dll or .exe extension to remove */
-    if ((p = strrchr( name, '.' )))
-    {
-        if (!strcasecmp( p, ".dll" ) || !strcasecmp( p, ".exe" )) namelen -= 4;
-    }
+    /* clear dlerror to avoid glibc bug */
+    dlerror();
 
     buffer = malloc( dll_path_maxlen + namelen + 8 );
 
     /* store the name at the end of the buffer, prefixed by /lib and followed by .so */
     p = buffer + dll_path_maxlen;
     memcpy( p, "/lib", 4 );
-    for (i = 0, p += 4; i < namelen; i++, p++) *p = tolower(name[i]);
+    p += 4;
+    memcpy( p, name, namelen+1 );
+    ext = strrchr( p, '.' );
+    p += namelen;
+    /* check for .dll or .exe extension to remove */
+    if (ext && (!strcmp( ext, ".dll" ) || !strcmp( ext, ".exe" ))) p = ext;
     memcpy( p, ".so", 4 );
 
     for (i = 0; i < nb_dll_paths; i++)
@@ -108,6 +110,7 @@ static void *dlopen_dll( const char *name )
         char *p = buffer + dll_path_maxlen - len;
         memcpy( p, dll_paths[i], len );
         if ((ret = dlopen( p, RTLD_NOW ))) break;
+        dlerror();  /* clear dlerror to avoid glibc bug */
     }
 
     /* now try the default dlopen search path */
@@ -327,7 +330,7 @@ void *wine_dll_load( const char *filename )
     for (i = 0; i < nb_dlls; i++)
     {
         if (!builtin_dlls[i].nt) continue;
-        if (!strcasecmp( builtin_dlls[i].filename, filename ))
+        if (!strcmp( builtin_dlls[i].filename, filename ))
         {
             const IMAGE_NT_HEADERS *nt = builtin_dlls[i].nt;
             builtin_dlls[i].nt = NULL;
@@ -356,6 +359,7 @@ void wine_dll_unload( void *handle )
  *           wine_dll_load_main_exe
  *
  * Try to load the .so for the main exe, optionally searching for it in PATH.
+ * Note: dlerror() is cleared before returning because of a glibc bug.
  */
 void *wine_dll_load_main_exe( const char *name, int search_path )
 {
@@ -367,6 +371,7 @@ void *wine_dll_load_main_exe( const char *name, int search_path )
     if (!path)
     {
         /* no path, try only the specified name */
+        dlerror();  /* clear dlerror to avoid glibc bug */
         ret = dlopen( name, RTLD_NOW );
     }
     else
@@ -389,6 +394,7 @@ void *wine_dll_load_main_exe( const char *name, int search_path )
                 if ((len = p - path) > 0)
                 {
                     memcpy( basename - len, path, len );
+                    dlerror();  /* clear dlerror to avoid glibc bug */
                     if ((ret = dlopen( basename - len, RTLD_NOW ))) break;
                 }
                 if (!*p) break;
@@ -397,6 +403,7 @@ void *wine_dll_load_main_exe( const char *name, int search_path )
             if (tmp != buffer) free( tmp );
         }
     }
+    if (!ret) dlerror();  /* clear dlerror to avoid glibc bug */
 #endif  /* HAVE_DL_API */
     return ret;
 }

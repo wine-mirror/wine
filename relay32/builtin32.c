@@ -23,6 +23,7 @@
 #include "wine/library.h"
 #include "global.h"
 #include "module.h"
+#include "file.h"
 #include "heap.h"
 #include "main.h"
 #include "winerror.h"
@@ -46,12 +47,14 @@ void *BUILTIN32_dlopen( const char *name )
 
     if (!(handle = wine_dll_load( name )))
     {
-	LPSTR pErr;
-	pErr = dlerror();
-	if (strstr(pErr, "undefined symbol")) /* undef symbol -> ERR() */
-	    ERR("failed to load %s: %s\n", name, pErr);
-	else /* WARN() for libraries that are supposed to be native */
-            WARN("failed to load %s: %s\n", name, pErr );
+        LPSTR pErr;
+        if ((pErr = dlerror()))
+        {
+            if (strstr(pErr, "undefined symbol")) /* undef symbol -> ERR() */
+                ERR("failed to load %s: %s\n", name, pErr);
+            else /* WARN() for libraries that are supposed to be native */
+                WARN("failed to load %s: %s\n", name, pErr );
+        }
     }
     return handle;
 #else
@@ -136,6 +139,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
     strcpy( dllname, name );
     p = strrchr( dllname, '.' );
     if (!p) strcat( dllname, ".dll" );
+    for (p = dllname; *p; p++) *p = FILE_tolower(*p);
 
     if (!(handle = BUILTIN32_dlopen( dllname ))) goto error;
 

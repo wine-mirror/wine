@@ -122,6 +122,7 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
     strcpy( dllname, name );
     p = strrchr( dllname, '.' );
     if (!p) strcat( dllname, ".dll" );
+    for (p = dllname; *p; p++) *p = FILE_tolower(*p);
 
     for (i = 0; i < nb_dlls; i++)
     {

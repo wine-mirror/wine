@@ -154,8 +154,10 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
          points to the ENTIRE DOS filename of the library
          t is returned by HeapAlloc() above and so is also used
          with HeapFree() below */
-	dlhandle = ELFDLL_dlopen(s,RTLD_NOW);
+        dlerror();  /* clear dlerror because of glibc bug */
+	dlhandle = dlopen(s,RTLD_NOW);
 	if (!dlhandle) {
+                dlerror();  /* clear dlerror because of glibc bug */
 		HeapFree( GetProcessHeap(), 0, t );
 		SetLastError( ERROR_FILE_NOT_FOUND );
 		return NULL;
@@ -181,12 +183,19 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
 		ERR("Can't import from UNIX dynamic libs by ordinal, sorry.\n");
 		return (FARPROC)0;
 	}
+        dlerror();  /* clear dlerror() first */
 	fun = dlsym(wm->dlhandle,funcName);
-	/* we sometimes have an excess '_' at the beginning of the name */
-	if (!fun && (funcName[0]=='_')) {
+        if (!fun)
+        {
+            dlerror();  /* clear dlerror() to avoid glibc bug */
+            /* we sometimes have an excess '_' at the beginning of the name */
+            if (funcName[0]=='_')
+            {
 		funcName++ ;
 		fun = dlsym(wm->dlhandle,funcName);
-	}
+                if (!fun) dlerror();  /* clear dlerror() to avoid glibc bug */
+            }
+        }
 	if (!fun) {
 		/* Function@nrofargs usually marks a stdcall function 
 		 * with nrofargs bytes that are popped at the end
@@ -199,6 +208,7 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
 			nrofargs = 0;
 			sscanf(t+1,"%d",&nrofargs);
 			fun = dlsym(wm->dlhandle,fn);
+                        if (!fun) dlerror();  /* clear dlerror() to avoid glibc bug */
 			HeapFree( GetProcessHeap(), 0, fn );
 		}
 	}
