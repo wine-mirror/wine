@@ -337,7 +337,7 @@ X11DRV_DrawArc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
                 INT xend, INT yend, INT lines )
 {
     INT xcenter, ycenter, istart_angle, idiff_angle;
-    INT width, oldwidth, oldendcap;
+    INT width, oldwidth;
     double start_angle, end_angle;
     XPoint points[4];
     BOOL update = FALSE;
@@ -362,7 +362,6 @@ X11DRV_DrawArc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
       { POINT tmp = start; start = end; end = tmp; }
 
     oldwidth = width = physDev->pen.width;
-    oldendcap = physDev->pen.endcap;
     if (!width) width = 1;
     if(physDev->pen.style == PS_NULL) width = 0;
 
@@ -377,7 +376,6 @@ X11DRV_DrawArc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
     }
     if(width == 0) width = 1; /* more accurate */
     physDev->pen.width = width;
-    physDev->pen.endcap = PS_ENDCAP_SQUARE;
 
     xcenter = (rc.right + rc.left) / 2;
     ycenter = (rc.bottom + rc.top) / 2;
@@ -482,7 +480,6 @@ X11DRV_DrawArc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
     X11DRV_UnlockDIBSection(physDev, update);
 
     physDev->pen.width = oldwidth;
-    physDev->pen.endcap = oldendcap;
     return TRUE;
 }
 
