@@ -492,9 +492,9 @@ static void get_etched_rect(HWND dialog, RECT *rect)
     GetClientRect(dialog, rect);
 
     /* these dimensions from the labelserial static in En.rc  */
-    rect->top = 258;
-    rect->bottom = 258;
-    rect->left += 35;
+    rect->top = 265;
+    rect->bottom = 265;
+    rect->left += 25;
     rect->right -= 25;
 }
 
