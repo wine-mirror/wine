@@ -469,7 +469,7 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
 
  if ((!env)&&pdb) env = pdb->env_db->environ;
  if (alloc) {
-  if ((hModule = MODULE_CreateDummyModule(ofs, NULL)) < 32) {
+  if ((hModule = MODULE_CreateDummyModule(ofs, NULL, 0)) < 32) {
    SetLastError(hModule);
    return FALSE;
   }

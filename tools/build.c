@@ -873,7 +873,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pModule->dlls_to_init  = 0;
     pModule->nrname_handle = 0;
     pModule->min_swap_area = 0;
-    pModule->expected_version = 0x030a;
+    pModule->expected_version = 0;
     pModule->module32 = 0;
     pModule->self = 0;
     pModule->self_loading_sel = 0;

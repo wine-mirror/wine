@@ -333,7 +333,7 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
  *
  * Create a dummy NE module for Win32 or Winelib.
  */
-HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
+HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName, WORD version )
 {
     HMODULE hModule;
     NE_MODULE *pModule;
@@ -375,7 +375,7 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
     pModule->nrname_size      = 0;
     pModule->fileinfo         = sizeof(NE_MODULE);
     pModule->os_flags         = NE_OSFLAGS_WINDOWS;
-    pModule->expected_version = 0x030a;
+    pModule->expected_version = version;
     pModule->self             = hModule;
 
     /* Set loaded file information */
@@ -1470,7 +1470,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			break;
 	}
 
-	ERR_(module)("Failed to load module '%s'; error=0x%08lx, \n", libname, err);
+	WARN_(module)("Failed to load module '%s'; error=0x%08lx, \n", libname, err);
 	SetLastError(err);
 	LeaveCriticalSection(&PROCESS_Current()->crit_section);
 	return NULL;

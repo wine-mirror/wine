@@ -28,7 +28,7 @@ extern DWORD PE_SizeofResource(HMODULE,HRSRC);
 extern struct _wine_modref *PE_LoadLibraryExA(LPCSTR, DWORD, DWORD *);
 extern void PE_UnloadLibrary(struct _wine_modref *);
 extern HGLOBAL PE_LoadResource(struct _wine_modref *wm,HRSRC);
-extern HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName );
+extern HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName, WORD *version );
 extern struct _wine_modref *PE_CreateModule( HMODULE hModule, OFSTRUCT *ofs, 
                                              DWORD flags, BOOL builtin );
 extern BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 

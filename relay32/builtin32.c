@@ -487,7 +487,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	}
 
 	/* Create 16-bit dummy module */
-	if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32)
+	if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName, 0 )) < 32)
 	{
 		*err = (DWORD)hModule16;
 		return NULL;	/* FIXME: Should unload the builtin module */

@@ -459,7 +459,7 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
  * want to access them. (HMODULE32 point to the start of it)
  */
-HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName )
+HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName, WORD *version )
 {
     HMODULE	hModule;
     HANDLE	mapping;
@@ -662,6 +662,10 @@ HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName )
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_EXPORT;
     if (dir->Size)
         *modName = (LPCSTR)RVA(((PIMAGE_EXPORT_DIRECTORY)RVA(dir->VirtualAddress))->Name);
+
+    /* Get expected OS / Subsystem version */
+    *version =   ( (nt->OptionalHeader.MajorSubsystemVersion & 0xff) << 8 )
+               |   (nt->OptionalHeader.MinorSubsystemVersion & 0xff);
 
     /* We don't need the orignal mapping any more */
     UnmapViewOfFile( (LPVOID)hModule );
@@ -882,6 +886,7 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 	WINE_MODREF	*wm;
 	char        	dllname[256], *p;
 	HFILE		hFile;
+	WORD		version = 0;
 
 	/* Append .DLL to name if no extension present */
 	strcpy( dllname, name );
@@ -892,7 +897,7 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 	hFile = OpenFile( dllname, &ofs, OF_READ | OF_SHARE_DENY_WRITE );
 	if ( hFile != HFILE_ERROR )
 	{
-		hModule32 = PE_LoadImage( hFile, &ofs, &modName );
+		hModule32 = PE_LoadImage( hFile, &ofs, &modName, &version );
 		CloseHandle( hFile );
 		if(!hModule32)
 		{
@@ -907,7 +912,7 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags, DWORD *err)
 	}
 
 	/* Create 16-bit dummy module */
-	if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32)
+	if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName, version )) < 32)
 	{
 		*err = (DWORD)hModule16;	/* This should give the correct error */
 		return NULL;
@@ -954,12 +959,13 @@ BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
                        LPPROCESS_INFORMATION info )
 {
     LPCSTR modName = NULL;
+    WORD version = 0;
     HMODULE16 hModule16;
     HMODULE hModule32;
     NE_MODULE *pModule;
 
     /* Load file */
-    if ( (hModule32 = PE_LoadImage( hFile, ofs, &modName )) < 32 )
+    if ( (hModule32 = PE_LoadImage( hFile, ofs, &modName, &version )) < 32 )
     {
         SetLastError( hModule32 );
         return FALSE;
@@ -973,7 +979,7 @@ BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
 #endif
 
     /* Create 16-bit dummy module */
-    if ( (hModule16 = MODULE_CreateDummyModule( ofs, modName )) < 32 ) 
+    if ( (hModule16 = MODULE_CreateDummyModule( ofs, modName, version )) < 32 ) 
     {
         SetLastError( hModule16 );
         return FALSE;
