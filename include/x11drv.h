@@ -341,9 +341,6 @@ extern Atom wmChangeState;
 extern Atom kwmDockWindow;
 extern Atom _kde_net_wm_system_tray_window_for;
 
-static inline Visual *X11DRV_GetVisual(void)     { return visual; }
-static inline Window X11DRV_GetXRootWindow(void) { return root_window; }
-
 /* X11 clipboard driver */
 
 extern void X11DRV_CLIPBOARD_FreeResources( Atom property );

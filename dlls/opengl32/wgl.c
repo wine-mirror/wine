@@ -83,7 +83,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
   TRACE("(%08x)\n", hdc);
 
   /* First, get the visual in use by the X11DRV */
-  template.visualid = XVisualIDFromVisual(X11DRV_GetVisual());
+  template.visualid = GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
   vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
 
   if (vis == NULL) {
@@ -455,12 +455,14 @@ static void process_attach(void) {
   int num;
   XVisualInfo template;
   XVisualInfo *vis = NULL;
+  Window root = (Window)GetPropA( GetDesktopWindow(), "__wine_x11_whole_window" );
 
-  if (!visual) {
-    ERR("X11DRV not loaded yet. Cannot create default context.\n");
-    return;
+  if (!root)
+  {
+      ERR("X11DRV not loaded. Cannot create default context.\n");
+      return;
   }
-  
+
   ENTER_GL();
 
   /* Try to get the visual from the Root Window.  We can't use the standard (presumably
@@ -468,7 +470,7 @@ static void process_attach(void) {
      Window was created using the standard X11DRV visual, and glXMakeCurrent can't deal 
      with mismatched visuals.  Note that the Root Window visual may not be double 
      buffered, so apps actually attempting to render this way may flicker */
-  if (TSXGetWindowAttributes( gdi_display, X11DRV_GetXRootWindow(), &win_attr ))
+  if (XGetWindowAttributes( gdi_display, root, &win_attr ))
   {
     rootVisual = win_attr.visual; 
   }
@@ -482,7 +484,7 @@ static void process_attach(void) {
   template.visualid = XVisualIDFromVisual(rootVisual);
   vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
   if (vis != NULL)        default_cx = glXCreateContext(gdi_display, vis, 0, GL_TRUE);
-  if (default_cx != NULL) glXMakeCurrent(gdi_display, X11DRV_GetXRootWindow(), default_cx);
+  if (default_cx != NULL) glXMakeCurrent(gdi_display, root, default_cx);
   XFree(vis);
   LEAVE_GL();
 

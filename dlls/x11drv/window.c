@@ -192,14 +192,18 @@ static Window create_icon_window( Display *display, WND *win )
     attr.bit_gravity = NorthWestGravity;
     attr.backing_store = NotUseful/*WhenMapped*/;
 
-    data->icon_window = TSXCreateWindow( display, root_window, 0, 0,
-                                         GetSystemMetrics( SM_CXICON ),
-                                         GetSystemMetrics( SM_CYICON ),
-                                         0, screen_depth,
-                                         InputOutput, visual,
-                                         CWEventMask | CWBitGravity | CWBackingStore, &attr );
+    wine_tsx11_lock();
+    data->icon_window = XCreateWindow( display, root_window, 0, 0,
+                                       GetSystemMetrics( SM_CXICON ),
+                                       GetSystemMetrics( SM_CYICON ),
+                                       0, screen_depth,
+                                       InputOutput, visual,
+                                       CWEventMask | CWBitGravity | CWBackingStore, &attr );
     XSaveContext( display, data->icon_window, winContext, (char *)win->hwndSelf );
+    wine_tsx11_unlock();
+
     TRACE( "created %lx\n", data->icon_window );
+    SetPropA( win->hwndSelf, "__wine_x11_icon_window", (HANDLE)data->icon_window );
     return data->icon_window;
 }
 
@@ -208,12 +212,15 @@ static Window create_icon_window( Display *display, WND *win )
 /***********************************************************************
  *              destroy_icon_window
  */
-inline static void destroy_icon_window( Display *display, struct x11drv_win_data *data )
+inline static void destroy_icon_window( Display *display, WND *win )
 {
+    struct x11drv_win_data *data = win->pDriverData;
+
     if (!data->icon_window) return;
     XDeleteContext( display, data->icon_window, winContext );
     XDestroyWindow( display, data->icon_window );
     data->icon_window = 0;
+    RemovePropA( win->hwndSelf, "__wine_x11_icon_window" );
 }
 
 
@@ -234,7 +241,7 @@ static void set_icon_hints( Display *display, WND *wndPtr, XWMHints *hints )
 
     if (!(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
-        destroy_icon_window( display, data );
+        destroy_icon_window( display, wndPtr );
         hints->flags &= ~(IconPixmapHint | IconMaskHint | IconWindowHint);
     }
     else if (!hIcon)
@@ -273,7 +280,7 @@ static void set_icon_hints( Display *display, WND *wndPtr, XWMHints *hints )
 
         hints->icon_pixmap = X11DRV_BITMAP_Pixmap(data->hWMIconBitmap);
         hints->icon_mask = X11DRV_BITMAP_Pixmap(data->hWMIconMask);
-        destroy_icon_window( display, data );
+        destroy_icon_window( display, wndPtr );
         hints->flags = (hints->flags & ~IconWindowHint) | IconPixmapHint | IconMaskHint;
     }
 }
@@ -632,6 +639,11 @@ static void create_desktop( Display *display, WND *wndPtr )
     wine_tsx11_unlock();
 
     data->whole_window = data->client_window = root_window;
+
+    SetPropA( wndPtr->hwndSelf, "__wine_x11_whole_window", (HANDLE)root_window );
+    SetPropA( wndPtr->hwndSelf, "__wine_x11_client_window", (HANDLE)root_window );
+    SetPropA( wndPtr->hwndSelf, "__wine_x11_visual_id", (HANDLE)XVisualIDFromVisual(visual) );
+
     if (root_window != DefaultRootWindow(display)) X11DRV_create_desktop_thread();
 }
 
@@ -798,7 +810,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
         XDeleteContext( display, data->whole_window, winContext );
         XDeleteContext( display, data->client_window, winContext );
         XDestroyWindow( display, data->whole_window );  /* this destroys client too */
-        destroy_icon_window( display, data );
+        destroy_icon_window( display, wndPtr );
         wine_tsx11_unlock();
     }
 
@@ -846,6 +858,9 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     TSXSync( display, False );
 
     WIN_ReleaseWndPtr( wndPtr );
+
+    SetPropA( hwnd, "__wine_x11_whole_window", (HANDLE)data->whole_window );
+    SetPropA( hwnd, "__wine_x11_client_window", (HANDLE)data->client_window );
 
     /* send WM_NCCREATE */
     TRACE( "hwnd %x cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );
