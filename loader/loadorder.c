@@ -98,7 +98,7 @@ static const struct loadorder_list default_list =
 /* default if nothing else specified */
 static const enum loadorder_type default_loadorder[LOADORDER_NTYPES] =
 {
-    LOADORDER_DLL, LOADORDER_BI, 0, 0
+    LOADORDER_BI, LOADORDER_DLL, 0, 0
 };
 
 static struct loadorder_list cmdline_list;
