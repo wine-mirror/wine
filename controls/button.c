@@ -1035,6 +1035,7 @@ static void OB_Paint( HWND hwnd, HDC hDC, UINT action )
     RECT clipRect;
     LONG_PTR id = GetWindowLongPtrA( hwnd, GWLP_ID );
     HWND parent;
+    HFONT hFont, hPrevFont = 0;
 
     dis.CtlType    = ODT_BUTTON;
     dis.CtlID      = id;
@@ -1058,9 +1059,11 @@ static void OB_Paint( HWND hwnd, HDC hDC, UINT action )
     DPtoLP(hDC, (LPPOINT) &clipRect, 2);
     IntersectClipRect(hDC, clipRect.left,  clipRect.top, clipRect.right, clipRect.bottom);
 
+    if ((hFont = get_button_font( hwnd ))) hPrevFont = SelectObject( hDC, hFont );
     parent = GetParent(hwnd);
     if (!parent) parent = hwnd;
     SendMessageW( parent, WM_CTLCOLORBTN, (WPARAM)hDC, (LPARAM)hwnd );
     SendMessageW( GetParent(hwnd), WM_DRAWITEM, id, (LPARAM)&dis );
+    if (hPrevFont) SelectObject(hDC, hPrevFont);
     SelectClipRgn(hDC, clipRegion);
 }
