@@ -561,7 +561,7 @@ typedef DWORD		EXECUTION_STATE;
  * we're ready we'll remove the '!defined(__WINE__)' (the equivalent
  * of converting it from DECLARE_OLD_HANDLE to DECLARE_HANDLE).
  */
-#if defined(STRICT) && !defined(__WINE__)
+#if defined(STRICT) || (defined(__WINE__) && !defined(WINE_NO_STRICT))
 typedef VOID*           HANDLE;
 #define DECLARE_OLD_HANDLE(a) \
     typedef struct a##__ { int unused; } *a; \

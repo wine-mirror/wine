@@ -1,4 +1,4 @@
-EXTRADEFS = -D_SHELL32_
+EXTRADEFS = -D_SHELL32_ -DWINE_NO_STRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

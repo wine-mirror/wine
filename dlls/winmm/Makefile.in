@@ -1,4 +1,4 @@
-EXTRADEFS = -D_WINMM_
+EXTRADEFS = -D_WINMM_ -DWINE_NO_STRICT
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

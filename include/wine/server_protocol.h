@@ -32,9 +32,15 @@ struct request_max_size
     int pad[16];
 };
 
+#if defined(STRICT) || (defined(__WINE__) && !defined(WINE_NO_STRICT))
+typedef void *obj_handle_t;
+typedef void *user_handle_t;
+#else
 typedef int obj_handle_t;
-typedef unsigned short atom_t;
 typedef unsigned int user_handle_t;
+#endif
+
+typedef unsigned short atom_t;
 typedef unsigned int process_id_t;
 typedef unsigned int thread_id_t;
 
