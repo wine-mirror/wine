@@ -39,6 +39,8 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
+#include "itsstor.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(itss);
 
 #include "initguid.h"
@@ -48,8 +50,6 @@ DEFINE_GUID(CLSID_ITSProtocol,0x9d148290,0xb9c8,0x11d0,0xa4,0xcc,0x00,0x00,0xf8,
 DEFINE_GUID(IID_IITStorage, 0x88cc31de, 0x27ab, 0x11d0, 0x9d, 0xf9, 0x0, 0xa0, 0xc9, 0x22, 0xe6, 0xec);
 
 static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj);
-extern HRESULT ITS_IParseDisplayName_create(IUnknown *pUnkOuter, LPVOID *ppObj);
-extern HRESULT ITSS_StgOpenStorage( const WCHAR*, IStorage*, DWORD, SNB, DWORD, IStorage** );
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {

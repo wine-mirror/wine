@@ -38,6 +38,8 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
+#include "itsstor.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(itss);
 
 /*****************************************************************************/
@@ -153,8 +155,30 @@ static HRESULT WINAPI ITS_IMonikerImpl_BindToStorage(
     REFIID riid,
     void** ppvObj)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ICOM_THIS(ITS_IMonikerImpl,iface);
+    DWORD grfMode = STGM_SIMPLE | STGM_READ | STGM_SHARE_EXCLUSIVE;
+    HRESULT r;
+    IStorage *stg = NULL;
+
+    TRACE("%p %p %p %s %p\n", This,
+           pbc, pmkToLeft, debugstr_guid(riid), ppvObj);
+
+    r = ITSS_StgOpenStorage( This->szFile, NULL, grfMode, 0, 0, &stg );
+    if( r == S_OK )
+    {
+        TRACE("Opened storage %s\n", debugstr_w( This->szFile ) );
+        if (IsEqualGUID(riid, &IID_IStream))
+            r = IStorage_OpenStream( stg, This->szHtml,
+                       NULL, grfMode, 0, (IStream**)ppvObj );
+        else if (IsEqualGUID(riid, &IID_IStorage))
+            r = IStorage_OpenStorage( stg, This->szHtml,
+                       NULL, grfMode, NULL, 0, (IStorage**)ppvObj );
+        else
+            r = STG_E_ACCESSDENIED;
+        IStorage_Release( stg );
+    }
+
+    return r;
 }
 
 static HRESULT WINAPI ITS_IMonikerImpl_Reduce(

@@ -36,6 +36,7 @@
 
 #include "itss.h"
 #include "chm_lib.h"
+#include "itsstor.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -330,7 +331,15 @@ HRESULT WINAPI ITSS_IStorageImpl_OpenStream(
     len = strlenW( This->dir ) + strlenW( pwcsName ) + 1;
     path = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
     strcpyW( path, This->dir );
+    if( pwcsName[0] == '/' )
+    {
+        WCHAR *p = &path[strlenW( path ) - 1];
+        while( ( path <= p ) && ( *p = '/' ) )
+            *p-- = 0;
+    }
     strcatW( path, pwcsName );
+
+    TRACE("Resolving %s\n", debugstr_w(path));
 
     r = chm_resolve_object(This->chmfile, path, &ui);
     HeapFree( GetProcessHeap(), 0, path );
@@ -368,7 +377,10 @@ HRESULT WINAPI ITSS_IStorageImpl_OpenStorage(
     DWORD reserved,
     IStorage** ppstg)
 {
-    FIXME("\n");
+    ICOM_THIS(ITSS_IStorageImpl,iface);
+
+    FIXME("%p %s %p %lu %p %lu %p\n", This, debugstr_w(pwcsName),
+          pstgPriority, grfMode, snbExclude, reserved, ppstg);
     return E_NOTIMPL;
 }
 
@@ -749,8 +761,21 @@ static HRESULT WINAPI ITSS_IStream_Stat(
         STATSTG* pstatstg,
         DWORD grfStatFlag)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ICOM_THIS(IStream_Impl,iface);
+
+    TRACE("%p %p %ld\n", This, pstatstg, grfStatFlag);
+
+    memset( pstatstg, 0, sizeof *pstatstg );
+    if( !( grfStatFlag & STATFLAG_NONAME ) )
+    {
+        FIXME("copy the name\n");
+    }
+    pstatstg->type = STGTY_STREAM;
+    pstatstg->cbSize.QuadPart = This->ui.length;
+    pstatstg->grfMode = STGM_READ;
+    memcpy( &pstatstg->clsid, &CLSID_ITStorage, sizeof (CLSID) );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ITSS_IStream_Clone(

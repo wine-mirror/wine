@@ -626,7 +626,7 @@ struct chmFile *chm_openW(const WCHAR *filename)
     /* open file */
     if ((newHandle->fd=CreateFileW(filename,
                                    GENERIC_READ,
-                                   0,
+                                   FILE_SHARE_READ,
                                    NULL,
                                    OPEN_EXISTING,
                                    FILE_ATTRIBUTE_NORMAL,
