@@ -280,6 +280,20 @@ RPC_STATUS WINAPI RpcStringFreeA(unsigned char** String)
   return RPC_S_OK;
 }
 
+
+/*************************************************************************
+ *           UuidHash   [RPCRT4.@]
+ *
+ * Generates a hash value for a given UUID
+ *
+ */
+unsigned short WINAPI UuidHash(UUID *uuid, RPC_STATUS *Status)
+{
+  FIXME("stub:\n");
+  *Status = RPC_S_OK;
+  return 0xabcd;
+}
+
 /*************************************************************************
  *           UuidToStringA   [RPCRT4.@]
  *

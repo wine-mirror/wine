@@ -107,6 +107,9 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 
 #define RpcBindingFromStringBinding WINELIB_NAME_AW(RpcBindingFromStringBinding)
 
+RPCRTAPI unsigned short RPC_ENTRY
+  UuidHash(UUID *, RPC_STATUS*);
+
 #include "rpcdcep.h"
 
 #endif /*__WINE_RPCDCE_H */

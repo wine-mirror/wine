@@ -24,6 +24,7 @@ debug_channels (ole)
 @ stdcall RpcStringBindingComposeW(wstr wstr wstr wstr wstr ptr) RpcStringBindingComposeW
 @ stdcall RpcStringFreeA(ptr) RpcStringFreeA
 @ stdcall UuidCreate(ptr) UuidCreate
+@ stdcall UuidHash(ptr ptr) UuidHash
 @ stdcall UuidToStringA(ptr ptr) UuidToStringA
 
 @ stub CStdStubBuffer_QueryInterface
