@@ -771,18 +771,20 @@ void BuildSpec16File( FILE *outfile )
 
     /* Output the DLL constructor */
 
-    fprintf( outfile, "#ifdef __GNUC__\n" );
-    fprintf( outfile, "static void init(void) __attribute__((unused));\n" );
-    fprintf( outfile, "#else /* defined(__GNUC__) */\n" );
-    fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
-    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
-    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall init\\n\"\n" );
-    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
-    fprintf( outfile, "static void init(void) { __wine_register_dll_16( &descriptor ); }\n" );
+    fprintf( outfile,
+             "#ifndef __GNUC__\n"
+             "static void __asm__dummy_dll_init(void) {\n"
+             "#endif /* defined(__GNUC__) */\n"
+             "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n"
+             "    \"\\tcall " PREFIX "__wine_spec_%s_init\\n\"\n"
+             "    \"\\t.previous\\n\");\n"
+             "#ifndef __GNUC__\n"
+             "}\n"
+             "#endif /* defined(__GNUC__) */\n\n"
+             "void __wine_spec_%s_init(void)\n"
+             "{\n"
+             "    __wine_register_dll_16( &descriptor );\n"
+             "}\n", DLLName, DLLName );
 }
 
 
