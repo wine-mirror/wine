@@ -453,19 +453,19 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
     switch (style & SS_TYPEMASK)
     {
     case SS_LEFT:
-	wFormat = DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_NOCLIP;
+	wFormat = DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK;
 	break;
 
     case SS_CENTER:
-	wFormat = DT_CENTER | DT_EXPANDTABS | DT_WORDBREAK | DT_NOCLIP;
+	wFormat = DT_CENTER | DT_EXPANDTABS | DT_WORDBREAK;
 	break;
 
     case SS_RIGHT:
-	wFormat = DT_RIGHT | DT_EXPANDTABS | DT_WORDBREAK | DT_NOCLIP;
+	wFormat = DT_RIGHT | DT_EXPANDTABS | DT_WORDBREAK;
 	break;
 
     case SS_SIMPLE:
-	wFormat = DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOCLIP;
+	wFormat = DT_LEFT | DT_SINGLELINE | DT_VCENTER;
 	break;
 
     case SS_LEFTNOWORDWRAP:
