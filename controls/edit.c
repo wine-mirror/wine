@@ -3534,11 +3534,15 @@ static BOOL EDIT_EM_Undo(EDITSTATE *es)
 	INT ulength;
 	LPWSTR utext;
 
-	/* Protect read-only edit control from modification */
-	if(es->style & ES_READONLY)
-	    return FALSE;
+	/* As per MSDN spec, for a single-line edit control,
+	   the return value is always TRUE */
+	if( es->style & ES_READONLY )
+            return !(es->style & ES_MULTILINE);
 
 	ulength = strlenW(es->undo_text);
+	if( ulength == 0 )
+            return !(es->style & ES_MULTILINE);
+
 	utext = HeapAlloc(GetProcessHeap(), 0, (ulength + 1) * sizeof(WCHAR));
 
 	strcpyW(utext, es->undo_text);
