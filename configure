@@ -1241,7 +1241,8 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
 
 
 
-LIBEXT=so       # library type .so or .a
+LIBEXT="so"
+
 
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
@@ -10171,9 +10172,16 @@ _ACEOF
 fi
 
 
-LDSHARED=""
-LDDLLFLAGS=""
+DLLEXT=""
+
+DLLFLAGS=""
+
 DLLIBS=""
+
+LDDLLFLAGS=""
+
+LDSHARED=""
+
 
 case $host_os in
   cygwin*|mingw32*)
@@ -10525,6 +10533,8 @@ done
 
     if test "$LIBEXT" = "so"
     then
+      DLLFLAGS="-fPIC"
+      DLLEXT=".so"
       echo "$as_me:$LINENO: checking whether we can build a GNU style ELF dll" >&5
 echo $ECHO_N "checking whether we can build a GNU style ELF dll... $ECHO_C" >&6
 if test "${ac_cv_c_dll_gnuelf+set}" = set; then
@@ -10650,30 +10660,21 @@ If you are using Linux, you will need a newer binutils.
    { (exit 1); exit 1; }; }
 fi
 
-DLLFLAGS=""
-
-if test "$LIBEXT" = "so"; then
-    DLLFLAGS="-fPIC"
-    DLLEXT=".so"
-elif test "$LIBEXT" = "dll"; then
-    #DLLFLAGS="-fPIC" # -fPIC doesn't work(at least in cygwin-b20) - FIXME
-    DLLEXT=""
-fi
-
 case $build_os in
   cygwin*|mingw32*)
-    LDPATH="PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$PATH\"" ;;
+    LDPATH="PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$PATH\""
+ ;;
   *)
-    LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$LD_LIBRARY_PATH\"" ;;
+    LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$LD_LIBRARY_PATH\""
+ ;;
 esac
 
+CRTLIBS=""
 
-
-
-
-
-
-
+case $host_os in
+  mingw32*)
+    CRTLIBS="-lmsvcrt" ;;
+esac
 
 
 if test "$LIBEXT" = "so"
@@ -14736,6 +14737,7 @@ s,@ECHO_C@,$ECHO_C,;t t
 s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
+s,@LIBEXT@,$LIBEXT,;t t
 s,@OPTIONS@,$OPTIONS,;t t
 s,@build@,$build,;t t
 s,@build_cpu@,$build_cpu,;t t
@@ -14803,15 +14805,15 @@ s,@ARTSINCL@,$ARTSINCL,;t t
 s,@ALSALIBS@,$ALSALIBS,;t t
 s,@NASLIBS@,$NASLIBS,;t t
 s,@AUDIOIOLIBS@,$AUDIOIOLIBS,;t t
+s,@DLLEXT@,$DLLEXT,;t t
+s,@DLLFLAGS@,$DLLFLAGS,;t t
+s,@DLLIBS@,$DLLIBS,;t t
+s,@LDDLLFLAGS@,$LDDLLFLAGS,;t t
+s,@LDSHARED@,$LDSHARED,;t t
 s,@DLLWRAP@,$DLLWRAP,;t t
 s,@ac_ct_DLLWRAP@,$ac_ct_DLLWRAP,;t t
-s,@DLLIBS@,$DLLIBS,;t t
-s,@DLLFLAGS@,$DLLFLAGS,;t t
-s,@DLLEXT@,$DLLEXT,;t t
-s,@LDSHARED@,$LDSHARED,;t t
-s,@LDDLLFLAGS@,$LDDLLFLAGS,;t t
-s,@LIBEXT@,$LIBEXT,;t t
 s,@LDPATH@,$LDPATH,;t t
+s,@CRTLIBS@,$CRTLIBS,;t t
 s,@LDD@,$LDD,;t t
 s,@ALLOCA@,$ALLOCA,;t t
 /@MAKE_RULES@/r $MAKE_RULES

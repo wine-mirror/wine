@@ -7,7 +7,7 @@ LIBEXT    = @LIBEXT@
 MODULE    = none
 SOVERSION = 1.0
 SONAME    = libwine.so
-EXTRALIBS = @DLLIBS@
+EXTRALIBS = @DLLIBS@ @CRTLIBS@
 
 C_SRCS = \
 	config.c \
@@ -33,7 +33,7 @@ libwine.a: $(OBJS)
 	$(RANLIB) $@
 
 libwine.dll: $(OBJS)
-	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine.a -o libwine.dll $(OBJS) -lmsvcrt
+	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine.a -o libwine.dll $(OBJS) $(EXTRALIBS)
 
 .PHONY: install_so install_a install_dll
 

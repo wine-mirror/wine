@@ -12,8 +12,8 @@ AC_CONFIG_AUX_DIR(tools)
 
 dnl **** Command-line arguments ****
 
-dnl Default values
-LIBEXT=so       # library type .so or .a
+dnl Library type .so or .a
+AC_SUBST(LIBEXT,"so")
 
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],[compile out all debugging messages]))
 AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE messages]))
@@ -723,9 +723,11 @@ fi
 
 dnl **** Check for working dll ****
 
-LDSHARED=""
-LDDLLFLAGS=""
-DLLIBS=""
+AC_SUBST(DLLEXT,"")
+AC_SUBST(DLLFLAGS,"")
+AC_SUBST(DLLIBS,"")
+AC_SUBST(LDDLLFLAGS,"")
+AC_SUBST(LDSHARED,"")
 
 case $host_os in
   cygwin*|mingw32*)
@@ -748,6 +750,8 @@ case $host_os in
 
     if test "$LIBEXT" = "so"
     then
+      DLLFLAGS="-fPIC"
+      DLLEXT=".so"
       AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
           [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic],
                            ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
@@ -778,30 +782,19 @@ If you are using Linux, you will need a newer binutils.]
 )
 fi
 
-DLLFLAGS=""
-
-if test "$LIBEXT" = "so"; then
-    DLLFLAGS="-fPIC"
-    DLLEXT=".so"
-elif test "$LIBEXT" = "dll"; then
-    #DLLFLAGS="-fPIC" # -fPIC doesn't work(at least in cygwin-b20) - FIXME
-    DLLEXT=""
-fi
-
 case $build_os in
   cygwin*|mingw32*)
-    LDPATH="PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$PATH\"" ;;
+    AC_SUBST(LDPATH,"PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$PATH\"") ;;
   *)
-    LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$LD_LIBRARY_PATH\"" ;;
+    AC_SUBST(LDPATH,"LD_LIBRARY_PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$LD_LIBRARY_PATH\"") ;;
 esac
 
-AC_SUBST(DLLIBS)
-AC_SUBST(DLLFLAGS)
-AC_SUBST(DLLEXT)
-AC_SUBST(LDSHARED)
-AC_SUBST(LDDLLFLAGS)
-AC_SUBST(LIBEXT)
-AC_SUBST(LDPATH)
+dnl Mingw needs explicit msvcrt for linking libwine
+AC_SUBST(CRTLIBS,"")
+case $host_os in
+  mingw32*)
+    CRTLIBS="-lmsvcrt" ;;
+esac
 
 dnl **** Get the soname for libraries that we load dynamically ****
 
