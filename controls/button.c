@@ -872,7 +872,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 		rbox.bottom = rbox.top + checkBoxHeight;
 	    } else { 
 		rbox.top -= -delta/2 + 1;
-		rbox.bottom += rbox.top + checkBoxHeight;
+		rbox.bottom = rbox.top + checkBoxHeight;
 	    }
 	} else if (style & BS_BOTTOM) {
 	    if (delta > 0) {
