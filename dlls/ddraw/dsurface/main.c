@@ -867,10 +867,12 @@ HRESULT WINAPI IDirectDrawSurface4Impl_EnumAttachedSurfaces(
     struct _surface_chain *chain = This->s.chain;
 
     TRACE("(%p)->(%p,%p)\n",This,context,esfcb);
-    for (i=0;i<chain->nrofsurfaces;i++) {
-      TRACE( "Enumerating attached surface (%p)\n", chain->surfaces[i]);
-      if (esfcb((LPDIRECTDRAWSURFACE) chain->surfaces[i], &(chain->surfaces[i]->s.surface_desc), context) == DDENUMRET_CANCEL)
-	return DD_OK; /* FIXME: return value correct? */
+    if (chain) {
+	for (i=0;i<chain->nrofsurfaces;i++) {
+	    TRACE( "Enumerating attached surface (%p)\n", chain->surfaces[i]);
+	    if (esfcb((LPDIRECTDRAWSURFACE) chain->surfaces[i], &(chain->surfaces[i]->s.surface_desc), context) == DDENUMRET_CANCEL)
+		return DD_OK; /* FIXME: return value correct? */
+	}
     }
     return DD_OK;
 }
