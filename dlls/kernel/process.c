@@ -45,6 +45,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
+WINE_DECLARE_DEBUG_CHANNEL(file);
 WINE_DECLARE_DEBUG_CHANNEL(server);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
@@ -67,6 +68,9 @@ static unsigned int server_startticks;
 int main_create_flags = 0;
 HMODULE kernel32_handle = 0;
 
+const WCHAR *DIR_Windows = NULL;
+const WCHAR *DIR_System = NULL;
+
 /* Process flags */
 #define PDB32_DEBUGGED      0x0001  /* Process is being debugged */
 #define PDB32_WIN16_PROC    0x0008  /* Win16 process */
@@ -79,7 +83,6 @@ static const WCHAR comW[] = {'.','c','o','m',0};
 static const WCHAR batW[] = {'.','b','a','t',0};
 static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
-extern int DIR_Init(void);
 extern void SHELL_LoadRegistry(void);
 extern void VOLUME_CreateDevices(void);
 extern void VERSION_Init( const WCHAR *appname );
@@ -780,6 +783,57 @@ done:
 
 
 /***********************************************************************
+ *           init_windows_dirs
+ *
+ * Initialize the windows and system directories from the environment.
+ */
+static void init_windows_dirs(void)
+{
+    static const WCHAR windirW[] = {'w','i','n','d','i','r',0};
+    static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
+    static const WCHAR default_windirW[] = {'c',':','\\','w','i','n','d','o','w','s',0};
+    static const WCHAR default_sysdirW[] = {'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m',0};
+
+    DWORD len;
+    WCHAR *buffer;
+
+    if ((len = GetEnvironmentVariableW( windirW, NULL, 0 )))
+    {
+        buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        GetEnvironmentVariableW( windirW, buffer, len );
+        DIR_Windows = buffer;
+    }
+    else
+    {
+        DIR_Windows = default_windirW;
+        SetEnvironmentVariableW( windirW, DIR_Windows );
+    }
+
+    if ((len = GetEnvironmentVariableW( winsysdirW, NULL, 0 )))
+    {
+        buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        GetEnvironmentVariableW( winsysdirW, buffer, len );
+        DIR_System = buffer;
+    }
+    else
+    {
+        DIR_System = default_sysdirW;
+        SetEnvironmentVariableW( winsysdirW, DIR_System );
+    }
+
+    if (GetFileAttributesW( DIR_Windows ) == INVALID_FILE_ATTRIBUTES)
+        MESSAGE( "Warning: the specified Windows directory %s is not accessible.\n",
+                 debugstr_w(DIR_Windows) );
+    if (GetFileAttributesW( DIR_System ) == INVALID_FILE_ATTRIBUTES)
+        MESSAGE( "Warning: the specified System directory %s is not accessible.\n",
+                 debugstr_w(DIR_System) );
+
+    TRACE_(file)( "WindowsDir = %s\n", debugstr_w(DIR_Windows) );
+    TRACE_(file)( "SystemDir  = %s\n", debugstr_w(DIR_System) );
+}
+
+
+/***********************************************************************
  *           process_init
  *
  * Main process initialisation code
@@ -876,9 +930,6 @@ static BOOL process_init( char *argv[], char **environ )
     /* Create device symlinks */
     VOLUME_CreateDevices();
 
-    /* initialise DOS directories */
-    if (!DIR_Init()) return FALSE;
-
     init_current_directory( &params->CurrentDirectory );
 
     /* registry initialisation */
@@ -893,6 +944,8 @@ static BOOL process_init( char *argv[], char **environ )
     SERVER_END_REQ;
 
     if (!info_size) set_registry_environment();
+
+    init_windows_dirs();
 
     return TRUE;
 }

@@ -50,8 +50,8 @@ extern HMODULE kernel32_handle;
 #define DOS_TABLE_SIZE 256
 extern HANDLE dos_handles[DOS_TABLE_SIZE];
 
-extern WCHAR *DIR_Windows;
-extern WCHAR *DIR_System;
+extern const WCHAR *DIR_Windows;
+extern const WCHAR *DIR_System;
 
 extern void PTHREAD_Init(void);
 extern BOOL WOWTHUNK_Init(void);

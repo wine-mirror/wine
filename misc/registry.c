@@ -390,7 +390,7 @@ static void _w31_dumptree(unsigned short idx, unsigned char *txt,
 /******************************************************************************
  * _w31_loadreg [Internal]
  */
-static void _w31_loadreg(void)
+static void _w31_loadreg( const WCHAR *path )
 {
     HANDLE                      hf;
     HKEY                        root;
@@ -400,7 +400,6 @@ static void _w31_loadreg(void)
     struct _w31_tabent*         tab = NULL;
     unsigned char*              txt = NULL;
     unsigned int		len;
-    OFSTRUCT		        ofs;
     ULONG			lastmodified;
     NTSTATUS                    status;
     IO_STATUS_BLOCK             iosb;
@@ -409,8 +408,8 @@ static void _w31_loadreg(void)
 
     TRACE("(void)\n");
 
-    hf = (HANDLE)OpenFile("reg.dat",&ofs,OF_READ);
-    if (hf==(HANDLE)HFILE_ERROR) return;
+    hf = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    if (hf==INVALID_HANDLE_VALUE) return;
 
     /* read & dump header */
     if (NtReadFile(hf, 0, NULL, NULL, &iosb, 
@@ -1598,9 +1597,14 @@ static void _load_windows_registry( HKEY hkey_local_machine, HKEY hkey_current_u
         }
 
         case REG_WIN31:
+        {
+            static const WCHAR reg_datW[] = {'\\','r','e','g','.','d','a','t',0};
             /* FIXME: here we should convert to *.reg file supported by server and call REQ_LOAD_REGISTRY, see REG_WIN95 case */
-            _w31_loadreg();
+            strcpyW(path, windir);
+            strcatW(path, reg_datW);
+            _w31_loadreg( path );
             break;
+        }
 
         case REG_DONTLOAD:
             TRACE("REG_DONTLOAD\n");
@@ -1803,7 +1807,11 @@ static void convert_drive_types(void)
     RtlInitUnicodeString( &nameW, drive_types_keyW );
 
     if (NtCreateKey( &hkey_new, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &disp )) return;
-    if (disp != REG_CREATED_NEW_KEY) return;
+    if (disp != REG_CREATED_NEW_KEY)
+    {
+        NtClose( hkey_new );
+        return;
+    }
 
     for (i = 0; i < 26; i++)
     {
@@ -1825,6 +1833,107 @@ static void convert_drive_types(void)
         NtClose( hkey_old );
     }
     NtClose( hkey_new );
+}
+
+
+/* convert the environment variable entries from the old format to the new one */
+static void convert_environment( HKEY hkey_current_user )
+{
+    static const WCHAR wineW[] = {'M','a','c','h','i','n','e','\\',
+                                  'S','o','f','t','w','a','r','e','\\',
+                                  'W','i','n','e','\\','W','i','n','e','\\',
+                                  'C','o','n','f','i','g','\\','W','i','n','e',0};
+    static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
+    static const WCHAR systemW[] = {'s','y','s','t','e','m',0};
+    static const WCHAR windirW[] = {'w','i','n','d','i','r',0};
+    static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
+    static const WCHAR envW[] = {'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR tempW[] = {'T','E','M','P',0};
+    static const WCHAR tmpW[] = {'T','M','P',0};
+    static const WCHAR pathW[] = {'P','A','T','H',0};
+    static const WCHAR profileW[] = {'p','r','o','f','i','l','e',0};
+    static const WCHAR userprofileW[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
+
+    char buffer[1024*sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    DWORD dummy;
+    ULONG disp;
+    HKEY hkey_old, hkey_env;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, wineW );
+
+    if (NtOpenKey( &hkey_old, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return;
+
+    attr.RootDirectory = hkey_current_user;
+    RtlInitUnicodeString( &nameW, envW );
+    if (NtCreateKey( &hkey_env, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &disp ))
+    {
+        NtClose( hkey_old );
+        return;
+    }
+    if (disp != REG_CREATED_NEW_KEY) goto done;
+
+    /* convert TEMP */
+    RtlInitUnicodeString( &nameW, tempW );
+    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+    {
+        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+        RtlInitUnicodeString( &nameW, tmpW );
+        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+        MESSAGE( "Converted temp dir to new entry HKCU\\Environment \"TEMP\" = %s\n",
+                 debugstr_w( (WCHAR*)info->Data ) );
+    }
+
+    /* convert PATH */
+    RtlInitUnicodeString( &nameW, pathW );
+    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+    {
+        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+        MESSAGE( "Converted path dir to new entry HKCU\\Environment \"PATH\" = %s\n",
+                 debugstr_w( (WCHAR*)info->Data ) );
+    }
+
+    /* convert USERPROFILE */
+    RtlInitUnicodeString( &nameW, profileW );
+    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+    {
+        RtlInitUnicodeString( &nameW, userprofileW );
+        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+        MESSAGE( "Converted profile dir to new entry HKCU\\Environment \"USERPROFILE\" = %s\n",
+                 debugstr_w( (WCHAR*)info->Data ) );
+    }
+
+    /* convert windir */
+    RtlInitUnicodeString( &nameW, windowsW );
+    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+    {
+        RtlInitUnicodeString( &nameW, windirW );
+        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+        MESSAGE( "Converted windows dir to new entry HKCU\\Environment \"windir\" = %s\n",
+                 debugstr_w( (WCHAR*)info->Data ) );
+    }
+
+    /* convert winsysdir */
+    RtlInitUnicodeString( &nameW, systemW );
+    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+    {
+        RtlInitUnicodeString( &nameW, winsysdirW );
+        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+        MESSAGE( "Converted system dir to new entry HKCU\\Environment \"winsysdir\" = %s\n",
+                 debugstr_w( (WCHAR*)info->Data ) );
+    }
+
+done:
+    NtClose( hkey_old );
+    NtClose( hkey_env );
 }
 
 
@@ -1977,6 +2086,7 @@ void SHELL_LoadRegistry( void )
     /* convert keys from config file to new registry format */
 
     convert_drive_types();
+    convert_environment( hkey_current_user );
 
     NtClose(hkey_users_default);
     NtClose(hkey_current_user);
