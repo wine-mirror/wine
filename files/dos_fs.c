@@ -1376,7 +1376,7 @@ BOOL WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len )
 {
     BOOL ret;
     DOS_FULL_NAME path;
-    if ((ret = DOSFS_GetFullName( dos, FALSE, &path ))) lstrcpynA( buffer, dos, len );
+    if ((ret = DOSFS_GetFullName( dos, FALSE, &path ))) lstrcpynA( buffer, path.long_name, len );
     return ret;
 }
 
