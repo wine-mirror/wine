@@ -13,7 +13,6 @@
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(tapi);
-DECLARE_DEBUG_CHANNEL(comm);
 
 /***********************************************************************
  *		lineAccept (TAPI32.@)
@@ -394,7 +393,7 @@ DWORD WINAPI lineInitialize(
   LPCSTR lpszAppName,
   LPDWORD lpdwNumDevs)
 {
-    FIXME_(comm)("stub.\n");
+    FIXME("(...): stub.\n");
     return 0;
 }
 
@@ -446,7 +445,8 @@ DWORD WINAPI lineNegotiateAPIVersion(
   LPLINEEXTENSIONID lpExtensionID
 )
 {
-    FIXME_(comm)("stub.\n");
+    FIXME("(%4x, %ld, %ld, %ld, ...): stub.\n", hLineApp, dwDeviceID, 
+		    dwAPILowVersion, dwAPIHighVersion);
     *lpdwAPIVersion = dwAPIHighVersion;
     return 0;
 }
@@ -504,7 +504,7 @@ DWORD WINAPI lineRedirect(
   LPCSTR lpszDestAddress,
   DWORD  dwCountryCode) {
 
-  FIXME_(comm)(": stub.\n");
+  FIXME(": stub.\n");
   return 1;
 }
 
