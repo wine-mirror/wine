@@ -214,7 +214,6 @@ respective dlls.
 	files/			- KERNEL file I/O
 	misc/			- KERNEL registry 
 
-	graphics/		- GDI graphics drivers
 	objects/		- GDI logical objects
 
 	controls/		- USER built-in widgets
@@ -267,6 +266,11 @@ into a stub:
    *  
    * Draw many Bezier curves.
    *
+   * PARAMS
+   *   hdc   [I] Device context to draw to
+   *   p     [I] Array of POINT structs
+   *   count [I] Number of points in p
+   *
    * RETURNS
    *   Success: Non-zero.
    *   Failure: FALSE. Use GetLastError() to find the error cause.
@@ -274,19 +278,16 @@ into a stub:
    * BUGS
    *   Unimplemented
    */
-   BOOL WINAPI PolyBezierTo(HDC hdc,     /* [In] Device context to draw to */
-                            LPCVOID p,   /* [In] Array of POINT structs */
-                            DWORD count  /* [In] Number of points in p */
-   ) 
+   BOOL WINAPI PolyBezierTo(HDC hdc, LPCVOID p, DWORD count) 
    {
-      /* tell the user they've got a substandard implementation */
-      FIXME(gdi, ":(%x,%p,%d): stub\n", hdc, p, count);
+       /* tell the user they've got a substandard implementation */
+       FIXME(gdi, ":(%x,%p,%d): stub\n", hdc, p, count);
 
-      /* some programs may be able to compensate, 
-       * if they know what happened 
-       */
-      SetLastError(ERROR_CALL_NOT_IMPLEMENTED);  
-      return FALSE;    /* error value */
+       /* some programs may be able to compensate, 
+        * if they know what happened 
+        */
+       SetLastError(ERROR_CALL_NOT_IMPLEMENTED);  
+       return FALSE;    /* error value */
    }
 
 4. Implement and test the rest of the function.
@@ -430,16 +431,6 @@ struct { BYTE x; WORD y; };
 
 For alignment on a 2-byte boundary, there is a "pshpack2.h", etc.
 
-The use of the WINE_PACKED attribute is obsolete. Please remove these 
-in favour of the above solution. 
-Using WINE_PACKED, you would declare the above structure like this:
-
-struct { BYTE x; WORD y WINE_PACKED; };
-
-You had to do this every time a structure member is not aligned
-correctly under Windows (i.e. a WORD not on an even address, or a
-DWORD on a address that was not a multiple of 4).
-
 
 NAMING CONVENTIONS FOR API FUNCTIONS AND TYPES
 ==============================================
@@ -450,8 +441,7 @@ functions and types. If the Windows API uses the name 'xxx', the Wine
 code must use:
 
  - 'xxx16' for the Win16 version,
- - 'xxx'   for the Win32 version when no ASCII/Unicode strings are
-   involved,
+ - 'xxx'   for the Win32 version when no strings are involved,
  - 'xxxA'  for the Win32 version with ASCII strings,
  - 'xxxW'  for the Win32 version with Unicode strings.
 
@@ -486,30 +476,6 @@ The Winelib user can then say:
 
 and this will use the correct declaration depending on the definition
 of the UNICODE symbol.
-
-
-NAMING CONVENTIONS FOR NON-API FUNCTIONS AND TYPES
-==================================================
-
-Functions and data which are internal to your code (or at least shouldn't be
-visible to any Winelib or Windows program) should be preceded by
-an identifier to the module:
-
-Examples:
-
-ENUMPRINTERS_GetDWORDFromRegistryA()    (in dlls/winspool/info.c)
-IAVIFile_fnRelease()                    (in dlls/avifil32/avifile.c)
-X11DRV_CreateDC()                       (in graphics/x11drv/init.c)
-
-if you need prototypes for these, there are a few possibilities:
-- within same source file only:
-  put the prototypes at the top of your file and mark them as prototypes.
-- within the same module:
-  create a header file within the subdirectory where that module resides,
-  e.g.  graphics/ddraw_private.h
-- from a totally different module, or for use in winelib:
-  you should never do that. Only exported APIs can be called across
-  module boundaries.
 
 
 DEBUG MESSAGES
