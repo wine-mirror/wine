@@ -240,7 +240,27 @@ __ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
                    "call %l0, 0\n\t" /* call func */
                    "mov %l1, %o0\n\t" /* delay slot:  arg for func */
                    "ta 0x01\n\t"); /* breakpoint - we never get here */
-#else /* !sparc, !i386 */
+#elif defined(__powerpc__) && defined(__APPLE__)
+/* Darwin SYSDEPS_SwitchToThreadStack
+ Function Pointer to call is on r3, Args to pass on r4 and stack on r1 */
+__ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
+                   "stw r1, 0x4(r13)\n\t" /* teb->stack_top */
+                   "mr r12,r3\n\t"
+                   "mtctr r12\n\t" /* func->ctr */
+                   "mr r3,r4\n\t" /* args->function param 1 (r3) */
+                   "bctr\n\t" /* call ctr */
+                   "b _SYSDEPS_SwitchToThreadStack+24\n\t"); /* loop */
+#elif defined(__powerpc__) && defined(__GNUC__)
+/* Linux SYSDEPS_SwitchToThreadStack
+ Function Pointer to call is on r3, Args to pass on r4 and stack on r1 */
+__ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
+                   "stw 1, 0x4(13)\n\t" /* teb->stack_top */
+                   "mr 12,3\n\t"
+                   "mtctr 12\n\t" /* func->ctr */
+                   "mr 3,4\n\t" /* args->function param 1 (r3) */
+                   "bctr\n\t" /* call ctr */
+                   "b _SYSDEPS_SwitchToThreadStack+24\n\t"); /* loop */
+#else  /* !powerpc, !sparc, !i386 */
 void SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *arg )
 {
     func( arg );
