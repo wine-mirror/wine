@@ -182,7 +182,7 @@ static int run_test( const char *name )
     if (!(test = find_test( name )))
     {
         fprintf( stderr, "Fatal: test '%s' does not exist.\n", name );
-        exit(1);
+        ExitProcess(1);
     }
     successes = failures = todo_successes = todo_failures = 0;
     todo_level = 0;
@@ -211,7 +211,7 @@ int main( int argc, char **argv )
     if (!argv[1])
     {
         fprintf( stderr, "Usage: %s test_name\n", argv[0] );
-        exit(1);
+        ExitProcess(1);
     }
-    exit( run_test(argv[1]) );
+    ExitProcess( run_test(argv[1]) );
 }
