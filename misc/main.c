@@ -75,6 +75,12 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Nl",0x0413},	/* LANG_Nl */
     {"Ru",0x0419},	/* LANG_Ru */
     {"Wa",0x0490},      /* LANG_Wa */
+    {"Ga",0x043c},	/* LANG_Ga */
+    {"Gd",0x083c},	/* LANG_Gd */
+    {"Gv",0x0c3c},	/* LANG_Gv */
+    {"Kw",0x0491},	/* LANG_Kw */
+    {"Cy",0x0492},	/* LANG_Cy */
+    {"Br",0x0493},	/* LANG_Br  */
     {NULL,0}
 };
 
@@ -129,8 +135,8 @@ static const char szUsage[] =
   "    -fixedmap       Use a \"standard\" color map\n"
   "    -help           Show this help message\n"
   "    -iconic         Start as an icon\n"
-  "    -language xx    Set the language (one of Ca,Cs,Da,De,En,Eo,Es,Fi,Fr,Hu,It,\n"
-  "                    Ko,Nl,No,Pl,Pt,Sv,Ru,Wa)\n"
+  "    -language xx    Set the language (one of Br,Ca,Cs,Cy,Da,De,En,Eo,Es,Fi,Fr,Ga,Gd,Gv\n"
+  "                    Hu,It,Ko,Kw,Nl,No,Pl,Pt,Sv,Ru,Wa)\n"
   "    -managed        Allow the window manager to manage created windows\n"
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n"
   "    -name name      Set the application name\n"

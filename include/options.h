@@ -34,7 +34,13 @@ typedef enum
     LANG_Ca,  /* Catalan */
     LANG_Nl,  /* Dutch */
     LANG_Ru,  /* Russian */
-    LANG_Wa   /* Walon */
+    LANG_Wa,   /* Walon */
+    LANG_Br,  /* Breton */
+    LANG_Cy,  /* Welsh */
+    LANG_Ga,  /* Irish Gaelic */
+    LANG_Gd,  /* Scots Gaelic */
+    LANG_Gv,  /* Manx Gaelic */
+    LANG_Kw   /* Cornish */
 } WINE_LANGUAGE;
 
 typedef struct

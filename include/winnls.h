@@ -267,6 +267,9 @@
 /* non standard; keep the number high enough (but < 0xff) */
 #define LANG_ESPERANTO			 0x8f
 #define LANG_WALON			 0x90
+#define LANG_CORNISH                     0x91
+#define LANG_WELSH                       0x92
+#define LANG_BRETON                      0x93
 
 /* Sublanguage definitions */
 #define SUBLANG_NEUTRAL                  0x00    /* language neutral */
@@ -366,6 +369,7 @@
 #define SUBLANG_AZERI_CYRILLIC		 0x02
 #define SUBLANG_GAELIC			 0x01
 #define SUBLANG_GAELIC_SCOTTISH		 0x02
+#define SUBLANG_GAELIC_MANX              0x03
 #define SUBLANG_MALAY			 0x01
 #define SUBLANG_MALAY_BRUNEI_DARUSSALAM  0x02
 #define SUBLANG_UZBEK			 0x01

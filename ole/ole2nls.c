@@ -251,6 +251,17 @@ LANG_END
 LANG_BEGIN (LANG_THAI, SUBLANG_DEFAULT)	/*0x41e*/
 #include "nls/tha.nls"
 LANG_END
+LANG_BEGIN (LANG_GAELIC, SUBLANG_DEFAULT) /* 0x043c */
+#include "nls/gae.nls"
+LANG_END
+
+LANG_BEGIN (LANG_GAELIC, SUBLANG_GAELIC_SCOTTISH)
+#include "nls/gdh.nls"
+LANG_END
+
+LANG_BEGIN (LANG_GAELIC, SUBLANG_GAELIC_MANX)
+#include "nls/gdv.nls"
+LANG_END
 
 LANG_BEGIN (LANG_ESPERANTO, SUBLANG_DEFAULT)	/*0x048f*/
 #include "nls/esperanto.nls"
@@ -259,6 +270,19 @@ LANG_END
 LANG_BEGIN (LANG_WALON, SUBLANG_DEFAULT)	/*0x0490*/
 #include "nls/wal.nls"
 LANG_END
+
+LANG_BEGIN (LANG_CORNISH, SUBLANG_DEFAULT) /* 0x0491  */
+#include "nls/cor.nls"
+LANG_END
+
+LANG_BEGIN (LANG_WELSH, SUBLANG_DEFAULT) /* 0x0492 */
+#include "nls/cym.nls"
+LANG_END
+
+LANG_BEGIN (LANG_BRETON, SUBLANG_DEFAULT) /* 0x0x93  */
+#include "nls/brf.nls"
+LANG_END
+
 	    };
 
 
@@ -513,6 +537,7 @@ const struct map_lcid2str {
 	{0x043b,"Saami"},
 	{0x043c,"Irish gaelic"},
 	{0x083c,"Scottish gaelic"},
+	{0x0c3c,"Manx Gaelic"},
 	{0x043e,"Malay (Malaysia)"},
 	{0x083e,"Malay (Brunei Darussalam)"},
 	{0x043f,"Kazak"},
@@ -534,6 +559,9 @@ const struct map_lcid2str {
 	{0x0457,"Konkani"},
 	{0x048f,"Esperanto"}, /* Non official */
 	{0x0490,"Walon"}, /* Non official */
+	{0x0491,"Cornish"},	/* Not official */
+	{0x0492,"Welsh"},	/* Not official */
+	{0x0493,"Breton"},	/* Not official */
 	{0x0000,"Unknown"}
     }, languages_de[]={
 	{0x0401,"Arabic"},

@@ -221,7 +221,7 @@ Start as an icon
 .I -language xx
 Set the language to
 .I xx
-(one of Ca, Cs, Da, De, En, Eo, Es, Fi, Fr, Hu, It, Ko, No, Pl, Pt, Ru, Sv, Wa)
+(one of Br, Ca, Cs, Cy, Da, De, En, Eo, Es, Fi, Fr, Ga, Gd, Gv, Hu, It, Ko, Kw, No, Pl, Pt, Ru, Sv, Wa)
 .TP
 .I -managed
 Create each top-level window as a properly managed X window instead of
