@@ -31,6 +31,9 @@
 #endif
 #include <fcntl.h>
 #ifdef linux
+#ifdef HAVE_LINUX_COMPILER_H
+#include <linux/compiler.h>
+#endif
 # include <linux/fd.h>
 #endif
 

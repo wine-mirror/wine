@@ -1114,6 +1114,7 @@ AC_CHECK_HEADERS(\
 	libutil.h \
 	link.h \
 	linux/cdrom.h \
+	linux/compiler.h \
 	linux/hdreg.h \
 	linux/input.h \
 	linux/ioctl.h \
