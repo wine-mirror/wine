@@ -39,6 +39,7 @@
 #include "winternl.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "kernel_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -530,20 +531,28 @@ BOOL WINAPI GetProcessTimes(
  *	GetCalendarInfoA				(KERNEL32.@)
  *
  */
-int WINAPI GetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType,
+int WINAPI GetCalendarInfoA(LCID lcid, CALID Calendar, CALTYPE CalType,
 			    LPSTR lpCalData, int cchData, LPDWORD lpValue)
 {
     int ret;
     LPWSTR lpCalDataW = NULL;
 
     FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): quarter-stub\n",
-	  Locale, Calendar, CalType, lpCalData, cchData, lpValue);
-    /* FIXME: Should verify if Locale is allowable in ANSI, as per MSDN */
+          lcid, Calendar, CalType, lpCalData, cchData, lpValue);
 
-    if(cchData)
-      if(!(lpCalDataW = HeapAlloc(GetProcessHeap(), 0, cchData*sizeof(WCHAR)))) return 0;
+    lcid = ConvertDefaultLocale(lcid);
 
-    ret = GetCalendarInfoW(Locale, Calendar, CalType, lpCalDataW, cchData, lpValue);
+    if (NLS_IsUnicodeOnlyLcid(lcid))
+    {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return 0;
+    }
+
+    if (cchData &&
+        !(lpCalDataW = HeapAlloc(GetProcessHeap(), 0, cchData*sizeof(WCHAR))))
+      return 0;
+
+    ret = GetCalendarInfoW(lcid, Calendar, CalType, lpCalDataW, cchData, lpValue);
     if(ret && lpCalDataW && lpCalData)
       WideCharToMultiByte(CP_ACP, 0, lpCalDataW, cchData, lpCalData, cchData, NULL, NULL);
     if(lpCalDataW)

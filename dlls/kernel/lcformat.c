@@ -95,7 +95,7 @@ static CRITICAL_SECTION NLS_FormatsCS = { &NLS_FormatsCS_debug, -1, 0, 0, 0, 0 }
  *
  * Get a numeric locale format value.
  */
-static WINAPI DWORD NLS_GetLocaleNumber(LCID lcid, DWORD dwFlags)
+static DWORD NLS_GetLocaleNumber(LCID lcid, DWORD dwFlags)
 {
   WCHAR szBuff[80];
   DWORD dwVal = 0;
@@ -120,7 +120,7 @@ static WINAPI DWORD NLS_GetLocaleNumber(LCID lcid, DWORD dwFlags)
  *
  * Get a string locale format value.
  */
-static WINAPI WCHAR* NLS_GetLocaleString(LCID lcid, DWORD dwFlags)
+static WCHAR* NLS_GetLocaleString(LCID lcid, DWORD dwFlags)
 {
   WCHAR szBuff[80], *str;
   DWORD dwLen;
@@ -145,7 +145,7 @@ static WINAPI WCHAR* NLS_GetLocaleString(LCID lcid, DWORD dwFlags)
  *
  * Calculate (and cache) the number formats for a locale.
  */
-static WINAPI const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
+static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
 {
   /* GetLocaleInfo() identifiers for cached formatting strings */
   static const USHORT NLS_LocaleIndices[] = {
@@ -295,7 +295,7 @@ static WINAPI const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
  *
  * Determine if a locale is Unicode only, and thus invalid in ASCII calls.
  */
-BOOL WINAPI NLS_IsUnicodeOnlyLcid(LCID lcid)
+BOOL NLS_IsUnicodeOnlyLcid(LCID lcid)
 {
   switch (PRIMARYLANGID(lcid))
   {
@@ -666,9 +666,9 @@ NLS_GetDateTimeFormatW_Overrun:
  *
  * ASCII wrapper for GetDateFormatA/GetTimeFormatA.
  */
-static INT WINAPI NLS_GetDateTimeFormatA(LCID lcid, DWORD dwFlags,
-                                         const SYSTEMTIME* lpTime,
-                                         LPCSTR lpFormat, LPSTR lpStr, INT cchOut)
+static INT NLS_GetDateTimeFormatA(LCID lcid, DWORD dwFlags,
+                                  const SYSTEMTIME* lpTime,
+                                  LPCSTR lpFormat, LPSTR lpStr, INT cchOut)
 {
   DWORD cp = CP_ACP;
   WCHAR szFormat[128], szOut[128];
