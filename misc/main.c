@@ -45,6 +45,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "tweak.h"
+#include "winerror.h"
 
 /**********************************************************************/
 
@@ -946,6 +947,21 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 		lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
 		break;
 	}
+
+	case SPI_GETICONMETRICS: {
+	    LPICONMETRICSA lpIcon = lpvParam;
+	    if(!lpIcon || lpIcon->cbSize != sizeof(*lpIcon))
+	        return FALSE;
+	    SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0,
+				   &lpIcon->iHorzSpacing, FALSE );
+	    SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0,
+				   &lpIcon->iVertSpacing, FALSE );
+	    SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0,
+				   &lpIcon->iTitleWrap, FALSE );
+	    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0,
+				   &lpIcon->lfFont, FALSE );
+	    break;
+	}
 	case SPI_GETWORKAREA:
 		SetRect( (RECT *)lpvParam, 0, 0,
 			GetSystemMetrics( SM_CXSCREEN ),
@@ -1234,8 +1250,9 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     break;
 
 		default:
-			WARN_(system)("Unknown option %d.\n", uAction);
-			break;
+			FIXME_(system)("Unknown option %d.\n", uAction);
+			SetLastError(ERROR_INVALID_SPI_VALUE);
+			return 0;
 	}
 	return 1;
 }
@@ -1291,6 +1308,20 @@ BOOL WINAPI SystemParametersInfoW( UINT uAction, UINT uParam,
             lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
         }
         break;
+	case SPI_GETICONMETRICS: {
+	    LPICONMETRICSW lpIcon = lpvParam;
+	    if(!lpIcon || lpIcon->cbSize != sizeof(*lpIcon))
+	        return FALSE;
+	    SystemParametersInfoW( SPI_ICONHORIZONTALSPACING, 0,
+				   &lpIcon->iHorzSpacing, FALSE );
+	    SystemParametersInfoW( SPI_ICONVERTICALSPACING, 0,
+				   &lpIcon->iVertSpacing, FALSE );
+	    SystemParametersInfoW( SPI_GETICONTITLEWRAP, 0,
+				   &lpIcon->iTitleWrap, FALSE );
+	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
+				   &lpIcon->lfFont, FALSE );
+	    break;
+	}
     case SPI_GETNONCLIENTMETRICS: {
 	/* FIXME: implement correctly */
 	LPNONCLIENTMETRICSW	lpnm=(LPNONCLIENTMETRICSW)lpvParam;

@@ -2222,6 +2222,24 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(NONCLIENTMETRICS)
 DECL_WINELIB_TYPE_AW(LPNONCLIENTMETRICS)
 
+typedef struct tagICONMETRICSA {
+    UINT cbSize;
+    int iHorzSpacing;
+    int iVertSpacing;
+    int iTitleWrap;
+    LOGFONTA lfFont;
+} ICONMETRICSA, *LPICONMETRICSA;
+
+typedef struct tagICONMETRICSW {
+    UINT cbSize;
+    int iHorzSpacing;
+    int iVertSpacing;
+    int iTitleWrap;
+    LOGFONTW lfFont;
+} ICONMETRICSW, *LPICONMETRICSW;
+
+DECL_WINELIB_TYPE_AW(ICONMETRICS)
+DECL_WINELIB_TYPE_AW(LPICONMETRICS)
 
 /* Window Styles */
 #define WS_OVERLAPPED    0x00000000L
