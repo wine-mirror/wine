@@ -56,7 +56,7 @@ extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap );
   /* objects/dib.c */
 extern int DIB_GetDIBWidthBytes( int width, int depth );
 extern int DIB_GetDIBImageBytes( int width, int height, int depth );
-extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
+extern int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
 extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
                               int *height, WORD *bpp, WORD *compr );
 extern void DIB_UpdateDIBSection( DC *dc, BOOL toDIB );

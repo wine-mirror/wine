@@ -86,5 +86,14 @@ extern BOOL MFDRV_ExtTextOut( struct tagDC *dc, INT x, INT y,
 				UINT flags, const RECT *lprect, LPCSTR str,
 				UINT count, const INT *lpDx );
 extern BOOL MFDRV_PaintRgn( DC *dc, HRGN hrgn );
+extern INT MFDRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
+				    DWORD cy, INT xSrc, INT ySrc,
+				    UINT startscan, UINT lines, LPCVOID bits,
+				    const BITMAPINFO *info, UINT coloruse );
+extern INT MFDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
+				INT heightDst, INT xSrc, INT ySrc,
+				INT widthSrc, INT heightSrc, const void *bits,
+				const BITMAPINFO *info, UINT wUsage,
+				DWORD dwRop );
 
 #endif  /* __WINE_METAFILEDRV_H */

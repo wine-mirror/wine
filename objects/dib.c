@@ -58,7 +58,7 @@ int DIB_GetDIBImageBytes( int width, int height, int depth )
  *
  * Return the size of the bitmap info structure including color table.
  */
-int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse )
+int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
 {
     int colors;
 

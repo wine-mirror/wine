@@ -8,6 +8,7 @@
 #include "metafiledrv.h"
 #include "heap.h"
 #include "debug.h"
+#include "bitmap.h"
 
 DEFAULT_DEBUG_CHANNEL(metafile)
 
@@ -150,3 +151,84 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
 }
 
 
+/***********************************************************************
+ *           MFDRV_StretchDIBits
+ */
+INT MFDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
+			 INT heightDst, INT xSrc, INT ySrc, INT widthSrc,
+			 INT heightSrc, const void *bits,
+			 const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
+{
+    DWORD len, infosize, imagesize;
+    METARECORD *mr;
+
+    infosize = DIB_BitmapInfoSize(info, wUsage);
+    imagesize = DIB_GetDIBImageBytes( info->bmiHeader.biWidth,
+				      info->bmiHeader.biHeight,
+				      info->bmiHeader.biBitCount );
+
+    len = sizeof(METARECORD) + 10 * sizeof(WORD) + infosize + imagesize;
+    mr = (METARECORD *)HeapAlloc( SystemHeap, 0, len );
+    if(!mr) return 0;
+
+    mr->rdSize = len / 2;
+    mr->rdFunction = META_STRETCHDIB;
+    mr->rdParm[0] = LOWORD(dwRop);
+    mr->rdParm[1] = HIWORD(dwRop);
+    mr->rdParm[2] = wUsage;
+    mr->rdParm[3] = (INT16)heightSrc;
+    mr->rdParm[4] = (INT16)widthSrc;
+    mr->rdParm[5] = (INT16)ySrc;
+    mr->rdParm[6] = (INT16)xSrc;
+    mr->rdParm[7] = (INT16)heightDst;
+    mr->rdParm[8] = (INT16)widthDst;
+    mr->rdParm[9] = (INT16)yDst;
+    mr->rdParm[10] = (INT16)xDst;
+    memcpy(mr->rdParm + 11, info, infosize);
+    memcpy(mr->rdParm + 11 + infosize / 2, bits, imagesize);
+    MFDRV_WriteRecord( dc, mr, mr->rdSize * 2 );
+    HeapFree( SystemHeap, 0, mr );
+    return heightSrc;
+}
+
+	
+/***********************************************************************
+ *           MFDRV_SetDIBitsToDeivce
+ */
+INT MFDRV_SetDIBitsToDevice( DC *dc, INT xDst, INT yDst, DWORD cx,
+			     DWORD cy, INT xSrc, INT ySrc, UINT startscan,
+			     UINT lines, LPCVOID bits, const BITMAPINFO *info,
+			     UINT coloruse )
+
+{
+    DWORD len, infosize, imagesize;
+    METARECORD *mr;
+
+    infosize = DIB_BitmapInfoSize(info, coloruse);
+    imagesize = DIB_GetDIBImageBytes( info->bmiHeader.biWidth,
+				      info->bmiHeader.biHeight,
+				      info->bmiHeader.biBitCount );
+
+    len = sizeof(METARECORD) + 8 * sizeof(WORD) + infosize + imagesize;
+    mr = (METARECORD *)HeapAlloc( SystemHeap, 0, len );
+    if(!mr) return 0;
+
+    mr->rdSize = len / 2;
+    mr->rdFunction = META_SETDIBTODEV;
+    mr->rdParm[0] = coloruse;
+    mr->rdParm[1] = lines;
+    mr->rdParm[2] = startscan;
+    mr->rdParm[3] = (INT16)ySrc;
+    mr->rdParm[4] = (INT16)xSrc;
+    mr->rdParm[5] = (INT16)cy;
+    mr->rdParm[6] = (INT16)cx;
+    mr->rdParm[7] = (INT16)yDst;
+    mr->rdParm[8] = (INT16)xDst;
+    memcpy(mr->rdParm + 9, info, infosize);
+    memcpy(mr->rdParm + 9 + infosize / 2, bits, imagesize);
+    MFDRV_WriteRecord( dc, mr, mr->rdSize * 2 );
+    HeapFree( SystemHeap, 0, mr );
+    return lines;
+}
+
+	

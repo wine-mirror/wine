@@ -696,6 +696,8 @@ BOOL WINAPI EnumMetaFile(
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
+	TRACE(metafile, "Calling EnumFunc with record type %x\n",
+	      mr->rdFunction);
         if (!lpEnumFunc( hdc, ht, mr, mh->mtNoObjects, (LONG)lpData ))
 	{
 	    result = FALSE;
@@ -724,7 +726,7 @@ BOOL WINAPI EnumMetaFile(
 }
 
 static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn );
-
+static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr);
 /******************************************************************
  *             PlayMetaFileRecord16   (GDI.176)
  *
@@ -735,16 +737,16 @@ static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn );
  * BUGS
  *  The following metafile records are unimplemented:
  *
- *  FRAMEREGION, DRAWTEXT, SETDIBTODEV, ANIMATEPALETTE, SETPALENTRIES,
+ *  FRAMEREGION, DRAWTEXT, ANIMATEPALETTE, SETPALENTRIES,
  *  RESIZEPALETTE, EXTFLOODFILL, RESETDC, STARTDOC, STARTPAGE, ENDPAGE,
  *  ABORTDOC, ENDDOC, CREATEBRUSH, CREATEBITMAPINDIRECT, and CREATEBITMAP.
  *
  */
 void WINAPI PlayMetaFileRecord16( 
-	    HDC16 hdc, /* DC to render metafile into */
-	    HANDLETABLE16 *ht, /* pointer to handle table for metafile objects */
-	    METARECORD *mr, /* pointer to metafile record to render */
-	    UINT16 nHandles /* size of handle table */
+	  HDC16 hdc, /* DC to render metafile into */
+	  HANDLETABLE16 *ht, /* pointer to handle table for metafile objects */
+	  METARECORD *mr, /* pointer to metafile record to render */
+	  UINT16 nHandles /* size of handle table */
 ) {
     short s1;
     HANDLE16 hndl;
@@ -757,12 +759,12 @@ void WINAPI PlayMetaFileRecord16(
     switch (mr->rdFunction)
     {
     case META_EOF:
-      break;
+        break;
 
     case META_DELETEOBJECT:
-      DeleteObject(*(ht->objectHandle + *(mr->rdParm)));
-      *(ht->objectHandle + *(mr->rdParm)) = 0;
-      break;
+        DeleteObject(*(ht->objectHandle + *(mr->rdParm)));
+	*(ht->objectHandle + *(mr->rdParm)) = 0;
+	break;
 
     case META_SETBKCOLOR:
 	SetBkColor16(hdc, MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
@@ -850,14 +852,14 @@ void WINAPI PlayMetaFileRecord16(
 
     case META_ARC:
 	Arc(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
-	      (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
-	      (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-             (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
+	         (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
+	         (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
+	         (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_ELLIPSE:
 	Ellipse(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-                  (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
+                     (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_FLOODFILL:
@@ -867,20 +869,20 @@ void WINAPI PlayMetaFileRecord16(
 
     case META_PIE:
 	Pie(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
-	      (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
-	      (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-             (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
+	         (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
+	         (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
+                 (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_RECTANGLE:
 	Rectangle(hdc, (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-                    (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
+                       (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_ROUNDRECT:
 	RoundRect(hdc, (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
-                    (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-                    (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
+                       (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
+                       (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_PATBLT:
@@ -932,9 +934,9 @@ void WINAPI PlayMetaFileRecord16(
 
     case META_CHORD:
 	Chord(hdc, (INT16)*(mr->rdParm + 7), (INT16)*(mr->rdParm + 6),
-		(INT16)*(mr->rdParm+5), (INT16)*(mr->rdParm + 4),
-		(INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
-               (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
+	           (INT16)*(mr->rdParm + 5), (INT16)*(mr->rdParm + 4),
+	           (INT16)*(mr->rdParm + 3), (INT16)*(mr->rdParm + 2),
+	           (INT16)*(mr->rdParm + 1), (INT16)*(mr->rdParm));
 	break;
 
     case META_CREATEPATTERNBRUSH:
@@ -960,6 +962,12 @@ void WINAPI PlayMetaFileRecord16(
 	    MF_AddHandle(ht, nHandles,
 			 CreateDIBPatternBrush(hndl, *(mr->rdParm + 1)));
 	    GlobalFree16(hndl);
+	    break;
+
+	default:
+	    ERR(metafile, "META_CREATEPATTERNBRUSH: Unknown pattern type %d\n",
+		mr->rdParm[0]);
+	    break;
 	}
 	break;
 	
@@ -1005,50 +1013,14 @@ void WINAPI PlayMetaFileRecord16(
         break;
 
     case META_EXTTEXTOUT:
-      {
-        LPINT16 dxx;
-	LPSTR sot; 
-        DWORD len;
-
-        s1 = mr->rdParm[2];                              /* String length */
-        len = sizeof(METARECORD) + (((s1 + 1) >> 1) * 2) + 2 * sizeof(short)
-	 + sizeof(UINT16) +  (mr->rdParm[3] ? sizeof(RECT16) : 0);  /* rec len without dx array */
-
-	sot= (LPSTR)&mr->rdParm[4];			/* start_of_text */
-	if (mr->rdParm[3])
-	   sot+=sizeof(RECT16);				/* there is a rectangle, so add offset */
-	 
-	if (mr->rdSize == len / 2)
-          dxx = NULL;                                   /* determine if array present */
-        else 
-	  if (mr->rdSize == (len + s1 * sizeof(INT16)) / 2)
-            dxx = (LPINT16)(sot+(((s1+1)>>1)*2));	   
-          else 
-	  {
-	   TRACE(metafile,"%s  len: %ld\n",
-             sot,mr->rdSize);
-           WARN(metafile,
-	     "Please report: PlayMetaFile/ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
-		   len,s1,mr->rdSize,mr->rdParm[3]);
-           dxx = NULL; /* should't happen -- but if, we continue with NULL [for workaround] */
-          }
-        ExtTextOut16( hdc, mr->rdParm[1],              /* X position */
-	                   mr->rdParm[0],              /* Y position */
-	                   mr->rdParm[3],              /* options */
-		     	   mr->rdParm[3] ? (LPRECT16) &mr->rdParm[4]:NULL,  /* rectangle */
-		           sot,				/* string */
-                           s1, dxx);                    /* length, dx array */
-        if (dxx)                      
-          TRACE(metafile,"%s  len: %ld  dx0: %d\n",
-            sot,mr->rdSize,dxx[0]);
-       }
-       break;
+        MF_Play_MetaExtTextOut( hdc, mr );
+	break;
     
     case META_STRETCHDIB:
       {
-       LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[11]);
-       LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
-       StretchDIBits16(hdc,mr->rdParm[10],mr->rdParm[9],mr->rdParm[8],
+	LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[11]);
+	LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
+	StretchDIBits16(hdc,mr->rdParm[10],mr->rdParm[9],mr->rdParm[8],
                        mr->rdParm[7],mr->rdParm[6],mr->rdParm[5],
                        mr->rdParm[4],mr->rdParm[3],bits,info,
                        mr->rdParm[2],MAKELONG(mr->rdParm[0],mr->rdParm[1]));
@@ -1057,9 +1029,9 @@ void WINAPI PlayMetaFileRecord16(
 
     case META_DIBSTRETCHBLT:
       {
-       LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[10]); 
-       LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
-       StretchDIBits16(hdc,mr->rdParm[9],mr->rdParm[8],mr->rdParm[7],
+	LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[10]); 
+	LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
+	StretchDIBits16(hdc,mr->rdParm[9],mr->rdParm[8],mr->rdParm[7],
                        mr->rdParm[6],mr->rdParm[5],mr->rdParm[4],
                        mr->rdParm[3],mr->rdParm[2],bits,info,
                        DIB_RGB_COLORS,MAKELONG(mr->rdParm[0],mr->rdParm[1]));
@@ -1068,36 +1040,36 @@ void WINAPI PlayMetaFileRecord16(
 
     case META_STRETCHBLT:
       {
-       HDC16 hdcSrc=CreateCompatibleDC16(hdc);
-       HBITMAP hbitmap=CreateBitmap(mr->rdParm[10], /*Width */
+	HDC16 hdcSrc=CreateCompatibleDC16(hdc);
+	HBITMAP hbitmap=CreateBitmap(mr->rdParm[10], /*Width */
                                         mr->rdParm[11], /*Height*/
                                         mr->rdParm[13], /*Planes*/
                                         mr->rdParm[14], /*BitsPixel*/
                                         (LPSTR)&mr->rdParm[15]);  /*bits*/
-       SelectObject(hdcSrc,hbitmap);
-       StretchBlt16(hdc,mr->rdParm[9],mr->rdParm[8],
+	SelectObject(hdcSrc,hbitmap);
+	StretchBlt16(hdc,mr->rdParm[9],mr->rdParm[8],
                     mr->rdParm[7],mr->rdParm[6],
 		    hdcSrc,mr->rdParm[5],mr->rdParm[4],
 		    mr->rdParm[3],mr->rdParm[2],
 		    MAKELONG(mr->rdParm[0],mr->rdParm[1]));
-       DeleteDC(hdcSrc);		    
+	DeleteDC(hdcSrc);		    
       }
       break;
 
     case META_BITBLT:
       {
-       HDC16 hdcSrc=CreateCompatibleDC16(hdc);
-       HBITMAP hbitmap=CreateBitmap(mr->rdParm[7]/*Width */,
+	HDC16 hdcSrc=CreateCompatibleDC16(hdc);
+	HBITMAP hbitmap=CreateBitmap(mr->rdParm[7]/*Width */,
                                         mr->rdParm[8]/*Height*/,
                                         mr->rdParm[10]/*Planes*/,
                                         mr->rdParm[11]/*BitsPixel*/,
                                         (LPSTR)&mr->rdParm[12]/*bits*/);
-       SelectObject(hdcSrc,hbitmap);
-       BitBlt(hdc,(INT16)mr->rdParm[6],(INT16)mr->rdParm[5],
+	SelectObject(hdcSrc,hbitmap);
+	BitBlt(hdc,(INT16)mr->rdParm[6],(INT16)mr->rdParm[5],
                 (INT16)mr->rdParm[4],(INT16)mr->rdParm[3],
                 hdcSrc, (INT16)mr->rdParm[2],(INT16)mr->rdParm[1],
                 MAKELONG(0,mr->rdParm[0]));
-       DeleteDC(hdcSrc);		    
+	DeleteDC(hdcSrc);		    
       }
       break;
 
@@ -1128,45 +1100,44 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_DIBCREATEPATTERNBRUSH:
-	/*  *(mr->rdParm) may be BS_PATTERN or BS_DIBPATTERN: but there's no difference */
+	/*  *(mr->rdParm) may be BS_PATTERN or BS_DIBPATTERN:
+	    but there's no difference */
+
         TRACE(metafile,"%d\n",*(mr->rdParm));
 	s1 = mr->rdSize * 2 - sizeof(METARECORD) - 2;
 	hndl = GlobalAlloc16(GMEM_MOVEABLE, s1);
 	ptr = GlobalLock16(hndl);
 	memcpy(ptr, mr->rdParm + 2, s1);
 	GlobalUnlock16(hndl);
-	MF_AddHandle(ht, nHandles,CreateDIBPatternBrush16(hndl, *(mr->rdParm + 1)));
+	MF_AddHandle(ht, nHandles,
+		     CreateDIBPatternBrush16(hndl, *(mr->rdParm + 1)));
 	GlobalFree16(hndl);
 	break;
 
-     case META_DIBBITBLT:
-        {
-		/*In practice ive found that theres two layout for META_DIBBITBLT,
-		one (the first here) is the usual one when a src dc is actually passed
-		int, the second occurs when the src dc is passed in as NULL to
-		the creating BitBlt.
-		as the second case has no dib, a size check will suffice to distinguish.
+    case META_DIBBITBLT:
+      /* In practice I've found that there are two layouts for
+	 META_DIBBITBLT, one (the first here) is the usual one when a src
+	 dc is actually passed to it, the second occurs when the src dc is
+	 passed in as NULL to the creating BitBlt. As the second case has
+	 no dib, a size check will suffice to distinguish.
 
+	 Caolan.McNamara@ul.ie */
 
-		Caolan.McNamara@ul.ie
-		*/
-		if (mr->rdSize > 12)
-                {
-                    LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[8]);
-                    LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[0] );
-                    StretchDIBits16(hdc,mr->rdParm[7],mr->rdParm[6],mr->rdParm[5],
-                                    mr->rdParm[4],mr->rdParm[3],mr->rdParm[2],
-                                    mr->rdParm[5],mr->rdParm[4],bits,info,
-                                    DIB_RGB_COLORS,MAKELONG(mr->rdParm[0],mr->rdParm[1]));
-                }
-		else	/*equivalent to a PatBlt*/
-                {
-                    PatBlt16(hdc, mr->rdParm[8], mr->rdParm[7],
-                             mr->rdParm[6], mr->rdParm[5],
-                             MAKELONG(*(mr->rdParm), *(mr->rdParm + 1)));
-                }
-        }
-        break;	
+        if (mr->rdSize > 12) {
+	    LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[8]);
+	    LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize(info, mr->rdParm[0]);
+
+	    StretchDIBits16(hdc, mr->rdParm[7], mr->rdParm[6], mr->rdParm[5],
+                                 mr->rdParm[4], mr->rdParm[3], mr->rdParm[2],
+                                 mr->rdParm[5], mr->rdParm[4], bits, info,
+                                 DIB_RGB_COLORS,
+			         MAKELONG(mr->rdParm[0], mr->rdParm[1]));
+	} else { /* equivalent to a PatBlt */
+	    PatBlt16(hdc, mr->rdParm[8], mr->rdParm[7],
+		          mr->rdParm[6], mr->rdParm[5],
+		          MAKELONG(mr->rdParm[0], mr->rdParm[1]));
+	}
+	break;	
        
     case META_SETTEXTCHAREXTRA:
         SetTextCharacterExtra16(hdc, (INT16)*(mr->rdParm));
@@ -1178,13 +1149,27 @@ void WINAPI PlayMetaFileRecord16(
 
     case META_EXTFLOODFILL:
         ExtFloodFill(hdc, (INT16)*(mr->rdParm + 4), (INT16)*(mr->rdParm + 3),
-                     MAKELONG(*(mr->rdParm+1), *(mr->rdParm + 2)),*(mr->rdParm));
+                     MAKELONG(*(mr->rdParm+1), *(mr->rdParm + 2)),
+		     *(mr->rdParm));
         break;
 
-#define META_UNIMP(x) case x: FIXME(metafile, "PlayMetaFileRecord:record type "#x" not implemented.\n");break;
+    case META_SETDIBTODEV:
+      {
+        BITMAPINFO *info = (BITMAPINFO *) &(mr->rdParm[9]);
+	char *bits = (char *)info + DIB_BitmapInfoSize( info, mr->rdParm[0] );
+        SetDIBitsToDevice(hdc, (INT16)mr->rdParm[8], (INT16)mr->rdParm[7],
+			  (INT16)mr->rdParm[6], (INT16)mr->rdParm[5],
+			  (INT16)mr->rdParm[4], (INT16)mr->rdParm[3],
+			  mr->rdParm[2], mr->rdParm[1], bits, info,
+			  mr->rdParm[0]);
+	break;
+      }
+
+#define META_UNIMP(x) case x: \
+FIXME(metafile, "PlayMetaFileRecord:record type "#x" not implemented.\n"); \
+break;
     META_UNIMP(META_FRAMEREGION)
     META_UNIMP(META_DRAWTEXT)
-    META_UNIMP(META_SETDIBTODEV)
     META_UNIMP(META_ANIMATEPALETTE)
     META_UNIMP(META_SETPALENTRIES)
     META_UNIMP(META_RESIZEPALETTE)
@@ -1270,10 +1255,10 @@ HMETAFILE16 WINAPI SetMetaFileBits16(
  */
 HMETAFILE16 WINAPI SetMetaFileBitsBetter16( HMETAFILE16 hMeta )
 {
-   if( IsValidMetaFile16( hMeta ) )
-       return (HMETAFILE16)GlobalReAlloc16( hMeta, 0, 
+    if( IsValidMetaFile16( hMeta ) )
+        return (HMETAFILE16)GlobalReAlloc16( hMeta, 0, 
 			   GMEM_SHARE | GMEM_NODISCARD | GMEM_MODIFY);
-   return (HMETAFILE16)0;
+    return (HMETAFILE16)0;
 }
 
 /******************************************************************
@@ -1331,9 +1316,9 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
                                 UINT cbBuffer, LPBYTE lpbBuffer,
                                 INT fnMapMode, HDC hdcRef)
 {
-  FIXME(metafile, "(%d,%d,%p,%d,%d): stub\n",
-        hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef);
-  return 0;
+    FIXME(metafile, "(%d,%d,%p,%d,%d): stub\n",
+	  hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef);
+    return 0;
 }
 
 /******************************************************************
@@ -1409,5 +1394,48 @@ static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn )
  }
  
 
-/*  LocalWords:  capatibility
+/******************************************************************
+ *         MF_Play_MetaExtTextOut
+ *
+ *  Handles META_EXTTEXTOUT for PlayMetaFileRecord().
  */
+
+static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr)
+{
+    LPINT16 dxx;
+    LPSTR sot; 
+    DWORD len;
+    WORD s1;
+
+    s1 = mr->rdParm[2];                              /* String length */
+    len = sizeof(METARECORD) + (((s1 + 1) >> 1) * 2) + 2 * sizeof(short)
+      + sizeof(UINT16) +  (mr->rdParm[3] ? sizeof(RECT16) : 0); 
+                                           /* rec len without dx array */
+
+    sot = (LPSTR)&mr->rdParm[4];		      /* start_of_text */
+    if (mr->rdParm[3])
+        sot += sizeof(RECT16);  /* there is a rectangle, so add offset */
+	 
+    if (mr->rdSize == len / 2)
+        dxx = NULL;                      /* determine if array present */
+    else 
+        if (mr->rdSize == (len + s1 * sizeof(INT16)) / 2)
+	    dxx = (LPINT16)(sot+(((s1+1)>>1)*2));	   
+	else {
+	    TRACE(metafile,"%s  len: %ld\n",  sot, mr->rdSize);
+	    WARN(metafile,
+	     "Please report: ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
+		 len, s1, mr->rdSize, mr->rdParm[3]);
+	    dxx = NULL; /* should't happen -- but if, we continue with NULL */
+	}
+    ExtTextOut16( hdc, mr->rdParm[1],              /* X position */
+		       mr->rdParm[0],              /* Y position */
+	               mr->rdParm[3],              /* options */
+		       mr->rdParm[3] ? (LPRECT16) &mr->rdParm[4]:NULL,  
+                                                   /* rectangle */
+		       sot,			       /* string */
+                       s1, dxx);                   /* length, dx array */
+    if (dxx)                      
+        TRACE(metafile,"%s  len: %ld  dx0: %d\n", sot, mr->rdSize, dxx[0]);
+    return TRUE;
+}

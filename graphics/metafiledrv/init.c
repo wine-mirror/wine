@@ -69,7 +69,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SetBkColor,                /* pSetBkColor */
     NULL,                            /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
-    NULL,                            /* pSetDIBitsToDevice */
+    MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */
     MFDRV_SetMapMode,                /* pSetMapMode */
     NULL,                            /* pSetMapperFlags */
     MFDRV_SetPixel,                  /* pSetPixel */
@@ -86,7 +86,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SetWindowExt,              /* pSetWindowExt */
     MFDRV_SetWindowOrg,              /* pSetWindowOrg */
     MFDRV_StretchBlt,                /* pStretchBlt */
-    NULL                             /* pStretchDIBits */
+    MFDRV_StretchDIBits              /* pStretchDIBits */
 };
 
 
