@@ -1350,6 +1350,8 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
                   newPos.right, newPos.bottom, LOWORD(swp) );
     if (cmd == SW_HIDE)
     {
+        HWND hFocus;
+
         /* FIXME: This will cause the window to be activated irrespective
          * of whether it is owned by the same thread. Has to be done
          * asynchronously.
@@ -1359,8 +1361,13 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             WINPOS_ActivateOtherWindow(hwnd);
 
         /* Revert focus to parent */
-        if (hwnd == GetFocus() || IsChild(hwnd, GetFocus()))
-            SetFocus( GetParent(hwnd) );
+        hFocus = GetFocus();
+        if (hwnd == hFocus || IsChild(hwnd, hFocus))
+        {
+            HWND parent = GetAncestor(hwnd, GA_PARENT);
+            if (parent == GetDesktopWindow()) parent = 0;
+            SetFocus(parent);
+        }
     }
     if (!IsWindow( hwnd )) goto END;
     else if( wndPtr->dwStyle & WS_MINIMIZE ) WINPOS_ShowIconTitle( hwnd, TRUE );
