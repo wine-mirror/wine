@@ -4091,7 +4091,7 @@ d3ddevice_init_at_startup(void *gl_handle)
     const char *glVersion;
     const char *glXExtensions = NULL;
     const void *(*pglXGetProcAddressARB)(const GLubyte *) = NULL;
-    int major, minor, patch;
+    int major, minor, patch, num_parsed;
     
     TRACE("Initializing GL...\n");
     
@@ -4136,7 +4136,13 @@ d3ddevice_init_at_startup(void *gl_handle)
     }
     
     /* Parse the GL version string */
-    sscanf(glVersion, "%d.%d.%d", &major, &minor, &patch);
+    num_parsed = sscanf(glVersion, "%d.%d.%d", &major, &minor, &patch);
+    if (num_parsed == 1) {
+	minor = 0;
+	patch = 0;
+    } else if (num_parsed == 2) {
+	patch = 0;
+    }
     TRACE("GL version %d.%d.%d\n", major, minor, patch);
 
     /* And starts to fill the extension context properly */
