@@ -82,6 +82,8 @@ static ULONG WINAPI SecManagerImpl_AddRef(IInternetSecurityManager* iface)
 
     TRACE("(%p)->(ref before=%lu)\n",This, refCount - 1);
 
+    URLMON_LockModule();
+
     return refCount;
 }
 
@@ -96,6 +98,9 @@ static ULONG WINAPI SecManagerImpl_Release(IInternetSecurityManager* iface)
     if (!refCount){
         HeapFree(GetProcessHeap(),0,This);
     }
+
+    URLMON_UnlockModule();
+
     return refCount;
 }
 
@@ -242,6 +247,8 @@ static ULONG WINAPI ZoneMgrImpl_AddRef(IInternetZoneManager* iface)
 
     TRACE("(%p)->(ref before=%lu)\n",This, refCount - 1);
 
+    URLMON_LockModule();
+
     return refCount;
 }
 
@@ -257,6 +264,9 @@ static ULONG WINAPI ZoneMgrImpl_Release(IInternetZoneManager* iface)
 
     if(!refCount)
         HeapFree(GetProcessHeap(), 0, This);
+
+    URLMON_UnlockModule();
+    
     return refCount;
 }
 
