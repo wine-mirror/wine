@@ -86,8 +86,8 @@
 86 stub MsiInstallMissingFileW
 87 stdcall MsiInstallProductA(str str)
 88 stdcall MsiInstallProductW(wstr wstr)
-89 stub MsiLocateComponentA
-90 stub MsiLocateComponentW
+89 stdcall MsiLocateComponentA(str ptr long)
+90 stdcall MsiLocateComponentW(wstr ptr long)
 91 stdcall MsiOpenDatabaseA(str str ptr)
 92 stdcall MsiOpenDatabaseW(wstr wstr ptr)
 93 stdcall MsiOpenPackageA(str ptr)
@@ -193,8 +193,8 @@
 193 stub MsiUseFeatureExW
 194 stub MsiGetFileVersionA
 195 stub MsiGetFileVersionW
-196 stdcall MsiLoadStringA(long long long long long long)
-197 stdcall MsiLoadStringW(long long long long long long)
+196 stdcall MsiLoadStringA(long long long long long)
+197 stdcall MsiLoadStringW(long long long long long)
 198 stdcall MsiMessageBoxA(long long long long long long)
 199 stdcall MsiMessageBoxW(long long long long long long)
 200 stub MsiDecomposeDescriptorA

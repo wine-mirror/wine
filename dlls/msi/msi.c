@@ -516,16 +516,28 @@ INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL dwUILevel, HWND *phWnd)
     return dwUILevel;
 }
 
-UINT WINAPI MsiLoadStringA(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e, DWORD f)
+UINT WINAPI MsiLoadStringA(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e)
 {
-    FIXME("%08lx %08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e,f);
+    FIXME("%08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiLoadStringW(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e, DWORD f)
+UINT WINAPI MsiLoadStringW(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e)
 {
-    FIXME("%08lx %08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e,f);
+    FIXME("%08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e);
     return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+INSTALLSTATE WINAPI MsiLocateComponentA(LPCSTR szComponent, LPSTR lpPathBuf, DWORD *pcchBuf)
+{
+    FIXME("%s %p %08lx\n", debugstr_a(szComponent), lpPathBuf, *pcchBuf);
+    return INSTALLSTATE_UNKNOWN;
+}
+
+INSTALLSTATE WINAPI MsiLocateComponentW(LPCWSTR szComponent, LPSTR lpPathBuf, DWORD *pcchBuf)
+{
+    FIXME("%s %p %08lx\n", debugstr_w(szComponent), lpPathBuf, *pcchBuf);
+    return INSTALLSTATE_UNKNOWN;
 }
 
 UINT WINAPI MsiMessageBoxA(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e, DWORD f)
