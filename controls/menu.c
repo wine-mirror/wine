@@ -1114,11 +1114,21 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
     if (!(lpitem->fType & MF_OWNERDRAW))
     {
-        if ((lpitem->fState & MF_HILITE) && !(IS_BITMAP_ITEM(lpitem->fType)))
-            if ((menuBar) &&  (TWEAK_WineLook==WIN98_LOOK))
-	        DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
-	    else
-	        FillRect( hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT) );
+	if (lpitem->fState & MF_HILITE)
+	{
+	    if(TWEAK_WineLook == WIN98_LOOK)
+	    {
+		if(menuBar)
+		    DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
+		else
+		    FillRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
+	    }
+	    else /* Not Win98 Look */
+	    {
+		if(!IS_BITMAP_ITEM(lpitem->fType))
+		    FillRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
+	    }
+	}
         else
 	    FillRect( hdc, &rect, GetSysColorBrush(COLOR_MENU) );
     }
@@ -1168,15 +1178,29 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
       /* Setup colors */
 
-    if ((lpitem->fState & MF_HILITE) && !(IS_BITMAP_ITEM(lpitem->fType)) )
+    if (lpitem->fState & MF_HILITE)
     {
-	if (lpitem->fState & MF_GRAYED)
-	    SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
-	else if ((menuBar) &&  (TWEAK_WineLook==WIN98_LOOK))
-	    SetTextColor( hdc, GetSysColor( COLOR_MENUTEXT ) );
-	else
-	    SetTextColor( hdc, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
-	SetBkColor( hdc, GetSysColor( COLOR_HIGHLIGHT ) );
+	if(TWEAK_WineLook == WIN98_LOOK)
+	{
+	    if(menuBar)
+		SetTextColor(hdc, GetSysColor(COLOR_MENUTEXT));
+	    else
+	    {
+		if(lpitem->fState & MF_GRAYED)
+		    SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+		else
+		    SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+	    }
+	    SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+	}
+	else /* Not Win98 Look */
+	{
+	    SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+	    if(!IS_BITMAP_ITEM(lpitem->fType))
+		SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+	    else
+		SetBkColor(hdc, GetSysColor(COLOR_MENU));
+	}
     }
     else
     {
@@ -1285,7 +1309,8 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 		rect.top+(rect.bottom-rect.top-bm.bmHeight)/2 : rect.top;
 
 	    BitBlt( hdc, rect.left, top, rect.right - rect.left,
-		  rect.bottom - rect.top, hdcMem, 0, 0, SRCCOPY );
+		  rect.bottom - rect.top, hdcMem, 0, 0,
+		  (lpitem->fState & MF_HILITE) ? NOTSRCCOPY : SRCCOPY );
 	}
 	DeleteDC( hdcMem );
 
