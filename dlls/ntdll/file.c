@@ -117,8 +117,8 @@ NTSTATUS WINAPI NtOpenFile( PHANDLE handle, ACCESS_MASK access,
  *	sharing      [I] Type of shared access the caller would like to the file
  *	disposition  [I] Specifies what to do, depending on whether the file already exists
  *	options      [I] Options for creating a new file
- *	ea_buffer    [I] Undocumented
- *	ea_length    [I] Undocumented
+ *	ea_buffer    [I] Pointer to a extended attributes buffer
+ *	ea_length    [I] Length of ea_buffer
  *
  * RETURNS
  *  Success: 0. handle and io are updated.
@@ -138,6 +138,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
           handle, access, debugstr_us(attr->ObjectName), attr->Attributes,
           attr->RootDirectory, attr->SecurityDescriptor, io, alloc_size,
           attributes, sharing, disposition, options, ea_buffer, ea_length );
+
+    if (!attr || !attr->ObjectName) return STATUS_INVALID_PARAMETER;
 
     if (attr->RootDirectory)
     {
