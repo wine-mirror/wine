@@ -3469,10 +3469,12 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
 
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
 	ret = MMSYSERR_INVALHANDLE;
+    } else if (!lpMidiHdr) {
+        ret = MMSYSERR_INVALPARAM;
     } else {
 	if (!PostThreadMessageA(lpMidiStrm->dwThreadID, 
-					WINE_MSM_HEADER, cbMidiHdr, 
-					(DWORD)lpMidiHdr)) {
+                                WINE_MSM_HEADER, cbMidiHdr, 
+                                (DWORD)lpMidiHdr)) {
 	    WARN("bad PostThreadMessageA\n");
 	    ret = MMSYSERR_ERROR;
 	}
