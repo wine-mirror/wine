@@ -51,7 +51,7 @@ HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle )
 	  ret = PSDRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
 	  break;
       case REGION_MAGIC:
-	  ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
+	  ret = (HGDIOBJ)SelectClipRgn( dc->hSelf, handle );
 	  break;
       default:
 	  ERR("Unknown object magic %04x\n", GDIMAGIC(ptr->wMagic));
