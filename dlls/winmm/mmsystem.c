@@ -2188,7 +2188,7 @@ static	LPWINE_MIDI	MIDI_OutAlloc(HMIDIOUT* lphMidiOut, LPDWORD lpdwCallback,
 	*lphMidiOut = hMidiOut;
 
     if (lpwm) {
-	lpwm->mod.hMidi = hMidiOut;
+	lpwm->mod.hMidi = (HMIDI) hMidiOut;
 	lpwm->mod.dwCallback = *lpdwCallback;
 	lpwm->mod.dwInstance = *lpdwInstance;
 	lpwm->mod.dnDevNode = 0;
@@ -2255,7 +2255,7 @@ UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
     ret = MMSYSTEM_midiOutOpen(&hmo, uDeviceID, dwCallback, dwInstance,
 			       dwFlags, FALSE);
 
-    if (lphMidiOut != NULL) *lphMidiOut = hmo;
+    if (lphMidiOut != NULL) *lphMidiOut = HMIDIOUT_16(hmo);
     return ret;
 }
 
@@ -2283,7 +2283,7 @@ UINT WINAPI midiOutClose(HMIDIOUT hMidiOut)
  */
 UINT16 WINAPI midiOutClose16(HMIDIOUT16 hMidiOut)
 {
-    return midiOutClose(hMidiOut);
+    return midiOutClose(HMIDIOUT_32(hMidiOut));
 }
 
 /**************************************************************************
@@ -2381,7 +2381,7 @@ UINT WINAPI midiOutShortMsg(HMIDIOUT hMidiOut, DWORD dwMsg)
  */
 UINT16 WINAPI midiOutShortMsg16(HMIDIOUT16 hMidiOut, DWORD dwMsg)
 {
-    return midiOutShortMsg(hMidiOut, dwMsg);
+    return midiOutShortMsg(HMIDIOUT_32(hMidiOut), dwMsg);
 }
 
 /**************************************************************************
@@ -2437,7 +2437,7 @@ UINT WINAPI midiOutReset(HMIDIOUT hMidiOut)
  */
 UINT16 WINAPI midiOutReset16(HMIDIOUT16 hMidiOut)
 {
-    return midiOutReset(hMidiOut);
+    return midiOutReset(HMIDIOUT_32(hMidiOut));
 }
 
 /**************************************************************************
@@ -2503,7 +2503,8 @@ UINT WINAPI midiOutCachePatches(HMIDIOUT hMidiOut, UINT uBank,
 UINT16 WINAPI midiOutCachePatches16(HMIDIOUT16 hMidiOut, UINT16 uBank,
                                     WORD* lpwPatchArray, UINT16 uFlags)
 {
-    return midiOutCachePatches(hMidiOut, uBank, lpwPatchArray, uFlags);
+    return midiOutCachePatches(HMIDIOUT_32(hMidiOut), uBank, lpwPatchArray,
+			       uFlags);
 }
 
 /**************************************************************************
@@ -2739,7 +2740,7 @@ static	UINT MMSYSTEM_midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCall
     if (lpwm == NULL)
 	return MMSYSERR_NOMEM;
 
-    lpwm->mod.hMidi = hMidiIn;
+    lpwm->mod.hMidi = (HMIDI) hMidiIn;
     lpwm->mod.dwCallback = dwCallback;
     lpwm->mod.dwInstance = dwInstance;
 
@@ -2778,7 +2779,7 @@ UINT16 WINAPI midiInOpen16(HMIDIIN16* lphMidiIn, UINT16 uDeviceID,
     ret = MMSYSTEM_midiInOpen(&xhmid, uDeviceID, dwCallback, dwInstance,
 			      dwFlags, FALSE);
 
-    if (lphMidiIn) *lphMidiIn = xhmid;
+    if (lphMidiIn) *lphMidiIn = HMIDIIN_16(xhmid);
     return ret;
 }
 
@@ -2805,7 +2806,7 @@ UINT WINAPI midiInClose(HMIDIIN hMidiIn)
  */
 UINT16 WINAPI midiInClose16(HMIDIIN16 hMidiIn)
 {
-    return midiInClose(hMidiIn);
+    return midiInClose(HMIDIIN_32(hMidiIn));
 }
 
 /**************************************************************************
@@ -2936,7 +2937,7 @@ UINT WINAPI midiInStart(HMIDIIN hMidiIn)
  */
 UINT16 WINAPI midiInStart16(HMIDIIN16 hMidiIn)
 {
-    return midiInStart(hMidiIn);
+    return midiInStart(HMIDIIN_32(hMidiIn));
 }
 
 /**************************************************************************
@@ -2959,7 +2960,7 @@ UINT WINAPI midiInStop(HMIDIIN hMidiIn)
  */
 UINT16 WINAPI midiInStop16(HMIDIIN16 hMidiIn)
 {
-    return midiInStop(hMidiIn);
+    return midiInStop(HMIDIIN_32(hMidiIn));
 }
 
 /**************************************************************************
@@ -2982,7 +2983,7 @@ UINT WINAPI midiInReset(HMIDIIN hMidiIn)
  */
 UINT16 WINAPI midiInReset16(HMIDIIN16 hMidiIn)
 {
-    return midiInReset(hMidiIn);
+    return midiInReset(HMIDIIN_32(hMidiIn));
 }
 
 /**************************************************************************
@@ -3408,7 +3409,7 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
     HeapFree(GetProcessHeap(), 0, lpMidiStrm);
     CloseHandle(lpMidiStrm->hEvent);
 
-    return midiOutClose(hMidiStrm);
+    return midiOutClose((HMIDIOUT)hMidiStrm);
 }
 
 /**************************************************************************
@@ -3444,7 +3445,7 @@ static	MMRESULT WINAPI MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT l
     lpwm = MIDI_OutAlloc(&hMidiOut, &dwCallback, &dwInstance, &fdwOpen, 1, &mosm, bFrom32);
     lpMidiStrm->hDevice = hMidiOut;
     if (lphMidiStrm)
-	*lphMidiStrm = hMidiOut;
+	*lphMidiStrm = (HMIDISTRM)hMidiOut;
 
     /* FIXME: is lpuDevice initialized upon entering midiStreamOpen ? */
     FIXME("*lpuDeviceID=%x\n", *lpuDeviceID);
@@ -3673,7 +3674,7 @@ MMRESULT WINAPI midiStreamStop(HMIDISTRM hMidiStrm)
  */
 MMRESULT16 WINAPI midiStreamClose16(HMIDISTRM16 hMidiStrm)
 {
-    return midiStreamClose(hMidiStrm);
+    return midiStreamClose(HMIDISTRM_32(hMidiStrm));
 }
 
 /**************************************************************************
@@ -3692,7 +3693,7 @@ MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phMidiStrm, LPUINT16 devid,
     devid32 = *devid;
     ret = MMSYSTEM_MidiStream_Open(&hMidiStrm32, &devid32, cMidi, dwCallback,
 				   dwInstance, fdwOpen, FALSE);
-    *phMidiStrm = hMidiStrm32;
+    *phMidiStrm = HMIDISTRM_16(hMidiStrm32);
     *devid = devid32;
     return ret;
 }
@@ -3702,7 +3703,8 @@ MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phMidiStrm, LPUINT16 devid,
  */
 MMRESULT16 WINAPI midiStreamOut16(HMIDISTRM16 hMidiStrm, LPMIDIHDR16 lpMidiHdr, UINT16 cbMidiHdr)
 {
-    return midiStreamOut(hMidiStrm, (LPMIDIHDR)lpMidiHdr, cbMidiHdr);
+    return midiStreamOut(HMIDISTRM_32(hMidiStrm), (LPMIDIHDR)lpMidiHdr,
+		         cbMidiHdr);
 }
 
 /**************************************************************************
@@ -3710,7 +3712,7 @@ MMRESULT16 WINAPI midiStreamOut16(HMIDISTRM16 hMidiStrm, LPMIDIHDR16 lpMidiHdr, 
  */
 MMRESULT16 WINAPI midiStreamPause16(HMIDISTRM16 hMidiStrm)
 {
-    return midiStreamPause(hMidiStrm);
+    return midiStreamPause(HMIDISTRM_32(hMidiStrm));
 }
 
 /**************************************************************************
@@ -3724,7 +3726,7 @@ MMRESULT16 WINAPI midiStreamPosition16(HMIDISTRM16 hMidiStrm, LPMMTIME16 lpmmt16
     if (!lpmmt16)
 	return MMSYSERR_INVALPARAM;
     MMSYSTEM_MMTIME16to32(&mmt32, lpmmt16);
-    ret = midiStreamPosition(hMidiStrm, &mmt32, sizeof(MMTIME));
+    ret = midiStreamPosition(HMIDISTRM_32(hMidiStrm), &mmt32, sizeof(MMTIME));
     MMSYSTEM_MMTIME32to16(lpmmt16, &mmt32);
     return ret;
 }
@@ -3734,7 +3736,7 @@ MMRESULT16 WINAPI midiStreamPosition16(HMIDISTRM16 hMidiStrm, LPMMTIME16 lpmmt16
  */
 MMRESULT16 WINAPI midiStreamProperty16(HMIDISTRM16 hMidiStrm, LPBYTE lpPropData, DWORD dwProperty)
 {
-    return midiStreamProperty(hMidiStrm, lpPropData, dwProperty);
+    return midiStreamProperty(HMIDISTRM_32(hMidiStrm), lpPropData, dwProperty);
 }
 
 /**************************************************************************
@@ -3742,7 +3744,7 @@ MMRESULT16 WINAPI midiStreamProperty16(HMIDISTRM16 hMidiStrm, LPBYTE lpPropData,
  */
 MMRESULT16 WINAPI midiStreamRestart16(HMIDISTRM16 hMidiStrm)
 {
-    return midiStreamRestart(hMidiStrm);
+    return midiStreamRestart(HMIDISTRM_32(hMidiStrm));
 }
 
 /**************************************************************************
@@ -3750,7 +3752,7 @@ MMRESULT16 WINAPI midiStreamRestart16(HMIDISTRM16 hMidiStrm)
  */
 MMRESULT16 WINAPI midiStreamStop16(HMIDISTRM16 hMidiStrm)
 {
-    return midiStreamStop(hMidiStrm);
+    return midiStreamStop(HMIDISTRM_32(hMidiStrm));
 }
 
 static	UINT WINAPI MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,

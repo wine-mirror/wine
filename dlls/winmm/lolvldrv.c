@@ -693,7 +693,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		*(LPDWORD)((char*)ptr + sizeof(LPMIDIOPENDESC)) = *lpdwUser;
 		mod16 = (LPMIDIOPENDESC16)((LPSTR)ptr + sizeof(LPMIDIOPENDESC) + 2*sizeof(DWORD));
 
-		mod16->hMidi = mod32->hMidi;
+		mod16->hMidi = HMIDI_16(mod32->hMidi);
 		mod16->dwCallback = mod32->dwCallback;
 		mod16->dwInstance = mod32->dwInstance;
 		mod16->dnDevNode = mod32->dnDevNode;

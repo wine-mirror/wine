@@ -817,7 +817,7 @@ static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 
 	wmm->dwStatus = MCI_MODE_NOT_READY;
 	if (oldstat == MCI_MODE_PAUSE)
-	    dwRet = midiOutReset(wmm->hMidi);
+	    dwRet = midiOutReset((HMIDIOUT)wmm->hMidi);
 
 	while (wmm->dwStatus != MCI_MODE_STOP)
 	    Sleep(10);
@@ -962,7 +962,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	MIDI_mciReadNextEvent(wmm, mmt); /* FIXME == 0 */
     }
 
-    dwRet = midiOutOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);
+    dwRet = midiOutOpen((LPHMIDIOUT)&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);
     /*	dwRet = midiInOpen(&wmm->hMidi, MIDIMAPPER, 0L, 0L, CALLBACK_NULL);*/
     if (dwRet != MMSYSERR_NOERROR) {
 	return dwRet;
@@ -1142,7 +1142,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	    break;
 	default:
 	    if (doPlay) {
-		dwRet = midiOutShortMsg(wmm->hMidi, mmt->dwEventData);
+		dwRet = midiOutShortMsg((HMIDIOUT)wmm->hMidi, mmt->dwEventData);
 	    } else {
 		switch (LOBYTE(LOWORD(mmt->dwEventData)) & 0xF0) {
 		case MIDI_NOTEON:
@@ -1150,7 +1150,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 		    dwRet = 0;
 		    break;
 		default:
-		    dwRet = midiOutShortMsg(wmm->hMidi, mmt->dwEventData);
+		    dwRet = midiOutShortMsg((HMIDIOUT)wmm->hMidi, mmt->dwEventData);
 		}
 	    }
 	}
@@ -1163,9 +1163,9 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	}
     }
 
-    midiOutReset(wmm->hMidi);
+    midiOutReset((HMIDIOUT)wmm->hMidi);
 
-    dwRet = midiOutClose(wmm->hMidi);
+    dwRet = midiOutClose((HMIDIOUT)wmm->hMidi);
     /* to restart playing at beginning when it's over */
     wmm->dwPositionMS = 0;
 
@@ -1212,7 +1212,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     midiHdr.dwBufferLength = 1024;
     midiHdr.dwUser = 0L;
     midiHdr.dwFlags = 0L;
-    dwRet = midiInPrepareHeader(wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
+    dwRet = midiInPrepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
     TRACE("After MIDM_PREPARE \n");
     wmm->dwStatus = MCI_MODE_RECORD;
     /* FIXME: there is no buffer added */
@@ -1220,12 +1220,12 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 	TRACE("wmm->dwStatus=%p %d\n",
 	      &wmm->dwStatus, wmm->dwStatus);
 	midiHdr.dwBytesRecorded = 0;
-	dwRet = midiInStart(wmm->hMidi);
+	dwRet = midiInStart((HMIDIIN)wmm->hMidi);
 	TRACE("midiInStart => dwBytesRecorded=%lu\n", midiHdr.dwBytesRecorded);
 	if (midiHdr.dwBytesRecorded == 0) break;
     }
     TRACE("Before MIDM_UNPREPARE \n");
-    dwRet = midiInUnprepareHeader(wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
+    dwRet = midiInUnprepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
     TRACE("After MIDM_UNPREPARE \n");
     if (midiHdr.lpData != NULL) {
 	HeapFree(GetProcessHeap(), 0, midiHdr.lpData);
@@ -1255,7 +1255,7 @@ static DWORD MIDI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 	/* stop all notes */
 	unsigned chn;
 	for (chn = 0; chn < 16; chn++)
-	    midiOutShortMsg(wmm->hMidi, 0x78B0 | chn);
+	    midiOutShortMsg((HMIDIOUT)(wmm->hMidi), 0x78B0 | chn);
 	wmm->dwStatus = MCI_MODE_PAUSE;
     }
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
@@ -1712,5 +1712,3 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
 }
-
-

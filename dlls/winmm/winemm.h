@@ -226,3 +226,14 @@ LPWINE_MM_IDATA			MULTIMEDIA_GetIData(void);
 
 LPWINE_MM_IDATA			TIME_MMTimeStart(void);
 void				TIME_MMTimeStop(void);
+
+/* HANDLE16 -> HANDLE conversions */
+#define HMIDI_32(h16)		((HMIDI)(ULONG_PTR)(h16))
+#define HMIDIIN_32(h16)		((HMIDIIN)(ULONG_PTR)(h16))
+#define HMIDIOUT_32(h16)	((HMIDIOUT)(ULONG_PTR)(h16))
+#define HMIDISTRM_32(h16)	((HMIDISTRM)(ULONG_PTR)(h16))
+/* HANDLE -> HANDLE16 conversions */
+#define HMIDI_16(h32)		(LOWORD(h32))
+#define HMIDIIN_16(h32)		(LOWORD(h32))
+#define HMIDIOUT_16(h32)	(LOWORD(h32))
+#define HMIDISTRM_16(h32)	(LOWORD(h32))

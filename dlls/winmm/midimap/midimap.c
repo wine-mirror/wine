@@ -81,7 +81,7 @@ typedef struct tagMIDIOUTPORT
 {
     char		name[MAXPNAMELEN];
     int			loaded;
-    HMIDI		hMidi;
+    HMIDIOUT		hMidi;
     unsigned short	uDevID;
     LPBYTE		lpbPatch;
     unsigned int	aChn[16];
@@ -494,7 +494,7 @@ static	DWORD	MIDIMAP_drvOpen(LPSTR str)
 			     numMidiOutPorts * sizeof(MIDIOUTPORT));
     for (dev = 0; dev < numMidiOutPorts; dev++)
     {
-	if (midiOutGetDevCapsA((HMIDIOUT)dev, &moc, sizeof(moc)) == 0L)
+	if (midiOutGetDevCapsA(dev, &moc, sizeof(moc)) == 0L)
 	{
 	    strcpy(midiOutPorts[dev].name, moc.szPname);
 	    midiOutPorts[dev].loaded = 0;
@@ -552,5 +552,3 @@ LONG CALLBACK	MIDIMAP_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 }
-
-
