@@ -882,7 +882,7 @@ static DWORD PutField (DWORD pixel, int shift, int len)
 }
 
 static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInfo *gi,
-			    COLORREF color)
+			    int color)
 {
     int             r_shift, r_len;
     int             g_shift, g_len;
@@ -893,10 +893,6 @@ static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInf
     int             width, height;
     int             w, tx;
     BYTE            src_r, src_g, src_b;
-
-    src_r = GetRValue(color);
-    src_g = GetGValue(color);
-    src_b = GetBValue(color);
 
     x -= gi->x;
     y -= gi->y;
@@ -909,6 +905,11 @@ static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInf
     ExamineBitfield (image->red_mask, &r_shift, &r_len);
     ExamineBitfield (image->green_mask, &g_shift, &g_len);
     ExamineBitfield (image->blue_mask, &b_shift, &b_len);
+
+    src_r = GetField(color, r_shift, r_len);
+    src_g = GetField(color, g_shift, g_len);
+    src_b = GetField(color, b_shift, b_len);
+    
     for(; height--; y++)
     {
         mask = maskLine;
@@ -927,12 +928,7 @@ static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInf
 	    if(tx < 0) continue;
 
 	    if (m == 0xff)
-	    {
-	        pixel = (PutField ((src_r), r_shift, r_len) |
-			 PutField ((src_g), g_shift, g_len) |
-			 PutField ((src_b), b_shift, b_len));
-		XPutPixel (image, tx, y, pixel);
-	    }
+		XPutPixel (image, tx, y, color);
 	    else if (m)
 	    {
 	        BYTE r, g, b;
@@ -989,7 +985,6 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     INT char_extra;
     HRGN saved_region = 0;
     UINT align = GetTextAlign( hdc );
-    COLORREF textColor = GetTextColor( hdc );
 
     TRACE("%p, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
 	  lprect, debugstr_wn(wstr, count), count, lpDx);
@@ -1056,7 +1051,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
 
     if(physDev->depth == 1) {
-        if((textColor & 0xffffff) == 0) {
+        if((physDev->textPixel & 0xffffff) == 0) {
 	    textPixel = 0;
 	    backgroundPixel = 1;
 	} else {
@@ -1241,19 +1236,27 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 								CPRepeat, &pa);
 	    wine_tsx11_unlock();
 	    TRACE("Created pixmap of depth %d\n", format->depth);
-	    /* init lastTextColor to something different from textColor */
-	    physDev->xrender->lastTextColor = ~textColor;
+	    /* init lastTextColor to something different from textPixel */
+	    physDev->xrender->lastTextColor = ~physDev->textPixel;
 
 	}
 
-	if(textColor != physDev->xrender->lastTextColor) {
+	if(physDev->textPixel != physDev->xrender->lastTextColor) {
 	    if(physDev->depth != 1) {
-	      /* Map 0 -- 0xff onto 0 -- 0xffff */
-	        col.red = GetRValue(textColor);
+                /* Map 0 -- 0xff onto 0 -- 0xffff */
+                int             r_shift, r_len;
+                int             g_shift, g_len;
+                int             b_shift, b_len;
+
+                ExamineBitfield (visual->red_mask, &r_shift, &r_len );
+                ExamineBitfield (visual->green_mask, &g_shift, &g_len);
+                ExamineBitfield (visual->blue_mask, &b_shift, &b_len);
+
+	        col.red = GetField(physDev->textPixel, r_shift, r_len);
 		col.red |= col.red << 8;
-		col.green = GetGValue(textColor);
+		col.green = GetField(physDev->textPixel, g_shift, g_len);
 		col.green |= col.green << 8;
-		col.blue = GetBValue(textColor);
+		col.blue = GetField(physDev->textPixel, b_shift, b_len);
 		col.blue |= col.blue << 8;
 		col.alpha = 0x0;
 	    } else { /* for a 1bpp bitmap we always need a 1 in the tile */
@@ -1265,7 +1268,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				  physDev->xrender->tile_pict,
 				  &col, 0, 0, 1, 1);
 	    wine_tsx11_unlock();
-	    physDev->xrender->lastTextColor = textColor;
+	    physDev->xrender->lastTextColor = physDev->textPixel;
 	}
 
 	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
@@ -1451,7 +1454,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				yoff + image_off_y - extents.top,
 				entry->bitmaps[glyphs[idx]],
 				&entry->gis[glyphs[idx]],
-				textColor);
+				physDev->textPixel);
 		if(deltas) {
 		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    xoff = offset * cosEsc;
