@@ -452,8 +452,8 @@ DECL_WINELIB_TYPE_AW(PFILEPATHS_)
 #define ERROR_NO_SUCH_INTERFACE_DEVICE    ERROR_NO_SUCH_DEVICE_INTERFACE
 #define ERROR_NOT_INSTALLED               (APPLICATION_ERROR_MASK|ERROR_SEVERITY_ERROR|0x1000)
 
-HINF     WINAPI SetupOpenInfFileA( PCSTR name, PCSTR class, DWORD style, UINT *error );
-HINF     WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *error );
+HINF     WINAPI SetupOpenInfFileA( PCSTR name, PCSTR pszclass, DWORD style, UINT *error );
+HINF     WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR pszclass, DWORD style, UINT *error );
 #define         SetupOpenInfFile WINELIB_NAME_AW(SetupOpenInfFile)
 BOOL     WINAPI SetupOpenAppendInfFileA( PCSTR, HINF, UINT * );
 BOOL     WINAPI SetupOpenAppendInfFileW( PCWSTR, HINF, UINT * );
