@@ -214,6 +214,9 @@ HRESULT WINAPI StrRetToBufA(struct _STRRET *src, const struct _ITEMIDLIST *pidl,
 HRESULT WINAPI StrRetToBufW(struct _STRRET *src, const struct _ITEMIDLIST *pidl, LPWSTR dest, DWORD len);
 #define StrRetToBuf WINELIB_NAME_AW(StrRetToBuf)
 
+
+/* Shell Registry interfaces */
+
 HRESULT WINAPI SHQueryValueExA(HKEY hkey, LPSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 HRESULT WINAPI SHQueryValueExW(HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserved, LPDWORD pdwType, LPVOID pvData, LPDWORD pcbData);
 #define SHQueryValueEx WINELIB_NAME_AW(SHQueryValueEx)
@@ -225,6 +228,26 @@ HRESULT WINAPI SHDeleteKeyW(HKEY hkey, LPCWSTR pszSubKey);
 DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey);
 DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey);
 #define  SHDeleteEmptyKey WINELIB_NAME_AW(SHDeleteEmptyKey)
+
+
+typedef HANDLE HUSKEY;
+typedef HUSKEY *PHUSKEY;
+
+typedef enum {
+    SHREGDEL_DEFAULT = 0,   /* delete HKCU if found or HKLM if not */
+    SHREGDEL_HKCU = 0x01,   /* delete HKCU */
+    SHREGDEL_HKLM = 0x10,   /* delete HKLM */
+    SHREGDEL_BOTH = 0x11,   /* delete HKCU *and* HKLM */
+} SHREGDEL_FLAGS; 
+
+typedef enum {
+    SHREGENUM_DEFAULT = 0,  /* do HKCU or HKLM if not found */
+    SHREGENUM_HKCU = 0x01,  /* do HKCU only  */
+    SHREGENUM_HKLM = 0x10,  /* do HKLM only  */
+    SHREGENUM_BOTH = 0x11,  /* do both HKCU and HKLM without dups */
+} SHREGENUM_FLAGS; 
+
+
 
 HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized, 
 				LPDWORD pcchCanonicalized, DWORD dwFlags);
