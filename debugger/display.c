@@ -49,7 +49,7 @@ DEBUG_AddDisplay(struct expr * exp, int count, char format)
 }
 
 int
-DEBUG_InfoDisplay()
+DEBUG_InfoDisplay(void)
 {
   int i;
 
@@ -70,10 +70,10 @@ DEBUG_InfoDisplay()
 }
 
 int
-DEBUG_DoDisplay()
+DEBUG_DoDisplay(void)
 {
-  DBG_ADDR	addr;
-  int i;
+  DBG_VALUE	value;
+  int		i;
 
   /*
    * First find a slot where we can store this display.
@@ -82,8 +82,8 @@ DEBUG_DoDisplay()
     {
       if( displaypoints[i].exp != NULL )
 	{
-	  addr = DEBUG_EvalExpr(displaypoints[i].exp);
-	  if( addr.type == NULL )
+	  value = DEBUG_EvalExpr(displaypoints[i].exp);
+	  if( value.type == NULL )
 	    {
 	      fprintf(stderr, "Unable to evaluate expression ");
 	      DEBUG_DisplayExpr(displaypoints[i].exp);
@@ -97,13 +97,13 @@ DEBUG_DoDisplay()
 	      fprintf(stderr, " = ");
 	      if( displaypoints[i].format == 'i' )
 		{
-		  DEBUG_ExamineMemory( &addr, 
-			       displaypoints[i].count, 
-			       displaypoints[i].format);
+		  DEBUG_ExamineMemory( &value, 
+				       displaypoints[i].count, 
+				       displaypoints[i].format);
 		}
 	      else
 		{
-		  DEBUG_Print( &addr, 
+		  DEBUG_Print( &value, 
 			       displaypoints[i].count, 
 			       displaypoints[i].format, 0);
 		}

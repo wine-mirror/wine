@@ -8,6 +8,7 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -20,40 +21,41 @@
  *
  * Implementation of the 'print' command.
  */
-void DEBUG_PrintBasic( const DBG_ADDR *addr, int count, char format )
+void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
 {
   char        * default_format;
-  long long int value;
+  long long int res;
 
-  if( addr->type == NULL )
+  assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
+  if( value->type == NULL ) 
     {
       fprintf(stderr, "Unable to evaluate expression\n");
       return;
     }
   
   default_format = NULL;
-  value = DEBUG_GetExprValue(addr, &default_format);
+  res = DEBUG_GetExprValue(value, &default_format);
 
   switch(format)
     {
     case 'x':
-      if (addr->seg) 
+      if (value->addr.seg) 
 	{
-	  DEBUG_nchar += fprintf( stderr, "0x%04lx", (long unsigned int) value );
+	  DEBUG_nchar += fprintf( stderr, "0x%04lx", (long unsigned int) res );
 	}
       else 
 	{
-	  DEBUG_nchar += fprintf( stderr, "0x%08lx", (long unsigned int) value );
+	  DEBUG_nchar += fprintf( stderr, "0x%08lx", (long unsigned int) res );
 	}
       break;
       
     case 'd':
-      DEBUG_nchar += fprintf( stderr, "%ld\n", (long int) value );
+      DEBUG_nchar += fprintf( stderr, "%ld\n", (long int) res );
       break;
       
     case 'c':
       DEBUG_nchar += fprintf( stderr, "%d = '%c'",
-	       (char)(value & 0xff), (char)(value & 0xff) );
+			      (char)(res & 0xff), (char)(res & 0xff) );
       break;
       
     case 'i':
@@ -64,7 +66,51 @@ void DEBUG_PrintBasic( const DBG_ADDR *addr, int count, char format )
     case 0:
       if( default_format != NULL )
 	{
-	  DEBUG_nchar += fprintf( stderr, default_format, value );
+	  if (strstr(default_format, "%S") == NULL)
+	    {
+	       DEBUG_nchar += fprintf( stderr, default_format, res );
+	    } 
+	  else
+	    {
+	       char* 	ptr;
+	       int	state = 0;
+
+	       /* FIXME: simplistic implementation for default_format being
+		* foo%Sbar => will print foo, then string then bar
+		*/
+	       for (ptr = default_format; *ptr; ptr++) 
+	       {
+		  fprintf(stderr, "[%c]", *ptr);
+
+		  if (*ptr == '%') state++;
+		  else if (state == 1) 
+		    {
+		       if (*ptr == 'S') 
+			 {
+			    char 	ch;
+			    char*	str = (char*)(long)res;
+
+			    for (; DEBUG_READ_MEM(str, &ch, 1) && ch; str++) {
+			       fputc(ch, stderr);
+			       DEBUG_nchar++;
+			    }
+			 }
+		       else 
+			 {
+			    /* shouldn't happen */
+			    fputc('%', stderr);
+			    fputc(*ptr, stderr);
+			    DEBUG_nchar += 2;
+			 }
+		       state = 0;
+		    }
+		  else
+		    {
+		       fputc(*ptr, stderr);
+		       DEBUG_nchar++;
+		    }
+	       }
+	    } 
 	}
       break;
     }
@@ -144,7 +190,7 @@ void DEBUG_Help(void)
 "  display <expr>                         undisplay <disnum>",
 "  delete display <disnum>                debugmsg <class>[-+]<type>\n",
 "  mode [16,32]                           walk [wnd,class,queue,module,",
-"                                               process,modref <pid>]",
+"  whatis                                       process,modref <pid>]",
 "  info (see 'help info' for options)\n",
 
 "The 'x' command accepts repeat counts and formats (including 'i') in the",

@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "task.h"
@@ -120,7 +119,7 @@ static int next_expr_free = 0;
 
 static
 struct expr *
-DEBUG_GetFreeExpr()
+DEBUG_GetFreeExpr(void)
 {
   struct expr * rtn;
 
@@ -133,7 +132,7 @@ DEBUG_GetFreeExpr()
 }
 
 void
-DEBUG_FreeExprMem()
+DEBUG_FreeExprMem(void)
 {
   next_expr_free = 0;
 }
@@ -291,13 +290,12 @@ DEBUG_CallExpr(const char * funcname, int nargs, ...)
   return ex;
 }
 
-DBG_ADDR
-DEBUG_EvalExpr(struct expr * exp)
+DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 {
-  DBG_ADDR	rtn;
+  DBG_VALUE	rtn;
   int		i;
-  DBG_ADDR	exp1;
-  DBG_ADDR	exp2;
+  DBG_VALUE	exp1;
+  DBG_VALUE	exp2;
   unsigned int	cexp[5];
   int		    scale1;
   int		    scale2;
@@ -306,29 +304,34 @@ DEBUG_EvalExpr(struct expr * exp)
   struct datatype * type2;
 
   rtn.type = NULL;
-  rtn.off = NULL;
-  rtn.seg = NULL;
+  rtn.addr.off = 0;
+  rtn.addr.seg = 0;
 
   switch(exp->type)
     {
     case EXPR_TYPE_CAST:
       rtn = DEBUG_EvalExpr(exp->un.cast.expr);
       rtn.type = exp->un.cast.cast;
+      if (DEBUG_GetType(rtn.type) == DT_POINTER)
+	 rtn.cookie = DV_TARGET;
       break;
     case EXPR_TYPE_STRING:
       rtn.type = DEBUG_TypeString;
-      rtn.off = (unsigned int) &exp->un.string.str;
-      rtn.seg = 0;
+      rtn.cookie = DV_HOST;
+      rtn.addr.off = (unsigned int) &exp->un.string.str;
+      rtn.addr.seg = 0;
       break;
     case EXPR_TYPE_CONST:
       rtn.type = DEBUG_TypeIntConst;
-      rtn.off = (unsigned int) &exp->un.constant.value;
-      rtn.seg = 0;
+      rtn.cookie = DV_HOST;
+      rtn.addr.off = (unsigned int) &exp->un.constant.value;
+      rtn.addr.seg = 0;
       break;
     case EXPR_TYPE_US_CONST:
       rtn.type = DEBUG_TypeUSInt;
-      rtn.off = (unsigned int) &exp->un.u_const.value;
-      rtn.seg = 0;
+      rtn.cookie = DV_HOST;
+      rtn.addr.off = (unsigned int) &exp->un.u_const.value;
+      rtn.addr.seg = 0;
       break;
     case EXPR_TYPE_SYMBOL:
       if( !DEBUG_GetSymbolValue(exp->un.symbol.name, -1, &rtn, FALSE) )
@@ -340,12 +343,13 @@ DEBUG_EvalExpr(struct expr * exp)
       exp1 =  DEBUG_EvalExpr(exp->un.structure.exp1);
       if( exp1.type == NULL )
 	{
-	  break;
+	   RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	}
-      rtn.off = DEBUG_TypeDerefPointer(&exp1, &type1);
+      rtn.cookie = DV_TARGET;
+      rtn.addr.off = DEBUG_TypeDerefPointer(&exp1, &type1);
       if( type1 == NULL )
 	{
-	  break;
+	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	}
       rtn.type = type1;
       DEBUG_FindStructElement(&rtn, exp->un.structure.element_name,
@@ -355,7 +359,7 @@ DEBUG_EvalExpr(struct expr * exp)
       exp1 =  DEBUG_EvalExpr(exp->un.structure.exp1);
       if( exp1.type == NULL )
 	{
-	  break;
+	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	}
       rtn = exp1;
       DEBUG_FindStructElement(&rtn, exp->un.structure.element_name,
@@ -381,8 +385,7 @@ DEBUG_EvalExpr(struct expr * exp)
        */
       if( !DEBUG_GetSymbolValue(exp->un.call.funcname, -1, &rtn, FALSE ) )
 	{
-	  fprintf(stderr, "Failed to find symbol\n");
-	  break;
+	  RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
 	}
 
 #if 0
@@ -392,7 +395,7 @@ DEBUG_EvalExpr(struct expr * exp)
        */
       int		(*fptr)();
 
-      fptr = (int (*)()) rtn.off;
+      fptr = (int (*)()) rtn.addr.off;
       switch(exp->un.call.nargs)
 	{
 	case 0:
@@ -422,27 +425,30 @@ DEBUG_EvalExpr(struct expr * exp)
       exp->un.call.result = 0;
 #endif
       rtn.type = DEBUG_TypeInt;
-      rtn.off = (unsigned int) &exp->un.call.result;
+      rtn.cookie = DV_HOST;
+      rtn.addr.off = (unsigned int) &exp->un.call.result;
 
       break;
     case EXPR_TYPE_REGISTER:
       rtn.type = DEBUG_TypeIntConst;
+      rtn.cookie = DV_HOST;
       exp->un.rgister.result = DEBUG_GetRegister(exp->un.rgister.reg);
-      rtn.off = (unsigned int) &exp->un.rgister.result;
+      rtn.addr.off = (unsigned int) &exp->un.rgister.result;
 #ifdef __i386__
       if( exp->un.rgister.reg == REG_EIP )
-	  rtn.seg = DEBUG_context.SegCs;
+	  rtn.addr.seg = DEBUG_context.SegCs;
       else
-	  rtn.seg = DEBUG_context.SegDs;
+	  rtn.addr.seg = DEBUG_context.SegDs;
 #endif
-      DEBUG_FixAddress( &rtn, 0 );
+      DEBUG_FixAddress( &rtn.addr, 0 );
       break;
     case EXPR_TYPE_BINOP:
       exp1 = DEBUG_EvalExpr(exp->un.binop.exp1);
       exp2 = DEBUG_EvalExpr(exp->un.binop.exp2);
+      rtn.cookie = DV_HOST;
       if( exp1.type == NULL || exp2.type == NULL )
 	{
-	  break;
+	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	}
       if( exp1.type == DEBUG_TypeIntConst && exp2.type == DEBUG_TypeIntConst )
 	{
@@ -452,7 +458,8 @@ DEBUG_EvalExpr(struct expr * exp)
 	{
 	  rtn.type = DEBUG_TypeInt;
 	}
-      rtn.off = (unsigned int) &exp->un.binop.result;
+      rtn.addr.seg = 0;
+      rtn.addr.off = (unsigned int) &exp->un.binop.result;
       switch(exp->un.binop.binop_type)
 	{
 	case EXP_OP_ADD:
@@ -462,7 +469,7 @@ DEBUG_EvalExpr(struct expr * exp)
 	  scale2 = 1;
 	  if( type1 != NULL && type2 != NULL )
 	    {
-	      break;
+	      RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	    }
 	  else if( type1 != NULL )
 	    {
@@ -474,7 +481,6 @@ DEBUG_EvalExpr(struct expr * exp)
 	      scale1 = DEBUG_GetObjectSize(type2);
 	      rtn.type = exp2.type;
 	    }
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) * scale1  + scale2 * VAL(exp2));
 	  break;
 	case EXP_OP_SUB:
@@ -487,7 +493,7 @@ DEBUG_EvalExpr(struct expr * exp)
 	    {
 	      if( type1 != type2 )
 		{
-		  break;
+		  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 		}
 	      scale3 = DEBUG_GetObjectSize(type1);
 	    }
@@ -502,112 +508,89 @@ DEBUG_EvalExpr(struct expr * exp)
 	      scale1 = DEBUG_GetObjectSize(type2);
 	      rtn.type = exp2.type;
 	    }
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) - VAL(exp2)) / scale3;
 	  break;
 	case EXP_OP_SEG:
-	  rtn.seg = VAL(exp1);
+	  rtn.cookie = DV_TARGET;
+	  rtn.addr.seg = VAL(exp1);
           exp->un.binop.result = VAL(exp2);
 #ifdef __i386__
-	  DEBUG_FixSegment(&rtn);
+	  DEBUG_FixSegment(&rtn.addr);
 #endif
 	  break;
 	case EXP_OP_LOR:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) || VAL(exp2));
 	  break;
 	case EXP_OP_LAND:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) && VAL(exp2));
 	  break;
 	case EXP_OP_OR:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) | VAL(exp2));
 	  break;
 	case EXP_OP_AND:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) & VAL(exp2));
 	  break;
 	case EXP_OP_XOR:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) ^ VAL(exp2));
  	  break;
 	case EXP_OP_EQ:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) == VAL(exp2));
 	  break;
 	case EXP_OP_GT:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) > VAL(exp2));
 	  break;
 	case EXP_OP_LT:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) < VAL(exp2));
 	  break;
 	case EXP_OP_GE:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) >= VAL(exp2));
 	  break;
 	case EXP_OP_LE:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) <= VAL(exp2));
 	  break;
 	case EXP_OP_NE:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) != VAL(exp2));
 	  break;
 	case EXP_OP_SHL:
-	  rtn.seg = 0;
 	  exp->un.binop.result = ((unsigned) VAL(exp1) << VAL(exp2));
 	  break;
 	case EXP_OP_SHR:
-	  rtn.seg = 0;
 	  exp->un.binop.result = ((unsigned) VAL(exp1) >> VAL(exp2));
 	  break;
 	case EXP_OP_MUL:
-	  rtn.seg = 0;
 	  exp->un.binop.result = (VAL(exp1) * VAL(exp2));
 	  break;
 	case EXP_OP_DIV:
-	  if( VAL(exp2) != 0 )
+	  if( VAL(exp2) == 0 )
 	    {
-	      rtn.seg = 0;
-	      exp->un.binop.result = (VAL(exp1) / VAL(exp2));
+	       RaiseException(DEBUG_STATUS_DIV_BY_ZERO, 0, 0, NULL);
 	    }
-	  else
-	    {
-	      rtn.seg = 0;
-	      rtn.type = NULL;
-	      rtn.off = 0;
-	    }
+	  exp->un.binop.result = (VAL(exp1) / VAL(exp2));
 	  break;
 	case EXP_OP_REM:
-	  if( VAL(exp2) != 0 )
+	  if( VAL(exp2) == 0 )
 	    {
-	      rtn.seg = 0;
-	      exp->un.binop.result = (VAL(exp1) % VAL(exp2));
+	       RaiseException(DEBUG_STATUS_DIV_BY_ZERO, 0, 0, NULL);
 	    }
-	  else
-	    {
-	      rtn.seg = 0;
-	      rtn.type = NULL;
-	      rtn.off = 0;
-	    }
+	  exp->un.binop.result = (VAL(exp1) % VAL(exp2));
 	  break;
 	case EXP_OP_ARR:
 	  DEBUG_ArrayIndex(&exp1, &rtn, VAL(exp2));
 	  break;
 	default:
+	  RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
 	  break;
 	}
       break;
     case EXPR_TYPE_UNOP:
       exp1 = DEBUG_EvalExpr(exp->un.unop.exp1);
+      rtn.cookie = DV_HOST;
       if( exp1.type == NULL )
 	{
-	  break;
+	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	}
-      rtn.off = (unsigned int) &exp->un.unop.result;
+      rtn.addr.seg = 0;
+      rtn.addr.off = (unsigned int) &exp->un.unop.result;
       if( exp1.type == DEBUG_TypeIntConst )
 	{
 	  rtn.type = exp1.type;
@@ -619,47 +602,56 @@ DEBUG_EvalExpr(struct expr * exp)
       switch(exp->un.unop.unop_type)
 	{
 	case EXP_OP_NEG:
-	  rtn.seg = 0;
 	  exp->un.unop.result = -VAL(exp1);
 	  break;
 	case EXP_OP_NOT:
-	  rtn.seg = 0;
 	  exp->un.unop.result = !VAL(exp1);
 	  break;
 	case EXP_OP_LNOT:
-	  rtn.seg = 0;
 	  exp->un.unop.result = ~VAL(exp1);
 	  break;
 	case EXP_OP_DEREF:
- 	  rtn.seg = 0;
-	  rtn.off = (unsigned int) DEBUG_TypeDerefPointer(&exp1, &rtn.type);
+	  rtn.cookie = exp1.cookie;
+	  rtn.addr.off = (unsigned int) DEBUG_TypeDerefPointer(&exp1, &rtn.type);
+	  if (!rtn.type)
+	    {
+	      RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
+	    }
 	  break;
 	case EXP_OP_FORCE_DEREF:
-	  rtn.seg = exp1.seg;
-	  rtn.off = DEBUG_READ_MEM((void*)exp1.off, &rtn.off, sizeof(rtn.off));
+	  rtn.cookie = exp1.cookie;
+	  rtn.addr.seg = exp1.addr.seg;
+	  if (exp1.cookie == DV_TARGET)
+	     DEBUG_READ_MEM((void*)exp1.addr.off, &rtn.addr.off, sizeof(rtn.addr.off));
+	  else
+	     memcpy(&rtn.addr.off, (void*)exp1.addr.off, sizeof(rtn.addr.off));
 	  break;
 	case EXP_OP_ADDR:
-	  rtn.seg = 0;
+          /* FIXME: even for a 16 bit entity ? */
+	  rtn.cookie = DV_TARGET;
 	  rtn.type = DEBUG_FindOrMakePointerType(exp1.type);
-	  exp->un.unop.result = exp1.off;
+	  exp->un.unop.result = exp1.addr.off;
 	  break;
+	default:
+	   RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
 	}
       break;
     default:
-      fprintf(stderr,"Unexpected expression.\n");
-      DEBUG_Exit(123);
+      fprintf(stderr,"Unexpected expression (%d).\n", exp->type);
+      RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
       break;
     }
+
+  assert(rtn.cookie == DV_TARGET || rtn.cookie == DV_HOST);
 
   return rtn;
 }
 
 
 int
-DEBUG_DisplayExpr(struct expr * exp)
+DEBUG_DisplayExpr(const struct expr * exp)
 {
   int		i;
-
 
   switch(exp->type)
     {
@@ -680,7 +672,7 @@ DEBUG_DisplayExpr(struct expr * exp)
       fprintf(stderr, "%d", exp->un.u_const.value);
       break;
     case EXPR_TYPE_STRING:
-      fprintf(stderr, "\"%s\"", exp->un.string.str);
+      fprintf(stderr, "\"%s\"", exp->un.string.str); 
       break;
     case EXPR_TYPE_SYMBOL:
       fprintf(stderr, "%s" , exp->un.symbol.name);
@@ -803,7 +795,7 @@ DEBUG_DisplayExpr(struct expr * exp)
       break;
     default:
       fprintf(stderr,"Unexpected expression.\n");
-      DEBUG_Exit(123);
+      RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
       break;
     }
 
@@ -811,7 +803,7 @@ DEBUG_DisplayExpr(struct expr * exp)
 }
 
 struct expr *
-DEBUG_CloneExpr(struct expr * exp)
+DEBUG_CloneExpr(const struct expr * exp)
 {
   int		i;
   struct expr * rtn;
@@ -860,7 +852,7 @@ DEBUG_CloneExpr(struct expr * exp)
       break;
     default:
       fprintf(stderr,"Unexpected expression.\n");
-      DEBUG_Exit(123);
+      RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
       break;
     }
 
@@ -913,7 +905,7 @@ DEBUG_FreeExpr(struct expr * exp)
       break;
     default:
       fprintf(stderr,"Unexpected expression.\n");
-      DEBUG_Exit(123);
+      RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
       break;
     }
 

@@ -49,7 +49,7 @@ static int DEBUG_start_sourceline = -1;
 static int DEBUG_end_sourceline = -1;
 
 void
-DEBUG_ShowDir()
+DEBUG_ShowDir(void)
 {
   struct searchlist * sl;
 
@@ -78,7 +78,7 @@ DEBUG_AddPath(const char * path)
 }
 
 void
-DEBUG_NukePath()
+DEBUG_NukePath(void)
 {
   struct searchlist * sl;
   struct searchlist * nxt;
@@ -422,7 +422,7 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
   DEBUG_end_sourceline = end;
 }
 
-DBG_ADDR DEBUG_LastDisassemble={NULL,0,0};
+DBG_ADDR DEBUG_LastDisassemble={0,0};
 
 static int
 _disassemble(DBG_ADDR *addr)
@@ -438,33 +438,36 @@ _disassemble(DBG_ADDR *addr)
 }
 
 void
-_disassemble_fixaddr(DBG_ADDR *addr) {
+_disassemble_fixaddr(DBG_VALUE *value) {
     DWORD seg2;
     struct datatype *testtype;
 
-    DEBUG_FixAddress(addr, DEBUG_context.SegCs);
-    if( addr->type != NULL )
+    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
+
+    DEBUG_FixAddress(&value->addr, DEBUG_context.SegCs);
+
+    if( value->type != NULL )
       {
-        if( addr->type == DEBUG_TypeIntConst )
+        if( value->type == DEBUG_TypeIntConst )
           {
             /*
              * We know that we have the actual offset stored somewhere
              * else in 32-bit space.  Grab it, and we
              * should be all set.
              */
-            seg2 = addr->seg;
-            addr->seg = 0;
-            addr->off = DEBUG_GetExprValue(addr, NULL);
-            addr->seg = seg2;
+            seg2 = value->addr.seg;
+            value->addr.seg = 0;
+            value->addr.off = DEBUG_GetExprValue(value, NULL);
+            value->addr.seg = seg2;
           }
         else
           {
-            DEBUG_TypeDerefPointer(addr, &testtype);
-            if( testtype != NULL || addr->type == DEBUG_TypeIntConst )
-                addr->off = DEBUG_GetExprValue(addr, NULL);
+            DEBUG_TypeDerefPointer(value, &testtype);
+            if( testtype != NULL || value->type == DEBUG_TypeIntConst )
+                value->addr.off = DEBUG_GetExprValue(value, NULL);
           }
       }
-    else if (!addr->seg && !addr->off)
+    else if (!value->addr.seg && !value->addr.off)
     {
         fprintf(stderr,"Invalid expression\n");
         return;
@@ -472,18 +475,18 @@ _disassemble_fixaddr(DBG_ADDR *addr) {
 }
 
 void
-DEBUG_Disassemble(const DBG_ADDR *xstart,const DBG_ADDR *xend,int offset)
+DEBUG_Disassemble(const DBG_VALUE *xstart,const DBG_VALUE *xend,int offset)
 {
   int i;
   DBG_ADDR	last;
-  DBG_ADDR	end,start;
+  DBG_VALUE	end,start;
 
   if (xstart) {
-    start=*xstart;
+    start = *xstart;
     _disassemble_fixaddr(&start);
   }
   if (xend) {
-    end=*xend;
+    end = *xend;
     _disassemble_fixaddr(&end);
   }
   if (!xstart && !xend) {
@@ -493,26 +496,26 @@ DEBUG_Disassemble(const DBG_ADDR *xstart,const DBG_ADDR *xend,int offset)
 
     for (i=0;i<offset;i++)
       if (!_disassemble(&last)) break;
-    memcpy(&DEBUG_LastDisassemble,&last,sizeof(last));
+    DEBUG_LastDisassemble = last;
     return;
   }
-  last = start;
+  last = start.addr;
   if (!xend) {
     for (i=0;i<offset;i++)
       if (!_disassemble(&last)) break;
-    memcpy(&DEBUG_LastDisassemble,&last,sizeof(last));
+    DEBUG_LastDisassemble = last;
     return;
   }
-  while (last.off <= end.off)
+  while (last.off <= end.addr.off)
     if (!_disassemble(&last)) break;
-  memcpy(&DEBUG_LastDisassemble,&last,sizeof(last));
+  DEBUG_LastDisassemble = last;
   return;
 }
 
 
 
 #if 0
-main()
+main(void)
 {
   int i, j;
   DEBUG_AddPath("../../de");

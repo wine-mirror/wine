@@ -32,7 +32,7 @@ XFlush(Display * d )
   return(0);
 }
 
-HTASK16    GetCurrentTask()
+HTASK16    GetCurrentTask(void)
 {
   exit(0);
 }
@@ -70,17 +70,17 @@ void WIN_DumpWindow( HWND hwnd )
 }
 
 
-void CLASS_WalkClasses()
+void CLASS_WalkClasses(void)
 {
   exit(0);
 }
 
-void MODULE_WalkModules()
+void MODULE_WalkModules(void)
 {
   exit(0);
 }
 
-void QUEUE_WalkQueues()
+void QUEUE_WalkQueues(void)
 {
   exit(0);
 }
@@ -173,7 +173,7 @@ struct CodeViewDebug
 	char		    cv_name[1];
 };
 
-test_pdbstuff()
+test_pdbstuff(void)
 {
   struct deferred_debug_info deefer;
   IMAGE_DEBUG_DIRECTORY dinfo;

@@ -176,12 +176,14 @@ static	void			DEBUG_InitCurrThread(void)
     if (!Options.debug) return;
 
     if (DEBUG_CurrThread->start) {
-	DBG_ADDR	addr;
+	DBG_VALUE	value;
 	
 	DEBUG_SetBreakpoints(FALSE);
-	addr.seg = 0;
-	addr.off = (DWORD)DEBUG_CurrThread->start;
-	DEBUG_AddBreakpoint(&addr);
+	value.type = NULL;
+	value.cookie = DV_TARGET;
+	value.addr.seg = 0;
+	value.addr.off = (DWORD)DEBUG_CurrThread->start;
+	DEBUG_AddBreakpoint(&value);
 	DEBUG_SetBreakpoints(TRUE);
     } else {
 	DEBUG_CurrThread->wait_for_first_exception = 1;
@@ -386,6 +388,11 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 	    
 	    DEBUG_InitCurrProcess();
 	    DEBUG_InitCurrThread();
+#ifdef _WE_SUPPORT_THE_STAB_TYPES_USED_BY_MINGW_TOO
+	    /* so far, process name is not set */
+	    DEBUG_RegisterDebugInfo((DWORD)de.u.CreateProcessInfo.lpBaseOfImage, 
+				    "wine-exec");
+#endif
 	    break;
 	    
 	case EXIT_THREAD_DEBUG_EVENT:

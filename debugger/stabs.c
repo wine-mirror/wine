@@ -8,7 +8,6 @@
 
 #include "config.h"
 
-#include <assert.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -426,7 +425,7 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
   return TRUE;
 }
 
-static int DEBUG_FreeRegisteredTypedefs()
+static int DEBUG_FreeRegisteredTypedefs(void)
 {
   int			 count;
   int			 j;
@@ -775,10 +774,10 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
   struct name_hash    * curr_sym = NULL;
   char                  currpath[PATH_MAX];
   int                   i;
-  int                   ignore = FALSE;
+  int                   in_external_file = FALSE;
   int                   last_nso = -1;
   int                   len;
-  DBG_ADDR              new_addr;
+  DBG_VALUE	        new_value;
   int                   nstab;
   char                * ptr;
   char                * stabbuff;
@@ -855,16 +854,17 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            *
            * With a.out, they actually do make some amount of sense.
            */
-          new_addr.seg = 0;
-          new_addr.type = DEBUG_ParseStabType(ptr);
-          new_addr.off = load_offset + stab_ptr->n_value;
+          new_value.addr.seg = 0;
+          new_value.type = DEBUG_ParseStabType(ptr);
+          new_value.addr.off = load_offset + stab_ptr->n_value;
+	  new_value.cookie = DV_TARGET;
 
           stab_strcpy(symname, ptr);
 #ifdef __ELF__
-          curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath,
+          curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath,
                                       SYM_WINE | SYM_DATA | SYM_INVALID);
 #else
-          curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath, 
+          curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath, 
                                       SYM_WINE | SYM_DATA );
 #endif
           break;
@@ -883,20 +883,20 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
           /*
            * These are static symbols and BSS symbols.
            */
-          new_addr.seg = 0;
-          new_addr.type = DEBUG_ParseStabType(ptr);
-          new_addr.off = load_offset + stab_ptr->n_value;
+          new_value.addr.seg = 0;
+          new_value.type = DEBUG_ParseStabType(ptr);
+          new_value.addr.off = load_offset + stab_ptr->n_value;
+	  new_value.cookie = DV_TARGET;
 
           stab_strcpy(symname, ptr);
-          curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath, 
+          curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath, 
                                       SYM_WINE | SYM_DATA );
           break;
         case N_PSYM:
           /*
            * These are function parameters.
            */
-          if(     (curr_func != NULL)
-               && (stab_ptr->n_value != 0) )
+          if( curr_func != NULL && !in_external_file )
             {
               stab_strcpy(symname, ptr);
               curr_loc = DEBUG_AddLocal( curr_func, 0, 
@@ -905,26 +905,21 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
             }
           break;
         case N_RSYM:
-          if( curr_func != NULL )
+          if( curr_func != NULL && !in_external_file )
             {
               stab_strcpy(symname, ptr);
-              curr_loc = DEBUG_AddLocal( curr_func, stab_ptr->n_value, 
+              curr_loc = DEBUG_AddLocal( curr_func, stab_ptr->n_value + 1, 
 					 0, 0, 0, symname );
               DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
             }
           break;
         case N_LSYM:
-          if(     (curr_func != NULL)
-               && (stab_ptr->n_value != 0) )
+          if( curr_func != NULL && !in_external_file )
             {
               stab_strcpy(symname, ptr);
               curr_loc = DEBUG_AddLocal( curr_func, 0, 
 					 stab_ptr->n_value, 0, 0, symname );
 	      DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
-            }
-          else if (curr_func == NULL)
-            {
-              stab_strcpy(symname, ptr);
             }
           break;
         case N_SLINE:
@@ -932,7 +927,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            * This is a line number.  These are always relative to the start
            * of the function (N_FUN), and this makes the lookup easier.
            */
-          if( curr_func != NULL )
+          if( curr_func != NULL && !in_external_file )
             {
 #ifdef __ELF__
               DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc, 
@@ -961,11 +956,12 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            * on, we will add the line number information and the
            * local symbols.
            */
-          if( !ignore )
+          if( !in_external_file )
             {
-              new_addr.seg = 0;
-              new_addr.type = DEBUG_ParseStabType(ptr);
-              new_addr.off = load_offset + stab_ptr->n_value;
+              new_value.addr.seg = 0;
+              new_value.type = DEBUG_ParseStabType(ptr);
+              new_value.addr.off = load_offset + stab_ptr->n_value;
+	      new_value.cookie = DV_TARGET;
               /*
                * Copy the string to a temp buffer so we
                * can kill everything after the ':'.  We do
@@ -974,7 +970,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
                * sucks up swap space like crazy.
                */
               stab_strcpy(symname, ptr);
-              curr_func = DEBUG_AddSymbol( symname, &new_addr, currpath,
+              curr_func = DEBUG_AddSymbol( symname, &new_value, currpath,
                                            SYM_WINE | SYM_FUNC);
             }
           else
@@ -1031,16 +1027,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            * If this is the main source, enable the debug stuff, otherwise
            * ignore it.
            */
-          if( subpath == NULL || strcmp(ptr, subpath) == 0 )
-            {
-              ignore = FALSE;
-            }
-          else
-            {
-              ignore = TRUE;
-              DEBUG_Normalize(curr_func);
-              curr_func = NULL;
-            }
+          in_external_file = !(subpath == NULL || strcmp(ptr, subpath) == 0);
           break;
         case N_UNDF:
           strs += strtabinc;
@@ -1106,7 +1093,7 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
   struct name_hash * curr_sym = NULL;
   int		  flags;
   int		  i;
-  DBG_ADDR        new_addr;
+  DBG_VALUE       new_value;
   int		  nsym;
   char		* strp;
   char		* symname;
@@ -1148,19 +1135,20 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
        * we will have to keep the darned thing, because there can be
        * multiple local symbols by the same name.
        */
-      if(    (DEBUG_GetSymbolValue(symname, -1, &new_addr, FALSE ) == TRUE)
-	  && (new_addr.off == (load_offset + symp->st_value)) )
+      if(    (DEBUG_GetSymbolValue(symname, -1, &new_value, FALSE ) == TRUE)
+	  && (new_value.addr.off == (load_offset + symp->st_value)) )
 	  continue;
 
-      new_addr.seg = 0;
-      new_addr.type = NULL;
-      new_addr.off = load_offset + symp->st_value;
+      new_value.addr.seg = 0;
+      new_value.type = NULL;
+      new_value.addr.off = load_offset + symp->st_value;
+      new_value.cookie = DV_TARGET;
       flags = SYM_WINE | (ELF32_ST_BIND(symp->st_info) == STT_FUNC 
 			  ? SYM_FUNC : SYM_DATA);
       if( ELF32_ST_BIND(symp->st_info) == STB_GLOBAL )
-	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, NULL, flags );
+	  curr_sym = DEBUG_AddSymbol( symname, &new_value, NULL, flags );
       else
-	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, curfile, flags );
+	  curr_sym = DEBUG_AddSymbol( symname, &new_value, curfile, flags );
 
       /*
        * Record the size of the symbol.  This can come in handy in

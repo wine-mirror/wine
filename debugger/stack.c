@@ -57,23 +57,24 @@ typedef struct
 void DEBUG_InfoStack(void)
 {
 #ifdef __i386__
-    DBG_ADDR addr;
-
-    addr.type = NULL;
-    addr.seg = DEBUG_context.SegSs;
-    addr.off = DEBUG_context.Esp;
+    DBG_VALUE	value;
+    
+    value.type = NULL;
+    value.cookie = DV_TARGET;
+    value.addr.seg = DEBUG_context.SegSs;
+    value.addr.off = DEBUG_context.Esp;
 
     fprintf(stderr,"Stack dump:\n");
-    switch (DEBUG_GetSelectorType(addr.seg)) {
+    switch (DEBUG_GetSelectorType(value.addr.seg)) {
     case 32: /* 32-bit mode */
-       DEBUG_ExamineMemory( &addr, 24, 'x' );
+       DEBUG_ExamineMemory( &value, 24, 'x' );
        break;
     case 16:  /* 16-bit mode */
-        addr.off &= 0xffff;
-        DEBUG_ExamineMemory( &addr, 24, 'w' );
+        value.addr.off &= 0xffff;
+        DEBUG_ExamineMemory( &value, 24, 'w' );
 	break;
     default:
-       fprintf(stderr, "Bad segment (%ld)\n", addr.seg);
+       fprintf(stderr, "Bad segment (%ld)\n", value.addr.seg);
     }
     fprintf(stderr,"\n");
 #endif
@@ -317,7 +318,7 @@ void DEBUG_BackTrace(BOOL noisy)
 		  if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
 		  return;
 	       }
-	       code.type = NULL;
+
 	       code.seg  = 0;
 	       code.off  = frame32.retaddr;
 	       
@@ -352,7 +353,6 @@ void DEBUG_BackTrace(BOOL noisy)
 		  return;
 	      }
 	      
-	      code.type = NULL;
 	      code.seg  = frame16.cs;
 	      code.off  = frame16.ip;
 	      

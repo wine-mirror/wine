@@ -8,11 +8,12 @@
 #define __WINE_DEBUGGER_H
 
 #include <sys/types.h> /* u_long ... */
+#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 
 #ifdef __i386__
-#define STEP_FLAG 0x100 /* single step flag */
+#define STEP_FLAG 0x00000100 /* single step flag */
 #define V86_FLAG  0x00020000
 #endif
 
@@ -46,10 +47,19 @@ extern struct datatype * DEBUG_TypeString;
 
 typedef struct
 {
-    struct datatype * type;
-    DWORD seg;  /* 0xffffffff means current default segment (cs or ds) */
-    DWORD off;
+    DWORD		seg;  /* 0xffffffff means current default segment (cs or ds) */
+    DWORD 		off;
 } DBG_ADDR;
+
+#define	DV_TARGET	0xF00D
+#define	DV_HOST		0x50DA
+
+typedef struct
+{
+   struct datatype*	type;
+   int			cookie;	/* DV_??? */
+   DBG_ADDR		addr;	
+} DBG_VALUE;
 
 struct list_id
 {
@@ -101,15 +111,27 @@ enum exec_mode
 				 * instr just after the call.
 				 */
 };
- 
+
+#define	DBG_BREAK 0
+#define	DBG_WATCH 1
+
 typedef struct
 {
     DBG_ADDR      addr;
-    BYTE          addrlen;
-    BYTE          opcode;
-    WORD	  skipcount;
     WORD	  enabled : 1, 
-                  refcount;
+                  type : 1,
+                  is32 : 1,
+                  refcount : 13;
+    WORD	  skipcount;
+    union {
+       BYTE          opcode;
+       struct {
+	  BYTE		rw : 1,
+	                len : 2;
+	  BYTE		reg;
+	  DWORD		oldval;
+       } w;
+    } u;
     struct expr * condition;
 } BREAKPOINT;
 
@@ -171,8 +193,8 @@ enum debug_regs
 
   /* debugger/break.c */
 extern void DEBUG_SetBreakpoints( BOOL set );
-extern int  DEBUG_FindBreakpoint( const DBG_ADDR *addr );
-extern void DEBUG_AddBreakpoint( const DBG_ADDR *addr );
+extern void DEBUG_AddBreakpoint( const DBG_VALUE *addr );
+extern void DEBUG_AddWatchpoint( const DBG_VALUE *addr, int is_write );
 extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
 extern void DEBUG_InfoBreakpoints(void);
@@ -181,6 +203,7 @@ extern BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
 extern void DEBUG_SuspendExecution( void );
 extern enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count );
 extern BOOL DEBUG_IsFctReturn(void);
+extern int DEBUG_AddBPCondition(int bpnum, struct expr * exp);
 
   /* debugger/db_disasm.c */
 extern void DEBUG_Disasm( DBG_ADDR *addr, int display );
@@ -200,15 +223,11 @@ struct expr * DEBUG_StructExpr(struct expr *, const char * element);
 struct expr * DEBUG_ArrayExpr(struct expr *, struct expr * index);
 struct expr * DEBUG_CallExpr(const char *, int nargs, ...);
 struct expr * DEBUG_TypeCastExpr(struct datatype *, struct expr *);
-extern int  DEBUG_ExprValue(const DBG_ADDR *, unsigned int *);
-extern DBG_ADDR DEBUG_EvalExpr(struct expr *);
+extern DBG_VALUE DEBUG_EvalExpr(struct expr *);
 extern int DEBUG_DelDisplay(int displaynum);
-extern struct expr * DEBUG_CloneExpr(struct expr * exp);
+extern struct expr * DEBUG_CloneExpr(const struct expr * exp);
 extern int DEBUG_FreeExpr(struct expr * exp);
-extern int DEBUG_DisplayExpr(struct expr * exp);
-
-  /* more debugger/break.c */
-extern int DEBUG_AddBPCondition(int bpnum, struct expr * exp);
+extern int DEBUG_DisplayExpr(const struct expr * exp);
 
   /* debugger/display.c */
 extern int DEBUG_DoDisplay(void);
@@ -219,15 +238,12 @@ extern int DEBUG_InfoDisplay(void);
 
   /* debugger/hash.c */
 extern struct name_hash * DEBUG_AddSymbol( const char *name, 
-					   const DBG_ADDR *addr,
-					   const char * sourcefile,
+					   const DBG_VALUE *addr,
+					   const char *sourcefile,
 					   int flags);
-extern struct name_hash * DEBUG_AddInvSymbol( const char *name, 
-					   const DBG_ADDR *addr,
-					   const char * sourcefile);
 extern BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
-				     DBG_ADDR *addr, int );
-extern BOOL DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr );
+				  DBG_VALUE *addr, int );
+extern BOOL DEBUG_SetSymbolValue( const char * name, const DBG_VALUE *addr );
 extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 					     struct name_hash ** rtn,
 					     unsigned int ebp,
@@ -235,7 +251,7 @@ extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 extern void DEBUG_ReadSymbolTable( const char * filename );
 extern int  DEBUG_LoadEntryPoints( const char * prefix );
 extern void DEBUG_AddLineNumber( struct name_hash * func, int line_num, 
-		     unsigned long offset );
+				 unsigned long offset );
 extern struct wine_locals *
             DEBUG_AddLocal( struct name_hash * func, int regno, 
 			    int offset,
@@ -250,14 +266,14 @@ extern int DEBUG_SetSymbolBPOff(struct name_hash * sym, unsigned int len);
 extern int DEBUG_GetSymbolAddr(struct name_hash * sym, DBG_ADDR * addr);
 extern int DEBUG_cmp_sym(const void * p1, const void * p2);
 extern BOOL DEBUG_GetLineNumberAddr( struct name_hash *, const int lineno, 
-				DBG_ADDR *addr, int bp_flag );
+				     DBG_ADDR *addr, int bp_flag );
 
 extern int DEBUG_SetLocalSymbolType(struct wine_locals * sym, 
 				    struct datatype * type);
 BOOL DEBUG_Normalize(struct name_hash * nh );
 
   /* debugger/info.c */
-extern void DEBUG_PrintBasic( const DBG_ADDR *addr, int count, char format );
+extern void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format );
 extern struct symbol_info DEBUG_PrintAddress( const DBG_ADDR *addr, 
 					      int addrlen, int flag );
 extern void DEBUG_Help(void);
@@ -282,7 +298,7 @@ extern void DEBUG_WalkWindows(HWND hWnd, int indent);
   /* debugger/memory.c */
 extern int DEBUG_ReadMemory( const DBG_ADDR *address );
 extern void DEBUG_WriteMemory( const DBG_ADDR *address, int value );
-extern void DEBUG_ExamineMemory( const DBG_ADDR *addr, int count, char format);
+extern void DEBUG_ExamineMemory( const DBG_VALUE *addr, int count, char format);
 extern void DEBUG_InvalLinAddr( void* addr );
 #ifdef __i386__
 extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
@@ -311,7 +327,8 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 
   /* debugger/stabs.c */
 extern int DEBUG_ReadExecutableDbgInfo(void);
-extern int DEBUG_ParseStabs(char * addr, unsigned int load_offset, unsigned int staboff, int stablen, unsigned int strtaboff, int strtablen);
+extern int DEBUG_ParseStabs(char * addr, unsigned int load_offset, unsigned int staboff, 
+			    int stablen, unsigned int strtaboff, int strtablen);
 
   /* debugger/msc.c */
 extern int DEBUG_RegisterDebugInfo( HMODULE, const char *);
@@ -325,8 +342,7 @@ extern int DEBUG_nchar;
 extern void DEBUG_InitTypes(void);
 extern struct datatype * DEBUG_NewDataType(enum debug_type xtype, 
 					   const char * typename);
-extern unsigned int 
-DEBUG_TypeDerefPointer(const DBG_ADDR * addr, struct datatype ** newtype);
+extern unsigned int DEBUG_TypeDerefPointer(const DBG_VALUE *value, struct datatype ** newtype);
 extern int DEBUG_AddStructElement(struct datatype * dt, 
 				  char * name, struct datatype * type, 
 				  int offset, int size);
@@ -334,20 +350,21 @@ extern int DEBUG_SetStructSize(struct datatype * dt, int size);
 extern int DEBUG_SetPointerType(struct datatype * dt, struct datatype * dt2);
 extern int DEBUG_SetArrayParams(struct datatype * dt, int min, int max,
 				struct datatype * dt2);
-extern void DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level );
-extern unsigned int DEBUG_FindStructElement(DBG_ADDR * addr, 
+extern void DEBUG_Print( const DBG_VALUE *addr, int count, char format, int level );
+extern unsigned int DEBUG_FindStructElement(DBG_VALUE * addr, 
 					    const char * ele_name, int * tmpbuf);
 extern struct datatype * DEBUG_GetPointerType(struct datatype * dt);
 extern int DEBUG_GetObjectSize(struct datatype * dt);
-extern unsigned int DEBUG_ArrayIndex(const DBG_ADDR * addr, DBG_ADDR * result, int index);
+extern unsigned int DEBUG_ArrayIndex(const DBG_VALUE * addr, DBG_VALUE * result, int index);
 extern struct datatype * DEBUG_FindOrMakePointerType(struct datatype * reftype);
-extern long long int DEBUG_GetExprValue(const DBG_ADDR * addr, char ** format);
+extern long long int DEBUG_GetExprValue(const DBG_VALUE * addr, char ** format);
 extern int DEBUG_SetBitfieldParams(struct datatype * dt, int offset, 
 				   int nbits, struct datatype * dt2);
 extern int DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2);
 extern enum debug_type DEBUG_GetType(struct datatype * dt);
 extern struct datatype * DEBUG_TypeCast(enum debug_type, const char *);
-extern int DEBUG_PrintTypeCast(struct datatype *);
+extern int DEBUG_PrintTypeCast(const struct datatype *);
+extern int DEBUG_PrintType( const DBG_VALUE* addr );
 
   /* debugger/source.c */
 extern void DEBUG_ShowDir(void);
@@ -355,7 +372,7 @@ extern void DEBUG_AddPath(const char * path);
 extern void DEBUG_List(struct list_id * line1, struct list_id * line2,  
 		       int delta);
 extern void DEBUG_NukePath(void);
-extern void DEBUG_Disassemble( const DBG_ADDR *, const DBG_ADDR*, int offset );
+extern void DEBUG_Disassemble( const DBG_VALUE *, const DBG_VALUE*, int offset );
 
   /* debugger/external.c */
 extern void DEBUG_ExternalDebugger(void);
@@ -390,6 +407,10 @@ extern char*	DEBUG_XStrDup(const char *str);
 extern HANDLE dbg_heap;
 #endif
 
-#define		DEBUG_STATUS_NO_SYMBOL	0x80003000
+#define	DEBUG_STATUS_OFFSET		0x80003000
+#define	DEBUG_STATUS_INTERNAL_ERROR	(DEBUG_STATUS_OFFSET+0)
+#define	DEBUG_STATUS_NO_SYMBOL		(DEBUG_STATUS_OFFSET+1)
+#define	DEBUG_STATUS_DIV_BY_ZERO	(DEBUG_STATUS_OFFSET+2)
+#define	DEBUG_STATUS_BAD_TYPE		(DEBUG_STATUS_OFFSET+3)
 
 #endif  /* __WINE_DEBUGGER_H */

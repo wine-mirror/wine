@@ -3,6 +3,7 @@
  *
  * Copyright 1993 Eric Youngdale
  * Copyright 1995 Alexandre Julliard
+ * Copyright 2000 Eric Pouech
  */
 
 #include "config.h"
@@ -103,7 +104,6 @@ BOOL	DEBUG_IsSelectorSystem(WORD sel)
 
 void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
 {
-    addr->type = NULL;
 #ifdef __i386__
     addr->seg  = DEBUG_context.SegCs;
 
@@ -120,7 +120,6 @@ void	DEBUG_InvalLinAddr( void* addr )
 {
    DBG_ADDR address;
 
-   address.type = NULL;
    address.seg = 0;
    address.off = (unsigned long)addr;
 
@@ -169,14 +168,16 @@ void DEBUG_WriteMemory( const DBG_ADDR *address, int value )
  *
  * Implementation of the 'x' command.
  */
-void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
+void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 {
-    DBG_ADDR addr =	* address;
+    DBG_VALUE		  value = *_value;
     int			  i;
     unsigned char	* pnt;
     struct datatype	* testtype;
 
-    DEBUG_FixAddress( &addr, 
+    assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
+
+    DEBUG_FixAddress( &value.addr, 
 		      (format == 'i') ?
 		      DEBUG_context.SegCs : 
 		      DEBUG_context.SegDs );
@@ -186,31 +187,31 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
      * reading.  We will use the same segment as what we have already,
      * and hope that this is a sensible thing to do.
      */
-    if( addr.type != NULL )
+    if( value.type != NULL )
       {
-	if( addr.type == DEBUG_TypeIntConst )
+	if( value.type == DEBUG_TypeIntConst )
 	  {
 	    /*
 	     * We know that we have the actual offset stored somewhere
 	     * else in 32-bit space.  Grab it, and we
 	     * should be all set.
 	     */
-	    unsigned int  seg2 = addr.seg;
-	    addr.seg = 0;
-	    addr.off = DEBUG_GetExprValue(&addr, NULL);
-	    addr.seg = seg2;
+	    unsigned int  seg2 = value.addr.seg;
+	    value.addr.seg = 0;
+	    value.addr.off = DEBUG_GetExprValue(&value, NULL);
+	    value.addr.seg = seg2;
 	  }
 	else
 	  {
-	    if (DEBUG_TypeDerefPointer(&addr, &testtype) == 0)
+	    if (DEBUG_TypeDerefPointer(&value, &testtype) == 0)
 	      return;
-	    if( testtype != NULL || addr.type == DEBUG_TypeIntConst )
+	    if( testtype != NULL || value.type == DEBUG_TypeIntConst )
 	      {
-		addr.off = DEBUG_GetExprValue(&addr, NULL);
+		value.addr.off = DEBUG_GetExprValue(&value, NULL);
 	      }
 	  }
       }
-    else if (!addr.seg && !addr.off)
+    else if (!value.addr.seg && !value.addr.off)
     {
 	fprintf(stderr,"Invalid expression\n");
 	return;
@@ -218,11 +219,11 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 
     if (format != 'i' && count > 1)
     {
-        DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, FALSE );
+        DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );
         fprintf(stderr,": ");
     }
 
-    pnt = (void*)DEBUG_ToLinear( &addr );
+    pnt = (void*)DEBUG_ToLinear( &value.addr );
 
     switch(format)
     {
@@ -256,9 +257,9 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 	case 'i':
 		while (count--)
                 {
-                    DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, TRUE );
+                    DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, TRUE );
                     fprintf(stderr,": ");
-                    DEBUG_Disasm( &addr, TRUE );
+                    DEBUG_Disasm( &value.addr, TRUE );
                     fprintf(stderr,"\n");
 		}
 		return;
@@ -267,10 +268,10 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 		for(i=0; i<count; i++) { \
                     if (!DEBUG_READ_MEM_VERBOSE(pnt, &_v, sizeof(_t))) break; \
                     fprintf(stderr,_f,(_vv)); \
-                    pnt += sizeof(_t); addr.off += sizeof(_t); \
+                    pnt += sizeof(_t); value.addr.off += sizeof(_t); \
                     if ((i % (_l)) == (_l)-1) { \
                         fprintf(stderr,"\n"); \
-                        DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, FALSE );\
+                        DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );\
                         fprintf(stderr,": ");\
                     } \
 		} \

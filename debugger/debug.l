@@ -131,7 +131,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INITIAL>help|hel|he|"?"		{ BEGIN(HELP_CMD); return tHELP; }
 
 <INITIAL>backtrace|backtrac|backtra|backt|back|bac|ba|bt { BEGIN(NOCMD); return tBACKTRACE; }
-<INITIAL>where|wher|whe                  { BEGIN(NOCMD); return tBACKTRACE; }
+<INITIAL>where|wher|whe                 { BEGIN(NOCMD); return tBACKTRACE; }
 
 <INITIAL>cont|con|co|c   		{ BEGIN(NOCMD); return tCONT; }
 <INITIAL>pass|pas|pa   			{ BEGIN(NOCMD); return tPASS; }
@@ -151,14 +151,15 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 
 <INITIAL,INFO_CMD,DEL_CMD>break|brea|bre|br|b	{ BEGIN(PATH_EXPECTED); return tBREAK; }
 <INITIAL>watch|watc|wat			{ BEGIN(PATH_EXPECTED); return tWATCH; }
+<INITIAL>whatis|whati|what		{ BEGIN(PATH_EXPECTED); return tWHATIS; }
 
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
 <INFO_CMD,WALK_CMD>class|clas|cla                  { return tCLASS; }
 <INFO_CMD,WALK_CMD>module|modul|modu|mod  { return tMODULE; }
-<INFO_CMD,WALK_CMD>queue|queu|que			{ return tQUEUE; }
+<INFO_CMD,WALK_CMD>queue|queu|que	{ return tQUEUE; }
 <INFO_CMD,WALK_CMD>process|proces|proce|proc   		{ return tPROCESS; }
-<INFO_CMD,WALK_CMD>modref|modre|modr			{ return tMODREF; }
+<INFO_CMD,WALK_CMD>modref|modre|modr	{ return tMODREF; }
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
 <INFO_CMD>stack|stac|sta|st     		{ return tSTACK; }

@@ -55,14 +55,14 @@ struct name_hash
     int		       lines_alloc;
     WineLineNo       * linetab;
 
-    DBG_ADDR           addr;
+    DBG_VALUE          value;
     unsigned short     flags;
     unsigned short     breakpoint_offset;
     unsigned int       symbol_size;
 };
 
 
-static BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr );
+static BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_VALUE *value );
 static int sortlist_valid = FALSE;
 
 static int sorttab_nsym;
@@ -107,22 +107,22 @@ DEBUG_cmp_sym(const void * p1, const void * p2)
       return 1;
     }
 
-  if( (*name1)->addr.seg > (*name2)->addr.seg )
+  if( (*name1)->value.addr.seg > (*name2)->value.addr.seg )
     {
       return 1;
     }
 
-  if( (*name1)->addr.seg < (*name2)->addr.seg )
+  if( (*name1)->value.addr.seg < (*name2)->value.addr.seg )
     {
       return -1;
     }
 
-  if( (*name1)->addr.off > (*name2)->addr.off )
+  if( (*name1)->value.addr.off > (*name2)->value.addr.off )
     {
       return 1;
     }
 
-  if( (*name1)->addr.off < (*name2)->addr.off )
+  if( (*name1)->value.addr.off < (*name2)->value.addr.off )
     {
       return -1;
     }
@@ -137,7 +137,7 @@ DEBUG_cmp_sym(const void * p1, const void * p2)
  */
 static
 void
-DEBUG_ResortSymbols()
+DEBUG_ResortSymbols(void)
 {
     struct name_hash *nh;
     int		nsym = 0;
@@ -185,7 +185,7 @@ DEBUG_ResortSymbols()
  * Add a symbol to the table.
  */
 struct name_hash *
-DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source,
+DEBUG_AddSymbol( const char * name, const DBG_VALUE *value, const char * source,
 		 int flags)
 {
     struct name_hash  * new;
@@ -195,16 +195,19 @@ DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source,
     char * c;
     int hash;
 
+    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
+
     hash = name_hash(name);
     for (nh = name_hash_table[hash]; nh; nh = nh->next)
     {
  	if( ((nh->flags & SYM_INVALID) != 0) && strcmp(name, nh->name) == 0 )
         {
- 	    nh->addr.off = addr->off;
- 	    nh->addr.seg = addr->seg;
- 	    if( nh->addr.type == NULL && addr->type != NULL )
+ 	    nh->value.addr = value->addr;
+
+ 	    if( nh->value.type == NULL && value->type != NULL )
             {
- 		nh->addr.type = addr->type;
+ 		nh->value.type = value->type;
+		nh->value.cookie = value->cookie;
             }
 	    /* it may happen that the same symbol is defined in several compilation
 	     * units, but the linker decides to merge it into a single instance.
@@ -213,10 +216,11 @@ DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source,
 	     */
  	    if ((flags & SYM_INVALID) == 0)
 	       nh->flags &= ~SYM_INVALID;
+
  	    return nh;
         }
- 	if (nh->addr.seg == addr->seg &&
- 	    nh->addr.off == addr->off &&
+ 	if (nh->value.addr.seg == value->addr.seg &&
+ 	    nh->value.addr.off == value->addr.off &&
  	    strcmp(name, nh->name) == 0 )
         {
             return nh;
@@ -229,7 +233,7 @@ DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source,
      */
     
     new = (struct name_hash *) DBG_alloc(sizeof(struct name_hash));
-    new->addr = *addr;
+    new->value = *value;
     new->name = DBG_strdup(name);
 
     if( source != NULL )
@@ -334,7 +338,7 @@ BOOL DEBUG_Normalize(struct name_hash * nh )
  * Get the address of a named symbol.
  */
 BOOL DEBUG_GetSymbolValue( const char * name, const int lineno, 
-			   DBG_ADDR *addr, int bp_flag )
+			   DBG_VALUE *value, int bp_flag )
 {
     char buffer[256];
     struct name_hash *nh;
@@ -371,10 +375,12 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
      */
     if (!nh) 
       {
-	return DEBUG_GetStackSymbolValue(name, addr);
+	return DEBUG_GetStackSymbolValue(name, value);
       }
 
-    return DEBUG_GetLineNumberAddr( nh, lineno, addr, bp_flag );
+    value->type = nh->value.type;
+    value->cookie = nh->value.cookie;
+    return DEBUG_GetLineNumberAddr( nh, lineno, &value->addr, bp_flag );
 }
 
 /***********************************************************************
@@ -383,13 +389,13 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
  * Get the address of a named symbol.
  */
 BOOL DEBUG_GetLineNumberAddr( struct name_hash * nh, const int lineno, 
-				DBG_ADDR *addr, int bp_flag )
+			      DBG_ADDR *addr, int bp_flag )
 {
     int i;
 
     if( lineno == -1 )
       {
-	*addr = nh->addr;
+	*addr = nh->value.addr;
 	if( bp_flag )
 	  {
 	    addr->off += nh->breakpoint_offset;
@@ -430,10 +436,12 @@ BOOL DEBUG_GetLineNumberAddr( struct name_hash * nh, const int lineno,
  *
  * Set the address of a named symbol.
  */
-BOOL DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr )
+BOOL DEBUG_SetSymbolValue( const char * name, const DBG_VALUE *value )
 {
     char buffer[256];
     struct name_hash *nh;
+
+    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
 
     for(nh = name_hash_table[name_hash(name)]; nh; nh = nh->next)
         if (!strcmp(nh->name, name)) break;
@@ -447,9 +455,9 @@ BOOL DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr )
     }
 
     if (!nh) return FALSE;
-    nh->addr = *addr;
-    nh->flags &= SYM_INVALID;
-    DEBUG_FixAddress( &nh->addr, DEBUG_context.SegDs );
+    nh->value = *value;
+    nh->flags &= ~SYM_INVALID;
+    DEBUG_FixAddress( &nh->value.addr, DEBUG_context.SegDs );
     return TRUE;
 }
 
@@ -510,15 +518,15 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
      */
     low = 0;
     high = sorttab_nsym;
-    if( addr_sorttab[0]->addr.seg > addr->seg
-	|| (   addr_sorttab[0]->addr.seg == addr->seg 
-	    && addr_sorttab[0]->addr.off > addr->off) )
+    if( addr_sorttab[0]->value.addr.seg > addr->seg
+	|| (   addr_sorttab[0]->value.addr.seg == addr->seg 
+	    && addr_sorttab[0]->value.addr.off > addr->off) )
       {
 	nearest = NULL;
       }
-    else if( addr_sorttab[high - 1]->addr.seg < addr->seg
-	|| (   addr_sorttab[high - 1]->addr.seg == addr->seg 
-	    && addr_sorttab[high - 1]->addr.off < addr->off) )
+    else if( addr_sorttab[high - 1]->value.addr.seg < addr->seg
+	|| (   addr_sorttab[high - 1]->value.addr.seg == addr->seg 
+	    && addr_sorttab[high - 1]->value.addr.off < addr->off) )
       {
 	nearest = addr_sorttab[high - 1];
       }
@@ -536,10 +544,10 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 		 */
 		if( mid > 0 && addr_sorttab[mid]->linetab == NULL )
 		  {
-		    if(    (addr_sorttab[mid - 1]->addr.seg ==
-			    addr_sorttab[mid]->addr.seg)
-			&& (addr_sorttab[mid - 1]->addr.off ==
-			    addr_sorttab[mid]->addr.off)
+		    if(    (addr_sorttab[mid - 1]->value.addr.seg ==
+			    addr_sorttab[mid]->value.addr.seg)
+			&& (addr_sorttab[mid - 1]->value.addr.off ==
+			    addr_sorttab[mid]->value.addr.off)
 		        && (addr_sorttab[mid - 1]->linetab != NULL) )
 		      {
 			mid--;
@@ -549,10 +557,10 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 		if(    (mid < sorttab_nsym - 1)
 		    && (addr_sorttab[mid]->linetab == NULL) )
 		  {
-		    if(    (addr_sorttab[mid + 1]->addr.seg ==
-			    addr_sorttab[mid]->addr.seg)
-			&& (addr_sorttab[mid + 1]->addr.off ==
-			    addr_sorttab[mid]->addr.off)
+		    if(    (addr_sorttab[mid + 1]->value.addr.seg ==
+			    addr_sorttab[mid]->value.addr.seg)
+			&& (addr_sorttab[mid + 1]->value.addr.off ==
+			    addr_sorttab[mid]->value.addr.off)
 		        && (addr_sorttab[mid + 1]->linetab != NULL) )
 		      {
 			mid++;
@@ -561,17 +569,17 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 		nearest = addr_sorttab[mid];
 #if 0
 		fprintf(stderr, "Found %x:%x when looking for %x:%x %x %s\n",
-			addr_sorttab[mid ]->addr.seg,
-			addr_sorttab[mid ]->addr.off,
+			addr_sorttab[mid ]->value.addr.seg,
+			addr_sorttab[mid ]->value.addr.off,
 			addr->seg, addr->off,
 			addr_sorttab[mid ]->linetab,
 			addr_sorttab[mid ]->name);
 #endif
 		break;
 	      }
-	    if(    (addr_sorttab[mid]->addr.seg < addr->seg)
-		|| (   addr_sorttab[mid]->addr.seg == addr->seg 
-		    && addr_sorttab[mid]->addr.off <= addr->off) )
+	    if(    (addr_sorttab[mid]->value.addr.seg < addr->seg)
+		|| (   addr_sorttab[mid]->value.addr.seg == addr->seg 
+		    && addr_sorttab[mid]->value.addr.off <= addr->off) )
 	      {
 		low = mid;
 	      }
@@ -649,7 +657,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
       }
 
     if( (nearest->sourcefile != NULL) && (flag == TRUE)
-	&& (addr->off - nearest->addr.off < 0x100000) )
+	&& (addr->off - nearest->value.addr.off < 0x100000) )
       {
 
 	/*
@@ -685,24 +693,24 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
         if (!sourcefile) sourcefile = nearest->sourcefile;
         else sourcefile++;
 
-	if (addr->off == nearest->addr.off)
+	if (addr->off == nearest->value.addr.off)
 	  sprintf( name_buffer, "%s%s [%s%s]", nearest->name, 
 		   arglist, sourcefile, lineinfo);
 	else
 	  sprintf( name_buffer, "%s+0x%lx%s [%s%s]", nearest->name,
-		   addr->off - nearest->addr.off, 
+		   addr->off - nearest->value.addr.off, 
 		   arglist, sourcefile, lineinfo );
       }
     else
       {
-	if (addr->off == nearest->addr.off)
+	if (addr->off == nearest->value.addr.off)
 	  sprintf( name_buffer, "%s%s", nearest->name, arglist);
 	else {
-	  if (addr->seg && (nearest->addr.seg!=addr->seg))
+	  if (addr->seg && (nearest->value.addr.seg!=addr->seg))
 	      return NULL;
 	  else
 	      sprintf( name_buffer, "%s+0x%lx%s", nearest->name,
-		       addr->off - nearest->addr.off, arglist);
+		       addr->off - nearest->value.addr.off, arglist);
  	}
       }
     return name_buffer;
@@ -717,7 +725,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 void DEBUG_ReadSymbolTable( const char * filename )
 {
     FILE * symbolfile;
-    DBG_ADDR addr = { 0, 0 };
+    DBG_VALUE value;
     int nargs;
     char type;
     char * cpnt;
@@ -732,6 +740,11 @@ void DEBUG_ReadSymbolTable( const char * filename )
 
     fprintf( stderr, "Reading symbols from file %s\n", filename );
 
+    value.type = NULL;
+    value.addr.seg = 0;
+    value.addr.off = 0;
+    value.cookie = DV_TARGET;
+ 
     while (1)
     {
         fgets( buffer, sizeof(buffer), symbolfile );
@@ -751,8 +764,8 @@ void DEBUG_ReadSymbolTable( const char * filename )
         }
         if (!(*cpnt) || *cpnt == '\n') continue;
 		
-        nargs = sscanf(buffer, "%lx %c %s", &addr.off, &type, name);
-        DEBUG_AddSymbol( name, &addr, NULL, SYM_WINE );
+        nargs = sscanf(buffer, "%lx %c %s", &value.addr.off, &type, name);
+        DEBUG_AddSymbol( name, &value, NULL, SYM_WINE );
     }
     fclose(symbolfile);
 }
@@ -766,23 +779,27 @@ void DEBUG_ReadSymbolTable( const char * filename )
 static void DEBUG_LoadEntryPoints16( HMODULE16 hModule, NE_MODULE *pModule,
                                      const char *name )
 {
-    DBG_ADDR addr;
-    char buffer[256];
-    FARPROC16 address;
+    DBG_VALUE	value;
+    char 	buffer[256];
+    FARPROC16	address;
+    unsigned char *cpnt = (unsigned char *)pModule + pModule->name_table;
+
+    value.type = NULL;
+    value.cookie = DV_TARGET;
+    value.addr.seg = 0;
+    value.addr.off = 0;
 
     /* First search the resident names */
 
-    unsigned char *cpnt = (unsigned char *)pModule + pModule->name_table;
     while (*cpnt)
     {
         cpnt += *cpnt + 1 + sizeof(WORD);
         sprintf( buffer, "%s.%.*s", name, *cpnt, cpnt + 1 );
         if ((address = NE_GetEntryPoint(hModule, *(WORD *)(cpnt + *cpnt + 1))))
         {
-            addr.seg = HIWORD(address);
-            addr.off = LOWORD(address);
-            addr.type = NULL;
-            DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+            value.addr.seg = HIWORD(address);
+            value.addr.off = LOWORD(address);
+            DEBUG_AddSymbol( buffer, &value, NULL, SYM_WIN32 | SYM_FUNC );
         }
     }
 
@@ -796,10 +813,9 @@ static void DEBUG_LoadEntryPoints16( HMODULE16 hModule, NE_MODULE *pModule,
         sprintf( buffer, "%s.%.*s", name, *cpnt, cpnt + 1 );
         if ((address = NE_GetEntryPoint(hModule, *(WORD *)(cpnt + *cpnt + 1))))
         {
-            addr.seg = HIWORD(address);
-            addr.off = LOWORD(address);
-            addr.type = NULL;
-            DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+            value.addr.seg = HIWORD(address);
+            value.addr.off = LOWORD(address);
+            DEBUG_AddSymbol( buffer, &value, NULL, SYM_WIN32 | SYM_FUNC );
         }
     }
 }
@@ -814,7 +830,7 @@ static void DEBUG_LoadEntryPoints32( HMODULE hModule, const char *name )
 {
 #define RVA(x) (hModule+(DWORD)(x))
 
-    DBG_ADDR addr;
+    DBG_VALUE	value;
     char buffer[256];
     int i, j;
     IMAGE_SECTION_HEADER *pe_seg;
@@ -823,20 +839,22 @@ static void DEBUG_LoadEntryPoints32( HMODULE hModule, const char *name )
     WORD *ordinals;
     void **functions;
     const char **names;
-
-    addr.seg = 0;
-    addr.type = NULL;
+ 
+    value.type = NULL;
+    value.cookie = DV_TARGET;
+    value.addr.seg = 0;
+    value.addr.off = 0;
 
     /* Add start of DLL */
 
-    addr.off = hModule;
-    DEBUG_AddSymbol( name, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+    value.addr.off = hModule;
+    DEBUG_AddSymbol( name, &value, NULL, SYM_WIN32 | SYM_FUNC );
 
     /* Add entry point */
 
     sprintf( buffer, "%s.EntryPoint", name );
-    addr.off = (DWORD)RVA_PTR( hModule, OptionalHeader.AddressOfEntryPoint );
-    DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+    value.addr.off = (DWORD)RVA_PTR( hModule, OptionalHeader.AddressOfEntryPoint );
+    DEBUG_AddSymbol( buffer, &value, NULL, SYM_WIN32 | SYM_FUNC );
 
     /* Add start of sections */
 
@@ -844,8 +862,8 @@ static void DEBUG_LoadEntryPoints32( HMODULE hModule, const char *name )
     for (i = 0; i < PE_HEADER(hModule)->FileHeader.NumberOfSections; i++)
     {
         sprintf( buffer, "%s.%s", name, pe_seg->Name );
-        addr.off = RVA(pe_seg->VirtualAddress );
-        DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+        value.addr.off = RVA(pe_seg->VirtualAddress );
+        DEBUG_AddSymbol( buffer, &value, NULL, SYM_WIN32 | SYM_FUNC );
         pe_seg++;
     }
 
@@ -864,8 +882,8 @@ static void DEBUG_LoadEntryPoints32( HMODULE hModule, const char *name )
       {
           if (!names[i]) continue;
           sprintf( buffer, "%s.%s", name, (char *)RVA(names[i]) );
-          addr.off = RVA( functions[ordinals[i]] );
-        DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+          value.addr.off = RVA( functions[ordinals[i]] );
+        DEBUG_AddSymbol( buffer, &value, NULL, SYM_WIN32 | SYM_FUNC );
       }
 
       for (i = 0; i < exports->NumberOfFunctions; i++)
@@ -876,8 +894,8 @@ static void DEBUG_LoadEntryPoints32( HMODULE hModule, const char *name )
             if ((ordinals[j] == i) && names[j]) break;
           if (j < exports->NumberOfNames) continue;
           sprintf( buffer, "%s.%ld", name, i + exports->Base );
-          addr.off = (DWORD)RVA( functions[i] );
-          DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+          value.addr.off = (DWORD)RVA( functions[i] );
+          DEBUG_AddSymbol( buffer, &value, NULL, SYM_WIN32 | SYM_FUNC );
       }
     }
     DEBUG_RegisterDebugInfo(hModule, name);
@@ -969,7 +987,8 @@ int DEBUG_LoadEntryPoints(const char* pfx)
     BOOL 	ok;
     WINE_MODREF*wm;
     DBG_LEPData	lep;
-    
+    PDB*	current = PROCESS_Current();
+
     lep.first = 0;
     lep.pfx = pfx;
 
@@ -983,7 +1002,7 @@ int DEBUG_LoadEntryPoints(const char* pfx)
 	    DEBUG_LoadEntryPoints16( entry.hModule, pModule, entry.szModule );
     }
 
-    for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next)
+    for (wm = current->modref_list; wm; wm=wm->next)
     {
         if ((wm->flags & WINE_MODREF_INTERNAL))
         {
@@ -992,7 +1011,7 @@ int DEBUG_LoadEntryPoints(const char* pfx)
         }
     }
     if (lep.first) fprintf( stderr, " $");
-    for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next)
+    for (wm = current->modref_list; wm; wm=wm->next)
     {
         if (!(wm->flags & WINE_MODREF_INTERNAL))
         {
@@ -1022,9 +1041,8 @@ DEBUG_AddLineNumber( struct name_hash * func, int line_num,
     }
 
   func->linetab[func->n_lines].line_number = line_num;
-  func->linetab[func->n_lines].pc_offset.seg = func->addr.seg;
-  func->linetab[func->n_lines].pc_offset.off = func->addr.off + offset;
-  func->linetab[func->n_lines].pc_offset.type = NULL;
+  func->linetab[func->n_lines].pc_offset.seg = func->value.addr.seg;
+  func->linetab[func->n_lines].pc_offset.off = func->value.addr.off + offset;
   func->n_lines++;
 }
 
@@ -1060,7 +1078,7 @@ DEBUG_AddLocal( struct name_hash * func, int regno,
 }
 
 void
-DEBUG_DumpHashInfo()
+DEBUG_DumpHashInfo(void)
 {
   int i;
   int depth;
@@ -1102,15 +1120,15 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
      */
     low = 0;
     high = sorttab_nsym;
-    if( addr_sorttab[0]->addr.seg > addr->seg
-	|| (   addr_sorttab[0]->addr.seg == addr->seg 
-	    && addr_sorttab[0]->addr.off > addr->off) )
+    if( addr_sorttab[0]->value.addr.seg > addr->seg
+	|| (   addr_sorttab[0]->value.addr.seg == addr->seg 
+	    && addr_sorttab[0]->value.addr.off > addr->off) )
       {
 	nearest = NULL;
       }
-    else if( addr_sorttab[high - 1]->addr.seg < addr->seg
-	|| (   addr_sorttab[high - 1]->addr.seg == addr->seg 
-	    && addr_sorttab[high - 1]->addr.off < addr->off) )
+    else if( addr_sorttab[high - 1]->value.addr.seg < addr->seg
+	|| (   addr_sorttab[high - 1]->value.addr.seg == addr->seg 
+	    && addr_sorttab[high - 1]->value.addr.off < addr->off) )
       {
 	nearest = addr_sorttab[high - 1];
       }
@@ -1128,10 +1146,10 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
 		 */
 		if( mid > 0 && addr_sorttab[mid]->linetab == NULL )
 		  {
-		    if(    (addr_sorttab[mid - 1]->addr.seg ==
-			    addr_sorttab[mid]->addr.seg)
-			&& (addr_sorttab[mid - 1]->addr.off ==
-			    addr_sorttab[mid]->addr.off)
+		    if(    (addr_sorttab[mid - 1]->value.addr.seg ==
+			    addr_sorttab[mid]->value.addr.seg)
+			&& (addr_sorttab[mid - 1]->value.addr.off ==
+			    addr_sorttab[mid]->value.addr.off)
 		        && (addr_sorttab[mid - 1]->linetab != NULL) )
 		      {
 			mid--;
@@ -1141,10 +1159,10 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
 		if(    (mid < sorttab_nsym - 1)
 		    && (addr_sorttab[mid]->linetab == NULL) )
 		  {
-		    if(    (addr_sorttab[mid + 1]->addr.seg ==
-			    addr_sorttab[mid]->addr.seg)
-			&& (addr_sorttab[mid + 1]->addr.off ==
-			    addr_sorttab[mid]->addr.off)
+		    if(    (addr_sorttab[mid + 1]->value.addr.seg ==
+			    addr_sorttab[mid]->value.addr.seg)
+			&& (addr_sorttab[mid + 1]->value.addr.off ==
+			    addr_sorttab[mid]->value.addr.off)
 		        && (addr_sorttab[mid + 1]->linetab != NULL) )
 		      {
 			mid++;
@@ -1153,17 +1171,17 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
 		nearest = addr_sorttab[mid];
 #if 0
 		fprintf(stderr, "Found %x:%x when looking for %x:%x %x %s\n",
-			addr_sorttab[mid ]->addr.seg,
-			addr_sorttab[mid ]->addr.off,
+			addr_sorttab[mid ]->value.addr.seg,
+			addr_sorttab[mid ]->value.addr.off,
 			addr->seg, addr->off,
 			addr_sorttab[mid ]->linetab,
 			addr_sorttab[mid ]->name);
 #endif
 		break;
 	      }
-	    if(    (addr_sorttab[mid]->addr.seg < addr->seg)
-		|| (   addr_sorttab[mid]->addr.seg == addr->seg 
-		    && addr_sorttab[mid]->addr.off <= addr->off) )
+	    if(    (addr_sorttab[mid]->value.addr.seg < addr->seg)
+		|| (   addr_sorttab[mid]->value.addr.seg == addr->seg 
+		    && addr_sorttab[mid]->value.addr.off <= addr->off) )
 	      {
 		low = mid;
 	      }
@@ -1206,13 +1224,13 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
      * until it gets past the function prologue.  We only do this if there
      * is more than one line number for the function, of course.
      */
-    if( nearest->addr.off == addr->off && nearest->n_lines > 1 )
+    if( nearest->value.addr.off == addr->off && nearest->n_lines > 1 )
       {
 	return NOT_ON_LINENUMBER;
       }
 
     if( (nearest->sourcefile != NULL)
-	&& (addr->off - nearest->addr.off < 0x100000) )
+	&& (addr->off - nearest->value.addr.off < 0x100000) )
       {
           low = 0;
           high = nearest->n_lines;
@@ -1327,7 +1345,7 @@ DEBUG_GetFuncInfo( struct list_id * ret, const char * filename,
  * Get the address of a named symbol from the current stack frame.
  */
 static
-BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr )
+BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_VALUE *value )
 {
   struct name_hash * curr_func;
   unsigned int	     ebp;
@@ -1346,14 +1364,14 @@ BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr )
        * comes up with RBRAC/LBRAC stabs in particular.
        */
       if(    (curr_func->local_vars[i].pc_start != 0)
-	  && ((eip - curr_func->addr.off) 
+	  && ((eip - curr_func->value.addr.off) 
 	      < curr_func->local_vars[i].pc_start) )
 	{
 	  continue;
 	}
 
       if(    (curr_func->local_vars[i].pc_end != 0)
-	  && ((eip - curr_func->addr.off) 
+	  && ((eip - curr_func->value.addr.off) 
 	      > curr_func->local_vars[i].pc_end) )
 	{
 	  continue;
@@ -1364,44 +1382,32 @@ BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr )
 	  /*
 	   * OK, we found it.  Now figure out what to do with this.
 	   */
-	  /* FIXME: what if regno == 0 ($eax) */
 	  if( curr_func->local_vars[i].regno != 0 )
 	    {
-#if 0
-	       /* FIXME: NEWDBG NIY */
-	       /* this is a hack: addr points to the current processor context
-		* (as defined while entering the debugger), and uses a pointer
-		* to main memory (thus sharing the process address space *AND*
-		* the debugger address space, which is not good with address
-		* space separation in place)
-		*/
 	      /*
 	       * Register variable.  Point to DEBUG_context field.
 	       */
-	      addr->seg = 0;
-	      addr->off = ((DWORD)DEBUG_context) + reg_ofs[curr_func->local_vars[i].regno];
-	      addr->type = curr_func->local_vars[i].type;
-#else
-	      fprintf(stderr, "No longer supported: value of register variable\n");
-	      addr->seg = 0;
-	      addr->off = 0;
-	      addr->type = NULL;
-#endif	      
-	      return TRUE;
+	      value->addr.off = ((DWORD)&DEBUG_context) + 
+		 reg_ofs[curr_func->local_vars[i].regno - 1];
+	      value->cookie = DV_HOST;
 	    }
-
-	  addr->seg = 0;
-	  addr->off = ebp + curr_func->local_vars[i].offset;
-	  addr->type = curr_func->local_vars[i].type;
+	  else 
+	    {
+	      value->addr.off = ebp + curr_func->local_vars[i].offset;
+	      value->cookie = DV_TARGET;
+	    }
+	  value->addr.seg = 0;
+	  value->type = curr_func->local_vars[i].type;
 
 	  return TRUE;
 	}
     }
+
   return FALSE;
 }
 
 int
-DEBUG_InfoLocals()
+DEBUG_InfoLocals(void)
 {
   struct name_hash  * curr_func;
   unsigned int	      ebp;
@@ -1422,26 +1428,26 @@ DEBUG_InfoLocals()
        * comes up with RBRAC/LBRAC stabs in particular.
        */
       if(    (curr_func->local_vars[i].pc_start != 0)
-	  && ((eip - curr_func->addr.off) 
+	  && ((eip - curr_func->value.addr.off) 
 	      < curr_func->local_vars[i].pc_start) )
 	{
 	  continue;
 	}
 
       if(    (curr_func->local_vars[i].pc_end != 0)
-	  && ((eip - curr_func->addr.off) 
+	  && ((eip - curr_func->value.addr.off) 
 	      > curr_func->local_vars[i].pc_end) )
 	{
 	  continue;
 	}
       
-      if( curr_func->local_vars[i].offset == 0 )
+      if( curr_func->local_vars[i].regno != 0 )
 	{
-	  ptr = (unsigned int *) (((DWORD)&DEBUG_context)
-		+ reg_ofs[curr_func->local_vars[i].regno]);
+	  ptr = (unsigned int *)(((DWORD)&DEBUG_context)
+				 + reg_ofs[curr_func->local_vars[i].regno - 1]);
 	  fprintf(stderr, "%s:%s (optimized into register $%s) == 0x%8.8x\n",
 		  curr_func->name, curr_func->local_vars[i].name,
-		  reg_name[curr_func->local_vars[i].regno],
+		  reg_name[curr_func->local_vars[i].regno - 1],
 		  *ptr);
 	}
       else
@@ -1476,7 +1482,7 @@ int
 DEBUG_GetSymbolAddr(struct name_hash * sym, DBG_ADDR * addr)
 {
 
-  *addr = sym->addr;
+  *addr = sym->value.addr;
 
   return TRUE;
 }

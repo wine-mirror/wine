@@ -1011,7 +1011,6 @@ static void db_task_printsym(unsigned int addr, int size)
 {
     DBG_ADDR address;
 
-    address.type = NULL;
     address.seg = 0;
     address.off = addr;
 

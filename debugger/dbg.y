@@ -4,6 +4,7 @@
  *
  * Copyright 1993 Eric Youngdale
  * Copyright 1995 Morten Welinder
+ * Copyright 2000 Eric Pouech
  */
 
 #include "config.h"
@@ -21,8 +22,8 @@
 extern FILE * yyin;
 int curr_frame = 0;
 
-void issue_prompt(void);
-void mode_command(int);
+static void issue_prompt(void);
+static void mode_command(int);
 void flush_symbols(void);
 int yylex(void);
 int yyerror(char *);
@@ -31,7 +32,7 @@ int yyerror(char *);
 
 %union
 {
-    DBG_ADDR         address;
+    DBG_VALUE        value;
     enum debug_regs  reg;
     char *           string;
     int              integer;
@@ -46,7 +47,7 @@ int yyerror(char *);
 %token tPROCESS tMODREF
 %token tEOL tSTRING tDEBUGSTR
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
-%token tSTEPI tNEXTI tFINISH tSHOW tDIR
+%token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS
 %token <string> tPATH
 %token <string> tIDENTIFIER tSTRING tDEBUGSTR
 %token <integer> tNUM tFORMAT
@@ -77,7 +78,7 @@ int yyerror(char *);
 
 %type <expression> expr lval lvalue 
 %type <type> type_cast type_expr
-%type <address> expr_addr lval_addr
+%type <value> expr_addr lval_addr
 %type <integer> expr_value
 %type <string> pathname
 
@@ -144,19 +145,21 @@ command:
     | tCOND tNUM tEOL          { DEBUG_AddBPCondition($2, NULL); }
     | tCOND tNUM expr tEOL     { DEBUG_AddBPCondition($2, $3); }
     | tSYMBOLFILE pathname tEOL{ DEBUG_ReadSymbolTable($2); }
+    | tWHATIS expr_addr tEOL   { DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
     | list_command
     | disassemble_command
     | set_command
     | x_command
     | print_command
     | break_command
+    | watch_command
     | info_command
     | walk_command
 
 set_command:
       tSET tREG '=' expr_value tEOL	   { DEBUG_SetRegister( $2, $4 ); 
 					     DEBUG_FreeExprMem(); }
-    | tSET lval_addr '=' expr_value tEOL   { DEBUG_WriteMemory( &$2, $4 ); 
+    | tSET lval_addr '=' expr_value tEOL   { DEBUG_WriteMemory( &$2.addr, $4 ); 
  					     DEBUG_FreeExprMem(); }
 
 pathname:
@@ -180,7 +183,7 @@ list_arg:
     | pathname ':' tNUM	       { $$.sourcefile = $1; $$.line = $3; }
     | tIDENTIFIER	       { DEBUG_GetFuncInfo( & $$, NULL, $1); }
     | pathname ':' tIDENTIFIER { DEBUG_GetFuncInfo( & $$, $1, $3); }
-    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2, FALSE, NULL, 
+    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2.addr, FALSE, NULL, 
 							0, & $$ ); 
  					     DEBUG_FreeExprMem(); }
 
@@ -199,20 +202,20 @@ print_command:
 break_command:
       tBREAK '*' expr_addr tEOL { DEBUG_AddBreakpoint( &$3 ); 
  					     DEBUG_FreeExprMem(); }
-    | tBREAK tIDENTIFIER tEOL  { DBG_ADDR addr;
-				 if( DEBUG_GetSymbolValue($2, -1, &addr, TRUE) )
+    | tBREAK tIDENTIFIER tEOL  { DBG_VALUE value;
+				 if( DEBUG_GetSymbolValue($2, -1, &value, TRUE) )
 				   {
-				     DEBUG_AddBreakpoint( &addr );
+				     DEBUG_AddBreakpoint( &value );
 				   }
 				 else
 				   {
 				     fprintf(stderr,"Unable to add breakpoint\n");
 				   }
 				}
-    | tBREAK tIDENTIFIER ':' tNUM tEOL  { DBG_ADDR addr;
-				 if( DEBUG_GetSymbolValue($2, $4, &addr, TRUE) )
+    | tBREAK tIDENTIFIER ':' tNUM tEOL  { DBG_VALUE value;
+				 if( DEBUG_GetSymbolValue($2, $4, &value, TRUE) )
 				   {
-				     DEBUG_AddBreakpoint( &addr );
+				     DEBUG_AddBreakpoint( &value );
 				   }
 				 else
 				   {
@@ -220,15 +223,16 @@ break_command:
 				   }
 				}
     | tBREAK tNUM tEOL	       { struct name_hash *nh;
-				 DBG_ADDR addr;
-				 DEBUG_GetCurrentAddress( &addr );
-				 DEBUG_FindNearestSymbol(&addr, TRUE,
+				 DBG_VALUE value;
+				 DEBUG_GetCurrentAddress( &value.addr );
+				 DEBUG_FindNearestSymbol(&value.addr, TRUE,
 							 &nh, 0, NULL);
 				 if( nh != NULL )
 				   {
-				     DEBUG_GetLineNumberAddr(nh, 
-						      $2, &addr, TRUE);
-				     DEBUG_AddBreakpoint( &addr );
+				     DEBUG_GetLineNumberAddr(nh, $2, &value.addr, TRUE);
+				     value.type = NULL;
+				     value.cookie = DV_TARGET;
+				     DEBUG_AddBreakpoint( &value );
 				   }
 				 else
 				   {
@@ -236,19 +240,29 @@ break_command:
 				   }
                                }
 
-    | tBREAK tEOL              { DBG_ADDR addr;
-				 DEBUG_GetCurrentAddress( &addr );
-                                 DEBUG_AddBreakpoint( &addr );
+    | tBREAK tEOL              { DBG_VALUE value;
+				 DEBUG_GetCurrentAddress( &value.addr );
+				 value.type = NULL;
+				 value.cookie = DV_TARGET;
+                                 DEBUG_AddBreakpoint( &value );
                                }
+
+watch_command:
+      tWATCH '*' expr_addr tEOL { DEBUG_AddWatchpoint( &$3, 1 ); 
+ 					     DEBUG_FreeExprMem(); }
+    | tWATCH tIDENTIFIER tEOL  { DBG_VALUE value;
+				 if( DEBUG_GetSymbolValue($2, -1, &value, TRUE) )
+				     DEBUG_AddWatchpoint( &value, 1 );
+				 else
+				     fprintf(stderr,"Unable to add breakpoint\n");
+				}
 
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
     | tINFO tCLASS tSTRING tEOL	{ DEBUG_InfoClass( $3 ); DEBUG_FreeExprMem(); }
     | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
-    | tINFO tMODULE expr_value tEOL   { DEBUG_DumpModule( $3 ); 
- 					     DEBUG_FreeExprMem(); }
-    | tINFO tQUEUE expr_value tEOL    { DEBUG_DumpQueue( $3 ); 
- 					     DEBUG_FreeExprMem(); }
+    | tINFO tMODULE expr_value tEOL   { DEBUG_DumpModule( $3 ); DEBUG_FreeExprMem(); }
+    | tINFO tQUEUE expr_value tEOL    { DEBUG_DumpQueue( $3 ); DEBUG_FreeExprMem(); }
     | tINFO tREGS tEOL          { DEBUG_InfoRegisters(); }
     | tINFO tSEGMENTS expr_value tEOL { DEBUG_InfoSegments( $3, 1 ); DEBUG_FreeExprMem(); }
     | tINFO tSEGMENTS tEOL      { DEBUG_InfoSegments( 0, -1 ); }
@@ -296,9 +310,10 @@ expr_addr:
       expr			{ $$ = DEBUG_EvalExpr($1); }
 
 expr_value:
-      expr        { DBG_ADDR addr = DEBUG_EvalExpr($1); 
+      expr        { DBG_VALUE	value = DEBUG_EvalExpr($1); 
                     /* expr_value is typed as an integer */
-		    if (!addr.off || !DEBUG_READ_MEM((void*)addr.off, &$$, sizeof($$)))
+		    if (!value.addr.off || 
+			!DEBUG_READ_MEM((void*)value.addr.off, &$$, sizeof($$)))
 		       $$ = 0; }
 /*
  * The expr rule builds an expression tree.  When we are done, we call
@@ -315,8 +330,7 @@ expr:
     | expr '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); } 
     | tIDENTIFIER '(' ')'	 { $$ = DEBUG_CallExpr($1, 0); } 
     | tIDENTIFIER '(' expr ')'	 { $$ = DEBUG_CallExpr($1, 1, $3); } 
-    | tIDENTIFIER '(' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 2, $3, 
-							       $5); } 
+    | tIDENTIFIER '(' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 2, $3, $5); } 
     | tIDENTIFIER '(' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7); } 
     | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7, $9); } 
     | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7, $9, $11); } 
@@ -370,24 +384,39 @@ lvalue:
 	
 %%
 
-void 
-issue_prompt(){
+static void issue_prompt(void)
+{
 #ifdef DONT_USE_READLINE
-	fprintf(stderr,"Wine-dbg>");
+   fprintf(stderr, "Wine-dbg>");
 #endif
 }
 
-void mode_command(int newmode)
+static void mode_command(int newmode)
 {
     if ((newmode == 16) || (newmode == 32)) DEBUG_CurrThread->dbg_mode = newmode;
     else fprintf(stderr,"Invalid mode (use 16 or 32)\n");
 }
 
-static WINE_EXCEPTION_FILTER(no_symbol)
+static WINE_EXCEPTION_FILTER(wine_dbg)
 {
-    if (GetExceptionCode() == DEBUG_STATUS_NO_SYMBOL)
-        return EXCEPTION_EXECUTE_HANDLER;
-    return EXCEPTION_CONTINUE_SEARCH;
+   switch (GetExceptionCode()) {
+   case DEBUG_STATUS_INTERNAL_ERROR:
+      fprintf(stderr, "WineDbg internal error\n");
+      break;
+   case DEBUG_STATUS_NO_SYMBOL:
+      fprintf(stderr, "Undefined symbol\n");
+      break;
+   case DEBUG_STATUS_DIV_BY_ZERO:
+      fprintf(stderr, "Division by zero\n");
+      break;
+   case DEBUG_STATUS_BAD_TYPE:
+      fprintf(stderr, "No type or type mismatch\n");
+      break;
+   default:
+      fprintf(stderr, "Exception %lx\n", GetExceptionCode());
+      break;
+   }
+   return EXCEPTION_EXECUTE_HANDLER;
 }
 
 /***********************************************************************
@@ -443,8 +472,6 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
     {
         DBG_ADDR addr;
         DEBUG_GetCurrentAddress( &addr );
-
-/* EPP 	if (USER_Driver) USER_Driver->pBeginDebugging(); */
 
 #ifdef __i386__
         switch (newmode = DEBUG_GetSelectorType(addr.seg)) {
@@ -509,9 +536,8 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
 	       if ((ret_ok = DEBUG_ValidateRegisters()))
 		  ret_ok = DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear( &addr ), &ch, 1 );
 	    } 
-	    __EXCEPT(no_symbol)
+	    __EXCEPT(wine_dbg)
 	    {
-	       fprintf(stderr, "Undefined symbol\n");
 	       ret_ok = 0;
 	    }
 	    __ENDTRY;
@@ -527,13 +553,12 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
      */
     if ((DEBUG_CurrThread->dbg_exec_mode == EXEC_CONT) || (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS))
 	DEBUG_CurrThread->dbg_exec_count = 0;
-/* EPP     if (USER_Driver) USER_Driver->pEndDebugging(); */
     
     return (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS) ? 0 : DBG_CONTINUE;
 }
 
 int yyerror(char* s)
 {
-	fprintf(stderr,"%s\n", s);
-        return 0;
+   fprintf(stderr,"%s\n", s);
+   return 0;
 }

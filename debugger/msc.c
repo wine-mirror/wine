@@ -1249,7 +1249,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 }
 
 void
-DEBUG_InitCVDataTypes()
+DEBUG_InitCVDataTypes(void)
 {
   /*
    * These are the common builtin types that are used by VC++.
@@ -1505,7 +1505,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
   char		       namebuff[9];
   char		     * nampnt;
   int		       naux;
-  DBG_ADDR	       new_addr;
+  DBG_VALUE	       new_value;
   int		       nfiles = 0;
   int		       nfiles_alloc = 0;
   struct CoffFiles     orig_file;
@@ -1519,6 +1519,9 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
   coff_strtab = (char *) ((unsigned int) coff_symbol + 18*coff->N_Sym);
 
   linetab_indx = 0;
+
+  new_value.cookie = DV_TARGET;
+  new_value.type = NULL;
 
   for(i=0; i < coff->N_Sym; i++ )
     {
@@ -1675,8 +1678,8 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	      nampnt++;
 	    }
 
-	  new_addr.seg = 0;
-	  new_addr.off = (int) (deefer->load_addr + coff_sym->Value);
+	  new_value.addr.seg = 0;
+	  new_value.addr.off = (int) (deefer->load_addr + coff_sym->Value);
 
 	  if( curr_file->neps + 1 >= curr_file->neps_alloc )
 	    {
@@ -1689,7 +1692,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	  fprintf(stderr,"\tAdding static symbol %s\n", nampnt);
 #endif
 	  curr_file->entries[curr_file->neps++] =
-	    DEBUG_AddSymbol( nampnt, &new_addr, this_file, SYM_WIN32 );
+	     DEBUG_AddSymbol( nampnt, &new_value, this_file, SYM_WIN32 );
 	  i += naux;
 	  continue;
 	}
@@ -1715,11 +1718,11 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	      nampnt++;
 	    }
 
-	  new_addr.seg = 0;
-	  new_addr.off = (int) (deefer->load_addr + coff_sym->Value);
+	  new_value.addr.seg = 0;
+	  new_value.addr.off = (int) (deefer->load_addr + coff_sym->Value);
 
 #if 0
-	  fprintf(stderr, "%d: %x %s\n", i, new_addr.off, nampnt);
+	  fprintf(stderr, "%d: %x %s\n", i, new_value.addr.off, nampnt);
 
 	  fprintf(stderr,"\tAdding global symbol %s\n", nampnt);
 #endif
@@ -1745,7 +1748,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 			 coff_files[j].neps_alloc * sizeof(struct name_hash *));
 	    }
 	  coff_files[j].entries[coff_files[j].neps++] =
-	    DEBUG_AddSymbol( nampnt, &new_addr, this_file, SYM_WIN32 );
+	    DEBUG_AddSymbol( nampnt, &new_value, this_file, SYM_WIN32 );
 	  i += naux;
 	  continue;
 	}
@@ -1774,11 +1777,11 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	      nampnt++;
 	    }
 
-	  new_addr.seg = 0;
-	  new_addr.off = (int) (deefer->load_addr + coff_sym->Value);
+	  new_value.addr.seg = 0;
+	  new_value.addr.off = (int) (deefer->load_addr + coff_sym->Value);
 
 #if 0
-	  fprintf(stderr, "%d: %x %s\n", i, new_addr.off, nampnt);
+	  fprintf(stderr, "%d: %x %s\n", i, new_value.addr.off, nampnt);
 
 	  fprintf(stderr,"\tAdding global data symbol %s\n", nampnt);
 #endif
@@ -1786,7 +1789,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	  /*
 	   * Now we need to figure out which file this guy belongs to.
 	   */
-	  DEBUG_AddSymbol( nampnt, &new_addr, NULL, SYM_WIN32 );
+	  DEBUG_AddSymbol( nampnt, &new_value, NULL, SYM_WIN32 );
 	  i += naux;
 	  continue;
 	}
@@ -1856,9 +1859,9 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	      while(TRUE)
 		{
 		  if (i+1 >= coff_files[j].neps) break;
-		  DEBUG_GetSymbolAddr(coff_files[j].entries[i+1], &new_addr);
+		  DEBUG_GetSymbolAddr(coff_files[j].entries[i+1], &new_value.addr);
 		  if( (((unsigned int)deefer->load_addr +
-		        linepnt->VirtualAddr) >= new_addr.off) )
+		        linepnt->VirtualAddr) >= new_value.addr.off) )
 		  {
 		      i++;
 		  } else break;
@@ -1869,12 +1872,12 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	       * start of the function, so we need to subtract that offset
 	       * first.
 	       */
-	      DEBUG_GetSymbolAddr(coff_files[j].entries[i], &new_addr);
+	      DEBUG_GetSymbolAddr(coff_files[j].entries[i], &new_value.addr);
 	      DEBUG_AddLineNumber(coff_files[j].entries[i], 
 				  linepnt->Linenum,
 				  (unsigned int) deefer->load_addr 
 				  + linepnt->VirtualAddr 
-				  - new_addr.off);
+				  - new_value.addr.off);
 	    }
 	}
     }
@@ -2013,7 +2016,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
   int			  i;
   int			  j;
   int			  len;
-  DBG_ADDR		  new_addr;
+  DBG_VALUE		  new_value;
   int			  nsect;
   union any_size	  ptr;
   IMAGE_SECTION_HEADER  * sectp;
@@ -2070,12 +2073,13 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	   */
 
 	  memcpy(symname, sym->data.name, sym->data.namelen);
-	  new_addr.seg = 0;
-	  new_addr.type = DEBUG_GetCVType(sym->data.symtype);
-	  new_addr.off = (unsigned int) deefer->load_addr + 
-	    sectp[sym->data.seg - 1].VirtualAddress + 
-	    sym->data.offset;
-	  DEBUG_AddSymbol( symname, &new_addr, NULL, SYM_WIN32 | SYM_DATA );
+	  new_value.addr.seg = 0;
+	  new_value.type = DEBUG_GetCVType(sym->data.symtype);
+	  new_value.addr.off = (unsigned int) deefer->load_addr + 
+	     sectp[sym->data.seg - 1].VirtualAddress + 
+	     sym->data.offset;
+	  new_value.cookie = DV_TARGET;
+	  DEBUG_AddSymbol( symname, &new_value, NULL, SYM_WIN32 | SYM_DATA );
 	  break;
 	case S_GDATA_32:
 	case S_LDATA_32:
@@ -2099,12 +2103,13 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	   */
 
 	  memcpy(symname, sym->data32.name, sym->data32.namelen);
-	  new_addr.seg = 0;
-	  new_addr.type = DEBUG_GetCVType(sym->data32.symtype);
-	  new_addr.off = (unsigned int) deefer->load_addr + 
-	    sectp[sym->data32.seg - 1].VirtualAddress + 
-	    sym->data32.offset;
-	  DEBUG_AddSymbol( symname, &new_addr, NULL, SYM_WIN32 | SYM_DATA );
+	  new_value.addr.seg = 0;
+	  new_value.type = DEBUG_GetCVType(sym->data32.symtype);
+	  new_value.addr.off = (unsigned int) deefer->load_addr + 
+	     sectp[sym->data32.seg - 1].VirtualAddress + 
+	     sym->data32.offset;
+	  new_value.cookie = DV_TARGET;
+	  DEBUG_AddSymbol( symname, &new_value, NULL, SYM_WIN32 | SYM_DATA );
 	  break;
 	case S_THUNK:
 	  /*
@@ -2113,12 +2118,13 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	   * a PLT slot in the normal jargon that everyone else uses.
 	   */
 	  memcpy(symname, sym->thunk.name, sym->thunk.namelen);
-	  new_addr.seg = 0;
-	  new_addr.type = NULL;
-	  new_addr.off = (unsigned int) deefer->load_addr + 
-	    sectp[sym->thunk.segment - 1].VirtualAddress + 
-	    sym->thunk.offset;
-	  thunk_sym = DEBUG_AddSymbol( symname, &new_addr, NULL, 
+	  new_value.addr.seg = 0;
+	  new_value.type = NULL;
+	  new_value.addr.off = (unsigned int) deefer->load_addr + 
+	     sectp[sym->thunk.segment - 1].VirtualAddress + 
+	     sym->thunk.offset;
+	  new_value.cookie = DV_TARGET;
+	  thunk_sym = DEBUG_AddSymbol( symname, &new_value, NULL, 
 				       SYM_WIN32 | SYM_FUNC);
 	  DEBUG_SetSymbolSize(thunk_sym, sym->thunk.thunk_len);
 	  break;
@@ -2128,11 +2134,12 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	   * Global and static functions.
 	   */
 	  memcpy(symname, sym->proc.name, sym->proc.namelen);
-	  new_addr.seg = 0;
-	  new_addr.type = DEBUG_GetCVType(sym->proc.proctype);
-	  new_addr.off = (unsigned int) deefer->load_addr + 
-	    sectp[sym->proc.segment - 1].VirtualAddress + 
-	    sym->proc.offset;
+	  new_value.addr.seg = 0;
+	  new_value.type = DEBUG_GetCVType(sym->proc.proctype);
+	  new_value.addr.off = (unsigned int) deefer->load_addr + 
+	     sectp[sym->proc.segment - 1].VirtualAddress + 
+	     sym->proc.offset;
+	  new_value.cookie = DV_TARGET;
 	  /*
 	   * See if we can find a segment that this goes with.  If so,
 	   * it means that we also may have line number information
@@ -2142,10 +2149,10 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	    {
 	      if(     ((unsigned int) deefer->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
-		       + linetab[i].start <= new_addr.off)
+		       + linetab[i].start <= new_value.addr.off)
 		  &&  ((unsigned int) deefer->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
-		       + linetab[i].end > new_addr.off) )
+		       + linetab[i].end > new_value.addr.off) )
 		{
 		  break;
 		}
@@ -2154,7 +2161,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
  	  DEBUG_Normalize(curr_func);
 	  if( !linetab || linetab[i].linetab == NULL )
 	    {
-	      curr_func = DEBUG_AddSymbol( symname, &new_addr, NULL,
+	      curr_func = DEBUG_AddSymbol( symname, &new_value, NULL,
 					   SYM_WIN32 | SYM_FUNC);
 	    }
 	  else
@@ -2164,7 +2171,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	       * and add whatever line numbers are appropriate for this
 	       * function.
 	       */
-	      curr_func = DEBUG_AddSymbol( symname, &new_addr, 
+	      curr_func = DEBUG_AddSymbol( symname, &new_value, 
 					   linetab[i].sourcefile,
 					   SYM_WIN32 | SYM_FUNC);
 	      for(j=0; j < linetab[i].nline; j++)
@@ -2193,11 +2200,12 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	   * Global and static functions.
 	   */
 	  memcpy(symname, sym->proc32.name, sym->proc32.namelen);
-	  new_addr.seg = 0;
-	  new_addr.type = DEBUG_GetCVType(sym->proc32.proctype);
-	  new_addr.off = (unsigned int) deefer->load_addr + 
+	  new_value.addr.seg = 0;
+	  new_value.type = DEBUG_GetCVType(sym->proc32.proctype);
+	  new_value.addr.off = (unsigned int) deefer->load_addr + 
 	    sectp[sym->proc32.segment - 1].VirtualAddress + 
 	    sym->proc32.offset;
+	  new_value.cookie = DV_TARGET;
 	  /*
 	   * See if we can find a segment that this goes with.  If so,
 	   * it means that we also may have line number information
@@ -2207,10 +2215,10 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	    {
 	      if(     ((unsigned int) deefer->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
-		       + linetab[i].start <= new_addr.off)
+		       + linetab[i].start <= new_value.addr.off)
 		  &&  ((unsigned int) deefer->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
-		       + linetab[i].end > new_addr.off) )
+		       + linetab[i].end > new_value.addr.off) )
 		{
 		  break;
 		}
@@ -2219,7 +2227,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
  	  DEBUG_Normalize(curr_func);
 	  if( !linetab || linetab[i].linetab == NULL )
 	    {
-	      curr_func = DEBUG_AddSymbol( symname, &new_addr, NULL,
+	      curr_func = DEBUG_AddSymbol( symname, &new_value, NULL,
 					   SYM_WIN32 | SYM_FUNC);
 	    }
 	  else
@@ -2229,7 +2237,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	       * and add whatever line numbers are appropriate for this
 	       * function.
 	       */
-	      curr_func = DEBUG_AddSymbol( symname, &new_addr, 
+	      curr_func = DEBUG_AddSymbol( symname, &new_value, 
 					   linetab[i].sourcefile,
 					   SYM_WIN32 | SYM_FUNC);
 	      for(j=0; j < linetab[i].nline; j++)
@@ -2970,7 +2978,7 @@ leave:
 }
 
 int
-DEBUG_ProcessDeferredDebug()
+DEBUG_ProcessDeferredDebug(void)
 {
   struct deferred_debug_info * deefer;
   struct CodeViewDebug	     * cvd;
