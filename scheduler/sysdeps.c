@@ -16,6 +16,7 @@ static int *ph_errno = &h_errno;
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include <sys/resource.h>
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
@@ -31,6 +32,7 @@ static int *ph_errno = &h_errno;
 #include "selectors.h"
 #include "server.h"
 #include "winbase.h"
+#include "global.h"
 #include "wine/exception.h"
 #include "debugtools.h"
 
@@ -225,8 +227,7 @@ void SYSDEPS_ExitThread( int status )
 /***********************************************************************
  *           SYSDEPS_CallOnStack
  */
-static int SYSDEPS_DoCallOnStack( int (*func)(LPVOID), LPVOID arg ) WINE_UNUSED;
-static int SYSDEPS_DoCallOnStack( int (*func)(LPVOID), LPVOID arg )
+int SYSDEPS_DoCallOnStack( int (*func)(LPVOID), LPVOID arg )
 {
     int retv = 0;
 
@@ -281,6 +282,9 @@ static LPVOID SYSDEPS_LargeStackLow = NULL;
 
 void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
 {
+    DWORD page_size = VIRTUAL_GetPageSize();
+    DWORD cur_stack = (((DWORD)&func) + (page_size-1)) & ~(page_size-1);
+
     TEB *teb = NtCurrentTeb();
     LPVOID stackTop = teb->stack_top;
     LPVOID stackLow = teb->stack_low;
@@ -293,8 +297,11 @@ void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
         rl.rlim_cur = 8*1024*1024;
     }
 
-    SYSDEPS_LargeStackTop = teb->stack_top = &func - 128;
-    SYSDEPS_LargeStackLow = teb->stack_low = teb->stack_top - rl.rlim_cur;
+    teb->stack_top = (LPVOID) cur_stack;
+    teb->stack_low = (LPVOID)(cur_stack - rl.rlim_cur);
+
+    SYSDEPS_LargeStackTop = (LPVOID)(cur_stack - 2*page_size);
+    SYSDEPS_LargeStackLow = (LPVOID)(cur_stack - rl.rlim_cur);
 
     SYSDEPS_CallOnStack( stackTop, stackLow, 
                          (int (*)(void *))func, NULL );
