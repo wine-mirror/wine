@@ -437,10 +437,20 @@ HANDLE NE_OpenFile( NE_MODULE *pModule )
 }
 
 
+/* wrapper for SetFilePointer and ReadFile */
+static BOOL read_data( HANDLE handle, LONG offset, void *buffer, DWORD size )
+{
+    DWORD result;
+
+    if (SetFilePointer( handle, offset, NULL, SEEK_SET ) == INVALID_SET_FILE_POINTER) return FALSE;
+    if (!ReadFile( handle, buffer, size, &result, NULL )) return FALSE;
+    return (result == size);
+}
+
 /***********************************************************************
  *           NE_LoadExeHeader
  */
-static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
+static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
 {
     IMAGE_DOS_HEADER mz_header;
     IMAGE_OS2_HEADER ne_header;
@@ -459,16 +469,13 @@ static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
        ((fastload && ((offset) >= fastload_offset) && \
          ((offset)+(size) <= fastload_offset+fastload_length)) ? \
         (memcpy( buffer, fastload+(offset)-fastload_offset, (size) ), TRUE) : \
-        (_llseek( hFile, (offset), SEEK_SET), \
-         _lread( hFile, (buffer), (size) ) == (size)))
+         read_data( handle, (offset), (buffer), (size)))
 
-    _llseek( hFile, 0, SEEK_SET );
-    if ((_lread(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
+    if (!read_data( handle, 0, &mz_header, sizeof(mz_header)) ||
         (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
         return (HMODULE16)11;  /* invalid exe */
 
-    _llseek( hFile, mz_header.e_lfanew, SEEK_SET );
-    if (_lread( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
+    if (!read_data( handle, mz_header.e_lfanew, &ne_header, sizeof(ne_header) ))
         return (HMODULE16)11;  /* invalid exe */
 
     if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
@@ -529,8 +536,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
                         fastload_offset, fastload_length );
         if ((fastload = HeapAlloc( GetProcessHeap(), 0, fastload_length )) != NULL)
         {
-            _llseek( hFile, fastload_offset, SEEK_SET);
-            if (_lread(hFile, fastload, fastload_length) != fastload_length)
+            if (!read_data( handle, fastload_offset, fastload, fastload_length))
             {
                 HeapFree( GetProcessHeap(), 0, fastload );
                 WARN("Error reading fast-load area!\n");
@@ -752,9 +758,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
         }
         FarSetOwner16( pModule->nrname_handle, hModule );
         buffer = GlobalLock16( pModule->nrname_handle );
-        _llseek( hFile, ne_header.ne_nrestab, SEEK_SET );
-        if (_lread( hFile, buffer, ne_header.ne_cbnrestab )
-              != ne_header.ne_cbnrestab)
+        if (!read_data( handle, ne_header.ne_nrestab, buffer, ne_header.ne_cbnrestab ))
         {
             GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
