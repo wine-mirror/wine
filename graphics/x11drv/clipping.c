@@ -159,7 +159,9 @@ void X11DRV_StartGraphicsExposures( HDC hdc )
     if (dc)
     {
         X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-        TSXSetGraphicsExposures( gdi_display, physDev->gc, True );
+        wine_tsx11_lock();
+        XSetGraphicsExposures( gdi_display, physDev->gc, True );
+        wine_tsx11_unlock();
         physDev->exposures = 0;
         GDI_ReleaseObj( hdc );
     }
@@ -186,7 +188,6 @@ void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn )
         XSetGraphicsExposures( gdi_display, physDev->gc, False );
         if (physDev->exposures)
         {
-            XSync( gdi_display, False );
             for (;;)
             {
                 XWindowEvent( gdi_display, physDev->drawable, ~0, &event );

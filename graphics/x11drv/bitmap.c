@@ -145,9 +145,12 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 	  bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
 
       /* Create the pixmap */
-    if (!(bmp->physBitmap = (void *)TSXCreatePixmap(gdi_display, root_window,
-                                                    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-                                                    bmp->bitmap.bmBitsPixel)))
+    wine_tsx11_lock();
+    bmp->physBitmap = (void *)XCreatePixmap(gdi_display, root_window,
+                                            bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+                                            bmp->bitmap.bmBitsPixel);
+    wine_tsx11_unlock();
+    if (!bmp->physBitmap)
     {
         WARN("Can't create Pixmap\n");
 	GDI_ReleaseObj( hbitmap );

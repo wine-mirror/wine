@@ -152,12 +152,13 @@ int X11DRV_PALETTE_Init(void)
 	    RegCloseKey(hkey);
 	}
 
+        wine_tsx11_lock();
 	if (private_color_map)
 	{
 	    XSetWindowAttributes win_attr;
 
-	    X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap( gdi_display, root_window,
-						 visual, AllocAll );
+	    X11DRV_PALETTE_PaletteXColormap = XCreateColormap( gdi_display, root_window,
+                                                               visual, AllocAll );
 	    if (X11DRV_PALETTE_PaletteXColormap)
 	    {
 	        X11DRV_PALETTE_PaletteFlags |= (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_WHITESET);
@@ -169,21 +170,24 @@ int X11DRV_PALETTE_Init(void)
 	        if( root_window != DefaultRootWindow(gdi_display) )
 	        {
 		    win_attr.colormap = X11DRV_PALETTE_PaletteXColormap;
-		    TSXChangeWindowAttributes( gdi_display, root_window, CWColormap, &win_attr );
+		    XChangeWindowAttributes( gdi_display, root_window, CWColormap, &win_attr );
 		}
 		break;
 	    }
 	}
-        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
-                                                            visual, AllocNone);
+        X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
+                                                          visual, AllocNone);
+        wine_tsx11_unlock();
         break;
     }
 
     case StaticGray:
-        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
-                                                            visual, AllocNone);
+        wine_tsx11_lock();
+        X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
+                                                          visual, AllocNone);
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
         X11DRV_PALETTE_Graymax = (1 << screen_depth)-1;
+        wine_tsx11_unlock();
         break;
 
     case TrueColor:
@@ -193,24 +197,27 @@ int X11DRV_PALETTE_Init(void)
 	/* FIXME: hack to detect XFree32 XF_VGA16 ... We just have
 	 * depths 1 and 4
 	 */
-	depths=TSXListDepths(gdi_display,DefaultScreen(gdi_display),&nrofdepths);
+        wine_tsx11_lock();
+        depths = XListDepths(gdi_display,DefaultScreen(gdi_display),&nrofdepths);
 	if ((nrofdepths==2) && ((depths[0]==4) || depths[1]==4)) {
 	    monoPlane = 1;
 	    for( white = palette_size - 1; !(white & 1); white >>= 1 )
 	        monoPlane++;
     	    X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
-            X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
-                                                                visual, AllocNone);
-	    TSXFree(depths);
-	    break;
+            X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
+                                                              visual, AllocNone);
 	}
-	TSXFree(depths);
-        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
-                                                            visual, AllocNone);
-        X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
-        X11DRV_PALETTE_ComputeShifts(visual->red_mask, &X11DRV_PALETTE_PRed, &X11DRV_PALETTE_LRed);
-        X11DRV_PALETTE_ComputeShifts(visual->green_mask, &X11DRV_PALETTE_PGreen, &X11DRV_PALETTE_LGreen);
-        X11DRV_PALETTE_ComputeShifts(visual->blue_mask, &X11DRV_PALETTE_PBlue, &X11DRV_PALETTE_LBlue);
+        else
+        {
+            X11DRV_PALETTE_PaletteXColormap = XCreateColormap(gdi_display, root_window,
+                                                              visual, AllocNone);
+            X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
+            X11DRV_PALETTE_ComputeShifts(visual->red_mask, &X11DRV_PALETTE_PRed, &X11DRV_PALETTE_LRed);
+            X11DRV_PALETTE_ComputeShifts(visual->green_mask, &X11DRV_PALETTE_PGreen, &X11DRV_PALETTE_LGreen);
+            X11DRV_PALETTE_ComputeShifts(visual->blue_mask, &X11DRV_PALETTE_PBlue, &X11DRV_PALETTE_LBlue);
+        }
+        XFree(depths);
+        wine_tsx11_unlock();
         break;
       }
     }
@@ -250,9 +257,13 @@ int X11DRV_PALETTE_Init(void)
 void X11DRV_PALETTE_Cleanup(void)
 {
   if( COLOR_gapFilled )
-    TSXFreeColors(gdi_display, X11DRV_PALETTE_PaletteXColormap,
+  {
+      wine_tsx11_lock();
+      XFreeColors(gdi_display, X11DRV_PALETTE_PaletteXColormap,
 		  (unsigned long*)(X11DRV_PALETTE_PaletteToXPixel + COLOR_gapStart),
 		  COLOR_gapFilled, 0);
+      wine_tsx11_unlock();
+  }
 }
 
 /***********************************************************************
@@ -796,8 +807,10 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
 		   ((X11DRV_PALETTE_XPixelToPalette)?X11DRV_PALETTE_XPixelToPalette[pixel]:pixel)) ) & 0x00ffffff;
     }
 
+    wine_tsx11_lock();
     color.pixel = pixel;
-    TSXQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+    XQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
+    wine_tsx11_unlock();
     return RGB(color.red >> 8, color.green >> 8, color.blue >> 8);
 }
 

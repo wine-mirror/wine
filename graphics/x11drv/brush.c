@@ -185,21 +185,23 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 
     if(!bmp->physBitmap) goto done;
 
+    wine_tsx11_lock();
     if ((dc->bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
     {
         /* Special case: a color pattern on a monochrome DC */
-        physDev->brush.pixmap = TSXCreatePixmap( gdi_display, root_window, 8, 8, 1);
+        physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window, 8, 8, 1);
         /* FIXME: should probably convert to monochrome instead */
-        TSXCopyPlane( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
-                      BITMAP_monoGC, 0, 0, 8, 8, 0, 0, 1 );
+        XCopyPlane( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
+                    BITMAP_monoGC, 0, 0, 8, 8, 0, 0, 1 );
     }
     else
     {
-        physDev->brush.pixmap = TSXCreatePixmap( gdi_display, root_window,
-                                                 8, 8, bmp->bitmap.bmBitsPixel );
-        TSXCopyArea( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
-                     BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
+        physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window,
+                                               8, 8, bmp->bitmap.bmBitsPixel );
+        XCopyArea( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
+                   BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
     }
+    wine_tsx11_unlock();
 
     if (bmp->bitmap.bmBitsPixel > 1)
     {
@@ -254,8 +256,10 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
       case BS_HATCHED:
 	TRACE("BS_HATCHED\n" );
 	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( physDev, logbrush.lbColor );
-	physDev->brush.pixmap = TSXCreateBitmapFromData( gdi_display, root_window,
-				 HatchBrushes[logbrush.lbHatch], 8, 8 );
+        wine_tsx11_lock();
+        physDev->brush.pixmap = XCreateBitmapFromData( gdi_display, root_window,
+                                                       HatchBrushes[logbrush.lbHatch], 8, 8 );
+        wine_tsx11_unlock();
 	physDev->brush.fillStyle = FillStippled;
 	break;
 

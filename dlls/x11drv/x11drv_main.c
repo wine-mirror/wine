@@ -309,7 +309,7 @@ static void process_attach(void)
 
     /* Open display */
 
-    if (!(display = TSXOpenDisplay( NULL )))
+    if (!(display = XOpenDisplay( NULL )))
     {
         MESSAGE( "x11drv: Can't open display: %s\n", XDisplayName(NULL) );
         ExitProcess(1);
@@ -325,10 +325,10 @@ static void process_attach(void)
     if (screen_depth)  /* depth specified */
     {
         int depth_count, i;
-        int *depth_list = TSXListDepths(display, DefaultScreen(display), &depth_count);
+        int *depth_list = XListDepths(display, DefaultScreen(display), &depth_count);
         for (i = 0; i < depth_count; i++)
             if (depth_list[i] == screen_depth) break;
-        TSXFree( depth_list );
+        XFree( depth_list );
         if (i >= depth_count)
 	{
             MESSAGE( "x11drv: Depth %d not supported on this screen.\n", screen_depth );
@@ -508,7 +508,9 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 BOOL X11DRV_GetScreenSaveActive(void)
 {
     int timeout, temp;
-    TSXGetScreenSaver(gdi_display, &timeout, &temp, &temp, &temp);
+    wine_tsx11_lock();
+    XGetScreenSaver(gdi_display, &timeout, &temp, &temp, &temp);
+    wine_tsx11_unlock();
     return timeout != 0;
 }
 
@@ -522,11 +524,13 @@ void X11DRV_SetScreenSaveActive(BOOL bActivate)
     int timeout, interval, prefer_blanking, allow_exposures;
     static int last_timeout = 15 * 60;
 
-    TSXGetScreenSaver(gdi_display, &timeout, &interval, &prefer_blanking,
-                      &allow_exposures);
+    wine_tsx11_lock();
+    XGetScreenSaver(gdi_display, &timeout, &interval, &prefer_blanking,
+                    &allow_exposures);
     if (timeout) last_timeout = timeout;
 
     timeout = bActivate ? last_timeout : 0;
-    TSXSetScreenSaver(gdi_display, timeout, interval, prefer_blanking,
-                      allow_exposures);
+    XSetScreenSaver(gdi_display, timeout, interval, prefer_blanking,
+                    allow_exposures);
+    wine_tsx11_unlock();
 }

@@ -2928,7 +2928,9 @@ void X11DRV_FONT_InitX11Metrics( void )
   HKEY hkey;
 
 
-  x_pattern = TSXListFonts(gdi_display, "*", MAX_FONTS, &x_count );
+  wine_tsx11_lock();
+  x_pattern = XListFonts(gdi_display, "*", MAX_FONTS, &x_count );
+  wine_tsx11_unlock();
 
   TRACE("Font Mapper: initializing %i x11 fonts\n", x_count);
   if (x_count == MAX_FONTS)
@@ -2988,7 +2990,8 @@ void X11DRV_FONT_InitX11Metrics( void )
       }
   }
 
-  TSXFreeFontNames(x_pattern);
+  wine_tsx11_lock();
+  XFreeFontNames(x_pattern);
 
   /* check if we're dealing with X11 R6 server */
   {
@@ -2997,9 +3000,11 @@ void X11DRV_FONT_InitX11Metrics( void )
       if( (x_fs = safe_XLoadQueryFont(gdi_display, buffer)) )
       {
 	  text_caps |= TC_SF_X_YINDEP;
-	  TSXFreeFont(gdi_display, x_fs);
+	  XFreeFont(gdi_display, x_fs);
       }
   }
+  wine_tsx11_unlock();
+
   HeapFree(GetProcessHeap(), 0, buffer);
 
   XFONT_WindowsNames();

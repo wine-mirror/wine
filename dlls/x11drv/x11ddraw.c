@@ -83,11 +83,15 @@ static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
       win = root_window;
     }
 
-    TSXGrabPointer(display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);
+    wine_tsx11_lock();
+    XGrabPointer(display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);
+    wine_tsx11_unlock();
   }
   else
   {
-    TSXUngrabPointer(display, CurrentTime);
+    wine_tsx11_lock();
+    XUngrabPointer(display, CurrentTime);
+    wine_tsx11_unlock();
   }
 
   return 0;
@@ -212,7 +216,12 @@ static DDHAL_DDSURFACECALLBACKS hal_ddsurfcallbacks = {
 static DWORD PASCAL X11DRV_DDHAL_DestroyPalette(LPDDHAL_DESTROYPALETTEDATA data)
 {
   Colormap pal = data->lpDDPalette->u1.dwReserved1;
-  if (pal) TSXFreeColormap(gdi_display, pal);
+  if (pal)
+  {
+      wine_tsx11_lock();
+      XFreeColormap(gdi_display, pal);
+      wine_tsx11_unlock();
+  }
   data->ddRVal = DD_OK;
   return DDHAL_DRIVER_HANDLED;
 }
@@ -426,14 +435,16 @@ void X11DRV_DDHAL_SetPalEntries(Colormap pal, DWORD dwBase, DWORD dwNumEntries,
   int n;
 
   if (pal) {
+    wine_tsx11_lock();
     c.flags = DoRed|DoGreen|DoBlue;
     c.pixel = dwBase;
     for (n=0; n<dwNumEntries; n++,c.pixel++) {
       c.red   = lpEntries[n].peRed   << 8;
       c.green = lpEntries[n].peGreen << 8;
       c.blue  = lpEntries[n].peBlue  << 8;
-      TSXStoreColor(gdi_display, pal, &c);
+      XStoreColor(gdi_display, pal, &c);
     }
-    TSXFlush(gdi_display); /* update display immediately */
+    XFlush(gdi_display); /* update display immediately */
+    wine_tsx11_unlock();
   }
 }

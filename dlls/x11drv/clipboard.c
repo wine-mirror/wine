@@ -1589,7 +1589,9 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, A
 
     /* Delete the property on the window now that we are done
      * This will send a PropertyNotify event to the selection owner. */
-    TSXDeleteProperty(display,w,prop);
+    wine_tsx11_lock();
+    XDeleteProperty(display,w,prop);
+    wine_tsx11_unlock();
 
     /* Free the retrieved property data */
     HeapFree(GetProcessHeap(),0,val);

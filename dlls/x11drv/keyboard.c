@@ -1624,7 +1624,9 @@ void X11DRV_MappingNotify( XMappingEvent *event )
 {
     HWND hwnd;
 
-    TSXRefreshKeyboardMapping(event);
+    wine_tsx11_lock();
+    XRefreshKeyboardMapping(event);
+    wine_tsx11_unlock();
     X11DRV_InitKeyboard( pKeyStateTable );
 
     hwnd = GetFocus();
@@ -2196,5 +2198,7 @@ found:
  */
 void X11DRV_Beep(void)
 {
-  TSXBell(thread_display(), 0);
+    wine_tsx11_lock();
+    XBell(thread_display(), 0);
+    wine_tsx11_unlock();
 }

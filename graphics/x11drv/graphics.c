@@ -625,18 +625,22 @@ X11DRV_Rectangle(X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bott
     {
         if (X11DRV_SetupGCForBrush( physDev ))
 	{
-            TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                              physDev->org.x + rc.left + (width + 1) / 2,
-                              physDev->org.y + rc.top + (width + 1) / 2,
-                              rc.right-rc.left-width-1, rc.bottom-rc.top-width-1);
+            wine_tsx11_lock();
+            XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
+                            physDev->org.x + rc.left + (width + 1) / 2,
+                            physDev->org.y + rc.top + (width + 1) / 2,
+                            rc.right-rc.left-width-1, rc.bottom-rc.top-width-1);
+            wine_tsx11_unlock();
 	    update = TRUE;
 	}
     }
     if (X11DRV_SetupGCForPen( physDev ))
     {
-        TSXDrawRectangle( gdi_display, physDev->drawable, physDev->gc,
-                          physDev->org.x + rc.left, physDev->org.y + rc.top,
-                          rc.right-rc.left-1, rc.bottom-rc.top-1 );
+        wine_tsx11_lock();
+        XDrawRectangle( gdi_display, physDev->drawable, physDev->gc,
+                        physDev->org.x + rc.left, physDev->org.y + rc.top,
+                        rc.right-rc.left-1, rc.bottom-rc.top-1 );
+        wine_tsx11_unlock();
 	update = TRUE;
     }
 
@@ -1038,14 +1042,18 @@ X11DRV_Polygon( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
 
     if (X11DRV_SetupGCForBrush( physDev ))
     {
-        TSXFillPolygon( gdi_display, physDev->drawable, physDev->gc,
-                        points, count+1, Complex, CoordModeOrigin);
+        wine_tsx11_lock();
+        XFillPolygon( gdi_display, physDev->drawable, physDev->gc,
+                      points, count+1, Complex, CoordModeOrigin);
+        wine_tsx11_unlock();
 	update = TRUE;
     }
     if (X11DRV_SetupGCForPen ( physDev ))
     {
-        TSXDrawLines( gdi_display, physDev->drawable, physDev->gc,
-                      points, count+1, CoordModeOrigin );
+        wine_tsx11_lock();
+        XDrawLines( gdi_display, physDev->drawable, physDev->gc,
+                    points, count+1, CoordModeOrigin );
+        wine_tsx11_unlock();
 	update = TRUE;
     }
 
@@ -1240,12 +1248,13 @@ X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
     if (!PtVisible( physDev->hdc, x, y )) return FALSE;
     if (GetRgnBox( dc->hGCClipRgn, &rect ) == ERROR) return FALSE;
 
-    if (!(image = TSXGetImage( gdi_display, physDev->drawable,
-                               physDev->org.x + rect.left,
-                               physDev->org.y + rect.top,
-                               rect.right - rect.left,
-                               rect.bottom - rect.top,
-                               AllPlanes, ZPixmap ))) return FALSE;
+    wine_tsx11_lock();
+    image = XGetImage( gdi_display, physDev->drawable,
+                       physDev->org.x + rect.left, physDev->org.y + rect.top,
+                       rect.right - rect.left, rect.bottom - rect.top,
+                       AllPlanes, ZPixmap );
+    wine_tsx11_unlock();
+    if (!image) return FALSE;
 
     if (X11DRV_SetupGCForBrush( physDev ))
     {

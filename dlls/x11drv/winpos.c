@@ -2205,8 +2205,11 @@ void X11DRV_ForceWindowRaise( HWND hwnd )
             WND *ptr = WIN_FindWndPtr( list[i] );
             if (!ptr) continue;
             if (!IsRectEmpty( &ptr->rectWindow ) && get_whole_window(ptr))
-                TSXReconfigureWMWindow( display, get_whole_window(ptr), 0,
-                                        CWStackMode, &winChanges );
+            {
+                wine_tsx11_lock();
+                XReconfigureWMWindow( display, get_whole_window(ptr), 0, CWStackMode, &winChanges );
+                wine_tsx11_unlock();
+            }
             WIN_ReleaseWndPtr( ptr );
         }
     }

@@ -1256,8 +1256,10 @@ void X11DRV_SetFocus( HWND hwnd )
 
     if (!hwnd)  /* If setting the focus to 0, uninstall the colormap */
     {
+        wine_tsx11_lock();
         if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
-            TSXUninstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
+            XUninstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
+        wine_tsx11_unlock();
         return;
     }
 

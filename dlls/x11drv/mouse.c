@@ -162,7 +162,9 @@ static void update_cursor( HWND hwnd, Window win )
     if (data->cursor_window != win)
     {
         data->cursor_window = win;
-        if (data->cursor) TSXDefineCursor( data->display, win, data->cursor );
+        wine_tsx11_lock();
+        if (data->cursor) XDefineCursor( data->display, win, data->cursor );
+        wine_tsx11_unlock();
     }
 }
 

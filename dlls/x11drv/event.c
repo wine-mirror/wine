@@ -852,11 +852,8 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
       }
       else
       {
-          if (TRACE_ON(clipboard))
-	  {
-              TRACE_(clipboard)("Request for property %s (%ld) failed\n", 
-                  TSXGetAtomName(display, event->target), event->target);
-          }
+          TRACE_(clipboard)("Request for property %s (%ld) failed\n",
+                            TSXGetAtomName(display, event->target), event->target);
       }
   }
 
@@ -874,7 +871,9 @@ END:
     result.target = event->target;
     result.time = event->time;
     TRACE("Sending SelectionNotify event...\n");
-    TSXSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
+    wine_tsx11_lock();
+    XSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
+    wine_tsx11_unlock();
   }
 }
 
