@@ -11,10 +11,12 @@
 
 static LPPHONE PHONE_Alloc(void)
 {
+    return 0;
 }
 
 static LPPHONE PHONE_Get(HPHONE hPhone)
 {	
+    return 0;
 }
 
 DWORD WINAPI phoneClose(HPHONE hPhone)
