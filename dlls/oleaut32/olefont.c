@@ -1197,10 +1197,10 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   UINT*     puArgErr)
 {
   _ICOM_THIS_From_IDispatch(IFont, iface);
-  FIXME("%p->(%ld,%s,%lx,%x):Stub\n", this,dispIdMember,debugstr_guid(riid),lcid,
+  FIXME("%p->(%ld,%s,%lx,%x), stub!\n", this,dispIdMember,debugstr_guid(riid),lcid,
     wFlags
   );
-  return E_NOTIMPL;
+  return S_OK;
 }
 
 /************************************************************************
