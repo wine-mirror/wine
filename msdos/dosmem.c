@@ -50,8 +50,6 @@ WORD DOSMEM_0000H;        /* segment at 0:0 */
 WORD DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
 WORD DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 
-DWORD DOSMEM_CollateTable;
-
 /* use 2 low bits of 'size' for the housekeeping */
 
 #define DM_BLOCK_DEBUG		0xABE00000
@@ -307,80 +305,6 @@ static void DOSMEM_FillBiosSegments(void)
 }
 
 /***********************************************************************
- *           DOSMEM_InitCollateTable
- *
- * Initialises the collate table (character sorting, language dependent)
- */
-static void DOSMEM_InitCollateTable()
-{
-	DWORD		x;
-	unsigned char	*tbl;
-	int		i;
-
-	x = GlobalDOSAlloc16(258);
-	DOSMEM_CollateTable = MAKELONG(0,(x>>16));
-	tbl = DOSMEM_MapRealToLinear(DOSMEM_CollateTable);
-	*(WORD*)tbl	= 0x100;
-	tbl += 2;
-	for ( i = 0; i < 0x100; i++) *tbl++ = i;
-}
-
-/***********************************************************************
- *           DOSMEM_InitErrorTable
- *
- * Initialises the error tables (DOS 5+)
- */
-static void DOSMEM_InitErrorTable()
-{
-#if 0  /* no longer used */
-	DWORD		x;
-	char 		*call;
-
-        /* We will use a snippet of real mode code that calls */
-        /* a WINE-only interrupt to handle moving the requested */
-        /* message into the buffer... */
-
-        /* FIXME - There is still something wrong... */
-
-        /* FIXME - Find hex values for opcodes...
-
-           (On call, AX contains message number
-                     DI contains 'offset' (??)
-            Resturn, ES:DI points to counted string )
-
-           PUSH BX
-           MOV BX, AX
-           MOV AX, (arbitrary subfunction number)
-           INT (WINE-only interrupt)
-           POP BX
-           RET
-
-        */
-
-        const int	code = 4;
-        const int	buffer = 80;
-        const int 	SIZE_TO_ALLOCATE = code + buffer;
-
-        /* FIXME - Complete rewrite of the table system to save */
-        /* precious DOS space. Now, we return the 0001:???? as */
-        /* DOS 4+ (??, it seems to be the case in MS 7.10) treats that */
-        /* as a special case and programs will use the alternate */
-        /* interface (a farcall returned with INT 24 (AX = 0x122e, DL = */
-        /* 0x08) which lets us have a smaller memory footprint anyway. */
-
- 	x = GlobalDOSAlloc16(SIZE_TO_ALLOCATE);
-
-	DOSMEM_ErrorCall = MAKELONG(0,(x>>16));
-        DOSMEM_ErrorBuffer = DOSMEM_ErrorCall + code;
-
-	call = DOSMEM_MapRealToLinear(DOSMEM_ErrorCall);
-
-        memset(call, 0, SIZE_TO_ALLOCATE);
-#endif
-        /* FIXME - Copy assembly into buffer here */
-}
-
-/***********************************************************************
  *           DOSMEM_InitMemory
  *
  * Initialises the DOS memory structures.
@@ -480,8 +404,6 @@ BOOL DOSMEM_Init(BOOL dos_init)
         DOSMEM_FillBiosSegments();
         DOSMEM_FillIsrTable();
         DOSMEM_InitMemory();
-        DOSMEM_InitCollateTable();
-        DOSMEM_InitErrorTable();
         already_done = 1;
     }
     else if (dos_init && !already_mapped)

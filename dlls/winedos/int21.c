@@ -44,6 +44,330 @@ extern void WINAPI INT_Int21Handler( CONTEXT86 *context );
 WINE_DEFAULT_DEBUG_CHANNEL(int21);
 
 
+#include "pshpack1.h"
+
+/*
+ * Structure for DOS data that can be accessed directly from applications.
+ * Real and protected mode pointers will be returned to this structure so
+ * the structure must be correctly packed.
+ */
+typedef struct _INT21_HEAP {
+    WORD uppercase_size;             /* Size of the following table in bytes */
+    BYTE uppercase_table[128];       /* Uppercase equivalents of chars from 0x80 to 0xff. */
+
+    WORD lowercase_size;             /* Size of the following table in bytes */
+    BYTE lowercase_table[256];       /* Lowercase equivalents of chars from 0x00 to 0xff. */
+
+    WORD collating_size;             /* Size of the following table in bytes */
+    BYTE collating_table[256];       /* Values used to sort characters from 0x00 to 0xff. */
+
+    WORD filename_size;              /* Size of the following filename data in bytes */
+    BYTE filename_reserved1;         /* 0x01 for MS-DOS 3.30-6.00 */
+    BYTE filename_lowest;            /* Lowest permissible character value for filename */
+    BYTE filename_highest;           /* Highest permissible character value for filename */
+    BYTE filename_reserved2;         /* 0x00 for MS-DOS 3.30-6.00 */
+    BYTE filename_exclude_first;     /* First illegal character in permissible range */
+    BYTE filename_exclude_last;      /* Last illegal character in permissible range */
+    BYTE filename_reserved3;         /* 0x02 for MS-DOS 3.30-6.00 */
+    BYTE filename_illegal_size;      /* Number of terminators in the following table */
+    BYTE filename_illegal_table[16]; /* Characters which terminate a filename */
+
+    WORD dbcs_size;                  /* Number of valid ranges in the following table */
+    BYTE dbcs_table[16];             /* Start/end bytes for N ranges and 00/00 as terminator */
+
+    BYTE misc_indos;                 /* Interrupt 21 nesting flag */
+} INT21_HEAP;
+
+#include "poppack.h"
+
+
+/***********************************************************************
+ *           INT21_GetSystemCountryCode
+ *
+ * Return DOS country code for default system locale.
+ */
+static WORD INT21_GetSystemCountryCode()
+{
+    /*
+     * FIXME: Determine country code. We should probably use
+     *        DOSCONF structure for that.
+     */
+    return GetSystemDefaultLangID();
+}
+
+
+/***********************************************************************
+ *           INT21_FillCountryInformation
+ *
+ * Fill 34-byte buffer with country information data using
+ * default system locale.
+ */
+static void INT21_FillCountryInformation( BYTE *buffer )
+{
+    /* 00 - WORD: date format
+     *          00 = mm/dd/yy
+     *          01 = dd/mm/yy
+     *          02 = yy/mm/dd
+     */
+    *(WORD*)(buffer + 0) = 0; /* FIXME: Get from locale */
+
+    /* 02 - BYTE[5]: ASCIIZ currency symbol string */
+    buffer[2] = '$'; /* FIXME: Get from locale */
+    buffer[3] = 0;
+
+    /* 07 - BYTE[2]: ASCIIZ thousands separator */
+    buffer[7] = 0; /* FIXME: Get from locale */
+    buffer[8] = 0;
+
+    /* 09 - BYTE[2]: ASCIIZ decimal separator */
+    buffer[9]  = '.'; /* FIXME: Get from locale */
+    buffer[10] = 0;
+
+    /* 11 - BYTE[2]: ASCIIZ date separator */
+    buffer[11] = '/'; /* FIXME: Get from locale */
+    buffer[12] = 0;
+
+    /* 13 - BYTE[2]: ASCIIZ time separator */
+    buffer[13] = ':'; /* FIXME: Get from locale */
+    buffer[14] = 0;
+
+    /* 15 - BYTE: Currency format
+     *          bit 2 = set if currency symbol replaces decimal point
+     *          bit 1 = number of spaces between value and currency symbol
+     *          bit 0 = 0 if currency symbol precedes value
+     *                  1 if currency symbol follows value
+     */
+    buffer[15] = 0; /* FIXME: Get from locale */
+
+    /* 16 - BYTE: Number of digits after decimal in currency */
+    buffer[16] = 0; /* FIXME: Get from locale */
+
+    /* 17 - BYTE: Time format
+     *          bit 0 = 0 if 12-hour clock
+     *                  1 if 24-hour clock
+     */
+    buffer[17] = 1; /* FIXME: Get from locale */
+
+    /* 18 - DWORD: Address of case map routine */
+    *(DWORD*)(buffer + 18) = 0; /* FIXME: ptr to case map routine */
+
+    /* 22 - BYTE[2]: ASCIIZ data-list separator */
+    buffer[22] = ','; /* FIXME: Get from locale */
+    buffer[23] = 0;
+
+    /* 24 - BYTE[10]: Reserved */
+    memset( buffer + 24, 0, 10 );
+}
+
+
+/***********************************************************************
+ *           INT21_FillHeap
+ *
+ * Initialize DOS heap.
+ */
+static void INT21_FillHeap( INT21_HEAP *heap )
+{
+    static const char terminators[] = "\"\\./[]:|<>+=;,";
+    int i;
+
+    /*
+     * Uppercase table.
+     */
+    heap->uppercase_size = 128;
+    for (i = 0; i < 128; i++) 
+        heap->uppercase_table[i] = toupper( 128 + i );
+
+    /*
+     * Lowercase table.
+     */
+    heap->lowercase_size = 256;
+    for (i = 0; i < 256; i++) 
+        heap->lowercase_table[i] = tolower( i );
+    
+    /*
+     * Collating table.
+     */
+    heap->collating_size = 256;
+    for (i = 0; i < 256; i++) 
+        heap->collating_table[i] = i;
+
+    /*
+     * Filename table.
+     */
+    heap->filename_size = 8 + strlen(terminators);
+    heap->filename_illegal_size = strlen(terminators);
+    strcpy( heap->filename_illegal_table, terminators );
+
+    heap->filename_reserved1 = 0x01;
+    heap->filename_lowest = 0;           /* FIXME: correct value? */
+    heap->filename_highest = 0xff;       /* FIXME: correct value? */
+    heap->filename_reserved2 = 0x00;    
+    heap->filename_exclude_first = 0x00; /* FIXME: correct value? */
+    heap->filename_exclude_last = 0x00;  /* FIXME: correct value? */
+    heap->filename_reserved3 = 0x02;
+
+    /*
+     * DBCS lead byte table. This table is empty.
+     */
+    heap->dbcs_size = 0;
+    memset( heap->dbcs_table, 0, sizeof(heap->dbcs_table) );
+
+    /*
+     * Initialize InDos flag.
+     */
+    heap->misc_indos = 0;
+}
+
+
+/***********************************************************************
+ *           INT21_GetHeapSelector
+ *
+ * Get segment/selector for DOS heap (INT21_HEAP).
+ * Creates and initializes heap on first call.
+ */
+static WORD INT21_GetHeapSelector( CONTEXT86 *context )
+{
+    static WORD heap_segment = 0;
+    static WORD heap_selector = 0;
+    static BOOL heap_initialized = FALSE;
+
+    if (!heap_initialized)
+    {
+        INT21_HEAP *ptr = DOSVM_AllocDataUMB( sizeof(INT21_HEAP), 
+                                              &heap_segment,
+                                              &heap_selector );
+        INT21_FillHeap( ptr );
+        heap_initialized = TRUE;
+    }
+
+    if (!ISV86(context) && DOSVM_IsWin16())
+        return heap_selector;
+    else
+        return heap_segment;
+}
+
+
+/***********************************************************************
+ *           INT21_ExtendedCountryInformation
+ *
+ * Handler for function 0x65.
+ */
+static void INT21_ExtendedCountryInformation( CONTEXT86 *context )
+{
+    BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, context->SegEs, context->Edi );
+
+    TRACE( "GET EXTENDED COUNTRY INFORMATION, subfunction %02x\n",
+           AL_reg(context) );
+
+    /*
+     * Check subfunctions that are passed country and code page.
+     */
+    if (AL_reg(context) >= 0x01 && AL_reg(context) <= 0x07)
+    {
+        WORD country = DX_reg(context);
+        WORD codepage = BX_reg(context);
+
+        if (country != 0xffff && country != INT21_GetSystemCountryCode())
+            FIXME( "Requested info on non-default country %04x\n", country );
+
+        if (codepage != 0xffff && codepage != GetOEMCP())
+            FIXME( "Requested info on non-default code page %04x\n", codepage );
+    }
+
+    switch (AL_reg(context)) {
+    case 0x00: /* SET GENERAL INTERNATIONALIZATION INFO */
+        INT_BARF( context, 0x21 );
+        SET_CFLAG( context );
+        break;
+
+    case 0x01: /* GET GENERAL INTERNATIONALIZATION INFO */
+        TRACE( "Get general internationalization info\n" );
+        dataptr[0] = 0x01; /* Info ID */
+        *(WORD*)(dataptr+1) = 38; /* Size of the following info */
+        *(WORD*)(dataptr+3) = INT21_GetSystemCountryCode(); /* Country ID */
+        *(WORD*)(dataptr+5) = GetOEMCP(); /* Code page */
+        INT21_FillCountryInformation( dataptr + 7 );
+        SET_CX( context, 41 ); /* Size of returned info */
+        break;
+        
+    case 0x02: /* GET POINTER TO UPPERCASE TABLE */
+    case 0x04: /* GET POINTER TO FILENAME UPPERCASE TABLE */
+        TRACE( "Get pointer to uppercase table\n" );
+        dataptr[0] = AL_reg(context); /* Info ID */
+        *(DWORD*)(dataptr+1) = MAKESEGPTR( INT21_GetHeapSelector( context ),
+                                           offsetof(INT21_HEAP, uppercase_size) );
+        SET_CX( context, 5 ); /* Size of returned info */
+        break;
+
+    case 0x03: /* GET POINTER TO LOWERCASE TABLE */
+        TRACE( "Get pointer to lowercase table\n" );
+        dataptr[0] = 0x03; /* Info ID */
+        *(DWORD*)(dataptr+1) = MAKESEGPTR( INT21_GetHeapSelector( context ),
+                                           offsetof(INT21_HEAP, lowercase_size) );
+        SET_CX( context, 5 ); /* Size of returned info */
+        break;
+
+    case 0x05: /* GET POINTER TO FILENAME TERMINATOR TABLE */
+        TRACE("Get pointer to filename terminator table\n");
+        dataptr[0] = 0x05; /* Info ID */
+        *(DWORD*)(dataptr+1) = MAKESEGPTR( INT21_GetHeapSelector( context ),
+                                           offsetof(INT21_HEAP, filename_size) );
+        SET_CX( context, 5 ); /* Size of returned info */
+        break;
+
+    case 0x06: /* GET POINTER TO COLLATING SEQUENCE TABLE */
+        TRACE("Get pointer to collating sequence table\n");
+        dataptr[0] = 0x06; /* Info ID */
+        *(DWORD*)(dataptr+1) = MAKESEGPTR( INT21_GetHeapSelector( context ),
+                                           offsetof(INT21_HEAP, collating_size) );
+        SET_CX( context, 5 ); /* Size of returned info */
+        break;
+
+    case 0x07: /* GET POINTER TO DBCS LEAD BYTE TABLE */
+        TRACE("Get pointer to DBCS lead byte table\n");
+        dataptr[0] = 0x07; /* Info ID */
+        *(DWORD*)(dataptr+1) = MAKESEGPTR( INT21_GetHeapSelector( context ),
+                                           offsetof(INT21_HEAP, dbcs_size) );
+        SET_CX( context, 5 ); /* Size of returned info */
+        break;
+
+    case 0x20: /* CAPITALIZE CHARACTER */
+    case 0xa0: /* CAPITALIZE FILENAME CHARACTER */
+        TRACE("Convert char to uppercase\n");
+        SET_DL( context, toupper(DL_reg(context)) );
+        break;
+
+    case 0x21: /* CAPITALIZE STRING */
+    case 0xa1: /* CAPITALIZE COUNTED FILENAME STRING */
+        TRACE("Convert string to uppercase with length\n");
+        {
+            char *ptr = (char *)CTX_SEG_OFF_TO_LIN( context,
+                                                    context->SegDs,
+                                                    context->Edx );
+            WORD len = CX_reg(context);
+            while (len--) { *ptr = toupper(*ptr); ptr++; }
+        }
+        break;
+
+    case 0x22: /* CAPITALIZE ASCIIZ STRING */
+    case 0xa2: /* CAPITALIZE ASCIIZ FILENAME */
+        TRACE("Convert ASCIIZ string to uppercase\n");
+        _strupr( (LPSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx) );
+        break;
+
+    case 0x23: /* DETERMINE IF CHARACTER REPRESENTS YES/NO RESPONSE */
+        INT_BARF( context, 0x21 );
+        SET_CFLAG( context );
+        break;
+
+    default:
+        INT_BARF( context, 0x21 );
+        SET_CFLAG(context);
+        break;
+    }
+}
+
+
 /***********************************************************************
  *           INT21_GetPSP
  *
@@ -501,8 +825,13 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
     case 0x33: /* MULTIPLEXED */
-    case 0x34: /* GET ADDRESS OF INDOS FLAG */
         INT_Int21Handler( context );
+        break;
+
+    case 0x34: /* GET ADDRESS OF INDOS FLAG */
+        TRACE( "GET ADDRESS OF INDOS FLAG\n" );
+        context->SegEs = INT21_GetHeapSelector( context );
+        SET_BX( context, offsetof(INT21_HEAP, misc_indos) );
         break;
 
     case 0x35: /* GET INTERRUPT VECTOR */
@@ -524,10 +853,20 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x38: /* GET COUNTRY-SPECIFIC INFORMATION */
-        TRACE( "GET COUNTRY-SPECIFIC INFORMATION for country 0x%02x\n",
-               AL_reg(context) );
-        SET_AX( context, 0x02 ); /* no country support available */
-        SET_CFLAG( context );
+        TRACE( "GET COUNTRY-SPECIFIC INFORMATION\n" );
+        if (AL_reg(context)) 
+        {
+            WORD country = AL_reg(context);
+            if (country == 0xff)
+                country = BX_reg(context);
+            if (country != INT21_GetSystemCountryCode())
+                FIXME( "Requested info on non-default country %04x\n", country );
+        }
+        INT21_FillCountryInformation( CTX_SEG_OFF_TO_LIN(context, 
+                                                         context->SegDs, 
+                                                         context->Edx) );
+        SET_AX( context, INT21_GetSystemCountryCode() );
+        SET_BX( context, INT21_GetSystemCountryCode() );
         break;
 
     case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
@@ -723,8 +1062,11 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x5e: /* NETWORK 5E */
     case 0x5f: /* NETWORK 5F */
     case 0x60: /* "TRUENAME" - CANONICALIZE FILENAME OR PATH */
-    case 0x61: /* UNUSED */
         INT_Int21Handler( context );
+        break;
+
+    case 0x61: /* UNUSED */
+        SET_AL( context, 0 );
         break;
 
     case 0x62: /* GET PSP ADDRESS */
@@ -732,7 +1074,14 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x63: /* MISC. LANGUAGE SUPPORT */
-        INT_Int21Handler( context );
+        switch (AL_reg(context)) {
+        case 0x00: /* GET DOUBLE BYTE CHARACTER SET LEAD-BYTE TABLE */
+            TRACE( "GET DOUBLE BYTE CHARACTER SET LEAD-BYTE TABLE\n" );
+            context->SegDs = INT21_GetHeapSelector( context );
+            SET_SI( context, offsetof(INT21_HEAP, dbcs_table) );
+            SET_AL( context, 0 ); /* success */
+            break;
+        }
         break;
 
     case 0x64: /* OS/2 DOS BOX */
@@ -740,9 +1089,23 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         SET_CFLAG(context);
     	break;
 
-    case 0x65: /* GET EXTENDED COUNTRY INFORMATION */
+    case 0x65: /* EXTENDED COUNTRY INFORMATION */
+        INT21_ExtendedCountryInformation( context );
+        break;
+
     case 0x66: /* GLOBAL CODE PAGE TABLE */
-        INT_Int21Handler( context );
+        switch (AL_reg(context))
+        {
+        case 0x01:
+            TRACE( "GET GLOBAL CODE PAGE TABLE\n" );
+            SET_BX( context, GetOEMCP() );
+            SET_DX( context, GetOEMCP() );
+            break;
+        case 0x02:
+            FIXME( "SET GLOBAL CODE PAGE TABLE, active %d, system %d - ignored\n",
+                   BX_reg(context), DX_reg(context) );
+            break;
+        }
         break;
 
     case 0x67: /* SET HANDLE COUNT */

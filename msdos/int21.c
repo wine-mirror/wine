@@ -122,15 +122,12 @@ struct EDPB			/* FAT32 extended Drive Parameter Block */
 
 };
 
-WORD CodePage = 437;
 DWORD dpbsegptr;
 
 struct DosHeap {
-	BYTE InDosFlag;
         BYTE mediaID;
 	BYTE biosdate[8];
         struct DPB dpb;
-        BYTE DummyDBCSLeadTable[6];
 };
 static struct DosHeap *heap;
 static WORD DosHeapHandle;
@@ -153,9 +150,7 @@ static BOOL INT21_CreateHeap(void)
     }
     heap = (struct DosHeap *) GlobalLock16(DosHeapHandle);
     dpbsegptr = MAKESEGPTR(DosHeapHandle,(int)&heap->dpb-(int)heap);
-    heap->InDosFlag = 0;
     strcpy(heap->biosdate, "01/01/80");
-    memset(heap->DummyDBCSLeadTable, 0, 6);
     return TRUE;
 }
 
@@ -751,21 +746,6 @@ static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context )
 }
 
 
-static void INT21_GetDBCSLeadTable( CONTEXT86 *context )
-{
-    if (heap || INT21_CreateHeap())
-    { /* return an empty table just as DOS 4.0+ does */
-	context->SegDs = DosHeapHandle;
-	SET_SI( context, (int)&heap->DummyDBCSLeadTable - (int)heap );
-    }
-    else
-    {
-        SET_AX( context, 0x1 ); /* error */
-        SET_CFLAG(context);
-    }
-}
-
-
 static int INT21_GetDiskSerialNumber( CONTEXT86 *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
@@ -1165,13 +1145,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
                 INT_BARF( context, 0x21 );
 		break;
         }
-        break;
-
-    case 0x34: /* GET ADDRESS OF INDOS FLAG */
-        TRACE("GET ADDRESS OF INDOS FLAG\n");
-        if (!heap) INT21_CreateHeap();
-        context->SegEs = DosHeapHandle;
-        SET_BX( context, (int)&heap->InDosFlag - (int)heap );
         break;
 
     case 0x36: /* GET FREE DISK SPACE */
@@ -1636,76 +1609,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
                                                         context->Edi),NULL))
 		bSetDOSExtendedError = TRUE;
             else SET_AX( context, 0 );
-        }
-        break;
-
-    case 0x61: /* UNUSED */
-    case 0x63: /* misc. language support */
-        switch (AL_reg(context)) {
-        case 0x00: /* GET DOUBLE BYTE CHARACTER SET LEAD-BYTE TABLE */
-	    INT21_GetDBCSLeadTable(context);
-            break;
-        }
-        break;
-
-    case 0x65:{/* GET EXTENDED COUNTRY INFORMATION */
-	BYTE    *dataptr=CTX_SEG_OFF_TO_LIN(context, context->SegEs,context->Edi);
-	TRACE("GET EXTENDED COUNTRY INFORMATION code page %d country %d\n",
-	      BX_reg(context), DX_reg(context));
-    	switch (AL_reg(context)) {
-	case 0x01:
-	    TRACE("\tget general internationalization info\n");
-	    dataptr[0] = 0x1;
-	    *(WORD*)(dataptr+1) = 41;
-	    *(WORD*)(dataptr+3) = GetSystemDefaultLangID();
-	    *(WORD*)(dataptr+5) = CodePage;
-	    *(DWORD*)(dataptr+0x19) = 0; /* FIXME: ptr to case map routine */
-	    break;
-	case 0x06:
-	    TRACE("\tget pointer to collating sequence table\n");
-	    dataptr[0] = 0x06;
-	    *(DWORD*)(dataptr+1) = MAKELONG(DOSMEM_CollateTable & 0xFFFF,DOSMEM_AllocSelector(DOSMEM_CollateTable>>16));
-	    SET_CX( context, 258 );/*FIXME: size of table?*/
-	    break;
-        case 0x20:
-            TRACE("\tConvert char to uppercase\n");
-            SET_DL( context, toupper(DL_reg(context)) );
-            break;
-        case 0x21:
-            TRACE("\tconvert string to uppercase with length\n");
-            {
-                char *ptr = (char *)CTX_SEG_OFF_TO_LIN(context,context->SegDs,context->Edx);
-                WORD len = CX_reg(context);
-                while (len--) { *ptr = toupper(*ptr); ptr++; }
-            }
-            break;
-        case 0x22:
-            TRACE("\tConvert ASCIIZ string to uppercase\n");
-            _strupr( (LPSTR)CTX_SEG_OFF_TO_LIN(context,context->SegDs,context->Edx) );
-            break;
-	default:
-	    TRACE("\tunimplemented function %d\n",AL_reg(context));
-            INT_BARF( context, 0x21 );
-            SET_CFLAG(context);
-    	    break;
-	}
-    	break;
-    }
-    case 0x66: /* GLOBAL CODE PAGE TABLE */
-        switch (AL_reg(context))
-        {
-        case 0x01:
-	    TRACE("GET GLOBAL CODE PAGE TABLE\n");
-            SET_BX( context, CodePage );
-            SET_DX( context, CodePage );
-            RESET_CFLAG(context);
-            break;
-        case 0x02:
-	    TRACE("SET GLOBAL CODE PAGE TABLE active page %d system page %d\n",
-		  BX_reg(context),DX_reg(context));
-            CodePage = BX_reg(context);
-            RESET_CFLAG(context);
-            break;
         }
         break;
 

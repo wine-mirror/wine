@@ -162,7 +162,6 @@ typedef struct
 extern WORD DOSMEM_0000H;
 extern WORD DOSMEM_BiosDataSeg;
 extern WORD DOSMEM_BiosSysSeg;
-extern DWORD DOSMEM_CollateTable;
 
 /* msdos/dosmem.c */
 extern BOOL DOSMEM_Init(BOOL);
