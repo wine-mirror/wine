@@ -13,6 +13,7 @@
 #include "module.h"
 #include "stackframe.h"
 #include "task.h"
+#include "syslevel.h"
 #include "debugstr.h"
 #include "debugtools.h"
 #include "main.h"

@@ -422,14 +422,8 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
 				*(short*)(page+offset) += ldelta;
 				break;
 			case IMAGE_REL_BASED_HIGHLOW:
-#if 1
 				*(int*)(page+offset) += delta;
-#else
-				{ int h=*(unsigned short*)(page+offset);
-				  int l=r->TypeOffset[++i];
-				  *(unsigned int*)(page + offset) = (h<<16) + l + delta;
-				}
-#endif
+				/* FIXME: if this is an exported address, fire up enhanced logic */
 				break;
 			case IMAGE_REL_BASED_HIGHADJ:
 				FIXME_(win32)("Don't know what to do with IMAGE_REL_BASED_HIGHADJ\n");

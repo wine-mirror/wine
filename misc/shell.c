@@ -23,6 +23,7 @@
 #include "shlobj.h"
 #include "debugtools.h"
 #include "winreg.h"
+#include "syslevel.h"
 #include "imagelist.h"
 
 DECLARE_DEBUG_CHANNEL(exec)

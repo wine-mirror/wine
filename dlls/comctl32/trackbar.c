@@ -167,6 +167,7 @@ TRACKBAR_CalcThumb (HWND hwnd, TRACKBAR_INFO *infoPtr)
 	
     thumb=&infoPtr->rcThumb;
     range=infoPtr->nRangeMax - infoPtr->nRangeMin;
+    if (!range) return; /* FIXME: may this happen? */
     if (GetWindowLongA (hwnd, GWL_STYLE) & TBS_VERT) {
     	width=infoPtr->rcChannel.bottom - infoPtr->rcChannel.top;
         thumb->left  = infoPtr->rcChannel.left - 1;

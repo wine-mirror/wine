@@ -112,7 +112,7 @@ init    CRTDLL_Init
 107 cdecl _fpreset() CRTDLL__fpreset
 108 stub _fputchar
 109 stub _fputwchar
-110 stub _fsopen
+110 cdecl _fsopen(str str long) CRTDLL__fsopen
 111 cdecl _fstat(long ptr) CRTDLL__fstat
 112 stub _ftime
 113 cdecl _ftol() CRTDLL__ftol

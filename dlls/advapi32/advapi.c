@@ -8,10 +8,10 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "winbase.h"
 #include "windef.h"
 #include "winerror.h"
 #include "wine/winestring.h"
-#include "heap.h"
 
 #include "debugtools.h"
 

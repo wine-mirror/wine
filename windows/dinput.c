@@ -517,6 +517,7 @@ static HRESULT WINAPI IDirectInputDevice2AImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE2A iface,
 	LPDIDEVCAPS lpDIDevCaps)
 {
+	lpDIDevCaps->dwFlags = DIDC_ATTACHED;
 	FIXME(dinput, "stub!\n");
 	return DI_OK;
 }

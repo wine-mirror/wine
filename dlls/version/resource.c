@@ -9,13 +9,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "peexe.h"
 #include "neexe.h"
 #include "module.h"
 #include "winver.h"
-#include "heap.h"
 #include "lzexpand.h"
-#include "peexe.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver)

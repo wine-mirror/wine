@@ -247,6 +247,10 @@ DWORD __cdecl CRTDLL__initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 	return 0;
 }
 
+CRTDLL_FILE * __cdecl CRTDLL__fsopen(LPCSTR x, LPCSTR y, INT z) {
+	FIXME("(%s,%s,%d),stub!\n",x,y,z);
+	return NULL;
+}
 /*********************************************************************
  *                  _fdopen     (CRTDLL.91)
  */

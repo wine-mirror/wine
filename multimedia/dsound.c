@@ -2277,7 +2277,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 		} else if (errno == EBUSY) {
 			MSG("Sound device busy, will keep trying.\n");
 		} else {
-			MSG("Unexpected error while checking for sound support.\n");
+			MSG("Unexpected error (%d) while checking for sound support.\n",errno);
 			return DSERR_GENERIC;
 		}
 	} else {

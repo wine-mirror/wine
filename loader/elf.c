@@ -114,8 +114,10 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags, DWORD *err)
 	if (!s)
 		s=strrchr(libname,'\\');
 	if (s) {
-		strncpy(t,libname,s-libname+1);
-		t[s-libname+1]= '\0';
+		s++; /* skip / or \ */
+		/* copy everything up to s-1 */
+		memcpy(t,libname,s-libname);
+		t[s-libname]= '\0';
 	} else
 		s = (LPSTR)libname;
 	modname = s;

@@ -761,6 +761,7 @@ static void PROPSHEET_Changed(HWND hwndDlg, HWND hwndDirtyPage)
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
                                                     PropSheetInfoStr);
 
+  if (!psInfo) return;
   /*
    * Set the dirty flag of this page.
    */
