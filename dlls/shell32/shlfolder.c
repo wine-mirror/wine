@@ -682,7 +682,10 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 	  }
 	}
 
-	*ppidl = pidlTemp;
+        if (!hr)
+	  *ppidl = pidlTemp;
+	else
+	  *ppidl = NULL;
 
 	TRACE("(%p)->(-- pidl=%p ret=0x%08lx)\n", This, ppidl? *ppidl:0, hr);
 

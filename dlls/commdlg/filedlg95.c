@@ -2693,7 +2693,7 @@ LPITEMIDLIST GetParentPidl(LPITEMIDLIST pidl)
  *      GetPidlFromName
  *
  * returns the pidl of the file name relative to folder 
- * NULL if an error occured
+ * NULL if an error occurred
  */
 LPITEMIDLIST GetPidlFromName(IShellFolder *lpsf,LPCSTR lpcstrFileName)
 {
@@ -2704,7 +2704,8 @@ LPITEMIDLIST GetPidlFromName(IShellFolder *lpsf,LPCSTR lpcstrFileName)
   TRACE("sf=%p file=%s\n", lpsf, lpcstrFileName);
 
   if(!lpcstrFileName) return NULL;
-    
+  if(!*lpcstrFileName) return NULL;
+
   MultiByteToWideChar(CP_ACP,MB_PRECOMPOSED,lpcstrFileName,-1,(LPWSTR)lpwstrDirName,MAX_PATH);  
 
   if(!lpsf)
