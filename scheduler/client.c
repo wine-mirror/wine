@@ -426,9 +426,9 @@ static int server_connect( const char *oldcwd, const char *serverdir )
         usleep( 50000 );
         if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
         if (connect( s, (struct sockaddr *)&addr, slen ) == -1)
-            fatal_error( "'%s/%s' exists,\n"
+            fatal_error( "file '%s/%s' exists,\n"
                          "   but I cannot connect to it; maybe the server has crashed?\n"
-                         "   If this is the case, you should remove the socket file and try again.\n",
+                         "   If this is the case, you should remove this socket file and try again.\n",
                          serverdir, SOCKETNAME );
     }
     fcntl( s, F_SETFD, 1 ); /* set close on exec flag */
