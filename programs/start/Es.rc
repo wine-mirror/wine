@@ -19,9 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
+LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 {
 STRING_USAGE,                                   "Inicia un programa, o abre un documento con el programa que se suele utilizar para archivos con esa extensión. \n\
 Uso: \n\
