@@ -46,6 +46,15 @@ DEFAULT_DEBUG_CHANNEL(toolbar)
 
 #define TOOLBAR_GetInfoPtr(hwnd) ((TOOLBAR_INFO *)GetWindowLongA(hwnd,0))
 
+static BOOL 
+TOOLBAR_IsValidBitmapIndex(TOOLBAR_INFO *infoPtr, INT index)
+{
+    if ((index>=0) && (index < infoPtr->nNumBitmaps))
+      return TRUE;
+    else
+      return FALSE;
+}
+
 
 static void
 TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc)
@@ -96,7 +105,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 
 	InflateRect (&rcText, -3, -3);
 
-	if (himl && btnPtr->iBitmap>=0) {
+	if (himl && TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
 		if ((dwStyle & TBSTYLE_LIST) &&
 		    ((btnPtr->fsStyle & TBSTYLE_AUTOSIZE) == 0) &&
 		    (btnPtr->iBitmap != I_IMAGENONE)) {
@@ -228,7 +237,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    DrawEdge (hdc, &rc, EDGE_RAISED,
 		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 	
-	if (infoPtr->himlDis && btnPtr->iBitmap>=0)
+	if (infoPtr->himlDis && 
+            TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDis, btnPtr->iBitmap, hdc,
 				rc.left+1, rc.top+1, ILD_NORMAL);
 	else
@@ -245,7 +255,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    DrawEdge (hdc, &rc, BDR_SUNKENOUTER, BF_RECT | BF_MIDDLE | BF_ADJUST);
 	else
 	    DrawEdge (hdc, &rc, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
-        if (btnPtr->iBitmap>=0)
+        if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle,
@@ -265,7 +275,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
 	TOOLBAR_DrawPattern (hdc, &rc);
         
-        if (btnPtr->iBitmap>=0)
+        if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
 
@@ -291,10 +301,11 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     {
 	if (btnPtr->bHot)
 	    DrawEdge (hdc, &rc, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
-	if (btnPtr->bHot && infoPtr->himlHot && btnPtr->iBitmap>=0)
+	if (btnPtr->bHot && infoPtr->himlHot && 
+            TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlHot, btnPtr->iBitmap, hdc,
 			    rc.left +2, rc.top +2, ILD_NORMAL);
-	else if (btnPtr->iBitmap>=0)
+	else if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			    rc.left +2, rc.top +2, ILD_NORMAL);
     }
@@ -303,7 +314,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	DrawEdge (hdc, &rc, EDGE_RAISED,
 		BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
-        if (btnPtr->iBitmap>=0)
+        if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+1, rc.top+1, ILD_NORMAL);
     }
@@ -330,6 +341,34 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
     }
 }
 
+static void
+TOOLBAR_MeasureString(HWND hwnd, INT index, LPSIZE lpSize)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    TBUTTON_INFO *btnPtr;
+    HDC hdc;
+    HFONT hOldFont;
+
+    lpSize->cx = 0;
+    lpSize->cy = 0;
+    hdc = GetDC (0);
+    hOldFont = SelectObject (hdc, infoPtr->hFont);
+
+    btnPtr = &infoPtr->buttons[index];
+
+    if (!(btnPtr->fsState & TBSTATE_HIDDEN) &&
+         (btnPtr->iString > -1) &&
+         (btnPtr->iString < infoPtr->nNumStrings)) 
+    {
+        LPWSTR lpText = infoPtr->strings[btnPtr->iString];
+        GetTextExtentPoint32W (hdc, lpText, lstrlenW (lpText), lpSize);
+    }
+
+    SelectObject (hdc, hOldFont);
+    ReleaseDC (0, hdc);
+
+    TRACE("string size %d x %d!\n", lpSize->cx, lpSize->cy);
+}
 
 static void
 TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
@@ -337,38 +376,20 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *btnPtr;
     INT i;
-    HDC hdc;
-    HFONT hOldFont;
     SIZE sz;
-    LPWSTR lpText = NULL;
 
 
     lpSize->cx = 0;
     lpSize->cy = 0;
-    hdc = GetDC (0);
-    hOldFont = SelectObject (hdc, infoPtr->hFont);
 
     btnPtr = infoPtr->buttons;
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++) {
-	if (!(btnPtr->fsState & TBSTATE_HIDDEN) &&
-	    (btnPtr->iString > -1) &&
-	    (btnPtr->iString < infoPtr->nNumStrings)) {
-	    /* get a pointer to the text */
-	    if (HIWORD(btnPtr->iString) != 0)
-		lpText = (LPWSTR)btnPtr->iString;
-	    else if ((btnPtr->iString >= 0) && (btnPtr->iString < infoPtr->nNumStrings))
-		lpText = infoPtr->strings[btnPtr->iString];
-
-	    GetTextExtentPoint32W (hdc, lpText, lstrlenW (lpText), &sz);
-	    if (sz.cx > lpSize->cx)
-		lpSize->cx = sz.cx;
-	    if (sz.cy > lpSize->cy)
-		lpSize->cy = sz.cy;
-	}
+        TOOLBAR_MeasureString(hwnd,i,&sz);
+        if (sz.cx > lpSize->cx)
+            lpSize->cx = sz.cx;
+        if (sz.cy > lpSize->cy)
+            lpSize->cy = sz.cy;
     }
-
-    SelectObject (hdc, hOldFont);
-    ReleaseDC (0, hdc);
 
     TRACE("string size %d x %d!\n", lpSize->cx, lpSize->cy);
 }
@@ -556,7 +577,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     INT i;
 
     for (i = 0; i < infoPtr->nNumButtons && !usesBitmaps; i++)
-	if (infoPtr->buttons[i].iBitmap >=0)
+	if (TOOLBAR_IsValidBitmapIndex(infoPtr,infoPtr->buttons[i].iBitmap))
 	    usesBitmaps = TRUE;
 
     if (sizeString.cy > 0) {
@@ -633,7 +654,14 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 		cx = (btnPtr->iBitmap > 0) ?
 		     btnPtr->iBitmap : SEPARATOR_WIDTH;
 	else {
-	    cx = infoPtr->nButtonWidth;
+            if (btnPtr->fsStyle & TBSTYLE_AUTOSIZE) 
+            {
+              SIZE sz;
+              TOOLBAR_MeasureString(hwnd,i,&sz);
+              cx = sz.cx + 6;
+            }
+            else
+	      cx = infoPtr->nButtonWidth;
 	}
 	cy = infoPtr->nHeight;
 
@@ -986,7 +1014,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPTBADDBITMAP lpAddBmp = (LPTBADDBITMAP)lParam;
-    INT nIndex = 0, nButtons;
+    INT nIndex = 0, nButtons, nCount;
     HBITMAP hbmLoad;
 
     if (!lpAddBmp)
@@ -1043,6 +1071,8 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			      ILC_COLOR | ILC_MASK, nButtons, 2);
 	infoPtr->himlInt = infoPtr->himlDef;
     }
+
+    nCount = ImageList_GetImageCount(infoPtr->himlDef);
 
     /* Add bitmaps to the default image list */
     if (lpAddBmp->hInst == (HINSTANCE)0)
@@ -1117,7 +1147,21 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	DeleteObject (hbmLoad);
     }
 
-    infoPtr->nNumBitmaps += nButtons;
+    if (nIndex != -1)
+    {
+       INT imagecount = ImageList_GetImageCount(infoPtr->himlDef);
+
+       if (infoPtr->nNumBitmaps + nButtons != imagecount)
+       {
+         WARN("Desired images do not match recieved images : Previous image number %s Previous images in list %i  added %i expecting total %i, Images in list %i\n",
+	      infoPtr->nNumBitmaps, nCount, imagecount - nCount,
+	      infoPtr->nNumBitmaps+nButtons,imagecount);
+
+	 infoPtr->nNumBitmaps = imagecount;
+       }
+       else
+         infoPtr->nNumBitmaps += nButtons;
+    }
 
     return nIndex;
 }
@@ -2817,6 +2861,7 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     himlTemp = infoPtr->himlDef;
     infoPtr->himlDef = (HIMAGELIST)lParam;
 
+     infoPtr->nNumBitmaps = ImageList_GetImageCount(infoPtr->himlDef);
     /* FIXME: redraw ? */
 
     return (LRESULT)himlTemp; 
@@ -3022,6 +3067,8 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nMaxTextRows = 1;
     infoPtr->cxMin = -1;
     infoPtr->cxMax = -1;
+    infoPtr->nNumBitmaps = 0;
+    infoPtr->nNumStrings = 0;
 
     infoPtr->bCaptured = FALSE;
     infoPtr->bUnicode = IsWindowUnicode (hwnd);
