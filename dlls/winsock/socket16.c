@@ -126,7 +126,7 @@ static SEGPTR get_buffer_pe(int size)
         HeapFree( GetProcessHeap(), 0, pe_buffer );
     }
     pe_buffer = HeapAlloc( GetProcessHeap(), 0, (pe_len = size) );
-    pe_buffer_seg = MapLS( he_buffer );
+    pe_buffer_seg = MapLS( pe_buffer );
     return pe_buffer_seg;
 }
 
