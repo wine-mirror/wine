@@ -36,6 +36,8 @@ extern HMODULE SHLWAPI_hcomdlg32;
 extern HMODULE SHLWAPI_hmpr;
 extern HMODULE SHLWAPI_hmlang;
 
+typedef HANDLE HSHARED; /* Shared memory */
+
 /* following is GUID for IObjectWithSite::SetSite  -- see _174           */
 static DWORD id1[4] = {0xfc4801a3, 0x11cf2ba9, 0xaa0029a2, 0x52733d00};
 /* following is GUID for IPersistMoniker::GetClassID  -- see _174        */
@@ -227,75 +229,227 @@ DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.7]
- * (Used by IE4 during startup)
- * appears to return HWND (used as input to 8 below)
+ * SHLWAPI_DupSharedHandle
+ *
+ * Internal implemetation of SHLWAPI_11.
  */
-HRESULT WINAPI SHLWAPI_7 (
-	LPVOID w,
-	LPVOID x,
-	LPVOID y)    /* [???] appears to be result of GetCurrentProcessId() */
+static
+HSHARED WINAPI SHLWAPI_DupSharedHandle(HSHARED hShared, DWORD dwDstProcId,
+                                       DWORD dwSrcProcId, DWORD dwAccess,
+                                       DWORD dwOptions)
 {
-    FIXME("(%p %p %p) stub\n", w, x, y);
-    return 0;
-#if 0
-    /* pseudo code extracted from relay trace */
-    fhnd = CreateFileMappingA(-1, 0, 4, 0, 0x58, 0);
-    addr = MapViewOfFile(fhnd, 6, 0, 0, 0);
-    UnmapViewOfFile(addr);
-    GetCurrentProcessId();
-    GetCurrentProcessId();
-    sph = GetCurrentProcess();
-    GetCurrentProcessId();
-    dph = GetCurrentProcess();
-    DuplicateHandle(sph, fhnd, dph, &hoho, 0x000f001f, 0, 2);
-    GetCurrentProcessId();
-    GetCurrentProcessId();
-    CloseHandle(fhnd);
-    return hoho;
-#endif
+  HANDLE hDst, hSrc;
+  DWORD dwMyProcId = GetCurrentProcessId();
+  HSHARED hRet = (HSHARED)NULL;
+
+  TRACE("(%p,%ld,%ld,%08lx,%08lx)\n", (PVOID)hShared, dwDstProcId, dwSrcProcId,
+        dwAccess, dwOptions);
+
+  /* Get dest process handle */
+  if (dwDstProcId == dwMyProcId)
+    hDst = GetCurrentProcess();
+  else
+    hDst = OpenProcess(PROCESS_DUP_HANDLE, 0, dwDstProcId);
+
+  if (hDst)
+  {
+    /* Get src process handle */
+    if (dwSrcProcId == dwMyProcId)
+      hSrc = GetCurrentProcess();
+    else
+      hSrc = OpenProcess(PROCESS_DUP_HANDLE, 0, dwSrcProcId);
+
+    if (hSrc)
+    {
+      /* Make handle available to dest process */
+      if (!DuplicateHandle(hDst, (HANDLE)hShared, hSrc, &hRet,
+                           dwAccess, 0, dwOptions | DUPLICATE_SAME_ACCESS))
+        hRet = (HSHARED)NULL;
+
+      if (dwSrcProcId != dwMyProcId)
+        CloseHandle(hSrc);
+    }
+
+    if (dwDstProcId != dwMyProcId)
+      CloseHandle(hDst);
+  }
+
+  TRACE("Returning handle %p\n", (PVOID)hRet);
+  return hRet;
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.8]
- * (Used by IE4 during startup)
- * appears to return MapViewOfFile+4 (used as input to 9 below)
- */
-LONG WINAPI SHLWAPI_8 (
-	LPVOID w,    /* [???] possibly HANDLE */
-	LPVOID x)    /* [???] appears to be result of GetCurrentProcessId() */
+ * @  [SHLWAPI.7]
+ *
+ * Create a block of sharable memory and initialise it with data.
+ *
+ * PARAMS
+ * dwProcId [I] ID of process owning data
+ * lpvData  [I] Pointer to data to write
+ * dwSize   [I] Size of data
+ *
+ * RETURNS
+ * Success: A shared memory handle
+ * Failure: NULL
+ *
+ * NOTES
+ * Ordinals 7-11 provide a set of calls to create shared memory between a
+ * group of processes. The shared memory is treated opaquely in that its size
+ * is not exposed to clients who map it. This is accomplished by storing
+ * the size of the map as the first DWORD of mapped data, and then offsetting
+ * the view pointer returned by this size.
+ *
+ * SHLWAPI_7/SHLWAPI_10 - Create/Destroy the shared memory handle
+ * SHLWAPI_8/SHLWAPI_9  - Get/Release a pointer to the shared data
+ * SHLWAPI_11           - Helper function; Duplicate cross-process handles
+   */
+HSHARED WINAPI SHLWAPI_7 (DWORD dwProcId, LPCVOID lpvData, DWORD dwSize)
 {
-    FIXME("(%p %p) stub\n", w, x);
-    return 0;
-#if 0
-    /* pseudo code extracted from relay trace */
-    GetCurrentProcessId();
-    GetCurrentProcessId();
-    sph = GetCurrentProcess();
-    GetCurrentProcessId();
-    dph = GetCurrentProcess();
-    DuplicateHandle(sph, w, dph, &hoho, 0x000f001f, 0, 2);
-    GetCurrentProcessId();
-    GetCurrentProcessId();
-    addr = MapViewOfFile(hoho, 6, 0, 0, 0);
-    CloseHandle(hoho);
-    return (LONG)addr + 4;
-#endif
+  HANDLE hMap;
+  LPVOID pMapped;
+  HSHARED hRet = (HSHARED)NULL;
+
+  TRACE("(%ld,%p,%ld)\n", dwProcId, lpvData, dwSize);
+
+  /* Create file mapping of the correct length */
+  hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, FILE_MAP_READ, 0,
+                            dwSize + sizeof(dwSize), NULL);
+  if (!hMap)
+    return hRet;
+
+  /* Get a view in our process address space */
+  pMapped = MapViewOfFile(hMap, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
+
+  if (pMapped)
+  {
+    /* Write size of data, followed by the data, to the view */
+    *((DWORD*)pMapped) = dwSize;
+    if (dwSize)
+      memcpy(pMapped + sizeof(dwSize), lpvData, dwSize);
+
+    /* Release view. All further views mapped will be opaque */
+    UnmapViewOfFile(pMapped);
+    hRet = SHLWAPI_DupSharedHandle((HSHARED)hMap, dwProcId,
+                                   GetCurrentProcessId(), FILE_MAP_ALL_ACCESS,
+                                   DUPLICATE_SAME_ACCESS);
+  }
+
+  CloseHandle(hMap);
+  return hRet;
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.9]
- * (Used by IE4 during startup)
+ * @ [SHLWAPI.8]
+ *
+ * Get a pointer to a block of shared memory from a shared memory handle.
+ *
+ * PARAMS
+ * hShared  [I] Shared memory handle
+ * dwProcId [I] ID of process owning hShared
+ *
+ * RETURNS
+ * Success: A pointer to the shared memory
+ * Failure: NULL
+ *
+ * NOTES
+ * See SHLWAPI_7.
+   */
+PVOID WINAPI SHLWAPI_8 (HSHARED hShared, DWORD dwProcId)
+  {
+  HSHARED hDup;
+  LPVOID pMapped;
+
+  TRACE("(%p %ld)\n", (PVOID)hShared, dwProcId);
+
+  /* Get handle to shared memory for current process */
+  hDup = SHLWAPI_DupSharedHandle(hShared, dwProcId, GetCurrentProcessId(),
+                                 FILE_MAP_ALL_ACCESS, 0);
+  /* Get View */
+  pMapped = MapViewOfFile((HANDLE)hDup, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
+  CloseHandle(hDup);
+
+  if (pMapped)
+    return pMapped + sizeof(DWORD); /* Hide size */
+  return NULL;
+}
+
+/*************************************************************************
+ * @ [SHLWAPI.9]
+ *
+ * Release a pointer to a block of shared memory.
+ *
+ * PARAMS
+ * lpView [I] Shared memory pointer
+ *
+ * RETURNS
+ * Success: TRUE
+ * Failure: FALSE
+ *
+ * NOTES
+ * See SHLWAPI_7.
  */
-HRESULT WINAPI SHLWAPI_9 (
-	LPVOID w)
+BOOL WINAPI SHLWAPI_9 (LPVOID lpView)
 {
-    FIXME("(%p) stub\n", w);
-    return 0;
-#if 0
-    /* pseudo code extracted from relay trace */
-    return UnmapViewOfFile((LPVOID)((LONG)w-4));
-#endif
+  TRACE("(%p)\n", lpView);
+  return UnmapViewOfFile(lpView - sizeof(DWORD)); /* Include size */
+}
+
+/*************************************************************************
+ * @ [SHLWAPI.10]
+ *
+ * Destroy a block of sharable memory.
+ *
+ * PARAMS
+ * hShared  [I] Shared memory handle
+ * dwProcId [I] ID of process owning hShared
+ *
+ * RETURNS
+ * Success: TRUE
+ * Failure: FALSE
+ *
+ * NOTES
+ * See SHLWAPI_7.
+ */
+BOOL WINAPI SHLWAPI_10 (HSHARED hShared, DWORD dwProcId)
+{
+  HSHARED hClose;
+
+  TRACE("(%p %ld)\n", (PVOID)hShared, dwProcId);
+
+  /* Get a copy of the handle for our process, closing the source handle */
+  hClose = SHLWAPI_DupSharedHandle(hShared, dwProcId, GetCurrentProcessId(),
+                                   FILE_MAP_ALL_ACCESS,DUPLICATE_CLOSE_SOURCE);
+  /* Close local copy */
+  return CloseHandle((HANDLE)hClose);
+}
+
+/*************************************************************************
+ * @   [SHLWAPI.11]
+ *
+ * Copy a sharable memory handle from one process to another.
+ *
+ * PARAMS
+ * hShared     [I] Shared memory handle to duplicate
+ * dwDstProcId [I] ID of the process wanting the duplicated handle
+ * dwSrcProcId [I] ID of the process owning hShared
+ * dwAccess    [I] Desired DuplicateHandle access
+ * dwOptions   [I] Desired DuplicateHandle options
+ *
+ * RETURNS
+ * Success: A handle suitable for use by the dwDstProcId process.
+ * Failure: A NULL handle.
+ *
+ * NOTES
+ * See SHLWAPI_7.
+ */
+HSHARED WINAPI SHLWAPI_11(HSHARED hShared, DWORD dwDstProcId, DWORD dwSrcProcId,
+                          DWORD dwAccess, DWORD dwOptions)
+{
+  HSHARED hRet;
+
+  hRet = SHLWAPI_DupSharedHandle(hShared, dwDstProcId, dwSrcProcId,
+                                 dwAccess, dwOptions);
+  return hRet;
 }
 
 /*************************************************************************

@@ -16,11 +16,11 @@ debug_channels (shell)
 4   stub @
 5   stub @
 6   stub @
-7   stdcall @(long long long) SHLWAPI_7
+7   stdcall @(long ptr long) SHLWAPI_7
 8   stdcall @(long long) SHLWAPI_8
-9   stdcall @(long) SHLWAPI_9
-10  stub @
-11  stub @
+9   stdcall @(ptr) SHLWAPI_9
+10  stdcall @(long long) SHLWAPI_10
+11  stdcall @(long long long long long) SHLWAPI_11
 12  stub @
 13  stdcall @(ptr ptr) SHLWAPI_13
 14  stdcall @(ptr ptr) SHLWAPI_14
