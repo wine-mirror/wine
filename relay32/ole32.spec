@@ -40,14 +40,14 @@ type	win32
  37 stub CoRegisterMallocSpy
  38 stdcall CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter32
  39 stub CoReleaseMarshalData
- 40 stdcall CoRevokeClassObject(long) CoRevokeClassObject
+ 40 stdcall CoRevokeClassObject(long) CoRevokeClassObject32
  41 stub CoRevokeMallocSpy
  42 stdcall CoSetState(ptr) CoSetState32
  43 stdcall CoTaskMemAlloc(long) CoTaskMemAlloc
  44 stdcall CoTaskMemFree(ptr) CoTaskMemFree
  45 stub CoTaskMemRealloc
  46 stub CoTreatAsClass
- 47 stdcall CoUninitialize() CoUninitialize
+ 47 stdcall CoUninitialize() CoUninitialize32
  48 stub CoUnloadingWOW
  49 stub CoUnmarshalHresult
  50 stub CoUnmarshalInterface

@@ -41,8 +41,9 @@ HRESULT WINAPI CoInitialize32(LPVOID lpReserved);
 HRESULT WINAPI CoInitializeEx32(LPVOID lpReserved, DWORD dwCoInit);
 #define CoInitializeEx WINELIB_NAME(CoInitializeEx)
 
-void WINAPI CoUninitialize(void);
-
+void WINAPI CoUninitialize16(void);
+void WINAPI CoUninitialize32(void);
+#define CoUninitialize WINELIB_NAME(CoUninitialize)
 
 HRESULT WINAPI CoCreateGuid(GUID *pguid);
 
@@ -59,7 +60,9 @@ HRESULT WINAPI CoRegisterClassObject16(REFCLSID rclsid, LPUNKNOWN pUnk, DWORD dw
 HRESULT WINAPI CoRegisterClassObject32(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,LPDWORD lpdwRegister);
 #define CoRegisterClassObject WINELIB_NAME(CoRegisterClassObject)
 
-HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
+HRESULT WINAPI CoRevokeClassObject32(DWORD dwRegister);
+#define CoRevokeClassObject WINELIB_NAME(CoRevokeClassObject)
+
 HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,LPVOID pvReserved, const REFIID iid, LPVOID *ppv);
 
 

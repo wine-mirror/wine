@@ -3,6 +3,7 @@
  *
  *	Copyright 1995	Martin von Loewis
  *	Copyright 1998	Justin Bradford
+ *      Copyright 1999  Francis Beaudet
  */
 
 #include "config.h"
@@ -30,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 #include "windows.h"
 #include "winerror.h"
 #include "ole.h"
@@ -42,12 +44,43 @@
 
 #include "objbase.h"
 
+/****************************************************************************
+ * This section defines variables internal to the COM module.
+ *
+ * TODO: Most of these things will have to be made thread-safe.
+ */
 LPMALLOC16 currentMalloc16=NULL;
 LPMALLOC32 currentMalloc32=NULL;
 
 HTASK16 hETask = 0;
 WORD Table_ETask[62];
 
+/*
+ * This lock count counts the number of times CoInitialize is called. It is
+ * decreased every time CoUninitialize is called. When it hits 0, the COM
+ * libraries are freed
+ */
+static ULONG s_COMLockCount = 0;
+
+/*
+ * This linked list contains the list of registered class objects. These
+ * are mostly used to register the factories for out-of-proc servers of OLE
+ * objects.
+ *
+ * TODO: Make this data structure aware of inter-process communication. This
+ *       means that parts of this will be exported to the Wine Server.
+ */
+typedef struct tagRegisteredClass
+{
+  CLSID     classIdentifier;
+  LPUNKNOWN classObject;
+  DWORD     runContext;
+  DWORD     connectFlags;
+  DWORD     dwCookie;
+  struct tagRegisteredClass* nextClass;
+} RegisteredClass;
+
+static RegisteredClass* firstRegisteredClass = NULL;
 
 /* this open DLL table belongs in a per process table, but my guess is that
  * it shouldn't live in the kernel, so I'll put them out here in DLL
@@ -60,6 +93,16 @@ typedef struct tagOpenDll {
 } OpenDll;
 
 static OpenDll *openDllList = NULL; /* linked list of open dlls */
+
+/*****************************************************************************
+ * This section contains prototypes to internal methods for this
+ * module
+ */
+static HRESULT COM_GetRegisteredClassObject(REFCLSID    rclsid,
+					    DWORD       dwClsContext,
+					    LPUNKNOWN*  ppUnk);
+
+static void COM_RevokeAllClasses();
 
 
 /******************************************************************************
@@ -88,60 +131,136 @@ HRESULT WINAPI CoInitialize16(
 /******************************************************************************
  *		CoInitialize32	[OLE32.26]
  *
- * Set the win32 IMalloc used for memorymanagement
+ * Initializes the COM libraries.
  *
- * RETURNS
- * S_OK if successful, S_FALSE otherwise, RPC_E_CHANGED_MODE if a previous 
- * call to CoInitializeEx specified another threading model.
- *
- * BUGS
- * Only the single threaded model is supported. As a result RPC_E_CHANGED_MODE 
- * is never returned.
+ * See CoInitializeEx32
  */
 HRESULT WINAPI CoInitialize32(
-	LPVOID lpReserved	/* [in] pointer to win32 malloc interface */
-) {
-    /* FIXME: there really should be something here that incrememts a refcount
-     * but I'm supposing that it is a real COM object, so I won't bother
-     * creating one here.  (Decrement done in CoUnitialize()) */
-    currentMalloc32 = (LPMALLOC32)lpReserved;
-    return S_OK;
+	LPVOID lpReserved	/* [in] pointer to win32 malloc interface
+                                   (obsolete, should be NULL) */
+) 
+{
+  /*
+   * Just delegate to the newer method.
+   */
+  return CoInitializeEx32(lpReserved, COINIT_APARTMENTTHREADED);
 }
 
 /******************************************************************************
  *		CoInitializeEx32	[OLE32.163]
  *
- * Set the win32 IMalloc used for memory management
+ * Initializes the COM libraries. The behavior used to set the win32 IMalloc
+ * used for memory management is obsolete.
  *
  * RETURNS
- * S_OK if successful, S_FALSE otherwise, RPC_E_CHANGED_MODE if a previous 
- * call to CoInitializeEx specified another threading model.
+ *  S_OK               if successful,
+ *  S_FALSE            if this function was called already.
+ *  RPC_E_CHANGED_MODE if a previous call to CoInitialize specified another
+ *                      threading model.
  *
  * BUGS
  * Only the single threaded model is supported. As a result RPC_E_CHANGED_MODE 
  * is never returned.
+ *
+ * See the windows documentation for more details.
  */
 HRESULT WINAPI CoInitializeEx32(
-	LPVOID lpReserved,	/* [in] pointer to win32 malloc interface */
+	LPVOID lpReserved,	/* [in] pointer to win32 malloc interface
+                                   (obsolete, should be NULL) */
 	DWORD dwCoInit		/* [in] A value from COINIT specifies the threading model */
-) {
-  if (dwCoInit!=COINIT_APARTMENTTHREADED) {
+) 
+{
+  HRESULT hr;
+
+  TRACE(ole, "(%p, %x)\n", lpReserved, (int)dwCoInit);
+
+  if (lpReserved!=NULL)
+  {
+    ERR(ole,"(%p, %x) - Bad parameter passed-in %p, must be an old Windows Application\n", lpReserved, (int)dwCoInit, lpReserved);
+  }
+
+  /*
+   * Check for unsupported features.
+   */
+  if (dwCoInit!=COINIT_APARTMENTTHREADED) 
+  {
     FIXME(ole, ":(%p,%x): unsupported flag %x\n", lpReserved, (int)dwCoInit, (int)dwCoInit);
     /* Hope for the best and continue anyway */
   }
-  return CoInitialize32(lpReserved);
+
+  /*
+   * Check the lock count. If this is the first time going through the initialize
+   * process, we have to initialize the libraries.
+   */
+  if (s_COMLockCount==0)
+  {
+    /*
+     * Initialize the various COM libraries and data structures.
+     */
+    TRACE(ole, "() - Initializing the COM libraries\n");
+
+    hr = S_OK;
+  }
+  else
+    hr = S_FALSE;
+
+  /*
+   * Crank-up that lock count.
+   */
+  s_COMLockCount++;
+
+  return hr;
 }
 
 /***********************************************************************
- *           CoUnitialize   [COMPOBJ.3]
+ *           CoUninitialize16   [COMPOBJ.3]
  * Don't know what it does. 
  * 3-Nov-98 -- this was originally misspelled, I changed it to what I
  *   believe is the correct spelling
  */
-void WINAPI CoUninitialize(void)
+void WINAPI CoUninitialize16(void)
 {
-    TRACE(ole,"(void)\n");
+  TRACE(ole,"()\n");
+  CoFreeAllLibraries();
+}
+
+/***********************************************************************
+ *           CoUninitialize32   [OLE32.47]
+ *
+ * This method will release the COM libraries.
+ *
+ * See the windows documentation for more details.
+ */
+void WINAPI CoUninitialize32(void)
+{
+  TRACE(ole,"()\n");
+  
+  /*
+   * Decrease the reference count.
+   */
+  s_COMLockCount--;
+  
+  /*
+   * If we are back to 0 locks on the COM library, make sure we free
+   * all the associated data structures.
+   */
+  if (s_COMLockCount==0)
+  {
+    /*
+     * Release the various COM libraries and data structures.
+     */
+    TRACE(ole, "() - Releasing the COM libraries\n");
+
+    /*
+     * Release the references to the registered class objects.
+     */
+    COM_RevokeAllClasses();
+
+    /*
+     * This will free the loaded COM Dlls.
+     */
     CoFreeAllLibraries();
+}
 }
 
 /***********************************************************************
@@ -752,10 +871,76 @@ HRESULT WINAPI CoRegisterClassObject16(
 	return 0;
 }
 
+/***
+ * COM_GetRegisteredClassObject
+ *
+ * This internal method is used to scan the registered class list to 
+ * find a class object.
+ *
+ * Params: 
+ *   rclsid        Class ID of the class to find.
+ *   dwClsContext  Class context to match.
+ *   ppv           [out] returns a pointer to the class object. Complying
+ *                 to normal COM usage, this method will increase the
+ *                 reference count on this object.
+ */
+static HRESULT COM_GetRegisteredClassObject(
+	REFCLSID    rclsid,
+	DWORD       dwClsContext,
+	LPUNKNOWN*  ppUnk)
+{
+  RegisteredClass* curClass;
+
+  /*
+   * Sanity check
+   */
+  assert(ppUnk!=0);
+
+  /*
+   * Iterate through the whole list and try to match the class ID.
+   */
+  curClass = firstRegisteredClass;
+
+  while (curClass != 0)
+  {
+    /*
+     * Check if we have a match on the class ID.
+     */
+    if (IsEqualGUID32(&(curClass->classIdentifier), rclsid))
+    {
+      /*
+       * Since we don't do out-of process or DCOM just right away, let's ignore the
+       * class context.
+       */
+
+      /*
+       * We have a match, return the pointer to the class object.
+       */
+      *ppUnk = curClass->classObject;
+
+      IUnknown_AddRef(curClass->classObject);
+
+      return S_OK;
+    }
+
+    /*
+     * Step to the next class in the list.
+     */
+    curClass = curClass->nextClass;
+  }
+
+  /*
+   * If we get to here, we haven't found our class.
+   */
+  return S_FALSE;
+}
+
 /******************************************************************************
  *		CoRegisterClassObject32	[OLE32.36]
  *
- * Don't know where it registers it ...
+ * This method will register the class object for a given class ID.
+ *
+ * See the Windows documentation for more details.
  */
 HRESULT WINAPI CoRegisterClassObject32(
 	REFCLSID rclsid,
@@ -763,23 +948,137 @@ HRESULT WINAPI CoRegisterClassObject32(
 	DWORD dwClsContext, /* [in] CLSCTX flags indicating the context in which to run the executable */
 	DWORD flags,        /* [in] REGCLS flags indicating how connections are made */
 	LPDWORD lpdwRegister
-) {
+) 
+{
+  RegisteredClass* newClass;
+  LPUNKNOWN        foundObject;
+  HRESULT          hr;
     char buf[80];
 
     WINE_StringFromCLSID(rclsid,buf);
 
-    FIXME(ole,"(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
-	    buf,pUnk,dwClsContext,flags,lpdwRegister
-    );
-    return 0;
+  TRACE(ole,"(%s,%p,0x%08lx,0x%08lx,%p)\n",
+	buf,pUnk,dwClsContext,flags,lpdwRegister);
+
+  /*
+   * Perform a sanity check on the parameters
+   */
+  if ( (lpdwRegister==0) || (pUnk==0) )
+  {
+    return E_INVALIDARG;
+}
+
+  /*
+   * Initialize the cookie (out parameter)
+   */
+  *lpdwRegister = 0;
+
+  /*
+   * First, check if the class is already registered.
+   * If it is, this should cause an error.
+   */
+  hr = COM_GetRegisteredClassObject(rclsid, dwClsContext, &foundObject);
+
+  if (hr == S_OK)
+  {
+    /*
+     * The COM_GetRegisteredClassObject increased the reference count on the
+     * object so it has to be released.
+     */
+    IUnknown_Release(foundObject);
+
+    return CO_E_OBJISREG;
+  }
+    
+  /*
+   * If it is not registered, we must create a new entry for this class and
+   * append it to the registered class list.
+   * We use the address of the chain node as the cookie since we are sure it's
+   * unique.
+   */
+  newClass = HeapAlloc(GetProcessHeap(), 0, sizeof(RegisteredClass));
+
+  /*
+   * Initialize the node.
+   */
+  newClass->classIdentifier = *rclsid;
+  newClass->runContext      = dwClsContext;
+  newClass->connectFlags    = flags;
+  newClass->dwCookie        = (DWORD)newClass;
+  newClass->nextClass       = firstRegisteredClass;
+
+  /*
+   * Since we're making a copy of the object pointer, we have to increase it's
+   * reference count.
+   */
+  newClass->classObject     = pUnk;
+  IUnknown_AddRef(newClass->classObject);
+
+  firstRegisteredClass = newClass;
+    
+  /*
+   * We're successfyl Yippee!
+   */
+  return S_OK;
 }
 
 /***********************************************************************
- *           CoRevokeClassObject [OLE32.40]
+ *           CoRevokeClassObject32 [OLE32.40]
+ *
+ * This method will remove a class object from the class registry
+ *
+ * See the Windows documentation for more details.
  */
-HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister) {
-    FIXME(ole,"(%08lx),stub!\n",dwRegister);
+HRESULT WINAPI CoRevokeClassObject32(
+        DWORD dwRegister) 
+{
+  RegisteredClass** prevClassLink;
+  RegisteredClass*  curClass;
+
+  TRACE(ole,"(%08lx)\n",dwRegister);
+
+  /*
+   * Iterate through the whole list and try to match the cookie.
+   */
+  curClass      = firstRegisteredClass;
+  prevClassLink = &firstRegisteredClass;
+
+  while (curClass != 0)
+  {
+    /*
+     * Check if we have a match on the cookie.
+     */
+    if (curClass->dwCookie == dwRegister)
+    {
+      /*
+       * Remove the class from the chain.
+       */
+      *prevClassLink = curClass->nextClass;
+
+      /*
+       * Release the reference to the class object.
+       */
+      IUnknown_Release(curClass->classObject);
+
+      /*
+       * Free the memory used by the chain node.
+ */
+      HeapFree(GetProcessHeap(), 0, curClass);
+
     return S_OK;
+}
+
+    /*
+     * Step to the next class in the list.
+     */
+    prevClassLink = &(curClass->nextClass);
+    curClass      = curClass->nextClass;
+  }
+
+  /*
+   * If we get to here, we haven't found our class.
+   */
+  return E_INVALIDARG;
 }
 
 /***********************************************************************
@@ -788,6 +1087,7 @@ HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister) {
 HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
                         LPVOID pvReserved, const REFIID iid, LPVOID *ppv)
 {
+    LPUNKNOWN regClassObject;
     char xclsid[50],xiid[50];
     HRESULT hres = E_UNEXPECTED;
 
@@ -801,6 +1101,27 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
     WINE_StringFromCLSID((LPCLSID)iid,xiid);
     TRACE(ole,"\n\tCLSID:\t%s,\n\tIID:\t%s\n",xclsid,xiid);
+
+    /*
+     * First, try and see if we can't match the class ID with one of the 
+     * registered classes.
+     */
+    if (S_OK == COM_GetRegisteredClassObject(rclsid, dwClsContext, &regClassObject))
+    {
+      /*
+       * Get the required interface from the retrieved pointer.
+       */
+      hres = IUnknown_QueryInterface(regClassObject, iid, ppv);
+
+      /*
+       * Since QI got another reference on the pointer, we want to release the
+       * one we already have. If QI was unsuccessful, this will release the object. This
+       * is good since we are not returning it in the "out" parameter.
+       */
+      IUnknown_Release(regClassObject);
+
+      return hres;
+    }
 
     /* out of process and remote servers not supported yet */
     if ((CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER) & dwClsContext) {
@@ -841,8 +1162,10 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 	    TRACE(ole,"couldn't find function DllGetClassObject in %s\n", dllName);
 	    return E_ACCESSDENIED;
 	}
-	/* FIXME: Shouldn't we get a classfactory and use this to create 
-	 * the required object?
+
+	/*
+	 * Ask the DLL for it's class object. (there was a note here about class
+	 * factories but this is good.
 	 */
 	return DllGetClassObject(rclsid, iid, ppv);
     }
@@ -868,32 +1191,41 @@ HRESULT WINAPI CoCreateInstance(
 	LPUNKNOWN pUnkOuter,
 	DWORD dwClsContext,
 	REFIID iid,
-	LPVOID *ppv
-) {
-#if 0
-	char buf[80],xbuf[80];
-
-	if (rclsid)
-		WINE_StringFromCLSID(rclsid,buf);
-	else
-		sprintf(buf,"<rclsid-0x%08lx>",(DWORD)rclsid);
-	if (iid)
-		WINE_StringFromCLSID(iid,xbuf);
-	else
-		sprintf(xbuf,"<iid-0x%08lx>",(DWORD)iid);
-
-	FIXME(ole,"(%s,%p,0x%08lx,%s,%p): stub !\n",buf,pUnkOuter,dwClsContext,xbuf,ppv);
-	*ppv = NULL;
-#else	
+	LPVOID *ppv) 
+{
 	HRESULT hres;
 	LPCLASSFACTORY lpclf = 0;
 
-        hres = CoGetClassObject(rclsid, dwClsContext, NULL, (const REFIID) &IID_IClassFactory, (LPVOID)&lpclf);
-        if (!SUCCEEDED(hres)) return hres;
+  /*
+   * Sanity check
+   */
+  if (ppv==0)
+    return E_POINTER;
+
+  /*
+   * Initialize the "out" parameter
+   */
+  *ppv = 0;
+  
+  /*
+   * Get a class factory to construct the object we want.
+   */
+  hres = CoGetClassObject(rclsid,
+			  dwClsContext,
+			  NULL,
+			  (const REFIID) &IID_IClassFactory,
+			  (LPVOID)&lpclf);
+
+  if (FAILED(hres))
+    return hres;
+
+  /*
+   * Create the object and don't forget to release the factory
+   */
 	hres = IClassFactory_CreateInstance(lpclf, pUnkOuter, iid, ppv);
 	IClassFactory_Release(lpclf);
+
 	return hres;
-#endif
 }
 
 
@@ -1112,3 +1444,19 @@ HRESULT WINAPI CoSetState32(LPDWORD state)
     *state = 0;
     return S_OK;
 }
+
+/***
+ * COM_RevokeAllClasses
+ *
+ * This method is called when the COM libraries are uninitialized to 
+ * release all the references to the class objects registered with
+ * the library
+ */
+static void COM_RevokeAllClasses()
+{
+  while (firstRegisteredClass!=0)
+  {
+    CoRevokeClassObject32(firstRegisteredClass->dwCookie);
+  }
+}
+

@@ -9,11 +9,23 @@
 #include "ole2.h"
 #include "process.h"
 #include "debug.h"
+#include "objbase.h"
 #include "objidl.h"
 #include "wine/obj_base.h"
 #include "wine/obj_clientserver.h"
 #include "wine/obj_storage.h"
 #include "wine/obj_moniker.h"
+
+/******************************************************************************
+ * These are static/global variables that the OLE module uses to maintain
+ * it's state.
+ */
+
+/*
+ * This is the lock count on the OLE library. It is controlled by the
+ * OLEInitialize/OLEUninitialize methods.
+ */
+static ULONG s_OLEModuleLockCount = 0;
 
 /******************************************************************************
  *		OleBuildVersion	[OLE2.1]
@@ -29,8 +41,44 @@ DWORD WINAPI OleBuildVersion(void)
  */
 HRESULT WINAPI OleInitialize(LPVOID reserved)
 {
-    FIXME(ole,"OleInitialize - stub\n");
-    return S_OK;
+  HRESULT hr;
+
+  TRACE(ole, "(%p)\n", reserved);
+
+  /*
+   * The first duty of the OleInitialize is to initialize the COM libraries.
+   */
+  hr = CoInitializeEx32(NULL, COINIT_APARTMENTTHREADED);
+
+  /*
+   * If the CoInitializeEx call failed, the OLE libraries can't be 
+   * initialized.
+   */
+  if (FAILED(hr))
+    return hr;    
+
+  /*
+   * Then, it has to initialize the OLE specific modules.
+   * This includes:
+   *     Clipboard
+   *     Drag and Drop
+   *     Object linking and Embedding
+   *     In-place activation
+   */
+  if (s_OLEModuleLockCount==0)
+{
+    /* 
+     * Initialize the libraries.
+     */
+    TRACE(ole, "() - Initializing the OLE libraries\n");
+}
+
+  /*
+   * Then, we increase the lock count on the OLE module.
+   */
+  s_OLEModuleLockCount++;  
+
+  return hr;
 }
 
 /******************************************************************************
@@ -48,7 +96,28 @@ DWORD WINAPI CoGetCurrentProcess(void) {
  */
 void WINAPI OleUninitialize(void)
 {
-    FIXME(ole,"stub\n");
+  TRACE(ole, "()\n");
+
+  /*
+   * Decrease the lock count on the OLE module.
+   */
+  s_OLEModuleLockCount--;
+
+  /*
+   * If we hit the bottom of the lock stack, free the libraries.
+   */
+  if (s_OLEModuleLockCount==0)
+  {
+    /*
+     * Actually free the libraries.
+     */
+    TRACE(ole, "() - Freeing the last reference count\n");
+  }
+  
+  /*
+   * Then, uninitialize the COM libraries.
+   */
+  CoUninitialize32();
 }
 
 /***********************************************************************
