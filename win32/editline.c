@@ -239,8 +239,8 @@ static int WCEL_GetLeftWordTransition(WCEL_Context* ctx, int ofs)
 static int WCEL_GetRightWordTransition(WCEL_Context* ctx, int ofs)
 {
     ofs++;
-    while (ofs <= ctx->len && !WCEL_iswalnum(ctx->line[ofs])) ofs++;
     while (ofs <= ctx->len && WCEL_iswalnum(ctx->line[ofs])) ofs++;
+    while (ofs <= ctx->len && !WCEL_iswalnum(ctx->line[ofs])) ofs++;
     return min(ofs, ctx->len);
 }
 
@@ -294,6 +294,46 @@ static void    WCEL_MoveToHist(WCEL_Context* ctx, int idx)
 	HeapFree(GetProcessHeap(), 0, data);
 	ctx->histPos = idx;
     }
+}
+
+static void    WCEL_FindPrevInHist(WCEL_Context* ctx)
+{
+    int startPos = ctx->histPos;
+    WCHAR*	data;
+    int		len, oldofs;
+
+    if (ctx->histPos && ctx->histPos == ctx->histSize) {
+        startPos--;
+        ctx->histPos--;
+    }
+
+    do {
+       data = WCEL_GetHistory(ctx, ctx->histPos);
+
+       if (ctx->histPos) ctx->histPos--;
+       else ctx->histPos = (ctx->histSize-1);
+
+       len = lstrlenW(data) + 1;
+       if ((len >= ctx->ofs) && 
+           (memcmp(ctx->line, data, ctx->ofs * sizeof(WCHAR)) == 0)) {
+
+           /* need to clean also the screen if new string is shorter than old one */
+           WCEL_DeleteString(ctx, 0, ctx->len);
+
+           if (WCEL_Grow(ctx, len))
+           {
+              oldofs = ctx->ofs;
+              ctx->ofs = 0;
+              WCEL_InsertString(ctx, data);
+              ctx->ofs = oldofs;
+              SetConsoleCursorPosition(ctx->hConOut, WCEL_GetCoord(ctx, ctx->ofs));
+              HeapFree(GetProcessHeap(), 0, data);
+              return;
+           }
+       }
+    } while (ctx->histPos != startPos);
+    
+    return;
 }
 
 /* ====================================================================
@@ -537,6 +577,13 @@ static KeyEntry StdKeyMap[] =
     {	0,		NULL			}
 };
 
+static KeyEntry Win32ExtraStdKeyMap[] = 
+{
+    {/*VK_F8*/   0x77,	WCEL_FindPrevInHist	},
+    {	0,		NULL			}
+};
+
+
 static	KeyEntry EmacsKeyMapCtrl[] = 
 {
     {	CTRL('@'),	WCEL_SetMark		},
@@ -617,6 +664,7 @@ static	KeyEntry Win32KeyMapExtended[] =
     {/*VK_END*/  0x23,	WCEL_MoveToEnd 		},
     {/*VK_UP*/   0x26, 	WCEL_MoveToPrevHist 	},
     {/*VK_DOWN*/ 0x28,	WCEL_MoveToNextHist	},
+    {/*VK_DEL*/  0x2e,	WCEL_FindPrevInHist /*L_DeleteCurrChar*/	},
     {	0,		NULL 			}
 };
 
@@ -624,12 +672,14 @@ static	KeyEntry Win32KeyMapCtrlExtended[] =
 {
     {/*VK_LEFT*/ 0x25, 	WCEL_MoveToLeftWord 	},
     {/*VK_RIGHT*/0x27,	WCEL_MoveToRightWord	},
+    {/*VK_END*/  0x23,	WCEL_KillToEndOfLine	},
     {	0,		NULL 			}
 };
 
 KeyMap	Win32KeyMap[] = 
 {
     {0x00000000, 1, StdKeyMap},
+    {0x00000000, 0, Win32ExtraStdKeyMap},
     {0x00000100, 0, Win32KeyMapExtended},
     {0x00000104, 0, Win32KeyMapCtrlExtended},
     {0x00000108, 0, Win32KeyMapCtrlExtended},
