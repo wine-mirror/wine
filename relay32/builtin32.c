@@ -20,6 +20,7 @@
 #include "winerror.h"
 #include "server.h"
 #include "debugtools.h"
+#include "options.h" /* for argv0 */
 
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(relay);
@@ -48,7 +49,6 @@ static int nb_dlls;
 
 extern void RELAY_CallFrom32();
 extern void RELAY_CallFrom32Regs();
-
 
 /***********************************************************************
  *           BUILTIN32_WarnSecondInstance
@@ -96,11 +96,18 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     DEBUG_ENTRY_POINT *debug;
     INT i, size, nb_sections;
     BYTE *addr;
+    BYTE* xcnlnk;
+    DWORD xcnsize = 0;
 
     /* Allocate the module */
 
     nb_sections = 2;  /* exports + code */
     if (descr->nb_imports) nb_sections++;
+
+    if (!strcmp(descr->name, "KERNEL32")) {
+       nb_sections++;
+       xcnsize = sizeof(DWORD);
+    }
     size = (sizeof(IMAGE_DOS_HEADER)
             + sizeof(IMAGE_NT_HEADERS)
             + nb_sections * sizeof(IMAGE_SECTION_HEADER)
@@ -108,7 +115,9 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
             + sizeof(IMAGE_EXPORT_DIRECTORY)
             + descr->nb_funcs * sizeof(LPVOID)
             + descr->nb_names * sizeof(LPSTR)
-            + descr->fwd_size);
+            + descr->fwd_size 
+	    + xcnsize);
+
 #ifdef __i386__
     if (WARN_ON(relay) || TRACE_ON(relay))
         size += descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
@@ -124,7 +133,8 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     funcs = (LPVOID *)(exp + 1);
     names = (LPSTR *)(funcs + descr->nb_funcs);
     pfwd  = (LPSTR)(names + descr->nb_names);
-    rtab  = pfwd + descr->fwd_size;
+    xcnlnk= pfwd + descr->fwd_size;
+    rtab  = xcnlnk + xcnsize;
     debug = (DEBUG_ENTRY_POINT *)(rtab + (rsrc ? rsrc->restabsize : 0));
 
     /* Build the DOS and NT headers */
@@ -219,7 +229,23 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
                              IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ |
                              IMAGE_SCN_MEM_WRITE);
-    sec++;
+
+    /* Build Wine's .so link section. Those sections are used by the wine debugger to
+     * link a builtin PE header with the corresponding ELF module (from either a 
+     * shared library, or the main executable - wine emulator or any winelib program 
+     */
+    if (xcnsize) 
+    {
+       sec++;
+       strcpy( sec->Name, ".xcnlnk" );
+       sec->Misc.VirtualSize = xcnsize;
+       sec->VirtualAddress   = (BYTE *)xcnlnk - addr;
+       sec->SizeOfRawData    = sec->Misc.VirtualSize;
+       sec->PointerToRawData = (BYTE *)xcnlnk - addr;
+       sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ);
+
+       *(const char**)xcnlnk = argv0;
+    }
 
     /* Build the resource directory */
 
