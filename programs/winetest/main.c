@@ -55,6 +55,7 @@ struct rev_info
     const char* rev;
 };
 
+char *tag = NULL;
 static struct wine_test *wine_tests;
 static struct rev_info *rev_infos = NULL;
 static const char whitespace[] = " \t\r\n";
@@ -429,7 +430,7 @@ EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
 }
 
 char *
-run_tests (char *logname, const char *tag)
+run_tests (char *logname)
 {
     int nr_of_files = 0, nr_of_tests = 0, i;
     char *tempdir, *shorttempdir;
@@ -480,7 +481,7 @@ run_tests (char *logname, const char *tag)
     xprintf ("Archive: ");
     if (strres) xprintf ("%.*s", strsize, strres);
     else xprintf ("-\n");
-    xprintf ("Tag: %s\n", tag?tag:"");
+    xprintf ("Tag: %s\n", tag);
     xprintf ("Build info:\n");
     strres = extract_rcdata (BUILD_INFO, STRINGRES, &strsize);
     while (strres) {
@@ -556,8 +557,9 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                     LPSTR cmdLine, int cmdShow)
 {
     char *logname = NULL;
-    const char *cp, *submit = NULL, *tag = NULL;
+    const char *cp, *submit = NULL;
     int reset_env = 1;
+    int interactive = 1;
 
     /* initialize the revision information first */
     extract_rev_infos();
@@ -572,6 +574,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
         switch (cmdLine[1]) {
         case 'c':
             report (R_TEXTMODE);
+            interactive = 0;
             break;
         case 'e':
             reset_env = 0;
@@ -581,6 +584,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             exit (0);
         case 'q':
             report (R_QUIET);
+            interactive = 0;
             break;
         case 's':
             submit = strtok (NULL, whitespace);
@@ -608,10 +612,10 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
         cmdLine = strtok (NULL, whitespace);
     }
     if (!submit) {
-        if (!running_on_visible_desktop ()) {
-            report (R_ERROR, "Tests must be run on a visible desktop");
-            exit (2);
-        }
+        report (R_STATUS, "Starting up");
+
+        if (!running_on_visible_desktop ())
+            report (R_FATAL, "Tests must be run on a visible desktop");
 
         if (reset_env && (putenv ("WINETEST_PLATFORM=windows") ||
                           putenv ("WINETEST_DEBUG=1") || 
@@ -619,15 +623,22 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                           putenv ("WINETEST_REPORT_SUCCESS=0")))
             report (R_FATAL, "Could not reset environment: %d", errno);
 
-        report (R_STATUS, "Starting up");
+        if (!tag) {
+            if (!interactive)
+                report (R_FATAL, "Please specify a tag (-t option) if "
+                        "running noninteractive!");
+            if (guiAskTag () == IDABORT) exit (1);
+        }
+        report (R_TAG);
+
         if (!logname) {
-            logname = run_tests (NULL, tag);
+            logname = run_tests (NULL);
             if (report (R_ASK, MB_YESNO, "Do you want to submit the "
                         "test results?") == IDYES)
                 if (!send_file (logname) && remove (logname))
                     report (R_WARNING, "Can't remove logfile: %d.", errno);
             free (logname);
-        } else run_tests (logname, tag);
+        } else run_tests (logname);
         report (R_STATUS, "Finished");
     }
     exit (0);

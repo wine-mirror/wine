@@ -46,6 +46,7 @@ enum report_type {
     R_PROGRESS,
     R_STEP,
     R_DELTA,
+    R_TAG,
     R_DIR,
     R_OUT,
     R_WARNING,
@@ -56,6 +57,8 @@ enum report_type {
     R_QUIET
 };
 
+extern char *tag;
+int guiAskTag (void);
 int report (enum report_type t, ...);
 
 #endif /* __WINETESTS_H */

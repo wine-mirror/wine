@@ -23,7 +23,18 @@
 #include "resource.h"
 #include "tests.rc"
 
-IDD_STATUS DIALOG 0, 0, 160, 140
+IDD_TAG DIALOG 0, 0, 150, 65
+STYLE WS_POPUP
+CAPTION "No tag supplied"
+BEGIN
+    CTEXT "Please supply a tag for your report.  You can use letters, digits, dashes and periods."
+        IDC_STATIC, 10, 5, 130, 30
+    EDITTEXT IDC_TAG, 35, 30, 80, 10
+    DEFPUSHBUTTON "Start", IDOK, 25, 45, 40, 14
+    PUSHBUTTON    "Abort", IDABORT, 85, 45, 40, 14
+END
+
+IDD_STATUS DIALOG 0, 0, 160, 150
 STYLE WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 CAPTION "Wine Test Shell"
 BEGIN
@@ -34,17 +45,20 @@ BEGIN
     LTEXT   "Network transfer:", IDC_ST2,        10,  60, 140, 10
     CONTROL "PB2", IDC_PB2, PROGRESS_CLASS, 0,    5,  70, 150, 10
                                                
-    LTEXT   "Working directory:", IDC_STATIC,    10,  89, 100, 10
-    EDITTEXT                      IDC_DIR,       71,  88,  79, 10,
+    LTEXT   "Tag:",               IDC_STATIC,    10,  89, 100, 10
+    EDITTEXT                      IDC_TAG,       25,  88, 125, 10,
+             ES_READONLY
+    LTEXT   "Working directory:", IDC_STATIC,    10, 100, 100, 10
+    EDITTEXT                      IDC_DIR,       71,  99,  79, 10,
              ES_READONLY | ES_AUTOHSCROLL
-    LTEXT   "Output file:",       IDC_STATIC,    10, 100, 100, 10
-    EDITTEXT                      IDC_OUT,       46,  99, 104, 10,
+    LTEXT   "Output file:",       IDC_STATIC,    10, 111, 100, 10
+    EDITTEXT                      IDC_OUT,       46, 110, 104, 10,
              ES_READONLY | ES_AUTOHSCROLL
 
-    DEFPUSHBUTTON "About", IDHELP,               20, 113,  30, 14
-    PUSHBUTTON    "Edit",  IDCANCEL,             65, 113,  30, 14,
+    DEFPUSHBUTTON "About", IDHELP,               20, 123,  30, 14
+    PUSHBUTTON    "Edit",  IDCANCEL,             65, 123,  30, 14,
                    WS_DISABLED
-    PUSHBUTTON    "Stop",  IDABORT,             110, 113,  30, 14
+    PUSHBUTTON    "Stop",  IDABORT,             110, 123,  30, 14
 
     CONTROL "Created", IDC_SB, STATUSCLASSNAME, 0, 0,0,0,0
 END

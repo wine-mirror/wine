@@ -176,6 +176,23 @@ guiDelta (va_list ap)
     return 0;
 }
 
+/* report (R_TAG) */
+int
+textTag (va_list ap)
+{
+    fputs ("Tag: ", stderr);
+    fputs (tag, stderr);
+    fputc ('\n', stderr);
+    return 0;
+}
+
+int
+guiTag (va_list ap)
+{
+    SetDlgItemText (dialog, IDC_TAG, tag);
+    return 0;
+}
+
 /* report (R_DIR, fmt, ...) */
 int
 textDir (va_list ap)
@@ -301,6 +318,39 @@ guiAsk (va_list ap)
     return ret;
 }
 
+BOOL CALLBACK
+AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    int len;
+
+    switch (msg) {
+    case WM_COMMAND:
+        switch (LOWORD (wParam)) {
+        case IDOK:
+            len = GetWindowTextLengthA (GetDlgItem (hwnd, IDC_TAG));
+            if (len <= 20) {    /* keep it consistent with IDD_TAG */
+                tag = xmalloc (len+1);
+                GetDlgItemTextA (hwnd, IDC_TAG, tag, len+1);
+                if (!badtagchar (tag)) EndDialog (hwnd, IDOK);
+                else free (tag);
+            }
+            return TRUE;
+        case IDABORT:
+            EndDialog (hwnd, IDABORT);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+int
+guiAskTag (void)
+{
+    return DialogBox (GetModuleHandle (NULL),
+                      MAKEINTRESOURCE (IDD_TAG),
+                      dialog, AskTagProc);
+}
+
 /* Quiet functions */
 int
 qNoOp (va_list ap)
@@ -403,15 +453,15 @@ report (enum report_type t, ...)
     int ret = 0;
     static r_fun_t * const text_funcs[] =
         {textStatus, textProgress, textStep, textDelta,
-         textDir, textOut,
+         textTag, textDir, textOut,
          textWarning, textError, textFatal, textAsk};
     static r_fun_t * const GUI_funcs[] =
         {guiStatus, guiProgress, guiStep, guiDelta,
-         guiDir, guiOut,
+         guiTag, guiDir, guiOut,
          guiWarning, guiError, guiFatal, guiAsk};
     static r_fun_t * const quiet_funcs[] =
         {qNoOp, qNoOp, qNoOp, qNoOp,
-         qNoOp, qNoOp,
+         qNoOp, qNoOp, qNoOp,
          qNoOp, qNoOp, qFatal, qAsk};
     static r_fun_t * const * funcs = NULL;
 
