@@ -22,6 +22,10 @@ extern INT32	(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
 extern HIMAGELIST (CALLBACK * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
 extern HICON32	(CALLBACK * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
 extern INT32	(CALLBACK* pImageList_GetImageCount)(HIMAGELIST);
+
+extern LPVOID	(CALLBACK* pCOMCTL32_Alloc) (INT32);  
+extern BOOL32	(CALLBACK* pCOMCTL32_Free) (LPVOID);  
+
 extern HDPA	(CALLBACK* pDPA_Create) (INT32);  
 extern INT32	(CALLBACK* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
 extern BOOL32	(CALLBACK* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
@@ -35,6 +39,11 @@ extern HICON32	WINAPI SIC_GetIcon (LPSTR sSourceFile, DWORD dwSourceIndex, BOOL3
 
 /* Classes Root */
 extern BOOL32 WINAPI HCR_MapTypeToValue ( LPSTR szExtension, LPSTR szFileType, DWORD len);
+
+HGLOBAL32	WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID);
+LPVOID		WINAPI SHLockShared(HANDLE32 hmem, DWORD procID);
+BOOL32		WINAPI SHUnlockShared(HANDLE32 pmem);
+HANDLE32	WINAPI SHFreeShared(HANDLE32 hmem, DWORD procID);
 
 /* FIXME should be moved to a header file. IsEqualGUID 
 is declared but not exported in compobj.c !!!*/

@@ -56,8 +56,8 @@ SHChangeNotifyRegister(
  * SHChangeNotifyDeregister [SHELL32.4]
  */
 DWORD WINAPI
-SHChangeNotifyDeregister(LONG x1,LONG x2)
-{	FIXME(shell,"(0x%08lx,0x%08lx):stub.\n",x1,x2);
+SHChangeNotifyDeregister(LONG x1)
+{	FIXME(shell,"(0x%08lx):stub.\n",x1);
 	return 0;
 }
 
@@ -65,13 +65,27 @@ SHChangeNotifyDeregister(LONG x1,LONG x2)
  * ParseField [SHELL32.58]
  *
  */
-DWORD WINAPI ParseField(LPCSTR src,DWORD x2,LPSTR target,DWORD pathlen) {
-	FIXME(shell,"(%s,0x%08lx,%p,%ld):stub.\n",
-		src,x2,target,pathlen
-	);
-	if (!src)
-		return 0;
-	return 0;
+DWORD WINAPI ParseField(LPCSTR src,DWORD field,LPSTR dst,DWORD len) 
+{	FIXME(shell,"(%s,0x%08lx,%p,%ld):stub.\n",src,field,dst,len);
+
+	if (!src || !src[0] || !dst || !len)
+	  return 0;
+
+	if (field >1)
+	{ field--;	
+	  while (field)
+	  { if (*src==0x0) return FALSE;
+	    if (*src==',') field--;
+	    src++;
+	  }
+	}
+
+	while (*src!=0x00 && *src!=',' && len>0) 
+	{ *dst=*src; dst++, src++; len--;
+	}
+	*dst=0x0;
+	
+	return TRUE;
 }
 
 /*************************************************************************
@@ -636,23 +650,34 @@ BOOL32 WINAPI ShellExecuteEx32W (LPSHELLEXECUTEINFO32W sei)
 	
 	return 0;
 }
+static LPUNKNOWN SHELL32_IExplorerInterface=0;
 /*************************************************************************
  * SHSetInstanceExplorer [SHELL32.176]
  *
+ * NOTES
+ *  Sets the interface
  */
-HRESULT WINAPI SHSetInstanceExplorer (DWORD u)
-{	FIXME(shell,"0x%08lx stub\n",u);
-	return 0;
+HRESULT WINAPI SHSetInstanceExplorer (LPUNKNOWN lpUnknown)
+{	TRACE (shell,"%p\n", lpUnknown);
+	SHELL32_IExplorerInterface = lpUnknown;
+	return (HRESULT) lpUnknown;
 }
 /*************************************************************************
  * SHGetInstanceExplorer [SHELL32.256]
  *
  * NOTES
- *  exported by name
+ *  gets the interface pointer of the explorer and a reference
  */
-HRESULT WINAPI SHGetInstanceExplorer (DWORD u)
-{	FIXME(shell,"0x%08lx stub\n",u);
-	return 0;
+HRESULT WINAPI SHGetInstanceExplorer (LPUNKNOWN * lpUnknown)
+{	TRACE(shell,"%p\n", lpUnknown);
+
+	*lpUnknown = SHELL32_IExplorerInterface;
+
+	if (!SHELL32_IExplorerInterface)
+	  return E_FAIL;
+
+	SHELL32_IExplorerInterface->lpvtbl->fnAddRef(SHELL32_IExplorerInterface);
+	return NOERROR;
 }
 /*************************************************************************
  * SHFreeUnusedLibraries [SHELL32.123]
@@ -660,9 +685,9 @@ HRESULT WINAPI SHGetInstanceExplorer (DWORD u)
  * NOTES
  *  exported by name
  */
-HRESULT WINAPI SHFreeUnusedLibraries (DWORD u)
-{	FIXME(shell,"0x%08lx stub\n",u);
-	return 0;
+HRESULT WINAPI SHFreeUnusedLibraries (void)
+{	FIXME(shell,"stub\n");
+	return TRUE;
 }
 /*************************************************************************
  * DAD_ShowDragImage [SHELL32.137]
@@ -897,7 +922,7 @@ HGLOBAL32 WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
  *  the receiver of (WM_USER+2) trys to lock the HANDLE (?) 
  *  the returnvalue seems to be a memoryadress
  */
-void * WINAPI SHLockShared(HANDLE32 hmem, DWORD procID)
+LPVOID WINAPI SHLockShared(HANDLE32 hmem, DWORD procID)
 {	TRACE(shell,"handle=0x%04x procID=0x%04lx\n",hmem,procID);
 	return GlobalLock32(hmem);
 }
@@ -1170,4 +1195,12 @@ LPWSTR WINAPI StrFormatByteSize32W ( DWORD dw, LPWSTR pszBuf, UINT32 cchBuf )
 	}
 	lstrcpynAtoW (pszBuf, buf, cchBuf);
 	return pszBuf;	
+}
+/*************************************************************************
+ * SHWaitForFileToOpen [SHELL32.97]
+ *
+ */
+HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
+{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w);
+	return 0;
 }

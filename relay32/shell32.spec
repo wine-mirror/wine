@@ -9,7 +9,7 @@ init	Shell32LibMain
 
    2 stdcall SHChangeNotifyRegister(long long long long long long) SHChangeNotifyRegister
    3 stub CheckEscapesA@8
-   4 stdcall SHChangeNotifyDeregister (long long) SHChangeNotifyDeregister
+   4 stdcall SHChangeNotifyDeregister (long) SHChangeNotifyDeregister
    5 stub SHChangeNotifyUpdateEntryList@16
    6 stub CheckEscapesW@8
    7 stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW
@@ -44,8 +44,8 @@ init	Shell32LibMain
   36 stdcall PathAppend(str str) PathAppend
   37 stdcall PathCombine(ptr ptr ptr) PathCombine32AW
   38 stub PathStripPath
-  39 stdcall PathIsUNC(str) PathIsUNC
-  40 stub PathIsRelative@4
+  39 stdcall PathIsUNC (ptr) PathIsUNC32AW
+  40 stdcall PathIsRelative (ptr) PathIsRelative32AW
   41 stub Control_RunDLLA@16
   42 stub Control_RunDLLW@16
   43 stdcall PathIsExe (ptr) PathIsExe
@@ -102,7 +102,7 @@ init	Shell32LibMain
   94 stub Win32RemoveDirectory
   95 stdcall SHLogILFromFSIL (ptr) SHLogILFromFSIL
   96 stdcall StrRetToStrN (long long long long) StrRetToStrN
-  97 stub SHWaitForFileToOpen
+  97 stdcall SHWaitForFileToOpen (long long long) SHWaitForFileToOpen
   98 stdcall SHGetRealIDL (long long long) SHGetRealIDL
   99 stdcall SetAppStartingCursor (long long) SetAppStartingCursor32
  100 stdcall SHRestricted(long) SHRestricted
@@ -128,7 +128,7 @@ init	Shell32LibMain
  120 stub FileMenu_AbortInitMenu
  121 stdcall SHFlushClipboard () SHFlushClipboard
  122 stub RunDLL_CallEntry16
- 123 stdcall SHFreeUnusedLibraries (long) SHFreeUnusedLibraries
+ 123 stdcall SHFreeUnusedLibraries () SHFreeUnusedLibraries
  124 stub FileMenu_AppendFilesForPidl
  125 stub FileMenu_AddFilesForPidl
  126 stdcall SHOutOfMemoryMessageBox (long long long) SHOutOfMemoryMessageBox
@@ -150,7 +150,7 @@ init	Shell32LibMain
  142 stub FileMenu_DeleteSeparator
  143 stub FileMenu_EnableItemByCmd
  144 stub FileMenu_GetItemExtent
- 145 stub PathFindOnPath
+ 145 stdcall PathFindOnPath (ptr ptr) PathFindOnPath32AW
  146 stub RLBuildListOfPaths
  147 stdcall SHCLSIDFromString(long long) SHCLSIDFromString
  148 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIcon32A   # exported by name

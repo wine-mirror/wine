@@ -927,13 +927,16 @@ HIMAGELIST (CALLBACK * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
 HICON32	(CALLBACK * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
 INT32	(CALLBACK* pImageList_GetImageCount)(HIMAGELIST);
 
+LPVOID	(CALLBACK* pCOMCTL32_Alloc) (INT32);  
+BOOL32	(CALLBACK* pCOMCTL32_Free) (LPVOID);  
+
 HDPA	(CALLBACK* pDPA_Create) (INT32);  
 INT32	(CALLBACK* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
 BOOL32	(CALLBACK* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
 LPVOID	(CALLBACK* pDPA_GetPtr) (const HDPA, INT32);   
 BOOL32	(CALLBACK* pDPA_Destroy) (const HDPA); 
 INT32	(CALLBACK *pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
-
+static BOOL32 bShell32IsInitialized=0;
 /*************************************************************************
  * SHELL32 LibMain
  *
@@ -950,7 +953,7 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
 
   shell32_hInstance = hinstDLL;
   
-  if (fdwReason==DLL_PROCESS_ATTACH)
+  if (fdwReason==DLL_PROCESS_ATTACH && !bShell32IsInitialized)
   { hComctl32 = LoadLibrary32A("COMCTL32.DLL");	
     if (hComctl32)
     { pDLLInitComctl=GetProcAddress32(hComctl32,"InitCommonControlsEx");
@@ -964,6 +967,8 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
       pImageList_GetImageCount=GetProcAddress32(hComctl32,"ImageList_GetImageCount");
 
       /* imports by ordinal, pray that it works*/
+      pCOMCTL32_Alloc=GetProcAddress32(hComctl32, (LPCSTR)71L);
+      pCOMCTL32_Free=GetProcAddress32(hComctl32, (LPCSTR)73L);
       pDPA_Create=GetProcAddress32(hComctl32, (LPCSTR)328L);
       pDPA_Destroy=GetProcAddress32(hComctl32, (LPCSTR)329L);
       pDPA_GetPtr=GetProcAddress32(hComctl32, (LPCSTR)332L);
@@ -979,6 +984,7 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
       exit (1);
     }
     SIC_Initialize();
+    bShell32IsInitialized = TRUE;
   }
   return TRUE;
 }

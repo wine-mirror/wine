@@ -344,11 +344,47 @@ LPVOID WINAPI PathCombine32AW(LPVOID szDest, LPCVOID lpszDir, LPCVOID lpszFile)
  * NOTES
  *     PathIsUNC(char*path);
  */
-BOOL32 WINAPI PathIsUNC(LPCSTR path) {
-  TRACE(shell,"%s\n",path);
+BOOL32 WINAPI PathIsUNC32A(LPCSTR path) 
+{	TRACE(shell,"%s\n",path);
+
 	if ((path[0]=='\\') && (path[1]=='\\'))
-		return TRUE;
+	  return TRUE;
 	return FALSE;
+}
+BOOL32 WINAPI PathIsUNC32W(LPCWSTR path) 
+{	TRACE(shell,"%s\n",debugstr_w(path));
+
+	if ((path[0]=='\\') && (path[1]=='\\'))
+	  return TRUE;
+	return FALSE;
+}
+BOOL32 WINAPI PathIsUNC32AW (LPCVOID path)
+{	if (VERSION_OsIsUnicode())
+	  return PathIsUNC32W( path );
+	return PathIsUNC32A( path );  
+}
+/*************************************************************************
+ *  PathIsRelativ [SHELL32.40]
+ * 
+ */
+BOOL32 WINAPI PathIsRelative32A (LPCSTR path)
+{	TRACE(shell,"path=%s\n",path);
+
+	if (path && (path[0]!='\\' && path[1]==':'))
+	  return TRUE;
+	return FALSE;    
+}
+BOOL32 WINAPI PathIsRelative32W (LPCWSTR path)
+{	TRACE(shell,"path=%s\n",debugstr_w(path));
+
+	if (path && (path[0]!='\\' && path[1]==':'))
+	  return TRUE;
+	return FALSE;    
+}
+BOOL32 WINAPI PathIsRelative32AW (LPCVOID path)
+{	if (VERSION_OsIsUnicode())
+	  return PathIsRelative32W( path );
+	return PathIsRelative32A( path );  
 }
 /*************************************************************************
  *  PathIsExe [SHELL32.43]
@@ -584,6 +620,23 @@ BOOL32 WINAPI IsLFNDrive(LPCSTR path) {
 	return FALSE;
     return fnlen>12;
 }
+/*************************************************************************
+ * PathFindOnPath [SHELL32.145]
+ */
+BOOL32 WINAPI PathFindOnPath32A(LPSTR sFile, LPCSTR sOtherDirs)
+{	FIXME(shell,"%s %s\n",sFile, sOtherDirs);
+	return FALSE;
+}
+BOOL32 WINAPI PathFindOnPath32W(LPWSTR sFile, LPCWSTR sOtherDirs)
+{	FIXME(shell,"%s %s\n",debugstr_w(sFile), debugstr_w(sOtherDirs));
+	return FALSE;
+}
+BOOL32 WINAPI PathFindOnPath32AW(LPVOID sFile, LPCVOID sOtherDirs)
+{	if (VERSION_OsIsUnicode())
+	  return PathFindOnPath32W(sFile, sOtherDirs);
+	return PathFindOnPath32A(sFile, sOtherDirs);
+}
+
 /*************************************************************************
  * PathGetExtension [SHELL32.158]
  *

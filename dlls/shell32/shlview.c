@@ -878,8 +878,25 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 		    }
 		    else					/* we are acting with a full featured IShellBrowser */
 		    { TRACE(shell,"-- explorer: BrowseObject pidl =%p\n", this->aSelectedItems[0]);
-		      wFlags = SBSP_SAMEBROWSER | SBSP_DEFMODE | SBSP_RELATIVE;
-		      IShellBrowser_BrowseObject(this->pShellBrowser, this->aSelectedItems[0], wFlags);
+		      /*wFlags = SBSP_SAMEBROWSER | SBSP_DEFMODE | SBSP_RELATIVE;
+		      IShellBrowser_BrowseObject(this->pShellBrowser, this->aSelectedItems[0], wFlags);*/
+		      {	int i = ILGetSize( this->aSelectedItems[0] );
+			char commandline[255];
+	                STARTUPINFO32A  startupinfo;
+			PROCESS_INFORMATION processinformation;
+			HGLOBAL32 hmem;
+
+	                ZeroMemory(&startupinfo,sizeof(STARTUPINFO32A));
+			startupinfo.cb = sizeof(STARTUPINFO32A);
+						
+		        hmem = SHAllocShared ( this->aSelectedItems[0], i, 0);
+			
+			sprintf (commandline, " /N,/IDList,:%li", (DWORD)SHLockShared(hmem,0));
+			CreateProcess32A("explorer.exe", commandline, NULL, NULL, FALSE, 0, 
+					NULL, NULL, &startupinfo, &processinformation);
+			SHUnlockShared(hmem);
+			
+		      }
 		    }
 		  }
 		  else

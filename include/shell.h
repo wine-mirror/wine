@@ -236,7 +236,7 @@ typedef struct
 } IDSTRUCT;
 
 DWORD WINAPI SHChangeNotifyRegister(HWND32 hwnd,LONG events1,LONG events2,DWORD msg,int count,IDSTRUCT *idlist);
-DWORD WINAPI SHChangeNotifyDeregister(LONG x1,LONG x2);
+DWORD WINAPI SHChangeNotifyDeregister(LONG x1);
 
 /****************************************************************************
 * SHAddToRecentDocs API
@@ -292,6 +292,21 @@ LPSTR WINAPI PathRemoveBlanks32A(LPSTR str);
 LPWSTR WINAPI PathRemoveBlanks32W(LPWSTR str);
 #define  PathRemoveBlanks WINELIB_NAME_AW(PathRemoveBlanks)
 LPVOID WINAPI PathRemoveBlanks32AW(LPVOID str);
+
+BOOL32 WINAPI PathIsRelative32A(LPCSTR str);
+BOOL32 WINAPI PathIsRelative32W(LPCWSTR str);
+#define  PathIsRelative WINELIB_NAME_AW(PathIsRelative)
+BOOL32 WINAPI PathIsRelative32AW(LPCVOID str);
+
+BOOL32 WINAPI PathIsUNC32A(LPCSTR str);
+BOOL32 WINAPI PathIsUNC32W(LPCWSTR str);
+#define  PathIsUNC WINELIB_NAME_AW(PathIsUNC)
+BOOL32 WINAPI PathIsUNC32AW(LPCVOID str);
+
+BOOL32 WINAPI PathFindOnPath32A(LPSTR sFile, LPCSTR sOtherDirs);
+BOOL32 WINAPI PathFindOnPath32W(LPWSTR sFile, LPCWSTR sOtherDirs);
+#define PathFindOnPath WINELIB_NAME_AW(PathFindOnPath)
+BOOL32 WINAPI PathFindOnPath32AW(LPVOID sFile, LPCVOID sOtherDirs);
 
 LPSTR WINAPI StrFormatByteSize32A ( DWORD dw, LPSTR pszBuf, UINT32 cchBuf );
 LPWSTR WINAPI StrFormatByteSize32W ( DWORD dw, LPWSTR pszBuf, UINT32 cchBuf );
