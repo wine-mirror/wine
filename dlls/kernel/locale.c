@@ -1302,9 +1302,15 @@ BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
  */
 BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
 {
-    const union cptable *table = get_codepage_table( codepage );
+    const union cptable *table;
 
-    if (!table)
+    if (!cpinfo)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!(table = get_codepage_table( codepage )))
     {
         switch(codepage)
         {
