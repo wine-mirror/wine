@@ -455,7 +455,7 @@ olecli/libolecli32.@LIBEXT@: libole32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LI
 oledlg/liboledlg.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 olepro32/libolepro32.@LIBEXT@: liboleaut32.@LIBEXT@ libntdll.@LIBEXT@
 olesvr/libolesvr32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-opengl32/libopengl32.@LIBEXT@: libx11drv.@LIBEXT@ libkernel32.@LIBEXT@
+opengl32/libopengl32.@LIBEXT@: libuser32.@LIBEXT@ libx11drv.@LIBEXT@ libkernel32.@LIBEXT@
 psapi/libpsapi.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 quartz/libquartz.@LIBEXT@: libole2.@LIBEXT@ libntdll.@LIBEXT@
 rasapi32/librasapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
