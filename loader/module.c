@@ -525,15 +525,10 @@ HINSTANCE32 WINAPI LoadModule32( LPCSTR name, LPVOID paramBlock )
                            NULL, &startup, &info ))
         return GetLastError();  /* guaranteed to be < 32 */
     
-    /* Get hInstance from process */
+    /* Get 16-bit hInstance/hTask from process */
     pdb = PROCESS_IdToPDB( info.dwProcessId );
-    if ( pdb->exe_modref )
-        hInstance = pdb->exe_modref->module;
-    else
-    {
-        tdb = pdb? (TDB *)GlobalLock16( pdb->task ) : NULL;
-        hInstance = tdb? tdb->hInstance : 0;
-    }
+    tdb = pdb? (TDB *)GlobalLock16( pdb->task ) : NULL;
+    hInstance = tdb && tdb->hInstance? tdb->hInstance : pdb? pdb->task : 0;
 
     /* Close off the handles */
     CloseHandle( info.hThread );
