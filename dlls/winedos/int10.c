@@ -77,6 +77,61 @@ typedef struct _INT10_HEAP {
     WORD  WineHeapSegment;
 } INT10_HEAP;
 
+/*
+ * Structure for VBE Mode Info Block. See the VBE 3.0 standard for details.
+ * This structure must be correctly packed.
+ */
+struct _ModeInfoBlock {
+    WORD  ModeAttributes;       /* 0x00 */
+    BYTE  WinAAttributes;       /* 0x02 */
+    BYTE  WinBAttributes;       /* 0x03 */
+    WORD  WinGranularity;       /* 0x04 */
+    WORD  WinSize;              /* 0x06 */
+    WORD  WinASegment;          /* 0x08 */
+    WORD  WinBSegment;          /* 0x0A */
+    DWORD WinFuncPtr;           /* 0x0C */
+    WORD  BytesPerScanLine;     /* 0x10 */
+    /* mandatory for VBE 1.2+ */
+    WORD  XResolution;          /* 0x12 */
+    WORD  YResolution;          /* 0x14 */
+    BYTE  XCharSize;            /* 0x16 */
+    BYTE  YCharSize;            /* 0x17 */
+    BYTE  NumberOfPlanes;       /* 0x18 */
+    BYTE  BitsPerPixel;         /* 0x19 */
+    BYTE  NumberOfBanks;        /* 0x1A */
+    BYTE  MemoryModel;          /* 0x1B */
+    BYTE  BankSize;             /* 0x1C */
+    BYTE  NumberOfImagePages;   /* 0x1D */
+    BYTE  Reserved1;            /* 0x1E */
+    BYTE  RedMaskSize;          /* 0x1F */
+    BYTE  RedFieldPosition;     /* 0x20 */
+    BYTE  GreenMaskSize;        /* 0x21 */
+    BYTE  GreenFieldPosition;   /* 0x22 */
+    BYTE  BlueMaskSize;         /* 0x23 */
+    BYTE  BlueFieldPosition;    /* 0x24 */
+    BYTE  RsvdMaskSize;         /* 0x25 */
+    BYTE  RsvdFieldPosition;    /* 0x26 */
+    BYTE  DirectColorModeInfo;  /* 0x27 */
+    /* mandatory for VBE 2.0+ */
+    DWORD PhysBasePtr;          /* 0x28 */
+    DWORD Reserved2;            /* 0x2C */
+    WORD  Reserved3;            /* 0x30 */
+    /* mandatory for VBE 3.0+ */
+    WORD  LinBytesPerScanLine;  /* 0x32 */
+    BYTE  BnkNumberOfImagePages;/* 0x34 */
+    BYTE  LinNumberOfImagePages;/* 0x35 */
+    BYTE  LinRedMaskSize;       /* 0x36 */
+    BYTE  LinRedFieldPosition;  /* 0x37 */
+    BYTE  LinGreenMaskSize;     /* 0x38 */
+    BYTE  LinGreenFieldPosition;/* 0x39 */
+    BYTE  LinBlueMaskSize;      /* 0x3A */
+    BYTE  LinBlueFieldPosition; /* 0x3B */
+    BYTE  LinRsvdMaskSize;      /* 0x3C */
+    BYTE  LinRsvdFieldPosition; /* 0x3D */
+    DWORD MaxPixelClock;        /* 0x3E */
+    BYTE  Reserved4[190];       /* 0x42 */
+};
+
 #include "poppack.h"
 
 /*
@@ -256,7 +311,7 @@ static void INT10_FillControllerInformation( BYTE *buffer )
  * Returns FALSE if mode is unknown and TRUE is mode is known
  * even if it is not supported.
  */
-static BOOL INT10_FillModeInformation( BYTE *buffer, WORD mode )
+static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
 {
     const INT10_MODE *ptr = INT10_FindMode( mode );
     if (!ptr)
@@ -300,7 +355,7 @@ static BOOL INT10_FillModeInformation( BYTE *buffer, WORD mode )
         if (mode > 0xff)
             attr |= 0x0020;
 
-        *(WORD*)(buffer + 0) = attr;
+        mib->ModeAttributes = attr;
     }
 
     /*
@@ -311,46 +366,46 @@ static BOOL INT10_FillModeInformation( BYTE *buffer, WORD mode )
      *   2 - Window is writable.
      * 3-7 - Reserved.
      */
-    buffer[2] = 0x07; /* window A exists, readable and writable */
-    buffer[3] = 0x00; /* window B not supported */
+    mib->WinAAttributes = 0x07; /* window A exists, readable and writable */
+    mib->WinBAttributes = 0x00; /* window B not supported */
 
     /* 04 - WORD: window granularity in KB */
-    *(WORD*)(buffer + 4) = 64;
+    mib->WinGranularity = 64;
 
     /* 06 - WORD: window size in KB */
-    *(WORD*)(buffer + 6) = 64;
+    mib->WinSize = 64;
 
     /* 08 - WORD[2]: start segments, window A and window B */
-    *(WORD*)(buffer +  8) = 0xa000; /* window A segment */
-    *(WORD*)(buffer + 10) = 0x0000; /* window B not supported */
+    mib->WinASegment = 0xa000; /* window A segment */
+    mib->WinBSegment = 0x0000; /* window B not supported */
 
     /* 12 - DWORD: window positioning function */
-    *(DWORD*)(buffer + 12) = 0; /* not supported */
+    mib->WinFuncPtr = 0; /* not supported */
     
     /* 16 - WORD: bytes per scan line */
     /* FIXME: is this always correct? */
-    *(WORD*)(buffer + 16) = ptr->Width * (ptr->Depth ? (ptr->Depth + 7) / 8 : 1);
+    mib->BytesPerScanLine = ptr->Width * (ptr->Depth ? (ptr->Depth + 7) / 8 : 1);
 
     /* 18 - WORD: width in pixels (graphics) or characters (text) */
-    *(WORD*)(buffer + 18) = ptr->Width;
+    mib->XResolution = ptr->Width;
 
     /* 20 - WORD: height in pixels (graphics) or characters (text) */
-    *(WORD*)(buffer + 20) = ptr->Height;
+    mib->YResolution = ptr->Height;
 
     /* 22 - BYTE: width of character cell in pixels */
-    buffer[22] = 0; /* FIXME */
+    mib->XCharSize = 0; /* FIXME */
 
     /* 23 - BYTE: height of character cell in pixels */
-    buffer[23] = 0; /* FIXME */
+    mib->YCharSize = 0; /* FIXME */
 
     /* 24 - BYTE: number of memory planes */
-    buffer[24] = 1; /* FIXME */
+    mib->NumberOfPlanes = 1; /* FIXME */
 
     /* 25 - BYTE: number of bits per pixel */
-    buffer[25] = ptr->Depth; /* FIXME: text modes? reserved bits? */
+    mib->BitsPerPixel = ptr->Depth; /* FIXME: text modes? reserved bits? */
 
     /* 26 - BYTE: number of banks */
-    buffer[26] = 1; /* FIXME */
+    mib->NumberOfBanks = 1; /* FIXME */
 
     /*
      * 27 - BYTE: memory model type
@@ -367,50 +422,50 @@ static BOOL INT10_FillModeInformation( BYTE *buffer, WORD mode )
      * 10-FF - OEM memory models.
      */
     if (!ptr->Depth)
-        buffer[27] = 0; /* text mode */
+        mib->MemoryModel = 0; /* text mode */
     else
-        buffer[27] = 3; /* FIXME */
+        mib->MemoryModel = 3; /* FIXME */
 
     /* 28 - BYTE: size of bank in KB */
-    buffer[28] = 0; /* FIXME */
+    mib->BankSize = 0; /* FIXME */
 
     /* 29 - BYTE: number of image pages (less one) in video RAM */
-    buffer[29] = 0; /* FIXME */
+    mib->NumberOfImagePages = 0; /* FIXME */
 
     /* 30 - BYTE: reserved (0x00 for VBE 1.0-2.0, 0x01 for VBE 3.0) */
-    buffer[30] = 0x01;
+    mib->Reserved1 = 0x01;
 
     /* 
      * 31 - BYTE: red mask size 
      * Size of red color component in bits.
      * Used only when memory model is direct color, otherwise set to zero.
      */
-    buffer[31] = 0; /* FIXME */
+    mib->RedMaskSize = 0; /* FIXME */
 
     /*
      * 32 - BYTE: red field position 
      * Bit position of the least significant bit of red color component.
      * Used only when memory model is direct color, otherwise set to zero.
      */
-    buffer[32] = 0; /* FIXME */
+    mib->RedFieldPosition = 0; /* FIXME */
 
     /* 33 - BYTE: green mask size */
-    buffer[33] = 0; /* FIXME */
+    mib->GreenMaskSize = 0; /* FIXME */
 
     /* 34 - BYTE: green field position */
-    buffer[34] = 0; /* FIXME */
+    mib->GreenFieldPosition = 0; /* FIXME */
 
     /* 35 - BYTE: blue mask size */
-    buffer[35] = 0; /* FIXME */
+    mib->BlueMaskSize = 0; /* FIXME */
     
     /* 36 - BYTE: blue field position */
-    buffer[36] = 0;
+    mib->BlueFieldPosition = 0;
 
     /* 37 - BYTE: reserved mask size */
-    buffer[37] = 0;
+    mib->RsvdMaskSize = 0;
 
     /* 38 - BYTE: reserved mask position */
-    buffer[38] = 0;
+    mib->RsvdFieldPosition = 0;
 
     /*
      * 39 - BYTE: direct color mode info 
@@ -418,55 +473,55 @@ static BOOL INT10_FillModeInformation( BYTE *buffer, WORD mode )
      * 0 - Set if color ramp is programmable.
      * 1 - Set if bytes in reserved field may be used by application.
      */
-    buffer[39] = 0; /* not supported */
+    mib->DirectColorModeInfo = 0; /* not supported */
 
     /* 40 - DWORD: physical address of linear video buffer */
-    *(DWORD*)(buffer + 40) = 0; /* not supported */
+    mib->PhysBasePtr = 0; /* not supported */
 
     /* 44 - DWORD: reserved, always zero */
-    *(DWORD*)(buffer + 44) = 0;
+    mib->Reserved2 = 0;
 
     /* 48 - WORD: reserved, always zero */
-    *(WORD*)(buffer + 48) = 0;
+    mib->Reserved3 = 0;
 
     /* 50 - WORD: bytes per scan line in linear modes */
-    *(WORD*)(buffer + 50) = *(WORD*)(buffer + 16);
+    mib->LinBytesPerScanLine = mib->BytesPerScanLine;
 
     /* 52 - BYTE: number of images (less one) for banked video modes */
-    buffer[52] = 0; /* FIXME */
+    mib->BnkNumberOfImagePages = 0; /* FIXME */
 
     /* 53 - BYTE: number of images (less one) for linear video modes */
-    buffer[53] = buffer[52];
+    mib->LinNumberOfImagePages = mib->BnkNumberOfImagePages;
 
     /* 54 - BYTE: red mask size (linear modes) */
-    buffer[54] = buffer[31];
+    mib->LinRedMaskSize = mib->RedMaskSize;
 
     /* 55 - BYTE: red field position (linear modes) */
-    buffer[55] = buffer[32];
+    mib->LinRedFieldPosition = mib->RedFieldPosition;
 
     /* 56 - BYTE: green mask size (linear modes) */
-    buffer[56] = buffer[33];
+    mib->LinGreenMaskSize = mib->GreenMaskSize;
 
     /* 57 - BYTE: green field size (linear modes) */
-    buffer[57] = buffer[34];
+    mib->LinGreenFieldPosition = mib->GreenFieldPosition;
 
     /* 58 - BYTE: blue mask size (linear modes) */
-    buffer[58] = buffer[35];
+    mib->LinBlueMaskSize = mib->BlueMaskSize;
 
     /* 59 - BYTE: blue field position (linear modes) */
-    buffer[59] = buffer[36];
+    mib->LinBlueFieldPosition = mib->BlueFieldPosition;
 
     /* 60 - BYTE: reserved mask size (linear modes) */
-    buffer[60] = buffer[37];
+    mib->LinRsvdMaskSize = mib->RsvdMaskSize;
 
     /* 61 - BYTE: reserved mask position (linear modes) */
-    buffer[61] = buffer[38];
+    mib->LinRsvdFieldPosition = mib->RsvdFieldPosition;
 
     /* 62 - DWORD: maximum pixel clock for graphics video mode, in Hz */
-    *(DWORD*)(buffer + 62) = 0; /* FIXME */
+    mib->MaxPixelClock = 0; /* FIXME */
 
     /* 66 - BYTE[190]: reserved, set to zero */
-    memset( buffer + 66, 190, 0 );
+    memset( &mib->Reserved4, 190, 0 );
 
     return TRUE;
 }
@@ -809,9 +864,9 @@ static void INT10_HandleVESA( CONTEXT86 *context )
     case 0x01: /* RETURN MODE INFORMATION */
         TRACE( "VESA RETURN MODE INFORMATION %04x\n", CX_reg(context) );
         {
-            BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
-                                           context->SegEs, 
-                                           context->Edi);
+            struct _ModeInfoBlock *ptr = CTX_SEG_OFF_TO_LIN(context,
+                                                            context->SegEs, 
+                                                            context->Edi);
             SET_AL( context, 0x4f );
             if (INT10_FillModeInformation( ptr, CX_reg(context) ))
                 SET_AH( context, 0x00 ); /* status: success */
