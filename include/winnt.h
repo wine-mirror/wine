@@ -117,6 +117,7 @@
 
 #define CALLBACK    __stdcall
 #define WINAPI      __stdcall
+#define NTAPI       __stdcall
 #define APIPRIVATE  __stdcall
 #define PASCAL      __stdcall
 #define CDECL       __cdecl
@@ -3512,5 +3513,7 @@ typedef struct _RTL_CRITICAL_SECTION {
     HANDLE LockSemaphore;
     ULONG_PTR SpinCount;
 }  RTL_CRITICAL_SECTION, *PRTL_CRITICAL_SECTION;
+
+typedef VOID (NTAPI * WAITORTIMERCALLBACKFUNC) (PVOID, BOOLEAN );
 
 #endif  /* __WINE_WINNT_H */

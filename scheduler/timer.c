@@ -28,6 +28,9 @@
 #include "wine/unicode.h"
 #include "file.h"  /* for FILETIME routines */
 #include "wine/server.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(timer);
 
 
 /***********************************************************************
@@ -172,4 +175,46 @@ BOOL WINAPI CancelWaitableTimer( HANDLE handle )
     }
     SERVER_END_REQ;
     return ret;
+}
+
+
+/***********************************************************************
+ *           CreateTimerQueueTimer  (KERNEL32.@)
+ *
+ * Creates a timer-queue timer. This timer expires at the specified due
+ * time (in ms), then after every specified period (in ms). When the timer
+ * expires, the callback function is called.
+ *
+ * RETURNS
+ *   nonzero on success or zero on faillure
+ *
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI CreateTimerQueueTimer( PHANDLE phNewTimer, HANDLE TimerQueue,
+				   WAITORTIMERCALLBACK Callback, PVOID Parameter,
+				   DWORD DueTime, DWORD Period, ULONG Flags )
+{
+    FIXME("stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           DeleteTimerQueueTimer  (KERNEL32.@)
+ *
+ * Cancels a timer-queue timer. 
+ *
+ * RETURNS
+ *   nonzero on success or zero on faillure
+ *
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI DeleteTimerQueueTimer( HANDLE TimerQueue, HANDLE Timer,
+				   HANDLE CompletionEvent )
+{
+    FIXME("stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TRUE;
 }

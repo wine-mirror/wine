@@ -955,15 +955,17 @@ init	MAIN_KernelInit
 @ stdcall SetThreadExecutionState(long) SetThreadExecutionState
 
 # Windows 2000, Terminal Server 4.0 SP4 functions
+@ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long) CreateTimerQueueTimer
+@ stdcall DeleteTimerQueueTimer(long long long) DeleteTimerQueueTimer
+@ stdcall GetCalendarInfoA(long long long ptr long ptr) GetCalendarInfoA
+@ stdcall GetCalendarInfoW(long long long ptr long ptr) GetCalendarInfoW
 @ stdcall GetSystemWindowsDirectoryA(ptr long) GetSystemWindowsDirectoryA
 @ stdcall GetSystemWindowsDirectoryW(ptr long) GetSystemWindowsDirectoryW
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long) InitializeCriticalSectionAndSpinCount
 @ stdcall ProcessIdToSessionId(long ptr) ProcessIdToSessionId
-@ stdcall SetCriticalSectionSpinCount(ptr long) SetCriticalSectionSpinCount
-@ stdcall GetCalendarInfoA(long long long ptr long ptr) GetCalendarInfoA
-@ stdcall GetCalendarInfoW(long long long ptr long ptr) GetCalendarInfoW
 @ stdcall SetCalendarInfoA(long long long str) SetCalendarInfoA
 @ stdcall SetCalendarInfoW(long long long wstr) SetCalendarInfoW
+@ stdcall SetCriticalSectionSpinCount(ptr long) SetCriticalSectionSpinCount
 @ stdcall VerifyVersionInfoA(long long long long) VerifyVersionInfoA
 @ stdcall VerifyVersionInfoW(long long long long) VerifyVersionInfoW
 
