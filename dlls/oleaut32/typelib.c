@@ -289,7 +289,7 @@ HRESULT WINAPI LoadTypeLibEx(
     INT index = 1;
 
     TRACE("(%s,%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
-    
+
     *pptLib = NULL;
     if(!SearchPathW(NULL,szFile,NULL,sizeof(szPath)/sizeof(WCHAR),szPath,
 		    NULL)) {
@@ -810,6 +810,11 @@ static void dump_VarType(VARTYPE vt,char *szVarType) {
     if (vt & VT_VECTOR)
 	szVarType += strlen(strcpy(szVarType, "vector of "));
     switch(vt & VT_TYPEMASK) {
+    case VT_EMPTY: sprintf(szVarType, "VT_EMPTY"); break;
+    case VT_NULL: sprintf(szVarType, "VT_NULL"); break;
+    case VT_RECORD: sprintf(szVarType, "VT_RECORD"); break;
+    case VT_I8: sprintf(szVarType, "VT_I8"); break;
+    case VT_UI8: sprintf(szVarType, "VT_UI8"); break;
     case VT_UI1: sprintf(szVarType, "VT_UI"); break;
     case VT_I2: sprintf(szVarType, "VT_I2"); break;
     case VT_I4: sprintf(szVarType, "VT_I4"); break;
@@ -1106,15 +1111,14 @@ void dump_Variant(VARIANT * pvar)
 
         case VT_DATE:
         {
-            struct tm TM;
-            memset( &TM, 0, sizeof(TM) );
+            SYSTEMTIME st;
 
-            if( DateToTm( *(DATE*)ref, 0, &TM ) == FALSE ) {
+            if(!VariantTimeToSystemTime(*(DATE*)ref, &st)) {
                 TRACE("invalid date? (?)%ld %f\n", *(long*)ref, *(double *)ref);
             } else {
                 TRACE("(yyyymmdd) %4.4d-%2.2d-%2.2d (time) %2.2d:%2.2d:%2.2d [%f]\n",
-                       TM.tm_year, TM.tm_mon+1, TM.tm_mday,
-                      TM.tm_hour, TM.tm_min, TM.tm_sec, *(double *)ref);
+                       st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute,
+                       st.wSecond, *(double *)ref);
             }
             break;
         }
@@ -2097,7 +2101,7 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
 
     if(*ppTypeLib) {
 	ITypeLibImpl *impl = (ITypeLibImpl*)*ppTypeLib;
-	
+
 	TRACE("adding to cache\n");
 	impl->path = HeapAlloc(GetProcessHeap(), 0, (strlenW(pszFileName)+1) * sizeof(WCHAR));
 	lstrcpyW(impl->path, pszFileName);
