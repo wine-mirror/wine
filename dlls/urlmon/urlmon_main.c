@@ -57,6 +57,16 @@ HRESULT WINAPI URLMON_DllRegisterServer(void)
 }
 
 /***********************************************************************
+ *		DllRegisterServerEx (URLMON.@)
+ */
+HRESULT WINAPI URLMON_DllRegisterServerEx(void)
+{
+    FIXME("(void): stub\n");
+
+    return E_FAIL;
+}
+
+/***********************************************************************
  *		DllUnregisterServer (URLMON.@)
  */
 HRESULT WINAPI URLMON_DllUnregisterServer(void)

@@ -194,8 +194,8 @@ import	ole32.dll
  179 stub SHGetNewLinkInfoA
  180 stub SHGetNewLinkInfoW
  181 stdcall RegisterShellHook(long long) RegisterShellHook
- 182 cdecl ShellMessageBoxW(long long long str long long) ShellMessageBoxW
- 183 cdecl ShellMessageBoxA(long long long str long long) ShellMessageBoxA
+ 182 varargs ShellMessageBoxW(long long long str long) ShellMessageBoxW
+ 183 varargs ShellMessageBoxA(long long long str long) ShellMessageBoxA
  184 stdcall ArrangeWindows(long long long long long) ArrangeWindows
  185 stub SHHandleDiskFull
  186 stub ExtractAssociatedIconExW   # exported by name

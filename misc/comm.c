@@ -1189,10 +1189,11 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
         else
             lpdcb->fParity = FALSE;
 #ifdef CMSPAR
-	switch (port.c_cflag & (PARENB | PARODD | CMSPAR)) {
+	switch (port.c_cflag & (PARENB | PARODD | CMSPAR))
 #else
-	switch (port.c_cflag & (PARENB | PARODD)) {
+	switch (port.c_cflag & (PARENB | PARODD))
 #endif
+	{
 		case 0:
 			lpdcb->Parity = NOPARITY;
 			break;
@@ -2378,10 +2379,11 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
         else
             lpdcb->fParity = FALSE;
 #ifdef CMSPAR
-	switch (port.c_cflag & (PARENB | PARODD | CMSPAR)) {
+	switch (port.c_cflag & (PARENB | PARODD | CMSPAR))
 #else
-	switch (port.c_cflag & (PARENB | PARODD)) {
+	switch (port.c_cflag & (PARENB | PARODD))
 #endif
+	{
 		case 0:
 			lpdcb->Parity = NOPARITY;
 			break;

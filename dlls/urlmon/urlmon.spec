@@ -29,7 +29,7 @@ import	ole32.dll
 @ stdcall DllGetClassObject(ptr ptr ptr) URLMON_DllGetClassObject
 @ stdcall DllInstall(long ptr) URLMON_DllInstall
 @ stdcall DllRegisterServer() URLMON_DllRegisterServer
-@ stub DllRegisterServerEx
+@ stdcall DllRegisterServerEx() URLMON_DllRegisterServerEx
 @ stdcall DllUnregisterServer() URLMON_DllUnregisterServer
 @ stub Extract
 @ stub FaultInIEFeature
