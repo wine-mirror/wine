@@ -465,14 +465,17 @@ typedef struct _IMAGELIST *HIMAGELIST;
 #define ILC_COLOR32      0x0020
 #define ILC_PALETTE      0x0800  /* no longer supported by M$ */
 
-#define ILD_NORMAL       0x0000
-#define ILD_TRANSPARENT  0x0001
-#define ILD_BLEND25      0x0002
-#define ILD_BLEND50      0x0004
-#define ILD_MASK         0x0010
-#define ILD_IMAGE        0x0020
-#define ILD_ROP          0x0040
-#define ILD_OVERLAYMASK  0x0F00
+#define ILD_NORMAL        0x0000
+#define ILD_TRANSPARENT   0x0001
+#define ILD_BLEND25       0x0002
+#define ILD_BLEND50       0x0004
+#define ILD_MASK          0x0010
+#define ILD_IMAGE         0x0020
+#define ILD_ROP           0x0040
+#define ILD_OVERLAYMASK   0x0F00
+#define ILD_PRESERVEALPHA 0x1000
+#define ILD_SCALE         0x2000
+#define ILD_DPISCALE      0x4000
 
 #define ILD_SELECTED     ILD_BLEND50
 #define ILD_FOCUS        ILD_BLEND25
@@ -499,18 +502,21 @@ typedef struct _IMAGELISTDRAWPARAMS
 {
     DWORD       cbSize;
     HIMAGELIST  himl;
-    INT       i;
-    HDC       hdcDst;
-    INT       x;
-    INT       y;
-    INT       cx;
-    INT       cy;
-    INT       xBitmap;  /* x offest from the upperleft of bitmap */
-    INT       yBitmap;  /* y offset from the upperleft of bitmap */
+    INT         i;
+    HDC         hdcDst;
+    INT         x;
+    INT         y;
+    INT         cx;
+    INT         cy;
+    INT         xBitmap;  /* x offest from the upperleft of bitmap */
+    INT         yBitmap;  /* y offset from the upperleft of bitmap */
     COLORREF    rgbBk;
     COLORREF    rgbFg;
-    UINT      fStyle;
+    UINT        fStyle;
     DWORD       dwRop;
+    DWORD       fState;
+    DWORD       Frame;
+    DWORD       crEffect;
 } IMAGELISTDRAWPARAMS, *LPIMAGELISTDRAWPARAMS;
 
 
@@ -3457,8 +3463,6 @@ static const WCHAR WC_COMBOBOXEXW[] = { 'C','o','m','b','o',
 #define CBEM_SETUNICODEFORMAT   CCM_SETUNICODEFORMAT
 #define CBEM_GETUNICODEFORMAT   CCM_GETUNICODEFORMAT
 #define CBEM_HASEDITCHANGED     (WM_USER+10)
-#define CBEM_SETUNICODEFORMAT   CCM_SETUNICODEFORMAT
-#define CBEM_GETUNICODEFORMAT   CCM_GETUNICODEFORMAT
 
 #define CBEIF_TEXT              0x00000001
 #define CBEIF_IMAGE             0x00000002
