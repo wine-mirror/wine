@@ -17,6 +17,7 @@ C_SRCS = \
 	aviparse.c \
 	basefilt.c \
 	basepin.c \
+	capgraph.c \
 	complist.c \
 	csconv.c \
 	devenum.c \
@@ -24,6 +25,7 @@ C_SRCS = \
 	fgevent.c \
 	fgpass.c \
 	fgraph.c \
+	filesink.c \
 	fmap.c \
 	ifgraph.c \
 	imcntl.c \

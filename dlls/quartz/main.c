@@ -50,6 +50,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 #include "parser.h"
 #include "asyncsrc.h"
 #include "xform.h"
+#include "capgraph.h"
+#include "filesink.h"
 
 
 typedef struct QUARTZ_CLASSENTRY
@@ -94,6 +96,9 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_FilterMapper, &QUARTZ_CreateFilterMapper },
 	{ &CLSID_FilterMapper2, &QUARTZ_CreateFilterMapper2 },
 	{ &CLSID_SeekingPassThru, &QUARTZ_CreateSeekingPassThru },
+	{ &CLSID_CaptureGraphBuilder, &QUARTZ_CreateCaptureGraph },
+	{ &CLSID_CaptureGraphBuilder2, &QUARTZ_CreateCaptureGraph },
+
 	{ &CLSID_AudioRender, &QUARTZ_CreateAudioRenderer },
 	{ &CLSID_VideoRenderer, &QUARTZ_CreateVideoRenderer },
 	{ &CLSID_quartzWaveParser, &QUARTZ_CreateWaveParser },
@@ -102,6 +107,7 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_URLReader, &QUARTZ_CreateURLReader },
 	{ &CLSID_AVIDec, &QUARTZ_CreateAVIDec },
 	{ &CLSID_Colour, &QUARTZ_CreateColour },
+	{ &CLSID_FileWriter, &QUARTZ_CreateFileWriter },
 	{ NULL, NULL },
 };
 
