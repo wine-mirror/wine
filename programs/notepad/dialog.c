@@ -357,134 +357,212 @@ VOID DIALOG_FileSaveAs(VOID)
 
 VOID DIALOG_FilePrint(VOID)
 {
-        LONG bFlags, nBase;
-        WORD nOffset;
-        DOCINFO di;
-        int nResult;
-        HDC hContext;
-        PRINTDLG printer;
+    LONG bFlags;
+    DOCINFO di;
+    int nResult;
+    HDC hContext;
+    PRINTDLG printer;
+    char *pDevNamesSpace;
+    LPDEVNAMES lpDevNames;
+    SIZE szMetric;
+    int cWidthPels, cHeightPels, border;
+    int xLeft, yTop, count, i, pagecount, dopage, copycount;
+    LOGFONT hdrFont;
+    HFONT font, old_font=0;
+    CHAR *pTemp;
+    int size;
 
-        CHAR szDocumentName[MAX_STRING_LEN]; /* Name of document */
-        CHAR szPrinterName[MAX_STRING_LEN];  /* Name of the printer */
-        CHAR szDeviceName[MAX_STRING_LEN];   /* Name of the printer device */
-        CHAR szOutput[MAX_STRING_LEN];       /* in which file/device to print */
+    CHAR szDocumentName[MAX_STRING_LEN]; /* Name of document */
+    CHAR szPrinterName[MAX_STRING_LEN];  /* Name of the printer */
+    CHAR szDeviceName[MAX_STRING_LEN];   /* Name of the printer device */
+    CHAR szOutput[MAX_STRING_LEN];       /* in which file/device to print */
+    
+    strcpy(szDocumentName, Globals.szFileTitle);
+    count = strlen(szDocumentName);
 
-/*        LPDEVMODE  hDevMode;   */
-/*        LPDEVNAMES hDevNames; */
+    /* Get a small font and print some header info on each page */
+    hdrFont.lfHeight = 100;
+    hdrFont.lfWidth = 0;
+    hdrFont.lfEscapement = 0;
+    hdrFont.lfOrientation = 0;
+    hdrFont.lfWeight = FW_BOLD;
+    hdrFont.lfItalic = 0;
+    hdrFont.lfUnderline = 0;
+    hdrFont.lfStrikeOut = 0;
+    hdrFont.lfCharSet = ANSI_CHARSET;
+    hdrFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
+    hdrFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    hdrFont.lfQuality = PROOF_QUALITY;
+    hdrFont.lfPitchAndFamily = VARIABLE_PITCH | FF_ROMAN;
+    strcpy(hdrFont.lfFaceName, "Times New Roman");
+    
+    font = CreateFontIndirect(&hdrFont);
+    
+    /* Get Current Settings */
+    ZeroMemory(&printer, sizeof(printer));
+    printer.lStructSize           = sizeof(printer);
+    printer.hwndOwner             = Globals.hMainWnd;
+    printer.hInstance             = Globals.hInstance;
+    
+    /* Set some default flags */
+    bFlags = PD_RETURNDC + PD_SHOWHELP;
+    if (TRUE) {
+            /* Remove "Print Selection" if there is no selection */
+            bFlags = bFlags + PD_NOSELECTION;
+    }
+    printer.Flags                 = bFlags;
+    printer.nFromPage             = 1;
+    printer.nMinPage              = 1;
+    /* we really need to calculate number of pages to set nMaxPage and nToPage */
+    printer.nToPage               = 20;
+    printer.nMaxPage              = 20;
 
-/*        hDevMode  = GlobalAlloc(GMEM_MOVEABLE + GMEM_ZEROINIT, sizeof(DEVMODE)); */
-/*        hDevNames = GlobalAlloc(GMEM_MOVEABLE + GMEM_ZEROINIT, sizeof(DEVNAMES)); */
+    /* Let commdlg manage copy settings */
+    printer.nCopies               = (WORD)PD_USEDEVMODECOPIES;
 
-        /* Get Current Settings */
-        ZeroMemory(&printer, sizeof(printer));
-        printer.lStructSize           = sizeof(printer);
-        printer.hwndOwner             = Globals.hMainWnd;
-        printer.hInstance             = Globals.hInstance;
+    nResult = PrintDlg(&printer);
+    if (printer.hDevNames==0)
+        return;
+    if (!nResult) {
+        MessageBox(Globals.hMainWnd, "PrintDlg failed", "Print Error", MB_ICONEXCLAMATION);
+        return;
+    }
+    hContext = printer.hDC;
 
-        nResult = PrintDlg(&printer);
-
-/*        hContext = CreateDC(, szDeviceName, "TEST.TXT", 0); */
-
-        /* Congratulations to those Microsoft Engineers responsible */
-        /* for the following pointer acrobatics */
-
-        assert(printer.hDevNames!=0);
-
-        nBase = (LONG)(printer.hDevNames);
-
-        nOffset = (WORD)((LPDEVNAMES) printer.hDevNames)->wDriverOffset;
-        lstrcpy(szPrinterName, (LPSTR) (nBase + nOffset));
-
-        nOffset = (WORD)((LPDEVNAMES) printer.hDevNames)->wDeviceOffset;
-        lstrcpy(szDeviceName, (LPSTR) (nBase + nOffset));
-
-        nOffset = (WORD)((LPDEVNAMES) printer.hDevNames)->wOutputOffset;
-        lstrcpy(szOutput, (LPSTR) (nBase + nOffset));
-
-        MessageBox(Globals.hMainWnd, szPrinterName, "Printer Name", MB_ICONEXCLAMATION);
-        MessageBox(Globals.hMainWnd, szDeviceName,  "Device Name",  MB_ICONEXCLAMATION);
-        MessageBox(Globals.hMainWnd, szOutput,      "Output",       MB_ICONEXCLAMATION);
-
-        /* Set some default flags */
-
-        bFlags = PD_RETURNDC + PD_SHOWHELP;
-
-        if (TRUE) {
-             /* Remove "Print Selection" if there is no selection */
-             bFlags = bFlags + PD_NOSELECTION;
-        }
-
-        printer.Flags                 = bFlags;
+    pDevNamesSpace = GlobalLock(printer.hDevNames);
+    lpDevNames = (LPDEVNAMES) pDevNamesSpace;
+    lstrcpy(szPrinterName, pDevNamesSpace+lpDevNames->wDriverOffset);
+    lstrcpy(szDeviceName, pDevNamesSpace+lpDevNames->wDeviceOffset);
+    lstrcpy(szOutput, pDevNamesSpace+lpDevNames->wOutputOffset);
+    GlobalUnlock(printer.hDevNames);
 /*
-        printer.nFromPage             = 0;
-        printer.nToPage               = 0;
-        printer.nMinPage              = 0;
-        printer.nMaxPage              = 0;
+    MessageBox(Globals.hMainWnd, szPrinterName, "Printer Name", MB_ICONEXCLAMATION);
+    MessageBox(Globals.hMainWnd, szDeviceName,  "Device Name",  MB_ICONEXCLAMATION);
+    MessageBox(Globals.hMainWnd, szOutput,      "Output",       MB_ICONEXCLAMATION);
 */
+    /* initialize DOCINFO */
+    di.cbSize = sizeof(DOCINFO);
+    di.lpszDocName = szDocumentName;
+    di.lpszOutput = szOutput;
+    di.lpszDatatype = (LPTSTR) NULL;
+    di.fwType = 0; 
+    
+    /* The default resolution is pixels, ie MM_TEXT */
+/*    SetMapMode(hContext, MM_TWIPS);*/
+/*    SetViewPortExExt(hContext, 10, 10, 0);*/
+/*    SetBkMode(hContext, OPAQUE);*/
 
-        /* Let commdlg manage copy settings */
-        printer.nCopies               = (WORD)PD_USEDEVMODECOPIES;
+    /* Get the page dimensions in pixels. */
+    cWidthPels = GetDeviceCaps(hContext, HORZRES);
+    cHeightPels = GetDeviceCaps(hContext, VERTRES);
 
-        if (PrintDlg(&printer)) {
+    /* Get the file text */
+    size = GetWindowTextLength(Globals.hEdit);
+    pTemp = (LPSTR) GlobalAlloc(GMEM_FIXED, size);
+    if (!pTemp)
+    {
+        ShowLastError();
+        return;
+    }
+    GetWindowText(Globals.hEdit, pTemp, size);
+    if (!size)
+    {
+        ShowLastError();
+        return;
+    }
+    
+    /* Okay, let's print */
+    nResult = StartDoc(hContext, &di);
+    if (nResult <= 0) {
+        MessageBox(Globals.hMainWnd, "StartDoc failed", "Print Error", MB_ICONEXCLAMATION);
+        return;
+    }
 
-            /* initialize DOCINFO */
-            di.cbSize = sizeof(DOCINFO);
-            lstrcpy((LPSTR)di.lpszDocName, szDocumentName);
-            lstrcpy((LPSTR)di.lpszOutput,  szOutput);
+    border = 150;
+    for (copycount=1; copycount <= printer.nCopies; copycount++) {
+        i = 0;
+        pagecount = 1;
+        do {
+            if (pagecount >= printer.nFromPage &&
+    /*          ((printer.Flags & PD_PAGENUMS) == 0 ||  pagecount <= printer.nToPage))*/
+            pagecount <= printer.nToPage)
+                dopage = 1;
+            else
+                dopage = 0;
+            
+            old_font = SelectObject(hContext, font);
+            GetTextExtentPoint32(hContext, "M", 1, &szMetric); 
+                
+            if (dopage) {
+                nResult = StartPage(hContext);
+                if (nResult <= 0) {
+                    MessageBox(Globals.hMainWnd, "StartPage failed", "Print Error", MB_ICONEXCLAMATION);
+                    return;
+                }
+                /* Write a rectangle and header at the top of each page */
+                Rectangle(hContext, border, border, cWidthPels-border, border+szMetric.cy*2);
+                /* I don't know what's up with this TextOut command. This comes out
+                kind of mangled.
+                */
+                TextOut(hContext, border*2, border+szMetric.cy*0.5, szDocumentName, count);
+            }
+            
+            /* The starting point for the main text */
+            xLeft = border*2;
+            yTop = border+szMetric.cy*4;
+            
+            SelectObject(hContext, old_font);
+            GetTextExtentPoint32(hContext, "M", 1, &szMetric); 
+            
+            /* Since outputting strings is giving me problems, output the main
+            text one character at a time.
+            */
+            do {
+                if (pTemp[i] == '\n') {
+                    xLeft = border*2;
+                    yTop += szMetric.cy;
+                }
+                else if (pTemp[i] != '\r') {
+                    if (dopage)
+                        TextOut(hContext, xLeft, yTop, &pTemp[i], 1);
+                    xLeft += szMetric.cx;
+                }
+            } while (i++<size && yTop<(cHeightPels-border*2));
+            
+            if (dopage)
+                EndPage(hContext);
+            pagecount++;
+        } while (i<size);
+    }
 
-            hContext = printer.hDC;
-            assert(hContext!=0);
-            assert( (int) hContext!=PD_RETURNDC);
-
-            SetMapMode(hContext, MM_LOMETRIC);
-/*          SetViewPortExExt(hContext, 10, 10, 0); */
-            SetBkMode(hContext, OPAQUE);
-
-            nResult = TextOut(hContext, 0, 0, " ", 1);
-            assert(nResult != 0);
-
-            nResult = StartDoc(hContext, &di);
-            assert(nResult != SP_ERROR);
-
-            nResult = StartPage(hContext);
-            assert(nResult >0);
-
-            /* FIXME: actually print */
-
-            nResult = EndPage(hContext);
-
-            switch (nResult) {
-               case SP_ERROR:
-                       MessageBox(Globals.hMainWnd, "Generic Error", "Print Engine Error", MB_ICONEXCLAMATION);
-                       break;
-               case SP_APPABORT:
-                       MessageBox(Globals.hMainWnd, "The print job was aborted.", "Print Engine Error", MB_ICONEXCLAMATION);
-                       break;
-               case SP_USERABORT:
-                       MessageBox(Globals.hMainWnd, "The print job was aborted using the Print Manager ", "Print Engine Error", MB_ICONEXCLAMATION);
-                       break;
-               case SP_OUTOFDISK:
-                       MessageBox(Globals.hMainWnd, "Out of disk space", "Print Engine Error", MB_ICONEXCLAMATION);
-                       break;
-               case SP_OUTOFMEMORY:
-                       AlertOutOfMemory();
-                       break;
-               default:
-                       MessageBox(Globals.hMainWnd, "Default", "Print", MB_ICONEXCLAMATION);
-            } /* switch */
-            nResult = EndDoc(hContext);
-            assert(nResult>=0);
-            nResult = DeleteDC(hContext);
-            assert(nResult!=0);
-        } /* if */
-
-/*       GlobalFree(hDevNames); */
-/*       GlobalFree(hDevMode); */
+    switch (nResult) {
+        case SP_ERROR:
+                MessageBox(Globals.hMainWnd, "Generic Error", "Print Engine Error", MB_ICONEXCLAMATION);
+                break;
+        case SP_APPABORT:
+                MessageBox(Globals.hMainWnd, "The print job was aborted.", "Print Engine Error", MB_ICONEXCLAMATION);
+                break;
+        case SP_USERABORT:
+                MessageBox(Globals.hMainWnd, "The print job was aborted using the Print Manager ", "Print Engine Error", MB_ICONEXCLAMATION);
+                break;
+        case SP_OUTOFDISK:
+                MessageBox(Globals.hMainWnd, "Out of disk space", "Print Engine Error", MB_ICONEXCLAMATION);
+                break;
+        case SP_OUTOFMEMORY:
+                AlertOutOfMemory();
+                break;
+        default:
+                break;
+    } /* switch */
+    nResult = EndDoc(hContext);
+    assert(nResult>=0);
+    nResult = DeleteDC(hContext);
+    assert(nResult!=0);
 }
 
 VOID DIALOG_FilePageSetup(VOID)
 {
-        DIALOG_PageSetup();
+    DIALOG_PageSetup();
 }
 
 VOID DIALOG_FilePrinterSetup(VOID)
