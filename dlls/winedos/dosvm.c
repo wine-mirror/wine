@@ -684,9 +684,12 @@ BOOL WINAPI DOSVM_Init( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved 
         TRACE("Initializing DOS memory structures\n");
         DOSMEM_Init( TRUE );
         DOSDEV_InstallDOSDevices();
+
+#ifdef MZ_SUPPORTED
         event_notifier = CreateEventA(NULL, FALSE, FALSE, NULL);
         if(!event_notifier)
           ERR("Failed to create event object!\n");
+#endif
 
     }
     return TRUE;
