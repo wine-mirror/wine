@@ -24,7 +24,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/loader/task.c \
 	$(TOPOBJDIR)/loader/ne/module.c \
 	$(TOPOBJDIR)/loader/ne/segment.c \
-	$(TOPOBJDIR)/memory/atom.c \
 	$(TOPOBJDIR)/memory/codepage.c \
 	$(TOPOBJDIR)/memory/environ.c \
 	$(TOPOBJDIR)/memory/global.c \
