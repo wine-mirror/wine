@@ -1399,7 +1399,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
         volume->myDesc.Type   = D3DRTYPE_VOLUME;
         volume->myDesc.Pool   = Pool;
         volume->myDesc.Usage  = Usage;
-        volume->bytesPerPixel   = D3DFmtGetBpp(Format);
+        volume->bytesPerPixel   = D3DFmtGetBpp(This, Format);
         volume->myDesc.Size     = (Width * volume->bytesPerPixel) * Height * Depth;
         volume->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, volume->myDesc.Size);
 
@@ -1465,8 +1465,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
 	   }
 
            TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[j][i], object->surfaces[j][i]->allocatedMemory);
-           tmpW = max(1, tmpW / 2);
         }
+        tmpW = max(1, tmpW / 2);
     }
 
     TRACE("(%p) : Iface@%p\n", This, object);
@@ -1546,7 +1546,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface
     object->myDesc.Usage = D3DUSAGE_RENDERTARGET;
     object->myDesc.Pool = D3DPOOL_DEFAULT;
     object->myDesc.MultiSampleType = MultiSample;
-    object->bytesPerPixel = D3DFmtGetBpp(Format);
+    object->bytesPerPixel = D3DFmtGetBpp(This, Format);
     object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
     object->lockable = Lockable;
@@ -1579,7 +1579,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE
     object->myDesc.Usage = D3DUSAGE_DEPTHSTENCIL;
     object->myDesc.Pool = D3DPOOL_DEFAULT;
     object->myDesc.MultiSampleType = MultiSample;
-    object->bytesPerPixel = D3DFmtGetBpp(Format);
+    object->bytesPerPixel = D3DFmtGetBpp(This, Format);
     object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
     object->lockable = (D3DFMT_D16_LOCKABLE == Format) ? TRUE : FALSE;
@@ -1607,7 +1607,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface
     object->myDesc.Type = D3DRTYPE_SURFACE;
     object->myDesc.Usage = 0;
     object->myDesc.Pool = D3DPOOL_SYSTEMMEM;
-    object->bytesPerPixel = D3DFmtGetBpp(Format);
+    object->bytesPerPixel = D3DFmtGetBpp(This, Format);
     object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
     object->lockable = TRUE;
@@ -1888,7 +1888,20 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, I
     IDirect3DDevice8Impl_CleanRender(iface);
 
     if ((IDirect3DSurface8Impl*) pRenderTarget == This->frontBuffer && (IDirect3DSurface8Impl*) pNewZStencil == This->depthStencilBuffer) {
+      IDirect3DSurface8Impl* tmp;
+
       TRACE("retoring SetRenderTarget defaults\n");
+
+      tmp = This->renderTarget;
+      This->renderTarget = (IDirect3DSurface8Impl*) This->frontBuffer;
+      IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->renderTarget);
+      IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8) tmp);
+      
+      tmp = This->stencilBufferTarget;
+      This->stencilBufferTarget = (IDirect3DSurface8Impl*) This->depthStencilBuffer;
+      if (NULL != This->stencilBufferTarget) IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->stencilBufferTarget);
+      if (NULL != tmp) IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8) tmp);
+
       return D3D_OK;
     }
 
@@ -1917,7 +1930,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE8 i
     
     /* Note inc ref on returned surface */
     *ppZStencilSurface = (LPDIRECT3DSURFACE8) This->stencilBufferTarget;
-    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppZStencilSurface);
+    if (NULL != *ppZStencilSurface) IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppZStencilSurface);
 
     return D3D_OK;
 }
@@ -1941,10 +1954,36 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
     getchar(); */
 
     if (This->frontBuffer != This->renderTarget) {
+      {
+	GLenum prev_read;
+	glGetIntegerv(GL_READ_BUFFER, &prev_read);
+	vcheckGLcall("glIntegerv");
+	glReadBuffer(GL_BACK);
+	vcheckGLcall("glReadBuffer");
+	{
+	  long j;
+	  long pitch = This->renderTarget->myDesc.Width * This->renderTarget->bytesPerPixel;
+	  for (j = 0; j < This->renderTarget->myDesc.Height; ++j) {
+	    glReadPixels(0, 
+			 This->renderTarget->myDesc.Height - j - 1, 
+			 This->renderTarget->myDesc.Width, 
+			 1,
+			 D3DFmt2GLFmt(This, This->renderTarget->myDesc.Format), 
+			 D3DFmt2GLType(This, This->renderTarget->myDesc.Format), 
+			 This->renderTarget->allocatedMemory + j * pitch);
+	    vcheckGLcall("glReadPixels");
+	  }
+	}      
+	glReadBuffer(prev_read);
+	vcheckGLcall("glReadBuffer");
+      }
+
       IDirect3DBaseTexture8* cont = NULL;
       HRESULT hr;
       hr = IDirect3DSurface8_GetContainer((LPDIRECT3DSURFACE8) This->renderTarget, &IID_IDirect3DBaseTexture8, (void**) &cont);
       if (SUCCEEDED(hr) && NULL != cont) {
+	/** always dirtify for now. we must find a better way to see that surface have been modified */
+	IDirect3DBaseTexture8Impl_SetDirty(cont, TRUE);
 	IDirect3DBaseTexture8_PreLoad(cont);
 	IDirect3DBaseTexture8_Release(cont);
 	cont = NULL;
@@ -2680,8 +2719,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
     glPushMatrix();
     glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
 
-    TRACE("Clipplane [%f,%f,%f,%f]\n", This->UpdateStateBlock->clipplane[Index][0], This->UpdateStateBlock->clipplane[Index][1],
-          This->UpdateStateBlock->clipplane[Index][2], This->UpdateStateBlock->clipplane[Index][3]);
+    TRACE("Clipplane [%f,%f,%f,%f]\n", 
+	  This->UpdateStateBlock->clipplane[Index][0], 
+	  This->UpdateStateBlock->clipplane[Index][1],
+          This->UpdateStateBlock->clipplane[Index][2], 
+	  This->UpdateStateBlock->clipplane[Index][3]);
     glClipPlane(GL_CLIP_PLANE0 + Index, This->UpdateStateBlock->clipplane[Index]);
 
     glPopMatrix();
@@ -2700,9 +2742,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
     }
 
     pPlane[0] = This->StateBlock->clipplane[Index][0];
-    pPlane[1] = This->StateBlock->clipplane[Index][0];
-    pPlane[2] = This->StateBlock->clipplane[Index][0];
-    pPlane[3] = This->StateBlock->clipplane[Index][0];
+    pPlane[1] = This->StateBlock->clipplane[Index][1];
+    pPlane[2] = This->StateBlock->clipplane[Index][2];
+    pPlane[3] = This->StateBlock->clipplane[Index][3];
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3DRENDERSTATETYPE State,DWORD Value) {
@@ -2850,12 +2892,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_AMBIENT                   :
         {
             float col[4];
-#if 0
-            col[0] = ((Value >> 16) & 0xFF) / 255.0;
-            col[1] = ((Value >>  8) & 0xFF) / 255.0;
-            col[2] = ((Value >>  0) & 0xFF) / 255.0;
-            col[3] = ((Value >> 24) & 0xFF) / 255.0;
-#endif
 	    D3DCOLORTOGLFLOAT4(Value, col);
             TRACE("Setting ambient to (%f,%f,%f,%f)\n", col[0], col[1], col[2], col[3]);
             glLightModelfv(GL_LIGHT_MODEL_AMBIENT, col);
@@ -2929,14 +2965,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             float ref = ((float) This->StateBlock->renderstate[D3DRS_ALPHAREF]) / 255.0f;
 
             switch ((D3DCMPFUNC) Value) {
-            case D3DCMP_NEVER:         glParm=GL_NEVER; break;
-            case D3DCMP_LESS:          glParm=GL_LESS; break;
-            case D3DCMP_EQUAL:         glParm=GL_EQUAL; break;
-            case D3DCMP_LESSEQUAL:     glParm=GL_LEQUAL; break;
-            case D3DCMP_GREATER:       glParm=GL_GREATER; break;
-            case D3DCMP_NOTEQUAL:      glParm=GL_NOTEQUAL; break;
-            case D3DCMP_GREATEREQUAL:  glParm=GL_GEQUAL; break;
-            case D3DCMP_ALWAYS:        glParm=GL_ALWAYS; break;
+            case D3DCMP_NEVER:         glParm = GL_NEVER; break;
+            case D3DCMP_LESS:          glParm = GL_LESS; break;
+            case D3DCMP_EQUAL:         glParm = GL_EQUAL; break;
+            case D3DCMP_LESSEQUAL:     glParm = GL_LEQUAL; break;
+            case D3DCMP_GREATER:       glParm = GL_GREATER; break;
+            case D3DCMP_NOTEQUAL:      glParm = GL_NOTEQUAL; break;
+            case D3DCMP_GREATEREQUAL:  glParm = GL_GEQUAL; break;
+            case D3DCMP_ALWAYS:        glParm = GL_ALWAYS; break;
             default:
                 FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
             }
@@ -3061,7 +3097,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                NOTE: If not supported dont give FIXME as very minimal impact and very few people are
                   yet running 1.4!
              */
-            if (Value) {
+              if (Value) {
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
                 checkGLcall("glMaterialfv");
 #if defined(GL_VERSION_1_4)
@@ -3074,7 +3110,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                 TRACE("Specular colors cannot be enabled in this version of opengl\n");
 #endif
                 checkGLcall("glEnable(GL_COLOR_)\n");
-            } else {
+              } else {
                 float black[4] = {0.0, 0.0, 0.0, 0.0};
 
                 /* for the case of enabled lighting: */
@@ -3092,7 +3128,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                 TRACE("Specular colors cannot be disabled in this version of opengl\n");
 #endif
                 checkGLcall("glDisable(GL_COLOR_)\n");
-	    }
+	      }
         }
         break;
 
@@ -3125,8 +3161,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
            }
            TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
-           This->stencilfunc = glParm;
-           glStencilFunc(glParm, ref, mask);
+	   This->stencilfunc = glParm;
+	   glStencilFunc(glParm, ref, mask);
            checkGLcall("glStencilFunc");
         }
         break;
@@ -3477,13 +3513,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_COLORWRITEENABLE          :
         TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n", 
-                    Value & D3DCOLORWRITEENABLE_RED?1:0,
-                    Value & D3DCOLORWRITEENABLE_GREEN?1:0,
-                    Value & D3DCOLORWRITEENABLE_BLUE?1:0,
-                    Value & D3DCOLORWRITEENABLE_ALPHA?1:0); 
-		glColorMask(Value & D3DCOLORWRITEENABLE_RED, 
+	      Value & D3DCOLORWRITEENABLE_RED   ? 1 : 0,
+	      Value & D3DCOLORWRITEENABLE_GREEN ? 1 : 0,
+	      Value & D3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
+	      Value & D3DCOLORWRITEENABLE_ALPHA ? 1 : 0); 
+	glColorMask(Value & D3DCOLORWRITEENABLE_RED, 
                     Value & D3DCOLORWRITEENABLE_GREEN,
-		            Value & D3DCOLORWRITEENABLE_BLUE, 
+		    Value & D3DCOLORWRITEENABLE_BLUE, 
                     Value & D3DCOLORWRITEENABLE_ALPHA);
         checkGLcall("glColorMask(...)\n");
 		break;
@@ -3791,6 +3827,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         }
         break;
 
+    case D3DTSS_MAXANISOTROPY         :
+      {	
+	if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+	  glTexParameteri(This->StateBlock->textureDimensions[Stage], GL_TEXTURE_MAX_ANISOTROPY_EXT, This->StateBlock->texture_state[Stage][D3DTSS_MAXANISOTROPY]);
+	  checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
+	}
+      }
+      break;
 
     case D3DTSS_MAGFILTER             :
         if (Value == D3DTEXF_POINT) {
@@ -4007,6 +4051,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 		     *   we can use GL_SUBTRACT_ARB here
 		     */
 #endif
+
                 case D3DTOP_ADDSMOOTH                 :
                 case D3DTOP_BLENDDIFFUSEALPHA         :
                 case D3DTOP_BLENDTEXTUREALPHA         :
@@ -4264,7 +4309,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
     case D3DTSS_MIPMAPLODBIAS         :
     case D3DTSS_MAXMIPLEVEL           :
-    case D3DTSS_MAXANISOTROPY         :
     case D3DTSS_BUMPENVLSCALE         :
     case D3DTSS_BUMPENVLOFFSET        :
     case D3DTSS_RESULTARG             :
@@ -4288,12 +4332,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPaletteEntries(LPDIRECT3DDEVICE8 iface,
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     FIXME("(%p) : setting p[%u] <= RGBA(%02x,%02x,%02x,%02x)\n", This, PaletteNumber,
           pEntries->peRed, pEntries->peGreen, pEntries->peBlue, pEntries->peFlags);
-    memcpy(&This->palettes[PaletteNumber], pEntries, 256 * sizeof(PALETTEENTRY));
+    memcpy(This->palettes[PaletteNumber], pEntries, 256 * sizeof(PALETTEENTRY));
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetPaletteEntries(LPDIRECT3DDEVICE8 iface, UINT PaletteNumber, PALETTEENTRY* pEntries) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    memcpy(pEntries, &This->palettes[PaletteNumber], 256 * sizeof(PALETTEENTRY));
+    memcpy(pEntries, This->palettes[PaletteNumber], 256 * sizeof(PALETTEENTRY));
     FIXME("(%p) : returning p[%u] => RGBA(%02x,%02x,%02x,%02x)\n", This, PaletteNumber,
           pEntries->peRed, pEntries->peGreen, pEntries->peBlue, pEntries->peFlags);
     return D3D_OK;
@@ -4309,7 +4353,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetCurrentTexturePalette(LPDIRECT3DDEVICE8
 		      256,              /* table size */
 		      GL_RGBA,          /* table format */
 		      GL_UNSIGNED_BYTE, /* table type */
-		      &This->palettes[PaletteNumber]);
+		      This->palettes[PaletteNumber]);
       checkGLcall("glColorTableEXT");
     } else {
       /* Delayed palette handling ... waiting for software emulation into preload code */
@@ -4896,7 +4940,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
   int attribs[256];
   int nAttribs = 0;
   D3DFORMAT BackBufferFormat = ((IDirect3DSurface8Impl*) RenderSurface)->myDesc.Format;
-  D3DFORMAT StencilBufferFormat = ((IDirect3DSurface8Impl*) StencilSurface)->myDesc.Format;
+  D3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IDirect3DSurface8Impl*) StencilSurface)->myDesc.Format : 0;
   UINT Width = ((IDirect3DSurface8Impl*) RenderSurface)->myDesc.Width;
   UINT Height = ((IDirect3DSurface8Impl*) RenderSurface)->myDesc.Height;
   IDirect3DSurface8Impl* tmp;
@@ -5021,14 +5065,15 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
       vcheckGLcall("glReadBuffer");
       {
 	long j;
+	long pitch = This->renderTarget->myDesc.Width * This->renderTarget->bytesPerPixel;
 	for (j = 0; j < This->renderTarget->myDesc.Height; ++j) {
 	  glReadPixels(0, 
 		       This->renderTarget->myDesc.Height - j - 1, 
 		       This->renderTarget->myDesc.Width, 
 		       1,
-		       D3DFmt2GLFmt(This->renderTarget->myDesc.Format), 
-		       D3DFmt2GLType(This->renderTarget->myDesc.Format), 
-		       This->renderTarget->allocatedMemory);
+		       D3DFmt2GLFmt(This, This->renderTarget->myDesc.Format), 
+		       D3DFmt2GLType(This, This->renderTarget->myDesc.Format), 
+		       This->renderTarget->allocatedMemory + j * pitch);
 	  vcheckGLcall("glReadPixels");
 	}
       }      
@@ -5064,8 +5109,8 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
 
     tmp = This->stencilBufferTarget;
     This->stencilBufferTarget = (IDirect3DSurface8Impl*) StencilSurface;
-    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->stencilBufferTarget);
-    IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8) tmp);
+    if (NULL != This->stencilBufferTarget) IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->stencilBufferTarget);
+    if (NULL != tmp) IDirect3DSurface8Impl_Release((LPDIRECT3DSURFACE8) tmp);
 
     return D3D_OK;
 

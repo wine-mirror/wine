@@ -25,6 +25,7 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "wine/debug.h"
+#include <stdio.h>
 
 #include "d3d8_private.h"
 
@@ -204,8 +205,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 			 This->lockedRect.bottom - j - 1, 
 			 This->lockedRect.right - This->lockedRect.left, 
 			 1,
-			 D3DFmt2GLFmt(This->myDesc.Format), 
-                         D3DFmt2GLType(This->myDesc.Format), 
+			 D3DFmt2GLFmt(This->Device, This->myDesc.Format), 
+                         D3DFmt2GLType(This->Device, This->myDesc.Format), 
                          pLockedRect->pBits);
 	    vcheckGLcall("glReadPixels");
 	  }
@@ -398,12 +399,14 @@ ICOM_VTABLE(IDirect3DSurface8) Direct3DSurface8_Vtbl =
     IDirect3DSurface8Impl_UnlockRect,
 };
 
-HRESULT WINAPI IDirect3DSurface8Impl_CreateGLTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level) {
+HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level) {
   ICOM_THIS(IDirect3DSurface8Impl,iface);
 
-
-  if ((This->myDesc.Format == D3DFMT_P8 || This->myDesc.Format == D3DFMT_A8P8) && 
-      !GL_SUPPORT_DEV(EXT_PALETTED_TEXTURE, This->Device)) {
+  if ((This->myDesc.Format == D3DFMT_P8 || This->myDesc.Format == D3DFMT_A8P8) 
+#if defined(GL_EXT_paletted_texture)
+      && !GL_SUPPORT_DEV(EXT_PALETTED_TEXTURE, This->Device)
+#endif
+      ) {
     /**
      * wanted a paletted texture and not really support it in HW 
      * so software emulation code begin
@@ -450,27 +453,133 @@ HRESULT WINAPI IDirect3DSurface8Impl_CreateGLTexture(LPDIRECT3DSURFACE8 iface, G
     return D3D_OK;    
   }
 
-  TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-	gl_target, 
-	gl_level, 
-	D3DFmt2GLIntFmt(This->myDesc.Format), 
-	This->myDesc.Width, 
-	This->myDesc.Height, 
-	0, 
-	D3DFmt2GLFmt(This->myDesc.Format), 
-	D3DFmt2GLType(This->myDesc.Format),
-	This->allocatedMemory);
-  glTexImage2D(gl_target,
-	       gl_level,
-	       D3DFmt2GLIntFmt(This->myDesc.Format),
-	       This->myDesc.Width,
-	       This->myDesc.Height,
-	       0,
-	       D3DFmt2GLFmt(This->myDesc.Format),
-	       D3DFmt2GLType(This->myDesc.Format),
-	       This->allocatedMemory);
-  checkGLcall("glTexImage2D");
-  
+  if (This->myDesc.Format == D3DFMT_DXT1 || 
+      This->myDesc.Format == D3DFMT_DXT3 || 
+      This->myDesc.Format == D3DFMT_DXT5) {
+#if defined(GL_EXT_texture_compression_s3tc)
+    if (GL_SUPPORT_DEV(EXT_TEXTURE_COMPRESSION_S3TC, This->Device)) {
+      TRACE("Calling glCompressedTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, sz=%d, Mem=%p\n",
+	    gl_target, 
+	    gl_level, 
+	    D3DFmt2GLIntFmt(This->Device, This->myDesc.Format), 
+	    This->myDesc.Width, 
+	    This->myDesc.Height, 
+	    0, 
+	    This->myDesc.Size,
+	    This->allocatedMemory);
+      glCompressedTexImage2DARB(gl_target, 
+				gl_level, 
+				D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
+				This->myDesc.Width,
+				This->myDesc.Height,
+				0,
+				This->myDesc.Size,
+				This->allocatedMemory);
+      checkGLcall("glCommpressedTexTexImage2D");
+    }
+#endif
+  } else {
+    TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
+	  gl_target, 
+	  gl_level, 
+	  D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
+	  This->myDesc.Width, 
+	  This->myDesc.Height, 
+	  0, 
+	  D3DFmt2GLFmt(This->Device, This->myDesc.Format), 
+	  D3DFmt2GLType(This->Device, This->myDesc.Format),
+	  This->allocatedMemory);
+    glTexImage2D(gl_target, 
+		 gl_level,
+		 D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
+		 This->myDesc.Width,
+		 This->myDesc.Height,
+		 0,
+		 D3DFmt2GLFmt(This->Device, This->myDesc.Format),
+		 D3DFmt2GLType(This->Device, This->myDesc.Format),
+		 This->allocatedMemory);
+    checkGLcall("glTexImage2D");
 
+#if 0
+    {
+      static int gen = 0;
+      char buffer[4096];
+      ++gen;
+      if ((gen % 10) == 0) {
+	snprintf(buffer, sizeof(buffer), "/tmp/surface%d_level%d_%d.png", gl_target, gl_level, gen);
+	IDirect3DSurface8Impl_SaveSnapshot((LPDIRECT3DSURFACE8) This, buffer);
+      }
+    }
+#endif
+  }
+
+  return D3D_OK;
+}
+
+#include <errno.h>
+HRESULT WINAPI IDirect3DSurface8Impl_SaveSnapshot(LPDIRECT3DSURFACE8 iface, const char* filename) {
+  FILE* f = NULL;
+  int i;
+  ICOM_THIS(IDirect3DSurface8Impl,iface);
+
+  f = fopen(filename, "w+");
+  if (NULL == f) {
+    ERR("opening of %s failed with: %s\n", filename, strerror(errno));
+    return D3DERR_INVALIDCALL;
+  }
+
+  TRACE("opened %s\n", filename);
+
+  fprintf(f, "P6\n%u %u\n255\n", This->myDesc.Width, This->myDesc.Height);
+  switch (This->myDesc.Format) {
+  case D3DFMT_X8R8G8B8:
+  case D3DFMT_A8R8G8B8:
+    {
+      DWORD color;
+      for (i = 0; i < This->myDesc.Width * This->myDesc.Height; i++) {
+	color = ((DWORD*) This->allocatedMemory)[i];
+	fputc((color >> 16) & 0xFF, f);
+	fputc((color >>  8) & 0xFF, f);
+	fputc((color >>  0) & 0xFF, f);
+      }
+    }
+    break;
+  case D3DFMT_R8G8B8:
+    {
+      BYTE* color;
+      for (i = 0; i < This->myDesc.Width * This->myDesc.Height; i++) {
+	color = ((BYTE*) This->allocatedMemory) + (3 * i);
+	fputc((color[0]) & 0xFF, f);
+	fputc((color[1]) & 0xFF, f);
+	fputc((color[2]) & 0xFF, f);
+      }
+    }
+    break;
+  case D3DFMT_A1R5G5B5: 
+    {
+      WORD color;
+      for (i = 0; i < This->myDesc.Width * This->myDesc.Height; i++) {
+	color = ((WORD*) This->allocatedMemory)[i];
+	fputc((color >> 10) & 0xFF, f);
+	fputc((color >>  5) & 0xFF, f);
+	fputc((color >>  0) & 0xFF, f);
+      }
+    }
+    break;
+  case D3DFMT_R5G6B5: 
+    {
+      WORD color;
+      for (i = 0; i < This->myDesc.Width * This->myDesc.Height; i++) {
+	color = ((WORD*) This->allocatedMemory)[i];
+	fputc((color >> 11) & 0xFF, f);
+	fputc((color >>  5) & 0xFF, f);
+	fputc((color >>  0) & 0xFF, f);
+      }
+    }
+    break;
+  default: 
+    FIXME("Unimplemented dump mode format(%u,%s)\n", This->myDesc.Format, debug_d3dformat(This->myDesc.Format));
+  }
+  fclose(f);
   return D3D_OK;
 }

@@ -31,10 +31,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* IDirect3DTexture8 IUnknown parts follow: */
-HRESULT WINAPI IDirect3DTexture8Impl_QueryInterface(LPDIRECT3DTEXTURE8 iface,REFIID riid,LPVOID *ppobj)
+HRESULT WINAPI IDirect3DTexture8Impl_QueryInterface(LPDIRECT3DTEXTURE8 iface, REFIID riid, LPVOID *ppobj)
 {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
-    TRACE("(%p) : QueryInterface\n", This);
+    TRACE("(%p) : QueryInterface for %s\n", This, debugstr_guid(riid));
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DResource8)
         || IsEqualGUID(riid, &IID_IDirect3DBaseTexture8)
@@ -44,7 +44,7 @@ HRESULT WINAPI IDirect3DTexture8Impl_QueryInterface(LPDIRECT3DTEXTURE8 iface,REF
         return D3D_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    WARN("(%p)->(%s,%p) not found\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
 }
 
@@ -134,7 +134,7 @@ void     WINAPI        IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
 	  
 	}
 
-	IDirect3DSurface8Impl_CreateGLTexture((LPDIRECT3DSURFACE8) This->surfaces[i], GL_TEXTURE_2D, i); 
+	IDirect3DSurface8Impl_LoadTexture((LPDIRECT3DSURFACE8) This->surfaces[i], GL_TEXTURE_2D, i); 
 #if 0
 	TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
 	      GL_TEXTURE_2D, 
@@ -194,7 +194,8 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 ifa
         TRACE("(%p) Level (%d)\n", This, Level);
         return IDirect3DSurface8Impl_GetDesc((LPDIRECT3DSURFACE8) This->surfaces[Level], pDesc);
     } else {
-        FIXME("(%p) Level (%d)\n", This, Level);
+        FIXME("Levels seems too high?!!\n");
+	return D3DERR_INVALIDCALL;
     }
     return D3D_OK;
 }
@@ -218,6 +219,7 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_LockRect(LPDIRECT3DTEXTURE8 iface, 
         TRACE("(%p) Level (%d) success(%lu)\n", This, Level, hr);
     } else {
         FIXME("Levels seems too high?!!\n");
+	return D3DERR_INVALIDCALL;
     }
     return hr;
 }
@@ -230,8 +232,9 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_UnlockRect(LPDIRECT3DTEXTURE8 iface
         TRACE("(%p) Level (%d) success(%lu)\n", This, Level, hr);
     } else {
         FIXME("Levels seems too high?!!\n");
+	return D3DERR_INVALIDCALL;
     }
-    return D3D_OK;
+    return hr;
 }
 HRESULT  WINAPI        IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTURE8 iface, CONST RECT* pDirtyRect) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);

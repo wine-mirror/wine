@@ -513,7 +513,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
                           D3DSTENCILCAPS_REPLACE | 
                           D3DSTENCILCAPS_ZERO;
 #if defined(GL_VERSION_1_4) || defined(GL_EXT_stencil_wrap)
-    pCaps->StencilCaps |= D3DSTENCILCAPS_DECR    |
+    pCaps->StencilCaps |= D3DSTENCILCAPS_DECR    | 
                           D3DSTENCILCAPS_INCR;
 #endif
 
@@ -603,8 +603,13 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
     pCaps->MaxStreams = 2; /* HACK: Some games want at least 2 */ 
     pCaps->MaxStreamStride = 1024;
 
+#if 1
     pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
     pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
+#else
+    pCaps->VertexShaderVersion = 0;
+    pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
+#endif
 
 #if 0
     pCaps->PixelShaderVersion = D3DPS_VERSION(1,1);
@@ -837,9 +842,9 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->renderTarget = object->frontBuffer;
     IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) object->renderTarget);
     object->stencilBufferTarget = object->depthStencilBuffer;
-    if (NULL != object->stencilBufferTarget)
+    if (NULL != object->stencilBufferTarget) {
       IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) object->stencilBufferTarget);
-
+    }
 
     /* Now override the surface's Flip method (if in double buffering) ?COPIED from DDRAW!?
     ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
@@ -875,8 +880,8 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
     checkGLcall("glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
 
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
-    checkGLcall("glLightModel (GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);");
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+    checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
 
     /* 
      * Initialize openGL extension related variables
@@ -955,6 +960,9 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
 	  FIXME(" FOUND: EXT Texture S3TC compression support\n");
 	  This->gl_info.supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_EXT_texture_filter_anisotropic") == 0) {
+	  FIXME(" FOUND: EXT Texture Anisotropic filter support\n");
+	  This->gl_info.supported[EXT_TEXTURE_FILTER_ANISOTROPIC] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_lod") == 0) {
 	  FIXME(" FOUND: EXT Texture LOD support\n");
 	  This->gl_info.supported[EXT_TEXTURE_LOD] = TRUE;

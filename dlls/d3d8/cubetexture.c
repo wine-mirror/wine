@@ -135,34 +135,34 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
     int i;
     int j;
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    TRACE("(%p) : About to load texture\n", This);
+    TRACE("(%p) : About to load texture: dirtified(%d)\n", This, This->Dirty);
     for (i = 0; i < This->levels; i++) {
-      if (i == 0 && This->surfaces[0][i]->textureName != 0 && This->Dirty == FALSE) {
+      if (i == 0 && This->surfaces[0][0]->textureName != 0 && This->Dirty == FALSE) {
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 #if defined(GL_VERSION_1_3)
-	glBindTexture(GL_TEXTURE_CUBE_MAP, This->surfaces[0][i]->textureName);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, This->surfaces[0][0]->textureName);
 #else
-        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][i]->textureName);
+        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][0]->textureName);
 #endif
 	checkGLcall("glBindTexture");
-	TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][i], i, This->surfaces[0][i]->textureName);
+	TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][0], i, This->surfaces[0][0]->textureName);
 	/* No need to walk through all mip-map levels, since already all assigned */
 	i = This->levels;
       } else {
 	if (i == 0) {
-	  if (This->surfaces[0][i]->textureName == 0) {
-	    glGenTextures(1, &This->surfaces[0][i]->textureName);
+	  if (This->surfaces[0][0]->textureName == 0) {
+	    glGenTextures(1, &This->surfaces[0][0]->textureName);
 	    checkGLcall("glGenTextures");
-	    TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][i], i, This->surfaces[0][i]->textureName);
+	    TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][i], i, This->surfaces[0][0]->textureName);
 	  }
 
 #if defined(GL_VERSION_1_3)
-	  glBindTexture(GL_TEXTURE_CUBE_MAP, This->surfaces[0][i]->textureName);
+	  glBindTexture(GL_TEXTURE_CUBE_MAP, This->surfaces[0][0]->textureName);
 #else
-	  glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][i]->textureName);
+	  glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][0]->textureName);
 #endif
 	  checkGLcall("glBindTexture");
-	  
+
 	  TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->levels - 1);
 #if defined(GL_VERSION_1_3)
 	  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, This->levels - 1); 
@@ -173,7 +173,7 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
 	}
 	
 	for (j = 0; j < 6; j++) {
-	  IDirect3DSurface8Impl_CreateGLTexture((LPDIRECT3DSURFACE8) This->surfaces[j][i], cube_targets[j], i); 
+	  IDirect3DSurface8Impl_LoadTexture((LPDIRECT3DSURFACE8) This->surfaces[j][i], cube_targets[j], i); 
 #if 0
 	  TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, glFmt=%x, glType=%x, Mem=%p\n",
 		cube_targets[j], 
@@ -195,6 +195,12 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
 		       fmt2glType(This->format),
 		       This->surfaces[j][i]->allocatedMemory);
 	  checkGLcall("glTexImage2D");
+#endif
+#if 0
+	  static int gen = 0;
+	  char buffer[4096];
+	  snprintf(buffer, sizeof(buffer), "/tmp/cube%d_face%d_level%d_%d.png", This->surfaces[0][0]->textureName, j, i, ++gen);
+	  IDirect3DSurface8Impl_SaveSnapshot((LPDIRECT3DSURFACE8) This->surfaces[j][i], buffer);
 #endif
 	}
 	/* Removed glTexParameterf now TextureStageStates are initialized at startup */

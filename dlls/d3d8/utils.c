@@ -158,101 +158,23 @@ const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType) {
   }
 }
 
+const char* debug_d3dpool(D3DPOOL Pool) {
+  switch (Pool) {
+#define POOL_TO_STR(p) case p: return #p;
+    POOL_TO_STR(D3DPOOL_DEFAULT);
+    POOL_TO_STR(D3DPOOL_MANAGED);
+    POOL_TO_STR(D3DPOOL_SYSTEMMEM);
+    POOL_TO_STR(D3DPOOL_SCRATCH);
+#undef  POOL_TO_STR
+  default:
+    FIXME("Unrecognized %u D3DPOOL!\n", Pool);
+    return "unrecognized";
+  }
+}
+
 /*
  * Simple utility routines used for dx -> gl mapping of byte formats
  */
-SHORT bytesPerPixel(D3DFORMAT fmt) {
-    SHORT retVal;
-
-    switch (fmt) {
-    /* color buffer */
-    case D3DFMT_P8:               retVal = 1; break;
-    case D3DFMT_R3G3B2:           retVal = 1; break;
-    case D3DFMT_R5G6B5:           retVal = 2; break;
-    case D3DFMT_X1R5G5B5:         retVal = 2; break;
-    case D3DFMT_A4R4G4B4:         retVal = 2; break;
-    case D3DFMT_X4R4G4B4:         retVal = 2; break;
-    case D3DFMT_A1R5G5B5:         retVal = 2; break;
-    case D3DFMT_R8G8B8:           retVal = 3; break;
-    case D3DFMT_X8R8G8B8:         retVal = 4; break;
-    case D3DFMT_A8R8G8B8:         retVal = 4; break;
-    /* depth/stencil buffer */
-    case D3DFMT_D16_LOCKABLE:     retVal = 2; break;
-    case D3DFMT_D16:              retVal = 2; break;
-    case D3DFMT_D15S1:            retVal = 2; break;
-    case D3DFMT_D24X4S4:          retVal = 4; break;
-    case D3DFMT_D24S8:            retVal = 4; break;
-    case D3DFMT_D24X8:            retVal = 4; break;
-    case D3DFMT_D32:              retVal = 4; break;
-    /* unknown */				  
-    case D3DFMT_UNKNOWN:
-      /* Guess at the highest value of the above */
-      TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %u\n", fmt);
-      retVal = 4;
-      break;
-
-    default:
-      FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
-      retVal = 4;
-    }
-    TRACE("bytes/Pxl for fmt(%u,%s) = %d\n", fmt, debug_d3dformat(fmt), retVal);
-    return retVal;
-}
-
-GLint fmt2glintFmt(D3DFORMAT fmt) {
-    GLint retVal;
-
-    switch (fmt) {
-    case D3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
-    case D3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
-    case D3DFMT_X8R8G8B8:         retVal = GL_RGB8; break;
-    case D3DFMT_R8G8B8:           retVal = GL_RGB8; break;
-    case D3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
-    case D3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
-    default:
-        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
-        retVal = GL_RGB8;
-    }
-    TRACE("fmt2glintFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
-    return retVal;
-}
-
-GLenum fmt2glFmt(D3DFORMAT fmt) {
-    GLenum retVal;
-
-    switch (fmt) {
-    case D3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
-    case D3DFMT_A8R8G8B8:         retVal = GL_BGRA; break;
-    case D3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
-    case D3DFMT_R8G8B8:           retVal = GL_BGR; break;
-    case D3DFMT_R5G6B5:           retVal = GL_RGB; break;
-    case D3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
-    default:
-        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
-        retVal = GL_BGR;
-    }
-    TRACE("fmt2glFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
-    return retVal;
-}
-
-GLenum fmt2glType(D3DFORMAT fmt) {
-    GLenum retVal;
-
-    switch (fmt) {
-    case D3DFMT_A4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
-    case D3DFMT_A8R8G8B8:         retVal = GL_UNSIGNED_BYTE; break;
-    case D3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_BYTE; break;
-    case D3DFMT_R5G6B5:           retVal = GL_UNSIGNED_SHORT_5_6_5; break;
-    case D3DFMT_R8G8B8:           retVal = GL_UNSIGNED_BYTE; break;
-    case D3DFMT_A1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
-    default:
-        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
-        retVal = GL_UNSIGNED_BYTE;
-    }
-    TRACE("fmt2glType for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
-    return retVal;
-}
-
 int D3DPrimitiveListGetVertexSize(D3DPRIMITIVETYPE PrimitiveType, int iNumPrim) {
   switch (PrimitiveType) {
   case D3DPT_POINTLIST:     return iNumPrim;
@@ -328,20 +250,141 @@ GLenum D3DFmt2GLDepthType(D3DFORMAT fmt) {
   return 0;
 }
 
-SHORT D3DFmtGetBpp(D3DFORMAT fmt) {
-  return bytesPerPixel(fmt);
+SHORT D3DFmtGetBpp(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
+    SHORT retVal;
+
+    switch (fmt) {
+    /* color buffer */
+    case D3DFMT_P8:               retVal = 1; break;
+    case D3DFMT_R3G3B2:           retVal = 1; break;
+    case D3DFMT_R5G6B5:           retVal = 2; break;
+    case D3DFMT_X1R5G5B5:         retVal = 2; break;
+    case D3DFMT_A4R4G4B4:         retVal = 2; break;
+    case D3DFMT_X4R4G4B4:         retVal = 2; break;
+    case D3DFMT_A1R5G5B5:         retVal = 2; break;
+    case D3DFMT_R8G8B8:           retVal = 3; break;
+    case D3DFMT_X8R8G8B8:         retVal = 4; break;
+    case D3DFMT_A8R8G8B8:         retVal = 4; break;
+    /* depth/stencil buffer */
+    case D3DFMT_D16_LOCKABLE:     retVal = 2; break;
+    case D3DFMT_D16:              retVal = 2; break;
+    case D3DFMT_D15S1:            retVal = 2; break;
+    case D3DFMT_D24X4S4:          retVal = 4; break;
+    case D3DFMT_D24S8:            retVal = 4; break;
+    case D3DFMT_D24X8:            retVal = 4; break;
+    case D3DFMT_D32:              retVal = 4; break;
+    /* unknown */				  
+    case D3DFMT_UNKNOWN:
+      /* Guess at the highest value of the above */
+      TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %u\n", fmt);
+      retVal = 4;
+      break;
+
+    default:
+      FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+      retVal = 4;
+    }
+    TRACE("bytes/Pxl for fmt(%u,%s) = %d\n", fmt, debug_d3dformat(fmt), retVal);
+    return retVal;
 }
 
-GLint D3DFmt2GLIntFmt(D3DFORMAT fmt) {
-  return fmt2glintFmt(fmt);
+GLint D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
+    GLint retVal;
+
+    switch (fmt) {
+    case D3DFMT_P8:               retVal = GL_COLOR_INDEX8_EXT; break;
+    case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX8_EXT; break;
+
+    case D3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
+    case D3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
+    case D3DFMT_X8R8G8B8:         retVal = GL_RGB8; break;
+    case D3DFMT_R8G8B8:           retVal = GL_RGB8; break;
+    case D3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
+    case D3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
+    default:
+        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+        retVal = GL_RGB8;
+    }
+#if defined(GL_EXT_texture_compression_s3tc)
+    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+      switch (fmt) {
+      case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+      case D3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+      case D3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+      default:
+	/* stupid compiler */
+	break;
+      }
+    }
+#endif
+    TRACE("fmt2glintFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
+    return retVal;
 }
 
-GLenum D3DFmt2GLFmt(D3DFORMAT fmt) {
-  return fmt2glFmt(fmt);
+GLenum D3DFmt2GLFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
+    GLenum retVal;
+
+    switch (fmt) {
+    case D3DFMT_P8:               retVal = GL_COLOR_INDEX; break;
+    case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX; break;
+
+    case D3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
+    case D3DFMT_A8R8G8B8:         retVal = GL_BGRA; break;
+    case D3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
+    case D3DFMT_R8G8B8:           retVal = GL_BGR; break;
+    case D3DFMT_R5G6B5:           retVal = GL_RGB; break;
+    case D3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
+    default:
+        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+        retVal = GL_BGR;
+    }
+#if defined(GL_EXT_texture_compression_s3tc)
+    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+      switch (fmt) {
+      case D3DFMT_DXT1:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; break;
+      case D3DFMT_DXT3:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; break;
+      case D3DFMT_DXT5:             retVal = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; break;
+      default:
+	/* stupid compiler */
+	break;
+      }
+    }
+#endif
+    TRACE("fmt2glFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
+    return retVal;
 }
 
-GLenum D3DFmt2GLType(D3DFORMAT fmt) {
-  return fmt2glType(fmt);
+GLenum D3DFmt2GLType(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
+    GLenum retVal;
+
+    switch (fmt) {
+    case D3DFMT_P8:               retVal = GL_UNSIGNED_BYTE; break;
+    case D3DFMT_A8P8:             retVal = GL_UNSIGNED_BYTE; break;
+
+    case D3DFMT_A4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
+    case D3DFMT_A8R8G8B8:         retVal = GL_UNSIGNED_BYTE; break;
+    case D3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_BYTE; break;
+    case D3DFMT_R5G6B5:           retVal = GL_UNSIGNED_SHORT_5_6_5; break;
+    case D3DFMT_R8G8B8:           retVal = GL_UNSIGNED_BYTE; break;
+    case D3DFMT_A1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
+    default:
+        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+        retVal = GL_UNSIGNED_BYTE;
+    }
+#if defined(GL_EXT_texture_compression_s3tc)
+    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+      switch (fmt) {
+      case D3DFMT_DXT1:             retVal = 0; break;
+      case D3DFMT_DXT3:             retVal = 0; break;
+      case D3DFMT_DXT5:             retVal = 0; break;
+      default:
+	/* stupid compiler */
+	break;
+      }
+    }
+#endif
+    TRACE("fmt2glType for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
+    return retVal;
 }
 
 int SOURCEx_RGB_EXT(DWORD arg) {

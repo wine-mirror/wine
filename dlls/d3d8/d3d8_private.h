@@ -168,6 +168,7 @@ typedef enum _GL_SupportedExt {
   EXT_PALETTED_TEXTURE,
   EXT_SECONDARY_COLOR,
   EXT_TEXTURE_COMPRESSION_S3TC,
+  EXT_TEXTURE_FILTER_ANISOTROPIC,
   EXT_TEXTURE_LOD,
   EXT_TEXTURE_LOD_BIAS,
   EXT_VERTEX_WEIGHTING,
@@ -608,7 +609,8 @@ extern HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D
 extern HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface);
 
 /* internal Interfaces */
-extern HRESULT WINAPI IDirect3DSurface8Impl_CreateGLTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level);
+extern HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level);
+extern HRESULT WINAPI IDirect3DSurface8Impl_SaveSnapshot(LPDIRECT3DSURFACE8 iface, const char* filename);
 
 
 /* ------------------ */
@@ -1228,15 +1230,11 @@ extern DWORD WINAPI IDirect3DPixelShaderImpl_GetVersion(IDirect3DPixelShaderImpl
  * to see how not defined it here
  */ 
 void   setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage);
-SHORT  bytesPerPixel(D3DFORMAT fmt);
-GLint  fmt2glintFmt(D3DFORMAT fmt);
-GLenum fmt2glFmt(D3DFORMAT fmt);
-GLenum fmt2glType(D3DFORMAT fmt);
 
-SHORT  D3DFmtGetBpp(D3DFORMAT fmt);
-GLint  D3DFmt2GLIntFmt(D3DFORMAT fmt);
-GLenum D3DFmt2GLFmt(D3DFORMAT fmt);
-GLenum D3DFmt2GLType(D3DFORMAT fmt);
+SHORT  D3DFmtGetBpp(IDirect3DDevice8Impl* This, D3DFORMAT fmt);
+GLint  D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt);
+GLenum D3DFmt2GLFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt);
+GLenum D3DFmt2GLType(IDirect3DDevice8Impl* This, D3DFORMAT fmt);
 
 GLenum D3DFmt2GLDepthFmt(D3DFORMAT fmt);
 GLenum D3DFmt2GLDepthType(D3DFORMAT fmt);
@@ -1259,5 +1257,6 @@ const char* debug_d3dusage(DWORD usage);
 const char* debug_d3dformat(D3DFORMAT fmt);
 const char* debug_d3dressourcetype(D3DRESOURCETYPE res);
 const char* debug_d3dprimitivetype(D3DPRIMITIVETYPE PrimitiveType);
+const char* debug_d3dpool(D3DPOOL Pool);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */
