@@ -605,7 +605,11 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
             return TRUE;
         }
         break;
+    case WM_CLOSE:
+      EndDialog(hWnd, TRUE);
+      break;
     }
+
     return 0;
 }
 
