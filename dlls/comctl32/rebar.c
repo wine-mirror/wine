@@ -4122,7 +4122,7 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     SetWindowLongW (hwnd, GWL_STYLE, infoPtr->dwStyle);
 
     /* get font handle for Caption Font */
-    ncm.cbSize = sizeof(NONCLIENTMETRICSA);
+    ncm.cbSize = sizeof(ncm);
     SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
     /* if the font is bold, set to normal */
     if (ncm.lfCaptionFont.lfWeight > FW_NORMAL) {
