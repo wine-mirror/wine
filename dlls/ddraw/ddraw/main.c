@@ -549,19 +549,22 @@ HRESULT common_off_screen_CreateSurface(
 	}
 	bpp = GET_BPP(lpdsf->s.surface_desc);
 
-	if (bpp != PFGET_BPP(This->d->directdraw_pixelformat)) {
-	  /* When the application is requesting a 24 bpp surface and the Direct Draw bpp
-	     is set to 32, we 'upgrade' the requested bpp to 32 to make the blit faster
-	     from off-screen surface to visible surfaces.
-
-	     With this, Windows Media Player works in 32 bpp mode.
-                                                   Lionel */
-	  if ((bpp == 3) && (PFGET_BPP(This->d->directdraw_pixelformat) == 4)) {
-	    TRACE("Warning: 'upgrading' requested 24 bpp format to 32 bpp for efficiencies reasons\n");
-	    TRACE("         some applications may have problems with it.\n");
-	    bpp = PFGET_BPP(This->d->directdraw_pixelformat);
-	    lpdsf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
-	  }
+	/* When the application is requesting a 24 bpp surface and the Direct Draw bpp
+	   is set to 32, we 'upgrade' the requested bpp to 32 to make the blit faster
+	   from off-screen surface to visible surfaces.
+	   
+	   This can also happen with 15 / 16 bpp.
+	   
+	   With this, Windows Media Player works in 32 bpp mode.
+	                  Lionel
+	*/
+	if (((bpp == 3) && (PFGET_BPP(This->d->directdraw_pixelformat) == 4)) ||
+	    ((bpp == 2) && (PFGET_BPP(This->d->directdraw_pixelformat) == 2) &&
+	     (lpdsf->s.surface_desc.ddpfPixelFormat.u1.dwRBitMask != This->d->directdraw_pixelformat.u1.dwRBitMask))) {
+	  TRACE("Warning: 'upgrading' requested pixel format to screen pixel format for blit efficiency\n");
+	  TRACE("         some applications may have problems with it.\n");
+	  bpp = PFGET_BPP(This->d->directdraw_pixelformat);
+	  lpdsf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
 	}
     }
     
