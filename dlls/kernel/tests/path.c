@@ -317,10 +317,10 @@ static void test_setdir(CHAR *olddir,CHAR *newdir,
     ok(val==0,
        "%s: SetCurrentDirectoryA passed when it should have failed",errstr);
     ok(len==chklen,
-       "%s: SetCurrentDirectory changed the directrory, though it failed",
+       "%s: SetCurrentDirectory changed the directory, though it failed",
        errstr);
     ok(lstrcmpiA(olddir,tmppath)==0,
-       "%s: SetCurrentDirectory changed the directrory, though it failed",
+       "%s: SetCurrentDirectory changed the directory, though it failed",
        errstr);
   }
 }
@@ -529,7 +529,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   test_ValidPathA(curdir,LONGDIR,LONGFILE,tmpstr,NULL,"test4");
   test_LongtoShortA(tmpstr,longdir_short,"PAT","test4");
 
-/* Now check all of the invalid file w/ valid directroy combinations */
+/* Now check all of the invalid file w/ valid directory combinations */
 /* Start with a 8.3 directory, 8.3 filename */
   test_ValidPathA(curdir,SHORTDIR,NONFILE_SHORT,tmpstr,&passfail,"test5");
   todo_wine {
