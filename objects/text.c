@@ -188,7 +188,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 				 * and the font idetifies iteself as requiring language processing.
 				 */
 				GCP_RESULTSW gcp;
-				
+
 				gcp.lStructSize=sizeof(gcp);
 				gcp.lpOutString=HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
 				gcp.lpOrder=NULL;
@@ -198,11 +198,12 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 				gcp.lpGlyphs=NULL;
 				gcp.nGlyphs=0;
 				gcp.nMaxFit=0;
-				
+
 				GetCharacterPlacementW(hdc, str, count, 0, &gcp, GCP_REORDER );
-				
+
 				ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags|ETO_IGNORELANGUAGE,
 					lprect,gcp.lpOutString,count,lpDx);
+				HeapFree(GetProcessHeap(), 0, gcp.lpOutString);
 			} else
 				ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,lpDx);
 		}
