@@ -183,6 +183,7 @@ PCRYPTPROV CRYPT_LoadProvider(PSTR pImage)
 		FIXME("Failed to load dll %s\n", debugstr_a(pImage));
 		goto error;
 	}
+	provider->refcount = 1;
 
 	errorcode = NTE_PROVIDER_DLL_FAIL;
 	CRYPT_GetProvFunc(CPAcquireContext);
@@ -525,9 +526,18 @@ BOOL WINAPI CryptAcquireContextW (HCRYPTPROV *phProv, LPCWSTR pszContainer,
  */
 BOOL WINAPI CryptContextAddRef (HCRYPTPROV hProv, DWORD *pdwReserved, DWORD dwFlags)
 {
-	FIXME("(0x%lx, %p, %08lx): stub!\n", hProv, pdwReserved, dwFlags);
-	return FALSE;
-	/* InterlockIncrement?? */
+	PCRYPTPROV pProv = (PCRYPTPROV)hProv;	
+
+	TRACE("(0x%lx, %p, %08lx)\n", hProv, pdwReserved, dwFlags);
+
+	if (!pProv)
+	{
+		SetLastError(NTE_BAD_UID);
+		return FALSE;
+	}
+
+	pProv->refcount++;
+	return TRUE;
 }
 
 /******************************************************************************
@@ -546,7 +556,7 @@ BOOL WINAPI CryptContextAddRef (HCRYPTPROV hProv, DWORD *pdwReserved, DWORD dwFl
 BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)
 {
 	PCRYPTPROV pProv = (PCRYPTPROV)hProv;
-	BOOL ret;
+	BOOL ret = TRUE;
 
 	TRACE("(0x%lx, %08ld)\n", hProv, dwFlags);
 
@@ -555,16 +565,20 @@ BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)
 		SetLastError(NTE_BAD_UID);
 		return FALSE;
 	}
-	/* FIXME: Decrement the counter here first if possible */
-	ret = pProv->pFuncs->pCPReleaseContext(pProv->hPrivate, dwFlags);
-	FreeLibrary(pProv->hModule);
+
+	pProv->refcount--;
+	if (pProv->refcount <= 0) 
+	{
+		ret = pProv->pFuncs->pCPReleaseContext(pProv->hPrivate, dwFlags);
+		FreeLibrary(pProv->hModule);
 #if 0
-	CRYPT_Free(pProv->pVTable->pContextInfo);
+		CRYPT_Free(pProv->pVTable->pContextInfo);
 #endif
-	CRYPT_Free(pProv->pVTable->pszProvName);
-	CRYPT_Free(pProv->pVTable);
-	CRYPT_Free(pProv->pFuncs);
-	CRYPT_Free(pProv);
+		CRYPT_Free(pProv->pVTable->pszProvName);
+		CRYPT_Free(pProv->pVTable);
+		CRYPT_Free(pProv->pFuncs);
+		CRYPT_Free(pProv);
+	}
 	return ret;
 }
 

@@ -58,6 +58,7 @@ typedef struct tagPROVFUNCS
 
 typedef struct tagCRYPTPROV
 {
+	UINT refcount;
 	HMODULE hModule;
 	PPROVFUNCS pFuncs;
         HCRYPTPROV hPrivate;  /*CSP's handle - Should not be given to application under any circumstances!*/
