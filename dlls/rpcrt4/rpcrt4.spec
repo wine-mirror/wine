@@ -206,7 +206,7 @@ init	RPCRT4_LibMain
 @ stub NdrClientCall
 @ varargs NdrClientCall2(ptr ptr) NdrClientCall2
 @ stub NdrClientInitialize
-@ stub NdrClientInitializeNew
+@ stdcall NdrClientInitializeNew(ptr ptr ptr long) NdrClientInitializeNew
 @ stub NdrContextHandleInitialize
 @ stub NdrContextHandleSize
 @ stub NdrConvert
@@ -216,14 +216,14 @@ init	RPCRT4_LibMain
 @ stub NdrCorrelationPass
 @ stub NdrDcomAsyncClientCall
 @ stub NdrDcomAsyncStubCall
-@ stub NdrFreeBuffer
+@ stdcall NdrFreeBuffer(ptr) NdrFreeBuffer
 @ stub NdrFullPointerFree
 @ stub NdrFullPointerInsertRefId
 @ stub NdrFullPointerQueryPointer
 @ stub NdrFullPointerQueryRefId
 @ stub NdrFullPointerXlatFree
 @ stub NdrFullPointerXlatInit
-@ stub NdrGetBuffer
+@ stdcall NdrGetBuffer(ptr long ptr) NdrGetBuffer
 @ stub NdrGetDcomProtocolVersion
 @ stub NdrGetPartialBuffer
 @ stub NdrGetPipeBuffer
@@ -265,7 +265,7 @@ init	RPCRT4_LibMain
 @ stub NdrRpcSsDefaultFree
 @ stub NdrRpcSsDisableAllocate
 @ stub NdrRpcSsEnableAllocate
-@ stub NdrSendReceive
+@ stdcall NdrSendReceive(ptr ptr) NdrSendReceive
 @ stub NdrServerCall
 @ stub NdrServerCall2
 @ stub NdrStubCall
@@ -298,7 +298,7 @@ init	RPCRT4_LibMain
 @ stub NdrConformantArrayMemorySize
 @ stub NdrConformantArrayUnmarshall
 @ stub NdrConformantStringBufferSize
-@ stub NdrConformantStringMarshall
+@ stdcall NdrConformantStringMarshall(ptr ptr ptr) NdrConformantStringMarshall
 @ stub NdrConformantStringMemorySize
 @ stub NdrConformantStringUnmarshall
 @ stub NdrConformantStructBufferSize

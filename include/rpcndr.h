@@ -296,4 +296,17 @@ RPCRTAPI void* RPC_ENTRY
 RPCRTAPI void RPC_ENTRY
   NdrOleFree( void* NodeToFree );
 
+RPCRTAPI void RPC_ENTRY
+  NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg, 
+                          PMIDL_STUB_DESC pStubDesc, int unknown );
+RPCRTAPI void RPC_ENTRY
+  NdrConformantStringMarshall( MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pszMessage,
+                               PFORMAT_STRING pFormat);
+RPCRTAPI void RPC_ENTRY
+  NdrGetBuffer( MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle );
+RPCRTAPI void RPC_ENTRY
+  NdrFreeBuffer( MIDL_STUB_MESSAGE *pStubMsg );
+RPCRTAPI void RPC_ENTRY
+  NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char *buffer );
+
 #endif /*__WINE_RPCNDR_H */

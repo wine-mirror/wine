@@ -18,7 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * TODO:
- *  - actually implement RPCRT4_NdrClientCall2
+ *  - Exception handling
+ *  - Context stuff
+ *  - Who knows
  */
 
 #include <stdio.h>
@@ -38,25 +40,40 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-
 LONG_PTR /* CLIENT_CALL_RETURN */ RPCRT4_NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, va_list args)
 {
 
   RPC_CLIENT_INTERFACE *rpc_cli_if = (RPC_CLIENT_INTERFACE *)(pStubDesc->RpcInterfaceInformation);
+  LONG_PTR ret = 0;
+  RPC_BINDING_HANDLE handle = 0;
+  RPC_MESSAGE rpcmsg;
+  MIDL_STUB_MESSAGE stubmsg;
 
-  FIXME("(pStubDec == ^%p,pFormat = \"%s\",...): stub\n", pStubDesc, pFormat);
-  TRACE("rpc_cli_if == ^%p\n", rpc_cli_if);
-  if (rpc_cli_if) /* for objects this is NULL */
-    TRACE("rpc_cli_if: Length == %d; InterfaceID == <%s,<%d.%d>>; TransferSyntax == <%s,<%d.%d>>; DispatchTable == ^%p; RpcProtseqEndpointCount == %d; RpcProtseqEndpoint == ^%p; Flags == %d\n",
-     rpc_cli_if->Length,
-     debugstr_guid(&rpc_cli_if->InterfaceId.SyntaxGUID), rpc_cli_if->InterfaceId.SyntaxVersion.MajorVersion, rpc_cli_if->InterfaceId.SyntaxVersion.MinorVersion,
-     debugstr_guid(&rpc_cli_if->TransferSyntax.SyntaxGUID), rpc_cli_if->TransferSyntax.SyntaxVersion.MajorVersion, rpc_cli_if->TransferSyntax.SyntaxVersion.MinorVersion,
-     rpc_cli_if->DispatchTable, 
-     rpc_cli_if->RpcProtseqEndpointCount, 
-     rpc_cli_if->RpcProtseqEndpoint, 
-     rpc_cli_if->Flags);
+  TRACE("(pStubDec == ^%p,pFormat = ^%p,...): semi-stub\n", pStubDesc, pFormat);
+  if (rpc_cli_if) /* NULL for objects */ {
+    TRACE("  *rpc_cli_if (== ^%p) == (RPC_CLIENT_INTERFACE):\n", pStubDesc);
+    TRACE("    Length == %d\n", rpc_cli_if->Length);
+    TRACE("    InterfaceID == %s (%d.%d)\n", debugstr_guid(&rpc_cli_if->InterfaceId.SyntaxGUID), 
+      rpc_cli_if->InterfaceId.SyntaxVersion.MajorVersion, rpc_cli_if->InterfaceId.SyntaxVersion.MinorVersion);
+    TRACE("    TransferSyntax == %s (%d.%d)\n", debugstr_guid(&rpc_cli_if->TransferSyntax.SyntaxGUID),
+      rpc_cli_if->TransferSyntax.SyntaxVersion.MajorVersion, rpc_cli_if->TransferSyntax.SyntaxVersion.MinorVersion);
+    TRACE("    DispatchTable == ^%p\n", rpc_cli_if->DispatchTable);
+    TRACE("    RpcProtseqEndpointCount == ^%d\n", rpc_cli_if->RpcProtseqEndpointCount);
+    TRACE("    RpcProtseqEndpoint == ^%p\n", rpc_cli_if->RpcProtseqEndpoint);
+    TRACE("    Flags == ^%d\n", rpc_cli_if->Flags);
+  }
 
-  return 0;
+  NdrClientInitializeNew( &rpcmsg, &stubmsg, pStubDesc, 0 );
+        
+  handle = (RPC_BINDING_HANDLE)0xdeadbeef; /* FIXME: dce uses interop_binding_handle; */
+
+  stubmsg.BufferLength = 0; /* FIXME */
+
+  NdrGetBuffer( &stubmsg, stubmsg.BufferLength, handle );
+  NdrSendReceive( &stubmsg, stubmsg.Buffer  );
+  NdrFreeBuffer( &stubmsg );
+ 
+  return ret;
 }
 
 /***********************************************************************
