@@ -22,13 +22,88 @@ typedef struct IStdMarshalInfo IStdMarshalInfo,*LPSTDMARSHALINFO;
 /*****************************************************************************
  * IMarshal interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IMarshal
+#define IMarshal_METHODS \
+    ICOM_METHOD6(HRESULT,GetUnmarshalClass,  REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags, CLSID*,pCid); \
+    ICOM_METHOD6(HRESULT,GetMarshalSizeMax,  REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags, DWORD*,pSize); \
+    ICOM_METHOD6(HRESULT,MarshalInterface,   IStream32*,pStm, REFIID,riid, void*,pv, DWORD,dwDestContext, void*,pvDestContext, DWORD,mshlflags); \
+    ICOM_METHOD3(HRESULT,UnmarshalInterface, IStream32*,pStm, REFIID,riid, void**,ppv); \
+    ICOM_METHOD1(HRESULT,ReleaseMarshalData, IStream32*,pStm); \
+    ICOM_METHOD1(HRESULT,DisconnectObject,   DWORD,dwReserved);
+#define IMarshal_IMETHODS \
+    ICOM_INHERITS(IMarshal,IUnknown)
+ICOM_DEFINE(IMarshal,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IMarshal_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IMarshal_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IMarshal_Release(p)            ICOM_CALL (Release,p)
+/*** IMarshal methods ***/
+#define IMarshal_GetUnmarshalClass(p,a,b,c,d,e,f) ICOM_CALL6(GetUnmarshalClass,p,a,b,c,d,e,f)
+#define IMarshal_GetMarshalSizeMax(p,a,b,c,d,e,f) ICOM_CALL6(GetMarshalSizeMax,p,a,b,c,d,e,f)
+#define IMarshal_MarshalInterface(p,a,b,c,d,e,f)  ICOM_CALL6(MarshalInterface,p,a,b,c,d,e,f)
+#define IMarshal_UnmarshalInterface(p,a,b,c)      ICOM_CALL3(UnmarshalInterface,p,a,b,c)
+#define IMarshal_ReleaseMarshalData(p,a)          ICOM_CALL1(ReleaseMarshalData,p,a)
+#define IMarshal_DisconnectObject(p,a)            ICOM_CALL1(DisconnectObject,p,a)
+#endif
 
 
 /*****************************************************************************
  * IStdMarshalInfo interface
  */
+#define ICOM_INTERFACE IStdMarshalInfo
+#define IStdMarshalInfo_METHODS \
+    ICOM_METHOD3(HRESULT,GetClassForHandler,  DWORD,dwDestContext, void*,pvDestContext, CLSID*,pClsid);
+#define IStdMarshalInfo_IMETHODS \
+    ICOM_INHERITS(IStdMarshalInfo,IUnknown)
+ICOM_DEFINE(IStdMarshalInfo,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IStdMarshalInfo_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IStdMarshalInfo_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IStdMarshalInfo_Release(p)            ICOM_CALL (Release,p)
+/*** IStdMarshalInfo methods ***/
+#define IStdMarshalInfo_GetClassForHandler(p,a,b,c) ICOM_CALL3(GetClassForHandler,p,a,b,c)
+#endif
+
+
+/*****************************************************************************
+ * Additional marshalling API
+ */
+
 /* FIXME: not implemented */
+HRESULT WINAPI CoCreateFreeThreadedMarshaler(LPUNKNOWN punkOuter, LPUNKNOWN* ppunkMarshal);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoGetInterfaceAndReleaseStream(LPSTREAM32 pStm, REFIID iid, LPVOID* ppv);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoGetMarshalSizeMax(ULONG* pulSize, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoGetStandardMarshal(REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags, LPMARSHAL* ppMarshal);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoMarshalHresult(LPSTREAM32 pstm, HRESULT hresult);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoMarshalInterface(LPSTREAM32 pStm, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(REFIID riid, LPUNKNOWN pUnk, LPSTREAM32* ppStm);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoReleaseMarshalData(LPSTREAM32 pStm);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoUnmarshalHresult(LPSTREAM32 pstm, HRESULT* phresult);
+
+/* FIXME: not implemented */
+HRESULT WINAPI CoUnmarshalInterface(LPSTREAM32 pStm, REFIID riid, LPVOID* ppv);
 
 
 #endif /* __WINE_WINE_OBJ_MARSHAL_H */
