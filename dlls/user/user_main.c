@@ -50,7 +50,6 @@ extern UINT (WINAPI *pfnGDIRealizePalette)(HDC hdc);
 static HMODULE graphics_driver;
 static DWORD exiting_thread_id;
 
-extern void COMM_Init(void);
 extern void WDML_NotifyThreadDetach(void);
 
 #define GET_USER_FUNC(name) USER_Driver.p##name = (void*)GetProcAddress( graphics_driver, #name )
@@ -264,9 +263,6 @@ static BOOL process_attach(void)
 
     /* Initialize mouse driver */
     if (USER_Driver.pInitMouse) USER_Driver.pInitMouse( InputKeyStateTable );
-
-    /* Initialize 16-bit serial communications */
-    COMM_Init();
 
     return TRUE;
 }

@@ -85,11 +85,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(comm);
 #define MAX_PORTS   9
 
 struct DosDeviceStruct {
-    char *devicename;   /* /dev/ttyS0 */
     HANDLE handle;
     int suspended;
     int unget,xmit;
-    int baudrate;
     int evtchar;
     /* events */
     int commerror, eventmask;
@@ -128,75 +126,55 @@ static void COMM_MSRUpdate( HANDLE handle, UCHAR * pMsr )
     *pMsr = (*pMsr & ~MSR_MASK) | tmpmsr;
 }
 
-void COMM_Init(void)
+static BOOL get_com_device_name( int port, char *devicename, DWORD size, int *baudrate )
 {
-	int x;
-	char option[10], temp[256], *btemp;
-	HKEY hkey;
+    HKEY hkey;
+    char temp[256], *btemp;
 
-	for (x=0; x!=MAX_PORTS; x++) {
-		strcpy(option,"COMx");
-		option[3] = '1' + x;
-		option[4] = '\0';
+    if (port >= MAX_PORTS) return FALSE;
+    temp[0] = 0;
+    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\serialports", &hkey))
+    {
+        DWORD type, count = sizeof(temp);
+        char value[8];
 
-		/* default value */
-		strcpy(temp, "*");
+        sprintf( value, "COM%d", port+1 );
+        RegQueryValueExA(hkey, value, 0, &type, temp, &count);
+        RegCloseKey(hkey);
+    }
+    if (!temp[0]) return FALSE;
 
-		if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\serialports", &hkey))
-		{
-		    DWORD type, count = sizeof(temp);
+    btemp = strchr(temp,',');
+    if (btemp != NULL)
+    {
+        *btemp++ = '\0';
+        if (baudrate) *baudrate = atoi(btemp);
+    }
+    else if (baudrate) *baudrate = -1;
+    if (devicename) lstrcpynA( devicename, temp, size );
+    return TRUE;
+}
 
-		    RegQueryValueExA(hkey, option, 0, &type, temp, &count);
-		    RegCloseKey(hkey);
-		}
+static BOOL get_lpt_device_name( int port, char *devicename, DWORD size )
+{
+    HKEY hkey;
+    char temp[256];
 
-		if (!strcmp(temp, "*") || *temp == '\0')
-			COM[x].devicename = NULL;
-		else {
-		  	btemp = strchr(temp,',');
-			if (btemp != NULL) {
-			  	*btemp++ = '\0';
-				COM[x].baudrate = atoi(btemp);
-			} else {
-				COM[x].baudrate = -1;
-			}
-			if ((COM[x].devicename = malloc(strlen(temp)+1)) == NULL)
-				WARN("Can't malloc for device info!\n");
-			else {
-				COM[x].handle = 0;
-				strcpy(COM[x].devicename, temp);
-				TRACE("%s = %s\n", option, COM[x].devicename);
-			}
- 		}
+    if (port >= MAX_PORTS) return FALSE;
+    temp[0] = 0;
+    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\parallelports", &hkey))
+    {
+        DWORD type, count = sizeof(temp);
+        char value[8];
 
-		strcpy(option, "LPTx");
-		option[3] = '1' + x;
-		option[4] = '\0';
+        sprintf( value, "LPT%d", port+1 );
+        RegQueryValueExA(hkey, value, 0, &type, temp, &count);
+        RegCloseKey(hkey);
+    }
+    if (!temp[0]) return FALSE;
 
-		/* default value */
-		strcpy(temp, "*");
-
-		if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\parallelports", &hkey))
-		{
-		    DWORD type, count = sizeof(temp);
-
-		    RegQueryValueExA(hkey, option, 0, &type, temp, &count);
-		    RegCloseKey(hkey);
-		}
-
-		if (!strcmp(temp, "*") || *temp == '\0')
-			LPT[x].devicename = NULL;
-		else {
-			if ((LPT[x].devicename = malloc(strlen(temp)+1)) == NULL)
-				WARN("Can't malloc for device info!\n");
-			else {
-				LPT[x].handle = 0;
-				strcpy(LPT[x].devicename, temp);
-				TRACE("%s = %s\n", option, LPT[x].devicename);
-			}
-		}
-
-	}
+    if (devicename) lstrcpynA( devicename, temp, size );
+    return TRUE;
 }
 
 
@@ -228,14 +206,14 @@ static int    GetCommPort_ov(LPOVERLAPPED ov, int write)
 	return -1;
 }
 
-static int ValidCOMPort(int x)
+inline static int ValidCOMPort(int x)
 {
-	return(x < MAX_PORTS ? (int) COM[x].devicename : 0);
+    return get_com_device_name( x, NULL, 0, NULL );
 }
 
-static int ValidLPTPort(int x)
+inline static int ValidLPTPort(int x)
 {
-	return(x < MAX_PORTS ? (int) LPT[x].devicename : 0);
+    return get_lpt_device_name( x, NULL, 0 );
 }
 
 static int WinError(void)
@@ -549,12 +527,15 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 	if (port-- == 0)
 		ERR("BUG ! COM0 or LPT0 don't exist !\n");
 
-	if (!strncasecmp(device,"COM",3)) {
+	if (!strncasecmp(device,"COM",3))
+        {
+                char devicename[32];
+                int baudrate;
 
-                TRACE("%s = %s\n", device, COM[port].devicename);
-
-		if (!ValidCOMPort(port))
+                if (!get_com_device_name( port, devicename, sizeof(devicename), &baudrate ))
 			return IE_BADID;
+
+                TRACE("%s = %s\n", device, devicename);
 
 		if (COM[port].handle)
 			return IE_OPEN;
@@ -563,7 +544,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,
 			FILE_FLAG_OVERLAPPED|FILE_FLAG_NO_BUFFERING, 0 );
 		if (handle == INVALID_HANDLE_VALUE) {
-			ERR("Couldn't open %s ! (%s)\n", COM[port].devicename, strerror(errno));
+			ERR("Couldn't open %s ! (%s)\n", devicename, strerror(errno));
 			return IE_HARDWARE;
 		} else {
 			memset(COM[port].unknown, 0, sizeof(COM[port].unknown));
@@ -575,10 +556,10 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
                         /* save terminal state */
 			GetCommState16(port,&COM[port].dcb);
                         /* set default parameters */
-                        if(COM[port].baudrate>-1){
+                        if(baudrate>-1){
                             DCB16 dcb;
 			    memcpy(&dcb,&COM[port].dcb,sizeof(dcb));
-                            dcb.BaudRate=COM[port].baudrate;
+                            dcb.BaudRate=baudrate;
                             /* more defaults:
                              * databits, parity, stopbits
                              */
@@ -724,13 +705,13 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 	switch(nFunction) {
 	case GETMAXCOM:
 	        TRACE("GETMAXCOM\n");
-		for (max = MAX_PORTS;!COM[max].devicename;max--)
+		for (max = MAX_PORTS;!ValidCOMPort(max);max--)
 			;
 		return max;
 
 	case GETMAXLPT:
 		TRACE("GETMAXLPT\n");
-		for (max = MAX_PORTS;!LPT[max].devicename;max--)
+		for (max = MAX_PORTS;!ValidLPTPort(max);max--)
 			;
 		return FLAG_LPT + max;
 
@@ -1209,4 +1190,3 @@ BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
 	ptr->n_write = cbOutQueue;
 	return TRUE;
 }
-
