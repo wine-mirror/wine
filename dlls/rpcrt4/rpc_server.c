@@ -31,10 +31,13 @@
 #include "winreg.h"
 
 #include "rpc.h"
+#include "excpt.h"
 
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 #include "rpc_server.h"
+#include "rpc_misc.h"
 #include "rpc_defs.h"
 
 #define MAX_THREADS 128
@@ -63,7 +66,7 @@ static RpcPacket* spacket_head;
 static RpcPacket* spacket_tail;
 static HANDLE server_sem;
 
-static DWORD worker_count, worker_free;
+static DWORD worker_count, worker_free, worker_tls;
 
 static RpcServerInterface* RPCRT4_find_interface(UUID* object, UUID* if_id)
 {
@@ -110,6 +113,18 @@ static RpcPacket* RPCRT4_pop_packet(void)
   return packet;
 }
 
+static WINE_EXCEPTION_FILTER(rpc_filter)
+{
+  PRPC_MESSAGE msg;
+  msg = TlsGetValue(worker_tls);
+  I_RpcFreeBuffer(msg);
+  msg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
+  msg->BufferLength = sizeof(DWORD);
+  I_RpcGetBuffer(msg);
+  *(DWORD*)msg->Buffer = GetExceptionCode();
+  return EXCEPTION_EXECUTE_HANDLER;
+}
+
 static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, void* buf)
 {
   RpcBinding* pbind;
@@ -117,6 +132,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, void* buf
   RpcServerInterface* sif;
   RPC_DISPATCH_FUNCTION func;
 
+  TlsSetValue(worker_tls, &msg);
   memset(&msg, 0, sizeof(msg));
   msg.BufferLength = hdr->len;
   msg.Buffer = buf;
@@ -152,7 +168,12 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, void* buf
                   MAKEWORD(hdr->drep[2], 0));
 
       /* dispatch */
-      if (func) func(&msg);
+      __TRY {
+        if (func) func(&msg);
+      } __EXCEPT(rpc_filter) {
+        /* failure packet was created in rpc_filter */
+        TRACE("exception caught, returning failure packet\n");
+      } __ENDTRY
 
       /* send response packet */
       I_RpcSend(&msg);
@@ -176,6 +197,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, void* buf
   HeapFree(GetProcessHeap(), 0, buf);
   I_RpcFreeBuffer(&msg);
   msg.Buffer = NULL;
+  TlsSetValue(worker_tls, NULL);
 }
 
 static DWORD CALLBACK RPCRT4_worker_thread(LPVOID the_arg)
@@ -411,6 +433,7 @@ static void RPCRT4_start_listen(void)
   if (! ++listen_count) {
     if (!mgr_event) mgr_event = CreateEventA(NULL, TRUE, FALSE, NULL);
     if (!server_sem) server_sem = CreateSemaphoreA(NULL, 0, MAX_THREADS, NULL);
+    if (!worker_tls) worker_tls = TlsAlloc();
     std_listen = TRUE;
     server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, NULL, 0, NULL);
     LeaveCriticalSection(&listen_cs);

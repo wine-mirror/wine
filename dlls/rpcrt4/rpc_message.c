@@ -37,6 +37,7 @@
 #include "wine/debug.h"
 
 #include "rpc_binding.h"
+#include "rpc_misc.h"
 #include "rpc_defs.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -111,7 +112,9 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   /* initialize packet header */
   memset(&hdr, 0, sizeof(hdr));
   hdr.rpc_ver = 4;
-  hdr.ptype = bind->server ? PKT_RESPONSE : PKT_REQUEST;
+  hdr.ptype = bind->server
+              ? ((pMsg->RpcFlags & WINE_RPCFLAG_EXCEPTION) ? PKT_FAULT : PKT_RESPONSE)
+              : PKT_REQUEST;
   hdr.object = *obj; /* FIXME: IIRC iff no object, the header structure excludes this elt */
   hdr.if_id = (bind->server) ? sif->InterfaceId.SyntaxGUID : cif->InterfaceId.SyntaxGUID;
   hdr.if_vers = 
@@ -227,10 +230,27 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
       goto fail;
     }
 
+    status = RPC_S_PROTOCOL_ERROR;
+
+    switch (hdr.ptype) {
+    case PKT_RESPONSE:
+      if (bind->server) goto fail;
+      break;
+    case PKT_REQUEST:
+      if (!bind->server) goto fail;
+      break;
+    case PKT_FAULT:
+      pMsg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
+      status = RPC_S_CALL_FAILED; /* ? */
+      goto fail;
+    default:
+      goto fail;
+    }
+
     /* success */
     status = RPC_S_OK;
 
-    /* FIXME: check packet type, destination, etc? */
+    /* FIXME: check destination, etc? */
     break;
   }
 fail:

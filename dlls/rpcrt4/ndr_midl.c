@@ -106,6 +106,10 @@ void WINAPI NdrProxySendReceive(void *This,
   pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
   pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
   pStubMsg->Buffer = pStubMsg->BufferStart;
+
+  /* raise exception if call failed */
+  if (hr == RPC_S_CALL_FAILED) RpcRaiseException(*(DWORD*)pStubMsg->Buffer);
+  else if (FAILED(hr)) RpcRaiseException(hr);
 }
 
 /***********************************************************************
