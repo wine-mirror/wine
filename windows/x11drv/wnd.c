@@ -447,7 +447,6 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
             if( pWndParent == pDesktop )
             {
                 wndPtr->dwStyle &= ~WS_CHILD;
-                wndPtr->wIDmenu = 0;
                 if( X11DRV_GetXRootWindow() == DefaultRootWindow(display) )
                 {
                     CREATESTRUCTA cs;
