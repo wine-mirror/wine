@@ -1290,7 +1290,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      regf = base;
 
 	      /* hbin block */
-	      hbin = base + 0x1000;
+	      hbin = (char *) base + 0x1000;
 	      if (hbin->id != NT_REG_POOL_BLOCK_ID)
 	      {
 	        ERR_(reg)( "%s hbin block invalid\n", fn);
@@ -1313,7 +1313,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	        goto error1;
 	      }
 
-	      ret = _nt_parse_nk (hkey, base+0x1000, nk, level);
+	      ret = _nt_parse_nk (hkey, (char *) base + 0x1000, nk, level);
 	    }
 	    break;
 	  default:

@@ -302,8 +302,8 @@ DWORD WINAPI IcmpSendEcho(
     timeout.tv_usec=(Timeout % 1000)*1000;
     addrlen=sizeof(addr);
     ier=ReplyBuffer;
-    ip_header=ReplyBuffer+sizeof(ICMP_ECHO_REPLY);
-    endbuf=ReplyBuffer+ReplySize;
+    ip_header=(struct ip *) ((char *) ReplyBuffer+sizeof(ICMP_ECHO_REPLY));
+    endbuf=(char *) ReplyBuffer+ReplySize;
     maxlen=ReplySize-sizeof(ICMP_ECHO_REPLY);
 
     /* Send the packet */
@@ -457,7 +457,7 @@ DWORD WINAPI IcmpSendEcho(
             ier->Options.Flags=ip_header->ip_off >> 13;
             ier->Options.OptionsSize=ip_header_len-sizeof(struct ip);
             if (ier->Options.OptionsSize!=0) {
-                ier->Options.OptionsData=ier->Data-ier->Options.OptionsSize;
+                ier->Options.OptionsData=(unsigned char *) ier->Data-ier->Options.OptionsSize;
                 /* FIXME: We are supposed to rearrange the option's 'source route' data */
                 memmove(ier->Options.OptionsData,((char*)ip_header)+ip_header_len,ier->Options.OptionsSize);
                 endbuf=ier->Options.OptionsData;

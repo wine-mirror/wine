@@ -531,7 +531,7 @@ static TYPEDESC stndTypeDesc[VT_LPWSTR+1]={/* VT_LPWSTR is largest type that */
 
 static void TLB_abort()
 {
-		*((int *)0)=0;
+    DebugBreak();
 }
 static void * TLB_Alloc(unsigned size)
 {

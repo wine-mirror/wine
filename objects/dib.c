@@ -541,7 +541,7 @@ INT WINAPI GetDIBits(
             /*FIXME: Only RGB dibs supported for now */
             int srcwidth = bmp->dib->dsBm.bmWidth, srcwidthb = bmp->dib->dsBm.bmWidthBytes;
             int dstwidthb = DIB_GetDIBWidthBytes( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
-            LPBYTE dbits = bits, sbits = bmp->dib->dsBm.bmBits + (startscan * srcwidthb);
+            LPBYTE dbits = bits, sbits = (LPBYTE) bmp->dib->dsBm.bmBits + (startscan * srcwidthb);
             int x, y;
 
             if ((info->bmiHeader.biHeight < 0) ^ (bmp->dib->dsBmih.biHeight < 0))

@@ -92,7 +92,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
         memcpy( (LPBYTE)pModule, descr->module_start, res_off );
         memcpy( (LPBYTE)pModule + res_off, rsrc->res_start, rsrc->res_size );
         memcpy( (LPBYTE)pModule + res_off + rsrc->res_size, 
-                descr->module_start + res_off, descr->module_size - res_off );
+                (LPBYTE)descr->module_start + res_off, descr->module_size - res_off );
 
         /* Have to fix up various pModule-based near pointers.  Ugh! */
         pModule->name_table   += rsrc->res_size;

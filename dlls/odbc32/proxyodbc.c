@@ -21,7 +21,7 @@
 #define _WINDOWS
 #endif
 
-typedef char* 		GUID;  //This definition is in sqltypes.h, but if _WINDOWS is defined, this is skipped.
+typedef char* 		GUID;  /* This definition is in sqltypes.h, but if _WINDOWS is defined, this is skipped. */
 
 #include "sql.h"
 #include "sqltypes.h"

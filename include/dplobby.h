@@ -244,19 +244,19 @@ typedef struct tagDPADDRESS
 /* Used for specification of a communication port. Baud rate, stop bits and
  * parity bits can be found in winbase.h. These are flow control constants only. 
  */
-#define DPCPA_NOFLOW        0           // no flow control
-#define DPCPA_XONXOFFFLOW   1           // software flow control
-#define DPCPA_RTSFLOW       2           // hardware flow control with RTS
-#define DPCPA_DTRFLOW       3           // hardware flow control with DTR
-#define DPCPA_RTSDTRFLOW    4           // hardware flow control with RTS and DTR
+#define DPCPA_NOFLOW        0           /* no flow control */
+#define DPCPA_XONXOFFFLOW   1           /* software flow control */
+#define DPCPA_RTSFLOW       2           /* hardware flow control with RTS */
+#define DPCPA_DTRFLOW       3           /* hardware flow control with DTR */
+#define DPCPA_RTSDTRFLOW    4           /* hardware flow control with RTS and DTR */
 
 typedef struct tagDPCOMPORTADDRESS
 {
-    DWORD   dwComPort;                  // COM port to use (1-4)
-    DWORD   dwBaudRate;                 // baud rate (100-256k)
-    DWORD   dwStopBits;                 // no. stop bits (1-2)
-    DWORD   dwParity;                   // parity (none, odd, even, mark)
-    DWORD   dwFlowControl;              // flow control (none, xon/xoff, rts, dtr)
+    DWORD   dwComPort;                  /* COM port to use (1-4) */
+    DWORD   dwBaudRate;                 /* baud rate (100-256k) */
+    DWORD   dwStopBits;                 /* no. stop bits (1-2) */
+    DWORD   dwParity;                   /* parity (none, odd, even, mark) */
+    DWORD   dwFlowControl;              /* flow control (none, xon/xoff, rts, dtr) */
 } DPCOMPORTADDRESS, *LPDPCOMPORTADDRESS;
 
 

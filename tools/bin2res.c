@@ -264,7 +264,7 @@ int convert_to_bin()
 	    {
 	      printf("[%s:s]", outfile);
 	    }
-end_of_resource:	    
+end_of_resource: ;
 	  }
 	}
 	

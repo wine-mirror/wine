@@ -195,8 +195,9 @@ void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 void WINAPI SHChangeNotifyAW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
 {
 	if(VERSION_OsIsUnicode())
-	  return SHChangeNotifyW (wEventId, uFlags, dwItem1, dwItem2);
-	return SHChangeNotifyA (wEventId, uFlags, dwItem1, dwItem2);
+	  SHChangeNotifyW (wEventId, uFlags, dwItem1, dwItem2);
+	else
+	  SHChangeNotifyA (wEventId, uFlags, dwItem1, dwItem2);
 }
 
 /*************************************************************************

@@ -1362,7 +1362,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	  iExt = CBGetCurSel(fodInfos->DlgInfos.hwndFileTypeCB);
 	  lpOrg = (LPSTR) CBGetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB, iExt);
 	  if ((int)lpOrg == -1)
-	      lpOrg = NULL;	// we get -1 if the filetype LB is empty 
+	      lpOrg = NULL;	/* we get -1 if the filetype LB is empty */
 
 	  lpstrExt = lpOrg;
 

@@ -3407,7 +3407,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
 			}
 
 			for (i=1;*sptr=='0' ;i++, sptr++) ; /* Ignore leading zeros from source*/
-				if (intsize==0 && (decsize==0 || thisleadingzero)) // Insert one leading zero into destination if required
+				if (intsize==0 && (decsize==0 || thisleadingzero)) /* Insert one leading zero into destination if required */
 					*(dptr++)=digits_buf[0];
 				for (i=1;i<=intsize;i++) {
 

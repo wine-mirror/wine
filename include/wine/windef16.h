@@ -24,7 +24,7 @@ typedef UINT16         *LPUINT16;
 	typedef HANDLE16 a##16; \
 	typedef a##16 *P##a##16; \
 	typedef a##16 *NP##a##16; \
-	typedef a##16 *LP##a##16; 
+	typedef a##16 *LP##a##16 
 
 DECLARE_HANDLE16(HACMDRIVERID);
 DECLARE_HANDLE16(HACMDRIVER);

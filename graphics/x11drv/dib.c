@@ -1699,7 +1699,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
         case 24:
         case 32:
             {
-                if( bmpImage->blue_mask == 0xff && bmpImage->red_mask == 0xff0000 )  // packed BGR to unpacked BGR
+	        if( bmpImage->blue_mask == 0xff && bmpImage->red_mask == 0xff0000 )  /* packed BGR to unpacked BGR */
                 {
                     DWORD *dstpixel, val, buf;
                     DWORD *ptr = (DWORD *)(srcbits + left*3);
@@ -1711,25 +1711,25 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                     {
                         dstpixel = (DWORD *) (bmpImage->data + h*bmpImage->bytes_per_line + left*4);
 
-                        for (x = 0; x < dstwidth/4; x++) {   // do 3 dwords source, 4 dwords dest at a time
+                        for (x = 0; x < dstwidth/4; x++) {   /* do 3 dwords source, 4 dwords dest at a time */
                             buf = *ptr++;
-                            *dstpixel++ = buf&0x00ffffff;                  // b1, g1, r1
-                            val = (buf >> 24);                             // b2
+                            *dstpixel++ = buf&0x00ffffff;                  /* b1, g1, r1 */
+                            val = (buf >> 24);                             /* b2 */
                             buf = *ptr++;
-                            *dstpixel++ = (val | (buf<<8)) &0x00ffffff;    // g2, r2
-                            val = (buf >> 16);                             // b3, g3
+                            *dstpixel++ = (val | (buf<<8)) &0x00ffffff;    /* g2, r2 */
+                            val = (buf >> 16);                             /* b3, g3 */
                             buf = *ptr++;
-                            *dstpixel++ = (val | (buf<<16)) &0x00ffffff;   // r3
-                            *dstpixel++ = (buf >> 8);                      // b4, g4, r4
+                            *dstpixel++ = (val | (buf<<16)) &0x00ffffff;   /* r3 */
+                            *dstpixel++ = (buf >> 8);                      /* b4, g4, r4 */
                         }
-                        for ( divk=div, bits=(BYTE*)ptr; divk>0; divk--, bits+=3 ) // do remainder
+                        for ( divk=div, bits=(BYTE*)ptr; divk>0; divk--, bits+=3 ) /* do remainder */
                         {
-                            *dstpixel++ = *(DWORD*)bits & 0x00ffffff;      // b, g, r
+			    *dstpixel++ = *(DWORD*)bits & 0x00ffffff;      /* b, g, r */
                         }
                         ptr = (DWORD*)((srcbits+=linebytes)+left*3);
                     }
                 }
-		else if( bmpImage->blue_mask == 0xff0000 && bmpImage->red_mask == 0xff )  // packed BGR to unpacked RGB
+		else if( bmpImage->blue_mask == 0xff0000 && bmpImage->red_mask == 0xff )  /* packed BGR to unpacked RGB */
                 {
                     DWORD *dstpixel, val, buf;
                     DWORD *ptr = (DWORD *)(srcbits + left*3);
@@ -1741,21 +1741,21 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                     {
                         dstpixel = (DWORD *) (bmpImage->data + h*bmpImage->bytes_per_line + left*4);
 
-                        for (x = 0; x < dstwidth/4; x++) {   // do 3 dwords source, 4 dwords dest at a time
+                        for (x = 0; x < dstwidth/4; x++) {   /* do 3 dwords source, 4 dwords dest at a time */
                             buf = *ptr++;
-                            *dstpixel++ = ((buf&0xff)<<16) | (buf&0xff00) | ((buf&0xff0000)>>16);  // b1, g1, r1
-                            val = ((buf&0xff000000)>>8);                                           // b2
+                            *dstpixel++ = ((buf&0xff)<<16) | (buf&0xff00) | ((buf&0xff0000)>>16);  /* b1, g1, r1 */
+                            val = ((buf&0xff000000)>>8);                                           /* b2 */
                             buf = *ptr++;
-                            *dstpixel++ = val | ((buf&0xff)<<8) | ((buf&0xff00)>>8);               // g2, r2
-                            val = (buf&0xff0000) | ((buf&0xff000000)>>16);                         // b3, g3
+                            *dstpixel++ = val | ((buf&0xff)<<8) | ((buf&0xff00)>>8);               /* g2, r2 */
+                            val = (buf&0xff0000) | ((buf&0xff000000)>>16);                         /* b3, g3 */
                             buf = *ptr++;
-                            *dstpixel++ = val | (buf&0xff);                                        // r3
-                            *dstpixel++ = ((buf&0xff00)<<8) | ((buf&0xff0000)>>8) | (buf>>24);     // b4, g4, r4
+                            *dstpixel++ = val | (buf&0xff);                                        /* r3 */
+                            *dstpixel++ = ((buf&0xff00)<<8) | ((buf&0xff0000)>>8) | (buf>>24);     /* b4, g4, r4 */
                         }
-                        for ( divk=div, bits=(BYTE*)ptr; divk>0; divk--, bits+=3 ) // do remainder
+                        for ( divk=div, bits=(BYTE*)ptr; divk>0; divk--, bits+=3 ) /* do remainder */
                         {
                             buf = *(DWORD*)bits;
-                            *dstpixel++ = ((buf&0xff)<<16) | (buf&0xff00) | ((buf&0xff0000)>>16);  // b, g, r
+                            *dstpixel++ = ((buf&0xff)<<16) | (buf&0xff00) | ((buf&0xff0000)>>16);  /* b, g, r */
                         }
                         ptr = (DWORD*)((srcbits+=linebytes)+left*3);
                     }
@@ -1767,7 +1767,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
 
         case 15:
             {
-                if( bmpImage->blue_mask == 0x7c00 && bmpImage->red_mask == 0x1f )   // BGR888 to RGB555
+	        if( bmpImage->blue_mask == 0x7c00 && bmpImage->red_mask == 0x1f )   /* BGR888 to RGB555 */
                 {
                     DWORD  *ptr = (DWORD *)(srcbits + left*3), val;
                     LPBYTE bits;
@@ -1775,7 +1775,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                     int div = dstwidth % 4;
                     int divk;
 
-                    for (h = lines - 1; h >= 0; h--) {              //Do 4 pixels at a time
+                    for (h = lines - 1; h >= 0; h--) {              /* Do 4 pixels at a time */
                         dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
                         for (x = 0; x < dstwidth/4; x++) {
                             *dstpixel++ = (WORD)((((val = *ptr++) << 7) & 0x7c00) | ((val >> 6) & 0x03e0) | ((val >> 19) & 0x1f));
@@ -1783,14 +1783,14 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                             *dstpixel++ = (WORD)(((val >> 9) & 0x07c00) | ((val >> 22) & 0x03e0) | (((val = *ptr++) >> 3) & 0x1f));
                             *dstpixel++ = (WORD)(((val >> 1) & 0x07c00) | ((val >> 14) & 0x03e0) | ((val >> 27) & 0x1f));
                         }
-                        for (bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  //dstwidth not divisible by 4?
+                        for (bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  /* dstwidth not divisible by 4? */
                             *dstpixel++ = (((WORD)bits[0] << 7) & 0x07c00) |
                                             (((WORD)bits[1] << 2) & 0x03e0) |
                                             (((WORD)bits[2] >> 3) & 0x001f);
                         ptr = (DWORD *)((srcbits += linebytes) + left * 3);
                     }
                 }
-                else if( bmpImage->blue_mask == 0x1f && bmpImage->red_mask == 0x7c00 )   // BGR888 to BGR555
+                else if( bmpImage->blue_mask == 0x1f && bmpImage->red_mask == 0x7c00 )   /* BGR888 to BGR555 */
                 {
                     DWORD  *ptr = (DWORD *)(srcbits + left*3), val;
                     LPBYTE bits;
@@ -1798,7 +1798,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                     int div = dstwidth % 4;
                     int divk;
 
-                    for (h = lines - 1; h >= 0; h--) {              //Do 4 pixels at a time
+                    for (h = lines - 1; h >= 0; h--) {              /* Do 4 pixels at a time */
                         dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
                         for (x = 0; x < dstwidth/4; x++) {
                             *dstpixel++ = (WORD)((((val = *ptr++) >> 3) & 0x1f) | ((val >> 6) & 0x03e0) | ((val >> 9) & 0x7c00));
@@ -1806,7 +1806,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                             *dstpixel++ = (WORD)(((val >> 19) & 0x1f) | ((val >> 22) & 0x03e0) | (((val = *ptr++) << 7) & 0x7c00));
                             *dstpixel++ = (WORD)(((val >> 11) & 0x1f) | ((val >> 14) & 0x03e0) | ((val >> 17) & 0x7c00));
                         }
-                        for (bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  //dstwidth not divisible by 4?
+                        for (bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  /* dstwidth not divisible by 4? */
                             *dstpixel++ = (((WORD)bits[2] << 7) & 0x07c00) |
                                             (((WORD)bits[1] << 2) & 0x03e0) |
                                             (((WORD)bits[0] >> 3) & 0x001f);
@@ -1826,9 +1826,9 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                 int div = dstwidth % 4;
                 int divk;
 
-                if( bmpImage->blue_mask == 0x001f && bmpImage->red_mask == 0xf800 )    // BGR888 to BGR565
+                if( bmpImage->blue_mask == 0x001f && bmpImage->red_mask == 0xf800 )    /* BGR888 to BGR565 */
                 {
-                    for (h = lines - 1; h >= 0; h--) {              //Do 4 pixels at a time
+		    for (h = lines - 1; h >= 0; h--) {              /* Do 4 pixels at a time */
                         dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
                         for (x = 0; x < dstwidth/4; x++) {
                             *dstpixel++ = (WORD)((((val = *ptr++) >> 3) & 0x1f) | ((val >> 5) & 0x07e0) | ((val >> 8) & 0xf800));
@@ -1836,16 +1836,16 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                             *dstpixel++ = (WORD)(((val >> 19) & 0x1f) | ((val >> 21) & 0x07e0) | (((val = *ptr++) << 8) & 0xf800));
                             *dstpixel++ = (WORD)(((val >> 11) & 0x1f) | ((val >> 13) & 0x07e0) | ((val >> 16) & 0xf800));
                         }
-                        for (   bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  //dstwidth is not divisible by 4?
+                        for (   bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  /* dstwidth is not divisible by 4? */
                             *dstpixel++ = (((WORD)bits[2] << 8) & 0xf800) |
                                             (((WORD)bits[1] << 3) & 0x07e0) |
                                             (((WORD)bits[0] >> 3) & 0x001f);
                         ptr = (DWORD *)((srcbits += linebytes) + left * 3);
                     }
                 }
-                else if( bmpImage->blue_mask == 0xf800 && bmpImage->red_mask == 0x001f ) // BGR888 to RGB565
+                else if( bmpImage->blue_mask == 0xf800 && bmpImage->red_mask == 0x001f ) /* BGR888 to RGB565 */
                 {
-                    for (h = lines - 1; h >= 0; h--) {              //Do 4 pixels at a time
+		    for (h = lines - 1; h >= 0; h--) {              /* Do 4 pixels at a time */
                         dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
                         for (x = 0; x < dstwidth/4; x++) {
                             *dstpixel++ = (WORD)((((val = *ptr++) << 8) & 0xf800) | ((val >> 5) & 0x07e0) | ((val >> 19) & 0x1f));
@@ -1853,7 +1853,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                             *dstpixel++ = (WORD)(((val >> 8) & 0xf800) | ((val >> 21) & 0x07e0) | (((val = *ptr++) >> 3) & 0x1f));
                             *dstpixel++ = (WORD)((val & 0xf800) | ((val >> 13) & 0x07e0) | ((val >> 27) & 0x1f));
                         }
-                        for (   bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  //dstwidth is not divisible by 4?
+                        for (   bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  /* dstwidth is not divisible by 4? */
                             *dstpixel++ = (((WORD)bits[0] << 8) & 0xf800) |
                                             (((WORD)bits[1] << 3) & 0x07e0) |
                                             (((WORD)bits[2] >> 3) & 0x001f);

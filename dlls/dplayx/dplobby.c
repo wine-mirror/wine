@@ -740,7 +740,7 @@ HRESULT DPL_CreateAddress(
   BOOL bAnsiInterface )
 {
   const DWORD dwNumAddElements = 2; /* Service Provide & address data type */
-  DPCOMPOUNDADDRESSELEMENT addressElements[ dwNumAddElements ];
+  DPCOMPOUNDADDRESSELEMENT addressElements[ 2 /* dwNumAddElements */ ];
 
   TRACE( "(%p)->(%p,%p,0x%08lx,%p,%p,%d)\n", guidSP, guidDataType, lpData, dwDataSize, 
                                              lpAddress, lpdwAddressSize, bAnsiInterface );
@@ -817,7 +817,7 @@ static HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, L
     }
 
     dwSizeThisEnumeration  = sizeof( DPADDRESS ) + lpElements->dwDataSize;
-    lpAddress             += dwSizeThisEnumeration;
+    lpAddress = (char *) lpAddress + dwSizeThisEnumeration;
     dwTotalSizeEnumerated += dwSizeThisEnumeration;
   }
 
@@ -1589,10 +1589,10 @@ HRESULT DPL_CreateCompoundAddress
 
     lpdpAddress->guidDataType = DPAID_TotalSize;
     lpdpAddress->dwDataSize = sizeof( DWORD );
-    lpAddress += sizeof( DPADDRESS );
+    lpAddress = (char *) lpAddress + sizeof( DPADDRESS );
 
     *(LPDWORD)lpAddress = dwSizeRequired;
-    lpAddress += sizeof( DWORD );
+    lpAddress = (char *) lpAddress + sizeof( DWORD );
   }
 
   /* Calculate the size of the buffer required */
@@ -1608,10 +1608,10 @@ HRESULT DPL_CreateCompoundAddress
 
       lpdpAddress->guidDataType = lpElements->guidDataType;
       lpdpAddress->dwDataSize = sizeof( GUID );
-      lpAddress += sizeof( DPADDRESS );
+      lpAddress = (char *) lpAddress + sizeof( DPADDRESS );
 
       *((LPGUID)lpAddress) = *((LPGUID)lpElements->lpData);
-      lpAddress += sizeof( GUID );
+      lpAddress = (char *) lpAddress + sizeof( GUID );
     }
     else if ( ( IsEqualGUID( &lpElements->guidDataType, &DPAID_Phone ) ) ||
               ( IsEqualGUID( &lpElements->guidDataType, &DPAID_Modem ) ) || 
@@ -1622,12 +1622,12 @@ HRESULT DPL_CreateCompoundAddress
 
       lpdpAddress->guidDataType = lpElements->guidDataType;
       lpdpAddress->dwDataSize = lpElements->dwDataSize;
-      lpAddress += sizeof( DPADDRESS );
+      lpAddress = (char *) lpAddress + sizeof( DPADDRESS );
 
       lstrcpynA( (LPSTR)lpAddress, 
                  (LPCSTR)lpElements->lpData, 
                  lpElements->dwDataSize );
-      lpAddress += lpElements->dwDataSize;
+      lpAddress = (char *) lpAddress + lpElements->dwDataSize;
     }
     else if ( ( IsEqualGUID( &lpElements->guidDataType, &DPAID_PhoneW ) ) ||
               ( IsEqualGUID( &lpElements->guidDataType, &DPAID_ModemW ) ) ||
@@ -1638,12 +1638,12 @@ HRESULT DPL_CreateCompoundAddress
 
       lpdpAddress->guidDataType = lpElements->guidDataType;
       lpdpAddress->dwDataSize = lpElements->dwDataSize;
-      lpAddress += sizeof( DPADDRESS );
+      lpAddress = (char *) lpAddress + sizeof( DPADDRESS );
 
       lstrcpynW( (LPWSTR)lpAddress,
                  (LPCWSTR)lpElements->lpData,
                  lpElements->dwDataSize );
-      lpAddress += lpElements->dwDataSize * sizeof( WCHAR );
+      lpAddress = (char *) lpAddress + lpElements->dwDataSize * sizeof( WCHAR );
     }
     else if ( IsEqualGUID( &lpElements->guidDataType, &DPAID_INetPort ) )
     {
@@ -1651,10 +1651,10 @@ HRESULT DPL_CreateCompoundAddress
 
       lpdpAddress->guidDataType = lpElements->guidDataType;
       lpdpAddress->dwDataSize = lpElements->dwDataSize;
-      lpAddress += sizeof( DPADDRESS );
+      lpAddress = (char *) lpAddress + sizeof( DPADDRESS );
 
       *((LPWORD)lpAddress) = *((LPWORD)lpElements->lpData);
-      lpAddress += sizeof( WORD );
+      lpAddress = (char *) lpAddress + sizeof( WORD );
     }
     else if ( IsEqualGUID( &lpElements->guidDataType, &DPAID_ComPort ) )
     {
@@ -1662,10 +1662,10 @@ HRESULT DPL_CreateCompoundAddress
 
       lpdpAddress->guidDataType = lpElements->guidDataType;
       lpdpAddress->dwDataSize = lpElements->dwDataSize;
-      lpAddress += sizeof( DPADDRESS );
+      lpAddress = (char *) lpAddress + sizeof( DPADDRESS );
 
       memcpy( lpAddress, lpElements->lpData, sizeof( DPADDRESS ) ); 
-      lpAddress += sizeof( DPADDRESS );
+      lpAddress = (char *) lpAddress + sizeof( DPADDRESS );
     }
   }
 

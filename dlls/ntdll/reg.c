@@ -283,7 +283,7 @@ NTSTATUS WINAPI NtEnumerateKey(
 	      DOSFS_UnixTimeToFileTime(req->modif, &kni->LastWriteTime, 0);
 	      kni->TitleIndex = 0;
 	      memcpy (kni->Name, req->name, kni->NameLength);
-	      if (kni->ClassLength) memcpy (KeyInformation+kni->ClassOffset, req->class, kni->ClassLength);
+	      if (kni->ClassLength) memcpy ((char *) KeyInformation + kni->ClassOffset, req->class, kni->ClassLength);
 	    }
 	    break;
 	  default:
@@ -347,7 +347,7 @@ NTSTATUS WINAPI NtQueryKey(
 	      kfi->Values = req->values;
 	      kfi->MaxValueNameLen = req->max_value;
 	      kfi->MaxValueDataLen = req->max_data;
-	      if(kfi->ClassLength) memcpy (KeyInformation+kfi->ClassOffset, req->class, kfi->ClassLength);
+	      if(kfi->ClassLength) memcpy ((char *) KeyInformation + kfi->ClassOffset, req->class, kfi->ClassLength);
 	    }
 	    break;
 	  case KeyNodeInformation:
@@ -364,7 +364,7 @@ NTSTATUS WINAPI NtQueryKey(
 	      DOSFS_UnixTimeToFileTime(req->modif, &kni->LastWriteTime, 0);
 	      kni->TitleIndex = 0;
 	      memcpy (kni->Name, req->name, kni->NameLength);
-	      if(kni->ClassLength) memcpy (KeyInformation+kni->ClassOffset, req->class, kni->ClassLength);
+	      if(kni->ClassLength) memcpy ((char *) KeyInformation + kni->ClassOffset, req->class, kni->ClassLength);
 	    }
 	    break;
 	  default:
@@ -568,7 +568,7 @@ NTSTATUS WINAPI NtQueryValueKey(
 	      kfi->NameLength = 0;
 	      kfi->DataOffset = DataOffset;
 	      kfi->DataLength = req->len;
-	      memcpy(KeyValueInformation+DataOffset, req->data, req->len);
+	      memcpy((char *) KeyValueInformation + DataOffset, req->data, req->len);
 	    }  
 	    break;
 	  case KeyValuePartialInformation:

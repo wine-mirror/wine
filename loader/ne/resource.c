@@ -203,7 +203,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
         {
             /* NOTE: hRsrcMap points to start of built-in resource data */
             memcpy( GlobalLock16( handle ), 
-                    pModule->hRsrcMap + (pNameInfo->offset << sizeShift),
+                    (char *)pModule->hRsrcMap + (pNameInfo->offset << sizeShift),
                     pNameInfo->length << sizeShift );
         }
 	return handle;

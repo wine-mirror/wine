@@ -422,19 +422,19 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
 DWORD WINAPI SHFree(LPVOID x) 
 {
 #if MEM_DEBUG
-	WORD len = *(LPWORD)(x-2);
+	WORD len = *(LPWORD)((LPBYTE)x-2);
 
-	if ( *(LPWORD)(x+len) != 0x7384)
+	if ( *(LPWORD)((LPBYTE)x+len) != 0x7384)
 	  ERR("MAGIC2!\n");
 
-	if ( (*(LPWORD)(x-4)) != 0x8271)
+	if ( (*(LPWORD)((LPBYTE)x-4)) != 0x8271)
 	  ERR("MAGIC1!\n");
 	else
-	  memset(x-4, 0xde, len+6);
+	  memset((LPBYTE)x-4, 0xde, len+6);
 
 	TRACE("%p len=%u\n",x, len);
 
-	x -= 4;
+	x = (LPBYTE) x - 4;
 #else
 	TRACE("%p\n",x);
 #endif

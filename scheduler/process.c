@@ -1171,7 +1171,7 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPVOID buffer, DWOR
         req->addr = (char *)addr + pos;
         req->len = (max + sizeof(int) - 1) / sizeof(int);
         req->first_mask = ~0;
-        memcpy( req->data, buffer + pos, max );
+        memcpy( req->data, (char *) buffer + pos, max );
         if (server_call( REQ_WRITE_PROCESS_MEMORY )) goto error;
         pos += max;
         size -= max;
