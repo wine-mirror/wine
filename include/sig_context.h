@@ -284,7 +284,4 @@ typedef DWORD SIGCONTEXT;
 #define HANDLER_CONTEXT 0
 #endif
 
-/* memory/instr.c */
-extern BOOL INSTR_EmulateInstruction( SIGCONTEXT * );
-
 #endif /* __WINE_SIG_CONTEXT_H */

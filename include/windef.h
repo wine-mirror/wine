@@ -358,6 +358,14 @@ typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 #define SELECTOROF(ptr)     (HIWORD(ptr))
 #define OFFSETOF(ptr)       (LOWORD(ptr))
 
+#ifdef __WINE__
+/* macros to set parts of a DWORD (not in the Windows API) */
+#define SET_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD(val))
+#define SET_LOBYTE(dw,val)  ((dw) = ((dw) & 0xffffff00) | LOBYTE(val))
+#define SET_HIBYTE(dw,val)  ((dw) = ((dw) & 0xffff00ff) | (LOWORD(val) & 0xff00))
+#define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
+#endif
+
 /* Macros to access unaligned or wrong-endian WORDs and DWORDs. */
 /* Note: These macros are semantically broken, at least for wrc.  wrc
    spits out data in the platform's current binary format, *not* in 

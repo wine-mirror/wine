@@ -20,7 +20,6 @@
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "winnt.h"
-#include "sig_context.h"
 #include "msdos.h"
 #include "file.h"
 #include "miscemu.h"
@@ -128,18 +127,18 @@ static void DOSVM_SimulateInt( int vect, CONTEXT86 *context, LPDOSTASK lpDosTask
     /* if internal interrupt, call it directly */
     INT_RealModeInterrupt(vect,context);
   } else {
-    WORD*stack=(WORD*)(V86BASE(context)+(((DWORD)SS_reg(context))<<4)+SP_reg(context));
-    WORD flag=FL_reg(context);
+    WORD*stack=(WORD*)(V86BASE(context)+(((DWORD)SS_reg(context))<<4)+LOWORD(ESP_reg(context)));
+    WORD flag=LOWORD(EFL_reg(context));
 
     if (IF_ENABLED(context)) flag|=IF_MASK;
     else flag&=~IF_MASK;
 
     *(--stack)=flag;
     *(--stack)=CS_reg(context);
-    *(--stack)=IP_reg(context);
-    SP_reg(context)-=6;
+    *(--stack)=LOWORD(EIP_reg(context));
+    ESP_reg(context)-=6;
     CS_reg(context)=SELECTOROF(handler);
-    IP_reg(context)=OFFSETOF(handler);
+    EIP_reg(context)=OFFSETOF(handler);
     IF_CLR(context);
   }
 }
@@ -229,25 +228,20 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*
 static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
                           struct vm86plus_struct*VM86 )
 {
- SIGCONTEXT sigcontext;
  CONTEXT86 context;
  int ret=0;
 
- if (VM86_TYPE(fn)==VM86_UNKNOWN) {
-  /* INSTR_EmulateInstruction needs a SIGCONTEXT, not a CONTEXT... */
-#define CP(x,y) y##_sig(&sigcontext) = VM86->regs.x
+#define CP(x,y) y##_reg(&context) = VM86->regs.x
   CV;
 #undef CP
-  ret=INSTR_EmulateInstruction(&sigcontext);
-#define CP(x,y) VM86->regs.x = y##_sig(&sigcontext)
+ if (VM86_TYPE(fn)==VM86_UNKNOWN) {
+  ret=INSTR_EmulateInstruction(&context);
+#define CP(x,y) VM86->regs.x = y##_reg(&context)
   CV;
 #undef CP
   if (ret) return 0;
   ret=0;
  }
-#define CP(x,y) y##_reg(&context) = VM86->regs.x
- CV;
-#undef CP
  (void*)V86BASE(&context)=lpDosTask->img;
 #ifdef TRY_PICRETURN
  if (VM86->vm86plus.force_return_for_pic) {

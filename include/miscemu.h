@@ -101,6 +101,9 @@ extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT); /* linear DOS to Wine */
 extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 
+/* memory/instr.c */
+extern BOOL INSTR_EmulateInstruction( CONTEXT86 *context );
+
 /* msdos/devices.c */
 extern void DOSDEV_InstallDOSDevices(void);
 

@@ -432,6 +432,16 @@ static HANDLER_DEF(EXC_segv)
 
     HANDLER_INIT();
 
+#if defined(TRAP_sig) && defined(CR2_sig)
+    /* we want the page-fault case to be fast */
+    if (TRAP_sig(HANDLER_CONTEXT) == 14)
+        if (VIRTUAL_HandleFault( (LPVOID)CR2_sig(HANDLER_CONTEXT) )) return;
+#endif
+
+    EXC_SaveContext( &context, HANDLER_CONTEXT );
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionFlags   = EH_NONCONTINUABLE;
+    rec.ExceptionAddress = GET_IP(&context);
     rec.NumberParameters = 0;
 
 #ifdef TRAP_sig
@@ -451,12 +461,11 @@ static HANDLER_DEF(EXC_segv)
         break;
     case 11:  /* Segment not present exception */
     case 13:  /* General protection fault */
-        if (INSTR_EmulateInstruction( HANDLER_CONTEXT )) return;
+        if (INSTR_EmulateInstruction( &context )) goto restore;
         rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
         break;
     case 14:  /* Page fault */
 #ifdef CR2_sig
-        if (VIRTUAL_HandleFault( (LPVOID)CR2_sig(HANDLER_CONTEXT) )) return;
         rec.NumberParameters = 2;
 #ifdef ERROR_sig
         rec.ExceptionInformation[0] = (ERROR_sig(HANDLER_CONTEXT) & 2) != 0;
@@ -469,11 +478,11 @@ static HANDLER_DEF(EXC_segv)
         break;
     case 17:  /* Alignment check exception */
         /* FIXME: pass through exception handler first? */
-    	if (EFL_sig(HANDLER_CONTEXT) & 0x00040000)
+    	if (EFL_reg(&context) & 0x00040000)
         {
             /* Disable AC flag, return */
-            EFL_sig(HANDLER_CONTEXT) &= ~0x00040000;
-            return;
+            EFL_reg(&context) &= ~0x00040000;
+            goto restore;
  	}
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
@@ -492,16 +501,13 @@ static HANDLER_DEF(EXC_segv)
     }
 #else  /* TRAP_sig */
 # ifdef __i386
-    if (INSTR_EmulateInstruction( HANDLER_CONTEXT )) return;
+    if (INSTR_EmulateInstruction( &context )) return;
 # endif
     rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;  /* generic error */
 #endif  /* TRAP_sig */
 
-    EXC_SaveContext( &context, HANDLER_CONTEXT );
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionFlags   = EH_NONCONTINUABLE;
-    rec.ExceptionAddress = GET_IP(&context);
     REGS_FUNC(RtlRaiseException)( &rec, &context );
+ restore:
     EXC_RestoreContext( &context, HANDLER_CONTEXT );
 }
 
