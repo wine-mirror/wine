@@ -80,8 +80,6 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
 		*/
 	       for (ptr = default_format; *ptr; ptr++) 
 	       {
-		  DEBUG_Printf(DBG_CHN_MESG, "[%c]", *ptr);
-
 		  if (*ptr == '%') state++;
 		  else if (state == 1) 
 		    {
