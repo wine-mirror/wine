@@ -530,6 +530,13 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
                                             pPresentationParameters->BackBufferFormat,
                                             (LPDIRECT3DSURFACE8*) &object->backBuffer);
 
+    if (pPresentationParameters->EnableAutoDepthStencil)
+        IDirect3DDevice8Impl_CreateImageSurface((LPDIRECT3DDEVICE8) object,
+                                                pPresentationParameters->BackBufferWidth,
+                                                pPresentationParameters->BackBufferHeight,
+                                                pPresentationParameters->AutoDepthStencilFormat,
+                                                (LPDIRECT3DSURFACE8*) &object->depthStencilBuffer);
+    
     /* Now override the surface's Flip method (if in double buffering) ?COPIED from DDRAW!?
     ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
     {

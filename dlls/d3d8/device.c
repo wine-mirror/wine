@@ -828,12 +828,22 @@ SHORT bytesPerPixel(D3DFORMAT fmt) {
     SHORT retVal;
 
     switch (fmt) {
+    /* color buffer */
     case D3DFMT_A4R4G4B4:         retVal = 2; break;
     case D3DFMT_A8R8G8B8:         retVal = 4; break;
     case D3DFMT_X8R8G8B8:         retVal = 4; break;
     case D3DFMT_R8G8B8:           retVal = 3; break;
     case D3DFMT_R5G6B5:           retVal = 2; break;
     case D3DFMT_A1R5G5B5:         retVal = 2; break;
+    /* depth/stencil buffer */
+    case D3DFMT_D16_LOCKABLE:     retVal = 2; break;
+    case D3DFMT_D32:              retVal = 4; break;
+    case D3DFMT_D15S1:            retVal = 2; break;
+    case D3DFMT_D24S8:            retVal = 4; break;
+    case D3DFMT_D16:              retVal = 2; break;
+    case D3DFMT_D24X8:            retVal = 4; break;
+    case D3DFMT_D24X4S4:          retVal = 4; break;
+    /* unknown */				  
     case D3DFMT_UNKNOWN:
         /* Guess at the highest value of the above */
         TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %d\n", fmt);
@@ -1587,10 +1597,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE8 i
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
-    /* Note inc ref on returned surface *
-    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppBackBuffer); */
+    TRACE("(%p)->(%p)\n", This, ppZStencilSurface);
+    
+    /* Note inc ref on returned surface */
+    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8)This->depthStencilBuffer);
+    *ppZStencilSurface = (LPDIRECT3DSURFACE8)This->depthStencilBuffer;
 
-    FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
 
