@@ -4599,6 +4599,7 @@ static DWORD cbt_hook_thread_id;
 
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
 { 
+    HWND hwnd;
     char buf[256];
 
     trace("CBT: %d, %08x, %08lx\n", nCode, wParam, lParam);
@@ -4633,9 +4634,9 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     }
 
     /* Log also SetFocus(0) calls */
-    if (!wParam) wParam = lParam;
+    hwnd = wParam ? (HWND)wParam : (HWND)lParam;
 
-    if (GetClassNameA((HWND)wParam, buf, sizeof(buf)))
+    if (GetClassNameA(hwnd, buf, sizeof(buf)))
     {
 	if (!lstrcmpiA(buf, "TestWindowClass") ||
 	    !lstrcmpiA(buf, "TestParentClass") ||
@@ -4921,9 +4922,8 @@ static const struct message WmGlobalHookSeq_1[] = {
     /* create window in the thread proc */
     { HCBT_CREATEWND, hook|lparam, 0, 2 },
     /* our test events */
-    { HCBT_SETFOCUS, hook|lparam, 0, 2 }, /* SetFocus(0) */
-    { HCBT_ACTIVATE, hook|lparam, 0, 2 },
-    { HCBT_SETFOCUS, hook|lparam, 0, 2 }, /* SetFocus(hwnd) */
+    { HCBT_SYSCOMMAND, hook|wparam|lparam, SC_PREVWINDOW, 2 },
+    { HCBT_SYSCOMMAND, hook|wparam|lparam, SC_NEXTWINDOW, 2 },
     { 0 }
 };
 static const struct message WmGlobalHookSeq_2[] = {
@@ -4968,6 +4968,7 @@ static DWORD cbt_global_hook_thread_id;
 
 static LRESULT CALLBACK cbt_global_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
 { 
+    HWND hwnd;
     char buf[256];
 
     trace("CBT_2: %d, %08x, %08lx\n", nCode, wParam, lParam);
@@ -4986,9 +4987,9 @@ static LRESULT CALLBACK cbt_global_hook_proc(int nCode, WPARAM wParam, LPARAM lP
     }
 
     /* Log also SetFocus(0) calls */
-    if (!wParam) wParam = lParam;
+    hwnd = wParam ? (HWND)wParam : (HWND)lParam;
 
-    if (GetClassNameA((HWND)wParam, buf, sizeof(buf)))
+    if (GetClassNameA(hwnd, buf, sizeof(buf)))
     {
 	if (!lstrcmpiA(buf, "TestWindowClass") ||
 	    !lstrcmpiA(buf, "static"))
@@ -5053,9 +5054,14 @@ static DWORD WINAPI cbt_global_hook_thread_proc(void *param)
 
     *(HWND *)param = hwnd;
 
-    /* generate focus related CBT events */
+    /* Windows doesn't like when a thread plays games with the focus,
+       that leads to all kinds of misbehaviours and failures to activate
+       a window. So, better keep next lines commented out.
     SetFocus(0);
-    SetFocus(hwnd);
+    SetFocus(hwnd);*/
+
+    DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_PREVWINDOW, 0);
+    DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_NEXTWINDOW, 0);
 
     SetEvent(hevent);
 
