@@ -366,7 +366,6 @@ CRTDLL_FILE * __cdecl CRTDLL_fopen(LPCSTR path, LPCSTR mode)
   }
   else if (mode[0] == 'a')
   {
-      /* FIXME: there is no O_APPEND in CreateFile, should emulate it */
       access = GENERIC_WRITE;
       creation = OPEN_ALWAYS;
       if (mode[1] == '+') access |= GENERIC_READ;
@@ -382,6 +381,11 @@ CRTDLL_FILE * __cdecl CRTDLL_fopen(LPCSTR path, LPCSTR mode)
   }
   TRACE("file %s mode %s got handle %d file %p\n",
 		 path,mode,handle,file);
+  if (mode[0] == 'a')
+  {
+      /* if appending, seek to end of file */
+      SetFilePointer( handle, 0, NULL, FILE_END );
+  }
   return file;
 }
 
@@ -444,19 +448,121 @@ DWORD __cdecl CRTDLL_freopen(LPCSTR path, LPCSTR mode, LPVOID stream)
  */
 INT __cdecl CRTDLL_fscanf( CRTDLL_FILE *stream, LPSTR format, ... )
 {
-#if 0
-    va_list valist;
-    INT res;
-
-    va_start( valist, format );
-#ifdef HAVE_VFSCANF
-    res = vfscanf( xlat_file_ptr(stream), format, valist );
-#endif
-    va_end( valist );
-    return res;
-#endif
-    FIXME("broken\n");
-    return 0;
+    INT rd = 0;
+    int nch;
+    va_list ap;
+    if (!*format) return 0;
+    WARN("%p (\"%s\"): semi-stub\n", stream, format);
+    nch = CRTDLL_fgetc(stream);
+    va_start(ap, format);
+    while (*format) {
+        if (*format == ' ') {
+            /* skip whitespace */
+            while ((nch!=EOF) && isspace(nch))
+                nch = CRTDLL_fgetc(stream);
+        }
+        else if (*format == '%') {
+            int st = 0;
+            format++;
+            switch(*format) {
+            case 'd': { /* read an integer */
+                    int*val = va_arg(ap, int*);
+                    int cur = 0;
+                    /* skip initial whitespace */
+                    while ((nch!=EOF) && isspace(nch))
+                        nch = CRTDLL_fgetc(stream);
+                    /* get sign and first digit */
+                    if (nch == '-') {
+                        nch = CRTDLL_fgetc(stream);
+                        if (isdigit(nch))
+                            cur = -(nch - '0');
+                        else break;
+                    } else {
+                        if (isdigit(nch))
+                            cur = nch - '0';
+                        else break;
+                    }
+                    nch = CRTDLL_fgetc(stream);
+                    /* read until no more digits */
+                    while ((nch!=EOF) && isdigit(nch)) {
+                        cur = cur*10 + (nch - '0');
+                        nch = CRTDLL_fgetc(stream);
+                    }
+                    st = 1;
+                    *val = cur;
+                }
+                break;
+            case 'f': { /* read a float */
+                    float*val = va_arg(ap, float*);
+                    float cur = 0;
+                    /* skip initial whitespace */
+                    while ((nch!=EOF) && isspace(nch))
+                        nch = CRTDLL_fgetc(stream);
+                    /* get sign and first digit */
+                    if (nch == '-') {
+                        nch = CRTDLL_fgetc(stream);
+                        if (isdigit(nch))
+                            cur = -(nch - '0');
+                        else break;
+                    } else {
+                        if (isdigit(nch))
+                            cur = nch - '0';
+                        else break;
+                    }
+                    /* read until no more digits */
+                    while ((nch!=EOF) && isdigit(nch)) {
+                        cur = cur*10 + (nch - '0');
+                        nch = CRTDLL_fgetc(stream);
+                    }
+                    if (nch == '.') {
+                        /* handle decimals */
+                        float dec = 1;
+                        nch = CRTDLL_fgetc(stream);
+                        while ((nch!=EOF) && isdigit(nch)) {
+                            dec /= 10;
+                            cur += dec * (nch - '0');
+                            nch = CRTDLL_fgetc(stream);
+                        }
+                    }
+                    st = 1;
+                    *val = cur;
+                }
+                break;
+            case 's': { /* read a word */
+                    char*str = va_arg(ap, char*);
+                    char*sptr = str;
+                    /* skip initial whitespace */
+                    while ((nch!=EOF) && isspace(nch))
+                        nch = CRTDLL_fgetc(stream);
+                    /* read until whitespace */
+                    while ((nch!=EOF) && !isspace(nch)) {
+                        *sptr++ = nch; st++;
+                        nch = CRTDLL_fgetc(stream);
+                    }
+                    /* terminate */
+                    *sptr = 0;
+                    TRACE("read word: %s\n", str);
+                }
+                break;
+            default: FIXME("unhandled: %%%c\n", *format);
+            }
+            if (st) rd++;
+            else break;
+        }
+        else {
+            /* check for character match */
+            if (nch == *format)
+               nch = CRTDLL_fgetc(stream);
+            else break;
+        }
+        format++;
+    }
+    va_end(ap);
+    if (nch!=EOF) {
+        WARN("need ungetch\n");
+    }
+    TRACE("returning %d\n", rd);
+    return rd;
 }
 
 /*********************************************************************
