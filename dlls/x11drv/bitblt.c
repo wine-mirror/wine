@@ -1133,8 +1133,6 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, INT xDst, INT y
                                      RECT *visRectSrc, RECT *visRectDst )
 {
     RECT rect, clipRect;
-    DC *dcSrc = physDevSrc ? physDevSrc->dc : NULL;
-    DC *dcDst = physDevDst->dc;
 
       /* Get the destination visible rectangle */
 
@@ -1144,7 +1142,7 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, INT xDst, INT y
     rect.bottom = yDst + heightDst;
     if (widthDst < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightDst < 0) SWAP_INT32( &rect.top, &rect.bottom );
-    GetRgnBox( dcDst->hGCClipRgn, &clipRect );
+    GetRgnBox( physDevDst->dc->hGCClipRgn, &clipRect );
     if (!IntersectRect( visRectDst, &rect, &clipRect )) return FALSE;
 
       /* Get the source visible rectangle */
@@ -1157,8 +1155,15 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, INT xDst, INT y
     if (widthSrc < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightSrc < 0) SWAP_INT32( &rect.top, &rect.bottom );
     /* Apparently the clipping and visible regions are only for output,
-       so just check against totalExtent here to avoid BadMatch errors */
-    if (!IntersectRect( visRectSrc, &rect, &dcSrc->totalExtent ))
+       so just check against dc extent here to avoid BadMatch errors */
+    if (GetObjectType( physDevSrc->hdc ) == OBJ_MEMDC)
+    {
+        BITMAP bm;
+        GetObjectW( GetCurrentObject(physDevSrc->hdc,OBJ_BITMAP), sizeof(bm), &bm );
+        SetRect( &clipRect, 0, 0, bm.bmWidth, bm.bmHeight );
+    }
+    else SetRect( &clipRect, 0, 0, screen_width, screen_height );
+    if (!IntersectRect( visRectSrc, &rect, &clipRect ))
         return FALSE;
 
       /* Intersect the rectangles */

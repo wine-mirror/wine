@@ -949,11 +949,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     gsCacheEntry *entry;
     BOOL retv = FALSE;
     HDC hdc = physDev->hdc;
-    DC *dc = physDev->dc;
     int textPixel, backgroundPixel;
     INT *deltas = NULL;
     INT char_extra;
     UINT align = GetTextAlign( hdc );
+    COLORREF textColor = GetTextColor( hdc );
 
     TRACE("%p, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
 	  lprect, debugstr_wn(wstr, count), count, lpDx);
@@ -968,7 +968,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if(lprect)
       TRACE("rect: %ld,%ld - %ld,%ld\n", lprect->left, lprect->top, lprect->right,
 	    lprect->bottom);
-    TRACE("align = %x bkmode = %x mapmode = %x\n", align, GetBkMode(hdc), dc->MapMode);
+    TRACE("align = %x bkmode = %x mapmode = %x\n", align, GetBkMode(hdc), GetMapMode(hdc));
 
     if(align & TA_UPDATECP)
     {
@@ -1015,7 +1015,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
 
     if(physDev->depth == 1) {
-        if((dc->textColor & 0xffffff) == 0) {
+        if((textColor & 0xffffff) == 0) {
 	    textPixel = 0;
 	    backgroundPixel = 1;
 	} else {
@@ -1083,7 +1083,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     tm.tmAscent = X11DRV_YWStoDS(physDev, tm.tmAscent);
     tm.tmDescent = X11DRV_YWStoDS(physDev, tm.tmDescent);
-    switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
+    switch( align & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
     case TA_LEFT:
         if (align & TA_UPDATECP) {
 	    pt.x = x + xwidth;
@@ -1144,12 +1144,14 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 							   CPSubwindowMode, &pa);
 	    wine_tsx11_unlock();
 
-	    TRACE("allocing pict = %lx dc = %p drawable = %08lx\n", physDev->xrender->pict, dc, physDev->drawable);
+	    TRACE("allocing pict = %lx dc = %p drawable = %08lx\n",
+                  physDev->xrender->pict, hdc, physDev->drawable);
 	} else {
-	    TRACE("using existing pict = %lx dc = %p drawable = %08lx\n", physDev->xrender->pict, dc, physDev->drawable);
+	    TRACE("using existing pict = %lx dc = %p drawable = %08lx\n",
+                  physDev->xrender->pict, hdc, physDev->drawable);
 	}
 
-	if ((data = X11DRV_GetRegionData( dc->hGCClipRgn, 0 )))
+	if ((data = X11DRV_GetRegionData( physDev->dc->hGCClipRgn, 0 )))
 	{
 	    wine_tsx11_lock();
 	    pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
@@ -1192,19 +1194,19 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 								CPRepeat, &pa);
 	    wine_tsx11_unlock();
 	    TRACE("Created pixmap of depth %d\n", format->depth);
-	    /* init lastTextColor to something different from dc->textColor */
-	    physDev->xrender->lastTextColor = ~dc->textColor;
+	    /* init lastTextColor to something different from textColor */
+	    physDev->xrender->lastTextColor = ~textColor;
 
 	}
 
-	if(dc->textColor != physDev->xrender->lastTextColor) {
+	if(textColor != physDev->xrender->lastTextColor) {
 	    if(physDev->depth != 1) {
 	      /* Map 0 -- 0xff onto 0 -- 0xffff */
-	        col.red = GetRValue(dc->textColor);
+	        col.red = GetRValue(textColor);
 		col.red |= col.red << 8;
-		col.green = GetGValue(dc->textColor);
+		col.green = GetGValue(textColor);
 		col.green |= col.green << 8;
-		col.blue = GetBValue(dc->textColor);
+		col.blue = GetBValue(textColor);
 		col.blue |= col.blue << 8;
 		col.alpha = 0x0;
 	    } else { /* for a 1bpp bitmap we always need a 1 in the tile */
@@ -1216,7 +1218,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				  physDev->xrender->tile_pict,
 				  &col, 0, 0, 1, 1);
 	    wine_tsx11_unlock();
-	    physDev->xrender->lastTextColor = dc->textColor;
+	    physDev->xrender->lastTextColor = textColor;
 	}
 
 	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
@@ -1439,7 +1441,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				yoff + image_off_y - extents.top,
 				entry->bitmaps[glyphs[idx]],
 				&entry->gis[glyphs[idx]],
-				dc->textColor);
+				textColor);
 		if(deltas) {
 		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    xoff = offset * cosEsc;

@@ -59,6 +59,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     POINT               pt;
     DC *dc = physDev->dc;
     UINT align = GetTextAlign( physDev->hdc );
+    INT charExtra = GetTextCharacterExtra( physDev->hdc );
 
     if(dc->gdiFont)
         return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count,
@@ -261,7 +262,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     wine_tsx11_unlock();
     if(!rotated)
     {
-      if (!dc->charExtra && !dc->breakExtra && !lpDx)
+      if (!charExtra && !dc->breakExtra && !lpDx)
       {
         X11DRV_cptable[pfo->fi->cptable].pDrawString(
 		pfo, gdi_display, physDev->drawable, physDev->gc,
@@ -326,7 +327,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
 		do
                 {
-                    delta += dc->charExtra;
+                    delta += charExtra;
                     if (str2b[i].byte2 == (char)dfBreakChar)
 		      delta += dc->breakExtra;
 		    pitem->nchars++;
@@ -369,7 +370,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 			      font->per_char[char_metric_offset].attributes:
 			      font->min_bounds.attributes)
 	                  * pfo->lpX11Trans->pixelsize / 1000.0;
-	  offset += dc->charExtra;
+	  offset += charExtra;
 	  if (str2b[i].byte2 == (char)dfBreakChar)
 	    offset += dc->breakExtra;
 	}
@@ -434,6 +435,7 @@ BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
 
     TRACE("%s %d\n", debugstr_wn(str,count), count);
     if( pfo ) {
+        INT charExtra = GetTextCharacterExtra( physDev->hdc );
 	XChar2b *p = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, str, count );
 	if (!p) return FALSE;
         if( !pfo->lpX11Trans ) {
@@ -443,7 +445,7 @@ BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
 				count, &dir, &ascent, &descent, &info_width );
 
           size->cx = fabs((FLOAT)(info_width + dc->breakRem + count *
-                                  dc->charExtra) * dc->xformVport2World.eM11);
+                                  charExtra) * dc->xformVport2World.eM11);
           size->cy = fabs((FLOAT)(pfo->fs->ascent + pfo->fs->descent) *
                           dc->xformVport2World.eM22);
 	} else {
@@ -459,7 +461,7 @@ BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
 	    TRACE("x = %f y = %f\n", x, y);
 	    x *= pfo->lpX11Trans->pixelsize / 1000.0;
 	    y *= pfo->lpX11Trans->pixelsize / 1000.0;
-	    size->cx = fabs((x + dc->breakRem + count * dc->charExtra) *
+	    size->cx = fabs((x + dc->breakRem + count * charExtra) *
 			    dc->xformVport2World.eM11);
 	    size->cy = fabs(y * dc->xformVport2World.eM22);
 	}
