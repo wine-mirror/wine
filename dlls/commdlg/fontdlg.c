@@ -22,7 +22,6 @@
 #include "dlgs.h"
 #include "module.h"
 #include "debugtools.h"
-#include "font.h"
 #include "cderr.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg);
@@ -38,6 +37,24 @@ LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
 				  LPARAM lParam);
 LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
                                    LPARAM lParam);
+
+static void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 )
+{
+    font32->lfHeight = font16->lfHeight;
+    font32->lfWidth = font16->lfWidth;
+    font32->lfEscapement = font16->lfEscapement;
+    font32->lfOrientation = font16->lfOrientation;
+    font32->lfWeight = font16->lfWeight;
+    font32->lfItalic = font16->lfItalic;
+    font32->lfUnderline = font16->lfUnderline;
+    font32->lfStrikeOut = font16->lfStrikeOut;
+    font32->lfCharSet = font16->lfCharSet;
+    font32->lfOutPrecision = font16->lfOutPrecision;
+    font32->lfClipPrecision = font16->lfClipPrecision;
+    font32->lfQuality = font16->lfQuality;
+    font32->lfPitchAndFamily = font16->lfPitchAndFamily;
+    lstrcpynA( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
+}
 
 static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)
 {
@@ -72,6 +89,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     FARPROC16 ptr;
     CHOOSEFONTA cf32a;
     LOGFONTA lf32a;
+    LOGFONT16 *font16;
     SEGPTR lpTemplateName;
     
     cf32a.lpLogFont=&lf32a;
@@ -157,8 +175,23 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
         GlobalFree16(hGlobal16);
     }
     lpChFont->lpTemplateName=lpTemplateName;
-    FONT_LogFont32ATo16(cf32a.lpLogFont,
-        (LPLOGFONT16)(PTR_SEG_TO_LIN(lpChFont->lpLogFont)));
+
+
+    font16 = PTR_SEG_TO_LIN(lpChFont->lpLogFont);
+    font16->lfHeight = cf32a.lpLogFont->lfHeight;
+    font16->lfWidth = cf32a.lpLogFont->lfWidth;
+    font16->lfEscapement = cf32a.lpLogFont->lfEscapement;
+    font16->lfOrientation = cf32a.lpLogFont->lfOrientation;
+    font16->lfWeight = cf32a.lpLogFont->lfWeight;
+    font16->lfItalic = cf32a.lpLogFont->lfItalic;
+    font16->lfUnderline = cf32a.lpLogFont->lfUnderline;
+    font16->lfStrikeOut = cf32a.lpLogFont->lfStrikeOut;
+    font16->lfCharSet = cf32a.lpLogFont->lfCharSet;
+    font16->lfOutPrecision = cf32a.lpLogFont->lfOutPrecision;
+    font16->lfClipPrecision = cf32a.lpLogFont->lfClipPrecision;
+    font16->lfQuality = cf32a.lpLogFont->lfQuality;
+    font16->lfPitchAndFamily = cf32a.lpLogFont->lfPitchAndFamily;
+    lstrcpynA( font16->lfFaceName, cf32a.lpLogFont->lfFaceName, LF_FACESIZE );
     return bRet;
 }
 

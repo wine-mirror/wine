@@ -13,8 +13,6 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "prsht.h"
-#include "dialog.h"
-#include "win.h"
 #include "winnls.h"
 #include "comctl32.h"
 #include "debugtools.h"
@@ -129,7 +127,6 @@ static int PROPSHEET_GetPageIndex(HPROPSHEETPAGE hpage, PropSheetInfo* psInfo);
 static void PROPSHEET_SetWizButtons(HWND hwndDlg, DWORD dwFlags);
 static PADDING_INFO PROPSHEET_GetPaddingInfoWizard(HWND hwndDlg, const PropSheetInfo* psInfo);
 static BOOL PROPSHEET_IsDialogMessage(HWND hwnd, LPMSG lpMsg);
-static INT PROPSHEET_DoDialogBox( HWND hwnd, HWND owner);
 
 BOOL WINAPI
 PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -343,44 +340,6 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
   return TRUE;
 }
 
-/******************************************************************************
- *            PROPSHEET_DoDialogBox
- *
- * Copied from windows/dialog.c:DIALOG_DoDialogBox
- */
-static INT PROPSHEET_DoDialogBox( HWND hwnd, HWND owner)
-{
-   WND * wndPtr;
-   DIALOGINFO * dlgInfo;
-   MSG msg;
-   INT retval;
-
-     /* Owner must be a top-level window */
-   owner = WIN_GetTopParent( owner );
-   if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
-   dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-
-   if (!(dlgInfo->flags & DF_END)) /* was EndDialog called in WM_INITDIALOG ? */
-   {
-       EnableWindow( owner, FALSE );
-       ShowWindow( hwnd, SW_SHOW );
-       while (GetMessageA(&msg, 0, 0, 0))
-       {
-           if (!PROPSHEET_IsDialogMessage( hwnd, &msg))
-           {
-               TranslateMessage( &msg );
-               DispatchMessageA( &msg );
-           }
-           if (dlgInfo->flags & DF_END) break;
-       }
-       EnableWindow( owner, TRUE );
-   }
-   retval = dlgInfo->idResult; 
-   WIN_ReleaseWndPtr(wndPtr);
-   DestroyWindow( hwnd );
-   return retval;
-}
-
 
 /******************************************************************************
  *            PROPSHEET_CreateDialog
@@ -422,15 +381,19 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   if (psInfo->useCallback)
     (*(psInfo->ppshheader.pfnCallback))(0, PSCB_PRECREATE, (LPARAM)temp);
 
-  ret = CreateDialogIndirectParamA(psInfo->ppshheader.hInstance,
-                                     (LPDLGTEMPLATEA) temp,
-                                     psInfo->ppshheader.hwndParent,
-                                     (DLGPROC) PROPSHEET_DialogProc,
-                                     (LPARAM)psInfo);
-
   if (!(psInfo->ppshheader.dwFlags & PSH_MODELESS))
-     ret = PROPSHEET_DoDialogBox((HWND)ret, psInfo->ppshheader.hwndParent);
- 
+      ret = DialogBoxIndirectParamA(psInfo->ppshheader.hInstance,
+                                    (LPDLGTEMPLATEA) temp,
+                                    psInfo->ppshheader.hwndParent,
+                                    (DLGPROC) PROPSHEET_DialogProc,
+                                    (LPARAM)psInfo);
+  else
+      ret = CreateDialogIndirectParamA(psInfo->ppshheader.hInstance,
+                                       (LPDLGTEMPLATEA) temp,
+                                       psInfo->ppshheader.hwndParent,
+                                       (DLGPROC) PROPSHEET_DialogProc,
+                                       (LPARAM)psInfo);
+
   COMCTL32_Free(temp);
 
   return ret;
@@ -529,8 +492,7 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   RECT rc,tabRect;
   int tabOffsetX, tabOffsetY, buttonHeight;
   PADDING_INFO padding = PROPSHEET_GetPaddingInfo(hwndDlg);
-  WND * wndPtr = WIN_FindWndPtr( hwndDlg );
-  DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+  RECT units;
 
   /* Get the height of buttons */
   GetClientRect(hwndButton, &rc);
@@ -546,6 +508,11 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
 
   MapDialogRect(hwndDlg, &rc);
 
+  /* retrieve the dialog units */
+  units.left = units.right = 4;
+  units.top = units.bottom = 8;
+  MapDialogRect(hwndDlg, &units);
+
   /*
    * Resize the tab control.
    */
@@ -556,13 +523,13 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   if ((rc.bottom - rc.top) < (tabRect.bottom - tabRect.top))
   {
       rc.bottom = rc.top + tabRect.bottom - tabRect.top;
-      psInfo->height = MulDiv((rc.bottom - rc.top),8,dlgInfo->yBaseUnit);
+      psInfo->height = MulDiv((rc.bottom - rc.top),8,units.top);
   }
   
   if ((rc.right - rc.left) < (tabRect.right - tabRect.left))
   {
       rc.right = rc.left + tabRect.right - tabRect.left;
-      psInfo->width  = MulDiv((rc.right - rc.left),4,dlgInfo->xBaseUnit);
+      psInfo->width  = MulDiv((rc.right - rc.left),4,units.left);
   }
 
   SendMessageA(hwndTabCtrl, TCM_ADJUSTRECT, TRUE, (LPARAM)&rc);
@@ -588,8 +555,6 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
    */
   SetWindowPos(hwndDlg, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-
-  WIN_ReleaseWndPtr(wndPtr);
   return TRUE;
 }
 
@@ -606,8 +571,7 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
   RECT rc,tabRect;
   int buttonHeight, lineHeight;
   PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndDlg, psInfo);
-  WND * wndPtr = WIN_FindWndPtr( hwndDlg );
-  DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+  RECT units;
 
   /* Get the height of buttons */
   GetClientRect(hwndButton, &rc);
@@ -615,6 +579,11 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
 
   GetClientRect(hwndLine, &rc);
   lineHeight = rc.bottom;
+
+  /* retrieve the dialog units */
+  units.left = units.right = 4;
+  units.top = units.bottom = 8;
+  MapDialogRect(hwndDlg, &units);
 
   /*
    * Biggest page size.
@@ -631,13 +600,13 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
   if ((rc.bottom - rc.top) < (tabRect.bottom - tabRect.top))
   {
       rc.bottom = rc.top + tabRect.bottom - tabRect.top;
-      psInfo->height = MulDiv((rc.bottom - rc.top), 8, dlgInfo->yBaseUnit);
+      psInfo->height = MulDiv((rc.bottom - rc.top), 8, units.top);
   }
   
   if ((rc.right - rc.left) < (tabRect.right - tabRect.left))
   {
       rc.right = rc.left + tabRect.right - tabRect.left;
-      psInfo->width  = MulDiv((rc.right - rc.left), 4, dlgInfo->xBaseUnit);
+      psInfo->width  = MulDiv((rc.right - rc.left), 4, units.left);
   }
 
   TRACE("Biggest page %d %d %d %d\n", rc.left, rc.top, rc.right, rc.bottom);
@@ -651,8 +620,6 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
    */
   SetWindowPos(hwndDlg, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-
-  WIN_ReleaseWndPtr(wndPtr);
   return TRUE;
 }
 

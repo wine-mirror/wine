@@ -19,7 +19,6 @@
 #include "heap.h"
 #include "commdlg.h"
 #include "module.h"
-#include "drive.h"
 #include "debugtools.h"
 #include "cderr.h"
 #include "tweak.h"
@@ -606,8 +605,17 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
       WARN("Couldn't read initial directory %s!\n", debugstr_w(tmpstr));
   }
   /* select current drive in combo 2, omit missing drives */
-  for(i = 0, n = -1; i <= DRIVE_GetCurrentDrive(); i++)
-    if (DRIVE_IsValid(i))                  n++;
+  {
+      char dir[MAX_PATH];
+      char str[4] = "a:\\";
+      GetCurrentDirectoryA( sizeof(dir), dir );
+      for(i = 0, n = -1; i < 26; i++)
+      {
+          str[0] = 'a' + i;
+          if (GetDriveTypeA(str) != DRIVE_DOESNOTEXIST) n++;
+          if (toupper(str[0]) == toupper(dir[0])) break;
+      }
+  }
   SendDlgItemMessageW(hWnd, cmb2, CB_SETCURSEL, n, 0);
   if (!(ofn->Flags & OFN_SHOWHELP))
     ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);

@@ -3,8 +3,6 @@ type	win32
 file	winspool.drv
 init	WINSPOOL_EntryPoint
 
-import	user32.dll
-import	gdi32.dll
 import	advapi32.dll
 import	kernel32.dll
 import	ntdll.dll

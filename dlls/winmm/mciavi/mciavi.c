@@ -159,7 +159,7 @@ static	DWORD	AVI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     wma->wStatus = MCI_MODE_PLAY;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
+	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
@@ -418,7 +418,7 @@ static	DWORD	AVI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA
     }
     if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
+	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     

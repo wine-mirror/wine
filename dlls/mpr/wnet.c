@@ -10,7 +10,6 @@
 
 #include "winbase.h"
 #include "winnetwk.h"
-#include "drive.h"
 #include "heap.h"
 #include "debugtools.h"
 
@@ -333,22 +332,22 @@ DWORD WINAPI WNetRestoreConnectionW( HWND hwndOwner, LPWSTR lpszDevice )
 DWORD WINAPI WNetGetConnectionA( LPCSTR lpLocalName, 
                                  LPSTR lpRemoteName, LPDWORD lpBufferSize )
 {
-    const char *path;
+    char label[40];
 
     TRACE( "local %s\n", lpLocalName );
     if (lpLocalName[1] == ':')
     {
-        int drive = toupper(lpLocalName[0]) - 'A';
         switch(GetDriveTypeA(lpLocalName))
         {
         case DRIVE_REMOTE:
-            path = DRIVE_GetLabel(drive);
-            if (strlen(path) + 1 > *lpBufferSize)
+            if (!GetVolumeInformationA( lpLocalName, label, sizeof(label),
+                                        NULL, NULL, NULL, NULL, 0 )) label[0] = 0;
+            if (strlen(label) + 1 > *lpBufferSize)
             {
-                *lpBufferSize = strlen(path) + 1;
+                *lpBufferSize = strlen(label) + 1;
                 return WN_MORE_DATA;
             }
-            strcpy( lpRemoteName, path );
+            strcpy( lpRemoteName, label );
             *lpBufferSize = strlen(lpRemoteName) + 1;
             return WN_SUCCESS;
 	case DRIVE_REMOVABLE:

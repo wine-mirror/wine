@@ -7,6 +7,7 @@
  * Copyright 1999, 2000 Huw D M Davies
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -36,6 +37,14 @@ static HDPA pOpenedPrinterDPA = NULL;
 extern HDPA   (WINAPI* WINSPOOL_DPA_CreateEx) (INT, HANDLE);
 extern LPVOID (WINAPI* WINSPOOL_DPA_GetPtr) (const HDPA, INT);
 extern INT    (WINAPI* WINSPOOL_DPA_InsertPtr) (const HDPA, INT, LPVOID);
+
+static DWORD (WINAPI *GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
+                                                     WORD fwCapability, LPSTR lpszOutput,
+                                                     LPDEVMODEA lpdm );
+static INT (WINAPI *GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
+                                              LPSTR lpszDevice, LPSTR lpszPort,
+                                              LPDEVMODEA lpdmInput, LPSTR lpszProfile,
+                                              DWORD fwMode );
 
 static char Printers[] =
 "System\\CurrentControlSet\\control\\Print\\Printers\\";
@@ -284,6 +293,13 @@ INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort, WORD cap,
 			       LPSTR pOutput, LPDEVMODEA lpdm)
 {
     INT ret;
+
+    if (!GDI_CallDeviceCapabilities16)
+    {
+        GDI_CallDeviceCapabilities16 = (void*)GetProcAddress( GetModuleHandleA("gdi32"),
+                                                              (LPCSTR)104 );
+        if (!GDI_CallDeviceCapabilities16) return -1;
+    }
     ret = GDI_CallDeviceCapabilities16(pDevice, pPort, cap, pOutput, lpdm);
 
     /* If DC_PAPERSIZE map POINT16s to POINTs */
@@ -377,6 +393,12 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
 	lpName = HEAP_strdupWtoA(GetProcessHeap(),0,lpNameW);
     }
 
+    if (!GDI_CallExtDeviceMode16)
+    {
+        GDI_CallExtDeviceMode16 = (void*)GetProcAddress( GetModuleHandleA("gdi32"),
+                                                         (LPCSTR)102 );
+        if (!GDI_CallExtDeviceMode16) return -1;
+    }
     ret = GDI_CallExtDeviceMode16(hWnd, pDevModeOutput, lpName, "LPT1:",
 				  pDevModeInput, NULL, fMode);
 
@@ -675,7 +697,7 @@ static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
 
     lpKey = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                        strlen(p) + strlen(Drivers));
-    (void) wsprintfA( lpKey, Drivers, p);
+    sprintf( lpKey, Drivers, p);
 
     TRACE("%s\n", lpKey);
 
