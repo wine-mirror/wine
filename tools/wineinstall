@@ -17,29 +17,33 @@
 #  some support for binary package installs
 #  set and tell user about LD_LIBRARY_PATH if necessary
 #  set EXTRA_LD_LIBRARY_PATH in wine.conf
+# Apr 9 2000 - Ove Kåven
+#  make root's registry global (system-default)
 
 # defaults (change these if you are a packager)
 CONFARGS=                     # configure args, e.g. --prefix=/usr --sysconfdir=/etc
 prefix=/usr/local             # installation prefix
-sysconfdir=$prefix/etc        # where wine.conf is supposed to be
-libdir=$prefix/lib            # where libwine.so will be installed
+sysconfdir=$prefix/etc        # where wine.conf and global registry is supposed to be
+libdir=$prefix/lib            # where libwine.so will be (or is) installed
+exdir=documentation/samples   # where the example system.ini resides
 CONF=$sysconfdir/wine.conf    # default path of the wine.conf
 BINDIST=no                    # whether called from a binary package config script
 DOCONF=auto                   # whether to autogenerate wine.conf
 DOWCHK=auto                   # whether to autoconfigure existing-windows installation
 DOWINE=auto                   # whether to autoconfigure no-windows installation
 DOREG=auto                    # whether to install default registry
+SYSREG=yes                    # whether to make root's registry global (system-default)
 # elfdlls are not implemented yet, so this has no effect yet
 DLLPATH=$libdir/wine          # default path of the elfdll .so files
 # only for existing-windows installs
-WINECONF=tools/wineconf       # the path of wineconf perl script (for existing-windows)
+WINECONF=tools/wineconf       # the path of wineconf perl script
 # only for no-windows installs
 WINEINI=wine.ini              # the path of default wine.ini (also used by wineconf)
 WININI=/dev/null              # the path of default win.ini
-SYSTEMINI=documentation/samples/system.ini          # the path of default system.ini
+SYSTEMINI=$exdir/system.ini   # the path of default system.ini
 REGAPI=programs/regapi/regapi # the path of regapi winelib application
 DEFREG=winedefault.reg        # the path of the registry file to be fed to regapi
-# CROOT=/var/wine             # the path of the fake Drive C (for no-windows)
+# CROOT=/var/wine             # the path of the fake Drive C (asks user if not set)
 
 # startup...
 
@@ -247,7 +251,7 @@ elif [ "$DOWINE" = 'auto' ]
 then DOWINE=no
 fi
 
-# generate wine.conf for no-windows install, if necessary
+# setup a no-windows installation, if necessary
 if [ "$DOWINE" = 'yes' ]
 then {
   if [ `whoami` != 'root' ]
@@ -345,11 +349,35 @@ then {
     echo "Registry install failed. Perhaps you weren't running X."
     exit 1
   }
-  else echo "Registry successfully installed."
+  else echo "Registry entries successfully installed."
   fi
-  # FIXME: perhaps install registry to $sysconfdir/winesystem.reg and $sysconfdir/wineuser.reg?
+  if [ "$SYSREG" = 'auto' ]
+  then SYSREG=yes
+  fi
 }
 fi
+
+# make root's registry global, if desired
+if [ `whoami` = 'root' ] && [ "$SYSREG" = 'yes' ]
+then {
+  if ! [ -f $sysconfdir/wine.userreg ]
+  then {
+    echo "Linking root's user registry hive to the global registry..."
+    cp ~/.wine/wine.userreg $sysconfdir/wine.userreg
+    ln -sf $sysconfdir/wine.userreg ~/.wine/wine.userreg
+  }
+  fi
+  if ! [ -f $sysconfdir/wine.systemreg ]
+  then {
+    echo "Linking root's system registry hive to the global registry..."
+    cp ~/.wine/system.reg $sysconfdir/wine.systemreg
+    ln -sf $sysconfdir/wine.systemreg ~/.wine/system.reg
+  }
+  fi
+}
+fi
+
+# it's a wrap
 echo
 echo "Installation complete for now. Good luck (this is still alpha software)."
 echo "If you have problems with WINE, please read the documentation first,"
