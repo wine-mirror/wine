@@ -100,6 +100,8 @@
 #include <netdb.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -202,7 +204,7 @@ static inline CHAR *SMB_nextSepA (CHAR *s) {while (*s && !SMB_isSepA (*s)) s++; 
  * replacing separators with null characters
  */
 
-USHORT SMB_MultiplexId = 0;
+static USHORT SMB_MultiplexId = 0;
 
 struct NB_Buffer
 {
@@ -1532,16 +1534,15 @@ done:
     return handle;
 }
 
-static BOOL SMB_GetSmbInfo(HANDLE hFile, USHORT *tree_id, USHORT *user_id, USHORT *dialect, USHORT *file_id, LPDWORD offset)
+static NTSTATUS SMB_GetSmbInfo(HANDLE hFile, USHORT *tree_id, USHORT *user_id, USHORT *dialect, USHORT *file_id, LPDWORD offset)
 {
-    int r;
+    NTSTATUS status;
 
     SERVER_START_REQ( get_smb_info )
     {
         req->handle  = hFile;
         req->flags   = 0;
-        SetLastError(0);
-        r = wine_server_call_err( req );
+        status = wine_server_call( req );
         if(tree_id)
             *tree_id = reply->tree_id;
         if(user_id)
@@ -1555,12 +1556,12 @@ static BOOL SMB_GetSmbInfo(HANDLE hFile, USHORT *tree_id, USHORT *user_id, USHOR
     }
     SERVER_END_REQ;
 
-    return !r;
+    return status;
 }
 
-static BOOL SMB_SetOffset(HANDLE hFile, DWORD offset)
+static NTSTATUS SMB_SetOffset(HANDLE hFile, DWORD offset)
 {
-    int r;
+    NTSTATUS status;
 
     TRACE("offset = %08lx\n",offset);
 
@@ -1569,61 +1570,53 @@ static BOOL SMB_SetOffset(HANDLE hFile, DWORD offset)
         req->handle  = hFile;
         req->flags   = SMBINFO_SET_OFFSET;
         req->offset  = offset;
-        SetLastError(0);
-        r = wine_server_call_err( req );
+        status = wine_server_call( req );
         /* if(offset)
             *offset = reply->offset; */
     }
     SERVER_END_REQ;
 
-    return !r;
+    return status;
 }
 
-BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead, LPOVERLAPPED lpOverlapped)
+NTSTATUS WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, 
+                             PIO_STATUS_BLOCK io_status)
 {
     int fd;
-    DWORD total, count, offset;
+    DWORD count, offset;
     USHORT user_id, tree_id, dialect, file_id, read;
-    BOOL r=TRUE;
 
-    TRACE("%p %p %ld %p\n", hFile, buffer, bytesToRead, bytesRead);
+    TRACE("%p %p %ld %p\n", hFile, buffer, bytesToRead, io_status);
 
-    if(!SMB_GetSmbInfo(hFile, &tree_id, &user_id, &dialect, &file_id, &offset))
-        return FALSE;
+    io_status->Information = 0;
+
+    io_status->u.Status = SMB_GetSmbInfo(hFile, &tree_id, &user_id, &dialect, &file_id, &offset);
+    if (io_status->u.Status) return io_status->u.Status;
 
     fd = FILE_GetUnixHandle(hFile, GENERIC_READ);
-    if(fd<0)
-        return FALSE;
+    if (fd<0) return io_status->u.Status = STATUS_INVALID_HANDLE;
 
-    total = 0;
     while(1)
     {
-        count = bytesToRead - total;
+        count = bytesToRead - io_status->Information;
         if(count>0x400)
             count = 0x400;
         if(count==0)
             break;
         read = 0;
-        r = SMB_Read(fd, tree_id, user_id, dialect, file_id, offset, buffer, count, &read);
-        if(!r)
+        if (!SMB_Read(fd, tree_id, user_id, dialect, file_id, offset, buffer, count, &read))
             break;
         if(!read)
             break;
-        total += read;
+        io_status->Information += read;
         buffer = (char*)buffer + read;
         offset += read;
-        if(total>=bytesToRead)
+        if(io_status->Information >= bytesToRead)
             break;
     }
     close(fd);
 
-    if(bytesRead)
-        *bytesRead = total;
-
-    if(!SMB_SetOffset(hFile, offset))
-        return FALSE;
-
-    return r;
+    return io_status->u.Status = SMB_SetOffset(hFile, offset);
 }
 
 SMB_DIR* WINAPI SMB_FindFirst(LPCWSTR name)

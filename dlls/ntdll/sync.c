@@ -446,9 +446,9 @@ static void WINAPI check_async_list(async_private *asp, DWORD status)
     if( status != STATUS_ALERTED )
     {
         ovp_status = status;
-        ovp->ops->set_status (ovp, status);
+        ovp->iosb->u.Status = status;
     }
-    else ovp_status = ovp->ops->get_status (ovp);
+    else ovp_status = ovp->iosb->u.Status;
 
     if( ovp_status == STATUS_PENDING ) ovp->func( ovp );
 

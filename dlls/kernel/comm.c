@@ -84,6 +84,8 @@
 # include <sys/strtio.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "winerror.h"
 
@@ -104,15 +106,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(comm);
  * Asynchronous I/O for asynchronous wait requests                     *
  */
 
-static DWORD commio_get_async_status (const async_private *ovp);
 static DWORD commio_get_async_count (const async_private *ovp);
-static void commio_set_async_status (async_private *ovp, const DWORD status);
 static void commio_async_cleanup  (async_private *ovp);
 
 static async_ops commio_async_ops =
 {
-    commio_get_async_status,       /* get_status */
-    commio_set_async_status,       /* set_status */
     commio_get_async_count,        /* get_count */
     NULL,                          /* call_completion */
     commio_async_cleanup           /* cleanup */
@@ -121,19 +119,8 @@ static async_ops commio_async_ops =
 typedef struct async_commio
 {
     struct async_private             async;
-    LPOVERLAPPED                     lpOverlapped;
     char                             *buffer;
 } async_commio;
-
-static DWORD commio_get_async_status (const struct async_private *ovp)
-{
-    return ((async_commio*) ovp)->lpOverlapped->Internal;
-}
-
-static void commio_set_async_status (async_private *ovp, const DWORD status)
-{
-    ((async_commio*) ovp)->lpOverlapped->Internal = status;
-}
 
 static DWORD commio_get_async_count (const struct async_private *ovp)
 {
@@ -1664,14 +1651,14 @@ BOOL WINAPI GetCommModemStatus(
 static void COMM_WaitCommEventService(async_private *ovp)
 {
     async_commio *commio = (async_commio*) ovp;
-    LPOVERLAPPED lpOverlapped = commio->lpOverlapped;
+    IO_STATUS_BLOCK* iosb = commio->async.iosb;
 
-    TRACE("overlapped %p\n",lpOverlapped);
+    TRACE("iosb %p\n",iosb);
 
     /* FIXME: detect other events */
     *commio->buffer = EV_RXCHAR;
 
-    lpOverlapped->Internal = STATUS_SUCCESS;
+    iosb->u.Status = STATUS_SUCCESS;
 }
 
 
@@ -1714,7 +1701,7 @@ static BOOL COMM_WaitCommEvent(
     ovp->async.type = ASYNC_TYPE_WAIT;
     ovp->async.func = COMM_WaitCommEventService;
     ovp->async.event = lpOverlapped->hEvent;
-    ovp->lpOverlapped = lpOverlapped;
+    ovp->async.iosb = (IO_STATUS_BLOCK*)lpOverlapped;
     ovp->buffer = (char *)lpdwEvents;
 
     lpOverlapped->InternalHigh = 0;

@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -35,14 +36,15 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/server.h"
+#include "async.h"
 #include "ntdll_misc.h"
 #include "file.h" /* FIXME */
+#include "../files/smb.h"
 
 #include "winternl.h"
 #include "winioctl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
-
 
 /**************************************************************************
  *                 NtOpenFile				[NTDLL.@]
@@ -154,31 +156,175 @@ NTSTATUS WINAPI NtCreateFile(
 	return 0;
 }
 
-/* set the last error depending on errno */
-NTSTATUS NTFILE_errno_to_status(int val)
+/***********************************************************************
+ *                  Asynchronous file I/O                              *
+ */
+static DWORD fileio_get_async_count(const async_private *ovp);
+static void CALLBACK fileio_call_completion_func(ULONG_PTR data);
+static void fileio_async_cleanup(async_private *ovp);
+
+static async_ops fileio_async_ops =
 {
-    switch (val)
+    fileio_get_async_count,        /* get_count */
+    fileio_call_completion_func,   /* call_completion */
+    fileio_async_cleanup           /* cleanup */
+};
+
+static async_ops fileio_nocomp_async_ops =
+{
+    fileio_get_async_count,        /* get_count */
+    NULL,                          /* call_completion */
+    fileio_async_cleanup           /* cleanup */
+};
+
+typedef struct async_fileio
+{
+    struct async_private             async;
+    PIO_APC_ROUTINE                  apc;
+    void*                            apc_user;
+    char                             *buffer;
+    unsigned int                     count;
+    unsigned long                    offset;
+    enum fd_type                     fd_type;
+} async_fileio;
+
+static DWORD fileio_get_async_count(const struct async_private *ovp)
+{
+    async_fileio *fileio = (async_fileio*) ovp;
+
+    if (fileio->count < fileio->async.iosb->Information)
+    	return 0;
+    return fileio->count - fileio->async.iosb->Information;
+}
+
+static void CALLBACK fileio_call_completion_func(ULONG_PTR data)
+{
+    async_fileio *ovp = (async_fileio*) data;
+    TRACE("data: %p\n", ovp);
+
+    ovp->apc( ovp->apc_user, ovp->async.iosb, ovp->async.iosb->Information );
+
+    fileio_async_cleanup( &ovp->async );
+}
+
+static void fileio_async_cleanup( struct async_private *ovp )
+{
+    RtlFreeHeap( ntdll_get_process_heap(), 0, ovp );
+}
+
+/***********************************************************************
+ *           FILE_GetUnixHandleType
+ *
+ * Retrieve the Unix handle corresponding to a file handle.
+ * Returns -1 on failure.
+ */
+static int FILE_GetUnixHandleType( HANDLE handle, DWORD access, enum fd_type *type, int *flags_ptr, int *fd )
+{
+    int ret, flags;
+
+    *fd = -1;
+    ret = wine_server_handle_to_fd( handle, access, fd, type, &flags );
+    if (flags_ptr) *flags_ptr = flags;
+    if (!ret && (((access & GENERIC_READ)  && (flags & FD_FLAG_RECV_SHUTDOWN)) ||
+                 ((access & GENERIC_WRITE) && (flags & FD_FLAG_SEND_SHUTDOWN))))
     {
-    case EAGAIN:    return ( STATUS_SHARING_VIOLATION );
-    case ESPIPE:
-    case EBADF:     return ( STATUS_INVALID_HANDLE );
-    case ENOSPC:    return ( STATUS_DISK_FULL );
-    case EACCES:
-    case ESRCH:
-    case EPERM:     return ( STATUS_ACCESS_DENIED );
-    case EROFS:     return ( STATUS_MEDIA_WRITE_PROTECTED );
-    case EBUSY:     return ( STATUS_FILE_LOCK_CONFLICT );
-    case ENOENT:    return ( STATUS_NO_SUCH_FILE );
-    case EISDIR:    return ( STATUS_FILE_IS_A_DIRECTORY );
-    case ENFILE:
-    case EMFILE:    return ( STATUS_NO_MORE_FILES );
-    case EEXIST:    return ( STATUS_OBJECT_NAME_COLLISION );
-    case EINVAL:    return ( STATUS_INVALID_PARAMETER );
-    case ENOTEMPTY: return ( STATUS_DIRECTORY_NOT_EMPTY );
-    case EIO:       return ( STATUS_ACCESS_VIOLATION );
+        close(*fd);
+        ret = STATUS_PIPE_DISCONNECTED;
     }
-    perror("file_set_error");
-    return ( STATUS_INVALID_PARAMETER );
+    return ret;
+}
+
+/***********************************************************************
+ *           FILE_GetNtStatus(void)
+ *
+ * Retrieve the Nt Status code from errno.
+ * Try to be consistent with FILE_SetDosError().
+ */
+static DWORD FILE_GetNtStatus(void)
+{
+    int err = errno;
+    DWORD nt;
+
+    TRACE( "errno = %d\n", errno );
+    switch (err)
+    {
+    case EAGAIN:       nt = STATUS_SHARING_VIOLATION;       break;
+    case EBADF:        nt = STATUS_INVALID_HANDLE;          break;
+    case ENOSPC:       nt = STATUS_DISK_FULL;               break;
+    case EPERM:
+    case EROFS:
+    case EACCES:       nt = STATUS_ACCESS_DENIED;           break;
+    case ENOENT:       nt = STATUS_SHARING_VIOLATION;       break;
+    case EISDIR:       nt = STATUS_FILE_IS_A_DIRECTORY;     break;
+    case EMFILE:
+    case ENFILE:       nt = STATUS_NO_MORE_FILES;           break;
+    case EINVAL:
+    case ENOTEMPTY:    nt = STATUS_DIRECTORY_NOT_EMPTY;     break;
+    case EPIPE:        nt = STATUS_PIPE_BROKEN;             break;
+    case ENOEXEC:      /* ?? */
+    case ESPIPE:       /* ?? */
+    case EEXIST:       /* ?? */
+    default:
+        FIXME( "Converting errno %d to STATUS_UNSUCCESSFUL\n", err );
+        nt = STATUS_UNSUCCESSFUL;
+    }
+    return nt;
+}
+
+/***********************************************************************
+ *             FILE_AsyncReadService      (INTERNAL)
+ *
+ *  This function is called while the client is waiting on the
+ *  server, so we can't make any server calls here.
+ */
+static void FILE_AsyncReadService(async_private *ovp)
+{
+    async_fileio *fileio = (async_fileio*) ovp;
+    IO_STATUS_BLOCK*  io_status = fileio->async.iosb;
+    int result;
+    int already = io_status->Information;
+
+    TRACE("%p %p\n", io_status, fileio->buffer );
+
+    /* check to see if the data is ready (non-blocking) */
+
+    if ( fileio->fd_type == FD_TYPE_SOCKET )
+        result = read(ovp->fd, &fileio->buffer[already], fileio->count - already);
+    else
+    {
+        result = pread(ovp->fd, &fileio->buffer[already], fileio->count - already,
+                       fileio->offset + already);
+        if ((result < 0) && (errno == ESPIPE))
+            result = read(ovp->fd, &fileio->buffer[already], fileio->count - already);
+    }
+
+    if ((result < 0) && ((errno == EAGAIN) || (errno == EINTR)))
+    {
+        TRACE("Deferred read %d\n",errno);
+        io_status->u.Status = STATUS_PENDING;
+        return;
+    }
+
+    /* check to see if the transfer is complete */
+    if (result < 0)
+    {
+        io_status->u.Status = FILE_GetNtStatus();
+        return;
+    }
+    else if (result == 0)
+    {
+        io_status->u.Status = io_status->Information ? STATUS_SUCCESS : STATUS_END_OF_FILE;
+        return;
+    }
+
+    io_status->Information += result;
+    if (io_status->Information >= fileio->count || fileio->fd_type == FD_TYPE_SOCKET )
+        io_status->u.Status = STATUS_SUCCESS;
+    else
+        io_status->u.Status = STATUS_PENDING;
+
+    TRACE("read %d more bytes %ld/%d so far\n",
+          result, io_status->Information, fileio->count);
 }
 
 
@@ -187,67 +333,164 @@ NTSTATUS NTFILE_errno_to_status(int val)
  *  ZwReadFile					[NTDLL.@]
  *
  * Parameters
- *   HANDLE32 		FileHandle
- *   HANDLE32 		Event 		OPTIONAL
- *   PIO_APC_ROUTINE 	ApcRoutine 	OPTIONAL
- *   PVOID 		ApcContext 	OPTIONAL
- *   PIO_STATUS_BLOCK 	IoStatusBlock
- *   PVOID 		Buffer
- *   ULONG 		Length
- *   PLARGE_INTEGER 	ByteOffset 	OPTIONAL
- *   PULONG 		Key 		OPTIONAL
+ *   HANDLE32 		hFile
+ *   HANDLE32 		hEvent 		OPTIONAL
+ *   PIO_APC_ROUTINE 	apc      	OPTIONAL
+ *   PVOID 		apc_user 	OPTIONAL
+ *   PIO_STATUS_BLOCK 	io_status
+ *   PVOID 		buffer
+ *   ULONG 		length
+ *   PLARGE_INTEGER 	offset   	OPTIONAL
+ *   PULONG 		key 		OPTIONAL
  *
  * IoStatusBlock->Information contains the number of bytes read on return.
  */
-NTSTATUS WINAPI NtReadFile (
-	HANDLE FileHandle,
-	HANDLE EventHandle,
-	PIO_APC_ROUTINE ApcRoutine,
-	PVOID ApcContext,
-	PIO_STATUS_BLOCK IoStatusBlock,
-	PVOID Buffer,
-	ULONG Length,
-	PLARGE_INTEGER ByteOffset,
-	PULONG Key)
+NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent, 
+                           PIO_APC_ROUTINE apc, void* apc_user, 
+                           PIO_STATUS_BLOCK io_status, void* buffer, ULONG length,
+                           PLARGE_INTEGER offset, PULONG key)
 {
-	int fd, result, flags, ret;
-	enum fd_type type;
+    int unix_handle, flags;
+    enum fd_type type;
 
-	FIXME("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
-		FileHandle,EventHandle,ApcRoutine,ApcContext,IoStatusBlock,Buffer,Length,ByteOffset,Key);
+    TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
+          hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
-	if (IsBadWritePtr( Buffer, Length ) ||
-	    IsBadWritePtr( IoStatusBlock, sizeof(*IoStatusBlock)) ||
-	    IsBadWritePtr( ByteOffset, sizeof(*ByteOffset)) )
-		return STATUS_ACCESS_VIOLATION;
+    io_status->Information = 0;
+    io_status->u.Status = FILE_GetUnixHandleType( hFile, GENERIC_READ, &type, &flags, &unix_handle );
+    if (io_status->u.Status) return io_status->u.Status;
 
-	IoStatusBlock->Information = 0;
+    if (flags & FD_FLAG_TIMEOUT)
+    {
+        if (hEvent)
+        {
+            /* this shouldn't happen, but check it */
+            FIXME("NIY-hEvent\n");
+            return STATUS_NOT_IMPLEMENTED;
+        }
+        io_status->u.Status = NtCreateEvent(&hEvent, SYNCHRONIZE, NULL, 0, 0);
+        if (io_status->u.Status) return io_status->u.Status;
+    }
+        
+    if (flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT))
+    {
+        async_fileio*   ovp;
 
-	ret = wine_server_handle_to_fd( FileHandle, GENERIC_READ, &fd, &type, &flags );
-	if(ret)
-		return ret;
+        if (unix_handle < 0) return STATUS_INVALID_HANDLE;
 
-	/* FIXME: this code only does synchronous reads so far */
+        ovp = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(async_fileio));
+        if (!ovp) return STATUS_NO_MEMORY;
 
-	/* FIXME: depending on how libc implements this, between two processes
-	      there could be a race condition between the seek and read here */
-	do
-	{
-               	result = pread( fd, Buffer, Length, ByteOffset->QuadPart);
-	}
-	while ( (result == -1) && ((errno == EAGAIN) || (errno == EINTR)) );
+        ovp->async.ops = (apc ? &fileio_async_ops : &fileio_nocomp_async_ops );
+        ovp->async.handle = hFile;
+        ovp->async.fd = unix_handle;
+        ovp->async.type = ASYNC_TYPE_READ;
+        ovp->async.func = FILE_AsyncReadService;
+        ovp->async.event = hEvent;
+        ovp->async.iosb = io_status;
+        ovp->count = length;
+        ovp->offset = offset->s.LowPart;
+        if (offset->s.HighPart) FIXME("NIY-high part\n");
+        ovp->apc = apc;
+        ovp->apc_user = apc_user;
+        ovp->buffer = buffer;
+        ovp->fd_type = type;
 
-	close( fd );
+        io_status->Information = 0;
+        io_status->u.Status = register_new_async(&ovp->async);
+        if (io_status->u.Status == STATUS_PENDING && hEvent)
+        {
+            finish_async(&ovp->async);
+            close(unix_handle);
+        }
+        return io_status->u.Status;
+    }
+    switch (type)
+    {
+    case FD_TYPE_SMB:
+        FIXME("NIY-SMB\n");
+        close(unix_handle);
+        return SMB_ReadFile(hFile, buffer, length, io_status);
 
-	if (result == -1)
-	{
-		return IoStatusBlock->u.Status = NTFILE_errno_to_status(errno);
-	}
+    case FD_TYPE_DEFAULT:
+        /* normal unix files */
+        if (unix_handle == -1) return STATUS_INVALID_HANDLE;
+        break;
 
-	IoStatusBlock->Information = result;
-	IoStatusBlock->u.Status = 0;
+    default:
+        FIXME("Unsupported type of fd %d\n", type);
+	if (unix_handle == -1) close(unix_handle);
+        return STATUS_INVALID_HANDLE;
+    }
 
-	return STATUS_SUCCESS;
+    if (offset)
+    {
+        FILE_POSITION_INFORMATION   fpi;
+
+        fpi.CurrentByteOffset = *offset;
+        io_status->u.Status = NtSetInformationFile(hFile, io_status, &fpi, sizeof(fpi), 
+                                                   FilePositionInformation);
+        if (io_status->u.Status)
+        {
+            close(unix_handle);
+            return io_status->u.Status;
+        }
+    }
+    /* code for synchronous reads */
+    while ((io_status->Information = read( unix_handle, buffer, length )) == -1)
+    {
+        if ((errno == EAGAIN) || (errno == EINTR)) continue;
+        if (errno == EFAULT) FIXME( "EFAULT handling broken for now\n" );
+	io_status->u.Status = FILE_GetNtStatus();
+	break;
+    }
+    close( unix_handle );
+    return io_status->u.Status;
+}
+
+/***********************************************************************
+ *             FILE_AsyncWriteService      (INTERNAL)
+ *
+ *  This function is called while the client is waiting on the
+ *  server, so we can't make any server calls here.
+ */
+static void FILE_AsyncWriteService(struct async_private *ovp)
+{
+    async_fileio *fileio = (async_fileio *) ovp;
+    PIO_STATUS_BLOCK io_status = fileio->async.iosb;
+    int result;
+    int already = io_status->Information;
+
+    TRACE("(%p %p)\n",io_status,fileio->buffer);
+
+    /* write some data (non-blocking) */
+
+    if ( fileio->fd_type == FD_TYPE_SOCKET )
+        result = write(ovp->fd, &fileio->buffer[already], fileio->count - already);
+    else
+    {
+        result = pwrite(ovp->fd, &fileio->buffer[already], fileio->count - already,
+                        fileio->offset + already);
+        if ((result < 0) && (errno == ESPIPE))
+            result = write(ovp->fd, &fileio->buffer[already], fileio->count - already);
+    }
+
+    if ((result < 0) && ((errno == EAGAIN) || (errno == EINTR)))
+    {
+        io_status->u.Status = STATUS_PENDING;
+        return;
+    }
+
+    /* check to see if the transfer is complete */
+    if (result < 0)
+    {
+        io_status->u.Status = FILE_GetNtStatus();
+        return;
+    }
+
+    io_status->Information += result;
+    io_status->u.Status = (io_status->Information < fileio->count) ? STATUS_PENDING : STATUS_SUCCESS;
+    TRACE("wrote %d more bytes %ld/%d so far\n",result,io_status->Information,fileio->count);
 }
 
 /******************************************************************************
@@ -255,30 +498,112 @@ NTSTATUS WINAPI NtReadFile (
  *  ZwWriteFile					[NTDLL.@]
  *
  * Parameters
- *   HANDLE32 		FileHandle
- *   HANDLE32 		Event 		OPTIONAL
- *   PIO_APC_ROUTINE 	ApcRoutine 	OPTIONAL
- *   PVOID 		ApcContext 	OPTIONAL
- *   PIO_STATUS_BLOCK 	IoStatusBlock
- *   PVOID 		Buffer
- *   ULONG 		Length
- *   PLARGE_INTEGER 	ByteOffset 	OPTIONAL
- *   PULONG 		Key 		OPTIONAL
+ *   HANDLE32 		hFile
+ *   HANDLE32 		hEvent 		OPTIONAL
+ *   PIO_APC_ROUTINE 	apc      	OPTIONAL
+ *   PVOID 		apc_user 	OPTIONAL
+ *   PIO_STATUS_BLOCK 	io_status
+ *   PVOID 		buffer
+ *   ULONG 		length
+ *   PLARGE_INTEGER 	offset   	OPTIONAL
+ *   PULONG 		key 		OPTIONAL
  */
-NTSTATUS WINAPI NtWriteFile (
-	HANDLE FileHandle,
-	HANDLE EventHandle,
-	PIO_APC_ROUTINE ApcRoutine,
-	PVOID ApcContext,
-	PIO_STATUS_BLOCK IoStatusBlock,
-	PVOID Buffer,
-	ULONG Length,
-	PLARGE_INTEGER ByteOffset,
-	PULONG Key)
+NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
+                            PIO_APC_ROUTINE apc, void* apc_user,
+                            PIO_STATUS_BLOCK io_status, 
+                            const void* buffer, ULONG length,
+                            PLARGE_INTEGER offset, PULONG key)
 {
-	FIXME("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),stub!\n",
-	FileHandle,EventHandle,ApcRoutine,ApcContext,IoStatusBlock,Buffer,Length,ByteOffset,Key);
-	return 0;
+    int unix_handle, flags;
+    enum fd_type type;
+
+    TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p)!\n",
+          hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
+
+    TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
+          hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
+
+    io_status->Information = 0;
+
+    io_status->u.Status = FILE_GetUnixHandleType( hFile, GENERIC_WRITE, &type, &flags, &unix_handle );
+    if (io_status->u.Status) return io_status->u.Status;
+
+    if (flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT))
+    {
+        async_fileio*   ovp;
+
+        if (unix_handle < 0) return STATUS_INVALID_HANDLE;
+
+        ovp = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(async_fileio));
+        if (!ovp) return STATUS_NO_MEMORY;
+
+        ovp->async.ops = (apc ? &fileio_async_ops : &fileio_nocomp_async_ops );
+        ovp->async.handle = hFile;
+        ovp->async.fd = unix_handle;
+        ovp->async.type = ASYNC_TYPE_WRITE;
+        ovp->async.func = FILE_AsyncWriteService;
+        ovp->async.event = hEvent;
+        ovp->async.iosb = io_status;
+        ovp->count = length;
+        ovp->offset = offset->s.LowPart;
+        if (offset->s.HighPart) FIXME("NIY-high part\n");
+        ovp->apc = apc;
+        ovp->apc_user = apc_user;
+        ovp->buffer = (void*)buffer;
+        ovp->fd_type = type;
+
+        io_status->Information = 0;
+        io_status->u.Status = register_new_async(&ovp->async);
+        if (io_status->u.Status == STATUS_PENDING && hEvent)
+        {
+            finish_async(&ovp->async);
+            close(unix_handle);
+        }
+        return io_status->u.Status;
+    }
+    switch (type)
+    {
+    case FD_TYPE_SMB:
+        FIXME("NIY-SMB\n");
+        close(unix_handle);
+        return STATUS_NOT_IMPLEMENTED;
+
+    case FD_TYPE_DEFAULT:
+        /* normal unix files */
+        if (unix_handle == -1) return STATUS_INVALID_HANDLE;
+        break;
+
+    default:
+        FIXME("Unsupported type of fd %d\n", type);
+	if (unix_handle == -1) close(unix_handle);
+        return STATUS_INVALID_HANDLE;
+    }
+
+    if (offset)
+    {
+        FILE_POSITION_INFORMATION   fpi;
+
+        fpi.CurrentByteOffset = *offset;
+        io_status->u.Status = NtSetInformationFile(hFile, io_status, &fpi, sizeof(fpi), 
+                                                   FilePositionInformation);
+        if (io_status->u.Status)
+        {
+            close(unix_handle);
+            return io_status->u.Status;
+        }
+    }
+
+    /* synchronous file write */
+    while ((io_status->Information = write( unix_handle, buffer, length )) == -1)
+    {
+        if ((errno == EAGAIN) || (errno == EINTR)) continue;
+        if (errno == EFAULT) FIXME( "EFAULT handling broken for now\n" );
+        if (errno == ENOSPC) io_status->u.Status = STATUS_DISK_FULL;
+        else io_status->u.Status = FILE_GetNtStatus();
+        break;
+    }
+    close( unix_handle );
+    return io_status->u.Status;
 }
 
 /**************************************************************************
@@ -665,7 +990,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
         hEvent = reply->event;
     }
     SERVER_END_REQ;
-    if( !ret && hEvent )
+    if (!ret && hEvent)
     {
         ret = NtWaitForSingleObject( hEvent, FALSE, NULL );
         NtClose( hEvent );

@@ -27,20 +27,17 @@
 #define __WINE_ASYNC_H
 
 #include "wine/server.h"
+#include "winternl.h"
 
 struct async_private;
 
 typedef void (*async_handler)(struct async_private *ovp);
 typedef void (CALLBACK *async_call_completion_func)(ULONG_PTR data);
-typedef DWORD (*async_get_status)(const struct async_private *ovp);
 typedef DWORD (*async_get_count)(const struct async_private *ovp);
-typedef void (*async_set_status)(struct async_private *ovp, const DWORD status);
 typedef void (*async_cleanup)(struct async_private *ovp);
 
 typedef struct async_ops
 {
-    async_get_status            get_status;
-    async_set_status            set_status;
     async_get_count             get_count;
     async_call_completion_func  call_completion;
     async_cleanup               cleanup;
@@ -48,43 +45,50 @@ typedef struct async_ops
 
 typedef struct async_private
 {
-    struct async_ops     *ops;
-    HANDLE        handle;
-    HANDLE        event;
-    int           fd;
-    async_handler func;
-    int           type;
-    struct async_private *next;
-    struct async_private *prev;
+    struct async_ops*   ops;
+    HANDLE              handle;
+    HANDLE              event;
+    int                 fd;
+    async_handler       func;
+    int                 type;
+    IO_STATUS_BLOCK*    iosb;
+    struct async_private* next;
+    struct async_private* prev;
 } async_private;
 
 /* All functions declared static for Dll separation purposes */
+static void CALLBACK call_user_apc( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    PAPCFUNC func = (PAPCFUNC)arg1;
+    func( arg2 );
+}
 
 inline static void finish_async( async_private *ovp )
 {
-    if(ovp->prev)
+    if (ovp->prev)
         ovp->prev->next = ovp->next;
     else
         NtCurrentTeb()->pending_list = ovp->next;
 
-    if(ovp->next)
+    if (ovp->next)
         ovp->next->prev = ovp->prev;
 
     ovp->next = ovp->prev = NULL;
 
-    close( ovp->fd );
-    if( ovp->event != INVALID_HANDLE_VALUE )
+    close(ovp->fd);
+    if ( ovp->event != INVALID_HANDLE_VALUE )
         NtSetEvent( ovp->event, NULL );
 
     if ( ovp->ops->call_completion )
-        QueueUserAPC( ovp->ops->call_completion, GetCurrentThread(), (ULONG_PTR)ovp );
+        NtQueueApcThread( GetCurrentThread(), call_user_apc, 
+                          (ULONG_PTR)ovp->ops->call_completion, (ULONG_PTR)ovp, 0 );
     else
-        ovp->ops->cleanup ( ovp );
+        ovp->ops->cleanup( ovp );
 }
 
-inline static BOOL __register_async( async_private *ovp, const DWORD status )
+inline static NTSTATUS __register_async( async_private *ovp, const DWORD status )
 {
-    BOOL ret;
+    NTSTATUS    ret;
 
     SERVER_START_REQ( register_async )
     {
@@ -97,23 +101,20 @@ inline static BOOL __register_async( async_private *ovp, const DWORD status )
     }
     SERVER_END_REQ;
 
-    if ( ret ) {
-        SetLastError( RtlNtStatusToDosError(ret) );
-        ovp->ops->set_status ( ovp, ret );
-    }
+    if (ret) ovp->iosb->u.Status = ret;
 
-    if ( ovp->ops->get_status (ovp) != STATUS_PENDING )
-        finish_async (ovp);
+    if ( ovp->iosb->u.Status != STATUS_PENDING )
+        finish_async(ovp);
 
     return ret;
 }
 
 #define register_old_async(ovp) \
-    __register_async (ovp, ovp->ops->get_status( ovp ));
+    __register_async(ovp, ovp->iosb->u.Status);
 
-inline static BOOL register_new_async( async_private *ovp )
+inline static NTSTATUS register_new_async( async_private *ovp )
 {
-    ovp->ops->set_status ( ovp, STATUS_PENDING );
+    ovp->iosb->u.Status = STATUS_PENDING;
 
     ovp->next = NtCurrentTeb()->pending_list;
     ovp->prev = NULL;
@@ -123,13 +124,13 @@ inline static BOOL register_new_async( async_private *ovp )
     return __register_async( ovp, STATUS_PENDING );
 }
 
-inline static BOOL cancel_async ( async_private *ovp )
+inline static NTSTATUS cancel_async( async_private *ovp )
 {
      /* avoid multiple cancellations */
-     if ( ovp->ops->get_status( ovp ) != STATUS_PENDING )
-          return 0;
-     ovp->ops->set_status ( ovp, STATUS_CANCELLED );
-     return __register_async ( ovp, STATUS_CANCELLED );
+     if ( ovp->iosb->u.Status != STATUS_PENDING )
+          return STATUS_SUCCESS;
+     ovp->iosb->u.Status = STATUS_CANCELLED;
+     return __register_async( ovp, STATUS_CANCELLED );
 }
 
 #endif /* __WINE_ASYNC_H */

@@ -107,6 +107,8 @@
 # include <sys/time.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wine/winbase16.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -147,16 +149,12 @@ extern CRITICAL_SECTION csWSgetXXXbyYYY;
  ****************************************************************/
 #include "async.h"
 
-static DWORD ws2_async_get_status (const struct async_private *ovp);
 static DWORD ws2_async_get_count  (const struct async_private *ovp);
-static void  ws2_async_set_status (struct async_private *ovp, const DWORD status);
 static void CALLBACK ws2_async_call_completion (ULONG_PTR data);
 static void ws2_async_cleanup ( struct async_private *ovp );
 
 static struct async_ops ws2_async_ops =
 {
-    ws2_async_get_status,
-    ws2_async_set_status,
     ws2_async_get_count,
     ws2_async_call_completion,
     ws2_async_cleanup
@@ -164,8 +162,6 @@ static struct async_ops ws2_async_ops =
 
 static struct async_ops ws2_nocomp_async_ops =
 {
-    ws2_async_get_status,
-    ws2_async_set_status,
     ws2_async_get_count,
     NULL,                     /* call_completion */
     ws2_async_cleanup
@@ -174,12 +170,11 @@ static struct async_ops ws2_nocomp_async_ops =
 typedef struct ws2_async
 {
     async_private                       async;
-    LPWSAOVERLAPPED                     overlapped;
     LPWSAOVERLAPPED                     user_overlapped;
     LPWSAOVERLAPPED_COMPLETION_ROUTINE  completion_func;
     struct iovec                        *iovec;
     int                                 n_iovecs;
-    struct WS_sockaddr            *addr;
+    struct WS_sockaddr                  *addr;
     union {
         int val;     /* for send operations */
         int *ptr;    /* for recv operations */
@@ -1021,31 +1016,24 @@ inline void ws_sockaddr_free(const struct sockaddr* uaddr, const struct WS_socka
  * Functions for handling overlapped I/O
  **************************************************************************/
 
-static DWORD ws2_async_get_status (const struct async_private *ovp)
-{
-    return ((ws2_async*) ovp)->overlapped->Internal;
-}
-
-static VOID ws2_async_set_status (struct async_private *ovp, const DWORD status)
-{
-    ((ws2_async*) ovp)->overlapped->Internal = status;
-}
-
 static DWORD ws2_async_get_count (const struct async_private *ovp)
 {
-    return ((ws2_async*) ovp)->overlapped->InternalHigh;
+    return ovp->iosb->Information;
 }
 
 static void ws2_async_cleanup ( struct async_private *ap )
 {
     struct ws2_async *as = (struct ws2_async*) ap;
 
-    TRACE ( "as: %p uovl %p ovl %p\n", as, as->user_overlapped, as->overlapped );
+    TRACE ( "as: %p uovl %p ovl %p\n", as, as->user_overlapped, as->async.iosb );
     if ( !as->user_overlapped )
     {
+#if 0
+        /* FIXME: I don't think this is really used */
         if ( as->overlapped->hEvent != INVALID_HANDLE_VALUE )
             WSACloseEvent ( as->overlapped->hEvent  );
-        HeapFree ( GetProcessHeap(), 0, as->overlapped );
+#endif
+        HeapFree ( GetProcessHeap(), 0, as->async.iosb );
     }
 
     if ( as->iovec )
@@ -1060,8 +1048,8 @@ static void CALLBACK ws2_async_call_completion (ULONG_PTR data)
 
     TRACE ("data: %p\n", as);
 
-    as->completion_func ( NtStatusToWSAError (as->overlapped->Internal),
-                          as->overlapped->InternalHigh,
+    as->completion_func ( NtStatusToWSAError (as->async.iosb->u.Status),
+                          as->async.iosb->Information,
                           as->user_overlapped,
                           as->flags );
     ws2_async_cleanup ( &as->async );
@@ -1114,22 +1102,22 @@ WS2_make_async (SOCKET s, int fd, int type, struct iovec *iovec, DWORD dwBufferC
 
     if ( lpOverlapped )
     {
-        wsa->overlapped = lpOverlapped;
+        wsa->async.iosb = (IO_STATUS_BLOCK*)lpOverlapped;
         wsa->async.event = ( lpCompletionRoutine ? INVALID_HANDLE_VALUE : lpOverlapped->hEvent );
     }
     else
     {
-        wsa->overlapped = HeapAlloc ( GetProcessHeap(), 0,
-                                      sizeof (WSAOVERLAPPED) );
-        if ( !wsa->overlapped )
+        wsa->async.iosb = HeapAlloc ( GetProcessHeap(), 0,
+                                      sizeof (IO_STATUS_BLOCK) );
+        if ( !wsa->async.iosb )
             goto error;
-        wsa->async.event = wsa->overlapped->hEvent = INVALID_HANDLE_VALUE;
+        wsa->async.event = INVALID_HANDLE_VALUE;
     }
 
-    wsa->overlapped->InternalHigh = 0;
-    TRACE ( "wsa %p, ops %p, h %p, ev %p, fd %d, func %p, ov %p, uov %p, cfunc %p\n",
+    wsa->async.iosb->Information = 0;
+    TRACE ( "wsa %p, ops %p, h %p, ev %p, fd %d, func %p, iosb %p, uov %p, cfunc %p\n",
             wsa, wsa->async.ops, wsa->async.handle, wsa->async.event, wsa->async.fd, wsa->async.func,
-            wsa->overlapped, wsa->user_overlapped, wsa->completion_func );
+            wsa->async.iosb, wsa->user_overlapped, wsa->completion_func );
 
     return wsa;
 
@@ -1220,9 +1208,9 @@ static void WS2_async_recv ( async_private *as )
 
     TRACE ( "async %p\n", wsa );
 
-    if ( wsa->overlapped->Internal != STATUS_PENDING )
+    if ( wsa->async.iosb->u.Status != STATUS_PENDING )
     {
-        TRACE ( "status: %ld\n", wsa->overlapped->Internal );
+        TRACE ( "status: %ld\n", wsa->async.iosb->u.Status );
         return;
     }
 
@@ -1231,8 +1219,8 @@ static void WS2_async_recv ( async_private *as )
 
     if (result >= 0)
     {
-        wsa->overlapped->Internal = STATUS_SUCCESS;
-        wsa->overlapped->InternalHigh = result;
+        wsa->async.iosb->u.Status = STATUS_SUCCESS;
+        wsa->async.iosb->Information = result;
         TRACE ( "received %d bytes\n", result );
         _enable_event ( wsa->async.handle, FD_READ, 0, 0 );
         return;
@@ -1241,13 +1229,13 @@ static void WS2_async_recv ( async_private *as )
     err = wsaErrno ();
     if ( err == WSAEINTR || err == WSAEWOULDBLOCK )  /* errno: EINTR / EAGAIN */
     {
-        wsa->overlapped->Internal = STATUS_PENDING;
+        wsa->async.iosb->u.Status = STATUS_PENDING;
         _enable_event ( wsa->async.handle, FD_READ, 0, 0 );
         TRACE ( "still pending\n" );
     }
     else
     {
-        wsa->overlapped->Internal = err;
+        wsa->async.iosb->u.Status = err;
         TRACE ( "Error: %x\n", err );
     }
 }
@@ -1312,9 +1300,9 @@ static void WS2_async_send ( async_private *as )
 
     TRACE ( "async %p\n", wsa );
 
-    if ( wsa->overlapped->Internal != STATUS_PENDING )
+    if ( wsa->async.iosb->u.Status != STATUS_PENDING )
     {
-        TRACE ( "status: %ld\n", wsa->overlapped->Internal );
+        TRACE ( "status: %ld\n", wsa->async.iosb->u.Status );
         return;
     }
 
@@ -1323,8 +1311,8 @@ static void WS2_async_send ( async_private *as )
 
     if (result >= 0)
     {
-        wsa->overlapped->Internal = STATUS_SUCCESS;
-        wsa->overlapped->InternalHigh = result;
+        wsa->async.iosb->u.Status = STATUS_SUCCESS;
+        wsa->async.iosb->Information = result;
         TRACE ( "sent %d bytes\n", result );
         _enable_event ( wsa->async.handle, FD_WRITE, 0, 0 );
         return;
@@ -1333,7 +1321,7 @@ static void WS2_async_send ( async_private *as )
     err = wsaErrno ();
     if ( err == WSAEINTR )
     {
-        wsa->overlapped->Internal = STATUS_PENDING;
+        wsa->async.iosb->u.Status = STATUS_PENDING;
         _enable_event ( wsa->async.handle, FD_WRITE, 0, 0 );
         TRACE ( "still pending\n" );
     }
@@ -1341,7 +1329,7 @@ static void WS2_async_send ( async_private *as )
     {
         /* We set the status to a winsock error code and check for that
            later in NtStatusToWSAError () */
-        wsa->overlapped->Internal = err;
+        wsa->async.iosb->u.Status = err;
         TRACE ( "Error: %x\n", err );
     }
 }
@@ -1370,9 +1358,9 @@ static void WS2_async_shutdown ( async_private *as )
     }
 
     if ( err )
-        wsa->overlapped->Internal = wsaErrno ();
+        wsa->async.iosb->u.Status = wsaErrno ();
     else
-        wsa->overlapped->Internal = STATUS_SUCCESS;
+        wsa->async.iosb->u.Status = STATUS_SUCCESS;
 }
 
 /***********************************************************************
@@ -2461,7 +2449,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             err = NtStatusToWSAError ( ret );
 
             if ( !lpOverlapped )
-                HeapFree ( GetProcessHeap(), 0, wsa->overlapped );
+                HeapFree ( GetProcessHeap(), 0, wsa->async.iosb );
             HeapFree ( GetProcessHeap(), 0, wsa );
             goto err_free;
         }
@@ -3918,7 +3906,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             err = NtStatusToWSAError ( ret );
 
             if ( !lpOverlapped )
-                HeapFree ( GetProcessHeap(), 0, wsa->overlapped );
+                HeapFree ( GetProcessHeap(), 0, wsa->async.iosb );
             HeapFree ( GetProcessHeap(), 0, wsa );
             goto err_free;
         }

@@ -66,7 +66,6 @@
 
 #include "drive.h"
 #include "file.h"
-#include "async.h"
 #include "heap.h"
 #include "msdos.h"
 #include "wincon.h"
@@ -82,86 +81,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
-/* Macro to derive file offset from OVERLAPPED struct */
-#define OVERLAPPED_OFFSET(overlapped) ((off_t) (overlapped)->Offset + ((off_t) (overlapped)->OffsetHigh << 32))
-
 HANDLE dos_handles[DOS_TABLE_SIZE];
 mode_t FILE_umask;
-
-extern HANDLE WINAPI FILE_SmbOpen(LPCSTR name);
-
-/***********************************************************************
- *                  Asynchronous file I/O                              *
- */
-static DWORD fileio_get_async_status (const async_private *ovp);
-static DWORD fileio_get_async_count (const async_private *ovp);
-static void fileio_set_async_status (async_private *ovp, const DWORD status);
-static void CALLBACK fileio_call_completion_func (ULONG_PTR data);
-static void fileio_async_cleanup (async_private *ovp);
-
-static async_ops fileio_async_ops =
-{
-    fileio_get_async_status,       /* get_status */
-    fileio_set_async_status,       /* set_status */
-    fileio_get_async_count,        /* get_count */
-    fileio_call_completion_func,   /* call_completion */
-    fileio_async_cleanup           /* cleanup */
-};
-
-static async_ops fileio_nocomp_async_ops =
-{
-    fileio_get_async_status,       /* get_status */
-    fileio_set_async_status,       /* set_status */
-    fileio_get_async_count,        /* get_count */
-    NULL,                          /* call_completion */
-    fileio_async_cleanup           /* cleanup */
-};
-
-typedef struct async_fileio
-{
-    struct async_private             async;
-    LPOVERLAPPED                     lpOverlapped;
-    LPOVERLAPPED_COMPLETION_ROUTINE  completion_func;
-    char                             *buffer;
-    unsigned int                     count;
-    enum fd_type                     fd_type;
-} async_fileio;
-
-static DWORD fileio_get_async_status (const struct async_private *ovp)
-{
-    return ((async_fileio*) ovp)->lpOverlapped->Internal;
-}
-
-static void fileio_set_async_status (async_private *ovp, const DWORD status)
-{
-    ((async_fileio*) ovp)->lpOverlapped->Internal = status;
-}
-
-static DWORD fileio_get_async_count (const struct async_private *ovp)
-{
-    async_fileio *fileio = (async_fileio*) ovp;
-
-    if (fileio->count < fileio->lpOverlapped->InternalHigh)
-    	return 0;
-    return fileio->count - fileio->lpOverlapped->InternalHigh;
-}
-
-static void CALLBACK fileio_call_completion_func (ULONG_PTR data)
-{
-    async_fileio *ovp = (async_fileio*) data;
-    TRACE ("data: %p\n", ovp);
-
-    ovp->completion_func( RtlNtStatusToDosError ( ovp->lpOverlapped->Internal ),
-                          ovp->lpOverlapped->InternalHigh,
-                          ovp->lpOverlapped );
-
-    fileio_async_cleanup ( &ovp->async );
-}
-
-static void fileio_async_cleanup ( struct async_private *ovp )
-{
-    HeapFree ( GetProcessHeap(), 0, ovp );
-}
 
 /***********************************************************************
  *              FILE_ConvertOFMode
@@ -216,42 +137,6 @@ int FILE_strncasecmp( const char *str1, const char *str2, int len )
     return ret;
 }
 
-
-/***********************************************************************
- *           FILE_GetNtStatus(void)
- *
- * Retrieve the Nt Status code from errno.
- * Try to be consistent with FILE_SetDosError().
- */
-DWORD FILE_GetNtStatus(void)
-{
-    int err = errno;
-    DWORD nt;
-    TRACE ( "errno = %d\n", errno );
-    switch ( err )
-    {
-    case EAGAIN:       nt = STATUS_SHARING_VIOLATION;       break;
-    case EBADF:        nt = STATUS_INVALID_HANDLE;          break;
-    case ENOSPC:       nt = STATUS_DISK_FULL;               break;
-    case EPERM:
-    case EROFS:
-    case EACCES:       nt = STATUS_ACCESS_DENIED;           break;
-    case ENOENT:       nt = STATUS_SHARING_VIOLATION;       break;
-    case EISDIR:       nt = STATUS_FILE_IS_A_DIRECTORY;     break;
-    case EMFILE:
-    case ENFILE:       nt = STATUS_NO_MORE_FILES;           break;
-    case EINVAL:
-    case ENOTEMPTY:    nt = STATUS_DIRECTORY_NOT_EMPTY;     break;
-    case EPIPE:        nt = STATUS_PIPE_BROKEN;             break;
-    case ENOEXEC:      /* ?? */
-    case ESPIPE:       /* ?? */
-    case EEXIST:       /* ?? */
-    default:
-        FIXME ( "Converting errno %d to STATUS_UNSUCCESSFUL\n", err );
-        nt = STATUS_UNSUCCESSFUL;
-    }
-    return nt;
-}
 
 /***********************************************************************
  *           FILE_SetDosError
@@ -1533,575 +1418,180 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
 }
 
 
-/***********************************************************************
- *              GetOverlappedResult     (KERNEL32.@)
+/******************************************************************
+ *		FILE_ReadWriteApc (internal)
  *
- * Check the result of an Asynchronous data transfer from a file.
- *
- * RETURNS
- *   TRUE on success
- *   FALSE on failure
- *
- *  If successful (and relevant) lpTransferred will hold the number of
- *   bytes transferred during the async operation.
- *
- * BUGS
- *
- * Currently only works for WaitCommEvent, ReadFile, WriteFile
- *   with communications ports.
  *
  */
-BOOL WINAPI GetOverlappedResult(
-    HANDLE hFile,              /* [in] handle of file to check on */
-    LPOVERLAPPED lpOverlapped, /* [in/out] pointer to overlapped  */
-    LPDWORD lpTransferred,     /* [in/out] number of bytes transferred  */
-    BOOL bWait                 /* [in] wait for the transfer to complete ? */
-) {
-    DWORD r;
-
-    TRACE("(%p %p %p %x)\n", hFile, lpOverlapped, lpTransferred, bWait);
-
-    if(lpOverlapped==NULL)
-    {
-        ERR("lpOverlapped was null\n");
-        return FALSE;
-    }
-    if(!lpOverlapped->hEvent)
-    {
-        ERR("lpOverlapped->hEvent was null\n");
-        return FALSE;
-    }
-
-    if ( bWait )
-    {
-        do {
-            TRACE("waiting on %p\n",lpOverlapped);
-            r = WaitForSingleObjectEx(lpOverlapped->hEvent, INFINITE, TRUE);
-            TRACE("wait on %p returned %ld\n",lpOverlapped,r);
-        } while (r==STATUS_USER_APC);
-    }
-    else if ( lpOverlapped->Internal == STATUS_PENDING )
-    {
-        /* Wait in order to give APCs a chance to run. */
-        /* This is cheating, so we must set the event again in case of success -
-           it may be a non-manual reset event. */
-        do {
-            TRACE("waiting on %p\n",lpOverlapped);
-            r = WaitForSingleObjectEx(lpOverlapped->hEvent, 0, TRUE);
-            TRACE("wait on %p returned %ld\n",lpOverlapped,r);
-        } while (r==STATUS_USER_APC);
-        if ( r == WAIT_OBJECT_0 )
-            NtSetEvent ( lpOverlapped->hEvent, NULL );
-    }
-
-    if(lpTransferred)
-        *lpTransferred = lpOverlapped->InternalHigh;
-
-    switch ( lpOverlapped->Internal )
-    {
-    case STATUS_SUCCESS:
-        return TRUE;
-    case STATUS_PENDING:
-        SetLastError ( ERROR_IO_INCOMPLETE );
-        if ( bWait ) ERR ("PENDING status after waiting!\n");
-        return FALSE;
-    default:
-        SetLastError ( RtlNtStatusToDosError ( lpOverlapped->Internal ) );
-        return FALSE;
-    }
-}
-
-/***********************************************************************
- *             CancelIo                   (KERNEL32.@)
- */
-BOOL WINAPI CancelIo(HANDLE handle)
+static void WINAPI      FILE_ReadWriteApc(void* apc_user, PIO_STATUS_BLOCK io_status, ULONG len)
 {
-    async_private *ovp,*t;
+    LPOVERLAPPED_COMPLETION_ROUTINE  cr = (LPOVERLAPPED_COMPLETION_ROUTINE)apc_user;
 
-    TRACE("handle = %p\n",handle);
-
-    for (ovp = NtCurrentTeb()->pending_list; ovp; ovp = t)
-    {
-        t = ovp->next;
-        if ( ovp->handle == handle )
-             cancel_async ( ovp );
-    }
-    WaitForMultipleObjectsEx(0,NULL,FALSE,1,TRUE);
-    return TRUE;
-}
-
-/***********************************************************************
- *             FILE_AsyncReadService      (INTERNAL)
- *
- *  This function is called while the client is waiting on the
- *  server, so we can't make any server calls here.
- */
-static void FILE_AsyncReadService(async_private *ovp)
-{
-    async_fileio *fileio = (async_fileio*) ovp;
-    LPOVERLAPPED lpOverlapped = fileio->lpOverlapped;
-    int result, r;
-    int already = lpOverlapped->InternalHigh;
-
-    TRACE("%p %p\n", lpOverlapped, fileio->buffer );
-
-    /* check to see if the data is ready (non-blocking) */
-
-    if ( fileio->fd_type == FD_TYPE_SOCKET )
-        result = read (ovp->fd, &fileio->buffer[already], fileio->count - already);
-    else
-    {
-        result = pread (ovp->fd, &fileio->buffer[already], fileio->count - already,
-                        OVERLAPPED_OFFSET (lpOverlapped) + already);
-        if ((result < 0) && (errno == ESPIPE))
-            result = read (ovp->fd, &fileio->buffer[already], fileio->count - already);
-    }
-
-    if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
-    {
-        TRACE("Deferred read %d\n",errno);
-        r = STATUS_PENDING;
-        goto async_end;
-    }
-
-    /* check to see if the transfer is complete */
-    if(result<0)
-    {
-        r = FILE_GetNtStatus ();
-        goto async_end;
-    }
-    else if ( result == 0 )
-    {
-        r = ( lpOverlapped->InternalHigh ? STATUS_SUCCESS : STATUS_END_OF_FILE );
-        goto async_end;
-    }
-
-    lpOverlapped->InternalHigh += result;
-    TRACE("read %d more bytes %ld/%d so far\n",result,lpOverlapped->InternalHigh,fileio->count);
-
-    if(lpOverlapped->InternalHigh >= fileio->count || fileio->fd_type == FD_TYPE_SOCKET )
-        r = STATUS_SUCCESS;
-    else
-        r = STATUS_PENDING;
-
-async_end:
-    lpOverlapped->Internal = r;
-}
-
-/***********************************************************************
- *              FILE_ReadFileEx                (INTERNAL)
- */
-static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
-			 LPOVERLAPPED overlapped,
-			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
-                         HANDLE hEvent)
-{
-    async_fileio *ovp;
-    int fd;
-    int flags;
-    enum fd_type type;
-
-    TRACE("file %p to buf %p num %ld %p func %p\n",
-	  hFile, buffer, bytesToRead, overlapped, lpCompletionRoutine);
-
-    /* check that there is an overlapped struct */
-    if (overlapped==NULL)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    fd = FILE_GetUnixHandleType ( hFile, GENERIC_READ, &type, &flags);
-    if ( fd < 0 )
-    {
-        WARN ( "Couldn't get FD\n" );
-        return FALSE;
-    }
-
-    ovp = (async_fileio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_fileio));
-    if(!ovp)
-    {
-        TRACE("HeapAlloc Failed\n");
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        goto error;
-    }
-
-    ovp->async.ops = ( lpCompletionRoutine ? &fileio_async_ops : &fileio_nocomp_async_ops );
-    ovp->async.handle = hFile;
-    ovp->async.fd = fd;
-    ovp->async.type = ASYNC_TYPE_READ;
-    ovp->async.func = FILE_AsyncReadService;
-    ovp->async.event = hEvent;
-    ovp->lpOverlapped = overlapped;
-    ovp->count = bytesToRead;
-    ovp->completion_func = lpCompletionRoutine;
-    ovp->buffer = buffer;
-    ovp->fd_type = type;
-
-    return !register_new_async (&ovp->async);
-
-error:
-    close (fd);
-    return FALSE;
-
+    cr(RtlNtStatusToDosError(io_status->u.Status), len, (LPOVERLAPPED)io_status);
 }
 
 /***********************************************************************
  *              ReadFileEx                (KERNEL32.@)
  */
 BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
-			 LPOVERLAPPED overlapped,
-			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+                       LPOVERLAPPED overlapped,
+                       LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
-    overlapped->InternalHigh = 0;
-    return FILE_ReadFileEx(hFile,buffer,bytesToRead,overlapped,lpCompletionRoutine, INVALID_HANDLE_VALUE);
-}
+    LARGE_INTEGER       offset;
+    NTSTATUS            status;
+    PIO_STATUS_BLOCK    io_status;
 
-static BOOL FILE_TimeoutRead(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead)
-{
-    OVERLAPPED ov;
-    BOOL r = FALSE;
-
-    TRACE("%p %p %ld %p\n", hFile, buffer, bytesToRead, bytesRead );
-
-    ZeroMemory(&ov, sizeof (OVERLAPPED));
-    if(STATUS_SUCCESS==NtCreateEvent(&ov.hEvent, SYNCHRONIZE, NULL, 0, 0))
+    if (!overlapped)
     {
-        if(FILE_ReadFileEx(hFile, buffer, bytesToRead, &ov, NULL, ov.hEvent))
-        {
-            r = GetOverlappedResult(hFile, &ov, bytesRead, TRUE);
-        }
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
-    CloseHandle(ov.hEvent);
-    return r;
+
+    offset.s.LowPart = overlapped->Offset;
+    offset.s.HighPart = overlapped->OffsetHigh;
+    io_status = (PIO_STATUS_BLOCK)overlapped;
+    io_status->u.Status = STATUS_PENDING;
+
+    status = NtReadFile(hFile, NULL, FILE_ReadWriteApc, lpCompletionRoutine,
+                        io_status, buffer, bytesToRead, &offset, NULL);
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************
  *              ReadFile                (KERNEL32.@)
  */
 BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
-                        LPDWORD bytesRead, LPOVERLAPPED overlapped )
+                      LPDWORD bytesRead, LPOVERLAPPED overlapped )
 {
-    int unix_handle, result, flags;
-    enum fd_type type;
-
+    LARGE_INTEGER       offset;
+    PLARGE_INTEGER      poffset = NULL;
+    IO_STATUS_BLOCK     iosb;
+    PIO_STATUS_BLOCK    io_status = &iosb;
+    HANDLE              hEvent = 0;
+    NTSTATUS            status;
+        
     TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToRead,
           bytesRead, overlapped );
 
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
+    if (IsBadReadPtr(buffer, bytesToRead))
+    {
+        SetLastError(ERROR_WRITE_FAULT); /* FIXME */
+        return FALSE;
+    }
     if (is_console_handle(hFile))
 	return FILE_ReadConsole(hFile, buffer, bytesToRead, bytesRead, NULL);
 
-    unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_READ, &type, &flags );
-
-    if (flags & FD_FLAG_OVERLAPPED)
+    if (overlapped != NULL)
     {
-	if (unix_handle == -1) return FALSE;
-        if ( (overlapped==NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
-        {
-            TRACE("Overlapped not specified or invalid event flag\n");
-	    close(unix_handle);
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-
-        close(unix_handle);
-        overlapped->InternalHigh = 0;
-
-        if(!FILE_ReadFileEx(hFile, buffer, bytesToRead, overlapped, NULL, overlapped->hEvent))
-            return FALSE;
-
-        if ( !GetOverlappedResult (hFile, overlapped, bytesRead, FALSE) )
-        {
-            if ( GetLastError() == ERROR_IO_INCOMPLETE )
-                SetLastError ( ERROR_IO_PENDING );
-            return FALSE;
-        }
-
-        return TRUE;
+        offset.s.LowPart = overlapped->Offset;
+        offset.s.HighPart = overlapped->OffsetHigh;
+        poffset = &offset;
+        hEvent = overlapped->hEvent;
+        io_status = (PIO_STATUS_BLOCK)overlapped;
     }
-    if (flags & FD_FLAG_TIMEOUT)
+    io_status->u.Status = STATUS_PENDING;
+    io_status->Information = 0;
+
+    status = NtReadFile(hFile, hEvent, NULL, NULL, io_status, buffer, bytesToRead, poffset, NULL);
+
+    if (status != STATUS_PENDING && bytesRead)
+        *bytesRead = io_status->Information;
+
+    if (status && status != STATUS_END_OF_FILE)
     {
-        close(unix_handle);
-        return FILE_TimeoutRead(hFile, buffer, bytesToRead, bytesRead);
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    switch(type)
-    {
-    case FD_TYPE_SMB:
-        return SMB_ReadFile(hFile, buffer, bytesToRead, bytesRead, NULL);
-
-    case FD_TYPE_DEFAULT:
-        /* normal unix files */
-        if (unix_handle == -1) return FALSE;
-        if (overlapped)
-        {
-            DWORD highOffset = overlapped->OffsetHigh;
-            if ( (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, overlapped->Offset,
-                                                             &highOffset, FILE_BEGIN)) &&
-                 (GetLastError() != NO_ERROR) )
-            {
-              close(unix_handle);
-              return FALSE;
-            }
-        }
-        break;
-
-    default:
-	if (unix_handle == -1)
-	    return FALSE;
-    }
-
-    if(overlapped)
-    {
-	off_t offset = OVERLAPPED_OFFSET(overlapped);
-	if(lseek(unix_handle, offset, SEEK_SET) == -1)
-	{
-	    close(unix_handle);
-	    SetLastError(ERROR_INVALID_PARAMETER);
-	    return FALSE;
-	}
-    }
-
-    /* code for synchronous reads */
-    while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
-    {
-	if ((errno == EAGAIN) || (errno == EINTR)) continue;
-	if ((errno == EFAULT) && !IsBadWritePtr( buffer, bytesToRead )) continue;
-	FILE_SetDosError();
-	break;
-    }
-    close( unix_handle );
-    if (result == -1) return FALSE;
-    if (bytesRead) *bytesRead = result;
     return TRUE;
 }
 
 
 /***********************************************************************
- *             FILE_AsyncWriteService      (INTERNAL)
- *
- *  This function is called while the client is waiting on the
- *  server, so we can't make any server calls here.
+ *              WriteFileEx                (KERNEL32.@)
  */
-static void FILE_AsyncWriteService(struct async_private *ovp)
+BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
+                        LPOVERLAPPED overlapped,
+                        LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
-    async_fileio *fileio = (async_fileio *) ovp;
-    LPOVERLAPPED lpOverlapped = fileio->lpOverlapped;
-    int result, r;
-    int already = lpOverlapped->InternalHigh;
+    LARGE_INTEGER       offset;
+    NTSTATUS            status;
+    PIO_STATUS_BLOCK    io_status;
 
-    TRACE("(%p %p)\n",lpOverlapped,fileio->buffer);
-
-    /* write some data (non-blocking) */
-
-    if ( fileio->fd_type == FD_TYPE_SOCKET )
-        result = write(ovp->fd, &fileio->buffer[already], fileio->count - already);
-    else
-    {
-        result = pwrite(ovp->fd, &fileio->buffer[already], fileio->count - already,
-                    OVERLAPPED_OFFSET (lpOverlapped) + already);
-        if ((result < 0) && (errno == ESPIPE))
-            result = write(ovp->fd, &fileio->buffer[already], fileio->count - already);
-    }
-
-    if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
-    {
-        r = STATUS_PENDING;
-        goto async_end;
-    }
-
-    /* check to see if the transfer is complete */
-    if(result<0)
-    {
-        r = FILE_GetNtStatus ();
-        goto async_end;
-    }
-
-    lpOverlapped->InternalHigh += result;
-
-    TRACE("wrote %d more bytes %ld/%d so far\n",result,lpOverlapped->InternalHigh,fileio->count);
-
-    if(lpOverlapped->InternalHigh < fileio->count)
-        r = STATUS_PENDING;
-    else
-        r = STATUS_SUCCESS;
-
-async_end:
-    lpOverlapped->Internal = r;
-}
-
-/***********************************************************************
- *              FILE_WriteFileEx
- */
-static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
-                             LPOVERLAPPED overlapped,
-                             LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
-                             HANDLE hEvent)
-{
-    async_fileio *ovp;
-    int fd;
-    int flags;
-    enum fd_type type;
-
-    TRACE("file %p to buf %p num %ld %p func %p handle %p\n",
-	  hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine, hEvent);
+    TRACE("%p %p %ld %p %p\n", 
+          hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine);
 
     if (overlapped == NULL)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+    offset.s.LowPart = overlapped->Offset;
+    offset.s.HighPart = overlapped->OffsetHigh;
 
-    fd = FILE_GetUnixHandleType ( hFile, GENERIC_WRITE, &type, &flags );
-    if ( fd < 0 )
-    {
-        TRACE( "Couldn't get FD\n" );
-        return FALSE;
-    }
+    io_status = (PIO_STATUS_BLOCK)overlapped;
+    io_status->u.Status = STATUS_PENDING;
 
-    ovp = (async_fileio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_fileio));
-    if(!ovp)
-    {
-        TRACE("HeapAlloc Failed\n");
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        goto error;
-    }
+    status = NtWriteFile(hFile, NULL, FILE_ReadWriteApc, lpCompletionRoutine,
+                         io_status, buffer, bytesToWrite, &offset, NULL);
 
-    ovp->async.ops = ( lpCompletionRoutine ? &fileio_async_ops : &fileio_nocomp_async_ops );
-    ovp->async.handle = hFile;
-    ovp->async.fd = fd;
-    ovp->async.type = ASYNC_TYPE_WRITE;
-    ovp->async.func = FILE_AsyncWriteService;
-    ovp->lpOverlapped = overlapped;
-    ovp->async.event = hEvent;
-    ovp->buffer = (LPVOID) buffer;
-    ovp->count = bytesToWrite;
-    ovp->completion_func = lpCompletionRoutine;
-    ovp->fd_type = type;
-
-    return !register_new_async (&ovp->async);
-
-error:
-    close (fd);
-    return FALSE;
-}
-
-/***********************************************************************
- *              WriteFileEx                (KERNEL32.@)
- */
-BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
-			 LPOVERLAPPED overlapped,
-			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
-{
-    overlapped->InternalHigh = 0;
-
-    return FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine, INVALID_HANDLE_VALUE);
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 /***********************************************************************
  *             WriteFile               (KERNEL32.@)
  */
 BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
-                         LPDWORD bytesWritten, LPOVERLAPPED overlapped )
+                       LPDWORD bytesWritten, LPOVERLAPPED overlapped )
 {
-    int unix_handle, result, flags;
-    enum fd_type type;
+    HANDLE hEvent = NULL;
+    LARGE_INTEGER offset;
+    PLARGE_INTEGER poffset = NULL;
+    NTSTATUS status;
+    IO_STATUS_BLOCK iosb;
+    PIO_STATUS_BLOCK piosb = &iosb;
 
-    TRACE("%p %p %ld %p %p\n", hFile, buffer, bytesToWrite,
-          bytesWritten, overlapped );
-
-    if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
-    if (!bytesToWrite) return TRUE;
+    TRACE("%p %p %ld %p %p\n", 
+          hFile, buffer, bytesToWrite, bytesWritten, overlapped );
 
     if (is_console_handle(hFile))
 	return FILE_WriteConsole(hFile, buffer, bytesToWrite, bytesWritten, NULL);
-
-    unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_WRITE, &type, &flags );
-
-    if (flags & FD_FLAG_OVERLAPPED)
+    
+    if (IsBadReadPtr(buffer, bytesToWrite))
     {
-	if (unix_handle == -1) return FALSE;
-        if ( (overlapped==NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
-        {
-            TRACE("Overlapped not specified or invalid event flag\n");
-	    close(unix_handle);
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-
-        close(unix_handle);
-        overlapped->InternalHigh = 0;
-
-        if(!FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, NULL, overlapped->hEvent))
-            return FALSE;
-
-        if ( !GetOverlappedResult (hFile, overlapped, bytesWritten, FALSE) )
-        {
-            if ( GetLastError() == ERROR_IO_INCOMPLETE )
-                SetLastError ( ERROR_IO_PENDING );
-            return FALSE;
-        }
-
-        return TRUE;
+        SetLastError(ERROR_READ_FAULT); /* FIXME */
+        return FALSE;
     }
 
-    switch(type)
+    if (overlapped)
     {
-    case FD_TYPE_DEFAULT:
-        if (unix_handle == -1) return FALSE;
-
-        if(overlapped)
-        {
-            DWORD highOffset = overlapped->OffsetHigh;
-            if ( (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, overlapped->Offset,
-                                                             &highOffset, FILE_BEGIN)) &&
-                 (GetLastError() != NO_ERROR) )
-            {
-              close(unix_handle);
-              return FALSE;
-            }
-        }
-        break;
-
-    default:
-        if (unix_handle == -1)
-            return FALSE;
-        if (overlapped)
-        {
-            close(unix_handle);
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-        break;
+        offset.s.LowPart = overlapped->Offset;
+        offset.s.HighPart = overlapped->OffsetHigh;
+        poffset = &offset;
+        hEvent = overlapped->hEvent;
+        piosb = (PIO_STATUS_BLOCK)overlapped;
     }
+    piosb->u.Status = STATUS_PENDING;
+    piosb->Information = 0;
 
-    if(overlapped)
+    status = NtWriteFile(hFile, hEvent, NULL, NULL, piosb,
+                         buffer, bytesToWrite, poffset, NULL);
+    if (status)
     {
-	off_t offset = OVERLAPPED_OFFSET(overlapped);
-	if(lseek(unix_handle, offset, SEEK_SET) == -1)
-	{
-	    close(unix_handle);
-	    SetLastError(ERROR_INVALID_PARAMETER);
-	    return FALSE;
-	}
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
+    if (bytesWritten) *bytesWritten = piosb->Information;
 
-    /* synchronous file write */
-    while ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
-    {
-        if ((errno == EAGAIN) || (errno == EINTR)) continue;
-        if ((errno == EFAULT) && !IsBadReadPtr( buffer, bytesToWrite )) continue;
-        if (errno == ENOSPC)
-            SetLastError( ERROR_DISK_FULL );
-        else
-        FILE_SetDosError();
-        break;
-    }
-    close( unix_handle );
-    if (result == -1) return FALSE;
-    if (bytesWritten) *bytesWritten = result;
     return TRUE;
 }
 

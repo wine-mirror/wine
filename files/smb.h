@@ -22,7 +22,8 @@
 extern inline int SMB_isSepW (WCHAR c) {return (c == '\\' || c == '/');}
 extern inline int SMB_isUNCW (LPCWSTR filename) {return (filename && SMB_isSepW (filename[0]) && SMB_isSepW (filename[1]));}
 
-extern BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead, LPOVERLAPPED lpOverlapped);
+NTSTATUS WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, 
+                             PIO_STATUS_BLOCK io_status);
 extern HANDLE WINAPI SMB_CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
                               DWORD attributes, HANDLE template );

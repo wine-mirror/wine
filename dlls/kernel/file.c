@@ -32,17 +32,118 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-
+#include "wincon.h"
 #include "kernel_private.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "async.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 /**************************************************************************
  *                      Operations on file handles                        *
  **************************************************************************/
+
+/***********************************************************************
+ *              GetOverlappedResult     (KERNEL32.@)
+ *
+ * Check the result of an Asynchronous data transfer from a file.
+ *
+ * Parameters
+ *   HANDLE hFile                 [in] handle of file to check on
+ *   LPOVERLAPPED lpOverlapped    [in/out] pointer to overlapped
+ *   LPDWORD lpTransferred        [in/out] number of bytes transferred
+ *   BOOL bWait                   [in] wait for the transfer to complete ?
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ *  If successful (and relevant) lpTransferred will hold the number of
+ *   bytes transferred during the async operation.
+ *
+ * BUGS
+ *
+ * Currently only works for WaitCommEvent, ReadFile, WriteFile
+ *   with communications ports.
+ *
+ */
+BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
+                                LPDWORD lpTransferred, BOOL bWait)
+{
+    DWORD r;
+
+    TRACE("(%p %p %p %x)\n", hFile, lpOverlapped, lpTransferred, bWait);
+
+    if (lpOverlapped==NULL)
+    {
+        ERR("lpOverlapped was null\n");
+        return FALSE;
+    }
+    if (!lpOverlapped->hEvent)
+    {
+        ERR("lpOverlapped->hEvent was null\n");
+        return FALSE;
+    }
+
+    if ( bWait )
+    {
+        do {
+            TRACE("waiting on %p\n",lpOverlapped);
+            r = WaitForSingleObjectEx(lpOverlapped->hEvent, INFINITE, TRUE);
+            TRACE("wait on %p returned %ld\n",lpOverlapped,r);
+        } while (r==STATUS_USER_APC);
+    }
+    else if ( lpOverlapped->Internal == STATUS_PENDING )
+    {
+        /* Wait in order to give APCs a chance to run. */
+        /* This is cheating, so we must set the event again in case of success -
+           it may be a non-manual reset event. */
+        do {
+            TRACE("waiting on %p\n",lpOverlapped);
+            r = WaitForSingleObjectEx(lpOverlapped->hEvent, 0, TRUE);
+            TRACE("wait on %p returned %ld\n",lpOverlapped,r);
+        } while (r==STATUS_USER_APC);
+        if ( r == WAIT_OBJECT_0 )
+            NtSetEvent ( lpOverlapped->hEvent, NULL );
+    }
+
+    if(lpTransferred)
+        *lpTransferred = lpOverlapped->InternalHigh;
+
+    switch ( lpOverlapped->Internal )
+    {
+    case STATUS_SUCCESS:
+        return TRUE;
+    case STATUS_PENDING:
+        SetLastError ( ERROR_IO_INCOMPLETE );
+        if ( bWait ) ERR ("PENDING status after waiting!\n");
+        return FALSE;
+    default:
+        SetLastError ( RtlNtStatusToDosError ( lpOverlapped->Internal ) );
+        return FALSE;
+    }
+}
+
+/***********************************************************************
+ *             CancelIo                   (KERNEL32.@)
+ */
+BOOL WINAPI CancelIo(HANDLE handle)
+{
+    async_private *ovp,*t;
+
+    TRACE("handle = %p\n",handle);
+
+    for (ovp = NtCurrentTeb()->pending_list; ovp; ovp = t)
+    {
+        t = ovp->next;
+        if ( ovp->handle == handle )
+             cancel_async ( ovp );
+    }
+    WaitForMultipleObjectsEx(0,NULL,FALSE,1,TRUE);
+    return TRUE;
+}
 
 /***********************************************************************
  *           _hread   (KERNEL32.@)
