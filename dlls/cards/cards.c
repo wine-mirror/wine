@@ -84,8 +84,14 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 	HBITMAP hCardBitmap;
 	HGDIOBJ result;
 	DWORD rasterOp = SRCCOPY;
+	BOOL roundCornersFlag;
+	COLORREF savedPixels[12];
 
 	TRACE("(%p, %d, %d, %d, %d, %d, %d, %ld)\n", hdc, x, y, dx, dy, card, mode, color);
+
+	roundCornersFlag = !(mode & MODEFLAG_DONT_ROUND_CORNERS) &&
+			   (dx == cardWidth) && (dy == cardHeight);
+	mode &= ~MODEFLAG_DONT_ROUND_CORNERS;
 
 	if((card < 0) || (card > CARD_MAX))
 	{
@@ -144,10 +150,42 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 
 		SetBkColor(hdc, color);
 
+		if(roundCornersFlag)
+		{
+			savedPixels[0] = GetPixel(hdc, x, y);
+			savedPixels[1] = GetPixel(hdc, x + 1, y);
+			savedPixels[2] = GetPixel(hdc, x, y + 1);
+			savedPixels[3] = GetPixel(hdc, x + dx - 1, y);
+			savedPixels[4] = GetPixel(hdc, x + dx - 2, y);
+			savedPixels[5] = GetPixel(hdc, x + dx - 1, y + 1);
+			savedPixels[6] = GetPixel(hdc, x, y + dy - 1);
+			savedPixels[7] = GetPixel(hdc, x + 1, y + dy - 1);
+			savedPixels[8] = GetPixel(hdc, x, y + dy - 2);
+			savedPixels[9] = GetPixel(hdc, x + dx - 1, y + dy - 1);
+			savedPixels[10] = GetPixel(hdc, x + dx - 2, y + dy - 1);
+			savedPixels[11] = GetPixel(hdc, x + dx - 1, y + dy - 2);
+		}
+
 		if((cardWidth == dx) && (cardHeight == dy))
 			BitBlt(hdc, x, y, cardWidth, cardHeight, hMemoryDC, 0, 0, rasterOp);
 		else
 			StretchBlt(hdc, x, y, dx, dy, hMemoryDC, 0, 0, cardWidth, cardHeight, rasterOp);
+
+		if(roundCornersFlag)
+		{
+			SetPixel(hdc, x, y, savedPixels[0]);
+			SetPixel(hdc, x + 1, y, savedPixels[1]);
+			SetPixel(hdc, x, y + 1, savedPixels[2]);
+			SetPixel(hdc, x + dx - 1, y, savedPixels[3]);
+			SetPixel(hdc, x + dx - 2, y, savedPixels[4]);
+			SetPixel(hdc, x + dx - 1, y + 1, savedPixels[5]);
+			SetPixel(hdc, x, y + dy - 1, savedPixels[6]);
+			SetPixel(hdc, x + 1, y + dy - 1, savedPixels[7]);
+			SetPixel(hdc, x, y + dy - 2, savedPixels[8]);
+			SetPixel(hdc, x + dx - 1, y + dy - 1, savedPixels[9]);
+			SetPixel(hdc, x + dx - 2, y + dy - 1, savedPixels[10]);
+			SetPixel(hdc, x + dx - 1, y + dy - 2, savedPixels[11]);
+		}
 	}
 
 	DeleteDC(hMemoryDC);

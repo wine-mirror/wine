@@ -61,6 +61,8 @@
 #define MODE_DECKX              6
 #define MODE_DECKO              7
 
+#define MODEFLAG_DONT_ROUND_CORNERS 0x80000000
+
 /* As defined by CARD_SUIT_* */
 #define SUIT_FROM_CARD(card) (card & 3)
 /* 0 = ace, ..., 12 = king */
