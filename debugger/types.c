@@ -403,6 +403,9 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
       if( type2->type == DT_BASIC && type2->un.basic.basic_size == 1 )
 	{
 	  def_format = "\"%s\"";
+	  address.off = rtn;
+	  address.seg = 0;
+	  if (!DBG_CHECK_READ_PTR( &address, 1 )) return 0;
 	  break;
 	}
       else
