@@ -2295,6 +2295,9 @@ static void BuildCallTo32CBClient( FILE *outfile )
  * The pointer to the function can be retrieved by calling CALL32_Init,
  * which also takes care of saving the current 32-bit stack pointer.
  *
+ * NOTE: The CALL32_LargeStack routine may be recursively entered by the 
+ *       same thread, but not concurrently entered by several threads.
+ *
  * Stack layout:
  *   ...     ...
  * (ebp+12)  arg
@@ -2333,7 +2336,12 @@ static void BuildCallTo32LargeStack( FILE *outfile )
 
     /* Switch to the original 32-bit stack pointer */
 
+    fprintf( outfile, "\tcmpl $0, CALL32_RecursionCount\n" );
+    fprintf( outfile, "\tjne  CALL32_skip\n" );
     fprintf( outfile, "\tmovl CALL32_Original32_esp, %%esp\n" );
+    fprintf( outfile, "CALL32_skip:\n" );
+
+    fprintf( outfile, "\tincl CALL32_RecursionCount\n" );
 
     /* Transfer the argument and call the function */
 
@@ -2341,6 +2349,8 @@ static void BuildCallTo32LargeStack( FILE *outfile )
     fprintf( outfile, "\tcall *8(%%ebp)\n" );
 
     /* Restore registers and return */
+
+    fprintf( outfile, "\tdecl CALL32_RecursionCount\n" );
 
     fprintf( outfile, "\tmovl %%ebp,%%esp\n" );
     fprintf( outfile, "\tpopl %%ebp\n" );
@@ -2350,6 +2360,7 @@ static void BuildCallTo32LargeStack( FILE *outfile )
 
     fprintf( outfile, "\t.data\n" );
     fprintf( outfile, "CALL32_Original32_esp:\t.long 0\n" );
+    fprintf( outfile, "CALL32_RecursionCount:\t.long 0\n" );
     fprintf( outfile, "\t.text\n" );
 }
 
