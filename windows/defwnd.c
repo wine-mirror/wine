@@ -559,7 +559,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	        iF10Key = 1;
 	     else
 	        if( wParam == VK_ESCAPE && (GetKeyState(VK_SHIFT) & 0x8000))
-                    SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, VK_SPACE );
+                    SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ' );
 	break;
 
     case WM_KEYUP:
@@ -572,23 +572,25 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_SYSCHAR:
+    {
 	iMenuSysKey = 0;
-	if (wParam == VK_RETURN && IsIconic(hwnd))
+        if (wParam == '\r' && IsIconic(hwnd))
         {
             PostMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0L );
 	    break;
         }
 	if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)
         {
-	    if (wParam == VK_TAB || wParam == VK_ESCAPE) break;
-            if (wParam == VK_SPACE && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD))
+            if (wParam == '\t' || wParam == '\x1b') break;
+            if (wParam == ' ' && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD))
                 SendMessageW( GetParent(hwnd), msg, wParam, lParam );
 	    else
                 SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, wParam );
         }
 	else /* check for Ctrl-Esc */
-            if (wParam != VK_ESCAPE) MessageBeep(0);
+            if (wParam != '\x1b') MessageBeep(0);
 	break;
+    }
 
     case WM_SHOWWINDOW:
         {
@@ -867,6 +869,14 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             result = 0;
         break;
 
+    case WM_SYSCHAR:
+    {
+        BYTE ch = LOWORD(wParam);
+        WCHAR wch;
+        MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
+        wParam = MAKEWPARAM( wch, HIWORD(wParam) );
+    }
+    /* fall through */
     default:
         result = DEFWND_DefWinProc( hwnd, msg, wParam, lParam );
         break;

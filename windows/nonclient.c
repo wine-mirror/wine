@@ -2193,7 +2193,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	break;
 
     case SC_KEYMENU:
-        MENU_TrackKbdMenuBar( hwnd, wParam, LOWORD(lParam) );
+        MENU_TrackKbdMenuBar( hwnd, wParam, (WCHAR)lParam );
 	break;
 
     case SC_TASKLIST:

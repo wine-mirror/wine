@@ -664,7 +664,7 @@ static MENUITEM *MENU_FindItemByCoords( POPUPMENU *menu,
  * Return item id, -1 if none, -2 if we should close the menu.
  */
 static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
-				  UINT key, BOOL forceMenuChar )
+                                WCHAR key, BOOL forceMenuChar )
 {
     TRACE("\tlooking for '%c' (0x%02x) in [%p]\n", (char)key, key, hmenu );
 
@@ -3000,11 +3000,13 @@ void MENU_TrackMouseMenuBar( HWND hWnd, INT ht, POINT pt )
  *
  * Menu-bar tracking upon a keyboard event. Called from NC_HandleSysCommand().
  */
-void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, INT vkey)
+void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
 {
     UINT uItem = NO_SELECTED_ITEM;
     HMENU hTrackMenu;
     UINT wFlags = TPM_ENTERIDLEEX | TPM_LEFTALIGN | TPM_LEFTBUTTON;
+
+    TRACE("hwnd %p wParam 0x%04x wChar 0x%04x\n", hwnd, wParam, wChar);
 
     /* find window that has a menu */
 
@@ -3014,7 +3016,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, INT vkey)
     /* check if we have to track a system menu */
 
     hTrackMenu = GetMenu( hwnd );
-    if (!hTrackMenu || IsIconic(hwnd) || vkey == VK_SPACE )
+    if (!hTrackMenu || IsIconic(hwnd) || wChar == ' ' )
     {
         if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_SYSMENU)) return;
         if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_MANAGED) return;
@@ -3027,9 +3029,9 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, INT vkey)
 
     MENU_InitTracking( hwnd, hTrackMenu, FALSE, wFlags );
 
-    if( vkey && vkey != VK_SPACE )
+    if( wChar && wChar != ' ' )
     {
-        uItem = MENU_FindItemByKey( hwnd, hTrackMenu, vkey, (wParam & HTSYSMENU) );
+        uItem = MENU_FindItemByKey( hwnd, hTrackMenu, wChar, (wParam & HTSYSMENU) );
         if( uItem >= (UINT)(-2) )
         {
             if( uItem == (UINT)(-1) ) MessageBeep(0);
@@ -3043,7 +3045,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, INT vkey)
 
         if( uItem == NO_SELECTED_ITEM )
             MENU_MoveSelection( hwnd, hTrackMenu, ITEM_NEXT );
-        else if( vkey )
+        else if( wChar )
             PostMessageW( hwnd, WM_KEYDOWN, VK_DOWN, 0L );
 
         MENU_TrackMenu( hTrackMenu, wFlags, 0, 0, hwnd, NULL );
