@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include "miscemu.h"
+#include "vga.h"
 /* #define DEBUG_INT */
 #include "debug.h"
 
@@ -47,13 +48,23 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
             0x07 - 80x25
         */
 
-        if ((AL_reg(context) == 0x02) || (AL_reg(context) == 0x07)) {
-           TRACE(int10, "Set Video Mode - Set to Text - 0x0%x\n",
-              AL_reg(context));
-        }
-        else {
-           FIXME(int10, "Set Video Mode (0x%x) - Not Supported\n", 
-              AL_reg(context));
+        switch (AL_reg(context)) {
+            case 0x00:
+            case 0x01:
+            case 0x02:
+            case 0x03:
+            case 0x07:
+                VGA_Exit();
+                TRACE(int10, "Set Video Mode - Set to Text - 0x0%x\n",
+                   AL_reg(context));
+                break;
+            case 0x13:
+                TRACE(int10, "Setting VGA 320x200 256-color mode\n");
+                VGA_SetMode(320,200,8);
+                break;
+            default:
+                FIXME(int10, "Set Video Mode (0x%x) - Not Supported\n", 
+                   AL_reg(context));
         }
         break;
 
