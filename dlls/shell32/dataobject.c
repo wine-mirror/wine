@@ -189,6 +189,8 @@ static HRESULT WINAPI IEnumFORMATETC_fnClone(LPENUMFORMATETC iface, LPENUMFORMAT
 
 	if (!ppenum) return E_INVALIDARG;
 	*ppenum = IEnumFORMATETC_Constructor(This->countFmt, This->pFmt);
+        if(*ppenum)
+           IEnumFORMATETC_fnSkip(*ppenum, This->posFmt);
 	return S_OK;
 }
 
