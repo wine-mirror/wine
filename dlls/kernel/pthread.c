@@ -22,6 +22,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#ifdef HAVE_PTHREAD_H
+
 #define _GNU_SOURCE /* we may need to override some GNU extensions */
 
 #include <assert.h>
@@ -52,8 +54,6 @@
 static const struct wine_pthread_functions functions;
 
 DECL_GLOBAL_CONSTRUCTOR(pthread_init) { wine_pthread_init_process( &functions ); }
-
-static inline int init_done(void) { return GetProcessHeap() != 0; }
 
 /* NOTE: This is a truly extremely incredibly ugly hack!
  * But it does seem to work... */
@@ -176,7 +176,6 @@ static void mutex_real_init( pthread_mutex_t *mutex )
 
 static int wine_pthread_mutex_lock(pthread_mutex_t *mutex)
 {
-  if (!init_done()) return 0;
   if (!((wine_mutex)mutex)->critsect)
     mutex_real_init( mutex );
 
@@ -186,7 +185,6 @@ static int wine_pthread_mutex_lock(pthread_mutex_t *mutex)
 
 static int wine_pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-  if (!init_done()) return 0;
   if (!((wine_mutex)mutex)->critsect)
     mutex_real_init( mutex );
 
@@ -251,7 +249,6 @@ static int wine_pthread_rwlock_destroy(pthread_rwlock_t *rwlock)
 
 static int wine_pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 {
-  if (!init_done()) return 0;
   if (!((wine_rwlock)rwlock)->lock)
     rwlock_real_init( rwlock );
 
@@ -262,7 +259,6 @@ static int wine_pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 
 static int wine_pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
 {
-  if (!init_done()) return 0;
   if (!((wine_rwlock)rwlock)->lock)
     rwlock_real_init( rwlock );
 
@@ -275,7 +271,6 @@ static int wine_pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
 
 static int wine_pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 {
-  if (!init_done()) return 0;
   if (!((wine_rwlock)rwlock)->lock)
     rwlock_real_init( rwlock );
 
@@ -286,7 +281,6 @@ static int wine_pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 
 static int wine_pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock)
 {
-  if (!init_done()) return 0;
   if (!((wine_rwlock)rwlock)->lock)
     rwlock_real_init( rwlock );
 
@@ -585,3 +579,5 @@ static const struct wine_pthread_functions functions =
     wine_pthread_cond_wait,         /* ptr_pthread_cond_wait */
     wine_pthread_cond_timedwait     /* ptr_pthread_cond_timedwait */
 };
+
+#endif /* HAVE_PTHREAD_H */
