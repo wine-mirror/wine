@@ -813,11 +813,6 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
         return FALSE;
 
     TRACE("(%s,%lx)\n",lpFileName,attributes);
-    if (attributes & FILE_ATTRIBUTE_NORMAL) {
-      attributes &= ~FILE_ATTRIBUTE_NORMAL;
-      if (attributes)
-        FIXME("(%s):%lx illegal combination with FILE_ATTRIBUTE_NORMAL.\n", lpFileName,attributes);
-    }
     if(stat(full_name.long_name,&buf)==-1)
     {
         FILE_SetDosError();
@@ -840,11 +835,11 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
     if (attributes & FILE_ATTRIBUTE_DIRECTORY)
     {
         if (!S_ISDIR(buf.st_mode))
-            FIXME("SetFileAttributes expected the file '%s' to be a directory",
+            FIXME("SetFileAttributes expected the file '%s' to be a directory\n",
                   lpFileName);
         attributes &= ~FILE_ATTRIBUTE_DIRECTORY;
     }
-    attributes &= ~(FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
+    attributes &= ~(FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
     if (attributes)
         FIXME("(%s):%lx attribute(s) not implemented.\n", lpFileName,attributes);
     if (-1==chmod(full_name.long_name,buf.st_mode))
