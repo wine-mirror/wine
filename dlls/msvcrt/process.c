@@ -246,6 +246,15 @@ int _execl(const char* name, const char* arg0, ...)
 }
 
 /*********************************************************************
+ *		_execle (MSVCRT.@)
+ */
+int _execle(const char* name, const char* arg0, ...)
+{
+    FIXME("stub\n");
+    return -1;
+}
+
+/*********************************************************************
  *		_execlp (MSVCRT.@)
  *
  * Like on Windows, this function does not handle arguments with spaces
@@ -268,6 +277,15 @@ int _execlp(const char* name, const char* arg0, ...)
   MSVCRT_free(args);
 
   return ret;
+}
+
+/*********************************************************************
+ *		_execlpe (MSVCRT.@)
+ */
+int _execlpe(const char* name, const char* arg0, ...)
+{
+    FIXME("stub\n");
+    return -1;
 }
 
 /*********************************************************************
@@ -341,6 +359,16 @@ int _spawnl(int flags, const char* name, const char* arg0, ...)
 }
 
 /*********************************************************************
+ *		_spawnle (MSVCRT.@)
+ */
+int _spawnle(int flags, const char* name, const char* arg0, ...)
+{
+    FIXME("stub\n");
+    return -1;
+}
+
+
+/*********************************************************************
  *		_spawnlp (MSVCRT.@)
  *
  * Like on Windows, this function does not handle arguments with spaces
@@ -363,6 +391,15 @@ int _spawnlp(int flags, const char* name, const char* arg0, ...)
   MSVCRT_free(args);
 
   return ret;
+}
+
+/*********************************************************************
+ *		_spawnlpe (MSVCRT.@)
+ */
+int _spawnlpe(int flags, const char* name, const char* arg0, ...)
+{
+    FIXME("stub\n");
+    return -1;
 }
 
 /*********************************************************************

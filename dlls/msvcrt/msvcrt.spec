@@ -206,9 +206,9 @@
 @ cdecl _except_handler2(ptr ptr ptr ptr)
 @ cdecl _except_handler3(ptr ptr ptr ptr)
 @ varargs _execl(str str)
-@ stub _execle #(str str) varargs
+@ varargs _execle(str str)
 @ varargs _execlp(str str)
-@ stub _execlpe #(str str) varargs
+@ varargs _execlpe(str str)
 @ cdecl _execv(str str)
 @ cdecl _execve(str str str)
 @ cdecl _execvp(str str)
@@ -437,9 +437,9 @@
 @ varargs _snwprintf(wstr long wstr) ntdll._snwprintf
 @ varargs _sopen(str long long) MSVCRT__sopen
 @ varargs _spawnl(long str str)
-@ stub _spawnle #(long str str) varargs
+@ varargs _spawnle(long str str)
 @ varargs _spawnlp(long str str)
-@ stub _spawnlpe #(long str str) varargs
+@ varargs _spawnlpe(long str str)
 @ cdecl _spawnv(long str ptr)
 @ cdecl _spawnve(long str ptr ptr)
 @ cdecl _spawnvp(long str ptr)
