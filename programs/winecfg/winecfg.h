@@ -37,6 +37,60 @@
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
+#define return_if_fail(try, ret) \
+    if (!(try)) { \
+	WINE_ERR("assertion (##try) failed, returning\n"); \
+	return ret; \
+    }
+
+/* Transaction management */
+enum transaction_action {
+    ACTION_SET,
+    ACTION_REMOVE
+};
+
+struct transaction {
+    char *section;
+    char *key;
+    char *newValue;
+    enum transaction_action action;
+    struct transaction *next, *prev;
+};
+extern struct transaction *tqhead, *tqtail;
+
+extern int instantApply; /* non-zero means apply all changes instantly */
+
+
+/* Commits a transaction to the registry */
+void processTransaction(struct transaction *trans);
+
+/* Processes every pending transaction in the queue, removing them as it works from head to tail */
+void processTransQueue();
+
+/* Adds a transaction to the head of the queue. If we're using instant apply, this calls processTransaction
+ * action can be either:
+ *   ACTION_SET -> this transaction will change a registry key, newValue is the replacement value
+ *   ACTION_REMOVE -> this transaction will remove a registry key. In this case, newValue is ignored.
+ */
+void addTransaction(char *section, char *key, enum transaction_action action, char *newValue);
+
+/* frees the transaction structure, all fields, and removes it from the queue if in it */
+void destroyTransaction(struct transaction *trans);
+
+/* Initializes the transaction system */
+int initialize(void);
+
+
+
+
+
+
+
+
+
+
+
+
 typedef struct structWineCfg
 {
     char   szWinVer[MAX_VERSION_LENGTH];
@@ -68,11 +122,13 @@ int freeConfig(WINECFG_DESC *pCfg);
 int loadConfig(WINECFG_DESC *pCfg);
 int saveConfig(const WINECFG_DESC *pCfg);
 
-int setConfigValue (HKEY hCurrent, char *subkey, char *valueName, const char *value);
-int getConfigValue (HKEY hCurrent, char *subkey, char *valueName, char *retVal, int length, char *defaultResult);
-
+int setConfigValue (char *subkey, char *valueName, const char *value);
+char *getConfigValue (char *subkey, char *valueName, char *defaultResult);
+HRESULT doesConfigValueExist (char *subkey, char *valueName);
+HRESULT removeConfigValue (char *subkey, char *valueName);
 
 /* X11DRV */
+
 void initX11DrvDlg (HWND hDlg);
 void saveX11DrvDlgSettings (HWND hDlg);
 INT_PTR CALLBACK X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -84,6 +140,6 @@ void saveDriveSettings (HWND hDlg);
 INT_PTR CALLBACK DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-#define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
+#define WINE_KEY_ROOT "Software\\Wine\\WineCfg\\Config"
 
 #endif

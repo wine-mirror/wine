@@ -80,7 +80,7 @@ static DLL_DESC sDLLType[] = {
 
 /*****************************************************************************
  */
-const VERSION_DESC* getWinVersions(void)
+VERSION_DESC* getWinVersions(void)
 {
     return sWinVersions;
 }
@@ -88,7 +88,7 @@ const VERSION_DESC* getWinVersions(void)
 
 /*****************************************************************************
  */
-const VERSION_DESC* getDOSVersions(void)
+VERSION_DESC* getDOSVersions(void)
 {
     return sDOSVersions;
 }
@@ -96,7 +96,7 @@ const VERSION_DESC* getDOSVersions(void)
 
 /*****************************************************************************
  */
-const VERSION_DESC* getWinelook(void)
+VERSION_DESC* getWinelook(void)
 {
     return sWineLook;
 }
@@ -104,7 +104,7 @@ const VERSION_DESC* getWinelook(void)
 
 /*****************************************************************************
  */
-const DLL_DESC* getDLLDefaults(void)
+DLL_DESC* getDLLDefaults(void)
 {
     return sDLLType;
 }

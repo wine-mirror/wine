@@ -62,28 +62,24 @@ IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    EDITTEXT        IDC_SYSCOLORS,100,41,40,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Use a private color map",IDC_PRIVATEMAP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,62,91,10
-    CONTROL         "Favor correctness over speed",IDC_PERFECTGRAPH,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,76,117,10
     CONTROL         "Use XFree DGA extension",IDC_XDGA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,141,62,97,10
-    CONTROL         "Use XFree Shm extension",IDC_XSHM,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,141,76,96,10
-    CONTROL         "Enable Wine desktop",IDC_MANAGED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,143,84,10
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,159,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,159,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    GROUPBOX        "Render Settings",IDC_STATIC,8,4,244,90
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,44,97,10
+    CONTROL         "Enable Wine desktop",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,17,110,84,10
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    GROUPBOX        "Render Settings",IDC_STATIC,8,4,244,60
     LTEXT           "The driver color and render settings are used to optimise the way in which colors and applications are displayed.",
                     IDC_STATIC,15,17,228,22
+		    
     LTEXT           "Allocated system colors:",IDC_STATIC,15,43,76,8
-    GROUPBOX        "Wine Desktop",IDC_STATIC,8,99,244,83
+    EDITTEXT        IDC_SYSCOLORS,90,41,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    
+    GROUPBOX        "Wine Desktop",IDC_STATIC,8,65,244,83
     LTEXT           "Wine can be setup to emulate a windows desktop, or can be run in ""Managed"" mode (default) where the default X11 windows manager/environment is resposible for placing the windows.",
-                    IDC_STATIC,15,112,228,28
-    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,17,161,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,161,8,8,WS_DISABLED
+                    IDC_STATIC,15,77,228,28
+    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,17,125,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,125,8,8,WS_DISABLED
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250

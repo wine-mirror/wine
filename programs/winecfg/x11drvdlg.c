@@ -34,67 +34,139 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
+#define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
+
+int updatingUI;
+
+void updateGUIForDesktopMode(HWND hDlg) {
+    WINE_TRACE("\n");
+
+    updatingUI = TRUE;
+    
+    /* do we have desktop mode enabled? */
+    if (doesConfigValueExist("x11drv", "Desktop") == S_OK) {
+	CheckDlgButton(hDlg, IDC_ENABLE_DESKTOP, BST_CHECKED);
+	/* enable the controls */
+	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), 1);
+	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), 1);
+	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_SIZE), 1);
+	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_BY), 1);
+	SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), "640");
+	SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), "480");	
+    }
+    else {
+	CheckDlgButton(hDlg, IDC_ENABLE_DESKTOP, BST_UNCHECKED);
+	/* disable the controls */
+	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), 0);
+	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), 0);
+	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_SIZE), 0);
+	EnableWindow(GetDlgItem(hDlg, IDC_DESKTOP_BY), 0);
+
+	SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), "");
+	SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), "");
+    }
+
+    updatingUI = FALSE;
+}
+
 /* pokes the win32 api to setup the dialog from the config struct */
 void initX11DrvDlg (HWND hDlg)
 {
-    char szBuf[20];
+    char *buf;
+    int x, y;
+    char *i;
 
-    /* system colors */
-    sprintf (szBuf, "%d", config.sX11Drv.nSysColors);
-    SendDlgItemMessage (hDlg, IDC_SYSCOLORS, WM_SETTEXT, 0, (LPARAM) szBuf);
-
-    /* private color map */
-    if (config.sX11Drv.nPrivateMap)
-	SendDlgItemMessage( hDlg, IDC_PRIVATEMAP, BM_SETCHECK, BST_CHECKED, 0);
-
-    /* perfect graphics */
-    if (config.sX11Drv.nPerfect)
-	SendDlgItemMessage( hDlg, IDC_PERFECTGRAPH, BM_SETCHECK, BST_CHECKED, 0);
-
+    updatingUI = TRUE;
+    
+    updateGUIForDesktopMode(hDlg);
+    
     /* desktop size */
-    sprintf (szBuf, "%d", config.sX11Drv.nDesktopSizeX);
-    SendDlgItemMessage (hDlg, IDC_DESKTOP_WIDTH, WM_SETTEXT, 0, (LPARAM) szBuf);
-    sprintf (szBuf, "%d", config.sX11Drv.nDesktopSizeY);
-    SendDlgItemMessage (hDlg, IDC_DESKTOP_HEIGHT, WM_SETTEXT, 0, (LPARAM) szBuf);
+    buf = getConfigValue("x11drv", "Desktop", "640x480");
+    i = strchr(buf, 'x');
+    *i = '\0';
+    i++;
+    SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), buf);
+    SetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), i);
+    free(buf);
 
-    if (config.sX11Drv.nDGA) SendDlgItemMessage( hDlg, IDC_XDGA, BM_SETCHECK, BST_CHECKED, 0);
-    if (config.sX11Drv.nXShm) SendDlgItemMessage( hDlg, IDC_XSHM, BM_SETCHECK, BST_CHECKED, 0);
+    SendDlgItemMessage(hDlg, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
+    SendDlgItemMessage(hDlg, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);    
+    
+    updatingUI = FALSE;
 }
 
-void
-saveX11DrvDlgSettings (HWND hDlg)
-{
+
+
+void setFromDesktopSizeEdits(HWND hDlg) {
+    char *width = malloc(RES_MAXLEN+1);
+    char *height = malloc(RES_MAXLEN+1);
+    char *newStr = malloc((RES_MAXLEN*2) + 2);
+
+    if (updatingUI) return;
+    
+    WINE_TRACE("\n");
+    
+    GetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_WIDTH), width, RES_MAXLEN+1);
+    GetWindowText(GetDlgItem(hDlg, IDC_DESKTOP_HEIGHT), height, RES_MAXLEN+1);
+
+    if (strcmp(width, "") == 0) strcpy(width, "640");
+    if (strcmp(height, "") == 0) strcpy(height, "480");
+    
+    sprintf(newStr, "%sx%s", width, height);
+    addTransaction("x11drv", "Desktop", ACTION_SET, newStr);
+
+    free(width);
+    free(height);
+    free(newStr);
 }
 
+void onEnableDesktopClicked(HWND hDlg) {
+    WINE_TRACE("\n");
+    if (IsDlgButtonChecked(hDlg, IDC_ENABLE_DESKTOP) == BST_CHECKED) {
+	/* it was just unchecked, so read the values of the edit boxes, set the config value */
+	setFromDesktopSizeEdits(hDlg);
+    } else {
+	/* it was just checked, so remove the config values */
+	addTransaction("x11drv", "Desktop", ACTION_REMOVE, NULL);
+    }
+    updateGUIForDesktopMode(hDlg);
+}
+    
 INT_PTR CALLBACK
 X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
 	case WM_INITDIALOG:
 	    break;
-
+	    
 	case WM_COMMAND:
 	    switch(HIWORD(wParam)) {
 		case EN_CHANGE: {
 		    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+		    if ( (LOWORD(wParam) == IDC_DESKTOP_WIDTH) || (LOWORD(wParam) == IDC_DESKTOP_HEIGHT) ) setFromDesktopSizeEdits(hDlg);
 		    break;
 		}
-
+		case BN_CLICKED: {
+		    WINE_TRACE("%ld\n", LOWORD(wParam));
+		    switch(LOWORD(wParam)) {
+			case IDC_ENABLE_DESKTOP: onEnableDesktopClicked(hDlg); break;
+		    };
+		    break;
+		}
+		    
 		default:
 		    break;
 	    }
 	    break;
-
+	
+	
 	case WM_NOTIFY:
 	    switch (((LPNMHDR)lParam)->code) {
 		case PSN_KILLACTIVE: {
-		    /* validate user info.  Lets just assume everything is okay for now */
 		    SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);
 		    break;
 		}
 		case PSN_APPLY: {
-		    /* should probably check everything is really all rosy :) */
-		    saveX11DrvDlgSettings (hDlg);
 		    SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 		    break;
 		}

@@ -62,6 +62,9 @@ initGeneralDlg (HWND hDlg)
 {
     int i;
     const VERSION_DESC *pVer = NULL;
+    char *curWinVer = getConfigValue("Version", "Windows", "win98");
+    char *curDOSVer = getConfigValue("Version", "DOS", "6.22");
+    char *curWineLook = getConfigValue("Tweak.Layout", "WineLook", "win95");
 
     if ((pVer = getWinVersions ()))
     {
@@ -69,7 +72,7 @@ initGeneralDlg (HWND hDlg)
 	{
 	    SendDlgItemMessage (hDlg, IDC_WINVER, CB_ADDSTRING,
 				0, (LPARAM) pVer->szDescription);
-	    if (!strcmp (pVer->szVersion, config.szWinVer))
+	    if (!strcmp (pVer->szVersion, curWinVer))
 		SendDlgItemMessage (hDlg, IDC_WINVER, CB_SETCURSEL,
 				    (WPARAM) i, 0);
 	}
@@ -80,7 +83,7 @@ initGeneralDlg (HWND hDlg)
 	{
 	    SendDlgItemMessage (hDlg, IDC_DOSVER, CB_ADDSTRING,
 				0, (LPARAM) pVer->szDescription);
-	    if (!strcmp (pVer->szVersion, config.szDOSVer))
+	    if (!strcmp (pVer->szVersion, curDOSVer))
 		SendDlgItemMessage (hDlg, IDC_DOSVER, CB_SETCURSEL,
 				    (WPARAM) i, 0);
 	}
@@ -91,11 +94,15 @@ initGeneralDlg (HWND hDlg)
 	{
 	    SendDlgItemMessage (hDlg, IDC_WINELOOK, CB_ADDSTRING,
 				0, (LPARAM) pVer->szDescription);
-	    if (!strcmp (pVer->szVersion, config.szWinLook))
+	    if (!strcmp (pVer->szVersion, curWineLook))
 		SendDlgItemMessage (hDlg, IDC_WINELOOK, CB_SETCURSEL,
 				    (WPARAM) i, 0);
 	}
     }
+
+    free(curWinVer);
+    free(curDOSVer);
+    free(curWineLook);
 }
 
 INT_PTR CALLBACK
@@ -112,12 +119,12 @@ GeneralDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_WINVER: if (HIWORD(wParam) == CBN_SELCHANGE) {
 		    /* user changed the wine version combobox */
 		    int selection = SendDlgItemMessage( hDlg, IDC_WINVER, CB_GETCURSEL, 0, 0);
-		    const VERSION_DESC *desc = getWinVersions();
+		    VERSION_DESC *desc = getWinVersions();
 
 		    while (selection > 0) {
 			desc++; selection--;
 		    }
-		    strcpy(config.szWinVer, desc->szVersion);
+		    addTransaction("Version", "Windows", ACTION_SET, desc->szVersion);
 		}
 	        break;
 	    }
@@ -264,12 +271,12 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
     /* Until winecfg is fully functional, warn users that it is incomplete and doesn't do anything */
     WINE_FIXME("The winecfg tool is not yet complete, and does not actually alter your configuration.\n");
     WINE_FIXME("If you want to alter the way Wine works, look in the ~/.wine/config file for more information.\n");
-    
-    /*
-     * Load the configuration from registry
-     */
-    loadConfig (&config);
 
+    if (initialize() != 0) {
+	WINE_ERR("initialization failed, aborting\n");
+	ExitProcess(1);
+    }
+    
     /*
      * The next 3 lines should be all that is needed
      * for the Wine Configuration property sheet
@@ -277,7 +284,6 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
     InitCommonControls ();
     if (doPropertySheet (hInstance, NULL) > 0) {
 	WINE_TRACE("OK\n");
-	saveConfig(&config);
     } else
 	WINE_TRACE("Cancel\n");
     

@@ -93,9 +93,9 @@ typedef struct
     int    nSynchronous;
 } X11DRV_DESC;
 
-const VERSION_DESC *getWinVersions(void);
-const VERSION_DESC *getDOSVersions(void);
-const VERSION_DESC *getWinelook(void);
-const DLL_DESC *getDLLDefaults(void);
+VERSION_DESC *getWinVersions(void);
+VERSION_DESC *getDOSVersions(void);
+VERSION_DESC *getWinelook(void);
+DLL_DESC *getDLLDefaults(void);
 
 #endif

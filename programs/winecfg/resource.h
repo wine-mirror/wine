@@ -101,3 +101,4 @@
 #define IDC_BOX_LABELSERIAL             1071
 #define IDC_STATIC_SERIAL               1072
 #define IDC_STATIC_LABEL                1073
+#define IDC_ENABLE_DESKTOP              1074
