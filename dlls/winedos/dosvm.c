@@ -187,7 +187,6 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
   LPDOSEVENT event, cur, prev;
 
   if (current_context) {
-    EnterCriticalSection(&qcrit);
     event = malloc(sizeof(DOSEVENT));
     if (!event) {
       ERR("out of memory allocating event entry\n");
@@ -196,6 +195,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     event->irq = irq; event->priority = priority;
     event->relay = relay; event->data = data;
 
+    EnterCriticalSection(&qcrit);
     /* insert event into linked list, in order *after*
      * all earlier events of higher or equal priority */
     cur = pending_event; prev = NULL;

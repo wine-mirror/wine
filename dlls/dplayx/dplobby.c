@@ -1285,6 +1285,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
     HeapFree( GetProcessHeap(), 0, enumData.lpszCommandLine );
     HeapFree( GetProcessHeap(), 0, enumData.lpszCurrentDirectory );
 
+    LeaveCriticalSection( &This->unk->DPL_lock );
     return DPERR_CANTCREATEPROCESS;
   }
 
@@ -1304,6 +1305,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
   if( hr != DP_OK )
   {
     ERR( "SetConnectionSettings failure %s\n", DPLAYX_HresultToString( hr ) );
+    LeaveCriticalSection( &This->unk->DPL_lock );
     return hr;
   }
 

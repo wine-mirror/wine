@@ -566,6 +566,7 @@ static	DWORD	MCIAVI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 	wma->dwCurrVideoFrame = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwTo);
     } else {
 	WARN("dwFlag doesn't tell where to seek to...\n");
+	LeaveCriticalSection(&wma->cs);
 	return MCIERR_MISSING_PARAMETER;
     }
 
