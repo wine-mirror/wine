@@ -2583,6 +2583,14 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
     pdb_convert_types_header( &types, types_image );
     pdb_convert_symbols_header( &symbols, &header_size, symbols_image );
 
+    if ( !root )
+    {
+        DEBUG_Printf( DBG_CHN_ERR,
+                      "-Unable to get root from .PDB file %s\n",
+                      filename );
+        goto leave;
+    }
+
     /*
      * Check for unknown versions
      */
