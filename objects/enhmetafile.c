@@ -327,9 +327,10 @@ UINT WINAPI GetEnhMetaFileBits(
  *  Render a single enhanced metafile record in the device context hdc.
  *
  *  RETURNS
- *    TRUE on success, FALSE on error.
+ *    TRUE (non zero) on success, FALSE on error.
  *  BUGS
  *    Many unimplemented records.
+ *    No error handling on record play failures (ie checking return codes)
  */
 BOOL WINAPI PlayEnhMetaFileRecord( 
      HDC hdc, /* device context in which to render EMF record */
@@ -625,59 +626,429 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
       }
 #endif
+
     case EMR_SETMETARGN:
       {
         SetMetaRgn( hdc );
         break;
       }
+
     case EMR_SETWORLDTRANSFORM:
       {
         PEMRSETWORLDTRANSFORM lpXfrm = (PEMRSETWORLDTRANSFORM)mr;
+
         SetWorldTransform( hdc, &lpXfrm->xform );
+
         break;
       }
+
     case EMR_POLYBEZIER:
+      {
+        PEMRPOLYBEZIER lpPolyBez = (PEMRPOLYBEZIER)mr; 
+
+        FIXME( "Bounding rectangle ignored for EMR_POLYBEZIER\n" );
+        PolyBezier( hdc, (const LPPOINT)lpPolyBez->aptl, (UINT)lpPolyBez->cptl ); 
+
+        break;
+      }
+
     case EMR_POLYGON:
+      {
+        PEMRPOLYGON lpPoly = (PEMRPOLYGON)mr;
+     
+        FIXME( "Bounding rectangle ignored for EMR_POLYGON\n" );
+        Polygon( hdc, (const LPPOINT)lpPoly->aptl, (UINT)lpPoly->cptl );
+
+        break;
+      }
+
     case EMR_POLYLINE:
+      {
+        PEMRPOLYLINE lpPolyLine = (PEMRPOLYLINE)mr;
+ 
+        FIXME( "Bounding rectangle ignored for EMR_POLYLINE\n" ); 
+        Polyline( hdc, (const LPPOINT)lpPolyLine->aptl, (UINT)lpPolyLine->cptl );
+
+        break; 
+      }
+
     case EMR_POLYBEZIERTO:
+      {
+        PEMRPOLYBEZIERTO lpPolyBezierTo = (PEMRPOLYBEZIERTO)mr;
+
+        FIXME( "Bounding rectangle ignored for EMR_POLYBEZIERTO\n" );
+        PolyBezierTo( hdc, (const LPPOINT)lpPolyBezierTo->aptl, (UINT)lpPolyBezierTo->cptl );
+
+        break; 
+      }
+
     case EMR_POLYLINETO:
+      {
+        PEMRPOLYLINETO lpPolyLineTo = (PEMRPOLYLINETO)mr;
+
+        FIXME( "Bounding rectangle ignored for EMR_POLYLINETO\n" );
+        PolylineTo( hdc, (const LPPOINT)lpPolyLineTo->aptl, (UINT)lpPolyLineTo->cptl );
+
+        break;
+      }
+
     case EMR_POLYPOLYLINE:
+      {
+        PEMRPOLYPOLYLINE lpPolyPolyLine = (PEMRPOLYPOLYLINE)mr;
+
+        FIXME( "Bounding rectangle ignored for EMR_POLYPOLYLINE\n" );
+        PolyPolyline( hdc, 
+                      (const LPPOINT)lpPolyPolyLine->aptl, 
+                      lpPolyPolyLine->aPolyCounts, 
+                      lpPolyPolyLine->nPolys ); 
+
+        break;
+      }
+
     case EMR_POLYPOLYGON:
+      {
+        PEMRPOLYPOLYGON lpPolyPolygon = (PEMRPOLYPOLYGON)mr;
+        INT* lpPolyCounts;
+        UINT i;
+
+        /* We get the polygon point counts in a dword struct. Transform
+           this into an INT struct */ 
+        lpPolyCounts = (INT*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        sizeof(INT)*lpPolyPolygon->cptl ); 
+
+        for( i=0; i<lpPolyPolygon->cptl; i++ )
+        {
+          lpPolyCounts[i] = (INT)lpPolyPolygon->aPolyCounts[i];
+        }
+
+        FIXME( "Bounding rectangle ignored for EMR_POLYPOLYGON\n" );
+        PolyPolygon( hdc, (const LPPOINT)lpPolyPolygon->aptl,
+                     lpPolyCounts, lpPolyPolygon->nPolys );
+
+        HeapFree( GetProcessHeap(), 0, lpPolyCounts ); 
+
+        break;
+      }
+
     case EMR_SETBRUSHORGEX:
+      {
+        PEMRSETBRUSHORGEX lpSetBrushOrgEx = (PEMRSETBRUSHORGEX)mr;
+
+        SetBrushOrgEx( hdc, 
+                       (INT)lpSetBrushOrgEx->ptlOrigin.x, 
+                       (INT)lpSetBrushOrgEx->ptlOrigin.y, 
+                       NULL );
+
+        break;
+      }
+ 
     case EMR_SETPIXELV:
+      {
+        PEMRSETPIXELV lpSetPixelV = (PEMRSETPIXELV)mr;
+
+        SetPixelV( hdc, 
+                   (INT)lpSetPixelV->ptlPixel.x, 
+                   (INT)lpSetPixelV->ptlPixel.y, 
+                   lpSetPixelV->crColor );
+
+        break;
+      }
+
     case EMR_SETMAPPERFLAGS:
+      {
+        PEMRSETMAPPERFLAGS lpSetMapperFlags = (PEMRSETMAPPERFLAGS)mr;
+   
+        SetMapperFlags( hdc, lpSetMapperFlags->dwFlags );
+
+        break;
+      }
+
     case EMR_SETCOLORADJUSTMENT:
+      {
+        PEMRSETCOLORADJUSTMENT lpSetColorAdjust = (PEMRSETCOLORADJUSTMENT)mr; 
+
+        SetColorAdjustment( hdc, &lpSetColorAdjust->ColorAdjustment );
+
+        break;
+      }
+
     case EMR_OFFSETCLIPRGN:
+      {
+        PEMROFFSETCLIPRGN lpOffsetClipRgn = (PEMROFFSETCLIPRGN)mr;
+
+        OffsetClipRgn( hdc, 
+                       (INT)lpOffsetClipRgn->ptlOffset.x,
+                       (INT)lpOffsetClipRgn->ptlOffset.y );
+
+        break;
+      } 
+
     case EMR_EXCLUDECLIPRECT:
+      {
+        PEMREXCLUDECLIPRECT lpExcludeClipRect = (PEMREXCLUDECLIPRECT)mr;
+
+        ExcludeClipRect( hdc, 
+                         lpExcludeClipRect->rclClip.left, 
+                         lpExcludeClipRect->rclClip.top, 
+                         lpExcludeClipRect->rclClip.right, 
+                         lpExcludeClipRect->rclClip.bottom  );
+
+         break;
+      }
+
     case EMR_SCALEVIEWPORTEXTEX:
+      {
+        PEMRSCALEVIEWPORTEXTEX lpScaleViewportExtEx = (PEMRSCALEVIEWPORTEXTEX)mr;
+
+        ScaleViewportExtEx( hdc, 
+                            lpScaleViewportExtEx->xNum,
+                            lpScaleViewportExtEx->xDenom,
+                            lpScaleViewportExtEx->yNum,
+                            lpScaleViewportExtEx->yDenom,
+                            NULL );
+     
+        break;
+      }
+ 
     case EMR_SCALEWINDOWEXTEX:
+      {
+        PEMRSCALEWINDOWEXTEX lpScaleWindowExtEx = (PEMRSCALEWINDOWEXTEX)mr;
+
+        ScaleWindowExtEx( hdc,
+                          lpScaleWindowExtEx->xNum,
+                          lpScaleWindowExtEx->xDenom,
+                          lpScaleWindowExtEx->yNum,
+                          lpScaleWindowExtEx->yDenom, 
+                          NULL );
+
+        break;
+      }
+
     case EMR_MODIFYWORLDTRANSFORM:
+      {
+        PEMRMODIFYWORLDTRANSFORM lpModifyWorldTrans = (PEMRMODIFYWORLDTRANSFORM)mr;
+
+        ModifyWorldTransform( hdc, &lpModifyWorldTrans->xform, 
+                              lpModifyWorldTrans->iMode );
+
+        break;
+      }
+
     case EMR_ANGLEARC:
+      {
+        PEMRANGLEARC lpAngleArc = (PEMRANGLEARC)mr; 
+
+        AngleArc( hdc, 
+                 (INT)lpAngleArc->ptlCenter.x, (INT)lpAngleArc->ptlCenter.y,
+                 lpAngleArc->nRadius, lpAngleArc->eStartAngle, 
+                 lpAngleArc->eSweepAngle );
+
+        break;
+      }
+ 
     case EMR_ROUNDRECT: 
+      {
+        PEMRROUNDRECT lpRoundRect = (PEMRROUNDRECT)mr;
+
+        RoundRect( hdc, 
+                   lpRoundRect->rclBox.left,
+                   lpRoundRect->rclBox.top,
+                   lpRoundRect->rclBox.right,
+                   lpRoundRect->rclBox.bottom,
+                   lpRoundRect->szlCorner.cx,
+                   lpRoundRect->szlCorner.cy );
+
+        break; 
+      }
+
     case EMR_ARC:
+      {
+        PEMRARC lpArc = (PEMRARC)mr;
+
+        Arc( hdc,  
+             (INT)lpArc->rclBox.left,
+             (INT)lpArc->rclBox.top,
+             (INT)lpArc->rclBox.right,
+             (INT)lpArc->rclBox.bottom,
+             (INT)lpArc->ptlStart.x, 
+             (INT)lpArc->ptlStart.y,
+             (INT)lpArc->ptlEnd.x,
+             (INT)lpArc->ptlEnd.y );
+
+        break;  
+      }
+
     case EMR_CHORD:
+      {
+        PEMRCHORD lpChord = (PEMRCHORD)mr;
+
+        Chord( hdc,
+             (INT)lpChord->rclBox.left,
+             (INT)lpChord->rclBox.top,
+             (INT)lpChord->rclBox.right,
+             (INT)lpChord->rclBox.bottom,
+             (INT)lpChord->ptlStart.x,
+             (INT)lpChord->ptlStart.y,
+             (INT)lpChord->ptlEnd.x,
+             (INT)lpChord->ptlEnd.y );
+
+        break;
+      }
+
     case EMR_PIE:
-    case EMR_SETPALETTEENTRIES:  
-    case EMR_RESIZEPALETTE:
-    case EMR_EXTFLOODFILL:
+      {
+        PEMRPIE lpPie = (PEMRPIE)mr;
+
+        Pie( hdc,
+             (INT)lpPie->rclBox.left,
+             (INT)lpPie->rclBox.top,
+             (INT)lpPie->rclBox.right,
+             (INT)lpPie->rclBox.bottom,
+             (INT)lpPie->ptlStart.x,
+             (INT)lpPie->ptlStart.y,
+             (INT)lpPie->ptlEnd.x,
+             (INT)lpPie->ptlEnd.y );
+
+       break;
+      }
+
     case EMR_ARCTO: 
+      {
+        PEMRARC lpArcTo = (PEMRARC)mr;
+
+        ArcTo( hdc,
+               (INT)lpArcTo->rclBox.left,
+               (INT)lpArcTo->rclBox.top,
+               (INT)lpArcTo->rclBox.right,
+               (INT)lpArcTo->rclBox.bottom,
+               (INT)lpArcTo->ptlStart.x,
+               (INT)lpArcTo->ptlStart.y,
+               (INT)lpArcTo->ptlEnd.x,
+               (INT)lpArcTo->ptlEnd.y );
+
+        break;
+      }
+
+    case EMR_EXTFLOODFILL:
+      {
+        PEMREXTFLOODFILL lpExtFloodFill = (PEMREXTFLOODFILL)mr;
+
+        ExtFloodFill( hdc, 
+                      (INT)lpExtFloodFill->ptlStart.x,
+                      (INT)lpExtFloodFill->ptlStart.y,
+                      lpExtFloodFill->crColor,
+                      (UINT)lpExtFloodFill->iMode );
+
+        break;
+      }
+
     case EMR_POLYDRAW:
+      {
+        PEMRPOLYDRAW lpPolyDraw = (PEMRPOLYDRAW)mr;
+
+        FIXME( "Bounding rectangle ignored for EMR_POLYDRAW\n" );
+        PolyDraw( hdc, 
+                  (const LPPOINT)lpPolyDraw->aptl,
+                  lpPolyDraw->abTypes,
+                  (INT)lpPolyDraw->cptl );
+ 
+        break;
+      } 
+
     case EMR_SETARCDIRECTION:
+      {
+        PEMRSETARCDIRECTION lpSetArcDirection = (PEMRSETARCDIRECTION)mr;
+
+        SetArcDirection( hdc, (INT)lpSetArcDirection->iArcDirection );
+
+        break;
+      }
+
     case EMR_SETMITERLIMIT:
+      {
+        PEMRSETMITERLIMIT lpSetMiterLimit = (PEMRSETMITERLIMIT)mr;
+
+        SetMiterLimit( hdc, lpSetMiterLimit->eMiterLimit, NULL );
+
+        break;
+      } 
+
     case EMR_BEGINPATH:
+      {
+        BeginPath( hdc );
+        break;
+      }
+
     case EMR_ENDPATH: 
+      {
+        EndPath( hdc );
+        break;
+      }
+
     case EMR_CLOSEFIGURE:
+      {
+        CloseFigure( hdc );
+        break;
+      }
+
     case EMR_FILLPATH:
+      {
+        /*PEMRFILLPATH lpFillPath = (PEMRFILLPATH)mr;*/
+
+        FIXME( "Bounding rectangle ignored for EMR_FILLPATH\n" );
+        FillPath( hdc );
+
+        break;
+      }
+
     case EMR_STROKEANDFILLPATH:
+      {
+        /*PEMRSTROKEANDFILLPATH lpStrokeAndFillPath = (PEMRSTROKEANDFILLPATH)mr;*/
+
+        FIXME( "Bounding rectangle ignored for EMR_STROKEANDFILLPATH\n" );
+        StrokeAndFillPath( hdc );
+
+        break;
+      }
+
     case EMR_STROKEPATH:
+      {
+        /*PEMRSTROKEPATH lpStrokePath = (PEMRSTROKEPATH)mr;*/
+
+        FIXME( "Bounding rectangle ignored for EMR_STROKEPATH\n" );  
+        StrokePath( hdc );
+
+        break;
+      }
+
     case EMR_FLATTENPATH:
+      {
+        FlattenPath( hdc ); 
+        break;
+      }
+
     case EMR_WIDENPATH:
+      {
+        WidenPath( hdc );
+        break;
+      }
+
     case EMR_SELECTCLIPPATH:
+      {
+        PEMRSELECTCLIPPATH lpSelectClipPath = (PEMRSELECTCLIPPATH)mr;
+
+        SelectClipPath( hdc, (INT)lpSelectClipPath->iMode );
+
+        break;
+      }
+ 
     case EMR_ABORTPATH:
-    case EMR_FILLRGN:
-    case EMR_FRAMERGN:
-    case EMR_INVERTRGN:
-    case EMR_PAINTRGN:
+      {
+        AbortPath( hdc );
+        break;
+      }
+
+
     case EMR_BITBLT:
     case EMR_STRETCHBLT:
     case EMR_MASKBLT:
@@ -701,9 +1072,16 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_GLSRECORD:
     case EMR_GLSBOUNDEDRECORD:
     case EMR_PIXELFORMAT: 
+    case EMR_SETPALETTEENTRIES:  
+    case EMR_RESIZEPALETTE:
+    case EMR_FILLRGN:
+    case EMR_FRAMERGN:
+    case EMR_INVERTRGN:
+    case EMR_PAINTRGN:
     default:
+      /* From docs: If PlayEnhMetaFileRecord doesn't recognize a 
+                    record then ignore and return TRUE. */
       FIXME("type %d is unimplemented\n", type);
-      /*  SetLastError(E_NOTIMPL); */
       break;
     }
   return TRUE;
