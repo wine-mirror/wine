@@ -209,7 +209,7 @@ WARN(reg, "Could not access key!\n");
           channel <literal>xxx</literal>, do:
         </para>
         <programlisting>
-#include "debug.h"
+#include "debugtools.h"
 
 ....
 
@@ -219,7 +219,7 @@ YYY(xxx, "&lt;message>", ...);
           Some examples from the code:
         </para>
         <programlisting>
-#include "debug.h"
+#include "debugtools.h"
 
 ...
 
@@ -500,7 +500,7 @@ LPSTR debugres(const void *id);
           Thus, to use it, do something on the following lines:
         </para>
         <programlisting>
-#include "debug.h"
+#include "debugtools.h"
 
 ...
 
