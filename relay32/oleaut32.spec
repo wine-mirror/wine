@@ -4,10 +4,10 @@ type win32
 1 stub DllGetClassObject
 2 stdcall SysAllocString(wstr) SysAllocString32
 3 stdcall SysReAllocString(ptr wstr) SysReAllocString32
-4 stub SysAllocStringLen
-5 stub SysReAllocStringLen
+4 stdcall SysAllocStringLen(wstr long) SysAllocStringLen32
+5 stdcall SysReAllocStringLen(ptr ptr long) SysReAllocStringLen32
 6 stdcall SysFreeString(wstr) SysFreeString32
-7 stub SysStringLen
+7 stdcall SysStringLen(wstr) SysStringLen32
 8 stub VariantInit
 9 stub VariantClear
 10 stub VariantCopy
