@@ -8,6 +8,7 @@
 
 #include "ntdef.h"
 #include "winnt.h"
+#include "winreg.h"
 #include "winbase.h"	/* fixme: should be taken out sometimes */
 
 #include "pshpack1.h"
@@ -845,6 +846,118 @@ NtSetSecurityObject(
         IN SECURITY_INFORMATION SecurityInformation,
         IN PSECURITY_DESCRIPTOR SecurityDescriptor);
 
+/*	registry functions */
+
+NTSTATUS WINAPI NtCreateKey(
+	PHANDLE KeyHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes,
+	ULONG TitleIndex,
+	PUNICODE_STRING Class,
+	ULONG CreateOptions,
+	PULONG Disposition);
+
+NTSTATUS WINAPI NtOpenKey(
+	PHANDLE KeyHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes);
+
+NTSTATUS WINAPI NtDeleteKey(HANDLE KeyHandle);
+
+NTSTATUS WINAPI NtDeleteValueKey(
+	IN HANDLE KeyHandle,
+	IN PUNICODE_STRING ValueName);
+
+NTSTATUS WINAPI NtEnumerateKey(
+	HANDLE KeyHandle,
+	ULONG Index,
+	KEY_INFORMATION_CLASS KeyInformationClass,
+	PVOID KeyInformation,
+	ULONG Length,
+	PULONG ResultLength);
+
+NTSTATUS WINAPI NtQueryKey(
+	HANDLE KeyHandle,
+	KEY_INFORMATION_CLASS KeyInformationClass,
+	PVOID KeyInformation,
+	ULONG Length,
+	PULONG ResultLength);
+
+NTSTATUS WINAPI NtEnumerateValueKey(
+	HANDLE KeyHandle,
+	ULONG Index,
+	KEY_VALUE_INFORMATION_CLASS KeyInformationClass,
+	PVOID KeyInformation,
+	ULONG Length,
+	PULONG ResultLength);
+
+NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle);
+
+NTSTATUS WINAPI NtLoadKey(
+	PHANDLE KeyHandle,
+	POBJECT_ATTRIBUTES ObjectAttributes);
+
+NTSTATUS WINAPI NtNotifyChangeKey(
+	IN HANDLE KeyHandle,
+	IN HANDLE Event,
+	IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+	IN PVOID ApcContext OPTIONAL,
+	OUT PIO_STATUS_BLOCK IoStatusBlock,
+	IN ULONG CompletionFilter,
+	IN BOOLEAN Asynchroneous,
+	OUT PVOID ChangeBuffer,
+	IN ULONG Length,
+	IN BOOLEAN WatchSubtree);
+
+NTSTATUS WINAPI NtQueryMultipleValueKey(
+	HANDLE KeyHandle,
+	PVALENTW ListOfValuesToQuery,
+	ULONG NumberOfItems,
+	PVOID MultipleValueInformation,
+	ULONG Length,
+	PULONG  ReturnLength);
+
+NTSTATUS WINAPI NtQueryValueKey(
+	IN HANDLE KeyHandle,
+	IN PUNICODE_STRING ValueName,
+	IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
+	OUT PVOID KeyValueInformation,
+	IN ULONG Length,
+	OUT PULONG ResultLength);
+
+NTSTATUS WINAPI NtReplaceKey(
+	IN POBJECT_ATTRIBUTES ObjectAttributes,
+	IN HANDLE Key,
+	IN POBJECT_ATTRIBUTES ReplacedObjectAttributes);
+
+NTSTATUS WINAPI NtRestoreKey(
+	HANDLE KeyHandle,
+	HANDLE FileHandle,
+	ULONG RestoreFlags);
+
+NTSTATUS WINAPI NtSaveKey(
+	IN HANDLE KeyHandle,
+	IN HANDLE FileHandle);
+
+NTSTATUS WINAPI NtSetInformationKey(
+	IN HANDLE KeyHandle,
+	IN const int KeyInformationClass,
+	IN PVOID KeyInformation,
+	IN ULONG KeyInformationLength);
+
+NTSTATUS WINAPI NtSetValueKey(
+	HANDLE KeyHandle,
+	PUNICODE_STRING ValueName,
+	ULONG TitleIndex,
+	ULONG Type,
+	PVOID Data,
+	ULONG DataSize);
+
+NTSTATUS WINAPI NtUnloadKey(
+	IN HANDLE KeyHandle);
+
+NTSTATUS WINAPI NtClose(
+	HANDLE Handle);
 
 /*	misc */
 
