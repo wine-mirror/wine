@@ -2095,6 +2095,12 @@ INT WINAPI WSOCK32_setsockopt(SOCKET16 s, INT level, INT optname,
 	int fd = _get_sock_fd(s);
         int woptval;
 
+	/* Is a privileged and useless operation, so we don't. */
+	if ((optname == WS_SO_DEBUG) && (level == WS_SOL_SOCKET)) {
+	    FIXME("(%d,SOL_SOCKET,SO_DEBUG,%p(%ld)) attempted (is privileged). Ignoring.\n",s,optval,*(DWORD*)optval);
+	    return 0;
+	}
+
         if(optname == WS_SO_DONTLINGER && level == WS_SOL_SOCKET) {
 	    /* This is unique to WinSock and takes special conversion */
             linger.l_onoff	= *((int*)optval) ? 0: 1;
