@@ -904,6 +904,10 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBSTATE_ELLIPSES        0x40
 #define TBSTATE_MARKED          0x80
 
+
+/* as of _WIN32_IE >= 0x0500 the following symbols are obsolete, 
+ * "everyone" should use the BTNS_... stuff below
+ */
 #define TBSTYLE_BUTTON          0x00
 #define TBSTYLE_SEP             0x01
 #define TBSTYLE_CHECK           0x02
@@ -912,6 +916,16 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBSTYLE_DROPDOWN        0x08
 #define TBSTYLE_AUTOSIZE        0x10
 #define TBSTYLE_NOPREFIX        0x20
+#define BTNS_BUTTON             TBSTYLE_BUTTON
+#define BTNS_SEP                TBSTYLE_SEP
+#define BTNS_CHECK              TBSTYLE_CHECK
+#define BTNS_GROUP              TBSTYLE_GROUP
+#define BTNS_CHECKGROUP         TBSTYLE_CHECKGROUP
+#define BTNS_DROPDOWN           TBSTYLE_DROPDOWN
+#define BTNS_AUTOSIZE           TBSTYLE_AUTOSIZE
+#define BTNS_NOPREFIX           TBSTYLE_NOPREFIX
+#define BTNS_SHOWTEXT           0x40  /* ignored unless TBSTYLE_EX_MIXEDB set */
+#define BTNS_WHOLEDROPDOWN      0x80  /* draw dropdown arrow, but without split arrow section */
 
 #define TBSTYLE_TOOLTIPS        0x0100
 #define TBSTYLE_WRAPABLE        0x0200
@@ -921,7 +935,10 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBSTYLE_CUSTOMERASE     0x2000 
 #define TBSTYLE_REGISTERDROP    0x4000
 #define TBSTYLE_TRANSPARENT     0x8000
-#define TBSTYLE_EX_DRAWDDARROWS 0x00000001
+#define TBSTYLE_EX_DRAWDDARROWS         0x00000001
+#define TBSTYLE_EX_UNDOC1               0x00000004 /* similar to TBSTYLE_WRAPABLE */
+#define TBSTYLE_EX_MIXEDBUTTONS         0x00000008
+#define TBSTYLE_EX_HIDECLIPPEDBUTTONS   0x00000010 /* don't show partially obscured buttons */
 
 #define TBIF_IMAGE              0x00000001
 #define TBIF_TEXT               0x00000002
@@ -1029,6 +1046,17 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TB_GETCOLORSCHEME        CCM_GETCOLORSCHEME
 #define TB_SETUNICODEFORMAT      CCM_SETUNICODEFORMAT
 #define TB_GETUNICODEFORMAT      CCM_GETUNICODEFORMAT
+#define TB_GETSTRINGW            (WM_USER+91)
+#define TB_GETSTRINGA            (WM_USER+92)
+#define TB_GETSTRING  WINELIB_NAME_AW(TB_GETSTRING)
+
+/* undocumented messages in Toolbar */
+#define TB_UNKWN45D              (WM_USER+93)
+#define TB_UNKWN45E              (WM_USER+94)
+#define TB_UNKWN460              (WM_USER+96)
+#define TB_UNKWN463              (WM_USER+99)
+#define TB_UNKWN464              (WM_USER+100)
+
 
 #define TBN_FIRST               (0U-700U)
 #define TBN_LAST                (0U-720U)
