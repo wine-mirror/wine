@@ -144,32 +144,24 @@ default: "C:\\\\WINDOWS;C:\\\\WINDOWS\\\\SYSTEM"
 Used to specify the path which will be used to find executables and
 dlls. Make sure to double all the backslashes.
 .PP
-.B [DllDefaults]
-.br
-.I format: """EXTRA_LD_LIBRARY_PATH""=""@prefix@/lib/wine[:/more/path/to/search[:...]]"""
-.br
-The path will be appended to any existing LD_LIBRARY_PATH from the 
-environment for the search of .so libraries.
-.PP
-.I format: """DefaultLoadOrder""=""native,so,builtin"""
-.br
-A comma separated list of module-types to try to load in that specific
-order. The DefaultLoadOrder key is used as a fallback when a module is
-not specified explicitely. If the DefaultLoadOrder key is not found, 
-then the order "native,builtin,so" is used.
-.br
-Case is not important and only the first letter of each type is enough
-to identify the type n[ative], s[o], b[uiltin]. Also whitespace is
-ignored. See also commandline option
-.I --dll
-for details about the allowable types.
-.PP
 .B [DllOverrides]
 .br
-There are no explicit keys defined other than module/library names. A
-module namd is followed by an assignment of the load order for this
-specific module. See above for possible types. You should not specify
-an extension.
+.I format: """modulename""=""native,so,builtin"""
+.br
+.I modulename
+can be any valid module name, without extension. The specified value
+is a comma separated list of module-types to try to load in that
+specific order. Case is not important and only the first letter of
+each type is enough to identify the type n[ative], s[o],
+b[uiltin]. Also whitespace is ignored. See also commandline option
+.I --dll
+for details about the allowable types.
+.br
+The wildcard entry
+.I """*"""
+specifies the load order to use for modules not explicitly
+mentioned. If the wildcard entry is not found, then the order
+"native,builtin,so" is used.
 .br
 Examples:
 .br
@@ -177,18 +169,13 @@ Examples:
 .br
 .I """kernel""=""builtin"""
 .br
-.I """comdlg32""=""native, builtin"""
+.I """comdlg32""=""native,builtin"""
 .br
-.I """commdlg""=""native, builtin"""
+.I """*""=""builtin,native"""
 .br
 Changing the load order of kernel/kernel32 and gdi/gdi32 to
 anything other than builtin will cause wine to fail because wine cannot
-use native versions for these libraries (gdi[32] might work native someday,
-but kernel[32] will never work native).
-Note that using the native versions of user[32] isn't recommended right now,
-as these modules face nearly the same problems as kernel/gdi and we only
-just managed to make them work partially. But trying to use it might get
-your program running.
+use native versions for these libraries.
 .br
 Always make sure that you have some kind of strategy in mind when you start
 fiddling with the current defaults and needless to say that you must know
@@ -252,6 +239,33 @@ Load Windows registry from the current Windows directory.
 booleans: Y/y/T/t/1 are true, N/n/F/f/0 are false.
 .br
 Defaults are read all, write to home files.
+.PP
+.B [AppDefaults\\\\\\\\<appname>\\\\\\\\...]
+.PP
+This section allows specifying application-specific values for
+the other sections described above.
+.I <appname>
+is the name of the application exe file, without path. The "..."
+should be replaced by the name of one of the above configuration
+sections.
+.br
+Example:
+.br
+.I [AppDefaults\\\\\\\\sol.exe\\\\\\\\DllOverrides]
+.br
+.I """shell32""" = """native"""
+.br
+means that Solitaire will use "native" load order for the shell32
+dll. All other applications will continue to use what was specified in
+the general
+.I DllOverrides
+section.
+.br
+The only section that supports application-specific information at the
+moment is
+.I DllOverrides.
+.br
+Make sure to use double backslashes in the section name.
 .PP
 .SH SAMPLE CONFIGURATION FILE
 A sample configuration file is distributed as

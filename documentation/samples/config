@@ -67,9 +67,6 @@ WINE REGISTRY Version 2
 
 # <wineconf>
 
-[DllDefaults]
-"DefaultLoadOrder" = "native, builtin, so"
-
 [DllOverrides]
 "commdlg"      = "builtin, native"
 "comdlg32"     = "builtin, native"
@@ -77,6 +74,8 @@ WINE REGISTRY Version 2
 "version"      = "builtin, native"
 "shell"        = "builtin, native"
 "shell32"      = "builtin, native"
+"shfolder"     = "builtin, native"
+"shlwapi"      = "builtin, native"
 "lzexpand"     = "builtin, native"
 "lz32"         = "builtin, native"
 "comctl32"     = "builtin, native"
@@ -88,7 +87,9 @@ WINE REGISTRY Version 2
 "ddraw"        = "builtin, native"
 "dinput"       = "builtin, native"
 "dsound"       = "builtin, native"
+"opengl32"     = "builtin, native"
 "msvcrt"       = "native, builtin"
+"rpcrt4"       = "native, builtin"
 "msvideo"      = "builtin, native"
 "msvfw32"      = "builtin, native"
 "mcicda.drv"   = "builtin, native"
@@ -100,6 +101,8 @@ WINE REGISTRY Version 2
 "msacm"        = "builtin, native"
 "msacm32"      = "builtin, native"
 "midimap.drv"  = "builtin, native"
+; default for all other dlls
+"*" = "native, builtin, so"
 
 [x11drv]
 ; Number of colors to allocate from the system palette

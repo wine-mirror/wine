@@ -40,16 +40,7 @@ struct loadorder_list
 /* the list must remain sorted by dll name */
 static module_loadorder_t default_order_list[] =
 {
-    { "advapi32",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "comctl32",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "comdlg32",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "commctrl",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "commdlg",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "crtdll",       { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "ddraw",        { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "dinput",       { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
     { "display",      { LOADORDER_BI,  0,             0, 0 } },
-    { "dsound",       { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
     { "gdi",          { LOADORDER_BI,  0,             0, 0 } },
     { "gdi32",        { LOADORDER_BI,  0,             0, 0 } },
     { "glide2x",      { LOADORDER_SO,  LOADORDER_DLL, 0, 0 } },
@@ -59,38 +50,15 @@ static module_loadorder_t default_order_list[] =
     { "kernel32",     { LOADORDER_BI,  0,             0, 0 } },
     { "keyboard",     { LOADORDER_BI,  0,             0, 0 } },
     { "krnl386",      { LOADORDER_BI,  0,             0, 0 } },
-    { "lz32",         { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "lzexpand",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "mcianim.drv",  { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
-    { "mciavi.drv",   { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
-    { "mcicda.drv",   { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "mciseq.drv",   { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "mciwave.drv",  { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "midimap.drv",  { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
     { "mmsystem",     { LOADORDER_BI,  0,             0, 0 } },
     { "mouse",        { LOADORDER_BI,  0,             0, 0 } },
-    { "mpr",          { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "msacm",        { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "msacm.drv",    { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "msacm32",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "msvcrt",       { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
-    { "msvfw32",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "msvideo",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
     { "ntdll",        { LOADORDER_BI,  0,             0, 0 } },
     { "odbc32",       { LOADORDER_BI,  0,             0, 0 } },
-    { "opengl32",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "rpcrt4",       { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
-    { "shell",        { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "shell32",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "shfolder",     { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "shlwapi",      { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
     { "system",       { LOADORDER_BI,  0,             0, 0 } },
     { "toolhelp",     { LOADORDER_BI,  0,             0, 0 } },
     { "ttydrv",       { LOADORDER_BI,  0,             0, 0 } },
     { "user",         { LOADORDER_BI,  0,             0, 0 } },
     { "user32",       { LOADORDER_BI,  0,             0, 0 } },
-    { "ver",          { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
-    { "version",      { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
     { "w32skrnl",     { LOADORDER_BI,  0,             0, 0 } },
     { "winaspi",      { LOADORDER_BI,  0,             0, 0 } },
     { "windebug",     { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
@@ -99,7 +67,6 @@ static module_loadorder_t default_order_list[] =
     { "wing",         { LOADORDER_BI,  0,             0, 0 } },
     { "winmm",        { LOADORDER_BI,  0,             0, 0 } },
     { "winsock",      { LOADORDER_BI,  0,             0, 0 } },
-    { "winspool.drv", { LOADORDER_BI,  LOADORDER_DLL, 0, 0 } },
     { "wnaspi32",     { LOADORDER_BI,  0,             0, 0 } },
     { "wow32",        { LOADORDER_BI,  0,             0, 0 } },
     { "wprocs",       { LOADORDER_BI,  0,             0, 0 } },
@@ -417,9 +384,10 @@ static BOOL get_list_load_order( const char *module, const struct loadorder_list
 /***************************************************************************
  *	get_app_load_order
  *
- * Get the load order for a given module from the app-specific DllOverrides list
+ * Get the load order for a given module from the app-specific DllOverrides list.
+ * Also look for default '*' key if no module key found.
  */
-static BOOL get_app_load_order( const char *module, enum loadorder_type lo[] )
+static BOOL get_app_load_order( const char *module, enum loadorder_type lo[], BOOL *got_default )
 {
     HKEY hkey, appkey;
     DWORD count, type, res;
@@ -447,10 +415,14 @@ static BOOL get_app_load_order( const char *module, enum loadorder_type lo[] )
     if (res) return FALSE;
 
     count = sizeof(buffer);
-    res = RegQueryValueExA( appkey, module, NULL, &type, buffer, &count );
+    if ((res = RegQueryValueExA( appkey, module, NULL, &type, buffer, &count )))
+    {
+        if (!(res = RegQueryValueExA( appkey, "*", NULL, &type, buffer, &count )))
+            *got_default = TRUE;
+    }
+    else TRACE( "got app loadorder '%s' for '%s'\n", buffer, module );
     RegCloseKey( appkey );
     if (res) return FALSE;
-    TRACE( "got app loadorder '%s' for '%s'\n", buffer, module );
     return ParseLoadOrder( buffer, lo );
 }
 
@@ -459,8 +431,10 @@ static BOOL get_app_load_order( const char *module, enum loadorder_type lo[] )
  *	get_standard_load_order
  *
  * Get the load order for a given module from the main DllOverrides list
+ * Also look for default '*' key if no module key found.
  */
-static BOOL get_standard_load_order( const char *module, enum loadorder_type lo[] )
+static BOOL get_standard_load_order( const char *module, enum loadorder_type lo[],
+                                     BOOL *got_default )
 {
     HKEY hkey;
     DWORD count, type, res;
@@ -470,10 +444,14 @@ static BOOL get_standard_load_order( const char *module, enum loadorder_type lo[
         return FALSE;
 
     count = sizeof(buffer);
-    res = RegQueryValueExA( hkey, module, NULL, &type, buffer, &count );
+    if ((res = RegQueryValueExA( hkey, module, NULL, &type, buffer, &count )))
+    {
+        if (!(res = RegQueryValueExA( hkey, "*", NULL, &type, buffer, &count )))
+            *got_default = TRUE;
+    }
+    else TRACE( "got standard loadorder '%s' for '%s'\n", buffer, module );
     RegCloseKey( hkey );
     if (res) return FALSE;
-    TRACE( "got standard loadorder '%s' for '%s'\n", buffer, module );
     return ParseLoadOrder( buffer, lo );
 }
 
@@ -526,6 +504,8 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
 	char *cptr;
 	char *name;
 	int len;
+        BOOL got_app_default = FALSE, got_std_default = FALSE;
+        enum loadorder_type lo_default[LOADORDER_NTYPES];
 
 	TRACE("looking for %s\n", path);
 
@@ -568,15 +548,28 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
         if (get_list_load_order( fname, &cmdline_list, loadorder )) return;
 
         /* then app-specific config */
-        if (get_app_load_order( fname, loadorder )) return;
+        if (get_app_load_order( fname, loadorder, &got_app_default ))
+        {
+            if (!got_app_default) return;
+            /* save the default value for later on */
+            memcpy( lo_default, loadorder, sizeof(lo_default) );
+        }
 
         /* then standard config */
-        if (get_standard_load_order( fname, loadorder )) return;
+        if (get_standard_load_order( fname, loadorder, &got_std_default ))
+        {
+            if (!got_std_default) return;
+            /* save the default value for later on */
+            if (!got_app_default) memcpy( lo_default, loadorder, sizeof(lo_default) );
+        }
 
         /* then compiled-in defaults */
         if (get_list_load_order( fname, &default_list, loadorder )) return;
 
  done:
         /* last, return the default */
-        get_default_load_order( loadorder );
+        if (got_app_default || got_std_default)
+            memcpy( loadorder, lo_default, sizeof(lo_default) );
+        else
+            get_default_load_order( loadorder );
 }
