@@ -337,9 +337,11 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
                           MESSAGE("WARNING: very old native DLL (NT 3.x) used, might cause instability.\n");
                           return NT351;
                   case 4: return NT40;
-                  case 5: return NT2K;
-                  case 6: return WINXP;
-                  case 7: return WIN2K3; /* FIXME: Not sure, should be verified with a Win2K3 dll */
+                  case 5: switch (RtlImageNtHeader(hmod)->OptionalHeader.MinorOperatingSystemVersion){
+                          case 0: return NT2K;
+                          case 1: return WINXP;
+                          case 2: return WIN2K3;
+                          }
                   default:
                           FIXME("Unknown DLL OS version, please report !!\n");
                           return WIN2K3;
