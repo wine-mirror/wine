@@ -957,7 +957,7 @@ LONG WINAPI AVIStreamSampleToTime(PAVISTREAM pstream, LONG lSample)
 LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime)
 {
   AVISTREAMINFOW asiw;
-  LONG sample;
+  ULONG sample;
 
   TRACE("(%p,%ld)\n", pstream, lTime);
 

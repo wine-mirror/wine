@@ -164,7 +164,7 @@ static ULONG   WINAPI ITmpFile_fnRelease(IAVIFile *iface)
   TRACE("(%p) -> %ld\n", iface, This->ref - 1);
 
   if (!--(This->ref)) {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < This->fInfo.dwStreams; i++) {
       if (This->ppStreams[i] != NULL) {

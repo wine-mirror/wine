@@ -192,7 +192,7 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
     DWORD  dwNumServiceArgs ;
     LPWSTR *lpArgVecW;
     LPSTR  *lpArgVecA;
-    int i;
+    unsigned int i;
 
     TRACE("(%p)\n", servent);
     wait = CreateSemaphoreW(NULL,1,1,_ServiceStartDataW);
@@ -808,7 +808,7 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
 {
     LPWSTR *lpwstr=NULL;
     UNICODE_STRING usBuffer;
-    int i;
+    unsigned int i;
 
     TRACE("(%p,%ld,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
 

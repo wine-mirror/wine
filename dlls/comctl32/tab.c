@@ -1051,7 +1051,7 @@ static void TAB_SetItemBounds (HWND hwnd)
   TAB_INFO*   infoPtr = TAB_GetInfoPtr(hwnd);
   LONG        lStyle  = GetWindowLongA(hwnd, GWL_STYLE);
   TEXTMETRICA fontMetrics;
-  INT         curItem;
+  UINT        curItem;
   INT         curItemLeftPos;
   INT         curItemRowCount;
   HFONT       hFont, hOldFont;
@@ -1243,8 +1243,8 @@ static void TAB_SetItemBounds (HWND hwnd)
   /* Arrange all tabs evenly if style says so */
    if (!(lStyle & TCS_RAGGEDRIGHT) &&  ((lStyle & TCS_MULTILINE) || (lStyle & TCS_VERTICAL)) && (infoPtr->uNumItem > 0))
    {
-      INT tabPerRow,remTab;
-      INT iRow,iItm;
+      INT tabPerRow,remTab,iRow;
+      UINT iItm;
       INT iCount=0;
 
       /*
@@ -2341,7 +2341,7 @@ static void TAB_EnsureSelectionVisible(
 
       if (newselected != iTargetRow)
       {
-         INT i;
+         UINT i;
          if(lStyle & TCS_VERTICAL)
          {
            for (i=0; i < infoPtr->uNumItem; i++)
@@ -2387,7 +2387,8 @@ static void TAB_EnsureSelectionVisible(
   else
   {
      RECT r;
-     INT  width, i;
+     INT width;
+     UINT i;
 
      /* Calculate the part of the client area that is visible */
      GetClientRect(hwnd, &r);
@@ -3173,7 +3174,7 @@ static LRESULT
 TAB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
-  INT iItem;
+  UINT iItem;
 
   if (!infoPtr)
       return 0;

@@ -472,7 +472,7 @@ static HRESULT WINAPI ICMStream_fnSetFormat(IAVIStream *iface, LONG pos,
 
   /* initial format setting? */
   if (This->lpbiInput == NULL) {
-    LONG size;
+    ULONG size;
 
     assert(This->hic != NULL);
 

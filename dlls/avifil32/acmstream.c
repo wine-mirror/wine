@@ -526,7 +526,7 @@ static HRESULT WINAPI ACMStream_fnWrite(IAVIStream *iface, LONG start,
   ICOM_THIS(IAVIStreamImpl,iface);
 
   HRESULT hr;
-  LONG    size;
+  ULONG   size;
 
   TRACE("(%p,%ld,%ld,%p,%ld,0x%08lX,%p,%p)\n", iface, start, samples,
 	buffer, buffersize, flags, sampwritten, byteswritten);

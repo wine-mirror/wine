@@ -256,7 +256,8 @@ DATETIME_SetMonthCalFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static void
 DATETIME_UseFormat (DATETIME_INFO *infoPtr, const char *formattxt)
 {
- int i,j,k,len;
+ unsigned int i;
+ int j,k,len;
  int *nrFields=& infoPtr->nrFields;
 
  TRACE ("%s\n",formattxt);
@@ -267,7 +268,7 @@ DATETIME_UseFormat (DATETIME_INFO *infoPtr, const char *formattxt)
  len=strlen(allowedformatchars);
  k=0;
 
- for (i=0; i<strlen (formattxt); i++)  {
+ for (i=0; formattxt[i]; i++)  {
 	TRACE ("\n%d %c:",i, formattxt[i]);
  	for (j=0; j<len; j++) {
  		if (allowedformatchars[j]==formattxt[i]) {

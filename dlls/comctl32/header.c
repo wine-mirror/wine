@@ -108,8 +108,8 @@ static INT
 HEADER_OrderToIndex(HWND hwnd, WPARAM wParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    INT i,iorder = (INT)wParam;
-
+    INT iorder = (INT)wParam;
+    UINT i;
 
     if ((iorder <0) || iorder >infoPtr->uNumItem)
       return iorder;
@@ -125,7 +125,8 @@ HEADER_SetItemBounds (HWND hwnd)
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     HEADER_ITEM *phdi;
     RECT rect;
-    int i, x;
+    unsigned int i;
+    int x;
 
     infoPtr->bRectsValid = TRUE;
 
@@ -354,7 +355,8 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
     HFONT hFont, hOldFont;
     RECT rect;
     HBRUSH hbrBk;
-    INT i, x;
+    UINT i;
+    INT x;
 
     /* get rect for the bar, adjusted for the border */
     GetClientRect (hwnd, &rect);
@@ -401,7 +403,8 @@ HEADER_InternalHitTest (HWND hwnd, LPPOINT lpPt, UINT *pFlags, INT *pItem)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     RECT rect, rcTest;
-    INT  iCount, width;
+    UINT iCount;
+    INT width;
     BOOL bNoWidth;
 
     GetClientRect (hwnd, &rect);
@@ -814,7 +817,7 @@ HEADER_GetOrderArray(HWND hwnd, WPARAM wParam, LPARAM lParam)
     LPINT order = (LPINT) lParam;
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
 
-    if ((int)wParam <infoPtr->uNumItem)
+    if ((unsigned int)wParam <infoPtr->uNumItem)
       return FALSE;
     for (i=0; i<(int)wParam; i++)
       *order++=HEADER_OrderToIndex(hwnd,i);
@@ -829,7 +832,7 @@ HEADER_SetOrderArray(HWND hwnd, WPARAM wParam, LPARAM lParam)
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     HEADER_ITEM *lpItem;
 
-    if ((int)wParam <infoPtr->uNumItem)
+    if ((unsigned int)wParam <infoPtr->uNumItem)
       return FALSE;
     for (i=0; i<(int)wParam; i++)
       {
@@ -870,7 +873,8 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDITEMA   *phdi = (HDITEMA*)lParam;
     INT       nItem = (INT)wParam;
     HEADER_ITEM *lpItem;
-    INT       len, i, iOrder;
+    INT       len, iOrder;
+    UINT      i;
 
     if ((phdi == NULL) || (nItem < 0))
 	return -1;
@@ -971,7 +975,8 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDITEMW   *phdi = (HDITEMW*)lParam;
     INT       nItem = (INT)wParam;
     HEADER_ITEM *lpItem;
-    INT       len, i, iOrder;
+    INT       len, iOrder;
+    UINT      i;
 
     if ((phdi == NULL) || (nItem < 0))
 	return -1;

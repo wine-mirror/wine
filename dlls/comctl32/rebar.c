@@ -751,8 +751,8 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
      /*   start and end bands are *not* hidden                       */
 {
     REBAR_BAND *lpBand;
-    UINT x, xsep, extra, curwidth, fudge;
-    INT i, last_adjusted;
+    UINT xsep, extra, curwidth, fudge;
+    INT x, i, last_adjusted;
 
     TRACE("start=%u, end=%u, max x=%d, max y=%d\n",
 	  rowstart, rowend, maxx, mcy);

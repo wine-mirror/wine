@@ -832,9 +832,9 @@ CreateMappedBitmap (HINSTANCE hInstance, INT idBitmap, UINT wFlags,
     HGLOBAL hglb;
     HRSRC hRsrc;
     LPBITMAPINFOHEADER lpBitmap, lpBitmapInfo;
-    UINT nSize, nColorTableSize;
+    UINT nSize, nColorTableSize, iColor;
     RGBQUAD *pColorTable;
-    INT iColor, i, iMaps, nWidth, nHeight;
+    INT i, iMaps, nWidth, nHeight;
     HDC hdcScreen;
     HBITMAP hbm;
     LPCOLORMAP sysColorMap;

@@ -2168,7 +2168,7 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
     TTTOOL_INFO *toolPtr;
-    INT i;
+    UINT i;
 
     /* free tools */
     if (infoPtr->tools) {

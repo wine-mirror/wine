@@ -400,14 +400,14 @@ static void COMBOEX_AdjustEditPos (COMBOEX_INFO *infoPtr)
 static void COMBOEX_ReSize (COMBOEX_INFO *infoPtr)
 {
     SIZE mysize;
-    UINT cy;
+    LONG cy;
     IMAGEINFO iinfo;
 
     COMBOEX_GetComboFontSize (infoPtr, &mysize);
     cy = mysize.cy + CBE_EXTRA;
     if (infoPtr->himl && ImageList_GetImageInfo(infoPtr->himl, 0, &iinfo)) {
 	cy = max (iinfo.rcImage.bottom - iinfo.rcImage.top, cy);
-	TRACE("upgraded height due to image:  height=%d\n", cy);
+	TRACE("upgraded height due to image:  height=%ld\n", cy);
     }
     SendMessageW (infoPtr->hwndSelf, CB_SETITEMHEIGHT, (WPARAM)-1, (LPARAM)cy);
     if (infoPtr->hwndCombo) {
@@ -1610,7 +1610,7 @@ static LRESULT COMBOEX_Size (COMBOEX_INFO *infoPtr, INT width, INT height)
 static LRESULT COMBOEX_WindowPosChanging (COMBOEX_INFO *infoPtr, WINDOWPOS *wp)
 {
     RECT cbx_wrect, cbx_crect, cb_wrect;
-    UINT width, height;
+    INT width, height;
 
     GetWindowRect (infoPtr->hwndSelf, &cbx_wrect);
     GetClientRect (infoPtr->hwndSelf, &cbx_crect);

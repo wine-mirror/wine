@@ -544,7 +544,8 @@ static HRESULT WINAPI IAVIEditStream_fnPaste(IAVIEditStream*iface,LONG*plStart,
   IEditStreamInternal*pInternal = NULL;
   IAVIEditStreamImpl *pEdit = NULL;
   PAVISTREAM          pStream;
-  DWORD               startPos, endPos, streamNr, n, nStreams;
+  DWORD               startPos, endPos, streamNr, nStreams;
+  LONG                n;
 
   TRACE("(%p,%p,%p,%p,%ld,%ld)\n",iface,plStart,plLength,
 	pSource,lStart,lLength);
@@ -576,7 +577,7 @@ static HRESULT WINAPI IAVIEditStream_fnPaste(IAVIEditStream*iface,LONG*plStart,
 
   /* streamtype specific tests */
   if (srcInfo.fccType == streamtypeVIDEO) {
-    DWORD size;
+    LONG size;
 
     size = srcInfo.rcFrame.right - srcInfo.rcFrame.left;
     if (size != This->sInfo.rcFrame.right - This->sInfo.rcFrame.left)

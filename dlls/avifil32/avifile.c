@@ -986,13 +986,13 @@ static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream *iface, LONG pos,
     LPBITMAPINFOHEADER lpbiOld = (LPBITMAPINFOHEADER)This->lpFormat;
     RGBQUAD           *rgbNew  = (RGBQUAD*)((LPBYTE)lpbiNew + lpbiNew->biSize);
     AVIPALCHANGE      *lppc = NULL;
-    INT                n;
+    UINT               n;
 
-    /* pherhaps formatchange, check it ... */
+    /* perhaps format change, check it ... */
     if (This->cbFormat != formatsize)
       return AVIERR_UNSUPPORTED;
 
-    /* no formatchange, only the initial one */
+    /* no format change, only the initial one */
     if (memcmp(This->lpFormat, format, formatsize) == 0)
       return AVIERR_OK;
 
@@ -1090,7 +1090,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
 
   if (This->sInfo.dwSampleSize != 0) {
     /* fixed samplesize -- we can read over frame/block boundaries */
-    LONG block  = start;
+    ULONG block = start;
     LONG offset = 0;
 
     /* convert start sample to block,offset pair */
@@ -2080,7 +2080,7 @@ static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
 static void    AVIFILE_SamplesToBlock(IAVIStreamImpl *This, LPLONG pos,
 				      LPLONG offset)
 {
-  DWORD block;
+  LONG block;
 
   /* pre-conditions */
   assert(This != NULL);

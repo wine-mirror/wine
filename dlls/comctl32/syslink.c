@@ -34,6 +34,7 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(progress);
@@ -375,7 +376,7 @@ CheckParameter:
                         /* Copy the tag parameters */
                         if(lpID != NULL)
                         {
-                            nc = min(lenId, lstrlenW(lpID));
+                            nc = min(lenId, strlenW(lpID));
                             nc = min(nc, MAX_LINKID_TEXT);
                             Last->u.Link.szID = SYSLINK_Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
                             if(Last->u.Link.szID != NULL)
@@ -388,7 +389,7 @@ CheckParameter:
                             Last->u.Link.szID = NULL;
                         if(lpUrl != NULL)
                         {
-                            nc = min(lenUrl, lstrlenW(lpUrl));
+                            nc = min(lenUrl, strlenW(lpUrl));
                             nc = min(nc, L_MAX_URL_LENGTH);
                             Last->u.Link.szUrl = SYSLINK_Alloc((L_MAX_URL_LENGTH + 1) * sizeof(WCHAR));
                             if(Last->u.Link.szUrl != NULL)
@@ -455,7 +456,7 @@ CheckParameter:
             /* Copy the tag parameters */
             if(lpID != NULL)
             {
-                nc = min(lenId, lstrlenW(lpID));
+                nc = min(lenId, strlenW(lpID));
                 nc = min(nc, MAX_LINKID_TEXT);
                 Last->u.Link.szID = SYSLINK_Alloc((MAX_LINKID_TEXT + 1) * sizeof(WCHAR));
                 if(Last->u.Link.szID != NULL)
@@ -468,7 +469,7 @@ CheckParameter:
                 Last->u.Link.szID = NULL;
             if(lpUrl != NULL)
             {
-                nc = min(lenUrl, lstrlenW(lpUrl));
+                nc = min(lenUrl, strlenW(lpUrl));
                 nc = min(nc, L_MAX_URL_LENGTH);
                 Last->u.Link.szUrl = SYSLINK_Alloc((L_MAX_URL_LENGTH + 1) * sizeof(WCHAR));
                 if(Last->u.Link.szUrl != NULL)

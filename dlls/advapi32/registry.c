@@ -663,7 +663,7 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
 DWORD WINAPI RegQueryMultipleValuesA(HKEY hkey, PVALENTA val_list, DWORD num_vals,
                                      LPSTR lpValueBuf, LPDWORD ldwTotsize)
 {
-    int i;
+    unsigned int i;
     DWORD maxBytes = *ldwTotsize;
     HRESULT status;
     LPSTR bufptr = lpValueBuf;
@@ -709,7 +709,7 @@ DWORD WINAPI RegQueryMultipleValuesA(HKEY hkey, PVALENTA val_list, DWORD num_val
 DWORD WINAPI RegQueryMultipleValuesW(HKEY hkey, PVALENTW val_list, DWORD num_vals,
                                      LPWSTR lpValueBuf, LPDWORD ldwTotsize)
 {
-    int i;
+    unsigned int i;
     DWORD maxBytes = *ldwTotsize;
     HRESULT status;
     LPSTR bufptr = (LPSTR)lpValueBuf;
