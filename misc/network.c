@@ -295,9 +295,9 @@ WORD WINAPI WNetGetCaps16( WORD capability )
 /**************************************************************************
  *		WNetGetUser16			[USER.516]
  */
-WORD WINAPI WNetGetUser16( LPSTR szUser, LPINT16 nBufferSize )
+WORD WINAPI WNetGetUser16( LPCSTR lpName, LPSTR szUser, LPINT16 nBufferSize )
 {
-    FIXME( "(%p, %p): stub\n", szUser, nBufferSize );
+    FIXME( "(%p, %p, %p): stub\n", lpName, szUser, nBufferSize );
     return WN16_NOT_SUPPORTED;
 }
 
