@@ -1,18 +1,19 @@
   <chapter id="debugger">
-    <title>The Wine Debugger</title>
+    <title>Debugging Wine</title>
 
     <sect1 id="dbg-intro">
-      <title>I Introduction</title>
+      <title>Introduction</title>
 
       <para>
-        written by Eric Pouech (Last updated: 8/15/2000)
+        Written by &name-eric-pouech; <email>&email-eric-pouech;</email>
+	(Last updated: 6/14/2000)
       </para>
       <para>
         (Extracted from <filename>wine/documentation/winedbg</filename>)
       </para>
 
       <sect2>
-        <title>I.1 Processes and threads: in underlying OS and in Windows</title>
+        <title>Processes and threads: in underlying OS and in Windows</title>
 
         <para>
           Before going into the depths of debugging in Wine, here's
@@ -80,7 +81,7 @@
       </sect2>
 
       <sect2>
-        <title>I.2 Wine, debugging and WineDbg</title>
+        <title>Wine, debugging and WineDbg</title>
 
         <para>
           When talking of debugging in Wine, there are at least two
@@ -96,35 +97,30 @@
           </listitem>
         </itemizedlist>
         <para>
-          Wine implements most the the Windows' debugging API (the
+          Wine implements most of the Windows' debugging API (the
           part in KERNEL32, not the one in
           <filename>IMAGEHLP.DLL</filename>), and allows any program
-          (emulated or WineLib) using that API to debug a
+          (emulated or Winelib) using that API to debug a
           <varname>W-process</varname>.
         </para>
         <para>
-          <command>WineDbg</command> is a WineLib application making
-          use of this API to allow debugging both any Wine or WineLib
+          <command>WineDbg</command> is a Winelib application making
+          use of this API to allow debugging both any Wine or Winelib
           applications as well as Wine itself (kernel and all DLLs).
-        </para>
-        <para>
-          <command>WineDbg</command> understands symbolic information 
-          from both Unix world (mainly ELF stabs) and from Windows 
-          (most Microsoft debugging formats are supported - CodeView, 
-          .DBG files...)
         </para>
       </sect2>
     </sect1>
 
+
     <sect1 id="dbg-modes">
-      <title>II WineDbg's modes of invocation</title>
+      <title>WineDbg's modes of invocation</title>
 
       <sect2>
-        <title>II.1 Starting a process</title>
+        <title>Starting a process</title>
 
         <para>
           Any application (either a Windows' native executable, or a
-          WineLib application) can be run through
+          Winelib application) can be run through
           <command>WineDbg</command>. Command line options and tricks
           are the same as for wine:
         </para>
@@ -135,7 +131,7 @@ winedbg "hl.exe -windowed"
       </sect2>
 
       <sect2>
-        <title>II.2 Attaching</title>
+        <title>Attaching</title>
 
         <para>
           <command>WineDbg</command> can also be launched without any
@@ -156,8 +152,8 @@ winedbg "hl.exe -windowed"
         </itemizedlist>
       </sect2>
 
-      <sect2>
-        <title>II.3 On exception</title>
+      <sect2 id="dbg-on-exception">
+        <title id="dbg-exception-title">On exception</title>
 
         <para>
           When something goes wrong, Windows tracks this as an
@@ -237,7 +233,7 @@ winedbg "hl.exe -windowed"
       </sect2>
 
       <sect2>
-        <title>II.4 Quitting</title>
+        <title>Quitting</title>
 
         <para>
           Unfortunately, Windows doesn't provide a detach kind of API,
@@ -250,16 +246,703 @@ winedbg "hl.exe -windowed"
       </sect2>
     </sect1>
 
-    <sect1 id="dbg-config">
-      <title>III Configuration</title>
+
+    <sect1 id="wine-debugger">
+      <title>Using the Wine Debugger</title>
+
+      <para>
+        Written by &name-marcus-meissner; <email>&email-marcus-meissner;</email>,
+        additions welcome.
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/debugging</filename>)
+      </para>
+
+      <para>
+        This file describes where to start debugging Wine. If at any
+        point you get stuck and want to ask for help, please read the
+        file <filename>documentation/bugreports</filename> for
+        information on how to write useful bug reports.
+      </para>
 
       <sect2>
-        <title>III.1 Registry configuration</title>
+        <title>Crashes</title>
+
+        <para>
+          These usually show up like this:
+        </para>
+        <screen>
+|Unexpected Windows program segfault - opcode = 8b
+|Segmentation fault in Windows program 1b7:c41.
+|Loading symbols from ELF file /root/wine/wine...
+|....more Loading symbols from ...
+|In 16 bit mode.
+|Register dump:
+| CS:01b7 SS:016f DS:0287 ES:0000
+| IP:0c41 SP:878a BP:8796 FLAGS:0246
+| AX:811e BX:0000 CX:0000 DX:0000 SI:0001 DI:ffff
+|Stack dump:
+|0x016f:0x878a:  0001 016f ffed 0000 0000 0287 890b 1e5b
+|0x016f:0x879a:  01b7 0001 000d 1050 08b7 016f 0001 000d
+|0x016f:0x87aa:  000a 0003 0004 0000 0007 0007 0190 0000
+|0x016f:0x87ba:
+|
+|0050: sel=0287 base=40211d30 limit=0b93f (bytes) 16-bit rw-
+|Backtrace:
+|0 0x01b7:0x0c41 (PXSRV_FONGETFACENAME+0x7c)
+|1 0x01b7:0x1e5b (PXSRV_FONPUTCATFONT+0x2cd)
+|2 0x01a7:0x05aa
+|3 0x01b7:0x0768 (PXSRV_FONINITFONTS+0x81)
+|4 0x014f:0x03ed (PDOXWIN_@SQLCURCB$Q6CBTYPEULN8CBSCTYPE+0x1b1)
+|5 0x013f:0x00ac
+|
+|0x01b7:0x0c41 (PXSRV_FONGETFACENAME+0x7c):  movw        %es:0x38(%bx),%dx
+        </screen>
+        <para>
+          Steps to debug a crash. You may stop at any step, but please
+          report the bug and provide as much of the information
+          gathered to the newsgroup or the relevant developer as
+          feasible.
+        </para>
+
+        <orderedlist>
+          <listitem>
+            <para>
+              Get the reason for the crash. This is usually an access to
+              an invalid selector, an access to an out of range address
+              in a valid selector, popping a segmentregister from the
+              stack or the like. When reporting a crash, report this
+              <emphasis>whole</emphasis> crashdump even if it doesn't
+              make sense to you.
+            </para>
+            <para>
+              (In this case it is access to an invalid selector, for
+              <systemitem>%es</systemitem> is <literal>0000</literal>, as
+              seen in the register dump).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Determine the cause of the crash. Since this is usually
+              a primary/secondary reaction to a failed or misbehaving
+              Wine function, rerun Wine with <parameter>-debugmsg
+                +relay</parameter> added to the commandline. This will
+              generate quite a lot of output, but usually the reason is
+              located in the last call(s).  Those lines usually look like
+              this:
+            </para>
+            <screen>
+|Call KERNEL.90: LSTRLEN(0227:0692 "text") ret=01e7:2ce7 ds=0227
+      ^^^^^^^^^  ^       ^^^^^^^^^ ^^^^^^      ^^^^^^^^^    ^^^^
+      |          |       |         |           |            |Datasegment
+      |          |       |         |           |Return address
+      |          |       |         |textual parameter
+      |          |       |
+      |          |       |Argument(s). This one is a win16 segmented pointer.
+      |          |Function called.
+      |The module, the function is called in. In this case it is KERNEL.
+		        
+|Ret  KERNEL.90: LSTRLEN() retval=0x0004 ret=01e7:2ce7 ds=0227
+                                  ^^^^^^
+				  |Returnvalue is 16 bit and has the value 4.
+            </screen>
+          </listitem>
+          <listitem>
+            <para>
+              If you have found a misbehaving function, try to find out
+              why it misbehaves. Find the function in the source code.
+              Try to make sense of the arguments passed. Usually there is
+              a <function>TRACE(&lt;channel>,"(...)\n");</function> at
+              the beginning of the function. Rerun wine with
+              <parameter>-debugmsg +xyz,+relay</parameter> added to the
+              commandline.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Additional information on how to debug using the internal
+              debugger can be  found in
+              <filename>debugger/README</filename>.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If this information isn't clear enough or if you want to
+              know more about what's happening in the function itself,
+              try running wine with <parameter>-debugmsg
+                +all</parameter>, which dumps ALL included debug
+              information in wine.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If even that isn't enough, add more debug output for
+              yourself into the functions you find relevant.  See
+              <filename>documentation/debug-msgs</filename>. You might
+              also try to run the program in <command>gdb</command>
+              instead of using the WINE-debugger. If you do that, use
+              <parameter>handle SIGSEGV nostop noprint</parameter> to
+              disable the handling of seg faults inside
+              <command>gdb</command> (needed for Win16). If you don't use
+              the <parameter>--desktop</parameter> or
+              <parameter>--managed</parameter> option, start the WINE
+              process with <parameter>--sync</parameter>, or chances are
+              good to get X into an unusable state.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              You can also set a breakpoint for that function. Start wine
+              with the <parameter>--debug</parameter> option added to the
+              commandline. After loading the executable wine will enter
+              the internal debugger. Use <parameter>break
+                KERNEL_LSTRLEN</parameter> (replace by function you want
+              to debug, CASE IS RELEVANT) to set a breakpoint.  Then use
+              <command>continue</command> to start normal
+              program-execution. Wine will stop if it reaches the
+              breakpoint. If the program isn't yet at the crashing call
+              of that function, use <command>continue</command> again
+              until you are about to enter that function. You may now
+              proceed with single-stepping the function until you reach
+              the point of crash. Use the other debugger commands to
+              print registers and the like.
+            </para>
+          </listitem>
+        </orderedlist>
+      </sect2>
+
+      <sect2>
+        <title>Program hangs, nothing happens</title>
+
+        <para>
+          Switch to UNIX shell, get the process-ID using <command>ps -a |
+            grep wine</command>, and do a <command>kill -HUP
+            &lt;pid></command> (without the &lt; and >). Wine will
+          then enter its internal debugger and you can proceed as
+          explained above. Also, you can use
+          <parameter>--debug</parameter> switch and then you can get into
+          internal debugger by pressing 
+          <keycombo><keycap>Ctrl</keycap><keycap>C</keycap></keycombo> in
+          the terminal where you run Wine.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Program reports an error with a Messagebox</title>
+
+        <para>
+          Sometimes programs are reporting failure using more or
+          less nondescript messageboxes. We can debug this using the
+          same method as Crashes, but there is one problem... For
+          setting up a message box the program also calls Wine
+          producing huge chunks of debug code.
+        </para>
+        <para>
+          Since the failure happens usually directly before setting up
+          the Messagebox you can start wine with
+          <parameter>--debug</parameter> added to the commandline, set a
+          breakpoint at <function>MessageBoxA</function> (called by win16
+          and win32 programs) and proceed with
+          <command>continue</command>. With <parameter>--debugmsg
+            +all</parameter> Wine will now stop directly before setting
+          up the Messagebox. Proceed as explained above.
+        </para>
+        <para>
+          You can also run wine using <command>wine -debugmsg +relay
+            program.exe 2>&1 | less -i</command> and in
+          <command>less</command> search for <quote>MessageBox</quote>.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Disassembling programs:</title>
+
+        <para>
+          You may also try to disassemble the offending program to
+          check for undocumented features and/or use of them.
+        </para>
+        <para>
+          The best, freely available, disassembler for Win16 programs is
+          <application>Windows Codeback</application>, archivename
+          <filename>wcbxxx.zip</filename>, which usually can be found in
+          the <filename>Cica-Mirror</filename> subdirectory on the WINE
+          ftpsites. (See <filename>ANNOUNCE</filename>).
+        </para>
+        <para>
+          Disassembling win32 programs is possible using
+          <application>Windows Disassembler 32</application>, archivename
+          something like <filename>w32dsm87.zip</filename> (or similar)
+          on <systemitem class="systemname">ftp.winsite.com</systemitem>
+          and mirrors.  The shareware version does not allow saving of
+          disassembly listings. You can also use the newer (and in the
+          full version better) <application>Interactive
+            Disassembler</application> (IDA) from the ftp sites mentioned
+          at the end of the document. Understanding disassembled code is
+          mostly a question of exercise.
+        </para>
+        <para>
+          Most code out there uses standard C function entries (for it
+          is usually  written in C). Win16 function entries usually
+          look like that:
+        </para>
+        <programlisting>
+push bp
+mov bp, sp
+... function code ..
+retf XXXX 	&lt;--------- XXXX is number of bytes of arguments
+        </programlisting>
+        <para>
+          This is a <function>FAR</function> function with no local
+          storage. The arguments usually start at
+          <literal>[bp+6]</literal> with increasing offsets. Note, that
+          <literal>[bp+6]</literal> belongs to the
+          <emphasis>rightmost</emphasis> argument, for exported win16
+          functions use the PASCAL calling convention. So, if we use
+          <function>strcmp(a,b)</function> with <parameter>a</parameter>
+          and <parameter>b</parameter> both 32 bit variables
+          <parameter>b</parameter> would be at <literal>[bp+6]</literal>
+          and <parameter>a</parameter> at <literal>[bp+10]</literal>.
+        </para>
+        <para>
+          Most functions make also use of local storage in the stackframe:
+        </para>
+        <programlisting>
+enter 0086, 00
+... function code ...
+leave
+retf XXXX
+        </programlisting>
+        <para>
+          This does mostly the same as above, but also adds
+          <literal>0x86</literal> bytes of stackstorage, which is
+          accessed using <literal>[bp-xx]</literal>. Before calling a
+          function, arguments are pushed on the stack using something
+          like this:
+        </para>
+        <programlisting>
+push word ptr [bp-02]	&lt;- will be at [bp+8]
+push di			&lt;- will be at [bp+6]
+call KERNEL.LSTRLEN
+        </programlisting>
+        <para>
+          Here first the selector and then the offset to the passed
+          string are pushed.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Sample debugging session:</title>
+
+        <para>
+          Let's debug the infamous Word <filename>SHARE.EXE</filename>
+          messagebox: 
+        </para>
+        <screen>
+|marcus@jet $ wine winword.exe
+|            +---------------------------------------------+
+|            | !  You must leave Windows and load SHARE.EXE|
+|            |    before starting Word.                    |
+|            +---------------------------------------------+
+        </screen>
+        <screen>
+|marcus@jet $ wine winword.exe -debugmsg +relay -debug
+|CallTo32(wndproc=0x40065bc0,hwnd=000001ac,msg=00000081,wp=00000000,lp=00000000)
+|Win16 task 'winword': Breakpoint 1 at 0x01d7:0x001a
+|CallTo16(func=0127:0070,ds=0927)
+|Call WPROCS.24: TASK_RESCHEDULE() ret=00b7:1456 ds=0927
+|Ret  WPROCS.24: TASK_RESCHEDULE() retval=0x8672 ret=00b7:1456 ds=0927
+|CallTo16(func=01d7:001a,ds=0927)
+|     AX=0000 BX=3cb4 CX=1f40 DX=0000 SI=0000 DI=0927 BP=0000 ES=11f7
+|Loading symbols: /home/marcus/wine/wine...
+|Stopped on breakpoint 1 at 0x01d7:0x001a
+|In 16 bit mode.
+|Wine-dbg>break MessageBoxA                          &lt;---- Set Breakpoint
+|Breakpoint 2 at 0x40189100 (MessageBoxA [msgbox.c:190])
+|Wine-dbg>c                                            &lt;---- Continue
+|Call KERNEL.91: INITTASK() ret=0157:0022 ds=08a7
+|     AX=0000 BX=3cb4 CX=1f40 DX=0000 SI=0000 DI=08a7 ES=11d7 EFL=00000286
+|CallTo16(func=090f:085c,ds=0dcf,0x0000,0x0000,0x0000,0x0000,0x0800,0x0000,0x0000,0x0dcf)
+|...                                                   &lt;----- Much debugoutput
+|Call KERNEL.136: GETDRIVETYPE(0x0000) ret=060f:097b ds=0927
+                               ^^^^^^ Drive 0 (A:)
+|Ret  KERNEL.136: GETDRIVETYPE() retval=0x0002 ret=060f:097b ds=0927
+                                        ^^^^^^  DRIVE_REMOVEABLE
+						(It is a floppy diskdrive.)
+
+|Call KERNEL.136: GETDRIVETYPE(0x0001) ret=060f:097b ds=0927
+                               ^^^^^^ Drive 1 (B:)
+|Ret  KERNEL.136: GETDRIVETYPE() retval=0x0000 ret=060f:097b ds=0927
+                                        ^^^^^^  DRIVE_CANNOTDETERMINE
+						(I don't have drive B: assigned)
+
+|Call KERNEL.136: GETDRIVETYPE(0x0002) ret=060f:097b ds=0927
+                               ^^^^^^^ Drive 2 (C:)
+|Ret  KERNEL.136: GETDRIVETYPE() retval=0x0003 ret=060f:097b ds=0927
+                                        ^^^^^^ DRIVE_FIXED
+                                               (specified as a harddisk)
+
+|Call KERNEL.97: GETTEMPFILENAME(0x00c3,0x09278364"doc",0x0000,0927:8248) ret=060f:09b1 ds=0927
+                                 ^^^^^^           ^^^^^        ^^^^^^^^^
+                                 |                |            |buffer for fname
+                                 |                |temporary name ~docXXXX.tmp
+                                 |Force use of Drive C:.
+
+|Warning: GetTempFileName returns 'C:~doc9281.tmp', which doesn't seem to be writeable.
+|Please check your configuration file if this generates a failure.
+        </screen>
+        <para>
+          Whoops, it even detects that something is wrong!
+        </para>
+        <screen>
+|Ret  KERNEL.97: GETTEMPFILENAME() retval=0x9281 ret=060f:09b1 ds=0927
+                                          ^^^^^^ Temporary storage ID
+
+|Call KERNEL.74: OPENFILE(0x09278248"C:~doc9281.tmp",0927:82da,0x1012) ret=060f:09d8 ds=0927
+                                    ^^^^^^^^^^^^^^^^ ^^^^^^^^^ ^^^^^^^
+                                    |filename        |OFSTRUCT |open mode:
+
+                                       OF_CREATE|OF_SHARE_EXCLUSIVE|OF_READWRITE
+        </screen>
+        <para>
+          This fails, since my <medialabel>C:</medialabel> drive is in
+          this case mounted readonly.
+        </para>
+        <screen>
+|Ret  KERNEL.74: OPENFILE() retval=0xffff ret=060f:09d8 ds=0927
+                                   ^^^^^^ HFILE_ERROR16, yes, it failed.
+
+|Call USER.1: MESSAGEBOX(0x0000,0x09278376"Sie mussen Windows verlassen und SHARE.EXE laden bevor Sie Word starten.",0x00000000,0x1030) ret=060f:084f ds=0927
+        </screen>           
+        <para>
+          And MessageBox'ed.
+        </para>
+        <screen>
+|Stopped on breakpoint 2 at 0x40189100 (MessageBoxA [msgbox.c:190])
+|190     {		&lt;- the sourceline
+In 32 bit mode.
+Wine-dbg>
+        </screen>
+        <para>
+          The code seems to find a writeable harddisk and tries to create
+          a file there. To work around this bug, you can define
+          <medialabel>C:</medialabel> as a networkdrive, which is ignored
+          by the code above.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Debugging Tips</title>
+
+        <para>
+          Here are some useful debugging tips, added by Andreas Mohr:
+        </para>
+
+        <itemizedlist>
+          <listitem>
+            <para>
+              If you have a program crashing at such an early loader phase that you can't
+              use the Wine debugger normally, but Wine already executes the program's
+              start code, then you may use a special trick. You should do a
+              <programlisting>
+wine --debugmsg +relay program
+              </programlisting>
+              to get a listing of the functions the program calls in its start function.
+              Now you do a
+              <programlisting>
+wine --debug winfile.exe
+              </programlisting>
+            </para>
+            <para>
+              This way, you get into <command>Wine-dbg</command>. Now you
+              can set a breakpoint on any function the program calls in
+              the start function and just type <userinput>c</userinput>
+              to bypass the eventual calls of Winfile to this function
+              until you are finally at the place where this function gets
+              called by the crashing start function. Now you can proceed
+              with your debugging as usual.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If you try to run a program and it quits after showing an error messagebox,
+              the problem can usually be identified in the return value of one of the
+              functions executed before <function>MessageBox()</function>.
+              That's why you should re-run the program with e.g.
+              <programlisting>
+wine --debugmsg +relay &lt;program name> &>relmsg
+              </programlisting>
+              Then do a <command>more relmsg</command> and search for the
+              last occurrence of a call to the string "MESSAGEBOX". This is a line like
+              <programlisting>
+Call USER.1: MESSAGEBOX(0x0000,0x01ff1246 "Runtime error 219 at 0004:1056.",0x00000000,0x1010) ret=01f7:2160 ds=01ff
+              </programlisting>
+              In my example the lines before the call to
+              <function>MessageBox()</function> look like that:
+              <programlisting>
+Call KERNEL.96: FREELIBRARY(0x0347) ret=01cf:1033 ds=01ff
+CallTo16(func=033f:0072,ds=01ff,0x0000)
+Ret  KERNEL.96: FREELIBRARY() retval=0x0001 ret=01cf:1033 ds=01ff
+Call KERNEL.96: FREELIBRARY(0x036f) ret=01cf:1043 ds=01ff
+CallTo16(func=0367:0072,ds=01ff,0x0000)
+Ret  KERNEL.96: FREELIBRARY() retval=0x0001 ret=01cf:1043 ds=01ff
+Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
+CallTo16(func=0317:0072,ds=01ff,0x0000)
+Ret  KERNEL.96: FREELIBRARY() retval=0x0001 ret=01cf:105c ds=01ff
+Call USER.171: WINHELP(0x02ac,0x01ff05b4 "COMET.HLP",0x0002,0x00000000) ret=01cf:1070 ds=01ff
+CallTo16(func=0117:0080,ds=01ff)
+Call WPROCS.24: TASK_RESCHEDULE() ret=00a7:0a2d ds=002b
+Ret  WPROCS.24: TASK_RESCHEDULE() retval=0x0000 ret=00a7:0a2d ds=002b
+Ret  USER.171: WINHELP() retval=0x0001 ret=01cf:1070 ds=01ff
+Call KERNEL.96: FREELIBRARY(0x01be) ret=01df:3e29 ds=01ff
+Ret  KERNEL.96: FREELIBRARY() retval=0x0000 ret=01df:3e29 ds=01ff
+Call KERNEL.52: FREEPROCINSTANCE(0x02cf00ba) ret=01f7:1460 ds=01ff
+Ret  KERNEL.52: FREEPROCINSTANCE() retval=0x0001 ret=01f7:1460 ds=01ff
+Call USER.1: MESSAGEBOX(0x0000,0x01ff1246 "Runtime error 219 at 0004:1056.",0x00000000,0x1010) ret=01f7:2160 ds=01ff
+              </programlisting>
+            </para>
+            <para>
+              I think that the call to <function>MessageBox()</function>
+              in this example is <emphasis>not</emphasis> caused by a
+              wrong result value of some previously executed function
+              (it's happening quite often like that), but instead the
+              messagebox complains about a runtime error at
+              <literal>0x0004:0x1056</literal>.
+            </para>
+            <para>
+              As the segment value of the address is only
+              <literal>4</literal>, I think that that is only an internal
+              program value. But the offset address reveals something
+              quite interesting: Offset <literal>1056</literal> is
+              <emphasis>very</emphasis> close to the return address of
+              <function>FREELIBRARY()</function>:
+              <programlisting>
+Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
+                                             ^^^^
+              </programlisting>
+            </para>
+            <para>
+              Provided that segment <literal>0x0004</literal> is indeed segment
+              <literal>0x1cf</literal>, we now we can use IDA                 (available at
+              <ulink url="ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip">
+                ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip</ulink>) to
+              disassemble the part that caused the error. We just have to find the address of
+              the call to <function>FreeLibrary()</function>. Some lines before that the
+              runtime error occurred. But be careful! In some cases you don't have to
+              disassemble the main program, but instead some DLL called by it in order to find
+              the correct place where the runtime error occurred. That can be determined by
+              finding the origin of the segment value (in this case <literal>0x1cf</literal>).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If you have created a relay file of some crashing
+              program and want to set a breakpoint at a certain
+              location which is not yet available as the program loads
+              the breakpoint's segment during execution, you may set a
+              breakpoint to <function>GetVersion16/32</function> as
+              those functions are called very often.
+            </para>
+            <para>
+              Then do a <userinput>c</userinput> until you are able to
+              set this breakpoint without error message.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Some useful programs:
+            </para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <application>IDA</application>: 
+                  <filename>
+                    <ulink url="ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip">
+                      ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip</ulink>
+                  </filename>
+                </term>
+                <listitem>
+                  <para>
+                    <emphasis>Very</emphasis> good DOS disassembler ! It's badly needed
+                    for debugging Wine sometimes.
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <application>XRAY</application>:
+                  <filename>
+                    <ulink url="ftp://ftp.th-darmstadt.de/pub/machines/ms-dos/SimTel/msdos/asmutil/xray15.zip">
+                      ftp://ftp.th-darmstadt.de/pub/machines/ms-dos/SimTel/msdos/asmutil/xray15.zip</ulink>
+                  </filename>
+                </term>
+                <listitem>
+                  <para>
+                    Traces DOS calls (Int 21h, DPMI, ...). Use it with
+                    Windows to correct file management problems etc.
+                  </para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <application>pedump</application>:
+                  <filename>
+                    <ulink url="http://oak.oakland.edu/pub/simtelnet/win95/prog/pedump.zip">
+                      http://oak.oakland.edu/pub/simtelnet/win95/prog/pedump.zip</ulink>
+                  </filename>
+                </term>
+                <listitem>
+                  <para>
+                    Dumps the imports and exports of a PE (Portable
+                    Executable) DLL.
+                  </para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </itemizedlist>
+      </sect2>
+
+      <sect2>
+        <title>Some basic debugger usages:</title>
+
+        <para>
+          After starting your program with
+        </para>
+        <screen>
+wine -debug myprog.exe
+        </screen>
+        <para>
+          the program loads and you get a prompt at the program
+          starting point. Then you can set breakpoints:
+        </para>
+        <screen>
+  b RoutineName      (by outine name) OR
+  b *0x812575        (by address)
+        </screen>
+        <para>
+          Then you hit <command>c</command> (continue) to run the
+          program. It stops at the breakpoint. You can type
+        </para>
+        <screen>
+  step               (to step one line) OR
+  stepi              (to step one machine instruction at a time;
+                      here, it helps to know the basic 386
+                      instruction set)
+  info reg           (to see registers)
+  info stack         (to see hex values in the stack)
+  info local         (to see local variables)
+  list &lt;line number> (to list source code)
+  x &lt;variable name>  (to examine a variable; only works if code
+                      is not compiled with optimization)
+  x 0x4269978        (to examine a memory location)
+  ?                  (help)
+  q                  (quit)
+        </screen>
+        <para>
+          By hitting <keycap>Enter</keycap>, you repeat the last
+          command.
+        </para>
+      </sect2>
+    </sect1>
+
+
+    <sect1 id="memory-addresses">
+      <title>Useful memory addresses</title>
+      <para>
+        Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
+      </para>
+      <para>
+        Wine uses several different kinds of memory addresses.
+      </para>
+      <variablelist>
+        <varlistentry>
+          <term>
+            Win32/"normal" Wine addresses/Linux: linear addresses.
+          </term>
+          <listitem>
+            <para>
+              Linear addresses can be everything from 0x0 up to
+              0xffffffff.  In Wine on Linux they are often around
+              e.g. 0x08000000, 0x00400000 (std. Win32 program load
+              address), 0x40000000.  Every Win32 process has its own
+              private 4GB address space (that is, from 0x0 up to
+              0xffffffff).
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            Win16 "enhanced mode": segmented addresses.
+          </term>
+          <listitem>
+            <para>
+              These are the "normal" Win16 addresses, called SEGPTR.
+              They have a segment:offset notation, e.g. 0x01d7:0x0012.
+              The segment part usually is a "selector", which *always*
+              has the lowest 3 bits set.  Some sample selectors are
+              0x1f7, 0x16f, 0x8f.  If these bits are set except for
+              the lowest bit, as e.g. with 0x1f6,xi then it might be a
+              handle to global memory. Just set the lowest bit to get
+              the selector in these cases.  A selector kind of
+              "points" to a certain linear (see above) base address.
+              It has more or less three important attributes: segment
+              base address, segment limit, segment access rights.
+            </para>
+            <para>
+              Example:
+            </para>
+            <para>
+              Selector 0x1f7 (0x40320000, 0x0000ffff, r-x) So 0x1f7
+              has a base address of 0x40320000, the segment's last
+              address is 0x4032ffff (limit 0xffff), and it's readable
+              and executable.  So an address of 0x1f7:0x2300 would be
+              the linear address of 0x40322300.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            DOS/Win16 "standard mode"
+          </term>
+          <listitem>
+            <para>
+              They, too, have a segment:offset notation.  But they are
+              completely different from "normal" Win16 addresses, as
+              they just represent at most 1MB of memory: The segment
+              part can be anything from 0 to 0xffff, and it's the same
+              with the offset part.
+            </para>
+            <para>
+              Now the strange thing is the calculation that's behind
+              these addresses: Just calculate segment*16 + offset in
+              order to get a "linear DOS" address.  So
+              e.g. 0x0f04:0x3628 results in 0xf040 + 0x3628 = 0x12668.
+              And the highest address you can get is 0xfffff (1MB), of
+              course.  In Wine, this "linear DOS" address of 0x12668
+              has to be added to the linear base address of the
+              corresponding DOS memory allocated for dosmod in order
+              to get the true linear address of a DOS seg:offs
+              address.  And make sure that you're doing this in the
+              correct process with the correct linear address space,
+              of course ;-)
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect1>
+
+    <sect1 id="dbg-config">
+      <title>Configuration</title>
+
+      <sect2>
+        <title>Registry configuration</title>
 
         <para>
           The Windows' debugging API uses a registry entry to know
-          with debugger  to invoke when an unhandled exception
-          occurs (see II.3 for some details). Two values in key 
+          which debugger to invoke when an unhandled exception occurs
+          (see <link endterm="dbg-exception-title"
+          linkend="dbg-on-exception"></link> for some details). Two
+          values in key
         </para>
         <programlisting>
 "MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug"
@@ -280,6 +963,8 @@ winedbg "hl.exe -windowed"
                 (<command>WineDbg</command> can of course be used, but
                 any other Windows' debugging API aware debugger will
                 do).
+		The path to the debugger you chose to use must be reachable
+		via a DOS drive in the Wine config file !
               </para>
             </listitem>
           </varlistentry>
@@ -331,12 +1016,12 @@ winedbg "hl.exe -windowed"
       </sect2>
 
       <sect2>
-        <title>III.2 WineDbg configuration</title>
+        <title>WineDbg configuration</title>
 
         <para>
           <command>WineDbg</command> can be configured thru a number
           of options. Those options are stored in the registry, on a
-          per user basis. The key is (in *my* registry)
+          per user basis. The key is (in <emphasis>my</emphasis> registry)
         </para>
         <programlisting>
 [eric\\Software\\Wine\\WineDbg]
@@ -344,7 +1029,7 @@ winedbg "hl.exe -windowed"
         <para>
           Those options can be read/written while inside
           <command>WineDbg</command>, as part of the debugger
-          expressions. To refer to one of this option, its name must
+          expressions. To refer to one of these options, its name must
           be  prefixed by a <literal>$</literal> sign. For example, 
         </para>
         <programlisting>
@@ -367,7 +1052,7 @@ set $BreakAllThreadsStartup = 1
         </para>
 
         <sect3>
-          <title>III.2.1 Controling when the debugger is entered</title>
+          <title>Controlling when the debugger is entered</title>
 
           <variablelist>
             <varlistentry>
@@ -437,7 +1122,7 @@ set $BreakAllThreadsStartup = 1
         </sect3>
 
         <sect3>
-          <title>III.2.2 Output handling</title>
+          <title>Output handling</title>
 
           <variablelist>
             <varlistentry>
@@ -527,7 +1212,7 @@ UseXTerm = 1
         </sect3>
         
         <sect3>
-          <title>III.2.2 Context information</title>
+          <title>Context information</title>
 
           <variablelist>
             <varlistentry>
@@ -559,25 +1244,14 @@ UseXTerm = 1
           </para>
         </sect3>
       </sect2>
-      <sect2>
-        <title>III.3 Finding files</title>
-        
-        <para>
-          WineDbg uses some lookup algorithms to find the files containing 
-          the debugging information. For ELF files, the current directory, 
-          the list of directories pointed by PATH, LD_LIBRARY_PATH are 
-          searched (in that order). For Microsoft debugging files, 
-          current directory, and directories pointed by _NT_SYMBOL_PATH and
-	  _NT_ALT_SYMBOL_PATH (in that order) are searched.
-        </para>
-      </sect2>
     </sect1>
 
+
     <sect1 id="dbg-commands">
-      <title>IV WineDbg commands</title>
+      <title>WineDbg Command Reference</title>
 
       <sect2>
-        <title>IV.1 Misc</title>
+        <title>Misc</title>
 
         <screen>
 abort		aborts the debugger
@@ -597,7 +1271,7 @@ mode 32		switch to 32 bit mode
       </sect2>
 
       <sect2>
-        <title>IV.2 Flow control</title>
+        <title>Flow control</title>
 
         <screen>
 cont		continue execution until next breakpoint or exception.
@@ -620,7 +1294,7 @@ finish		do nexti commands until current function is exited
       </sect2>
 
       <sect2>
-        <title>IV.3 Breakpoints, watch points</title>
+        <title>Breakpoints, watch points</title>
 
         <screen>
 enable N	enables (break|watch)point #N
@@ -644,7 +1318,7 @@ info break	lists all (break|watch)points (with state)
       </sect2>
 
       <sect2>
-        <title>IV.4 Stack manipulation</title>
+        <title>Stack manipulation</title>
 
         <screen>
 bt		print calling stack of current thread
@@ -659,7 +1333,7 @@ info local	prints information on local variables for current
       </sect2>
 
       <sect2>
-        <title>IV.5 Directory & source file manipulation</title>
+        <title>Directory & source file manipulation</title>
 
         <screen>
 show dir
@@ -687,7 +1361,7 @@ list foo.c:1,56	lists source lines from line 1 up to 56 in file foo.c
       </sect2>
 
       <sect2>
-        <title>IV.6 Displaying</title>
+        <title>Displaying</title>
 
         <para>
           A display is an expression that's evaluated and printed
@@ -707,7 +1381,7 @@ undisplay N	(same as del display)
       </sect2>
 
       <sect2>
-        <title>IV.7 Disassembly</title>
+        <title>Disassembly</title>
 
         <screen>
 disas		disassemble from current position
@@ -718,7 +1392,7 @@ disas &lt;expr&gt;,&lt;expr&gt;disassembles code between addresses specified by
       </sect2>
 
       <sect2>
-        <title>IV.8 Information on Wine's internals</title>
+        <title>Information on Wine's internals</title>
 
         <screen>
 info class &lt;id&gt;	prints information on Windows's class &lt;id&gt;
@@ -747,7 +1421,7 @@ walk modref	(no longer avail)
       </sect2>
 
       <sect2>
-        <title>IV.9 Memory (reading, writing, typing)</title>
+        <title>Memory (reading, writing, typing)</title>
 
         <screen>
 x &lt;expr&gt;	examines memory at &lt;expr&gt; address
@@ -776,11 +1450,12 @@ b =&gt; 8 bit unsigned hexadecimal integer
       </sect2>
     </sect1>
 
+
     <sect1 id="dbg-others">
-      <title>V Other debuggers</title>
+      <title>Other debuggers</title>
 
       <sect2>
-        <title>V.1 Using other Unix debuggers</title>
+        <title>Using other Unix debuggers</title>
 
         <para>
           You can also use other debuggers (like
@@ -795,7 +1470,7 @@ b =&gt; 8 bit unsigned hexadecimal integer
           <varname>upids</varname> are for the Windows' application
           running the desktop, the first thread of the application is
           generally the third <varname>upid</varname>; when running a
-          WineLib program, the first thread of the application is
+          Winelib program, the first thread of the application is
           generally the first <varname>upid</varname>)
         </para>
         <note>
@@ -809,10 +1484,72 @@ b =&gt; 8 bit unsigned hexadecimal integer
             thread you wish to debug.
           </para>
         </note>
+
+        <!-- *** Extra content spliced in from article by Andreas Mohr *** -->
+        <para>
+          Following text written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
+        </para>
+        <para>
+          Here's how to get info about the current execution status of a
+          certain Wine process:
+        </para>
+        <para>
+          Change into your Wine source dir and enter:
+        </para>
+        <screen>
+$ gdb wine
+        </screen>
+        <para>
+          Switch to another console and enter <command>ps ax | grep
+            wine</command> to find all wine processes. Inside
+          <command>gdb</command>, repeat for all Wine processes:
+        </para>
+        <screen>
+(gdb) attach <userinput>PID</userinput>
+        </screen>
+        <para>
+          with <userinput>PID</userinput> being the process ID of one of
+          the Wine processes.  Use
+        </para>
+        <screen>
+(gdb) bt
+        </screen>
+        <para>
+          to get the backtrace of the current Wine process, i.e. the
+          function call history.  That way you can find out what the
+          current process is doing right now.  And then you can use
+          several times:
+        </para>
+        <screen>
+(gdb) n
+        </screen>
+        <para>
+          or maybe even
+        </para>
+        <screen>
+(gdb) b <userinput>SomeFunction</userinput>
+        </screen>
+        <para>
+          and
+        </para>
+        <screen>
+(gdb) c
+        </screen>
+        <para>
+          to set a breakpoint at a certain function and continue up to
+          that function.  Finally you can enter
+        </para>
+        <screen>
+(gdb) detach
+        </screen>
+        <para>
+          to detach from the Wine process.
+        </para>
+        <!-- *** End of xtra content *** -->
       </sect2>
 
       <sect2>
-        <title>V.2 Using other Windows debuggers</title>
+        <title>Using other Windows debuggers</title>
 
         <para>
           You can use any Windows' debugging API compliant debugger
@@ -823,7 +1560,7 @@ b =&gt; 8 bit unsigned hexadecimal integer
       </sect2>
 
       <sect2>
-        <title>V.3 Main differences between winedbg and regular Unix debuggers</title>
+        <title>Main differences between winedbg and regular Unix debuggers</title>
 
         <!-- FIXME: convert this into a table -->
         <screen>
@@ -846,8 +1583,9 @@ b =&gt; 8 bit unsigned hexadecimal integer
       </sect2>
     </sect1>
 
+
     <sect1 id="dbg-limits">
-      <title>VI Limitations</title>
+      <title>Limitations</title>
 
       <para>
         16 bit processes are not supported (but calls to 16 bit code
@@ -860,6 +1598,6 @@ b =&gt; 8 bit unsigned hexadecimal integer
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

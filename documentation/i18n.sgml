@@ -5,12 +5,13 @@
       <title>Adding New Languages</title>
 
       <para>
-        written by Morten Welinder, January 1996.
+        Written by &name-morten-welinder; <email>&email-morten-welinder;</email>,
+        January 1996.
       </para>
 
       <itemizedlist>
         <listitem>
-          <para>Thereafter revised Februari 1999 by Klaas van Gend</para>
+          <para>Thereafter revised February 1999 by Klaas van Gend</para>
         </listitem>
         <listitem>
           <para>Revised again May 23, 1999, Klaas van Gend</para>
@@ -37,6 +38,7 @@
           <member>Japanese</member>
           <member>Romanian</member>
           <member>Croatian</member>
+          <member>Slovak</member>
           <member>Turkish</member>
           <member>Slovanian</member>
         </simplelist>
@@ -196,6 +198,6 @@
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

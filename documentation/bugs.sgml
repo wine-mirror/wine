@@ -5,7 +5,7 @@
       <title>How To Report A Bug</title>
 
       <para>
-        written by Gerard Patel (???)
+        Written by &name-gerard-patel; <email>&email-gerard-patel;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/bugreports</filename>)
@@ -25,14 +25,14 @@
         <orderedlist>
           <listitem>
             <para>
-              Your computer *must* have perl on it for this method to
-              work. To find out if you have perl, run <command>which
-                perl</command>. If it returns something like
+              Your computer <emphasis>must</emphasis> have perl on it
+	      for this method to work. To find out if you have perl,
+	      run <command>which perl</command>. If it returns something like
               <filename>/usr/bin/perl</filename>, you're in business.
               Otherwise, skip on down to "The Hard Way". If you aren't
               sure, just keep on going. When you try to run the
-              script, it will become *very* apparent if you don't have
-              perl.
+              script, it will become <emphasis>very</emphasis> apparent
+	      if you don't have perl.
             </para>
           </listitem>
           <listitem>
@@ -130,7 +130,7 @@
               <parameter>+snoop</parameter> is pretty unstable and
               often will crash earlier than a simple
               <parameter>+relay</parameter>! If this is the case, then
-              please use *only* <parameter>+relay</parameter>!! A bug
+              please use <emphasis>only</emphasis> <parameter>+relay</parameter>!! A bug
               report with a crash in <parameter>+snoop</parameter>
               code is useless in most cases!
             </para>
@@ -211,6 +211,6 @@
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "chapter" "")
 End:
 -->

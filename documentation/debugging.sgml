@@ -1,11 +1,8 @@
   <chapter id="debugging">
-    <title>Debugging Wine</title>
-
-    <sect1 id="debug-msg">
-      <title>Debug Messages</title>
+    <title>Debug Logging</title>
 
       <para>
-        written by Dimitrie O. Paun <email>dimi@cs.toronto.edu</email>, 28 Mar 1998
+        Written by &name-dimitrie-paun; <email>&email-dimitrie-paun;</email>, 28 Mar 1998
       </para>
       <para>
         (Extracted from <filename>wine/documentation/debug-msgs</filename>)
@@ -36,7 +33,7 @@
         </para>
       </important>
 
-      <sect2>
+      <sect1 id="dbg-classes">
         <title>Debugging classes</title>
 
         <para>
@@ -151,9 +148,9 @@
           off and certain classes of messages may be completely
           disabled at compile time to reduce the  size of Wine.
         </para>
-      </sect2>
+      </sect1>
 
-      <sect2>
+      <sect1 id="dbg-channels">
         <title>Debugging channels</title>
 
         <para>
@@ -202,9 +199,9 @@ dprintf_reg(stddeb, "Could not access key!\n");
 WARN(reg, "Could not access key!\n");
           </programlisting>
         </note>
-      </sect2>
+      </sect1>
 
-      <sect2>
+      <sect1 id="dbg-using">
         <title>How to use it</title>
 
         <para>
@@ -216,7 +213,7 @@ WARN(reg, "Could not access key!\n");
 
 ....
 
-YYY(xxx, "&lt;message&gt;", ...);
+YYY(xxx, "&lt;message>", ...);
         </programlisting>
         <para>
           Some examples from the code:
@@ -277,9 +274,9 @@ YYY(xxx, "&lt;message&gt;", ...);
             </listitem>
           </orderedlist>
         </note>
-      </sect2>
+      </sect1>
 
-      <sect2>
+      <sect1 id="dbg-checking">
         <title>Are we debugging?</title>
 
         <para>
@@ -310,9 +307,9 @@ if(TRACE_ON(atom)){
             used only once!) are used in Wine.
           </para>
         </note>
-      </sect2>
+      </sect1>
 
-      <sect2>
+      <sect1 id="dbg-in-memory">
         <title>In-memory messages</title>
 
         <para>
@@ -338,7 +335,7 @@ dbg_decl_str(name, len);
             <para>
               print in it with:
             <programlisting>
-dsprintf(name, "&lt;message&gt;", ...);
+dsprintf(name, "&lt;message>", ...);
             </programlisting>
               which is just like a <function>sprintf</function>
               function but instead of a C string as first parameter it
@@ -370,13 +367,13 @@ void some_func(tabs)
   LPINT16 p = (LPINT16)tabs;
   dbg_decl_str(listbox, 256);                   /* declare the string */
 
-  for (i = 0; i &lt; descr-&gt;nb_tabs; i++) {
-    descr-&gt;tabs[i] = *p++&lt;&lt;1; 
+  for (i = 0; i &lt; descr->nb_tabs; i++) {
+    descr->tabs[i] = *p++&lt;&lt;1; 
     if(TRACING(listbox))                         /* write in it only if
-      dsprintf(listbox, "%hd ", descr-&gt;tabs[i]); /* we are gonna output it */
+      dsprintf(listbox, "%hd ", descr->tabs[i]); /* we are gonna output it */
   }
   TRACE(listbox, "Listbox %04x: settabstops %s", 
-	wnd-&gt;hwndSelf, dbg_str(listbox));        /* output the whole thing */
+	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
 }
         </programlisting>
         <para>
@@ -390,23 +387,23 @@ void some_func(tabs)
   LPINT16 p = (LPINT16)tabs;
   dbg_decl_str(listbox, 256);                   /* declare the string      */
 
-  for (i = 0; i &lt; descr-&gt;nb_tabs; i++) {
-    descr-&gt;tabs[i] = *p++&lt;&lt;1;  
+  for (i = 0; i &lt; descr->nb_tabs; i++) {
+    descr->tabs[i] = *p++&lt;&lt;1;  
     if(TRACING(listbox))                         /* write in it only if
-      dsprintf(listbox, "%hd ", descr-&gt;tabs[i]); /* we are gonna output it */
+      dsprintf(listbox, "%hd ", descr->tabs[i]); /* we are gonna output it */
   }
   TRACE(listbox, "Listbox %04x: settabstops %s\n", 
-	wnd-&gt;hwndSelf, dbg_str(listbox));        /* output the whole thing */
+	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
 
   dbg_reset_str(listbox);                        /* !!!reset the string!!! */
-  for (i = 0; i &lt; descr-&gt;extrainfo_nr; i++) {
-    descr-&gt;extrainfo = *p+1; 
+  for (i = 0; i &lt; descr->extrainfo_nr; i++) {
+    descr->extrainfo = *p+1; 
     if(TRACING(listbox))                         /* write in it only if
-      dsprintf(listbox,"%3d ",descr-&gt;extrainfo); /* we are gonna output it */
+      dsprintf(listbox,"%3d ",descr->extrainfo); /* we are gonna output it */
   }
 
   TRACE(listbox, "Listbox %04x: extrainfo %s\n", 
-	wnd-&gt;hwndSelf, dbg_str(listbox));        /* output the whole thing */
+	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
 
 }
         </programlisting>
@@ -459,9 +456,9 @@ if(YYY(xxx))
             </listitem>
           </itemizedlist>
         </important>
-      </sect2>
+      </sect1>
 
-      <sect2>
+      <sect1 id="dbg-resource-ids">
         <title>Resource identifiers</title>
 
         <para>
@@ -497,7 +494,7 @@ LPSTR debugres(const void *id);
           returns a string of the form:
         </para>
         <programlisting>
-'&lt;identifier&gt;'
+'&lt;identifier>'
         </programlisting>
         <para>
           Thus, to use it, do something on the following lines:
@@ -509,9 +506,9 @@ LPSTR debugres(const void *id);
 
    YYY(xxx, "resource is %s", debugres(myresource));
         </programlisting>
-      </sect2>
+      </sect1>
 
-      <sect2>
+      <sect1 id="dbg-param">
         <title>The <parameter>--debugmsg</parameter> command line option</title>
 
         <para>
@@ -598,9 +595,9 @@ LPSTR debugres(const void *id);
               default</para>
           </listitem>
         </itemizedlist>
-      </sect2>
+      </sect1>
 
-      <sect2>
+      <sect1 id="dbg-compiling">
         <title>Compiling Out Debugging Messages</title>
 
         <para>
@@ -620,9 +617,9 @@ LPSTR debugres(const void *id);
           This feature has not been extensively tested--it may subtly
           break some things.
         </para>
-      </sect2>
+      </sect1>
 
-      <sect2>
+      <sect1 id="dbg-notes">
         <title>A Few Notes on Style</title>
 
         <para>
@@ -632,7 +629,7 @@ LPSTR debugres(const void *id);
           output format is the following:
         </para>
         <screen>
-yyy:xxx:fff &lt;message&gt;
+yyy:xxx:fff &lt;message>
 
 where: 
   yyy = the class (fixme, err, warn, trace)
@@ -641,7 +638,7 @@ where:
         </screen>
         <para>
           these fields are output automatically. All you have to
-          provide is the &lt;message&gt; part.
+          provide is the &lt;message> part.
         </para>
         <para>
           So here are some ideas:
@@ -780,777 +777,13 @@ MSG( "Definition of drive %d is incorrect!\n", drive );
             </para>
           </listitem>
         </itemizedlist>
-      </sect2>
-    </sect1>
+      </sect1>
 
-    <sect1 id="wine-debugger">
-      <title>Using the Wine Debugger</title>
-
-      <para>
-        written by Marcus Meissner <email>msmeissn@cip.informatik.uni-erlangen.de</email>,
-        additions welcome.
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/debugging</filename>)
-      </para>
-
-      <para>
-        This file describes where to start debugging Wine. If at any
-        point you get stuck and want to ask for help, please read the
-        file <filename>documentation/bugreports</filename> for
-        information on how to write useful bug reports.
-      </para>
-
-      <sect2>
-        <title>Crashes</title>
-
-        <para>
-          These usually show up like this:
-        </para>
-        <screen>
-|Unexpected Windows program segfault - opcode = 8b
-|Segmentation fault in Windows program 1b7:c41.
-|Loading symbols from ELF file /root/wine/wine...
-|....more Loading symbols from ...
-|In 16 bit mode.
-|Register dump:
-| CS:01b7 SS:016f DS:0287 ES:0000
-| IP:0c41 SP:878a BP:8796 FLAGS:0246
-| AX:811e BX:0000 CX:0000 DX:0000 SI:0001 DI:ffff
-|Stack dump:
-|0x016f:0x878a:  0001 016f ffed 0000 0000 0287 890b 1e5b
-|0x016f:0x879a:  01b7 0001 000d 1050 08b7 016f 0001 000d
-|0x016f:0x87aa:  000a 0003 0004 0000 0007 0007 0190 0000
-|0x016f:0x87ba:
-|
-|0050: sel=0287 base=40211d30 limit=0b93f (bytes) 16-bit rw-
-|Backtrace:
-|0 0x01b7:0x0c41 (PXSRV_FONGETFACENAME+0x7c)
-|1 0x01b7:0x1e5b (PXSRV_FONPUTCATFONT+0x2cd)
-|2 0x01a7:0x05aa
-|3 0x01b7:0x0768 (PXSRV_FONINITFONTS+0x81)
-|4 0x014f:0x03ed (PDOXWIN_@SQLCURCB$Q6CBTYPEULN8CBSCTYPE+0x1b1)
-|5 0x013f:0x00ac
-|
-|0x01b7:0x0c41 (PXSRV_FONGETFACENAME+0x7c):  movw        %es:0x38(%bx),%dx
-        </screen>
-        <para>
-          Steps to debug a crash. You may stop at any step, but please
-          report the bug and provide as much of the information
-          gathered to the newsgroup or the relevant developer as
-          feasible.
-        </para>
-
-        <orderedlist>
-          <listitem>
-            <para>
-              Get the reason for the crash. This is usually an access to
-              an invalid selector, an access to an out of range address
-              in a valid selector, popping a segmentregister from the
-              stack or the like. When reporting a crash, report this
-              <emphasis>whole</emphasis> crashdump even if it doesn't
-              make sense to you.
-            </para>
-            <para>
-              (In this case it is access to an invalid selector, for
-              <systemitem>%es</systemitem> is <literal>0000</literal>, as
-              seen in the register dump).
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Determine the cause of the crash. Since this is usually
-              a primary/secondary reaction to a failed or misbehaving
-              Wine function, rerun Wine with <parameter>-debugmsg
-                +relay</parameter> added to the commandline. This will
-              generate quite a lot of output, but usually the reason is
-              located in the last call(s).  Those lines usually look like
-              this:
-            </para>
-            <screen>
-|Call KERNEL.90: LSTRLEN(0227:0692 "text") ret=01e7:2ce7 ds=0227
-      ^^^^^^^^^  ^       ^^^^^^^^^ ^^^^^^      ^^^^^^^^^    ^^^^
-      |          |       |         |           |            |Datasegment
-      |          |       |         |           |Return address
-      |          |       |         |textual parameter
-      |          |       |
-      |          |       |Argument(s). This one is a win16 segmented pointer.
-      |          |Function called.
-      |The module, the function is called in. In this case it is KERNEL.
-		        
-|Ret  KERNEL.90: LSTRLEN() retval=0x0004 ret=01e7:2ce7 ds=0227
-                                  ^^^^^^
-				  |Returnvalue is 16 bit and has the value 4.
-            </screen>
-          </listitem>
-          <listitem>
-            <para>
-              If you have found a misbehaving function, try to find out
-              why it misbehaves. Find the function in the source code.
-              Try to make sense of the arguments passed. Usually there is
-              a <function>TRACE(&lt;channel&gt;,"(...)\n");</function> at
-              the beginning of the function. Rerun wine with
-              <parameter>-debugmsg +xyz,+relay</parameter> added to the
-              commandline.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Additional information on how to debug using the internal
-              debugger can be  found in
-              <filename>debugger/README</filename>.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              If this information isn't clear enough or if you want to
-              know more about what's happening in the function itself,
-              try running wine with <parameter>-debugmsg
-                +all</parameter>, which dumps ALL included debug
-              information in wine.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              If even that isn't enough, add more debug output for
-              yourself into the functions you find relevant.  See
-              <filename>documentation/debug-msgs</filename>. You might
-              also try to run the program in <command>gdb</command>
-              instead of using the WINE-debugger. If you do that, use
-              <parameter>handle SIGSEGV nostop noprint</parameter> to
-              disable the handling of seg faults inside
-              <command>gdb</command> (needed for Win16). If you don't use
-              the <parameter>--desktop</parameter> or
-              <parameter>--managed</parameter> option, start the WINE
-              process with <parameter>--sync</parameter>, or chances are
-              good to get X into an unusable state.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              You can also set a breakpoint for that function. Start wine
-              with the <parameter>--debug</parameter> option added to the
-              commandline. After loading the executable wine will enter
-              the internal debugger. Use <parameter>break
-                KERNEL_LSTRLEN</parameter> (replace by function you want
-              to debug, CASE IS RELEVANT) to set a breakpoint.  Then use
-              <command>continue</command> to start normal
-              program-execution. Wine will stop if it reaches the
-              breakpoint. If the program isn't yet at the crashing call
-              of that function, use <command>continue</command> again
-              until you are about to enter that function. You may now
-              proceed with single-stepping the function until you reach
-              the point of crash. Use the other debugger commands to
-              print registers and the like.
-            </para>
-          </listitem>
-        </orderedlist>
-      </sect2>
-
-      <sect2>
-        <title>Program hangs, nothing happens</title>
-
-        <para>
-          Switch to UNIX shell, get the process-ID using <command>ps -a |
-            grep wine</command>, and do a <command>kill -HUP
-            &lt;pid&gt;</command> (without the &lt; and &gt;). Wine will
-          then enter its internal debugger and you can proceed as
-          explained above. Also, you can use
-          <parameter>--debug</parameter> switch and then you can get into
-          internal debugger by pressing 
-          <keycombo><keycap>Ctrl</keycap><keycap>C</keycap></keycombo> in
-          the terminal where you run Wine.
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>Program reports an error with a Messagebox</title>
-
-        <para>
-          Sometimes programs are reporting failure using more or
-          less nondescript messageboxes. We can debug this using the
-          same method as Crashes, but there is one problem... For
-          setting up a message box the program also calls Wine
-          producing huge chunks of debug code.
-        </para>
-        <para>
-          Since the failure happens usually directly before setting up
-          the Messagebox you can start wine with
-          <parameter>--debug</parameter> added to the commandline, set a
-          breakpoint at <function>MessageBoxA</function> (called by win16
-          and win32 programs) and proceed with
-          <command>continue</command>. With <parameter>--debugmsg
-            +all</parameter> Wine will now stop directly before setting
-          up the Messagebox. Proceed as explained above.
-        </para>
-        <para>
-          You can also run wine using <command>wine -debugmsg +relay
-            program.exe 2&gt;&1 | less -i</command> and in
-          <command>less</command> search for <quote>MessageBox</quote>.
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>Disassembling programs:</title>
-
-        <para>
-          You may also try to disassemble the offending program to
-          check for undocumented features and/or use of them.
-        </para>
-        <para>
-          The best, freely available, disassembler for Win16 programs is
-          <application>Windows Codeback</application>, archivename
-          <filename>wcbxxx.zip</filename>, which usually can be found in
-          the <filename>Cica-Mirror</filename> subdirectory on the WINE
-          ftpsites. (See <filename>ANNOUNCE</filename>).
-        </para>
-        <para>
-          Disassembling win32 programs is possible using
-          <application>Windows Disassembler 32</application>, archivename
-          something like <filename>w32dsm87.zip</filename> (or similar)
-          on <systemitem class="systemname">ftp.winsite.com</systemitem>
-          and mirrors.  The shareware version does not allow saving of
-          disassembly listings. You can also use the newer (and in the
-          full version better) <application>Interactive
-            Disassembler</application> (IDA) from the ftp sites mentioned
-          at the end of the document. Understanding disassembled code is
-          mostly a question of exercise.
-        </para>
-        <para>
-          Most code out there uses standard C function entries (for it
-          is usually  written in C). Win16 function entries usually
-          look like that:
-        </para>
-        <programlisting>
-push bp
-mov bp, sp
-... function code ..
-retf XXXX 	&lt;--------- XXXX is number of bytes of arguments
-        </programlisting>
-        <para>
-          This is a <function>FAR</function> function with no local
-          storage. The arguments usually start at
-          <literal>[bp+6]</literal> with increasing offsets. Note, that
-          <literal>[bp+6]</literal> belongs to the
-          <emphasis>rightmost</emphasis> argument, for exported win16
-          functions use the PASCAL calling convention. So, if we use
-          <function>strcmp(a,b)</function> with <parameter>a</parameter>
-          and <parameter>b</parameter> both 32 bit variables
-          <parameter>b</parameter> would be at <literal>[bp+6]</literal>
-          and <parameter>a</parameter> at <literal>[bp+10]</literal>.
-        </para>
-        <para>
-          Most functions make also use of local storage in the stackframe:
-        </para>
-        <programlisting>
-enter 0086, 00
-... function code ...
-leave
-retf XXXX
-        </programlisting>
-        <para>
-          This does mostly the same as above, but also adds
-          <literal>0x86</literal> bytes of stackstorage, which is
-          accessed using <literal>[bp-xx]</literal>. Before calling a
-          function, arguments are pushed on the stack using something
-          like this:
-        </para>
-        <programlisting>
-push word ptr [bp-02]	&lt;- will be at [bp+8]
-push di			&lt;- will be at [bp+6]
-call KERNEL.LSTRLEN
-        </programlisting>
-        <para>
-          Here first the selector and then the offset to the passed
-          string are pushed.
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>Sample debugging session:</title>
-
-        <para>
-          Let's debug the infamous Word <filename>SHARE.EXE</filename>
-          messagebox: 
-        </para>
-        <screen>
-|marcus@jet $ wine winword.exe
-|            +---------------------------------------------+
-|            | !  You must leave Windows and load SHARE.EXE|
-|            |    before starting Word.                    |
-|            +---------------------------------------------+
-        </screen>
-        <screen>
-|marcus@jet $ wine winword.exe -debugmsg +relay -debug
-|CallTo32(wndproc=0x40065bc0,hwnd=000001ac,msg=00000081,wp=00000000,lp=00000000)
-|Win16 task 'winword': Breakpoint 1 at 0x01d7:0x001a
-|CallTo16(func=0127:0070,ds=0927)
-|Call WPROCS.24: TASK_RESCHEDULE() ret=00b7:1456 ds=0927
-|Ret  WPROCS.24: TASK_RESCHEDULE() retval=0x8672 ret=00b7:1456 ds=0927
-|CallTo16(func=01d7:001a,ds=0927)
-|     AX=0000 BX=3cb4 CX=1f40 DX=0000 SI=0000 DI=0927 BP=0000 ES=11f7
-|Loading symbols: /home/marcus/wine/wine...
-|Stopped on breakpoint 1 at 0x01d7:0x001a
-|In 16 bit mode.
-|Wine-dbg&gt;break MessageBoxA                          &lt;---- Set Breakpoint
-|Breakpoint 2 at 0x40189100 (MessageBoxA [msgbox.c:190])
-|Wine-dbg&gt;c                                            &lt;---- Continue
-|Call KERNEL.91: INITTASK() ret=0157:0022 ds=08a7
-|     AX=0000 BX=3cb4 CX=1f40 DX=0000 SI=0000 DI=08a7 ES=11d7 EFL=00000286
-|CallTo16(func=090f:085c,ds=0dcf,0x0000,0x0000,0x0000,0x0000,0x0800,0x0000,0x0000,0x0dcf)
-|...                                                   &lt;----- Much debugoutput
-|Call KERNEL.136: GETDRIVETYPE(0x0000) ret=060f:097b ds=0927
-                               ^^^^^^ Drive 0 (A:)
-|Ret  KERNEL.136: GETDRIVETYPE() retval=0x0002 ret=060f:097b ds=0927
-                                        ^^^^^^  DRIVE_REMOVEABLE
-						(It is a floppy diskdrive.)
-
-|Call KERNEL.136: GETDRIVETYPE(0x0001) ret=060f:097b ds=0927
-                               ^^^^^^ Drive 1 (B:)
-|Ret  KERNEL.136: GETDRIVETYPE() retval=0x0000 ret=060f:097b ds=0927
-                                        ^^^^^^  DRIVE_CANNOTDETERMINE
-						(I don't have drive B: assigned)
-
-|Call KERNEL.136: GETDRIVETYPE(0x0002) ret=060f:097b ds=0927
-                               ^^^^^^^ Drive 2 (C:)
-|Ret  KERNEL.136: GETDRIVETYPE() retval=0x0003 ret=060f:097b ds=0927
-                                        ^^^^^^ DRIVE_FIXED
-                                               (specified as a harddisk)
-
-|Call KERNEL.97: GETTEMPFILENAME(0x00c3,0x09278364"doc",0x0000,0927:8248) ret=060f:09b1 ds=0927
-                                 ^^^^^^           ^^^^^        ^^^^^^^^^
-                                 |                |            |buffer for fname
-                                 |                |temporary name ~docXXXX.tmp
-                                 |Force use of Drive C:.
-
-|Warning: GetTempFileName returns 'C:~doc9281.tmp', which doesn't seem to be writeable.
-|Please check your configuration file if this generates a failure.
-        </screen>
-        <para>
-          Whoops, it even detects that something is wrong!
-        </para>
-        <screen>
-|Ret  KERNEL.97: GETTEMPFILENAME() retval=0x9281 ret=060f:09b1 ds=0927
-                                          ^^^^^^ Temporary storage ID
-
-|Call KERNEL.74: OPENFILE(0x09278248"C:~doc9281.tmp",0927:82da,0x1012) ret=060f:09d8 ds=0927
-                                    ^^^^^^^^^^^^^^^^ ^^^^^^^^^ ^^^^^^^
-                                    |filename        |OFSTRUCT |open mode:
-
-                                       OF_CREATE|OF_SHARE_EXCLUSIVE|OF_READWRITE
-        </screen>
-        <para>
-          This fails, since my <medialabel>C:</medialabel> drive is in
-          this case mounted readonly.
-        </para>
-        <screen>
-|Ret  KERNEL.74: OPENFILE() retval=0xffff ret=060f:09d8 ds=0927
-                                   ^^^^^^ HFILE_ERROR16, yes, it failed.
-
-|Call USER.1: MESSAGEBOX(0x0000,0x09278376"Sie mussen Windows verlassen und SHARE.EXE laden bevor Sie Word starten.",0x00000000,0x1030) ret=060f:084f ds=0927
-        </screen>           
-        <para>
-          And MessageBox'ed.
-        </para>
-        <screen>
-|Stopped on breakpoint 2 at 0x40189100 (MessageBoxA [msgbox.c:190])
-|190     {		&lt;- the sourceline
-In 32 bit mode.
-Wine-dbg&gt;
-        </screen>
-        <para>
-          The code seems to find a writeable harddisk and tries to create
-          a file there. To work around this bug, you can define
-          <medialabel>C:</medialabel> as a networkdrive, which is ignored
-          by the code above.
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>Debugging Tips</title>
-
-        <para>
-          Here are some useful debugging tips, added by Andreas Mohr:
-        </para>
-
-        <itemizedlist>
-          <listitem>
-            <para>
-              If you have a program crashing at such an early loader phase that you can't
-              use the Wine debugger normally, but Wine already executes the program's
-              start code, then you may use a special trick. You should do a
-              <programlisting>
-wine --debugmsg +relay program
-              </programlisting>
-              to get a listing of the functions the program calls in its start function.
-              Now you do a
-              <programlisting>
-wine --debug winfile.exe
-              </programlisting>
-            </para>
-            <para>
-              This way, you get into <command>Wine-dbg</command>. Now you
-              can set a breakpoint on any function the program calls in
-              the start function and just type <userinput>c</userinput>
-              to bypass the eventual calls of Winfile to this function
-              until you are finally at the place where this function gets
-              called by the crashing start function. Now you can proceed
-              with your debugging as usual.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              If you try to run a program and it quits after showing an error messagebox,
-              the problem can usually be identified in the return value of one of the
-              functions executed before <function>MessageBox()</function>.
-              That's why you should re-run the program with e.g.
-              <programlisting>
-wine --debugmsg +relay &lt;program name&gt; &&gt;relmsg
-              </programlisting>
-              Then do a <command>more relmsg</command> and search for the
-              last occurrence of a call to the string "MESSAGEBOX". This is a line like
-              <programlisting>
-Call USER.1: MESSAGEBOX(0x0000,0x01ff1246 "Runtime error 219 at 0004:1056.",0x00000000,0x1010) ret=01f7:2160 ds=01ff
-              </programlisting>
-              In my example the lines before the call to
-              <function>MessageBox()</function> look like that:
-              <programlisting>
-Call KERNEL.96: FREELIBRARY(0x0347) ret=01cf:1033 ds=01ff
-CallTo16(func=033f:0072,ds=01ff,0x0000)
-Ret  KERNEL.96: FREELIBRARY() retval=0x0001 ret=01cf:1033 ds=01ff
-Call KERNEL.96: FREELIBRARY(0x036f) ret=01cf:1043 ds=01ff
-CallTo16(func=0367:0072,ds=01ff,0x0000)
-Ret  KERNEL.96: FREELIBRARY() retval=0x0001 ret=01cf:1043 ds=01ff
-Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
-CallTo16(func=0317:0072,ds=01ff,0x0000)
-Ret  KERNEL.96: FREELIBRARY() retval=0x0001 ret=01cf:105c ds=01ff
-Call USER.171: WINHELP(0x02ac,0x01ff05b4 "COMET.HLP",0x0002,0x00000000) ret=01cf:1070 ds=01ff
-CallTo16(func=0117:0080,ds=01ff)
-Call WPROCS.24: TASK_RESCHEDULE() ret=00a7:0a2d ds=002b
-Ret  WPROCS.24: TASK_RESCHEDULE() retval=0x0000 ret=00a7:0a2d ds=002b
-Ret  USER.171: WINHELP() retval=0x0001 ret=01cf:1070 ds=01ff
-Call KERNEL.96: FREELIBRARY(0x01be) ret=01df:3e29 ds=01ff
-Ret  KERNEL.96: FREELIBRARY() retval=0x0000 ret=01df:3e29 ds=01ff
-Call KERNEL.52: FREEPROCINSTANCE(0x02cf00ba) ret=01f7:1460 ds=01ff
-Ret  KERNEL.52: FREEPROCINSTANCE() retval=0x0001 ret=01f7:1460 ds=01ff
-Call USER.1: MESSAGEBOX(0x0000,0x01ff1246 "Runtime error 219 at 0004:1056.",0x00000000,0x1010) ret=01f7:2160 ds=01ff
-              </programlisting>
-            </para>
-            <para>
-              I think that the call to <function>MessageBox()</function>
-              in this example is <emphasis>not</emphasis> caused by a
-              wrong result value of some previously executed function
-              (it's happening quite often like that), but instead the
-              messagebox complains about a runtime error at
-              <literal>0x0004:0x1056</literal>.
-            </para>
-            <para>
-              As the segment value of the address is only
-              <literal>4</literal>, I think that that is only an internal
-              program value. But the offset address reveals something
-              quite interesting: Offset <literal>1056</literal> is
-              <emphasis>very</emphasis> close to the return address of
-              <function>FREELIBRARY()</function>:
-              <programlisting>
-Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
-                                             ^^^^
-              </programlisting>
-            </para>
-            <para>
-              Provided that segment <literal>0x0004</literal> is indeed segment
-              <literal>0x1cf</literal>, we now we can use IDA                 (available at
-              <ulink url="ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip">
-                ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip</ulink>) to
-              disassemble the part that caused the error. We just have to find the address of
-              the call to <function>FreeLibrary()</function>. Some lines before that the
-              runtime error occurred. But be careful! In some cases you don't have to
-              disassemble the main program, but instead some DLL called by it in order to find
-              the correct place where the runtime error occurred. That can be determined by
-              finding the origin of the segment value (in this case <literal>0x1cf</literal>).
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              If you have created a relay file of some crashing
-              program and want to set a breakpoint at a certain
-              location which is not yet available as the program loads
-              the breakpoint's segment during execution, you may set a
-              breakpoint to <function>GetVersion16/32</function> as
-              those functions are called very often.
-            </para>
-            <para>
-              Then do a <userinput>c</userinput> until you are able to
-              set this breakpoint without error message.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Some useful programs:
-            </para>
-            <variablelist>
-              <varlistentry>
-                <term>
-                  <application>IDA</application>: 
-                  <filename>
-                    <ulink url="ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip">
-                      ftp://ftp.uni-koeln.de/pc/msdos/programming/assembler/ida35bx.zip</ulink>
-                  </filename>
-                </term>
-                <listitem>
-                  <para>
-                    *Very* good DOS disassembler ! It's badly needed
-                    for debugging Wine sometimes.
-                  </para>
-                </listitem>
-              </varlistentry>
-              <varlistentry>
-                <term>
-                  <application>XRAY</application>:
-                  <filename>
-                    <ulink url="ftp://ftp.th-darmstadt.de/pub/machines/ms-dos/SimTel/msdos/asmutil/xray15.zip">
-                      ftp://ftp.th-darmstadt.de/pub/machines/ms-dos/SimTel/msdos/asmutil/xray15.zip</ulink>
-                  </filename>
-                </term>
-                <listitem>
-                  <para>
-                    Traces DOS calls (Int 21h, DPMI, ...). Use it with
-                    Windows to correct file management problems etc.
-                  </para>
-                </listitem>
-              </varlistentry>
-              <varlistentry>
-                <term>
-                  <application>pedump</application>:
-                  <filename>
-                    <ulink url="http://oak.oakland.edu/pub/simtelnet/win95/prog/pedump.zip">
-                      http://oak.oakland.edu/pub/simtelnet/win95/prog/pedump.zip</ulink>
-                  </filename>
-                </term>
-                <listitem>
-                  <para>
-                    Dumps the imports and exports of a PE (Portable
-                    Executable) DLL.
-                  </para>
-                </listitem>
-              </varlistentry>
-            </variablelist>
-          </listitem>
-        </itemizedlist>
-      </sect2>
-
-      <sect2>
-    <title>Some basic debugger usages:</title>
-
-        <para>
-          After starting your program with
-        </para>
-        <screen>
-wine -debug myprog.exe
-        </screen>
-        <para>
-          the program loads and you get a prompt at the program
-          starting point. Then you can set breakpoints:
-        </para>
-        <screen>
-  b RoutineName      (by outine name) OR
-  b *0x812575        (by address)
-        </screen>
-        <para>
-          Then you hit <command>c</command> (continue) to run the
-          program. It stops at the breakpoint. You can type
-        </para>
-        <screen>
-  step               (to step one line) OR
-  stepi              (to step one machine instruction at a time;
-                      here, it helps to know the basic 386
-                      instruction set)
-  info reg           (to see registers)
-  info stack         (to see hex values in the stack)
-  info local         (to see local variables)
-  list &lt;line number&gt; (to list source code)
-  x &lt;variable name&gt;  (to examine a variable; only works if code
-                      is not compiled with optimization)
-  x 0x4269978        (to examine a memory location)
-  ?                  (help)
-  q                  (quit)
-        </screen>
-        <para>
-          By hitting <keycap>Enter</keycap>, you repeat the last
-          command.
-        </para>
-      </sect2>
-    </sect1>
-
-    <sect1 id="cvs-regression">
-      <title>How to do regression testing using Cvs</title>
-
-      <para>
-        written by Gerard Patel (???)
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/bugreports</filename>)
-      </para>
-
-      <para>
-        A problem that can happen sometimes is 'it used to work
-        before, now it doesn't anymore...'. Here is a step by step
-        procedure to try to pinpoint when the problem occured. This is
-        *NOT* for casual users.
-      </para>
-
-      <orderedlist>
-        <listitem>
-          <para>
-            Get the 'full cvs' archive from winehq. This archive is
-            the cvs tree but with the tags controling the versioning
-            system. It's a big file (> 15 meg) with a name like
-            full-cvs-&lt;last update date&gt; (it's more than 100mb
-            when uncompressed, you can't very well do this with
-            small, old computers or slow Internet connections).
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            untar it into a repository directory:
-            <screen>
-cd /home/gerard
-tar -zxffull-cvs-2000-05-20.tar.gz
-mv wine repository
-            </screen>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            extract a new destination directory. This directory must
-            not be in a subdirectory of the repository else
-            <command>cvs</command> will think it's part of the
-            repository and deny you an extraction in the repository:
-          <screen>
-cd /home/gerard
-mv wine wine_current (-> this protects your current wine sandbox, if any)
-export CVSROOT=/home/gerard/repository
-cd /home/gerard
-cvs -d $CVSROOT checkout wine
-          </screen>
-          </para>
-          <para>
-            Note that it's not possible to do a checkout at a given
-            date; you always do the checkout for the last date where
-            the full-cvs-xxx snapshot was generated.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            you will have now in the <filename>~/wine</filename>
-            directory an image of the cvs tree, on the client side.
-            Now update this image to the date you want:
-          <screen>
-cd /home/gerard/wine
-cvs -d $CVSROOT update -D "1999-06-01"   
-          </screen>
-          </para>
-          <para>
-            The date format is <literal>YYYY-MM-DD</literal>.
-          </para>
-          <para>
-            Many messages will inform you that more recent files have
-            been deleted to set back the client cvs tree to the date
-            you asked, for example:
-          <screen>
-cvs update: tsx11/ts_xf86dga2.c is no longer in the repository
-          </screen>
-          </para>
-          <para>
-            <command>cvs update</command> is not limited to upgrade to
-            a *newer* version as I have believed for far too long :-(
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Now proceed as for a normal update:
-          </para>
-          <screen>
-./configure
-make depend && make
-          </screen>
-          <para>
-            When you have found the exact date when a bug was added to
-            the cvs tree, use something like :
-          <screen>
-cvs -d $CVSROOT diff -D "1999-07-10" -D "1999-07-12"
-          </screen>
-            to get all the differences between the last cvs tree
-            version known to work and code that first displayed the
-            misbehavior.
-          </para>
-          <note>
-            <para>
-              I did not include flags for <command>diff</command>
-              since they are in my <filename>.cvsrc</filename> file:
-            </para>
-            <screen>
-cvs -z 3
-update -dPA
-diff -u
-            </screen>
-          </note>
-          <para>
-            From this diff file, particularly the file names, and the
-            <filename>ChangeLog</filename>, it's usually possible to
-            find the different individual patches that were done at
-            this time. 
-          </para>
-          <para>
-            If any non-programmer reads this, the fastest method to get
-            at the point where the problem occured is to use a binary
-            search, that is, if the problem occured in 1999, start at
-            mid-year, then is the problem is already here, back to 1st
-            April, if not, to 1st October, and so on.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            The next step is to start from the last working version
-            and to dig the individual contributions from
-            <ulink url="http://www.integrita.com/cgi-local/lwgate.pl/WINE-PATCHES/">
-              http://www.integrita.com/cgi-local/lwgate.pl/WINE-PATCHES/</ulink>
-            (where the Wine patches mailing list is archived)
-          </para>
-          <para>
-            If the patch was done by the Wine maintainer or if it was
-            sent directly to his mail address without going first through 
-           <ulink url="mailto:wine-patches@winehq.com">wine-patches</ulink>,
-            you are out of luck as you will never find the patch in
-            the archive. If it is, it's often possible to apply the
-            patches one by one to last working cvs snapshot, compile and test.
-            If you have saved the next candidate as
-            <filename>/home/gerard/buggedpatch1.txt</filename>:
-          </para>
-          <screen>
-cd /home/gerard/wine
-patch -p 0 &lt; /home/gerard/buggedpatch1.txt
-          </screen>
-          <para>
-            Beware that the committed patch is not always identical to
-            the patch that the author sent to wine-patches, as
-            sometimes the Wine maintainer changes things a bit.
-          </para>
-          <para>
-            If you find one patch that is getting the cvs source tree to
-            reproduce the problem, you have almost won; post the problem on
-            <systemitem>comp.emulators.windows.wine</systemitem> and there
-            is a chance that the author will jump in to suggest a fix; or
-            there is always the possibility to look hard at the patch until
-            it is coerced to reveal where is the bug :-) 
-          </para>
-        </listitem>
-      </orderedlist>
-    </sect1>
   </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

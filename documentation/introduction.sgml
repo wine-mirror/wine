@@ -1,0 +1,259 @@
+  <chapter id="introduction">
+    <title>Introduction</title>
+
+    <sect1 id="what-is-wine">
+      <title>What is Wine?</title>
+
+      <para>
+        Written by &name-john-sheets; <email>&email-john-sheets;</email>
+      </para>
+
+      <sect2>
+        <title>Windows and Linux</title>
+        <!-- general description of wine, what does it do? -->
+        <para>
+          Many people have faced the frustration of owning software that
+          won't run on their computer.  With the recent popularity of
+          Linux, this is happening more and more often because of
+          differing operating systems.  Your Windows software won't run
+          on Linux, and your Linux software won't run in Windows.
+        </para>
+        <para>
+          A common solution to this problem is to install both operating
+          systems on the same computer, as a <quote>dual boot</quote>
+          system.  If you want to write a document in MS Word, you can
+          boot up in Windows; if you want to run the GnuCash, the GNOME
+          financial application, you can shut down your Windows session
+          and reboot into Linux.  The problem with this is that you
+          can't do both at the same time.  Each time you switch back and
+          forth between MS Word and GnuCash, you have to reboot again.
+          This can get tiresome quickly.
+        </para>
+        <para>
+          Life would be so much easier if you could run all your
+          applications on the same system, regardless of whether they
+          are written for Windows or for Linux.  On Windows, this isn't
+          really possible.
+          <footnote>
+            <para>
+              Technically, if you have two networked computers, one
+              running Windows and the other running Linux, and if you
+              have some sort of X server software running on the Windows
+              system, you can export Linux applications onto the Windows
+              system.  Unfortunately, most decent win32 X servers are
+              commercial products, many of which cost quite a lot.
+              However, this doesn't solve the problem if you only own
+              one computer system.
+            </para>
+          </footnote>
+          However, Wine makes it possible to run native Windows
+          applications alongside native Linux applications on a Linux
+          (or Solaris) system.  You can share desktop space between MS
+          Word and GnuCash, overlapping their windows, iconizing them,
+          and even running them from the same launcher.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Emulation versus Native Linking</title>
+        <!-- emulator vs. Winelib -->
+        <para>
+          Wine is a UNIX implementation of the win32 libraries,
+          written from scratch by hundreds of volunteer developers and
+          released under an open source license.  Anyone can download
+          and read through the source code, and fix bugs that arise.
+          The Wine community is full of richly talented programmers
+          who have spent thousands of hours of personal time on
+          improving Wine so that it works well with the win32
+          <firstterm>Applications Programming Interface</firstterm>
+          (API), and keeps pace with new developments from Microsoft.
+        </para>
+        <para>
+          Wine can run applications in two discrete ways: as
+          pre-compiled Windows binaries, or as natively compiled X11
+          (X Window System) applications.  The former method uses
+          emulation to connect a Windows application to the Wine
+          libraries.  You can run your Windows application directly
+          with the emulator, by installing through Wine or by simply
+          copying the Windows executables onto your Linux system.
+        </para>
+        <para>
+          The other way to run Windows applications with Wine requires
+          that you have the source code for the application.  Instead
+          of compiling it with native Windows compilers, you can
+          compile it with a native Linux compiler --
+          <command>gcc</command> for example -- and link in the Wine
+          Libraries as you would with any other native UNIX
+          application.  These natively linked applications are
+          referred to as Winelib applications.
+        </para>
+        <para>
+          The Wine Users Guide will focus on running precompiled
+          Windows applications using the Wine emulator.
+          <ulink url="http://wine.codeweavers.com/docs/winelib-user/">
+            The Winelib Users Guide</ulink> will cover Winelib
+            applications.
+        </para>
+
+        <!-- the development model -->
+        <para>
+        </para>
+      </sect2>
+    </sect1>
+
+<!-- *** Not really useful as is, but may be able to recycle this elsewhere...
+    <sect1 id="getting-started">
+      <title>Getting started</title>
+
+      <para>
+        Written by &name-john-sheets; <email>&email-john-sheets;</email>
+      </para>
+
+      <para>
+        Wine can be pretty intimidating at first.  The Wine
+        distribution consists of over two thousand files and half a
+        million lines of source code
+        <footnote>
+          <para>Crudely calculated from running <command>find . | wc
+              -l</command> and <command>cat `find . -name "*.c"` | wc
+              -l</command>, respectively, from a fresh CVS checkout.</para>
+        </footnote>,
+        and is probably one of the steepest learning curves in the
+        open source world.  This chapter will give you a crash course
+        in the important topics you need to know to get started with
+        running Wine applications.
+      </para>
+    </sect1>
+-->
+
+    <sect1 id="wine-stats">
+      <title>Wine Requirements and Features</title>
+
+      <para>
+        Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
+      </para>
+
+      <sect2 id="system-requirements">
+        <title>System requirements</title>
+        <para>
+          In order to run Wine, you need the following:
+        </para>
+        <para>
+          <itemizedlist>
+            <listitem>
+              <para>
+                a computer ;-) Wine: only PCs >= i386 are supported at
+                the moment.  Winelib: other platforms might be
+                supported, but can be tricky.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                a UNIX-like operating system such as Linux, *BSD,
+                Solaris x86
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                >= 16MB of RAM.  Everything below is pretty much
+                unusable.  >= 64 MB is needed for a "good" execution.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                an X11 window system (XFree86 etc.).  Wine is prepared
+                for other graphics display drivers, but writing
+                support is not too easy.  The text console display
+                driver is nearly usable.
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+      </sect2>
+
+      <sect2 id="wine-capabilities">
+        <title>Wine capabilities</title>
+
+        <para>
+          Now that you hopefully managed to fulfill the requirements
+          mentioned above, we tell you what Wine is able to do/support:
+        </para>
+        <para>
+          <itemizedlist>
+            <listitem>
+              <para>
+                Support for executing DOS, Win 3.x and Win9x/NT/Win2000
+                programs (most of Win32's controls are supported)
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Optional use of external vendor DLLs (e.g. original
+                Windows DLLs)
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                X11-based graphics display (remote display to any X
+                terminal possible), text mode console
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Desktop-in-a-box or mixable windows
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Pretty advanced DirectX support for games
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Good support for sound, alternative input devices
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Printing: supports native Win16 printer drivers,
+                Internal PostScript driver
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Modems, serial devices are supported
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Winsock TCP/IP networking
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                ASPI interface (SCSI) support for scanners, CD writers,
+                ...
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Unicode support, relatively advanced language support
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Wine debugger and configurable trace logging messages
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+      </sect2>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "set" "book" "chapter" "")
+End:
+-->

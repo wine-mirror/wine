@@ -1,5 +1,5 @@
-    <chapter id="dlls">
-      <title>Wine Builtin DLLs</title>
+  <chapter id="dlls">
+    <title>Wine Builtin DLLs Overview</title>
     <para>A more detailed look at Wine's builtin DLLs...</para>
 
     <sect1 id="common-controls">
@@ -11,7 +11,7 @@
       </bridgehead>
 
       <para>
-        written by Eric Kohl &lt;ekohl@abo.rhein-zeitung.de&gt;
+        Written by &name-eric-kohl; <email>&email-eric-kohl;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/common_controls</filename>)
@@ -180,7 +180,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Dummy written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -205,7 +207,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Dummy written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -230,7 +234,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Dummy written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -255,7 +261,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Dummy written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -280,7 +288,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Alex Priem. &lt;alexp@sci.kun.nl&gt;</para>
+                <para>
+                  Dummy written by &name-alex-priem; <email>&email-alex-priem;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -305,7 +315,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Eric Kohl &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Dummy written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -334,7 +346,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -359,7 +373,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Eric Kohl &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Dummy written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -378,9 +394,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>
-                  Dummy written by Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;,
-                  Alex Priem &lt;alexp@sci.kun.nl&gt;
+                 <para>
+                  Dummy written by &name-eric-kohl; <email>&email-eric-kohl;</email>,
+                  &name-alex-priem; <email>&email-alex-priem;</email>
                 </para>
               </listitem>
             </varlistentry>
@@ -403,16 +419,19 @@
                 <para>Dummy written by: </para>
                 <itemizedlist>
                   <listitem>
-                    <para>Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                    <para>
+                      Written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                    </para>
                   </listitem>
                   <listitem>
-                    <para>Luc Tourangeau &lt;luc@macadamian.com&gt;</para>
+                    <para>&name-luc-tourangeau; <email>&email-luc-tourangeau;</email></para>
                   </listitem>
                   <listitem>
-                    <para>Koen Deforche &lt;jozef@kotnet.org&gt;</para>
+                    <para>&name-koen-deforche; <email>&email-koen-deforche;</email></para>
                   </listitem>
                   <listitem>
-                    <para>Francis Beaudet &lt;francis@macadamian.com&gt; and the "Corel-Team"</para>
+                    <para>&name-francis-beaudet; <email>&email-francis-beaudet;</email>
+                      and the "Corel Team"</para>
                   </listitem>
                 </itemizedlist>
               </listitem>
@@ -443,7 +462,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -468,7 +489,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -493,7 +516,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Eric Kohl. &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -543,8 +568,8 @@
               <term>Author:</term>
               <listitem>
                 <para>
-                  Anders Carlsson &lt;anders.carlsson@linux.nu&gt; and
-                  Francis Beaudet &lt;francis@macadamian.com&gt;
+                  &name-anders-carlsson; <email>&email-anders-carlsson;</email> and
+                  &name-francis-beaudet; <email>&email-francis-beaudet;</email>
                 </para>
               </listitem>
             </varlistentry>
@@ -570,7 +595,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Eric Kohl &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -623,7 +650,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Anders Carlsson &lt;anders.carlsson@linux.nu&gt;</para>
+                <para>
+                  &name-anders-carlsson; <email>&email-anders-carlsson;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -642,7 +671,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Eric Kohl &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -664,7 +695,9 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Eric Kohl &lt;ekohl@abo.rhein-zeitung.de&gt;</para>
+                <para>
+                  Written by &name-eric-kohl; <email>&email-eric-kohl;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -691,8 +724,8 @@
               <term>Author:</term>
               <listitem>
                 <para>
-                  Dummy written by Eric Kohl &lt;ekohl@abo.rhein-zeitung.de&gt;,
-                  Alex Priem &lt;alexp@sci.kun.nl&gt;
+                  Written by &name-eric-kohl; <email>&email-eric-kohl;</email> and 
+                  &name-alex-priem; <email>&email-alex-priem;</email>
                 </para>
               </listitem>
             </varlistentry>
@@ -712,13 +745,17 @@
             <varlistentry>
               <term>Author:</term>
               <listitem>
-                <para>Dummy written by Eric Kohl., Alex Priem &lt;alexp@sci.kun.nl&gt;</para>
+                <para>
+                  Written by &name-eric-kohl; <email>&email-eric-kohl;</email> and 
+                  &name-alex-priem; <email>&email-alex-priem;</email>, fixes by
+                  &name-aric-stewart; <email>&email-aric-stewart;</email>
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Under construction.</para>
+                <para>Quite usable already.</para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -733,7 +770,7 @@
               <listitem>
                 <para>
                   Original implementation by Dimitrie O. Paun.
-                  Some minor changes by Eric Kohl &lt;ekohl@abo.rhein-zeitung.de&gt;.
+                  Some minor changes by &name-eric-kohl; <email>&email-eric-kohl;</email>.
                 </para>
               </listitem>
             </varlistentry>
@@ -798,7 +835,7 @@
         </para>
 
         <sect3>
-          <title>5.1 Dymnamic Storage Array (DSA)</title>
+          <title>5.1 Dynamic Storage Array (DSA)</title>
 
           <para>
             The DSA functions are used to store and manage dynamic
@@ -903,6 +940,6 @@
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

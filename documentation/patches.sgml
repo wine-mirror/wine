@@ -1,11 +1,78 @@
-    <chapter id="patches">
-      <title>Submitting Patches</title>
-    <para>How to create patches, and where to send them...</para>
-    </chapter>
+  <chapter id="patches">
+    <title>Submitting Patches</title>
+
+    <para>
+      Written by &name-albert-den-haan; <email>&email-albert-den-haan;</email>
+    </para>
+    <sect1 id="patch-format">
+      <title>Patch Format</title>
+
+      <para>
+        Your patch should include:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            a description of what was wrong and what is now better
+            (and now broken :).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            your contact information ( Name/Handle and e-mail )
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            the patch in <command>diff -u</command> format (it happens...)
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        <command>cvs diff -u</command> works great for the common case
+        where a file is edited.  However, if you add or remove a file
+        <command>cvs diff</command> will not report that correctly so
+        make sure you explicitly take care of this rare case.
+      </para>
+      <para>
+        For additions: mention that you have some new files and
+        include them as either separate attachments or by appending
+        <command>diff -Nu</command> of them to any <command>cvs diff
+          -u</command> output you may have.
+      </para>
+      <para>
+        For removals, list the files.
+      </para>
+    </sect1>
+
+    <sect1 id="patch-quality">
+      <title>Quality Assurance</title>
+
+      <para>
+        (Or, "How do I get Alexandre to apply my patch quickly so I
+        can build on it and it will not go stale?")
+      </para>
+      <para>
+        Make sure your patch applies to the current CVS head
+        revisions.  If a bunch of patches are commited to CVS that may
+        affect whether your patch will apply cleanly then verify that
+        your patch does apply!   <command>cvs update</command> is your
+        friend!
+      </para>
+      <para>
+        Save yourself some embarasment and run your patched code
+        against more than just your current test example.  Experience
+        will tell you how much effort to apply here.
+      </para>
+
+    </sect1>
+  </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

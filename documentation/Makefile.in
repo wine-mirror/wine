@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 BOOKNAME  = wine-doc
+DB2HTML   = $(SRCDIR)/db2html-winehq
 
 EXTRASUBDIRS = samples status
 
@@ -14,14 +15,18 @@ BOOK_SRCS = \
 	compiling.sgml \
 	configuring.sgml \
 	consoles.sgml \
+	cvs-regression.sgml \
 	debugger.sgml \
 	debugging.sgml \
 	dlls.sgml \
 	documentation.sgml \
 	fonts.sgml \
+	getting.sgml \
 	i18n.sgml \
 	implementation.sgml \
 	installing.sgml \
+	introduction.sgml \
+	ole.sgml \
 	opengl.sgml \
 	packaging.sgml \
 	patches.sgml \
@@ -42,13 +47,13 @@ all: $(BOOK_TARGETS)
 @MAKE_RULES@
 
 $(BOOKNAME)/index.html: $(BOOK_SRCS)
-	db2html $(BOOKNAME).sgml
+	$(DB2HTML) $(BOOKNAME).sgml
 
 $(BOOKNAME).pdf: $(BOOK_SRCS)
-	db2pdf $(BOOKNAME).sgml
+	db2pdf $(BOOKNAME).sgml > /dev/null 2>&1
 
 $(BOOKNAME).ps: $(BOOK_SRCS)
-	db2ps $(BOOKNAME).sgml
+	db2ps $(BOOKNAME).sgml > /dev/null 2>&1
 
 install:: 
 	$(INSTALL) -d $(mandir)/man$(prog_manext)

@@ -1,11 +1,169 @@
   <chapter id="compiling">
     <title>Compiling Wine</title>
     <para>How to compile wine, and problems that may arise...</para>
+
+    <sect1 id="compiling-wine">
+      <title>Compiling Wine</title>
+
+      <sect2>
+        <title>Tools required</title>
+	<para>
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+	        gcc -- 2.7.x required (Wine uses attribute stdcall).
+		Versions earlier than 2.7.2.3 barf on shellord.c
+		-- compile without optimizing for that file.
+		In addition EGCS 1.1.x and GCC 2.95.x are reported
+		to work fine.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        flex >= 2.5.1 (required for the debugger and wrc,
+		and lex won't do)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        bison (also required for debugger. Don't know whether BSD yacc
+		would work.)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        X11 libs and include files
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        Xpm libs and include files
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        texinfo >= 3.11 (optional, to compile the documentation.)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        autoconf (if you want to remake configure, which is
+		not normally required)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        XF86DGA extension (optional, detected by configure,
+		needed for DirectX support)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        Open Sound System (optional, detected by configure,
+		for sound support)
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	<para>
+	  The Red Hat RPMs are gcc-XXX, flex-XXX, XFree86-devel-XXX, xpm-XXX,
+	  and xpm-devel, where XXX is the version number.
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>Space required</title>
+	<para>
+	  You also need about 230 MB of available disk space for compilation.
+	  The compiled libwine.so binary takes around 5 MB of disk space,
+	  which can be reduced to about 1 MB by stripping ('strip wine').
+	  Stripping is not recommended, however, as you can't submit
+	  proper crash reports with a stripped binary any more.
+	</para>
+      </sect2>
+      
+      <sect2>
+        <title>Common problems</title>
+	<para>
+	  If you get a repeatable sig11 compiling shellord.c, thunk.c
+	  or other files, try compiling just that file without optimization.
+	  Then you should be able to finish the build.
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>OS specific issues</title>
+	<para>
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+	        FreeBSD -- In order to run Wine, the FreeBSD kernel
+		needs to be compiled with
+
+		<informaltable frame="all">
+		  <tgroup cols="2">
+		    <tbody>
+		      <row>
+		        <entry>options</entry>
+		        <entry>USER_LDT</entry>
+		      </row>
+		      <row>
+		        <entry>options</entry>
+		        <entry>SYSVSHM</entry>
+		      </row>
+		      <row>
+		        <entry>options</entry>
+		        <entry>SYSVSEM</entry>
+		      </row>
+		      <row>
+		        <entry>options</entry>
+		        <entry>SYSVMSG</entry>
+		      </row>
+		    </tbody>
+		  </tgroup>
+		</informaltable>
+
+
+		If you need help, read the chapter "<ulink url="http://www.freebsd.org/handbook/kernelconfig-building.html">Building and Installing a Custom Kernel</ulink>" in the "<ulink url="http://www.freebsd.org/handbook/">FreeBSD handbook</ulink>. You'll need to be running FreeBSD 3.x or later.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        SCO Unixware, Openserver -- UW port is supported by SCO.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        OS/2 -- not a complete port. See <ulink url="http://odin.netlabs.org/ProjectAbout.phtml">Odin</ulink> for a project which uses some Wine code.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Solaris x86 2.x -- Needs GNU toolchain (gcc, gas, flex as above, yacc may work) to compile, seems functional (980215). 
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		DGUX, HP, Irix, or other Unixes; non-intel Linux.
+		No ports have been seriously attempted.
+		For non-intel Unixes, only a winelib port is relevant.
+		Alignment may be a problem.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        Macintosh/Rhapsody/BeOS -- no ports have been attempted.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+        </para>
+      </sect2>
+    </sect1>
   </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

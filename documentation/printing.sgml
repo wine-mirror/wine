@@ -6,15 +6,14 @@
       <title>Printing</title>
 
       <para>
-        written by (???)
+        Written by &name-huw-davies; <email>&email-huw-davies;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/printing</filename>)
       </para>
 
       <para>
-        Printing in Wine can be done in one of two ways. Both of which are very
-        alpha.
+        Printing in Wine can be done in one of two ways. Both of which are pretty alpha.
       </para>
       <orderedlist>
         <listitem>
@@ -30,8 +29,8 @@
 
       <para>
         Note that at the moment WinPrinters (cheap, dumb printers that require
-        the host computer to explicitly control the head) will not work. It is
-        unclear whether they ever will.
+        the host computer to explicitly control the head) will not work with
+	their Windows printer drivers.  It is unclear whether they ever will.
       </para>
 
       <sect2>
@@ -93,7 +92,7 @@ LPT1:=foo.ps LPT2:=|lpr
       <title>The Wine PostScript Driver</title>
 
       <para>
-        written by Huw Davies <email>h.davies1@physics.ox.ac.uk</email>
+        Written by &name-huw-davies; <email>&email-huw-davies;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/psdriver</filename>)
@@ -251,7 +250,7 @@ ppdfile=/somewhere/file.ppd
           Please contact me if you want to help so that we can avoid duplication.
         </para>
         <para>
-          Huw Davies <email>h.davies1@physics.ox.ac.uk</email>
+          &name-huw-davies; <email>&email-huw-davies;</email>
         </para>
       </sect2>
     </sect1>
@@ -260,6 +259,6 @@ ppdfile=/somewhere/file.ppd
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "chapter" "")
 End:
 -->

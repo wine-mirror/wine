@@ -1,18 +1,373 @@
   <chapter id="running">
     <title>Running Wine</title>
-    <para>Explain the command-line options you can use to run Wine</para>
+
+    <para>
+      Written by &name-john-sheets; <email>&email-john-sheets;</email>
+    </para>
 
     <sect1 id="running-wine">
       <title>How to run Wine</title>
       <para>
-        The first thing you need to do is...
+        Wine is a very complicated piece of software with many ways to
+        adjust how it runs.  With very few exceptions, you can
+        activate the same set of features through the <link
+        linkend="configuring">configuration file </link> as you can
+        with command-line parameters.  In this chapter, we'll briefly
+        discuss these parameters, and match them up with their
+        corresponding configuration variables.
       </para>
+
+      <para>
+        You can invoke the <command>wine --help</command> command to
+        get a listing of all Wine's command-line parameters:
+      </para>
+      <para>
+        <screen>
+Usage: ./wine [options] program_name [arguments]
+
+Options:
+   --config name    Specify config file to use
+   --debugmsg name  Turn debugging-messages on or off
+   --desktop geom   Use a desktop window of the given geometry
+   --display name   Use the specified display
+   --dll name       Enable or disable built-in DLLs
+   --dosver x.xx    DOS version to imitate (e.g. 6.22)
+                    Only valid with --winver win31
+   --help,-h        Show this help message
+   --language xx    Set the language (one of Br,Ca,Cs,Cy,Da,De,En,Eo,Es,Fi,Fr,Ga,Gd,Gv,
+                    Hr,Hu,It,Ja,Ko,Kw,Nl,No,Pl,Pt,Sk,Sv,Ru,Wa)
+   --managed        Allow the window manager to manage created windows
+   --synchronous    Turn on synchronous display mode
+   --version,-v     Display the Wine version
+   --winver         Version to imitate (win95,nt40,win31,nt2k,win98,nt351,win30,win20)
+        </screen>
+      </para>
+
+      <para>
+        You can specify as many options as you want, if any.
+        Typically, you will want to have your configuration file set
+        up with a sensible set of defaults; in this case, you can run
+        <command>wine</command> without explicitly listing any
+        options.  In rare cases, you might want to override certain
+        parameters on the command line.  If you find yourself using
+        the same long set of command options with certain
+        applications, you might find it easier to work with multiple
+        config files, using the <link
+        linkend="config-parameter"><parameter>--config</parameter>
+        parameter</link> to specify a non-default configuration.
+      </para>
+      <para>
+        After the options, you should put the name of the file you
+        want <command>wine</command> to execute.  If the executable is
+        in the <parameter>Path</parameter> parameter in the
+        configuration file, you can simply give the executable file
+        name.  However, if the executable is not in
+        <parameter>Path</parameter>, you must give the full path to
+        the executable (in Windows format, not UNIX format!).  For
+        example, given a <parameter>Path</parameter> of the following:
+      </para>
+      <screen>
+[wine]
+"Path"="c:\windows;c:\windows\system;e:\;e:\test;f:\"
+      </screen>
+      <para>
+        You could run the file
+        <filename>c:\windows\system\foo.exe</filename> with:
+      </para>
+      <screen>
+<prompt>$</prompt> <userinput>wine foo.exe</userinput>
+      </screen>
+      <para>
+        However, you would have to run the file
+        <filename>c:\myapps\foo.exe</filename> with this command:
+      </para>
+      <screen>
+<prompt>$</prompt> <userinput>wine c:\myapps\foo.exe</userinput>
+      </screen>
+      <para>
+        Finally, if you want to pass any parameters to your windows
+        application, you can list them at the end, just after the
+        executable name.  Thus, to run the imaginary
+        <command>foo.exe</command> Windows application with its
+        <parameter>/advanced</parameter> mode parameter, while
+        invoking Wine in <link
+        linkend="managed-parameter"><parameter>--managed</parameter>
+        mode</link>, you would do something like this:
+      </para>
+      <screen>
+<prompt>$</prompt> <userinput>wine --managed foo.exe /advanced</userinput>
+      </screen>
+      <para>
+        In other words, options that affect Wine should come
+        <emphasis>before</emphasis> the Windows program name, while
+        options that affect the Windows program should come
+        <emphasis>after</emphasis> it.
+      </para>
+    </sect1>
+
+    <sect1 id="command-line-options">
+      <title>Command-Line Options</title>
+      <sect2 id="config-parameter">
+        <title>--config</title>
+        <para>
+          The <parameter>--config</parameter> parameter allows you to
+          specify which configuration file you want to use for the
+          current invocation of <command>wine</command>.  For example,
+          if you like to run a specific application or set of
+          applications with a different array of options than your
+          normal defaults, you might set up a different config file
+          for them, and use the <parameter>--config</parameter> option
+          to make use of it.
+        </para>
+        <para>
+          The default value of <parameter>--config</parameter> is
+          <filename>~/.winerc</filename>.  This value is hardwired
+          into the Wine source code.  In future versions of Wine, the
+          default may change to <filename>~/.wine/conf</filename>.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--debugmsg [channels]</title>
+        <para>
+          Wine isn't perfect, and many Windows applications still
+          don't run without bugs under Wine (but then, many of them
+          don't run without bugs under native Windows either!).  To
+          make it easier for people to track down the causes behind
+          each bug, Wine provides a number of <firstterm>debug
+          channels</firstterm> that you can tap into.
+        </para>
+        <para>
+          Each debug channel, when activated, will trigger logging
+          messages to be displayed to the console where you invoked
+          <command>wine</command>.  From there you can redirect the
+          messages to a file and examine it at your leisure.  But be
+          forewarned!  Some debug channels can generate incredible
+          volumes of log messages.  Among the most prolific offenders
+          are <parameter>relay</parameter> which spits out a log
+          message every time a win32 function is called,
+          <parameter>win</parameter> which tracks windows message
+          passing, and of course <parameter>all</parameter> which is
+          an alias for every single debug channel that exists.  For a
+          complex application, your debug logs can easily top 1 MB and
+          higher.  A <parameter>relay</parameter> trace can often
+          generate more than 10 MB of log messages, depending on how
+          long you run the application.  Logging does slow down Wine
+          quite a bit, so don't use <parameter>--debugmsg</parameter>
+          unless you really do want log files.
+        </para>
+        <para>
+          Within each debug channel, you can further specify a
+          <firstterm>message class</firstterm>, to filter out the
+          different severities of errors.  The four message classes
+          are:
+          <simplelist type="inline">
+            <member><parameter>trace</parameter></member>
+            <member><parameter>fixme</parameter></member>
+            <member><parameter>warn</parameter></member>
+            <member><parameter>err</parameter></member>
+          </simplelist>.
+        </para>
+        <para>
+          To turn on a debug channel, use the form
+          <parameter>class+channel</parameter>.  To turn it off, use
+          <parameter>class-channel</parameter>.  To list more than one
+          channel in the same <parameter>--debugmsg</parameter>
+          option, separate them with commas.  For example, to request
+          <parameter>warn</parameter> class messages in the
+          <parameter>heap</parameter> debug channel, you could invoke
+          <command>wine</command> like this:
+        </para>
+        <screen>
+<prompt>$</prompt> <userinput>wine --debugmsg warn+heap <replaceable>program_name</replaceable></userinput>
+        </screen>
+        <para>
+          If you leave off the message class, <command>wine</command>
+          will display messages from all four classes for that channel:
+        </para>
+        <screen>
+<prompt>$</prompt> <userinput>wine --debugmsg +heap <replaceable>program_name</replaceable></userinput>
+        </screen>
+        <para>
+          If you wanted to see log messages for everything except the
+          relay channel, you might do something like this:
+        </para>
+        <screen>
+<prompt>$</prompt> <userinput>wine --debugmsg +all,-relay <replaceable>program_name</replaceable></userinput>
+        </screen>
+        <para>
+          Here is a master list of all the debug channels and classes
+          in Wine.  More channels might be added to (or subtracted
+          from) later versions.
+        </para>
+        <screen>
+all       accel     advapi    animate   aspi      atom      avifile   bitblt   
+bitmap    caret     cdrom     class     clipboard clipping  combo     comboex  
+comm      commctrl  commdlg   console   crtdll    cursor    datetime  dc       
+ddeml     ddraw     debug     debugstr  delayhlp  dialog    dinput    dll      
+dosfs     dosmem    dplay     driver    dsound    edit      elfdll    enhmetafile
+event     exec      file      fixup     font      gdi       global    graphics 
+header    heap      hook      hotkey    icmp      icon      imagehlp  imagelist
+imm       int       int10     int16     int17     int19     int21     int31    
+io        ipaddress joystick  key       keyboard  ldt       listbox   listview 
+local     mci       mcianim   mciavi    mcicda    mcimidi   mciwave   mdi      
+menu      message   metafile  midi      mmaux     mmio      mmsys     mmtime   
+module    monthcal  mpr       msacm     msg       msvideo   nativefont nonclient
+ntdll     odbc      ole       opengl    pager     palette   pidl      print    
+process   profile   progress  prop      propsheet psapi     psdrv     ras      
+rebar     reg       region    relay     resource  richedit  scroll    segment  
+seh       selector  sendmsg   server    setupapi  setupx    shell     snoop    
+sound     static    statusbar storage   stress    string    syscolor  system   
+tab       tape      tapi      task      text      thread    thunk     timer    
+toolbar   toolhelp  tooltips  trackbar  treeview  ttydrv    tweak     typelib  
+updown    ver       virtual   vxd       wave      win       win16drv  win32    
+wing      wininet   winsock   winspool  wnet      x11       x11drv    
+        </screen>
+        <para>
+          For more details about debug channels, check out the
+          <ulink url="http://wine.codeweavers.com/docs/wine-devel/">
+            The Wine Developer's Guide</ulink>.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--desktop [geometry]</title>
+        <para>
+          By default, <command>wine</command> runs applications on
+          your regular desktop.  Wine application windows intermingle
+          with native X11 applications.  Windows overlap each other,
+          and you can resize them in relation to each other.
+          Normally, when you minimize Wine windows, they collapse into
+          a small icon at the lower left corner of your desktop,
+          circumventing the behavior of your other non-Wine windows.
+          However, if you're running in <link linkend="managed-parameter">
+          --managed mode</link>, your Wine applications will minimize
+          just like your other windows.
+        </para>
+        <para>
+          Sometimes, you may want to restrict Wine windows to a
+          smaller area of your desktop.  This is what the
+          <parameter>--desktop</parameter> option controls.  Whenever
+          you pass this option to <command>wine</command>, it will
+          create a window of that size and use that as Wine's desktop
+          instead of borrowing the regular desktop space.  Wine will
+          then place the application window inside the new desktop
+          window.  If you minimize the application, it will iconize to
+          the bottom left corner of its own desktop window.
+        </para>
+        <para>
+          The <parameter>--desktop</parameter> option geometry info in
+          the standard X11 geometry format, e.g., "640x480" for a
+          desktop window 640 pixels wide and 480 pixels high.  You can
+          also in theory specify the coordinates of the upper left
+          corner of the desktop window, but your window manager may
+          choose to override that request.  The following invocation
+          would open a new 640 x 480 desktop window at coordinates
+          (10, 25):
+          <screen>
+<prompt>$</prompt> <userinput>wine --desktop 640x480+10+25 foo.exe</userinput>
+          </screen>
+        </para>
+        <para>
+          More commonly, you'll leave off the starting coordinates,
+          and only use the height and width:
+          <screen>
+<prompt>$</prompt> <userinput>wine --desktop 640x480 foo.exe</userinput>
+          </screen>
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--display</title>
+        <para>
+          By default, wine will display its windows on whichever X
+          Display you have in the <envar>$DISPLAY</envar> environment
+          variable.  Often, <envar>$DISPLAY</envar> is set to
+          <literal>:0</literal>, which sends all windows to the
+          primary video monitor on the current host machine.
+        </para>
+        <para>
+          To send windows to a different monitor on the same system,
+          you could change <literal>:0</literal> to a different
+          number, for example <literal>:1</literal> to send output to
+          the second monitor.  You can also specify other systems.  If
+          you were logged into the system <systemitem
+          class="systemname">alpha</systemitem>, but wanted wine to
+          run on another system on the network, <systemitem
+          class="systemname">beta</systemitem>, you might use a
+          <envar>$DISPLAY</envar> of <literal>beta:0</literal>.
+        </para>
+        <para>
+          You can also declare display values on the wine command
+          line, using the <parameter>--display</parameter> option.
+          The last example above might look like this:
+        </para>
+        <programlisting>
+<prompt>$</prompt> wine --display="beta:0" foo.exe
+        </programlisting>
+      </sect2>
+
+      <sect2>
+        <title>--dll</title>
+        <para>
+          
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--dosver</title>
+        <para>
+          
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--help</title>
+        <para>
+          
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--language</title>
+        <para>
+          
+        </para>
+      </sect2>
+
+      <sect2 id="managed-parameter">
+        <title>--managed</title>
+        <para>
+          
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--synchronous</title>
+        <para>
+          
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--version</title>
+        <para>
+          
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--winver</title>
+        <para>
+          
+        </para>
+      </sect2>
     </sect1>
   </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "chapter" "")
 End:
 -->

@@ -5,7 +5,8 @@
       <title>Consoles</title>
 
       <para>
-        written by (???)
+        Written by &name-john-richardson; <email>&email-john-richardson;</email>
+        Maintained by &name-joseph-pranevich; <email>&email-joseph-pranevich;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/console</filename>)
@@ -19,7 +20,7 @@
           <parameter>-Sxxn</parameter> switch. A
           <systemitem>pty</systemitem> is opened and the master goes
           to the <filename>xterm</filename> side and the slave is held
-          by the wine side.  The console itself it turned into a few
+          by the wine side.  The console itself is turned into a few
           <type>HANDLE32</type>s and is set to the
           <varname>STD_*_HANDLES</varname>.
         </para>
@@ -35,7 +36,7 @@
         </para>
         <para>
           <emphasis>[this paragraph is now out of date]</emphasis> If
-          the command line console is to be inheirited or a process
+          the command line console is to be inherited or a process
           inherits its parent's console (-- can that happen???), the
           console is created at process init time via
           <function>PROCESS_InheritConsole</function>. The
@@ -90,7 +91,7 @@
           processing input.  Win32 has line-at-a-time processing,
           character processing, and echo. I'm putting together an
           intermediate driver that will handle this (and hopefully
-          won't be any more buggy then the NT4 console
+          won't be any more buggy than the NT4 console
           implementation).
         </para>
       </sect2>
@@ -297,7 +298,7 @@ wine -console ncurses+xterm &lt;application&gt;
                 <para>
                   Tell any driver that is interested (ncurses) which
                   termcap and/or terminfo type to use. The default is
-                  xterm which is appropiate for most uses.
+                  xterm which is appropriate for most uses.
                   <command>nxterm</command> may give you better
                   support if you use that terminal. This can also be
                   changed to "linux" (or "console" on older systems)
@@ -381,6 +382,6 @@ wine -console ncurses+xterm &lt;application&gt;
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

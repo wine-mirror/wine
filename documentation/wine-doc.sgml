@@ -1,23 +1,31 @@
-<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+<!doctype set PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
-<!entity running SYSTEM "running.sgml">
+<!-- *** Include list of authors *** -->
+<!entity % authors SYSTEM "authors.ent">
+%authors;
+
+<!-- *** Entities for Wine User Guide *** -->
+<!entity introduction SYSTEM "introduction.sgml">
+<!entity getting SYSTEM "getting.sgml">
 <!entity installing SYSTEM "installing.sgml">
 <!entity configuring SYSTEM "configuring.sgml">
 <!entity registry SYSTEM "registry.sgml">
+<!entity running SYSTEM "running.sgml">
 <!entity bugs SYSTEM "bugs.sgml">
+
+<!-- *** Not currently used (???) *** -->
 <!entity fonts SYSTEM "fonts.sgml">
 <!entity printing SYSTEM "printing.sgml">
 
+<!-- *** Entities for Wine Developer Guide *** -->
 <!entity compiling SYSTEM "compiling.sgml">
 <!entity debugging SYSTEM "debugging.sgml">
 <!entity documentation SYSTEM "documentation.sgml">
 <!entity patches SYSTEM "patches.sgml">
 <!entity i18n SYSTEM "i18n.sgml">
 <!entity porting SYSTEM "porting.sgml">
-
-<!entity packaging SYSTEM "packaging.sgml">
-
 <!entity architecture SYSTEM "architecture.sgml">
+<!entity ole SYSTEM "ole.sgml">
 <!entity debugger SYSTEM "debugger.sgml">
 <!entity consoles SYSTEM "consoles.sgml">
 <!entity implementation SYSTEM "implementation.sgml">
@@ -25,70 +33,95 @@
 <!entity build SYSTEM "build.sgml">
 <!entity tools SYSTEM "tools.sgml">
 <!entity dlls SYSTEM "dlls.sgml">
-<!entity status SYSTEM "status.sgml">
+<!entity cvs-regression SYSTEM "cvs-regression.sgml">
+
+<!-- *** Entities for Wine Developer Guide *** -->
+<!entity winelib-user SYSTEM "winelib-user.sgml">
+
+<!-- *** Entities for Wine Packager Guide *** -->
+<!entity packaging SYSTEM "packaging.sgml">
+
 ]>
 
-<book id="index">
-  <bookinfo>
+<set id="index">
+  <setinfo>
     <title>Wine Documentation</title>
-  </bookinfo>
 
-  <preface id="preface">
-    <title>Notes About this Document</title>
-    <para>
-      The following documentation has been extracted from the Wine
-      source tree, from the <filename>wine/documentation</filename>
-      directory.  So far, no new content has been added aside from
-      marking it up for DocBook and a few minor tweaks to smooth
-      that process.  All credit should go to the original authors,
-      who are attributed according the the "written by" comments
-      in those files.  If I've missed anyone, please contact
-      <email>John R. Sheets &lt;jsheets@codeweavers.com></email>
-    </para>
-  </preface>
+    <releaseinfo>
+      <emphasis>
+        The following documentation has been extracted from the Wine
+        source tree, from the <filename>wine/documentation</filename>
+        directory.  All credit should go to the original authors, who
+        are attributed according the the "written by" comments in
+        those files.  Additional content has also been added.
+      </emphasis>
+    </releaseinfo>
+  </setinfo>
 
-  <part id="part-one">
-    <title>Using Wine</title>
+  <!-- *** Wine User Guide *** -->
+  <book id="index-user">
+    <bookinfo>
+      <title>Wine User Guide</title>
+    </bookinfo>
 
-    &running;
+    &introduction;
+    &getting;
+
     &installing;
     &configuring;
+    &running;
     &bugs;
+    <!--
     &fonts;
     &printing;
+    -->
+  </book>
 
-  </part>
+  <!-- *** Wine Developer Guide *** -->
+  <book id="index-developer">
+    <bookinfo>
+      <title>Wine Developer's Guide</title>
+    </bookinfo>
 
-  <part id="part-two">
-    <title>Developing Wine</title>
+    <part id="part-one">
+      <title>Developing Wine</title>
+      &compiling;
+      &debugger;
+      &documentation;
+      &patches;
+      &i18n;
+      &tools;
+    </part>
 
-    &compiling;
-    &debugging;
-    &documentation;
-    &patches;
-    &i18n;
-    &porting;
+    <part id="part-two">
+      <title>Wine Architecture</title>
+      &architecture;
+      &debugging;
+      &ole;
+      &opengl;
+      &build;
+      &dlls;
+    </part>
 
-  </part>
+    <part>
+      <title>Advanced Topics</title>
+      &implementation;
+      &porting;
+      &consoles;
+      &cvs-regression;
+    </part>
+  </book>
 
-  <part id="part-three">
-    <title>Distributing Wine</title>
+
+  <!-- *** Winelib User Guide *** -->
+  &winelib-user;
+
+  <!-- *** Wine Packager Guide *** -->
+  <book id="index-pkg">
+    <bookinfo>
+      <title>Wine Packagers Guide</title>
+    </bookinfo>
 
     &packaging;
-
-  </part>
-
-  <part id="part-four">
-    <title>Wine Architecture</title>
-
-    &architecture;
-    &debugger;
-    &consoles;
-    &implementation;
-    &opengl;
-    &build;
-    &tools;
-    &dlls;
-
-  </part>
-</book>
+  </book>
+</set>

@@ -5,7 +5,7 @@
       <title>bin2res</title>
 
       <para>
-        written by juergen.schmied@debitel.net (11/99)
+        Written by &name-juergen-schmied; <email>&email-juergen-schmied;</email> (11/99)
       </para>
       <para>
         (Extracted from <filename>wine/documentation/resources</filename>)
@@ -89,6 +89,6 @@ bash-2.03# ../../tools/bin2res -d bin shres.rc
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

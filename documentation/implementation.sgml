@@ -6,7 +6,7 @@
       <title>Builtin DLLs</title>
 
       <para>
-        written by &lt;juergen.schmied@metronet.de>
+        Written by &name-juergen-schmied; <email>&email-juergen-schmied;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/internal-dll</filename>)
@@ -195,7 +195,7 @@ WORD   cmd;
       <title>File Handles</title>
 
       <para>
-        written by (???)
+        Written by (???)
       </para>
       <para>
         (Extracted from <filename>wine/documentation/filehandles</filename>)
@@ -260,7 +260,7 @@ WORD   cmd;
       <title>Doing A Hardware Trace In Wine</title>
 
       <para>
-        written by Jonathan Buzzard &lt;jab@hex.prestel.co.uk>
+        Written by &name-jonathan-buzzard; <email>&email-jonathan-buzzard;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/ioport-trace-hints</filename>)
@@ -530,6 +530,6 @@ EOF
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

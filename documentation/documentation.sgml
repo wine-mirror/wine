@@ -6,7 +6,7 @@
       <title>Writing Wine API Documentation</title>
 
       <para>
-        written by (???)
+        Written by &name-douglas-ridgway; <email>&email-douglas-ridgway;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/README.documentation</filename>)
@@ -18,7 +18,7 @@
       </para>
       <screen>
 /******************************************************************
- *         CopyMetaFile32A   (GDI32.23)
+ *         CopyMetaFileA   (GDI32.23)
  *
  *  Copies the metafile corresponding to hSrcMetaFile to either
  *  a disk file, if a filename is given, or to a new memory based
@@ -32,8 +32,8 @@
  *
  *  Copying to disk returns NULL even if successful.
  */
-HMETAFILE32 WINAPI CopyMetaFile32A(
-		   HMETAFILE32 hSrcMetaFile, /* handle of metafile to copy */
+HMETAFILE WINAPI CopyMetaFileA(
+		   HMETAFILE hSrcMetaFile, /* handle of metafile to copy */
 		   LPCSTR lpFilename /* filename if copying to a file */
 ) { ... }
       </screen>
@@ -46,17 +46,17 @@ CopyMetaFileA(3w)                               CopyMetaFileA(3w)
 
 
 NAME
-       CopyMetaFileA - CopyMetaFile32A   (GDI32.23)
+       CopyMetaFileA   (GDI32.23)
 
 SYNOPSIS
-       HMETAFILE32 CopyMetaFileA
+       HMETAFILE CopyMetaFileA
        (
-            HMETAFILE32 hSrcMetaFile,
+            HMETAFILE hSrcMetaFile,
             LPCSTR lpFilename
        );
 
 PARAMETERS
-       HMETAFILE32 hSrcMetaFile
+       HMETAFILE hSrcMetaFile
               Handle of metafile to copy.
 
        LPCSTR lpFilename
@@ -84,6 +84,6 @@ SEE ALSO
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->

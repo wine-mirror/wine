@@ -1,0 +1,172 @@
+  <chapter id="cvs-regression">
+    <title>How to do regression testing using Cvs</title>
+
+    <para>
+      written by (???)
+    </para>
+    <para>
+      (Extracted from <filename>wine/documentation/bugreports</filename>)
+    </para>
+
+    <para>
+      A problem that can happen sometimes is 'it used to work
+      before, now it doesn't anymore...'. Here is a step by step
+      procedure to try to pinpoint when the problem occured. This is
+      <emphasis>NOT</emphasis> for casual users.
+    </para>
+
+    <orderedlist>
+      <listitem>
+        <para>
+          Get the 'full cvs' archive from winehq. This archive is
+          the cvs tree but with the tags controlling the versioning
+          system. It's a big file (> 15 meg) with a name like
+          full-cvs-&lt;last update date> (it's more than 100mb
+          when uncompressed, you can't very well do this with
+          small, old computers or slow Internet connections).
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          untar it into a repository directory:
+          <screen>
+            cd /home/gerard
+            tar -zxffull-cvs-2000-05-20.tar.gz
+            mv wine repository
+          </screen>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          extract a new destination directory. This directory must
+          not be in a subdirectory of the repository else
+          <command>cvs</command> will think it's part of the
+          repository and deny you an extraction in the repository:
+          <screen>
+            cd /home/gerard
+            mv wine wine_current (-> this protects your current wine sandbox, if any)
+            export CVSROOT=/home/gerard/repository
+            cd /home/gerard
+            cvs -d $CVSROOT checkout wine
+          </screen>
+        </para>
+        <para>
+          Note that it's not possible to do a checkout at a given
+          date; you always do the checkout for the last date where
+          the full-cvs-xxx snapshot was generated.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          you will have now in the <filename>~/wine</filename>
+          directory an image of the cvs tree, on the client side.
+          Now update this image to the date you want:
+          <screen>
+            cd /home/gerard/wine
+            cvs -d $CVSROOT update -D "1999-06-01"   
+          </screen>
+        </para>
+        <para>
+          The date format is <literal>YYYY-MM-DD</literal>.
+        </para>
+        <para>
+          Many messages will inform you that more recent files have
+          been deleted to set back the client cvs tree to the date
+          you asked, for example:
+          <screen>
+            cvs update: tsx11/ts_xf86dga2.c is no longer in the repository
+          </screen>
+        </para>
+        <para>
+          <command>cvs update</command> is not limited to upgrade to
+          a <emphasis>newer</emphasis> version as I have believed for far too long :-(
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Now proceed as for a normal update:
+        </para>
+        <screen>
+          ./configure
+          make depend && make
+        </screen>
+        <para>
+          When you have found the exact date when a bug was added to
+          the cvs tree, use something like :
+          <screen>
+            cvs -d $CVSROOT diff -D "1999-07-10" -D "1999-07-12"
+          </screen>
+          to get all the differences between the last cvs tree
+          version known to work and code that first displayed the
+          misbehavior.
+        </para>
+        <note>
+          <para>
+            I did not include flags for <command>diff</command>
+            since they are in my <filename>.cvsrc</filename> file:
+          </para>
+          <screen>
+            cvs -z 3
+            update -dPA
+            diff -u
+          </screen>
+        </note>
+        <para>
+          From this diff file, particularly the file names, and the
+          <filename>ChangeLog</filename>, it's usually possible to
+          find the different individual patches that were done at
+          this time. 
+        </para>
+        <para>
+          If any non-programmer reads this, the fastest method to get
+          at the point where the problem occured is to use a binary
+          search, that is, if the problem occured in 1999, start at
+          mid-year, then is the problem is already here, back to 1st
+          April, if not, to 1st October, and so on.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The next step is to start from the last working version
+          and to dig the individual contributions from
+          <ulink url="http://www.integrita.com/cgi-local/lwgate.pl/WINE-PATCHES/">
+            http://www.integrita.com/cgi-local/lwgate.pl/WINE-PATCHES/</ulink>
+          (where the Wine patches mailing list is archived)
+        </para>
+        <para>
+          If the patch was done by the Wine maintainer or if it was
+          sent directly to his mail address without going first through 
+          <ulink url="mailto:wine-patches@winehq.com">wine-patches</ulink>,
+          you are out of luck as you will never find the patch in
+          the archive. If it is, it's often possible to apply the
+          patches one by one to last working cvs snapshot, compile and test.
+          If you have saved the next candidate as
+          <filename>/home/gerard/buggedpatch1.txt</filename>:
+        </para>
+        <screen>
+          cd /home/gerard/wine
+          patch -p 0 &lt; /home/gerard/buggedpatch1.txt
+        </screen>
+        <para>
+          Beware that the committed patch is not always identical to
+          the patch that the author sent to wine-patches, as
+          sometimes the Wine maintainer changes things a bit.
+        </para>
+        <para>
+          If you find one patch that is getting the cvs source tree to
+          reproduce the problem, you have almost won; post the problem on
+          <systemitem>comp.emulators.windows.wine</systemitem> and there
+          is a chance that the author will jump in to suggest a fix; or
+          there is always the possibility to look hard at the patch until
+          it is coerced to reveal where is the bug :-) 
+        </para>
+      </listitem>
+    </orderedlist>
+  </chapter>
+
+  <!-- Keep this comment at the end of the file
+  Local variables:
+  mode: sgml
+  sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
+  End:
+  -->

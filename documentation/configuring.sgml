@@ -5,7 +5,7 @@
     <sect1 id="config">
       <title>General Configuration</title>
       <para>
-        Copyright 1999 Adam Sacarny (magicbox@bestweb.net)
+        Copyright 1999 &name-adam-sacarny; <email>&email-adam-sacarny;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/config</filename>)
@@ -515,7 +515,7 @@ winsock	= wsock32
             </programlisting>
           </para>
           <para>
-            For example, to load builtin KERNEL pair (Case doesn't
+            For example, to load builtin KERNEL pair (case doesn't
             matter here):
             <programlisting>
 kernel,kernel32 = builtin
@@ -649,7 +649,7 @@ Alias1 = Foo,--google-,subst
           <title>The [serialports], [parallelports], [spooler], and [ports] Sections</title>
           <para>
             Even though it sounds like a lot of sections, these are
-            all closely related. They all are for communications and
+            all closely related. They are all for communications and
             parallel ports. 
           </para>
           <para>
@@ -678,7 +678,7 @@ Alias1 = Foo,--google-,subst
             <programlisting>LptX=/dev/lpY</programlisting>
           </para>
           <para>
-            Seem farmiliar? Syntax is just like the COM port setting.
+            Sounds familiar? Syntax is just like the COM port setting.
             Replace <literal>X</literal> with a value from 1-4 as it
             is in Windows and <literal>Y</literal> with a value from
             0-3 (<literal>Y</literal> is usually the value in windows
@@ -714,10 +714,10 @@ Alias1 = Foo,--google-,subst
           </para>
           <para>
             <programlisting>write=0x779,0x379,0x280-0x2a0</programlisting>
-            Gives direct write access to those IO's. It probably a
+            Gives direct write access to those IO's. It's probably a
             good idea to keep the values of the
             <literal>read</literal> and <literal>write</literal>
-            settings the same. This stuff will only work  when you're
+            settings the same. This stuff will only work when you're
             root.
           </para>
         </sect3>
@@ -725,7 +725,7 @@ Alias1 = Foo,--google-,subst
         <sect3>
           <title>The [spy], [Registry], [tweak.layout], and [programs] Sections</title>
           <para>
-            [spy] is used to Include or exclude debug messages, and to
+            [spy] is used to include or exclude debug messages, and to
             output them to a file. The latter is rarely used. THESE
             ARE ALL OPTIONAL AND YOU PROBABLY DON'T NEED TO ADD OR
             REMOVE ANYTHING IN THIS SECTION TO YOUR CONFIG.
@@ -816,20 +816,19 @@ Alias1 = Foo,--google-,subst
         <para>
           There is always a chance that things will go wrong. If the
           unthinkable happens,  try the newsgroup,
-          <systemitem>comp.emulators.ms-windows.wine</systemitem> Make sure that you have
-          looked over this document thoroughly, and have also read:
+          <systemitem>comp.emulators.ms-windows.wine</systemitem>,
+	  or the IRCnet channel <systemitem>#WineHQ</systemitem>.
+	  Make sure that you have looked over this document thoroughly,
+	  and have also read:
         </para>
         <itemizedlist>
           <listitem>
             <para><filename>README</filename></para>
           </listitem>
           <listitem>
-            <para><filename>documentation/bugreports</filename></para>
-          </listitem>
-          <listitem>
             <para>
-              <filename>http://www.westfalen.de/witch/wine-HOWTO.txt</filename>
-              (Optional but recommended)
+              <filename>http://www.la-sorciere.de/wine/index.html</filename>
+              (optional but recommended)
             </para>
           </listitem>
         </itemizedlist>
@@ -844,7 +843,7 @@ Alias1 = Foo,--google-,subst
     <sect1 id="win95look">
       <title>Win95/98 Look</title>
       <para>
-        by ???
+        Written by &name-david-cuthbert; <email>&email-david-cuthbert;</email>
       </para>
       <para>
         (Extracted from <filename>wine/documentation/win95look</filename>)
@@ -887,10 +886,10 @@ WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
       <title>Configuring the x11drv Driver</title>
 
       <para>
-        written by Ove Kåven
+        Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
       </para>
       <para>
-        (Extracted from <filename>wine/documentation/x11drv</filename>)
+        (Extracted from <filename>wine/documentation/cdrom-labels</filename>)
       </para>
 
       <para>
@@ -1136,7 +1135,7 @@ WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
             <firstname>Petr</firstname>
             <surname>Tomasek</surname>
             <affiliation>
-              <address><email>&lt;tomasek@etf.cuni.cz></email></address>
+              <address><email>&email-petr-tomasek;</email></address>
             </affiliation>
             <contrib>Nov 14 1999</contrib>
           </author>
@@ -1144,7 +1143,7 @@ WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
             <firstname>Andreas</firstname>
             <surname>Mohr</surname>
             <affiliation>
-              <address><email>&lt;a.mohr@mailto.de></email></address>
+              <address><email>&email-andreas-mohr;</email></address>
             </affiliation>
             <contrib>Jan 25 2000</contrib>
           </author>
@@ -1153,11 +1152,11 @@ WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
 
       <title>Drive labels and serial numbers with wine</title>
       <para>
-        by Petr Tomasek &lt;tomasek@etf.cuni.cz>
+        Written by &name-petr-tomasek; <email>&email-petr-tomasek;</email>
         Nov 14 1999
       </para>
       <para>
-        changes by Andreas Mohr &lt;a.mohr@mailto.de>
+        Changes by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
         Jan 25 2000
       </para>
       <para>
@@ -1221,9 +1220,9 @@ WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
         </para>
         <para>
           If you want to give a <literal>Device=</literal> entry
-          *only* for drive raw sector accesses, but not for reading
-          the volume info from the device (i.e. you want a
-          <emphasis>fixed</emphasis>, preconfigured label), you need
+          <emphasis>only</emphasis> for drive raw sector accesses,
+	  but not for reading the volume info from the device (i.e. you want
+	  a <emphasis>fixed</emphasis>, preconfigured label), you need
           to specify <literal>ReadVolInfo=0</literal> to tell Wine to
           skip the volume reading.
         </para>
@@ -1292,7 +1291,9 @@ Filesystem=msdos
     <sect1 id="dll-overrides">
       <title>Dll Overrides</title>
 
-      <para>by Ove Kaaven &lt;ovek@arcticnet.no></para>
+      <para>
+        Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
+      </para>
       <para>
         (Extracted from <filename>wine/documentation/dll-overrides</filename>)
       </para>
@@ -1350,7 +1351,7 @@ Filesystem=msdos
                 A native Unix <filename>.so</filename> file, with
                 calling convention conversion thunks generated on the
                 fly as the library is loaded. This is mostly useful
-                for libraries such as "glide" that has exactly the
+                for libraries such as "glide" that have exactly the
                 same API on both Windows and Unix.
               </para> </listitem>
           </varlistentry>
@@ -1690,7 +1691,9 @@ Filesystem=msdos
     <sect1 id="keyboard">
       <title>Keyboard</title>
 
-      <para>by Ove Kaaven &lt;ovek@arcticnet.no></para>
+      <para>
+        Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
+      </para>
       <para>
         (Extracted from <filename>wine/documentation/keyboard</filename>)
       </para>
@@ -1869,6 +1872,6 @@ diff -u the_backup_file_you_made windows/x11drv/keyboard.c > layout.diff
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "chapter" "")
 End:
 -->

@@ -1,15 +1,16 @@
   <chapter id="opengl">
     <title>Wine and OpenGL</title>
 
-      <para>
-        written by Lionel Ulmer &lt;lionel.ulmer@free.fr>, last modification : 2000/06/13
-      </para>
-      <para>
+    <para>
+      Written by &name-lionel-ulmer; <email>&email-lionel-ulmer;</email>,
+      last modification : 2000/06/13
+    </para>
+    <para>
       (Extracted from <filename>wine/documentation/opengl</filename>)
-      </para>
+    </para>
 
     <sect1 id="opengl-required">
-      <title>I What is needed to have OpenGL support in Wine</title>
+      <title>What is needed to have OpenGL support in Wine</title>
 
       <para>
         Basically, if you have a Linux OpenGL ABI compliant libGL
@@ -29,7 +30,7 @@
       </para>
 
       <sect2>
-        <title>I.1 Header files</title>
+        <title>Header files</title>
 
         <para>
           The needed header files to build OpenGL support in Wine are :
@@ -67,7 +68,7 @@
       </sect2>
 
       <sect2>
-        <title>I.2 OpenGL library thread-safety</title>
+        <title>OpenGL library thread-safety</title>
 
         <para>
           After that, the script checks if the OpenGL library relies
@@ -96,7 +97,7 @@
       </sect2>
 
       <sect2>
-        <title>I.3 OpenGL library itself</title>
+        <title>OpenGL library itself</title>
 
         <para>
           To check for the presence of 'libGL' on the system, the
@@ -107,7 +108,7 @@
       </sect2>
 
       <sect2>
-        <title>I.4 glXGetProcAddressARB function</title>
+        <title>glXGetProcAddressARB function</title>
 
         <para>
           The core of Wine's OpenGL implementation (at least for all
@@ -130,7 +131,7 @@
     </sect1>
 
     <sect1 id="opengl-configure">
-      <title>II How to configure</title>
+      <title>How to configure</title>
 
       <para>
         Configuration is quite easy : once OpenGL support has been
@@ -156,7 +157,7 @@ DesktopDoubleBuffered = Y
     </sect1>
 
     <sect1 id="opengl-works">
-      <title>III How it all works</title>
+      <title>How it all works</title>
 
       <para>
         The core OpenGL function calls are the same between Windows
@@ -191,7 +192,7 @@ DesktopDoubleBuffered = Y
       </para>
 
       <sect2>
-        <title>III.1 The Windowing system integration</title>
+        <title>The Windowing system integration</title>
 
         <para>
           This integration is done at two levels : 
@@ -222,7 +223,7 @@ DesktopDoubleBuffered = Y
       </sect2>
 
       <sect2>
-        <title>III.2 The thunks</title>
+        <title>The thunks</title>
 
         <para>
           The thunks are the Wine code that does the calling
@@ -315,10 +316,10 @@ DesktopDoubleBuffered = Y
     </sect1>
 
     <sect1 id="opengl-problems">
-      <title>IV  Known problems - shortcomings</title>
+      <title>Known problems - shortcomings</title>
 
       <sect2>
-        <title>IV.1 Missing GLU32.DLL</title>
+        <title>Missing GLU32.DLL</title>
 
         <para>
           GLU is a library that is layered upon OpenGL. There is a
@@ -338,7 +339,7 @@ DesktopDoubleBuffered = Y
       </sect2>
 
       <sect2>
-        <title>IV.2 OpenGL not detected at configure time</title>
+        <title>OpenGL not detected at configure time</title>
 
         <para>
           See section (I) for a detailed explanation of the
@@ -347,7 +348,7 @@ DesktopDoubleBuffered = Y
       </sect2>
 
       <sect2>
-        <title>IV.3 When running an OpenGL application, the screen flickers</title>
+        <title>When running an OpenGL application, the screen flickers</title>
 
         <para>
           See section (II) for how to create the context
@@ -356,11 +357,11 @@ DesktopDoubleBuffered = Y
       </sect2>
 
       <sect2>
-        <title>IV.4 Wine gives me the following error message : </title>
+        <title>Wine gives me the following error message : </title>
 
         <screen>
 Extension defined in the OpenGL library but NOT in opengl_ext.c...
-Please report (lionel.ulmer@free.fr) !
+Please report (&email-lionel-ulmer;) !
         </screen>
 
         <para>
@@ -398,12 +399,12 @@ Please report (lionel.ulmer@free.fr) !
         <para>
           If you have this, run with <parameter>--debugmsg
             +opengl</parameter> and send me
-          <email>lionel.ulmer@free.fr</email> the TRACE.
+          <email>&email-lionel-ulmer;</email> the TRACE.
         </para>
       </sect2>
 
       <sect2>
-        <title>IV.5 <filename>libopengl32.so</filename> is built but it is still not working</title>
+        <title><filename>libopengl32.so</filename> is built but it is still not working</title>
 
         <para>
           This may be caused by some missing functions required by
@@ -453,6 +454,6 @@ gcc dummy.c -L/usr/local/lib -lwine -lopengl32
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
 End:
 -->
