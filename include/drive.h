@@ -48,7 +48,6 @@ extern LPCWSTR DRIVE_GetLabel( int drive );
 extern DWORD DRIVE_GetSerialNumber( int drive );
 extern int DRIVE_SetSerialNumber( int drive, DWORD serial );
 extern UINT DRIVE_GetFlags( int drive );
-extern UINT DRIVE_GetCodepage( int drive );
 extern int DRIVE_Chdir( int drive, LPCWSTR path );
 extern int DRIVE_Disable( int drive  );
 extern int DRIVE_Enable( int drive  );

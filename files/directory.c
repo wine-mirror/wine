@@ -156,7 +156,7 @@ int DIR_Init(void)
     else
     {
         WCHAR szdrive[3]={drive+'A',':',0};
-        MultiByteToWideChar(DRIVE_GetCodepage(drive), 0, cwd, -1, longpath, MAX_PATHNAME_LEN);
+        MultiByteToWideChar(CP_UNIXCP, 0, cwd, -1, longpath, MAX_PATHNAME_LEN);
         DRIVE_SetCurrentDrive( drive );
         DRIVE_Chdir( drive, longpath );
 	if(GetDriveTypeW(szdrive)==DRIVE_CDROM)
@@ -938,8 +938,7 @@ TRACE("drive %c: root %s\n", 'A' + full_name.drive, DRIVE_GetRoot(full_name.driv
         LPWSTR p;
         if (buflen > 3)
         {
-            MultiByteToWideChar(DRIVE_GetCodepage(full_name.drive), 0,
-                                res, -1, buffer + 3, buflen - 3);
+            MultiByteToWideChar(CP_UNIXCP, 0, res, -1, buffer + 3, buflen - 3);
             buffer[buflen - 1] = 0;
         }
         for (p = buffer; *p; p++) if (*p == '/') *p = '\\';

@@ -90,7 +90,6 @@ typedef struct
     DWORD     serial_conf;    /* drive serial number as cfg'd in wine config */
     UINT      type;      /* drive type */
     UINT      flags;     /* drive flags */
-    UINT      codepage;  /* drive code page */
     dev_t     dev;       /* unix device number */
     ino_t     ino;       /* unix inode number */
 } DOSDRIVE;
@@ -199,7 +198,6 @@ int DRIVE_Init(void)
     UNICODE_STRING nameW;
 
     static const WCHAR PathW[] = {'P','a','t','h',0};
-    static const WCHAR CodepageW[] = {'C','o','d','e','p','a','g','e',0};
     static const WCHAR LabelW[] = {'L','a','b','e','l',0};
     static const WCHAR SerialW[] = {'S','e','r','i','a','l',0};
     static const WCHAR TypeW[] = {'T','y','p','e',0};
@@ -223,14 +221,6 @@ int DRIVE_Init(void)
         nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + i;
         if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) continue;
 
-        /* Get the code page number */
-        RtlInitUnicodeString( &nameW, CodepageW );
-        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-        {
-            WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-            drive->codepage = strtolW( data, NULL, 10 );
-        }
-
         /* Get the root path */
         RtlInitUnicodeString( &nameW, PathW );
         if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
@@ -243,19 +233,19 @@ int DRIVE_Init(void)
 
             if (path[0] == '/')
             {
-                len = WideCharToMultiByte(drive->codepage, 0, path, -1, NULL, 0, NULL, NULL);
+                len = WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL);
                 drive->root = HeapAlloc(GetProcessHeap(), 0, len);
-                WideCharToMultiByte(drive->codepage, 0, path, -1, drive->root, len, NULL, NULL);
+                WideCharToMultiByte(CP_UNIXCP, 0, path, -1, drive->root, len, NULL, NULL);
             }
             else
             {
                 /* relative paths are relative to config dir */
                 const char *config = wine_get_config_dir();
                 len = strlen(config);
-                len += WideCharToMultiByte(drive->codepage, 0, path, -1, NULL, 0, NULL, NULL) + 2;
+                len += WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL) + 2;
                 drive->root = HeapAlloc( GetProcessHeap(), 0, len );
                 len -= sprintf( drive->root, "%s/", config );
-                WideCharToMultiByte(drive->codepage, 0, path, -1,
+                WideCharToMultiByte(CP_UNIXCP, 0, path, -1,
                                     drive->root + strlen(drive->root), len, NULL, NULL);
             }
 
@@ -329,9 +319,9 @@ int DRIVE_Init(void)
             if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
             {
                 WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-                len = WideCharToMultiByte(drive->codepage, 0, data, -1, NULL, 0, NULL, NULL);
+                len = WideCharToMultiByte(CP_UNIXCP, 0, data, -1, NULL, 0, NULL, NULL);
                 drive->device = HeapAlloc(GetProcessHeap(), 0, len);
-                WideCharToMultiByte(drive->codepage, 0, data, -1, drive->device, len, NULL, NULL);
+                WideCharToMultiByte(CP_UNIXCP, 0, data, -1, drive->device, len, NULL, NULL);
 
                 RtlInitUnicodeString( &nameW, ReadVolInfoW );
                 if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
@@ -366,10 +356,10 @@ int DRIVE_Init(void)
 
             count++;
             TRACE("Drive %c: path=%s type=%s label=%s serial=%08lx "
-                  "flags=%08x codepage=%u dev=%x ino=%x\n",
+                  "flags=%08x dev=%x ino=%x\n",
                   'A' + i, drive->root, debugstr_w(DRIVE_Types[drive->type]),
                   debugstr_w(drive->label_conf), drive->serial_conf, drive->flags,
-                  drive->codepage, (int)drive->dev, (int)drive->ino );
+                  (int)drive->dev, (int)drive->ino );
         }
 
     next:
@@ -479,9 +469,8 @@ int DRIVE_FindDriveRoot( const char **path )
     struct stat st;
 
     strcpy( buffer, *path );
-    while ((p = strchr( buffer, '\\' )) != NULL)
-        *p = '/';
-    len = strlen(buffer);
+    for (p = buffer; *p; p++) if (*p == '\\') *p = '/';
+    len = p - buffer;
 
     /* strip off trailing slashes */
     while (len > 1 && buffer[len - 1] == '/') buffer[--len] = 0;
@@ -541,49 +530,38 @@ int DRIVE_FindDriveRootW( LPCWSTR *path )
     struct stat st;
 
     strcpyW( buffer, *path );
-    while ((p = strchrW( buffer, '\\' )) != NULL)
-        *p = '/';
-    len = strlenW(buffer);
+    for (p = buffer; *p; p++) if (*p == '\\') *p = '/';
+    len = p - buffer;
 
     /* strip off trailing slashes */
     while (len > 1 && buffer[len - 1] == '/') buffer[--len] = 0;
 
     for (;;)
     {
-        int codepage = -1;
+        char buffA[MAX_PATHNAME_LEN];
 
-        /* Find the drive */
-        for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+        WideCharToMultiByte( CP_UNIXCP, 0, buffer, -1, buffA, sizeof(buffA), NULL, NULL );
+        if (stat( buffA, &st ) == 0 && S_ISDIR( st.st_mode ))
         {
-            char buffA[MAX_PATHNAME_LEN];
-
-            if (!DOSDrives[drive].root ||
-                (DOSDrives[drive].flags & DRIVE_DISABLED))
-                continue;
-
-            if (codepage != DOSDrives[drive].codepage)
+            /* Find the drive */
+            for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
             {
-                WideCharToMultiByte( DOSDrives[drive].codepage, 0, buffer, -1,
-                                     buffA, sizeof(buffA), NULL, NULL );
-                if (stat( buffA, &st ) == -1 || !S_ISDIR( st.st_mode ))
-                {
-                    codepage = -1;
+                if (!DOSDrives[drive].root ||
+                    (DOSDrives[drive].flags & DRIVE_DISABLED))
                     continue;
+
+                if ((DOSDrives[drive].dev == st.st_dev) &&
+                    (DOSDrives[drive].ino == st.st_ino))
+                {
+                    static const WCHAR rootW[] = {'\\',0};
+
+                    if (len == 1) len = 0;  /* preserve root slash in returned path */
+                    TRACE( "%s -> drive %c:, root=%s, name=%s\n",
+                           debugstr_w(*path), 'A' + drive, debugstr_w(buffer), debugstr_w(*path + len));
+                    *path += len;
+                    if (!**path) *path = rootW;
+                    return drive;
                 }
-                codepage = DOSDrives[drive].codepage;
-            }
-
-            if ((DOSDrives[drive].dev == st.st_dev) &&
-                (DOSDrives[drive].ino == st.st_ino))
-            {
-                static const WCHAR rootW[] = {'\\',0};
-
-                if (len == 1) len = 0;  /* preserve root slash in returned path */
-                TRACE( "%s -> drive %c:, root=%s, name=%s\n",
-                       debugstr_w(*path), 'A' + drive, debugstr_w(buffer), debugstr_w(*path + len));
-                *path += len;
-                if (!**path) *path = rootW;
-                return drive;
             }
         }
         if (len <= 1) return -1;  /* reached root */
@@ -902,7 +880,7 @@ DWORD CDROM_Data_GetLabel(int drive, WCHAR *label)
             }
             else
             {
-                MultiByteToWideChar(DOSDrives[drive].codepage, 0, (LPSTR)label_read, -1, label, 11);
+                MultiByteToWideChar(CP_UNIXCP, 0, (LPSTR)label_read, -1, label, 11);
                 label[11] = '\0';
             }
             return 1;
@@ -988,7 +966,7 @@ LPCWSTR DRIVE_GetLabel( int drive )
 
 	    /* FIXME: ISO9660 uses a 32 bytes long label. Should we do also? */
 	    if (offs != -1)
-                MultiByteToWideChar(DOSDrives[drive].codepage, 0, buff+offs, 11,
+                MultiByteToWideChar(CP_UNIXCP, 0, buff+offs, 11,
                                     DOSDrives[drive].label_read, 11);
 	    DOSDrives[drive].label_read[11]='\0';
 	    read = 1;
@@ -1217,16 +1195,6 @@ UINT DRIVE_GetFlags( int drive )
     if ((drive < 0) || (drive >= MAX_DOS_DRIVES)) return 0;
     return DOSDrives[drive].flags;
 }
-
-/***********************************************************************
- *           DRIVE_GetCodepage
- */
-UINT DRIVE_GetCodepage( int drive )
-{
-    if ((drive < 0) || (drive >= MAX_DOS_DRIVES)) return 0;
-    return DOSDrives[drive].codepage;
-}
-
 
 /***********************************************************************
  *           DRIVE_Chdir

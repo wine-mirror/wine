@@ -482,7 +482,7 @@ static BOOL DOSFS_AddDirEntry(DOS_DIR **dir, LPCWSTR name, LPCWSTR dosname)
 /***********************************************************************
  *           DOSFS_OpenDir_VFAT
  */
-static BOOL DOSFS_OpenDir_VFAT(UINT codepage, DOS_DIR **dir, const char *unix_path)
+static BOOL DOSFS_OpenDir_VFAT(DOS_DIR **dir, const char *unix_path)
 {
 #ifdef VFAT_IOCTL_READDIR_BOTH
     KERNEL_DIRENT de[2];
@@ -504,13 +504,13 @@ static BOOL DOSFS_OpenDir_VFAT(UINT codepage, DOS_DIR **dir, const char *unix_pa
             break;
         if (!de[0].d_reclen)
             break;
-        MultiByteToWideChar(codepage, 0, de[0].d_name, -1, long_name, MAX_PATH);
+        MultiByteToWideChar(CP_UNIXCP, 0, de[0].d_name, -1, long_name, MAX_PATH);
         if (!DOSFS_ToDosFCBFormat( long_name, short_name ))
             short_name[0] = '\0';
         if (de[1].d_name[0])
-            MultiByteToWideChar(codepage, 0, de[1].d_name, -1, long_name, MAX_PATH);
+            MultiByteToWideChar(CP_UNIXCP, 0, de[1].d_name, -1, long_name, MAX_PATH);
         else
-            MultiByteToWideChar(codepage, 0, de[0].d_name, -1, long_name, MAX_PATH);
+            MultiByteToWideChar(CP_UNIXCP, 0, de[0].d_name, -1, long_name, MAX_PATH);
         r = DOSFS_AddDirEntry(dir, long_name, short_name );
         if(!r)
             break;
@@ -533,7 +533,7 @@ static BOOL DOSFS_OpenDir_VFAT(UINT codepage, DOS_DIR **dir, const char *unix_pa
  *
  * Now use the standard opendir/readdir interface
  */
-static BOOL DOSFS_OpenDir_Normal( UINT codepage, DOS_DIR **dir, const char *unix_path )
+static BOOL DOSFS_OpenDir_Normal( DOS_DIR **dir, const char *unix_path )
 {
     DIR *unixdir = opendir( unix_path );
     BOOL r = TRUE;
@@ -548,7 +548,7 @@ static BOOL DOSFS_OpenDir_Normal( UINT codepage, DOS_DIR **dir, const char *unix
 
         if(!de)
             break;
-        MultiByteToWideChar(codepage, 0, de->d_name, -1, long_name, MAX_PATH);
+        MultiByteToWideChar(CP_UNIXCP, 0, de->d_name, -1, long_name, MAX_PATH);
         r = DOSFS_AddDirEntry(dir, long_name, empty_strW);
         if(!r)
             break;
@@ -562,7 +562,7 @@ static BOOL DOSFS_OpenDir_Normal( UINT codepage, DOS_DIR **dir, const char *unix
 /***********************************************************************
  *           DOSFS_OpenDir
  */
-static DOS_DIR *DOSFS_OpenDir( UINT codepage, const char *unix_path )
+static DOS_DIR *DOSFS_OpenDir( const char *unix_path )
 {
     const int init_size = 0x100;
     DOS_DIR *dir = HeapAlloc( GetProcessHeap(), 0, sizeof(*dir) + init_size*sizeof (WCHAR));
@@ -582,10 +582,10 @@ static DOS_DIR *DOSFS_OpenDir( UINT codepage, const char *unix_path )
        directory and mask in several other places */
     if (!*unix_path) unix_path = "/";
 
-    r = DOSFS_OpenDir_VFAT( codepage, &dir, unix_path);
+    r = DOSFS_OpenDir_VFAT( &dir, unix_path);
 
     if(!r)
-        r = DOSFS_OpenDir_Normal( codepage, &dir, unix_path);
+        r = DOSFS_OpenDir_Normal( &dir, unix_path);
 
     if(!r)
     {
@@ -768,7 +768,7 @@ BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf
 
     if (!DOSFS_ToDosFCBFormat( name, dos_name )) dos_name[0] = '\0';
 
-    if (!(dir = DOSFS_OpenDir( DRIVE_GetCodepage(path->drive), path->long_name )))
+    if (!(dir = DOSFS_OpenDir( path->long_name )))
     {
         WARN("(%s,%s): can't open dir: %s\n",
              path->long_name, debugstr_w(name), strerror(errno) );
@@ -802,8 +802,7 @@ BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf
     }
     if (ret)
     {
-        if (long_buf) WideCharToMultiByte(DRIVE_GetCodepage(path->drive), 0,
-                                          long_name, -1, long_buf, long_len, NULL, NULL);
+        if (long_buf) WideCharToMultiByte(CP_UNIXCP, 0, long_name, -1, long_buf, long_len, NULL, NULL);
         if (short_buf)
         {
             if (short_name)
@@ -1052,7 +1051,7 @@ static int DOSFS_GetPathDrive( LPCWSTR *name )
 BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
 {
     BOOL found;
-    UINT flags, codepage;
+    UINT flags;
     char *p_l, *root;
     LPWSTR p_s;
     static const WCHAR driveA_rootW[] = {'A',':','\\',0};
@@ -1068,7 +1067,6 @@ BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
 
     if ((full->drive = DOSFS_GetPathDrive( &name )) == -1) return FALSE;
     flags = DRIVE_GetFlags( full->drive );
-    codepage = DRIVE_GetCodepage(full->drive);
 
     lstrcpynA( full->long_name, DRIVE_GetRoot( full->drive ),
                  sizeof(full->long_name) );
@@ -1156,7 +1154,7 @@ BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
                 /* under the same short name. */
                 if (flags & DRIVE_CASE_SENSITIVE) wch = tolowerW(*name);
                 else wch = *name;
-                p_l += WideCharToMultiByte(codepage, 0, &wch, 1, p_l, 2, NULL, NULL);
+                p_l += WideCharToMultiByte(CP_UNIXCP, 0, &wch, 1, p_l, 2, NULL, NULL);
                 name++;
             }
 	    /* Ignore trailing dots and spaces */
@@ -1362,7 +1360,6 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
     const char *root;
     LPWSTR p;
     int drive;
-    UINT codepage;
     DWORD ret, len = 0;
 
     if (!shortpath) {
@@ -1387,9 +1384,8 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
 
     root = full_name.long_name;
     drive = DRIVE_FindDriveRoot(&root);
-    codepage = DRIVE_GetCodepage(drive);
 
-    ret = MultiByteToWideChar(codepage, 0, root, -1, NULL, 0);
+    ret = MultiByteToWideChar(CP_UNIXCP, 0, root, -1, NULL, 0);
     ret += 3; /* A:\ */
     /* reproduce terminating slash */
     if (ret > 4) /* if not drive root */
@@ -1403,7 +1399,7 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
     {
         longpath[0] = 'A' + drive;
         longpath[1] = ':';
-        MultiByteToWideChar(codepage, 0, root, -1, longpath + 2, longlen - 2);
+        MultiByteToWideChar(CP_UNIXCP, 0, root, -1, longpath + 2, longlen - 2);
         for (p = longpath; *p; p++) if (*p == '/') *p = '\\';
         if (len)
         {
@@ -1541,8 +1537,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCWSTR name, DWORD len, LPWSTR result )
 	    p_l = full_name.long_name + strlen(root);
 	  }
 	/* append long name (= unix name) to drive */
-	MultiByteToWideChar(DRIVE_GetCodepage(drive), 0, p_l, -1,
-                            full_name.short_name + 2, MAX_PATHNAME_LEN - 3);
+	MultiByteToWideChar(CP_UNIXCP, 0, p_l, -1, full_name.short_name + 2, MAX_PATHNAME_LEN - 3);
 	/* append name to treat */
 	namelen= strlenW(full_name.short_name);
 	p = (LPWSTR)name;
@@ -1850,7 +1845,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
         }
 
         /* Check the file attributes */
-        WideCharToMultiByte(DRIVE_GetCodepage(info->drive), 0, long_name, -1,
+        WideCharToMultiByte(CP_UNIXCP, 0, long_name, -1,
                             p, sizeof(buffer) - (int)(p - buffer), NULL, NULL);
         if (!FILE_Stat( buffer, &fileinfo, &is_symlink ))
         {
@@ -1937,7 +1932,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         info.attr = attr;
         info.drive = drive;
         info.cur_pos = 0;
-        info.u.dos_dir = DOSFS_OpenDir( DRIVE_GetCodepage(drive), info.path );
+        info.u.dos_dir = DOSFS_OpenDir( info.path );
     }
     else
     {
@@ -2012,7 +2007,6 @@ HANDLE WINAPI FindFirstFileExW(
           WIN32_FIND_DATAW * data = (WIN32_FIND_DATAW *) lpFindFileData;
           char *p;
           INT long_mask_len;
-          UINT codepage;
 
           data->dwReserved0 = data->dwReserved1 = 0x0;
           if (lpFileName[0] == '\\' && lpFileName[1] == '\\')
@@ -2048,19 +2042,18 @@ HANDLE WINAPI FindFirstFileExW(
             info->path = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
             strcpy( info->path, full_name.long_name );
 
-            codepage = DRIVE_GetCodepage(full_name.drive);
             p = strrchr( info->path, '/' );
             *p++ = '\0';
-            long_mask_len = MultiByteToWideChar(codepage, 0, p, -1, NULL, 0);
+            long_mask_len = MultiByteToWideChar(CP_UNIXCP, 0, p, -1, NULL, 0);
             info->long_mask = HeapAlloc( GetProcessHeap(), 0, long_mask_len * sizeof(WCHAR) );
-            MultiByteToWideChar(codepage, 0, p, -1, info->long_mask, long_mask_len);
+            MultiByteToWideChar(CP_UNIXCP, 0, p, -1, info->long_mask, long_mask_len);
 
             info->short_mask = NULL;
             info->attr = 0xff;
             info->drive = full_name.drive;
             info->cur_pos = 0;
 
-            info->u.dos_dir = DOSFS_OpenDir( codepage, info->path );
+            info->u.dos_dir = DOSFS_OpenDir( info->path );
           }
           if (!FindNextFileW( (HANDLE) info, data ))
           {

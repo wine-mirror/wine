@@ -41,7 +41,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
-#include "drive.h"
 #include "file.h"
 #include "heap.h"
 #include "wine/unicode.h"
@@ -458,7 +457,6 @@ static BOOL PROFILE_FlushFile(void)
     if (!CurProfile->changed || !CurProfile->dos_name) return TRUE;
     if (!(unix_name = CurProfile->unix_name) || !(file = fopen(unix_name, "w")))
     {
-        int drive = toupperW(CurProfile->dos_name[0]) - 'A';
         WCHAR *name, *name_lwr;
         /* Try to create it in $HOME/.wine */
         /* FIXME: this will need a more general solution */
@@ -472,7 +470,7 @@ static BOOL PROFILE_FlushFile(void)
         name_lwr = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
         strcpyW(name_lwr, name);
         strlwrW(name_lwr);
-        WideCharToMultiByte(DRIVE_GetCodepage(drive), 0, name_lwr, -1,
+        WideCharToMultiByte(CP_UNIXCP, 0, name_lwr, -1,
                             p, sizeof(buffer) - strlen(buffer), NULL, NULL);
         HeapFree(GetProcessHeap(), 0, name_lwr);
 
@@ -623,7 +621,7 @@ static BOOL PROFILE_Open( LPCWSTR filename )
     name_lwr = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
     strcpyW(name_lwr, name);
     strlwrW(name_lwr);
-    WideCharToMultiByte(DRIVE_GetCodepage(full_name.drive), 0, name_lwr, -1,
+    WideCharToMultiByte(CP_UNIXCP, 0, name_lwr, -1,
                         p, sizeof(buffer) - strlen(buffer), NULL, NULL);
     HeapFree(GetProcessHeap(), 0, name_lwr);
 
