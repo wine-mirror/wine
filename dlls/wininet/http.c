@@ -1532,6 +1532,15 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         /* If we don't have a path we set it to root */
         if (NULL == lpwhr->lpszPath)
             lpwhr->lpszPath = WININET_strdupW(szSlash);
+        else /* remove \r and \n*/
+        {
+            int nLen = strlenW(lpwhr->lpszPath);
+            while ((nLen >0 ) && ((lpwhr->lpszPath[nLen-1] == '\r')||(lpwhr->lpszPath[nLen-1] == '\n')))
+            {
+                nLen--;
+                lpwhr->lpszPath[nLen]='\0';
+            }
+        }
 
         if(CSTR_EQUAL != CompareStringW( LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
                            lpwhr->lpszPath, strlenW(szHttp), szHttp, strlenW(szHttp) )
