@@ -18,7 +18,6 @@
 #include "wingdi.h"
 #include "ddrawi.h"
 #include "bitmap.h"
-#include "win.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
@@ -50,19 +49,12 @@ static void GrabPointer(HWND hWnd)
 {
   Display *display = thread_display();
   if (hWnd) {
-    WND *tmpWnd;
-    Window win;
     /* find the X11 window that ddraw uses */
-    tmpWnd = WIN_FindWndPtr(hWnd);
-    win = X11DRV_WND_GetXWindow(tmpWnd);
-    TRACE("WND: %p win: %ld\n", tmpWnd, win);
-    WIN_ReleaseWndPtr(tmpWnd);
+    Window win = X11DRV_get_whole_window(hWnd);
+    TRACE("WND: %x win: %ld\n", hWnd, win);
     if (!win) {
       TRACE("host off desktop\n");
-      tmpWnd = WIN_FindWndPtr(GetDesktopWindow());
-      win = X11DRV_WND_GetXWindow(tmpWnd);
-      TRACE("Owner WND: %p win: %ld\n", tmpWnd, win);
-      WIN_ReleaseWndPtr(tmpWnd);
+      win = root_window;
     }
     TSXGrabPointer(display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);
   }

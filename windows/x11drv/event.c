@@ -51,7 +51,7 @@ extern Atom dndProtocol;
 extern Atom dndSelection;
 
 extern void X11DRV_KEYBOARD_UpdateState(void);
-extern void X11DRV_KEYBOARD_HandleEvent(WND *pWnd, XKeyEvent *event);
+extern void X11DRV_KEYBOARD_HandleEvent( XKeyEvent *event, int x, int y );
 
 #define NB_BUTTONS      5     /* Windows can handle 3 buttons and the wheel too */
 
@@ -97,15 +97,15 @@ static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event );
 static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event );
 static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event );
 static void EVENT_Expose( HWND hWnd, XExposeEvent *event );
-static void EVENT_GraphicsExpose( HWND hWnd, XGraphicsExposeEvent *event );
-static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event );
 static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple );
 static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event);
 static void EVENT_PropertyNotify( XPropertyEvent *event );
 static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
-static void EVENT_MapNotify( HWND pWnd, XMapEvent *event );
-static void EVENT_UnmapNotify( HWND pWnd, XUnmapEvent *event );
 static void EVENT_MappingNotify( XMappingEvent *event );
+
+extern void X11DRV_MapNotify( HWND hwnd, XMapEvent *event );
+extern void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event );
+extern void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
 
 #ifdef HAVE_LIBXXF86DGA2
 static int DGAMotionEventType;
@@ -122,14 +122,6 @@ static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event );
 static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event );
 #endif
 
-/* Usable only with OLVWM - compile option perhaps?
-static void EVENT_EnterNotify( HWND hWnd, XCrossingEvent *event );
-*/
-
-static void EVENT_GetGeometry( Display *display, Window win, int *px, int *py,
-                               unsigned int *pwidth, unsigned int *pheight );
-
-
 /* Static used for the current input method */
 static INPUT_TYPE current_input_type = X11DRV_INPUT_ABSOLUTE;
 static BOOL in_transition = FALSE; /* This is not used as for today */
@@ -138,31 +130,22 @@ static BOOL in_transition = FALSE; /* This is not used as for today */
 /***********************************************************************
  *           process_events
  */
-static void process_events( Display *display )
+static int process_events( struct x11drv_thread_data *data )
 {
     XEvent event;
+    int count = 0;
 
     wine_tsx11_lock();
-    while ( XPending( display ) )
+    while ( XPending( data->display ) )
     {
-        XNextEvent( display, &event );
+        XNextEvent( data->display, &event );
         wine_tsx11_unlock();
         EVENT_ProcessEvent( &event );
+        count++;
         wine_tsx11_lock();
     }
     wine_tsx11_unlock();
-}
-
-/***********************************************************************
- *		X11DRV_Synchronize
- *
- * Synchronize with the X server. Should not be used too often.
- */
-void X11DRV_Synchronize( void )
-{
-    Display *display = thread_display();
-    TSXSync( display, False );
-    process_events( display );
+    return count;
 }
 
 
@@ -183,14 +166,19 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     for (i = 0; i < count; i++) new_handles[i] = handles[i];
     new_handles[count] = data->display_fd;
 
-    data->process_event_count++;
     wine_tsx11_lock();
     XFlush( gdi_display );
     XFlush( data->display );
     wine_tsx11_unlock();
-    ret = WaitForMultipleObjectsEx( count+1, new_handles, flags & MWMO_WAITALL,
-                                    timeout, flags & MWMO_ALERTABLE );
-    if (ret == count) process_events( data->display );
+
+    data->process_event_count++;
+    if (process_events( data )) ret = count;
+    else
+    {
+        ret = WaitForMultipleObjectsEx( count+1, new_handles, flags & MWMO_WAITALL,
+                                        timeout, flags & MWMO_ALERTABLE );
+        if (ret == count) process_events( data );
+    }
     data->process_event_count--;
     return ret;
 }
@@ -272,33 +260,20 @@ static void EVENT_ProcessEvent( XEvent *event )
       ke.keycode = evt->keycode;
       ke.same_screen = TRUE;
       
-      X11DRV_KEYBOARD_HandleEvent(NULL, &ke);
+      X11DRV_KEYBOARD_HandleEvent(&ke,pt.x,pt.y);
       return;
     }
   }
 #endif
-  
-  if ( TSXFindContext( display, event->xany.window, winContext,
-		       (char **)&hWnd ) != 0) {
-    if ( event->type == ClientMessage) {
-      /* query window (drag&drop event contains only drag window) */
-      Window   	root, child;
-      int      	root_x, root_y, child_x, child_y;
-      unsigned	u;
-      TSXQueryPointer( display, root_window, &root, &child,
-		       &root_x, &root_y, &child_x, &child_y, &u);
-      if (TSXFindContext( display, child, winContext, (char **)&hWnd ) != 0)
-	return;
-    } else {
+
+  if (TSXFindContext( display, event->xany.window, winContext, (char **)&hWnd ) != 0)
       hWnd = 0;  /* Not for a registered window */
-    }
-  }
 
   if ( !hWnd && event->xany.window != root_window
              && event->type != PropertyNotify 
              && event->type != MappingNotify)
-      ERR("Got event %s for unknown Window %08lx\n",
-          event_names[event->type], event->xany.window );
+      WARN( "Got event %s for unknown Window %08lx\n",
+            event_names[event->type], event->xany.window );
   else
       TRACE("Got event %s for hwnd %04x\n",
             event_names[event->type], hWnd );
@@ -334,65 +309,22 @@ static void EVENT_ProcessEvent( XEvent *event )
 					MotionNotify, event));    
       EVENT_MotionNotify( hWnd, (XMotionEvent*)event );
       break;
-      
+
     case FocusIn:
-    {
-      WND *pWndLastFocus = 0;
-      XWindowAttributes win_attr;
-      BOOL bIsDisabled;
-      XFocusChangeEvent *xfocChange = (XFocusChangeEvent*)event;
-
-      if (!hWnd) return;
-
-      bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
-
-      /* If the window has been disabled and we are in managed mode,
-       * revert the X focus back to the last focus window. This is to disallow
-       * the window manager from switching focus away while the app is
-       * in a modal state.
-       */
-      if ( Options.managed && bIsDisabled && glastXFocusWin)
-      {
-        /* Change focus only if saved focus window is registered and viewable */
-        if ( TSXFindContext( xfocChange->display, glastXFocusWin, winContext,
-                             (char **)&pWndLastFocus ) == 0 )
-        {
-          if ( TSXGetWindowAttributes( display, glastXFocusWin, &win_attr ) &&
-                 (win_attr.map_state == IsViewable) )
-          {
-            TSXSetInputFocus( xfocChange->display, glastXFocusWin, RevertToParent, CurrentTime );
-            X11DRV_Synchronize();
-            break;
-          }
-        }
-      }
-       
-      EVENT_FocusIn( hWnd, xfocChange );
+      EVENT_FocusIn( hWnd, (XFocusChangeEvent*)event );
       break;
-    }
-      
+
     case FocusOut:
-    {
-      /* Save the last window which had the focus */
-      XFocusChangeEvent *xfocChange = (XFocusChangeEvent*)event;
-      glastXFocusWin = xfocChange->window;
-      if (!hWnd) return;
-      if (GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED) glastXFocusWin = 0;
       EVENT_FocusOut( hWnd, (XFocusChangeEvent*)event );
       break;
-    }
-      
+
     case Expose:
-      EVENT_Expose( hWnd, (XExposeEvent *)event );
+      EVENT_Expose( hWnd, &event->xexpose );
       break;
-      
-    case GraphicsExpose:
-      EVENT_GraphicsExpose( hWnd, (XGraphicsExposeEvent *)event );
-      break;
-      
+
     case ConfigureNotify:
       if (!hWnd) return;
-      EVENT_ConfigureNotify( hWnd, (XConfigureEvent*)event );
+      X11DRV_ConfigureNotify( hWnd, &event->xconfigure );
       break;
 
     case SelectionRequest:
@@ -414,23 +346,15 @@ static void EVENT_ProcessEvent( XEvent *event )
       EVENT_ClientMessage( hWnd, (XClientMessageEvent *) event );
       break;
 
-#if 0
-    case EnterNotify:
-      EVENT_EnterNotify( hWnd, (XCrossingEvent *) event );
-      break;
-#endif
-
     case NoExpose:
       break;
-      
+
     case MapNotify:
-      if (!hWnd) return;
-      EVENT_MapNotify( hWnd, (XMapEvent *)event );
+      X11DRV_MapNotify( hWnd, (XMapEvent *)event );
       break;
 
     case UnmapNotify:
-      if (!hWnd) return;
-      EVENT_UnmapNotify( hWnd, (XUnmapEvent *)event );
+      X11DRV_UnmapNotify( hWnd, (XUnmapEvent *)event );
       break;
 
     case MappingNotify:
@@ -443,136 +367,6 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
     }
     TRACE( "returns.\n" );
-}
-
-/***********************************************************************
- *           EVENT_QueryZOrder
- *
- * Synchronize internal z-order with the window manager's.
- */
-static BOOL __check_query_condition( WND** pWndA, WND** pWndB )
-{
-  /* return TRUE if we have at least two managed windows */
-  
-  for( *pWndB = NULL; *pWndA; *pWndA = (*pWndA)->next )
-    if( ((*pWndA)->dwExStyle & WS_EX_MANAGED) &&
-	((*pWndA)->dwStyle & WS_VISIBLE )) break;
-  if( *pWndA )
-    for( *pWndB = (*pWndA)->next; *pWndB; *pWndB = (*pWndB)->next )
-      if( ((*pWndB)->dwExStyle & WS_EX_MANAGED) &&
-	  ((*pWndB)->dwStyle & WS_VISIBLE )) break;
-  return ((*pWndB) != NULL);
-}
-
-static Window __get_common_ancestor( Display *display, Window A, Window B,
-                                     Window** children, unsigned* total )
-{
-    /* find the real root window */
-  
-    Window      root, *childrenB;
-    unsigned    totalB;
-
-    while( A != B && A && B )
-    {
-      TSXQueryTree( display, A, &root, &A, children, total );
-      TSXQueryTree( display, B, &root, &B, &childrenB, &totalB );
-      if( childrenB ) TSXFree( childrenB );
-      if( *children ) TSXFree( *children ), *children = NULL;
-    }
-
-    if( A && B )
-    {
-	TSXQueryTree( display, A, &root, &B, children, total );
-	return A;
-    }
-    return 0 ;
-}
-
-static Window __get_top_decoration( Display *display, Window w, Window ancestor )
-{
-  Window*     children, root, prev = w, parent = w;
-  unsigned    total;
-  
-  do
-    {
-      w = parent;
-      TSXQueryTree( display, w, &root, &parent, &children, &total );
-      if( children ) TSXFree( children );
-    } while( parent && parent != ancestor );
-  TRACE("\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
-  return ( parent ) ? w : 0 ;
-}
-
-static unsigned __td_lookup( Window w, Window* list, unsigned max )
-{
-  unsigned    i;
-  for( i = max - 1; i >= 0; i-- ) if( list[i] == w ) break;
-  return i;
-}
-
-static HWND EVENT_QueryZOrder( Display *display, HWND hWndCheck)
-{
-  HWND      hwndInsertAfter = HWND_TOP;
-  WND      *pWndCheck = WIN_FindWndPtr(hWndCheck);
-  WND      *pDesktop = WIN_GetDesktop();
-  WND      *pWnd, *pWndZ = WIN_LockWndPtr(pDesktop->child);
-  Window      w, parent, *children = NULL;
-  unsigned    total, check, pos, best;
-  
-  if( !__check_query_condition(&pWndZ, &pWnd) )
-  {
-      WIN_ReleaseWndPtr(pWndCheck);
-      WIN_ReleaseWndPtr(pDesktop->child);
-      WIN_ReleaseDesktop();
-      return hwndInsertAfter;
-  }
-  WIN_LockWndPtr(pWndZ);
-  WIN_LockWndPtr(pWnd);
-  WIN_ReleaseWndPtr(pDesktop->child);
-  WIN_ReleaseDesktop();
-  
-  parent = __get_common_ancestor( display, X11DRV_WND_GetXWindow(pWndZ),
-				  X11DRV_WND_GetXWindow(pWnd),
-				  &children, &total );
-  if( parent && children )
-  {
-      /* w is the ancestor if pWndCheck that is a direct descendant of 'parent' */
-
-      w = __get_top_decoration( display, X11DRV_WND_GetXWindow(pWndCheck), parent );
-
-      if( w != children[total-1] ) /* check if at the top */
-      {
-	  /* X child at index 0 is at the bottom, at index total-1 is at the top */
-	  check = __td_lookup( w, children, total );
-	  best = total;
-
-          for( WIN_UpdateWndPtr(&pWnd,pWndZ); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
-          {
-	      /* go through all windows in Wine z-order... */
-
-	      if( pWnd != pWndCheck )
-              {
-		  if( !(pWnd->dwExStyle & WS_EX_MANAGED) ||
-		      !(w = __get_top_decoration( display, X11DRV_WND_GetXWindow(pWnd), parent )) )
-		    continue;
-		  pos = __td_lookup( w, children, total );
-		  if( pos < best && pos > check )
-                  {
-		      /* find a nearest Wine window precedes 
-		       * pWndCheck in the real z-order... */
-		      best = pos;
-		      hwndInsertAfter = pWnd->hwndSelf;
-                  }
-		  if( best - check == 1 ) break;
-              }
-          }
-      }
-  }
-  if( children ) TSXFree( children );
-  WIN_ReleaseWndPtr(pWnd);
-  WIN_ReleaseWndPtr(pWndZ);
-  WIN_ReleaseWndPtr(pWndCheck);
-  return hwndInsertAfter;
 }
 
 /***********************************************************************
@@ -593,62 +387,74 @@ WORD X11DRV_EVENT_XStateToKeyState( int state )
   return kstate;
 }
 
+
 /***********************************************************************
  *           EVENT_Expose
  */
-static void EVENT_Expose( HWND hWnd, XExposeEvent *event )
+static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
 {
-  RECT rect;
-  int  offx = 0,offy = 0;
+    RECT rect;
+    struct x11drv_win_data *data;
+    int flags = RDW_INVALIDATE | RDW_ERASE;
+    WND *win;
 
-  WND *pWnd = WIN_FindWndPtr(hWnd);
-  /* Make position relative to client area instead of window */
-  offx =  (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
-  offy =  (pWnd? (pWnd->rectClient.top - pWnd->rectWindow.top) : 0);
+    TRACE( "win %x (%lx) %d,%d %dx%d\n",
+           hwnd, event->window, event->x, event->y, event->width, event->height );
 
-  rect.left   = event->x - offx;
-  rect.top    = event->y - offy;
+    rect.left   = event->x;
+    rect.top    = event->y;
+    rect.right  = rect.left + event->width;
+    rect.bottom = rect.top + event->height;
 
-  rect.right  = rect.left + event->width;
-  rect.bottom = rect.top + event->height;
+    if (!(win = WIN_FindWndPtr(hwnd))) return;
+    data = win->pDriverData;
 
-  WIN_ReleaseWndPtr(pWnd);
+    if (event->window != data->client_window)  /* whole window or icon window */
+    {
+        flags |= RDW_FRAME;
+        /* make position relative to client area instead of window */
+        OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
+    }
 
-  RedrawWindow( hWnd, &rect, 0, RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
-
-  if (event->count == 0)
-    SendNotifyMessageA(hWnd,WM_SYNCPAINT, 0, 0);
+    /* find the top level parent that doesn't clip children and invalidate the area */
+    /* on the parent (which will invalidate all the children too) */
+    while (win->parent && win->parent->hwndSelf != GetDesktopWindow() &&
+           !(win->parent->dwStyle & WS_CLIPCHILDREN))
+    {
+        OffsetRect( &rect, win->rectClient.left, win->rectClient.top );
+        WIN_UpdateWndPtr( &win, win->parent );
+        flags &= ~RDW_FRAME;  /* parent will invalidate children frame anyway */
+    }
+    hwnd = win->hwndSelf;
+    WIN_ReleaseWndPtr(win);
+    RedrawWindow( hwnd, &rect, 0, flags );
 }
 
 
-/***********************************************************************
- *           EVENT_GraphicsExpose
- *
- * This is needed when scrolling area is partially obscured
- * by non-Wine X window.
- */
-static void EVENT_GraphicsExpose( HWND hWnd, XGraphicsExposeEvent *event )
+/* get the coordinates of a mouse event */
+static void get_coords( HWND *hwnd, Window window, int x, int y, POINT *pt )
 {
-  RECT rect;
-  int  offx = 0,offy = 0;
+    struct x11drv_win_data *data;
+    WND *win;
 
-  WND *pWnd = WIN_FindWndPtr(hWnd);
-  /* Make position relative to client area instead of window */
-  offx =  (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
-  offy =  (pWnd? (pWnd->rectClient.top - pWnd->rectWindow.top) : 0);
+    if (!(win = WIN_FindWndPtr( *hwnd ))) return;
+    data = win->pDriverData;
 
-  rect.left   = event->x - offx;
-  rect.top    = event->y - offy;
-
-  rect.right  = rect.left + event->width;
-  rect.bottom = rect.top + event->height;
-
-  WIN_ReleaseWndPtr(pWnd);
-
-  RedrawWindow( hWnd, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE );
-
-  if (event->count == 0)
-    SendNotifyMessageA(hWnd,WM_SYNCPAINT, 0, 0);
+    if (window == data->whole_window)
+    {
+        x -= data->client_rect.left;
+        y -= data->client_rect.top;
+    }
+    while (win->parent && win->parent->hwndSelf != GetDesktopWindow())
+    {
+        x += win->rectClient.left;
+        y += win->rectClient.top;
+        WIN_UpdateWndPtr( &win, win->parent );
+    }
+    pt->x = x + win->rectClient.left;
+    pt->y = y + win->rectClient.top;
+    *hwnd = win->hwndSelf;
+    WIN_ReleaseWndPtr( win );
 }
 
 
@@ -659,10 +465,9 @@ static void EVENT_GraphicsExpose( HWND hWnd, XGraphicsExposeEvent *event )
  */
 static void EVENT_Key( HWND hWnd, XKeyEvent *event )
 {
-    WND *pWnd = WIN_FindWndPtr(hWnd);
-  X11DRV_KEYBOARD_HandleEvent( pWnd, event );
-    WIN_ReleaseWndPtr(pWnd);
-
+    POINT pt;
+    get_coords( &hWnd, event->window, event->x, event->y, &pt );
+    X11DRV_KEYBOARD_HandleEvent( event, pt.x, pt.y );
 }
 
 
@@ -671,22 +476,22 @@ static void EVENT_Key( HWND hWnd, XKeyEvent *event )
  */
 static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
 {
-  if (current_input_type == X11DRV_INPUT_ABSOLUTE) {
-    WND *pWnd = WIN_FindWndPtr(hWnd);
-    int xOffset = pWnd? pWnd->rectWindow.left : 0;
-    int yOffset = pWnd? pWnd->rectWindow.top  : 0;
-    WIN_ReleaseWndPtr(pWnd);
-    
-    X11DRV_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 
-                            xOffset + event->x, yOffset + event->y,
-                            X11DRV_EVENT_XStateToKeyState( event->state ), 
-                            event->time - X11DRV_server_startticks, hWnd);
-  } else {
-    X11DRV_SendEvent( MOUSEEVENTF_MOVE,
-                            event->x_root, event->y_root,
-                            X11DRV_EVENT_XStateToKeyState( event->state ), 
-                            event->time - X11DRV_server_startticks, hWnd);
-  }
+    POINT pt;
+
+    if (current_input_type == X11DRV_INPUT_ABSOLUTE)
+    {
+        get_coords( &hWnd, event->window, event->x, event->y, &pt );
+        X11DRV_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, pt.x, pt.y,
+                          X11DRV_EVENT_XStateToKeyState( event->state ),
+                          event->time - X11DRV_server_startticks, hWnd);
+    }
+    else
+    {
+        X11DRV_SendEvent( MOUSEEVENTF_MOVE,
+                          event->x_root, event->y_root,
+                          X11DRV_EVENT_XStateToKeyState( event->state ),
+                          event->time - X11DRV_server_startticks, hWnd);
+    }
 }
 
 
@@ -695,51 +500,46 @@ static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
  */
 static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
 {
-  static WORD statusCodes[NB_BUTTONS] = 
-  { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_WHEEL, MOUSEEVENTF_WHEEL};
-  int buttonNum = event->button - 1;
-  
-  WND *pWnd = WIN_FindWndPtr(hWnd);
-  int xOffset = pWnd? pWnd->rectWindow.left : 0;
-  int yOffset = pWnd? pWnd->rectWindow.top  : 0;
-  WORD keystate,wData = 0;
-  
-  WIN_ReleaseWndPtr(pWnd);
+    static const WORD statusCodes[NB_BUTTONS] = { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_MIDDLEDOWN,
+                                                  MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_WHEEL,
+                                                  MOUSEEVENTF_WHEEL};
+    int buttonNum = event->button - 1;
+    WORD keystate, wData = 0;
+    POINT pt;
 
-  if (buttonNum >= NB_BUTTONS) return;
+    if (buttonNum >= NB_BUTTONS) return;
 
-  /*
-   * Get the compatible keystate
-   */
-  keystate = X11DRV_EVENT_XStateToKeyState( event->state );
-  
-  /*
-   * Make sure that the state of the button that was just 
-   * pressed is "down".
-   */
-  switch (buttonNum)
-  {
+    get_coords( &hWnd, event->window, event->x, event->y, &pt );
+
+    /* Get the compatible keystate */
+    keystate = X11DRV_EVENT_XStateToKeyState( event->state );
+
+    /*
+     * Make sure that the state of the button that was just 
+     * pressed is "down".
+     */
+    switch (buttonNum)
+    {
     case 0:
-      keystate |= MK_LBUTTON;
-      break;
+        keystate |= MK_LBUTTON;
+        break;
     case 1:
-      keystate |= MK_MBUTTON;
-      break;
+        keystate |= MK_MBUTTON;
+        break;
     case 2:
-      keystate |= MK_RBUTTON;
-      break;
+        keystate |= MK_RBUTTON;
+        break;
     case 3:
         wData = WHEEL_DELTA;
         break;
     case 4:
         wData = -WHEEL_DELTA;
         break;
-  }
-  
-  X11DRV_SendEvent( statusCodes[buttonNum], 
-                          xOffset + event->x, yOffset + event->y,
-                          MAKEWPARAM(keystate,wData),
-                          event->time - X11DRV_server_startticks, hWnd);
+    }
+
+    X11DRV_SendEvent( statusCodes[buttonNum], pt.x, pt.y,
+                      MAKEWPARAM(keystate,wData),
+                      event->time - X11DRV_server_startticks, hWnd);
 }
 
 
@@ -748,45 +548,39 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
  */
 static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
 {
-  static WORD statusCodes[NB_BUTTONS] = 
-  { MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_RIGHTUP };
-  int buttonNum = event->button - 1;
-  WND *pWnd = WIN_FindWndPtr(hWnd);
-  int xOffset = pWnd? pWnd->rectWindow.left : 0;
-  int yOffset = pWnd? pWnd->rectWindow.top  : 0;
-  WORD keystate;
-  
-  WIN_ReleaseWndPtr(pWnd);
-  
-  if (buttonNum >= NB_BUTTONS) return;    
-  
-  /*
-   * Get the compatible keystate
-   */
-  keystate = X11DRV_EVENT_XStateToKeyState( event->state );
+    static const WORD statusCodes[NB_BUTTONS] = { MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEUP,
+                                                  MOUSEEVENTF_RIGHTUP, 0, 0 };
+    int buttonNum = event->button - 1;
+    WORD keystate;
+    POINT pt;
 
-  /*
-   * Make sure that the state of the button that was just 
-   * released is "up".
-   */
-  switch (buttonNum)
-  {
+    if (buttonNum >= NB_BUTTONS) return;
+
+    get_coords( &hWnd, event->window, event->x, event->y, &pt );
+
+    /* Get the compatible keystate */
+    keystate = X11DRV_EVENT_XStateToKeyState( event->state );
+
+    /*
+     * Make sure that the state of the button that was just 
+     * released is "up".
+     */
+    switch (buttonNum)
+    {
     case 0:
-      keystate &= ~MK_LBUTTON;
-      break;
+        keystate &= ~MK_LBUTTON;
+        break;
     case 1:
-      keystate &= ~MK_MBUTTON;
-      break;
+        keystate &= ~MK_MBUTTON;
+        break;
     case 2:
-      keystate &= ~MK_RBUTTON;
-      break;
-  default:
-      return;
-  }
-
-  X11DRV_SendEvent( statusCodes[buttonNum], 
-                          xOffset + event->x, yOffset + event->y,
-                          keystate, event->time - X11DRV_server_startticks, hWnd);
+        keystate &= ~MK_RBUTTON;
+        break;
+    default:
+        return;
+    }
+    X11DRV_SendEvent( statusCodes[buttonNum], pt.x, pt.y,
+                      keystate, event->time - X11DRV_server_startticks, hWnd);
 }
 
 
@@ -795,12 +589,42 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
  */
 static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
 {
-    if (event->detail != NotifyPointer)
-        if (hWnd != GetForegroundWindow())
+    WND *pWndLastFocus;
+    XWindowAttributes win_attr;
+    BOOL bIsDisabled;
+
+    if (!hWnd) return;
+
+    bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
+
+    /* If the window has been disabled and we are in managed mode,
+       * revert the X focus back to the last focus window. This is to disallow
+       * the window manager from switching focus away while the app is
+       * in a modal state.
+       */
+    if ( Options.managed && bIsDisabled && glastXFocusWin)
+    {
+        /* Change focus only if saved focus window is registered and viewable */
+        wine_tsx11_lock();
+        if (XFindContext( event->display, glastXFocusWin, winContext,
+                           (char **)&pWndLastFocus ) == 0 )
         {
-            SetForegroundWindow( hWnd );
-	    X11DRV_KEYBOARD_UpdateState();
+            if (XGetWindowAttributes( event->display, glastXFocusWin, &win_attr ) &&
+                (win_attr.map_state == IsViewable) )
+            {
+                XSetInputFocus( event->display, glastXFocusWin, RevertToParent, CurrentTime );
+                wine_tsx11_unlock();
+                return;
+            }
         }
+        wine_tsx11_unlock();
+    }
+
+    if (event->detail != NotifyPointer && hWnd != GetForegroundWindow())
+    {
+        SetForegroundWindow( hWnd );
+        X11DRV_KEYBOARD_UpdateState();
+    }
 }
 
 
@@ -811,25 +635,27 @@ static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
  */
 static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
 {
-    if (event->detail != NotifyPointer)
-        if (hWnd == GetForegroundWindow())
-	{
-	    SendMessageA( hWnd, WM_CANCELMODE, 0, 0 );
+    /* Save the last window which had the focus */
+    glastXFocusWin = event->window;
+    if (!hWnd) return;
+    if (GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED) glastXFocusWin = 0;
 
-
-            /* don't reset the foreground window, if the window who's 
+    if (event->detail != NotifyPointer && hWnd == GetForegroundWindow())
+    {
+        /* don't reset the foreground window, if the window which is
                getting the focus is a Wine window */
-            if (!X11DRV_CheckFocus())
-            {
-                /* Abey : 6-Oct-99. Check again if the focus out window is the
-                   Foreground window, because in most cases the messages sent
-                   above must have already changed the foreground window, in which
-                   case we don't have to change the foreground window to 0 */
+        if (!X11DRV_CheckFocus())
+        {
+            SendMessageA( hWnd, WM_CANCELMODE, 0, 0 );
+            /* Abey : 6-Oct-99. Check again if the focus out window is the
+               Foreground window, because in most cases the messages sent
+               above must have already changed the foreground window, in which
+               case we don't have to change the foreground window to 0 */
 
-                if (hWnd == GetForegroundWindow())
-                    SetForegroundWindow( 0 );
-            }
-	}
+            if (hWnd == GetForegroundWindow())
+                SetForegroundWindow( 0 );
+        }
+    }
 }
 
 /**********************************************************************
@@ -847,100 +673,6 @@ static BOOL X11DRV_CheckFocus(void)
         TSXFindContext(display, xW, winContext, (char **)&hWnd) ) 
       return FALSE;
     return TRUE;
-}
-
-/**********************************************************************
- *              EVENT_GetGeometry
- *
- * Helper function for ConfigureNotify handling.
- * Get the new geometry of a window relative to the root window.
- */
-static void EVENT_GetGeometry( Display *display, Window win, int *px, int *py,
-                               unsigned int *pwidth, unsigned int *pheight )
-{
-    Window root, top;
-    int x, y, width, height, border, depth;
-
-    wine_tsx11_lock();
-
-    /* Get the geometry of the window */
-    XGetGeometry( display, win, &root, &x, &y, &width, &height,
-                  &border, &depth );
-
-    /* Translate the window origin to root coordinates */
-    XTranslateCoordinates( display, win, root, 0, 0, &x, &y, &top );
-
-    wine_tsx11_unlock();
-
-    *px = x;
-    *py = y;
-    *pwidth = width;
-    *pheight = height;
-}
-
-/**********************************************************************
- *              EVENT_ConfigureNotify
- *
- * The ConfigureNotify event is only selected on top-level windows
- * when the -managed flag is used.
- */
-static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event )
-{
-    RECT rectWindow;
-    int x, y, flags = 0;
-    unsigned int width, height;
-    HWND newInsertAfter, oldInsertAfter;
-  
-    /* Get geometry and Z-order according to X */
-
-    EVENT_GetGeometry( event->display, event->window, &x, &y, &width, &height );
-    newInsertAfter = EVENT_QueryZOrder( event->display, hWnd );
-
-    /* Get geometry and Z-order according to Wine */
-
-    /*
-     *  Needs to find the first Visible Window above the current one
-     */
-    oldInsertAfter = hWnd;
-    for (;;)
-    {
-        oldInsertAfter = GetWindow( oldInsertAfter, GW_HWNDPREV );
-        if (!oldInsertAfter)
-        {
-            oldInsertAfter = HWND_TOP;
-            break;
-        }
-        if (GetWindowLongA( oldInsertAfter, GWL_STYLE ) & WS_VISIBLE) break;
-    }
-
-    /* Compare what has changed */
-
-    GetWindowRect( hWnd, &rectWindow );
-    if ( rectWindow.left == x && rectWindow.top == y )
-        flags |= SWP_NOMOVE;
-    else
-        TRACE_(win)( "%04x moving from (%d,%d) to (%d,%d)\n", hWnd, 
-	             rectWindow.left, rectWindow.top, x, y );
-
-    if (    rectWindow.right - rectWindow.left == width
-         && rectWindow.bottom - rectWindow.top == height )
-        flags |= SWP_NOSIZE;
-    else
-        TRACE_(win)( "%04x resizing from (%d,%d) to (%d,%d)\n", hWnd, 
-                     rectWindow.right - rectWindow.left, 
-                     rectWindow.bottom - rectWindow.top, width, height );
-
-    if ( newInsertAfter == oldInsertAfter )
-        flags |= SWP_NOZORDER;
-    else
-        TRACE_(win)( "%04x restacking from after %04x to after %04x\n", hWnd, 
-                     oldInsertAfter, newInsertAfter );
-
-    /* If anything changed, call SetWindowPos */
-
-    if ( flags != (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER) )
-        SetWindowPos( hWnd, newInsertAfter, x, y, width, height, 
-                            flags | SWP_NOACTIVATE | SWP_WINE_NOHOSTMOVE );
 }
 
 
@@ -1524,7 +1256,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
   
   pWnd = WIN_FindWndPtr(hWnd);
   
-  TSXQueryPointer( event->display, X11DRV_WND_GetXWindow(pWnd), &w_aux_root, &w_aux_child, 
+  TSXQueryPointer( event->display, get_whole_window(pWnd), &w_aux_root, &w_aux_child,
                    &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
                    (unsigned int*)&aux_long);
   
@@ -1743,22 +1475,24 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
     if ((event->message_type == wmProtocols) && 
 	(((Atom) event->data.l[0]) == wmDeleteWindow))
     {
-      /* Ignore the delete window request if the window has been disabled
-       * and we are in managed mode. This is to disallow applications from
-       * being closed by the window manager while in a modal state.
-       */
-      BOOL bIsDisabled;
-      bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
-
-      if ( !Options.managed || !bIsDisabled )
-      PostMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+        /* Ignore the delete window request if the window has been disabled */
+        if (!(GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED))
+            PostMessageA( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     }
-    else if ( event->message_type == dndProtocol &&
-	      (event->data.l[0] == DndFile || event->data.l[0] == DndFiles) )
-      EVENT_DropFromOffiX(hWnd, event);
-    else if ( event->message_type == dndProtocol &&
-	      event->data.l[0] == DndURL )
-      EVENT_DropURLs(hWnd, event);
+    else if (event->message_type == dndProtocol)
+    {
+        /* query window (drag&drop event contains only drag window) */
+        Window root, child;
+        int root_x, root_y, child_x, child_y;
+        unsigned int u;
+        TSXQueryPointer( event->display, root_window, &root, &child,
+                         &root_x, &root_y, &child_x, &child_y, &u);
+        if (TSXFindContext( event->display, child, winContext, (char **)&hWnd ) != 0) return;
+        if (event->data.l[0] == DndFile || event->data.l[0] == DndFiles)
+            EVENT_DropFromOffiX(hWnd, event);
+        else if (event->data.l[0] == DndURL)
+            EVENT_DropURLs(hWnd, event);
+    }
     else {
 #if 0
       /* enable this if you want to see the message */
@@ -1782,65 +1516,6 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
   }
 }
 
-/**********************************************************************
- *           EVENT_EnterNotify
- *
- * Install colormap when Wine window is focused in
- * self-managed mode with private colormap
- */
-#if 0
-void EVENT_EnterNotify( HWND hWnd, XCrossingEvent *event )
-{
-  if( !Options.managed && root_window == DefaultRootWindow(event->display) &&
-      (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus() )
-    TSXInstallColormap( event->display, X11DRV_PALETTE_GetColormap() );
-}
-#endif
-
-/**********************************************************************
- *		EVENT_MapNotify
- */
-void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
-{
-  HWND hwndFocus = GetFocus();
-  WND *wndFocus = WIN_FindWndPtr(hwndFocus);
-  WND *pWnd = WIN_FindWndPtr(hWnd);
-  if (pWnd && (pWnd->dwExStyle & WS_EX_MANAGED))
-  {
-      DCE_InvalidateDCE( pWnd, &pWnd->rectWindow );
-      pWnd->dwStyle &= ~WS_MINIMIZE;
-      pWnd->dwStyle |=  WS_VISIBLE;
-      WIN_InternalShowOwnedPopups(hWnd,TRUE,TRUE);
-  }
-  WIN_ReleaseWndPtr(pWnd);
-
-  if (hwndFocus && IsChild( hWnd, hwndFocus ))
-      X11DRV_SetFocus(hwndFocus);
-
-  WIN_ReleaseWndPtr(wndFocus);
-  
-  return;
-}
-
-
-/**********************************************************************
- *              EVENT_UnmapNotify
- */
-void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
-{
-  WND *pWnd = WIN_FindWndPtr(hWnd);
-  if (pWnd && (pWnd->dwExStyle & WS_EX_MANAGED))
-  {
-      EndMenu();
-      if( pWnd->dwStyle & WS_VISIBLE )
-      {
-	  pWnd->dwStyle |=  WS_MINIMIZE;
-	  pWnd->dwStyle &= ~WS_VISIBLE;
-            WIN_InternalShowOwnedPopups(hWnd,FALSE,TRUE);
-      }
-  }
-  WIN_ReleaseWndPtr(pWnd);
-}
 
 /***********************************************************************
  *           EVENT_MappingNotify

@@ -89,6 +89,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(GetDC);
     GET_USER_FUNC(EnableWindow);
     GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
+    GET_USER_FUNC(ScrollDC);
     GET_USER_FUNC(ScrollWindowEx);
     GET_USER_FUNC(SetFocus);
     GET_USER_FUNC(SetParent);
@@ -96,6 +97,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(SetWindowRgn);
     GET_USER_FUNC(SetWindowIcon);
     GET_USER_FUNC(SetWindowText);
+    GET_USER_FUNC(ShowWindow);
     GET_USER_FUNC(SysCommandSizeMove);
 
     return TRUE;

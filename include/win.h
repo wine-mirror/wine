@@ -16,13 +16,6 @@
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
-  /* PAINT_RedrawWindow() control flags */
-#define RDW_EX_USEHRGN		0x0001
-#define RDW_EX_DELETEHRGN	0x0002
-#define RDW_EX_XYWINDOW		0x0004
-#define RDW_EX_TOPFRAME		0x0010
-#define RDW_EX_DELAY_NCPAINT    0x0020
-
 struct tagCLASS;
 struct tagDCE;
 struct tagMESSAGEQUEUE;
@@ -65,13 +58,9 @@ typedef struct tagWND
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 
-/* Host attributes */
-#define HAK_ICONICSTATE	   3
-
 typedef struct tagWND_DRIVER
 {
     void   (*pForceWindowRaise)(WND *);
-    BOOL   (*pSetHostAttr)(WND *, INT haKey, INT value);
 } WND_DRIVER;
 
 extern WND_DRIVER *WND_Driver;
@@ -104,14 +93,6 @@ typedef struct
 #define BWA_SKIPOWNED		0x0004
 #define BWA_SKIPICONIC		0x0008
 
-  /* WIN_UpdateNCRgn() flags */
-#define UNC_CHECK		0x0001
-#define UNC_ENTIRE		0x0002
-#define UNC_REGION		0x0004
-#define UNC_UPDATE		0x0008
-#define UNC_DELAY_NCPAINT       0x0010
-#define UNC_IN_BEGINPAINT       0x0020
-
   /* Window functions */
 extern void   WIN_LockWnds( void );
 extern void   WIN_UnlockWnds( void );
@@ -137,8 +118,6 @@ extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT bwa, UINT* pnum );
 extern void   WIN_ReleaseWinArray(WND **wndArray);
 extern BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly );
 
-extern HICON16 NC_IconForWindow( WND *wndPtr );
-
 extern HWND CARET_GetHwnd(void);
 extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
 
@@ -148,11 +127,6 @@ extern void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text );
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
 
 extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/property.c */
-
-extern BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
-                                  HRGN hrgnUpdate, UINT flags,
-                                  UINT control );		      /* windows/painting.c */
-extern HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT flags);     /* windows/painting.c */
 
 /* Classes functions */
 struct tagCLASS;  /* opaque structure */
@@ -166,9 +140,5 @@ extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 
 /* windows/focus.c */
 extern void FOCUS_SwitchFocus( struct tagMESSAGEQUEUE *pMsgQ, HWND , HWND );
-
-/* generic method that returns TRUE if the window properties ask for a 
-   window manager type of border */
-extern BOOL WIN_WindowNeedsWMBorder( DWORD style, DWORD exStyle );
 
 #endif  /* __WINE_WIN_H */

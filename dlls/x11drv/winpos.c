@@ -8,6 +8,7 @@
 #include "config.h"
 
 #include "ts_xlib.h"
+#include "ts_xutil.h"
 #include "ts_shape.h"
 
 #include "winbase.h"
@@ -26,8 +27,7 @@
 
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(win);
-
+DEFAULT_DEBUG_CHANNEL(x11drv);
 
 #define SWP_AGG_NOGEOMETRYCHANGE \
     (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE)
@@ -53,480 +53,187 @@ DEFAULT_DEBUG_CHANNEL(win);
 #define ON_BOTTOM_BORDER(hit) \
  (((hit) == HTBOTTOM) || ((hit) == HTBOTTOMLEFT) || ((hit) == HTBOTTOMRIGHT))
 
-/***********************************************************************
- *           DCE_OffsetVisRgn
- *
- * Change region from DC-origin relative coordinates to screen coords.
- */
-
-static void DCE_OffsetVisRgn( HDC hDC, HRGN hVisRgn )
-{
-    DC *dc;
-    if (!(dc = DC_GetDCPtr( hDC ))) return;
-
-    OffsetRgn( hVisRgn, dc->DCOrgX, dc->DCOrgY );
-
-    GDI_ReleaseObj( hDC );
-}
-
 
 /***********************************************************************
- *           DCE_GetVisRect
+ *		clip_children
  *
- * Calculate the visible rectangle of a window (i.e. the client or
- * window area clipped by the client area of all ancestors) in the
- * corresponding coordinates. Return FALSE if the visible region is empty.
+ * Clip all children of a given window out of the visible region
  */
-static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
+static void clip_children( WND *win, HRGN hrgn, int whole_window )
 {
-    *lprect = clientArea ? wndPtr->rectClient : wndPtr->rectWindow;
+    WND *ptr;
+    HRGN rectRgn;
+    int x, y;
 
-    if (wndPtr->dwStyle & WS_VISIBLE)
+    /* first check if we have anything to do */
+    for (ptr = win->child; ptr; ptr = ptr->next)
+        if (ptr->dwStyle & WS_VISIBLE) break;
+    if (!ptr) return; /* no children to clip */
+
+    if (whole_window)
     {
-        INT xoffset = lprect->left;
-        INT yoffset = lprect->top;
-
-        while( !(wndPtr->flags & WIN_NATIVE) &&
-               ( wndPtr = WIN_LockWndPtr(wndPtr->parent)) )
-        {
-            if ( (wndPtr->dwStyle & (WS_ICONIC | WS_VISIBLE)) != WS_VISIBLE )
-            {
-                WIN_ReleaseWndPtr(wndPtr);
-                goto fail;
-            }
-
-            xoffset += wndPtr->rectClient.left;
-            yoffset += wndPtr->rectClient.top;
-            OffsetRect( lprect, wndPtr->rectClient.left,
-                        wndPtr->rectClient.top );
-
-            if( (wndPtr->rectClient.left >= wndPtr->rectClient.right) ||
-                (wndPtr->rectClient.top >= wndPtr->rectClient.bottom) ||
-                (lprect->left >= wndPtr->rectClient.right) ||
-                (lprect->right <= wndPtr->rectClient.left) ||
-                (lprect->top >= wndPtr->rectClient.bottom) ||
-                (lprect->bottom <= wndPtr->rectClient.top) )
-            {
-                WIN_ReleaseWndPtr(wndPtr);
-                goto fail;
-            }
-
-            lprect->left = max( lprect->left, wndPtr->rectClient.left );
-            lprect->right = min( lprect->right, wndPtr->rectClient.right );
-            lprect->top = max( lprect->top, wndPtr->rectClient.top );
-            lprect->bottom = min( lprect->bottom, wndPtr->rectClient.bottom );
-
-            WIN_ReleaseWndPtr(wndPtr);
-        }
-        OffsetRect( lprect, -xoffset, -yoffset );
-        return TRUE;
+        x = win->rectWindow.left - win->rectClient.left;
+        y = win->rectWindow.top - win->rectClient.top;
     }
+    else x = y = 0;
 
-fail:
-    SetRectEmpty( lprect );
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           DCE_AddClipRects
- *
- * Go through the linked list of windows from pWndStart to pWndEnd,
- * adding to the clip region the intersection of the target rectangle
- * with an offset window rectangle.
- */
-static BOOL DCE_AddClipRects( WND *pWndStart, WND *pWndEnd,
-                              HRGN hrgnClip, LPRECT lpRect, int x, int y )
-{
-    RECT rect;
-
-    if (X11DRV_WND_GetXWindow(pWndStart)) return TRUE; /* X will do the clipping */
-
-    for (WIN_LockWndPtr(pWndStart); (pWndStart && (pWndStart != pWndEnd)); WIN_UpdateWndPtr(&pWndStart,pWndStart->next))
+    rectRgn = CreateRectRgn( 0, 0, 0, 0 );
+    while (ptr)
     {
-        if( !(pWndStart->dwStyle & WS_VISIBLE) ) continue;
-
-        rect.left = pWndStart->rectWindow.left + x;
-        rect.top = pWndStart->rectWindow.top + y;
-        rect.right = pWndStart->rectWindow.right + x;
-        rect.bottom = pWndStart->rectWindow.bottom + y;
-
-        if( IntersectRect( &rect, &rect, lpRect ))
+        if (ptr->dwStyle & WS_VISIBLE)
         {
-            if(!REGION_UnionRectWithRgn( hrgnClip, &rect )) break;
+            SetRectRgn( rectRgn, ptr->rectWindow.left + x, ptr->rectWindow.top + y,
+                        ptr->rectWindow.right + x, ptr->rectWindow.bottom + y );
+            if (CombineRgn( hrgn, hrgn, rectRgn, RGN_DIFF ) == NULLREGION)
+                break;  /* no need to go on, region is empty */
         }
+        ptr = ptr->next;
     }
-    WIN_ReleaseWndPtr(pWndStart);
-    return (pWndStart == pWndEnd);
+    DeleteObject( rectRgn );
 }
 
 
 /***********************************************************************
- *           DCE_GetVisRgn
+ *		get_visible_region
  *
- * Return the visible region of a window, i.e. the client or window area
- * clipped by the client area of all ancestors, and then optionally
- * by siblings and children.
+ * Compute the visible region of a window
  */
-static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
+static HRGN get_visible_region( WND *win, UINT flags )
 {
-    HRGN hrgnVis = 0;
+    HRGN rgn;
     RECT rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    WND *childWnd = WIN_FindWndPtr( hwndChild );
+    int xoffset, yoffset;
+    X11DRV_WND_DATA *data = win->pDriverData;
 
-    /* Get visible rectangle and create a region with it. */
-
-    if (wndPtr && DCE_GetVisRect(wndPtr, !(flags & DCX_WINDOW), &rect))
+    if (flags & DCX_WINDOW)
     {
-        if((hrgnVis = CreateRectRgnIndirect( &rect )))
-        {
-            HRGN hrgnClip = CreateRectRgn( 0, 0, 0, 0 );
-            INT xoffset, yoffset;
-
-            if( hrgnClip )
-            {
-                /* Compute obscured region for the visible rectangle by 
-		 * clipping children, siblings, and ancestors. Note that
-		 * DCE_GetVisRect() returns a rectangle either in client
-		 * or in window coordinates (for DCX_WINDOW request). */
-
-                if( (flags & DCX_CLIPCHILDREN) && wndPtr->child )
-                {
-                    if( flags & DCX_WINDOW )
-                    {
-                        /* adjust offsets since child window rectangles are 
-			 * in client coordinates */
-
-                        xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
-                        yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-                    }
-                    else
-                        xoffset = yoffset = 0;
-
-                    DCE_AddClipRects( wndPtr->child, NULL, hrgnClip, &rect, xoffset, yoffset );
-                }
-
-                /* We may need to clip children of child window, if a window with PARENTDC
-		 * class style and CLIPCHILDREN window style (like in Free Agent 16
-		 * preference dialogs) gets here, we take the region for the parent window
-		 * but apparently still need to clip the children of the child window... */
-
-                if( (cflags & DCX_CLIPCHILDREN) && childWnd && childWnd->child )
-                {
-                    if( flags & DCX_WINDOW )
-                    {
-                        /* adjust offsets since child window rectangles are 
-			 * in client coordinates */
-
-                        xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
-                        yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-                    }
-                    else
-                        xoffset = yoffset = 0;
-
-                    /* client coordinates of child window */
-                    xoffset += childWnd->rectClient.left;
-                    yoffset += childWnd->rectClient.top;
-
-                    DCE_AddClipRects( childWnd->child, NULL, hrgnClip,
-                                      &rect, xoffset, yoffset );
-                }
-
-                /* sibling window rectangles are in client 
-		 * coordinates of the parent window */
-
-                if (flags & DCX_WINDOW)
-                {
-                    xoffset = -wndPtr->rectWindow.left;
-                    yoffset = -wndPtr->rectWindow.top;
-                }
-                else
-                {
-                    xoffset = -wndPtr->rectClient.left;
-                    yoffset = -wndPtr->rectClient.top;
-                }
-
-                if (flags & DCX_CLIPSIBLINGS && wndPtr->parent )
-                    DCE_AddClipRects( wndPtr->parent->child,
-                                      wndPtr, hrgnClip, &rect, xoffset, yoffset );
-
-                /* Clip siblings of all ancestors that have the
-                 * WS_CLIPSIBLINGS style
-		 */
-
-                while (wndPtr->parent)
-                {
-                    WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
-                    xoffset -= wndPtr->rectClient.left;
-                    yoffset -= wndPtr->rectClient.top;
-                    if(wndPtr->dwStyle & WS_CLIPSIBLINGS && wndPtr->parent)
-                    {
-                        DCE_AddClipRects( wndPtr->parent->child, wndPtr,
-                                          hrgnClip, &rect, xoffset, yoffset );
-                    }
-                }
-
-                /* Now once we've got a jumbo clip region we have
-		 * to substract it from the visible rectangle.
-	         */
-                CombineRgn( hrgnVis, hrgnVis, hrgnClip, RGN_DIFF );
-                DeleteObject( hrgnClip );
-            }
-            else
-            {
-                DeleteObject( hrgnVis );
-                hrgnVis = 0;
-            }
-        }
+        xoffset = win->rectWindow.left;
+        yoffset = win->rectWindow.top;
     }
     else
-        hrgnVis = CreateRectRgn(0, 0, 0, 0); /* empty */
-    WIN_ReleaseWndPtr(wndPtr);
-    WIN_ReleaseWndPtr(childWnd);
-    return hrgnVis;
+    {
+        xoffset = win->rectClient.left;
+        yoffset = win->rectClient.top;
+    }
+
+    if (flags & DCX_PARENTCLIP)
+        GetClientRect( win->parent->hwndSelf, &rect );
+    else if (flags & DCX_WINDOW)
+        rect = data->whole_rect;
+    else
+        rect = win->rectClient;
+
+    /* vis region is relative to the start of the client/window area */
+    OffsetRect( &rect, -xoffset, -yoffset );
+
+    if (!(rgn = CreateRectRgn( rect.left, rect.top, rect.right, rect.bottom ))) return 0;
+
+    if (flags & DCX_CLIPCHILDREN)
+    {
+        /* if we are clipping siblings and using the client area,
+         * X will do the clipping for us; otherwise, we need to
+         * clip children by hand here
+         */
+        if ((flags & DCX_WINDOW) || !(flags & DCX_CLIPSIBLINGS))
+            clip_children( win, rgn, (flags & DCX_WINDOW) );
+    }
+    return rgn;
 }
 
 
 /***********************************************************************
- *		GetDC   (X11DRV.@)
+ *		X11DRV_GetDC
  *
  * Set the drawable, origin and dimensions for the DC associated to
  * a given window.
  */
 BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 {
-    WND *w, *wndPtr = WIN_FindWndPtr(hwnd);
-    DC *dc;
-    X11DRV_PDEVICE *physDev;
-    INT dcOrgXCopy = 0, dcOrgYCopy = 0;
-    BOOL offsetClipRgn = FALSE;
-    BOOL updateVisRgn;
-    HRGN hrgnVisible = 0;
+    WND *win = WIN_FindWndPtr( hwnd );
+    X11DRV_WND_DATA *data = win->pDriverData;
+    Drawable drawable;
+    int org_x, org_y, mode = IncludeInferiors;
 
-    if (!wndPtr) return FALSE;
+    /* don't clip siblings if using parent clip region */
+    if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
 
-    if (!(dc = DC_GetDCPtr( hdc )))
+    if (flags & DCX_CLIPSIBLINGS)
     {
-        WIN_ReleaseWndPtr( wndPtr );
-        return FALSE;
-    }
-
-    physDev = (X11DRV_PDEVICE *)dc->physDev;
-
-    /*
-     * This function change the coordinate system (DCOrgX,DCOrgY)
-     * values. When it moves the origin, other data like the current clipping
-     * region will not be moved to that new origin. In the case of DCs that are class
-     * or window DCs that clipping region might be a valid value from a previous use
-     * of the DC and changing the origin of the DC without moving the clip region
-     * results in a clip region that is not placed properly in the DC.
-     * This code will save the dc origin, let the SetDrawable
-     * modify the origin and reset the clipping. When the clipping is set,
-     * it is moved according to the new DC origin.
-     */
-    if ( (wndPtr->clsStyle & (CS_OWNDC | CS_CLASSDC)) && (dc->hClipRgn > 0))
-    {
-        dcOrgXCopy = dc->DCOrgX;
-        dcOrgYCopy = dc->DCOrgY;
-        offsetClipRgn = TRUE;
-    }
-
-    if (flags & DCX_WINDOW)
-    {
-        dc->DCOrgX  = wndPtr->rectWindow.left;
-        dc->DCOrgY  = wndPtr->rectWindow.top;
-    }
-    else
-    {
-        dc->DCOrgX  = wndPtr->rectClient.left;
-        dc->DCOrgY  = wndPtr->rectClient.top;
-    }
-
-    w = wndPtr;
-    while (!X11DRV_WND_GetXWindow(w))
-    {
-        w = w->parent;
-        dc->DCOrgX += w->rectClient.left;
-        dc->DCOrgY += w->rectClient.top;
-    }
-    dc->DCOrgX -= w->rectWindow.left;
-    dc->DCOrgY -= w->rectWindow.top;
-
-    /* reset the clip region, according to the new origin */
-    if ( offsetClipRgn )
-    {
-        OffsetRgn(dc->hClipRgn, dc->DCOrgX - dcOrgXCopy,dc->DCOrgY - dcOrgYCopy);
-    }
-
-    physDev->drawable = X11DRV_WND_GetXWindow(w);
-
-#if 0
-    /* This is needed when we reuse a cached DC because
-     * SetDCState() called by ReleaseDC() screws up DC
-     * origins for child windows.
-     */
-
-    if( bSetClipOrigin )
-        TSXSetClipOrigin( display, physDev->gc, dc->DCOrgX, dc->DCOrgY );
-#endif
-
-    updateVisRgn = (dc->flags & DC_DIRTY) != 0;
-    GDI_ReleaseObj( hdc );
-
-    if (updateVisRgn)
-    {
-        if (flags & DCX_PARENTCLIP)
+        if (IsIconic( hwnd ))
         {
-            WND *parentPtr = WIN_LockWndPtr(wndPtr->parent);
-
-            if( wndPtr->dwStyle & WS_VISIBLE && !(parentPtr->dwStyle & WS_MINIMIZE) )
-            {
-                DWORD dcxFlags;
-
-                if( parentPtr->dwStyle & WS_CLIPSIBLINGS )
-                    dcxFlags = DCX_CLIPSIBLINGS | (flags & ~(DCX_CLIPCHILDREN | DCX_WINDOW));
-                else
-                    dcxFlags = flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW);
-
-                hrgnVisible = DCE_GetVisRgn( parentPtr->hwndSelf, dcxFlags,
-                                             wndPtr->hwndSelf, flags );
-                if( flags & DCX_WINDOW )
-                    OffsetRgn( hrgnVisible, -wndPtr->rectWindow.left,
-                               -wndPtr->rectWindow.top );
-                else
-                    OffsetRgn( hrgnVisible, -wndPtr->rectClient.left,
-                               -wndPtr->rectClient.top );
-                DCE_OffsetVisRgn( hdc, hrgnVisible );
-            }
-            else
-                hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
-            WIN_ReleaseWndPtr(parentPtr);
+            drawable = data->icon_window ? data->icon_window : data->whole_window;
+            org_x = 0;
+            org_y = 0;
+        }
+        else if (flags & DCX_WINDOW)
+        {
+            drawable = data->whole_window;
+            org_x = win->rectWindow.left - data->whole_rect.left;
+            org_y = win->rectWindow.top - data->whole_rect.top;
         }
         else
         {
-            if ((hwnd == GetDesktopWindow()) && (root_window != DefaultRootWindow(thread_display())))
-                hrgnVisible = CreateRectRgn( 0, 0, GetSystemMetrics(SM_CXSCREEN),
-                                             GetSystemMetrics(SM_CYSCREEN) );
-            else
-            {
-                hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );
-                DCE_OffsetVisRgn( hdc, hrgnVisible );
-            }
+            drawable = data->client_window;
+            org_x = 0;
+            org_y = 0;
+            if (flags & DCX_CLIPCHILDREN) mode = ClipByChildren;  /* can use X11 clipping */
         }
-        SelectVisRgn16( hdc, hrgnVisible );
     }
-
-    /* apply additional region operation (if any) */
-
-    if( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) )
+    else
     {
-        if( !hrgnVisible ) hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
-
-        TRACE("\tsaved VisRgn, clipRgn = %04x\n", hrgn);
-
-        SaveVisRgn16( hdc );
-        CombineRgn( hrgnVisible, hrgn, 0, RGN_COPY );
-        DCE_OffsetVisRgn( hdc, hrgnVisible );
-        CombineRgn( hrgnVisible, InquireVisRgn16( hdc ), hrgnVisible,
-                      (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-        SelectVisRgn16( hdc, hrgnVisible );
+        /* not clipping siblings -> have to use parent client drawable */
+        if (win->parent) drawable = get_client_window( win->parent );
+        else drawable = root_window;
+        if (flags & DCX_WINDOW)
+        {
+            org_x = win->rectWindow.left;
+            org_y = win->rectWindow.top;
+        }
+        else
+        {
+            org_x = win->rectClient.left;
+            org_y = win->rectClient.top;
+        }
     }
 
-    if (hrgnVisible) DeleteObject( hrgnVisible );
+    X11DRV_SetDrawable( hdc, drawable, mode, org_x, org_y );
 
-    WIN_ReleaseWndPtr( wndPtr );
+    if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ||
+        SetHookFlags16( hdc, DCHF_VALIDATEVISRGN ))  /* DC was dirty */
+    {
+        /* need to recompute the visible region */
+        HRGN visRgn = get_visible_region( win, flags );
+
+        if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
+            CombineRgn( visRgn, visRgn, hrgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
+
+        /* make it relative to the drawable origin */
+        OffsetRgn( visRgn, org_x, org_y );
+        SelectVisRgn16( hdc, visRgn );
+        DeleteObject( visRgn );
+    }
+
+    WIN_ReleaseWndPtr( win );
     return TRUE;
 }
 
 
-/***********************************************************************
- *           SWP_DoSimpleFrameChanged
- *
- * NOTE: old and new client rect origins are identical, only
- *	 extents may have changed. Window extents are the same.
- */
-static void SWP_DoSimpleFrameChanged( WND* wndPtr, RECT* pOldClientRect,
-                                      WORD swpFlags, UINT uFlags )
-{
-    INT i = 0;
-    RECT rect;
-    HRGN hrgn = 0;
-
-    if( !(swpFlags & SWP_NOCLIENTSIZE) )
-    {
-        /* Client rect changed its position/size, most likely a scrollar
-	 * was added/removed.
-	 *
-	 * FIXME: WVR alignment flags
-	 */
-
-        if( wndPtr->rectClient.right >  pOldClientRect->right ) /* right edge */
-        {
-            i++;
-            rect.top = 0;
-            rect.bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
-            rect.right = wndPtr->rectClient.right - wndPtr->rectClient.left;
-            if(!(uFlags & SWP_EX_NOCOPY))
-                rect.left = pOldClientRect->right - wndPtr->rectClient.left;
-            else
-            {
-                rect.left = 0;
-                goto redraw;
-            }
-        }
-
-        if( wndPtr->rectClient.bottom > pOldClientRect->bottom ) /* bottom edge */
-        {
-            if( i )
-                hrgn = CreateRectRgnIndirect( &rect );
-            rect.left = 0;
-            rect.right = wndPtr->rectClient.right - wndPtr->rectClient.left;
-            rect.bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
-            if(!(uFlags & SWP_EX_NOCOPY))
-                rect.top = pOldClientRect->bottom - wndPtr->rectClient.top;
-            else
-                rect.top = 0;
-            if( i++ )
-                REGION_UnionRectWithRgn( hrgn, &rect );
-        }
-
-        if( i == 0 && (uFlags & SWP_EX_NOCOPY) ) /* force redraw anyway */
-        {
-            rect = wndPtr->rectWindow;
-            OffsetRect( &rect, wndPtr->rectWindow.left - wndPtr->rectClient.left,
-                        wndPtr->rectWindow.top - wndPtr->rectClient.top );
-            i++;
-        }
-    }
-
-    if( i )
-    {
-    redraw:
-        PAINT_RedrawWindow( wndPtr->hwndSelf, &rect, hrgn, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE |
-                            RDW_ERASENOW | RDW_ALLCHILDREN, RDW_EX_TOPFRAME | RDW_EX_USEHRGN );
-    }
-    else
-    {
-        WIN_UpdateNCRgn(wndPtr, 0, UNC_UPDATE | UNC_ENTIRE);
-    }
-
-    if( hrgn > 1 )
-        DeleteObject( hrgn );
-}
 
 /***********************************************************************
  *           SWP_DoWinPosChanging
  */
-static BOOL SWP_DoWinPosChanging( WND* wndPtr, WINDOWPOS* pWinpos,
-                                  RECT* pNewWindowRect, RECT* pNewClientRect )
+static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT* pNewClientRect )
 {
-      /* Send WM_WINDOWPOSCHANGING message */
+    WND *wndPtr;
+
+    /* Send WM_WINDOWPOSCHANGING message */
 
     if (!(pWinpos->flags & SWP_NOSENDCHANGING))
-        SendMessageA( wndPtr->hwndSelf, WM_WINDOWPOSCHANGING, 0, (LPARAM)pWinpos );
+        SendMessageA( pWinpos->hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)pWinpos );
 
-      /* Calculate new position and size */
+    if (!(wndPtr = WIN_FindWndPtr( pWinpos->hwnd ))) return FALSE;
+
+    /* Calculate new position and size */
 
     *pNewWindowRect = wndPtr->rectWindow;
     *pNewClientRect = (wndPtr->dwStyle & WS_MINIMIZE) ? wndPtr->rectWindow
@@ -547,8 +254,8 @@ static BOOL SWP_DoWinPosChanging( WND* wndPtr, WINDOWPOS* pWinpos,
         OffsetRect( pNewClientRect, pWinpos->x - wndPtr->rectWindow.left,
                                     pWinpos->y - wndPtr->rectWindow.top );
     }
-
     pWinpos->flags |= SWP_NOCLIENTMOVE | SWP_NOCLIENTSIZE;
+    WIN_ReleaseWndPtr( wndPtr );
     return TRUE;
 }
 
@@ -556,7 +263,7 @@ static BOOL SWP_DoWinPosChanging( WND* wndPtr, WINDOWPOS* pWinpos,
  *           SWP_DoNCCalcSize
  */
 static UINT SWP_DoNCCalcSize( WND* wndPtr, WINDOWPOS* pWinpos,
-                              RECT* pNewWindowRect, RECT* pNewClientRect, WORD f)
+                              RECT* pNewWindowRect, RECT* pNewClientRect )
 {
     UINT wvrFlags = 0;
 
@@ -566,7 +273,6 @@ static UINT SWP_DoNCCalcSize( WND* wndPtr, WINDOWPOS* pWinpos,
          wvrFlags = WINPOS_SendNCCalcSize( pWinpos->hwnd, TRUE, pNewWindowRect,
                                     &wndPtr->rectWindow, &wndPtr->rectClient,
                                     pWinpos, pNewClientRect );
-
          /* FIXME: WVR_ALIGNxxx */
 
          if( pNewClientRect->left != wndPtr->rectClient.left ||
@@ -580,8 +286,8 @@ static UINT SWP_DoNCCalcSize( WND* wndPtr, WINDOWPOS* pWinpos,
              pWinpos->flags &= ~SWP_NOCLIENTSIZE;
     }
     else
-      if( !(f & SWP_NOMOVE) && (pNewClientRect->left != wndPtr->rectClient.left ||
-                                pNewClientRect->top != wndPtr->rectClient.top) )
+      if( !(pWinpos->flags & SWP_NOMOVE) && (pNewClientRect->left != wndPtr->rectClient.left ||
+                                             pNewClientRect->top != wndPtr->rectClient.top) )
             pWinpos->flags &= ~SWP_NOCLIENTMOVE;
     return wvrFlags;
 }
@@ -640,256 +346,24 @@ END:
     return hwndInsertAfter;
 }
 
-/***********************************************************************
- *	     SWP_CopyValidBits
- *
- * Make window look nice without excessive repainting
- *
- * visible and update regions are in window coordinates
- * client and window rectangles are in parent client coordinates
- *
- * Returns: uFlags and a dirty region in *pVisRgn.
- */
-static UINT SWP_CopyValidBits( WND* Wnd, HRGN* pVisRgn,
-                               LPRECT lpOldWndRect,
-                               LPRECT lpOldClientRect, UINT uFlags )
+
+/* fix redundant flags and values in the WINDOWPOS structure */
+static BOOL fixup_flags( WINDOWPOS *winpos )
 {
-    RECT r;
-    HRGN newVisRgn, dirtyRgn;
-    INT  my = COMPLEXREGION;
-    DWORD dflags;
+    WND *wndPtr = WIN_FindWndPtr( winpos->hwnd );
+    BOOL ret = TRUE;
 
-    TRACE("\tnew wnd=(%i %i-%i %i) old wnd=(%i %i-%i %i), %04x\n",
-          Wnd->rectWindow.left, Wnd->rectWindow.top,
-          Wnd->rectWindow.right, Wnd->rectWindow.bottom,
-          lpOldWndRect->left, lpOldWndRect->top,
-          lpOldWndRect->right, lpOldWndRect->bottom, *pVisRgn);
-    TRACE("\tnew client=(%i %i-%i %i) old client=(%i %i-%i %i)\n",
-          Wnd->rectClient.left, Wnd->rectClient.top,
-          Wnd->rectClient.right, Wnd->rectClient.bottom,
-          lpOldClientRect->left, lpOldClientRect->top,
-          lpOldClientRect->right,lpOldClientRect->bottom );
+    if (!wndPtr) return FALSE;
 
-    if( Wnd->hrgnUpdate == 1 )
-        uFlags |= SWP_EX_NOCOPY; /* whole window is invalid, nothing to copy */
-
-    dflags = DCX_WINDOW;
-    if(Wnd->dwStyle & WS_CLIPSIBLINGS)
-        dflags |= DCX_CLIPSIBLINGS;
-    newVisRgn = DCE_GetVisRgn( Wnd->hwndSelf, dflags, 0, 0);
-
-    dirtyRgn = CreateRectRgn( 0, 0, 0, 0 );
-
-    if( !(uFlags & SWP_EX_NOCOPY) ) /* make sure dst region covers only valid bits */
-        my = CombineRgn( dirtyRgn, newVisRgn, *pVisRgn, RGN_AND );
-
-    if( (my == NULLREGION) || (uFlags & SWP_EX_NOCOPY) )
-    {
-    nocopy:
-
-        TRACE("\twon't copy anything!\n");
-
-        /* set dirtyRgn to the sum of old and new visible regions
-         * in parent client coordinates */
-
-        OffsetRgn( newVisRgn, Wnd->rectWindow.left, Wnd->rectWindow.top );
-        OffsetRgn( *pVisRgn, lpOldWndRect->left, lpOldWndRect->top );
-
-        CombineRgn(*pVisRgn, *pVisRgn, newVisRgn, RGN_OR );
-    }
-    else /* copy valid bits to a new location */
-    {
-        INT  dx, dy, ow, oh, nw, nh, ocw, ncw, och, nch;
-        HRGN hrgnValid = dirtyRgn; /* non-empty intersection of old and new visible rgns */
-
-        /* subtract already invalid region inside Wnd from the dst region */
-
-        if( Wnd->hrgnUpdate )
-            if( CombineRgn( hrgnValid, hrgnValid, Wnd->hrgnUpdate, RGN_DIFF) == NULLREGION )
-                goto nocopy;
-
-        /* check if entire window can be copied */
-
-        ow = lpOldWndRect->right - lpOldWndRect->left;
-        oh = lpOldWndRect->bottom - lpOldWndRect->top;
-        nw = Wnd->rectWindow.right - Wnd->rectWindow.left;
-        nh = Wnd->rectWindow.bottom - Wnd->rectWindow.top;
-
-        ocw = lpOldClientRect->right - lpOldClientRect->left;
-        och = lpOldClientRect->bottom - lpOldClientRect->top;
-        ncw = Wnd->rectClient.right  - Wnd->rectClient.left;
-        nch = Wnd->rectClient.bottom  - Wnd->rectClient.top;
-
-        if(  (ocw != ncw) || (och != nch) ||
-             ( ow !=  nw) || ( oh !=  nh) ||
-             ((lpOldClientRect->top - lpOldWndRect->top)   !=
-              (Wnd->rectClient.top - Wnd->rectWindow.top)) ||
-             ((lpOldClientRect->left - lpOldWndRect->left) !=
-              (Wnd->rectClient.left - Wnd->rectWindow.left)) )
-        {
-            if(uFlags & SWP_EX_PAINTSELF)
-            {
-                /* movement relative to the window itself */
-                dx = (Wnd->rectClient.left - Wnd->rectWindow.left) -
-                    (lpOldClientRect->left - lpOldWndRect->left) ;
-                dy = (Wnd->rectClient.top - Wnd->rectWindow.top) -
-                    (lpOldClientRect->top - lpOldWndRect->top) ;
-            }
-            else
-            {
-                /* movement relative to the parent's client area */
-                dx = Wnd->rectClient.left - lpOldClientRect->left;
-                dy = Wnd->rectClient.top - lpOldClientRect->top;
-            }
-
-            /* restrict valid bits to the common client rect */
-
-            r.left = Wnd->rectClient.left - Wnd->rectWindow.left;
-            r.top = Wnd->rectClient.top  - Wnd->rectWindow.top;
-            r.right = r.left + min( ocw, ncw );
-            r.bottom = r.top + min( och, nch );
-
-            REGION_CropRgn( hrgnValid, hrgnValid, &r,
-                            (uFlags & SWP_EX_PAINTSELF) ? NULL : (POINT*)&(Wnd->rectWindow));
-            GetRgnBox( hrgnValid, &r );
-            if( IsRectEmpty( &r ) )
-                goto nocopy;
-            r = *lpOldClientRect;
-        }
-        else
-        {
-            if(uFlags & SWP_EX_PAINTSELF) {
-                /*
-                 * with SWP_EX_PAINTSELF, the window repaints itself. Since a window can't move
-                 * relative to itself, only the client area can change.
-                 * if the client rect didn't change, there's nothing to do.
-                 */
-                dx = 0;
-                dy = 0;
-            }
-            else
-            {
-                dx = Wnd->rectWindow.left - lpOldWndRect->left;
-                dy = Wnd->rectWindow.top -  lpOldWndRect->top;
-                OffsetRgn( hrgnValid, Wnd->rectWindow.left, Wnd->rectWindow.top );
-            }
-            r = *lpOldWndRect;
-        }
-
-        if( !(uFlags & SWP_EX_PAINTSELF) )
-        {
-            /* Move remaining regions to parent coordinates */
-            OffsetRgn( newVisRgn, Wnd->rectWindow.left, Wnd->rectWindow.top );
-            OffsetRgn( *pVisRgn,  lpOldWndRect->left, lpOldWndRect->top );
-        }
-        else
-            OffsetRect( &r, -lpOldWndRect->left, -lpOldWndRect->top );
-
-        TRACE("\tcomputing dirty region!\n");
-
-        /* Compute combined dirty region (old + new - valid) */
-        CombineRgn( *pVisRgn, *pVisRgn, newVisRgn, RGN_OR);
-        CombineRgn( *pVisRgn, *pVisRgn, hrgnValid, RGN_DIFF);
-
-        /* Blt valid bits, r is the rect to copy  */
-
-        if( dx || dy )
-        {
-            RECT rClip;
-            HDC hDC;
-
-            /* get DC and clip rect with drawable rect to avoid superfluous expose events
-               from copying clipped areas */
-
-            if( uFlags & SWP_EX_PAINTSELF )
-            {
-                hDC = GetDCEx( Wnd->hwndSelf, hrgnValid, DCX_WINDOW | DCX_CACHE |
-                               DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CLIPSIBLINGS );
-                rClip.right = nw; rClip.bottom = nh;
-            }
-            else
-            {
-                hDC = GetDCEx( Wnd->parent->hwndSelf, hrgnValid, DCX_CACHE |
-                               DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CLIPSIBLINGS );
-                rClip.right = Wnd->parent->rectClient.right - Wnd->parent->rectClient.left;
-                rClip.bottom = Wnd->parent->rectClient.bottom - Wnd->parent->rectClient.top;
-            }
-            rClip.left = rClip.top = 0;
-
-            if( oh > nh ) r.bottom = r.top  + nh;
-            if( ow < nw ) r.right = r.left  + nw;
-
-            if( IntersectRect( &r, &r, &rClip ) )
-            {
-                X11DRV_WND_SurfaceCopy( Wnd->parent, hDC, dx, dy, &r, TRUE );
-
-                /* When you copy the bits without repainting, parent doesn't
-                   get validated appropriately. Therefore, we have to validate
-                   the parent with the windows' updated region when the
-                   parent's update region is not empty. */
-
-                if (Wnd->parent->hrgnUpdate != 0 && !(Wnd->parent->dwStyle & WS_CLIPCHILDREN))
-                {
-                    OffsetRect(&r, dx, dy);
-                    ValidateRect(Wnd->parent->hwndSelf, &r);
-                }
-            }
-            ReleaseDC( (uFlags & SWP_EX_PAINTSELF) ?
-                       Wnd->hwndSelf :  Wnd->parent->hwndSelf, hDC);
-        }
-    }
-
-    /* *pVisRgn now points to the invalidated region */
-
-    DeleteObject(newVisRgn);
-    DeleteObject(dirtyRgn);
-    return uFlags;
-}
-
-
-/***********************************************************************
- *		SetWindowPos   (X11DRV.@)
- */
-BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
-{
-    WND *wndPtr,*wndTemp;
-    RECT newWindowRect, newClientRect;
-    RECT oldWindowRect, oldClientRect;
-    HRGN visRgn = 0;
-    UINT wvrFlags = 0, uFlags = 0;
-    BOOL retvalue, resync = FALSE, bChangePos;
-    HWND hwndActive = GetForegroundWindow();
-
-    TRACE( "hwnd %04x, swp (%i,%i)-(%i,%i) flags %08x\n",
-           winpos->hwnd, winpos->x, winpos->y,
-           winpos->x + winpos->cx, winpos->y + winpos->cy, winpos->flags);
-
-    bChangePos = !(winpos->flags & SWP_WINE_NOHOSTMOVE);
-    winpos->flags &= ~SWP_WINE_NOHOSTMOVE;
-
-    /* ------------------------------------------------------------------------ CHECKS */
-
-      /* Check window handle */
-
-    if (winpos->hwnd == GetDesktopWindow()) return FALSE;
-    if (!(wndPtr = WIN_FindWndPtr( winpos->hwnd ))) return FALSE;
-
-    TRACE("\tcurrent (%i,%i)-(%i,%i), style %08x\n",
-          wndPtr->rectWindow.left, wndPtr->rectWindow.top,
-          wndPtr->rectWindow.right, wndPtr->rectWindow.bottom, (unsigned)wndPtr->dwStyle );
-
-    /* Fix redundant flags */
-
-    if(wndPtr->dwStyle & WS_VISIBLE)
-        winpos->flags &= ~SWP_SHOWWINDOW;
+    if (wndPtr->dwStyle & WS_VISIBLE) winpos->flags &= ~SWP_SHOWWINDOW;
     else
     {
-        if (!(winpos->flags & SWP_SHOWWINDOW)) winpos->flags |= SWP_NOREDRAW;
         winpos->flags &= ~SWP_HIDEWINDOW;
+        if (!(winpos->flags & SWP_SHOWWINDOW)) winpos->flags |= SWP_NOREDRAW;
     }
 
-    if ( winpos->cx < 0 ) winpos->cx = 0;
-    if ( winpos->cy < 0 ) winpos->cy = 0;
+    if (winpos->cx < 0) winpos->cx = 0;
+    if (winpos->cy < 0) winpos->cy = 0;
 
     if ((wndPtr->rectWindow.right - wndPtr->rectWindow.left == winpos->cx) &&
         (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top == winpos->cy))
@@ -898,15 +372,15 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     if ((wndPtr->rectWindow.left == winpos->x) && (wndPtr->rectWindow.top == winpos->y))
         winpos->flags |= SWP_NOMOVE;    /* Already the right position */
 
-    if (winpos->hwnd == hwndActive)
+    if (winpos->hwnd == GetForegroundWindow())
         winpos->flags |= SWP_NOACTIVATE;   /* Already active */
-    else if ( (wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD )
+    else if ((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) != WS_CHILD)
     {
-        if(!(winpos->flags & SWP_NOACTIVATE)) /* Bring to the top when activating */
+        if (!(winpos->flags & SWP_NOACTIVATE)) /* Bring to the top when activating */
         {
             winpos->flags &= ~SWP_NOZORDER;
             winpos->hwndInsertAfter = HWND_TOP;
-            goto Pos;
+            goto done;
         }
     }
 
@@ -920,64 +394,68 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     if ((winpos->hwndInsertAfter != HWND_TOP) && (winpos->hwndInsertAfter != HWND_BOTTOM))
     {
         WND* wnd = WIN_FindWndPtr(winpos->hwndInsertAfter);
-
-        if( wnd ) {
-            if( wnd->parent != wndPtr->parent )
+        if (wnd)
+        {
+            if (wnd->parent != wndPtr->parent) ret = FALSE;
+            else
             {
-                retvalue = FALSE;
-                WIN_ReleaseWndPtr(wnd);
-                goto END;
+                /* don't need to change the Zorder of hwnd if it's already inserted
+                 * after hwndInsertAfter or when inserting hwnd after itself.
+                 */
+                if ((wnd->next == wndPtr ) || (winpos->hwnd == winpos->hwndInsertAfter))
+                    winpos->flags |= SWP_NOZORDER;
             }
-            /* don't need to change the Zorder of hwnd if it's already inserted
-             * after hwndInsertAfter or when inserting hwnd after itself.
-             */
-            if(( wnd->next == wndPtr ) || (winpos->hwnd == winpos->hwndInsertAfter))
-                winpos->flags |= SWP_NOZORDER;
+            WIN_ReleaseWndPtr(wnd);
         }
-        WIN_ReleaseWndPtr(wnd);
     }
+ done:
+    WIN_ReleaseWndPtr(wndPtr);
+    return ret;
+}
 
- Pos:  /* ------------------------------------------------------------------------ MAIN part */
 
-    SWP_DoWinPosChanging( wndPtr, winpos, &newWindowRect, &newClientRect );
+/***********************************************************************
+ *		SetWindowPos   (X11DRV.@)
+ */
+BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
+{
+    WND *wndPtr;
+    RECT newWindowRect, newClientRect;
+    RECT oldWindowRect, oldClientRect;
+    UINT wvrFlags = 0;
+    BOOL bChangePos;
+
+    TRACE( "hwnd %04x, swp (%i,%i)-(%i,%i) flags %08x\n",
+           winpos->hwnd, winpos->x, winpos->y,
+           winpos->x + winpos->cx, winpos->y + winpos->cy, winpos->flags);
+
+    bChangePos = !(winpos->flags & SWP_WINE_NOHOSTMOVE);
+    winpos->flags &= ~SWP_WINE_NOHOSTMOVE;
+
+    /* Check window handle */
+    if (winpos->hwnd == GetDesktopWindow()) return FALSE;
+
+    /* Fix redundant flags */
+    if (!fixup_flags( winpos )) return FALSE;
+
+    SWP_DoWinPosChanging( winpos, &newWindowRect, &newClientRect );
+
+    if (!(wndPtr = WIN_FindWndPtr( winpos->hwnd ))) return FALSE;
+
+    TRACE("\tcurrent (%i,%i)-(%i,%i), style %08x\n",
+          wndPtr->rectWindow.left, wndPtr->rectWindow.top,
+          wndPtr->rectWindow.right, wndPtr->rectWindow.bottom, (unsigned)wndPtr->dwStyle );
 
     if((winpos->flags & (SWP_NOZORDER | SWP_HIDEWINDOW | SWP_SHOWWINDOW)) != SWP_NOZORDER)
     {
-        if( wndPtr->parent == WIN_GetDesktop() )
+        if( wndPtr->parent->hwndSelf == GetDesktopWindow() )
             winpos->hwndInsertAfter = SWP_DoOwnedPopups( wndPtr->parent, wndPtr,
                                                          winpos->hwndInsertAfter, winpos->flags );
-        WIN_ReleaseDesktop();
-    }
-
-    if(!(wndPtr->flags & WIN_NATIVE) )
-    {
-        if( winpos->hwndInsertAfter == HWND_TOP )
-            winpos->flags |= ( wndPtr->parent->child == wndPtr)? SWP_NOZORDER: 0;
-        else
-            if( winpos->hwndInsertAfter == HWND_BOTTOM )
-                winpos->flags |= ( wndPtr->next )? 0: SWP_NOZORDER;
-            else
-                if( !(winpos->flags & SWP_NOZORDER) )
-                    if( GetWindow(winpos->hwndInsertAfter, GW_HWNDNEXT) == wndPtr->hwndSelf )
-                        winpos->flags |= SWP_NOZORDER;
-
-        if( !(winpos->flags & (SWP_NOREDRAW | SWP_SHOWWINDOW)) &&
-            ((winpos->flags & (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_HIDEWINDOW | SWP_FRAMECHANGED))
-             != (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER)) )
-        {
-            /* get a previous visible region for SWP_CopyValidBits() */
-            DWORD dflags = DCX_WINDOW;
-
-            if (wndPtr->dwStyle & WS_CLIPSIBLINGS)
-                dflags |= DCX_CLIPSIBLINGS;
-
-            visRgn = DCE_GetVisRgn(winpos->hwnd, dflags, 0, 0);
-        }
     }
 
     /* Common operations */
 
-    wvrFlags = SWP_DoNCCalcSize( wndPtr, winpos, &newWindowRect, &newClientRect, winpos->flags );
+    wvrFlags = SWP_DoNCCalcSize( wndPtr, winpos, &newWindowRect, &newClientRect );
 
     if(!(winpos->flags & SWP_NOZORDER) && winpos->hwnd != winpos->hwndInsertAfter)
     {
@@ -1008,160 +486,80 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     if( oldClientRect.right - oldClientRect.left ==
         newClientRect.right - newClientRect.left ) wvrFlags &= ~WVR_HREDRAW;
 
-    if( (winpos->flags & SWP_NOCOPYBITS) ||
-        (!(winpos->flags & SWP_NOCLIENTSIZE) &&
-         (wvrFlags >= WVR_HREDRAW) && (wvrFlags < WVR_VALIDRECTS)) )
-    {
-        uFlags |= SWP_EX_NOCOPY;
-    }
-/*
- *  Use this later in CopyValidBits()
- *
-    else if( 0  )
-	uFlags |= SWP_EX_NONCLIENT;
- */
-
     /* FIXME: actually do something with WVR_VALIDRECTS */
 
     wndPtr->rectWindow = newWindowRect;
     wndPtr->rectClient = newClientRect;
 
-    if (wndPtr->flags & WIN_NATIVE)  /* -------------------------------------------- hosted window */
+    if (winpos->flags & SWP_SHOWWINDOW) wndPtr->dwStyle |= WS_VISIBLE;
+    else if (winpos->flags & SWP_HIDEWINDOW)
     {
-        BOOL bCallDriver = TRUE;
-        HWND tempInsertAfter = winpos->hwndInsertAfter;
-
-        winpos->hwndInsertAfter = winpos->hwndInsertAfter;
-
-        if( !(winpos->flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW | SWP_NOREDRAW)) )
-        {
-            /* This is the only place where we need to force repainting of the contents
-               of windows created by the host window system, all other cases go through the
-               expose event handling */
-
-            if( (winpos->flags & (SWP_NOSIZE | SWP_FRAMECHANGED)) == (SWP_NOSIZE | SWP_FRAMECHANGED) )
-            {
-                winpos->cx = newWindowRect.right - newWindowRect.left;
-                winpos->cy = newWindowRect.bottom - newWindowRect.top;
-
-                X11DRV_WND_SetWindowPos(wndPtr, winpos, bChangePos);
-                winpos->hwndInsertAfter = tempInsertAfter;
-                bCallDriver = FALSE;
-
-                if( winpos->flags & SWP_NOCLIENTMOVE )
-                    SWP_DoSimpleFrameChanged(wndPtr, &oldClientRect, winpos->flags, uFlags );
-                else
-                {
-                    /* client area moved but window extents remained the same, copy valid bits */
-
-                    visRgn = CreateRectRgn( 0, 0, winpos->cx, winpos->cy );
-                    uFlags = SWP_CopyValidBits( wndPtr, &visRgn, &oldWindowRect, &oldClientRect,
-                                                uFlags | SWP_EX_PAINTSELF );
-                }
-            }
-        }
-
-        if( bCallDriver )
-        {
-            if( !(winpos->flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW | SWP_NOREDRAW)) )
-            {
-                if( (oldClientRect.left - oldWindowRect.left == newClientRect.left - newWindowRect.left) &&
-                    (oldClientRect.top - oldWindowRect.top == newClientRect.top - newWindowRect.top) &&
-                    !(uFlags & SWP_EX_NOCOPY) )
-                {
-                    /* The origin of the client rect didn't move so we can try to repaint
-                     * only the nonclient area by setting bit gravity hint for the host window system.
-                     */
-
-                    if( !(wndPtr->dwExStyle & WS_EX_MANAGED) )
-                    {
-                        HRGN hrgn = CreateRectRgn( 0, 0, newWindowRect.right - newWindowRect.left,
-                                                   newWindowRect.bottom - newWindowRect.top);
-                        RECT rcn = newClientRect;
-                        RECT rco = oldClientRect;
-
-                        OffsetRect( &rcn, -newWindowRect.left, -newWindowRect.top );
-                        OffsetRect( &rco, -oldWindowRect.left, -oldWindowRect.top );
-                        IntersectRect( &rcn, &rcn, &rco );
-                        visRgn = CreateRectRgnIndirect( &rcn );
-                        CombineRgn( visRgn, hrgn, visRgn, RGN_DIFF );
-                        DeleteObject( hrgn );
-                        uFlags = SWP_EX_PAINTSELF;
-                    }
-                    X11DRV_WND_SetGravity(wndPtr, NorthWestGravity );
-                }
-            }
-
-            X11DRV_WND_SetWindowPos(wndPtr, winpos, bChangePos);
-            X11DRV_WND_SetGravity(wndPtr, ForgetGravity );
-            winpos->hwndInsertAfter = tempInsertAfter;
-        }
-
-        if( winpos->flags & SWP_SHOWWINDOW )
-        {
-            HWND focus, curr;
-
-            wndPtr->dwStyle |= WS_VISIBLE;
-
-            if (wndPtr->dwExStyle & WS_EX_MANAGED) resync = TRUE;
-
-            /* focus was set to unmapped window, reset host focus
-             * since the window is now visible */
-
-            focus = curr = GetFocus();
-            while (curr)
-            {
-                if (curr == winpos->hwnd)
-                {
-                    X11DRV_SetFocus(focus);
-                    break;
-                }
-                curr = GetParent(curr);
-            }
-        }
-    }
-    else  /* -------------------------------------------- emulated window */
-    {
-        if( winpos->flags & SWP_SHOWWINDOW )
-        {
-            wndPtr->dwStyle |= WS_VISIBLE;
-            uFlags |= SWP_EX_PAINTSELF;
-            visRgn = 1; /* redraw the whole window */
-        }
-        else if( !(winpos->flags & SWP_NOREDRAW) )
-        {
-            if( winpos->flags & SWP_HIDEWINDOW )
-            {
-                if( visRgn > 1 ) /* map to parent */
-                    OffsetRgn( visRgn, oldWindowRect.left, oldWindowRect.top );
-                else
-                    visRgn = 0;
-            }
-            else
-            {
-                if( (winpos->flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE )
-                    uFlags = SWP_CopyValidBits(wndPtr, &visRgn, &oldWindowRect,
-                                               &oldClientRect, uFlags);
-                else
-                {
-                    /* nothing moved, redraw frame if needed */
-
-                    if( winpos->flags & SWP_FRAMECHANGED )
-                        SWP_DoSimpleFrameChanged( wndPtr, &oldClientRect, winpos->flags, uFlags );
-                    if( visRgn )
-                    {
-                        DeleteObject( visRgn );
-                        visRgn = 0;
-                    }
-                }
-            }
-        }
-    }
-
-    if( winpos->flags & SWP_HIDEWINDOW )
-    {
+        /* clear the update region */
+        RedrawWindow( winpos->hwnd, NULL, 0, RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE |
+                                             RDW_NOINTERNALPAINT | RDW_ALLCHILDREN );
         wndPtr->dwStyle &= ~WS_VISIBLE;
     }
+
+    if (get_whole_window(wndPtr))  /* don't do anything if X window not created yet */
+    {
+        Display *display = thread_display();
+
+        wine_tsx11_lock();
+        if (!(winpos->flags & SWP_SHOWWINDOW) && (winpos->flags & SWP_HIDEWINDOW))
+        {
+            if (!IsRectEmpty( &oldWindowRect ))
+            {
+                XUnmapWindow( display, get_whole_window(wndPtr) );
+                TRACE( "unmapping win %x\n", winpos->hwnd );
+            }
+            else TRACE( "not unmapping zero size win %x\n", winpos->hwnd );
+        }
+        else if ((wndPtr->dwStyle & WS_VISIBLE) &&
+                 !IsRectEmpty( &oldWindowRect ) && IsRectEmpty( &newWindowRect ))
+        {
+            /* resizing to zero size -> unmap */
+            TRACE( "unmapping zero size win %x\n", winpos->hwnd );
+            XUnmapWindow( display, get_whole_window(wndPtr) );
+        }
+
+        if (bChangePos)
+            X11DRV_sync_whole_window_position( display, wndPtr, !(winpos->flags & SWP_NOZORDER) );
+        else
+        {
+            struct x11drv_win_data *data = wndPtr->pDriverData;
+            data->whole_rect = wndPtr->rectWindow;
+            X11DRV_window_to_X_rect( wndPtr, &data->whole_rect );
+        }
+
+        if (X11DRV_sync_client_window_position( display, wndPtr ) ||
+            (winpos->flags & SWP_FRAMECHANGED))
+        {
+            /* if we moved the client area, repaint the whole non-client window */
+            XClearArea( display, get_whole_window(wndPtr), 0, 0, 0, 0, True );
+        }
+        if (winpos->flags & SWP_SHOWWINDOW)
+        {
+            if (!IsRectEmpty( &newWindowRect ))
+            {
+                XMapWindow( display, get_whole_window(wndPtr) );
+                TRACE( "mapping win %x\n", winpos->hwnd );
+            }
+            else TRACE( "not mapping win %x, size is zero\n", winpos->hwnd );
+        }
+        else if ((wndPtr->dwStyle & WS_VISIBLE) &&
+                 IsRectEmpty( &oldWindowRect ) && !IsRectEmpty( &newWindowRect ))
+        {
+            /* resizing from zero size to non-zero -> map */
+            TRACE( "mapping non zero size win %x\n", winpos->hwnd );
+            XMapWindow( display, get_whole_window(wndPtr) );
+        }
+        XFlush( display );  /* FIXME: should not be necessary */
+        wine_tsx11_unlock();
+    }
+
+    WIN_ReleaseWndPtr(wndPtr);
+
+    if (wvrFlags & WVR_REDRAW) RedrawWindow( winpos->hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
 
     if (winpos->hwnd == CARET_GetHwnd())
     {
@@ -1171,54 +569,6 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
             ShowCaret(winpos->hwnd);
     }
 
-    /* ------------------------------------------------------------------------ FINAL */
-
-    if (wndPtr->flags & WIN_NATIVE)
-        X11DRV_Synchronize();  /* Synchronize with the host window system */
-
-    wndTemp = WIN_GetDesktop();
-
-    /* repaint invalidated region (if any)
-     *
-     * FIXME: if SWP_NOACTIVATE is not set then set invalid regions here without any painting
-     *        and force update after ChangeActiveWindow() to avoid painting frames twice.
-     */
-
-    if( visRgn )
-    {
-        if( !(winpos->flags & SWP_NOREDRAW) )
-        {
-
-            /*  Use PAINT_RedrawWindow to explicitly force an invalidation of the window,
-		its parent and sibling and so on, and then erase the parent window
-		background if the parent is either a top-level window or its parent's parent
-		is top-level window. Rely on the system to repaint other affected
-		windows later on.  */
-            if( uFlags & SWP_EX_PAINTSELF )
-            {
-                PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, (visRgn == 1) ? 0 : visRgn,
-                                    RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN,
-                                    RDW_EX_XYWINDOW | RDW_EX_USEHRGN );
-            }
-            else
-            {
-                PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, (visRgn == 1) ? 0 : visRgn,
-                                    RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN,
-                                    RDW_EX_USEHRGN );
-            }
-
-            if(wndPtr -> parent == wndTemp || wndPtr->parent->parent == wndTemp )
-            {
-                RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0,
-                              RDW_ERASENOW | RDW_NOCHILDREN );
-            }
-        }
-        if( visRgn != 1 )
-            DeleteObject( visRgn );
-    }
-
-    WIN_ReleaseDesktop();
-
     if (!(winpos->flags & SWP_NOACTIVATE))
         WINPOS_ChangeActiveWindow( winpos->hwnd, FALSE );
 
@@ -1226,18 +576,593 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     TRACE("\tstatus flags = %04x\n", winpos->flags & SWP_AGG_STATUSFLAGS);
 
-    if ( resync ||
-         (((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) &&
-          !(winpos->flags & SWP_NOSENDCHANGING)) )
-    {
+    if (((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) &&
+          !(winpos->flags & SWP_NOSENDCHANGING))
         SendMessageA( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
-        if (resync) X11DRV_Synchronize();
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           WINPOS_FindIconPos
+ *
+ * Find a suitable place for an iconic window.
+ */
+static POINT WINPOS_FindIconPos( WND* wndPtr, POINT pt )
+{
+    RECT rectParent;
+    short x, y, xspacing, yspacing;
+
+    GetClientRect( wndPtr->parent->hwndSelf, &rectParent );
+    if ((pt.x >= rectParent.left) && (pt.x + GetSystemMetrics(SM_CXICON) < rectParent.right) &&
+        (pt.y >= rectParent.top) && (pt.y + GetSystemMetrics(SM_CYICON) < rectParent.bottom))
+        return pt;  /* The icon already has a suitable position */
+
+    xspacing = GetSystemMetrics(SM_CXICONSPACING);
+    yspacing = GetSystemMetrics(SM_CYICONSPACING);
+
+    y = rectParent.bottom;
+    for (;;)
+    {
+        x = rectParent.left;
+        do
+        {
+              /* Check if another icon already occupies this spot */
+            WND *childPtr = WIN_LockWndPtr(wndPtr->parent->child);
+            while (childPtr)
+            {
+                if ((childPtr->dwStyle & WS_MINIMIZE) && (childPtr != wndPtr))
+                {
+                    if ((childPtr->rectWindow.left < x + xspacing) &&
+                        (childPtr->rectWindow.right >= x) &&
+                        (childPtr->rectWindow.top <= y) &&
+                        (childPtr->rectWindow.bottom > y - yspacing))
+                        break;  /* There's a window in there */
+                }
+                WIN_UpdateWndPtr(&childPtr,childPtr->next);
+            }
+            WIN_ReleaseWndPtr(childPtr);
+            if (!childPtr) /* No window was found, so it's OK for us */
+            {
+                pt.x = x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2;
+                pt.y = y - (yspacing + GetSystemMetrics(SM_CYICON)) / 2;
+                return pt;
+            }
+            x += xspacing;
+        } while(x <= rectParent.right-xspacing);
+        y -= yspacing;
+    }
+}
+
+
+
+
+
+UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    UINT swpFlags = 0;
+    POINT size;
+    WINDOWPLACEMENT wpl;
+
+    TRACE("0x%04x %u\n", hwnd, cmd );
+
+    wpl.length = sizeof(wpl);
+    GetWindowPlacement( hwnd, &wpl );
+
+    size.x = wndPtr->rectWindow.left;
+    size.y = wndPtr->rectWindow.top;
+
+    if (!HOOK_CallHooksA(WH_CBT, HCBT_MINMAX, wndPtr->hwndSelf, cmd))
+    {
+        if( wndPtr->dwStyle & WS_MINIMIZE )
+        {
+            if( !SendMessageA( wndPtr->hwndSelf, WM_QUERYOPEN, 0, 0L ) )
+            {
+                swpFlags = SWP_NOSIZE | SWP_NOMOVE;
+                goto done;
+            }
+            swpFlags |= SWP_NOCOPYBITS;
+        }
+        switch( cmd )
+        {
+        case SW_MINIMIZE:
+            if( wndPtr->dwStyle & WS_MAXIMIZE)
+            {
+                wndPtr->flags |= WIN_RESTORE_MAX;
+                wndPtr->dwStyle &= ~WS_MAXIMIZE;
+            }
+            else
+                wndPtr->flags &= ~WIN_RESTORE_MAX;
+            wndPtr->dwStyle |= WS_MINIMIZE;
+
+            X11DRV_set_iconic_state( wndPtr );
+
+            wpl.ptMinPosition = WINPOS_FindIconPos( wndPtr, wpl.ptMinPosition );
+
+            SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
+                     GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON) );
+            swpFlags |= SWP_NOCOPYBITS;
+            break;
+
+        case SW_MAXIMIZE:
+            WINPOS_GetMinMaxInfo( wndPtr, &size, &wpl.ptMaxPosition, NULL, NULL );
+
+            if( wndPtr->dwStyle & WS_MINIMIZE )
+            {
+                wndPtr->dwStyle &= ~WS_MINIMIZE;
+                WINPOS_ShowIconTitle( wndPtr, FALSE );
+                X11DRV_set_iconic_state( wndPtr );
+            }
+            wndPtr->dwStyle |= WS_MAXIMIZE;
+
+            SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
+            break;
+
+        case SW_RESTORE:
+            if( wndPtr->dwStyle & WS_MINIMIZE )
+            {
+                wndPtr->dwStyle &= ~WS_MINIMIZE;
+                WINPOS_ShowIconTitle( wndPtr, FALSE );
+                X11DRV_set_iconic_state( wndPtr );
+
+                if( wndPtr->flags & WIN_RESTORE_MAX)
+                {
+                    /* Restore to maximized position */
+                    WINPOS_GetMinMaxInfo( wndPtr, &size, &wpl.ptMaxPosition, NULL, NULL);
+                    wndPtr->dwStyle |= WS_MAXIMIZE;
+                    SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
+                    break;
+                }
+            }
+            else
+                if( !(wndPtr->dwStyle & WS_MAXIMIZE) )
+                {
+                    swpFlags = (UINT16)(-1);
+                    goto done;
+                }
+                else wndPtr->dwStyle &= ~WS_MAXIMIZE;
+
+            /* Restore to normal position */
+
+            *rect = wpl.rcNormalPosition;
+            rect->right -= rect->left;
+            rect->bottom -= rect->top;
+
+            break;
+        }
+    } else swpFlags |= SWP_NOSIZE | SWP_NOMOVE;
+
+ done:
+    WIN_ReleaseWndPtr( wndPtr );
+    return swpFlags;
+}
+
+
+/***********************************************************************
+ *              X11DRV_ShowWindow   (X11DRV.@)
+ */
+BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
+{
+    WND* 	wndPtr = WIN_FindWndPtr( hwnd );
+    BOOL 	wasVisible, showFlag;
+    RECT 	newPos = {0, 0, 0, 0};
+    UINT 	swp = 0;
+
+    if (!wndPtr) return FALSE;
+
+    TRACE("hwnd=%04x, cmd=%d\n", hwnd, cmd);
+
+    wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
+
+    switch(cmd)
+    {
+        case SW_HIDE:
+            if (!wasVisible) goto END;;
+	    swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
+		        SWP_NOACTIVATE | SWP_NOZORDER;
+	    break;
+
+	case SW_SHOWMINNOACTIVE:
+            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+            /* fall through */
+	case SW_SHOWMINIMIZED:
+            swp |= SWP_SHOWWINDOW;
+            /* fall through */
+	case SW_MINIMIZE:
+            swp |= SWP_FRAMECHANGED;
+            if( !(wndPtr->dwStyle & WS_MINIMIZE) )
+		 swp |= WINPOS_MinMaximize( hwnd, SW_MINIMIZE, &newPos );
+            else swp |= SWP_NOSIZE | SWP_NOMOVE;
+	    break;
+
+	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
+            swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
+            if( !(wndPtr->dwStyle & WS_MAXIMIZE) )
+		 swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
+            else swp |= SWP_NOSIZE | SWP_NOMOVE;
+            break;
+
+	case SW_SHOWNA:
+            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+            /* fall through */
+	case SW_SHOW:
+	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+
+	    /*
+	     * ShowWindow has a little peculiar behavior that if the
+	     * window is already the topmost window, it will not
+	     * activate it.
+	     */
+	    if (GetTopWindow((HWND)0)==hwnd && (wasVisible || GetActiveWindow() == hwnd))
+	      swp |= SWP_NOACTIVATE;
+
+	    break;
+
+	case SW_SHOWNOACTIVATE:
+            swp |= SWP_NOZORDER;
+            if (GetActiveWindow()) swp |= SWP_NOACTIVATE;
+            /* fall through */
+	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
+	case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
+	case SW_RESTORE:
+	    swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
+
+            if( wndPtr->dwStyle & (WS_MINIMIZE | WS_MAXIMIZE) )
+		 swp |= WINPOS_MinMaximize( hwnd, SW_RESTORE, &newPos );
+            else swp |= SWP_NOSIZE | SWP_NOMOVE;
+	    break;
     }
 
-    retvalue = TRUE;
- END:
+    showFlag = (cmd != SW_HIDE);
+    if (showFlag != wasVisible)
+    {
+        SendMessageA( hwnd, WM_SHOWWINDOW, showFlag, 0 );
+        if (!IsWindow( hwnd )) goto END;
+    }
+
+    /* We can't activate a child window */
+    if ((wndPtr->dwStyle & WS_CHILD) &&
+        !(wndPtr->dwExStyle & WS_EX_MDICHILD))
+        swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+
+    SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
+                  newPos.right, newPos.bottom, LOWORD(swp) );
+    if (cmd == SW_HIDE)
+    {
+        /* FIXME: This will cause the window to be activated irrespective
+         * of whether it is owned by the same thread. Has to be done
+         * asynchronously.
+         */
+
+        if (hwnd == GetActiveWindow())
+            WINPOS_ActivateOtherWindow(wndPtr);
+
+        /* Revert focus to parent */
+        if (hwnd == GetFocus() || IsChild(hwnd, GetFocus()))
+            SetFocus( GetParent(hwnd) );
+    }
+    if (!IsWindow( hwnd )) goto END;
+    else if( wndPtr->dwStyle & WS_MINIMIZE ) WINPOS_ShowIconTitle( wndPtr, TRUE );
+
+    if (wndPtr->flags & WIN_NEED_SIZE)
+    {
+        /* should happen only in CreateWindowEx() */
+	int wParam = SIZE_RESTORED;
+
+	wndPtr->flags &= ~WIN_NEED_SIZE;
+	if (wndPtr->dwStyle & WS_MAXIMIZE) wParam = SIZE_MAXIMIZED;
+	else if (wndPtr->dwStyle & WS_MINIMIZE) wParam = SIZE_MINIMIZED;
+	SendMessageA( hwnd, WM_SIZE, wParam,
+		     MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
+			    wndPtr->rectClient.bottom-wndPtr->rectClient.top));
+	SendMessageA( hwnd, WM_MOVE, 0,
+		   MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top) );
+    }
+
+END:
     WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    return wasVisible;
+}
+
+
+/**********************************************************************
+ *		X11DRV_MapNotify
+ */
+void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
+{
+    HWND hwndFocus = GetFocus();
+    WND *win;
+
+    if (!(win = WIN_FindWndPtr( hwnd ))) return;
+
+    if ((win->dwStyle & WS_VISIBLE) &&
+        (win->dwStyle & WS_MINIMIZE) &&
+        (win->dwExStyle & WS_EX_MANAGED))
+    {
+        int x, y;
+        unsigned int width, height, border, depth;
+        Window root, top;
+        RECT rect;
+
+        DCE_InvalidateDCE( win, &win->rectWindow );
+        win->dwStyle &= ~WS_MINIMIZE;
+        win->dwStyle |= WS_VISIBLE;
+        WIN_InternalShowOwnedPopups( hwnd, TRUE, TRUE );
+
+        if (win->flags & WIN_RESTORE_MAX)
+            win->dwStyle |= WS_MAXIMIZE;
+        else
+            win->dwStyle &= ~WS_MAXIMIZE;
+
+        /* FIXME: hack */
+        wine_tsx11_lock();
+        XGetGeometry( event->display, get_whole_window(win), &root, &x, &y, &width, &height,
+                        &border, &depth );
+        XTranslateCoordinates( event->display, get_whole_window(win), root, 0, 0, &x, &y, &top );
+        wine_tsx11_unlock();
+        rect.left   = x;
+        rect.top    = y;
+        rect.right  = x + width;
+        rect.bottom = y + height;
+        X11DRV_X_to_window_rect( win, &rect );
+
+        SendMessageA( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
+        SetWindowPos( hwnd, 0, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
+                      SWP_NOZORDER | SWP_WINE_NOHOSTMOVE );
+    }
+    if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
+    WIN_ReleaseWndPtr( win );
+}
+
+
+/**********************************************************************
+ *              X11DRV_UnmapNotify
+ */
+void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event )
+{
+    WND *win;
+
+    if (!(win = WIN_FindWndPtr( hwnd ))) return;
+
+    if ((win->dwStyle & WS_VISIBLE) && (win->dwExStyle & WS_EX_MANAGED))
+    {
+        EndMenu();
+        SendMessageA( hwnd, WM_SHOWWINDOW, SW_MINIMIZE, 0 );
+
+        win->flags &= ~WIN_RESTORE_MAX;
+        win->dwStyle |= WS_MINIMIZE;
+
+        if (win->dwStyle & WS_MAXIMIZE)
+        {
+            win->flags |= WIN_RESTORE_MAX;
+            win->dwStyle &= ~WS_MAXIMIZE;
+        }
+
+        SetWindowPos( hwnd, 0, 0, 0, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
+                      SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_WINE_NOHOSTMOVE );
+
+        WIN_InternalShowOwnedPopups( hwnd, FALSE, TRUE );
+    }
+    WIN_ReleaseWndPtr( win );
+}
+
+
+/***********************************************************************
+ *           query_zorder
+ *
+ * Synchronize internal z-order with the window manager's.
+ */
+static BOOL __check_query_condition( WND** pWndA, WND** pWndB )
+{
+    /* return TRUE if we have at least two managed windows */
+
+    for( *pWndB = NULL; *pWndA; *pWndA = (*pWndA)->next )
+        if( ((*pWndA)->dwExStyle & WS_EX_MANAGED) &&
+            ((*pWndA)->dwStyle & WS_VISIBLE )) break;
+    if( *pWndA )
+        for( *pWndB = (*pWndA)->next; *pWndB; *pWndB = (*pWndB)->next )
+            if( ((*pWndB)->dwExStyle & WS_EX_MANAGED) &&
+                ((*pWndB)->dwStyle & WS_VISIBLE )) break;
+    return ((*pWndB) != NULL);
+}
+
+static Window __get_common_ancestor( Display *display, Window A, Window B,
+                                     Window** children, unsigned* total )
+{
+    /* find the real root window */
+
+    Window      root, *childrenB;
+    unsigned    totalB;
+
+    while( A != B && A && B )
+    {
+      TSXQueryTree( display, A, &root, &A, children, total );
+      TSXQueryTree( display, B, &root, &B, &childrenB, &totalB );
+      if( childrenB ) TSXFree( childrenB );
+      if( *children ) TSXFree( *children ), *children = NULL;
+    }
+
+    if( A && B )
+    {
+        TSXQueryTree( display, A, &root, &B, children, total );
+        return A;
+    }
+    return 0 ;
+}
+
+static Window __get_top_decoration( Display *display, Window w, Window ancestor )
+{
+    Window*     children, root, prev = w, parent = w;
+    unsigned    total;
+
+    do
+    {
+        w = parent;
+        TSXQueryTree( display, w, &root, &parent, &children, &total );
+        if( children ) TSXFree( children );
+    } while( parent && parent != ancestor );
+    TRACE("\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
+    return ( parent ) ? w : 0 ;
+}
+
+static unsigned __td_lookup( Window w, Window* list, unsigned max )
+{
+    unsigned    i;
+    for( i = max - 1; i >= 0; i-- ) if( list[i] == w ) break;
+    return i;
+}
+
+static HWND query_zorder( Display *display, HWND hWndCheck)
+{
+    HWND      hwndInsertAfter = HWND_TOP;
+    WND      *pWndCheck = WIN_FindWndPtr(hWndCheck);
+    WND      *pDesktop = WIN_GetDesktop();
+    WND      *pWnd, *pWndZ = WIN_LockWndPtr(pDesktop->child);
+    Window      w, parent, *children = NULL;
+    unsigned    total, check, pos, best;
+
+    if( !__check_query_condition(&pWndZ, &pWnd) )
+    {
+        WIN_ReleaseWndPtr(pWndCheck);
+        WIN_ReleaseWndPtr(pDesktop->child);
+        WIN_ReleaseDesktop();
+        return hwndInsertAfter;
+    }
+    WIN_LockWndPtr(pWndZ);
+    WIN_LockWndPtr(pWnd);
+    WIN_ReleaseWndPtr(pDesktop->child);
+    WIN_ReleaseDesktop();
+
+    parent = __get_common_ancestor( display, get_whole_window(pWndZ),
+                                    get_whole_window(pWnd), &children, &total );
+    if( parent && children )
+    {
+        /* w is the ancestor if pWndCheck that is a direct descendant of 'parent' */
+
+        w = __get_top_decoration( display, get_whole_window(pWndCheck), parent );
+
+        if( w != children[total-1] ) /* check if at the top */
+        {
+            /* X child at index 0 is at the bottom, at index total-1 is at the top */
+            check = __td_lookup( w, children, total );
+            best = total;
+
+            for( WIN_UpdateWndPtr(&pWnd,pWndZ); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
+            {
+                /* go through all windows in Wine z-order... */
+
+                if( pWnd != pWndCheck )
+                {
+                    if( !(pWnd->dwExStyle & WS_EX_MANAGED) ||
+                        !(w = __get_top_decoration( display, get_whole_window(pWnd), parent )) )
+                        continue;
+                    pos = __td_lookup( w, children, total );
+                    if( pos < best && pos > check )
+                    {
+                        /* find a nearest Wine window precedes 
+                         * pWndCheck in the real z-order... */
+                        best = pos;
+                        hwndInsertAfter = pWnd->hwndSelf;
+                    }
+                    if( best - check == 1 ) break;
+                }
+            }
+        }
+    }
+    if( children ) TSXFree( children );
+    WIN_ReleaseWndPtr(pWnd);
+    WIN_ReleaseWndPtr(pWndZ);
+    WIN_ReleaseWndPtr(pWndCheck);
+    return hwndInsertAfter;
+}
+
+
+/***********************************************************************
+ *		X11DRV_ConfigureNotify
+ */
+void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
+{
+    HWND oldInsertAfter;
+    struct x11drv_win_data *data;
+    WND *win;
+    RECT rect;
+    WINDOWPOS winpos;
+    int x = event->x, y = event->y;
+
+    if (!(win = WIN_FindWndPtr( hwnd ))) return;
+    data = win->pDriverData;
+
+    /* Get geometry */
+
+    if (!event->send_event)  /* normal event, need to map coordinates to the root */
+    {
+        Window child;
+        wine_tsx11_lock();
+        XTranslateCoordinates( event->display, data->whole_window, root_window,
+                               0, 0, &x, &y, &child );
+        wine_tsx11_unlock();
+    }
+    rect.left   = x;
+    rect.top    = y;
+    rect.right  = x + event->width;
+    rect.bottom = y + event->height;
+    TRACE( "win %x new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
+           hwnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
+           event->x, event->y, event->width, event->height );
+    X11DRV_X_to_window_rect( win, &rect );
+    WIN_ReleaseWndPtr( win );
+
+    winpos.hwnd  = hwnd;
+    winpos.x     = rect.left;
+    winpos.y     = rect.top;
+    winpos.cx    = rect.right - rect.left;
+    winpos.cy    = rect.bottom - rect.top;
+    winpos.flags = SWP_NOACTIVATE;
+
+    /* Get Z-order (FIXME) */
+
+    winpos.hwndInsertAfter = query_zorder( event->display, hwnd );
+
+    /* needs to find the first Visible Window above the current one */
+    oldInsertAfter = hwnd;
+    for (;;)
+    {
+        oldInsertAfter = GetWindow( oldInsertAfter, GW_HWNDPREV );
+        if (!oldInsertAfter)
+        {
+            oldInsertAfter = HWND_TOP;
+            break;
+        }
+        if (GetWindowLongA( oldInsertAfter, GWL_STYLE ) & WS_VISIBLE) break;
+    }
+
+    /* Compare what has changed */
+
+    GetWindowRect( hwnd, &rect );
+    if (rect.left == winpos.x && rect.top == winpos.y) winpos.flags |= SWP_NOMOVE;
+    else
+        TRACE( "%04x moving from (%d,%d) to (%d,%d)\n",
+               hwnd, rect.left, rect.top, winpos.x, winpos.y );
+
+    if (rect.right - rect.left == winpos.cx &&
+        rect.bottom - rect.top == winpos.cy) winpos.flags |= SWP_NOSIZE;
+    else
+        TRACE( "%04x resizing from (%dx%d) to (%dx%d)\n",
+               hwnd, rect.right - rect.left, rect.bottom - rect.top,
+               winpos.cx, winpos.cy );
+
+    if (winpos.hwndInsertAfter == oldInsertAfter) winpos.flags |= SWP_NOZORDER;
+    else
+        TRACE( "%04x restacking from after %04x to after %04x\n",
+               hwnd, oldInsertAfter, winpos.hwndInsertAfter );
+
+    /* if nothing changed, don't do anything */
+    if (winpos.flags == (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE)) return;
+
+    SetWindowPos( hwnd, winpos.hwndInsertAfter, winpos.x, winpos.y,
+                  winpos.cx, winpos.cy, winpos.flags | SWP_WINE_NOHOSTMOVE );
 }
 
 
@@ -1281,17 +1206,19 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 #ifdef HAVE_LIBXSHAPE
     {
         Display *display = thread_display();
-        Window win = X11DRV_WND_GetXWindow(wndPtr);
+        X11DRV_WND_DATA *data = wndPtr->pDriverData;
 
-        if (win)
+        if (data->whole_window)
         {
             if (!hrgn)
             {
-                TSXShapeCombineMask( display, win, ShapeBounding, 0, 0, None, ShapeSet );
+                TSXShapeCombineMask( display, data->whole_window,
+                                     ShapeBounding, 0, 0, None, ShapeSet );
             }
             else
             {
                 XRectangle *aXRect;
+                int x_offset, y_offset;
                 DWORD size;
                 DWORD dwBufferSize = GetRegionData(hrgn, 0, NULL);
                 PRGNDATA pRegionData = HeapAlloc(GetProcessHeap(), 0, dwBufferSize);
@@ -1299,6 +1226,8 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 
                 GetRegionData(hrgn, dwBufferSize, pRegionData);
                 size = pRegionData->rdh.nCount;
+                x_offset = wndPtr->rectWindow.left - data->whole_rect.left;
+                y_offset = wndPtr->rectWindow.top - data->whole_rect.top;
                 /* convert region's "Windows rectangles" to XRectangles */
                 aXRect = HeapAlloc(GetProcessHeap(), 0, size * sizeof(*aXRect) );
                 if (aXRect)
@@ -1307,8 +1236,8 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
                     RECT *pRect = (RECT*) pRegionData->Buffer;
                     for (; pRect < ((RECT*) pRegionData->Buffer) + size ; ++pRect, ++pCurrRect)
                     {
-                        pCurrRect->x      = pRect->left;
-                        pCurrRect->y      = pRect->top;
+                        pCurrRect->x      = pRect->left + x_offset;
+                        pCurrRect->y      = pRect->top + y_offset;
                         pCurrRect->height = pRect->bottom - pRect->top;
                         pCurrRect->width  = pRect->right  - pRect->left;
 
@@ -1322,7 +1251,7 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
                     }
 
                     /* shape = non-rectangular windows (X11/extensions) */
-                    TSXShapeCombineRectangles( display, win, ShapeBounding,
+                    TSXShapeCombineRectangles( display, data->whole_window, ShapeBounding,
                                                0, 0, aXRect,
                                                pCurrRect - aXRect, ShapeSet, YXBanded );
                     HeapFree(GetProcessHeap(), 0, aXRect );
@@ -1543,17 +1472,9 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     {
         MapWindowPoints( wndPtr->parent->hwndSelf, 0, (LPPOINT)&mouseRect, 2 );
     }
-    SendMessageA( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
 
-    if (GetCapture() != hwnd) SetCapture( hwnd );
-
-    if (wndPtr->parent && (wndPtr->parent->hwndSelf != GetDesktopWindow()))
-    {
-          /* Retrieve a default cache DC (without using the window style) */
-        hdc = GetDCEx( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
-    }
-    else
-        hdc = GetDC( 0 );
+    /* Retrieve a default cache DC (without using the window style) */
+    hdc = GetDCEx( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
 
     if( iconic ) /* create a cursor for dragging */
     {
@@ -1566,19 +1487,28 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     /* repaint the window before moving it around */
     RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 
+    SendMessageA( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
+    SetCapture( hwnd );
+
     /* grab the server only when moving top-level windows without desktop */
     grab = (!DragFullWindows && (root_window == DefaultRootWindow(gdi_display)) &&
             (wndPtr->parent->hwndSelf == GetDesktopWindow()));
+
+    wine_tsx11_lock();
     if (grab)
     {
-        wine_tsx11_lock();
         XSync( gdi_display, False );
         XGrabServer( display );
+        XSync( display, False );
         /* switch gdi display to the thread display, since the server is grabbed */
         old_gdi_display = gdi_display;
         gdi_display = display;
-        wine_tsx11_unlock();
     }
+    XGrabPointer( display, get_whole_window(wndPtr), False,
+                  PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
+                  GrabModeAsync, GrabModeAsync, get_client_window(wndPtr->parent),
+                  None, CurrentTime );
+    wine_tsx11_unlock();
 
     while(1)
     {
@@ -1681,19 +1611,18 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     else if (moved && !DragFullWindows)
         draw_moving_frame( hdc, &sizingRect, thickframe );
 
-    if (wndPtr->parent && (wndPtr->parent->hwndSelf != GetDesktopWindow()))
-        ReleaseDC( wndPtr->parent->hwndSelf, hdc );
-    else
-        ReleaseDC( 0, hdc );
+    ReleaseDC( wndPtr->parent->hwndSelf, hdc );
 
+    wine_tsx11_lock();
+    XUngrabPointer( display, CurrentTime );
     if (grab)
     {
-        wine_tsx11_lock();
         XSync( display, False );
         XUngrabServer( display );
+        XSync( display, False );
         gdi_display = old_gdi_display;
-        wine_tsx11_unlock();
     }
+    wine_tsx11_unlock();
 
     if (HOOK_CallHooksA( WH_CBT, HCBT_MOVESIZE, hwnd, (LPARAM)&sizingRect ))
         sizingRect = wndPtr->rectWindow;

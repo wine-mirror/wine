@@ -27,11 +27,12 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl GetScreenSaveTimeout() X11DRV_GetScreenSaveTimeout
 @ cdecl SetScreenSaveTimeout(long) X11DRV_SetScreenSaveTimeout
 @ cdecl LoadOEMResource(long long) X11DRV_LoadOEMResource
-@ cdecl CreateWindow(long) X11DRV_CreateWindow
+@ cdecl CreateWindow(long ptr) X11DRV_CreateWindow
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
 @ cdecl GetDC(long long long long) X11DRV_GetDC
 @ cdecl EnableWindow(long long) X11DRV_EnableWindow
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) X11DRV_MsgWaitForMultipleObjectsEx
+@ cdecl ScrollDC(long long long ptr ptr long ptr) X11DRV_ScrollDC
 @ cdecl ScrollWindowEx(long long long ptr ptr long ptr long) X11DRV_ScrollWindowEx
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long) X11DRV_SetParent
@@ -39,6 +40,7 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
 @ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
+@ cdecl ShowWindow(long long) X11DRV_ShowWindow
 @ cdecl SysCommandSizeMove(long long) X11DRV_SysCommandSizeMove
 @ cdecl AcquireClipboard() X11DRV_AcquireClipboard
 @ cdecl ReleaseClipboard() X11DRV_ReleaseClipboard

@@ -154,13 +154,8 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
 /* set the cursor of a window; helper for X11DRV_SetCursor */
 static BOOL CALLBACK set_win_cursor( HWND hwnd, LPARAM cursor )
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    if (wndPtr)
-    {
-        Window win = X11DRV_WND_GetXWindow(wndPtr);
-        if (win) TSXDefineCursor( thread_display(), win, (Cursor)cursor );
-    }
-    WIN_ReleaseWndPtr( wndPtr );
+    Window win = X11DRV_get_whole_window( hwnd );
+    if (win) TSXDefineCursor( thread_display(), win, (Cursor)cursor );
     return TRUE;
 }
 

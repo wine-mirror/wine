@@ -28,6 +28,17 @@ DECLARE_DEBUG_CHANNEL(nonclient);
 					(r).right = (wnd)->rectClient.right - (wnd)->rectWindow.left; \
 					(r).bottom = (wnd)->rectClient.bottom - (wnd)->rectWindow.top
 
+  /* PAINT_RedrawWindow() control flags */
+#define RDW_EX_DELAY_NCPAINT    0x0020
+
+  /* WIN_UpdateNCRgn() flags */
+#define UNC_CHECK		0x0001
+#define UNC_ENTIRE		0x0002
+#define UNC_REGION		0x0004
+#define UNC_UPDATE		0x0008
+#define UNC_DELAY_NCPAINT       0x0010
+#define UNC_IN_BEGINPAINT       0x0020
+
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_GRADIENTINACTIVECAPTION
 
@@ -127,7 +138,7 @@ static BOOL WIN_HaveToDelayNCPAINT(
  *	  is 1 then the hRgn is preserved and RDW_Paint() will have to get 
  *	  a DC without extra clipping region.
  */
-HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
+static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 {
     RECT  r;
     HRGN  hClip = 0;
@@ -323,7 +334,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 
     TRACE("hrgnUpdate = %04x, \n", hrgnUpdate);
 
-    if (GetClassWord16(wndPtr->hwndSelf, GCW_STYLE) & CS_PARENTDC)
+    if (GetClassLongA(wndPtr->hwndSelf, GCL_STYLE) & CS_PARENTDC)
     {
         /* Don't clip the output to the update region for CS_PARENTDC window */
 	if( hrgnUpdate ) 
@@ -336,7 +347,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 	if( hrgnUpdate ) /* convert to client coordinates */
 	    OffsetRgn( hrgnUpdate, wndPtr->rectWindow.left - wndPtr->rectClient.left,
 			           wndPtr->rectWindow.top - wndPtr->rectClient.top );
-        lps->hdc = GetDCEx(hwnd, hrgnUpdate, DCX_INTERSECTRGN |
+        lps->hdc = GetDCEx(hwnd, hrgnUpdate, DCX_INTERSECTRGN | 
                              DCX_WINDOWPAINT | DCX_USESTYLE | (bIcon ? DCX_WINDOW : 0) );
 	/* ReleaseDC() in EndPaint() will delete the region */
     }
@@ -477,7 +488,7 @@ END:
  *  Validate the portions of parents that are covered by a validated child
  *  wndPtr = child
  */
-void  RDW_ValidateParent(WND *wndChild)  
+static void RDW_ValidateParent(WND *wndChild)
 {
     WND *wndParent = WIN_LockWndPtr(wndChild->parent);
     WND *wndDesktop = WIN_GetDesktop();
@@ -611,15 +622,14 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 
 		if( CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate, hRgn, RGN_DIFF )
 		    == NULLREGION )
-		    goto EMPTY;
+                {
+                    DeleteObject( wndPtr->hrgnUpdate );
+                    wndPtr->hrgnUpdate = 0;
+                }
 	    }
 	    else /* validate everything */
 	    {
-		if( wndPtr->hrgnUpdate > 1 )
-		{
-EMPTY:
-		    DeleteObject( wndPtr->hrgnUpdate );
-		}
+		if( wndPtr->hrgnUpdate > 1 ) DeleteObject( wndPtr->hrgnUpdate );
 		wndPtr->hrgnUpdate = 0;
 	    }
 
@@ -757,7 +767,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
         if (wndPtr->hrgnUpdate) /* wm_painticon wparam is 1 */
             SendMessage16( hWnd, (bIcon) ? WM_PAINTICON : WM_PAINT, bIcon, 0 );
     }
-    else if ((flags & RDW_ERASENOW) || (ex & RDW_EX_TOPFRAME))
+    else if (flags & RDW_ERASENOW)
     {
 	UINT dcx = DCX_INTERSECTRGN | DCX_USESTYLE | DCX_KEEPCLIPRGN | DCX_WINDOWPAINT | DCX_CACHE;
 	HRGN hrgnRet;
@@ -765,7 +775,6 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 	hrgnRet = WIN_UpdateNCRgn(wndPtr, 
 				  hrgn, 
 				  UNC_REGION | UNC_CHECK | 
-				  ((ex & RDW_EX_TOPFRAME) ? UNC_ENTIRE : 0) |
 				  ((ex & RDW_EX_DELAY_NCPAINT) ? UNC_DELAY_NCPAINT : 0) ); 
 
         if( hrgnRet )
@@ -792,7 +801,6 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
     }
 
     if( !IsWindow(hWnd) ) return hrgn;
-    ex &= ~RDW_EX_TOPFRAME;
 
       /* ... and its child windows */
 
@@ -820,12 +828,12 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
     return hrgn;
 }
 
+
 /***********************************************************************
- *           PAINT_RedrawWindow
- *
+ *		RedrawWindow (USER32.@)
  */
-BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
-                           HRGN hrgnUpdate, UINT flags, UINT ex )
+BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
+                              HRGN hrgnUpdate, UINT flags )
 {
     HRGN hRgn = 0;
     RECT r, r2;
@@ -848,8 +856,8 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	if( hrgnUpdate )
 	{
 	    GetRgnBox( hrgnUpdate, &r );
-            TRACE( "%04x (%04x) NULL %04x box (%i,%i-%i,%i) flags=%04x, exflags=%04x\n", 
-	          hwnd, wndPtr->hrgnUpdate, hrgnUpdate, r.left, r.top, r.right, r.bottom, flags, ex);
+            TRACE( "%04x (%04x) NULL %04x box (%i,%i-%i,%i) flags=%04x\n",
+	          hwnd, wndPtr->hrgnUpdate, hrgnUpdate, r.left, r.top, r.right, r.bottom, flags );
 	}
 	else
 	{
@@ -857,9 +865,9 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 		r = *rectUpdate;
 	    else
 		SetRectEmpty( &r );
-	    TRACE( "%04x (%04x) %s %d,%d-%d,%d %04x flags=%04x, exflags=%04x\n",
+	    TRACE( "%04x (%04x) %s %d,%d-%d,%d %04x flags=%04x\n",
 			hwnd, wndPtr->hrgnUpdate, rectUpdate ? "rect" : "NULL", r.left, 
-			r.top, r.right, r.bottom, hrgnUpdate, flags, ex );
+			r.top, r.right, r.bottom, hrgnUpdate, flags );
 	}
     }
 
@@ -870,17 +878,9 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
     else
 	r = wndPtr->rectClient;
 
-    if( ex & RDW_EX_XYWINDOW )
-    {
-	pt.x = pt.y = 0;
-        OffsetRect( &r, -wndPtr->rectWindow.left, -wndPtr->rectWindow.top );
-    }
-    else
-    {
-	pt.x = wndPtr->rectClient.left - wndPtr->rectWindow.left;
-	pt.y = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-	OffsetRect( &r, -wndPtr->rectClient.left, -wndPtr->rectClient.top );
-    }
+    pt.x = wndPtr->rectClient.left - wndPtr->rectWindow.left;
+    pt.y = wndPtr->rectClient.top - wndPtr->rectWindow.top;
+    OffsetRect( &r, -wndPtr->rectClient.left, -wndPtr->rectClient.top );
 
     if (flags & RDW_INVALIDATE)  /* ------------------------- Invalidate */
     {
@@ -935,7 +935,6 @@ rect2i:
 	{
 	    if( !IntersectRect( &r2, &r, rectUpdate ) ) goto END;
 		OffsetRect( &r2, pt.x, pt.y );
-rect2v:
 	    hRgn = CreateRectRgnIndirect( &r2 );
 	}
 	else /* entire window or client depending on RDW_FRAME */
@@ -945,7 +944,7 @@ rect2v:
 	    else
 	    {
 		GETCLIENTRECTW( wndPtr, r2 );
-		goto rect2v;
+                hRgn = CreateRectRgnIndirect( &r2 );
             }
         }
     }
@@ -956,23 +955,13 @@ rect2v:
 
     /* Erase/update windows, from now on hRgn is a scratch region */
 
-    hRgn = RDW_Paint( wndPtr, (hRgn == 1) ? 0 : hRgn, flags, ex );
+    hRgn = RDW_Paint( wndPtr, (hRgn == 1) ? 0 : hRgn, flags, 0 );
 
 END:
     if( hRgn > 1 && (hRgn != hrgnUpdate) )
 	DeleteObject(hRgn );
     WIN_ReleaseWndPtr(wndPtr);
     return TRUE;
-}
-
-
-/***********************************************************************
- *		RedrawWindow (USER32.@)
- */
-BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
-                              HRGN hrgnUpdate, UINT flags )
-{
-    return PAINT_RedrawWindow( hwnd, rectUpdate, hrgnUpdate, flags, 0 );
 }
 
 

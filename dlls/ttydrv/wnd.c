@@ -17,8 +17,7 @@ DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 WND_DRIVER TTYDRV_WND_Driver =
 {
-  TTYDRV_WND_ForceWindowRaise,
-  TTYDRV_WND_SetHostAttr
+  TTYDRV_WND_ForceWindowRaise
 };
 
 #define SWP_AGG_NOGEOMETRYCHANGE \
@@ -31,8 +30,10 @@ WND_DRIVER TTYDRV_WND_Driver =
 /**********************************************************************
  *		CreateWindow   (TTYDRV.@)
  */
-BOOL TTYDRV_CreateWindow( HWND hwnd )
+BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs )
 {
+    BOOL ret;
+
 #ifdef WINE_CURSES
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     WINDOW *window;
@@ -41,32 +42,40 @@ BOOL TTYDRV_CreateWindow( HWND hwnd )
     TRACE("(%x)\n", hwnd);
 
     /* Only create top-level windows */
-    if (wndPtr->dwStyle & WS_CHILD)
+    if (!(wndPtr->dwStyle & WS_CHILD))
     {
-        WIN_ReleaseWndPtr( wndPtr );
-        return TRUE;
-    }
+        if (!wndPtr->parent)  /* desktop */
+            window = root_window;
+        else
+        {
+            int x = wndPtr->rectWindow.left;
+            int y = wndPtr->rectWindow.top;
+            int cx = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
+            int cy = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    if (!wndPtr->parent)  /* desktop */
-        window = root_window;
-    else
-    {
-        int x = wndPtr->rectWindow.left;
-        int y = wndPtr->rectWindow.top;
-        int cx = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
-        int cy = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
-
-        window = subwin( root_window, cy/cellHeight, cx/cellWidth,
-                         y/cellHeight, x/cellWidth);
-        werase(window);
-        wrefresh(window);
+            window = subwin( root_window, cy/cellHeight, cx/cellWidth,
+                             y/cellHeight, x/cellWidth);
+            werase(window);
+            wrefresh(window);
+        }
+        wndPtr->pDriverData = window;
     }
-    wndPtr->pDriverData = window;
     WIN_ReleaseWndPtr( wndPtr );
 #else /* defined(WINE_CURSES) */
     FIXME("(%x): stub\n", hwnd);
 #endif /* defined(WINE_CURSES) */
-    return TRUE;
+
+    if (IsWindowUnicode( hwnd ))
+    {
+        ret = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
+        if (ret) ret = (SendMessageW( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);
+    }
+    else
+    {
+        ret = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
+        if (ret) ret = (SendMessageA( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -95,16 +104,6 @@ BOOL TTYDRV_DestroyWindow( HWND hwnd )
 void TTYDRV_WND_ForceWindowRaise(WND *wndPtr)
 {
   FIXME("(%p): stub\n", wndPtr);
-}
-
-/***********************************************************************
- *              TTYDRV_WND_SetHostAttr
- */
-BOOL TTYDRV_WND_SetHostAttr(WND *wndPtr, INT attr, INT value)
-{
-  FIXME("(%p): stub\n", wndPtr);
-
-  return TRUE;
 }
 
 

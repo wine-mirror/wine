@@ -72,3 +72,102 @@ void X11DRV_SetDeviceClipping( DC * dc )
     GDI_ReleaseObj( dc->hGCClipRgn );
 }
 
+
+/***********************************************************************
+ *           X11DRV_SetDrawable
+ *
+ * Set the drawable, clipping mode and origin for a DC.
+ */
+void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, int org_x, int org_y )
+{
+    DC *dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        X11DRV_PDEVICE *physDev = dc->physDev;
+        /*
+         * This function change the coordinate system (DCOrgX,DCOrgY)
+         * values. When it moves the origin, other data like the current clipping
+         * region will not be moved to that new origin. In the case of DCs that are class
+         * or window DCs that clipping region might be a valid value from a previous use
+         * of the DC and changing the origin of the DC without moving the clip region
+         * results in a clip region that is not placed properly in the DC.
+         * This code will save the dc origin, let the SetDrawable
+         * modify the origin and reset the clipping. When the clipping is set,
+         * it is moved according to the new DC origin.
+         */
+        if (dc->hClipRgn) OffsetRgn( dc->hClipRgn, org_x - dc->DCOrgX, org_y - dc->DCOrgY );
+        dc->DCOrgX = org_x;
+        dc->DCOrgY = org_y;
+        physDev->drawable = drawable;
+        TSXSetSubwindowMode( gdi_display, physDev->gc, mode );
+        GDI_ReleaseObj( hdc );
+    }
+}
+
+
+/***********************************************************************
+ *           X11DRV_StartGraphicsExposures
+ *
+ * Set the DC in graphics exposures mode
+ */
+void X11DRV_StartGraphicsExposures( HDC hdc )
+{
+    DC *dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        X11DRV_PDEVICE *physDev = dc->physDev;
+        TSXSetGraphicsExposures( gdi_display, physDev->gc, True );
+        GDI_ReleaseObj( hdc );
+    }
+}
+
+
+/***********************************************************************
+ *           X11DRV_EndGraphicsExposures
+ *
+ * End the graphics exposures mode and process the events
+ */
+void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn )
+{
+    HRGN tmp = 0;
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if (dc)
+    {
+        XEvent event;
+        X11DRV_PDEVICE *physDev = dc->physDev;
+
+        SetRectRgn( hrgn, 0, 0, 0, 0 );
+        wine_tsx11_lock();
+        XSetGraphicsExposures( gdi_display, physDev->gc, False );
+        XSync( gdi_display, False );
+        for (;;)
+        {
+            XWindowEvent( gdi_display, physDev->drawable, ~0, &event );
+            if (event.type == NoExpose) break;
+            if (event.type == GraphicsExpose)
+            {
+                TRACE( "got %d,%d %dx%d count %d\n",
+                       event.xgraphicsexpose.x, event.xgraphicsexpose.y,
+                       event.xgraphicsexpose.width, event.xgraphicsexpose.height,
+                       event.xgraphicsexpose.count );
+
+                if (!tmp) tmp = CreateRectRgn( 0, 0, 0, 0 );
+                SetRectRgn( tmp, event.xgraphicsexpose.x, event.xgraphicsexpose.y,
+                            event.xgraphicsexpose.x + event.xgraphicsexpose.width,
+                            event.xgraphicsexpose.y + event.xgraphicsexpose.height );
+                CombineRgn( hrgn, hrgn, tmp, RGN_OR );
+                if (!event.xgraphicsexpose.count) break;
+            }
+            else
+            {
+                ERR( "got unexpected event %d\n", event.type );
+                break;
+            }
+            if (tmp) DeleteObject( tmp );
+        }
+        wine_tsx11_unlock();
+        GDI_ReleaseObj( hdc );
+    }
+}
+

@@ -1306,28 +1306,22 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     case SRCCOPY:  /* 0xcc */
         if (dcSrc->bitsPerPixel == dcDst->bitsPerPixel)
         {
-            BOOL expose = !(dcSrc->flags & DC_MEMORY) && !(dcDst->flags & DC_MEMORY);
-            if ( expose ) XSetGraphicsExposures( gdi_display, physDevDst->gc, True );
             XSetFunction( gdi_display, physDevDst->gc, GXcopy );
             XCopyArea( gdi_display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
                        visRectSrc.left, visRectSrc.top,
                        width, height, visRectDst.left, visRectDst.top );
-            if ( expose ) XSetGraphicsExposures( gdi_display, physDevDst->gc, False );
             return TRUE;
         }
         if (dcSrc->bitsPerPixel == 1)
         {
-            BOOL expose = !(dcSrc->flags & DC_MEMORY) && !(dcDst->flags & DC_MEMORY);
             XSetBackground( gdi_display, physDevDst->gc, physDevDst->textPixel );
             XSetForeground( gdi_display, physDevDst->gc, physDevDst->backgroundPixel );
             XSetFunction( gdi_display, physDevDst->gc, GXcopy );
-            if ( expose ) XSetGraphicsExposures( gdi_display, physDevDst->gc, True );
             XCopyPlane( gdi_display, physDevSrc->drawable,
                         physDevDst->drawable, physDevDst->gc,
                         visRectSrc.left, visRectSrc.top,
                         width, height, visRectDst.left, visRectDst.top, 1 );
-            if ( expose ) XSetGraphicsExposures( gdi_display, physDevDst->gc, False );
             return TRUE;
         }
         break;
@@ -1355,6 +1349,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     }
 
     tmpGC = XCreateGC( gdi_display, physDevDst->drawable, 0, NULL );
+    XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
     XSetGraphicsExposures( gdi_display, tmpGC, False );
     pixmaps[DST] = XCreatePixmap( gdi_display, root_window, width, height,
                                   dcDst->bitsPerPixel );

@@ -315,7 +315,6 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
     Display *display = thread_display();
     HWND           hWnd = 0;
     HWND           hWndClipWindow = GetOpenClipboardWindow();
-    WND*           wnd = NULL;
     XEvent         xe;
     Atom           aTargets;
     Atom           atype=AnyPropertyType;
@@ -343,10 +342,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
     /*
      * Query the selection owner for the TARGETS property
      */
-    wnd = WIN_FindWndPtr(hWnd);
-    w = X11DRV_WND_FindXWindow(wnd);
-    WIN_ReleaseWndPtr(wnd);
-    wnd = NULL;
+    w = X11DRV_get_top_window(hWnd);
 
     aTargets = TSXInternAtom(display, "TARGETS", False);
 
@@ -863,9 +859,7 @@ void X11DRV_AcquireClipboard(void)
     if ( !(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)) )
     {
         Atom xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
-        WND *tmpWnd = WIN_FindWndPtr( hWndClipWindow ? hWndClipWindow : AnyPopup() );
-        owner = X11DRV_WND_FindXWindow(tmpWnd );
-        WIN_ReleaseWndPtr(tmpWnd);
+        owner = X11DRV_get_top_window( hWndClipWindow ? hWndClipWindow : AnyPopup() );
 
         /* Grab PRIMARY selection if not owned */
         if ( !(selectionAcquired & S_PRIMARY) )
@@ -1012,18 +1006,15 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
     BOOL bRet = selectionAcquired;
     HWND hWndClipWindow = GetOpenClipboardWindow();
     HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
-    WND* wnd = NULL;
     LPWINE_CLIPFORMAT lpFormat;
 
     TRACE("%d\n", wFormat);
 
-    if( !selectionAcquired && (wnd = WIN_FindWndPtr(hWnd)) )
+    if (!selectionAcquired)
     {
 	XEvent xe;
         Atom propRequest;
-	Window w = X11DRV_WND_FindXWindow(wnd);
-        WIN_ReleaseWndPtr(wnd);
-        wnd = NULL;
+	Window w = X11DRV_get_top_window(hWnd);
 
         /* Map the format ID requested to an X selection property.
          * If the format is in the cache, use the atom associated
@@ -1089,7 +1080,7 @@ void X11DRV_ResetSelectionOwner(WND *pWnd, BOOL bFooBar)
 {
     Display *display = thread_display();
     HWND hWndClipOwner = 0;
-    Window XWnd = X11DRV_WND_GetXWindow(pWnd);
+    Window XWnd = get_whole_window(pWnd);
     Atom xaClipboard;
     BOOL bLostSelection = FALSE;
 
@@ -1118,10 +1109,10 @@ void X11DRV_ResetSelectionOwner(WND *pWnd, BOOL bFooBar)
     selectionWindow = None;
 
     if( pWnd->next ) 
-        selectionWindow = X11DRV_WND_GetXWindow(pWnd->next);
+        selectionWindow = get_whole_window(pWnd->next);
     else if( pWnd->parent )
          if( pWnd->parent->child != pWnd ) 
-             selectionWindow = X11DRV_WND_GetXWindow(pWnd->parent->child);
+             selectionWindow = get_whole_window(pWnd->parent->child);
 
     if( selectionWindow != None )
     {

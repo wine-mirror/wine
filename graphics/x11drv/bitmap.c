@@ -41,6 +41,7 @@ BOOL X11DRV_BITMAP_Init(void)
     {
         BITMAP_monoGC = XCreateGC( gdi_display, tmpPixmap, 0, NULL );
         XSetGraphicsExposures( gdi_display, BITMAP_monoGC, False );
+        XSetSubwindowMode( gdi_display, BITMAP_monoGC, IncludeInferiors );
         XFreePixmap( gdi_display, tmpPixmap );
     }
 
@@ -50,6 +51,7 @@ BOOL X11DRV_BITMAP_Init(void)
         {
             BITMAP_colorGC = XCreateGC( gdi_display, tmpPixmap, 0, NULL );
             XSetGraphicsExposures( gdi_display, BITMAP_colorGC, False );
+            XSetSubwindowMode( gdi_display, BITMAP_colorGC, IncludeInferiors );
             XFreePixmap( gdi_display, tmpPixmap );
         }
     }
@@ -101,6 +103,8 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
         XFreeGC( gdi_display, physDev->gc );
         physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
         XSetGraphicsExposures( gdi_display, physDev->gc, False );
+        XSetSubwindowMode( gdi_display, physDev->gc, IncludeInferiors );
+        XFlush( gdi_display );
         wine_tsx11_unlock();
 	dc->bitsPerPixel = bmp->bitmap.bmBitsPixel;
         DC_InitDC( dc );

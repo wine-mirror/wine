@@ -69,11 +69,12 @@ typedef struct tagUSER_DRIVER {
     void   (*pResetSelectionOwner)(struct tagWND *, BOOL);
 
     /* windowing functions */
-    BOOL   (*pCreateWindow)(HWND);
+    BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*);
     BOOL   (*pDestroyWindow)(HWND);
     BOOL   (*pGetDC)(HWND,HDC,HRGN,DWORD);
     BOOL   (*pEnableWindow)(HWND,BOOL);
     DWORD  (*pMsgWaitForMultipleObjectsEx)(DWORD,const HANDLE*,DWORD,DWORD,DWORD);
+    BOOL   (*pScrollDC)(HDC,INT,INT,const RECT*,const RECT*,HRGN,LPRECT);
     INT    (*pScrollWindowEx)(HWND,INT,INT,const RECT*,const RECT*,HRGN,LPRECT,UINT);
     void   (*pSetFocus)(HWND);
     HWND   (*pSetParent)(HWND,HWND);
@@ -81,6 +82,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pSetWindowRgn)(HWND,HRGN,BOOL);
     HICON  (*pSetWindowIcon)(HWND,HICON,BOOL);
     BOOL   (*pSetWindowText)(HWND,LPCWSTR);
+    BOOL   (*pShowWindow)(HWND,INT);
     void   (*pSysCommandSizeMove)(HWND,WPARAM);
 } USER_DRIVER;
 

@@ -708,7 +708,7 @@ void X11DRV_KEYBOARD_UpdateState ( void )
  *
  * Handle a X key event
  */
-void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
+void X11DRV_KEYBOARD_HandleEvent( XKeyEvent *event, int x, int y )
 {
     char Str[24]; 
     KeySym keysym;
@@ -717,8 +717,6 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     static BOOL force_extended = FALSE; /* hack for AltGr translation */
     int ascii_chars;
 
-    INT event_x = (pWnd? pWnd->rectWindow.left : 0) + event->x;
-    INT event_y = (pWnd? pWnd->rectWindow.top  : 0) + event->y;
     DWORD event_time = event->time - X11DRV_server_startticks;
 
     /* this allows support for dead keys */
@@ -745,11 +743,11 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	{
 	TRACE_(key)("Alt Gr key event received\n");
 	event->keycode = kcControl; /* Simulate Control */
-	X11DRV_KEYBOARD_HandleEvent( pWnd, event );
+	X11DRV_KEYBOARD_HandleEvent( event, x, y );
 
 	event->keycode = kcAlt; /* Simulate Alt */
 	force_extended = TRUE;
-	X11DRV_KEYBOARD_HandleEvent( pWnd, event );
+	X11DRV_KEYBOARD_HandleEvent( event, x, y );
 	force_extended = FALSE;
     
     /* Here we save the pressed/released state of the AltGr key, to be able to 
@@ -783,13 +781,11 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     switch (vkey & 0xff)
     {
     case VK_NUMLOCK:    
-      KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, event->type, event_x, event_y,
-                            event_time );
+      KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, event->type, x, y, event_time );
       break;
     case VK_CAPITAL:
       TRACE("Caps Lock event. (type %d). State before : %#.2x\n",event->type,pKeyStateTable[vkey]);
-      KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, event->type, event_x, event_y,
-                            event_time ); 
+      KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, event->type, x, y, event_time );
       TRACE("State after : %#.2x\n",pKeyStateTable[vkey]);
       break;
     default:
@@ -797,19 +793,15 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	if (!(pKeyStateTable[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
 	  { 
 	    TRACE("Adjusting NumLock state. \n");
-	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyPress, event_x, event_y,
-                                  event_time );
-	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyRelease, event_x, event_y,
-                                  event_time );
+	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyPress, x, y, event_time );
+	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyRelease, x, y, event_time );
 	  }
         /* Adjust the CAPSLOCK state if it has been changed outside wine */
 	if (!(pKeyStateTable[VK_CAPITAL] & 0x01) != !(event->state & LockMask))
 	  {
               TRACE("Adjusting Caps Lock state.\n");
-	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyPress, event_x, event_y,
-                                  event_time );
-	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyRelease, event_x, event_y,
-                                  event_time );
+	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyPress, x, y, event_time );
+	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyRelease, x, y, event_time );
 	  }
 	/* Not Num nor Caps : end of intermediary states for both. */
 	NumState = FALSE;
@@ -823,8 +815,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
 	if ( force_extended )            dwFlags |= KEYEVENTF_WINE_FORCEEXTENDED;
 
-	KEYBOARD_SendEvent( vkey & 0xff, bScan, dwFlags, 
-                            event_x, event_y, event_time );
+        KEYBOARD_SendEvent( vkey & 0xff, bScan, dwFlags, x, y, event_time );
     }
    }
 }

@@ -55,11 +55,14 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
     /* patch the desktop window queue to point to our queue */
     win = WIN_FindWndPtr( hwnd );
     win->hmemTaskQ = GetFastQueue16();
+    X11DRV_register_window( display, hwnd, win->pDriverData );
     WIN_ReleaseWndPtr( win );
 
     SetWindowLongW( hwnd, GWL_WNDPROC, (LONG)desktop_winproc );
-    X11DRV_register_window( display, hwnd, root_window );
-    TSXMapWindow( display, root_window );
+    wine_tsx11_lock();
+    XSetWMProtocols( display, root_window, &wmDeleteWindow, 1 );
+    XMapWindow( display, root_window );
+    wine_tsx11_unlock();
 
     while (GetMessageW( &msg, hwnd, 0, 0 )) DispatchMessageW( &msg );
     return 0;

@@ -553,6 +553,7 @@ BOOL WIN_CreateDesktopWindow(void)
     DWORD clsStyle;
     WNDPROC winproc;
     DCE *dce;
+    CREATESTRUCTA cs;
 
     TRACE("Creating desktop window\n");
 
@@ -601,9 +602,21 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->cbWndExtra        = wndExtra;
     pWndDesktop->irefCount         = 0;
 
-    if (!USER_Driver.pCreateWindow( hwndDesktop )) return FALSE;
+    cs.lpCreateParams = NULL;
+    cs.hInstance      = 0;
+    cs.hMenu          = 0;
+    cs.hwndParent     = 0;
+    cs.x              = 0;
+    cs.y              = 0;
+    cs.cx             = pWndDesktop->rectWindow.right;
+    cs.cy             = pWndDesktop->rectWindow.bottom;
+    cs.style          = pWndDesktop->dwStyle;
+    cs.dwExStyle      = pWndDesktop->dwExStyle;
+    cs.lpszName       = NULL;
+    cs.lpszClass      = DESKTOP_CLASS_ATOM;
 
-    SendMessageW( hwndDesktop, WM_NCCREATE, 0, 0 );
+    if (!USER_Driver.pCreateWindow( hwndDesktop, &cs )) return FALSE;
+
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
     return TRUE;
 }
@@ -685,14 +698,12 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     INT sw = SW_SHOW; 
     struct tagCLASS *classPtr;
     WND *wndPtr;
-    HWND retvalue;
-    HWND16 hwnd, hwndLinkAfter;
+    HWND hwnd, hwndLinkAfter;
     POINT maxSize, maxPos, minTrack, maxTrack;
     INT wndExtra;
     DWORD clsStyle;
     WNDPROC winproc;
     DCE *dce;
-    LRESULT CALLBACK (*localSend32)(HWND, UINT, WPARAM, LPARAM);
 
     TRACE("%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
           (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName), 
@@ -811,7 +822,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 	    TRACE("CBT-hook returned 0\n");
 	    USER_HEAP_FREE( hwnd );
             CLASS_RemoveWindow( classPtr );
-            retvalue =  0;
+            hwnd =  0;
             goto end;
 	}
     }
@@ -862,12 +873,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->rectWindow.bottom = cs->y + cs->cy;
     wndPtr->rectClient        = wndPtr->rectWindow;
 
-    if (!USER_Driver.pCreateWindow(wndPtr->hwndSelf))
-    {
-        retvalue = FALSE;
-        goto end;
-    }
-
     /* Set the window menu */
 
     if ((wndPtr->dwStyle & (WS_CAPTION | WS_CHILD)) == WS_CAPTION )
@@ -889,96 +894,44 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     }
     else wndPtr->wIDmenu = (UINT)cs->hMenu;
 
-    /* Send the WM_CREATE message 
-     * Perhaps we shouldn't allow width/height changes as well. 
-     * See p327 in "Internals". 
-     */
-
-    maxPos.x = wndPtr->rectWindow.left; maxPos.y = wndPtr->rectWindow.top;
-
-    localSend32 = (type == WIN_PROC_32W) ? SendMessageW : SendMessageA;
-    if( (*localSend32)( hwnd, WM_NCCREATE, 0, (LPARAM)cs) )
+    if (!USER_Driver.pCreateWindow( wndPtr->hwndSelf, cs ))
     {
-        /* Insert the window in the linked list */
-
-        WIN_LinkWindow( hwnd, hwndLinkAfter );
-
-        WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
-                               NULL, NULL, 0, &wndPtr->rectClient );
-        OffsetRect(&wndPtr->rectWindow, maxPos.x - wndPtr->rectWindow.left,
-                                          maxPos.y - wndPtr->rectWindow.top);
-        if( ((*localSend32)( hwnd, WM_CREATE, 0, (LPARAM)cs )) != -1 )
-        {
-            /* Send the size messages */
-
-            if (!(wndPtr->flags & WIN_NEED_SIZE))
-            {
-                /* send it anyway */
-	        if (((wndPtr->rectClient.right-wndPtr->rectClient.left) <0)
-		    ||((wndPtr->rectClient.bottom-wndPtr->rectClient.top)<0))
-		  WARN("sending bogus WM_SIZE message 0x%08lx\n",
-			MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-				 wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-                (*localSend32)( hwnd, WM_SIZE, SIZE_RESTORED,
-                                MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-                                         wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-                (*localSend32)( hwnd, WM_MOVE, 0,
-                                MAKELONG( wndPtr->rectClient.left,
-                                          wndPtr->rectClient.top ) );
-            }
-
-            /* Show the window, maximizing or minimizing if needed */
-
-            if (wndPtr->dwStyle & (WS_MINIMIZE | WS_MAXIMIZE))
-            {
-		RECT16 newPos;
-		UINT16 swFlag = (wndPtr->dwStyle & WS_MINIMIZE) ? SW_MINIMIZE : SW_MAXIMIZE;
-                wndPtr->dwStyle &= ~(WS_MAXIMIZE | WS_MINIMIZE);
-		WINPOS_MinMaximize( wndPtr, swFlag, &newPos );
-                swFlag = ((wndPtr->dwStyle & WS_CHILD) || GetActiveWindow())
-                    ? SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED
-                    : SWP_NOZORDER | SWP_FRAMECHANGED;
-                SetWindowPos( hwnd, 0, newPos.left, newPos.top,
-                                newPos.right, newPos.bottom, swFlag );
-            }
-
-	    if( (wndPtr->dwStyle & WS_CHILD) && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
-	    {
-		/* Notify the parent window only */
-
-		SendMessageA( wndPtr->parent->hwndSelf, WM_PARENTNOTIFY,
-				MAKEWPARAM(WM_CREATE, wndPtr->wIDmenu), (LPARAM)hwnd );
-                if( !IsWindow(hwnd) )
-                {
-                    retvalue = 0;
-                    goto end;
-                }
-	    }
-
-            if (cs->style & WS_VISIBLE) ShowWindow( hwnd, sw );
-
-            /* Call WH_SHELL hook */
-
-            if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
-                HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
-
-            TRACE("created window %04x\n", hwnd);
-            retvalue = hwnd;
-            goto end;
-        }
-        WIN_UnlinkWindow( hwnd );
+        WARN("aborted by WM_xxCREATE!\n");
+        WIN_ReleaseWndPtr(WIN_DestroyWindow( wndPtr ));
+        CLASS_RemoveWindow( classPtr );
+        WIN_ReleaseWndPtr(wndPtr);
+        return 0;
     }
 
-    /* Abort window creation */
+    if( (wndPtr->dwStyle & WS_CHILD) && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
+    {
+        /* Notify the parent window only */
 
-    WARN("aborted by WM_xxCREATE!\n");
-    WIN_ReleaseWndPtr(WIN_DestroyWindow( wndPtr ));
-    CLASS_RemoveWindow( classPtr );
-    retvalue = 0;
-end:
+        SendMessageA( wndPtr->parent->hwndSelf, WM_PARENTNOTIFY,
+                      MAKEWPARAM(WM_CREATE, wndPtr->wIDmenu), (LPARAM)hwnd );
+        if( !IsWindow(hwnd) )
+        {
+            hwnd = 0;
+            goto end;
+        }
+    }
+
+    if (cs->style & WS_VISIBLE)
+    {
+        /* in case WS_VISIBLE got set in the meantime */
+        wndPtr->dwStyle &= ~WS_VISIBLE;
+        ShowWindow( hwnd, sw );
+    }
+
+    /* Call WH_SHELL hook */
+
+    if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
+        HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
+
+    TRACE("created window %04x\n", hwnd);
+ end:
     WIN_ReleaseWndPtr(wndPtr);
-
-    return retvalue;
+    return hwnd;
 }
 
 
@@ -2176,8 +2129,12 @@ INT WINAPI GetWindowTextA( HWND hwnd, LPSTR lpString, INT nMaxCount )
  */
 INT WINAPI InternalGetWindowText(HWND hwnd,LPWSTR lpString,INT nMaxCount )
 {
-    FIXME("(0x%08x,%p,0x%x),stub!\n",hwnd,lpString,nMaxCount);
-    return GetWindowTextW(hwnd,lpString,nMaxCount);
+    WND *win = WIN_FindWndPtr( hwnd );
+    if (!win) return 0;
+    if (win->text) lstrcpynW( lpString, win->text, nMaxCount );
+    else lpString[0] = 0;
+    WIN_ReleaseWndPtr( win );
+    return strlenW(lpString);
 }
 
 

@@ -19,6 +19,7 @@
 #include "winbase.h"
 #include "gdi.h"
 #include "user.h"
+#include "win.h"
 #include "thread.h"
 
 #define MAX_PIXELFORMATS 8
@@ -181,8 +182,11 @@ extern HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeleteP
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
 extern Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc );
 
-extern BOOL X11DRV_SetupGCForPatBlt( struct tagDC *dc, GC gc,
-				       BOOL fMapColors );
+extern void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, int org_x, int org_y );
+extern void X11DRV_StartGraphicsExposures( HDC hdc );
+extern void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn );
+
+extern BOOL X11DRV_SetupGCForPatBlt( struct tagDC *dc, GC gc, BOOL fMapColors );
 extern BOOL X11DRV_SetupGCForBrush( struct tagDC *dc );
 extern BOOL X11DRV_SetupGCForPen( struct tagDC *dc );
 extern BOOL X11DRV_SetupGCForText( struct tagDC *dc );
@@ -307,7 +311,7 @@ struct x11drv_thread_data
 {
     Display *display;
     HANDLE   display_fd;
-    int      process_event_count;
+    int      process_event_count;  /* recursion count for event processing */
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);
@@ -327,6 +331,15 @@ extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern unsigned int screen_depth;
 
+extern Atom wmProtocols;
+extern Atom wmDeleteWindow;
+extern Atom wmTakeFocus;
+extern Atom dndProtocol;
+extern Atom dndSelection;
+extern Atom wmChangeState;
+extern Atom kwmDockWindow;
+extern Atom _kde_net_wm_system_tray_window_for;
+
 static inline Visual *X11DRV_GetVisual(void)     { return visual; }
 static inline Window X11DRV_GetXRootWindow(void) { return root_window; }
 
@@ -344,8 +357,6 @@ extern BOOL X11DRV_GetClipboardData(UINT wFormat);
 /* X11 event driver */
 
 extern WORD X11DRV_EVENT_XStateToKeyState( int state ) ;
-
-extern void X11DRV_Synchronize( void );
 
 typedef enum {
   X11DRV_INPUT_RELATIVE,
@@ -381,28 +392,50 @@ extern void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
 
 extern struct tagWND_DRIVER X11DRV_WND_Driver;
 
-typedef struct _X11DRV_WND_DATA {
-  Window window;
-  HBITMAP hWMIconBitmap;
-  HBITMAP hWMIconMask;
-  int bit_gravity;
-} X11DRV_WND_DATA;
+/* x11drv private window data */
+struct x11drv_win_data
+{
+    Window  whole_window;   /* X window for the complete window */
+    Window  client_window;  /* X window for the client area */
+    Window  icon_window;    /* X window for the icon */
+    RECT    whole_rect;     /* X window rectangle for the whole window relative to parent */
+    RECT    client_rect;    /* client area relative to whole window */
+    HBITMAP hWMIconBitmap;
+    HBITMAP hWMIconMask;
+};
 
-extern Window X11DRV_WND_GetXWindow(struct tagWND *wndPtr);
-extern Window X11DRV_WND_FindXWindow(struct tagWND *wndPtr);
+typedef struct x11drv_win_data X11DRV_WND_DATA;
+
+extern Window X11DRV_get_client_window( HWND hwnd );
+extern Window X11DRV_get_whole_window( HWND hwnd );
+extern Window X11DRV_get_top_window( HWND hwnd );
+
+inline static Window get_client_window( WND *wnd )
+{
+    struct x11drv_win_data *data = wnd->pDriverData;
+    return data->client_window;
+}
+
+inline static Window get_whole_window( WND *wnd )
+{
+    struct x11drv_win_data *data = wnd->pDriverData;
+    return data->whole_window;
+}
 
 extern void X11DRV_WND_ForceWindowRaise(struct tagWND *pWnd);
-extern void X11DRV_WND_SetWindowPos(struct tagWND *wndPtr, const struct tagWINDOWPOS *winpos, BOOL bSMC_SETXPOS);
-extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCWSTR text);
-extern void X11DRV_WND_SurfaceCopy(struct tagWND *wndPtr, HDC hdc, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
-extern void X11DRV_WND_SetGravity(struct tagWND* wndPtr, int value );
-extern BOOL X11DRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 
 extern void X11DRV_SetFocus( HWND hwnd );
 extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
 
-extern void X11DRV_register_window( Display *display, HWND hwnd, Window win );
+extern void X11DRV_expect_error( unsigned char request, unsigned char error, XID id );
+extern int X11DRV_check_error(void);
+extern void X11DRV_register_window( Display *display, HWND hwnd, struct x11drv_win_data *data );
+extern void X11DRV_set_iconic_state( WND *win );
+extern void X11DRV_window_to_X_rect( WND *win, RECT *rect );
+extern void X11DRV_X_to_window_rect( WND *win, RECT *rect );
 extern void X11DRV_create_desktop_thread(void);
 extern Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geometry );
+extern int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder );
+extern int X11DRV_sync_client_window_position( Display *display, WND *win );
 
 #endif  /* __WINE_X11DRV_H */

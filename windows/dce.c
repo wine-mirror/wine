@@ -211,9 +211,9 @@ static void DCE_DeleteClipRgn( DCE* dce )
 
     dce->hClipRgn = 0;
 
-    TRACE("\trestoring VisRgn\n");
-
-    RestoreVisRgn16(dce->hDC);
+    /* make it dirty so that the vis rgn gets recomputed next time */
+    dce->DCXflags |= DCX_DCEDIRTY;
+    SetHookFlags16( dce->hDC, DCHF_INVALIDATEVISRGN );
 }
 
 
@@ -412,8 +412,9 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     BOOL	bUpdateClipOrigin = FALSE;
 
     TRACE("hwnd %04x, hrgnClip %04x, flags %08x\n", 
-				hwnd, hrgnClip, (unsigned)flags);
-    
+          hwnd, hrgnClip, (unsigned)flags);
+
+    if (!hwnd) hwnd = GetDesktopWindow();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
 
     /* fixup flags */
@@ -437,17 +438,11 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	else flags |= DCX_CACHE;
     }
 
-    if( flags & DCX_NOCLIPCHILDREN )
-    {
-        flags |= DCX_CACHE;
-        flags &= ~(DCX_PARENTCLIP | DCX_CLIPCHILDREN);
-    }
-
     if (flags & DCX_WINDOW) 
 	flags = (flags & ~DCX_CLIPCHILDREN) | DCX_CACHE;
 
-    if (!(wndPtr->dwStyle & WS_CHILD) || !wndPtr->parent ) 
-	flags &= ~DCX_PARENTCLIP;
+    if (!wndPtr->parent || (wndPtr->parent->hwndSelf == GetDesktopWindow()))
+        flags = (flags & ~DCX_PARENTCLIP) | DCX_CLIPSIBLINGS;
     else if( flags & DCX_PARENTCLIP )
     {
 	flags |= DCX_CACHE;
@@ -514,25 +509,6 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	{
 	    TRACE("\tskipping hVisRgn update\n");
 	    bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */
-
-            /* Abey - 16Jul99. to take care of the nested GetDC. first one
-               with DCX_EXCLUDERGN or DCX_INTERSECTRGN flags and the next
-               one with or without these flags. */
-
-	    if(dce->DCXflags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
-	    {
-		/* This is likely to be a nested BeginPaint().
-                   or a BeginPaint() followed by a GetDC()*/
-
-		if( dce->hClipRgn != hrgnClip )
-		{
-		    FIXME("new hrgnClip[%04x] smashes the previous[%04x]\n",
-			  hrgnClip, dce->hClipRgn );
-		    DCE_DeleteClipRgn( dce );
-		}
-		else 
-		    RestoreVisRgn16(dce->hDC);
-	    }
 	}
     }
     if (!dce)
@@ -542,6 +518,14 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
 
     if (!(flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN))) hrgnClip = 0;
+
+    if (((flags ^ dce->DCXflags) & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) &&
+        (dce->hClipRgn != hrgnClip))
+    {
+        /* if the extra clip region has changed, get rid of the old one */
+        DCE_DeleteClipRgn( dce );
+    }
+
     dce->hwndCurrent = hwnd;
     dce->hClipRgn = hrgnClip;
     dce->DCXflags = flags & (DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
@@ -581,7 +565,7 @@ HDC WINAPI GetDC(
 	     HWND hwnd /* [in] handle of window */
 ) {
     if (!hwnd)
-        return GetDCEx( GetDesktopWindow(), 0, DCX_CACHE | DCX_WINDOW );
+        return GetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
     return GetDCEx( hwnd, 0, DCX_USESTYLE );
 }
 
@@ -591,7 +575,6 @@ HDC WINAPI GetDC(
  */
 HDC16 WINAPI GetWindowDC16( HWND16 hwnd )
 {
-    if (!hwnd) hwnd = GetDesktopWindow16();
     return GetDCEx16( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
 }
 
@@ -601,7 +584,6 @@ HDC16 WINAPI GetWindowDC16( HWND16 hwnd )
  */
 HDC WINAPI GetWindowDC( HWND hwnd )
 {
-    if (!hwnd) hwnd = GetDesktopWindow();
     return GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
 }
 
