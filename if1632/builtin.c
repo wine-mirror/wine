@@ -17,7 +17,6 @@
 #include "heap.h"
 #include "module.h"
 #include "miscemu.h"
-#include "neexe.h"
 #include "stackframe.h"
 #include "user.h"
 #include "process.h"
@@ -42,21 +41,11 @@ typedef struct
 static const BUILTIN16_DESCRIPTOR *builtin_dlls[MAX_DLLS];
 static int nb_dlls;
 
-/* list of DLLs that should always be loaded at startup */
-static const char * const always_load[] =
-{
-    "system", "display", "wprocs", NULL
-};
-
-  /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
-#define FIRST_INTERRUPT_ORDINAL 100
-
 
 /***********************************************************************
  *           BUILTIN_DoLoadModule16
  *
- * Load a built-in Win16 module. Helper function for BUILTIN_LoadModule
- * and BUILTIN_Init.
+ * Load a built-in Win16 module. Helper function for BUILTIN_LoadModule.
  */
 static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
 {
@@ -140,38 +129,6 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
 
     NE_RegisterModule( pModule );
     return hModule;
-}
-
-
-/***********************************************************************
- *           BUILTIN_Init
- *
- * Load all built-in modules marked as 'always used'.
- */
-BOOL BUILTIN_Init(void)
-{
-    WORD vector;
-    HMODULE16 hModule;
-    const char * const *ptr = always_load;
-
-    while (*ptr)
-    {
-        if (!BUILTIN_LoadModule( *ptr )) return FALSE;
-        ptr++;
-    }
-
-    /* Set interrupt vectors from entry points in WPROCS.DLL */
-
-    hModule = GetModuleHandle16( "WPROCS" );
-    for (vector = 0; vector < 256; vector++)
-    {
-        FARPROC16 proc = NE_GetEntryPoint( hModule,
-                                           FIRST_INTERRUPT_ORDINAL + vector );
-        assert(proc);
-        INT_SetPMHandler( vector, proc );
-    }
-
-    return TRUE;
 }
 
 
@@ -287,18 +244,4 @@ void BUILTIN_RegisterDLL( const BUILTIN16_DESCRIPTOR *descr )
 {
     assert( nb_dlls < MAX_DLLS );
     builtin_dlls[nb_dlls++] = descr;
-}
-
-
-/**********************************************************************
- *	    BUILTIN_DefaultIntHandler
- *
- * Default interrupt handler.
- */
-void WINAPI BUILTIN_DefaultIntHandler( CONTEXT86 *context )
-{
-    WORD ordinal;
-    char name[80];
-    BUILTIN_GetEntryPoint16( CURRENT_STACK16, name, &ordinal );
-    INT_BARF( context, ordinal - FIRST_INTERRUPT_ORDINAL );
 }

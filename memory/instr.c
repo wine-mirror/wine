@@ -680,6 +680,12 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
             {
                 FARPROC16 addr = INT_GetPMHandler( instr[1] );
                 WORD *stack = (WORD *)STACK_PTR( context );
+                if (!addr)
+                {
+                    FIXME("no handler for interrupt %02x, ignoring it\n", instr[1]);
+                    EIP_reg(context) += prefixlen + 2;
+                    return TRUE;
+                }
                 /* Push the flags and return address on the stack */
                 *(--stack) = LOWORD(EFL_reg(context));
                 *(--stack) = CS_reg(context);

@@ -81,7 +81,6 @@ typedef struct
     const void *rsrc;              /* resources data */
 } BUILTIN16_DESCRIPTOR;
 
-extern BOOL BUILTIN_Init(void);
 extern HMODULE16 BUILTIN_LoadModule( LPCSTR name );
 extern LPCSTR BUILTIN_GetEntryPoint16( struct _STACK16FRAME *frame, LPSTR name, WORD *pOrd );
 extern void BUILTIN_RegisterDLL( const BUILTIN16_DESCRIPTOR *descr );

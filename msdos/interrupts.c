@@ -6,13 +6,18 @@
 
 #include <sys/types.h>
 #include "windef.h"
+#include "wine/winbase16.h"
 #include "miscemu.h"
 #include "msdos.h"
+#include "module.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(int)
+DEFAULT_DEBUG_CHANNEL(int);
 
 static FARPROC16 INT_Vectors[256];
+
+/* Ordinal number for interrupt 0 handler in WPROCS.DLL */
+#define FIRST_INTERRUPT 100
 
 
 /**********************************************************************
@@ -22,6 +27,19 @@ static FARPROC16 INT_Vectors[256];
  */
 FARPROC16 INT_GetPMHandler( BYTE intnum )
 {
+    if (!INT_Vectors[intnum])
+    {
+        static HMODULE16 wprocs;
+        if (!wprocs)
+        {
+            if ((wprocs = GetModuleHandle16( "wprocs" )) < 32)
+            {
+                ERR("could not load wprocs.dll\n");
+                return 0;
+            }
+        }
+        INT_Vectors[intnum] = NE_GetEntryPoint( wprocs, FIRST_INTERRUPT + intnum );
+    }
     return INT_Vectors[intnum];
 }
 
