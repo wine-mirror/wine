@@ -5,3 +5,4 @@ msi.dll.dbg.c
 msi.spec.def
 sql.tab.c
 sql.tab.h
+version.res

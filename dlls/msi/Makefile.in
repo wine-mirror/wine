@@ -23,7 +23,7 @@ C_SRCS = \
 	tokenize.c \
 	where.c
 
-#RC_SRCS= msi_rc.rc
+RC_SRCS = version.rc
 
 EXTRA_SRCS = sql.y cond.y
 EXTRA_OBJS = sql.tab.o cond.tab.o
