@@ -93,6 +93,9 @@
 # to 0 if a message box has to be presented before running the debugger
 "Auto"="1"
 
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Hotfix\Q246009]
+"Installed"="1"
+
 #
 # This identifies the files for available code pages
 #

@@ -43,7 +43,8 @@ HFDI __cdecl FDICreate(
 	int      cpuType,
 	PERF     perf)
 {
-    FIXME("(%p, %p, %p, %p, %p, %p, %p, %d, %p): stub\n", 
+    FIXME("(pfnalloc == ^%p, pfnfree == ^%p, pfnopen == ^%p, pfnread == ^%p, pfnwrite == ^%p, \
+           pfnclose == ^%p, pfnseek == ^%p, cpuType == %d, perf == ^%p): stub\n", 
 	  pfnalloc, pfnfree, pfnopen, pfnread, pfnwrite, pfnclose, pfnseek,
 	  cpuType, perf);
 
@@ -52,7 +53,6 @@ HFDI __cdecl FDICreate(
     perf->fError = TRUE;
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
     return NULL;
 }
 
@@ -65,10 +65,9 @@ BOOL __cdecl FDIIsCabinet(
 	INT_PTR         hf,
 	PFDICABINETINFO pfdici)
 {
-    FIXME("(%p, %d, %p): stub\n", hfdi, hf, pfdici);
+    FIXME("(hfdi == ^%p, hf == ^%d, pfdici == ^%p): stub\n", hfdi, hf, pfdici);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
     return FALSE;
 }
 
@@ -84,11 +83,11 @@ BOOL __cdecl FDICopy(
 	PFNFDIDECRYPT  pfnfdid,
 	void          *pvUser)
 {
-    FIXME("(%p, %p, %p, %d, %p, %p, %p): stub\n",
+    FIXME("(hfdi == ^%p, pszCabinet == ^%p, pszCabPath == ^%p, flags == %0d, \
+           pfnfdin == ^%p, pfnfdid == ^%p, pvUser == ^%p): stub\n",
 	  hfdi, pszCabinet, pszCabPath, flags, pfnfdin, pfnfdid, pvUser);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
     return FALSE;
 }
 
@@ -97,10 +96,9 @@ BOOL __cdecl FDICopy(
  */
 BOOL __cdecl FDIDestroy(HFDI hfdi)
 {
-    FIXME("(%p): stub\n", hfdi);
+    FIXME("(hfdi == ^%p): stub\n", hfdi);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
     return FALSE;
 }
 
@@ -112,7 +110,8 @@ BOOL __cdecl FDITruncateCabinet(
 	char   *pszCabinetName,
 	USHORT  iFolderToDelete)
 {
-    FIXME("(%p, %p, %hu): stub\n", hfdi, pszCabinetName, iFolderToDelete);
+    FIXME("(hfdi == ^%p, pszCabinetName == %s, iFolderToDelete == %hu): stub\n",
+      hfdi, debugstr_a(pszCabinetName), iFolderToDelete);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 

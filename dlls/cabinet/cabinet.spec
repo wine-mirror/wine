@@ -1,6 +1,6 @@
 1 stub GetDllVersion
-2 stub DllGetVersion
-3 stub Extract
+2 stdcall DllGetVersion (ptr) CABINET_DllGetVersion
+3 stdcall Extract(long ptr) Extract
 4 stub DeleteExtractedFiles
 10 cdecl FCICreate(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) FCICreate
 11 cdecl FCIAddFile(long ptr ptr long ptr ptr ptr long) FCIAddFile

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = urlmon.dll
-IMPORTS   = ole32 wininet user32 kernel32
+IMPORTS   = cabinet ole32 wininet user32 kernel32
 EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@

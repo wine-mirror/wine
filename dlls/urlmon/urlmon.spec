@@ -26,7 +26,7 @@
 @ stdcall DllRegisterServer() URLMON_DllRegisterServer
 @ stdcall DllRegisterServerEx() URLMON_DllRegisterServerEx
 @ stdcall DllUnregisterServer() URLMON_DllUnregisterServer
-@ stdcall Extract(long str) Extract
+@ forward Extract cabinet.Extract
 @ stub FaultInIEFeature
 @ stub FindMediaType
 @ stub FindMediaTypeClass

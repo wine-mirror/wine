@@ -9,6 +9,8 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	cabextract.c \
+	cabinet_main.c \
 	fci.c \
 	fdi.c
 

@@ -972,31 +972,3 @@ void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
 {
     FIXME("stub\n");
 }
-
-/***********************************************************************
- *           Extract (URLMON.@)
- *
- */
-HRESULT WINAPI Extract(DWORD Param1, LPCSTR Param2)
-{
-    /*
-     * This is a TOTAL hack to make use of the external cabextract
-     * utility. This will need to be replaces with actual cab processing
-     * before the 'day is done'
-     */
-    char cmd[MAX_PATH];
-    char unixname[MAX_PATH];
-    char targetpath[MAX_PATH];
-
-    FIXME(" STUB: %lx %s\n", Param1, Param2);
-
-    wine_get_unix_file_name(Param2,unixname,MAX_PATH);
-    strcpy(targetpath,unixname);
-    *strrchr(targetpath,'/')=0;
-
-    sprintf(cmd,"cabextract -q -d %s %s",targetpath,unixname);
-
-    system(cmd);
-
-   return S_OK;
-}
