@@ -43,6 +43,7 @@
 
 #include <string.h>
 #include "winbase.h"
+#include "heap.h"
 #include "commctrl.h"
 #include "listview.h"
 #include "debugtools.h"
@@ -4517,7 +4518,21 @@ static LRESULT LISTVIEW_InsertColumnA(HWND hwnd, INT nColumn,
   return nNewColumn;
 }
 
-/* LISTVIEW_InsertColumnW  */
+static LRESULT LISTVIEW_InsertColumnW(HWND hwnd, INT nColumn, 
+                                      LPLVCOLUMNW lpColumn)
+{
+  LVCOLUMNA	lvca;
+  LRESULT		lres;
+      
+  memcpy(&lvca,lpColumn,sizeof(lvca));
+  if (lpColumn->mask & LVCF_TEXT)
+    lvca.pszText = HEAP_strdupWtoA(GetProcessHeap(),0,lpColumn->pszText);
+  lres = LISTVIEW_InsertColumnA(hwnd,nColumn,&lvca);
+  if (lpColumn->mask & LVCF_TEXT)
+    HeapFree(GetProcessHeap(),0,lvca.pszText);
+  return lres;
+}
+
 
 /***
  * DESCRIPTION:
@@ -4615,6 +4630,25 @@ static LRESULT LISTVIEW_InsertItemA(HWND hwnd, LPLVITEMA lpLVItem)
   }
   
   return nItem;
+}
+
+static LRESULT LISTVIEW_InsertItemW(HWND hwnd, LPLVITEMW lpLVItem) {
+  LVITEMA lvia;
+  LRESULT lres;
+
+  memcpy(&lvia,lpLVItem,sizeof(LVITEMA));
+  if (lvia.mask & LVIF_TEXT) {
+    if (lpLVItem->pszText == LPSTR_TEXTCALLBACKW)
+      lvia.pszText = LPSTR_TEXTCALLBACKA;
+    else
+      lvia.pszText = HEAP_strdupWtoA(GetProcessHeap(),0,lpLVItem->pszText);
+  }
+  lres = LISTVIEW_InsertItemA(hwnd, &lvia);
+  if (lvia.mask & LVIF_TEXT) {
+    if (lpLVItem->pszText != LPSTR_TEXTCALLBACKW)
+      HeapFree(GetProcessHeap(),0,lvia.pszText);
+  }
+  return lres;
 }
 
 /* LISTVIEW_InsertItemW */
@@ -6747,15 +6781,16 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_HitTest(hwnd, (LPLVHITTESTINFO)lParam);
 
   case LVM_INSERTCOLUMNA:
-    return LISTVIEW_InsertColumnA(hwnd, (INT)wParam, 
-                                    (LPLVCOLUMNA)lParam);
+    return LISTVIEW_InsertColumnA(hwnd, (INT)wParam, (LPLVCOLUMNA)lParam);
 
-/*	case LVM_INSERTCOLUMNW: */
+  case LVM_INSERTCOLUMNW:
+    return LISTVIEW_InsertColumnW(hwnd, (INT)wParam, (LPLVCOLUMNW)lParam);
 
   case LVM_INSERTITEMA:
     return LISTVIEW_InsertItemA(hwnd, (LPLVITEMA)lParam);
 
-/*	case LVM_INSERTITEMW: */
+  case LVM_INSERTITEMW:
+    return LISTVIEW_InsertItemW(hwnd, (LPLVITEMW)lParam);
 
   case LVM_REDRAWITEMS:
     return LISTVIEW_RedrawItems(hwnd, (INT)wParam, (INT)lParam);
