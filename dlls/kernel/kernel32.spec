@@ -1002,7 +1002,7 @@
 @ stdcall GetDiskFreeSpaceExW (wstr ptr ptr ptr)
 @ stdcall GetFileAttributesExA(str long ptr)
 @ stdcall GetFileAttributesExW(wstr long ptr)
-@ stub GetProcessPriorityBoost
+@ stdcall GetProcessPriorityBoost(long ptr)
 @ stdcall GetThreadPriorityBoost(long ptr)
 @ stdcall InterlockedCompareExchange (ptr long long)
 @ stdcall InterlockedExchangeAdd (ptr long )

@@ -1719,6 +1719,19 @@ BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel, LPDWORD lpdwFlags )
 
 
 /***********************************************************************
+ *           GetProcessPriorityBoost    (KERNEL32.@)
+ */
+BOOL WINAPI GetProcessPriorityBoost(HANDLE hprocess,PBOOL pDisablePriorityBoost)
+{
+    FIXME("(%p,%p): semi-stub\n", hprocess, pDisablePriorityBoost);
+    
+    /* Report that no boost is present.. */
+    *pDisablePriorityBoost = FALSE;
+    
+    return TRUE;
+}
+
+/***********************************************************************
  *           SetProcessPriorityBoost    (KERNEL32.@)
  */
 BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
