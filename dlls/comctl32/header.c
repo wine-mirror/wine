@@ -254,12 +254,8 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	    GetObjectA (phdi->hbm, sizeof(BITMAP), (LPVOID)&bmp);
 
 	    textRect = r;
-	    if (infoPtr->bUnicode)
-              DrawTextW (hdc, phdi->pszText, -1,
-	   	  &textRect, DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_CALCRECT);
-	    else
-              DrawTextA (hdc, (LPCSTR)phdi->pszText, -1,
-	   	  &textRect, DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_CALCRECT);
+	    DrawTextW (hdc, phdi->pszText, -1,
+	               &textRect, DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_CALCRECT);
 	    tx = textRect.right - textRect.left;
 	    ry = r.bottom - r.top;
 	    rx = r.right - r.left;
@@ -315,14 +311,10 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
             r.left += 3 ;
 	    r.right -= 3;
 	    SetTextColor (hdc, (bHotTrack) ? COLOR_HIGHLIGHT : COLOR_BTNTEXT);
-	    if (infoPtr->bUnicode)
-              DrawTextW (hdc, phdi->pszText, -1,
-	   	  &r, uTextJustify|DT_END_ELLIPSIS|DT_VCENTER|DT_SINGLELINE);
-	    else
-              DrawTextA (hdc, (LPCSTR)phdi->pszText, -1,
-	   	  &r, uTextJustify|DT_END_ELLIPSIS|DT_VCENTER|DT_SINGLELINE);
-            if (oldBkMode != TRANSPARENT)
-                SetBkMode(hdc, oldBkMode);
+	    DrawTextW (hdc, phdi->pszText, -1,
+	               &r, uTextJustify|DT_END_ELLIPSIS|DT_VCENTER|DT_SINGLELINE);
+	    if (oldBkMode != TRANSPARENT)
+	        SetBkMode(hdc, oldBkMode);
         }
     }/*Ownerdrawn*/
 
