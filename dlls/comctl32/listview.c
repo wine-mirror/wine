@@ -2991,7 +2991,6 @@ static void LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT
   LVITEMW lvItem;
   LVCOLUMNW lvColumn;
   UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
-  RECT rcTemp;
   INT textLeft;
   INT nLabelWidth = 0;
 
@@ -3022,16 +3021,6 @@ static void LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT
         textLeft = rcItem.left + (rcItem.right-rcItem.left-nLabelWidth)/2;
     }
   }
-
-
-  /* redraw the background of the item */
-  rcTemp = rcItem;
-  if(infoPtr->nColumnCount == (nSubItem + 1))
-    rcTemp.right  = infoPtr->rcList.right;
-  else
-    rcTemp.right += WIDTH_PADDING;
-
-  LISTVIEW_FillBkgnd(infoPtr, hdc, &rcTemp);
 
   /* set item colors */
   if (ListView_GetItemState(infoPtr->hwndSelf,nItem,LVIS_SELECTED) && Selected)
@@ -3116,7 +3105,6 @@ static void LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
   BOOL bImage = FALSE;
   INT   iBkMode = -1;
   UINT  textoutOptions = ETO_OPAQUE | ETO_CLIPPED;
-  RECT rcTemp;
 
   TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
 
@@ -3130,15 +3118,6 @@ static void LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
   *lvItem.pszText = '\0';
   LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE);
   TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
-
-  /* redraw the background of the item */
-  rcTemp = rcItem;
-  if(infoPtr->nColumnCount == (nItem + 1))
-    rcTemp.right = infoPtr->rcList.right;
-  else
-    rcTemp.right+=WIDTH_PADDING;
-
-  LISTVIEW_FillBkgnd(infoPtr, hdc, &rcTemp);
 
   /* do indent */
   if (lvItem.iIndent>0 && infoPtr->iconSize.cx > 0)
@@ -3321,8 +3300,6 @@ static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
 
   TRACE("background rect (%d,%d)-(%d,%d)\n",
         rcFill.left, rcFill.top, rcFill.right, rcFill.bottom);
-
-  LISTVIEW_FillBkgnd(infoPtr, hdc, &rcFill);
 
   /* Set the item to the boundary box for now */
   rcItem = rcFill;
@@ -4611,10 +4588,6 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
           nScrollPosHeight = 1;
           rcItem.top += infoPtr->rcList.top;
         }
-	else
-	{
-	    ERR("LVS_LIST top unknown, nScrollPosWidth=%d\n", nScrollPosWidth);
-	}
 
 	if (nScrollPosHeight)
 	{
@@ -4643,10 +4616,6 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
           nScrollPosHeight = 1;
           rcItem.bottom -= infoPtr->rcList.bottom;
         }
-	else  /* LVS_LIST */
-	{
-	    ERR("LVS_LIST bottom unknown, nScrollPosWidth=%d\n", nScrollPosWidth);
-	}
 
 	if (nScrollPosHeight)
 	{
