@@ -558,3 +558,49 @@ unsigned short* wine_rewrite_s4tos2(const wchar_t* str4 )
 
     return str2;
 }
+
+#ifndef HAVE_ECVT
+/*
+ * NetBSD 1.5 doesn't have ecvt, fcvt, gcvt. We just check for ecvt, though.
+ * Fix/verify these implementations !
+ */
+
+/***********************************************************************
+ *		ecvt
+ */
+char *ecvt (double number, int  ndigits,  int  *decpt,  int *sign)
+{
+    static buf[40]; /* ought to be enough */
+    char *dec;
+    sprintf(buf, "%.*e", ndigits /* FIXME wrong */, number); 
+    *sign = (number < 0);
+    dec = strchr(buf, '.');
+    *decpt = (dec) ? (int)dec - (int)buf : -1;
+    return buf;
+}
+
+/***********************************************************************
+ *		fcvt
+ */
+char *fcvt (double number, int  ndigits,  int  *decpt,  int *sign)
+{
+    static buf[40]; /* ought to be enough */
+    char *dec;
+    sprintf(buf, "%.*e", ndigits, number);
+    *sign = (number < 0);
+    dec = strchr(buf, '.');
+    *decpt = (dec) ? (int)dec - (int)buf : -1;
+    return buf;
+}
+
+/***********************************************************************
+ *		gcvt
+ *
+ * FIXME: uses both E and F.
+ */
+char *gcvt (double number, size_t  ndigit,  char *buff)
+{
+    sprintf(buff, "%.*E", ndigit, number);
+    return buff;
+}
+#endif /* HAVE_ECVT */

@@ -178,6 +178,9 @@
 /* Define if you have the dlopen function.  */
 #undef HAVE_DLOPEN
 
+/* Define if you have the ecvt function.  */
+#undef HAVE_ECVT
+
 /* Define if you have the finite function.  */
 #undef HAVE_FINITE
 

@@ -781,6 +781,7 @@ AC_CHECK_FUNCS(\
 	__libc_fork \
 	_lwp_create \
 	clone \
+	ecvt \
 	finite \
 	fpclass \
 	getnetbyaddr \
