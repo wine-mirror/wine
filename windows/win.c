@@ -2198,10 +2198,9 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
                                  LPARAM lParam )
 {
     WND **list, **ppWnd;
-    HQUEUE16 hQueue = GetTaskQueue( hTask );
 
     /* This function is the same as EnumWindows(),    */
-    /* except for an added check on the window queue. */
+    /* except for an added check on the window's task. */
 
     if (!(list = WIN_BuildWinArray( pWndDesktop, 0, NULL ))) return FALSE;
 
@@ -2211,7 +2210,7 @@ BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
     {
         /* Make sure that the window still exists */
         if (!IsWindow32((*ppWnd)->hwndSelf)) continue;
-        if ((*ppWnd)->hmemTaskQ != hQueue) continue;  /* Check the queue */
+        if (QUEUE_GetQueueTask((*ppWnd)->hmemTaskQ) != hTask) continue;
         if (!func( (*ppWnd)->hwndSelf, lParam )) break;
     }
     HeapFree( SystemHeap, 0, list );
