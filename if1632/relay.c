@@ -97,7 +97,7 @@ void WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, INT nArgs )
 /***********************************************************************
  *		__wine_call_from_16_word
  */
-WORD __cdecl __wine_call_from_16_word(...)
+WORD __cdecl __wine_call_from_16_word(void)
 {
     assert( FALSE );
 }
@@ -105,7 +105,7 @@ WORD __cdecl __wine_call_from_16_word(...)
 /***********************************************************************
  *		__wine_call_from_16_long
  */
-LONG __cdecl __wine_call_from_16_long(...)
+LONG __cdecl __wine_call_from_16_long(void)
 {
     assert( FALSE );
 }
@@ -113,7 +113,7 @@ LONG __cdecl __wine_call_from_16_long(...)
 /***********************************************************************
  *		__wine_call_from_16_regs
  */
-void __cdecl __wine_call_from_16_regs(...)
+void __cdecl __wine_call_from_16_regs(void)
 {
     assert( FALSE );
 }
@@ -121,7 +121,7 @@ void __cdecl __wine_call_from_16_regs(...)
 /***********************************************************************
  *		__wine_call_from_16_thunk
  */
-void __cdecl __wine_call_from_16_thunk(...)
+void __cdecl __wine_call_from_16_thunk(void)
 {
     assert( FALSE );
 }
