@@ -429,7 +429,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall GetProfileSectionW(wstr ptr long) GetProfileSectionW
 @ stdcall GetProfileStringA(str str str ptr long) GetProfileStringA
 @ stdcall GetProfileStringW(wstr wstr wstr ptr long) GetProfileStringW
-@ stub GetQueuedCompletionStatus
+@ stdcall GetQueuedCompletionStatus(long ptr ptr ptr long) GetQueuedCompletionStatus
 @ stub GetSLCallbackTarget
 @ stub GetSLCallbackTemplate
 @ stdcall GetShortPathNameA(str ptr long) GetShortPathNameA

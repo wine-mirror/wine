@@ -298,3 +298,15 @@ DWORD dwNumberOfConcurrentThreads)
     FIXME("(%04x, %04x, %08lx, %08lx): stub.\n", hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
     return (HANDLE)NULL;
 }
+
+/******************************************************************************
+ *		GetQueuedCompletionStatus (KERNEL32.@)
+ */
+BOOL WINAPI GetQueuedCompletionStatus(
+    HANDLE CompletionPort, LPDWORD lpNumberOfBytesTransferred,
+    LPDWORD lpCompletionKey, LPOVERLAPPED *lpOverlapped, DWORD dwMilliseconds
+) {
+    FIXME("(%x,%p,%p,%p,%ld), stub!\n",CompletionPort,lpNumberOfBytesTransferred,lpCompletionKey,lpOverlapped,dwMilliseconds);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
