@@ -67,6 +67,9 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
 
 #include "winerror.h"
 #include "windef.h"
@@ -169,9 +172,9 @@ static BOOL UNC_SplitName(LPSTR unc, LPSTR *hostname, LPSTR *share, LPSTR *file)
 
 static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
 {
-    int fd,on=1,r,len;
+    int fd,on=1,r,len,i,fromsize;
     struct pollfd fds;
-    struct sockaddr_in sin;
+    struct sockaddr_in sin,fromaddr;
     unsigned char buffer[256];
 
     fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -180,38 +183,67 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
 
     r = setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof on);
     if(r<0)
-        return FALSE;
+        goto err;
 
     if(0==inet_aton("255.255.255.255", (struct in_addr *)&sin.sin_addr.s_addr))
     {
         FIXME("Error getting bcast address\n");
-        return FALSE;
+        goto err;
     }
     sin.sin_family = AF_INET;
     sin.sin_port    = htons(137);
 
     len = NB_NameReq(host,buffer,sizeof buffer);
     if(len<=0)
-        return FALSE;
+        goto err;
 
     r = sendto(fd, buffer, len, 0, &sin, sizeof sin);
     if(r<0)
     {
         FIXME("Error sending packet\n");
-        return FALSE;
+        goto err;
     }
 
     fds.fd = fd;
     fds.events = POLLIN;
     fds.revents = 0;
 
+    /* FIXME: this is simple and easily fooled logic
+     *  we should loop until we receive the correct packet or timeout
+     */
     r = poll(&fds,1,NB_TIMEOUT);
     if(r!=1)
-        return FALSE;
+        goto err;
+
+    TRACE("Got response!\n");
+
+    fromsize = sizeof (fromaddr);
+    r = recvfrom(fd, buffer, sizeof buffer, 0, &fromaddr, &fromsize);
+    if(r<0)
+        goto err;
+
+    ERR("%d bytes received\n",r);
+
+    if(r!=62)
+        goto err;
+
+    for(i=0; i<r; i++)
+        DPRINTF("%02X%c",buffer[i],(((i+1)!=r)&&((i+1)%16))?' ':'\n');
+    DPRINTF("\n");
+
+    if(0x0f & buffer[3])
+        goto err;
+
+    ERR("packet is OK\n");
+
+    memcpy(&addr->sin_addr, &buffer[58], sizeof addr->sin_addr);
 
     close(fd);
-    TRACE("Got response!\n");
     return TRUE;
+
+err:
+    close(fd);
+    return FALSE;
 }
 
 #define NB_FIRST 0x40
@@ -837,64 +869,77 @@ static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect, USH
     return TRUE;
 }
 
-static int SMB_LoginAndConnect(LPCSTR host, LPCSTR share, USHORT *tree_id, USHORT *user_id, USHORT *dialect)
+static int SMB_GetSocket(LPCSTR host)
 {
     int fd=-1,r;
     struct sockaddr_in sin;
+    struct hostent *he;
+
+    ERR("host %s\n",host);
+
+    if(NB_Lookup(host,&sin))
+        goto connect;
+
+    he = gethostbyname(host);
+    if(he)
+    {
+        memcpy(&sin.sin_addr,he->h_addr, sizeof (sin.sin_addr));
+        goto connect;
+    }
+
+    /* FIXME: resolve by WINS too */
+
+    ERR("couldn't resolve SMB host %s\n", host);
+
+    return -1;
+
+connect:
+    sin.sin_family = AF_INET;
+    sin.sin_port   = htons(139);  /* netbios session */
+
+    fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(fd<0)
+        return fd;
+
+    {
+        unsigned char *x = (unsigned char *)&sin.sin_addr;
+        ERR("Connecting to %d.%d.%d.%d ...\n", x[0],x[1],x[2],x[3]);
+    }
+    r = connect(fd, &sin, sizeof sin);
+
+    if(!NB_SessionReq(fd, "*SMBSERVER", "WINE"))
+    {
+        close(fd);
+        return -1;
+    }
+
+    return fd;
+}
+
+static BOOL SMB_LoginAndConnect(int fd, LPCSTR host, LPCSTR share, USHORT *tree_id, USHORT *user_id, USHORT *dialect)
+{
     LPSTR name=NULL;
 
     ERR("host %s share %s\n",host,share);
 
-    /* FIXME: use various lookup methods */
-    if(0)
-        NB_Lookup(host,&sin);
-    else
-    {
-        if(0==inet_aton("127.0.0.1", (struct in_addr *)&sin.sin_addr.s_addr))
-        {
-            FIXME("Error getting localhost address\n");
-            SetLastError( ERROR_PATH_NOT_FOUND );
-            return INVALID_HANDLE_VALUE;
-        }
-        sin.sin_family = AF_INET;
-        sin.sin_port   = htons(139);  /* netbios session */
-    }
-
-    fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(fd<0)
-        goto fail;
-
-    ERR("Connecting...\n");
-    r = connect(fd, &sin, sizeof sin);
-    if(r<0)
-        goto fail;
-
-    if(!NB_SessionReq(fd, "*SMBSERVER", "WINE"))
-        goto fail;
-
     if(!SMB_NegotiateProtocol(fd, dialect))
-        goto fail;
+        return FALSE;
 
     if(!SMB_SessionSetup(fd, user_id))
-        goto fail;
+        return FALSE;
 
     name = HeapAlloc(GetProcessHeap(),0,strlen(host)+strlen(share)+5);
     if(!name)
-        goto fail;
+        return FALSE;
+
     sprintf(name,"\\\\%s\\%s",host,share);
     if(!SMB_TreeConnect(fd,*user_id,name,tree_id))
-        goto fail;
-    HeapFree(GetProcessHeap(),0,name);
-
-    return fd;
-
-fail:
-    if(name)
+    {
         HeapFree(GetProcessHeap(),0,name);
-    ERR("Failed\n");
-    if(fd>=0)
-        close(fd);
-    return -1;
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 static HANDLE SMB_RegisterFile( int fd, USHORT tree_id, USHORT user_id, USHORT dialect, USHORT file_id)
@@ -932,11 +977,11 @@ HANDLE WINAPI SMB_CreateFileA( LPCSTR uncname, DWORD access, DWORD sharing,
     int fd;
     USHORT tree_id=0, user_id=0, dialect=0, file_id=0;
     LPSTR name,host,share,file;
-    HANDLE handle = 0;
+    HANDLE handle = INVALID_HANDLE_VALUE;
 
     name = HeapAlloc(GetProcessHeap(),0,lstrlenA(uncname));
     if(!name)
-        return -1;
+        return handle;
 
     lstrcpyA(name,uncname);
 
@@ -947,33 +992,30 @@ HANDLE WINAPI SMB_CreateFileA( LPCSTR uncname, DWORD access, DWORD sharing,
     }
 
     ERR("server is %s, share is %s, file is %s\n", host, share, file);
-    fd = SMB_LoginAndConnect(host, share, &tree_id, &user_id, &dialect);
+
+    fd = SMB_GetSocket(host);
     if(fd < 0)
-    {
-        HeapFree(GetProcessHeap(),0,name);
-        return handle;
-    }
+        goto done;
+
+    if(!SMB_LoginAndConnect(fd, host, share, &tree_id, &user_id, &dialect))
+        goto done;
 
 #if 0
     if(!SMB_NtCreateOpen(fd, tree_id, user_id, dialect, file, 
                     access, sharing, sa, creation, attributes, template, &file_id ))
     {
         close(fd);
-        HeapFree(GetProcessHeap(),0,name);
         ERR("CreateOpen failed\n");
-        return handle;
+        goto done;
     }
 #endif
     if(!SMB_Open(fd, tree_id, user_id, dialect, file, 
                     access, sharing, creation, attributes, &file_id ))
     {
         close(fd);
-        HeapFree(GetProcessHeap(),0,name);
         ERR("CreateOpen failed\n");
-        return handle;
+        goto done;
     }
-
-    HeapFree(GetProcessHeap(),0,name);
 
     handle = SMB_RegisterFile(fd, tree_id, user_id, dialect, file_id);
     if(!handle)
@@ -982,6 +1024,8 @@ HANDLE WINAPI SMB_CreateFileA( LPCSTR uncname, DWORD access, DWORD sharing,
         close(fd);
     }
  
+done:
+    HeapFree(GetProcessHeap(),0,name);
     return handle;
 }
 
