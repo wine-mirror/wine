@@ -24,6 +24,27 @@
 
 #include "wine/test.h"
 
+static BOOL create_temp_file(char *name)
+{
+    UINT r;
+    unsigned char buffer[26], i;
+    DWORD sz;
+    HANDLE handle;
+    
+    r = GetTempFileName(".", "msitest",0,name);
+    if(!r)
+        return r;
+    handle = CreateFile(name, GENERIC_READ|GENERIC_WRITE, 
+        0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(handle==INVALID_HANDLE_VALUE)
+        return 0;
+    for(i=0; i<26; i++)
+        buffer[i]=i+'a';
+    r = WriteFile(handle,buffer,sizeof buffer,&sz,NULL);
+    CloseHandle(handle);
+    return r;
+}
+
 void test_msirecord(void)
 {
     DWORD r, sz;
@@ -31,6 +52,7 @@ void test_msirecord(void)
     MSIHANDLE h;
     char buf[10];
     const char str[] = "hello";
+    char filename[MAX_PATH];
 
     /* check behaviour with an invalid record */
     r = MsiRecordGetFieldCount(0);
@@ -88,10 +110,8 @@ void test_msirecord(void)
     r = MsiRecordSetInteger(h, 0, 1);
     ok(r == ERROR_SUCCESS, "Failed to set integer at 0 to 1\n");
     r = MsiRecordSetInteger(h, 1, 1);
-    /*printf("r = %d\n",r); */
     ok(r == ERROR_INVALID_PARAMETER, "set integer at 1\n");
     r = MsiRecordSetInteger(h, -1, 0);
-    /*printf("r = %d\n",r); */
     ok(r == ERROR_INVALID_PARAMETER, "set integer at -1\n");
     r = MsiRecordIsNull(h,0);
     ok(r==0, "new record is null after setting an integer\n");
@@ -185,7 +205,73 @@ void test_msirecord(void)
     ok(r == ERROR_SUCCESS, "failed to get string from integer\n");
     ok(0==strcmp(buf,"-32"), "failed to get string from integer\n");
 
+    /* same record, now try streams */
+    r = MsiRecordSetStream(h, 0, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "set NULL stream\n");
+    sz = sizeof buf;
+    r = MsiRecordReadStream(h, 0, buf, &sz);
+    ok(r == ERROR_INVALID_DATATYPE, "read non-stream type\n");
+    ok(sz == sizeof buf, "set sz\n");
+
     /* same record, now close it */
+    r = MsiCloseHandle(h);
+    ok(r == ERROR_SUCCESS, "Failed to close handle\n");
+
+    /* now try streams in a new record - need to create a file to play with */
+    r = create_temp_file(filename); 
+    if(!r)
+        return;
+
+    /* streams can't be inserted in field 0 for some reason */
+    h = MsiCreateRecord(2);
+    ok(h, "couldn't create a two field record\n");
+    r = MsiRecordSetStream(h, 0, filename);
+    ok(r == ERROR_INVALID_PARAMETER, "added stream to field 0\n");
+    r = MsiRecordSetStream(h, 1, filename);
+    ok(r == ERROR_SUCCESS, "failed to add stream to record\n");
+    r = MsiRecordReadStream(h, 1, buf, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "should return error\n");
+    ok(DeleteFile(filename), "failed to delete stream temp file\n");
+    r = MsiRecordReadStream(h, 1, NULL, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "should return error\n");
+    sz = sizeof buf;
+    r = MsiRecordReadStream(h, 1, NULL, &sz);
+    ok(r == ERROR_SUCCESS, "failed to read stream\n");
+    ok(sz==26,"couldn't get size of stream");
+    sz = 0;
+    r = MsiRecordReadStream(h, 1, buf, &sz);
+    ok(r == ERROR_SUCCESS, "failed to read stream\n");
+    ok(sz==0,"short read");
+    sz = sizeof buf;
+    r = MsiRecordReadStream(h, 1, buf, &sz);
+    ok(r == ERROR_SUCCESS, "failed to read stream\n");
+    ok(sz==sizeof buf,"short read");
+    ok(!strncmp(buf,"abcdefghij",10), "read the wrong thing\n");
+    sz = sizeof buf;
+    r = MsiRecordReadStream(h, 1, buf, &sz);
+    ok(r == ERROR_SUCCESS, "failed to read stream\n");
+    ok(sz==sizeof buf,"short read");
+    ok(!strncmp(buf,"klmnopqrst",10), "read the wrong thing\n");
+    memset(buf,0,sizeof buf);
+    sz = sizeof buf;
+    r = MsiRecordReadStream(h, 1, buf, &sz);
+    ok(r == ERROR_SUCCESS, "failed to read stream\n");
+    ok(sz==6,"short read");
+    ok(!strcmp(buf,"uvwxyz"), "read the wrong thing\n");
+    memset(buf,0,sizeof buf);
+    sz = sizeof buf;
+    r = MsiRecordReadStream(h, 1, buf, &sz);
+    ok(r == ERROR_SUCCESS, "failed to read stream\n");
+    ok(sz==0,"size non-zero at end of stream\n");
+    ok(buf[0]==0, "read something at end of the stream\n");
+    r = MsiRecordSetStream(h, 1, NULL);
+    ok(r == ERROR_SUCCESS, "failed to reset stream\n");
+    sz = 0;
+    r = MsiRecordReadStream(h, 1, NULL, &sz);
+    ok(r == ERROR_SUCCESS, "bytes left wrong after reset\n");
+    ok(sz==26,"couldn't get size of stream\n");
+
+    /* now close the stream record */
     r = MsiCloseHandle(h);
     ok(r == ERROR_SUCCESS, "Failed to close handle\n");
 }
