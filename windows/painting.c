@@ -651,7 +651,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
     if( flags & (RDW_INVALIDATE | RDW_VALIDATE) )
     {
         HWND *list;
-	if( hRgn > 1 && bChildren && (list = WIN_BuildWinArray( wndPtr->hwndSelf )))
+	if( hRgn > 1 && bChildren && (list = WIN_ListChildren( wndPtr->hwndSelf )))
 	{
 	    POINT ptTotal, prevOrigin = {0,0};
             POINT ptClient;
@@ -689,7 +689,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
                 }
                 WIN_ReleaseWndPtr( wnd );
             }
-            WIN_ReleaseWinArray( list );
+            HeapFree( GetProcessHeap(), 0, list );
             OffsetRgn( hRgn, ptTotal.x, ptTotal.y );
             bChildren = 0;
 	}
@@ -700,7 +700,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
     if( bChildren )
     {
         HWND *list;
-        if ((list = WIN_BuildWinArray( wndPtr->hwndSelf )))
+        if ((list = WIN_ListChildren( wndPtr->hwndSelf )))
         {
             INT i;
             for (i = 0; list[i]; i++)
@@ -711,7 +711,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
                     RDW_UpdateRgns( wnd, hRgn, flags, FALSE );
                 WIN_ReleaseWndPtr( wnd );
             }
-            WIN_ReleaseWinArray( list );
+            HeapFree( GetProcessHeap(), 0, list );
         }
     }
 
@@ -820,7 +820,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
     {
         HWND *list, *phwnd;
 
-	if( (list = WIN_BuildWinArray( wndPtr->hwndSelf )) )
+	if( (list = WIN_ListChildren( wndPtr->hwndSelf )) )
 	{
 	    for (phwnd = list; *phwnd; phwnd++)
 	    {
@@ -830,7 +830,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
                     hrgn = RDW_Paint( wndPtr, hrgn, flags, ex );
                 WIN_ReleaseWndPtr(wndPtr);
 	    }
-	    WIN_ReleaseWinArray(list);
+            HeapFree( GetProcessHeap(), 0, list );
 	}
     }
 

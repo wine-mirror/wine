@@ -25,7 +25,7 @@ typedef struct tagWND
     struct tagWND *next;          /* Next sibling */
     struct tagWND *child;         /* First child */
     struct tagWND *parent;        /* Window parent (from CreateWindow) */
-    struct tagWND *owner;         /* Window owner */
+    HWND           owner;         /* Window owner */
     struct tagCLASS *class;       /* Window class */
     HWINDOWPROC    winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
@@ -92,8 +92,8 @@ extern HWND WIN_FindWinToRepaint( HWND hwnd );
 extern void WIN_DestroyThreadWindows( HWND hwnd );
 extern BOOL WIN_CreateDesktopWindow(void);
 extern BOOL WIN_IsWindowDrawable(WND*, BOOL );
-extern HWND *WIN_BuildWinArray( HWND hwnd );
-extern void WIN_ReleaseWinArray( HWND *wndArray );
+extern HWND *WIN_ListParents( HWND hwnd );
+extern HWND *WIN_ListChildren( HWND hwnd );
 extern BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly );
 
 extern HWND CARET_GetHwnd(void);

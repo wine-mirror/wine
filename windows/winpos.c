@@ -553,7 +553,7 @@ HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt, UINT uFlags)
 
     GetClientRect( hwndParent, &rect );
     if (!PtInRect( &rect, pt )) return 0;
-    if (!(list = WIN_BuildWinArray( hwndParent ))) return 0;
+    if (!(list = WIN_ListChildren( hwndParent ))) return 0;
 
     for (i = 0; list[i] && !retvalue; i++)
     {
@@ -571,7 +571,7 @@ HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt, UINT uFlags)
         }
         WIN_ReleaseWndPtr( wnd );
     }
-    WIN_ReleaseWinArray( list );
+    HeapFree( GetProcessHeap(), 0, list );
     if (!retvalue) retvalue = hwndParent;
     return retvalue;
 }
@@ -1523,7 +1523,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         DWORD old_thread = GetWindowThreadProcessId( hwndPrevActive, NULL );
         DWORD new_thread = GetWindowThreadProcessId( hwndActive, NULL );
 
-        if ((list = WIN_BuildWinArray( GetDesktopWindow() )))
+        if ((list = WIN_ListChildren( GetDesktopWindow() )))
         {
             for (phwnd = list; *phwnd; phwnd++)
             {
@@ -1531,12 +1531,12 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
                 if (GetWindowThreadProcessId( *phwnd, NULL ) == old_thread)
                     SendMessageW( *phwnd, WM_ACTIVATEAPP, 0, new_thread );
             }
-            WIN_ReleaseWinArray(list);
+            HeapFree( GetProcessHeap(), 0, list );
         }
 
 	hActiveQueue = hNewActiveQueue;
 
-        if ((list = WIN_BuildWinArray( GetDesktopWindow() )))
+        if ((list = WIN_ListChildren( GetDesktopWindow() )))
         {
             for (phwnd = list; *phwnd; phwnd++)
             {
@@ -1544,7 +1544,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
                 if (GetWindowThreadProcessId( *phwnd, NULL ) == new_thread)
                     SendMessageW( *phwnd, WM_ACTIVATEAPP, 1, old_thread );
             }
-            WIN_ReleaseWinArray(list);
+            HeapFree( GetProcessHeap(), 0, list );
         }
         
 	if (hWnd && !IsWindow(hWnd)) goto CLEANUP;
@@ -1625,6 +1625,7 @@ BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
     WND *pWnd;
     HWND hwndActive = 0;
     HWND hwndTo = 0;
+    HWND owner;
 
     /* Get current active window from the active queue */
     if ( hActiveQueue )
@@ -1648,10 +1649,11 @@ BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
         return 0;
     }
 
-    if( !(pWnd->dwStyle & WS_POPUP) || !(pWnd->owner) ||
-        !WINPOS_CanActivate((hwndTo = GetAncestor( pWnd->owner->hwndSelf, GA_ROOT ))) )
+    owner = GetWindow( hwnd, GW_OWNER );
+    if( !(pWnd->dwStyle & WS_POPUP) || !owner ||
+        !WINPOS_CanActivate((hwndTo = GetAncestor( owner, GA_ROOT ))) )
     {
-        HWND tmp = GetAncestor( pWnd->hwndSelf, GA_ROOT );
+        HWND tmp = GetAncestor( hwnd, GA_ROOT );
         hwndTo = hwndPrevActive;
 
         while( !WINPOS_CanActivate(hwndTo) )

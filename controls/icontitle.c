@@ -58,12 +58,10 @@ HWND ICONTITLE_Create( HWND owner )
     wndPtr = WIN_FindWndPtr( hWnd );
     if( wndPtr )
     {
-        WND *wnd = WIN_FindWndPtr(owner);
-	wndPtr->owner = wnd;	/* MDI depends on this */
+        wndPtr->owner = owner; /* MDI depends on this */
 	wndPtr->dwStyle &= ~(WS_CAPTION | WS_BORDER);
         if (!IsWindowEnabled(owner)) wndPtr->dwStyle |= WS_DISABLED;
         WIN_ReleaseWndPtr(wndPtr);
-        WIN_ReleaseWndPtr(wnd);
 	return hWnd;
     }
     return 0;

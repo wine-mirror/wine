@@ -224,7 +224,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
 
     /* We have to build a list of all windows first, as in EnumWindows */
 
-    if (!(list = WIN_BuildWinArray( GetDesktopWindow() ))) return FALSE;
+    if (!(list = WIN_ListChildren( GetDesktopWindow() ))) return FALSE;
 
     /* Send a WM_QUERYENDSESSION message to every window */
 
@@ -243,7 +243,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
         if (!IsWindow( *phwnd )) continue;
         SendMessageW( *phwnd, WM_ENDSESSION, result, 0 );
     }
-    WIN_ReleaseWinArray(list);
+    HeapFree( GetProcessHeap(), 0, list );
 
     if (result) ExitKernel16();
     return FALSE;

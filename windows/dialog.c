@@ -1609,14 +1609,14 @@ HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
 HWND WINAPI GetDlgItem( HWND hwndDlg, INT id )
 {
     int i;
-    HWND *list = WIN_BuildWinArray( hwndDlg );
+    HWND *list = WIN_ListChildren( hwndDlg );
     HWND ret = 0;
 
     if (!list) return 0;
 
     for (i = 0; list[i]; i++) if (GetWindowLongW( list[i], GWL_ID ) == id) break;
     ret = list[i];
-    WIN_ReleaseWinArray( list );
+    HeapFree( GetProcessHeap(), 0, list );
     return ret;
 }
 

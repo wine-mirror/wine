@@ -141,13 +141,13 @@ static HWND MDI_GetChildByID(HWND hwnd, UINT id)
     HWND *win_array;
     int i;
 
-    if (!(win_array = WIN_BuildWinArray( hwnd ))) return 0;
+    if (!(win_array = WIN_ListChildren( hwnd ))) return 0;
     for (i = 0; win_array[i]; i++)
     {
         if (GetWindowLongA( win_array[i], GWL_ID ) == id) break;
     }
     ret = win_array[i];
-    WIN_ReleaseWinArray( win_array );
+    HeapFree( GetProcessHeap(), 0, win_array );
     return ret;
 }
 
@@ -282,7 +282,7 @@ static HWND MDI_GetWindow(MDICLIENTINFO *clientInfo, HWND hWnd, BOOL bNext,
     dwStyleMask |= WS_DISABLED | WS_VISIBLE;
     if( !hWnd ) hWnd = clientInfo->hwndActiveChild;
 
-    if (!(list = WIN_BuildWinArray( GetParent(hWnd) ))) return 0;
+    if (!(list = WIN_ListChildren( GetParent(hWnd) ))) return 0;
     i = 0;
     /* start from next after hWnd */
     while (list[i] && list[i] != hWnd) i++;
@@ -304,7 +304,7 @@ static HWND MDI_GetWindow(MDICLIENTINFO *clientInfo, HWND hWnd, BOOL bNext,
         if (bNext) goto found;
     }
  found:
-    WIN_ReleaseWinArray( list );
+    HeapFree( GetProcessHeap(), 0, list );
     return last;
 }
 
@@ -857,7 +857,7 @@ static LONG MDICascade( HWND client, MDICLIENTINFO *ci )
 
     if (ci->nActiveChildren == 0) return 0;
 
-    if (!(win_array = WIN_BuildWinArray( client ))) return 0;
+    if (!(win_array = WIN_ListChildren( client ))) return 0;
 
     /* remove all the windows we don't want */
     for (i = total = 0; win_array[i]; i++)
@@ -890,7 +890,7 @@ static LONG MDICascade( HWND client, MDICLIENTINFO *ci )
                           SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
         }
     }
-    WIN_ReleaseWinArray( win_array );
+    HeapFree( GetProcessHeap(), 0, win_array );
 
     if (has_icons) ArrangeIconicWindows( client );
     return 0;
@@ -910,7 +910,7 @@ static void MDITile( HWND client, MDICLIENTINFO *ci, WPARAM wParam )
 
     if (ci->nActiveChildren == 0) return;
 
-    if (!(win_array = WIN_BuildWinArray( client ))) return;
+    if (!(win_array = WIN_ListChildren( client ))) return;
 
     /* remove all the windows we don't want */
     for (i = total = 0; win_array[i]; i++)
@@ -975,7 +975,7 @@ static void MDITile( HWND client, MDICLIENTINFO *ci, WPARAM wParam )
             x += xsize;
         }
     }
-    WIN_ReleaseWinArray( win_array );
+    HeapFree( GetProcessHeap(), 0, win_array );
     if (has_icons) ArrangeIconicWindows( client );
 }
 
@@ -1948,7 +1948,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
     GetClientRect( hwnd, &clientRect );
     SetRectEmpty( &childRect );
 
-    if ((list = WIN_BuildWinArray( hwnd )))
+    if ((list = WIN_ListChildren( hwnd )))
     {
         int i;
         for (i = 0; list[i]; i++)
@@ -1956,7 +1956,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
             DWORD style = GetWindowLongW( list[i], GWL_STYLE );
             if (style & WS_MAXIMIZE)
             {
-                WIN_ReleaseWinArray( list );
+                HeapFree( GetProcessHeap(), 0, list );
                 ShowScrollBar( hwnd, SB_BOTH, FALSE );
                 return;
             }
@@ -1967,7 +1967,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
                 WIN_ReleaseWndPtr( pWnd );
             }
         }
-        WIN_ReleaseWinArray( list );
+        HeapFree( GetProcessHeap(), 0, list );
     }
     UnionRect( &childRect, &clientRect, &childRect );
 
@@ -2145,11 +2145,11 @@ static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, 
            HWND hListBox = GetDlgItem(hDlg, MDI_IDC_LISTBOX);
            HWND *list, *sorted_list;
 
-           if (!(list = WIN_BuildWinArray( (HWND)lParam ))) return TRUE;
+           if (!(list = WIN_ListChildren( (HWND)lParam ))) return TRUE;
            if (!(sorted_list = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                           sizeof(HWND) * ci->nActiveChildren )))
            {
-               WIN_ReleaseWinArray( list );
+               HeapFree( GetProcessHeap(), 0, list );
                return FALSE;
            }
 
@@ -2159,7 +2159,7 @@ static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, 
                UINT id = GetWindowLongW( list[i], GWL_ID ) - ci->idFirstChild;
                if (id < ci->nActiveChildren) sorted_list[id] = list[i];
            }
-           WIN_ReleaseWinArray( list );
+           HeapFree( GetProcessHeap(), 0, list );
 
            for (i = 0; i < ci->nActiveChildren; i++)
            {
@@ -2260,13 +2260,13 @@ static void MDI_SwapMenuItems(HWND parent, UINT pos1, UINT pos2)
     HWND *list;
     int i;
 
-    if (!(list = WIN_BuildWinArray( parent ))) return;
+    if (!(list = WIN_ListChildren( parent ))) return;
     for (i = 0; list[i]; i++)
     {
         UINT id = GetWindowLongW( list[i], GWL_ID );
         if (id == pos1) SetWindowLongW( list[i], GWL_ID, pos2 );
         else if (id == pos2) SetWindowLongW( list[i], GWL_ID, pos1 );
     }
-    WIN_ReleaseWinArray( list );
+    HeapFree( GetProcessHeap(), 0, list );
 }
 

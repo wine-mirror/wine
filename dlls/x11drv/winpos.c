@@ -573,7 +573,7 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
 
         if( hwndInsertAfter != HWND_TOP )
         {
-            if ((list = WIN_BuildWinArray( GetDesktopWindow() )))
+            if ((list = WIN_ListChildren( GetDesktopWindow() )))
             {
                 int i;
                 for (i = 0; list[i]; i++)
@@ -588,7 +588,7 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
     }
     else if (style & WS_CHILD) return hwndInsertAfter;
 
-    if (!list) list = WIN_BuildWinArray( GetDesktopWindow() );
+    if (!list) list = WIN_ListChildren( GetDesktopWindow() );
     if (list)
     {
         int i;
@@ -604,7 +604,7 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
                 hwndInsertAfter = list[i];
             }
         }
-        WIN_ReleaseWinArray( list );
+        HeapFree( GetProcessHeap(), 0, list );
     }
 
     return hwndInsertAfter;

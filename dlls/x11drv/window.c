@@ -347,9 +347,9 @@ static void set_wm_hints( Display *display, WND *win )
     /* transient for hint */
     if (win->owner)
     {
-        struct x11drv_win_data *owner_data = win->owner->pDriverData;
-        XSetTransientForHint( display, data->whole_window, owner_data->whole_window );
-        group_leader = owner_data->whole_window;
+        Window owner_win = X11DRV_get_whole_window( win->owner );
+        XSetTransientForHint( display, data->whole_window, owner_win );
+        group_leader = owner_win;
     }
     else group_leader = data->whole_window;
 
