@@ -422,7 +422,7 @@ create_primary(IDirectDrawImpl* This, LPDDSURFACEDESC2 pDDSD,
 	IDirectDrawSurface7_Release(pPrev);
     }
 
-    This->primary_surface = *ppSurf;
+    This->primary_surface = (IDirectDrawSurfaceImpl *)*ppSurf;
 
     return DD_OK;
 }
@@ -468,7 +468,7 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
     ICOM_THIS(IDirectDrawImpl, iface);
 
     TRACE("(%p)->(%p,%p,%p)\n",This,pDDSD,ppSurf,pUnkOuter);
-    TRACE("Requested Caps: 0x%x\n", pDDSD->ddsCaps.dwCaps);
+    TRACE("Requested Caps: 0x%lx\n", pDDSD->ddsCaps.dwCaps);
 
     if (pUnkOuter != NULL)
 	return CLASS_E_NOAGGREGATION; /* unchecked */

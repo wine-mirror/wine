@@ -18,7 +18,6 @@
 #include "debugtools.h"
 #include "heap.h"
 
-#include "initguid.h"
 #include "ddraw.h"
 #include "d3d.h"
 

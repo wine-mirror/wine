@@ -246,10 +246,10 @@ Main_DirectDrawSurface_ChangeUniquenessValue(LPDIRECTDRAWSURFACE7 iface)
 	if (old_uniqueness_value == 0) break;
 	if (new_uniqueness_value == 0) new_uniqueness_value = 1;
 
-	if (InterlockedCompareExchange(&vThis->uniqueness_value,
-				       old_uniqueness_value,
-				       new_uniqueness_value)
-	    == old_uniqueness_value)
+	if (InterlockedCompareExchange((PVOID*)&vThis->uniqueness_value,
+				       (PVOID)old_uniqueness_value,
+				       (PVOID)new_uniqueness_value)
+	    == (PVOID)old_uniqueness_value)
 	    break;
     }
 
@@ -356,7 +356,7 @@ Main_DirectDrawSurface_Flip(LPDIRECTDRAWSURFACE7 iface,
     /* XXX I don't think this algorithm works for more than 1 backbuffer. */
     if (override == NULL)
     {
-	static const DDSCAPS2 back_caps = { DDSCAPS_BACKBUFFER };
+	static DDSCAPS2 back_caps = { DDSCAPS_BACKBUFFER };
 	LPDIRECTDRAWSURFACE7 tgt;
 
 	hr = IDirectDrawSurface7_GetAttachedSurface(iface, &back_caps, &tgt);

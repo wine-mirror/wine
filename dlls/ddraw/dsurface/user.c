@@ -20,7 +20,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* if you use OWN_WINDOW, don't use SYNC_UPDATE, or you may get trouble */
 /* #define SYNC_UPDATE */
-#define OWN_WINDOW
+#define OWN_WINDOW 
 
 #ifdef OWN_WINDOW
 static void User_create_own_window(IDirectDrawSurfaceImpl* This);
@@ -328,13 +328,14 @@ static void User_destroy_own_window(IDirectDrawSurfaceImpl* This)
 {
     USER_PRIV_VAR(priv, This);
 
-    if (This->ddraw_owner->cooperative_level & DDSCL_FULLSCREEN)
+    if (priv->user.window)
     {
 	SetWindowPos(priv->user.window, 0, 0, 0, 0, 0,
 		     SWP_DEFERERASE|SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOMOVE|SWP_NOZORDER|
 		     SWP_NOREDRAW|SWP_NOSENDCHANGING|SWP_NOSIZE|SWP_HIDEWINDOW);
 	DestroyWindow(priv->user.window);
 	DirectDrawSurface_UnregisterClass();
+	priv->user.window = 0;
     }
 }
 #endif

@@ -110,7 +110,9 @@ EnumCallback(LPDIRECTDRAWSURFACE7 iface, LPDDSURFACEDESC2 pDDSD,
     DDRAW_Convert_DDSURFACEDESC_2_To_1(pDDSD, &ddsd);
 #endif
 
-    return info->callback((LPDIRECTDRAWSURFACE)CONVERT_REV(iface), pDDSD,
+    /* the LPDDSURFACEDESC2 -> LPDDSURFACEDESC coercion is safe, since
+     * the data format is compatible with older enum procs */
+    return info->callback((LPDIRECTDRAWSURFACE)CONVERT_REV(iface), (LPDDSURFACEDESC)pDDSD,
 			  info->context);
 }
 

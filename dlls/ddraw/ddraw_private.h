@@ -251,6 +251,8 @@ typedef struct {
 } ddraw_driver;
 
 void DDRAW_register_driver(const ddraw_driver*);
+BOOL DDRAW_XVidMode_Init(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv);
+BOOL DDRAW_XF86DGA2_Init(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv);
 
 const ddraw_driver* DDRAW_FindDriver(const GUID* guid);
 

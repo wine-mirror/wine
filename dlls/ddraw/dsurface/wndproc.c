@@ -63,7 +63,8 @@ static LRESULT WINAPI DirectDrawSurface_WndProc(HWND hwnd, UINT msg, WPARAM wPar
 	case WM_PAINT:
 	    {
 		PAINTSTRUCT ps;
-		HDC dc = BeginPaint(hwnd, &ps);
+		HDC dc;
+		dc = BeginPaint(hwnd, &ps);
 		/* call User_copy_to_screen? */
 		EndPaint(hwnd, &ps);
 		ret = 0;

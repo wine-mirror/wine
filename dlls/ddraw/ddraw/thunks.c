@@ -188,13 +188,17 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
     LPDIRECTDRAWSURFACE7 pSurface7;
     HRESULT hr;
 
+    /* the LPDDSURFACEDESC -> LPDDSURFACEDESC2 conversion should be ok, 
+     * since the data layout is the same */
     hr = IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,
 						       IDirectDraw,
 						       IDirectDraw7,
 						       This),
-				    pSDesc, &pSurface7, pUnkOuter);
+				    (LPDDSURFACEDESC2)pSDesc, &pSurface7, pUnkOuter);
 
-    *ppSurface = COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,
+    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
+     * IDirectDrawSurface vtable layout at the beginning  */
+    *ppSurface = (LPDIRECTDRAWSURFACE) COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,
 				    IDirectDrawSurface7, IDirectDrawSurface3,
 				    pSurface7);
 
@@ -209,13 +213,17 @@ IDirectDraw2Impl_CreateSurface(LPDIRECTDRAW2 This, LPDDSURFACEDESC pSDesc,
     LPDIRECTDRAWSURFACE7 pSurface7;
     HRESULT hr;
 
+    /* the LPDDSURFACEDESC -> LPDDSURFACEDESC2 conversion should be ok, 
+     * since the data layout is the same */
     hr = IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,
 						       IDirectDraw,
 						       IDirectDraw7,
 						       This),
-				    pSDesc, &pSurface7, pUnkOuter);
+				    (LPDDSURFACEDESC2)pSDesc, &pSurface7, pUnkOuter);
 
-    *ppSurface = COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,
+    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
+     * IDirectDrawSurface vtable layout at the beginning  */
+    *ppSurface = (LPDIRECTDRAWSURFACE)COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,
 				    IDirectDrawSurface7, IDirectDrawSurface3,
 				    pSurface7);
 
@@ -227,11 +235,13 @@ IDirectDraw4Impl_CreateSurface(LPDIRECTDRAW4 This, LPDDSURFACEDESC2 pSDesc,
 			       LPDIRECTDRAWSURFACE4 *ppSurface,
 			       IUnknown *pUnkOuter)
 {
+    /* the LPDDSURFACEDESC -> LPDDSURFACEDESC2 conversion should be ok, 
+     * since the data layout is the same */
     return IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,
 							 IDirectDraw4,
 							 IDirectDraw7,
 							 This),
-				      pSDesc,
+				      (LPDDSURFACEDESC2)pSDesc,
 				      (LPDIRECTDRAWSURFACE7 *)ppSurface,
 				      pUnkOuter);
 }
@@ -252,7 +262,9 @@ IDirectDrawImpl_DuplicateSurface(LPDIRECTDRAW This, LPDIRECTDRAWSURFACE pSrc,
 							  pSrc),
 				       &pDst7);
 
-    *ppDst = COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7,
+    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
+     * IDirectDrawSurface vtable layout at the beginning  */
+    *ppDst = (LPDIRECTDRAWSURFACE)COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7,
 				IDirectDrawSurface3, pDst7);
 
     return hr;
@@ -274,7 +286,9 @@ IDirectDraw2Impl_DuplicateSurface(LPDIRECTDRAW2 This, LPDIRECTDRAWSURFACE pSrc,
 							  pSrc),
 				       &pDst7);
 
-    *ppDst = COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7,
+    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
+     * IDirectDrawSurface vtable layout at the beginning  */
+    *ppDst = (LPDIRECTDRAWSURFACE)COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7,
 				IDirectDrawSurface3, pDst7);
 
     return hr;
@@ -318,7 +332,7 @@ IDirectDrawImpl_EnumDisplayModes(LPDIRECTDRAW This, DWORD dwFlags,
 							    IDirectDraw,
 							    IDirectDraw7,
 							    This),
-					 dwFlags, pDDSD, &cbcontext,
+					 dwFlags, (LPDDSURFACEDESC2)pDDSD, &cbcontext,
 					 EnumDisplayModesCallbackThunk);
 }
 
@@ -333,7 +347,7 @@ IDirectDraw2Impl_EnumDisplayModes(LPDIRECTDRAW2 This, DWORD dwFlags,
 							    IDirectDraw2,
 							    IDirectDraw7,
 							    This),
-					 dwFlags, pDDSD, &cbcontext,
+					 dwFlags, (LPDDSURFACEDESC2)pDDSD, &cbcontext,
 					 EnumDisplayModesCallbackThunk);
 }
 
@@ -361,7 +375,10 @@ EnumSurfacesCallbackThunk(LPDIRECTDRAWSURFACE7 pSurf, LPDDSURFACEDESC2 pDDSD,
 {
     struct surfacescallback_context *cbcontext = context;
 
-    return cbcontext->func(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,
+    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
+     * IDirectDrawSurface vtable layout at the beginning  */
+    return cbcontext->func((LPDIRECTDRAWSURFACE) 
+                           COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,
 					      IDirectDrawSurface7,
 					      IDirectDrawSurface3, pSurf),
 			   (LPDDSURFACEDESC)pDDSD, cbcontext->context);
@@ -527,7 +544,9 @@ IDirectDrawImpl_GetGDISurface(LPDIRECTDRAW This, LPDIRECTDRAWSURFACE *ppSurf)
 						       IDirectDraw7,
 						       This), &pSurf7);
 
-    *ppSurf = COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7,
+    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
+     * IDirectDrawSurface vtable layout at the beginning  */
+    *ppSurf = (LPDIRECTDRAWSURFACE)COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7,
 				 IDirectDrawSurface3, pSurf7);
 
     return hr;
@@ -544,7 +563,9 @@ IDirectDraw2Impl_GetGDISurface(LPDIRECTDRAW2 This, LPDIRECTDRAWSURFACE *ppSurf)
 						       IDirectDraw7,
 						       This), &pSurf7);
 
-    *ppSurf = COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7,
+    /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
+     * IDirectDrawSurface vtable layout at the beginning  */
+    *ppSurf = (LPDIRECTDRAWSURFACE)COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7,
 				 IDirectDrawSurface3, pSurf7);
 
     return hr;
