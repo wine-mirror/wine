@@ -758,36 +758,73 @@ MMRESULT WINAPI acmFormatTagEnumW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd,
 
     if (paftd->cbStruct < sizeof(*paftd)) return MMSYSERR_INVALPARAM;
 
-    if (had) FIXME("had != NULL, not supported\n");
+    /* (WS) MSDN info page says that if had != 0, then we should find
+     * the specific driver to get its tags from. Therefore I'm removing
+     * the FIXME call and adding a search block below. It also seems
+     * that the lack of this functionality was the responsible for 
+     * codecs to be multiply and incorrectly listed. 
+     */
 
-    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
-	/* should check for codec only */
-	if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
-	    acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == MMSYSERR_NOERROR) {
-	    for (i = 0; i < padid->cFormatTags; i++) {
-		paftd->dwFormatTagIndex = i;
-		if (MSACM_Message(had, ACMDM_FORMATTAG_DETAILS,
-				  (LPARAM)paftd, ACM_FORMATTAGDETAILSF_INDEX) == MMSYSERR_NOERROR) {
-		    if (paftd->dwFormatTag == WAVE_FORMAT_PCM) {
-			if (paftd->szFormatTag[0] == 0)
-			    MultiByteToWideChar( CP_ACP, 0, "PCM", -1, paftd->szFormatTag,
-						 sizeof(paftd->szFormatTag)/sizeof(WCHAR) );
-			/* FIXME (EPP): I'm not sure this is the correct
-			 * algorithm (should make more sense to apply the same
-			 * for all already loaded formats, but this will do
-			 * for now
-			 */
-			if (bPcmDone) continue;
-			bPcmDone = TRUE;
-		    }
-		    if (!(fnCallback)((HACMDRIVERID)padid, paftd, dwInstance, padid->fdwSupport)) {
-                        acmDriverClose(had, 0);
-                        return MMSYSERR_NOERROR;
-		    }
-		}
-	    }
-	}
-	acmDriverClose(had, 0);
+    /* if (had) FIXME("had != NULL, not supported\n"); */
+
+    if (had) {
+
+       if (acmDriverID((HACMOBJ)had, (HACMDRIVERID *)&padid, 0) != MMSYSERR_NOERROR)
+          return MMSYSERR_INVALHANDLE;
+
+       for (i = 0; i < padid->cFormatTags; i++) {
+	  paftd->dwFormatTagIndex = i;
+	  if (MSACM_Message(had, ACMDM_FORMATTAG_DETAILS,
+	  (LPARAM)paftd, ACM_FORMATTAGDETAILSF_INDEX) == MMSYSERR_NOERROR) {
+	     if (paftd->dwFormatTag == WAVE_FORMAT_PCM) {
+	        if (paftd->szFormatTag[0] == 0)
+		   MultiByteToWideChar( CP_ACP, 0, "PCM", -1, paftd->szFormatTag,
+			 sizeof(paftd->szFormatTag)/sizeof(WCHAR) );
+		/* (WS) I'm preserving this PCM hack since it seems to be
+		 * correct. Please notice this block was borrowed from
+		 * below.
+	  	 */
+		if (bPcmDone) continue;
+		   bPcmDone = TRUE;
+	     }
+	     if (!(fnCallback)((HACMDRIVERID)padid, paftd, dwInstance, padid->fdwSupport)) 
+                return MMSYSERR_NOERROR;
+	  }
+       }
+
+    }
+
+    /* if had==0 then search for the first suitable driver */
+    else {
+       for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
+          /* should check for codec only */
+          if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
+	     acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == MMSYSERR_NOERROR) {
+	     for (i = 0; i < padid->cFormatTags; i++) {
+	        paftd->dwFormatTagIndex = i;
+	        if (MSACM_Message(had, ACMDM_FORMATTAG_DETAILS,
+	           (LPARAM)paftd, ACM_FORMATTAGDETAILSF_INDEX) == MMSYSERR_NOERROR) {
+	           if (paftd->dwFormatTag == WAVE_FORMAT_PCM) {
+		      if (paftd->szFormatTag[0] == 0)
+		         MultiByteToWideChar( CP_ACP, 0, "PCM", -1, paftd->szFormatTag,
+				 sizeof(paftd->szFormatTag)/sizeof(WCHAR) );
+		      /* FIXME (EPP): I'm not sure this is the correct
+		       * algorithm (should make more sense to apply the same
+		       * for all already loaded formats, but this will do
+	  	       * for now
+	       	       */
+		      if (bPcmDone) continue;
+		         bPcmDone = TRUE;
+		   }
+		   if (!(fnCallback)((HACMDRIVERID)padid, paftd, dwInstance, padid->fdwSupport)) {
+                      acmDriverClose(had, 0);
+                      return MMSYSERR_NOERROR;
+		   }
+	        }
+	     }
+          }
+          acmDriverClose(had, 0);
+       }
     }
     return MMSYSERR_NOERROR;
 }
