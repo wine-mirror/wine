@@ -166,12 +166,12 @@ DPA_SaveStream (const HDPA hDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM 
  * DPA_Merge [COMCTL32.11]
  *
  * PARAMS
- *     hdpa1    [I] handle to a dynamic pointer array
- *     hdpa2    [I] handle to a dynamic pointer array
- *     dwFlags  [I] flags
- *     pfnSort  [I] pointer to sort function
- *     pfnMerge [I] pointer to merge function
- *     lParam   [I] application specific value
+ *     hdpa1       [I] handle to a dynamic pointer array
+ *     hdpa2       [I] handle to a dynamic pointer array
+ *     dwFlags     [I] flags
+ *     pfnCompare  [I] pointer to sort function
+ *     pfnMerge    [I] pointer to merge function
+ *     lParam      [I] application specific value
  *
  * NOTES
  *     No more information available yet!
@@ -182,15 +182,11 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	   PFNDPACOMPARE pfnCompare, PFNDPAMERGE pfnMerge, LPARAM lParam)
 {
     INT nCount;
-
-#if 0    /* these go with the "incomplete implementation" below */
-    LPVOID pWork1, pWork2;
+    LPVOID *pWork1, *pWork2;
     INT nResult;
     INT nIndex;
-    INT nNewItems;
-#endif
 
-    TRACE("(%p %p %08lx %p %p %08lx): semi stub!\n",
+    TRACE("%p %p %08lx %p %p %08lx)\n",
 	   hdpa1, hdpa2, dwFlags, pfnCompare, pfnMerge, lParam);
 
     if (IsBadWritePtr (hdpa1, sizeof(DPA)))
@@ -222,12 +218,7 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	   hdpa1->nItemCount, hdpa2->nItemCount);
 
 
-    /* preliminary hack - simply append the pointer list hdpa2 to hdpa1 */
-    for (nCount = 0; nCount < hdpa2->nItemCount; nCount++)
-	DPA_InsertPtr (hdpa1, hdpa1->nItemCount + 1, hdpa2->ptrs[nCount]);
-
-#if 0
-    /* incomplete implementation */
+    /* working but untrusted implementation */
 
     pWork1 = &(hdpa1->ptrs[hdpa1->nItemCount - 1]);
     pWork2 = &(hdpa2->ptrs[hdpa2->nItemCount - 1]);
@@ -237,19 +228,24 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 
     do
     {
-	nResult = (pfnCompare)(pWork1, pWork2, lParam);
+        if (nIndex < 0) break;
+	nResult = (pfnCompare)(*pWork1, *pWork2, lParam);
+	TRACE("compare result=%d, dpa1.cnt=%d, dpa2.cnt=%d\n", 
+	      nResult, nIndex, nCount);
 
 	if (nResult == 0)
 	{
 	    PVOID ptr;
 
-	    ptr = (pfnMerge)(1, pWork1, pWork2, lParam);
+	    ptr = (pfnMerge)(1, *pWork1, *pWork2, lParam);
 	    if (!ptr)
 		return FALSE;
 
 	    nCount--;
 	    pWork2--;
-	    pWork1 = ptr;
+	    *pWork1 = ptr;
+	    nIndex--;
+	    pWork1--;
 	}
 	else if (nResult < 0)
 	{
@@ -261,6 +257,8 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 
 		(pfnMerge)(2, ptr, NULL, lParam);
 	    }
+	    nIndex--;
+	    pWork1--;
 	}
 	else
 	{
@@ -268,21 +266,17 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	    {
 		PVOID ptr;
 
-		ptr = (pfnMerge)(3, pWork2, NULL, lParam);
+		ptr = (pfnMerge)(3, *pWork2, NULL, lParam);
 		if (!ptr)
 		    return FALSE;
 		DPA_InsertPtr (hdpa1, nIndex, ptr);
-    }
+	    }
 	    nCount--;
 	    pWork2--;
 	}
 
-	nIndex--;
-	pWork1--;
-
     }
     while (nCount >= 0);
-#endif
 
     return TRUE;
 }
