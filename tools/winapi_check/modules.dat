@@ -1,7 +1,6 @@
 % dlls/advapi32/advapi32.spec
 
 dlls/advapi32
-memory
 misc
 
 % dlls/avicap32/avicap32.spec
@@ -199,7 +198,6 @@ dlls/iphlpapi
 
 dlls/kernel
 files
-memory
 misc
 msdos
 
@@ -207,7 +205,6 @@ msdos
 
 dlls/kernel
 files
-memory
 msdos
 misc
 
@@ -249,13 +246,11 @@ dlls/kernel
 
 % dlls/kernel/system.drv.spec
 
-memory
 misc
 
 % dlls/kernel/toolhelp.spec
 
 dlls/kernel
-memory
 
 % dlls/kernel/win87em.spec
 

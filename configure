@@ -13292,7 +13292,7 @@ then
 cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBFONTCONFIG "$ac_cv_lib_soname_fontconfig"
 _ACEOF
-fi;
+fi
 
 echo "$as_me:$LINENO: checking for -lssl soname" >&5
 echo $ECHO_N "checking for -lssl soname... $ECHO_C" >&6
@@ -17096,8 +17096,6 @@ esac
 
           ac_config_commands="$ac_config_commands include/wine"
 
-          ac_config_commands="$ac_config_commands memory"
-
           ac_config_commands="$ac_config_commands misc"
 
           ac_config_commands="$ac_config_commands msdos"
@@ -17871,7 +17869,6 @@ do
   "graphics" ) CONFIG_COMMANDS="$CONFIG_COMMANDS graphics" ;;
   "graphics/x11drv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS graphics/x11drv" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
-  "memory" ) CONFIG_COMMANDS="$CONFIG_COMMANDS memory" ;;
   "misc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS misc" ;;
   "msdos" ) CONFIG_COMMANDS="$CONFIG_COMMANDS msdos" ;;
   "objects" ) CONFIG_COMMANDS="$CONFIG_COMMANDS objects" ;;
@@ -18599,8 +18596,6 @@ echo "$as_me: creating graphics" >&6;} && mkdir "graphics") ;;
 echo "$as_me: creating graphics/x11drv" >&6;} && mkdir "graphics/x11drv") ;;
     include/wine ) test -d "include/wine" || ({ echo "$as_me:$LINENO: creating include/wine" >&5
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
-    memory ) test -d "memory" || ({ echo "$as_me:$LINENO: creating memory" >&5
-echo "$as_me: creating memory" >&6;} && mkdir "memory") ;;
     misc ) test -d "misc" || ({ echo "$as_me:$LINENO: creating misc" >&5
 echo "$as_me: creating misc" >&6;} && mkdir "misc") ;;
     msdos ) test -d "msdos" || ({ echo "$as_me:$LINENO: creating msdos" >&5
