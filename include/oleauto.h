@@ -44,8 +44,8 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR*,UINT);
 void WINAPI SysFreeString(BSTR);
 INT  WINAPI SysReAllocString(LPBSTR,const OLECHAR*);
 int  WINAPI SysReAllocStringLen(BSTR*,const OLECHAR*,UINT);
-int  WINAPI SysStringByteLen(BSTR);
-int  WINAPI SysStringLen(BSTR);
+UINT WINAPI SysStringByteLen(BSTR);
+UINT WINAPI SysStringLen(BSTR);
 
 /* IErrorInfo helpers */
 HRESULT WINAPI SetErrorInfo(ULONG,IErrorInfo*);

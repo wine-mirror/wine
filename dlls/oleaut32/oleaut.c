@@ -91,7 +91,7 @@ HMODULE OLEAUT32_hModule = NULL;
  *  calculated by lstrlenW(), since it returns the length that was used to
  *  allocate the string by SysAllocStringLen().
  */
-int WINAPI SysStringLen(BSTR str)
+UINT WINAPI SysStringLen(BSTR str)
 {
     DWORD* bufferPointer;
 
@@ -121,7 +121,7 @@ int WINAPI SysStringLen(BSTR str)
  * NOTES
  *  See SysStringLen(), BSTR().
  */
-int WINAPI SysStringByteLen(BSTR str)
+UINT WINAPI SysStringByteLen(BSTR str)
 {
     DWORD* bufferPointer;
 
