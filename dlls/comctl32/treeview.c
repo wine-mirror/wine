@@ -1266,6 +1266,7 @@ TREEVIEW_GetCount (HWND hwnd, WPARAM wParam, LPARAM lParam)
 /***************************************************************************
  * This method does the chaining of the insertion of a treeview item 
  * before an item.
+ * If parent is NULL, we're inserting at the root of the list.
  */
 static void TREEVIEW_InsertBefore(
     TREEVIEW_INFO *infoPtr,
@@ -1279,9 +1280,6 @@ static void TREEVIEW_InsertBefore(
 
   if (newItem == NULL)
     ERR("NULL newItem, impossible condition\n");
-
-  if (parent == NULL)
-    ERR("NULL parent, impossible condition\n");
 
   if (sibling != NULL) /* Insert before this sibling for this parent */
   { 
@@ -1304,15 +1302,20 @@ static void TREEVIEW_InsertBefore(
       upSibling->sibling = newItem->hItem;
     else
       /* this item is the first child of this parent, adjust parent pointers */
-      parent->firstChild = newItem->hItem;
+	  if (parent)
+      	parent->firstChild = newItem->hItem;
+	  else 
+		infoPtr->TopRootItem= newItem->hItem;
   }
   else /* Insert as first child of this parent */
-    parent->firstChild = newItem->hItem;
+	if (parent)
+    	parent->firstChild = newItem->hItem;
 }
 
 /***************************************************************************
  * This method does the chaining of the insertion of a treeview item 
  * after an item.
+ * If parent is NULL, we're inserting at the root of the list.
  */
 static void TREEVIEW_InsertAfter(
     TREEVIEW_INFO *infoPtr,
@@ -1324,11 +1327,9 @@ static void TREEVIEW_InsertAfter(
   HTREEITEM     siblingHandle   = 0;
   TREEVIEW_ITEM *sibling        = NULL;
 
+
   if (newItem == NULL)
     ERR("NULL newItem, impossible condition\n");
-
-  if (parent == NULL)
-    ERR("NULL parent, impossible condition\n");
 
   if (upSibling != NULL) /* Insert after this upsibling for this parent */
   { 
@@ -1355,7 +1356,8 @@ static void TREEVIEW_InsertAfter(
     */
   }
   else /* Insert as first child of this parent */
-    parent->firstChild = newItem->hItem;
+	if (parent)
+    	parent->firstChild = newItem->hItem;
 }
 
 /***************************************************************************
@@ -1630,11 +1632,16 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
         break; 
       else
       {
-        TREEVIEW_ITEM *aChild        = 
-          &infoPtr->items[(INT)parentItem->firstChild];
+        TREEVIEW_ITEM *aChild;
+		  
   
         TREEVIEW_ITEM *previousChild = NULL;
         BOOL bItemInserted           = FALSE;
+
+	    if (parentItem)
+          aChild = &infoPtr->items[(INT)parentItem->firstChild];
+		else 
+          aChild = &infoPtr->items[(INT)infoPtr->TopRootItem];
   
         /* Iterate the parent children to see where we fit in */
         while ( aChild != NULL )
@@ -3556,7 +3563,7 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return TREEVIEW_VScroll (hwnd, wParam, lParam);
   
 		case WM_DRAWITEM:
-			printf ("drawItem\n");
+			TRACE ("drawItem\n");
 			return DefWindowProcA (hwnd, uMsg, wParam, lParam);
   
 		default:
