@@ -222,6 +222,9 @@ typedef LPDRVCALLBACK LPWAVECALLBACK;
 #define  WAVE_MAPPED               	0x0004
 #define  WAVE_FORMAT_DIRECT        	0x0008
 #define  WAVE_FORMAT_DIRECT_QUERY  	(WAVE_FORMAT_QUERY | WAVE_FORMAT_DIRECT)
+#ifdef __WINE__
+#define  WAVE_DIRECTSOUND               0x0080
+#endif
 
 typedef struct wavehdr_tag {
     LPSTR       lpData;		/* pointer to locked data buffer */

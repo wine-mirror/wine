@@ -55,6 +55,8 @@ DEFAULT_DEBUG_CHANNEL(dsound);
 			/* (Starcraft videos won't work with higher than 32 x10ms) */
 #define DS_HEL_MARGIN 4 /* HEL only: number of waveOut fragments ahead to mix in new buffers */
 
+#define DS_HAL_QUEUE 28 /* HAL only: max number of fragments to prebuffer */
+
 /* Linux does not support better timing than 10ms */
 #define DS_TIME_RES 10  /* Resolution of multimedia timer */
 #define DS_TIME_DEL 10  /* Delay of multimedia timer callback, and duration of HEL fragment */
@@ -831,7 +833,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {
 
 	This->ref--;
 	if (!This->ref) {
-		IDirectSoundNotify_Release((LPDIRECTSOUNDBUFFER)This->dsb);
+		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)This->dsb);
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
@@ -918,6 +920,8 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundBufferImpl *dsb)
 		LPBYTE newbuf;
 		DWORD buflen;
 		HRESULT merr = DS_OK;
+		/* Start in pause mode, to allow buffers to get filled */
+		waveOutPause(dsb->dsound->hwo);
 		/* use fragments of 10ms (1/100s) each (which should get us within
 		 * the documented write cursor lead of 10-15ms) */
 		buflen = ((dsb->wfx.nAvgBytesPerSec / 100) & ~3) * DS_HEL_FRAGS;
@@ -986,6 +990,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	IDirectSoundBufferImpl** dsb;
+	HRESULT err = DS_OK;
 	int			i;
 
 	/* Let's be pedantic! */
@@ -1018,7 +1023,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 
 	memcpy(&(primarybuf->wfx), wfex, sizeof(primarybuf->wfx));
 
-	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld"
+	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
 		   "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
 		   wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
 		   wfex->nAvgBytesPerSec, wfex->nBlockAlign, 
@@ -1032,13 +1037,19 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 		waveOutClose(This->dsound->hwo);
 		This->dsound->hwo = 0;
                 waveOutOpen(&(This->dsound->hwo), This->dsound->drvdesc.dnDevNode,
-			    &(primarybuf->wfx), 0, 0, 0);
-		/* Start in pause mode until buffers are filled */
-		waveOutPause(This->dsound->hwo);
+			    &(primarybuf->wfx), 0, 0, CALLBACK_NULL | WAVE_DIRECTSOUND);
 		DSOUND_PrimaryOpen(primarybuf);
 	}
-	if (primarybuf->hwbuf)
-		IDsDriverBuffer_SetFormat(primarybuf->hwbuf, &(primarybuf->wfx));
+	if (primarybuf->hwbuf) {
+		err = IDsDriverBuffer_SetFormat(primarybuf->hwbuf, &(primarybuf->wfx));
+		if (err == DSERR_BUFFERLOST) {
+			/* Wine-only: the driver wants us to recreate the HW buffer */
+			IDsDriverBuffer_Release(primarybuf->hwbuf);
+			err = IDsDriver_CreateSoundBuffer(primarybuf->dsound->driver,&(primarybuf->wfx),primarybuf->dsbd.dwFlags,0,
+							  &(primarybuf->buflen),&(primarybuf->buffer),
+							  (LPVOID)&(primarybuf->hwbuf));
+		}
+	}
 	DSOUND_RecalcFormat(primarybuf);
 
 	LeaveCriticalSection(&(This->dsound->lock));
@@ -1176,18 +1187,25 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER iface)
 
 static DWORD WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER iface) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-/*	TRACE("(%p) ref was %ld\n",This, This->ref); */
+	DWORD ref;
 
-	return ++(This->ref);
+	TRACE("(%p) ref was %ld, thread is %lx\n",This, This->ref, GetCurrentThreadId());
+
+	ref = InterlockedIncrement(&(This->ref));
+	if (!ref) {
+		FIXME("thread-safety alert! AddRef-ing with a zero refcount!\n");
+	}
+	return ref;
 }
 static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	int	i;
+	DWORD ref;
 
-/*	TRACE("(%p) ref was %ld\n",This, This->ref); */
+	TRACE("(%p) ref was %ld, thread is %lx\n",This, This->ref, GetCurrentThreadId());
 
-	if (--This->ref)
-		return This->ref;
+	ref = InterlockedDecrement(&(This->ref));
+	if (ref) return ref;
 
 	EnterCriticalSection(&(This->dsound->lock));
 	for (i=0;i<This->dsound->nrofbuffers;i++)
@@ -1197,8 +1215,9 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 	if (i < This->dsound->nrofbuffers) {
 		/* Put the last buffer of the list in the (now empty) position */
 		This->dsound->buffers[i] = This->dsound->buffers[This->dsound->nrofbuffers - 1];
-		This->dsound->buffers = HeapReAlloc(GetProcessHeap(),0,This->dsound->buffers,sizeof(LPDIRECTSOUNDBUFFER)*This->dsound->nrofbuffers);
 		This->dsound->nrofbuffers--;
+		This->dsound->buffers = HeapReAlloc(GetProcessHeap(),0,This->dsound->buffers,sizeof(LPDIRECTSOUNDBUFFER)*This->dsound->nrofbuffers);
+		TRACE("buffer count is now %d\n", This->dsound->nrofbuffers);
 		IDirectSound_Release((LPDIRECTSOUND)This->dsound);
 	}
 	LeaveCriticalSection(&(This->dsound->lock));
@@ -1258,7 +1277,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			*playpos = 0;
 		}
 		else if (playpos) {
-			DWORD pplay, lplay, splay;
+			DWORD pplay, lplay, splay, pstate;
 			/* let's get this exact; first, recursively call GetPosition on the primary */
 			EnterCriticalSection(&(primarybuf->lock));
 			if ((This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2) || primarybuf->hwbuf) {
@@ -1270,6 +1289,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			}
 			/* get last mixed primary play position */
 			lplay = primarybuf->mixpos;
+			pstate = primarybuf->state;
 			/* get our own last mixed position while we still have the lock */
 			splay = This->mixpos;
 			LeaveCriticalSection(&(primarybuf->lock));
@@ -1279,6 +1299,14 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			/* the actual primary play position (pplay) is always behind last mixed (lplay)
 			 * (unless the computer is too slow, which we can't fix anyway) */
 			/* we need to know how far away we are from there */
+			if (lplay == pplay) {
+				if ((pstate == STATE_PLAYING) || (pstate == STATE_STOPPING)) {
+					/* wow, the software mixer is really doing well,
+					 * seems the entire primary buffer is filled! */
+					lplay += primarybuf->buflen;
+				}
+				/* else: the primary buffer is not playing, so probably empty */
+			}
 			if (lplay < pplay) lplay += primarybuf->buflen; /* wraparound */
 			lplay -= pplay;
 			/* divide the offset by its sample size */
@@ -1315,7 +1343,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(
 	LPDIRECTSOUNDBUFFER iface,LPDWORD status
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	TRACE("(%p,%p)\n",This,status);
+	TRACE("(%p,%p), thread is %lx\n",This,status,GetCurrentThreadId());
 
 	if (status == NULL)
 		return DSERR_INVALIDPARAM;
@@ -1326,6 +1354,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(
 	if (This->playflags & DSBPLAY_LOOPING)
 		*status |= DSBSTATUS_LOOPING;
 
+	TRACE("status=%lx\n", *status);
 	return DS_OK;
 }
 
@@ -1844,15 +1873,29 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 	EnterCriticalSection(&(This->lock));
 	/* register buffer */
 	if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
-		This->buffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,This->buffers,sizeof(IDirectSoundBufferImpl*)*(This->nrofbuffers+1));
-		This->buffers[This->nrofbuffers] = *ippdsb;
-		This->nrofbuffers++;
+		IDirectSoundBufferImpl **newbuffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,This->buffers,sizeof(IDirectSoundBufferImpl*)*(This->nrofbuffers+1));
+		if (newbuffers) {
+			This->buffers = newbuffers;
+			This->buffers[This->nrofbuffers] = *ippdsb;
+			This->nrofbuffers++;
+			TRACE("buffer count is now %d\n", This->nrofbuffers);
+		} else {
+			ERR("out of memory for buffer list! Current buffer count is %d\n", This->nrofbuffers);
+			err = DSERR_OUTOFMEMORY;
+		}
 	}
 	LeaveCriticalSection(&(This->lock));
 
 	IDirectSound_AddRef(iface);
 
 	InitializeCriticalSection(&((*ippdsb)->lock));
+
+	if (err != DS_OK) {
+		/* oops... */
+		IDirectSoundBuffer_Release(*ppdsb);
+		*ippdsb = NULL;
+		return err;
+	}
 	
 #if USE_DSOUND3D
 	if (dsbd->dwFlags & DSBCAPS_CTRL3D) {
@@ -1921,11 +1964,20 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 	memcpy(&((*ippdsb)->wfx), &(ipdsb->wfx), sizeof((*ippdsb)->wfx));
 	/* register buffer */
 	EnterCriticalSection(&(This->lock));
-	This->buffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,This->buffers,sizeof(IDirectSoundBufferImpl**)*(This->nrofbuffers+1));
-	This->buffers[This->nrofbuffers] = *ippdsb;
-	This->nrofbuffers++;
-	IDirectSound_AddRef(iface);
+	{
+		IDirectSoundBufferImpl **newbuffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,This->buffers,sizeof(IDirectSoundBufferImpl**)*(This->nrofbuffers+1));
+		if (newbuffers) {
+			This->buffers = newbuffers;
+			This->buffers[This->nrofbuffers] = *ippdsb;
+			This->nrofbuffers++;
+			TRACE("buffer count is now %d\n", This->nrofbuffers);
+		} else {
+			ERR("out of memory for buffer list! Current buffer count is %d\n", This->nrofbuffers);
+			/* FIXME: release buffer */
+		}
+	}
 	LeaveCriticalSection(&(This->lock));
+	IDirectSound_AddRef(iface);
 	return DS_OK;
 }
 
@@ -1992,7 +2044,8 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND iface) {
 		timeKillEvent(This->timerID);
 		timeEndPeriod(DS_TIME_RES);
 
-		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)primarybuf);
+		if (primarybuf)
+			IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)primarybuf);
 
 		if (This->buffers) {
 			for( i=0;i<This->nrofbuffers;i++)	
@@ -2413,14 +2466,14 @@ static void *DSOUND_tmpbuffer(size_t len)
   return tmp_buffer;
 }
 
-static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos)
+static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
 	INT	i, len, ilen, temp, field;
 	INT	advance = primarybuf->wfx.wBitsPerSample >> 3;
 	BYTE	*buf, *ibuf, *obuf;
 	INT16	*ibufs, *obufs;
 
-	len = dsound->fraglen;
+	len = fraglen;
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
 		temp = MulDiv(primarybuf->wfx.nAvgBytesPerSec, dsb->buflen,
 			dsb->nAvgBytesPerSec) -
@@ -2510,29 +2563,29 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos)
 	return len;
 }
 
-static DWORD WINAPI DSOUND_MixPrimary(DWORD writepos, BOOL starting)
+static DWORD WINAPI DSOUND_MixPrimary(DWORD writepos, DWORD fraglen, BOOL starting)
 {
 	INT			i, len, maxlen = 0;
 	IDirectSoundBufferImpl	*dsb;
 
+	TRACE("(%ld,%ld,%d)\n", writepos, fraglen, starting);
 	for (i = dsound->nrofbuffers - 1; i >= 0; i--) {
 		dsb = dsound->buffers[i];
 
 		if (!dsb || !(ICOM_VTBL(dsb)))
 			continue;
-		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)dsb);
  		if (dsb->buflen && dsb->state && !(starting && (dsb->state != STATE_STARTING))) {
+			TRACE("Checking %p\n", dsb);
 			EnterCriticalSection(&(dsb->lock));
 			if (dsb->state == STATE_STOPPING) {
 				/* FIXME: perhaps attempt to remove the buffer from the prebuffer */
 				dsb->state = STATE_STOPPED;
 			} else {
-				len = DSOUND_MixInBuffer(dsb, writepos);
+				len = DSOUND_MixInBuffer(dsb, writepos, fraglen);
 				maxlen = len > maxlen ? len : maxlen;
 			}
 			LeaveCriticalSection(&(dsb->lock));
 		}
-		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)dsb);
 	}
 	
 	return maxlen;
@@ -2557,6 +2610,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 {
 	DWORD len;
 	int nfiller;
+	BOOL forced;
 
 	if (!dsound || !primarybuf) {
 		ERR("dsound died without killing us?\n");
@@ -2567,20 +2621,180 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 
 	EnterCriticalSection(&(dsound->lock));
 
+	if (!primarybuf || !primarybuf->ref) {
+		/* seems the primary buffer is currently being released */
+		LeaveCriticalSection(&(dsound->lock));
+		return;
+	}
+
 	/* the sound of silence */
 	nfiller = primarybuf->wfx.wBitsPerSample == 8 ? 128 : 0;
 
+	/* whether the primary is forced to play even without secondary buffers */
+	forced = ((primarybuf->state == STATE_PLAYING) || (primarybuf->state == STATE_STARTING));
+
 	if (primarybuf->hwbuf) {
-		DWORD playpos, writepos;
-		IDsDriverBuffer_GetPosition(primarybuf->hwbuf, &playpos, &writepos);
-		/* Well, we *could* do Just-In-Time mixing using the writepos,
-		 * but that's a little bit ambitious and unnecessary...
-		 * let's stick with the fraglen */
-		/* FIXME: do something clever */
+		if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
+			BOOL paused = ((primarybuf->state == STATE_STOPPED) || (primarybuf->state == STATE_STARTING));
+			DWORD playpos, writepos, inq, maxq, mixq, frag;
+			IDsDriverBuffer_GetPosition(primarybuf->hwbuf, &playpos, &writepos);
+			/* Well, we *could* do Just-In-Time mixing using the writepos,
+			 * but that's a little bit ambitious and unnecessary... */
+			/* rather add our safety margin to the writepos, if we're playing */
+			if (!paused) {
+				writepos += primarybuf->writelead;
+				while (writepos >= primarybuf->buflen)
+					writepos -= primarybuf->buflen;
+			} else writepos = playpos;
+			TRACE("primary playpos=%ld, writepos=%ld, clrpos=%ld, mixpos=%ld\n",
+			      playpos,writepos,primarybuf->playpos,primarybuf->mixpos);
+			/* wipe out just-played sound data */
+			if (playpos < primarybuf->playpos) {
+				memset(primarybuf->buffer + primarybuf->playpos, nfiller, primarybuf->buflen - primarybuf->playpos);
+				memset(primarybuf->buffer, nfiller, playpos);
+			} else {
+				memset(primarybuf->buffer + primarybuf->playpos, nfiller, playpos - primarybuf->playpos);
+			}
+			primarybuf->playpos = playpos;
+
+			/* check how much prebuffering is left */
+			inq = primarybuf->mixpos;
+			if (inq < writepos)
+				inq += primarybuf->buflen;
+			inq -= writepos;
+
+			/* find the maximum we can prebuffer */
+			if (!paused) {
+				maxq = playpos;
+				if (maxq < writepos)
+					maxq += primarybuf->buflen;
+				maxq -= writepos;
+			} else maxq = primarybuf->buflen;
+
+			/* clip maxq to DS_HAL_QUEUE */
+			frag = DS_HAL_QUEUE * dsound->fraglen;
+			if (maxq > frag) maxq = frag;
+
+			/* check for consistency */
+			if (inq > maxq) {
+				/* the playback position must have passed our last
+				 * mixed position, i.e. it's an underrun, or we have
+				 * nothing more to play */
+			        inq = 0;
+				/* stop the playback now, to allow buffers to refill */
+				IDsDriverBuffer_Stop(primarybuf->hwbuf);
+				if (primarybuf->state == STATE_PLAYING) {
+					primarybuf->state = STATE_STARTING;
+				}
+				else if (primarybuf->state == STATE_STOPPING) {
+					primarybuf->state = STATE_STOPPED;
+				}
+				else {
+					/* how can we have an underrun if we aren't playing? */
+					ERR("unexpected primary state (%ld)\n", primarybuf->state);
+				}
+				/* the Stop is supposed to reset play position to beginning of buffer */
+				/* unfortunately, OSS is not able to do so, so get current pointer */
+				IDsDriverBuffer_GetPosition(primarybuf->hwbuf, &playpos, NULL);
+				writepos = playpos;
+				primarybuf->playpos = playpos;
+				primarybuf->mixpos = playpos;
+				inq = 0;
+				maxq = primarybuf->buflen;
+				if (maxq > frag) maxq = frag;
+				memset(primarybuf->buffer, nfiller, primarybuf->buflen);
+				paused = TRUE;
+			}
+
+			EnterCriticalSection(&(primarybuf->lock));
+
+			/* see if some new buffers have been started that we want to merge into our prebuffer;
+			 * this should minimize latency even when we have a large prebuffer */
+			if (!paused) {
+				if (primarybuf->mixpos < writepos) {
+					/* mix to end of buffer */
+					len = DSOUND_MixPrimary(writepos, primarybuf->buflen - writepos, TRUE);
+					if ((len + writepos) < primarybuf->buflen)
+						goto addmix_complete;
+					/* mix from beginning of buffer */
+					if (primarybuf->mixpos)
+						len = DSOUND_MixPrimary(0, primarybuf->mixpos, TRUE);
+				} else {
+					/* mix middle of buffer */
+					len = DSOUND_MixPrimary(writepos, primarybuf->mixpos - writepos, TRUE);
+				}
+			}
+		addmix_complete:
+			DSOUND_MarkPlaying();
+
+			mixq = maxq - inq;
+			TRACE("queued %ld, max %ld, mixing %ld, paused %d\n", inq, maxq, mixq, paused);
+			/* it's too inefficient to mix less than a fragment at a time */
+			if (mixq >= dsound->fraglen) {
+
+#define FRAG_MIXER \
+	if (frag > mixq) frag = mixq; \
+	len = DSOUND_MixPrimary(primarybuf->mixpos, frag, FALSE); \
+        if (forced) len = frag; \
+	primarybuf->mixpos += len; \
+	mixq -= len; inq += len
+
+				if ((playpos < writepos) || (paused && (playpos == writepos))) {
+					if (primarybuf->mixpos) {
+						/* mix to end of buffer */
+						frag = primarybuf->buflen - primarybuf->mixpos;
+						FRAG_MIXER;
+						if (primarybuf->mixpos < primarybuf->buflen)
+							goto mix_complete;
+						primarybuf->mixpos = 0;
+					}
+					if (mixq >= dsound->fraglen) {
+						/* mix from beginning of buffer */
+						frag = playpos;
+						if ((!frag) && paused) frag = primarybuf->buflen;
+						FRAG_MIXER;
+					}
+				}
+				else if (playpos > writepos) {
+					/* mix middle of buffer */
+					frag = playpos - primarybuf->mixpos;
+					FRAG_MIXER;
+				}
+				else {
+					/* this should preferably not happen... */
+					ERR("mixer malfunction (ambiguous writepos)!\n");
+				}
+#undef FRAG_MIXER
+			}
+		mix_complete:
+			if (inq) {
+				/* buffers have been filled, restart playback */
+				if (primarybuf->state == STATE_STARTING) {
+					IDsDriverBuffer_Play(primarybuf->hwbuf, 0, 0, DSBPLAY_LOOPING);
+					primarybuf->state = STATE_PLAYING;
+				}
+				else if (primarybuf->state == STATE_STOPPED) {
+					/* the primarybuf is supposed to play if there's something to play
+					 * even if it is reported as stopped, so don't let this confuse you */
+					IDsDriverBuffer_Play(primarybuf->hwbuf, 0, 0, DSBPLAY_LOOPING);
+					primarybuf->state = STATE_STOPPING;
+				}
+			}
+			LeaveCriticalSection(&(primarybuf->lock));
+		} else {
+			/* in the DSSCL_WRITEPRIMARY mode, the app is totally in charge... */
+			if (primarybuf->state == STATE_STARTING) {
+				IDsDriverBuffer_Play(primarybuf->hwbuf, 0, 0, DSBPLAY_LOOPING);
+				primarybuf->state = STATE_PLAYING;
+			} 
+			else if (primarybuf->state == STATE_STOPPING) {
+				IDsDriverBuffer_Stop(primarybuf->hwbuf);
+				primarybuf->state = STATE_STOPPED;
+			}
+		}
 	} else {
 		/* using waveOut stuff */
 		/* if no buffers are playing, we should be in pause mode now */
-		BOOL in_pause = !dsound->pwqueue;
 		DWORD writepos;
 		/* clean out completed fragments */
 		while (dsound->pwqueue && (dsound->pwave[dsound->pwplay]->dwFlags & WHDR_DONE)) {
@@ -2595,12 +2809,18 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 		}
 		primarybuf->playpos = dsound->pwplay * dsound->fraglen;
 		TRACE("primary playpos=%ld, mixpos=%ld\n",primarybuf->playpos,primarybuf->mixpos);
-		if (!(in_pause || dsound->pwqueue)) {
+		if (!dsound->pwqueue) {
 			/* this is either an underrun or we have nothing more to play...
 			 * since playback has already stopped now, we can enter pause mode,
 			 * in order to allow buffers to refill */
-			 waveOutPause(dsound->hwo);
-			 in_pause = TRUE;
+			if (primarybuf->state == STATE_PLAYING) {
+				waveOutPause(dsound->hwo);
+				primarybuf->state = STATE_STARTING;
+			}
+			else if (primarybuf->state == STATE_STOPPING) {
+				waveOutPause(dsound->hwo);
+				primarybuf->state = STATE_STOPPED;
+			}
 		}
 
 		/* find next write position, plus some extra margin */
@@ -2608,14 +2828,12 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 		while (writepos >= primarybuf->buflen) writepos -= primarybuf->buflen;
 
 		EnterCriticalSection(&(primarybuf->lock));
-		if (primarybuf->state == STATE_STARTING)
-			primarybuf->state = STATE_PLAYING;
 		/* see if some new buffers have been started that we want to merge into our prebuffer;
 		 * this should minimize latency even when we have a large prebuffer */
 		if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
-			if (!in_pause) {
+			if ((primarybuf->state == STATE_PLAYING) || (primarybuf->state == STATE_STOPPING)) {
 				while (writepos != primarybuf->mixpos) {
-					len = DSOUND_MixPrimary(writepos, TRUE);
+					len = DSOUND_MixPrimary(writepos, dsound->fraglen, TRUE);
 					if (!len) break;
 					writepos += dsound->fraglen;
 					if (writepos >= primarybuf->buflen)
@@ -2629,10 +2847,9 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 		 * mix a bunch of fragments now as necessary */
 		while (dsound->pwqueue < DS_HEL_QUEUE) {
 			if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
-				len = DSOUND_MixPrimary(primarybuf->mixpos, FALSE);
+				len = DSOUND_MixPrimary(primarybuf->mixpos, dsound->fraglen, FALSE);
 			} else len=0;
-			if (primarybuf->state == STATE_PLAYING)
-				len = dsound->fraglen;
+			if (forced) len = dsound->fraglen;
 			/* if we have nothing to play, don't bother to */
 			if (!len) break;
 			if (len < dsound->fraglen) {
@@ -2649,13 +2866,20 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 			if (dsound->pwwrite >= DS_HEL_FRAGS) dsound->pwwrite = 0;
 			dsound->pwqueue++;
 		}
-		if (primarybuf->state == STATE_STOPPING)
-			primarybuf->state = STATE_STOPPED;
-		LeaveCriticalSection(&(primarybuf->lock));
-		if (in_pause && dsound->pwqueue) {
+		if (dsound->pwqueue) {
 			/* buffers have been filled, restart playback */
-			waveOutRestart(dsound->hwo);
+			if (primarybuf->state == STATE_STARTING) {
+				waveOutRestart(dsound->hwo);
+				primarybuf->state = STATE_PLAYING;
+			}
+			else if (primarybuf->state == STATE_STOPPED) {
+				/* the primarybuf is supposed to play if there's something to play
+				 * even if it is reported as stopped, so don't let this confuse you */
+				waveOutRestart(dsound->hwo);
+				primarybuf->state = STATE_STOPPING;
+			}
 		}
+		LeaveCriticalSection(&(primarybuf->lock));
 	}
 	LeaveCriticalSection(&(dsound->lock));
 }
@@ -2736,7 +2960,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	if ((*ippDS)->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN) {
 		/* FIXME: is this right? */
 		err = mmErr(waveOutOpen(&((*ippDS)->hwo), (*ippDS)->drvdesc.dnDevNode, &((*ippDS)->wfx),
-					0, 0, CALLBACK_NULL));
+					0, 0, CALLBACK_NULL | WAVE_DIRECTSOUND));
 	}
 
 	if (drv && (err == DS_OK))
@@ -2757,7 +2981,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 
 		/* FIXME: look at wcaps */
 		(*ippDS)->drvcaps.dwFlags = DSCAPS_EMULDRIVER |
-			DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO | DSCAPS_CONTINUOUSRATE;
+			DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO;
 
 		/* Allocate memory for HEL buffer headers */
 		for (c=0; c<DS_HEL_FRAGS; c++) {
@@ -2773,8 +2997,6 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 				}
 			}
 		}
-		/* Start in pause mode until buffers are filled */
-		waveOutPause((*ippDS)->hwo);
 	}
 
 	InitializeCriticalSection(&((*ippDS)->lock));
