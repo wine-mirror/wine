@@ -418,10 +418,11 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
     WCHAR wBuffer[256];      /* Used to GetProfileString */
     UINT  retval = 31;       /* default - 'No association was found' */
     WCHAR *tok;              /* token pointer */
-    WCHAR xlpFile[256] = {0}; /* result of SearchPath */
+    WCHAR xlpFile[256];      /* result of SearchPath */
 
     TRACE("%s\n", (lpFile != NULL) ? debugstr_w(lpFile) : "-");
 
+    xlpFile[0] = '\0';
     lpResult[0] = '\0'; /* Start off with an empty return string */
     if (key) *key = '\0';
 
@@ -708,9 +709,11 @@ static UINT execute_from_key(LPWSTR key, LPCWSTR lpFile, void *env, LPCWSTR szCo
 			     SHELL_ExecuteW32 execfunc,
 			     LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
-    WCHAR cmd[1024] = {0};
+    WCHAR cmd[1024];
     LONG cmdlen = sizeof(cmd);
     UINT retval = 31;
+
+    cmd[0] = '\0';
 
     /* Get the application for the registry */
     if (RegQueryValueW(HKEY_CLASSES_ROOT, key, cmd, &cmdlen) == ERROR_SUCCESS)
@@ -718,8 +721,10 @@ static UINT execute_from_key(LPWSTR key, LPCWSTR lpFile, void *env, LPCWSTR szCo
 	static const WCHAR wCommand[] = {'c','o','m','m','a','n','d',0};
 	static const WCHAR wDdeexec[] = {'d','d','e','e','x','e','c',0};
         LPWSTR tmp;
-        WCHAR param[256] = {0};
+        WCHAR param[256];
         LONG paramlen = sizeof(param);
+
+        param[0] = '\0';
 
         /* Get the parameters needed by the application
            from the associated ddeexec key */
