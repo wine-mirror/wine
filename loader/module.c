@@ -749,6 +749,56 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
     return hInstance;
 }
 
+
+static void get_executable_name( LPCSTR line, LPSTR name, int namelen,
+                                 LPCSTR *after, BOOL extension )
+{
+    int len = 0;
+    LPCSTR p = NULL, pcmd = NULL;
+
+    if ((p = strchr(line, '"')))
+    {
+        p++;      /* skip '"' */
+        line = p;
+        if ((pcmd = strchr(p, '"'))) { /* closing '"' available, too ? */
+            pcmd++;
+            len = (int)pcmd - (int)p;
+        } 
+    }
+
+    if (!len)
+    {
+        p = strchr(line, ' ');
+        do {
+            len = (p? p-line : strlen(line)) + 1;
+            if (len > namelen - 4) len = namelen - 4;
+            lstrcpynA(name, line, len);
+            if (extension && !strchr(name, '\\') && !strchr(name, '.'))
+                strcat(name, ".exe");
+            if (GetFileAttributesA(name) != -1) {
+                pcmd = p ? p : line+strlen(line);
+                break;
+            }
+            /* if there is a space and no file found yet, include the word
+             * up to the next space too. If there is no next space, just
+             * use the first word.
+             */
+            if (p) {
+                p = strchr(p+1, ' ');
+            } else {
+                p = strchr(line, ' ');
+                len = (p? p-line : strlen(line)) + 1;
+                if (len > namelen - 4)
+                    len = namelen - 4;
+                pcmd = p ? p + 1 : line+strlen(line);
+                break;
+            }
+        } while (1);
+    }
+    lstrcpynA(name, line, len);
+    if (after) *after = pcmd;
+}
+
 /**********************************************************************
  *       CreateProcessA          (KERNEL32.171)
  */
@@ -764,8 +814,8 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     HFILE hFile;
     OFSTRUCT ofs;
     DWORD type;
-    LPCSTR cmdline;
-    char name[256];
+    char name[256], cmdline[256];
+    LPCSTR p = NULL;
 
     /* Get name and command line */
 
@@ -775,38 +825,25 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         return FALSE;
     }
 
-    cmdline = lpCommandLine? lpCommandLine : lpApplicationName;
+    name[0] = '\0';
+    cmdline[0] = '\0';
 
-    if (lpApplicationName)
-        lstrcpynA(name, lpApplicationName, sizeof(name) - 4);
-    else {
-        char	*ptr;
-        int	len;
-
-	/* Take care off .exes with spaces in their names */
-	ptr = strchr(lpCommandLine, ' ');
-	do {
-	    len = (ptr? ptr-lpCommandLine : strlen(lpCommandLine)) + 1;
-	    if (len > sizeof(name) - 4) len = sizeof(name) - 4;
-	    lstrcpynA(name, lpCommandLine, len);
-	    if (!strchr(name, '\\') && !strchr(name, '.'))
-		strcat(name, ".exe");
-	    if (GetFileAttributesA(name)!=-1)
-	    	break;
-	    /* if there is a space and no file found yet, include the word
-	     * up to the next space too. If there is no next space, just
-	     * use the first word.
-	     */
-	    if (ptr) {
-	    	ptr = strchr(ptr+1, ' ');
+    if (lpApplicationName) {
+        get_executable_name( lpApplicationName, name, sizeof(name), NULL, FALSE);
+        strcpy(cmdline, name);
+#if 0
+        p = strrchr(name, '.');
+        if (p >= name+strlen(name)-4) /* FIXME */
+            *p = '\0';
+#endif
+    }
+    if (strlen(name)) {
+        get_executable_name(lpCommandLine, cmdline, sizeof(cmdline), &p, TRUE);
+        strcat(cmdline, p);
 	    } else {
-	        ptr = strchr(lpCommandLine, ' ');
-		len = (ptr? ptr-lpCommandLine : strlen(lpCommandLine)) + 1;
-		if (len > sizeof(name) - 4) len = sizeof(name) - 4;
-		lstrcpynA(name, lpCommandLine, len);
-		break;
-	    }
-	} while (1);
+        get_executable_name(lpCommandLine, name, sizeof(name), &p, TRUE);
+        strcpy(cmdline, name);
+        strcat(cmdline, p);
     }
 
     if (!strchr(name, '\\') && !strchr(name, '.'))
