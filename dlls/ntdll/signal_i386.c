@@ -459,6 +459,17 @@ static inline int get_error_code( const SIGCONTEXT *sigcontext )
 #endif
 }
 
+/***********************************************************************
+ *           get_signal_stack
+ *
+ * Get the base of the signal stack for the current thread.
+ */
+static inline void *get_signal_stack(void)
+{
+    return NtCurrentTeb()->DeallocationStack;
+}
+
+
 #ifdef __HAVE_VM86
 /***********************************************************************
  *           save_vm86_context
@@ -686,24 +697,44 @@ static void restore_context( CONTEXT *context, SIGCONTEXT *sigcontext )
  *
  * Handler initialization when the full context is not needed.
  */
-static void init_handler( const SIGCONTEXT *sigcontext )
+static void *init_handler( const SIGCONTEXT *sigcontext )
 {
-    /* restore a proper %fs for the fault handler */
+    void *stack = (void *)ESP_sig(sigcontext);
+
+    /* now restore a proper %fs for the fault handler */
     if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
         !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
     {
+        /*
+         * Win16 or DOS protected mode. Note that during switch
+         * from 16-bit mode to linear mode, CS may be set to system
+         * segment before FS is restored. Fortunately, in this case
+         * SS is still non-system segment. This is why both CS and SS
+         * are checked.
+         */
         wine_set_fs( signal_fs );
         wine_set_gs( NtCurrentTeb()->gs_sel );
+        stack = (void *)NtCurrentTeb()->cur_stack;
     }
 #ifdef __HAVE_VM86
     else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
     {
-        /* fetch the saved %fs on the stack */
-        wine_set_fs( *(unsigned int *)ESP_sig(sigcontext) );
-        wine_set_gs( NtCurrentTeb()->gs_sel );
+        unsigned int *int_stack = stack;
+        /* fetch the saved %fs and %gs from the stack */
+        wine_set_fs( int_stack[0] );
+        wine_set_gs( int_stack[1] );
     }
-#endif  /* __HAVE_VM86 */
-    else  /* 32-bit mode, get %fs at time of the fault */
+    else if ((char *)EIP_sig(sigcontext) == (char *)vm86_return + 2 /* popl %fs */)
+    {
+        unsigned int *int_stack = stack;
+        /* %fs has been popped already but %gs is still on the stack */
+#ifdef FS_sig
+        wine_set_fs( FS_sig(sigcontext) );
+#endif
+        wine_set_gs( int_stack[0] );
+    }
+#endif
+    else  /* 32-bit mode */
     {
 #ifdef FS_sig
         wine_set_fs( FS_sig(sigcontext) );
@@ -712,6 +743,7 @@ static void init_handler( const SIGCONTEXT *sigcontext )
         wine_set_gs( GS_sig(sigcontext) );
 #endif
     }
+    return stack;
 }
 
 
@@ -786,48 +818,12 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     gs = wine_get_gs();
 #endif
 
-    /* now restore a proper %fs for the fault handler */
-    if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
-        !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
-    {
-        /*
-         * Win16 or DOS protected mode. Note that during switch
-         * from 16-bit mode to linear mode, CS may be set to system
-         * segment before FS is restored. Fortunately, in this case
-         * SS is still non-system segment. This is why both CS and SS
-         * are checked.
-         */
-        wine_set_fs( signal_fs );
-        wine_set_gs( NtCurrentTeb()->gs_sel );
-        stack = (struct stack_layout *)NtCurrentTeb()->cur_stack;
-    }
-    else  /* 32-bit mode */
-    {
-        stack = (struct stack_layout *)ESP_sig(sigcontext);
-#ifdef __HAVE_VM86
-        if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
-        {
-            unsigned int *int_stack = (unsigned int *)stack;
-            /* fetch the saved %fs and %gs from the stack */
-            wine_set_fs( int_stack[0] );
-            wine_set_gs( int_stack[1] );
-        }
-        else
-#endif
-        {
-#ifdef FS_sig
-            wine_set_fs( FS_sig(sigcontext) );
-#endif
-#ifdef GS_sig
-            wine_set_gs( GS_sig(sigcontext) );
-#endif
-        }
-    }
+    stack = init_handler( sigcontext );
 
     /* stack sanity checks */
 
-    if ((char *)stack >= (char *)NtCurrentTeb()->DeallocationStack &&
-        (char *)stack < (char *)NtCurrentTeb()->DeallocationStack + SIGNAL_STACK_SIZE)
+    if ((char *)stack >= (char *)get_signal_stack() &&
+        (char *)stack < (char *)get_signal_stack() + SIGNAL_STACK_SIZE)
     {
         ERR( "nested exception on signal stack in thread %04lx eip %08lx esp %08lx stack %p-%p\n",
              GetCurrentThreadId(), EIP_sig(sigcontext), ESP_sig(sigcontext),
@@ -1292,7 +1288,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
         sig_act.ksa_mask    = (1 << (SIGINT-1)) |
                               (1 << (SIGUSR2-1));
         /* point to the top of the signal stack */
-        sig_act.ksa_restorer = (char *)NtCurrentTeb()->DeallocationStack + SIGNAL_STACK_SIZE;
+        sig_act.ksa_restorer = (char *)get_signal_stack() + SIGNAL_STACK_SIZE;
         return wine_sigaction( sig, &sig_act, NULL );
     }
 #endif  /* linux */
@@ -1346,7 +1342,7 @@ BOOL SIGNAL_Init(void)
 
 #ifdef HAVE_SIGALTSTACK
     struct sigaltstack ss;
-    ss.ss_sp    = NtCurrentTeb()->DeallocationStack;
+    ss.ss_sp    = get_signal_stack();
     ss.ss_size  = SIGNAL_STACK_SIZE;
     ss.ss_flags = 0;
     if (!sigaltstack(&ss, NULL)) have_sigaltstack = 1;
