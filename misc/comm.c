@@ -270,7 +270,7 @@ static void comm_notification(int fd,void*private)
   /* write from output queue */
   prev = comm_outbuf(ptr);
   do {
-    bleft = ((ptr->obuf_tail < ptr->obuf_head) ? ptr->obuf_head : ptr->obuf_size)
+    bleft = ((ptr->obuf_tail <= ptr->obuf_head) ? ptr->obuf_head : ptr->obuf_size)
       - ptr->obuf_tail;
     len = bleft ? write(fd, ptr->outbuf + ptr->obuf_tail, bleft) : 0;
     if (len > 0) {
