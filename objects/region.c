@@ -2573,14 +2573,22 @@ HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count,
  *
  * NOTES
  *     This function is UNDOCUMENTED, it isn't even in the header file.
- *     I assume that it will return a HRGN32!??
  */
-HRGN WINAPI GetRandomRgn(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3)
+INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
 {
-    FIXME("(0x%08lx 0x%08lx 0x%08lx): empty stub!\n",
-	   dwArg1, dwArg2, dwArg3);
+    FIXME("(0x%x 0x%x 0x%lx): empty stub!\n",
+	   hDC, hRgn, dwCode);
 
-    return 0;
+    switch (dwCode)
+    {
+	case 1:
+	    return GetClipRgn (hDC, hRgn);
+
+	default:
+	    return -1;
+    }
+
+    return -1;
 }
 
 /***********************************************************************
