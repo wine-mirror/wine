@@ -2,6 +2,7 @@
  * Translate between Wine and Unix paths
  *
  * Copyright 2002 Mike Wetherell
+ * Copyright 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "wine/debug.h"
+
 #define VERSION "0.1 (" PACKAGE_STRING ")"
 
 enum {
@@ -32,17 +35,16 @@ enum {
     UNIXFORMAT  = 4
 };
 
-static char *progname;
+static const char progname[] = "winepath";
 
 /* Wine specific functions */
-extern BOOL process_init(char *argv[]);
 typedef LPSTR (*wine_get_unix_file_name_t) ( LPCWSTR dos );
 /*
  * handle an option
  */
-static int option(int shortopt, char *longopt)
+static int option(int shortopt, const WCHAR *longopt)
 {
-    const char *helpmsg =
+    static const char helpmsg[] =
     "Convert PATH(s) to Unix or Windows long or short paths.\n"
     "\n"
     "  -u, --unix    output Unix format\n"
@@ -73,7 +75,7 @@ static int option(int shortopt, char *longopt)
 
     fprintf(stderr, "%s: invalid option ", progname);
     if (longopt)
-        fprintf(stderr, "'%s'\n", longopt);
+        fprintf(stderr, "%s\n", wine_dbgstr_w(longopt));
     else
         fprintf(stderr, "'-%c'\n", shortopt);
     fprintf(stderr, "Try '%s --help' for help\n", progname);
@@ -83,11 +85,17 @@ static int option(int shortopt, char *longopt)
 /*
  * Parse command line options
  */
-static int parse_options(char *argv[])
+static int parse_options(const WCHAR *argv[])
 {
+    static const WCHAR longW[] = { 'l','o','n','g',0 };
+    static const WCHAR shortW[] = { 's','h','o','r','t',0 };
+    static const WCHAR unixW[] = { 'u','n','i','x',0 };
+    static const WCHAR helpW[] = { 'h','e','l','p',0 };
+    static const WCHAR versionW[] = { 'v','e','r','s','i','o','n',0 };
+    static const WCHAR nullW[] = { 0 };
+    static const WCHAR *longopts[] = { longW, shortW, unixW, helpW, versionW, nullW };
     int outputformats = 0;
     int done = 0;
-    char *longopts[] = { "long", "short", "unix", "help", "version", "" };
     int i, j;
 
     for (i = 1; argv[i] && !done; )
@@ -105,7 +113,7 @@ static int parse_options(char *argv[])
             } else {
                 /* long option */
                 for (j = 0; longopts[j][0]; j++)
-                    if (strcmp(argv[i]+2, longopts[j]) == 0)
+                    if (!lstrcmpiW(argv[i]+2, longopts[j]))
                         break;
                 outputformats |= option(longopts[j][0], argv[i]);
             }
@@ -126,14 +134,14 @@ static int parse_options(char *argv[])
 /*
  * Main function
  */
-int main(int argc, char *argv[])
+int wmain(int argc, const WCHAR *argv[])
 {
     wine_get_unix_file_name_t wine_get_unix_file_name_ptr = NULL;
-    static char path[MAX_PATH];
+    WCHAR dos_pathW[MAX_PATH];
+    char path[MAX_PATH];
     int outputformats;
     int i;
 
-    progname = argv[0];
     outputformats = parse_options(argv);
     if (outputformats == 0)
         outputformats = UNIXFORMAT;
@@ -153,19 +161,19 @@ int main(int argc, char *argv[])
     {
         *path='\0';
         if (outputformats & LONGFORMAT) {
-            GetFullPathNameA(argv[i], sizeof(path), path, NULL);
+            if (GetFullPathNameW(argv[i], MAX_PATH, dos_pathW, NULL))
+                WideCharToMultiByte(CP_UNIXCP, 0, dos_pathW, -1, path, MAX_PATH, NULL, NULL);
             printf("%s\n", path);
         }
         if (outputformats & SHORTFORMAT) {
-            GetShortPathNameA(argv[i], path, sizeof(path));
+            if (GetShortPathNameW(argv[i], dos_pathW, MAX_PATH))
+                WideCharToMultiByte(CP_UNIXCP, 0, dos_pathW, -1, path, MAX_PATH, NULL, NULL);
             printf("%s\n", path);
         }
         if (outputformats & UNIXFORMAT) {
-            WCHAR dosW[MAX_PATH];
             char *unix_name;
 
-            MultiByteToWideChar(CP_ACP, 0, argv[i], -1, dosW, MAX_PATH);
-            if ((unix_name = wine_get_unix_file_name_ptr(dosW)))
+            if ((unix_name = wine_get_unix_file_name_ptr(argv[i])))
             {
                 printf("%s\n", unix_name);
                 HeapFree( GetProcessHeap(), 0, unix_name );
