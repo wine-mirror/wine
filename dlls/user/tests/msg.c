@@ -148,6 +148,7 @@ static const struct message WmShowVisiblePopupSeq_3[] = {
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent|parent },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_SETFOCUS, sent|defwinproc },
     { 0 }
@@ -276,6 +277,33 @@ static const struct message WmReparentButtonSeq[] = { /* FIXME: add */
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOREDRAW|SWP_NOZORDER },
     { WM_MOVE, sent|defwinproc },
     { WM_SHOWWINDOW, sent|wparam, 1 },
+    { 0 }
+};
+/* Creation of a custom dialog (32) */
+static const struct message WmCreateCustomDialogSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_GETMINMAXINFO, sent },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { HCBT_ACTIVATE, hook },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { WM_KILLFOCUS, sent|parent },
+    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_SETFOCUS, sent },
+    { WM_GETDLGCODE, sent|defwinproc|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc },
+    { WM_ERASEBKGND, sent },
+    { WM_CTLCOLORDLG, sent|defwinproc },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
     { 0 }
 };
 /* Creation of a modal dialog (32) */
@@ -637,6 +665,13 @@ static void test_messages(void)
     ok_sequence(WmShowVisiblePopupSeq_2, "CreateWindow:show_visible_popup_2");
     DestroyWindow(hchild);
 
+    flush_sequence();
+    hwnd = CreateWindowExA(WS_EX_DLGMODALFRAME, "TestDialogClass", NULL, WS_VISIBLE|WS_CAPTION|WS_SYSMENU|WS_DLGFRAME,
+                           0, 0, 100, 100, hparent, 0, 0, NULL);
+    ok(hwnd != 0, "Failed to create custom dialog window\n");
+    ok_sequence(WmCreateCustomDialogSeq, "CreateCustomDialog");
+    DestroyWindow(hwnd);
+
     DestroyWindow(hparent);
     flush_sequence();
 
@@ -648,17 +683,17 @@ static void test_messages(void)
                            100, 100, 200, 200, 0, hmenu, 0, NULL);
     ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped");
     ok (SetMenu(hwnd, 0), "SetMenu");
-    ok_sequence(WmSetMenuNonVisibleSizeChangeSeq, "SetMenu:NonVisibleSizeChange");    
+    ok_sequence(WmSetMenuNonVisibleSizeChangeSeq, "SetMenu:NonVisibleSizeChange");
     ok (SetMenu(hwnd, 0), "SetMenu");
-    ok_sequence(WmSetMenuNonVisibleNoSizeChangeSeq, "SetMenu:NonVisibleNoSizeChange");    
+    ok_sequence(WmSetMenuNonVisibleNoSizeChangeSeq, "SetMenu:NonVisibleNoSizeChange");
     ShowWindow(hwnd, SW_SHOW);
     flush_sequence();
     ok (SetMenu(hwnd, 0), "SetMenu");
-    ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange");    
+    ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange");
     ok (SetMenu(hwnd, hmenu), "SetMenu");
-    ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange");    
-    DestroyWindow(hwnd);
+    ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange");
 
+    DestroyWindow(hwnd);
 }
 
 static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -719,7 +754,8 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
 
     trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
-    if (message == WM_PARENTNOTIFY)
+    if (message == WM_PARENTNOTIFY || message == WM_CANCELMODE ||
+	message == WM_KILLFOCUS || message == WM_ENABLE)
     {
         msg.message = message;
         msg.flags = sent|parent|wparam|lparam;
@@ -731,6 +767,32 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
 
     defwndproc_counter++;
     ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    trace("dialog: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    DefDlgProcA(hwnd, DM_SETDEFID, 1, 0);
+    ret = DefDlgProcA(hwnd, DM_GETDEFID, 0, 0);
+    ok(HIWORD(ret) == DC_HASDEFID, "DM_GETDEFID should return DC_HASDEFID\n");
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(&msg);
+
+    defwndproc_counter++;
+    ret = DefDlgProcA(hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
@@ -764,6 +826,11 @@ static BOOL RegisterWindowClasses(void)
     cls.lpszClassName = "SimpleWindowClass";
     if(!RegisterClassA(&cls)) return FALSE;
 
+    ok(GetClassInfoA(0, "#32770", &cls), "GetClassInfo failed\n");
+    cls.lpfnWndProc = TestDlgProcA;
+    cls.lpszClassName = "TestDialogClass";
+    if(!RegisterClassA(&cls)) return FALSE;
+
     return TRUE;
 }
 
@@ -780,7 +847,8 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (!strcmp(buf, "TestWindowClass") ||
 	    !strcmp(buf, "TestParentClass") ||
 	    !strcmp(buf, "TestPopupClass") ||
-	    !strcmp(buf, "SimpleWindowClass"))
+	    !strcmp(buf, "SimpleWindowClass") ||
+	    !strcmp(buf, "TestDialogClass"))
 	{
 	    struct message msg;
 
