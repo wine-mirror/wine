@@ -1486,8 +1486,13 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   PropSheetInfo * psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
                                                      PropSheetInfoStr);
   HWND hwndTabControl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
-  PropPageInfo* oldPages = psInfo->proppage;
+  PropPageInfo* oldPages;
 
+  if (!psInfo) {
+    FIXME("No psInfo for propertysheet at windows 0x%04x? returning FALSE...\n");
+    return FALSE;
+  }
+  oldPages = psInfo->proppage;
   /*
    * hpage takes precedence over index.
    */
