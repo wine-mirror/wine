@@ -2637,9 +2637,9 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
 	    TRACE(font, "x = %f y = %f\n", x, y);
 	    x *= pfo->lpX11Trans->pixelsize / 1000.0;
 	    y *= pfo->lpX11Trans->pixelsize / 1000.0; 
-	    size->cx = fabsf((x + dc->w.breakRem + count * dc->w.charExtra) *
+	    size->cx = fabs((x + dc->w.breakRem + count * dc->w.charExtra) *
 			     dc->wndExtX / dc->vportExtX);
-	    size->cy = fabsf(y * dc->wndExtY / dc->vportExtY);
+	    size->cy = fabs(y * dc->wndExtY / dc->vportExtY);
 	}
 	return TRUE;
     }

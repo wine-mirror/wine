@@ -453,11 +453,13 @@ static int dump_create_pipe_reply( struct create_pipe_reply *req, int len )
 
 static int dump_alloc_console_request( struct alloc_console_request *req, int len )
 {
+    fprintf( stderr, " dummy=%d", req->dummy );
     return (int)sizeof(*req);
 }
 
 static int dump_free_console_request( struct free_console_request *req, int len )
 {
+    fprintf( stderr, " dummy=%d", req->dummy );
     return (int)sizeof(*req);
 }
 
@@ -548,6 +550,7 @@ static int dump_read_console_input_request( struct read_console_input_request *r
 
 static int dump_read_console_input_reply( struct read_console_input_reply *req, int len )
 {
+    fprintf( stderr, " dummy=%d", req->dummy );
     return (int)sizeof(*req);
 }
 

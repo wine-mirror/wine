@@ -6,12 +6,17 @@
  * Copyright 1995 Morten Welinder
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #include "winbase.h"
 #include "class.h"

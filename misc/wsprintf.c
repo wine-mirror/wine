@@ -382,7 +382,7 @@ INT WINAPI wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec,
     LPSTR p = buffer;
     UINT i, len;
     CHAR number[20];
-    WPRINTF_DATA argData = (WPRINTF_DATA)0;
+    WPRINTF_DATA argData;
 
     while (*spec && (maxlen > 1))
     {

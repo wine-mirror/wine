@@ -64,9 +64,9 @@ static void CLIENT_SendRequest_v( enum request req, int pass_fd,
 {
     THDB *thdb = THREAD_Current();
 #ifndef HAVE_MSGHDR_ACCRIGHTS
-    struct cmsg_fd cmsg  = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS, pass_fd };
+    struct cmsg_fd cmsg;
 #endif
-    struct msghdr msghdr = { NULL, 0, vec, veclen, };
+    struct msghdr msghdr;
     struct header head;
     int i, ret, len;
 
@@ -80,16 +80,39 @@ static void CLIENT_SendRequest_v( enum request req, int pass_fd,
     head.len  = len;
     head.seq  = thdb->seq++;
 
+    msghdr.msg_name    = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov     = vec;
+    msghdr.msg_iovlen  = veclen;
+
+#ifdef HAVE_MSGHDR_ACCRIGHTS
     if (pass_fd != -1)  /* we have an fd to send */
     {
-#ifdef HAVE_MSGHDR_ACCRIGHTS
-        msghdr.msg_accrights = (void *)&pass_fd;
+        msghdr.msg_accrights    = (void *)&pass_fd;
         msghdr.msg_accrightslen = sizeof(pass_fd);
-#else
+    }
+    else
+    {
+        msghdr.msg_accrights    = NULL;
+        msghdr.msg_accrightslen = 0;
+    }
+#else  /* HAVE_MSGHDR_ACCRIGHTS */
+    if (pass_fd != -1)  /* we have an fd to send */
+    {
+        cmsg.len   = sizeof(cmsg);
+        cmsg.level = SOL_SOCKET;
+        cmsg.type  = SCM_RIGHTS;
+        cmsg.fd    = pass_fd;
         msghdr.msg_control    = &cmsg;
         msghdr.msg_controllen = sizeof(cmsg);
-#endif
     }
+    else
+    {
+        msghdr.msg_control    = NULL;
+        msghdr.msg_controllen = 0;
+    }
+    msghdr.msg_flags = 0;
+#endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
     if ((ret = sendmsg( thdb->socket, &msghdr, 0 )) < len)
     {
@@ -122,7 +145,7 @@ void CLIENT_SendRequest( enum request req, int pass_fd,
         vec[i].iov_len  = va_arg( args, int );
     }
     va_end( args );
-    return CLIENT_SendRequest_v( req, pass_fd, vec, n );
+    CLIENT_SendRequest_v( req, pass_fd, vec, n );
 }
 
 
@@ -137,14 +160,31 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
 {
     THDB *thdb = THREAD_Current();
     int pass_fd = -1;
-#ifdef HAVE_MSGHDR_ACCRIGHTS
-    struct msghdr msghdr = { NULL, 0, vec, veclen, (void*)&pass_fd, sizeof(int) };
-#else
-    struct cmsg_fd cmsg  = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS, -1 };
-    struct msghdr msghdr = { NULL, 0, vec, veclen, &cmsg, sizeof(cmsg), 0 };
-#endif
     struct header head;
     int ret, remaining;
+
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+    struct msghdr msghdr;
+
+    msghdr.msg_accrights    = (void *)&pass_fd;
+    msghdr.msg_accrightslen = sizeof(int);
+#else  /* HAVE_MSGHDR_ACCRIGHTS */
+    struct msghdr msghdr;
+    struct cmsg_fd cmsg;
+
+    cmsg.len   = sizeof(cmsg);
+    cmsg.level = SOL_SOCKET;
+    cmsg.type  = SCM_RIGHTS;
+    cmsg.fd    = -1;
+    msghdr.msg_control    = &cmsg;
+    msghdr.msg_controllen = sizeof(cmsg);
+    msghdr.msg_flags      = 0;
+#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+
+    msghdr.msg_name    = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov     = vec;
+    msghdr.msg_iovlen  = veclen;
 
     assert( veclen > 0 );
     vec[0].iov_base       = &head;

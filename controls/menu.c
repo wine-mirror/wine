@@ -756,7 +756,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 	BITMAP bm;
 	HBITMAP resBmp = 0;
 
-	// Check if there is a magic menu item associated with this item
+	/* Check if there is a magic menu item associated with this item */
 	if((LOWORD((int)lpitem->text))<12)
 	{
 	    resBmp = MENU_LoadMagicItem((int)lpitem->text, (lpitem->fType & MF_HILITE),
@@ -1149,8 +1149,10 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
         HDC hdcMem = CreateCompatibleDC( hdc );
 
-	// Check if there is a magic menu item associated with this item
-	// and load the appropriate bitmap
+        /*
+         * Check if there is a magic menu item associated with this item
+         * and load the appropriate bitmap
+         */
 	if((LOWORD((int)lpitem->text)) < 12)
 	{
 	    resBmp = MENU_LoadMagicItem((int)lpitem->text, (lpitem->fState & MF_HILITE),

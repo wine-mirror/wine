@@ -114,11 +114,11 @@ typedef struct DataCache DataCache;
  * by this object.
  */
 #define _ICOM_THIS_From_IDataObject(class,name)       class* this = (class*)name;
-#define _ICOM_THIS_From_NDIUnknown(class, name)       class* this = (class*)(((void*)name)-sizeof(void*)); 
-#define _ICOM_THIS_From_IPersistStorage(class, name)  class* this = (class*)(((void*)name)-2*sizeof(void*)); 
-#define _ICOM_THIS_From_IViewObject2(class, name)     class* this = (class*)(((void*)name)-3*sizeof(void*)); 
-#define _ICOM_THIS_From_IOleCache2(class, name)       class* this = (class*)(((void*)name)-4*sizeof(void*)); 
-#define _ICOM_THIS_From_IOleCacheControl(class, name) class* this = (class*)(((void*)name)-5*sizeof(void*)); 
+#define _ICOM_THIS_From_NDIUnknown(class, name)       class* this = (class*)(((char*)name)-sizeof(void*)); 
+#define _ICOM_THIS_From_IPersistStorage(class, name)  class* this = (class*)(((char*)name)-2*sizeof(void*)); 
+#define _ICOM_THIS_From_IViewObject2(class, name)     class* this = (class*)(((char*)name)-3*sizeof(void*)); 
+#define _ICOM_THIS_From_IOleCache2(class, name)       class* this = (class*)(((char*)name)-4*sizeof(void*)); 
+#define _ICOM_THIS_From_IOleCacheControl(class, name) class* this = (class*)(((char*)name)-5*sizeof(void*)); 
 
 /*
  * Prototypes for the methods of the DataCache class.

@@ -184,38 +184,38 @@ static void do_IO_port_init_read_or_write(char* temp, char rw)
 	}
 }
 
-static __inline__ BYTE inb( WORD port )
+static inline BYTE inb( WORD port )
 {
     BYTE b;
     __asm__ __volatile__( "inb %w1,%0" : "=a" (b) : "d" (port) );
     return b;
 }
 
-static __inline__ WORD inw( WORD port )
+static inline WORD inw( WORD port )
 {
     WORD w;
     __asm__ __volatile__( "inw %w1,%0" : "=a" (w) : "d" (port) );
     return w;
 }
 
-static __inline__ DWORD inl( WORD port )
+static inline DWORD inl( WORD port )
 {
     DWORD dw;
     __asm__ __volatile__( "inl %w1,%0" : "=a" (dw) : "d" (port) );
     return dw;
 }
 
-static __inline__ void outb( BYTE value, WORD port )
+static inline void outb( BYTE value, WORD port )
 {
     __asm__ __volatile__( "outb %b0,%w1" : : "a" (value), "d" (port) );
 }
 
-static __inline__ void outw( WORD value, WORD port )
+static inline void outw( WORD value, WORD port )
 {
     __asm__ __volatile__( "outw %w0,%w1" : : "a" (value), "d" (port) );
 }
 
-static __inline__ void outl( DWORD value, WORD port )
+static inline void outl( DWORD value, WORD port )
 {
     __asm__ __volatile__( "outl %0,%w1" : : "a" (value), "d" (port) );
 }

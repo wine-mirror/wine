@@ -1007,6 +1007,9 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     /* Output code for all register functions */
 
     fprintf( outfile, "#ifdef __i386__\n" );
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "static void __asm__dummy() {\n" );
+    fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
     for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
     {
         if (odp->type != TYPE_REGISTER) continue;
@@ -1021,7 +1024,10 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
                  odp->u.func.link_name, odp->u.func.link_name,
                  odp->u.func.link_name, odp->u.func.link_name );
     }
-    fprintf( outfile, "#endif\n" );
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
+    fprintf( outfile, "#endif /* defined(__i386__) */\n" );
 
     /* Output the DLL functions prototypes */
 

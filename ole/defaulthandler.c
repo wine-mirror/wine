@@ -107,9 +107,9 @@ typedef struct DefaultHandler DefaultHandler;
  * by this object.
  */
 #define _ICOM_THIS_From_IOleObject(class,name)       class* this = (class*)name;
-#define _ICOM_THIS_From_NDIUnknown(class, name)      class* this = (class*)(((void*)name)-sizeof(void*)); 
-#define _ICOM_THIS_From_IDataObject(class, name)     class* this = (class*)(((void*)name)-2*sizeof(void*)); 
-#define _ICOM_THIS_From_IRunnableObject(class, name) class* this = (class*)(((void*)name)-3*sizeof(void*)); 
+#define _ICOM_THIS_From_NDIUnknown(class, name)      class* this = (class*)(((char*)name)-sizeof(void*)); 
+#define _ICOM_THIS_From_IDataObject(class, name)     class* this = (class*)(((char*)name)-2*sizeof(void*)); 
+#define _ICOM_THIS_From_IRunnableObject(class, name) class* this = (class*)(((char*)name)-3*sizeof(void*)); 
 
 /*
  * Prototypes for the methods of the DefaultHandler class.

@@ -426,7 +426,7 @@ HRESULT WINAPI HGLOBALStreamImpl_Read(
    */
   supportBuffer = GlobalLock(This->supportHandle);
 
-  memcpy(pv, supportBuffer+This->currentPosition.LowPart, bytesToReadFromBuffer);
+  memcpy(pv, (char *) supportBuffer+This->currentPosition.LowPart, bytesToReadFromBuffer);
 
   /*
    * Move the current position to the new position
@@ -510,7 +510,7 @@ HRESULT WINAPI HGLOBALStreamImpl_Write(
    */
   supportBuffer = GlobalLock(This->supportHandle);
 
-  memcpy(supportBuffer+This->currentPosition.LowPart, pv, cb);  
+  memcpy((char *) supportBuffer+This->currentPosition.LowPart, pv, cb);  
 
   /*
    * Move the current position to the new position

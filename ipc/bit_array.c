@@ -35,11 +35,10 @@
 
 #include "bit_array.h"
 #ifdef HAS_BITOPS
-#define inline __inline__  /* So we can compile with -ansi */
 #include <asm/bitops.h>
 #else
-static __inline__ int clear_bit(int bit, int *mem);
-static __inline__ int set_bit(int bit, int *mem);
+static inline int clear_bit(int bit, int *mem);
+static inline int set_bit(int bit, int *mem);
 #endif /* HAS_BITOPS */
 
 
@@ -81,7 +80,7 @@ static void initialize_arrays()
 ** Find first zero bit in the integer.
 ** Assume there is at least one zero.
 */
-static __inline__ int find_zbit_in_integer(unsigned int integer)
+static inline int find_zbit_in_integer(unsigned int integer)
 {
   int i;
 
@@ -98,7 +97,7 @@ static __inline__ int find_zbit_in_integer(unsigned int integer)
 }
 
 /* return -1 on failure */
-static __inline__ int find_first_zero_bit(unsigned *array, int bits)
+static inline int find_first_zero_bit(unsigned *array, int bits)
 {
   unsigned int  integer;
   int i;
@@ -120,7 +119,7 @@ static __inline__ int find_first_zero_bit(unsigned *array, int bits)
   return -1;
 }
 
-static __inline__ int test_bit(int pos, unsigned *array)
+static inline int test_bit(int pos, unsigned *array)
 {
   unsigned int integer;
   int bit = BIT_IN_INT(pos);
@@ -139,7 +138,7 @@ static __inline__ int test_bit(int pos, unsigned *array)
 
 /* inputs: bit number and memory address (32 bit) */
 /* output: Value of the bit before modification */
-static __inline__ int clear_bit(int bit, int *mem)
+static inline int clear_bit(int bit, int *mem)
 {
   int ret;
 
@@ -151,7 +150,7 @@ static __inline__ int clear_bit(int bit, int *mem)
   return (ret);
 }
 
-static __inline__ int set_bit(int bit, int *mem)
+static inline int set_bit(int bit, int *mem)
 {
   int ret;
   __asm__("xor %1,%1\n"

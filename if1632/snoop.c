@@ -265,19 +265,19 @@ void WINAPI SNOOP16_Entry(CONTEXT *context) {
 		max = fun->nrofargs;
 		if (max>16) max=16;
 		for (i=max;i--;)
-			DPRINTF("%04x%s",*(WORD*)(PTR_SEG_OFF_TO_LIN(SS_reg(context),SP_reg(context))+8+sizeof(WORD)*i),i?",":"");
+			DPRINTF("%04x%s",*(WORD*)((char *) PTR_SEG_OFF_TO_LIN(SS_reg(context),SP_reg(context))+8+sizeof(WORD)*i),i?",":"");
 		if (max!=fun->nrofargs)
 			DPRINTF(" ...");
 	} else if (fun->nrofargs<0) {
 		DPRINTF("<unknown, check return>");
 		ret->args = HeapAlloc(SystemHeap,0,16*sizeof(WORD));
-		memcpy(ret->args,(LPBYTE)(PTR_SEG_OFF_TO_LIN(SS_reg(context),SP_reg(context))+8),sizeof(WORD)*16);
+		memcpy(ret->args,(LPBYTE)((char *) PTR_SEG_OFF_TO_LIN(SS_reg(context),SP_reg(context))+8),sizeof(WORD)*16);
 	}
 	DPRINTF(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 }
 
 void WINAPI SNOOP16_Return(CONTEXT *context) {
-	SNOOP16_RETURNENTRY	*ret = (SNOOP16_RETURNENTRY*)(PTR_SEG_OFF_TO_LIN(CS_reg(context),IP_reg(context))-5);
+	SNOOP16_RETURNENTRY	*ret = (SNOOP16_RETURNENTRY*)((char *) PTR_SEG_OFF_TO_LIN(CS_reg(context),IP_reg(context))-5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
 	 * function it is too late anyway and we can just set '0' (which 

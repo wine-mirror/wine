@@ -79,10 +79,10 @@ typedef void *VA_LIST16;
   (thdb)->cur_stack += (size))
 
 /* Push a DWORD on the 32-bit stack */
-#define STACK32_PUSH(context,val) (*--((DWORD *)ESP_reg(context)) = (val))
+#define STACK32_PUSH(context,val) (*--(*(DWORD **)&ESP_reg(context)) = (val))
 
 /* Pop a DWORD from the 32-bit stack */
-#define STACK32_POP(context) (*((DWORD *)ESP_reg(context))++)
+#define STACK32_POP(context) (*(*(DWORD **)&ESP_reg(context))++)
 
 /* Win32 register functions */
 #define REGS_ENTRYPOINT(name) void WINAPI __regs_##name( CONTEXT *context )

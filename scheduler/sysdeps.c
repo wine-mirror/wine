@@ -158,7 +158,7 @@ int SYSDEPS_SpawnThread( THDB *thread )
 #ifdef HAVE__LWP_CREATE
     ucontext_t context;
     _lwp_makecontext( &context, (void(*)(void *))SYSDEPS_StartThread, thread,
-                      NULL, thread->stack_base, thread->teb.stack_top - thread->stack_base );
+                      NULL, thread->stack_base, (char *) thread->teb.stack_top - (char *) thread->stack_base );
     if ( _lwp_create( &context, 0, NULL ) )
         return -1;
     return 0;

@@ -380,7 +380,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
   supportBuffer = GlobalLock(This->supportHandle);
 
   memcpy(pv,
-         supportBuffer + ulOffset.LowPart,
+         (char *) supportBuffer + ulOffset.LowPart,
          bytesToReadFromBuffer);
 
   /*
@@ -458,7 +458,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
    */
   supportBuffer = GlobalLock(This->supportHandle);
 
-  memcpy(supportBuffer + ulOffset.LowPart, pv, cb);
+  memcpy((char *) supportBuffer + ulOffset.LowPart, pv, cb);
 
   /*
    * Return the number of bytes written.

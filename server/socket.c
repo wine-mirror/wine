@@ -70,10 +70,9 @@ static void do_write( struct client *client, int client_fd )
 {
     struct iovec vec[2];
 #ifndef HAVE_MSGHDR_ACCRIGHTS
-    struct cmsg_fd cmsg  = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS,
-                             client->pass_fd };
+    struct cmsg_fd cmsg;
 #endif
-    struct msghdr msghdr = { NULL, 0, vec, 2, };
+    struct msghdr msghdr;
     int ret;
 
     /* make sure we have something to send */
@@ -81,12 +80,17 @@ static void do_write( struct client *client, int client_fd )
     /* make sure the client is listening */
     assert( client->state == READING );
 
+    msghdr.msg_name = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov = vec;
+
     if (client->count < sizeof(client->head))
     {
         vec[0].iov_base = (char *)&client->head + client->count;
         vec[0].iov_len  = sizeof(client->head) - client->count;
         vec[1].iov_base = client->data;
         vec[1].iov_len  = client->head.len - sizeof(client->head);
+        msghdr.msg_iovlen = 2;
     }
     else
     {
@@ -94,16 +98,36 @@ static void do_write( struct client *client, int client_fd )
         vec[0].iov_len  = client->head.len - client->count;
         msghdr.msg_iovlen = 1;
     }
+
+#ifdef HAVE_MSGHDR_ACCRIGHTS
     if (client->pass_fd != -1)  /* we have an fd to send */
     {
-#ifdef HAVE_MSGHDR_ACCRIGHTS
         msghdr.msg_accrights = (void *)&client->pass_fd;
         msghdr.msg_accrightslen = sizeof(client->pass_fd);
-#else
+    }
+    else
+    {
+        msghdr.msg_accrights = NULL;
+        msghdr.msg_accrightslen = 0;
+    }
+#else  /* HAVE_MSGHDR_ACCRIGHTS */
+    if (client->pass_fd != -1)  /* we have an fd to send */
+    {
+        cmsg.len = sizeof(cmsg);
+        cmsg.level = SOL_SOCKET;
+        cmsg.type = SCM_RIGHTS;
+        cmsg.fd = client->pass_fd;
         msghdr.msg_control = &cmsg;
         msghdr.msg_controllen = sizeof(cmsg);
-#endif
     }
+    else
+    {
+        msghdr.msg_control = NULL;
+        msghdr.msg_controllen = 0;
+    }
+    msghdr.msg_flags = 0;
+#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+
     ret = sendmsg( client_fd, &msghdr, 0 );
     if (ret == -1)
     {
@@ -133,13 +157,30 @@ static void do_read( struct client *client, int client_fd )
 {
     struct iovec vec;
     int pass_fd = -1;
-#ifdef HAVE_MSGHDR_ACCRIGHTS
-    struct msghdr msghdr = { NULL, 0, &vec, 1, (void*)&pass_fd, sizeof(int) };
-#else
-    struct cmsg_fd cmsg  = { sizeof(cmsg), SOL_SOCKET, SCM_RIGHTS, -1 };
-    struct msghdr msghdr = { NULL, 0, &vec, 1, &cmsg, sizeof(cmsg), 0 };
-#endif
     int ret;
+
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+    struct msghdr msghdr;
+
+    msghdr.msg_accrights    = (void *)&pass_fd;
+    msghdr.msg_accrightslen = sizeof(int);
+#else  /* HAVE_MSGHDR_ACCRIGHTS */
+    struct msghdr msghdr;
+    struct cmsg_fd cmsg;
+
+    cmsg.len   = sizeof(cmsg);
+    cmsg.level = SOL_SOCKET;
+    cmsg.type  = SCM_RIGHTS;
+    cmsg.fd    = -1;
+    msghdr.msg_control    = &cmsg;
+    msghdr.msg_controllen = sizeof(cmsg);
+    msghdr.msg_flags      = 0;
+#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+
+    msghdr.msg_name    = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov     = &vec;
+    msghdr.msg_iovlen  = 1;
 
     if (client->count < sizeof(client->head))
     {

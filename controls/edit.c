@@ -11,6 +11,8 @@
  *	please read EDIT.TODO (and update it when you change things)
  */
 
+#include "config.h"
+
 #include <string.h>
 #include "winnt.h"
 #include "win.h"
@@ -113,8 +115,9 @@ typedef struct
 #define ORDER_UINT(x,y) do { if ((UINT)(y) < (UINT)(x)) SWAP_UINT32((x),(y)); } while(0)
 
 #define DPRINTF_EDIT_NOTIFY(hwnd, str) \
-	({TRACE_(edit)("notification " str " sent to hwnd=%08x\n", \
-		       (UINT)(hwnd));})
+	do {TRACE_(edit)("notification " str " sent to hwnd=%08x\n", \
+		       (UINT)(hwnd));} while(0)
+
 /* used for disabled or read-only edit control */
 #define EDIT_SEND_CTLCOLORSTATIC(wnd,hdc) \
 	(SendMessageA((wnd)->parent->hwndSelf, WM_CTLCOLORSTATIC, \
@@ -123,10 +126,10 @@ typedef struct
 	(SendMessageA((wnd)->parent->hwndSelf, WM_CTLCOLOREDIT, \
 			(WPARAM)(hdc), (LPARAM)(wnd)->hwndSelf))
 #define EDIT_NOTIFY_PARENT(wnd, wNotifyCode, str) \
-	(DPRINTF_EDIT_NOTIFY((wnd)->parent->hwndSelf, str), \
+	do {DPRINTF_EDIT_NOTIFY((wnd)->parent->hwndSelf, str); \
 	SendMessageA((wnd)->parent->hwndSelf, WM_COMMAND, \
-			MAKEWPARAM((wnd)->wIDmenu, wNotifyCode), \
-			(LPARAM)(wnd)->hwndSelf))
+		     MAKEWPARAM((wnd)->wIDmenu, wNotifyCode), \
+		     (LPARAM)(wnd)->hwndSelf);} while(0)
 #define DPRINTF_EDIT_MSG16(str) \
 	TRACE_(edit)(\
 		     "16 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n", \
@@ -145,12 +148,12 @@ typedef struct
 /*
  *	These functions have trivial implementations
  *	We still like to call them internally
- *	"static __inline__" makes them more like macro's
+ *	"static inline" makes them more like macro's
  */
-static __inline__ BOOL	EDIT_EM_CanUndo(WND *wnd, EDITSTATE *es);
-static __inline__ void		EDIT_EM_EmptyUndoBuffer(WND *wnd, EDITSTATE *es);
-static __inline__ void		EDIT_WM_Clear(WND *wnd, EDITSTATE *es);
-static __inline__ void		EDIT_WM_Cut(WND *wnd, EDITSTATE *es);
+static inline BOOL	EDIT_EM_CanUndo(WND *wnd, EDITSTATE *es);
+static inline void		EDIT_EM_EmptyUndoBuffer(WND *wnd, EDITSTATE *es);
+static inline void		EDIT_WM_Clear(WND *wnd, EDITSTATE *es);
+static inline void		EDIT_WM_Cut(WND *wnd, EDITSTATE *es);
 /*
  *	This is the only exported function
  */
@@ -252,7 +255,7 @@ static LRESULT	EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT action, INT pos, HWN
  *	EM_CANUNDO
  *
  */
-static __inline__ BOOL EDIT_EM_CanUndo(WND *wnd, EDITSTATE *es)
+static inline BOOL EDIT_EM_CanUndo(WND *wnd, EDITSTATE *es)
 {
 	return (es->undo_insert_count || lstrlenA(es->undo_text));
 }
@@ -263,7 +266,7 @@ static __inline__ BOOL EDIT_EM_CanUndo(WND *wnd, EDITSTATE *es)
  *	EM_EMPTYUNDOBUFFER
  *
  */
-static __inline__ void EDIT_EM_EmptyUndoBuffer(WND *wnd, EDITSTATE *es)
+static inline void EDIT_EM_EmptyUndoBuffer(WND *wnd, EDITSTATE *es)
 {
 	es->undo_insert_count = 0;
 	*es->undo_text = '\0';
@@ -275,7 +278,7 @@ static __inline__ void EDIT_EM_EmptyUndoBuffer(WND *wnd, EDITSTATE *es)
  *	WM_CLEAR
  *
  */
-static __inline__ void EDIT_WM_Clear(WND *wnd, EDITSTATE *es)
+static inline void EDIT_WM_Clear(WND *wnd, EDITSTATE *es)
 {
 	EDIT_EM_ReplaceSel(wnd, es, TRUE, "");
 }
@@ -286,7 +289,7 @@ static __inline__ void EDIT_WM_Clear(WND *wnd, EDITSTATE *es)
  *	WM_CUT
  *
  */
-static __inline__ void EDIT_WM_Cut(WND *wnd, EDITSTATE *es)
+static inline void EDIT_WM_Cut(WND *wnd, EDITSTATE *es)
 {
 	EDIT_WM_Copy(wnd, es);
 	EDIT_WM_Clear(wnd, es);

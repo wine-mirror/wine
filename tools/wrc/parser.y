@@ -85,14 +85,18 @@
  *			- Corrected syntax problems with an old yacc (;)
  *			- Added extra comment about grammar
  */
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
-#include <config.h>
 #include "wrc.h"
 #include "utils.h"
 #include "newstruc.h"

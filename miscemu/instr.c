@@ -23,7 +23,11 @@ DECLARE_DEBUG_CHANNEL(io)
    (IS_V86(context) ? FALSE : IS_SELECTOR_32BIT(seg))
 
 #define STACK_sig(context) \
-   (IS_SEL_32(context,SS_sig(context)) ? ESP_sig(context) : SP_sig(context))
+   (IS_SEL_32(context,SS_sig(context)) ? ESP_sig(context) : (DWORD)SP_sig(context))
+
+#define ADD_STACK_sig(context,offset) \
+   do { if (IS_SEL_32(context,SS_sig(context))) ESP_sig(context) += (offset); \
+        else SP_sig(context) += (offset); } while(0)
 
 #define MAKE_PTR(seg,off) \
    (IS_SELECTOR_SYSTEM(seg) ? (void *)(off) : PTR_SEG_OFF_TO_LIN(seg,off))
@@ -408,7 +412,7 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
                     case 0x17: SS_sig(context) = seg; break;
                     case 0x1f: DS_sig(context) = seg; break;
                     }
-                    STACK_sig(context) += long_op ? 4 : 2;
+                    ADD_STACK_sig(context, long_op ? 4 : 2);
                     EIP_sig(context) += prefixlen + 1;
                     return TRUE;
                 }
@@ -465,7 +469,7 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
                     if (INSTR_ReplaceSelector( context, &seg ))
                     {
                         FS_sig(context) = seg;
-                        STACK_sig(context) += long_op ? 4 : 2;
+                        ADD_STACK_sig(context, long_op ? 4 : 2);
                         EIP_sig(context) += prefixlen + 2;
                         return TRUE;
                     }
@@ -480,7 +484,7 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
                     if (INSTR_ReplaceSelector( context, &seg ))
                     {
                         GS_sig(context) = seg;
-                        STACK_sig(context) += long_op ? 4 : 2;
+                        ADD_STACK_sig(context, long_op ? 4 : 2);
                         EIP_sig(context) += prefixlen + 2;
                         return TRUE;
                     }
@@ -667,7 +671,7 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
                 *(--stack) = FL_sig(context);
                 *(--stack) = CS_sig(context);
                 *(--stack) = IP_sig(context) + prefixlen + 2;
-                STACK_sig(context) -= 3 * sizeof(WORD);
+                ADD_STACK_sig(context, -3 * sizeof(WORD));
                 /* Jump to the interrupt handler */
                 CS_sig(context)  = HIWORD(addr);
                 EIP_sig(context) = LOWORD(addr);
@@ -681,7 +685,7 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
                 EIP_sig(context) = *stack++;
                 CS_sig(context)  = *stack++;
                 EFL_sig(context) = *stack;
-                STACK_sig(context) += 3*sizeof(DWORD);  /* Pop the return address and flags */
+                ADD_STACK_sig(context, 3*sizeof(DWORD));  /* Pop the return address and flags */
             }
             else
             {
@@ -689,7 +693,7 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
                 EIP_sig(context) = *stack++;
                 CS_sig(context)  = *stack++;
                 FL_sig(context)  = *stack;
-                STACK_sig(context) += 3*sizeof(WORD);  /* Pop the return address and flags */
+                ADD_STACK_sig(context, 3*sizeof(WORD));  /* Pop the return address and flags */
             }
             return TRUE;
 
@@ -803,7 +807,7 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
         WORD *stack = (WORD *)STACK_PTR( context );
         *--stack = CS_sig(context);
         *--stack = EIP_sig(context);
-        STACK_sig(context) -= 2*sizeof(WORD);
+        ADD_STACK_sig(context, -2*sizeof(WORD));
 
         CS_sig(context) = SELECTOROF( gpHandler );
         EIP_sig(context) = OFFSETOF( gpHandler );

@@ -501,12 +501,14 @@ struct create_pipe_reply
 /* Allocate a console for the current process */
 struct alloc_console_request
 {
+    int dummy;
 };
 
 
 /* Free the console of the current process */
 struct free_console_request
 {
+    int dummy;
 };
 
 
@@ -597,6 +599,7 @@ struct read_console_input_request
 };
 struct read_console_input_reply
 {
+    int dummy;
 /*  INPUT_RECORD records[0]; */ /* input records */
 };
 
