@@ -595,9 +595,12 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
     if(event->type ==  motion_type)
     {
         XDeviceMotionEvent *motion = (XDeviceMotionEvent *)event;
+        LPWTI_CURSORS_INFO cursor = &gSysCursor[motion->deviceid];
 
         TRACE_(event)("Received tablet motion event (%p)\n",hwnd);
         TRACE("Received tablet motion event (%p)\n",hwnd);
+        /* Set cursor to inverted if cursor is the eraser */
+        gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
         gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(motion->time);
         gMsgPacket.pkSerialNumber = gSerial++;
         gMsgPacket.pkCursor = motion->deviceid;
@@ -615,11 +618,14 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
               button_release_type))
     {
         XDeviceButtonEvent *button = (XDeviceButtonEvent *) event;
+        LPWTI_CURSORS_INFO cursor = &gSysCursor[button->deviceid];
 
         TRACE_(event)("Received tablet button event\n");
         TRACE("Received tablet button %s event\n", (event->type ==
                                 button_press_type)?"press":"release");
 
+        /* Set cursor to inverted if cursor is the eraser */
+        gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
         set_button_state(button->deviceid);
         gMsgPacket.pkTime = button->time;
         gMsgPacket.pkSerialNumber = gSerial++;
@@ -648,10 +654,13 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
              (event->type == proximity_out_type))
     {
         XProximityNotifyEvent *proximity = (XProximityNotifyEvent *) event;
+        LPWTI_CURSORS_INFO cursor = &gSysCursor[proximity->deviceid];
 
         TRACE_(event)("Received tablet proximity event\n");
         TRACE("Received tablet proximity event\n");
-        gMsgPacket.pkStatus = (event->type==proximity_out_type)?TPS_PROXIMITY:0;
+        /* Set cursor to inverted if cursor is the eraser */
+        gMsgPacket.pkStatus = (cursor->TYPE == 0xc85a ?TPS_INVERT:0);
+        gMsgPacket.pkStatus |= (event->type==proximity_out_type)?TPS_PROXIMITY:0;
         gMsgPacket.pkTime = proximity->time;
         gMsgPacket.pkSerialNumber = gSerial++;
         gMsgPacket.pkCursor = proximity->deviceid;
