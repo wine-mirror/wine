@@ -504,6 +504,8 @@ void PROCESS_Start(void)
     case PROC_WIN32:
         TRACE_(relay)( "Starting Win32 process (entryproc=%p)\n", entry );
         if (pdb->flags & PDB32_DEBUGGED) DebugBreak();
+	/* FIXME: should use _PEB as parameter for NT 3.5 programs !
+	 * Dunno about other OSs */
         ExitProcess( entry(NULL) );
     }
 
