@@ -53,7 +53,9 @@ enum wine_internal_message
     WM_WINE_ENABLEWINDOW,
     WM_WINE_SETACTIVEWINDOW,
     WM_WINE_KEYBOARD_LL_HOOK,
-    WM_WINE_MOUSE_LL_HOOK
+    WM_WINE_MOUSE_LL_HOOK,
+    WM_WINE_FIRST_DRIVER_MSG = 0x80001000,  /* range of messages reserved for the USER driver */
+    WM_WINE_LAST_DRIVER_MSG = 0x80001fff
 };
 
 struct tagCURSORICONINFO;
@@ -111,6 +113,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pSetWindowText)(HWND,LPCWSTR);
     BOOL   (*pShowWindow)(HWND,INT);
     void   (*pSysCommandSizeMove)(HWND,WPARAM);
+    LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
 } USER_DRIVER;
 
 extern USER_DRIVER USER_Driver;

@@ -129,6 +129,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(SetWindowText);
     GET_USER_FUNC(ShowWindow);
     GET_USER_FUNC(SysCommandSizeMove);
+    GET_USER_FUNC(WindowMessage);
 
     return TRUE;
 }

@@ -42,6 +42,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(key);
 
 #define WM_NCMOUSEFIRST WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST  WM_NCMBUTTONDBLCLK
@@ -1151,6 +1152,11 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     case WM_WINE_MOUSE_LL_HOOK:
         return HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, wparam, lparam, TRUE );
     default:
+        if (msg >= WM_WINE_FIRST_DRIVER_MSG && msg <= WM_WINE_LAST_DRIVER_MSG)
+        {
+            if (!USER_Driver.pWindowMessage) return 0;
+            return USER_Driver.pWindowMessage( hwnd, msg, wparam, lparam );
+        }
         FIXME( "unknown internal message %x\n", msg );
         return 0;
     }
@@ -2470,6 +2476,188 @@ BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG pmsg )
     MSG msg = *pmsg;
     msg.wParam = map_wparam_AtoW( msg.message, msg.wParam );
     return IsDialogMessageW( hwndDlg, &msg );
+}
+
+
+/***********************************************************************
+ *		TranslateMessage (USER32.@)
+ *
+ * Implementation of TranslateMessage.
+ *
+ * TranslateMessage translates virtual-key messages into character-messages,
+ * as follows :
+ * WM_KEYDOWN/WM_KEYUP combinations produce a WM_CHAR or WM_DEADCHAR message.
+ * ditto replacing WM_* with WM_SYS*
+ * This produces WM_CHAR messages only for keys mapped to ASCII characters
+ * by the keyboard driver.
+ *
+ * If the message is WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, or WM_SYSKEYUP, the
+ * return value is nonzero, regardless of the translation.
+ *
+ */
+BOOL WINAPI TranslateMessage( const MSG *msg )
+{
+    UINT message;
+    WCHAR wp[2];
+    BYTE state[256];
+
+    if (msg->message < WM_KEYFIRST || msg->message > WM_KEYLAST) return FALSE;
+    if (msg->message != WM_KEYDOWN && msg->message != WM_SYSKEYDOWN) return TRUE;
+
+    TRACE_(key)("Translating key %s (%04x), scancode %02x\n",
+                 SPY_GetVKeyName(msg->wParam), msg->wParam, LOBYTE(HIWORD(msg->lParam)));
+
+    GetKeyboardState( state );
+    /* FIXME : should handle ToUnicode yielding 2 */
+    switch (ToUnicode(msg->wParam, HIWORD(msg->lParam), state, wp, 2, 0))
+    {
+    case 1:
+        message = (msg->message == WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR;
+        TRACE_(key)("1 -> PostMessageW(%p,%s,%04x,%08lx)\n",
+            msg->hwnd, SPY_GetMsgName(message, msg->hwnd), wp[0], msg->lParam);
+        PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
+        break;
+
+    case -1:
+        message = (msg->message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
+        TRACE_(key)("-1 -> PostMessageW(%p,%s,%04x,%08lx)\n",
+            msg->hwnd, SPY_GetMsgName(message, msg->hwnd), wp[0], msg->lParam);
+        PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
+        break;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		DispatchMessageA (USER32.@)
+ */
+LONG WINAPI DispatchMessageA( const MSG* msg )
+{
+    WND * wndPtr;
+    LONG retval;
+    WNDPROC winproc;
+
+      /* Process timer messages */
+    if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
+    {
+        if (msg->lParam) return CallWindowProcA( (WNDPROC)msg->lParam, msg->hwnd,
+                                                 msg->message, msg->wParam, GetTickCount() );
+    }
+
+    if (msg->message & 0x80000000)
+        return handle_internal_message( msg->hwnd, msg->message, msg->wParam, msg->lParam );
+
+    if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
+    {
+        if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( msg->hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr->tid != GetCurrentThreadId())
+    {
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        WIN_ReleasePtr( wndPtr );
+        return 0;
+    }
+    winproc = wndPtr->winproc;
+    WIN_ReleasePtr( wndPtr );
+
+    SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
+                      msg->wParam, msg->lParam );
+    retval = CallWindowProcA( winproc, msg->hwnd, msg->message,
+                              msg->wParam, msg->lParam );
+    SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
+                     msg->wParam, msg->lParam );
+
+    if (msg->message == WM_PAINT)
+    {
+        /* send a WM_NCPAINT and WM_ERASEBKGND if the non-client area is still invalid */
+        HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+        GetUpdateRgn( msg->hwnd, hrgn, TRUE );
+        DeleteObject( hrgn );
+    }
+    return retval;
+}
+
+
+/***********************************************************************
+ *		DispatchMessageW (USER32.@) Process a message
+ *
+ * Process the message specified in the structure *_msg_.
+ *
+ * If the lpMsg parameter points to a WM_TIMER message and the
+ * parameter of the WM_TIMER message is not NULL, the lParam parameter
+ * points to the function that is called instead of the window
+ * procedure.
+ *
+ * The message must be valid.
+ *
+ * RETURNS
+ *
+ *   DispatchMessage() returns the result of the window procedure invoked.
+ *
+ * CONFORMANCE
+ *
+ *   ECMA-234, Win32
+ *
+ */
+LONG WINAPI DispatchMessageW( const MSG* msg )
+{
+    WND * wndPtr;
+    LONG retval;
+    WNDPROC winproc;
+
+      /* Process timer messages */
+    if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
+    {
+        if (msg->lParam) return CallWindowProcW( (WNDPROC)msg->lParam, msg->hwnd,
+                                                 msg->message, msg->wParam, GetTickCount() );
+    }
+
+    if (msg->message & 0x80000000)
+        return handle_internal_message( msg->hwnd, msg->message, msg->wParam, msg->lParam );
+
+    if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
+    {
+        if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( msg->hwnd )) SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr->tid != GetCurrentThreadId())
+    {
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        WIN_ReleasePtr( wndPtr );
+        return 0;
+    }
+    winproc = wndPtr->winproc;
+    WIN_ReleasePtr( wndPtr );
+
+    SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
+                      msg->wParam, msg->lParam );
+    retval = CallWindowProcW( winproc, msg->hwnd, msg->message,
+                              msg->wParam, msg->lParam );
+    SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
+                     msg->wParam, msg->lParam );
+
+    if (msg->message == WM_PAINT)
+    {
+        /* send a WM_NCPAINT and WM_ERASEBKGND if the non-client area is still invalid */
+        HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+        GetUpdateRgn( msg->hwnd, hrgn, TRUE );
+        DeleteObject( hrgn );
+    }
+    return retval;
 }
 
 
