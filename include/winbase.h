@@ -1550,6 +1550,7 @@ VOID        WINAPI RtlMoveMemory(LPVOID,LPCVOID,UINT);
 VOID        WINAPI RtlZeroMemory(LPVOID,UINT);
 DWORD       WINAPI SearchPathA(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI SearchPathW(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
+#define     SearchPath WINELIB_NAME_AW(SearchPath)
 BOOL      WINAPI SetCommMask(INT,DWORD);
 BOOL      WINAPI SetComputerNameA(LPCSTR);
 BOOL      WINAPI SetComputerNameW(LPCWSTR);
@@ -1817,9 +1818,10 @@ BOOL      WINAPI WritePrivateProfileSectionW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WritePrivateProfileSection WINELIB_NAME_AW(WritePrivateProfileSection)
 BOOL      WINAPI WritePrivateProfileStringA(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
 BOOL      WINAPI WritePrivateProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR);
+#define     WritePrivateProfileString WINELIB_NAME_AW(WritePrivateProfileString)
 BOOL	     WINAPI WriteProfileSectionA(LPCSTR,LPCSTR);
 BOOL	     WINAPI WriteProfileSectionW(LPCWSTR,LPCWSTR);
-#define     WritePrivateProfileString WINELIB_NAME_AW(WritePrivateProfileString)
+#define     WritePrivateProfileSection WINELIB_NAME_AW(WritePrivateProfileSection)
 BOOL      WINAPI WritePrivateProfileStructA(LPCSTR,LPCSTR,LPVOID,UINT,LPCSTR);
 BOOL      WINAPI WritePrivateProfileStructW(LPCWSTR,LPCWSTR,LPVOID,UINT,LPCWSTR);
 #define     WritePrivateProfileStruct WINELIB_NAME_AW(WritePrivateProfileStruct)
