@@ -2,3 +2,4 @@ Makefile
 dmusic.dll.dbg.c
 dmusic.spec.c
 dmusic.spec.def
+version.res
