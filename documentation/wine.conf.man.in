@@ -253,6 +253,65 @@ default: none
 default: Win31
 .br 
 Use Win95-like window displays or Win3.1-like window displays.
+.PP
+.B [Registry]
+.br
+.I format: AltCurrentUserFile=<filename>
+.br
+alternate registry file name: HKEY_CURRENT_USER 
+.PP
+.I format: AltUserFile=<filename>
+.br
+alternate registry file name: HKKEY_USERS
+.PP
+.I format: AltLocalMachineFile=<filename>
+.br
+alternate registry file name: HKEY_LOCAL_MASCHINE
+.PP
+.I format: LoadAltRegistryFiles=<boolean>
+.br
+Load above registries.
+.PP
+.I format: WritetoAltRegistryFiles=<boolean>
+.br
+TRY to write all changes to alt registries
+.PP
+.I format: LoadGlobalRegistryFiles=<boolean>
+.br
+Global registries (stored in /etc)
+.PP
+.I format: LoadHomeRegistryFiles=<boolean>
+.br
+Home registries (stored in ~user/.wine/)
+.PP
+.I format: WritetoHomeRegistryFiles=<boolean>
+.br
+TRY to write all changes to alt registries
+.PP
+.I format: LoadWin311RegistryFiles=<boolean>
+.br
+Windows 3.1 registry files stored in windows directory
+.PP
+.I format: LoadWin95RegistryFiles=<boolean>
+.br
+Windows 95 registry files stored in windows directory and c:
+.PP
+.I format: LoadWinNTRegistryFiles=<boolean>
+.br
+Windows NT registry files stored in <windows directory>/system32/config and <windows directory>/<profiles>/user.dat. (not yet completely implemented)
+.PP
+.I format: NTUser=<username>
+.br
+Needed for building path to the user registry file: <windows directory>/profiles/<username>/ntuser.dat
+.PP
+To avoid interferences between all registrys you should only activate the win311, win95 or the winnt registry.
+.PP
+booleans: Y/y/T/t/1 are true, N/n/F/f/0 are false.
+.br
+Defaults are read all, write to Home and Alt
+.PP
+Note: it is pointless to specify alt files and neither load nor write to them.
+.PP
 .SH SAMPLE CONFIGURATION FILE
 A sample configuration file is distributed as
 .B wine.ini
