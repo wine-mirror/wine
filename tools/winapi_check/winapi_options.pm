@@ -61,6 +61,12 @@ my %options = (
     "calling-convention" => { default => 0, parent => "local", description => "calling convention checking" },
     "misplaced" => { default => 1, parent => "local", description => "check for misplaced functions" },
     "cross-call" => { default => 0, parent => "local", description => "check for cross calling functions" },
+    "cross-call-win32-win16" => { 
+	default => 0, parent => "cross-call", description => "check for cross calls between win32 and win16"
+     },
+    "cross-call-unicode-ascii" => { 
+	default => 0, parent => "cross-call", description => "check for cross calls between Unicode and ASCII" 
+     },
     "documentation" => { default => 1, parent => "local", description => "check for documentation inconsistances\n" },
     "documentation-width" => { default => 0, parent => "documentation", description => "check for documentation width inconsistances\n" },
 
@@ -85,8 +91,10 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
+    my $output = \${$self->{OUTPUT}};
+
+    $$output = shift;
     my $refarguments = shift;
-    my @ARGV = @$refarguments;
     my $wine_dir = shift;
 
     $self->options_set("default");
@@ -96,7 +104,13 @@ sub new {
     my $module = \${$self->{MODULE}};
     my $global = \${$self->{GLOBAL}};
 
-    while(defined($_ = shift @ARGV)) {
+    if($wine_dir eq ".") {
+	$$global = 1;
+    } else {
+	$$global = 0;
+    }
+
+    while(defined($_ = shift @$refarguments)) {
 	if(/^--(all|none)$/) {
 	    $self->options_set("$1");
 	    next;
@@ -121,8 +135,9 @@ sub new {
 		$name = $1;
 		$prefix = "no";
 		if(defined($value)) {
-		    print STDERR "<internal>: options with prefix 'no' can't take parameters\n";
-		    exit 1;
+		    $$output->write("options with prefix 'no' can't take parameters\n");
+
+		    return undef;
 		}
 	    }
 
@@ -174,10 +189,16 @@ sub new {
 	    $$module = { active => 1, filter => 1, hash => \%names };
 	}	
 	elsif(/^-(.*)$/) {
-	    print STDERR "<internal>: unknown option: $&\n"; 
-	    print STDERR "<internal>: usage: winapi-check [--help] [<files>]\n";
-	    exit 1;
+	    $$output->write("unknown option: $_\n"); 
+
+	    return undef;
 	} else {
+	    if(!-e $_) {
+		$$output->write("$_: no such file or directory\n");
+
+		return undef;
+	    }
+
 	    push @$c_files, $_;
 	}
     }
@@ -194,10 +215,10 @@ sub new {
 
     @$c_files = sort(map {
 	s/^.\/(.*)$/$1/;
-	if(!/spec\.c$/) {
-	    $_;
-	} else {
+	if(/glue\.c|spec\.c$/) {
 	    ();
+	} else {
+	    $_;
 	}
     } split(/\n/, `find $c_paths -name \\*.c`));
 

@@ -185,18 +185,31 @@ sub check_file {
 	    my @called_names = $$functions{$name}->called_function_names;
 	    my @called_by_names = $$functions{$name}->called_by_function_names;
 	    my $module = $$functions{$name}->module;
-	    my $module16 = $$functions{$name}->module16;
-	    my $module32 = $$functions{$name}->module32;
 
-	    if($#called_names >= 0 && (defined($module16) || defined($module32)) ) {	
-		for my $called_name (@called_names) {
-		    my $called_module16 = $$functions{$called_name}->module16;
-		    my $called_module32 = $$functions{$called_name}->module32;
-		    if(defined($module32) &&
-		       defined($called_module16) && !defined($called_module32) &&
-		       $name ne $called_name) 
-		    {
-			$output->write("$file: $module: $name: illegal call to $called_name (Win16)\n");
+	    if($options->cross_call_win32_win16) {
+		my $module16 = $$functions{$name}->module16;
+		my $module32 = $$functions{$name}->module32;
+
+		if($#called_names >= 0 && (defined($module16) || defined($module32)) ) {	
+		    for my $called_name (@called_names) {
+			my $called_module16 = $$functions{$called_name}->module16;
+			my $called_module32 = $$functions{$called_name}->module32;
+			if(defined($module32) &&
+			   defined($called_module16) && !defined($called_module32) &&
+			   $name ne $called_name) 
+			{
+			    $output->write("$file: $module: $name: illegal call to $called_name (Win32 -> Win16)\n");
+			}
+		    }
+		}
+	    }
+
+	    if($options->cross_call_unicode_ascii) {
+		if($name =~ /W$/) {
+		    for my $called_name (@called_names) {
+			if($called_name =~ /A$/) {
+			    $output->write("$file: $module: $name: illegal call to $called_name (Unicode -> ASCII)\n");
+			}
 		    }
 		}
 	    }

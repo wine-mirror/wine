@@ -221,7 +221,7 @@ sub parse_c_file {
 		#print "  " . ($n + 1) . ": '$argument'\n";
 		$argument =~ s/^(IN OUT(?=\s)|IN(?=\s)|OUT(?=\s)|\s*)\s*//;
 		$argument =~ s/^(const(?=\s)|CONST(?=\s)|\s*)\s*//;
-		if($argument =~ /^...$/) {
+		if($argument =~ /^\.\.\.$/) {
 		    $argument = "...";
 		} elsif($argument =~ /^((struct\s+|union\s+|enum\s+)?\w+)\s*((\*\s*?)*)\s*/) {
 		    $argument = "$1";

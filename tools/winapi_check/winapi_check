@@ -54,13 +54,17 @@ if(length($wine_dir) != 1) {
     $current_dir =~ s/\/.$//;
 }
 
-my $options = winapi_options->new(\@ARGV, $wine_dir);
-if($options->help) {
+my $output = 'output'->new;
+
+my $options = winapi_options->new($output, \@ARGV, $wine_dir);
+if(!defined($options)) {
+    $output->write("usage: winapi_check [--help] [<files>]\n");
+
+    exit 1;
+} elsif($options->help) {
     $options->show_help;
     exit;
 }
-
-my $output = 'output'->new;
 
 my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, "$winapi_check_dir/modules.dat");
 
@@ -514,10 +518,7 @@ foreach my $file ($options->c_files) {
 		    if($nativeapi->is_conditional_header($header)) { 
 			if(!$preprocessor->is_def($macro)) {
 			    if($macro =~ /^HAVE_X11/) {
-				if(!$preprocessor->is_undef("X_DISPLAY_MISSING")) {
-				    $output->write("$file: #$directive $argument: is a conditional include, " .
-						   "but is not protected\n");
-				}
+				# Do nothing X Windows is handled differently
 			    } elsif($macro =~ /^HAVE_(.*?)_H$/) {
 				if($header ne "alloca.h" && !$preprocessor->is_def("STATFS_DEFINED_BY_$1")) {
 				    $output->write("$file: #$directive $argument: is a conditional include, " . 

@@ -1,7 +1,6 @@
 %long
 
 BOOL
-BYTE
 DWORD
 INT
 LONG
@@ -31,6 +30,7 @@ LPSTR
 %void
 
 VOID
+void
 
 %wstr
 
