@@ -1497,6 +1497,26 @@ LsaClose(IN LSA_HANDLE ObjectHandle)
 }
 
 /******************************************************************************
+ * LsaStorePrivateData [ADVAPI32.@]
+ */
+NTSTATUS WINAPI LsaStorePrivateData( LSA_HANDLE PolicyHandle,
+    PLSA_UNICODE_STRING KeyName, PLSA_UNICODE_STRING PrivateData)
+{
+    FIXME("%p %p %p\n", PolicyHandle, KeyName, PrivateData);
+    return STATUS_OBJECT_NAME_NOT_FOUND;
+}
+
+/******************************************************************************
+ * LsaRetrievePrivateData [ADVAPI32.@]
+ */
+NTSTATUS WINAPI LsaRetrievePrivateData( LSA_HANDLE PolicyHandle,
+    PLSA_UNICODE_STRING KeyName, PLSA_UNICODE_STRING* PrivateData)
+{
+    FIXME("%p %p %p\n", PolicyHandle, KeyName, PrivateData);
+    return STATUS_OBJECT_NAME_NOT_FOUND;
+}
+
+/******************************************************************************
  * LsaNtStatusToWinError [ADVAPI32.@]
  *
  * PARAMS

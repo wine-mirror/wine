@@ -370,6 +370,8 @@
 @ stub LsaEnumeratePrivileges
 @ stub LsaLookupPrivilegeDisplayName
 @ stub LsaICLookupNames
+@ stdcall LsaRetrievePrivateData(ptr ptr ptr)
+@ stdcall LsaStorePrivateData(ptr ptr ptr)
 @ stub ElfRegisterEventSourceW
 @ stub ElfReportEventW
 @ stub ElfDeregisterEventSource
