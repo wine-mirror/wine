@@ -12,9 +12,10 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+EXEEXT    = @EXEEXT@
 MODULE    = none
 
-PROGRAMS = winegcc
+PROGRAMS = winegcc$(EXEEXT)
 
 C_SRCS = \
 	utils.c \
@@ -24,16 +25,16 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-winegcc: winegcc.o utils.o
+winegcc$(EXEEXT): winegcc.o utils.o
 	$(CC) $(CFLAGS) -o $@ winegcc.o utils.o $(LIBPORT)
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) winegcc $(bindir)/winegcc
-	cd $(bindir) && $(RM) wineg++ && $(LN_S) winegcc wineg++
-	cd $(bindir) && $(RM) winecpp && $(LN_S) winegcc winecpp
+	$(INSTALL_PROGRAM) winegcc$(EXEEXT) $(bindir)/winegcc$(EXEEXT)
+	cd $(bindir) && $(RM) wineg++$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) wineg++$(EXEEXT)
+	cd $(bindir) && $(RM) winecpp$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) winecpp$(EXEEXT)
 
 uninstall::
-	$(RM) $(bindir)/winegcc $(bindir)/wineg++ $(bindir)/winecpp
+	$(RM) $(bindir)/winegcc$(EXEEXT) $(bindir)/wineg++y$(EXEEXT) $(bindir)/winecpp$(EXEEXT)
 
 ### Dependencies:
