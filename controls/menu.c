@@ -2675,13 +2675,10 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    break;
 
 		case WM_MOUSEMOVE:
-                    /* In win95 winelook, the selected menu item must be changed every time the
-                       mouse moves. In Win31 winelook, the mouse button has to be held down */
+                    /* the selected menu item must be changed every time */
+		     /* the mouse moves. */
 
-                    if ( hmenu && 
-                         ( (msg.wParam & MK_LBUTTON) ||
-                           ((wFlags & TPM_RIGHTBUTTON) && (msg.wParam & MK_RBUTTON))) )
-
+                    if (hmenu)
 			fEndMenu |= !MENU_MouseMove( &mt, hmenu, wFlags );
 
 	    } /* switch(msg.message) - mouse */
