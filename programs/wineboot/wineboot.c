@@ -23,8 +23,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
-const char * const RENAME_FILE="wininit.ini";
-const char * const RENAME_FILE_SECTION="[rename]";
 #define MAX_LINE_LENGTH (2*MAX_PATH+2)
 
 static BOOL GetLine( HANDLE hFile, char *buf, size_t buflen )
@@ -67,31 +65,14 @@ static BOOL GetLine( HANDLE hFile, char *buf, size_t buflen )
  */
 static BOOL wininit()
 {
+    const char * const RENAME_FILE="wininit.ini";
+    const char * const RENAME_FILE_TO="wininit.bak";
+    const char * const RENAME_FILE_SECTION="[rename]";
     char buffer[MAX_LINE_LENGTH];
-    char ini_path[MAX_PATH];
     HANDLE hFile;
-    DWORD res;
 
-    res=GetWindowsDirectoryA( ini_path, sizeof(ini_path) );
 
-    if( res==0 )
-    {
-	WINE_ERR("Couldn't get the windows directory - error %ld\n",
-		GetLastError() );
-
-	return FALSE;
-    }
-
-    if( res>=sizeof(ini_path) )
-    {
-	WINE_ERR("Windows path too long (%ld)\n", res );
-
-	return FALSE;
-    }
-
-    sprintf( ini_path+res, "\\%s", RENAME_FILE );
-
-    hFile=CreateFileA(ini_path, GENERIC_READ,
+    hFile=CreateFileA(RENAME_FILE, GENERIC_READ,
 		    FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
 		    NULL );
     
@@ -162,9 +143,9 @@ static BOOL wininit()
 
     CloseHandle( hFile );
 
-    if( !DeleteFileA( ini_path ) )
+    if( !MoveFileExA( RENAME_FILE, RENAME_FILE_TO, MOVEFILE_REPLACE_EXISTING) )
     {
-        WINE_ERR("Couldn't erase %s, error %ld\n", ini_path, GetLastError() );
+        WINE_ERR("Couldn't rename wininit.ini, error %ld\n", GetLastError() );
 
         return FALSE;
     }
@@ -174,7 +155,35 @@ static BOOL wininit()
 
 int main( int argc, char *argv[] )
 {
-    wininit();
+    /* First, set the current directory to SystemRoot */
+    TCHAR gen_path[MAX_PATH];
+    DWORD res;
 
-    return 0;
+    res=GetWindowsDirectory( gen_path, sizeof(gen_path) );
+    
+    if( res==0 )
+    {
+	WINE_ERR("Couldn't get the windows directory - error %ld\n",
+		GetLastError() );
+
+	return 100;
+    }
+
+    if( res>=sizeof(gen_path) )
+    {
+	WINE_ERR("Windows path too long (%ld)\n", res );
+
+	return 100;
+    }
+
+    if( !SetCurrentDirectory( gen_path ) )
+    {
+        WINE_ERR("Cannot set the dir to %s (%ld)\n", gen_path, GetLastError() );
+
+        return 100;
+    }
+
+    res=wininit();
+
+    return res?0:101;
 }
