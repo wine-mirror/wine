@@ -802,7 +802,7 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
     LRESULT      retVal = 1;
     int          iWndsLocks;
     
-    *pRes = 0;
+    if (pRes) *pRes = 0;
 
     if (IsTaskLocked16() || !IsWindow(hwnd))
         return 0;
@@ -828,12 +828,17 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
     smsg->lParam = lParam;
     
     smsg->lResult = 0;
-    smsg->hSrcQueue = GetFastQueue16();
+    smsg->hSrcQueue = pRes ? GetFastQueue16() : 0;
     smsg->hDstQueue = hDestQueue;
     smsg->flags = flags;
 
-    /* add smsg struct in the processing SM list of the source queue */
-    QUEUE_AddSMSG(queue, SM_PROCESSING_LIST, smsg);
+    if (pRes) {
+        /* add smsg struct in the processing SM list of the source queue */
+        QUEUE_AddSMSG(queue, SM_PROCESSING_LIST, smsg);
+    } else {
+        /* this is a notification message, we don't need a reply */
+        smsg->flags |= SMSG_ALREADY_REPLIED | SMSG_RECEIVER_CLEANS;
+    }
 
     /* add smsg struct in the pending list of the destination queue */
     if (QUEUE_AddSMSG(destQ, SM_PENDING_LIST, smsg) == FALSE)
@@ -841,6 +846,8 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
         retVal = 0;
 	goto CLEANUP;
     }
+
+    if (!pRes) goto CLEANUP; /* don't need a reply */
 
     iWndsLocks = WIN_SuspendWndsLock();
 
@@ -942,7 +949,8 @@ BOOL WINAPI ReplyMessage( LRESULT result )
 
 
     if (    !(smsg = queue->smWaiting)
-         || !(senderQ = QUEUE_Lock( smsg->hSrcQueue )) )
+         || !(  (senderQ = QUEUE_Lock( smsg->hSrcQueue ))
+              || (smsg->flags & SMSG_ALREADY_REPLIED)) )
         goto ReplyMessageEnd;
 
     if ( !(smsg->flags & SMSG_ALREADY_REPLIED) )
@@ -1711,11 +1719,11 @@ static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
     WND **list, **ppWnd;
     LRESULT ret = 1;
 
-    *pRes = 0;
+    if (pRes) *pRes = 0;
 
     if (hwnd == HWND_BROADCAST|| hwnd == HWND_TOPMOST)
     {
-        *pRes = 1;
+        if (pRes) *pRes = 1;
         
         if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
         {
@@ -1783,30 +1791,33 @@ static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
     if (flags & SMSG_WIN32)
         SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wParam, lParam );
     else
-    SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
+        SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
 
     if (wndPtr->hmemTaskQ != GetFastQueue16())
         ret = MSG_SendMessageInterThread( wndPtr->hmemTaskQ, hwnd, msg,
                                           wParam, lParam, timeout, flags, pRes );
     else
     {
+        LRESULT res;
+
         /* Call the right CallWindowProc flavor */
         if (flags & SMSG_UNICODE)
-            *pRes = CallWindowProcW( (WNDPROC)wndPtr->winproc,
-                                     hwnd, msg, wParam, lParam );
+            res = CallWindowProcW( (WNDPROC)wndPtr->winproc,
+                                   hwnd, msg, wParam, lParam );
         else if (flags & SMSG_WIN32)
-            *pRes = CallWindowProcA( (WNDPROC)wndPtr->winproc,
-                                hwnd, msg, wParam, lParam );
+            res = CallWindowProcA( (WNDPROC)wndPtr->winproc,
+                                   hwnd, msg, wParam, lParam );
         else
-            *pRes = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
+            res = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
                                     (HWND16) hwnd, (UINT16) msg,
                                     (WPARAM16) wParam, lParam );
+        if (pRes) *pRes = res;
     }
 
     if (flags & SMSG_WIN32)
-        SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, *pRes, wParam, lParam );
+        SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, pRes?*pRes:0, wParam, lParam );
     else
-    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, *pRes, wParam, lParam );
+        SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, pRes?*pRes:0, wParam, lParam );
 END:
     WIN_ReleaseWndPtr(wndPtr);
     return ret;
@@ -2570,44 +2581,20 @@ LONG WINAPI BroadcastSystemMessage(
 
 /***********************************************************************
  *           SendNotifyMessageA    (USER32.460)
- * FIXME
- *  The message sended with PostMessage has to be put in the queue
- *  with a higher priority as the other "Posted" messages.
- *  QUEUE_AddMsg has to be modifyed.
  */
 BOOL WINAPI SendNotifyMessageA(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
-{	BOOL ret = TRUE;
-	FIXME("(%04x,%08x,%08x,%08lx) not complete\n",
-	      hwnd, msg, wParam, lParam);
-	      
-	if ( GetCurrentThreadId() == GetWindowThreadProcessId ( hwnd, NULL))
-	{	ret=SendMessageA ( hwnd, msg, wParam, lParam );
-	}
-	else
-	{	PostMessageA ( hwnd, msg, wParam, lParam );
-	}
-	return ret;
+{
+   return MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE,
+                          SMSG_WIN32, NULL);
 }
 
 /***********************************************************************
  *           SendNotifyMessageW    (USER32.461)
- * FIXME
- *  The message sended with PostMessage has to be put in the queue
- *  with a higher priority as the other "Posted" messages.
- *  QUEUE_AddMsg has to be modifyed.
  */
 BOOL WINAPI SendNotifyMessageW(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
-{       BOOL ret = TRUE;
-	FIXME("(%04x,%08x,%08x,%08lx) not complete\n",
-	      hwnd, msg, wParam, lParam);
-
-	if ( GetCurrentThreadId() == GetWindowThreadProcessId ( hwnd, NULL))
-	{       ret=SendMessageW ( hwnd, msg, wParam, lParam );
-	}
-	else
-	{       PostMessageW ( hwnd, msg, wParam, lParam );
-	}
-	return ret;
+{
+   return MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE,
+                          SMSG_WIN32 | SMSG_UNICODE, NULL);
 }
 
 /***********************************************************************
