@@ -15,6 +15,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "debug.h"
 #include "wine/obj_storage.h"
 
 #include "storage32.h"
@@ -627,6 +628,13 @@ HRESULT WINAPI StgStreamImpl_SetSize(
   return S_OK;
 }
         
+/***
+ * This method is part of the IStream interface.
+ *
+ * It will copy the 'cb' Bytes to 'pstm' IStream.
+ *
+ * See the documentation of IStream for more info.
+ */
 HRESULT WINAPI StgStreamImpl_CopyTo( 
 				    IStream*      iface,
 				    IStream*      pstm,         /* [unique][in] */ 
@@ -634,7 +642,69 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
 				    ULARGE_INTEGER* pcbRead,      /* [out] */        
 				    ULARGE_INTEGER* pcbWritten)   /* [out] */        
 {
-  return E_NOTIMPL;
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+  HRESULT        hr = S_OK;
+  BYTE           tmpBuffer[128];
+  ULONG          bytesRead, bytesWritten, copySize;
+  ULARGE_INTEGER totalBytesRead;
+  ULARGE_INTEGER totalBytesWritten;
+
+  /*
+   * Sanity check
+   */
+  if ( pstm == 0 )
+    return STG_E_INVALIDPOINTER;
+
+  totalBytesRead.LowPart = totalBytesRead.HighPart = 0;
+  totalBytesWritten.LowPart = totalBytesWritten.HighPart = 0;
+
+  /*
+   * use stack to store data temporarly
+   * there is surely more performant way of doing it, for now this basic
+   * implementation will do the job
+   */
+  while ( cb.LowPart > 0 )
+  {
+    if ( cb.LowPart >= 128 )
+      copySize = 128;
+    else
+      copySize = cb.LowPart;
+    
+    StgStreamImpl_Read(iface, tmpBuffer, 128, &bytesRead);
+
+    totalBytesRead.LowPart += bytesRead;
+    
+    StgStreamImpl_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
+
+    totalBytesWritten.LowPart += bytesWritten;
+
+    /*
+     * Check that read & write operations were succesfull
+     */
+    if ( (bytesRead != copySize) && (bytesWritten != copySize) )
+    {
+      hr = STG_E_MEDIUMFULL;
+      break;
+    }
+    
+    cb.LowPart = cb.LowPart - copySize;
+  }
+
+  /*
+   * Update number of bytes read and written
+   */
+  if (pcbRead)
+  {
+    pcbRead->LowPart = totalBytesRead.LowPart;
+    pcbRead->HighPart = totalBytesRead.HighPart;
+  }
+
+  if (pcbWritten)
+  {
+    pcbWritten->LowPart = totalBytesWritten.LowPart;
+    pcbWritten->HighPart = totalBytesWritten.HighPart;
+  }
+  return hr;
 }
 
 /***
@@ -672,6 +742,7 @@ HRESULT WINAPI StgStreamImpl_LockRegion(
 					ULARGE_INTEGER cb,          /* [in] */ 
 					DWORD          dwLockType)  /* [in] */ 
 {
+  FIXME(ole, "not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -681,6 +752,7 @@ HRESULT WINAPI StgStreamImpl_UnlockRegion(
 					  ULARGE_INTEGER cb,          /* [in] */ 
 					  DWORD          dwLockType)  /* [in] */ 
 {
+  FIXME(ole, "not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -725,5 +797,6 @@ HRESULT WINAPI StgStreamImpl_Clone(
 				   IStream*     iface,
 				   IStream**    ppstm) /* [out] */ 
 {
+  FIXME(ole, "not implemented!\n");
   return E_NOTIMPL;
 }

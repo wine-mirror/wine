@@ -901,6 +901,7 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   ULONG            newPropertyIndex;
   HRESULT          hr;
 
+  
   /*
    * Validate parameters
    */
@@ -1012,6 +1013,7 @@ HRESULT WINAPI StorageImpl_CreateStorage(
     return hr;
   }
 
+  
   return S_OK;
 }
 
@@ -1262,7 +1264,150 @@ HRESULT WINAPI StorageImpl_CopyTo(
   SNB         snbExclude,   /* [unique][in] */ 
   IStorage    *pstgDest)    /* [unique][in] */ 
 {
-  return E_NOTIMPL;
+  IEnumSTATSTG *elements     = 0;
+  STATSTG      curElement, strStat;
+  HRESULT      hr;
+  IStorage     *pstgTmp, *pstgChild;
+  IStream      *pstrTmp, *pstrChild;
+
+  if ((ciidExclude != 0) || (rgiidExclude != NULL) || (snbExclude != NULL))
+    FIXME( ole, "Exclude option not implemented\n");
+
+  /*
+   * Perform a sanity check
+   */
+  if ( pstgDest == 0 )
+    return STG_E_INVALIDPOINTER;
+
+  /* 
+   * Enumerate the elements
+   */
+  hr = IStorage_EnumElements( iface, 0, 0, 0, &elements );
+
+  if ( hr != S_OK )
+    return hr;
+
+  /*
+   * set the class ID
+   */
+  StorageBaseImpl_Stat( iface, &curElement, STATFLAG_NONAME);
+  IStorage_SetClass( pstgDest, &curElement.clsid );
+  
+  do
+  {
+    /*
+     * Obtain the next element
+     */
+    hr = IEnumSTATSTG_Next( elements, 1, &curElement, NULL );
+
+    if ( hr == S_FALSE )
+    {
+      hr = S_OK;   /* done, every element has been copied */
+      break;
+    }
+
+    if (curElement.type == STGTY_STORAGE)
+    {
+      /*
+       * open child source storage
+       */
+      hr = StorageBaseImpl_OpenStorage( iface, curElement.pwcsName, NULL,
+                                    STGM_READ|STGM_SHARE_EXCLUSIVE,
+                                    NULL, 0, &pstgChild );
+
+      if (hr != S_OK)
+        break;
+
+      /*
+       * Check if destination storage is not a child of the source
+       * storage, which will cause an infinite loop
+       */
+      if (pstgChild == pstgDest)
+      {
+	IEnumSTATSTG_Release(elements);
+
+	return STG_E_ACCESSDENIED;
+      }
+            
+      /*
+       * create a new storage in destination storage
+       */
+      hr = IStorage_CreateStorage( pstgDest, curElement.pwcsName,
+                                   STGM_FAILIFTHERE|STGM_WRITE, 0, 0,
+                                   &pstgTmp );
+      /*
+       * if it already exist, don't create a new one use this one
+       */
+      if (hr == STG_E_FILEALREADYEXISTS)
+      {
+        hr = IStorage_OpenStorage( pstgDest, curElement.pwcsName, NULL,
+                                   STGM_WRITE|STGM_SHARE_EXCLUSIVE,
+                                   NULL, 0, &pstgTmp );
+      }
+        
+      if (hr != S_OK)
+        break;
+
+        
+      /*
+       * do the copy recursively
+       */
+      hr = IStorage_CopyTo( pstgChild, ciidExclude, rgiidExclude,
+                               snbExclude, pstgTmp );
+                                
+      IStorage_Release( pstgTmp );
+      IStorage_Release( pstgChild );
+    }
+    else if (curElement.type == STGTY_STREAM)
+    {
+      /*
+       * create a new stream in destination storage. If the stream already
+       * exist, it will be deleted and a new one will be created.
+       */
+      hr = IStorage_CreateStream( pstgDest, curElement.pwcsName,
+                                  STGM_CREATE|STGM_WRITE|STGM_SHARE_EXCLUSIVE,
+                                  0, 0, &pstrTmp );
+
+      if (hr != S_OK)
+        break;
+
+      /*
+       * open child stream storage
+       */
+      hr = StorageBaseImpl_OpenStream( iface, curElement.pwcsName, NULL,
+                                      STGM_READ|STGM_SHARE_EXCLUSIVE,
+                                      0, &pstrChild );
+
+      if (hr != S_OK)
+        break;
+
+      /*
+       * Get the size of the stream
+       */
+      IStream_Stat( pstrChild, &strStat, STATFLAG_NONAME );
+      
+      /*
+       * do the copy
+       */
+      hr = IStream_CopyTo( pstrChild, pstrTmp, strStat.cbSize,
+                           NULL, NULL );
+                                
+      IStream_Release( pstrTmp );
+      IStream_Release( pstrChild );
+    }
+    else
+    {
+      WARN(ole, "unknown element type: %ld\n", curElement.type);
+    }
+
+  } while (hr == S_OK);
+
+  /*
+   * Clean-up
+   */
+  IEnumSTATSTG_Release(elements);
+  
+  return hr;
 }
         
 /*************************************************************************
@@ -1275,6 +1420,7 @@ HRESULT WINAPI StorageImpl_MoveElementTo(
   const OLECHAR *pwcsNewName,/* [string][in] */ 
   DWORD           grfFlags)    /* [in] */ 
 {
+  FIXME(ole, "not implemented!\n");
   return E_NOTIMPL;
 }
         
@@ -1295,6 +1441,7 @@ HRESULT WINAPI StorageImpl_Commit(
 HRESULT WINAPI StorageImpl_Revert( 
   IStorage* iface)
 {
+  FIXME(ole, "not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -1811,6 +1958,7 @@ HRESULT WINAPI StorageImpl_SetElementTimes(
   const FILETIME  *patime,  /* [in] */ 
   const FILETIME  *pmtime)  /* [in] */ 
 {
+  FIXME(ole, "not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -1822,6 +1970,7 @@ HRESULT WINAPI StorageImpl_SetStateBits(
   DWORD         grfStateBits,/* [in] */ 
   DWORD         grfMask)     /* [in] */ 
 {
+  FIXME(ole, "not implemented!\n");
   return E_NOTIMPL;
 }
 
