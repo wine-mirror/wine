@@ -325,8 +325,8 @@ HRESULT WINAPI NdrDllRegisterProxy(
 /***********************************************************************
  *		RpcServerUseProtseqEpA (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcServerUseProtseqEpA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor )
+
+RPC_STATUS WINAPI RpcServerUseProtseqEpA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor )
 {
   RPC_POLICY policy;
   
@@ -343,8 +343,7 @@ RpcServerUseProtseqEpA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID Sec
 /***********************************************************************
  *		RpcServerUseProtseqEpW (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor )
+RPC_STATUS WINAPI RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor )
 {
   RPC_POLICY policy;
   
@@ -361,8 +360,7 @@ RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID S
 /***********************************************************************
  *		RpcServerUseProtseqEpExA (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcServerUseProtseqEpExA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor,
+RPC_STATUS WINAPI RpcServerUseProtseqEpExA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor,
                           PRPC_POLICY lpPolicy )
 {
   FIXME( "(%s,%u,%s,%p,{%u,%lu,%lu}): stub\n", Protseq, MaxCalls, Endpoint, SecurityDescriptor,
@@ -374,8 +372,7 @@ RpcServerUseProtseqEpExA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID S
 /***********************************************************************
  *		RpcServerUseProtseqEpExW (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor,
+RPC_STATUS WINAPI RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor,
                           PRPC_POLICY lpPolicy )
 {
   FIXME( "(%s,%u,%s,%p,{%u,%lu,%lu}): stub\n", debugstr_w( Protseq ), MaxCalls, debugstr_w( Endpoint ),
@@ -388,8 +385,7 @@ RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID
 /***********************************************************************
  *		RpcServerRegisterIf (RPCRT4.@)
  */
-RPC_STATUS RPC_ENTRY
-RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv )
+RPC_STATUS WINAPI RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv )
 {
   /* FIXME: Dump UUID using UuidToStringA */
   TRACE( "(%p,%p,%p)\n", IfSpec, MgrTypeUuid, MgrEpv );
@@ -400,8 +396,7 @@ RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEp
 /***********************************************************************
  *		RpcServerRegisterIfEx (RPCRT4.@)
  */
-RPC_STATUS RPC_ENTRY
-RpcServerRegisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
+RPC_STATUS WINAPI RpcServerRegisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
                        UINT Flags, UINT MaxCalls, RPC_IF_CALLBACK_FN* IfCallbackFn )
 {
   /* FIXME: Dump UUID using UuidToStringA */
@@ -413,8 +408,7 @@ RpcServerRegisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* Mgr
 /***********************************************************************
  *		RpcServerRegisterIf2 (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
+RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
                       UINT Flags, UINT MaxCalls, UINT MaxRpcSize, RPC_IF_CALLBACK_FN* IfCallbackFn )
 {
   /* FIXME: Dump UUID using UuidToStringA */
@@ -427,8 +421,7 @@ RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrE
 /***********************************************************************
  *		RpcServerRegisterAuthInfoA (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcServerRegisterAuthInfoA( LPSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( LPSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                             LPVOID Arg )
 {
   FIXME( "(%s,%lu,%p,%p): stub\n", ServerPrincName, AuthnSvc, GetKeyFn, Arg );
@@ -439,8 +432,7 @@ RpcServerRegisterAuthInfoA( LPSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_
 /***********************************************************************
  *		RpcServerRegisterAuthInfoW (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                             LPVOID Arg )
 {
   FIXME( "(%s,%lu,%p,%p): stub\n", debugstr_w( ServerPrincName ), AuthnSvc, GetKeyFn, Arg );
@@ -451,8 +443,7 @@ RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY
 /***********************************************************************
  *		RpcServerListen (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT DontWait )
+RPC_STATUS WINAPI RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT DontWait )
 {
   FIXME( "(%u,%u,%u): stub\n", MinimumCallThreads, MaxCalls, DontWait );
   
@@ -462,8 +453,7 @@ RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT DontWait )
 /***********************************************************************
  *		RpcStringBindingComposeA (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint,
+RPC_STATUS WINAPI RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint,
                           LPSTR Options, LPSTR* StringBinding )
 {
   FIXME( "(%s,%s,%s,%s,%s,%p): stub\n", ObjUuid, Protseq, NetworkAddr, Endpoint, Options, StringBinding );
@@ -475,8 +465,7 @@ RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR NetworkAddr, LPSTR
 /***********************************************************************
  *		RpcStringBindingComposeW (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr, LPWSTR Endpoint,
+RPC_STATUS WINAPI RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr, LPWSTR Endpoint,
                           LPWSTR Options, LPWSTR* StringBinding )
 {
   FIXME( "(%s,%s,%s,%s,%s,%p): stub\n", debugstr_w( ObjUuid ), debugstr_w( Protseq ), debugstr_w( NetworkAddr ),
@@ -489,8 +478,7 @@ RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWSTR NetworkAddr, LP
 /***********************************************************************
  *		RpcBindingFromStringBindingA (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding )
+RPC_STATUS WINAPI RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding )
 {
   FIXME( "(%s,%p): stub\n", StringBinding, Binding );
   
@@ -500,8 +488,7 @@ RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding )
 /***********************************************************************
  *		RpcBindingFromStringBindingW (RPCRT4.@)
  */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDING_HANDLE* Binding )
+RPC_STATUS WINAPI RpcBindingFromStringBindingW( LPWSTR StringBinding, RPC_BINDING_HANDLE* Binding )
 {
   FIXME( "(%s,%p): stub\n", debugstr_w( StringBinding ), Binding );
 
