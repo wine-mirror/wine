@@ -2185,6 +2185,34 @@ INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent)
     return (INT16)WSAAsyncSelect( s, hWnd, wMsg, lEvent );
 }
 
+/***********************************************************************
+ *		WSARecvEx()			(WSOCK32.1107)
+ *
+ * WSARecvEx is a Microsoft specific extension to winsock that is identical to recv
+ * except that has an in/out argument call flags that has the value MSG_PARTIAL ored
+ * into the flags parameter when a partial packet is read. This only applies to
+ * sockets using the datagram protocol. This method does not seem to be implemented
+ * correctly by microsoft as the winsock implementation does not set the MSG_PARTIAL
+ * flag when a fragmented packet arrives.
+ */
+INT     WINAPI   WSARecvEx(SOCKET s, char *buf, INT len, INT *flags) {
+  FIXME("(WSARecvEx) partial packet return value not set \n");
+
+  return WINSOCK_recv(s, buf, len, *flags);
+}
+
+
+/***********************************************************************
+ *              WSARecvEx16()			(WINSOCK.1107)
+ *
+ * See description for WSARecvEx()
+ */
+INT16     WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags) {
+  FIXME("(WSARecvEx16) partial packet return value not set \n");
+
+  return WINSOCK_recv16(s, buf, len, *flags);
+}
+
 
 /***********************************************************************
  *	__WSAFDIsSet()			(WINSOCK.151)

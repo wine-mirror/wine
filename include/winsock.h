@@ -257,6 +257,10 @@ typedef struct WSAData {
 #endif
 #define MSG_MAXIOVLEN   16
 
+#ifndef MSG_PARTIAL
+#define MSG_PARTIAL     0x8000 /* partial send or recv (WSARecvEx) */
+#endif
+
 /*
  * Define constant based on rfc883, used by gethostbyxxxx() calls.
  */
@@ -433,6 +437,8 @@ INT     WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle);
 INT16     WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent);
 INT     WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent);
 
+INT16     WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags);
+INT     WINAPI   WSARecvEx(SOCKET s, char *buf, INT len, INT *flags);
 
 /*
  * Address families
