@@ -5108,7 +5108,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
     infoPtr->bTransparent = (dwStyle & TBSTYLE_TRANSPARENT);
     infoPtr->bBtnTranspnt = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_LIST));
-    infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE : DT_CENTER;
+    infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS: DT_CENTER | DT_END_ELLIPSIS;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
     infoPtr->iVersion = 0;
     infoPtr->hwndSelf = hwnd;
@@ -6251,10 +6251,10 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 
     if (nType == GWL_STYLE) {
 	if (lpStyle->styleNew & TBSTYLE_LIST) {
-	    infoPtr->dwDTFlags = DT_LEFT | DT_VCENTER | DT_SINGLELINE;
+	    infoPtr->dwDTFlags = DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS;
 	}
 	else {
-	    infoPtr->dwDTFlags = DT_CENTER;
+	    infoPtr->dwDTFlags = DT_CENTER | DT_END_ELLIPSIS;
 	}
 	infoPtr->bTransparent = (lpStyle->styleNew & TBSTYLE_TRANSPARENT);
 	infoPtr->bBtnTranspnt = (lpStyle->styleNew &
