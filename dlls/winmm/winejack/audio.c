@@ -52,6 +52,8 @@
 #include "dsound.h"
 #include "dsdriver.h"
 #include "jack.h"
+#include "wine/unicode.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 #ifdef HAVE_JACK_JACK_H

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winejack.drv
 IMPORTS   = winmm user32 kernel32
-EXTRALIBS = -ldxguid -luuid
+EXTRALIBS = -ldxguid -luuid $(LIBUNICODE)
 
 C_SRCS = \
 	audio.c \
