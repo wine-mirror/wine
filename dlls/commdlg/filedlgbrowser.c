@@ -306,6 +306,15 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     if(!psfTmp)
         return E_FAIL;
 
+    /* If the pidl to browse to is equal to the actual pidl ... 
+       do nothing and pretend you did it*/
+    if(COMDLG32_PIDL_ILIsEqual(pidlTmp,fodInfos->ShellInfos.pidlAbsCurrent))
+    {
+        IShellFolder_Release(psfTmp);
+	COMDLG32_SHFree(pidlTmp);
+        return NOERROR;
+    }
+
     /* Release the current fodInfos->Shell.FOIShellFolder and update its value */
     IShellFolder_Release(fodInfos->Shell.FOIShellFolder);
     fodInfos->Shell.FOIShellFolder = psfTmp;

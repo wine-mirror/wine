@@ -1640,8 +1640,9 @@ static BOOL FILEDLG95_LOOKIN_OnCommand(HWND hwnd, WORD wNotifyCode)
 
       iItem = CBGetCurSel(fodInfos->DlgInfos.hwndLookInCB);
 
-      tmpFolder = (LPSFOLDER) CBGetItemDataPtr(fodInfos->DlgInfos.hwndLookInCB,
-                                               iItem);
+      if(!(tmpFolder = (LPSFOLDER) CBGetItemDataPtr(fodInfos->DlgInfos.hwndLookInCB,
+                                               iItem)))
+	return FALSE;
 
 
       if(SUCCEEDED(IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser,
@@ -1929,16 +1930,16 @@ IShellFolder *GetShellFolderFromPidl(LPITEMIDLIST pidlAbs)
     psf = psfParent;
     if(pidlAbs && pidlAbs->mkid.cb)
     {
-      if(FAILED(IShellFolder_BindToObject(psfParent, pidlAbs, NULL, &IID_IShellFolder, (LPVOID*)&psf)))
+      if(SUCCEEDED(IShellFolder_BindToObject(psfParent, pidlAbs, NULL, &IID_IShellFolder, (LPVOID*)&psf)))
       {
-        psf = NULL;
+	IShellFolder_Release(psfParent);
+        return psf;
       }
     }
-    IShellFolder_Release(psfParent);
+    /* return the desktop */
+    return psfParent;
   }
-
-  return psf;
-
+  return NULL;
 }
 
 /***********************************************************************
@@ -1954,9 +1955,8 @@ LPITEMIDLIST GetParentPidl(LPITEMIDLIST pidl)
 
   pidlParent = COMDLG32_PIDL_ILClone(pidl);
   COMDLG32_PIDL_ILRemoveLastID(pidlParent);
-
+     
   return pidlParent;
-
 }
 
 /***********************************************************************
