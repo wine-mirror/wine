@@ -7428,13 +7428,14 @@ static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEM
   BOOL bResult = TRUE;
   LVITEMW lvItem;
 
-  TRACE("(nItem=%d, lpLVItem=%s)\n", nItem, debuglvitem_t(lpLVItem, TRUE));
+  TRACE("(nItem=%d, state=%x, stateMask=%x)\n", nItem, lpLVItem->state,
+        lpLVItem->stateMask);
 
   lvItem.iItem = nItem;
   lvItem.iSubItem = 0;
   lvItem.mask = LVIF_STATE;
   lvItem.state = lpLVItem->state;
-  lvItem.stateMask = lpLVItem->stateMask ;
+  lvItem.stateMask = lpLVItem->stateMask;
 
   if (nItem == -1)
   {
