@@ -626,7 +626,7 @@ struct StgStreamImpl
    */
   BlockChainStream*      bigBlockChain;
   SmallBlockChainStream* smallBlockChain;
-  
+  DWORD grfMode; 
 };
 
 /*

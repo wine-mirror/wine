@@ -411,7 +411,10 @@ HRESULT WINAPI StgStreamImpl_Write(
 
   TRACE("(%p, %p, %ld, %p)\n",
 	iface, pv, cb, pcbWritten);
-  
+ 
+  if (!(This->grfMode & STGM_WRITE))
+     return STG_E_ACCESSDENIED; 
+
   /*
    * If the caller is not interested in the number of bytes written,
    * we use another buffer to avoid "if" statements in the code.

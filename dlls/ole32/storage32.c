@@ -336,6 +336,7 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
     
     if (newStream!=0)
     {
+      newStream->grfMode = grfMode;
       *ppstm = (IStream*)newStream;
 
       /*
