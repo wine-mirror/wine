@@ -187,20 +187,14 @@ static WNDPROC16 CLASS_SetProc( CLASS *classPtr, WNDPROC newproc, WINDOWPROCTYPE
         if (!*proc || type == WIN_PROC_32W) proc = &classPtr->winprocW;
     }
     ret = WINPROC_GetProc( *proc, type );
-    WINPROC_SetProc( proc, newproc, type, WIN_PROC_CLASS );
-    /* now free the one that we didn't set */
+    *proc = WINPROC_AllocProc( newproc, type );
+    /* now clear the one that we didn't set */
     if (classPtr->winprocA && classPtr->winprocW)
     {
         if (proc == &classPtr->winprocA)
-        {
-            WINPROC_FreeProc( classPtr->winprocW, WIN_PROC_CLASS );
             classPtr->winprocW = 0;
-        }
         else
-        {
-            WINPROC_FreeProc( classPtr->winprocA, WIN_PROC_CLASS );
             classPtr->winprocA = 0;
-        }
     }
     return ret;
 }
@@ -303,8 +297,6 @@ static void CLASS_FreeClass( CLASS *classPtr )
     if (classPtr->dce) DCE_FreeDCE( classPtr->dce );
     if (classPtr->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         DeleteObject( classPtr->hbrBackground );
-    WINPROC_FreeProc( classPtr->winprocA, WIN_PROC_CLASS );
-    WINPROC_FreeProc( classPtr->winprocW, WIN_PROC_CLASS );
     UnMapLS( classPtr->segMenuName );
     HeapFree( GetProcessHeap(), 0, classPtr->menuName );
     HeapFree( GetProcessHeap(), 0, classPtr );
@@ -458,10 +450,8 @@ static CLASS *register_builtin( const struct builtin_class_descr *descr )
     classPtr->hCursor       = LoadCursorA( 0, (LPSTR)descr->cursor );
     classPtr->hbrBackground = descr->brush;
 
-    if (descr->procA) WINPROC_SetProc( &classPtr->winprocA, descr->procA,
-                                       WIN_PROC_32A, WIN_PROC_CLASS );
-    if (descr->procW) WINPROC_SetProc( &classPtr->winprocW, descr->procW,
-                                       WIN_PROC_32W, WIN_PROC_CLASS );
+    if (descr->procA) classPtr->winprocA = WINPROC_AllocProc( descr->procA, WIN_PROC_32A );
+    if (descr->procW) classPtr->winprocW = WINPROC_AllocProc( descr->procW, WIN_PROC_32W );
     release_class_ptr( classPtr );
     return classPtr;
 }
@@ -623,8 +613,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
     classPtr->hCursor       = HCURSOR_32(wc->hCursor);
     classPtr->hbrBackground = HBRUSH_32(wc->hbrBackground);
 
-    WINPROC_SetProc( &classPtr->winprocA, (WNDPROC)wc->lpfnWndProc,
-                     WIN_PROC_16, WIN_PROC_CLASS );
+    classPtr->winprocA = WINPROC_AllocProc( (WNDPROC)wc->lpfnWndProc, WIN_PROC_16 );
     CLASS_SetMenuNameA( classPtr, MapSL(wc->lpszMenuName) );
     release_class_ptr( classPtr );
     return atom;
@@ -662,7 +651,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     classPtr->hIconSm       = wc->hIconSm;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
-    WINPROC_SetProc( &classPtr->winprocA, wc->lpfnWndProc, WIN_PROC_32A, WIN_PROC_CLASS );
+    classPtr->winprocA      = WINPROC_AllocProc( wc->lpfnWndProc, WIN_PROC_32A );
     CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
     release_class_ptr( classPtr );
     return atom;
@@ -700,7 +689,7 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     classPtr->hIconSm       = wc->hIconSm;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
-    WINPROC_SetProc( &classPtr->winprocW, wc->lpfnWndProc, WIN_PROC_32W, WIN_PROC_CLASS );
+    classPtr->winprocW      = WINPROC_AllocProc( wc->lpfnWndProc, WIN_PROC_32W );
     CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
     release_class_ptr( classPtr );
     return atom;

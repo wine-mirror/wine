@@ -650,7 +650,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     }
     DCE_FreeWindowDCE( hwnd );    /* Always do this to catch orphaned DCs */
     if (USER_Driver.pDestroyWindow) USER_Driver.pDestroyWindow( hwnd );
-    WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
     wndPtr->class = NULL;
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
     WIN_ReleaseWndPtr( wndPtr );
@@ -2058,7 +2057,7 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
         }
     case GWLP_WNDPROC:
         retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, type );
-        WINPROC_SetProc( &wndPtr->winproc, (WNDPROC)newval, type, WIN_PROC_WINDOW );
+        wndPtr->winproc = WINPROC_AllocProc( (WNDPROC)newval, type );
         WIN_ReleasePtr( wndPtr );
         return retval;
     case GWLP_ID:
@@ -2070,7 +2069,7 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
         {
             WNDPROC *ptr = (WNDPROC *)((char *)wndPtr->wExtra + DWLP_DLGPROC);
             retval = (ULONG_PTR)WINPROC_GetProc( *ptr, type );
-            WINPROC_SetProc( ptr, (WNDPROC)newval, type, WIN_PROC_WINDOW );
+            *ptr = WINPROC_AllocProc( (WNDPROC)newval, type );
             WIN_ReleasePtr( wndPtr );
             return retval;
         }

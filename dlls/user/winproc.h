@@ -36,13 +36,6 @@ typedef enum
     WIN_PROC_32W
 } WINDOWPROCTYPE;
 
-typedef enum
-{
-    WIN_PROC_CLASS,
-    WIN_PROC_WINDOW,
-    WIN_PROC_TIMER
-} WINDOWPROCUSER;
-
 typedef struct
 {
     WPARAM16	wParam;
@@ -60,9 +53,7 @@ typedef struct
 struct tagWINDOWPROC;
 
 extern WNDPROC16 WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type );
-extern BOOL WINPROC_SetProc( WNDPROC *pFirst, WNDPROC func,
-                               WINDOWPROCTYPE type, WINDOWPROCUSER user );
-extern void WINPROC_FreeProc( WNDPROC proc, WINDOWPROCUSER user );
+extern WNDPROC WINPROC_AllocProc( WNDPROC func, WINDOWPROCTYPE type );
 extern WINDOWPROCTYPE WINPROC_GetProcType( WNDPROC proc );
 
 extern INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam,

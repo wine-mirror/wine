@@ -247,7 +247,6 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
                 }
                 if (dlgInfo->hUserFont) DeleteObject( dlgInfo->hUserFont );
                 if (dlgInfo->hMenu) DestroyMenu( dlgInfo->hMenu );
-                WINPROC_FreeProc( DEFDLG_GetDlgProc( hwnd ), WIN_PROC_WINDOW );
                 HeapFree( GetProcessHeap(), 0, dlgInfo );
             }
 	      /* Window clean-up */

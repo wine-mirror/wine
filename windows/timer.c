@@ -77,7 +77,6 @@ static void TIMER_ClearTimer( TIMER * pTimer )
     pTimer->msg     = 0;
     pTimer->id      = 0;
     pTimer->timeout = 0;
-    WINPROC_FreeProc( pTimer->proc, WIN_PROC_TIMER );
 }
 
 
@@ -172,7 +171,7 @@ static UINT_PTR TIMER_SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
 
     if (!hwnd) id = i + 1;
 
-    if (proc) WINPROC_SetProc( &winproc, proc, type, WIN_PROC_TIMER );
+    if (proc) winproc = WINPROC_AllocProc( proc, type );
 
     SERVER_START_REQ( set_win_timer )
     {
