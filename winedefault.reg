@@ -57,7 +57,11 @@
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion]
 "ProgramFilesDir"="C:\Program Files"
 "CommonFilesDir"="C:\Program Files\Common Files"
-# This is intended for a centrally managed (server) directory where system files and e.g. fonts can reside. Most installs have this set to C:\WINDOWS, though.
+
+# This is intended for a centrally managed (server) directory where
+# system files and e.g. fonts can reside. Most installs have this set
+# to C:\WINDOWS, though.
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Setup]
 "SharedDir"="C:\WINDOWS"
 
 #
