@@ -76,7 +76,7 @@
 
 #ifdef _TYPE_ALIGNMENT
 #define TEST__TYPE_ALIGNMENT(type, align) \
-    ok(_TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")", _TYPE_ALIGNMENT(type))
+    ok(_TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", _TYPE_ALIGNMENT(type))
 #else
 # define TEST__TYPE_ALIGNMENT(type, align) do { } while (0)
 #endif
