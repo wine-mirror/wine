@@ -567,7 +567,7 @@ static BOOL notify_click(LISTVIEW_INFO *infoPtr,  INT code, LVHITTESTINFO *lvht)
     nmlv.iItem = lvht->iItem;
     nmlv.iSubItem = lvht->iSubItem;
     nmlv.ptAction = lvht->pt;
-    return notify_listview(infoPtr, NM_RCLICK, &nmlv);
+    return notify_listview(infoPtr, code, &nmlv);
 }
 
 static int get_ansi_notification(INT unicodeNotificationCode)
@@ -913,6 +913,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	    {
 		RANGE item_range = { nItem, nItem };
 		ranges_add(i->ranges, item_range);
+		TRACE("    icon=%d\n", nItem);
 	    }				    
 	}
 	return TRUE;
@@ -929,6 +930,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	if (upper < lower) return TRUE;
 	i->range.lower = lower;
 	i->range.upper = upper;
+	TRACE("    report=[%d,%d]\n", lower, upper);
     }
     else
     {
@@ -952,7 +954,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	    item_range.lower = nCol * nPerCol + nFirstRow;
 	    if(item_range.lower >= infoPtr->nItemCount) break;
 	    item_range.upper = min(nCol * nPerCol + nLastRow, infoPtr->nItemCount - 1);
-	    TRACE("   range=[%d,%d]\n", item_range.lower, item_range.upper);
+	    TRACE("   list=[%d,%d]\n", item_range.lower, item_range.upper);
 	    ranges_add(i->ranges, item_range);
 	}
     }
@@ -2181,18 +2183,20 @@ static void ranges_dump(HDPA ranges)
     for (i = 0; i < ranges->nItemCount; i++)
     {
     	RANGE *selection = DPA_GetPtr(ranges, i);
-    	ERR("   [%d - %d]\n", selection->lower, selection->upper);
+    	TRACE("   [%d - %d]\n", selection->lower, selection->upper);
     }
 }
 
 static inline BOOL ranges_contain(HDPA ranges, INT nItem)
 {
-  RANGE srchrng = { nItem, nItem };
+    RANGE srchrng = { nItem, nItem };
 
-  return DPA_Search(ranges, &srchrng, 0, ranges_cmp, 0, DPAS_SORTED) != -1;
+    TRACE("(nItem=%d)\n", nItem);
+    if (TRACE_ON(listview)) ranges_dump(ranges);
+    return DPA_Search(ranges, &srchrng, 0, ranges_cmp, 0, DPAS_SORTED) != -1;
 }
 
-static BOOL ranges_shift(HDPA ranges, INT nItem, INT delta)
+static BOOL ranges_shift(HDPA ranges, INT nItem, INT delta, INT nUpper)
 {
     RANGE srchrng, *chkrng;
     INT index;
@@ -2206,10 +2210,10 @@ static BOOL ranges_shift(HDPA ranges, INT nItem, INT delta)
     for (;index < ranges->nItemCount; index++)
     {
 	chkrng = DPA_GetPtr(ranges, index);
-    	if (chkrng->lower >= nItem && chkrng->lower + delta >= 0)
-            chkrng->lower += delta;
-        if (chkrng->upper >= nItem && chkrng->upper + delta >= 0)
-            chkrng->upper += delta;
+    	if (chkrng->lower >= nItem)
+	    chkrng->lower = max(min(chkrng->lower + delta, nUpper - 1), 0);
+        if (chkrng->upper >= nItem)
+	    chkrng->upper = max(min(chkrng->upper + delta, nUpper - 1), 0);
     }
     return TRUE;
 }
@@ -2230,6 +2234,8 @@ static BOOL ranges_add(HDPA ranges, RANGE range)
     if (index == -1)
     {
 	RANGE *newrgn;
+
+	TRACE("Adding new range\n");
 
 	/* create the brand new range to insert */	
         newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
@@ -2287,6 +2293,7 @@ static BOOL ranges_add(HDPA ranges, RANGE range)
 	} while(1);
     }
 
+    if (TRACE_ON(listview)) ranges_dump(ranges);
     return TRUE;
 }
 
@@ -2354,84 +2361,6 @@ static BOOL ranges_del(HDPA ranges, RANGE range)
 }
 
 /***
- * Helper function for LISTVIEW_RemoveSelectionRange, and LISTVIEW_SetItem.
- */
-static BOOL remove_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BOOL adj_sel_only)
-{
-    RANGE range = { lower, upper };
-    LVITEMW lvItem;
-    INT i;
-
-    if (!ranges_del(infoPtr->hdpaSelectionRanges, range)) return FALSE;
-    if (adj_sel_only) return TRUE;
-   
-    /* reset the selection on items */
-    lvItem.state = 0;
-    lvItem.stateMask = LVIS_SELECTED;
-    for(i = lower; i <= upper; i++)
-	LISTVIEW_SetItemState(infoPtr, i, &lvItem);
-
-    return TRUE;
-}
-
-/***
- * Helper function for LISTVIEW_AddSelectionRange, and LISTVIEW_SetItem.
- */
-static BOOL add_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BOOL adj_sel_only)
-{
-    RANGE range = { lower, upper };
-    LVITEMW lvItem;
-    INT i;
-
-    if (!ranges_add(infoPtr->hdpaSelectionRanges, range)) return FALSE;
-    if (adj_sel_only) return TRUE;
-   
-    /* set the selection on items */
-    lvItem.state = LVIS_SELECTED;
-    lvItem.stateMask = LVIS_SELECTED;
-    for(i = lower; i <= upper; i++)
-	LISTVIEW_SetItemState(infoPtr, i, &lvItem);
-
-    return TRUE;
-}
-   
-/**
-* DESCRIPTION:
-* Adds a selection range.
-*
-* PARAMETER(S):
-* [I] infoPtr : valid pointer to the listview structure
-* [I] lower : lower item index
-* [I] upper : upper item index
-*
-* RETURN:
-*   Success: TRUE
-*   Failure: FALSE
-*/
-static inline BOOL LISTVIEW_AddSelectionRange(LISTVIEW_INFO *infoPtr, INT lower, INT upper)
-{
-    return add_selection_range(infoPtr, lower, upper, FALSE);
-}
-
-/***
-* DESCRIPTION:
-* Removes a range selections.
-*
-* PARAMETER(S):
-* [I] infoPtr : valid pointer to the listview structure
-* [I] lower : lower item index
-* [I] upper : upper item index
-*
-* RETURN:
-*   Success: TRUE
-*   Failure: FALSE
-*/
-static inline BOOL LISTVIEW_RemoveSelectionRange(LISTVIEW_INFO *infoPtr, INT lower, INT upper)
-{
-    return remove_selection_range(infoPtr, lower, upper, FALSE);
-}
-
-/***
 * DESCRIPTION:
 * Removes all selection ranges
 *
@@ -2444,7 +2373,9 @@ static inline BOOL LISTVIEW_RemoveSelectionRange(LISTVIEW_INFO *infoPtr, INT low
 */
 static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr)
 {
+    LVITEMW lvItem;
     RANGE *sel;
+    INT i;
 
     if (infoPtr->bRemovingAllSelections) return TRUE;
 
@@ -2452,10 +2383,15 @@ static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr)
 
     TRACE("()\n");
 
+    lvItem.state = 0;
+    lvItem.stateMask = LVIS_SELECTED;
+    
     do
     {
 	sel = DPA_GetPtr(infoPtr->hdpaSelectionRanges, 0);
-	if (sel) LISTVIEW_RemoveSelectionRange(infoPtr, sel->lower, sel->upper);
+	if (!sel) continue;
+	for(i = sel->lower; i <= sel->upper; i++) 
+	    LISTVIEW_SetItemState(infoPtr, i, &lvItem);
     }
     while (infoPtr->hdpaSelectionRanges->nItemCount > 0);
 
@@ -2554,7 +2490,7 @@ static void LISTVIEW_ShiftIndices(LISTVIEW_INFO *infoPtr, INT nItem, INT directi
     
     TRACE("Shifting %iu, %i steps\n", nItem, direction);
 
-    ranges_shift(infoPtr->hdpaSelectionRanges, nItem, direction);
+    ranges_shift(infoPtr->hdpaSelectionRanges, nItem, direction, infoPtr->nItemCount);
 
     assert(abs(direction) == 1);
 
@@ -2868,13 +2804,15 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
     /* and the selection is the only other state a virtual list may hold */
     if (lpLVItem->stateMask & LVIS_SELECTED)
     {
+	RANGE range = { lpLVItem->iItem, lpLVItem->iItem };
+
         if (lpLVItem->state & LVIS_SELECTED)
         {
 	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr);
-	    add_selection_range(infoPtr, lpLVItem->iItem, lpLVItem->iItem, TRUE);
+	    ranges_add(infoPtr->hdpaSelectionRanges, range);
         }
         else
-	    remove_selection_range(infoPtr, lpLVItem->iItem, lpLVItem->iItem, TRUE);
+	    ranges_del(infoPtr->hdpaSelectionRanges, range);
     }
 
     /* notify the parent now that things have changed */
@@ -2915,9 +2853,23 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
     lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
     if (!lpItem) return FALSE;
 
+    /* we need to handle the focus, and selection differently */
+    lpItem->state &= ~(LVIS_FOCUSED | LVIS_SELECTED);
+    if (~infoPtr->uCallbackMask & LVIS_FOCUSED)
+    {
+	if (lpLVItem->iItem == infoPtr->nFocusedItem) 
+	    lpItem->state |= LVIS_FOCUSED;
+    }
+    if (~infoPtr->uCallbackMask & LVIS_SELECTED)
+    {
+	if (ranges_contain(infoPtr->hdpaSelectionRanges, lpLVItem->iItem))
+	    lpItem->state |= LVIS_SELECTED;
+    }
+
+    TRACE("lpItem->state=0x%x\n", lpItem->state);
     /* determine what fields will change */    
     if ((lpLVItem->mask & LVIF_STATE) &&
-	((lpItem->state ^ lpLVItem->state) & lpLVItem->stateMask))
+	((lpItem->state ^ lpLVItem->state) & lpLVItem->stateMask & ~infoPtr->uCallbackMask))
 	uChanged |= LVIF_STATE;
 
     if ((lpLVItem->mask & LVIF_IMAGE) && (lpItem->hdr.iImage != lpLVItem->iImage))
@@ -2931,7 +2883,8 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 
     if ((lpLVItem->mask & LVIF_TEXT) && textcmpWT(lpItem->hdr.pszText, lpLVItem->pszText, isW))
 	uChanged |= LVIF_TEXT;
-    
+   
+    TRACE("uChanged=0x%x\n", uChanged); 
     if (!uChanged) return TRUE;
     
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
@@ -2960,18 +2913,20 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 
     if (uChanged & LVIF_STATE)
     {
+	RANGE range = { lpLVItem->iItem, lpLVItem->iItem };
+	
 	lpItem->state &= ~lpLVItem->stateMask;
 	lpItem->state |= (lpLVItem->state & lpLVItem->stateMask);
-	if (nmlv.uNewState & LVIS_SELECTED)
+	if (lpLVItem->state & lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED)
 	{
 	    if (lStyle & LVS_SINGLESEL) LISTVIEW_RemoveAllSelections(infoPtr);
-	    add_selection_range(infoPtr, lpLVItem->iItem, lpLVItem->iItem, TRUE);
+	    ranges_add(infoPtr->hdpaSelectionRanges, range);
 	}
 	else if (lpLVItem->stateMask & LVIS_SELECTED)
-	    remove_selection_range(infoPtr, lpLVItem->iItem, lpLVItem->iItem, TRUE);
+	    ranges_del(infoPtr->hdpaSelectionRanges, range);
 	
 	/* if we are asked to change focus, and we manage it, do it */
-	if (nmlv.uNewState & ~infoPtr->uCallbackMask & LVIS_FOCUSED)
+	if (lpLVItem->state & lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED)
 	{
 	    if (lpLVItem->state & LVIS_FOCUSED)
 	    {
@@ -5467,6 +5422,7 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     else if (infoPtr->rcList.bottom < lpht->pt.y)
 	lpht->flags |= LVHT_BELOW;
 
+    TRACE("lpht->flags=0x%x\n", lpht->flags);
     if (lpht->flags) return -1;
 
     lpht->flags |= LVHT_NOWHERE;
@@ -5483,7 +5439,8 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     iterator_next(&i); /* go to first item in the sequence */
     lpht->iItem = i.nItem;
     iterator_destroy(&i);
-    
+   
+    TRACE("lpht->iItem=%d\n", lpht->iItem); 
     if (lpht->iItem == -1) return -1;
 
     lvItem.mask = LVIF_STATE | LVIF_TEXT;
@@ -5505,6 +5462,7 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 	rcBounds = rcBox;
     else
 	UnionRect(&rcBounds, &rcIcon, &rcLabel);
+    TRACE("rcBounds=%s\n", debugrect(&rcBounds));
     if (!PtInRect(&rcBounds, opt)) return -1;
 
     if (PtInRect(&rcIcon, opt))
@@ -5515,7 +5473,8 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 	lpht->flags |= LVHT_ONITEMSTATEICON;
     if (lpht->flags & LVHT_ONITEM)
 	lpht->flags &= ~LVHT_NOWHERE;
-    
+   
+    TRACE("lpht->flags=0x%x\n", lpht->flags); 
     if (uView == LVS_REPORT && lpht->iItem != -1 && subitem)
     {
   	INT j, nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
@@ -6767,6 +6726,7 @@ static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompar
     HDPA hdpaSubItems;
     LISTVIEW_ITEM *lpItem;
     LPVOID selectionMarkItem;
+    LVITEMW item;
     int i;
 
     TRACE("(pfnCompare=%p, lParamSort=%lx)\n", pfnCompare, lParamSort);
@@ -6784,6 +6744,9 @@ static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompar
 	lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
 	if (lpItem) lpItem->state |= LVIS_FOCUSED;
     }
+    /* FIXME: go thorugh selected items and mark them so in lpItem->state */
+    /*        clear the lpItem->state for non-selected ones */
+    /*        remove the selection ranges */
     
     infoPtr->pfnCompare = pfnCompare;
     infoPtr->lParamSort = lParamSort;
@@ -6793,7 +6756,6 @@ static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompar
      * be after the sort (otherwise, the list items move around, but
      * whatever is at the item's previous original position will be
      * selected instead)
-     * FIXME: can't this be made more efficient?
      */
     selectionMarkItem=(infoPtr->nSelectionMark>=0)?DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nSelectionMark):NULL;
     for (i=0; i < infoPtr->nItemCount; i++)
@@ -6802,9 +6764,11 @@ static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompar
 	lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
 
 	if (lpItem->state & LVIS_SELECTED)
-	    LISTVIEW_AddSelectionRange(infoPtr, i, i);
-	else
-	    LISTVIEW_RemoveSelectionRange(infoPtr, i, i);
+	{
+	    item.state = LVIS_SELECTED;
+	    item.stateMask = LVIS_SELECTED;
+	    LISTVIEW_SetItemState(infoPtr, i, &item);
+	}
 	if (lpItem->state & LVIS_FOCUSED)
 	{
             infoPtr->nFocusedItem = i;
