@@ -1398,6 +1398,11 @@ static ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 ifa
       DeleteDC(This->s.hdc);
       DeleteObject(This->s.DIBsection);
     }
+
+    /* Free the clipper if attached to this surface */
+    if( This->lpClipper ) {
+      IDirectDrawClipper_Release(This->lpClipper);
+    }
     
     HeapFree(GetProcessHeap(),0,This);
     return S_OK;
@@ -1461,6 +1466,11 @@ static ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 if
 	SelectObject(This->s.hdc, This->s.holdbitmap);
 	DeleteDC(This->s.hdc);
 	DeleteObject(This->s.DIBsection);
+    }
+
+    /* Free the clipper if present */
+    if( This->lpClipper ) {
+      IDirectDrawClipper_Release(This->lpClipper);
     }
 
     HeapFree(GetProcessHeap(),0,This);
@@ -1539,10 +1549,15 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetOverlayPosition(
 }
 
 static HRESULT WINAPI IDirectDrawSurface4Impl_SetClipper(
-	LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWCLIPPER clipper
+	LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWCLIPPER lpClipper
 ) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
-	FIXME("(%p)->(%p),stub!\n",This,clipper);
+
+	TRACE("(%p)->(%p)!\n",This,lpClipper);
+
+	This->lpClipper = lpClipper;
+	IDirectDrawClipper_AddRef( lpClipper ); /* Add the reference to it */
+
 	return DD_OK;
 }
 
@@ -2231,6 +2246,8 @@ HRESULT WINAPI DirectDrawCreateClipper( DWORD dwFlags,
   ICOM_VTBL(*ilplpDDClipper) = &ddclipvt;
   (*ilplpDDClipper)->ref = 1;
 
+  (*ilplpDDClipper)->hWnd = 0; 
+
   return DD_OK;
 }
 
@@ -2238,10 +2255,19 @@ HRESULT WINAPI DirectDrawCreateClipper( DWORD dwFlags,
  *			IDirectDrawClipper
  */
 static HRESULT WINAPI IDirectDrawClipperImpl_SetHwnd(
-	LPDIRECTDRAWCLIPPER iface,DWORD x,HWND hwnd
+	LPDIRECTDRAWCLIPPER iface, DWORD dwFlags, HWND hWnd
 ) {
         ICOM_THIS(IDirectDrawClipperImpl,iface);
-	FIXME("(%p)->SetHwnd(0x%08lx,0x%08lx),stub!\n",This,x,(DWORD)hwnd);
+
+	TRACE("(%p)->SetHwnd(0x%08lx,0x%08lx)\n",This,dwFlags,(DWORD)hWnd);
+
+        if( dwFlags )
+        {
+          return DDERR_INVALIDPARAMS; 
+        }
+
+        This->hWnd = hWnd;
+
 	return DD_OK;
 }
 
@@ -2292,10 +2318,13 @@ static ULONG WINAPI IDirectDrawClipperImpl_AddRef( LPDIRECTDRAWCLIPPER iface )
 
 static HRESULT WINAPI IDirectDrawClipperImpl_GetHWnd(
          LPDIRECTDRAWCLIPPER iface,
-         HWND* HWndPtr )
+         HWND* hWndPtr )
 {
    ICOM_THIS(IDirectDrawClipperImpl,iface);
-   FIXME("(%p)->(%p),stub!\n",This,HWndPtr);
+   FIXME("(%p)->(%p),stub!\n",This,hWndPtr);
+
+   *hWndPtr = This->hWnd; 
+
    return DD_OK;
 }
 
@@ -2901,6 +2930,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
     (*ilpdsf)->s.ddraw = This;
     (*ilpdsf)->s.palette = NULL;
     (*ilpdsf)->t.dga.fb_height = -1; /* This is to have non-on screen surfaces freed */
+    (*ilpdsf)->lpClipper = NULL;
 
     /* Copy the surface description */
     (*ilpdsf)->s.surface_desc = *lpddsd;
@@ -3167,6 +3197,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
     ICOM_VTBL(*ilpdsf)             = (ICOM_VTABLE(IDirectDrawSurface)*)&xlib_dds4vt;
     (*ilpdsf)->s.palette = NULL;
     (*ilpdsf)->t.xlib.image = NULL; /* This is for off-screen buffers */
+    (*ilpdsf)->lpClipper = NULL;
 
     /* Copy the surface description */
     (*ilpdsf)->s.surface_desc = *lpddsd;
@@ -4646,18 +4677,19 @@ static ICOM_VTABLE(IDirectDraw) xlib_ddvt =
  *
  */
 
-
 #ifdef HAVE_LIBXXF86DGA
 static HRESULT WINAPI DGA_IDirectDraw2Impl_SetDisplayMode(
-	LPDIRECTDRAW2 iface,DWORD width,DWORD height,DWORD depth,DWORD xx,DWORD yy
+	LPDIRECTDRAW2 iface,DWORD width,DWORD height,DWORD depth,DWORD dwRefreshRate, DWORD dwFlags
 ) {
+	FIXME( "Ignored parameters (0x%08lx,0x%08lx)\n", dwRefreshRate, dwFlags ); 
 	return DGA_IDirectDrawImpl_SetDisplayMode((LPDIRECTDRAW)iface,width,height,depth);
 }
 #endif /* defined(HAVE_LIBXXF86DGA) */
 
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_SetDisplayMode(
-	LPDIRECTDRAW2 iface,DWORD width,DWORD height,DWORD depth,DWORD xx,DWORD yy
+	LPDIRECTDRAW2 iface,DWORD width,DWORD height,DWORD depth,DWORD dwRefreshRate,DWORD dwFlags
 ) {
+	FIXME( "Ignored parameters (0x%08lx,0x%08lx)\n", dwRefreshRate, dwFlags ); 
 	return Xlib_IDirectDrawImpl_SetDisplayMode((LPDIRECTDRAW)iface,width,height,depth);
 }
 

@@ -45,8 +45,9 @@ struct IDirectDrawClipperImpl
     /* IUnknown fields */
     ICOM_VFIELD(IDirectDrawClipper);
     DWORD                            ref;
+
     /* IDirectDrawClipper fields */
-    /* none */
+    HWND hWnd;
 };
 
 /*****************************************************************************
@@ -184,6 +185,7 @@ struct IDirectDrawSurfaceImpl
 	struct _dga_directdrawsurface	dga;
 	struct _xlib_directdrawsurface	xlib;
     } t;
+    LPDIRECTDRAWCLIPPER lpClipper;
 };
 
 /*****************************************************************************
@@ -200,6 +202,7 @@ struct IDirectDrawSurface2Impl
 	struct _dga_directdrawsurface	dga;
 	struct _xlib_directdrawsurface	xlib;
     } t;
+    LPDIRECTDRAWCLIPPER lpClipper;
 };
 
 /*****************************************************************************
@@ -216,6 +219,7 @@ struct IDirectDrawSurface3Impl
 	struct _dga_directdrawsurface	dga;
 	struct _xlib_directdrawsurface	xlib;
     } t;
+    LPDIRECTDRAWCLIPPER lpClipper;
 };
 
 /*****************************************************************************
@@ -226,12 +230,14 @@ struct IDirectDrawSurface4Impl
     /* IUnknown fields */
     ICOM_VFIELD(IDirectDrawSurface4);
     DWORD                             ref;
+
     /* IDirectDrawSurface4 fields */
     struct _common_directdrawsurface	s;
     union {
 	struct _dga_directdrawsurface	dga;
 	struct _xlib_directdrawsurface	xlib;
     } t;
+    LPDIRECTDRAWCLIPPER lpClipper;
 } ;
 
 struct _surface_chain {
