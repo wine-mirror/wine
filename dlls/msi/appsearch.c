@@ -527,9 +527,6 @@ static UINT ACTION_FileMatchesSig(MSISIGNATURE *sig,
  * Assumes sig->File is not NULL.
  * Returns ERROR_SUCCESS on success (which may include non-critical errors),
  * something else on failures which should halt the install.
- * FIXME: according to MSDN, FindFirstFile doesn't work on root directories.
- * Is that also true in Wine?
- * FIXME: if dir is not a full path, have to check all fixed drives.
  */
 static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
  MSISIGNATURE *sig, LPCWSTR dir, int depth)
@@ -613,7 +610,6 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
     return rc;
 }
 
-/* FIXME: if dir is not a full path, have to check all fixed drives. */
 static UINT ACTION_CheckDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
  LPCWSTR dir)
 {
@@ -624,6 +620,66 @@ static UINT ACTION_CheckDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
         TRACE("directory exists, setting %s to %s\n",
          debugstr_w(sig->Property), debugstr_w(dir));
         rc = MSI_SetPropertyW(package, sig->Property, dir);
+    }
+    return rc;
+}
+
+static BOOL ACTION_IsFullPath(LPCWSTR path)
+{
+    WCHAR first = toupperW(path[0]);
+    BOOL ret;
+
+    if (first >= 'A' && first <= 'A' && path[1] == ':')
+        ret = TRUE;
+    else if (path[0] == '\\' && path[1] == '\\')
+        ret = TRUE;
+    else
+        ret = FALSE;
+    return ret;
+}
+
+static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
+ LPCWSTR expanded, int depth)
+{
+    UINT rc;
+    BOOL found;
+
+    if (ACTION_IsFullPath(expanded))
+    {
+        if (sig->File)
+            rc = ACTION_RecurseSearchDirectory(package, &found, sig,
+             expanded, depth);
+        else
+        {
+            /* Recursively searching a directory makes no sense when the
+             * directory to search is the thing you're trying to find.
+             */
+            rc = ACTION_CheckDirectory(package, sig, expanded);
+        }
+    }
+    else
+    {
+        WCHAR pathWithDrive[MAX_PATH] = { 'C',':','\\',0 };
+        DWORD drives = GetLogicalDrives();
+        int i;
+
+        rc = ERROR_SUCCESS;
+        found = FALSE;
+        for (i = 0; rc == ERROR_SUCCESS && !found && i < 26; i++)
+            if (drives & (1 << drives))
+            {
+                pathWithDrive[0] = 'A' + i;
+                if (GetDriveTypeW(pathWithDrive) == DRIVE_FIXED)
+                {
+                    strncpyW(pathWithDrive + 3, expanded,
+                     sizeof(pathWithDrive) / sizeof(pathWithDrive[0]) - 3);
+                    if (sig->File)
+                        rc = ACTION_RecurseSearchDirectory(package, &found, sig,
+                         pathWithDrive, depth);
+                    else
+                        rc = ACTION_CheckDirectory(package, sig, pathWithDrive);
+                }
+            }
     }
     return rc;
 }
@@ -647,7 +703,6 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, MSISIGNATURE *sig)
         WCHAR buffer[MAX_PATH], expanded[MAX_PATH];
         DWORD sz;
         int depth;
-        BOOL found;
 
         rc = MSI_ViewExecute(view, 0);
         if (rc != ERROR_SUCCESS)
@@ -693,16 +748,7 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, MSISIGNATURE *sig)
             depth = MSI_RecordGetInteger(row,4);
         ACTION_ExpandAnyPath(package, buffer, expanded,
          sizeof(expanded) / sizeof(expanded[0]));
-        if (sig->File)
-            rc = ACTION_RecurseSearchDirectory(package, &found, sig,
-             expanded, depth);
-        else
-        {
-            /* Recursively searching a directory makes no sense when the
-             * directory to search is the thing you're trying to find.
-             */
-            rc = ACTION_CheckDirectory(package, sig, expanded);
-        }
+        rc = ACTION_SearchDirectory(package, sig, expanded, depth);
 
 end:
         msiobj_release(&row->hdr);
