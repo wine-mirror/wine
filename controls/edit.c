@@ -3555,8 +3555,6 @@ static BOOL EDIT_EM_Undo(EDITSTATE *es)
             return !(es->style & ES_MULTILINE);
 
 	ulength = strlenW(es->undo_text);
-	if( ulength == 0 )
-            return !(es->style & ES_MULTILINE);
 
 	utext = HeapAlloc(GetProcessHeap(), 0, (ulength + 1) * sizeof(WCHAR));
 
@@ -3567,7 +3565,7 @@ static BOOL EDIT_EM_Undo(EDITSTATE *es)
 
 	EDIT_EM_SetSel(es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
 	EDIT_EM_EmptyUndoBuffer(es);
-	EDIT_EM_ReplaceSel(es, TRUE, utext, FALSE, TRUE);
+	EDIT_EM_ReplaceSel(es, TRUE, utext, TRUE, TRUE);
 	EDIT_EM_SetSel(es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
         /* send the notification after the selection start and end are set */
         EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
