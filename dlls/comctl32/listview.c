@@ -596,7 +596,7 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
 	else
 	{
 	    cchTempBufMax = pdi->item.cchTextMax;
-	    pdi->item.pszText = 0; /* make sure we don't process garbage */
+	    *pdi->item.pszText = 0; /* make sure we don't process garbage */
 	}
 
         pszTempBuf = HeapAlloc(GetProcessHeap(), 0,
