@@ -243,6 +243,7 @@ extern int WIN32_LastError;
 #define ERROR_CAN_NOT_COMPLETE      1003
 #define ERROR_INVALID_FLAGS         1004
 #define ERROR_BADKEY                1010 /* Config reg key invalid */
+#define ERROR_CANTOPEN              1011
 #define ERROR_CANTREAD              1012 /* Config reg key couldn't be read */
 #define ERROR_CANTWRITE             1013 /* Config reg key couldn't be written */
 #define ERROR_DLL_INIT_FAILED       1114

@@ -300,6 +300,16 @@ ICOM_DEFINE(IPrint,IUnknown)
 #endif
 				
 				
+#define LPMSODOCUMENT                  LPOLEDOCUMENT
+#define LPMSODOCUMENTSITE              LPOLEDOCUMENTSITE
+#define LPMSOVIEW                      LPOLEDOCUMENTVIEW
+#define LPENUMMSOVIEW                  LPENUMOLEDOCUMENTVIEWS
+#define LPMSOCOMMANDTARGET             LPOLECOMMANDTARGET
+#define IID_IMsoDocument               IID_IOleDocument
+#define IID_IMsoDocumentSite           IID_IOleDocumentSite
+#define IID_IMsoView                   IID_IOleDocumentView
+#define IID_IEnumMsoView               IID_IEnumOleDocumentViews
+#define IID_IMsoCommandTarget          IID_IOleCommandTarget
 				
 
 #endif /* __WINE_DOCOBJ_H */

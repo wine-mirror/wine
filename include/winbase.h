@@ -3,7 +3,7 @@
 
 #include "winnt.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 
 #ifdef __cplusplus
@@ -205,6 +205,33 @@ typedef struct
 
 DECL_WINELIB_TYPE_AW(WIN32_FIND_DATA)
 DECL_WINELIB_TYPE_AW(LPWIN32_FIND_DATA)
+
+typedef struct
+{
+    LPVOID lpData;
+    DWORD cbData;
+    BYTE cbOverhead;
+    BYTE iRegionIndex;
+    WORD wFlags;
+    union {
+        struct {
+            HANDLE hMem;
+            DWORD dwReserved[3];
+        } Block;
+        struct {
+            DWORD dwCommittedSize;
+            DWORD dwUnCommittedSize;
+            LPVOID lpFirstBlock;
+            LPVOID lpLastBlock;
+        } Region;
+    } Foo;
+} PROCESS_HEAP_ENTRY, *LPPROCESS_HEAP_ENTRY;
+
+#define PROCESS_HEAP_REGION                   0x0001
+#define PROCESS_HEAP_UNCOMMITTED_RANGE        0x0002
+#define PROCESS_HEAP_ENTRY_BUSY               0x0004
+#define PROCESS_HEAP_ENTRY_MOVEABLE           0x0010
+#define PROCESS_HEAP_ENTRY_DDESHARE           0x0020
 
 #define INVALID_HANDLE_VALUE16  ((HANDLE16) -1)
 #define INVALID_HANDLE_VALUE  ((HANDLE) -1)
@@ -1178,7 +1205,7 @@ typedef struct tagCOMMTIMEOUTS {
 	DWORD	WriteTotalTimeoutConstant;
 } COMMTIMEOUTS,*LPCOMMTIMEOUTS;
   
-#pragma pack(4)
+#include "poppack.h"
 
 typedef VOID (CALLBACK *PAPCFUNC)(ULONG_PTR);
 

@@ -39,6 +39,15 @@ void	WINAPI DragFinish(HDROP h);
 BOOL16	WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p);
 BOOL	WINAPI DragQueryPoint(HDROP hDrop, POINT *p);
 
+#define NIF_MESSAGE             0x00000001
+#define NIF_ICON                0x00000002
+#define NIF_TIP                 0x00000004
+
+#define NIM_ADD                 0x00000000
+#define NIM_MODIFY              0x00000001
+#define NIM_DELETE              0x00000002
+
+
 
 /******************************************
  * Application Bar

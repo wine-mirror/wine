@@ -134,6 +134,8 @@ typedef struct IStream IStream,*LPSTREAM;
  */
 #define STGTY_STORAGE 1
 #define STGTY_STREAM  2
+#define STGTY_LOCKBYTES 3
+#define STGTY_PROPERTY  4
 
 /*****************************************************************************
  * STATFLAG enumeration

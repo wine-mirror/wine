@@ -1570,13 +1570,13 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     int argsize = 0;
     int short_ret = 0;
     int reg_func = 0;
-    int cdecl = 0;
+    int Cdecl = 0;
     int thunk = 0;
     char *args = profile + 7;
 
     /* Parse function type */
 
-    if (!strncmp( "c_", profile, 2 )) cdecl = 1;
+    if (!strncmp( "c_", profile, 2 )) Cdecl = 1;
     else if (!strncmp( "t_", profile, 2 )) thunk = 1;
     else if (strncmp( "p_", profile, 2 ))
     {
@@ -1654,7 +1654,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     /* Transfer the arguments */
 
     if (reg_func) BuildContext16( outfile );
-    else if (*args) argsize = TransferArgs16To32( outfile, args, cdecl );
+    else if (*args) argsize = TransferArgs16To32( outfile, args, Cdecl );
     else if (thunk)
     {
         /* Get the stack selector base */
@@ -1701,7 +1701,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     {
         int ftype = 0;
 
-        if (cdecl) ftype |= 4;
+        if (Cdecl) ftype |= 4;
         if (reg_func) ftype |= 2;
         if (short_ret) ftype |= 1;
 
@@ -1820,7 +1820,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\t.byte 0x66\n" );
         fprintf( outfile, "\tlret\n" );
     }
-    else if (argsize && !cdecl)
+    else if (argsize && !Cdecl)
     {
         fprintf( outfile, "\t.byte 0x66\n" );
         fprintf( outfile, "\tlret $%d\n", argsize );

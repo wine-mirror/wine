@@ -9,7 +9,7 @@ extern "C" {
 
 #define _WINGDI_
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct _ABCFLOAT {
     FLOAT   abcfA;
@@ -227,6 +227,9 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define	MOUSETRAILS		39
 #define	GETDEVICEUNITS		42
 
+#define DESKTOPVERTRES          117
+#define DESKTOPHORZRES          118
+
 #define	GETEXTENDEDTEXTMETRICS	256
 #define	GETEXTENTTABLE		257
 #define	GETPAIRKERNTABLE	258
@@ -313,6 +316,7 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define WHITEONBLACK         2
 #define COLORONCOLOR	     3
 #define HALFTONE             4
+#define MAXSTRETCHBLTMODE    4 
 
 #define STRETCH_ANDSCANS     BLACKONWHITE
 #define STRETCH_ORSCANS      WHITEONBLACK
@@ -1367,6 +1371,10 @@ typedef struct
 #define TT_AVAILABLE        0x0001
 #define TT_ENABLED          0x0002
 
+#define TT_PRIM_LINE    1
+#define TT_PRIM_QSPLINE 2
+#define TT_POLYGON_TYPE 24 
+
 /* Get/SetSystemPaletteUse() values */
 #define SYSPAL_STATIC   1
 #define SYSPAL_NOSTATIC 2
@@ -1765,7 +1773,7 @@ typedef struct
     UINT16  bcHeight;
     UINT16  bcPlanes;
     UINT16  bcBitCount;
-} BITMAPCOREHEADER;
+} BITMAPCOREHEADER, *LPBITMAPCOREHEADER;
 
 typedef struct
 {
@@ -2942,7 +2950,7 @@ typedef struct _RGNDATA {
 typedef BOOL16 (CALLBACK* ABORTPROC16)(HDC16, INT16);
 typedef BOOL (CALLBACK* ABORTPROC)(HDC, INT);
 
-#pragma pack(4)
+#include "poppack.h"
 
 /* Declarations for functions that exist only in Win16 */
 

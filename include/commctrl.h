@@ -104,7 +104,7 @@ BOOL WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 #define NM_SETCURSOR            (NM_FIRST-17)
 #define NM_CHAR                 (NM_FIRST-18)
 #define NM_TOOLTIPSCREATED      (NM_FIRST-19)
-
+#define NM_UPDOWN                NMUPDOWN
 
 /* callback constants */
 #define LPSTR_TEXTCALLBACKA    ((LPSTR)-1L)

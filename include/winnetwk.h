@@ -80,5 +80,15 @@ UINT      WINAPI MultinetGetErrorTextA(DWORD,DWORD,DWORD);
 UINT      WINAPI MultinetGetErrorTextW(DWORD,DWORD,DWORD);
 #define     MultinetGetErrorText WINELIB_NAME_AW(MultinetGetErrorText_)
 
+#define RESOURCETYPE_ANY             0x00000000
+#define RESOURCETYPE_DISK            0x00000001
+#define RESOURCETYPE_PRINT           0x00000002
+
+#define CONNECT_UPDATE_PROFILE       0x00000001
+#define CONNECT_UPDATE_RECENT        0x00000002
+#define CONNECT_TEMPORARY            0x00000004
+#define CONNECT_INTERACTIVE          0x00000008
+#define CONNECT_PROMPT               0x00000010
+#define CONNECT_NEED_DRIVE           0x00000020
 
 #endif /* _WINNETWK_H_ */

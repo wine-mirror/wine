@@ -330,7 +330,7 @@ typedef struct tagFUNCDESC
 	SHORT cScodes;
 	ELEMDESC elemdescFunc;
 	WORD wFuncFlags;
-} FUNCDESC;
+} FUNCDESC, *LPFUNCDESC;
 
 typedef enum tagVARKIND
 {

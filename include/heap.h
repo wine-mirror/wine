@@ -39,25 +39,5 @@ static __inline__ SEGPTR WINE_UNUSED SEGPTR_Get(LPCVOID ptr) {
 #define SEGPTR_FREE(ptr) \
          (HIWORD(ptr) ? HeapFree( SegptrHeap, 0, (ptr) ) : 0)
 
-typedef struct
-{
-    LPVOID lpData;
-    DWORD cbData;
-    BYTE cbOverhead;
-    BYTE iRegionIndex;
-    WORD wFlags;
-    union {
-        struct {
-            HANDLE hMem;
-            DWORD dwReserved[3];
-        } Block;
-        struct {
-            DWORD dwCommittedSize;
-            DWORD dwUnCommittedSize;
-            LPVOID lpFirstBlock;
-            LPVOID lpLastBlock;
-        } Region;
-    } Foo;
-} PROCESS_HEAP_ENTRY, *LPPROCESS_HEAP_ENTRY;
 
 #endif  /* __WINE_HEAP_H */

@@ -11,6 +11,13 @@
 #endif
 #include "windef.h"
 
+#define MB_PRECOMPOSED              0x00000001 
+#define MB_COMPOSITE                0x00000002
+#define MB_USEGLYPHCHARS            0x00000004
+#define MB_ERR_INVALID_CHARS        0x00000008
+
+#define LCID_INSTALLED              0x00000001 
+
 /* flags to GetLocaleInfo */
 #define	LOCALE_NOUSEROVERRIDE	    0x80000000
 #define	LOCALE_USE_CP_ACP	    0x40000000
@@ -255,6 +262,7 @@
 #define SUBLANG_SYS_DEFAULT              0x02    /* system default */
 
 #define SUBLANG_ARABIC                   0x01
+#define SUBLANG_ARABIC_SAUDI_ARABIA      0x01
 #define SUBLANG_ARABIC_IRAQ              0x02
 #define SUBLANG_ARABIC_EGYPT             0x03
 #define SUBLANG_ARABIC_LIBYA             0x04
@@ -350,6 +358,7 @@
 #define SUBLANG_MALAY_BRUNEI_DARUSSALAM  0x02
 #define SUBLANG_UZBEK			 0x01
 #define SUBLANG_UZBEK_CYRILLIC		 0x02
+#define SUBLANG_URDU_PAKISTAN            0x01
 
 /* Sort definitions */
 #define SORT_DEFAULT                     0x0

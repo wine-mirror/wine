@@ -74,12 +74,21 @@ extern "C" {
 #define WINAPI      __stdcall
 #define APIPRIVATE  __stdcall
 #define PASCAL      __stdcall
+#define pascal      __stdcall
 #define _pascal     __stdcall
 #define _stdcall    __stdcall
 #define _fastcall   __stdcall
 #define __export    __stdcall
+#define CDECL       __cdecl
+#define _CDECL      __cdecl
+#define cdecl       __cdecl
+#define _cdecl      __cdecl
 #define WINAPIV     __cdecl
 #define APIENTRY    WINAPI
+
+#define __declspec(x)
+#define dllimport
+#define dllexport
 
 #define CONST       const
 

@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 /* flags for HIGHCONTRAST dwFlags field */
 #define HCF_HIGHCONTRASTON  0x00000001
@@ -211,7 +211,15 @@ typedef struct
 #define BS_ICON                0x00000040L
 #define BS_BITMAP              0x00000080L
 
+#define BS_TEXT                0x00000000L
+#define BS_ICON                0x00000040L
+#define BS_BITMAP              0x00000080L
 #define BS_LEFT                0x00000100L
+#define BS_RIGHT               0x00000200L
+#define BS_CENTER              0x00000300L
+#define BS_TOP                 0x00000400L
+#define BS_BOTTOM              0x00000800L
+#define BS_VCENTER             0x00000C00L
 #define BS_PUSHLIKE            0x00001000L
 #define BS_MULTILINE           0x00002000L
 #define BS_NOTIFY              0x00004000L
@@ -2688,6 +2696,9 @@ typedef struct
 #define CF_RIFF             11
 #define CF_WAVE             12
 #define CF_ENHMETAFILE      14
+#define CF_HDROP            15
+#define CF_LOCALE           16
+#define CF_MAX              17
 
 #define CF_OWNERDISPLAY     0x0080
 #define CF_DSPTEXT          0x0081
@@ -2786,7 +2797,7 @@ typedef struct
 #define NF_QUERY	    3
 #define NF_REQUERY	    4
 
-#pragma pack(4)
+#include "poppack.h"
 #define     EnumTaskWindows(handle,proc,lparam) \
             EnumThreadWindows(handle,proc,lparam)
 #define     OemToAnsiA OemToCharA
@@ -3503,6 +3514,8 @@ INT       WINAPI LoadMessageA(HMODULE,UINT,WORD,LPSTR,INT);
 INT       WINAPI LoadMessageW(HMODULE,UINT,WORD,LPWSTR,INT);
 
 VOID        WINAPI ScreenSwitchEnable16(WORD);
+
+#define WC_DIALOG    (LPSTR)((DWORD)((WORD)( 0x8002)))
 
 #ifdef __cplusplus
 }

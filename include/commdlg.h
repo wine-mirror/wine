@@ -29,9 +29,7 @@ extern "C" {
 #define OFN_SHAREAWARE               0x00004000
 #define OFN_NOREADONLYRETURN         0x00008000
 #define OFN_NOTESTFILECREATE         0x00010000
-
-/*      OFN_?                        0x00020000 */
-
+#define OFN_NONETWORKBUTTON          0x00020000 
 #define OFN_NOLONGNAMES              0x00040000
 #define OFN_EXPLORER                 0x00080000
 #define OFN_NODEREFERENCELINKS       0x00100000
@@ -254,7 +252,7 @@ DECL_WINELIB_TYPE_AW(LPFINDREPLACE)
 #define FR_HIDEWHOLEWORD                0x00010000
 
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct 
 {
@@ -324,7 +322,7 @@ typedef struct
 DECL_WINELIB_TYPE_AW(CHOOSEFONT)
 DECL_WINELIB_TYPE_AW(LPCHOOSEFONT)
 
-#pragma pack(4)
+#include "poppack.h"
 
 #define CF_SCREENFONTS               0x00000001
 #define CF_PRINTERFONTS              0x00000002
