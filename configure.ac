@@ -1246,6 +1246,7 @@ dlls/comctl32/Makefile
 dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/crypt32/Makefile
+dlls/d3d8/Makefile
 dlls/dciman32/Makefile
 dlls/ddraw/Makefile
 dlls/devenum/Makefile
