@@ -82,7 +82,7 @@ LRESULT CALLBACK WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
     return 0l;
 }
 
-int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
     MSG      msg;
     WNDCLASS class;

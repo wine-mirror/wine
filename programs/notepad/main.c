@@ -854,7 +854,7 @@ LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
  *           WinMain
  */
 
-int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     MSG      msg;
     WNDCLASS class;

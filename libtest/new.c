@@ -6,7 +6,7 @@ HANDLE ghInstance;
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK ChildProc (HWND, UINT, WPARAM, LPARAM);
 
-int PASCAL WinMain (HANDLE hInstance, HANDLE hPrevInstance,
+int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		    LPSTR lpszCmdParam, int nCmdShow)
     {
     char szAppName[] = "ClassLook" ;

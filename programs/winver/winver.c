@@ -8,7 +8,7 @@
 #include "windows.h"
 #include "version.h"
 
-int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
    return ShellAbout((HWND)0, "WINE", WINE_RELEASE_INFO, 0);
 }

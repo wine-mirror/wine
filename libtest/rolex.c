@@ -220,7 +220,7 @@ WPARAM MessageLoop()
   }
 }
 
-int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
   WNDCLASS class;
   if(!prev)

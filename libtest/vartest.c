@@ -101,7 +101,7 @@ OLECHAR* AtoW( char* p )
 #endif
 
 
-int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
 	VARIANTARG va;
 	VARIANTARG vb;

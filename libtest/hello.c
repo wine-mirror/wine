@@ -4,7 +4,7 @@ char szAppName[] = "Hello";
 
 long FAR PASCAL WndProc(HWND, UINT, WPARAM, LPARAM);
 
-int PASCAL WinMain (HANDLE hInstance, HANDLE hPrevInst, LPSTR lpszCmdLine,
+int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpszCmdLine,
 			 int nCmdShow)
 {
 	HWND hwnd;

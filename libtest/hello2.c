@@ -1,6 +1,6 @@
 #include "windows.h"
 
-int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
   return MessageBox((HWND)0,
 		    (LPSTR)"Hello, hello!",
