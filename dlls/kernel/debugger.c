@@ -372,7 +372,7 @@ void WINAPIV _DebugOutput( void )
 }
 
 /***********************************************************************
- *           DebugSetProcessKillOnExit                    (KERNEL.328)
+ *           DebugSetProcessKillOnExit                    (KERNEL32.@)
  *
  * Let a debugger decide wether a debuggee will be killed upon debugger
  * termination

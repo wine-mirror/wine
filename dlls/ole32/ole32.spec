@@ -32,9 +32,9 @@ debug_channels (accel ole relay storage)
  18 stdcall CoGetCurrentProcess() CoGetCurrentProcess
  19 stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) CoGetInterfaceAndReleaseStream
  20 stdcall CoGetMalloc(long ptr) CoGetMalloc
- 21 stub CoGetMarshalSizeMax        # stdcall (ptr ptr ptr long ptr long) return 0,ERR_NOTIMPLEMENTED
+ 21 stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) CoGetMarshalSizeMax
  22 stdcall CoGetPSClsid(ptr ptr) CoGetPSClsid 
- 23 stub CoGetStandardMarshal       # stdcall (ptr ptr long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
+ 23 stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) CoGetStandardMarshal
  24 stub CoGetState
  25 stub CoGetTreatAsClass          # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  26 stdcall CoInitialize(ptr) CoInitialize
