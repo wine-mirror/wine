@@ -211,15 +211,14 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
 	    return 0;
 
         case DM_SETDEFID:
-            if (dlgInfo->flags & DF_END) return 1;
-            DEFDLG_SetDefButton( hwnd, dlgInfo,
-                                 wParam ? GetDlgItem( hwnd, wParam ) : 0 );
+            if (dlgInfo && !(dlgInfo->flags & DF_END))
+                DEFDLG_SetDefButton( hwnd, dlgInfo, wParam ? GetDlgItem( hwnd, wParam ) : 0 );
             return 1;
 
         case DM_GETDEFID:
+            if (dlgInfo && !(dlgInfo->flags & DF_END))
             {
                 HWND hwndDefId;
-                if (dlgInfo->flags & DF_END) return 0;
                 if (dlgInfo->idResult)
                     return MAKELONG( dlgInfo->idResult, DC_HASDEFID );
                 if ((hwndDefId = DEFDLG_FindDefButton( hwnd )))
@@ -228,7 +227,8 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
 	    return 0;
 
 	case WM_NEXTDLGCTL:
-	    {
+            if (dlgInfo)
+            {
                 HWND hwndDest = (HWND)wParam;
                 if (!lParam)
                     hwndDest = GetNextDlgTabItem(hwnd, GetFocus(), wParam);
@@ -252,7 +252,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
 	    return DefWindowProcA( hwnd, msg, wParam, lParam );
 
 	case WM_GETFONT:
-	    return dlgInfo->hUserFont;
+            return dlgInfo ? dlgInfo->hUserFont : 0;
 
         case WM_CLOSE:
             PostMessageA( hwnd, WM_COMMAND, IDCANCEL,
