@@ -167,11 +167,13 @@ typedef struct {
     DWORD                       dwBufferSize;           /* size of whole ALSA buffer in bytes */
     LPWAVEHDR			lpQueuePtr;		/* start of queued WAVEHDRs (waiting to be notified) */
     LPWAVEHDR			lpPlayPtr;		/* start of not yet fully played buffers */
+    DWORD			dwPartialOffset;	/* Offset of not yet written bytes in lpPlayPtr */
 
     LPWAVEHDR			lpLoopPtr;              /* pointer of first buffer in loop, if any */
     DWORD			dwLoops;		/* private copy of loop counter */
 
-    DWORD			dwPlayedTotal;
+    DWORD			dwPlayedTotal;		/* number of bytes actually played since opening */
+    DWORD			dwWrittenTotal;		/* number of bytes written to ALSA buffer since opening */
 
     /* synchronization stuff */
     HANDLE			hStartUpEvent;
@@ -937,6 +939,9 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
  */
 static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, snd_pcm_status_t* ps)
 {
+   snd_pcm_sframes_t delay = 0;
+   snd_pcm_delay(wwo->p_handle, &delay);
+   wwo->dwPlayedTotal = wwo->dwWrittenTotal - delay;
    return TRUE;
 }
 
@@ -953,8 +958,6 @@ static void wodPlayer_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 
     if (!lpWaveHdr) return;
 
-    wwo->lpPlayPtr->reserved = 0;
-
     if (lpWaveHdr->dwFlags & WHDR_BEGINLOOP) {
 	if (wwo->lpLoopPtr) {
 	    WARN("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
@@ -966,6 +969,7 @@ static void wodPlayer_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 	    wwo->dwLoops = lpWaveHdr->dwLoops;
 	}
     }
+    wwo->dwPartialOffset = 0;
 }
 
 /**************************************************************************
@@ -977,11 +981,11 @@ static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEOUT* wwo)
 {
     LPWAVEHDR lpWaveHdr = wwo->lpPlayPtr;
 
+    wwo->dwPartialOffset = 0;
     if ((lpWaveHdr->dwFlags & WHDR_ENDLOOP) && wwo->lpLoopPtr) {
 	/* We're at the end of a loop, loop if required */
 	if (--wwo->dwLoops > 0) {
 	    wwo->lpPlayPtr = wwo->lpLoopPtr;
-	    wwo->lpPlayPtr->reserved = 0;
 	} else {
 	    /* Handle overlapping loops correctly */
 	    if (wwo->lpLoopPtr != lpWaveHdr && (lpWaveHdr->dwFlags & WHDR_BEGINLOOP)) {
@@ -1016,7 +1020,7 @@ static DWORD wodPlayer_DSPWait(const WINE_WAVEOUT *wwo)
 }
 
 /**************************************************************************
- * 			     wodPllayer_NotifyWait               [internal]
+ * 			     wodPlayer_NotifyWait               [internal]
  * Returns the number of milliseconds to wait before attempting to notify
  * completion of the specified wavehdr.
  * This is based on the number of bytes remaining to be written in the
@@ -1026,8 +1030,12 @@ static DWORD wodPlayer_NotifyWait(const WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 {
     DWORD dwMillis;
 
-    dwMillis = (lpWaveHdr->dwBufferLength - lpWaveHdr->reserved) * 1000 / wwo->format.wf.nAvgBytesPerSec;
-    if (!dwMillis) dwMillis = 1;
+    if (lpWaveHdr->reserved < wwo->dwPlayedTotal) {
+        dwMillis = 1;
+    } else {
+        dwMillis = (lpWaveHdr->reserved - wwo->dwPlayedTotal) * 1000 / wwo->format.wf.nAvgBytesPerSec;
+        if (!dwMillis) dwMillis = 1;
+    }
 
     return dwMillis;
 }
@@ -1042,18 +1050,18 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* frames)
 {
     /* Only attempt to write to free frames */
     LPWAVEHDR lpWaveHdr = wwo->lpPlayPtr;
-    DWORD dwLength = snd_pcm_bytes_to_frames(wwo->p_handle, lpWaveHdr->dwBufferLength - lpWaveHdr->reserved);
+    DWORD dwLength = snd_pcm_bytes_to_frames(wwo->p_handle, lpWaveHdr->dwBufferLength - wwo->dwPartialOffset);
     int toWrite = min(dwLength, *frames);
     int written;
 
-    TRACE("Writing wavehdr %p.%lu[%lu]\n", lpWaveHdr, lpWaveHdr->reserved, lpWaveHdr->dwBufferLength);
+    TRACE("Writing wavehdr %p.%lu[%lu]\n", lpWaveHdr, wwo->dwPartialOffset, lpWaveHdr->dwBufferLength);
 
-    written = (wwo->write)(wwo->p_handle, lpWaveHdr->lpData + lpWaveHdr->reserved, toWrite);
+    written = (wwo->write)(wwo->p_handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
     if ( written < 0)
     {
     	/* XRUN occurred. let's try to recover */
         ALSA_XRUNRecovery(wwo, written);
-	written = (wwo->write)(wwo->p_handle, lpWaveHdr->lpData + lpWaveHdr->reserved, toWrite);
+	written = (wwo->write)(wwo->p_handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
     }
     if (written <= 0)
     {
@@ -1062,15 +1070,15 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* frames)
         return written;
     }
 
-    lpWaveHdr->reserved += snd_pcm_frames_to_bytes(wwo->p_handle, written);
-    if ( lpWaveHdr->reserved >= lpWaveHdr->dwBufferLength) {
+    wwo->dwPartialOffset += snd_pcm_frames_to_bytes(wwo->p_handle, written);
+    if ( wwo->dwPartialOffset >= lpWaveHdr->dwBufferLength) {
 	/* this will be used to check if the given wave header has been fully played or not... */
-        lpWaveHdr->reserved = lpWaveHdr->dwBufferLength;
+        wwo->dwPartialOffset = lpWaveHdr->dwBufferLength;
         /* If we wrote all current wavehdr, skip to the next one */
         wodPlayer_PlayPtrNext(wwo);
     }
     *frames -= written;
-    wwo->dwPlayedTotal += snd_pcm_frames_to_bytes(wwo->p_handle, written);
+    wwo->dwWrittenTotal += snd_pcm_frames_to_bytes(wwo->p_handle, written);
 
     return written;
 }
@@ -1093,11 +1101,12 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
      * - we hit the beginning of a running loop
      * - we hit a wavehdr which hasn't finished playing
      */
+#if 0
     while ((lpWaveHdr = wwo->lpQueuePtr) &&
            (force ||
             (lpWaveHdr != wwo->lpPlayPtr &&
              lpWaveHdr != wwo->lpLoopPtr &&
-             lpWaveHdr->reserved == lpWaveHdr->dwBufferLength))) {
+             lpWaveHdr->reserved <= wwo->dwPlayedTotal))) {
 
 	wwo->lpQueuePtr = lpWaveHdr->lpNext;
 
@@ -1106,6 +1115,25 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 
 	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
     }
+#else
+    for (;;)
+    {
+        lpWaveHdr = wwo->lpQueuePtr;
+        if (!lpWaveHdr) {TRACE("Empty queue\n"); break;}
+        if (!force)
+        {
+            if (lpWaveHdr == wwo->lpPlayPtr) {TRACE("play %p\n", lpWaveHdr); break;}
+            if (lpWaveHdr == wwo->lpLoopPtr) {TRACE("loop %p\n", lpWaveHdr); break;}
+            if (lpWaveHdr->reserved > wwo->dwPlayedTotal){TRACE("still playing %p (%lu/%lu)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
+        }
+	wwo->lpQueuePtr = lpWaveHdr->lpNext;
+
+	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+	lpWaveHdr->dwFlags |= WHDR_DONE;
+
+	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
+    }
+#endif
     return  (lpWaveHdr && lpWaveHdr != wwo->lpPlayPtr && lpWaveHdr != wwo->lpLoopPtr) ?
         wodPlayer_NotifyWait(wwo, lpWaveHdr) : INFINITE;
 }
@@ -1146,6 +1174,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo)
     /* flush all possible output */
     wait_for_poll(wwo->p_handle, wwo->ufds, wwo->count);
 
+    wodUpdatePlayedTotal(wwo, NULL);
     /* updates current notify list */
     wodPlayer_NotifyCompletions(wwo, FALSE);
 
@@ -1163,6 +1192,9 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo)
 
     wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
     wwo->state = WINE_WS_STOPPED;
+    wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
+    /* Clear partial wavehdr */
+    wwo->dwPartialOffset = 0;
 
     /* remove any existing message in the ring */
     EnterCriticalSection(&wwo->msgRing.msg_crst);
@@ -1273,12 +1305,36 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
  */
 static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
 {
-    DWORD               availInQ = snd_pcm_avail_update(wwo->p_handle);
+    DWORD               availInQ;
+
+    wodUpdatePlayedTotal(wwo, NULL);
+    availInQ = snd_pcm_avail_update(wwo->p_handle);
+
+#if 0
+    /* input queue empty and output buffer with less than one fragment to play */
+    if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + wwo->dwFragmentSize) {
+	TRACE("Run out of wavehdr:s...\n");
+        return INFINITE;
+    }
+#endif
 
     /* no more room... no need to try to feed */
-    while (wwo->lpPlayPtr && availInQ > 0)
-        if ( wodPlayer_WriteMaxFrags(wwo, &availInQ) < 0 )
-	    break;
+    if (availInQ > 0) {
+        /* Feed from partial wavehdr */
+        if (wwo->lpPlayPtr && wwo->dwPartialOffset != 0) {
+            wodPlayer_WriteMaxFrags(wwo, &availInQ);
+        }
+
+        /* Feed wavehdrs until we run out of wavehdrs or DSP space */
+        if (wwo->dwPartialOffset == 0 && wwo->lpPlayPtr) {
+            do {
+                TRACE("Setting time to elapse for %p to %lu\n",
+                      wwo->lpPlayPtr, wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength);
+                /* note the value that dwPlayedTotal will return when this wave finishes playing */
+                wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
+            } while (wodPlayer_WriteMaxFrags(wwo, &availInQ) && wwo->lpPlayPtr && availInQ > 0);
+        }
+    }
 
     return wodPlayer_DSPWait(wwo);
 }
@@ -1308,6 +1364,15 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	if (wwo->state == WINE_WS_PLAYING) {
 	    dwNextFeedTime = wodPlayer_FeedDSP(wwo);
 	    dwNextNotifyTime = wodPlayer_NotifyCompletions(wwo, FALSE);
+	    if (dwNextFeedTime == INFINITE) {
+		/* FeedDSP ran out of data, but before giving up, */
+		/* check that a notification didn't give us more */
+		wodPlayer_ProcessMessages(wwo);
+		if (wwo->lpPlayPtr) {
+		    TRACE("recovering\n");
+		    dwNextFeedTime = wodPlayer_FeedDSP(wwo);
+		}
+	    }
 	} else {
 	    dwNextFeedTime = dwNextNotifyTime = INFINITE;
 	}
