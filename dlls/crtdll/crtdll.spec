@@ -327,8 +327,8 @@ import	ntdll
 @ cdecl _wcsdup(wstr) CRTDLL__wcsdup
 @ forward _wcsicmp ntdll._wcsicmp
 @ cdecl _wcsicoll(wstr wstr) CRTDLL__wcsicoll
-@ forward _wcslwr forward._wcslwr
-@ forward _wcsnicmp forward._wcsnicmp
+@ forward _wcslwr ntdll._wcslwr
+@ forward _wcsnicmp ntdll._wcsnicmp
 @ cdecl _wcsnset(wstr long long) CRTDLL__wcsnset
 @ cdecl _wcsrev(wstr) CRTDLL__wcsrev
 @ cdecl _wcsset(wstr long) CRTDLL__wcsset
