@@ -7,7 +7,11 @@
 
         <para>
           Written by &name-marcus-meissner; <email>&email-marcus-meissner;</email>
+        </para>
+        <para>
           Updated by &name-jeremy-white; <email>&email-jeremy-white;</email>
+        </para>
+        <para>
           Updated by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
         </para>
     </sect1>
@@ -459,19 +463,24 @@
             </listitem>
 
         <listitem id=libfiles>
-        <para> Shared Object Library Files </para>
-	<para> This list is NOT necessarily current ! </para>
+        <para>Shared Object Library Files</para>
+	<para>This list may NOT necessarily current!</para>
 
         <simplelist columns=5>
 <member>advapi32.dll.so</>
 <member>avicap32.dll.so</>
 <member>avifil32.dll.so</>
 <member>avifile.dll.so</>
+<member>aviinfo.exe.so</>
+<member>aviplay.exe.so</>
+<member>clock.exe.so </>
+<member>comcat.dll.so</>
 <member>comctl32.dll.so</>
 <member>comdlg32.dll.so</>
 <member>comm.dll.so</>
 <member>commdlg.dll.so</>
 <member>compobj.dll.so</>
+<member>control.exe.so</>
 <member>crtdll.dll.so</>
 <member>crypt32.dll.so</>
 <member>dciman32.dll.so</>
@@ -479,14 +488,20 @@
 <member>ddraw.dll.so</>
 <member>devenum.dll.so</>
 <member>dinput.dll.so</>
+<member>dinput8.dll.so</>
 <member>dispdib.dll.so</>
 <member>display.dll.so</>
 <member>dplay.dll.so</>
 <member>dplayx.dll.so</>
 <member>dsound.dll.so</>
+<member>expand.exe.so</>
 <member>gdi.exe.so</>
 <member>gdi32.dll.so</>
 <member>glu32.dll.so</>
+<member>icmp.dll.so</>
+<member>imaadp32.acm.so</>
+<member>imagehlp.dll.so</>
+<member>icinfo.exe.so</>
 <member>icmp.dll.so</>
 <member>imaadp32.acm.so</>
 <member>imagehlp.dll.so</>
@@ -522,6 +537,13 @@
 <member>msdmo.dll.so</>
 <member>msg711.drv.so</>
 <member>msimg32.dll.so</>
+<member>msacm.drv.so</>
+<member>msnet32.dll.so</>
+<member>msrle32.dll.so</>
+<member>msdmo.dll.so</>
+<member>msg711.acm.so</>
+<member>msimg32.dll.so</>
+<member>msisys.ocx.so</>
 <member>msnet32.dll.so</>
 <member>msrle32.dll.so</>
 <member>msvcrt.dll.so</>
@@ -529,6 +551,7 @@
 <member>msvfw32.dll.so</>
 <member>msvideo.dll.so</>
 <member>netapi32.dll.so</>
+<member>notepad.exe.so</>
 <member>ntdll.dll.so</>
 <member>odbc32.dll.so</>
 <member>ole2.dll.so</>
@@ -546,11 +569,17 @@
 <member>olesvr.dll.so</>
 <member>olesvr32.dll.so</>
 <member>opengl32.dll.so</>
+<member>osversioncheck.exe.so</>
+<member>progman.exe.so</>
 <member>psapi.dll.so</>
 <member>qcap.dll.so</>
 <member>quartz.dll.so</>
 <member>rasapi16.dll.so</>
 <member>rasapi32.dll.so</>
+<member>regapi.exe.so</>
+<member>regedit.exe.so </>
+<member>regsvr32.exe.so</>
+<member>regtest.exe.so</>
 <member>riched32.dll.so</>
 <member>rpcrt4.dll.so</>
 <member>serialui.dll.so</>
@@ -571,6 +600,7 @@
 <member>ttydrv.dll.so</>
 <member>twain_32.dll.so</>
 <member>typelib.dll.so</>
+<member>uninstaller.exe.so</>
 <member>url.dll.so</>
 <member>urlmon.dll.so</>
 <member>user.exe.so</>
@@ -583,12 +613,20 @@
 <member>win87em.dll.so</>
 <member>winaspi.dll.so</>
 <member>windebug.dll.so</>
+<member>winealsa.drv.so</>
 <member>winearts.drv.so</>
+<member>wineconsole.exe.so</>
+<member>winedbg.exe.so</>
 <member>winedos.dll.so</>
+<member>winefile.exe.so</>
+<member>winemine.exe.so</>
+<member>winemp3.acm.so</>
 <member>wineoss.drv.so</>
+<member>winepath.exe.so</>
 <member>wineps.dll.so</>
 <member>wineps16.dll.so</>
 <member>wing.dll.so</>
+<member>winhelp.exe.so</>
 <member>wininet.dll.so</>
 <member>winmm.dll.so</>
 <member>winnls.dll.so</>
@@ -610,26 +648,29 @@
             <listitem id=manfiles>
             <para> Man Pages</para>
                 <simplelist columns=1>
-<member>wine.man</>
 <member>wine.conf.man</>
+<member>wine.man</>
+<member>winemaker</>
 <member>wmc.man</>
 <member>wrc.man</>
-        </simplelist>
-
-        </listitem>
+                </simplelist>
+            </listitem>
 
 
             <listitem id=includefiles>
-            <para> Include Files</para>
-	    <para> This list is NOT necessarily current ! </para>
+            <para>Include Files</para>
+	    <para>This list may NOT be current!</para>
                 <simplelist columns=5>
 
+<member>audevcod.h</>
 <member>basetsd.h</>
 <member>cderr.h</>
 <member>cguid.h</>
+<member>comcat.h</>
 <member>commctrl.h</>
 <member>commdlg.h</>
 <member>compobj.h</>
+<member>cpl.h</>
 <member>d3d.h</>
 <member>d3dcaps.h</>
 <member>d3dtypes.h</>
@@ -641,9 +682,13 @@
 <member>dinput.h</>
 <member>dispdib.h</>
 <member>dlgs.h</>
+<member>dmo.h</>
+<member>dmoreg.h</>
+<member>dmort.h</>
 <member>docobj.h</>
 <member>dplay.h</>
 <member>dplobby.h</>
+<member>dshow.h</>
 <member>dsound.h</>
 <member>guiddef.h</>
 <member>imagehlp.h</>
@@ -652,11 +697,50 @@
 <member>instance.h</>
 <member>lmcons.h</>
 <member>lzexpand.h</>
+<member>mapi.h</>
+<member>mapicode.h</>
 <member>mapidefs.h</>
+<member>mciavi.h</>
 <member>mcx.h</>
+<member>mediaerr.h</>
+<member>mediaobj.h</>
+<member>minmax.h</>
 <member>mmreg.h</>
 <member>mmsystem.h</>
 <member>msacm.h</>
+<member>msacmdlg.h</>
+<member>msvcrt/conio.h</>
+<member>msvcrt/crtdbg.h</>
+<member>msvcrt/ctype.h</>
+<member>msvcrt/direct.h</>
+<member>msvcrt/dos.h</>
+<member>msvcrt/eh.h</>
+<member>msvcrt/excpt.h</>
+<member>msvcrt/fcntl.h</>
+<member>msvcrt/io.h</>
+<member>msvcrt/locale.h</>
+<member>msvcrt/malloc.h</>
+<member>msvcrt/mbctype.h</>
+<member>msvcrt/mbstring.h</>
+<member>msvcrt/process.h</>
+<member>msvcrt/search.h</>
+<member>msvcrt/setjmp.h</>
+<member>msvcrt/share.h</>
+<member>msvcrt/stddef.h</>
+<member>msvcrt/stdio.h</>
+<member>msvcrt/stdlib.h</>
+<member>msvcrt/string.h</>
+<member>msvcrt/sys/locking.h</>
+<member>msvcrt/sys/stat.h</>
+<member>msvcrt/sys/timeb.h</>
+<member>msvcrt/sys/types.h</>
+<member>msvcrt/sys/utime.h</>
+<member>msvcrt/time.h</>
+<member>msvcrt/wchar.h</>
+<member>msvcrt/wctype.h</>
+<member>mswsock.h</>
+<member>nb30.h</>
+<member>nspapi.h</>
 <member>ntsecapi.h</>
 <member>oaidl.h</>
 <member>objbase.h</>
@@ -679,7 +763,13 @@
 <member>regstr.h</>
 <member>richedit.h</>
 <member>rpc.h</>
+<member>rpcdce.h</>
+<member>rpcdcep.h</>
+<member>rpcndr.h</>
+<member>rpcnterr.h</>
+<member>rpcproxy.h</>
 <member>servprov.h</>
+<member>setupapi.h</>
 <member>shellapi.h</>
 <member>shlguid.h</>
 <member>shlobj.h</>
@@ -692,21 +782,26 @@
 <member>tlhelp32.h</>
 <member>unknwn.h</>
 <member>urlmon.h</>
+<member>uuids.h</>
 <member>ver.h</>
 <member>vfw.h</>
+<member>vfwmsgs.h</>
 <member>winbase.h</>
 <member>wincon.h</>
 <member>wincrypt.h</>
 <member>windef.h</>
 <member>windows.h</>
 <member>windowsx.h</>
+<member>wine/debug.h</>
 <member>wine/exception.h</>
 <member>wine/icmpapi.h</>
 <member>wine/ipexport.h</>
+<member>wine/library.h</>
 <member>wine/obj_base.h</>
 <member>wine/obj_cache.h</>
 <member>wine/obj_channel.h</>
 <member>wine/obj_clientserver.h</>
+<member>wine/obj_comcat.h</>
 <member>wine/obj_commdlgbrowser.h</>
 <member>wine/obj_connection.h</>
 <member>wine/obj_contextmenu.h</>
@@ -714,6 +809,7 @@
 <member>wine/obj_dataobject.h</>
 <member>wine/obj_dockingwindowframe.h</>
 <member>wine/obj_dragdrop.h</>
+<member>wine/obj_enumguid.h</>
 <member>wine/obj_enumidlist.h</>
 <member>wine/obj_errorinfo.h</>
 <member>wine/obj_extracticon.h</>
@@ -730,12 +826,14 @@
 <member>wine/obj_property.h</>
 <member>wine/obj_propertystorage.h</>
 <member>wine/obj_queryassociations.h</>
+<member>wine/obj_serviceprovider.h</>
 <member>wine/obj_shellbrowser.h</>
 <member>wine/obj_shellextinit.h</>
 <member>wine/obj_shellfolder.h</>
 <member>wine/obj_shelllink.h</>
 <member>wine/obj_shellview.h</>
 <member>wine/obj_storage.h</>
+<member>wine/obj_webbrowser.h</>
 <member>wine/unicode.h</>
 <member>winerror.h</>
 <member>wingdi.h</>
@@ -745,6 +843,7 @@
 <member>winnls.h</>
 <member>winnt.h</>
 <member>winreg.h</>
+<member>winres.h</>
 <member>winresrc.h</>
 <member>winsock.h</>
 <member>winsock2.h</>
@@ -754,22 +853,102 @@
 <member>winver.h</>
 <member>wnaspi32.h</>
 <member>wownt32.h</>
+<member>ws2spi.h</>
+<member>ws2tcpip.h</>
+<member>wshisotp.h</>
+<member>wsipx.h</>
 <member>wtypes.h</>
 <member>zmouse.h</>
+<member>libwine_uuid.a</>
         </simplelist>
 
         </listitem>
 
         <listitem id=docfiles>
-        <para>
-        Documentation files.
-        </para>
-        <para>
-        At the time of this writing, I do not have a
-        definitive list of documentation files to
-        be installed.  However, they do include
-        the HTML files generated from the SGML in the Wine CVS tree.
-        </para>
+        <para>Documentation files.</para>
+    	<para>This list may NOT be current!</para>
+
+        <simplelist columns=3>
+
+<member>HOWTO-winelib.gz</>
+<member>wine-devel-20020710/wine-devel</>
+<member>wine-devel/accel-impl.html</>
+<member>wine-devel/arch-dlls.html</>
+<member>wine-devel/architecture.html</>
+<member>wine-devel/build.html</>
+<member>wine-devel/com-writing.html</>
+<member>wine-devel/compiling.html</>
+<member>wine-devel/consoles.html</>
+<member>wine-devel/cvs-regression.html</>
+<member>wine-devel/dbg-channels.html</>
+<member>wine-devel/dbg-checking.html</>
+<member>wine-devel/dbg-commands.html</>
+<member>wine-devel/dbg-compiling.html</>
+<member>wine-devel/dbg-config.html</>
+<member>wine-devel/dbg-in-memory.html</>
+<member>wine-devel/dbg-limits.html</>
+<member>wine-devel/dbg-modes.html</>
+<member>wine-devel/dbg-notes.html</>
+<member>wine-devel/dbg-others.html</>
+<member>wine-devel/dbg-param.html</>
+<member>wine-devel/dbg-resource-ids.html</>
+<member>wine-devel/dbg-using.html</>
+<member>wine-devel/debugger.html</>
+<member>wine-devel/debugging.html</>
+<member>wine-devel/dlls.html</>
+<member>wine-devel/documentation.html</>
+<member>wine-devel/file-handles.html</>
+<member>wine-devel/hardware-trace.html</>
+<member>wine-devel/i18n.html</>
+<member>wine-devel/implementation.html</>
+<member>wine-devel/index.html</>
+<member>wine-devel/memory-addresses.html</>
+<member>wine-devel/module-overview.html</>
+<member>wine-devel/ole-binary.html</>
+<member>wine-devel/ole.html</>
+<member>wine-devel/opengl-configure.html</>
+<member>wine-devel/opengl-problems.html</>
+<member>wine-devel/opengl-works.html</>
+<member>wine-devel/opengl.html</>
+<member>wine-devel/os2-wine.html</>
+<member>wine-devel/part-one.html</>
+<member>wine-devel/part-three.html</>
+<member>wine-devel/part-two.html</>
+<member>wine-devel/patch-quality.html</>
+<member>wine-devel/patches.html</>
+<member>wine-devel/porting.html</>
+<member>wine-devel/tools.html</>
+<member>wine-devel/wine-debugger.html</>
+<member>wine-devel/wine-docbook.html</>
+<member>winelib-user/bindlls-building.html</>
+<member>winelib-user/bindlls-cxx-apis.html</>
+<member>winelib-user/bindlls-spec.html</>
+<member>winelib-user/bindlls-wrapper.html</>
+<member>winelib-user/bindlls.html</>
+<member>winelib-user/c-library.html</>
+<member>winelib-user/com-support.html</>
+<member>winelib-user/index.html</>
+<member>winelib-user/init-problems.html</>
+<member>winelib-user/linking.html</>
+<member>winelib-user/mfc-compiling.html</>
+<member>winelib-user/mfc-legal-issues.html</>
+<member>winelib-user/mfc-using.html</>
+<member>winelib-user/mfc.html</>
+<member>winelib-user/others.html</>
+<member>winelib-user/packaging.html</>
+<member>winelib-user/portability-issues.html</>
+<member>winelib-user/porting-compiling.html</>
+<member>winelib-user/seh.html</>
+<member>winelib-user/spec-file.html</>
+<member>winelib-user/unicode.html</>
+<member>winelib-user/winelib-getting-started.html</>
+<member>winelib-user/winelib-introduction.html</>
+<member>winelib-user/winelib-requirements.html</>
+<member>winelib-user/winelib-toolkit.html</>
+<member>winelib-user/wmc.html</>
+<member>winelib-user/wrc.html</>
+        </simplelist>
+
         </listitem>
 
 
