@@ -796,10 +796,13 @@ DWORD WINAPI GetConsoleTitleW(LPWSTR title, DWORD size)
 #undef GetLargestConsoleWindowSize
 DWORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
-    COORD c;
-    c.X = 80;
-    c.Y = 24;
-    return *(DWORD *)&c;
+    union {
+	COORD c;
+	DWORD w;
+    } x;
+    x.c.X = 80;
+    x.c.Y = 24;
+    return x.w;
 }
 #endif /* defined(__i386__) */
 
