@@ -794,7 +794,12 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
         }
         old_pos = de->d_off;
         /* move on to the next entry */
-        de = (KERNEL_DIRENT64 *)((char *)de + de->d_reclen);
+        if (res > 0) de = (KERNEL_DIRENT64 *)((char *)de + de->d_reclen);
+        else
+        {
+            res = getdents64( fd, data, size );
+            de = data;
+        }
     }
 
     if (last_info) last_info->NextEntryOffset = 0;
