@@ -1,4 +1,0 @@
-*.spec.c
-*.spec.glue.s
-Makefile
-libsetupx.so.1.0

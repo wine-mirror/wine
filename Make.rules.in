@@ -134,12 +134,9 @@ DLLS = \
 	rpcrt4 \
 	serialui \
 	setupapi \
-	setupx \
 	shell32 \
 	shfolder \
 	shlwapi \
-	sound \
-	stress \
 	tapi32 \
 	ttydrv \
 	urlmon \

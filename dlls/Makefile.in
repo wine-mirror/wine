@@ -45,13 +45,10 @@ DLLFILES = \
 	richedit/libriched32.@LIBEXT@ \
 	rpcrt4/librpcrt4.@LIBEXT@ \
 	serialui/libserialui.@LIBEXT@ \
-	setupx/libsetupx.@LIBEXT@ \
 	setupapi/libsetupapi.@LIBEXT@ \
 	shell32/libshell32.@LIBEXT@ \
 	shfolder/libshfolder.@LIBEXT@ \
 	shlwapi/libshlwapi.@LIBEXT@ \
-	sound/libsound.@LIBEXT@ \
-	stress/libstress.@LIBEXT@ \
 	tapi32/libtapi32.@LIBEXT@ \
 	ttydrv/libttydrv.@LIBEXT@ \
 	urlmon/liburlmon.@LIBEXT@ \
@@ -102,8 +99,11 @@ EXTRADLLNAMES = \
 	olecli \
 	olesvr \
 	rasapi16 \
+	setupx \
 	shell \
+	sound \
 	storage \
+	stress \
 	system \
 	toolhelp \
 	typelib \
@@ -154,12 +154,9 @@ SUBDIRS = \
 	rpcrt4 \
 	serialui \
 	setupapi \
-	setupx \
 	shell32 \
 	shfolder \
 	shlwapi \
-	sound \
-	stress \
 	tapi32 \
 	ttydrv \
 	urlmon \
@@ -228,7 +225,7 @@ libimm32.@LIBEXT@: imm32/libimm32.@LIBEXT@
 	$(RM) $@ && $(LN_S) imm32/libimm32.@LIBEXT@ $@
 
 libkernel32.@LIBEXT@ libcomm.@LIBEXT@ libkernel.@LIBEXT@ libsystem.@LIBEXT@ \
-  libtoolhelp.@LIBEXT@ libwin87em.@LIBEXT@ libwindebug.@LIBEXT@ \
+  libstress.@LIBEXT@ libtoolhelp.@LIBEXT@ libwin87em.@LIBEXT@ libwindebug.@LIBEXT@ \
   libwprocs.@LIBEXT@: kernel/libkernel32.@LIBEXT@
 	$(RM) $@ && $(LN_S) kernel/libkernel32.@LIBEXT@ $@
 
@@ -310,11 +307,8 @@ librpcrt4.@LIBEXT@: rpcrt4/librpcrt4.@LIBEXT@
 libserialui.@LIBEXT@: serialui/libserialui.@LIBEXT@
 	$(RM) $@ && $(LN_S) serialui/libserialui.@LIBEXT@ $@
 
-libsetupapi.@LIBEXT@: setupapi/libsetupapi.@LIBEXT@
+libsetupapi.@LIBEXT@ libsetupx.@LIBEXT@: setupapi/libsetupapi.@LIBEXT@
 	$(RM) $@ && $(LN_S) setupapi/libsetupapi.@LIBEXT@ $@
-
-libsetupx.@LIBEXT@: setupx/libsetupx.@LIBEXT@
-	$(RM) $@ && $(LN_S) setupx/libsetupx.@LIBEXT@ $@
 
 libshell32.@LIBEXT@ libshell.@LIBEXT@: shell32/libshell32.@LIBEXT@
 	$(RM) $@ && $(LN_S) shell32/libshell32.@LIBEXT@ $@
@@ -324,12 +318,6 @@ libshfolder.@LIBEXT@: shfolder/libshfolder.@LIBEXT@
 
 libshlwapi.@LIBEXT@: shlwapi/libshlwapi.@LIBEXT@
 	$(RM) $@ && $(LN_S) shlwapi/libshlwapi.@LIBEXT@ $@
-
-libsound.@LIBEXT@: sound/libsound.@LIBEXT@
-	$(RM) $@ && $(LN_S) sound/libsound.@LIBEXT@ $@
-
-libstress.@LIBEXT@: stress/libstress.@LIBEXT@
-	$(RM) $@ && $(LN_S) stress/libstress.@LIBEXT@ $@
 
 libtapi32.@LIBEXT@: tapi32/libtapi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) tapi32/libtapi32.@LIBEXT@ $@
@@ -358,7 +346,7 @@ libwineps.@LIBEXT@: wineps/libwineps.@LIBEXT@
 libwininet.@LIBEXT@: wininet/libwininet.@LIBEXT@
 	$(RM) $@ && $(LN_S) wininet/libwininet.@LIBEXT@ $@
 
-libwinmm.@LIBEXT@ libmmsystem.@LIBEXT@: winmm/libwinmm.@LIBEXT@
+libwinmm.@LIBEXT@ libmmsystem.@LIBEXT@ libsound.@LIBEXT@: winmm/libwinmm.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/libwinmm.@LIBEXT@ $@
 
 libwinspool.drv.@LIBEXT@: winspool/libwinspool.drv.@LIBEXT@

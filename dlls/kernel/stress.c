@@ -1,5 +1,5 @@
 #include <limits.h>
-#include "stress.h"
+#include "windef.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(stress);

@@ -1,4 +1,0 @@
-*.spec.c
-*.spec.glue.s
-Makefile
-libstress.so.1.0

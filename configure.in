@@ -1021,12 +1021,9 @@ dlls/richedit/Makefile
 dlls/rpcrt4/Makefile
 dlls/serialui/Makefile
 dlls/setupapi/Makefile
-dlls/setupx/Makefile
 dlls/shell32/Makefile
 dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
-dlls/sound/Makefile
-dlls/stress/Makefile
 dlls/tapi32/Makefile
 dlls/ttydrv/Makefile
 dlls/ttydrv/Makefile

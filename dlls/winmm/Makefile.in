@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winmm
 SOVERSION = 1.0
-ALTNAMES  = mmsystem
+ALTNAMES  = mmsystem sound
 
 C_SRCS = \
 	joystick.c \
@@ -12,6 +12,7 @@ C_SRCS = \
 	mci.c \
 	mmio.c \
 	mmsystem.c \
+	sound16.c \
 	time.c
 
 GLUE =  lolvldrv.c \
