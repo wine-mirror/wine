@@ -273,16 +273,6 @@ LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
 
 
 /**************************************************************************
- *           FatalAppExit16   (KERNEL.137)
- */
-void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
-{
-    WARN("AppExit\n");
-    FatalAppExitA( action, str );
-}
-
-
-/**************************************************************************
  *           FatalAppExitA   (KERNEL32.108)
  */
 void WINAPI FatalAppExitA( UINT action, LPCSTR str )

@@ -241,6 +241,9 @@ DWORD  WINAPI TaskSetCSIP(HTASK16 hTask, WORD wCS, WORD wIP);
 DWORD  WINAPI TaskGetCSIP(HTASK16 hTask);
 BOOL16 WINAPI TaskSwitch(HTASK16 hTask, DWORD dwNewCSIP);
 
+/* flag for TerminateApp16() */
+#define NO_UAE_BOX     1
+
 /* mem info */
 
 typedef struct tagMEMMANINFO {

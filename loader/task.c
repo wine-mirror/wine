@@ -1586,6 +1586,57 @@ BOOL16 WINAPI TaskFindHandle16( TASKENTRY *lpte, HTASK16 hTask )
 }
 
 
+/**************************************************************************
+ *           FatalAppExit16   (KERNEL.137)
+ */
+void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
+{
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+
+    if (!pTask || !(pTask->error_mode & SEM_NOGPFAULTERRORBOX))
+    {
+        if (Callout.MessageBoxA)
+            Callout.MessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+        else
+            ERR( "%s\n", debugstr_a(str) );
+    }
+    ExitThread(0xff);
+}
+
+
+/***********************************************************************
+ *           TerminateApp16   (TOOLHELP.77)
+ *
+ * See "Undocumented Windows".
+ */
+void WINAPI TerminateApp16(HTASK16 hTask, WORD wFlags)
+{
+    if (hTask && hTask != GetCurrentTask())
+    {
+        FIXME("cannot terminate task %x\n", hTask);
+        return;
+    }
+
+    if (wFlags & NO_UAE_BOX)
+    {
+        UINT16 old_mode;
+        old_mode = SetErrorMode16(0);
+        SetErrorMode16(old_mode|SEM_NOGPFAULTERRORBOX);
+    }
+    FatalAppExit16( 0, NULL );
+
+    /* hmm, we're still alive ?? */
+
+    /* check undocumented flag */
+    if (!(wFlags & 0x8000))
+        TASK_CallTaskSignalProc( USIG16_TERMINATION, hTask );
+
+    /* UndocWin says to call int 0x21/0x4c exit=0xff here,
+       but let's just call ExitThread */
+    ExitThread(0xff);
+}
+
+
 /***********************************************************************
  *           GetAppCompatFlags16   (KERNEL.354)
  */
