@@ -1555,12 +1555,13 @@ BOOL _ILGetFileDateTime(LPCITEMIDLIST pidl, FILETIME *pFt)
 
 BOOL _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 {	
-	FILETIME ft;
+	FILETIME ft,lft;
 	SYSTEMTIME time;
 
 	if (! _ILGetFileDateTime( pidl, &ft )) return FALSE;
 	
-	FileTimeToSystemTime (&ft, &time);
+	FileTimeToLocalFileTime(&ft, &lft);
+	FileTimeToSystemTime (&lft, &time);
 	return GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&time, NULL,  pOut, uOutSize);
 }
 
