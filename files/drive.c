@@ -89,27 +89,6 @@ static const WCHAR DRIVE_Types[][8] =
     {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
 };
 
-
-/* Known filesystem types */
-
-typedef struct
-{
-    const WCHAR name[6];
-    UINT      flags;
-} FS_DESCR;
-
-static const FS_DESCR DRIVE_Filesystems[] =
-{
-    { {'u','n','i','x',0}, DRIVE_CASE_SENSITIVE | DRIVE_CASE_PRESERVING },
-    { {'m','s','d','o','s',0}, DRIVE_SHORT_NAMES },
-    { {'d','o','s',0}, DRIVE_SHORT_NAMES },
-    { {'f','a','t',0}, DRIVE_SHORT_NAMES },
-    { {'v','f','a','t',0}, DRIVE_CASE_PRESERVING },
-    { {'w','i','n','9','5',0}, DRIVE_CASE_PRESERVING },
-    { { 0 }, 0 }
-};
-
-
 static DOSDRIVE DOSDrives[MAX_DOS_DRIVES];
 static int DRIVE_CurDrive = -1;
 
@@ -146,21 +125,6 @@ static inline UINT DRIVE_GetDriveType( INT drive, LPCWSTR value )
 
 
 /***********************************************************************
- *           DRIVE_GetFSFlags
- */
-static UINT DRIVE_GetFSFlags( INT drive, LPCWSTR value )
-{
-    const FS_DESCR *descr;
-
-    for (descr = DRIVE_Filesystems; *descr->name; descr++)
-        if (!strcmpiW( value, descr->name )) return descr->flags;
-    MESSAGE("Drive %c: unknown filesystem type %s, defaulting to 'win95'.\n",
-            'A' + drive, debugstr_w(value) );
-    return DRIVE_CASE_PRESERVING;
-}
-
-
-/***********************************************************************
  *           DRIVE_Init
  */
 int DRIVE_Init(void)
@@ -182,7 +146,6 @@ int DRIVE_Init(void)
 
     static const WCHAR PathW[] = {'P','a','t','h',0};
     static const WCHAR TypeW[] = {'T','y','p','e',0};
-    static const WCHAR FilesystemW[] = {'F','i','l','e','s','y','s','t','e','m',0};
     static const WCHAR DeviceW[] = {'D','e','v','i','c','e',0};
     static const WCHAR FailReadOnlyW[] = {'F','a','i','l','R','e','a','d','O','n','l','y',0};
 
@@ -260,15 +223,6 @@ int DRIVE_Init(void)
             }
             else drive->type = DRIVE_FIXED;
 
-            /* Get the filesystem type */
-            RtlInitUnicodeString( &nameW, FilesystemW );
-            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-            {
-                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-                drive->flags = DRIVE_GetFSFlags( i, data );
-            }
-            else drive->flags = DRIVE_CASE_PRESERVING;
-
             /* Get the device */
             RtlInitUnicodeString( &nameW, DeviceW );
             if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
@@ -329,7 +283,7 @@ int DRIVE_Init(void)
     {
         for (i = 0, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, drive++)
         {
-            if (drive->root && !(drive->flags & DRIVE_DISABLED))
+            if (drive->root)
             {
                 DRIVE_CurDrive = i;
                 break;
@@ -355,8 +309,7 @@ int DRIVE_Init(void)
 int DRIVE_IsValid( int drive )
 {
     if ((drive < 0) || (drive >= MAX_DOS_DRIVES)) return 0;
-    return (DOSDrives[drive].root &&
-            !(DOSDrives[drive].flags & DRIVE_DISABLED));
+    return (DOSDrives[drive].root != NULL);
 }
 
 
@@ -425,9 +378,7 @@ int DRIVE_FindDriveRoot( const char **path )
         {
             for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
             {
-               if (!DOSDrives[drive].root ||
-                   (DOSDrives[drive].flags & DRIVE_DISABLED))
-                   continue;
+               if (!DOSDrives[drive].root) continue;
 
                if ((DOSDrives[drive].dev == st.st_dev) &&
                    (DOSDrives[drive].ino == st.st_ino))
@@ -489,9 +440,7 @@ int DRIVE_FindDriveRootW( LPCWSTR *path )
             /* Find the drive */
             for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
             {
-                if (!DOSDrives[drive].root ||
-                    (DOSDrives[drive].flags & DRIVE_DISABLED))
-                    continue;
+                if (!DOSDrives[drive].root) continue;
 
                 if ((DOSDrives[drive].dev == st.st_dev) &&
                     (DOSDrives[drive].ino == st.st_ino))

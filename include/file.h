@@ -81,7 +81,7 @@ extern DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
 extern BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer );
 extern HANDLE DOSFS_OpenDevice( LPCWSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa);
 extern BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf,
-                                INT long_len, LPWSTR short_buf, BOOL ignore_case );
+                                INT long_len, LPWSTR short_buf );
 extern BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last,
                                  DOS_FULL_NAME *full );
 

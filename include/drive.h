@@ -27,11 +27,7 @@
 
 /* Drive flags */
 
-#define DRIVE_DISABLED        0x0001  /* Drive is disabled */
-#define DRIVE_SHORT_NAMES     0x0002  /* Drive fs has 8.3 file names */
-#define DRIVE_CASE_SENSITIVE  0x0004  /* Drive fs is case sensitive */
-#define DRIVE_CASE_PRESERVING 0x0008  /* Drive fs is case preserving */
-#define DRIVE_FAIL_READ_ONLY  0x0010  /* Fail opening read-only files for writing */
+#define DRIVE_FAIL_READ_ONLY  0x0001  /* Fail opening read-only files for writing */
 
 extern int DRIVE_Init(void);
 extern int DRIVE_IsValid( int drive );

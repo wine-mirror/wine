@@ -11,47 +11,34 @@ WINE REGISTRY Version 2
 ;; [Drive X]
 ;; "Path"="xxx"       (Unix path for drive root)
 ;; "Type"="xxx"       (supported types are 'floppy', 'hd', 'cdrom' and 'network')
-;; "Filesystem"="xxx" (supported types are 'msdos'/'dos'/'fat', 'win95'/'vfat', 'unix')
-;;   This is the FS Wine is supposed to emulate on a certain
-;;   directory structure.
-;;   Recommended:
-;;   - "win95" for ext2fs, VFAT and FAT32
-;;   - "msdos" for FAT16 (ugly, upgrading to VFAT driver strongly recommended)
-;;   DON'T use "unix" unless you intend to port programs using Winelib !
 ;; "Device"="/dev/xx" (only if you want to allow raw device access)
 ;;
 [Drive A]
 "Path" = "/mnt/fd0"
 "Type" = "floppy"
-"Filesystem" = "win95"
 "Device" = "/dev/fd0"
 
 [Drive C]
 "Path" = "/c"
 "Type" = "hd"
-"Filesystem" = "win95"
 
 [Drive D]
 "Path" = "/cdrom"
 "Type" = "cdrom"
-"Filesystem" = "win95"
 ; make sure that device is correct and has proper permissions !
 "Device" = "/dev/cdrom"
 
 [Drive E]
 "Path" = "/tmp"
 "Type" = "hd"
-"Filesystem" = "win95"
 
 [Drive F]
 "Path" = "%HOME%"
 "Type" = "network"
-"Filesystem" = "win95"
 
 [Drive Z]
 "Path" = "/"
 "Type" = "hd"
-"Filesystem" = "win95"
 
 [wine]
 "Windows" = "c:\\windows"

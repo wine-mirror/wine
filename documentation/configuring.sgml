@@ -328,16 +328,6 @@
                 <entry>General settings for Wine</entry>
               </row>
               <row>
-                <entry>[DllDefaults]</entry>
-                <entry>recmd</entry>
-                <entry>Defaults for loading DLL's</entry>
-              </row>
-              <row>
-                <entry>[DllPairs]</entry>
-                <entry>recmd</entry>
-                <entry>Sanity checkers for DLL's</entry>
-              </row>
-              <row>
                 <entry>[DllOverrides]</entry>
                 <entry>recmd</entry>
                 <entry>Overrides defaults for DLL loading</entry>
@@ -502,34 +492,6 @@
             your wine is stripped.
           </para>
         </sect3>
-
-        <sect3 id="config-dlldefaults">
-          <title>The [DllDefaults] Section</title>
-          <para>
-            These settings provide wine's default handling of DLL loading.
-          </para>
-          <para>
-            <programlisting>"DefaultLoadOrder" =" native, builtin"</programlisting>
-            This setting is a comma-delimited list of the order in
-            which to attempt loading DLLs. If the first option fails,
-            it will try the second, and so on. The order specified
-            above is probably the best in most conditions.
-          </para>
-        </sect3>
-
-        <sect3>
-          <title>The [DllPairs] Section</title>
-          <para>
-          At one time, there was a section called [DllPairs] in the
-          default configuration file, but this has been obsoleted
-          because the pairing information has now been embedded into
-          Wine itself. (The purpose of this section was merely to be
-          able to issue warnings if the user attempted to pair
-          codependent 16-bit/32-bit DLLs of different types.) If you
-          still have this in your <filename>~/.wine/.config</filename> or
-          <filename>wine.conf</filename>, you may safely delete it.
-          </para>
-  	</sect3>
 
         <sect3 id="config-dlloverrides">
           <title>The [DllOverrides] Section</title>
@@ -982,20 +944,13 @@
 [Drive C]
 "Path" = "%HOME%/wine"
 "Type" = "hd"
-"Label" = "MS-DOS"
-"Filesystem" = "win95"
         </programlisting>
 
         <para>
           With this configuration, what windows apps think of as
           "c:\windows\system" would map to
           <filename>/home/user/wine/windows/system</filename> in the UNIX
-          filesystem. Note that you need to specify
-          <literal>"Filesystem" = "win95"</literal>,
-	  <emphasis>not</emphasis>
-          <literal>"Filesystem" = "unix"</literal>, to make Wine simulate a
-          Windows compatible (case insensitive) filesystem, otherwise
-          most apps won't work.
+          filesystem.
         </para>
       </sect2>
 
@@ -1082,79 +1037,6 @@ C:\                Root directory of primary disk drive
 	  exported over the network via NFS and thus can have slow response
 	  times.
         </para>
-        <para>
-          <programlisting>"Label" = "blah"</programlisting>
-            Defines the drive label. Generally only needed
-            for programs that look for a special CD-ROM.
-          The label may be up to 11 characters.
-            Note that the preferred way of managing labels and serial numbers
-            of CD-ROMs and floppies is to give Wine raw device access for
-            reading these on a per-CD case (see "Device" below) instead of
-            hardcoding one specific "Label".
-        </para>
-        <para>
-          <programlisting>"Serial" = "deadbeef"</programlisting>
-          Tells Wine the serial number of the drive. A few programs with
-          intense protection for pirating might need this, but otherwise
-          it's not needed. Up to 8 characters and hexadecimal.
-            Using a "Device" entry instead of hardcoding the "Serial" probably
-            is a smarter choice.
-        </para>
-        <para>
-          <programlisting>"Filesystem" = "win95|unix|msdos"</programlisting>
-          Sets up the way Wine looks at files on the drive.
-          This setting controls the file name lookup and mapping of
-          Wine to existing file systems on your PC, it does
-          <emphasis>not</emphasis> tell anything about the filesystem
-          used itself.
-        </para>
-
-        <variablelist>
-          <varlistentry>
-            <term><literal>win95</literal></term>
-            <listitem>
-              <para>
-                Case insensitive. Alike to Windows 9x/NT 4. This is
-                the long filename filesystem you are probably used
-                to working with. The filesystem behavior of choice for most
-                programs to be run under wine.  <emphasis>Probably the one
-                you want!</emphasis>
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><literal>unix</literal></term>
-            <listitem>
-              <para>
-                Case sensitive. This filesystem has almost no use
-                (Windows apps expect case insensitive filenames),
-        	  except maybe for Winelib applications.
-                Try it if you dare, but win95 is a much better
-                and always recommended choice.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><literal>msdos</literal></term>
-            <listitem>
-              <para>
-                Case insensitive filesystem. Alike to DOS and
-                Windows 3.x. <literal>8.3</literal> is the maximum
-                length of files (eightdot.123) - longer ones will be
-                truncated.
-        	  <note>
-        	  <para>
-        	    This is a <emphasis>very bad choice</emphasis> if
-        	    you plan on running apps that use long filenames.
-        	    win95 should work fine with apps that were designed
-        	    to run under the msdos system.  In other words, you
-        	    might not want to use this.
-        	  </para>
-        	  </note>
-              </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
 
         <programlisting>"Device" = "/dev/xx"</programlisting>
         <para>
@@ -1184,22 +1066,15 @@ Here is a setup for Drive C, a generic hard drive:
 [Drive C]
 "Path" = "/dosc"
 "Type" = "hd"
-"Label" = "Hard Drive"
-"Filesystem" = "win95"
 This is a setup for Drive E, a generic CD-ROM drive:
 [Drive E]
 "Path" = "/mnt/cdrom"
 "Type" = "cdrom"
-"Label" = "Total Annihilation"
-"Filesystem" = "win95"
 "Device" = "/dev/cdrom"
 And here is a setup for Drive A, a generic floppy drive:
 [Drive A]
 "Type" = "floppy"
 "Path" = "/mnt/floppy"
-"Label" = "Floppy Drive"
-"Serial" = "87654321"
-"Filesystem" = "win95"
 "Device" = "/dev/fd0"
           </programlisting>
         </para>
@@ -1391,8 +1266,6 @@ And here is a setup for Drive A, a generic floppy drive:
   	    The directory to be used for emulating a C: drive will be
   	    the base directory for some Windows specific directories
   	    created below.
-  	    Remember to use
-              <userinput>"Filesystem" = "win95"</userinput>!
             </para>
           </listitem>
           <listitem>
@@ -1794,55 +1667,30 @@ And here is a setup for Drive A, a generic floppy drive:
         </para>
         <para>
           If you don't want to read labels and serial numbers directly from
-          the device, then you should give fixed
-          <literal>"Label" =</literal> or <literal>"Serial" =</literal>
-          entries in <filename>~/.wine/config</filename>, as Wine returns
-          these entries instead if no device is given. If they don't
-          exist, then Wine will return default values (label
-          <literal>Drive X</literal> and serial
-          <literal>12345678</literal>).
-        </para>
-        <para>
-          If you want to give a <literal>"Device" =</literal> entry
-          <emphasis>only</emphasis> for drive raw sector accesses,
-        but not for reading the volume info from the device (i.e. you want
-        a <emphasis>fixed</emphasis>, preconfigured label), you need
-          to specify <literal>"ReadVolInfo" = "0"</literal> to tell Wine
-          to skip the volume reading.
+          the device, you can create files at the root of the drive
+          named <filename>.windows-label</filename> and
+          <filename>.windows-serial</filename> respectively. These are
+          simple ASCII files that you can create with any text editor;
+          the label can be set to any string you like, the serial
+          number should be expressed as an hexadecimal number.
         </para>
       </sect3>
 
       <sect3>
         <title>Examples</title>
         <para>
-          Here's a simple example of CD-ROM and floppy; labels will be
-          read from the device on both CD-ROM and floppy; serial
-          numbers on floppy only:
+          Here's a simple example of CD-ROM and floppy:
         </para>
         <programlisting>
 [Drive A]
 "Path" = "/mnt/floppy"
 "Type" = "floppy"
 "Device" = "/dev/fd0"
-"Filesystem" = "msdos"
 
 [Drive R]
 "Path" = "/mnt/cdrom"
 "Type" = "cdrom"
 "Device" = "/dev/hda1"
-"Filesystem" = "win95"
-        </programlisting>
-        <para>
-          Here's an example of overriding the CD-ROM label:
-        </para>
-        <programlisting>
-[Drive J]
-"Path" = "/mnt/cdrom"
-"Type" = "cdrom"
-"Label" = "X234GCDSE"
-; note that the device isn't really needed here as we have a fixed label
-"Device" = "/dev/cdrom"
-"Filesystem" = "msdos"
         </programlisting>
       </sect3>
 
@@ -1853,17 +1701,8 @@ And here is a setup for Drive A, a generic floppy drive:
       	The CD-ROM label can be read only if the data track of
       	the disk resides in the first track and the cdrom is
       	iso9660.
-            </para> </listitem>
-          <listitem> <para>
-      	Better checking for FAT superblock (it now checks only
-      	one byte). </para>
-          </listitem>
           <listitem> <para>
       	Support for labels/serial nums WRITING.
-            </para> </listitem>
-          <listitem> <para>
-      	Can the label be longer than 11 chars? (iso9660 has 32
-      	chars).
             </para> </listitem>
           <listitem> <para>
       	What about reading ext2 volume label? ....

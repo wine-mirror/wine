@@ -133,6 +133,9 @@ static const WCHAR parW[] = {'P','a','r','a','l','l','e','l',0};
 static const WCHAR serW[] = {'S','e','r','i','a','l',0};
 static const WCHAR oneW[] = {'1',0};
 
+/* at some point we may want to allow Winelib apps to set this */
+static const BOOL is_case_sensitive = FALSE;
+
 /*
  * Directory info for DOSFS_ReadDir
  * contains the names of *all* the files in the directory
@@ -175,11 +178,11 @@ static WINE_EXCEPTION_FILTER(page_fault)
  * (i.e. contains only valid DOS chars, lower-case only, fits in 8.3 format).
  * File name can be terminated by '\0', '\\' or '/'.
  */
-static int DOSFS_ValidDOSName( LPCWSTR name, int ignore_case )
+static int DOSFS_ValidDOSName( LPCWSTR name )
 {
     static const char invalid_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" INVALID_DOS_CHARS;
     const WCHAR *p = name;
-    const char *invalid = ignore_case ? (invalid_chars + 26) : invalid_chars;
+    const char *invalid = !is_case_sensitive ? (invalid_chars + 26) : invalid_chars;
     int len = 0;
 
     if (*p == '.')
@@ -352,13 +355,13 @@ static void DOSFS_ToDosDTAFormat( LPCWSTR name, LPWSTR buffer )
  * *test1.txt*			test1.txt				*
  * h?l?o*t.dat			hellothisisatest.dat			*
  */
-static int DOSFS_MatchLong( LPCWSTR mask, LPCWSTR name, int case_sensitive )
+static int DOSFS_MatchLong( LPCWSTR mask, LPCWSTR name )
 {
     LPCWSTR lastjoker = NULL;
     LPCWSTR next_to_retry = NULL;
     static const WCHAR asterisk_dot_asterisk[] = {'*','.','*',0};
 
-    TRACE("(%s, %s, %x)\n", debugstr_w(mask), debugstr_w(name), case_sensitive);
+    TRACE("(%s, %s)\n", debugstr_w(mask), debugstr_w(name));
 
     if (!strcmpW( mask, asterisk_dot_asterisk )) return 1;
     while (*name && *mask)
@@ -371,7 +374,7 @@ static int DOSFS_MatchLong( LPCWSTR mask, LPCWSTR name, int case_sensitive )
             if (!*mask) return 1; /* end of mask is all '*', so match */
 
             /* skip to the next match after the joker(s) */
-            if (case_sensitive) while (*name && (*name != *mask)) name++;
+            if (is_case_sensitive) while (*name && (*name != *mask)) name++;
             else while (*name && (toupperW(*name) != toupperW(*mask))) name++;
 
             if (!*name) break;
@@ -380,7 +383,7 @@ static int DOSFS_MatchLong( LPCWSTR mask, LPCWSTR name, int case_sensitive )
         else if (*mask != '?')
         {
             int mismatch = 0;
-            if (case_sensitive)
+            if (is_case_sensitive)
             {
                 if (*mask != *name) mismatch = 1;
             }
@@ -637,8 +640,7 @@ static BOOL DOSFS_ReadDir( DOS_DIR *dir, LPCWSTR *long_name,
  * File name can be terminated by '\0', '\\' or '/'.
  * 'buffer' must be at least 13 characters long.
  */
-static void DOSFS_Hash( LPCWSTR name, LPWSTR buffer, BOOL dir_format,
-                        BOOL ignore_case )
+static void DOSFS_Hash( LPCWSTR name, LPWSTR buffer, BOOL dir_format )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS "~.";
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
@@ -654,7 +656,7 @@ static void DOSFS_Hash( LPCWSTR name, LPWSTR buffer, BOOL dir_format,
         buffer[11] = 0;
     }
 
-    if (DOSFS_ValidDOSName( name, ignore_case ))
+    if (DOSFS_ValidDOSName( name ))
     {
         /* Check for '.' and '..' */
         if (*name == '.')
@@ -683,7 +685,7 @@ static void DOSFS_Hash( LPCWSTR name, LPWSTR buffer, BOOL dir_format,
     /* Compute the hash code of the file name */
     /* If you know something about hash functions, feel free to */
     /* insert a better algorithm here... */
-    if (ignore_case)
+    if (!is_case_sensitive)
     {
         for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
             hash = (hash<<3) ^ (hash>>5) ^ tolowerW(*p) ^ (tolowerW(p[1]) << 8);
@@ -740,7 +742,7 @@ static void DOSFS_Hash( LPCWSTR name, LPWSTR buffer, BOOL dir_format,
  * 'short_buf' must be at least 13 characters long.
  */
 BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf,
-                         INT long_len, LPWSTR short_buf, BOOL ignore_case)
+                         INT long_len, LPWSTR short_buf )
 {
     DOS_DIR *dir;
     LPCWSTR long_name, short_name;
@@ -770,7 +772,7 @@ BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf
         /* Check against Unix name */
         if (len == strlenW(long_name))
         {
-            if (!ignore_case)
+            if (is_case_sensitive)
             {
                 if (!strncmpW( long_name, name, len )) break;
             }
@@ -784,7 +786,7 @@ BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf
             /* Check against hashed DOS name */
             if (!short_name)
             {
-                DOSFS_Hash( long_name, tmp_buf, TRUE, ignore_case );
+                DOSFS_Hash( long_name, tmp_buf, TRUE );
                 short_name = tmp_buf;
             }
             if (!strcmpW( dos_name, short_name )) break;
@@ -798,7 +800,7 @@ BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf
             if (short_name)
                 DOSFS_ToDosDTAFormat( short_name, short_buf );
             else
-                DOSFS_Hash( long_name, short_buf, FALSE, ignore_case );
+                DOSFS_Hash( long_name, short_buf, FALSE );
         }
         TRACE("(%s,%s) -> %s (%s)\n", path->long_name, debugstr_w(name),
               debugstr_w(long_name), short_buf ? debugstr_w(short_buf) : "***");
@@ -984,7 +986,6 @@ static int DOSFS_GetPathDrive( LPCWSTR *name )
 BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
 {
     BOOL found;
-    UINT flags;
     char *p_l, *root;
     LPWSTR p_s;
     static const WCHAR driveA_rootW[] = {'A',':','\\',0};
@@ -999,7 +1000,6 @@ BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
     }
 
     if ((full->drive = DOSFS_GetPathDrive( &name )) == -1) return FALSE;
-    flags = DRIVE_GetFlags( full->drive );
 
     lstrcpynA( full->long_name, DRIVE_GetRoot( full->drive ),
                  sizeof(full->long_name) );
@@ -1063,8 +1063,7 @@ BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
         /* Get the long and short name matching the file name */
 
         if ((found = DOSFS_FindUnixName( full, name, p_l + 1,
-                         sizeof(full->long_name) - (p_l - full->long_name) - 1,
-                         p_s + 1, !(flags & DRIVE_CASE_SENSITIVE) )))
+                         sizeof(full->long_name) - (p_l - full->long_name) - 1, p_s + 1 )))
         {
             *p_l++ = '/';
             p_l   += strlen(p_l);
@@ -1085,7 +1084,7 @@ BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last, DOS_FULL_NAME *full )
                 /* If the drive is case-sensitive we want to create new */
                 /* files in lower-case otherwise we can't reopen them   */
                 /* under the same short name. */
-                if (flags & DRIVE_CASE_SENSITIVE) wch = tolowerW(*name);
+                if (is_case_sensitive) wch = tolowerW(*name);
                 else wch = *name;
                 p_l += WideCharToMultiByte(CP_UNIXCP, 0, &wch, 1, p_l, 2, NULL, NULL);
                 name++;
@@ -1186,7 +1185,6 @@ static BOOL get_show_dir_symlinks_option(void)
  */
 static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
 {
-    UINT flags = DRIVE_GetFlags( info->drive );
     char *p, buffer[MAX_PATHNAME_LEN];
     const char *drive_path;
     int drive_root;
@@ -1215,8 +1213,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
 
         if (info->long_mask && *info->long_mask)
         {
-            if (!DOSFS_MatchLong( info->long_mask, long_name,
-                                  flags & DRIVE_CASE_SENSITIVE )) continue;
+            if (!DOSFS_MatchLong( info->long_mask, long_name )) continue;
         }
 
         /* Check the file attributes */
@@ -1247,11 +1244,9 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
         if (short_name)
             DOSFS_ToDosDTAFormat( short_name, entry->cAlternateFileName );
         else
-            DOSFS_Hash( long_name, entry->cAlternateFileName, FALSE,
-                        !(flags & DRIVE_CASE_SENSITIVE) );
+            DOSFS_Hash( long_name, entry->cAlternateFileName, FALSE );
 
         lstrcpynW( entry->cFileName, long_name, sizeof(entry->cFileName)/sizeof(entry->cFileName[0]) );
-        if (!(flags & DRIVE_CASE_PRESERVING)) strlwrW( entry->cFileName );
         TRACE("returning %s (%s) %02lx %ld\n",
               debugstr_w(entry->cFileName), debugstr_w(entry->cAlternateFileName),
               entry->dwFileAttributes, entry->nFileSizeLow );

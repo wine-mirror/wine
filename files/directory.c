@@ -689,8 +689,7 @@ static BOOL DIR_TryPath( const DOS_FULL_NAME *dir, LPCWSTR name,
         return FALSE;
     }
     if (!DOSFS_FindUnixName( dir, name, p_l,
-                   sizeof(full_name->long_name) - (p_l - full_name->long_name),
-                   p_s, !(DRIVE_GetFlags(dir->drive) & DRIVE_CASE_SENSITIVE) ))
+                   sizeof(full_name->long_name) - (p_l - full_name->long_name), p_s ))
         return FALSE;
 
     full_name->drive = dir->drive;
