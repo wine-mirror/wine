@@ -2330,7 +2330,7 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     if (dwFlags & (DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPAN))
 	return DSERR_CONTROLUNAVAIL;
 
-    *ippdsdb = (IDsDriverBufferImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverBufferImpl));
+    *ippdsdb = (IDsDriverBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsDriverBufferImpl));
     if (*ippdsdb == NULL)
 	return DSERR_OUTOFMEMORY;
     (*ippdsdb)->lpVtbl  = &dsdbvt;
@@ -2407,7 +2407,7 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 	return MMSYSERR_NOTSUPPORTED;
     }
 
-    *idrv = (IDsDriverImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverImpl));
+    *idrv = (IDsDriverImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsDriverImpl));
     if (!*idrv)
 	return MMSYSERR_NOMEM;
     (*idrv)->lpVtbl	= &dsdvt;
@@ -3074,6 +3074,113 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 }
 
 /*======================================================================*
+ *                  Low level DSOUND notify implementation		*
+ *======================================================================*/
+
+typedef struct IDsDriverNotifyImpl IDsDriverNotifyImpl;
+
+struct IDsDriverNotifyImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IDsDriverNotify);
+    DWORD                            ref;
+    /* IDsDriverNotifyImpl fields */
+    LPDSBPOSITIONNOTIFY              notifies;
+    int                              nrofnotifies;
+};
+
+static HRESULT WINAPI IDsDriverNotifyImpl_QueryInterface(
+    PIDSDRIVERNOTIFY iface,
+    REFIID riid,
+    LPVOID *ppobj) 
+{
+    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+
+    if ( IsEqualGUID(riid, &IID_IUnknown) ||
+         IsEqualGUID(riid, &IID_IDsDriverNotify) ) {
+	IDsDriverNotify_AddRef(iface);
+	*ppobj = This;
+	return DS_OK;
+    }
+
+    FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
+
+    *ppobj = 0;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface) 
+{
+    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedIncrement(&(This->ref));
+    return ref;
+}
+
+static ULONG WINAPI IDsDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface) 
+{
+    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedDecrement(&(This->ref));
+    /* FIXME: A notification should be a part of a buffer rather than pointed
+     * to from a buffer. Hence the -1 ref count */
+    if (ref == -1) {
+	if (This->notifies != NULL)
+	    HeapFree(GetProcessHeap(), 0, This->notifies);
+
+	HeapFree(GetProcessHeap(),0,This);
+	return 0;
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
+    PIDSDRIVERNOTIFY iface,
+    DWORD howmuch,
+    LPCDSBPOSITIONNOTIFY notify) 
+{
+    ICOM_THIS(IDsDriverNotifyImpl,iface);
+    TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
+
+    if (!notify) {
+	WARN("invalid parameter\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if (TRACE_ON(wave)) {
+	int i;
+	for (i=0;i<howmuch;i++)
+	    TRACE("notify at %ld to 0x%08lx\n",
+		notify[i].dwOffset,(DWORD)notify[i].hEventNotify);
+    }
+
+    /* Make an internal copy of the caller-supplied array.
+     * Replace the existing copy if one is already present. */
+    This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+    This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+    memcpy(This->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
+    This->nrofnotifies = howmuch;
+
+    return S_OK;
+}
+
+ICOM_VTABLE(IDsDriverNotify) dsdnvt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDsDriverNotifyImpl_QueryInterface,
+    IDsDriverNotifyImpl_AddRef,
+    IDsDriverNotifyImpl_Release,
+    IDsDriverNotifyImpl_SetNotificationPositions,
+};
+
+/*======================================================================*
  *                  Low level DSOUND capture implementation		*
  *======================================================================*/
 
@@ -3098,6 +3205,10 @@ struct IDsCaptureDriverBufferImpl
     /* IDsCaptureDriverBufferImpl fields */
     IDsCaptureDriverImpl*	drv;
     DWORD			buflen;
+
+    /* IDsDriverNotifyImpl fields */
+    IDsDriverNotifyImpl*        notify;
+    int                         notify_index;
 };
 
 static HRESULT DSDB_MapCapture(IDsCaptureDriverBufferImpl *dscdb)
@@ -3159,7 +3270,29 @@ static HRESULT DSDB_UnmapCapture(IDsCaptureDriverBufferImpl *dscdb)
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(PIDSCDRIVERBUFFER iface, REFIID riid, LPVOID *ppobj)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
-    FIXME("(%p,%p,%p): stub!\n",This,riid,ppobj);
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+
+    if ( IsEqualGUID( &IID_IDsDriverNotify, riid ) ) {
+	if (!This->notify) {
+	    This->notify = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->notify));
+	    if (This->notify) {
+		This->notify->ref = 0;	/* release when ref = -1 */
+		This->notify->lpVtbl = &dsdnvt;
+	    }
+	}
+	if (This->notify) {
+	    IDsDriverNotify_AddRef((PIDSDRIVERNOTIFY)This->notify);
+	    *ppobj = (LPVOID)This->notify;
+	    return DS_OK;
+	}
+	*ppobj = 0;
+	return E_FAIL;
+    }
+
+    FIXME("(%p,%s,%p) unsupported GUID\n", This, debugstr_guid(riid), ppobj);
+
+    *ppobj = 0;
+
     return DSERR_UNSUPPORTED;
 }
 
@@ -3176,6 +3309,8 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
     if (--This->ref)
 	return This->ref;
     DSDB_UnmapCapture(This);
+    if (This->notify)
+	IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
     HeapFree(GetProcessHeap(),0,This);
     return 0;
 }
@@ -3402,15 +3537,17 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
 	return DSERR_ALLOCATED;
     }
 
-    *ippdscdb = (IDsCaptureDriverBufferImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsCaptureDriverBufferImpl));
+    *ippdscdb = (IDsCaptureDriverBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsCaptureDriverBufferImpl));
     if (*ippdscdb == NULL) {
 	TRACE("out of memory\n");
 	return DSERR_OUTOFMEMORY;
     }
 
     (*ippdscdb)->lpVtbl = &dscdbvt;
-    (*ippdscdb)->ref	= 1;
-    (*ippdscdb)->drv	= This;
+    (*ippdscdb)->ref          = 1;
+    (*ippdscdb)->drv          = This;
+    (*ippdscdb)->notify       = 0;
+    (*ippdscdb)->notify_index = 0;
 
     if (WInDev[This->wDevID].state == WINE_WS_CLOSED) {
 	WAVEOPENDESC desc;
@@ -3487,7 +3624,7 @@ static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
 	return MMSYSERR_NOTSUPPORTED;
     }
 
-    *idrv = (IDsCaptureDriverImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDsCaptureDriverImpl));
+    *idrv = (IDsCaptureDriverImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsCaptureDriverImpl));
     if (!*idrv)
 	return MMSYSERR_NOMEM;
     (*idrv)->lpVtbl	= &dscdvt;
