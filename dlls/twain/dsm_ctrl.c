@@ -364,7 +364,7 @@ TW_UINT16 TWAIN_OpenDSM (pTW_IDENTITY pOrigin, TW_MEMREF pData)
             DSM_currentDevice = 0;
             DSM_sourceId = 0;
         }
-        DSM_parentHWND = *(HWND*)pData;
+        DSM_parentHWND = *(TW_HANDLE*)pData;
         DSM_currentState = 3; /* transition to state 3 */
         DSM_twCC = TWCC_SUCCESS;
         twRC = TWRC_SUCCESS;
@@ -392,4 +392,3 @@ TW_UINT16 TWAIN_GetDSMStatus (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 
     return TWRC_SUCCESS;
 }
-

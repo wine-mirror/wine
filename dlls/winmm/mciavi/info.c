@@ -401,7 +401,7 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 	    TRACE("MCI_DGV_STATUS_HPAL => %lx\n", lpParms->dwReturn);
 	    break;
 	case MCI_DGV_STATUS_HWND:
-	    lpParms->dwReturn = wma->hWnd;
+	    lpParms->dwReturn = (DWORD)wma->hWnd;
 	    TRACE("MCI_DGV_STATUS_HWND => %u\n", wma->hWnd);
 	    break;
 #if 0
@@ -444,11 +444,9 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
     }
     if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wma->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
 
     return ret;
 }
-
-

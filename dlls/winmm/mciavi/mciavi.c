@@ -324,7 +324,7 @@ static	DWORD	MCIAVI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     	MCIAVI_CleanUp(wma);
 
 	if ((dwFlags & MCI_NOTIFY) && lpParms) {
-	    mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	    mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			    wma->openParms.wDeviceID,
 			    MCI_NOTIFY_SUCCESSFUL);
 	}
@@ -444,7 +444,7 @@ cleanUp:
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wma->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
 
@@ -501,7 +501,7 @@ static	DWORD	MCIAVI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     }
 
     if ((dwFlags & MCI_NOTIFY) && lpParms) {
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wma->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
 
@@ -572,7 +572,7 @@ static	DWORD	MCIAVI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
     TRACE("Seeking to frame=%lu bytes\n", wma->dwCurrVideoFrame);
 
     if (dwFlags & MCI_NOTIFY) {
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wma->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
 
@@ -1009,5 +1009,3 @@ LONG CALLBACK	MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
 }
-
-

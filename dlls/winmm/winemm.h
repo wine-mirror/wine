@@ -239,6 +239,7 @@ void				TIME_MMTimeStop(void);
 #define HWAVE_32(h16)		((HWAVE)(ULONG_PTR)(h16))
 #define HWAVEIN_32(h16)		((HWAVEIN)(ULONG_PTR)(h16))
 #define HWAVEOUT_32(h16)	((HWAVEOUT)(ULONG_PTR)(h16))
+#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 /* HANDLE -> HANDLE16 conversions */
 #define HDRVR_16(h32)		(LOWORD(h32))
@@ -252,3 +253,4 @@ void				TIME_MMTimeStop(void);
 #define HWAVE_16(h32)		(LOWORD(h32))
 #define HWAVEIN_16(h32)		(LOWORD(h32))
 #define HWAVEOUT_16(h32)	(LOWORD(h32))
+#define HWND_16(h32)		(LOWORD(h32))

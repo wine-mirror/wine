@@ -759,7 +759,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 	break;
 
     case WM_DROPOBJECT:
-	if( wParam == hWnd )
+	if( wParam == (WPARAM)hWnd )
       { LPDRAGINFO16 lpDragInfo = MapSL((SEGPTR)lParam);
 	    if( lpDragInfo && lpDragInfo->wFlags == DRAGOBJ_DATA && lpDragInfo->hList )
         { char* pstr = (char*)GlobalLock16( (HGLOBAL16)(lpDragInfo->hList) );

@@ -2915,7 +2915,7 @@ REBAR_GetTextColor (REBAR_INFO *infoPtr)
 inline static LRESULT
 REBAR_GetToolTips (REBAR_INFO *infoPtr)
 {
-    return infoPtr->hwndToolTip;
+    return (LRESULT)infoPtr->hwndToolTip;
 }
 
 
@@ -3878,7 +3878,7 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* issue WM_NOTIFYFORMAT to get unicode status of parent */
     i = SendMessageA(REBAR_GetNotifyParent (infoPtr),
-		     WM_NOTIFYFORMAT, hwnd, NF_QUERY);
+		     WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
     if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
 	ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
 	    i);
@@ -4001,7 +4001,7 @@ REBAR_NotifyFormat (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (lParam == NF_REQUERY) {
 	i = SendMessageA(REBAR_GetNotifyParent (infoPtr),
-			 WM_NOTIFYFORMAT, infoPtr->hwndSelf, NF_QUERY);
+			 WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
 	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
 	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
 		i);

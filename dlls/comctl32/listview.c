@@ -4395,7 +4395,7 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
 static LRESULT LISTVIEW_GetEditControl(HWND hwnd)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
-  return infoPtr->hwndEdit;
+  return (LRESULT)infoPtr->hwndEdit;
 }
 
 
@@ -5221,7 +5221,7 @@ static LRESULT LISTVIEW_GetHeader(HWND hwnd)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
-  return infoPtr->hwndHeader;
+  return (LRESULT)infoPtr->hwndHeader;
 }
 
 /* LISTVIEW_GetHotCursor */
@@ -7024,7 +7024,7 @@ static LRESULT LISTVIEW_InsertItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL isW)
 		  member. See comments for LISTVIEW_InsertCompare() for greater detail */
 		  nItem = DPA_InsertPtr( infoPtr->hdpaItems,
 			  GETITEMCOUNT( infoPtr ) + 1, hdpaSubItems );
-		  DPA_Sort( infoPtr->hdpaItems, LISTVIEW_InsertCompare, hwnd );
+		  DPA_Sort( infoPtr->hdpaItems, LISTVIEW_InsertCompare, (LPARAM)hwnd );
 		  nItem = DPA_GetPtrIndex( infoPtr->hdpaItems, hdpaSubItems );
 	      }
 	      else
@@ -8135,7 +8135,7 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, PFNLVCOMPARE pfnCompare, LPARAM lPa
 
     infoPtr->pfnCompare = pfnCompare;
     infoPtr->lParamSort = lParamSort;
-    DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, hwnd);
+    DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, (LPARAM)hwnd);
 
     /* Adjust selections and indices so that they are the way they should
      * be after the sort (otherwise, the list items move around, but
@@ -9737,10 +9737,10 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_DeleteItem(hwnd, (INT)wParam);
 
   case LVM_EDITLABELW:
-    return LISTVIEW_EditLabelT(hwnd, (INT)wParam, TRUE);
+    return (LRESULT)LISTVIEW_EditLabelT(hwnd, (INT)wParam, TRUE);
 
   case LVM_EDITLABELA:
-    return LISTVIEW_EditLabelT(hwnd, (INT)wParam, FALSE);
+    return (LRESULT)LISTVIEW_EditLabelT(hwnd, (INT)wParam, FALSE);
 
   case LVM_ENSUREVISIBLE:
     return LISTVIEW_EnsureVisible(hwnd, (INT)wParam, (BOOL)lParam);

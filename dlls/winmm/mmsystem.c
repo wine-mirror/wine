@@ -1688,7 +1688,7 @@ BOOL16 WINAPI mciDriverNotify16(HWND16 hWndCallBack, UINT16 wDevID, UINT16 wStat
 {
     TRACE("(%04X, %04x, %04X)\n", hWndCallBack, wDevID, wStatus);
 
-    return PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
+    return PostMessageA(HWND_32(hWndCallBack), MM_MCINOTIFY, wStatus, wDevID);
 }
 
 /**************************************************************************
@@ -1840,15 +1840,15 @@ UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data)
 
     TRACE("(0x%04x, 0x%08lx)\n", wDevID, data);
 
-    if ((HIWORD(data) != 0 && GetActiveWindow() != HIWORD(data)) ||
+    if ((HIWORD(data) != 0 && HWND_16(GetActiveWindow()) != HIWORD(data)) ||
 	(GetAsyncKeyState(LOWORD(data)) & 1) == 0) {
 	UserYield16();
 	ret = 0;
     } else {
 	MSG		msg;
 
-	msg.hwnd = HIWORD(data);
-	while (!PeekMessageA(&msg, HIWORD(data), WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
+	msg.hwnd = HWND_32(HIWORD(data));
+	while (!PeekMessageA(&msg, msg.hwnd, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
 	ret = -1;
     }
     return ret;

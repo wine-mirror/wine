@@ -569,7 +569,8 @@ static void UPDOWN_DoAction (UPDOWN_INFO *infoPtr, int delta, int action)
     /* Also, notify it. This message is sent in any case. */
     SendMessageW( GetParent(infoPtr->Self),
 		  dwStyle & UDS_HORZ ? WM_HSCROLL : WM_VSCROLL,
-		  MAKELONG(SB_THUMBPOSITION, infoPtr->CurVal), infoPtr->Self);
+		  MAKELONG(SB_THUMBPOSITION, infoPtr->CurVal),
+		  (LPARAM)infoPtr->Self);
 }
 
 /***********************************************************************
@@ -791,7 +792,8 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 
 	    	SendMessageW( GetParent(hwnd),
 			      dwStyle & UDS_HORZ ? WM_HSCROLL : WM_VSCROLL,
-                  	      MAKELONG(SB_ENDSCROLL, infoPtr->CurVal), hwnd);
+                  	      MAKELONG(SB_ENDSCROLL, infoPtr->CurVal),
+			      (LPARAM)hwnd);
 		if (UPDOWN_IsBuddyEdit(infoPtr))
 		    SendMessageW(infoPtr->Buddy, EM_SETSEL, 0, MAKELONG(0, -1));
 	    }
@@ -857,12 +859,12 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 
 	case UDM_GETBUDDY:
 	    if (wParam || lParam) UNKNOWN_PARAM(UDM_GETBUDDY, wParam, lParam);
-	    return infoPtr->Buddy;
+	    return (LRESULT)infoPtr->Buddy;
 
 	case UDM_SETBUDDY:
 	    if (lParam) UNKNOWN_PARAM(UDM_SETBUDDY, wParam, lParam);
-	    temp = infoPtr->Buddy;
-	    UPDOWN_SetBuddy (infoPtr, wParam);
+	    temp = (int)infoPtr->Buddy;
+	    UPDOWN_SetBuddy (infoPtr, (HWND)wParam);
 	    return temp;
 
 	case UDM_GETPOS:

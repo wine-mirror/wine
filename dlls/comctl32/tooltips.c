@@ -632,7 +632,7 @@ TOOLTIPS_CheckTool (HWND hwnd, BOOL bShowTest)
     INT nTool;
 
     GetCursorPos (&pt);
-    hwndTool = SendMessageA (hwnd, TTM_WINDOWFROMPOINT, 0, (LPARAM)&pt);
+    hwndTool = (HWND)SendMessageA (hwnd, TTM_WINDOWFROMPOINT, 0, (LPARAM)&pt);
     if (hwndTool == 0)
 	return -1;
 
@@ -1974,7 +1974,7 @@ TOOLTIPS_UpdateTipTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLTIPS_WindowFromPoint (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    return WindowFromPoint (*((LPPOINT)lParam));
+    return (LRESULT)WindowFromPoint (*((LPPOINT)lParam));
 }
 
 

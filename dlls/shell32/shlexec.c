@@ -680,7 +680,7 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
 
     sei.cbSize = sizeof(sei);
     sei.fMask = 0;
-    sei.hwnd = hWnd;
+    sei.hwnd = HWND_32(hWnd);
     sei.lpVerb = lpOperation;
     sei.lpFile = lpFile;
     sei.lpParameters = lpParameters;

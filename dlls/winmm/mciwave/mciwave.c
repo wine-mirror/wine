@@ -32,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciwave);
 
+#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
+
 typedef struct {
     UINT			wDevID;
     HANDLE			hWave;
@@ -577,7 +579,7 @@ static DWORD WAVE_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
     wmw->dwStatus = MCI_MODE_STOP;
 
     if ((dwFlags & MCI_NOTIFY) && lpParms) {
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmw->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
 
@@ -623,7 +625,7 @@ static DWORD WAVE_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
     wmw->lpWaveFormat = NULL;
 
     if ((dwFlags & MCI_NOTIFY) && lpParms) {
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmw->openParms.wDeviceID,
 			(dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
     }
@@ -850,7 +852,7 @@ cleanUp:
     CloseHandle(wmw->hEvent);
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmw->openParms.wDeviceID,
 			dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
     }
@@ -1076,7 +1078,7 @@ cleanUp:
     }
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmw->openParms.wDeviceID,
 			dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
     }
@@ -1162,7 +1164,7 @@ static DWORD WAVE_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	TRACE("Seeking to position=%lu bytes\n", wmw->dwPosition);
 
 	if (dwFlags & MCI_NOTIFY) {
-	    mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	    mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			    wmw->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
 	}
     }
@@ -1308,7 +1310,7 @@ static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMS lpParms)
     if (dwFlags & MCI_NOTIFY) {
 	if (ret == ERROR_SUCCESS) wparam = MCI_NOTIFY_SUCCESSFUL;
 
-    	mciDriverNotify( (HWND) LOWORD(lpParms->dwCallback),
+    	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			 wmw->openParms.wDeviceID, wparam);
     }
 
@@ -1455,7 +1457,7 @@ static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	}
     }
     if (dwFlags & MCI_NOTIFY) {
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmw->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return ret;

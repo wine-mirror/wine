@@ -199,7 +199,7 @@ TAB_GetToolTips (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
 
     if (infoPtr == NULL) return 0;
-    return infoPtr->hwndToolTip;
+    return (LRESULT)infoPtr->hwndToolTip;
 }
 
 static LRESULT
@@ -499,7 +499,7 @@ static LRESULT TAB_FocusChanging(
   return DefWindowProcA (hwnd, uMsg, wParam, lParam);
 }
 
-static HWND TAB_InternalHitTest (
+static INT TAB_InternalHitTest (
   HWND      hwnd,
   TAB_INFO* infoPtr,
   POINT     pt,
@@ -507,7 +507,7 @@ static HWND TAB_InternalHitTest (
 
 {
   RECT rect;
-  int iCount;
+  INT iCount;
 
   for (iCount = 0; iCount < infoPtr->uNumItem; iCount++)
   {

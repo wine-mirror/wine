@@ -813,7 +813,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
     infoPtr->clrBk = CLR_DEFAULT;
     infoPtr->hFont = 0;
 
-    i = SendMessageW(GetParent (hwnd), WM_NOTIFYFORMAT, hwnd, NF_QUERY);
+    i = SendMessageW(GetParent (hwnd), WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
     infoPtr->NtfUnicode = (i == NFR_UNICODE);
 
     GetClientRect (hwnd, &rect);
@@ -1067,7 +1067,7 @@ static LRESULT
 STATUSBAR_NotifyFormat (STATUSWINDOWINFO *infoPtr, HWND from, INT cmd)
 {
     if (cmd == NF_REQUERY) {
-	INT i = SendMessageW(from, WM_NOTIFYFORMAT, infoPtr->Self, NF_QUERY);
+	INT i = SendMessageW(from, WM_NOTIFYFORMAT, (WPARAM)infoPtr->Self, NF_QUERY);
 	infoPtr->NtfUnicode = (i == NFR_UNICODE);
     }
     return infoPtr->NtfUnicode ? NFR_UNICODE : NFR_ANSI;

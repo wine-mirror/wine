@@ -114,7 +114,7 @@ BOOL WINAPI SHELL_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst,
  */
 void WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b)
 {
-  DragAcceptFiles(hWnd, b);
+  DragAcceptFiles(HWND_32(hWnd), b);
 }
 
 /*************************************************************************
@@ -198,7 +198,7 @@ HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
  */
 BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
                                LPARAM lParam )
-{ return AboutDlgProc( hWnd, msg, wParam, lParam );
+{ return AboutDlgProc( HWND_32(hWnd), msg, wParam, lParam );
 }
 
 
@@ -207,7 +207,7 @@ BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
  */
 BOOL16 WINAPI ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
                             HICON16 hIcon )
-{ return ShellAboutA( hWnd, szApp, szOtherStuff, hIcon );
+{ return ShellAboutA( HWND_32(hWnd), szApp, szOtherStuff, hIcon );
 }
 
 /*************************************************************************
@@ -495,7 +495,7 @@ LRESULT WINAPI ShellHookProc16(INT16 code, WPARAM16 wParam, LPARAM lParam)
 	    case HSHELL_WINDOWDESTROYED:	uMsg = uMsgWndDestroyed; break;
 	    case HSHELL_ACTIVATESHELLWINDOW: 	uMsg = uMsgShellActivate;
         }
-	PostMessageA( SHELL_hWnd, uMsg, wParam, 0 );
+	PostMessageA( HWND_32(SHELL_hWnd), uMsg, wParam, 0 );
     }
     return CallNextHookEx16( SHELL_hHook, code, wParam, lParam );
 }

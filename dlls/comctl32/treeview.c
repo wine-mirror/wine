@@ -1603,7 +1603,7 @@ static LRESULT
 TREEVIEW_GetToolTips(TREEVIEW_INFO *infoPtr)
 {
     TRACE("\n");
-    return infoPtr->hwndToolTip;
+    return (LRESULT)infoPtr->hwndToolTip;
 }
 
 static LRESULT
@@ -1615,7 +1615,7 @@ TREEVIEW_SetToolTips(TREEVIEW_INFO *infoPtr, HWND hwndTT)
     prevToolTip = infoPtr->hwndToolTip;
     infoPtr->hwndToolTip = hwndTT;
 
-    return prevToolTip;
+    return (LRESULT)prevToolTip;
 }
 
 
@@ -3382,7 +3382,7 @@ TREEVIEW_HitTest(TREEVIEW_INFO *infoPtr, LPTVHITTESTINFO lpht)
 static LRESULT
 TREEVIEW_GetEditControl(TREEVIEW_INFO *infoPtr)
 {
-    return infoPtr->hwndEdit;
+    return (LRESULT)infoPtr->hwndEdit;
 }
 
 static LRESULT CALLBACK
@@ -5029,7 +5029,7 @@ TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (lParam == NF_REQUERY) {
 	i = SendMessageA(GetParent (infoPtr->hwnd),
-			 WM_NOTIFYFORMAT, infoPtr->hwnd, NF_QUERY);
+			 WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwnd, NF_QUERY);
 	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
 	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
 		i);
@@ -5146,7 +5146,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_DeleteItem(infoPtr, (HTREEITEM)lParam);
 
     case TVM_EDITLABELA:
-	return TREEVIEW_EditLabelA(infoPtr, (HTREEITEM)lParam);
+	return (LRESULT)TREEVIEW_EditLabelA(infoPtr, (HTREEITEM)lParam);
 
     case TVM_EDITLABELW:
 	FIXME("Unimplemented msg TVM_EDITLABELW\n");

@@ -196,4 +196,7 @@ inline static void __SHCloneStrWtoA(char ** target, const WCHAR * source)
 	WideCharToMultiByte(CP_ACP, 0, source, -1, *target, len, NULL, NULL);
 }
 
+/* handle conversions */
+#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
+
 #endif

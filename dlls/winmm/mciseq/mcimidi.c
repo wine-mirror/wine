@@ -42,6 +42,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mcimidi);
 
+#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
+
 #define MIDI_NOTEOFF             0x80
 #define MIDI_NOTEON              0x90
 
@@ -830,7 +832,7 @@ static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
@@ -869,7 +871,7 @@ static DWORD MIDI_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
@@ -1171,7 +1173,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
 
@@ -1234,7 +1236,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     wmm->dwStatus = MCI_MODE_STOP;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
@@ -1260,7 +1262,7 @@ static DWORD MIDI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
     }
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
 
@@ -1284,7 +1286,7 @@ static DWORD MIDI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     }
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
@@ -1478,7 +1480,7 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
     }
     if (dwFlags & MCI_NOTIFY) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return ret;
@@ -1635,7 +1637,7 @@ static DWORD MIDI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 
 	if (dwFlags & MCI_NOTIFY) {
 	    TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	    mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
+	    mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
 			    wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 	}
     }

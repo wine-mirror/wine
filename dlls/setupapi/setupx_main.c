@@ -69,6 +69,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
+#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
+
 /***********************************************************************
  *		SURegOpenKey (SETUPX.47)
  */
@@ -202,7 +204,7 @@ RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lps
 	    break;
 	case HOW_ALWAYS_PROMPT_REBOOT:
 	case HOW_PROMPT_REBOOT:
-            if (MessageBoxA(hwnd, "You must restart Wine before the new settings will take effect.\n\nDo you want to exit Wine now ?", "Systems Settings Change", MB_YESNO|MB_ICONQUESTION) == IDYES)
+            if (MessageBoxA(HWND_32(hwnd), "You must restart Wine before the new settings will take effect.\n\nDo you want to exit Wine now ?", "Systems Settings Change", MB_YESNO|MB_ICONQUESTION) == IDYES)
                 reboot = TRUE;
 	    break;
 	default:

@@ -583,7 +583,7 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
                                        (LPDLGTEMPLATEW) temp,
                                        psInfo->ppshheader.hwndParent,
                                        (DLGPROC) PROPSHEET_DialogProc,
-                                       (LPARAM)psInfo);
+                                       (LPARAM)psInfo) ? TRUE : FALSE;
 
   COMCTL32_Free(temp);
 
@@ -2668,7 +2668,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       if (psInfo->activeValid && psInfo->active_page != -1)
         hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
 
-      SetWindowLongW(hwnd, DWL_MSGRESULT, hwndPage);
+      SetWindowLongW(hwnd, DWL_MSGRESULT, (LONG)hwndPage);
 
       return TRUE;
     }
@@ -2685,7 +2685,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
       HWND hwndTabCtrl = GetDlgItem(hwnd, IDC_TABCONTROL);
 
-      SetWindowLongW(hwnd, DWL_MSGRESULT, hwndTabCtrl);
+      SetWindowLongW(hwnd, DWL_MSGRESULT, (LONG)hwndTabCtrl);
 
       return TRUE;
     }

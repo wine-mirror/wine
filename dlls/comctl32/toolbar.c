@@ -3274,7 +3274,7 @@ TOOLBAR_GetToolTips (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr == NULL)
 	return 0;
-    return infoPtr->hwndToolTip;
+    return (LRESULT)infoPtr->hwndToolTip;
 }
 
 
@@ -4239,7 +4239,7 @@ TOOLBAR_SetParent (HWND hwnd, WPARAM wParam, LPARAM lParam)
     hwndOldNotify = infoPtr->hwndNotify;
     infoPtr->hwndNotify = (HWND)wParam;
 
-    return hwndOldNotify;
+    return (LRESULT)hwndOldNotify;
 }
 
 
@@ -5285,7 +5285,7 @@ TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (lParam == NF_REQUERY) {
 	i = SendMessageA(GetParent(infoPtr->hwndSelf),
-			 WM_NOTIFYFORMAT, infoPtr->hwndSelf, NF_QUERY);
+			 WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
 	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
 	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
 		i);

@@ -200,7 +200,7 @@ DATETIME_GetMonthCal (HWND hwnd)
   DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
 
   TRACE("\n");
-  return infoPtr->hMonthCal;
+  return (LRESULT)infoPtr->hMonthCal;
 }
 
 

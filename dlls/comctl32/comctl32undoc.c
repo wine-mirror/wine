@@ -2318,7 +2318,7 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
     if (!lpNotify->hwndTo)
 	return 0;
 
-    if (lpNotify->hwndFrom == -1) {
+    if (lpNotify->hwndFrom == (HWND)-1) {
 	lpNmh = lpHdr;
 	idFrom = lpHdr->idFrom;
     }

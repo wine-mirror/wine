@@ -459,7 +459,7 @@ static CBE_ITEMDATA * COMBOEX_FindItem(COMBOEX_INFO *infoPtr, INT index)
 
 static inline BOOL COMBOEX_HasEdit(COMBOEX_INFO *infoPtr)
 {
-    return infoPtr->hwndEdit;
+    return infoPtr->hwndEdit ? TRUE : FALSE;
 }
 
 
@@ -921,7 +921,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
 
     infoPtr->unicode = IsWindowUnicode (hwnd);
 
-    i = SendMessageW(GetParent (hwnd), WM_NOTIFYFORMAT, hwnd, NF_QUERY);
+    i = SendMessageW(GetParent (hwnd), WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
     if ((i != NFR_ANSI) && (i != NFR_UNICODE)) {
 	WARN("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n", i);
 	i = NFR_ANSI;
@@ -1571,7 +1571,7 @@ static LRESULT COMBOEX_NotifyFormat (COMBOEX_INFO *infoPtr, LPARAM lParam)
 {
     if (lParam == NF_REQUERY) {
 	INT i = SendMessageW(GetParent (infoPtr->hwndSelf),
-			 WM_NOTIFYFORMAT, infoPtr->hwndSelf, NF_QUERY);
+			 WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
 	infoPtr->NtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
     }
     return infoPtr->NtfUnicode ? NFR_UNICODE : NFR_ANSI;
@@ -2057,7 +2057,7 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendMessageW ( GetParent(infoPtr->hwndSelf), WM_COMMAND,
 			       MAKEWPARAM(GetDlgCtrlID (infoPtr->hwndSelf),
 					  CBN_EDITCHANGE),
-			       infoPtr->hwndSelf);
+			       (LPARAM)infoPtr->hwndSelf);
 		return 0;
 	        }
 
@@ -2125,10 +2125,10 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return COMBOEX_DeleteItem (infoPtr, wParam);
 
 	case CBEM_GETCOMBOCONTROL:
-	    return infoPtr->hwndCombo;
+	    return (LRESULT)infoPtr->hwndCombo;
 
 	case CBEM_GETEDITCONTROL:
-	    return infoPtr->hwndEdit;
+	    return (LRESULT)infoPtr->hwndEdit;
 
 	case CBEM_GETEXTENDEDSTYLE:
 	    return infoPtr->dwExtStyle;

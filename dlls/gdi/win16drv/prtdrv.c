@@ -63,6 +63,8 @@ extern LONG CALLBACK PRTDRV_CallTo16_long_llwll (FARPROC16,LONG,LONG,WORD,LONG,
 /* ### stop build ### */
 
 
+#define HWND_16(h32)		(LOWORD(h32))
+
 #define MAX_PRINTER_DRIVERS 	16
 static LOADED_PRINTER_DRIVER *gapLoadedPrinterDrivers[MAX_PRINTER_DRIVERS];
 
@@ -775,7 +777,8 @@ INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
     lpSegProfile = MapLS(lpszProfile);
     lpSegOut = MapLS(lpdmOutput);
     lpSegIn = MapLS(lpdmInput);
-    wRet = PRTDRV_CallTo16_word_wwlllllw( pLPD->fn[FUNC_EXTDEVICEMODE], hwnd, pLPD->hInst,
+    wRet = PRTDRV_CallTo16_word_wwlllllw( pLPD->fn[FUNC_EXTDEVICEMODE],
+					  HWND_16(hwnd), pLPD->hInst,
                                           lpSegOut, lpSegDevice, lpSegPort, lpSegIn,
                                           lpSegProfile, dwMode );
     UnMapLS(lpSegOut);

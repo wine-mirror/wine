@@ -1090,7 +1090,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrRet,
 DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
 			     UINT16 uRetLen, HWND16 hwndCallback)
 {
-    return mciSendStringA(lpstrCommand, lpstrRet, uRetLen, hwndCallback);
+    return mciSendStringA(lpstrCommand, lpstrRet, uRetLen, HWND_32(hwndCallback));
 }
 
 /**************************************************************************
@@ -1284,7 +1284,7 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 	    if (mbp32) {
 		mbp32->dwCallback = mbp16->dwCallback;
 		mbp32->nVirtKey = mbp16->nVirtKey;
-		mbp32->hwndBreak = mbp16->hwndBreak;
+		mbp32->hwndBreak = HWND_32(mbp16->hwndBreak);
 	    } else {
 		return MCI_MAP_NOMEM;
 	    }

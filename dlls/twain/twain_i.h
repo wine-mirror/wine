@@ -47,7 +47,7 @@ typedef struct tagActiveDS
 TW_UINT16 DSM_initialized;      /* whether Source Manager is initialized */
 TW_UINT16 DSM_currentState;     /* current state of Source Manager */
 TW_UINT16 DSM_twCC;             /* current condition code of Source Manager */
-TW_INT32  DSM_parentHWND;       /* window handle of the Source's "parent" */
+TW_HANDLE DSM_parentHWND;       /* window handle of the Source's "parent" */
 TW_UINT32 DSM_sourceId;         /* source id generator */
 TW_UINT16 DSM_currentDevice;    /* keep track of device during enumeration */
 #ifdef HAVE_SANE
