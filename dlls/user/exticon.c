@@ -580,7 +580,7 @@ HRESULT WINAPI PrivateExtractIconsA (
 }
 
 /***********************************************************************
- *           PrivateExtractIconExW			[USER32.443]
+ *           PrivateExtractIconExW			[USER32.@]
  * NOTES
  *  if nIcons = -1 it returns the number of icons in any case !!!
  */
@@ -636,7 +636,7 @@ HRESULT WINAPI PrivateExtractIconExW (
 }
 
 /***********************************************************************
- *           PrivateExtractIconExA			[USER32.442]
+ *           PrivateExtractIconExA			[USER32.@]
  */
 HRESULT WINAPI PrivateExtractIconExA (
 	LPCSTR lpstrFile,

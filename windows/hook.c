@@ -1211,7 +1211,7 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
 
 
 /***********************************************************************
- *		SetWindowsHook16 (USER.121)
+ *		SetWindowsHook (USER.121)
  */
 FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
@@ -1241,7 +1241,8 @@ HHOOK WINAPI SetWindowsHookW( INT id, HOOKPROC proc )
 
 
 /***********************************************************************
- *		SetWindowsHookEx16 (USER.291) (USER32.@)
+ *		SetWindowsHookEx (USER.291)
+ *		SetWindowsHookEx16 (USER32.@)
  */
 HHOOK WINAPI SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
                                  HTASK16 hTask )
@@ -1320,7 +1321,8 @@ BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
 
 
 /***********************************************************************
- *		CallNextHookEx16 (USER.293) (USER32.@)
+ *		CallNextHookEx (USER.293)
+ *		CallNextHookEx16 (USER32.@)
  *
  * I wouldn't have separated this into 16 and 32 bit versions, but I
  * need a way to figure out if I need to do a mapping or not.

@@ -222,7 +222,7 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT
 
 
 /***********************************************************************
- *           DrawTextExW    (USER32.166)
+ *           DrawTextExW    (USER32.@)
  */
 #define MAX_STATIC_BUFFER 1024
 INT WINAPI DrawTextExW( HDC hdc, LPCWSTR str, INT i_count, 
@@ -421,7 +421,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPCWSTR str, INT i_count,
 }
 
 /***********************************************************************
- *           DrawTextA    (USER32.164)
+ *           DrawTextA    (USER32.@)
  */
 INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count, LPRECT rect, UINT flags )
 {
@@ -443,7 +443,7 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count, LPRECT rect, UINT flags )
 }
 
 /***********************************************************************
- *           DrawTextW    (USER32.167)
+ *           DrawTextW    (USER32.@)
  */
 INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count,
                           LPRECT rect, UINT flags )
@@ -452,7 +452,7 @@ INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count,
 }
 
 /***********************************************************************
- *           DrawTextExA    (USER32.165)
+ *           DrawTextExA    (USER32.@)
  */
 INT WINAPI DrawTextExA( HDC hdc, LPCSTR str, INT count,
                      LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
@@ -581,7 +581,7 @@ BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
 
 
 /***********************************************************************
- *           GrayStringA   (USER32.315)
+ *           GrayStringA   (USER32.@)
  */
 BOOL WINAPI GrayStringA( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
                          LPARAM lParam, INT cch, INT x, INT y,
@@ -593,7 +593,7 @@ BOOL WINAPI GrayStringA( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
 
 
 /***********************************************************************
- *           GrayStringW   (USER32.316)
+ *           GrayStringW   (USER32.@)
  */
 BOOL WINAPI GrayStringW( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
                          LPARAM lParam, INT cch, INT x, INT y,
@@ -697,7 +697,7 @@ LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
 
 
 /***********************************************************************
- *           TabbedTextOutA    (USER32.542)
+ *           TabbedTextOutA    (USER32.@)
  */
 LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr, INT count,
                             INT cTabStops, const INT *lpTabPos, INT nTabOrg )
@@ -709,7 +709,7 @@ LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr, INT count,
 
 
 /***********************************************************************
- *           TabbedTextOutW    (USER32.543)
+ *           TabbedTextOutW    (USER32.@)
  */
 LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str, INT count,
                             INT cTabStops, const INT *lpTabPos, INT nTabOrg )
@@ -742,7 +742,7 @@ DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
 
 
 /***********************************************************************
- *           GetTabbedTextExtentA    (USER32.293)
+ *           GetTabbedTextExtentA    (USER32.@)
  */
 DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count,
                                    INT cTabStops, const INT *lpTabPos )
@@ -754,7 +754,7 @@ DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count,
 
 
 /***********************************************************************
- *           GetTabbedTextExtentW    (USER32.294)
+ *           GetTabbedTextExtentW    (USER32.@)
  */
 DWORD WINAPI GetTabbedTextExtentW( HDC hdc, LPCWSTR lpstr, INT count,
                                    INT cTabStops, const INT *lpTabPos )

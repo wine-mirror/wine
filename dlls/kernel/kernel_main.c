@@ -108,7 +108,7 @@ BOOL WINAPI MAIN_KernelInit( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 }
 
 /***********************************************************************
- *		KERNEL_nop
+ *		KERNEL_nop (KERNEL.361)
  *
  * Entry point for kernel functions that do nothing.
  */
@@ -123,7 +123,7 @@ LONG WINAPI KERNEL_nop(void) { return 0; }
  */
 
 /***********************************************************************
- *		KERNEL_AnsiNext16
+ *		KERNEL_AnsiNext16 (KERNEL.77)
  */
 SEGPTR WINAPI KERNEL_AnsiNext16(SEGPTR current)
 {
@@ -131,7 +131,7 @@ SEGPTR WINAPI KERNEL_AnsiNext16(SEGPTR current)
 }
 
 /***********************************************************************
- *		KERNEL_AnsiPrev16
+ *		KERNEL_AnsiPrev16(KERNEL.78)
  */	
 SEGPTR WINAPI KERNEL_AnsiPrev16( SEGPTR start, SEGPTR current )
 {
@@ -139,7 +139,7 @@ SEGPTR WINAPI KERNEL_AnsiPrev16( SEGPTR start, SEGPTR current )
 }
 
 /***********************************************************************
- *		KERNEL_AnsiUpper16
+ *		KERNEL_AnsiUpper16 (KERNEL.79)
  */
 SEGPTR WINAPI KERNEL_AnsiUpper16( SEGPTR strOrChar )
 {
@@ -157,7 +157,7 @@ SEGPTR WINAPI KERNEL_AnsiUpper16( SEGPTR strOrChar )
 }
 
 /***********************************************************************
- *		KERNEL_AnsiLower16
+ *		KERNEL_AnsiLower16 (KERNEL.80)
  */
 SEGPTR WINAPI KERNEL_AnsiLower16( SEGPTR strOrChar )
 {
@@ -174,6 +174,9 @@ SEGPTR WINAPI KERNEL_AnsiLower16( SEGPTR strOrChar )
     else return tolower((char)strOrChar);
 }
 
+/***********************************************************************
+ *		KERNEL_lstrcmp16 (KERNEL.87)
+ */
 INT16 WINAPI KERNEL_lstrcmp16( LPCSTR str1, LPCSTR str2 )
 {
     return (INT16)strcmp( str1, str2 );

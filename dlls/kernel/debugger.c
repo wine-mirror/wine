@@ -112,6 +112,7 @@ BOOL WINAPI WaitForDebugEvent(
 
 /**********************************************************************
  *           ContinueDebugEvent   (KERNEL32.146)
+ *           ContinueDebugEvent   (WIN32S16.5)
  *
  *  Enables a thread that previously produced a debug event to continue.
  *
@@ -164,6 +165,7 @@ BOOL WINAPI DebugActiveProcess(
 
 
 /***********************************************************************
+ *           OutputDebugStringA   (KERNEL.115)
  *           OutputDebugStringA   (KERNEL32.548)
  *
  *  Output by an application of a unicode string to a debugger (if attached)
@@ -259,7 +261,7 @@ void WINAPI DebugBreak16(
 
 
 /***********************************************************************
- *           IsDebuggerPresent   (KERNEL32)
+ *           IsDebuggerPresent   (KERNEL32.827)
  *
  *  Allows a process to determine if there is a debugger attached.
  *

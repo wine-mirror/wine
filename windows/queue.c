@@ -1560,6 +1560,7 @@ BOOL WINAPI GetInputState(void)
 
 /***********************************************************************
  *		UserYield (USER.332)
+ *		UserYield16 (USER32.@)
  */
 void WINAPI UserYield16(void)
 {

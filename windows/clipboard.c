@@ -760,7 +760,7 @@ BOOL WINAPI CloseClipboard(void)
 
 
 /**************************************************************************
- *		EmptyClipboard16 (USER.139)
+ *		EmptyClipboard (USER.139)
  */
 BOOL16 WINAPI EmptyClipboard16(void)
 {
@@ -1360,7 +1360,7 @@ BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 
 
 /**************************************************************************
- *		IsClipboardFormatAvailable16 (USER.193)
+ *		IsClipboardFormatAvailable (USER.193)
  */
 BOOL16 WINAPI IsClipboardFormatAvailable16( UINT16 wFormat )
 {

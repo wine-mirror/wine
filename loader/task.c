@@ -1354,6 +1354,7 @@ WORD WINAPI GetDummyModuleHandleDS16(void)
 
 /***********************************************************************
  *           IsTask   (KERNEL.320)
+ *           IsTask16 (KERNEL32.@)
  */
 BOOL16 WINAPI IsTask16( HTASK16 hTask )
 {

@@ -1473,7 +1473,7 @@ BOOL WINAPI PeekMessageW(
 
 
 /***********************************************************************
- *		GetMessage32_16 (USER.820)
+ *		GetMessage32 (USER.820)
  */
 BOOL16 WINAPI GetMessage32_16( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
                                UINT16 last, BOOL16 wHaveParamHigh )
@@ -1650,7 +1650,8 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT message, WPARAM wParam,
 }
 
 /***********************************************************************
- *		PostAppMessage16 (USER.116)
+ *		PostAppMessage (USER.116)
+ *		PostAppMessage16 (USER32.@)
  */
 BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message, 
                                 WPARAM16 wParam, LPARAM lParam )

@@ -465,7 +465,7 @@ DWORD WINAPI CallProcEx32W16( void )
 
 
 /**********************************************************************
- *           WOW16Call               (KERNEL.501)
+ *           WOW16Call               (KERNEL.500)
  *
  * FIXME!!!
  *

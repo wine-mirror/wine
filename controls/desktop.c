@@ -218,7 +218,7 @@ static LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LP
 }
 
 /***********************************************************************
- *           PaintDesktop   (USER32.415)
+ *           PaintDesktop   (USER32.@)
  *
  */
 BOOL WINAPI PaintDesktop(HDC hdc)
@@ -254,7 +254,7 @@ BOOL16 WINAPI SetDeskWallPaper16( LPCSTR filename )
 
 
 /***********************************************************************
- *           SetDeskWallPaper   (USER32.475)
+ *           SetDeskWallPaper   (USER32.@)
  *
  * FIXME: is there a unicode version?
  */

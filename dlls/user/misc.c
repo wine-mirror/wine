@@ -16,7 +16,7 @@
 DEFAULT_DEBUG_CHANNEL(win);
 
 /**********************************************************************
- * SetLastErrorEx [USER32.485]  Sets the last-error code.
+ * SetLastErrorEx [USER32.@]  Sets the last-error code.
  *
  * RETURNS
  *    None.
@@ -42,7 +42,7 @@ void WINAPI SetLastErrorEx(
 
 
 /******************************************************************************
- * GetProcessWindowStation [USER32.280]  Returns handle of window station
+ * GetProcessWindowStation [USER32.@]  Returns handle of window station
  *
  * NOTES
  *    Docs say the return value is HWINSTA
@@ -59,7 +59,7 @@ HWINSTA WINAPI GetProcessWindowStation(void)
 
 
 /******************************************************************************
- * GetThreadDesktop [USER32.295]  Returns handle to desktop
+ * GetThreadDesktop [USER32.@]  Returns handle to desktop
  *
  * NOTES
  *    Docs say the return value is HDESK
@@ -79,7 +79,7 @@ DWORD WINAPI GetThreadDesktop( DWORD dwThreadId )
 
 
 /******************************************************************************
- * SetDebugErrorLevel [USER32.475]
+ * SetDebugErrorLevel [USER32.@]
  * Sets the minimum error level for generating debugging events
  *
  * PARAMS
@@ -92,7 +92,7 @@ VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
 
 
 /******************************************************************************
- *                    GetProcessDefaultLayout [USER32.802]
+ *                    GetProcessDefaultLayout [USER32.@]
  *
  * Gets the default layout for parentless windows.
  * Right now, just returns 0 (left-to-right).
@@ -117,7 +117,7 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *pdwDefaultLayout )
 
 
 /******************************************************************************
- *                    SetProcessDefaultLayout [USER32.803]
+ *                    SetProcessDefaultLayout [USER32.@]
  *
  * Sets the default layout for parentless windows.
  * Right now, only accepts 0 (left-to-right).
@@ -140,7 +140,7 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD dwDefaultLayout )
 
 
 /******************************************************************************
- * OpenDesktopA [USER32.408]
+ * OpenDesktopA [USER32.@]
  *
  * NOTES
  *    Return type should be HDESK
@@ -159,7 +159,7 @@ HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
 
 
 /******************************************************************************
- *		SetUserObjectInformationA   (USER32.512)
+ *		SetUserObjectInformationA   (USER32.@)
  */
 BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex, 
 				       LPVOID pvInfo, DWORD nLength )
@@ -169,7 +169,7 @@ BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex,
 }
 
 /******************************************************************************
- *		SetThreadDesktop   (USER32.510)
+ *		SetThreadDesktop   (USER32.@)
  */
 BOOL WINAPI SetThreadDesktop( HANDLE hDesktop )
 {
@@ -179,7 +179,7 @@ BOOL WINAPI SetThreadDesktop( HANDLE hDesktop )
 
 
 /***********************************************************************
- *           RegisterShellHookWindow			[USER32.459]
+ *           RegisterShellHookWindow			[USER32.@]
  */
 HRESULT WINAPI RegisterShellHookWindow ( DWORD u )
 {
@@ -189,7 +189,7 @@ HRESULT WINAPI RegisterShellHookWindow ( DWORD u )
 
 
 /***********************************************************************
- *           DeregisterShellHookWindow			[USER32.132]
+ *           DeregisterShellHookWindow			[USER32.@]
  */
 HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
 {
@@ -200,7 +200,7 @@ HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
 
 
 /***********************************************************************
- *           RegisterTasklist   			[USER23.436]
+ *           RegisterTasklist   			[USER32.@]
  */
 DWORD WINAPI RegisterTasklist (DWORD x)
 {
@@ -209,21 +209,21 @@ DWORD WINAPI RegisterTasklist (DWORD x)
 }
 
 /***********************************************************************
- *		stub_USER_489
+ *		stub_USER_489 (USER.489)
  */
 LONG WINAPI stub_USER_489(void) { FIXME("stub\n"); return 0; }
 
 /***********************************************************************
- *		stub_USER_490
+ *		stub_USER_490 (USER.490)
  */
 LONG WINAPI stub_USER_490(void) { FIXME("stub\n"); return 0; }
 
 /***********************************************************************
- *		stub_USER_492
+ *		stub_USER_492 (USER.492)
  */
 LONG WINAPI stub_USER_492(void) { FIXME("stub\n"); return 0; }
 
 /***********************************************************************
- *		stub_USER_496
+ *		stub_USER_496 (USER.496)
  */
 LONG WINAPI stub_USER_496(void) { FIXME("stub\n"); return 0; }

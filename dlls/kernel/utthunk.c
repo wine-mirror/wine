@@ -66,7 +66,7 @@ extern LONG CALLBACK UTTHUNK_CallTo16_long_ll(FARPROC16,LONG,LONG);
 /* ### stop build ### */
 
 /****************************************************************************
- *		UTGlue16     (KERNEL Wine-specific export)
+ *		UTGlue16 (KERNEL.666) (KERNEL Wine-specific export)
  */
 DWORD WINAPI UTGlue16( LPVOID lpBuff, DWORD dwUserDefined, SEGPTR *translationList,
 		       UTGLUEPROC target )
@@ -213,7 +213,7 @@ static UTINFO *UTFind( HMODULE hModule )
 
 
 /****************************************************************************
- *		UTRegister (KERNEL32.697)
+ *		UTRegister (KERNEL32.698)
  */
 BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL, 
                         LPSTR lpszInitName, LPSTR lpszProcName,
@@ -270,7 +270,7 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
 }
 
 /****************************************************************************
- *		UTUnRegister (KERNEL32.698)
+ *		UTUnRegister (KERNEL32.699)
  */
 VOID WINAPI UTUnRegister( HMODULE hModule )
 {
@@ -291,7 +291,7 @@ VOID WINAPI UTUnRegister( HMODULE hModule )
 }
 
 /****************************************************************************
- *		UTInit16     (KERNEL.494)
+ *		UTInit16     (KERNEL.493)
  */
 WORD WINAPI UTInit16( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
 {

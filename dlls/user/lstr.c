@@ -329,7 +329,7 @@ BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
 
 
 /***********************************************************************
- *           CharLowerA   (USER32.25)
+ *           CharLowerA   (USER32.@)
  * FIXME: handle current locale
  */
 LPSTR WINAPI CharLowerA(LPSTR x)
@@ -461,7 +461,7 @@ BOOL WINAPI IsCharLowerW(WCHAR x)
 
 
 /***********************************************************************
- *           IsCharUpperA   (USER.435) (USER32.337)
+ *           IsCharUpperA   (USER.435) (USER32.@)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharUpperA(CHAR x)

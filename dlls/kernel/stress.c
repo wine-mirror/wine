@@ -6,7 +6,7 @@
 DEFAULT_DEBUG_CHANNEL(stress);
 
 /***********************************************************************
- *		AllocDiskSpace
+ *		AllocDiskSpace (STRESS.10)
  */
 INT16 WINAPI AllocDiskSpace(LONG lLeft, UINT16 uDrive)
 {
@@ -17,7 +17,7 @@ INT16 WINAPI AllocDiskSpace(LONG lLeft, UINT16 uDrive)
 }
 
 /***********************************************************************
- *		AllocFileHandles
+ *		AllocFileHandles (STRESS.6)
  */
 INT16 WINAPI AllocFileHandles(INT16 Left)
 {
@@ -30,7 +30,7 @@ INT16 WINAPI AllocFileHandles(INT16 Left)
 }
 
 /***********************************************************************
- *		AllocGDIMem
+ *		AllocGDIMem (STRESS.14)
  */
 BOOL16 WINAPI AllocGDIMem(UINT16 uLeft)
 {
@@ -40,7 +40,7 @@ BOOL16 WINAPI AllocGDIMem(UINT16 uLeft)
 }
 
 /***********************************************************************
- *		AllocMem
+ *		AllocMem (STRESS.2)
  */
 BOOL16 WINAPI AllocMem(DWORD dwLeft)
 {
@@ -50,7 +50,7 @@ BOOL16 WINAPI AllocMem(DWORD dwLeft)
 }
 
 /***********************************************************************
- *		AllocUserMem
+ *		AllocUserMem (STRESS.12)
  */
 BOOL16 WINAPI AllocUserMem(UINT16 uContig)
 {
@@ -60,7 +60,7 @@ BOOL16 WINAPI AllocUserMem(UINT16 uContig)
 }
 
 /***********************************************************************
- *		FreeAllMem
+ *		FreeAllMem (STRESS.3)
  */
 void WINAPI FreeAllMem(void)
 {
@@ -68,7 +68,7 @@ void WINAPI FreeAllMem(void)
 }
 
 /***********************************************************************
- *		FreeAllGDIMem
+ *		FreeAllGDIMem (STRESS.15)
  */
 void WINAPI FreeAllGDIMem(void)
 {
@@ -76,7 +76,7 @@ void WINAPI FreeAllGDIMem(void)
 }
 
 /***********************************************************************
- *		FreeAllUserMem
+ *		FreeAllUserMem (STRESS.13)
  */
 void WINAPI FreeAllUserMem(void)
 {
@@ -84,15 +84,7 @@ void WINAPI FreeAllUserMem(void)
 }
 
 /***********************************************************************
- *
- */
-void WINAPI GetFreeAllUserMem(void)
-{
-       TRACE("GetFreeAllUserMem\n");
-}
-
-/***********************************************************************
- *		GetFreeFileHandles
+ *		GetFreeFileHandles (STRESS.8)
  */
 INT16 WINAPI GetFreeFileHandles(void)
 {
@@ -106,7 +98,7 @@ INT16 WINAPI GetFreeFileHandles(void)
 }
 
 /***********************************************************************
- *		UnAllocDiskSpace
+ *		UnAllocDiskSpace (STRESS.11)
  */
 void WINAPI UnAllocDiskSpace(UINT16 drive)
 {
@@ -114,7 +106,7 @@ void WINAPI UnAllocDiskSpace(UINT16 drive)
 }
 
 /***********************************************************************
- *		UnAllocFileHandles
+ *		UnAllocFileHandles (STRESS.7)
  */
 void WINAPI UnAllocFileHandles(void)
 {

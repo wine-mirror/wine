@@ -180,6 +180,7 @@ BOOL WINAPI PulseEvent( HANDLE handle )
 
 
 /***********************************************************************
+ *           SetEvent    (KERNEL.458)
  *           SetEvent    (KERNEL32.644)
  */
 BOOL WINAPI SetEvent( HANDLE handle )
@@ -189,6 +190,7 @@ BOOL WINAPI SetEvent( HANDLE handle )
 
 
 /***********************************************************************
+ *           ResetEvent    (KERNEL.459)
  *           ResetEvent    (KERNEL32.586)
  */
 BOOL WINAPI ResetEvent( HANDLE handle )
@@ -234,7 +236,7 @@ VOID WINAPI VWin32_EventWait(HANDLE event)
 }
 
 /***********************************************************************
- *       VWin32_EventSet	(KERNEL.451)
+ *       VWin32_EventSet	(KERNEL.479)
  */
 VOID WINAPI VWin32_EventSet(HANDLE event)
 {
@@ -575,7 +577,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 
 
 /***********************************************************************
- *           WaitNamedPipeA   (KERNEL32.@)
+ *           WaitNamedPipeA   (KERNEL32.725)
  */
 BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
 {
@@ -586,7 +588,7 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
 
 
 /***********************************************************************
- *           WaitNamedPipeW   (KERNEL32.@)
+ *           WaitNamedPipeW   (KERNEL32.726)
  */
 BOOL WINAPI WaitNamedPipeW (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 {

@@ -70,7 +70,7 @@ HWND16 WINAPI CreateDialogIndirectParamML16( HINSTANCE16 hinstWnd,
 
 
 /******************************************************************************
- *                    DialogBoxIndirectParamML16 [USER.916]
+ *                    DialogBoxIndirectParamML16 [USER.918]
  */
 HWND16 WINAPI DialogBoxIndirectParamML16( HINSTANCE16 hinstWnd,
                                           HGLOBAL16 hglbDlgTemp,
@@ -141,7 +141,7 @@ HFONT16 WINAPI GetCodePageSystemFont16( UINT16 iFont, UINT16 iCodePage )
 
 
 /******************************************************************************
- *                    GetLanguageName16 [USER.906]
+ *                    GetLanguageName16 [USER.907]
  * Returns the name of one language in (possibly) a different language.
  * Currently only handles language 0 (english).
  *

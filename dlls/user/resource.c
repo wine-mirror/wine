@@ -47,7 +47,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, LPCSTR lpTableName)
 }
 
 /**********************************************************************
- *			LoadAcceleratorsW	(USER32.356)
+ *			LoadAcceleratorsW	(USER32.@)
  * The image layout seems to look like this (not 100% sure):
  * 00:	BYTE	type		type of accelerator
  * 01:	BYTE	pad		(to WORD boundary)
@@ -95,7 +95,7 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
 }
 
 /***********************************************************************
- *		LoadAcceleratorsA   (USER32.355)
+ *		LoadAcceleratorsA   (USER32.@)
  */
 HACCEL WINAPI LoadAcceleratorsA(HINSTANCE instance,LPCSTR lpTableName)
 {
@@ -111,7 +111,7 @@ HACCEL WINAPI LoadAcceleratorsA(HINSTANCE instance,LPCSTR lpTableName)
 }
 
 /**********************************************************************
- *             CopyAcceleratorTableA   (USER32.58)
+ *             CopyAcceleratorTableA   (USER32.@)
  */
 INT WINAPI CopyAcceleratorTableA(HACCEL src, LPACCEL dst, INT entries)
 {
@@ -119,7 +119,7 @@ INT WINAPI CopyAcceleratorTableA(HACCEL src, LPACCEL dst, INT entries)
 }
 
 /**********************************************************************
- *             CopyAcceleratorTableW   (USER32.59)
+ *             CopyAcceleratorTableW   (USER32.@)
  *
  * By mortene@pvv.org 980321
  */
@@ -173,7 +173,7 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
 }
 
 /*********************************************************************
- *                    CreateAcceleratorTableA   (USER32.64)
+ *                    CreateAcceleratorTableA   (USER32.@)
  *
  * By mortene@pvv.org 980321
  */
@@ -218,7 +218,7 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
 }
 
 /*********************************************************************
- *                    CreateAcceleratorTableW   (USER32.64)
+ *                    CreateAcceleratorTableW   (USER32.@)
  *
  * 
  */
@@ -273,7 +273,7 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
 }
 
 /******************************************************************************
- * DestroyAcceleratorTable [USER32.130]
+ * DestroyAcceleratorTable [USER32.@]
  * Destroys an accelerator table
  *
  * NOTES
@@ -335,7 +335,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
 }
 
 /**********************************************************************
- *	LoadStringW		(USER32.376)
+ *	LoadStringW		(USER32.@)
  */
 INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
                             LPWSTR buffer, INT buflen )
@@ -386,7 +386,7 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 }
 
 /**********************************************************************
- *	LoadStringA	(USER32.375)
+ *	LoadStringA	(USER32.@)
  */
 INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
                             LPSTR buffer, INT buflen )

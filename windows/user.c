@@ -172,7 +172,8 @@ void WINAPI FinalUserInit16( void )
 }
 
 /***********************************************************************
- *		UserSignalProc (USER.391) (USER32.@)
+ *		SignalProc32 (USER.391)
+ *		UserSignalProc (USER32.@)
  *
  * For comments about the meaning of uCode and dwFlags 
  * see PROCESS_CallUserSignalProc.

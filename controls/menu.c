@@ -3134,7 +3134,7 @@ BOOL16 WINAPI TrackPopupMenu16( HMENU16 hMenu, UINT16 wFlags, INT16 x, INT16 y,
 
 
 /**********************************************************************
- *           TrackPopupMenu   (USER32.549)
+ *           TrackPopupMenu   (USER32.@)
  *
  * Like the win32 API, the function return the command ID only if the
  * flag TPM_RETURNCMD is on.
@@ -3162,7 +3162,7 @@ BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, INT x, INT y,
 }
 
 /**********************************************************************
- *           TrackPopupMenuEx   (USER32.550)
+ *           TrackPopupMenuEx   (USER32.@)
  */
 BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
                                 HWND hWnd, LPTPMPARAMS lpTpm )
@@ -3314,7 +3314,7 @@ BOOL16 WINAPI ChangeMenu16( HMENU16 hMenu, UINT16 pos, SEGPTR data,
 
 
 /*******************************************************************
- *         ChangeMenuA    (USER32.23)
+ *         ChangeMenuA    (USER32.@)
  */
 BOOL WINAPI ChangeMenuA( HMENU hMenu, UINT pos, LPCSTR data,
                              UINT id, UINT flags )
@@ -3335,7 +3335,7 @@ BOOL WINAPI ChangeMenuA( HMENU hMenu, UINT pos, LPCSTR data,
 
 
 /*******************************************************************
- *         ChangeMenuW    (USER32.24)
+ *         ChangeMenuW    (USER32.@)
  */
 BOOL WINAPI ChangeMenuW( HMENU hMenu, UINT pos, LPCWSTR data,
                              UINT id, UINT flags )
@@ -3365,7 +3365,7 @@ BOOL16 WINAPI CheckMenuItem16( HMENU16 hMenu, UINT16 id, UINT16 flags )
 
 
 /*******************************************************************
- *         CheckMenuItem    (USER32.46)
+ *         CheckMenuItem    (USER32.@)
  */
 DWORD WINAPI CheckMenuItem( HMENU hMenu, UINT id, UINT flags )
 {
@@ -3391,7 +3391,7 @@ UINT16 WINAPI EnableMenuItem16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
 
 
 /**********************************************************************
- *         EnableMenuItem    (USER32.170)
+ *         EnableMenuItem    (USER32.@)
  */
 UINT WINAPI EnableMenuItem( HMENU hMenu, UINT wItemID, UINT wFlags )
 {
@@ -3445,7 +3445,7 @@ INT16 WINAPI GetMenuString16( HMENU16 hMenu, UINT16 wItemID,
 
 
 /*******************************************************************
- *         GetMenuStringA    (USER32.268)
+ *         GetMenuStringA    (USER32.@)
  */
 INT WINAPI GetMenuStringA( 
 	HMENU hMenu,	/* [in] menuhandle */
@@ -3470,7 +3470,7 @@ INT WINAPI GetMenuStringA(
 
 
 /*******************************************************************
- *         GetMenuStringW    (USER32.269)
+ *         GetMenuStringW    (USER32.@)
  */
 INT WINAPI GetMenuStringW( HMENU hMenu, UINT wItemID,
                                LPWSTR str, INT nMaxSiz, UINT wFlags )
@@ -3499,7 +3499,7 @@ BOOL16 WINAPI HiliteMenuItem16( HWND16 hWnd, HMENU16 hMenu, UINT16 wItemID,
 
 
 /**********************************************************************
- *         HiliteMenuItem    (USER32.318)
+ *         HiliteMenuItem    (USER32.@)
  */
 BOOL WINAPI HiliteMenuItem( HWND hWnd, HMENU hMenu, UINT wItemID,
                                 UINT wHilite )
@@ -3526,7 +3526,7 @@ UINT16 WINAPI GetMenuState16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
 
 
 /**********************************************************************
- *         GetMenuState    (USER32.267)
+ *         GetMenuState    (USER32.@)
  */
 UINT WINAPI GetMenuState( HMENU hMenu, UINT wItemID, UINT wFlags )
 {
@@ -3565,7 +3565,7 @@ INT16 WINAPI GetMenuItemCount16( HMENU16 hMenu )
 
 
 /**********************************************************************
- *         GetMenuItemCount    (USER32.262)
+ *         GetMenuItemCount    (USER32.@)
  */
 INT WINAPI GetMenuItemCount( HMENU hMenu )
 {
@@ -3585,7 +3585,7 @@ UINT16 WINAPI GetMenuItemID16( HMENU16 hMenu, INT16 nPos )
 }
 
 /**********************************************************************
- *         GetMenuItemID    (USER32.263)
+ *         GetMenuItemID    (USER32.@)
  */
 UINT WINAPI GetMenuItemID( HMENU hMenu, INT nPos )
 {
@@ -3612,7 +3612,7 @@ BOOL16 WINAPI InsertMenu16( HMENU16 hMenu, UINT16 pos, UINT16 flags,
 
 
 /*******************************************************************
- *         InsertMenuW    (USER32.325)
+ *         InsertMenuW    (USER32.@)
  */
 BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
                              UINT id, LPCWSTR str )
@@ -3644,7 +3644,7 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
 
 
 /*******************************************************************
- *         InsertMenuA    (USER32.322)
+ *         InsertMenuA    (USER32.@)
  */
 BOOL WINAPI InsertMenuA( HMENU hMenu, UINT pos, UINT flags,
                              UINT id, LPCSTR str )
@@ -3672,7 +3672,7 @@ BOOL16 WINAPI AppendMenu16(HMENU16 hMenu, UINT16 flags, UINT16 id, SEGPTR data)
 
 
 /*******************************************************************
- *         AppendMenuA    (USER32.5)
+ *         AppendMenuA    (USER32.@)
  */
 BOOL WINAPI AppendMenuA( HMENU hMenu, UINT flags,
                              UINT id, LPCSTR data )
@@ -3682,7 +3682,7 @@ BOOL WINAPI AppendMenuA( HMENU hMenu, UINT flags,
 
 
 /*******************************************************************
- *         AppendMenuW    (USER32.6)
+ *         AppendMenuW    (USER32.@)
  */
 BOOL WINAPI AppendMenuW( HMENU hMenu, UINT flags,
                              UINT id, LPCWSTR data )
@@ -3701,7 +3701,7 @@ BOOL16 WINAPI RemoveMenu16( HMENU16 hMenu, UINT16 nPos, UINT16 wFlags )
 
 
 /**********************************************************************
- *         RemoveMenu    (USER32.441)
+ *         RemoveMenu    (USER32.@)
  */
 BOOL WINAPI RemoveMenu( HMENU hMenu, UINT nPos, UINT wFlags )
 {
@@ -3746,7 +3746,7 @@ BOOL16 WINAPI DeleteMenu16( HMENU16 hMenu, UINT16 nPos, UINT16 wFlags )
 
 
 /**********************************************************************
- *         DeleteMenu    (USER32.129)
+ *         DeleteMenu    (USER32.@)
  */
 BOOL WINAPI DeleteMenu( HMENU hMenu, UINT nPos, UINT wFlags )
 {
@@ -3772,7 +3772,7 @@ BOOL16 WINAPI ModifyMenu16( HMENU16 hMenu, UINT16 pos, UINT16 flags,
 
 
 /*******************************************************************
- *         ModifyMenuW    (USER32.398)
+ *         ModifyMenuW    (USER32.@)
  */
 BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
                              UINT id, LPCWSTR str )
@@ -3797,7 +3797,7 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
 
 
 /*******************************************************************
- *         ModifyMenuA    (USER32.397)
+ *         ModifyMenuA    (USER32.@)
  */
 BOOL WINAPI ModifyMenuA( HMENU hMenu, UINT pos, UINT flags,
                              UINT id, LPCSTR str )
@@ -3825,7 +3825,7 @@ HMENU16 WINAPI CreatePopupMenu16(void)
 
 
 /**********************************************************************
- *         CreatePopupMenu    (USER32.82)
+ *         CreatePopupMenu    (USER32.@)
  */
 HMENU WINAPI CreatePopupMenu(void)
 {
@@ -3841,7 +3841,7 @@ HMENU WINAPI CreatePopupMenu(void)
 
 
 /**********************************************************************
- *         GetMenuCheckMarkDimensions    (USER.417) (USER32.258)
+ *         GetMenuCheckMarkDimensions    (USER.417) (USER32.@)
  */
 DWORD WINAPI GetMenuCheckMarkDimensions(void)
 {
@@ -3860,7 +3860,7 @@ BOOL16 WINAPI SetMenuItemBitmaps16( HMENU16 hMenu, UINT16 nPos, UINT16 wFlags,
 
 
 /**********************************************************************
- *         SetMenuItemBitmaps    (USER32.490)
+ *         SetMenuItemBitmaps    (USER32.@)
  */
 BOOL WINAPI SetMenuItemBitmaps( HMENU hMenu, UINT nPos, UINT wFlags,
                                     HBITMAP hNewUnCheck, HBITMAP hNewCheck)
@@ -3894,7 +3894,7 @@ HMENU16 WINAPI CreateMenu16(void)
 
 
 /**********************************************************************
- *         CreateMenu    (USER32.81)
+ *         CreateMenu    (USER32.@)
  */
 HMENU WINAPI CreateMenu(void)
 {
@@ -3924,7 +3924,7 @@ BOOL16 WINAPI DestroyMenu16( HMENU16 hMenu )
 
 
 /**********************************************************************
- *         DestroyMenu    (USER32.134)
+ *         DestroyMenu    (USER32.@)
  */
 BOOL WINAPI DestroyMenu( HMENU hMenu )
 {
@@ -3983,7 +3983,7 @@ HMENU16 WINAPI GetSystemMenu16( HWND16 hWnd, BOOL16 bRevert )
 
 
 /**********************************************************************
- *         GetSystemMenu    (USER32.291)
+ *         GetSystemMenu    (USER32.@)
  */
 HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 {
@@ -4046,7 +4046,7 @@ BOOL16 WINAPI SetSystemMenu16( HWND16 hwnd, HMENU16 hMenu )
 
 
 /*******************************************************************
- *         SetSystemMenu    (USER32.508)
+ *         SetSystemMenu    (USER32.@)
  */
 BOOL WINAPI SetSystemMenu( HWND hwnd, HMENU hMenu )
 {
@@ -4073,7 +4073,7 @@ HMENU16 WINAPI GetMenu16( HWND16 hWnd )
 
 
 /**********************************************************************
- *         GetMenu    (USER32.257)
+ *         GetMenu    (USER32.@)
  */
 HMENU WINAPI GetMenu( HWND hWnd ) 
 {
@@ -4100,7 +4100,7 @@ BOOL16 WINAPI SetMenu16( HWND16 hWnd, HMENU16 hMenu )
 
 
 /**********************************************************************
- *         SetMenu    (USER32.487)
+ *         SetMenu    (USER32.@)
  */
 BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
 {
@@ -4152,7 +4152,7 @@ HMENU16 WINAPI GetSubMenu16( HMENU16 hMenu, INT16 nPos )
 
 
 /**********************************************************************
- *         GetSubMenu    (USER32.288)
+ *         GetSubMenu    (USER32.@)
  */
 HMENU WINAPI GetSubMenu( HMENU hMenu, INT nPos )
 {
@@ -4174,7 +4174,7 @@ void WINAPI DrawMenuBar16( HWND16 hWnd )
 
 
 /**********************************************************************
- *         DrawMenuBar    (USER32.161)
+ *         DrawMenuBar    (USER32.@)
  */
 BOOL WINAPI DrawMenuBar( HWND hWnd )
 {
@@ -4202,7 +4202,7 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
 
 
 /***********************************************************************
- *           EndMenu   (USER.187) (USER32.175)
+ *           EndMenu   (USER.187) (USER32.@)
  */
 void WINAPI EndMenu(void)
 {
@@ -4264,7 +4264,7 @@ HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, LPCSTR name )
 
 
 /*****************************************************************
- *        LoadMenuA   (USER32.370)
+ *        LoadMenuA   (USER32.@)
  */
 HMENU WINAPI LoadMenuA( HINSTANCE instance, LPCSTR name )
 {
@@ -4275,7 +4275,7 @@ HMENU WINAPI LoadMenuA( HINSTANCE instance, LPCSTR name )
 
 
 /*****************************************************************
- *        LoadMenuW   (USER32.373)
+ *        LoadMenuW   (USER32.@)
  */
 HMENU WINAPI LoadMenuW( HINSTANCE instance, LPCWSTR name )
 {
@@ -4315,7 +4315,7 @@ HMENU16 WINAPI LoadMenuIndirect16( LPCVOID template )
 
 
 /**********************************************************************
- *	    LoadMenuIndirectA    (USER32.371)
+ *	    LoadMenuIndirectA    (USER32.@)
  */
 HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
 {
@@ -4356,7 +4356,7 @@ HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
 
 
 /**********************************************************************
- *	    LoadMenuIndirectW    (USER32.372)
+ *	    LoadMenuIndirectW    (USER32.@)
  */
 HMENU WINAPI LoadMenuIndirectW( LPCVOID template )
 {
@@ -4376,7 +4376,7 @@ BOOL16 WINAPI IsMenu16( HMENU16 hmenu )
 
 
 /**********************************************************************
- *		IsMenu    (USER32.346)
+ *		IsMenu    (USER32.@)
  */
 BOOL WINAPI IsMenu(HMENU hmenu)
 {
@@ -4466,7 +4466,7 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 }
 
 /**********************************************************************
- *		GetMenuItemInfoA    (USER32.264)
+ *		GetMenuItemInfoA    (USER32.@)
  */
 BOOL WINAPI GetMenuItemInfoA( HMENU hmenu, UINT item, BOOL bypos,
                                   LPMENUITEMINFOA lpmii)
@@ -4476,7 +4476,7 @@ BOOL WINAPI GetMenuItemInfoA( HMENU hmenu, UINT item, BOOL bypos,
 }
 
 /**********************************************************************
- *		GetMenuItemInfoW    (USER32.265)
+ *		GetMenuItemInfoW    (USER32.@)
  */
 BOOL WINAPI GetMenuItemInfoW( HMENU hmenu, UINT item, BOOL bypos,
                                   LPMENUITEMINFOW lpmii)
@@ -4578,7 +4578,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 }
 
 /**********************************************************************
- *		SetMenuItemInfoA    (USER32.491)
+ *		SetMenuItemInfoA    (USER32.@)
  */
 BOOL WINAPI SetMenuItemInfoA(HMENU hmenu, UINT item, BOOL bypos,
                                  const MENUITEMINFOA *lpmii) 
@@ -4588,7 +4588,7 @@ BOOL WINAPI SetMenuItemInfoA(HMENU hmenu, UINT item, BOOL bypos,
 }
 
 /**********************************************************************
- *		SetMenuItemInfoW    (USER32.492)
+ *		SetMenuItemInfoW    (USER32.@)
  */
 BOOL WINAPI SetMenuItemInfoW(HMENU hmenu, UINT item, BOOL bypos,
                                  const MENUITEMINFOW *lpmii)
@@ -4598,7 +4598,7 @@ BOOL WINAPI SetMenuItemInfoW(HMENU hmenu, UINT item, BOOL bypos,
 }
 
 /**********************************************************************
- *		SetMenuDefaultItem    (USER32.489)
+ *		SetMenuDefaultItem    (USER32.@)
  *
  */
 BOOL WINAPI SetMenuDefaultItem(HMENU hmenu, UINT uItem, UINT bypos)
@@ -4647,7 +4647,7 @@ BOOL WINAPI SetMenuDefaultItem(HMENU hmenu, UINT uItem, UINT bypos)
 }
 
 /**********************************************************************
- *		GetMenuDefaultItem    (USER32.260)
+ *		GetMenuDefaultItem    (USER32.@)
  */
 UINT WINAPI GetMenuDefaultItem(HMENU hmenu, UINT bypos, UINT flags)
 {
@@ -4715,7 +4715,7 @@ BOOL16 WINAPI InsertMenuItem16( HMENU16 hmenu, UINT16 pos, BOOL16 byposition,
 
 
 /**********************************************************************
- *		InsertMenuItemA    (USER32.323)
+ *		InsertMenuItemA    (USER32.@)
  */
 BOOL WINAPI InsertMenuItemA(HMENU hMenu, UINT uItem, BOOL bypos,
                                 const MENUITEMINFOA *lpmii)
@@ -4726,7 +4726,7 @@ BOOL WINAPI InsertMenuItemA(HMENU hMenu, UINT uItem, BOOL bypos,
 
 
 /**********************************************************************
- *		InsertMenuItemW    (USER32.324)
+ *		InsertMenuItemW    (USER32.@)
  */
 BOOL WINAPI InsertMenuItemW(HMENU hMenu, UINT uItem, BOOL bypos,
                                 const MENUITEMINFOW *lpmii)
@@ -4736,7 +4736,7 @@ BOOL WINAPI InsertMenuItemW(HMENU hMenu, UINT uItem, BOOL bypos,
 }
 
 /**********************************************************************
- *		CheckMenuRadioItem    (USER32.47)
+ *		CheckMenuRadioItem    (USER32.@)
  */
 
 BOOL WINAPI CheckMenuRadioItem(HMENU hMenu,
@@ -4786,7 +4786,7 @@ BOOL16 WINAPI CheckMenuRadioItem16(HMENU16 hMenu,
 }
 
 /**********************************************************************
- *		GetMenuItemRect    (USER32.266)
+ *		GetMenuItemRect    (USER32.@)
  *
  *      ATTENTION: Here, the returned values in rect are the screen 
  *                 coordinates of the item just like if the menu was 
@@ -4843,7 +4843,7 @@ BOOL16 WINAPI GetMenuItemRect16 (HWND16 hwnd, HMENU16 hMenu, UINT16 uItem,
 }
 
 /**********************************************************************
- *		SetMenuInfo
+ *		SetMenuInfo    (USER32.@)
  *
  * FIXME
  *	MIM_APPLYTOSUBMENUS
@@ -4879,7 +4879,7 @@ BOOL WINAPI SetMenuInfo (HMENU hMenu, LPCMENUINFO lpmi)
 }
 
 /**********************************************************************
- *		GetMenuInfo
+ *		GetMenuInfo    (USER32.@)
  *
  *  NOTES
  *	win98/NT5.0
@@ -4923,7 +4923,7 @@ BOOL16 WINAPI SetMenuContextHelpId16( HMENU16 hMenu, DWORD dwContextHelpID)
 
 
 /**********************************************************************
- *         SetMenuContextHelpId    (USER32.488)
+ *         SetMenuContextHelpId    (USER32.@)
  */
 BOOL WINAPI SetMenuContextHelpId( HMENU hMenu, DWORD dwContextHelpID)
 {
@@ -4948,7 +4948,7 @@ DWORD WINAPI GetMenuContextHelpId16( HMENU16 hMenu )
 }
  
 /**********************************************************************
- *         GetMenuContextHelpId    (USER32.488)
+ *         GetMenuContextHelpId    (USER32.@)
  */
 DWORD WINAPI GetMenuContextHelpId( HMENU hMenu )
 {
@@ -4964,7 +4964,7 @@ DWORD WINAPI GetMenuContextHelpId( HMENU hMenu )
 }
 
 /**********************************************************************
- *         MenuItemFromPoint    (USER32.387)
+ *         MenuItemFromPoint    (USER32.@)
  */
 UINT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
 {
@@ -5123,7 +5123,7 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
 }
 
 /**********************************************************************
- *      TranslateAccelerator      (USER32.551)(USER32.552)(USER32.553)
+ *      TranslateAccelerator      (USER32.@)
  */
 INT WINAPI TranslateAccelerator( HWND hWnd, HACCEL hAccel, LPMSG msg )
 {

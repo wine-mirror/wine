@@ -190,7 +190,7 @@ LPVOID WINAPI GetThunkBuff(void)
 }
 
 /***********************************************************************
- *		ThunkConnect32		(KERNEL32)
+ *		ThunkConnect32		(KERNEL32.688)
  * Connects a 32bit and a 16bit thunkbuffer.
  */
 UINT WINAPI ThunkConnect32( 
@@ -279,7 +279,7 @@ UINT WINAPI ThunkConnect32(
 }
 
 /**********************************************************************
- * 		QT_Thunk			(KERNEL32)
+ * 		QT_Thunk			(KERNEL32.559)
  *
  * The target address is in EDX.
  * The 16 bit arguments start at ESP.
@@ -480,72 +480,72 @@ static void FT_Exit(CONTEXT86 *context, int nPopArgs)
 void WINAPI FT_Exit0 (CONTEXT86 *context) { FT_Exit(context,  0); }
 
 /***********************************************************************
- *		FT_Exit4 (KERNEL32.219)
+ *		FT_Exit4 (KERNEL32.226)
  */
 void WINAPI FT_Exit4 (CONTEXT86 *context) { FT_Exit(context,  4); }
 
 /***********************************************************************
- *		FT_Exit8 (KERNEL32.220)
+ *		FT_Exit8 (KERNEL32.232)
  */
 void WINAPI FT_Exit8 (CONTEXT86 *context) { FT_Exit(context,  8); }
 
 /***********************************************************************
- *		FT_Exit12 (KERNEL32.221)
+ *		FT_Exit12 (KERNEL32.219)
  */
 void WINAPI FT_Exit12(CONTEXT86 *context) { FT_Exit(context, 12); }
 
 /***********************************************************************
- *		FT_Exit16 (KERNEL32.222)
+ *		FT_Exit16 (KERNEL32.220)
  */
 void WINAPI FT_Exit16(CONTEXT86 *context) { FT_Exit(context, 16); }
 
 /***********************************************************************
- *		FT_Exit20 (KERNEL32.223)
+ *		FT_Exit20 (KERNEL32.221)
  */
 void WINAPI FT_Exit20(CONTEXT86 *context) { FT_Exit(context, 20); }
 
 /***********************************************************************
- *		FT_Exit24 (KERNEL32.224)
+ *		FT_Exit24 (KERNEL32.222)
  */
 void WINAPI FT_Exit24(CONTEXT86 *context) { FT_Exit(context, 24); }
 
 /***********************************************************************
- *		FT_Exit28 (KERNEL32.225)
+ *		FT_Exit28 (KERNEL32.223)
  */
 void WINAPI FT_Exit28(CONTEXT86 *context) { FT_Exit(context, 28); }
 
 /***********************************************************************
- *		FT_Exit32 (KERNEL32.226)
+ *		FT_Exit32 (KERNEL32.224)
  */
 void WINAPI FT_Exit32(CONTEXT86 *context) { FT_Exit(context, 32); }
 
 /***********************************************************************
- *		FT_Exit36 (KERNEL32.227)
+ *		FT_Exit36 (KERNEL32.225)
  */
 void WINAPI FT_Exit36(CONTEXT86 *context) { FT_Exit(context, 36); }
 
 /***********************************************************************
- *		FT_Exit40 (KERNEL32.228)
+ *		FT_Exit40 (KERNEL32.227)
  */
 void WINAPI FT_Exit40(CONTEXT86 *context) { FT_Exit(context, 40); }
 
 /***********************************************************************
- *		FT_Exit44 (KERNEL32.229)
+ *		FT_Exit44 (KERNEL32.228)
  */
 void WINAPI FT_Exit44(CONTEXT86 *context) { FT_Exit(context, 44); }
 
 /***********************************************************************
- *		FT_Exit48 (KERNEL32.230)
+ *		FT_Exit48 (KERNEL32.229)
  */
 void WINAPI FT_Exit48(CONTEXT86 *context) { FT_Exit(context, 48); }
 
 /***********************************************************************
- *		FT_Exit52 (KERNEL32.231)
+ *		FT_Exit52 (KERNEL32.230)
  */
 void WINAPI FT_Exit52(CONTEXT86 *context) { FT_Exit(context, 52); }
 
 /***********************************************************************
- *		FT_Exit56 (KERNEL32.232)
+ *		FT_Exit56 (KERNEL32.231)
  */
 void WINAPI FT_Exit56(CONTEXT86 *context) { FT_Exit(context, 56); }
 
@@ -853,7 +853,7 @@ VOID WINAPI ThunkInitSL(
 }
 
 /**********************************************************************
- *           SSInit		KERNEL.700
+ *           SSInit		(KERNEL.700)
  * RETURNS
  *	TRUE for success.
  */
@@ -863,7 +863,7 @@ BOOL WINAPI SSInit16()
 }
 
 /**********************************************************************
- *           SSOnBigStack	KERNEL32.87
+ *           SSOnBigStack	(KERNEL32.87)
  * Check if thunking is initialized (ss selector set up etc.)
  * We do that differently, so just return TRUE.
  * [ok]
@@ -877,7 +877,7 @@ BOOL WINAPI SSOnBigStack()
 }
 
 /**********************************************************************
- *           SSConfirmSmallStack     KERNEL.704
+ *           SSConfirmSmallStack     (KERNEL.704)
  *
  * Abort if not on small stack.
  *
@@ -889,7 +889,7 @@ void WINAPI SSConfirmSmallStack( CONTEXT86 *context )
 }
 
 /**********************************************************************
- *           SSCall
+ *           SSCall (KERNEL32.88)
  * One of the real thunking functions. This one seems to be for 32<->32
  * thunks. It should probably be capable of crossing processboundaries.
  *
@@ -964,7 +964,7 @@ void WINAPI W32S_BackTo32( CONTEXT86 *context )
 }
 
 /**********************************************************************
- *			AllocSLCallback		(KERNEL32)
+ *			AllocSLCallback		(KERNEL32.105)
  *
  * Win95 uses some structchains for callbacks. It allocates them
  * in blocks of 100 entries, size 32 bytes each, layout:
@@ -1067,7 +1067,7 @@ BOOL16 WINAPI IsPeFormat16(
 
 
 /***********************************************************************
- *           K32Thk1632Prolog			(KERNEL32.492)
+ *           K32Thk1632Prolog			(KERNEL32.491)
  */
 void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
 {
@@ -1128,7 +1128,7 @@ void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           K32Thk1632Epilog			(KERNEL32.491)
+ *           K32Thk1632Epilog			(KERNEL32.490)
  */
 void WINAPI K32Thk1632Epilog( CONTEXT86 *context )
 {
@@ -1845,7 +1845,7 @@ void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
 
 
 /***********************************************************************
- *           Get16DLLAddress       (KERNEL32)
+ *           Get16DLLAddress       (KERNEL32.1599)
  *
  * This function is used by a Win32s DLL if it wants to call a Win16 function.
  * A 16:16 segmented pointer to the function is returned.
@@ -1920,7 +1920,7 @@ void WINAPI HouseCleanLogicallyDeadHandles(void)
 }
 
 /**********************************************************************
- *		_KERNEL32_100
+ *		_KERNEL32_100 (KERNEL32.100)
  */
 BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
 {
@@ -1929,7 +1929,7 @@ BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
 }
 
 /**********************************************************************
- *		_KERNEL32_99
+ *		_KERNEL32_99 (KERNEL32.99)
  *
  * Checks whether the clock has to be switched from daylight
  * savings time to standard time or vice versa.

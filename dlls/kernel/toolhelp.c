@@ -38,7 +38,7 @@ static int nrofnotifys = 0;
 static FARPROC16 HookNotify = NULL;
 
 /***********************************************************************
- *		NotifyRegister16
+ *		NotifyRegister16 (TOOLHELP.73)
  */
 BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
                               WORD wFlags )
@@ -68,7 +68,7 @@ BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
 }
 
 /***********************************************************************
- *		NotifyUnregister16
+ *		NotifyUnregister16 (TOOLHELP.74)
  */
 BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
 {
@@ -89,7 +89,7 @@ BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
 }
 
 /***********************************************************************
- *		StackTraceCSIPFirst16
+ *		StackTraceCSIPFirst (TOOLHELP.67)
  */
 BOOL16 WINAPI StackTraceCSIPFirst16(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WORD wIP, WORD wBP)
 {
@@ -98,7 +98,7 @@ BOOL16 WINAPI StackTraceCSIPFirst16(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WO
 }
 
 /***********************************************************************
- *		StackTraceFirst16
+ *		StackTraceFirst (TOOLHELP.66)
  */
 BOOL16 WINAPI StackTraceFirst16(STACKTRACEENTRY *ste, HTASK16 Task)
 {
@@ -107,7 +107,7 @@ BOOL16 WINAPI StackTraceFirst16(STACKTRACEENTRY *ste, HTASK16 Task)
 }
 
 /***********************************************************************
- *		StackTraceNext16
+ *		StackTraceNext (TOOLHELP.68)
  */
 BOOL16 WINAPI StackTraceNext16(STACKTRACEENTRY *ste)
 {
@@ -116,7 +116,7 @@ BOOL16 WINAPI StackTraceNext16(STACKTRACEENTRY *ste)
 }
 
 /***********************************************************************
- *		InterruptRegister16
+ *		InterruptRegister (TOOLHELP.75)
  */
 BOOL16 WINAPI InterruptRegister16( HTASK16 task, FARPROC callback )
 {
@@ -125,7 +125,7 @@ BOOL16 WINAPI InterruptRegister16( HTASK16 task, FARPROC callback )
 }
 
 /***********************************************************************
- *		InterruptUnRegister16
+ *		InterruptUnRegister (TOOLHELP.76)
  */
 BOOL16 WINAPI InterruptUnRegister16( HTASK16 task )
 {

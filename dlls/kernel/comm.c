@@ -1,4 +1,4 @@
- /*
+/*
  * DEC 93 Erik Bos <erik@xs4all.nl>
  *
  * Copyright 1996 Marcus Meissner
@@ -1468,7 +1468,7 @@ INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
 }
 
 /***********************************************************************
- *           EnableCommNotification16   (USER.246)
+ *           EnableCommNotification   (USER.245)
  */
 BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
                                       INT16 cbWriteNotify, INT16 cbOutQueue )
@@ -1488,7 +1488,7 @@ BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
 
 
 /**************************************************************************
- *         BuildCommDCBA		(KERNEL32.14)
+ *         BuildCommDCBA		(KERNEL32.113)
  *
  *  Updates a device control block data structure with values from an
  *  ascii device control string.  The device control string has two forms
@@ -1506,7 +1506,7 @@ BOOL WINAPI BuildCommDCBA(
 }
 
 /**************************************************************************
- *         BuildCommDCBAndTimeoutsA	(KERNEL32.15)
+ *         BuildCommDCBAndTimeoutsA	(KERNEL32.114)
  *
  *  Updates a device control block data structure with values from an
  *  ascii device control string.  Taking time out values from a time outs
@@ -1640,7 +1640,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 }
 
 /**************************************************************************
- *         BuildCommDCBAndTimeoutsW		(KERNEL32.16)
+ *         BuildCommDCBAndTimeoutsW		(KERNEL32.115)
  *
  *  Updates a device control block data structure with values from an
  *  unicode device control string.  Taking time out values from a time outs
@@ -1669,7 +1669,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsW(
 }
 
 /**************************************************************************
- *         BuildCommDCBW		(KERNEL32.17)
+ *         BuildCommDCBW		(KERNEL32.116)
  *
  *  Updates a device control block structure with values from an
  *  unicode device control string.  The device control string has two forms
@@ -1690,7 +1690,7 @@ BOOL WINAPI BuildCommDCBW(
 int commerror=0;
 
 /*****************************************************************************
- *	SetCommBreak		(KERNEL32.449)
+ *	SetCommBreak		(KERNEL32.616)
  *
  *  Halts the transmission of characters to a communications device.
  *
@@ -1731,7 +1731,7 @@ BOOL WINAPI SetCommBreak(
 }
 
 /*****************************************************************************
- *	ClearCommBreak		(KERNEL32.20)
+ *	ClearCommBreak		(KERNEL32.135)
  *
  *  Resumes character transmission from a communication device.
  *
@@ -1771,7 +1771,7 @@ BOOL WINAPI ClearCommBreak(
 }
 
 /*****************************************************************************
- *	EscapeCommFunction	(KERNEL32.214)
+ *	EscapeCommFunction	(KERNEL32.213)
  *
  *  Directs a communication device to perform an extended function.
  *
@@ -1889,7 +1889,7 @@ BOOL WINAPI EscapeCommFunction(
 }
 
 /********************************************************************
- *      PurgeComm        (KERNEL32.557)
+ *      PurgeComm        (KERNEL32.558)
  *
  *  Terminates pending operations and/or discards buffers on a
  *  communication resource.
@@ -1931,7 +1931,7 @@ BOOL WINAPI PurgeComm(
 }
 
 /*****************************************************************************
- *	ClearCommError	(KERNEL32.21)
+ *	ClearCommError	(KERNEL32.136)
  *
  *  Enables further I/O operations on a communications resource after
  *  supplying error and current status information.
@@ -1990,7 +1990,7 @@ BOOL WINAPI ClearCommError(
 }
 
 /*****************************************************************************
- *      SetupComm       (KERNEL32.676)
+ *      SetupComm       (KERNEL32.677)
  *
  *  Called after CreateFile to hint to the communication resource to use
  *  specified sizes for input and output buffers rather than the default values.
@@ -2021,7 +2021,7 @@ BOOL WINAPI SetupComm(
 } 
 
 /*****************************************************************************
- *	GetCommMask	(KERNEL32.156)
+ *	GetCommMask	(KERNEL32.284)
  *
  *  Obtain the events associated with a communication device that will cause a call
  *  WaitCommEvent to return.
@@ -2052,7 +2052,7 @@ BOOL WINAPI GetCommMask(
 }
 
 /*****************************************************************************
- *	SetCommMask	(KERNEL32.451)
+ *	SetCommMask	(KERNEL32.618)
  *
  *  There be some things we need to hear about yon there communications device.
  *  (Set which events associated with a communication device should cause
@@ -2083,7 +2083,7 @@ BOOL WINAPI SetCommMask(
 }
 
 /*****************************************************************************
- *	SetCommState    (KERNEL32.452)
+ *	SetCommState    (KERNEL32.619)
  *
  *  Re-initializes all hardware and control settings of a communications device,
  *  with values from a device control block without effecting the input and output
@@ -2393,7 +2393,7 @@ BOOL WINAPI SetCommState(
 
 
 /*****************************************************************************
- *	GetCommState	(KERNEL32.159)
+ *	GetCommState	(KERNEL32.287)
  *
  *  Fills in a device control block with information from a communications device.
  *
@@ -2597,7 +2597,7 @@ BOOL WINAPI GetCommState(
 }
 
 /*****************************************************************************
- *	TransmitCommChar	(KERNEL32.535)
+ *	TransmitCommChar	(KERNEL32.697)
  *
  *  Transmits a single character in front of any pending characters in the
  *  output buffer.  Usually used to send an interrupt character to a host.
@@ -2620,7 +2620,7 @@ BOOL WINAPI TransmitCommChar(
 }
 
 /*****************************************************************************
- *	GetCommTimeouts		(KERNEL32.160)
+ *	GetCommTimeouts		(KERNEL32.288)
  *
  *  Obtains the request time out values for the communications device.
  *
@@ -2661,7 +2661,7 @@ BOOL WINAPI GetCommTimeouts(
 }
 
 /*****************************************************************************
- *	SetCommTimeouts		(KERNEL32.453)
+ *	SetCommTimeouts		(KERNEL32.620)
  *
  * Sets the timeouts used when reading and writing data to/from COMM ports.
  *

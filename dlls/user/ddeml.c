@@ -494,7 +494,7 @@ UINT16 WINAPI DdeInitialize16( LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
 
 
 /******************************************************************************
- *            DdeInitializeA   (USER32.106)
+ *            DdeInitializeA   (USER32.@)
  */
 UINT WINAPI DdeInitializeA( LPDWORD pidInst, PFNCALLBACK pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
@@ -505,7 +505,7 @@ UINT WINAPI DdeInitializeA( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
 
 /******************************************************************************
- * DdeInitializeW [USER32.107]
+ * DdeInitializeW [USER32.@]
  * Registers an application with the DDEML
  *
  * PARAMS
@@ -796,7 +796,7 @@ BOOL16 WINAPI DdeUninitialize16( DWORD idInst )
 
 
 /*****************************************************************
- * DdeUninitialize [USER32.119]  Frees DDEML resources
+ * DdeUninitialize [USER32.@]  Frees DDEML resources
  *
  * PARAMS
  *    idInst [I] Instance identifier
@@ -892,7 +892,7 @@ HCONVLIST WINAPI DdeConnectList16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 
 
 /******************************************************************************
- * DdeConnectList [USER32.93]  Establishes conversation with DDE servers
+ * DdeConnectList [USER32.@]  Establishes conversation with DDE servers
  *
  * PARAMS
  *    idInst     [I] Instance identifier
@@ -924,7 +924,7 @@ HCONV WINAPI DdeQueryNextServer16( HCONVLIST hConvList, HCONV hConvPrev )
 
 
 /*****************************************************************
- * DdeQueryNextServer [USER32.112]
+ * DdeQueryNextServer [USER32.@]
  */
 HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
 {
@@ -933,7 +933,7 @@ HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
 }
 
 /*****************************************************************
- * DdeQueryStringA [USER32.113]
+ * DdeQueryStringA [USER32.@]
  *
  *****************************************************************
  *
@@ -1004,7 +1004,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
 }
 
 /*****************************************************************
- * DdeQueryStringW [USER32.114]
+ * DdeQueryStringW [USER32.@]
  *
  *****************************************************************
  *
@@ -1084,7 +1084,7 @@ BOOL16 WINAPI DdeDisconnectList16( HCONVLIST hConvList )
 
 
 /******************************************************************************
- * DdeDisconnectList [USER32.98]  Destroys list and terminates conversations
+ * DdeDisconnectList [USER32.@]  Destroys list and terminates conversations
  *
  * RETURNS
  *    Success: TRUE
@@ -1110,7 +1110,7 @@ HCONV WINAPI DdeConnect16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 
 
 /*****************************************************************
- *            DdeConnect   (USER32.92)
+ *            DdeConnect   (USER32.@)
  */
 HCONV WINAPI DdeConnect( DWORD idInst, HSZ hszService, HSZ hszTopic,
                            LPCONVCONTEXT pCC )
@@ -1155,7 +1155,7 @@ HDDEDATA WINAPI DdeCreateDataHandle16( DWORD idInst, LPBYTE pSrc, DWORD cb,
 }
 
 /*****************************************************************
- *            DdeCreateDataHandle (USER32.94)
+ *            DdeCreateDataHandle (USER32.@)
  */
 HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb, 
                                        DWORD cbOff, HSZ hszItem, UINT wFmt, 
@@ -1175,7 +1175,7 @@ HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb,
 }
 
 /*****************************************************************
- *            DdeDisconnect   (USER32.97)
+ *            DdeDisconnect   (USER32.@)
  */
 BOOL WINAPI DdeDisconnect( HCONV hConv )
 {
@@ -1185,7 +1185,7 @@ BOOL WINAPI DdeDisconnect( HCONV hConv )
 
 
 /*****************************************************************
- *            DdeReconnect   (DDEML.37) (USER32.115)
+ *            DdeReconnect   (DDEML.37) (USER32.@)
  */
 HCONV WINAPI DdeReconnect( HCONV hConv )
 {
@@ -1220,7 +1220,7 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
 
 
 /*****************************************************************
- * DdeCreateStringHandleA [USER32.95]
+ * DdeCreateStringHandleA [USER32.@]
  *
  * RETURNS
  *    Success: String handle
@@ -1292,7 +1292,7 @@ HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
 
 
 /******************************************************************************
- * DdeCreateStringHandleW [USER32.96]  Creates handle to identify string
+ * DdeCreateStringHandleW [USER32.@]  Creates handle to identify string
  *
  * RETURNS
  *    Success: String handle
@@ -1382,7 +1382,7 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
 
 
 /*****************************************************************
- *            DdeFreeStringHandle   (USER32.101)
+ *            DdeFreeStringHandle   (USER32.@)
  * RETURNS: success: nonzero
  *          fail:    zero
  *
@@ -1444,7 +1444,7 @@ BOOL16 WINAPI DdeFreeDataHandle16( HDDEDATA hData )
 
 
 /*****************************************************************
- *            DdeFreeDataHandle   (USER32.100)
+ *            DdeFreeDataHandle   (USER32.@)
  */
 BOOL WINAPI DdeFreeDataHandle( HDDEDATA hData )
 {
@@ -1465,7 +1465,7 @@ BOOL16 WINAPI DdeKeepStringHandle16( DWORD idInst, HSZ hsz )
 
 
 /*****************************************************************
- *            DdeKeepStringHandle  (USER32.108)
+ *            DdeKeepStringHandle  (USER32.@)
  *
  * RETURNS: success: nonzero
  *          fail:    zero
@@ -1529,7 +1529,7 @@ HDDEDATA WINAPI DdeClientTransaction16( LPVOID pData, DWORD cbData,
 
 
 /*****************************************************************
- *            DdeClientTransaction  (USER32.90)
+ *            DdeClientTransaction  (USER32.@)
  */
 HDDEDATA WINAPI DdeClientTransaction( LPBYTE pData, DWORD cbData,
                                         HCONV hConv, HSZ hszItem, UINT wFmt,
@@ -1555,7 +1555,7 @@ BOOL16 WINAPI DdeAbandonTransaction16( DWORD idInst, HCONV hConv,
 
 /*****************************************************************
  *
- *            DdeAbandonTransaction (USER32.87)
+ *            DdeAbandonTransaction (USER32.@)
  *
 ******************************************************************
  *
@@ -1582,7 +1582,7 @@ BOOL16 WINAPI DdePostAdvise16( DWORD idInst, HSZ hszTopic, HSZ hszItem )
 
 
 /******************************************************************************
- * DdePostAdvise [USER32.110]  Send transaction to DDE callback function.
+ * DdePostAdvise [USER32.@]  Send transaction to DDE callback function.
  *
  * RETURNS
  *    Success: TRUE
@@ -1610,7 +1610,7 @@ HDDEDATA WINAPI DdeAddData16( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
 
 /*****************************************************************
  *
- *            DdeAddData (USER32.89)
+ *            DdeAddData (USER32.@)
  *
 ******************************************************************
  *
@@ -1630,7 +1630,7 @@ HDDEDATA WINAPI DdeAddData( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
 
 /*****************************************************************
  *
- *            DdeImpersonateClient (USER32.105)
+ *            DdeImpersonateClient (USER32.@)
  *
 ******************************************************************
  *
@@ -1650,7 +1650,7 @@ BOOL WINAPI DdeImpersonateClient( HCONV hConv)
 
 /*****************************************************************
  *
- *            DdeSetQualityOfService (USER32.116)
+ *            DdeSetQualityOfService (USER32.@)
  *
 ******************************************************************
  *
@@ -1670,7 +1670,7 @@ BOOL WINAPI DdeSetQualityOfService( HWND hwndClient, CONST SECURITY_QUALITY_OF_S
 
 /*****************************************************************
  *
- *            DdeSetUserHandle (USER32.117)
+ *            DdeSetUserHandle (USER32.@)
  *
 ******************************************************************
  *
@@ -1688,7 +1688,7 @@ BOOL WINAPI DdeSetUserHandle( HCONV hConv, DWORD id, DWORD hUser)
 }
 
 /******************************************************************************
- * DdeGetData [USER32.102]  Copies data from DDE object ot local buffer
+ * DdeGetData [USER32.@]  Copies data from DDE object ot local buffer
  *
  * RETURNS
  *    Size of memory object associated with handle
@@ -1726,7 +1726,7 @@ LPBYTE WINAPI DdeAccessData16( HDDEDATA hData, LPDWORD pcbDataSize )
 }
 
 /*****************************************************************
- *            DdeAccessData (USER32.88)
+ *            DdeAccessData (USER32.@)
  */
 LPBYTE WINAPI DdeAccessData( HDDEDATA hData, LPDWORD pcbDataSize )
 {
@@ -1743,7 +1743,7 @@ BOOL16 WINAPI DdeUnaccessData16( HDDEDATA hData )
 }
 
 /*****************************************************************
- *            DdeUnaccessData (USER32.118)
+ *            DdeUnaccessData (USER32.@)
  */
 BOOL WINAPI DdeUnaccessData( HDDEDATA hData )
 {
@@ -1761,7 +1761,7 @@ BOOL16 WINAPI DdeEnableCallback16( DWORD idInst, HCONV hConv, UINT16 wCmd )
 }
 
 /*****************************************************************
- *            DdeEnableCallback (USER32.99)
+ *            DdeEnableCallback (USER32.@)
  */
 BOOL WINAPI DdeEnableCallback( DWORD idInst, HCONV hConv, UINT wCmd )
 {
@@ -1781,7 +1781,7 @@ HDDEDATA WINAPI DdeNameService16( DWORD idInst, HSZ hsz1, HSZ hsz2,
 
 
 /******************************************************************************
- * DdeNameService [USER32.109]  {Un}registers service name of DDE server
+ * DdeNameService [USER32.@]  {Un}registers service name of DDE server
  *
  * PARAMS
  *    idInst [I] Instance identifier
@@ -1989,7 +1989,7 @@ UINT16 WINAPI DdeGetLastError16( DWORD idInst )
 
 
 /******************************************************************************
- * DdeGetLastError [USER32.103]  Gets most recent error code
+ * DdeGetLastError [USER32.@]  Gets most recent error code
  *
  * PARAMS
  *    idInst [I] Instance identifier
@@ -2055,7 +2055,7 @@ INT16 WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
 }
 
 /*****************************************************************
- *            DdeCmpStringHandles (USER32.91)
+ *            DdeCmpStringHandles (USER32.@)
  *
  * Compares the value of two string handles.  This comparison is
  * not case sensitive.
@@ -2120,7 +2120,7 @@ INT WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
 }
 
 /*****************************************************************
- *            PackDDElParam (USER32.414)
+ *            PackDDElParam (USER32.@)
  *
  * RETURNS
  *   the packed lParam
@@ -2133,7 +2133,7 @@ LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
 
 
 /*****************************************************************
- *            UnpackDDElParam (USER32.562)
+ *            UnpackDDElParam (USER32.@)
  *
  * RETURNS
  *   success: nonzero
@@ -2148,7 +2148,7 @@ BOOL WINAPI UnpackDDElParam(UINT msg, LPARAM lParam,
 
 
 /*****************************************************************
- *            FreeDDElParam (USER32.204)
+ *            FreeDDElParam (USER32.@)
  *
  * RETURNS
  *   success: nonzero
@@ -2161,7 +2161,7 @@ BOOL WINAPI FreeDDElParam(UINT msg, LPARAM lParam)
 }
 
 /*****************************************************************
- *            ReuseDDElParam (USER32.446)
+ *            ReuseDDElParam (USER32.@)
  *
  * RETURNS
  *   the packed lParam
@@ -2185,7 +2185,7 @@ UINT16 WINAPI DdeQueryConvInfo16( HCONV hconv, DWORD idTransaction , LPCONVINFO1
 
 
 /******************************************************************
- *		DdeQueryConvInfo (USER32.111)
+ *		DdeQueryConvInfo (USER32.@)
  *
  */
 UINT WINAPI DdeQueryConvInfo( HCONV hconv, DWORD idTransaction , LPCONVINFO lpConvInfo)

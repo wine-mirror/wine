@@ -278,7 +278,7 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
 
 
 /***********************************************************************
- *		GetSysColorBrush16 (USER.281)
+ *		GetSysColorBrush (USER.281)
  */
 HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
 {

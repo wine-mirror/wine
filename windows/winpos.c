@@ -872,7 +872,7 @@ static BOOL WINPOS_CanActivate(WND* pWnd)
 
 
 /*******************************************************************
- *		SetActiveWindow16 (USER.59)
+ *		SetActiveWindow (USER.59)
  */
 HWND16 WINAPI SetActiveWindow16( HWND16 hwnd )
 {

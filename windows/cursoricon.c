@@ -1252,7 +1252,7 @@ WORD WINAPI CURSORICON_Destroy( HGLOBAL16 handle, UINT16 flags )
 }
 
 /***********************************************************************
- *		DestroyIcon16 (USER.457)
+ *		DestroyIcon (USER.457)
  */
 BOOL16 WINAPI DestroyIcon16( HICON16 hIcon )
 {
@@ -2105,7 +2105,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
 
 
 /***********************************************************************
- *		LoadImage16 (USER.389)
+ *		LoadImage (USER.389)
  *
  */
 HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,

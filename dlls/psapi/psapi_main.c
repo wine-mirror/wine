@@ -15,7 +15,7 @@ DEFAULT_DEBUG_CHANNEL(psapi);
 #include <string.h>
 
 /***********************************************************************
- *           EmptyWorkingSet (PSAPI.1)
+ *           EmptyWorkingSet (PSAPI.@)
  */
 BOOL WINAPI EmptyWorkingSet(HANDLE hProcess)
 {
@@ -23,7 +23,7 @@ BOOL WINAPI EmptyWorkingSet(HANDLE hProcess)
 }
 
 /***********************************************************************
- *           EnumDeviceDrivers (PSAPI.2)
+ *           EnumDeviceDrivers (PSAPI.@)
  */
 BOOL WINAPI EnumDeviceDrivers(
   LPVOID *lpImageBase, DWORD cb, LPDWORD lpcbNeeded)
@@ -38,7 +38,7 @@ BOOL WINAPI EnumDeviceDrivers(
 
 
 /***********************************************************************
- *           EnumProcesses (PSAPI.3)
+ *           EnumProcesses (PSAPI.@)
  */
 BOOL WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
 {
@@ -51,7 +51,7 @@ BOOL WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
 }
 
 /***********************************************************************
- *           EnumProcessModules (PSAPI.4)
+ *           EnumProcessModules (PSAPI.@)
  */
 BOOL WINAPI EnumProcessModules(
   HANDLE hProcess, HMODULE *lphModule, DWORD cb, LPDWORD lpcbNeeded)
@@ -67,7 +67,7 @@ BOOL WINAPI EnumProcessModules(
 }
 
 /***********************************************************************
- *          GetDeviceDriverBaseNameA (PSAPI.5)
+ *          GetDeviceDriverBaseNameA (PSAPI.@)
  */
 DWORD WINAPI GetDeviceDriverBaseNameA(
   LPVOID ImageBase, LPSTR lpBaseName, DWORD nSize)
@@ -83,7 +83,7 @@ DWORD WINAPI GetDeviceDriverBaseNameA(
 }
 
 /***********************************************************************
- *           GetDeviceDriverBaseNameW (PSAPI.6)
+ *           GetDeviceDriverBaseNameW (PSAPI.@)
  */
 DWORD WINAPI GetDeviceDriverBaseNameW(
   LPVOID ImageBase, LPWSTR lpBaseName, DWORD nSize)
@@ -99,7 +99,7 @@ DWORD WINAPI GetDeviceDriverBaseNameW(
 }
 
 /***********************************************************************
- *           GetDeviceDriverFileNameA (PSAPI.7)
+ *           GetDeviceDriverFileNameA (PSAPI.@)
  */
 DWORD WINAPI GetDeviceDriverFileNameA(
   LPVOID ImageBase, LPSTR lpFilename, DWORD nSize)
@@ -115,7 +115,7 @@ DWORD WINAPI GetDeviceDriverFileNameA(
 }
 
 /***********************************************************************
- *           GetDeviceDriverFileNameW (PSAPI.8)
+ *           GetDeviceDriverFileNameW (PSAPI.@)
  */
 DWORD WINAPI GetDeviceDriverFileNameW(
   LPVOID ImageBase, LPWSTR lpFilename, DWORD nSize)
@@ -131,7 +131,7 @@ DWORD WINAPI GetDeviceDriverFileNameW(
 }
 
 /***********************************************************************
- *           GetMappedFileNameA (PSAPI.9)
+ *           GetMappedFileNameA (PSAPI.@)
  */
 DWORD WINAPI GetMappedFileNameA(
   HANDLE hProcess, LPVOID lpv, LPSTR lpFilename, DWORD nSize)
@@ -147,7 +147,7 @@ DWORD WINAPI GetMappedFileNameA(
 }
 
 /***********************************************************************
- *           GetMappedFileNameW (PSAPI.10)
+ *           GetMappedFileNameW (PSAPI.@)
  */
 DWORD WINAPI GetMappedFileNameW(
   HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename, DWORD nSize)
@@ -163,7 +163,7 @@ DWORD WINAPI GetMappedFileNameW(
 }
 
 /***********************************************************************
- *           GetModuleBaseNameA (PSAPI.11)
+ *           GetModuleBaseNameA (PSAPI.@)
  */
 DWORD WINAPI GetModuleBaseNameA(
   HANDLE hProcess, HMODULE hModule, LPSTR lpBaseName, DWORD nSize)
@@ -179,7 +179,7 @@ DWORD WINAPI GetModuleBaseNameA(
 }
 
 /***********************************************************************
- *           GetModuleBaseNameW (PSAPI.12)
+ *           GetModuleBaseNameW (PSAPI.@)
  */
 DWORD WINAPI GetModuleBaseNameW(
   HANDLE hProcess, HMODULE hModule, LPWSTR lpBaseName, DWORD nSize)
@@ -194,7 +194,7 @@ DWORD WINAPI GetModuleBaseNameW(
 }
 
 /***********************************************************************
- *           GetModuleFileNameExA (PSAPI.13)
+ *           GetModuleFileNameExA (PSAPI.@)
  */
 DWORD WINAPI GetModuleFileNameExA(
   HANDLE hProcess, HMODULE hModule, LPSTR lpFilename, DWORD nSize)
@@ -210,7 +210,7 @@ DWORD WINAPI GetModuleFileNameExA(
 }
 
 /***********************************************************************
- *           GetModuleFileNameExW (PSAPI.14)
+ *           GetModuleFileNameExW (PSAPI.@)
  */
 DWORD WINAPI GetModuleFileNameExW(
   HANDLE hProcess, HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
@@ -226,7 +226,7 @@ DWORD WINAPI GetModuleFileNameExW(
 }
 
 /***********************************************************************
- *           GetModuleInformation (PSAPI.15)
+ *           GetModuleInformation (PSAPI.@)
  */
 BOOL WINAPI GetModuleInformation(
   HANDLE hProcess, HMODULE hModule, LPMODULEINFO lpmodinfo, DWORD cb)
@@ -241,7 +241,7 @@ BOOL WINAPI GetModuleInformation(
 }
 
 /***********************************************************************
- *           GetProcessMemoryInfo (PSAPI.16)
+ *           GetProcessMemoryInfo (PSAPI.@)
  */
 BOOL WINAPI GetProcessMemoryInfo(
   HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)
@@ -256,7 +256,7 @@ BOOL WINAPI GetProcessMemoryInfo(
 }
 
 /***********************************************************************
- *           GetWsChanges (PSAPI.17)
+ *           GetWsChanges (PSAPI.@)
  */
 BOOL WINAPI GetWsChanges(
   HANDLE hProcess, PPSAPI_WS_WATCH_INFORMATION lpWatchInfo, DWORD cb)
@@ -271,7 +271,7 @@ BOOL WINAPI GetWsChanges(
 }
 
 /***********************************************************************
- *           InitializeProcessForWsWatch (PSAPI.18)
+ *           InitializeProcessForWsWatch (PSAPI.@)
  */
 BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
 {

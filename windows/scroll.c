@@ -22,7 +22,7 @@
 DEFAULT_DEBUG_CHANNEL(scroll);
 
 /*************************************************************************
- *		ScrollWindow16 (USER.61)
+ *		ScrollWindow (USER.61)
  */
 void WINAPI ScrollWindow16(HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
                            const RECT16 *clipRect )
