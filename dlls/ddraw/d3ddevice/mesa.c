@@ -132,20 +132,17 @@ static BOOL opengl_flip( LPVOID display, LPVOID drawable)
 /*******************************************************************************
  *				OpenGL static functions
  */
-static void set_context(IDirect3DDeviceImpl* This) {
-#if 0
-    D3DDPRIVATE(This);
-
+static void set_context(IDirect3DDeviceImpl* This)
+{
+    IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
+   
     ENTER_GL();
-    TRACE("glxMakeCurrent %p, %ld, %p\n",odev->gdi_display,odev->drawable, odev->ctx);
-    if (glXMakeCurrent(odev->gdi_display,odev->drawable, odev->ctx) == False) {
+    TRACE("glxMakeCurrent %p, %ld, %p\n",glThis->display,glThis->drawable, glThis->gl_context);
+    if (glXMakeCurrent(glThis->display, glThis->drawable, glThis->gl_context) == False) {
 	ERR("Error in setting current context (context %p drawable %ld)!\n",
-	    odev->ctx, odev->drawable);
+	    glThis->gl_context, glThis->drawable);
     }
     LEAVE_GL();
-#else
-    ERR("This function should not be called in the current state of the code...\n");
-#endif
 }
 
 static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
@@ -1083,7 +1080,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     glColor3f(1.0, 1.0, 1.0);
     LEAVE_GL();
 
-    fill_device_capabilities(d3d->ddraw);    
+    /* fill_device_capabilities(d3d->ddraw); */    
     
     ICOM_INIT_INTERFACE(object, IDirect3DDevice,  VTABLE_IDirect3DDevice);
     ICOM_INIT_INTERFACE(object, IDirect3DDevice2, VTABLE_IDirect3DDevice2);

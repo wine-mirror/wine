@@ -426,7 +426,7 @@ Thunk_IDirect3DImpl_1_CreateMaterial(LPDIRECT3D iface,
 				    &ret_val,
 				    pUnkOuter);
 
-    *lplpDirect3DMaterial = COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial3, IDirect3DMaterial, &ret_val);
+    *lplpDirect3DMaterial = COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial3, IDirect3DMaterial, ret_val);
 
     TRACE(" returning interface %p.\n", *lplpDirect3DMaterial);
     
@@ -457,7 +457,7 @@ Thunk_IDirect3DImpl_2_CreateMaterial(LPDIRECT3D2 iface,
 				    &ret_val,
 				    pUnkOuter);
 
-    *lplpDirect3DMaterial2 = COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial3, IDirect3DMaterial2, &ret_val);
+    *lplpDirect3DMaterial2 = COM_INTERFACE_CAST(IDirect3DMaterialImpl, IDirect3DMaterial3, IDirect3DMaterial2, ret_val);
 
     TRACE(" returning interface %p.\n", *lplpDirect3DMaterial2);
     

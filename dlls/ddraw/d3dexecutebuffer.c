@@ -183,28 +183,26 @@ static void _dump_D3DEXECUTEBUFFERDESC(LPD3DEXECUTEBUFFERDESC lpDesc) {
 
 static void execute(IDirect3DExecuteBufferImpl *This,
 		    IDirect3DDeviceImpl *lpDevice,
-		    IDirect3DViewportImpl *lpViewport) {
-#if 0
-    IDirect3DExecuteBufferImpl* ilpBuff=(IDirect3DExecuteBufferImpl*)lpBuff;
-    IDirect3DViewport2Impl* ivp=(IDirect3DViewport2Impl*)vp;
-    /* DWORD bs = ilpBuff->desc.dwBufferSize; */
-    DWORD vs = ilpBuff->data.dwVertexOffset;
-    /* DWORD vc = ilpBuff->data.dwVertexCount; */
-    DWORD is = ilpBuff->data.dwInstructionOffset;
-    /* DWORD il = ilpBuff->data.dwInstructionLength; */
+		    IDirect3DViewportImpl *lpViewport)
+{
+    IDirect3DDeviceGLImpl* lpDeviceGL = (IDirect3DDeviceGLImpl*) lpDevice;
+    /* DWORD bs = This->desc.dwBufferSize; */
+    DWORD vs = This->data.dwVertexOffset;
+    /* DWORD vc = This->data.dwVertexCount; */
+    DWORD is = This->data.dwInstructionOffset;
+    /* DWORD il = This->data.dwInstructionLength; */
     
-    void *instr = ilpBuff->desc.lpData + is;
-    D3DDPRIVATE((IDirect3DDeviceImpl*)dev);
+    void *instr = This->desc.lpData + is;
 
     /* Should check if the viewport was added or not to the device */
 
     /* Activate the viewport */
-    ivp->device.active_device1 = (IDirect3DDeviceImpl*)dev;
-    ivp->activate(ivp);
+    lpViewport->active_device = lpDevice;
+    lpViewport->activate(lpViewport);
 
     TRACE("ExecuteData : \n");
     if (TRACE_ON(ddraw))
-      _dump_executedata(&(ilpBuff->data));
+      _dump_executedata(&(This->data));
 
     ENTER_GL();
 
@@ -230,12 +228,12 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 
 	    case D3DOP_TRIANGLE: {
 	        int i;
-		OGL_Vertex  *vx    = (OGL_Vertex  *) ilpBuff->vertex_data;
-		OGL_LVertex *l_vx  = (OGL_LVertex *) ilpBuff->vertex_data;
-		D3DTLVERTEX *tl_vx = (D3DTLVERTEX *) ilpBuff->vertex_data;
+		OGL_Vertex  *vx    = (OGL_Vertex  *) This->vertex_data;
+		OGL_LVertex *l_vx  = (OGL_LVertex *) This->vertex_data;
+		D3DTLVERTEX *tl_vx = (D3DTLVERTEX *) This->vertex_data;
 		TRACE("TRIANGLE         (%d)\n", count);
 		
-		switch (ilpBuff->vertex_type) {
+		switch (This->vertex_type) {
 		    case D3DVT_VERTEX:
 		        /* This time, there is lighting */
 		        glEnable(GL_LIGHTING);
@@ -245,16 +243,16 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			glLoadIdentity(); /* The model transformation was done during the
 					     transformation phase */
 			glMatrixMode(GL_PROJECTION);
-			TRACE("  Projection Matrix : (%p)\n", odev->proj_mat);
-			dump_mat(odev->proj_mat);
-			TRACE("  View       Matrix : (%p)\n", odev->view_mat);
-			dump_mat(odev->view_mat);
+			TRACE("  Projection Matrix : (%p)\n", lpDeviceGL->proj_mat);
+			dump_mat(lpDeviceGL->proj_mat);
+			TRACE("  View       Matrix : (%p)\n", lpDeviceGL->view_mat);
+			dump_mat(lpDeviceGL->view_mat);
 
 			/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
 			   are always 0.0 at the front viewing volume and 1.0 at the back with Direct 3D and with
 			   the default behaviour of OpenGL. So, no additional transformation is required. */
-			glLoadMatrixf((float *) odev->proj_mat);
-			glMultMatrixf((float *) odev->view_mat);
+			glLoadMatrixf((float *) lpDeviceGL->proj_mat);
+			glMultMatrixf((float *) lpDeviceGL->view_mat);
 			break;
 
 		    case D3DVT_LVERTEX:
@@ -267,16 +265,16 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 					     transformation phase */
 			glMatrixMode(GL_PROJECTION);
 			
-			TRACE("  Projection Matrix : (%p)\n", odev->proj_mat);
-			dump_mat(odev->proj_mat);
-			TRACE("  View       Matrix : (%p)\n", odev->view_mat);
-			dump_mat(odev->view_mat);
+			TRACE("  Projection Matrix : (%p)\n", lpDeviceGL->proj_mat);
+			dump_mat(lpDeviceGL->proj_mat);
+			TRACE("  View       Matrix : (%p)\n", lpDeviceGL->view_mat);
+			dump_mat(lpDeviceGL->view_mat);
 			
 			/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
 			   are always 0 at the front viewing volume and 1 at the back with Direct 3D and with
 			   the default behaviour of OpenGL. So, no additional transformation is required. */
-			glLoadMatrixf((float *) odev->proj_mat);
-			glMultMatrixf((float *) odev->view_mat);
+			glLoadMatrixf((float *) lpDeviceGL->proj_mat);
+			glMultMatrixf((float *) lpDeviceGL->view_mat);
 			break;
 
 		    case D3DVT_TLVERTEX: {
@@ -291,7 +289,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			glMatrixMode(GL_PROJECTION);
 			glLoadIdentity();
 			
-			if (ivp == NULL) {
+			if (lpViewport == NULL) {
 			    ERR("No current viewport !\n");
 			    /* Using standard values */
 			    height = 640.0;
@@ -299,10 +297,10 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			    minZ = -10.0;
 			    maxZ = 10.0;
 			} else {
-			    height = (GLdouble) ivp->viewport.vp1.dwHeight;
-			    width  = (GLdouble) ivp->viewport.vp1.dwWidth;
-			    minZ   = (GLdouble) ivp->viewport.vp1.dvMinZ;
-			    maxZ   = (GLdouble) ivp->viewport.vp1.dvMaxZ;
+			    height = (GLdouble) lpViewport->viewports.vp1.dwHeight;
+			    width  = (GLdouble) lpViewport->viewports.vp1.dwWidth;
+			    minZ   = (GLdouble) lpViewport->viewports.vp1.dvMinZ;
+			    maxZ   = (GLdouble) lpViewport->viewports.vp1.dvMaxZ;
 			    
 			    if (minZ == maxZ) {
 			        /* I do not know why, but many Dx 3.0 games have minZ = maxZ = 0.0 */
@@ -318,7 +316,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			break;
 		}
 
-		switch (ilpBuff->vertex_type) {
+		switch (This->vertex_type) {
 		    case D3DVT_VERTEX:
 		        TRIANGLE_LOOP(DO_VERTEX);
 			break;
@@ -381,17 +379,17 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    switch (ci->u1.dtstTransformStateType) {
 		        case D3DTRANSFORMSTATE_WORLD: {
 			    TRACE("  WORLD (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
-			    odev->world_mat = (D3DMATRIX*) ci->u2.dwArg[0];
+			    lpDeviceGL->world_mat = (D3DMATRIX*) ci->u2.dwArg[0];
 			} break;
 
 			case D3DTRANSFORMSTATE_VIEW: {
 			    TRACE("  VIEW (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
-			    odev->view_mat = (D3DMATRIX*) ci->u2.dwArg[0];
+			    lpDeviceGL->view_mat = (D3DMATRIX*) ci->u2.dwArg[0];
 			} break;
 
 			case D3DTRANSFORMSTATE_PROJECTION: {
 			    TRACE("  PROJECTION (%p)\n", (D3DMATRIX*) ci->u2.dwArg[0]);
-			    odev->proj_mat = (D3DMATRIX*) ci->u2.dwArg[0];
+			    lpDeviceGL->proj_mat = (D3DMATRIX*) ci->u2.dwArg[0];
 			} break;
 			  
 			default:
@@ -413,7 +411,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    /* Handle the state transform */
 		    switch (ci->u1.dlstLightStateType) {
 		        case D3DLIGHTSTATE_MATERIAL: {
-			    IDirect3DMaterial2Impl* mat = (IDirect3DMaterial2Impl*) ci->u2.dwArg[0];
+			    IDirect3DMaterialImpl* mat = (IDirect3DMaterialImpl*) ci->u2.dwArg[0];
 			    TRACE("  MATERIAL\n");
 			    
 			    if (mat != NULL) {
@@ -477,7 +475,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
 		    
 		    /* Handle the state transform */
-		    set_render_state(ci->u1.drstRenderStateType, ci->u2.dwArg[0], &(odev->rs));
+		    set_render_state(ci->u1.drstRenderStateType, ci->u2.dwArg[0], &(lpDeviceGL->render_state));
 
 		    instr += size;
 		}
@@ -538,14 +536,14 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    /* Enough for the moment */
 		    if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORMLIGHT) {
 		        int nb;
-			D3DVERTEX  *src = ((LPD3DVERTEX)  (ilpBuff->desc.lpData + vs)) + ci->wStart;
-			OGL_Vertex *dst = ((OGL_Vertex *) (ilpBuff->vertex_data)) + ci->wDest;
-			D3DMATRIX *mat = odev->world_mat;
+			D3DVERTEX  *src = ((LPD3DVERTEX)  (This->desc.lpData + vs)) + ci->wStart;
+			OGL_Vertex *dst = ((OGL_Vertex *) (This->vertex_data)) + ci->wDest;
+			D3DMATRIX *mat = lpDeviceGL->world_mat;
 			
 			TRACE("  World Matrix : (%p)\n", mat);
 			dump_mat(mat);
 
-			ilpBuff->vertex_type = D3DVT_VERTEX;
+			This->vertex_type = D3DVT_VERTEX;
 			
 			for (nb = 0; nb < ci->dwCount; nb++) {
 			    /* For the moment, no normal transformation... */
@@ -567,14 +565,14 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			}
 		    } else if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORM) {
 		        int nb;
-			D3DLVERTEX *src  = ((LPD3DLVERTEX) (ilpBuff->desc.lpData + vs)) + ci->wStart;
-			OGL_LVertex *dst = ((OGL_LVertex *) (ilpBuff->vertex_data)) + ci->wDest;
-			D3DMATRIX *mat = odev->world_mat;
+			D3DLVERTEX *src  = ((LPD3DLVERTEX) (This->desc.lpData + vs)) + ci->wStart;
+			OGL_LVertex *dst = ((OGL_LVertex *) (This->vertex_data)) + ci->wDest;
+			D3DMATRIX *mat = lpDeviceGL->world_mat;
 			
 			TRACE("  World Matrix : (%p)\n", mat);
 			dump_mat(mat);
 			
-			ilpBuff->vertex_type = D3DVT_LVERTEX;
+			This->vertex_type = D3DVT_LVERTEX;
 			
 			for (nb = 0; nb < ci->dwCount; nb++) {
 			    dst->c  = src->u4.color;
@@ -592,10 +590,10 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			    dst++;
 			}
 		    } else if (ci->dwFlags == D3DPROCESSVERTICES_COPY) {
-		        D3DTLVERTEX *src = ((LPD3DTLVERTEX) (ilpBuff->desc.lpData + vs)) + ci->wStart;
-			D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (ilpBuff->vertex_data)) + ci->wDest;
+		        D3DTLVERTEX *src = ((LPD3DTLVERTEX) (This->desc.lpData + vs)) + ci->wStart;
+			D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (This->vertex_data)) + ci->wDest;
 			
-			ilpBuff->vertex_type = D3DVT_TLVERTEX;
+			This->vertex_type = D3DVT_TLVERTEX;
 			
 			memcpy(dst, src, ci->dwCount * sizeof(D3DTLVERTEX));
 		    } else {
@@ -627,7 +625,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		for (i = 0; i < count; i++) {
 		    LPD3DBRANCH ci = (LPD3DBRANCH) instr;
 
-		    if ((ilpBuff->data.dsStatus.dwStatus & ci->dwMask) == ci->dwValue) {
+		    if ((This->data.dsStatus.dwStatus & ci->dwMask) == ci->dwValue) {
 		        if (!ci->bNegate) {
 			    TRACE(" Should branch to %ld\n", ci->dwOffset);
 			}
@@ -654,7 +652,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATUS ci = (LPD3DSTATUS) instr;
 		    
-		    ilpBuff->data.dsStatus = *ci;
+		    This->data.dsStatus = *ci;
 
 		    instr += size;
 		}
@@ -668,11 +666,8 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 	}
     }
 
-  end_of_buffer:
+end_of_buffer:
     LEAVE_GL();
-#else
-    FIXME("Need to make this function compile again !!!\n");
-#endif
 }
 
 HRESULT WINAPI
@@ -868,7 +863,7 @@ HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirect3DImpl 
     object->d3ddev = d3ddev;
 
     /* Initializes memory */
-    memcpy(&object->desc, &lpDesc, lpDesc->dwSize);
+    memcpy(&object->desc, lpDesc, lpDesc->dwSize);
 
     /* No buffer given */
     if ((object->desc.dwFlags & D3DDEB_LPDATA) == 0)
