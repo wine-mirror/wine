@@ -9,6 +9,7 @@
 
 #include "config.h"
 #include "winbase.h"
+#include "syslevel.h"
 #include "selectors.h"  /* for SET_FS */
 
 struct _PDB;
@@ -78,7 +79,7 @@ typedef struct _THDB
     void          *entry_arg;      /* 1c4 Entry point arg (was: unknown) */
     DWORD          unknown5[4];    /* 1c8 Unknown */
     DWORD          sys_count[4];   /* 1d8 Syslevel mutex entry counters */
-    CRITICAL_SECTION *sys_mutex[4];/* 1e8 Syslevel mutex pointers */
+    SYSLEVEL      *sys_mutex[4];   /* 1e8 Syslevel mutex pointers */
     DWORD          unknown6[2];    /* 1f8 Unknown */
     /* The following are Wine-specific fields */
     int            socket;         /* Socket for server communication */

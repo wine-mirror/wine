@@ -340,11 +340,11 @@ file	krnl386.exe
 432 stub FileTimeToLocalFileTime
 434 pascal16 UnicodeToAnsi(ptr ptr word) UnicodeToAnsi16
 435 stub GetTaskFlags
-436 stub _ConfirmSysLevel
-437 stub _CheckNotSysLevel
-438 stub _CreateSysLevel
-439 stub _EnterSysLevel
-440 stub _LeaveSysLevel
+436 pascal16 _ConfirmSysLevel(ptr) _ConfirmSysLevel
+437 pascal16 _CheckNotSysLevel(ptr) _CheckNotSysLevel
+438 pascal16 _CreateSysLevel(ptr long) _CreateSysLevel
+439 pascal16 _EnterSysLevel(ptr) _EnterSysLevel
+440 pascal16 _LeaveSysLevel(ptr) _LeaveSysLevel
 441 pascal CreateThread16(ptr long segptr segptr long ptr) THUNK_CreateThread16
 442 pascal VWin32_EventCreate() VWin32_EventCreate
 443 pascal VWin32_EventDestroy(long) VWin32_EventDestroy

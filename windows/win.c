@@ -33,6 +33,7 @@
 #include "mdi.h"
 #include "local.h"
 #include "desktop.h"
+#include "syslevel.h"
 
 DECLARE_DEBUG_CHANNEL(msg)
 DECLARE_DEBUG_CHANNEL(win)
@@ -50,7 +51,7 @@ static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
 /* thread safeness */
-static CRITICAL_SECTION WIN_CritSection;
+static SYSLEVEL WIN_SysLevel;
 
 /***********************************************************************
  *           WIN_Init
@@ -58,8 +59,7 @@ static CRITICAL_SECTION WIN_CritSection;
 void WIN_Init( void )
 {
     /* Initialisation of the critical section for thread safeness */
-    InitializeCriticalSection(&WIN_CritSection);
-    MakeCriticalSectionGlobal(&WIN_CritSection);
+    _CreateSysLevel( &WIN_SysLevel, 2 );
 }
 
 /***********************************************************************
@@ -67,9 +67,9 @@ void WIN_Init( void )
  *
  *   Locks access to all WND structures for thread safeness
  */
-void WIN_LockWnds()
+void WIN_LockWnds( void )
 {
-    EnterCriticalSection(&WIN_CritSection);
+    _EnterSysLevel( &WIN_SysLevel );
 }
 
 /***********************************************************************
@@ -77,34 +77,24 @@ void WIN_LockWnds()
  *
  *  Unlocks access to all WND structures
  */
-void WIN_UnlockWnds()
+void WIN_UnlockWnds( void )
 {
-    LeaveCriticalSection(&WIN_CritSection);
+    _LeaveSysLevel( &WIN_SysLevel );
 }
+
 /***********************************************************************
  *           WIN_SuspendWndsLock
  *
  *   Suspend the lock on WND structures.
  *   Returns the number of locks suspended
  */
-int WIN_SuspendWndsLock()
+int WIN_SuspendWndsLock( void )
 {
-    int isuspendedLocks = 0;
+    int isuspendedLocks = _ConfirmSysLevel( &WIN_SysLevel );
+    int count = isuspendedLocks;
 
-    /* make sure that the lock is not suspended by different thread than
-     the owning thread */
-    if(WIN_CritSection.OwningThread != GetCurrentThreadId())
-    {
-        return 0;
-    }
-    /* set the value of isuspendedlock to the actual recursion count
-     of the critical section */
-    isuspendedLocks = WIN_CritSection.RecursionCount;
-    /* set the recursion count of the critical section to 1
-     so the owning thread will be able to leave it */
-    while (WIN_CritSection.RecursionCount > 1) WIN_UnlockWnds();
-    /* leave critical section*/
-    WIN_UnlockWnds();
+    while ( count-- > 0 )
+        _LeaveSysLevel( &WIN_SysLevel );
 
     return isuspendedLocks;
 }
@@ -114,17 +104,10 @@ int WIN_SuspendWndsLock()
  *
  *  Restore the suspended locks on WND structures
  */
-void WIN_RestoreWndsLock(int ipreviousLocks)
+void WIN_RestoreWndsLock( int ipreviousLocks )
 {
-    if(!ipreviousLocks)
-    {
-        return;
-    }
-    /* restore the lock */
-    WIN_LockWnds();
-    /* set the recursion count of the critical section to the
-     value of suspended locks (given by WIN_SuspendWndsLock())*/
-    while (WIN_CritSection.RecursionCount < ipreviousLocks) WIN_LockWnds();
+    while ( ipreviousLocks-- > 0 )
+        _EnterSysLevel( &WIN_SysLevel );
 }
 
 /***********************************************************************
