@@ -3660,7 +3660,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
   {
     HKEY hkResult;
     LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers";
-    LPSTR guidDataSubKey   = "Guid";
+    LPCSTR guidDataSubKey  = "Guid";
     char subKeyName[51];
     DWORD dwIndex, sizeOfSubKeyName=50;
     FILETIME filetime;
@@ -3754,7 +3754,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
   {
     HKEY hkResult;
     LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Lobby Providers";
-    LPSTR guidDataSubKey   = "Guid";
+    LPCSTR guidDataSubKey  = "Guid";
     char subKeyName[51];
     DWORD dwIndex, sizeOfSubKeyName=50;
     FILETIME filetime;
@@ -5218,9 +5218,9 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
                       NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
        ++dwIndex, sizeOfSubKeyName=50 )
   {
-    LPSTR    majVerDataSubKey = "dwReserved1";
-    LPSTR    minVerDataSubKey = "dwReserved2";
-    LPSTR    guidDataSubKey   = "Guid";
+    LPCSTR   majVerDataSubKey = "dwReserved1";
+    LPCSTR   minVerDataSubKey = "dwReserved2";
+    LPCSTR   guidDataSubKey   = "Guid";
     HKEY     hkServiceProvider;
     GUID     serviceProviderGUID;
     DWORD    returnTypeGUID, returnTypeReserved, sizeOfReturnBuffer = 50;

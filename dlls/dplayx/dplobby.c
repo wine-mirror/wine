@@ -775,8 +775,8 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
       char     returnBuffer[51];
       WCHAR    buff[51];
       DWORD    dwAtIndex;
-      LPSTR    atKey = "Address Types";
-      LPSTR    guidDataSubKey   = "Guid";
+      LPCSTR   atKey = "Address Types";
+      LPCSTR   guidDataSubKey   = "Guid";
       FILETIME filetime;
 
 
@@ -886,7 +886,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
 
   HKEY hkResult;
   LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Applications";
-  LPSTR guidDataSubKey   = "Guid";
+  LPCSTR guidDataSubKey  = "Guid";
   DWORD dwIndex, sizeOfSubKeyName=50;
   char subKeyName[51];
   FILETIME filetime;
@@ -1081,10 +1081,10 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
   {
     char  returnBuffer[200];
     DWORD returnType, sizeOfReturnBuffer;
-    LPSTR clSubKey   = "CommandLine";
-    LPSTR cdSubKey   = "CurrentDirectory";
-    LPSTR fileSubKey = "File";
-    LPSTR pathSubKey = "Path";
+    LPCSTR clSubKey   = "CommandLine";
+    LPCSTR cdSubKey   = "CurrentDirectory";
+    LPCSTR fileSubKey = "File";
+    LPCSTR pathSubKey = "Path";
 
     /* FIXME: Lazy man hack - dplay struct has the present reg key saved */
 

@@ -45,7 +45,7 @@ void _dump_cooperativelevel_DI(DWORD dwFlags) {
   int   i;
   const struct {
     DWORD       mask;
-    char        *name;
+    const char  *name;
   } flags[] = {
 #define FE(x) { x, #x},
     FE(DISCL_BACKGROUND)
@@ -64,7 +64,7 @@ void _dump_EnumObjects_flags(DWORD dwFlags) {
   int   i;
   const struct {
     DWORD       mask;
-    char        *name;
+    const char  *name;
   } flags[] = {
 #define FE(x) { x, #x},
     FE(DIDFT_ABSAXIS)

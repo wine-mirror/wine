@@ -51,7 +51,7 @@ HWND crypt_hWindow = 0;
 
 static inline PSTR CRYPT_GetProvKeyName(PCSTR pProvName)
 {
-	const PSTR KEYSTR = "Software\\Microsoft\\Cryptography\\Defaults\\Provider\\";
+	PCSTR KEYSTR = "Software\\Microsoft\\Cryptography\\Defaults\\Provider\\";
 	PSTR keyname;
 
 	keyname = CRYPT_Alloc(strlen(KEYSTR) + strlen(pProvName) +1);
@@ -66,8 +66,8 @@ static inline PSTR CRYPT_GetProvKeyName(PCSTR pProvName)
 
 static inline PSTR CRYPT_GetTypeKeyName(DWORD dwType, BOOL user)
 {
-	const PSTR MACHINESTR = "Software\\Microsoft\\Cryptography\\Defaults\\Provider Types\\Type XXX";
-	const PSTR USERSTR = "Software\\Microsoft\\Cryptography\\Provider Type XXX";
+	PCSTR MACHINESTR = "Software\\Microsoft\\Cryptography\\Defaults\\Provider Types\\Type XXX";
+	PCSTR USERSTR = "Software\\Microsoft\\Cryptography\\Provider Type XXX";
 	PSTR keyname;
 	PSTR ptr;
 

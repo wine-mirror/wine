@@ -334,7 +334,7 @@ typedef struct
 static UINT mindragx = 0;
 static UINT mindragy = 0;
 
-static char *band_stylename[] = {
+static const char *band_stylename[] = {
     "RBBS_BREAK",              /* 0001 */
     "RBBS_FIXEDSIZE",          /* 0002 */
     "RBBS_CHILDEDGE",          /* 0004 */
@@ -346,7 +346,7 @@ static char *band_stylename[] = {
     "RBBS_NOGRIPPER",          /* 0100 */
     NULL };
 
-static char *band_maskname[] = {
+static const char *band_maskname[] = {
     "RBBIM_STYLE",         /*    0x00000001 */
     "RBBIM_COLORS",        /*    0x00000002 */
     "RBBIM_TEXT",          /*    0x00000004 */

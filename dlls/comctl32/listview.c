@@ -529,7 +529,7 @@ static char* debug_getbuf()
     return buffers[index++ % DEBUG_BUFFERS];
 }
 
-static inline char* debugrange(const RANGE *lprng)
+static inline const char* debugrange(const RANGE *lprng)
 {
     if (lprng) 
     {
@@ -539,7 +539,7 @@ static inline char* debugrange(const RANGE *lprng)
     } else return "(null)";
 }
 
-static inline char* debugpoint(const POINT *lppt)
+static inline const char* debugpoint(const POINT *lppt)
 {
     if (lppt) 
     {
@@ -549,7 +549,7 @@ static inline char* debugpoint(const POINT *lppt)
     } else return "(null)";
 }
 
-static inline char* debugrect(const RECT *rect)
+static inline const char* debugrect(const RECT *rect)
 {
     if (rect) 
     {
@@ -560,7 +560,7 @@ static inline char* debugrect(const RECT *rect)
     } else return "(null)";
 }
 
-static char * debugscrollinfo(const SCROLLINFO *pScrollInfo)
+static const char * debugscrollinfo(const SCROLLINFO *pScrollInfo)
 {
     char* buf = debug_getbuf(), *text = buf;
     int len, size = DEBUG_BUFFER_SIZE;
@@ -592,7 +592,7 @@ undo:
     return text;
 } 
 
-static char* debugnmlistview(const NMLISTVIEW *plvnm)
+static const char* debugnmlistview(const NMLISTVIEW *plvnm)
 {
     if (plvnm)
     {
@@ -605,7 +605,7 @@ static char* debugnmlistview(const NMLISTVIEW *plvnm)
     } else return "(null)";
 }
 
-static char* debuglvitem_t(const LVITEMW *lpLVItem, BOOL isW)
+static const char* debuglvitem_t(const LVITEMW *lpLVItem, BOOL isW)
 {
     char* buf = debug_getbuf(), *text = buf;
     int len, size = DEBUG_BUFFER_SIZE;
@@ -641,7 +641,7 @@ undo:
     return text;
 }
 
-static char* debuglvcolumn_t(const LVCOLUMNW *lpColumn, BOOL isW)
+static const char* debuglvcolumn_t(const LVCOLUMNW *lpColumn, BOOL isW)
 {
     char* buf = debug_getbuf(), *text = buf;
     int len, size = DEBUG_BUFFER_SIZE;
@@ -681,7 +681,7 @@ undo:
     return text;
 }
 
-static char* debuglvhittestinfo(const LVHITTESTINFO *lpht)
+static const char* debuglvhittestinfo(const LVHITTESTINFO *lpht)
 {
     if (lpht) 
     {

@@ -2486,7 +2486,8 @@ void extract_file(struct cab_file *fi, int lower, int fix, LPCSTR dir, cab_decom
 
 exit_handler:
   if (err) {
-    char *errmsg, *cabname;
+    const char *errmsg;
+    char *cabname;
     switch (err) {
     case DECR_NOMEMORY:
       errmsg = "out of memory!\n"; break;
