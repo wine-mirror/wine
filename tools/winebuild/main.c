@@ -93,6 +93,17 @@ static void open_input( const char *name )
     }
 }
 
+/* set the dll file name from the input file name */
+static void set_dll_file_name( const char *name )
+{
+    char *p;
+
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+    strcpy( DLLFileName, name );
+    if ((p = strrchr( DLLFileName, '.' )) && !strcmp( p, ".spec" )) *p = 0;
+    if (!strchr( DLLFileName, '.' )) strcat( DLLFileName, ".dll" );
+}
+
 /* cleanup on program exit */
 static void cleanup(void)
 {
@@ -218,16 +229,10 @@ static void do_k_flags( const char *arg )
 
 static void do_spec( const char *arg )
 {
-    char *p;
-
     if (exec_mode != MODE_NONE || !arg[0]) do_usage();
     exec_mode = MODE_SPEC;
     open_input( arg );
-
-    if ((p = strrchr( arg, '/' ))) strcpy( DLLFileName, p + 1 );
-    else strcpy( DLLFileName, arg );
-    if ((p = strrchr( DLLFileName, '.' )) && !strcmp( p, ".spec" )) *p = 0;
-    if (!strchr( DLLFileName, '.' )) strcat( DLLFileName, ".dll" );
+    set_dll_file_name( arg );
 }
 
 static void do_def( const char *arg )
@@ -235,6 +240,7 @@ static void do_def( const char *arg )
     if (exec_mode != MODE_NONE || !arg[0]) do_usage();
     exec_mode = MODE_DEF;
     open_input( arg );
+    set_dll_file_name( arg );
 }
 
 static void do_exe( const char *arg )
