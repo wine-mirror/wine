@@ -83,6 +83,12 @@ typedef struct tagLV_INTHIT
   INT            iDistItem;    /* item number that is closest */
 } LV_INTHIT, *LPLV_INTHIT;
 
+typedef struct tagCOLUMNCACHE
+{
+  RECT rc;
+  UINT align;
+} COLUMNCACHE, *LPCOLUMNCACHE;
+
 typedef struct tagITEMHDR
 {
   LPWSTR pszText;
@@ -2953,96 +2959,29 @@ static inline BOOL LISTVIEW_FillBkgnd(LISTVIEW_INFO *infoPtr, HDC hdc, const REC
  * RETURN:
  * None
  */
-static void LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nSubItem,
-                                 RECT rcItem, BOOL Selected)
+static void LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, 
+		                 INT nSubItem, RECT rcItem, UINT align)
 {
-  WCHAR szDispText[DISP_TEXT_SIZE];
-  LVITEMW lvItem;
-  LVCOLUMNW lvColumn;
-  UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
-  INT textLeft;
-  INT nLabelWidth = 0;
+    WCHAR szDispText[DISP_TEXT_SIZE];
+    LVITEMW lvItem;
 
-  TRACE("(hdc=%x, nItem=%d, nSubItem=%d)\n", hdc, nItem, nSubItem);
+    TRACE("(hdc=%x, nItem=%d, nSubItem=%d, rcItem=%s)\n", 
+	   hdc, nItem, nSubItem, debugrect(&rcItem));
 
-  /* get information needed for drawing the item */
-  lvItem.mask = LVIF_TEXT;
-  lvItem.iItem = nItem;
-  lvItem.iSubItem = nSubItem;
-  lvItem.cchTextMax = COUNTOF(szDispText);
-  lvItem.pszText = szDispText;
-  *lvItem.pszText = '\0';
-  LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE);
-  TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
+    /* get information needed for drawing the item */
+    lvItem.mask = LVIF_TEXT | LVIF_IMAGE;
+    lvItem.iItem = nItem;
+    lvItem.iSubItem = nSubItem;
+    lvItem.cchTextMax = COUNTOF(szDispText);
+    lvItem.pszText = szDispText;
+    *lvItem.pszText = '\0';
+    LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE);
+    TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
-  lvColumn.mask = LVCF_FMT;
-  LISTVIEW_GetColumnT(infoPtr, nSubItem, &lvColumn, TRUE);
-  textLeft = rcItem.left;
-  TRACE("lvColumn.fmt=%d\n", lvColumn.fmt);
-  if (lvColumn.fmt != LVCFMT_LEFT)
-  {
-    if ((nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE)))
-    {
-      if (lvColumn.fmt == LVCFMT_RIGHT)
-        textLeft = rcItem.right - nLabelWidth;
-      else
-        textLeft = rcItem.left + (rcItem.right-rcItem.left-nLabelWidth)/2;
-    }
-  }
-
-  /* set item colors */
-  if (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED) && Selected)
-  {
-    if (infoPtr->bFocus)
-    {
-      SetBkColor(hdc, comctl32_color.clrHighlight);
-      SetTextColor(hdc, comctl32_color.clrHighlightText);
-    }
-    else
-    {
-      SetBkColor(hdc, comctl32_color.clr3dFace);
-      SetTextColor(hdc, comctl32_color.clrBtnText);
-    }
-  }
-  else
-  {
-    if ( (infoPtr->clrTextBk == CLR_DEFAULT) || (infoPtr->clrTextBk == CLR_NONE) )
-    {
-       SetBkMode(hdc, TRANSPARENT);
-       textoutOptions &= ~ETO_OPAQUE;
-    }
-    else
-    {
-      SetBkMode(hdc, OPAQUE);
-      SetBkColor(hdc, infoPtr->clrTextBk);
-    }
-
-    SetTextColor(hdc, infoPtr->clrText);
-  }
-
-  TRACE("drawing text %s, len=%d, rect=%s\n",
-	debugstr_w(lvItem.pszText), textLeft, debugrect(&rcItem));
-  ExtTextOutW(hdc, textLeft, rcItem.top, textoutOptions,
-              &rcItem, lvItem.pszText, lstrlenW(lvItem.pszText), NULL);
-
-  if (Selected)
-  {
-    /* fill in the gap */
-    RECT rec;
-    if (nSubItem < Header_GetItemCount(infoPtr->hwndHeader)-1)
-    {
-      CopyRect(&rec,&rcItem);
-      rec.left = rec.right;
-      rec.right = rec.left+REPORT_MARGINX;
-      ExtTextOutW(hdc, rec.left , rec.top, textoutOptions,
-        &rec, NULL, 0, NULL);
-    }
-    CopyRect(&rec,&rcItem);
-    rec.right = rec.left;
-    rec.left = rec.left - REPORT_MARGINX;
-    ExtTextOutW(hdc, rec.left , rec.top, textoutOptions,
-    &rec, NULL, 0, NULL);
-  }
+    if (lvItem.iImage) FIXME("Draw the image for the subitem\n");
+    
+    DrawTextW(hdc, lvItem.pszText, -1, &rcItem, 
+	      DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | align);
 }
 
 
@@ -3055,13 +2994,12 @@ static void LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT
  * [I] hdc : device context handle
  * [I] nItem : item index
  * [I] rcItem : item rectangle
- * [I] bFullSelect : TRUE if all item is selected
  *
  * RETURN:
  *   TRUE: if item is focused
  *   FALSE: otherwise
  */
-static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT rcItem, BOOL bFullSelect)
+static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT rcItem)
 {
   WCHAR szDispText[DISP_TEXT_SIZE];
   INT nLabelWidth;
@@ -3130,7 +3068,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
   }
 
   /* Don't bother painting item being edited */
-  if (infoPtr->bEditing && lprcFocus && !bFullSelect) 
+  if (infoPtr->bEditing && lprcFocus) 
   {
     SetRectEmpty(lprcFocus);
     return FALSE;
@@ -3175,8 +3113,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
   nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
   if (rcItem.left + nLabelWidth < rcItem.right)
   {
-    if (!bFullSelect)
-      rcItem.right = rcItem.left + nLabelWidth + TRAILING_PADDING;
+    rcItem.right = rcItem.left + nLabelWidth + TRAILING_PADDING;
     if (bImage)
       rcItem.right += IMAGE_PADDING;
   }
@@ -3201,17 +3138,6 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
 	  rcItem.left, rcItem.top, rcItem.right, rcItem.bottom);
     ExtTextOutW(hdc, dwTextX, rcItem.top, textoutOptions,
                 &rcItem, lvItem.pszText, lstrlenW(lvItem.pszText), NULL);
-  }
-
-  if (bFullSelect)
-  {
-    /* fill in the gap */
-    RECT rec;
-    CopyRect(&rec,&rcItem);
-    rec.left = rec.right;
-    rec.right = rec.left+REPORT_MARGINX;
-    ExtTextOutW(hdc, rec.left , rec.top, textoutOptions,
-		&rec, NULL, 0, NULL);
   }
 
   if (nMixMode != 0)
@@ -3421,14 +3347,19 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     INT rgntype, nDrawPosY, j;
     INT nTop, nItem, nLast, nUpdateHeight, nUpdateWidth;
     INT nColumnCount, nFirstCol, nLastCol;
-    RECT rcItem, rcClip, *lprcCols;
+    RECT rcItem, rcClip, rcFullSelect;
     BOOL bFullSelected, isFocused;
     DWORD cditemmode = CDRF_DODEFAULT;
     LONG lStyle = infoPtr->dwStyle;
     UINT uID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
+    COLORREF oldBkClr, oldFgClr;
+    INT oldBkMode;
+    COLUMNCACHE *lpCols;
+    LVCOLUMNW lvColumn;
+    LVITEMW lvItem;
     POINT ptOrig;
 
-    TRACE("\n");
+    TRACE("()\n");
 
     /* nothing to draw */
     if(GETITEMCOUNT(infoPtr) == 0) return;
@@ -3453,12 +3384,12 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 
     /* cache column info */
     nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
-    lprcCols = COMCTL32_Alloc(nColumnCount * sizeof(RECT));
-    if (!lprcCols) return;
+    lpCols = COMCTL32_Alloc(nColumnCount * sizeof(COLUMNCACHE));
+    if (!lpCols) return;
     for (j = 0; j < nColumnCount; j++) 
     {
-    	Header_GetItemRect(infoPtr->hwndHeader, j, &lprcCols[j]);
-	TRACE("lprcCols[%d]=%s\n", j, debugrect(&lprcCols[j]));
+    	Header_GetItemRect(infoPtr->hwndHeader, j, &lpCols[j].rc);
+	TRACE("lpCols[%d].rc=%s\n", j, debugrect(&lpCols[j].rc));
     }
     
     /* Get scroll info once before loop */
@@ -3467,15 +3398,33 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     /* we now narrow the columns as well */
     nLastCol = nColumnCount - 1;
     for(nFirstCol = 0; nFirstCol < nColumnCount; nFirstCol++)
-	if (lprcCols[nFirstCol].right + ptOrig.x >= rcClip.left) break;
+	if (lpCols[nFirstCol].rc.right + ptOrig.x >= rcClip.left) break;
     for(nLastCol = nColumnCount - 1; nLastCol >= 0; nLastCol--)
-	if (lprcCols[nLastCol].left + ptOrig.x < rcClip.right) break;
+	if (lpCols[nLastCol].rc.left + ptOrig.x < rcClip.right) break;
+
+    /* cache the per-column information before we start drawing */
+    for (j = nFirstCol; j <= nLastCol; j++)
+    {
+	lvColumn.mask = LVCF_FMT;
+	LISTVIEW_GetColumnT(infoPtr, j, &lvColumn, TRUE);
+	TRACE("lvColumn=%s\n", debuglvcolumn_t(&lvColumn, TRUE));
+	lpCols[j].align = DT_LEFT;
+	if (lvColumn.fmt & LVCFMT_RIGHT)
+	    lpCols[j].align = DT_RIGHT;
+	else if (lvColumn.fmt & LVCFMT_CENTER)
+	    lpCols[j].align = DT_CENTER;
+    }
 	
     /* a last few bits before we start drawing */
     TRACE("nTop=%d, nItem=%d, nLast=%d, nFirstCol=%d, nLastCol=%d\n",
 	  nTop, nItem, nLast, nFirstCol, nLastCol);
     bFullSelected = infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT;
     nDrawPosY = infoPtr->rcList.top + (nItem - nTop) * infoPtr->nItemHeight;
+
+    /* save dc values we're gonna trash while drawing */
+    oldBkMode = GetBkMode(hdc);
+    oldBkClr = GetBkColor(hdc);
+    oldFgClr = GetTextColor(hdc);
    
     /* iterate through the invalidated rows */ 
     for (; nItem < nLast; nItem++, nDrawPosY += infoPtr->nItemHeight)
@@ -3487,45 +3436,83 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
             LVITEMW item;
 
             TRACE("Owner Drawn\n");
+
+            item.iItem = nItem;
+	    item.iSubItem = 0;
+            item.mask = LVIF_PARAM | LVIF_STATE;
+	    item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+	    if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) continue;
+	    
+            dis.hwndItem = infoPtr->hwndSelf;
+            dis.hDC = hdc;
             dis.CtlType = ODT_LISTVIEW;
             dis.CtlID = uID;
             dis.itemID = nItem;
             dis.itemAction = ODA_DRAWENTIRE;
+            dis.itemData = item.lParam;
             dis.itemState = 0;
-
-            if (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED)) 
-	        dis.itemState |= ODS_SELECTED;
-            if (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED)) 
-	        dis.itemState |= ODS_FOCUS;
-
-            dis.hwndItem = infoPtr->hwndSelf;
-            dis.hDC = hdc;
-
-            dis.rcItem.left = lprcCols[0].left;
-            dis.rcItem.right = lprcCols[nColumnCount - 1].right;
+            if (item.state & LVIS_SELECTED) dis.itemState |= ODS_SELECTED;
+            if (item.state & LVIS_FOCUSED) dis.itemState |= ODS_FOCUS;
+            dis.rcItem.left = lpCols[0].rc.left;
+            dis.rcItem.right = lpCols[nColumnCount - 1].rc.right;
             dis.rcItem.top = nDrawPosY;
             dis.rcItem.bottom = dis.rcItem.top + infoPtr->nItemHeight;
             OffsetRect(&dis.rcItem, ptOrig.x, 0);
 
-            item.iItem = nItem;
-	    item.iSubItem = 0;
-            item.mask = LVIF_PARAM;
-            dis.itemData = LISTVIEW_GetItemW(infoPtr, &item, TRUE) ? item.lParam : 0;
-
             if (SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, uID, (LPARAM)&dis))
 		continue;
         }
+	
+	/* compute the full select rectangle, if needed */
+	if (bFullSelected)
+	{
+	    lvItem.mask = LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
+	    lvItem.stateMask = LVIS_SELECTED;
+	    lvItem.iItem = nItem;
+	    lvItem.iSubItem = 0;
+  	    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) continue;
+	     
+	    rcFullSelect.left = lpCols[0].rc.left + REPORT_MARGINX +
+	    			infoPtr->iconSize.cx * lvItem.iIndent +
+				(infoPtr->himlSmall ? infoPtr->iconSize.cx : 0);
+	    rcFullSelect.right = max(rcFullSelect.left, lpCols[nColumnCount - 1].rc.right - REPORT_MARGINX);
+	    rcFullSelect.top = nDrawPosY;
+	    rcFullSelect.bottom = rcFullSelect.top + infoPtr->nItemHeight;
+	    OffsetRect(&rcFullSelect, ptOrig.x, 0);
+	}
 
+	/* draw the background of the selection rectangle, if need be */
+	SetBkMode(hdc, OPAQUE);
+	if (bFullSelected && (lvItem.state & LVIS_SELECTED))
+	{
+	    if (infoPtr->bFocus)
+	    {
+		SetBkColor(hdc, comctl32_color.clrHighlight);
+   		SetTextColor(hdc, comctl32_color.clrHighlightText);
+	    }
+	    else
+	    {
+		SetBkColor(hdc, comctl32_color.clr3dFace);
+		SetTextColor(hdc, comctl32_color.clrBtnText);
+	    }
+	    ExtTextOutW(hdc, rcFullSelect.left, rcFullSelect.top, ETO_CLIPPED | ETO_OPAQUE, &rcFullSelect, 0, 0, 0);
+	}
+	else
+	{
+	    if ( (infoPtr->clrTextBk == CLR_DEFAULT) || (infoPtr->clrTextBk == CLR_NONE) )
+		SetBkMode(hdc, TRANSPARENT);
+	    SetTextColor(hdc, infoPtr->clrText);
+	}
+	    
 	/* iterate through the invalidated columns */
     	isFocused = FALSE;	    
 	for (j = nFirstCol; j <= nLastCol; j++)
 	{
-		
 	    if (cdmode & CDRF_NOTIFYITEMDRAW)
 		cditemmode = notify_customdrawitem (infoPtr, hdc, nItem, j, CDDS_ITEMPREPAINT);
 	    if (cditemmode & CDRF_SKIPDEFAULT) continue;
 
-	    rcItem = lprcCols[j];
+	    rcItem = lpCols[j].rc;
 	    rcItem.left += REPORT_MARGINX;
 	    rcItem.right = max(rcItem.left, rcItem.right - REPORT_MARGINX);
 	    rcItem.top = nDrawPosY;
@@ -3535,25 +3522,23 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    OffsetRect(&rcItem, ptOrig.x, 0);
 
 	    if (j == 0)
-		isFocused = LISTVIEW_DrawItem(infoPtr, hdc, nItem, rcItem, bFullSelected);
+		isFocused = LISTVIEW_DrawItem(infoPtr, hdc, nItem, rcItem);
 	    else
-		LISTVIEW_DrawSubItem(infoPtr, hdc, nItem, j, rcItem, bFullSelected);
+		LISTVIEW_DrawSubItem(infoPtr, hdc, nItem, j, rcItem, lpCols[j].align);
 
 	    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
 		notify_customdrawitem(infoPtr, hdc, nItem, 0, CDDS_ITEMPOSTPAINT);
 	}
 
 	/* Adjust focus if we have it, and we are in full select */
-	if (bFullSelected && isFocused)
-	{
-	    infoPtr->rcFocus.left = lprcCols[0].left + REPORT_MARGINX;
-	    infoPtr->rcFocus.right = max(infoPtr->rcFocus.left, lprcCols[nColumnCount - 1].right - REPORT_MARGINX);
-	    infoPtr->rcFocus.top = nDrawPosY;
-	    infoPtr->rcFocus.bottom = infoPtr->rcFocus.top + infoPtr->nItemHeight;
-	}
+	if (bFullSelected && isFocused) infoPtr->rcFocus = rcFullSelect;
     }
-	
-    COMCTL32_Free(lprcCols);
+
+    /* cleanup the mess */
+    SetTextColor(hdc, oldFgClr);
+    SetBkColor(hdc, oldBkClr);
+    SetBkMode(hdc, oldBkMode);
+    COMCTL32_Free(lpCols);
 }
 
 /***
@@ -3608,7 +3593,7 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
       rcItem.bottom = rcItem.top + nItemHeight;
       rcItem.right = rcItem.left + nItemWidth;
 
-      LISTVIEW_DrawItem(infoPtr, hdc, nItem, rcItem, FALSE);
+      LISTVIEW_DrawItem(infoPtr, hdc, nItem, rcItem);
 
       if (cditemmode & CDRF_NOTIFYPOSTPAINT)
         notify_customdrawitem(infoPtr, hdc, nItem, 0, CDDS_ITEMPOSTPAINT);
@@ -3680,7 +3665,7 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, BOOL bSmall, D
             rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	    
             if (bSmall)
-              LISTVIEW_DrawItem(infoPtr, hdc, i, rcItem, FALSE);
+              LISTVIEW_DrawItem(infoPtr, hdc, i, rcItem);
             else
               LISTVIEW_DrawLargeItem(infoPtr, hdc, i, rcItem);
           }
@@ -3725,7 +3710,7 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, BOOL bSmall, D
             rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	    
             if (bSmall)
-              LISTVIEW_DrawItem(infoPtr, hdc, i, rcItem, FALSE);
+              LISTVIEW_DrawItem(infoPtr, hdc, i, rcItem);
             else
               LISTVIEW_DrawLargeItem(infoPtr, hdc, i, rcItem);
           }
