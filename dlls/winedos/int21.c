@@ -2474,6 +2474,55 @@ static BOOL INT21_Fat32( CONTEXT86 *context )
         }
         break;
 
+    case 0x03: /* FAT32 - GET EXTENDED FREE SPACE ON DRIVE */
+        {
+            WCHAR dirW[MAX_PATH];
+            char *dirA = CTX_SEG_OFF_TO_LIN( context,
+                                             context->SegDs, context->Edx );
+            BYTE *data = CTX_SEG_OFF_TO_LIN( context, 
+                                             context->SegEs, context->Edi );
+            DWORD cluster_sectors;
+            DWORD sector_bytes;
+            DWORD free_clusters;
+            DWORD total_clusters;
+
+            TRACE( "FAT32 - GET EXTENDED FREE SPACE ON DRIVE %s\n", dirA );
+            MultiByteToWideChar(CP_OEMCP, 0, dirA, -1, dirW, MAX_PATH);
+
+            if (CX_reg(context) < 44)
+            {
+                SetLastError( ERROR_BAD_LENGTH );
+                return FALSE;
+            }
+
+            if (!GetDiskFreeSpaceW( dirW, &cluster_sectors, &sector_bytes,
+                                    &free_clusters, &total_clusters ))
+                return FALSE;
+
+            *(WORD*) (data +  0) = 44; /* size of structure */
+            *(WORD*) (data +  2) = 0;  /* version */
+            *(DWORD*)(data +  4) = cluster_sectors;
+            *(DWORD*)(data +  8) = sector_bytes;
+            *(DWORD*)(data + 12) = free_clusters;
+            *(DWORD*)(data + 16) = total_clusters;
+
+            /*
+             * Below we have free/total sectors and
+             * free/total allocation units without adjustment
+             * for compression. We fake both using cluster information.
+             */
+            *(DWORD*)(data + 20) = free_clusters * cluster_sectors;
+            *(DWORD*)(data + 24) = total_clusters * cluster_sectors;
+            *(DWORD*)(data + 28) = free_clusters;
+            *(DWORD*)(data + 32) = total_clusters;
+            
+            /*
+             * Between (data + 36) and (data + 43) there
+             * are eight reserved bytes.
+             */
+        }
+        break;
+
     default:
         INT_BARF( context, 0x21 );
     }
@@ -3923,6 +3972,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x73: /* MSDOS7 - FAT32 */
+        RESET_CFLAG( context );
         if (!INT21_Fat32( context ))
             bSetDOSExtendedError = TRUE;
         break;
