@@ -225,7 +225,7 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	if ((dsb->freq == dsb->dsound->pwfx->nSamplesPerSec) &&
 	    (dsb->pwfx->wBitsPerSample == dsb->dsound->pwfx->wBitsPerSample) &&
 	    (dsb->pwfx->nChannels == dsb->dsound->pwfx->nChannels)) {
-	        DWORD bytesleft = dsb->buflen - dsb->buf_mixpos;
+	        INT bytesleft = dsb->buflen - dsb->buf_mixpos;
 		TRACE("(%p) Best case\n", dsb);
 	    	if (len <= bytesleft )
 			CopyMemory(obp, ibp, len);
@@ -374,18 +374,18 @@ static LPBYTE DSOUND_tmpbuffer(IDirectSoundImpl *dsound, DWORD len)
 
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
-	INT	i, len, ilen, temp, field, nBlockAlign, todo;
+	INT	i, len, ilen, field, nBlockAlign, todo;
 	BYTE	*buf, *ibuf;
 
 	TRACE("(%p,%ld,%ld)\n",dsb,writepos,fraglen);
 
 	len = fraglen;
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
-		temp = MulDiv(dsb->dsound->pwfx->nAvgBytesPerSec, dsb->buflen,
+		INT temp = MulDiv(dsb->dsound->pwfx->nAvgBytesPerSec, dsb->buflen,
 			dsb->nAvgBytesPerSec) -
-		       MulDiv(dsb->dsound->pwfx->nAvgBytesPerSec, dsb->buf_mixpos,
+			MulDiv(dsb->dsound->pwfx->nAvgBytesPerSec, dsb->buf_mixpos,
 			dsb->nAvgBytesPerSec);
-		len = (len > temp) ? temp : len;
+		len = min(len, temp);
 	}
 	nBlockAlign = dsb->dsound->pwfx->nBlockAlign;
 	len = len / nBlockAlign * nBlockAlign;	/* data alignment */
