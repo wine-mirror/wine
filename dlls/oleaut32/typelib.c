@@ -408,14 +408,17 @@ HRESULT WINAPI RegisterTypeLib(
     HRESULT res;
     TLIBATTR *attr;
     OLECHAR guid[80];
-    LPSTR guidA;
-    CHAR keyName[120];
+    WCHAR keyName[120];
     CHAR tmp[MAX_PATH];
     HKEY key, subKey;
     UINT types, tidx;
     TYPEKIND kind;
     DWORD disposition;
-    static const char *PSOA = "{00020424-0000-0000-C000-000000000046}";
+    static const WCHAR PSOA[] = {
+       '{','0','0','0','2','0','4','2','4','-','0','0','0','0','-','0','0','0','0',
+       '-','C','0','0','0','-','0','0','0','0','0','0','0','0','0','0','4','6','}',0};
+    static const WCHAR fmt[] = { 
+        'T','y','p','e','L','i','b','\\','%','s','\\','%','x','.','%','x',0 };
 
     if (ptlib == NULL || szFullPath == NULL)
         return E_INVALIDARG;
@@ -424,13 +427,11 @@ HRESULT WINAPI RegisterTypeLib(
         return E_FAIL;
 
     StringFromGUID2(&attr->guid, guid, 80);
-    guidA = HEAP_strdupWtoA(GetProcessHeap(), 0, guid);
-    snprintf(keyName, sizeof(keyName), "TypeLib\\%s\\%x.%x",
-        guidA, attr->wMajorVerNum, attr->wMinorVerNum);
-    HeapFree(GetProcessHeap(), 0, guidA);
+    snprintfW(keyName, sizeof(keyName)/sizeof(WCHAR), fmt,
+        guid, attr->wMajorVerNum, attr->wMinorVerNum);
 
     res = S_OK;
-    if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyName, 0, NULL, 0,
+    if (RegCreateKeyExW(HKEY_CLASSES_ROOT, keyName, 0, NULL, 0,
         KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS)
     {
         LPOLESTR doc;
@@ -595,46 +596,57 @@ HRESULT WINAPI RegisterTypeLib(
 		     */
 		    if (1 || (tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION))
 		    {
+			static const WCHAR fmt_interface[] = {
+			   'I','n','t','e','r','f','a','c','e','\\','%','s',0 };
+
                         if (!(tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)) {
                             FIXME("Registering non-oleautomation interface!\n");
                         }
 
 			/* register interface<->typelib coupling */
 			StringFromGUID2(&tattr->guid, guid, 80);
-			guidA = HEAP_strdupWtoA(GetProcessHeap(), 0, guid);
-			snprintf(keyName, sizeof(keyName), "Interface\\%s", guidA);
-			HeapFree(GetProcessHeap(), 0, guidA);
+			snprintfW(keyName, sizeof(keyName)/sizeof(WCHAR), fmt_interface, guid);
 
-			if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyName, 0, NULL, 0,
-					    KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS) {
+			if (RegCreateKeyExW(HKEY_CLASSES_ROOT, keyName, 0, NULL, 0,
+					    KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS)
+			{
+                            static const WCHAR psclsid[] = {
+				'P','r','o','x','y','S','t','u','b','C','l','s','i','d',0 };
+			    static const WCHAR psclsid32[] = {
+				'P','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2',0 };
+
 			    if (name)
 				RegSetValueExW(key, NULL, 0, REG_SZ,
 					       (BYTE *)name, lstrlenW(name) * sizeof(OLECHAR));
 
-			    if (RegCreateKeyExA(key, "ProxyStubClsid", 0, NULL, 0,
+			    if (RegCreateKeyExW(key, psclsid, 0, NULL, 0,
 				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS) {
-				RegSetValueExA(subKey, NULL, 0, REG_SZ,
-					       PSOA, strlen(PSOA));
+				RegSetValueExW(subKey, NULL, 0, REG_SZ,
+					       (BYTE*)PSOA, sizeof PSOA);
 				RegCloseKey(subKey);
 			    }
 
-			    if (RegCreateKeyExA(key, "ProxyStubClsid32", 0, NULL, 0,
+			    if (RegCreateKeyExW(key, psclsid32, 0, NULL, 0,
 				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS) {
-				RegSetValueExA(subKey, NULL, 0, REG_SZ,
-					       PSOA, strlen(PSOA));
+				RegSetValueExW(subKey, NULL, 0, REG_SZ,
+					       (BYTE*)PSOA, sizeof PSOA);
 				RegCloseKey(subKey);
 			    }
 
 			    if (RegCreateKeyExA(key, "TypeLib", 0, NULL, 0,
-				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS) {
-				CHAR ver[32];
+				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS)
+			    {
+				WCHAR ver[32];
+				static const WCHAR fmtver[] = {'%','x','.','%','x',0 };
+				static const WCHAR szVer[] = {'V','e','r','s','i','o','n',0};
+
 				StringFromGUID2(&attr->guid, guid, 80);
-				snprintf(ver, sizeof(ver), "%x.%x",
+				snprintfW(ver, sizeof(ver), fmtver,
 					 attr->wMajorVerNum, attr->wMinorVerNum);
 				RegSetValueExW(subKey, NULL, 0, REG_SZ,
 					       (BYTE *)guid, lstrlenW(guid) * sizeof(OLECHAR));
-				RegSetValueExA(subKey, "Version", 0, REG_SZ,
-					       ver, lstrlenA(ver));
+				RegSetValueExW(subKey, szVer, 0, REG_SZ,
+					       (BYTE*)ver, lstrlenW(ver) * sizeof(WCHAR));
 				RegCloseKey(subKey);
 			    }
 
