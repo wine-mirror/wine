@@ -376,8 +376,11 @@ void __cdecl _splitpath(const char* inpath, char * drv, char * dir,
     }
     else if (dir) dir[0] = 0;
 
-    /* look for extension */
-    for (end = inpath; *end; end++) if (*end == '.') break;
+    /* look for extension: what's after the last dot */
+    end = NULL;
+    for (p = inpath; *p; p++) if (*p == '.') end = p;
+
+    if (!end) end = p; /* there's no extension */
 
     if (fname)
     {

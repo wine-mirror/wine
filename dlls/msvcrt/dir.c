@@ -463,8 +463,11 @@ void _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar
     }
     else if (dir) dir[0] = 0;
 
-    /* look for extension */
-    for (end = inpath; *end; end++) if (*end == '.') break;
+    /* look for extension: what's after the last dot */
+    end = NULL;
+    for (p = inpath; *p; p++) if (*p == '.') end = p;
+
+    if (!end) end = p; /* there's no extension */
 
     if (fname)
     {
