@@ -63,10 +63,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#ifdef ICMP_WIN
-#include "winsock2.h"
-#endif
-
 #include "winerror.h"
 #include "ipexport.h"
 #include "icmpapi.h"
@@ -101,42 +97,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(icmp);
 
-/* Define the following macro to use the winsock functions */
-/*#define ICMP_WIN*/
-
-#ifdef ICMP_WIN
-/* FIXME: should we include winsock.h ???*/
-SOCKET WINAPI WINSOCK_socket(INT af, INT type, INT protocol);
-INT WINAPI WINSOCK_sendto(SOCKET s, char *buf, INT len, INT flags, struct sockaddr *to, INT tolen);
-INT WINAPI WINSOCK_recvfrom(SOCKET s, char *buf,INT len, INT flags, struct sockaddr *from, INT *fromlen32);
-INT WINAPI WINSOCK_shutdown(SOCKET s, INT how);
-#endif
-
-
-#ifdef ICMP_WIN
-#define ISOCK_SOCKET                SOCKET
-#define ISOCK_ISVALID(a)            ((a)!=INVALID_SOCKET)
-#define ISOCK_getsockopt(a,b,c,d,e) WINSOCK_getsockopt(a,b,c,d,e)
-#define ISOCK_recvfrom(a,b,c,d,e,f) WINSOCK_recvfrom(a,b,c,d,e,f)
-#define ISOCK_select(a,b,c,d,e)     WINSOCK_select(a,b,c,d,e)
-#define ISOCK_sendto(a,b,c,d,e,f)   WINSOCK_sendto(a,b,c,d,e,f)
-#define ISOCK_setsockopt(a,b,c,d,e) WINSOCK_setsockopt(a,b,c,d,e)
-#define ISOCK_shutdown(a,b)         WINSOCK_shutdown(a,b)
-#define ISOCK_socket(a,b,c)         WINSOCK_socket(a,b,c)
-#else
-#define ISOCK_SOCKET                int
-#define ISOCK_ISVALID(a)            ((a)>=0)
-#define ISOCK_getsockopt(a,b,c,d,e) getsockopt(a,b,c,d,e)
-#define ISOCK_recvfrom(a,b,c,d,e,f) recvfrom(a,b,c,d,e,f)
-#define ISOCK_select(a,b,c,d,e)     select(a,b,c,d,e)
-#define ISOCK_setsockopt(a,b,c,d,e) setsockopt(a,b,c,d,e)
-#define ISOCK_sendto(a,b,c,d,e,f)   sendto(a,b,c,d,e,f)
-#define ISOCK_shutdown(a,b)         shutdown(a,b)
-#define ISOCK_socket(a,b,c)         socket(a,b,c)
-#endif
 
 typedef struct {
-    ISOCK_SOCKET sid;
+    int sid;
     IP_OPTION_INFORMATION default_opts;
 } icmp_t;
 
@@ -185,8 +148,8 @@ HANDLE WINAPI IcmpCreateFile(VOID)
 {
     icmp_t* icp;
 
-    ISOCK_SOCKET sid=ISOCK_socket(AF_INET,SOCK_RAW,IPPROTO_ICMP);
-    if (!ISOCK_ISVALID(sid)) {
+    int sid=socket(AF_INET,SOCK_RAW,IPPROTO_ICMP);
+    if (sid < 0) {
         MESSAGE("WARNING: Trying to use ICMP (network ping) will fail unless running as root\n");
         SetLastError(ERROR_ACCESS_DENIED);
         return INVALID_HANDLE_VALUE;
@@ -215,7 +178,7 @@ BOOL WINAPI IcmpCloseHandle(HANDLE  IcmpHandle)
         return FALSE;
     }
 
-    ISOCK_shutdown(icp->sid,2);
+    shutdown(icp->sid,2);
     HeapFree(GetProcessHeap (), 0, icp);
     return TRUE;
 }
@@ -294,19 +257,19 @@ DWORD WINAPI IcmpSendEcho(
             int len;
             /* Before we mess with the options, get the default values */
             len=sizeof(val);
-            ISOCK_getsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,&len);
+            getsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,&len);
             icp->default_opts.Ttl=val;
 
             len=sizeof(val);
-            ISOCK_getsockopt(icp->sid,IPPROTO_IP,IP_TOS,(char *)&val,&len);
+            getsockopt(icp->sid,IPPROTO_IP,IP_TOS,(char *)&val,&len);
             icp->default_opts.Tos=val;
             /* FIXME: missing: handling of IP 'flags', and all the other options */
         }
 
         val=RequestOptions->Ttl;
-        ISOCK_setsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,sizeof(val));
+        setsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,sizeof(val));
         val=RequestOptions->Tos;
-        ISOCK_setsockopt(icp->sid,IPPROTO_IP,IP_TOS,(char *)&val,sizeof(val));
+        setsockopt(icp->sid,IPPROTO_IP,IP_TOS,(char *)&val,sizeof(val));
         /* FIXME:  missing: handling of IP 'flags', and all the other options */
 
         icp->default_opts.OptionsSize=IP_OPTS_CUSTOM;
@@ -315,9 +278,9 @@ DWORD WINAPI IcmpSendEcho(
 
         /* Restore the default options */
         val=icp->default_opts.Ttl;
-        ISOCK_setsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,sizeof(val));
+        setsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,sizeof(val));
         val=icp->default_opts.Tos;
-        ISOCK_setsockopt(icp->sid,IPPROTO_IP,IP_TOS,(char *)&val,sizeof(val));
+        setsockopt(icp->sid,IPPROTO_IP,IP_TOS,(char *)&val,sizeof(val));
         /* FIXME: missing: handling of IP 'flags', and all the other options */
 
         icp->default_opts.OptionsSize=IP_OPTS_DEFAULT;
@@ -350,7 +313,7 @@ DWORD WINAPI IcmpSendEcho(
 #endif
 
     gettimeofday(&send_time,NULL);
-    res=ISOCK_sendto(icp->sid, reqbuf, reqsize, 0, (struct sockaddr*)&addr, sizeof(addr));
+    res=sendto(icp->sid, reqbuf, reqsize, 0, (struct sockaddr*)&addr, sizeof(addr));
     HeapFree(GetProcessHeap (), 0, reqbuf);
     if (res<0) {
         if (errno==EMSGSIZE)
@@ -373,9 +336,9 @@ DWORD WINAPI IcmpSendEcho(
 
     /* Get the reply */
     ip_header_len=0; /* because gcc was complaining */
-    while ((res=ISOCK_select(icp->sid+1,&fdr,NULL,NULL,&timeout))>0) {
+    while ((res=select(icp->sid+1,&fdr,NULL,NULL,&timeout))>0) {
         gettimeofday(&recv_time,NULL);
-        res=ISOCK_recvfrom(icp->sid, (char*)ip_header, maxlen, 0, (struct sockaddr*)&addr,&addrlen);
+        res=recvfrom(icp->sid, (char*)ip_header, maxlen, 0, (struct sockaddr*)&addr,&addrlen);
         TRACE("received %d bytes from %s\n",res, inet_ntoa(addr.sin_addr));
         ier->Status=IP_REQ_TIMED_OUT;
 
