@@ -546,9 +546,6 @@ currently lacking. We need:
 	; get the stuff from the readonly installation and can write to our own.
 	Temp=t:\			(the TEMP directory)
 
-    * [Tweak.Layout]
-	WineLook=win95                (just the coolest look ;)
-
     * Possibly modify the [spooler], [serialports] and [parallelports] sections.
       FIXME: possibly more, including printer stuff.
 

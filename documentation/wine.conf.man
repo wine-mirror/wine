@@ -264,14 +264,6 @@ Used to specify which functions will be included in the snoop debug log.
 For Relay and Snoop <dllname>.* includes or excludes the whole dll. Exclude
 entries have priority over Include entries.
 .PP
-.B [Tweak.Layout]
-.br
-.I format: """WineLook""=""<Win31|Win95|Win98>"""
-.br
-default: "Win31"
-.br
-Use Win95-like window displays or Win3.1-like window displays.
-.PP
 .B [Registry]
 .br
 .I format: """LoadGlobalRegistryFiles""=""<boolean>"""

@@ -34,7 +34,6 @@
  *   - Make the desktop size UI a combo box, with a Custom option, so it's more obvious what you might want to choose here
  *
  * BUGS:
- *   - WineLook default fallback doesn't work
  *   - x11drv page triggers key writes on entry
  *
  */

@@ -35,18 +35,15 @@ typedef struct _APPL
   BOOL isGlobal;
   char* lpcApplication;
   char* lpcVersionSection;
-  char* lpcWinelookSection;
 } APPL, *LPAPPL;
 
-static LPAPPL CreateAppl(BOOL isGlobal, char* application, char* version_section, char* winelook_section)
+static LPAPPL CreateAppl(BOOL isGlobal, char* application, char* version_section)
 {
   LPAPPL out;
-  WINE_TRACE("application: '%s', version_section: '%s', winelook_section: '%s'\n", application,
-	     version_section, winelook_section);
+  WINE_TRACE("application: '%s', version_section: '%s'\n", application, version_section);
   out = HeapAlloc(GetProcessHeap(),0,sizeof(APPL));
   out->lpcApplication = strdup(application);
   out->lpcVersionSection = strdup(version_section);
-  out->lpcWinelookSection = strdup(winelook_section);
   out->isGlobal = isGlobal;
   return out;
 }
@@ -56,12 +53,11 @@ static VOID FreeAppl(LPAPPL lpAppl)
  /* The strings were strdup-ped, so we use "free" */
   if (lpAppl->lpcApplication) free(lpAppl->lpcApplication);
   if (lpAppl->lpcVersionSection) free(lpAppl->lpcVersionSection);
-  if (lpAppl->lpcWinelookSection) free(lpAppl->lpcWinelookSection);
   HeapFree(GetProcessHeap(),0,lpAppl);
 }
 
-/* section can be "Version" or "Tweak.Layout" */
-/* key can be "Windows"/"Dos"/"WineLook" */
+/* section can be "Version" */
+/* key can be "Windows"/"Dos" */
 /* value can be appropriate values for the above keys */
 typedef struct _APPSETTING
 {
@@ -128,9 +124,8 @@ static VOID LoadAppSettings(LPAPPL appl /*DON'T FREE, treeview will own this*/, 
   HTREEITEM hParent;
   LPAPPSETTING lpas;
 	
-  WINE_TRACE("opening '%s' and '%s'\n", appl->lpcVersionSection, appl->lpcWinelookSection);
-  if ((RegOpenKey (configKey, appl->lpcVersionSection, &key) == ERROR_SUCCESS) ||
-      (RegOpenKey (configKey, appl->lpcWinelookSection, &key) == ERROR_SUCCESS))
+  WINE_TRACE("opening '%s'\n", appl->lpcVersionSection);
+  if (RegOpenKey (configKey, appl->lpcVersionSection, &key) == ERROR_SUCCESS)
   {
      i = 0;
      size = 255;
@@ -182,39 +177,6 @@ static VOID LoadAppSettings(LPAPPL appl /*DON'T FREE, treeview will own this*/, 
      {
        WINE_TRACE("no version section found\n");
      }
-
-     i = 0; /* reset i to 0 before calling RegEnumValue() again */
-
-     /* insert winelook entries */
-     if(RegOpenKey (configKey, appl->lpcWinelookSection, &key) == ERROR_SUCCESS)
-     {
-       while (RegEnumValue(key, i, name, &size, NULL, NULL, read, &readSize) == ERROR_SUCCESS)
-       {
-	 char itemtext[128];
-
-	 WINE_TRACE("Reading value %s, namely %s\n", name, read);
-			
-	 lpIt = CreateItemTag();
-	 lpas = CreateAppSetting(name, read);
-	 lpIt->lpSetting = lpas;
-	 lpIt->lpAppl = appl;
-	 tis.u.item.lParam = (LPARAM)lpIt;
-
-	 /* convert the value for 'winelook' to human readable form */
-	 description = getDescriptionFromVersion(getWinelook(), read);
-	 if(!description) description = "Not found";
-	 
-	 sprintf(itemtext, "%s - %s", name, description);
-	 tis.u.item.pszText = itemtext;
-
-	 TreeView_InsertItem(hwndTV,&tis);
-	 i++; size = 255; readSize = 255;
-       }
-       RegCloseKey(key);
-     } else
-     {
-       WINE_TRACE("no winelook section found\n");
-     }
   }
 }
 
@@ -230,14 +192,11 @@ static VOID UpdateComboboxes(HWND hDlg, LPAPPL lpAppl)
   /* retrieve the registry values for this application */
   char *curWinVer = getConfigValue(lpAppl->lpcVersionSection, "Windows", "");
   char *curDOSVer = getConfigValue(lpAppl->lpcVersionSection, "DOS", "");
-  char *curWineLook = getConfigValue(lpAppl->lpcWinelookSection, "WineLook", "");
 
   if(curWinVer) WINE_TRACE("curWinVer is '%s'\n", curWinVer);
   else WINE_TRACE("curWinVer is null\n");
   if(curDOSVer) WINE_TRACE("curDOSVer is '%s'\n", curDOSVer);
   else WINE_TRACE("curDOSVer is null\n");
-  if(curWineLook) WINE_TRACE("curWineLook is '%s'\n", curWineLook);
-  else WINE_TRACE("curWineLook is null\n");
 
   /* normalize the version strings */
   if(strlen(curWinVer) != 0)
@@ -286,33 +245,8 @@ static VOID UpdateComboboxes(HWND hDlg, LPAPPL lpAppl)
 			-1, 0);
   }
 
-  if(strlen(curWineLook) != 0)
-  {
-    if ((pVer = getWinelook ()))
-    {
-      WINE_TRACE("Winelook\n");
-
-      for (i = 0; *pVer->szVersion || *pVer->szDescription; i++, pVer++)
-      {
-	WINE_TRACE("pVer->szVersion == %s\n", pVer->szVersion);
-	if (!strcasecmp (pVer->szVersion, curWineLook))
-	{
-	  SendDlgItemMessage (hDlg, IDC_WINELOOK, CB_SETCURSEL,
-			      (WPARAM) i, 0);
-	  WINE_TRACE("match with %s\n", pVer->szVersion);
-	}
-      }
-    }
-  } else
-  {
-    WINE_TRACE("setting winelook to nothing\n");
-    SendDlgItemMessage (hDlg, IDC_WINELOOK, CB_SETCURSEL,
-			      -1, 0);
-  }
-
   if(curWinVer) free(curWinVer);
   if(curDOSVer) free(curDOSVer);
-  if(curWineLook) free(curWineLook);
 }
 
 void
@@ -337,14 +271,6 @@ initAppDlgComboboxes (HWND hDlg)
 			  0, (LPARAM) pVer->szDescription);
     }
   }
-  if ((pVer = getWinelook ()))
-  {
-    for (i = 0; *pVer->szVersion || *pVer->szDescription; i++, pVer++)
-    {
-      SendDlgItemMessage (hDlg, IDC_WINELOOK, CB_ADDSTRING,
-			  0, (LPARAM) pVer->szDescription);
-    }
-  }
 }
 
 
@@ -357,11 +283,10 @@ static VOID OnInitAppDlg(HWND hDlg)
   DWORD size;
   char appl [255];
   char lpcVersionKey [255];
-  char lpcWinelookKey [255];
   FILETIME ft;
 
   hwndTV = GetDlgItem(hDlg,IDC_APP_TREEVIEW);
-  lpAppl = CreateAppl(TRUE, "Global Settings", "Version", "Tweak.Layout");
+  lpAppl = CreateAppl(TRUE, "Global Settings", "Version");
   LoadAppSettings(lpAppl, hDlg, hwndTV);
 	
   /*And now the application specific stuff:*/
@@ -372,8 +297,7 @@ static VOID OnInitAppDlg(HWND hDlg)
     while (RegEnumKeyEx(applKey, i, appl, &size, NULL, NULL, NULL, &ft) == ERROR_SUCCESS)
     {
       sprintf(lpcVersionKey, "AppDefaults\\%s\\Version", appl);
-      sprintf(lpcWinelookKey, "AppDefaults\\%s\\Tweak.Layout", appl);
-      lpAppl = CreateAppl(FALSE, appl, lpcVersionKey, lpcWinelookKey);
+      lpAppl = CreateAppl(FALSE, appl, lpcVersionKey);
       LoadAppSettings(lpAppl, hDlg, hwndTV);
       i++; size = 255;
     }
@@ -414,7 +338,6 @@ static VOID OnAddApplicationClick(HWND hDlg)
   char szFileTitle [255];
   char szFile [255];
   char lpcVersionKey [255];
-  char lpcWinelookKey [255];
 
   TVINSERTSTRUCT tis;
   LPITEMTAG lpit;
@@ -438,14 +361,12 @@ static VOID OnAddApplicationClick(HWND hDlg)
     tis.u.item.pszText = szFileTitle;
     lpit = CreateItemTag();
     sprintf(lpcVersionKey, "AppDefaults\\%s\\Version", szFileTitle);
-    sprintf(lpcWinelookKey, "AppDefaults\\%s\\Tweak.Layout", szFileTitle);
-    lpit->lpAppl = CreateAppl(FALSE, szFileTitle, lpcVersionKey, lpcWinelookKey);
+    lpit->lpAppl = CreateAppl(FALSE, szFileTitle, lpcVersionKey);
     tis.u.item.lParam = (LPARAM)lpit;
     TreeView_InsertItem(GetDlgItem(hDlg, IDC_APP_TREEVIEW), &tis);
 
-    /* add the empty entries for the Version and Winelook sections for this app */
+    /* add the empty entries for the Version section for this app */
     setConfigValue(lpcVersionKey,NULL,NULL);
-    setConfigValue(lpcWinelookKey,NULL,NULL);
   }
 }
 
@@ -465,7 +386,6 @@ static VOID OnRemoveApplicationClick(HWND hDlg)
     {
       /* add transactions to remove all entries for this application */
       addTransaction(lpit->lpAppl->lpcVersionSection, NULL, ACTION_REMOVE, NULL);
-      addTransaction(lpit->lpAppl->lpcWinelookSection, NULL, ACTION_REMOVE, NULL);
       TreeView_DeleteItem(hTV,ti.hItem);
     }
   }
@@ -492,7 +412,7 @@ static void UpdateWinverSelection(HWND hDlg, int selection)
       /* remove this applications setting */
       if((selection == CB_ERR) || !(*pVer[selection].szVersion))
       {
-	WINE_TRACE("removing section '%s'\n", lpit->lpAppl->lpcWinelookSection);
+	WINE_TRACE("removing section '%s'\n", lpit->lpAppl->lpcVersionSection);
 	addTransaction(lpit->lpAppl->lpcVersionSection, "Windows", ACTION_REMOVE, NULL); /* change registry entry */
       } else
       {
@@ -527,7 +447,7 @@ static void UpdateDosverSelection(HWND hDlg, int selection)
       /* remove this applications setting */
       if((selection == CB_ERR) || !(*pVer[selection].szVersion))
       {
-	WINE_TRACE("removing section '%s'\n", lpit->lpAppl->lpcWinelookSection);
+	WINE_TRACE("removing section '%s'\n", lpit->lpAppl->lpcVersionSection);
 	addTransaction(lpit->lpAppl->lpcVersionSection, "DOS", ACTION_REMOVE, NULL); /* change registry entry */
       } else
       {
@@ -540,43 +460,6 @@ static void UpdateDosverSelection(HWND hDlg, int selection)
     }
   }
 }
-
-static void UpdateWinelookSelection(HWND hDlg, int selection)
-{
-  TVITEM ti;
-  LPITEMTAG lpit;
-  VERSION_DESC *pVer = NULL;
-  HWND hTV = GetDlgItem(hDlg, IDC_APP_TREEVIEW);
-
-  ti.mask = TVIF_PARAM;
-  ti.hItem = TreeView_GetSelection(hTV);
-  if (TreeView_GetItem (hTV, &ti))
-  {
-    lpit = (LPITEMTAG) ti.lParam;
-
-    if(lpit->lpAppl)
-    {
-      pVer = getWinelook();
-
-      /* if no item is selected OR if our version string is null */
-      /* remove this applications setting */
-      if((selection == CB_ERR) || !(*pVer[selection].szVersion))
-      {
-	WINE_TRACE("removing section '%s'\n", lpit->lpAppl->lpcWinelookSection);
-	addTransaction(lpit->lpAppl->lpcWinelookSection, "WineLook", ACTION_REMOVE, NULL); /* change registry entry */
-      } else
-      {
-	WINE_TRACE("setting section '%s', key '%s', value '%s'\n", lpit->lpAppl->lpcWinelookSection, "WineLook", pVer[selection].szVersion);
-	addTransaction(lpit->lpAppl->lpcWinelookSection, "WineLook", ACTION_SET, pVer[selection].szVersion); /* change registry entry */
-      }
-
-      TreeView_DeleteAllItems(hTV); /* delete all items from the treeview */
-      OnInitAppDlg(hDlg);
-    }
-  }
-}
-
-
 
 INT_PTR CALLBACK
 AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -614,10 +497,6 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
       case IDC_DOSVER:
 	selection = SendDlgItemMessage( hDlg, IDC_DOSVER, CB_GETCURSEL, 0, 0);
 	UpdateDosverSelection(hDlg, selection);
-	break;
-      case IDC_WINELOOK:
-	selection = SendDlgItemMessage( hDlg, IDC_WINELOOK, CB_GETCURSEL, 0, 0);
-	UpdateWinelookSelection(hDlg, selection);
 	break;
       }
     case BN_CLICKED:

@@ -831,15 +831,9 @@ static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect, BO
     /* handle fontsize > bitmap_height */
     top = (h>bm.bmHeight) ? rect->top+(h-bm.bmHeight)/2 : rect->top;
     left=rect->left;
-    if (TWEAK_WineLook == WIN95_LOOK) {
-        rop=((lpitem->fState & MF_HILITE) && !IS_MAGIC_ITEM(lpitem->text)) ? NOTSRCCOPY : SRCCOPY;
-        if ((lpitem->fState & MF_HILITE) && IS_BITMAP_ITEM(lpitem->fType))
-            SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
-    } else {
-        left++;
-        w-=2;
-        rop=((lpitem->fState & MF_HILITE) && !IS_MAGIC_ITEM(lpitem->text) && (!menuBar)) ? MERGEPAINT : SRCCOPY;
-    }
+    rop=((lpitem->fState & MF_HILITE) && !IS_MAGIC_ITEM(lpitem->text)) ? NOTSRCCOPY : SRCCOPY;
+    if ((lpitem->fState & MF_HILITE) && IS_BITMAP_ITEM(lpitem->fType))
+        SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
     BitBlt( hdc, left, top, w, h, hdcMem, bmp_xoffset, 0, rop );
     DeleteDC( hdcMem );
 }
@@ -921,12 +915,9 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         MENU_GetBitmapItemSize( (int)lpitem->text, lpitem->dwItemData, &size );
         lpitem->rect.right  += size.cx;
         lpitem->rect.bottom += size.cy;
-        if (TWEAK_WineLook == WIN98_LOOK)
-        {
-            /* Leave space for the sunken border */
-            lpitem->rect.right  += 2;
-            lpitem->rect.bottom += 2;
-        }
+        /* Leave space for the sunken border */
+        lpitem->rect.right  += 2;
+        lpitem->rect.bottom += 2;
     }
 
 
@@ -1170,18 +1161,10 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     {
 	if (lpitem->fState & MF_HILITE)
 	{
-	    if(TWEAK_WineLook == WIN98_LOOK)
-	    {
-		if(menuBar)
-		    DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
-		else
-		    FillRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
-	    }
-	    else /* Not Win98 Look */
-	    {
-		if(!IS_BITMAP_ITEM(lpitem->fType))
-		    FillRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
-	    }
+	     if(menuBar)
+		DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
+	     else
+		FillRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
 	}
         else
 	    FillRect( hdc, &rect, GetSysColorBrush(COLOR_MENU) );
@@ -1216,24 +1199,15 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
     if (lpitem->fState & MF_HILITE)
     {
-	if(TWEAK_WineLook == WIN98_LOOK)
-	{
-            if(menuBar) {
-		SetTextColor(hdc, GetSysColor(COLOR_MENUTEXT));
-                SetBkColor(hdc, GetSysColor(COLOR_MENU));
-	    } else {
-		if(lpitem->fState & MF_GRAYED)
-		    SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
-		else
-		    SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
-                SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
-	    }
-	}
-	else /* Not Win98 Look */
-	{
-	    SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
-	    if(!IS_BITMAP_ITEM(lpitem->fType))
-		SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+        if(menuBar) {
+	    SetTextColor(hdc, GetSysColor(COLOR_MENUTEXT));
+            SetBkColor(hdc, GetSysColor(COLOR_MENU));
+	} else {
+	    if(lpitem->fState & MF_GRAYED)
+		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+	    else
+		SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+            SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
 	}
     }
     else
@@ -3186,23 +3160,22 @@ UINT WINAPI EnableMenuItem( HMENU hMenu, UINT wItemID, UINT wFlags )
     oldflags = item->fState & (MF_GRAYED | MF_DISABLED);
     item->fState ^= (oldflags ^ wFlags) & (MF_GRAYED | MF_DISABLED);
 
-    /* In win95 if the close item in the system menu change update the close button */
-    if (TWEAK_WineLook == WIN95_LOOK)
-	if((item->wID == SC_CLOSE) && (oldflags != wFlags))
+    /* If the close item in the system menu change update the close button */
+    if((item->wID == SC_CLOSE) && (oldflags != wFlags))
+    {
+	if (menu->hSysMenuOwner != 0)
 	{
-	    if (menu->hSysMenuOwner != 0)
-	    {
-		POPUPMENU* parentMenu;
+	    POPUPMENU* parentMenu;
 
-		/* Get the parent menu to access*/
-		if (!(parentMenu = MENU_GetMenu(menu->hSysMenuOwner)))
-		    return (UINT)-1;
+	    /* Get the parent menu to access*/
+	    if (!(parentMenu = MENU_GetMenu(menu->hSysMenuOwner)))
+		return (UINT)-1;
 
-		/* Refresh the frame to reflect the change*/
-		SetWindowPos(parentMenu->hWnd, 0, 0, 0, 0, 0,
-			     SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
-	    }
+	    /* Refresh the frame to reflect the change*/
+	    SetWindowPos(parentMenu->hWnd, 0, 0, 0, 0, 0,
+		         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
 	}
+    }
 
     return oldflags;
 }

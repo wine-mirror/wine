@@ -362,11 +362,6 @@
                 <entry>Specifies locations of windows registry files</entry>
               </row>
               <row>
-                <entry>[tweak.layout]</entry>
-                <entry>recmd</entry>
-                <entry>Appearance of Wine</entry>
-              </row>
-              <row>
                 <entry>[programs]</entry>
                 <entry>no</entry>
                 <entry>Programs to be run automatically</entry>
@@ -660,7 +655,7 @@
         </sect3>
 
         <sect3 id="config-debug-etc">
-          <title>The [Debug], [Registry], [tweak.layout], and [programs] Sections</title>
+          <title>The [Debug], [Registry], and [programs] Sections</title>
           <para>
             [Debug] is used to include or exclude debug messages, and to
             output them to a file. The latter is rarely used. <emphasis>These
@@ -714,16 +709,6 @@
           <para>
             <programlisting>"UserFileName" = "/dirs/to/user.reg"</programlisting>
             The location of your old <filename>user.reg</filename> file.
-          </para>
-          <para>
-            [tweak.layout] is devoted to wine's look. There is only
-            one setting for it.
-          </para>
-          <para>
-            <programlisting>"WineLook" = "win31|win95|win98"</programlisting>
-            Will change the look of wine from Windows 3.1 to Windows 95.
-            The <literal>win98</literal> setting behaves
-            just like <literal>win95</literal> most of the time.
           </para>
           <para>
             [programs] can be used to say what programs run under
@@ -2615,39 +2600,6 @@ the [Version] section.
 
 &fonts;
 &printing;
-
-<sect1 id="config-win95look">
-<title>Win95/98 Look And Feel</title>
-<para>
-Instead of compiling Wine for Win3.1 vs. Win95 using
-<constant>#define</constant> switches, the code now looks in a
-special [Tweak.Layout] section of
-<filename>~/.wine/config</filename> for a
-<literal>"WineLook" = "Win95"</literal> or
-<literal>"WineLook" = "Win98"</literal> entry.
-</para>
-<para>
-A few new sections and a number of entries have been added to
-the <filename>~/.wine/config</filename> file -- these are for
-debugging the Win95 tweaks only and may be removed in a future
-release!  These entries/sections are:
-</para>
-<programlisting>
-[Tweak.Fonts]
-"System.Height" = "&lt;point size>"    # Sets the height of the system typeface
-"System.Bold" = "[true|false]"      # Whether the system font should be boldfaced
-"System.Italic" = "[true|false]"    # Whether the system font should be italicized
-"System.Underline" = "[true|false]" # Whether the system font should be underlined
-"System.StrikeOut" = "[true|false]" # Whether the system font should be struck out
-"OEMFixed.xxx"                  # Same parameters for the OEM fixed typeface
-"AnsiFixed.xxx"                 # Same parameters for the Ansi fixed typeface
-"AnsiVar.xxx"                   # Same parameters for the Ansi variable typeface
-"SystemFixed.xxx"               # Same parameters for the System fixed typeface
-
-[Tweak.Layout]
-"WineLook" = "[Win31|Win95|Win98]"  # Changes Wine's look and feel
-</programlisting>
-</sect1>
 
     <sect1 id="config-scsi-support">
       <title>SCSI Support</title>

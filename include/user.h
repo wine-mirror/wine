@@ -136,16 +136,6 @@ extern void USER_CheckNotLock(void);
 
 extern BOOL USER_IsExitingThread( DWORD tid );
 
-/* Wine look */
-
-typedef enum
-{
-    WIN95_LOOK,
-    WIN98_LOOK
-} WINE_LOOK;
-
-extern WINE_LOOK TWEAK_WineLook;
-
 /* gray brush cache */
 extern HBRUSH CACHE_GetPattern55AABrush(void);
 

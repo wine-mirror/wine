@@ -466,15 +466,7 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
         LTInnerI = RBInnerI = LTRBInnerFlat[uType & (BDR_INNER|BDR_OUTER)];
         LTOuterI = RBOuterI = LTRBOuterFlat[uType & (BDR_INNER|BDR_OUTER)];
 
-        /* Bertho Stultiens states above that this function exactly matches win95
-         * In win98 BF_FLAT rectangles have an inner border same color as the
-	 * middle (COLOR_BTNFACE). I believe it's the same for win95 but since
-	 * I don't know I go with Bertho and just sets it for win98 until proven
-	 * otherwise.
-	 *                                          Dennis Björklund, 10 June, 99
-	 */
-	if( TWEAK_WineLook == WIN98_LOOK && LTInnerI != -1 )
-            LTInnerI = RBInnerI = COLOR_BTNFACE;
+	if( LTInnerI != -1 ) LTInnerI = RBInnerI = COLOR_BTNFACE;
     }
     else if(uFlags & BF_SOFT)
     {

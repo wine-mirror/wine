@@ -46,14 +46,6 @@ static VERSION_DESC sDOSVersions[] = {
     {"", ""}
 };
 
-static VERSION_DESC sWineLook[] = {
-    {"", "Use default(Global setting)"},
-    {"win31", "Windows 3.1"},
-    {"win95", "Windows 95"},
-    {"win98", "Windows 98"},
-    {"", ""}
-};
-
 #if 0
 static VERSION_DESC sWineDrivers[] = {
     {"x11drv", "X11 Interface"},
@@ -106,14 +98,6 @@ VERSION_DESC* getWinVersions(void)
 VERSION_DESC* getDOSVersions(void)
 {
     return sDOSVersions;
-}
-
-
-/*****************************************************************************
- */
-VERSION_DESC* getWinelook(void)
-{
-    return sWineLook;
 }
 
 

@@ -39,8 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 
 USER_DRIVER USER_Driver;
 
-WINE_LOOK TWEAK_WineLook = WIN95_LOOK;
-
 WORD USER_HeapSel = 0;  /* USER heap selector */
 HMODULE user32_module = 0;
 
@@ -151,37 +149,6 @@ static void palette_init(void)
 
 
 /***********************************************************************
- *           tweak_init
- */
-static void tweak_init(void)
-{
-    static const char *OS = "Win95";
-    char buffer[80];
-    HKEY hkey;
-    DWORD type, count = sizeof(buffer);
-
-    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Layout", &hkey ))
-        return;
-    if (RegQueryValueExA( hkey, "WineLook", 0, &type, buffer, &count ))
-        strcpy( buffer, "Win95" );  /* default value */
-    RegCloseKey( hkey );
-
-    /* WIN31_LOOK is default */
-    if (!strncasecmp( buffer, "Win95", 5 ))
-    {
-        TWEAK_WineLook = WIN95_LOOK;
-        OS = "Win95";
-    }
-    else if (!strncasecmp( buffer, "Win98", 5 ))
-    {
-        TWEAK_WineLook = WIN98_LOOK;
-        OS = "Win98";
-    }
-    TRACE("Using %s look and feel.\n", OS);
-}
-
-
-/***********************************************************************
  *           USER initialisation routine
  */
 static BOOL process_attach(void)
@@ -197,7 +164,6 @@ static BOOL process_attach(void)
     }
 
     /* Load the graphics driver */
-    tweak_init();
     if (!load_driver()) return FALSE;
 
     /* Initialize system colors and metrics */

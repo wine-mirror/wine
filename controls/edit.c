@@ -4374,13 +4374,8 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 		es->style |= ES_AUTOVSCROLL;
 	} else {
 		es->buffer_limit = BUFLIMIT_SINGLE;
-                if ( WIN95_LOOK == TWEAK_WineLook) {
-		        es->style &= ~ES_CENTER;
-		        es->style &= ~ES_RIGHT;
-                } else {
-			if (es->style & ES_RIGHT)
-				es->style &= ~ES_CENTER;
-                }
+		es->style &= ~ES_CENTER;
+		es->style &= ~ES_RIGHT;
 		es->style &= ~WS_HSCROLL;
 		es->style &= ~WS_VSCROLL;
 		es->style &= ~ES_AUTOVSCROLL;

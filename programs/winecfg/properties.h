@@ -89,7 +89,6 @@ typedef struct
 
 VERSION_DESC *getWinVersions(void);
 VERSION_DESC *getDOSVersions(void);
-VERSION_DESC *getWinelook(void);
 DLL_DESC *getDLLDefaults(void);
 AUDIO_DRIVER *getAudioDrivers(void);
 char* getVersionFromDescription(VERSION_DESC *pVer, char *desc);
