@@ -415,7 +415,7 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
     DWORD *args, ret;
     DWORD mutex_count;
     VA_LIST16 valist;
-    int i;
+    unsigned int i;
     int aix;
 
     ReleaseThunkLock( &mutex_count );
@@ -485,6 +485,10 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
     case 12:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
             break;
     case 13:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12]);
+            break;
+    case 14:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13]);
+            break;
+    case 15:ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12],args[13],args[14]);
             break;
     default:
             /* FIXME: should go up to 32  arguments */
