@@ -366,26 +366,6 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
      public: virtual ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j) = 0;
 
 
-#define ICOM_CMETHOD(ret,xfn) \
-     public: virtual ret (CALLBACK xfn)(void) const = 0;
-#define ICOM_CMETHOD1(ret,xfn,ta,na) \
-     public: virtual ret (CALLBACK xfn)(ta a) const = 0;
-#define ICOM_CMETHOD2(ret,xfn,ta,na,tb,nb) \
-     public: virtual ret (CALLBACK xfn)(ta a,tb b) const = 0;
-#define ICOM_CMETHOD3(ret,xfn,ta,na,tb,nb,tc,nc) \
-     public: virtual ret (CALLBACK xfn)(ta a,tb b,tc c) const = 0;
-#define ICOM_CMETHOD4(ret,xfn,ta,na,tb,nb,tc,nc,td,nd) \
-     public: virtual ret (CALLBACK xfn)(ta a,tb b,tc c,td d) const = 0;
-#define ICOM_CMETHOD5(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-     public: virtual ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e) const = 0;
-#define ICOM_CMETHOD6(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-     public: virtual ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f) const = 0;
-#define ICOM_CMETHOD7(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-     public: virtual ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g) const = 0;
-#define ICOM_CMETHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
-     public: virtual ret (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) const = 0;
-
-
 #define ICOM_VMETHOD(xfn) \
      public: virtual void (CALLBACK xfn)(void) = 0;
 #define ICOM_VMETHOD1(xfn,ta,na) \
@@ -405,25 +385,6 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
 #define ICOM_VMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
      public: virtual void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) = 0;
 
-
-#define ICOM_CVMETHOD(xfn) \
-     public: virtual void (CALLBACK xfn)(void) const = 0;
-#define ICOM_CVMETHOD1(xfn,ta,na) \
-     public: virtual void (CALLBACK xfn)(ta a) const = 0;
-#define ICOM_CVMETHOD2(xfn,ta,na,tb,nb) \
-     public: virtual void (CALLBACK xfn)(ta a,tb b) const = 0;
-#define ICOM_CVMETHOD3(xfn,ta,na,tb,nb,tc,nc) \
-     public: virtual void (CALLBACK xfn)(ta a,tb b,tc c) const = 0;
-#define ICOM_CVMETHOD4(xfn,ta,na,tb,nb,tc,nc,td,nd) \
-     public: virtual void (CALLBACK xfn)(ta a,tb b,tc c,td d) const = 0;
-#define ICOM_CVMETHOD5(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-     public: virtual void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e) const = 0;
-#define ICOM_CVMETHOD6(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-     public: virtual void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f) const = 0;
-#define ICOM_CVMETHOD7(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-     public: virtual void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g) const = 0;
-#define ICOM_CVMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
-     public: virtual void (CALLBACK xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) const = 0;
 
 #ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
 
@@ -481,25 +442,6 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
 #define ICOM_METHOD10(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj) \
     ret (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
 
-#define ICOM_CMETHOD(ret,xfn) \
-        ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me);
-#define ICOM_CMETHOD1(ret,xfn,ta,na) \
-    ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a);
-#define ICOM_CMETHOD2(ret,xfn,ta,na,tb,nb) \
-    ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b);
-#define ICOM_CMETHOD3(ret,xfn,ta,na,tb,nb,tc,nc) \
-    ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c);
-#define ICOM_CMETHOD4(ret,xfn,ta,na,tb,nb,tc,nc,td,nd) \
-    ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d);
-#define ICOM_CMETHOD5(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-    ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e);
-#define ICOM_CMETHOD6(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-    ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f);
-#define ICOM_CMETHOD7(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-    ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
-#define ICOM_CMETHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
-    ret (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
-
 #define ICOM_VMETHOD(xfn) \
     void (CALLBACK *fn##xfn)(ICOM_INTERFACE* me);
 #define ICOM_VMETHOD1(xfn,ta,na) \
@@ -518,25 +460,6 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
     void (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
 #define ICOM_VMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,nh) \
     void (CALLBACK *fn##xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
-
-#define ICOM_CVMETHOD(xfn) \
-        void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me);
-#define ICOM_CVMETHOD1(xfn,ta,na) \
-    void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a);
-#define ICOM_CVMETHOD2(xfn,ta,na,tb,nb) \
-    void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b);
-#define ICOM_CVMETHOD3(xfn,ta,na,tb,nb,tc,nc) \
-    void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c);
-#define ICOM_CVMETHOD4(xfn,ta,na,tb,nb,tc,nc,td,nd) \
-    void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d);
-#define ICOM_CVMETHOD5(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-    void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e);
-#define ICOM_CVMETHOD6(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-    void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f);
-#define ICOM_CVMETHOD7(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-    void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
-#define ICOM_CVMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
-    void (CALLBACK *fn##xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
 
 #define ICOM_CALL(xfn, p)                       ICOM_VTBL(p)->fn##xfn(p)
 #define ICOM_CALL1(xfn, p,a)                    ICOM_VTBL(p)->fn##xfn(p,a)
@@ -576,25 +499,6 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
     ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i);
 #define ICOM_METHOD10(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj) \
     ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
-
-#define ICOM_CMETHOD(ret,xfn) \
-        ret (CALLBACK *xfn)(const ICOM_INTERFACE* me);
-#define ICOM_CMETHOD1(ret,xfn,ta,na) \
-    ret (CALLBACK *xfn)(const ICOM_INTERFACE* me,ta a);
-#define ICOM_CMETHOD2(ret,xfn,ta,na,tb,nb) \
-    ret (CALLBACK *xfn)(const ICOM_INTERFACE* me,ta a,tb b);
-#define ICOM_CMETHOD3(ret,xfn,ta,na,tb,nb,tc,nc) \
-    ret (CALLBACK *xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c);
-#define ICOM_CMETHOD4(ret,xfn,ta,na,tb,nb,tc,nc,td,nd) \
-    ret (CALLBACK *xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d);
-#define ICOM_CMETHOD5(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-    ret (CALLBACK *xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e);
-#define ICOM_CMETHOD6(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-    ret (CALLBACK *xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f);
-#define ICOM_CMETHOD7(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-    ret (CALLBACK *xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
-#define ICOM_CMETHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
-    ret (CALLBACK *xfn)(const ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
 
 #define ICOM_VMETHOD(xfn) \
     void (CALLBACK *xfn)(ICOM_INTERFACE* me);
@@ -771,8 +675,8 @@ ICOM_DEFINE(IClassFactory,IUnknown)
     ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb) \
     ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb) \
     ICOM_VMETHOD1(       Free,        LPVOID,pv) \
-    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv) \
-    ICOM_CMETHOD1(INT16, DidAlloc,    LPVOID,pv) \
+    ICOM_METHOD1(DWORD, GetSize,     LPVOID,pv) \
+    ICOM_METHOD1(INT16, DidAlloc,    LPVOID,pv) \
     ICOM_METHOD  (LPVOID,HeapMinimize)
 #define IMalloc16_IMETHODS \
     IUnknown_IMETHODS \
@@ -798,9 +702,9 @@ ICOM_DEFINE(IMalloc16,IUnknown)
     ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb) \
     ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb) \
     ICOM_VMETHOD1(       Free,        LPVOID,pv) \
-    ICOM_CMETHOD1(DWORD, GetSize,     LPVOID,pv) \
-    ICOM_CMETHOD1(INT, DidAlloc,    LPVOID,pv) \
-    ICOM_METHOD  (LPVOID,HeapMinimize)
+    ICOM_METHOD1(DWORD, GetSize,     LPVOID,pv) \
+    ICOM_METHOD1(INT, DidAlloc,    LPVOID,pv) \
+    ICOM_METHOD  (VOID,  HeapMinimize)
 #define IMalloc_IMETHODS \
     IUnknown_IMETHODS \
     IMalloc_METHODS

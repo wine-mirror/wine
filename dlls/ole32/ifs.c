@@ -318,10 +318,9 @@ static INT WINAPI IMalloc_fnDidAlloc(const IMalloc* iface,LPVOID pv) {
 /******************************************************************************
  * IMalloc32_HeapMinimize [VTABLE]
  */
-static LPVOID WINAPI IMalloc_fnHeapMinimize(LPMALLOC iface) {
+static VOID WINAPI IMalloc_fnHeapMinimize(LPMALLOC iface) {
 	ICOM_THIS(IMalloc32Impl,iface);
 	TRACE("(%p)->HeapMinimize()\n",This);
-	return NULL;
 }
 
 static ICOM_VTABLE(IMalloc) VT_IMalloc32 = 
