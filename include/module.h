@@ -227,6 +227,7 @@ extern BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum );
 extern BOOL NE_CreateAllSegments( NE_MODULE *pModule );
 extern HINSTANCE16 NE_GetInstance( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE16 hModule );
+extern void NE_DllProcessAttach( HMODULE16 hModule );
 
 /* loader/ne/convert.c */
 HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size );

@@ -971,7 +971,10 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 				 * when we load implicitly linked DLLs this will be done by InitTask().
 				 */
 				if(pModule->flags & NE_FFLAGS_LIBMODULE)
+				{
 					NE_InitializeDLLs(hModule);
+					NE_DllProcessAttach(hModule);
+				}
 			}
 			return hinst;
 		}
@@ -1268,7 +1271,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
 
             /* Free the objects owned by the DLL module */
             TASK_CallTaskSignalProc( USIG16_DLL_UNLOAD, hModule );
-            PROCESS_CallUserSignalProc( USIG_DLL_UNLOAD_WIN16, hModule );
+            PROCESS_CallUserSignalProc( USIG_DLL_UNLOAD_WIN16, 0, hModule );
         }
         else
             call_wep = FALSE;  /* We are freeing a task -> no more WEPs */

@@ -25,6 +25,7 @@
 #include "file.h"
 #include "module.h"
 #include "stackframe.h"
+#include "builtin16.h"
 #include "debugtools.h"
 #include "xmalloc.h"
 #include "toolhelp.h"
@@ -614,50 +615,6 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 }
 
 /***********************************************************************
- *           NE_CallDllEntryPoint
- *
- * Call the DllEntryPoint of DLLs with subsystem >= 4.0 
- */
-
-static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
-{
-    WORD hInst, ds, heap;
-    FARPROC16 entryPoint;
-    WORD ordinal;
-    CONTEXT86 context;
-    LPBYTE stack = (LPBYTE)CURRENT_STACK16;
-
-    if (!(pModule->flags & NE_FFLAGS_BUILTIN) && pModule->expected_version < 0x0400) return;
-    if (!(ordinal = NE_GetOrdinal( pModule->self, "DllEntryPoint" ))) return;
-    if (!(entryPoint = NE_GetEntryPoint( pModule->self, ordinal ))) return;
-
-    memset( &context, 0, sizeof(context) );
-
-    NE_GetDLLInitParams( pModule, &hInst, &ds, &heap );
-
-    DS_reg(&context) = ds;
-    ES_reg(&context) = ds;   /* who knows ... */
-
-    CS_reg(&context) = HIWORD(entryPoint);
-    EIP_reg(&context) = LOWORD(entryPoint);
-    EBP_reg(&context) =  OFFSETOF( NtCurrentTeb()->cur_stack )
-                         + (WORD)&((STACK16FRAME*)0)->bp;
-
-    *(DWORD *)(stack -  4) = dwReason;      /* dwReason */
-    *(WORD *) (stack -  6) = hInst;         /* hInst */
-    *(WORD *) (stack -  8) = ds;            /* wDS */
-    *(WORD *) (stack - 10) = heap;          /* wHeapSize */
-    *(DWORD *)(stack - 14) = 0;             /* dwReserved1 */
-    *(WORD *) (stack - 16) = 0;             /* wReserved2 */
-
-    TRACE_(dll)("Calling DllEntryPoint, cs:ip=%04lx:%04lx\n",
-          CS_reg(&context), EIP_reg(&context));
-
-    Callbacks->CallRegisterShortProc( &context, 16 );
-}
-
-
-/***********************************************************************
  *           NE_InitializeDLLs
  *
  * Recursively initialize all DLLs (according to the order in which 
@@ -683,7 +640,116 @@ void NE_InitializeDLLs( HMODULE16 hModule )
         GlobalFree16( to_init );
     }
     NE_InitDLL( pTask, pModule );
+}
+
+
+/***********************************************************************
+ *           NE_CallDllEntryPoint
+ *
+ * Call the DllEntryPoint of DLLs with subsystem >= 4.0 
+ */
+
+static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
+{
+    WORD hInst, ds, heap;
+    FARPROC16 entryPoint;
+    WORD ordinal;
+
+    if (!(pModule->flags & NE_FFLAGS_LIBMODULE)) return;
+    if (!(pModule->flags & NE_FFLAGS_BUILTIN) && pModule->expected_version < 0x0400) return;
+    if (!(ordinal = NE_GetOrdinal( pModule->self, "DllEntryPoint" ))) return;
+    if (!(entryPoint = NE_GetEntryPoint( pModule->self, ordinal ))) return;
+
+    NE_GetDLLInitParams( pModule, &hInst, &ds, &heap );
+
+    TRACE_(dll)( "Calling %s DllEntryPoint, cs:ip=%04x:%04x\n",
+                 NE_MODULE_NAME( pModule ),
+                 SELECTOROF(entryPoint), OFFSETOF(entryPoint) );
+
+    if ( pModule->flags & NE_FFLAGS_BUILTIN )
+    {
+        DWORD WINAPI (*entryProc)(DWORD,WORD,WORD,WORD,DWORD,WORD) =
+              (DWORD WINAPI (*)(DWORD,WORD,WORD,WORD,DWORD,WORD))
+              ((ENTRYPOINT16 *)PTR_SEG_TO_LIN( entryPoint ))->target;
+
+        entryProc( dwReason, hInst, ds, heap, 0, 0 );
+    }
+    else
+    {
+        LPBYTE stack = (LPBYTE)CURRENT_STACK16;
+        CONTEXT86 context;
+
+        memset( &context, 0, sizeof(context) );
+        DS_reg(&context) = ds;
+        ES_reg(&context) = ds;   /* who knows ... */
+
+        CS_reg(&context) = HIWORD(entryPoint);
+        EIP_reg(&context) = LOWORD(entryPoint);
+        EBP_reg(&context) =  OFFSETOF( NtCurrentTeb()->cur_stack )
+                             + (WORD)&((STACK16FRAME*)0)->bp;
+
+        *(DWORD *)(stack -  4) = dwReason;      /* dwReason */
+        *(WORD *) (stack -  6) = hInst;         /* hInst */
+        *(WORD *) (stack -  8) = ds;            /* wDS */
+        *(WORD *) (stack - 10) = heap;          /* wHeapSize */
+        *(DWORD *)(stack - 14) = 0;             /* dwReserved1 */
+        *(WORD *) (stack - 16) = 0;             /* wReserved2 */
+
+        Callbacks->CallRegisterShortProc( &context, 16 );
+    }
+}
+
+/***********************************************************************
+ *           NE_DllProcessAttach
+ * 
+ * Call the DllEntryPoint of all modules this one (recursively)
+ * depends on, according to the order in which they were loaded.
+ *
+ * Note that --as opposed to the PE module case-- there is no notion
+ * of 'module loaded into a process' for NE modules, and hence we 
+ * have no place to store the fact that the DllEntryPoint of a
+ * given module was already called on behalf of this process (e.g.
+ * due to some earlier LoadLibrary16 call).
+ *
+ * Thus, we just call the DllEntryPoint twice in that case.  Win9x
+ * appears to behave this way as well ...
+ *
+ * This routine must only be called with the Win16Lock held.
+ * 
+ * FIXME:  We should actually abort loading in case the DllEntryPoint
+ *         returns FALSE ...
+ *
+ */
+void NE_DllProcessAttach( HMODULE16 hModule )
+{
+    NE_MODULE *pModule;
+    WORD *pModRef;
+    int i;
+
+    if (!(pModule = NE_GetPtr( hModule ))) return;
+    assert( !(pModule->flags & NE_FFLAGS_WIN32) );
+
+    /* Check for recursive call */
+    if ( pModule->misc_flags & 0x80 ) return;
+
+    TRACE_(dll)("(%s) - START\n", NE_MODULE_NAME(pModule) );
+
+    /* Tag current module to prevent recursive loop */
+    pModule->misc_flags |= 0x80;
+
+    /* Recursively attach all DLLs this one depends on */
+    pModRef = NE_MODULE_TABLE( pModule );
+    for ( i = 0; i < pModule->modref_count; i++ )
+        if ( pModRef[i] )
+            NE_DllProcessAttach( (HMODULE16)pModRef[i] );
+
+    /* Call DLL entry point */
     NE_CallDllEntryPoint( pModule, DLL_PROCESS_ATTACH );
+
+    /* Remove recursion flag */
+    pModule->misc_flags &= ~0x80;
+
+    TRACE_(dll)("(%s) - END\n", NE_MODULE_NAME(pModule) );
 }
 
 
