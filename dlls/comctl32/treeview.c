@@ -838,6 +838,8 @@ TREEVIEW_FreeItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 {
     DPA_DeletePtr(infoPtr->items, DPA_GetPtrIndex(infoPtr->items, item));
     COMCTL32_Free(item);
+    if (infoPtr->selectedItem == item)
+        infoPtr->selectedItem = NULL;
 }
 
 
