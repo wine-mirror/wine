@@ -9,6 +9,7 @@
 
 #include "windef.h"
 #include "module.h"
+#include "thread.h"
 
 struct _NE_MODULE;
 struct _THREAD_ENTRY;
@@ -154,7 +155,6 @@ extern void ENV_FreeEnvironment( PDB *pdb );
 
 /* scheduler/process.c */
 extern BOOL PROCESS_Init( void );
-extern PDB *PROCESS_Current(void);
 extern BOOL PROCESS_IsCurrent( HANDLE handle );
 extern PDB *PROCESS_Initial(void);
 extern PDB *PROCESS_IdToPDB( DWORD id );
@@ -174,5 +174,10 @@ extern DWORD DEBUG_SendCreateProcessEvent( HFILE file, HMODULE module, void *ent
 extern DWORD DEBUG_SendCreateThreadEvent( void *entry );
 extern DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR name );
 extern DWORD DEBUG_SendUnloadDLLEvent( HMODULE module );
+
+static inline PDB *PROCESS_Current(void)
+{
+    return NtCurrentTeb()->process;
+}
 
 #endif  /* __WINE_PROCESS_H */

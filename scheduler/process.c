@@ -61,14 +61,6 @@ void PROCESS_WalkProcess(void)
 }
 
 /***********************************************************************
- *           PROCESS_Current
- */
-PDB *PROCESS_Current(void)
-{
-    return THREAD_Current()->process;
-}
-
-/***********************************************************************
  *           PROCESS_Initial
  *
  * FIXME: This works only while running all processes in the same
@@ -354,7 +346,7 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
  */
 BOOL PROCESS_Init(void)
 {
-    THDB *thdb;
+    TEB *teb;
     int server_fd;
 
     /* Start the server */
@@ -374,10 +366,10 @@ BOOL PROCESS_Init(void)
     if (!VIRTUAL_Init()) return FALSE;
 
     /* Create the initial thread structure and socket pair */
-    if (!(thdb = THREAD_CreateInitialThread( &initial_pdb, server_fd ))) return FALSE;
+    if (!(teb = THREAD_CreateInitialThread( &initial_pdb, server_fd ))) return FALSE;
 
     /* Remember TEB selector of initial process for emergency use */
-    SYSLEVEL_EmergencyTeb = thdb->teb_sel;
+    SYSLEVEL_EmergencyTeb = teb->teb_sel;
 
     /* Create the system heap */
     if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
@@ -405,8 +397,7 @@ void PROCESS_Start(void)
 {
     UINT cmdShow = 0;
     LPTHREAD_START_ROUTINE entry = NULL;
-    THDB *thdb = THREAD_Current();
-    PDB *pdb = thdb->process;
+    PDB *pdb = PROCESS_Current();
     NE_MODULE *pModule = NE_GetPtr( pdb->module );
     OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
     IMAGE_OPTIONAL_HEADER *header = !pModule->module32? NULL :
@@ -437,7 +428,7 @@ void PROCESS_Start(void)
     /* Create a task for this process */
     if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
         cmdShow = pdb->env_db->startup_info->wShowWindow;
-    if (!TASK_Create( thdb, pModule, pdb->hInstance, pdb->hPrevInstance, cmdShow ))
+    if (!TASK_Create( pModule, pdb->hInstance, pdb->hPrevInstance, cmdShow ))
         goto error;
 
     /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
@@ -534,7 +525,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     int server_thandle;
     struct new_process_request req;
     struct new_process_reply reply;
-    THDB *thdb = NULL;
+    TEB *teb = NULL;
     PDB *parent = PROCESS_Current();
     PDB *pdb = PROCESS_CreatePDB( parent, inherit );
 
@@ -592,11 +583,11 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     /* Create the main thread */
 
-    if (!(thdb = THREAD_Create( pdb, 0L, size, hInstance == 0, tsa, &server_thandle ))) 
+    if (!(teb = THREAD_Create( pdb, 0L, size, hInstance == 0, tsa, &server_thandle ))) 
         goto error;
     info->hThread     = server_thandle;
-    info->dwThreadId  = (DWORD)thdb->teb.tid;
-    thdb->startup     = PROCESS_Start;
+    info->dwThreadId  = (DWORD)teb->tid;
+    teb->startup = PROCESS_Start;
 
     /* Create the load-done event */
     load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL );
@@ -607,7 +598,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     pdb->module = pModule->self;
     pdb->hInstance = hInstance;
     pdb->hPrevInstance = hPrevInstance;
-    SYSDEPS_SpawnThread( thdb );
+    SYSDEPS_SpawnThread( teb );
 
     /* Wait until process is initialized (or initialization failed) */
     handles[0] = info->hProcess;
@@ -720,7 +711,7 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
 
     case GPD_THDB:
         if ( process != PROCESS_Current() ) return 0;
-        return (DWORD)THREAD_Current();
+        return (DWORD)NtCurrentTeb() - 0x10 /* FIXME */;
 
     case GPD_PDB:
         return (DWORD)process;
@@ -1146,3 +1137,13 @@ DWORD WINAPI GetProcessHeaps(DWORD nrofheaps,HANDLE *heaps) {
 	return 1;
 }
 
+
+/***********************************************************************
+ *           SetErrorMode   (KERNEL32.486)
+ */
+UINT WINAPI SetErrorMode( UINT mode )
+{
+    UINT old = PROCESS_Current()->error_mode;
+    PROCESS_Current()->error_mode = mode;
+    return old;
+}

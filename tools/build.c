@@ -177,7 +177,7 @@ static int debugging = 1;
 #define CONTEXTOFFSET(reg)  STRUCTOFFSET(CONTEXT,reg)
 
   /* Offset of the stack pointer relative to %fs:(0) */
-#define STACKOFFSET (STRUCTOFFSET(THDB,cur_stack) - STRUCTOFFSET(THDB,teb))
+#define STACKOFFSET (STRUCTOFFSET(TEB,cur_stack))
 
 
 static void *xmalloc (size_t size)

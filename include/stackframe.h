@@ -47,8 +47,8 @@ typedef struct
 
 #include "poppack.h"
 
-#define THREAD_STACK16(thdb) ((STACK16FRAME*)PTR_SEG_TO_LIN((thdb)->cur_stack))
-#define CURRENT_STACK16      (THREAD_STACK16(THREAD_Current()))
+#define THREAD_STACK16(teb)  ((STACK16FRAME*)PTR_SEG_TO_LIN((teb)->cur_stack))
+#define CURRENT_STACK16      (THREAD_STACK16(NtCurrentTeb()))
 #define CURRENT_DS           (CURRENT_STACK16->ds)
 
 /* varargs lists on the 16-bit stack */
@@ -66,17 +66,17 @@ typedef void *VA_LIST16;
 /* Push bytes on the 16-bit stack of a thread;
  * return a segptr to the first pushed byte
  */
-#define STACK16_PUSH(thdb,size) \
- (memmove((char*)THREAD_STACK16(thdb)-(size),THREAD_STACK16(thdb), \
+#define STACK16_PUSH(teb,size) \
+ (memmove((char*)THREAD_STACK16(teb)-(size),THREAD_STACK16(teb), \
           sizeof(STACK16FRAME)), \
-  (thdb)->cur_stack -= (size), \
-  (SEGPTR)((thdb)->cur_stack + sizeof(STACK16FRAME)))
+  (teb)->cur_stack -= (size), \
+  (SEGPTR)((teb)->cur_stack + sizeof(STACK16FRAME)))
 
 /* Pop bytes from the 16-bit stack of a thread */
-#define STACK16_POP(thdb,size) \
- (memmove((char*)THREAD_STACK16(thdb)+(size),THREAD_STACK16(thdb), \
+#define STACK16_POP(teb,size) \
+ (memmove((char*)THREAD_STACK16(teb)+(size),THREAD_STACK16(teb), \
           sizeof(STACK16FRAME)), \
-  (thdb)->cur_stack += (size))
+  (teb)->cur_stack += (size))
 
 /* Push a DWORD on the 32-bit stack */
 #define STACK32_PUSH(context,val) (*--(*(DWORD **)&ESP_reg(context)) = (val))

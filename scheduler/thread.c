@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include "wine/winbase16.h"
 #include "thread.h"
@@ -28,40 +29,40 @@
 
 DEFAULT_DEBUG_CHANNEL(thread)
 
-/* THDB of the initial thread */
-static THDB initial_thdb;
+/* TEB of the initial thread */
+static TEB initial_teb;
 
 /* Global thread list (FIXME: not thread-safe) */
-THDB *THREAD_First = &initial_thdb;
+TEB *THREAD_First = &initial_teb;
 
 /***********************************************************************
  *           THREAD_IsWin16
  */
-BOOL THREAD_IsWin16( THDB *thdb )
+BOOL THREAD_IsWin16( TEB *teb )
 {
-    return !thdb || !(thdb->teb.flags & TEBF_WIN32);
+    return !teb || !(teb->flags & TEBF_WIN32);
 }
 
 /***********************************************************************
- *           THREAD_IdToTHDB
+ *           THREAD_IdToTEB
  *
- * Convert a thread id to a THDB, making sure it is valid.
+ * Convert a thread id to a TEB, making sure it is valid.
  */
-THDB *THREAD_IdToTHDB( DWORD id )
+TEB *THREAD_IdToTEB( DWORD id )
 {
-    THDB *thdb = THREAD_First;
+    TEB *teb = THREAD_First;
 
-    if (!id) return THREAD_Current();
-    while (thdb)
+    if (!id) return NtCurrentTeb();
+    while (teb)
     {
-        if ((DWORD)thdb->teb.tid == id) return thdb;
-        thdb = thdb->next;
+        if ((DWORD)teb->tid == id) return teb;
+        teb = teb->next;
     }
     /* Allow task handles to be used; convert to main thread */
     if ( IsTask16( id ) )
     {
         TDB *pTask = (TDB *)GlobalLock16( id );
-        if (pTask) return pTask->thdb;
+        if (pTask) return pTask->teb;
     }
     SetLastError( ERROR_INVALID_PARAMETER );
     return NULL;
@@ -69,12 +70,12 @@ THDB *THREAD_IdToTHDB( DWORD id )
 
 
 /***********************************************************************
- *           THREAD_InitTHDB
+ *           THREAD_InitTEB
  *
- * Initialization of a newly created THDB.
+ * Initialization of a newly created TEB.
  */
-static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
-                             LPSECURITY_ATTRIBUTES sa )
+static BOOL THREAD_InitTEB( TEB *teb, DWORD stack_size, BOOL alloc_stack16,
+                            LPSECURITY_ATTRIBUTES sa )
 {
     DWORD old_prot;
 
@@ -92,71 +93,71 @@ static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
     	stack_size = 1024 * 1024;
     if (stack_size >= 16*1024*1024)
     	WARN("Thread stack size is %ld MB.\n",stack_size/1024/1024);
-    thdb->stack_base = VirtualAlloc(NULL, stack_size + SIGNAL_STACK_SIZE +
-                                    (alloc_stack16 ? 0x10000 : 0),
-                                    MEM_COMMIT, PAGE_EXECUTE_READWRITE );
-    if (!thdb->stack_base) goto error;
+    teb->stack_base = VirtualAlloc(NULL, stack_size + SIGNAL_STACK_SIZE +
+                                   (alloc_stack16 ? 0x10000 : 0),
+                                   MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    if (!teb->stack_base) goto error;
     /* Set a guard page at the bottom of the stack */
-    VirtualProtect( thdb->stack_base, 1, PAGE_EXECUTE_READWRITE | PAGE_GUARD,
-                    &old_prot );
-    thdb->teb.stack_top   = (char *)thdb->stack_base + stack_size;
-    thdb->teb.stack_low   = thdb->stack_base;
-    thdb->signal_stack    = thdb->teb.stack_top;  /* start of signal stack */
+    VirtualProtect( teb->stack_base, 1, PAGE_EXECUTE_READWRITE | PAGE_GUARD, &old_prot );
+    teb->stack_top    = (char *)teb->stack_base + stack_size;
+    teb->stack_low    = teb->stack_base;
+    teb->signal_stack = teb->stack_top;  /* start of signal stack */
 
     /* Allocate the 16-bit stack selector */
 
     if (alloc_stack16)
     {
-        thdb->teb.stack_sel = SELECTOR_AllocBlock( thdb->teb.stack_top,
-                                                   0x10000, SEGMENT_DATA,
-                                                   FALSE, FALSE );
-        if (!thdb->teb.stack_sel) goto error;
-        thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( thdb->teb.stack_sel, 
-                                                 0x10000 - sizeof(STACK16FRAME) );
-        thdb->signal_stack = (char *)thdb->signal_stack + 0x10000;
+        teb->stack_sel = SELECTOR_AllocBlock( teb->stack_top, 0x10000, SEGMENT_DATA,
+                                              FALSE, FALSE );
+        if (!teb->stack_sel) goto error;
+        teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( teb->stack_sel, 
+                                                0x10000 - sizeof(STACK16FRAME) );
+        teb->signal_stack = (char *)teb->signal_stack + 0x10000;
     }
 
     /* Create the thread event */
 
-    if (!(thdb->event = CreateEventA( NULL, FALSE, FALSE, NULL ))) goto error;
-    thdb->event = ConvertToGlobalHandle( thdb->event );
+    if (!(teb->event = CreateEventA( NULL, FALSE, FALSE, NULL ))) goto error;
+    teb->event = ConvertToGlobalHandle( teb->event );
     return TRUE;
 
 error:
-    if (thdb->event) CloseHandle( thdb->event );
-    if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
-    if (thdb->stack_base) VirtualFree( thdb->stack_base, 0, MEM_RELEASE );
+    if (teb->event) CloseHandle( teb->event );
+    if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
+    if (teb->stack_base) VirtualFree( teb->stack_base, 0, MEM_RELEASE );
     return FALSE;
 }
 
 
 /***********************************************************************
- *           THREAD_FreeTHDB
+ *           THREAD_FreeTEB
  *
  * Free data structures associated with a thread.
  * Must be called from the context of another thread.
  */
-void CALLBACK THREAD_FreeTHDB( ULONG_PTR arg )
+void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
 {
-    THDB *thdb = (THDB *)arg;
-    THDB **pptr = &THREAD_First;
+    TEB *teb = (TEB *)arg;
+    TEB **pptr = &THREAD_First;
 
-    TRACE("(%p) called\n", thdb );
-    SERVICE_Delete( thdb->cleanup );
+    TRACE("(%p) called\n", teb );
+    SERVICE_Delete( teb->cleanup );
 
     PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
     
-    CloseHandle( thdb->event );
-    while (*pptr && (*pptr != thdb)) pptr = &(*pptr)->next;
-    if (*pptr) *pptr = thdb->next;
+    CloseHandle( teb->event );
+    while (*pptr && (*pptr != teb)) pptr = &(*pptr)->next;
+    if (*pptr) *pptr = teb->next;
 
     /* Free the associated memory */
 
-    if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
-    SELECTOR_FreeBlock( thdb->teb_sel, 1 );
-    close( thdb->socket );
-    VirtualFree( thdb->stack_base, 0, MEM_RELEASE );
-    HeapFree( SystemHeap, HEAP_NO_SERIALIZE, thdb );
+    if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
+    SELECTOR_FreeBlock( teb->teb_sel, 1 );
+    close( teb->socket );
+    if (teb->buffer)
+        munmap( teb->buffer, (char *)teb->buffer_end - (char *)teb->buffer );
+    VirtualFree( teb->stack_base, 0, MEM_RELEASE );
+    HeapFree( SystemHeap, 0, teb );
 }
 
 
@@ -165,39 +166,38 @@ void CALLBACK THREAD_FreeTHDB( ULONG_PTR arg )
  *
  * Create the initial thread.
  */
-THDB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
+TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
 {
-    initial_thdb.process         = pdb;
-    initial_thdb.teb.except      = (void *)-1;
-    initial_thdb.teb.self        = &initial_thdb.teb;
-    initial_thdb.teb.flags       = /* TEBF_WIN32 */ 0;
-    initial_thdb.teb.tls_ptr     = initial_thdb.tls_array;
-    initial_thdb.teb.process     = pdb;
-    initial_thdb.exit_code       = 0x103; /* STILL_ACTIVE */
-    initial_thdb.socket          = server_fd;
+    initial_teb.except      = (void *)-1;
+    initial_teb.self        = &initial_teb;
+    initial_teb.flags       = /* TEBF_WIN32 */ 0;
+    initial_teb.tls_ptr     = initial_teb.tls_array;
+    initial_teb.process     = pdb;
+    initial_teb.exit_code   = 0x103; /* STILL_ACTIVE */
+    initial_teb.socket      = server_fd;
 
     /* Allocate the TEB selector (%fs register) */
 
-    if (!(initial_thdb.teb_sel = SELECTOR_AllocBlock( &initial_thdb.teb, 0x1000,
-                                                      SEGMENT_DATA, TRUE, FALSE )))
+    if (!(initial_teb.teb_sel = SELECTOR_AllocBlock( &initial_teb, 0x1000,
+                                                     SEGMENT_DATA, TRUE, FALSE )))
     {
         MESSAGE("Could not allocate fs register for initial thread\n" );
         return NULL;
     }
-    SYSDEPS_SetCurThread( &initial_thdb );
+    SYSDEPS_SetCurThread( &initial_teb );
 
     /* Now proceed with normal initialization */
 
     if (CLIENT_InitThread()) return NULL;
-    if (!THREAD_InitTHDB( &initial_thdb, 0, TRUE, NULL )) return NULL;
-    return &initial_thdb;
+    if (!THREAD_InitTEB( &initial_teb, 0, TRUE, NULL )) return NULL;
+    return &initial_teb;
 }
 
 
 /***********************************************************************
  *           THREAD_Create
  */
-THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
+TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
                      LPSECURITY_ATTRIBUTES sa, int *server_handle )
 {
     struct new_thread_request request;
@@ -205,24 +205,21 @@ THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16
     int fd[2];
     HANDLE cleanup_object;
 
-    THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
-    if (!thdb) return NULL;
-    thdb->process         = pdb;
-    thdb->teb.except      = (void *)-1;
-    thdb->teb.htask16     = pdb->task;
-    thdb->teb.self        = &thdb->teb;
-    thdb->teb.flags       = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
-    thdb->teb.tls_ptr     = thdb->tls_array;
-    thdb->teb.process     = pdb;
-    thdb->exit_code       = 0x103; /* STILL_ACTIVE */
-    thdb->flags           = flags;
-    thdb->socket          = -1;
+    TEB *teb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(TEB) );
+    if (!teb) return NULL;
+    teb->except      = (void *)-1;
+    teb->htask16     = pdb->task;
+    teb->self        = teb;
+    teb->flags       = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
+    teb->tls_ptr     = teb->tls_array;
+    teb->process     = pdb;
+    teb->exit_code   = 0x103; /* STILL_ACTIVE */
+    teb->socket      = -1;
 
     /* Allocate the TEB selector (%fs register) */
 
-    thdb->teb_sel = SELECTOR_AllocBlock( &thdb->teb, 0x1000, SEGMENT_DATA,
-                                         TRUE, FALSE );
-    if (!thdb->teb_sel) goto error;
+    teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
+    if (!teb->teb_sel) goto error;
 
     /* Create the socket pair for server communication */
 
@@ -231,38 +228,38 @@ THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );  /* FIXME */
         goto error;
     }
-    thdb->socket = fd[0];
+    teb->socket = fd[0];
     fcntl( fd[0], F_SETFD, 1 ); /* set close on exec flag */
 
     /* Create the thread on the server side */
 
-    request.pid     = thdb->process->server_pid;
-    request.suspend = ((thdb->flags & CREATE_SUSPENDED) != 0);
+    request.pid     = teb->process->server_pid;
+    request.suspend = ((flags & CREATE_SUSPENDED) != 0);
     request.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     CLIENT_SendRequest( REQ_NEW_THREAD, fd[1], 1, &request, sizeof(request) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
-    thdb->teb.tid = reply.tid;
+    teb->tid = reply.tid;
     *server_handle = reply.handle;
 
     /* Do the rest of the initialization */
 
-    if (!THREAD_InitTHDB( thdb, stack_size, alloc_stack16, sa )) goto error;
-    thdb->next = THREAD_First;
-    THREAD_First = thdb;
+    if (!THREAD_InitTEB( teb, stack_size, alloc_stack16, sa )) goto error;
+    teb->next = THREAD_First;
+    THREAD_First = teb;
 
     /* Install cleanup handler */
     if ( !DuplicateHandle( GetCurrentProcess(), *server_handle, 
 			   GetCurrentProcess(), &cleanup_object, 
 			   0, FALSE, DUPLICATE_SAME_ACCESS ) ) goto error;
-    thdb->cleanup = SERVICE_AddObject( cleanup_object, THREAD_FreeTHDB, (ULONG_PTR)thdb );
+    teb->cleanup = SERVICE_AddObject( cleanup_object, THREAD_FreeTEB, (ULONG_PTR)teb );
 
-    return thdb;
+    return teb;
 
 error:
     if (reply.handle != -1) CloseHandle( reply.handle );
-    if (thdb->teb_sel) SELECTOR_FreeBlock( thdb->teb_sel, 1 );
-    HeapFree( SystemHeap, 0, thdb );
-    if (thdb->socket != -1) close( thdb->socket );
+    if (teb->teb_sel) SELECTOR_FreeBlock( teb->teb_sel, 1 );
+    if (teb->socket != -1) close( teb->socket );
+    HeapFree( SystemHeap, 0, teb );
     return NULL;
 }
 
@@ -274,15 +271,14 @@ error:
  */
 static void THREAD_Start(void)
 {
-    THDB *thdb = THREAD_Current();
-    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
+    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)NtCurrentTeb()->entry_point;
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
     PE_InitTls();
     MODULE_DllThreadAttach( NULL );
 
-    if (thdb->process->flags & PDB32_DEBUGGED) DEBUG_SendCreateThreadEvent( func );
+    if (NtCurrentTeb()->process->flags & PDB32_DEBUGGED) DEBUG_SendCreateThreadEvent( func );
 
-    ExitThread( func( thdb->entry_arg ) );
+    ExitThread( func( NtCurrentTeb()->entry_arg ) );
 }
 
 
@@ -294,18 +290,18 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             DWORD flags, LPDWORD id )
 {
     int handle = -1;
-    THDB *thread = THREAD_Create( PROCESS_Current(), flags, stack, TRUE, sa, &handle );
-    if (!thread) return INVALID_HANDLE_VALUE;
-    thread->teb.flags  |= TEBF_WIN32;
-    thread->entry_point = start;
-    thread->entry_arg   = param;
-    thread->startup     = THREAD_Start;
-    if (SYSDEPS_SpawnThread( thread ) == -1)
+    TEB *teb = THREAD_Create( PROCESS_Current(), flags, stack, TRUE, sa, &handle );
+    if (!teb) return INVALID_HANDLE_VALUE;
+    teb->flags      |= TEBF_WIN32;
+    teb->entry_point = start;
+    teb->entry_arg   = param;
+    teb->startup     = THREAD_Start;
+    if (SYSDEPS_SpawnThread( teb ) == -1)
     {
         CloseHandle( handle );
         return INVALID_HANDLE_VALUE;
     }
-    if (id) *id = (DWORD)thread->teb.tid;
+    if (id) *id = (DWORD)teb->tid;
     return handle;
 }
 
@@ -335,18 +331,6 @@ HANDLE WINAPI GetCurrentThread(void)
 }
 
 
-/***********************************************************************
- * GetCurrentThreadId [KERNEL32.201]  Returns thread identifier.
- *
- * RETURNS
- *    Thread identifier of calling thread
- */
-DWORD WINAPI GetCurrentThreadId(void)
-{
-    return (DWORD)CURRENT()->tid;
-}
-
-
 /**********************************************************************
  * GetLastError [KERNEL.148] [KERNEL32.227]  Returns last-error code.
  *
@@ -355,25 +339,7 @@ DWORD WINAPI GetCurrentThreadId(void)
  */
 DWORD WINAPI GetLastError(void)
 {
-    THDB *thread = THREAD_Current();
-    DWORD ret = thread->last_error;
-    TRACE("0x%lx\n",ret);
-    return ret;
-}
-
-
-/**********************************************************************
- * SetLastError [KERNEL.147] [KERNEL32.497]  Sets the last-error code.
- *
- * RETURNS
- *    None.
- */
-void WINAPI SetLastError(
-    DWORD error) /* [in] Per-thread error code */
-{
-    THDB *thread = THREAD_Current();
-    TRACE("%p error=0x%lx\n",thread,error);
-    thread->last_error = error;
+    return NtCurrentTeb()->last_error;
 }
 
 
@@ -414,24 +380,24 @@ void WINAPI SetLastErrorEx(
  */
 DWORD WINAPI TlsAlloc( void )
 {
-    THDB *thread = THREAD_Current();
+    PDB *process = PROCESS_Current();
     DWORD i, mask, ret = 0;
-    DWORD *bits = thread->process->tls_bits;
-    EnterCriticalSection( &thread->process->crit_section );
+    DWORD *bits = process->tls_bits;
+    EnterCriticalSection( &process->crit_section );
     if (*bits == 0xffffffff)
     {
         bits++;
         ret = 32;
         if (*bits == 0xffffffff)
         {
-            LeaveCriticalSection( &thread->process->crit_section );
+            LeaveCriticalSection( &process->crit_section );
             SetLastError( ERROR_NO_MORE_ITEMS );
             return 0xffffffff;
         }
     }
     for (i = 0, mask = 1; i < 32; i++, mask <<= 1) if (!(*bits & mask)) break;
     *bits |= mask;
-    LeaveCriticalSection( &thread->process->crit_section );
+    LeaveCriticalSection( &process->crit_section );
     return ret + i;
 }
 
@@ -448,27 +414,27 @@ DWORD WINAPI TlsAlloc( void )
 BOOL WINAPI TlsFree(
     DWORD index) /* [in] TLS Index to free */
 {
+    PDB *process = PROCESS_Current();
     DWORD mask;
-    THDB *thread = THREAD_Current();
-    DWORD *bits = thread->process->tls_bits;
+    DWORD *bits = process->tls_bits;
     if (index >= 64)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    EnterCriticalSection( &thread->process->crit_section );
+    EnterCriticalSection( &process->crit_section );
     if (index >= 32) bits++;
     mask = (1 << (index & 31));
     if (!(*bits & mask))  /* already free? */
     {
-        LeaveCriticalSection( &thread->process->crit_section );
+        LeaveCriticalSection( &process->crit_section );
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
     *bits &= ~mask;
-    thread->tls_array[index] = 0;
+    NtCurrentTeb()->tls_array[index] = 0;
     /* FIXME: should zero all other thread values */
-    LeaveCriticalSection( &thread->process->crit_section );
+    LeaveCriticalSection( &process->crit_section );
     return TRUE;
 }
 
@@ -483,14 +449,13 @@ BOOL WINAPI TlsFree(
 LPVOID WINAPI TlsGetValue(
     DWORD index) /* [in] TLS index to retrieve value for */
 {
-    THDB *thread = THREAD_Current();
     if (index >= 64)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
     }
     SetLastError( ERROR_SUCCESS );
-    return thread->tls_array[index];
+    return NtCurrentTeb()->tls_array[index];
 }
 
 
@@ -505,13 +470,12 @@ BOOL WINAPI TlsSetValue(
     DWORD index,  /* [in] TLS index to set value for */
     LPVOID value) /* [in] Value to be stored */
 {
-    THDB *thread = THREAD_Current();
     if (index >= 64)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    thread->tls_array[index] = value;
+    NtCurrentTeb()->tls_array[index] = value;
     return TRUE;
 }
 
@@ -848,4 +812,30 @@ BOOL WINAPI SetThreadLocale(
 {
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
+
+
+/**********************************************************************
+ * SetLastError [KERNEL.147] [KERNEL32.497]  Sets the last-error code.
+ *
+ * RETURNS
+ *    None.
+ */
+#undef SetLastError
+void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
+{
+    NtCurrentTeb()->last_error = error;
+}
+
+
+/***********************************************************************
+ * GetCurrentThreadId [KERNEL32.201]  Returns thread identifier.
+ *
+ * RETURNS
+ *    Thread identifier of calling thread
+ */
+#undef GetCurrentThreadId
+DWORD WINAPI GetCurrentThreadId(void)
+{
+    return (DWORD)NtCurrentTeb()->tid;
 }

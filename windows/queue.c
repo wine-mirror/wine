@@ -61,7 +61,7 @@ PERQUEUEDATA * PERQDATA_CreateInstance( )
     TRACE_(msg)("()\n");
 
     /* Share a single instance of perQData for all 16 bit tasks */
-    if ( ( bIsWin16 = THREAD_IsWin16( THREAD_Current() ) ) )
+    if ( ( bIsWin16 = THREAD_IsWin16( NtCurrentTeb() ) ) )
     {
         /* If previously allocated, just bump up ref count */
         if ( pQDataWin16 )
@@ -373,7 +373,7 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
              "wakeBits: %8.4x\n"
              "wakeMask: %8.4x\n"
              "hCurHook: %8.4x\n",
-             pq->next, pq->thdb, pq->firstMsg, pq->smWaiting, pq->lastMsg,
+             pq->next, pq->teb, pq->firstMsg, pq->smWaiting, pq->lastMsg,
              pq->smPending, pq->msgCount, pq->smProcessing,
              (unsigned)pq->lockCount, pq->wWinVersion,
              pq->wPaintCount, pq->wTimerCount,
@@ -400,10 +400,10 @@ void QUEUE_WalkQueues(void)
             WARN_(msg)("Bad queue handle %04x\n", hQueue );
             return;
         }
-        if (!GetModuleName16( queue->thdb->process->task, module, sizeof(module )))
+        if (!GetModuleName16( queue->teb->process->task, module, sizeof(module )))
             strcpy( module, "???" );
         DPRINTF( "%04x %4d %p %04x %s\n", hQueue,queue->msgCount,
-                 queue->thdb, queue->thdb->process->task, module );
+                 queue->teb, queue->teb->process->task, module );
         hQueue = queue->next;
         QUEUE_Unlock( queue );
     }
@@ -459,7 +459,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 
     /* Create an Event object for waiting on message, used by win32 thread
        only */
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
+    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
     {
         msgQueue->hEvent = CreateEventA( NULL, FALSE, FALSE, NULL);
 
@@ -633,10 +633,10 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
         queue->wakeMask = 0;
         
         /* Wake up thread waiting for message */
-        if ( THREAD_IsWin16( queue->thdb ) )
+        if ( THREAD_IsWin16( queue->teb ) )
         {
             int iWndsLock = WIN_SuspendWndsLock();
-            PostEvent16( queue->thdb->process->task );
+            PostEvent16( queue->teb->process->task );
             WIN_RestoreWndsLock( iWndsLock );
         }
         else
@@ -673,7 +673,7 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
 
     TRACE_(msg)("q %04x waiting for %04x\n", GetFastQueue16(), bits);
 
-    if ( THREAD_IsWin16( THREAD_Current() ) && (timeout != INFINITE) )
+    if ( THREAD_IsWin16( NtCurrentTeb() ) && (timeout != INFINITE) )
         curTime = GetTickCount();
 
     if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
@@ -704,7 +704,7 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
 	
 	TRACE_(msg)("%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
 
-        if ( !THREAD_IsWin16( THREAD_Current() ) )
+        if ( !THREAD_IsWin16( NtCurrentTeb() ) )
         {
 	    BOOL		bHasWin16Lock;
 	    DWORD		dwlc;
@@ -1244,7 +1244,7 @@ HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue )
 
     if (queue)
 {
-        hTask = queue->thdb->process->task;
+        hTask = queue->teb->process->task;
         QUEUE_Unlock( queue );
 }
 
@@ -1373,8 +1373,8 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 
     if (!queue) return 0;
 
-    if ( process ) *process = (DWORD)queue->thdb->process->server_pid;
-    retvalue = (DWORD)queue->thdb->teb.tid;
+    if ( process ) *process = (DWORD)queue->teb->process->server_pid;
+    retvalue = (DWORD)queue->teb->tid;
 
     QUEUE_Unlock( queue );
     return retvalue;
@@ -1412,12 +1412,12 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
     HQUEUE16 hQueue;
     MESSAGEQUEUE *queuePtr;
 
-    THDB *thdb = THREAD_Current();
+    TEB *teb = NtCurrentTeb();
 
-    if (!thdb)
+    if (!teb)
         return 0;
 
-    hQueue = thdb->teb.queue;
+    hQueue = teb->queue;
     
     if ( !hQueue )
     {
@@ -1430,11 +1430,11 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
         
         /* Link new queue into list */
         queuePtr = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
-        queuePtr->thdb = THREAD_Current();
+        queuePtr->teb = NtCurrentTeb();
 
         HeapLock( SystemHeap );  /* FIXME: a bit overkill */
         SetThreadQueue16( 0, hQueue );
-        thdb->teb.queue = hQueue;
+        teb->queue = hQueue;
             
         queuePtr->next  = hFirstQueue;
         hFirstQueue = hQueue;
@@ -1530,7 +1530,7 @@ void WINAPI UserYield16(void)
     QUEUE_Unlock( queue );
     
     /* Yield */
-    if ( THREAD_IsWin16( THREAD_Current() ) )
+    if ( THREAD_IsWin16( NtCurrentTeb() ) )
         OldYield16();
     else
     {

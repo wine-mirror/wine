@@ -81,7 +81,7 @@ typedef struct tagMESSAGEQUEUE
 {
   HQUEUE16  next;                   /* Next queue */
   HQUEUE16  self;                   /* Handle to self (was: reserved) */
-  THDB*     thdb;                   /* Thread owning queue */
+  TEB*      teb;                    /* Thread owning queue */
   HANDLE  hEvent;                 /* Event handle */
   CRITICAL_SECTION cSection;        /* Queue access critical section */
 

@@ -99,17 +99,16 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         STACK16FRAME *stack16Top;
         DWORD oldstack;
  	WORD old_hSeg, new_hSeg;
-        THDB *thdb = THREAD_Current();
         HFILE hFile32;
         HFILE16 hFile16;
 
  	selfloadheader = (SELFLOADHEADER *)
  		PTR_SEG_OFF_TO_LIN(SEL(pSegTable->hSeg),0);
- 	oldstack = thdb->cur_stack;
+ 	oldstack = NtCurrentTeb()->cur_stack;
  	old_hSeg = pSeg->hSeg;
- 	thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
-                                                 0xff00 - sizeof(*stack16Top));
-        stack16Top = (STACK16FRAME *)PTR_SEG_TO_LIN(thdb->cur_stack);
+ 	NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
+                                                          0xff00 - sizeof(*stack16Top));
+        stack16Top = CURRENT_STACK16;
         stack16Top->frame32 = 0;
         stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
         stack16Top->entry_point = 0;
@@ -146,7 +145,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	  }
  	} 
  	
- 	thdb->cur_stack = oldstack;
+ 	NtCurrentTeb()->cur_stack = oldstack;
     }
     else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
         ReadFile(hf, mem, size, &res, NULL);
@@ -405,7 +404,6 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         /* Handle self-loading modules */
         SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
-        THDB *thdb = THREAD_Current();
         HMODULE16 hselfload = GetModuleHandle16("WPROCS");
         DWORD oldstack;
         WORD saved_hSeg = pSegTable[pModule->dgroup - 1].hSeg;
@@ -420,10 +418,10 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         selfloadheader->MyAlloc  = NE_GetEntryPoint(hselfload,28);
         selfloadheader->SetOwner = NE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
         pModule->self_loading_sel = SEL(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
-        oldstack = thdb->cur_stack;
-        thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
-                                                0xff00 - sizeof(*stack16Top) );
-        stack16Top = (STACK16FRAME *)PTR_SEG_TO_LIN(thdb->cur_stack);
+        oldstack = NtCurrentTeb()->cur_stack;
+        NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
+                                                          0xff00 - sizeof(*stack16Top) );
+        stack16Top = CURRENT_STACK16;
         stack16Top->frame32 = 0;
         stack16Top->ebp = 0;
         stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
@@ -444,7 +442,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         _lclose16(hf);
         /* some BootApp procs overwrite the segment handle of dgroup */
         pSegTable[pModule->dgroup - 1].hSeg = saved_hSeg;
-        thdb->cur_stack = oldstack;
+        NtCurrentTeb()->cur_stack = oldstack;
 
         for (i = 2; i <= pModule->seg_count; i++)
             if (!NE_LoadSegment( pModule, i )) return FALSE;
@@ -658,8 +656,7 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 
     CS_reg(&context)  = SEL(pSegTable[pModule->cs-1].hSeg);
     EIP_reg(&context) = pModule->ip;
-    EBP_reg(&context) = OFFSETOF(THREAD_Current()->cur_stack)
-                          + (WORD)&((STACK16FRAME*)0)->bp;
+    EBP_reg(&context) = OFFSETOF(NtCurrentTeb()->cur_stack) + (WORD)&((STACK16FRAME*)0)->bp;
 
 
     pModule->cs = 0;  /* Don't initialize it twice */
@@ -682,8 +679,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
     FARPROC16 entryPoint;
     WORD ordinal;
     CONTEXT context;
-    THDB *thdb = THREAD_Current();
-    LPBYTE stack = (LPBYTE)THREAD_STACK16(thdb);
+    LPBYTE stack = (LPBYTE)CURRENT_STACK16;
 
     if (!(pModule->flags & NE_FFLAGS_BUILTIN) && pModule->expected_version < 0x0400) return;
     if (!(ordinal = NE_GetOrdinal( pModule->self, "DllEntryPoint" ))) return;
@@ -698,7 +694,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
 
     CS_reg(&context) = HIWORD(entryPoint);
     IP_reg(&context) = LOWORD(entryPoint);
-    EBP_reg(&context) =  OFFSETOF( thdb->cur_stack )
+    EBP_reg(&context) =  OFFSETOF( NtCurrentTeb()->cur_stack )
                          + (WORD)&((STACK16FRAME*)0)->bp;
 
     *(DWORD *)(stack -  4) = dwReason;      /* dwReason */

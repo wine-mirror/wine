@@ -70,28 +70,28 @@ VOID WINAPI _CreateSysLevel(SYSLEVEL *lock, INT level)
  */
 VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
 {
-    THDB *thdb = THREAD_Current();
+    TEB *teb = NtCurrentTeb();
     int i;
 
     TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count before %ld\n", 
-                  lock, lock->level, thdb->teb.tid, thdb->teb_sel, getpid(),
-                  thdb->sys_count[lock->level] );
+                  lock, lock->level, teb->tid, teb->teb_sel, getpid(),
+                  teb->sys_count[lock->level] );
 
     for ( i = 3; i > lock->level; i-- )
-        if ( thdb->sys_count[i] > 0 )
+        if ( teb->sys_count[i] > 0 )
         {
             ERR("(%p, level %d): Holding %p, level %d. Expect deadlock!\n", 
-                        lock, lock->level, thdb->sys_mutex[i], i );
+                        lock, lock->level, teb->sys_mutex[i], i );
         }
 
     EnterCriticalSection( &lock->crst );
 
-    thdb->sys_count[lock->level]++;
-    thdb->sys_mutex[lock->level] = lock;
+    teb->sys_count[lock->level]++;
+    teb->sys_mutex[lock->level] = lock;
 
     TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count after  %ld\n",
-                  lock, lock->level, thdb->teb.tid, thdb->teb_sel, getpid(), 
-                  thdb->sys_count[lock->level] );
+                  lock, lock->level, teb->tid, teb->teb_sel, getpid(), 
+                  teb->sys_count[lock->level] );
 
     if (lock == &Win16Mutex)
         GET_FS( SYSLEVEL_Win16CurrentTeb );
@@ -102,29 +102,29 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
  */
 VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 {
-    THDB *thdb = THREAD_Current();
+    TEB *teb = NtCurrentTeb();
 
     TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count before %ld\n", 
-                  lock, lock->level, thdb->teb.tid, thdb->teb_sel, getpid(),
-                  thdb->sys_count[lock->level] );
+                  lock, lock->level, teb->tid, teb->teb_sel, getpid(),
+                  teb->sys_count[lock->level] );
 
-    if ( thdb->sys_count[lock->level] <= 0 || thdb->sys_mutex[lock->level] != lock )
+    if ( teb->sys_count[lock->level] <= 0 || teb->sys_mutex[lock->level] != lock )
     {
         ERR("(%p, level %d): Invalid state: count %ld mutex %p.\n",
-                    lock, lock->level, thdb->sys_count[lock->level], 
-                    thdb->sys_mutex[lock->level] );
+                    lock, lock->level, teb->sys_count[lock->level], 
+                    teb->sys_mutex[lock->level] );
     }
     else
     {
-        if ( --thdb->sys_count[lock->level] == 0 )
-            thdb->sys_mutex[lock->level] = NULL;
+        if ( --teb->sys_count[lock->level] == 0 )
+            teb->sys_mutex[lock->level] = NULL;
     }
 
     LeaveCriticalSection( &lock->crst );
 
     TRACE("(%p, level %d): thread %p (fs %04x, pid %d) count after  %ld\n",
-                  lock, lock->level, thdb->teb.tid, thdb->teb_sel, getpid(), 
-                  thdb->sys_count[lock->level] );
+                  lock, lock->level, teb->tid, teb->teb_sel, getpid(), 
+                  teb->sys_count[lock->level] );
 }
 
 /************************************************************************
@@ -232,11 +232,10 @@ VOID SYSLEVEL_RestoreWin16Lock(VOID)
  */
 VOID SYSLEVEL_CheckNotLevel( INT level )
 {
-    THDB *thdb = THREAD_Current();
     INT i;
 
     for ( i = 3; i >= level; i-- )
-        if ( thdb->sys_count[i] > 0 )
+        if ( NtCurrentTeb()->sys_count[i] > 0 )
         {
             ERR("(%d): Holding lock of level %d!\n", 
                        level, i );

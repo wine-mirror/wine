@@ -813,8 +813,8 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
     iWndsLocks = WIN_SuspendWndsLock();
 
     /* force destination task to run next, if 16 bit threads */
-    if ( THREAD_IsWin16(THREAD_Current()) && THREAD_IsWin16(destQ->thdb) )
-        DirectedYield16( destQ->thdb->teb.htask16 );
+    if ( THREAD_IsWin16(NtCurrentTeb()) && THREAD_IsWin16(destQ->teb) )
+        DirectedYield16( destQ->teb->htask16 );
 
     /* wait for the result, note that 16-bit apps almost always get out of
      * DirectedYield() with SMSG_HAVE_RESULT flag already set */
@@ -936,8 +936,8 @@ BOOL WINAPI ReplyMessage( LRESULT result )
         QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
 
         /* switch directly to sending task (16 bit thread only) */
-        if ( THREAD_IsWin16( THREAD_Current() ) && THREAD_IsWin16( senderQ->thdb ) )
-            DirectedYield16( senderQ->thdb->teb.htask16 );
+        if ( THREAD_IsWin16( NtCurrentTeb() ) && THREAD_IsWin16( senderQ->teb ) )
+            DirectedYield16( senderQ->teb->htask16 );
 
         ret = TRUE;
     }
@@ -1006,7 +1006,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
     if (IsTaskLocked16()) flags |= PM_NOYIELD;
 
     /* Never yield on Win32 threads */
-    if (!THREAD_IsWin16(THREAD_Current())) flags |= PM_NOYIELD;
+    if (!THREAD_IsWin16(NtCurrentTeb())) flags |= PM_NOYIELD;
 
     iWndsLocks = WIN_SuspendWndsLock();
 
@@ -1881,7 +1881,7 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
     msgQueue->changeBits = 0;
     msgQueue->wakeMask = dwWakeMask;
 
-    if (THREAD_IsWin16(THREAD_Current()))
+    if (THREAD_IsWin16(NtCurrentTeb()))
     {
       /*
        * This is a temporary solution to a big problem.

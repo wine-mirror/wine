@@ -57,7 +57,7 @@ extern int clone( int (*fn)(void *arg), void *stack, int flags, void *arg );
 static int init_done;
 
 #ifndef __i386__
-static THDB *pCurrentThread;
+static TEB *pCurrentTeb;
 #endif
 
 
@@ -78,15 +78,13 @@ int *__error()
 int *___errno()
 #endif
 {
-    THDB *thdb;
     if (!init_done) return perrno;
-    thdb = THREAD_Current();
 #ifdef NO_REENTRANT_X11
     /* Use static libc errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->teb.tid)
+    if (X11DRV_CritSection.OwningThread == GetCurrentThreadId())
         return perrno;
 #endif
-    return &thdb->thread_errno;
+    return &NtCurrentTeb()->thread_errno;
 }
 
 /***********************************************************************
@@ -96,15 +94,13 @@ int *___errno()
  */
 int *__h_errno_location()
 {
-    THDB *thdb;
     if (!init_done) return ph_errno;
-    thdb = THREAD_Current();
 #ifdef NO_REENTRANT_X11
     /* Use static libc h_errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == (HANDLE)thdb->teb.tid)
+    if (X11DRV_CritSection.OwningThread == GetCurrentThreadId())
         return ph_errno;
 #endif
-    return &thdb->thread_h_errno;
+    return &NtCurrentTeb()->thread_h_errno;
 }
 
 #endif /* NO_REENTRANT_LIBC */
@@ -114,14 +110,14 @@ int *__h_errno_location()
  *
  * Make 'thread' the current thread.
  */
-void SYSDEPS_SetCurThread( THDB *thread )
+void SYSDEPS_SetCurThread( TEB *teb )
 {
 #ifdef __i386__
     /* On the i386, the current thread is in the %fs register */
-    SET_FS( thread->teb_sel );
+    SET_FS( teb->teb_sel );
 #else
     /* FIXME: only works if there is no preemptive task-switching going on... */
-    pCurrentThread = thread;
+    pCurrentTeb = teb;
 #endif  /* __i386__ */
     init_done = 1;  /* now we can use threading routines */
 }
@@ -131,11 +127,11 @@ void SYSDEPS_SetCurThread( THDB *thread )
  *
  * Startup routine for a new thread.
  */
-static void SYSDEPS_StartThread( THDB *thdb )
+static void SYSDEPS_StartThread( TEB *teb )
 {
-    SYSDEPS_SetCurThread( thdb );
+    SYSDEPS_SetCurThread( teb );
     CLIENT_InitThread();
-    thdb->startup();
+    teb->startup();
     SYSDEPS_ExitThread();  /* should never get here */
 }
 
@@ -146,13 +142,13 @@ static void SYSDEPS_StartThread( THDB *thdb )
  * Start running a new thread.
  * Return -1 on error, 0 if OK.
  */
-int SYSDEPS_SpawnThread( THDB *thread )
+int SYSDEPS_SpawnThread( TEB *teb )
 {
 #ifndef NO_REENTRANT_LIBC
 
 #ifdef HAVE_CLONE_SYSCALL
-    if (clone( (int (*)(void *))SYSDEPS_StartThread, thread->teb.stack_top,
-               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, thread ) < 0)
+    if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top,
+               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, teb ) < 0)
         return -1;
     /* FIXME: close the child socket in the parent process */
 /*    close( thread->socket );*/
@@ -160,8 +156,8 @@ int SYSDEPS_SpawnThread( THDB *thread )
 #endif
 
 #ifdef HAVE_RFORK
-    DWORD *sp = (DWORD *)thread->teb.stack_top;
-    *--sp = (DWORD)thread;
+    DWORD *sp = (DWORD *)teb->stack_top;
+    *--sp = (DWORD)teb;
     *--sp = 0;
     *--sp = (DWORD)SYSDEPS_StartThread;
     __asm__(
@@ -182,8 +178,8 @@ int SYSDEPS_SpawnThread( THDB *thread )
 
 #ifdef HAVE__LWP_CREATE
     ucontext_t context;
-    _lwp_makecontext( &context, (void(*)(void *))SYSDEPS_StartThread, thread,
-                      NULL, thread->stack_base, (char *) thread->teb.stack_top - (char *) thread->stack_base );
+    _lwp_makecontext( &context, (void(*)(void *))SYSDEPS_StartThread, teb,
+                      NULL, teb->stack_base, (char *)teb->stack_top - (char *)teb->stack_base );
     if ( _lwp_create( &context, 0, NULL ) )
         return -1;
     return 0;
@@ -219,11 +215,21 @@ void SYSDEPS_ExitThread(void)
  *
  * This will crash and burn if called before threading is initialized
  */
-TEB * WINAPI NtCurrentTeb(void)
+
+#ifdef NtCurrentTeb
+
+/* if it was defined as a macro, we need to do some magic */
+#undef NtCurrentTeb
+struct _TEB * WINAPI NtCurrentTeb(void)
 {
-#ifdef __i386__
-    return CURRENT();
-#else
-    return &pCurrentThread->teb;
-#endif  /* __i386__ */
+    return __get_teb();
 }
+
+#else  /* NtCurrentTeb */
+
+struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    return pCurrentTeb;
+}
+
+#endif  /* NtCurrentTeb */

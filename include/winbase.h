@@ -1303,7 +1303,6 @@ BOOL      WINAPI GetCommModemStatus(HANDLE, LPDWORD);
 HANDLE    WINAPI GetCurrentProcess(void);
 DWORD       WINAPI GetCurrentProcessId(void);
 HANDLE    WINAPI GetCurrentThread(void);
-DWORD       WINAPI GetCurrentThreadId(void);
 INT       WINAPI GetDateFormatA(LCID,DWORD,LPSYSTEMTIME,LPCSTR,LPSTR,INT);
 INT       WINAPI GetDateFormatW(LCID,DWORD,LPSYSTEMTIME,LPCWSTR,LPWSTR,INT);
 #define     GetDateFormat WINELIB_NAME_AW(GetDateFormat)
@@ -1493,7 +1492,6 @@ LANGID      WINAPI GetSystemDefaultLangID(void);
 LCID        WINAPI GetSystemDefaultLCID(void);
 LANGID      WINAPI GetUserDefaultLangID(void);
 LCID        WINAPI GetUserDefaultLCID(void);
-VOID        WINAPI SetLastError(DWORD);
 ATOM        WINAPI AddAtomA(LPCSTR);
 ATOM        WINAPI AddAtomW(LPCWSTR);
 #define     AddAtom WINELIB_NAME_AW(AddAtom)
@@ -1741,6 +1739,13 @@ INT       WINAPI lstrcmpiA(LPCSTR,LPCSTR);
 INT       WINAPI lstrcmpiW(LPCWSTR,LPCWSTR);
 #define     lstrcmpi WINELIB_NAME_AW(lstrcmpi)
 
+/* the following may be macros when compiling Wine */
+#ifndef SetLastError
+VOID WINAPI SetLastError(DWORD);
+#endif
+#ifndef GetCurrentThreadId
+DWORD WINAPI GetCurrentThreadId(void);
+#endif
 
 #ifdef __cplusplus
 }

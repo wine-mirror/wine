@@ -294,18 +294,17 @@ void WINAPI REGS_FUNC(QT_Thunk)( CONTEXT *context )
 {
     CONTEXT context16;
     DWORD argsize;
-    THDB *thdb = THREAD_Current();
 
     memcpy(&context16,context,sizeof(context16));
 
     CS_reg(&context16)  = HIWORD(EDX_reg(context));
     IP_reg(&context16)  = LOWORD(EDX_reg(context));
-    EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
+    EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize = EBP_reg(context)-ESP_reg(context)-0x40;
 
-    memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
+    memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)ESP_reg(context), argsize );
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
@@ -408,17 +407,16 @@ void WINAPI REGS_FUNC(FT_Thunk)( CONTEXT *context )
     CONTEXT context16;
     DWORD i, argsize;
     LPBYTE newstack, oldstack;
-    THDB *thdb = THREAD_Current();
 
     memcpy(&context16,context,sizeof(context16));
 
     CS_reg(&context16)  = HIWORD(callTarget);
     IP_reg(&context16)  = LOWORD(callTarget);
-    EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
+    EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize  = EBP_reg(context)-ESP_reg(context)-0x40;
-    newstack = ((LPBYTE)THREAD_STACK16(thdb))-argsize;
+    newstack = (LPBYTE)CURRENT_STACK16 - argsize;
     oldstack = (LPBYTE)ESP_reg(context);
 
     memcpy( newstack, oldstack, argsize );
@@ -427,8 +425,8 @@ void WINAPI REGS_FUNC(FT_Thunk)( CONTEXT *context )
 	if (mapESPrelative & (1 << i))
 	{
 	    SEGPTR *arg = (SEGPTR *)(newstack + 2*i);
-	    *arg = PTR_SEG_OFF_TO_SEGPTR(SELECTOROF(thdb->cur_stack), 
-                                         OFFSETOF(thdb->cur_stack) - argsize
+	    *arg = PTR_SEG_OFF_TO_SEGPTR(SELECTOROF(NtCurrentTeb()->cur_stack), 
+                                         OFFSETOF(NtCurrentTeb()->cur_stack) - argsize
 					 + (*(LPBYTE *)arg - oldstack));
 	}
 
@@ -597,14 +595,13 @@ void WINAPI REGS_FUNC(Common32ThkLS)( CONTEXT *context )
 {
     CONTEXT context16;
     DWORD argsize;
-    THDB *thdb = THREAD_Current();
 
     memcpy(&context16,context,sizeof(context16));
 
     DI_reg(&context16)  = CX_reg(context);
     CS_reg(&context16)  = HIWORD(EAX_reg(context));
     IP_reg(&context16)  = LOWORD(EAX_reg(context));
-    EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
+    EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize = HIWORD(EDX_reg(context)) * 4;
@@ -613,7 +610,7 @@ void WINAPI REGS_FUNC(Common32ThkLS)( CONTEXT *context )
     if (EDX_reg(context) == EIP_reg(context))
         argsize = 6 * 4;
 
-    memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
+    memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)ESP_reg(context), argsize );
 
     EAX_reg(context) = Callbacks->CallRegisterLongProc(&context16, argsize + 32);
@@ -653,24 +650,23 @@ void WINAPI REGS_FUNC(OT_32ThkLSF)( CONTEXT *context )
 {
     CONTEXT context16;
     DWORD argsize;
-    THDB *thdb = THREAD_Current();
 
     memcpy(&context16,context,sizeof(context16));
 
     CS_reg(&context16)  = HIWORD(EDX_reg(context));
     IP_reg(&context16)  = LOWORD(EDX_reg(context));
-    EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
+    EBP_reg(&context16) = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize = 2 * *(WORD *)ESP_reg(context) + 2;
 
-    memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
+    memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)ESP_reg(context), argsize );
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc(&context16, argsize);
 
     memcpy( (LPBYTE)ESP_reg(context), 
-            ((LPBYTE)THREAD_STACK16(thdb))-argsize, argsize );
+            (LPBYTE)CURRENT_STACK16 - argsize, argsize );
 }
 
 /***********************************************************************
@@ -1092,7 +1088,7 @@ void WINAPI REGS_FUNC(K32Thk1632Prolog)( CONTEXT *context )
       If we recognize this situation, we try to simulate the actions
       of our CallTo/CallFrom mechanism by copying the 16-bit stack
       to our 32-bit stack, creating a proper STACK16FRAME and 
-      updating thdb->cur_stack. */ 
+      updating cur_stack. */ 
 
    if (   code[5] == 0xFF && code[6] == 0x55 && code[7] == 0xFC
        && code[13] == 0x66 && code[14] == 0xCB)
@@ -1100,27 +1096,26 @@ void WINAPI REGS_FUNC(K32Thk1632Prolog)( CONTEXT *context )
       WORD  stackSel  = NtCurrentTeb()->stack_sel;
       DWORD stackBase = GetSelectorBase(stackSel);
 
-      THDB *thdb = THREAD_Current();
       DWORD argSize = EBP_reg(context) - ESP_reg(context);
       char *stack16 = (char *)ESP_reg(context) - 4;
-      char *stack32 = (char *)thdb->cur_stack - argSize;
+      char *stack32 = (char *)NtCurrentTeb()->cur_stack - argSize;
       STACK16FRAME *frame16 = (STACK16FRAME *)stack16 - 1;
 
       TRACE_(thunk)("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   EBP_reg(context), ESP_reg(context), thdb->cur_stack);
+                   EBP_reg(context), ESP_reg(context), NtCurrentTeb()->cur_stack);
 
       memset(frame16, '\0', sizeof(STACK16FRAME));
-      frame16->frame32 = (STACK32FRAME *)thdb->cur_stack;
+      frame16->frame32 = (STACK32FRAME *)NtCurrentTeb()->cur_stack;
       frame16->ebp = EBP_reg(context);
 
       memcpy(stack32, stack16, argSize);
-      thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(stackSel, (DWORD)frame16 - stackBase);
+      NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(stackSel, (DWORD)frame16 - stackBase);
 
       ESP_reg(context) = (DWORD)stack32 + 4;
       EBP_reg(context) = ESP_reg(context) + argSize;
 
       TRACE_(thunk)("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   EBP_reg(context), ESP_reg(context), thdb->cur_stack);
+                   EBP_reg(context), ESP_reg(context), NtCurrentTeb()->cur_stack);
    }
 
    SYSLEVEL_ReleaseWin16Lock();
@@ -1140,8 +1135,7 @@ void WINAPI REGS_FUNC(K32Thk1632Epilog)( CONTEXT *context )
    if (   code[5] == 0xFF && code[6] == 0x55 && code[7] == 0xFC
        && code[13] == 0x66 && code[14] == 0xCB)
    {
-      THDB *thdb = THREAD_Current();
-      STACK16FRAME *frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN(thdb->cur_stack);
+      STACK16FRAME *frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN(NtCurrentTeb()->cur_stack);
       char *stack16 = (char *)(frame16 + 1);
       DWORD argSize = frame16->ebp - (DWORD)stack16;
       char *stack32 = (char *)frame16->frame32 - argSize;
@@ -1149,15 +1143,15 @@ void WINAPI REGS_FUNC(K32Thk1632Epilog)( CONTEXT *context )
       DWORD nArgsPopped = ESP_reg(context) - (DWORD)stack32;
 
       TRACE_(thunk)("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   EBP_reg(context), ESP_reg(context), thdb->cur_stack);
+                   EBP_reg(context), ESP_reg(context), NtCurrentTeb()->cur_stack);
 
-      thdb->cur_stack = (DWORD)frame16->frame32;
+      NtCurrentTeb()->cur_stack = (DWORD)frame16->frame32;
 
       ESP_reg(context) = (DWORD)stack16 + nArgsPopped;
       EBP_reg(context) = frame16->ebp;
 
       TRACE_(thunk)("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   EBP_reg(context), ESP_reg(context), thdb->cur_stack);
+                   EBP_reg(context), ESP_reg(context), NtCurrentTeb()->cur_stack);
    }
 }
 

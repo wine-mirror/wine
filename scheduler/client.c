@@ -34,7 +34,7 @@
  */
 static void CLIENT_Die(void)
 {
-    close( THREAD_Current()->socket );
+    close( NtCurrentTeb()->socket );
     SYSDEPS_ExitThread();
 }
 
@@ -46,7 +46,7 @@ void CLIENT_ProtocolError( const char *err, ... )
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "Client protocol error:%p: ", CURRENT()->tid );
+    fprintf( stderr, "Client protocol error:%p: ", NtCurrentTeb()->tid );
     vfprintf( stderr, err, args );
     va_end( args );
     CLIENT_Die();
@@ -61,7 +61,6 @@ void CLIENT_ProtocolError( const char *err, ... )
 static void CLIENT_SendRequest_v( enum request req, int pass_fd,
                                   struct iovec *vec, int veclen )
 {
-    THDB *thdb = THREAD_Current();
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     struct cmsg_fd cmsg;
 #endif
@@ -77,7 +76,7 @@ static void CLIENT_SendRequest_v( enum request req, int pass_fd,
     assert( len <= MAX_MSG_LENGTH );
     head.type = req;
     head.len  = len;
-    head.seq  = thdb->seq++;
+    head.seq  = NtCurrentTeb()->seq++;
 
     msghdr.msg_name    = NULL;
     msghdr.msg_namelen = 0;
@@ -113,7 +112,7 @@ static void CLIENT_SendRequest_v( enum request req, int pass_fd,
     msghdr.msg_flags = 0;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-    if ((ret = sendmsg( thdb->socket, &msghdr, 0 )) < len)
+    if ((ret = sendmsg( NtCurrentTeb()->socket, &msghdr, 0 )) < len)
     {
         if (ret == -1)
         {
@@ -161,7 +160,6 @@ void CLIENT_SendRequest( enum request req, int pass_fd,
 static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
                                         struct iovec *vec, int veclen )
 {
-    THDB *thdb = THREAD_Current();
     int pass_fd = -1;
     struct header head;
     int ret, remaining;
@@ -193,7 +191,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
     vec[0].iov_base       = &head;
     vec[0].iov_len        = sizeof(head);
 
-    while ((ret = recvmsg( thdb->socket, &msghdr, 0 )) == -1)
+    while ((ret = recvmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == -1)
     {
         if (errno == EINTR) continue;
         if (errno == EPIPE) CLIENT_Die();
@@ -210,8 +208,9 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
     if ((head.len < sizeof(head)) || (head.len > MAX_MSG_LENGTH))
         CLIENT_ProtocolError( "header length %d\n", head.len );
 
-    if (head.seq != thdb->seq++)
-        CLIENT_ProtocolError( "sequence %08x instead of %08x\n", head.seq, thdb->seq - 1 );
+    if (head.seq != NtCurrentTeb()->seq++)
+        CLIENT_ProtocolError( "sequence %08x instead of %08x\n",
+                              head.seq, NtCurrentTeb()->seq - 1 );
 
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     pass_fd = cmsg.fd;
@@ -239,7 +238,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
 		addlen = iovtot + vec[i].iov_len - (head.len - remaining);
 		bufp = (char *)vec[i].iov_base + (vec[i].iov_len - addlen);
 		if (addlen > remaining) addlen = remaining;
-		if ((addlen = recv( thdb->socket, bufp, addlen, 0 )) == -1)
+		if ((addlen = recv( NtCurrentTeb()->socket, bufp, addlen, 0 )) == -1)
 		{
 		    perror( "recv" );
 		    CLIENT_ProtocolError( "recv\n" );
@@ -256,7 +255,7 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
 	else
 	    break;
 
-        if ((addlen = recv( thdb->socket, buffer, addlen, 0 )) == -1)
+        if ((addlen = recv( NtCurrentTeb()->socket, buffer, addlen, 0 )) == -1)
         {
             perror( "recv" );
             CLIENT_ProtocolError( "recv\n" );
@@ -362,16 +361,15 @@ int CLIENT_InitServer(void)
  */
 int CLIENT_InitThread(void)
 {
-    THDB *thdb = THREAD_Current();
     struct init_thread_request req;
     struct init_thread_reply reply;
 
     req.unix_pid = getpid();
-    req.teb      = &thdb->teb;
+    req.teb      = NtCurrentTeb();
     CLIENT_SendRequest( REQ_INIT_THREAD, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return -1;
-    thdb->process->server_pid = reply.pid;
-    thdb->teb.tid = reply.tid;
+    NtCurrentTeb()->process->server_pid = reply.pid;
+    NtCurrentTeb()->tid = reply.tid;
     return 0;
 }
 

@@ -261,7 +261,6 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
 {
     LPWORD stack16;
 #ifndef MZ_SUPPORTED
-    THDB *thdb = THREAD_Current();
     WORD sel;
     SEGPTR seg_addr;
 #endif /* !MZ_SUPPORTED */
@@ -337,7 +336,7 @@ callrmproc_again:
         SP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
 #else
     if (!already) {
-        stack16 = THREAD_STACK16(thdb);
+        stack16 = CURRENT_STACK16;
 #endif
         stack16 -= args;
         if (args) memcpy(stack16, stack, args*sizeof(WORD) );

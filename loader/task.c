@@ -260,8 +260,8 @@ void TASK_CallToStart(void)
 
     TRACE_(task)("Starting main program: cs:ip=%04lx:%04x ds=%04lx ss:sp=%04x:%04x\n",
                   CS_reg(&context), IP_reg(&context), DS_reg(&context),
-                  SELECTOROF(pTask->thdb->cur_stack),
-                  OFFSETOF(pTask->thdb->cur_stack) );
+                  SELECTOROF(pTask->teb->cur_stack),
+                  OFFSETOF(pTask->teb->cur_stack) );
 
     Callbacks->CallRegisterShortProc( &context, 0 );
 }
@@ -275,7 +275,7 @@ void TASK_CallToStart(void)
  *       by entering the Win16Lock while linking the task into the
  *       global task list.
  */
-BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
+BOOL TASK_Create( NE_MODULE *pModule, HINSTANCE16 hInstance,
                   HINSTANCE16 hPrevInstance, UINT16 cmdShow)
 {
     HTASK16 hTask;
@@ -283,7 +283,7 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     LPSTR cmd_line;
     WORD sp;
     char name[10];
-    PDB *pdb32 = thdb->process;
+    PDB *pdb32 = PROCESS_Current();
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
       /* Allocate the task structure */
@@ -311,7 +311,7 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     pTask->hParent       = GetCurrentTask();
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
-    pTask->thdb          = thdb;
+    pTask->teb           = NtCurrentTeb();
     pTask->curdrive      = DRIVE_GetCurrentDrive() | 0x80;
     strcpy( pTask->curdir, "\\" );
     lstrcpynA( pTask->curdir + 1, DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() ),
@@ -385,7 +385,7 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 
     /* Enter task handle into thread and process */
  
-    pTask->thdb->teb.htask16 = pTask->thdb->process->task = hTask;
+    pTask->teb->htask16 = pTask->teb->process->task = hTask;
     TRACE_(task)("module='%s' cmdline='%s' task=%04x\n", name, cmd_line, hTask );
 
     /* If we have a DGROUP/hInstance, use it for 16-bit stack */
@@ -395,7 +395,7 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
         if (!(sp = pModule->sp))
             sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
         sp &= ~1;  sp -= sizeof(STACK16FRAME);
-        pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
+        pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
     }
 
     /* If requested, add entry point breakpoint */
@@ -427,8 +427,8 @@ static void TASK_DeleteTask( HTASK16 hTask )
 
     /* Delete the Win32 part of the task */
 
-/*    PROCESS_FreePDB( pTask->thdb->process ); FIXME */
-/*    K32OBJ_DecCount( &pTask->thdb->header ); FIXME */
+/*    PROCESS_FreePDB( pTask->teb->process ); FIXME */
+/*    K32OBJ_DecCount( &pTask->teb->header ); FIXME */
 
     /* Free the selector aliases */
 
@@ -602,7 +602,7 @@ void TASK_Reschedule(void)
     TRACE_(task)( "entered with hCurrentTask %04x by hTask %04x (pid %d)\n", 
                   hCurrentTask, hOldTask, getpid() );
 
-    if ( pOldTask && THREAD_IsWin16( THREAD_Current() ) )
+    if ( pOldTask && THREAD_IsWin16( NtCurrentTeb() ) )
     {
         /* We are called by an active (non-deleted) 16-bit task */
 
@@ -695,7 +695,7 @@ void TASK_Reschedule(void)
         SetEvent( pNewTask->hEvent );
 
         /* This is set just in case some app reads it ... */
-        pNewTask->ss_sp = pNewTask->thdb->cur_stack;
+        pNewTask->ss_sp = pNewTask->teb->cur_stack;
     }
 
     /* If we need to put the current task to sleep, do it ... */
@@ -744,7 +744,7 @@ void WINAPI InitTask16( CONTEXT *context )
          *
          * 0 (=%bp) is pushed on the stack
          */
-        SEGPTR ptr = STACK16_PUSH( pTask->thdb, sizeof(WORD) );
+        SEGPTR ptr = STACK16_PUSH( pTask->teb, sizeof(WORD) );
         *(WORD *)PTR_SEG_TO_LIN(ptr) = 0;
         SP_reg(context) -= 2;
 
@@ -778,7 +778,7 @@ void WINAPI InitTask16( CONTEXT *context )
     pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
     pinstance->stackbottom = stackhi; /* yup, that's right. Confused me too. */
     pinstance->stacktop    = stacklow; 
-    pinstance->stackmin    = OFFSETOF( pTask->thdb->cur_stack );
+    pinstance->stackmin    = OFFSETOF( pTask->teb->cur_stack );
 }
 
 
@@ -792,9 +792,9 @@ BOOL16 WINAPI WaitEvent16( HTASK16 hTask )
     if (!hTask) hTask = GetCurrentTask();
     pTask = (TDB *)GlobalLock16( hTask );
 
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
+    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
     {
-        FIXME_(task)("called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        FIXME_(task)("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
         return TRUE;
     }
 
@@ -822,16 +822,16 @@ void WINAPI PostEvent16( HTASK16 hTask )
     if (!hTask) hTask = GetCurrentTask();
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
 
-    if ( !THREAD_IsWin16( pTask->thdb ) )
+    if ( !THREAD_IsWin16( pTask->teb ) )
     {
-        FIXME_(task)("called for Win32 thread (%04x)!\n", pTask->thdb->teb_sel );
+        FIXME_(task)("called for Win32 thread (%04x)!\n", pTask->teb->teb_sel );
         return;
     }
 
     pTask->nEvents++;
 
     /* If we are a 32-bit task, we might need to wake up the 16-bit scheduler */
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
+    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
         TASK_Reschedule();
 }
 
@@ -884,9 +884,9 @@ void WINAPI OldYield16(void)
 {
     TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
+    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
     {
-        FIXME_(task)("called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        FIXME_(task)("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
         return;
     }
 
@@ -903,9 +903,9 @@ void WINAPI DirectedYield16( HTASK16 hTask )
 {
     TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
+    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
     {
-        FIXME_(task)("called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        FIXME_(task)("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
         return;
     }
 
@@ -1099,15 +1099,15 @@ HQUEUE16 WINAPI GetTaskQueue16( HTASK16 hTask )
  */
 HQUEUE16 WINAPI SetThreadQueue16( DWORD thread, HQUEUE16 hQueue )
 {
-    THDB *thdb = thread? THREAD_IdToTHDB( thread ) : THREAD_Current();
-    HQUEUE16 oldQueue = thdb? thdb->teb.queue : 0;
+    TEB *teb = thread? THREAD_IdToTEB( thread ) : NtCurrentTeb();
+    HQUEUE16 oldQueue = teb? teb->queue : 0;
 
-    if ( thdb )
+    if ( teb )
     {
-        thdb->teb.queue = hQueue;
+        teb->queue = hQueue;
 
-        if ( GetTaskQueue16( thdb->process->task ) == oldQueue )
-            SetTaskQueue16( thdb->process->task, hQueue );
+        if ( GetTaskQueue16( teb->process->task ) == oldQueue )
+            SetTaskQueue16( teb->process->task, hQueue );
     }
 
     return oldQueue;
@@ -1118,15 +1118,15 @@ HQUEUE16 WINAPI SetThreadQueue16( DWORD thread, HQUEUE16 hQueue )
  */
 HQUEUE16 WINAPI GetThreadQueue16( DWORD thread )
 {
-    THDB *thdb = NULL;
+    TEB *teb = NULL;
     if ( !thread )
-        thdb = THREAD_Current();
+        teb = NtCurrentTeb();
     else if ( HIWORD(thread) )
-        thdb = THREAD_IdToTHDB( thread );
+        teb = THREAD_IdToTEB( thread );
     else if ( IsTask16( (HTASK16)thread ) )
-        thdb = ((TDB *)GlobalLock16( (HANDLE16)thread ))->thdb;
+        teb = ((TDB *)GlobalLock16( (HANDLE16)thread ))->teb;
 
-    return (HQUEUE16)(thdb? thdb->teb.queue : 0);
+    return (HQUEUE16)(teb? teb->queue : 0);
 }
 
 /***********************************************************************
@@ -1134,15 +1134,15 @@ HQUEUE16 WINAPI GetThreadQueue16( DWORD thread )
  */
 VOID WINAPI SetFastQueue16( DWORD thread, HANDLE hQueue )
 {
-    THDB *thdb = NULL;
+    TEB *teb = NULL;
     if ( !thread )
-        thdb = THREAD_Current();
+        teb = NtCurrentTeb();
     else if ( HIWORD(thread) )
-        thdb = THREAD_IdToTHDB( thread );
+        teb = THREAD_IdToTEB( thread );
     else if ( IsTask16( (HTASK16)thread ) )
-        thdb = ((TDB *)GlobalLock16( (HANDLE16)thread ))->thdb;
+        teb = ((TDB *)GlobalLock16( (HANDLE16)thread ))->teb;
 
-    if ( thdb ) thdb->teb.queue = (HQUEUE16) hQueue;
+    if ( teb ) teb->queue = (HQUEUE16) hQueue;
 }
 
 /***********************************************************************
@@ -1150,16 +1150,16 @@ VOID WINAPI SetFastQueue16( DWORD thread, HANDLE hQueue )
  */
 HANDLE WINAPI GetFastQueue16( void )
 {
-    THDB *thdb = THREAD_Current();
-    if (!thdb) return 0;
+    TEB *teb = NtCurrentTeb();
+    if (!teb) return 0;
 
-    if (!thdb->teb.queue)
-        Callout.InitThreadInput16( 0, THREAD_IsWin16(thdb)? 4 : 5 );
+    if (!teb->queue)
+        Callout.InitThreadInput16( 0, THREAD_IsWin16(teb)? 4 : 5 );
 
-    if (!thdb->teb.queue)
+    if (!teb->queue)
         FIXME_(task)("(): should initialize thread-local queue, expect failure!\n" );
 
-    return (HANDLE)thdb->teb.queue;
+    return (HANDLE)teb->queue;
 }
 
 /***********************************************************************
@@ -1175,14 +1175,14 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
     if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
     if (!(pData = (INSTANCEDATA *)GlobalLock16( seg ))) return;
     TRACE_(task)("old=%04x:%04x new=%04x:%04x\n",
-                  SELECTOROF( pTask->thdb->cur_stack ),
-                  OFFSETOF( pTask->thdb->cur_stack ), seg, ptr );
+                  SELECTOROF( pTask->teb->cur_stack ),
+                  OFFSETOF( pTask->teb->cur_stack ), seg, ptr );
 
     /* Save the old stack */
 
-    oldFrame = THREAD_STACK16( pTask->thdb );
+    oldFrame = THREAD_STACK16( pTask->teb );
     /* pop frame + args and push bp */
-    pData->old_ss_sp   = pTask->thdb->cur_stack + sizeof(STACK16FRAME)
+    pData->old_ss_sp   = pTask->teb->cur_stack + sizeof(STACK16FRAME)
                            + 2 * sizeof(WORD);
     *(WORD *)PTR_SEG_TO_LIN(pData->old_ss_sp) = oldFrame->bp;
     pData->stacktop    = top;
@@ -1196,8 +1196,8 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
      */
     copySize = oldFrame->bp - OFFSETOF(pData->old_ss_sp);
     copySize += 3 * sizeof(WORD) + sizeof(STACK16FRAME);
-    pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( seg, ptr - copySize );
-    newFrame = THREAD_STACK16( pTask->thdb );
+    pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( seg, ptr - copySize );
+    newFrame = THREAD_STACK16( pTask->teb );
 
     /* Copy the stack frame and the local variables to the new stack */
 
@@ -1212,12 +1212,10 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
  */
 void WINAPI SwitchStackBack16( CONTEXT *context )
 {
-    TDB *pTask;
     STACK16FRAME *oldFrame, *newFrame;
     INSTANCEDATA *pData;
 
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
-    if (!(pData = (INSTANCEDATA *)GlobalLock16(SELECTOROF(pTask->thdb->cur_stack))))
+    if (!(pData = (INSTANCEDATA *)GlobalLock16(SELECTOROF(NtCurrentTeb()->cur_stack))))
         return;
     if (!pData->old_ss_sp)
     {
@@ -1227,7 +1225,7 @@ void WINAPI SwitchStackBack16( CONTEXT *context )
     TRACE_(task)("restoring stack %04x:%04x\n",
 		 SELECTOROF(pData->old_ss_sp), OFFSETOF(pData->old_ss_sp) );
 
-    oldFrame = THREAD_STACK16( pTask->thdb );
+    oldFrame = CURRENT_STACK16;
 
     /* Pop bp from the previous stack */
 
@@ -1236,14 +1234,14 @@ void WINAPI SwitchStackBack16( CONTEXT *context )
 
     /* Switch back to the old stack */
 
-    pTask->thdb->cur_stack = pData->old_ss_sp - sizeof(STACK16FRAME);
+    NtCurrentTeb()->cur_stack = pData->old_ss_sp - sizeof(STACK16FRAME);
     SS_reg(context)  = SELECTOROF(pData->old_ss_sp);
     ESP_reg(context) = OFFSETOF(pData->old_ss_sp) - sizeof(DWORD); /*ret addr*/
     pData->old_ss_sp = 0;
 
     /* Build a stack frame for the return */
 
-    newFrame = THREAD_STACK16( pTask->thdb );
+    newFrame = CURRENT_STACK16;
     newFrame->frame32 = oldFrame->frame32;
     if (TRACE_ON(relay))
     {
@@ -1332,22 +1330,9 @@ WORD WINAPI GetExeVersion16(void)
 UINT16 WINAPI SetErrorMode16( UINT16 mode )
 {
     TDB *pTask;
-    UINT16 oldMode;
-
     if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
-    oldMode = pTask->error_mode;
     pTask->error_mode = mode;
-    pTask->thdb->process->error_mode = mode;
-    return oldMode;
-}
-
-
-/***********************************************************************
- *           SetErrorMode32   (KERNEL32.486)
- */
-UINT WINAPI SetErrorMode( UINT mode )
-{
-    return SetErrorMode16( (UINT16)mode );
+    return SetErrorMode( mode );
 }
 
 
@@ -1568,8 +1553,8 @@ BOOL16 WINAPI TaskNext16( TASKENTRY *lpte )
     lpte->hTaskParent   = pTask->hParent;
     lpte->hInst         = pTask->hInstance;
     lpte->hModule       = pTask->hModule;
-    lpte->wSS           = SELECTOROF( pTask->thdb->cur_stack );
-    lpte->wSP           = OFFSETOF( pTask->thdb->cur_stack );
+    lpte->wSS           = SELECTOROF( pTask->teb->cur_stack );
+    lpte->wSP           = OFFSETOF( pTask->teb->cur_stack );
     lpte->wStackTop     = pInstData->stacktop;
     lpte->wStackMinimum = pInstData->stackmin;
     lpte->wStackBottom  = pInstData->stackbottom;

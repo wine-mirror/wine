@@ -377,6 +377,19 @@ WINAPI SetUnhandledExceptionFilter( LPTOP_LEVEL_EXCEPTION_FILTER filter );
 #define DBG_CONTROL_BREAK           0x40010008
 #define DBG_EXCEPTION_NOT_HANDLED   0x80010001
 
+struct _TEB;
+#if defined(__i386__) && defined(__WINE__)
+static inline struct _TEB *__get_teb(void)
+{
+    struct _TEB *teb;
+    __asm__(".byte 0x64\n\tmovl (0x18),%0" : "=r" (teb));
+    return teb;
+}
+#define NtCurrentTeb() __get_teb()
+#else
+extern struct _TEB * WINAPI NtCurrentTeb(void);
+#endif
+
 /*
  * Here follows typedefs for security and tokens.
  */ 

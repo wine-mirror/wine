@@ -161,13 +161,13 @@ void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *contex
     if (debug_hook( rec, context, TRUE ) == DBG_CONTINUE)
         return;  /* continue execution */
 
-    frame = CURRENT()->except;
+    frame = NtCurrentTeb()->except;
     nested_frame = NULL;
     while (frame != (PEXCEPTION_FRAME)0xFFFFFFFF)
     {
         /* Check frame address */
-        if (((void*)frame < CURRENT()->stack_low) ||
-            ((void*)(frame+1) > CURRENT()->stack_top) ||
+        if (((void*)frame < NtCurrentTeb()->stack_low) ||
+            ((void*)(frame+1) > NtCurrentTeb()->stack_top) ||
             (int)frame & 3)
         {
             rec->ExceptionFlags |= EH_STACK_INVALID;
@@ -241,7 +241,7 @@ void WINAPI REGS_FUNC(RtlUnwind)( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
     TRACE( "code=%lx flags=%lx\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
 
     /* get chain of exception frames */
-    frame = CURRENT()->except;
+    frame = NtCurrentTeb()->except;
     while ((frame != (PEXCEPTION_FRAME)0xffffffff) && (frame != pEndFrame))
     {
         /* Check frame address */
@@ -253,8 +253,8 @@ void WINAPI REGS_FUNC(RtlUnwind)( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
             newrec.NumberParameters = 0;
             RtlRaiseException( &newrec );  /* never returns */
         }
-        if (((void*)frame < CURRENT()->stack_low) ||
-            ((void*)(frame+1) > CURRENT()->stack_top) ||
+        if (((void*)frame < NtCurrentTeb()->stack_low) ||
+            ((void*)(frame+1) > NtCurrentTeb()->stack_top) ||
             (int)frame & 3)
         {
             newrec.ExceptionCode    = STATUS_BAD_STACK;

@@ -256,18 +256,18 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     WORD *args;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     DWORD offset = 0;
-    THDB *thdb = THREAD_Current();
+    TEB *teb = NtCurrentTeb();
     int iWndsLocks;
 
     /* Window procedures want ax = hInstance, ds = es = ss */
     
     memset(&context, '\0', sizeof(context));
-    DS_reg(&context)  = SELECTOROF(thdb->cur_stack);
+    DS_reg(&context)  = SELECTOROF(teb->cur_stack);
     ES_reg(&context)  = DS_reg(&context);
     EAX_reg(&context) = wndPtr ? wndPtr->hInstance : DS_reg(&context);
     CS_reg(&context)  = SELECTOROF(proc);
     EIP_reg(&context) = OFFSETOF(proc);
-    EBP_reg(&context) = OFFSETOF(thdb->cur_stack)
+    EBP_reg(&context) = OFFSETOF(teb->cur_stack)
                         + (WORD)&((STACK16FRAME*)0)->bp;
 
     WIN_ReleaseWndPtr(wndPtr);
@@ -293,14 +293,14 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 	if (offset)
 	{
 	    void *s = PTR_SEG_TO_LIN(lParam);
-	    lParam = STACK16_PUSH( thdb, offset );
+	    lParam = STACK16_PUSH( teb, offset );
 	    memcpy( PTR_SEG_TO_LIN(lParam), s, offset );
 	}
     }
 
     iWndsLocks = WIN_SuspendWndsLock();
 
-    args = (WORD *)THREAD_STACK16(thdb) - 5;
+    args = (WORD *)THREAD_STACK16(teb) - 5;
     args[0] = LOWORD(lParam);
     args[1] = HIWORD(lParam);
     args[2] = wParam;
@@ -308,7 +308,7 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     args[4] = hwnd;
 
     ret = CallTo16_sreg_( &context, 5 * sizeof(WORD) );
-    if (offset) STACK16_POP( thdb, offset );
+    if (offset) STACK16_POP( teb, offset );
 
     WIN_RestoreWndsLock(iWndsLocks);
 
@@ -822,7 +822,7 @@ static void THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
 
     CS_reg( &context ) = SELECTOROF( proc );
     IP_reg( &context ) = OFFSETOF( proc );
-    BP_reg( &context ) = OFFSETOF( THREAD_Current()->cur_stack )
+    BP_reg( &context ) = OFFSETOF( NtCurrentTeb()->cur_stack )
                          + (WORD)&((STACK16FRAME*)0)->bp;
 
     AX_reg( &context ) = timer;
@@ -1148,10 +1148,10 @@ WOW16Call(WORD x,WORD y,WORD z) {
 	FIXME_(thunk)("(0x%04x,0x%04x,%d),calling (",x,y,z);
 
 	for (i=0;i<x/2;i++) {
-		WORD	a = STACK16_POP(THREAD_Current(),2);
+		WORD	a = STACK16_POP(NtCurrentTeb(),2);
 		DPRINTF("%04x ",a);
 	}
-	calladdr = STACK16_POP(THREAD_Current(),4);
+	calladdr = STACK16_POP(NtCurrentTeb(),4);
 	DPRINTF(") calling address was 0x%08lx\n",calladdr);
 	return 0;
 }
@@ -1511,7 +1511,7 @@ void WINAPI InitCBClient16( FARPROC glueLS )
 void WINAPI CBClientGlueSL( CONTEXT *context )
 {
     /* Create stack frame */
-    SEGPTR stackSeg = STACK16_PUSH( THREAD_Current(), 12 );
+    SEGPTR stackSeg = STACK16_PUSH( NtCurrentTeb(), 12 );
     LPWORD stackLin = PTR_SEG_TO_LIN( stackSeg );
     SEGPTR glue;
     

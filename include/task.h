@@ -49,7 +49,7 @@ typedef struct
 
 #define THUNK_MAGIC  ('P' | ('T' << 8))
 
-struct _THDB;
+struct _TEB;
 struct _WSINFO;
 struct _NE_MODULE;
 
@@ -92,7 +92,7 @@ typedef struct _TDB
     DWORD     int75 WINE_PACKED;          /* 4a int 75 (80x87 error) handler */
     DWORD     compat_flags WINE_PACKED;   /* 4e Compatibility flags */
     BYTE      unused4[2];                 /* 52 */
-    struct _THDB   *thdb;                 /* 54 Pointer to thread database */
+    struct _TEB *teb;                     /* 54 Pointer to thread database */
     struct _WSINFO *pwsi;		  /* 58 Socket control struct */
     BYTE      unused5[4];                 /* 5B */
     HANDLE16  hPDB;                       /* 60 Selector of PDB (i.e. PSP) */
@@ -146,7 +146,7 @@ typedef struct _THHOOK
 extern THHOOK *pThhook;
 extern void (*TASK_AddTaskEntryBreakpoint)( HTASK16 hTask );
 
-extern BOOL TASK_Create( struct _THDB *thdb, struct _NE_MODULE *pModule,
+extern BOOL TASK_Create( struct _NE_MODULE *pModule,
                          HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
                          UINT16 cmdShow );
 extern void TASK_KillTask( HTASK16 hTask );

@@ -223,7 +223,7 @@ static void DEBUG_DoBackTrace(int noisy)
         is16 = TRUE;
     }
 
-    next_switch = THREAD_Current()->cur_stack;
+    next_switch = NtCurrentTeb()->cur_stack;
     if (is16) {
       if (IsBadReadPtr((STACK32FRAME*)next_switch, sizeof(STACK32FRAME))) {
 	 fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );

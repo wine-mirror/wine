@@ -262,15 +262,15 @@ void RELAY_Unimplemented16(void)
  */
 void RELAY_DebugCallTo16( int* stack, int nb_args )
 {
-    THDB *thdb;
+    TEB *teb;
 
     if (!TRACE_ON(relay)) return;
-    thdb = THREAD_Current();
+    teb = NtCurrentTeb();
 
     if (nb_args == -1)  /* Register function */
     {
         CONTEXT *context = (CONTEXT *)stack[0];
-        WORD *stack16 = (WORD *)THREAD_STACK16(thdb);
+        WORD *stack16 = (WORD *)THREAD_STACK16(teb);
         DPRINTF("CallTo16(func=%04lx:%04x,ds=%04lx",
                 CS_reg(context), IP_reg(context), DS_reg(context) );
         nb_args = stack[1] / sizeof(WORD);
@@ -278,8 +278,8 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
 	    --stack16;
 	    DPRINTF( ",0x%04x", *stack16 );
 	}
-        DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
-                OFFSETOF(thdb->cur_stack) );
+        DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(teb->cur_stack),
+                OFFSETOF(teb->cur_stack) );
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x FS=%04x\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
@@ -289,14 +289,14 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
     {
         DPRINTF("CallTo16(func=%04x:%04x,ds=%04x",
                 HIWORD(stack[0]), LOWORD(stack[0]),
-                SELECTOROF(thdb->cur_stack) );
+                SELECTOROF(teb->cur_stack) );
         stack++;
         while (nb_args--) {
 	    DPRINTF(",0x%04x", *stack );
 	    stack++;
 	}
-        DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
-                OFFSETOF(thdb->cur_stack) );
+        DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(teb->cur_stack),
+                OFFSETOF(teb->cur_stack) );
     }
 
     SYSLEVEL_CheckNotLevel( 2 );
@@ -308,14 +308,11 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
  */
 void RELAY_DebugCallTo16Ret( int ret_val )
 {
-    THDB *thdb;
-
     if (!TRACE_ON(relay)) return;
-    thdb = THREAD_Current();
 
     DPRINTF("CallTo16() ss:sp=%04x:%04x retval=0x%08x\n", 
-            SELECTOROF(thdb->cur_stack), OFFSETOF(thdb->cur_stack), ret_val);
-
+            SELECTOROF(NtCurrentTeb()->cur_stack),
+            OFFSETOF(NtCurrentTeb()->cur_stack), ret_val);
     SYSLEVEL_CheckNotLevel( 2 );
 }
 
@@ -380,7 +377,7 @@ void WINAPI Throw16( CONTEXT *context )
     LPCATCHBUF lpbuf;
     STACK16FRAME *pFrame;
     STACK32FRAME *frame32;
-    THDB *thdb = THREAD_Current();
+    TEB *teb = NtCurrentTeb();
 
     VA_START16( valist );
     AX_reg(context) = VA_ARG16( valist, WORD );  /* retval */
@@ -389,11 +386,11 @@ void WINAPI Throw16( CONTEXT *context )
     VA_END16( valist );
 
     /* Find the frame32 corresponding to the frame16 we are jumping to */
-    pFrame = THREAD_STACK16( thdb );
-    frame32 = THREAD_STACK16( thdb )->frame32;
+    pFrame = THREAD_STACK16(teb);
+    frame32 = pFrame->frame32;
     while (frame32 && frame32->frame16)
     {
-        if (OFFSETOF(frame32->frame16) < OFFSETOF(thdb->cur_stack))
+        if (OFFSETOF(frame32->frame16) < OFFSETOF(teb->cur_stack))
             break;  /* Something strange is going on */
         if (OFFSETOF(frame32->frame16) > lpbuf[2])
         {
@@ -507,8 +504,7 @@ static DWORD RELAY_CallProc32W(int Ex)
 		break;
 	}
 	/* POP nrofargs DWORD arguments and 3 DWORD parameters */
-        if (!Ex) STACK16_POP( THREAD_Current(),
-                              (3 + nrofargs) * sizeof(DWORD) );
+        if (!Ex) STACK16_POP( NtCurrentTeb(), (3 + nrofargs) * sizeof(DWORD) );
 
 	TRACE("%s - returns %08lx\n",dbg_str(relay),ret);
 	HeapFree( GetProcessHeap(), 0, args );
