@@ -608,7 +608,7 @@ BOOL WineEngInit(void)
 	vlen = valuelen;
 	while(RegEnumValueA(hkey, i++, value, &vlen, NULL, &type, data,
 			    &dlen) == ERROR_SUCCESS) {
-	    if(((LPSTR)data)[1] == ':')
+	    if(((LPSTR)data)[0] && ((LPSTR)data)[1] == ':')
 	        if(wine_get_unix_file_name((LPSTR)data, unixname, sizeof(unixname)))
 		    AddFontFileToList(unixname);
 
