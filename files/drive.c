@@ -663,17 +663,38 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
     int fd;
     off_t offs;
     int ret = 0;
+    struct stat stat_buf;
 
-    if (memset(buff,0,DRIVE_SUPER)!=buff) return -1;
-    if ((fd=open(DOSDrives[drive].device,O_RDONLY)) == -1)
-    {
-	struct stat st;
+    memset(buff, 0, DRIVE_SUPER);
+    	/* O_NONBLOCK in case we're opening FIFO; we'll be reset it later */
+    if ((fd = open(DOSDrives[drive].device, O_RDONLY|O_NOCTTY|O_NONBLOCK)) != -1) {
+	if (fstat(fd, &stat_buf) < 0) {	/* shouldn't happen since we just opened that file */
+	    ERR("fstat() failed for opened device '%s' (drive %c:) ! IT SHOULDN'T HAPPEN !!!\n",
+		DOSDrives[drive].device, 'A'+drive);
+	    ret = -1;
+	} else if (!S_ISBLK(stat_buf.st_mode)) {
+	    ERR("Device '%s' (drive %c:) is not a block device - check your config\n",
+		DOSDrives[drive].device, 'A'+drive);
+	    ret = -1;
+			/* reset O_NONBLOCK */
+        } else if (fcntl(fd, F_SETFL, 0) < 0 || fcntl(fd, F_GETFL) & O_NONBLOCK) {
+	    ERR("fcntl() failed to reset O_NONBLOCK for device '%s' (drive %c:)\n",
+		DOSDrives[drive].device, 'A'+drive);
+	    ret = -1;
+	}
+	if (ret) {
+	    close(fd);
+	    fd = -1;
+	}
+    } else {
 	if (!DOSDrives[drive].device)
 	    ERR("No device configured for drive %c: !\n", 'A'+drive);
 	else
 	    ERR("Couldn't open device '%s' for drive %c: ! (%s)\n", DOSDrives[drive].device, 'A'+drive,
-		 (stat(DOSDrives[drive].device, &st)) ?
+		(stat(DOSDrives[drive].device, &stat_buf)) ?
 			"not available or symlink not valid ?" : "no permission");
+    }
+    if (fd == -1) {
 	ERR("Can't read drive volume info ! Either pre-set it or make sure the device to read it from is accessible !\n");
 	PROFILE_UsageWineIni();
 	return -1;
