@@ -213,6 +213,9 @@ HRESULT DSOUND_PrimaryStop(IDirectSoundImpl *This)
 	if (This->hwbuf) {
 		err = IDsDriverBuffer_Stop(This->hwbuf);
 		if (err == DSERR_BUFFERLOST) {
+			DWORD flags = CALLBACK_FUNCTION;
+			if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
+				flags |= WAVE_DIRECTSOUND;
 			/* Wine-only: the driver wants us to reopen the device */
 			/* FIXME: check for errors */
 			IDsDriverBuffer_Release(This->hwbuf);
@@ -220,7 +223,7 @@ HRESULT DSOUND_PrimaryStop(IDirectSoundImpl *This)
 			This->hwo = 0;
 			err = mmErr(waveOutOpen(&(This->hwo), This->drvdesc.dnDevNode,
 						&(This->wfx), (DWORD)DSOUND_callback, (DWORD)This,
-						CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
+						flags));
 			if (err == DS_OK)
 				err = IDsDriver_CreateSoundBuffer(This->driver,&(This->wfx),
 								  DSBCAPS_PRIMARYBUFFER,0,
@@ -323,13 +326,16 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 		dsound->wfx.nSamplesPerSec * dsound->wfx.nBlockAlign;
 
 	if (dsound->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT) {
+		DWORD flags = CALLBACK_FUNCTION;
+		if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
+			flags |= WAVE_DIRECTSOUND;
 		/* FIXME: check for errors */
 		DSOUND_PrimaryClose(dsound);
 		waveOutClose(dsound->hwo);
 		dsound->hwo = 0;
                 err = mmErr(waveOutOpen(&(dsound->hwo), dsound->drvdesc.dnDevNode,
                                         &(dsound->wfx), (DWORD)DSOUND_callback, (DWORD)dsound,
-                                        CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
+                                        flags));
                 if (err == DS_OK)
                     DSOUND_PrimaryOpen(dsound);
 	}

@@ -115,6 +115,7 @@ int ds_hel_margin = DS_HEL_MARGIN;
 int ds_hel_queue = DS_HEL_QUEUE;
 int ds_snd_queue_max = DS_SND_QUEUE_MAX;
 int ds_snd_queue_min = DS_SND_QUEUE_MIN;
+int ds_hw_accel = DS_HW_ACCEL_FULL;
 
 /*
  * Call the callback provided to DirectSoundEnumerateA.
@@ -199,6 +200,17 @@ void setup_dsound_options(void)
     if (!get_config_key( hkey, appkey, "SndQueueMin", buffer, MAX_PATH ))
         ds_snd_queue_min = atoi(buffer);
 
+    if (!get_config_key( hkey, appkey, "HardwareAcceleration", buffer, MAX_PATH )) {
+	if (strcmp(buffer, "Full") == 0)
+	    ds_hw_accel = DS_HW_ACCEL_FULL;
+	else if (strcmp(buffer, "Standard") == 0)
+	    ds_hw_accel = DS_HW_ACCEL_STANDARD;
+	else if (strcmp(buffer, "Basic") == 0)
+	    ds_hw_accel = DS_HW_ACCEL_BASIC;
+	else if (strcmp(buffer, "Emulation") == 0)
+	    ds_hw_accel = DS_HW_ACCEL_EMULATION;
+    }
+
     if (appkey) RegCloseKey( appkey );
     RegCloseKey( hkey );
 
@@ -212,7 +224,13 @@ void setup_dsound_options(void)
        WARN("ds_snd_queue_max = %d (default=%d)\n",ds_snd_queue_max ,DS_SND_QUEUE_MAX);
     if (ds_snd_queue_min != DS_SND_QUEUE_MIN)
        WARN("ds_snd_queue_min = %d (default=%d)\n",ds_snd_queue_min ,DS_SND_QUEUE_MIN);
-
+    if (ds_hw_accel != DS_HW_ACCEL_FULL)
+	WARN("ds_hw_accel = %s (default=Full)\n", 
+	    ds_hw_accel==DS_HW_ACCEL_FULL ? "Full" :
+	    ds_hw_accel==DS_HW_ACCEL_STANDARD ? "Standard" :
+	    ds_hw_accel==DS_HW_ACCEL_BASIC ? "Basic" :
+	    ds_hw_accel==DS_HW_ACCEL_EMULATION ? "Emulation" :
+	    "Unknown");
 }
 
 
@@ -604,6 +622,10 @@ HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *
 	/* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
 	waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0);
 
+	/* Disable the direct sound driver to force emulation if requested. */
+	if (ds_hw_accel == DS_HW_ACCEL_EMULATION)
+	    drv = NULL;
+	
 	/* Allocate memory */
 	*ippDS = (IDirectSoundImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundImpl));
 	if (*ippDS == NULL)
@@ -654,6 +676,12 @@ HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *
 	 * before the DirectSound interface is opened */
 	if ((*ippDS)->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
 	{
+		DWORD flags = CALLBACK_FUNCTION;
+
+		/* disable direct sound if requested */
+		if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
+		    flags |= WAVE_DIRECTSOUND;
+
 		/* FIXME: is this right? */
                 (*ippDS)->drvdesc.dnDevNode = 0;
                 err = DSERR_ALLOCATED;
@@ -665,7 +693,7 @@ HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *
                   err = mmErr(waveOutOpen(&((*ippDS)->hwo),
 					  (*ippDS)->drvdesc.dnDevNode, &((*ippDS)->wfx),
 					  (DWORD)DSOUND_callback, (DWORD)(*ippDS),
-					  CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
+					  flags));
                   (*ippDS)->drvdesc.dnDevNode++; /* next wave device */
 		}
 

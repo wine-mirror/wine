@@ -901,11 +901,7 @@ void DSOUND_PerformMix(void)
 			/* DSOUND_callback may need this lock */
 			LeaveCriticalSection(&(dsound->mixlock));
 #endif
-			/* FIXME: OSS doesn't allow independent stopping of input and output streams */
-			/* in full duplex mode so don't stop when capturing. This should be moved into */
-			/* the OSS driver someday. */ 
-			if ( (dsound_capture == NULL) || (dsound_capture->state != STATE_CAPTURING) )
-				DSOUND_PrimaryStop(dsound);
+			DSOUND_PrimaryStop(dsound);
 #ifdef SYNC_CALLBACK
 			EnterCriticalSection(&(dsound->mixlock));
 #endif

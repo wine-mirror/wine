@@ -64,6 +64,16 @@ static HRESULT DSOUND_CreateDirectSoundCaptureBuffer(
     IDirectSoundCaptureImpl *ipDSC, 
     LPCDSCBUFFERDESC lpcDSCBufferDesc, 
     LPVOID* ppobj );
+static HRESULT WINAPI IDirectSoundFullDuplexImpl_Initialize(
+    LPDIRECTSOUNDFULLDUPLEX iface,
+    LPCGUID pCaptureGuid,
+    LPCGUID pRendererGuid,
+    LPCDSCBUFFERDESC lpDscBufferDesc,
+    LPCDSBUFFERDESC lpDsBufferDesc,
+    HWND hWnd,
+    DWORD dwLevel,
+    LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8,
+    LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8 );
 
 static ICOM_VTABLE(IDirectSoundCapture) dscvt;
 static ICOM_VTABLE(IDirectSoundCaptureBuffer8) dscbvt;
@@ -427,9 +437,13 @@ IDirectSoundCaptureImpl_Initialize(
     }
     err = DS_OK;
 
+    /* Disable the direct sound driver to force emulation if requested. */
+    if (ds_hw_accel == DS_HW_ACCEL_EMULATION)
+	This->driver = NULL;
+
     /* Get driver description */
     if (This->driver) {
-	ERR("You have a sound card that is Direct Sound Capture capable but the driver is not finished\n");
+	ERR("You have a sound card that is Direct Sound Capture capable but the driver is not finished. You can add a line to the wine config file in [dsound]: \"HardwareAcceleration\" = \"Emulation\" to force emulation mode.\n");
 	/* FIXME: remove this return to test driver */
 	return DSERR_NODRIVER;
         TRACE("using DirectSound driver\n");
@@ -455,6 +469,7 @@ IDirectSoundCaptureImpl_Initialize(
 
         /* the driver is now open, so it's now allowed to call GetCaps */
         if (This->driver) {
+	    This->drvcaps.dwSize = sizeof(This->drvcaps);
             err = IDsCaptureDriver_GetCaps(This->driver,&(This->drvcaps));
 	    if (err != DS_OK) {
 		WARN("IDsCaptureDriver_GetCaps failed\n");
@@ -580,10 +595,12 @@ DSOUND_CreateDirectSoundCaptureBuffer(
 	} else {
             LPBYTE newbuf;
             DWORD buflen;
+	    DWORD flags = CALLBACK_FUNCTION;
+	    if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
+		flags |= WAVE_DIRECTSOUND;
             err = mmErr(waveInOpen(&(ipDSC->hwi),
                 ipDSC->drvdesc.dnDevNode, &(ipDSC->wfx),
-                (DWORD)DSOUND_capture_callback, (DWORD)ipDSC,
-                CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
+                (DWORD)DSOUND_capture_callback, (DWORD)ipDSC, flags));
             if (err != DS_OK) {
                 WARN("waveInOpen failed\n");
 	        ipDSC->hwi = 0;
@@ -757,6 +774,7 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
     if (This->dsound->driver) {
         return IDsCaptureDriverBuffer_GetPosition(This->dsound->hwbuf, lpdwCapturePosition, lpdwReadPosition );
     } else if (This->dsound->hwi) {
+	EnterCriticalSection(&(This->dsound->lock));
 	TRACE("old This->dsound->state=%ld\n",This->dsound->state);
         if (lpdwCapturePosition) {
             MMTIME mtime;
@@ -777,6 +795,7 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
             *lpdwReadPosition = This->dsound->read_position;
         }
 	TRACE("new This->dsound->state=%ld\n",This->dsound->state);
+	LeaveCriticalSection(&(This->dsound->lock));
 	if (lpdwCapturePosition) TRACE("*lpdwCapturePosition=%ld\n",*lpdwCapturePosition);
 	if (lpdwReadPosition) TRACE("*lpdwReadPosition=%ld\n",*lpdwReadPosition);
     } else {
@@ -838,6 +857,8 @@ IDirectSoundCaptureBufferImpl_GetStatus(
     }
 
     *lpdwStatus = 0;
+    EnterCriticalSection(&(This->dsound->lock));
+
     TRACE("old This->dsound->state=%ld, old lpdwStatus=%08lx\n",This->dsound->state,*lpdwStatus);
     if ((This->dsound->state == STATE_STARTING) || 
         (This->dsound->state == STATE_CAPTURING)) {
@@ -846,6 +867,7 @@ IDirectSoundCaptureBufferImpl_GetStatus(
             *lpdwStatus |= DSCBSTATUS_LOOPING;
     }
     TRACE("new This->dsound->state=%ld, new lpdwStatus=%08lx\n",This->dsound->state,*lpdwStatus);
+    LeaveCriticalSection(&(This->dsound->lock));
 
     TRACE("status=%lx\n", *lpdwStatus);
     TRACE("returning DS_OK\n");
@@ -1170,6 +1192,63 @@ static ICOM_VTABLE(IDirectSoundCaptureBuffer8) dscbvt =
     IDirectSoundCaptureBufferImpl_GetFXStatus
 };
 
+/***************************************************************************
+ * DirectSoundFullDuplexCreate8 [DSOUND.8]
+ *
+ * Create and initialize a DirectSoundFullDuplex interface
+ *
+ * RETURNS
+ *    Success: DS_OK
+ *    Failure: DSERR_NOAGGREGATION, DSERR_ALLOCATED, DSERR_INVALIDPARAM,
+ *             DSERR_OUTOFMEMORY DSERR_INVALIDCALL DSERR_NODRIVER
+ */
+HRESULT WINAPI 
+DirectSoundFullDuplexCreate8(
+    LPCGUID pcGuidCaptureDevice,
+    LPCGUID pcGuidRenderDevice,
+    LPCDSCBUFFERDESC pcDSCBufferDesc,
+    LPCDSBUFFERDESC pcDSBufferDesc,
+    HWND hWnd,
+    DWORD dwLevel,
+    LPDIRECTSOUNDFULLDUPLEX *ppDSFD,
+    LPDIRECTSOUNDCAPTUREBUFFER8 *ppDSCBuffer8,
+    LPDIRECTSOUNDBUFFER8 *ppDSBuffer8,
+    LPUNKNOWN pUnkOuter)
+{
+    IDirectSoundFullDuplexImpl** ippDSFD=(IDirectSoundFullDuplexImpl**)ppDSFD;
+    TRACE("(%s,%s,%p,%p,%lx,%lx,%p,%p,%p,%p)\n", debugstr_guid(pcGuidCaptureDevice), 
+	debugstr_guid(pcGuidRenderDevice), pcDSCBufferDesc, pcDSBufferDesc,
+	(DWORD)hWnd, dwLevel, ppDSFD, ppDSCBuffer8, ppDSBuffer8, pUnkOuter);
+
+    if ( pUnkOuter ) {
+	WARN("pUnkOuter != 0\n");
+        return DSERR_NOAGGREGATION;
+    }
+
+    *ippDSFD = (IDirectSoundFullDuplexImpl*)HeapAlloc(GetProcessHeap(),
+            HEAP_ZERO_MEMORY, sizeof(IDirectSoundFullDuplexImpl));
+
+    if (*ippDSFD == NULL) {
+	TRACE("couldn't allocate memory\n");
+	return DSERR_OUTOFMEMORY;
+    }
+    else
+    {
+        ICOM_THIS(IDirectSoundFullDuplexImpl, *ippDSFD);
+
+        This->ref = 1;
+
+        InitializeCriticalSection( &(This->lock) );
+
+        ICOM_VTBL(This) = &dsfdvt;
+
+        return IDirectSoundFullDuplexImpl_Initialize( (LPDIRECTSOUNDFULLDUPLEX)This,
+                                                      pcGuidCaptureDevice, pcGuidRenderDevice,
+                                                      pcDSCBufferDesc, pcDSBufferDesc,
+                                                      hWnd, dwLevel, ppDSCBuffer8, ppDSBuffer8);
+    }
+}
+
 static HRESULT WINAPI
 IDirectSoundFullDuplexImpl_QueryInterface(
     LPDIRECTSOUNDFULLDUPLEX iface,
@@ -1192,6 +1271,7 @@ IDirectSoundFullDuplexImpl_AddRef( LPDIRECTSOUNDFULLDUPLEX iface )
 
     TRACE( "(%p) was 0x%08lx\n", This, This->ref );
     uRef = ++(This->ref);
+
     LeaveCriticalSection( &(This->lock) );
 
     return uRef;
