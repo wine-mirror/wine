@@ -586,11 +586,11 @@ import  ntdll.dll
 568 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsoleA
 569 stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInputA
 570 stdcall ReadConsoleInputW(long ptr long ptr) ReadConsoleInputW 
-571 stub ReadConsoleOutputA
-572 stub ReadConsoleOutputAttribute
+571 stdcall ReadConsoleOutputA(long ptr long long ptr) ReadConsoleOutputA
+572 stdcall ReadConsoleOutputAttribute(long ptr long long ptr) ReadConsoleOutputAttribute
 573 stdcall ReadConsoleOutputCharacterA(long ptr long long ptr) ReadConsoleOutputCharacterA
-574 stub ReadConsoleOutputCharacterW
-575 stub ReadConsoleOutputW
+574 stdcall ReadConsoleOutputCharacterW(long ptr long long ptr) ReadConsoleOutputCharacterW
+575 stdcall ReadConsoleOutputW(long ptr long long ptr) ReadConsoleOutputW
 576 stdcall ReadConsoleW(long ptr long ptr ptr) ReadConsoleW
 577 stdcall ReadFile(long ptr long ptr ptr) ReadFile
 578 stdcall ReadFileEx(long ptr long ptr ptr) ReadFileEx
@@ -628,7 +628,7 @@ import  ntdll.dll
 610 register SUnMapLS_IP_EBP_40() SUnMapLS_IP_EBP_40
 611 register SUnMapLS_IP_EBP_8() SUnMapLS_IP_EBP_8
 612 stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr) ScrollConsoleScreenBufferA
-613 stub ScrollConsoleScreenBufferW
+613 stdcall ScrollConsoleScreenBufferW(long ptr ptr ptr ptr) ScrollConsoleScreenBufferW
 614 stdcall SearchPathA(str str str long ptr ptr) SearchPathA
 615 stdcall SearchPathW(wstr wstr wstr long ptr ptr) SearchPathW
 616 stdcall SetCommBreak(long) SetCommBreak
@@ -639,7 +639,7 @@ import  ntdll.dll
 621 stdcall SetComputerNameA(str) SetComputerNameA
 622 stdcall SetComputerNameW(wstr) SetComputerNameW
 623 stdcall SetConsoleActiveScreenBuffer(long) SetConsoleActiveScreenBuffer
-624 stub SetConsoleCP
+624 stdcall SetConsoleCP(long) SetConsoleCP
 625 stdcall SetConsoleCtrlHandler(ptr long) SetConsoleCtrlHandler
 626 stdcall SetConsoleCursorInfo(long ptr) SetConsoleCursorInfo
 627 stdcall SetConsoleCursorPosition(long long) SetConsoleCursorPosition
@@ -746,12 +746,12 @@ import  ntdll.dll
 728 stdcall WinExec(str long) WinExec
 729 stdcall WriteConsoleA(long ptr long ptr ptr) WriteConsoleA
 730 stdcall WriteConsoleInputA(long ptr long ptr) WriteConsoleInputA
-731 stub WriteConsoleInputW
+731 stdcall WriteConsoleInputW(long ptr long ptr) WriteConsoleInputW
 732 stdcall WriteConsoleOutputA(long ptr long long ptr) WriteConsoleOutputA
 733 stub WriteConsoleOutputAttribute
 734 stub WriteConsoleOutputCharacterA
 735 stub WriteConsoleOutputCharacterW
-736 stub WriteConsoleOutputW
+736 stdcall WriteConsoleOutputW(long ptr long long ptr) WriteConsoleOutputW
 737 stdcall WriteConsoleW(long ptr long ptr ptr) WriteConsoleW
 738 stdcall WriteFile(long ptr long ptr ptr) WriteFile
 739 stub WriteFileEx

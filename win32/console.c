@@ -866,6 +866,22 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
 }
 
 /***********************************************************************
+ *            WriteConsoleOutputW   (KERNEL32.734)
+ */
+BOOL WINAPI WriteConsoleOutputW( HANDLE hConsoleOutput,
+                                     LPCHAR_INFO lpBuffer,
+                                     COORD dwBufferSize,
+                                     COORD dwBufferCoord,
+                                     LPSMALL_RECT lpWriteRegion)
+{
+    FIXME("(%d,%p,%dx%d,%dx%d,%p): stub\n", hConsoleOutput, lpBuffer,
+	  dwBufferSize.X,dwBufferSize.Y,dwBufferCoord.X,dwBufferCoord.Y,lpWriteRegion);
+    
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;   
+}
+
+/***********************************************************************
  *            WriteConsoleW   (KERNEL32.577)
  */
 BOOL WINAPI WriteConsoleW( HANDLE hConsoleOutput,
@@ -1081,6 +1097,19 @@ BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
         buffer += len;
     }
     return TRUE;
+}
+
+/******************************************************************************
+ * WriteConsoleInputW [KERNEL32.731]  Write data to a console input buffer
+ *
+ */
+BOOL WINAPI WriteConsoleInputW( HANDLE handle, INPUT_RECORD *buffer,
+                                DWORD count, LPDWORD written )
+{
+    FIXME("(%d,%p,%ld,%p): stub!\n", handle, buffer, count, written);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;    
 }
 
 
@@ -1427,6 +1456,21 @@ BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput,
     return FALSE;
 }
 
+/******************************************************************************
+ * ReadConsoleOutputCharacterW [KERNEL32.574]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI ReadConsoleOutputCharacterW(HANDLE hConsoleOutput, 
+	      LPWSTR lpstr, DWORD dword, COORD coord, LPDWORD lpdword)
+{
+    FIXME("(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput,lpstr,
+	  dword,coord.X,coord.Y,lpdword);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 
 /******************************************************************************
  * ScrollConsoleScreenBufferA [KERNEL32.612]
@@ -1440,6 +1484,95 @@ BOOL WINAPI ScrollConsoleScreenBufferA( HANDLE hConsoleOutput,
 {
     FIXME("(%d,%p,%p,%dx%d,%p): stub\n", hConsoleOutput,lpScrollRect,
 	  lpClipRect,dwDestOrigin.X,dwDestOrigin.Y,lpFill);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
+ * ScrollConsoleScreenBufferW [KERNEL32.613]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI ScrollConsoleScreenBufferW( HANDLE hConsoleOutput, 
+	      LPSMALL_RECT lpScrollRect, LPSMALL_RECT lpClipRect,
+              COORD dwDestOrigin, LPCHAR_INFO lpFill)
+{
+    FIXME("(%d,%p,%p,%dx%d,%p): stub\n", hConsoleOutput,lpScrollRect,
+	  lpClipRect,dwDestOrigin.X,dwDestOrigin.Y,lpFill);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *  ReadConsoleOutputA [KERNEL32.571]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI ReadConsoleOutputA( HANDLE hConsoleOutput, 
+				LPCHAR_INFO lpBuffer,
+				COORD dwBufferSize,
+				COORD dwBufferCoord,
+				LPSMALL_RECT lpReadRegion )
+{
+    FIXME("(%d,%p,%dx%d,%dx%d,%p): stub\n", hConsoleOutput, lpBuffer,
+	  dwBufferSize.X, dwBufferSize.Y, dwBufferSize.X, dwBufferSize.Y, 
+	  lpReadRegion);
+    
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *  ReadConsoleOutputW [KERNEL32.575]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI ReadConsoleOutputW( HANDLE hConsoleOutput, 
+				LPCHAR_INFO lpBuffer,
+				COORD dwBufferSize,
+				COORD dwBufferCoord,
+				LPSMALL_RECT lpReadRegion )
+{
+    FIXME("(%d,%p,%dx%d,%dx%d,%p): stub\n", hConsoleOutput, lpBuffer,
+	  dwBufferSize.X, dwBufferSize.Y, dwBufferSize.X, dwBufferSize.Y, 
+	  lpReadRegion);
+    
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *  ReadConsoleOutputAttribute [KERNEL32.572]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI ReadConsoleOutputAttribute( HANDLE hConsoleOutput, 
+					LPWORD lpAttribute,
+					DWORD nLength,
+					COORD dwReadCoord,
+					LPDWORD lpNumberOfAttrsRead)
+{
+    FIXME("(%d,%p,%ld,%dx%d,%p): stub\n", hConsoleOutput, lpAttribute,
+	  nLength, dwReadCoord.X, dwReadCoord.Y, lpNumberOfAttrsRead);
+    
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *  SetConsoleCP	 [KERNEL32.572]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI SetConsoleCP( UINT cp )
+{
+    FIXME("(%d): stub\n", cp);
+    
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
