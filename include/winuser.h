@@ -2871,7 +2871,8 @@ typedef struct tagMINIMIZEDMETRICS {
 #define SW_SHOWNA           8
 #define SW_RESTORE          9
 #define SW_SHOWDEFAULT	    10
-#define SW_MAX		    10
+#define SW_FORCEMINIMIZE    11
+#define SW_MAX              11
 #define SW_NORMALNA	    0xCC	/* undoc. flag in MinMaximize */
 
   /* WM_SIZE message wParam values */

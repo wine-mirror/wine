@@ -1178,6 +1178,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             swp |= SWP_NOACTIVATE | SWP_NOZORDER;
             /* fall through */
 	case SW_SHOWMINIMIZED:
+        case SW_FORCEMINIMIZE: /* FIXME: Does not work if thread is hung. */
             swp |= SWP_SHOWWINDOW;
             /* fall through */
 	case SW_MINIMIZE:
