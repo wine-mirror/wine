@@ -748,11 +748,23 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     TRACE("(%s,%s,0x%08lx)\n", debugstr_w(lpMachineName),
           debugstr_w(lpDatabaseName), dwDesiredAccess);
 
-    /*
-     * FIXME: what is lpDatabaseName?
-     * It should be set to "SERVICES_ACTIVE_DATABASE" according to
-     * docs, but what if it isn't?
-     */
+    if( lpDatabaseName )
+    {
+        if( strcmpiW( lpDatabaseName, SERVICES_ACTIVE_DATABASEW ) == 0 )
+        {
+            /* noop, all right */
+        }
+        else if( strcmpiW( lpDatabaseName, SERVICES_FAILED_DATABASEW ) == 0 )
+        {
+            SetLastError( ERROR_DATABASE_DOES_NOT_EXIST );
+            return NULL;
+        }
+        else
+        {
+            SetLastError( ERROR_INVALID_NAME );
+            return NULL;
+        }
+    }
 
     retval = alloc_sc_handle( SC_HTYPE_MANAGER );
     if( NULL == retval ) return NULL;
