@@ -1161,122 +1161,32 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
  */
 INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 {
-	int speed;
 	struct DosDeviceStruct *ptr;
-	struct termios port;
-	int fd,r;
+	DCB dcb;
 
     	TRACE("cid %d, ptr %p\n", cid, lpdcb);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
 		return -1;
 	}
-	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
-		return -1;
-	r = tcgetattr(fd, &port);
-	close(fd);
-	if (r == -1) {
+	if (!GetCommState(ptr->handle,&dcb)) {
 		ptr->commerror = WinError();	
 		return -1;
 	}
-	lpdcb->Id = cid;
-#ifndef __EMX__
-#ifdef CBAUD
-        speed = port.c_cflag & CBAUD;
-#else
-        speed = port.c_ospeed;
-#endif
-        switch(speed) {
-		case B110:
-			lpdcb->BaudRate = 110;
-			break;
-		case B300:
-			lpdcb->BaudRate = 300;
-			break;
-		case B600:
-			lpdcb->BaudRate = 600;
-			break;
-		case B1200:
-			lpdcb->BaudRate = 1200;
-			break;
-		case B2400:
-			lpdcb->BaudRate = 2400;
-			break;
-		case B4800:
-			lpdcb->BaudRate = 4800;
-			break;
-		case B9600:
-			lpdcb->BaudRate = 9600;
-			break;
-		case B19200:
-			lpdcb->BaudRate = 19200;
-			break;
-		case B38400:
-			lpdcb->BaudRate = 38400;
-			break;
-#ifdef B57600
-		case B57600:
-			lpdcb->BaudRate = 57600;
-			break;
-#endif
-#ifdef B115200
-		case B115200:
-			lpdcb->BaudRate = 57601;
-			break;
-#endif
-	}
-#endif
-	switch (port.c_cflag & CSIZE) {
-		case CS5:
-			lpdcb->ByteSize = 5;
-			break;
-		case CS6:
-			lpdcb->ByteSize = 6;
-			break;
-		case CS7:
-			lpdcb->ByteSize = 7;
-			break;
-		case CS8:
-			lpdcb->ByteSize = 8;
-			break;
-	}	
-	
-        if(port.c_iflag & INPCK)
-            lpdcb->fParity = TRUE;
-        else
-            lpdcb->fParity = FALSE;
-#ifdef CMSPAR
-	switch (port.c_cflag & (PARENB | PARODD | CMSPAR))
-#else
-	switch (port.c_cflag & (PARENB | PARODD))
-#endif
-	{
-		case 0:
-			lpdcb->Parity = NOPARITY;
-			break;
-		case PARENB:
-			lpdcb->Parity = EVENPARITY;
-			break;
-		case (PARENB | PARODD):
-			lpdcb->Parity = ODDPARITY;		
-			break;
-#ifdef CMSPAR
-		case (PARENB | CMSPAR):
-			lpdcb->Parity = MARKPARITY;		
-			break;
-                case (PARENB | PARODD | CMSPAR):
-			lpdcb->Parity = SPACEPARITY;		
-			break;
-#endif
-	}
 
-	if (port.c_cflag & CSTOPB)
-            if(lpdcb->ByteSize == 5)
-                lpdcb->StopBits = ONE5STOPBITS;
-            else
-                lpdcb->StopBits = TWOSTOPBITS;
-	else
-            lpdcb->StopBits = ONESTOPBIT;
+	lpdcb->Id = cid;
+	if(dcb.BaudRate<0x10000)
+		lpdcb->BaudRate = dcb.BaudRate;
+	else if(dcb.BaudRate==115200)
+			lpdcb->BaudRate = 57601;
+	else {
+		WARN("Baud rate can't be converted\n");
+		lpdcb->BaudRate = 57601;
+	}
+	lpdcb->ByteSize = dcb.ByteSize;
+	lpdcb->fParity = dcb.fParity;
+	lpdcb->Parity = dcb.Parity;
+	lpdcb->StopBits = dcb.StopBits;
 
 	lpdcb->RlsTimeout = 50;
 	lpdcb->CtsTimeout = 50; 
@@ -1286,26 +1196,15 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 	lpdcb->fBinary = 1;
 	lpdcb->fDtrDisable = 0;
 
-#ifdef CRTSCTS
+	lpdcb->fDtrflow = (dcb.fDtrControl==DTR_CONTROL_ENABLE);
+	lpdcb->fRtsflow = (dcb.fRtsControl==RTS_CONTROL_ENABLE);
+	lpdcb->fOutxCtsFlow = dcb.fOutxCtsFlow;
+	lpdcb->fOutxDsrFlow = dcb.fOutxDsrFlow;
+	lpdcb->fDtrDisable = (dcb.fDtrControl==DTR_CONTROL_DISABLE);
 
-	if (port.c_cflag & CRTSCTS) {
-		lpdcb->fDtrflow = 1;
-		lpdcb->fRtsflow = 1;
-		lpdcb->fOutxCtsFlow = 1;
-		lpdcb->fOutxDsrFlow = 1;
-	} else 
-#endif
-		lpdcb->fDtrDisable = 1;
+	lpdcb->fInX = dcb.fInX;
 
-	if (port.c_iflag & IXON)
-		lpdcb->fInX = 1;
-	else
-		lpdcb->fInX = 0;
-
-	if (port.c_iflag & IXOFF)
-		lpdcb->fOutX = 1;
-	else
-		lpdcb->fOutX = 0;
+	lpdcb->fOutX = dcb.fOutX;
 /*
 	lpdcb->XonChar = 
 	lpdcb->XoffChar = 
