@@ -1253,28 +1253,28 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
  */
 #define ICOM_INTERFACE IDirectDraw2
 #define IDirectDraw2_METHODS \
-    ICOM_METHOD (HRESULT,Compact) \
-    ICOM_METHOD3(HRESULT,CreateClipper,          DWORD,dwFlags, LPDIRECTDRAWCLIPPER*,lplpDDClipper, IUnknown*,pUnkOuter) \
-    ICOM_METHOD4(HRESULT,CreatePalette,          DWORD,dwFlags, LPPALETTEENTRY,lpColorTable, LPDIRECTDRAWPALETTE*,lplpDDPalette, IUnknown*,pUnkOuter) \
-    ICOM_METHOD3(HRESULT,CreateSurface,          LPDDSURFACEDESC,lpDDSurfaceDesc, LPDIRECTDRAWSURFACE*,lplpDDSurface, IUnknown*,pUnkOuter) \
-    ICOM_METHOD2(HRESULT,DuplicateSurface,       LPDIRECTDRAWSURFACE,lpDDSurface, LPDIRECTDRAWSURFACE*,lplpDupDDSurface) \
-    ICOM_METHOD4(HRESULT,EnumDisplayModes,       DWORD,dwFlags, LPDDSURFACEDESC,lpDDSurfaceDesc, LPVOID,lpContext, LPDDENUMMODESCALLBACK,lpEnumModesCallback) \
-    ICOM_METHOD4(HRESULT,EnumSurfaces,           DWORD,dwFlags, LPDDSURFACEDESC,lpDDSD, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
-    ICOM_METHOD (HRESULT,FlipToGDISurface) \
-    ICOM_METHOD2(HRESULT,GetCaps,                LPDDCAPS,lpDDDriverCaps, LPDDCAPS,lpDDHELCaps) \
-    ICOM_METHOD1(HRESULT,GetDisplayMode,         LPDDSURFACEDESC,lpDDSurfaceDesc) \
-    ICOM_METHOD2(HRESULT,GetFourCCCodes,         LPDWORD,lpNumCodes, LPDWORD,lpCodes) \
-    ICOM_METHOD1(HRESULT,GetGDISurface,          LPDIRECTDRAWSURFACE*,lplpGDIDDSurface) \
-    ICOM_METHOD1(HRESULT,GetMonitorFrequency,    LPDWORD,lpdwFrequency) \
-    ICOM_METHOD1(HRESULT,GetScanLine,            LPDWORD,lpdwScanLine) \
-    ICOM_METHOD1(HRESULT,GetVerticalBlankStatus, BOOL*,lpbIsInVB) \
-    ICOM_METHOD1(HRESULT,Initialize,             GUID*,lpGUID) \
-    ICOM_METHOD (HRESULT,RestoreDisplayMode) \
-    ICOM_METHOD2(HRESULT,SetCooperativeLevel,    HWND,hWnd, DWORD,dwFlags) \
-    ICOM_METHOD5(HRESULT,SetDisplayMode,         DWORD,dwWidth, DWORD,dwHeight, DWORD,dwBPP, DWORD,dwRefreshRate, DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,WaitForVerticalBlank,   DWORD,dwFlags, HANDLE,hEvent) \
-    /* added in v2 */ \
-    ICOM_METHOD3(HRESULT,GetAvailableVidMem, LPDDSCAPS,lpDDCaps, LPDWORD,lpdwTotal, LPDWORD,lpdwFree)
+/*0c*/    ICOM_METHOD (HRESULT,Compact) \
+/*10*/    ICOM_METHOD3(HRESULT,CreateClipper,          DWORD,dwFlags, LPDIRECTDRAWCLIPPER*,lplpDDClipper, IUnknown*,pUnkOuter) \
+/*14*/    ICOM_METHOD4(HRESULT,CreatePalette,          DWORD,dwFlags, LPPALETTEENTRY,lpColorTable, LPDIRECTDRAWPALETTE*,lplpDDPalette, IUnknown*,pUnkOuter) \
+/*18*/    ICOM_METHOD3(HRESULT,CreateSurface,          LPDDSURFACEDESC,lpDDSurfaceDesc, LPDIRECTDRAWSURFACE*,lplpDDSurface, IUnknown*,pUnkOuter) \
+/*1c*/    ICOM_METHOD2(HRESULT,DuplicateSurface,       LPDIRECTDRAWSURFACE,lpDDSurface, LPDIRECTDRAWSURFACE*,lplpDupDDSurface) \
+/*20*/    ICOM_METHOD4(HRESULT,EnumDisplayModes,       DWORD,dwFlags, LPDDSURFACEDESC,lpDDSurfaceDesc, LPVOID,lpContext, LPDDENUMMODESCALLBACK,lpEnumModesCallback) \
+/*24*/    ICOM_METHOD4(HRESULT,EnumSurfaces,           DWORD,dwFlags, LPDDSURFACEDESC,lpDDSD, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
+/*28*/    ICOM_METHOD (HRESULT,FlipToGDISurface) \
+/*2c*/    ICOM_METHOD2(HRESULT,GetCaps,                LPDDCAPS,lpDDDriverCaps, LPDDCAPS,lpDDHELCaps) \
+/*30*/    ICOM_METHOD1(HRESULT,GetDisplayMode,         LPDDSURFACEDESC,lpDDSurfaceDesc) \
+/*34*/    ICOM_METHOD2(HRESULT,GetFourCCCodes,         LPDWORD,lpNumCodes, LPDWORD,lpCodes) \
+/*38*/    ICOM_METHOD1(HRESULT,GetGDISurface,          LPDIRECTDRAWSURFACE*,lplpGDIDDSurface) \
+/*3c*/    ICOM_METHOD1(HRESULT,GetMonitorFrequency,    LPDWORD,lpdwFrequency) \
+/*40*/    ICOM_METHOD1(HRESULT,GetScanLine,            LPDWORD,lpdwScanLine) \
+/*44*/    ICOM_METHOD1(HRESULT,GetVerticalBlankStatus, BOOL*,lpbIsInVB) \
+/*48*/    ICOM_METHOD1(HRESULT,Initialize,             GUID*,lpGUID) \
+/*4c*/    ICOM_METHOD (HRESULT,RestoreDisplayMode) \
+/*50*/    ICOM_METHOD2(HRESULT,SetCooperativeLevel,    HWND,hWnd, DWORD,dwFlags) \
+/*54*/    ICOM_METHOD5(HRESULT,SetDisplayMode,         DWORD,dwWidth, DWORD,dwHeight, DWORD,dwBPP, DWORD,dwRefreshRate, DWORD,dwFlags) \
+/*58*/    ICOM_METHOD2(HRESULT,WaitForVerticalBlank,   DWORD,dwFlags, HANDLE,hEvent) \
+/*5c*/    /* added in v2 */ \
+/*60*/    ICOM_METHOD3(HRESULT,GetAvailableVidMem, LPDDSCAPS,lpDDCaps, LPDWORD,lpdwTotal, LPDWORD,lpdwFree)
 #define IDirectDraw2_IMETHODS \
     IUnknown_IMETHODS \
     IDirectDraw2_METHODS
@@ -1414,39 +1414,39 @@ ICOM_DEFINE(IDirectDraw7,IDirectDraw4)
  */
 #define ICOM_INTERFACE IDirectDrawSurface
 #define IDirectDrawSurface_METHODS \
-    ICOM_METHOD1(HRESULT,AddAttachedSurface,    LPDIRECTDRAWSURFACE,lpDDSAttachedSurface) \
-    ICOM_METHOD1(HRESULT,AddOverlayDirtyRect,   LPRECT,lpRect) \
-    ICOM_METHOD5(HRESULT,Blt,                   LPRECT,lpDestRect, LPDIRECTDRAWSURFACE,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwFlags, LPDDBLTFX,lpDDBltFx) \
-    ICOM_METHOD3(HRESULT,BltBatch,              LPDDBLTBATCH,lpDDBltBatch, DWORD,dwCount, DWORD,dwFlags) \
-    ICOM_METHOD5(HRESULT,BltFast,               DWORD,dwX, DWORD,dwY, LPDIRECTDRAWSURFACE,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwTrans) \
-    ICOM_METHOD2(HRESULT,DeleteAttachedSurface, DWORD,dwFlags, LPDIRECTDRAWSURFACE,lpDDSAttachedSurface) \
-    ICOM_METHOD2(HRESULT,EnumAttachedSurfaces,  LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
-    ICOM_METHOD3(HRESULT,EnumOverlayZOrders,    DWORD,dwFlags, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpfnCallback) \
-    ICOM_METHOD2(HRESULT,Flip,                  LPDIRECTDRAWSURFACE,lpDDSurfaceTargetOverride, DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,GetAttachedSurface,    LPDDSCAPS,lpDDSCaps, LPDIRECTDRAWSURFACE*,lplpDDAttachedSurface) \
-    ICOM_METHOD1(HRESULT,GetBltStatus,          DWORD,dwFlags) \
-    ICOM_METHOD1(HRESULT,GetCaps,               LPDDSCAPS,lpDDSCaps) \
-    ICOM_METHOD1(HRESULT,GetClipper,            LPDIRECTDRAWCLIPPER*,lplpDDClipper) \
-    ICOM_METHOD2(HRESULT,GetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
-    ICOM_METHOD1(HRESULT,GetDC,                 HDC*,lphDC) \
-    ICOM_METHOD1(HRESULT,GetFlipStatus,         DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,GetOverlayPosition,    LPLONG,lplX, LPLONG,lplY) \
-    ICOM_METHOD1(HRESULT,GetPalette,            LPDIRECTDRAWPALETTE*,lplpDDPalette) \
-    ICOM_METHOD1(HRESULT,GetPixelFormat,        LPDDPIXELFORMAT,lpDDPixelFormat) \
-    ICOM_METHOD1(HRESULT,GetSurfaceDesc,        LPDDSURFACEDESC,lpDDSurfaceDesc) \
-    ICOM_METHOD2(HRESULT,Initialize,            LPDIRECTDRAW,lpDD, LPDDSURFACEDESC,lpDDSurfaceDesc) \
-    ICOM_METHOD (HRESULT,IsLost) \
-    ICOM_METHOD4(HRESULT,Lock,                  LPRECT,lpDestRect, LPDDSURFACEDESC,lpDDSurfaceDesc, DWORD,dwFlags, HANDLE,hEvent) \
-    ICOM_METHOD1(HRESULT,ReleaseDC,             HDC,hDC) \
-    ICOM_METHOD (HRESULT,Restore) \
-    ICOM_METHOD1(HRESULT,SetClipper,            LPDIRECTDRAWCLIPPER,lpDDClipper) \
-    ICOM_METHOD2(HRESULT,SetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
-    ICOM_METHOD2(HRESULT,SetOverlayPosition,    LONG,lX, LONG,lY) \
-    ICOM_METHOD1(HRESULT,SetPalette,            LPDIRECTDRAWPALETTE,lpDDPalette) \
-    ICOM_METHOD1(HRESULT,Unlock,                LPVOID,lpSurfaceData) \
-    ICOM_METHOD5(HRESULT,UpdateOverlay,         LPRECT,lpSrcRect, LPDIRECTDRAWSURFACE,lpDDDestSurface, LPRECT,lpDestRect, DWORD,dwFlags, LPDDOVERLAYFX,lpDDOverlayFx) \
-    ICOM_METHOD1(HRESULT,UpdateOverlayDisplay,  DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,UpdateOverlayZOrder,   DWORD,dwFlags, LPDIRECTDRAWSURFACE,lpDDSReference)
+/*0c*/    ICOM_METHOD1(HRESULT,AddAttachedSurface,    LPDIRECTDRAWSURFACE,lpDDSAttachedSurface) \
+/*10*/    ICOM_METHOD1(HRESULT,AddOverlayDirtyRect,   LPRECT,lpRect) \
+/*14*/    ICOM_METHOD5(HRESULT,Blt,                   LPRECT,lpDestRect, LPDIRECTDRAWSURFACE,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwFlags, LPDDBLTFX,lpDDBltFx) \
+/*18*/    ICOM_METHOD3(HRESULT,BltBatch,              LPDDBLTBATCH,lpDDBltBatch, DWORD,dwCount, DWORD,dwFlags) \
+/*1c*/    ICOM_METHOD5(HRESULT,BltFast,               DWORD,dwX, DWORD,dwY, LPDIRECTDRAWSURFACE,lpDDSrcSurface, LPRECT,lpSrcRect, DWORD,dwTrans) \
+/*20*/    ICOM_METHOD2(HRESULT,DeleteAttachedSurface, DWORD,dwFlags, LPDIRECTDRAWSURFACE,lpDDSAttachedSurface) \
+/*24*/    ICOM_METHOD2(HRESULT,EnumAttachedSurfaces,  LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
+/*28*/    ICOM_METHOD3(HRESULT,EnumOverlayZOrders,    DWORD,dwFlags, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpfnCallback) \
+/*2c*/    ICOM_METHOD2(HRESULT,Flip,                  LPDIRECTDRAWSURFACE,lpDDSurfaceTargetOverride, DWORD,dwFlags) \
+/*30*/    ICOM_METHOD2(HRESULT,GetAttachedSurface,    LPDDSCAPS,lpDDSCaps, LPDIRECTDRAWSURFACE*,lplpDDAttachedSurface) \
+/*34*/    ICOM_METHOD1(HRESULT,GetBltStatus,          DWORD,dwFlags) \
+/*38*/    ICOM_METHOD1(HRESULT,GetCaps,               LPDDSCAPS,lpDDSCaps) \
+/*3c*/    ICOM_METHOD1(HRESULT,GetClipper,            LPDIRECTDRAWCLIPPER*,lplpDDClipper) \
+/*40*/    ICOM_METHOD2(HRESULT,GetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
+/*44*/    ICOM_METHOD1(HRESULT,GetDC,                 HDC*,lphDC) \
+/*48*/    ICOM_METHOD1(HRESULT,GetFlipStatus,         DWORD,dwFlags) \
+/*4c*/    ICOM_METHOD2(HRESULT,GetOverlayPosition,    LPLONG,lplX, LPLONG,lplY) \
+/*50*/    ICOM_METHOD1(HRESULT,GetPalette,            LPDIRECTDRAWPALETTE*,lplpDDPalette) \
+/*54*/    ICOM_METHOD1(HRESULT,GetPixelFormat,        LPDDPIXELFORMAT,lpDDPixelFormat) \
+/*58*/    ICOM_METHOD1(HRESULT,GetSurfaceDesc,        LPDDSURFACEDESC,lpDDSurfaceDesc) \
+/*5c*/    ICOM_METHOD2(HRESULT,Initialize,            LPDIRECTDRAW,lpDD, LPDDSURFACEDESC,lpDDSurfaceDesc) \
+/*60*/    ICOM_METHOD (HRESULT,IsLost) \
+/*64*/    ICOM_METHOD4(HRESULT,Lock,                  LPRECT,lpDestRect, LPDDSURFACEDESC,lpDDSurfaceDesc, DWORD,dwFlags, HANDLE,hEvent) \
+/*68*/    ICOM_METHOD1(HRESULT,ReleaseDC,             HDC,hDC) \
+/*6c*/    ICOM_METHOD (HRESULT,Restore) \
+/*70*/    ICOM_METHOD1(HRESULT,SetClipper,            LPDIRECTDRAWCLIPPER,lpDDClipper) \
+/*74*/    ICOM_METHOD2(HRESULT,SetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
+/*78*/    ICOM_METHOD2(HRESULT,SetOverlayPosition,    LONG,lX, LONG,lY) \
+/*7c*/    ICOM_METHOD1(HRESULT,SetPalette,            LPDIRECTDRAWPALETTE,lpDDPalette) \
+/*80*/    ICOM_METHOD1(HRESULT,Unlock,                LPVOID,lpSurfaceData) \
+/*84*/    ICOM_METHOD5(HRESULT,UpdateOverlay,         LPRECT,lpSrcRect, LPDIRECTDRAWSURFACE,lpDDDestSurface, LPRECT,lpDestRect, DWORD,dwFlags, LPDDOVERLAYFX,lpDDOverlayFx) \
+/*88*/    ICOM_METHOD1(HRESULT,UpdateOverlayDisplay,  DWORD,dwFlags) \
+/*8c*/    ICOM_METHOD2(HRESULT,UpdateOverlayZOrder,   DWORD,dwFlags, LPDIRECTDRAWSURFACE,lpDDSReference)
 #define IDirectDrawSurface_IMETHODS \
     IUnknown_IMETHODS \
     IDirectDrawSurface_METHODS
