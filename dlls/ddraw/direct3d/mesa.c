@@ -62,7 +62,22 @@ GL_IDirect3DImpl_1_EnumDevices(LPDIRECT3D iface,
 }
 
 HRESULT WINAPI
-GL_IDirect3DImpl_3_2T_EnumDevices(LPDIRECT3D3 iface,
+GL_IDirect3DImpl_2_EnumDevices(LPDIRECT3D2 iface,
+				  LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
+				  LPVOID lpUserArg)
+{
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D2, iface);
+    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpEnumDevicesCallback, lpUserArg);
+
+    /* Call functions defined in d3ddevices.c */
+    if (d3ddevice_enumerate(lpEnumDevicesCallback, lpUserArg, 2) != D3DENUMRET_OK)
+	return D3D_OK;
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DImpl_3_EnumDevices(LPDIRECT3D3 iface,
 				  LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
 				  LPVOID lpUserArg)
 {
@@ -146,7 +161,7 @@ create_device_helper(IDirectDrawImpl *This,
     IDirect3DDeviceImpl *lpd3ddev;
     HRESULT ret_value;
 
-    ret_value = d3ddevice_create(&lpd3ddev, This, lpDDS, FALSE);
+    ret_value = d3ddevice_create(&lpd3ddev, This, lpDDS, version);
     if (FAILED(ret_value)) return ret_value;
     
     if ((iid == NULL) ||
@@ -331,7 +346,7 @@ IDirect3D3Vtbl VTABLE_IDirect3D3 =
     XCAST(QueryInterface) Thunk_IDirect3DImpl_3_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_3_AddRef,
     XCAST(Release) Thunk_IDirect3DImpl_3_Release,
-    XCAST(EnumDevices) GL_IDirect3DImpl_3_2T_EnumDevices,
+    XCAST(EnumDevices) GL_IDirect3DImpl_3_EnumDevices,
     XCAST(CreateLight) GL_IDirect3DImpl_3_2T_1T_CreateLight,
     XCAST(CreateMaterial) GL_IDirect3DImpl_3_2T_1T_CreateMaterial,
     XCAST(CreateViewport) GL_IDirect3DImpl_3_2T_1T_CreateViewport,
@@ -358,7 +373,7 @@ IDirect3D2Vtbl VTABLE_IDirect3D2 =
     XCAST(QueryInterface) Thunk_IDirect3DImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_2_AddRef,
     XCAST(Release) Thunk_IDirect3DImpl_2_Release,
-    XCAST(EnumDevices) Thunk_IDirect3DImpl_2_EnumDevices,
+    XCAST(EnumDevices) GL_IDirect3DImpl_2_EnumDevices,
     XCAST(CreateLight) Thunk_IDirect3DImpl_2_CreateLight,
     XCAST(CreateMaterial) Thunk_IDirect3DImpl_2_CreateMaterial,
     XCAST(CreateViewport) Thunk_IDirect3DImpl_2_CreateViewport,

@@ -207,6 +207,9 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface(LPDIRECT3DDEVICE7 iface,
 
     *obp = NULL;
 
+    /* Note: We cannot get an interface whose version is higher than the
+     *       Direct3D object that created the device */
+
     if ( IsEqualGUID( &IID_IUnknown,  riid ) ) {
         IDirect3DDevice7_AddRef(ICOM_INTERFACE(This, IDirect3DDevice7));
 	*obp = iface;
@@ -219,19 +222,19 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface(LPDIRECT3DDEVICE7 iface,
 	TRACE("  Creating IDirect3DDevice interface %p\n", *obp);
 	return S_OK;
     }
-    if ( IsEqualGUID( &IID_IDirect3DDevice2, riid ) ) {
+    if ( IsEqualGUID( &IID_IDirect3DDevice2, riid ) && (This->version >= 2)) {
         IDirect3DDevice7_AddRef(ICOM_INTERFACE(This, IDirect3DDevice7));
         *obp = ICOM_INTERFACE(This, IDirect3DDevice2);
 	TRACE("  Creating IDirect3DDevice2 interface %p\n", *obp);
 	return S_OK;
     }
-    if ( IsEqualGUID( &IID_IDirect3DDevice3, riid ) ) {
+    if ( IsEqualGUID( &IID_IDirect3DDevice3, riid ) && (This->version >= 3)) {
         IDirect3DDevice7_AddRef(ICOM_INTERFACE(This, IDirect3DDevice7));
         *obp = ICOM_INTERFACE(This, IDirect3DDevice3);
 	TRACE("  Creating IDirect3DDevice3 interface %p\n", *obp);
 	return S_OK;
     }
-    if ( IsEqualGUID( &IID_IDirect3DDevice7, riid ) ) {
+    if ( IsEqualGUID( &IID_IDirect3DDevice7, riid ) && (This->version >= 7)) {
         IDirect3DDevice7_AddRef(ICOM_INTERFACE(This, IDirect3DDevice7));
         *obp = ICOM_INTERFACE(This, IDirect3DDevice7);
 	TRACE("  Creating IDirect3DDevice7 interface %p\n", *obp);

@@ -474,7 +474,7 @@ GL_IDirect3DDeviceImpl_3_2T_1T_GetCaps(LPDIRECT3DDEVICE3 iface,
 
 static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
 					  LPD3DENUMPIXELFORMATSCALLBACK cb_2,
-					  LPVOID context)
+					  LPVOID context, int version)
 {
     DDSURFACEDESC sdesc;
     LPDDPIXELFORMAT pformat;
@@ -617,7 +617,8 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
-    if (GL_extensions.s3tc_compressed_texture) {
+    /* DXT textures only exist for devices created from IDirect3D3 and above */
+    if ((version >= 3) && GL_extensions.s3tc_compressed_texture) {
 	TRACE("Enumerating DXT1\n");
 	pformat->dwFlags = DDPF_FOURCC;
         pformat->dwFourCC = MAKE_FOURCC('D','X','T','1');
@@ -682,7 +683,7 @@ GL_IDirect3DDeviceImpl_2_1T_EnumTextureFormats(LPDIRECT3DDEVICE2 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpD3DEnumTextureProc, lpArg);
-    return enum_texture_format_OpenGL(lpD3DEnumTextureProc, NULL, lpArg);
+    return enum_texture_format_OpenGL(lpD3DEnumTextureProc, NULL, lpArg, This->version);
 }
 
 HRESULT WINAPI
@@ -692,7 +693,7 @@ GL_IDirect3DDeviceImpl_7_3T_EnumTextureFormats(LPDIRECT3DDEVICE7 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpD3DEnumPixelProc, lpArg);
-    return enum_texture_format_OpenGL(NULL, lpD3DEnumPixelProc, lpArg);
+    return enum_texture_format_OpenGL(NULL, lpD3DEnumPixelProc, lpArg, This->version);
 }
 
 HRESULT WINAPI
@@ -2312,7 +2313,7 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
 
     /* Apparently, whatever the state of BLEND, color keying is always activated for 'old' D3D versions */
     if (((This->state_block.render_state[D3DRENDERSTATE_COLORKEYENABLE - 1]) ||
-	 (glThis->version == 1)) &&
+	 (glThis->parent.version == 1)) &&
 	(enable_colorkey)) {
 	TRACE(" colorkey activated.\n");
 	
@@ -3877,7 +3878,7 @@ apply_texture_state(IDirect3DDeviceImpl *This)
 }     
 
 HRESULT
-d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surface, BOOLEAN from_surface)
+d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surface, int version)
 {
     IDirect3DDeviceImpl *object;
     IDirect3DDeviceGLImpl *gl_object;
@@ -3903,19 +3904,13 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     object->set_matrices = d3ddevice_set_matrices;
     object->matrices_updated = d3ddevice_matrices_updated;
     object->flush_to_framebuffer = d3ddevice_flush_to_frame_buffer;
+    object->version = version;
     
     TRACE(" creating OpenGL device for surface = %p, d3d = %p\n", surface, d3d);
 
     InitializeCriticalSection(&(object->crit));
 
     TRACE(" device critical section : %p\n", &(object->crit));
-
-    /* This is just a hack for some badly done games :-/ */
-    if (from_surface) {
-	gl_object->version = 1;
-	TRACE(" using D3D1 special hacks.\n");
-    } else
-	gl_object->version = 7;
 
     device_context = GetDC(surface->ddraw_owner->window);
     gl_object->display = get_display(device_context);
@@ -4067,8 +4062,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     /* And finally warn D3D that this device is now present */
     object->d3d->d3d_added_device(object->d3d, object);
 
-    /* FIXME: Should handle other versions than just 7 */
-    InitDefaultStateBlock(&object->state_block, 7);
+    InitDefaultStateBlock(&object->state_block, object->version);
     /* Apply default render state and texture stage state values */
     apply_render_state(object, &object->state_block);
     apply_texture_state(object);

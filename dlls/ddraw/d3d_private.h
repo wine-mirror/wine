@@ -197,6 +197,9 @@ struct IDirect3DDeviceImpl
     ICOM_VFIELD_MULTI(IDirect3DDevice);
     DWORD  ref;
 
+    /* Version of the Direct3D object from which the device has been created */
+    DWORD version;
+
     /* IDirect3DDevice fields */
     IDirectDrawImpl *d3d;
     IDirectDrawSurfaceImpl *surface;

@@ -361,7 +361,7 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        glThis->blending = dwRenderState;
 
 	        /* Hack for some old games ... */
-	        if (glThis->version == 1) {
+	        if (glThis->parent.version == 1) {
 		    lpStateBlock->render_state[D3DRENDERSTATE_COLORKEYENABLE - 1] = dwRenderState;
 		}
 	        break;
