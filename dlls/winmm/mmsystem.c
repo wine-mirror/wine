@@ -2173,6 +2173,120 @@ void WINAPI WMMMidiRunOnce16(void)
  */
 
 /**************************************************************************
+ *                              DRIVER_MapMsg32To16             [internal]
+ *
+ * Map a 32 bit driver message to a 16 bit driver message.
+ */
+WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
+{
+    WINMM_MapType       ret = WINMM_MAP_MSGERROR;
+
+    switch (wMsg) {
+    case DRV_LOAD:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+    case DRV_FREE:
+    case DRV_QUERYCONFIGURE:
+    case DRV_REMOVE:
+    case DRV_EXITSESSION:
+    case DRV_EXITAPPLICATION:
+    case DRV_POWER:
+    case DRV_CLOSE:     /* should be 0/0 */
+    case DRV_OPEN:      /* pass through */
+        /* lParam1 and lParam2 are not used */
+        ret = WINMM_MAP_OK;
+        break;
+    case DRV_CONFIGURE:
+    case DRV_INSTALL:
+        /* lParam1 is a handle to a window (conf) or to a driver (inst) or not used,
+         * lParam2 is a pointer to DRVCONFIGINFO
+         */
+        if (*lParam2) {
+            LPDRVCONFIGINFO16 dci16 = HeapAlloc( GetProcessHeap(), 0, sizeof(*dci16) );
+            LPDRVCONFIGINFO     dci32 = (LPDRVCONFIGINFO)(*lParam2);
+
+            if (dci16) {
+                LPSTR str1;
+
+                dci16->dwDCISize = sizeof(DRVCONFIGINFO16);
+
+                if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCISectionName)) != NULL)
+                {
+                    dci16->lpszDCISectionName = MapLS( str1 );
+                } else {
+                    return WINMM_MAP_NOMEM;
+                }
+                if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCIAliasName)) != NULL)
+                {
+                    dci16->lpszDCIAliasName = MapLS( str1 );
+                } else {
+                    return WINMM_MAP_NOMEM;
+                }
+            } else {
+                return WINMM_MAP_NOMEM;
+            }
+            *lParam2 = MapLS( dci16 );
+            ret = WINMM_MAP_OKMEM;
+        } else {
+            ret = WINMM_MAP_OK;
+        }
+        break;
+    default:
+        if (!((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100))) {
+           FIXME("Unknown message 0x%04x\n", wMsg);
+        }
+        ret = WINMM_MAP_OK;
+    }
+    return ret;
+}
+
+/**************************************************************************
+ *                              DRIVER_UnMapMsg32To16           [internal]
+ *
+ * UnMap a 32 bit driver message to a 16 bit driver message.
+ */
+WINMM_MapType DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
+{
+    WINMM_MapType       ret = WINMM_MAP_MSGERROR;
+
+    switch (wMsg) {
+    case DRV_LOAD:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+    case DRV_FREE:
+    case DRV_QUERYCONFIGURE:
+    case DRV_REMOVE:
+    case DRV_EXITSESSION:
+    case DRV_EXITAPPLICATION:
+    case DRV_POWER:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+        /* lParam1 and lParam2 are not used */
+        break;
+    case DRV_CONFIGURE:
+    case DRV_INSTALL:
+        /* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO, lParam2 */
+        if (lParam2) {
+            LPDRVCONFIGINFO16   dci16 = MapSL(lParam2);
+            HeapFree( GetProcessHeap(), 0, MapSL(dci16->lpszDCISectionName) );
+            HeapFree( GetProcessHeap(), 0, MapSL(dci16->lpszDCIAliasName) );
+            UnMapLS( lParam2 );
+            UnMapLS( dci16->lpszDCISectionName );
+            UnMapLS( dci16->lpszDCIAliasName );
+            HeapFree( GetProcessHeap(), 0, dci16 );
+        }
+        ret = WINMM_MAP_OK;
+        break;
+    default:
+        if (!((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100))) {
+            FIXME("Unknown message 0x%04x\n", wMsg);
+        }
+        ret = WINMM_MAP_OK;
+    }
+    return ret;
+}
+
+/**************************************************************************
  * 				DrvOpen	       		[MMSYSTEM.1100]
  */
 HDRVR16 WINAPI DrvOpen16(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)

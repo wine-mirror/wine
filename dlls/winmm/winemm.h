@@ -265,6 +265,10 @@ BOOL                            MULTIMEDIA_PlaySound(const void* pszSound, HMODU
 void    			TIME_MMTimeStart(void);
 void				TIME_MMTimeStop(void);
 
+/* temporary defines */
+WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2);
+WINMM_MapType DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2);
+
 /* Global variables */
 extern LPWINE_MM_IDATA		WINMM_IData;
 
