@@ -130,14 +130,14 @@ const struct builtin_class_descr SCROLL_builtin_class =
     IDC_ARROW,              /* cursor */
     0                       /* brush */
 };
-    
+
 /***********************************************************************
  *           SCROLL_ScrollInfoValid
  *
  *  Determine if the supplied SCROLLINFO struct is valid.
+ *  info     [in] The SCROLLINFO struct to be tested
  */
-inline static BOOL SCROLL_ScrollInfoValid(
-LPSCROLLINFO info /* [in] The SCROLLINFO struct to be tested */)
+inline static BOOL SCROLL_ScrollInfoValid( LPCSCROLLINFO info )
 {
     return !(info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)
         || (info->cbSize != sizeof(*info)
@@ -146,11 +146,15 @@ LPSCROLLINFO info /* [in] The SCROLLINFO struct to be tested */)
 
 
 /***********************************************************************
- *           SCROLL_GetScrollBarInfo
+ *           SCROLL_GetInternalInfo
+
+ * Returns pointer to internal SCROLLBAR_INFO structure for nBar
+ * or NULL if failed (f.i. scroll bar does not exist yet)
+ * If alloc is TRUE and the struct does not exist yet, create it.
  */
-static SCROLLBAR_INFO *SCROLL_GetScrollBarInfo( HWND hwnd, INT nBar )
+static SCROLLBAR_INFO *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc )
 {
-    SCROLLBAR_INFO *infoPtr;
+    SCROLLBAR_INFO *infoPtr = NULL;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
     if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return NULL;
@@ -159,17 +163,20 @@ static SCROLLBAR_INFO *SCROLL_GetScrollBarInfo( HWND hwnd, INT nBar )
         case SB_HORZ: infoPtr = (SCROLLBAR_INFO *)wndPtr->pHScroll; break;
         case SB_VERT: infoPtr = (SCROLLBAR_INFO *)wndPtr->pVScroll; break;
         case SB_CTL:  infoPtr = (SCROLLBAR_INFO *)wndPtr->wExtra; break;
-        default:
-            WIN_ReleaseWndPtr( wndPtr );
-            return NULL;
+        case SB_BOTH: WARN("with SB_BOTH"); break;
     }
 
-    if (!infoPtr)  /* Create the info structure if needed */
+    if (!infoPtr && alloc)
     {
-        if ((infoPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(SCROLLBAR_INFO) )))
+        if (nBar != SB_HORZ && nBar != SB_VERT)
+            WARN("Cannot initialize nBar=%d\n",nBar);
+        else if ((infoPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(SCROLLBAR_INFO) )))
         {
+            /* Set default values */
             infoPtr->minVal = infoPtr->curVal = infoPtr->page = 0;
+            /* From MSDN: max for a standard scroll bar is 100 by default. */
             infoPtr->maxVal = 100;
+            /* Scroll bar is enabled by default after create */
             infoPtr->flags  = ESB_ENABLE_BOTH;
             if (nBar == SB_HORZ) wndPtr->pHScroll = infoPtr;
             else wndPtr->pVScroll = infoPtr;
@@ -255,8 +262,12 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
     }
     else
     {
-        SCROLLBAR_INFO *info = SCROLL_GetScrollBarInfo( hwnd, nBar );
-
+        SCROLLBAR_INFO *info = SCROLL_GetInternalInfo( hwnd, nBar, FALSE );
+        if (!info)
+        {
+            WARN("called for missing scroll bar");
+            return FALSE;
+        }
         *arrowSize = GetSystemMetrics(SM_CXVSCROLL);
         pixels -= (2 * (GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP));
 
@@ -662,7 +673,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     INT arrowSize, thumbSize, thumbPos;
     RECT rect;
     BOOL vertical;
-    SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollBarInfo( hwnd, nBar );
+    SCROLLBAR_INFO *infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, FALSE );
     BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
     DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
 
@@ -813,7 +824,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     RECT rect;
     HDC hdc;
 
-    SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollBarInfo( hwnd, nBar );
+    SCROLLBAR_INFO *infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, FALSE );
     if (!infoPtr) return;
     if ((SCROLL_trackHitTest == SCROLL_NOWHERE) && (msg != WM_LBUTTONDOWN))
 		  return;
@@ -1112,7 +1123,7 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
  */
 static void SCROLL_CreateScrollBar(HWND hwnd, LPCREATESTRUCTW lpCreate)
 {
-    LPSCROLLBAR_INFO info = SCROLL_GetScrollBarInfo(hwnd, SB_CTL);
+    LPSCROLLBAR_INFO info = SCROLL_GetInternalInfo(hwnd, SB_CTL, TRUE);
     if (!info) return;
 
     TRACE("hwnd=%p lpCreate=%p\n", hwnd, lpCreate);
@@ -1169,6 +1180,9 @@ static void SCROLL_CreateScrollBar(HWND hwnd, LPCREATESTRUCTW lpCreate)
  *    hwnd [I]  Handle of window with scrollbar(s)
  *    nBar [I]  One of SB_HORZ, SB_VERT, or SB_CTL
  *    info [IO] fMask specifies which values to retrieve
+ *
+ * RETURNS
+ *    FALSE if requested field not filled (f.i. scroll bar does not exist)
  */
 static BOOL SCROLL_GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
 {
@@ -1176,7 +1190,7 @@ static BOOL SCROLL_GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
 
     /* handle invalid data structure */
     if (!SCROLL_ScrollInfoValid(info)
-        || !(infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar)))
+        || !(infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, FALSE)))
             return FALSE;
 
     /* fill in the desired scroll info structure */
@@ -1205,7 +1219,7 @@ static BOOL SCROLL_GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
  */
 static INT SCROLL_GetScrollPos(HWND hwnd, INT nBar)
 {
-    LPSCROLLBAR_INFO infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar);
+    LPSCROLLBAR_INFO infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, FALSE);
     return infoPtr ? infoPtr->curVal: 0;
 }
 
@@ -1225,7 +1239,9 @@ static INT SCROLL_GetScrollPos(HWND hwnd, INT nBar)
  */
 static BOOL SCROLL_GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
 {
-    LPSCROLLBAR_INFO infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar);
+    LPSCROLLBAR_INFO infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, FALSE);
+    if (!infoPtr)
+        return FALSE;
 
     if (lpMin) *lpMin = infoPtr ? infoPtr->minVal : 0;
     if (lpMax) *lpMax = infoPtr ? infoPtr->maxVal : 0;
@@ -1246,7 +1262,7 @@ static BOOL SCROLL_GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
  */
 static BOOL SCROLL_SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal)
 {
-    LPSCROLLBAR_INFO infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar);
+    LPSCROLLBAR_INFO infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, FALSE);
 
     TRACE("hwnd=%p nBar=%d min=%d max=%d\n", hwnd, nBar, minVal, maxVal);
 
@@ -1275,7 +1291,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case WM_ENABLE:
         {
 	    SCROLLBAR_INFO *infoPtr;
-	    if ((infoPtr = SCROLL_GetScrollBarInfo( hwnd, SB_CTL )))
+	    if ((infoPtr = SCROLL_GetInternalInfo( hwnd, SB_CTL, FALSE )))
 	    {
 		infoPtr->flags = wParam ? ESB_ENABLE_BOTH : ESB_DISABLE_BOTH;
 		SCROLL_RefreshScrollBar(hwnd, SB_CTL, TRUE, TRUE);
@@ -1487,10 +1503,10 @@ static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, const SCROLLINFO *info, BO
     BOOL bChangeParams = FALSE; /* don't show/hide scrollbar if params don't change */
     INT action = 0;
 
-    if (!(infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar))) return 0;
-    if (info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)) return 0;
-    if ((info->cbSize != sizeof(*info)) &&
-        (info->cbSize != sizeof(*info)-sizeof(info->nTrackPos))) return 0;
+    /* handle invalid data structure */
+    if (!SCROLL_ScrollInfoValid(info)
+        || !(infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, TRUE)))
+            return 0;
 
     if (TRACE_ON(scroll))
     {
@@ -1635,7 +1651,8 @@ done:
  *  nBar [I]  One of SB_HORZ, SB_VERT, or SB_CTL
  *  info [IO] fMask specifies which values to retrieve
  *
- * RETURNS STD
+ * RETURNS
+ *  TRUE if SCROLLINFO is filled
  */
 BOOL WINAPI GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
 {
@@ -1676,7 +1693,7 @@ INT WINAPI SetScrollPos( HWND hwnd, INT nBar, INT nPos, BOOL bRedraw)
     SCROLLBAR_INFO *infoPtr;
     INT oldPos;
 
-    if (!(infoPtr = SCROLL_GetScrollBarInfo( hwnd, nBar ))) return 0;
+    if (!(infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, FALSE ))) return 0;
     oldPos      = infoPtr->curVal;
     info.cbSize = sizeof(info);
     info.nPos   = nPos;
@@ -1717,6 +1734,8 @@ INT WINAPI GetScrollPos(HWND hwnd, INT nBar)
 
 /*************************************************************************
  *           SetScrollRange   (USER32.@)
+ * The SetScrollRange function sets the minimum and maximum scroll box positions 
+ * If nMinPos and nMaxPos is the same value, the scroll bar will hide
  *
  * Sets the range of the scroll bar.
  *
@@ -1734,7 +1753,7 @@ BOOL WINAPI SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal, BOOL bRe
     SCROLLINFO info;
  
     TRACE("hwnd=%p nBar=%d min=%d max=%d, bRedraw=%d\n", hwnd, nBar, minVal, maxVal, bRedraw);
- 
+
     info.cbSize = sizeof(info);
     info.fMask  = SIF_RANGE;
     info.nMin   = minVal;
@@ -1781,7 +1800,8 @@ INT SCROLL_SetNCSbState(HWND hwnd, int vMin, int vMax, int vPos,
  *    lpMin   [O]  Where to store minimum value
  *    lpMax   [O]  Where to store maximum value
  *
- * RETURNS STD
+ * RETURNS
+ *    TRUE if values is filled
  */
 BOOL WINAPI GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
 {
@@ -1877,7 +1897,7 @@ BOOL WINAPI EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
 
     if (nBar == SB_BOTH)
     {
-	if (!(infoPtr = SCROLL_GetScrollBarInfo( hwnd, SB_VERT ))) return FALSE;
+	if (!(infoPtr = SCROLL_GetInternalInfo( hwnd, SB_VERT, TRUE ))) return FALSE;
 	if (!(bFineWithMe = (infoPtr->flags == flags)) )
 	{
 	    infoPtr->flags = flags;
@@ -1888,7 +1908,7 @@ BOOL WINAPI EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
     else
 	bFineWithMe = TRUE;
 
-    if (!(infoPtr = SCROLL_GetScrollBarInfo( hwnd, nBar ))) return FALSE;
+    if (!(infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, TRUE ))) return FALSE;
     if (bFineWithMe && infoPtr->flags == flags) return FALSE;
     infoPtr->flags = flags;
 
