@@ -172,7 +172,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 		goto done;
 	    }
 
-	    bmSize = DIB_GetDIBImageBytes(bm.bmWidth, bm.bmHeight, 1);
+	    bmSize = DIB_GetDIBImageBytes(bm.bmWidth, bm.bmHeight, DIB_PAL_COLORS);
 
 	    size = sizeof(METARECORD) + sizeof(WORD) + sizeof(BITMAPINFO) +
 	      sizeof(RGBQUAD) + bmSize;
