@@ -12,7 +12,8 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	audio.c \
 	audio_05.c \
-	alsa.c
+	alsa.c \
+	midi.c
 
 @MAKE_DLL_RULES@
 

@@ -29,3 +29,4 @@
 #endif
 
 extern LONG ALSA_WaveInit(void);
+extern LONG ALSA_MidiInit(void);
