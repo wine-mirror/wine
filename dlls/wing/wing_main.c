@@ -152,9 +152,13 @@ BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
                                HDC16 srcDC, INT16 xSrc, INT16 ySrc,
                                INT16 widSrc, INT16 heiSrc)
 {
+    BOOL16 retval;
     TRACE("(%d,%d,...)\n", destDC, srcDC);
-    return StretchBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC,
+    SetStretchBltMode16 ( destDC, COLORONCOLOR );
+    retval=StretchBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC,
 			xSrc, ySrc, widSrc, heiSrc, SRCCOPY);
+    SetStretchBltMode16 ( destDC, BLACKONWHITE );
+    return retval;
 }
 
 /***********************************************************************
