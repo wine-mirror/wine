@@ -1959,7 +1959,10 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
                 return;
             }
         }
-        sprintf( sp_e->msg_name, "%04x", sp_e->msgnum );
+        if (sp_e->msgnum >= WM_USER && sp_e->msgnum <= WM_APP)
+            sprintf( sp_e->msg_name, "WM_USER+%d", sp_e->msgnum - WM_USER );
+        else
+            sprintf( sp_e->msg_name, "%04x", sp_e->msgnum );
     }
     else
     {
