@@ -2800,61 +2800,63 @@ TAB_GetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TAB_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
-  INT iItem = (INT) wParam;
-  BOOL bResult = FALSE;
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+    INT iItem = (INT) wParam;
+    BOOL bResult = FALSE;
 
-  if ((iItem >= 0) && (iItem < infoPtr->uNumItem))
-  {
-    TAB_ITEM *oldItems = infoPtr->items;
+    if ((iItem >= 0) && (iItem < infoPtr->uNumItem))
+    {
+	TAB_ITEM *oldItems = infoPtr->items;
+	
+	TAB_InvalidateTabArea(hwnd, infoPtr);
 
-    infoPtr->uNumItem--;
-    infoPtr->items = Alloc(sizeof (TAB_ITEM) * infoPtr->uNumItem);
+	infoPtr->uNumItem--;
+	infoPtr->items = Alloc(sizeof (TAB_ITEM) * infoPtr->uNumItem);
 
-    if (iItem > 0)
-      memcpy(&infoPtr->items[0], &oldItems[0], iItem * sizeof(TAB_ITEM));
+	if (iItem > 0)
+	    memcpy(&infoPtr->items[0], &oldItems[0], iItem * sizeof(TAB_ITEM));
 
-    if (iItem < infoPtr->uNumItem)
-      memcpy(&infoPtr->items[iItem], &oldItems[iItem + 1],
-              (infoPtr->uNumItem - iItem) * sizeof(TAB_ITEM));
+	if (iItem < infoPtr->uNumItem)
+	    memcpy(&infoPtr->items[iItem], &oldItems[iItem + 1],
+		   (infoPtr->uNumItem - iItem) * sizeof(TAB_ITEM));
 
-    Free(oldItems);
+	Free(oldItems);
 
-    /* Readjust the selected index */
-    if ((iItem == infoPtr->iSelected) && (iItem > 0))
-      infoPtr->iSelected--;
+	/* Readjust the selected index */
+	if ((iItem == infoPtr->iSelected) && (iItem > 0))
+	    infoPtr->iSelected--;
 
-    if (iItem < infoPtr->iSelected)
-      infoPtr->iSelected--;
+	if (iItem < infoPtr->iSelected)
+	    infoPtr->iSelected--;
 
-    if (infoPtr->uNumItem == 0)
-      infoPtr->iSelected = -1;
+	if (infoPtr->uNumItem == 0)
+	    infoPtr->iSelected = -1;
 
-    /* Reposition and repaint tabs */
-    TAB_SetItemBounds(hwnd);
-    TAB_InvalidateTabArea(hwnd,infoPtr);
+	/* Reposition and repaint tabs */
+	TAB_SetItemBounds(hwnd);
 
-    bResult = TRUE;
-  }
+	bResult = TRUE;
+    }
 
-  return bResult;
+    return bResult;
 }
 
 static LRESULT
 TAB_DeleteAllItems (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+   
+    TAB_InvalidateTabArea(hwnd,infoPtr);  
 
-  Free (infoPtr->items);
-  infoPtr->uNumItem = 0;
-  infoPtr->iSelected = -1;
-  if (infoPtr->iHotTracked >= 0)
-    KillTimer(hwnd, TAB_HOTTRACK_TIMER);
-  infoPtr->iHotTracked = -1;
-
-  TAB_SetItemBounds(hwnd);
-  TAB_InvalidateTabArea(hwnd,infoPtr);
-  return TRUE;
+    Free (infoPtr->items);
+    infoPtr->uNumItem = 0;
+    infoPtr->iSelected = -1;
+    if (infoPtr->iHotTracked >= 0)
+	KillTimer(hwnd, TAB_HOTTRACK_TIMER);
+    infoPtr->iHotTracked = -1;
+    
+    TAB_SetItemBounds(hwnd);
+    return TRUE;
 }
 
 
