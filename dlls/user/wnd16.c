@@ -467,7 +467,8 @@ INT16 WINAPI GetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR str, UINT16 len )
  */
 void WINAPI SetDlgItemInt16( HWND16 hwnd, INT16 id, UINT16 value, BOOL16 fSigned )
 {
-    SetDlgItemInt( WIN_Handle32(hwnd), (UINT)(UINT16)id, value, fSigned );
+    SetDlgItemInt( WIN_Handle32(hwnd), (UINT)(UINT16)id, 
+             (UINT)(fSigned ? (INT16) value : (UINT16) value), fSigned );
 }
 
 
@@ -510,7 +511,7 @@ BOOL16 WINAPI CheckRadioButton16( HWND16 hwndDlg, UINT16 firstID,
  */
 BOOL16 WINAPI CheckDlgButton16( HWND16 hwnd, INT16 id, UINT16 check )
 {
-    SendDlgItemMessage16( hwnd, id, BM_SETCHECK, check, 0 );
+    SendDlgItemMessage16( hwnd, id, BM_SETCHECK16, check, 0 );
     return TRUE;
 }
 
@@ -520,7 +521,7 @@ BOOL16 WINAPI CheckDlgButton16( HWND16 hwnd, INT16 id, UINT16 check )
  */
 UINT16 WINAPI IsDlgButtonChecked16( HWND16 hwnd, UINT16 id )
 {
-    return (UINT16)SendDlgItemMessage16( hwnd, id, BM_GETCHECK, 0, 0 );
+    return (UINT16)SendDlgItemMessage16( hwnd, id, BM_GETCHECK16, 0, 0 );
 }
 
 
