@@ -12,12 +12,12 @@
 ## $LINUXDIST holds the name of the distribution
 ## $JADETAG adds "/#html" to the stylesheet-specification in the Jade
 ##          command line (see comments below), if necessary for that dist.
-if [ -e /etc/debian_version ]; then
+if [ -f /etc/debian_version ]; then
   LINUXDIST="Debian"
   JADETAG=\#html
 fi
 
-if [ -e /etc/redhat_release ]; then
+if [ -f /etc/redhat_release ]; then
   LINUXDIST="Redhat"
   JADETAG=
 fi

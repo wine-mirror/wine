@@ -1951,7 +1951,7 @@ sub generate_project_files
       }
       print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_LIBRARY_PATH) \$(${canon}_LIBRARIES:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
       if (@$target[$T_TYPE] ne $TT_DLL) {
-        print FILEO "\ttest -e @$target[$T_NAME] || \$(LN_S) \$(WINE) @$target[$T_NAME]\n";
+        print FILEO "\ttest -f @$target[$T_NAME] || \$(LN_S) \$(WINE) @$target[$T_NAME]\n";
       }
       print FILEO "\n\n";
     }

@@ -392,7 +392,7 @@ $(hello_SPEC_SRCS:.spec=.spec.c): $(hello_SPEC_SRCS:.spec) $(hello_SPEC_SRCS:.sp
 hello.so: $(hello_SPEC_SRCS:.spec=.spec.o) $(hello_OBJS) $(hello_DEP
 ENDS) 
         $(LDSHARED) $(LDDLLFLAGS) -o $@ $(hello_OBJS) $(hello_SPEC_SRCS:.spec=.spec.o) $(hello_LIBRARY_PATH) $(hello_LIBRARIES:%=-l%) $(DLL_LINK) $(LIBS)
-        test -e hello || $(LN_S) $(WINE) hello
+        test -f hello || $(LN_S) $(WINE) hello
         </programlisting>
         <para>
           Then come additional directives to link the executables and 

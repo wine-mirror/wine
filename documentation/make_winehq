@@ -20,7 +20,7 @@
 
 WWWDIR=www.winehq.com
 ## Want to put this into a sub-directory for easier maintenance
-if [ -e "$WWWDIR" ]; then
+if [ -d "$WWWDIR" -o -f "$WWWDIR" ]; then
   rm -rf "$WWWDIR.old"
   mv "$WWWDIR" "$WWWDIR".old
 fi
