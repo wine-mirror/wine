@@ -22,8 +22,10 @@
 #endif  /* HAVE_WCTYPE_H */
 
 
-#include "windows.h"
-#include "winnt.h"	/* HEAP_ macros */
+#include "winbase.h"
+#include "winnls.h"
+#include "wine/winbase16.h"
+#include "winuser.h"
 #include "task.h"
 #include "heap.h"
 #include "ldt.h"

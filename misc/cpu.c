@@ -7,8 +7,10 @@
 
 #include <ctype.h>
 #include <string.h>
+#include "winbase.h"
+#include "wine/winbase16.h"
+#include "winreg.h"
 #include "global.h"
-#include "windows.h"
 #include "winnt.h"
 #include "winerror.h"
 #include "winreg.h"

@@ -5,7 +5,6 @@
  */
 
 #include <errno.h>
-#include "windows.h"
 #include "winerror.h"
 #include "debug.h"
 

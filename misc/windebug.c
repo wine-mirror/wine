@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "windows.h"
+#include "wintypes.h"
 #include "module.h"
 #include "debug.h"
 

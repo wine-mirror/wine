@@ -5,7 +5,6 @@
  *
  */
 
-#include "windows.h"
 #include "pen.h"
 #include "psdrv.h"
 #include "debug.h"

@@ -5,7 +5,6 @@
  *
  */
 #include <string.h>
-#include "windows.h"
 #include "psdrv.h"
 #include "debug.h"
 #include "winspool.h"

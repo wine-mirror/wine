@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "windows.h"
+#include "wintypes.h"
 #include "debug.h"
 
 UINT32 WINAPI lineInitialize(

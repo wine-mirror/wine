@@ -14,7 +14,6 @@
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
-#include "windows.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "file.h"

@@ -7,9 +7,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "except.h"
-#include "windows.h"
 #include "winerror.h"
+#include "wine/winestring.h"
+#include "except.h"
 #include "heap.h"
 #include "task.h"
 #include "debug.h"

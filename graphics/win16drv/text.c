@@ -6,7 +6,6 @@
  */
 
 #include <stdlib.h>
-#include "windows.h"
 #include "win16drv.h"
 #include "dc.h"
 #include "gdi.h"

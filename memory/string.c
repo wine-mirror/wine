@@ -7,7 +7,8 @@
 
 #include <ctype.h>
 #include <string.h>
-#include "windows.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "ldt.h"
 #include "debug.h"

@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "windows.h"
+#include "wine/winbase16.h"
 #include "global.h"
 #include "heap.h"
 #include "toolhelp.h"

@@ -6,8 +6,9 @@
  */
 
 #include <string.h>
-#include "windows.h"
 #include "winbase.h"
+#include "winuser.h"
+#include "wine/winuser16.h"
 #include "miscemu.h"
 #include "vga.h"
 #include "ddraw.h"

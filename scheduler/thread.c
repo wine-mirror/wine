@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <signal.h>
 #include <unistd.h>
 #include "wine/winbase16.h"
 #include "thread.h"
@@ -16,7 +15,6 @@
 #include "winerror.h"
 #include "heap.h"
 #include "selectors.h"
-#include "miscemu.h"
 #include "winnt.h"
 #include "server.h"
 #include "stackframe.h"

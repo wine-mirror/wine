@@ -44,7 +44,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include "windows.h"
+#include "windef.h"
 #include "winbase.h"
 #include "callback.h"
 #include "file.h"

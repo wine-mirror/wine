@@ -9,7 +9,10 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "windows.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "file.h"
 #include "heap.h"
 #include "lzexpand.h"

@@ -5,12 +5,12 @@
  */
 
 #include <assert.h>
-#include "debug.h"
-#include "windows.h"
+#include "winuser.h"
 #include "callback.h"
 #include "task.h"
 #include "syslevel.h"
 #include "queue.h"
+#include "debug.h"
 
 
 /**********************************************************************

@@ -10,13 +10,13 @@
 
 #include <stdlib.h>
 #include <strings.h>
+#include "winbase.h"
+#include "winuser.h"
 #include "ddeml.h"
-#include "debug.h"
-#include "windows.h"
-#include "wintypes.h"
 #include "winerror.h"
 #include "heap.h"
 #include "shm_semaph.h"
+#include "debug.h"
 
 /* Has defined in atom.c file.
  */

@@ -11,12 +11,13 @@
 #include <pwd.h>
 #include <unistd.h>
 
-#include "windows.h"
+#include "wintypes.h"
+#include "winnetwk.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "drive.h"
 #include "wnet.h"
 #include "debug.h"
-#include "win.h"
 #include "heap.h"
 
 /********************************************************************

@@ -3,7 +3,7 @@
  */
 
 #include <stdlib.h>
-#include "windows.h"
+#include "wintypes.h"
 #include "debug.h"
 
 INT16 WINAPI OpenSound16(void)

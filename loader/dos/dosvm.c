@@ -21,6 +21,7 @@
 #include "winnt.h"
 #include "sig_context.h"
 #include "msdos.h"
+#include "file.h"
 #include "miscemu.h"
 #include "debugger.h"
 #include "module.h"

@@ -6,9 +6,8 @@
  */
 
 #include <stdio.h>
-#include "windows.h"
+#include "wine/winbase16.h"
 #include "win16drv.h"
-#include "gdi.h"
 #include "module.h"
 #include "font.h"
 #include "heap.h"

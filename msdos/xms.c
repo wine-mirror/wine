@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "windows.h"
+#include "global.h"
 #include "module.h"
 #include "miscemu.h"
 #include "toolhelp.h"

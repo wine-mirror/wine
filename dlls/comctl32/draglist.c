@@ -13,7 +13,6 @@
  */
 
 #include "commctrl.h"
-
 #include "debug.h"
 
 

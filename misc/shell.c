@@ -13,7 +13,6 @@
 #include "wine/shell16.h"
 #include "winerror.h"
 #include "file.h"
-#include "shell.h"
 #include "heap.h"
 #include "module.h"
 #include "neexe.h"
@@ -26,7 +25,6 @@
 #include "debug.h"
 #include "winreg.h"
 #include "imagelist.h"
-#include "commctrl.h"
 
 /* .ICO file ICONDIR definitions */
 

@@ -46,7 +46,6 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
-#include "windows.h"
 
 #include "winerror.h"
 #include "gdi.h"

@@ -32,7 +32,7 @@
  */
 
 #include <assert.h>
-#include "windows.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "ldt.h"
 #include "process.h"

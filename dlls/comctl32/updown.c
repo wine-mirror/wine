@@ -32,7 +32,6 @@
 #include <stdlib.h>
 #include "commctrl.h"
 #include "winnls.h"
-#include "sysmetrics.h"
 #include "updown.h"
 #include "win.h"
 #include "debug.h"

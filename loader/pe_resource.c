@@ -12,8 +12,8 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
+#include "wine/winestring.h"
 #include "wintypes.h"
-#include "windows.h"
 #include "pe_image.h"
 #include "module.h"
 #include "heap.h"

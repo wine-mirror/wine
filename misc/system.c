@@ -12,7 +12,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "windows.h"
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "selectors.h"
 #include "sig_context.h"
 #include "miscemu.h"

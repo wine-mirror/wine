@@ -35,7 +35,6 @@
 #endif
 
 #include "winsock.h"
-#include "windows.h"
 #include "heap.h"
 #include "ldt.h"
 #include "message.h"

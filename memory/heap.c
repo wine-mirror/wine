@@ -8,7 +8,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include "windows.h"
+#include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "selectors.h"
 #include "global.h"
 #include "winbase.h"

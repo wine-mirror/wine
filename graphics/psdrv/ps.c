@@ -7,7 +7,6 @@
 
 #include <ctype.h>
 #include <string.h>
-#include "windows.h"
 #include "psdrv.h"
 #include "winspool.h"
 #include "debug.h"

@@ -16,7 +16,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "windows.h"
 #include "snoop.h"
 #include "process.h"
 #include "neexe.h"

@@ -9,12 +9,12 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "windows.h"
 #include "winbase.h"
+#include "winuser.h"
+#include "wine/winbase16.h"
 #include "process.h"
 #include "options.h"
 #include "debug.h"
-#include "ole.h"
 #include "neexe.h"
 #include "winversion.h"
 

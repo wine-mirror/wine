@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "windows.h"
+#include "wintypes.h"
 #include "stackframe.h"
 #include "debug.h"
 

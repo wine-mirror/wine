@@ -33,7 +33,9 @@
 #include <signal.h>
 #include <assert.h>
 
-#include "windows.h"
+#include "winbase.h"
+#include "wine/winuser16.h"
+#include "wine/keyboard16.h"
 #include "k32obj.h"
 #include "thread.h"
 #include "async.h"

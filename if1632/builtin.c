@@ -7,9 +7,9 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
-#include "windows.h"
+#include "winbase.h"
+#include "wine/winbase16.h"
 #include "builtin32.h"
-#include "gdi.h"
 #include "global.h"
 #include "heap.h"
 #include "module.h"

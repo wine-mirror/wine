@@ -21,16 +21,14 @@
 #ifdef MALLOC_DEBUGGING
 # include <malloc.h>
 #endif
+#include "winbase.h"
 #include "winsock.h"
 #include "heap.h"
 #include "message.h"
 #include "msdos.h"
-#include "windows.h"
 #include "color.h"
 #include "options.h"
 #include "desktop.h"
-#include "shell.h"
-#include "winbase.h"
 #include "builtin32.h"
 #include "debug.h"
 #include "debugdefs.h"

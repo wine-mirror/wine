@@ -5,11 +5,11 @@
  */
 
 #include <stdlib.h>
+#include "wine/winestring.h"
 #include "libres.h"
 #include "resource.h"
 #include "debug.h"
 #include "heap.h"
-#include "windows.h"
 #include "xmalloc.h"
 
 typedef struct RLE

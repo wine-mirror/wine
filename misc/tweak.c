@@ -29,7 +29,7 @@
  *****************************************************************************/
 
 #include <string.h>
-#include "windows.h"
+#include "winuser.h"
 #include "tweak.h"
 #include "options.h"
 #include "debug.h"

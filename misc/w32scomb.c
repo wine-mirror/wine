@@ -8,11 +8,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "windows.h"
+#include "wintypes.h"
+#include "wine/winbase16.h"
 #include "module.h"
 #include "ldt.h"
 #include "selectors.h"
-#include "winbase.h"
 #include "heap.h"
 
 /***********************************************************************

@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/times.h>
-#include "windows.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "heap.h"
 #include "thread.h"

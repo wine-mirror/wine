@@ -10,19 +10,11 @@
 #include "ts_xutil.h"
 #include "x11drv.h"
 
-#include <math.h>
 #include <stdlib.h>
-#ifndef PI
-#define PI M_PI
-#endif
-#include "gdi.h"
 #include "dc.h"
 #include "bitmap.h"
-#include "callback.h"
 #include "heap.h"
-#include "metafile.h"
 #include "monitor.h"
-#include "palette.h"
 #include "cache.h"
 #include "region.h"
 #include "path.h"

@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "windows.h"
+#include "wine/winbase16.h"
 #include "debugger.h"
 #include "miscemu.h"
 

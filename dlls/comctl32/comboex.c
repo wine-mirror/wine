@@ -16,9 +16,9 @@
  *   - should include "combo.h" 
  */
 
+#include "win.h"
 #include "commctrl.h"
 #include "comboex.h"
-#include "win.h"
 #include "debug.h"
 
 #define ID_CB_EDIT    1001

@@ -38,8 +38,8 @@ AJ 990101:
 #include <math.h>
 #include <fcntl.h>
 #include <setjmp.h>
-#include "win.h"
-#include "windows.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "debug.h"
 #include "module.h"

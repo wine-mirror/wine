@@ -5,7 +5,6 @@
    only the 'OpenGL' target is supported. */
 
 #include "config.h"
-#include "windows.h"
 #include "wintypes.h"
 #include "winerror.h"
 #include "wine/obj_base.h"

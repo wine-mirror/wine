@@ -7,7 +7,6 @@
  */
 
 #include <string.h>
-#include "windows.h"
 #include "winnt.h" /* HEAP_ZERO_MEMORY */
 #include "psdrv.h"
 #include "options.h"

@@ -14,7 +14,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "windows.h"
+#include "wine/winbase16.h"
 #include "ldt.h"
 #include "task.h"
 #include "global.h"

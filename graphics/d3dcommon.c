@@ -4,8 +4,6 @@
    This file contains all common miscellaneous code that spans
    different 'objects' */
 
-#include "config.h"
-#include "windows.h"
 #include "wintypes.h"
 #include "wine/obj_base.h"
 #include "ddraw.h"

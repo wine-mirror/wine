@@ -7,13 +7,12 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wintypes.h"
-#include "debug.h"
 #include "driver.h"
 #include "heap.h"
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"
+#include "debug.h"
 
 /**********************************************************************/
 

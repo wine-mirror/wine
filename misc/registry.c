@@ -30,8 +30,10 @@
 #include <pwd.h>
 #include <assert.h>
 #include <time.h>
-#include "windows.h"
-#include "win.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "winerror.h"
 #include "file.h"
 #include "heap.h"

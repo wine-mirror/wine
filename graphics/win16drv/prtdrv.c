@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#include "windows.h"
+#include "wine/winbase16.h"
 #include "win16drv.h"
 #include "heap.h"
 #include "brush.h"

@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <sys/sem.h>
 #include "debug.h"
-#include "windows.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "heap.h"

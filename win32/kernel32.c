@@ -8,7 +8,9 @@
  *      the function documentation for more details.
  */
 
-#include "windows.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wine/winbase16.h"
 #include "callback.h"
 #include "task.h"
 #include "user.h"

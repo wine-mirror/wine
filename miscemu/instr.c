@@ -4,7 +4,7 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#include "windows.h"
+#include "wine/winuser16.h"
 #include "ldt.h"
 #include "global.h"
 #include "module.h"

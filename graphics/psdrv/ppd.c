@@ -7,7 +7,6 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "windows.h"
 #include "winnt.h" /* HEAP_ZERO_MEMORY */
 #include "heap.h"
 #include "debug.h"

@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include "windows.h"
 #include "winerror.h"
 #include "k32obj.h"
 #include "process.h"

@@ -17,8 +17,8 @@
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
-#include "windows.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winerror.h"
 #include "file.h"
 #include "process.h"

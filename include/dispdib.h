@@ -8,7 +8,7 @@
 #ifndef __WINE_DISPDIB_H
 #define __WINE_DISPDIB_H
 
-#include "wintypes.h"
+#include "wingdi.h"
 
 /* error codes */
 #define DISPLAYDIB_NOERROR        0x0000

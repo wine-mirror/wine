@@ -4,7 +4,6 @@
    This files contains the implementation of Direct3DMaterial2. */
 
 #include "config.h"
-#include "windows.h"
 #include "wintypes.h"
 #include "winerror.h"
 #include "wine/obj_base.h"

@@ -19,7 +19,6 @@
 #define PATH_MAX _MAX_PATH
 #endif
 
-#include "win.h"
 #include "debugger.h"
 #include "xmalloc.h"
 

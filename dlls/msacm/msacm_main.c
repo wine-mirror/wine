@@ -4,9 +4,8 @@
  *      Copyright 1998  Patrik Stridvall
  */
 
-#include "winerror.h"
 #include "winbase.h"
-#include "wintypes.h"
+#include "winerror.h"
 #include "msacm.h"
 #include "debug.h"
 

@@ -8,7 +8,8 @@
 #include <malloc.h>
 #include <math.h>
 
-#include "windows.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "winerror.h"
 
 #include "dc.h"

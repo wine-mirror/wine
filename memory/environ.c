@@ -4,7 +4,6 @@
  * Copyright 1996, 1998 Alexandre Julliard
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "winuser.h"

@@ -9,13 +9,13 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include "wine/winbase16.h"
 #include "module.h"
 #include "neexe.h"
 #include "process.h"
 #include "task.h"
 #include "miscemu.h"
 #include "toolhelp.h"
-#include "windows.h"
 #include "debugger.h"
 #include "dosexe.h"
 

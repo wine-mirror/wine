@@ -18,7 +18,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "win.h"
 #include "pe_image.h"
 #include "peexe.h"
 #include "debugger.h"

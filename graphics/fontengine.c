@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <debug.h>     
-#include "windows.h"
+#include "winbase.h"
 #include "font.h"
 
 

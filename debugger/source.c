@@ -19,7 +19,6 @@
 #define PATH_MAX _MAX_PATH
 #endif
 
-#include "win.h"
 #include "wine/winbase16.h"
 #include "pe_image.h"
 #include "peexe.h"

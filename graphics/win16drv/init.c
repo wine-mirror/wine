@@ -7,7 +7,6 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "windows.h"
 #include "win16drv.h"
 #include "gdi.h"
 #include "bitmap.h"

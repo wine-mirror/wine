@@ -6,7 +6,8 @@
 
 #include <stdarg.h>
 #include <string.h>
-#include "windows.h"
+#include "wine/winbase16.h"
+#include "winuser.h"
 #include "ldt.h"
 #include "stackframe.h"
 #include "debug.h"

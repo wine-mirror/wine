@@ -13,7 +13,6 @@
 #include "config.h"
 
 #include <string.h>
-#include <signal.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
@@ -46,8 +45,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "wine/winbase16.h"
 #include "winsock.h"
-#include "windows.h"
 #include "winnt.h"
 #include "heap.h"
 #include "ldt.h"

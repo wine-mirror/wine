@@ -5,7 +5,7 @@
  */
 
 #include <stdio.h>
-#include "windows.h"
+#include "wingdi.h"
 #include "gdi.h"
 #include "heap.h"
 #include "ldt.h"

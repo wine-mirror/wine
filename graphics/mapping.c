@@ -4,7 +4,6 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#include <math.h>
 #include "dc.h"
 #include "debug.h"
 

@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.h>
-#include "windows.h"
 #include "winerror.h"
 #include "winnls.h"
 #include "heap.h"

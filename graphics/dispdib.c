@@ -6,7 +6,6 @@
  */
 
 #include <string.h>
-#include "windows.h"
 #include "miscemu.h"
 #include "dispdib.h"
 #include "vga.h"

@@ -6,7 +6,7 @@
  *
  */
 
-#include "windows.h"
+#include "wingdi.h"
 #include "cache.h"
 
 static const WORD wPattern55AA[] =

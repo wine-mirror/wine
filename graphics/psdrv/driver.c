@@ -10,11 +10,10 @@
  */
 
 #include <string.h>
-#include "windows.h"
 #include "psdrv.h"
 #include "debug.h"
 #include "resource.h"
-#include "win.h"
+#include "winuser.h"
 #include "winspool.h"
 
 static LONG Resolutions[][2] = { {600,600} };

@@ -7,7 +7,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "windows.h"
+#include "wintypes.h"
 #include "debug.h"
 
 void WINAPI BootTask()
