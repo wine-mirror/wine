@@ -143,6 +143,8 @@ int msi_addstring( string_table *st, int n, const CHAR *data, int len, UINT refc
 {
     int sz;
 
+    if( !data )
+        return 0;
     if( !data[0] )
         return 0;
     if( n > 0 )
@@ -189,6 +191,8 @@ int msi_addstringW( string_table *st, int n, const WCHAR *data, int len, UINT re
 {
     /* TRACE("[%2d] = %s\n", string_no, debugstr_an(data,len) ); */
 
+    if( !data )
+        return 0;
     if( !data[0] )
         return 0;
     if( n > 0 )

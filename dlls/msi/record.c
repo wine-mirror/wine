@@ -284,6 +284,9 @@ const WCHAR *MSI_RecordGetString( MSIHANDLE handle, unsigned int iField )
     if( iField > rec->count )
         return NULL;
 
+    if( rec->fields[iField].type != MSIFIELD_WSTR )
+        return NULL;
+
     return rec->fields[iField].u.szwVal;
 }
 

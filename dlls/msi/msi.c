@@ -36,6 +36,8 @@
 #include "wine/unicode.h"
 #include "objbase.h"
 
+#include "initguid.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 /*
@@ -45,6 +47,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
  *  and make sure to only use it in W functions.
  */
 #define LPCTSTR LPCWSTR
+
+DEFINE_GUID( CLSID_MsiDatabase, 0x000c1084, 0x0000, 0x0000, 0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
 static const WCHAR szInstaller[] = {
 'S','o','f','t','w','a','r','e','\\',
@@ -188,6 +192,7 @@ UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phD
     MSIDATABASE *db;
     UINT ret;
     LPWSTR szMode;
+    STATSTG stat;
 
     TRACE("%s %s %p\n",debugstr_w(szDBPath),debugstr_w(szPersist), phDB);
 
@@ -212,7 +217,10 @@ UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phD
         r = StgCreateDocfile( szDBPath, 
               STGM_DIRECT|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &stg);
         if( r == ERROR_SUCCESS )
+        {
+            IStorage_SetClass( stg, &CLSID_MsiDatabase );
             r = init_string_table( stg );
+        }
     }
     else if( szPersist == MSIDBOPEN_TRANSACT )
     {
@@ -230,6 +238,23 @@ UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phD
         FIXME("open failed r = %08lx!\n",r);
         return ERROR_FUNCTION_FAILED;
     }
+
+    r = IStorage_Stat( stg, &stat, STATFLAG_NONAME );
+    if( FAILED( r ) )
+    {
+        FIXME("Failed to stat storage\n");
+        ret = ERROR_FUNCTION_FAILED;
+        goto end;
+    }
+
+    if( memcmp( &stat.clsid, &CLSID_MsiDatabase, sizeof (GUID) ) )
+    {
+        ERR("storage GUID is not a MSI database GUID %s\n",
+             debugstr_guid(&stat.clsid) );
+        ret = ERROR_FUNCTION_FAILED;
+        goto end;
+    }
+
 
     handle = alloc_msihandle( MSIHANDLETYPE_DATABASE, sizeof (MSIDATABASE),
                               MSI_CloseDatabase, (void**) &db );
