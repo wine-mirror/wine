@@ -571,9 +571,11 @@ static void test_CopyFileA(void)
        "WriteFile error %ld\n", GetLastError());
     ok(GetFileSize(hfile, NULL) == sizeof(prefix), "source file has wrong size\n");
     /* get the file time and change it to prove the difference */
-    ok(GetFileTime(hfile, NULL, NULL, &ft1), "GetFileTime error %ld\n", GetLastError());
+    ret = GetFileTime(hfile, NULL, NULL, &ft1);
+    ok( ret, "GetFileTime error %ld\n", GetLastError());
     ft1.dwLowDateTime -= 600000000; /* 60 second */
-    ok(SetFileTime(hfile, NULL, NULL, &ft1), "SetFileTime error %ld\n", GetLastError());
+    ret = SetFileTime(hfile, NULL, NULL, &ft1);
+    ok( ret, "SetFileTime error %ld\n", GetLastError());
     GetFileTime(hfile, NULL, NULL, &ft1);  /* get the actual time back */
     CloseHandle(hfile);
 
@@ -595,7 +597,8 @@ static void test_CopyFileA(void)
     ok(ret == sizeof(prefix), "destination file has wrong size %ld\n", ret);
 
     /* make sure that destination has the same filetime */
-    ok(ret = GetFileTime(hfile, NULL, NULL, &ft2), "GetFileTime error %ld\n", GetLastError());
+    ret = GetFileTime(hfile, NULL, NULL, &ft2);
+    ok( ret, "GetFileTime error %ld\n", GetLastError());
     ok(CompareFileTime(&ft1, &ft2) == 0, "destination file has wrong filetime\n");
 
     SetLastError(0xdeadbeef);

@@ -5202,6 +5202,7 @@ static DWORD WINAPI cbt_global_hook_thread_proc(void *param)
 
 static void test_winevents(void)
 {
+    BOOL ret;
     MSG msg;
     HWND hwnd, hwnd2;
     UINT i;
@@ -5243,7 +5244,8 @@ static void test_winevents(void)
 
     ok_sequence(WmGlobalHookSeq_2, "global hook 2", FALSE);
 
-    ok(UnhookWindowsHookEx(hCBT_global_hook), "UnhookWindowsHookEx error %ld", GetLastError());
+    ret = UnhookWindowsHookEx(hCBT_global_hook);
+    ok( ret, "UnhookWindowsHookEx error %ld", GetLastError());
 
     PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
@@ -5304,7 +5306,8 @@ static void test_winevents(void)
 
     ok_sequence(WmWinEventCaretSeq, "caret winevent", FALSE);
 
-    ok(pUnhookWinEvent(hhook), "UnhookWinEvent error %ld\n", GetLastError());
+    ret = pUnhookWinEvent(hhook);
+    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
 
     PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
@@ -5349,7 +5352,8 @@ static void test_winevents(void)
     ok(!PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE), "msg queue should be empty\n");
     ok_sequence(WmWinEventCaretSeq_2, "caret winevent for out of context proc", FALSE);
 
-    ok(pUnhookWinEvent(hhook), "UnhookWinEvent error %ld\n", GetLastError());
+    ret = pUnhookWinEvent(hhook);
+    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
 
     PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
@@ -5363,6 +5367,7 @@ static void test_winevents(void)
 
 static void test_set_hook(void)
 {
+    BOOL ret;
     HHOOK hhook;
     HWINEVENTHOOK hwinevent_hook;
     HMODULE user32 = GetModuleHandleA("user32.dll");
@@ -5438,7 +5443,8 @@ static void test_set_hook(void)
 	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
     ok(hwinevent_hook != 0, "SetWinEventHook error %ld\n", GetLastError());
     ok(GetLastError() == 0xdeadbeef, "unexpected error %ld\n", GetLastError());
-    ok(pUnhookWinEvent(hwinevent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+    ret = pUnhookWinEvent(hwinevent_hook);
+    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
 
 todo_wine {
     /* This call succeeds under win2k SP4, but fails under Wine.
@@ -5448,7 +5454,8 @@ todo_wine {
 	0, win_event_proc, 0xdeadbeef, 0, WINEVENT_OUTOFCONTEXT);
     ok(hwinevent_hook != 0, "SetWinEventHook error %ld\n", GetLastError());
     ok(GetLastError() == 0xdeadbeef, "unexpected error %ld\n", GetLastError());
-    ok(pUnhookWinEvent(hwinevent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+    ret = pUnhookWinEvent(hwinevent_hook);
+    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
 }
 
     SetLastError(0xdeadbeef);
@@ -5554,6 +5561,7 @@ static const struct message destroy_window_with_children[] = {
 
 static void test_DestroyWindow(void)
 {
+    BOOL ret;
     HWND parent, child1, child2, child3, child4, test;
     UINT child_id = WND_CHILD_ID + 1;
 
@@ -5654,7 +5662,8 @@ todo_wine {
     ok(test == child4, "wrong capture window %p\n", test);
 
     test_DestroyWindow_flag = TRUE;
-    ok(DestroyWindow(parent), "DestroyWindow() error %ld\n", GetLastError());
+    ret = DestroyWindow(parent);
+    ok( ret, "DestroyWindow() error %ld\n", GetLastError());
     test_DestroyWindow_flag = FALSE;
     ok_sequence(destroy_window_with_children, "destroy window with children", 0);
 
@@ -5744,6 +5753,7 @@ static void test_DispatchMessage(void)
 
 START_TEST(msg)
 {
+    BOOL ret;
     HMODULE user32 = GetModuleHandleA("user32.dll");
     FARPROC pSetWinEventHook = GetProcAddress(user32, "SetWinEventHook");
     FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
@@ -5777,7 +5787,8 @@ START_TEST(msg)
     test_winevents();
 
     /* Fix message sequences before removing 3 lines below */
-    ok(pUnhookWinEvent(hEvent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+    ret = pUnhookWinEvent(hEvent_hook);
+    ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
     pUnhookWinEvent = 0;
     hEvent_hook = 0;
 
@@ -5797,7 +5808,8 @@ START_TEST(msg)
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)
     {
-	ok(pUnhookWinEvent(hEvent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+	ret = pUnhookWinEvent(hEvent_hook);
+	ok( ret, "UnhookWinEvent error %ld\n", GetLastError());
 	SetLastError(0xdeadbeef);
 	ok(!pUnhookWinEvent(hEvent_hook), "UnhookWinEvent succeeded\n");
 	ok(GetLastError() == ERROR_INVALID_HANDLE || /* Win2k */

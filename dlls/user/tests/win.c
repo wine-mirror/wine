@@ -2407,6 +2407,7 @@ static void test_nccalcscroll(HWND parent)
 
 static void test_SetParent(void)
 {
+    BOOL ret;
     HWND desktop = GetDesktopWindow();
     BOOL is_win9x = GetWindowLongPtrW(desktop, GWLP_WNDPROC) == 0;
     HWND parent, child1, child2, child3, child4;
@@ -2475,7 +2476,8 @@ todo_wine {
         check_parents(child4, desktop, child2, child2, child2, child4, parent);
     }
 
-    ok(DestroyWindow(parent), "DestroyWindow() error %ld\n", GetLastError());
+    ret = DestroyWindow(parent);
+    ok( ret, "DestroyWindow() error %ld\n", GetLastError());
 
     ok(!IsWindow(parent), "parent still exists\n");
     ok(!IsWindow(child1), "child1 still exists\n");
