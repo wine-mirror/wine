@@ -1,15 +1,22 @@
 .\" -*- nroff -*-
-.TH WINE 1 "July 8, 1998" "Version 980628" "Windows Emulator"
+.TH WINE 1 "October 20, 1998" "Version 981018" "Windows Emulator"
 .SH NAME
 wine \- run Windows programs under Unix
 .SH SYNOPSIS
 .B wine
 [
-.I options
-]
+.I wine_options
+] "
 .I program_name
 [
-.I program_name...
+.I program_args
+] "
+[ "
+.I program_name
+[
+.I program_args
+]"
+.I ...
 ]
 .SH DESCRIPTION
 .B wine
@@ -39,8 +46,8 @@ reetrant option enabled.
 .PP
 .B libXpm
 must be installed.  If you're using Red Hat, the name of the package is
-XFree86-devel.  The sources may be FTP'd from ftp.Xfree86.org or its 
-mirrors.
+XFree86-devel.  The sources may be obtained via FTP from ftp.Xfree86.org 
+or its mirrors.
 .PP
 .B gcc
 2.7.x or later is required to build
@@ -69,6 +76,10 @@ file contained in the source distribution.
 .I -backingstore
 Turn on backing store
 .TP
+.I -config filename
+Use the named configuration file rather than the default
+(/usr/local/etc/wine.conf or ~/.winerc).
+.TP
 .I -debug
 Enter the debugger before starting application
 .TP
@@ -83,7 +94,8 @@ xxx is optional and can be one of the following:
 or 
 .I trace. 
 If xxx is not specified, all debugging messages for the specified
-channel are turned on.  # is required and can be either + or -.  Note that 
+channel are turned on.  Each channel will print messages about a particular
+component of Wine.  # is required and can be either + or -.  Note that 
 there is not a space after the comma between names.
 .PP
 For instance:
@@ -95,18 +107,20 @@ will turn on DLL warning messages and all heap messages.
 will turn off all FIXME messages, turn on cursor warning messages, and turn
 on all relay messages (API calls).
 .PP
-The full list of names is: all, accel, advapi, aspi, atom, bitblt, bitmap, 
-caret, cd, cdaudio, class, clipboard, clipping, combo, comm, commctrl, 
-commdlg, console, crtdll, cursor, dc, dde, ddeml, ddraw, debug, dialog, 
-dinput, dll, dosfs, driver, dsound, edit, event, exec, file, fixup, font, 
-gdi, global, graphics, header, heap, hook, icon, imagelist, int, int21, 
-int31, key, keyboard, ldt, listbox, local, mci, mcianim, mciwave, mdi, menu, 
-message, metafile, midi, mmaux, mmio, mmsys, mmtime, module, mpr, msg, 
-nonclient, ntdll, ole, palette, print, process, profile, prop, reg, region, 
-relay, resource, scroll, security, segment, selector, sem, sendmsg, shell, 
-shm, snoop, sound, stress, string, syscolor, task, text, thread, thunk, timer, 
-toolhelp, tweak, uitools, updown, ver, virtual, vxd, win, win16drv, win32, 
-wing, winsock, wnet, x11, x11drv.
+The full list of names is: all, accel, advapi, animate, aspi, atom, 
+bitblt, bitmap, caret, cd, cdaudio, class, clipboard, clipping, combo, 
+comboex, comm, commctrl, commdlg, console, crtdll, cursor, dc, dde, ddeml, 
+ddraw, debug, dialog, dinput, dll, dosfs, dosmem, dplay, driver, dsound, 
+edit, event, exec, file, fixup, font, gdi, global, graphics, header, heap, 
+hook, hotkey, icon, imagehlp, imagelist, imm, int, int10, int16, int21, 
+int31, ipaddress, key, keyboard, ldt, listbox, local, mci, mcianim, mciwave, mdi, menu, message, metafile, midi, mmaux, mmio, mmsys, mmtime, module, mpr, 
+msg, nativefont, nonclient, ntdll, ole, pager, palette, pidl, print, process, 
+profile, progress, prop, psapi, psdrv, rebar, reg, region, relay, resource, 
+s, scroll, security, segment, selector, sem, sendmsg, shell, shm, snoop, 
+sound, static, statusbar, stress, string, syscolor, system, tab, task, text, 
+thread, thunk, timer, toolbar, toolhelp, tooltips, trackbar, treeview, tweak, 
+uitools, updown, ver, virtual, vxd, win, win16drv, win32, wing, winsock, 
+wnet, x11, x11drv.
 .PP
 For more information on debugging messages, see the file 
 .I documentation/debug-msgs
@@ -127,11 +141,15 @@ Enables/disables built-in DLL's - starting wine with
 .I -dll -commdlg
 is probably a good idea.
 The full list of DLLs modifiable by this is:
-WIN87EM, SHELL, SOUND, KEYBOARD, WINSOCK, STRESS, MMSYSTEM, SYSTEM, TOOLHELP,
-MOUSE, COMMDLG, OLE2, OLE2CONV, OLE2DISP, OLE2NLS, OLE2PROX, OLECLI, OLESVR,
-COMPOBJ, STORAGE, WINPROCS, DDEML, ADVAPI32, COMCTL32, COMDLG32, CRTDLL,
-GDI32, LZ32, MPR, NTDLL, OLE32, SHELL32, USER32, VER, VERSION, W32SYS, WINMM,
-WINSPOOL, WSOCK32
+ADVAPI32, AVIFILE, COMCTL32, COMDLG32, COMM, COMMDLG, COMPOBJ, CRTDLL, 
+DCIMAN32, DDEML, DDRAW, DINPUT, DISPLAY, DPLAY, DPLAYX, DSOUND, GDI, GDI32, 
+IMAGEHLP, IMM32, KEYBOARD, LZ32, LZEXPAND, MMSYSTEM, MOUSE, MPR, MSACM, 
+MSACM32, MSNET32, MSVFW32, MSVIDEO, OLE2, OLE32, OLE2CONV, OLE2DISP, OLE2NLS, 
+OLE2PROX, OLE2THK, OLEAUT32, OLECLI, OLECLI32, OLEDLG, OLESVR, OLESVR32, 
+PSAPI, RASAPI16, RASAPI32, SHELL, SHELL32, SOUND, STORAGE, STRESS, SYSTEM,
+TAPI32, TOOLHELP, TYPELIB, USER, USER32, VER, VERSION, W32SKRNL, W32SYS, 
+WIN32S16, WIN87EM, WINASPI, WINDEBUG, WINEPS, WINMM, WING, WINSOCK, WINSPOOL, 
+WNASPI32, WOW32, WPROCS, WSOCK32
 .TP
 .I -failreadonly
 Read only files may not be opened in write mode (the default is to
@@ -196,7 +214,8 @@ script.  Alternatively, you may have a
 .I .winerc
 file of this format in your home directory or have the environment variable
 .B WINE_INI
-pointing to a configuration file.
+pointing to a configuration file, or use the -config option on the command 
+line.
 .SH CONFIGURATION FILE FORMAT
 All entries are grouped in sections; a section begins with the line
 .br
@@ -334,9 +353,9 @@ default: none
 .PP
 .B [Tweak.Layout]
 .br
-.I format: Win95Look=<true|false>
+.I format: WineLook=<Win31|Win95|Win98>
 .br
-default: false
+default: Win31
 .br 
 Use Win95-like window displays or Win3.1-like window displays.
 .SH SAMPLE CONFIGURATION FILE
@@ -392,7 +411,7 @@ Include=WM_COMMAND;
 .PP
 [Tweak.Layout]
 .br 
-Win95Look=true
+WineLook=Win95
 .SH AUTHORS
 .B Wine
 is available thanks to the work of many developers. For a listing
@@ -415,9 +434,14 @@ Bug reports and successes may be posted to
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
-can be ftp'ed from sunsite.unc.edu or tsx-11.mit.edu in the /pub/linux/ALPHA/Wine/development 
+can be obtained via FTP from sunsite.unc.edu or tsx-11.mit.edu in the /pub/linux/ALPHA/Wine/development 
 directory.  The releases are in the format 'Wine-yymmdd.tar.gz', 
 or 'Wine-yymmdd.diff.gz' for the diff's from the previous release.
+.PP
+The latest snapshot of the code may be obtained via CVS.  For information
+on how to do this, please see
+.I
+http://www.winehq.com/cvs.html
 .PP
 The
 .B wine
