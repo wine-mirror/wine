@@ -141,8 +141,9 @@ DWORD WINAPI FormatMessageA(
 	DWORD	dwLanguageId,
 	LPSTR	lpBuffer,
 	DWORD	nSize,
-	LPDWORD	args /* va_list *args */
+	va_list* _args
 ) {
+  LPDWORD args=(LPDWORD)_args;
 #ifdef __i386__
 /* This implementation is completely dependant on the format of the va_list on x86 CPUs */
 	LPSTR	target,t;
@@ -351,8 +352,9 @@ DWORD WINAPI FormatMessageW(
 	DWORD	dwLanguageId,
 	LPWSTR	lpBuffer,
 	DWORD	nSize,
-	LPDWORD	args /* va_list *args */
+	va_list* _args
 ) {
+  LPDWORD args=(LPDWORD)_args;
 #ifdef __i386__
 /* This implementation is completely dependant on the format of the va_list on x86 CPUs */
 	LPSTR	target,t;

@@ -5,6 +5,9 @@
 #include "winnt.h"
 #include "pshpack1.h"
 
+#ifndef RC_INVOKED
+#include <stdarg.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -1329,10 +1332,8 @@ HRSRC     WINAPI FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
 BOOL      WINAPI FlushConsoleInputBuffer(HANDLE);
 BOOL      WINAPI FlushFileBuffers(HANDLE);
 BOOL      WINAPI FlushViewOfFile(LPCVOID, DWORD);
-DWORD       WINAPI FormatMessageA(DWORD,LPCVOID,DWORD,DWORD,LPSTR,
-				    DWORD,LPDWORD);
-DWORD       WINAPI FormatMessageW(DWORD,LPCVOID,DWORD,DWORD,LPWSTR,
-				    DWORD,LPDWORD);
+DWORD       WINAPI FormatMessageA(DWORD,LPCVOID,DWORD,DWORD,LPSTR,DWORD,va_list*);
+DWORD       WINAPI FormatMessageW(DWORD,LPCVOID,DWORD,DWORD,LPWSTR,DWORD,va_list*);
 #define     FormatMessage WINELIB_NAME_AW(FormatMessage)
 BOOL      WINAPI FreeConsole(void);
 BOOL      WINAPI FreeEnvironmentStringsA(LPSTR);
