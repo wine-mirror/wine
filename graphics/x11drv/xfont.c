@@ -375,7 +375,7 @@ static int LFD_InitFontInfo( fontInfo* fi, LPSTR lpstr )
    else						/* ... and -microsoft-cp125x */
    {
 	fi->df.dfCharSet = OEM_CHARSET;
-	if( !strncasecmp(lpch, localMSEncoding, 6) )
+	if( !strncasecmp(lpch, localMSEncoding, strlen(localMSEncoding)) )
 	{
 	    lpch = LFD_Advance( lpch, 1 );
 	    if( lpch && (i = atoi( lpch )) < numCPTranslation )
