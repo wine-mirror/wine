@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = quartz.dll
-IMPORTS   = ole32 oleaut32 advapi32 kernel32
+IMPORTS   = ole32 oleaut32 advapi32 kernel32 user32
 EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@
@@ -17,7 +17,10 @@ C_SRCS = \
 	filtergraph.c \
 	filtermapper.c \
 	main.c \
-	pin.c
+	pin.c \
+	regsvr.c
+
+RC_SRCS = version.rc
 
 @MAKE_DLL_RULES@
 

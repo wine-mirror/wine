@@ -191,15 +191,6 @@ DWORD WINAPI QUARTZ_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 }
 
 /***********************************************************************
- *      DllRegisterServer (QUARTZ.@)
- */
-HRESULT WINAPI QUARTZ_DllRegisterServer()
-{
-        FIXME("(): stub\n");
-        return 0;
-}
-
-/***********************************************************************
  *              DllCanUnloadNow (QUARTZ.@)
  */
 HRESULT WINAPI QUARTZ_DllCanUnloadNow()
