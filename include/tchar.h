@@ -24,7 +24,7 @@
 #endif
 
 #if defined(_UNICODE) || defined(_MBCS)
-#error You must use msvcrt when builing in Unicode/MBCS mode
+#error You must use msvcrt when building in Unicode/MBCS mode
 #endif
 
 #ifdef __cplusplus
@@ -219,8 +219,11 @@ extern "C" {
 #define _TEXT(x) __T(x)
 
 #ifdef _UNICODE
-#ifndef _WCTYPE_T_DEFINED
+#if !defined(_WINT_T_DEFINED) && !defined(__WINT_TYPE__)
 typedef unsigned short wint_t;
+#endif
+
+#ifndef _WCTYPE_T_DEFINED
 typedef unsigned short wctype_t;
 #define _WCTYPE_T_DEFINED
 #endif
