@@ -27,8 +27,8 @@ DEFAULT_DEBUG_CHANNEL(debugstr);
  *  Returns true if a debug event occurred and false if the call timed out.
  */
 BOOL WINAPI WaitForDebugEvent(
-	 LPDEBUG_EVENT event, /* Address of structure for event information. */
-	 DWORD timeout /* Number of milliseconds to wait for event. */)
+    LPDEBUG_EVENT event,   /* [out] Address of structure for event information. */
+    DWORD         timeout) /* [in] Number of milliseconds to wait for event. */
 {
     BOOL ret;
     DWORD res;
@@ -132,9 +132,9 @@ BOOL WINAPI WaitForDebugEvent(
  *  and thread are valid.
  */
 BOOL WINAPI ContinueDebugEvent(
-	DWORD pid, /* The id of the process to continue. */
-	DWORD tid, /* The id of the thread to continue. */
-	DWORD status /* The rule to apply to unhandled exeptions. */)
+    DWORD pid,    /* [in] The id of the process to continue. */
+    DWORD tid,    /* [in] The id of the thread to continue. */
+    DWORD status) /* [in] The rule to apply to unhandled exeptions. */
 {
     BOOL ret;
     SERVER_START_REQ
@@ -160,7 +160,7 @@ BOOL WINAPI ContinueDebugEvent(
  *  True if the debugger was attached to process.
  */
 BOOL WINAPI DebugActiveProcess(
-	DWORD pid /* The process to be debugged. */)
+    DWORD pid) /* [in] The process to be debugged. */
 {
     BOOL ret;
     SERVER_START_REQ
@@ -182,7 +182,7 @@ BOOL WINAPI DebugActiveProcess(
  *  and program log.
  */
 void WINAPI OutputDebugStringA(
-        LPCSTR str /* The message to be logged and given to the debugger. */)
+    LPCSTR str) /* [in] The message to be logged and given to the debugger. */
 {
     SERVER_START_REQ
     {
@@ -204,7 +204,7 @@ void WINAPI OutputDebugStringA(
  *  and program log.
  */
 void WINAPI OutputDebugStringW(
-	LPCWSTR str /* The message to be logged and given to the debugger. */)
+    LPCWSTR str) /* [in] The message to be logged and given to the debugger. */
 {
     SERVER_START_REQ
     {
@@ -226,7 +226,7 @@ void WINAPI OutputDebugStringW(
  *  and program log.
  */
 void WINAPI OutputDebugString16(
-        LPCSTR str /* The message to be logged and given to the debugger.*/)
+    LPCSTR str) /* [in] The message to be logged and given to the debugger. */
 {
     OutputDebugStringA( str );
 }
@@ -255,7 +255,7 @@ void WINAPI DebugBreak(void)
  *  Only 386 compatible processors implemented.
  */
 void WINAPI DebugBreak16(
-        CONTEXT86 *context /* A pointer to the 386 compatible processor state. */)
+    CONTEXT86 *context) /* [in/out] A pointer to the 386 compatible processor state. */
 {
 #ifdef __i386__
     EXCEPTION_RECORD rec;

@@ -25,7 +25,7 @@ DECLARE_DEBUG_CHANNEL(typelib);
 
 
 /******************************************************************************
- *         DispInvoke    (OLEAUT32.30)
+ *		DispInvoke (OLEAUT32.30)
  *
  *
  * Calls method of an object through its IDispatch interface.
@@ -37,16 +37,15 @@ DECLARE_DEBUG_CHANNEL(typelib);
  *
  * 		S_OK on success.
  */
-HRESULT WINAPI
-DispInvoke(VOID*            _this,          /* object instance */
-           ITypeInfo*       ptinfo,         /* object's type info */
-           DISPID           dispidMember,   /* member id */
-           USHORT           wFlags,         /* kind of method call */
-           DISPPARAMS*      pparams,        /* array of arguments */
-           VARIANT*         pvarResult,     /* result of method call */
-           EXCEPINFO*       pexcepinfo,     /* information about exception */
-           UINT*            puArgErr        /* index of bad argument(if any) */
-          )
+HRESULT WINAPI DispInvoke(
+	VOID       *_this,        /* [in] object instance */
+	ITypeInfo  *ptinfo,       /* [in] object's type info */
+	DISPID      dispidMember, /* [in] member id */
+	USHORT      wFlags,       /* [in] kind of method call */
+	DISPPARAMS *pparams,      /* [in] array of arguments */
+	VARIANT    *pvarResult,   /* [out] result of method call */
+	EXCEPINFO  *pexcepinfo,   /* [out] information about exception */
+	UINT       *puArgErr)     /* [out] index of bad argument(if any) */
 {
     HRESULT hr = E_FAIL;
 
@@ -68,7 +67,7 @@ DispInvoke(VOID*            _this,          /* object instance */
 
 
 /******************************************************************************
- *         DispGetIDsOfNames (OLEAUT32.29)
+ *		DispGetIDsOfNames (OLEAUT32.29)
  *
  * Convert a set of names to dispids, based on information 
  * contained in object's type library.
@@ -80,11 +79,11 @@ DispInvoke(VOID*            _this,          /* object instance */
  *
  * 		S_OK on success.
  */
-HRESULT WINAPI
-DispGetIDsOfNames(ITypeInfo* ptinfo,
-                  OLECHAR**  rgszNames,
-                  UINT       cNames,
-                  DISPID*    rgdispid)
+HRESULT WINAPI DispGetIDsOfNames(
+	ITypeInfo  *ptinfo,    /* [in] */
+	OLECHAR   **rgszNames, /* [in] */
+	UINT        cNames,    /* [in] */
+	DISPID     *rgdispid)  /* [out] */
 {
     HRESULT hr = E_FAIL;
 
@@ -97,7 +96,7 @@ DispGetIDsOfNames(ITypeInfo* ptinfo,
 }
 
 /******************************************************************************
- *         DispGetParam    (OLEAUT32.30)
+ *		DispGetParam (OLEAUT32.28)
  *
  * Retrive a parameter from a DISPPARAMS structures and coerce it to
  * specified variant type
@@ -109,10 +108,12 @@ DispGetIDsOfNames(ITypeInfo* ptinfo,
  *
  * 		S_OK on success.
  */
-HRESULT WINAPI
-DispGetParam(DISPPARAMS*    pdispparams,
-             UINT           position,
-             VARTYPE        vtTarg)
+HRESULT WINAPI DispGetParam(
+	DISPPARAMS *pdispparams, /* [in] */
+	UINT        position,    /* [in] */
+	VARTYPE     vtTarg,      /* [in] */
+	VARIANT    *pvarResult,  /* [out] */
+	UINT       *puArgErr)    /* [out] */
 {
     HRESULT hr = E_FAIL;
 

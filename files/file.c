@@ -339,13 +339,13 @@ HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa 
  *
  * PARAMS
  *
- * filename     [I] pointer to filename to be accessed
- * access       [I] access mode requested
- * sharing      [I] share mode
- * sa           [I] pointer to security attributes
- * creation     [I] how to create the file
- * attributes   [I] attributes for newly created file
- * template     [I] handle to file with extended attributes to copy
+ * filename     [in] pointer to filename to be accessed
+ * access       [in] access mode requested
+ * sharing      [in] share mode
+ * sa           [in] pointer to security attributes
+ * creation     [in] how to create the file
+ * attributes   [in] attributes for newly created file
+ * template     [in] handle to file with extended attributes to copy
  *
  * RETURNS
  *   Success: Open handle to specified file
@@ -1141,10 +1141,10 @@ HFILE WINAPI _lclose( HFILE hFile )
  *
  */
 BOOL WINAPI GetOverlappedResult(
-    HANDLE hFile,              /* [I] handle of file to check on */
-    LPOVERLAPPED lpOverlapped, /* [I/O] pointer to overlapped  */
-    LPDWORD lpTransferred,     /* [I/O] number of bytes transfered  */
-    BOOL bWait                 /* [I] wait for the transfer to complete ? */
+    HANDLE hFile,              /* [in] handle of file to check on */
+    LPOVERLAPPED lpOverlapped, /* [in/out] pointer to overlapped  */
+    LPDWORD lpTransferred,     /* [in/out] number of bytes transfered  */
+    BOOL bWait                 /* [in] wait for the transfer to complete ? */
 ) {
     DWORD r;
 

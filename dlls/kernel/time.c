@@ -41,7 +41,8 @@ static int TIME_GetBias( time_t utc, int *pdaylight)
  *  True if the time was set, false if the time was invalid or the
  *  necessary permissions were not held.
  */
-BOOL WINAPI SetLocalTime( const SYSTEMTIME *systime /* The desired local time. */ )
+BOOL WINAPI SetLocalTime(
+    const SYSTEMTIME *systime) /* [in] The desired local time. */
 {
     struct timeval tv;
     struct tm t;
@@ -98,9 +99,9 @@ BOOL WINAPI SetLocalTime( const SYSTEMTIME *systime /* The desired local time. *
  *  (also the signature is wrong it should have a return type of BOOL)
  */
 DWORD WINAPI GetSystemTimeAdjustment(
-	 LPDWORD lpTimeAdjustment, /* The clock adjustment per interupt in 100's of nanoseconds. */
-	 LPDWORD lpTimeIncrement, /* The time between clock interupts in 100's of nanoseconds. */
-	 LPBOOL lpTimeAdjustmentDisabled /* The clock synchonisation has been disabled. */ )
+    LPDWORD lpTimeAdjustment,         /* [out] The clock adjustment per interupt in 100's of nanoseconds. */
+    LPDWORD lpTimeIncrement,          /* [out] The time between clock interupts in 100's of nanoseconds. */
+    LPBOOL  lpTimeAdjustmentDisabled) /* [out] The clock synchonisation has been disabled. */
 {
     *lpTimeAdjustment = 0;
     *lpTimeIncrement = 0;
@@ -120,7 +121,7 @@ DWORD WINAPI GetSystemTimeAdjustment(
  *  necessary permissions were not held.
  */
 BOOL WINAPI SetSystemTime(
-    const SYSTEMTIME *systime /* The desired system time. */)
+    const SYSTEMTIME *systime) /* [in] The desired system time. */
 {
     struct timeval tv;
     struct timezone tz;
@@ -181,7 +182,7 @@ BOOL WINAPI SetSystemTime(
  *  The daylight savings time standard or TIME_ZONE_ID_INVALID if the call failed.
  */
 DWORD WINAPI GetTimeZoneInformation(
-	LPTIME_ZONE_INFORMATION tzinfo /* The time zone structure to be filled in. */)
+    LPTIME_ZONE_INFORMATION tzinfo) /* [out] The time zone structure to be filled in. */
 {
     time_t gmt;
     int bias, daylight;
@@ -213,7 +214,7 @@ DWORD WINAPI GetTimeZoneInformation(
  *  Use the obsolete unix timezone structure and tz_dsttime member.
  */
 BOOL WINAPI SetTimeZoneInformation(
-	const LPTIME_ZONE_INFORMATION tzinfo /* The new time zone. */)
+    const LPTIME_ZONE_INFORMATION tzinfo) /* [in] The new time zone. */
 {
     struct timezone tz;
 
@@ -241,9 +242,9 @@ BOOL WINAPI SetTimeZoneInformation(
  *  Does not handle daylight savings time adjustments correctly.
  */
 BOOL WINAPI SystemTimeToTzSpecificLocalTime(
-	LPTIME_ZONE_INFORMATION lpTimeZoneInformation, /* The desired time zone. */
-	LPSYSTEMTIME lpUniversalTime, /* The utc time to base local time on. */
-	LPSYSTEMTIME lpLocalTime /* The local time in the time zone. */)
+    LPTIME_ZONE_INFORMATION lpTimeZoneInformation, /* [in] The desired time zone. */
+    LPSYSTEMTIME            lpUniversalTime,       /* [in] The utc time to base local time on. */
+    LPSYSTEMTIME            lpLocalTime)           /* [out] The local time in the time zone. */
 {
   FIXME(":stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -257,7 +258,7 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
  *  Fills in a file time structure with the current time in UTC format.
  */
 VOID WINAPI GetSystemTimeAsFileTime(
-	LPFILETIME time /* The file time struct to be filled with the system time. */)
+    LPFILETIME time) /* [out] The file time struct to be filled with the system time. */
 {
     NtQuerySystemTime( (LARGE_INTEGER *)time );
 }
@@ -298,11 +299,11 @@ static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
  *  lpCreationTime, lpExitTime are NOT INITIALIZED.
  */
 BOOL WINAPI GetProcessTimes(
-	HANDLE hprocess, /* The process to be queried (obtained from PROCESS_QUERY_INFORMATION). */
-	LPFILETIME lpCreationTime, /* The creation time of the process. */
-	LPFILETIME lpExitTime, /* The exit time of the process if exited. */
-	LPFILETIME lpKernelTime, /* The time spent in kernal routines in 100's of nanoseconds. */
-	LPFILETIME lpUserTime /* The time spent in user routines in 100's of nanoseconds. */)
+    HANDLE     hprocess,       /* [in] The process to be queried (obtained from PROCESS_QUERY_INFORMATION). */
+    LPFILETIME lpCreationTime, /* [out] The creation time of the process. */
+    LPFILETIME lpExitTime,     /* [out] The exit time of the process if exited. */
+    LPFILETIME lpKernelTime,   /* [out] The time spent in kernal routines in 100's of nanoseconds. */
+    LPFILETIME lpUserTime)     /* [out] The time spent in user routines in 100's of nanoseconds. */
 {
     struct tms tms;
 
