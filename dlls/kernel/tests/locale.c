@@ -3,6 +3,7 @@
  * Test run on win2K (French)
  *
  * Copyright (c) 2002 YASAR Mehmet
+ * Copyright 2003 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -696,30 +697,282 @@ char buffer1[BUFFER_SIZE], buffer2[BUFFER_SIZE];
 
 	strcpy(buffer1, "Salut"); strcpy(buffer2, "Salute");
 	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok (ret== 1, "CompareStringA (st1=%s str2=%s) expected result=1", buffer1, buffer2);
+	ok(ret == 1, "CompareStringA (st1=%s str2=%s) expected result=1, got %d", buffer1, buffer2, ret);
 
 	strcpy(buffer1, "Salut"); strcpy(buffer2, "saLuT");
 	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok (ret== 2, "CompareStringA (st1=%s str2=%s) expected result=2", buffer1, buffer2);
+	ok(ret == 2, "CompareStringA (st1=%s str2=%s) expected result=2, got %d", buffer1, buffer2, ret);
 
 	strcpy(buffer1, "Salut"); strcpy(buffer2, "hola");
 	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok (ret== 3, "CompareStringA (st1=%s str2=%s) expected result=3", buffer1, buffer2);
+	ok(ret == 3, "CompareStringA (st1=%s str2=%s) expected result=3, got %d", buffer1, buffer2, ret);
 
-	strcpy(buffer1, "héhé"); strcpy(buffer2, "hèhè");
+	strcpy(buffer1, "haha"); strcpy(buffer2, "hoho");
 	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok (ret== 1, "CompareStringA (st1=%s str2=%s) expected result=1", buffer1, buffer2);
+	ok (ret == 1, "CompareStringA (st1=%s str2=%s) expected result=1, got %d", buffer1, buffer2, ret);
 
 	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
 
-	strcpy(buffer1, "héhé"); strcpy(buffer2, "hèhè");
+	strcpy(buffer1, "haha"); strcpy(buffer2, "hoho");
 	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
-	ok (ret== 1, "CompareStringA (st1=%s str2=%s) expected result=1", buffer1, buffer2);
+	ok (ret == 1, "CompareStringA (st1=%s str2=%s) expected result=1, got %d", buffer1, buffer2, ret);
 
 	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, 0);
-	ok (ret== 3, "CompareStringA (st1=%s str2=%s) expected result=3", buffer1, buffer2);
+	ok (ret == 3, "CompareStringA (st1=%s str2=%s) expected result=3, got %d", buffer1, buffer2, ret);
 }
 
+void test_LCMapStringA(void)
+{
+    int ret, ret2;
+    char buf[256], buf2[256];
+    static const char upper_case[] = "\tJUST! A, TEST; STRING 1/*+-.\r\n";
+    static const char lower_case[] = "\tjust! a, test; string 1/*+-.\r\n";
+    static const char symbols_stripped[] = "justateststring1";
+
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE | LCMAP_UPPERCASE,
+                       upper_case, -1, buf, sizeof(buf));
+    ok(!ret, "LCMAP_LOWERCASE and LCMAP_UPPERCASE are mutually exclusive\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
+       "unexpected error code %ld\n", GetLastError());
+
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_HIRAGANA | LCMAP_KATAKANA,
+                       upper_case, -1, buf, sizeof(buf));
+    ok(!ret, "LCMAP_HIRAGANA and LCMAP_KATAKANA are mutually exclusive\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
+       "unexpected error code %ld\n", GetLastError());
+
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
+
+                       upper_case, -1, buf, sizeof(buf));
+    ok(!ret, "LCMAP_HALFWIDTH | LCMAP_FULLWIDTH are mutually exclusive\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
+       "unexpected error code %ld\n", GetLastError());
+
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE,
+                       upper_case, -1, buf, sizeof(buf));
+    ok(!ret, "LCMAP_TRADITIONAL_CHINESE and LCMAP_SIMPLIFIED_CHINESE are mutually exclusive\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
+       "unexpected error code %ld\n", GetLastError());
+
+    /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE | SORT_STRINGSORT,
+                       upper_case, -1, buf, sizeof(buf));
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError());
+    ok(!ret, "SORT_STRINGSORT without LCMAP_SORTKEY must fail\n");
+
+    /* test LCMAP_LOWERCASE */
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE,
+                       upper_case, -1, buf, sizeof(buf));
+    ok(ret == lstrlenA(upper_case) + 1,
+       "ret %d, error %ld, expected value %d\n",
+       ret, GetLastError(), lstrlenA(upper_case) + 1);
+    ok(!lstrcmpA(buf, lower_case), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
+
+    /* test LCMAP_UPPERCASE */
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
+                       lower_case, -1, buf, sizeof(buf));
+    ok(ret == lstrlenA(lower_case) + 1,
+       "ret %d, error %ld, expected value %d\n",
+       ret, GetLastError(), lstrlenA(lower_case) + 1);
+    ok(!lstrcmpA(buf, upper_case), "LCMapStringA should return %s, but not %s\n", upper_case, buf);
+
+    /* LCMAP_UPPERCASE or LCMAP_LOWERCASE should accept src == dst */
+    lstrcpyA(buf, lower_case);
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
+                       buf, -1, buf, sizeof(buf));
+    if (!ret) /* Win9x */
+        trace("Ignoring LCMapStringA(LCMAP_UPPERCASE, buf, buf) error on Win9x\n");
+    else
+    {
+        ok(ret == lstrlenA(lower_case) + 1,
+           "ret %d, error %ld, expected value %d\n",
+           ret, GetLastError(), lstrlenA(lower_case) + 1);
+        ok(!lstrcmpA(buf, upper_case), "LCMapStringA should return %s, but not %s\n", upper_case, buf);
+    }
+    lstrcpyA(buf, upper_case);
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE,
+                       buf, -1, buf, sizeof(buf));
+    if (!ret) /* Win9x */
+        trace("Ignoring LCMapStringA(LCMAP_LOWERCASE, buf, buf) error on Win9x\n");
+    else
+    {
+        ok(ret == lstrlenA(upper_case) + 1,
+           "ret %d, error %ld, expected value %d\n",
+           ret, GetLastError(), lstrlenA(lower_case) + 1);
+        ok(!lstrcmpA(buf, lower_case), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
+    }
+
+    /* otherwise src == dst should fail */
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | LCMAP_UPPERCASE,
+                       buf, 10, buf, sizeof(buf));
+    ok(GetLastError() == ERROR_INVALID_FLAGS /* NT */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* Win9x */,
+       "unexpected error code %ld\n", GetLastError());
+    ok(!ret, "src == dst without LCMAP_UPPERCASE or LCMAP_LOWERCASE must fail\n");
+
+    /* test whether '\0' is always appended */
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       upper_case, -1, buf, sizeof(buf));
+    ok(ret, "LCMapStringA must succeed\n");
+    ret2 = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       upper_case, lstrlenA(upper_case), buf2, sizeof(buf2));
+    ok(ret, "LCMapStringA must succeed\n");
+    ok(ret == ret2, "lengths of sort keys must be equal\n");
+    ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
+
+    /* test LCMAP_SORTKEY | NORM_IGNORECASE */
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | NORM_IGNORECASE,
+                       upper_case, -1, buf, sizeof(buf));
+    ok(ret, "LCMapStringA must succeed\n");
+    ret2 = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       lower_case, -1, buf2, sizeof(buf2));
+    ok(ret2, "LCMapStringA must succeed\n");
+    ok(ret == ret2, "lengths of sort keys must be equal\n");
+    ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
+
+    /* test NORM_IGNORENONSPACE */
+    lstrcpyA(buf, "foo");
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, NORM_IGNORENONSPACE,
+                       lower_case, -1, buf, sizeof(buf));
+    ok(ret == lstrlenA(lower_case) + 1, "LCMapStringA should return %d, ret = %d\n",
+	lstrlenA(lower_case) + 1, ret);
+    ok(!lstrcmpA(buf, lower_case), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
+
+    /* test NORM_IGNORESYMBOLS */
+    lstrcpyA(buf, "foo");
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, NORM_IGNORESYMBOLS,
+                       lower_case, -1, buf, sizeof(buf));
+    ok(ret == lstrlenA(symbols_stripped) + 1, "LCMapStringA should return %d, ret = %d\n",
+	lstrlenA(symbols_stripped) + 1, ret);
+    ok(!lstrcmpA(buf, symbols_stripped), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
+}
+
+void test_LCMapStringW(void)
+{
+    int ret, ret2;
+    WCHAR buf[256], buf2[256];
+    char *p_buf = (char *)buf, *p_buf2 = (char *)buf2;
+    static const WCHAR upper_case[] = {'\t','J','U','S','T','!',' ','A',',',' ','T','E','S','T',';',' ','S','T','R','I','N','G',' ','1','/','*','+','-','.','\r','\n',0};
+    static const WCHAR lower_case[] = {'\t','j','u','s','t','!',' ','a',',',' ','t','e','s','t',';',' ','s','t','r','i','n','g',' ','1','/','*','+','-','.','\r','\n',0};
+    static const WCHAR symbols_stripped[] = {'j','u','s','t','a','t','e','s','t','s','t','r','i','n','g','1',0};
+    static const WCHAR fooW[] = {'f','o','o',0};
+
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE | LCMAP_UPPERCASE,
+                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        trace("Skipping LCMapStringW tests on Win9x\n");
+        return;
+    }
+    ok(!ret, "LCMAP_LOWERCASE and LCMAP_UPPERCASE are mutually exclusive\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
+       "unexpected error code %ld\n", GetLastError());
+
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_HIRAGANA | LCMAP_KATAKANA,
+                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(!ret, "LCMAP_HIRAGANA and LCMAP_KATAKANA are mutually exclusive\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
+       "unexpected error code %ld\n", GetLastError());
+
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
+                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(!ret, "LCMAP_HALFWIDTH | LCMAP_FULLWIDTH are mutually exclusive\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
+       "unexpected error code %ld\n", GetLastError());
+
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE,
+                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(!ret, "LCMAP_TRADITIONAL_CHINESE and LCMAP_SIMPLIFIED_CHINESE are mutually exclusive\n");
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
+       "unexpected error code %ld\n", GetLastError());
+
+    /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE | SORT_STRINGSORT,
+                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError());
+    ok(!ret, "SORT_STRINGSORT without LCMAP_SORTKEY must fail\n");
+
+    /* test LCMAP_LOWERCASE */
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE,
+                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == lstrlenW(upper_case) + 1,
+       "ret %d, error %ld, expected value %d\n",
+       ret, GetLastError(), lstrlenW(upper_case) + 1);
+    ok(!lstrcmpW(buf, lower_case), "string compare mismatch\n");
+
+    /* test LCMAP_UPPERCASE */
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
+                       lower_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == lstrlenW(lower_case) + 1,
+       "ret %d, error %ld, expected value %d\n",
+       ret, GetLastError(), lstrlenW(lower_case) + 1);
+    ok(!lstrcmpW(buf, upper_case), "string compare mismatch\n");
+
+    /* LCMAP_UPPERCASE or LCMAP_LOWERCASE should accept src == dst */
+    lstrcpyW(buf, lower_case);
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
+                       buf, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == lstrlenW(lower_case) + 1,
+       "ret %d, error %ld, expected value %d\n",
+       ret, GetLastError(), lstrlenW(lower_case) + 1);
+    ok(!lstrcmpW(buf, upper_case), "string compare mismatch\n");
+
+    lstrcpyW(buf, upper_case);
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE,
+                       buf, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == lstrlenW(upper_case) + 1,
+       "ret %d, error %ld, expected value %d\n",
+       ret, GetLastError(), lstrlenW(lower_case) + 1);
+    ok(!lstrcmpW(buf, lower_case), "string compare mismatch\n");
+ 
+    /* otherwise src == dst should fail */
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | LCMAP_UPPERCASE,
+                       buf, 10, buf, sizeof(buf));
+    ok(GetLastError() == ERROR_INVALID_FLAGS /* NT */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* Win9x */,
+       "unexpected error code %ld\n", GetLastError());
+    ok(!ret, "src == dst without LCMAP_UPPERCASE or LCMAP_LOWERCASE must fail\n");
+
+    /* test whether '\0' is always appended */
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       upper_case, -1, buf, sizeof(buf));
+    ok(ret, "LCMapStringW must succeed\n");
+    ret2 = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       upper_case, lstrlenW(upper_case), buf2, sizeof(buf2));
+    ok(ret, "LCMapStringW must succeed\n");
+    ok(ret == ret2, "lengths of sort keys must be equal\n");
+    ok(!lstrcmpA(p_buf, p_buf2), "sort keys must be equal\n");
+
+    /* test LCMAP_SORTKEY | NORM_IGNORECASE */
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | NORM_IGNORECASE,
+                       upper_case, -1, buf, sizeof(buf));
+    ok(ret, "LCMapStringW must succeed\n");
+    ret2 = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       lower_case, -1, buf2, sizeof(buf2));
+    ok(ret2, "LCMapStringW must succeed\n");
+    ok(ret == ret2, "lengths of sort keys must be equal\n");
+    ok(!lstrcmpA(p_buf, p_buf2), "sort keys must be equal\n");
+
+    /* test NORM_IGNORENONSPACE */
+    lstrcpyW(buf, fooW);
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, NORM_IGNORENONSPACE,
+                       lower_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == lstrlenW(lower_case) + 1, "LCMapStringW should return %d, ret = %d\n",
+	lstrlenW(lower_case) + 1, ret);
+    ok(!lstrcmpW(buf, lower_case), "string comparison mismatch\n");
+
+    /* test NORM_IGNORESYMBOLS */
+    lstrcpyW(buf, fooW);
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, NORM_IGNORESYMBOLS,
+                       lower_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == lstrlenW(symbols_stripped) + 1, "LCMapStringW should return %d, ret = %d\n",
+	lstrlenW(symbols_stripped) + 1, ret);
+    ok(!lstrcmpW(buf, symbols_stripped), "string comparison mismatch\n");
+}
 
 START_TEST(locale)
 {
@@ -733,4 +986,7 @@ START_TEST(locale)
 	TestGetNumberFormat();
 	TestGetCurrencyFormat();
 	TestCompareStringA();
+
+    test_LCMapStringW();
+    test_LCMapStringA();
 }

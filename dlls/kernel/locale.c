@@ -535,7 +535,7 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
  *		GetLocaleInfoA (KERNEL32.@)
  *
  * NOTES
- *  LANG_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
+ *  LOCALE_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
  *
  *  MS online documentation states that the string returned is NULL terminated
  *  except for LOCALE_FONTSIGNATURE  which "will return a non-NULL
@@ -593,7 +593,7 @@ INT WINAPI GetLocaleInfoA( LCID lcid, LCTYPE lctype, LPSTR buffer, INT len )
  *		GetLocaleInfoW (KERNEL32.@)
  *
  * NOTES
- *  LANG_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
+ *  LOCALE_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
  *
  *  MS online documentation states that the string returned is NULL terminated
  *  except for LOCALE_FONTSIGNATURE  which "will return a non-NULL
@@ -617,8 +617,8 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     }
     if (!len) buffer = NULL;
 
-    if (lcid == LOCALE_NEUTRAL || lcid == LANG_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
-    else if (lcid == LANG_USER_DEFAULT) lcid = GetUserDefaultLCID();
+    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
+    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
 
     lcflags = lctype & LOCALE_LOCALEINFOFLAGSMASK;
     lctype &= ~LOCALE_LOCALEINFOFLAGSMASK;
@@ -705,8 +705,8 @@ BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
     DWORD len;
     BOOL ret;
 
-    if (lcid == LOCALE_NEUTRAL || lcid == LANG_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
-    else if (lcid == LANG_USER_DEFAULT) lcid = GetUserDefaultLCID();
+    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
+    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
 
     if (!(lctype & LOCALE_USE_CP_ACP)) codepage = get_lcid_codepage( lcid );
     len = MultiByteToWideChar( codepage, 0, data, -1, NULL, 0 );
@@ -733,8 +733,8 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     NTSTATUS status;
     HKEY hkey;
 
-    if (lcid == LOCALE_NEUTRAL || lcid == LANG_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
-    else if (lcid == LANG_USER_DEFAULT) lcid = GetUserDefaultLCID();
+    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
+    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
 
     if (!(value = get_locale_value_name( lctype )))
     {
@@ -780,8 +780,8 @@ LCID WINAPI GetThreadLocale(void)
  */
 BOOL WINAPI SetThreadLocale( LCID lcid ) /* [in] Locale identifier */
 {
-    if (lcid == LOCALE_NEUTRAL || lcid == LANG_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
-    else if (lcid == LANG_USER_DEFAULT) lcid = GetUserDefaultLCID();
+    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
+    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
 
     NtCurrentTeb()->CurrentLocale = lcid;
     NtCurrentTeb()->code_page = get_lcid_codepage( lcid );
@@ -993,6 +993,319 @@ BOOL WINAPI GetStringTypeExA( LCID locale, DWORD type, LPCSTR src, INT count, LP
     return GetStringTypeA(locale, type, src, count, chartype);
 }
 
+
+/*************************************************************************
+ *           LCMapStringW    (KERNEL32.@)
+ */
+INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
+                        LPWSTR dst, INT dstlen)
+{
+    LPWSTR dst_ptr;
+
+    if (!src || !srclen || dstlen < 0)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    /* mutually exclusive flags */
+    if ((flags & (LCMAP_LOWERCASE | LCMAP_UPPERCASE)) == (LCMAP_LOWERCASE | LCMAP_UPPERCASE) ||
+        (flags & (LCMAP_HIRAGANA | LCMAP_KATAKANA)) == (LCMAP_HIRAGANA | LCMAP_KATAKANA) ||
+        (flags & (LCMAP_HALFWIDTH | LCMAP_FULLWIDTH)) == (LCMAP_HALFWIDTH | LCMAP_FULLWIDTH) ||
+        (flags & (LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE)) == (LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE))
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return 0;
+    }
+
+    if (!dstlen) dst = NULL;
+
+    if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_SYSTEM_DEFAULT) lcid = GetSystemDefaultLCID();
+    else if (lcid == LOCALE_USER_DEFAULT) lcid = GetUserDefaultLCID();
+
+    if (flags & LCMAP_SORTKEY)
+    {
+        if (src == dst)
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+            return 0;
+        }
+
+        if (srclen < 0) srclen = strlenW(src);
+
+        TRACE("(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
+              lcid, flags, debugstr_wn(src, srclen), srclen, dst, dstlen);
+
+        return wine_get_sortkey(flags, src, srclen, (char *)dst, dstlen);
+    }
+
+    /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
+    if (flags & SORT_STRINGSORT)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return 0;
+    }
+
+    if (srclen < 0) srclen = strlenW(src) + 1;
+
+    TRACE("(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
+          lcid, flags, debugstr_wn(src, srclen), srclen, dst, dstlen);
+
+    if (!dst) /* return required string length */
+    {
+        INT len;
+
+        for (len = 0; srclen; src++, srclen--)
+        {
+            WCHAR wch = *src;
+            /* tests show that win2k just ignores NORM_IGNORENONSPACE,
+             * and skips white space and punctuation characters for
+             * NORM_IGNORESYMBOLS.
+             */
+            if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
+                continue;
+            len++;
+        }
+        return len;
+    }
+
+    if (flags & LCMAP_UPPERCASE)
+    {
+        for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
+        {
+            WCHAR wch = *src;
+            if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
+                continue;
+            *dst_ptr++ = toupperW(wch);
+            dstlen--;
+        }
+    }
+    else if (flags & LCMAP_LOWERCASE)
+    {
+        for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
+        {
+            WCHAR wch = *src;
+            if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
+                continue;
+            *dst_ptr++ = tolowerW(wch);
+            dstlen--;
+        }
+    }
+    else
+    {
+        if (src == dst)
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+            return 0;
+        }
+        for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
+        {
+            WCHAR wch = *src;
+            if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
+                continue;
+            *dst_ptr++ = wch;
+            dstlen--;
+        }
+    }
+
+    return dst_ptr - dst;
+}
+
+/*************************************************************************
+ *           LCMapStringA    (KERNEL32.@)
+ */
+INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
+                        LPSTR dst, INT dstlen)
+{
+    WCHAR bufW[128];
+    LPWSTR srcW, dstW;
+    INT ret = 0, srclenW, dstlenW;
+    UINT locale_cp;
+
+    if (!src || !srclen || dstlen < 0)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                   (WCHAR *)&locale_cp, (sizeof(locale_cp)/sizeof(WCHAR)));
+
+    srclenW = MultiByteToWideChar(locale_cp, 0, src, srclen, bufW, 128);
+    if (srclenW)
+        srcW = bufW;
+    else
+    {
+        srclenW = MultiByteToWideChar(locale_cp, 0, src, srclen, NULL, 0);
+        srcW = HeapAlloc(GetProcessHeap(), 0, srclenW * sizeof(WCHAR));
+        if (!srcW)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return 0;
+        }
+        MultiByteToWideChar(locale_cp, 0, src, srclen, srcW, srclenW);
+    }
+
+    if (flags & LCMAP_SORTKEY)
+    {
+        if (src == dst)
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+            goto map_string_exit;
+        }
+        ret = wine_get_sortkey(flags, srcW, srclenW, dst, dstlen);
+    }
+
+    if (flags & SORT_STRINGSORT)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        goto map_string_exit;
+    }
+
+    dstlenW = LCMapStringW(lcid, flags, srcW, srclenW, NULL, 0);
+    dstW = HeapAlloc(GetProcessHeap(), 0, dstlenW * sizeof(WCHAR));
+    if (!dstW)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        goto map_string_exit;
+    }
+
+    LCMapStringW(lcid, flags, srcW, srclenW, dstW, dstlenW);
+    ret = WideCharToMultiByte(locale_cp, 0, dstW, dstlenW, dst, dstlen, NULL, NULL);
+    HeapFree(GetProcessHeap(), 0, dstW);
+
+map_string_exit:
+    if (srcW != bufW) HeapFree(GetProcessHeap(), 0, srcW);
+    return ret;
+}
+
+/******************************************************************************
+ *           CompareStringW    (KERNEL32.@)
+ */
+INT WINAPI CompareStringW(LCID lcid, DWORD style,
+                          LPCWSTR str1, INT len1, LPCWSTR str2, INT len2)
+{
+    INT ret, len;
+
+    if (!str1 || !str2)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (len1 < 0) len1 = lstrlenW(str1);
+    if (len2 < 0) len2 = lstrlenW(str2);
+
+    len = (len1 < len2) ? len1 : len2;
+    ret = (style & NORM_IGNORECASE) ? strncmpiW(str1, str2, len) :
+                                      strncmpW(str1, str2, len);
+
+    if (ret) /* need to translate result */
+        return (ret < 0) ? CSTR_LESS_THAN : CSTR_GREATER_THAN;
+
+    if (len1 == len2) return CSTR_EQUAL;
+    /* the longer one is lexically greater */
+    return (len1 < len2) ? CSTR_LESS_THAN : CSTR_GREATER_THAN;
+}
+
+/******************************************************************************
+ *           CompareStringA    (KERNEL32.@)
+ */
+INT WINAPI CompareStringA(LCID lcid, DWORD style,
+                          LPCSTR str1, INT len1, LPCSTR str2, INT len2)
+{
+    WCHAR buf1W[128], buf2W[128];
+    LPWSTR str1W, str2W;
+    INT len1W, len2W, ret;
+    UINT locale_cp;
+
+    if (!str1 || !str2)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                   (WCHAR *)&locale_cp, (sizeof(locale_cp)/sizeof(WCHAR)));
+
+    len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, buf1W, 128);
+    if (len1W)
+        str1W = buf1W;
+    else
+    {
+        len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, NULL, 0);
+        str1W = HeapAlloc(GetProcessHeap(), 0, len1W * sizeof(WCHAR));
+        if (!str1W)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return 0;
+        }
+        MultiByteToWideChar(locale_cp, 0, str1, len1, str1W, len1W);
+    }
+    len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, buf2W, 128);
+    if (len2W)
+        str2W = buf2W;
+    else
+    {
+        len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, NULL, 0);
+        str2W = HeapAlloc(GetProcessHeap(), 0, len2W * sizeof(WCHAR));
+        if (!str2W)
+        {
+            if (str1W != buf1W) HeapFree(GetProcessHeap(), 0, str1W);
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return 0;
+        }
+        MultiByteToWideChar(locale_cp, 0, str2, len2, str2W, len2W);
+    }
+
+    ret = CompareStringW(lcid, style, str1W, len1W, str2W, len2W);
+
+    if (str1W != buf1W) HeapFree(GetProcessHeap(), 0, str1W);
+    if (str2W != buf2W) HeapFree(GetProcessHeap(), 0, str2W);
+    return ret;
+}
+
+/*************************************************************************
+ *           lstrcmp     (KERNEL32.@)
+ *           lstrcmpA    (KERNEL32.@)
+ */
+int WINAPI lstrcmpA(LPCSTR str1, LPCSTR str2)
+{
+    int ret = CompareStringA(GetThreadLocale(), 0, str1, -1, str2, -1);
+    if (ret) ret -= 2;
+    return ret;
+}
+
+/*************************************************************************
+ *           lstrcmpi     (KERNEL32.@)
+ *           lstrcmpiA    (KERNEL32.@)
+ */
+int WINAPI lstrcmpiA(LPCSTR str1, LPCSTR str2)
+{
+    int ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, str1, -1, str2, -1);
+    if (ret) ret -= 2;
+    return ret;
+}
+
+/*************************************************************************
+ *           lstrcmpW    (KERNEL32.@)
+ */
+int WINAPI lstrcmpW(LPCWSTR str1, LPCWSTR str2)
+{
+    int ret = CompareStringW(GetThreadLocale(), 0, str1, -1, str2, -1);
+    if (ret) ret -= 2;
+    return ret;
+}
+
+/*************************************************************************
+ *           lstrcmpiW    (KERNEL32.@)
+ */
+int WINAPI lstrcmpiW(LPCWSTR str1, LPCWSTR str2)
+{
+    int ret = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, str1, -1, str2, -1);
+    if (ret) ret -= 2;
+    return ret;
+}
 
 /******************************************************************************
  *		LOCALE_Init

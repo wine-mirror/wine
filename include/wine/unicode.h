@@ -21,6 +21,8 @@
 #ifndef __WINE_UNICODE_H
 #define __WINE_UNICODE_H
 
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winnls.h"
 
@@ -70,6 +72,8 @@ extern int wine_cp_wcstombs( const union cptable *table, int flags,
                              char *dst, int dstlen, const char *defchar, int *used );
 extern int wine_utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen );
 extern int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen );
+
+extern int wine_get_sortkey( int flags, const WCHAR *src, int srclen, char *dst, int dstlen );
 
 extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
 extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );

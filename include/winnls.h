@@ -196,6 +196,10 @@ extern "C" {
 #define LCMAP_HALFWIDTH	0x00400000	/* map double byte to single byte */
 #define LCMAP_FULLWIDTH	0x00800000	/* map single byte to double byte */
 
+#define LCMAP_LINGUISTIC_CASING   0x01000000 /* use linguistic rules for casing */
+#define LCMAP_SIMPLIFIED_CHINESE  0x02000000 /* map traditional chinese to simplified chinese */
+#define LCMAP_TRADITIONAL_CHINESE 0x04000000 /* map simplified chinese to traditional chinese */
+
 /* Date Flags for GetDateFormat. */
 
 #define DATE_SHORTDATE         0x00000001  /* use short date picture */

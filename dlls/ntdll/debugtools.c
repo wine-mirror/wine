@@ -100,6 +100,7 @@ static inline void release( void *ptr )
 /* put an ASCII string into the debug buffer */
 inline static char *put_string_a( const char *src, int n )
 {
+    static const char hex[16] = "0123456789abcdef";
     char *dst, *res;
 
     if (n == -1) n = strlen(src);
@@ -123,9 +124,9 @@ inline static char *put_string_a( const char *src, int n )
             else
             {
                 *dst++ = '\\';
-                *dst++ = '0' + ((c >> 6) & 7);
-                *dst++ = '0' + ((c >> 3) & 7);
-                *dst++ = '0' + ((c >> 0) & 7);
+                *dst++ = 'x';
+                *dst++ = hex[(c >> 4) & 0x0f];
+                *dst++ = hex[c & 0x0f];
             }
         }
     }

@@ -16344,8 +16344,6 @@ esac
 
           ac_config_commands="$ac_config_commands objects"
 
-          ac_config_commands="$ac_config_commands ole"
-
           ac_config_commands="$ac_config_commands programs/regapi/tests"
 
           ac_config_commands="$ac_config_commands programs/regedit/tests"
@@ -17118,7 +17116,6 @@ do
   "misc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS misc" ;;
   "msdos" ) CONFIG_COMMANDS="$CONFIG_COMMANDS msdos" ;;
   "objects" ) CONFIG_COMMANDS="$CONFIG_COMMANDS objects" ;;
-  "ole" ) CONFIG_COMMANDS="$CONFIG_COMMANDS ole" ;;
   "programs/regapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regapi/tests" ;;
   "programs/regedit/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regedit/tests" ;;
   "relay32" ) CONFIG_COMMANDS="$CONFIG_COMMANDS relay32" ;;
@@ -17857,8 +17854,6 @@ echo "$as_me: creating misc" >&6;} && mkdir "misc") ;;
 echo "$as_me: creating msdos" >&6;} && mkdir "msdos") ;;
     objects ) test -d "objects" || ({ echo "$as_me:$LINENO: creating objects" >&5
 echo "$as_me: creating objects" >&6;} && mkdir "objects") ;;
-    ole ) test -d "ole" || ({ echo "$as_me:$LINENO: creating ole" >&5
-echo "$as_me: creating ole" >&6;} && mkdir "ole") ;;
     programs/regapi/tests ) test -d "programs/regapi/tests" || ({ echo "$as_me:$LINENO: creating programs/regapi/tests" >&5
 echo "$as_me: creating programs/regapi/tests" >&6;} && mkdir "programs/regapi/tests") ;;
     programs/regedit/tests ) test -d "programs/regedit/tests" || ({ echo "$as_me:$LINENO: creating programs/regedit/tests" >&5

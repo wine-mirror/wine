@@ -20,7 +20,6 @@ SPEC_SRCS16 = \
 	windebug.spec
 
 C_SRCS = \
-	$(TOPOBJDIR)/ole/ole2nls.c \
 	atom.c \
 	change.c \
 	comm.c \
@@ -65,7 +64,7 @@ MC_SRCS = \
 	messages/winerr_enu.mc
 
 SUBDIRS      = tests
-EXTRASUBDIRS = messages nls $(TOPOBJDIR)/ole
+EXTRASUBDIRS = messages nls
 
 @MAKE_DLL_RULES@
 

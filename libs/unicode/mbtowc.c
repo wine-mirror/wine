@@ -20,11 +20,10 @@
 
 #include <string.h>
 
-#include "winnls.h"
 #include "wine/unicode.h"
 
 /* get the decomposition of a Unicode char */
-static int get_decomposition( WCHAR src, WCHAR *dst, unsigned int dstlen )
+int get_decomposition( WCHAR src, WCHAR *dst, unsigned int dstlen )
 {
     extern const WCHAR unicode_decompose_table[];
     const WCHAR *ptr = unicode_decompose_table;

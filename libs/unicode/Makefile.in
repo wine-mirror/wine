@@ -70,9 +70,11 @@ CODEPAGES = \
 
 C_SRCS = \
 	casemap.c \
+	collation.c \
 	compose.c \
 	cptable.c \
 	mbtowc.c \
+	sortkey.c \
 	string.c \
 	utf8.c \
 	wctomb.c \

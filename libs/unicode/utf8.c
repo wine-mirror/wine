@@ -20,7 +20,6 @@
 
 #include <string.h>
 
-#include "winnls.h"
 #include "wine/unicode.h"
 
 /* number of following bytes in sequence based on first byte value (for bytes above 0x7f) */

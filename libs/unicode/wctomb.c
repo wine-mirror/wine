@@ -20,7 +20,6 @@
 
 #include <string.h>
 
-#include "winnls.h"
 #include "wine/unicode.h"
 
 /* search for a character in the unicode_compose_table; helper for compose() */
