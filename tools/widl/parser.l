@@ -262,6 +262,8 @@ static struct keyword {
 	{"pointer_default",		tPOINTERDEFAULT},
 /* ... */
 	{"properties",			tPROPERTIES},
+	{"propget",			tPROPGET},
+	{"propput",			tPROPPUT},
 /* ... */
 	{"public",			tPUBLIC},
 /* ... */

@@ -90,6 +90,10 @@ static void write_pident(FILE *h, var_t *v)
 
 void write_name(FILE *h, var_t *v)
 {
+  if (is_attr( v->attrs, ATTR_PROPGET ))
+    fprintf(h, "get_" );
+  else if (is_attr( v->attrs, ATTR_PROPPUT ))
+    fprintf(h, "put_" );
   fprintf(h, "%s", v->name);
 }
 

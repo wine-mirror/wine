@@ -156,6 +156,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tOUT
 %token tPOINTERDEFAULT
 %token tPROPERTIES
+%token tPROPGET tPROPPUT
 %token tPUBLIC
 %token tREADONLY tREF
 %token tRETVAL
@@ -359,6 +360,8 @@ attribute:
 	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
 	| tOUT					{ $$ = make_attr(ATTR_OUT); }
 	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
+	| tPROPGET				{ $$ = make_attr(ATTR_PROPGET); }
+	| tPROPPUT				{ $$ = make_attr(ATTR_PROPPUT); }
 	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
 	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
 	| tRETVAL				{ $$ = make_attr(ATTR_RETVAL); }
@@ -502,7 +505,7 @@ funcdef:
 						  $4->attrs = $1;
 						  $$ = make_func($4, $6);
 						  if (is_attr($4->attrs, ATTR_IN)) {
-						    yyerror("Inapplicatable attribute");
+						    yyerror("Inapplicable attribute");
 						  }
 						  if (!is_attr($4->attrs, ATTR_OUT)) {
 						    attr_t *a = make_attr(ATTR_OUT);
