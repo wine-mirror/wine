@@ -261,7 +261,7 @@ DEFINE_COMMON_NOTIFICATIONS(LISTVIEW_INFO, hwndSelf);
 /*
  * forward declarations
  */
-static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL, BOOL);
+static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
 static INT LISTVIEW_SuperHitTestItem(LISTVIEW_INFO *, LPLVHITTESTINFO, BOOL, BOOL);
 static void LISTVIEW_AlignLeft(LISTVIEW_INFO *);
 static void LISTVIEW_AlignTop(LISTVIEW_INFO *);
@@ -677,7 +677,7 @@ static BOOL notify_customdrawitem (LISTVIEW_INFO *infoPtr, HDC hdc, UINT iItem, 
     item.iItem = iItem;
     item.iSubItem = 0;
     item.mask = LVIF_PARAM;
-    if (!LISTVIEW_GetItemT(infoPtr, &item, TRUE, TRUE)) return FALSE;
+    if (!LISTVIEW_GetItemT(infoPtr, &item, TRUE)) return FALSE;
 
     uItemState = 0;
 
@@ -737,9 +737,9 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 #define LISTVIEW_InvalidateList(infoPtr)\
     LISTVIEW_InvalidateRect(infoPtr, &infoPtr->rcList)
 
-static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL internal)
+static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
 {
-    return LISTVIEW_GetItemT(infoPtr, lpLVItem, internal, TRUE);
+    return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
 }
 
 static inline int LISTVIEW_GetType(LISTVIEW_INFO *infoPtr)
@@ -955,7 +955,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
         item.iSubItem = 0;
         item.pszText = buffer;
         item.cchTextMax = COUNTOF(buffer);
-        if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) return 0;
+        if (!LISTVIEW_GetItemW(infoPtr, &item)) return 0;
 
         /* check for a match */
         if (lstrncmpiW(item.pszText,infoPtr->szSearchParam,infoPtr->nSearchParamLength) == 0) {
@@ -1248,7 +1248,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	lvItem.mask = LVIF_INDENT;
 	lvItem.iItem = nItem;
 	lvItem.iSubItem = 0;
-	if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return FALSE;
+	if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
 
 	/* do indent */
 	nIndent = infoPtr->iconSize.cx * lvItem.iIndent;
@@ -2915,7 +2915,7 @@ static BOOL LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem,
     lvItem.cchTextMax = COUNTOF(szDispText);
     lvItem.pszText = szDispText;
     *lvItem.pszText = '\0';
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return FALSE;
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
@@ -2960,7 +2960,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     lvItem.pszText = szDispText;
     *lvItem.pszText = '\0';
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return FALSE;
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
     /* now check if we need to update the focus rectangle */
@@ -3055,7 +3055,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
   *lvItem.pszText = '\0';
-  if (!LISTVIEW_GetItemW(infoPtr, &lvItem, FALSE)) return FALSE;
+  if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
   TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
   /* now check if we need to update the focus rectangle */
@@ -3311,7 +3311,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    item.iSubItem = 0;
             item.mask = LVIF_PARAM | LVIF_STATE;
 	    item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
-	    if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) continue;
+	    if (!LISTVIEW_GetItemW(infoPtr, &item)) continue;
 	   
 	    ZeroMemory(&dis, sizeof(dis)); 
             dis.hwndItem = infoPtr->hwndSelf;
@@ -3341,7 +3341,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    item.stateMask = LVIS_SELECTED;
 	    item.iItem = nItem;
 	    item.iSubItem = 0;
-  	    if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) continue;
+  	    if (!LISTVIEW_GetItemW(infoPtr, &item)) continue;
 	     
 	    rcFullSelect.left = lpCols[0].rc.left + REPORT_MARGINX +
 	    			infoPtr->iconSize.cx * item.iIndent +
@@ -3839,7 +3839,6 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 
     LISTVIEW_UpdateScroll(infoPtr);
 
-    /* invalidate client area (optimization needed) */
     LISTVIEW_InvalidateList(infoPtr);
   }
 
@@ -3983,7 +3982,7 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
   if (lStyle & LVS_OWNERDATA)
   {
     infoPtr->hdpaItems->nItemCount --;
-    LISTVIEW_InvalidateList(infoPtr);
+    LISTVIEW_InvalidateList(infoPtr); /*FIXME: optimize */
     return TRUE;
   }
 
@@ -4036,8 +4035,7 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 
     LISTVIEW_UpdateScroll(infoPtr);
 
-    /* FIXME: optimizartion refresh client area */
-    LISTVIEW_InvalidateList(infoPtr);
+    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
   }
 
   return bResult;
@@ -4070,7 +4068,7 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
     dispInfo.item.iItem = infoPtr->nEditLabelItem;
     dispInfo.item.iSubItem = 0;
     dispInfo.item.stateMask = ~0;
-    if (!LISTVIEW_GetItemW(infoPtr, &dispInfo.item, TRUE)) return FALSE;
+    if (!LISTVIEW_GetItemW(infoPtr, &dispInfo.item)) return FALSE;
     dispInfo.item.pszText = pszText;
     dispInfo.item.cchTextMax = textlenT(pszText, isW);
 
@@ -4132,7 +4130,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
     dispInfo.item.stateMask = ~0;
     dispInfo.item.pszText = szDispText;
     dispInfo.item.cchTextMax = DISP_TEXT_SIZE;
-    if (!LISTVIEW_GetItemT(infoPtr, &dispInfo.item, FALSE, isW)) return 0;
+    if (!LISTVIEW_GetItemT(infoPtr, &dispInfo.item, isW)) return 0;
 
     infoPtr->hwndEdit = CreateEditLabelT(infoPtr, dispInfo.item.pszText, WS_VISIBLE,
 		    rect.left-2, rect.top-1, 0, rect.bottom - rect.top+2, isW);
@@ -4350,7 +4348,7 @@ static LRESULT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
 
         lvItem.iItem = nItem;
         lvItem.iSubItem = 0;
-        if (LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE))
+        if (LISTVIEW_GetItemW(infoPtr, &lvItem))
         {
           if (lvItem.mask & LVIF_TEXT)
           {
@@ -4668,27 +4666,32 @@ static inline BOOL is_item_selected(LISTVIEW_INFO *infoPtr, INT nItem)
  * PARAMETER(S):
  * [I] hwnd : window handle
  * [IO] lpLVItem : item info
- * [I] internal : if true then we will use tricks that avoid copies
- *               but are not compatible with the regular interface
  * [I] isW : if TRUE, then lpLVItem is a LPLVITEMW,
  *           if FALSE, the lpLVItem is a LPLVITEMA.
+ *
+ * NOTE:
+ *   This is the internal 'GetItem' interface -- it tries to
+ *   be smart, and avoids text copies, if possible, by modifing
+ *   lpLVItem->pszText to point to the text string. Please note
+ *   that this is not always possible (e.g. OWNERDATA), so on
+ *   entry you *must* supply valid values for pszText, and cchTextMax.
+ *   The only difference to the documented interface is that upon
+ *   return, you should use *only* the lpLVItem->pszText, rather than
+ *   the buffer pointer you provided on input. Most code already does
+ *   that, so it's not a problem.
+ *   For the two cases when the text must be copied (that is,
+ *   for LVM_GETITEM, and LVMGETITEMTEXT), use LISTVIEW_GetItemExtT.
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL internal, BOOL isW)
+static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 {
     NMLVDISPINFOW dispInfo;
     LISTVIEW_ITEM *lpItem;
     ITEMHDR* pItemHdr;
     HDPA hdpaSubItems;
-
-    if (internal && !isW)
-    {
-        ERR("We can't have internal non-Unicode GetItem!\n");
-        return FALSE;
-    }
 
     /* In the following:
      * lpLVItem describes the information requested by the user
@@ -4697,7 +4700,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
      *     information from the application
      */
 
-    TRACE("(lpLVItem=%s, internal=%d, isW=%d)\n", debuglvitem_t(lpLVItem, isW), internal, isW);
+    TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
     if (!lpLVItem || (lpLVItem->iItem < 0) ||
         (lpLVItem->iItem >= GETITEMCOUNT(infoPtr)))
@@ -4828,14 +4831,11 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	if ((dispInfo.item.mask & LVIF_DI_SETITEM) && pItemHdr->pszText)
 	    textsetptrT(&pItemHdr->pszText, dispInfo.item.pszText, isW);
 
-	/* If lpLVItem->pszText==dispInfo.item.pszText a copy is unnecessary, but */
-	/* some apps give a new pointer in ListView_Notify so we can't be sure.  */
-	if (lpLVItem->pszText != dispInfo.item.pszText)
-	    textcpynT(lpLVItem->pszText, isW, dispInfo.item.pszText, isW, lpLVItem->cchTextMax);
+	lpLVItem->pszText = dispInfo.item.pszText;
     }
     else if (lpLVItem->mask & LVIF_TEXT)
     {
-	if (internal) lpLVItem->pszText = pItemHdr->pszText;
+	if (isW) lpLVItem->pszText = pItemHdr->pszText;
 	else textcpynT(lpLVItem->pszText, isW, pItemHdr->pszText, TRUE, lpLVItem->cchTextMax);
     }
 
@@ -4881,6 +4881,42 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	lpLVItem->iIndent = lpItem->iIndent;
 
     return TRUE;
+}
+
+/***
+ * DESCRIPTION:
+ * Retrieves item attributes.
+ *
+ * PARAMETER(S):
+ * [I] hwnd : window handle
+ * [IO] lpLVItem : item info
+ * [I] isW : if TRUE, then lpLVItem is a LPLVITEMW,
+ *           if FALSE, the lpLVItem is a LPLVITEMA.
+ *
+ * NOTE:
+ *   This is the external 'GetItem' interface -- it properly copies
+ *   the text in the provided buffer.
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static BOOL LISTVIEW_GetItemExtT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
+{
+    LPWSTR pszText;
+    BOOL bResult;
+
+    if (!lpLVItem || (lpLVItem->iItem < 0) ||
+        (lpLVItem->iItem >= GETITEMCOUNT(infoPtr)))
+	return FALSE;
+
+    pszText = lpLVItem->pszText;
+    bResult = LISTVIEW_GetItemT(infoPtr, lpLVItem, isW);
+    if (bResult && lpLVItem->pszText != pszText)
+	textcpynT(pszText, isW, lpLVItem->pszText, isW, lpLVItem->cchTextMax);
+    lpLVItem->pszText = pszText;
+
+    return bResult;
 }
 
 
@@ -4957,6 +4993,7 @@ static BOOL LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem
     HDC hdc = GetDC (infoPtr->hwndSelf);
     HFONT hOldFont = SelectObject (hdc, infoPtr->hFont);
     UINT uFormat = LISTVIEW_DTFLAGS | DT_CALCRECT;
+    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     RECT rcText = *rect;
     RECT rcBack = *rect;
     BOOL focused, selected;
@@ -4986,11 +5023,9 @@ static BOOL LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem
     lvItem.mask = LVIF_TEXT;
     lvItem.iItem = nItem;
     lvItem.iSubItem = 0;
-    /* We will specify INTERNAL and so will receive back a const
-     * pointer to the text, rather than specifying a buffer to which
-     * to copy it. FIXME: what about OWNERDRAW???
-     */
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return FALSE;
+    lvItem.pszText = szDispText;
+    lvItem.cchTextMax = DISP_TEXT_SIZE;
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
 
     InflateRect(&rcText, -2, 0);
     DrawTextW (hdc, lvItem.pszText, -1, &rcText, uFormat);
@@ -5178,9 +5213,9 @@ static INT LISTVIEW_GetLabelWidth(LISTVIEW_INFO *infoPtr, INT nItem)
     lvItem.mask = LVIF_TEXT;
     lvItem.iItem = nItem;
     lvItem.iSubItem = 0;
-    lvItem.cchTextMax = DISP_TEXT_SIZE;
     lvItem.pszText = szDispText;
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return 0;
+    lvItem.cchTextMax = DISP_TEXT_SIZE;
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return 0;
   
     /* FIXME: is this right? What if the label is very long? */ 
     return LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
@@ -5237,7 +5272,7 @@ static LRESULT LISTVIEW_GetItemState(LISTVIEW_INFO *infoPtr, INT nItem, UINT uMa
     lvItem.iSubItem = 0;
     lvItem.mask = LVIF_STATE;
     lvItem.stateMask = uMask;
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return 0;
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return 0;
 
     return lvItem.state & uMask;
 }
@@ -5262,7 +5297,7 @@ static LRESULT LISTVIEW_GetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEM
 
     lpLVItem->mask = LVIF_TEXT;
     lpLVItem->iItem = nItem;
-    if (!LISTVIEW_GetItemT(infoPtr, lpLVItem, FALSE, isW)) return 0;
+    if (!LISTVIEW_GetItemExtT(infoPtr, lpLVItem, isW)) return 0;
 
     return textlenT(lpLVItem->pszText, isW);
 }
@@ -5986,8 +6021,7 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 
     LISTVIEW_UpdateScroll(infoPtr);
     
-    /* FIXME: refresh client area */
-    LISTVIEW_InvalidateList(infoPtr);
+    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
 
     TRACE("    <- %d\n", nItem);
     return nItem;
@@ -6266,7 +6300,7 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
     INT nLabelWidth;
     RECT rcHeader;
     LVITEMW lvItem;
-    WCHAR szDispText[DISP_TEXT_SIZE];
+    WCHAR szDispText[DISP_TEXT_SIZE] = { 0 };
 
     if (!infoPtr->hwndHeader) /* make sure we have a header */
       return (FALSE);
@@ -6286,7 +6320,7 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
     /* resize all columns if in LVS_LIST mode */
     if(uView == LVS_LIST) {
       infoPtr->nItemWidth = cx;
-      LISTVIEW_InvalidateList(infoPtr);
+      LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
       return TRUE;
     }
 
@@ -6309,14 +6343,13 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
       {
         lvItem.iSubItem = iCol;
         lvItem.mask = LVIF_TEXT;
-        lvItem.cchTextMax = DISP_TEXT_SIZE;
         lvItem.pszText = szDispText;
-        *lvItem.pszText = '\0';
+        lvItem.cchTextMax = DISP_TEXT_SIZE;
         cx = 0;
         for(item_index = 0; item_index < GETITEMCOUNT(infoPtr); item_index++)
         {
           lvItem.iItem = item_index;
-          if (!LISTVIEW_GetItemT(infoPtr, &lvItem, FALSE, TRUE)) continue;
+          if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) continue;
           nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
           cx = (nLabelWidth>cx)?nLabelWidth:cx;
         }
@@ -6373,14 +6406,13 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
 
         lvItem.iSubItem = iCol;
         lvItem.mask = LVIF_TEXT;
-        lvItem.cchTextMax = DISP_TEXT_SIZE;
         lvItem.pszText = szDispText;
-        *lvItem.pszText = '\0';
+        lvItem.cchTextMax = DISP_TEXT_SIZE;
         cx = size.cx;
         for(item_index = 0; item_index < GETITEMCOUNT(infoPtr); item_index++)
         {
           lvItem.iItem = item_index;
-          if (!LISTVIEW_GetItemT(infoPtr, &lvItem, FALSE, TRUE)) continue;
+          if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) continue;
           nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
           nLabelWidth += TRAILING_PADDING;
           /* While it is possible for subitems to have icons, even MS messes
@@ -6399,7 +6431,7 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
   hdi.cxy = cx;
   lret = Header_SetItemW(infoPtr->hwndHeader, (WPARAM)iCol, (LPARAM)&hdi);
 
-  LISTVIEW_InvalidateList(infoPtr);
+  LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
 
   return lret;
 }
@@ -6637,6 +6669,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
 
       /*
        * Internally remove all the selections.
+       * FIXME: why not RemoveAllSelections
        */
       do
       {
@@ -6664,7 +6697,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
       LISTVIEW_UpdateScroll(infoPtr);
 
       if (min(precount,infoPtr->hdpaItems->nItemCount)<topvisible)
-        LISTVIEW_InvalidateList(infoPtr);
+        LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
   }
   else
   {
@@ -7010,7 +7043,7 @@ static LRESULT LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompar
     LISTVIEW_AlignTop(infoPtr);
 
     /* refresh the display */
-    LISTVIEW_InvalidateList(infoPtr);
+    LISTVIEW_InvalidateList(infoPtr); /* FIXME: display should not change for [SMALL]ICON view */
 
     return TRUE;
 }
@@ -7849,7 +7882,7 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, INT nCtrlId, LPNMHDR lpnm
     if (lpnmh->code == HDN_ENDTRACKW)
     {
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(infoPtr);
-      LISTVIEW_InvalidateList(infoPtr);
+      LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
     }
     else if(lpnmh->code ==  HDN_ITEMCLICKW || lpnmh->code ==  HDN_ITEMCLICKA)
     {
@@ -7871,7 +7904,7 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, INT nCtrlId, LPNMHDR lpnm
        */
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(infoPtr);
       LISTVIEW_UpdateScroll(infoPtr);
-      LISTVIEW_InvalidateList(infoPtr);
+      LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
     }
 
   }
@@ -8128,9 +8161,13 @@ static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
  */
 static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedraw)
 {
+    HFONT oldFont = infoPtr->hFont;
+
     TRACE("(hfont=%x,redraw=%hu)\n", hFont, fRedraw);
 
     infoPtr->hFont = hFont ? hFont : infoPtr->hDefaultFont;
+    if (infoPtr->hFont == oldFont) return 0;
+    
     LISTVIEW_SaveTextMetrics(infoPtr);
 
     if (LISTVIEW_GetType(infoPtr) == LVS_REPORT)
@@ -8195,8 +8232,7 @@ static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
 
     LISTVIEW_UpdateScroll(infoPtr);
 
-    /* FIXME: be smarter here */
-    LISTVIEW_InvalidateList(infoPtr);
+    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
   }
 
   return 0;
@@ -8385,7 +8421,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
     LISTVIEW_UpdateScroll(infoPtr);
 
     /* invalidate client area + erase background */
-    LISTVIEW_InvalidateList(infoPtr);
+    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
 
     /* print the list of unsupported window styles */
     LISTVIEW_UnsupportedStyles(lpss->styleNew);
@@ -8519,10 +8555,10 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 
   case LVM_GETITEMA:
-    return LISTVIEW_GetItemT(infoPtr, (LPLVITEMW)lParam, FALSE, FALSE);
+    return LISTVIEW_GetItemExtT(infoPtr, (LPLVITEMW)lParam, FALSE);
 
   case LVM_GETITEMW:
-    return LISTVIEW_GetItemT(infoPtr, (LPLVITEMW)lParam, FALSE, TRUE);
+    return LISTVIEW_GetItemExtT(infoPtr, (LPLVITEMW)lParam, TRUE);
 
   case LVM_GETITEMCOUNT:
     return GETITEMCOUNT(infoPtr);
