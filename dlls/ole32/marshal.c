@@ -473,7 +473,12 @@ CoMarshalInterface( IStream *pStm, REFIID riid, IUnknown *pUnk,
   }
   hres = IMarshal_MarshalInterface(pMarshal,pStm,riid,pUnk,dwDestContext,pvDestContext,mshlflags);
   if (hres) {
-    FIXME("Failed to Marshal the interface, %lx?\n",hres);
+    if (IsEqualGUID(riid,&IID_IClassFactory)) {
+	MESSAGE("\nERROR: You need to merge the 'winedefault.reg' file into your\n");
+	MESSAGE("       Wine registry by running: `regedit winedefault.reg'\n\n");
+    } else {
+	FIXME("Failed to Marshal the interface, %lx?\n",hres);
+    }
     goto release_marshal;
   }
 release_marshal:
