@@ -8,7 +8,8 @@ EXTRALIBS = $(LIBUNICODE) -luuid
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
-	mlang.c
+	mlang.c \
+	regsvr.c
 
 SUBDIRS = tests
 

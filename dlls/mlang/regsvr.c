@@ -1,5 +1,5 @@
 /*
- *	self-registerable dll functions for atl.dll
+ *	self-registerable dll functions for mlang.dll
  *
  * Copyright (C) 2003 John K. Hohm
  * Copyright (C) 2004 Steven Edwards for ReactOS
@@ -19,7 +19,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define COM_NO_WINDOWS_H
 #include <stdarg.h>
 #include <string.h>
 
@@ -35,9 +34,11 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(atl);
+WINE_DEFAULT_DEBUG_CHANNEL(mlang);
 
-DEFINE_GUID( CLSID_ATLRegistrar, 0x44ec053a,0x400f,0x11d0,0x9d,0xcd,0x00,0xa0,0xc9,0x03,0x91,0xd3 );
+DEFINE_GUID( CLSID_MLANGSupport, 0x275c23e2,0x3747,0x11d0,0x9f,0xea,0x00,0xaa,0x00,0x3f,0x86,0x46 );
+DEFINE_GUID( CLSID_MLANGString, 0x44ec053a,0xb70d,0x11d0,0xb1,0x88,0x00,0xaa,0x00,0x38,0xc9,0x69 );
+DEFINE_GUID( CLSID_MLANGCharSet, 0xd66d6f99,0xcdaa,0x11d0,0xb8,0x22,0x00,0xC0,0x4f,0xc9,0xb3,0x1f );
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
@@ -508,13 +509,27 @@ static LONG recursive_delete_keyW(HKEY base, WCHAR const *name)
  */
 static struct regsvr_coclass const coclass_list[] = {
     {
-	&CLSID_ATLRegistrar,
-	"Registrar Class",
-	NULL,
-	"atl.dll",
-	"Both"
+        &CLSID_MLANGSupport,
+        "Multi Language Support",
+        NULL,
+        "mlang.dll",
+        "Both"
     },
-    { NULL }			/* list terminator */
+    {
+        &CLSID_MLANGString,
+        "Multi Language String",
+        NULL,
+        "mlang.dll",
+        "Both"
+    },
+    {
+        &CLSID_MLANGCharSet,
+        "Multi Language ConvertCharset",
+        NULL,
+        "mlang.dll",
+        "Both"
+    },
+    { NULL }    /* list terminator */
 };
 
 /***********************************************************************
@@ -526,9 +541,9 @@ static struct regsvr_interface const interface_list[] = {
 };
 
 /***********************************************************************
- *		DllRegisterServer (ATL.@)
+ *		DllRegisterServer (MLANG.@)
  */
-HRESULT WINAPI ATL_DllRegisterServer(void)
+HRESULT WINAPI MLANG_DllRegisterServer(void)
 {
     HRESULT hr;
 
@@ -541,9 +556,9 @@ HRESULT WINAPI ATL_DllRegisterServer(void)
 }
 
 /***********************************************************************
- *		DllUnregisterServer (ATL.@)
+ *		DllUnregisterServer (MLANG.@)
  */
-HRESULT WINAPI ATL_DllUnregisterServer(void)
+HRESULT WINAPI MLANG_DllUnregisterServer(void)
 {
     HRESULT hr;
 

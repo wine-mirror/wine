@@ -1936,15 +1936,3 @@ HRESULT WINAPI MLANG_DllCanUnloadNow(void)
     FIXME("\n");
     return S_FALSE;
 }
-
-HRESULT WINAPI MLANG_DllRegisterServer(void)
-{
-    FIXME("\n");
-    return S_OK;
-}
-
-HRESULT WINAPI MLANG_DllUnregisterServer(void)
-{
-    FIXME("\n");
-    return S_OK;
-}
