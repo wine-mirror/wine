@@ -147,9 +147,7 @@ typedef struct tagLISTVIEW_INFO
 				* LISTVIEW_UpdateSize. This rectangle offset
 				* by the LISTVIEW_GetOrigin value is in
 				* client coordinates   */
-  RECT rcView;                 /* This rectangle contains all items - 
-				* contructed in LISTVIEW_AlignTop and
-				* LISTVIEW_AlignLeft   */
+  RECT rcView;                 /* This rectangle contains all items */ 
   SIZE iconSize;
   SIZE iconSpacing;
   SIZE iconStateSize;
@@ -276,8 +274,6 @@ typedef struct tagLISTVIEW_INFO
  */
 static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
 static void LISTVIEW_GetItemBox(LISTVIEW_INFO *, INT, LPRECT);
-static void LISTVIEW_AlignLeft(LISTVIEW_INFO *);
-static void LISTVIEW_AlignTop(LISTVIEW_INFO *);
 static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *, INT);
 static void LISTVIEW_GetItemOrigin(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *, INT, LPPOINT);
@@ -1325,13 +1321,12 @@ static void LISTVIEW_UpdateHeaderSize(LISTVIEW_INFO *infoPtr, INT nNewScrollPos)
  */
 static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
 {
-  LONG lStyle = infoPtr->dwStyle;
-  UINT uView =  lStyle & LVS_TYPEMASK;
+  UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
   INT nListHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
   INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
   SCROLLINFO scrollInfo;
 
-  if (lStyle & LVS_NOSCROLL) return;
+  if (infoPtr->dwStyle & LVS_NOSCROLL) return;
 
   scrollInfo.cbSize = sizeof(SCROLLINFO);
 
@@ -2806,14 +2801,13 @@ static void LISTVIEW_SetSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
 {
   /* FIXME: pass in the state */
-  LONG lStyle = infoPtr->dwStyle;
   WORD wShift = HIWORD(GetKeyState(VK_SHIFT));
   WORD wCtrl = HIWORD(GetKeyState(VK_CONTROL));
   BOOL bResult = FALSE;
 
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
-    if (lStyle & LVS_SINGLESEL)
+    if (infoPtr->dwStyle & LVS_SINGLESEL)
     {
       bResult = TRUE;
       LISTVIEW_SetSelection(infoPtr, nItem);
@@ -3203,7 +3197,7 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *infoPtr)
 {
     LONG lStyle = infoPtr->dwStyle;
-    UINT uView = lStyle & LVS_TYPEMASK;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     INT nItem = 0;
     SCROLLINFO scrollInfo;
 
@@ -3731,29 +3725,24 @@ static DWORD LISTVIEW_ApproximateViewRect(LISTVIEW_INFO *infoPtr, INT nItemCount
  */
 static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
 {
-  UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-  BOOL bResult = FALSE;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 
-  if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
-  {
+    if (uView != LVS_ICON && uView != LVS_SMALLICON) return FALSE;
+  
+    if (nAlignCode == LVA_DEFAULT)
+    {
+	if (infoPtr->dwStyle & LVS_ALIGNLEFT) nAlignCode = LVA_ALIGNLEFT;
+        else nAlignCode = LVA_ALIGNTOP;
+    }
+    
     switch (nAlignCode)
     {
-    case LVA_ALIGNLEFT:
-      FIXME("nAlignCode=LVA_ALIGNLEFT: not implemented\n");
-      break;
-    case LVA_ALIGNTOP:
-      FIXME("nAlignCode=LVA_ALIGNTOP: not implemented\n");
-      break;
-    case LVA_DEFAULT:
-      FIXME("nAlignCode=LVA_DEFAULT: not implemented\n");
-      break;
-    case LVA_SNAPTOGRID:
-      FIXME("nAlignCode=LVA_SNAPTOGRID: not implemented\n");
-      break;
+    case LVA_ALIGNLEFT: LISTVIEW_AlignLeft(infoPtr); return TRUE;
+    case LVA_ALIGNTOP: LISTVIEW_AlignTop(infoPtr); return TRUE;
+    case LVA_SNAPTOGRID: FIXME("LVA_SNAPTOGRID: not implemented\n"); break;
     }
-  }
 
-  return bResult;
+    return FALSE;
 }
 
 /* << LISTVIEW_CreateDragImage >> */
@@ -3772,8 +3761,6 @@ static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
  */
 static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 {
-  LONG lStyle = infoPtr->dwStyle;
-  UINT uView = lStyle & LVS_TYPEMASK;
   LISTVIEW_ITEM *lpItem;
   LISTVIEW_SUBITEM *lpSubItem;
   NMLISTVIEW nmlv;
@@ -3789,7 +3776,7 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
   SetRectEmpty(&infoPtr->rcFocus);
   /* But we are supposed to leave nHotItem as is! */
 
-  if (lStyle & LVS_OWNERDATA)
+  if (infoPtr->dwStyle & LVS_OWNERDATA)
   {
     infoPtr->nItemCount = 0;
     LISTVIEW_InvalidateList(infoPtr);
@@ -3845,19 +3832,6 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
     infoPtr->nItemCount = 0;
     DPA_DeleteAllPtrs(infoPtr->hdpaPosX);
     DPA_DeleteAllPtrs(infoPtr->hdpaPosY);
-
-    /* align items (set position of each item) */
-    if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
-    {
-      if (lStyle & LVS_ALIGNLEFT)
-      {
-        LISTVIEW_AlignLeft(infoPtr);
-      }
-      else
-      {
-        LISTVIEW_AlignTop(infoPtr);
-      }
-    }
 
     LISTVIEW_UpdateScroll(infoPtr);
 
@@ -4007,8 +3981,7 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
  */
 static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 {
-  LONG lStyle = infoPtr->dwStyle;
-  UINT uView = lStyle & LVS_TYPEMASK;
+  UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
   NMLISTVIEW nmlv;
   BOOL bResult = FALSE;
   HDPA hdpaSubItems;
@@ -4029,7 +4002,7 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
   nmlv.iItem = nItem;
   notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
 
-  if (lStyle & LVS_OWNERDATA)
+  if (infoPtr->dwStyle & LVS_OWNERDATA)
   {
     infoPtr->nItemCount--;
     LISTVIEW_InvalidateList(infoPtr); /*FIXME: optimize */
@@ -4072,13 +4045,8 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
     LISTVIEW_ShiftIndices(infoPtr, nItem, -1);
 
     /* align items (set position of each item) */
-    if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
-    {
-      if (lStyle & LVS_ALIGNLEFT)
-        LISTVIEW_AlignLeft(infoPtr);
-      else
-        LISTVIEW_AlignTop(infoPtr);
-    }
+    if ((infoPtr->dwStyle & LVS_AUTOARRANGE) && (uView == LVS_SMALLICON || uView == LVS_ICON))
+	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
 
     LISTVIEW_UpdateScroll(infoPtr);
 
@@ -5387,17 +5355,16 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
  */
 static void LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
 {
-    DWORD lStyle = infoPtr->dwStyle;
-    UINT uView = lStyle & LVS_TYPEMASK;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     INT nHorzPos = 0, nVertPos = 0;
     SCROLLINFO scrollInfo;
 
     scrollInfo.cbSize = sizeof(SCROLLINFO);    
     scrollInfo.fMask = SIF_POS;
     
-    if ((lStyle & WS_HSCROLL) && GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
+    if ((infoPtr->dwStyle & WS_HSCROLL) && GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
 	nHorzPos = scrollInfo.nPos;
-    if ((lStyle & WS_VSCROLL) && GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
+    if ((infoPtr->dwStyle & WS_VSCROLL) && GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
 	nVertPos = scrollInfo.nPos;
 
     TRACE("nHorzPos=%d, nVertPos=%d\n", nHorzPos, nVertPos);
@@ -5614,8 +5581,7 @@ static INT WINAPI LISTVIEW_InsertCompare(  LPVOID first, LPVOID second,  LPARAM 
  */
 static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 {
-    LONG lStyle = infoPtr->dwStyle;
-    UINT uView = lStyle & LVS_TYPEMASK;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     INT nItem;
     HDPA hdpaSubItems;
     NMLISTVIEW nmlv;
@@ -5625,12 +5591,12 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL
 
     TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
-    if (lStyle & LVS_OWNERDATA) return infoPtr->nItemCount++;
+    if (infoPtr->dwStyle & LVS_OWNERDATA) return infoPtr->nItemCount++;
 
     /* make sure it's an item, and not a subitem; cannot insert a subitem */
     if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iSubItem) return -1;
 
-    if (!is_assignable_item(lpLVItem, lStyle)) return -1;
+    if (!is_assignable_item(lpLVItem, infoPtr->dwStyle)) return -1;
 
     if ( !(lpItem = (LISTVIEW_ITEM *)COMCTL32_Alloc(sizeof(LISTVIEW_ITEM))) )
 	return -1;
@@ -5639,9 +5605,8 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL
     if ( !(hdpaSubItems = DPA_Create(8)) ) goto fail;
     if ( !DPA_SetPtr(hdpaSubItems, 0, lpItem) ) assert (FALSE);
 
-    /* FIXME: is the handling of this LVS_OWNERDRAWFIXED correct? */
-    is_sorted = (lStyle & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) &&
-	        !(lStyle & LVS_OWNERDRAWFIXED) && (LPSTR_TEXTCALLBACKW != lpLVItem->pszText);
+    is_sorted = (infoPtr->dwStyle & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) &&
+	        !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (LPSTR_TEXTCALLBACKW != lpLVItem->pszText);
 
     nItem = is_sorted ? infoPtr->nItemCount : min(lpLVItem->iItem, infoPtr->nItemCount);
     TRACE(" inserting at %d, sorted=%d, count=%d, iItem=%d\n", nItem, is_sorted, infoPtr->nItemCount, lpLVItem->iItem);
@@ -5689,7 +5654,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL
     /* align items (set position of each item) */
     if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
     {
-	if (lStyle & LVS_ALIGNLEFT) LISTVIEW_AlignLeft(infoPtr);
+	if (infoPtr->dwStyle & LVS_ALIGNLEFT) LISTVIEW_AlignLeft(infoPtr);
         else LISTVIEW_AlignTop(infoPtr);
     }
 
@@ -6698,7 +6663,7 @@ static INT WINAPI LISTVIEW_CallBackCompare(LPVOID first, LPVOID second, LPARAM l
  */
 static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, LPARAM lParamSort)
 {
-    UINT lStyle = infoPtr->dwStyle;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     HDPA hdpaSubItems;
     LISTVIEW_ITEM *lpItem;
     LPVOID selectionMarkItem;
@@ -6707,7 +6672,7 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
 
     TRACE("(pfnCompare=%p, lParamSort=%lx)\n", pfnCompare, lParamSort);
 
-    if (lStyle & LVS_OWNERDATA) return FALSE;
+    if (infoPtr->dwStyle & LVS_OWNERDATA) return FALSE;
 
     if (!infoPtr->hdpaItems) return FALSE;
 
@@ -6759,7 +6724,8 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
     LISTVIEW_AlignTop(infoPtr);
 
     /* refresh the display */
-    LISTVIEW_InvalidateList(infoPtr); /* FIXME: display should not change for [SMALL]ICON view */
+    if (uView != LVS_ICON && uView != LVS_SMALLICON)
+	LISTVIEW_InvalidateList(infoPtr);
 
     return TRUE;
 }
@@ -6778,16 +6744,15 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
  */
 static BOOL LISTVIEW_Update(LISTVIEW_INFO *infoPtr, INT nItem)
 {
-    LONG lStyle = infoPtr->dwStyle;
-    UINT uView = lStyle & LVS_TYPEMASK;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 
     TRACE("(nItem=%d)\n", nItem);
 
     if (nItem < 0 && nItem >= infoPtr->nItemCount) return FALSE;
 
     /* rearrange with default alignment style */
-    if ((lStyle & LVS_AUTOARRANGE) && ((uView == LVS_ICON) ||(uView == LVS_SMALLICON)))
-	LISTVIEW_Arrange(infoPtr, 0);
+    if ((infoPtr->dwStyle & LVS_AUTOARRANGE) && (uView == LVS_ICON || uView == LVS_SMALLICON))
+	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
     else
 	LISTVIEW_InvalidateItem(infoPtr, nItem);
 
@@ -7382,7 +7347,6 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS 
 static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
 {
   LVHITTESTINFO lvHitTestInfo;
-  LONG lStyle = infoPtr->dwStyle;
   static BOOL bGroupSelect = TRUE;
   POINT pt = { pts.x, pts.y };
   INT nItem;
@@ -7405,7 +7369,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   infoPtr->nEditLabelItem = -1;
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
-    if (lStyle & LVS_SINGLESEL)
+    if (infoPtr->dwStyle & LVS_SINGLESEL)
     {
       if (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED))
         infoPtr->nEditLabelItem = nItem;
@@ -7512,8 +7476,6 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pts)
  */
 static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
 {
-  LONG lStyle = infoPtr->dwStyle;
-
   TRACE("()\n");
 
   /* delete all items */
@@ -7524,7 +7486,7 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
   ranges_destroy(infoPtr->selectionRanges);
 
   /* destroy image lists */
-  if (!(lStyle & LVS_SHAREIMAGELISTS))
+  if (!(infoPtr->dwStyle & LVS_SHAREIMAGELISTS))
   {
       if (infoPtr->himlNormal)
 	  ImageList_Destroy(infoPtr->himlNormal);
@@ -7919,25 +7881,18 @@ static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
  */
 static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
 {
-  LONG lStyle = infoPtr->dwStyle;
-  UINT uView = lStyle & LVS_TYPEMASK;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 
-  TRACE("(width=%d, height=%d)\n", Width, Height);
+    TRACE("(width=%d, height=%d)\n", Width, Height);
 
-  if (LISTVIEW_UpdateSize(infoPtr))
-  {
-    if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
-    {
-        if (lStyle & LVS_ALIGNLEFT)
-            LISTVIEW_AlignLeft(infoPtr);
-        else
-            LISTVIEW_AlignTop(infoPtr);
-    }
+    if (!LISTVIEW_UpdateSize(infoPtr)) return 0;
+    
+    if ((infoPtr->dwStyle & LVS_AUTOARRANGE) && (uView == LVS_SMALLICON || uView == LVS_ICON))
+	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
 
     LISTVIEW_UpdateScroll(infoPtr);
 
-    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
-  }
+    LISTVIEW_InvalidateList(infoPtr);
 
   return 0;
 }
@@ -7955,8 +7910,7 @@ static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
  */
 static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 {
-  LONG lStyle = infoPtr->dwStyle;
-  UINT uView = lStyle & LVS_TYPEMASK;
+  UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
   RECT rcList;
   RECT rcOld;
 
@@ -7976,7 +7930,7 @@ static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
      * The "2" is there to mimic the native control. I think it may be
      * related to either padding or edges.  (GLA 7/2002)
      */
-    if (!(lStyle & WS_HSCROLL))
+    if (!(infoPtr->dwStyle & WS_HSCROLL))
     {
       INT nHScrollHeight = GetSystemMetrics(SM_CYHSCROLL);
       if (infoPtr->rcList.bottom > nHScrollHeight)
@@ -7999,7 +7953,7 @@ static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 
     SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
 
-    if (!(LVS_NOCOLUMNHEADER & lStyle))
+    if (!(LVS_NOCOLUMNHEADER & infoPtr->dwStyle))
       infoPtr->rcList.top = max(wp.cy, 0);
   }
   return (EqualRect(&rcOld,&(infoPtr->rcList)));
@@ -8086,12 +8040,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
      
     if ( (uNewView == LVS_ICON || uNewView == LVS_SMALLICON) &&
 	 (uNewView != uOldView || ((lpss->styleNew ^ lpss->styleOld) & LVS_ALIGNMASK)) )
-    {
-	 if (infoPtr->dwStyle & LVS_ALIGNLEFT)
-	     LISTVIEW_AlignLeft(infoPtr);
-	 else 
-	     LISTVIEW_AlignTop(infoPtr);
-    }
+	 LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
 
     /* update the size of the client area */
     LISTVIEW_UpdateSize(infoPtr);
