@@ -3752,6 +3752,7 @@ dlls/msacm/Makefile
 dlls/msacm32/Makefile
 dlls/ntdll/Makefile
 dlls/psapi/Makefile
+dlls/rasapi32/Makefile
 dlls/shell32/Makefile
 dlls/winaspi/Makefile
 dlls/wnaspi32/Makefile
@@ -3903,6 +3904,7 @@ dlls/msacm/Makefile
 dlls/msacm32/Makefile
 dlls/ntdll/Makefile
 dlls/psapi/Makefile
+dlls/rasapi32/Makefile
 dlls/shell32/Makefile
 dlls/winaspi/Makefile
 dlls/wnaspi32/Makefile

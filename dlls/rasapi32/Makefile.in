@@ -1,0 +1,15 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = rasapi32
+
+C_SRCS = rasapi.c 
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+

@@ -45,7 +45,7 @@ type	win32
 541 stub	RasDialW
 542 stub	RasEditPhonebookEntryA
 543 stub	RasEditPhonebookEntryW
-544 stub	RasEnumConnectionsA
+544 stdcall	RasEnumConnectionsA(ptr ptr ptr) RasEnumConnections32A
 545 stub	RasEnumConnectionsW
 546 stub	RasEnumEntriesA
 547 stub	RasEnumEntriesW
