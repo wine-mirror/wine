@@ -49,8 +49,12 @@ char s_file_autoreg_str[] =
 #endif
 	"\taddl\t$4,%%esp\n"
 	"\tret\n\n"
+#ifdef __NetBSD__
+	".stabs \"___CTOR_LIST__\",22,0,0,.LAuto_Register\n\n"
+#else
 	"\t.section .ctors,\"aw\"\n"
 	"\t.long\t.LAuto_Register\n\n"
+#endif
 	;
 
 char h_file_head_str[] =
