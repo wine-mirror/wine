@@ -512,7 +512,7 @@ BOOL WINAPI CryptDeriveKey (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseData
 	PCRYPTHASH hash = (PCRYPTHASH)hBaseData;
 	PCRYPTKEY key;
 
-	TRACE("(0x%lx, %d, 0x%ld, %08ld, %p)\n", hProv, Algid, hBaseData, dwFlags, phKey);
+	TRACE("(0x%lx, 0x%08x, 0x%lx, 0x%08lx, %p)\n", hProv, Algid, hBaseData, dwFlags, phKey);
 
 	if (!prov || !hash)
 		CRYPT_ReturnLastError(ERROR_INVALID_HANDLE);
