@@ -2651,7 +2651,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
 			/* End the loop if executedMenuId is an item ID */
 			/* or if the job was done (executedMenuId = 1). */
-                        fEndMenu = (executedMenuId != 0);
+                        fEndMenu = fRemove = (executedMenuId != 0);
 		    }
                     /* No menu was selected by the mouse */
                     /* if the function was called by TrackPopupMenu, continue
