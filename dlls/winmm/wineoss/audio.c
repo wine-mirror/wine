@@ -2708,24 +2708,21 @@ static HRESULT WINAPI IDsDriverImpl_GetCaps(PIDSDRIVER iface, PDSDRIVERCAPS pCap
     return DS_OK;
 }
 
-static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
-						      LPWAVEFORMATEX pwfx,
-						      DWORD dwFlags, 
-						      DWORD dwCardAddress,
-						      LPDWORD pdwcbBufferSize,
-						      LPBYTE *ppbBuffer,
-						      LPVOID *ppvObj)
+static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
+                                              LPWAVEFORMATEX pwfx,
+                                              DWORD dwFlags, 
+                                              DWORD dwCardAddress,
+                                              LPDWORD pdwcbBufferSize,
+                                              LPBYTE *ppbBuffer,
+                                              LPVOID *ppvObj)
 {
     ICOM_THIS(IDsDriverImpl,iface);
     IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
     HRESULT err;
     audio_buf_info info;
     int enable = 0;
-    TRACE("(%p,%p,%lx,%lx)\n",iface,pwfx,dwFlags,dwCardAddress);
+    TRACE("(%p,%p,%lx,%lx,%p,%p,%p)\n",iface,pwfx,dwFlags,dwCardAddress,pdwcbBufferSize,ppbBuffer,ppvObj);
 
-    /* we only support primary buffers */
-    if (!(dwFlags & DSBCAPS_PRIMARYBUFFER))
-	return DSERR_UNSUPPORTED;
     if (This->primary)
 	return DSERR_ALLOCATED;
     if (dwFlags & (DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPAN))
@@ -2772,6 +2769,38 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     This->primary = *ippdsdb;
 
     return DS_OK;
+}
+
+static HRESULT WINAPI DSD_CreateSecondaryBuffer(PIDSDRIVER iface,
+                                                LPWAVEFORMATEX pwfx,
+                                                DWORD dwFlags, 
+                                                DWORD dwCardAddress,
+                                                LPDWORD pdwcbBufferSize,
+                                                LPBYTE *ppbBuffer,
+                                                LPVOID *ppvObj)
+{
+    ICOM_THIS(IDsDriverImpl,iface);
+    IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
+    FIXME("(%p,%p,%lx,%lx,%p,%p,%p): stub\n",This,pwfx,dwFlags,dwCardAddress,pdwcbBufferSize,ppbBuffer,ppvObj);
+
+    *ippdsdb = 0;
+    return DSERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
+                                                      LPWAVEFORMATEX pwfx,
+                                                      DWORD dwFlags, 
+                                                      DWORD dwCardAddress,
+                                                      LPDWORD pdwcbBufferSize,
+                                                      LPBYTE *ppbBuffer,
+                                                      LPVOID *ppvObj)
+{
+    TRACE("(%p,%p,%lx,%lx,%p,%p,%p)\n",iface,pwfx,dwFlags,dwCardAddress,pdwcbBufferSize,ppbBuffer,ppvObj);
+
+    if (dwFlags & DSBCAPS_PRIMARYBUFFER)
+        return DSD_CreatePrimaryBuffer(iface,pwfx,dwFlags,dwCardAddress,pdwcbBufferSize,ppbBuffer,ppvObj);
+
+    return DSD_CreateSecondaryBuffer(iface,pwfx,dwFlags,dwCardAddress,pdwcbBufferSize,ppbBuffer,ppvObj);
 }
 
 static HRESULT WINAPI IDsDriverImpl_DuplicateSoundBuffer(PIDSDRIVER iface,
