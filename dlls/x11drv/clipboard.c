@@ -321,7 +321,7 @@ static void intern_atoms(void)
     wine_tsx11_unlock();
 
     for (format = ClipFormats, i = 0; format; format = format->NextFormat)
-        if (!format->drvData) format->drvData = atoms[i];
+        if (!format->drvData) format->drvData = atoms[i++];
 
     HeapFree( GetProcessHeap(), 0, names );
     HeapFree( GetProcessHeap(), 0, atoms );
