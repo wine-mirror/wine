@@ -70,6 +70,7 @@ BASEDIRS = \
 	ntdll \
 	odbc32 \
 	ole32 \
+	oleacc \
 	oleaut32 \
 	olecli \
 	oledlg \
@@ -256,6 +257,7 @@ SYMLINKS = \
 	ntdll.dll$(DLLEXT) \
 	odbc32.dll$(DLLEXT) \
 	ole32.dll$(DLLEXT) \
+	oleacc.dll$(DLLEXT) \
 	oleaut32.dll$(DLLEXT) \
 	olecli32.dll$(DLLEXT) \
 	oledlg.dll$(DLLEXT) \
@@ -512,6 +514,9 @@ ole32.dll$(DLLEXT) compobj.dll$(DLLEXT) ole2.dll$(DLLEXT) \
   ole2thk.dll$(DLLEXT) storage.dll$(DLLEXT): ole32/ole32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ole32/ole32.dll$(DLLEXT) $@
 
+oleacc.dll$(DLLEXT): oleacc/oleacc.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) oleacc/oleacc.dll$(DLLEXT) $@
+
 oleaut32.dll$(DLLEXT) ole2disp.dll$(DLLEXT) typelib.dll$(DLLEXT): oleaut32/oleaut32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) oleaut32/oleaut32.dll$(DLLEXT) $@
 
@@ -715,6 +720,7 @@ IMPORT_LIBS = \
 	libntdll \
 	libodbc32 \
 	libole32 \
+	liboleacc \
 	liboleaut32 \
 	libolecli32 \
 	liboledlg \
@@ -1027,6 +1033,11 @@ libole32.def: ole32/ole32.spec.def
 libole32.a: ole32/ole32.spec.def
 	$(DLLTOOL) -k -l $@ -d ole32/ole32.spec.def
 
+liboleacc.def: oleacc/oleacc.spec.def
+	$(RM) $@ && $(LN_S) oleacc/oleacc.spec.def $@
+liboleacc.a: oleacc/oleacc.spec.def
+	$(DLLTOOL) -k -l $@ -d oleacc/oleacc.spec.def
+
 liboleaut32.def: oleaut32/oleaut32.spec.def
 	$(RM) $@ && $(LN_S) oleaut32/oleaut32.spec.def $@
 liboleaut32.a: oleaut32/oleaut32.spec.def
@@ -1286,6 +1297,7 @@ netapi32/netapi32.spec.def: $(WINEBUILD)
 ntdll/ntdll.spec.def: $(WINEBUILD)
 odbc32/odbc32.spec.def: $(WINEBUILD)
 ole32/ole32.spec.def: $(WINEBUILD)
+oleacc/oleacc.spec.def: $(WINEBUILD)
 oleaut32/oleaut32.spec.def: $(WINEBUILD)
 olecli/olecli32.spec.def: $(WINEBUILD)
 oledlg/oledlg.spec.def: $(WINEBUILD)
@@ -1399,6 +1411,7 @@ netapi32/netapi32.dll$(DLLEXT): netapi32
 ntdll/ntdll.dll$(DLLEXT): ntdll
 odbc32/odbc32.dll$(DLLEXT): odbc32
 ole32/ole32.dll$(DLLEXT): ole32
+oleacc/oleacc.dll$(DLLEXT): oleacc
 oleaut32/oleaut32.dll$(DLLEXT): oleaut32
 olecli/olecli32.dll$(DLLEXT): olecli
 oledlg/oledlg.dll$(DLLEXT): oledlg
