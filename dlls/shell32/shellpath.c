@@ -1573,7 +1573,6 @@ HRESULT WINAPI SHGetFolderPathW(
     WCHAR      szBuildPath[MAX_PATH], szTemp[MAX_PATH];
     DWORD      folder = nFolder & CSIDL_FOLDER_MASK;
     CSIDL_Type type;
-    WCHAR     *p;
 
     TRACE("%p,%p,nFolder=0x%04x\n", hwndOwner,pszPath,nFolder);
 
@@ -1657,39 +1656,16 @@ HRESULT WINAPI SHGetFolderPathW(
     }
 
     /* create directory/directories */
-    p = strchrW(szBuildPath, '\\');
-    while (p)
+    if (SHCreateDirectoryExW(hwndOwner, szBuildPath, NULL))
     {
-        *p = 0;
-        if (!PathFileExistsW(szBuildPath))
-        {
-            TRACE("Creating directory %s\n", debugstr_w(szBuildPath));
-            if (!CreateDirectoryW(szBuildPath,NULL))
-            {
-                ERR("Failed to create directory '%s'.\n",
-                 debugstr_w(szBuildPath));
-                hr = E_FAIL;
-                goto end;
-            }
-        }
-        *p = '\\';
-        p = strchrW(p+1, '\\');
-    }
-    /* last component must be created too. */
-    if (!PathFileExistsW(szBuildPath))
-    {
-        if (!CreateDirectoryW(szBuildPath,NULL))
-        {
-            ERR("Failed to create directory '%s'.\n", debugstr_w(szBuildPath));
-            hr = E_FAIL;
-            goto end;
-        }
+        ERR("Failed to create directory '%s'.\n", debugstr_w(szBuildPath));
+        hr = E_FAIL;
+        goto end;
     }
 
     TRACE("Created missing system directory '%s'\n", debugstr_w(szBuildPath));
 end:
-    TRACE("returning 0x%08lx (final path is %s)\n", hr,
-     debugstr_w(szBuildPath));
+    TRACE("returning 0x%08lx (final path is %s)\n", hr, debugstr_w(szBuildPath));
     return hr;
 }
 
