@@ -15,7 +15,7 @@
 @ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
 @ stdcall AllocateLocallyUniqueId(ptr)
 @ stub AreAllAccessesGranted
-@ stub AreAnyAccessesGranted
+@ stdcall AreAnyAccessesGranted(long long)
 @ stdcall BackupEventLogA (long str)
 @ stdcall BackupEventLogW (long wstr)
 @ stdcall BuildTrusteeWithSidA(ptr ptr)

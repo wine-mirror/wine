@@ -1547,6 +1547,26 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
 }
 
 /******************************************************************************
+ * AreAnyAccessesGranted [ADVAPI32.@]
+ *
+ * Determines whether or not any of a set of specified access permissions have
+ * been granted or not.
+ *
+ * PARAMS
+ *   GrantedAccess [I] The permissions that have been granted.
+ *   DesiredAccess [I] The permissions that you want to have.
+ *
+ * RETURNS
+ *   Nonzero if any of the permissions have been granted, zero if none of the
+ *   permissions have been granted.
+ */
+
+BOOL WINAPI AreAnyAccessesGranted( DWORD GrantedAccess, DWORD DesiredAccess )
+{
+    return (GrantedAccess & DesiredAccess) != 0;
+}
+
+/******************************************************************************
  * SetNamedSecurityInfoW [ADVAPI32.@]
  */
 DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
