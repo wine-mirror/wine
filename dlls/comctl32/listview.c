@@ -3015,8 +3015,9 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   if (bImage)
     dwTextX += IMAGE_PADDING;
 
-  ExtTextOutA(hdc, dwTextX, rcItem.top, textoutOptions,
-              &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
+  if (lvItem.pszText)
+    ExtTextOutA(hdc, dwTextX, rcItem.top, textoutOptions,
+                &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
 
   if ((FullSelect)&&(Header_GetItemCount(infoPtr->hwndHeader) > 1))
   {
@@ -3959,11 +3960,13 @@ static LRESULT LISTVIEW_DeleteColumn(HWND hwnd, INT nColumn)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  UINT uOwnerData = GetWindowLongA(hwnd, GWL_STYLE) & LVS_OWNERDATA;
   BOOL bResult = FALSE;
 
   if (Header_DeleteItem(infoPtr->hwndHeader, nColumn) != FALSE)
   {
-    bResult = LISTVIEW_RemoveColumn(infoPtr->hdpaItems, nColumn);
+    if (!uOwnerData)
+      bResult = LISTVIEW_RemoveColumn(infoPtr->hdpaItems, nColumn);
 
     /* Need to reset the item width when deleting a column */
     infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
