@@ -3691,7 +3691,16 @@ static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
     (int)SNDMSGA((hwnd), TCM_SETMINTABWIDTH, 0, x)
 #define TabCtrl_DeselectAll(hwnd, fExcludeFocus)\
     (void)SNDMSGA((hwnd), TCM_DESELECTALL, fExcludeFocus, 0)
-
+#define TabCtrl_GetUnicodeFormat(hwnd) \
+    (BOOL)SNDMSGA((hwnd), TCM_GETUNICODEFORMAT, 0, 0)
+#define TabCtrl_SetUnicodeFormat(hwnd, fUnicode) \
+    (BOOL)SNDMSGA((hwnd), TCM_SETUNICODEFORMAT, (WPARAM)fUnicode, 0)
+#define TabCtrl_GetExtendedStyle(hwnd) \
+    (BOOL)SNDMSGA((hwnd), TCM_GETEXTENDEDSTYLE, 0, 0)
+#define TabCtrl_SetExtendedStyle(hwnd, dwExStyle) \
+    (BOOL)SNDMSGA((hwnd), TCM_GETEXTENDEDSTYLE, 0, (LPARAM)dwExStyle)
+#define TabCtrl_HighlightItem(hwnd, i, fHighlight) \
+    (BOOL)SNDMSG((hwnd), TCM_HIGHLIGHTITEM, (WPARAM)i, (LPARAM)MAKELONG(fHighlight, 0))
 
 /* constants for TCHITTESTINFO */
 
