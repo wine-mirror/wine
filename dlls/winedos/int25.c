@@ -43,6 +43,10 @@ BOOL DOSVM_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
     WCHAR root[] = {'\\','\\','.','\\','A',':',0};
     HANDLE h;
 
+    TRACE( "abs diskread, drive %d, sector %ld, "
+           "count %ld, buffer %p\n",
+           drive, begin, nr_sect, dataptr );
+
     root[4] += drive;
     h = CreateFileW(root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
                     FILE_FLAG_BACKUP_SEMANTICS, NULL);
@@ -55,7 +59,6 @@ BOOL DOSVM_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
     }
     else
     {
-        if (h != INVALID_HANDLE_VALUE) CloseHandle(h);
         memset( dataptr, 0, nr_sect * 512 );
         if (fake_success)
         {
@@ -106,10 +109,6 @@ void WINAPI DOSVM_Int25Handler( CONTEXT86 *context )
         begin  = DX_reg( context );
         length = CX_reg( context );
     }
-
-    TRACE( "abs diskread, drive %d, sector %ld, "
-           "count %ld, buffer %p\n",
-           AL_reg( context ), begin, length, dataptr );
 
     DOSVM_RawRead( AL_reg( context ), begin, length, dataptr, TRUE );
     RESET_CFLAG( context );

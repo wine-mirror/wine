@@ -42,6 +42,10 @@ BOOL DOSVM_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL 
     WCHAR root[] = {'\\','\\','.','\\','A',':',0};
     HANDLE h;
 
+    TRACE( "abs diskwrite, drive %d, sector %ld, "
+           "count %ld, buffer %p\n",
+           drive, begin, nr_sect, dataptr );
+
     root[4] += drive;
     h = CreateFileW(root, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                     0, NULL);
@@ -62,7 +66,7 @@ BOOL DOSVM_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL 
 /**********************************************************************
  *	    DOSVM_Int26Handler (WINEDOS16.138)
  *
- * Handler for int 26h (absolute disk read).
+ * Handler for int 26h (absolute disk write).
  */
 void WINAPI DOSVM_Int26Handler( CONTEXT86 *context )
 {
@@ -94,10 +98,6 @@ void WINAPI DOSVM_Int26Handler( CONTEXT86 *context )
         begin  = DX_reg( context );
         length = CX_reg( context );
     }
-
-    TRACE( "abs diskwrite, drive %d, sector %ld, "
-           "count %ld, buffer %p\n",
-           AL_reg( context ), begin, length, dataptr );
 
     DOSVM_RawWrite( AL_reg( context ), begin, length, dataptr, TRUE );
     RESET_CFLAG( context );

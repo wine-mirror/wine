@@ -2408,6 +2408,12 @@ static void CreateBPB(int drive, BYTE *data, BOOL16 limited)
     }
 }
 
+inline DWORD INT21_Ioctl_CylHeadSect2Lin(DWORD cyl, WORD head, WORD sec, WORD cyl_cnt, WORD head_cnt, WORD sec_cnt)
+{
+    DWORD res = (cyl * head_cnt*sec_cnt + head * sec_cnt + sec);
+    return res;
+}
+
 /***********************************************************************
  *           INT21_Ioctl_Block
  *
@@ -2462,7 +2468,7 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
         break;
 
     case 0x0d: /* GENERIC BLOCK DEVICE REQUEST */
-        /* Get pointer to IOCTL parameter block. */
+        /* Get pointer to IOCTL parameter block */
         dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 
         switch (CX_reg(context))
@@ -2471,13 +2477,31 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
             TRACE( "GENERIC IOCTL - Write logical device track - %c:\n",
                    'A' + drive);
             {
-                WORD head   = *(WORD *)dataptr+1;
-                WORD cyl    = *(WORD *)dataptr+3;
-                WORD sect   = *(WORD *)dataptr+5;
-                WORD nrsect = *(WORD *)dataptr+7;
-                BYTE *data  =  (BYTE *)dataptr+9; /* FIXME: is this correct? */
+                WORD head   = *(WORD *)(dataptr+1);
+                WORD cyl    = *(WORD *)(dataptr+3);
+                WORD sect   = *(WORD *)(dataptr+5);
+                WORD nrsect = *(WORD *)(dataptr+7);
+                BYTE *data  = CTX_SEG_OFF_TO_LIN(context, *(WORD *)(dataptr+11), *(WORD *)(dataptr+9));
+                WORD cyl_cnt, head_cnt, sec_cnt;
 
-                if (!DOSVM_RawWrite(drive, head*cyl*sect, nrsect, data, FALSE))
+                /* FIXME: we're faking some values here */
+                if (drive > 1)
+                {
+                    /* cyl_cnt = 0x300;
+                    head_cnt = 16;
+                    sec_cnt = 255; */
+                    SET_AX( context, ERROR_WRITE_FAULT );
+                    SET_CFLAG(context);
+                    break;
+                }
+                else
+                { /* floppy */
+                    cyl_cnt = 80;
+                    head_cnt = 2;
+                    sec_cnt = 18;
+                }
+
+                if (!DOSVM_RawWrite(drive, INT21_Ioctl_CylHeadSect2Lin(cyl, head, sect, cyl_cnt, head_cnt, sec_cnt), nrsect, data, FALSE))
                 {
                     SET_AX( context, ERROR_WRITE_FAULT );
                     SET_CFLAG(context);
@@ -2516,13 +2540,28 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
             TRACE( "GENERIC IOCTL - Read logical device track - %c:\n",
                    'A' + drive);
             {
-                WORD head   = *(WORD *)dataptr+1;
-                WORD cyl    = *(WORD *)dataptr+3;
-                WORD sect   = *(WORD *)dataptr+5;
-                WORD nrsect = *(WORD *)dataptr+7;
-                BYTE *data  =  (BYTE *)dataptr+9; /* FIXME: is this correct? */
+                WORD head   = *(WORD *)(dataptr+1);
+                WORD cyl    = *(WORD *)(dataptr+3);
+                WORD sect   = *(WORD *)(dataptr+5);
+                WORD nrsect = *(WORD *)(dataptr+7);
+                BYTE *data  = CTX_SEG_OFF_TO_LIN(context, *(WORD *)(dataptr+11), *(WORD *)(dataptr+9));
+                WORD cyl_cnt, head_cnt, sec_cnt;
 
-                if (!DOSVM_RawRead(drive, head*cyl*sect, nrsect, data, FALSE))
+                /* FIXME: we're faking some values here */
+                if (drive > 1)
+                {
+                    cyl_cnt = 0x300;
+                    head_cnt = 16;
+                    sec_cnt = 255;
+                }
+                else
+                { /* floppy */
+                    cyl_cnt = 80;
+                    head_cnt = 2;
+                    sec_cnt = 18;
+                }
+
+                if (!DOSVM_RawRead(drive, INT21_Ioctl_CylHeadSect2Lin(cyl, head, sect, cyl_cnt, head_cnt, sec_cnt), nrsect, data, FALSE))
                 {
                     SET_AX( context, ERROR_READ_FAULT );
                     SET_CFLAG(context);
@@ -2557,7 +2596,7 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
             break;
 
         case 0x0872:
-            /* Trail on error implementation */
+            /* Trial and error implementation */
             SET_AX( context, drivetype == DRIVE_UNKNOWN ? 0x0f : 0x01 );
             SET_CFLAG(context);	/* Seems to be set all the time */
             break;
