@@ -103,28 +103,27 @@ static inline D3DVALUE VectorMagnitude (LPD3DVECTOR a)
 }
 
 /* conversion between radians and degrees */
-static inline LONG RadToDeg (LONG angle)
+static inline DWORD RadToDeg (DWORD angle)
 {
-	LONG newangle;
+	DWORD newangle;
 	newangle = angle * (360/(2*M_PI));
 	TRACE("%ld rad = %ld deg\n", angle, newangle);
 	return newangle;
 }
 
 /* conversion between degrees and radians */
-static inline LONG DegToRad (LONG angle)
+static inline DWORD DegToRad (DWORD angle)
 {
-	LONG newangle;
+	DWORD newangle;
 	newangle = angle * (2*M_PI/360);
 	TRACE("%ld deg = %ld rad\n", angle, newangle);
 	return newangle;
 }
 
 /* angle between vectors */
-static inline LONG AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
+static inline DWORD AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
 {
-	LONG angle;
-	LONG cos;
+	DWORD angle, cos;
 	D3DVALUE la, lb, product;
 	/* definition of scalar product: a*b = |a|*|b|*cos...therefore: */
 	product = ScalarProduct (a,b);
@@ -132,7 +131,7 @@ static inline LONG AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
 	lb = VectorMagnitude (b);
 	cos = product/(la*lb);
 	/* we now have angle in radians */
-	angle = DegToRad(cos);
+	angle = RadToDeg(cos);
 	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %ld degrees\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x, \
 	      b->u2.y, b->u3.z, angle);
 	return angle;	
@@ -157,9 +156,16 @@ static inline D3DVECTOR VectorBetweenTwoPoints (LPD3DVECTOR a, LPD3DVECTOR b)
 static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 {
 	IDirectSound3DListenerImpl *dsl;
+	
+	/* volume, at which the sound will be played after all calcs. */
+	LONG lVolume;
+	/* attuneation (temp variable) */
+	LONG lAttuneation;
+	int iPower;
+	/* stuff for distance related stuff calc. */
 	D3DVECTOR vDistance;
 	D3DVALUE fDistance;
-	
+		
 	if (ds3db->dsb->dsound->listener == NULL)
 		return;
 	
@@ -169,25 +175,50 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 	{
 		case DS3DMODE_NORMAL:
 		{
+			/* initial volume */
+			lVolume = ds3db->lVolume;
+
+			/* distance attuneation stuff */
 			vDistance = VectorBetweenTwoPoints(&ds3db->ds3db.vPosition, &dsl->ds3dl.vPosition);
 			fDistance = VectorMagnitude (&vDistance);
+			
 			if (fDistance > ds3db->ds3db.flMaxDistance)
 			{
-				/* some apps don't want you too hear too distant sounds... */
+				/* some apps don't want you to hear too distant sounds... */
 				if (ds3db->dsb->dsbd.dwFlags & DSBCAPS_MUTE3DATMAXDISTANCE)
 				{
 					ds3db->dsb->volpan.lVolume = DSBVOLUME_MIN;
-					DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
-					DSOUND_ForceRemix (ds3db->dsb);
+					DSOUND_RecalcVolPan (&ds3db->dsb->volpan);		
+					/* i guess mixing here would be a waste of power */
 					return;
-				}				
+				}
+				else
+					fDistance = ds3db->ds3db.flMaxDistance;
 			}
-			ds3db->dsb->volpan.lVolume = DSBVOLUME_MAX;		
+			
+			if (fDistance < ds3db->ds3db.flMinDistance)
+				fDistance = ds3db->ds3db.flMinDistance;
+			
+			/* the formula my dad and i have figured out after reading msdn info about min/max distance
+			   ...hope it works */
+			iPower = fDistance/ds3db->ds3db.flMinDistance - 1; /* this sucks, but for unknown reason damn thing works only if you reduce it for 1 */
+			lAttuneation = (((pow(2, iPower) - 1)*DSBVOLUME_MIN) + lVolume)/pow(2, iPower);
+			lAttuneation /= 5; /* i've figured this value wih trying (without it, sound is too quiet */
+			TRACE ("distance att.: distance = %f, min distance = %f => adjusting volume %ld for attuneation %ld\n", fDistance, ds3db->ds3db.flMinDistance, lVolume, lAttuneation);
+			lVolume = lVolume + lAttuneation;
+			/* conning */
+			
+			/* at least, we got the desired volume */
+			ds3db->dsb->volpan.lVolume = lVolume;
+			DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
+			DSOUND_ForceRemix (ds3db->dsb);			
+			break;
 		}
 		case DS3DMODE_HEADRELATIVE:
 		case DS3DMODE_DISABLE:
 			DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
-			DSOUND_ForceRemix (ds3db->dsb);	
+			DSOUND_ForceRemix (ds3db->dsb);
+			break;
 	}
 }
 
