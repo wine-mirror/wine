@@ -40,7 +40,7 @@ static	DWORD	CDAUDIO_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 
     wmcda->wDevID = modp->wDeviceID;
     mciSetDriverData(wmcda->wDevID, (DWORD)wmcda);
-    modp->wCustomCommandTable = -1;
+    modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_SEQUENCER;
     return modp->wDeviceID;
 }
@@ -152,7 +152,7 @@ static DWORD CDAUDIO_CalcFrame(WINE_MCICDAUDIO* wmcda, DWORD dwTime)
 /**************************************************************************
  * 			CDAUDIO_CalcTime			[internal]
  */
-static DWORD CDAUDIO_CalcTime(WINE_MCICDAUDIO* wmcda, DWORD dwFrame)
+static DWORD CDAUDIO_CalcTime(WINE_MCICDAUDIO* wmcda, DWORD dwFrame, LPDWORD lpRet)
 {
     DWORD	dwTime = 0;
     UINT16	wTrack;
@@ -166,6 +166,7 @@ static DWORD CDAUDIO_CalcTime(WINE_MCICDAUDIO* wmcda, DWORD dwFrame)
     case MCI_FORMAT_MILLISECONDS:
 	dwTime = (dwFrame * 1000) / CDFRAMES_PERSEC;
 	TRACE("MILLISECONDS %lu\n", dwTime);
+	*lpRet = 0;
 	break;
     case MCI_FORMAT_MSF:
 	wMinutes = dwFrame / CDFRAMES_PERMIN;
@@ -174,6 +175,7 @@ static DWORD CDAUDIO_CalcTime(WINE_MCICDAUDIO* wmcda, DWORD dwFrame)
 	dwTime = MCI_MAKE_MSF(wMinutes, wSeconds, wFrames);
 	TRACE("MSF %02u:%02u:%02u -> dwTime=%lu\n",
 	      wMinutes, wSeconds, wFrames, dwTime);
+	*lpRet = MCI_COLONIZED3_RETURN;
 	break;
     case MCI_FORMAT_TMSF:
     default:
@@ -189,6 +191,7 @@ static DWORD CDAUDIO_CalcTime(WINE_MCICDAUDIO* wmcda, DWORD dwFrame)
 	wFrames = dwFrame - CDFRAMES_PERMIN * wMinutes - CDFRAMES_PERSEC * wSeconds;
 	dwTime = MCI_MAKE_TMSF(wTrack, wMinutes, wSeconds, wFrames);
 	TRACE("%02u-%02u:%02u:%02u\n", wTrack, wMinutes, wSeconds, wFrames);
+	*lpRet = MCI_COLONIZED4_RETURN;
 	break;
     }
     return dwTime;
@@ -281,6 +284,8 @@ static DWORD CDAUDIO_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS 
 static DWORD CDAUDIO_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags, 
 				   LPMCI_GETDEVCAPS_PARMS lpParms)
 {
+    DWORD	ret = 0;
+
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
@@ -288,40 +293,53 @@ static DWORD CDAUDIO_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
     if (dwFlags & MCI_GETDEVCAPS_ITEM) {
 	TRACE("MCI_GETDEVCAPS_ITEM dwItem=%08lX;\n", lpParms->dwItem);
 
-	switch(lpParms->dwItem) {
+	switch (lpParms->dwItem) {
 	case MCI_GETDEVCAPS_CAN_RECORD:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_AUDIO:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_VIDEO:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_DEVICE_TYPE:
-	    lpParms->dwReturn = MCI_DEVTYPE_CD_AUDIO;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(MCI_DEVTYPE_CD_AUDIO, MCI_DEVTYPE_CD_AUDIO);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_USES_FILES:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_COMPOUND_DEVICE:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_EJECT:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_PLAY:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_SAVE:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	default:
+	    ERR("Unsupported %lx devCaps item\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
+    } else {
+	TRACE("No GetDevCaps-Item !\n");
+	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     TRACE("lpParms->dwReturn=%08lX;\n", lpParms->dwReturn);
-    return 0;
+    return ret;
 }
 
 /**************************************************************************
@@ -329,35 +347,26 @@ static DWORD CDAUDIO_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
  */
 static DWORD CDAUDIO_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
 {
-    DWORD		ret = 0;
     LPSTR		str = 0;
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
     
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (lpParms == NULL || lpParms->lpstrReturn == NULL) {
-	ret = MCIERR_NULL_PARAMETER_BLOCK;
-    } else if (wmcda == NULL) {
-	ret = MCIERR_INVALID_DEVICE_ID;
-    } else {
-	TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
-	
-	switch(dwFlags) {
-	case MCI_INFO_PRODUCT:
-	    str = "Wine's audio CD";
-	    break;
-	default:
-	    WARN("Don't know this info command (%lu)\n", dwFlags);
-	    ret = MCIERR_UNRECOGNIZED_COMMAND;
-	}
-    }
-    if (str) {
-	ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
-    } else {
-	lpParms->lpstrReturn[0] = 0;
-    }
+    if (lpParms == NULL || lpParms->lpstrReturn == NULL)
+	return MCIERR_NULL_PARAMETER_BLOCK;
+    if (wmcda == NULL) return MCIERR_INVALID_DEVICE_ID;
+
+    TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
     
-    return ret;
+    switch(dwFlags) {
+    case MCI_INFO_PRODUCT:
+	str = "Wine's audio CD";
+	break;
+    default:
+	WARN("Don't know this info command (%lu)\n", dwFlags);
+	return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+    return MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
 }
 
 /**************************************************************************
@@ -370,105 +379,112 @@ static DWORD CDAUDIO_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS 
     
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (lpParms == NULL) {
-	ret = MCIERR_NULL_PARAMETER_BLOCK;
-    } else if (wmcda == NULL) {
-	ret = MCIERR_INVALID_DEVICE_ID;
-    } else {
-	if (dwFlags & MCI_NOTIFY) {
-	    TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	    mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
-			      wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-	}
-	if (dwFlags & MCI_STATUS_ITEM) {
-	    switch (lpParms->dwItem) {
-	    case MCI_STATUS_CURRENT_TRACK:
-		if (!CDAUDIO_GetCDStatus(&wmcda->wcda)) {
+    if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
+    if (wmcda == NULL) return MCIERR_INVALID_DEVICE_ID;
+
+    if (dwFlags & MCI_NOTIFY) {
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
+			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+    }
+    if (dwFlags & MCI_STATUS_ITEM) {
+	switch (lpParms->dwItem) {
+	case MCI_STATUS_CURRENT_TRACK:
+	    if (!CDAUDIO_GetCDStatus(&wmcda->wcda)) {
+		return CDAUDIO_mciGetError(wmcda);
+	    }
+	    lpParms->dwReturn = wmcda->wcda.nCurTrack;
+	    TRACE("CURRENT_TRACK=%lu!\n", lpParms->dwReturn);
+	    break;
+	case MCI_STATUS_LENGTH:
+	    if (wmcda->wcda.nTracks == 0) {
+		if (!CDAUDIO_GetTracksInfo(&wmcda->wcda)) {
+		    WARN("error reading TracksInfo !\n");
 		    return CDAUDIO_mciGetError(wmcda);
 		}
-		lpParms->dwReturn = wmcda->wcda.nCurTrack;
-		TRACE("CURRENT_TRACK=%lu!\n", lpParms->dwReturn);
-		return 0;
-	    case MCI_STATUS_LENGTH:
-		if (wmcda->wcda.nTracks == 0) {
-		    if (!CDAUDIO_GetTracksInfo(&wmcda->wcda)) {
-			WARN("error reading TracksInfo !\n");
-			return CDAUDIO_mciGetError(wmcda);
-		    }
-		}
-		if (dwFlags & MCI_TRACK) {
-		    TRACE("MCI_TRACK #%lu LENGTH=??? !\n", lpParms->dwTrack);
-		    if (lpParms->dwTrack > wmcda->wcda.nTracks || lpParms->dwTrack == 0)
-			return MCIERR_OUTOFRANGE;
-		    lpParms->dwReturn = wmcda->wcda.lpdwTrackLen[lpParms->dwTrack - 1];
-		} else {
-		    lpParms->dwReturn = wmcda->wcda.dwTotalLen;
-		}
-		lpParms->dwReturn = CDAUDIO_CalcTime(wmcda, lpParms->dwReturn);
-		TRACE("LENGTH=%lu !\n", lpParms->dwReturn);
-		return 0;
-	    case MCI_STATUS_MODE:
-		if (!CDAUDIO_GetCDStatus(&wmcda->wcda)) 
-		    return CDAUDIO_mciGetError(wmcda);
-		lpParms->dwReturn = CDAUDIO_mciMode(wmcda->wcda.cdaMode);
-		if (!lpParms->dwReturn) lpParms->dwReturn = wmcda->mciMode;
-		TRACE("MCI_STATUS_MODE=%08lX !\n", lpParms->dwReturn);
-		return 0;
-	    case MCI_STATUS_MEDIA_PRESENT:
-		if (!CDAUDIO_GetCDStatus(&wmcda->wcda)) 
-		    return CDAUDIO_mciGetError(wmcda);
-		lpParms->dwReturn = (wmcda->wcda.nTracks > 0) ? TRUE : FALSE;
-		TRACE("MCI_STATUS_MEDIA_PRESENT =%s!\n", lpParms->dwReturn ? "Y" : "N");
-		return 0;
-	    case MCI_STATUS_NUMBER_OF_TRACKS:
-		lpParms->dwReturn = CDAUDIO_GetNumberOfTracks(&wmcda->wcda);
-		TRACE("MCI_STATUS_NUMBER_OF_TRACKS = %lu !\n", lpParms->dwReturn);
-		if (lpParms->dwReturn == (WORD)-1) 
-		    return CDAUDIO_mciGetError(wmcda);
-		return 0;
-	    case MCI_STATUS_POSITION:
-		if (!CDAUDIO_GetCDStatus(&wmcda->wcda)) 
-		    return CDAUDIO_mciGetError(wmcda);
-		lpParms->dwReturn = wmcda->wcda.dwCurFrame;
-		if (dwFlags & MCI_STATUS_START) {
-		    lpParms->dwReturn = wmcda->wcda.dwFirstOffset;
-		    TRACE("get MCI_STATUS_START !\n");
-		}
-		if (dwFlags & MCI_TRACK) {
-		    if (lpParms->dwTrack > wmcda->wcda.nTracks || lpParms->dwTrack == 0)
-			return MCIERR_OUTOFRANGE;
-		    lpParms->dwReturn = wmcda->wcda.lpdwTrackPos[lpParms->dwTrack - 1];
-		    TRACE("get MCI_TRACK #%lu !\n", lpParms->dwTrack);
-		}
-		lpParms->dwReturn = CDAUDIO_CalcTime(wmcda, lpParms->dwReturn);
-		TRACE("MCI_STATUS_POSITION=%08lX !\n", lpParms->dwReturn);
-		return 0;
-	    case MCI_STATUS_READY:
-		TRACE("MCI_STATUS_READY !\n");
-		lpParms->dwReturn = (wmcda->wcda.cdaMode != WINE_CDA_DONTKNOW && wmcda->wcda.cdaMode != WINE_CDA_NOTREADY);
-		TRACE("MCI_STATUS_READY=%ld!\n", lpParms->dwReturn);
-		return 0;
-	    case MCI_STATUS_TIME_FORMAT:
-		lpParms->dwReturn = wmcda->dwTimeFormat;
-		TRACE("MCI_STATUS_TIME_FORMAT =%08lx!\n", lpParms->dwReturn);
-		return 0;
-	    case MCI_CDA_STATUS_TYPE_TRACK:
-		if (!(dwFlags & MCI_TRACK)) 
-		    return MCIERR_MISSING_PARAMETER;
+	    }
+	    if (dwFlags & MCI_TRACK) {
+		TRACE("MCI_TRACK #%lu LENGTH=??? !\n", lpParms->dwTrack);
 		if (lpParms->dwTrack > wmcda->wcda.nTracks || lpParms->dwTrack == 0)
 		    return MCIERR_OUTOFRANGE;
+		lpParms->dwReturn = wmcda->wcda.lpdwTrackLen[lpParms->dwTrack - 1];
+	    } else {
+		lpParms->dwReturn = wmcda->wcda.dwTotalLen;
+	    }
+	    lpParms->dwReturn = CDAUDIO_CalcTime(wmcda, lpParms->dwReturn, &ret);
+	    TRACE("LENGTH=%lu !\n", lpParms->dwReturn);
+	    break;
+	case MCI_STATUS_MODE:
+	    if (!CDAUDIO_GetCDStatus(&wmcda->wcda)) 
+		return CDAUDIO_mciGetError(wmcda);
+	    lpParms->dwReturn = CDAUDIO_mciMode(wmcda->wcda.cdaMode);
+	    if (!lpParms->dwReturn) lpParms->dwReturn = wmcda->mciMode;
+	    TRACE("MCI_STATUS_MODE=%08lX !\n", lpParms->dwReturn);
+	    lpParms->dwReturn = MAKEMCIRESOURCE(lpParms->dwReturn, lpParms->dwReturn);
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_STATUS_MEDIA_PRESENT:
+	    if (!CDAUDIO_GetCDStatus(&wmcda->wcda)) 
+		return CDAUDIO_mciGetError(wmcda);
+	    lpParms->dwReturn = (wmcda->wcda.nTracks == 0) ? 
+		MAKEMCIRESOURCE(FALSE, MCI_FALSE) : MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    TRACE("MCI_STATUS_MEDIA_PRESENT =%s!\n", LOWORD(lpParms->dwReturn) ? "Y" : "N");
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_STATUS_NUMBER_OF_TRACKS:
+	    lpParms->dwReturn = CDAUDIO_GetNumberOfTracks(&wmcda->wcda);
+	    TRACE("MCI_STATUS_NUMBER_OF_TRACKS = %lu !\n", lpParms->dwReturn);
+	    if (lpParms->dwReturn == (WORD)-1) 
+		return CDAUDIO_mciGetError(wmcda);
+	    break;
+	case MCI_STATUS_POSITION:
+	    if (!CDAUDIO_GetCDStatus(&wmcda->wcda)) 
+		return CDAUDIO_mciGetError(wmcda);
+	    lpParms->dwReturn = wmcda->wcda.dwCurFrame;
+	    if (dwFlags & MCI_STATUS_START) {
+		lpParms->dwReturn = wmcda->wcda.dwFirstOffset;
+		TRACE("get MCI_STATUS_START !\n");
+	    }
+	    if (dwFlags & MCI_TRACK) {
+		if (lpParms->dwTrack > wmcda->wcda.nTracks || lpParms->dwTrack == 0)
+		    return MCIERR_OUTOFRANGE;
+		lpParms->dwReturn = wmcda->wcda.lpdwTrackPos[lpParms->dwTrack - 1];
+		TRACE("get MCI_TRACK #%lu !\n", lpParms->dwTrack);
+	    }
+	    lpParms->dwReturn = CDAUDIO_CalcTime(wmcda, lpParms->dwReturn, &ret);
+	    TRACE("MCI_STATUS_POSITION=%08lX !\n", lpParms->dwReturn);
+	    break;
+	case MCI_STATUS_READY:
+	    TRACE("MCI_STATUS_READY !\n");
+	    lpParms->dwReturn = (wmcda->wcda.cdaMode == WINE_CDA_DONTKNOW ||
+				 wmcda->wcda.cdaMode == WINE_CDA_NOTREADY) ?
+		MAKEMCIRESOURCE(FALSE, MCI_FALSE) : MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    TRACE("MCI_STATUS_READY=%u!\n", LOWORD(lpParms->dwReturn));
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_STATUS_TIME_FORMAT:
+	    lpParms->dwReturn = MAKEMCIRESOURCE(wmcda->dwTimeFormat, wmcda->dwTimeFormat);
+	    TRACE("MCI_STATUS_TIME_FORMAT=%08x!\n", LOWORD(lpParms->dwReturn));
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
+	case MCI_CDA_STATUS_TYPE_TRACK:
+	    if (!(dwFlags & MCI_TRACK)) 
+		ret = MCIERR_MISSING_PARAMETER;
+	    else if (lpParms->dwTrack > wmcda->wcda.nTracks || lpParms->dwTrack == 0)
+		ret = MCIERR_OUTOFRANGE;
+	    else
 		lpParms->dwReturn = (wmcda->wcda.lpbTrackFlags[lpParms->dwTrack - 1] & 
 				     CDROM_DATA_TRACK) ? MCI_CDA_TRACK_OTHER : MCI_CDA_TRACK_AUDIO;
-		TRACE("MCI_CDA_STATUS_TYPE_TRACK[%ld]=%08lx\n", lpParms->dwTrack, lpParms->dwReturn);
-		return 0;
-	    default:
-		WARN("unknown command %08lX !\n", lpParms->dwItem);
-		return MCIERR_UNRECOGNIZED_COMMAND;
-	    }
+	    TRACE("MCI_CDA_STATUS_TYPE_TRACK[%ld]=%08lx\n", lpParms->dwTrack, lpParms->dwReturn);
+	    break;
+	default:
+	    FIXME("unknown command %08lX !\n", lpParms->dwItem);
+	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
+    } else {
+	WARN("not MCI_STATUS_ITEM !\n");
     }
-    WARN("not MCI_STATUS_ITEM !\n");
-    return 0;
+    return ret;
 }
 
 /**************************************************************************
@@ -730,6 +746,7 @@ LONG CALLBACK	MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     /* FIXME: I wonder if those two next items are really called ? */
     case MCI_SET_DOOR_OPEN:	return CDAUDIO_mciSetDoor(dwDevID, TRUE);
     case MCI_SET_DOOR_CLOSED:	return CDAUDIO_mciSetDoor(dwDevID, FALSE);
+    /* commands that should be supported */
     case MCI_LOAD:		
     case MCI_SAVE:		
     case MCI_FREEZE:		
@@ -738,7 +755,6 @@ LONG CALLBACK	MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_UNFREEZE:		
     case MCI_UPDATE:		
     case MCI_WHERE:		
-    case MCI_WINDOW:		
     case MCI_STEP:		
     case MCI_SPIN:		
     case MCI_ESCAPE:		
@@ -746,14 +762,18 @@ LONG CALLBACK	MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:		
     case MCI_DELETE:		
     case MCI_PASTE:		
-	WARN("Unsupported command=%s\n", MCI_CommandToString(wMsg));
+	FIXME("Unsupported yet command=%s\n", MCI_MessageToString(wMsg));
+	break;
+    /* commands that should report an error */
+    case MCI_WINDOW:		
+	FIXME("Unsupported command=%s\n", MCI_MessageToString(wMsg));
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
-	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
+	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:
-	TRACE("Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
+	TRACE("Sending msg=%s to default driver proc\n", MCI_MessageToString(wMsg));
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

@@ -47,7 +47,7 @@ static	DWORD	ANIM_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 
     wma->wDevID = modp->wDeviceID;
     mciSetDriverData(wma->wDevID, (DWORD)wma);
-    modp->wCustomCommandTable = -1;
+    modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_SEQUENCER;
     return modp->wDeviceID;
 }
@@ -165,7 +165,8 @@ static DWORD ANIM_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 				LPMCI_GETDEVCAPS_PARMS lpParms)
 {
     WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
-    
+    DWORD		ret;
+
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
@@ -173,47 +174,61 @@ static DWORD ANIM_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
     
     if (dwFlags & MCI_GETDEVCAPS_ITEM) {
 	TRACE("MCI_GETDEVCAPS_ITEM dwItem=%08lX;\n", lpParms->dwItem);
+
 	switch(lpParms->dwItem) {
 	case MCI_GETDEVCAPS_CAN_RECORD:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_AUDIO:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_VIDEO:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_DEVICE_TYPE:
-	    lpParms->dwReturn = MCI_DEVTYPE_ANIMATION;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(MCI_DEVTYPE_ANIMATION, MCI_DEVTYPE_ANIMATION);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_USES_FILES:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_COMPOUND_DEVICE:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_EJECT:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_PLAY:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_SAVE:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	default:
+	    FIXME("Unknown capability (%08lx) !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
+    } else {
+	WARN("No GETDEVCAPS_ITEM !\n");
+	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     TRACE("lpParms->dwReturn=%08lX;\n", lpParms->dwReturn);
-    return 0;
+    return ret;
 }
 
 
 /**************************************************************************
  * 				ANIM_CalcTime			[internal]
  */
-static DWORD ANIM_CalcTime(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwFrame)
+static DWORD ANIM_CalcTime(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwFrame, LPDWORD lpRet)
 {
     DWORD	dwTime = 0;
     UINT16	wTrack;
@@ -226,6 +241,7 @@ static DWORD ANIM_CalcTime(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwFrame)
     switch (dwFormatType) {
     case MCI_FORMAT_MILLISECONDS:
 	dwTime = dwFrame / ANIMFRAMES_PERSEC * 1000;
+	*lpRet = 0;
 	TRACE("MILLISECONDS %lu\n", dwTime);
 	break;
     case MCI_FORMAT_MSF:
@@ -234,8 +250,8 @@ static DWORD ANIM_CalcTime(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwFrame)
 	wFrames = dwFrame - ANIMFRAMES_PERMIN * wMinutes - 
 	    ANIMFRAMES_PERSEC * wSeconds;
 	dwTime = MCI_MAKE_MSF(wMinutes, wSeconds, wFrames);
-	TRACE("MSF %02u:%02u:%02u -> dwTime=%lu\n",
-	      wMinutes, wSeconds, wFrames, dwTime);
+	TRACE("MSF %02u:%02u:%02u -> dwTime=%lu\n",wMinutes, wSeconds, wFrames, dwTime);
+	*lpRet = MCI_COLONIZED3_RETURN;
 	break;
     default:
 	/* unknown format ! force TMSF ! ... */
@@ -252,8 +268,8 @@ static DWORD ANIM_CalcTime(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwFrame)
 	wFrames = dwFrame - ANIMFRAMES_PERMIN * wMinutes - 
 	    ANIMFRAMES_PERSEC * wSeconds;
 	dwTime = MCI_MAKE_TMSF(wTrack, wMinutes, wSeconds, wFrames);
-	TRACE("%02u-%02u:%02u:%02u\n",
-	      wTrack, wMinutes, wSeconds, wFrames);
+	*lpRet = MCI_COLONIZED4_RETURN;
+	TRACE("%02u-%02u:%02u:%02u\n", wTrack, wMinutes, wSeconds, wFrames);
 	break;
     }
     return dwTime;
@@ -302,47 +318,40 @@ static DWORD ANIM_CalcFrame(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwTime)
     return dwFrame;
 }
 
-
 /**************************************************************************
  * 				ANIM_mciInfo			[internal]
  */
 static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
 {
     WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
-    DWORD		ret = 0;
     LPSTR		str = 0;
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (lpParms == NULL || lpParms->lpstrReturn == NULL) {
-	ret = MCIERR_NULL_PARAMETER_BLOCK;
-    } else if (wma == NULL) {
-	ret = MCIERR_INVALID_DEVICE_ID;
-    } else {
-	TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
-	
-	switch(dwFlags) {
-	case MCI_INFO_PRODUCT:
-	    str = "Wine's animation";
-	    break;
-	case MCI_INFO_FILE:
-	    str = wma->openParms.lpstrElementName;
-	    break;
-	case MCI_ANIM_INFO_TEXT:
-	    str = "Animation Window";
-	    break;
-	default:
-	    WARN("Don't know this info command (%lu)\n", dwFlags);
-	    ret = MCIERR_UNRECOGNIZED_COMMAND;
-	}
-    }
-    if (str) {
-	ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
-    } else {
-	lpParms->lpstrReturn[0] = 0;
-    }
+    if (lpParms == NULL || lpParms->lpstrReturn == NULL)
+	return MCIERR_NULL_PARAMETER_BLOCK;
+
+    if (wma == NULL)
+	return MCIERR_INVALID_DEVICE_ID;
     
-    return ret;
+    TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
+    
+    switch(dwFlags) {
+    case MCI_INFO_PRODUCT:
+	str = "Wine's animation";
+	break;
+    case MCI_INFO_FILE:
+	str = wma->openParms.lpstrElementName;
+	break;
+    case MCI_ANIM_INFO_TEXT:
+	str = "Animation Window";
+	break;
+    default:
+	WARN("Don't know this info command (%lu)\n", dwFlags);
+	return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+
+    return MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
 }
 
 /**************************************************************************
@@ -351,15 +360,16 @@ static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpPar
 static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
     WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
-    
+    DWORD		ret;
+
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL) return MCIERR_INTERNAL;
     if (wma == NULL) return MCIERR_INVALID_DEVICE_ID;
     
     if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
-	      lpParms->dwCallback);
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -368,35 +378,33 @@ static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	case MCI_STATUS_CURRENT_TRACK:
 	    lpParms->dwReturn = wma->nCurTrack;
 	    TRACE("CURRENT_TRACK=%lu!\n", lpParms->dwReturn);
-	    return 0;
+	    break;
 	case MCI_STATUS_LENGTH:
 	    if (dwFlags & MCI_TRACK) {
-		TRACE("MCI_TRACK #%lu LENGTH=??? !\n",
-		      lpParms->dwTrack);
+		TRACE("MCI_TRACK #%lu LENGTH=??? !\n", lpParms->dwTrack);
 		if (lpParms->dwTrack > wma->nTracks)
 		    return MCIERR_OUTOFRANGE;
 		lpParms->dwReturn = wma->lpdwTrackLen[lpParms->dwTrack];
 	    }
 	    else
 		lpParms->dwReturn = wma->dwTotalLen;
-	    lpParms->dwReturn = ANIM_CalcTime(wma, wma->dwTimeFormat, lpParms->dwReturn);
+	    lpParms->dwReturn = ANIM_CalcTime(wma, wma->dwTimeFormat, lpParms->dwReturn, &ret);
 	    TRACE("LENGTH=%lu !\n", lpParms->dwReturn);
-	    return 0;
+	    break;
 	case MCI_STATUS_MODE:
-	    lpParms->dwReturn = wma->mode;
-	    TRACE("MCI_STATUS_MODE=%08lX !\n",
-		  lpParms->dwReturn);
-	    return 0;
+	    TRACE("MCI_STATUS_MODE=%04X !\n", wma->mode);
+	    lpParms->dwReturn = MAKEMCIRESOURCE(wma->mode, wma->mode);
+	    ret = MCI_RESOURCE_RETURNED;
+	    break;
 	case MCI_STATUS_MEDIA_PRESENT:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    TRACE("MCI_STATUS_MEDIA_PRESENT !\n");
-	    return 0;
+	    break;
 	case MCI_STATUS_NUMBER_OF_TRACKS:
 	    lpParms->dwReturn = 1;
-	    TRACE("MCI_STATUS_NUMBER_OF_TRACKS = %lu !\n",
-		  lpParms->dwReturn);
-	    if (lpParms->dwReturn == (WORD)-1) return MCIERR_INTERNAL;
-	    return 0;
+	    TRACE("MCI_STATUS_NUMBER_OF_TRACKS = %lu !\n", lpParms->dwReturn);
+	    break;
 	case MCI_STATUS_POSITION:
 	    lpParms->dwReturn = wma->dwCurFrame;
 	    if (dwFlags & MCI_STATUS_START) {
@@ -409,25 +417,29 @@ static DWORD ANIM_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 		lpParms->dwReturn = wma->lpdwTrackPos[lpParms->dwTrack - 1];
 		TRACE("get MCI_TRACK #%lu !\n", lpParms->dwTrack);
 	    }
-	    lpParms->dwReturn = ANIM_CalcTime(wma, wma->dwTimeFormat, lpParms->dwReturn);
-	    TRACE("MCI_STATUS_POSITION=%08lX !\n",
-		  lpParms->dwReturn);
-	    return 0;
+	    lpParms->dwReturn = ANIM_CalcTime(wma, wma->dwTimeFormat, lpParms->dwReturn, &ret);
+	    TRACE("MCI_STATUS_POSITION=%08lX !\n", lpParms->dwReturn);
+	    break;
 	case MCI_STATUS_READY:
 	    TRACE("MCI_STATUS_READY !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    return 0;
 	case MCI_STATUS_TIME_FORMAT:
 	    TRACE("MCI_STATUS_TIME_FORMAT !\n");
-	    lpParms->dwReturn = MCI_FORMAT_MILLISECONDS;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(MCI_FORMAT_MILLISECONDS, MCI_FORMAT_MILLISECONDS);
+	    TRACE("MCI_STATUS_TIME_FORMAT => %u\n", LOWORD(lpParms->dwReturn));
+	    ret = MCI_RESOURCE_RETURNED;
 	    return 0;
 	default:
-	    WARN("Unknown command %08lX !\n", lpParms->dwItem);
+	    FIXME("Unknown command %08lX !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
+    } else {
+	WARN("No MCI_STATUS_ITEM !\n");
+	return MCIERR_UNRECOGNIZED_COMMAND;
     }
-    WARN("Not MCI_STATUS_ITEM !\n");
-    return 0;
+    return ret;
 }
 
 
@@ -478,8 +490,8 @@ static DWORD ANIM_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     
     wma->mode = MCI_MODE_STOP;
     if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
-	      lpParms->dwCallback);
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -497,8 +509,8 @@ static DWORD ANIM_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     if (lpParms == NULL) return MCIERR_INTERNAL;
     wma->mode = MCI_MODE_PAUSE;
     if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
-	      lpParms->dwCallback);
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -516,8 +528,8 @@ static DWORD ANIM_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
     if (lpParms == NULL) return MCIERR_INTERNAL;
     wma->mode = MCI_MODE_STOP;
     if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
-	      lpParms->dwCallback);
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -537,7 +549,7 @@ static DWORD ANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
     
     if (lpParms == NULL) return MCIERR_INTERNAL;
     wma->mode = MCI_MODE_SEEK;
-    switch(dwFlags) {
+    switch (dwFlags) {
     case MCI_SEEK_TO_START:
 	PlayParms.dwFrom = 0;
 	break;
@@ -552,8 +564,8 @@ static DWORD ANIM_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
     if (dwRet != 0) return dwRet;
     dwRet = ANIM_mciStop(wDevID, MCI_WAIT, (LPMCI_GENERIC_PARMS)&PlayParms);
     if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
-	      lpParms->dwCallback);
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
+
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -569,6 +581,7 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
     WINE_MCIANIM*	wma = ANIM_mciGetOpenDrv(wDevID);
     
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
+
     if (lpParms == NULL) return MCIERR_INTERNAL;
     if (wma == NULL) return MCIERR_INVALID_DEVICE_ID;
     /*
@@ -596,8 +609,7 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
     if (dwFlags & MCI_SET_ON) return MCIERR_UNSUPPORTED_FUNCTION;
     if (dwFlags & MCI_SET_OFF) return MCIERR_UNSUPPORTED_FUNCTION;
     if (dwFlags & MCI_NOTIFY) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
-	      lpParms->dwCallback);
+	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
@@ -610,7 +622,7 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 LONG 	CALLBACK	MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 					   DWORD dwParam1, DWORD dwParam2)
 {
-    switch(wMsg) {
+    switch (wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1; 
     case DRV_OPEN:		return ANIM_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
@@ -649,14 +661,14 @@ LONG 	CALLBACK	MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:		
     case MCI_DELETE:		
     case MCI_PASTE:		
-	WARN("Unsupported command=%s\n", MCI_CommandToString(wMsg));
+	FIXME("Unsupported message=%s\n", MCI_MessageToString(wMsg));
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
-	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
+	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:			
-	TRACE("Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
+	TRACE("Sending msg=%s to default driver proc\n", MCI_MessageToString(wMsg));
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

@@ -60,7 +60,7 @@ static	DWORD	WAVE_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 
     wmw->wDevID = modp->wDeviceID;
     mciSetDriverData(wmw->wDevID, (DWORD)wmw);
-    modp->wCustomCommandTable = -1;
+    modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_WAVEFORM_AUDIO;
     return modp->wDeviceID;
 }
@@ -94,7 +94,10 @@ static WINE_MCIWAVE*  WAVE_mciGetOpenDev(UINT16 wDevID)
     return wmw;
 }
 
-static	DWORD 	WAVE_ConvertByteToTimeFormat(WINE_MCIWAVE* wmw, DWORD val)
+/**************************************************************************
+ * 				WAVE_ConvertByteToTimeFormat	[internal]	
+ */
+static	DWORD 	WAVE_ConvertByteToTimeFormat(WINE_MCIWAVE* wmw, DWORD val, LPDWORD lpRet)
 {
     DWORD	ret = 0;
     
@@ -112,9 +115,13 @@ static	DWORD 	WAVE_ConvertByteToTimeFormat(WINE_MCIWAVE* wmw, DWORD val)
 	WARN("Bad time format %lu!\n", wmw->dwMciTimeFormat);
     }
     TRACE("val=%lu=0x%08lx [tf=%lu] => ret=%lu\n", val, val, wmw->dwMciTimeFormat, ret);
+    *lpRet = 0;
     return ret;
 }
 
+/**************************************************************************
+ * 				WAVE_ConvertTimeFormatToByte	[internal]	
+ */
 static	DWORD 	WAVE_ConvertTimeFormatToByte(WINE_MCIWAVE* wmw, DWORD val)
 {
     DWORD	ret = 0;
@@ -136,6 +143,9 @@ static	DWORD 	WAVE_ConvertTimeFormatToByte(WINE_MCIWAVE* wmw, DWORD val)
     return ret;
 }
 
+/**************************************************************************
+ * 			WAVE_mciReadFmt	                        [internal]
+ */
 static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
 {
     MMCKINFO	mmckInfo;
@@ -741,7 +751,8 @@ static DWORD WAVE_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 static DWORD WAVE_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
-    
+    DWORD		ret;
+
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -754,16 +765,18 @@ static DWORD WAVE_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	    break;
 	case MCI_STATUS_LENGTH:
 	    /* only one track in file is currently handled, so don't take care of MCI_TRACK flag */
-	    lpParms->dwReturn = WAVE_ConvertByteToTimeFormat(wmw, wmw->dwLength);
+	    lpParms->dwReturn = WAVE_ConvertByteToTimeFormat(wmw, wmw->dwLength, &ret);
 	    TRACE("MCI_STATUS_LENGTH => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
-	    lpParms->dwReturn = wmw->dwStatus;
-	    TRACE("MCI_STATUS_MODE => %lu\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_MODE => %u\n", wmw->dwStatus);
+	    lpParms->dwReturn = MAKEMCIRESOURCE(wmw->dwStatus, wmw->dwStatus);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_MEDIA_PRESENT:
 	    TRACE("MCI_STATUS_MEDIA_PRESENT => TRUE!\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_NUMBER_OF_TRACKS:
 	    /* only one track in file is currently handled, so don't take care of MCI_TRACK flag */
@@ -773,17 +786,21 @@ static DWORD WAVE_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	case MCI_STATUS_POSITION:
 	    /* only one track in file is currently handled, so don't take care of MCI_TRACK flag */
 	    lpParms->dwReturn = WAVE_ConvertByteToTimeFormat(wmw, 
-							     (dwFlags & MCI_STATUS_START) ? 0 : wmw->dwPosition);
+							     (dwFlags & MCI_STATUS_START) ? 0 : wmw->dwPosition,
+							     &ret);
 	    TRACE("MCI_STATUS_POSITION %s => %lu\n", 
 		  (dwFlags & MCI_STATUS_START) ? "start" : "current", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_READY:
-	    lpParms->dwReturn = (wmw->dwStatus != MCI_MODE_NOT_READY);
-	    TRACE("MCI_STATUS_READY => %lu!\n", lpParms->dwReturn);
+	    lpParms->dwReturn = (wmw->dwStatus == MCI_MODE_NOT_READY) ?
+		MAKEMCIRESOURCE(FALSE, MCI_FALSE) : MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    TRACE("MCI_STATUS_READY => %u!\n", LOWORD(lpParms->dwReturn));
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_TIME_FORMAT:
-	    lpParms->dwReturn = wmw->dwMciTimeFormat;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(wmw->dwMciTimeFormat, wmw->dwMciTimeFormat);
 	    TRACE("MCI_STATUS_TIME_FORMAT => %lu\n", lpParms->dwReturn);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_WAVE_INPUT:
 	    TRACE("MCI_WAVE_INPUT !\n");
@@ -831,7 +848,7 @@ static DWORD WAVE_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
-    return 0;
+    return ret;
 }
 
 /**************************************************************************
@@ -841,7 +858,8 @@ static DWORD WAVE_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 				LPMCI_GETDEVCAPS_PARMS lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
-    
+    DWORD		ret = 0;
+
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -850,31 +868,40 @@ static DWORD WAVE_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
     if (dwFlags & MCI_GETDEVCAPS_ITEM) {
 	switch(lpParms->dwItem) {
 	case MCI_GETDEVCAPS_DEVICE_TYPE:
-	    lpParms->dwReturn = MCI_DEVTYPE_WAVEFORM_AUDIO;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(MCI_DEVTYPE_WAVEFORM_AUDIO, MCI_DEVTYPE_WAVEFORM_AUDIO);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_AUDIO:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_VIDEO:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_USES_FILES:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_COMPOUND_DEVICE:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_RECORD:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_EJECT:
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_PLAY:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_SAVE:
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_WAVE_GETDEVCAPS_INPUTS:
 	    lpParms->dwReturn = 1;
@@ -883,11 +910,14 @@ static DWORD WAVE_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 	    lpParms->dwReturn = 1;
 	    break;
 	default:
-	    TRACE("Unknown capability (%08lx) !\n", lpParms->dwItem);
+	    FIXME("Unknown capability (%08lx) !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
+    } else {
+	WARN("No GetDevCaps-Item !\n");
+	return MCIERR_UNRECOGNIZED_COMMAND;
     }
-    return 0;
+    return ret;
 }
 
 /**************************************************************************
@@ -972,6 +1002,7 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_GETDEVCAPS:	return WAVE_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)  dwParam2);
     case MCI_INFO:		return WAVE_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMS16)      dwParam2);
     case MCI_SEEK:		return WAVE_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)        dwParam2);		
+	/* commands that should be supported */
     case MCI_LOAD:		
     case MCI_SAVE:		
     case MCI_FREEZE:		
@@ -980,7 +1011,6 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_UNFREEZE:		
     case MCI_UPDATE:		
     case MCI_WHERE:		
-    case MCI_WINDOW:		
     case MCI_STEP:		
     case MCI_SPIN:		
     case MCI_ESCAPE:		
@@ -988,14 +1018,17 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:		
     case MCI_DELETE:		
     case MCI_PASTE:		
-	WARN("Unsupported command=%s\n", MCI_CommandToString(wMsg));
+	FIXME("Unsupported yet command=%s\n", MCI_MessageToString(wMsg));
+	break;
+    case MCI_WINDOW:		
+	TRACE("Unsupported command=%s\n", MCI_MessageToString(wMsg));
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
-	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
+	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:
-	FIXME("is probably wrong msg=%s\n", MCI_CommandToString(wMsg));
+	FIXME("is probably wrong msg=%s\n", MCI_MessageToString(wMsg));
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

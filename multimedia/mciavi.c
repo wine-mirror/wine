@@ -44,7 +44,7 @@ static	DWORD	AVI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 
     wma->wDevID = modp->wDeviceID;
     mciSetDriverData(wma->wDevID, (DWORD)wma);
-    modp->wCustomCommandTable = -1;
+    modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_SEQUENCER;
     return modp->wDeviceID;
 }
@@ -354,7 +354,8 @@ static	DWORD	AVI_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParm
 static	DWORD	AVI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpParms)
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
-    
+    DWORD		ret = 0;
+
     TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -376,12 +377,14 @@ static	DWORD	AVI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA
 	    TRACE("MCI_STATUS_LENGTH => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
- 	    lpParms->dwReturn = wma->wStatus;
-	    TRACE("MCI_STATUS_MODE => %lu\n", lpParms->dwReturn);
+ 	    lpParms->dwReturn = MAKEMCIRESOURCE(wma->wStatus, wma->wStatus);
+	    ret = MCI_RESOURCE_RETURNED;
+	    TRACE("MCI_STATUS_MODE => %u\n", LOWORD(lpParms->dwReturn));
 	    break;
 	case MCI_STATUS_MEDIA_PRESENT:
 	    TRACE("MCI_STATUS_MEDIA_PRESENT => TRUE\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_NUMBER_OF_TRACKS:
 	    lpParms->dwReturn = 3;
@@ -394,15 +397,18 @@ static	DWORD	AVI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA
 		  (dwFlags & MCI_STATUS_START) ? "start" : "current", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_READY:
-	    lpParms->dwReturn = (wma->wStatus != MCI_MODE_NOT_READY);
-	    TRACE("MCI_STATUS_READY = %lu\n", lpParms->dwReturn);
+	    lpParms->dwReturn = (wma->wStatus == MCI_MODE_NOT_READY) ?
+		MAKEMCIRESOURCE(FALSE, MCI_FALSE) : MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
+	    TRACE("MCI_STATUS_READY = %u\n", LOWORD(lpParms->dwReturn));
 	    break;
 	case MCI_STATUS_TIME_FORMAT:
-	    lpParms->dwReturn = wma->dwTimeFormat;
-	    TRACE("MCI_STATUS_TIME_FORMAT => %lu\n", lpParms->dwReturn);
+	    lpParms->dwReturn = MAKEMCIRESOURCE(wma->dwTimeFormat, wma->dwTimeFormat);
+	    TRACE("MCI_STATUS_TIME_FORMAT => %u\n", LOWORD(lpParms->dwReturn));
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	default:
-	    WARN("Unknowm command %08lX !\n", lpParms->dwItem);
+	    FIXME("Unknowm command %08lX !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
     } else {
@@ -415,7 +421,7 @@ static	DWORD	AVI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA
 			  wma->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     
-    return 0;
+    return ret;
 }
 
 /***************************************************************************
@@ -424,7 +430,8 @@ static	DWORD	AVI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA
 static	DWORD	AVI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS lpParms)
 {
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
-    
+    DWORD		ret;
+
     TRACE("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -434,49 +441,58 @@ static	DWORD	AVI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_P
 	switch (lpParms->dwItem) {
 	case MCI_GETDEVCAPS_DEVICE_TYPE:
 	    TRACE("MCI_GETDEVCAPS_DEVICE_TYPE !\n");
-	    lpParms->dwReturn = MCI_DEVTYPE_DIGITAL_VIDEO;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(MCI_DEVTYPE_DIGITAL_VIDEO, MCI_DEVTYPE_DIGITAL_VIDEO);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_AUDIO:
 	    TRACE("MCI_GETDEVCAPS_HAS_AUDIO !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_VIDEO:
 	    TRACE("MCI_GETDEVCAPS_HAS_VIDEO !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_USES_FILES:
 	    TRACE("MCI_GETDEVCAPS_USES_FILES !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_COMPOUND_DEVICE:
 	    TRACE("MCI_GETDEVCAPS_COMPOUND_DEVICE !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_EJECT:
 	    TRACE("MCI_GETDEVCAPS_CAN_EJECT !\n");
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_PLAY:
 	    TRACE("MCI_GETDEVCAPS_CAN_PLAY !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_RECORD:
 	    TRACE("MCI_GETDEVCAPS_CAN_RECORD !\n");
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_SAVE:
 	    TRACE("MCI_GETDEVCAPS_CAN_SAVE !\n");
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	default:
-	    TRACE("Unknown capability (%08lx) !\n", lpParms->dwItem);
+	    FIXME("Unknown capability (%08lx) !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
     } else {
-	TRACE("No GetDevCaps-Item !\n");
+	WARN("No GetDevCaps-Item !\n");
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
-    return 0;
+    return ret;
 }
 
 /***************************************************************************
@@ -484,45 +500,36 @@ static	DWORD	AVI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_P
  */
 static	DWORD	AVI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpParms)
 {
-    DWORD		ret = 0;
     LPSTR		str = 0;
     WINE_MCIAVI*	wma = AVI_mciGetOpenDev(wDevID);
     
     TRACE("(%04X, %08lX, %p) : stub;\n", wDevID, dwFlags, lpParms);
     
-    if (lpParms == NULL || lpParms->lpstrReturn == NULL) {
-	ret = MCIERR_NULL_PARAMETER_BLOCK;
-    } else if (wma == NULL) {
-	ret = MCIERR_INVALID_DEVICE_ID;
-    } else {
-	TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
-	
-	switch (dwFlags) {
-	case MCI_INFO_PRODUCT:
-	    str = "Wine's AVI player";
-	    break;
-	case MCI_INFO_FILE:
-	    str = "";
-	    break;
-#if 0
-	    /* FIXME: the following manifest constants are not defined in <WINE>/include/mmsystem.h */
-	case MCI_INFO_COPYRIGHT:
-	    break;
-	case MCI_INFO_NAME:
-	    break;
-#endif
-	default:
-	    WARN("Don't know this info command (%lu)\n", dwFlags);
-	    ret = MCIERR_UNRECOGNIZED_COMMAND;
-	}
-    }
-    if (str) {
-	ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
-    } else {
-	lpParms->lpstrReturn[0] = 0;
-    }
+    if (lpParms == NULL || lpParms->lpstrReturn == NULL)
+	return MCIERR_NULL_PARAMETER_BLOCK;
+    if (wma == NULL) return MCIERR_INVALID_DEVICE_ID;
+
+    TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
     
-    return ret;
+    switch (dwFlags) {
+    case MCI_INFO_PRODUCT:
+	str = "Wine's AVI player";
+	break;
+    case MCI_INFO_FILE:
+	str = "";
+	break;
+#if 0
+	/* FIXME: the following manifest constants are not defined in <WINE>/include/mmsystem.h */
+    case MCI_INFO_COPYRIGHT:
+	break;
+    case MCI_INFO_NAME:
+	break;
+#endif
+    default:
+	WARN("Don't know this info command (%lu)\n", dwFlags);
+	return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+    return MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
 }
 
 /***************************************************************************
@@ -1018,14 +1025,14 @@ LONG CALLBACK	MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 	
     case MCI_SPIN:
     case MCI_ESCAPE:		
-	WARN("Unsupported command=%s\n", MCI_CommandToString(wMsg));
+	WARN("Unsupported command=%s\n", MCI_MessageToString(wMsg));
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:			
-	TRACE("Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
+	TRACE("Sending msg=%s to default driver proc\n", MCI_MessageToString(wMsg));
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;

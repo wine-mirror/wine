@@ -34,7 +34,7 @@ typedef struct {
     WORD		wEventLength;		/* current length  (event) pointed by dwIndex */
     WORD		wStatus : 1,		/* 1 : playing, 0 : done */
 	                wTrackNr : 7,
-	                wLastCommand : 8;
+	                wLastCommand : 8;	/* last MIDI command on track */
 } MCI_MIDITRACK;
 
 typedef struct tagWINE_MCIMIDI {
@@ -44,7 +44,7 @@ typedef struct tagWINE_MCIMIDI {
     WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
     HANDLE16 		hCallback;         	/* Callback handle for pending notification  */
     HMMIO		hFile;	            	/* mmio file handle open as Element          */
-    MCI_OPEN_PARMSA 	openParms;
+    LPCSTR		lpstrElementName;	/* Name of file */
     HLOCAL16		hMidiHdr;
     WORD		dwStatus;		/* one from MCI_MODE_xxxx */
     DWORD		dwMciTimeFormat;	/* One of the supported MCI_FORMAT_xxxx */	       
@@ -80,7 +80,7 @@ static	DWORD	MIDI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 
     wmm->wDevID = modp->wDeviceID;
     mciSetDriverData(wmm->wDevID, (DWORD)wmm);
-    modp->wCustomCommandTable = -1;
+    modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_SEQUENCER;
     return modp->wDeviceID;
 }
@@ -619,7 +619,8 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParm
     }
     TRACE("hFile=%u\n", wmm->hFile);
     
-    memcpy(&wmm->openParms, lpParms, sizeof(MCI_OPEN_PARMSA));
+    /* FIXME: should I get a strdup() of it instead? */
+    wmm->lpstrElementName = lpParms->lpstrElementName;
     
     wmm->wNotifyDeviceID = dwDeviceID;
     wmm->dwStatus = MCI_MODE_NOT_READY;	/* while loading file contents */
@@ -775,7 +776,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     if (wmm == NULL)	return MCIERR_INVALID_DEVICE_ID;
     
     if (wmm->hFile == 0) {
-	WARN("Can't play: no file '%s' !\n", wmm->openParms.lpstrElementName);
+	WARN("Can't play: no file '%s' !\n", wmm->lpstrElementName);
 	return MCIERR_FILE_NOT_FOUND;
     }
     
@@ -1063,8 +1064,7 @@ static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
     if (wmm == 0)	return MCIERR_INVALID_DEVICE_ID;
     
     if (wmm->hFile == 0) {
-	WARN("Can't find file='%08lx' !\n", 
-	     (DWORD)wmm->openParms.lpstrElementName);
+	WARN("Can't find file='%s' !\n", wmm->lpstrElementName);
 	return MCIERR_FILE_NOT_FOUND;
     }
     start = 1; 		end = 99999;
@@ -1246,7 +1246,8 @@ static DWORD MIDI_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
-    
+    DWORD		ret = 0;
+
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -1272,12 +1273,14 @@ static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	    TRACE("MCI_STATUS_LENGTH => %lu\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
- 	    lpParms->dwReturn = wmm->dwStatus;
-	    TRACE("MCI_STATUS_MODE => %lu\n", lpParms->dwReturn);
+	    TRACE("MCI_STATUS_MODE => %u\n", wmm->dwStatus);
+ 	    lpParms->dwReturn = MAKEMCIRESOURCE(wmm->dwStatus, wmm->dwStatus);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_MEDIA_PRESENT:
 	    TRACE("MCI_STATUS_MEDIA_PRESENT => TRUE\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_NUMBER_OF_TRACKS:
 	    lpParms->dwReturn = (wmm->wFormat == 2) ? wmm->nTracks : 1;
@@ -1291,12 +1294,15 @@ static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 		  (dwFlags & MCI_STATUS_START) ? "start" : "current", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_READY:
-	    lpParms->dwReturn = (wmm->dwStatus != MCI_MODE_NOT_READY);
-	    TRACE("MCI_STATUS_READY = %lu\n", lpParms->dwReturn);
+	    lpParms->dwReturn = (wmm->dwStatus == MCI_MODE_NOT_READY) ?
+		MAKEMCIRESOURCE(FALSE, MCI_FALSE) : MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
+	    TRACE("MCI_STATUS_READY = %u\n", LOWORD(lpParms->dwReturn));
 	    break;
 	case MCI_STATUS_TIME_FORMAT:
-	    lpParms->dwReturn = wmm->dwMciTimeFormat;
-	    TRACE("MCI_STATUS_TIME_FORMAT => %lu\n", lpParms->dwReturn);
+	    lpParms->dwReturn = MAKEMCIRESOURCE(wmm->dwMciTimeFormat, wmm->dwMciTimeFormat);
+	    TRACE("MCI_STATUS_TIME_FORMAT => %u\n", LOWORD(lpParms->dwReturn));
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_SEQ_STATUS_DIVTYPE:
 	    TRACE("MCI_SEQ_STATUS_DIVTYPE !\n");
@@ -1311,6 +1317,8 @@ static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	    } else {
 		lpParms->dwReturn = MCI_SEQ_DIV_PPQN;
 	    }
+	    lpParms->dwReturn = MAKEMCIRESOURCE(lpParms->dwReturn,lpParms->dwReturn);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_SEQ_STATUS_MASTER:
 	    TRACE("MCI_SEQ_STATUS_MASTER !\n");
@@ -1333,7 +1341,7 @@ static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	    lpParms->dwReturn = wmm->dwTempo;
 	    break;
 	default:
-	    WARN("Unknowm command %08lX !\n", lpParms->dwItem);
+	    FIXME("Unknowm command %08lX !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
     } else {
@@ -1345,7 +1353,7 @@ static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
-    return 0;
+    return ret;
 }
 
 /**************************************************************************
@@ -1355,7 +1363,8 @@ static DWORD MIDI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 				LPMCI_GETDEVCAPS_PARMS lpParms)
 {
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
-    
+    DWORD		ret;
+
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -1365,49 +1374,58 @@ static DWORD MIDI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 	switch (lpParms->dwItem) {
 	case MCI_GETDEVCAPS_DEVICE_TYPE:
 	    TRACE("MCI_GETDEVCAPS_DEVICE_TYPE !\n");
-	    lpParms->dwReturn = MCI_DEVTYPE_SEQUENCER;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(MCI_DEVTYPE_SEQUENCER, MCI_DEVTYPE_SEQUENCER);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_AUDIO:
 	    TRACE("MCI_GETDEVCAPS_HAS_AUDIO !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_HAS_VIDEO:
 	    TRACE("MCI_GETDEVCAPS_HAS_VIDEO !\n");
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_USES_FILES:
 	    TRACE("MCI_GETDEVCAPS_USES_FILES !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_COMPOUND_DEVICE:
 	    TRACE("MCI_GETDEVCAPS_COMPOUND_DEVICE !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_EJECT:
 	    TRACE("MCI_GETDEVCAPS_CAN_EJECT !\n");
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_PLAY:
 	    TRACE("MCI_GETDEVCAPS_CAN_PLAY !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_RECORD:
 	    TRACE("MCI_GETDEVCAPS_CAN_RECORD !\n");
-	    lpParms->dwReturn = TRUE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_SAVE:
 	    TRACE("MCI_GETDEVCAPS_CAN_SAVE !\n");
-	    lpParms->dwReturn = FALSE;
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	default:
-	    TRACE("Unknown capability (%08lx) !\n", lpParms->dwItem);
+	    FIXME("Unknown capability (%08lx) !\n", lpParms->dwItem);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
     } else {
-	TRACE("No GetDevCaps-Item !\n");
+	WARN("No GetDevCaps-Item !\n");
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
-    return 0;
+    return ret;
 }
 
 /**************************************************************************
@@ -1415,45 +1433,36 @@ static DWORD MIDI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
  */
 static DWORD MIDI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 {
-    DWORD		ret = 0;
-    LPSTR		str = 0;
+    LPCSTR		str = 0;
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
     
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
-    if (lpParms == NULL || lpParms->lpstrReturn == NULL) {
-	ret = MCIERR_NULL_PARAMETER_BLOCK;
-    } else if (wmm == NULL) {
-	ret = MCIERR_INVALID_DEVICE_ID;
-    } else {
-	TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
-	
-	switch (dwFlags) {
-	case MCI_INFO_PRODUCT:
-	    str = "Wine's MIDI sequencer";
-	    break;
-	case MCI_INFO_FILE:
-	    str = wmm->openParms.lpstrElementName;
-	    break;
-#if 0
-	    /* FIXME: the following manifest constants are not defined in <WINE>/include/mmsystem.h */
-	case MCI_INFO_COPYRIGHT:
-	    break;
-	case MCI_INFO_NAME:
-	    break;
-#endif
-	default:
-	    WARN("Don't know this info command (%lu)\n", dwFlags);
-	    ret = MCIERR_UNRECOGNIZED_COMMAND;
-	}
-    }
-    if (str) {
-	ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
-    } else {
-	lpParms->lpstrReturn[0] = 0;
-    }
+    if (lpParms == NULL || lpParms->lpstrReturn == NULL)
+	return MCIERR_NULL_PARAMETER_BLOCK;
+    if (wmm == NULL) return MCIERR_INVALID_DEVICE_ID;
+
+    TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
     
-    return ret;
+    switch (dwFlags) {
+    case MCI_INFO_PRODUCT:
+	str = "Wine's MIDI sequencer";
+	break;
+    case MCI_INFO_FILE:
+	str = wmm->lpstrElementName;
+	break;
+#if 0
+	/* FIXME: the following manifest constants are not defined in <WINE>/include/mmsystem.h */
+    case MCI_INFO_COPYRIGHT:
+	break;
+    case MCI_INFO_NAME:
+	break;
+#endif
+    default:
+	WARN("Don't know this info command (%lu)\n", dwFlags);
+	return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+    return MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, str);
 }
 
 /**************************************************************************
@@ -1546,6 +1555,7 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_INFO:
     case MCI_SEEK:
 #endif
+    /* commands that should be supported */
     case MCI_LOAD:		
     case MCI_SAVE:		
     case MCI_FREEZE:		
@@ -1554,7 +1564,6 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_UNFREEZE:		
     case MCI_UPDATE:		
     case MCI_WHERE:		
-    case MCI_WINDOW:		
     case MCI_STEP:		
     case MCI_SPIN:		
     case MCI_ESCAPE:		
@@ -1562,14 +1571,18 @@ LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_CUT:		
     case MCI_DELETE:		
     case MCI_PASTE:		
-	WARN("Unsupported command=%s\n", MCI_CommandToString(wMsg));
+	WARN("Unsupported command=%s\n", MCI_MessageToString(wMsg));
+	break;
+    /* commands that should report an error */
+    case MCI_WINDOW:		
+	FIXME("Unsupported command=%s\n", MCI_MessageToString(wMsg));
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
 	FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
     default:			
-	TRACE("Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
+	TRACE("Sending msg=%s to default driver proc\n", MCI_MessageToString(wMsg));
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MCIERR_UNRECOGNIZED_COMMAND;
