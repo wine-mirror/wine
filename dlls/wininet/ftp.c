@@ -26,6 +26,7 @@
 #ifdef HAVE_NETINET_IH_H
 # include <netinet/in.h>
 #endif
+#include <netinet/in.h>
 #include <netinet/ip.h>
 
 #include "winbase.h"
