@@ -87,7 +87,8 @@
           <listitem>
             <para>
               then the case of the filenames in your include statements may be
-              wrong: maybe they include 'Windows.h' instead of 'windows.h'.
+              wrong: maybe they include <filename>Windows.h</filename> instead
+              of <filename>windows.h</filename>.
             </para>
           </listitem>
           <listitem>
@@ -119,19 +120,16 @@
           Winemaker is a perl script which is designed to help you bootstrap
           the conversion of your Windows projects to Winelib. In order to do
           this it will go analyze your code, fixing the issues listed above
-          and generate autoconf-based Makefiles.
+          and generate straight Makefiles.
         </para>
         <para>
-          Let's suppose that Wine/Winelib has been installed in the
-          <filename class="Directory">/usr/local/wine</filename>
-          directory, and that you are already in the top directory of your
+          Let's suppose that you are already in the top directory of your
           sources. Then converting your project to Winelib may be as simple
           as just running the three commands below (note the dot indicating
           current directory at the end of the first command):
         </para>
         <programlisting>
           $ winemaker --lower-uppercase .
-          $ ./configure --with-wine=/usr/local/wine
           $ make
         </programlisting>
 
@@ -146,28 +144,62 @@
 
         <para>
           Before starting to work on a big project you may want to try to port a
-          small application. The winemine application from the Wine source tree
+          small application. The notepad application from the Wine source tree
           suits well for testing purposes. It can be found in the programs
-          subdirectory. winemine is a simple application, but has a few C,
+          subdirectory. notepad is a simple application, but has a few C,
           header and resource files.
         </para>
         <para>
           Run <command>make clean</command> in the
-          winemine source directory if it contains results of previous builds.
-          Create a separate directory with name winemine2, so it won't conflict
-          with the Wine copy of the application. Copy the sources of winemine
+          notepad source directory if it contains results of previous builds.
+          Create a separate directory with name notepad2, so it won't conflict
+          with the Wine copy of the application. Copy the sources of notepad
           (files *.c, *.h, *.rc) to this directory. Now run the commands,
-          mentioned above from the winemine2 directory:
+          mentioned above from the notepad2 directory:
         </para>
         <programlisting>
           $ winemaker --lower-uppercase .
-          $ ./configure --with-wine=/usr/local/wine
+          $ make
+        </programlisting>
+
+        <para>
+          Notice how the build fails in a resource file
+          (<filename>Da.rc</filename> at the time this was written).
+          This is because for the time being, the Wine resource compiler
+          (<command>windres</command>) can't cope with more than one
+          resource file ending up in a given executable. To get around
+          that limitation, the Wine developers have chosen to only have
+          one master resource file per application, and include the
+          other ones via <literal>#include</literal> statements in the
+          master one. The included files do not
+          <literal>#include</literal> the necessary files to be
+          compilable on their own. You will need to do the same thing
+          for now in your own Winelib port projects.
+        </para>
+        <para>
+          To fix that problem, you will need to edit the list of
+          resource files winemaker thought notepad used, and only keep
+          the master resource file. To do so, open
+          <filename>notepad2/Makefile</filename> in a text editor and
+          search for an assignment to a variable with
+          <literal>RC_SRCS</literal> as part of its name. It will likely
+          be named <literal>notepad2_exe_RC_SRCS</literal>. There will
+          be a list of resource files starting on the same line. Remove
+          them all except <filename>rsrc.rc</filename> (this is the
+          master one for notepad). Save your work.
+        </para>
+        <para>
+          Now you're ready to continue at the same point the first
+          <command>make</command> failed. Return to the notepad2
+          directory and type:
+        </para>
+        <programlisting>
           $ make
         </programlisting>
 
         <para>
           You are done! Now you can start the application as
-          <command>./winemine2</command>.
+          <command>./notepad2</command>.
         </para>
         <para>
           If you come across problems preparing and building this application
