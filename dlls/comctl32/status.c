@@ -457,18 +457,22 @@ static LRESULT
 STATUSBAR_GetTipTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
+    LPSTR tip = (LPSTR)lParam;
 
-    if (infoPtr->hwndToolTip) {
-	TTTOOLINFOA ti;
-	ti.cbSize = sizeof(TTTOOLINFOA);
-	ti.hwnd = hwnd;
-	ti.uId = LOWORD(wParam);
-	SendMessageA (infoPtr->hwndToolTip, TTM_GETTEXTA, 0, (LPARAM)&ti);
+    if (tip) {
+        CHAR buf[INFOTIPSIZE];
+        buf[0]='\0';
 
-	if (ti.lpszText)
-	    lstrcpynA ((LPSTR)lParam, ti.lpszText, HIWORD(wParam));
+        if (infoPtr->hwndToolTip) {
+            TTTOOLINFOA ti;
+            ti.cbSize = sizeof(TTTOOLINFOA);
+            ti.hwnd = hwnd;
+            ti.uId = LOWORD(wParam);
+            ti.lpszText = buf;
+            SendMessageA(infoPtr->hwndToolTip, TTM_GETTEXTA, 0, (LPARAM)&ti);
+        }
+        lstrcpynA(tip, buf, HIWORD(wParam));
     }
-
     return 0;
 }
 
@@ -477,16 +481,21 @@ static LRESULT
 STATUSBAR_GetTipTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
+    LPWSTR tip = (LPWSTR)lParam;
 
-    if (infoPtr->hwndToolTip) {
-	TTTOOLINFOW ti;
-	ti.cbSize = sizeof(TTTOOLINFOW);
-	ti.hwnd = hwnd;
-	ti.uId = LOWORD(wParam);
-	SendMessageW (infoPtr->hwndToolTip, TTM_GETTEXTW, 0, (LPARAM)&ti);
+    if (tip) {
+        WCHAR buf[INFOTIPSIZE];
+        buf[0]=0;
 
-	if (ti.lpszText)
-	    lstrcpynW ((LPWSTR)lParam, ti.lpszText, HIWORD(wParam));
+	if (infoPtr->hwndToolTip) {
+	    TTTOOLINFOW ti;
+	    ti.cbSize = sizeof(TTTOOLINFOW);
+	    ti.hwnd = hwnd;
+	    ti.uId = LOWORD(wParam);
+            ti.lpszText = buf;
+	    SendMessageW(infoPtr->hwndToolTip, TTM_GETTEXTW, 0, (LPARAM)&ti);
+	}
+	lstrcpynW(tip, buf, HIWORD(wParam));
     }
 
     return 0;
