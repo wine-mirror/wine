@@ -1611,9 +1611,9 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
             DEBUG_SendUnloadDLLEvent( wm->module );
     }
 
-    MODULE_FlushModrefs();
-
     TRACE("(%s) - END\n", wm->modname );
+
+    MODULE_FlushModrefs();
 
     return TRUE;
 }
