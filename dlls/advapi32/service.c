@@ -28,7 +28,6 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "wine/unicode.h"
-#include "heap.h"
 #include "wine/debug.h"
 #include "winternl.h"
 
@@ -225,7 +224,7 @@ EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
 /******************************************************************************
  * read_scm_lock_data
  *
- * helper function for StartServiceCtrlDispatcherA/W
+ * helper function for service control dispatcher
  *
  * SCM database is locked by StartService;
  * open global SCM lock object and read service name
@@ -257,7 +256,7 @@ static BOOL read_scm_lock_data( LPWSTR buffer )
 /******************************************************************************
  * open_seb_shmem
  *
- * helper function for StartServiceCtrlDispatcherA/W
+ * helper function for service control dispatcher
  */
 static struct SEB* open_seb_shmem( LPWSTR service_name, HANDLE* hServiceShmem )
 {
@@ -281,7 +280,7 @@ static struct SEB* open_seb_shmem( LPWSTR service_name, HANDLE* hServiceShmem )
 /******************************************************************************
  * build_arg_vectors
  *
- * helper function for StartServiceCtrlDispatcherA/W
+ * helper function for service control dispatcher
  *
  * Allocate and initialize array of LPWSTRs to arguments in variable part
  * of service environment block.
@@ -307,22 +306,19 @@ static LPWSTR* build_arg_vectors( struct SEB* seb )
 }
 
 /******************************************************************************
- * StartServiceCtrlDispatcherA [ADVAPI32.@]
+ * service_ctrl_dispatcher
+ *
+ * helper function for StartServiceCtrlDispatcherA/W
  */
-BOOL WINAPI
-StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
+static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii )
 {
-    LPSERVICE_MAIN_FUNCTIONA fpMain;
     WCHAR service_name[ MAX_SERVICE_NAME ];
     HANDLE hServiceShmem = NULL;
     struct SEB *seb = NULL;
-    DWORD  dwNumServiceArgs = 0;
+    DWORD  dwNumServiceArgs;
     LPWSTR *lpArgVecW = NULL;
-    LPSTR  *lpArgVecA = NULL;
     unsigned int i;
     BOOL ret = FALSE;
-
-    TRACE("(%p)\n", servent);
 
     if( ! read_scm_lock_data( service_name ) )
     {
@@ -347,31 +343,66 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
     lpArgVecW[0] = service_name;
     dwNumServiceArgs = seb->argc + 1;
 
-    /* Convert the Unicode arg vectors back to ASCII */
-    lpArgVecA = (LPSTR*) HeapAlloc( GetProcessHeap(), 0,
-                                    dwNumServiceArgs*sizeof(LPSTR) );
-    for(i=0; i<dwNumServiceArgs; i++)
-        lpArgVecA[i]=HEAP_strdupWtoA(GetProcessHeap(), 0, lpArgVecW[i]);
-
-    /* FIXME: find service entry by name if SERVICE_WIN32_SHARE_PROCESS */
-    TRACE("%s at %p)\n", debugstr_a(servent->lpServiceName),servent);
-    fpMain = servent->lpServiceProc;
+    if( ascii )
+        /* Convert the Unicode arg vectors back to ASCII */
+        for(i=0; i<dwNumServiceArgs; i++)
+        {
+            LPWSTR src = lpArgVecW[i];
+            int len = WideCharToMultiByte( CP_ACP, 0, src, -1, NULL, 0, NULL, NULL );
+            LPSTR dest = HeapAlloc( GetProcessHeap(), 0, len );
+            if( NULL == dest )
+                goto done;
+            WideCharToMultiByte( CP_ACP, 0, src, -1, dest, len, NULL, NULL );
+            /* copy converted string back  */
+            memcpy( src, dest, len );
+            HeapFree( GetProcessHeap(), 0, dest );
+        }
 
     /* try to start the service */
-    fpMain( dwNumServiceArgs, lpArgVecA);
+    servent->lpServiceProc( dwNumServiceArgs, lpArgVecW);
+    ret = TRUE;
 
 done:
-    if(dwNumServiceArgs)
-    {
-        /* free arg strings */
-        for(i=0; i<dwNumServiceArgs; i++)
-            HeapFree(GetProcessHeap(), 0, lpArgVecA[i]);
-        HeapFree(GetProcessHeap(), 0, lpArgVecA);
-    }
-
     if( lpArgVecW ) HeapFree( GetProcessHeap(), 0, lpArgVecW );
     if( seb ) UnmapViewOfFile( seb );
     if( hServiceShmem ) CloseHandle( hServiceShmem );
+    return ret;
+}
+
+/******************************************************************************
+ * StartServiceCtrlDispatcherA [ADVAPI32.@]
+ */
+BOOL WINAPI
+StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
+{
+    int count, i;
+    LPSERVICE_TABLE_ENTRYW ServiceTableW;
+    BOOL ret;
+
+    TRACE("(%p)\n", servent);
+
+    /* convert service table to unicode */
+    for( count = 0; servent[ count ].lpServiceName; )
+        count++;
+    ServiceTableW = HeapAlloc( GetProcessHeap(), 0, (count + 1) * sizeof(SERVICE_TABLE_ENTRYW) );
+    if( NULL == ServiceTableW )
+        return FALSE;
+
+    for( i = 0; i < count; i++ )
+    {
+        ServiceTableW[ i ].lpServiceName = SERV_dup( servent[ i ].lpServiceName );
+        ServiceTableW[ i ].lpServiceProc = (LPSERVICE_MAIN_FUNCTIONW) servent[ i ].lpServiceProc;
+    }
+    ServiceTableW[ count ].lpServiceName = NULL;
+    ServiceTableW[ count ].lpServiceProc = NULL;
+
+    /* start dispatcher */
+    ret = service_ctrl_dispatcher( ServiceTableW, TRUE );
+
+    /* free service table */
+    for( i = 0; i < count; i++ )
+        SERV_free( ServiceTableW[ i ].lpServiceName );
+    HeapFree( GetProcessHeap(), 0, ServiceTableW );
     return ret;
 }
 
@@ -384,43 +415,8 @@ done:
 BOOL WINAPI
 StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 {
-    LPSERVICE_MAIN_FUNCTIONW fpMain;
-    WCHAR service_name[ MAX_SERVICE_NAME ];
-    HANDLE hServiceShmem = NULL;
-    struct SEB *seb;
-    DWORD  dwNumServiceArgs ;
-    LPWSTR *lpServiceArgVectors ;
-
     TRACE("(%p)\n", servent);
-
-    if( ! read_scm_lock_data( service_name ) )
-        return FALSE;
-
-    seb = open_seb_shmem( service_name, &hServiceShmem );
-    if( NULL == seb )
-        return FALSE;
-
-    lpServiceArgVectors = build_arg_vectors( seb );
-    if( NULL == lpServiceArgVectors )
-    {
-        UnmapViewOfFile( seb );
-        CloseHandle( hServiceShmem );
-        return FALSE;
-    }
-    lpServiceArgVectors[0] = service_name;
-    dwNumServiceArgs = seb->argc + 1;
-
-    /* FIXME: find service entry by name if SERVICE_WIN32_SHARE_PROCESS */
-    TRACE("%s at %p)\n", debugstr_w(servent->lpServiceName),servent);
-    fpMain = servent->lpServiceProc;
-
-    /* try to start the service */
-    fpMain( dwNumServiceArgs, lpServiceArgVectors);
-
-    HeapFree( GetProcessHeap(), 0, lpServiceArgVectors );
-    UnmapViewOfFile( seb );
-    CloseHandle( hServiceShmem );
-    return TRUE;
+    return service_ctrl_dispatcher( servent, FALSE );
 }
 
 /******************************************************************************
