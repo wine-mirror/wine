@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = oleaut32.dll
 IMPORTS   = oleaut32
+EXTRALIBS = $(LIBUUID)
 
 CTESTS = \
 	safearray.c \

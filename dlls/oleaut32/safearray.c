@@ -20,6 +20,15 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* Memory Layout of a SafeArray:
+ *
+ * -0x10: start of memory.
+ * -0x10: GUID	for VT_DISPATCH and VT_UNKNOWN safearrays (if FADF_HAVEIID)
+ * -0x04: DWORD varianttype; (for all others, except VT_RECORD) (if FADF_HAVEVARTYPE)
+ *  -0x4: IRecordInfo* iface; 	(if FADF_RECORD, for VT_RECORD (can be NULL))
+ *  0x00: SAFEARRAY,
+ *  0x10: SAFEARRAYBOUNDS[0...]
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -59,7 +68,7 @@ static ULONG
 getArraySize(SAFEARRAY *psa);
 
 static HRESULT
-duplicateData(SAFEARRAY *psa, SAFEARRAY **ppsaOut);
+duplicateData(SAFEARRAY *psa, SAFEARRAY *ppsaOut);
 
 /* Association between VARTYPE and their size.
    A size of zero is defined for the unsupported types.  */
@@ -100,6 +109,38 @@ VARTYPE_NOT_SUPPORTED,	/* VT_CARRAY      [T]       C style array			*/
 VARTYPE_NOT_SUPPORTED,	/* VT_USERDEFINED [T]       user defined type			*/
 VARTYPE_NOT_SUPPORTED,	/* VT_LPSTR       [T][P]    null terminated string	*/
 VARTYPE_NOT_SUPPORTED,	/* VT_LPWSTR      [T][P]    wide null term string		*/
+VARTYPE_NOT_SUPPORTED,	/* 32 */
+VARTYPE_NOT_SUPPORTED,  /* 33 */
+VARTYPE_NOT_SUPPORTED,  /* 34 */
+VARTYPE_NOT_SUPPORTED,  /* 35 */
+VARTYPE_NOT_SUPPORTED,  /* VT_RECORD                record */
+VARTYPE_NOT_SUPPORTED,  /* 37 */
+VARTYPE_NOT_SUPPORTED,  /* 38 */
+VARTYPE_NOT_SUPPORTED,  /* 39 */
+VARTYPE_NOT_SUPPORTED,  /* 40 */
+VARTYPE_NOT_SUPPORTED,  /* 41 */
+VARTYPE_NOT_SUPPORTED,  /* 42 */
+VARTYPE_NOT_SUPPORTED,  /* 43 */
+VARTYPE_NOT_SUPPORTED,  /* 44 */
+VARTYPE_NOT_SUPPORTED,  /* 45 */
+VARTYPE_NOT_SUPPORTED,  /* 46 */
+VARTYPE_NOT_SUPPORTED,  /* 47 */
+VARTYPE_NOT_SUPPORTED,  /* 48 */
+VARTYPE_NOT_SUPPORTED,  /* 49 */
+VARTYPE_NOT_SUPPORTED,  /* 50 */
+VARTYPE_NOT_SUPPORTED,  /* 51 */
+VARTYPE_NOT_SUPPORTED,  /* 52 */
+VARTYPE_NOT_SUPPORTED,  /* 53 */
+VARTYPE_NOT_SUPPORTED,  /* 54 */
+VARTYPE_NOT_SUPPORTED,  /* 55 */
+VARTYPE_NOT_SUPPORTED,  /* 56 */
+VARTYPE_NOT_SUPPORTED,  /* 57 */
+VARTYPE_NOT_SUPPORTED,  /* 58 */
+VARTYPE_NOT_SUPPORTED,  /* 59 */
+VARTYPE_NOT_SUPPORTED,  /* 60 */
+VARTYPE_NOT_SUPPORTED,  /* 61 */
+VARTYPE_NOT_SUPPORTED,  /* 62 */
+VARTYPE_NOT_SUPPORTED,  /* 63 */
 VARTYPE_NOT_SUPPORTED,	/* VT_FILETIME       [P]    FILETIME			*/
 VARTYPE_NOT_SUPPORTED,	/* VT_BLOB           [P]    Length prefixed bytes */
 VARTYPE_NOT_SUPPORTED,	/* VT_STREAM         [P]    Name of stream follows		*/
@@ -109,9 +150,6 @@ VARTYPE_NOT_SUPPORTED,	/* VT_STORED_OBJECT  [P]    Storage contains object*/
 VARTYPE_NOT_SUPPORTED,	/* VT_BLOB_OBJECT    [P]    Blob contains an object*/
 VARTYPE_NOT_SUPPORTED,	/* VT_CF             [P]    Clipboard format			*/
 VARTYPE_NOT_SUPPORTED,	/* VT_CLSID          [P]    A Class ID			*/
-VARTYPE_NOT_SUPPORTED,	/* VT_VECTOR         [P]    simple counted array		*/
-VARTYPE_NOT_SUPPORTED,	/* VT_ARRAY    [V]          SAFEARRAY*			*/
-VARTYPE_NOT_SUPPORTED 	/* VT_BYREF    [V]          void* for local use	*/
 };
 
 static const int LAST_VARTYPE = sizeof(VARTYPE_SIZE)/sizeof(VARTYPE_SIZE[0]);
@@ -127,23 +165,24 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
 {
   SAFEARRAYBOUND *sab;
   LONG allocSize = 0;
+  LPVOID ptr;
 
   if (!cDims || cDims >= 0x10000) /* 65536 appears to be the limit */
     return E_INVALIDARG;
   if (!ppsaOut)
     return E_POINTER;
 
-
-  /* SAFEARRAY + SAFEARRAYBOUND * (cDims -1) ( -1 because there is already one
-                                             ( in SAFEARRAY struct */
-  allocSize = sizeof(**ppsaOut) + (sizeof(*sab) * (cDims-1));
+  /* GUID + SAFEARRAY + SAFEARRAYBOUND * (cDims -1)
+   * ( -1 because there is already one ( in SAFEARRAY struct
+   */
+  allocSize = sizeof(GUID) + sizeof(**ppsaOut) + (sizeof(*sab) * (cDims-1));
 
   /* Allocate memory for SAFEARRAY struc */
-  if(( (*ppsaOut)=HeapAlloc(
-        GetProcessHeap(), HEAP_ZERO_MEMORY, allocSize)) == NULL){
-    return(E_UNEXPECTED);
-  }
-  (*ppsaOut)->cDims = cDims;
+  ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, allocSize);
+  if (!ptr)
+    return E_OUTOFMEMORY;
+  *ppsaOut = ptr+sizeof(GUID);
+  (*ppsaOut)->cDims	= cDims;
   TRACE("(%d): %lu bytes allocated for descriptor.\n", cDims, allocSize);
 
   return(S_OK);
@@ -152,21 +191,37 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
 /*************************************************************************
  *		SafeArrayAllocDescriptorEx (OLEAUT32.41)
  * Allocate the appropriate amount of memory for the SafeArray descriptor
- *
- * This is a minimal implementation just to get things moving.
- *
- * The MSDN documentation on this doesn't tell us much.
+ * and also store information about the vartype before the returned pointer.
  */
 HRESULT WINAPI SafeArrayAllocDescriptorEx(
   VARTYPE vt,
   UINT    cDims,
   SAFEARRAY **ppsaOut)
 {
-  if ( (vt >= LAST_VARTYPE) ||
-       ( VARTYPE_SIZE[vt] == VARTYPE_NOT_SUPPORTED ) )
-    return E_UNEXPECTED;
+  HRESULT hres;
 
-  return SafeArrayAllocDescriptor (cDims, ppsaOut);
+  hres = SafeArrayAllocDescriptor (cDims, ppsaOut);
+  if (FAILED(hres))
+    return hres;
+
+  switch (vt) {
+  case VT_DISPATCH:
+    (*ppsaOut)->fFeatures = FADF_HAVEIID;
+    SafeArraySetIID( *ppsaOut, &IID_IDispatch);
+    break;
+  case VT_UNKNOWN:
+    (*ppsaOut)->fFeatures = FADF_HAVEIID;
+    SafeArraySetIID( *ppsaOut, &IID_IUnknown);
+    break;
+  case VT_RECORD:
+    (*ppsaOut)->fFeatures = FADF_RECORD;
+    break;
+  default:
+    (*ppsaOut)->fFeatures = FADF_HAVEVARTYPE;
+    ((DWORD*)*ppsaOut)[-1] = vt;
+    break;
+  }
+  return S_OK;
 }
 
 /*************************************************************************
@@ -213,12 +268,18 @@ SAFEARRAY* WINAPI SafeArrayCreate(
     return NULL;
 
   /* Allocate memory for the array descriptor */
-  if( FAILED( hRes = SafeArrayAllocDescriptor(cDims, &psa)))
+  if( FAILED( hRes = SafeArrayAllocDescriptorEx(vt, cDims, &psa)))
     return NULL;
 
   /* setup data members... */
   psa->cDims     = cDims;
-  psa->fFeatures = getFeatures(vt);
+  switch (vt) {
+  case VT_BSTR:      psa->fFeatures |= FADF_BSTR;break;
+  case VT_UNKNOWN:   psa->fFeatures |= FADF_UNKNOWN;break;
+  case VT_DISPATCH:  psa->fFeatures |= FADF_DISPATCH;break;
+  case VT_VARIANT:   psa->fFeatures |= FADF_VARIANT;break;
+  default: break;
+  }
   psa->cLocks    = 0;
   psa->pvData    = NULL;
   psa->cbElements= VARTYPE_SIZE[vt];
@@ -246,14 +307,16 @@ SAFEARRAY* WINAPI SafeArrayCreate(
 HRESULT WINAPI SafeArrayDestroyDescriptor(
   SAFEARRAY *psa)
 {
+  LPVOID ptr;
+
   /* Check for lockness before to free... */
   if(psa->cLocks > 0)
     return DISP_E_ARRAYISLOCKED;
 
   /* The array is unlocked, then, deallocate memory */
-  if(HeapFree( GetProcessHeap(), 0, psa) == FALSE)
+  ptr = ((IID*)psa)-1;
+  if(HeapFree( GetProcessHeap(), 0, ptr) == FALSE)
     return E_UNEXPECTED;
-
   return(S_OK);
 }
 
@@ -328,7 +391,7 @@ HRESULT WINAPI SafeArrayPutElement(
 
     } else {
 
-      if(psa->fFeatures == FADF_BSTR) { /* Create a new object */
+      if(psa->fFeatures & FADF_BSTR) { /* Create a new object */
         BSTR pbstrReAllocStr = NULL;
         if(pv &&
            ((pbstrReAllocStr = SYSDUPSTRING( (OLECHAR*)pv )) == NULL)) {
@@ -337,7 +400,7 @@ HRESULT WINAPI SafeArrayPutElement(
         } else
           *((BSTR*)elementStorageAddress) = pbstrReAllocStr;
       }
-      else if(psa->fFeatures == FADF_VARIANT) {
+      else if(psa->fFeatures & FADF_VARIANT) {
         HRESULT hr = VariantCopy(elementStorageAddress, pv);
         if (FAILED(hr)) {
           SafeArrayUnlock(psa);
@@ -385,7 +448,7 @@ HRESULT WINAPI SafeArrayGetElement(
     /* Figure out the number of byte to skip ... */
     elementStorageAddress = (char *) psa->pvData+(stepCountInSAData*psa->cbElements);
 
-    if( psa->fFeatures == FADF_BSTR) {           /* reallocate the obj */
+    if( psa->fFeatures & FADF_BSTR) {           /* reallocate the obj */
       BSTR pbstrStoredStr = *(OLECHAR**)elementStorageAddress;
       BSTR pbstrReturnedStr = NULL;
       if( pbstrStoredStr &&
@@ -395,7 +458,7 @@ HRESULT WINAPI SafeArrayGetElement(
       } else
         *((BSTR*)pv) = pbstrReturnedStr;
     }
-    else if( psa->fFeatures == FADF_VARIANT) {
+    else if( psa->fFeatures & FADF_VARIANT) {
       HRESULT hr;
       VariantInit(pv);
       hr = VariantCopy(pv, elementStorageAddress);
@@ -624,7 +687,7 @@ HRESULT WINAPI SafeArrayDestroyData(
   if(!(psa->fFeatures & FADF_CREATEVECTOR)) { /* Set when we do CreateVector */
 
     /* free the whole chunk */
-    if((hRes = HeapFree( GetProcessHeap(), 0, psa->pvData)) == 0) /*falied*/
+    if((hRes = HeapFree( GetProcessHeap(), 0, psa->pvData)) == 0) /*failed*/
       return E_UNEXPECTED; /* UNDOC error condition */
 
     psa->pvData = NULL;
@@ -640,7 +703,7 @@ HRESULT WINAPI SafeArrayDestroyData(
  */
 HRESULT WINAPI SafeArrayCopyData(
   SAFEARRAY *psaSource,
-  SAFEARRAY **psaTarget)
+  SAFEARRAY *psaTarget)
 {
   USHORT   cDimCount;        /* looper */
   LONG     lDelta;           /* looper */
@@ -648,10 +711,10 @@ HRESULT WINAPI SafeArrayCopyData(
   ULONG    ulWholeArraySize; /* Number of item in SA */
   BSTR   bstr;
 
-  if(! (validArg(psaSource) && validArg(*psaTarget)) )
+  if(! (validArg(psaSource) && validArg(psaTarget)) )
     return E_INVALIDARG;
 
-  if(SafeArrayGetDim(psaSource) != SafeArrayGetDim(*psaTarget))
+  if(SafeArrayGetDim(psaSource) != SafeArrayGetDim(psaTarget))
     return E_INVALIDARG;
 
   ulWholeArraySize = getArraySize(psaSource);
@@ -659,34 +722,34 @@ HRESULT WINAPI SafeArrayCopyData(
   /* The two arrays boundaries must be of same lenght */
   for(cDimCount=0;cDimCount < psaSource->cDims; cDimCount++)
     if( psaSource->rgsabound[cDimCount].cElements !=
-      (*psaTarget)->rgsabound[cDimCount].cElements)
+      psaTarget->rgsabound[cDimCount].cElements)
       return E_INVALIDARG;
 
-  if( isPointer((*psaTarget)->fFeatures) ) {         /* the target contains ptr
-                                                        that must be released */
+  if( isPointer(psaTarget->fFeatures) ) {         /* the target contains ptr
+                                                     that must be released */
     for(lDelta=0;lDelta < ulWholeArraySize; lDelta++) {
       punk = *(IUnknown**)
-        ((char *) (*psaTarget)->pvData + (lDelta * (*psaTarget)->cbElements));
+        ((char *) psaTarget->pvData + (lDelta * psaTarget->cbElements));
 
       if( punk != NULL)
         IUnknown_Release(punk);
     }
 
   }
-  else if( (*psaTarget)->fFeatures & FADF_BSTR) {    /* the target contain BSTR
+  else if( psaTarget->fFeatures & FADF_BSTR) {    /* the target contain BSTR
                                                         that must be freed */
     for(lDelta=0;lDelta < ulWholeArraySize; lDelta++) {
       bstr =
-        *(BSTR*)((char *) (*psaTarget)->pvData + (lDelta * (*psaTarget)->cbElements));
+        *(BSTR*)((char *) psaTarget->pvData + (lDelta * psaTarget->cbElements));
 
       if( bstr != NULL)
         SysFreeString( bstr );
     }
   }
-  else if( (*psaTarget)->fFeatures & FADF_VARIANT) {
+  else if( psaTarget->fFeatures & FADF_VARIANT) {
 
     for(lDelta=0;lDelta < ulWholeArraySize; lDelta++) {
-      VariantClear((VARIANT*)((char *) (*psaTarget)->pvData + (lDelta * (*psaTarget)->cbElements)));
+      VariantClear((VARIANT*)((char *) psaTarget->pvData + (lDelta * psaTarget->cbElements)));
     }
   }
 
@@ -732,9 +795,26 @@ HRESULT WINAPI SafeArrayCopy(
 
   if((hRes=SafeArrayAllocDescriptor(psa->cDims, ppsaOut)) == S_OK){
 
-    /* Duplicate the SAFEARRAY struc */
+    /* Duplicate the SAFEARRAY struct */
     memcpy(*ppsaOut, psa,
             sizeof(*psa)+(sizeof(*(psa->rgsabound))*(psa->cDims-1)));
+
+    /* If the features that use storage before the SAFEARRAY struct are
+     * enabled, also copy this memory range. Flags have been copied already.
+     */
+    if (psa->fFeatures & (FADF_HAVEIID | FADF_HAVEVARTYPE))
+      memcpy(((GUID*)*ppsaOut)-1, ((GUID*)psa)-1, sizeof(GUID));
+
+    /* Copy the IRecordInfo* reference */
+    if (psa->fFeatures & FADF_RECORD) {
+      IRecordInfo *ri;
+
+      ri = ((IRecordInfo**)psa)[-1];
+      if (ri) {
+	((IRecordInfo**)*ppsaOut)[-1] = ri;
+	IRecordInfo_AddRef(ri);
+      }
+    }
 
     (*ppsaOut)->pvData = NULL; /* do not point to the same data area */
 
@@ -750,7 +830,7 @@ HRESULT WINAPI SafeArrayCopy(
       HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dAllocSize);
     if( (*ppsaOut)->pvData != NULL) {   /* HeapAlloc succeed */
 
-      if( (hRes=duplicateData(psa, ppsaOut)) != S_OK) { /* E_OUTOFMEMORY */
+      if( (hRes=duplicateData(psa, *ppsaOut)) != S_OK) { /* E_OUTOFMEMORY */
         HeapFree(GetProcessHeap(), 0, (*ppsaOut)->pvData);
         (*ppsaOut)->pvData = NULL;
         SafeArrayDestroyDescriptor(*ppsaOut);
@@ -779,6 +859,7 @@ SAFEARRAY* WINAPI SafeArrayCreateVector(
   ULONG   cElements)
 {
   SAFEARRAY *psa;
+  LPVOID    *ptr;
 
   /* Validate supported VARTYPE */
   if ( (vt >= LAST_VARTYPE) ||
@@ -786,11 +867,12 @@ SAFEARRAY* WINAPI SafeArrayCreateVector(
     return NULL;
 
   /* Allocate memory for the array descriptor and data contiguously  */
-  if( FAILED( psa = HeapAlloc( GetProcessHeap(),
+  ptr = HeapAlloc( GetProcessHeap(),
                       HEAP_ZERO_MEMORY,
-                      (sizeof(*psa) + (VARTYPE_SIZE[vt] * cElements))))) {
+                      (sizeof(GUID)+sizeof(*psa)+(VARTYPE_SIZE[vt]*cElements)));
+  if (!ptr)
     return NULL;
-  }
+  psa = (SAFEARRAY*)(ptr+sizeof(GUID));
 
   /* setup data members... */
   psa->cDims      = 1; /* always and forever */
@@ -874,13 +956,13 @@ static BOOL validArg(
   /* Check whether the size of the chunk makes sense... That's the only thing
      I can think of now... */
 
-  psaSize = HeapSize(GetProcessHeap(), 0, psa);
+  psaSize = HeapSize(GetProcessHeap(), 0, ((IID*)psa)-1);
   if (psaSize == -1)
     /* uh, foreign heap. Better don't mess with it ! */
     return TRUE;
 
   /* size of the descriptor when the SA is not created with CreateVector */
-  descSize = sizeof(*psa) + (sizeof(*sab) * (psa->cDims-1));
+  descSize = sizeof(GUID) + sizeof(*psa) + (sizeof(*sab) * (psa->cDims-1));
 
   /* size of the descriptor + data when created with CreateVector */
   fullSize = sizeof(*psa) + (psa->cbElements * psa->rgsabound[0].cElements);
@@ -960,14 +1042,12 @@ static BOOL resizeSafeArray(
 /************************************************************************
  * Used to set the fFeatures data member of the SAFEARRAY structure.
  */
-static INT getFeatures(
-  VARTYPE vt)
-{
-  switch(vt) {
-    case VT_BSTR:      return FADF_BSTR;
-    case VT_UNKNOWN:   return FADF_UNKNOWN;
-    case VT_DISPATCH:  return FADF_DISPATCH;
-    case VT_VARIANT:   return FADF_VARIANT;
+static INT getFeatures(VARTYPE vt) {
+  switch (vt) {
+  case VT_BSTR:      return FADF_BSTR;
+  case VT_UNKNOWN:   return FADF_UNKNOWN;
+  case VT_DISPATCH:  return FADF_DISPATCH;
+  case VT_VARIANT:   return FADF_VARIANT;
   }
   return 0;
 }
@@ -1088,14 +1168,14 @@ static ULONG getArraySize(
  */
 static HRESULT duplicateData(
   SAFEARRAY *psa,
-  SAFEARRAY **ppsaOut)
+  SAFEARRAY *ppsaOut)
 {
   ULONG    ulWholeArraySize; /* size of the thing */
   LONG     lDelta;
 
   ulWholeArraySize = getArraySize(psa); /* Number of item in SA */
 
-  SafeArrayLock(*ppsaOut);
+  SafeArrayLock(ppsaOut);
 
   if( isPointer(psa->fFeatures) ) {  /* If datatype is object increment
                                         object's reference count */
@@ -1109,8 +1189,7 @@ static HRESULT duplicateData(
     }
 
     /* Copy the source array data into target array */
-    memcpy((*ppsaOut)->pvData, psa->pvData,
-      ulWholeArraySize*psa->cbElements);
+    memcpy(ppsaOut->pvData, psa->pvData, ulWholeArraySize*psa->cbElements);
 
   }
   else if( psa->fFeatures & FADF_BSTR ) { /* if datatype is BSTR allocate
@@ -1121,11 +1200,11 @@ static HRESULT duplicateData(
       if(( pbstrReAllocStr = SYSDUPSTRING(
             *(BSTR*)((char *) psa->pvData+(lDelta * psa->cbElements)))) == NULL) {
 
-        SafeArrayUnlock(*ppsaOut);
+        SafeArrayUnlock(ppsaOut);
         return E_OUTOFMEMORY;
       }
 
-      *((BSTR*)((char *) (*ppsaOut)->pvData+(lDelta * psa->cbElements))) =
+      *((BSTR*)((char *)ppsaOut->pvData+(lDelta * psa->cbElements))) =
         pbstrReAllocStr;
     }
 
@@ -1133,19 +1212,14 @@ static HRESULT duplicateData(
   else if( psa->fFeatures & FADF_VARIANT ) {
 
     for(lDelta=0; lDelta < ulWholeArraySize; lDelta++) {
-      VariantCopy((VARIANT*)((char *) (*ppsaOut)->pvData+(lDelta * psa->cbElements)),
+      VariantCopy((VARIANT*)((char *) ppsaOut->pvData+(lDelta * psa->cbElements)),
                   (VARIANT*)((char *) psa->pvData+(lDelta * psa->cbElements)));
     }
 
+  } else { /* Simply copy the source array data into target array */
+    memcpy(ppsaOut->pvData, psa->pvData, ulWholeArraySize*psa->cbElements);
   }
-  else { /* Simply copy the source array data into target array */
-
-    memcpy((*ppsaOut)->pvData, psa->pvData,
-      ulWholeArraySize*psa->cbElements);
-  }
-
-  SafeArrayUnlock(*ppsaOut);
-
+  SafeArrayUnlock(ppsaOut);
   return S_OK;
 }
 
@@ -1158,44 +1232,106 @@ HRESULT WINAPI SafeArrayGetVartype(
   SAFEARRAY* psa,
   VARTYPE*   pvt)
 {
-  HRESULT hr = E_INVALIDARG;
-  VARTYPE vt = VT_EMPTY;
-
-  /* const short VARTYPE_OFFSET = -4; */
-
   if (psa->fFeatures & FADF_HAVEVARTYPE)
   {
     /* VT tag @ negative offset 4 in the array descriptor */
-    FIXME("Returning VT_BSTR instead of VT_...\n");
-    vt = VT_BSTR;
-  }
-  else if (psa->fFeatures & FADF_RECORD)
-  {
-    vt = VT_RECORD;
-  }
-  else if (psa->fFeatures & FADF_BSTR)
-  {
-    vt = VT_BSTR;
-  }
-  else if (psa->fFeatures & FADF_UNKNOWN)
-  {
-    vt = VT_UNKNOWN;
-  }
-  else if (psa->fFeatures & FADF_DISPATCH)
-  {
-    vt = VT_DISPATCH;
-  }
-  else if (psa->fFeatures & FADF_VARIANT)
-  {
-    vt = VT_VARIANT;
+    *pvt = ((DWORD*)psa)[-1];
+    return S_OK;
   }
 
-  if (vt != VT_EMPTY)
+  if (psa->fFeatures & FADF_RECORD)
   {
-    *pvt = vt;
-    hr = S_OK;
+    *pvt = VT_RECORD;
+    return S_OK;
   }
 
-  TRACE("HRESULT = %08lx\n", hr);
-  return hr;
+  if (psa->fFeatures & FADF_BSTR)
+  {
+    *pvt = VT_BSTR;
+    return S_OK;
+  }
+
+  if (psa->fFeatures & FADF_UNKNOWN)
+  {
+    *pvt = VT_UNKNOWN;
+    return S_OK;
+  }
+
+  if (psa->fFeatures & FADF_DISPATCH)
+  {
+    *pvt = VT_UNKNOWN; /* Yes, checked against windows */
+    return S_OK;
+  }
+
+  if (psa->fFeatures & FADF_VARIANT)
+  {
+    *pvt = VT_VARIANT;
+    return S_OK;
+  }
+  if (psa->fFeatures & FADF_HAVEIID)
+  {
+    /* We could check the IID here, but Windows apparently does not
+     * do that and returns VT_UNKNOWN for VT_DISPATCH too.
+     */
+    *pvt = VT_UNKNOWN;
+    return S_OK;
+  }
+
+  WARN("No vt found for safearray\n");
+  return E_INVALIDARG;
+}
+
+/************************************************************************
+ *		SafeArraySetIID (OLEAUT32.57)
+ */
+HRESULT WINAPI SafeArraySetIID(SAFEARRAY *arr, REFIID riid) {
+  IID *xiid = ((IID*)arr)-1;
+  TRACE("(%p, %s).\n",arr,debugstr_guid(riid));
+
+  if (!arr || !(arr->fFeatures & FADF_HAVEIID))
+    return E_INVALIDARG;
+  memcpy(xiid, riid, sizeof(GUID));
+  return S_OK;
+}
+
+/************************************************************************
+ *		SafeArrayGetIID (OLEAUT32.67)
+ */
+HRESULT WINAPI SafeArrayGetIID(SAFEARRAY *arr, IID *riid) {
+  IID *xiid = ((IID*)arr)-1;
+  TRACE("(%p, %s).\n",arr,debugstr_guid(riid));
+
+  if (!arr || !(arr->fFeatures & FADF_HAVEIID))
+    return E_INVALIDARG;
+  memcpy(riid, xiid, sizeof(GUID));
+  return S_OK;
+}
+
+/************************************************************************
+ *		SafeArraySetRecordInfo (OLEAUT32.44)
+ */
+HRESULT WINAPI SafeArraySetRecordInfo(SAFEARRAY *arr, IRecordInfo *iface) {
+  LPRECORDINFO oldiface;
+
+  if (!arr || !(arr->fFeatures & FADF_RECORD))
+    return E_INVALIDARG;
+  oldiface = ((IRecordInfo**)arr)[-1];
+  if (oldiface)
+    IRecordInfo_Release(oldiface);
+  ((IRecordInfo**)arr)[-1] = iface;
+  if (iface)
+    IRecordInfo_AddRef(iface);
+  return S_OK;
+}
+
+/************************************************************************
+ *		SafeArrayGetRecordInfo (OLEAUT32.45)
+ */
+HRESULT WINAPI SafeArrayGetRecordInfo(SAFEARRAY *arr, IRecordInfo** iface) {
+  if (!arr || !(arr->fFeatures & FADF_RECORD))
+    return E_INVALIDARG;
+  *iface = ((IRecordInfo**)arr)[-1];
+  if (*iface)
+    IRecordInfo_AddRef(*iface);
+  return S_OK;
 }

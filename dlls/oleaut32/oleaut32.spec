@@ -41,8 +41,8 @@
 41 stdcall SafeArrayAllocDescriptorEx(long long ptr) SafeArrayAllocDescriptorEx
 42 stub SafeArrayCreateEx
 43 stub SafeArrayCreateVectorEx
-44 stub SafeArraySetRecordInfo
-45 stub SafeArrayGetRecordInfo
+44 stdcall SafeArraySetRecordInfo(ptr ptr) SafeArraySetRecordInfo
+45 stdcall SafeArrayGetRecordInfo(ptr ptr) SafeArrayGetRecordInfo
 46 stdcall VarParseNumFromStr(wstr long long ptr ptr) VarParseNumFromStr
 47 stdcall VarNumFromParseNum(ptr ptr long ptr) VarNumFromParseNum
 48 stdcall VarI2FromUI1(long ptr) VarI2FromUI1
@@ -54,7 +54,7 @@
 54 stdcall VarI2FromStr(wstr long long ptr) VarI2FromStr
 55 stub VarI2FromDisp
 56 stdcall VarI2FromBool(long ptr) VarI2FromBool
-57 stub SafeArraySetIID
+57 stdcall SafeArraySetIID(ptr ptr) SafeArraySetIID
 58 stdcall VarI4FromUI1(long ptr) VarI4FromUI1
 59 stdcall VarI4FromI2(long ptr) VarI4FromI2
 60 stdcall VarI4FromR4(long ptr) VarI4FromR4
@@ -64,7 +64,7 @@
 64 stdcall VarI4FromStr(wstr long long ptr) VarI4FromStr
 65 stub VarI4FromDisp
 66 stdcall VarI4FromBool(long ptr) VarI4FromBool
-67 stub SafeArrayGetIID
+67 stdcall SafeArrayGetIID(ptr ptr) SafeArrayGetIID
 68 stdcall VarR4FromUI1(long ptr) VarR4FromUI1
 69 stdcall VarR4FromI2(long ptr) VarR4FromI2
 70 stdcall VarR4FromI4(long ptr) VarR4FromI4

@@ -33,6 +33,9 @@ typedef struct IDispatch IDispatch,*LPDISPATCH;
 DEFINE_OLEGUID(IID_ITypeInfo,       0x00020401,0,0);
 typedef struct ITypeInfo ITypeInfo,*LPTYPEINFO;
 
+DEFINE_OLEGUID(IID_IRecordInfo,     0x0000002f,0,0);
+typedef struct IRecordInfo IRecordInfo,*LPRECORDINFO;
+
 DEFINE_OLEGUID(IID_ITypeLib,        0x00020402,0,0);
 typedef struct ITypeLib ITypeLib,*LPTYPELIB;
 
@@ -801,5 +804,53 @@ ICOM_DEFINE(IEnumVARIANT,IUnknown)
 #define IEnumVARIANT_Skip(p,a)               ICOM_CALL1(Skip,p,a)
 #define IEnumVARIANT_Reset(p)                ICOM_CALL (Reset,p)
 #define IEnumVARIANT_Clone(p,a)              ICOM_CALL1(Clone,p,a)
+
+/*****************************************************************************
+ * IRecordInfo interface
+ */
+#define ICOM_INTERFACE IRecordInfo
+#define IRecordInfo_METHODS \
+  ICOM_METHOD1(HRESULT, RecordInit, PVOID, pvNew) \
+  ICOM_METHOD1(HRESULT, RecordClear, PVOID, pvExisting) \
+  ICOM_METHOD2(HRESULT, RecordCopy, PVOID, pvExisting, PVOID, pvNew) \
+  ICOM_METHOD1(HRESULT, GetGUID, GUID*, pguid) \
+  ICOM_METHOD1(HRESULT, GetName, BSTR*, pbstrName) \
+  ICOM_METHOD1(HRESULT, GetSize, ULONG*, pcbSize) \
+  ICOM_METHOD1(HRESULT, GetTypeInfo, ITypeInfo**, ppTypeInfo) \
+  ICOM_METHOD3(HRESULT, GetField, PVOID, pvData, LPCOLESTR, szFieldName, VARIANT*, pvarField) \
+  ICOM_METHOD4(HRESULT, GetFieldNoCopy, PVOID, pvData, LPCOLESTR, szFieldName, VARIANT*, pvarField, PVOID *,ppvDataCArray) \
+  ICOM_METHOD4(HRESULT, PutField, ULONG, wFlags, PVOID, pvData, LPCOLESTR, szFieldName, VARIANT*, pvarField) \
+  ICOM_METHOD4(HRESULT, PutFieldNoCopy, ULONG, wFlags, PVOID, pvData, LPCOLESTR, szFieldName, VARIANT*, pvarField) \
+  ICOM_METHOD2(HRESULT, GetFieldNames, ULONG*, pcNames, BSTR*, rgBstrNames) \
+  ICOM_METHOD1(BOOL, IsMatchingType, IRecordInfo*, pRecordInfo) \
+  ICOM_METHOD (LPVOID, RecordCreate) \
+  ICOM_METHOD2(HRESULT, RecordCreateCopy, PVOID, pvSource, PVOID*, ppvDest) \
+  ICOM_METHOD1(HRESULT, RecordDestroy, PVOID, pvRecord)
+
+#define IRecordInfo_IMETHODS \
+	IUnknown_IMETHODS \
+	IRecordInfo_METHODS
+ICOM_DEFINE(IRecordInfo,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IRecordInfo_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IRecordInfo_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IRecordInfo_Release(p)            ICOM_CALL (Release,p)
+/*** IRecordInfo methods ***/
+#define IRecordInfo_RecordInit(p,a)       ICOM_CALL1(RecordInit,p,a)
+#define IRecordInfo_RecordClear(p,a)      ICOM_CALL1(RecordClear,p,a)
+#define IRecordInfo_RecordCopy(p,a,b)     ICOM_CALL2(RecordCopy,p,a,b)
+#define IRecordInfo_GetGUID(p,a)          ICOM_CALL1(GetGUID,p,a)
+#define IRecordInfo_GetName(p,a)          ICOM_CALL1(GetName,p,a)
+#define IRecordInfo_GetTypeInfo(p,a)      ICOM_CALL1(GetTypeInfo,p,a)
+#define IRecordInfo_GetField(p,a,b,c)     ICOM_CALL3(GetField,p,a,b,c)
+#define IRecordInfo_GetFieldNoCopy(p,a,b,c,d) ICOM_CALL4(GetFieldNoCopy,p,a,b,c,d)
+#define IRecordInfo_PutField(p,a,b,c,d)   ICOM_CALL4(PutField,p,a,b,c,d)
+#define IRecordInfo_PutFieldNoCopy(p,a,b,c,d) ICOM_CALL4(PutField,p,a,b,c,d)
+#define IRecordInfo_GetFieldNames(p,a,b)  ICOM_CALL2(GetFieldNames,p,a,b)
+#define IRecordInfo_RecordCreate(p)       ICOM_CALL (RecordCreate,p)
+#define IRecordInfo_RecordCreateCopy(p,a,b) ICOM_CALL2(RecordCreateCopy,p,a,b)
+#define IRecordInfo_RecordDestroy(p,a)    ICOM_CALL1(RecordDestroy,p,a)
 
 #endif /* __WINE_WINE_OBJ_OLEAUT_H */

@@ -62,6 +62,9 @@ HRESULT WINAPI
 SafeArrayAllocDescriptor(UINT cDims, struct tagSAFEARRAY **ppsaOut);
 
 HRESULT WINAPI
+SafeArrayAllocDescriptorEx(VARTYPE vt,UINT cDims,struct tagSAFEARRAY **ppsaOut);
+
+HRESULT WINAPI
 SafeArrayAllocData(struct tagSAFEARRAY *psa);
 
 struct tagSAFEARRAY * WINAPI
@@ -104,7 +107,7 @@ HRESULT WINAPI
 SafeArrayPtrOfIndex(struct tagSAFEARRAY *psa, LONG *rgIndices, void **ppvData);
 
 HRESULT WINAPI
-SafeArrayCopyData(struct tagSAFEARRAY *psaSource, struct tagSAFEARRAY **psaTarget);
+SafeArrayCopyData(struct tagSAFEARRAY *psaSource, struct tagSAFEARRAY *psaTarget);
 
 HRESULT WINAPI
 SafeArrayDestroyData(struct tagSAFEARRAY *psa);
@@ -120,6 +123,21 @@ SafeArrayCreateVector(VARTYPE vt, LONG lLbound, ULONG cElements);
 
 HRESULT WINAPI
 SafeArrayRedim(struct tagSAFEARRAY *psa, struct tagSAFEARRAYBOUND *psaboundNew);
+
+HRESULT WINAPI
+SafeArraySetIID(struct tagSAFEARRAY *psa, REFGUID riid);
+
+HRESULT WINAPI
+SafeArrayGetIID(struct tagSAFEARRAY *psa, GUID *riid);
+
+HRESULT WINAPI
+SafeArrayGetVartype(struct tagSAFEARRAY *psa, VARTYPE *vt);
+
+HRESULT WINAPI
+SafeArrayGetRecordInfo(struct tagSAFEARRAY *psa, IRecordInfo **recordinfo);
+
+HRESULT WINAPI
+SafeArraySetRecordInfo(struct tagSAFEARRAY *psa, IRecordInfo *recordinfo);
 
 
 /* These are macros that help accessing the VARIANT date type.
