@@ -40,7 +40,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
  */
 
 /******************************************************************************
- *  RtlAllocateAndInitializeSid		[NTDLL.265] 
+ *  RtlAllocateAndInitializeSid		[NTDLL.@]
  *
  */
 BOOLEAN WINAPI RtlAllocateAndInitializeSid (
@@ -86,7 +86,7 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (
 	return STATUS_SUCCESS;
 }
 /******************************************************************************
- *  RtlEqualSid		[NTDLL.352] 
+ *  RtlEqualSid		[NTDLL.@]
  *
  */
 BOOL WINAPI RtlEqualSid( PSID pSid1, PSID pSid2 )
@@ -122,7 +122,7 @@ BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2)
 
 
 /******************************************************************************
- *  RtlFreeSid		[NTDLL.376] 
+ *  RtlFreeSid		[NTDLL.@]
  */
 DWORD WINAPI RtlFreeSid(PSID pSid) 
 {
@@ -132,7 +132,7 @@ DWORD WINAPI RtlFreeSid(PSID pSid)
 }
 
 /**************************************************************************
- * RtlLengthRequiredSid	[NTDLL.427]
+ * RtlLengthRequiredSid	[NTDLL.@]
  *
  * PARAMS
  *   nSubAuthorityCount []
@@ -143,7 +143,7 @@ DWORD WINAPI RtlLengthRequiredSid(DWORD nrofsubauths)
 }
 
 /**************************************************************************
- *                 RtlLengthSid				[NTDLL.429]
+ *                 RtlLengthSid				[NTDLL.@]
  */
 DWORD WINAPI RtlLengthSid(PSID pSid)
 {
@@ -153,7 +153,7 @@ DWORD WINAPI RtlLengthSid(PSID pSid)
 }
 
 /**************************************************************************
- *                 RtlInitializeSid			[NTDLL.410]
+ *                 RtlInitializeSid			[NTDLL.@]
  */
 BOOL WINAPI RtlInitializeSid(
 	PSID pSid,
@@ -176,7 +176,7 @@ BOOL WINAPI RtlInitializeSid(
 }
 
 /**************************************************************************
- *                 RtlSubAuthoritySid			[NTDLL.497]
+ *                 RtlSubAuthoritySid			[NTDLL.@]
  *
  * PARAMS
  *   pSid          []
@@ -188,7 +188,7 @@ LPDWORD WINAPI RtlSubAuthoritySid( PSID pSid, DWORD nSubAuthority )
 }
 
 /**************************************************************************
- * RtlIdentifierAuthoritySid	[NTDLL.395]
+ * RtlIdentifierAuthoritySid	[NTDLL.@]
  *
  * PARAMS
  *   pSid []
@@ -199,7 +199,7 @@ PSID_IDENTIFIER_AUTHORITY WINAPI RtlIdentifierAuthoritySid( PSID pSid )
 }
 
 /**************************************************************************
- *                 RtlSubAuthorityCountSid		[NTDLL.496]
+ *                 RtlSubAuthorityCountSid		[NTDLL.@]
  *
  * PARAMS
  *   pSid          []
@@ -211,7 +211,7 @@ LPBYTE WINAPI RtlSubAuthorityCountSid(PSID pSid)
 }
 
 /**************************************************************************
- *                 RtlCopySid				[NTDLL.302]
+ *                 RtlCopySid				[NTDLL.@]
  */
 DWORD WINAPI RtlCopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 {
@@ -226,7 +226,7 @@ DWORD WINAPI RtlCopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID
 	return TRUE;
 }
 /******************************************************************************
- * RtlValidSid [NTDLL.532]
+ * RtlValidSid [NTDLL.@]
  *
  * PARAMS
  *   pSid []
@@ -259,7 +259,7 @@ RtlValidSid( PSID pSid )
  */
 
 /**************************************************************************
- * RtlCreateSecurityDescriptor			[NTDLL.313]
+ * RtlCreateSecurityDescriptor			[NTDLL.@]
  *
  * RETURNS:
  *  0 success, 
@@ -277,7 +277,7 @@ NTSTATUS WINAPI RtlCreateSecurityDescriptor(
 	return STATUS_SUCCESS;
 }
 /**************************************************************************
- * RtlValidSecurityDescriptor			[NTDLL.313]
+ * RtlValidSecurityDescriptor			[NTDLL.@]
  *
  */
 NTSTATUS WINAPI RtlValidSecurityDescriptor(
@@ -348,7 +348,7 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
 }
 
 /**************************************************************************
- *  RtlSetDaclSecurityDescriptor		[NTDLL.483]
+ *  RtlSetDaclSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlSetDaclSecurityDescriptor (
 	PSECURITY_DESCRIPTOR lpsd,
@@ -409,7 +409,7 @@ NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
 }
 
 /**************************************************************************
- * RtlSetSaclSecurityDescriptor			[NTDLL.488]
+ * RtlSetSaclSecurityDescriptor			[NTDLL.@]
  */
 NTSTATUS WINAPI RtlSetSaclSecurityDescriptor (
 	PSECURITY_DESCRIPTOR lpsd,
@@ -435,7 +435,7 @@ NTSTATUS WINAPI RtlSetSaclSecurityDescriptor (
 }
 
 /**************************************************************************
- * RtlGetOwnerSecurityDescriptor		[NTDLL.488]
+ * RtlGetOwnerSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlGetOwnerSecurityDescriptor(
 	PSECURITY_DESCRIPTOR SecurityDescriptor,
@@ -456,7 +456,7 @@ NTSTATUS WINAPI RtlGetOwnerSecurityDescriptor(
 }
 
 /**************************************************************************
- *                 RtlSetOwnerSecurityDescriptor		[NTDLL.487]
+ *                 RtlSetOwnerSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlSetOwnerSecurityDescriptor(
 	PSECURITY_DESCRIPTOR lpsd,
@@ -477,7 +477,7 @@ NTSTATUS WINAPI RtlSetOwnerSecurityDescriptor(
 }
 
 /**************************************************************************
- *                 RtlSetGroupSecurityDescriptor		[NTDLL.485]
+ *                 RtlSetGroupSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlSetGroupSecurityDescriptor (
 	PSECURITY_DESCRIPTOR lpsd,
@@ -535,7 +535,7 @@ NTSTATUS WINAPI RtlMakeSelfRelativeSD(
  */
 
 /**************************************************************************
- *                 RtlCreateAcl				[NTDLL.306]
+ *                 RtlCreateAcl				[NTDLL.@]
  *
  * NOTES
  *    This should return NTSTATUS
@@ -559,7 +559,7 @@ NTSTATUS WINAPI RtlCreateAcl(PACL acl,DWORD size,DWORD rev)
 }
 
 /**************************************************************************
- *                 RtlFirstFreeAce			[NTDLL.370]
+ *                 RtlFirstFreeAce			[NTDLL.@]
  * looks for the AceCount+1 ACE, and if it is still within the alloced
  * ACL, return a pointer to it
  */
@@ -584,7 +584,7 @@ BOOLEAN WINAPI RtlFirstFreeAce(
 }
 
 /**************************************************************************
- *                 RtlAddAce				[NTDLL.260]
+ *                 RtlAddAce				[NTDLL.@]
  */
 NTSTATUS WINAPI RtlAddAce(
 	PACL acl,
@@ -693,7 +693,7 @@ NtSetSecurityObject(
 }
 
 /******************************************************************************
- * RtlGetControlSecurityDescriptor
+ * RtlGetControlSecurityDescriptor (NTDLL.@)
  */
 
 NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
@@ -706,7 +706,7 @@ NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
 }		
 
 /******************************************************************************
- * RtlConvertSidToUnicodeString
+ * RtlConvertSidToUnicodeString (NTDLL.@)
  */
 NTSTATUS WINAPI RtlConvertSidToUnicodeString(
        PUNICODE_STRING UnicodeSID,

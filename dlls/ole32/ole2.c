@@ -2236,7 +2236,7 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
 }
 
 /******************************************************************************
- * DllDebugObjectRPCHook
+ * DllDebugObjectRPCHook (OLE32.62)
  * turns on and off internal debugging,  pointer is only used on macintosh
  */
 

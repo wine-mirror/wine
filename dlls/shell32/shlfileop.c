@@ -148,7 +148,7 @@ BOOL WINAPI Win32DeleteFile(LPSTR fName)
 }
 
 /*************************************************************************
- * SHFileOperationA				[SHELL32.243]
+ * SHFileOperationA				[SHELL32.@]
  *
  * NOTES
  *     exported by name
@@ -205,7 +205,7 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
 }
 
 /*************************************************************************
- * SHFileOperationW				[SHELL32.244]
+ * SHFileOperationW				[SHELL32.@]
  *
  * NOTES
  *     exported by name
@@ -217,7 +217,7 @@ DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp)
 }
 
 /*************************************************************************
- * SHFileOperation				[SHELL32.242]
+ * SHFileOperation				[SHELL32.@]
  *
  */
 DWORD WINAPI SHFileOperationAW(LPVOID lpFileOp)

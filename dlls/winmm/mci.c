@@ -833,7 +833,8 @@ static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet,
 }
 
 /**************************************************************************
- * 				mciSendStringA		[MMSYSTEM.702][WINMM.51]
+ * 				mciSendStringA		[MMSYSTEM.702]
+ * 				mciSendStringA		[WINMM.@]
  */
 DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet, 
 			    UINT uRetLen, HWND hwndCallback)
@@ -1018,7 +1019,7 @@ errCleanUp:
 }
 
 /**************************************************************************
- * 				mciSendStringW			[WINMM.52]
+ * 				mciSendStringW			[WINMM.@]
  */
 DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrRet, 
 			    UINT uRetLen, HWND hwndCallback)
@@ -1043,7 +1044,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
 }
 
 /**************************************************************************
- * 				mciExecute			[WINMM.38]
+ * 				mciExecute			[WINMM.@]
  */
 DWORD WINAPI mciExecute(LPCSTR lpstrCommand)
 {
@@ -1110,7 +1111,7 @@ BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
 }
  
 /**************************************************************************
- *                    	mciLoadCommandResource  		[WINMM.48]
+ *                    	mciLoadCommandResource  		[WINMM.@]
  *
  * Strangely, this function only exists as an UNICODE one.
  */
@@ -1162,7 +1163,7 @@ UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
 #endif
 
 /**************************************************************************
- *                    	mciFreeCommandResource			[WINMM.39]
+ *                    	mciFreeCommandResource			[WINMM.@]
  */
 BOOL WINAPI mciFreeCommandResource(UINT uTable)
 {

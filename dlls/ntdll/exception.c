@@ -321,7 +321,7 @@ void WINAPI EXC_NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *ctx,
 
 
 /***********************************************************************
- *            RtlRaiseStatus  (NTDLL.465)
+ *            RtlRaiseStatus  (NTDLL.@)
  *
  * Raise an exception with ExceptionCode = status
  */
@@ -338,7 +338,7 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
 
 
 /*************************************************************
- *            __wine_exception_handler
+ *            __wine_exception_handler (NTDLL.@)
  *
  * Exception handler for exception blocks declared in Wine code.
  */
@@ -378,7 +378,7 @@ DWORD __wine_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame
 
 
 /*************************************************************
- *            __wine_finally_handler
+ *            __wine_finally_handler (NTDLL.@)
  *
  * Exception handler for try/finally blocks declared in Wine code.
  */

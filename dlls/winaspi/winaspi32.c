@@ -462,7 +462,7 @@ error_exit:
 
 
 /*******************************************************************
- *     GetASPI32SupportInfo		[WNASPI32.0]
+ *     GetASPI32SupportInfo		[WNASPI32.1]
  *
  * Checks if the ASPI subsystem is initialized correctly.
  *
@@ -481,7 +481,7 @@ DWORD __cdecl GetASPI32SupportInfo(void)
 }
 
 /***********************************************************************
- *             SendASPI32Command (WNASPI32.1)
+ *             SendASPI32Command (WNASPI32.2)
  */
 DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 {
@@ -559,7 +559,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 
 
 /***********************************************************************
- *             GetASPI32DLLVersion   (WNASPI32.3)
+ *             GetASPI32DLLVersion   (WNASPI32.4)
  */
 DWORD __cdecl GetASPI32DLLVersion(void)
 {
@@ -573,7 +573,7 @@ DWORD __cdecl GetASPI32DLLVersion(void)
 }
 
 /***********************************************************************
- *             GetASPI32Buffer   (WNASPI32.@)
+ *             GetASPI32Buffer   (WNASPI32.8)
  * Supposed to return a DMA capable large SCSI buffer.
  * Our implementation does not use those at all, all buffer stuff is 
  * done in the kernel SG device layer. So we just heapalloc the buffer.
@@ -589,7 +589,7 @@ BOOL __cdecl GetASPI32Buffer(PASPI32BUFF pab)
 }
 
 /***********************************************************************
- *             FreeASPI32Buffer   (WNASPI32.@)
+ *             FreeASPI32Buffer   (WNASPI32.14)
  */
 BOOL __cdecl FreeASPI32Buffer(PASPI32BUFF pab)
 {
@@ -598,7 +598,7 @@ BOOL __cdecl FreeASPI32Buffer(PASPI32BUFF pab)
 }
 
 /***********************************************************************
- *             TranslateASPI32Address   (WNASPI32.@)
+ *             TranslateASPI32Address   (WNASPI32.7)
  */
 BOOL __cdecl TranslateASPI32Address(LPDWORD pdwPath, LPDWORD pdwDEVNODE)
 {

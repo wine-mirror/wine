@@ -951,7 +951,7 @@ HRESULT WINAPI CreateItemMoniker16(LPCOLESTR16 lpszDelim,LPCOLESTR  lpszItem,LPM
 }
 
 /******************************************************************************
- *        CreateItemMoniker	[OLE32.55]
+ *        CreateItemMoniker	[OLE32.58]
  ******************************************************************************/
 HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim,LPCOLESTR  lpszItem, LPMONIKER * ppmk)
 {

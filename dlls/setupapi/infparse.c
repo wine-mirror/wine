@@ -96,7 +96,7 @@ RETERR16 IP_CloseInf(HINF16 hInf)
 }
 
 /***********************************************************************
- *		IpOpen16
+ *		IpOpen16 (SETUPX.2)
  *
  */
 RETERR16 WINAPI IpOpen16(LPCSTR lpInfFileName, HINF16 *lphInf)
@@ -106,7 +106,7 @@ RETERR16 WINAPI IpOpen16(LPCSTR lpInfFileName, HINF16 *lphInf)
 }
 
 /***********************************************************************
- *		IpClose16
+ *		IpClose16 (SETUPX.4)
  */
 RETERR16 WINAPI IpClose16(HINF16 hInf)
 {
@@ -114,7 +114,7 @@ RETERR16 WINAPI IpClose16(HINF16 hInf)
 }
 
 /***********************************************************************
- *		IpGetProfileString16
+ *		IpGetProfileString16 (SETUPX.210)
  */
 RETERR16 WINAPI IpGetProfileString16(HINF16 hInf, LPCSTR section, LPCSTR entry, LPSTR buffer, WORD buflen) 
 {

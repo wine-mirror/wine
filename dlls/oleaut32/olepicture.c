@@ -695,7 +695,7 @@ static ICOM_VTABLE(IDispatch) OLEPictureImpl_IDispatch_VTable =
 };
 
 /***********************************************************************
- * OleCreatePictureIndirect
+ * OleCreatePictureIndirect (OLEAUT32.419)
  */
 HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
 		            BOOL fOwn, LPVOID *ppvObj )
@@ -737,7 +737,7 @@ HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
 
 
 /***********************************************************************
- * OleLoadPicture
+ * OleLoadPicture (OLEAUT32.418)
  */
 HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 		            REFIID reed, LPVOID *ppvObj )
@@ -748,7 +748,7 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 }
 
 /***********************************************************************
- * OleLoadPictureEx
+ * OleLoadPictureEx (OLEAUT32.425)
  */
 HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 		            REFIID reed, DWORD xsiz, DWORD ysiz, DWORD flags, LPVOID *ppvObj )

@@ -308,7 +308,7 @@ static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 }
 
 /*************************************************************************
- * SHBrowseForFolderA [SHELL32.209]
+ * SHBrowseForFolderA [SHELL32.@]
  *
  */
 LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)

@@ -14,7 +14,7 @@
 DEFAULT_DEBUG_CHANNEL(dll);
 
 /***********************************************************************
- *		BootTask16
+ *		BootTask16 (WIN32S16.2)
  */
 void WINAPI BootTask16()
 {

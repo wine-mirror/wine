@@ -103,7 +103,7 @@ static const int LAST_VARTYPE = sizeof(VARTYPE_SIZE)/sizeof(ULONG);
 
 
 /*************************************************************************
- *		SafeArrayAllocDescriptor
+ *		SafeArrayAllocDescriptor (OLEAUT32.36)
  * Allocate the appropriate amount of memory for the SafeArray descriptor
  */
 HRESULT WINAPI SafeArrayAllocDescriptor( 
@@ -128,7 +128,7 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
 }
 
 /*************************************************************************
- *		SafeArrayAllocData
+ *		SafeArrayAllocData (OLEAUT32.37)
  * Allocate the appropriate amount of data for the SafeArray data
  */
 HRESULT WINAPI SafeArrayAllocData(
@@ -153,7 +153,7 @@ HRESULT WINAPI SafeArrayAllocData(
 }
 
 /*************************************************************************
- *		SafeArrayCreate
+ *		SafeArrayCreate (OLEAUT32.15)
  * Create a SafeArray object by encapsulating AllocDescriptor and AllocData 
  */
 SAFEARRAY* WINAPI SafeArrayCreate(
@@ -198,7 +198,7 @@ SAFEARRAY* WINAPI SafeArrayCreate(
 }
 
 /*************************************************************************
- *		SafeArrayDestroyDescriptor
+ *		SafeArrayDestroyDescriptor (OLEAUT32.38)
  * Frees the memory associated with the descriptor.
  */
 HRESULT WINAPI SafeArrayDestroyDescriptor(
@@ -217,7 +217,7 @@ HRESULT WINAPI SafeArrayDestroyDescriptor(
 
 
 /*************************************************************************
- *		SafeArrayLock
+ *		SafeArrayLock (OLEAUT32.21)
  * Increment the lock counter
  *
  * Doc says (MSDN Library ) that psa->pvData should be made available (!= NULL)
@@ -236,7 +236,7 @@ HRESULT WINAPI SafeArrayLock(
 }
 
 /*************************************************************************
- *		SafeArrayUnlock
+ *		SafeArrayUnlock (OLEAUT32.22)
  * Decrement the lock counter
  */
 HRESULT WINAPI SafeArrayUnlock(
@@ -253,7 +253,7 @@ HRESULT WINAPI SafeArrayUnlock(
 
 
 /*************************************************************************
- *		SafeArrayPutElement
+ *		SafeArrayPutElement (OLEAUT32.26)
  * Set the data at the given coordinate
  */
 HRESULT WINAPI SafeArrayPutElement(
@@ -310,7 +310,7 @@ HRESULT WINAPI SafeArrayPutElement(
 
 
 /*************************************************************************
- *		SafeArrayGetElement
+ *		SafeArrayGetElement (OLEAUT32.25)
  * Return the data element corresponding the the given coordinate
  */
 HRESULT WINAPI SafeArrayGetElement(
@@ -359,7 +359,7 @@ HRESULT WINAPI SafeArrayGetElement(
 }
 
 /*************************************************************************
- *		SafeArrayGetUBound
+ *		SafeArrayGetUBound (OLEAUT32.19)
  * return the UP bound for a given array dimension
  */
 HRESULT WINAPI SafeArrayGetUBound(
@@ -383,7 +383,7 @@ HRESULT WINAPI SafeArrayGetUBound(
 }
 
 /*************************************************************************
- *		SafeArrayGetLBound
+ *		SafeArrayGetLBound (OLEAUT32.20)
  * Return the LO bound for a given array dimension 
  */
 HRESULT WINAPI SafeArrayGetLBound(
@@ -405,7 +405,7 @@ HRESULT WINAPI SafeArrayGetLBound(
 }
 
 /*************************************************************************
- *		SafeArrayGetDim
+ *		SafeArrayGetDim (OLEAUT32.17)
  * returns the number of dimension in the array
  */
 UINT WINAPI SafeArrayGetDim(
@@ -422,7 +422,7 @@ UINT WINAPI SafeArrayGetDim(
 }
 
 /*************************************************************************
- *		SafeArrayGetElemsize
+ *		SafeArrayGetElemsize (OLEAUT32.18)
  * Return the size of the element in the array
  */
 UINT WINAPI SafeArrayGetElemsize(
@@ -439,7 +439,7 @@ UINT WINAPI SafeArrayGetElemsize(
 }
 
 /*************************************************************************
- *		SafeArrayAccessData
+ *		SafeArrayAccessData (OLEAUT32.23)
  * increment the access count and return the data 
  */
 HRESULT WINAPI SafeArrayAccessData(
@@ -467,7 +467,7 @@ HRESULT WINAPI SafeArrayAccessData(
 
 
 /*************************************************************************
- *		SafeArrayUnaccessData
+ *		SafeArrayUnaccessData (OLEAUT32.24)
  * Decrement the access count
  */
 HRESULT WINAPI SafeArrayUnaccessData(
@@ -480,7 +480,7 @@ HRESULT WINAPI SafeArrayUnaccessData(
 }
 
 /************************************************************************ 
- *		SafeArrayPtrOfIndex
+ *		SafeArrayPtrOfIndex (OLEAUT32.148)
  * Return a pointer to the element at rgIndices
  */
 HRESULT WINAPI SafeArrayPtrOfIndex(
@@ -506,7 +506,7 @@ HRESULT WINAPI SafeArrayPtrOfIndex(
 }
 
 /************************************************************************ 
- *		SafeArrayDestroyData
+ *		SafeArrayDestroyData (OLEAUT32.39)
  * Frees the memory data bloc
  */
 HRESULT WINAPI SafeArrayDestroyData(
@@ -561,7 +561,7 @@ HRESULT WINAPI SafeArrayDestroyData(
 }
 
 /************************************************************************ 
- *		SafeArrayCopyData
+ *		SafeArrayCopyData (OLEAUT32.412)
  * Copy the psaSource's data block into psaTarget if dimension and size
  * permits it.
  */
@@ -614,7 +614,7 @@ HRESULT WINAPI SafeArrayCopyData(
 }
 
 /************************************************************************ 
- *		SafeArrayDestroy
+ *		SafeArrayDestroy (OLEAUT32.16)
  * Deallocates all memory reserved for the SafeArray
  */
 HRESULT WINAPI SafeArrayDestroy(
@@ -636,7 +636,7 @@ HRESULT WINAPI SafeArrayDestroy(
 }
 
 /************************************************************************ 
- *		SafeArrayCopy
+ *		SafeArrayCopy (OLEAUT32.27)
  * Make a dupplicate of a SafeArray
  */
 HRESULT WINAPI SafeArrayCopy(
@@ -689,7 +689,7 @@ HRESULT WINAPI SafeArrayCopy(
 }
 
 /************************************************************************ 
- *		SafeArrayCreateVector
+ *		SafeArrayCreateVector (OLEAUT32.411)
  * Creates a one dimension safearray where the data is next to the 
  * SAFEARRAY structure.
  */
@@ -726,7 +726,7 @@ SAFEARRAY* WINAPI SafeArrayCreateVector(
 } 
 
 /************************************************************************ 
- *		SafeArrayRedim
+ *		SafeArrayRedim (OLEAUT32.40)
  * Changes the caracteristics of the last dimension of the SafeArray
  */
 HRESULT WINAPI SafeArrayRedim(
@@ -1047,7 +1047,7 @@ static HRESULT duplicateData(
 
 
 /************************************************************************ 
- *		SafeArrayGetVarType
+ *		SafeArrayGetVarType (OLEAUT32.77)
  * Returns the VARTYPE stored in the given safearray
  */
 HRESULT WINAPI SafeArrayGetVarType(

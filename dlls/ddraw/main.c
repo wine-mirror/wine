@@ -166,7 +166,7 @@ HRESULT WINAPI DirectDrawEnumerateW(
 }
 
 /***********************************************************************
- *		DirectDrawCreate
+ *		DirectDrawCreate (DDRAW.@)
  */
 
 const ddraw_driver* DDRAW_FindDriver(const GUID* pGUID)
@@ -244,7 +244,7 @@ static HRESULT DDRAW_Create(
 }
 
 /***********************************************************************
- *		DirectDrawCreate
+ *		DirectDrawCreate (DDRAW.@)
  *
  * Only creates legacy IDirectDraw interfaces.
  * Cannot create IDirectDraw7 interfaces.
@@ -257,7 +257,7 @@ HRESULT WINAPI DirectDrawCreate(
 }
 
 /***********************************************************************
- *		DirectDrawCreateEx
+ *		DirectDrawCreateEx (DDRAW.@)
  *
  * Only creates new IDirectDraw7 interfaces.
  * Supposed to fail if legacy interfaces are requested.

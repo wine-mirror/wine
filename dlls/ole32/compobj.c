@@ -827,7 +827,7 @@ HRESULT WINAPI CoGetPSClsid(
 
 
 /***********************************************************************
- *		WriteClassStm
+ *		WriteClassStm (OLE32.159)
  *
  * This function write a CLSID on stream
  */
@@ -842,7 +842,7 @@ HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid)
 }
 
 /***********************************************************************
- *		ReadClassStm
+ *		ReadClassStm (OLE32.135)
  *
  * This function read a CLSID from a stream
  */
@@ -1249,7 +1249,7 @@ HRESULT WINAPI CoGetClassObject(
 }
 
 /***********************************************************************
- *        CoResumeClassObjects
+ *        CoResumeClassObjects (OLE32.173)
  *
  * Resumes classobjects registered with REGCLS suspended
  */
@@ -1260,7 +1260,7 @@ HRESULT WINAPI CoResumeClassObjects(void)
 }
 
 /***********************************************************************
- *        GetClassFile
+ *        GetClassFile (OLE32.67)
  *
  * This function supplies the CLSID associated with the given filename.
  */
@@ -1739,7 +1739,7 @@ HRESULT WINAPI CoCreateFreeThreadedMarshaler (LPUNKNOWN punkOuter, LPUNKNOWN* pp
 
 
 /***********************************************************************
- *           DllGetClassObject [OLE32.63]
+ *           DllGetClassObject [OLE32.@]
  */
 HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
 {	

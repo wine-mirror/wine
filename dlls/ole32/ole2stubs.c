@@ -76,7 +76,7 @@ HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
 }
 
 /******************************************************************************
- *              OleCreate        [OLE32.80]
+ *              OleCreate        [OLE32.89]
  *
  */
 HRESULT WINAPI OleCreate(

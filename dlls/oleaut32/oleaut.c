@@ -20,7 +20,7 @@ static WCHAR	_delimiter[2] = {'!',0}; /* default delimiter apparently */
 static WCHAR	*pdelimiter = &_delimiter[0];
 
 /***********************************************************************
- *		RegisterActiveObject
+ *		RegisterActiveObject (OLEAUT32.33)
  */
 HRESULT WINAPI RegisterActiveObject(
 	LPUNKNOWN punk,REFCLSID rcid,DWORD dwFlags,LPDWORD pdwRegister
@@ -46,7 +46,7 @@ HRESULT WINAPI RegisterActiveObject(
 }
 
 /***********************************************************************
- *		RevokeActiveObject
+ *		RevokeActiveObject (OLEAUT32.34)
  */
 HRESULT WINAPI RevokeActiveObject(DWORD xregister,LPVOID reserved)
 {
@@ -62,7 +62,7 @@ HRESULT WINAPI RevokeActiveObject(DWORD xregister,LPVOID reserved)
 }
 
 /***********************************************************************
- *		GetActiveObject
+ *		GetActiveObject (OLEAUT32.35)
  */
 HRESULT WINAPI GetActiveObject(REFCLSID rcid,LPVOID preserved,LPUNKNOWN *ppunk)
 {

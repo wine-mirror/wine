@@ -9,7 +9,7 @@
 DEFAULT_DEBUG_CHANNEL(mpr);
 
 /**************************************************************************
- * WNetCachePassword [MPR.52]  Saves password in cache
+ * WNetCachePassword [MPR.@]  Saves password in cache
  *
  * NOTES
  *	only the parameter count is verifyed  
@@ -38,7 +38,7 @@ DWORD WINAPI WNetCachePassword(
 }
 
 /*****************************************************************
- *  WNetRemoveCachedPassword [MPR.95]
+ *  WNetRemoveCachedPassword [MPR.@]
  */
 UINT WINAPI WNetRemoveCachedPassword( LPSTR pbResource, WORD cbResource, 
                                       BYTE nType )
@@ -50,7 +50,7 @@ UINT WINAPI WNetRemoveCachedPassword( LPSTR pbResource, WORD cbResource,
 }
 
 /*****************************************************************
- * WNetGetCachedPassword [MPR.69]  Retrieves password from cache
+ * WNetGetCachedPassword [MPR.@]  Retrieves password from cache
  *
  * NOTES
  *  the stub seems to be wrong:
@@ -82,7 +82,7 @@ DWORD WINAPI WNetGetCachedPassword(
 }
 
 /*******************************************************************
- * WNetEnumCachedPasswords [MPR.61]
+ * WNetEnumCachedPasswords [MPR.@]
  *
  * NOTES
  *	the parameter count is verifyed  

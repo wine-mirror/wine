@@ -10,7 +10,7 @@ DEFAULT_DEBUG_CHANNEL(mpr);
 
 
 /*****************************************************************
- *     MultinetGetConnectionPerformanceA [MPR.25]
+ *     MultinetGetConnectionPerformanceA [MPR.@]
  *
  * RETURNS
  *    Success: NO_ERROR
@@ -30,7 +30,7 @@ DWORD WINAPI MultinetGetConnectionPerformanceA(
 }
 
 /*****************************************************************
- *     MultinetGetConnectionPerformanceW [MPR.26]
+ *     MultinetGetConnectionPerformanceW [MPR.@]
  */
 DWORD WINAPI MultinetGetConnectionPerformanceW(
 	LPNETRESOURCEW lpNetResource,
@@ -43,7 +43,7 @@ DWORD WINAPI MultinetGetConnectionPerformanceW(
 }
 
 /*****************************************************************
- *  MultinetGetErrorTextA [MPR.27]
+ *  MultinetGetErrorTextA [MPR.@]
  */
 DWORD WINAPI MultinetGetErrorTextA( DWORD x, DWORD y, DWORD z )
 {
@@ -52,7 +52,7 @@ DWORD WINAPI MultinetGetErrorTextA( DWORD x, DWORD y, DWORD z )
 }
 
 /*****************************************************************
- *  MultinetGetErrorTextW [MPR.28]
+ *  MultinetGetErrorTextW [MPR.@]
  */
 DWORD WINAPI MultinetGetErrorTextW( DWORD x, DWORD y, DWORD z )
 {

@@ -19,7 +19,7 @@ DEFAULT_DEBUG_CHANNEL(urlmon);
 static WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
 /***********************************************************************
- *           CreateURLMoniker (URLMON.22)
+ *           CreateURLMoniker (URLMON.@)
  *
  * Create a url moniker
  *
@@ -40,7 +40,7 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPWSTR szURL, IMoniker **p
 }
 
 /***********************************************************************
- *           RegisterBindStatusCallback (URLMON.52)
+ *           RegisterBindStatusCallback (URLMON.@)
  *
  * Register a bind status callback
  *
@@ -76,7 +76,7 @@ HRESULT WINAPI RegisterBindStatusCallback(
 }
 
 /***********************************************************************
- *           RevokeBindStatusCallback (URLMON.57)
+ *           RevokeBindStatusCallback (URLMON.@)
  *
  * Unregister a bind status callback
  *

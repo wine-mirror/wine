@@ -74,7 +74,7 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
 
 
 /******************************************************************************
- * NtOpenKey [NTDLL.129]
+ * NtOpenKey [NTDLL.@]
  * ZwOpenKey
  *   OUT	PHANDLE			retkey (returns 0 when failure)
  *   IN		ACCESS_MASK		access
@@ -694,7 +694,7 @@ NTSTATUS WINAPI NtUnloadKey(
 }
 
 /******************************************************************************
- *  RtlFormatCurrentUserKeyPath		[NTDLL.371] 
+ *  RtlFormatCurrentUserKeyPath		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlFormatCurrentUserKeyPath(
 	IN OUT PUNICODE_STRING KeyPath)

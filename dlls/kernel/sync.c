@@ -227,7 +227,7 @@ VOID WINAPI VWin32_EventWait(HANDLE event)
 }
 
 /***********************************************************************
- *       VWin32_EventSet	(KERNEL.479)
+ *       VWin32_EventSet	(KERNEL.451)
  */
 VOID WINAPI VWin32_EventSet(HANDLE event)
 {

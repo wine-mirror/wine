@@ -55,7 +55,7 @@
 DEFAULT_DEBUG_CHANNEL(setupapi);
 
 /***********************************************************************
- *		SURegOpenKey
+ *		SURegOpenKey (SETUPX.47)
  */
 DWORD WINAPI SURegOpenKey( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
 {
@@ -64,7 +64,7 @@ DWORD WINAPI SURegOpenKey( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
 }
 
 /***********************************************************************
- *		SURegQueryValueEx
+ *		SURegQueryValueEx (SETUPX.50)
  */
 DWORD WINAPI SURegQueryValueEx( HKEY hkey, LPSTR lpszValueName,
                                 LPDWORD lpdwReserved, LPDWORD lpdwType,

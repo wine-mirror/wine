@@ -22,7 +22,7 @@ DEFAULT_DEBUG_CHANNEL(ntdll);
  */
 
 /******************************************************************************
- *  NtCreateSemaphore
+ *  NtCreateSemaphore (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
                                    IN ACCESS_MASK access,
@@ -50,7 +50,7 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
 }
 
 /******************************************************************************
- *  NtOpenSemaphore
+ *  NtOpenSemaphore (NTDLL.@)
  */
 NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
                                  IN ACCESS_MASK access,
@@ -72,7 +72,7 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
 }
 
 /******************************************************************************
- *  NtQuerySemaphore
+ *  NtQuerySemaphore (NTDLL.@)
  */
 NTSTATUS WINAPI NtQuerySemaphore(
 	HANDLE SemaphoreHandle,
@@ -87,7 +87,7 @@ NTSTATUS WINAPI NtQuerySemaphore(
 }
 
 /******************************************************************************
- *  NtReleaseSemaphore
+ *  NtReleaseSemaphore (NTDLL.@)
  */
 NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous )
 {
@@ -110,7 +110,7 @@ NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous 
  */
  
 /**************************************************************************
- * NtCreateEvent
+ * NtCreateEvent (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateEvent(
 	OUT PHANDLE EventHandle,
@@ -136,7 +136,7 @@ NTSTATUS WINAPI NtCreateEvent(
 }
 
 /******************************************************************************
- *  NtOpenEvent
+ *  NtOpenEvent (NTDLL.@)
  */
 NTSTATUS WINAPI NtOpenEvent(
 	OUT PHANDLE EventHandle,
@@ -160,7 +160,7 @@ NTSTATUS WINAPI NtOpenEvent(
 
 
 /******************************************************************************
- *  NtSetEvent
+ *  NtSetEvent (NTDLL.@)
  */
 NTSTATUS WINAPI NtSetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
 {
@@ -179,7 +179,7 @@ NTSTATUS WINAPI NtSetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
 }
 
 /******************************************************************************
- *  NtResetEvent
+ *  NtResetEvent (NTDLL.@)
  */
 NTSTATUS WINAPI NtResetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
 {
@@ -199,7 +199,7 @@ NTSTATUS WINAPI NtResetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
 }
 
 /******************************************************************************
- *  NtClearEvent
+ *  NtClearEvent (NTDLL.@)
  *
  * FIXME
  *   same as NtResetEvent ???
@@ -210,7 +210,7 @@ NTSTATUS WINAPI NtClearEvent ( HANDLE handle )
 }
 
 /******************************************************************************
- *  NtPulseEvent
+ *  NtPulseEvent (NTDLL.@)
  *
  * FIXME
  *   PulseCount
@@ -230,7 +230,7 @@ NTSTATUS WINAPI NtPulseEvent( HANDLE handle, PULONG PulseCount )
 }
 
 /******************************************************************************
- *  NtQueryEvent
+ *  NtQueryEvent (NTDLL.@)
  */
 NTSTATUS WINAPI NtQueryEvent (
 	IN  HANDLE EventHandle,

@@ -2203,7 +2203,7 @@ HRESULT WINAPI VarUI1FromUI4(ULONG ulIn, BYTE* pbOut)
 
 
 /******************************************************************************
- *		VarUI1FromStr		[OLEAUT32.54]
+ *		VarUI1FromStr		[OLEAUT32.136]
  */
 HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbOut)
 {
@@ -2359,7 +2359,7 @@ HRESULT WINAPI VarI2FromBool(VARIANT_BOOL boolIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromI1		[OLEAUT32.48]
+ *		VarI2FromI1		[OLEAUT32.205]
  */
 HRESULT WINAPI VarI2FromI1(CHAR cIn, short* psOut)
 {
@@ -2390,7 +2390,7 @@ HRESULT WINAPI VarI2FromUI2(USHORT uiIn, short* psOut)
 }
 
 /******************************************************************************
- *		VarI2FromUI4		[OLEAUT32.49]
+ *		VarI2FromUI4		[OLEAUT32.207]
  */
 HRESULT WINAPI VarI2FromUI4(ULONG ulIn, short* psOut)
 {
@@ -2826,7 +2826,7 @@ HRESULT WINAPI VarR4FromCy(CY cyIn, FLOAT* pfltOut) {
 }
 
 /******************************************************************************
- *		VarR8FromUI1		[OLEAUT32.68]
+ *		VarR8FromUI1		[OLEAUT32.78]
  */
 HRESULT WINAPI VarR8FromUI1(BYTE bIn, double* pdblOut)
 {
@@ -2838,7 +2838,7 @@ HRESULT WINAPI VarR8FromUI1(BYTE bIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromI2		[OLEAUT32.69]
+ *		VarR8FromI2		[OLEAUT32.79]
  */
 HRESULT WINAPI VarR8FromI2(short sIn, double* pdblOut)
 {
@@ -2850,7 +2850,7 @@ HRESULT WINAPI VarR8FromI2(short sIn, double* pdblOut)
 }
 
 /******************************************************************************
- *		VarR8FromI4		[OLEAUT32.70]
+ *		VarR8FromI4		[OLEAUT32.80]
  */
 HRESULT WINAPI VarR8FromI4(LONG lIn, double* pdblOut)
 {
@@ -2988,7 +2988,7 @@ HRESULT WINAPI VarDateFromUI1(BYTE bIn, DATE* pdateOut)
 }
 
 /******************************************************************************
- *		VarDateFromI2		[OLEAUT32.222]
+ *		VarDateFromI2		[OLEAUT32.89]
  */
 HRESULT WINAPI VarDateFromI2(short sIn, DATE* pdateOut)
 {

@@ -161,7 +161,7 @@ static int in_cksum(u_short *addr, int len)
  */
 
 /***********************************************************************
- *		IcmpCreateFile
+ *		IcmpCreateFile (ICMP.@)
  */
 HANDLE WINAPI IcmpCreateFile(VOID)
 {
@@ -186,7 +186,7 @@ HANDLE WINAPI IcmpCreateFile(VOID)
 
 
 /***********************************************************************
- *		IcmpCloseHandle
+ *		IcmpCloseHandle (ICMP.@)
  */
 BOOL WINAPI IcmpCloseHandle(HANDLE  IcmpHandle)
 {
@@ -204,7 +204,7 @@ BOOL WINAPI IcmpCloseHandle(HANDLE  IcmpHandle)
 
 
 /***********************************************************************
- *		IcmpSendEcho
+ *		IcmpSendEcho (ICMP.@)
  */
 DWORD WINAPI IcmpSendEcho(
     HANDLE                   IcmpHandle,

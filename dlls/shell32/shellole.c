@@ -135,7 +135,7 @@ DWORD WINAPI SHCLSIDFromStringAW (LPVOID clsid, CLSID *id)
 }
 
 /*************************************************************************
- *			 SHGetMalloc			[SHELL32.220]
+ *			 SHGetMalloc			[SHELL32.@]
  * returns the interface to shell malloc.
  *
  * [SDK header win95/shlobj.h:
@@ -151,7 +151,7 @@ DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal)
 }
 
 /*************************************************************************
- * SHGetDesktopFolder			[SHELL32.216]
+ * SHGetDesktopFolder			[SHELL32.@]
  */
 LPSHELLFOLDER pdesktopfolder=NULL;
 
@@ -553,7 +553,7 @@ BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 }
 
 /*************************************************************************
- *  DragQueryFileA		[SHELL32.81] [shell32.82]
+ *  DragQueryFileA		[SHELL32.82] [shell32.82]
  */
 UINT WINAPI DragQueryFileA(
 	HDROP hDrop,

@@ -132,7 +132,7 @@ inline static LPSTR FTP_strdup( LPCSTR str )
 }
 
 /***********************************************************************
- *           FtpPutFileA (WININET.43)
+ *           FtpPutFileA (WININET.@)
  *
  * Uploads a file to the FTP server
  *
@@ -258,7 +258,7 @@ lend:
 
 
 /***********************************************************************
- *           FtpSetCurrentDirectoryA (WININET.49)
+ *           FtpSetCurrentDirectoryA (WININET.@)
  *
  * Change the working directory on the FTP server
  *
@@ -357,7 +357,7 @@ lend:
 
 
 /***********************************************************************
- *           FtpCreateDirectoryA (WININET.31)
+ *           FtpCreateDirectoryA (WININET.@)
  *
  * Create new directory on the FTP server
  *
@@ -452,7 +452,7 @@ lend:
 
 
 /***********************************************************************
- *           FtpFindFirstFileA (WININET.35)
+ *           FtpFindFirstFileA (WININET.@)
  *
  * Search the specified directory
  *
@@ -591,7 +591,7 @@ lend:
 
 
 /***********************************************************************
- *           FtpGetCurrentDirectoryA (WININET.37)
+ *           FtpGetCurrentDirectoryA (WININET.@)
  *
  * Retrieves the current directory
  *
@@ -715,7 +715,7 @@ lend:
 }
 
 /***********************************************************************
- *           FtpOpenFileA (WININET.41)
+ *           FtpOpenFileA (WININET.@)
  *
  * Open a remote file for writing or reading
  *
@@ -839,7 +839,7 @@ HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession,
 
 
 /***********************************************************************
- *           FtpGetFileA (WININET.39)
+ *           FtpGetFileA (WININET.@)
  *
  * Retrieve file from the FTP server
  *
@@ -971,7 +971,7 @@ lend:
 
 
 /***********************************************************************
- *           FtpDeleteFileA  (WININET.33)
+ *           FtpDeleteFileA  (WININET.@)
  *
  * Delete a file on the ftp server
  *
@@ -1065,7 +1065,7 @@ lend:
 
 
 /***********************************************************************
- *           FtpRemoveDirectoryA  (WININET.45)
+ *           FtpRemoveDirectoryA  (WININET.@)
  *
  * Remove a directory on the ftp server
  *
@@ -1160,7 +1160,7 @@ lend:
 
 
 /***********************************************************************
- *           FtpRenameFileA  (WININET.47)
+ *           FtpRenameFileA  (WININET.@)
  *
  * Rename a file on the ftp server
  *

@@ -31,7 +31,7 @@ DEFAULT_DEBUG_CHANNEL(shell);
 
 #define MORE_DEBUG 1
 /*************************************************************************
- * CommandLineToArgvW			[SHELL32.7]
+ * CommandLineToArgvW			[SHELL32.@]
  */
 LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 {	LPWSTR  *argv,s,t;
@@ -355,7 +355,7 @@ DWORD WINAPI SHGetFileInfoAW(
 }
 
 /*************************************************************************
- * DuplicateIcon			[SHELL32.188]
+ * DuplicateIcon			[SHELL32.@]
  */
 HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
 {
@@ -378,7 +378,7 @@ HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
     
 
 /*************************************************************************
- * ExtractIconA				[SHELL32.133]
+ * ExtractIconA				[SHELL32.@]
  *
  * FIXME
  *  if the filename is not a file return 1
@@ -399,7 +399,7 @@ HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 }
 
 /*************************************************************************
- * ExtractIconW				[SHELL32.180]
+ * ExtractIconW				[SHELL32.@]
  *
  * fixme
  *  is the filename is not a file return 1
@@ -418,7 +418,7 @@ HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 }
 
 /*************************************************************************
- * FindExecutableA			[SHELL32.184]
+ * FindExecutableA			[SHELL32.@]
  */
 HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
                                       LPSTR lpResult )
@@ -452,7 +452,7 @@ HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
 }
 
 /*************************************************************************
- * FindExecutableW			[SHELL32.219]
+ * FindExecutableW			[SHELL32.@]
  */
 HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory,
                                      LPWSTR lpResult)
@@ -488,7 +488,7 @@ static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
 }
 
 /*************************************************************************
- * SHAppBarMessage			[SHELL32.207]
+ * SHAppBarMessage			[SHELL32.@]
  */
 UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 {
@@ -536,7 +536,7 @@ UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 }
 
 /*************************************************************************
- * SHHelpShortcuts_RunDLL		[SHELL32.224]
+ * SHHelpShortcuts_RunDLL		[SHELL32.@]
  *
  */
 DWORD WINAPI SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
@@ -547,7 +547,7 @@ DWORD WINAPI SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, D
 }
 
 /*************************************************************************
- * SHLoadInProc				[SHELL32.225]
+ * SHLoadInProc				[SHELL32.@]
  * Create an instance of specified object class from within 
  * the shell process and release it immediately
  */
@@ -567,7 +567,7 @@ DWORD WINAPI SHLoadInProc (REFCLSID rclsid)
 }
 
 /*************************************************************************
- * ShellExecuteA			[SHELL32.245]
+ * ShellExecuteA			[SHELL32.290]
  */
 HINSTANCE WINAPI ShellExecuteA( HWND hWnd, LPCSTR lpOperation,
                                     LPCSTR lpFile, LPCSTR lpParameters,
@@ -740,7 +740,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
 
 /*************************************************************************
- * ShellAboutA				[SHELL32.243]
+ * ShellAboutA				[SHELL32.288]
  */
 BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
                              HICON hIcon )
@@ -764,7 +764,7 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
 
 
 /*************************************************************************
- * ShellAboutW				[SHELL32.244]
+ * ShellAboutW				[SHELL32.289]
  */
 BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
                              HICON hIcon )
@@ -792,7 +792,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
 }
 
 /*************************************************************************
- * FreeIconList
+ * FreeIconList (SHELL32.@)
  */
 void WINAPI FreeIconList( DWORD dw )
 { FIXME("(%lx): stub\n",dw);
@@ -936,7 +936,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 }
 
 /*************************************************************************
- * DllInstall         [SHELL32.202]
+ * DllInstall         [SHELL32.@]
  *
  * PARAMETERS
  *   

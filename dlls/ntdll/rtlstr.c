@@ -744,7 +744,7 @@ NTSTATUS WINAPI RtlAppendUnicodeStringToString( UNICODE_STRING *dst, const UNICO
 */
 
 /**************************************************************************
- *	RtlIsTextUnicode
+ *	RtlIsTextUnicode (NTDLL.@)
  *
  *	Apply various feeble heuristics to guess whether
  *	the text buffer contains Unicode.

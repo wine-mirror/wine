@@ -5146,7 +5146,8 @@ HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP,
 }
 
 /***************************************************************************
- *  DirectPlayEnumerateA [DPLAYX.2][DPLAYX.9][DPLAY.2] 
+ *  DirectPlayEnumerate  [DPLAYX.9]
+ *  DirectPlayEnumerateA [DPLAYX.2]
  *
  *  The pointer to the structure lpContext will be filled with the 
  *  appropriate data for each service offered by the OS. These services are
@@ -5324,7 +5325,8 @@ static BOOL CALLBACK cbDPCreateEnumConnections(
 
 
 /***************************************************************************
- *  DirectPlayCreate [DPLAYX.1][DPLAY.1]
+ *  DirectPlayCreate [DPLAYX.1]
+ *  DirectPlayCreate [DPLAY.1]
  *
  */
 HRESULT WINAPI DirectPlayCreate

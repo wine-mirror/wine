@@ -434,7 +434,7 @@ SignalFileOpen (DWORD dwParam1)
 }
 
 /*************************************************************************
- * SHAddToRecentDocs				[SHELL32.234]
+ * SHAddToRecentDocs				[SHELL32.@]
  *
  * PARAMETERS
  *   uFlags  [IN] SHARD_PATH or SHARD_PIDL
@@ -665,7 +665,7 @@ HRESULT WINAPI SHSetInstanceExplorer (LPUNKNOWN lpUnknown)
 	return (HRESULT) lpUnknown;
 }
 /*************************************************************************
- * SHGetInstanceExplorer			[SHELL32.256]
+ * SHGetInstanceExplorer			[SHELL32.@]
  *
  * NOTES
  *  gets the interface pointer of the explorer and a reference
@@ -916,7 +916,7 @@ HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
 }
 
 /************************************************************************
- *	DoEnvironmentSubstA			[SHELL32.1222]
+ *	DoEnvironmentSubstA			[SHELL32.@]
  *
  */
 HRESULT WINAPI DoEnvironmentSubstA(LPSTR x, LPSTR y)
@@ -926,7 +926,7 @@ HRESULT WINAPI DoEnvironmentSubstA(LPSTR x, LPSTR y)
 }
 
 /************************************************************************
- *	DoEnvironmentSubstW			[SHELL32.1223]
+ *	DoEnvironmentSubstW			[SHELL32.@]
  *
  */
 HRESULT WINAPI DoEnvironmentSubstW(LPWSTR x, LPWSTR y)

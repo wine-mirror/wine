@@ -196,7 +196,7 @@ void	TIME_MMTimeStop(void)
 }
 
 /**************************************************************************
- * 				timeGetSystemTime	[WINMM.140]
+ * 				timeGetSystemTime	[WINMM.@]
  */
 MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
 {
@@ -302,7 +302,7 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 
 }
 
 /**************************************************************************
- * 				timeKillEvent		[WINMM.142]
+ * 				timeKillEvent		[WINMM.@]
  */
 MMRESULT WINAPI timeKillEvent(UINT wID)
 {
@@ -343,7 +343,7 @@ MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
 }
 
 /**************************************************************************
- * 				timeGetDevCaps		[WINMM.139]
+ * 				timeGetDevCaps		[WINMM.@]
  */
 MMRESULT WINAPI timeGetDevCaps(LPTIMECAPS lpCaps, UINT wSize)
 {
@@ -367,7 +367,7 @@ MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
 }
 
 /**************************************************************************
- * 				timeBeginPeriod		[WINMM.137]
+ * 				timeBeginPeriod		[WINMM.@]
  */
 MMRESULT WINAPI timeBeginPeriod(UINT wPeriod)
 {
@@ -391,7 +391,7 @@ MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
 }
 
 /**************************************************************************
- * 				timeEndPeriod		[WINMM.138]
+ * 				timeEndPeriod		[WINMM.@]
  */
 MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
 {
@@ -415,7 +415,8 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
 }
 
 /**************************************************************************
- * 				timeGetTime    [MMSYSTEM.607][WINMM.141]
+ * 				timeGetTime    [MMSYSTEM.607]
+ * 				timeGetTime    [WINMM.@]
  */
 DWORD WINAPI timeGetTime(void)
 {

@@ -10,7 +10,7 @@ DEFAULT_DEBUG_CHANNEL(mpr);
 
 
 /*****************************************************************
- *  WNetLogoffA [MPR.89]
+ *  WNetLogoffA [MPR.@]
  */
 DWORD WINAPI WNetLogoffA( LPCSTR lpProvider, HWND hwndOwner )
 {
@@ -21,7 +21,7 @@ DWORD WINAPI WNetLogoffA( LPCSTR lpProvider, HWND hwndOwner )
 }
 
 /*****************************************************************
- *  WNetLogoffW [MPR.90]
+ *  WNetLogoffW [MPR.@]
  */
 DWORD WINAPI WNetLogoffW( LPCWSTR lpProvider, HWND hwndOwner )
 {
@@ -32,7 +32,7 @@ DWORD WINAPI WNetLogoffW( LPCWSTR lpProvider, HWND hwndOwner )
 }
 
 /*****************************************************************
- *  WNetLogonA [MPR.91]
+ *  WNetLogonA [MPR.@]
  */
 DWORD WINAPI WNetLogonA( LPCSTR lpProvider, HWND hwndOwner )
 {
@@ -43,7 +43,7 @@ DWORD WINAPI WNetLogonA( LPCSTR lpProvider, HWND hwndOwner )
 }
 
 /*****************************************************************
- *  WNetLogonW [MPR.91]
+ *  WNetLogonW [MPR.@]
  */
 DWORD WINAPI WNetLogonW( LPCWSTR lpProvider, HWND hwndOwner )
 {
@@ -54,7 +54,7 @@ DWORD WINAPI WNetLogonW( LPCWSTR lpProvider, HWND hwndOwner )
 }
 
 /*****************************************************************
- *  WNetVerifyPasswordA [MPR.91]
+ *  WNetVerifyPasswordA [MPR.@]
  */
 DWORD WINAPI WNetVerifyPasswordA( LPCSTR lpszPassword, BOOL *pfMatch )
 {
@@ -65,7 +65,7 @@ DWORD WINAPI WNetVerifyPasswordA( LPCSTR lpszPassword, BOOL *pfMatch )
 }
 
 /*****************************************************************
- *  WNetVerifyPasswordW [MPR.91]
+ *  WNetVerifyPasswordW [MPR.@]
  */
 DWORD WINAPI WNetVerifyPasswordW( LPCWSTR lpszPassword, BOOL *pfMatch )
 {

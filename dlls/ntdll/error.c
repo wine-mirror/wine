@@ -21,7 +21,7 @@ struct error_table
 static const struct error_table error_table[];
 
 /**************************************************************************
- *           RtlNtStatusToDosError
+ *           RtlNtStatusToDosError (NTDLL.@)
  */
 DWORD WINAPI RtlNtStatusToDosError( DWORD status )
 {

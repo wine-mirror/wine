@@ -5669,7 +5669,7 @@ HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid)
 }
 
 /***********************************************************************
- *    ReadClassStg
+ *    ReadClassStg (OLE32.134)
  *
  * This method reads the CLSID previously written to a storage object with the WriteClassStg.
  */
@@ -5694,7 +5694,7 @@ HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid){
 }
 
 /***********************************************************************
- *    OleLoadFromStream
+ *    OleLoadFromStream (OLE32.113)
  *
  * This function loads an object from stream
  */
@@ -5728,7 +5728,7 @@ HRESULT  WINAPI OleLoadFromStream(IStream *pStm,REFIID iidInterface,void** ppvOb
 }
 
 /***********************************************************************
- *    OleSaveToStream
+ *    OleSaveToStream (OLE32.125)
  *
  * This function saves an object with the IPersistStream interface on it
  * to the specified stream.

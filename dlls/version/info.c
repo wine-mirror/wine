@@ -422,7 +422,7 @@ END:
 }
 
 /***********************************************************************
- *           GetFileVersionInfoSizeA         [VERSION.2]
+ *           GetFileVersionInfoSizeA         [VERSION.@]
  */
 DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 {
@@ -477,7 +477,7 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 }
 
 /***********************************************************************
- *           GetFileVersionInfoSizeW         [VERSION.3]
+ *           GetFileVersionInfoSizeW         [VERSION.@]
  */
 DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 {
@@ -490,7 +490,7 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 }
 
 /***********************************************************************
- *           GetFileVersionInfoA             [VERSION.1]
+ *           GetFileVersionInfoA             [VERSION.@]
  */
 BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
@@ -529,7 +529,7 @@ DO_CONVERT:
 }
 
 /***********************************************************************
- *           GetFileVersionInfoW             [VERSION.4]
+ *           GetFileVersionInfoW             [VERSION.@]
  */
 BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
@@ -606,7 +606,7 @@ static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT
 }
 
 /***********************************************************************
- *           VerQueryValueA              [VERSION.12]
+ *           VerQueryValueA              [VERSION.@]
  */
 DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )
@@ -663,7 +663,7 @@ DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
 }
 
 /***********************************************************************
- *           VerQueryValueW              [VERSION.13]
+ *           VerQueryValueW              [VERSION.@]
  */
 DWORD WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )

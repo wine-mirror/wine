@@ -15,7 +15,7 @@
 DEFAULT_DEBUG_CHANNEL(msacm);
 
 /**************************************************************************
- *		DllEntryPoint (MSACM.255)
+ *		DllEntryPoint (MSACM.2046)
  *
  * MSACM DLL entry point
  *

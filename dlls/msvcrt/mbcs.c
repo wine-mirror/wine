@@ -155,7 +155,7 @@ char *_mbsninc(const char *str, unsigned int num)
 }
 
 /*********************************************************************
- *		_mbslen(MSVCRT.206)
+ *		_mbslen(MSVCRT.@)
  */
 int _mbslen(const unsigned char *str)
 {

@@ -56,7 +56,7 @@ static inline void NormalizeTimeFields(CSHORT *FieldToNormalize, CSHORT *CarryFi
 }
 
 /******************************************************************************
- *  RtlTimeToTimeFields		[NTDLL.265] 
+ *  RtlTimeToTimeFields		[NTDLL.@]
  *
  */
 
@@ -127,7 +127,7 @@ VOID WINAPI RtlTimeToTimeFields(
 	TimeFields->Day = (CSHORT) (Days + 1);
 }
 /******************************************************************************
- *  RtlTimeFieldsToTime		[NTDLL.265] 
+ *  RtlTimeFieldsToTime		[NTDLL.@]
  *
  */
 BOOLEAN WINAPI RtlTimeFieldsToTime(
@@ -230,7 +230,7 @@ void WINAPI RtlSecondsSince1980ToTime( DWORD time, FILETIME *res )
 }
 
 /******************************************************************************
- * RtlTimeToElapsedTimeFields [NTDLL.502]
+ * RtlTimeToElapsedTimeFields [NTDLL.@]
  * FIXME: prototype guessed
  */
 VOID WINAPI RtlTimeToElapsedTimeFields(

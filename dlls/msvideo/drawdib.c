@@ -37,7 +37,7 @@ typedef struct {
 } WINE_HDD;
 
 /***********************************************************************
- *		DrawDibOpen		[MSVFW32.10]
+ *		DrawDibOpen		[MSVFW32.@]
  */
 HDRAWDIB VFWAPI DrawDibOpen(void) {
 	HDRAWDIB hdd;
@@ -56,7 +56,7 @@ HDRAWDIB16 VFWAPI DrawDibOpen16(void) {
 }
 
 /***********************************************************************
- *		DrawDibClose		[MSVFW32.5]
+ *		DrawDibClose		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibClose(HDRAWDIB hdd) {
 	WINE_HDD *whdd = GlobalLock16(hdd);
@@ -82,7 +82,7 @@ BOOL16 VFWAPI DrawDibClose16(HDRAWDIB16 hdd) {
 }
 
 /***********************************************************************
- *		DrawDibEnd		[MSVFW32.7]
+ *		DrawDibEnd		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibEnd(HDRAWDIB hdd) {
 	BOOL ret = TRUE;
@@ -133,7 +133,7 @@ BOOL16 VFWAPI DrawDibEnd16(HDRAWDIB16 hdd) {
 }
 
 /***********************************************************************
- *              DrawDibBegin            [MSVFW32.3]
+ *              DrawDibBegin            [MSVFW32.@]
  */
 BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 						 HDC      hdc,
@@ -258,7 +258,7 @@ BOOL16 VFWAPI DrawDibBegin16(HDRAWDIB16 hdd,
 }
 
 /**********************************************************************
- *		DrawDibDraw		[MSVFW32.6]
+ *		DrawDibDraw		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 	INT xDst, INT yDst, INT dxDst, INT dyDst,
@@ -348,7 +348,7 @@ BOOL16 VFWAPI DrawDibDraw16(HDRAWDIB16 hdd,
 }
 
 /*************************************************************************
- *		DrawDibStart		[MSVFW32.14]
+ *		DrawDibStart		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibStart(HDRAWDIB hdd, DWORD rate) {
 	FIXME("(0x%08lx,%ld), stub\n",(DWORD)hdd,rate);
@@ -363,7 +363,7 @@ BOOL16 VFWAPI DrawDibStart16(HDRAWDIB16 hdd, DWORD rate) {
 }
 
 /*************************************************************************
- *		DrawDibStop		[MSVFW32.15]
+ *		DrawDibStop		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibStop(HDRAWDIB hdd) {
 	FIXME("(0x%08lx), stub\n",(DWORD)hdd);
@@ -378,7 +378,7 @@ BOOL16 DrawDibStop16(HDRAWDIB16 hdd) {
 }
 
 /***********************************************************************
- *              DrawDibSetPalette       [MSVFW32.13]   
+ *              DrawDibSetPalette       [MSVFW32.@]
  */
 BOOL VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal) {
 	WINE_HDD *whdd;
@@ -404,7 +404,7 @@ BOOL16 VFWAPI DrawDibSetPalette16(HDRAWDIB16 hdd, HPALETTE16 hpal) {
 }
 
 /***********************************************************************
- *              DrawDibGetPalette       [MSVFW32.9]   
+ *              DrawDibGetPalette       [MSVFW32.@]
  */
 HPALETTE VFWAPI DrawDibGetPalette(HDRAWDIB hdd) {
 	WINE_HDD *whdd;
@@ -426,7 +426,7 @@ HPALETTE16 VFWAPI DrawDibGetPalette16(HDRAWDIB16 hdd) {
 }
 
 /***********************************************************************
- *              DrawDibRealize          [MSVFW32.12]
+ *              DrawDibRealize          [MSVFW32.@]
  */
 UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground) {
 	WINE_HDD *whdd;

@@ -157,7 +157,7 @@ static HRGN get_visible_region( WND *win, WND *top, UINT flags, int mode )
 
 
 /***********************************************************************
- *		X11DRV_GetDC
+ *		X11DRV_GetDC (X11DRV.@)
  *
  * Set the drawable, origin and dimensions for the DC associated to
  * a given window.

@@ -96,7 +96,7 @@ static	void	CALLBACK	JOY_Timer(HWND hWnd, UINT wMsg, UINT wTimer, DWORD dwTime)
 }
 
 /**************************************************************************
- * 				joyGetNumDevs		[WINMM.30]
+ * 				joyGetNumDevs		[WINMM.@]
  */
 UINT WINAPI joyGetNumDevs(void)
 {
@@ -120,7 +120,7 @@ UINT16 WINAPI joyGetNumDevs16(void)
 }
 
 /**************************************************************************
- * 				joyGetDevCapsA		[WINMM.27]
+ * 				joyGetDevCapsA		[WINMM.@]
  */
 MMRESULT WINAPI joyGetDevCapsA(UINT wID, LPJOYCAPSA lpCaps, UINT wSize)
 {
@@ -134,7 +134,7 @@ MMRESULT WINAPI joyGetDevCapsA(UINT wID, LPJOYCAPSA lpCaps, UINT wSize)
 }   
 
 /**************************************************************************
- * 				joyGetDevCapsW		[WINMM.28]
+ * 				joyGetDevCapsW		[WINMM.@]
  */
 MMRESULT WINAPI joyGetDevCapsW(UINT wID, LPJOYCAPSW lpCaps, UINT wSize)
 {
@@ -217,7 +217,7 @@ MMRESULT16 WINAPI joyGetDevCaps16(UINT16 wID, LPJOYCAPS16 lpCaps, UINT16 wSize)
 }
 
 /**************************************************************************
- *                              joyGetPosEx             [WINMM.32]
+ *                              joyGetPosEx             [WINMM.@]
  */
 MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
 {
@@ -250,7 +250,7 @@ MMRESULT16 WINAPI joyGetPosEx16(UINT16 wID, LPJOYINFOEX lpInfo)
 }
 
 /**************************************************************************
- * 				joyGetPos	       	[WINMM.31]
+ * 				joyGetPos	       	[WINMM.@]
  */
 MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
 {
@@ -287,7 +287,7 @@ MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 }
 
 /**************************************************************************
- * 				joyGetThreshold		[WINMM.36]
+ * 				joyGetThreshold		[WINMM.@]
  */
 MMRESULT WINAPI joyGetThreshold(UINT wID, LPUINT lpThreshold)
 {
@@ -313,7 +313,7 @@ MMRESULT16 WINAPI joyGetThreshold16(UINT16 wID, LPUINT16 lpThreshold)
 }
 
 /**************************************************************************
- * 				joyReleaseCapture	[WINMM.34]
+ * 				joyReleaseCapture	[WINMM.@]
  */
 MMRESULT WINAPI joyReleaseCapture(UINT wID)
 {
@@ -339,7 +339,7 @@ MMRESULT16 WINAPI joyReleaseCapture16(UINT16 wID)
 }
 
 /**************************************************************************
- * 				joySetCapture		[WINMM.35]
+ * 				joySetCapture		[WINMM.@]
  */
 MMRESULT WINAPI joySetCapture(HWND hWnd, UINT wID, UINT wPeriod, BOOL bChanged)
 {
@@ -373,7 +373,7 @@ MMRESULT16 WINAPI joySetCapture16(HWND16 hWnd, UINT16 wID, UINT16 wPeriod, BOOL1
 }
 
 /**************************************************************************
- * 				joySetThreshold		[WINMM.36]
+ * 				joySetThreshold		[WINMM.@]
  */
 MMRESULT WINAPI joySetThreshold(UINT wID, UINT wThreshold)
 {

@@ -43,7 +43,7 @@ BOOL WINAPI DPLAYX_LibMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReser
 }
 
 /***********************************************************************
- *              DllCanUnloadNow (DPLAYX.10)
+ *              DllCanUnloadNow (DPLAYX.@)
  */
 HRESULT WINAPI DPLAYX_DllCanUnloadNow(void)
 {

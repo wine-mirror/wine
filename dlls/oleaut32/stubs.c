@@ -18,7 +18,7 @@
 DEFAULT_DEBUG_CHANNEL(ole);
 
 /***********************************************************************
- * OleIconToCursor
+ * OleIconToCursor (OLEAUT32.415)
  */
 HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon)
 {
@@ -27,7 +27,7 @@ HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon)
 }
 
 /***********************************************************************
- * OleCreatePropertyFrameIndirect
+ * OleCreatePropertyFrameIndirect (OLEAUT32.416)
  */
 HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams)
 {
@@ -36,7 +36,7 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams)
 }
  
 /***********************************************************************
- * OleCreatePropertyFrame
+ * OleCreatePropertyFrame (OLEAUT32.417)
  */
 HRESULT WINAPI OleCreatePropertyFrame(
     HWND hwndOwner, UINT x, UINT y, LPCOLESTR lpszCaption,ULONG cObjects,

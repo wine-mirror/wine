@@ -29,7 +29,7 @@ static RTL_CRITICAL_SECTION peb_lock = CRITICAL_SECTION_INIT;
  */
 
 /***********************************************************************
- *           RtlInitializeResource	(NTDLL.409)
+ *           RtlInitializeResource	(NTDLL.@)
  *
  * xxxResource() functions implement multiple-reader-single-writer lock.
  * The code is based on information published in WDJ January 1999 issue.
@@ -51,7 +51,7 @@ void WINAPI RtlInitializeResource(LPRTL_RWLOCK rwl)
 
 
 /***********************************************************************
- *           RtlDeleteResource		(NTDLL.330)
+ *           RtlDeleteResource		(NTDLL.@)
  */
 void WINAPI RtlDeleteResource(LPRTL_RWLOCK rwl)
 {
@@ -72,7 +72,7 @@ void WINAPI RtlDeleteResource(LPRTL_RWLOCK rwl)
 
 
 /***********************************************************************
- *          RtlAcquireResourceExclusive	(NTDLL.256)
+ *          RtlAcquireResourceExclusive	(NTDLL.@)
  */
 BYTE WINAPI RtlAcquireResourceExclusive(LPRTL_RWLOCK rwl, BYTE fWait)
 {
@@ -117,7 +117,7 @@ done:
 }
 
 /***********************************************************************
- *          RtlAcquireResourceShared	(NTDLL.257)
+ *          RtlAcquireResourceShared	(NTDLL.@)
  */
 BYTE WINAPI RtlAcquireResourceShared(LPRTL_RWLOCK rwl, BYTE fWait)
 {
@@ -158,7 +158,7 @@ done:
 
 
 /***********************************************************************
- *           RtlReleaseResource		(NTDLL.471)
+ *           RtlReleaseResource		(NTDLL.@)
  */
 void WINAPI RtlReleaseResource(LPRTL_RWLOCK rwl)
 {
@@ -200,7 +200,7 @@ wake_exclusive:
 
 
 /***********************************************************************
- *           RtlDumpResource		(NTDLL.340)
+ *           RtlDumpResource		(NTDLL.@)
  */
 void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
 {
@@ -340,7 +340,7 @@ DWORD WINAPI RtlDeleteSecurityObject(DWORD x1) {
 }
 
 /**************************************************************************
- *                 RtlNormalizeProcessParams		[NTDLL.441]
+ *                 RtlNormalizeProcessParams		[NTDLL.@]
  */
 LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x)
 {
@@ -349,7 +349,7 @@ LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x)
 }
 
 /**************************************************************************
- *                 RtlGetNtProductType			[NTDLL.390]
+ *                 RtlGetNtProductType			[NTDLL.@]
  */
 BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
 {
@@ -359,8 +359,8 @@ BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
 }
 
 /**************************************************************************
- *                 NTDLL_chkstk				[NTDLL.862]
- *                 NTDLL_alloca_probe				[NTDLL.861]
+ *                 NTDLL_chkstk				[NTDLL.@]
+ *                 NTDLL_alloca_probe				[NTDLL.@]
  * Glorified "enter xxxx".
  */
 void WINAPI NTDLL_chkstk( CONTEXT86 *context )
@@ -373,7 +373,7 @@ void WINAPI NTDLL_alloca_probe( CONTEXT86 *context )
 }
 
 /**************************************************************************
- *                 RtlDosPathNameToNtPathName_U		[NTDLL.338]
+ *                 RtlDosPathNameToNtPathName_U		[NTDLL.@]
  *
  * FIXME: convert to UNC or whatever is expected here
  */

@@ -2537,7 +2537,7 @@ INT16 WINAPI WINSOCK_gethostname16(char *name, INT16 namelen)
  * ------------------------------------------------------------------- */
 
 /***********************************************************************
- *		WSAEnumNetworkEvents
+ *		WSAEnumNetworkEvents (WS2_32.36)
  */
 int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lpEvent)
 {
@@ -2564,7 +2564,7 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 }
 
 /***********************************************************************
- *		WSAEventSelect
+ *		WSAEventSelect (WS2_32.39)
  */
 int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 {

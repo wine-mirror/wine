@@ -136,7 +136,7 @@ INT16 WINAPI LZStart16(void)
 
 
 /***********************************************************************
- *           LZStart   (LZ32.6)
+ *           LZStart   (LZ32.@)
  */
 INT WINAPI LZStart(void)
 {
@@ -158,7 +158,7 @@ HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 
 
 /***********************************************************************
- *           LZInit   (LZ32.2)
+ *           LZInit   (LZ32.@)
  *
  * initializes internal decompression buffers, returns lzfiledescriptor.
  * (return value the same as hfSrc, if hfSrc is not compressed)
@@ -211,7 +211,8 @@ HFILE WINAPI LZInit( HFILE hfSrc )
 
 
 /***********************************************************************
- *           LZDone   (LZEXPAND.9) (LZ32.8)
+ *           LZDone   (LZEXPAND.9)
+ *           LZDone   (LZ32.@)
  */
 void WINAPI LZDone(void)
 {
@@ -229,7 +230,7 @@ INT16 WINAPI GetExpandedName16( LPCSTR in, LPSTR out )
 
 
 /***********************************************************************
- *           GetExpandedNameA   (LZ32.9)
+ *           GetExpandedNameA   (LZ32.@)
  *
  * gets the full filename of the compressed file 'in' by opening it
  * and reading the header
@@ -307,7 +308,7 @@ INT WINAPI GetExpandedNameA( LPCSTR in, LPSTR out )
 
 
 /***********************************************************************
- *           GetExpandedNameW   (LZ32.11)
+ *           GetExpandedNameW   (LZ32.@)
  */
 INT WINAPI GetExpandedNameW( LPCWSTR in, LPWSTR out )
 {
@@ -335,7 +336,7 @@ INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 
 
 /***********************************************************************
- *           LZRead   (LZ32.4)
+ *           LZRead   (LZ32.@)
  */
 INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
 {
@@ -436,7 +437,7 @@ LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 
 
 /***********************************************************************
- *           LZSeek   (LZ32.3)
+ *           LZSeek   (LZ32.@)
  */
 LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
 {
@@ -491,7 +492,7 @@ LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
 
 
 /***********************************************************************
- *           LZCopy   (LZ32.0)
+ *           LZCopy   (LZ32.@)
  *
  * Copies everything from src to dest
  * if src is a LZ compressed file, it will be uncompressed.
@@ -579,7 +580,7 @@ HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 
 
 /***********************************************************************
- *           LZOpenFileA   (LZ32.1)
+ *           LZOpenFileA   (LZ32.@)
  *
  * Opens a file. If not compressed, open it as a normal file.
  */
@@ -607,7 +608,7 @@ HFILE WINAPI LZOpenFileA( LPCSTR fn, LPOFSTRUCT ofs, UINT mode )
 
 
 /***********************************************************************
- *           LZOpenFileW   (LZ32.10)
+ *           LZOpenFileW   (LZ32.@)
  */
 HFILE WINAPI LZOpenFileW( LPCWSTR fn, LPOFSTRUCT ofs, UINT mode )
 {
@@ -632,7 +633,7 @@ void WINAPI LZClose16( HFILE16 fd )
 
 
 /***********************************************************************
- *           LZClose   (LZ32.5)
+ *           LZClose   (LZ32.@)
  */
 void WINAPI LZClose( HFILE fd )
 {
@@ -660,7 +661,7 @@ LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
 
 
 /***********************************************************************
- *           CopyLZFile  (LZ32.7)
+ *           CopyLZFile  (LZ32.@)
  *
  * Copy src to dest (including uncompressing src).
  * NOTE: Yes. This is exactly the same function as LZCopy.

@@ -21,7 +21,7 @@ typedef void * POBJDIR_INFORMATION;
  */
  
 /******************************************************************************
- * NtQueryObject [NTDLL.161]
+ * NtQueryObject [NTDLL.@]
  */
 NTSTATUS WINAPI NtQueryObject(
 	IN HANDLE ObjectHandle,
@@ -209,7 +209,7 @@ NTSTATUS WINAPI NtDuplicateObject(
 }
 
 /**************************************************************************
- *                 NtClose				[NTDLL.65]
+ *                 NtClose				[NTDLL.@]
  * FUNCTION: Closes a handle reference to an object
  * ARGUMENTS:
  *	Handle	handle to close
@@ -244,7 +244,7 @@ NTSTATUS WINAPI NtWaitForSingleObject(
  */
 
 /**************************************************************************
- * NtOpenDirectoryObject [NTDLL.124]
+ * NtOpenDirectoryObject [NTDLL.@]
  * FUNCTION: Opens a namespace directory object
  * ARGUMENTS:
  *  DirectoryHandle	Variable which receives the directory handle
@@ -278,7 +278,7 @@ NTSTATUS WINAPI NtCreateDirectoryObject(
 }
 
 /******************************************************************************
- * NtQueryDirectoryObject [NTDLL.149] 
+ * NtQueryDirectoryObject [NTDLL.@]
  * FUNCTION: Reads information from a namespace directory
  * ARGUMENTS:
  *  DirObjInformation	Buffer to hold the data read

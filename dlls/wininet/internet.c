@@ -131,7 +131,7 @@ WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 
 /***********************************************************************
- *           InternetOpenA   (WININET.113)
+ *           InternetOpenA   (WININET.@)
  *
  * Per-application initialization of wininet
  *
@@ -183,7 +183,7 @@ INTERNETAPI HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent,
 
 
 /***********************************************************************
- *           InternetGetLastResponseInfoA (WININET.108)
+ *           InternetGetLastResponseInfoA (WININET.@)
  *
  * Return last wininet error description on the calling thread
  *
@@ -213,7 +213,7 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
 
 
 /***********************************************************************
- *           InternetGetConnectedState (WININET.103)
+ *           InternetGetConnectedState (WININET.@)
  *
  * Return connected state
  *
@@ -231,7 +231,7 @@ BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
 
 
 /***********************************************************************
- *           InternetConnectA (WININET.93)
+ *           InternetConnectA (WININET.@)
  *
  * Open a ftp, gopher or http session
  *
@@ -273,7 +273,7 @@ INTERNETAPI HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
 }
 
 /***********************************************************************
- *           InternetFindNextFileA (WININET.102)
+ *           InternetFindNextFileA (WININET.@)
  *
  * Continues a file search from a previous call to FindFirstFile
  *
@@ -407,7 +407,7 @@ VOID INTERNET_CloseHandle(LPWININETAPPINFOA lpwai)
 
 
 /***********************************************************************
- *           InternetCloseHandle (WININET.89)
+ *           InternetCloseHandle (WININET.@)
  *
  * Generic close handle function
  *
@@ -496,7 +496,7 @@ BOOL SetUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen, LPCSTR 
 
 
 /***********************************************************************
- *           InternetCrackUrlA (WININET.95)
+ *           InternetCrackUrlA (WININET.@)
  *
  * Break up URL into its components
  *
@@ -696,7 +696,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 
 
 /***********************************************************************
- *           InternetAttemptConnect (WININET.81)
+ *           InternetAttemptConnect (WININET.@)
  *
  * Attempt to make a connection to the internet
  *
@@ -713,7 +713,7 @@ INTERNETAPI DWORD WINAPI InternetAttemptConnect(DWORD dwReserved)
 
 
 /***********************************************************************
- *           InternetCanonicalizeUrlA (WININET.85)
+ *           InternetCanonicalizeUrlA (WININET.@)
  *
  * Escape unsafe characters and spaces
  *
@@ -740,7 +740,7 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
 }
 
 /***********************************************************************
- *           InternetSetStatusCallback (WININET.133)
+ *           InternetSetStatusCallback (WININET.@)
  *
  * Sets up a callback function which is called as progress is made
  * during an operation. 
@@ -768,7 +768,7 @@ INTERNETAPI INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallback(
 
 
 /***********************************************************************
- *           InternetWriteFile (WININET.138)
+ *           InternetWriteFile (WININET.@)
  *
  * Write data to an open internet file 
  *
@@ -816,7 +816,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
 
 
 /***********************************************************************
- *           InternetReadFile (WININET.121)
+ *           InternetReadFile (WININET.@)
  *
  * Read data from an open internet file 
  *
@@ -864,7 +864,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 
 
 /***********************************************************************
- *           InternetQueryOptionA
+ *           InternetQueryOptionA (WININET.@)
  *
  * Queries an options on the specified handle
  *
@@ -918,7 +918,7 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
 
 
 /***********************************************************************
- *           InternetGetCookieA
+ *           InternetGetCookieA (WININET.@)
  *
  * Retrieve cookie from the specified url
  *
@@ -969,7 +969,7 @@ INTERNET_SCHEME GetInternetScheme(LPCSTR lpszScheme, INT nMaxCmp)
 }
 
 /***********************************************************************
- *	InternetCheckConnectionA
+ *	InternetCheckConnectionA (WININET.@)
  *
  * Pings a requested host to check internet connection
  *

@@ -236,7 +236,7 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
 }
 
 /*************************************************************************
- * ILLoadFromStream
+ * ILLoadFromStream (SHELL32.26)
  *
  * NOTES
  *   the first two bytes are the len, the pidl is following then
@@ -280,7 +280,7 @@ HRESULT WINAPI ILLoadFromStream (IStream * pStream, LPITEMIDLIST * ppPidl)
 }
 
 /*************************************************************************
- * ILSaveToStream
+ * ILSaveToStream (SHELL32.27)
  *
  * NOTES
  *   the first two bytes are the len, the pidl is following then
@@ -383,7 +383,7 @@ LPITEMIDLIST WINAPI SHCloneSpecialIDList(HWND hwndOwner,DWORD nFolder,DWORD x3)
 }
 
 /*************************************************************************
- * ILGlobalClone [SHELL32.97]
+ * ILGlobalClone [SHELL32.20]
  *
  */
 LPITEMIDLIST WINAPI ILGlobalClone(LPCITEMIDLIST pidl)
@@ -818,7 +818,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW (LPCVOID lpszPath)
 }
 
 /*************************************************************************
- * SHGetSpecialFolderLocation		[SHELL32.223]
+ * SHGetSpecialFolderLocation		[SHELL32.@]
  *
  * gets the folder locations from the registry and creates a pidl
  * creates missing reg keys and directorys
@@ -945,7 +945,7 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 	return E_INVALIDARG;
 }
 /*************************************************************************
- * SHGetDataFromIDListW [SHELL32.247]
+ * SHGetDataFromIDListW [SHELL32.248]
  *
  */
 HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
@@ -989,7 +989,7 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 }
 
 /*************************************************************************
- * SHGetPathFromIDListA		[SHELL32.261][NT 4.0: SHELL32.220]
+ * SHGetPathFromIDListA		[SHELL32.@][NT 4.0: SHELL32.220]
  *
  * PARAMETERS
  *  pidl,   [IN] pidl 
@@ -1039,7 +1039,7 @@ BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath)
 	return TRUE;
 }
 /*************************************************************************
- * SHGetPathFromIDListW 			[SHELL32.262]
+ * SHGetPathFromIDListW 			[SHELL32.@]
  */
 BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath)
 {	char sTemp[MAX_PATH];
@@ -1102,7 +1102,7 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
 }
 
 /*************************************************************************
- * SHGetPathFromIDListAW		[SHELL32.221][NT 4.0: SHELL32.219]
+ * SHGetPathFromIDListAW		[SHELL32.@][NT 4.0: SHELL32.219]
  */
 BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPVOID pszPath)
 {

@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(mpr);
  */
 
 /*********************************************************************
- * WNetOpenEnumA [MPR.92]
+ * WNetOpenEnumA [MPR.@]
  */
 DWORD WINAPI WNetOpenEnumA( DWORD dwScope, DWORD dwType, DWORD dwUsage,
                             LPNETRESOURCEA lpNet, LPHANDLE lphEnum )
@@ -34,7 +34,7 @@ DWORD WINAPI WNetOpenEnumA( DWORD dwScope, DWORD dwType, DWORD dwUsage,
 }
 
 /*********************************************************************
- * WNetOpenEnumW [MPR.93]
+ * WNetOpenEnumW [MPR.@]
  */
 DWORD WINAPI WNetOpenEnumW( DWORD dwScope, DWORD dwType, DWORD dwUsage,
                             LPNETRESOURCEW lpNet, LPHANDLE lphEnum )
@@ -47,7 +47,7 @@ DWORD WINAPI WNetOpenEnumW( DWORD dwScope, DWORD dwType, DWORD dwUsage,
 }
 
 /*********************************************************************
- * WNetEnumResourceA [MPR.66]
+ * WNetEnumResourceA [MPR.@]
  */
 DWORD WINAPI WNetEnumResourceA( HANDLE hEnum, LPDWORD lpcCount, 
                                 LPVOID lpBuffer, LPDWORD lpBufferSize )
@@ -60,7 +60,7 @@ DWORD WINAPI WNetEnumResourceA( HANDLE hEnum, LPDWORD lpcCount,
 }
 
 /*********************************************************************
- * WNetEnumResourceW [MPR.67]
+ * WNetEnumResourceW [MPR.@]
  */
 DWORD WINAPI WNetEnumResourceW( HANDLE hEnum, LPDWORD lpcCount, 
                                 LPVOID lpBuffer, LPDWORD lpBufferSize )
@@ -73,7 +73,7 @@ DWORD WINAPI WNetEnumResourceW( HANDLE hEnum, LPDWORD lpcCount,
 }
 
 /*********************************************************************
- * WNetCloseEnum [MPR.58]
+ * WNetCloseEnum [MPR.@]
  */
 DWORD WINAPI WNetCloseEnum( HANDLE hEnum )
 {
@@ -84,7 +84,7 @@ DWORD WINAPI WNetCloseEnum( HANDLE hEnum )
 }
 
 /*********************************************************************
- * WNetGetResourceInformationA [MPR.80]
+ * WNetGetResourceInformationA [MPR.@]
  */
 DWORD WINAPI WNetGetResourceInformationA( LPNETRESOURCEA lpNetResource, 
                                           LPVOID lpBuffer, LPDWORD cbBuffer, 
@@ -98,7 +98,7 @@ DWORD WINAPI WNetGetResourceInformationA( LPNETRESOURCEA lpNetResource,
 }
 
 /*********************************************************************
- * WNetGetResourceInformationW [MPR.80]
+ * WNetGetResourceInformationW [MPR.@]
  */
 DWORD WINAPI WNetGetResourceInformationW( LPNETRESOURCEW lpNetResource, 
                                           LPVOID lpBuffer, LPDWORD cbBuffer, 
@@ -112,7 +112,7 @@ DWORD WINAPI WNetGetResourceInformationW( LPNETRESOURCEW lpNetResource,
 }
 
 /*********************************************************************
- * WNetGetResourceParentA [MPR.83]
+ * WNetGetResourceParentA [MPR.@]
  */
 DWORD WINAPI WNetGetResourceParentA( LPNETRESOURCEA lpNetResource,
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
@@ -125,7 +125,7 @@ DWORD WINAPI WNetGetResourceParentA( LPNETRESOURCEA lpNetResource,
 }
 
 /*********************************************************************
- * WNetGetResourceParentW [MPR.84]
+ * WNetGetResourceParentW [MPR.@]
  */
 DWORD WINAPI WNetGetResourceParentW( LPNETRESOURCEW lpNetResource,
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
@@ -144,7 +144,7 @@ DWORD WINAPI WNetGetResourceParentW( LPNETRESOURCEW lpNetResource,
  */
 
 /*********************************************************************
- *  WNetAddConnectionA [MPR.50] 
+ *  WNetAddConnectionA [MPR.@]
  */
 DWORD WINAPI WNetAddConnectionA( LPCSTR lpRemoteName, LPCSTR lpPassword,
                                  LPCSTR lpLocalName )
@@ -157,7 +157,7 @@ DWORD WINAPI WNetAddConnectionA( LPCSTR lpRemoteName, LPCSTR lpPassword,
 }
 
 /*********************************************************************
- *  WNetAddConnectionW [MPR.51] 
+ *  WNetAddConnectionW [MPR.@]
  */
 DWORD WINAPI WNetAddConnectionW( LPCWSTR lpRemoteName, LPCWSTR lpPassword,
                                  LPCWSTR lpLocalName )
@@ -170,7 +170,7 @@ DWORD WINAPI WNetAddConnectionW( LPCWSTR lpRemoteName, LPCWSTR lpPassword,
 }
 
 /*********************************************************************
- *  WNetAddConnection2A [MPR.46] 
+ *  WNetAddConnection2A [MPR.@]
  */
 DWORD WINAPI WNetAddConnection2A( LPNETRESOURCEA lpNetResource,
                                   LPCSTR lpPassword, LPCSTR lpUserID, 
@@ -184,7 +184,7 @@ DWORD WINAPI WNetAddConnection2A( LPNETRESOURCEA lpNetResource,
 }
 
 /*********************************************************************
- * WNetAddConnection2W [MPR.47]
+ * WNetAddConnection2W [MPR.@]
  */
 DWORD WINAPI WNetAddConnection2W( LPNETRESOURCEW lpNetResource,
                                   LPCWSTR lpPassword, LPCWSTR lpUserID, 
@@ -198,7 +198,7 @@ DWORD WINAPI WNetAddConnection2W( LPNETRESOURCEW lpNetResource,
 }
 
 /*********************************************************************
- * WNetAddConnection3A [MPR.48]
+ * WNetAddConnection3A [MPR.@]
  */
 DWORD WINAPI WNetAddConnection3A( HWND hwndOwner, LPNETRESOURCEA lpNetResource,
                                   LPCSTR lpPassword, LPCSTR lpUserID, 
@@ -212,7 +212,7 @@ DWORD WINAPI WNetAddConnection3A( HWND hwndOwner, LPNETRESOURCEA lpNetResource,
 }
 
 /*********************************************************************
- * WNetAddConnection3W [MPR.49]
+ * WNetAddConnection3W [MPR.@]
  */
 DWORD WINAPI WNetAddConnection3W( HWND hwndOwner, LPNETRESOURCEW lpNetResource,
                                   LPCWSTR lpPassword, LPCWSTR lpUserID, 
@@ -226,7 +226,7 @@ DWORD WINAPI WNetAddConnection3W( HWND hwndOwner, LPNETRESOURCEW lpNetResource,
 } 
 
 /*****************************************************************
- *  WNetUseConnectionA [MPR.100]
+ *  WNetUseConnectionA [MPR.@]
  */
 DWORD WINAPI WNetUseConnectionA( HWND hwndOwner, LPNETRESOURCEA lpNetResource,
                                  LPCSTR lpPassword, LPCSTR lpUserID, DWORD dwFlags,
@@ -242,7 +242,7 @@ DWORD WINAPI WNetUseConnectionA( HWND hwndOwner, LPNETRESOURCEA lpNetResource,
 }
 
 /*****************************************************************
- *  WNetUseConnectionW [MPR.101]
+ *  WNetUseConnectionW [MPR.@]
  */
 DWORD WINAPI WNetUseConnectionW( HWND hwndOwner, LPNETRESOURCEW lpNetResource,
                                  LPCWSTR lpPassword, LPCWSTR lpUserID, DWORD dwFlags,
@@ -258,7 +258,7 @@ DWORD WINAPI WNetUseConnectionW( HWND hwndOwner, LPNETRESOURCEW lpNetResource,
 }
 
 /*********************************************************************
- *  WNetCancelConnectionA [MPR.55]
+ *  WNetCancelConnectionA [MPR.@]
  */
 DWORD WINAPI WNetCancelConnectionA( LPCSTR lpName, BOOL fForce )
 {
@@ -268,7 +268,7 @@ DWORD WINAPI WNetCancelConnectionA( LPCSTR lpName, BOOL fForce )
 }
 
 /*********************************************************************
- *  WNetCancelConnectionW [MPR.56]
+ *  WNetCancelConnectionW [MPR.@]
  */
 DWORD WINAPI WNetCancelConnectionW( LPCWSTR lpName, BOOL fForce ) 
 {
@@ -278,7 +278,7 @@ DWORD WINAPI WNetCancelConnectionW( LPCWSTR lpName, BOOL fForce )
 }
 
 /*********************************************************************
- *  WNetCancelConnection2A [MPR.53]
+ *  WNetCancelConnection2A [MPR.@]
  */
 DWORD WINAPI WNetCancelConnection2A( LPCSTR lpName, DWORD dwFlags, BOOL fForce ) 
 {
@@ -288,7 +288,7 @@ DWORD WINAPI WNetCancelConnection2A( LPCSTR lpName, DWORD dwFlags, BOOL fForce )
 }
 
 /*********************************************************************
- *  WNetCancelConnection2W [MPR.54]
+ *  WNetCancelConnection2W [MPR.@]
  */
 DWORD WINAPI WNetCancelConnection2W( LPCWSTR lpName, DWORD dwFlags, BOOL fForce ) 
 {
@@ -298,7 +298,7 @@ DWORD WINAPI WNetCancelConnection2W( LPCWSTR lpName, DWORD dwFlags, BOOL fForce 
 }
 
 /*****************************************************************
- *  WNetRestoreConnectionA [MPR.96]
+ *  WNetRestoreConnectionA [MPR.@]
  */
 DWORD WINAPI WNetRestoreConnectionA( HWND hwndOwner, LPSTR lpszDevice )
 {
@@ -309,7 +309,7 @@ DWORD WINAPI WNetRestoreConnectionA( HWND hwndOwner, LPSTR lpszDevice )
 }
 
 /*****************************************************************
- *  WNetRestoreConnectionW [MPR.97]
+ *  WNetRestoreConnectionW [MPR.@]
  */
 DWORD WINAPI WNetRestoreConnectionW( HWND hwndOwner, LPWSTR lpszDevice )
 {
@@ -320,7 +320,7 @@ DWORD WINAPI WNetRestoreConnectionW( HWND hwndOwner, LPWSTR lpszDevice )
 }
 
 /**************************************************************************
- * WNetGetConnectionA [MPR.71]
+ * WNetGetConnectionA [MPR.@]
  *
  * RETURNS
  * - WN_BAD_LOCALNAME     lpLocalName makes no sense
@@ -363,7 +363,7 @@ DWORD WINAPI WNetGetConnectionA( LPCSTR lpLocalName,
 }
 
 /**************************************************************************
- * WNetGetConnectionW [MPR.72]
+ * WNetGetConnectionW [MPR.@]
  */
 DWORD WINAPI WNetGetConnectionW( LPCWSTR lpLocalName, 
                                  LPWSTR lpRemoteName, LPDWORD lpBufferSize )
@@ -387,7 +387,7 @@ DWORD WINAPI WNetGetConnectionW( LPCWSTR lpLocalName,
 }
 
 /**************************************************************************
- * WNetSetConnectionA [MPR.72]
+ * WNetSetConnectionA [MPR.@]
  */
 DWORD WINAPI WNetSetConnectionA( LPCSTR lpName, DWORD dwProperty, 
                                  LPVOID pvValue )
@@ -399,7 +399,7 @@ DWORD WINAPI WNetSetConnectionA( LPCSTR lpName, DWORD dwProperty,
 }
 
 /**************************************************************************
- * WNetSetConnectionW [MPR.72]
+ * WNetSetConnectionW [MPR.@]
  */
 DWORD WINAPI WNetSetConnectionW( LPCWSTR lpName, DWORD dwProperty, 
                                  LPVOID pvValue )
@@ -411,7 +411,7 @@ DWORD WINAPI WNetSetConnectionW( LPCWSTR lpName, DWORD dwProperty,
 }
 
 /*****************************************************************
- * WNetGetUniversalNameA [MPR.85]
+ * WNetGetUniversalNameA [MPR.@]
  */
 DWORD WINAPI WNetGetUniversalNameA ( LPCSTR lpLocalPath, DWORD dwInfoLevel, 
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
@@ -424,7 +424,7 @@ DWORD WINAPI WNetGetUniversalNameA ( LPCSTR lpLocalPath, DWORD dwInfoLevel,
 }
 
 /*****************************************************************
- * WNetGetUniversalNameW [MPR.86]
+ * WNetGetUniversalNameW [MPR.@]
  */
 DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel, 
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
@@ -443,7 +443,7 @@ DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel,
  */
 
 /**************************************************************************
- * WNetGetUserA [MPR.86]
+ * WNetGetUserA [MPR.@]
  *
  * FIXME: we should not return ourselves, but the owner of the drive lpName
  */
@@ -475,7 +475,7 @@ DWORD WINAPI WNetGetUserA( LPCSTR lpName, LPSTR lpUserID, LPDWORD lpBufferSize )
 }
 
 /*****************************************************************
- * WNetGetUserW [MPR.87]
+ * WNetGetUserW [MPR.@]
  */
 DWORD WINAPI WNetGetUserW( LPCWSTR lpName, LPWSTR lpUserID, LPDWORD lpBufferSize ) 
 {
@@ -487,7 +487,7 @@ DWORD WINAPI WNetGetUserW( LPCWSTR lpName, LPWSTR lpUserID, LPDWORD lpBufferSize
 }
 
 /*********************************************************************
- * WNetConnectionDialog [MPR.61]
+ * WNetConnectionDialog [MPR.@]
  */ 
 DWORD WINAPI WNetConnectionDialog( HWND hwnd, DWORD dwType )
 { 
@@ -498,7 +498,7 @@ DWORD WINAPI WNetConnectionDialog( HWND hwnd, DWORD dwType )
 }
 
 /*********************************************************************
- * WNetConnectionDialog1A [MPR.59]
+ * WNetConnectionDialog1A [MPR.@]
  */
 DWORD WINAPI WNetConnectionDialog1A( LPCONNECTDLGSTRUCTA lpConnDlgStruct )
 { 
@@ -509,7 +509,7 @@ DWORD WINAPI WNetConnectionDialog1A( LPCONNECTDLGSTRUCTA lpConnDlgStruct )
 }
 
 /*********************************************************************
- * WNetConnectionDialog1W [MPR.60]
+ * WNetConnectionDialog1W [MPR.@]
  */ 
 DWORD WINAPI WNetConnectionDialog1W( LPCONNECTDLGSTRUCTW lpConnDlgStruct )
 { 
@@ -520,7 +520,7 @@ DWORD WINAPI WNetConnectionDialog1W( LPCONNECTDLGSTRUCTW lpConnDlgStruct )
 }
 
 /*********************************************************************
- * WNetDisconnectDialog [MPR.64]
+ * WNetDisconnectDialog [MPR.@]
  */ 
 DWORD WINAPI WNetDisconnectDialog( HWND hwnd, DWORD dwType )
 { 
@@ -531,7 +531,7 @@ DWORD WINAPI WNetDisconnectDialog( HWND hwnd, DWORD dwType )
 }
 
 /*********************************************************************
- * WNetDisconnectDialog1A [MPR.62]
+ * WNetDisconnectDialog1A [MPR.@]
  */ 
 DWORD WINAPI WNetDisconnectDialog1A( LPDISCDLGSTRUCTA lpConnDlgStruct )
 { 
@@ -542,7 +542,7 @@ DWORD WINAPI WNetDisconnectDialog1A( LPDISCDLGSTRUCTA lpConnDlgStruct )
 }
 
 /*********************************************************************
- * WNetDisconnectDialog1W [MPR.63]
+ * WNetDisconnectDialog1W [MPR.@]
  */ 
 DWORD WINAPI WNetDisconnectDialog1W( LPDISCDLGSTRUCTW lpConnDlgStruct )
 { 
@@ -553,7 +553,7 @@ DWORD WINAPI WNetDisconnectDialog1W( LPDISCDLGSTRUCTW lpConnDlgStruct )
 }
 
 /*********************************************************************
- * WNetGetLastErrorA [MPR.75]
+ * WNetGetLastErrorA [MPR.@]
  */ 
 DWORD WINAPI WNetGetLastErrorA( LPDWORD lpError,
                                 LPSTR lpErrorBuf, DWORD nErrorBufSize,
@@ -567,7 +567,7 @@ DWORD WINAPI WNetGetLastErrorA( LPDWORD lpError,
 }
 
 /*********************************************************************
- * WNetGetLastErrorW [MPR.76]
+ * WNetGetLastErrorW [MPR.@]
  */ 
 DWORD WINAPI WNetGetLastErrorW( LPDWORD lpError,
                                 LPWSTR lpErrorBuf, DWORD nErrorBufSize,
@@ -581,7 +581,7 @@ DWORD WINAPI WNetGetLastErrorW( LPDWORD lpError,
 }
 
 /*********************************************************************
- * WNetGetNetworkInformationA [MPR.77]
+ * WNetGetNetworkInformationA [MPR.@]
  */ 
 DWORD WINAPI WNetGetNetworkInformationA( LPCSTR lpProvider, 
                                          LPNETINFOSTRUCT lpNetInfoStruct )
@@ -593,7 +593,7 @@ DWORD WINAPI WNetGetNetworkInformationA( LPCSTR lpProvider,
 }
 
 /*********************************************************************
- * WNetGetNetworkInformationW [MPR.77]
+ * WNetGetNetworkInformationW [MPR.@]
  */ 
 DWORD WINAPI WNetGetNetworkInformationW( LPCWSTR lpProvider, 
                                          LPNETINFOSTRUCT lpNetInfoStruct )
@@ -605,7 +605,7 @@ DWORD WINAPI WNetGetNetworkInformationW( LPCWSTR lpProvider,
 }
 
 /*****************************************************************
- *  WNetGetProviderNameA [MPR.79]
+ *  WNetGetProviderNameA [MPR.@]
  */
 DWORD WINAPI WNetGetProviderNameA( DWORD dwNetType, 
                                    LPSTR lpProvider, LPDWORD lpBufferSize )
@@ -617,7 +617,7 @@ DWORD WINAPI WNetGetProviderNameA( DWORD dwNetType,
 }
 
 /*****************************************************************
- *  WNetGetProviderNameW [MPR.80]
+ *  WNetGetProviderNameW [MPR.@]
  */
 DWORD WINAPI WNetGetProviderNameW( DWORD dwNetType,
                                    LPWSTR lpProvider, LPDWORD lpBufferSize ) 

@@ -3232,7 +3232,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 }
 
 /*******************************************************************************
- *		DirectSoundCreate
+ *		DirectSoundCreate (DSOUND.1)
  */
 HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUnkOuter )
 {
@@ -3853,7 +3853,7 @@ static ICOM_VTABLE(IClassFactory) DSCF_Vtbl = {
 static IClassFactoryImpl DSOUND_CF = {&DSCF_Vtbl, 1 };
 
 /*******************************************************************************
- * DllGetClassObject [DSOUND.4]
+ * DllGetClassObject [DSOUND.@]
  * Retrieves class object from a DLL object
  *
  * NOTES
@@ -3884,7 +3884,7 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 
 
 /*******************************************************************************
- * DllCanUnloadNow [DSOUND.3]  Determines whether the DLL is in use.
+ * DllCanUnloadNow [DSOUND.@]  Determines whether the DLL is in use.
  *
  * RETURNS
  *    Success: S_OK

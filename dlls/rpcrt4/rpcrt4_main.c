@@ -265,7 +265,7 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 }
 
 /*************************************************************************
- *           RpcStringFreeA   [RPCRT4.436]
+ *           RpcStringFreeA   [RPCRT4.@]
  *
  * Frees a character string allocated by the RPC run-time library.
  *
@@ -281,7 +281,7 @@ RPC_STATUS WINAPI RpcStringFreeA(unsigned char** String)
 }
 
 /*************************************************************************
- *           UuidToStringA   [RPCRT4.450]
+ *           UuidToStringA   [RPCRT4.@]
  *
  * Converts a UUID to a string.
  *

@@ -75,7 +75,7 @@ inline static LPSTR HTTP_strdup( LPCSTR str )
 }
 
 /***********************************************************************
- *           HttpAddRequestHeadersA (WININET.68)
+ *           HttpAddRequestHeadersA (WININET.@)
  *
  * Adds one or more HTTP header to the request handler
  *
@@ -132,7 +132,7 @@ INTERNETAPI BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
 
 
 /***********************************************************************
- *           HttpOpenRequestA (WININET.72)
+ *           HttpOpenRequestA (WININET.@)
  *
  * Open a HTTP request handle
  *
@@ -291,7 +291,7 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 
 
 /***********************************************************************
- *           HttpQueryInfoA (WININET.74)
+ *           HttpQueryInfoA (WININET.@)
  *
  * Queries for information about an HTTP request
  *
@@ -491,7 +491,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
 }
 
 /***********************************************************************
- *           HttpSendRequestA (WININET.76)
+ *           HttpSendRequestA (WININET.@)
  *
  * Sends the specified request to the HTTP server
  *

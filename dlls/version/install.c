@@ -197,7 +197,7 @@ DWORD WINAPI VerFindFileA(
 }
 
 /*****************************************************************************
- * VerFindFileW						[VERSION.6]
+ * VerFindFileW						[VERSION.@]
  */
 DWORD WINAPI VerFindFileW( UINT flags,LPCWSTR lpszFilename,LPCWSTR lpszWinDir,
                            LPCWSTR lpszAppDir, LPWSTR lpszCurDir,UINT *lpuCurDirLen,
@@ -337,7 +337,7 @@ _error2vif(DWORD error) {
 
 
 /******************************************************************************
- * VerInstallFileA [VERSION.7]
+ * VerInstallFileA [VERSION.@]
  */
 DWORD WINAPI VerInstallFileA(
 	UINT flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
@@ -504,7 +504,7 @@ DWORD WINAPI VerInstallFileA(
 
 
 /******************************************************************************
- * VerInstallFileW				[VERSION.8]
+ * VerInstallFileW				[VERSION.@]
  */
 DWORD WINAPI VerInstallFileW(
 	UINT flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,

@@ -55,7 +55,7 @@ UINT16 WINAPI CompareString16(DWORD lcid,DWORD fdwStyle,
 }
 
 /******************************************************************************
- *      RegisterNLSInfoChanged  [OLE2NLS.10]
+ *      RegisterNLSInfoChanged  [OLE2NLS.9]
  */
 BOOL16 WINAPI RegisterNLSInfoChanged16(LPVOID lpNewNLSInfo) /* [???] FIXME */
 {

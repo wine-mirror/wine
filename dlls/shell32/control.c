@@ -346,7 +346,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCSTR cmd)
 }
 
 /*************************************************************************
- * Control_RunDLL			[SHELL32.12]
+ * Control_RunDLL			[SHELL32.@]
  *
  */
 void WINAPI Control_RunDLL(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdShow)
@@ -366,7 +366,7 @@ void WINAPI Control_RunDLL(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdSho
 }
 
 /*************************************************************************
- * Control_FillCache_RunDLL			[SHELL32.8]
+ * Control_FillCache_RunDLL			[SHELL32.@]
  *
  */
 HRESULT WINAPI Control_FillCache_RunDLL(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)

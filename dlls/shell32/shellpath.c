@@ -596,7 +596,7 @@ HRESULT WINAPI PathProcessCommandW (
 }
 
 /*************************************************************************
-*	PathProcessCommandAW
+*	PathProcessCommandAW (SHELL32.653)
 */
 HRESULT WINAPI PathProcessCommandAW (
 	LPCVOID lpszPath,
@@ -614,7 +614,7 @@ HRESULT WINAPI PathProcessCommandAW (
 */
 
 /*************************************************************************
- * PathSetDlgItemPathAW
+ * PathSetDlgItemPathAW (SHELL32.48)
  */
 BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath) 
 {	if (SHELL_OsIsUnicode())
@@ -624,7 +624,7 @@ BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
 
 
 /*************************************************************************
- * SHGetSpecialFolderPathA [SHELL32.175]
+ * SHGetSpecialFolderPathA [SHELL32.@]
  * 
  * converts csidl to path
  */
@@ -1079,7 +1079,7 @@ BOOL WINAPI SHGetSpecialFolderPathW (
 }
 
 /*************************************************************************
- * SHGetSpecialFolderPathAW
+ * SHGetSpecialFolderPathAW (SHELL32.175)
  */
 BOOL WINAPI SHGetSpecialFolderPathAW (
 	HWND hwndOwner,

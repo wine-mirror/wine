@@ -1143,7 +1143,7 @@ BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2)
 }
 
 /*************************************************************************
- * PathIsURLA
+ * PathIsURLA (SHLWAPI.@)
  */
 BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 {
@@ -1171,7 +1171,7 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 }  
 
 /*************************************************************************
- * PathIsURLW
+ * PathIsURLW (SHLWAPI.@)
  */
 BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 {

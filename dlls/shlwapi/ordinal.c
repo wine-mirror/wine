@@ -1041,7 +1041,7 @@ HPALETTE WINAPI SHCreateShellPalette(HDC hdc)
 }
 
 /*************************************************************************
- *	SHGetInverseCMAP
+ *	SHGetInverseCMAP (SHLWAPI.@)
  */
 DWORD WINAPI SHGetInverseCMAP (LPVOID x, DWORD why)
 {

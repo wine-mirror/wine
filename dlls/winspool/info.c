@@ -652,7 +652,7 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
 
 
 /*****************************************************************************
- *          DocumentPropertiesW 
+ *          DocumentPropertiesW (WINSPOOL.@)
  */
 LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 				LPWSTR pDeviceName,

@@ -472,7 +472,7 @@ static DWORD WINAPI PlaySound_Thread(LPVOID arg)
 }
 
 /**************************************************************************
- * 				PlaySoundA		[WINMM.1]
+ * 				PlaySoundA		[WINMM.@]
  */
 BOOL WINAPI PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound)
 {
@@ -543,7 +543,7 @@ BOOL WINAPI PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound)
 }
 
 /**************************************************************************
- * 				PlaySoundW		[WINMM.18]
+ * 				PlaySoundW		[WINMM.@]
  */
 BOOL WINAPI PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 {
@@ -586,7 +586,7 @@ BOOL WINAPI sndPlaySoundA(LPCSTR lpszSoundName, UINT uFlags)
 }
 
 /**************************************************************************
- * 				sndPlaySoundW		[WINMM.136]
+ * 				sndPlaySoundW		[WINMM.@]
  */
 BOOL WINAPI sndPlaySoundW(LPCWSTR lpszSoundName, UINT uFlags)
 {
@@ -611,7 +611,7 @@ BOOL16 WINAPI sndPlaySound16(LPCSTR lpszSoundName, UINT16 uFlags)
 
 
 /**************************************************************************
- * 				mmsystemGetVersion	[WINMM.134]
+ * 				mmsystemGetVersion	[WINMM.@]
  */
 UINT WINAPI mmsystemGetVersion(void)
 {
@@ -753,7 +753,7 @@ static LPWINE_MIXER MIXER_GetDev(HMIXEROBJ hmix, DWORD dwFlags)
 }
 
 /**************************************************************************
- * 				mixerGetNumDevs			[WINMM.108]
+ * 				mixerGetNumDevs			[WINMM.@]
  */
 UINT WINAPI mixerGetNumDevs(void) 
 {
@@ -769,7 +769,7 @@ UINT16 WINAPI mixerGetNumDevs16(void)
 }
 
 /**************************************************************************
- * 				mixerGetDevCapsA		[WINMM.101]
+ * 				mixerGetDevCapsA		[WINMM.@]
  */
 UINT WINAPI mixerGetDevCapsA(UINT devid, LPMIXERCAPSA mixcaps, UINT size) 
 {
@@ -782,7 +782,7 @@ UINT WINAPI mixerGetDevCapsA(UINT devid, LPMIXERCAPSA mixcaps, UINT size)
 }
 
 /**************************************************************************
- * 				mixerGetDevCapsW		[WINMM.102]
+ * 				mixerGetDevCapsW		[WINMM.@]
  */
 UINT WINAPI mixerGetDevCapsW(UINT devid, LPMIXERCAPSW mixcaps, UINT size) 
 {
@@ -853,7 +853,7 @@ static	UINT  MMSYSTEM_mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallbac
 }
 
 /**************************************************************************
- * 				mixerOpen			[WINMM.110]
+ * 				mixerOpen			[WINMM.@]
  */
 UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
 		      DWORD dwInstance, DWORD fdwOpen) 
@@ -863,7 +863,7 @@ UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD dwCallback,
 }
 
 /**************************************************************************
- * 				mixerOpen			[MMSYSTEM.803]
+ * 				mixerOpen			[MMSYSTEM.802]
  */
 UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
 			  DWORD dwInstance, DWORD fdwOpen) 
@@ -878,7 +878,7 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
 }
 
 /**************************************************************************
- * 				mixerClose			[WINMM.98]
+ * 				mixerClose			[WINMM.@]
  */
 UINT WINAPI mixerClose(HMIXER hMix) 
 {
@@ -904,7 +904,7 @@ UINT16 WINAPI mixerClose16(HMIXER16 hMix)
 }
 
 /**************************************************************************
- * 				mixerGetID			[WINMM.103]
+ * 				mixerGetID			[WINMM.@]
  */
 UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID) 
 {
@@ -936,7 +936,7 @@ UINT16 WINAPI mixerGetID16(HMIXEROBJ16 hmix, LPUINT16 lpid, DWORD fdwID)
 }
 
 /**************************************************************************
- * 				mixerGetControlDetailsA		[WINMM.99]
+ * 				mixerGetControlDetailsA		[WINMM.@]
  */
 UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA,
 				    DWORD fdwDetails) 
@@ -956,7 +956,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
 }
 
 /**************************************************************************
- * 				mixerGetControlDetailsW	[WINMM.100]
+ * 				mixerGetControlDetailsW	[WINMM.@]
  */
 UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd, DWORD fdwDetails) 
 {
@@ -1019,7 +1019,7 @@ UINT16 WINAPI mixerGetControlDetails16(HMIXEROBJ16 hmix,
 }
 
 /**************************************************************************
- * 				mixerGetLineControlsA	[WINMM.104]
+ * 				mixerGetLineControlsA	[WINMM.@]
  */
 UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA, 
 				  DWORD fdwControls) 
@@ -1039,7 +1039,7 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA,
 }
 
 /**************************************************************************
- * 				mixerGetLineControlsW		[WINMM.105]
+ * 				mixerGetLineControlsW		[WINMM.@]
  */
 UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW, 
 				  DWORD fdwControls) 
@@ -1159,7 +1159,7 @@ UINT16 WINAPI mixerGetLineControls16(HMIXEROBJ16 hmix,
 }
 
 /**************************************************************************
- * 				mixerGetLineInfoA		[WINMM.106]
+ * 				mixerGetLineInfoA		[WINMM.@]
  */
 UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliW, DWORD fdwInfo)
 {
@@ -1175,7 +1175,7 @@ UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliW, DWORD fdwInfo
 }
 
 /**************************************************************************
- * 				mixerGetLineInfoW		[WINMM.107]
+ * 				mixerGetLineInfoW		[WINMM.@]
  */
 UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpmliW, 
 			      DWORD fdwInfo) 
@@ -1304,7 +1304,7 @@ UINT16 WINAPI mixerGetLineInfo16(HMIXEROBJ16 hmix, LPMIXERLINE16 lpmli16,
 }
 
 /**************************************************************************
- * 				mixerSetControlDetails	[WINMM.111]
+ * 				mixerSetControlDetails	[WINMM.@]
  */
 UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA, 
 				   DWORD fdwDetails) 
@@ -1332,7 +1332,7 @@ UINT16 WINAPI mixerSetControlDetails16(HMIXEROBJ16 hmix,
 }
 
 /**************************************************************************
- * 				mixerMessage		[WINMM.109]
+ * 				mixerMessage		[WINMM.@]
  */
 UINT WINAPI mixerMessage(HMIXER hmix, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
 {
@@ -1357,7 +1357,7 @@ DWORD WINAPI mixerMessage16(HMIXER16 hmix, UINT16 uMsg, DWORD dwParam1,
 }
 
 /**************************************************************************
- * 				auxGetNumDevs		[WINMM.22]
+ * 				auxGetNumDevs		[WINMM.@]
  */
 UINT WINAPI auxGetNumDevs(void)
 {
@@ -1373,7 +1373,7 @@ UINT16 WINAPI auxGetNumDevs16(void)
 }
 
 /**************************************************************************
- * 				auxGetDevCapsW		[WINMM.20]
+ * 				auxGetDevCapsW		[WINMM.@]
  */
 UINT WINAPI auxGetDevCapsW(UINT uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
 {
@@ -1391,7 +1391,7 @@ UINT WINAPI auxGetDevCapsW(UINT uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
 }
 
 /**************************************************************************
- * 				auxGetDevCapsA		[WINMM.21]
+ * 				auxGetDevCapsA		[WINMM.@]
  */
 UINT WINAPI auxGetDevCapsA(UINT uDeviceID, LPAUXCAPSA lpCaps, UINT uSize)
 {
@@ -1419,7 +1419,7 @@ UINT16 WINAPI auxGetDevCaps16(UINT16 uDeviceID, LPAUXCAPS16 lpCaps, UINT16 uSize
 }
 
 /**************************************************************************
- * 				auxGetVolume		[WINMM.23]
+ * 				auxGetVolume		[WINMM.@]
  */
 UINT WINAPI auxGetVolume(UINT uDeviceID, DWORD* lpdwVolume)
 {
@@ -1447,7 +1447,7 @@ UINT16 WINAPI auxGetVolume16(UINT16 uDeviceID, LPDWORD lpdwVolume)
 }
 
 /**************************************************************************
- * 				auxSetVolume		[WINMM.25]
+ * 				auxSetVolume		[WINMM.@]
  */
 UINT WINAPI auxSetVolume(UINT uDeviceID, DWORD dwVolume)
 {
@@ -1517,7 +1517,7 @@ DWORD WINAPI auxOutMessage16(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD
 }
 
 /**************************************************************************
- * 				mciGetErrorStringW		[WINMM.46]
+ * 				mciGetErrorStringW		[WINMM.@]
  */
 BOOL WINAPI mciGetErrorStringW(DWORD wError, LPWSTR lpstrBuffer, UINT uLength)
 {
@@ -1530,7 +1530,7 @@ BOOL WINAPI mciGetErrorStringW(DWORD wError, LPWSTR lpstrBuffer, UINT uLength)
 }
 
 /**************************************************************************
- * 				mciGetErrorStringA		[WINMM.45]
+ * 				mciGetErrorStringA		[WINMM.@]
  */
 BOOL WINAPI mciGetErrorStringA(DWORD wError, LPSTR lpstrBuffer, UINT uLength)
 {
@@ -1572,7 +1572,7 @@ BOOL16 WINAPI mciDriverNotify16(HWND16 hWndCallBack, UINT16 wDevID, UINT16 wStat
 }
 
 /**************************************************************************
- *			mciDriverNotify				[WINMM.36]
+ *			mciDriverNotify				[WINMM.@]
  */
 BOOL WINAPI mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
 {
@@ -1597,7 +1597,7 @@ DWORD WINAPI mciGetDriverData16(UINT16 uDeviceID)
 }
 
 /**************************************************************************
- * 			mciGetDriverData			[WINMM.44]
+ * 			mciGetDriverData			[WINMM.@]
  */
 DWORD WINAPI mciGetDriverData(UINT uDeviceID) 
 {
@@ -1624,7 +1624,7 @@ BOOL16 WINAPI mciSetDriverData16(UINT16 uDeviceID, DWORD data)
 }
 
 /**************************************************************************
- * 			mciSetDriverData			[WINMM.53]
+ * 			mciSetDriverData			[WINMM.@]
  */
 BOOL WINAPI mciSetDriverData(UINT uDeviceID, DWORD data) 
 {
@@ -1644,7 +1644,7 @@ BOOL WINAPI mciSetDriverData(UINT uDeviceID, DWORD data)
 }
 
 /**************************************************************************
- * 				mciSendCommandA			[WINMM.49]
+ * 				mciSendCommandA			[WINMM.@]
  */
 DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 {
@@ -1660,7 +1660,7 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
 }
 
 /**************************************************************************
- * 				mciSendCommandW			[WINMM.50]
+ * 				mciSendCommandW			[WINMM.@]
  */
 DWORD WINAPI mciSendCommandW(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 {
@@ -1696,7 +1696,7 @@ UINT16 WINAPI mciGetDeviceID16(LPCSTR lpstrName)
 }
 
 /**************************************************************************
- * 				mciGetDeviceIDA    		[WINMM.41]
+ * 				mciGetDeviceIDA    		[WINMM.@]
  */
 UINT WINAPI mciGetDeviceIDA(LPCSTR lpstrName)
 {
@@ -1704,7 +1704,7 @@ UINT WINAPI mciGetDeviceIDA(LPCSTR lpstrName)
 }
 
 /**************************************************************************
- * 				mciGetDeviceIDW		       	[WINMM.43]
+ * 				mciGetDeviceIDW		       	[WINMM.@]
  */
 UINT WINAPI mciGetDeviceIDW(LPCWSTR lpwstrName)
 {
@@ -1762,7 +1762,7 @@ BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC16 fpYieldProc, DWORD
 }
 
 /**************************************************************************
- * 				mciSetYieldProc			[WINMM.54]
+ * 				mciSetYieldProc			[WINMM.@]
  */
 BOOL WINAPI mciSetYieldProc(UINT uDeviceID, YIELDPROC fpYieldProc, DWORD dwYieldData)
 {
@@ -1792,7 +1792,7 @@ UINT16 WINAPI mciGetDeviceIDFromElementID16(DWORD dwElementID, LPCSTR lpstrType)
 }
 	
 /**************************************************************************
- * 				mciGetDeviceIDFromElementIDW	[WINMM.42]
+ * 				mciGetDeviceIDFromElementIDW	[WINMM.@]
  */
 UINT WINAPI mciGetDeviceIDFromElementIDW(DWORD dwElementID, LPCWSTR lpstrType)
 {
@@ -1828,7 +1828,7 @@ YIELDPROC16 WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
 }
     
 /**************************************************************************
- * 				mciGetYieldProc			[WINMM.47]
+ * 				mciGetYieldProc			[WINMM.@]
  */
 YIELDPROC WINAPI mciGetYieldProc(UINT uDeviceID, DWORD* lpdwYieldData)
 {
@@ -1860,7 +1860,7 @@ HTASK16 WINAPI mciGetCreatorTask16(UINT16 uDeviceID)
 }
 
 /**************************************************************************
- * 				mciGetCreatorTask		[WINMM.40]
+ * 				mciGetCreatorTask		[WINMM.@]
  */
 HTASK WINAPI mciGetCreatorTask(UINT uDeviceID)
 {
@@ -1895,7 +1895,7 @@ UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID)
 }
 
 /**************************************************************************
- * 			mciDriverYield				[WINMM.37]
+ * 			mciDriverYield				[WINMM.@]
  */
 UINT WINAPI mciDriverYield(UINT uDeviceID) 
 {
@@ -1914,7 +1914,7 @@ UINT WINAPI mciDriverYield(UINT uDeviceID)
 }
 
 /**************************************************************************
- * 				midiOutGetNumDevs	[WINMM.80]
+ * 				midiOutGetNumDevs	[WINMM.@]
  */
 UINT WINAPI midiOutGetNumDevs(void)
 {
@@ -1930,7 +1930,7 @@ UINT16 WINAPI midiOutGetNumDevs16(void)
 }
 
 /**************************************************************************
- * 				midiOutGetDevCapsW	[WINMM.76]
+ * 				midiOutGetDevCapsW	[WINMM.@]
  */
 UINT WINAPI midiOutGetDevCapsW(UINT uDeviceID, LPMIDIOUTCAPSW lpCaps, 
 			       UINT uSize)
@@ -1953,7 +1953,7 @@ UINT WINAPI midiOutGetDevCapsW(UINT uDeviceID, LPMIDIOUTCAPSW lpCaps,
 }
 
 /**************************************************************************
- * 				midiOutGetDevCapsA	[WINMM.75]
+ * 				midiOutGetDevCapsA	[WINMM.@]
  */
 UINT WINAPI midiOutGetDevCapsA(UINT uDeviceID, LPMIDIOUTCAPSA lpCaps, 
 			       UINT uSize)
@@ -2022,7 +2022,7 @@ static	UINT16	MIDI_GetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
 }
 
 /**************************************************************************
- * 				midiOutGetErrorTextA 	[WINMM.77]
+ * 				midiOutGetErrorTextA 	[WINMM.@]
  */
 UINT WINAPI midiOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
@@ -2030,7 +2030,7 @@ UINT WINAPI midiOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 }
 
 /**************************************************************************
- * 				midiOutGetErrorTextW 	[WINMM.78]
+ * 				midiOutGetErrorTextW 	[WINMM.@]
  */
 UINT WINAPI midiOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
@@ -2117,7 +2117,7 @@ UINT MMSYSTEM_midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID, DWORD dwCallback
 }
 
 /**************************************************************************
- * 				midiOutOpen    		[WINMM.84]
+ * 				midiOutOpen    		[WINMM.@]
  */
 UINT WINAPI midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID,
 			DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
@@ -2143,7 +2143,7 @@ UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
 }
 
 /**************************************************************************
- * 				midiOutClose		[WINMM.74]
+ * 				midiOutClose		[WINMM.@]
  */
 UINT WINAPI midiOutClose(HMIDIOUT hMidiOut)
 {
@@ -2170,7 +2170,7 @@ UINT16 WINAPI midiOutClose16(HMIDIOUT16 hMidiOut)
 }
 
 /**************************************************************************
- * 				midiOutPrepareHeader	[WINMM.85]
+ * 				midiOutPrepareHeader	[WINMM.@]
  */
 UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
 				 MIDIHDR* lpMidiOutHdr, UINT uSize)
@@ -2203,7 +2203,7 @@ UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
 }
 
 /**************************************************************************
- * 				midiOutUnprepareHeader	[WINMM.89]
+ * 				midiOutUnprepareHeader	[WINMM.@]
  */
 UINT WINAPI midiOutUnprepareHeader(HMIDIOUT hMidiOut,
 				   MIDIHDR* lpMidiOutHdr, UINT uSize)
@@ -2245,7 +2245,7 @@ UINT16 WINAPI midiOutUnprepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
 }
 
 /**************************************************************************
- * 				midiOutShortMsg		[WINMM.88]
+ * 				midiOutShortMsg		[WINMM.@]
  */
 UINT WINAPI midiOutShortMsg(HMIDIOUT hMidiOut, DWORD dwMsg)
 {
@@ -2268,7 +2268,7 @@ UINT16 WINAPI midiOutShortMsg16(HMIDIOUT16 hMidiOut, DWORD dwMsg)
 }
 
 /**************************************************************************
- * 				midiOutLongMsg		[WINMM.82]
+ * 				midiOutLongMsg		[WINMM.@]
  */
 UINT WINAPI midiOutLongMsg(HMIDIOUT hMidiOut,
 			   MIDIHDR* lpMidiOutHdr, UINT uSize)
@@ -2301,7 +2301,7 @@ UINT16 WINAPI midiOutLongMsg16(HMIDIOUT16 hMidiOut,          /* [in] */
 }
 
 /**************************************************************************
- * 				midiOutReset		[WINMM.86]
+ * 				midiOutReset		[WINMM.@]
  */
 UINT WINAPI midiOutReset(HMIDIOUT hMidiOut)
 {
@@ -2324,7 +2324,7 @@ UINT16 WINAPI midiOutReset16(HMIDIOUT16 hMidiOut)
 }
 
 /**************************************************************************
- * 				midiOutGetVolume	[WINMM.81]
+ * 				midiOutGetVolume	[WINMM.@]
  */
 UINT WINAPI midiOutGetVolume(UINT uDeviceID, DWORD* lpdwVolume)
 {
@@ -2347,7 +2347,7 @@ UINT16 WINAPI midiOutGetVolume16(UINT16 uDeviceID, DWORD* lpdwVolume)
 }
 
 /**************************************************************************
- * 				midiOutSetVolume	[WINMM.87]
+ * 				midiOutSetVolume	[WINMM.@]
  */
 UINT WINAPI midiOutSetVolume(UINT uDeviceID, DWORD dwVolume)
 {
@@ -2370,7 +2370,7 @@ UINT16 WINAPI midiOutSetVolume16(UINT16 uDeviceID, DWORD dwVolume)
 }
 
 /**************************************************************************
- * 				midiOutCachePatches		[WINMM.73]
+ * 				midiOutCachePatches		[WINMM.@]
  */
 UINT WINAPI midiOutCachePatches(HMIDIOUT hMidiOut, UINT uBank,
 				WORD* lpwPatchArray, UINT uFlags)
@@ -2390,7 +2390,7 @@ UINT16 WINAPI midiOutCachePatches16(HMIDIOUT16 hMidiOut, UINT16 uBank,
 }
 
 /**************************************************************************
- * 				midiOutCacheDrumPatches	[WINMM.72]
+ * 				midiOutCacheDrumPatches	[WINMM.@]
  */
 UINT WINAPI midiOutCacheDrumPatches(HMIDIOUT hMidiOut, UINT uPatch,
 				    WORD* lpwKeyArray, UINT uFlags)
@@ -2409,7 +2409,7 @@ UINT16 WINAPI midiOutCacheDrumPatches16(HMIDIOUT16 hMidiOut, UINT16 uPatch,
 }
 
 /**************************************************************************
- * 				midiOutGetID		[WINMM.79]
+ * 				midiOutGetID		[WINMM.@]
  */
 UINT WINAPI midiOutGetID(HMIDIOUT hMidiOut, UINT* lpuDeviceID)
 {
@@ -2443,7 +2443,7 @@ UINT16 WINAPI midiOutGetID16(HMIDIOUT16 hMidiOut, UINT16* lpuDeviceID)
 }
 
 /**************************************************************************
- * 				midiOutMessage		[WINMM.83]
+ * 				midiOutMessage		[WINMM.@]
  */
 DWORD WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage, 
 			    DWORD dwParam1, DWORD dwParam2)
@@ -2497,7 +2497,7 @@ DWORD WINAPI midiOutMessage16(HMIDIOUT16 hMidiOut, UINT16 uMessage,
 }
 
 /**************************************************************************
- * 				midiInGetNumDevs	[WINMM.64]
+ * 				midiInGetNumDevs	[WINMM.@]
  */
 UINT WINAPI midiInGetNumDevs(void)
 {
@@ -2513,7 +2513,7 @@ UINT16 WINAPI midiInGetNumDevs16(void)
 }
 
 /**************************************************************************
- * 				midiInGetDevCapsW	[WINMM.60]
+ * 				midiInGetDevCapsW	[WINMM.@]
  */
 UINT WINAPI midiInGetDevCapsW(UINT uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 {
@@ -2532,7 +2532,7 @@ UINT WINAPI midiInGetDevCapsW(UINT uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 }
 
 /**************************************************************************
- * 				midiInGetDevCapsA	[WINMM.59]
+ * 				midiInGetDevCapsA	[WINMM.@]
  */
 UINT WINAPI midiInGetDevCapsA(UINT uDeviceID, LPMIDIINCAPSA lpCaps, UINT uSize)
 {
@@ -2567,7 +2567,7 @@ UINT16 WINAPI midiInGetDevCaps16(UINT16 uDeviceID, LPMIDIINCAPS16 lpCaps,
 }
 
 /**************************************************************************
- * 				midiInGetErrorTextW 		[WINMM.62]
+ * 				midiInGetErrorTextW 		[WINMM.@]
  */
 UINT WINAPI midiInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
@@ -2580,7 +2580,7 @@ UINT WINAPI midiInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 }
 
 /**************************************************************************
- * 				midiInGetErrorTextA 		[WINMM.61]
+ * 				midiInGetErrorTextA 		[WINMM.@]
  */
 UINT WINAPI midiInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
@@ -2631,7 +2631,7 @@ static	UINT MMSYSTEM_midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD dwCall
 }
 
 /**************************************************************************
- * 				midiInOpen		[WINMM.66]
+ * 				midiInOpen		[WINMM.@]
  */
 UINT WINAPI midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID,
 		       DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
@@ -2657,7 +2657,7 @@ UINT16 WINAPI midiInOpen16(HMIDIIN16* lphMidiIn, UINT16 uDeviceID,
 }
 
 /**************************************************************************
- * 				midiInClose		[WINMM.58]
+ * 				midiInClose		[WINMM.@]
  */
 UINT WINAPI midiInClose(HMIDIIN hMidiIn)
 {
@@ -2683,7 +2683,7 @@ UINT16 WINAPI midiInClose16(HMIDIIN16 hMidiIn)
 }
 
 /**************************************************************************
- * 				midiInPrepareHeader	[WINMM.67]
+ * 				midiInPrepareHeader	[WINMM.@]
  */
 UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn, 
 				MIDIHDR* lpMidiInHdr, UINT uSize)
@@ -2716,7 +2716,7 @@ UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
 }
 
 /**************************************************************************
- * 				midiInUnprepareHeader	[WINMM.71]
+ * 				midiInUnprepareHeader	[WINMM.@]
  */
 UINT WINAPI midiInUnprepareHeader(HMIDIIN hMidiIn,
 				  MIDIHDR* lpMidiInHdr, UINT uSize)
@@ -2758,7 +2758,7 @@ UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
 }
 
 /**************************************************************************
- * 				midiInAddBuffer		[WINMM.57]
+ * 				midiInAddBuffer		[WINMM.@]
  */
 UINT WINAPI midiInAddBuffer(HMIDIIN hMidiIn,
 			    MIDIHDR* lpMidiInHdr, UINT uSize)
@@ -2791,7 +2791,7 @@ UINT16 WINAPI midiInAddBuffer16(HMIDIIN16 hMidiIn,         /* [in] */
 }
 
 /**************************************************************************
- * 				midiInStart			[WINMM.69]
+ * 				midiInStart			[WINMM.@]
  */
 UINT WINAPI midiInStart(HMIDIIN hMidiIn)
 {
@@ -2814,7 +2814,7 @@ UINT16 WINAPI midiInStart16(HMIDIIN16 hMidiIn)
 }
 
 /**************************************************************************
- * 				midiInStop			[WINMM.70]
+ * 				midiInStop			[WINMM.@]
  */
 UINT WINAPI midiInStop(HMIDIIN hMidiIn)
 {
@@ -2837,7 +2837,7 @@ UINT16 WINAPI midiInStop16(HMIDIIN16 hMidiIn)
 }
 
 /**************************************************************************
- * 				midiInReset			[WINMM.68]
+ * 				midiInReset			[WINMM.@]
  */
 UINT WINAPI midiInReset(HMIDIIN hMidiIn)
 {
@@ -2860,7 +2860,7 @@ UINT16 WINAPI midiInReset16(HMIDIIN16 hMidiIn)
 }
 
 /**************************************************************************
- * 				midiInGetID			[WINMM.63]
+ * 				midiInGetID			[WINMM.@]
  */
 UINT WINAPI midiInGetID(HMIDIIN hMidiIn, UINT* lpuDeviceID)
 {
@@ -2898,7 +2898,7 @@ UINT16 WINAPI midiInGetID16(HMIDIIN16 hMidiIn, UINT16* lpuDeviceID)
 }
 
 /**************************************************************************
- * 				midiInMessage		[WINMM.65]
+ * 				midiInMessage		[WINMM.@]
  */
 DWORD WINAPI midiInMessage(HMIDIIN hMidiIn, UINT uMessage, 
 			   DWORD dwParam1, DWORD dwParam2)
@@ -3266,7 +3266,7 @@ static	BOOL MMSYSTEM_MidiStream_PostMessage(WINE_MIDIStream* lpMidiStrm, WORD ms
 }
 
 /**************************************************************************
- * 				midiStreamClose			[WINMM.90]
+ * 				midiStreamClose			[WINMM.@]
  */
 MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
 {
@@ -3355,7 +3355,7 @@ static	MMRESULT WINAPI MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT l
 }
 
 /**************************************************************************
- * 				midiStreamOpen			[WINMM.91]
+ * 				midiStreamOpen			[WINMM.@]
  */
 MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, 
 			       DWORD cMidi, DWORD dwCallback, 
@@ -3366,7 +3366,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 }
 
 /**************************************************************************
- * 				midiStreamOut			[WINMM.92]
+ * 				midiStreamOut			[WINMM.@]
  */
 MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr, 
 			      UINT cbMidiHdr) 
@@ -3390,7 +3390,7 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
 }
 
 /**************************************************************************
- * 				midiStreamPause			[WINMM.93]
+ * 				midiStreamPause			[WINMM.@]
  */
 MMRESULT WINAPI midiStreamPause(HMIDISTRM hMidiStrm) 
 {
@@ -3411,7 +3411,7 @@ MMRESULT WINAPI midiStreamPause(HMIDISTRM hMidiStrm)
 }
 
 /**************************************************************************
- * 				midiStreamPosition		[WINMM.94]
+ * 				midiStreamPosition		[WINMM.@]
  */
 MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbmmt) 
 {
@@ -3445,7 +3445,7 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 }
 
 /**************************************************************************
- * 				midiStreamProperty		[WINMM.95]
+ * 				midiStreamProperty		[WINMM.@]
  */
 MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD dwProperty) 
 {
@@ -3490,7 +3490,7 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
 }
 
 /**************************************************************************
- * 				midiStreamRestart		[WINMM.96]
+ * 				midiStreamRestart		[WINMM.@]
  */
 MMRESULT WINAPI midiStreamRestart(HMIDISTRM hMidiStrm) 
 {
@@ -3521,7 +3521,7 @@ MMRESULT WINAPI midiStreamRestart(HMIDISTRM hMidiStrm)
 }
 
 /**************************************************************************
- * 				midiStreamStop			[WINMM.97]
+ * 				midiStreamStop			[WINMM.@]
  */
 MMRESULT WINAPI midiStreamStop(HMIDISTRM hMidiStrm) 
 {
@@ -3718,7 +3718,7 @@ UINT16 WINAPI waveOutGetDevCaps16(UINT16 uDeviceID,
 }
 
 /**************************************************************************
- * 				waveOutGetDevCapsA		[WINMM.162]
+ * 				waveOutGetDevCapsA		[WINMM.@]
  */
 UINT WINAPI waveOutGetDevCapsA(UINT uDeviceID, LPWAVEOUTCAPSA lpCaps,
 			       UINT uSize)
@@ -3737,7 +3737,7 @@ UINT WINAPI waveOutGetDevCapsA(UINT uDeviceID, LPWAVEOUTCAPSA lpCaps,
 }
 
 /**************************************************************************
- * 				waveOutGetDevCapsW		[WINMM.163]
+ * 				waveOutGetDevCapsW		[WINMM.@]
  */
 UINT WINAPI waveOutGetDevCapsW(UINT uDeviceID, LPWAVEOUTCAPSW lpCaps,
 			       UINT uSize)
@@ -3796,7 +3796,7 @@ UINT16 WINAPI waveOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 }
 
 /**************************************************************************
- * 				waveOutGetErrorTextA 	[WINMM.164]
+ * 				waveOutGetErrorTextA 	[WINMM.@]
  */
 UINT WINAPI waveOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
@@ -3804,7 +3804,7 @@ UINT WINAPI waveOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 }
 
 /**************************************************************************
- * 				waveOutGetErrorTextW 	[WINMM.165]
+ * 				waveOutGetErrorTextW 	[WINMM.@]
  */
 UINT WINAPI waveOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
@@ -3817,7 +3817,7 @@ UINT WINAPI waveOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 }
 
 /**************************************************************************
- *			waveOutOpen			[WINMM.173]
+ *			waveOutOpen			[WINMM.@]
  * All the args/structs have the same layout as the win16 equivalents
  */
 UINT WINAPI waveOutOpen(HWAVEOUT* lphWaveOut, UINT uDeviceID,
@@ -3849,7 +3849,7 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
 }
 
 /**************************************************************************
- * 				waveOutClose		[WINMM.161]
+ * 				waveOutClose		[WINMM.@]
  */
 UINT WINAPI waveOutClose(HWAVEOUT hWaveOut)
 {
@@ -3882,7 +3882,7 @@ UINT16 WINAPI waveOutClose16(HWAVEOUT16 hWaveOut)
 }
 
 /**************************************************************************
- * 				waveOutPrepareHeader	[WINMM.175]
+ * 				waveOutPrepareHeader	[WINMM.@]
  */
 UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
 				 WAVEHDR* lpWaveOutHdr, UINT uSize)
@@ -3920,7 +3920,7 @@ UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16 hWaveOut,      /* [in] */
 }
 
 /**************************************************************************
- * 				waveOutUnprepareHeader	[WINMM.181]
+ * 				waveOutUnprepareHeader	[WINMM.@]
  */
 UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
 				   LPWAVEHDR lpWaveOutHdr, UINT uSize)
@@ -3995,7 +3995,7 @@ UINT16 WINAPI waveOutWrite16(HWAVEOUT16 hWaveOut,       /* [in] */
 }
 
 /**************************************************************************
- * 				waveOutBreakLoop	[WINMM.160]
+ * 				waveOutBreakLoop	[WINMM.@]
  */
 UINT WINAPI waveOutBreakLoop(HWAVEOUT hWaveOut)
 {
@@ -4023,7 +4023,7 @@ UINT16 WINAPI waveOutBreakLoop16(HWAVEOUT16 hWaveOut16)
 }
 
 /**************************************************************************
- * 				waveOutPause		[WINMM.174]
+ * 				waveOutPause		[WINMM.@]
  */
 UINT WINAPI waveOutPause(HWAVEOUT hWaveOut)
 {
@@ -4051,7 +4051,7 @@ UINT16 WINAPI waveOutPause16(HWAVEOUT16 hWaveOut16)
 }
 
 /**************************************************************************
- * 				waveOutReset		[WINMM.176]
+ * 				waveOutReset		[WINMM.@]
  */
 UINT WINAPI waveOutReset(HWAVEOUT hWaveOut)
 {
@@ -4079,7 +4079,7 @@ UINT16 WINAPI waveOutReset16(HWAVEOUT16 hWaveOut16)
 }
 
 /**************************************************************************
- * 				waveOutRestart		[WINMM.177]
+ * 				waveOutRestart		[WINMM.@]
  */
 UINT WINAPI waveOutRestart(HWAVEOUT hWaveOut)
 {
@@ -4107,7 +4107,7 @@ UINT16 WINAPI waveOutRestart16(HWAVEOUT16 hWaveOut16)
 }
 
 /**************************************************************************
- * 				waveOutGetPosition	[WINMM.170]
+ * 				waveOutGetPosition	[WINMM.@]
  */
 UINT WINAPI waveOutGetPosition(HWAVEOUT hWaveOut, LPMMTIME lpTime,
 			       UINT uSize)
@@ -4138,7 +4138,7 @@ UINT16 WINAPI waveOutGetPosition16(HWAVEOUT16 hWaveOut, LPMMTIME16 lpTime,
 }
 
 /**************************************************************************
- * 				waveOutGetPitch		[WINMM.168]
+ * 				waveOutGetPitch		[WINMM.@]
  */
 UINT WINAPI waveOutGetPitch(HWAVEOUT hWaveOut, LPDWORD lpdw)
 {
@@ -4160,7 +4160,7 @@ UINT16 WINAPI waveOutGetPitch16(HWAVEOUT16 hWaveOut16, LPDWORD lpdw)
 }
 
 /**************************************************************************
- * 				waveOutSetPitch		[WINMM.178]
+ * 				waveOutSetPitch		[WINMM.@]
  */
 UINT WINAPI waveOutSetPitch(HWAVEOUT hWaveOut, DWORD dw)
 {
@@ -4182,7 +4182,7 @@ UINT16 WINAPI waveOutSetPitch16(HWAVEOUT16 hWaveOut16, DWORD dw)
 }
 
 /**************************************************************************
- * 				waveOutGetPlaybackRate	[WINMM.169]
+ * 				waveOutGetPlaybackRate	[WINMM.@]
  */
 UINT WINAPI waveOutGetPlaybackRate(HWAVEOUT hWaveOut, LPDWORD lpdw)
 {
@@ -4204,7 +4204,7 @@ UINT16 WINAPI waveOutGetPlaybackRate16(HWAVEOUT16 hWaveOut16, LPDWORD lpdw)
 }
 
 /**************************************************************************
- * 				waveOutSetPlaybackRate	[WINMM.179]
+ * 				waveOutSetPlaybackRate	[WINMM.@]
  */
 UINT WINAPI waveOutSetPlaybackRate(HWAVEOUT hWaveOut, DWORD dw)
 {
@@ -4226,7 +4226,7 @@ UINT16 WINAPI waveOutSetPlaybackRate16(HWAVEOUT16 hWaveOut16, DWORD dw)
 }
 
 /**************************************************************************
- * 				waveOutGetVolume	[WINMM.171]
+ * 				waveOutGetVolume	[WINMM.@]
  */
 UINT WINAPI waveOutGetVolume(UINT devid, LPDWORD lpdw)
 {
@@ -4249,7 +4249,7 @@ UINT16 WINAPI waveOutGetVolume16(UINT16 devid, LPDWORD lpdw)
 }
     
 /**************************************************************************
- * 				waveOutSetVolume	[WINMM.180]
+ * 				waveOutSetVolume	[WINMM.@]
  */
 UINT WINAPI waveOutSetVolume(UINT devid, DWORD dw)
 {
@@ -4308,7 +4308,7 @@ UINT16 WINAPI waveOutGetID16(HWAVEOUT16 hWaveOut, UINT16* lpuDeviceID)
 }
 
 /**************************************************************************
- * 				waveOutMessage 		[WINMM.172]
+ * 				waveOutMessage 		[WINMM.@]
  */
 DWORD WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage, 
 			    DWORD dwParam1, DWORD dwParam2)
@@ -4356,7 +4356,7 @@ DWORD WINAPI waveOutMessage16(HWAVEOUT16 hWaveOut, UINT16 uMessage,
 }
 
 /**************************************************************************
- * 				waveInGetNumDevs 		[WINMM.151]
+ * 				waveInGetNumDevs 		[WINMM.@]
  */
 UINT WINAPI waveInGetNumDevs(void)
 {
@@ -4372,7 +4372,7 @@ UINT16 WINAPI waveInGetNumDevs16(void)
 }
 
 /**************************************************************************
- * 				waveInGetDevCapsW 		[WINMM.147]
+ * 				waveInGetDevCapsW 		[WINMM.@]
  */
 UINT WINAPI waveInGetDevCapsW(UINT uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 {
@@ -4393,7 +4393,7 @@ UINT WINAPI waveInGetDevCapsW(UINT uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 }
 
 /**************************************************************************
- * 				waveInGetDevCapsA 		[WINMM.146]
+ * 				waveInGetDevCapsA 		[WINMM.@]
  */
 UINT WINAPI waveInGetDevCapsA(UINT uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSize)
 {
@@ -4430,7 +4430,7 @@ UINT16 WINAPI waveInGetDevCaps16(UINT16 uDeviceID, LPWAVEINCAPS16 lpCaps,
 }
 
 /**************************************************************************
- * 				waveInGetErrorTextA 	[WINMM.148]
+ * 				waveInGetErrorTextA 	[WINMM.@]
  */
 UINT WINAPI waveInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
@@ -4438,7 +4438,7 @@ UINT WINAPI waveInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 }
 
 /**************************************************************************
- * 				waveInGetErrorTextW 	[WINMM.149]
+ * 				waveInGetErrorTextW 	[WINMM.@]
  */
 UINT WINAPI waveInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
@@ -4459,7 +4459,7 @@ UINT16 WINAPI waveInGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 }
 
 /**************************************************************************
- * 				waveInOpen			[WINMM.154]
+ * 				waveInOpen			[WINMM.@]
  */
 UINT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
 		       const LPWAVEFORMATEX lpFormat, DWORD dwCallback,
@@ -4490,7 +4490,7 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
 }
 
 /**************************************************************************
- * 				waveInClose			[WINMM.145]
+ * 				waveInClose			[WINMM.@]
  */
 UINT WINAPI waveInClose(HWAVEIN hWaveIn)
 {
@@ -4522,7 +4522,7 @@ UINT16 WINAPI waveInClose16(HWAVEIN16 hWaveIn)
 }
 
 /**************************************************************************
- * 				waveInPrepareHeader		[WINMM.155]
+ * 				waveInPrepareHeader		[WINMM.@]
  */
 UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr, 
 				UINT uSize)
@@ -4564,7 +4564,7 @@ UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
 }
 
 /**************************************************************************
- * 				waveInUnprepareHeader	[WINMM.159]
+ * 				waveInUnprepareHeader	[WINMM.@]
  */
 UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr, 
 				  UINT uSize)
@@ -4609,7 +4609,7 @@ UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
 }
 
 /**************************************************************************
- * 				waveInAddBuffer		[WINMM.144]
+ * 				waveInAddBuffer		[WINMM.@]
  */
 UINT WINAPI waveInAddBuffer(HWAVEIN hWaveIn,
 			    WAVEHDR* lpWaveInHdr, UINT uSize)
@@ -4644,7 +4644,7 @@ UINT16 WINAPI waveInAddBuffer16(HWAVEIN16 hWaveIn,       /* [in] */
 }
 
 /**************************************************************************
- * 				waveInReset		[WINMM.156]
+ * 				waveInReset		[WINMM.@]
  */
 UINT WINAPI waveInReset(HWAVEIN hWaveIn)
 {
@@ -4673,7 +4673,7 @@ UINT16 WINAPI waveInReset16(HWAVEIN16 hWaveIn16)
 }
 
 /**************************************************************************
- * 				waveInStart		[WINMM.157]
+ * 				waveInStart		[WINMM.@]
  */
 UINT WINAPI waveInStart(HWAVEIN hWaveIn)
 {
@@ -4702,7 +4702,7 @@ UINT16 WINAPI waveInStart16(HWAVEIN16 hWaveIn16)
 }
 
 /**************************************************************************
- * 				waveInStop		[WINMM.158]
+ * 				waveInStop		[WINMM.@]
  */
 UINT WINAPI waveInStop(HWAVEIN hWaveIn)
 {
@@ -4731,7 +4731,7 @@ UINT16 WINAPI waveInStop16(HWAVEIN16 hWaveIn16)
 }
 
 /**************************************************************************
- * 				waveInGetPosition	[WINMM.152]
+ * 				waveInGetPosition	[WINMM.@]
  */
 UINT WINAPI waveInGetPosition(HWAVEIN hWaveIn, LPMMTIME lpTime,
 			      UINT uSize)
@@ -4762,7 +4762,7 @@ UINT16 WINAPI waveInGetPosition16(HWAVEIN16 hWaveIn, LPMMTIME16 lpTime,
 }
 
 /**************************************************************************
- * 				waveInGetID			[WINMM.150]
+ * 				waveInGetID			[WINMM.@]
  */
 UINT WINAPI waveInGetID(HWAVEIN hWaveIn, UINT* lpuDeviceID)
 {
@@ -4798,7 +4798,7 @@ UINT16 WINAPI waveInGetID16(HWAVEIN16 hWaveIn, UINT16* lpuDeviceID)
 }
 
 /**************************************************************************
- * 				waveInMessage 		[WINMM.153]
+ * 				waveInMessage 		[WINMM.@]
  */
 DWORD WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 			   DWORD dwParam1, DWORD dwParam2)

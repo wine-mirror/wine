@@ -14,7 +14,7 @@
 DEFAULT_DEBUG_CHANNEL(ole);
 
 /***********************************************************************
- *		OLEPRO32_DllUnregisterServer
+ *		OLEPRO32_DllUnregisterServer (OLEPRO32.258)
  */
 HRESULT WINAPI OLEPRO32_DllUnregisterServer()
 {
@@ -23,7 +23,7 @@ HRESULT WINAPI OLEPRO32_DllUnregisterServer()
 }
 
 /***********************************************************************
- *		OLEPRO32_DllRegisterServer
+ *		OLEPRO32_DllRegisterServer (OLEPRO32.257)
  */
 HRESULT WINAPI OLEPRO32_DllRegisterServer()
 {
@@ -32,7 +32,7 @@ HRESULT WINAPI OLEPRO32_DllRegisterServer()
 }
 
 /***********************************************************************
- *		OLEPRO32_DllCanUnloadNow
+ *		OLEPRO32_DllCanUnloadNow (OLEPRO32.255)
  */
 HRESULT WINAPI OLEPRO32_DllCanUnloadNow( )
 {
@@ -41,7 +41,7 @@ HRESULT WINAPI OLEPRO32_DllCanUnloadNow( )
 }
 
 /***********************************************************************
- *		OLEPRO32_DllGetClassObject
+ *		OLEPRO32_DllGetClassObject (OLEPRO32.256)
  */
 HRESULT WINAPI OLEPRO32_DllGetClassObject( REFCLSID rclsid, REFIID riid, LPVOID* ppv )
 {

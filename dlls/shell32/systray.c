@@ -335,7 +335,8 @@ BOOL SYSTRAY_Init(void)
 }
 
 /*************************************************************************
- * Shell_NotifyIconA			[SHELL32.297][SHELL32.296]
+ * Shell_NotifyIcon			[SHELL32.296]
+ * Shell_NotifyIconA			[SHELL32.297]
  */
 BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
 {

@@ -24,7 +24,7 @@ DEFAULT_DEBUG_CHANNEL(ntdll);
  */
  
 /**************************************************************************
- *		NtCreateTimer				[NTDLL.87]
+ *		NtCreateTimer				[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreateTimer(
 	OUT PHANDLE TimerHandle,
@@ -38,7 +38,7 @@ NTSTATUS WINAPI NtCreateTimer(
 	return 0;
 }
 /**************************************************************************
- *		NtSetTimer				[NTDLL.221]
+ *		NtSetTimer				[NTDLL.@]
  */
 NTSTATUS WINAPI NtSetTimer(
 	IN HANDLE TimerHandle,
@@ -55,7 +55,7 @@ NTSTATUS WINAPI NtSetTimer(
 }
 
 /******************************************************************************
- * NtQueryTimerResolution [NTDLL.129]
+ * NtQueryTimerResolution [NTDLL.@]
  */
 NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3) 
 {
@@ -111,7 +111,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 }
 
 /******************************************************************************
- * NtSetInformationProcess [NTDLL.207]
+ * NtSetInformationProcess [NTDLL.@]
  */
 NTSTATUS WINAPI NtSetInformationProcess(
 	IN HANDLE ProcessHandle,
@@ -269,7 +269,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 }
 
 /******************************************************************************
-*  NtQueryInformationToken		[NTDLL.156] 
+*  NtQueryInformationToken		[NTDLL.@]
 *
 * NOTES
 *  Buffer for TokenUser:
@@ -567,7 +567,7 @@ NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x
 }
 
 /******************************************************************************
- * NtQuerySystemInformation [NTDLL.168]
+ * NtQuerySystemInformation [NTDLL.@]
  *
  * ARGUMENTS:
  *  SystemInformationClass	Index to a certain information structure
@@ -630,7 +630,7 @@ NTSTATUS WINAPI NtCreatePagingFile(
 }
 
 /******************************************************************************
- *  NtDisplayString				[NTDLL.95] 
+ *  NtDisplayString				[NTDLL.@]
  * 
  * writes a string to the nt-textmode screen eg. during startup
  */
@@ -658,7 +658,7 @@ NTSTATUS WINAPI NtPowerInformation(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
 }
 
 /******************************************************************************
- *  NtAllocateLocallyUniqueId
+ *  NtAllocateLocallyUniqueId (NTDLL.@)
  *
  * FIXME: the server should do that
  */

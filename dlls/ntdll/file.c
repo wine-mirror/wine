@@ -8,7 +8,7 @@
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /**************************************************************************
- *                 NtOpenFile				[NTDLL.127]
+ *                 NtOpenFile				[NTDLL.@]
  * FUNCTION: Opens a file
  * ARGUMENTS:
  *  FileHandle		Variable that receives the file handle on return
@@ -34,7 +34,7 @@ NTSTATUS WINAPI NtOpenFile(
 }
 
 /**************************************************************************
- *		NtCreateFile				[NTDLL.73]
+ *		NtCreateFile				[NTDLL.@]
  * FUNCTION: Either causes a new file or directory to be created, or it opens
  *  an existing file, device, directory or volume, giving the caller a handle
  *  for the file object. This handle can be used by subsequent calls to
@@ -105,7 +105,7 @@ NTSTATUS WINAPI NtReadFile (
 }
 
 /**************************************************************************
- *		NtDeviceIoControlFile			[NTDLL.94]
+ *		NtDeviceIoControlFile			[NTDLL.@]
  */
 NTSTATUS WINAPI NtDeviceIoControlFile(
 	IN HANDLE DeviceHandle,
@@ -126,7 +126,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(
 }
 
 /******************************************************************************
- * NtFsControlFile [NTDLL.108]
+ * NtFsControlFile [NTDLL.@]
  */
 NTSTATUS WINAPI NtFsControlFile(
 	IN HANDLE DeviceHandle,

@@ -11,7 +11,7 @@ DEFAULT_DEBUG_CHANNEL(mpr);
 
 
 /*****************************************************************
- *  NPSAuthenticationDialogA [MPR.30]
+ *  NPSAuthenticationDialogA [MPR.@]
  */
 DWORD WINAPI NPSAuthenticationDialogA( LPAUTHDLGSTRUCTA lpAuthDlgStruct )
 {
@@ -20,7 +20,7 @@ DWORD WINAPI NPSAuthenticationDialogA( LPAUTHDLGSTRUCTA lpAuthDlgStruct )
 }
 
 /*****************************************************************
- *  NPSGetProviderHandleA [MPR.34]
+ *  NPSGetProviderHandleA [MPR.@]
  */
 DWORD WINAPI NPSGetProviderHandleA( PHPROVIDER phProvider )
 {
@@ -29,7 +29,7 @@ DWORD WINAPI NPSGetProviderHandleA( PHPROVIDER phProvider )
 }
 
 /*****************************************************************
- *  NPSGetProviderNameA [MPR.35]
+ *  NPSGetProviderNameA [MPR.@]
  */
 DWORD WINAPI NPSGetProviderNameA( HPROVIDER hProvider, LPCSTR *lpszProviderName )
 {
@@ -38,7 +38,7 @@ DWORD WINAPI NPSGetProviderNameA( HPROVIDER hProvider, LPCSTR *lpszProviderName 
 }
 
 /*****************************************************************
- *  NPSGetSectionNameA [MPR.36]
+ *  NPSGetSectionNameA [MPR.@]
  */
 DWORD WINAPI NPSGetSectionNameA( HPROVIDER hProvider, LPCSTR *lpszSectionName )
 {
@@ -47,7 +47,7 @@ DWORD WINAPI NPSGetSectionNameA( HPROVIDER hProvider, LPCSTR *lpszSectionName )
 }
 
 /*****************************************************************
- *  NPSSetExtendedErrorA [MPR.40]
+ *  NPSSetExtendedErrorA [MPR.@]
  */
 DWORD WINAPI NPSSetExtendedErrorA( DWORD NetSpecificError, LPSTR lpExtendedErrorText )
 {
@@ -56,7 +56,7 @@ DWORD WINAPI NPSSetExtendedErrorA( DWORD NetSpecificError, LPSTR lpExtendedError
 }
 
 /*****************************************************************
- *  NPSSetCustomTextA [MPR.39]
+ *  NPSSetCustomTextA [MPR.@]
  */
 VOID WINAPI NPSSetCustomTextA( LPSTR lpCustomErrorText )
 {
@@ -64,7 +64,7 @@ VOID WINAPI NPSSetCustomTextA( LPSTR lpCustomErrorText )
 }
 
 /*****************************************************************
- *  NPSCopyStringA [MPR.31]
+ *  NPSCopyStringA [MPR.@]
  */
 DWORD WINAPI NPSCopyStringA( LPCSTR lpString, LPVOID lpBuffer, LPDWORD lpdwBufferSize )
 {
@@ -73,7 +73,7 @@ DWORD WINAPI NPSCopyStringA( LPCSTR lpString, LPVOID lpBuffer, LPDWORD lpdwBuffe
 }
 
 /*****************************************************************
- *  NPSDeviceGetNumberA [MPR.32]
+ *  NPSDeviceGetNumberA [MPR.@]
  */
 DWORD WINAPI NPSDeviceGetNumberA( LPSTR lpLocalName, LPDWORD lpdwNumber, LPDWORD lpdwType )
 {
@@ -82,7 +82,7 @@ DWORD WINAPI NPSDeviceGetNumberA( LPSTR lpLocalName, LPDWORD lpdwNumber, LPDWORD
 }
 
 /*****************************************************************
- *  NPSDeviceGetStringA [MPR.33]
+ *  NPSDeviceGetStringA [MPR.@]
  */
 DWORD WINAPI NPSDeviceGetStringA( DWORD dwNumber, DWORD dwType, LPSTR lpLocalName, LPDWORD lpdwBufferSize )
 {
@@ -91,7 +91,7 @@ DWORD WINAPI NPSDeviceGetStringA( DWORD dwNumber, DWORD dwType, LPSTR lpLocalNam
 }
 
 /*****************************************************************
- *  NPSNotifyRegisterA [MPR.38]
+ *  NPSNotifyRegisterA [MPR.@]
  */
 DWORD WINAPI NPSNotifyRegisterA( enum NOTIFYTYPE NotifyType, NOTIFYCALLBACK pfNotifyCallBack )
 {
@@ -100,7 +100,7 @@ DWORD WINAPI NPSNotifyRegisterA( enum NOTIFYTYPE NotifyType, NOTIFYCALLBACK pfNo
 }
 
 /*****************************************************************
- *  NPSNotifyGetContextA [MPR.37]
+ *  NPSNotifyGetContextA [MPR.@]
  */
 LPVOID WINAPI NPSNotifyGetContextA( NOTIFYCALLBACK pfNotifyCallBack )
 {

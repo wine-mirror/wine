@@ -12,7 +12,7 @@ DEFAULT_DEBUG_CHANNEL(setupapi);
 
 
 /***********************************************************************
- *		SetupCloseFileQueue
+ *		SetupCloseFileQueue (SETUPAPI.56)
  */
 VOID WINAPI SetupCloseFileQueue(HSPFILEQ QueueHandle)
 {
@@ -20,7 +20,7 @@ VOID WINAPI SetupCloseFileQueue(HSPFILEQ QueueHandle)
 }
 
 /***********************************************************************
- *		SetupCommitFileQueueA
+ *		SetupCommitFileQueueA (SETUPAPI.59)
  */
 BOOL WINAPI SetupCommitFileQueueA(HWND Owner, HSPFILEQ QueueHandle,
 				  PSP_FILE_CALLBACK_A MsgHandler,
@@ -31,7 +31,7 @@ BOOL WINAPI SetupCommitFileQueueA(HWND Owner, HSPFILEQ QueueHandle,
 }
 
 /***********************************************************************
- *		SetupIterateCabinetA
+ *		SetupIterateCabinetA (SETUPAPI.205)
  */
 BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
                                  PSP_FILE_CALLBACK_A MsgHandler, PVOID Context)
@@ -41,7 +41,7 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
 }
 
 /***********************************************************************
- *		SetupIterateCabinetW
+ *		SetupIterateCabinetW (SETUPAPI.206)
  */
 BOOL WINAPI SetupIterateCabinetW(PWSTR CabinetFile, DWORD Reserved,
                                  PSP_FILE_CALLBACK_W MsgHandler, PVOID Context) 
@@ -52,7 +52,7 @@ BOOL WINAPI SetupIterateCabinetW(PWSTR CabinetFile, DWORD Reserved,
 
 
 /***********************************************************************
- *		SetupGetLineTextA
+ *		SetupGetLineTextA (SETUPAPI.177)
  */
 BOOL WINAPI SetupGetLineTextA (PINFCONTEXT Context, HINF InfHandle,
                         PCSTR Section, PCSTR Key, LPSTR ReturnBuffer,
@@ -63,7 +63,7 @@ BOOL WINAPI SetupGetLineTextA (PINFCONTEXT Context, HINF InfHandle,
 }
 
 /***********************************************************************
- *		SetupGetStringFieldA
+ *		SetupGetStringFieldA (SETUPAPI.187)
  */
 BOOL WINAPI SetupGetStringFieldA(PINFCONTEXT Context, DWORD FieldIndex, 
                                  LPSTR ReturnBuffer, DWORD ReturnBufferSize,
@@ -75,7 +75,7 @@ BOOL WINAPI SetupGetStringFieldA(PINFCONTEXT Context, DWORD FieldIndex,
 
 
 /***********************************************************************
- *		SetupFindNextLine
+ *		SetupFindNextLine (SETUPAPI.159)
  */
 BOOL WINAPI SetupFindNextLine (PINFCONTEXT ContextIn, PINFCONTEXT ContextOut)
 {
@@ -85,7 +85,7 @@ BOOL WINAPI SetupFindNextLine (PINFCONTEXT ContextIn, PINFCONTEXT ContextOut)
 
 
 /***********************************************************************
- *		SetupInitDefaultQueueCallback
+ *		SetupInitDefaultQueueCallback (SETUPAPI.191)
  */
 PVOID WINAPI SetupInitDefaultQueueCallback(HWND OwnerWindow)
 {
@@ -94,7 +94,7 @@ PVOID WINAPI SetupInitDefaultQueueCallback(HWND OwnerWindow)
 }
 
 /***********************************************************************
- *		SetupInitDefaultQueueCallbackEx
+ *		SetupInitDefaultQueueCallbackEx (SETUPAPI.192)
  */
 PVOID WINAPI SetupInitDefaultQueueCallbackEx(HWND OwnerWindow,
 					     HWND AlternativeProgressWindow,
@@ -107,7 +107,7 @@ PVOID WINAPI SetupInitDefaultQueueCallbackEx(HWND OwnerWindow,
 }
 
 /***********************************************************************
- *		SetupCloseInfFile
+ *		SetupCloseInfFile (SETUPAPI.57)
  */
 VOID WINAPI SetupCloseInfFile (HINF InfHandle)
 {
@@ -116,7 +116,7 @@ VOID WINAPI SetupCloseInfFile (HINF InfHandle)
 
 
 /***********************************************************************
- *		SetupDefaultQueueCallbackA
+ *		SetupDefaultQueueCallbackA (SETUPAPI.68)
  */
 UINT WINAPI SetupDefaultQueueCallbackA (PVOID Context, UINT Notification,
                                         UINT Param1, UINT Param2)
@@ -127,7 +127,7 @@ UINT WINAPI SetupDefaultQueueCallbackA (PVOID Context, UINT Notification,
 
 
 /***********************************************************************
- *		SetupFindFirstLineA
+ *		SetupFindFirstLineA (SETUPAPI.157)
  */
 BOOL WINAPI SetupFindFirstLineA (HINF InfHandle, PCSTR Section, PCSTR Key,
                                  PINFCONTEXT Context)
@@ -137,7 +137,7 @@ BOOL WINAPI SetupFindFirstLineA (HINF InfHandle, PCSTR Section, PCSTR Key,
 }
 
 /***********************************************************************
- *		SetupGetLineByIndexA
+ *		SetupGetLineByIndexA (SETUPAPI.173)
  */
 BOOL WINAPI SetupGetLineByIndexA (HINF InfHandle, PCSTR Section, DWORD Index,
                                  PINFCONTEXT Context)
@@ -148,7 +148,7 @@ BOOL WINAPI SetupGetLineByIndexA (HINF InfHandle, PCSTR Section, DWORD Index,
 
 
 /***********************************************************************
- *		SetupInstallFromInfSectionA
+ *		SetupInstallFromInfSectionA (SETUPAPI.201)
  */
 BOOL WINAPI SetupInstallFromInfSectionA (HWND Owner, HINF InfHandle, PCSTR SectionName,
                                          UINT Flags, HKEY RelativeKeyRoot, PCSTR SourceRootPath,
@@ -161,7 +161,7 @@ BOOL WINAPI SetupInstallFromInfSectionA (HWND Owner, HINF InfHandle, PCSTR Secti
 }
 
 /***********************************************************************
- *		SetupOpenAppendInfFileA
+ *		SetupOpenAppendInfFileA (SETUPAPI.209)
  */
 BOOL WINAPI SetupOpenAppendInfFileA (PCSTR FileName, HINF InfHandle,
 				    PUINT ErrorLine)
@@ -171,7 +171,7 @@ BOOL WINAPI SetupOpenAppendInfFileA (PCSTR FileName, HINF InfHandle,
 }
 
 /***********************************************************************
- *		SetupOpenFileQueue
+ *		SetupOpenFileQueue (SETUPAPI.211)
  */
 HSPFILEQ WINAPI SetupOpenFileQueue (VOID)
 {
@@ -180,7 +180,7 @@ HSPFILEQ WINAPI SetupOpenFileQueue (VOID)
 }
 
 /***********************************************************************
- *		SetupOpenInfFileA
+ *		SetupOpenInfFileA (SETUPAPI.212)
  */
 HINF WINAPI SetupOpenInfFileA (PCSTR FileName, PCSTR InfClass, DWORD InfStyle,
                                PUINT ErrorLine)
@@ -190,7 +190,7 @@ HINF WINAPI SetupOpenInfFileA (PCSTR FileName, PCSTR InfClass, DWORD InfStyle,
 }
 
 /***********************************************************************
- *		SetupQueueCopyA
+ *		SetupQueueCopyA (SETUPAPI.230)
  */
 BOOL WINAPI SetupQueueCopyA (HSPFILEQ QueueHandle, PCSTR SourceRootPath, PCSTR SourcePath,
 			     PCSTR SourceFileName, PCSTR SourceDescription, PCSTR SourceTagFile,
@@ -201,7 +201,7 @@ BOOL WINAPI SetupQueueCopyA (HSPFILEQ QueueHandle, PCSTR SourceRootPath, PCSTR S
 }
 
 /***********************************************************************
- *		SetupSetDirectoryIdA
+ *		SetupSetDirectoryIdA (SETUPAPI.259)
  */
 BOOL WINAPI SetupSetDirectoryIdA (HINF InfHandle,
 				  DWORD Id,
@@ -213,7 +213,7 @@ BOOL WINAPI SetupSetDirectoryIdA (HINF InfHandle,
 
 
 /***********************************************************************
- *		SetupTermDefaultQueueCallback
+ *		SetupTermDefaultQueueCallback (SETUPAPI.267)
  */
 VOID WINAPI SetupTermDefaultQueueCallback (PVOID Callback)
 {

@@ -62,7 +62,7 @@ void dinput_register_device(dinput_device *device) {
 }
 
 /******************************************************************************
- *	DirectInputCreateEx
+ *	DirectInputCreateEx (DINPUT.@)
  */
 HRESULT WINAPI DirectInputCreateEx(
 	HINSTANCE hinst, DWORD dwVersion, REFIID riid, LPVOID *ppDI,
@@ -95,7 +95,7 @@ HRESULT WINAPI DirectInputCreateEx(
 }
 
 /******************************************************************************
- *	DirectInputCreateA
+ *	DirectInputCreateA (DINPUT.@)
  */
 HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPUTA *ppDI, LPUNKNOWN punkOuter)
 {

@@ -170,7 +170,7 @@ static const unsigned char Lookup814[128 * 3] = {
 };
 
 /***********************************************************************
- *		LHashValOfNameSysA
+ *		LHashValOfNameSysA (OLEAUT32.166)
  *
  * Produce a two part hash: The high word is based on skind and lcid,
  * the low word is based on a repeated string hash of skind/str.
@@ -227,7 +227,7 @@ ULONG WINAPI LHashValOfNameSysA( SYSKIND skind, LCID lcid, LPCSTR lpStr)
 }
 
 /***********************************************************************
- *		LHashValOfNameSys
+ *		LHashValOfNameSys (OLEAUT32.165)
  */
 ULONG WINAPI LHashValOfNameSys( SYSKIND skind, LCID lcid, LPCOLESTR str)
 {
