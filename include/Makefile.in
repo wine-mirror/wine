@@ -121,6 +121,11 @@ WINDOWS_INCLUDES = \
 	mapi.h \
 	mapicode.h \
 	mapidefs.h \
+	mapiguid.h \
+	mapitags.h \
+	mapiutil.h \
+	mapival.h \
+	mapix.h \
 	mciavi.h \
 	mcx.h \
 	mediaerr.h \
