@@ -461,6 +461,19 @@ int main(void) {
   then
     CFLAGS="$CFLAGS -fno-strength-reduce"
   fi
+
+  dnl Check for -mpreferred-stack-boundary
+  AC_CACHE_CHECK("for gcc -mpreferred-stack-boundary=2 support",
+                 ac_cv_c_gcc_stack_boundary,
+  [saved_cflags=$CFLAGS
+  CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
+  AC_TRY_COMPILE(,[return 0],ac_cv_c_gcc_stack_boundary="yes",ac_cv_c_gcc_stack_boundary="no")
+  CFLAGS=$saved_cflags
+  ])
+  if test "$ac_cv_c_gcc_stack_boundary" = "yes"
+  then
+    CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
+  fi
 fi
 
 dnl **** Check if we need to place .type inside a .def directive ****
