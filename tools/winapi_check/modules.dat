@@ -242,6 +242,10 @@ dlls/msvcrt
 
 dlls/msvcrt20
 
+% dlls/msvcrt40/msvcrt40.spec
+
+dlls/msvcrt40
+
 % dlls/msvcrtd/msvcrtd.spec
 
 dlls/msvcrtd
