@@ -3,7 +3,7 @@
 # Copyright 2000 Francois Gouget for CodeWeavers
 # fgouget@codeweavers.com
 #
-my $version="0.5.6";
+my $version="0.5.7";
 
 use Cwd;
 use File::Basename;
@@ -519,7 +519,7 @@ sub source_scan_directory
 	}
       } elsif ($dentry =~ /\.rc$/i) {
 	push @sources_rc,"$dentry";
-      } elsif ($dentry =~ /\.(h|hxx|inl|rc2|dlg)$/i) {
+      } elsif ($dentry =~ /\.(h|hxx|hpp|inl|rc2|dlg)$/i) {
 	push @sources_misc,"$dentry";
 	if ($dentry =~ /^stdafx.h$/i) {
 	  @$project_settings[$T_FLAGS]|=$TF_MFC;
@@ -949,6 +949,7 @@ sub postprocess_targets
 	@$wrapper[$T_TYPE]=@$target[$T_TYPE];
 	@$wrapper[$T_INIT]=get_default_init(@$target[$T_TYPE]);
 	@$wrapper[$T_FLAGS]=$TF_WRAPPER | (@$target[$T_FLAGS] & $TF_MFC);
+	@$wrapper[$T_IMPORTS]=[ "kernel32.dll", "ntdll.dll", "user32.dll" ];
 	push @{@$wrapper[$T_SOURCES_C]},"@$wrapper[$T_NAME]_wrapper.c";
 
 	my $index=bsearch(@$target[$T_SOURCES_C],"@$wrapper[$T_NAME]_wrapper.c");
@@ -1507,11 +1508,12 @@ sub generate_wrapper_file
   my $app_init=(@$target[$T_TYPE]==$TT_GUIEXE?"\"WinMain\"":"\"main\"");
   my $app_mfc=(@$target[$T_FLAGS] & $TF_MFC?"\"mfc\"":NULL);
   foreach $line (@{$templates{"wrapper.c"}}) {
-    $line =~ s/\#\#WINEMAKER_APP_NAME\#\#/$app_name/;
-    $line =~ s/\#\#WINEMAKER_APP_TYPE\#\#/$app_type/;
-    $line =~ s/\#\#WINEMAKER_APP_INIT\#\#/$app_init/;
-    $line =~ s/\#\#WINEMAKER_APP_MFC\#\#/$app_mfc/;
-    print FILEO $line;
+    my $l=$line;
+    $l =~ s/\#\#WINEMAKER_APP_NAME\#\#/$app_name/;
+    $l =~ s/\#\#WINEMAKER_APP_TYPE\#\#/$app_type/;
+    $l =~ s/\#\#WINEMAKER_APP_INIT\#\#/$app_init/;
+    $l =~ s/\#\#WINEMAKER_APP_MFC\#\#/$app_mfc/;
+    print FILEO $l;
   }
   close(FILEO);
 }
