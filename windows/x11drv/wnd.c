@@ -156,6 +156,107 @@ BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
     return TRUE;
 }
 
+/**********************************************************************
+ *		X11DRV_WND_IconChanged
+ *
+ * hIcon or hIconSm has changed (or is being initialised for the
+ * first time). Complete the X11 driver-specific initialisation.
+ *
+ * This is not entirely correct, may need to create
+ * an icon window and set the pixmap as a background
+ */
+static void X11DRV_WND_IconChanged(WND *wndPtr)
+{
+
+    HICON16 hIcon = NC_IconForWindow(wndPtr); 
+
+    if( ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap )
+        DeleteObject( ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap );
+
+    if( ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask )
+        DeleteObject( ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask);
+
+    if (!hIcon)
+    {
+        ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap= 0;
+        ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask= 0;
+    }
+    else
+    {
+	HBITMAP hbmOrig;
+	RECT rcMask;
+	BITMAP bmMask;
+	ICONINFO ii;
+	HDC hDC;
+
+	GetIconInfo(hIcon, &ii);
+
+	X11DRV_CreateBitmap(ii.hbmMask);
+	X11DRV_CreateBitmap(ii.hbmColor);
+
+	GetObjectA(ii.hbmMask, sizeof(bmMask), &bmMask);
+	rcMask.top    = 0;
+	rcMask.left   = 0;
+	rcMask.right  = bmMask.bmWidth;
+	rcMask.bottom = bmMask.bmHeight;
+
+	hDC = CreateCompatibleDC(0);
+	hbmOrig = SelectObject(hDC, ii.hbmMask);
+	InvertRect(hDC, &rcMask);
+	SelectObject(hDC, hbmOrig);
+	DeleteDC(hDC);
+
+        ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = ii.hbmColor;
+        ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask= ii.hbmMask;
+    }
+    return;
+}
+
+static void X11DRV_WND_SetIconHints(WND *wndPtr, XWMHints *hints)
+{
+    if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap)
+    {
+	hints->icon_pixmap
+	    = X11DRV_BITMAP_Pixmap(((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap);
+	hints->flags |= IconPixmapHint;
+    }
+    else
+	hints->flags &= ~IconPixmapHint;
+
+    if (((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask)
+    {
+	hints->icon_mask
+	    = X11DRV_BITMAP_Pixmap(((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask);
+	hints->flags |= IconMaskHint;
+    }
+    else
+	hints->flags &= ~IconMaskHint;
+}
+
+/**********************************************************************
+ *		X11DRV_WND_UpdateIconHints
+ *
+ * hIcon or hIconSm has changed (or is being initialised for the
+ * first time). Complete the X11 driver-specific initialisation
+ * and set the window hints.
+ *
+ * This is not entirely correct, may need to create
+ * an icon window and set the pixmap as a background
+ */
+static void X11DRV_WND_UpdateIconHints(WND *wndPtr)
+{
+    XWMHints* wm_hints;
+
+    X11DRV_WND_IconChanged(wndPtr);
+
+    wm_hints = TSXAllocWMHints();
+
+    X11DRV_WND_SetIconHints(wndPtr, wm_hints);
+
+    TSXSetWMHints( display, X11DRV_WND_GetXWindow(wndPtr), wm_hints );
+    TSXFree( wm_hints );
+}
+
 
 /**********************************************************************
  *		X11DRV_WND_CreateWindow
@@ -196,6 +297,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       win_attr.cursor        = X11DRV_MOUSE_XCursor;
 
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = 0;
+      ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask = 0;
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->bit_gravity = win_attr.bit_gravity;
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
 	TSXCreateWindow( display, X11DRV_GetXRootWindow(), 
@@ -267,28 +369,9 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 
 	  if( wndPtr->flags & WIN_MANAGED )
 	  {
-	      if( wndPtr->class->hIcon )
-	      { 
-		  CURSORICONINFO *ptr;
+	      X11DRV_WND_IconChanged(wndPtr);
+	      X11DRV_WND_SetIconHints(wndPtr, wm_hints);
 
-		  if( (ptr = (CURSORICONINFO *)GlobalLock16( wndPtr->class->hIcon )) )
-		  {
-		      /* This is not entirely correct, may need to create
-		       * an icon window and set the pixmap as a background */
-
-		      HBITMAP hBitmap = CreateBitmap( ptr->nWidth, ptr->nHeight, 
-		   	  ptr->bPlanes, ptr->bBitsPerPixel, (char *)(ptr + 1) +
-                          ptr->nHeight * BITMAP_GetWidthBytes(ptr->nWidth,1) );
-
-		      if( hBitmap )
-		      {
-			((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = hBitmap;
-			  X11DRV_CreateBitmap( hBitmap );
-			  wm_hints->flags |= IconPixmapHint;
-			  wm_hints->icon_pixmap = X11DRV_BITMAP_Pixmap( hBitmap );
-		      }
-		   }
-	      }
 	      wm_hints->initial_state = (wndPtr->dwStyle & WS_MINIMIZE) 
 					? IconicState : NormalState;
 	  }
@@ -322,6 +405,11 @@ BOOL X11DRV_WND_DestroyWindow(WND *wndPtr)
        {
 	   DeleteObject( ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap );
 	   ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconBitmap = 0;
+       }
+       if( ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask )
+       {
+	   DeleteObject( ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask);
+	   ((X11DRV_WND_DATA *) wndPtr->pDriverData)->hWMIconMask= 0;
        }
    }
 
@@ -847,6 +935,11 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 		        TSXChangeWindowAttributes( display, w, CWBitGravity, &win_attr );
 		    }
 		   return TRUE;
+
+	case HAK_ICONS:	/* called when the icons change */
+	    if ( (wnd->flags & WIN_MANAGED) )
+		X11DRV_WND_UpdateIconHints(wnd);
+	    return TRUE;
 
 	case HAK_ACCEPTFOCUS: /* called when a window is disabled/enabled */
 

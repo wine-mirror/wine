@@ -406,6 +406,7 @@ extern struct tagWND_DRIVER X11DRV_WND_Driver;
 typedef struct _X11DRV_WND_DATA {
   Window window;
   HBITMAP hWMIconBitmap;
+  HBITMAP hWMIconMask;
   int bit_gravity;
 } X11DRV_WND_DATA;
 

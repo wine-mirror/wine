@@ -376,11 +376,11 @@ DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 			  GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
 	}
 	else {
-	    HICON hAppIcon = (HICON) GetClassLongA(hwnd, GCL_HICONSM);
-	    if(!hAppIcon) hAppIcon = (HICON) GetClassLongA(hwnd, GCL_HICON);
-	    
+	    WND* wndPtr = WIN_FindWndPtr(hwnd);
+	    HICON hAppIcon = (HICON) NC_IconForWindow(wndPtr);
 	    DrawIconEx (hdc, pt.x, pt.y, hAppIcon, GetSystemMetrics(SM_CXSMICON),
 			  GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
+            WIN_ReleaseWndPtr(wndPtr);
 	}
 
 	rc.left += (rc.bottom - rc.top);
@@ -870,14 +870,7 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
                 /* Check system menu */
 		if(wndPtr->dwStyle & WS_SYSMENU)
 		{
-		    /* Check if there is an user icon */
-		    HICON hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICONSM);
-		    if(!hIcon) hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON);
-		    
-		    /* If there is an icon associated with the window OR              */
-		    /* If there is no hIcon specified and this is not a modal dialog, */ 
-		    /* there is a system menu icon.                                   */
-		    if((hIcon != 0) || (!(wndPtr->dwStyle & DS_MODALFRAME)))
+		    if (NC_IconForWindow(wndPtr))
 			rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
 		}
                 if (pt.x < rect.left) return HTSYSMENU;
@@ -1073,14 +1066,7 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
 
 	NC_GetInsideRect95( hwnd, &rect );
 
-	hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICONSM);
-	if(!hIcon) hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON);
-
-	/* If there is no hIcon specified or this is not a modal dialog, */ 
-        /* get the default one.                                          */
-	if(hIcon == 0) 
-	    if (!(wndPtr->dwStyle & DS_MODALFRAME))
-		hIcon = LoadImageA(0, MAKEINTRESOURCEA(OIC_WINEICON), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+	hIcon = NC_IconForWindow( wndPtr );
 
 	if (hIcon)
 	    DrawIconEx (hdc, rect.left + 2, rect.top + 2, hIcon,
@@ -2855,4 +2841,17 @@ BOOL NC_DrawGrayButton(HDC hdc, int x, int y)
     DeleteDC (hdcMask);
     
     return TRUE;
+}
+
+HICON16 NC_IconForWindow(WND *wndPtr)
+{
+	HICON16 hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICONSM);
+	if(!hIcon) hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON);
+
+	/* If there is no hIcon specified and this is a modal dialog, */ 
+        /* get the default one.                                       */
+	if (!hIcon && (wndPtr->dwStyle & DS_MODALFRAME))
+		hIcon = LoadImageA(0, MAKEINTRESOURCEA(OIC_WINEICON), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+
+	return hIcon;
 }

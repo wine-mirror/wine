@@ -97,6 +97,7 @@ typedef struct tagWND
 #define HAK_BITGRAVITY     1
 #define HAK_ACCEPTFOCUS	   2
 #define HAK_ICONICSTATE	   3
+#define HAK_ICONS          4
 
 /* Bit Gravity */
 
@@ -194,6 +195,8 @@ extern WND*   WIN_GetTopParentPtr( WND* pWnd );
 extern BOOL WIN_IsWindowDrawable(WND*, BOOL );
 extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT bwa, UINT* pnum );
 extern void   WIN_ReleaseWinArray(WND **wndArray);
+
+extern HICON16 NC_IconForWindow( WND *wndPtr );
 
 extern HWND CARET_GetHwnd(void);
 extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */

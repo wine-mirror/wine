@@ -463,21 +463,27 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	return 1;
 
     case WM_SETICON:
+	{
+		int index = (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM;
+		HICON16 hOldIcon = GetClassLongA(wndPtr->hwndSelf, index); 
+		SetClassLongA(wndPtr->hwndSelf, index, lParam);
+
+		SetWindowPos(wndPtr->hwndSelf, 0, 0, 0, 0, 0, SWP_FRAMECHANGED
+			 | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+			 | SWP_NOZORDER);
+
+		if( wndPtr->flags & WIN_NATIVE )
+		    wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_ICONS, 0);
+
+		return hOldIcon;
+	}
+
     case WM_GETICON:
-        {
-            LRESULT result = 0;
-            int index = GCL_HICON;
+	{
+		int index = (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM;
+		return GetClassLongA(wndPtr->hwndSelf, index); 
+	}
 
-            if (wParam == ICON_SMALL)
-                index = GCL_HICONSM;
-
-            result = GetClassLongA(wndPtr->hwndSelf, index);
-
-            if (msg == WM_SETICON)
-                SetClassLongA(wndPtr->hwndSelf, index, lParam);
-
-            return result;
-        }
     case WM_HELP:
 	SendMessageA( wndPtr->parent->hwndSelf, msg, wParam, lParam );
 	break;
