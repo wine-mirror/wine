@@ -76,12 +76,12 @@ inline static void call_dtor( void *func, void *object )
     __asm__ __volatile__("call *%0" : : "r" (func), "c" (object) : "eax", "edx", "memory" );
 }
 
-static void dump_type( const cxx_type_info *type )
+static inline void dump_type( const cxx_type_info *type )
 {
-    DPRINTF( "flags %x type %p", type->flags, type->type_info );
-    if (type->type_info) DPRINTF( " (%p %s)", type->type_info->name, type->type_info->mangled );
-    DPRINTF( " offset %d vbase %d,%d size %d copy ctor %p\n", type->this_offset,
-             type->vbase_descr, type->vbase_offset, type->size, type->copy_ctor );
+    DPRINTF( "flags %x type %p %s offsets %d,%d,%d size %d copy ctor %p\n",
+             type->flags, type->type_info, dbgstr_type_info(type->type_info),
+             type->offsets.this_offset, type->offsets.vbase_descr, type->offsets.vbase_offset,
+             type->size, type->copy_ctor );
 }
 
 static void dump_exception_type( const cxx_exception_type *type )
@@ -121,31 +121,11 @@ static void dump_function_descr( const cxx_function_descr *descr, const cxx_exce
         for (j = 0; j < descr->tryblock[i].catchblock_count; j++)
         {
             catchblock_info *ptr = &descr->tryblock[i].catchblock[j];
-            DPRINTF( "        %d: flags %x offset %d handler %p type %p",
-                     j, ptr->flags, ptr->offset, ptr->handler, ptr->type_info );
-            if (ptr->type_info) DPRINTF( " (%p %s)", ptr->type_info->name, ptr->type_info->mangled );
-            DPRINTF( "\n" );
+            DPRINTF( "        %d: flags %x offset %d handler %p type %p %s\n",
+                     j, ptr->flags, ptr->offset, ptr->handler,
+                     ptr->type_info, dbgstr_type_info( ptr->type_info ) );
         }
     }
-}
-
-/* compute the this pointer for a base class of a given type */
-static void *get_this_pointer( const cxx_type_info *type, void *object )
-{
-    void *this_ptr;
-    int *offset_ptr;
-
-    if (!object) return NULL;
-    this_ptr = (char *)object + type->this_offset;
-    if (type->vbase_descr >= 0)
-    {
-        /* move this ptr to vbase descriptor */
-        this_ptr = (char *)this_ptr + type->vbase_descr;
-        /* and fetch additional offset from vbase descriptor */
-        offset_ptr = (int *)(*(char **)this_ptr + type->vbase_offset);
-        this_ptr = (char *)this_ptr + *offset_ptr;
-    }
-    return this_ptr;
 }
 
 /* check if the exception type is caught by a given catch block, and return the type that matched */
@@ -185,21 +165,21 @@ static void copy_exception( void *object, cxx_exception_frame *frame,
 
     if (catchblock->flags & TYPE_FLAG_REFERENCE)
     {
-        *dest_ptr = get_this_pointer( type, object );
+        *dest_ptr = get_this_pointer( &type->offsets, object );
     }
     else if (type->flags & CLASS_IS_SIMPLE_TYPE)
     {
         memmove( dest_ptr, object, type->size );
         /* if it is a pointer, adjust it */
-        if (type->size == sizeof(void *)) *dest_ptr = get_this_pointer( type, *dest_ptr );
+        if (type->size == sizeof(void *)) *dest_ptr = get_this_pointer( &type->offsets, *dest_ptr );
     }
     else  /* copy the object */
     {
         if (type->copy_ctor)
-            call_copy_ctor( type->copy_ctor, dest_ptr, get_this_pointer(type,object),
+            call_copy_ctor( type->copy_ctor, dest_ptr, get_this_pointer(&type->offsets,object),
                             (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS) );
         else
-            memmove( dest_ptr, get_this_pointer(type,object), type->size );
+            memmove( dest_ptr, get_this_pointer(&type->offsets,object), type->size );
     }
 }
 

@@ -61,10 +61,8 @@ typedef struct _rtti_base_descriptor
 {
   type_info *type_descriptor;
   int num_base_classes;
-  int base_class_offset;
-  unsigned int flags;
-  int unknown1;
-  int unknown2;
+  this_ptr_offsets offsets;    /* offsets for computing the this pointer */
+  unsigned int attributes;
 } rtti_base_descriptor;
 
 typedef struct _rtti_base_array
@@ -74,15 +72,15 @@ typedef struct _rtti_base_array
 
 typedef struct _rtti_object_hierarchy
 {
-  int unknown1;
-  int unknown2;
+  unsigned int signature;
+  unsigned int attributes;
   int array_len; /* Size of the array pointed to by 'base_classes' */
   const rtti_base_array *base_classes;
 } rtti_object_hierarchy;
 
 typedef struct _rtti_object_locator
 {
-  int unknown1;
+  unsigned int signature;
   int base_class_offset;
   unsigned int flags;
   type_info *type_descriptor;
@@ -105,6 +103,30 @@ const exception_vtable MSVCRT_bad_typeid_vtable;
 const exception_vtable MSVCRT_bad_cast_vtable;
 const exception_vtable MSVCRT___non_rtti_object_vtable;
 static const exception_vtable MSVCRT_type_info_vtable;
+
+static void dump_obj_locator( const rtti_object_locator *ptr )
+{
+    int i;
+    const rtti_object_hierarchy *h = ptr->type_hierarchy;
+
+    TRACE( "%p: sig=%08x base_offset=%08x flags=%08x type=%p %s hierarchy=%p\n",
+           ptr, ptr->signature, ptr->base_class_offset, ptr->flags,
+           ptr->type_descriptor, dbgstr_type_info(ptr->type_descriptor), ptr->type_hierarchy );
+    TRACE( "  hierarchy: sig=%08x attr=%08x len=%d base classes=%p\n",
+           h->signature, h->attributes, h->array_len, h->base_classes );
+    for (i = 0; i < h->array_len; i++)
+    {
+        TRACE( "    base class %p: num %d off %d,%d,%d attr %08x type %p %s\n",
+               h->base_classes->bases[i],
+               h->base_classes->bases[i]->num_base_classes,
+               h->base_classes->bases[i]->offsets.this_offset,
+               h->base_classes->bases[i]->offsets.vbase_descr,
+               h->base_classes->bases[i]->offsets.vbase_offset,
+               h->base_classes->bases[i]->attributes,
+               h->base_classes->bases[i]->type_descriptor,
+               dbgstr_type_info(h->base_classes->bases[i]->type_descriptor) );
+    }
+}
 
 /* Internal common ctor for exception */
 static void WINAPI EXCEPTION_ctor(exception *_this, const char** name)
@@ -641,9 +663,7 @@ static const rtti_base_descriptor exception_rtti_base_descriptor =
 {
   &exception_type_info,
   0,
-  0,
-  0,
-  0,
+  { 0, -1, 0 },
   0
 };
 
@@ -677,9 +697,7 @@ static const cxx_type_info exception_cxx_type_info =
 {
   0,
   &exception_type_info,
-  0,
-  -1,
-  0,
+  { 0, -1, 0 },
   sizeof(exception),
   (cxx_copy_ctor)__thiscall_MSVCRT_exception_copy_ctor
 };
@@ -695,9 +713,7 @@ static const rtti_base_descriptor bad_typeid_rtti_base_descriptor =
 {
   &bad_typeid_type_info,
   1,
-  0,
-  0xffffffff,
-  0,
+  { 0, -1, 0 },
   0
 };
 
@@ -731,9 +747,7 @@ static const cxx_type_info bad_typeid_cxx_type_info =
 {
   0,
   &bad_typeid_type_info,
-  0,
-  -1,
-  0,
+  { 0, -1, 0 },
   sizeof(exception),
   (cxx_copy_ctor)__thiscall_MSVCRT_bad_typeid_copy_ctor
 };
@@ -749,9 +763,7 @@ static const rtti_base_descriptor bad_cast_rtti_base_descriptor =
 {
   &bad_cast_type_info,
   1,
-  0,
-  0xffffffff,
-  0,
+  { 0, -1, 0 },
   0
 };
 
@@ -785,9 +797,7 @@ static const cxx_type_info bad_cast_cxx_type_info =
 {
   0,
   &bad_cast_type_info,
-  0,
-  -1,
-  0,
+  { 0, -1, 0 },
   sizeof(exception),
   (cxx_copy_ctor)__thiscall_MSVCRT_bad_cast_copy_ctor
 };
@@ -803,9 +813,7 @@ static const rtti_base_descriptor __non_rtti_object_rtti_base_descriptor =
 {
   &__non_rtti_object_type_info,
   2,
-  0,
-  0xffffffff,
-  0,
+  { 0, -1, 0 },
   0
 };
 
@@ -839,9 +847,7 @@ static const cxx_type_info __non_rtti_object_cxx_type_info =
 {
   0,
   &__non_rtti_object_type_info,
-  0,
-  -1,
-  0,
+  { 0, -1, 0 },
   sizeof(exception),
   (cxx_copy_ctor)__thiscall_MSVCRT___non_rtti_object_copy_ctor
 };
@@ -857,9 +863,7 @@ static const rtti_base_descriptor type_info_rtti_base_descriptor =
 {
   &type_info_type_info,
   0,
-  0,
-  0xffffffff,
-  0,
+  { 0, -1, 0 },
   0
 };
 
@@ -1150,12 +1154,15 @@ void* MSVCRT___RTDynamicCast(type_info *cppobj, int unknown,
   const rtti_object_locator *obj_locator;
 
   /* Note: cppobj _isn't_ a type_info, we use that struct for its vtable ptr */
-  TRACE("(%p,%d,%p,%p,%d)\n", cppobj, unknown, src, dst, do_throw);
+  TRACE("obj: %p unknown: %d src: %p %s dst: %p %s do_throw: %d)\n",
+        cppobj, unknown, src, dbgstr_type_info(src), dst, dbgstr_type_info(dst), do_throw);
   if (!cppobj)
     return 0;
   obj_locator= RTTI_GetObjectLocator(cppobj);
   if (unknown)
     FIXME("Unknown parameter is non-zero: please report\n");
+
+  if (TRACE_ON(msvcrt)) dump_obj_locator(obj_locator);
 
   /* To cast an object at runtime:
    * 1.Find out the true type of the object from the typeinfo at vtable[-1]
@@ -1176,8 +1183,9 @@ void* MSVCRT___RTDynamicCast(type_info *cppobj, int unknown,
 
       if (!strcmp(typ->mangled, dst->mangled))
       {
-        dst_offset = (*base_desc)->base_class_offset;
-        break;
+          /* compute the correct this pointer for that base class */
+          void *this_ptr = (char *)cppobj - obj_locator->base_class_offset;
+          return get_this_pointer( &(*base_desc)->offsets, this_ptr );
       }
       base_desc++;
       count++;
