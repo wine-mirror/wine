@@ -539,6 +539,25 @@ WORD WINAPI GetAsyncKeyState16(INT16 nKey)
     return GetAsyncKeyState(nKey);
 }
 
+/***********************************************************************
+ *              IsUserIdle      (USER.333)
+ */
+BOOL16 WINAPI IsUserIdle16(void)
+{
+    if ( GetAsyncKeyState( VK_LBUTTON ) & 0x8000 )
+        return FALSE;
+
+    if ( GetAsyncKeyState( VK_RBUTTON ) & 0x8000 )
+        return FALSE;
+
+    if ( GetAsyncKeyState( VK_MBUTTON ) & 0x8000 )
+        return FALSE;
+
+    /* Should check for screen saver activation here ... */
+
+    return TRUE;
+}
+
 /**********************************************************************
  *           KBD_translate_accelerator
  *
