@@ -482,7 +482,7 @@ VOID MACRO_Print(VOID)
     printer.hPrintTemplate      = 0;
     printer.hSetupTemplate      = 0;
         
-    if (PrintDlg16((LPPRINTDLG16)&printer)) {
+    if (PrintDlgA(&printer)) {
         fprintf(stderr, "Print()\n");
     };
 }
