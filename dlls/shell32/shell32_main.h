@@ -160,13 +160,15 @@ void InitChangeNotifications(void);
 void FreeChangeNotifications(void);
 
 /* file operation */
-#define ASK_DELETE_FILE		 1
-#define ASK_DELETE_FOLDER	 2
-#define ASK_DELETE_MULTIPLE_ITEM 3
+#define ASK_DELETE_FILE           1
+#define ASK_DELETE_FOLDER         2
+#define ASK_DELETE_MULTIPLE_ITEM  3
+#define ASK_CREATE_FOLDER         4
+#define ASK_OVERWRITE_FILE        5
 
 BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI);
 BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI);
-BOOL SHELL_WarnItemDelete(int nKindOfDialog, LPCSTR szDir);
+BOOL SHELL_ConfirmDialog(int nKindOfDialog, LPCSTR szDir);
 
 /* 16-bit functions */
 void        WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b);

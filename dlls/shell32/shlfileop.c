@@ -35,41 +35,39 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-BOOL SHELL_WarnItemDelete (int nKindOfDialog, LPCSTR szDir)
+BOOL SHELL_ConfirmDialog (int nKindOfDialog, LPCSTR szDir)
 {
 	char szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
+	UINT caption_resource_id, text_resource_id;
 
-        if(nKindOfDialog == ASK_DELETE_FILE)
-        {
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText,
-		sizeof(szText));
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION,
-		szCaption, sizeof(szCaption));
-	}
-        else if(nKindOfDialog == ASK_DELETE_FOLDER)
-        {
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText,
-		sizeof(szText));
-	  LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_CAPTION,
-		szCaption, sizeof(szCaption));
-        }
-        else if(nKindOfDialog == ASK_DELETE_MULTIPLE_ITEM)
-        {
-	  LoadStringA(shell32_hInstance, IDS_DELETEMULTIPLE_TEXT, szText,
-		sizeof(szText));
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION,
-		szCaption, sizeof(szCaption));
-        }
-	else {
-          FIXME("Called without a valid nKindOfDialog specified!\n");
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText,
-		sizeof(szText));
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION,
-		szCaption, sizeof(szCaption));
+	switch(nKindOfDialog) {
+
+	case ASK_DELETE_FILE:
+	  caption_resource_id	= IDS_DELETEITEM_CAPTION;
+	  text_resource_id	= IDS_DELETEITEM_TEXT;
+	  break;
+	case ASK_DELETE_FOLDER:
+	  caption_resource_id	= IDS_DELETEFOLDER_CAPTION;
+	  text_resource_id	= IDS_DELETEITEM_TEXT;
+	  break;
+	case ASK_DELETE_MULTIPLE_ITEM:
+	  caption_resource_id	= IDS_DELETEITEM_CAPTION;
+	  text_resource_id	= IDS_DELETEMULTIPLE_TEXT;
+	  break;
+	case ASK_OVERWRITE_FILE:
+	  caption_resource_id	= IDS_OVERWRITEFILE_CAPTION;
+	  text_resource_id	= IDS_OVERWRITEFILE_TEXT;
+	  break;
+	default:
+	  FIXME(" Unhandled nKindOfDialog %d stub\n", nKindOfDialog);
+	  return FALSE;
 	}
 
-	FormatMessageA(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-	    szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
+	LoadStringA(shell32_hInstance, caption_resource_id, szCaption, sizeof(szCaption));
+	LoadStringA(shell32_hInstance, text_resource_id, szText, sizeof(szText));
+
+	FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
 
 	return (IDOK == MessageBoxA(GetActiveWindow(), szBuffer, szCaption, MB_OKCANCEL | MB_ICONEXCLAMATION));
 }
@@ -91,7 +89,7 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 	PathAddBackslashA(szTemp);
 	strcat(szTemp, "*.*");
 
-	if (bShowUI && !SHELL_WarnItemDelete(ASK_DELETE_FOLDER, pszDir))
+	if (bShowUI && !SHELL_ConfirmDialog(ASK_DELETE_FOLDER, pszDir))
 	  return FALSE;
 
 	if(INVALID_HANDLE_VALUE != (hFind = FindFirstFileA(szTemp, &wfd)))
@@ -124,7 +122,7 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 
 BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI)
 {
-	if (bShowUI && !SHELL_WarnItemDelete(ASK_DELETE_FILE, pszFile))
+	if (bShowUI && !SHELL_ConfirmDialog(ASK_DELETE_FILE, pszFile))
 		return FALSE;
 
         return DeleteFileA(pszFile);
