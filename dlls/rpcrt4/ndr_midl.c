@@ -174,37 +174,40 @@ void WINAPI NdrStubGetBuffer(LPRPCSTUBBUFFER This,
 void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg, 
                                     PMIDL_STUB_DESC pStubDesc, int unknown )
 {
-  TRACE("stub\n");
+  FIXME("stub\n");
 }
 
 /***********************************************************************
  *            NdrConformantStringMarshall [RPCRT4.@]
  */
-void WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pszMessage,
+unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pszMessage,
   PFORMAT_STRING pFormat)
 { 
-  TRACE("stub\n");
+  FIXME("stub\n");
+  return NULL;
 }
 
 /***********************************************************************
  *           NdrGetBuffer [RPCRT4.@]
  */
-void WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle)
+unsigned char *WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle)
 {
-  TRACE("stub\n");
+  FIXME("stub\n");
+  return NULL;
 }
 /***********************************************************************
  *           NdrFreeBuffer [RPCRT4.@]
  */
 void WINAPI NdrFreeBuffer(MIDL_STUB_MESSAGE *pStubMsg)
 {
-  TRACE("stub\n");
+  FIXME("stub\n");
 }
 
 /************************************************************************
  *           NdrSendReceive [RPCRT4.@]
  */
-void WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char *buffer  )
+unsigned char *WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char *buffer  )
 {
-  TRACE("stub\n");
+  FIXME("stub\n");
+  return NULL;
 }
