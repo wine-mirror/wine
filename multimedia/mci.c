@@ -466,7 +466,7 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
     wmd->uSpecificCmdTable = LOWORD(modp.wCustomCommandTable);
     wmd->uTypeCmdTable = MCI_COMMAND_TABLE_NOT_LOADED;
 
-    TRACE("Loaded driver %u (%s), type is %d, cmdTable=%08x\n", 
+    TRACE("Loaded driver %x (%s), type is %d, cmdTable=%08x\n", 
 	  hDrv, strDevTyp, modp.wType, modp.wCustomCommandTable);
     
     wmd->lpstrDeviceType = strDevTyp;
@@ -1984,7 +1984,7 @@ DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 		break;
 	    case MCI_MAP_OK:
 	    case MCI_MAP_OKMEM:
-		dwRet = SendDriverMessage(wDevID, wMsg, dwParam1, dwParam2);
+		dwRet = SendDriverMessage(wmd->hDrv, wMsg, dwParam1, dwParam2);
 		if (res == MCI_MAP_OKMEM)
 		    MCI_UnMapMsg16To32A(wmd->wType, wMsg, dwParam2);
 		break;
