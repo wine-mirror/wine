@@ -317,7 +317,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
         {
 	   /* get the parent shellfolder */
 	   if (pidl) {
-	      hr = SHBindToParent( pidl, &IID_IShellFolder, (LPVOID*)&psfParent, &pidlLast);
+	      hr = SHBindToParent(pidl, &IID_IShellFolder, (LPVOID*)&psfParent, (LPCITEMIDLIST*)&pidlLast);
 	      ILFree(pidl);
 	   } else {
 	      ERR("pidl is null!\n");
@@ -332,7 +332,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  {
 	    psfi->dwAttributes = 0xffffffff;
 	  }
-	  IShellFolder_GetAttributesOf(psfParent, 1 , &pidlLast, &(psfi->dwAttributes));
+	  IShellFolder_GetAttributesOf(psfParent, 1, (LPCITEMIDLIST*)&pidlLast, &(psfi->dwAttributes));
 	}
 
 	/* get the displayname */
@@ -387,7 +387,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	if (SUCCEEDED(hr) && (flags & SHGFI_ICONLOCATION ))
 	{
 	  UINT uDummy,uFlags;
-	  hr = IShellFolder_GetUIObjectOf(psfParent, 0, 1, &pidlLast, &IID_IExtractIconA, &uDummy, (LPVOID*)&pei);
+	  hr = IShellFolder_GetUIObjectOf(psfParent, 0, 1, (LPCITEMIDLIST*)&pidlLast, &IID_IExtractIconA, &uDummy, (LPVOID*)&pei);
 
 	  if (SUCCEEDED(hr))
 	  {

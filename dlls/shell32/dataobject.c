@@ -226,7 +226,7 @@ static struct ICOM_VTABLE(IDataObject) dtovt;
 /**************************************************************************
 *  IDataObject_Constructor
 */
-LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST pMyPidl, LPITEMIDLIST * apidl, UINT cidl)
+LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPCITEMIDLIST pMyPidl, LPCITEMIDLIST * apidl, UINT cidl)
 {
 	IDataObjectImpl* dto;
 

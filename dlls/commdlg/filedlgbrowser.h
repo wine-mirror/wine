@@ -151,7 +151,7 @@ LPITEMIDLIST GetPidlFromDataObject ( IDataObject *doSelected, UINT nPidlIndex);
 UINT GetNumSelected(IDataObject *doSelected);
 
 /* pidl handling */
-BOOL IsPidlFolder (LPSHELLFOLDER psf, LPITEMIDLIST pidl);
+BOOL IsPidlFolder (LPSHELLFOLDER psf, LPCITEMIDLIST pidl);
 
 /* Functions used by the EDIT box */
 void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd);

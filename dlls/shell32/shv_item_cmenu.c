@@ -65,7 +65,7 @@ static BOOL ISvItemCm_CanRenameItems(ItemCmImpl *This)
 	  for(i = 0; i < This->cidl; i++){}
 	  if(i > 1) return FALSE;		/* can't rename more than one item at a time*/
 	  dwAttributes = SFGAO_CANRENAME;
-	  IShellFolder_GetAttributesOf(This->pSFParent, 1, This->apidl, &dwAttributes);
+	  IShellFolder_GetAttributesOf(This->pSFParent, 1, (LPCITEMIDLIST*)This->apidl, &dwAttributes);
 	  return dwAttributes & SFGAO_CANRENAME;
 	}
 	return FALSE;
@@ -339,7 +339,7 @@ static void DoDelete(IContextMenu *iface)
 	IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper, (LPVOID*)&psfhlp);
 	if (psfhlp)
 	{
-	  ISFHelper_DeleteItems(psfhlp, This->cidl, This->apidl);
+	  ISFHelper_DeleteItems(psfhlp, This->cidl, (LPCITEMIDLIST *)This->apidl);
 	  ISFHelper_Release(psfhlp);
 	}
 }

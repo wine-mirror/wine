@@ -139,8 +139,8 @@ HRESULT SHELL32_ParseNextElement (HWND hwndOwner,
  * This function is meant for virtual forders not backed by a file system
  * folder.
  */
-HRESULT SHELL32_CoCreateInitSF (LPITEMIDLIST pidlRoot,
-				LPITEMIDLIST pidlChild, REFCLSID clsid, REFIID iid, LPVOID * ppvOut)
+HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot,
+				LPCITEMIDLIST pidlChild, REFCLSID clsid, REFIID iid, LPVOID * ppvOut)
 {
     HRESULT hr;
 
@@ -177,8 +177,8 @@ HRESULT SHELL32_CoCreateInitSF (LPITEMIDLIST pidlRoot,
  *   pathRoot can be NULL for Folders beeing a drive.
  *   In this case the absolute path is build from pidlChild (eg. C:)
  */
-HRESULT SHELL32_CoCreateInitSFEx (LPITEMIDLIST pidlRoot,
-				  LPCSTR pathRoot, LPITEMIDLIST pidlChild, REFCLSID clsid, REFIID riid, LPVOID * ppvOut)
+HRESULT SHELL32_CoCreateInitSFEx (LPCITEMIDLIST pidlRoot,
+				  LPCSTR pathRoot, LPCITEMIDLIST pidlChild, REFCLSID clsid, REFIID riid, LPVOID * ppvOut)
 {
     HRESULT hr;
     IPersistFolder3 *ppf;
@@ -203,7 +203,9 @@ HRESULT SHELL32_CoCreateInitSFEx (LPITEMIDLIST pidlRoot,
 	    } else {
 		szDestPath[0] = '\0';
 	    }
-	    lstrcatA (szDestPath, _ILGetTextPointer (pidlChild));
+
+	    if (pidlChild)
+		lstrcatA (szDestPath, _ILGetTextPointer (pidlChild));
 
 	    /* fill the PERSIST_FOLDER_TARGET_INFO */
 	    ppfti.dwAttributes = -1;
@@ -330,7 +332,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
  *
  * This functions does not set flags!! It only resets flags when nessesary.
  */
-HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPITEMIDLIST pidl, LPDWORD pdwAttributes)
+HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWORD pdwAttributes)
 {
     GUID const *clsid;
     DWORD dwAttributes;

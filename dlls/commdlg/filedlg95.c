@@ -3109,7 +3109,7 @@ LPITEMIDLIST GetPidlFromName(IShellFolder *lpsf,LPWSTR lpcstrFileName)
 
 /*
 */
-BOOL IsPidlFolder (LPSHELLFOLDER psf, LPITEMIDLIST pidl)
+BOOL IsPidlFolder (LPSHELLFOLDER psf, LPCITEMIDLIST pidl)
 {
 	ULONG uAttr  = SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
 	HRESULT ret;

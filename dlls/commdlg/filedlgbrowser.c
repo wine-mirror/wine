@@ -102,7 +102,7 @@ static void COMDLG32_UpdateCurrentDir(FileOpenDlgInfos *fodInfos)
 }
 
 /* copied from shell32 to avoid linking to it */
-static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPCITEMIDLIST pidl)
 {
 	TRACE("dest=%p len=0x%lx strret=%p pidl=%p stub\n",dest,len,src,pidl);
 
@@ -722,7 +722,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand(ICommDlgBrowse
         HRESULT hRes;
 
         ULONG  ulAttr = SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
-        IShellFolder_GetAttributesOf(fodInfos->Shell.FOIShellFolder, 1, &pidl, &ulAttr);
+        IShellFolder_GetAttributesOf(fodInfos->Shell.FOIShellFolder, 1, (LPCITEMIDLIST *)&pidl, &ulAttr);
 	if (ulAttr & (SFGAO_FOLDER | SFGAO_HASSUBFOLDER) )
 	{
           hRes = IShellBrowser_BrowseObject((IShellBrowser *)This,pidl,SBSP_RELATIVE);

@@ -42,12 +42,13 @@ typedef struct
     WORD cb;      /* nr of bytes in this item */
     BYTE abID[1]; /* first byte in this item */
 } SHITEMID, *LPSHITEMID;
-typedef LPSHITEMID const LPCSHITEMID;
+typedef const SHITEMID *LPCSHITEMID;
 
 typedef struct _ITEMIDLIST
 {
     SHITEMID mkid; /* first itemid in list */
-} ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
+} ITEMIDLIST,*LPITEMIDLIST;
+typedef const ITEMIDLIST *LPCITEMIDLIST;
 #include <poppack.h>
 
 BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);

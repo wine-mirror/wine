@@ -52,7 +52,7 @@ BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList)
 #define INVALID_INDEX -1
 BOOL SIC_Initialize(void);
 void SIC_Destroy(void);
-BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT uFlags, UINT * pIndex);
+BOOL PidlToSicIndex (IShellFolder * sh, LPCITEMIDLIST pidl, BOOL bBigIcon, UINT uFlags, UINT * pIndex);
 INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex );
 
 /* Classes Root */
@@ -78,7 +78,7 @@ DWORD WINAPI ParseFieldW(LPCWSTR src, DWORD nField, LPWSTR dst, DWORD len);
 /****************************************************************************
  * Class constructors
  */
-LPDATAOBJECT	IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST myPidl, LPITEMIDLIST * apidl, UINT cidl);
+LPDATAOBJECT	IDataObject_Constructor(HWND hwndOwner, LPCITEMIDLIST myPidl, LPCITEMIDLIST * apidl, UINT cidl);
 LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT, const FORMATETC []);
 
 LPCLASSFACTORY	IClassFactory_Constructor(REFCLSID);
@@ -99,8 +99,8 @@ HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid,
 
 LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD,DWORD);
 
-LPEXTRACTICONA	IExtractIconA_Constructor(LPITEMIDLIST);
-LPEXTRACTICONW	IExtractIconW_Constructor(LPITEMIDLIST);
+LPEXTRACTICONA	IExtractIconA_Constructor(LPCITEMIDLIST);
+LPEXTRACTICONW	IExtractIconW_Constructor(LPCITEMIDLIST);
 HRESULT		CreateStreamOnFile (LPCWSTR pszFilename, DWORD grfMode, IStream ** ppstm);
 
 /* FIXME: rename the functions when the shell32.dll has it's own exports namespace */

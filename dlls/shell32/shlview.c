@@ -813,7 +813,7 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 	/* look, what's selected and create a context menu object of it*/
 	if( ShellView_GetSelections(This) )
 	{
-	  IShellFolder_GetUIObjectOf( This->pSFParent, This->hWndParent, This->cidl, This->apidl,
+	  IShellFolder_GetUIObjectOf( This->pSFParent, This->hWndParent, This->cidl, (LPCITEMIDLIST*)This->apidl,
 					(REFIID)&IID_IContextMenu, NULL, (LPVOID *)&pContextMenu);
 
 	  if(pContextMenu)
@@ -1217,11 +1217,11 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 
 	      if(GetShellOle() && pDoDragDrop)
 	      {
-	        if (SUCCEEDED(IShellFolder_GetUIObjectOf(This->pSFParent, This->hWnd, This->cidl, This->apidl, &IID_IDataObject,0,(LPVOID *)&pda)))
+	        if (SUCCEEDED(IShellFolder_GetUIObjectOf(This->pSFParent, This->hWnd, This->cidl, (LPCITEMIDLIST*)This->apidl, &IID_IDataObject,0,(LPVOID *)&pda)))
 	        {
 	          IDropSource * pds = (IDropSource*)&(This->lpvtblDropSource);	/* own DropSource interface */
 
-	  	  if (SUCCEEDED(IShellFolder_GetAttributesOf(This->pSFParent, This->cidl, This->apidl, &dwAttributes)))
+	  	  if (SUCCEEDED(IShellFolder_GetAttributesOf(This->pSFParent, This->cidl, (LPCITEMIDLIST*)This->apidl, &dwAttributes)))
 		  {
 		    if (dwAttributes & SFGAO_CANLINK)
 		    {
@@ -1247,7 +1247,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 
 	      TRACE("-- LVN_BEGINLABELEDITA %p\n",This);
 
-	      IShellFolder_GetAttributesOf(This->pSFParent, 1, &pidl, &dwAttr);
+	      IShellFolder_GetAttributesOf(This->pSFParent, 1, (LPCITEMIDLIST*)&pidl, &dwAttr);
 	      if (SFGAO_CANRENAME & dwAttr)
 	      {
 	        return FALSE;
@@ -1355,7 +1355,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		}
 
 		/* perform the item deletion */
-		ISFHelper_DeleteItems(psfhlp, i, pItems);
+		ISFHelper_DeleteItems(psfhlp, i, (LPCITEMIDLIST*)pItems);
 
 		/* free pidl array memory */
 		HeapFree(GetProcessHeap(), 0, pItems);
@@ -1841,7 +1841,7 @@ static HRESULT WINAPI IShellView_fnGetItemObject(IShellView * iface, UINT uItem,
 
 	  case SVGIO_SELECTION:
 	    ShellView_GetSelections(This);
-	    IShellFolder_GetUIObjectOf(This->pSFParent, This->hWnd, This->cidl, This->apidl, riid, 0, ppvOut);
+	    IShellFolder_GetUIObjectOf(This->pSFParent, This->hWnd, This->cidl, (LPCITEMIDLIST*)This->apidl, riid, 0, ppvOut);
 	    break;
 	}
 	TRACE("-- (%p)->(interface=%p)\n",This, *ppvOut);
@@ -1853,7 +1853,7 @@ static HRESULT WINAPI IShellView_fnGetItemObject(IShellView * iface, UINT uItem,
 
 static HRESULT WINAPI IShellView_fnEditItem(
 	IShellView * iface,
-	LPITEMIDLIST pidl)
+	LPCITEMIDLIST pidl)
 {
 	ICOM_THIS(IShellViewImpl, iface);
 	int i;

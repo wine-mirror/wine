@@ -40,7 +40,7 @@ static LPBROWSEINFOW	lpBrowseInfo;
 static LPITEMIDLIST	pidlRet;
 
 static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  lpifq, HTREEITEM hParent, IEnumIDList* lpe);
-static HTREEITEM InsertTreeViewItem(IShellFolder * lpsf, LPITEMIDLIST pidl, LPITEMIDLIST pidlParent, IEnumIDList* pEnumIL, HTREEITEM hParent);
+static HTREEITEM InsertTreeViewItem(IShellFolder * lpsf, LPCITEMIDLIST pidl, LPCITEMIDLIST pidlParent, IEnumIDList* pEnumIL, HTREEITEM hParent);
 
 #define SUPPORTEDFLAGS (BIF_STATUSTEXT | \
                         BIF_BROWSEFORCOMPUTER | \
@@ -153,7 +153,7 @@ typedef struct tagID
    IEnumIDList*  pEnumIL;
 } TV_ITEMDATA, *LPTV_ITEMDATA;
 
-static BOOL GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPWSTR lpFriendlyName)
+static BOOL GetName(LPSHELLFOLDER lpsf, LPCITEMIDLIST lpi, DWORD dwFlags, LPWSTR lpFriendlyName)
 {
 	BOOL   bSuccess=TRUE;
 	STRRET str;
@@ -173,7 +173,7 @@ static BOOL GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST lpi, DWORD dwFlags, LPWSTR 
 	return bSuccess;
 }
 
-static HTREEITEM InsertTreeViewItem(IShellFolder * lpsf, LPITEMIDLIST pidl, LPITEMIDLIST pidlParent, IEnumIDList* pEnumIL, HTREEITEM hParent)
+static HTREEITEM InsertTreeViewItem(IShellFolder * lpsf, LPCITEMIDLIST pidl, LPCITEMIDLIST pidlParent, IEnumIDList* pEnumIL, HTREEITEM hParent)
 {
 	TVITEMW 	tvi;
 	TVINSERTSTRUCTW	tvins;
@@ -212,7 +212,7 @@ static HTREEITEM InsertTreeViewItem(IShellFolder * lpsf, LPITEMIDLIST pidl, LPIT
 static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hParent, IEnumIDList* lpe)
 {
 	HTREEITEM	hPrev = 0;
-	LPITEMIDLIST	pidlTemp=0;
+	LPITEMIDLIST	pidlTemp = 0;
 	ULONG		ulFetched;
 	HRESULT		hr;
 	HWND		hwnd=GetParent(hwndTreeView);
@@ -226,7 +226,7 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 	    ULONG ulAttrs = SFGAO_HASSUBFOLDER | SFGAO_FOLDER;
 	    IEnumIDList* pEnumIL = NULL;
 	    IShellFolder* pSFChild = NULL;
-	    IShellFolder_GetAttributesOf(lpsf, 1, &pidlTemp, &ulAttrs);
+	    IShellFolder_GetAttributesOf(lpsf, 1, (LPCITEMIDLIST*)&pidlTemp, &ulAttrs);
 	    if (ulAttrs & SFGAO_FOLDER)
 	    {
 	        hr = IShellFolder_BindToObject(lpsf,pidlTemp,NULL,&IID_IShellFolder,(LPVOID*)&pSFChild);
@@ -278,14 +278,14 @@ static void BrsFolder_CheckValidSelection(HWND hWndTree, LPTV_ITEMDATA lptvid)
     if (lpBrowseInfo->ulFlags & BIF_RETURNFSANCESTORS)
     {
         dwAttributes = SFGAO_FILESYSANCESTOR | SFGAO_FILESYSTEM;
-        if (FAILED(IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1, &lptvid->lpi, &dwAttributes)) ||
+        if (FAILED(IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1, (LPCITEMIDLIST*)&lptvid->lpi, &dwAttributes)) ||
             !dwAttributes)
             bEnabled = FALSE;
     }
     if (lpBrowseInfo->ulFlags & BIF_RETURNONLYFSDIRS)
     {
         dwAttributes = SFGAO_FOLDER | SFGAO_FILESYSTEM;
-        if (FAILED(IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1, &lptvid->lpi, &dwAttributes)) ||
+        if (FAILED(IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1, (LPCITEMIDLIST*)&lptvid->lpi, &dwAttributes)) ||
             (dwAttributes != (SFGAO_FOLDER | SFGAO_FILESYSTEM)))
             bEnabled = FALSE;
     }

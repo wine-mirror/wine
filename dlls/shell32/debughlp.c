@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(pidl);
 
-LPITEMIDLIST  _dbg_ILGetNext(LPITEMIDLIST pidl)
+LPITEMIDLIST _dbg_ILGetNext(LPCITEMIDLIST pidl)
 {
 	WORD len;
 
@@ -41,8 +41,7 @@ LPITEMIDLIST  _dbg_ILGetNext(LPITEMIDLIST pidl)
 	  len =  pidl->mkid.cb;
 	  if (len)
 	  {
-	    pidl = (LPITEMIDLIST) (((LPBYTE)pidl)+len);
-	    return pidl;
+	    return (LPITEMIDLIST) (((LPBYTE)pidl)+len);
 	  }
 	}
 	return NULL;
@@ -53,7 +52,7 @@ BOOL _dbg_ILIsDesktop(LPCITEMIDLIST pidl)
 	return ( !pidl || (pidl && pidl->mkid.cb == 0x00) );
 }
 
-LPPIDLDATA _dbg_ILGetDataPointer(LPITEMIDLIST pidl)
+LPPIDLDATA _dbg_ILGetDataPointer(LPCITEMIDLIST pidl)
 {
 	if(pidl && pidl->mkid.cb != 0x00)
 	  return (LPPIDLDATA) &(pidl->mkid.abID);
@@ -174,7 +173,7 @@ DWORD _dbg_ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 
 void pdump (LPCITEMIDLIST pidl)
 {
-	LPITEMIDLIST pidltemp = pidl;
+	LPCITEMIDLIST pidltemp = pidl;
 
 	if (!TRACE_ON(pidl)) return;
 
@@ -220,7 +219,7 @@ void pdump (LPCITEMIDLIST pidl)
 BOOL pcheck (LPCITEMIDLIST pidl)
 {
         DWORD type, ret=TRUE;
-        LPITEMIDLIST pidltemp = pidl;
+        LPCITEMIDLIST pidltemp = pidl;
 
         if (pidltemp && pidltemp->mkid.cb)
         { do

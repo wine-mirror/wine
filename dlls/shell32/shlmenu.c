@@ -120,12 +120,12 @@ static LPFMINFO FM_SetMenuParameter(
  * FM_InitMenuPopup				[internal]
  *
  */
-static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
+static int FM_InitMenuPopup(HMENU hmenu, LPCITEMIDLIST pAlternatePidl)
 {	IShellFolder	*lpsf, *lpsf2;
 	ULONG		ulItemAttr = SFGAO_FOLDER;
 	UINT		uID, uFlags, uEnumFlags;
 	LPFNFMCALLBACK	lpfnCallback;
-	LPITEMIDLIST	pidl;
+	LPCITEMIDLIST	pidl;
 	char		sTemp[MAX_PATH];
 	int		NumberOfItems = 0, iIcon;
 	MENUINFO	MenuInfo;
@@ -150,7 +150,7 @@ static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
 	if (menudata->bInitialized)
 	  return 0;
 
-	pidl = ((pAlternatePidl) ? pAlternatePidl : menudata->pidl);
+	pidl = (pAlternatePidl? pAlternatePidl: menudata->pidl);
 	if (!pidl)
 	  return 0;
 
@@ -176,7 +176,7 @@ static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
 
 	      while ((!bAbortInit) && (NOERROR == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched)))
 	      {
-		if (SUCCEEDED (IShellFolder_GetAttributesOf(lpsf, 1, &pidlTemp, &ulItemAttr)))
+		if (SUCCEEDED (IShellFolder_GetAttributesOf(lpsf, 1, (LPCITEMIDLIST*)&pidlTemp, &ulItemAttr)))
 		{
 		  ILGetDisplayNameExA(NULL, pidlTemp, sTemp, ILGDN_FORPARSING);
 		  if (! (PidlToSicIndex(lpsf, pidlTemp, FALSE, 0, &iIcon)))

@@ -48,7 +48,7 @@ typedef struct _NOTIFICATIONLIST
 	LONG wEventMask;	/* subscribed events */
 	LONG wSignalledEvent;   /* event that occurred */
 	DWORD dwFlags;		/* client flags */
-    LPCITEMIDLIST pidlSignaled; /*pidl of the path that caused the signal*/
+	LPCITEMIDLIST pidlSignaled; /*pidl of the path that caused the signal*/
     
 } NOTIFICATIONLIST, *LPNOTIFICATIONLIST;
 
@@ -424,7 +424,7 @@ DWORD WINAPI NTSHChangeNotifyRegister(
 HANDLE WINAPI SHChangeNotification_Lock(
 	HANDLE hChange,
 	DWORD dwProcessId,
-	LPITEMIDLIST **lppidls,
+	LPCITEMIDLIST **lppidls,
 	LPLONG lpwEventId)
 {
     DWORD i;

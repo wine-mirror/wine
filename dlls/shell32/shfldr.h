@@ -34,10 +34,10 @@ typedef struct {
 LPCWSTR GetNextElementW (LPCWSTR pszNext, LPWSTR pszOut, DWORD dwOut);
 HRESULT SHELL32_ParseNextElement (HWND hwndOwner, IShellFolder2 * psf, LPITEMIDLIST * pidlInOut, LPOLESTR szNext,
 				  DWORD * pEaten, DWORD * pdwAttributes);
-HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPITEMIDLIST pidl, LPDWORD pdwAttributes);
-HRESULT SHELL32_CoCreateInitSF (LPITEMIDLIST pidlRoot, LPITEMIDLIST pidlChild, REFCLSID clsid, REFIID iid,
+HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWORD pdwAttributes);
+HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot, LPCITEMIDLIST pidlChild, REFCLSID clsid, REFIID iid,
 				LPVOID * ppvOut);
-HRESULT SHELL32_CoCreateInitSFEx (LPITEMIDLIST pidlRoot, LPCSTR pathRoot, LPITEMIDLIST pidlChild, REFCLSID clsid,
+HRESULT SHELL32_CoCreateInitSFEx (LPCITEMIDLIST pidlRoot, LPCSTR pathRoot, LPCITEMIDLIST pidlChild, REFCLSID clsid,
 				  REFIID iid, LPVOID * ppvOut);
 HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf, LPCITEMIDLIST pidl, DWORD dwFlags, LPSTR szOut,
 				       DWORD dwOutLen);

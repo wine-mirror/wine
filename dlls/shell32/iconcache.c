@@ -320,7 +320,7 @@ BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList)
  */
 BOOL PidlToSicIndex (
 	IShellFolder * sh,
-	LPITEMIDLIST pidl,
+	LPCITEMIDLIST pidl,
 	BOOL bBigIcon,
 	UINT uFlags,
 	UINT * pIndex)
