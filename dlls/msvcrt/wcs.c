@@ -15,7 +15,9 @@
 #include "msvcrt/string.h"
 #include "msvcrt/wctype.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 /* INTERNAL: MSVCRT_malloc() based wstrndup */

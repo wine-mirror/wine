@@ -18,7 +18,9 @@
 #include "msvcrt/setjmp.h"
 
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 typedef void (*MSVCRT_sig_handler_func)(void);
 

@@ -25,7 +25,9 @@
 #include "msvcrt/sys/utime.h"
 #include "msvcrt/time.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* for stat mode, permissions apply to all,owner and group */
 #define MSVCRT_S_IREAD  (_S_IREAD  | (_S_IREAD  >> 3) | (_S_IREAD  >> 6))

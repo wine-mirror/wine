@@ -10,7 +10,9 @@
 #include "msvcrt.h"
 #include "msvcrt/locale.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* FIXME: Need to hold locale for each LC_* type and aggregate
  * string to produce lc_all.

@@ -7,7 +7,9 @@
 
 #include "msvcrt/ctype.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* Some abbreviations to make the following table readable */
 #define _C_ _CONTROL

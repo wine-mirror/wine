@@ -15,7 +15,9 @@
 #include "msvcrt/time.h"
 
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 /* INTERNAL: Return formatted current time/date */

@@ -18,7 +18,9 @@
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* FIXME: Check file extensions for app to run */
 static const unsigned int EXE = 'e' << 16 | 'x' << 8 | 'e';

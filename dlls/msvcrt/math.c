@@ -16,7 +16,9 @@
 
 #include "msvcrt/stdlib.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 #ifndef HAVE_FINITE
 #ifndef finite /* Could be a macro */

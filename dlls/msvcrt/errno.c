@@ -15,7 +15,9 @@
 #include "msvcrt/string.h"
 
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 /* INTERNAL: Set the crt and dos errno's from the OS error given. */

@@ -18,7 +18,9 @@
 #include "msvcrt/wctype.h"
 
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 unsigned char MSVCRT_mbctype[257];
 int MSVCRT___mb_cur_max = 1;

@@ -11,7 +11,9 @@
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* INTERNAL: MSVCRT_malloc() based strndup */
 char* msvcrt_strndup(const char* buf, unsigned int size)

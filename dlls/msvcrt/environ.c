@@ -12,7 +12,9 @@
 #include "msvcrt/stdlib.h"
 
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /*********************************************************************
  *		getenv (MSVCRT.@)

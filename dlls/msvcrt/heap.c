@@ -13,7 +13,9 @@
 #include "msvcrt/malloc.h"
 
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* MT */
 extern CRITICAL_SECTION MSVCRT_heap_cs;

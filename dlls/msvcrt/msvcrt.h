@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "windef.h"
-#include "debugtools.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"

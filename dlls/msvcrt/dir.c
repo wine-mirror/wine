@@ -20,7 +20,9 @@
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* INTERNAL: Translate finddata_t to PWIN32_FIND_DATAA */
 static void msvcrt_fttofd(LPWIN32_FIND_DATAA fd, struct _finddata_t* ft)

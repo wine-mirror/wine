@@ -8,7 +8,9 @@
 #include "msvcrt/eh.h"
 #include "msvcrt/malloc.h"
 
-DEFAULT_DEBUG_CHANNEL(msvcrt);
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 typedef void (*v_table_ptr)();
