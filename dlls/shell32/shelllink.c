@@ -664,20 +664,29 @@ static HRESULT WINAPI IPersistStream_fnSave(
 	IStream*         stm,
 	BOOL             fClearDirty)
 {
-    LINK_HEADER header;
-    ULONG    count;
-    HRESULT    r;
+    static const WCHAR wOpen[] = {'o','p','e','n',0};
 
-	_ICOM_THIS_From_IPersistStream(IShellLinkImpl, iface);
+    LINK_HEADER header;
+    WCHAR   exePath[MAX_PATH];
+    ULONG   count;
+    HRESULT r;
+
+    _ICOM_THIS_From_IPersistStream(IShellLinkImpl, iface);
 
     TRACE("(%p) %p %x\n", This, stm, fClearDirty);
+
+    *exePath = '\0';
+
+    if (This->sPath)
+	SHELL_FindExecutable(NULL, This->sPath, wOpen, exePath, MAX_PATH, NULL, NULL, NULL, NULL);
 
     /* if there's no PIDL, generate one */
     if( ! This->pPidl )
     {
-        if( ! This->sPath )
+        if( !*exePath )
             return E_FAIL;
-        This->pPidl = ILCreateFromPathW( This->sPath );
+
+        This->pPidl = ILCreateFromPathW(exePath);
     }
 
     memset(&header, 0, sizeof(header));
@@ -724,10 +733,7 @@ static HRESULT WINAPI IPersistStream_fnSave(
         }
     }
 
-    TRACE("Path = %s\n", debugstr_w(This->sPath));
-    if( ! This->sPath )
-        return E_FAIL;
-    Stream_WriteLocationInfo( stm, This->sPath );
+    Stream_WriteLocationInfo( stm, exePath );
 
     TRACE("Description = %s\n", debugstr_w(This->sDescription));
     if( This->sDescription )
