@@ -626,10 +626,12 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
                                 LPVOID data, FINDEX_SEARCH_OPS search_op,
                                 LPVOID filter, DWORD flags)
 {
-    WCHAR buffer[MAX_PATH];
-    WCHAR *mask, *tmp = buffer;
+    WCHAR *mask, *p;
     FIND_FIRST_INFO *info = NULL;
-    DWORD size;
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
 
     if ((search_op != FindExSearchNameMatch) || (flags != 0))
     {
@@ -641,21 +643,11 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         FIXME("info level %d not implemented\n", level );
         return INVALID_HANDLE_VALUE;
     }
-    size = RtlGetFullPathName_U( filename, sizeof(buffer), buffer, &mask );
-    if (!size)
+
+    if (!RtlDosPathNameToNtPathName_U( filename, &nt_name, &mask, NULL ))
     {
         SetLastError( ERROR_PATH_NOT_FOUND );
         return INVALID_HANDLE_VALUE;
-    }
-    if (size > sizeof(buffer))
-    {
-        tmp = HeapAlloc( GetProcessHeap(), 0, size );
-        if (!tmp)
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return INVALID_HANDLE_VALUE;
-        }
-        size = RtlGetFullPathName_U( filename, size, tmp, &mask );
     }
 
     if (!mask || !*mask)
@@ -675,29 +667,43 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         goto error;
     }
+
+    /* truncate dir name before mask */
     *mask = 0;
+    nt_name.Length = (mask - nt_name.Buffer) * sizeof(WCHAR);
 
     /* check if path is the root of the drive */
     info->is_root = FALSE;
-    if (tmp[0] && tmp[1] == ':')
+    p = nt_name.Buffer + 4;  /* skip \??\ prefix */
+    if (p[0] && p[1] == ':')
     {
-        WCHAR *p = tmp + 2;
+        p += 2;
         while (*p == '\\') p++;
         info->is_root = (*p == 0);
     }
 
-    info->handle = CreateFileW( tmp, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                                OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
-    if (info->handle == INVALID_HANDLE_VALUE)
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtOpenFile( &info->handle, GENERIC_READ, &attr, &io,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+
+    if (status != STATUS_SUCCESS)
     {
         RtlFreeUnicodeString( &info->mask );
+        SetLastError( RtlNtStatusToDosError(status) );
         goto error;
     }
+    RtlFreeUnicodeString( &nt_name );
 
     RtlInitializeCriticalSection( &info->cs );
     info->data_pos = 0;
     info->data_len = 0;
-    if (tmp != buffer) HeapFree( GetProcessHeap(), 0, tmp );
 
     if (!FindNextFileW( (HANDLE)info, data ))
     {
@@ -709,8 +715,8 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     return (HANDLE)info;
 
 error:
-    if (tmp != buffer) HeapFree( GetProcessHeap(), 0, tmp );
     if (info) HeapFree( GetProcessHeap(), 0, info );
+    RtlFreeUnicodeString( &nt_name );
     return INVALID_HANDLE_VALUE;
 }
 

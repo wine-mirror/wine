@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "ntstatus.h"
 #include "wine/windef16.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -39,23 +40,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtree,
                                             DWORD dwNotifyFilter )
 {
-    HANDLE file, ret = INVALID_HANDLE_VALUE;
+    UNICODE_STRING pathW;
+    HANDLE ret = INVALID_HANDLE_VALUE;
 
-    TRACE( "%s %d %lx\n", debugstr_a(lpPathName), bWatchSubtree, dwNotifyFilter );
-
-    if ((file = CreateFileA( lpPathName, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 )) == INVALID_HANDLE_VALUE)
-        return INVALID_HANDLE_VALUE;
-
-    SERVER_START_REQ( create_change_notification )
+    if (RtlCreateUnicodeStringFromAsciiz( &pathW, lpPathName ))
     {
-        req->handle  = file;
-        req->subtree = bWatchSubtree;
-        req->filter  = dwNotifyFilter;
-        if (!wine_server_call_err( req )) ret = reply->handle;
+        ret = FindFirstChangeNotificationW( pathW.Buffer, bWatchSubtree, dwNotifyFilter );
+        RtlFreeUnicodeString( &pathW );
     }
-    SERVER_END_REQ;
-    CloseHandle( file );
+    else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
     return ret;
 }
 
@@ -65,13 +58,36 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtre
 HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName, BOOL bWatchSubtree,
                                             DWORD dwNotifyFilter)
 {
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
     HANDLE file, ret = INVALID_HANDLE_VALUE;
 
     TRACE( "%s %d %lx\n", debugstr_w(lpPathName), bWatchSubtree, dwNotifyFilter );
 
-    if ((file = CreateFileW( lpPathName, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 )) == INVALID_HANDLE_VALUE)
+    if (!RtlDosPathNameToNtPathName_U( lpPathName, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
         return INVALID_HANDLE_VALUE;
+    }
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtOpenFile( &file, 0, &attr, &io, 0,
+                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    RtlFreeUnicodeString( &nt_name );
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return INVALID_HANDLE_VALUE;
+    }
 
     SERVER_START_REQ( create_change_notification )
     {
