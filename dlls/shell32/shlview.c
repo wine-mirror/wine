@@ -206,13 +206,13 @@ static void MergeToolBar(LPSHELLVIEW this)
 	IShellBrowser_SendControlMsg(this->pShellBrowser,FCW_TOOLBAR,
 				 TB_ADDBITMAP, 8, (LPARAM)&ab, &iStdBMOffset);
 
-	TRACE(shell,"TB_ADDBITMAP returns %x\n", iStdBMOffset);
+	TRACE(shell,"TB_ADDBITMAP returns %lx\n", iStdBMOffset);
 
 	ab.nID   = IDB_VIEW_SMALL_COLOR;	// std view bitmaps
 	IShellBrowser_SendControlMsg(this->pShellBrowser,FCW_TOOLBAR,
 				 TB_ADDBITMAP, 8, (LPARAM)&ab, &iViewBMOffset);
 
-	TRACE(shell,"TB_ADDBITMAP returns %x\n", iViewBMOffset);
+	TRACE(shell,"TB_ADDBITMAP returns %lx\n", iViewBMOffset);
 
 	for (i=0; i<6; ++i)
 	{ tbActual[i] = c_tbDefault[i];
@@ -279,7 +279,7 @@ BOOL32 ShellView_CreateList (LPSHELLVIEW this)
 *  internal
 */
 int  nColumn1=120; /* width of column */
-int  nColumn2=50;
+int  nColumn2=80;
 int  nColumn3=170;
 int  nColumn4=60;
 
@@ -883,7 +883,7 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 		    }
 		  }
 		  else
-		  { TRACE(shell,"-- invoke command\n", this->aSelectedItems[0]);
+		  { TRACE(shell,"-- invoke command\n");
 		    ZeroMemory(&cmi, sizeof(cmi));
 	            cmi.cbSize = sizeof(cmi);
 	            cmi.hwnd = this->hWndParent;
@@ -1011,20 +1011,24 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 	    { if(lpdi->item.mask & LVIF_TEXT)	 /*is the text being requested?*/
 	      { if(_ILIsValue(pidl))	/*is this a value or a folder?*/
 	        { switch (lpdi->item.iSubItem)
-		  { case 1:
+		  { case 1:	/* size */
 		      _ILGetFileSize (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
 		      break;
-		    case 2:
+		    case 2:	/* extension */
 		      {	char sTemp[64];
-		        if (!( _ILGetExtension (pidl, sTemp, 64)
-			       && HCR_MapTypeToValue(sTemp, sTemp, 64)
-			       && HCR_MapTypeToValue(sTemp, lpdi->item.pszText, lpdi->item.cchTextMax )))
-			{ strncpy (lpdi->item.pszText, sTemp, lpdi->item.cchTextMax);
-			  strncat (lpdi->item.pszText, "-file", lpdi->item.cchTextMax);
-			}       
+		        if (_ILGetExtension (pidl, sTemp, 64))
+			{ if (!( HCR_MapTypeToValue(sTemp, sTemp, 64)
+			         && HCR_MapTypeToValue(sTemp, lpdi->item.pszText, lpdi->item.cchTextMax )))
+			  { strncpy (lpdi->item.pszText, sTemp, lpdi->item.cchTextMax);
+			    strncat (lpdi->item.pszText, "-file", lpdi->item.cchTextMax);
+			  }
+			}
+			else	/* no extension found */
+			{ lpdi->item.pszText[0]=0x00;
+			}    
 		      }
 		      break;
-		    case 3:  
+		    case 3:	/* date */
 		      _ILGetFileDate (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
 		      break;
 		  }

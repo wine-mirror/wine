@@ -15,8 +15,10 @@ C_SRCS = \
 	iconcache.c \
 	pidl.c \
 	shell32_main.c \
+	shelllink.c \
 	shellole.c \
 	shellord.c \
+	shellpath.c \
 	shlfolder.c \
 	shlview.c
 

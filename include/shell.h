@@ -283,7 +283,20 @@ LPCWSTR WINAPI PathFindFilename32W(LPCWSTR path);
 #define  PathFindFilename WINELIB_NAME_AW(PathFindFilename)
 LPCVOID WINAPI PathFindFilename32AW(LPCVOID path); 
 
-LPSTR WINAPI PathRemoveBlanks(LPSTR str);
+BOOL32 WINAPI PathMatchSpec32A(LPCSTR x, LPCSTR y);
+BOOL32 WINAPI PathMatchSpec32W(LPCWSTR x, LPCWSTR y);
+#define  PathMatchSpec WINELIB_NAME_AW(PathMatchSpec)
+BOOL32 WINAPI PathMatchSpec32AW(LPVOID x, LPVOID y);
+
+LPSTR WINAPI PathRemoveBlanks32A(LPSTR str);
+LPWSTR WINAPI PathRemoveBlanks32W(LPWSTR str);
+#define  PathRemoveBlanks WINELIB_NAME_AW(PathRemoveBlanks)
+LPVOID WINAPI PathRemoveBlanks32AW(LPVOID str);
+
+LPSTR WINAPI StrFormatByteSize32A ( DWORD dw, LPSTR pszBuf, UINT32 cchBuf );
+LPWSTR WINAPI StrFormatByteSize32W ( DWORD dw, LPWSTR pszBuf, UINT32 cchBuf );
+#define  StrFormatByteSize WINELIB_NAME_AW(StrFormatByteSize)
+
 /****************************************************************************
 *  other functions
 */

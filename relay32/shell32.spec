@@ -38,7 +38,7 @@ init	Shell32LibMain
   30 stdcall PathBuildRoot(ptr long) PathBuildRoot
   31 stdcall PathFindExtension(ptr) PathFindExtension32AW
   32 stdcall PathAddBackslash(ptr) PathAddBackslash32AW
-  33 stdcall PathRemoveBlanks(str) PathRemoveBlanks
+  33 stdcall PathRemoveBlanks(str) PathRemoveBlanks32AW
   34 stdcall PathFindFilename(ptr) PathFindFilename32AW
   35 stdcall PathRemoveFileSpec(str) PathRemoveFileSpec
   36 stdcall PathAppend(str str) PathAppend
@@ -51,9 +51,9 @@ init	Shell32LibMain
   43 stdcall PathIsExe (ptr) PathIsExe
   44 stub DoEnvironmentSubstA@8
   45 stdcall PathFileExists(str) PathFileExists
-  46 stdcall PathMatchSpec (str str) PathMatchSpec
+  46 stdcall PathMatchSpec (str str) PathMatchSpec32AW
   47 stub PathMakeUniqueName@20
-  48 stub PathSetDlgItemPath@12
+  48 stdcall PathSetDlgItemPath (long long ptr) PathSetDlgItemPath32AW
   49 stub PathQualify@4
   50 stub PathStripToRoot@4
   51 stdcall PathResolve(str long long) PathResolve

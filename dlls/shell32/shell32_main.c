@@ -909,11 +909,13 @@ DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath)
 DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath)
 {	char sTemp[MAX_PATH];
 
-	FIXME (shell,"(pidl=%p)\n", pidl);
+	TRACE (shell,"(pidl=%p)\n", pidl);
 
 	SHGetPathFromIDList32A (pidl, sTemp);
 	lstrcpyAtoW(pszPath, sTemp);
+
 	TRACE(shell,"-- (%s)\n",debugstr_w(pszPath));
+
 	return NOERROR;
 }
 

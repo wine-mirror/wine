@@ -977,8 +977,9 @@ BOOL32 WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
 	  default:
 	    return FALSE;
 	}
-	sprintf(stemp,"%lu", pdata->u.file.dwFileSize);
-	return GetNumberFormat32A(LOCALE_USER_DEFAULT, 0, stemp, NULL, pOut, uOutSize);
+	StrFormatByteSize32A(pdata->u.file.dwFileSize, stemp, 20);
+	strncpy( pOut, stemp, 20);
+	return TRUE;
 }
 
 BOOL32 WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT32 uOutSize)
