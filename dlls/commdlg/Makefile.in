@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = comdlg32.dll
-IMPORTS   = shell32 shlwapi comctl32 winspool.drv user32 gdi32 kernel32
+IMPORTS   = shell32 shlwapi comctl32 winspool user32 gdi32 kernel32
 ALTNAMES  = commdlg.dll
 EXTRALIBS = $(LIBUUID)
 

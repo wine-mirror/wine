@@ -34,7 +34,7 @@
 
 struct func
 {
-    const char *name;         /* function name */
+    char       *name;         /* function name */
     int         ordinal;      /* function ordinal */
     int         ord_only;     /* non-zero if function is imported by ordinal */
 };
@@ -150,7 +150,7 @@ inline static struct func *find_export( const char *name, struct func *table, in
 {
     struct func func, *res = NULL;
 
-    func.name = name;
+    func.name = (char *)name;
     func.ordinal = -1;
     if (table) res = bsearch( &func, table, size, sizeof(*table), func_cmp );
     return res;
@@ -163,10 +163,35 @@ inline static void sort_symbols( char **table, int size )
         qsort( table, size, sizeof(*table), name_cmp );
 }
 
+/* free an import structure */
+static void free_imports( struct import *imp )
+{
+    int i;
+
+    for (i = 0; i < imp->nb_exports; i++) free( imp->exports[i].name );
+    for (i = 0; i < imp->nb_imports; i++) free( imp->imports[i].name );
+    free( imp->exports );
+    free( imp->imports );
+    free( imp->dll );
+    free( imp );
+}
+
 /* remove the temp file at exit */
 static void remove_ld_tmp_file(void)
 {
     if (ld_tmp_file) unlink( ld_tmp_file );
+}
+
+/* check whether a given dll has already been imported */
+static int is_already_imported( const char *name )
+{
+    int i;
+
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (!strcmp( dll_imports[i]->dll, name )) return 1;
+    }
+    return 0;
 }
 
 /* open the .so library for a given dll in a specified path */
@@ -176,8 +201,8 @@ static char *try_library_path( const char *path, const char *name )
     int fd;
 
     buffer = xmalloc( strlen(path) + strlen(name) + 9 );
-    sprintf( buffer, "%s/%s", path, name );
-    strcat( buffer, ".so" );
+    sprintf( buffer, "%s/lib%s.def", path, name );
+
     /* check if the file exists */
     if ((fd = open( buffer, O_RDONLY )) != -1)
     {
@@ -199,66 +224,124 @@ static char *open_library( const char *name )
         if ((fullname = try_library_path( lib_path[i], name ))) return fullname;
     }
     if (!(fullname = try_library_path( ".", name )))
-        fatal_error( "could not open .so file for %s\n", name );
+        fatal_error( "could not open .def file for %s\n", name );
     return fullname;
 }
 
-/* read in the list of exported symbols of a .so */
-static void read_exported_symbols( const char *name, struct import *imp )
+/* skip whitespace until the next token */
+static char *skip_whitespace( char *p )
+{
+    while (*p && isspace(*p)) p++;
+    if (!*p || *p == ';') p = NULL;
+    return p;
+}
+
+/* skip to the start of the next token, null terminating the current one */
+static char *next_token( char *p )
+{
+    while (*p && !isspace(*p)) p++;
+    if (*p) *p++ = 0;
+    return skip_whitespace( p );
+}
+
+/* remove the @nn suffix from stdcall names */
+static char *remove_stdcall_decoration( char *buffer )
+{
+    char *p = buffer + strlen(buffer) - 1;
+    while (p > buffer && isdigit(*p)) p--;
+    if (p > buffer && *p == '@') *p = 0;
+    return buffer;
+}
+
+/* read in the list of exported symbols of an import library */
+static int read_import_lib( const char *name, struct import *imp )
 {
     FILE *f;
-    char buffer[1024], prefix[80], ord_prefix[80];
-    char *fullname, *cmdline;
-    int size, err;
+    char buffer[1024];
+    char *fullname;
+    int size;
 
     imp->exports    = NULL;
     imp->nb_exports = size = 0;
 
-    if (!(fullname = open_library( name ))) return;
-    cmdline = xmalloc( strlen(fullname) + 7 );
-    sprintf( cmdline, "nm -D %s", fullname );
+    fullname = open_library( name );
+    f = open_input_file( NULL, fullname );
     free( fullname );
-
-    if (!(f = popen( cmdline, "r" )))
-        fatal_error( "Cannot execute '%s'\n", cmdline );
-
-    sprintf( prefix, "__wine_dllexport_%s_", make_c_identifier(name) );
-    sprintf( ord_prefix, "__wine_ordexport_%s_", make_c_identifier(name) );
 
     while (fgets( buffer, sizeof(buffer), f ))
     {
+        char *name, *flags;
         int ordinal = 0, ord_only = 0;
+
         char *p = buffer + strlen(buffer) - 1;
-        if (p < buffer) continue;
+        if (p < buffer) goto next;
         if (*p == '\n') *p-- = 0;
-        if (!(p = strstr( buffer, prefix )))
+
+        p = buffer;
+        if (!(p = skip_whitespace(p))) goto next;
+        name = p;
+        p = next_token( name );
+
+        if (!strcmp( name, "LIBRARY" ))
         {
-            if (!(p = strstr( buffer, ord_prefix ))) continue;
-            ord_only = 1;
+            if (!p) fatal_error( "Expected name after LIBRARY\n" );
+            name = p;
+            p = next_token( name );
+            if (p) fatal_error( "Garbage after LIBRARY statement\n" );
+            if (is_already_imported( name ))
+            {
+                close_input_file( f );
+                return 0;  /* ignore this dll */
+            }
+            free( imp->dll );
+            imp->dll = xstrdup( name );
+            goto next;
         }
-        p += strlen(prefix);
-        if (isdigit(*p))
+        if (!strcmp( name, "EXPORTS" )) goto next;
+
+        /* check for ordinal */
+        if (!p) fatal_error( "Expected ordinal after function name\n" );
+        if (*p != '@' || !isdigit(p[1]))
+            fatal_error( "Expected ordinal after function name '%s'\n", name );
+        ordinal = strtol( p+1, &p, 10 );
+        if (ordinal >= MAX_ORDINALS) fatal_error( "Invalid ordinal number %d\n", ordinal );
+
+        /* check for optional flags */
+        while (p && (p = skip_whitespace(p)))
         {
-            ordinal = strtol( p, &p, 10 );
-            if (*p++ != '_') continue;
-            if (ordinal >= MAX_ORDINALS) continue;
+            flags = p;
+            p = next_token( flags );
+            if (!strcmp( flags, "NONAME" ))
+            {
+                ord_only = 1;
+                if (!ordinal) fatal_error( "Invalid ordinal number %d\n", ordinal );
+            }
+            else if (!strcmp( flags, "CONSTANT" ) || !strcmp( flags, "DATA" ))
+            {
+                /* we don't support importing non-function entry points */
+                goto next;
+            }
+            else fatal_error( "Garbage after ordinal declaration\n" );
         }
-        if (ord_only && !ordinal) continue;
 
         if (imp->nb_exports == size)
         {
             size += 128;
             imp->exports = xrealloc( imp->exports, size * sizeof(*imp->exports) );
         }
-        imp->exports[imp->nb_exports].name     = xstrdup( p );
+        if ((p = strchr( name, '=' ))) *p = 0;
+        remove_stdcall_decoration( name );
+        imp->exports[imp->nb_exports].name     = xstrdup( name );
         imp->exports[imp->nb_exports].ordinal  = ordinal;
         imp->exports[imp->nb_exports].ord_only = ord_only;
         imp->nb_exports++;
+    next:
+        current_line++;
     }
-    if ((err = pclose( f ))) fatal_error( "%s error %d\n", cmdline, err );
-    free( cmdline );
+    close_input_file( f );
     if (imp->nb_exports)
         qsort( imp->exports, imp->nb_exports, sizeof(*imp->exports), func_cmp );
+    return 1;
 }
 
 /* add a dll to the list of imports */
@@ -266,20 +349,16 @@ void add_import_dll( const char *name, int delay )
 {
     struct import *imp;
     char *fullname;
-    int i;
 
     fullname = xmalloc( strlen(name) + 5 );
     strcpy( fullname, name );
     if (!strchr( fullname, '.' )) strcat( fullname, ".dll" );
 
     /* check if we already imported it */
-    for (i = 0; i < nb_imports; i++)
+    if (is_already_imported( fullname ))
     {
-        if (!strcmp( dll_imports[i]->dll, fullname ))
-        {
-            free( fullname );
-            return;
-        }
+        free( fullname );
+        return;
     }
 
     imp = xmalloc( sizeof(*imp) );
@@ -289,10 +368,13 @@ void add_import_dll( const char *name, int delay )
     imp->nb_imports = 0;
 
     if (delay) nb_delayed++;
-    read_exported_symbols( fullname, imp );
 
-    dll_imports = xrealloc( dll_imports, (nb_imports+1) * sizeof(*dll_imports) );
-    dll_imports[nb_imports++] = imp;
+    if (read_import_lib( name, imp ))
+    {
+        dll_imports = xrealloc( dll_imports, (nb_imports+1) * sizeof(*dll_imports) );
+        dll_imports[nb_imports++] = imp;
+    }
+    else free_imports( imp );
 }
 
 /* initialize the list of ignored symbols */

@@ -129,7 +129,6 @@ static int output_debug( FILE *outfile )
 static int output_exports( FILE *outfile, int nr_exports )
 {
     int i, fwd_size = 0, total_size = 0;
-    char *p;
 
     if (!nr_exports) return 0;
 
@@ -295,39 +294,6 @@ static int output_exports( FILE *outfile, int nr_exports )
             fprintf( outfile, "    \"\\t.long 0,0,0,0\\n\"\n" );
         }
     }
-
-
-    /* output __wine_dllexport symbols */
-
-    for (i = 0; i < nb_names; i++)
-    {
-        /* check for invalid characters in the name */
-        for (p = Names[i]->name; *p; p++)
-            if (!isalnum(*p) && *p != '_' && *p != '.') break;
-        if (*p) continue;
-        fprintf( outfile, "    \"\\t.globl " __ASM_NAME("__wine_dllexport_%s_%d_%s") "\\n\"\n",
-                 make_c_identifier(DLLFileName), i, Names[i]->name );
-        fprintf( outfile, "    \"" __ASM_NAME("__wine_dllexport_%s_%d_%s") ":\\n\"\n",
-                 make_c_identifier(DLLFileName), i, Names[i]->name );
-    }
-
-    /* output ordinal exports */
-
-    for (i = 0; i < nb_entry_points; i++)
-    {
-        ORDDEF *odp = EntryPoints[i];
-
-        if (odp->name || !odp->export_name) continue;
-        /* check for invalid characters in the name */
-        for (p = odp->export_name; *p; p++)
-            if (!isalnum(*p) && *p != '_' && *p != '.') break;
-        if (*p) continue;
-        fprintf( outfile, "    \"\\t.globl " __ASM_NAME("__wine_ordexport_%s_%d_%s") "\\n\"\n",
-                 make_c_identifier(DLLFileName), odp->ordinal, odp->export_name );
-        fprintf( outfile, "    \"" __ASM_NAME("__wine_ordexport_%s_%d_%s") ":\\n\"\n",
-                 make_c_identifier(DLLFileName), odp->ordinal, odp->export_name );
-    }
-    fprintf( outfile, "    \"\\t.long 0xffffffff\\n\"\n" );
 
     /* output variables */
 

@@ -34,8 +34,10 @@ EXEEXT    = @EXEEXT@
 OBJEXT    = @OBJEXT@
 LIBEXT    = @LIBEXT@
 DLLEXT    = @DLLEXT@
+IMPLIBEXT = @IMPLIBEXT@
 CROSSCC   = @CROSSCC@
 LDSHARED  = @LDSHARED@
+DLLTOOL   = @DLLTOOL@
 DLLWRAP   = @DLLWRAP@
 DLLWRAPFLAGS = --add-stdcall-alias
 AR        = @AR@ rc
@@ -240,7 +242,8 @@ install:: $(INSTALLSUBDIRS:%=%/__install__)
 
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 
-.PHONY: install uninstall $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__uninstall__)
+.PHONY: install install-lib install-dev uninstall \
+	$(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__uninstall__)
 
 # Rules for checking that no imports are missing
 

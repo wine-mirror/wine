@@ -202,6 +202,48 @@ foreach my $mod (sort keys %directories)
 
 
 ################################################################
+# output the import libraries rules
+
+my @implibs = grep /\.dll$/, keys %directories;
+push @implibs, "winspool.drv";
+
+print NEWMAKE "\n# Import libraries\n\nIMPORT_LIBS =";
+foreach my $mod (sort @implibs)
+{
+    my $def = $mod;
+    $def =~ s/\.(dll|drv)$/.\$(IMPLIBEXT)/;
+    printf NEWMAKE " \\\n\tlib%s", $def;
+}
+print NEWMAKE "\n\n";
+
+foreach my $mod (sort @implibs)
+{
+    my $dir = $directories{$mod};
+    my $def = $mod;
+    my $spec = $mod;
+    $spec =~ s/\.dll$//;
+    $def =~ s/\.(dll|drv)$//;
+    printf NEWMAKE "lib%s.def: %s/%s.spec.def\n", $def, $dir, $spec;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s.spec.def \$@\n", $dir, $spec;
+    printf NEWMAKE "lib%s.a: %s/%s.spec.def\n", $def, $dir, $spec;
+    printf NEWMAKE "\t\$(DLLTOOL) -k -l \$@ -d %s/%s.spec.def\n\n", $dir, $spec;
+}
+foreach my $mod (sort @implibs)
+{
+    my $dir = $directories{$mod};
+    my $spec = $mod;
+    $spec =~ s/\.dll$//;
+    printf NEWMAKE "%s/%s.spec.def: \$(WINEBUILD)\n", $dir, $spec;
+}
+
+
+print NEWMAKE <<EOF;
+
+\$(SUBDIRS): \$(IMPORT_LIBS)
+
+EOF
+
+################################################################
 # output the inter-dll dependencies and rules
 
 print NEWMAKE "# Map library name to the corresponding directory\n\n";
@@ -217,38 +259,6 @@ foreach my $mod (sort keys %directories)
 {
     printf NEWMAKE "%s/__install__: %s\$(DLLEXT)\n", $directories{$mod}, $mod;
 }
-
-print NEWMAKE "\n# Inter-dll dependencies\n\n";
-
-my @depends = ();
-foreach my $mod (sort keys %imports)
-{
-    next unless @{$imports{$mod}};
-    my $count = 0;
-    my $dep = sprintf("%s:", $directories{$mod});
-    $dep .= " " x (8-length($directories{$mod}));
-    foreach my $i (@{$imports{$mod}})
-    {
-        if ($count++ >= 4)
-        {
-            $count = 1;
-            $dep .= " \\\n" . " " x 9;
-        }
-        $dep .= sprintf(" %s\$(DLLEXT)", $i);
-    }
-    foreach my $i (@{$linked_dlls{$mod}})
-    {
-        if ($count++ >= 4)
-        {
-            $count = 1;
-            $dep .= " \\\n" . " " x 9;
-        }
-        $dep .= sprintf(" lib%s.\$(LIBEXT)", $i);
-    }
-    push @depends, $dep . "\n";
-}
-print NEWMAKE sort @depends;
-
 
 ################################################################
 # output the linkable dlls special links
@@ -268,11 +278,19 @@ foreach my $mod (keys %linkable_dlls)
     printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
 }
 
+foreach my $mod (keys %imports)
+{
+    my $deps = "";
+    foreach my $i (@{$linked_dlls{$mod}}) { $deps .= " lib$i.\$(LIBEXT)"; }
+    if ($deps) { printf NEWMAKE "%s:%s\n", $directories{$mod}, $deps; }
+}
+
 print NEWMAKE <<EOF;
+
 uninstall::
 	\$(RM) \$(LINKABLE_DLLS:%=\$(libdir)/lib%.\$(LIBEXT))
 
-install::
+install install-lib::
 	\$(RM) \$(LINKABLE_DLLS:%=\$(libdir)/lib%.\$(LIBEXT))
 	cd \$(libdir) && if [ "\$(dlldir)" = "\$(libdir)/wine" ]; \\
 	then \\
@@ -294,8 +312,18 @@ print NEWMAKE "\tfi\n\n";
 print NEWMAKE <<EOF;
 # Misc rules
 
+install install-dev:: \$(IMPORT_LIBS)
+	\$(MKINSTALLDIRS) \$(dlldir)
+	for f in \$(IMPORT_LIBS); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
+
+install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
+
 uninstall::
+	\$(RM) \$(IMPORT_LIBS:%=\$(dlldir)/%)
 	-rmdir \$(dlldir)
+
+clean::
+	\$(RM) \$(IMPORT_LIBS)
 
 check test:: \$(BUILDSUBDIRS:%=%/__test__)
 

@@ -40,7 +40,6 @@ SUBDIRS = \
 
 # Sub-directories to install for install-lib
 INSTALLLIBSUBDIRS = \
-	dlls \
 	documentation \
 	library \
 	miscemu \
@@ -53,6 +52,9 @@ INSTALLDEVSUBDIRS = \
 	include \
 	ole \
 	tools
+
+# Sub-directories to install for both install-lib and install-dev
+INSTALLBOTHSUBDIRS = dlls
 
 INSTALLSUBDIRS = $(INSTALLDEVSUBDIRS) $(INSTALLLIBSUBDIRS)
 
@@ -81,11 +83,11 @@ install-aclocal: dummy
 	$(MKINSTALLDIRS) $(datadir)/aclocal
 	$(INSTALL_DATA) $(SRCDIR)/aclocal.m4 $(datadir)/aclocal/wine.m4
 
-install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__)
+install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-lib__)
 
-install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__) install-aclocal
+install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-dev__) install-aclocal
 
-install:: install-aclocal
+install:: install-lib install-dev install-aclocal
 	-$(LDCONFIG)
 	@if test -n "`LANG=C $(LDD) $(bindir)/wine|grep not.found`";	\
 	then								\
@@ -99,11 +101,20 @@ install:: install-aclocal
 		echo "*************************************************" ; \
 	fi
 
-uninstall::
+uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
 	$(RM) $(datadir)/aclocal/wine.m4
 	-rmdir $(datadir)/aclocal
 
-.PHONY: install-aclocal install-lib install-dev
+$(INSTALLBOTHSUBDIRS:%=%/__install-lib__): dummy
+	cd `dirname $@` && $(MAKE) install-lib
+
+$(INSTALLBOTHSUBDIRS:%=%/__install-dev__): dummy
+	cd `dirname $@` && $(MAKE) install-dev
+
+$(INSTALLBOTHSUBDIRS:%=%/__uninstall__): dummy
+	cd `dirname $@` && $(MAKE) uninstall
+
+.PHONY: install-aclocal $(INSTALLBOTHSUBDIRS:%=%/__install-lib__) $(INSTALLBOTHSUBDIRS:%=%/__install-dev__) $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
 
 # Dependencies between directories
 
@@ -113,9 +124,9 @@ server: library tools unicode
 miscemu programs: dlls library ole tools unicode
 tools: library unicode
 
-dlls/__install__: library ole tools unicode
+dlls/__install-lib__ dlls/__install-dev__: library ole tools unicode
 server/__install__: library tools unicode
-miscemu/__install__ programs/__install__: library ole tools unicode dlls/__install__
+miscemu/__install__ programs/__install__: library ole tools unicode dlls/__install-lib__
 library/__install__: library
 ole/__install__: ole
 tools/__install__: tools

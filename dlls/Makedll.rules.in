@@ -18,13 +18,15 @@ WIN16_FILES = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
 ALL_OBJS    = @WIN16_FILES@ $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 
-all: $(MODULE)$(DLLEXT)
+all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 
 @MAKE_RULES@
 
+IMPORTLIBS = $(DELAYIMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT)) $(IMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT))
+
 # Rules for .so files
 
-$(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
+$(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(IMPORTLIBS) $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(DLLMAIN:%=-e %) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 $(MODULE).so: $(MAINSPEC).o $(ALL_OBJS) Makefile.in
@@ -41,8 +43,8 @@ $(MODULE).glue.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
 
 # Rules for .dll files
 
-$(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) Makefile.in
-	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib lib$(MODULE:.dll=.a) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(DLLMAIN:%=--entry %) -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
+$(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) $(IMPORTLIBS) Makefile.in
+	$(DLLWRAP) -k --def $(SPEC_DEF) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(DLLMAIN:%=--entry %) -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 $(SPEC_DEF): $(WINEBUILD)
 

@@ -567,6 +567,567 @@ wsock32.dll$(DLLEXT): wsock32/wsock32.dll$(DLLEXT)
 x11drv.dll$(DLLEXT): x11drv/x11drv.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) x11drv/x11drv.dll$(DLLEXT) $@
 
+
+# Import libraries
+
+IMPORT_LIBS = \
+	libadvapi32.$(IMPLIBEXT) \
+	libavicap32.$(IMPLIBEXT) \
+	libavifil32.$(IMPLIBEXT) \
+	libcabinet.$(IMPLIBEXT) \
+	libcomcat.$(IMPLIBEXT) \
+	libcomctl32.$(IMPLIBEXT) \
+	libcomdlg32.$(IMPLIBEXT) \
+	libcrtdll.$(IMPLIBEXT) \
+	libcrypt32.$(IMPLIBEXT) \
+	libd3d8.$(IMPLIBEXT) \
+	libdciman32.$(IMPLIBEXT) \
+	libddraw.$(IMPLIBEXT) \
+	libdevenum.$(IMPLIBEXT) \
+	libdinput.$(IMPLIBEXT) \
+	libdinput8.$(IMPLIBEXT) \
+	libdplay.$(IMPLIBEXT) \
+	libdplayx.$(IMPLIBEXT) \
+	libdsound.$(IMPLIBEXT) \
+	libgdi32.$(IMPLIBEXT) \
+	libglu32.$(IMPLIBEXT) \
+	libicmp.$(IMPLIBEXT) \
+	libimagehlp.$(IMPLIBEXT) \
+	libimm32.$(IMPLIBEXT) \
+	libkernel32.$(IMPLIBEXT) \
+	liblz32.$(IMPLIBEXT) \
+	libmapi32.$(IMPLIBEXT) \
+	libmpr.$(IMPLIBEXT) \
+	libmsacm32.$(IMPLIBEXT) \
+	libmsdmo.$(IMPLIBEXT) \
+	libmsimg32.$(IMPLIBEXT) \
+	libmsnet32.$(IMPLIBEXT) \
+	libmsrle32.$(IMPLIBEXT) \
+	libmsvcrt.$(IMPLIBEXT) \
+	libmsvcrt20.$(IMPLIBEXT) \
+	libmsvfw32.$(IMPLIBEXT) \
+	libnetapi32.$(IMPLIBEXT) \
+	libntdll.$(IMPLIBEXT) \
+	libodbc32.$(IMPLIBEXT) \
+	libole32.$(IMPLIBEXT) \
+	liboleaut32.$(IMPLIBEXT) \
+	libolecli32.$(IMPLIBEXT) \
+	liboledlg.$(IMPLIBEXT) \
+	libolepro32.$(IMPLIBEXT) \
+	libolesvr32.$(IMPLIBEXT) \
+	libopengl32.$(IMPLIBEXT) \
+	libpsapi.$(IMPLIBEXT) \
+	libqcap.$(IMPLIBEXT) \
+	libquartz.$(IMPLIBEXT) \
+	librasapi32.$(IMPLIBEXT) \
+	libriched32.$(IMPLIBEXT) \
+	librpcrt4.$(IMPLIBEXT) \
+	libserialui.$(IMPLIBEXT) \
+	libsetupapi.$(IMPLIBEXT) \
+	libshdocvw.$(IMPLIBEXT) \
+	libshell32.$(IMPLIBEXT) \
+	libshfolder.$(IMPLIBEXT) \
+	libshlwapi.$(IMPLIBEXT) \
+	libsnmpapi.$(IMPLIBEXT) \
+	libsti.$(IMPLIBEXT) \
+	libtapi32.$(IMPLIBEXT) \
+	libttydrv.$(IMPLIBEXT) \
+	libtwain_32.$(IMPLIBEXT) \
+	liburl.$(IMPLIBEXT) \
+	liburlmon.$(IMPLIBEXT) \
+	libuser32.$(IMPLIBEXT) \
+	libversion.$(IMPLIBEXT) \
+	libw32skrnl.$(IMPLIBEXT) \
+	libwinedos.$(IMPLIBEXT) \
+	libwineps.$(IMPLIBEXT) \
+	libwininet.$(IMPLIBEXT) \
+	libwinmm.$(IMPLIBEXT) \
+	libwinnls32.$(IMPLIBEXT) \
+	libwinspool.$(IMPLIBEXT) \
+	libwintrust.$(IMPLIBEXT) \
+	libwnaspi32.$(IMPLIBEXT) \
+	libwow32.$(IMPLIBEXT) \
+	libws2_32.$(IMPLIBEXT) \
+	libwsock32.$(IMPLIBEXT) \
+	libx11drv.$(IMPLIBEXT)
+
+libadvapi32.def: advapi32/advapi32.spec.def
+	$(RM) $@ && $(LN_S) advapi32/advapi32.spec.def $@
+libadvapi32.a: advapi32/advapi32.spec.def
+	$(DLLTOOL) -k -l $@ -d advapi32/advapi32.spec.def
+
+libavicap32.def: avicap32/avicap32.spec.def
+	$(RM) $@ && $(LN_S) avicap32/avicap32.spec.def $@
+libavicap32.a: avicap32/avicap32.spec.def
+	$(DLLTOOL) -k -l $@ -d avicap32/avicap32.spec.def
+
+libavifil32.def: avifil32/avifil32.spec.def
+	$(RM) $@ && $(LN_S) avifil32/avifil32.spec.def $@
+libavifil32.a: avifil32/avifil32.spec.def
+	$(DLLTOOL) -k -l $@ -d avifil32/avifil32.spec.def
+
+libcabinet.def: cabinet/cabinet.spec.def
+	$(RM) $@ && $(LN_S) cabinet/cabinet.spec.def $@
+libcabinet.a: cabinet/cabinet.spec.def
+	$(DLLTOOL) -k -l $@ -d cabinet/cabinet.spec.def
+
+libcomcat.def: comcat/comcat.spec.def
+	$(RM) $@ && $(LN_S) comcat/comcat.spec.def $@
+libcomcat.a: comcat/comcat.spec.def
+	$(DLLTOOL) -k -l $@ -d comcat/comcat.spec.def
+
+libcomctl32.def: comctl32/comctl32.spec.def
+	$(RM) $@ && $(LN_S) comctl32/comctl32.spec.def $@
+libcomctl32.a: comctl32/comctl32.spec.def
+	$(DLLTOOL) -k -l $@ -d comctl32/comctl32.spec.def
+
+libcomdlg32.def: commdlg/comdlg32.spec.def
+	$(RM) $@ && $(LN_S) commdlg/comdlg32.spec.def $@
+libcomdlg32.a: commdlg/comdlg32.spec.def
+	$(DLLTOOL) -k -l $@ -d commdlg/comdlg32.spec.def
+
+libcrtdll.def: crtdll/crtdll.spec.def
+	$(RM) $@ && $(LN_S) crtdll/crtdll.spec.def $@
+libcrtdll.a: crtdll/crtdll.spec.def
+	$(DLLTOOL) -k -l $@ -d crtdll/crtdll.spec.def
+
+libcrypt32.def: crypt32/crypt32.spec.def
+	$(RM) $@ && $(LN_S) crypt32/crypt32.spec.def $@
+libcrypt32.a: crypt32/crypt32.spec.def
+	$(DLLTOOL) -k -l $@ -d crypt32/crypt32.spec.def
+
+libd3d8.def: d3d8/d3d8.spec.def
+	$(RM) $@ && $(LN_S) d3d8/d3d8.spec.def $@
+libd3d8.a: d3d8/d3d8.spec.def
+	$(DLLTOOL) -k -l $@ -d d3d8/d3d8.spec.def
+
+libdciman32.def: dciman32/dciman32.spec.def
+	$(RM) $@ && $(LN_S) dciman32/dciman32.spec.def $@
+libdciman32.a: dciman32/dciman32.spec.def
+	$(DLLTOOL) -k -l $@ -d dciman32/dciman32.spec.def
+
+libddraw.def: ddraw/ddraw.spec.def
+	$(RM) $@ && $(LN_S) ddraw/ddraw.spec.def $@
+libddraw.a: ddraw/ddraw.spec.def
+	$(DLLTOOL) -k -l $@ -d ddraw/ddraw.spec.def
+
+libdevenum.def: devenum/devenum.spec.def
+	$(RM) $@ && $(LN_S) devenum/devenum.spec.def $@
+libdevenum.a: devenum/devenum.spec.def
+	$(DLLTOOL) -k -l $@ -d devenum/devenum.spec.def
+
+libdinput.def: dinput/dinput.spec.def
+	$(RM) $@ && $(LN_S) dinput/dinput.spec.def $@
+libdinput.a: dinput/dinput.spec.def
+	$(DLLTOOL) -k -l $@ -d dinput/dinput.spec.def
+
+libdinput8.def: dinput8/dinput8.spec.def
+	$(RM) $@ && $(LN_S) dinput8/dinput8.spec.def $@
+libdinput8.a: dinput8/dinput8.spec.def
+	$(DLLTOOL) -k -l $@ -d dinput8/dinput8.spec.def
+
+libdplay.def: dplay/dplay.spec.def
+	$(RM) $@ && $(LN_S) dplay/dplay.spec.def $@
+libdplay.a: dplay/dplay.spec.def
+	$(DLLTOOL) -k -l $@ -d dplay/dplay.spec.def
+
+libdplayx.def: dplayx/dplayx.spec.def
+	$(RM) $@ && $(LN_S) dplayx/dplayx.spec.def $@
+libdplayx.a: dplayx/dplayx.spec.def
+	$(DLLTOOL) -k -l $@ -d dplayx/dplayx.spec.def
+
+libdsound.def: dsound/dsound.spec.def
+	$(RM) $@ && $(LN_S) dsound/dsound.spec.def $@
+libdsound.a: dsound/dsound.spec.def
+	$(DLLTOOL) -k -l $@ -d dsound/dsound.spec.def
+
+libgdi32.def: gdi/gdi32.spec.def
+	$(RM) $@ && $(LN_S) gdi/gdi32.spec.def $@
+libgdi32.a: gdi/gdi32.spec.def
+	$(DLLTOOL) -k -l $@ -d gdi/gdi32.spec.def
+
+libglu32.def: glu32/glu32.spec.def
+	$(RM) $@ && $(LN_S) glu32/glu32.spec.def $@
+libglu32.a: glu32/glu32.spec.def
+	$(DLLTOOL) -k -l $@ -d glu32/glu32.spec.def
+
+libicmp.def: icmp/icmp.spec.def
+	$(RM) $@ && $(LN_S) icmp/icmp.spec.def $@
+libicmp.a: icmp/icmp.spec.def
+	$(DLLTOOL) -k -l $@ -d icmp/icmp.spec.def
+
+libimagehlp.def: imagehlp/imagehlp.spec.def
+	$(RM) $@ && $(LN_S) imagehlp/imagehlp.spec.def $@
+libimagehlp.a: imagehlp/imagehlp.spec.def
+	$(DLLTOOL) -k -l $@ -d imagehlp/imagehlp.spec.def
+
+libimm32.def: imm32/imm32.spec.def
+	$(RM) $@ && $(LN_S) imm32/imm32.spec.def $@
+libimm32.a: imm32/imm32.spec.def
+	$(DLLTOOL) -k -l $@ -d imm32/imm32.spec.def
+
+libkernel32.def: kernel/kernel32.spec.def
+	$(RM) $@ && $(LN_S) kernel/kernel32.spec.def $@
+libkernel32.a: kernel/kernel32.spec.def
+	$(DLLTOOL) -k -l $@ -d kernel/kernel32.spec.def
+
+liblz32.def: lzexpand/lz32.spec.def
+	$(RM) $@ && $(LN_S) lzexpand/lz32.spec.def $@
+liblz32.a: lzexpand/lz32.spec.def
+	$(DLLTOOL) -k -l $@ -d lzexpand/lz32.spec.def
+
+libmapi32.def: mapi32/mapi32.spec.def
+	$(RM) $@ && $(LN_S) mapi32/mapi32.spec.def $@
+libmapi32.a: mapi32/mapi32.spec.def
+	$(DLLTOOL) -k -l $@ -d mapi32/mapi32.spec.def
+
+libmpr.def: mpr/mpr.spec.def
+	$(RM) $@ && $(LN_S) mpr/mpr.spec.def $@
+libmpr.a: mpr/mpr.spec.def
+	$(DLLTOOL) -k -l $@ -d mpr/mpr.spec.def
+
+libmsacm32.def: msacm/msacm32.spec.def
+	$(RM) $@ && $(LN_S) msacm/msacm32.spec.def $@
+libmsacm32.a: msacm/msacm32.spec.def
+	$(DLLTOOL) -k -l $@ -d msacm/msacm32.spec.def
+
+libmsdmo.def: msdmo/msdmo.spec.def
+	$(RM) $@ && $(LN_S) msdmo/msdmo.spec.def $@
+libmsdmo.a: msdmo/msdmo.spec.def
+	$(DLLTOOL) -k -l $@ -d msdmo/msdmo.spec.def
+
+libmsimg32.def: msimg32/msimg32.spec.def
+	$(RM) $@ && $(LN_S) msimg32/msimg32.spec.def $@
+libmsimg32.a: msimg32/msimg32.spec.def
+	$(DLLTOOL) -k -l $@ -d msimg32/msimg32.spec.def
+
+libmsnet32.def: msnet32/msnet32.spec.def
+	$(RM) $@ && $(LN_S) msnet32/msnet32.spec.def $@
+libmsnet32.a: msnet32/msnet32.spec.def
+	$(DLLTOOL) -k -l $@ -d msnet32/msnet32.spec.def
+
+libmsrle32.def: msvideo/msrle32/msrle32.spec.def
+	$(RM) $@ && $(LN_S) msvideo/msrle32/msrle32.spec.def $@
+libmsrle32.a: msvideo/msrle32/msrle32.spec.def
+	$(DLLTOOL) -k -l $@ -d msvideo/msrle32/msrle32.spec.def
+
+libmsvcrt.def: msvcrt/msvcrt.spec.def
+	$(RM) $@ && $(LN_S) msvcrt/msvcrt.spec.def $@
+libmsvcrt.a: msvcrt/msvcrt.spec.def
+	$(DLLTOOL) -k -l $@ -d msvcrt/msvcrt.spec.def
+
+libmsvcrt20.def: msvcrt20/msvcrt20.spec.def
+	$(RM) $@ && $(LN_S) msvcrt20/msvcrt20.spec.def $@
+libmsvcrt20.a: msvcrt20/msvcrt20.spec.def
+	$(DLLTOOL) -k -l $@ -d msvcrt20/msvcrt20.spec.def
+
+libmsvfw32.def: msvideo/msvfw32.spec.def
+	$(RM) $@ && $(LN_S) msvideo/msvfw32.spec.def $@
+libmsvfw32.a: msvideo/msvfw32.spec.def
+	$(DLLTOOL) -k -l $@ -d msvideo/msvfw32.spec.def
+
+libnetapi32.def: netapi32/netapi32.spec.def
+	$(RM) $@ && $(LN_S) netapi32/netapi32.spec.def $@
+libnetapi32.a: netapi32/netapi32.spec.def
+	$(DLLTOOL) -k -l $@ -d netapi32/netapi32.spec.def
+
+libntdll.def: ntdll/ntdll.spec.def
+	$(RM) $@ && $(LN_S) ntdll/ntdll.spec.def $@
+libntdll.a: ntdll/ntdll.spec.def
+	$(DLLTOOL) -k -l $@ -d ntdll/ntdll.spec.def
+
+libodbc32.def: odbc32/odbc32.spec.def
+	$(RM) $@ && $(LN_S) odbc32/odbc32.spec.def $@
+libodbc32.a: odbc32/odbc32.spec.def
+	$(DLLTOOL) -k -l $@ -d odbc32/odbc32.spec.def
+
+libole32.def: ole32/ole32.spec.def
+	$(RM) $@ && $(LN_S) ole32/ole32.spec.def $@
+libole32.a: ole32/ole32.spec.def
+	$(DLLTOOL) -k -l $@ -d ole32/ole32.spec.def
+
+liboleaut32.def: oleaut32/oleaut32.spec.def
+	$(RM) $@ && $(LN_S) oleaut32/oleaut32.spec.def $@
+liboleaut32.a: oleaut32/oleaut32.spec.def
+	$(DLLTOOL) -k -l $@ -d oleaut32/oleaut32.spec.def
+
+libolecli32.def: olecli/olecli32.spec.def
+	$(RM) $@ && $(LN_S) olecli/olecli32.spec.def $@
+libolecli32.a: olecli/olecli32.spec.def
+	$(DLLTOOL) -k -l $@ -d olecli/olecli32.spec.def
+
+liboledlg.def: oledlg/oledlg.spec.def
+	$(RM) $@ && $(LN_S) oledlg/oledlg.spec.def $@
+liboledlg.a: oledlg/oledlg.spec.def
+	$(DLLTOOL) -k -l $@ -d oledlg/oledlg.spec.def
+
+libolepro32.def: olepro32/olepro32.spec.def
+	$(RM) $@ && $(LN_S) olepro32/olepro32.spec.def $@
+libolepro32.a: olepro32/olepro32.spec.def
+	$(DLLTOOL) -k -l $@ -d olepro32/olepro32.spec.def
+
+libolesvr32.def: olesvr/olesvr32.spec.def
+	$(RM) $@ && $(LN_S) olesvr/olesvr32.spec.def $@
+libolesvr32.a: olesvr/olesvr32.spec.def
+	$(DLLTOOL) -k -l $@ -d olesvr/olesvr32.spec.def
+
+libopengl32.def: opengl32/opengl32.spec.def
+	$(RM) $@ && $(LN_S) opengl32/opengl32.spec.def $@
+libopengl32.a: opengl32/opengl32.spec.def
+	$(DLLTOOL) -k -l $@ -d opengl32/opengl32.spec.def
+
+libpsapi.def: psapi/psapi.spec.def
+	$(RM) $@ && $(LN_S) psapi/psapi.spec.def $@
+libpsapi.a: psapi/psapi.spec.def
+	$(DLLTOOL) -k -l $@ -d psapi/psapi.spec.def
+
+libqcap.def: qcap/qcap.spec.def
+	$(RM) $@ && $(LN_S) qcap/qcap.spec.def $@
+libqcap.a: qcap/qcap.spec.def
+	$(DLLTOOL) -k -l $@ -d qcap/qcap.spec.def
+
+libquartz.def: quartz/quartz.spec.def
+	$(RM) $@ && $(LN_S) quartz/quartz.spec.def $@
+libquartz.a: quartz/quartz.spec.def
+	$(DLLTOOL) -k -l $@ -d quartz/quartz.spec.def
+
+librasapi32.def: rasapi32/rasapi32.spec.def
+	$(RM) $@ && $(LN_S) rasapi32/rasapi32.spec.def $@
+librasapi32.a: rasapi32/rasapi32.spec.def
+	$(DLLTOOL) -k -l $@ -d rasapi32/rasapi32.spec.def
+
+libriched32.def: richedit/riched32.spec.def
+	$(RM) $@ && $(LN_S) richedit/riched32.spec.def $@
+libriched32.a: richedit/riched32.spec.def
+	$(DLLTOOL) -k -l $@ -d richedit/riched32.spec.def
+
+librpcrt4.def: rpcrt4/rpcrt4.spec.def
+	$(RM) $@ && $(LN_S) rpcrt4/rpcrt4.spec.def $@
+librpcrt4.a: rpcrt4/rpcrt4.spec.def
+	$(DLLTOOL) -k -l $@ -d rpcrt4/rpcrt4.spec.def
+
+libserialui.def: serialui/serialui.spec.def
+	$(RM) $@ && $(LN_S) serialui/serialui.spec.def $@
+libserialui.a: serialui/serialui.spec.def
+	$(DLLTOOL) -k -l $@ -d serialui/serialui.spec.def
+
+libsetupapi.def: setupapi/setupapi.spec.def
+	$(RM) $@ && $(LN_S) setupapi/setupapi.spec.def $@
+libsetupapi.a: setupapi/setupapi.spec.def
+	$(DLLTOOL) -k -l $@ -d setupapi/setupapi.spec.def
+
+libshdocvw.def: shdocvw/shdocvw.spec.def
+	$(RM) $@ && $(LN_S) shdocvw/shdocvw.spec.def $@
+libshdocvw.a: shdocvw/shdocvw.spec.def
+	$(DLLTOOL) -k -l $@ -d shdocvw/shdocvw.spec.def
+
+libshell32.def: shell32/shell32.spec.def
+	$(RM) $@ && $(LN_S) shell32/shell32.spec.def $@
+libshell32.a: shell32/shell32.spec.def
+	$(DLLTOOL) -k -l $@ -d shell32/shell32.spec.def
+
+libshfolder.def: shfolder/shfolder.spec.def
+	$(RM) $@ && $(LN_S) shfolder/shfolder.spec.def $@
+libshfolder.a: shfolder/shfolder.spec.def
+	$(DLLTOOL) -k -l $@ -d shfolder/shfolder.spec.def
+
+libshlwapi.def: shlwapi/shlwapi.spec.def
+	$(RM) $@ && $(LN_S) shlwapi/shlwapi.spec.def $@
+libshlwapi.a: shlwapi/shlwapi.spec.def
+	$(DLLTOOL) -k -l $@ -d shlwapi/shlwapi.spec.def
+
+libsnmpapi.def: snmpapi/snmpapi.spec.def
+	$(RM) $@ && $(LN_S) snmpapi/snmpapi.spec.def $@
+libsnmpapi.a: snmpapi/snmpapi.spec.def
+	$(DLLTOOL) -k -l $@ -d snmpapi/snmpapi.spec.def
+
+libsti.def: sti/sti.spec.def
+	$(RM) $@ && $(LN_S) sti/sti.spec.def $@
+libsti.a: sti/sti.spec.def
+	$(DLLTOOL) -k -l $@ -d sti/sti.spec.def
+
+libtapi32.def: tapi32/tapi32.spec.def
+	$(RM) $@ && $(LN_S) tapi32/tapi32.spec.def $@
+libtapi32.a: tapi32/tapi32.spec.def
+	$(DLLTOOL) -k -l $@ -d tapi32/tapi32.spec.def
+
+libttydrv.def: ttydrv/ttydrv.spec.def
+	$(RM) $@ && $(LN_S) ttydrv/ttydrv.spec.def $@
+libttydrv.a: ttydrv/ttydrv.spec.def
+	$(DLLTOOL) -k -l $@ -d ttydrv/ttydrv.spec.def
+
+libtwain_32.def: twain/twain_32.spec.def
+	$(RM) $@ && $(LN_S) twain/twain_32.spec.def $@
+libtwain_32.a: twain/twain_32.spec.def
+	$(DLLTOOL) -k -l $@ -d twain/twain_32.spec.def
+
+liburl.def: url/url.spec.def
+	$(RM) $@ && $(LN_S) url/url.spec.def $@
+liburl.a: url/url.spec.def
+	$(DLLTOOL) -k -l $@ -d url/url.spec.def
+
+liburlmon.def: urlmon/urlmon.spec.def
+	$(RM) $@ && $(LN_S) urlmon/urlmon.spec.def $@
+liburlmon.a: urlmon/urlmon.spec.def
+	$(DLLTOOL) -k -l $@ -d urlmon/urlmon.spec.def
+
+libuser32.def: user/user32.spec.def
+	$(RM) $@ && $(LN_S) user/user32.spec.def $@
+libuser32.a: user/user32.spec.def
+	$(DLLTOOL) -k -l $@ -d user/user32.spec.def
+
+libversion.def: version/version.spec.def
+	$(RM) $@ && $(LN_S) version/version.spec.def $@
+libversion.a: version/version.spec.def
+	$(DLLTOOL) -k -l $@ -d version/version.spec.def
+
+libw32skrnl.def: win32s/w32skrnl.spec.def
+	$(RM) $@ && $(LN_S) win32s/w32skrnl.spec.def $@
+libw32skrnl.a: win32s/w32skrnl.spec.def
+	$(DLLTOOL) -k -l $@ -d win32s/w32skrnl.spec.def
+
+libwinedos.def: winedos/winedos.spec.def
+	$(RM) $@ && $(LN_S) winedos/winedos.spec.def $@
+libwinedos.a: winedos/winedos.spec.def
+	$(DLLTOOL) -k -l $@ -d winedos/winedos.spec.def
+
+libwineps.def: wineps/wineps.spec.def
+	$(RM) $@ && $(LN_S) wineps/wineps.spec.def $@
+libwineps.a: wineps/wineps.spec.def
+	$(DLLTOOL) -k -l $@ -d wineps/wineps.spec.def
+
+libwininet.def: wininet/wininet.spec.def
+	$(RM) $@ && $(LN_S) wininet/wininet.spec.def $@
+libwininet.a: wininet/wininet.spec.def
+	$(DLLTOOL) -k -l $@ -d wininet/wininet.spec.def
+
+libwinmm.def: winmm/winmm.spec.def
+	$(RM) $@ && $(LN_S) winmm/winmm.spec.def $@
+libwinmm.a: winmm/winmm.spec.def
+	$(DLLTOOL) -k -l $@ -d winmm/winmm.spec.def
+
+libwinnls32.def: winnls/winnls32.spec.def
+	$(RM) $@ && $(LN_S) winnls/winnls32.spec.def $@
+libwinnls32.a: winnls/winnls32.spec.def
+	$(DLLTOOL) -k -l $@ -d winnls/winnls32.spec.def
+
+libwinspool.def: winspool/winspool.drv.spec.def
+	$(RM) $@ && $(LN_S) winspool/winspool.drv.spec.def $@
+libwinspool.a: winspool/winspool.drv.spec.def
+	$(DLLTOOL) -k -l $@ -d winspool/winspool.drv.spec.def
+
+libwintrust.def: wintrust/wintrust.spec.def
+	$(RM) $@ && $(LN_S) wintrust/wintrust.spec.def $@
+libwintrust.a: wintrust/wintrust.spec.def
+	$(DLLTOOL) -k -l $@ -d wintrust/wintrust.spec.def
+
+libwnaspi32.def: winaspi/wnaspi32.spec.def
+	$(RM) $@ && $(LN_S) winaspi/wnaspi32.spec.def $@
+libwnaspi32.a: winaspi/wnaspi32.spec.def
+	$(DLLTOOL) -k -l $@ -d winaspi/wnaspi32.spec.def
+
+libwow32.def: wow32/wow32.spec.def
+	$(RM) $@ && $(LN_S) wow32/wow32.spec.def $@
+libwow32.a: wow32/wow32.spec.def
+	$(DLLTOOL) -k -l $@ -d wow32/wow32.spec.def
+
+libws2_32.def: winsock/ws2_32.spec.def
+	$(RM) $@ && $(LN_S) winsock/ws2_32.spec.def $@
+libws2_32.a: winsock/ws2_32.spec.def
+	$(DLLTOOL) -k -l $@ -d winsock/ws2_32.spec.def
+
+libwsock32.def: wsock32/wsock32.spec.def
+	$(RM) $@ && $(LN_S) wsock32/wsock32.spec.def $@
+libwsock32.a: wsock32/wsock32.spec.def
+	$(DLLTOOL) -k -l $@ -d wsock32/wsock32.spec.def
+
+libx11drv.def: x11drv/x11drv.spec.def
+	$(RM) $@ && $(LN_S) x11drv/x11drv.spec.def $@
+libx11drv.a: x11drv/x11drv.spec.def
+	$(DLLTOOL) -k -l $@ -d x11drv/x11drv.spec.def
+
+advapi32/advapi32.spec.def: $(WINEBUILD)
+avicap32/avicap32.spec.def: $(WINEBUILD)
+avifil32/avifil32.spec.def: $(WINEBUILD)
+cabinet/cabinet.spec.def: $(WINEBUILD)
+comcat/comcat.spec.def: $(WINEBUILD)
+comctl32/comctl32.spec.def: $(WINEBUILD)
+commdlg/comdlg32.spec.def: $(WINEBUILD)
+crtdll/crtdll.spec.def: $(WINEBUILD)
+crypt32/crypt32.spec.def: $(WINEBUILD)
+d3d8/d3d8.spec.def: $(WINEBUILD)
+dciman32/dciman32.spec.def: $(WINEBUILD)
+ddraw/ddraw.spec.def: $(WINEBUILD)
+devenum/devenum.spec.def: $(WINEBUILD)
+dinput/dinput.spec.def: $(WINEBUILD)
+dinput8/dinput8.spec.def: $(WINEBUILD)
+dplay/dplay.spec.def: $(WINEBUILD)
+dplayx/dplayx.spec.def: $(WINEBUILD)
+dsound/dsound.spec.def: $(WINEBUILD)
+gdi/gdi32.spec.def: $(WINEBUILD)
+glu32/glu32.spec.def: $(WINEBUILD)
+icmp/icmp.spec.def: $(WINEBUILD)
+imagehlp/imagehlp.spec.def: $(WINEBUILD)
+imm32/imm32.spec.def: $(WINEBUILD)
+kernel/kernel32.spec.def: $(WINEBUILD)
+lzexpand/lz32.spec.def: $(WINEBUILD)
+mapi32/mapi32.spec.def: $(WINEBUILD)
+mpr/mpr.spec.def: $(WINEBUILD)
+msacm/msacm32.spec.def: $(WINEBUILD)
+msdmo/msdmo.spec.def: $(WINEBUILD)
+msimg32/msimg32.spec.def: $(WINEBUILD)
+msnet32/msnet32.spec.def: $(WINEBUILD)
+msvideo/msrle32/msrle32.spec.def: $(WINEBUILD)
+msvcrt/msvcrt.spec.def: $(WINEBUILD)
+msvcrt20/msvcrt20.spec.def: $(WINEBUILD)
+msvideo/msvfw32.spec.def: $(WINEBUILD)
+netapi32/netapi32.spec.def: $(WINEBUILD)
+ntdll/ntdll.spec.def: $(WINEBUILD)
+odbc32/odbc32.spec.def: $(WINEBUILD)
+ole32/ole32.spec.def: $(WINEBUILD)
+oleaut32/oleaut32.spec.def: $(WINEBUILD)
+olecli/olecli32.spec.def: $(WINEBUILD)
+oledlg/oledlg.spec.def: $(WINEBUILD)
+olepro32/olepro32.spec.def: $(WINEBUILD)
+olesvr/olesvr32.spec.def: $(WINEBUILD)
+opengl32/opengl32.spec.def: $(WINEBUILD)
+psapi/psapi.spec.def: $(WINEBUILD)
+qcap/qcap.spec.def: $(WINEBUILD)
+quartz/quartz.spec.def: $(WINEBUILD)
+rasapi32/rasapi32.spec.def: $(WINEBUILD)
+richedit/riched32.spec.def: $(WINEBUILD)
+rpcrt4/rpcrt4.spec.def: $(WINEBUILD)
+serialui/serialui.spec.def: $(WINEBUILD)
+setupapi/setupapi.spec.def: $(WINEBUILD)
+shdocvw/shdocvw.spec.def: $(WINEBUILD)
+shell32/shell32.spec.def: $(WINEBUILD)
+shfolder/shfolder.spec.def: $(WINEBUILD)
+shlwapi/shlwapi.spec.def: $(WINEBUILD)
+snmpapi/snmpapi.spec.def: $(WINEBUILD)
+sti/sti.spec.def: $(WINEBUILD)
+tapi32/tapi32.spec.def: $(WINEBUILD)
+ttydrv/ttydrv.spec.def: $(WINEBUILD)
+twain/twain_32.spec.def: $(WINEBUILD)
+url/url.spec.def: $(WINEBUILD)
+urlmon/urlmon.spec.def: $(WINEBUILD)
+user/user32.spec.def: $(WINEBUILD)
+version/version.spec.def: $(WINEBUILD)
+win32s/w32skrnl.spec.def: $(WINEBUILD)
+winedos/winedos.spec.def: $(WINEBUILD)
+wineps/wineps.spec.def: $(WINEBUILD)
+wininet/wininet.spec.def: $(WINEBUILD)
+winmm/winmm.spec.def: $(WINEBUILD)
+winnls/winnls32.spec.def: $(WINEBUILD)
+winspool/winspool.drv.spec.def: $(WINEBUILD)
+wintrust/wintrust.spec.def: $(WINEBUILD)
+winaspi/wnaspi32.spec.def: $(WINEBUILD)
+wow32/wow32.spec.def: $(WINEBUILD)
+winsock/ws2_32.spec.def: $(WINEBUILD)
+wsock32/wsock32.spec.def: $(WINEBUILD)
+x11drv/x11drv.spec.def: $(WINEBUILD)
+
+$(SUBDIRS): $(IMPORT_LIBS)
+
 # Map library name to the corresponding directory
 
 advapi32/advapi32.dll$(DLLEXT): advapi32
@@ -767,117 +1328,6 @@ winsock/__install__: ws2_32.dll$(DLLEXT)
 wsock32/__install__: wsock32.dll$(DLLEXT)
 x11drv/__install__: x11drv.dll$(DLLEXT)
 
-# Inter-dll dependencies
-
-advapi32: kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-avicap32: ntdll.dll$(DLLEXT)
-avifil32: msacm32.dll$(DLLEXT) msvfw32.dll$(DLLEXT) shell32.dll$(DLLEXT) winmm.dll$(DLLEXT) \
-          user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-cabinet:  kernel32.dll$(DLLEXT)
-comcat:   ole32.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-comctl32: user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-          winmm.dll$(DLLEXT)
-commdlg:  shell32.dll$(DLLEXT) shlwapi.dll$(DLLEXT) comctl32.dll$(DLLEXT) winspool.drv$(DLLEXT) \
-          user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-crtdll:   msvcrt.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-crypt32:  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-d3d8:     user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-dciman32: kernel32.dll$(DLLEXT)
-ddraw:    user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-devenum:  kernel32.dll$(DLLEXT)
-dinput8:  dinput.dll$(DLLEXT)
-dinput:   user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-dplay:    dplayx.dll$(DLLEXT)
-dplayx:   winmm.dll$(DLLEXT) ole32.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-          kernel32.dll$(DLLEXT)
-dsound:   winmm.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-gdi:      advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-glu32:    kernel32.dll$(DLLEXT)
-icmp:     kernel32.dll$(DLLEXT)
-imagehlp: kernel32.dll$(DLLEXT)
-imm32:    kernel32.dll$(DLLEXT)
-kernel:   ntdll.dll$(DLLEXT) libntdll.dll.$(LIBEXT)
-lzexpand: kernel32.dll$(DLLEXT)
-mapi32:   kernel32.dll$(DLLEXT)
-mpr:      advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-msacm/imaadp32: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-msacm/msadp32: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-msacm/msg711: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-msacm/winemp3: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-msacm:    winmm.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-msdmo:    kernel32.dll$(DLLEXT)
-msimg32:  kernel32.dll$(DLLEXT)
-msisys:   kernel32.dll$(DLLEXT)
-msnet32:  kernel32.dll$(DLLEXT)
-msvcrt20: msvcrt.dll$(DLLEXT)
-msvcrt:   kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-msvideo/msrle32: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-msvideo:  winmm.dll$(DLLEXT) comctl32.dll$(DLLEXT) version.dll$(DLLEXT) user32.dll$(DLLEXT) \
-          gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-netapi32: advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-odbc32:   kernel32.dll$(DLLEXT)
-ole32:    advapi32.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) rpcrt4.dll$(DLLEXT) \
-          kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-oleaut32: ole32.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-          kernel32.dll$(DLLEXT) comctl32.dll$(DLLEXT)
-olecli:   ole32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-oledlg:   kernel32.dll$(DLLEXT)
-olepro32: oleaut32.dll$(DLLEXT)
-olesvr:   kernel32.dll$(DLLEXT)
-opengl32: user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-psapi:    kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-qcap:     kernel32.dll$(DLLEXT)
-quartz:   kernel32.dll$(DLLEXT)
-rasapi32: kernel32.dll$(DLLEXT)
-richedit: user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-rpcrt4:   advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-serialui: user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-setupapi: user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-shdocvw:  ole32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-shell32:  ole32.dll$(DLLEXT) shlwapi.dll$(DLLEXT) comctl32.dll$(DLLEXT) user32.dll$(DLLEXT) \
-          gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-shfolder: shell32.dll$(DLLEXT)
-shlwapi:  ole32.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-          kernel32.dll$(DLLEXT)
-snmpapi:  kernel32.dll$(DLLEXT)
-sti:      kernel32.dll$(DLLEXT)
-tapi32:   advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-ttydrv:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-twain:    user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-url:      kernel32.dll$(DLLEXT)
-urlmon:   ole32.dll$(DLLEXT) wininet.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-user:     gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-version:  lz32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-win32s:   kernel32.dll$(DLLEXT)
-winaspi:  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winedos:  user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-wineps:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) winspool.drv$(DLLEXT) advapi32.dll$(DLLEXT) \
-          kernel32.dll$(DLLEXT)
-wininet:  shlwapi.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm/joystick: winmm.dll$(DLLEXT) user32.dll$(DLLEXT)
-winmm/mcianim: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm/mciavi: msvfw32.dll$(DLLEXT) winmm.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-          kernel32.dll$(DLLEXT)
-winmm/mcicda: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm/mciseq: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm/mciwave: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm/midimap: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm/wavemap: msacm32.dll$(DLLEXT) winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm/winealsa: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-winmm/winearts: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm/wineaudioio: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-winmm/winenas: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm/wineoss: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winmm:    user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-winnls:   kernel32.dll$(DLLEXT)
-winsock:  user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-winspool: advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-wintrust: kernel32.dll$(DLLEXT)
-wow32:    kernel32.dll$(DLLEXT)
-wsock32:  ws2_32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-x11drv:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-          ntdll.dll$(DLLEXT)
-
 # Special targets for dlls that we need to link to
 
 LINKABLE_DLLS = ntdll.dll
@@ -885,10 +1335,12 @@ LINKABLE_DLLS = ntdll.dll
 libntdll.dll.$(LIBEXT): ntdll/ntdll.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ntdll/ntdll.dll$(DLLEXT) $@
 
+kernel: libntdll.dll.$(LIBEXT)
+
 uninstall::
 	$(RM) $(LINKABLE_DLLS:%=$(libdir)/lib%.$(LIBEXT))
 
-install::
+install install-lib::
 	$(RM) $(LINKABLE_DLLS:%=$(libdir)/lib%.$(LIBEXT))
 	cd $(libdir) && if [ "$(dlldir)" = "$(libdir)/wine" ]; \
 	then \
@@ -899,8 +1351,18 @@ install::
 
 # Misc rules
 
+install install-dev:: $(IMPORT_LIBS)
+	$(MKINSTALLDIRS) $(dlldir)
+	for f in $(IMPORT_LIBS); do $(INSTALL_DATA) $$f $(dlldir)/$$f; done
+
+install install-lib:: $(INSTALLSUBDIRS:%=%/__install__)
+
 uninstall::
+	$(RM) $(IMPORT_LIBS:%=$(dlldir)/%)
 	-rmdir $(dlldir)
+
+clean::
+	$(RM) $(IMPORT_LIBS)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
 

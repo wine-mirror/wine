@@ -12,9 +12,6 @@ AC_CONFIG_AUX_DIR(tools)
 
 dnl **** Command-line arguments ****
 
-dnl Library type .so or .a
-AC_SUBST(LIBEXT,"so")
-
 AC_ARG_ENABLE(win16, AC_HELP_STRING([--disable-win16],[do not include Win16 support]))
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],[compile out all debugging messages]))
 AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE messages]))
@@ -752,9 +749,12 @@ AC_SUBST(DLLFLAGS,"")
 AC_SUBST(DLLIBS,"")
 AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LDSHARED,"")
+AC_SUBST(LIBEXT,"so")
+AC_SUBST(IMPLIBEXT,"def")
 
 case $host_os in
   cygwin*|mingw32*)
+    AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     AC_CHECK_TOOL(DLLWRAP,dllwrap,false)
     if test "$DLLWRAP" = "false"; then
       LIBEXT="a"
@@ -762,6 +762,7 @@ case $host_os in
       dnl FIXME - check whether dllwrap works correctly...
       LIBEXT="dll"
     fi
+    IMPLIBEXT="a"
     ;;
   *)
     AC_CHECK_HEADERS(dlfcn.h,

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineps.dll
-IMPORTS   = user32 gdi32 winspool.drv advapi32 kernel32
+IMPORTS   = user32 gdi32 winspool advapi32 kernel32
 ALTNAMES  = wineps16.dll
 EXTRAINCL = @FREETYPEINCL@
 
