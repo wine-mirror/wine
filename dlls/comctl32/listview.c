@@ -5756,10 +5756,16 @@ static LRESULT LISTVIEW_GetItemSpacing(HWND hwnd, BOOL bSmall)
   }
   else
   {
-    /* TODO: need to store width of smallicon item */
-    lResult = MAKELONG(0, infoPtr->nItemHeight);
-  }  
-  
+    LONG style = GetWindowLongA(hwnd, GWL_STYLE);
+    if ((style & LVS_TYPEMASK) == LVS_ICON)
+    {
+      lResult = MAKELONG(DEFAULT_COLUMN_WIDTH, GetSystemMetrics(SM_CXSMICON)+HEIGHT_PADDING);
+    }
+    else
+    {
+      lResult = MAKELONG(infoPtr->nItemWidth, infoPtr->nItemHeight);
+    }
+  }
   return lResult;
 }
 
