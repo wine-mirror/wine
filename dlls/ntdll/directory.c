@@ -27,13 +27,13 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#ifdef HAVE_MNTENT_H
-#include <mntent.h>
-#endif
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef HAVE_MNTENT_H
+#include <mntent.h>
+#endif
 #include <sys/stat.h>
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
