@@ -188,7 +188,8 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 	/* i586 optimized version */
 	__asm__ __volatile__ ( "rdtsc"
 			       : "=a" (counter->u.LowPart), "=d" (counter->u.HighPart) );
-	counter->QuadPart = counter->QuadPart / 1000; /* see below */
+        /* see below */
+	counter->QuadPart = counter->QuadPart / ( cpuHz / 1193182 ) ;
 	return TRUE;
     }
 #endif
@@ -219,10 +220,12 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 {
 #if defined(__i386__) && defined(__GNUC__)
     if (IsProcessorFeaturePresent( PF_RDTSC_INSTRUCTION_AVAILABLE )) {
-        /* The way Windows calculates this value is unclear, however simply using the CPU frequency
-           gives a value out by approximately a thousand. That can cause some applications to crash,
-           so we divide here to make our number more similar to the one Windows gives  */
-        frequency->QuadPart = cpuHz / 1000;
+        /* On a standard PC, Windows returns the clock frequency for the
+         * 8253 Programmable Interrupt Timer, which has been 1193182 Hz
+         * since the first IBM PC (cpuHz/4). There are applications that
+         * crash when the returned frequency is much higher or lower, so
+         * do not try to be smart */
+        frequency->QuadPart = 1193182;
         return TRUE;
     }
 #endif
