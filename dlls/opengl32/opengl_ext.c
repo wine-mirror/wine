@@ -138,6 +138,7 @@ void (*func_glDeleteFencesAPPLE)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glDeleteFencesNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glDeleteFragmentShaderATI)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glDeleteObjectARB)( unsigned int ) = (void *) 0xdeadbeef;
+void (*func_glDeleteObjectBufferATI)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glDeleteOcclusionQueriesNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glDeleteProgramsARB)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glDeleteProgramsNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
@@ -1120,6 +1121,7 @@ void WINAPI wine_glDeleteFencesAPPLE( GLsizei, GLuint* );
 void WINAPI wine_glDeleteFencesNV( GLsizei, GLuint* );
 void WINAPI wine_glDeleteFragmentShaderATI( GLuint );
 void WINAPI wine_glDeleteObjectARB( unsigned int );
+void WINAPI wine_glDeleteObjectBufferATI( GLuint );
 void WINAPI wine_glDeleteOcclusionQueriesNV( GLsizei, GLuint* );
 void WINAPI wine_glDeleteProgramsARB( GLsizei, GLuint* );
 void WINAPI wine_glDeleteProgramsNV( GLsizei, GLuint* );
@@ -1971,8 +1973,8 @@ void WINAPI wine_wglFreeMemoryNV( GLvoid * );
 
 
 /* The table giving the correspondance between names and functions */
-int extension_registry_size = 979;
-OpenGL_extension extension_registry[979] = {
+int extension_registry_size = 980;
+OpenGL_extension extension_registry[980] = {
   { "glActiveStencilFaceEXT", "glActiveStencilFaceEXT", (void *) wine_glActiveStencilFaceEXT, (void **) (&func_glActiveStencilFaceEXT) },
   { "glActiveTexture", "glActiveTexture", (void *) wine_glActiveTexture, (void **) (&func_glActiveTexture) },
   { "glActiveTextureARB", "glActiveTextureARB", (void *) wine_glActiveTextureARB, (void **) (&func_glActiveTextureARB) },
@@ -2104,6 +2106,7 @@ OpenGL_extension extension_registry[979] = {
   { "glDeleteFencesNV", "glDeleteFencesNV", (void *) wine_glDeleteFencesNV, (void **) (&func_glDeleteFencesNV) },
   { "glDeleteFragmentShaderATI", "glDeleteFragmentShaderATI", (void *) wine_glDeleteFragmentShaderATI, (void **) (&func_glDeleteFragmentShaderATI) },
   { "glDeleteObjectARB", "glDeleteObjectARB", (void *) wine_glDeleteObjectARB, (void **) (&func_glDeleteObjectARB) },
+  { "glDeleteObjectBufferATI", "glDeleteObjectBufferATI", (void *) wine_glDeleteObjectBufferATI, (void **) (&func_glDeleteObjectBufferATI) },
   { "glDeleteOcclusionQueriesNV", "glDeleteOcclusionQueriesNV", (void *) wine_glDeleteOcclusionQueriesNV, (void **) (&func_glDeleteOcclusionQueriesNV) },
   { "glDeleteProgramsARB", "glDeleteProgramsARB", (void *) wine_glDeleteProgramsARB, (void **) (&func_glDeleteProgramsARB) },
   { "glDeleteProgramsNV", "glDeleteProgramsNV", (void *) wine_glDeleteProgramsNV, (void **) (&func_glDeleteProgramsNV) },
@@ -3889,6 +3892,13 @@ void WINAPI wine_glDeleteObjectARB( unsigned int obj ) {
   TRACE("(%d)\n", obj );
   ENTER_GL();
   func_glDeleteObjectARB( obj );
+  LEAVE_GL();
+}
+
+void WINAPI wine_glDeleteObjectBufferATI( GLuint buffer ) {
+  TRACE("(%d)\n", buffer );
+  ENTER_GL();
+  func_glDeleteObjectBufferATI( buffer );
   LEAVE_GL();
 }
 

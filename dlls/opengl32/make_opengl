@@ -167,7 +167,7 @@ sub ConvertType {
 	      "GLcharARB" => "char",
 	      "GLhalfNV" => "unsigned short" );
 
-    foreach $org (keys %hash) {
+    foreach $org (reverse(sort(keys %hash))) {
 	if ($type =~ /$org/) {
 	    ($before, $after) = ($type =~ /^(.*)$org(.*)$/);
 	    return "$before$hash{$org}$after";
@@ -476,7 +476,8 @@ $pseudo_to_opengl{"IglooParameterSGIX"} = "GLint";
 								    [ "GLfloat", "readfreq" ],
 								    [ "GLfloat", "writefreq"],
 								    [ "GLfloat", "priority" ] ], "glXAllocateMemoryNV" ],
-      "wglFreeMemoryNV" => [ "wglFreeMemoryNV", "void", [ [ "GLvoid *", "pointer" ] ], "glXFreeMemoryNV" ]
+      "wglFreeMemoryNV" => [ "wglFreeMemoryNV", "void", [ [ "GLvoid *", "pointer" ] ], "glXFreeMemoryNV" ],
+      "glDeleteObjectBufferATI" => [ "glDeleteObjectBufferATI", "void", [ [ "GLuint", "buffer" ] ], "glDeleteObjectBufferATI" ]
       );
 
 
