@@ -25,6 +25,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "wine/exception.h"
 #include "thread.h"
 
 struct fiber_data
@@ -41,14 +42,22 @@ struct fiber_data
 
 
 /* call the fiber initial function once we have switched stack */
-static void start_fiber(void)
+static void start_fiber( void *arg )
 {
-    struct fiber_data *fiber = NtCurrentTeb()->fiber;
+    struct fiber_data *fiber = arg;
     LPFIBER_START_ROUTINE start = fiber->start;
 
-    fiber->start = NULL;
-    start( fiber->param );
-    ExitThread( 1 );
+    __TRY
+    {
+        fiber->start = NULL;
+        start( fiber->param );
+        ExitThread( 1 );
+    }
+    __EXCEPT(UnhandledExceptionFilter)
+    {
+        TerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
 }
 
 
@@ -180,7 +189,7 @@ void WINAPI SwitchToFiber( LPVOID fiber )
         NtCurrentTeb()->stack_low  = new_fiber->stack_low;
         NtCurrentTeb()->stack_base = new_fiber->stack_base;
         if (new_fiber->start)  /* first time */
-            SYSDEPS_SwitchToThreadStack( start_fiber );
+            SYSDEPS_SwitchToThreadStack( start_fiber, new_fiber );
         else
             longjmp( new_fiber->jmpbuf, 1 );
     }

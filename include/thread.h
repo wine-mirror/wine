@@ -150,7 +150,7 @@ extern int SYSDEPS_GetUnixTid(void);
 extern void SYSDEPS_InitErrno(void);
 extern void DECLSPEC_NORETURN SYSDEPS_ExitThread( int status );
 extern void DECLSPEC_NORETURN SYSDEPS_AbortThread( int status );
-extern void DECLSPEC_NORETURN SYSDEPS_SwitchToThreadStack( void (*func)(void) );
+extern void DECLSPEC_NORETURN SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *arg );
 
 /* signal handling */
 extern BOOL SIGNAL_Init(void);

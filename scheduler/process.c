@@ -109,14 +109,6 @@ PDB current_process;
 
 static RTL_USER_PROCESS_PARAMETERS     process_pmts;
 
-/* Process flags */
-#define PDB32_DEBUGGED      0x0001  /* Process is being debugged */
-#define PDB32_WIN16_PROC    0x0008  /* Win16 process */
-#define PDB32_DOS_PROC      0x0010  /* Dos process */
-#define PDB32_CONSOLE_PROC  0x0020  /* Console process */
-#define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
-#define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
-
 static char main_exe_name[MAX_PATH];
 static char *main_exe_name_ptr = main_exe_name;
 static HANDLE main_exe_file;
@@ -397,78 +389,73 @@ static BOOL process_init( char *argv[] )
  *
  * Startup routine of a new process. Runs on the new process stack.
  */
-static void start_process(void)
+static void start_process( void *arg )
 {
-    int debugged, console_app;
-    LPTHREAD_START_ROUTINE entry;
-    WINE_MODREF *wm;
-    HANDLE main_file = main_exe_file;
-    IMAGE_NT_HEADERS *nt;
-
-    /* use original argv[0] as name for the main module */
-    if (!main_exe_name[0])
+    __TRY
     {
-        if (!GetLongPathNameA( full_argv0, main_exe_name, sizeof(main_exe_name) ))
-            lstrcpynA( main_exe_name, full_argv0, sizeof(main_exe_name) );
-    }
+        LPTHREAD_START_ROUTINE entry;
+        HANDLE main_file = main_exe_file;
+        IMAGE_NT_HEADERS *nt;
+        PEB *peb = NtCurrentTeb()->Peb;
 
-    if (main_file)
+        if (main_file)
+        {
+            UINT drive_type = GetDriveTypeA( main_exe_name );
+            /* don't keep the file handle open on removable media */
+            if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM) main_file = 0;
+        }
+
+        /* Retrieve entry point address */
+        nt = RtlImageNtHeader( peb->ImageBaseAddress );
+        entry = (LPTHREAD_START_ROUTINE)((char*)peb->ImageBaseAddress +
+                                         nt->OptionalHeader.AddressOfEntryPoint);
+
+        /* Install signal handlers; this cannot be done before, since we cannot
+         * send exceptions to the debugger before the create process event that
+         * is sent by REQ_INIT_PROCESS_DONE.
+         * We do need the handlers in place by the time the request is over, so
+         * we set them up here. If we segfault between here and the server call
+         * something is very wrong... */
+        if (!SIGNAL_Init()) goto error;
+
+        /* Signal the parent process to continue */
+        SERVER_START_REQ( init_process_done )
+        {
+            req->module      = peb->ImageBaseAddress;
+            req->module_size = nt->OptionalHeader.SizeOfImage;
+            req->entry       = entry;
+            /* API requires a double indirection */
+            req->name        = &main_exe_name_ptr;
+            req->exe_file    = main_file;
+            req->gui         = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
+            wine_server_add_data( req, main_exe_name, strlen(main_exe_name) );
+            wine_server_call( req );
+            peb->BeingDebugged = reply->debugged;
+        }
+        SERVER_END_REQ;
+
+        /* create the main modref and load dependencies */
+        if (!PE_CreateModule( peb->ImageBaseAddress, main_exe_name, 0, 0, FALSE )) goto error;
+
+        if (main_exe_file) CloseHandle( main_exe_file ); /* we no longer need it */
+
+        MODULE_DllProcessAttach( NULL, (LPVOID)1 );
+
+        if (TRACE_ON(relay))
+            DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n",
+                     GetCurrentThreadId(), main_exe_name, entry );
+        if (peb->BeingDebugged) DbgBreakPoint();
+        SetLastError(0);  /* clear error code */
+        ExitThread( entry( NtCurrentTeb()->Peb ) );
+
+    error:
+        ExitProcess( GetLastError() );
+    }
+    __EXCEPT(UnhandledExceptionFilter)
     {
-        UINT drive_type = GetDriveTypeA( main_exe_name );
-        /* don't keep the file handle open on removable media */
-        if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM) main_file = 0;
+        TerminateThread( GetCurrentThread(), GetExceptionCode() );
     }
-
-    /* Retrieve entry point address */
-    nt = RtlImageNtHeader( current_process.module );
-    entry = (LPTHREAD_START_ROUTINE)((char*)current_process.module +
-                                     nt->OptionalHeader.AddressOfEntryPoint);
-    console_app = (nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
-    if (console_app) current_process.flags |= PDB32_CONSOLE_PROC;
-
-    /* Install signal handlers; this cannot be done before, since we cannot
-     * send exceptions to the debugger before the create process event that
-     * is sent by REQ_INIT_PROCESS_DONE.
-     * We do need the handlers in place by the time the request is over, so
-     * we set them up here. If we segfault between here and the server call
-     * something is very wrong... */
-    if (!SIGNAL_Init()) goto error;
-
-    /* Signal the parent process to continue */
-    SERVER_START_REQ( init_process_done )
-    {
-        req->module      = (void *)current_process.module;
-        req->module_size = nt->OptionalHeader.SizeOfImage;
-        req->entry    = entry;
-        /* API requires a double indirection */
-        req->name     = &main_exe_name_ptr;
-        req->exe_file = main_file;
-        req->gui      = !console_app;
-        wine_server_add_data( req, main_exe_name, strlen(main_exe_name) );
-        wine_server_call( req );
-        debugged = reply->debugged;
-    }
-    SERVER_END_REQ;
-
-    /* create the main modref and load dependencies */
-    if (!(wm = PE_CreateModule( current_process.module, main_exe_name, 0, 0, FALSE )))
-        goto error;
-
-    if (main_exe_file) CloseHandle( main_exe_file ); /* we no longer need it */
-
-    MODULE_DllProcessAttach( NULL, (LPVOID)1 );
-
-    if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n",
-                 GetCurrentThreadId(), main_exe_name, entry );
-    if (debugged) DbgBreakPoint();
-    /* FIXME: should use _PEB as parameter for NT 3.5 programs !
-     * Dunno about other OSs */
-    SetLastError(0);  /* clear error code */
-    ExitThread( entry(NULL) );
-
- error:
-    ExitProcess( GetLastError() );
+    __ENDTRY
 }
 
 
@@ -586,7 +573,7 @@ void __wine_process_init( int argc, char *argv[] )
     if (!THREAD_InitStack( NtCurrentTeb(), stack_size )) goto error;
 
     /* switch to the new stack */
-    SYSDEPS_SwitchToThreadStack( start_process );
+    SYSDEPS_SwitchToThreadStack( start_process, NULL );
 
  error:
     ExitProcess( GetLastError() );
@@ -1387,16 +1374,6 @@ void WINAPI ExitProcess( DWORD status )
     exit( status );
 }
 
-/***********************************************************************
- *           ExitProcess   (KERNEL.466)
- */
-void WINAPI ExitProcess16( WORD status )
-{
-    DWORD count;
-    ReleaseThunkLock( &count );
-    ExitProcess( status );
-}
-
 /******************************************************************************
  *           TerminateProcess   (KERNEL32.@)
  */
@@ -1407,441 +1384,6 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
     return !status;
 }
 
-
-/***********************************************************************
- *           GetProcessDword    (KERNEL.485)
- *           GetProcessDword    (KERNEL32.18)
- * 'Of course you cannot directly access Windows internal structures'
- */
-DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
-{
-    DWORD               x, y;
-    STARTUPINFOW        siw;
-
-    TRACE_(win32)("(%ld, %d)\n", dwProcessID, offset );
-
-    if (dwProcessID && dwProcessID != GetCurrentProcessId())
-    {
-        ERR("%d: process %lx not accessible\n", offset, dwProcessID);
-        return 0;
-    }
-
-    switch ( offset )
-    {
-    case GPD_APP_COMPAT_FLAGS:
-        return GetAppCompatFlags16(0);
-
-    case GPD_LOAD_DONE_EVENT:
-        return (DWORD)current_process.load_done_evt;
-
-    case GPD_HINSTANCE16:
-        return GetTaskDS16();
-
-    case GPD_WINDOWS_VERSION:
-        return GetExeVersion16();
-
-    case GPD_THDB:
-        return (DWORD)NtCurrentTeb() - 0x10 /* FIXME */;
-
-    case GPD_PDB:
-        return (DWORD)&current_process;
-
-    case GPD_STARTF_SHELLDATA: /* return stdoutput handle from startupinfo ??? */
-        GetStartupInfoW(&siw);
-        return (DWORD)siw.hStdOutput;
-
-    case GPD_STARTF_HOTKEY: /* return stdinput handle from startupinfo ??? */
-        GetStartupInfoW(&siw);
-        return (DWORD)siw.hStdInput;
-
-    case GPD_STARTF_SHOWWINDOW:
-        GetStartupInfoW(&siw);
-        return siw.wShowWindow;
-
-    case GPD_STARTF_SIZE:
-        GetStartupInfoW(&siw);
-        x = siw.dwXSize;
-        if ( (INT)x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
-        y = siw.dwYSize;
-        if ( (INT)y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
-        return MAKELONG( x, y );
-
-    case GPD_STARTF_POSITION:
-        GetStartupInfoW(&siw);
-        x = siw.dwX;
-        if ( (INT)x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
-        y = siw.dwY;
-        if ( (INT)y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
-        return MAKELONG( x, y );
-
-    case GPD_STARTF_FLAGS:
-        GetStartupInfoW(&siw);
-        return process_pmts.dwFlags;
-
-    case GPD_PARENT:
-        return 0;
-
-    case GPD_FLAGS:
-        return current_process.flags;
-
-    case GPD_USERDATA:
-        return current_process.process_dword;
-
-    default:
-        ERR_(win32)("Unknown offset %d\n", offset );
-        return 0;
-    }
-}
-
-/***********************************************************************
- *           SetProcessDword    (KERNEL.484)
- * 'Of course you cannot directly access Windows internal structures'
- */
-void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
-{
-    TRACE_(win32)("(%ld, %d)\n", dwProcessID, offset );
-
-    if (dwProcessID && dwProcessID != GetCurrentProcessId())
-    {
-        ERR("%d: process %lx not accessible\n", offset, dwProcessID);
-        return;
-    }
-
-    switch ( offset )
-    {
-    case GPD_APP_COMPAT_FLAGS:
-    case GPD_LOAD_DONE_EVENT:
-    case GPD_HINSTANCE16:
-    case GPD_WINDOWS_VERSION:
-    case GPD_THDB:
-    case GPD_PDB:
-    case GPD_STARTF_SHELLDATA:
-    case GPD_STARTF_HOTKEY:
-    case GPD_STARTF_SHOWWINDOW:
-    case GPD_STARTF_SIZE:
-    case GPD_STARTF_POSITION:
-    case GPD_STARTF_FLAGS:
-    case GPD_PARENT:
-    case GPD_FLAGS:
-        ERR_(win32)("Not allowed to modify offset %d\n", offset );
-        break;
-
-    case GPD_USERDATA:
-        current_process.process_dword = value;
-        break;
-
-    default:
-        ERR_(win32)("Unknown offset %d\n", offset );
-        break;
-    }
-}
-
-
-/*********************************************************************
- *           OpenProcess   (KERNEL32.@)
- */
-HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
-{
-    HANDLE ret = 0;
-    SERVER_START_REQ( open_process )
-    {
-        req->pid     = id;
-        req->access  = access;
-        req->inherit = inherit;
-        if (!wine_server_call_err( req )) ret = reply->handle;
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-/*********************************************************************
- *           MapProcessHandle   (KERNEL.483)
- */
-DWORD WINAPI MapProcessHandle( HANDLE handle )
-{
-    DWORD ret = 0;
-    SERVER_START_REQ( get_process_info )
-    {
-        req->handle = handle;
-        if (!wine_server_call_err( req )) ret = (DWORD)reply->pid;
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-/***********************************************************************
- *           SetPriorityClass   (KERNEL32.@)
- */
-BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
-{
-    BOOL ret;
-    SERVER_START_REQ( set_process_info )
-    {
-        req->handle   = hprocess;
-        req->priority = priorityclass;
-        req->mask     = SET_PROCESS_INFO_PRIORITY;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetPriorityClass   (KERNEL32.@)
- */
-DWORD WINAPI GetPriorityClass(HANDLE hprocess)
-{
-    DWORD ret = 0;
-    SERVER_START_REQ( get_process_info )
-    {
-        req->handle = hprocess;
-        if (!wine_server_call_err( req )) ret = reply->priority;
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
- *          SetProcessAffinityMask   (KERNEL32.@)
- */
-BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD affmask )
-{
-    BOOL ret;
-    SERVER_START_REQ( set_process_info )
-    {
-        req->handle   = hProcess;
-        req->affinity = affmask;
-        req->mask     = SET_PROCESS_INFO_AFFINITY;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-/**********************************************************************
- *          GetProcessAffinityMask    (KERNEL32.@)
- */
-BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
-                                      LPDWORD lpProcessAffinityMask,
-                                      LPDWORD lpSystemAffinityMask )
-{
-    BOOL ret = FALSE;
-    SERVER_START_REQ( get_process_info )
-    {
-        req->handle = hProcess;
-        if (!wine_server_call_err( req ))
-        {
-            if (lpProcessAffinityMask) *lpProcessAffinityMask = reply->process_affinity;
-            if (lpSystemAffinityMask) *lpSystemAffinityMask = reply->system_affinity;
-            ret = TRUE;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetProcessVersion    (KERNEL32.@)
- */
-DWORD WINAPI GetProcessVersion( DWORD processid )
-{
-    IMAGE_NT_HEADERS *nt;
-
-    if (processid && processid != GetCurrentProcessId())
-    {
-	FIXME("should use ReadProcessMemory\n");
-        return 0;
-    }
-    if ((nt = RtlImageNtHeader( current_process.module )))
-        return ((nt->OptionalHeader.MajorSubsystemVersion << 16) |
-                nt->OptionalHeader.MinorSubsystemVersion);
-    return 0;
-}
-
-/***********************************************************************
- *           GetProcessFlags    (KERNEL32.@)
- */
-DWORD WINAPI GetProcessFlags( DWORD processid )
-{
-    if (processid && processid != GetCurrentProcessId()) return 0;
-    return current_process.flags;
-}
-
-
-/***********************************************************************
- *		SetProcessWorkingSetSize	[KERNEL32.@]
- * Sets the min/max working set sizes for a specified process.
- *
- * PARAMS
- *    hProcess [I] Handle to the process of interest
- *    minset   [I] Specifies minimum working set size
- *    maxset   [I] Specifies maximum working set size
- *
- * RETURNS  STD
- */
-BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
-                                     SIZE_T maxset)
-{
-    FIXME("(%p,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
-    if(( minset == (SIZE_T)-1) && (maxset == (SIZE_T)-1)) {
-        /* Trim the working set to zero */
-        /* Swap the process out of physical RAM */
-    }
-    return TRUE;
-}
-
-/***********************************************************************
- *           GetProcessWorkingSetSize    (KERNEL32.@)
- */
-BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess, PSIZE_T minset,
-                                     PSIZE_T maxset)
-{
-	FIXME("(%p,%p,%p): stub\n",hProcess,minset,maxset);
-	/* 32 MB working set size */
-	if (minset) *minset = 32*1024*1024;
-	if (maxset) *maxset = 32*1024*1024;
-	return TRUE;
-}
-
-/***********************************************************************
- *           SetProcessShutdownParameters    (KERNEL32.@)
- *
- * CHANGED - James Sutherland (JamesSutherland@gmx.de)
- * Now tracks changes made (but does not act on these changes)
- */
-static DWORD shutdown_flags = 0;
-static DWORD shutdown_priority = 0x280;
-
-BOOL WINAPI SetProcessShutdownParameters(DWORD level, DWORD flags)
-{
-    FIXME("(%08lx, %08lx): partial stub.\n", level, flags);
-    shutdown_flags = flags;
-    shutdown_priority = level;
-    return TRUE;
-}
-
-
-/***********************************************************************
- * GetProcessShutdownParameters                 (KERNEL32.@)
- *
- */
-BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel, LPDWORD lpdwFlags )
-{
-    *lpdwLevel = shutdown_priority;
-    *lpdwFlags = shutdown_flags;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GetProcessPriorityBoost    (KERNEL32.@)
- */
-BOOL WINAPI GetProcessPriorityBoost(HANDLE hprocess,PBOOL pDisablePriorityBoost)
-{
-    FIXME("(%p,%p): semi-stub\n", hprocess, pDisablePriorityBoost);
-    
-    /* Report that no boost is present.. */
-    *pDisablePriorityBoost = FALSE;
-    
-    return TRUE;
-}
-
-/***********************************************************************
- *           SetProcessPriorityBoost    (KERNEL32.@)
- */
-BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
-{
-    FIXME("(%p,%d): stub\n",hprocess,disableboost);
-    /* Say we can do it. I doubt the program will notice that we don't. */
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		ReadProcessMemory (KERNEL32.@)
- */
-BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, SIZE_T size,
-                               SIZE_T *bytes_read )
-{
-    DWORD res;
-
-    SERVER_START_REQ( read_process_memory )
-    {
-        req->handle = process;
-        req->addr   = (void *)addr;
-        wine_server_set_reply( req, buffer, size );
-        if ((res = wine_server_call_err( req ))) size = 0;
-    }
-    SERVER_END_REQ;
-    if (bytes_read) *bytes_read = size;
-    return !res;
-}
-
-
-/***********************************************************************
- *           WriteProcessMemory    		(KERNEL32.@)
- */
-BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, SIZE_T size,
-                                SIZE_T *bytes_written )
-{
-    static const int zero;
-    unsigned int first_offset, last_offset, first_mask, last_mask;
-    DWORD res;
-
-    if (!size)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    /* compute the mask for the first int */
-    first_mask = ~0;
-    first_offset = (unsigned int)addr % sizeof(int);
-    memset( &first_mask, 0, first_offset );
-
-    /* compute the mask for the last int */
-    last_offset = (size + first_offset) % sizeof(int);
-    last_mask = 0;
-    memset( &last_mask, 0xff, last_offset ? last_offset : sizeof(int) );
-
-    SERVER_START_REQ( write_process_memory )
-    {
-        req->handle     = process;
-        req->addr       = (char *)addr - first_offset;
-        req->first_mask = first_mask;
-        req->last_mask  = last_mask;
-        if (first_offset) wine_server_add_data( req, &zero, first_offset );
-        wine_server_add_data( req, buffer, size );
-        if (last_offset) wine_server_add_data( req, &zero, sizeof(int) - last_offset );
-
-        if ((res = wine_server_call_err( req ))) size = 0;
-    }
-    SERVER_END_REQ;
-    if (bytes_written) *bytes_written = size;
-    {
-        char dummy[32];
-        SIZE_T read;
-        ReadProcessMemory( process, addr, dummy, sizeof(dummy), &read );
-    }
-    return !res;
-}
-
-
-/***********************************************************************
- *		RegisterServiceProcess (KERNEL.491)
- *		RegisterServiceProcess (KERNEL32.@)
- *
- * A service process calls this function to ensure that it continues to run
- * even after a user logged off.
- */
-DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
-{
-	/* I don't think that Wine needs to do anything in that function */
-	return 1; /* success */
-}
 
 /***********************************************************************
  * GetExitCodeProcess [KERNEL32.@]
@@ -1876,37 +1418,6 @@ UINT WINAPI SetErrorMode( UINT mode )
     UINT old = current_process.error_mode;
     current_process.error_mode = mode;
     return old;
-}
-
-
-/**************************************************************************
- *              SetFileApisToOEM   (KERNEL32.@)
- */
-VOID WINAPI SetFileApisToOEM(void)
-{
-    current_process.flags |= PDB32_FILE_APIS_OEM;
-}
-
-
-/**************************************************************************
- *              SetFileApisToANSI   (KERNEL32.@)
- */
-VOID WINAPI SetFileApisToANSI(void)
-{
-    current_process.flags &= ~PDB32_FILE_APIS_OEM;
-}
-
-
-/******************************************************************************
- * AreFileApisANSI [KERNEL32.@]  Determines if file functions are using ANSI
- *
- * RETURNS
- *    TRUE:  Set of file functions is using ANSI code page
- *    FALSE: Set of file functions is using OEM code page
- */
-BOOL WINAPI AreFileApisANSI(void)
-{
-    return !(current_process.flags & PDB32_FILE_APIS_OEM);
 }
 
 
@@ -2030,14 +1541,4 @@ BOOL WINAPI TlsSetValue(
     }
     NtCurrentTeb()->tls_array[index] = value;
     return TRUE;
-}
-
-
-/***********************************************************************
- *           GetCurrentProcess   (KERNEL32.@)
- */
-#undef GetCurrentProcess
-HANDLE WINAPI GetCurrentProcess(void)
-{
-    return (HANDLE)0xffffffff;
 }

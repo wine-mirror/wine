@@ -35,6 +35,7 @@ C_SRCS = \
 	lcformat.c \
 	local16.c \
 	locale.c \
+	process.c \
 	resource.c \
 	resource16.c \
 	stress.c \

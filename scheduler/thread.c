@@ -232,8 +232,16 @@ static void THREAD_Start(void)
     if (TRACE_ON(relay))
         DPRINTF("%04lx:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
 
-    MODULE_DllThreadAttach( NULL );
-    ExitThread( func( NtCurrentTeb()->entry_arg ) );
+    __TRY
+    {
+        MODULE_DllThreadAttach( NULL );
+        ExitThread( func( NtCurrentTeb()->entry_arg ) );
+    }
+    __EXCEPT(UnhandledExceptionFilter)
+    {
+        TerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
 }
 
 

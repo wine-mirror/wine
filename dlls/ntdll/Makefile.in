@@ -49,7 +49,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/scheduler/process.c \
 	$(TOPOBJDIR)/scheduler/pthread.c \
 	$(TOPOBJDIR)/scheduler/synchro.c \
-	$(TOPOBJDIR)/scheduler/sysdeps.c \
 	$(TOPOBJDIR)/scheduler/syslevel.c \
 	$(TOPOBJDIR)/scheduler/thread.c \
 	$(TOPOBJDIR)/win32/device.c \
@@ -80,6 +79,7 @@ C_SRCS = \
 	signal_sparc.c \
 	string.c \
 	sync.c \
+	sysdeps.c \
 	thread.c \
 	time.c \
 	virtual.c \

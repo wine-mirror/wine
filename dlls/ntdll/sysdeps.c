@@ -55,8 +55,6 @@
 #include "thread.h"
 #include "wine/server.h"
 #include "winbase.h"
-#include "wine/winbase16.h"
-#include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -101,27 +99,6 @@ void SYSDEPS_SetCurThread( TEB *teb )
 
 
 /***********************************************************************
- *           call_on_thread_stack
- *
- * Call a function once we switched to the thread stack.
- */
-static void call_on_thread_stack( void *func )
-{
-    __TRY
-    {
-        void (*funcptr)(void) = func;
-        funcptr();
-    }
-    __EXCEPT(UnhandledExceptionFilter)
-    {
-        TerminateThread( GetCurrentThread(), GetExceptionCode() );
-    }
-    __ENDTRY
-    SYSDEPS_ExitThread(0);  /* should never get here */
-}
-
-
-/***********************************************************************
  *           get_temp_stack
  *
  * Get a temporary stack address to run the thread exit code on.
@@ -161,15 +138,7 @@ static void SYSDEPS_StartThread( TEB *teb )
     SYSDEPS_SetCurThread( teb );
     SIGNAL_Init();
     CLIENT_InitThread();
-    __TRY
-    {
-        teb->startup();
-    }
-    __EXCEPT(UnhandledExceptionFilter)
-    {
-        TerminateThread( GetCurrentThread(), GetExceptionCode() );
-    }
-    __ENDTRY
+    teb->startup();
     SYSDEPS_ExitThread(0);  /* should never get here */
 }
 
@@ -230,12 +199,15 @@ int SYSDEPS_SpawnThread( TEB *teb )
 
 
 /***********************************************************************
- *           SYSDEPS_CallOnStack
+ *           SYSDEPS_SwitchToThreadStack
+ *
+ * Switch to the stack specified in the current thread TEB
+ * and call the specified function.
  */
-void DECLSPEC_NORETURN SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg );
+void DECLSPEC_NORETURN SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *arg );
 #ifdef __i386__
 #  ifdef __GNUC__
-__ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
+__ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
                    "movl 4(%esp),%ecx\n\t"  /* func */
                    "movl 8(%esp),%edx\n\t"  /* arg */
                    ".byte 0x64\n\tmovl 0x04,%esp\n\t"  /* teb->stack_top */
@@ -244,7 +216,7 @@ __ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
                    "call *%ecx\n\t"
                    "int $3" /* we never return here */ );
 #  elif defined(_MSC_VER)
-__declspec(naked) void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
+__declspec(naked) void SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *arg )
 {
   __asm mov ecx, 4[esp];
   __asm mov edx, 8[esp];
@@ -256,7 +228,7 @@ __declspec(naked) void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
 }
 #  endif /* defined(__GNUC__) || defined(_MSC_VER) */
 #elif defined(__sparc__) && defined(__GNUC__)
-__ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
+__ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
                    "mov %o0, %l0\n\t" /* store first argument */
                    "call " __ASM_NAME("NtCurrentTeb") ", 0\n\t"
                    "mov %o1, %l1\n\t" /* delay slot: store second argument */
@@ -265,21 +237,12 @@ __ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
                    "mov %l1, %o0\n\t" /* delay slot:  arg for func */
                    "ta 0x01\n\t"); /* breakpoint - we never get here */
 #else /* !sparc, !i386 */
-void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
+void SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *arg )
 {
     func( arg );
     while(1); /* avoid warning */
 }
 #endif /* !defined(__i386__) && !defined(__sparc__) */
-
-
-/***********************************************************************
- *           SYSDEPS_SwitchToThreadStack
- */
-void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
-{
-    SYSDEPS_CallOnStack( call_on_thread_stack, func );
-}
 
 
 /***********************************************************************
@@ -292,8 +255,10 @@ void SYSDEPS_ExitThread( int status )
     TEB *teb = NtCurrentTeb();
     struct thread_cleanup_info info;
     MEMORY_BASIC_INFORMATION meminfo;
+    DWORD size = 0;
 
-    VirtualQuery( teb->stack_top, &meminfo, sizeof(meminfo) );
+    NtQueryVirtualMemory( GetCurrentProcess(), teb->stack_top, MemoryBasicInformation,
+                          &meminfo, sizeof(meminfo), NULL );
     info.stack_base = meminfo.AllocationBase;
     info.stack_size = meminfo.RegionSize + ((char *)teb->stack_top - (char *)meminfo.AllocationBase);
     info.status     = status;
@@ -304,14 +269,15 @@ void SYSDEPS_ExitThread( int status )
     SYSDEPS_AbortThread( status );
 #else
     SIGNAL_Reset();
-    VirtualFree( teb->stack_base, 0, MEM_RELEASE | MEM_SYSTEM );
+    size = 0;
+    NtFreeVirtualMemory( GetCurrentProcess(), &teb->stack_base, &size, MEM_RELEASE | MEM_SYSTEM );
     close( teb->wait_fd[0] );
     close( teb->wait_fd[1] );
     close( teb->reply_fd );
     close( teb->request_fd );
     teb->stack_low = get_temp_stack();
     teb->stack_top = (char *) teb->stack_low + TEMP_STACK_SIZE;
-    SYSDEPS_CallOnStack( cleanup_thread, &info );
+    SYSDEPS_SwitchToThreadStack( cleanup_thread, &info );
 #endif
 }
 
