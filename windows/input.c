@@ -68,7 +68,9 @@ typedef union
 {
     struct
     {
+#ifndef BITFIELDS_BIGENDIAN
 	unsigned long count : 16;
+#endif
 	unsigned long code : 8;
 	unsigned long extended : 1;
 	unsigned long unused : 2;
@@ -76,6 +78,9 @@ typedef union
 	unsigned long context : 1;
 	unsigned long previous : 1;
 	unsigned long transition : 1;
+#ifdef BITFIELDS_BIGENDIAN
+	unsigned long count : 16;
+#endif
     } lp1;
     unsigned long lp2;
 } KEYLP;
