@@ -50,6 +50,7 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
 {
   switch (LOWORD(context->Eax)) {
   case 0x00:
+  case 0x21:
     TRACE("Reset mouse driver and request status\n");
     SET_AX( context, 0xFFFF ); /* installed */
     SET_BX( context, 3 );      /* # of buttons */
