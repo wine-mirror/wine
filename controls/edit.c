@@ -3078,7 +3078,7 @@ static LRESULT EDIT_WM_EraseBkGnd(WND *wnd, EDITSTATE *es, HDC dc)
 	HBRUSH brush;
 	RECT rc;
 
-        if (IsWindowEnabled(wnd->hwndSelf) || (es->style & ES_READONLY))
+        if (!IsWindowEnabled(wnd->hwndSelf) || (es->style & ES_READONLY))
                 brush = (HBRUSH)EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
         else
                 brush = (HBRUSH)EDIT_SEND_CTLCOLOR(wnd, dc);
@@ -3660,7 +3660,7 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es)
 	}
 	if (es->font)
 		old_font = SelectObject(dc, es->font);
-        if (IsWindowEnabled(wnd->hwndSelf) || (es->style & ES_READONLY))
+        if (!IsWindowEnabled(wnd->hwndSelf) || (es->style & ES_READONLY))
                 EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
         else
                 EDIT_SEND_CTLCOLOR(wnd, dc);
