@@ -101,8 +101,8 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS
     ULONG               Size;
     ULONG               Flags;
     ULONG               DebugFlags;
-    HANDLE              hConsole;
-    ULONG               ProcessGroup;
+    HANDLE              ConsoleHandle;
+    ULONG               ConsoleFlags;
     HANDLE              hStdInput;
     HANDLE              hStdOutput;
     HANDLE              hStdError;

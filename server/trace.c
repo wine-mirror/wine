@@ -324,8 +324,8 @@ static void dump_varargs_startup_info( size_t size )
     fprintf( stderr, "Size=%lx,", params.Size );
     fprintf( stderr, "Flags=%lx,", params.Flags );
     fprintf( stderr, "DebugFlags=%lx,", params.DebugFlags );
-    fprintf( stderr, "Console=%p,", params.hConsole );
-    fprintf( stderr, "ProcessGroup=%lx,", params.ProcessGroup );
+    fprintf( stderr, "ConsoleHandle=%p,", params.ConsoleHandle );
+    fprintf( stderr, "ConsoleFlags=%lx,", params.ConsoleFlags );
     fprintf( stderr, "hStdInput=%p,", params.hStdInput );
     fprintf( stderr, "hStdOutput=%p,", params.hStdOutput );
     fprintf( stderr, "hStdError=%p,", params.hStdError );

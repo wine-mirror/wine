@@ -453,7 +453,7 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
         params->AllocationSize = total_size;
         params->Size           = size;
         params->Flags          = PROCESS_PARAMS_FLAG_NORMALIZED;
-        params->ProcessGroup   = cur_params->ProcessGroup;
+        params->ConsoleFlags   = cur_params->ConsoleFlags;
         params->Environment    = Environment;
         /* all other fields are zero */
 

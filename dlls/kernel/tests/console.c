@@ -1,7 +1,7 @@
 /*
  * Unit tests for console API
  *
- * Copyright (c) 2003 Eric Pouech
+ * Copyright (c) 2003,2004 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -360,7 +360,6 @@ static void testWrite(HANDLE hCon, COORD sbSize)
     testWriteWrappedProcessed(hCon, sbSize);
 }
 
-#if 0
 static void testScroll(HANDLE hCon, COORD sbSize)
 {
     SMALL_RECT  scroll, clip;
@@ -477,6 +476,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
         }
     }
 
+#if 0
     /* clipping, src & dst rect do overlap */
     resetContent(hCon, sbSize, TRUE);
 
@@ -511,8 +511,46 @@ static void testScroll(HANDLE hCon, COORD sbSize)
             else okCHAR(hCon, c, CONTENT(c), DEFAULT_ATTRIB);
         }
     }
-}
 #endif
+}
+
+static int mch_count;
+/* we need the event as Wine console event generation isn't synchronous
+ * (ie GenerateConsoleCtrlEvent returns before all ctrl-handlers in all
+ * processes have been called).
+ */
+static HANDLE mch_event;
+static BOOL WINAPI mch(DWORD event)
+{
+    mch_count++;
+    SetEvent(mch_event);
+    return TRUE;
+}
+
+static void testCtrlHandler(void)
+{
+    ok(!SetConsoleCtrlHandler(mch, FALSE), "Shouldn't succeed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %lu\n", GetLastError());
+    ok(SetConsoleCtrlHandler(mch, TRUE), "Couldn't set handler\n");
+    /* wine requires the event for the test, as we cannot insure, so far, that event
+     * are processed synchronously in GenerateConsoleCtrlEvent()
+     */
+    mch_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    mch_count = 0;
+    ok(GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0), "Couldn't send ctrl-c event\n");
+    todo_wine ok(mch_count == 1, "Event isn't synchronous\n");
+    ok(WaitForSingleObject(mch_event, 3000) == WAIT_OBJECT_0, "event sending didn't work\n");
+    CloseHandle(mch_event);
+    ok(SetConsoleCtrlHandler(NULL, TRUE), "Couldn't turn off ctrl-c handling\n");
+    mch_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    mch_count = 0;
+    ok(GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0), "Couldn't send ctrl-c event\n");
+    ok(WaitForSingleObject(mch_event, 3000) == WAIT_TIMEOUT && mch_count == 0, "Event shouldn't have been sent\n");
+    CloseHandle(mch_event);
+    ok(SetConsoleCtrlHandler(mch, FALSE), "Couldn't remove handler\n");
+    ok(!SetConsoleCtrlHandler(mch, FALSE), "Shouldn't succeed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Bad error %lu\n", GetLastError());
+}
 
 START_TEST(console)
 {
@@ -553,9 +591,9 @@ START_TEST(console)
     /* testBottomScroll(); */
     /* will test all the scrolling operations */
     /* this one is disabled for now, Wine's result are way too bad */
-    /* testScroll(hCon, sbi.dwSize); */
+    testScroll(hConOut, sbi.dwSize);
     /* will test sb creation / modification... */
     /* testScreenBuffer() */
-
-    /* still to be done: events generation, access rights & access on objects */
+    testCtrlHandler();
+    /* still to be done: access rights & access on objects */
 }

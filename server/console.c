@@ -386,7 +386,8 @@ static struct console_input* console_input_get( obj_handle_t handle, unsigned ac
     return console;
 }
 
-struct console_signal_info {
+struct console_signal_info
+{
     struct console_input        *console;
     process_id_t                 group;
     int                          signal;
@@ -399,13 +400,11 @@ static int propagate_console_signal_cb(struct process *process, void *user)
     if (process->console == csi->console && process->running_threads &&
         (!csi->group || process->group_id == csi->group))
     {
-        struct thread *thread = process->thread_list;
-
-        while (thread)
+        /* find a suitable thread to signal */
+        struct thread *thread;
+        for (thread = process->thread_list; thread; thread = thread->proc_next)
         {
-            struct thread *next = thread->proc_next;
-            send_thread_signal( thread, csi->signal );
-            thread = next;
+            if (send_thread_signal( thread, csi->signal )) break;
         }
     }
     return FALSE;

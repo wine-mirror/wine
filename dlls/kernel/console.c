@@ -1,11 +1,11 @@
 /*
- * Win32 kernel functions
+ * Win32 console functions
  *
  * Copyright 1995 Martin von Loewis and Cameron Heide
  * Copyright 1997 Karl Garrison
  * Copyright 1998 John Richardson
  * Copyright 1998 Marcus Meissner
- * Copyright 2001,2002 Eric Pouech
+ * Copyright 2001,2002,2004 Eric Pouech
  * Copyright 2001 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
@@ -52,6 +52,7 @@
 #include "excpt.h"
 #include "console_private.h"
 #include "kernel_private.h"
+#include "thread.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
 
@@ -1419,20 +1420,14 @@ static BOOL WINAPI CONSOLE_DefaultHandler(DWORD dwCtrlType)
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
- *
- * CHANGED
- * James Sutherland (JamesSutherland@gmx.de)
- * Added global variables console_ignore_ctrl_c and handlers[]
- * Does not yet do any error checking, or set LastError if failed.
- * This doesn't yet matter, since these handlers are not yet called...!
  */
 
-struct ConsoleHandler {
+struct ConsoleHandler
+{
     PHANDLER_ROUTINE            handler;
     struct ConsoleHandler*      next;
 };
 
-static unsigned int             CONSOLE_IgnoreCtrlC = 0; /* FIXME: this should be inherited somehow */
 static struct ConsoleHandler    CONSOLE_DefaultConsoleHandler = {CONSOLE_DefaultHandler, NULL};
 static struct ConsoleHandler*   CONSOLE_Handlers = &CONSOLE_DefaultConsoleHandler;
 
@@ -1447,15 +1442,23 @@ static CRITICAL_SECTION CONSOLE_CritSect = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /*****************************************************************************/
 
+/******************************************************************
+ *		SetConsoleCtrlHandler (KERNEL32.@)
+ */
 BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
 {
     BOOL        ret = TRUE;
 
-    FIXME("(%p,%i) - no error checking or testing yet\n", func, add);
+    TRACE("(%p,%i)\n", func, add);
 
     if (!func)
     {
-	CONSOLE_IgnoreCtrlC = add;
+        RtlEnterCriticalSection(&CONSOLE_CritSect);
+        if (add)
+            NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags |= 1;
+        else
+            NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags &= ~1;
+        RtlLeaveCriticalSection(&CONSOLE_CritSect);
     }
     else if (add)
     {
@@ -1472,7 +1475,7 @@ BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
     {
         struct ConsoleHandler**  ch;
         RtlEnterCriticalSection(&CONSOLE_CritSect);
-        for (ch = &CONSOLE_Handlers; *ch; *ch = (*ch)->next)
+        for (ch = &CONSOLE_Handlers; *ch; ch = &(*ch)->next)
         {
             if ((*ch)->handler == func) break;
         }
@@ -1484,18 +1487,19 @@ BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
             if (rch == &CONSOLE_DefaultConsoleHandler)
             {
                 ERR("Who's trying to remove default handler???\n");
+                SetLastError(ERROR_INVALID_PARAMETER);
                 ret = FALSE;
             }
             else
             {
-                rch = *ch;
-                *ch = (*ch)->next;
+                *ch = rch->next;
                 HeapFree(GetProcessHeap(), 0, rch);
             }
         }
         else
         {
             WARN("Attempt to remove non-installed CtrlHandler %p\n", func);
+            SetLastError(ERROR_INVALID_PARAMETER);
             ret = FALSE;
         }
         RtlLeaveCriticalSection(&CONSOLE_CritSect);
@@ -1509,18 +1513,42 @@ static WINE_EXCEPTION_FILTER(CONSOLE_CtrlEventHandler)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-static DWORD WINAPI CONSOLE_HandleCtrlCEntry(void* pmt)
+/******************************************************************
+ *		CONSOLE_SendEventThread
+ *
+ * Internal helper to pass an event to the list on installed handlers
+ */
+static DWORD WINAPI CONSOLE_SendEventThread(void* pmt)
 {
-    struct ConsoleHandler*  ch;
+    DWORD                       event = (DWORD)pmt;
+    struct ConsoleHandler*      ch;
 
+    if (event == CTRL_C_EVENT)
+    {
+        BOOL    caught_by_dbg = TRUE;
+        /* First, try to pass the ctrl-C event to the debugger (if any)
+         * If it continues, there's nothing more to do
+         * Otherwise, we need to send the ctrl-C event to the handlers
+         */
+        __TRY
+        {
+            RaiseException( DBG_CONTROL_C, 0, 0, NULL );
+        }
+        __EXCEPT(CONSOLE_CtrlEventHandler)
+        {
+            caught_by_dbg = FALSE;
+        }
+        __ENDTRY;
+        if (caught_by_dbg) return 0;
+        /* the debugger didn't continue... so, pass to ctrl handlers */
+    }
     RtlEnterCriticalSection(&CONSOLE_CritSect);
-    /* the debugger didn't continue... so, pass to ctrl handlers */
     for (ch = CONSOLE_Handlers; ch; ch = ch->next)
     {
-        if (ch->handler((DWORD)pmt)) break;
+        if (ch->handler(event)) break;
     }
     RtlLeaveCriticalSection(&CONSOLE_CritSect);
-    return 0;
+    return 1;
 }
 
 /******************************************************************
@@ -1533,24 +1561,21 @@ int     CONSOLE_HandleCtrlC(unsigned sig)
     /* FIXME: better test whether a console is attached to this process ??? */
     extern    unsigned CONSOLE_GetNumHistoryEntries(void);
     if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return 0;
-    if (CONSOLE_IgnoreCtrlC) return 1;
 
-    /* try to pass the exception to the debugger
-     * if it continues, there's nothing more to do
-     * otherwise, we need to send the ctrl-event to the handlers
-     */
-    __TRY
+    /* check if we have to ignore ctrl-C events */
+    if (!(NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags & 1))
     {
-        RaiseException( DBG_CONTROL_C, 0, 0, NULL );
-    }
-    __EXCEPT(CONSOLE_CtrlEventHandler)
-    {
-        /* Create a separate thread to signal all the events. This would allow to
-         * synchronize between setting the handlers and actually calling them
+        /* Create a separate thread to signal all the events. 
+         * This is needed because:
+         *  - this function can be called in an Unix signal handler (hence on an
+         *    different stack than the thread that's running). This breaks the 
+         *    Win32 exception mechanisms (where the thread's stack is checked).
+         *  - since the current thread, while processing the signal, can hold the
+         *    console critical section, we need another execution environment where
+         *    we can wait on this critical section 
          */
-        CreateThread(NULL, 0, CONSOLE_HandleCtrlCEntry, (void*)CTRL_C_EVENT, 0, NULL);
+        CreateThread(NULL, 0, CONSOLE_SendEventThread, (void*)CTRL_C_EVENT, 0, NULL);
     }
-    __ENDTRY;
     return 1;
 }
 
@@ -1586,6 +1611,10 @@ BOOL WINAPI GenerateConsoleCtrlEvent(DWORD dwCtrlEvent,
     }
     SERVER_END_REQ;
 
+    /* FIXME: shall this function be synchronous, ie only return when all events
+     * have been handled by all processes in the given group ?
+     * As of today, we don't wait...
+     */
     return ret;
 }
 
