@@ -1103,7 +1103,7 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     DWORD dwFlags;
     int ascii_chars;
     XIC xic = X11DRV_get_ic( hwnd );
-    DWORD event_time = event->time - X11DRV_server_startticks;
+    DWORD event_time = EVENT_x11_time_to_win32_time(event->time);
     Status status = 0;
 
     TRACE_(key)("type %d, window %lx, state 0x%04x, keycode 0x%04x\n",

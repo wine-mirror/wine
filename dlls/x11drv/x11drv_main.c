@@ -98,8 +98,6 @@ int client_side_antialias_with_core = 1;
 int client_side_antialias_with_render = 1;
 int using_wine_desktop = 0;
 
-unsigned int X11DRV_server_startticks;
-
 static BOOL synchronous;  /* run in synchronous mode? */
 static BOOL desktop_dbl_buf = TRUE;
 static char *desktop_geometry;
@@ -212,19 +210,6 @@ void wine_tsx11_lock(void)
 void wine_tsx11_unlock(void)
 {
     LeaveCriticalSection( &X11DRV_CritSection );
-}
-
-/***********************************************************************
- *		get_server_startup
- *
- * Get the server startup time
- * Won't be exact, but should be sufficient
- */
-static void get_server_startup(void)
-{
-    struct timeval t;
-    gettimeofday( &t, NULL );
-    X11DRV_server_startticks = ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - GetTickCount();
 }
 
 
@@ -341,7 +326,6 @@ static BOOL process_attach(void)
 {
     Display *display;
 
-    get_server_startup();
     setup_options();
 
     /* Open display */

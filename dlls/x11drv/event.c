@@ -187,6 +187,40 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     return ret;
 }
 
+/***********************************************************************
+ *           EVENT_x11_time_to_win32_time
+ *
+ * Make our timer and the X timer line up as best we can
+ *  Pass 0 to retrieve the current adjustment value (times -1)
+ */
+DWORD EVENT_x11_time_to_win32_time(Time time)
+{
+  static DWORD adjust = 0;
+  DWORD now = GetTickCount();
+  DWORD ret;
+
+  if (! adjust && time != 0)
+  {
+    ret = now;
+    adjust = time - now;
+  }
+  else
+  {
+      /* If we got an event in the 'future', then our clock is clearly wrong. 
+         If we got it more than 10000 ms in the future, then it's most likely
+         that the clock has wrapped.  */
+
+      ret = time - adjust;
+      if (ret > now && ((ret - now) < 10000) && time != 0)
+      {
+        adjust += ret - now;
+        ret    -= ret - now;
+      }
+  }
+
+  return ret;
+
+}
 
 /***********************************************************************
  *           EVENT_ProcessEvent

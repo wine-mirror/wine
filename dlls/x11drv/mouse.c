@@ -141,7 +141,7 @@ static void send_mouse_event( HWND hwnd, DWORD flags, DWORD posX, DWORD posY,
     input.u.mi.dy          = posY;
     input.u.mi.mouseData   = data;
     input.u.mi.dwFlags     = flags;
-    input.u.mi.time        = time - X11DRV_server_startticks;
+    input.u.mi.time        = EVENT_x11_time_to_win32_time(time);
     input.u.mi.dwExtraInfo = (ULONG_PTR)hwnd;
     SendInput( 1, &input, sizeof(input) );
 }

@@ -1317,7 +1317,8 @@ void X11DRV_SetFocus( HWND hwnd )
         /* we must not use CurrentTime (ICCCM), so try to use last message time instead */
         /* FIXME: this is not entirely correct */
         XSetInputFocus( display, win, RevertToParent,
-                        /*CurrentTime*/ GetMessageTime() + X11DRV_server_startticks );
+                        /* CurrentTime */
+                        GetMessageTime() - EVENT_x11_time_to_win32_time(0));
         if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
             XInstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
     }

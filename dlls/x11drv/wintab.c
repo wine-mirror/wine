@@ -598,7 +598,7 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
 
         TRACE_(event)("Received tablet motion event (%p)\n",hwnd);
         TRACE("Received tablet motion event (%p)\n",hwnd);
-        gMsgPacket.pkTime = motion->time;
+        gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(motion->time);
         gMsgPacket.pkSerialNumber = gSerial++;
         gMsgPacket.pkCursor = motion->deviceid;
         gMsgPacket.pkX = motion->axis_data[0];
