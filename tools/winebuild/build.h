@@ -146,6 +146,7 @@ extern void warning( const char *msg, ... );
 extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
                         const char *label, int constant );
 extern void add_import_dll( const char *name );
+extern void add_ignore_symbol( const char *name );
 extern int resolve_imports( FILE *outfile );
 extern int output_imports( FILE *outfile );
 extern void load_res32_file( const char *name );

@@ -26,6 +26,10 @@ static char **undef_symbols;  /* list of undefined symbols */
 static int nb_undef_symbols = -1;
 static int undef_size;
 
+static char **ignore_symbols; /* list of symbols to ignore */
+static int nb_ignore_symbols;
+static int ignore_size;
+
 static struct import **dll_imports = NULL;
 static int nb_imports = 0;  /* number of imported dlls */
 static int total_imports = 0;  /* total number of imported functions */
@@ -143,6 +147,17 @@ void add_import_dll( const char *name )
     dll_imports[nb_imports++] = imp;
 }
 
+/* Add a symbol to the ignored symbol list */
+void add_ignore_symbol( const char *name )
+{
+    if (nb_ignore_symbols == ignore_size)
+    {
+        ignore_size += 32;
+        ignore_symbols = xrealloc( ignore_symbols, ignore_size * sizeof(*ignore_symbols) );
+    }
+    ignore_symbols[nb_ignore_symbols++] = xstrdup( name );
+}
+
 /* add a function to the list of imports from a given dll */
 static void add_import_func( struct import *imp, const char *name )
 {
@@ -160,6 +175,19 @@ inline static void add_undef_symbol( const char *name )
         undef_symbols = xrealloc( undef_symbols, undef_size * sizeof(*undef_symbols) );
     }
     undef_symbols[nb_undef_symbols++] = xstrdup( name );
+}
+
+/* remove all the holes in the undefined symbol list; return the number of removed symbols */
+static int remove_symbol_holes(void)
+{
+    int i, off;
+    for (i = off = 0; i < nb_undef_symbols; i++)
+    {
+        if (!undef_symbols[i]) off++;
+        else undef_symbols[i - off] = undef_symbols[i];
+    }
+    nb_undef_symbols -= off;
+    return off;
 }
 
 /* add the extra undefined symbols that will be contained in the generated spec file itself */
@@ -245,15 +273,31 @@ void read_undef_symbols( const char *name )
     if ((err = pclose( f ))) fatal_error( "nm -u %s error %d\n", name, err );
 }
 
+static void remove_ignored_symbols(void)
+{
+    int i;
+
+    sort_symbols( ignore_symbols, nb_ignore_symbols );
+    for (i = 0; i < nb_undef_symbols; i++)
+    {
+        if (find_symbol( undef_symbols[i], ignore_symbols, nb_ignore_symbols ))
+        {
+            free( undef_symbols[i] );
+            undef_symbols[i] = NULL;
+        }
+    }
+    remove_symbol_holes();
+}
+
 /* resolve the imports for a Win32 module */
 int resolve_imports( FILE *outfile )
 {
-    int i, j, off;
-    char **p;
+    int i, j;
 
     if (nb_undef_symbols == -1) return 0; /* no symbol file specified */
 
     add_extra_undef_symbols();
+    remove_ignored_symbols();
 
     for (i = 0; i < nb_imports; i++)
     {
@@ -265,18 +309,12 @@ int resolve_imports( FILE *outfile )
             if (res)
             {
                 add_import_func( imp, res );
+                free( undef_symbols[j] );
                 undef_symbols[j] = NULL;
             }
         }
         /* remove all the holes in the undef symbols list */
-        p = undef_symbols;
-        for (j = off = 0; j < nb_undef_symbols; j++)
-        {
-            if (!undef_symbols[j]) off++;
-            else undef_symbols[j - off] = undef_symbols[j];
-        }
-        nb_undef_symbols -= off;
-        if (!off) warn_unused( imp );
+        if (!remove_symbol_holes()) warn_unused( imp );
     }
     return 1;
 }

@@ -144,6 +144,24 @@ static void ParseDebug(void)
 
 
 /*******************************************************************
+ *         ParseIgnore
+ *
+ * Parse an 'ignore' definition.
+ */
+static void ParseIgnore(void)
+{
+    char *token = GetToken(0);
+    if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
+    for (;;)
+    {
+        token = GetToken(0);
+        if (*token == ')') break;
+        add_ignore_symbol( token );
+    }
+}
+
+
+/*******************************************************************
  *         ParseVariable
  *
  * Parse a variable definition.
@@ -582,6 +600,12 @@ SPEC_TYPE ParseTopLevel( FILE *file )
             if (SpecType != SPEC_WIN32)
                 fatal_error( "debug channels only supported for Win32 spec files\n" );
             ParseDebug();
+        }
+        else if (strcmp(token, "ignore") == 0)
+        {
+            if (SpecType != SPEC_WIN32)
+                fatal_error( "'ignore' only supported for Win32 spec files\n" );
+            ParseIgnore();
         }
         else if (strcmp(token, "@") == 0)
 	{
