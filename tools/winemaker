@@ -1765,7 +1765,11 @@ sub generate_project_files($)
 
   print FILEO "### Generic autoconf variables\n\n";
   generate_list("TOPSRCDIR",1,[ "\@top_srcdir\@" ]);
-  generate_list("TOPOBJDIR",1,[ "." ]);
+  my $dotdotpath=@$project[$P_PATH];
+  $dotdotpath =~ s%[^/]+%..%g;
+  $dotdotpath =~ s%/$%%;
+  $dotdotpath = "." if ($dotdotpath eq "");
+  generate_list("TOPOBJDIR",1,[ $dotdotpath ]);
   generate_list("SRCDIR",1,[ "\@srcdir\@" ]);
   generate_list("VPATH",1,[ "\@srcdir\@" ]);
   print FILEO "\n";
@@ -1934,7 +1938,7 @@ sub generate_project_files($)
     print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) install) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\t_list=\"\$(EXES:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(bindir); done\n";
+    print FILEO "\t_list=\"\$(EXES:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(libdir); done\n";
     print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(INSTALL_SCRIPT) \$\$i \$(bindir); done\n";
     print FILEO "\t_list=\"\$(DLLS)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(libdir); done\n";
   }
@@ -1946,7 +1950,7 @@ sub generate_project_files($)
     print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) uninstall) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\t_list=\"\$(EXES) \$(EXES:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(bindir)/\$\$i;done\n";
+    print FILEO "\t_list=\"\$(EXES) \$(EXES:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(libdir)/\$\$i;done\n";
     print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(RM) \$(bindir)/\$\$i;done\n";
     print FILEO "\t_list=\"\$(DLLS)\"; for i in \$\$_list; do \$(RM) \$(libdir)/\$\$i;done\n";
   }
@@ -2353,6 +2357,7 @@ AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
+AC_PROG_LN_S
 
 dnl **** Check for some libraries ****
 
@@ -2420,8 +2425,8 @@ CFLAGS=$saved_cflags
 ])
 if test "$ac_cv_c_dll_linux" = "yes"
 then
-  LDSHARED="\$(CC) -shared -Wl,-rpath,\$(libdir)"
-  LDXXSHARED="\$(CXX) -shared -Wl,-rpath,\$(libdir)"
+  LDSHARED="\$(CC) -shared"
+  LDXXSHARED="\$(CXX) -shared"
   LDDLLFLAGS="-Wl,-Bsymbolic"
 else
   AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
@@ -3045,6 +3050,7 @@ LDXXSHARED= @LDXXSHARED@
 LDDLLFLAGS= @LDDLLFLAGS@
 STRIP     = strip
 STRIPFLAGS= --strip-unneeded
+LN_S      = @LN_S@
 RM        = rm -f
 MV        = mv
 MKDIR     = mkdir -p
@@ -3098,7 +3104,7 @@ all: Makefile
 # Rules for makefile
 
 Makefile: Makefile.in $(TOPSRCDIR)/configure
-	@echo Makefile is older than $?, please rerun $(TOPSRCDIR)/configure
+	@echo $@ is older than $?, please rerun $(TOPSRCDIR)/configure
 	@exit 1
 
 # Rules for cleaning
