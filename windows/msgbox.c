@@ -24,6 +24,7 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "winternl.h"
 #include "dlgs.h"
 #include "heap.h"
 #include "user.h"
@@ -34,43 +35,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(dialog);
 #define MSGBOX_IDICON 1088
 #define MSGBOX_IDTEXT 100
 
-static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
+static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 {
-    static HFONT hFont = 0, hPrevFont = 0;
+    HFONT hFont = 0, hPrevFont = 0;
     RECT rect;
     HWND hItem;
     HDC hdc;
     int i, buttons;
     int bspace, bw, bh, theight, tleft, wwidth, wheight, bpos;
     int borheight, borwidth, iheight, ileft, iwidth, twidth, tiheight;
-    LPCSTR lpszText;
-    char buf[256];
+    LPCWSTR lpszText;
+    WCHAR buf[256];
 
     if (TWEAK_WineLook >= WIN95_LOOK) {
-	NONCLIENTMETRICSA nclm;
-	nclm.cbSize = sizeof(NONCLIENTMETRICSA);
-	SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-	hFont = CreateFontIndirectA (&nclm.lfMessageFont);
+	NONCLIENTMETRICSW nclm;
+	nclm.cbSize = sizeof(nclm);
+	SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+	hFont = CreateFontIndirectW (&nclm.lfMessageFont);
 	/* set button font */
 	for (i=1; i < 8; i++)
-	    SendDlgItemMessageA (hwnd, i, WM_SETFONT, (WPARAM)hFont, 0);
+	    SendDlgItemMessageW (hwnd, i, WM_SETFONT, (WPARAM)hFont, 0);
 	/* set text font */
-	SendDlgItemMessageA (hwnd, MSGBOX_IDTEXT, WM_SETFONT, (WPARAM)hFont, 0);
+	SendDlgItemMessageW (hwnd, MSGBOX_IDTEXT, WM_SETFONT, (WPARAM)hFont, 0);
     }
     if (HIWORD(lpmb->lpszCaption)) {
-       SetWindowTextA(hwnd, lpmb->lpszCaption);
+       SetWindowTextW(hwnd, lpmb->lpszCaption);
     } else {
-       if (LoadStringA(lpmb->hInstance, LOWORD(lpmb->lpszCaption), buf, sizeof(buf)))
-	  SetWindowTextA(hwnd, buf);
+       if (LoadStringW(lpmb->hInstance, LOWORD(lpmb->lpszCaption), buf, 256))
+	  SetWindowTextW(hwnd, buf);
     }
     if (HIWORD(lpmb->lpszText)) {
        lpszText = lpmb->lpszText;
     } else {
        lpszText = buf;
-       if (!LoadStringA(lpmb->hInstance, LOWORD(lpmb->lpszText), buf, sizeof(buf)))
+       if (!LoadStringW(lpmb->hInstance, LOWORD(lpmb->lpszText), buf, 256))
 	  *buf = 0;	/* FIXME ?? */
     }
-    SetWindowTextA(GetDlgItem(hwnd, MSGBOX_IDTEXT), lpszText);
+    SetWindowTextW(GetDlgItem(hwnd, MSGBOX_IDTEXT), lpszText);
 
     /* Hide not selected buttons */
     switch(lpmb->dwStyle & MB_TYPEMASK) {
@@ -110,20 +111,24 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     /* Set the icon */
     switch(lpmb->dwStyle & MB_ICONMASK) {
     case MB_ICONEXCLAMATION:
-	SendDlgItemMessageA(hwnd, stc1, STM_SETICON,
-			    (WPARAM)LoadIconA(0, IDI_EXCLAMATIONA), 0);
+	SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+			    (WPARAM)LoadIconW(0, IDI_EXCLAMATIONW), 0);
 	break;
     case MB_ICONQUESTION:
-	SendDlgItemMessageA(hwnd, stc1, STM_SETICON,
-			    (WPARAM)LoadIconA(0, IDI_QUESTIONA), 0);
+	SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+			    (WPARAM)LoadIconW(0, IDI_QUESTIONW), 0);
 	break;
     case MB_ICONASTERISK:
-	SendDlgItemMessageA(hwnd, stc1, STM_SETICON,
-			    (WPARAM)LoadIconA(0, IDI_ASTERISKA), 0);
+	SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+			    (WPARAM)LoadIconW(0, IDI_ASTERISKW), 0);
 	break;
     case MB_ICONHAND:
-      SendDlgItemMessageA(hwnd, stc1, STM_SETICON,
-			    (WPARAM)LoadIconA(0, IDI_HANDA), 0);
+      SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+			    (WPARAM)LoadIconW(0, IDI_HANDW), 0);
+      break;
+    case MB_USERICON:
+      SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+			  (WPARAM)LoadIconW(lpmb->hInstance, lpmb->lpszIcon), 0);
       break;
     default:
 	/* By default, Windows 95/98/NT do not associate an icon to message boxes.
@@ -156,14 +161,14 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     for (buttons = 0, i = 1; i < 8; i++)
     {
 	hItem = GetDlgItem(hwnd, i);
-	if (GetWindowLongA(hItem, GWL_STYLE) & WS_VISIBLE)
+	if (GetWindowLongW(hItem, GWL_STYLE) & WS_VISIBLE)
 	{
-	    char buttonText[1024];
+	    WCHAR buttonText[1024];
 	    int w, h;
 	    buttons++;
-	    if (GetWindowTextA(hItem, buttonText, sizeof buttonText))
+	    if (GetWindowTextW(hItem, buttonText, 1024))
 	    {
-		DrawTextA( hdc, buttonText, -1, &rect, DT_LEFT | DT_EXPANDTABS | DT_CALCRECT);
+		DrawTextW( hdc, buttonText, -1, &rect, DT_LEFT | DT_EXPANDTABS | DT_CALCRECT);
 		h = rect.bottom - rect.top;
 		w = rect.right - rect.left;
 		if (h > bh) bh = h;
@@ -180,7 +185,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     /* Get the text size */
     GetClientRect(GetDlgItem(hwnd, MSGBOX_IDTEXT), &rect);
     rect.top = rect.left = rect.bottom = 0;
-    DrawTextA( hdc, lpszText, -1, &rect,
+    DrawTextW( hdc, lpszText, -1, &rect,
 	       DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
     /* Min text width corresponds to space for the buttons */
     tleft = 2 * ileft + iwidth;
@@ -212,10 +217,10 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     for (buttons = i = 0; i < 7; i++) {
 	/* some arithmetic to get the right order for YesNoCancel windows */
 	hItem = GetDlgItem(hwnd, (i + 5) % 7 + 1);
-	if (GetWindowLongA(hItem, GWL_STYLE) & WS_VISIBLE) {
+	if (GetWindowLongW(hItem, GWL_STYLE) & WS_VISIBLE) {
 	    if (buttons++ == ((lpmb->dwStyle & MB_DEFMASK) >> 8)) {
 		SetFocus(hItem);
-		SendMessageA( hItem, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
+		SendMessageW( hItem, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
 	    }
 	    SetWindowPos(hItem, 0, bpos, tiheight, bw, bh,
 			 SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
@@ -248,14 +253,21 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
  *
  * Dialog procedure for message boxes.
  */
-static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
+static BOOL CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
                                         WPARAM wParam, LPARAM lParam )
 {
-  static HFONT hFont;
+  HFONT hFont;
+
   switch(message) {
    case WM_INITDIALOG:
-    hFont = MSGBOX_OnInit(hwnd, (LPMSGBOXPARAMSA)lParam);
-    return 0;
+   {
+       LPMSGBOXPARAMSW mbp = (LPMSGBOXPARAMSW)lParam;
+       SetWindowContextHelpId(hwnd, mbp->dwContextHelpId);
+       hFont = MSGBOX_OnInit(hwnd, mbp);
+       SetPropA(hwnd, "WINE_MSGBOX_HFONT", (HANDLE)hFont);
+       SetPropA(hwnd, "WINE_MSGBOX_HELPCALLBACK", (HANDLE)mbp->lpfnMsgBoxCallback);
+       break;
+   }
 
    case WM_COMMAND:
     switch (wParam)
@@ -267,11 +279,27 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
      case IDIGNORE:
      case IDYES:
      case IDNO:
+      hFont = GetPropA(hwnd, "WINE_MSGBOX_HFONT");
       EndDialog(hwnd, wParam);
       if (hFont)
 	  DeleteObject(hFont);
       break;
     }
+
+    case WM_HELP:
+    {
+        MSGBOXCALLBACK callback = (MSGBOXCALLBACK)GetPropA(hwnd, "WINE_MSGBOX_HELPCALLBACK");
+        HELPINFO hi;
+
+        memcpy(&hi, (void *)lParam, sizeof(hi));
+        hi.dwContextId = GetWindowContextHelpId(hwnd);
+
+        if (callback)
+            callback(&hi);
+        else
+            SendMessageW(GetWindow(hwnd, GW_OWNER), WM_HELP, 0, (LPARAM)&hi);
+	break;
+   }
 
    default:
      /* Ok. Ignore all the other messages */
@@ -291,44 +319,16 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
  */
 INT WINAPI MessageBoxA(HWND hWnd, LPCSTR text, LPCSTR title, UINT type)
 {
-    LPVOID template;
-    HRSRC hRes;
-    MSGBOXPARAMSA mbox;
-
-    WARN("Messagebox\n");
-
-    if(!(hRes = FindResourceA(GetModuleHandleA("USER32"), "MSGBOX", RT_DIALOGA)))
-        return 0;
-    if(!(template = (LPVOID)LoadResource(GetModuleHandleA("USER32"), hRes)))
-        return 0;
-
-    if (!text) text="<WINE-NULL>";
-    if (!title)
-      title="Error";
-    mbox.lpszCaption = title;
-    mbox.lpszText  = text;
-    mbox.dwStyle  = type;
-    return DialogBoxIndirectParamA( GetWindowLongA(hWnd,GWL_HINSTANCE), template,
-                                      hWnd, (DLGPROC)MSGBOX_DlgProc, (LPARAM)&mbox );
+    return MessageBoxExA(hWnd, text, title, type, LANG_NEUTRAL);
 }
 
 
 /**************************************************************************
  *		MessageBoxW (USER32.@)
  */
-INT WINAPI MessageBoxW( HWND hwnd, LPCWSTR text, LPCWSTR title,
-                            UINT type )
+INT WINAPI MessageBoxW( HWND hwnd, LPCWSTR text, LPCWSTR title, UINT type )
 {
-    LPSTR titleA = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
-    LPSTR textA  = HEAP_strdupWtoA( GetProcessHeap(), 0, text );
-    INT ret;
-
-    WARN("Messagebox\n");
-
-    ret = MessageBoxA( hwnd, textA, titleA, type );
-    HeapFree( GetProcessHeap(), 0, titleA );
-    HeapFree( GetProcessHeap(), 0, textA );
-    return ret;
+    return MessageBoxExW(hwnd, text, title, type, LANG_NEUTRAL);
 }
 
 
@@ -338,9 +338,20 @@ INT WINAPI MessageBoxW( HWND hwnd, LPCWSTR text, LPCWSTR title,
 INT WINAPI MessageBoxExA( HWND hWnd, LPCSTR text, LPCSTR title,
                               UINT type, WORD langid )
 {
-    WARN("Messagebox\n");
-    /* ignore language id for now */
-    return MessageBoxA(hWnd,text,title,type);
+    MSGBOXPARAMSA msgbox;
+
+    msgbox.cbSize = sizeof(msgbox);
+    msgbox.hwndOwner = hWnd;
+    msgbox.hInstance = 0;
+    msgbox.lpszText = text;
+    msgbox.lpszCaption = title;
+    msgbox.dwStyle = type;
+    msgbox.lpszIcon = NULL;
+    msgbox.dwContextHelpId = 0;
+    msgbox.lpfnMsgBoxCallback = NULL;
+    msgbox.dwLanguageId = langid;
+
+    return MessageBoxIndirectA(&msgbox);
 }
 
 /**************************************************************************
@@ -349,9 +360,20 @@ INT WINAPI MessageBoxExA( HWND hWnd, LPCSTR text, LPCSTR title,
 INT WINAPI MessageBoxExW( HWND hWnd, LPCWSTR text, LPCWSTR title,
                               UINT type, WORD langid )
 {
-    WARN("Messagebox\n");
-    /* ignore language id for now */
-    return MessageBoxW(hWnd,text,title,type);
+    MSGBOXPARAMSW msgbox;
+
+    msgbox.cbSize = sizeof(msgbox);
+    msgbox.hwndOwner = hWnd;
+    msgbox.hInstance = 0;
+    msgbox.lpszText = text;
+    msgbox.lpszCaption = title;
+    msgbox.dwStyle = type;
+    msgbox.lpszIcon = NULL;
+    msgbox.dwContextHelpId = 0;
+    msgbox.lpfnMsgBoxCallback = NULL;
+    msgbox.dwLanguageId = langid;
+
+    return MessageBoxIndirectW(&msgbox);
 }
 
 /**************************************************************************
@@ -359,19 +381,40 @@ INT WINAPI MessageBoxExW( HWND hWnd, LPCWSTR text, LPCWSTR title,
  */
 INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
 {
-    LPVOID template;
-    HRSRC hRes;
+    MSGBOXPARAMSW msgboxW;
+    UNICODE_STRING textW, captionW, iconW;
+    int ret;
 
-    WARN("Messagebox\n");
+    if (HIWORD(msgbox->lpszText))
+        RtlCreateUnicodeStringFromAsciiz(&textW, msgbox->lpszText);
+    else
+        textW.Buffer = (LPWSTR)msgbox->lpszText;
+    if (HIWORD(msgbox->lpszCaption))
+        RtlCreateUnicodeStringFromAsciiz(&captionW, msgbox->lpszCaption);
+    else
+        captionW.Buffer = (LPWSTR)msgbox->lpszCaption;
+    if (HIWORD(msgbox->lpszIcon))
+        RtlCreateUnicodeStringFromAsciiz(&iconW, msgbox->lpszIcon);
+    else
+        captionW.Buffer = (LPWSTR)msgbox->lpszIcon;
 
-    if(!(hRes = FindResourceA(GetModuleHandleA("USER32"), "MSGBOX", RT_DIALOGA)))
-        return 0;
-    if(!(template = (LPVOID)LoadResource(GetModuleHandleA("USER32"), hRes)))
-        return 0;
+    msgboxW.cbSize = sizeof(msgboxW);
+    msgboxW.hwndOwner = msgbox->hwndOwner;
+    msgboxW.hInstance = msgbox->hInstance;
+    msgboxW.lpszText = textW.Buffer;
+    msgboxW.lpszCaption = captionW.Buffer;
+    msgboxW.dwStyle = msgbox->dwStyle;
+    msgboxW.lpszIcon = iconW.Buffer;
+    msgboxW.dwContextHelpId = msgbox->dwContextHelpId;
+    msgboxW.lpfnMsgBoxCallback = msgbox->lpfnMsgBoxCallback;
+    msgboxW.dwLanguageId = msgbox->dwLanguageId;
 
-    return DialogBoxIndirectParamA( msgbox->hInstance, template,
-                                      msgbox->hwndOwner, (DLGPROC)MSGBOX_DlgProc,
-				      (LPARAM)msgbox );
+    ret = MessageBoxIndirectW(&msgboxW);
+
+    if (HIWORD(textW.Buffer)) RtlFreeUnicodeString(&textW);
+    if (HIWORD(captionW.Buffer)) RtlFreeUnicodeString(&captionW);
+    if (HIWORD(iconW.Buffer)) RtlFreeUnicodeString(&iconW);
+    return ret;
 }
 
 /**************************************************************************
@@ -379,10 +422,16 @@ INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
  */
 INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
 {
-    MSGBOXPARAMSA	msgboxa;
-    memcpy(&msgboxa,msgbox,sizeof(msgboxa));
-    msgboxa.lpszCaption = HEAP_strdupWtoA( GetProcessHeap(), 0, msgbox->lpszCaption );
-    msgboxa.lpszText = HEAP_strdupWtoA( GetProcessHeap(), 0, msgbox->lpszText );
-    msgboxa.lpszIcon = HEAP_strdupWtoA( GetProcessHeap(), 0, msgbox->lpszIcon );
-    return MessageBoxIndirectA(&msgboxa);
+    LPVOID tmplate;
+    HRSRC hRes;
+    HMODULE hUser32 = GetModuleHandleA("user32.dll");
+    static const WCHAR msg_box_res_nameW[] = { 'M','S','G','B','O','X',0 };
+
+    if (!(hRes = FindResourceW(hUser32, msg_box_res_nameW, RT_DIALOGW)))
+        return 0;
+    if (!(tmplate = (LPVOID)LoadResource(hUser32, hRes)))
+        return 0;
+
+    return DialogBoxIndirectParamW(msgbox->hInstance, tmplate, msgbox->hwndOwner,
+                                   MSGBOX_DlgProc, (LPARAM)msgbox);
 }

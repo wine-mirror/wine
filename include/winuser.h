@@ -2330,7 +2330,7 @@ typedef struct
     INT	iContextType;	/* Either HELPINFO_WINDOW or HELPINFO_MENUITEM */
     INT	iCtrlId;	/* Control Id or a Menu item Id. */
     HANDLE	hItemHandle;	/* hWnd of control or hMenu.     */
-    DWORD	dwContextId;	/* Context Id associated with this item */
+    DWORD_PTR	dwContextId;	/* Context Id associated with this item */
     POINT	MousePos;	/* Mouse Position in screen co-ordinates */
 }  HELPINFO,*LPHELPINFO;
 
@@ -2345,7 +2345,7 @@ typedef struct
     LPCSTR	lpszCaption;
     DWORD	dwStyle;
     LPCSTR	lpszIcon;
-    DWORD	dwContextHelpId;
+    DWORD_PTR	dwContextHelpId;
     MSGBOXCALLBACK	lpfnMsgBoxCallback;
     DWORD	dwLanguageId;
 } MSGBOXPARAMSA, *PMSGBOXPARAMSA, *LPMSGBOXPARAMSA;
@@ -2359,7 +2359,7 @@ typedef struct
     LPCWSTR	lpszCaption;
     DWORD	dwStyle;
     LPCWSTR	lpszIcon;
-    DWORD	dwContextHelpId;
+    DWORD_PTR	dwContextHelpId;
     MSGBOXCALLBACK	lpfnMsgBoxCallback;
     DWORD	dwLanguageId;
 } MSGBOXPARAMSW, *PMSGBOXPARAMSW, *LPMSGBOXPARAMSW;
