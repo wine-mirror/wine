@@ -6044,7 +6044,8 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 
     TRACE("(nColumn=%d, lpColumn=%s, isW=%d)\n", nColumn, debuglvcolumn_t(lpColumn, isW), isW);
 
-    if (!lpColumn || nColumn < 0 || nColumn > infoPtr->hdpaColumns->nItemCount) return -1;
+    if (!lpColumn || nColumn < 0) return -1;
+    nColumn = min(nColumn, infoPtr->hdpaColumns->nItemCount);
     
     ZeroMemory(&hdi, sizeof(HDITEMW));
     column_fill_hditem(infoPtr, &hdi, nColumn, lpColumn, isW);
