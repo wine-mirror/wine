@@ -93,6 +93,7 @@ typedef struct tagCRYPTKEY
 #define RSAENH_PERSONALITY_BASE        0u
 #define RSAENH_PERSONALITY_STRONG      1u
 #define RSAENH_PERSONALITY_ENHANCED    2u
+#define RSAENH_PERSONALITY_SCHANNEL    3u
 
 #define RSAENH_MAGIC_CONTAINER         0x26384993u
 typedef struct tagKEYCONTAINER
@@ -130,22 +131,23 @@ typedef struct tagKEYCONTAINER
 /******************************************************************************
  * aProvEnumAlgsEx - Defines the capabilities of the CSP personalities.
  */
-#define RSAENH_MAX_ENUMALGS 14
-PROV_ENUMALGS_EX aProvEnumAlgsEx[3][RSAENH_MAX_ENUMALGS+1] =
+#define RSAENH_MAX_ENUMALGS 19
+#define RSAENH_PCT1_SSL2_SSL3_TLS1 (CRYPT_FLAG_PCT1|CRYPT_FLAG_SSL2|CRYPT_FLAG_SSL3|CRYPT_FLAG_TLS1)
+PROV_ENUMALGS_EX aProvEnumAlgsEx[4][RSAENH_MAX_ENUMALGS+1] =
 {
  {
   {CALG_RC2,       40, 40,   56,0,                    4,"RC2",     24,"RSA Data Security's RC2"},
   {CALG_RC4,       40, 40,   56,0,                    4,"RC4",     24,"RSA Data Security's RC4"},
   {CALG_DES,       56, 56,   56,0,                    4,"DES",     31,"Data Encryption Standard (DES)"},
   {CALG_SHA,      160,160,  160,CRYPT_FLAG_SIGNING,   6,"SHA-1",   30,"Secure Hash Algorithm (SHA-1)"},
-  {CALG_MD2,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD2",     27,"MD2 Message Digest 2 (MD2)"},
-  {CALG_MD4,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD4",     27,"MD4 Message Digest 4 (MD4)"},
-  {CALG_MD5,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD5",     27,"MD5 Message Digest 5 (MD5)"},
+  {CALG_MD2,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD2",     23,"Message Digest 2 (MD2)"},
+  {CALG_MD4,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD4",     23,"Message Digest 4 (MD4)"},
+  {CALG_MD5,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD5",     23,"Message Digest 5 (MD5)"},
   {CALG_SSL3_SHAMD5,288,288,288,0,                   12,"SSL3 SHAMD5",12,"SSL3 SHAMD5"},
-  {CALG_MAC,        0,  0,    0,0,                    4,"MAC",     27,"Message Authentication Code"},
+  {CALG_MAC,        0,  0,    0,0,                    4,"MAC",     28,"Message Authentication Code"},
   {CALG_RSA_SIGN, 512,384,16384,CRYPT_FLAG_SIGNING|CRYPT_FLAG_IPSEC,9,"RSA_SIGN",14,"RSA Signature"},
-  {CALG_RSA_KEYX, 512,384, 1024,CRYPT_FLAG_SIGNING|CRYPT_FLAG_IPSEC,9,"RSA_KEYX",18,"RSA Key Exchange"},
-  {CALG_HMAC,       0,  0,    0,0,                    5,"HMAC",    23,"HMAC Hugo's MAC (HMAC)"},
+  {CALG_RSA_KEYX, 512,384, 1024,CRYPT_FLAG_SIGNING|CRYPT_FLAG_IPSEC,9,"RSA_KEYX",17,"RSA Key Exchange"},
+  {CALG_HMAC,       0,  0,    0,0,                    5,"HMAC",    18,"Hugo's MAC (HMAC)"},
   {0,               0,  0,    0,0,                    1,"",         1,""}
  },
  {
@@ -155,14 +157,14 @@ PROV_ENUMALGS_EX aProvEnumAlgsEx[3][RSAENH_MAX_ENUMALGS+1] =
   {CALG_3DES_112, 112,112,  112,0,                   13,"3DES TWO KEY",19,"Two Key Triple DES"},
   {CALG_3DES,     168,168,  168,0,                    5,"3DES",    21,"Three Key Triple DES"},
   {CALG_SHA,      160,160,  160,CRYPT_FLAG_SIGNING,   6,"SHA-1",   30,"Secure Hash Algorithm (SHA-1)"},
-  {CALG_MD2,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD2",     27,"MD2 Message Digest 2 (MD2)"},
-  {CALG_MD4,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD4",     27,"MD4 Message Digest 4 (MD4)"},
-  {CALG_MD5,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD5",     27,"MD5 Message Digest 5 (MD5)"},
+  {CALG_MD2,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD2",     23,"Message Digest 2 (MD2)"},
+  {CALG_MD4,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD4",     23,"Message Digest 4 (MD4)"},
+  {CALG_MD5,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD5",     23,"Message Digest 5 (MD5)"},
   {CALG_SSL3_SHAMD5,288,288,288,0,                   12,"SSL3 SHAMD5",12,"SSL3 SHAMD5"},
-  {CALG_MAC,        0,  0,    0,0,                    4,"MAC",     27,"Message Authentication Code"},
+  {CALG_MAC,        0,  0,    0,0,                    4,"MAC",     28,"Message Authentication Code"},
   {CALG_RSA_SIGN,1024,384,16384,CRYPT_FLAG_SIGNING|CRYPT_FLAG_IPSEC,9,"RSA_SIGN",14,"RSA Signature"},
-  {CALG_RSA_KEYX,1024,384,16384,CRYPT_FLAG_SIGNING|CRYPT_FLAG_IPSEC,9,"RSA_KEYX",18,"RSA Key Exchange"},
-  {CALG_HMAC,       0,  0,    0,0,                    5,"HMAC",    23,"HMAC Hugo's MAC (HMAC)"},
+  {CALG_RSA_KEYX,1024,384,16384,CRYPT_FLAG_SIGNING|CRYPT_FLAG_IPSEC,9,"RSA_KEYX",17,"RSA Key Exchange"},
+  {CALG_HMAC,       0,  0,    0,0,                    5,"HMAC",    18,"Hugo's MAC (HMAC)"},
   {0,               0,  0,    0,0,                    1,"",         1,""}
  },
  {
@@ -172,15 +174,37 @@ PROV_ENUMALGS_EX aProvEnumAlgsEx[3][RSAENH_MAX_ENUMALGS+1] =
   {CALG_3DES_112, 112,112,  112,0,                   13,"3DES TWO KEY",19,"Two Key Triple DES"},
   {CALG_3DES,     168,168,  168,0,                    5,"3DES",    21,"Three Key Triple DES"},
   {CALG_SHA,      160,160,  160,CRYPT_FLAG_SIGNING,   6,"SHA-1",   30,"Secure Hash Algorithm (SHA-1)"},
-  {CALG_MD2,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD2",     27,"MD2 Message Digest 2 (MD2)"},
-  {CALG_MD4,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD4",     27,"MD4 Message Digest 4 (MD4)"},
-  {CALG_MD5,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD5",     27,"MD5 Message Digest 5 (MD5)"},
+  {CALG_MD2,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD2",     23,"Message Digest 2 (MD2)"},
+  {CALG_MD4,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD4",     23,"Message Digest 4 (MD4)"},
+  {CALG_MD5,      128,128,  128,CRYPT_FLAG_SIGNING,   4,"MD5",     23,"Message Digest 5 (MD5)"},
   {CALG_SSL3_SHAMD5,288,288,288,0,                   12,"SSL3 SHAMD5",12,"SSL3 SHAMD5"},
-  {CALG_MAC,        0,  0,    0,0,                    4,"MAC",     27,"Message Authentication Code"},
+  {CALG_MAC,        0,  0,    0,0,                    4,"MAC",     28,"Message Authentication Code"},
   {CALG_RSA_SIGN,1024,384,16384,CRYPT_FLAG_SIGNING|CRYPT_FLAG_IPSEC,9,"RSA_SIGN",14,"RSA Signature"},
-  {CALG_RSA_KEYX,1024,384,16384,CRYPT_FLAG_SIGNING|CRYPT_FLAG_IPSEC,9,"RSA_KEYX",18,"RSA Key Exchange"},
-  {CALG_HMAC,       0,  0,    0,0,                    5,"HMAC",    23,"HMAC Hugo's MAC (HMAC)"},
+  {CALG_RSA_KEYX,1024,384,16384,CRYPT_FLAG_SIGNING|CRYPT_FLAG_IPSEC,9,"RSA_KEYX",17,"RSA Key Exchange"},
+  {CALG_HMAC,       0,  0,    0,0,                    5,"HMAC",    18,"Hugo's MAC (HMAC)"},
   {0,               0,  0,    0,0,                    1,"",         1,""}
+ },
+ {
+  {CALG_RC2,      128, 40,  128,RSAENH_PCT1_SSL2_SSL3_TLS1, 4,"RC2",        24,"RSA Data Security's RC2"},
+  {CALG_RC4,      128, 40,  128,RSAENH_PCT1_SSL2_SSL3_TLS1, 4,"RC4",        24,"RSA Data Security's RC4"},
+  {CALG_DES,       56, 56,   56,RSAENH_PCT1_SSL2_SSL3_TLS1, 4,"DES",        31,"Data Encryption Standard (DES)"},
+  {CALG_3DES_112, 112,112,  112,RSAENH_PCT1_SSL2_SSL3_TLS1,13,"3DES TWO KEY",19,"Two Key Triple DES"},
+  {CALG_3DES,     168,168,  168,RSAENH_PCT1_SSL2_SSL3_TLS1, 5,"3DES",       21,"Three Key Triple DES"},
+  {CALG_SHA,160,160,160,CRYPT_FLAG_SIGNING|RSAENH_PCT1_SSL2_SSL3_TLS1,6,"SHA-1",30,"Secure Hash Algorithm (SHA-1)"},
+  {CALG_MD5,128,128,128,CRYPT_FLAG_SIGNING|RSAENH_PCT1_SSL2_SSL3_TLS1,4,"MD5",23,"Message Digest 5 (MD5)"},
+  {CALG_SSL3_SHAMD5,288,288,288,0,                         12,"SSL3 SHAMD5",12,"SSL3 SHAMD5"},
+  {CALG_MAC,        0,  0,    0,0,                          4,"MAC",        28,"Message Authentication Code"},
+  {CALG_RSA_SIGN,1024,384,16384,CRYPT_FLAG_SIGNING|RSAENH_PCT1_SSL2_SSL3_TLS1,9,"RSA_SIGN",14,"RSA Signature"},
+  {CALG_RSA_KEYX,1024,384,16384,CRYPT_FLAG_SIGNING|RSAENH_PCT1_SSL2_SSL3_TLS1,9,"RSA_KEYX",17,"RSA Key Exchange"},
+  {CALG_HMAC,       0,  0,    0,0,                          5,"HMAC",       18,"Hugo's MAC (HMAC)"},
+  {CALG_PCT1_MASTER,128,128,128,CRYPT_FLAG_PCT1,           12,"PCT1 MASTER",12,"PCT1 Master"},
+  {CALG_SSL2_MASTER,40,40,  192,CRYPT_FLAG_SSL2,           12,"SSL2 MASTER",12,"SSL2 Master"},
+  {CALG_SSL3_MASTER,384,384,384,CRYPT_FLAG_SSL3,           12,"SSL3 MASTER",12,"SSL3 Master"},
+  {CALG_TLS1_MASTER,384,384,384,CRYPT_FLAG_TLS1,           12,"TLS1 MASTER",12,"TLS1 Master"},
+  {CALG_SCHANNEL_MASTER_HASH,0,0,-1,0,                     16,"SCH MASTER HASH",21,"SChannel Master Hash"},
+  {CALG_SCHANNEL_MAC_KEY,0,0,-1,0,                         12,"SCH MAC KEY",17,"SChannel MAC Key"},
+  {CALG_SCHANNEL_ENC_KEY,0,0,-1,0,                         12,"SCH ENC KEY",24,"SChannel Encryption Key"},
+  {0,               0,  0,    0,0,                          1,"",            1,""}
  }
 };
 
@@ -795,6 +819,8 @@ static HCRYPTPROV new_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTab
                 pKeyContainer->dwPersonality = RSAENH_PERSONALITY_BASE;
             } else if (!strcmp(pVTable->pszProvName, MS_ENHANCED_PROV_A)) {
                 pKeyContainer->dwPersonality = RSAENH_PERSONALITY_ENHANCED;
+            } else if (!strcmp(pVTable->pszProvName, MS_DEF_RSA_SCHANNEL_PROV_A)) { 
+                pKeyContainer->dwPersonality = RSAENH_PERSONALITY_SCHANNEL;
             } else {
                 pKeyContainer->dwPersonality = RSAENH_PERSONALITY_STRONG;
             }
