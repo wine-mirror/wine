@@ -398,8 +398,9 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 
     dwStyle = wndPtr->dwStyle;
 
-    pWndParent = parent ? WIN_FindWndPtr(parent) : WIN_GetDesktop();
-    if (!pWndParent)
+    if (!parent) parent = GetDesktopWindow();
+
+    if (!(pWndParent = WIN_FindWndPtr(parent)))
     {
         WIN_ReleaseWndPtr( wndPtr );
         return 0;
