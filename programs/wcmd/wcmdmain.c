@@ -56,14 +56,14 @@ HANDLE h;
 
   args[0] = param[0] = '\0';
   if (argc > 1) {
-    for (i=1; i<argc; i++) {
-      if (argv[i][0] == '/') {
+    /* interpreter options must come before the command to execute. 
+     * Any options after the command are command options, not interpreter options.
+     */
+    for (i=1; i<argc && argv[i][0] == '/'; i++)
         strcat (args, argv[i]);
-      }
-      else {
+    for (; i<argc; i++) {
         strcat (param, argv[i]);
         strcat (param, " ");
-      }
     }
   }
 
