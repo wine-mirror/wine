@@ -12,7 +12,50 @@
  *     The second cdrom (chapter 3) contains executables activate.exe,
  *     curtool.exe, deltool.exe, enumtools.exe, getinfo.exe, getiptxt.exe,
  *     hittest.exe, needtext.exe, newrect.exe, updtext.exe and winfrpt.exe.
+ *
+ *   Timer logic.
+ *
+ * One important point to remember is that tools don't necessarily get
+ * a WM_MOUSEMOVE once the cursor leaves the tool, an example is when
+ * a tool sets TTF_IDISHWND (i.e. an entire window is a tool) because
+ * here WM_MOUSEMOVEs only get sent when the cursor is inside the
+ * client area.  Therefore the only reliable way to know that the
+ * cursor has left a tool is to keep a timer running and check the
+ * position every time it expires.  This is the role of timer
+ * ID_TIMERLEAVE.
+ *
+ *
+ * On entering a tool (detected in a relayed WM_MOUSEMOVE) we start
+ * ID_TIMERSHOW, if this times out and we're still in the tool we show
+ * the tip.  On showing a tip we start both ID_TIMERPOP and
+ * ID_TIMERLEAVE.  On hiding a tooltip we kill ID_TIMERPOP.
+ * ID_TIMERPOP is restarted on every relayed WM_MOUSEMOVE.  If
+ * ID_TIMERPOP expires the tool is hidden and ID_TIMERPOP is killed.
+ * ID_TIMERLEAVE remains running - this is important as we need to
+ * determine when the cursor leaves the tool.
+ *
+ * When ID_TIMERLEAVE expires or on a relayed WM_MOUSEMOVE if we're
+ * still in the tool do nothing (apart from restart ID_TIMERPOP if
+ * this is a WM_MOUSEMOVE) (ID_TIMERLEAVE remains running).  If we've
+ * left the tool and entered another one then hide the tip and start
+ * ID_TIMERSHOW with time ReshowTime and kill ID_TIMERLEAVE.  If we're
+ * outside all tools hide the tip and kill ID_TIMERLEAVE.  On Relayed
+ * mouse button messages hide the tip but leave ID_TIMERLEAVE running,
+ * this again will let us keep track of when the cursor leaves the
+ * tool.
+ *
+ *
+ * infoPtr->nTool is the tool the mouse was on on the last relayed MM
+ * or timer expiry or -1 if the mouse was not on a tool.
+ * 
+ * infoPtr->nCurrentTool is the tool for which the tip is currently
+ * displaying text for or -1 if the tip is not shown.  Actually this
+ * will only ever be infoPtr-nTool or -1, so it could be changed to a
+ * BOOL.
+ *
  */
+
+
 
 #include <string.h>
 
@@ -116,12 +159,15 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 		}
 	    }
 	    else if (ttnmdi.szText[0]) {
-		lstrcpynAtoW (infoPtr->szTipText, ttnmdi.szText, 80);
+	        MultiByteToWideChar(CP_ACP, 0, ttnmdi.szText, 80,
+				    infoPtr->szTipText, INFOTIPSIZE);
 		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
-		    INT len = lstrlenA (ttnmdi.szText);
+		    INT len = MultiByteToWideChar(CP_ACP, 0, ttnmdi.szText,
+						  80, NULL, 0);
 		    toolPtr->hinst = 0;
-		    toolPtr->lpszText =	COMCTL32_Alloc ((len+1)* sizeof(WCHAR));
-		    lstrcpyAtoW (toolPtr->lpszText, ttnmdi.szText);
+		    toolPtr->lpszText =	COMCTL32_Alloc (len * sizeof(WCHAR));
+		    MultiByteToWideChar(CP_ACP, 0, ttnmdi.szText, 80,
+					toolPtr->lpszText, len);
 		}
 	    }
 	    else if (ttnmdi.lpszText == 0) {
@@ -129,12 +175,15 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 		infoPtr->szTipText[0] = L'\0';
 	    }
 	    else if (ttnmdi.lpszText != LPSTR_TEXTCALLBACKA) {
-		lstrcpynAtoW (infoPtr->szTipText, ttnmdi.lpszText, INFOTIPSIZE);
+		MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText, -1,
+				    infoPtr->szTipText, INFOTIPSIZE);
 		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
-		    INT len = lstrlenA (ttnmdi.lpszText);
+		    INT len = MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText,
+						  -1, NULL, 0);
 		    toolPtr->hinst = 0;
-		    toolPtr->lpszText =	COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-		    lstrcpyAtoW (toolPtr->lpszText, ttnmdi.lpszText);
+		    toolPtr->lpszText =	COMCTL32_Alloc (len * sizeof(WCHAR));
+		    MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText, -1,
+					toolPtr->lpszText, len);
 		}
 	    }
 	    else {
@@ -200,7 +249,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 
     infoPtr->nCurrentTool = infoPtr->nTool;
 
-    TRACE("Show tooltip pre %d!\n", infoPtr->nTool);
+    TRACE("Show tooltip pre %d! (%04x)\n", infoPtr->nTool, hwnd);
 
     TOOLTIPS_GetTipText (hwnd, infoPtr, infoPtr->nCurrentTool);
 
@@ -277,6 +326,9 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     UpdateWindow(hwnd);
 
     SetTimer (hwnd, ID_TIMERPOP, infoPtr->nAutoPopTime, 0);
+    TRACE("timer 2 started!\n");
+    SetTimer (hwnd, ID_TIMERLEAVE, infoPtr->nReshowTime, 0);
+    TRACE("timer 3 started!\n");
 }
 
 
@@ -286,11 +338,12 @@ TOOLTIPS_Hide (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     TTTOOL_INFO *toolPtr;
     NMHDR hdr;
 
+    TRACE("Hide tooltip %d! (%04x)\n", infoPtr->nCurrentTool, hwnd);
+
     if (infoPtr->nCurrentTool == -1)
 	return;
 
     toolPtr = &infoPtr->tools[infoPtr->nCurrentTool];
-    TRACE("Hide tooltip %d!\n", infoPtr->nCurrentTool);
     KillTimer (hwnd, ID_TIMERPOP);
 
     hdr.hwndFrom = hwnd;
@@ -500,21 +553,6 @@ TOOLTIPS_GetToolFromPoint (TOOLTIPS_INFO *infoPtr, HWND hwnd, LPPOINT lpPt)
 }
 
 
-static INT
-TOOLTIPS_GetToolFromMessage (TOOLTIPS_INFO *infoPtr, HWND hwndTool)
-{
-    DWORD   dwPos;
-    POINT pt;
-
-    dwPos = GetMessagePos ();
-    pt.x = (INT)LOWORD(dwPos);
-    pt.y = (INT)HIWORD(dwPos);
-    ScreenToClient (hwndTool, &pt);
-
-    return TOOLTIPS_GetToolFromPoint (infoPtr, hwndTool, &pt);
-}
-
-
 static BOOL
 TOOLTIPS_IsWindowActive (HWND hwnd)
 {
@@ -566,7 +604,7 @@ TOOLTIPS_Activate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (infoPtr->bActive)
 	TRACE("activate!\n");
 
-    if (!(infoPtr->bActive) && (infoPtr->nCurrentTool != -1)) 
+    if (!(infoPtr->bActive) && (infoPtr->nCurrentTool != -1))
 	TOOLTIPS_Hide (hwnd, infoPtr);
 
     return 0;
@@ -622,10 +660,12 @@ TOOLTIPS_AddToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	}
 	else {
-	    INT len = lstrlenA (lpToolInfo->lpszText);
+	    INT len = MultiByteToWideChar(CP_ACP, 0, lpToolInfo->lpszText, -1,
+					  NULL, 0);
 	    TRACE("add text \"%s\"!\n", lpToolInfo->lpszText);
-	    toolPtr->lpszText =	COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
-	    lstrcpyAtoW (toolPtr->lpszText, lpToolInfo->lpszText);
+	    toolPtr->lpszText =	COMCTL32_Alloc (len * sizeof(WCHAR));
+	    MultiByteToWideChar(CP_ACP, 0, lpToolInfo->lpszText, -1,
+				toolPtr->lpszText, len);
 	}
     }
 
@@ -1102,20 +1142,22 @@ TOOLTIPS_GetDelayTime (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
 
     switch (wParam) {
-	case TTDT_AUTOMATIC:
-	    return infoPtr->nAutomaticTime;
+    case TTDT_RESHOW:
+        return infoPtr->nReshowTime;
 
-	case TTDT_RESHOW:
-	    return infoPtr->nReshowTime;
+    case TTDT_AUTOPOP:
+        return infoPtr->nAutoPopTime;
 
-	case TTDT_AUTOPOP:
-	    return infoPtr->nAutoPopTime;
+    case TTDT_INITIAL:
+    case TTDT_AUTOMATIC: /* Apparently TTDT_AUTOMATIC returns TTDT_INITIAL */
+        return infoPtr->nInitialTime;
 
-	case TTDT_INITIAL:
-	    return infoPtr->nInitialTime;
+    default:
+        WARN("Invalid wParam %x\n", wParam);
+	break;
     }
 
-    return 0;
+    return -1;
 }
 
 
@@ -1158,7 +1200,12 @@ TOOLTIPS_GetTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nTool = TOOLTIPS_GetToolFromInfoA (infoPtr, lpToolInfo);
     if (nTool == -1) return 0;
 
-    lstrcpyWtoA (lpToolInfo->lpszText, infoPtr->tools[nTool].lpszText);
+    /* NB this API is broken, there is no way for the app to determine
+       what size buffer it requires nor a way to specify how long the
+       one it supplies is.  We'll assume it's upto INFOTIPSIZE */
+
+    WideCharToMultiByte(CP_ACP, 0, infoPtr->tools[nTool].lpszText, -1,
+			lpToolInfo->lpszText, INFOTIPSIZE, NULL, NULL);
 
     return 0;
 }
@@ -1399,16 +1446,6 @@ inline static LRESULT
 TOOLTIPS_Pop (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
-
-	/*
-	 * Need to set nCurrentTool to nOldTool so we hide the tool.
-	 *  nTool and nOldTool values change when the mouse leaves the window.
-	 * If using TTM_UPDATETIPTEXT we can end up with an nCurrentTool = -1 if the 
-	 * text can't be found, thus the tooltip would never be hidden.
-	 */
-	if (infoPtr->nTool != infoPtr->nOldTool)
-        infoPtr->nCurrentTool = infoPtr->nOldTool;
-
     TOOLTIPS_Hide (hwnd, infoPtr);
 
     return 0;
@@ -1421,6 +1458,7 @@ TOOLTIPS_RelayEvent (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
     LPMSG lpMsg = (LPMSG)lParam;
     POINT pt;
+    INT nOldTool;
 
     if (lParam == 0) {
 	ERR("lpMsg == NULL!\n");
@@ -1434,46 +1472,45 @@ TOOLTIPS_RelayEvent (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	case WM_MBUTTONUP:
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
-	    pt = lpMsg->pt;
-	    ScreenToClient (lpMsg->hwnd, &pt);
-	    infoPtr->nOldTool = infoPtr->nTool;
+	    pt.x = LOWORD(lParam);
+	    pt.y = HIWORD(lParam);
 	    infoPtr->nTool = TOOLTIPS_GetToolFromPoint (infoPtr, lpMsg->hwnd, &pt);
 	    TRACE("tool (%x) %d %d\n",
-		   hwnd, infoPtr->nOldTool, infoPtr->nTool);
+		   hwnd, infoPtr->nTool, infoPtr->nCurrentTool);
 	    TOOLTIPS_Hide (hwnd, infoPtr);
 	    break;
 
 	case WM_MOUSEMOVE:
-	    pt = lpMsg->pt;
-	    ScreenToClient (lpMsg->hwnd, &pt);
-	    infoPtr->nOldTool = infoPtr->nTool;
-	    infoPtr->nTool = TOOLTIPS_GetToolFromPoint (infoPtr, lpMsg->hwnd, &pt);
-	    TRACE("tool (%x) %d %d\n",
-		   hwnd, infoPtr->nOldTool, infoPtr->nTool);
-	    TRACE("WM_MOUSEMOVE (%04x %ld %ld)\n",
-		   hwnd, pt.x, pt.y);
-	    if ((infoPtr->bActive) && (infoPtr->nTool != infoPtr->nOldTool)) {
-		if (infoPtr->nOldTool == -1) {
-		    SetTimer (hwnd, ID_TIMERSHOW, infoPtr->nInitialTime, 0);
-		    TRACE("timer 1 started!\n");
+	    pt.x = LOWORD(lpMsg->lParam);
+	    pt.y = HIWORD(lpMsg->lParam);
+	    nOldTool = infoPtr->nTool;
+	    infoPtr->nTool = TOOLTIPS_GetToolFromPoint(infoPtr, lpMsg->hwnd,
+						       &pt);
+	    TRACE("tool (%x) %d %d %d\n", hwnd, nOldTool,
+		  infoPtr->nTool, infoPtr->nCurrentTool);
+	    TRACE("WM_MOUSEMOVE (%04x %ld %ld)\n", hwnd, pt.x, pt.y);
+
+	    if (infoPtr->nTool != nOldTool) {
+	        if(infoPtr->nTool == -1) { /* Moved out of all tools */
+		    TOOLTIPS_Hide(hwnd, infoPtr);
+		    KillTimer(hwnd, ID_TIMERLEAVE);
+		} else if (nOldTool == -1) { /* Moved from outside */
+		    if(infoPtr->bActive) {
+		        SetTimer(hwnd, ID_TIMERSHOW, infoPtr->nInitialTime, 0);
+			TRACE("timer 1 started!\n");
+		    }
+		} else { /* Moved from one to another */
+		    TOOLTIPS_Hide (hwnd, infoPtr);
+		    KillTimer(hwnd, ID_TIMERLEAVE);
+		    if(infoPtr->bActive) {
+		        SetTimer (hwnd, ID_TIMERSHOW, infoPtr->nReshowTime, 0);
+			TRACE("timer 1 started!\n");
+		    }
 		}
-		else {
-			/*
-			 * Need to set nCurrentTool to nOldTool so we hide the tool.
-			 *  nTool and nOldTool values change when the mouse leaves the window.
-			 * If using TTM_UPDATETIPTEXT we can end up with an nCurrentTool = -1 if the 
-			 * text can't be found, thus the tooltip would never be hidden.
-			 */
-			if (infoPtr->nTool != infoPtr->nOldTool)
-				infoPtr->nCurrentTool = infoPtr->nOldTool;
-			TOOLTIPS_Hide (hwnd, infoPtr);
-		    SetTimer (hwnd, ID_TIMERSHOW, infoPtr->nReshowTime, 0);
-		    TRACE("timer 2 started!\n");
-		}
-	    }
-	    if (infoPtr->nCurrentTool != -1) {
-		SetTimer (hwnd, ID_TIMERLEAVE, 100, 0);
-		TRACE("timer 3 started!\n");
+	    } else if(infoPtr->nCurrentTool != -1) { /* restart autopop */
+	        KillTimer(hwnd, ID_TIMERPOP);
+		SetTimer(hwnd, ID_TIMERPOP, infoPtr->nAutoPopTime, 0);
+		TRACE("timer 2 restarted\n");
 	    }
 	    break;
     }
@@ -1489,32 +1526,35 @@ TOOLTIPS_SetDelayTime (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT nTime = (INT)LOWORD(lParam);
 
     switch (wParam) {
-	case TTDT_AUTOMATIC:
-	    if (nTime == 0) {
-		infoPtr->nAutomaticTime = 500;
-		infoPtr->nReshowTime    = 100;
-		infoPtr->nAutoPopTime   = 5000;
-		infoPtr->nInitialTime   = 500;
-	    }
-	    else {
-		infoPtr->nAutomaticTime = nTime;
-		infoPtr->nReshowTime    = nTime / 5;
-		infoPtr->nAutoPopTime   = nTime * 10;
-		infoPtr->nInitialTime   = nTime;
-	    }
+    case TTDT_AUTOMATIC:
+        if (nTime <= 0)
+	    nTime = GetDoubleClickTime();
+	infoPtr->nReshowTime    = nTime / 5;
+	infoPtr->nAutoPopTime   = nTime * 10;
+	infoPtr->nInitialTime   = nTime;
+	break;
+
+    case TTDT_RESHOW:
+        if(nTime < 0)
+	    nTime = GetDoubleClickTime() / 5;
+	infoPtr->nReshowTime = nTime;
+	break;
+
+    case TTDT_AUTOPOP:
+        if(nTime < 0)
+	    nTime = GetDoubleClickTime() * 10;
+	infoPtr->nAutoPopTime = nTime;
+	break;
+
+    case TTDT_INITIAL:
+        if(nTime < 0)
+	    nTime = GetDoubleClickTime();
+	infoPtr->nInitialTime = nTime;
 	    break;
 
-	case TTDT_RESHOW:
-	    infoPtr->nReshowTime = nTime;
-	    break;
-
-	case TTDT_AUTOPOP:
-	    infoPtr->nAutoPopTime = nTime;
-	    break;
-
-	case TTDT_INITIAL:
-	    infoPtr->nInitialTime = nTime;
-	    break;
+    default:
+        WARN("Invalid wParam %x\n", wParam);
+	break;
     }
 
     return 0;
@@ -1611,9 +1651,11 @@ TOOLTIPS_SetToolInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		toolPtr->lpszText = NULL;
 	    }
 	    if (lpToolInfo->lpszText) {
-		INT len = lstrlenA (lpToolInfo->lpszText);
-		toolPtr->lpszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-		lstrcpyAtoW (toolPtr->lpszText, lpToolInfo->lpszText);
+		INT len = MultiByteToWideChar(CP_ACP, 0, lpToolInfo->lpszText,
+					      -1, NULL, 0);
+		toolPtr->lpszText = COMCTL32_Alloc (len * sizeof(WCHAR));
+		MultiByteToWideChar(CP_ACP, 0, lpToolInfo->lpszText, -1,
+				    toolPtr->lpszText, len);
 	    }
 	}
     }
@@ -1781,9 +1823,11 @@ TOOLTIPS_UpdateTipTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		toolPtr->lpszText = NULL;
 	    }
 	    if (lpToolInfo->lpszText) {
-		INT len = lstrlenA (lpToolInfo->lpszText);
-		toolPtr->lpszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
-		lstrcpyAtoW (toolPtr->lpszText, lpToolInfo->lpszText);
+		INT len = MultiByteToWideChar(CP_ACP, 0, lpToolInfo->lpszText,
+					      -1, NULL, 0);
+		toolPtr->lpszText = COMCTL32_Alloc (len * sizeof(WCHAR));
+		MultiByteToWideChar(CP_ACP, 0, lpToolInfo->lpszText, -1,
+				    toolPtr->lpszText, len);
 	    }
 	}
     }
@@ -1883,14 +1927,10 @@ TOOLTIPS_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     infoPtr->nMaxTipWidth = -1;
     infoPtr->nTool = -1;
-    infoPtr->nOldTool = -1;
     infoPtr->nCurrentTool = -1;
     infoPtr->nTrackTool = -1;
 
-    infoPtr->nAutomaticTime = 500;
-    infoPtr->nReshowTime    = 100;
-    infoPtr->nAutoPopTime   = 5000;
-    infoPtr->nInitialTime   = 500;
+    TOOLTIPS_SetDelayTime(hwnd, TTDT_AUTOMATIC, 0L);
 
     nResult = (INT) SendMessageA (GetParent (hwnd), WM_NOTIFYFORMAT,
 				  (WPARAM)hwnd, (LPARAM)NF_QUERY);
@@ -2098,50 +2138,59 @@ static LRESULT
 TOOLTIPS_OnWMGetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
-    INT length;
 
     if(!infoPtr || !(infoPtr->szTipText))
         return 0;
 
-    length = lstrlenW(infoPtr->szTipText);
-    /* When wParam is smaller than the lenght of the tip text
-       copy wParam characters of the tip text and return wParam */
-    if(wParam < length)
-    {
-        lstrcpynWtoA((LPSTR)lParam, infoPtr->szTipText,(UINT)wParam);
-        return wParam;
-    }
-    lstrcpyWtoA((LPSTR)lParam, infoPtr->szTipText);
-    return length;
+    return WideCharToMultiByte(CP_ACP, 0, infoPtr->szTipText, -1,
+			       (LPSTR)lParam, wParam, NULL, NULL);
 }
 
 static LRESULT
 TOOLTIPS_Timer (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
+    INT nOldTool;
 
     TRACE("timer %d (%x) expired!\n", wParam, hwnd);
 
-    switch (wParam)
-    {
-	case ID_TIMERSHOW:
-	    KillTimer (hwnd, ID_TIMERSHOW);
-	    if (TOOLTIPS_CheckTool (hwnd, TRUE) == infoPtr->nTool)
-		TOOLTIPS_Show (hwnd, infoPtr);
-	    break;
+    switch (wParam) {
+    case ID_TIMERSHOW:
+        KillTimer (hwnd, ID_TIMERSHOW);
+	nOldTool = infoPtr->nTool;
+	if ((infoPtr->nTool = TOOLTIPS_CheckTool (hwnd, TRUE)) == nOldTool)
+	    TOOLTIPS_Show (hwnd, infoPtr);
+	break;
 
-	case ID_TIMERPOP:
-	    TOOLTIPS_Hide (hwnd, infoPtr);
-	    break;
+    case ID_TIMERPOP:
+        TOOLTIPS_Hide (hwnd, infoPtr);
+	break;
 
-	case ID_TIMERLEAVE:
-	    KillTimer (hwnd, ID_TIMERLEAVE);
-	    if (TOOLTIPS_CheckTool (hwnd, FALSE) == -1) {
-		infoPtr->nTool = -1;
-		infoPtr->nOldTool = -1;
-		TOOLTIPS_Hide (hwnd, infoPtr);
+    case ID_TIMERLEAVE:
+        nOldTool = infoPtr->nTool;
+	infoPtr->nTool = TOOLTIPS_CheckTool (hwnd, FALSE);
+	TRACE("tool (%x) %d %d %d\n", hwnd, nOldTool,
+	      infoPtr->nTool, infoPtr->nCurrentTool);
+	if (infoPtr->nTool != nOldTool) {
+	    if(infoPtr->nTool == -1) { /* Moved out of all tools */
+	        TOOLTIPS_Hide(hwnd, infoPtr);
+		KillTimer(hwnd, ID_TIMERLEAVE);
+	    } else if (nOldTool == -1) { /* Moved from outside */
+	        ERR("How did this happen?\n");
+	    } else { /* Moved from one to another */
+	        TOOLTIPS_Hide (hwnd, infoPtr);
+		KillTimer(hwnd, ID_TIMERLEAVE);
+		if(infoPtr->bActive) {
+		    SetTimer (hwnd, ID_TIMERSHOW, infoPtr->nReshowTime, 0);
+		    TRACE("timer 1 started!\n");
+		}
 	    }
-	    break;
+	}
+	break;
+
+    default:
+        ERR("Unknown timer id %d\n", wParam);
+	break;
     }
     return 0;
 }
@@ -2170,58 +2219,26 @@ TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     LPTT_SUBCLASS_INFO lpttsi =
 	(LPTT_SUBCLASS_INFO)GetPropA (hwnd, COMCTL32_aSubclass);
-    TOOLTIPS_INFO *infoPtr;
-    UINT nTool;
+    MSG msg;
 
-    switch (uMsg) {
-	case WM_LBUTTONDOWN:
-	case WM_LBUTTONUP:
-	case WM_MBUTTONDOWN:
-	case WM_MBUTTONUP:
-	case WM_RBUTTONDOWN:
-	case WM_RBUTTONUP:
-	    infoPtr = TOOLTIPS_GetInfoPtr(lpttsi->hwndToolTip);
-		if (!infoPtr)
-			break;
-		nTool = TOOLTIPS_GetToolFromMessage (infoPtr, hwnd);
+    switch(uMsg) {
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+        msg.hwnd = hwnd;
+	msg.message = uMsg;
+	msg.wParam = wParam;
+	msg.lParam = lParam;
+	TOOLTIPS_RelayEvent(lpttsi->hwndToolTip, 0, (LPARAM)&msg);
+	break;
 
-		TRACE("subclassed mouse message %04x\n", uMsg);
-		infoPtr->nOldTool = infoPtr->nTool;
-		infoPtr->nTool = nTool;
-	    TOOLTIPS_Hide (lpttsi->hwndToolTip, infoPtr);
-	    break;
-
-	case WM_MOUSEMOVE:
-	    infoPtr = TOOLTIPS_GetInfoPtr (lpttsi->hwndToolTip);
-		if (!infoPtr)
-			break;
-		nTool = TOOLTIPS_GetToolFromMessage (infoPtr, hwnd);
-
-		TRACE("subclassed WM_MOUSEMOVE\n");
-		infoPtr->nOldTool = infoPtr->nTool;
-		infoPtr->nTool = nTool;
-
-		if ((infoPtr->bActive) &&
-		    (infoPtr->nTool != infoPtr->nOldTool)) {
-		    if (infoPtr->nOldTool == -1) {
-		    SetTimer (hwnd, ID_TIMERSHOW,
-				    infoPtr->nInitialTime, 0);
-			TRACE("timer 1 started!\n");
-		    }
-		    else {
-		    TOOLTIPS_Hide (lpttsi->hwndToolTip, infoPtr);
-		    SetTimer (hwnd, ID_TIMERSHOW,
-				infoPtr->nReshowTime, 0);
-			TRACE("timer 2 started!\n");
-		    }
-		}
-		if (infoPtr->nCurrentTool != -1) {
-		SetTimer (hwnd, ID_TIMERLEAVE, 100, 0);
-		    TRACE("timer 3 started!\n");
-		}
-	    break;
+    default:
+        break;
     }
-
     return CallWindowProcA (lpttsi->wpOrigProc, hwnd, uMsg, wParam, lParam);
 }
 

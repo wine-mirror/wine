@@ -44,10 +44,8 @@ typedef struct tagTOOLTIPS_INFO
     INT      yTrackPos;
     INT      nMaxTipWidth;
     INT      nTool;
-    INT      nOldTool;
     INT      nCurrentTool;
     INT      nTrackTool;
-    INT      nAutomaticTime;
     INT      nReshowTime;
     INT      nAutoPopTime;
     INT      nInitialTime;
