@@ -1,0 +1,118 @@
+#!/usr/bin/perl -w
+
+# Copyright 1999 Patrik Stridvall
+
+use strict;
+
+BEGIN {
+    require "tools/winapi_check/winapi.pm";
+    require "tools/winapi_check/nativeapi.pm";
+    require "tools/winapi_check/winapi_local.pm";
+    require "tools/winapi_check/winapi_global.pm";
+    require "tools/winapi_check/winapi_options.pm";
+    require "tools/winapi_check/winapi_parser.pm";
+
+    import winapi;
+    import nativeapi;
+    import winapi_local;
+    import winapi_global;
+    import winapi_options;
+    import winapi_parser;
+}
+
+my $options = winapi_options->new(\@ARGV);
+if($options->help) {
+    $options->show_help;
+    exit;
+}
+
+my $win16api = 'winapi'->new("win16", "tools/winapi_check/win16api.dat");
+my $win32api = 'winapi'->new("win32", "tools/winapi_check/win32api.dat");
+'winapi'->read_spec_files($win16api, $win32api);
+
+my $nativeapi = 'nativeapi'->new("tools/winapi_check/nativeapi.dat");
+
+for my $name ($win32api->all_functions) {
+    my $module16 = $win16api->function_module($name);
+    my $module32 = $win32api->function_module($name);
+	
+    if(defined($module16)) {
+	$win16api->found_shared_function($name);
+	$win32api->found_shared_function($name);
+	
+	if($options->shared) {
+	    print "*.spec: $name: is shared between $module16 (Win16) and $module32 (Win32)\n";
+	}
+    }
+}
+
+foreach my $file ($options->files) {
+    my $found_function = sub {
+	my $return_type = shift;
+	my $calling_convention = shift;
+	my $name = shift;
+	my $refarguments = shift;
+	my @arguments = @$refarguments;
+
+	if($options->global) {
+	    $win16api->found_type($return_type) if $options->win16;
+	    $win32api->found_type($return_type) if $options->win32;
+	    for my $argument (@arguments) {
+		$win16api->found_type($argument) if $options->win16;
+		$win32api->found_type($argument) if $options->win32;
+	    }
+	    
+	    $win16api->found_function($name) if $options->win16;
+	    $win32api->found_function($name) if $options->win32;
+	}
+	
+	if($options->local) {
+	    my $module16 = $win16api->function_module($name);
+	    my $module32 = $win32api->function_module($name);
+	    my $output = sub { 
+		my $module = shift;
+		return sub {
+		    my $msg = shift;
+		    print "$file: $module: $return_type $calling_convention $name(" . join(",", @arguments) . "): $msg\n";
+		}
+	    };
+	    my $output16 = &$output($module16);
+	    my $output32 = &$output($module32);
+	    
+	    if($options->argument) {
+		if($options->win16 && $options->report_module($module16)) {
+		  winapi_local::check_arguments $options, $output16,
+		    $return_type, $calling_convention, $name, [@arguments], $win16api;
+		}	
+		if($options->win32 && $options->report_module($module32)) {
+		  winapi_local::check_arguments $options, $output32,
+		    $return_type, $calling_convention, $name, [@arguments], $win32api;
+		}
+	    }
+	    if($options->misplaced) {
+		my $module; 
+		if($file =~ m'^dlls/(.*)/') {
+		    $module = $1;
+		}
+
+		if($options->win16 && $options->report_module($module16)) {
+		    if(!defined($module) || $module ne $module16) {
+			&$output16("function misplaced");
+		    }
+		}
+		
+		if($options->win32 && $options->report_module($module32)) {
+		    if(!defined($module) || $module ne $module32) {
+			&$output32("function misplaced");
+		    }
+		}		
+	    }
+	}
+    };   
+  winapi_parser::parse_c_file $options, $file, $found_function;
+}
+
+if($options->global) {
+    winapi_global::check $options, $win16api, $nativeapi if $options->win16;
+    winapi_global::check $options, $win32api, $nativeapi if $options->win32;
+}
