@@ -56,17 +56,65 @@ extern "C" {
 /*
  * This section defines the items that conflict with the Unix headers.
  */
-
-#include <sys/types.h>
-/* On FreeBSD we may get macros and prototypes for htonl & co.
- * This means the functions will not be called because of the macros.
- * So this should not harm us too much unless we try to define our own
- * prototypes (different calling convention).
+#ifndef USE_WS_PREFIX
+/* We are not using the WS_ prefix we risk getting conflicts for
+ * everything related to select.
  */
-#if defined(USE_WS_PREFIX) || !defined(htonl)
-# define WS_DEFINE_HTONL
-#endif /* htonl */
+# ifdef FD_CLR
+/* Too late, the Unix version of stdlib.h was included before winsock.h.
+ * This means select and all the related stuff is already defined and we
+ * cannot override types and function prototypes.
+ * All we can do is disable all these symbols so that they are not used
+ * inadvertantly.
+ */
+#  undef FD_SETSIZE
+#  undef FD_CLR
+#  undef FD_SET
+#  undef FD_ZERO
+#  undef FD_ISSET
 
+#  define FD_SETSIZE Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define FD_CLR     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define FD_SET     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define FD_ZERO    Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define FD_ISSET   Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define fd_set     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define select     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+# else  /* FD_CLR */
+/* stdlib.h has not been included yet so it's not too late. Include it now
+ * making sure that none of the select symbols is affected. Then we can
+ * define them with our own values.
+ */
+#  define fd_set unix_fd_set
+#  define timeval unix_timeval
+#  define select unix_select
+#  include <sys/types.h>
+#  include <stdlib.h>
+#  undef fd_set
+#  undef timeval
+#  undef select
+#  undef FD_SETSIZE
+#  undef FD_CLR
+#  undef FD_SET
+#  undef FD_ZERO
+#  undef FD_ISSET
+
+#  define WS_DEFINE_SELECT
+# endif /* FD_CLR */
+
+#else
+# define WS_DEFINE_SELECT
+# include <sys/types.h>
+# include <stdlib.h>
+#endif /* !USE_WS_PREFIX */
+
+#if defined(__MINGW_H) && !defined(MSVCRT_BSD_TYPES_DEFINED)
+/* MinGW doesn't define the u_xxx types */
+typedef unsigned char u_char;
+typedef unsigned short u_short;
+typedef unsigned int  u_int;
+typedef unsigned long u_long;
+#endif
 
 
 /*
@@ -336,55 +384,6 @@ typedef struct WS(linger)
 /*
  * Select
  */
-
-#if !defined(USE_WS_PREFIX) && !defined(__WINE_USE_MSVCRT)
-/* We are not using the WS_ prefix and not using the MSVCRT either so we
- * risk getting conflicts for everything related to select.
- */
-# ifdef FD_CLR
-/* Too late, the Unix version of stdlib.h was included before winsock.h.
- * This means select and all the related stuff is already defined and we
- * cannot override types and function prototypes.
- * All we can do is disable all these symbols so that they are not used
- * inadvertantly.
- */
-#  undef FD_SETSIZE
-#  undef FD_CLR
-#  undef FD_SET
-#  undef FD_ZERO
-#  undef FD_ISSET
-
-#  define FD_SETSIZE Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define FD_CLR     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define FD_SET     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define FD_ZERO    Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define FD_ISSET   Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define fd_set     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define select     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-# else
-/* stdlib.h has not been included yet so it's not too late. Include it now
- * making sure that none of the select symbols is affected. Then we can
- * define them with our own values.
- */
-#  define fd_set unix_fd_set
-#  define timeval unix_timeval
-#  define select unix_select
-#  include <stdlib.h>
-#  undef fd_set
-#  undef timeval
-#  undef select
-#  undef FD_SETSIZE
-#  undef FD_CLR
-#  undef FD_SET
-#  undef FD_ZERO
-#  undef FD_ISSET
-
-#  define WS_DEFINE_SELECT
-# endif /* FD_CLR */
-
-#else
-# define WS_DEFINE_SELECT
-#endif /* !USE_WS_PREFIX && !__WINE_USE_MSVCRT */
 
 #ifdef WS_DEFINE_SELECT
 /* Define our own version of select and the associated types and macros */
@@ -917,12 +916,16 @@ int WINAPI WS(setsockopt)(SOCKET,int,int,const char*,int);
 int WINAPI WS(shutdown)(SOCKET,int);
 SOCKET WINAPI WS(socket)(int,int,int);
 
-#ifdef WS_DEFINE_HTONL
+#if defined(htonl) && !defined(USE_WS_PREFIX)
+# undef htonl
+# undef htons
+# undef ntohl
+# undef ntohs
+#endif
 u_long WINAPI WS(htonl)(u_long);
 u_short WINAPI WS(htons)(u_short);
 u_long WINAPI WS(ntohl)(u_long);
 u_short WINAPI WS(ntohs)(u_short);
-#endif
 
 #if defined(__WINESRC__) || !defined(__WINE_WINSOCK2__)
 /* Stuff specific to winsock.h */
