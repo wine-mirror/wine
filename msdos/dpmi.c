@@ -400,6 +400,11 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             /* This is the protected mode switch */
             StartPM(context,pModule->lpDosTask);
             return;
+        } else
+        if (CS_reg(context)==pModule->lpDosTask->xms_seg) {
+            /* This is the XMS driver entry point */
+            XMS_Handler(context);
+            return;
         }
     }
 #endif
@@ -486,6 +491,12 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         }
         else
         {
+#ifdef MZ_SUPPORTED
+            if (pModule && pModule->lpDosTask) {
+                DWORD base = (DWORD)DOSMEM_MemoryBase(pModule->self);
+                if ((dw >= base) && (dw < base + 0x110000)) dw -= base;
+            }
+#endif
             CX_reg(context) = HIWORD(WineToApp(dw));
             DX_reg(context) = LOWORD(WineToApp(dw));
         }
@@ -495,14 +506,30 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     	TRACE(int31, "set selector base address (0x%04x,0x%08lx)\n",
                      BX_reg(context),
                      AppToWine(MAKELONG(DX_reg(context),CX_reg(context))));
-        SetSelectorBase(BX_reg(context),
-                        AppToWine(MAKELONG(DX_reg(context), CX_reg(context))));
+        dw = AppToWine(MAKELONG(DX_reg(context), CX_reg(context)));
+#ifdef MZ_SUPPORTED
+        /* well, what else could we possibly do? */
+        if (pModule && pModule->lpDosTask) {
+            if (dw < 0x110000) dw += (DWORD)DOSMEM_MemoryBase(pModule->self);
+        }
+#endif
+        SetSelectorBase(BX_reg(context), dw);
         break;
 
     case 0x0008:  /* Set selector limit */
     	TRACE(int31,"set selector limit (0x%04x,0x%08lx)\n",BX_reg(context),MAKELONG(DX_reg(context),CX_reg(context)));
-        SetSelectorLimit( BX_reg(context),
-                          MAKELONG( DX_reg(context), CX_reg(context) ) );
+        dw = MAKELONG( DX_reg(context), CX_reg(context) );
+#ifdef MZ_SUPPORTED
+        if (pModule && pModule->lpDosTask) {
+            DWORD base = GetSelectorBase( BX_reg(context) );
+            if ((dw == 0xffffffff) || ((base < 0x110000) && (base + dw > 0x110000))) {
+                AX_reg(context) = 0x8021;  /* invalid value */
+                SET_CFLAG(context);
+                break;
+            }
+        }
+#endif
+        SetSelectorLimit( BX_reg(context), dw );
         break;
 
     case 0x0009:  /* Set selector access rights */
@@ -548,6 +575,26 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     	FIXME(int31,"allocate descriptor (0x%04x), stub!\n",BX_reg(context));
         AX_reg(context) = 0x8011; /* descriptor unavailable */
         SET_CFLAG(context);
+        break;
+    case 0x0100:  /* Allocate DOS memory block */
+        TRACE(int31,"allocate DOS memory block (0x%x paragraphs)\n",BX_reg(context));
+        dw = GlobalDOSAlloc((DWORD)BX_reg(context)<<4);
+        if (dw) {
+            AX_reg(context) = HIWORD(dw);
+            DX_reg(context) = LOWORD(dw);
+        } else {
+            AX_reg(context) = 0x0008; /* insufficient memory */
+            BX_reg(context) = DOSMEM_Available(0)>>4;
+            SET_CFLAG(context);
+        }
+        break;
+    case 0x0101:  /* Free DOS memory block */
+        TRACE(int31,"free DOS memory block (0x%04x)\n",DX_reg(context));
+        dw = GlobalDOSFree(DX_reg(context));
+        if (!dw) {
+            AX_reg(context) = 0x0009; /* memory block address invalid */
+            SET_CFLAG(context);
+        }
         break;
     case 0x0200: /* get real mode interrupt vector */
 	FIXME(int31,"get realmode interupt vector(0x%02x) unimplemented.\n",
@@ -658,6 +705,10 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             CX_reg(context) = DI_reg(context) = LOWORD(WineToApp(ptr));
         }
         break;
+
+    case 0x0507:  /* Modify page attributes */
+        FIXME(int31,"modify page attributes unimplemented\n");
+        break;  /* Just ignore it */
 
     case 0x0600:  /* Lock linear region */
         FIXME(int31,"lock linear region unimplemented\n");
