@@ -105,7 +105,9 @@ static inline int hex_from0(char ch)
     if (ch >= '0' && ch <= '9') return ch - '0';
     if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
     if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+
     assert(0);
+    return 0;
 }
 
 static inline unsigned char hex_to0(int x)
