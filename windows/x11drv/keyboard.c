@@ -248,6 +248,16 @@ static const char main_key_BE[MAIN_LEN][4] =
  "<>\\"
 };
 
+/*** Hungarian keyboard layout (contributed by Zoltán Kovács) */
+static const char main_key_HU[MAIN_LEN][4] =
+{
+ "0§","1'~","2\"·","3+^","4!¢","5%°","6/²","7=`","8(ÿ","9)´","öÖ½","üÜ¨","óÓ¸",
+ "qQ\\","wW|","eE","rR","tT","zZ","uU","iIÍ","oOø","pP","õÕ÷","úÚ×",
+ "aA","sSð","dDÐ","fF[","gG]","hH","jJí","kK³","lL£","éÉ$","áÁß","ûÛ¤",
+ "yY>","xX#","cC&","vV@","bB{","nN}","mM",",?;",".:·","-_*",
+ "íÍ<"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static struct {
  WORD lang, ansi_codepage, oem_codepage;
@@ -273,6 +283,7 @@ static struct {
  {MAKELANGID(LANG_DUTCH,SUBLANG_DUTCH_BELGIAN),    1252, 850, &main_key_BE},
  {MAKELANGID(LANG_ITALIAN,SUBLANG_DEFAULT),        1252, 850, &main_key_IT},
  {MAKELANGID(LANG_ICELANDIC,SUBLANG_DEFAULT),      1252, 850, &main_key_IS},
+ {MAKELANGID(LANG_HUNGARIAN,SUBLANG_DEFAULT),      1252, 850, &main_key_HU},
 
  {0} /* sentinel */
 };
