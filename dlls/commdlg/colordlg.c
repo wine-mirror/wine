@@ -18,7 +18,6 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "heap.h"
 #include "commdlg.h"
 #include "dlgs.h"
 #include "debugtools.h"
@@ -1508,10 +1507,13 @@ BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
   lpcc->lCustData = lpChCol->lCustData;
   lpcc->lpfnHook = (LPCCHOOKPROC) lpChCol->lpfnHook;
   if ((lpcc->Flags & CC_ENABLETEMPLATE) && (lpChCol->lpTemplateName)) {
-      if (HIWORD(lpChCol->lpTemplateName))
-	  lpcc->lpTemplateName = HEAP_strdupAtoW(GetProcessHeap(), 0, lpChCol->lpTemplateName);
-      else
+      if (HIWORD(lpChCol->lpTemplateName)) {
+	  INT len = MultiByteToWideChar( CP_ACP, 0, lpChCol->lpTemplateName, -1, NULL, 0);
+	  lpcc->lpTemplateName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+	  MultiByteToWideChar( CP_ACP, 0, lpChCol->lpTemplateName, -1, lpcc->lpTemplateName, len );
+      } else {
 	  lpcc->lpTemplateName = (LPWSTR)lpChCol->lpTemplateName;
+      }
   }
 
   ret = ChooseColorW(lpcc);
