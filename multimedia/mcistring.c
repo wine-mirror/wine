@@ -2554,11 +2554,13 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
     }
     *dev++ = '\0';
     args = strchr(dev, ' ');
-    if (args != NULL) *args = '\0';
-    while (*++args == ' ');
 
     if (args != NULL) {
 	char	*s;
+
+	*args = '\0';
+	while (*++args == ' ');
+
 	i = 1;/* nrofkeywords = nrofspaces+1 */
 	s = args;
 	while ((s = strchr(s, ' ')) != NULL) {
