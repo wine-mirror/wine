@@ -1,6 +1,6 @@
 /*
  * This file defines the macros and types necessary to define COM interfaces,
- * and the three most basic COM interfaces: IUnknown, IMalloc and IClassFactory.
+ * and the three most basic COM interfaces: IUnknown and IClassFactory.
  *
  * Copyright (C) 1999 Francois Gouget
  *
@@ -644,9 +644,6 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 DEFINE_OLEGUID(IID_IClassFactory,	0x00000001L, 0, 0);
 typedef struct IClassFactory IClassFactory, *LPCLASSFACTORY;
 
-DEFINE_OLEGUID(IID_IMalloc,		0x00000002L, 0, 0);
-typedef struct IMalloc IMalloc,*LPMALLOC;
-
 DEFINE_OLEGUID(IID_IUnknown,		0x00000000L, 0, 0);
 typedef struct IUnknown IUnknown, *LPUNKNOWN;
 
@@ -693,55 +690,6 @@ ICOM_DEFINE(IClassFactory,IUnknown)
 /*** IClassFactory methods ***/
 #define IClassFactory_CreateInstance(p,a,b,c) ICOM_CALL3(CreateInstance,p,a,b,c)
 #define IClassFactory_LockServer(p,a)         ICOM_CALL1(LockServer,p,a)
-
-
-/*****************************************************************************
- * IMalloc interface
- */
-#define ICOM_INTERFACE IMalloc
-#define IMalloc_METHODS \
-    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb) \
-    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb) \
-    ICOM_VMETHOD1(       Free,        LPVOID,pv) \
-    ICOM_METHOD1(DWORD, GetSize,     LPVOID,pv) \
-    ICOM_METHOD1(INT, DidAlloc,    LPVOID,pv) \
-    ICOM_METHOD  (VOID,  HeapMinimize)
-#define IMalloc_IMETHODS \
-    IUnknown_IMETHODS \
-    IMalloc_METHODS
-ICOM_DEFINE(IMalloc,IUnknown)
-#undef ICOM_INTERFACE
-
-/*** IUnknown methods ***/
-#define IMalloc_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IMalloc_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IMalloc_Release(p)            ICOM_CALL (Release,p)
-/*** IMalloc methods ***/
-#define IMalloc_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
-#define IMalloc_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)
-#define IMalloc_Free(p,a)       ICOM_CALL1(Free,p,a)
-#define IMalloc_GetSize(p,a)    ICOM_CALL1(GetSize,p,a)
-#define IMalloc_DidAlloc(p,a)   ICOM_CALL1(DidAlloc,p,a)
-#define IMalloc_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
-
-/* values passed to CoGetMalloc */
-#define	MEMCTX_TASK		1 /* private task memory */
-#define	MEMCTX_SHARED		2 /* shared memory */
-#ifdef _MAC
-#define	MEMCTX_MACSYSTEM	3 /* system heap on mac */
-#endif
-/* mainly for internal use... */
-#define	MEMCTX_UNKNOWN		-1
-#define	MEMCTX_SAME		-2
-
-HRESULT WINAPI CoGetMalloc(DWORD dwMemContext,LPMALLOC* lpMalloc);
-
-LPVOID WINAPI CoTaskMemAlloc(ULONG size);
-
-void WINAPI CoTaskMemFree(LPVOID ptr);
-
-/* FIXME: unimplemented */
-LPVOID WINAPI CoTaskMemRealloc(LPVOID ptr, ULONG size);
 
 
 /*****************************************************************************
