@@ -2716,6 +2716,8 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVIF_PARAM              0x0004
 #define LVIF_STATE              0x0008
 #define LVIF_INDENT             0x0010
+#define LVIF_GROUPID            0x0100
+#define LVIF_COLUMNS            0x0200
 #define LVIF_NORECOMPUTE        0x0800
 #define LVIF_DI_SETITEM         0x1000
 

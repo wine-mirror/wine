@@ -4911,7 +4911,21 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	        dispInfo.item.stateMask = lpLVItem->stateMask & infoPtr->uCallbackMask;
 	    notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
 	    dispInfo.item.stateMask = lpLVItem->stateMask;
-	    *lpLVItem = dispInfo.item;
+	    if (lpLVItem->mask & (LVIF_GROUPID|LVIF_COLUMNS))
+	    {
+	        /* full size structure expected - _WIN32IE >= 0x560 */
+	        *lpLVItem = dispInfo.item;
+	    }
+	    else if (lpLVItem->mask & LVIF_INDENT)
+	    {
+	        /* indent member expected - _WIN32IE >= 0x300 */
+	        memcpy(lpLVItem, &dispInfo.item, offsetof( LVITEMW, iGroupId ));
+	    }
+	    else
+	    {
+	        /* minimal structure expected */
+	        memcpy(lpLVItem, &dispInfo.item, offsetof( LVITEMW, iIndent ));
+	    }
 	    TRACE("   getdispinfo(1):lpLVItem=%s\n", debuglvitem_t(lpLVItem, isW));
 	}
 	
@@ -5910,9 +5924,23 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     nItem = DPA_InsertPtr( infoPtr->hdpaItems, nItem, hdpaSubItems );
     if (nItem == -1) goto fail;
     infoPtr->nItemCount++;
-  
-    /* set the item attributes */ 
-    item = *lpLVItem;
+
+    /* set the item attributes */
+    if (lpLVItem->mask & (LVIF_GROUPID|LVIF_COLUMNS))
+    {
+       /* full size structure expected - _WIN32IE >= 0x560 */
+       item = *lpLVItem;
+    }
+    else if (lpLVItem->mask & LVIF_INDENT)
+    {
+       /* indent member expected - _WIN32IE >= 0x300 */
+       memcpy(&item, lpLVItem, offsetof( LVITEMW, iGroupId ));
+    }
+    else
+    {
+       /* minimal structure expected */
+       memcpy(&item, lpLVItem, offsetof( LVITEMW, iIndent ));
+    }
     item.iItem = nItem;
     item.state &= ~LVIS_STATEIMAGEMASK;
     if (!set_main_item(infoPtr, &item, TRUE, isW, &has_changed)) goto undo;
