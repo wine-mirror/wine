@@ -48,7 +48,7 @@ void _lock( int locknum );
 #define _TIME_LOCK      11
 #define _ENV_LOCK       12
 #define _EXIT_LOCK1     13
-#define _EXIT_LOCK2          14 /* No longer used? */
+#define _EXIT_LOCK2          14
 #define _THREADDATA_LOCK     15 /* No longer used? */
 #define _POPEN_LOCK     16
 #define _LOCKTAB_LOCK   17
