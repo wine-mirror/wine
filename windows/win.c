@@ -2022,7 +2022,8 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
         {
         case GWL_STYLE:
         case GWL_EXSTYLE:
-            style.styleOld = wndPtr->dwStyle;
+            style.styleOld =
+                offset == GWL_STYLE ? wndPtr->dwStyle : wndPtr->dwExStyle;
             style.styleNew = newval;
             WIN_ReleasePtr( wndPtr );
             SendMessageW( hwnd, WM_STYLECHANGING, offset, (LPARAM)&style );
