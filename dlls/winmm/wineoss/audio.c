@@ -253,11 +253,11 @@ LONG OSS_WaveInit(void)
 	TRACE("OSS dsp out caps=%08X\n", caps);
 	if ((caps & DSP_CAP_REALTIME) && !(caps & DSP_CAP_BATCH)) {
 	    WOutDev[0].caps.dwSupport |= WAVECAPS_SAMPLEACCURATE;
-
-	    /* well, might as well use the DirectSound cap flag for something */
-	    if ((caps & DSP_CAP_TRIGGER) && (caps & DSP_CAP_MMAP))
-		WOutDev[0].caps.dwSupport |= WAVECAPS_DIRECTSOUND;
 	}
+	/* well, might as well use the DirectSound cap flag for something */
+	if ((caps & DSP_CAP_TRIGGER) && (caps & DSP_CAP_MMAP) &&
+	    !(caps & DSP_CAP_BATCH))
+	    WOutDev[0].caps.dwSupport |= WAVECAPS_DIRECTSOUND;
     }
     close(audio);
     TRACE("out dwFormats = %08lX, dwSupport = %08lX\n",
@@ -821,9 +821,14 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     
     if (dwFlags & WAVE_DIRECTSOUND) {
-	/* with DirectSound, fragments are irrelevant, but a large buffer isn't...
-	 * so let's choose a full 64KB (32 * 2^11) for DirectSound */
-	audio_fragment = 0x0020000B;
+        if (wwo->caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+	    /* we have realtime DirectSound, fragments just waste our time,
+	     * but a large buffer is good, so choose 64KB (32 * 2^11) */
+	    audio_fragment = 0x0020000B;
+	else
+	    /* to approximate realtime, we must use small fragments,
+	     * let's try to fragment the above 64KB (256 * 2^8) */
+	    audio_fragment = 0x01000008;
     } else {
 	/* shockwave player uses only 4 1k-fragments at a rate of 22050 bytes/sec
 	 * thus leading to 46ms per fragment, and a turnaround time of 185ms
@@ -1415,12 +1420,15 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     if (lpdwPlay) *lpdwPlay = ptr;
     if (lpdwWrite) {
 	/* add some safety margin (not strictly necessary, but...) */
-	*lpdwWrite = ptr + 32;
+	if (WOutDev[This->drv->wDevID].caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+	    *lpdwWrite = ptr + 32;
+	else
+	    *lpdwWrite = ptr + WOutDev[This->drv->wDevID].dwFragmentSize;
 	while (*lpdwWrite > This->buflen)
 	    *lpdwWrite -= This->buflen;
     }
     TRACE("playpos=%ld, writepos=%ld\n", lpdwPlay?*lpdwPlay:0, lpdwWrite?*lpdwWrite:0);
-    return DSERR_UNSUPPORTED;
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwRes1, DWORD dwRes2, DWORD dwFlags)
@@ -1567,6 +1575,7 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
     HRESULT err;
     audio_buf_info info;
+    int enable = 0;
 
     TRACE("(%p,%p,%lx,%lx)\n",iface,pwfx,dwFlags,dwCardAddress);
     /* we only support primary buffers */
@@ -1604,6 +1613,12 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     /* primary buffer is ready to go */
     *pdwcbBufferSize	= WOutDev[This->wDevID].maplen;
     *ppbBuffer		= WOutDev[This->wDevID].mapping;
+
+    /* some drivers need some extra nudging after mapping */
+    if (ioctl(WOutDev[This->wDevID].unixdev, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+	ERR("ioctl failed (%d)\n", errno);
+	return DSERR_GENERIC;
+    }
 
     This->primary = *ippdsdb;
 
