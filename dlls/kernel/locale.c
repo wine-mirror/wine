@@ -2356,8 +2356,15 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
  */
 int WINAPI lstrcmpA(LPCSTR str1, LPCSTR str2)
 {
-    int ret = CompareStringA(GetThreadLocale(), 0, str1, -1, str2, -1);
+    int ret;
+    
+    if ((str1 == NULL) && (str2 == NULL)) return 0;
+    if (str1 == NULL) return -1;
+    if (str2 == NULL) return 1;
+
+    ret = CompareStringA(GetThreadLocale(), 0, str1, -1, str2, -1);
     if (ret) ret -= 2;
+    
     return ret;
 }
 
@@ -2378,8 +2385,15 @@ int WINAPI lstrcmpA(LPCSTR str1, LPCSTR str2)
  */
 int WINAPI lstrcmpiA(LPCSTR str1, LPCSTR str2)
 {
-    int ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, str1, -1, str2, -1);
+    int ret;
+    
+    if ((str1 == NULL) && (str2 == NULL)) return 0;
+    if (str1 == NULL) return -1;
+    if (str2 == NULL) return 1;
+
+    ret = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, str1, -1, str2, -1);
     if (ret) ret -= 2;
+    
     return ret;
 }
 
@@ -2390,8 +2404,15 @@ int WINAPI lstrcmpiA(LPCSTR str1, LPCSTR str2)
  */
 int WINAPI lstrcmpW(LPCWSTR str1, LPCWSTR str2)
 {
-    int ret = CompareStringW(GetThreadLocale(), 0, str1, -1, str2, -1);
+    int ret;
+
+    if ((str1 == NULL) && (str2 == NULL)) return 0;
+    if (str1 == NULL) return -1;
+    if (str2 == NULL) return 1;
+
+    ret = CompareStringW(GetThreadLocale(), 0, str1, -1, str2, -1);
     if (ret) ret -= 2;
+    
     return ret;
 }
 
@@ -2402,8 +2423,15 @@ int WINAPI lstrcmpW(LPCWSTR str1, LPCWSTR str2)
  */
 int WINAPI lstrcmpiW(LPCWSTR str1, LPCWSTR str2)
 {
-    int ret = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, str1, -1, str2, -1);
+    int ret;
+    
+    if ((str1 == NULL) && (str2 == NULL)) return 0;
+    if (str1 == NULL) return -1;
+    if (str2 == NULL) return 1;
+
+    ret = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, str1, -1, str2, -1);
     if (ret) ret -= 2;
+    
     return ret;
 }
 
