@@ -827,10 +827,14 @@ BOOL32 WINAPI GetDiskFreeSpaceEx32A( LPCSTR root,
     }
     if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
     /*FIXME: Do we have the number of bytes available to the user? */
-    avail->HighPart = available.HighPart;
-    totalfree->HighPart = size.HighPart;
-    avail->LowPart = available.LowPart ;
-    totalfree->LowPart = size.LowPart ;
+    if (totalfree) {
+    	totalfree->HighPart = size.HighPart;
+    	totalfree->LowPart = size.LowPart ;
+    }
+    if (avail) {
+        avail->HighPart = available.HighPart;
+        avail->LowPart = available.LowPart ;
+    }
     return TRUE;
 }
 
