@@ -4,6 +4,15 @@
  * Copyright 1998-2000	Bertho A. Stultiens (BS)
  *           1999	Juergen Schmied (JS)
  *
+ * 21-May-2000 BS	- Partial implementation of font resources.
+ *			- Corrected language propagation for binary
+ *			  resources such as bitmaps, isons, cursors,
+ *			  userres and rcdata. The language is now
+ *			  correct in .res files.
+ *			- Fixed reading the resource name as ident,
+ *			  so that it may overlap keywords.
+ * 20-May-2000 BS	- Implemented animated cursors and icons
+ *			  resource types.
  * 30-Apr-2000 BS	- Reintegration into the wine-tree
  * 14-Jan-2000 BS	- Redid the usertype resources so that they
  *			  are compatible.
@@ -117,6 +126,7 @@
 #include "winuser.h"
 
 int want_nl = 0;	/* Signal flex that we need the next newline */
+int want_id = 0;	/* Signal flex that we need the next identifier */
 stringtable_t *tagstt;	/* Stringtable tag.
 			 * It is set while parsing a stringtable to one of
 			 * the stringtables in the sttres list or a new one
@@ -129,6 +139,8 @@ stringtable_t *sttres;	/* Stringtable resources. This holds the list of
 static int *tagstt_memopt;
 static characts_t *tagstt_characts;
 static version_t *tagstt_version;
+
+static const char riff[4] = "RIFF";	/* RIFF file magic for animated cursor/icon */
 
 /* Prototypes of here defined functions */
 static event_t *get_event_head(event_t *p);
@@ -174,6 +186,8 @@ static stringtable_t *find_stringtable(lvc_t *lvc);
 static toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec);
 static toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 static string_t *make_filename(string_t *s);
+static resource_t *build_fontdirs(resource_t *tail);
+static resource_t *build_fontdir(resource_t **fnt, int nfnt);
 
 %}
 %union{
@@ -184,13 +198,10 @@ static string_t *make_filename(string_t *s);
 	resource_t	*res;
 	accelerator_t	*acc;
 	bitmap_t	*bmp;
-	cursor_t	*cur;
-	cursor_group_t	*curg;
 	dialog_t	*dlg;
 	dialogex_t	*dlgex;
 	font_t		*fnt;
-	icon_t		*ico;
-	icon_group_t	*icog;
+	fontdir_t	*fnd;
 	menu_t		*men;
 	menuex_t	*menex;
 	rcdata_t	*rdt;
@@ -219,6 +230,7 @@ static string_t *make_filename(string_t *s);
 	dlginit_t       *dginit;
 	style_pair_t	*styles;
 	style_t		*style;
+	ani_any_t	*ani;
 }
 
 %token tTYPEDEF tEXTERN tSTRUCT tENUM tCPPCLASS tINLINE tSTATIC tNL
@@ -226,7 +238,7 @@ static string_t *make_filename(string_t *s);
 %token <str> tSTRING tIDENT tFILENAME
 %token <raw> tRAWDATA
 %token tACCELERATORS tBITMAP tCURSOR tDIALOG tDIALOGEX tMENU tMENUEX tMESSAGETABLE
-%token tRCDATA tVERSIONINFO tSTRINGTABLE tFONT tICON
+%token tRCDATA tVERSIONINFO tSTRINGTABLE tFONT tFONTDIR tICON
 %token tAUTO3STATE tAUTOCHECKBOX tAUTORADIOBUTTON tCHECKBOX tDEFPUSHBUTTON
 %token tPUSHBUTTON tRADIOBUTTON tSTATE3 /* PUSHBOX */
 %token tGROUPBOX tCOMBOBOX tLISTBOX tSCROLLBAR
@@ -254,18 +266,18 @@ static string_t *make_filename(string_t *s);
 %type <res> 	resource_file resource resources resource_definition
 %type <stt>	stringtable strings
 %type <fnt>	font
-%type <icog>	icon
+%type <fnd>	fontdir
 %type <acc> 	accelerators
 %type <event> 	events
 %type <bmp> 	bitmap
-%type <curg> 	cursor
+%type <ani> 	cursor icon
 %type <dlg> 	dialog dlg_attributes
 %type <ctl> 	ctrls gen_ctrl lab_ctrl ctrl_desc iconinfo
 %type <iptr>	helpid
 %type <dlgex> 	dialogex dlgex_attribs
 %type <ctl>	exctrls gen_exctrl lab_exctrl exctrl_desc
 %type <rdt> 	rcdata
-%type <raw>	raw_data raw_elements opt_data
+%type <raw>	raw_data raw_elements opt_data file_raw
 %type <veri> 	versioninfo fix_version
 %type <verw>	ver_words
 %type <blk>	ver_blocks ver_block
@@ -313,6 +325,20 @@ resource_file
 		}
 		else
 			$1 = rsc;
+		/* Find the tail again */
+		while($1 && $1->next)
+			$1 = $1->next;
+		/* Now add any fontdirecory */
+		rsc = build_fontdirs($1);
+		/* 'build_fontdir' returns a head and $1 is a tail */
+		if($1)
+		{
+			$1->next = rsc;
+			if(rsc)
+				rsc->prev = $1;
+		}
+		else
+			$1 = rsc;
 		/* Final statement before were done */
 		resource_top = get_resource_head($1);
 		}
@@ -320,7 +346,7 @@ resource_file
 
 /* Resources are put into a linked list */
 resources
-	: /* Empty */		{ $$ = NULL; }
+	: /* Empty */		{ $$ = NULL; want_id = 1; }
 	| resources resource	{
 		if($2)
 		{
@@ -334,6 +360,23 @@ resources
 			if($1)
 				$1->next = head;
 			$$ = tail;
+			/* Check for duplicate identifiers */
+			while($1 && head)
+			{
+				resource_t *rsc = $1;
+				while(rsc)
+				{
+					if(rsc->type == head->type
+					&& rsc->lan->id == head->lan->id
+					&& rsc->lan->sub == head->lan->sub
+					&& !compare_name_id(rsc->name, head->name))
+					{
+						yyerror("Duplicate resource name '%s'", get_nameid_str(rsc->name));
+					}
+					rsc = rsc->prev;
+				}
+				head = head->next;
+			}
 		}
 		else if($1)
 		{
@@ -344,9 +387,10 @@ resources
 		}
 		else
 			$$ = NULL;
+		want_id = 1;
 		}
-	| resources preprocessor		{ $$ = $1; }
-	| resources cjunk			{ $$ = $1; }
+	| resources preprocessor		{ $$ = $1; want_id = 1; }
+	| resources cjunk			{ $$ = $1; want_id = 1; }
 	;
 
 /*
@@ -416,12 +460,16 @@ resource
 		$$ = NULL;
 		chat("Got STRINGTABLE");
 		}
-	| opt_language {
+	| tLANGUAGE {want_nl = 1; } expr ',' expr tNL	{
+		/* We *NEED* the newline to delimit the expression.
+		 * Otherwise, we would not be able to set the next
+		 * want_id anymore because of the token-lookahead.
+		 */
 		if(!win32)
 			yywarning("LANGUAGE not supported in 16-bit mode");
 		if(currentlanguage)
 			free(currentlanguage);
-		currentlanguage = $1;
+		currentlanguage = new_language($3, $5);
 		$$ = NULL;
 		}
 	;
@@ -457,20 +505,30 @@ nameid_s: nameid	{ $$ = $1; }
 /* get the value for a single resource*/
 resource_definition
 	: accelerators	{ $$ = new_resource(res_acc, $1, $1->memopt, $1->lvc.language); }
-	| bitmap	{ $$ = new_resource(res_bmp, $1, $1->memopt, dup_language(currentlanguage)); }
+	| bitmap	{ $$ = new_resource(res_bmp, $1, $1->memopt, $1->data->lvc.language); }
 	| cursor {
 		resource_t *rsc;
-		cursor_t *cur;
-		$$ = rsc = new_resource(res_curg, $1, $1->memopt, dup_language(currentlanguage));
-		for(cur = $1->cursorlist; cur; cur = cur->next)
+		if($1->type == res_anicur)
 		{
-			rsc->prev = new_resource(res_cur, cur, $1->memopt, dup_language(currentlanguage));
-			rsc->prev->next = rsc;
-			rsc = rsc->prev;
-			rsc->name = new_name_id();
-			rsc->name->type = name_ord;
-			rsc->name->name.i_name = cur->id;
+			$$ = rsc = new_resource(res_anicur, $1->u.ani, $1->u.ani->memopt, $1->u.ani->data->lvc.language);
 		}
+		else if($1->type == res_curg)
+		{
+			cursor_t *cur;
+			$$ = rsc = new_resource(res_curg, $1->u.curg, $1->u.curg->memopt, $1->u.curg->lvc.language);
+			for(cur = $1->u.curg->cursorlist; cur; cur = cur->next)
+			{
+				rsc->prev = new_resource(res_cur, cur, $1->u.curg->memopt, $1->u.curg->lvc.language);
+				rsc->prev->next = rsc;
+				rsc = rsc->prev;
+				rsc->name = new_name_id();
+				rsc->name->type = name_ord;
+				rsc->name->name.i_name = cur->id;
+			}
+		}
+		else
+			internal_error(__FILE__, __LINE__, "Invalid top-level type %d in cursor resource", $1->type);
+		free($1);
 		}
 	| dialog	{ $$ = new_resource(res_dlg, $1, $1->memopt, $1->lvc.language); }
 	| dialogex {
@@ -479,21 +537,32 @@ resource_definition
 		else
 			$$ = NULL;
 		}
-	| dlginit	{ $$ = new_resource(res_dlginit, $1, $1->memopt, $1->lvc.language); }
-	| font		{ $$ = new_resource(res_fnt, $1, $1->memopt, dup_language(currentlanguage)); }
+	| dlginit	{ $$ = new_resource(res_dlginit, $1, $1->memopt, $1->data->lvc.language); }
+	| font		{ $$ = new_resource(res_fnt, $1, $1->memopt, $1->data->lvc.language); }
+	| fontdir	{ $$ = new_resource(res_fntdir, $1, $1->memopt, $1->data->lvc.language); }
 	| icon {
 		resource_t *rsc;
-		icon_t *ico;
-		$$ = rsc = new_resource(res_icog, $1, $1->memopt, dup_language(currentlanguage));
-		for(ico = $1->iconlist; ico; ico = ico->next)
+		if($1->type == res_aniico)
 		{
-			rsc->prev = new_resource(res_ico, ico, $1->memopt, dup_language(currentlanguage));
-			rsc->prev->next = rsc;
-			rsc = rsc->prev;
-			rsc->name = new_name_id();
-			rsc->name->type = name_ord;
-			rsc->name->name.i_name = ico->id;
+			$$ = rsc = new_resource(res_aniico, $1->u.ani, $1->u.ani->memopt, $1->u.ani->data->lvc.language);
 		}
+		else if($1->type == res_icog)
+		{
+			icon_t *ico;
+			$$ = rsc = new_resource(res_icog, $1->u.icog, $1->u.icog->memopt, $1->u.icog->lvc.language);
+			for(ico = $1->u.icog->iconlist; ico; ico = ico->next)
+			{
+				rsc->prev = new_resource(res_ico, ico, $1->u.icog->memopt, $1->u.icog->lvc.language);
+				rsc->prev->next = rsc;
+				rsc = rsc->prev;
+				rsc->name = new_name_id();
+				rsc->name->type = name_ord;
+				rsc->name->name.i_name = ico->id;
+			}
+		}
+		else
+			internal_error(__FILE__, __LINE__, "Invalid top-level type %d in icon resource", $1->type);
+		free($1);
 		}
 	| menu		{ $$ = new_resource(res_men, $1, $1->memopt, $1->lvc.language); }
 	| menuex {
@@ -503,10 +572,10 @@ resource_definition
 			$$ = NULL;
 		}
 	| messagetable	{ $$ = new_resource(res_msg, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, dup_language(currentlanguage)); }
-	| rcdata	{ $$ = new_resource(res_rdt, $1, $1->memopt, $1->lvc.language); }
+	| rcdata	{ $$ = new_resource(res_rdt, $1, $1->memopt, $1->data->lvc.language); }
 	| toolbar	{ $$ = new_resource(res_toolbar, $1, $1->memopt, $1->lvc.language); }
-	| userres	{ $$ = new_resource(res_usr, $1, $1->memopt, dup_language(currentlanguage)); }
-	| versioninfo	{ $$ = new_resource(res_ver, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, dup_language(currentlanguage)); }
+	| userres	{ $$ = new_resource(res_usr, $1, $1->memopt, $1->data->lvc.language); }
+	| versioninfo	{ $$ = new_resource(res_ver, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, $1->lvc.language); }
 	;
 
 
@@ -516,23 +585,59 @@ filename: tFILENAME	{ $$ = make_filename($1); }
 	;
 
 /* ------------------------------ Bitmap ------------------------------ */
-bitmap	: tBITMAP loadmemopts filename	{ $$ = new_bitmap(load_file($3), $2); }
-	| tBITMAP loadmemopts raw_data	{ $$ = new_bitmap($3, $2); }
+bitmap	: tBITMAP loadmemopts file_raw	{ $$ = new_bitmap($3, $2); }
 	;
 
 /* ------------------------------ Cursor ------------------------------ */
-cursor	: tCURSOR loadmemopts filename	{ $$ = new_cursor_group(load_file($3), $2); }
-	| tCURSOR loadmemopts raw_data	{ $$ = new_cursor_group($3, $2); }
-	;
-
-/* ------------------------------ Font ------------------------------ */
-/* FIXME: Should we allow raw_data here? */
-font	: tFONT loadmemopts filename	{ $$ = new_font(load_file($3), $2); }
+cursor	: tCURSOR loadmemopts file_raw	{
+		$$ = new_ani_any();
+		if($3->size > 4 && !memcmp($3->data, riff, sizeof(riff)))
+		{
+			$$->type = res_anicur;
+			$$->u.ani = new_ani_curico(res_anicur, $3, $2);
+		}
+		else
+		{
+			$$->type = res_curg;
+			$$->u.curg = new_cursor_group($3, $2);
+		}
+	}
 	;
 
 /* ------------------------------ Icon ------------------------------ */
-icon	: tICON loadmemopts filename	{ $$ = new_icon_group(load_file($3), $2); }
-	| tICON loadmemopts raw_data	{ $$ = new_icon_group($3, $2); }
+icon	: tICON loadmemopts file_raw	{
+		$$ = new_ani_any();
+		if($3->size > 4 && !memcmp($3->data, riff, sizeof(riff)))
+		{
+			$$->type = res_aniico;
+			$$->u.ani = new_ani_curico(res_aniico, $3, $2);
+		}
+		else
+		{
+			$$->type = res_icog;
+			$$->u.icog = new_icon_group($3, $2);
+		}
+	}
+	;
+
+/* ------------------------------ Font ------------------------------ */
+	/*
+	 * The reading of raw_data for fonts is a Borland BRC
+	 * extension. MS generates an error. However, it is
+	 * most logical to support this, considering how wine
+	 * enters things in CVS (ascii).
+	 */
+font	: tFONT loadmemopts file_raw	{ $$ = new_font($3, $2); }
+	;
+
+	/*
+	 * The fontdir is a Borland BRC extension which only
+	 * reads the data as 'raw_data' from the file.
+	 * I don't know whether it is interpreted.
+	 * The fontdir is generated if it was not present and
+	 * fonts are defined in the source.
+	 */
+fontdir	: tFONTDIR loadmemopts raw_data	{ $$ = new_fontdir($3, $2); }
 	;
 
 /* ------------------------------ MessageTable ------------------------------ */
@@ -548,34 +653,15 @@ messagetable
 	;
 
 /* ------------------------------ RCData ------------------------------ */
-rcdata	: tRCDATA loadmemopts opt_lvc raw_data {
-		$$ = new_rcdata($4, $2);
-		if($3)
-		{
-			$$->lvc = *($3);
-			free($3);
-		}
-		if(!$$->lvc.language)
-			$$->lvc.language = dup_language(currentlanguage);
-		}
+rcdata	: tRCDATA loadmemopts raw_data	{ $$ = new_rcdata($3, $2); }
 	;
 
 /* ------------------------------ DLGINIT ------------------------------ */
-dlginit	: tDLGINIT loadmemopts opt_lvc raw_data {
-		$$ = new_dlginit($4, $2);
-		if($3)
-		{
-			$$->lvc = *($3);
-			free($3);
-		}
-		if(!$$->lvc.language)
-			$$->lvc.language = dup_language(currentlanguage);
-		}
+dlginit	: tDLGINIT loadmemopts raw_data	{ $$ = new_dlginit($3, $2); }
 	;	  
 
 /* ------------------------------ UserType ------------------------------ */
-userres	: usertype loadmemopts filename		{ $$ = new_user($1, load_file($3), $2); }
-	| usertype loadmemopts raw_data		{ $$ = new_user($1, $3, $2); }
+userres	: usertype loadmemopts file_raw		{ $$ = new_user($1, $3, $2); }
 	;
 
 usertype: tNUMBER {
@@ -1346,9 +1432,18 @@ opt_comma	/* There seem to be two ways to specify a stringtable... */
 
 /* ------------------------------ VersionInfo ------------------------------ */
 versioninfo
-	: tVERSIONINFO fix_version tBEGIN ver_blocks tEND {
-		$$ = $2;
-		$2->blocks = get_ver_block_head($4);
+	: tVERSIONINFO loadmemopts fix_version tBEGIN ver_blocks tEND {
+		$$ = $3;
+		if($2)
+		{
+			$$->memopt = *($2);
+			free($2);
+		}
+		else
+			$$->memopt = WRC_MO_MOVEABLE | (win32 ? WRC_MO_PURE : 0);
+		$$->blocks = get_ver_block_head($5);
+		/* Set language; there is no version or characteristics */
+		$$->lvc.language = dup_language(currentlanguage);
 		}
 	;
 
@@ -1590,8 +1685,19 @@ opt_version
 	: tVERSION expr			{ $$ = new_version($2); }
 	;
 
-/* ------------------------------ Raw data handking ------------------------------ */
-raw_data: tBEGIN raw_elements tEND	{ $$ = $2; }
+/* ------------------------------ Raw data handling ------------------------------ */
+raw_data: opt_lvc tBEGIN raw_elements tEND {
+		if($1)
+		{
+			$3->lvc = *($1);
+			free($1);
+		}
+
+		if(!$3->lvc.language)
+			$3->lvc.language = dup_language(currentlanguage);
+
+		$$ = $3;
+		}
 	;
 
 raw_elements
@@ -1603,6 +1709,14 @@ raw_elements
 	| raw_elements opt_comma tNUMBER  { $$ = merge_raw_data_int($1, $3); }
 	| raw_elements opt_comma tLNUMBER { $$ = merge_raw_data_long($1, $3); }
 	| raw_elements opt_comma tSTRING  { $$ = merge_raw_data_str($1, $3); }
+	;
+
+/* File data or raw data */
+file_raw: filename	{
+		$$ = load_file($1);
+		$$->lvc.language = dup_language(currentlanguage);
+		}
+	| raw_data	{ $$ = $1; }
 	;
 
 /* ------------------------------ Win32 expressions ------------------------------ */
@@ -2478,5 +2592,181 @@ static string_t *make_filename(string_t *str)
 		*cptr = tolower(*cptr);
 	}
 	return str;
+}
+
+/*
+ * Process all resources to extract fonts and build
+ * a fontdir resource.
+ *
+ * Note: MS' resource compiler (build 1472) does not
+ * handle font resources with different languages.
+ * The fontdir is generated in the last active language
+ * and font identifiers must be unique across the entire
+ * source.
+ * This is not logical considering the localization
+ * constraints of all other resource types. MS has,
+ * most probably, never testet localized fonts. However,
+ * using fontresources is rare, so it might not occur
+ * in normal applications.
+ * Wine does require better localization because a lot
+ * of languages are coded into the same executable.
+ * Therefore, I will generate fontdirs for *each*
+ * localized set of fonts.
+ */
+static resource_t *build_fontdir(resource_t **fnt, int nfnt)
+{
+	static int once = 0;
+	if(!once)
+	{
+		warning("Need to parse fonts, not yet implemented");
+		once++;
+	}
+	return NULL;
+}
+
+static resource_t *build_fontdirs(resource_t *tail)
+{
+	resource_t *rsc;
+	resource_t *lst = NULL;
+	resource_t **fnt = NULL;	/* List of all fonts */
+	int nfnt = 0;
+	resource_t **fnd = NULL;	/* List of all fontdirs */
+	int nfnd = 0;
+	resource_t **lanfnt = NULL;
+	int nlanfnt = 0;
+	int i;
+	name_id_t nid;
+	string_t str;
+	int fntleft;
+
+	nid.type = name_str;
+	nid.name.s_name = &str;
+	str.type = str_char;
+	str.str.cstr = "FONTDIR";
+	str.size = 7;
+
+	/* Extract all fonts and fontdirs */
+	for(rsc = tail; rsc; rsc = rsc->prev)
+	{
+		if(rsc->type == res_fnt)
+		{
+			nfnt++;
+			fnt = xrealloc(fnt, nfnt * sizeof(*fnt));
+			fnt[nfnt-1] = rsc;
+		}
+		else if(rsc->type == res_fntdir)
+		{
+			nfnd++;
+			fnd = xrealloc(fnd, nfnd * sizeof(*fnd));
+			fnd[nfnd-1] = rsc;
+		}
+	}
+
+	/* Verify the name of the present fontdirs */
+	for(i = 0; i < nfnd; i++)
+	{
+		if(compare_name_id(&nid, fnd[i]->name))
+		{
+			warning("User supplied FONTDIR entry has an invalid name '%s', ignored",
+				get_nameid_str(fnd[i]->name));
+			fnd[i] = NULL;
+		}
+	}
+
+	/* Sanity check */
+	if(nfnt == 0)
+	{
+		if(nfnd != 0)
+			warning("Found %d FONTDIR entries without any fonts present", nfnd);
+		goto clean;
+	}
+
+	/* Copy space */
+	lanfnt = xmalloc(nfnt * sizeof(*lanfnt));
+
+	/* Get all fonts covered by fontdirs */
+	for(i = 0; i < nfnd; i++)
+	{
+		int j;
+		WORD cnt;
+		int isswapped = 0;
+
+		if(!fnd[i])
+			continue;
+		for(j = 0; j < nfnt; j++)
+		{
+			if(!fnt[j])
+				continue;
+			if(fnt[j]->lan->id == fnd[i]->lan->id && fnt[j]->lan->sub == fnd[i]->lan->sub)
+			{
+				lanfnt[nlanfnt] = fnt[j];
+				nlanfnt++;
+				fnt[j] = NULL;
+			}
+		}
+
+		cnt = *(WORD *)fnd[i]->res.fnd->data->data;
+		if(nlanfnt == cnt)
+			isswapped = 0;
+		else if(nlanfnt == BYTESWAP_WORD(cnt))
+			isswapped = 1;
+		else
+			error("FONTDIR for language %d,%d has wrong count (%d, expected %d)",
+				fnd[i]->lan->id, fnd[i]->lan->sub, cnt, nlanfnt);
+#ifdef WORDS_BIGENDIAN
+		if((byteorder == WRC_BO_LITTLE && !isswapped) || (byteorder != WRC_BO_LITTLE && isswapped))
+#else
+		if((byteorder == WRC_BO_BIG && !isswapped) || (byteorder != WRC_BO_BIG && isswapped))
+#endif
+		{
+			internal_error(__FILE__, __LINE__, "User supplied FONTDIR needs byteswapping");
+		}
+	}
+
+	/* We now have fonts left where we need to make a fontdir resource */
+	for(i = fntleft = 0; i < nfnt; i++)
+	{
+		if(fnt[i])
+			fntleft++;
+	}
+	while(fntleft)
+	{
+		/* Get fonts of same language in lanfnt[] */
+		for(i = nlanfnt = 0; i < nfnt; i++)
+		{
+			if(fnt[i])
+			{
+				if(!nlanfnt)
+				{
+			addlanfnt:
+					lanfnt[nlanfnt] = fnt[i];
+					nlanfnt++;
+					fnt[i] = NULL;
+					fntleft--;
+				}
+				else if(fnt[i]->lan->id == lanfnt[0]->lan->id && fnt[i]->lan->sub == lanfnt[0]->lan->sub)
+					goto addlanfnt;
+			}
+		}
+		/* and build a fontdir */
+		rsc = build_fontdir(lanfnt, nlanfnt);
+		if(rsc)
+		{
+			if(lst)
+			{
+				lst->next = rsc;
+				rsc->prev = lst;
+			}
+			lst = rsc;
+		}
+	}
+
+	free(lanfnt);
+clean:
+	if(fnt)
+		free(fnt);
+	if(fnd)
+		free(fnd);
+	return lst;
 }
 

@@ -10,6 +10,7 @@
 /* From parser.y */
 extern int yydebug;
 extern int want_nl;		/* Set when getting line-numers */
+extern int want_id;		/* Set when getting the resource name */
 
 int yyparse(void);
 

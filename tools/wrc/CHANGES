@@ -1,4 +1,29 @@
 ---------------------------------------------------------------------------
+Version 1.1.3 (21-May-2000)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Implemented animated cursors and icons resource types.
+- Added partial support for font resources (user supplied fontdir is
+  required).
+- All resources with inline data (a la RCDATA) now support language,
+  version and characteristics data.
+- Implemented resource name duplicate checks. It is now an error if
+  two resources of the same type have the same name.
+- Bugfix: Language propagation was not correct when .res files were
+  generated.
+- Bugfix: VERSIONINFO now handles memory options.
+- Bugfix: resource names and the resource type may be equal (e.g. MENU
+  MENU {...}). This support was mistakingly deleted in the upgrade to
+  the builtin preprocessor.
+  The standalone LANGUAGE setting became context sensitive as a consequence
+  of this. Now it *must* end with a newline *after* both expressions and
+  no newlines are allowed within the line (the statement must fit on one
+  line). This is no practical problem though.
+
+Patrik Stridvall <ps@leissner.se>
+- Fixed byte order on Solaris and FreeBSD.
+
+---------------------------------------------------------------------------
 Version 1.1.2 (08-May-2000)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

@@ -41,6 +41,7 @@ __NEW_STRUCT_PROTO(lvc);
 __NEW_STRUCT_PROTO(res_count);
 __NEW_STRUCT_PROTO(string);
 __NEW_STRUCT_PROTO(toolbar_item);
+__NEW_STRUCT_PROTO(ani_any);
 
 resource_t *new_resource(enum res_e t, void *res, int memopt, language_t *lan);
 version_t *new_version(DWORD v);
@@ -53,8 +54,10 @@ rcdata_t *new_rcdata(raw_data_t *rd, int *memopt);
 font_id_t *new_font_id(int size, string_t *face, int weight, int italic);
 user_t *new_user(name_id_t *type, raw_data_t *rd, int *memopt);
 font_t *new_font(raw_data_t *rd, int *memopt);
+fontdir_t *new_fontdir(raw_data_t *rd, int *memopt);
 icon_group_t *new_icon_group(raw_data_t *rd, int *memopt);
 cursor_group_t *new_cursor_group(raw_data_t *rd, int *memopt);
+ani_curico_t *new_ani_curico(enum res_e type, raw_data_t *rd, int *memopt);
 bitmap_t *new_bitmap(raw_data_t *rd, int *memopt);
 ver_words_t *new_ver_words(int i);
 ver_words_t *add_ver_words(ver_words_t *w, int i);

@@ -2,6 +2,8 @@
  *
  * Copyright 1998-2000	Bertho A. Stultiens (BS)
  *
+ * 21-May-2000 BS	- Fixed the ident requirement of resource names
+ *			  which can be keywords.
  * 30-Apr-2000 BS	- Reintegration into the wine-tree
  * 11-Jan-2000 BS	- Very drastic cleanup because we don't have a
  *			  preprocessor in here anymore.
@@ -96,7 +98,7 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 #define YY_NO_TOP_STATE
 
 /* Always update the current character position within a line */
-#define YY_USER_ACTION	char_number+=yyleng;
+#define YY_USER_ACTION	char_number+=yyleng; wanted_id = want_id; want_id = 0;
 
 static void addcchar(char c);
 static void addwchar(short s);
@@ -114,95 +116,116 @@ static int stripslevel = 0;	/* Count {} during pp_strips/pp_stripe mode */
 static int stripplevel = 0;	/* Count () during pp_strips mode */
 static int cjunk_tagline;	/* Where did we start stripping (helps error tracking) */
 
+/*
+ * This one is a bit tricky.
+ * We set 'want_id' in the parser to get the first
+ * identifier we get across in the scanner, but we
+ * also want it to be reset at nearly any token we
+ * see. Exceptions are:
+ * - newlines
+ * - comments
+ * - whitespace
+ *
+ * The scanner will automatically reset 'want_id'
+ * after *each* scanner reduction and puts is value
+ * into the var below. In this way we can see the
+ * state after the YY_RULE_SETUP (i.e. the user action;
+ * see above) and don't have to worry too much when
+ * it needs to be reset.
+ */
+static int wanted_id = 0;
+static int save_wanted_id;	/* To save across comment reductions */
 
 struct keyword {
 	char	*keyword;
 	int	token;
 	int	isextension;
 	int	needcase;
+	int	alwayskw;
 };
 
 static struct keyword keywords[] = {
-	{ "ACCELERATORS",	tACCELERATORS,		0, 0},
-	{ "ALT",		tALT,			0, 0},
-	{ "ASCII",		tASCII,			0, 0},
-	{ "AUTO3STATE",		tAUTO3STATE,		1, 0},
-	{ "AUTOCHECKBOX",	tAUTOCHECKBOX,		1, 0},
-	{ "AUTORADIOBUTTON",	tAUTORADIOBUTTON,	1, 0},
-	{ "BEGIN",		tBEGIN,			0, 0},
-	{ "BITMAP",		tBITMAP,		0, 0},
-	{ "BLOCK",		tBLOCK,			0, 0},
-	{ "BUTTON",		tBUTTON,		1, 0},
-	{ "CAPTION",		tCAPTION,		0, 0},
-	{ "CHARACTERISTICS",	tCHARACTERISTICS,	1, 0},
-	{ "CHECKBOX",		tCHECKBOX,		0, 0},
-	{ "CHECKED",		tCHECKED,		0, 0},
-	{ "CLASS",		tCLASS,			0, 0},
-	{ "COMBOBOX",		tCOMBOBOX,		0, 0},
-	{ "CONTROL",		tCONTROL,		0, 0},
-	{ "CTEXT",		tCTEXT,			0, 0},
-	{ "CURSOR",		tCURSOR,		0, 0},
-	{ "DEFPUSHBUTTON",	tDEFPUSHBUTTON,		0, 0},
-	{ "DIALOG",		tDIALOG,		0, 0},
-	{ "DIALOGEX",		tDIALOGEX,		1, 0},
-	{ "DISCARDABLE",	tDISCARDABLE,		0, 0},
-	{ "DLGINIT",		tDLGINIT,		0, 0},
-	{ "EDITTEXT",		tEDITTEXT,		0, 0},
-	{ "END",		tEND,			0, 0},
-	{ "enum",		tENUM,			0, 1},
-	{ "EXSTYLE",		tEXSTYLE,		0, 0},
-	{ "extern",		tEXTERN,		0, 1},
-	{ "FILEFLAGS",		tFILEFLAGS,		0, 0},
-	{ "FILEFLAGSMASK",	tFILEFLAGSMASK,		0, 0},
-	{ "FILEOS",		tFILEOS,		0, 0},
-	{ "FILESUBTYPE",	tFILESUBTYPE,		0, 0},
-	{ "FILETYPE",		tFILETYPE,		0, 0},
-	{ "FILEVERSION",	tFILEVERSION,		0, 0},
-	{ "FIXED",		tFIXED,			0, 0},
-	{ "FONT",		tFONT,			0, 0},
-	{ "GRAYED",		tGRAYED,		0, 0},
-	{ "GROUPBOX",		tGROUPBOX,		0, 0},
-	{ "HELP",		tHELP,			0, 0},
-	{ "ICON",		tICON,			0, 0},
-	{ "IMPURE",		tIMPURE,		0, 0},
-	{ "INACTIVE",		tINACTIVE,		0, 0},
-	{ "inline",		tINLINE,		0, 1},
-	{ "LANGUAGE",		tLANGUAGE,		1, 0},
-	{ "LISTBOX",		tLISTBOX,		0, 0},
-	{ "LOADONCALL",		tLOADONCALL,		0, 0},
-	{ "LTEXT",		tLTEXT,			0, 0},
-	{ "MENU",		tMENU,			0, 0},
-	{ "MENUBARBREAK",	tMENUBARBREAK,		0, 0},
-	{ "MENUBREAK",		tMENUBREAK,		0, 0},
-	{ "MENUEX",		tMENUEX,		1, 0},
-	{ "MENUITEM",		tMENUITEM,		0, 0},
-	{ "MESSAGETABLE",	tMESSAGETABLE,		1, 0},
-	{ "MOVEABLE",		tMOVEABLE,		0, 0},
-	{ "NOINVERT",		tNOINVERT,		0, 0},
-	{ "NOT",		tNOT,			0, 0},
-	{ "POPUP",		tPOPUP,			0, 0},
-	{ "PRELOAD",		tPRELOAD,		0, 0},
-	{ "PRODUCTVERSION",	tPRODUCTVERSION,	0, 0},
-	{ "PURE",		tPURE,			0, 0},
-	{ "PUSHBUTTON",		tPUSHBUTTON,		0, 0},
-	{ "RADIOBUTTON",	tRADIOBUTTON,		0, 0},
-	{ "RCDATA",		tRCDATA,		0, 0},
-	{ "RTEXT",		tRTEXT,			0, 0},
-	{ "SCROLLBAR",		tSCROLLBAR,		0, 0},
-	{ "SEPARATOR",		tSEPARATOR,		0, 0},
-	{ "SHIFT",		tSHIFT,			0, 0},
-	{ "STATE3",		tSTATE3,		1, 0},
-	{ "static",		tSTATIC,		0, 1},
-	{ "STRING",		tSTRING,		0, 0},
-	{ "STRINGTABLE",	tSTRINGTABLE,		0, 0},
-	{ "struct",		tSTRUCT,		0, 1},
-	{ "STYLE",		tSTYLE,			0, 0},
-	{ "TOOLBAR",		tTOOLBAR,		1, 0},
-	{ "typedef",		tTYPEDEF,		0, 1},
-	{ "VALUE",		tVALUE,			0, 0},
-	{ "VERSION",		tVERSION,		1, 0},
-	{ "VERSIONINFO",	tVERSIONINFO,		0, 0},
-	{ "VIRTKEY",		tVIRTKEY,		0, 0}
+	{ "ACCELERATORS",	tACCELERATORS,		0, 0, 0},
+	{ "ALT",		tALT,			0, 0, 0},
+	{ "ASCII",		tASCII,			0, 0, 0},
+	{ "AUTO3STATE",		tAUTO3STATE,		1, 0, 0},
+	{ "AUTOCHECKBOX",	tAUTOCHECKBOX,		1, 0, 0},
+	{ "AUTORADIOBUTTON",	tAUTORADIOBUTTON,	1, 0, 0},
+	{ "BEGIN",		tBEGIN,			0, 0, 0},
+	{ "BITMAP",		tBITMAP,		0, 0, 0},
+	{ "BLOCK",		tBLOCK,			0, 0, 0},
+	{ "BUTTON",		tBUTTON,		1, 0, 0},
+	{ "CAPTION",		tCAPTION,		0, 0, 0},
+	{ "CHARACTERISTICS",	tCHARACTERISTICS,	1, 0, 0},
+	{ "CHECKBOX",		tCHECKBOX,		0, 0, 0},
+	{ "CHECKED",		tCHECKED,		0, 0, 0},
+	{ "CLASS",		tCLASS,			0, 0, 0},
+	{ "COMBOBOX",		tCOMBOBOX,		0, 0, 0},
+	{ "CONTROL",		tCONTROL,		0, 0, 0},
+	{ "CTEXT",		tCTEXT,			0, 0, 0},
+	{ "CURSOR",		tCURSOR,		0, 0, 0},
+	{ "DEFPUSHBUTTON",	tDEFPUSHBUTTON,		0, 0, 0},
+	{ "DIALOG",		tDIALOG,		0, 0, 0},
+	{ "DIALOGEX",		tDIALOGEX,		1, 0, 0},
+	{ "DISCARDABLE",	tDISCARDABLE,		0, 0, 0},
+	{ "DLGINIT",		tDLGINIT,		0, 0, 0},
+	{ "EDITTEXT",		tEDITTEXT,		0, 0, 0},
+	{ "END",		tEND,			0, 0, 0},
+	{ "enum",		tENUM,			0, 1, 1},
+	{ "EXSTYLE",		tEXSTYLE,		0, 0, 0},
+	{ "extern",		tEXTERN,		0, 1, 1},
+	{ "FILEFLAGS",		tFILEFLAGS,		0, 0, 0},
+	{ "FILEFLAGSMASK",	tFILEFLAGSMASK,		0, 0, 0},
+	{ "FILEOS",		tFILEOS,		0, 0, 0},
+	{ "FILESUBTYPE",	tFILESUBTYPE,		0, 0, 0},
+	{ "FILETYPE",		tFILETYPE,		0, 0, 0},
+	{ "FILEVERSION",	tFILEVERSION,		0, 0, 0},
+	{ "FIXED",		tFIXED,			0, 0, 0},
+	{ "FONT",		tFONT,			0, 0, 0},
+	{ "FONTDIR",		tFONTDIR,		0, 0, 0},	/* This is a Borland BRC extension */
+	{ "GRAYED",		tGRAYED,		0, 0, 0},
+	{ "GROUPBOX",		tGROUPBOX,		0, 0, 0},
+	{ "HELP",		tHELP,			0, 0, 0},
+	{ "ICON",		tICON,			0, 0, 0},
+	{ "IMPURE",		tIMPURE,		0, 0, 0},
+	{ "INACTIVE",		tINACTIVE,		0, 0, 0},
+	{ "inline",		tINLINE,		0, 1, 1},
+	{ "LANGUAGE",		tLANGUAGE,		1, 0, 1},
+	{ "LISTBOX",		tLISTBOX,		0, 0, 0},
+	{ "LOADONCALL",		tLOADONCALL,		0, 0, 0},
+	{ "LTEXT",		tLTEXT,			0, 0, 0},
+	{ "MENU",		tMENU,			0, 0, 0},
+	{ "MENUBARBREAK",	tMENUBARBREAK,		0, 0, 0},
+	{ "MENUBREAK",		tMENUBREAK,		0, 0, 0},
+	{ "MENUEX",		tMENUEX,		1, 0, 0},
+	{ "MENUITEM",		tMENUITEM,		0, 0, 0},
+	{ "MESSAGETABLE",	tMESSAGETABLE,		1, 0, 0},
+	{ "MOVEABLE",		tMOVEABLE,		0, 0, 0},
+	{ "NOINVERT",		tNOINVERT,		0, 0, 0},
+	{ "NOT",		tNOT,			0, 0, 0},
+	{ "POPUP",		tPOPUP,			0, 0, 0},
+	{ "PRELOAD",		tPRELOAD,		0, 0, 0},
+	{ "PRODUCTVERSION",	tPRODUCTVERSION,	0, 0, 0},
+	{ "PURE",		tPURE,			0, 0, 0},
+	{ "PUSHBUTTON",		tPUSHBUTTON,		0, 0, 0},
+	{ "RADIOBUTTON",	tRADIOBUTTON,		0, 0, 0},
+	{ "RCDATA",		tRCDATA,		0, 0, 0},
+	{ "RTEXT",		tRTEXT,			0, 0, 0},
+	{ "SCROLLBAR",		tSCROLLBAR,		0, 0, 0},
+	{ "SEPARATOR",		tSEPARATOR,		0, 0, 0},
+	{ "SHIFT",		tSHIFT,			0, 0, 0},
+	{ "STATE3",		tSTATE3,		1, 0, 0},
+	{ "static",		tSTATIC,		0, 1, 1},
+	{ "STRING",		tSTRING,		0, 0, 0},
+	{ "STRINGTABLE",	tSTRINGTABLE,		0, 0, 1},
+	{ "struct",		tSTRUCT,		0, 1, 1},
+	{ "STYLE",		tSTYLE,			0, 0, 0},
+	{ "TOOLBAR",		tTOOLBAR,		1, 0, 0},
+	{ "typedef",		tTYPEDEF,		0, 1, 1},
+	{ "VALUE",		tVALUE,			0, 0, 0},
+	{ "VERSION",		tVERSION,		1, 0, 0},
+	{ "VERSIONINFO",	tVERSIONINFO,		0, 0, 0},
+	{ "VIRTKEY",		tVIRTKEY,		0, 0, 0}
 };
 
 #define NKEYWORDS	(sizeof(keywords)/sizeof(keywords[0]))
@@ -318,6 +341,11 @@ static struct keyword *iskeyword(char *kw)
 				{
 					if(tok->token == tCLASS && !strcmp(yytext, "class"))
 						return tCPPCLASS;
+					else if(wanted_id && !tok->alwayskw)
+					{
+						yylval.str = make_string(yytext);
+						return tIDENT;
+					}
 					else
 						return tok->token;
 				}
@@ -446,17 +474,21 @@ L\"			{
 	 * Should never occur after preprocessing
 	 */
 <INITIAL,pp_stripp,pp_strips>"/*"	{
-				yy_push_state(comment);	if(!no_preprocess) yywarning("Found comments after preprocessing, please report");
+				yy_push_state(comment);
+				save_wanted_id = wanted_id;
+				if(!no_preprocess)
+					yywarning("Found comments after preprocessing, please report");
 			}
 <comment>[^*\n]*	;
 <comment>"*"+[^*/\n]*	;
 <comment>\n		line_number++; char_number = 1;
-<comment>"*"+"/"	yy_pop_state();
+<comment>"*"+"/"	yy_pop_state(); want_id = save_wanted_id;
 
-;[^\n]*			; /* not really comment, but left-over c-junk */
-"//"[^\n]*		if(!no_preprocess) yywarning("Found comments after preprocessing, please report");
+;[^\n]*			want_id = wanted_id; /* not really comment, but left-over c-junk */
+"//"[^\n]*		want_id = wanted_id; if(!no_preprocess) yywarning("Found comments after preprocessing, please report");
 
 \n			{
+				want_id = wanted_id;
 				line_number++;
 				char_number = 1;
 				if(want_nl)
@@ -465,7 +497,7 @@ L\"			{
 					return tNL;
 				}
 			}
-{ws}+			;	/* Eat whitespace */
+{ws}+			want_id = wanted_id;	/* Eat whitespace */
 
 <INITIAL>.		return yytext[0];
 

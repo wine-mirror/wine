@@ -44,6 +44,7 @@
 #define WRC_RT_VXD		(20)
 #define WRC_RT_ANICURSOR	(21)
 #define WRC_RT_ANIICON		(22)
+#define WRC_RT_HTML		(23)
 #define WRC_RT_DLGINIT          (240)
 #define WRC_RT_TOOLBAR		(241)  
 
@@ -160,8 +161,9 @@ enum res_e {
 	res_18,
 	res_pnp,	/* Not implemented, no layout available */
 	res_vxd,	/* Not implemented, no layout available */
-	res_anicur,	/* Not implemented, no layout available */
-	res_aniico,	/* Not implemented, no layout available */
+	res_anicur,
+	res_aniico,
+	res_html,	/* Not implemented, no layout available */
 
 	res_dlginit = WRC_RT_DLGINIT,	/* 240 */
 	res_toolbar = WRC_RT_TOOLBAR,	/* 241 */
@@ -175,6 +177,7 @@ enum res_e {
 typedef struct raw_data {
 	int	size;
 	char	*data;
+	lvc_t	lvc;		/* Localized data */
 } raw_data_t;
 
 /* Dialog structures */
@@ -286,11 +289,18 @@ typedef struct itemex_opt
 	int	gothelpid;
 } itemex_opt_t;
 
-/* RC structures for types read from file or supplied binary */
+/*
+ * Font resources
+ */
 typedef struct font {
 	DWORD		memopt;
 	raw_data_t	*data;
 } font_t;
+
+typedef struct fontdir {
+	DWORD		memopt;
+	raw_data_t	*data;
+} fontdir_t;
 
 /*
  * Icon resources
@@ -302,14 +312,14 @@ typedef struct icon_header {
 } icon_header_t;
 
 typedef struct icon_dir_entry {
-    BYTE  width;	/* From the SDK doc. */
-    BYTE  height;
-    BYTE  nclr;
-    BYTE  reserved;
-    WORD  planes;
-    WORD  bits;
-    DWORD ressize;
-    DWORD offset;
+	BYTE	width;		/* From the SDK doc. */
+	BYTE	height;
+	BYTE	nclr;
+	BYTE	reserved;
+	WORD	planes;
+	WORD	bits;
+	DWORD	ressize;
+	DWORD	offset;
 } icon_dir_entry_t;
 
 typedef struct icon {
@@ -342,14 +352,14 @@ typedef struct cursor_header {
 } cursor_header_t;
 
 typedef struct cursor_dir_entry {
-    BYTE  width;	/* From the SDK doc. */
-    BYTE  height;
-    BYTE  nclr;
-    BYTE  reserved;
-    WORD  xhot;
-    WORD  yhot;
-    DWORD ressize;
-    DWORD offset;
+	BYTE	width;		/* From the SDK doc. */
+	BYTE	height;
+	BYTE	nclr;
+	BYTE	reserved;
+	WORD	xhot;
+	WORD	yhot;
+	DWORD	ressize;
+	DWORD	offset;
 } cursor_dir_entry_t;
 
 typedef struct cursor {
@@ -374,6 +384,43 @@ typedef struct cursor_group {
 	int		ncursor;
 } cursor_group_t;
 
+/*
+ * Animated cursors and icons
+ */
+typedef struct aniheader {
+	DWORD	structsize;	/* Header size (36 bytes) */
+	DWORD	frames;		/* Number of unique icons in this cursor */
+	DWORD	steps;		/* Number of blits before the animation cycles */
+	DWORD	cx;		/* reserved, must be 0? */
+	DWORD	cy;		/* reserved, must be 0? */
+	DWORD	bitcount;	/* reserved, must be 0? */
+	DWORD	planes;		/* reserved, must be 0? */
+	DWORD	rate;		/* Default rate (1/60th of a second) if "rate" not present */
+	DWORD	flags;		/* Animation flag (1==AF_ICON, although both icons and cursors set this) */
+} aniheader_t;
+
+typedef struct riff_tag {
+	BYTE	tag[4];
+	DWORD	size;
+} riff_tag_t;
+
+typedef struct ani_curico {
+	DWORD		memopt;
+	raw_data_t	*data;
+} ani_curico_t;
+
+typedef struct ani_any {
+	enum res_e	type;
+	union {
+		ani_curico_t	*ani;
+		cursor_group_t	*curg;
+		icon_group_t	*icog;
+	} u;
+} ani_any_t;
+
+/*
+ * Bitmaps
+ */
 typedef struct bitmap {
 	DWORD		memopt;
 	raw_data_t	*data;
@@ -381,7 +428,6 @@ typedef struct bitmap {
 
 typedef struct rcdata {
 	DWORD		memopt;
-	lvc_t		lvc;
 	raw_data_t	*data;
 } rcdata_t;
 
@@ -467,6 +513,8 @@ typedef struct versioninfo {
 		int fst:1;
 	} gotit;
 	ver_block_t	*blocks;
+	lvc_t		lvc;
+	DWORD		memopt;
 } versioninfo_t;
 
 /* Accelerator structures */
@@ -509,7 +557,6 @@ typedef struct toolbar {
 
 typedef struct dlginit {
 	DWORD		memopt;
-	lvc_t		lvc;
 	raw_data_t	*data;
 } dlginit_t;
 
@@ -523,6 +570,7 @@ typedef struct resource {
 	language_t	*lan;	/* Only used as a sorting key and c-name creation*/
 	union {
 		accelerator_t	*acc;
+		ani_curico_t	*ani;
 		bitmap_t	*bmp;
 		cursor_t	*cur;
 		cursor_group_t	*curg;
@@ -530,6 +578,7 @@ typedef struct resource {
 		dialogex_t	*dlgex;
 		dlginit_t       *dlgi;
 		font_t		*fnt;
+		fontdir_t	*fnd;
 		icon_t		*ico;
 		icon_group_t	*icog;
 		menu_t		*men;

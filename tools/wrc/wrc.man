@@ -1,4 +1,4 @@
-.TH WRC 1 "May 8, 2000" "Version 1.1.2" "Wine Resource Compiler"
+.TH WRC 1 "May 21, 2000" "Version 1.1.3" "Wine Resource Compiler"
 .SH NAME
 wrc \- Wine Resource Compiler
 .SH SYNOPSIS
@@ -179,21 +179,26 @@ Additional resource\-types were contributed Ulrich Czekalla and Albert
 den Haan. Bugfixes have been contributed by many wine developpers.
 .SH BUGS
 \- The preprocessor recognizes variable argument macros, but does not
-expanded them correctly.
+expanded them correctly
 .br
-\- Codepage/UNICODE translations are not/not correct implemented.
+\- Codepage/UNICODE translations are not/not correct implemented
 .br
 \- Default memory options should differ between win16 and win32.
 .PP
-\- There is no support for:
+There is no support for:
 .br
-\- MESSAGETABLE (parsed, but not generated).
+\- MESSAGETABLE (parsed, but not generated)
 .br
-\- FONT (parsed, but not generated).
+\- RT_VXD, RT_PLUGPLAY and RT_HTML (unknown format)
 .br
-\- RT_VXD and RT_PLUGPLAY (unknown format)
-.br
-\- Animated cursors and icons (RIFF format unknown).
+\- PUSHBOX control is unsupported due to lack of original functionality.
+.PP
+Fonts are parsed and generated, but there is no support for the
+generation of the FONTDIR yet. The user must supply the FONTDIR
+resource in the source to match the FONT resources.
+.PP
+See the CHANGES and README.wrc files in the distribution for more
+comments on bugs and fixes across the versions.
 .SH AVAILABILITY
 .B wrc
 is part of the wine distribution, which is available through

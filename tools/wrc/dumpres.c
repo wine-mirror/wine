@@ -46,6 +46,8 @@ char *get_typename(resource_t* r)
 	case res_ver:	return "VERSIONINFO";
 	case res_dlginit: return "DLGINIT";
 	case res_toolbar: return "TOOLBAR";
+	case res_anicur:  return "CURSOR (animated)";
+	case res_aniico:  return "ICON (animated)";
 	default: 	return "Unknown";
 	}
 }
@@ -365,6 +367,24 @@ static void dump_icon_group(icon_group_t *icog)
 
 /*
  *****************************************************************************
+ * Function	: dump_ani_curico
+ * Syntax	: void dump_ani_curico(ani_curico_t *ani)
+ * Input	:
+ *	ani	- Animated object resource descriptor
+ * Output	: nop
+ * Description	:
+ * Remarks	:
+ *****************************************************************************
+*/
+static void dump_ani_curico(ani_curico_t *ani)
+{
+	dump_memopt(ani->memopt);
+	dump_lvc(&ani->data->lvc);
+	dump_raw_data(ani->data);
+}
+
+/*
+ *****************************************************************************
  * Function	: dump_font
  * Syntax	: void dump_font(font_t *fnt)
  * Input	:
@@ -377,6 +397,7 @@ static void dump_icon_group(icon_group_t *icog)
 static void dump_font(font_t *fnt)
 {
 	dump_memopt(fnt->memopt);
+	dump_lvc(&(fnt->data->lvc));
 	dump_raw_data(fnt->data);
 }
 
@@ -394,6 +415,7 @@ static void dump_font(font_t *fnt)
 static void dump_bitmap(bitmap_t *bmp)
 {
 	dump_memopt(bmp->memopt);
+	dump_lvc(&(bmp->data->lvc));
 	dump_raw_data(bmp->data);
 }
 
@@ -411,6 +433,7 @@ static void dump_bitmap(bitmap_t *bmp)
 static void dump_rcdata(rcdata_t *rdt)
 {
 	dump_memopt(rdt->memopt);
+	dump_lvc(&(rdt->data->lvc));
 	dump_raw_data(rdt->data);
 }
 
@@ -428,6 +451,7 @@ static void dump_rcdata(rcdata_t *rdt)
 static void dump_user(user_t *usr)
 {
 	dump_memopt(usr->memopt);
+	dump_lvc(&(usr->data->lvc));
 	printf("Class %s\n", get_nameid_str(usr->type));
 	dump_raw_data(usr->data);
 }
@@ -445,6 +469,7 @@ static void dump_user(user_t *usr)
 */
 static void dump_messagetable(messagetable_t *msg)
 {
+	dump_lvc(&(msg->data->lvc));
 	dump_raw_data(msg->data);
 }
 
@@ -821,6 +846,8 @@ static void dump_versioninfo(versioninfo_t *ver)
 {
 	ver_block_t *blk = ver->blocks;
 
+	dump_lvc(&(ver->lvc));
+
 	if(ver->gotit.fv)
 		printf("FILEVERSION %04x, %04x, %04x, %04x\n",
 			ver->filever_maj1,
@@ -907,7 +934,7 @@ static void dump_toolbar(toolbar_t *toolbar)
 static void dump_dlginit(dlginit_t *dit)
 {
 	dump_memopt(dit->memopt);
-	dump_lvc(&(dit->lvc));
+	dump_lvc(&(dit->data->lvc));
 	dump_raw_data(dit->data);
 }
 
@@ -996,6 +1023,10 @@ void dump_resources(resource_t *top)
 			break;
 		case res_toolbar:
 			dump_toolbar(top->res.tbt);
+			break;
+		case res_anicur:
+		case res_aniico:
+			dump_ani_curico(top->res.ani);
 			break;
 		default:
 			printf("Report this: Unknown resource type parsed %08x\n", top->type);

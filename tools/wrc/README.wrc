@@ -1,4 +1,4 @@
-Release 1.1.2 of wrc (08-May-2000), the wine resource compiler.
+Release 1.1.3 of wrc (21-May-2000), the wine resource compiler.
 
 See the file CHANGES for differences between the version and what has been
 corrected in the current version.
@@ -144,24 +144,38 @@ Borland's implementation. Wrc uses 0,0 as the default language if non is
 specified. Both MS and Borland use the language of the system that the
 compiler runs on.
 
-Not all resource-types can have local language keywords attached yet
-(notably: BITMAP, CURSOR, ICON and usertype). This is due to implementation
-of filename-scanning and the complexity that it poses. This will be changed
-in the next release. You can work arround this problem by putting a LANGUAGE
-statement before (and evt. after) the code in the resource file.
+Language, version and characteristics can be bound to all resource types that
+have inline data, such as RCDATA. This is an extension to MS' resource
+compiler, which lacks this support completely. Only VERSIONINFO cannot have
+version and characteristics attached, but languages are propagated properly if
+you declare it correctly before the VERSIONINFO resource starts.
+
+Example:
+
+1 RCDATA DISCARDABLE
+LANGUAGE 1, 0
+VERSION 312
+CHARACTERISTICS 876
+{
+	1, 2, 3, 4, 5, "and whatever more data you want"
+	'00 01 02 03 04 05 06 07 08'
+}
 
 
 Resource types supported
 ------------------------
 All types are supported except for:
-- FONT (RT_FONT, RT_FONTDIR)
 - MESSAGETABLE (RT_MESSAGETABLE)
-- Animated cursors/icons (RT_ANIICON, RT_ANICURSOR)
 - RT_VXD
 - RT_PLUGPLAY
+- RT_HTML
 
 These types will be implemented as soon as I get a proper specification of
 the layout.
+
+Font type resources (RT_FONT, RT_FONTDIR) are partially supported and will
+be enhanced when I have the complete spec. The font resources work only if
+you supply the FONTDIR resource yourself.
 
 
 Expression capabilities and resource names
@@ -263,10 +277,12 @@ things that I noted in the above text (more lack of implementation than bug
 though):
 - No codepage translation
 - UNICODE translations are not/not correct implemented
-- No documentation ('wrc -?' gives command-line options though)
+- No documentation ('wrc -?' gives command-line options and a manpage)
 - grep for FIXME in the source
 - Memory options are wrong under some conditions. There seems to be a
   different action for win32 and win16
+- PUSHBOX control is unsupported. The MS docs use it plenty, but neither
+  MS' nor Borland's compiler supports it.
 
 Reporting bugs and patches
 --------------------------

@@ -14,5 +14,6 @@
 
 char *get_typename(resource_t* r);
 void dump_resources(resource_t *top);
+char *get_nameid_str(name_id_t *n);
 
 #endif

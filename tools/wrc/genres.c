@@ -1192,6 +1192,40 @@ static res_t *icon2res(icon_t *ico)
 
 /*
  *****************************************************************************
+ * Function	: anicurico2res
+ * Syntax	: res_t *anicurico2res(name_id_t *name, ani_curico_t *ani)
+ * Input	:
+ *	name	- Name/ordinal of the resource
+ *	ani	- The animated object descriptor
+ * Output	: New .res format structure
+ * Description	:
+ * Remarks	: The endian of the object's structures have been converted
+ * 		  by the loader.
+ * 		  There are rumors that win311 could handle animated stuff.
+ * 		  That is why they are generated for both win16 and win32
+ * 		  compile.
+ *****************************************************************************
+*/
+static res_t *anicurico2res(name_id_t *name, ani_curico_t *ani, enum res_e type)
+{
+	int restag;
+	res_t *res;
+	assert(name != NULL);
+	assert(ani != NULL);
+
+	res = new_res();
+	restag = put_res_header(res, type == res_anicur ? WRC_RT_ANICURSOR : WRC_RT_ANIICON,
+				NULL, name, ani->memopt, NULL);
+	put_raw_data(res, ani->data, 0);
+	/* Set ResourceSize */
+	SetResSize(res, restag);
+	if(win32)
+		put_pad(res);
+	return res;
+}
+
+/*
+ *****************************************************************************
  * Function	: bitmap2res
  * Syntax	: res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
  * Input	:
@@ -1200,7 +1234,7 @@ static res_t *icon2res(icon_t *ico)
  * Output	: New .res format structure
  * Description	:
  * Remarks	: The endian of the bitmap structures have been converted
- * 		  to native by the loader.
+ * 		  by the loader.
  *****************************************************************************
 */
 static res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
@@ -1211,7 +1245,7 @@ static res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
 	assert(bmp != NULL);
 
 	res = new_res();
-	restag = put_res_header(res, WRC_RT_BITMAP, NULL, name, bmp->memopt, NULL);
+	restag = put_res_header(res, WRC_RT_BITMAP, NULL, name, bmp->memopt, &(bmp->data->lvc));
 	if(bmp->data->data[0] == 'B'
 	&& bmp->data->data[1] == 'M'
 	&& ((BITMAPFILEHEADER *)bmp->data->data)->bfSize == bmp->data->size
@@ -1240,15 +1274,53 @@ static res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
  *	fnt	- The font descriptor
  * Output	: New .res format structure
  * Description	:
- * Remarks	:
+ * Remarks	: The data has been prepared just after parsing.
  *****************************************************************************
 */
 static res_t *font2res(name_id_t *name, font_t *fnt)
 {
+	int restag;
+	res_t *res;
 	assert(name != NULL);
 	assert(fnt != NULL);
-	warning("Fonts not yet implemented");
-	return NULL;
+
+	res = new_res();
+	restag = put_res_header(res, WRC_RT_FONT, NULL, name, fnt->memopt, &(fnt->data->lvc));
+	put_raw_data(res, fnt->data, 0);
+	/* Set ResourceSize */
+	SetResSize(res, restag);
+	if(win32)
+		put_pad(res);
+	return res;
+}
+
+/*
+ *****************************************************************************
+ * Function	: fontdir2res
+ * Syntax	: res_t *fontdir2res(name_id_t *name, fontdir_t *fnd)
+ * Input	:
+ *	name	- Name/ordinal of the resource
+ *	fntdir	- The fontdir descriptor
+ * Output	: New .res format structure
+ * Description	:
+ * Remarks	: The data has been prepared just after parsing.
+ *****************************************************************************
+*/
+static res_t *fontdir2res(name_id_t *name, fontdir_t *fnd)
+{
+	int restag;
+	res_t *res;
+	assert(name != NULL);
+	assert(fnd != NULL);
+
+	res = new_res();
+	restag = put_res_header(res, WRC_RT_FONTDIR, NULL, name, fnd->memopt, &(fnd->data->lvc));
+	put_raw_data(res, fnd->data, 0);
+	/* Set ResourceSize */
+	SetResSize(res, restag);
+	if(win32)
+		put_pad(res);
+	return res;
 }
 
 /*
@@ -1271,7 +1343,7 @@ static res_t *rcdata2res(name_id_t *name, rcdata_t *rdt)
 	assert(rdt != NULL);
 
 	res = new_res();
-	restag = put_res_header(res, WRC_RT_RCDATA, NULL, name, rdt->memopt, NULL);
+	restag = put_res_header(res, WRC_RT_RCDATA, NULL, name, rdt->memopt, &(rdt->data->lvc));
 	put_raw_data(res, rdt->data, 0);
 	/* Set ResourceSize */
 	SetResSize(res, restag);
@@ -1379,7 +1451,7 @@ static res_t *user2res(name_id_t *name, user_t *usr)
 	assert(usr != NULL);
 
 	res = new_res();
-	restag = put_res_header(res, 0, usr->type, name, usr->memopt, NULL);
+	restag = put_res_header(res, 0, usr->type, name, usr->memopt, &(usr->data->lvc));
 	put_raw_data(res, usr->data, 0);
 	/* Set ResourceSize */
 	SetResSize(res, restag);
@@ -1504,7 +1576,7 @@ static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 	vsvi.size = 15; /* Excl. termination */
 
 	res = new_res();
-	restag = put_res_header(res, WRC_RT_VERSION, NULL, name, WRC_MO_MOVEABLE | WRC_MO_PURE, NULL);
+	restag = put_res_header(res, WRC_RT_VERSION, NULL, name, ver->memopt, &(ver->lvc));
 	rootblocksizetag = res->size;
 	put_word(res, 0);	/* BlockSize filled in later */
 	valsizetag = res->size;
@@ -1629,7 +1701,7 @@ static res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
 	assert(dit != NULL);
 
 	res = new_res();
-	restag = put_res_header(res, WRC_RT_DLGINIT, NULL, name, dit->memopt, &(dit->lvc));
+	restag = put_res_header(res, WRC_RT_DLGINIT, NULL, name, dit->memopt, &(dit->data->lvc));
 	put_raw_data(res, dit->data, 0);
 	/* Set ResourceSize */
 	SetResSize(res, restag);
@@ -1746,12 +1818,15 @@ char *get_c_typename(enum res_e type)
 	switch(type)
 	{
 	case res_acc:	return "Acc";
+	case res_anicur:return "AniCur";
+	case res_aniico:return "AniIco";
 	case res_bmp:	return "Bmp";
 	case res_cur:	return "Cur";
 	case res_curg:	return "CurGrp";
 	case res_dlg:
 	case res_dlgex:	return "Dlg";
 	case res_fnt:	return "Fnt";
+	case res_fntdir:return "FntDir";
 	case res_ico:	return "Ico";
 	case res_icog:	return "IcoGrp";
 	case res_men:
@@ -1812,6 +1887,10 @@ void resources2res(resource_t *top)
 			if(!top->binres)
 				top->binres = font2res(top->name, top->res.fnt);
 			break;
+		case res_fntdir:
+			if(!top->binres)
+				top->binres = fontdir2res(top->name, top->res.fnd);
+			break;
 		case res_ico:
 			if(!top->binres)
 				top->binres = icon2res(top->res.ico);
@@ -1856,7 +1935,11 @@ void resources2res(resource_t *top)
 			if(!top->binres)
 			    top->binres = dlginit2res(top->name, top->res.dlgi);
 			break;
-
+		case res_anicur:
+		case res_aniico:
+			if(!top->binres)
+			    top->binres = anicurico2res(top->name, top->res.ani, top->type);
+			break;
 		default:
 			internal_error(__FILE__, __LINE__, "Unknown resource type encountered %d in binary res generation", top->type);
 		}

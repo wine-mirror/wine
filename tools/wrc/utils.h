@@ -34,5 +34,6 @@ short *wstrcpy(short *dst, const short *src);
 int wstricmp(const short *s1, const short *s2);
 char *dupwstr2cstr(const short *str);
 short *dupcstr2wstr(const char *str);
+int compare_name_id(name_id_t *n1, name_id_t *n2);
 
 #endif

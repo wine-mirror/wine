@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
 
 #include "wrc.h"
 #include "newstruc.h"
@@ -42,6 +43,7 @@ __NEW_STRUCT_FUNC(lvc)
 __NEW_STRUCT_FUNC(res_count)
 __NEW_STRUCT_FUNC(string)
 __NEW_STRUCT_FUNC(toolbar_item)
+__NEW_STRUCT_FUNC(ani_any)
 
 /* New instances for all types of structures */
 /* Very inefficient (in size), but very functional :-]
@@ -146,8 +148,22 @@ font_t *new_font(raw_data_t *rd, int *memopt)
 		free(memopt);
 	}
 	else
-		fnt->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE;
+		fnt->memopt = WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE;
 	return fnt;
+}
+
+fontdir_t *new_fontdir(raw_data_t *rd, int *memopt)
+{
+	fontdir_t *fnd = (fontdir_t *)xmalloc(sizeof(fontdir_t));
+	fnd->data = rd;
+	if(memopt)
+	{
+		fnd->memopt = *memopt;
+		free(memopt);
+	}
+	else
+		fnd->memopt = WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE;
+	return fnd;
 }
 
 
@@ -364,7 +380,6 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 	icon_header_t *ih = (icon_header_t *)rd->data;
 	int swap = 0;
 
-	/* FIXME: Distinguish between normal and animated icons (RIFF format) */
 	if(ih->type == 1)
 		swap = 0;
 	else if(BYTESWAP_WORD(ih->type) == 1)
@@ -378,7 +393,7 @@ static void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
 	{
 		ico = new_icon();
 		ico->id = alloc_icon_id(icog->lvc.language);
-		ico->lvc.language = dup_language(icog->lvc.language);
+		ico->lvc = icog->lvc;
 		if(swap)
 		{
 			ide[i].offset = BYTESWAP_DWORD(ide[i].offset);
@@ -458,7 +473,6 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 	cursor_header_t *ch = (cursor_header_t *)rd->data;
 	int swap = 0;
 
-	/* FIXME: Distinguish between normal and animated cursors (RIFF format)*/
 	if(ch->type == 2)
 		swap = 0;
 	else if(BYTESWAP_WORD(ch->type) == 2)
@@ -473,7 +487,7 @@ static void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 		WORD bits;
 		cur = new_cursor();
 		cur->id = alloc_cursor_id(curg->lvc.language);
-		cur->lvc.language = dup_language(curg->lvc.language);
+		cur->lvc = curg->lvc;
 		if(swap)
 		{
 			cde[i].offset = BYTESWAP_DWORD(cde[i].offset);
@@ -536,7 +550,7 @@ icon_group_t *new_icon_group(raw_data_t *rd, int *memopt)
 	}
 	else
 		icog->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE | WRC_MO_DISCARDABLE;
-	icog->lvc.language = dup_language(currentlanguage);
+	icog->lvc = rd->lvc;
 	split_icons(rd, icog, &(icog->nicon));
 	free(rd->data);
 	free(rd);
@@ -553,13 +567,309 @@ cursor_group_t *new_cursor_group(raw_data_t *rd, int *memopt)
 	}
 	else
 		curg->memopt = WRC_MO_MOVEABLE | WRC_MO_PURE | WRC_MO_DISCARDABLE;
-	curg->lvc.language = dup_language(currentlanguage);
+	curg->lvc = rd->lvc;
 	split_cursors(rd, curg, &(curg->ncursor));
 	free(rd->data);
 	free(rd);
 	return curg;
 }
 
+/*
+ * Animated cursors and icons
+ *
+ * The format of animated cursors and icons is yet another example
+ * of bad design by "The Company". The entire RIFF structure is
+ * flawed by design because it is inconsistent and single minded:
+ * - some tags have lengths attached, others don't. The use of these
+ *   non-length tags is absolutely unclear;
+ * - the content of "icon" tags can be both icons and cursors;
+ * - tags lack proper alignment constraints. It seems that everything
+ *   is 16bit aligned, but I could not find that in any docu. Just be
+ *   prepared to eat anything;
+ * - there are no strict constraints on tag-nesting and the organization
+ *   is highly illogical;
+ *
+ * Anyhow, here is the basic structure:
+ * "RIFF" { dword taglength }
+ * 	"ACON"					// What does it do?
+ *	"LIST" { dword taglength }
+ *		"INFO"				// And what does this do?
+ *		"INAM" { dword taglength }	// Icon/cursor name
+ *			{inam data}
+ *		"IART" { dword taglength }	// The artist
+ *			{iart data}
+ *		"fram"				// Is followed by "icon"s
+ *		"icon" { dword taglength }	// First frame
+ *			{ icon/cursor data }
+ *		"icon" { dword taglength }	// Second frame
+ *			{ icon/cursor data }
+ *			...			// ...
+ *	"anih" { dword taglength }		// Header structure
+ *		{ aniheader_t structure }
+ *	"rate" { dword taglength }		// The rate for each frame
+ *		{ `steps' dwords }
+ *	"seq " { dword taglength }		// The frame blit-order
+ *		{ `steps' dwords }
+ *
+ * Tag length are bytelength without the header and length field (i.e. -8).
+ * The "LIST" tag may occur several times and may encapsulate different
+ * tags. The `steps' is the number of "icon" tags found (actually the
+ * number of steps specified in the aniheader_t structure). The "seq "uence
+ * tag can be ommitted, in which case the sequence is equal to the sequence
+ * of "icon"s found in the file. Also "rate" may be ommitted, in which case
+ * the deafult from the aniheader_t structure is used.
+ *
+ * A animated cursor puts `.cur' formatted files into each "icon" tag, whereas
+ * animated icons contain `.ico' formatted files.
+ *
+ * Note about the code: Yes, it can be shorter/compressed. Some tags can be
+ * dealt with in the same code. However, this version shows what is going on
+ * and is better debug-able.
+ */
+static const char riff[4] = "RIFF";
+static const char acon[4] = "ACON";
+static const char list[4] = "LIST";
+static const char info[4] = "INFO";
+static const char inam[4] = "INAM";
+static const char iart[4] = "IART";
+static const char fram[4] = "fram";
+static const char icon[4] = "icon";
+static const char anih[4] = "anih";
+static const char rate[4] = "rate";
+static const char seq[4]  = "seq ";
+
+#define NEXT_TAG(p)	((riff_tag_t *)(((char *)p) + (isswapped ? BYTESWAP_DWORD(p->size) : p->size) + sizeof(*p)))
+
+static void handle_ani_icon(riff_tag_t *rtp, enum res_e type, int isswapped)
+{
+	cursor_dir_entry_t *cdp;
+	cursor_header_t *chp;
+	int count;
+	int ctype;
+	int i;
+	static int once = 0;	/* This will trigger only once per file! */
+	const char *anistr = type == res_aniico ? "icon" : "cursor";
+	/* Notes:
+	 * Both cursor and icon directories are similar
+	 * Both cursor and icon headers are similar
+	 */
+
+	chp = (cursor_header_t *)(rtp+1);
+	cdp = (cursor_dir_entry_t *)(chp+1);
+	count = isswapped ? BYTESWAP_WORD(chp->count) : chp->count;
+	ctype = isswapped ? BYTESWAP_WORD(chp->type) : chp->type;
+	chp->reserved	= BYTESWAP_WORD(chp->reserved);
+	chp->type	= BYTESWAP_WORD(chp->type);
+	chp->count	= BYTESWAP_WORD(chp->count);
+
+	if(type == res_anicur && ctype != 2 && !once)
+	{
+		yywarning("Animated cursor contains invalid \"icon\" tag cursor-file (%d->%s)",
+				ctype,
+				ctype == 1 ? "icontype" : "?");
+		once++;
+	}
+	else if(type == res_aniico && ctype != 1 && !once)
+	{
+		yywarning("Animated icon contains invalid \"icon\" tag icon-file (%d->%s)",
+				ctype,
+				ctype == 2 ? "cursortype" : "?");
+		once++;
+	}
+	else if(ctype != 1 && ctype != 2 && !once)
+	{
+		yywarning("Animated %s contains invalid \"icon\" tag file-type (%d; neither icon nor cursor)", anistr, ctype);
+		once++;
+	}
+
+	for(i = 0; i < count; i++)
+	{
+		DWORD ofs = isswapped ? BYTESWAP_DWORD(cdp[i].offset) : cdp[i].offset;
+		DWORD sze = isswapped ? BYTESWAP_DWORD(cdp[i].ressize) : cdp[i].ressize;
+		if(ofs > rtp->size || ofs+sze > rtp->size)
+			yyerror("Animated %s's data corrupt", anistr);
+		convert_bitmap((char *)chp + ofs, 0);
+		cdp[i].xhot	= BYTESWAP_WORD(cdp->xhot);
+		cdp[i].yhot	= BYTESWAP_WORD(cdp->yhot);
+		cdp[i].ressize	= BYTESWAP_DWORD(cdp->ressize);
+		cdp[i].offset	= BYTESWAP_DWORD(cdp->offset);
+	}
+}
+
+static void handle_ani_list(riff_tag_t *lst, enum res_e type, int isswapped)
+{
+	riff_tag_t *rtp = lst+1;	/* Skip the "LIST" tag */
+	
+	while((char *)rtp < (char *)lst + lst->size + sizeof(*lst))
+	{
+		if(!memcmp(rtp->tag, info, sizeof(info)))
+		{
+			rtp = (riff_tag_t *)(((char *)rtp) + 4);
+		}
+		else if(!memcmp(rtp->tag, inam, sizeof(inam)))
+		{
+			/* Ignore the icon/cursor name; its a string */
+			rtp = NEXT_TAG(rtp);
+		}
+		else if(!memcmp(rtp->tag, iart, sizeof(iart)))
+		{
+			/* Ignore the author's name; its a string */
+			rtp = NEXT_TAG(rtp);
+		}
+		else if(!memcmp(rtp->tag, fram, sizeof(fram)))
+		{
+			/* This should be followed by "icon"s, but we
+			 * simply ignore this because it is pure
+			 * non-information.
+			 */
+			rtp = (riff_tag_t *)(((char *)rtp) + 4);
+		}
+		else if(!memcmp(rtp->tag, icon, sizeof(icon)))
+		{
+			handle_ani_icon(rtp, type, isswapped);
+			rtp = NEXT_TAG(rtp);
+		}
+		else
+			internal_error(__FILE__, __LINE__, "Unknown tag \"%c%c%c%c\" in RIFF file",
+				       isprint(rtp->tag[0]) ? rtp->tag[0] : '.',
+				       isprint(rtp->tag[1]) ? rtp->tag[1] : '.',
+				       isprint(rtp->tag[2]) ? rtp->tag[2] : '.',
+				       isprint(rtp->tag[3]) ? rtp->tag[3] : '.');
+
+		/* FIXME: This relies in sizeof(DWORD) == sizeof(pointer_type) */
+		if((DWORD)rtp & 1)
+			((char *)rtp)++;
+	}
+}
+
+ani_curico_t *new_ani_curico(enum res_e type, raw_data_t *rd, int *memopt)
+{
+	ani_curico_t *ani = (ani_curico_t *)xmalloc(sizeof(ani_curico_t));
+	riff_tag_t *rtp;
+	int isswapped = 0;
+	int doswap;
+	const char *anistr = type == res_aniico ? "icon" : "cursor";
+
+	assert(!memcmp(rd->data, riff, sizeof(riff)));
+	assert(type == res_anicur || type == res_aniico);
+
+	rtp = (riff_tag_t *)rd->data;
+
+	if(BYTESWAP_DWORD(rtp->size) + 2*sizeof(DWORD) == rd->size)
+		isswapped = 1;
+	else if(rtp->size + 2*sizeof(DWORD) == rd->size)
+		isswapped = 0;
+	else
+		yyerror("Animated %s has an invalid RIFF length", anistr);
+
+	switch(byteorder)
+	{
+#ifdef WORDS_BIGENDIAN
+	case WRC_BO_LITTLE:
+#else
+	case WRC_BO_BIG:
+#endif
+		doswap = !isswapped;
+		break;
+	default:
+		doswap = isswapped;
+	}
+
+	/*
+	 * When to swap what:
+	 * isswapped | doswap |
+	 * ----------+--------+---------------------------------
+	 *     0     |    0   | read native; don't convert
+	 *     1     |    0   | read swapped size; don't convert
+	 *     0     |    1   | read native; convert
+	 *     1     |    1   | read swapped size; convert
+	 * Reading swapped size if necessary to calculate in native
+	 * format. E.g. a little-endian source on a big-endian
+	 * processor.
+	 */
+	if(doswap)
+	{
+		/* We only go through the RIFF file if we need to swap
+		 * bytes in words/dwords. Else we couldn't care less
+		 * what the file contains. This is consistent with
+		 * MS' rc.exe, which doesn't complain at all, eventhough
+		 * the fileformat might not be entirely correct.
+		 */
+		rtp++;	/* Skip the "RIFF" tag */
+
+		while((char *)rtp < (char *)rd->data + rd->size)
+		{
+			if(!memcmp(rtp->tag, acon, sizeof(acon)))
+			{
+				rtp = (riff_tag_t *)(((char *)rtp) + 4);
+			}
+			else if(!memcmp(rtp->tag, list, sizeof(list)))
+			{
+				handle_ani_list(rtp, type, isswapped);
+				rtp = NEXT_TAG(rtp);
+			}
+			else if(!memcmp(rtp->tag, anih, sizeof(anih)))
+			{
+				aniheader_t *ahp = (aniheader_t *)((char *)(rtp+1));
+				ahp->structsize	= BYTESWAP_DWORD(ahp->structsize);
+				ahp->frames	= BYTESWAP_DWORD(ahp->frames);
+				ahp->steps	= BYTESWAP_DWORD(ahp->steps);
+				ahp->cx		= BYTESWAP_DWORD(ahp->cx);
+				ahp->cy		= BYTESWAP_DWORD(ahp->cy);
+				ahp->bitcount	= BYTESWAP_DWORD(ahp->bitcount);
+				ahp->planes	= BYTESWAP_DWORD(ahp->planes);
+				ahp->rate	= BYTESWAP_DWORD(ahp->rate);
+				ahp->flags	= BYTESWAP_DWORD(ahp->flags);
+				rtp = NEXT_TAG(rtp);
+			}
+			else if(!memcmp(rtp->tag, rate, sizeof(rate)))
+			{
+				int cnt = rtp->size / sizeof(DWORD);
+				DWORD *dwp = (DWORD *)(rtp+1);
+				int i;
+				for(i = 0; i < cnt; i++)
+					dwp[i] = BYTESWAP_DWORD(dwp[i]);
+				rtp = NEXT_TAG(rtp);
+			}
+			else if(!memcmp(rtp->tag, seq, sizeof(seq)))
+			{
+				int cnt = rtp->size / sizeof(DWORD);
+				DWORD *dwp = (DWORD *)(rtp+1);
+				int i;
+				for(i = 0; i < cnt; i++)
+					dwp[i] = BYTESWAP_DWORD(dwp[i]);
+				rtp = NEXT_TAG(rtp);
+			}
+			else
+				internal_error(__FILE__, __LINE__, "Unknown tag \"%c%c%c%c\" in RIFF file",
+				       isprint(rtp->tag[0]) ? rtp->tag[0] : '.',
+				       isprint(rtp->tag[1]) ? rtp->tag[1] : '.',
+				       isprint(rtp->tag[2]) ? rtp->tag[2] : '.',
+				       isprint(rtp->tag[3]) ? rtp->tag[3] : '.');
+
+			/* FIXME: This relies in sizeof(DWORD) == sizeof(pointer_type) */
+			if((DWORD)rtp & 1)
+				((char *)rtp)++;
+		}
+
+		/* We must end correctly here */
+		if((char *)rtp != (char *)rd->data + rd->size)
+			yyerror("Animated %s contains invalid field size(s)", anistr);
+	}
+
+	ani->data = rd;
+	if(memopt)
+	{
+		ani->memopt = *memopt;
+		free(memopt);
+	}
+	else
+		ani->memopt = WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE;
+	return ani;
+}
+#undef NEXT_TAG
+
+/* Bitmaps */
 bitmap_t *new_bitmap(raw_data_t *rd, int *memopt)
 {
 	bitmap_t *bmp = (bitmap_t *)xmalloc(sizeof(bitmap_t));
