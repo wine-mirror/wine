@@ -105,7 +105,7 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
   TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
 
   if (*pFormat == RPC_FC_C_CSTRING) {
-    /* we need 12 chars for the [maxlen, offset, len] DWORDS, + 1 byte for '\0' */
+    /* we need 12 octets for the [maxlen, offset, len] DWORDS, + 1 octet for '\0' */
     pStubMsg->BufferLength = strlen(pMemory) + 13 + BUFFER_PARANOIA;
   } else {
     ERR("Unhandled string type: %#x\n", *pFormat); 
@@ -139,6 +139,8 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
 void WINAPI NdrConvert( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat )
 {
   FIXME("(pStubMsg == ^%p, pFormat == ^%p): stub.\n", pStubMsg, pFormat);
+  /* FIXME: since this stub doesn't do any converting, the proper behavior
+     is to raise an exception */
 }
 
 /***********************************************************************
@@ -147,4 +149,6 @@ void WINAPI NdrConvert( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat )
 void WINAPI NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, long NumberParams )
 {
   FIXME("(pStubMsg == ^%p, pFormat == ^%p, NumberParams == %ld): stub.\n", pStubMsg, pFormat, NumberParams);
+  /* FIXME: since this stub doesn't do any converting, the proper behavior
+     is to raise an exception */
 }

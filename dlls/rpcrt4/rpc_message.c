@@ -102,6 +102,10 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
     MAKELONG(sif->InterfaceId.SyntaxVersion.MinorVersion, sif->InterfaceId.SyntaxVersion.MajorVersion) :
     MAKELONG(cif->InterfaceId.SyntaxVersion.MinorVersion, cif->InterfaceId.SyntaxVersion.MajorVersion);
   hdr.opnum = pMsg->ProcNum;
+  /* only the low-order 3 octets of the DataRepresentation go in the header */
+  hdr.drep[0] = LOBYTE(LOWORD(pMsg->DataRepresentation));
+  hdr.drep[1] = HIBYTE(LOWORD(pMsg->DataRepresentation));
+  hdr.drep[2] = LOBYTE(HIWORD(pMsg->DataRepresentation));
   hdr.len = pMsg->BufferLength;
 
   /* transmit packet */

@@ -26,6 +26,16 @@
 
 #include "rpc.h"
 
+#define NDR_LITTLE_ENDIAN              ((UINT32) 0x00000010)
+#define NDR_BIG_ENDIAN                 ((UINT32) 0x00000000)
+
+/*   Character Representation: ASCII
+ *   Integer Representation:   Little Endian
+ *   FP Representation:        IEEE
+ */
+#define NDR_LOCAL_DATA_REPRESENTATION ((UINT32) 0x00000010)
+#define NDR_LOCAL_ENDIAN              NDR_LITTLE_ENDIAN
+
 #define TARGET_IS_NT40_OR_LATER 1
 #define TARGET_IS_NT351_OR_WIN95_OR_LATER 1
 

@@ -144,6 +144,12 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
          }
          func = sif->If->DispatchTable->DispatchTable[msg.ProcNum];
        }
+       
+       /* put in the drep. FIXME: is this more universally applicable?
+          perhaps we should move this outward... */
+       msg.DataRepresentation = 
+         MAKELONG( MAKEWORD(hdr.drep[0], hdr.drep[1]),
+                   MAKEWORD(hdr.drep[2], 0));
 
        /* dispatch */
        if (func) func(&msg);

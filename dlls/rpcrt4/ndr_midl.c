@@ -40,6 +40,7 @@
 
 #include "cpsf.h"
 #include "ndr_misc.h"
+#include "rpcndr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -178,6 +179,8 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
   TRACE("(pRpcMessage == ^%p, pStubMsg == ^%p, pStubDesc == ^%p, ProcNum == %d)\n",
     pRpcMessage, pStubMsg, pStubDesc, ProcNum);
 
+  assert( pRpcMessage && pStubMsg && pStubDesc );
+
   memset(pRpcMessage, 0, sizeof(RPC_MESSAGE));
   memset(pStubMsg, 0, sizeof(MIDL_STUB_MESSAGE));
 
@@ -198,7 +201,20 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
 unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_MESSAGE pStubMsg,
                                               PMIDL_STUB_DESC pStubDesc )
 {
-  FIXME("(pRpcMsg == ^%p, pStubMsg == ^%p, pStubDesc == ^%p): stub.\n", pRpcMsg, pStubMsg, pStubDesc);
+  TRACE("(pRpcMsg == ^%p, pStubMsg == ^%p, pStubDesc == ^%p)\n", pRpcMsg, pStubMsg, pStubDesc);
+
+  assert( pRpcMsg && pStubMsg && pStubDesc );
+
+  memset(pStubMsg, 0, sizeof(MIDL_STUB_MESSAGE));
+
+  pStubMsg->ReuseBuffer = TRUE;
+  pStubMsg->IsClient = FALSE;
+  pStubMsg->StubDesc = pStubDesc;
+  pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
+  pStubMsg->pfnFree = pStubDesc->pfnFree;
+  pStubMsg->RpcMsg = pRpcMsg;
+
+  /* FIXME: determine the proper return value */
   return NULL;
 }
 
@@ -253,6 +269,9 @@ unsigned char *WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char 
     ERR("Ambiguous buffer doesn't match rpc message buffer.  No action taken.\n");
     return NULL;
   }
+  
+  /* not sure where MS does this; for now I'll stick it here */
+  stubmsg->RpcMsg->DataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
 
   if (I_RpcSendReceive(stubmsg->RpcMsg) != RPC_S_OK) {
     WARN("I_RpcSendReceive did not return success.\n");
