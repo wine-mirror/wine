@@ -1140,8 +1140,10 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
 
     xDst      = dcDst->w.DCOrgX + XLPTODP( dcDst, xDst );
     yDst      = dcDst->w.DCOrgY + YLPTODP( dcDst, yDst );
-    widthDst  = widthDst * dcDst->vportExtX / dcDst->wndExtX;
-    heightDst = heightDst * dcDst->vportExtY / dcDst->wndExtY;
+
+    /* Here we have to round to integers, not truncate */
+    widthDst  = MulDiv(widthDst, dcDst->vportExtX, dcDst->wndExtX);
+    heightDst = MulDiv(heightDst, dcDst->vportExtY, dcDst->wndExtY);
 
     TRACE("    vportdst=%d,%d-%d,%d wnddst=%d,%d-%d,%d\n",
                     dcDst->vportOrgX, dcDst->vportOrgY,
