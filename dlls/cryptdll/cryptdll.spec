@@ -9,6 +9,6 @@
 @ stub CDRegisterCSystem
 @ stub CDRegisterCheckSum
 @ stub CDRegisterRng
-@ stub MD5Final
-@ stub MD5Init
-@ stub MD5Update
+@ stdcall MD5Final(ptr) advapi32.MD5Final
+@ stdcall MD5Init(ptr) advapi32.MD5Init
+@ stdcall MD5Update(ptr ptr long) advapi32.MD5Update
