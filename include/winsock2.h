@@ -226,8 +226,28 @@ typedef unsigned int   GROUP;
 #define SG_UNCONSTRAINED_GROUP   0x01
 #define SG_CONSTRAINED_GROUP     0x02
 
-/* FIXME: We don't yet have qos.h */
-typedef DWORD QOS, *LPQOS;
+/*
+ * FLOWSPEC and SERVICETYPE should eventually move to qos.h
+ */
+
+typedef ULONG   SERVICETYPE;
+
+typedef struct _FLOWSPEC {
+       unsigned int      TokenRate;
+       unsigned int      TokenBucketSize;
+       unsigned int      PeakBandwidth;
+       unsigned int      Latency;
+        unsigned int      DelayVariation;
+       SERVICETYPE       ServiceType;
+       unsigned int      MaxSduSize;
+       unsigned int      MinimumPolicedSize;
+   } FLOWSPEC, *PFLOWSPEC, *LPFLOWSPEC;
+
+typedef struct _QUALITYOFSERVICE {
+        FLOWSPEC           SendingFlowspec;
+        FLOWSPEC           ReceivingFlowspec;
+        WSABUF             ProviderSpecific; 
+   } QOS, *LPQOS;
 
 typedef int CALLBACK (*LPCONDITIONPROC)
 (
@@ -439,6 +459,11 @@ typedef INT (WINAPI *LPFN_WSASTRINGTOADDRESSW)(LPSTR,INT,LPWSAPROTOCOL_INFOA,LPS
 typedef DWORD (WINAPI *LPFN_WSAWAITFORMULTIPLEEVENTS)(DWORD,const WSAEVENT*,BOOL,DWORD,BOOL);
 #endif /* WS_API_TYPEDEFS */
 
+
+/* Condition function return values */
+#define CF_ACCEPT       0x0000
+#define CF_REJECT       0x0001
+#define CF_DEFER        0x0002
 
 #include "poppack.h"
 

@@ -38,7 +38,7 @@ debug_channels (winsock)
 23  stdcall  socket(long long long) WS_socket
 24  stdcall  WSApSetPostRoutine(ptr) WSApSetPostRoutine
 25  stub     WPUCompleteOverlappedRequest
-26  stub     WSAAccept
+26  stdcall  WSAAccept(long ptr ptr ptr long) WSAAccept
 27  stub     WSAAddressToStringA
 28  stub     WSAAddressToStringW
 29  stdcall  WSACloseEvent(long) WSACloseEvent

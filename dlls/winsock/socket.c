@@ -3470,3 +3470,63 @@ INT WINAPI WSCDeinstallProvider(LPGUID lpProviderId, LPINT lpErrno)
     *lpErrno = 0;
     return 0;
 }
+
+
+SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
+               LPCONDITIONPROC lpfnCondition, DWORD dwCallbackData)
+{
+
+       int ret = 0, size = 0;
+       WSABUF CallerId, CallerData, CalleeId, CalleeData;
+       /*        QOS SQOS, GQOS; */
+       GROUP g;
+       SOCKET cs;
+       SOCKADDR s_addr, d_addr;
+
+       TRACE("Socket  %ui, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackD ata %ld\n",
+               s, addr, addrlen, lpfnCondition, dwCallbackData);
+
+       
+       size = sizeof(s_addr);
+       cs = WS_accept(s, &s_addr, &size);
+       
+       if (cs == SOCKET_ERROR) return SOCKET_ERROR;
+
+       CallerId.buf = (char *)&s_addr;
+       CallerId.len = sizeof(s_addr);  
+
+       CallerData.buf = NULL;
+       CallerData.len = (ULONG)NULL;   
+
+       WS_getsockname(cs, &d_addr, &size);
+
+       CalleeId.buf = (char *)&d_addr;
+       CalleeId.len = sizeof(d_addr);  
+
+       
+       ret = (*lpfnCondition)(&CallerId, &CallerData, NULL, NULL,
+                       &CalleeId, &CalleeData, &g, dwCallbackData); 
+
+       switch (ret)
+       {
+               case CF_ACCEPT:
+                       if (addr && addrlen)
+                               addr = memcpy(addr, &s_addr, (*addrlen > size) ?  size : *addrlen );
+                       return cs;
+               case CF_DEFER:
+                       SetLastError(WSATRY_AGAIN);
+                       return SOCKET_ERROR;
+               case CF_REJECT:
+                       WS_closesocket(cs);
+                       SetLastError(WSAECONNREFUSED);
+                       return SOCKET_ERROR;
+               default:
+                       FIXME("Unknown return type from Condition function\n");
+                       SetLastError(WSAENOTSOCK);
+                       return SOCKET_ERROR;
+               }
+
+       SetLastError(WSAENOTSOCK);
+       return SOCKET_ERROR;
+}
+
