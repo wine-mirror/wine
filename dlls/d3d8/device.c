@@ -1700,6 +1700,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
     D3DMATRIX m;
     int k;
     float f;
+    BOOL viewChanged = TRUE;
 
     /* Most of this routine, comments included copied from ddraw tree initially: */
     TRACE("(%p) : State=%d\n", This, d3dts);
@@ -1760,7 +1761,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
       case D3DTS_TEXTURE5:
       case D3DTS_TEXTURE6:
       case D3DTS_TEXTURE7:
-	conv_mat(lpmatrix, &This->StateBlock->transforms[d3dts]);
+        conv_mat(lpmatrix, &This->StateBlock->transforms[d3dts]);
         FIXME("Unhandled transform state for TEXTURE%d!!!\n", d3dts - D3DTS_TEXTURE0);
         FIXME("must use glMatrixMode(GL_TEXTURE) before texturing\n");
         break;
@@ -1776,47 +1777,59 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
       /** store it */
       conv_mat(lpmatrix, &This->StateBlock->transforms[d3dts]);
       if (checkGLSupport(ARB_VERTEX_BLEND)) {
-	FIXME("TODO\n");
+          FIXME("TODO\n");
       } else if (checkGLSupport(EXT_VERTEX_WEIGHTING)) {
-	FIXME("TODO\n");
+          FIXME("TODO\n");
       }
     }
 
     /*
      * Move the GL operation to outside of switch to make it work
-     * regardless of transform set order. Optimize later.
+     * regardless of transform set order.
      */
     ENTER_GL();
-    glMatrixMode(GL_PROJECTION);
-    checkGLcall("glMatrixMode");
-    glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
-    checkGLcall("glLoadMatrixf");
+    if (memcmp(&This->lastProj, &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0], sizeof(D3DMATRIX))) {
+        glMatrixMode(GL_PROJECTION);
+        checkGLcall("glMatrixMode");
+        glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
+        checkGLcall("glLoadMatrixf");
+        memcpy(&This->lastProj, &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0], sizeof(D3DMATRIX));
+    } else {
+        TRACE("Skipping as projection already correct\n");
+    }
 
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode");
-    glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
-    checkGLcall("glLoadMatrixf");
+    viewChanged = FALSE;
+    if (memcmp(&This->lastView, &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0], sizeof(D3DMATRIX))) {
+       glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+       checkGLcall("glLoadMatrixf");
+       memcpy(&This->lastView, &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0], sizeof(D3DMATRIX));
+       viewChanged = TRUE;
 
-    /* If we are changing the View matrix, reset the light and clipping planes to the new view */
-    if (d3dts == D3DTS_VIEW) {
+       /* If we are changing the View matrix, reset the light and clipping planes to the new view */
+       if (d3dts == D3DTS_VIEW) {
 
-        /* NOTE: We have to reset the positions even if the light/plane is not currently
-           enabled, since the call to enable it will not reset the position.             */
+           /* NOTE: We have to reset the positions even if the light/plane is not currently
+              enabled, since the call to enable it will not reset the position.             */
 
-        /* Reset lights */
-        for (k = 0; k < This->maxLights; k++) {
-            glLightfv(GL_LIGHT0 + k, GL_POSITION,       &This->lightPosn[k][0]);
-            checkGLcall("glLightfv posn");
-            glLightfv(GL_LIGHT0 + k, GL_SPOT_DIRECTION, &This->lightDirn[k][0]);
-            checkGLcall("glLightfv dirn");
-        }
+           /* Reset lights */
+           for (k = 0; k < This->maxLights; k++) {
+               glLightfv(GL_LIGHT0 + k, GL_POSITION,       &This->lightPosn[k][0]);
+               checkGLcall("glLightfv posn");
+               glLightfv(GL_LIGHT0 + k, GL_SPOT_DIRECTION, &This->lightDirn[k][0]);
+               checkGLcall("glLightfv dirn");
+           }
 
-        /* Reset Clipping Planes if clipping is enabled */
-        for (k = 0; k < This->clipPlanes; k++) {
-            glClipPlane(GL_CLIP_PLANE0 + k, This->StateBlock->clipplane[k]);
-            checkGLcall("glClipPlane");
-        }
+           /* Reset Clipping Planes if clipping is enabled */
+           for (k = 0; k < This->clipPlanes; k++) {
+               glClipPlane(GL_CLIP_PLANE0 + k, This->StateBlock->clipplane[k]);
+               checkGLcall("glClipPlane");
+           }
 
+       }
+    } else {
+        TRACE("Skipping view setup as view already correct\n");
     }
 
     /**
@@ -1826,47 +1839,65 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
     switch (This->UpdateStateBlock->vertex_blend) {
     case D3DVBF_DISABLE:
       {
-	glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
-	checkGLcall("glMultMatrixf");
+          if (viewChanged == TRUE || 
+              (memcmp(&This->lastWorld0, &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0], sizeof(D3DMATRIX)))) {
+               memcpy(&This->lastWorld0, &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0], sizeof(D3DMATRIX));
+              if (viewChanged==FALSE) {
+                 glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+                 checkGLcall("glLoadMatrixf");
+              }
+              glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
+              checkGLcall("glMultMatrixf");
+          } else {
+              TRACE("Skipping as world already correct\n");
+          }
       }
       break;
     case D3DVBF_1WEIGHTS:
     case D3DVBF_2WEIGHTS:
     case D3DVBF_3WEIGHTS:
       {
-	FIXME("valid/correct D3DVBF_[1..3]WEIGHTS\n");
-	/*
-	 * doc seems to say that the weight values must be in vertex data (specified in FVF by D3DFVF_XYZB*)
-	 * so waiting for the values before matrix work
-	for (k = 0; k < This->UpdateStateBlock->vertex_blend; ++k) {
-	  glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(k)].u.m[0][0]);
-	  checkGLcall("glMultMatrixf");
-	}
-	*/
+          FIXME("valid/correct D3DVBF_[1..3]WEIGHTS\n");
+          /*
+           * doc seems to say that the weight values must be in vertex data (specified in FVF by D3DFVF_XYZB*)
+           * so waiting for the values before matrix work
+          for (k = 0; k < This->UpdateStateBlock->vertex_blend; ++k) {
+            glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(k)].u.m[0][0]);
+            checkGLcall("glMultMatrixf");
+          }
+          */
       }
       break;
     case D3DVBF_TWEENING:
       {
-	FIXME("valid/correct D3DVBF_TWEENING\n");
-	f = This->UpdateStateBlock->tween_factor;
-	m.u.s._11 = f; m.u.s._12 = f; m.u.s._13 = f; m.u.s._14 = f;
-	m.u.s._21 = f; m.u.s._22 = f; m.u.s._23 = f; m.u.s._24 = f;
-	m.u.s._31 = f; m.u.s._32 = f; m.u.s._33 = f; m.u.s._34 = f;
-	m.u.s._41 = f; m.u.s._42 = f; m.u.s._43 = f; m.u.s._44 = f;
-	glMultMatrixf((float *) &m.u.m[0][0]);
-	checkGLcall("glMultMatrixf");
+          FIXME("valid/correct D3DVBF_TWEENING\n");
+          f = This->UpdateStateBlock->tween_factor;
+          m.u.s._11 = f; m.u.s._12 = f; m.u.s._13 = f; m.u.s._14 = f;
+          m.u.s._21 = f; m.u.s._22 = f; m.u.s._23 = f; m.u.s._24 = f;
+          m.u.s._31 = f; m.u.s._32 = f; m.u.s._33 = f; m.u.s._34 = f;
+          m.u.s._41 = f; m.u.s._42 = f; m.u.s._43 = f; m.u.s._44 = f;
+          if (viewChanged==FALSE) {
+              glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+              checkGLcall("glLoadMatrixf");
+          }
+          glMultMatrixf((float *) &m.u.m[0][0]);
+          checkGLcall("glMultMatrixf");
       }
       break;
     case D3DVBF_0WEIGHTS:
       {
-	FIXME("valid/correct D3DVBF_0WEIGHTS\n");
-	/* single matrix of weight 1.0f */
-	m.u.s._11 = 1.0f; m.u.s._12 = 1.0f; m.u.s._13 = 1.0f; m.u.s._14 = 1.0f;
-	m.u.s._21 = 1.0f; m.u.s._22 = 1.0f; m.u.s._23 = 1.0f; m.u.s._24 = 1.0f;
-	m.u.s._31 = 1.0f; m.u.s._32 = 1.0f; m.u.s._33 = 1.0f; m.u.s._34 = 1.0f;
-	m.u.s._41 = 1.0f; m.u.s._42 = 1.0f; m.u.s._43 = 1.0f; m.u.s._44 = 1.0f;
-	glMultMatrixf((float *) &m.u.m[0][0]);
-	checkGLcall("glMultMatrixf");
+          FIXME("valid/correct D3DVBF_0WEIGHTS\n");
+          /* single matrix of weight 1.0f */
+          m.u.s._11 = 1.0f; m.u.s._12 = 1.0f; m.u.s._13 = 1.0f; m.u.s._14 = 1.0f;
+          m.u.s._21 = 1.0f; m.u.s._22 = 1.0f; m.u.s._23 = 1.0f; m.u.s._24 = 1.0f;
+          m.u.s._31 = 1.0f; m.u.s._32 = 1.0f; m.u.s._33 = 1.0f; m.u.s._34 = 1.0f;
+          m.u.s._41 = 1.0f; m.u.s._42 = 1.0f; m.u.s._43 = 1.0f; m.u.s._44 = 1.0f;
+          if (viewChanged==FALSE) {
+              glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+              checkGLcall("glLoadMatrixf");
+          }
+          glMultMatrixf((float *) &m.u.m[0][0]);
+          checkGLcall("glMultMatrixf");
       }
       break;
     default:

@@ -258,6 +258,12 @@ struct IDirect3DDevice8Impl
     float                         lightPosn[MAX_ACTIVE_LIGHTS][4];
     float                         lightDirn[MAX_ACTIVE_LIGHTS][4];
 
+    /* Optimization */
+    D3DMATRIX                     lastProj;
+    D3DMATRIX                     lastView;
+    D3DMATRIX                     lastWorld0;
+
+
     /* OpenGL related */
     GLXContext                    glCtx;
     XVisualInfo                  *visInfo;
