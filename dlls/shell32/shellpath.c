@@ -1115,7 +1115,8 @@ HRESULT WINAPI SHGetFolderPathW(
 	        strcpyW(pszPath + 3, szDefaultPath);
 	      }
               dwType=REG_SZ;
-	      RegSetValueExW(hKey,szValueName,0,REG_SZ,(LPBYTE)pszPath,strlenW(pszPath)+1);
+	      RegSetValueExW(hKey,szValueName,0,REG_SZ,(LPBYTE)pszPath,
+                         (strlenW(pszPath)+1)*sizeof(WCHAR));
 	    }
 	  }
 	  RegCloseKey(hKey);
@@ -1151,7 +1152,8 @@ HRESULT WINAPI SHGetFolderPathW(
 	      strcpyW(pszPath + 3, szDefaultPath);
 	    }
             dwType=REG_SZ;
-	    RegSetValueExW(hKey,szValueName,0,REG_SZ,(LPBYTE)pszPath,strlenW(pszPath)+1);
+	    RegSetValueExW(hKey,szValueName,0,REG_SZ,(LPBYTE)pszPath,
+                       (strlenW(pszPath)+1)*sizeof(WCHAR));
 	  }
 	  RegCloseKey(hKey);
 	}
