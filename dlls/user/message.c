@@ -586,6 +586,11 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     /* these contain an HGLOBAL */
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
+    /* these contain HICON */
+    case WM_GETICON:
+    case WM_SETICON:
+    case WM_QUERYDRAGICON:
+    case WM_QUERYPARKICON:
     /* these contain pointers */
     case WM_DROPOBJECT:
     case WM_QUERYDROPOBJECT:
@@ -834,6 +839,11 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     /* these contain an HGLOBAL */
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
+    /* these contain HICON */
+    case WM_GETICON:
+    case WM_SETICON:
+    case WM_QUERYDRAGICON:
+    case WM_QUERYPARKICON:
     /* these contain pointers */
     case WM_DROPOBJECT:
     case WM_QUERYDROPOBJECT:
@@ -2502,4 +2512,14 @@ BOOL WINAPI SetKeyboardState( LPBYTE state )
     }
     SERVER_END_REQ;
     return ret;
+}
+
+/******************************************************************
+ *		IsHungAppWindow (USER32.@)
+ *
+ */
+BOOL WINAPI IsHungAppWindow( HWND hWnd )
+{
+    DWORD dwResult; 
+    return !SendMessageTimeoutA(hWnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwResult);	
 }

@@ -643,7 +643,7 @@
 @ stub RegisterNetworkCapabilities
 @ stub WNDPROC_CALLBACK
 @ stdcall DrawCaptionTempW(long long ptr long long wstr long)
-@ stub IsHungAppWindow
+@ stdcall IsHungAppWindow(long)
 @ stdcall ChangeDisplaySettingsExA(str ptr long long ptr)
 @ stdcall ChangeDisplaySettingsExW(wstr ptr long long ptr)
 @ stdcall SetWindowText(long str) SetWindowTextA
