@@ -25,6 +25,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -43,6 +44,7 @@
 int statvfs( const char *path, struct statvfs *buf )
 {
     int ret;
+#ifdef HAVE_STATFS
     struct statfs info;
 
 /* FIXME: add autoconf check for this */
@@ -86,6 +88,10 @@ int statvfs( const char *path, struct statvfs *buf )
         buf->f_favail  = info.f_ffree;
 #endif
     }
+#else  /* HAVE_STATFS */
+    ret = -1;
+    errno = ENOSYS;
+#endif  /* HAVE_STATFS */
     return ret;
 }
 
