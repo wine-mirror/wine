@@ -786,7 +786,7 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
 }
 
 #else
-BOOL WCCURSES_InitBackend(struct inner_data* data)
+enum init_return WCCURSES_InitBackend(struct inner_data* data)
 {
     return init_not_supported;
 }
