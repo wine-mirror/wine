@@ -573,7 +573,7 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
     default:
 	WARN("Unknown GetControlDetails flag (%08lx)\n", fdwDetails & MIXER_GETCONTROLDETAILSF_QUERYMASK);
     }
-    return MMSYSERR_NOTSUPPORTED;
+    return (ret);
 }
 
 /**************************************************************************
