@@ -23,7 +23,7 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
 
 
 /**********************************************************************
- *             WinHelp32A   (USER32.578)
+ *             WinHelp32A   (USER32.579)
  */
 BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
                           DWORD dwData )
@@ -109,7 +109,7 @@ BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
 
 
 /**********************************************************************
- *             WinHelp32W   (USER32.579)
+ *             WinHelp32W   (USER32.580)
  */
 BOOL32 WINAPI WinHelp32W( HWND32 hWnd, LPCWSTR helpFile, UINT32 command,
                           DWORD dwData )

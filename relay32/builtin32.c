@@ -93,7 +93,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &W32SKRNL_Descriptor, NULL, TRUE  },
     { &WINMM_Descriptor,    NULL, TRUE  },
     { &WINSPOOL_Descriptor, NULL, TRUE  },
-    { &WOW32_Descriptor,    NULL, FALSE },
+    { &WOW32_Descriptor,    NULL, TRUE },
     { &WSOCK32_Descriptor,  NULL, TRUE  },
     /* Last entry */
     { NULL, NULL, FALSE }

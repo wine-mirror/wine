@@ -22,7 +22,7 @@ void WINAPI SetRect16( LPRECT16 rect, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           SetRect32    (USER32.498)
+ *           SetRect32    (USER32.499)
  */
 void WINAPI SetRect32( LPRECT32 rect, INT32 left, INT32 top,
                        INT32 right, INT32 bottom )
@@ -44,7 +44,7 @@ void WINAPI SetRectEmpty16( LPRECT16 rect )
 
 
 /***********************************************************************
- *           SetRectEmpty32    (USER32.499)
+ *           SetRectEmpty32    (USER32.500)
  */
 void WINAPI SetRectEmpty32( LPRECT32 rect )
 {
@@ -63,7 +63,7 @@ BOOL16 WINAPI CopyRect16( RECT16 *dest, const RECT16 *src )
 
 
 /***********************************************************************
- *           CopyRect32    (USER32.61)
+ *           CopyRect32    (USER32.62)
  */
 BOOL32 WINAPI CopyRect32( RECT32 *dest, const RECT32 *src )
 {
@@ -82,7 +82,7 @@ BOOL16 WINAPI IsRectEmpty16( const RECT16 *rect )
 
 
 /***********************************************************************
- *           IsRectEmpty32    (USER32.346)
+ *           IsRectEmpty32    (USER32.347)
  */
 BOOL32 WINAPI IsRectEmpty32( const RECT32 *rect )
 {
@@ -101,7 +101,7 @@ BOOL16 WINAPI PtInRect16( const RECT16 *rect, POINT16 pt )
 
 
 /***********************************************************************
- *           PtInRect32    (USER32.423)
+ *           PtInRect32    (USER32.424)
  */
 BOOL32 WINAPI PtInRect32( const RECT32 *rect, POINT32 pt )
 {
@@ -123,7 +123,7 @@ void WINAPI OffsetRect16( LPRECT16 rect, INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           OffsetRect32    (USER32.405)
+ *           OffsetRect32    (USER32.406)
  */
 void WINAPI OffsetRect32( LPRECT32 rect, INT32 x, INT32 y )
 {
@@ -147,7 +147,7 @@ void WINAPI InflateRect16( LPRECT16 rect, INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           InflateRect32    (USER32.320)
+ *           InflateRect32    (USER32.321)
  */
 void WINAPI InflateRect32( LPRECT32 rect, INT32 x, INT32 y )
 {
@@ -180,7 +180,7 @@ BOOL16 WINAPI IntersectRect16( LPRECT16 dest, const RECT16 *src1,
 
 
 /***********************************************************************
- *           IntersectRect32    (USER32.326)
+ *           IntersectRect32    (USER32.327)
  */
 BOOL32 WINAPI IntersectRect32( LPRECT32 dest, const RECT32 *src1,
                                const RECT32 *src2 )
@@ -231,7 +231,7 @@ BOOL16 WINAPI UnionRect16( LPRECT16 dest, const RECT16 *src1,
 
 
 /***********************************************************************
- *           UnionRect32    (USER32.558)
+ *           UnionRect32    (USER32.559)
  */
 BOOL32 WINAPI UnionRect32( LPRECT32 dest, const RECT32 *src1,
                            const RECT32 *src2 )
@@ -271,7 +271,7 @@ BOOL16 WINAPI EqualRect16( const RECT16* rect1, const RECT16* rect2 )
 
 
 /***********************************************************************
- *           EqualRect32    (USER32.193)
+ *           EqualRect32    (USER32.194)
  */
 BOOL32 WINAPI EqualRect32( const RECT32* rect1, const RECT32* rect2 )
 {
@@ -317,7 +317,7 @@ BOOL16 WINAPI SubtractRect16( LPRECT16 dest, const RECT16 *src1,
 
 
 /***********************************************************************
- *           SubtractRect32    (USER32.535)
+ *           SubtractRect32    (USER32.536)
  */
 BOOL32 WINAPI SubtractRect32( LPRECT32 dest, const RECT32 *src1,
                               const RECT32 *src2 )

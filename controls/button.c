@@ -100,7 +100,7 @@ LRESULT WINAPI ButtonWndProc( HWND32 hWnd, UINT32 uMsg,
         if (!hbitmapCheckBoxes)
         {
             BITMAP32 bmp;
-            hbitmapCheckBoxes = LoadBitmap32A(0, MAKEINTRESOURCE(OBM_CHECKBOXES));
+            hbitmapCheckBoxes = LoadBitmap32A(0, MAKEINTRESOURCE32A(OBM_CHECKBOXES));
             GetObject32A( hbitmapCheckBoxes, sizeof(bmp), &bmp );
             checkBoxWidth  = bmp.bmWidth / 4;
             checkBoxHeight = bmp.bmHeight / 3;

@@ -8,10 +8,10 @@ type	win16
 7   pascal   FileSaveDlgProc(word word word long) FileSaveDlgProc
 8   pascal   ColorDlgProc(word word word long) ColorDlgProc
 #9   pascal  LOADALTERBITMAP exported, shared data
-11  pascal16 FindText(segptr) FindText
-12  pascal16 ReplaceText(segptr) ReplaceText
-13  pascal   FindTextDlgProc(word word word long) FindTextDlgProc
-14  pascal   ReplaceTextDlgProc(word word word long) ReplaceTextDlgProc
+11  pascal16 FindText(segptr) FindText16
+12  pascal16 ReplaceText(segptr) ReplaceText16
+13  pascal   FindTextDlgProc(word word word long) FindTextDlgProc16
+14  pascal   ReplaceTextDlgProc(word word word long) ReplaceTextDlgProc16
 15  pascal16 ChooseFont(ptr) ChooseFont
 16  pascal16 FormatCharDlgProc(word word word long) FormatCharDlgProc
 18  pascal16 FontStyleEnumProc(ptr ptr word long)   FontStyleEnumProc

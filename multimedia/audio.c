@@ -28,11 +28,13 @@
 #include "debug.h"
 
 #ifdef HAVE_OSS
+
 #ifdef HAVE_MACHINE_SOUNDCARD_H
-#include <machine/soundcard.h>
-#else /* HAVE_MACHINE_SOUNDCARD_H */
-#include <sys/soundcard.h>
-#endif /* HAVE_MACHINE_SOUNDCARD_H */
+# include <machine/soundcard.h>
+#endif
+#ifdef HAVE_SYS_SOUNDCARD_H
+# include <sys/soundcard.h>
+#endif
 
 #define SOUND_DEV "/dev/dsp"
 #define MIXER_DEV "/dev/mixer"

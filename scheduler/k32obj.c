@@ -162,8 +162,10 @@ BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name )
  * The refcount of the object must be decremented once it is initialized.
  */
 K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
-                       DWORD access, HANDLE32 *handle )
+                       DWORD access, SECURITY_ATTRIBUTES *sa, HANDLE32 *handle)
 {
+    BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+
     /* Check if the name already exists */
 
     K32OBJ *obj = K32OBJ_FindName( name );
@@ -172,7 +174,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
         if (obj->type == type)
         {
             SetLastError( ERROR_ALREADY_EXISTS );
-            *handle = HANDLE_Alloc( obj, access, FALSE );
+            *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit );
         }
         else
         {
@@ -209,7 +211,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
 
     /* Allocate a handle */
 
-    *handle = HANDLE_Alloc( obj, access, FALSE );
+    *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit );
     SYSTEM_UNLOCK();
     return obj;
 }

@@ -20,18 +20,16 @@
 #define MAX_MIDIOUTDRV 	(16)
 #define MAX_MCIMIDIDRV 	(1)
 
-#if defined (linux)
-#define __HAS_SOUNDCARD_H__
-#include <sys/soundcard.h>
-#elif defined (__FreeBSD__)
-#define __HAS_SOUNDCARD_H__
-#include <machine/soundcard.h>
-#include <sys/errno.h>
+#ifdef HAVE_SYS_SOUNDCARD_H
+# include <sys/soundcard.h>
+#endif
+#ifdef HAVE_MACHINE_SOUNDCARD_H
+# include <machine/soundcard.h>
 #endif
 
-#if defined (__HAS_SOUNDCARD_H__)
+#include <sys/errno.h>
 
-#define MIDI_DEV "/dev/sequencer"
+#define MIDI_DEV "/dev/midi"
 
 #ifdef SOUND_VERSION
 #define IOCTL(a,b,c)		ioctl(a,b,&c)
@@ -75,7 +73,4 @@ typedef struct {
 	HLOCAL16	hMidiHdr;
 	WORD	dwStatus;
 } LINUX_MCIMIDI;
-
-#endif
-
 #endif /* __WINE_MULTIMEDIA_H */

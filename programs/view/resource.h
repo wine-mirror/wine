@@ -4,6 +4,7 @@
 #define IDM_EXIT                        1000
 #define IDM_HELLO                       501
 #define IDM_OPEN                        502
+#define IDM_SET_EXT_TO_WIN              503
 #define IDM_LEFT                        601
 #define IDM_RIGHT                       602
 #define IDM_UP                          603

@@ -19,7 +19,7 @@
 
 
 /***********************************************************************
- *           MsgWaitForMultipleObjects    (USER32.399)
+ *           MsgWaitForMultipleObjects    (USER32.400)
  */
 DWORD WINAPI MsgWaitForMultipleObjects(
 	DWORD nCount,HANDLE32 *pHandles,BOOL32 fWaitAll,DWORD dwMilliseconds,
@@ -31,16 +31,6 @@ DWORD WINAPI MsgWaitForMultipleObjects(
 		fprintf(stderr,"%ld,",(DWORD)pHandles[i]);
 	fprintf(stderr,"],%d,%ld,0x%08lx)\n",fWaitAll,dwMilliseconds,dwWakeMask);
 	return 0;
-}
-
-/***********************************************************************
- *           DuplicateHandle    (KERNEL32.78)
- */
-BOOL32 WINAPI DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, DWORD e, BOOL32 f, DWORD g)
-{
-	fprintf(stderr,"DuplicateHandle(%d,%d,%d,%p,%ld,%d,%ld) stub\n",a,b,c,d,e,f,g);
-	*d = b;
-	return TRUE;
 }
 
 /**********************************************************************
@@ -87,13 +77,18 @@ BOOL32 WINAPI CreateProcess32A(
 	DWORD creationflags,LPVOID env,LPCSTR curdir,
 	LPSTARTUPINFO32A startupinfo,LPPROCESS_INFORMATION processinfo
 ) {
-	fprintf(stderr,"CreateProcessA(%s,%s,%p,%p,%d,%08lx,%p,%s,%p,%p), stub\n",
+	WARN(win32,"CreateProcessA(%s,%s,%p,%p,%d,%08lx,%p,%s,%p,%p),\n
+		calling WinExec32 instead\n",
 		appname,cmdline,processattributes,threadattributes,
 		inherithandles,creationflags,env,curdir,startupinfo,processinfo
 	);
+        WinExec32(cmdline,TRUE);
+        return TRUE;
+#if 0
 	/* make from lcc uses system as fallback if CreateProcess returns
 	   FALSE, so return false */
 	return FALSE;
+#endif
 }
 
 BOOL32 WINAPI CreateProcess32W(

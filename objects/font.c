@@ -722,10 +722,19 @@ BOOL32 WINAPI GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
 
 
 /***********************************************************************
- *           GetTextExtentPoint32W    (GDI32.231)
+ * GetTextExtentPoint32W [GDI32.231]  Computes width/height for a string
+ *
+ * Computes width and height of the specified string.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI GetTextExtentPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
-                                     LPSIZE32 size )
+BOOL32 WINAPI GetTextExtentPoint32W(
+    HDC32 hdc,     /* [in]  Handle of device context */
+    LPCWSTR str,   /* [in]  Address of text string */
+    INT32 count,   /* [in]  Number of characters in string */
+    LPSIZE32 size) /* [out] Address of structure for string size */
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     BOOL32 ret = GetTextExtentPoint32A( hdc, p, count, size );
@@ -892,6 +901,26 @@ BOOL32 WINAPI GetTextMetrics32W( HDC32 hdc, TEXTMETRIC32W *metrics )
     if (!GetTextMetrics32A( (HDC16)hdc, &tm )) return FALSE;
     FONT_TextMetric32Ato32W( &tm, metrics );
     return TRUE;
+}
+
+
+/***********************************************************************
+ * GetOutlineTextMetrics [GDI.308]  Gets metrics for TrueType fonts.
+ *
+ * NOTES
+ *    lpOTM should be LPOUTLINETEXTMETRIC
+ *
+ * RETURNS
+ *    Success: Non-zero or size of required buffer
+ *    Failure: 0
+ */
+INT16 WINAPI GetOutlineTextMetrics(
+    HDC16 hdc,    /* [in]  Handle of device context */
+    INT16 cbData, /* [in]  Size of metric data array */
+    void *lpOTM)  /* [out] Address of metric data array */
+{
+    FIXME(font, "(%04x,%04x,%p): stub\n", hdc,cbData,lpOTM);
+    return 0;
 }
 
 

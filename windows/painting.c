@@ -160,7 +160,7 @@ TRACE(win,"box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
 
 
 /***********************************************************************
- *           BeginPaint32    (USER32.9)
+ *           BeginPaint32    (USER32.10)
  */
 HDC32 WINAPI BeginPaint32( HWND32 hwnd, PAINTSTRUCT32 *lps )
 {
@@ -191,7 +191,7 @@ BOOL16 WINAPI EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 
 
 /***********************************************************************
- *           EndPaint32    (USER32.175)
+ *           EndPaint32    (USER32.176)
  */
 BOOL32 WINAPI EndPaint32( HWND32 hwnd, const PAINTSTRUCT32 *lps )
 {
@@ -496,7 +496,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 
 
 /***********************************************************************
- *           RedrawWindow32    (USER32.425)
+ *           RedrawWindow32    (USER32.426)
  */
 BOOL32 WINAPI RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
                               HRGN32 hrgnUpdate, UINT32 flags )
@@ -531,7 +531,7 @@ void WINAPI UpdateWindow16( HWND16 hwnd )
 }
 
 /***********************************************************************
- *           UpdateWindow32   (USER32.566)
+ *           UpdateWindow32   (USER32.567)
  */
 void WINAPI UpdateWindow32( HWND32 hwnd )
 {
@@ -549,7 +549,7 @@ void WINAPI InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 
 
 /***********************************************************************
- *           InvalidateRgn32   (USER32.328)
+ *           InvalidateRgn32   (USER32.329)
  */
 void WINAPI InvalidateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
@@ -567,7 +567,7 @@ void WINAPI InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
 
 
 /***********************************************************************
- *           InvalidateRect32   (USER32.327)
+ *           InvalidateRect32   (USER32.328)
  */
 void WINAPI InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
 {
@@ -587,7 +587,7 @@ void WINAPI ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
 
 
 /***********************************************************************
- *           ValidateRgn32   (USER32.571)
+ *           ValidateRgn32   (USER32.572)
  */
 void WINAPI ValidateRgn32( HWND32 hwnd, HRGN32 hrgn )
 {
@@ -605,7 +605,7 @@ void WINAPI ValidateRect16( HWND16 hwnd, const RECT16 *rect )
 
 
 /***********************************************************************
- *           ValidateRect32   (USER32.570)
+ *           ValidateRect32   (USER32.571)
  */
 void WINAPI ValidateRect32( HWND32 hwnd, const RECT32 *rect )
 {
@@ -629,7 +629,7 @@ BOOL16 WINAPI GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
 
 
 /***********************************************************************
- *           GetUpdateRect32   (USER32.296)
+ *           GetUpdateRect32   (USER32.297)
  */
 BOOL32 WINAPI GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
 {
@@ -661,7 +661,7 @@ INT16 WINAPI GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 
 
 /***********************************************************************
- *           GetUpdateRgn32   (USER32.297)
+ *           GetUpdateRgn32   (USER32.298)
  */
 INT32 WINAPI GetUpdateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
@@ -690,7 +690,7 @@ INT16 WINAPI ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
 
 
 /***********************************************************************
- *           ExcludeUpdateRgn32   (USER32.194)
+ *           ExcludeUpdateRgn32   (USER32.195)
  */
 INT32 WINAPI ExcludeUpdateRgn32( HDC32 hdc, HWND32 hwnd )
 {

@@ -515,7 +515,7 @@ HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
 	
 }
 /**********************************************************************
- *	    LoadImage32A    (USER32.364)
+ *	    LoadImage32A    (USER32.365)
  * FIXME: implementation still lacks nearly all features, see LR_*
  * defines in windows.h
  */
@@ -584,7 +584,7 @@ HBITMAP32 WINAPI CopyBitmap32 (HBITMAP32 hnd)
 }
 
 /**********************************************************************
- *	    CopyImage32    (USER32.60)
+ *	    CopyImage32    (USER32.61)
  *
  * FIXME: implementation still lacks nearly all features, see LR_*
  * defines in windows.h
@@ -632,7 +632,7 @@ HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
         return OBM_LoadBitmap( LOWORD((int)name) );
     }
 
-    if (!(hRsrc = FindResource16( instance, name, RT_BITMAP ))) return 0;
+    if (!(hRsrc = FindResource16( instance, name, RT_BITMAP16 ))) return 0;
     if (!(handle = LoadResource16( instance, hRsrc ))) return 0;
 
     info = (BITMAPINFO *)LockResource16( handle );
@@ -648,7 +648,7 @@ HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 }
 
 /**********************************************************************
- *	    LoadBitmap32W   (USER32.357)
+ *	    LoadBitmap32W   (USER32.358)
  */
 HBITMAP32 WINAPI LoadBitmap32W( HINSTANCE32 instance, LPCWSTR name )
 {
@@ -664,8 +664,7 @@ HBITMAP32 WINAPI LoadBitmap32W( HINSTANCE32 instance, LPCWSTR name )
         return OBM_LoadBitmap( LOWORD((int)name) );
     }
 
-    if (!(hRsrc = FindResource32W( instance, name,
-		(LPWSTR)RT_BITMAP ))) return 0;
+    if (!(hRsrc = FindResource32W( instance, name, RT_BITMAP32W ))) return 0;
     if (!(handle = LoadResource32( instance, hRsrc ))) return 0;
 
     info = (BITMAPINFO *)LockResource32( handle );
@@ -681,7 +680,7 @@ HBITMAP32 WINAPI LoadBitmap32W( HINSTANCE32 instance, LPCWSTR name )
 
 
 /**********************************************************************
- *	    LoadBitmap32A   (USER32.356)
+ *	    LoadBitmap32A   (USER32.357)
  */
 HBITMAP32 WINAPI LoadBitmap32A( HINSTANCE32 instance, LPCSTR name )
 {

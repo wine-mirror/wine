@@ -13,7 +13,7 @@
 #include "xmalloc.h"
 #include "debug.h"
 
-#if defined (__HAS_SOUNDCARD_H__)
+#ifdef HAVE_OSS
 
 extern int MODM_NUMDEVS;
 extern LPMIDIOUTCAPS16 midiDevices[MAX_MIDIOUTDRV];
@@ -26,7 +26,7 @@ extern LPMIDIOUTCAPS16 midiDevices[MAX_MIDIOUTDRV];
  * return the Windows equivalent to a Unix Device Type
  *
  */
-#if defined (__HAS_SOUNDCARD_H__)
+#ifdef HAVE_OSS
 int unixToWindowsDeviceType(int type)
 {
   /* MOD_MIDIPORT     output port 
@@ -57,12 +57,11 @@ int unixToWindowsDeviceType(int type)
  */
 BOOL32 MULTIMEDIA_Init (void)
 {
-#if defined (__HAS_SOUNDCARD_H__)
+#ifdef HAVE_OSS
   int i, status, numsynthdevs, nummididevs;
   struct synth_info sinfo;
   struct midi_info minfo;
   int fd;        /* file descriptor for MIDI_DEV */
-  LPMIDIOUTCAPS16 tmplpCaps = NULL;
 
   TRACE (midi, "Initializing the MIDI variables.\n");
   /* try to open device */
@@ -86,6 +85,8 @@ BOOL32 MULTIMEDIA_Init (void)
   }
 
   for (i = 0 ; i < numsynthdevs ; i++) {
+    LPMIDIOUTCAPS16 tmplpCaps;
+
     sinfo.device = i;
     status = ioctl(fd, SNDCTL_SYNTH_INFO, &sinfo);
     if (status == -1) {
@@ -144,12 +145,16 @@ BOOL32 MULTIMEDIA_Init (void)
   MODM_NUMDEVS = numsynthdevs + nummididevs;
   
   for (i = 0 ; i < nummididevs ; i++) {
+    LPMIDIOUTCAPS16 tmplpCaps;
+
     minfo.device = i;
     status = ioctl(fd, SNDCTL_MIDI_INFO, &minfo);
     if (status == -1) {
       ERR(midi, "ioctl failed.\n");
       return TRUE;
     }
+
+    tmplpCaps = xmalloc (sizeof (MIDIOUTCAPS16));
     /* This whole part is somewhat obscure to me. I'll keep trying to dig
        info about it. If you happen to know, please tell us. The very descritive
        minfo.dev_type was not used here.
@@ -174,7 +179,7 @@ BOOL32 MULTIMEDIA_Init (void)
   /* close file and exit */
   close(fd);
 
-#endif /* __HAS_SOUNDCARD_H__ */
+#endif /* HAVE_OSS */
   
   return TRUE;
   

@@ -19,7 +19,6 @@
 #include "debug.h"
 #include "gdi.h"
 
-WORD GDI_HeapSel = 0;
 
 /***********************************************************************
  *          GDI stock objects 
@@ -897,7 +896,7 @@ INT32 WINAPI MulDiv32(
 	     INT32 nMultiplier,
 	     INT32 nDivisor
 ) {
-#ifdef __GNUC__
+#if (SIZEOF_LONG_LONG >= 8)
     long long ret;
     if (!nDivisor) return -1;
     ret = ((long long)nMultiplicand * nMultiplier) / nDivisor;

@@ -282,7 +282,7 @@ HGLOBAL16 WINAPI GlobalAlloc16(
     HANDLE16 owner = GetCurrentPDB();
 
     if (flags & GMEM_DDESHARE)
-        owner = MODULE_HANDLEtoHMODULE16(owner);  /* Make it a module handle */
+        owner = GetExePtr(owner);  /* Make it a module handle */
     return GLOBAL_Alloc( flags, size, owner, FALSE, FALSE, FALSE );
 }
 
@@ -963,11 +963,7 @@ BOOL16 WINAPI MemManInfo( MEMMANINFO *info )
      * (under Windows) always fills the structure and returns true.
      */
     GlobalMemoryStatus( &status );
-#ifdef __svr4__
-    info->wPageSize            = sysconf(_SC_PAGESIZE);
-#else
-    info->wPageSize            = getpagesize();
-#endif
+    info->wPageSize            = VIRTUAL_GetPageSize();
     info->dwLargestFreeBlock   = status.dwAvailVirtual;
     info->dwMaxPagesAvailable  = info->dwLargestFreeBlock / info->wPageSize;
     info->dwMaxPagesLockable   = info->dwMaxPagesAvailable;
@@ -1225,9 +1221,10 @@ HGLOBAL32 WINAPI GlobalReAlloc32(
       {
 	 /* reallocate a moveable block */
 	 pintern=HANDLE_TO_INTERN(hmem);
-	 if(pintern->LockCount!=0)
+	 if(pintern->LockCount>1) {
+	    ERR(global,"handle 0x%08lx is still locked, cannot realloc!\n",(DWORD)hmem);
 	    SetLastError(ERROR_INVALID_HANDLE);
-	 else if(size!=0)
+	 } else if(size!=0)
 	 {
 	    hnew=hmem;
 	    if(pintern->Pointer)

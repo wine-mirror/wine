@@ -22,23 +22,9 @@
 
 
 /***********************************************************************
- *           HANDLE_AllocTable
- */
-HANDLE_TABLE *HANDLE_AllocTable( PDB32 *process )
-{
-    HANDLE_TABLE *table = HeapAlloc( process->system_heap, HEAP_ZERO_MEMORY,
-                                     sizeof(HANDLE_TABLE) +
-                                     (HTABLE_SIZE-1) * sizeof(HANDLE_ENTRY) );
-    if (!table) return NULL;
-    table->count = HTABLE_SIZE;
-    return table;
-}
-
-
-/***********************************************************************
  *           HANDLE_GrowTable
  */
-static BOOL32 HANDLE_GrowTable( PDB32 *process )
+static BOOL32 HANDLE_GrowTable( PDB32 *process, INT32 incr )
 {
     HANDLE_TABLE *table;
 
@@ -47,10 +33,10 @@ static BOOL32 HANDLE_GrowTable( PDB32 *process )
     table = HeapReAlloc( process->system_heap,
                          HEAP_ZERO_MEMORY | HEAP_NO_SERIALIZE, table,
                          sizeof(HANDLE_TABLE) +
-                         (table->count+HTABLE_INC-1) * sizeof(HANDLE_ENTRY) );
+                         (table->count + incr - 1) * sizeof(HANDLE_ENTRY) );
     if (table)
     {
-        table->count += HTABLE_INC;
+        table->count += incr;
         process->handle_table = table;
     }
     SYSTEM_UNLOCK();
@@ -59,15 +45,67 @@ static BOOL32 HANDLE_GrowTable( PDB32 *process )
 
 
 /***********************************************************************
+ *           HANDLE_CreateTable
+ *
+ * Create a process handle table, optionally inheriting the parent's handles.
+ */
+BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit )
+{
+    DWORD size;
+
+    /* Process must not already have a handle table */
+    assert( !pdb->handle_table );
+
+    /* If this is the first process, simply allocate a table */
+    if (!pdb->parent) inherit = FALSE;
+
+    SYSTEM_LOCK();
+    size = inherit ? pdb->parent->handle_table->count : HTABLE_SIZE;
+    if ((pdb->handle_table = HeapAlloc( pdb->system_heap,
+                                        HEAP_ZERO_MEMORY | HEAP_NO_SERIALIZE,
+                                        sizeof(HANDLE_TABLE) +
+                                        (size-1) * sizeof(HANDLE_ENTRY) )))
+    {
+        pdb->handle_table->count = size;
+        if (inherit)
+        {
+            HANDLE_ENTRY *src = pdb->parent->handle_table->entries;
+            HANDLE_ENTRY *dst = pdb->handle_table->entries;
+            HANDLE32 h;
+
+            for (h = 0; h < size; h++, src++, dst++)
+            {
+                /* Check if handle is valid and inheritable */
+                if (src->ptr && (src->access & RESERVED_INHERIT))
+                {
+                    dst->access = src->access;
+                    dst->ptr    = src->ptr;
+                    K32OBJ_IncCount( dst->ptr );
+                }
+            }
+        }
+        /* Handle 1 is the process itself (unless the parent decided otherwise) */
+        if (!pdb->handle_table->entries[1].ptr)
+        {
+            pdb->handle_table->entries[1].ptr    = &pdb->header;
+            pdb->handle_table->entries[1].access = PROCESS_ALL_ACCESS;
+            K32OBJ_IncCount( &pdb->header );
+        }
+    }
+    SYSTEM_UNLOCK();
+    return (pdb->handle_table != NULL);
+}
+
+
+/***********************************************************************
  *           HANDLE_Alloc
  *
  * Allocate a handle for a kernel object and increment its refcount.
  */
-HANDLE32 HANDLE_Alloc( K32OBJ *ptr, DWORD access, BOOL32 inherit )
+HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access, BOOL32 inherit )
 {
     HANDLE32 h;
     HANDLE_ENTRY *entry;
-    PDB32 *pdb = PROCESS_Current();
 
     assert( ptr );
 
@@ -77,16 +115,17 @@ HANDLE32 HANDLE_Alloc( K32OBJ *ptr, DWORD access, BOOL32 inherit )
 
     SYSTEM_LOCK();
     K32OBJ_IncCount( ptr );
-    entry = pdb->handle_table->entries;
-    for (h = 0; h < pdb->handle_table->count; h++, entry++)
+    /* Don't try to allocate handle 0 */
+    entry = pdb->handle_table->entries + 1;
+    for (h = 1; h < pdb->handle_table->count; h++, entry++)
         if (!entry->ptr) break;
-    if ((h < pdb->handle_table->count) || HANDLE_GrowTable( pdb ))
+    if ((h < pdb->handle_table->count) || HANDLE_GrowTable( pdb, HTABLE_INC ))
     {
         entry = &pdb->handle_table->entries[h];
         entry->access = access;
         entry->ptr    = ptr;
         SYSTEM_UNLOCK();
-        return h + 1;  /* Avoid handle 0 */
+        return h;
     }
     K32OBJ_DecCount( ptr );
     SYSTEM_UNLOCK();
@@ -101,15 +140,15 @@ HANDLE32 HANDLE_Alloc( K32OBJ *ptr, DWORD access, BOOL32 inherit )
  * Retrieve a pointer to a kernel object and increments its reference count.
  * The refcount must be decremented when the pointer is no longer used.
  */
-K32OBJ *HANDLE_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type, DWORD access )
+K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
+                          K32OBJ_TYPE type, DWORD access )
 {
     K32OBJ *ptr = NULL;
-    PDB32 *pdb = PROCESS_Current();
 
     SYSTEM_LOCK();
     if ((handle > 0) && (handle <= pdb->handle_table->count))
     {
-        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle-1];
+        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         if ((entry->access & access) != access)
             fprintf( stderr, "Warning: handle %08x bad access (acc=%08lx req=%08lx)\n",
                      handle, entry->access, access );
@@ -131,15 +170,15 @@ K32OBJ *HANDLE_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type, DWORD access )
  * Change the object pointer of a handle, and increment the refcount.
  * Use with caution!
  */
-BOOL32 HANDLE_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD access )
+BOOL32 HANDLE_SetObjPtr( PDB32 *pdb, HANDLE32 handle, K32OBJ *ptr,
+                         DWORD access )
 {
     BOOL32 ret = FALSE;
-    PDB32 *pdb = PROCESS_Current();
 
     SYSTEM_LOCK();
     if ((handle > 0) && (handle <= pdb->handle_table->count))
     {
-        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle-1];
+        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         K32OBJ *old_ptr = entry->ptr;
         K32OBJ_IncCount( ptr );
         entry->access = access;
@@ -154,18 +193,40 @@ BOOL32 HANDLE_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD access )
 
 
 /*********************************************************************
- *           CloseHandle   (KERNEL32.23)
+ *           HANDLE_GetAccess
  */
-BOOL32 WINAPI CloseHandle( HANDLE32 handle )
+static BOOL32 HANDLE_GetAccess( PDB32 *pdb, HANDLE32 handle, LPDWORD access )
 {
     BOOL32 ret = FALSE;
-    PDB32 *pdb = PROCESS_Current();
+
+    SYSTEM_LOCK();
+    if ((handle > 0) && (handle <= pdb->handle_table->count))
+    {
+        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
+        if (entry->ptr)
+        {
+            *access = entry->access & ~RESERVED_ALL;
+            ret = TRUE;
+        }
+    }
+    SYSTEM_UNLOCK();
+    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
+    return ret;
+}
+
+
+/*********************************************************************
+ *           HANDLE_Close
+ */
+static BOOL32 HANDLE_Close( PDB32 *pdb, HANDLE32 handle )
+{
+    BOOL32 ret = FALSE;
     K32OBJ *ptr;
 
     SYSTEM_LOCK();
     if ((handle > 0) && (handle <= pdb->handle_table->count))
     {
-        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle-1];
+        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         if ((ptr = entry->ptr))
         {
             if (!(entry->access & RESERVED_CLOSE_PROTECT))
@@ -185,6 +246,41 @@ BOOL32 WINAPI CloseHandle( HANDLE32 handle )
 
 
 /*********************************************************************
+ *           HANDLE_CloseAll
+ *
+ * Close all handles pointing to a given object (or all handles of the
+ * process if the object is NULL)
+ */
+void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *obj )
+{
+    HANDLE_ENTRY *entry;
+    K32OBJ *ptr;
+    HANDLE32 handle;
+
+    SYSTEM_LOCK();
+    entry = pdb->handle_table->entries;
+    for (handle = 0; handle < pdb->handle_table->count; handle++, entry++)
+    {
+        if (!(ptr = entry->ptr)) continue;  /* empty slot */
+        if (obj && (ptr != obj)) continue;  /* not the right object */
+        entry->access = 0;
+        entry->ptr    = NULL;
+        K32OBJ_DecCount( ptr );
+    }
+    SYSTEM_UNLOCK();
+}
+
+
+/*********************************************************************
+ *           CloseHandle   (KERNEL32.23)
+ */
+BOOL32 WINAPI CloseHandle( HANDLE32 handle )
+{
+    return HANDLE_Close( PROCESS_Current(), handle );
+}
+
+
+/*********************************************************************
  *           GetHandleInformation   (KERNEL32.336)
  */
 BOOL32 WINAPI GetHandleInformation( HANDLE32 handle, LPDWORD flags )
@@ -195,7 +291,7 @@ BOOL32 WINAPI GetHandleInformation( HANDLE32 handle, LPDWORD flags )
     SYSTEM_LOCK();
     if ((handle > 0) && (handle <= pdb->handle_table->count))
     {
-        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle-1];
+        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         if (entry->ptr)
         {
             if (flags)
@@ -222,7 +318,7 @@ BOOL32 WINAPI SetHandleInformation( HANDLE32 handle, DWORD mask, DWORD flags )
     SYSTEM_LOCK();
     if ((handle > 0) && (handle <= pdb->handle_table->count))
     {
-        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle-1];
+        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
         if (entry->ptr)
         {
             entry->access = (entry->access & ~mask) | flags;
@@ -231,5 +327,51 @@ BOOL32 WINAPI SetHandleInformation( HANDLE32 handle, DWORD mask, DWORD flags )
     }
     SYSTEM_UNLOCK();
     if (!ret) SetLastError( ERROR_INVALID_HANDLE );
+    return ret;
+}
+
+
+/*********************************************************************
+ *           DuplicateHandle   (KERNEL32.192)
+ */
+BOOL32 WINAPI DuplicateHandle( HANDLE32 source_process, HANDLE32 source,
+                               HANDLE32 dest_process, HANDLE32 *dest,
+                               DWORD access, BOOL32 inherit, DWORD options )
+{
+    PDB32 *src_pdb = NULL, *dst_pdb = NULL;
+    K32OBJ *obj = NULL;
+    BOOL32 ret = FALSE;
+    HANDLE32 handle;
+
+    SYSTEM_LOCK();
+
+    if (!(src_pdb = PROCESS_GetPtr( source_process, PROCESS_DUP_HANDLE )))
+        goto done;
+    if (!(obj = HANDLE_GetObjPtr( src_pdb, source, K32OBJ_UNKNOWN, 0 )))
+        goto done;
+
+    /* Now that we are sure the source is valid, handle the options */
+
+    if (options & DUPLICATE_CLOSE_SOURCE)
+        HANDLE_Close( src_pdb, source );
+    if (options & DUPLICATE_SAME_ACCESS)
+        HANDLE_GetAccess( src_pdb, source, &access );
+
+    /* And duplicate the handle in the dest process */
+
+    if (!(dst_pdb = PROCESS_GetPtr( dest_process, PROCESS_DUP_HANDLE )))
+        goto done;
+    if ((handle = HANDLE_Alloc( dst_pdb, obj,
+                                access, inherit )) != INVALID_HANDLE_VALUE32)
+    {
+        if (dest) *dest = handle;
+        ret = TRUE;
+    }
+
+done:
+    if (dst_pdb) K32OBJ_DecCount( &dst_pdb->header );
+    if (obj) K32OBJ_DecCount( obj );
+    if (src_pdb) K32OBJ_DecCount( &src_pdb->header );
+    SYSTEM_UNLOCK();
     return ret;
 }

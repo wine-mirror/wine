@@ -121,6 +121,7 @@ extern THDB *pCurrentThread;
 
 /* scheduler/thread.c */
 extern THDB *THREAD_Create( struct _PDB32 *pdb, DWORD stack_size,
+                            BOOL32 alloc_stack16,
                             LPTHREAD_START_ROUTINE start_addr, LPVOID param );
 extern THDB *THREAD_Current(void);
 extern THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access );

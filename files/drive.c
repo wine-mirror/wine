@@ -5,6 +5,8 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
@@ -12,17 +14,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 
-#if defined(__linux__) || defined(sun) || defined(hpux)
-#include <sys/vfs.h>
+#ifdef HAVE_SYS_VFS_H
+# include <sys/vfs.h>
 #endif
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/errno.h>
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
 #endif
-#if defined(__svr4__) || defined(_SCO_DS) || defined(__EMX__)
-#include <sys/statfs.h>
+#ifdef HAVE_SYS_MOUNT_H
+# include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_STATFS_H
+# include <sys/statfs.h>
 #endif
 
 #include "windows.h"
@@ -98,8 +102,7 @@ static DRIVETYPE DRIVE_GetDriveType( const char *name )
     {
         if (!lstrcmpi32A( buffer, DRIVE_Types[i] )) return (DRIVETYPE)i;
     }
-    fprintf( stderr, "%s: unknown type '%s', defaulting to 'hd'.\n",
-             name, buffer );
+    MSG("%s: unknown type '%s', defaulting to 'hd'.\n", name, buffer );
     return TYPE_HD;
 }
 
@@ -113,8 +116,8 @@ static UINT32 DRIVE_GetFSFlags( const char *name, const char *value )
 
     for (descr = DRIVE_Filesystems; descr->name; descr++)
         if (!lstrcmpi32A( value, descr->name )) return descr->flags;
-    fprintf( stderr, "%s: unknown filesystem type '%s', defaulting to 'unix'.\n",
-             name, value );
+    MSG("%s: unknown filesystem type '%s', defaulting to 'unix'.\n",
+	name, value );
     return DRIVE_CASE_SENSITIVE | DRIVE_CASE_PRESERVING;
 }
 
@@ -143,14 +146,13 @@ int DRIVE_Init(void)
 
             if (stat( path, &drive_stat_buffer ))
             {
-                fprintf( stderr, "Could not stat %s, ignoring drive %c:\n",
-                         path, 'A' + i );
+                MSG("Could not stat %s, ignoring drive %c:\n", path, 'A' + i );
                 continue;
             }
             if (!S_ISDIR(drive_stat_buffer.st_mode))
             {
-                fprintf( stderr, "%s is not a directory, ignoring drive %c:\n",
-                         path, 'A' + i );
+                MSG("%s is not a directory, ignoring drive %c:\n",
+		    path, 'A' + i );
                 continue;
             }
 
@@ -203,7 +205,7 @@ int DRIVE_Init(void)
 
     if (!count) 
     {
-        fprintf( stderr, "Warning: no valid DOS drive found, check your configuration file.\n" );
+        MSG("Warning: no valid DOS drive found, check your configuration file.\n" );
         /* Create a C drive pointing to Unix root dir */
         DOSDrives[2].root     = HEAP_strdupA( SystemHeap, 0, "/" );
         DOSDrives[2].dos_cwd  = HEAP_strdupA( SystemHeap, 0, "" );
@@ -583,6 +585,7 @@ static int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
         return 0;
     }
 
+/* FIXME: add autoconf check for this */
 #if defined(__svr4__) || defined(_SCO_DS)
     if (statfs( DOSDrives[drive].root, &info, 0, 0) < 0)
 #else
@@ -590,15 +593,19 @@ static int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
 #endif
     {
         FILE_SetDosError();
-        fprintf(stderr,"dosfs: cannot do statfs(%s)\n", DOSDrives[drive].root);
+        WARN(dosfs, "cannot do statfs(%s)\n", DOSDrives[drive].root);
         return 0;
     }
 
     *size = info.f_bsize * info.f_blocks;
-#if defined(__svr4__) || defined(_SCO_DS) || defined(__EMX__)
-    *available = info.f_bfree * info.f_bsize;
-#else
+#ifdef STATFS_HAS_BAVAIL
     *available = info.f_bavail * info.f_bsize;
+#else
+# ifdef STATFS_HAS_BFREE
+    *available = info.f_bfree * info.f_bsize;
+# else
+#  error "statfs has no bfree/bavail member!"
+# endif
 #endif
     return 1;
 }
@@ -631,7 +638,7 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
     {
         if ((root[1]) && ((root[1] != ':') || (root[2] != '\\')))
         {
-            fprintf( stderr, "GetDiskFreeSpaceA: invalid root '%s'\n", root );
+            WARN(dosfs, "invalid root '%s'\n", root );
             return FALSE;
         }
         drive = toupper(root[0]) - 'A';
@@ -653,7 +660,7 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
     }
     /* fixme: probably have to adjust those variables too for CDFS */
     *cluster_sectors = 1;
-    while (*cluster_sectors * 65530 < size) *cluster_sectors *= 2;
+    while (*cluster_sectors * 65536 < size) *cluster_sectors *= 2;
     *free_clusters   = available/ *cluster_sectors;
     *total_clusters  = size/ *cluster_sectors;
     return TRUE;
@@ -694,8 +701,7 @@ BOOL32 WINAPI GetDiskFreeSpaceEx32A( LPCSTR root,
     {
         if ((root[1]) && ((root[1] != ':') || (root[2] != '\\')))
         {
-            fprintf( stderr, "GetDiskFreeSpaceExA: invalid root '%s'\n",
-		     root );
+            WARN(dosfs, "invalid root '%s'\n", root );
             return FALSE;
         }
         drive = toupper(root[0]) - 'A';
@@ -755,7 +761,7 @@ UINT32 WINAPI GetDriveType32A( LPCSTR root )
     TRACE(dosfs, "(%s)\n", root );
     if ((root[1]) && (root[1] != ':'))
     {
-        fprintf( stderr, "GetDriveType32A: invalid root '%s'\n", root );
+        WARN(dosfs, "invalid root '%s'\n", root );
         return DRIVE_DOESNOTEXIST;
     }
     switch(DRIVE_GetType(toupper(root[0]) - 'A'))
@@ -949,7 +955,7 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
     {
         if ((root[1]) && (root[1] != ':'))
         {
-            fprintf( stderr, "GetVolumeInformation: invalid root '%s'\n",root);
+            WARN(dosfs, "invalid root '%s'\n",root);
             return FALSE;
         }
         drive = toupper(root[0]) - 'A';

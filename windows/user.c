@@ -20,9 +20,8 @@
 #include "debug.h"
 #include "toolhelp.h"
 #include "message.h"
+#include "miscemu.h"
 #include "shell.h"
-
-WORD USER_HeapSel = 0;
 
 extern BOOL32 MENU_PatchResidentPopup( HQUEUE16, WND* );
 extern void QUEUE_FlushMessages(HQUEUE16);
@@ -117,10 +116,12 @@ static void USER_InstallRsrcHandler( HINSTANCE16 hInstance )
     /* SetResourceHandler() returns previous function which is set
      * when a module's resource table is loaded. */
 
-    proc = SetResourceHandler( hInstance, RT_ICON, (FARPROC32)LoadDIBIconHandler );
+    proc = SetResourceHandler( hInstance, RT_ICON16,
+                               (FARPROC32)LoadDIBIconHandler );
     if(!__r16loader ) 
 	__r16loader = (RESOURCEHANDLER16)proc;
-    proc = SetResourceHandler( hInstance, RT_CURSOR, (FARPROC32)LoadDIBCursorHandler );
+    proc = SetResourceHandler( hInstance, RT_CURSOR16,
+                               (FARPROC32)LoadDIBCursorHandler );
     if(!__r16loader )
 	__r16loader = (RESOURCEHANDLER16)proc;
 }
@@ -140,6 +141,10 @@ INT16 WINAPI InitApp( HINSTANCE16 hInstance )
        */
 
     USER_InstallRsrcHandler( hInstance );
+
+    /* Hack: restore the divide-by-zero handler */
+    /* FIXME: should set a USER-specific handler that displays a msg box */
+    INT_SetHandler( 0, INT_GetHandler( 0xff ) );
 
       /* Create task message queue */
     queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
@@ -264,7 +269,7 @@ BOOL16 WINAPI ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
 
 
 /***********************************************************************
- *           ExitWindowsEx   (USER32.195)
+ *           ExitWindowsEx   (USER32.196)
  */
 BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
 {

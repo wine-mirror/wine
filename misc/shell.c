@@ -620,7 +620,7 @@ LRESULT WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 
 		    if( pstr )
 		    {
-			HCURSOR16 hCursor = LoadCursor16( 0, MAKEINTRESOURCE(OCR_DRAGOBJECT) );
+			HCURSOR16 hCursor = LoadCursor16( 0, MAKEINTRESOURCE16(OCR_DRAGOBJECT) );
 			SendMessage32A( hWndCtl, LB_GETTEXT32, (WPARAM32)idx, (LPARAM)pstr );
 			SendMessage32A( hWndCtl, LB_DELETESTRING32, (WPARAM32)idx, 0 );
 			UpdateWindow32( hWndCtl );
@@ -729,7 +729,7 @@ BOOL32 WINAPI ShellAbout32A( HWND32 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
     info.szApp        = szApp;
     info.szOtherStuff = szOtherStuff;
     info.hIcon        = hIcon;
-    if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE(OIC_WINEICON) );
+    if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
     return DialogBoxIndirectParam32A( WIN_GetWindowInstance( hWnd ),
                          SYSRES_GetResPtr( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX ),
                                       hWnd, AboutDlgProc32, (LPARAM)&info );
@@ -748,7 +748,7 @@ BOOL32 WINAPI ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     info.szApp        = HEAP_strdupWtoA( GetProcessHeap(), 0, szApp );
     info.szOtherStuff = HEAP_strdupWtoA( GetProcessHeap(), 0, szOtherStuff );
     info.hIcon        = hIcon;
-    if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE(OIC_WINEICON) );
+    if (!hIcon) info.hIcon = LoadIcon16( 0, MAKEINTRESOURCE16(OIC_WINEICON) );
     ret = DialogBoxIndirectParam32A( WIN_GetWindowInstance( hWnd ),
                          SYSRES_GetResPtr( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX ),
                                       hWnd, AboutDlgProc32, (LPARAM)&info );
@@ -1074,7 +1074,8 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 		_lclose32( hFile);
 		return 0;
 	}
-	icongroupresdir = GetResDirEntryW(rootresdir,(LPWSTR)RT_GROUP_ICON,(DWORD)rootresdir,FALSE);
+	icongroupresdir = GetResDirEntryW(rootresdir,RT_GROUP_ICON32W,
+                                          (DWORD)rootresdir,FALSE);
 	if (!icongroupresdir) {
 		WARN(reg,"No Icongroupresourcedirectory!\n");
 		UnmapViewOfFile(peimage);
@@ -1143,7 +1144,8 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 		cids[i] = cid;
 		RetPtr[i] = LookupIconIdFromDirectoryEx32(igdata,TRUE,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
 	}
-	iconresdir=GetResDirEntryW(rootresdir,(LPWSTR)RT_ICON,(DWORD)rootresdir,FALSE);
+	iconresdir=GetResDirEntryW(rootresdir,RT_ICON32W,
+                                   (DWORD)rootresdir,FALSE);
 	if (!iconresdir) {
 	    WARN(reg,"No Iconresourcedirectory!\n");
 	    UnmapViewOfFile(peimage);
@@ -1270,7 +1272,7 @@ HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst,LPSTR lpIconPath,
 	    *lpiIcon = 6;   /* generic icon - found nothing */
 
 	GetModuleFileName16(hInst, lpIconPath, 0x80);
-	hIcon = LoadIcon16( hInst, MAKEINTRESOURCE(*lpiIcon));
+	hIcon = LoadIcon16( hInst, MAKEINTRESOURCE16(*lpiIcon));
     }
 
     return hIcon;

@@ -675,7 +675,7 @@ void WINAPI PostQuitMessage16( INT16 exitCode )
 
 
 /***********************************************************************
- *           PostQuitMessage32   (USER32.420)
+ *           PostQuitMessage32   (USER32.421)
  */
 void WINAPI PostQuitMessage32( INT32 exitCode )
 {
@@ -699,7 +699,7 @@ HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 }
 
 /***********************************************************************
- *           GetWindowThreadProcessId   (USER32.312)
+ *           GetWindowThreadProcessId   (USER32.313)
  */
 DWORD WINAPI GetWindowThreadProcessId( HWND32 hwnd, LPDWORD process )
 {
@@ -727,7 +727,7 @@ BOOL16 WINAPI SetMessageQueue16( INT16 size )
 
 
 /***********************************************************************
- *           SetMessageQueue32   (USER32.493)
+ *           SetMessageQueue32   (USER32.494)
  */
 BOOL32 WINAPI SetMessageQueue32( INT32 size )
 {
@@ -822,7 +822,7 @@ DWORD WINAPI WaitForInputIdle (HANDLE32 hProcess, DWORD dwTimeOut)
 
 
 /***********************************************************************
- *           GetInputState32   (USER32.243)
+ *           GetInputState32   (USER32.244)
  */
 BOOL32 WINAPI GetInputState32(void)
 {
@@ -835,7 +835,7 @@ BOOL32 WINAPI GetInputState32(void)
 
 
 /***********************************************************************
- *           GetMessagePos   (USER.119) (USER32.271)
+ *           GetMessagePos   (USER.119) (USER32.272)
  */
 DWORD WINAPI GetMessagePos(void)
 {
@@ -847,7 +847,7 @@ DWORD WINAPI GetMessagePos(void)
 
 
 /***********************************************************************
- *           GetMessageTime   (USER.120) (USER32.272)
+ *           GetMessageTime   (USER.120) (USER32.273)
  */
 LONG WINAPI GetMessageTime(void)
 {
@@ -859,7 +859,7 @@ LONG WINAPI GetMessageTime(void)
 
 
 /***********************************************************************
- *           GetMessageExtraInfo   (USER.288) (USER32.270)
+ *           GetMessageExtraInfo   (USER.288) (USER32.271)
  */
 LONG WINAPI GetMessageExtraInfo(void)
 {

@@ -626,7 +626,7 @@ void WINAPI MessageBeep16( UINT16 i )
 
 
 /***********************************************************************
- *           MessageBeep32   (USER32.389)
+ *           MessageBeep32   (USER32.390)
  */
 BOOL32 WINAPI MessageBeep32( UINT32 i )
 {
@@ -655,7 +655,7 @@ LONG WINAPI GetTimerResolution(void)
 }
 
 /***********************************************************************
- *	SystemParametersInfo32A   (USER32.539)
+ *	SystemParametersInfo32A   (USER32.540)
  */
 BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
                                        LPVOID lpvParam, UINT32 fuWinIni )
@@ -999,7 +999,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 }
 
 /***********************************************************************
- *	SystemParametersInfo32W   (USER32.540)
+ *	SystemParametersInfo32W   (USER32.541)
  */
 BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
                                        LPVOID lpvParam, UINT32 fuWinIni )

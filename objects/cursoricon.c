@@ -217,7 +217,7 @@ static BOOL32 CURSORICON_LoadDirEntry16( HINSTANCE32 hInstance, SEGPTR name,
     CURSORICONDIRENTRY *entry = NULL;
 
     if (!(hRsrc = FindResource16( hInstance, name,
-                                fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON )))
+                              fCursor ? RT_GROUP_CURSOR16 : RT_GROUP_ICON16 )))
         return FALSE;
     if (!(hMem = LoadResource16( hInstance, hRsrc ))) return FALSE;
     if ((dir = (CURSORICONDIR *)LockResource16( hMem )))
@@ -251,7 +251,7 @@ static BOOL32 CURSORICON_LoadDirEntry32( HINSTANCE32 hInstance, LPCWSTR name,
     CURSORICONDIRENTRY *entry = NULL;
 
     if (!(hRsrc = FindResource32W( hInstance, name,
-                (LPCWSTR)(fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON) )))
+                            fCursor ? RT_GROUP_CURSOR32W : RT_GROUP_ICON32W )))
         return FALSE;
     if (!(hMem = LoadResource32( hInstance, hRsrc ))) return FALSE;
     if ((dir = (CURSORICONDIR*)LockResource32( hMem )))
@@ -441,7 +441,7 @@ HICON16 WINAPI CreateIconFromResourceEx16( LPBYTE bits, UINT16 cbSize, BOOL16 bI
 
 
 /**********************************************************************
- *          CreateIconFromResource          (USER32.???)
+ *          CreateIconFromResource          (USER32.76)
  * FIXME:
  *  	bon@elektron.ikp.physik.tu-darmstadt.de 971130: Test with weditres
  *	showed only blank layout. Couldn't determine if this is a problem
@@ -461,7 +461,7 @@ HICON32 WINAPI CreateIconFromResource32( LPBYTE bits, UINT32 cbSize,
 
 
 /**********************************************************************
- *          CreateIconFromResourceEx32          (USER32.76)
+ *          CreateIconFromResourceEx32          (USER32.77)
  */
 HICON32 WINAPI CreateIconFromResourceEx32( LPBYTE bits, UINT32 cbSize,
                                            BOOL32 bIcon, DWORD dwVersion,
@@ -503,8 +503,8 @@ static HGLOBAL16 CURSORICON_Load16( HINSTANCE16 hInstance, SEGPTR name,
     /* Load the resource */
 
     if ( (hRsrc = FindResource16( hInstance,
-                                MAKEINTRESOURCE( dirEntry.icon.wResId ),
-                                fCursor ? RT_CURSOR : RT_ICON )) )
+                                MAKEINTRESOURCE16( dirEntry.icon.wResId ),
+                                fCursor ? RT_CURSOR16 : RT_ICON16 )) )
     {
 	/* 16-bit icon or cursor resources are processed
 	 * transparently by the LoadResource16() via custom
@@ -558,8 +558,8 @@ static HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
     /* Load the resource */
 
     if ( (hRsrc = FindResource32W( hInstance,
-                      (LPWSTR) (DWORD) dirEntry.icon.wResId,
-                      (LPWSTR) (fCursor ? RT_CURSOR : RT_ICON ))) )
+                                   MAKEINTRESOURCE32W( dirEntry.icon.wResId ),
+                                   fCursor ? RT_CURSOR32W : RT_ICON32W )) )
     {
 	HANDLE32 h = 0;
 	if ( (handle = LoadResource32( hInstance, hRsrc )) )
@@ -689,7 +689,7 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL32 bSemiTransparent)
 
            if( !hRet ) /* fall back on default drag cursor */
                 hRet = CURSORICON_Copy( pTask->hInstance ,
-                              CURSORICON_Load16(0,MAKEINTRESOURCE(OCR_DRAGOBJECT),
+                              CURSORICON_Load16(0,MAKEINTRESOURCE16(OCR_DRAGOBJECT),
                                          SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, 1, TRUE) );
        }
 
@@ -749,7 +749,7 @@ HCURSOR16 WINAPI CreateCursor16( HINSTANCE16 hInstance,
 
 
 /***********************************************************************
- *           CreateCursor32    (USER32.66)
+ *           CreateCursor32    (USER32.67)
  */
 HCURSOR32 WINAPI CreateCursor32( HINSTANCE32 hInstance,
                                  INT32 xHotSpot, INT32 yHotSpot,
@@ -781,7 +781,7 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
 
 
 /***********************************************************************
- *           CreateIcon32    (USER32.74)
+ *           CreateIcon32    (USER32.75)
  */
 HICON32 WINAPI CreateIcon32( HINSTANCE32 hInstance, INT32 nWidth,
                              INT32 nHeight, BYTE bPlanes, BYTE bBitsPixel,
@@ -836,7 +836,7 @@ HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
 
 
 /***********************************************************************
- *           CopyIcon32    (USER32.59)
+ *           CopyIcon32    (USER32.60)
  */
 HICON32 WINAPI CopyIcon32( HICON32 hIcon )
 {
@@ -867,7 +867,7 @@ BOOL16 WINAPI DestroyIcon16( HICON16 hIcon )
 
 
 /***********************************************************************
- *           DestroyIcon32    (USER32.132)
+ *           DestroyIcon32    (USER32.133)
  */
 BOOL32 WINAPI DestroyIcon32( HICON32 hIcon )
 {
@@ -887,7 +887,7 @@ BOOL16 WINAPI DestroyCursor16( HCURSOR16 hCursor )
 
 
 /***********************************************************************
- *           DestroyCursor32    (USER32.131)
+ *           DestroyCursor32    (USER32.132)
  */
 BOOL32 WINAPI DestroyCursor32( HCURSOR32 hCursor )
 {
@@ -907,7 +907,7 @@ BOOL16 WINAPI DrawIcon16( HDC16 hdc, INT16 x, INT16 y, HICON16 hIcon )
 
 
 /***********************************************************************
- *           DrawIcon32    (USER32.158)
+ *           DrawIcon32    (USER32.159)
  */
 BOOL32 WINAPI DrawIcon32( HDC32 hdc, INT32 x, INT32 y, HICON32 hIcon )
 {
@@ -1117,7 +1117,7 @@ HCURSOR16 WINAPI SetCursor16( HCURSOR16 hCursor )
 
 
 /***********************************************************************
- *           SetCursor32    (USER32.471)
+ *           SetCursor32    (USER32.472)
  * RETURNS:
  *	A handle to the previous cursor shape.
  */
@@ -1151,7 +1151,7 @@ void WINAPI SetCursorPos16( INT16 x, INT16 y )
 
 
 /***********************************************************************
- *           SetCursorPos32    (USER32.473)
+ *           SetCursorPos32    (USER32.474)
  */
 BOOL32 WINAPI SetCursorPos32( INT32 x, INT32 y )
 {
@@ -1171,7 +1171,7 @@ INT16 WINAPI ShowCursor16( BOOL16 bShow )
 
 
 /***********************************************************************
- *           ShowCursor32    (USER32.529)
+ *           ShowCursor32    (USER32.530)
  */
 INT32 WINAPI ShowCursor32( BOOL32 bShow )
 {
@@ -1204,7 +1204,7 @@ HCURSOR16 WINAPI GetCursor16(void)
 
 
 /***********************************************************************
- *           GetCursor32    (USER32.226)
+ *           GetCursor32    (USER32.227)
  */
 HCURSOR32 WINAPI GetCursor32(void)
 {
@@ -1224,7 +1224,7 @@ BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
 
 
 /***********************************************************************
- *           ClipCursor32    (USER32.52)
+ *           ClipCursor32    (USER32.53)
  */
 BOOL32 WINAPI ClipCursor32( const RECT32 *rect )
 {
@@ -1269,7 +1269,7 @@ void WINAPI GetCursorPos16( POINT16 *pt )
 
 
 /***********************************************************************
- *           GetCursorPos32    (USER32.228)
+ *           GetCursorPos32    (USER32.229)
  */
 void WINAPI GetCursorPos32( POINT32 *pt )
 {
@@ -1289,7 +1289,7 @@ void WINAPI GetClipCursor16( RECT16 *rect )
 
 
 /***********************************************************************
- *           GetClipCursor32    (USER32.220)
+ *           GetClipCursor32    (USER32.221)
  */
 void WINAPI GetClipCursor32( RECT32 *rect )
 {
@@ -1327,7 +1327,7 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
 }
 
 /**********************************************************************
- *          LookupIconIdFromDirectoryEx32       (USER32.379)
+ *          LookupIconIdFromDirectoryEx32       (USER32.380)
  */
 INT32 WINAPI LookupIconIdFromDirectoryEx32( LPBYTE dir, BOOL32 bIcon,
              INT32 width, INT32 height, UINT32 cFlag )
@@ -1346,7 +1346,7 @@ INT16 WINAPI LookupIconIdFromDirectory16( LPBYTE dir, BOOL16 bIcon )
 }
 
 /**********************************************************************
- *          LookupIconIdFromDirectory		(USER32.378)
+ *          LookupIconIdFromDirectory		(USER32.379)
  */
 INT32 WINAPI LookupIconIdFromDirectory32( LPBYTE dir, BOOL32 bIcon )
 {
@@ -1367,10 +1367,10 @@ WORD WINAPI GetIconID( HGLOBAL16 hResource, DWORD resType )
 
     switch(resType)
     {
-	case RT_CURSOR:
+	case RT_CURSOR16:
 	     return (WORD)LookupIconIdFromDirectoryEx16( lpDir, FALSE, 
 			  SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, LR_MONOCHROME );
-	case RT_ICON:
+	case RT_ICON16:
 	     return (WORD)LookupIconIdFromDirectoryEx16( lpDir, TRUE,
 			  SYSMETRICS_CXICON, SYSMETRICS_CYICON, 0 );
 	default:
@@ -1448,7 +1448,7 @@ HICON16 WINAPI LoadIconHandler( HGLOBAL16 hResource, BOOL16 bNew )
 }
 
 /***********************************************************************
- *           LoadCursorW                (USER32.361)
+ *           LoadCursorW                (USER32.362)
  */
 HCURSOR32 WINAPI LoadCursor32W(HINSTANCE32 hInstance, LPCWSTR name)
 {
@@ -1457,7 +1457,7 @@ HCURSOR32 WINAPI LoadCursor32W(HINSTANCE32 hInstance, LPCWSTR name)
 }
 
 /***********************************************************************
- *           LoadCursorA                (USER32.358)
+ *           LoadCursorA                (USER32.359)
  */
 HCURSOR32 WINAPI LoadCursor32A(HINSTANCE32 hInstance, LPCSTR name)
 {
@@ -1474,7 +1474,7 @@ HCURSOR32 WINAPI LoadCursor32A(HINSTANCE32 hInstance, LPCSTR name)
 }
 
 /***********************************************************************
- *           LoadIconW          (USER32.363)
+ *           LoadIconW          (USER32.364)
  */
 HICON32 WINAPI LoadIcon32W(HINSTANCE32 hInstance, LPCWSTR name)
 {
@@ -1484,7 +1484,7 @@ HICON32 WINAPI LoadIcon32W(HINSTANCE32 hInstance, LPCWSTR name)
 }
 
 /***********************************************************************
- *           LoadIconA          (USER32.362)
+ *           LoadIconA          (USER32.363)
  */
 HICON32 WINAPI LoadIcon32A(HINSTANCE32 hInstance, LPCSTR name)
 {
@@ -1502,7 +1502,7 @@ HICON32 WINAPI LoadIcon32A(HINSTANCE32 hInstance, LPCSTR name)
 }
 
 /**********************************************************************
- *          GetIconInfo		(USER32.241)
+ *          GetIconInfo		(USER32.242)
  */
 BOOL32 WINAPI GetIconInfo(HICON32 hIcon,LPICONINFO iconinfo) {
     CURSORICONINFO	*ciconinfo;

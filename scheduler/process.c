@@ -1,7 +1,7 @@
 /*
  * Win32 processes
  *
- * Copyright 1996 Alexandre Julliard
+ * Copyright 1996, 1998 Alexandre Julliard
  */
 
 #include <assert.h>
@@ -17,6 +17,8 @@
 #include "thread.h"
 #include "winerror.h"
 #include "pe_image.h"
+#include "task.h"
+#include "debug.h"
 
 /* Process self-handle */
 #define PROCESS_SELF ((HANDLE32)0x7fffffff)
@@ -55,15 +57,14 @@ PDB32 *PROCESS_Current(void)
  */
 PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access )
 {
-    PDB32 *pdb;
+    PDB32 *pdb = PROCESS_Current();
 
     if (handle == PROCESS_SELF)
     {
-        pdb = PROCESS_Current();
         K32OBJ_IncCount( &pdb->header );
         return pdb;
     }
-    return (PDB32 *)HANDLE_GetObjPtr( handle, K32OBJ_PROCESS, access );
+    return (PDB32 *)HANDLE_GetObjPtr( pdb, handle, K32OBJ_PROCESS, access );
 }
 
 
@@ -87,58 +88,59 @@ PDB32 *PROCESS_IdToPDB( DWORD id )
 }
 
 
-static int pstr_cmp( const void *ps1, const void *ps2 )
-{
-    return lstrcmpi32A( *(LPSTR *)ps1, *(LPSTR *)ps2 );
-}
 
 /***********************************************************************
- *           PROCESS_FillEnvDB
+ *           PROCESS_BuildEnvDB
+ *
+ * Build the env DB for the initial process
  */
-static BOOL32 PROCESS_FillEnvDB( PDB32 *pdb, TDB *pTask, LPCSTR cmd_line )
+static BOOL32 PROCESS_BuildEnvDB( PDB32 *pdb )
 {
-    LPSTR p, env;
-    INT32 count = 0;
-    LPSTR *pp, *array = NULL;
+    /* Allocate the env DB (FIXME: should not be on the system heap) */
 
-    /* Copy the Win16 environment, sorting it in the process */
+    if (!(pdb->env_db = HeapAlloc(SystemHeap,HEAP_ZERO_MEMORY,sizeof(ENVDB))))
+        return FALSE;
+    InitializeCriticalSection( &pdb->env_db->section );
 
-    env = p = GlobalLock16( pTask->pdb.environment );
-    for (p = env; *p; p += strlen(p) + 1) count++;
-    pdb->env_db->env_size = (p - env) + 1;
-    pdb->env_db->environ = HeapAlloc( pdb->heap, 0, pdb->env_db->env_size );
-    if (!pdb->env_db->environ) goto error;
-    if (!(array = HeapAlloc( pdb->heap, 0, count * sizeof(array[0]) )))
-        goto error;
-    for (p = env, pp = array; *p; p += strlen(p) + 1) *pp++ = p;
-    qsort( array, count, sizeof(LPSTR), pstr_cmp );
-    p = pdb->env_db->environ;
-    for (pp = array; count; count--, pp++)
-    {
-        strcpy( p, *pp );
-        p += strlen(p) + 1;
-    }
-    *p = '\0';
-    HeapFree( pdb->heap, 0, array );
-    array = NULL;
+    /* Allocate the standard handles */
+
+    pdb->env_db->hStdin  = FILE_DupUnixHandle( 0 );
+    pdb->env_db->hStdout = FILE_DupUnixHandle( 1 );
+    pdb->env_db->hStderr = FILE_DupUnixHandle( 2 );
+    FILE_SetFileType( pdb->env_db->hStdin,  FILE_TYPE_CHAR );
+    FILE_SetFileType( pdb->env_db->hStdout, FILE_TYPE_CHAR );
+    FILE_SetFileType( pdb->env_db->hStderr, FILE_TYPE_CHAR );
+
+    /* Build the environment strings */
+
+    return ENV_BuildEnvironment( pdb );
+}
+
+
+/***********************************************************************
+ *           PROCESS_InheritEnvDB
+ */
+static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env )
+{
+    if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
+        return FALSE;
+    InitializeCriticalSection( &pdb->env_db->section );
+
+    /* Copy the parent environment */
+
+    if (!ENV_InheritEnvironment( pdb, env )) return FALSE;
 
     /* Copy the command line */
-    /* Fixme: Here we rely on the hack that loader/module.c put's the unprocessed
-       commandline after the processed one in Pascal notation.
-       We may access Null data if we get called another way.
-       If we have a real CreateProcess sometimes, the problem to get an unrestricted
-       commandline will go away and we won't need that hack any longer
-       */
-    if (!(pdb->env_db->cmd_line =
-	  HEAP_strdupA( pdb->heap, 0, cmd_line + (unsigned char)cmd_line[0] + 2)))
-        goto error;
-    return TRUE;
 
-error:
-    if (pdb->env_db->cmd_line) HeapFree( pdb->heap, 0, pdb->env_db->cmd_line );
-    if (array) HeapFree( pdb->heap, 0, array );
-    if (pdb->env_db->environ) HeapFree( pdb->heap, 0, pdb->env_db->environ );
-    return FALSE;
+    if (!(pdb->env_db->cmd_line = HEAP_strdupA( pdb->heap, 0, cmd_line )))
+        return FALSE;
+
+    /* Inherit the standard handles */
+    pdb->env_db->hStdin  = pdb->parent->env_db->hStdin;
+    pdb->env_db->hStdout = pdb->parent->env_db->hStdout;
+    pdb->env_db->hStderr = pdb->parent->env_db->hStderr;
+
+    return TRUE;
 }
 
 
@@ -150,8 +152,9 @@ error:
 static void PROCESS_FreePDB( PDB32 *pdb )
 {
     pdb->header.type = K32OBJ_UNKNOWN;
+    if (pdb->handle_table) HANDLE_CloseAll( pdb, NULL );
+    ENV_FreeEnvironment( pdb );
     if (pdb->heap && (pdb->heap != pdb->system_heap)) HeapDestroy( pdb->heap );
-    if (pdb->handle_table) HeapFree( pdb->system_heap, 0, pdb->handle_table );
     if (pdb->load_done_evt) K32OBJ_DecCount( pdb->load_done_evt );
     if (pdb->event) K32OBJ_DecCount( pdb->event );
     DeleteCriticalSection( &pdb->crit_section );
@@ -163,6 +166,7 @@ static void PROCESS_FreePDB( PDB32 *pdb )
  *           PROCESS_CreatePDB
  *
  * Allocate and fill a PDB structure.
+ * Runs in the context of the parent process.
  */
 static PDB32 *PROCESS_CreatePDB( PDB32 *parent )
 {
@@ -188,9 +192,10 @@ static PDB32 *PROCESS_CreatePDB( PDB32 *parent )
     if (!(pdb->event = EVENT_Create( TRUE, FALSE ))) goto error;
     if (!(pdb->load_done_evt = EVENT_Create( TRUE, FALSE ))) goto error;
 
-    /* Allocate the handle table */
+    /* Create the handle table */
 
-    if (!(pdb->handle_table = HANDLE_AllocTable( pdb ))) goto error;
+    if (!HANDLE_CreateTable( pdb, TRUE )) goto error;
+
     return pdb;
 
 error:
@@ -218,9 +223,12 @@ BOOL32 PROCESS_Init(void)
 
     /* Create the initial process and thread structures */
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
-    if (!(thdb = THREAD_Create( pdb, 0, NULL, NULL ))) return FALSE;
+    if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL ))) return FALSE;
     SET_CUR_THREAD( thdb );
     THREAD_InitDone = TRUE;
+
+    /* Create the environment DB of the first process */
+    if (!PROCESS_BuildEnvDB( pdb )) return FALSE;
 
     return TRUE;
 }
@@ -231,14 +239,16 @@ BOOL32 PROCESS_Init(void)
  *
  * Create a new process database and associated info.
  */
-PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line )
+PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
+                       HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
+                       UINT32 cmdShow )
 {
     DWORD size, commit;
-    NE_MODULE *pModule;
-    PDB32 *pdb = PROCESS_CreatePDB( PROCESS_Current() );
+    THDB *thdb = NULL;
+    PDB32 *parent = PROCESS_Current();
+    PDB32 *pdb = PROCESS_CreatePDB( parent );
 
     if (!pdb) return NULL;
-    if (!(pModule = MODULE_GetPtr( pTask->hModule ))) return 0;
 
     /* Create the heap */
 
@@ -255,12 +265,27 @@ PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line )
     if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
     pdb->heap_list = pdb->heap;
 
-    if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
-        goto error;
-    if (!PROCESS_FillEnvDB( pdb, pTask, cmd_line )) goto error;
+    /* Inherit the env DB from the parent */
+
+    if (!PROCESS_InheritEnvDB( pdb, cmd_line, env )) goto error;
+
+    /* Create the main thread */
+
+    if (pModule->module32)
+        size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
+    else
+        size = 0;
+    if (!(thdb = THREAD_Create( pdb, size, FALSE, NULL, NULL ))) goto error;
+
+    /* Create a Win16 task for this process */
+
+    pdb->task = TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow);
+    if (!pdb->task) goto error;
+
     return pdb;
 
 error:
+    if (thdb) K32OBJ_DecCount( &thdb->header );
     PROCESS_FreePDB( pdb );
     return NULL;
 }
@@ -315,39 +340,14 @@ static void PROCESS_RemoveWait( K32OBJ *obj, DWORD thread_id )
     return K32OBJ_OPS( pdb->event )->remove_wait( pdb->event, thread_id );
 }
 
-/***********************************************************************
- *		PROCESS_CloseObjHandles
- *
- *	closes all handles that reference "ptr"
- * note: need to add 1 to the array entry to get to what
- * CloseHandle expects (there is no zero handle)
- */
-void PROCESS_CloseObjHandles(PDB32 *pdb, K32OBJ *ptr)
-{
-	HANDLE32 handle;
-
-	assert( pdb->header.type == K32OBJ_PROCESS );
-
-	/* Close all handles that have a pointer to ptr */
-	for (handle = 0; handle < pdb->handle_table->count; handle++)
-		if (pdb->handle_table->entries[handle].ptr == ptr) 
-			CloseHandle( handle+1 );
-}
 
 /***********************************************************************
  *           PROCESS_Destroy
- * note: need to add 1 to the array entry to get to what
- * CloseHandle expects (there is no zero handle)
  */
 static void PROCESS_Destroy( K32OBJ *ptr )
 {
     PDB32 *pdb = (PDB32 *)ptr;
-    HANDLE32 handle;
     assert( ptr->type == K32OBJ_PROCESS );
-
-    /* Close all handles */
-    for (handle = 0; handle < pdb->handle_table->count; handle++)
-        if (pdb->handle_table->entries[handle].ptr) CloseHandle( handle+1 );
 
     /* Free everything */
 
@@ -395,7 +395,7 @@ HANDLE32 WINAPI OpenProcess( DWORD access, BOOL32 inherit, DWORD id )
         SetLastError( ERROR_INVALID_HANDLE );
         return 0;
     }
-    return HANDLE_Alloc( &pdb->header, access, inherit );
+    return HANDLE_Alloc( PROCESS_Current(), &pdb->header, access, inherit );
 }			      
 
 
@@ -408,278 +408,6 @@ DWORD WINAPI GetCurrentProcessId(void)
     return PDB_TO_PROCESS_ID( pdb );
 }
 
-
-/***********************************************************************
- *      GetEnvironmentStrings32A   (KERNEL32.210) (KERNEL32.211)
- */
-LPSTR WINAPI GetEnvironmentStrings32A(void)
-{
-    PDB32 *pdb = PROCESS_Current();
-    return pdb->env_db->environ;
-}
-
-
-/***********************************************************************
- *      GetEnvironmentStrings32W   (KERNEL32.212)
- */
-LPWSTR WINAPI GetEnvironmentStrings32W(void)
-{
-    INT32 size;
-    LPWSTR ret, pW;
-    LPSTR pA;
-    PDB32 *pdb = PROCESS_Current();
-
-    size = HeapSize( GetProcessHeap(), 0, pdb->env_db->environ );
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) )))
-        return NULL;
-    pA = pdb->env_db->environ;
-    pW = ret;
-    while (*pA)
-    {
-        lstrcpyAtoW( pW, pA );
-        size = strlen(pA);
-        pA += size + 1;
-        pW += size + 1;
-    }
-    *pW = 0;
-    return ret;
-}
-
-
-/***********************************************************************
- *           FreeEnvironmentStrings32A   (KERNEL32.141)
- */
-BOOL32 WINAPI FreeEnvironmentStrings32A( LPSTR ptr )
-{
-    PDB32 *pdb = PROCESS_Current();
-    if (ptr != pdb->env_db->environ)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           FreeEnvironmentStrings32W   (KERNEL32.142)
- */
-BOOL32 WINAPI FreeEnvironmentStrings32W( LPWSTR ptr )
-{
-    return HeapFree( GetProcessHeap(), 0, ptr );
-}
-
-
-/***********************************************************************
- *          GetEnvironmentVariable32A   (KERNEL32.213)
- */
-DWORD WINAPI GetEnvironmentVariable32A( LPCSTR name, LPSTR value, DWORD size )
-{
-    LPSTR p;
-    INT32 len, res;
-
-    p = PROCESS_Current()->env_db->environ;
-    if (!name || !*name)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-    len = strlen(name);
-    while (*p)
-    {
-        res = lstrncmpi32A( name, p, len );
-        if (res < 0) goto not_found;
-        if (!res && (p[len] == '=')) break;
-        p += strlen(p) + 1;
-    }
-    if (!*p) goto not_found;
-    if (value) lstrcpyn32A( value, p + len + 1, size );
-    len = strlen(p);
-    /* According to the Win32 docs, if there is not enough room, return
-     * the size required to hold the string plus the terminating null
-     */
-    if (size <= len) len++;
-    return len;
-	
-not_found:
-    return 0;  /* FIXME: SetLastError */
-}
-
-
-/***********************************************************************
- *           GetEnvironmentVariable32W   (KERNEL32.214)
- */
-DWORD WINAPI GetEnvironmentVariable32W( LPCWSTR nameW, LPWSTR valW, DWORD size)
-{
-    LPSTR name = HEAP_strdupWtoA( GetProcessHeap(), 0, nameW );
-    LPSTR val  = HeapAlloc( GetProcessHeap(), 0, size );
-    DWORD res  = GetEnvironmentVariable32A( name, val, size );
-    HeapFree( GetProcessHeap(), 0, name );
-    if (valW) lstrcpynAtoW( valW, val, size );
-    HeapFree( GetProcessHeap(), 0, val );
-    return res;
-}
-
-
-/***********************************************************************
- *           SetEnvironmentVariable32A   (KERNEL32.484)
- */
-BOOL32 WINAPI SetEnvironmentVariable32A( LPCSTR name, LPCSTR value )
-{
-    INT32 size, len, res;
-    LPSTR p, env, new_env;
-    PDB32 *pdb = PROCESS_Current();
-
-    env = p = pdb->env_db->environ;
-
-    /* Find a place to insert the string */
-
-    res = -1;
-    len = strlen(name);
-    while (*p)
-    {
-        res = lstrncmpi32A( name, p, len );
-        if (res < 0) break;
-        if (!res && (p[len] == '=')) break;
-        res = 1;
-        p += strlen(p) + 1;
-    }
-    if (!value && res)  /* Value to remove doesn't exist already */
-        return FALSE;
-
-    /* Realloc the buffer */
-
-    len = value ? strlen(name) + strlen(value) + 2 : 0;
-    if (!res) len -= strlen(p) + 1;  /* The name already exists */
-    size = pdb->env_db->env_size + len;
-    if (len < 0)
-    {
-        LPSTR next = p + strlen(p) + 1;
-        memmove( next + len, next, pdb->env_db->env_size - (next - env) );
-    }
-    if (!(new_env = HeapReAlloc( GetProcessHeap(), 0, env, size )))
-        return FALSE;
-    p = new_env + (p - env);
-    if (len > 0) memmove( p + len, p, pdb->env_db->env_size - (p-new_env) );
-
-    /* Set the new string */
-
-    if (value)
-    {
-        strcpy( p, name );
-        strcat( p, "=" );
-        strcat( p, value );
-    }
-    pdb->env_db->env_size = size;
-    pdb->env_db->environ  = new_env;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           SetEnvironmentVariable32W   (KERNEL32.485)
- */
-BOOL32 WINAPI SetEnvironmentVariable32W( LPCWSTR name, LPCWSTR value )
-{
-    LPSTR nameA  = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-    LPSTR valueA = HEAP_strdupWtoA( GetProcessHeap(), 0, value );
-    BOOL32 ret = SetEnvironmentVariable32A( nameA, valueA );
-    HeapFree( GetProcessHeap(), 0, nameA );
-    HeapFree( GetProcessHeap(), 0, valueA );
-    return ret;
-}
-
-
-/***********************************************************************
- *           ExpandEnvironmentVariablesA   (KERNEL32.103)
- */
-DWORD WINAPI ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD len)
-{
-	LPCSTR s;
-        LPSTR d;
-	HANDLE32	heap = GetProcessHeap();
-	LPSTR		xdst = HeapAlloc(heap,0,10);
-	DWORD		cursize = 10;
-	DWORD		ret;
-
-	fprintf(stderr,"ExpandEnvironmentStrings32A(%s)\n",src);
-	s=src;
-	d=xdst;
-	memset(dst,'\0',len);
-#define CHECK_FREE(n)  {				\
-	DWORD	_needed = (n);				\
-							\
-	while (cursize-(d-xdst)<_needed) {		\
-		DWORD	ind = d-xdst;			\
-							\
-		cursize+=100;				\
-		xdst=(LPSTR)HeapReAlloc(heap,0,xdst,cursize);\
-		d = xdst+ind;				\
-	}						\
-}
-
-	while (*s) {
-		if (*s=='%') {
-			LPCSTR end;
-
-			end = s;do { end++; } while (*end && *end!='%');
-			if (*end=='%') {
-				LPSTR	x = HeapAlloc(heap,0,end-s+1);
-				char	buf[2];
-
-				lstrcpyn32A(x,s+1,end-s);
-				x[end-s]=0;
-
-				/* put expanded variable directly into 
-				 * destination string, so we don't have
-				 * to use temporary buffers.
-				 */
-				ret = GetEnvironmentVariable32A(x,buf,2);
-				CHECK_FREE(ret+2);
-				ret = GetEnvironmentVariable32A(x,d,cursize-(d-xdst));
-				if (ret) {
-					d+=strlen(d);
-					s=end;
-				} else {
-					CHECK_FREE(strlen(x)+2);
-					*d++='%';
-					lstrcpy32A(d,x);
-					d+=strlen(x);
-					*d++='%';
-				}
-				HeapFree(heap,0,x);
-			} else
-				*d++=*s;
-
-			s++;
-		} else {
-			CHECK_FREE(1);
-			*d++=*s++;
-		}
-	}
-	*d	= '\0';
-	ret	= lstrlen32A(xdst)+1;
-	if (d-xdst<len)
-		lstrcpy32A(dst,xdst);
-	HeapFree(heap,0,xdst);
-	return ret;
-}
-
-/***********************************************************************
- *           ExpandEnvironmentVariablesA   (KERNEL32.104)
- */
-DWORD WINAPI ExpandEnvironmentStrings32W( LPCWSTR src, LPWSTR dst, DWORD len)
-{
-	HANDLE32	heap = GetProcessHeap();
-	LPSTR		srcA = HEAP_strdupWtoA(heap,0,src);
-	LPSTR		dstA = HeapAlloc(heap,0,len);
-	DWORD		ret = ExpandEnvironmentStrings32A(srcA,dstA,len);
-
-	lstrcpyAtoW(dst,dstA);
-	HeapFree(heap,0,dstA);
-	HeapFree(heap,0,srcA);
-	return ret;
-}
 
 /***********************************************************************
  *           GetProcessHeap    (KERNEL32.259)
@@ -910,7 +638,7 @@ BOOL32 WINAPI ReadProcessMemory( HANDLE32 hProcess, LPCVOID lpBaseAddress,
  * FIXME: check this, if we ever run win32 binaries in different addressspaces
  *	  ... and add a sizecheck
  */
-BOOL32 WINAPI WriteProcessMemory(HANDLE32 hProcess, LPCVOID lpBaseAddress,
+BOOL32 WINAPI WriteProcessMemory(HANDLE32 hProcess, LPVOID lpBaseAddress,
                                  LPVOID lpBuffer, DWORD nSize,
                                  LPDWORD lpNumberOfBytesWritten )
 {

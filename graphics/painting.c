@@ -267,7 +267,7 @@ INT16 WINAPI FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 
 
 /***********************************************************************
- *           FillRect32    (USER32.196)
+ *           FillRect32    (USER32.197)
  */
 INT32 WINAPI FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 {
@@ -292,7 +292,7 @@ void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
 
 
 /***********************************************************************
- *           InvertRect32    (USER32.329)
+ *           InvertRect32    (USER32.330)
  */
 void WINAPI InvertRect32( HDC32 hdc, const RECT32 *rect )
 {
@@ -337,7 +337,7 @@ INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 
 
 /***********************************************************************
- *           FrameRect32    (USER32.202)
+ *           FrameRect32    (USER32.203)
  */
 INT32 WINAPI FrameRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 {
@@ -510,7 +510,7 @@ void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 
 
 /***********************************************************************
- *           DrawFocusRect32    (USER32.155)
+ *           DrawFocusRect32    (USER32.156)
  *
  * FIXME: PatBlt(PATINVERT) with background brush.
  */

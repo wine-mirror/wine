@@ -1177,7 +1177,7 @@ HWND16 WINAPI SetCapture16( HWND16 hwnd )
 
 
 /**********************************************************************
- *		SetCapture32   (USER32.463)
+ *		SetCapture32   (USER32.464)
  */
 HWND32 WINAPI SetCapture32( HWND32 hwnd )
 {
@@ -1186,7 +1186,7 @@ HWND32 WINAPI SetCapture32( HWND32 hwnd )
 
 
 /**********************************************************************
- *		ReleaseCapture   (USER.19) (USER32.438)
+ *		ReleaseCapture   (USER.19) (USER32.439)
  */
 void WINAPI ReleaseCapture(void)
 {
@@ -1205,7 +1205,7 @@ HWND16 WINAPI GetCapture16(void)
 
 
 /**********************************************************************
- *		GetCapture32   (USER32.207)
+ *		GetCapture32   (USER32.208)
  */
 HWND32 WINAPI GetCapture32(void)
 {
@@ -1288,7 +1288,7 @@ BOOL16 WINAPI SwapMouseButton16( BOOL16 fSwap )
 
 
 /***********************************************************************
- *	     SwapMouseButton32   (USER32.536)
+ *	     SwapMouseButton32   (USER32.537)
  */
 BOOL32 WINAPI SwapMouseButton32( BOOL32 fSwap )
 {

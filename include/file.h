@@ -58,9 +58,6 @@ extern HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr );
 extern int DIR_Init(void);
 extern UINT32 DIR_GetWindowsUnixDir( LPSTR path, UINT32 count );
 extern UINT32 DIR_GetSystemUnixDir( LPSTR path, UINT32 count );
-extern UINT32 DIR_GetTempUnixDir( LPSTR path, UINT32 count );
-extern UINT32 DIR_GetDosPath( INT32 element, LPSTR path, UINT32 count );
-extern UINT32 DIR_GetUnixPath( INT32 element, LPSTR path, UINT32 count );
 extern DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
                              DOS_FULL_NAME *full_name, BOOL32 win32 );
 

@@ -38,40 +38,45 @@ static WNDCLASS32A WIDGETS_BuiltinClasses[BIC32_NB_CLASSES] =
 {
     /* BIC32_BUTTON */
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-      ButtonWndProc, 0, sizeof(BUTTONINFO), 0, 0, IDC_ARROW, 0, 0, "Button" },
+      ButtonWndProc, 0, sizeof(BUTTONINFO), 0, 0,
+      (HCURSOR32)IDC_ARROW32A, 0, 0, "Button" },
     /* BIC32_EDIT */
     { CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,
-      EditWndProc, 0, sizeof(void *), 0, 0, IDC_IBEAM, 0, 0, "Edit" },
+      EditWndProc, 0, sizeof(void *), 0, 0,
+      (HCURSOR32)IDC_IBEAM32A, 0, 0, "Edit" },
     /* BIC32_LISTBOX */
     { CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,
-      ListBoxWndProc, 0, sizeof(void *), 0, 0, IDC_ARROW, 0, 0, "ListBox" },
+      ListBoxWndProc, 0, sizeof(void *), 0, 0,
+      (HCURSOR32)IDC_ARROW32A, 0, 0, "ListBox" },
     /* BIC32_COMBO */
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, 
-      ComboWndProc, 0, sizeof(void *), 0, 0, IDC_ARROW, 0, 0, "ComboBox" },
+      ComboWndProc, 0, sizeof(void *), 0, 0,
+      (HCURSOR32)IDC_ARROW32A, 0, 0, "ComboBox" },
     /* BIC32_COMBOLB */
-    { CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS,
-      ComboLBWndProc, 0, sizeof(void *), 0, 0, IDC_ARROW, 0, 0, "ComboLBox" },
+    { CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS, ComboLBWndProc,
+      0, sizeof(void *), 0, 0, (HCURSOR32)IDC_ARROW32A, 0, 0, "ComboLBox" },
     /* BIC32_POPUPMENU */
-    { CS_GLOBALCLASS | CS_SAVEBITS, PopupMenuWndProc, 0,
-      sizeof(HMENU32), 0, 0, IDC_ARROW, NULL_BRUSH, 0, POPUPMENU_CLASS_NAME },
+    { CS_GLOBALCLASS | CS_SAVEBITS, PopupMenuWndProc, 0, sizeof(HMENU32),
+      0, 0, (HCURSOR32)IDC_ARROW32A, NULL_BRUSH, 0, POPUPMENU_CLASS_NAME },
     /* BIC32_STATIC */
     { CS_GLOBALCLASS | CS_PARENTDC, StaticWndProc,
-      0, sizeof(STATICINFO), 0, 0, IDC_ARROW, 0, 0, "Static" },
+      0, sizeof(STATICINFO), 0, 0, (HCURSOR32)IDC_ARROW32A, 0, 0, "Static" },
     /* BIC32_SCROLL */
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-      ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, IDC_ARROW, 0, 0, "ScrollBar"},
+      ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0,
+      (HCURSOR32)IDC_ARROW32A, 0, 0, "ScrollBar"},
     /* BIC32_MDICLIENT */
     { CS_GLOBALCLASS, MDIClientWndProc,
       0, sizeof(MDICLIENTINFO), 0, 0, 0, STOCK_LTGRAY_BRUSH, 0, "MDIClient" },
     /* BIC32_DESKTOP */
     { CS_GLOBALCLASS, DesktopWndProc, 0, sizeof(DESKTOPINFO),
-      0, 0, IDC_ARROW, 0, 0, DESKTOP_CLASS_NAME },
+      0, 0, (HCURSOR32)IDC_ARROW32A, 0, 0, DESKTOP_CLASS_NAME },
     /* BIC32_DIALOG */
     { CS_GLOBALCLASS | CS_SAVEBITS, DefDlgProc32A, 0, DLGWINDOWEXTRA,
-      0, 0, IDC_ARROW, 0, 0, DIALOG_CLASS_NAME },
+      0, 0, (HCURSOR32)IDC_ARROW32A, 0, 0, DIALOG_CLASS_NAME },
     /* BIC32_ICONTITLE */
     { CS_GLOBALCLASS, IconTitleWndProc, 0, 0, 
-      0, 0, IDC_ARROW, 0, 0, ICONTITLE_CLASS_NAME }
+      0, 0, (HCURSOR32)IDC_ARROW32A, 0, 0, ICONTITLE_CLASS_NAME }
 };
 
 static ATOM bicAtomTable[BIC32_NB_CLASSES];

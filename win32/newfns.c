@@ -8,6 +8,7 @@
 at a later date. */
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include "windows.h"
@@ -130,4 +131,58 @@ HANDLE32 WINAPI CreateNamedPipeW (LPCWSTR lpName, DWORD dwOpenMode,
 
   SetLastError (ERROR_UNKNOWN);
   return INVALID_HANDLE_VALUE32;
+}
+
+/***********************************************************************
+ *           GetSystemPowerStatus      (KERNEL32.621)
+ */
+BOOL32 WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
+{
+    return FALSE;   /* no power management support */
+}
+
+
+/***********************************************************************
+ *           SetSystemPowerState      (KERNEL32.630)
+ */
+BOOL32 WINAPI SetSystemPowerState(BOOL32 suspend_or_hibernate,
+                                  BOOL32 force_flag)
+{
+    /* suspend_or_hibernate flag: w95 does not support
+       this feature anyway */
+
+    for ( ;0; )
+    {
+        if ( force_flag )
+        {
+        }
+        else
+        {
+        }
+    }
+    return TRUE;
+}
+
+/**************************************************************************
+ *              GetNumberFormat32A	(KERNEL32.355)
+ */
+INT32 WINAPI GetNumberFormat32A(LCID locale, DWORD dwflags,
+			       LPCSTR lpvalue,  char *lpFormat,
+			       LPSTR lpNumberStr, int cchNumber)
+/* NOTE: type of lpFormat should be CONST NUMBERFORMAT */
+
+{
+ int n;
+
+ FIXME(file,"%s: stub, no reformating done\n",lpvalue);
+
+ n = strlen(lpvalue);
+ if (cchNumber) { 
+   strncpy(lpNumberStr,lpvalue,cchNumber);
+   if (cchNumber <= n) {
+     lpNumberStr[cchNumber-1] = 0;
+     n = cchNumber-1;
+   }
+ }
+ return n;
 }

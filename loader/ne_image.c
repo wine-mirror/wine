@@ -28,15 +28,33 @@
 
 
 /***********************************************************************
+ *           NE_GetRelocAddrName
+ */
+static const char *NE_GetRelocAddrName( BYTE addr_type, int additive )
+{
+    switch(addr_type & 0x7f)
+    {
+    case NE_RADDR_LOWBYTE:   return additive ? "BYTE add" : "BYTE";
+    case NE_RADDR_OFFSET16:  return additive ? "OFFSET16 add" : "OFFSET16";
+    case NE_RADDR_POINTER32: return additive ? "POINTER32 add" : "POINTER32";
+    case NE_RADDR_SELECTOR:  return additive ? "SELECTOR add" : "SELECTOR";
+    case NE_RADDR_POINTER48: return additive ? "POINTER48 add" : "POINTER48";
+    case NE_RADDR_OFFSET32:  return additive ? "OFFSET32 add" : "OFFSET32";
+    }
+    return "???";
+}
+
+
+/***********************************************************************
  *           NE_LoadSegment
  */
 BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 {
     SEGTABLEENTRY *pSegTable, *pSeg;
     WORD *pModuleTable;
-    WORD count, i, offset;
+    WORD count, i, offset, next_offset;
     HMODULE16 module;
-    FARPROC16 address;
+    FARPROC16 address = 0;
     int fd;
     struct relocation_entry_s *rep, *reloc_entries;
     BYTE *func_name;
@@ -170,7 +188,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	   and target */
 	additive = rep->relocation_type & NE_RELFLAG_ADDITIVE;
 	rep->relocation_type &= 0x3;
-	
+
 	switch (rep->relocation_type)
 	{
 	  case NE_RELTYPE_ORDINAL:
@@ -187,8 +205,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                              *((BYTE *)pModule + pModule->name_table),
                              (char *)pModule + pModule->name_table + 1 );
                 else
-                    fprintf( stderr, "Warning: no handler for %*.*s.%d, setting to 0:0\n",
-                            *((BYTE *)pTarget + pTarget->name_table),
+                    fprintf( stderr, "Warning: no handler for %.*s.%d, setting to 0:0\n",
                             *((BYTE *)pTarget + pTarget->name_table),
                             (char *)pTarget + pTarget->name_table + 1,
                             ordinal );
@@ -196,11 +213,11 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (TRACE_ON(fixup))
             {
                 NE_MODULE *pTarget = MODULE_GetPtr( module );
-                TRACE(fixup, "%d: %*.*s.%d=%04x:%04x\n", i + 1, 
-			     *((BYTE *)pTarget + pTarget->name_table),
-			     *((BYTE *)pTarget + pTarget->name_table),
-			     (char *)pTarget + pTarget->name_table + 1,
-			     ordinal, HIWORD(address), LOWORD(address) );
+                TRACE( fixup, "%d: %.*s.%d=%04x:%04x %s\n", i + 1, 
+                       *((BYTE *)pTarget + pTarget->name_table),
+                       (char *)pTarget + pTarget->name_table + 1,
+                       ordinal, HIWORD(address), LOWORD(address),
+                       NE_GetRelocAddrName( rep->address_type, additive ) );
             }
 	    break;
 	    
@@ -218,16 +235,17 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             {
                 NE_MODULE *pTarget = MODULE_GetPtr( module );
                 ERR(fixup, "Warning: no handler for %.*s.%s, setting to 0:0\n",
-			    *((BYTE *)pTarget + pTarget->name_table),
-			    (char *)pTarget + pTarget->name_table + 1, func_name );
+                    *((BYTE *)pTarget + pTarget->name_table),
+                    (char *)pTarget + pTarget->name_table + 1, func_name );
             }
             if (TRACE_ON(fixup))
             {
 	        NE_MODULE *pTarget = MODULE_GetPtr( module );
-                TRACE(fixup, "%d: %.*s.%s=%04x:%04x\n", i + 1, 
-			     *((BYTE *)pTarget + pTarget->name_table),
-			     (char *)pTarget + pTarget->name_table + 1,
-			     func_name, HIWORD(address), LOWORD(address) );
+                TRACE( fixup, "%d: %.*s.%s=%04x:%04x %s\n", i + 1, 
+                       *((BYTE *)pTarget + pTarget->name_table),
+                       (char *)pTarget + pTarget->name_table + 1,
+                       func_name, HIWORD(address), LOWORD(address),
+                       NE_GetRelocAddrName( rep->address_type, additive ) );
             }
 	    break;
 	    
@@ -241,8 +259,9 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                 address = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( pSegTable[rep->target1-1].selector, rep->target2 );
 	    }
 	    
-	    TRACE(fixup,"%d: %04x:%04x\n", 
-			  i + 1, HIWORD(address), LOWORD(address) );
+	    TRACE( fixup,"%d: %04x:%04x %s\n", 
+                   i + 1, HIWORD(address), LOWORD(address),
+                   NE_GetRelocAddrName( rep->address_type, additive ) );
 	    break;
 
 	  case NE_RELTYPE_OSFIXUP:
@@ -254,18 +273,11 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	     * successfully emulate the coprocessor if it doesn't
 	     * exist.
 	     */
-	    TRACE(fixup, "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  "
-			 "TARGET %04x %04x\n", i + 1, rep->address_type, 
-			 rep->relocation_type, rep->offset, rep->target1, rep->target2);
+	    TRACE( fixup, "%d: TYPE %d, OFFSET %04x, TARGET %04x %04x %s\n",
+                   i + 1, rep->relocation_type, rep->offset,
+                   rep->target1, rep->target2,
+                   NE_GetRelocAddrName( rep->address_type, additive ) );
 	    continue;
-	    
-	  default:
-	    WARN(fixup, "WARNING: %d: ADDR TYPE %d,  "
-			  "unknown TYPE %d, OFFSET %04x, TARGET %04x %04x\n",
-			  i + 1, rep->address_type, rep->relocation_type, 
-			  rep->offset, rep->target1, rep->target2);
-	    free(reloc_entries);
-	    return FALSE;
 	}
 
 	offset  = rep->offset;
@@ -273,76 +285,76 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         /* Apparently, high bit of address_type is sometimes set; */
         /* we ignore it for now */
 	if (rep->address_type > NE_RADDR_OFFSET32)
-            fprintf( stderr, "WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
-                     MODULE_GetModuleName(pModule->self), rep->address_type );
+            ERR( fixup, "WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
+                 MODULE_GetModuleName(pModule->self), rep->address_type );
 
-	switch (rep->address_type & 0x7f)
-	{
-	  case NE_RADDR_LOWBYTE:
-            do {
-                sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-                TRACE(fixup,"    %04x:%04x:%04x BYTE%s\n",
-                              pSeg->selector, offset, *sp, additive ? " additive":"");
-                offset = *sp;
-		if(additive)
-                    *(unsigned char*)sp = (unsigned char)(((int)address+offset) & 0xFF);
-		else
-                    *(unsigned char*)sp = (unsigned char)((int)address & 0xFF);
-            }
-            while (offset && offset != 0xffff && !additive);
-            break;
-
-	  case NE_RADDR_OFFSET16:
-	    do {
-                sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		TRACE(fixup,"    %04x:%04x:%04x OFFSET16%s\n",
-                              pSeg->selector, offset, *sp, additive ? " additive" : "" );
-		offset = *sp;
-		*sp = LOWORD(address);
-		if (additive) *sp += offset;
-	    } 
-	    while (offset && offset != 0xffff && !additive);
-	    break;
-	    
-	  case NE_RADDR_POINTER32:
-	    do {
-                sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		TRACE(fixup,"    %04x:%04x:%04x POINTER32%s\n",
-                              pSeg->selector, offset, *sp, additive ? " additive" : "" );
-		offset = *sp;
-		*sp    = LOWORD(address);
-		if (additive) *sp += offset;
+        if (additive)
+        {
+            sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
+            TRACE( fixup,"    %04x:%04x\n", offset, *sp );
+            switch (rep->address_type & 0x7f)
+            {
+            case NE_RADDR_LOWBYTE:
+                *(BYTE *)sp += LOBYTE((int)address);
+                break;
+            case NE_RADDR_OFFSET16:
+		*sp += LOWORD(address);
+                break;
+            case NE_RADDR_POINTER32:
+		*sp += LOWORD(address);
 		*(sp+1) = HIWORD(address);
-	    } 
-	    while (offset && offset != 0xffff && !additive);
-	    break;
-	    
-	  case NE_RADDR_SELECTOR:
-	    do {
-                sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
-		TRACE(fixup,"    %04x:%04x:%04x SELECTOR%s\n",
-                              pSeg->selector, offset, *sp, additive ? " additive" : "" );
-		offset = *sp;
-		*sp    = HIWORD(address);
+                break;
+            case NE_RADDR_SELECTOR:
 		/* Borland creates additive records with offset zero. Strange, but OK */
-		if(additive && offset)
-        	fprintf(stderr,"Additive selector to %4.4x.Please report\n",offset);
-	    } 
-	    while (offset && offset != 0xffff && !additive);
-	    break;
-	    
-	  default:
-	    WARN(fixup, "WARNING: %d: unknown ADDR TYPE %d,  "
-			 "TYPE %d,  OFFSET %04x,  TARGET %04x %04x\n",
-			 i + 1, rep->address_type, rep->relocation_type, 
-			 rep->offset, rep->target1, rep->target2);
-	    free(reloc_entries);
-	    return FALSE;
-	}
+                if (*sp)
+                    ERR(fixup,"Additive selector to %04x.Please report\n",*sp);
+		else
+                    *sp = HIWORD(address);
+            default:
+                goto unknown;
+            }
+        }
+        else  /* non-additive fixup */
+        {
+            do
+            {
+                sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
+                next_offset = *sp;
+                TRACE( fixup,"    %04x:%04x\n", offset, *sp );
+                switch (rep->address_type & 0x7f)
+                {
+                case NE_RADDR_LOWBYTE:
+                    *(BYTE *)sp = LOBYTE((int)address);
+                    break;
+                case NE_RADDR_OFFSET16:
+                    *sp = LOWORD(address);
+                    break;
+                case NE_RADDR_POINTER32:
+                    *(FARPROC16 *)sp = address;
+                    break;
+                case NE_RADDR_SELECTOR:
+                    *sp = SELECTOROF(address);
+                    break;
+                default:
+                    goto unknown;
+                }
+                if (next_offset == offset) break;  /* avoid infinite loop */
+                if (next_offset >= GlobalSize16(pSeg->selector)) break;
+                offset = next_offset;
+            } while (offset && (offset != 0xffff));
+        }
     }
 
     free(reloc_entries);
     return TRUE;
+
+unknown:
+    WARN(fixup, "WARNING: %d: unknown ADDR TYPE %d,  "
+         "TYPE %d,  OFFSET %04x,  TARGET %04x %04x\n",
+         i + 1, rep->address_type, rep->relocation_type, 
+         rep->offset, rep->target1, rep->target2);
+    free(reloc_entries);
+    return FALSE;
 }
 
 
@@ -429,7 +441,8 @@ BOOL32 NE_LoadDLLs( NE_MODULE *pModule )
             /* its handle in the list of DLLs to initialize.   */
             HMODULE16 hDLL;
 
-            if ((hDLL = MODULE_Load( buffer, (LPVOID)-1, NE_FFLAGS_IMPLICIT )) == 2)
+            if ((hDLL = MODULE_Load( buffer, NE_FFLAGS_IMPLICIT,
+                                     NULL, NULL, 0 )) == 2)
             {
                 /* file not found */
                 char *p;
@@ -439,7 +452,7 @@ BOOL32 NE_LoadDLLs( NE_MODULE *pModule )
                 if (!(p = strrchr( buffer, '\\' ))) p = buffer;
                 memcpy( p + 1, pstr + 1, *pstr );
                 strcpy( p + 1 + *pstr, ".dll" );
-                hDLL = MODULE_Load( buffer, (LPVOID)-1, NE_FFLAGS_IMPLICIT );
+                hDLL = MODULE_Load( buffer, NE_FFLAGS_IMPLICIT, NULL, NULL, 0);
             }
             if (hDLL < 32)
             {

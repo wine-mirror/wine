@@ -50,6 +50,7 @@ typedef struct
 
 struct _THDB;
 struct _WSINFO;
+struct _NE_MODULE;
 
   /* signal proc typedef */
 typedef void (CALLBACK *USERSIGNALPROC)(HANDLE16, UINT16, UINT16,
@@ -124,11 +125,9 @@ typedef struct _TDB
 
 #pragma pack(4)
 
-extern BOOL32 TASK_Init(void);
-extern HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
-                                HINSTANCE16 hPrevInstance,
-                                HANDLE16 hEnvironment, LPCSTR cmdLine,
-                                UINT16 cmdShow );
+extern HTASK16 TASK_Create( struct _THDB *thdb, struct _NE_MODULE *pModule,
+                            HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
+                            UINT16 cmdShow );
 extern void TASK_KillCurrentTask( INT16 exitCode );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
 extern void TASK_Reschedule(void);

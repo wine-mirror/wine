@@ -84,9 +84,16 @@ static const BYTE VIRTUAL_Win32Flags[16] =
 
 static FILE_VIEW *VIRTUAL_FirstView;
 
+#ifdef __i386___
+/* These are always the same on an i386, and it will be faster this way */
+# define page_mask  0xfff
+# define page_shift 12
+# define granularity_mask 0xffff
+#else
 static UINT32 page_shift;
 static UINT32 page_mask;
 static UINT32 granularity_mask;  /* Allocation granularity (usually 64k) */
+#endif  /* __i386__ */
 
 #define ROUND_ADDR(addr) \
    ((UINT32)(addr) & ~page_mask)
@@ -415,16 +422,25 @@ static BOOL32 VIRTUAL_CheckFlags(
  */
 BOOL32 VIRTUAL_Init(void)
 {
-    SYSTEM_INFO sysinfo;
-    GetSystemInfo( &sysinfo );
+#ifndef __i386__
+    DWORD page_size;
 
-    page_mask = sysinfo.dwPageSize - 1;
-    granularity_mask = sysinfo.dwAllocationGranularity - 1;
+# ifdef HAVE_GETPAGESIZE
+    page_size = getpagesize();
+# else
+#  ifdef __svr4__
+    page_size = sysconf(_SC_PAGESIZE);
+#  else
+#   error Cannot get the page size on this platform
+#  endif
+# endif
+    page_mask = page_size - 1;
+    granularity_mask = 0xffff;  /* hard-coded for now */
     /* Make sure we have a power of 2 */
-    assert( !(sysinfo.dwPageSize & page_mask) );
-    assert( !(sysinfo.dwAllocationGranularity & granularity_mask) );
+    assert( !(page_size & page_mask) );
     page_shift = 0;
-    while ((1 << page_shift) != sysinfo.dwPageSize) page_shift++;
+    while ((1 << page_shift) != page_size) page_shift++;
+#endif  /* !__i386__ */
 
 #ifdef linux
     {
@@ -464,6 +480,24 @@ BOOL32 VIRTUAL_Init(void)
     }
 #endif  /* linux */
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           VIRTUAL_GetPageSize
+ */
+DWORD VIRTUAL_GetPageSize(void)
+{
+    return 1 << page_shift;
+}
+
+
+/***********************************************************************
+ *           VIRTUAL_GetGranularity
+ */
+DWORD VIRTUAL_GetGranularity(void)
+{
+    return granularity_mask + 1;
 }
 
 
@@ -1013,15 +1047,16 @@ BOOL32 WINAPI IsBadStringPtr32W( LPCWSTR str, UINT32 max )
  */
 HANDLE32 WINAPI CreateFileMapping32A(
                 HFILE32 hFile,   /* [in] Handle of file to map */
-                LPSECURITY_ATTRIBUTES attr, /* [in] Optional security attributes */
+                SECURITY_ATTRIBUTES *sa, /* [in] Optional security attributes*/
                 DWORD protect,   /* [in] Protection for mapping object */
                 DWORD size_high, /* [in] High-order 32 bits of object size */
                 DWORD size_low,  /* [in] Low-order 32 bits of object size */
-                LPCSTR name      /* [in] Name of file-mapping object */
-) {
+                LPCSTR name      /* [in] Name of file-mapping object */ )
+{
     FILE_MAPPING *mapping = NULL;
     HANDLE32 handle;
     BYTE vprot;
+    BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
     /* First search for an object with the same name */
 
@@ -1031,7 +1066,8 @@ HANDLE32 WINAPI CreateFileMapping32A(
         if (obj->type == K32OBJ_MEM_MAPPED_FILE)
         {
             SetLastError( ERROR_ALREADY_EXISTS );
-            handle = HANDLE_Alloc( obj, FILE_MAP_ALL_ACCESS /*FIXME*/, FALSE );
+            handle = HANDLE_Alloc( PROCESS_Current(), obj,
+                                   FILE_MAP_ALL_ACCESS /*FIXME*/, inherit );
         }
         else
         {
@@ -1045,7 +1081,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
     /* Check parameters */
 
     TRACE(virtual,"(%x,%p,%08lx,%08lx%08lx,%s)\n",
-                    hFile, attr, protect, size_high, size_low, name );
+          hFile, sa, protect, size_high, size_low, name );
 
     vprot = VIRTUAL_GetProt( protect );
     if (protect & SEC_RESERVE)
@@ -1080,7 +1116,8 @@ HANDLE32 WINAPI CreateFileMapping32A(
             ((protect & 0xff) == PAGE_EXECUTE_READWRITE) ||
             ((protect & 0xff) == PAGE_EXECUTE_WRITECOPY))
                 access |= GENERIC_WRITE;
-        if (!(obj = HANDLE_GetObjPtr( hFile, K32OBJ_FILE, access )))
+        if (!(obj = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
+                                      K32OBJ_FILE, access )))
             goto error;
 
         if (!GetFileInformationByHandle( hFile, &info )) goto error;
@@ -1111,8 +1148,8 @@ HANDLE32 WINAPI CreateFileMapping32A(
     mapping->file            = (FILE_OBJECT *)obj;
 
     if (!K32OBJ_AddName( &mapping->header, name )) handle = 0;
-    else handle = HANDLE_Alloc( &mapping->header,
-                                FILE_MAP_ALL_ACCESS /*FIXME*/, FALSE );
+    else handle = HANDLE_Alloc( PROCESS_Current(), &mapping->header,
+                                FILE_MAP_ALL_ACCESS /*FIXME*/, inherit );
     K32OBJ_DecCount( &mapping->header );
     return handle;
 
@@ -1157,7 +1194,7 @@ HANDLE32 WINAPI OpenFileMapping32A(
     SYSTEM_LOCK();
     if ((obj = K32OBJ_FindNameType( name, K32OBJ_MEM_MAPPED_FILE )))
     {
-        handle = HANDLE_Alloc( obj, access, inherit );
+        handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit );
         K32OBJ_DecCount( obj );
     }
     SYSTEM_UNLOCK();
@@ -1244,7 +1281,8 @@ LPVOID WINAPI MapViewOfFileEx(
         return NULL;
     }
 
-    if (!(mapping = (FILE_MAPPING *)HANDLE_GetObjPtr( handle,
+    if (!(mapping = (FILE_MAPPING *)HANDLE_GetObjPtr( PROCESS_Current(),
+                                                      handle,
                                                       K32OBJ_MEM_MAPPED_FILE,
                                                       0  /* FIXME */ )))
         return NULL;

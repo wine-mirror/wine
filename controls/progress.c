@@ -5,8 +5,6 @@
  *
  * TODO:
  *   - I do not know what to to on WM_[SG]ET_FONT
- * Problems:
- *   - I think I do not compute correctly the numer of leds to be drawn
  */
 
 #include <stdlib.h>
@@ -21,7 +19,6 @@
 
 /* Control configuration constants */
 
-#define LED_WIDTH  8
 #define LED_GAP    2
 
 /* Work constants */
@@ -41,8 +38,8 @@
 static void PROGRESS_Paint(WND *wndPtr, HDC32 dc)
 {
   PROGRESS_INFO *infoPtr = PROGRESS_GetInfoPtr(wndPtr);
-  HBRUSH32 ledBrush;
-  int rightBar, rightMost;
+  HBRUSH32 hbrBar, hbrBk;
+  int rightBar, rightMost, ledWidth;
   PAINTSTRUCT32 ps;
   RECT32 rect;
   HDC32 hdc;
@@ -53,29 +50,90 @@ static void PROGRESS_Paint(WND *wndPtr, HDC32 dc)
   /* get a dc */
   hdc = dc==0 ? BeginPaint32(wndPtr->hwndSelf, &ps) : dc;
 
-  /* get the required brush */
-  ledBrush = GetSysColorBrush32(COLOR_HIGHLIGHT);
+  /* get the required bar brush */
+  if (infoPtr->ColorBar == CLR_DEFAULT)
+    hbrBar = GetSysColorBrush32(COLOR_HIGHLIGHT);
+  else
+    hbrBar = CreateSolidBrush32 (infoPtr->ColorBar);
+
+  /* get the required background brush */
+  if (infoPtr->ColorBk != CLR_DEFAULT)
+    hbrBk = CreateSolidBrush32 (infoPtr->ColorBk);
+  else
+    hbrBk = 0; /* to keep the compiler happy ;-) */
 
   /* get rect for the bar, adjusted for the border */
-  GetClientRect32(wndPtr->hwndSelf, &rect);
+  GetClientRect32 (wndPtr->hwndSelf, &rect);
+
+  /* Hack because of missing top border */
+  rect.top++;
 
   /* draw the border */
-  DrawEdge32(hdc, &rect, BDR_SUNKENOUTER, BF_RECT|BF_ADJUST|BF_MIDDLE);
+  if (infoPtr->ColorBk == CLR_DEFAULT)
+    DrawEdge32(hdc, &rect, BDR_SUNKENOUTER, BF_RECT|BF_ADJUST|BF_MIDDLE);
+  else
+  {
+    DrawEdge32(hdc, &rect, BDR_SUNKENOUTER, BF_RECT|BF_ADJUST);
+    FillRect32(hdc, &rect, hbrBk);
+  }
   rect.left++; rect.right--; rect.top++; rect.bottom--;
-  rightMost = rect.right;
 
   /* compute extent of progress bar */
-  rightBar = rect.left + 
-    MulDiv32(infoPtr->CurVal-infoPtr->MinVal,
-	     rect.right - rect.left,
-	     infoPtr->MaxVal-infoPtr->MinVal);
+  if (wndPtr->dwStyle & PBS_VERTICAL)
+  {
+    rightBar = rect.bottom - 
+      MulDiv32(infoPtr->CurVal-infoPtr->MinVal,
+	       rect.bottom - rect.top,
+	       infoPtr->MaxVal-infoPtr->MinVal);
+    ledWidth = MulDiv32 ((rect.right - rect.left), 2, 3);
+    rightMost = rect.top;
+  }
+  else
+  {
+    rightBar = rect.left + 
+      MulDiv32(infoPtr->CurVal-infoPtr->MinVal,
+	       rect.right - rect.left,
+	       infoPtr->MaxVal-infoPtr->MinVal);
+    ledWidth = MulDiv32 ((rect.bottom - rect.top), 2, 3);
+    rightMost = rect.right;
+  }
 
   /* now draw the bar */
-  while(rect.left < rightBar) { 
-    rect.right = rect.left+LED_WIDTH;
-    FillRect32(hdc, &rect, ledBrush);
-    rect.left  = rect.right+LED_GAP;
+  if (wndPtr->dwStyle & PBS_SMOOTH)
+  {
+    if (wndPtr->dwStyle & PBS_VERTICAL)
+      rect.top = rightBar;
+    else
+      rect.right = rightBar;
+    FillRect32(hdc, &rect, hbrBar);
   }
+  else
+  {
+    if (wndPtr->dwStyle & PBS_VERTICAL)
+      while(rect.bottom > rightBar) { 
+        rect.top = rect.bottom-ledWidth;
+        if (rect.top < rightMost)
+          rect.top = rightMost;
+        FillRect32(hdc, &rect, hbrBar);
+        rect.bottom = rect.top-LED_GAP;
+      }
+    else
+      while(rect.left < rightBar) { 
+        rect.right = rect.left+ledWidth;
+        if (rect.right > rightMost)
+          rect.right = rightMost;
+        FillRect32(hdc, &rect, hbrBar);
+        rect.left  = rect.right+LED_GAP;
+      }
+  }
+
+  /* delete bar brush */
+  if (infoPtr->ColorBar != CLR_DEFAULT)
+      DeleteObject32 (hbrBar);
+
+  /* delete background brush */
+  if (infoPtr->ColorBk != CLR_DEFAULT)
+      DeleteObject32 (hbrBk);
 
   /* clean-up */  
   if(!dc)
@@ -114,6 +172,8 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       infoPtr->MaxVal=100;
       infoPtr->CurVal=0; 
       infoPtr->Step=10;
+      infoPtr->ColorBar=CLR_DEFAULT;
+      infoPtr->ColorBk=CLR_DEFAULT;
       TRACE(updown, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
       break;
     
@@ -145,7 +205,9 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       if(wParam != 0){
 	infoPtr->CurVal += (UINT16)wParam;
 	PROGRESS_CoercePos(wndPtr);
-	PROGRESS_Paint(wndPtr, 0);
+        InvalidateRect32 (hwnd, NULL, FALSE);
+        UpdateWindow32 (hwnd);
+//	PROGRESS_Paint(wndPtr, 0);
       }
       return temp;
 
@@ -156,7 +218,8 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       if(temp != wParam){
 	infoPtr->CurVal = (UINT16)wParam;
 	PROGRESS_CoercePos(wndPtr);
-	PROGRESS_Paint(wndPtr, 0);
+        InvalidateRect32 (hwnd, NULL, FALSE);
+        UpdateWindow32 (hwnd);
       }
       return temp;          
       
@@ -170,7 +233,8 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
 	if(infoPtr->MaxVal <= infoPtr->MinVal)
 	  infoPtr->MaxVal = infoPtr->MinVal+1;
 	PROGRESS_CoercePos(wndPtr);
-	PROGRESS_Paint(wndPtr, 0);
+        InvalidateRect32 (hwnd, NULL, FALSE);
+        UpdateWindow32 (hwnd);
       }
       return temp;
 
@@ -189,9 +253,54 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       if(infoPtr->CurVal > infoPtr->MaxVal)
 	infoPtr->CurVal = infoPtr->MinVal;
       if(temp != infoPtr->CurVal)
-	PROGRESS_Paint(wndPtr, 0);
+      {
+        InvalidateRect32 (hwnd, NULL, FALSE);
+        UpdateWindow32 (hwnd);
+      }
+      return temp;
+
+    case PBM_SETRANGE32:
+      temp = MAKELONG(infoPtr->MinVal, infoPtr->MaxVal);
+      if((infoPtr->MinVal != (INT32)wParam) ||
+         (infoPtr->MaxVal != (INT32)lParam)) {
+	infoPtr->MinVal = (INT32)wParam;
+	infoPtr->MaxVal = (INT32)lParam;
+	if(infoPtr->MaxVal <= infoPtr->MinVal)
+	  infoPtr->MaxVal = infoPtr->MinVal+1;
+	PROGRESS_CoercePos(wndPtr);
+        InvalidateRect32 (hwnd, NULL, FALSE);
+        UpdateWindow32 (hwnd);
+      }
       return temp;
     
+    case PBM_GETRANGE:
+      if (lParam){
+        ((PPBRANGE)lParam)->iLow = infoPtr->MinVal;
+        ((PPBRANGE)lParam)->iHigh = infoPtr->MaxVal;
+      }
+      return (wParam) ? infoPtr->MinVal : infoPtr->MaxVal;
+
+    case PBM_GETPOS:
+      if (wParam || lParam)
+	UNKNOWN_PARAM(PBM_STEPIT, wParam, lParam);
+      return (infoPtr->CurVal);
+
+    case PBM_SETBARCOLOR:
+      if (wParam)
+	UNKNOWN_PARAM(PBM_SETBARCOLOR, wParam, lParam);
+      infoPtr->ColorBar = (COLORREF)lParam;     
+      InvalidateRect32 (hwnd, NULL, FALSE);
+      UpdateWindow32 (hwnd);
+      break;
+
+    case PBM_SETBKCOLOR:
+      if (wParam)
+	UNKNOWN_PARAM(PBM_SETBKCOLOR, wParam, lParam);
+      infoPtr->ColorBk = (COLORREF)lParam;
+      InvalidateRect32 (hwnd, NULL, FALSE);
+      UpdateWindow32 (hwnd);
+      break;
+
     default: 
       if (message >= WM_USER) 
 	ERR(progress, "unknown msg %04x wp=%04x lp=%08lx\n", 
@@ -201,6 +310,4 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
 
     return 0;
 }
-
-
 

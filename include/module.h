@@ -11,7 +11,7 @@
 #include "pe_image.h"
 
   /* In-memory module structure. See 'Windows Internals' p. 219 */
-typedef struct
+typedef struct _NE_MODULE
 {
     WORD    magic;            /* 00 'NE' signature */
     WORD    count;            /* 02 Usage count */
@@ -128,10 +128,11 @@ extern int MODULE_OpenFile( HMODULE32 hModule );
 extern LPSTR MODULE_GetModuleName( HMODULE32 hModule );
 extern void MODULE_RegisterModule( NE_MODULE *pModule );
 extern HMODULE32 MODULE_FindModule( LPCSTR path );
-extern HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, LOADPARAMS* paramBlock );
+extern HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, BOOL32 lib_only );
 extern HINSTANCE16 MODULE_GetInstance( HMODULE32 hModule );
 extern HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs );
-extern HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 flags );
+extern HINSTANCE16 MODULE_Load( LPCSTR name, UINT16 uFlags, LPCSTR cmd_line,
+                                LPCSTR env, UINT32 show_cmd );
 extern WORD MODULE_GetOrdinal( HMODULE32 hModule, const char *name );
 extern FARPROC16 MODULE_GetEntryPoint( HMODULE32 hModule, WORD ordinal );
 extern BOOL16 MODULE_SetEntryPoint( HMODULE32 hModule, WORD ordinal,

@@ -27,7 +27,6 @@
 #include "miscemu.h"
 #include "options.h"
 #include "spy.h"
-#include "task.h"
 #include "tweak.h"
 #include "user.h"
 #include "dce.h"
@@ -59,9 +58,6 @@ BOOL32 MAIN_KernelInit(void)
 
     /* Initialise DOS directories */
     if (!DIR_Init()) return FALSE;
-
-    /* Initialize tasks */
-    if (!TASK_Init()) return FALSE;
 
       /* Initialize event handling */
     if (!EVENT_Init()) return FALSE;

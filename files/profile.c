@@ -184,8 +184,8 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
         {
             if (!(p2 = strrchr( p, ']' )))
             {
-                fprintf( stderr, "PROFILE_Load: Invalid section header at line %d: '%s'\n",
-                         line, p );
+                WARN(profile, "Invalid section header at line %d: '%s'\n",
+		     line, p );
             }
             else
             {
@@ -352,13 +352,11 @@ static BOOL32 PROFILE_FlushFile(void)
     
     if (!file)
     {
-        fprintf( stderr, "Warning: could not save profile file %s\n",
-                 CurProfile.dos_name );
+        WARN(profile, "could not save profile file %s\n", CurProfile.dos_name);
         return FALSE;
     }
 
-    TRACE(profile, "Saving '%s' into '%s'\n",
-                     CurProfile.dos_name, unix_name );
+    TRACE(profile, "Saving '%s' into '%s'\n", CurProfile.dos_name, unix_name );
     PROFILE_Save( file, CurProfile.section );
     fclose( file );
     CurProfile.changed = FALSE;
@@ -452,7 +450,7 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
     else
     {
         /* Does not exist yet, we will create it in PROFILE_FlushFile */
-        fprintf( stderr, "Warning: profile file %s not found\n", newdos_name );
+        WARN(profile, "profile file %s not found\n", newdos_name );
     }
     return TRUE;
 }
@@ -479,6 +477,13 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
                 PROFILE_CopyEntry( buffer, key->name, len - 1, handle_env );
                 len -= strlen(buffer) + 1;
                 buffer += strlen(buffer) + 1;
+                if (key->value)
+                {
+                    buffer[-1] = '=';
+                    PROFILE_CopyEntry(buffer, key->value, len - 1, handle_env);
+                    len -= strlen(buffer) + 1; 
+                    buffer += strlen(buffer) + 1;
+                }
             }
             *buffer = '\0';
             return oldlen - len + 1;
@@ -738,7 +743,7 @@ int PROFILE_LoadWineIni(void)
             return 1;
         }
     }
-    else fprintf( stderr, "Warning: could not get $HOME value for config file.\n" );
+    else WARN(profile, "could not get $HOME value for config file.\n" );
 
     /* Try global file */
 
@@ -748,8 +753,8 @@ int PROFILE_LoadWineIni(void)
         fclose( f );
         return 1;
     }
-    fprintf( stderr, "Can't open configuration file %s or $HOME%s\n",
-             WINE_INI_GLOBAL, PROFILE_WineIniName );
+    WARN(profile, "Can't open configuration file %s or $HOME%s\n",
+	 WINE_INI_GLOBAL, PROFILE_WineIniName );
     return 0;
 }
 

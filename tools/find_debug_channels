@@ -1,10 +1,12 @@
 #!/bin/bash
 #
 # This script scans the whole source code for symbols of the form 
-# 'dprintf_xxx(yyy' where yyy is a C identifier and outputs, on the
-# standard output a sorted list of the identifiers found in the .c 
-# files. Each identifier is reported once. Header files are not
-# scanned.
+# 'xxx(yyy' where:
+#        xxx is either TRACE, WARN, ERR or WARN
+#        yyy is a C identifier 
+# It outputs on the standard output a sorted list of the 
+# yyy identifiers found in the .c files. 
+# Each identifier is reported once. Header files are not scanned.
 #
 # The script can be given an argument that specify the files to be
 # searched according to the following scheme:

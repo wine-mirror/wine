@@ -31,8 +31,8 @@ static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
     SYSTEM_LOCK();
     for (i = 0, ptr = wait->objs; i < count; i++, ptr++)
     {
-        if (!(*ptr = HANDLE_GetObjPtr( handles[i], K32OBJ_UNKNOWN,
-                                       SYNCHRONIZE )))
+        if (!(*ptr = HANDLE_GetObjPtr( PROCESS_Current(), handles[i],
+                                       K32OBJ_UNKNOWN, SYNCHRONIZE )))
             break;
         if (!K32OBJ_OPS( *ptr )->signaled)
         {

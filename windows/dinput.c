@@ -238,7 +238,6 @@ static ULONG WINAPI IDirectInputDeviceA_Release(LPDIRECTINPUTDEVICE32A this) {
 static HRESULT WINAPI SysKeyboardA_SetProperty(
 	LPDIRECTINPUTDEVICE32A this,REFGUID rguid,LPCDIPROPHEADER ph
 ) {
-	LPSYSKEYBOARD32A	kthis = (LPSYSKEYBOARD32A)this;
 	char			xbuf[50];
 
 	if (HIWORD(rguid))

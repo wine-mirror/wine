@@ -391,7 +391,7 @@ type	win32
 387 stub fwscanf
 388 cdecl getc(ptr) CRTDLL_getc
 389 stub getchar
-390 stub getenv
+390 cdecl getenv (str) CRTDLL_getenv
 391 cdecl gets(ptr) CRTDLL_gets
 392 cdecl gmtime(ptr) gmtime
 393 stub is_wctype

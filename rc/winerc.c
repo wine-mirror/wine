@@ -850,15 +850,15 @@ void create_output(gen_res* top)
         int type;
         switch(it->type)
         {
-        case acc:type=(int)RT_ACCELERATOR;break;
-        case bmp:type=(int)RT_BITMAP;break;
-        case cur:type=(int)RT_CURSOR;break;
-        case dlg:type=(int)RT_DIALOG;break;
-        case fnt:type=(int)RT_FONT;break;
-        case ico:type=(int)RT_ICON;break;
-        case men:type=(int)RT_MENU;break;
-        case rdt:type=(int)RT_RCDATA;break;
-        case str:type=(int)RT_STRING;break;
+        case acc:type=(int)RT_ACCELERATOR16;break;
+        case bmp:type=(int)RT_BITMAP16;break;
+        case cur:type=(int)RT_CURSOR16;break;
+        case dlg:type=(int)RT_DIALOG16;break;
+        case fnt:type=(int)RT_FONT16;break;
+        case ico:type=(int)RT_ICON16;break;
+        case men:type=(int)RT_MENU16;break;
+        case rdt:type=(int)RT_RCDATA16;break;
+        case str:type=(int)RT_STRING16;break;
         default:fprintf(stderr,"Unknown restype\n");type=-1;break;
         }
 	if(win32)

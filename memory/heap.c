@@ -1225,7 +1225,7 @@ BOOL32 WINAPI HeapValidate(
               LPCVOID block  /* [in] Optional pointer to memory block to validate */
 ) {
     SUBHEAP *subheap;
-    HEAP *heapPtr = HEAP_GetPtr(heap);
+    HEAP *heapPtr = (HEAP *)(heap);
 
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {

@@ -199,9 +199,6 @@ lookup_hkey(HKEY hkey) {
 	case HKEY_CURRENT_CONFIG:
 		return key_current_config;
 	default:
-		WARN(reg, "(%lx), special key!\n",
-			(LONG)hkey
-		);
 		return get_handle(hkey);
 	}
 	/*NOTREACHED*/

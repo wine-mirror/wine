@@ -14,7 +14,7 @@
 #include <stdio.h>
 
 BOOL FileIsPlaceable( LPCSTR szFileName );
-HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName );
+HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName );
 
 #define FN_LENGTH 80
 
@@ -26,7 +26,7 @@ BOOL isAldus;
 BOOL FileOpen(HWND hWnd, char *fn)
 {
   OPENFILENAME ofn = { sizeof(OPENFILENAME),
-		       0, NULL, "Metafiles\0*.wmf\0", NULL, 0, 0, NULL, 
+		       0, 0, "Metafiles\0*.wmf\0", NULL, 0, 0, NULL, 
 		       FN_LENGTH, NULL, 0, NULL, NULL, OFN_CREATEPROMPT |
 		       OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
   ofn.hwndOwner = hWnd;
@@ -47,7 +47,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	PAINTSTRUCT ps; 
 	BeginPaint(hwnd, &ps);
 	SetMapMode(ps.hdc, MM_ANISOTROPIC);
-	SetViewportExt(ps.hdc, width, height);
+	SetViewportExtEx(ps.hdc, width, height, NULL);
 	SetViewportOrgEx(ps.hdc, deltax, deltay, NULL);
 	if(hmf) PlayMetaFile(ps.hdc, hmf);
 	EndPaint(hwnd, &ps);
@@ -68,7 +68,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	    if (FileOpen(hwnd, filename)) {
 	      isAldus = FileIsPlaceable(filename);
 	      if (isAldus) {
-		hmf = GetPlaceableMetaFile(filename);
+		hmf = GetPlaceableMetaFile(hwnd, filename);
 	      } else {
 		RECT r;
 		hmf = GetMetaFile(filename);
@@ -80,6 +80,17 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	    }
 	  }
 	  break;
+	  
+	case IDM_SET_EXT_TO_WIN:
+	  {
+	    RECT r;
+	    GetClientRect(hwnd, &r);
+	    width = r.right - r.left;
+	    height = r.bottom - r.top;
+	    InvalidateRect( hwnd, NULL, TRUE );
+	  }
+	  break;
+
 	  
 	case IDM_LEFT:
 	  deltax += 100;
@@ -138,7 +149,7 @@ BOOL FileIsPlaceable( LPCSTR szFileName )
   return (apmh.key == APMHEADER_KEY);
 }
 
-HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
+HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
 {
   LPSTR	lpData;
   METAHEADER mfHeader;
@@ -162,31 +173,34 @@ HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
     char msg[128];
     sprintf(msg, "Computed checksum %04x != stored checksum %04x\n", 
 	   checksum, APMHeader.checksum);
-    /*    MessageBox(hwnd, msg, "Checksum failed", MB_OK); */
+        MessageBox(hwnd, msg, "Checksum failed", MB_OK);
     return 0;
   }
 
   if (!_lread(fh, (LPSTR)&mfHeader, sizeof(METAHEADER))) return 0;
 
-  if (!(lpData = GlobalAlloc(GPTR, (mfHeader.mtSize * 2L)))) return 0;
+  if (!(lpData = (LPSTR) GlobalAlloc(GPTR, (mfHeader.mtSize * 2L)))) return 0;
 
   _llseek(fh, sizeof(APMFILEHEADER), 0);
   if (!_lread(fh, lpData, (UINT)(mfHeader.mtSize * 2L)))
   {
     GlobalFree(lpData);
     _lclose(fh);
-    return NULL;
+    return 0;
   }
   _lclose(fh);
 
   if (!(hmf = SetMetaFileBitsEx(mfHeader.mtSize*2, lpData))) 
-    return NULL;
+    return 0;
 
   
-  width = APMHeader.bbox.right - APMHeader.bbox.left;
-  height = APMHeader.bbox.bottom - APMHeader.bbox.top;
+  width = APMHeader.bbox.Right - APMHeader.bbox.Left;
+  height = APMHeader.bbox.Bottom - APMHeader.bbox.Top;
 
-  /*  printf("Ok! width %d height %d\n", width, height); */
+  /*      printf("Ok! width %d height %d inch %d\n", width, height, APMHeader.inch);  */
+  width = width*96/APMHeader.inch;
+  height = height*96/APMHeader.inch;
+
   deltax = 0;
   deltay = 0 ;
   return hmf;

@@ -25,6 +25,7 @@
 #include "queue.h"
 #include "selectors.h"
 #include "stackframe.h"
+#include "task.h"
 #include "thread.h"
 #include "toolhelp.h"
 #include "winnt.h"
@@ -46,21 +47,8 @@ static HTASK16 hCurrentTask = 0;
 static HTASK16 hTaskToKill = 0;
 static HTASK16 hLockedTask = 0;
 static UINT16 nTaskCount = 0;
-static HGLOBAL16 hDOSEnvironment = 0;
 
-static HGLOBAL16 TASK_CreateDOSEnvironment(void);
-static void	 TASK_YieldToSystem(TDB*);
-
-
-/***********************************************************************
- *           TASK_Init
- */
-BOOL32 TASK_Init(void)
-{
-    if (!(hDOSEnvironment = TASK_CreateDOSEnvironment()))
-        fprintf( stderr, "Not enough memory for DOS Environment\n" );
-    return (hDOSEnvironment != 0);
-}
+static void TASK_YieldToSystem(TDB*);
 
 
 /***********************************************************************
@@ -72,115 +60,6 @@ HTASK16 TASK_GetNextTask( HTASK16 hTask )
 
     if (pTask->hNext) return pTask->hNext;
     return (hFirstTask != hTask) ? hFirstTask : 0; 
-}
-
-
-/***********************************************************************
- *           TASK_CreateDOSEnvironment
- *
- * Create the original DOS environment.
- */
-static HGLOBAL16 TASK_CreateDOSEnvironment(void)
-{
-    static const char program_name[] = "KRNL386.EXE";
-    char **e, *p;
-    int initial_size, size, i, winpathlen, sysdirlen;
-    HGLOBAL16 handle;
-
-    extern char **environ;
-
-    /* DOS environment format:
-     * ASCIIZ   string 1
-     * ASCIIZ   string 2
-     * ...
-     * ASCIIZ   string n
-     * ASCIIZ   PATH=xxx
-     * BYTE     0
-     * WORD     1
-     * ASCIIZ   program name (e.g. C:\WINDOWS\SYSTEM\KRNL386.EXE)
-     */
-
-    /* First compute the size of the fixed part of the environment */
-
-    for (i = winpathlen = 0; ; i++)
-    {
-        int len = DIR_GetDosPath( i, NULL, 0 );
-        if (!len) break;
-        winpathlen += len + 1;
-    }
-    if (!winpathlen) winpathlen = 1;
-    sysdirlen  = GetSystemDirectory32A( NULL, 0 ) + 1;
-    initial_size = 5 + winpathlen +           /* PATH=xxxx */
-                   1 +                        /* BYTE 0 at end */
-                   sizeof(WORD) +             /* WORD 1 */
-                   sysdirlen +                /* program directory */
-                   strlen(program_name) + 1;  /* program name */
-
-    /* Compute the total size of the Unix environment (except path) */
-
-    for (e = environ, size = initial_size; *e; e++)
-    {
-	if (lstrncmpi32A(*e, "path=", 5))
-	{
-            int len = strlen(*e) + 1;
-            if (size + len >= 32767)
-            {
-                fprintf( stderr, "Warning: environment larger than 32k.\n" );
-                break;
-            }
-            size += len;
-	}
-    }
-
-
-    /* Now allocate the environment */
-
-    if (!(handle = GlobalAlloc16( GMEM_FIXED, size ))) return 0;
-    p = (char *)GlobalLock16( handle );
-
-    /* And fill it with the Unix environment */
-
-    for (e = environ, size = initial_size; *e; e++)
-    {
-	if (lstrncmpi32A(*e, "path=", 5))
-	{
-            int len = strlen(*e) + 1;
-            if (size + len >= 32767) break;
-            strcpy( p, *e );
-            size += len;
-            p    += len;
-	}
-    }
-
-    /* Now add the path */
-
-    strcpy( p, "PATH=" );
-    for (i = 0, p += 5; ; i++)
-    {
-        if (!DIR_GetDosPath( i, p, winpathlen )) break;
-        p += strlen(p);
-        *p++ = ';';
-    }
-    if (p[-1] == ';') p[-1] = '\0';
-    else p++;
-
-    /* Now add the program name */
-
-    *p++ = '\0';
-    PUT_WORD( p, 1 );
-    p += sizeof(WORD);
-    GetSystemDirectory32A( p, sysdirlen );
-    strcat( p, "\\" );
-    strcat( p, program_name );
-
-    /* Display it */
-
-    p = (char *) GlobalLock16( handle );
-    TRACE(task, "Master DOS environment at %p\n", p);
-    for (; *p; p += strlen(p) + 1) TRACE(task, "    %s\n", p);
-    TRACE(task, "Progname: %s\n", p+3 );
-
-    return handle;
 }
 
 
@@ -390,50 +269,27 @@ static void TASK_CallToStart(void)
 
 
 /***********************************************************************
- *           TASK_CreateTask
+ *           TASK_Create
  */
-HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
-                         HINSTANCE16 hPrevInstance, HANDLE16 hEnvironment,
-                         LPCSTR cmdLine, UINT16 cmdShow )
+HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
+                     HINSTANCE16 hPrevInstance, UINT16 cmdShow)
 {
     HTASK16 hTask;
     TDB *pTask;
-    PDB32 *pdb32;
-    HGLOBAL16 hParentEnv;
-    NE_MODULE *pModule;
-    SEGTABLEENTRY *pSegTable;
-    LPSTR name;
+    LPSTR name, cmd_line;
     WORD sp;
     char *stack32Top;
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
-    
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    pSegTable = NE_SEG_TABLE( pModule );
+    PDB32 *pdb32 = thdb->process;
+    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
       /* Allocate the task structure */
 
     hTask = GLOBAL_Alloc( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB),
-                          hModule, FALSE, FALSE, FALSE );
+                          pModule->self, FALSE, FALSE, FALSE );
     if (!hTask) return 0;
     pTask = (TDB *)GlobalLock16( hTask );
-
-      /* Allocate the new environment block */
-
-    if (!(hParentEnv = hEnvironment))
-    {
-        TDB *pParent = (TDB *)GlobalLock16( hCurrentTask );
-        hParentEnv = pParent ? pParent->pdb.environment : hDOSEnvironment;
-    }
-    /* FIXME: do we really need to make a copy also when */
-    /*        we don't use the parent environment? */
-    if (!(hEnvironment = GlobalAlloc16( GMEM_FIXED, GlobalSize16(hParentEnv))))
-    {
-        GlobalFree16( hTask );
-        return 0;
-    }
-    memcpy( GlobalLock16( hEnvironment ), GlobalLock16( hParentEnv ),
-            GlobalSize16( hParentEnv ) );
 
     /* Fill the task structure */
 
@@ -447,10 +303,11 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     pTask->version       = pModule->expected_version;
     pTask->hInstance     = hInstance;
     pTask->hPrevInstance = hPrevInstance;
-    pTask->hModule       = hModule;
+    pTask->hModule       = pModule->self;
     pTask->hParent       = hCurrentTask;
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
+    pTask->thdb          = thdb;
     pTask->curdrive      = DRIVE_GetCurrentDrive() | 0x80;
     strcpy( pTask->curdir, "\\" );
     lstrcpyn32A( pTask->curdir + 1, DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() ),
@@ -462,13 +319,13 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
       /* Copy the module name */
 
-    name = MODULE_GetModuleName( hModule );
+    name = MODULE_GetModuleName( pModule->self );
     strncpy( pTask->module_name, name, sizeof(pTask->module_name) );
 
       /* Allocate a selector for the PDB */
 
     pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB),
-                                      hModule, FALSE, FALSE, FALSE, NULL );
+                                    pModule->self, FALSE, FALSE, FALSE, NULL );
 
       /* Fill the PDB */
 
@@ -484,9 +341,15 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
                                (int)&((PDB *)0)->fileHandles );
     pTask->pdb.hFileHandles = 0;
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
-    pTask->pdb.environment    = hEnvironment;
+    pTask->pdb.environment    = pdb32->env_db->env_sel;
     pTask->pdb.nbFiles        = 20;
-    lstrcpyn32A( pTask->pdb.cmdLine, cmdLine, sizeof(pTask->pdb.cmdLine) );
+
+    /* Fill the command line */
+
+    cmd_line = pdb32->env_db->cmd_line;
+    while (*cmd_line && (*cmd_line != ' ') && (*cmd_line != '\t')) cmd_line++;
+    lstrcpyn32A( pTask->pdb.cmdLine+1, cmd_line, sizeof(pTask->pdb.cmdLine)-1);
+    pTask->pdb.cmdLine[0] = strlen( pTask->pdb.cmdLine + 1 );
 
       /* Get the compatibility flags */
 
@@ -507,33 +370,12 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     pTask->dta = PTR_SEG_OFF_TO_SEGPTR( pTask->hPDB, 
                                 (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
 
-    /* Create the Win32 part of the task */
-
-    pdb32 = PROCESS_Create( pTask, cmdLine );
-    /* FIXME: check for pdb32 == NULL.  */
-    pdb32->task = hTask;
-    if (pModule->flags & NE_FFLAGS_WIN32)
-    {
-    /*
-        LPTHREAD_START_ROUTINE start =
-            (LPTHREAD_START_ROUTINE)(
-	    	PROCESS_Current()->exe_modref->load_addr +
-		PROCESS_Current()->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
-     */
-        pTask->thdb = THREAD_Create( pdb32,
-          PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve,
-                                     NULL, NULL );
-    }
-    else
-        pTask->thdb = THREAD_Create( pdb32, 0, NULL, NULL );
-    /* FIXME: check for pTask->thdb == NULL.  */
-
     /* Create the 16-bit stack frame */
 
     if (!(sp = pModule->sp))
         sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
     sp &= ~1;
-    pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
+    pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( pTask->hInstance, sp );
     pTask->thdb->cur_stack -= sizeof(STACK16FRAME) + sizeof(STACK32FRAME *);
     frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
     frame16->ebp = sp + (int)&((STACK16FRAME *)0)->bp;
@@ -564,7 +406,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     TASK_LinkTask( hTask );
 
     TRACE(task, "module='%s' cmdline='%s' task=%04x\n",
-                  name, cmdLine, hTask );
+          name, cmd_line, hTask );
 
     return hTask;
 }
@@ -840,6 +682,14 @@ void WINAPI InitTask( CONTEXT *context )
          */
         EAX_reg(context) = 1;
         EBX_reg(context) = pTask->pdb.cmdLine[0] ? 0x81 : 0x80;
+        
+	if (!pTask->pdb.cmdLine[0]) EBX_reg(context) = 0x80;
+	else
+        {
+            LPBYTE p = &pTask->pdb.cmdLine[1];
+            while ((*p == ' ') || (*p == '\t')) p++;
+            EBX_reg(context) = 0x80 + (p - pTask->pdb.cmdLine);
+        }
         ECX_reg(context) = pModule->stack_size;
         EDX_reg(context) = pTask->nCmdShow;
         ESI_reg(context) = (DWORD)pTask->hPrevInstance;
@@ -1294,7 +1144,7 @@ SEGPTR WINAPI GetDOSEnvironment(void)
     TDB *pTask;
 
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return 0;
-    return (SEGPTR)WIN16_GlobalLock16( pTask->pdb.environment );
+    return PTR_SEG_OFF_TO_SEGPTR( pTask->pdb.environment, 0 );
 }
 
 
@@ -1491,7 +1341,7 @@ DWORD WINAPI GetAppCompatFlags16( HTASK16 hTask )
 
 
 /***********************************************************************
- *           GetAppCompatFlags32   (USER32.205)
+ *           GetAppCompatFlags32   (USER32.206)
  */
 DWORD WINAPI GetAppCompatFlags32( HTASK32 hTask )
 {

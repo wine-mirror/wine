@@ -483,7 +483,7 @@ INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
 
 
 /***********************************************************************
- *           wvsprintf32A   (USER32.586)
+ *           wvsprintf32A   (USER32.587)
  */
 INT32 WINAPI wvsprintf32A( LPSTR buffer, LPCSTR spec, va_list args )
 {
@@ -493,7 +493,7 @@ INT32 WINAPI wvsprintf32A( LPSTR buffer, LPCSTR spec, va_list args )
 
 
 /***********************************************************************
- *           wvsprintf32W   (USER32.587)
+ *           wvsprintf32W   (USER32.588)
  */
 INT32 WINAPI wvsprintf32W( LPWSTR buffer, LPCWSTR spec, va_list args )
 {

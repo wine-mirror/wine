@@ -8,7 +8,7 @@ type	win32
   5 stdcall AppendMenuA(long long long ptr) AppendMenu32A
   6 stdcall AppendMenuW(long long long ptr) AppendMenu32W
   7 stdcall ArrangeIconicWindows(long) ArrangeIconicWindows32
-  8 stub AttachThreadInput
+  8 stdcall AttachThreadInput(long long long) AttachThreadInput
   9 stdcall BeginDeferWindowPos(long) BeginDeferWindowPos32
  10 stdcall BeginPaint(long ptr) BeginPaint32
  11 stdcall BringWindowToTop(long) BringWindowToTop32
@@ -305,7 +305,7 @@ type	win32
 300 stub GetUserObjectInformationW
 301 stub GetUserObjectSecurity
 302 stdcall GetWindow(long long) GetWindow32
-303 stub GetWindowContextHelpId
+303 stdcall GetWindowContextHelpId(long) GetWindowContextHelpId
 304 stdcall GetWindowDC(long) GetWindowDC32
 305 stdcall GetWindowLongA(long long) GetWindowLong32A
 306 stdcall GetWindowLongW(long long) GetWindowLong32W
@@ -517,7 +517,7 @@ type	win32
 512 stub SetUserObjectInformationA
 513 stub SetUserObjectInformationW
 514 stub SetUserObjectSecurity
-515 stub SetWindowContextHelpId
+515 stdcall SetWindowContextHelpId(long long) SetWindowContextHelpId
 516 stub SetWindowFullScreenState
 517 stdcall SetWindowLongA(long long long) SetWindowLong32A
 518 stdcall SetWindowLongW(long long long) SetWindowLong32W

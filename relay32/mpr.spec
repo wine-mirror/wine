@@ -30,7 +30,7 @@ type win32
 0049 stub WNetAddConnection3W
 0050 stub WNetAddConnectionA
 0051 stub WNetAddConnectionW
-0052 stub WNetCachePassword
+0052 stdcall WNetCachePassword(ptr long ptr long long) WNetCachePassword
 0053 stub WNetCancelConnection2A
 0054 stub WNetCancelConnection2W
 0055 stub WNetCancelConnectionA

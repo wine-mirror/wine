@@ -138,6 +138,25 @@ WORD SELECTOR_AllocBlock( const void *base, DWORD size, enum seg_type type,
 
 
 /***********************************************************************
+ *           SELECTOR_MoveBlock
+ *
+ * Move a block of selectors in linear memory.
+ */
+void SELECTOR_MoveBlock( WORD sel, const void *new_base )
+{
+    WORD i, count = (GET_SEL_LIMIT(sel) >> 16) + 1;
+
+    for (i = 0; i < count; i++)
+    {
+        ldt_entry entry;
+        LDT_GetEntry( SELECTOR_TO_ENTRY(sel) + i, &entry );
+        entry.base = (unsigned long)new_base;
+        LDT_SetEntry( SELECTOR_TO_ENTRY(sel) + i, &entry );
+    }
+}
+
+
+/***********************************************************************
  *           SELECTOR_FreeBlock
  *
  * Free a block of selectors.
@@ -496,13 +515,10 @@ DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count )
 
 /************************************* Win95 pointer mapping functions *
  *
- * NOTE: MapSLFix and UnMapSLFixArray are probably needed to prevent
- * unexpected linear address change when GlobalCompact() shuffles
- * moveable blocks.
  */
 
 /***********************************************************************
- *           MapSL   (KERNEL32.662)
+ *           MapSL   (KERNEL32.523)
  *
  * Maps fixed segmented pointer to linear.
  */
@@ -511,27 +527,53 @@ LPVOID WINAPI MapSL( SEGPTR sptr )
     return (LPVOID)PTR_SEG_TO_LIN(sptr);
 }
 
+/***********************************************************************
+ *           MapSLFix   (KERNEL32.524)
+ *
+ * FIXME: MapSLFix and UnMapSLFixArray should probably prevent
+ * unexpected linear address change when GlobalCompact() shuffles
+ * moveable blocks.
+ */
+
+LPVOID WINAPI MapSLFix( SEGPTR sptr )
+{
+    return (LPVOID)PTR_SEG_TO_LIN(sptr);
+}
 
 /***********************************************************************
- *           MapLS   (KERNEL32.679)
+ *           UnMapSLFixArray   (KERNEL32.701)
+ */
+
+void WINAPI UnMapSLFixArray( SEGPTR sptr[], INT32 length )
+{
+}
+
+/***********************************************************************
+ *           MapLS   (KERNEL32.522)
  *
  * Maps linear pointer to segmented.
  */
 SEGPTR WINAPI MapLS( LPVOID ptr )
 {
-    WORD sel = SELECTOR_AllocBlock( ptr, 0x10000, SEGMENT_DATA, FALSE, FALSE );
-    return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
+    if (!HIWORD(ptr))
+        return (SEGPTR)ptr;
+    else
+    {
+        WORD sel = SELECTOR_AllocBlock( ptr, 0x10000, SEGMENT_DATA, FALSE, FALSE );
+        return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
+    }
 }
 
 
 /***********************************************************************
- *           UnMapLS   (KERNEL32.680)
+ *           UnMapLS   (KERNEL32.700)
  *
  * Free mapped selector.
  */
 void WINAPI UnMapLS( SEGPTR sptr )
 {
-    if (!__winelib) SELECTOR_FreeBlock( SELECTOROF(sptr), 1 );
+    if (SELECTOROF(sptr)) 
+        SELECTOR_FreeBlock( SELECTOROF(sptr), 1 );
 }
 
 /***********************************************************************
@@ -624,6 +666,71 @@ void WINAPI SUnMapLS_IP_EBP_28(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,2
 void WINAPI SUnMapLS_IP_EBP_32(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,32); }
 void WINAPI SUnMapLS_IP_EBP_36(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,36); }
 void WINAPI SUnMapLS_IP_EBP_40(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,40); }
+
+/**********************************************************************
+ * 		AllocMappedBuffer	(KERNEL32.38)
+ *
+ * This is a undocumented KERNEL32 function that 
+ * SMapLS's a GlobalAlloc'ed buffer.
+ *
+ * Input:   EDI register: size of buffer to allocate
+ * Output:  EDI register: pointer to buffer
+ *
+ * Note: The buffer is preceeded by 8 bytes:
+ *        ...
+ *       edi+0   buffer
+ *       edi-4   SEGPTR to buffer
+ *       edi-8   some magic Win95 needs for SUnMapLS
+ *               (we use it for the memory handle)
+ *
+ *       The SEGPTR is used by the caller!
+ */
+
+void WINAPI AllocMappedBuffer(CONTEXT *context)
+{
+    HGLOBAL32 handle = GlobalAlloc32(0, EDI_reg(context) + 8);
+    DWORD *buffer = (DWORD *)GlobalLock32(handle);
+    SEGPTR ptr = 0;
+
+    if (buffer)
+        if (!(ptr = MapLS(buffer + 2)))
+        {
+            GlobalUnlock32(handle);
+            GlobalFree32(handle);
+        }
+
+    if (!ptr)
+        EAX_reg(context) = EDI_reg(context) = 0;
+    else
+    {
+        buffer[0] = handle;
+        buffer[1] = ptr;
+
+        EAX_reg(context) = (DWORD) ptr;
+        EDI_reg(context) = (DWORD)(buffer + 2);
+    }
+}
+
+/**********************************************************************
+ * 		FreeMappedBuffer	(KERNEL32.39)
+ *
+ * Free a buffer allocated by AllocMappedBuffer
+ *
+ * Input: EDI register: pointer to buffer
+ */
+
+void WINAPI FreeMappedBuffer(CONTEXT *context)
+{
+    if (EDI_reg(context))
+    {
+        DWORD *buffer = (DWORD *)EDI_reg(context) - 2;
+
+        UnMapLS(buffer[1]);
+
+        GlobalUnlock32(buffer[0]);
+        GlobalFree32(buffer[0]);
+    }
+}
 
 /**********************************************************************
  *           WOWGetVDMPointer	(KERNEL32.55)

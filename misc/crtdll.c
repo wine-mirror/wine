@@ -1703,3 +1703,29 @@ VOID __cdecl CRTDLL__sleep(unsigned long timeout)
   TRACE(crtdll,"CRTDLL__sleep for %ld milliseconds\n",timeout);
   Sleep((timeout)?timeout:1);
 }
+/*********************************************************************
+ *                  getenv           (CRTDLL.437)
+ */
+LPSTR __cdecl CRTDLL_getenv(const char *name) 
+{
+     LPSTR environ = GetEnvironmentStrings32A();
+     LPSTR pp,pos = NULL;
+     unsigned int length;
+  
+     for (pp = environ; (*pp); pp = pp + strlen(pp) +1)
+       {
+	 pos =strchr(pp,'=');
+	 if (pos)
+	   length = pos -pp;
+	 else
+	   length = strlen(pp);
+	 if (!strncmp(pp,name,length)) break;
+       }
+     if ((pp)&& (pos)) 
+       {
+	 pp = pos+1;
+	 TRACE(crtdll,"got %s\n",pp);
+       }
+     FreeEnvironmentStrings32A( environ );
+     return pp;
+}

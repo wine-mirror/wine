@@ -551,7 +551,7 @@ void WINAPI SetDoubleClickTime16( UINT16 interval )
 
 
 /**********************************************************************
- *           SetDoubleClickTime32   (USER32.479)
+ *           SetDoubleClickTime32   (USER32.480)
  */
 BOOL32 WINAPI SetDoubleClickTime32( UINT32 interval )
 {
@@ -570,7 +570,7 @@ UINT16 WINAPI GetDoubleClickTime16(void)
 
 
 /**********************************************************************
- *           GetDoubleClickTime32   (USER32.238)
+ *           GetDoubleClickTime32   (USER32.239)
  */
 UINT32 WINAPI GetDoubleClickTime32(void)
 {
@@ -990,7 +990,7 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           PostMessage32A   (USER32.418)
+ *           PostMessage32A   (USER32.419)
  */
 BOOL32 WINAPI PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
                               LPARAM lParam )
@@ -1001,7 +1001,7 @@ BOOL32 WINAPI PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 
 
 /***********************************************************************
- *           PostMessage32W   (USER32.419)
+ *           PostMessage32W   (USER32.420)
  */
 BOOL32 WINAPI PostMessage32W( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
                               LPARAM lParam )
@@ -1141,7 +1141,7 @@ BOOL32 WINAPI PostThreadMessage32A(DWORD idThread , UINT32 message,
 }
 
 /***********************************************************************
- *           SendMessage32A   (USER32.453)
+ *           SendMessage32A   (USER32.454)
  */
 LRESULT WINAPI SendMessage32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                                LPARAM lParam )
@@ -1278,7 +1278,7 @@ LRESULT WINAPI SendMessageTimeout32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
 
 /***********************************************************************
- *           WaitMessage    (USER.112) (USER32.577)
+ *           WaitMessage    (USER.112) (USER32.578)
  */
 void WINAPI WaitMessage( void )
 {
@@ -1489,7 +1489,7 @@ BOOL16 WINAPI TranslateMessage16( const MSG16 *msg )
 
 
 /***********************************************************************
- *           TranslateMessage32   (USER32.555)
+ *           TranslateMessage32   (USER32.556)
  */
 BOOL32 WINAPI TranslateMessage32( const MSG32 *msg )
 {
@@ -1544,7 +1544,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
 
 
 /***********************************************************************
- *           DispatchMessage32A   (USER32.140)
+ *           DispatchMessage32A   (USER32.141)
  */
 LONG WINAPI DispatchMessage32A( const MSG32* msg )
 {
@@ -1591,7 +1591,7 @@ LONG WINAPI DispatchMessage32A( const MSG32* msg )
 
 
 /***********************************************************************
- *           DispatchMessage32W   (USER32.141)
+ *           DispatchMessage32W   (USER32.142)
  */
 LONG WINAPI DispatchMessage32W( const MSG32* msg )
 {
@@ -1648,7 +1648,7 @@ WORD WINAPI RegisterWindowMessage16( SEGPTR str )
 
 
 /***********************************************************************
- *           RegisterWindowMessage32A   (USER32.436)
+ *           RegisterWindowMessage32A   (USER32.437)
  */
 WORD WINAPI RegisterWindowMessage32A( LPCSTR str )
 {
@@ -1658,7 +1658,7 @@ WORD WINAPI RegisterWindowMessage32A( LPCSTR str )
 
 
 /***********************************************************************
- *           RegisterWindowMessage32W   (USER32.437)
+ *           RegisterWindowMessage32W   (USER32.438)
  */
 WORD WINAPI RegisterWindowMessage32W( LPCWSTR str )
 {
@@ -1699,7 +1699,7 @@ BOOL16 WINAPI InSendMessage16(void)
 
 
 /***********************************************************************
- *           InSendMessage32    (USER32.319)
+ *           InSendMessage32    (USER32.320)
  */
 BOOL32 WINAPI InSendMessage32(void)
 {

@@ -18,7 +18,7 @@
 #include "debug.h"
 
 /***********************************************************************
- *          GetMessage32A   (USER32.269)
+ *          GetMessage32A   (USER32.270)
  */
 BOOL32 WINAPI GetMessage32A(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 {
@@ -33,7 +33,7 @@ BOOL32 WINAPI GetMessage32A(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 }
 
 /***********************************************************************
- *          GetMessage32W   (USER32.273)
+ *          GetMessage32W   (USER32.274)
  */
 BOOL32 WINAPI GetMessage32W(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 {

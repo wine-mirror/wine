@@ -46,6 +46,7 @@ AC_PROG_LEX
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
+AC_CHECK_PROG(C2MAN,c2man,c2man,true)
 
 dnl **** Check for some libraries ****
 
@@ -57,33 +58,28 @@ dnl Check for XFree86 DGA extension
 AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11)
 
 dnl **** Check for Open Sound System ****
+AC_CHECK_HEADERS(sys/soundcard.h machine/soundcard.h)
 
 AC_CACHE_CHECK("for Open Sound System",
 	ac_cv_c_opensoundsystem,
-	AC_TRY_COMPILE([#include <sys/soundcard.h>],[
+	AC_TRY_COMPILE([
+	#ifdef HAVE_SYS_SOUNDCARD_H
+		#include <sys/soundcard.h>
+	#endif
+	#ifdef HAVE_MACHINE_SOUNDCARD_H
+		#include <machine/soundcard.h>
+	#endif
+	],[
+
 /* check for one of the Open Sound System specific SNDCTL_ defines */
 #if !defined(SNDCTL_DSP_STEREO)
 #error No open sound system
 #endif
-],ac_cv_c_opensoundsystem="yes",ac_cv_c_opensoundsystem="no"))
-
-AC_CACHE_CHECK("for Open Sound System on *BSD",
-	ac_cv_c_opensoundsystem_bsd,
-	AC_TRY_COMPILE([#include <machine/soundcard.h>],[
-/* check for one of the Open Sound System specific SNDCTL_ defines */
-#if !defined(SNDCTL_DSP_STEREO)
-#error No open sound system
-#endif
-],ac_cv_c_opensoundsystem_bsd="yes",ac_cv_c_opensoundsystem_bsd="no"))
-
-if test "$ac_cv_c_opensoundsystem" = "yes" -o "$ac_cv_c_opensoundsystem_bsd" = "yes"
-then
-    AC_DEFINE(HAVE_OSS)
-    if test "$ac_cv_c_opensoundsystem_bsd" = "yes"
-    then
-        AC_DEFINE(HAVE_MACHINE_SOUNDCARD_H)
-    fi
-fi
+],
+	ac_cv_c_opensoundsystem="yes"
+	AC_DEFINE(HAVE_OSS),
+	ac_cv_c_opensoundsystem="no"
+))
 
 dnl **** Check for union semun ****
 
@@ -217,11 +213,74 @@ fi
 
 dnl **** Check for functions and header files ****
 
-AC_CHECK_FUNCS(clone memmove strerror tcgetattr timegm usleep wait4 waitpid)
-AC_CHECK_HEADERS(wctype.h)
+AC_CHECK_FUNCS(clone getpagesize memmove sigaltstack strerror tcgetattr timegm usleep wait4 waitpid)
+AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h sys/cdio.h sys/filio.h)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()
+AC_CHECK_SIZEOF(long long,0)
+
+dnl **** Dependent checks ****
+AC_CACHE_CHECK( "for statfs.f_bavail", wine_cv_statfs_bavail,
+  [ if test "x$statfs_bavail" = "xno"
+    then
+        wine_cv_statfs_bavail=no
+    else
+    	AC_TRY_COMPILE([
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#ifdef HAVE_SYS_STATFS_H
+	# include <sys/statfs.h>
+	#endif
+	#ifdef HAVE_SYS_MOUNT_H
+	# include <sys/mount.h>
+	#endif
+	#ifdef HAVE_SYS_VFS_H
+	# include <sys/vfs.h>
+	#endif
+	],[
+		struct statfs stfs;
+
+		stfs.f_bavail++;
+	],wine_cv_statfs_bavail=yes,wine_cv_statfs_bavail=no
+	)
+    fi ] )
+if test "$wine_cv_statfs_bavail" = "yes"
+then
+  AC_DEFINE(STATFS_HAS_BAVAIL)
+fi
+
+AC_CACHE_CHECK( "for statfs.f_bfree", wine_cv_statfs_bfree,
+  [ if test "x$statfs_bfree" = "xno"
+    then
+        wine_cv_statfs_bfree=no
+    else
+    	AC_TRY_COMPILE([
+	#ifdef HAVE_SYS_PARAM_H
+	# include <sys/param.h>
+	#endif
+	#ifdef HAVE_SYS_STATFS_H
+	# include <sys/statfs.h>
+	#endif
+	#ifdef HAVE_SYS_MOUNT_H
+	# include <sys/mount.h>
+	#endif
+	#ifdef HAVE_SYS_VFS_H
+	# include <sys/vfs.h>
+	#endif
+	],[
+		struct statfs stfs;
+
+		stfs.f_bfree++;
+	],wine_cv_statfs_bfree=yes,wine_cv_statfs_bfree=no
+	)
+    fi ] )
+if test "$wine_cv_statfs_bfree" = "yes"
+then
+  AC_DEFINE(STATFS_HAS_BFREE)
+fi
+
 
 dnl **** Generate output files ****
 

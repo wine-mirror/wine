@@ -16,6 +16,8 @@
  *                                     <lawson_whitney@juno.com>
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
@@ -24,8 +26,8 @@
 #include <errno.h>
 #include <ctype.h>
 #include <sys/stat.h>
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__svr4__)
-#include <sys/filio.h>
+#ifdef HAVE_SYS_FILIO_H
+# include <sys/filio.h>
 #endif
 #include <sys/ioctl.h>
 #include <unistd.h>

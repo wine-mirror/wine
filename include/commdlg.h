@@ -150,9 +150,41 @@ typedef struct {
 	LPARAM 		lCustData;              /* data passed to hook fn.  */
         WNDPROC16       lpfnHook;
 	SEGPTR 		lpTemplateName;         /* custom template name     */
-	} FINDREPLACE;
-typedef FINDREPLACE *LPFINDREPLACE;
+	} FINDREPLACE16, *LPFINDREPLACE16;
 
+typedef struct {
+	DWORD		lStructSize;
+	HWND32		hwndOwner;
+	HINSTANCE32	hInstance;
+
+	DWORD		Flags;
+	LPSTR		lpstrFindWhat;
+	LPSTR		lpstrReplaceWith;
+	WORD		wFindWhatLen;
+	WORD 		wReplaceWithLen;
+	LPARAM 		lCustData;
+        WNDPROC32       lpfnHook;
+	LPCSTR 		lpTemplateName;
+	} FINDREPLACE32A, *LPFINDREPLACE32A;
+
+typedef struct {
+	DWORD		lStructSize;
+	HWND32		hwndOwner;
+	HINSTANCE32	hInstance;
+
+	DWORD		Flags;
+	LPWSTR		lpstrFindWhat;
+	LPWSTR		lpstrReplaceWith;
+	WORD		wFindWhatLen;
+	WORD 		wReplaceWithLen;
+	LPARAM 		lCustData;
+        WNDPROC32       lpfnHook;
+	LPCWSTR		lpTemplateName;
+	} FINDREPLACE32W, *LPFINDREPLACE32W;
+	
+DECL_WINELIB_TYPE_AW(FINDREPLACE);
+DECL_WINELIB_TYPE_AW(LPFINDREPLACE);
+	
 #define FR_DOWN                         0x00000001
 #define FR_WHOLEWORD                    0x00000002
 #define FR_MATCHCASE                    0x00000004
@@ -393,7 +425,10 @@ typedef DEVNAMES * LPDEVNAMES;
 
 BOOL16  WINAPI ChooseColor(LPCHOOSECOLOR lpChCol);
 DWORD   WINAPI CommDlgExtendedError(void);
-HWND16  WINAPI FindText( SEGPTR find);
+HWND16  WINAPI FindText16( SEGPTR find);
+HWND32  WINAPI FindText32A(LPFINDREPLACE32A lpFind);
+HWND32  WINAPI FindText32W(LPFINDREPLACE32W lpFind);
+#define FindText WINELIB_NAME_AW(FindText)
 INT16   WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf);
 INT16   WINAPI GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf);
 INT16   WINAPI GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf);
@@ -407,13 +442,22 @@ BOOL32  WINAPI GetSaveFileName32A(LPOPENFILENAME32A ofn);
 BOOL32  WINAPI GetSaveFileName32W(LPOPENFILENAME32W ofn);
 #define GetSaveFileName WINELIB_NAME_AW(GetSaveFileName)
 BOOL16  WINAPI PrintDlg( SEGPTR print);
-HWND16  WINAPI ReplaceText( SEGPTR find);
+HWND16  WINAPI ReplaceText16( SEGPTR find);
+HWND32  WINAPI ReplaceText32A( LPFINDREPLACE32A lpFind);
+HWND32  WINAPI ReplaceText32W( LPFINDREPLACE32W lpFind);
+#define ReplaceText WINELIB_NAME_AW(ReplaceText)
 BOOL16  WINAPI ChooseFont(LPCHOOSEFONT lpChFont);
 LRESULT WINAPI FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI ColorDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI FindTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI ReplaceTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI FindTextDlgProc32A(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam, LPARAM lParam);
+LRESULT WINAPI FindTextDlgProc32W(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam, LPARAM lParam);
+#define FindTextDlgProc WINELIB_NAME_AW(FindTextDlgProc)
+LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI ReplaceTextDlgProc32A(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam, LPARAM lParam);
+LRESULT WINAPI ReplaceTextDlgProc32W(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam, LPARAM lParam);
+#define ReplaceTextProc WINELIB_NAME_AW(ReplaceTextDlgProc)
 LRESULT WINAPI PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI FormatCharDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);

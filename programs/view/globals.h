@@ -1,4 +1,7 @@
 
+/* for SMALL_RECT */
+#include "wincon.h" 
+
 /*  Add global function prototypes here */
 
 BOOL InitApplication(HINSTANCE);
@@ -16,18 +19,7 @@ extern char      szAppName[];    /* The name of this application */
 extern char      szTitle[];      /* The title bar text */
 
 
-#ifdef WINELIB
-typedef struct
-{
-	DWORD	key WINE_PACKED;
-	HANDLE16	hmf WINE_PACKED;
-	RECT16	bbox WINE_PACKED;
-	WORD	inch WINE_PACKED;
-	DWORD	reserved WINE_PACKED;
-	WORD	checksum WINE_PACKED;
-} APMFILEHEADER WINE_PACKED;
-#else
-#pragma pack( 2 )
+#pragma pack(1)
 typedef struct
 {
 	DWORD		key;
@@ -37,7 +29,6 @@ typedef struct
 	DWORD		reserved;
 	WORD		checksum;
 } APMFILEHEADER;
-#endif
 
 #define APMHEADER_KEY	0x9AC6CDD7l
 

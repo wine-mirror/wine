@@ -324,34 +324,23 @@ OLESTATUS WINAPI StringFromCLSID32(
  *           StringFromGUID2 (OLE32.152)
  *
  * Converts a global unique identifier into a string of an API-
- * specified fixed format.
+ * specified fixed format. (The usual {.....} stuff.)
  *
- * mortene@pvv.org 980318
+ * RETURNS
+ *	The (UNICODE) string representation of the GUID in 'str'
+ *	The length of the resulting string, 0 if there was any problem.
  */
-OLESTATUS WINAPI
-StringFromGUID2(const REFGUID *id, LPOLESTR32 *str, INT32 cmax)
+INT32 WINAPI
+StringFromGUID2(REFGUID id, LPOLESTR32 str, INT32 cmax)
 {
-  int chars_in_string = strlen("[DDDDDDDD-WWWW-WWWW-WWWW-WWWWDDDDDDDD]")+1;
-  DWORD dwtmp[2];
-  WORD wtmp[4];
+  char		xguid[80];
 
-  if(cmax >= chars_in_string) {
-    dwtmp[0] = *(DWORD *)id;
-    wtmp[0] = *(WORD *)(id + sizeof(DWORD));
-    wtmp[1] = *(WORD *)(id + sizeof(DWORD) + sizeof(WORD));
-    wtmp[2] = *(WORD *)(id + sizeof(DWORD) + 2*sizeof(WORD));
-    wtmp[3] = *(WORD *)(id + sizeof(DWORD) + 3*sizeof(WORD));
-    dwtmp[1] = *(DWORD *)(id + sizeof(DWORD) + 4*sizeof(WORD));
-    sprintf(*(char **)str, "[%08lx-%04x-%04x-%04x-%04x%08lx]",
-	    dwtmp[0], wtmp[0], wtmp[1], wtmp[2], wtmp[3], dwtmp[1]);
-    TRACE(ole, "'%s'\n", *str);
-    return chars_in_string;
-  }
-  else {
-    WARN(ole, "Too little space in the string: need %d chars, got: %d\n",
-	 chars_in_string, cmax);
-    return 0;
-  }
+  if (WINE_StringFromCLSID(id,xguid))
+  	return 0;
+  if (strlen(xguid)>=cmax)
+  	return 0;
+  lstrcpyAtoW(str,xguid);
+  return strlen(xguid);
 }
 
 /***********************************************************************

@@ -34,7 +34,7 @@ QueryPathOfRegTypeLib(
 		WINE_StringFromCLSID(guid,xguid);
 	else
 		sprintf(xguid,"<guid 0x%08lx>",(DWORD)guid);
-	FIXME(ole,"(%s,%d,%d,0x%04x,%p),stub!\n",xguid,wMaj,wMin,lcid,path);
+	FIXME(ole,"(%s,%d,%d,0x%04lx,%p),stub!\n",xguid,wMaj,wMin,lcid,path);
 	return E_FAIL;
 }
 

@@ -129,15 +129,57 @@ debugstr_w (LPCWSTR s)
 /* This routine returns a nicely formated name of the resource res
    If the resource name is a string, it will return '<res-name>'
    If it is a number, it will return #<4-digit-hex-number> */
-LPSTR
-debugres (const void *res)
+LPSTR debugres_a( LPCSTR res )
 {
-  if (HIWORD((DWORD)res))
-    return debugstr_a((LPCSTR)res);
-  else{
     char resname[10];
+    if (HIWORD(res)) return debugstr_a(res);
     sprintf(resname, "#%04x", LOWORD(res));
     return debugstr_a (resname);
-  }
 }
 
+LPSTR debugres_w( LPCWSTR res )
+{
+    char resname[10];
+    if (HIWORD(res)) return debugstr_w(res);
+    sprintf(resname, "#%04x", LOWORD(res));
+    return debugstr_a (resname);
+}
+
+/* ---------------------------------------------------------------------- */
+
+void debug_dumpstr (LPCSTR s)
+{
+  fputc ('"', stderr);
+  while (*s)
+    {
+      switch (*s)
+	{
+	case '\\':
+	case '"':
+	  fputc ('\\', stderr);
+	  fputc (*s, stderr);
+	  break;
+	case '\n':
+	  fputc ('\\', stderr);
+	  fputc ('n', stderr);
+	  break;
+	case '\r':
+	  fputc ('\\', stderr);
+	  fputc ('r', stderr);
+	  break;
+	case '\t':
+	  fputc ('\\', stderr);
+	  fputc ('t', stderr);
+	  break;
+	default:
+	  if (*s<' ')
+	    printf ("\\0x%02x", *s);
+	  else
+	    fputc (*s, stderr);
+	}
+      s++;
+    }
+  fputc ('"', stderr);
+}
+
+/* ---------------------------------------------------------------------- */

@@ -72,7 +72,7 @@ type	win32
  65 stdcall DPtoLP(long ptr long) DPtoLP32
  66 stub DeleteColorSpace
  67 stdcall DeleteDC(long) DeleteDC32
- 68 stdcall DeleteEnhMetaFile(long) DeleteEnhMetaFile32
+ 68 stdcall DeleteEnhMetaFile(long) DeleteEnhMetaFile
  69 stdcall DeleteMetaFile(long) DeleteMetaFile32
  70 stdcall DeleteObject(long)	DeleteObject32
  71 stub DescribePixelFormat
@@ -182,7 +182,7 @@ type	win32
 175 stub GetEnhMetaFileBits
 176 stdcall GetEnhMetaFileDescriptionA(long long ptr) GetEnhMetaFileDescription32A
 177 stub GetEnhMetaFileDescriptionW
-178 stdcall GetEnhMetaFileHeader(long long ptr) GetEnhMetaFileHeader32
+178 stdcall GetEnhMetaFileHeader(long long ptr) GetEnhMetaFileHeader
 179 stub GetEnhMetaFilePaletteEntries
 180 stub GetEnhMetaFileW
 181 stub GetFontData
@@ -267,8 +267,8 @@ type	win32
 260 stdcall PatBlt(long long long long long long) PatBlt32
 261 stdcall PathToRegion(long) PathToRegion32
 262 stdcall Pie(long long long long long long long long long) Pie32
-263 stdcall PlayEnhMetaFile(long long ptr) PlayEnhMetaFile32
-264 stdcall PlayEnhMetaFileRecord(long ptr ptr long) PlayEnhMetaFileRecord32
+263 stdcall PlayEnhMetaFile(long long ptr) PlayEnhMetaFile
+264 stdcall PlayEnhMetaFileRecord(long ptr ptr long) PlayEnhMetaFileRecord
 265 stdcall PlayMetaFile(long long) PlayMetaFile32
 266 stdcall PlayMetaFileRecord(long ptr ptr long) PlayMetaFileRecord32
 267 stub PlgBlt

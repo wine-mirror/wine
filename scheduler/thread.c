@@ -38,6 +38,8 @@ const K32OBJ_OPS THREAD_Ops =
     THREAD_Destroy      /* destroy */
 };
 
+/* The pseudohandle used for the current thread, see GetCurrentThread */
+#define CURRENT_THREAD_PSEUDOHANDLE 0xfffffffe
 
 /* Is threading code initialized? */
 BOOL32 THREAD_InitDone = FALSE;
@@ -52,12 +54,13 @@ THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access )
 {
     THDB *thread;
 
-    if (handle == 0xfffffffe)  /* Self-thread handle */
+    if (handle == CURRENT_THREAD_PSEUDOHANDLE)  /* Self-thread handle */
     {
         thread = THREAD_Current();
         K32OBJ_IncCount( &thread->header );
     }
-    else thread = (THDB *)HANDLE_GetObjPtr( handle, K32OBJ_THREAD, access );
+    else thread = (THDB *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
+                                            K32OBJ_THREAD, access );
     return thread;
 }
 
@@ -130,7 +133,7 @@ void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread )
 /***********************************************************************
  *           THREAD_Create
  */
-THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
+THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
                      LPTHREAD_START_ROUTINE start_addr, LPVOID param )
 {
     DWORD old_prot;
@@ -143,7 +146,6 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     thdb->process         = pdb;
     thdb->teb.except      = (void *)-1;
     thdb->teb.htask16     = 0; /* FIXME */
-    thdb->teb.stack_sel   = 0; /* FIXME */
     thdb->teb.self        = &thdb->teb;
     thdb->teb.tls_ptr     = thdb->tls_array;
     thdb->teb.process     = pdb;
@@ -166,8 +168,9 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     	stack_size = 1024 * 1024;
     if (stack_size >= 16*1024*1024)
     	fprintf(stderr,"Warning:Thread stack size is %ld MB.\n",stack_size/1024/1024);
-    thdb->stack_base = VirtualAlloc( NULL, stack_size, MEM_COMMIT,
-                                     PAGE_EXECUTE_READWRITE );
+    thdb->stack_base = VirtualAlloc(NULL,
+                                    stack_size + (alloc_stack16 ? 0x10000 : 0),
+                                    MEM_COMMIT, PAGE_EXECUTE_READWRITE );
     if (!thdb->stack_base) goto error;
     /* Set a guard page at the bottom of the stack */
     VirtualProtect( thdb->stack_base, 1, PAGE_EXECUTE_READWRITE | PAGE_GUARD,
@@ -181,6 +184,17 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     thdb->teb_sel = SELECTOR_AllocBlock( &thdb->teb, 0x1000, SEGMENT_DATA,
                                          TRUE, FALSE );
     if (!thdb->teb_sel) goto error;
+
+    /* Allocate the 16-bit stack selector */
+
+    if (alloc_stack16)
+    {
+        thdb->teb.stack_sel = SELECTOR_AllocBlock( thdb->teb.stack_top,
+                                                   0x10000, SEGMENT_DATA,
+                                                   FALSE, FALSE );
+        if (!thdb->teb.stack_sel) goto error;
+        thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( thdb->teb.stack_sel, 0xfffc );
+    }
 
     /* Allocate the event */
 
@@ -204,6 +218,7 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
 
 error:
     if (thdb->event) K32OBJ_DecCount( thdb->event );
+    if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
     if (thdb->teb_sel) SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     if (thdb->stack_base) VirtualFree( thdb->stack_base, 0, MEM_RELEASE );
     HeapFree( SystemHeap, 0, thdb );
@@ -287,6 +302,7 @@ static void THREAD_Destroy( K32OBJ *ptr )
 #endif
     K32OBJ_DecCount( thdb->event );
     SELECTOR_FreeBlock( thdb->teb_sel, 1 );
+    if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
     HeapFree( SystemHeap, 0, thdb );
 
 }
@@ -295,14 +311,18 @@ static void THREAD_Destroy( K32OBJ *ptr )
 /***********************************************************************
  *           CreateThread   (KERNEL32.63)
  */
-HANDLE32 WINAPI CreateThread( LPSECURITY_ATTRIBUTES attribs, DWORD stack,
+HANDLE32 WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                               LPTHREAD_START_ROUTINE start, LPVOID param,
                               DWORD flags, LPDWORD id )
 {
     HANDLE32 handle;
-    THDB *thread = THREAD_Create( PROCESS_Current(), stack, start, param );
+    BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+
+    THDB *thread = THREAD_Create( PROCESS_Current(), stack,
+                                  TRUE, start, param );
     if (!thread) return INVALID_HANDLE_VALUE32;
-    handle = HANDLE_Alloc( &thread->header, THREAD_ALL_ACCESS, FALSE );
+    handle = HANDLE_Alloc( PROCESS_Current(), &thread->header,
+                           THREAD_ALL_ACCESS, inherit );
     if (handle == INVALID_HANDLE_VALUE32) goto error;
     if (SYSDEPS_SpawnThread( thread ) == -1) goto error;
     *id = THDB_TO_THREAD_ID( thread );
@@ -315,9 +335,13 @@ error:
 
 
 /***********************************************************************
- *           ExitThread   (KERNEL32.215)
+ * ExitThread [KERNEL32.215]  Ends a thread
+ *
+ * RETURNS
+ *    None
  */
-void WINAPI ExitThread( DWORD code )
+void WINAPI ExitThread(
+    DWORD code) /* [in] Exit code for this thread */
 {
     THDB *thdb = THREAD_Current();
     LONG count;
@@ -343,16 +367,22 @@ void WINAPI ExitThread( DWORD code )
 
 
 /***********************************************************************
- *           GetCurrentThread   (KERNEL32.200)
+ * GetCurrentThread [KERNEL32.200]  Gets pseudohandle for current thread
+ *
+ * RETURNS
+ *    Pseudohandle for the current thread
  */
 HANDLE32 WINAPI GetCurrentThread(void)
 {
-    return 0xFFFFFFFE;
+    return CURRENT_THREAD_PSEUDOHANDLE;
 }
 
 
 /***********************************************************************
- *           GetCurrentThreadId   (KERNEL32.201)
+ * GetCurrentThreadId [KERNEL32.201]  Returns thread identifier.
+ *
+ * RETURNS
+ *    Thread identifier of calling thread
  */
 DWORD WINAPI GetCurrentThreadId(void)
 {
@@ -361,7 +391,10 @@ DWORD WINAPI GetCurrentThreadId(void)
 
 
 /**********************************************************************
- *           GetLastError   (KERNEL.148) (KERNEL32.227)
+ * GetLastError [KERNEL.148] [KERNEL32.227]  Returns last-error code.
+ *
+ * RETURNS
+ *     Calling thread's last error code value.
  */
 DWORD WINAPI GetLastError(void)
 {
@@ -371,9 +404,13 @@ DWORD WINAPI GetLastError(void)
 
 
 /**********************************************************************
- *           SetLastError   (KERNEL.147) (KERNEL32.497)
+ * SetLastError [KERNEL.147] [KERNEL32.497]  Sets the last-error code.
+ *
+ * RETURNS
+ *    None.
  */
-void WINAPI SetLastError( DWORD error )
+void WINAPI SetLastError(
+    DWORD error) /* [in] Per-thread error code */
 {
     THDB *thread = THREAD_Current();
     /* This one must work before we have a thread (FIXME) */
@@ -382,11 +419,27 @@ void WINAPI SetLastError( DWORD error )
 
 
 /**********************************************************************
- *           SetLastErrorEx   (USER32.484)
+ * SetLastErrorEx [USER32.485]  Sets the last-error code.
+ *
+ * RETURNS
+ *    None.
  */
-void WINAPI SetLastErrorEx( DWORD error, DWORD type )
+void WINAPI SetLastErrorEx(
+    DWORD error, /* [in] Per-thread error code */
+    DWORD type)  /* [in] Error type */
 {
-    /* FIXME: what about 'type'? */
+    TRACE(thread, "(%08lx, %08lx)\n", error,type);
+    switch(type) {
+        case 0:
+            break;
+        case SLE_ERROR:
+        case SLE_MINORERROR:
+        case SLE_WARNING:
+            /* Fall through for now */
+        default:
+            FIXME(thread, "(error=%08lx, type=%08lx): Unhandled type\n", error,type);
+            break;
+    }
     SetLastError( error );
 }
 
@@ -416,14 +469,15 @@ DWORD THREAD_TlsAlloc(THDB *thread)
     return ret + i;
 }
 
+
 /**********************************************************************
- *           TlsAlloc   (KERNEL32.530)
+ * TlsAlloc [KERNEL32.530]  Allocates a TLS index.
  *
  * Allocates a thread local storage index
  *
  * RETURNS
- *	TLS Index
- *	0xFFFFFFFF: Failure
+ *    Success: TLS Index
+ *    Failure: 0xFFFFFFFF
  */
 DWORD WINAPI TlsAlloc(void)
 {
@@ -432,9 +486,16 @@ DWORD WINAPI TlsAlloc(void)
 
 
 /**********************************************************************
- *           TlsFree   (KERNEL32.531)
+ * TlsFree [KERNEL32.531]  Releases a TLS index.
+ *
+ * Releases a thread local storage index, making it available for reuse
+ * 
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI TlsFree( DWORD index )
+BOOL32 WINAPI TlsFree(
+    DWORD index) /* [in] TLS Index to free */
 {
     DWORD mask;
     THDB *thread = THREAD_Current();
@@ -462,14 +523,15 @@ BOOL32 WINAPI TlsFree( DWORD index )
 
 
 /**********************************************************************
- *           TlsGetValue   (KERNEL32.532)
+ * TlsGetValue [KERNEL32.532]  Gets value in a thread's TLS slot
+ *
  * RETURNS
- *	!0: Value stored in calling thread's TLS slot for index
- *	0: Check GetLastError() for error code
+ *    Success: Value stored in calling thread's TLS slot for index
+ *    Failure: 0 and GetLastError returns NO_ERROR
  */
 LPVOID WINAPI TlsGetValue(
-	      DWORD index /* TLS index to retrieve value for */
-) {
+    DWORD index) /* [in] TLS index to retrieve value for */
+{
     THDB *thread = THREAD_Current();
     if (index >= 64)
     {
@@ -482,15 +544,16 @@ LPVOID WINAPI TlsGetValue(
 
 
 /**********************************************************************
- *           TlsSetValue   (KERNEL32.533)
+ * TlsSetValue [KERNEL32.533]  Stores a value in the thread's TLS slot.
+ *
  * RETURNS
- *	TRUE: Successful
- *      FALSE: Failure
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL32 WINAPI TlsSetValue(
-	      DWORD index, /* TLS index to set value for */
-	      LPVOID value /* value to be stored */
-) {
+    DWORD index,  /* [in] TLS index to set value for */
+    LPVOID value) /* [in] Value to be stored */
+{
     THDB *thread = THREAD_Current();
     if (index >= 64)
     {
@@ -503,9 +566,15 @@ BOOL32 WINAPI TlsSetValue(
 
 
 /***********************************************************************
- *           GetThreadContext   (KERNEL32.294)
+ * GetThreadContext [KERNEL32.294]  Retrieves context of thread.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI GetThreadContext( HANDLE32 handle, CONTEXT *context )
+BOOL32 WINAPI GetThreadContext(
+    HANDLE32 handle,  /* [in]  Handle to thread with context */
+    CONTEXT *context) /* [out] Address of context structure */
 {
     THDB *thread = THREAD_GetPtr( handle, THREAD_GET_CONTEXT );
     if (!thread) return FALSE;
@@ -516,15 +585,20 @@ BOOL32 WINAPI GetThreadContext( HANDLE32 handle, CONTEXT *context )
 
 
 /**********************************************************************
- *           GetThreadPriority   (KERNEL32.296)
+ * GetThreadPriority [KERNEL32.296]  Returns priority for thread.
+ *
+ * RETURNS
+ *    Success: Thread's priority level.
+ *    Failure: THREAD_PRIORITY_ERROR_RETURN
  */
-INT32 WINAPI GetThreadPriority(HANDLE32 hthread)
+INT32 WINAPI GetThreadPriority(
+    HANDLE32 hthread) /* [in] Handle to thread */
 {
     THDB *thread;
     INT32 ret;
     
     if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION )))
-        return 0;
+        return THREAD_PRIORITY_ERROR_RETURN;
     ret = thread->delta_priority;
     K32OBJ_DecCount( &thread->header );
     return ret;
@@ -532,9 +606,15 @@ INT32 WINAPI GetThreadPriority(HANDLE32 hthread)
 
 
 /**********************************************************************
- *           SetThreadPriority   (KERNEL32.514)
+ * SetThreadPriority [KERNEL32.514]  Sets priority for thread.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI SetThreadPriority(HANDLE32 hthread,INT32 priority)
+BOOL32 WINAPI SetThreadPriority(
+    HANDLE32 hthread, /* [in] Handle to thread */
+    INT32 priority)   /* [in] Thread priority level */
 {
     THDB *thread;
     
@@ -545,19 +625,34 @@ BOOL32 WINAPI SetThreadPriority(HANDLE32 hthread,INT32 priority)
     return TRUE;
 }
 
+
 /**********************************************************************
- *           TerminateThread   (KERNEL32)
+ * TerminateThread [KERNEL32.???]  Terminates a thread
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI TerminateThread(HANDLE32 handle,DWORD exitcode)
+BOOL32 WINAPI TerminateThread(
+    HANDLE32 handle, /* [in] Handle to thread */
+    DWORD exitcode)  /* [in] Exit code for thread */
 {
-    FIXME(thread,"(0x%08x,%ld): STUB!\n",handle,exitcode);
+    FIXME(thread,"(0x%08x,%ld): stub\n",handle,exitcode);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return TRUE;
 }
 
+
 /**********************************************************************
- *           GetExitCodeThread   (KERNEL32)
+ * GetExitCodeThread [KERNEL32.???]  Gets termination status of thread.
+ * 
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-BOOL32 WINAPI GetExitCodeThread(HANDLE32 hthread,LPDWORD exitcode)
+BOOL32 WINAPI GetExitCodeThread(
+    HANDLE32 hthread, /* [in]  Handle to thread */
+    LPDWORD exitcode) /* [out] Address to receive termination status */
 {
     THDB *thread;
     
@@ -568,34 +663,90 @@ BOOL32 WINAPI GetExitCodeThread(HANDLE32 hthread,LPDWORD exitcode)
     return TRUE;
 }
 
-/**********************************************************************
- *           ResumeThread   (KERNEL32)
- */
-BOOL32 WINAPI ResumeThread( HANDLE32 handle )
-{
-    FIXME(thread,"(0x%08x): STUB!\n",handle);
-    return TRUE;
-}
 
 /**********************************************************************
- *           SuspendThread   (KERNEL32)
+ * ResumeThread [KERNEL32.587]  Resumes a thread.
+ *
+ * Decrements a thread's suspend count.  When count is zero, the
+ * execution of the thread is resumed.
+ *
+ * RETURNS
+ *    Success: Previous suspend count
+ *    Failure: 0xFFFFFFFF
  */
-BOOL32 WINAPI SuspendThread( HANDLE32 handle )
+DWORD WINAPI ResumeThread(
+    HANDLE32 handle) /* [in] Indentifies thread to restart */
 {
-    FIXME(thread,"(0x%08x): STUB!\n",handle);
-    return TRUE;
+    FIXME(thread,"(0x%08x): stub\n",handle);
+    return 0xFFFFFFFF;
 }
 
+
 /**********************************************************************
- *           GetThreadTimes   (KERNEL32)
+ * SuspendThread [KERNEL32.681]  Suspends a thread.
+ *
+ * RETURNS
+ *    Success: Previous suspend count
+ *    Failure: 0xFFFFFFFF
+ */
+DWORD WINAPI SuspendThread(
+    HANDLE32 handle) /* [in] Handle to the thread */
+{
+    FIXME(thread,"(0x%08x): stub\n",handle);
+    return 0xFFFFFFFF;
+}
+
+
+/**********************************************************************
+ * GetThreadTimes [KERNEL32.???]  Obtains timing information.
+ *
+ * NOTES
+ *    What are the fields where these values are stored?
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL32 WINAPI GetThreadTimes( 
-	HANDLE32 thread, 
-	LPFILETIME creationtime,
-	LPFILETIME exittime,
-	LPFILETIME kerneltime,
-	LPFILETIME usertime
-) {
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
+    HANDLE32 thread,         /* [in]  Specifies the thread of interest */
+    LPFILETIME creationtime, /* [out] When the thread was created */
+    LPFILETIME exittime,     /* [out] When the thread was destroyed */
+    LPFILETIME kerneltime,   /* [out] Time thread spent in kernel mode */
+    LPFILETIME usertime)     /* [out] Time thread spent in user mode */
+{
+    FIXME(thread,"(0x%08x): stub\n",thread);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
 }
+
+
+/**********************************************************************
+ * AttachThreadInput [KERNEL32.8]  Attaches input of 1 thread to other
+ *
+ * Attaches the input processing mechanism of one thread to that of
+ * another thread.
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
+ */
+BOOL32 WINAPI AttachThreadInput( 
+    DWORD idAttach,   /* [in] Thread to attach */
+    DWORD idAttachTo, /* [in] Thread to attach to */
+    BOOL32 fAttach)   /* [in] Attach or detach */
+{
+    BOOL32 ret;
+
+    FIXME(thread, "(0x%08lx,0x%08lx,%d): stub\n",idAttach,idAttachTo,fAttach);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    if (fAttach) {
+        /* Attach threads */
+        ret = FALSE;
+    }
+    else {
+        /* Detach threads */
+        ret = FALSE;
+    };
+    return ret;
+}
+

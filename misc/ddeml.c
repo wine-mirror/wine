@@ -12,6 +12,9 @@
 #include "debug.h"
 
 
+static LONG     DDE_current_handle;
+
+
 /*****************************************************************
  *            DdeInitialize16   (DDEML.2)
  */
@@ -174,7 +177,8 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
 HSZ WINAPI DdeCreateStringHandle32A( DWORD idInst, LPCSTR psz, INT32 codepage )
 {
     FIXME( ddeml, "empty stub\n" );
-    return 0;
+    DDE_current_handle++;
+    return DDE_current_handle;
 }
 
 
@@ -184,7 +188,8 @@ HSZ WINAPI DdeCreateStringHandle32A( DWORD idInst, LPCSTR psz, INT32 codepage )
 HSZ WINAPI DdeCreateStringHandle32W( DWORD idInst, LPCWSTR psz, INT32 codepage)
 {
     FIXME( ddeml, "empty stub\n" );
-    return 0;
+    DDE_current_handle++;
+    return DDE_current_handle;
 }
 
 

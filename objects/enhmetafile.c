@@ -16,7 +16,7 @@
  *
  *
  */
-HENHMETAFILE32 GetEnhMetaFile32A( 
+HENHMETAFILE32 WINAPI GetEnhMetaFile32A( 
 	     LPCSTR lpszMetaFile  /* filename of enhanced metafile */
     )
 {
@@ -39,13 +39,13 @@ HENHMETAFILE32 GetEnhMetaFile32A(
 }
 
 /*****************************************************************************
- *        GetEnhMetaFileHeader32  (GDI32.178)
+ *        GetEnhMetaFileHeader  (GDI32.178)
  *
  *  If _buf_ is NULL, returns the size of buffer required.
  *  Otherwise, copy up to _bufsize_ bytes of enhanced metafile header into 
  *  _buf.
  */
-UINT32 GetEnhMetaFileHeader32( 
+UINT32 WINAPI GetEnhMetaFileHeader( 
        HENHMETAFILE32 hmf, /* enhanced metafile */
        UINT32 bufsize,     /* size of buffer */
        LPENHMETAHEADER buf /* buffer */ 
@@ -60,29 +60,53 @@ UINT32 GetEnhMetaFileHeader32(
 
 /*****************************************************************************
  *          GetEnhMetaFileDescription32A  (GDI32.176)
- *
- *  Copies the description string of an enhanced metafile into a buffer 
- *  _buf_.
- *
- * FIXME
- *   doesn't work. description is wide, with substructure
  */
-UINT32 GetEnhMetaFileDescription32A( 
+UINT32 WINAPI GetEnhMetaFileDescription32A( 
        HENHMETAFILE32 hmf, /* enhanced metafile */
        UINT32 size, /* size of buf */ 
        LPSTR buf /* buffer to receive description */
     )
 {
   LPENHMETAHEADER p = GlobalLock32(hmf);
-  
+  INT32 first  = lstrlen32W( (void *)p+p->offDescription);
+
   if (!buf || !size) return p->nDescription;
+
   lstrcpynWtoA(buf, (void *)p+p->offDescription, size);
-  /*  memmove(buf, (void *)p+p->offDescription, MIN(size,p->nDescription));*/
+  buf += first +1;
+  lstrcpynWtoA(buf, (void *)p+p->offDescription+2*(first+1), size-first-1);
+
+  /*  memmove(buf, (void *)p+p->offDescription, MIN(size,p->nDescription)); */
+  GlobalUnlock32(hmf);
   return MIN(size,p->nDescription);
 }
 
 /*****************************************************************************
- *           PlayEnhMetaFileRecord32  (GDI32.264)
+ *          GetEnhMetaFileDescription32W  (GDI32.xxx)
+ *
+ *  Copies the description string of an enhanced metafile into a buffer 
+ *  _buf_.
+ *
+ *  If _buf_ is NULL, returns size of _buf_ required. Otherwise, returns
+ *  number of characters copied.
+ */
+UINT32 WINAPI GetEnhMetaFileDescription32W( 
+       HENHMETAFILE32 hmf, /* enhanced metafile */
+       UINT32 size, /* size of buf */ 
+       LPWSTR buf /* buffer to receive description */
+    )
+{
+  LPENHMETAHEADER p = GlobalLock32(hmf);
+
+  if (!buf || !size) return p->nDescription;
+
+  memmove(buf, (void *)p+p->offDescription, MIN(size,p->nDescription));
+  GlobalUnlock32(hmf);
+  return MIN(size,p->nDescription);
+}
+
+/*****************************************************************************
+ *           PlayEnhMetaFileRecord  (GDI32.264)
  *
  *  Render a single enhanced metafile record in the device context hdc.
  *
@@ -91,7 +115,7 @@ UINT32 GetEnhMetaFileDescription32A(
  *  BUGS
  *    Many unimplemented records.
  */
-BOOL32 PlayEnhMetaFileRecord32( 
+BOOL32 WINAPI PlayEnhMetaFileRecord( 
      HDC32 hdc, 
      /* device context in which to render EMF record */
      LPHANDLETABLE32 handletable, 
@@ -345,7 +369,7 @@ BOOL32 PlayEnhMetaFileRecord32(
  * BUGS
  *   Ignores rect.
  */
-BOOL32 EnumEnhMetaFile32( 
+BOOL32 WINAPI EnumEnhMetaFile32( 
      HDC32 hdc, /* device context to pass to _EnhMetaFunc_ */
      HENHMETAFILE32 hmf, /* EMF to walk */
      ENHMFENUMPROC32 callback, /* callback function */ 
@@ -370,7 +394,7 @@ BOOL32 EnumEnhMetaFile32(
 
 
 /**************************************************************************
- *    PlayEnhMetaFile32  (GDI32.263)
+ *    PlayEnhMetaFile  (GDI32.263)
  *
  *    Renders an enhanced metafile into a specified rectangle *lpRect
  *    in device context hdc.
@@ -379,7 +403,7 @@ BOOL32 EnumEnhMetaFile32(
  *    Almost entirely unimplemented
  *
  */
-BOOL32 PlayEnhMetaFile32( 
+BOOL32 WINAPI PlayEnhMetaFile( 
        HDC32 hdc, /* DC to render into */
        HENHMETAFILE32 hmf, /* metafile to render */
        const RECT32 *lpRect  /* rectangle to place metafile inside */
@@ -391,7 +415,7 @@ BOOL32 PlayEnhMetaFile32(
 				    sizeof(HANDLETABLE32)*count);
   ht->objectHandle[0] = hmf;
   while (1) {
-    PlayEnhMetaFileRecord32(hdc, ht, p, count);
+    PlayEnhMetaFileRecord(hdc, ht, p, count);
     if (p->iType == EMR_EOF) break;
     p = (void *) p + p->nSize; /* casted so that arithmetic is in bytes */
   }
@@ -399,16 +423,16 @@ BOOL32 PlayEnhMetaFile32(
 }
 
 /*****************************************************************************
- *  DeleteEnhMetaFile32 (GDI32.68)
+ *  DeleteEnhMetaFile (GDI32.68)
  */
-BOOL32 DeleteEnhMetaFile32(HENHMETAFILE32 hmf) {
+BOOL32 WINAPI DeleteEnhMetaFile(HENHMETAFILE32 hmf) {
   return !GlobalFree32(hmf);
 }
 
 /*****************************************************************************
  *  CopyEnhMetaFileA (GDI32.21)
  */
-HENHMETAFILE32 CopyEnhMetaFile32A(HENHMETAFILE32 hmf, LPCSTR file) {
+HENHMETAFILE32 WINAPI CopyEnhMetaFile32A(HENHMETAFILE32 hmf, LPCSTR file) {
   return 0;
 }
 

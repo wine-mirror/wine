@@ -1872,9 +1872,9 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
 	else 
 	{
 	    fprintf( outfile, "\tpushw $0\n" );
-	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_long+2\n" );
+	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_eax+2\n" );
 	    fprintf( outfile, "\tpushw $0\n" );
-	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_long\n" );
+	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_eax\n" );
 	}
 
         /* Push the called routine address */
@@ -1957,6 +1957,7 @@ static void BuildRet16Func( FILE *outfile )
 {
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Ret_word\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Ret_long\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Ret_eax\n" );
 
     fprintf( outfile, PREFIX "CALLTO16_Ret_word:\n" );
     fprintf( outfile, "\txorl %%edx,%%edx\n" );
@@ -1967,6 +1968,7 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\tshll $16,%%edx\n" );
     fprintf( outfile, "\tmovw %%ax,%%dx\n" );
     fprintf( outfile, "\tmovl %%edx,%%eax\n" );
+    fprintf( outfile, PREFIX "CALLTO16_Ret_eax:\n" );
 
     /* Restore 32-bit segment registers */
 
@@ -2007,9 +2009,11 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\t.data\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_word\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_long\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_eax\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Current_fs\n" );
     fprintf( outfile, PREFIX "CALLTO16_RetAddr_word:\t.long 0\n" );
     fprintf( outfile, PREFIX "CALLTO16_RetAddr_long:\t.long 0\n" );
+    fprintf( outfile, PREFIX "CALLTO16_RetAddr_eax:\t.long 0\n" );
     fprintf( outfile, PREFIX "CALLTO16_Current_fs:\t.long 0\n" );
     fprintf( outfile, "\t.text\n" );
 }
@@ -2095,12 +2099,15 @@ static void BuildCallTo32LargeStack( FILE *outfile )
  *
  * Stack layout:
  *   ...     ...
- * (esp+208) ret addr (or relay addr when debugging(relay) is on)
- * (esp+204) entry point
+ * (esp+336) ret addr (or relay addr when debugging(relay) is on)
+ * (esp+332) entry point
+ * (esp+204) buffer area to allow stack frame manipulation
  * (esp+0)   CONTEXT struct
  */
 static void BuildCallFrom32Regs( FILE *outfile )
 {
+#define STACK_SPACE 128
+
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
@@ -2110,6 +2117,10 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, "\t.globl " PREFIX "CALL32_Regs\n" );
     fprintf( outfile, PREFIX "CALL32_Regs:\n" );
 
+    /* Allocate some buffer space on the stack */
+   
+    fprintf( outfile, "\tleal -%d(%%esp), %%esp\n", STACK_SPACE );
+    
     /* Build the context structure */
 
     fprintf( outfile, "\tpushw $0\n" );
@@ -2118,7 +2129,7 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, "\tpushfl\n" );
     fprintf( outfile, "\tpushw $0\n" );
     fprintf( outfile, "\t.byte 0x66\n\tpushl %%cs\n" );
-    fprintf( outfile, "\tpushl 20(%%esp)\n" );  /* %eip at time of call */
+    fprintf( outfile, "\tpushl %d(%%esp)\n", 16+STACK_SPACE+4 );  /* %eip at time of call */
     fprintf( outfile, "\tpushl %%ebp\n" );
 
     fprintf( outfile, "\tpushl %%eax\n" );
@@ -2145,7 +2156,7 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, "\tfsave %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
 
     fprintf( outfile, "\tleal %d(%%esp),%%eax\n",
-             sizeof(CONTEXT) + 4 ); /* %esp at time of call */
+             sizeof(CONTEXT) + STACK_SPACE + 4 ); /* %esp at time of call */
     fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Esp) );
 
     fprintf( outfile, "\tcall " PREFIX "RELAY_CallFrom32Regs\n" );
@@ -2184,6 +2195,8 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, "\tpopfl\n" );
     fprintf( outfile, "\tpopl %%esp\n" );
     fprintf( outfile, "\tret\n" );
+
+#undef STACK_SPACE
 }
 
 

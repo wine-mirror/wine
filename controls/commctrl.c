@@ -114,7 +114,7 @@ HWND16 WINAPI CreateStatusWindow16( INT16 style, LPCSTR text, HWND16 parent,
 HWND32 WINAPI CreateStatusWindow32W( INT32 style, LPCWSTR text, HWND32 parent,
                                      UINT32 wid )
 {
-    return CreateWindow32W(STATUSCLASSNAME32W, text, style, 
+    return CreateWindow32W((LPCWSTR)STATUSCLASSNAME32W, text, style, 
 			   CW_USEDEFAULT32, CW_USEDEFAULT32,
 			   CW_USEDEFAULT32, CW_USEDEFAULT32, 
 			   parent, wid, 0, 0);
@@ -156,7 +156,7 @@ void WINAPI InitCommonControls(void)
         old_name = class32->lpszClassName;
         strcpy( name, (char *)class32->lpszClassName );
         class32->lpszClassName = name;
-        class32->hCursor = LoadCursor32A( 0, (LPCSTR)IDC_ARROW );
+        class32->hCursor = LoadCursor32A( 0, IDC_ARROW32A );
         RegisterClass32A( class32 );
         class32->lpszClassName = old_name;	
     }

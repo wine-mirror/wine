@@ -5,8 +5,8 @@
  */
 
 #include <math.h>
-#if defined(__EMX__)
-#include <float.h>
+#ifdef HAVE_FLOAT_H
+# include <float.h>
 #endif
 #include <stdlib.h>
 #include "ts_xlib.h"
@@ -92,17 +92,32 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
     yend   = YLPTODP( dc, yend );
     if ((left == right) || (top == bottom)) return FALSE;
 
+    if (left > right) { tmp=left; left=right; right=tmp; }
+    if (top > bottom) { tmp=top; top=bottom; bottom=tmp; } 
     xcenter = (right + left) / 2;
     ycenter = (bottom + top) / 2;
     start_angle = atan2( (double)(ycenter-ystart)*(right-left),
 			 (double)(xstart-xcenter)*(bottom-top) );
     end_angle   = atan2( (double)(ycenter-yend)*(right-left),
 			 (double)(xend-xcenter)*(bottom-top) );
+    if ((xstart==xend)&&(ystart==yend))
+      { /* A lazy program delivers xstart=xend=ystart=yend=0) */
+	start_angle = 0;
+	end_angle = 2* PI;
+      }
+    else /* notorious cases */
+      if ((start_angle == PI)&&( end_angle <0))
+	start_angle = - PI;
+    else
+      if ((end_angle == PI)&&( start_angle <0))
+	end_angle = - PI;
     istart_angle = (INT32)(start_angle * 180 * 64 / PI);
     idiff_angle  = (INT32)((end_angle - start_angle) * 180 * 64 / PI );
-    if (idiff_angle <= 0) idiff_angle += 360 * 64;
-    if (left > right) { tmp=left; left=right; right=tmp; }
-    if (top > bottom) { tmp=top; top=bottom; bottom=tmp; }
+    if (idiff_angle < 0) 
+      {
+	istart_angle+= idiff_angle;
+	idiff_angle = abs(idiff_angle);
+      }
 
       /* Fill arc with brush if Chord() or Pie() */
 
@@ -227,12 +242,14 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 
     if ((left == right) || (top == bottom))
     {
+#if 0
 	if (DC_SetupGCForPen( dc ))
 	    TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
 		  dc->w.DCOrgX + left,
 		  dc->w.DCOrgY + top,
 		  dc->w.DCOrgX + right,
 		  dc->w.DCOrgY + bottom);
+#endif
 	return TRUE;
     }
     width = dc->u.x.pen.width;

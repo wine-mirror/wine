@@ -3,6 +3,8 @@
  *
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -16,13 +18,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__svr4__) || defined(_SCO_DS) || defined(__EMX__)
-#if !defined(_SCO_DS) && !defined(__EMX__)
-#include <sys/syscall.h>
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
 #endif
-#include <sys/param.h>
+#ifdef HAVE_SYSCALL_H
+# include <syscall.h>
 #else
-#include <syscall.h>
+# ifdef HAVE_SYS_SYSCALL_H
+#  include <sys/syscall.h>
+# endif
 #endif
 
 #include "miscemu.h"
@@ -154,9 +158,7 @@ BOOL32 SIGNAL_Init(void)
 {
     extern void SYNC_SetupSignals(void);
 
-    sigemptyset(&async_signal_set);
-
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__svr4__) || defined(_SCO_DS)
+#ifdef HAVE_SIGALTSTACK
     struct sigaltstack ss;
     ss.ss_sp    = SIGNAL_Stack;
     ss.ss_size  = sizeof(SIGNAL_Stack);
@@ -166,8 +168,10 @@ BOOL32 SIGNAL_Init(void)
         perror("sigstack");
         return FALSE;
     }
-#endif  /* __FreeBSD__ || __NetBSD__ || __OpenBSD__ || __svr4__ || _SCO_DS */
+#endif  /* HAVE_SIGALTSTACK */
     
+    sigemptyset(&async_signal_set);
+
     SIGNAL_SetHandler( SIGCHLD, (void (*)())SIGNAL_child, 1);
 #ifdef CONFIG_IPC
     sigaddset(&async_signal_set, SIGUSR2);

@@ -4,6 +4,7 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -20,18 +21,9 @@
 #include "options.h"
 #include "debug.h"
 
-#define MAX_PATH_ELEMENTS 20
+static DOS_FULL_NAME DIR_Windows;
+static DOS_FULL_NAME DIR_System;
 
-static char *DIR_WindowsDosDir;
-static char *DIR_WindowsUnixDir;
-static char *DIR_SystemDosDir;
-static char *DIR_SystemUnixDir;
-static char *DIR_TempDosDir;
-static char *DIR_TempUnixDir;
-
-static char *DIR_DosPath[MAX_PATH_ELEMENTS];  /* Path in DOS format */
-static char *DIR_UnixPath[MAX_PATH_ELEMENTS]; /* Path in Unix format */
-static int DIR_PathElements = 0;
 
 /***********************************************************************
  *           DIR_GetPath
@@ -39,69 +31,20 @@ static int DIR_PathElements = 0;
  * Get a path name from the wine.ini file and make sure it is valid.
  */
 static int DIR_GetPath( const char *keyname, const char *defval,
-                        char **dos_path, char **unix_path )
+                        DOS_FULL_NAME *full_name )
 {
     char path[MAX_PATHNAME_LEN];
-    DOS_FULL_NAME full_name;
-
     BY_HANDLE_FILE_INFORMATION info;
 
     PROFILE_GetWineIniString( "wine", keyname, defval, path, sizeof(path) );
-    if (!DOSFS_GetFullName( path, TRUE, &full_name ) ||
-        !FILE_Stat( full_name.long_name, &info ) ||
+    if (!DOSFS_GetFullName( path, TRUE, full_name ) ||
+        !FILE_Stat( full_name->long_name, &info ) ||
         !(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
     {
-        fprintf(stderr, "Invalid path '%s' for %s directory\n", path, keyname);
+        MSG("Invalid path '%s' for %s directory\n", path, keyname);
         return 0;
     }
-    *unix_path = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
-    *dos_path  = HEAP_strdupA( SystemHeap, 0, full_name.short_name );
     return 1;
-}
-
-
-/***********************************************************************
- *           DIR_ParseWindowsPath
- */
-void DIR_ParseWindowsPath( char *path )
-{
-    char *p;
-    DOS_FULL_NAME full_name;
-    BY_HANDLE_FILE_INFORMATION info;
-    int i;
-
-    for ( ; path && *path; path = p)
-    {
-        p = strchr( path, ';' );
-        if (p) while (*p == ';') *p++ = '\0';
-
-        if (DIR_PathElements >= MAX_PATH_ELEMENTS)
-        {
-            fprintf( stderr, "Warning: path has more than %d elements.\n",
-                     MAX_PATH_ELEMENTS );
-            break;
-        }
-        if (!DOSFS_GetFullName( path, TRUE, &full_name ) ||
-            !FILE_Stat( full_name.long_name, &info ) ||
-            !(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-        {
-            fprintf(stderr,"Warning: invalid dir '%s' in path, deleting it.\n",
-                    path );
-            continue;
-        }
-        DIR_UnixPath[DIR_PathElements] = HEAP_strdupA( SystemHeap, 0,
-                                                       full_name.long_name );
-        DIR_DosPath[DIR_PathElements]  = HEAP_strdupA( SystemHeap, 0,
-                                                       full_name.short_name );
-        DIR_PathElements++;
-    }
-
-    if (TRACE_ON(dosfs))
-        for (i = 0; i < DIR_PathElements; i++)
-        {
-            TRACE(dosfs, "Path[%d]: %s = %s\n",
-                           i, DIR_DosPath[i], DIR_UnixPath[i] );
-        }
 }
 
 
@@ -110,7 +53,8 @@ void DIR_ParseWindowsPath( char *path )
  */
 int DIR_Init(void)
 {
-    char path[MAX_PATHNAME_LEN], *env_p;
+    char path[MAX_PATHNAME_LEN];
+    DOS_FULL_NAME tmp_dir;
     int drive;
     const char *cwd;
 
@@ -122,8 +66,8 @@ int DIR_Init(void)
     cwd = path;
     if ((drive = DRIVE_FindDriveRoot( &cwd )) == -1)
     {
-        fprintf( stderr, "Warning: could not find DOS drive for cwd %s; starting in windows directory.\n",
-                 cwd );
+        MSG("Warning: could not find DOS drive for cwd %s; "
+	    "starting in windows directory.\n", cwd );
     }
     else
     {
@@ -131,50 +75,47 @@ int DIR_Init(void)
         DRIVE_Chdir( drive, cwd );
     }
 
-    if (!(DIR_GetPath( "windows", "c:\\windows",
-                       &DIR_WindowsDosDir, &DIR_WindowsUnixDir ))) return 0;
-    if (!(DIR_GetPath( "system", "c:\\windows\\system",
-                       &DIR_SystemDosDir, &DIR_SystemUnixDir ))) return 0;
-    if (!(DIR_GetPath( "temp", "c:\\windows",
-                       &DIR_TempDosDir, &DIR_TempUnixDir ))) return 0;
-    if (-1==access(DIR_TempUnixDir,W_OK)) {
+    if (!(DIR_GetPath( "windows", "c:\\windows", &DIR_Windows )))
+        return 0;
+    if (!(DIR_GetPath( "system", "c:\\windows\\system", &DIR_System )))
+        return 0;
+    if (!(DIR_GetPath( "temp", "c:\\windows", &tmp_dir )))
+        return 0;
+    if (-1 == access( tmp_dir.long_name, W_OK ))
+    {
     	if (errno==EACCES)
-		fprintf(stderr,"Warning: The Temporary Directory (as specified in wine.conf) is NOT writeable. Please check your configuration.\n");
+		MSG("Warning: The Temporary Directory (as specified in wine.conf) is NOT writeable. Please check your configuration.\n");
 	else
-		fprintf(stderr,"Warning: Access to Temporary Directory failed (%s).\n",strerror(errno));
+		MSG("Warning: Access to Temporary Directory failed (%s).\n",
+		    strerror(errno));
     }
-   
+
     if (drive == -1)
     {
-        drive = DIR_WindowsDosDir[0] - 'A';
+        drive = DIR_Windows.drive;
         DRIVE_SetCurrentDrive( drive );
-        DRIVE_Chdir( drive, DIR_WindowsDosDir + 2 );
+        DRIVE_Chdir( drive, DIR_Windows.short_name + 2 );
     }
 
     PROFILE_GetWineIniString("wine", "path", "c:\\windows;c:\\windows\\system",
                              path, sizeof(path) );
-    DIR_ParseWindowsPath( path );
 
-    TRACE(dosfs, "WindowsDir = %s\n", DIR_WindowsDosDir);
-    TRACE(dosfs, "SystemDir  = %s\n", DIR_SystemDosDir);
-    TRACE(dosfs, "TempDir    = %s\n", DIR_TempDosDir);
+    /* Set the environment variables */
+
+    SetEnvironmentVariable32A( "PATH", path );
+    SetEnvironmentVariable32A( "TEMP", tmp_dir.short_name );
+    SetEnvironmentVariable32A( "windir", DIR_Windows.short_name );
+    SetEnvironmentVariable32A( "winsysdir", DIR_System.short_name );
+
+    TRACE(dosfs, "WindowsDir = %s (%s)\n",
+          DIR_Windows.short_name, DIR_Windows.long_name );
+    TRACE(dosfs, "SystemDir  = %s (%s)\n",
+          DIR_System.short_name, DIR_System.long_name );
+    TRACE(dosfs, "TempDir    = %s (%s)\n",
+          tmp_dir.short_name, tmp_dir.long_name );
+    TRACE(dosfs, "Path       = %s\n", path );
     TRACE(dosfs, "Cwd        = %c:\\%s\n",
-		 'A' + drive, DRIVE_GetDosCwd( drive ) );
-
-    /* Put the temp and Windows and system directories into the environment */
-
-    env_p = HEAP_xalloc( SystemHeap, 0, strlen(DIR_TempDosDir) + 6 );
-    strcpy( env_p, "TEMP=" );
-    strcpy( env_p + 5, DIR_TempDosDir );
-    putenv( env_p );
-    env_p = HEAP_xalloc( SystemHeap, 0, strlen(DIR_WindowsDosDir) + 8 );
-    strcpy( env_p, "windir=" );
-    strcpy( env_p + 7, DIR_WindowsDosDir );
-    putenv( env_p );
-    env_p = HEAP_xalloc( SystemHeap, 0, strlen(DIR_SystemDosDir) + 11 );
-    strcpy( env_p, "winsysdir=" );
-    strcpy( env_p + 10, DIR_SystemDosDir );
-    putenv( env_p );
+          'A' + drive, DRIVE_GetDosCwd( drive ) );
 
     return 1;
 }
@@ -185,8 +126,11 @@ int DIR_Init(void)
  */
 UINT32 WINAPI GetTempPath32A( UINT32 count, LPSTR path )
 {
-    if (path) lstrcpyn32A( path, DIR_TempDosDir, count );
-    return strlen( DIR_TempDosDir );
+    UINT32 ret;
+    if (!(ret = GetEnvironmentVariable32A( "TMP", path, count )))
+        if (!(ret = GetEnvironmentVariable32A( "TEMP", path, count )))
+            ret = GetCurrentDirectory32A( count, path );
+    return ret;
 }
 
 
@@ -195,18 +139,13 @@ UINT32 WINAPI GetTempPath32A( UINT32 count, LPSTR path )
  */
 UINT32 WINAPI GetTempPath32W( UINT32 count, LPWSTR path )
 {
-    if (path) lstrcpynAtoW( path, DIR_TempDosDir, count );
-    return strlen( DIR_TempDosDir );
-}
-
-
-/***********************************************************************
- *           DIR_GetTempUnixDir
- */
-UINT32 DIR_GetTempUnixDir( LPSTR path, UINT32 count )
-{
-    if (path) lstrcpyn32A( path, DIR_TempUnixDir, count );
-    return strlen( DIR_TempUnixDir );
+    static const WCHAR tmp[]  = { 'T', 'M', 'P', 0 };
+    static const WCHAR temp[] = { 'T', 'E', 'M', 'P', 0 };
+    UINT32 ret;
+    if (!(ret = GetEnvironmentVariable32W( tmp, path, count )))
+        if (!(ret = GetEnvironmentVariable32W( temp, path, count )))
+            ret = GetCurrentDirectory32W( count, path );
+    return ret;
 }
 
 
@@ -215,8 +154,8 @@ UINT32 DIR_GetTempUnixDir( LPSTR path, UINT32 count )
  */
 UINT32 DIR_GetWindowsUnixDir( LPSTR path, UINT32 count )
 {
-    if (path) lstrcpyn32A( path, DIR_WindowsUnixDir, count );
-    return strlen( DIR_WindowsUnixDir );
+    if (path) lstrcpyn32A( path, DIR_Windows.long_name, count );
+    return strlen( DIR_Windows.long_name );
 }
 
 
@@ -225,19 +164,8 @@ UINT32 DIR_GetWindowsUnixDir( LPSTR path, UINT32 count )
  */
 UINT32 DIR_GetSystemUnixDir( LPSTR path, UINT32 count )
 {
-    if (path) lstrcpyn32A( path, DIR_SystemUnixDir, count );
-    return strlen( DIR_SystemUnixDir );
-}
-
-
-/***********************************************************************
- *           DIR_GetDosPath
- */
-UINT32 DIR_GetDosPath( INT32 element, LPSTR path, UINT32 count )
-{
-    if ((element < 0) || (element >= DIR_PathElements)) return 0;
-    if (path) lstrcpyn32A( path, DIR_DosPath[element], count );
-    return strlen( DIR_DosPath[element] );
+    if (path) lstrcpyn32A( path, DIR_System.long_name, count );
+    return strlen( DIR_System.long_name );
 }
 
 
@@ -246,8 +174,10 @@ UINT32 DIR_GetDosPath( INT32 element, LPSTR path, UINT32 count )
  */
 BYTE WINAPI GetTempDrive( BYTE ignored )
 {
+    char buffer[2];
     /* FIXME: apparently Windows does something with the ignored byte */
-    return DIR_TempDosDir[0];
+    if (!GetTempPath32A( sizeof(buffer), buffer )) buffer[0] = 'C';
+    return toupper(buffer[0]) - 'A';
 }
 
 
@@ -279,8 +209,8 @@ UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
  */
 UINT32 WINAPI GetWindowsDirectory32A( LPSTR path, UINT32 count )
 {
-    if (path) lstrcpyn32A( path, DIR_WindowsDosDir, count );
-    return strlen( DIR_WindowsDosDir );
+    if (path) lstrcpyn32A( path, DIR_Windows.short_name, count );
+    return strlen( DIR_Windows.short_name );
 }
 
 
@@ -289,8 +219,8 @@ UINT32 WINAPI GetWindowsDirectory32A( LPSTR path, UINT32 count )
  */
 UINT32 WINAPI GetWindowsDirectory32W( LPWSTR path, UINT32 count )
 {
-    if (path) lstrcpynAtoW( path, DIR_WindowsDosDir, count );
-    return strlen( DIR_WindowsDosDir );
+    if (path) lstrcpynAtoW( path, DIR_Windows.short_name, count );
+    return strlen( DIR_Windows.short_name );
 }
 
 
@@ -308,8 +238,8 @@ UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
  */
 UINT32 WINAPI GetSystemDirectory32A( LPSTR path, UINT32 count )
 {
-    if (path) lstrcpyn32A( path, DIR_SystemDosDir, count );
-    return strlen( DIR_SystemDosDir );
+    if (path) lstrcpyn32A( path, DIR_System.short_name, count );
+    return strlen( DIR_System.short_name );
 }
 
 
@@ -318,8 +248,8 @@ UINT32 WINAPI GetSystemDirectory32A( LPSTR path, UINT32 count )
  */
 UINT32 WINAPI GetSystemDirectory32W( LPWSTR path, UINT32 count )
 {
-    if (path) lstrcpynAtoW( path, DIR_SystemDosDir, count );
-    return strlen( DIR_SystemDosDir );
+    if (path) lstrcpynAtoW( path, DIR_System.short_name, count );
+    return strlen( DIR_System.short_name );
 }
 
 
@@ -443,11 +373,11 @@ BOOL32 WINAPI RemoveDirectory32W( LPCWSTR path )
  *
  * Helper function for DIR_SearchPath.
  */
-static BOOL32 DIR_TryPath( LPCSTR unix_dir, LPCSTR dos_dir, LPCSTR name,
+static BOOL32 DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
                            DOS_FULL_NAME *full_name )
 {
-    LPSTR p_l = full_name->long_name + strlen(unix_dir) + 1;
-    LPSTR p_s = full_name->short_name + strlen(dos_dir) + 1;
+    LPSTR p_l = full_name->long_name + strlen(dir->long_name) + 1;
+    LPSTR p_s = full_name->short_name + strlen(dir->short_name) + 1;
 
     if ((p_s >= full_name->short_name + sizeof(full_name->short_name) - 14) ||
         (p_l >= full_name->long_name + sizeof(full_name->long_name) - 1))
@@ -455,15 +385,53 @@ static BOOL32 DIR_TryPath( LPCSTR unix_dir, LPCSTR dos_dir, LPCSTR name,
         DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return FALSE;
     }
-    if (!DOSFS_FindUnixName( unix_dir, name, p_l,
+    if (!DOSFS_FindUnixName( dir->long_name, name, p_l,
                    sizeof(full_name->long_name) - (p_l - full_name->long_name),
-                   p_s, DRIVE_GetFlags( dos_dir[0] - 'A' ) ))
+                   p_s, DRIVE_GetFlags( dir->drive ) ))
         return FALSE;
-    strcpy( full_name->long_name, unix_dir );
+    strcpy( full_name->long_name, dir->long_name );
     p_l[-1] = '/';
-    strcpy( full_name->short_name, dos_dir );
+    strcpy( full_name->short_name, dir->short_name );
     p_s[-1] = '\\';
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           DIR_TryEnvironmentPath
+ *
+ * Helper function for DIR_SearchPath.
+ */
+static BOOL32 DIR_TryEnvironmentPath( LPCSTR name, DOS_FULL_NAME *full_name )
+{
+    LPSTR path, next, buffer;
+    BOOL32 ret = FALSE;
+    INT32 len = strlen(name);
+    DWORD size = GetEnvironmentVariable32A( "PATH", NULL, 0 );
+
+    if (!size) return FALSE;
+    if (!(path = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
+    if (!GetEnvironmentVariable32A( "PATH", path, size )) goto done;
+    next = path;
+    while (!ret && next)
+    {
+        LPSTR cur = next;
+        while (*cur == ';') cur++;
+        if (!*cur) break;
+        next = strchr( cur, ';' );
+        if (next) *next++ = '\0';
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, strlen(cur) + len + 2)))
+            goto done;
+        strcpy( buffer, cur );
+        strcat( buffer, "\\" );
+        strcat( buffer, name );
+        ret = DOSFS_GetFullName( buffer, TRUE, full_name );
+        HeapFree( GetProcessHeap(), 0, buffer );
+    }
+
+done:
+    HeapFree( GetProcessHeap(), 0, path );
+    return ret;
 }
 
 
@@ -501,7 +469,6 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 {
     DWORD len;
     LPCSTR p;
-    int i;
     LPSTR tmp = NULL;
     BOOL32 ret = TRUE;
 
@@ -558,12 +525,12 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     /* Try the Windows directory */
 
-    if (DIR_TryPath( DIR_WindowsUnixDir, DIR_WindowsDosDir, name, full_name ))
+    if (DIR_TryPath( &DIR_Windows, name, full_name ))
         goto done;
 
     /* Try the Windows system directory */
 
-    if (DIR_TryPath( DIR_SystemUnixDir, DIR_SystemDosDir, name, full_name ))
+    if (DIR_TryPath( &DIR_System, name, full_name ))
         goto done;
 
     /* Try the path of the current executable (for Win16 search order) */
@@ -572,13 +539,8 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     /* Try all directories in path */
 
-    for (i = 0; i < DIR_PathElements; i++)
-    {
-        if (DIR_TryPath( DIR_UnixPath[i], DIR_DosPath[i], name, full_name ))
-            goto done;
-    }
+    ret = DIR_TryEnvironmentPath( name, full_name );
 
-    ret = FALSE;
 done:
     if (tmp) HeapFree( GetProcessHeap(), 0, tmp );
     return ret;

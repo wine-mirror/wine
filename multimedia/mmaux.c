@@ -1,5 +1,5 @@
 /*
- * Sample AUXILARY Wine Driver for Linux
+ * Sample AUXILARY Wine Driver
  *
  * Copyright 1994 Martin Ayotte
  */
@@ -17,10 +17,11 @@
 #include "mmsystem.h"
 #include "debug.h"
 
-#ifdef linux
-#include <linux/soundcard.h>
-#elif __FreeBSD__
-#include <machine/soundcard.h>
+#ifdef HAVE_SYS_SOUNDCARD_H
+# include <sys/soundcard.h>
+#endif
+#ifdef HAVE_MACHINE_SOUNDCARD_H
+# include <machine/soundcard.h>
 #endif
 
 #define MIXER_DEV "/dev/mixer"
@@ -42,7 +43,7 @@ static int	NumDev = 6;
  */
 static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS16 lpCaps, DWORD dwSize)
 {
-#ifdef linux
+#ifdef HAVE_OSS
 	int 	mixer,volume;
 
 	TRACE(mmaux,"(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
@@ -113,7 +114,7 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS16 lpCaps, DWORD dwSize)
  */
 static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
-#ifdef linux
+#ifdef HAVE_OSS
 	int 	mixer,volume,left,right,cmd;
 
 	TRACE(mmaux,"(%04X, %p);\n", wDevID, lpdwVol);
@@ -171,7 +172,7 @@ static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
  */
 static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 {
-#ifdef linux
+#ifdef HAVE_OSS
 	int 	mixer;
 	int		volume;
 	int		cmd;

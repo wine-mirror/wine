@@ -950,6 +950,9 @@ HMETAFILE16 WINAPI SetMetaFileBitsBetter( HMETAFILE16 hMeta )
 
 /******************************************************************
  *         SetMetaFileBitsEx    (GDI32.323)
+ * 
+ *  Create a metafile from raw data. No checking of the data is performed.
+ *  Use _GetMetaFileBitsEx_ to get raw data from a metafile.
  */
 HMETAFILE32 WINAPI SetMetaFileBitsEx( 
      UINT32 size, /* size of metafile, in bytes */

@@ -16,24 +16,26 @@
 #include "mmsystem.h"
 #include "debug.h"
 
-#ifdef linux
-#include <linux/soundcard.h>
-#include <linux/cdrom.h>
-#elif __FreeBSD__
-#include <machine/soundcard.h>
-#include <sys/cdio.h>
+#ifdef HAVE_LINUX_CDROM_H
+# include <linux/cdrom.h>
+#endif
+#ifdef HAVE_MACHINE_SOUNDCARD_H
+# include <machine/soundcard.h>
+#endif
+#ifdef HAVE_SYS_CDIO_H
+# include <sys/cdio.h>
 #endif
 
 #ifdef __FreeBSD__
-#define CDAUDIO_DEV "/dev/rcd0c"
+# define CDAUDIO_DEV "/dev/rcd0c"
 #else
-#define CDAUDIO_DEV "/dev/cdrom"
+# define CDAUDIO_DEV "/dev/cdrom"
 #endif
 
 #ifdef SOUND_VERSION
-#define IOCTL(a,b,c)		ioctl(a,b,&c)
+# define IOCTL(a,b,c)		ioctl(a,b,&c)
 #else
-#define IOCTL(a,b,c)		(c = ioctl(a,b,c) )
+# define IOCTL(a,b,c)		(c = ioctl(a,b,c) )
 #endif
 
 #define MAX_CDAUDIODRV 		(1)

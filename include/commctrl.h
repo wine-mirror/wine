@@ -24,6 +24,13 @@ void WINAPI InitCommonControls(void);
 #define CCS_NOMOVEX         (CCS_VERT|CCS_NOMOVEY)
 
 
+/* common control shared messages */
+
+#define CCM_FIRST           0x2000
+
+#define CCM_SETBKCOLOR      (CCM_FIRST+1)     // lParam = bkColor
+
+
 /* StatusWindow */
 
 #define STATUSCLASSNAME16     "msctls_statusbar"
@@ -93,6 +100,9 @@ typedef struct tagUDACCEL
 #define UDM_GETACCEL       (WM_USER+108)
 #define UDM_SETBASE        (WM_USER+109)
 #define UDM_GETBASE        (WM_USER+110)
+#define UDM_SETRANGE32     (WM_USER+111)
+#define UDM_GETRANGE32     (WM_USER+112)
+
 
 /* Progress Bar */
 
@@ -107,6 +117,21 @@ typedef struct tagUDACCEL
 #define PBM_DELTAPOS        (WM_USER+3)
 #define PBM_SETSTEP         (WM_USER+4)
 #define PBM_STEPIT          (WM_USER+5)
+#define PBM_SETRANGE32      (WM_USER+6)
+#define PBM_GETRANGE        (WM_USER+7)
+#define PBM_GETPOS          (WM_USER+8)
+#define PBM_SETBARCOLOR     (WM_USER+9)
+#define PBM_SETBKCOLOR      CCM_SETBKCOLOR
+
+#define PBS_SMOOTH          0x01
+#define PBS_VERTICAL        0x04
+
+typedef struct
+{
+  INT32 iLow;
+  INT32 iHigh;
+} PBRANGE, *PPBRANGE;
+
  
 /* Functions prototypes */
 

@@ -105,7 +105,7 @@ static BOOL32 UPDOWN_OffsetVal(WND *wndPtr, int delta)
 }
 
 /***********************************************************************
- *           UPDOWN_GetArrawRect
+ *           UPDOWN_GetArrowRect
  * wndPtr   - pointer to the up-down wnd
  * rect     - will hold the rectangle
  * incr     - TRUE  get the "increment" rect (up or right)
@@ -758,6 +758,22 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
       TRACE(updown, "UpDown Ctrl new range(%d to %d), hwnd=%04x\n", 
 		     infoPtr->MinVal, infoPtr->MaxVal, hwnd);
       break;                             
+
+    case UDM_GETRANGE32:
+      if (wParam)
+	*(LPINT32)wParam = infoPtr->MinVal;
+      if (lParam)
+	*(LPINT32)lParam = infoPtr->MaxVal;
+      break;
+
+    case UDM_SETRANGE32:
+      infoPtr->MinVal = (INT32)wParam;
+      infoPtr->MaxVal = (INT32)lParam;
+      if (infoPtr->MaxVal <= infoPtr->MinVal)
+	infoPtr->MaxVal = infoPtr->MinVal + 1;
+      TRACE(updown, "UpDown Ctrl new range(%d to %d), hwnd=%04x\n", 
+		     infoPtr->MinVal, infoPtr->MaxVal, hwnd);
+      break;
 
     default: 
       if (message >= WM_USER) 

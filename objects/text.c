@@ -285,7 +285,7 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
 
 
 /***********************************************************************
- *           DrawText32A    (USER32.163)
+ *           DrawText32A    (USER32.164)
  */
 INT32 WINAPI DrawText32A( HDC32 hdc, LPCSTR str, INT32 count,
                           LPRECT32 rect, UINT32 flags )
@@ -303,7 +303,7 @@ INT32 WINAPI DrawText32A( HDC32 hdc, LPCSTR str, INT32 count,
 
 
 /***********************************************************************
- *           DrawText32W    (USER32.166)
+ *           DrawText32W    (USER32.167)
  */
 INT32 WINAPI DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
                           LPRECT32 rect, UINT32 flags )
@@ -315,7 +315,7 @@ INT32 WINAPI DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
 }
 
 /***********************************************************************
- *           DrawTextEx32A    (USER32.164)
+ *           DrawTextEx32A    (USER32.165)
  */
 INT32 DrawTextEx32A( HDC32 hdc, LPCSTR str, INT32 count,
                      LPRECT32 rect, UINT32 flags, LPDRAWTEXTPARAMS dtp )
@@ -326,7 +326,7 @@ INT32 DrawTextEx32A( HDC32 hdc, LPCSTR str, INT32 count,
 }
 
 /***********************************************************************
- *           DrawTextEx32W    (USER32.165)
+ *           DrawTextEx32W    (USER32.166)
  */
 INT32 DrawTextEx32W( HDC32 hdc, LPCWSTR str, INT32 count,
                      LPRECT32 rect, UINT32 flags, LPDRAWTEXTPARAMS dtp )
@@ -530,7 +530,7 @@ BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
 
 
 /***********************************************************************
- *           GrayString32A   (USER32.314)
+ *           GrayString32A   (USER32.315)
  */
 BOOL32 WINAPI GrayString32A( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
                              LPARAM lParam, INT32 cch, INT32 x, INT32 y,
@@ -541,7 +541,7 @@ BOOL32 WINAPI GrayString32A( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
 
 
 /***********************************************************************
- *           GrayString32W   (USER32.315)
+ *           GrayString32W   (USER32.316)
  */
 BOOL32 WINAPI GrayString32W( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
                              LPARAM lParam, INT32 cch, INT32 x, INT32 y,
@@ -640,7 +640,7 @@ LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
 
 
 /***********************************************************************
- *           TabbedTextOut32A    (USER32.541)
+ *           TabbedTextOut32A    (USER32.542)
  */
 LONG WINAPI TabbedTextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR lpstr,
                               INT32 count, INT32 cTabStops,
@@ -654,7 +654,7 @@ LONG WINAPI TabbedTextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR lpstr,
 
 
 /***********************************************************************
- *           TabbedTextOut32W    (USER32.542)
+ *           TabbedTextOut32W    (USER32.543)
  */
 LONG WINAPI TabbedTextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str,
                               INT32 count, INT32 cTabStops,
@@ -684,7 +684,7 @@ DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
 
 
 /***********************************************************************
- *           GetTabbedTextExtent32A    (USER32.292)
+ *           GetTabbedTextExtent32A    (USER32.293)
  */
 DWORD WINAPI GetTabbedTextExtent32A( HDC32 hdc, LPCSTR lpstr, INT32 count, 
                                      INT32 cTabStops, const INT32 *lpTabPos )
@@ -697,7 +697,7 @@ DWORD WINAPI GetTabbedTextExtent32A( HDC32 hdc, LPCSTR lpstr, INT32 count,
 
 
 /***********************************************************************
- *           GetTabbedTextExtent32W    (USER32.293)
+ *           GetTabbedTextExtent32W    (USER32.294)
  */
 DWORD WINAPI GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count, 
                                      INT32 cTabStops, const INT32 *lpTabPos )
@@ -711,25 +711,47 @@ DWORD WINAPI GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count,
 }
 
 /***********************************************************************
- *           GetTextCharset    (GDI32.226) (GDI.612)
+ * GetTextCharset32 [GDI32.226]  Gets character set for font in DC
+ *
+ * NOTES
+ *    Should it return a UINT32 instead of an INT32?
+ *
+ * RETURNS
+ *    Success: Character set identifier
+ *    Failure: DEFAULT_CHARSET
  */
-INT32 WINAPI GetTextCharset32(HDC32 hdc)
+INT32 WINAPI GetTextCharset32(
+    HDC32 hdc) /* [in] Handle to device context */
 {
-    FIXME(text,"(0x%x): stub\n",hdc);
-    return DEFAULT_CHARSET; 
+    /* MSDN docs say this is equivalent */
+    return GetTextCharsetInfo(hdc, NULL, 0);
 }
 
+/***********************************************************************
+ * GetTextCharset16 [GDI.612]
+ */
 INT16 WINAPI GetTextCharset16(HDC16 hdc)
 {
     return GetTextCharset32(hdc);
 }
 
 /***********************************************************************
- *           GetTextCharsetInfo    (GDI32.381)
+ * GetTextCharsetInfo [GDI32.381]  Gets character set for font
+ *
+ * NOTES
+ *    Should csi be an LPFONTSIGNATURE instead of an LPCHARSETINFO?
+ *    Should it return a UINT32 instead of an INT32?
+ *
+ * RETURNS
+ *    Success: Character set identifier
+ *    Failure: DEFAULT_CHARSET
  */
-INT32 WINAPI GetTextCharsetInfo(HDC32 hdc,LPCHARSETINFO csi,DWORD flags)
+INT32 WINAPI GetTextCharsetInfo(
+    HDC32 hdc,         /* [in]  Handle to device context */
+    LPCHARSETINFO csi, /* [out] Pointer to struct to receive data */
+    DWORD flags)       /* [in]  Reserved - must be 0 */
 {
-    FIXME(text,"(0x%x,%p,%08lx): stub!\n",hdc,csi,flags);
+    FIXME(text,"(0x%x,%p,%08lx): stub\n",hdc,csi,flags);
     if (csi) {
 	csi->ciCharset = DEFAULT_CHARSET;
 	csi->ciACP = GetACP();

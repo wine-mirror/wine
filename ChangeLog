@@ -1,4 +1,218 @@
 ----------------------------------------------------------------------
+Sun Apr 12 12:22:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [files/drive.c]
+	Fixed "no free space" problem with partition sizes between 1 and 2 GB
+	(cluster_sectors may not exceed 0x40).
+
+	* [windows/msgbox.c] [if1632/user.spec] [include/windows.h]
+	Implemented MessageBoxIndirect16, corrected MSGBOXPARAMS16.
+
+	* [loader/task.c]
+	DOS environment strings may never exceed 127 chars
+	-> truncate Unix environment strings if necessary.
+
+Sun Apr 12 02:51:44 1998  Dimitrie O. Paun  <dimi@mail.cs.toronto.edu>
+
+	* [files/*.c]
+	All fprintf statements were converted to appropriate debug
+	messages.
+
+	* [tools/find_debug_channels]
+	Updated comments at the beginning of the file.
+
+Sat Apr 11 15:27:21 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [loader/module.c] [loader/task.c] [scheduler/process.c]
+	Moved some code around to prepare the ground for CreateProcess().
+
+	* [memory/environ.c] [loader/task.c]
+	Moved Win32 environment strings functions to environ.c.
+	Unified Win16 and Win32 environment management.
+
+	* [scheduler/handle.c] [scheduler/k32obj.c] [scheduler/*.c]
+	Implemented handle inheritance and DuplicateHandle().
+
+	* [scheduler/thread.c]
+	Create a 16-bit stack for all threads.
+
+	* [windows/dialog.c]
+	Implemented DIALOGEX resource format.
+
+Fri Apr 10 20:21:51 1998  Marcus Meissner <marcus@mud.de>
+
+	* [configure.in][include/acconfig.h][*/*][multimedia/*]
+	Cleaned up the OSS detection stuff, added some more checks for
+	headerfiles/functions.
+	Removed a lot of OS specific #ifdefs.
+	Lots of dependend multimedia cleanups.
+
+	* [loader/pe_image.c]
+	Enhanced comment, added missing reference count increase.
+
+	* [ole/compobj.c]
+	Replaced broken StringFromGUID2 by working one.
+
+	* [misc/winsock.c]
+	SO_LINGER uses unsigned 16 bit in Win16 and Win32, but unsigned
+	int (32bit) for UNIX.
+
+	* [memory/global.c]
+	Allow realloc for lockcount 1 too.
+
+Fri Apr 10 15:27:34 1998  Morten Welinder  <terra@diku.dk>
+
+	* [graphics/x11drv/text.c]
+	Handle control characters in trace.  Ignore terminating newline.
+
+	* [multimedia/init.c]
+	(MULTIMEDIA_Init): Correct allocations.
+
+	* [tools/examine-relay]
+ 	Tidy up.
+
+	* [windows/syscolor.c]
+	Change highlight colour from lightblue to lightgray.  This
+	looks correct for menus.
+
+Fri Apr 10 01:49:58 1998  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [configure.in] [Make.rules.in]
+	Add check for c2man before using it.
+
+Fri Apr 10 02:59:21 1998  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [DEVELOPERS-HINTS]
+	Simple description of adding API calls.
+
+	* [include/wintypes.h] [include/windows.h]
+	Get rid of Winelib16, avoid declaring some illegal functions in
+	Winelib, add prototypes for some enhanced metafile functions, fix
+	GetTextExtentPoint32 declarations.
+
+	* [relay32/gdi32.spec] [objects/enhmetafile.c]
+	Cosmetic and functional improvements.
+
+	* [include/wincon.h] [programs/view/*]
+	Fixes, improved compatibility with native compilers.
+
+Thu Apr  9 15:48:49 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+	* [win32/kernel32.c]
+	Implemented FT_Thunk / FT_Prolog / FT_Exit / FT_PrologPrime.
+	Fixed Common32ThkLS thunk function.
+
+	* [tools/build.c] [relay32/relay386.c] [if1632/relay.c]
+	Changed relay code to allow register functions to modify stack layout.
+
+	* [memory/selector.c]
+	Implemented AllocMappedBuffer / FreeMappedBuffer.
+
+	* [relay32/kernel32.spec] [if1632/kernel.spec] [win32/ordinals.c]
+	Added names for undocumented functions.
+
+	* [loader/module.c]
+	Bugfix: LoadLibrary16 should *not* silently load 32-bit DLL.
+
+Thu Apr  9 03:54:58 1998  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [windows/keyboard.c]
+	Fix an erroneous test in TranslateAccelerator{16,32} for the end
+	of the accelerator table.
+
+Thu Apr  8 20:36:28 1998  Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de> 
+
+	* [misc/crtdll.c]
+	Implement getenv.
+
+	* [misc/commdlg.c]
+	Make Get[Save/Open]FileName work in most situations.
+
+	* [misc/lstr.c]
+	Use wvsprintf32A instead of vsprintf in FormatMessage32X
+
+	* [misc/version]
+	Make NT3.50 a recognised version
+
+	* [graphics/x11drv/graphics.c]
+	Change the algorithme to draw arcs
+
+	* [loader/resource.c]
+	Return an empty buffer in LoadString32A if no resource found.
+
+	* [win32/code_page.c]
+	Try harder to get the right size in MultiByteToWideChar.
+
+	* [win32/process.c]
+	Call WinExec32 for CreateProcess32A.
+
+	* [windows/user.c]
+	Install default Int0 Handler in InitApp().
+
+Thu Apr  8 19:29:48 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [misc/imagelist.c]
+	Preliminary fix for drawing selected images.
+	Various improvements.
+
+	* [controls/progress.c][include/progress.c][include/commctrl.h]
+	Added progress bar messages and styles for IE4.01 (dll version 4.72)
+	compatibility.
+	Fixed led size problem.
+
+	* [controls/updown.c][include/commctrl.h]
+	Added UDM_GETRANGE32 and UDM_SETRANGE32.
+
+	* [objects/oembitmaps.c][include/windows.h][include/bitmaps/*]
+	Added Win95 icons and fixed Win95 cursor and restore button bug.
+	Now they should be visible. Sorry!!!
+
+	* [relay32/comctl32.spec]
+	Added most missing function names.
+
+Tue Apr  6 18:48:36 1998  Matthew Becker <mbecker@glasscity.net>
+
+	* [objects/font.c] [if1632/gdi.spec]
+	GetOutlineTextMetrics: stub
+
+	* [objects/text.c]
+	GetTextCharset should just call GetTextCharsetInfo.
+
+	* [misc/mpr.c] [relay32/mpr.spec]
+	WNetCachePassword: stub
+
+	* [scheduler/thread.c] [relay32/user32.spec]
+	AttachThreadInput: stub
+	Updated documentation.
+
+	* [objects/palette.c]
+	Updated documentation.
+
+Tue Mar 31 17:06:30 1998  James Juran <jrj120@psu.edu>
+
+	* [*/*.c]
+	Finished fixing USER32 ordinal numbers in function documentation.
+
+Mon Mar 30 20:27:38 1998  Morten Welinder  <terra@diku.dk>
+
+	* [misc/debugstr.c] [include/debugstr.h]
+	Moved _dumpstr from relay32/relay386.c.  Improved control
+	character handling.
+
+	* [msdos/int21.c]
+	Implement 215E00 -- get machine name.
+
+	* [windows/winpos.c]
+	SetWindowPos32: Make an extra sync when mapping managed
+	windows.  This makes sure the reconfigure event has been
+	handled.  See Mshearts' what's-your-name window.
+
+Mon Mar 30 01:13:50 1998  Alexander V. Lukyanov <lav@long.yar.ru>
+
+	* [Makefile.in]
+	Install includes from TOPSRCDIR.
+
+----------------------------------------------------------------------
 Sun Mar 29 15:18:57 1998  Uwe Bonnes <elektron.ikp.physik.tu-darmstadt.de>
 
 	* [msdos/int21.c]

@@ -18,6 +18,7 @@
 #include "heap.h"
 #include "module.h"
 #include "neexe.h"
+#include "pe_image.h"
 #include "process.h"
 #include "thread.h"
 #include "resource.h"
@@ -27,8 +28,6 @@
 #include "toolhelp.h"
 #include "debug.h"
 #include "callback.h"
-
-extern HINSTANCE16 PE_LoadModule( HFILE32 hf, OFSTRUCT *ofs, LOADPARAMS* params );
 
 extern BOOL32 THREAD_InitDone;
 
@@ -375,8 +374,10 @@ HINSTANCE16 MODULE_GetInstance( HMODULE32 hModule )
 
 /***********************************************************************
  *           MODULE_CreateInstance
+ *
+ * If lib_only is TRUE, handle the module like a library even if it is a .EXE
  */
-HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, LOADPARAMS *params )
+HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, BOOL32 lib_only )
 {
     SEGTABLEENTRY *pSegment;
     NE_MODULE *pModule;
@@ -393,7 +394,7 @@ HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, LOADPARAMS *params )
     if (hPrevInstance)
     {
         if (pModule->flags & NE_FFLAGS_LIBMODULE) return hPrevInstance;
-        if (params == (LOADPARAMS*)-1) return hPrevInstance;
+        if (lib_only) return hPrevInstance;
     }
 
     minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
@@ -533,6 +534,7 @@ static HMODULE32 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
       fprintf(stderr, "Sorry, this is an OS/2 linear executable (LX) file !\n");
       return (HMODULE32)12;
     }
+
     /* We now have a valid NE header */
 
     size = sizeof(NE_MODULE) +
@@ -929,10 +931,10 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
         extern LRESULT ColorDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
         extern LRESULT FileOpenDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
         extern LRESULT FileSaveDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT FindTextDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT FindTextDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
         extern LRESULT PrintDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
         extern LRESULT PrintSetupDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT ReplaceTextDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT ReplaceTextDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
 
         if (!strcmp(name,"ColorDlgProc"))
             return (FARPROC16)ColorDlgProc;
@@ -941,13 +943,13 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
         if (!strcmp(name,"FileSaveDlgProc"))
             return (FARPROC16)FileSaveDlgProc;
         if (!strcmp(name,"FindTextDlgProc"))
-            return (FARPROC16)FindTextDlgProc;
+            return (FARPROC16)FindTextDlgProc16;
         if (!strcmp(name,"PrintDlgProc"))
             return (FARPROC16)PrintDlgProc;
         if (!strcmp(name,"PrintSetupDlgProc"))
             return (FARPROC16)PrintSetupDlgProc;
         if (!strcmp(name,"ReplaceTextDlgProc"))
-            return (FARPROC16)ReplaceTextDlgProc;
+            return (FARPROC16)ReplaceTextDlgProc16;
         fprintf(stderr,"warning: No mapping for %s(), add one in library/miscstubs.c\n",name);
         assert( FALSE );
         return NULL;
@@ -1135,14 +1137,18 @@ BOOL16 MODULE_FreeModule( HMODULE32 hModule, TDB* pTaskContext )
 /**********************************************************************
  *	    MODULE_Load
  *
- * Implementation of LoadModule()
+ * Implementation of LoadModule().
+ *
+ * cmd_line must contain the whole command-line, including argv[0] (and
+ * without a preceding length byte).
+ * If cmd_line is NULL, the module is loaded as a library even if it is a .exe
  */
-HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
+HINSTANCE16 MODULE_Load( LPCSTR name, UINT16 uFlags,
+                         LPCSTR cmd_line, LPCSTR env, UINT32 show_cmd )
 {
     HMODULE32 hModule;
     HINSTANCE16 hInstance, hPrevInstance;
     NE_MODULE *pModule;
-    LOADPARAMS *params = (LOADPARAMS *)paramBlock;
     OFSTRUCT ofs;
     HFILE32 hFile;
 
@@ -1152,7 +1158,7 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
         if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) return hModule;
         pModule = (NE_MODULE *)GlobalLock16( hModule );
         hPrevInstance = 0;
-        hInstance = MODULE_CreateInstance( hModule, params );
+        hInstance = MODULE_CreateInstance( hModule, (cmd_line == NULL) );
     }
     else
     {
@@ -1180,9 +1186,10 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
             hModule = MODULE_LoadExeHeader( hFile, &ofs );
             if (hModule < 32)
             {
-                if (hModule == 21)
-                    hModule = PE_LoadModule( hFile, &ofs, paramBlock );
-                else _lclose32( hFile );
+                if ((hModule == 21) && cmd_line)
+                    hModule = PE_LoadModule( hFile, &ofs, cmd_line,
+                                             env, show_cmd );
+                _lclose32( hFile );
 
                 if (hModule < 32)
                     fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
@@ -1197,7 +1204,7 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
 
             MODULE_CreateSegments( hModule );
             hPrevInstance = 0;
-            hInstance = MODULE_CreateInstance(hModule,(LOADPARAMS*)paramBlock);
+            hInstance = MODULE_CreateInstance( hModule, (cmd_line == NULL) );
 
             /* Load the referenced DLLs */
 
@@ -1228,7 +1235,7 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
         {
             pModule = MODULE_GetPtr( hModule );
             hPrevInstance = MODULE_GetInstance( hModule );
-            hInstance = MODULE_CreateInstance( hModule, params );
+            hInstance = MODULE_CreateInstance( hModule, (cmd_line == NULL) );
             if (hInstance != hPrevInstance)  /* not a library */
                 NE_LoadSegment( pModule, pModule->dgroup );
             pModule->count++;
@@ -1237,25 +1244,15 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
 
     /* Create a task for this instance */
 
-    if (!(pModule->flags & NE_FFLAGS_LIBMODULE) && (paramBlock != (LPVOID)-1))
+    if (cmd_line && !(pModule->flags & NE_FFLAGS_LIBMODULE))
     {
-	HTASK16 hTask;
-        WORD	showcmd;
+        PDB32 *pdb;
 
 	pModule->flags |= NE_FFLAGS_GUI;
 
-	/* PowerPoint passes NULL as showCmd */
-	if (params->showCmd)
-		showcmd = *((WORD *)PTR_SEG_TO_LIN(params->showCmd)+1);
-	else
-		showcmd = 0; /* FIXME: correct */
-
-        hTask = TASK_CreateTask( hModule, hInstance, hPrevInstance,
-                                 params->hEnvironment,
-                                (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
-                                 showcmd );
-
-	if( hTask && TASK_GetNextTask(hTask)) Yield16();
+        pdb = PROCESS_Create( pModule, cmd_line, env, hInstance,
+                              hPrevInstance, show_cmd );
+        if (pdb && (GetNumTasks() > 1)) Yield16();
     }
 
     return hInstance;
@@ -1267,7 +1264,37 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
  */
 HINSTANCE16 LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
-    return MODULE_Load( name, paramBlock, 0 );
+    LOADPARAMS *params = (LOADPARAMS *)paramBlock;
+    LPSTR cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
+    LPSTR new_cmd_line;
+    UINT16 show_cmd = 0;
+    LPCVOID env = NULL;
+    HINSTANCE16 hInstance;
+
+    if (!paramBlock || (paramBlock == (LPVOID)-1))
+        return LoadLibrary16( name );
+
+    params = (LOADPARAMS *)paramBlock;
+    cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
+    /* PowerPoint passes NULL as showCmd */
+    if (params->showCmd)
+        show_cmd = *((UINT16 *)PTR_SEG_TO_LIN(params->showCmd)+1);
+
+    if (!cmd_line) cmd_line = "";
+    else if (*cmd_line) cmd_line++;  /* skip the length byte */
+
+    if (!(new_cmd_line = HeapAlloc( GetProcessHeap(), 0,
+                                    strlen(cmd_line) + strlen(name) + 2 )))
+        return 0;
+    strcpy( new_cmd_line, name );
+    strcat( new_cmd_line, " " );
+    strcat( new_cmd_line, cmd_line );
+
+    if (params->hEnvironment) env = GlobalLock16( params->hEnvironment );
+    hInstance = MODULE_Load( name, 0, new_cmd_line, env, show_cmd );
+    if (params->hEnvironment) GlobalUnlock16( params->hEnvironment );
+    HeapFree( GetProcessHeap(), 0, new_cmd_line );
+    return hInstance;
 }
 
 /**********************************************************************
@@ -1280,8 +1307,8 @@ HINSTANCE16 LoadModule16( LPCSTR name, LPVOID paramBlock )
  */
 DWORD LoadModule32( LPCSTR name, LPVOID paramBlock ) 
 {
-#ifdef 0
-  LOADPARAMS32 *p = paramBlock;
+    LOADPARAMS32 *params = (LOADPARAMS32 *)paramBlock;
+#if 0
   STARTUPINFO st;
   PROCESSINFORMATION pi;
   st.cb = sizeof(STARTUPINFO);
@@ -1297,7 +1324,8 @@ DWORD LoadModule32( LPCSTR name, LPVOID paramBlock )
   CloseHandle32(pi.hThread); 
 
 #else
-    return MODULE_Load( name, paramBlock, 0 );
+  return MODULE_Load( name, 0, params->lpCmdLine, params->lpEnvAddress, 
+                        *((UINT16 *)params->lpCmdShow + 1) );
 #endif
 }
 
@@ -1455,7 +1483,7 @@ HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
     HMODULE32 hmod;
     
     hmod = PE_LoadLibraryEx32A(libname,PROCESS_Current(),hfile,flags);
-    if (hmod <= 32) {
+    if (hmod < 32) {
 	char buffer[256];
 
 	strcpy( buffer, libname );
@@ -1463,7 +1491,8 @@ HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
 	hmod = PE_LoadLibraryEx32A(buffer,PROCESS_Current(),hfile,flags);
     }
     /* initialize all DLLs, which haven't been initialized yet. */
-    PE_InitializeDLLs( PROCESS_Current(), DLL_PROCESS_ATTACH, NULL);
+    if (hmod >= 32)
+        PE_InitializeDLLs( PROCESS_Current(), DLL_PROCESS_ATTACH, NULL);
     return hmod;
 }
 
@@ -1519,13 +1548,13 @@ HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
     }
     TRACE(module, "(%08x) %s\n", (int)libname, libname);
 
-    handle = MODULE_Load( libname, (LPVOID)-1, 0 );
+    handle = MODULE_Load( libname, 0, NULL, NULL, 0 );
     if (handle == (HINSTANCE16)2)  /* file not found */
     {
         char buffer[256];
         lstrcpyn32A( buffer, libname, 252 );
         strcat( buffer, ".dll" );
-        handle = MODULE_Load( buffer, (LPVOID)-1, 0 );
+        handle = MODULE_Load( buffer, 0, NULL, NULL, 0 );
     }
     return handle;
 }
@@ -1577,23 +1606,13 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
  */
 HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 {
-    LOADPARAMS params;
-    HGLOBAL16 cmdShowHandle, cmdLineHandle;
     HINSTANCE32 handle = 2;
-    WORD *cmdShowPtr;
-    char *p, *cmdline, filename[256];
+    char *p, filename[256];
     static int use_load_module = 1;
     int  spacelimit = 0, exhausted = 0;
 
     if (!lpCmdLine)
         return 2;  /* File not found */
-    if (!(cmdShowHandle = GlobalAlloc16( 0, 2 * sizeof(WORD) )))
-        return 8;  /* Out of memory */
-    if (!(cmdLineHandle = GlobalAlloc16( 0, 2048 )))
-    {
-        GlobalFree16( cmdShowHandle );
-        return 8;  /* Out of memory */
-    }
 
     /* Keep trying to load a file by trying different filenames; e.g.,
        for the cmdline "abcd efg hij", try "abcd" with args "efg hij",
@@ -1603,15 +1622,8 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
     while(!exhausted && handle == 2) {
 	int spacecount = 0;
 
-	/* Store nCmdShow */
-
-	cmdShowPtr = (WORD *)GlobalLock16( cmdShowHandle );
-	cmdShowPtr[0] = 2;
-	cmdShowPtr[1] = nCmdShow;
-
 	/* Build the filename and command-line */
 
-	cmdline = (char *)GlobalLock16( cmdLineHandle );
 	lstrcpyn32A(filename, lpCmdLine,
 		    sizeof(filename) - 4 /* for extension */);
 
@@ -1633,18 +1645,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 	    }
 	}
 
-	if (*p)
-	    lstrcpyn32A( cmdline + 1, p + 1, 255 );
-	else
-	    cmdline[1] = '\0';
-
-	cmdline[0] = strlen( cmdline + 1 );
 	*p = '\0';
-	/* this is a (hopefully acceptable hack to get the whole
-	   commandline for PROCESS_Create
-	   we put it after the processed one */
-	lstrcpyn32A(cmdline + (unsigned char)cmdline[0] +2,
-		    lpCmdLine, 2048 - 256);
 
 	/* Now load the executable file */
 
@@ -1652,11 +1653,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 	{
 	    /* Winelib: Use LoadModule() only for the program itself */
 	    if (__winelib) use_load_module = 0;
-	    params.hEnvironment = (HGLOBAL16)SELECTOROF( GetDOSEnvironment() );
-	    params.cmdLine  = (SEGPTR)WIN16_GlobalLock16( cmdLineHandle );
-	    params.showCmd  = (SEGPTR)WIN16_GlobalLock16( cmdShowHandle );
-	    params.reserved = 0;
-	    handle = LoadModule32( filename, &params );
+            handle = MODULE_Load( filename, 0, lpCmdLine, NULL, nCmdShow );
 	    if (handle == 2)  /* file not found */
 	    {
 		/* Check that the original file name did not have a suffix */
@@ -1666,8 +1663,9 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 		{
 		    p = filename + strlen(filename);
 		    strcpy( p, ".exe" );
-		    handle = LoadModule16( filename, &params );
-		    *p = '\0';  /* Remove extension */
+                    handle = MODULE_Load( filename, 0, lpCmdLine,
+                                          NULL, nCmdShow );
+                    *p = '\0';  /* Remove extension */
 		}
 	    }
 	}
@@ -1703,7 +1701,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 		    argptr = argv;
 		    if (iconic) *argptr++ = "-iconic";
 		    *argptr++ = unixfilename;
-		    p = cmdline + 1;
+		    p = strdup(lpCmdLine);
 		    while (1)
 		    {
 			while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
@@ -1740,8 +1738,6 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 	}
     } /* while (!exhausted && handle < 32) */
 
-    GlobalFree16( cmdShowHandle );
-    GlobalFree16( cmdLineHandle );
     return handle;
 }
 

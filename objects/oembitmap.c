@@ -68,6 +68,8 @@
 #include "bitmaps/obm_reduce_95"
 #include "bitmaps/obm_close_95"
 #include "bitmaps/obm_closed_95"
+#include "bitmaps/obm_restore_95"
+#include "bitmaps/obm_restored_95"
 
 
 #define OBM_FIRST  OBM_RADIOCHECK  /* First OEM bitmap */
@@ -131,11 +133,15 @@ static struct
 #include "bitmaps/oic_portrait"
 #include "bitmaps/oic_landscape"
 #include "bitmaps/oic_wineicon"
+#include "bitmaps/oic_hand_95"
+#include "bitmaps/oic_ques_95"
+#include "bitmaps/oic_bang_95"
+#include "bitmaps/oic_note_95"
 
 #define OIC_FIRST  OIC_SAMPLE      /* First OEM icon */
 #define OIC_LAST   OIC_WINEICON   /* Last OEM icon */
 
-static char ** const OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
+static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 {
     oic_sample,    /* OIC_SAMPLE */
     oic_hand,      /* OIC_HAND */
@@ -164,6 +170,9 @@ static char ** const OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 #include "bitmaps/ocr_dragobject"
 /*#include "bitmaps/ocr_sizeall"*/
 /*#include "bitmaps/ocr_icocur"*/
+#include "bitmaps/ocr_no"
+#include "bitmaps/ocr_appstarting"
+#include "bitmaps/ocr_help"
 
 /* Cursor are not all contiguous (go figure...) */
 #define OCR_FIRST0 OCR_BUMMER
@@ -178,26 +187,41 @@ static char ** const OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 #define OCR_LAST2  OCR_SIZENS 
 #define OCR_BASE2	(OCR_BASE1 + OCR_LAST1 - OCR_FIRST1 + 1)
 
-#define NB_CURSORS (OCR_BASE2 + OCR_LAST2 - OCR_FIRST2 + 1)
+#define OCR_FIRST3 OCR_NO
+#define OCR_LAST3  OCR_NO
+#define OCR_BASE3       (OCR_BASE2 + OCR_LAST2 - OCR_FIRST2 + 1)
+
+#define OCR_FIRST4 OCR_APPSTARTING
+#define OCR_LAST4  OCR_APPSTARTING
+#define OCR_BASE4       (OCR_BASE3 + OCR_LAST3 - OCR_FIRST3 + 1)
+
+#define OCR_FIRST5 OCR_HELP
+#define OCR_LAST5  OCR_HELP
+#define OCR_BASE5       (OCR_BASE4 + OCR_LAST4 - OCR_FIRST4 + 1)
+
+#define NB_CURSORS (OCR_BASE5 + OCR_LAST5 - OCR_FIRST5 + 1)
 static char **OBM_Cursors_Data[NB_CURSORS] = 
 {
-    ocr_bummer,	   /* OCR_BUMMER */
-    ocr_dragobject,/* OCR_DRAGOBJECT */ 
-    ocr_normal,    /* OCR_NORMAL */
-    ocr_ibeam,     /* OCR_IBEAM */
-    ocr_wait,      /* OCR_WAIT */
-    ocr_cross,     /* OCR_CROSS */
-    ocr_up,        /* OCR_UP */
-    ocr_size,      /* OCR_SIZE */
-    ocr_icon,      /* OCR_ICON */
-    ocr_sizenwse,  /* OCR_SIZENWSE */
-    ocr_sizenesw,  /* OCR_SIZENESW */
-    ocr_sizewe,    /* OCR_SIZEWE */
-    ocr_sizens     /* OCR_SIZENS */
+    ocr_bummer,	     /* OCR_BUMMER */
+    ocr_dragobject,  /* OCR_DRAGOBJECT */ 
+    ocr_normal,      /* OCR_NORMAL */
+    ocr_ibeam,       /* OCR_IBEAM */
+    ocr_wait,        /* OCR_WAIT */
+    ocr_cross,       /* OCR_CROSS */
+    ocr_up,          /* OCR_UP */
+    ocr_size,        /* OCR_SIZE */
+    ocr_icon,        /* OCR_ICON */
+    ocr_sizenwse,    /* OCR_SIZENWSE */
+    ocr_sizenesw,    /* OCR_SIZENESW */
+    ocr_sizewe,      /* OCR_SIZEWE */
+    ocr_sizens,      /* OCR_SIZENS */
 #if 0
-    ocr_sizeall,   /* OCR_SIZEALL */
-    ocr_icocur     /* OCR_ICOCUR */
+    ocr_sizeall,     /* OCR_SIZEALL */
+    ocr_icocur       /* OCR_ICOCUR */
 #endif
+    ocr_no,          /* OCR_NO */
+    ocr_appstarting, /* OCR_APPSTARTING */
+    ocr_help         /* OCR_HELP */
 };
 
 static HGLOBAL16 OBM_Cursors[NB_CURSORS];
@@ -413,6 +437,12 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
                   id = OCR_BASE2 + id - OCR_FIRST2;
 	     else if ((id >= OCR_FIRST0) && (id <= OCR_LAST0))
 		       id = OCR_BASE0 + id - OCR_FIRST0;
+		  else if ((id >= OCR_FIRST3) && (id <= OCR_LAST3))
+			    id = OCR_BASE3 + id - OCR_FIRST3;
+		       else if ((id >= OCR_FIRST4) && (id <= OCR_LAST4))
+				 id = OCR_BASE4 + id - OCR_FIRST4;
+			    else if ((id >= OCR_FIRST5) && (id <= OCR_LAST5))
+				      id = OCR_BASE5 + id - OCR_FIRST5;
         else return 0;
         if (OBM_Cursors[id]) return OBM_Cursors[id];
     }
@@ -498,7 +528,7 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
 /***********************************************************************
  *           OBM_Init
  *
- * Initializes the OBM_Pixmaps_Data struct
+ * Initializes the OBM_Pixmaps_Data and OBM_Icons_Data struct
  */
 BOOL32 OBM_Init()
 {
@@ -508,6 +538,13 @@ BOOL32 OBM_Init()
 	OBM_Pixmaps_Data[OBM_ZOOM - OBM_FIRST].data = obm_zoom_95;
 	OBM_Pixmaps_Data[OBM_REDUCE - OBM_FIRST].data = obm_reduce_95;
 	OBM_Pixmaps_Data[OBM_CLOSE - OBM_FIRST].data = obm_close_95;
+        OBM_Pixmaps_Data[OBM_RESTORE - OBM_FIRST].data = obm_restore_95;
+        OBM_Pixmaps_Data[OBM_RESTORED - OBM_FIRST].data = obm_restored_95;
+
+        OBM_Icons_Data[OIC_HAND - OIC_FIRST] = oic_hand_95;
+        OBM_Icons_Data[OIC_QUES - OIC_FIRST] = oic_ques_95;
+        OBM_Icons_Data[OIC_BANG - OIC_FIRST] = oic_bang_95;
+        OBM_Icons_Data[OIC_NOTE - OIC_FIRST] = oic_note_95;
     }
     else {
 	OBM_Pixmaps_Data[OBM_ZOOMD - OBM_FIRST].data = obm_zoomd;
@@ -515,6 +552,13 @@ BOOL32 OBM_Init()
 	OBM_Pixmaps_Data[OBM_ZOOM - OBM_FIRST].data = obm_zoom;
 	OBM_Pixmaps_Data[OBM_REDUCE - OBM_FIRST].data = obm_reduce;
 	OBM_Pixmaps_Data[OBM_CLOSE - OBM_FIRST].data = obm_close;
+        OBM_Pixmaps_Data[OBM_RESTORE - OBM_FIRST].data = obm_restore;
+        OBM_Pixmaps_Data[OBM_RESTORED - OBM_FIRST].data = obm_restored;
+
+        OBM_Icons_Data[OIC_HAND - OIC_FIRST] = oic_hand;
+        OBM_Icons_Data[OIC_QUES - OIC_FIRST] = oic_ques;
+        OBM_Icons_Data[OIC_BANG - OIC_FIRST] = oic_bang;
+        OBM_Icons_Data[OIC_NOTE - OIC_FIRST] = oic_note;
     }
 
     return 1;

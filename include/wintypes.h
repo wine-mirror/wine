@@ -10,38 +10,29 @@
 #ifdef __WINE__
 # include "config.h"
 # undef WINELIB
-# undef WINELIB16
-# undef WINELIB32
 # undef UNICODE
 #else  /* __WINE__ */
 # ifndef WINELIB
 #  define WINELIB
 # endif
-# ifdef WINELIB16
-#  undef WINELIB32
-# else
-#  define WINELIB32
-# endif
 #endif  /* __WINE__ */
 
 /* Macros to map Winelib names to the correct implementation name */
-/* depending on WINELIB16, WINELIB32 and UNICODE macros.          */
+/* depending on WINELIB and UNICODE macros.                       */
+/* Note that WINELIB is purely Win32.                             */
 
 #ifdef __WINE__
 # define WINELIB_NAME(func)      this is a syntax error
 # define WINELIB_NAME_AW(func)   this is a syntax error
 #else  /* __WINE__ */
-# ifdef WINELIB32
+# ifdef WINELIB
 #  define WINELIB_NAME(func)     func##32
 #  ifdef UNICODE
 #   define WINELIB_NAME_AW(func) func##32W
 #  else
 #   define WINELIB_NAME_AW(func) func##32A
 #  endif  /* UNICODE */
-# else   /* WINELIB32 */
-#  define WINELIB_NAME(func)     func##16
-#  define WINELIB_NAME_AW(func)  func##16
-# endif  /* WINELIB32 */
+# endif  /* WINELIB */
 #endif  /* __WINE__ */
 
 #ifdef __WINE__

@@ -94,7 +94,11 @@ int WINAPI SysStringLen(BSTR str)
 	return strlen(BSTR_GetAddr(str));
 }
 
-OLESTATUS WINAPI CreateDispTypeInfo(INTERFACEDATA * pidata,LCID lcid,LPVOID/*ITypeInfo*/ * * pptinfo) {
+OLESTATUS WINAPI CreateDispTypeInfo(
+    INTERFACEDATA * pidata,
+    LCID lcid,
+    LPVOID * * pptinfo) /* ITypeInfo */
+{
 	fprintf(stderr,"CreateDispTypeInfo(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
 	return 0;
 }

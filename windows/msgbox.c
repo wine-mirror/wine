@@ -69,20 +69,20 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
     switch(lpmb->dwStyle & MB_ICONMASK) {
      case MB_ICONEXCLAMATION:
       SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-                           (WPARAM16)LoadIcon16(0, IDI_EXCLAMATION), 0);
+                           (WPARAM16)LoadIcon16(0, IDI_EXCLAMATION16), 0);
       break;
      case MB_ICONQUESTION:
       SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-                           (WPARAM16)LoadIcon16(0, IDI_QUESTION), 0);
+                           (WPARAM16)LoadIcon16(0, IDI_QUESTION16), 0);
       break;
      case MB_ICONASTERISK:
       SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-                           (WPARAM16)LoadIcon16(0, IDI_ASTERISK), 0);
+                           (WPARAM16)LoadIcon16(0, IDI_ASTERISK16), 0);
       break;
      case MB_ICONHAND:
      default:
       SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-                           (WPARAM16)LoadIcon16(0, IDI_HAND), 0);
+                           (WPARAM16)LoadIcon16(0, IDI_HAND16), 0);
       break;
     }
     
@@ -189,7 +189,7 @@ INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
 
 
 /**************************************************************************
- *           MessageBox32A   (USER32.390)
+ *           MessageBox32A   (USER32.391)
  */
 INT32 WINAPI MessageBox32A(HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type)
 {
@@ -208,7 +208,7 @@ INT32 WINAPI MessageBox32A(HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type)
 
 
 /**************************************************************************
- *           MessageBox32W   (USER32.395)
+ *           MessageBox32W   (USER32.396)
  */
 INT32 WINAPI MessageBox32W( HWND32 hwnd, LPCWSTR text, LPCWSTR title,
                             UINT32 type )
@@ -223,7 +223,7 @@ INT32 WINAPI MessageBox32W( HWND32 hwnd, LPCWSTR text, LPCWSTR title,
 
 
 /**************************************************************************
- *           MessageBoxEx32A   (USER32.391)
+ *           MessageBoxEx32A   (USER32.392)
  */
 INT32 WINAPI MessageBoxEx32A( HWND32 hWnd, LPCSTR text, LPCSTR title,
                               UINT32 type, WORD langid )
@@ -233,13 +233,37 @@ INT32 WINAPI MessageBoxEx32A( HWND32 hWnd, LPCSTR text, LPCSTR title,
 }
 
 /**************************************************************************
- *           MessageBoxEx32W   (USER32.392)
+ *           MessageBoxEx32W   (USER32.393)
  */
 INT32 WINAPI MessageBoxEx32W( HWND32 hWnd, LPCWSTR text, LPCWSTR title,
                               UINT32 type, WORD langid )
 {
     /* ignore language id for now */
     return MessageBox32W(hWnd,text,title,type);
+}
+
+/**************************************************************************
+ *           MessageBoxIndirect16   (USER.827)
+ */
+INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
+{
+    MSGBOXPARAMS32A msgbox32;
+    
+    msgbox32.cbSize		= msgbox->cbSize;
+    msgbox32.hwndOwner		= msgbox->hwndOwner;
+    msgbox32.hInstance		= msgbox->hInstance;
+    msgbox32.lpszText		= PTR_SEG_TO_LIN(msgbox->lpszText);
+    msgbox32.lpszCaption	= PTR_SEG_TO_LIN(msgbox->lpszCaption);
+    msgbox32.dwStyle		= msgbox->dwStyle;
+    msgbox32.lpszIcon		= PTR_SEG_TO_LIN(msgbox->lpszIcon);
+    msgbox32.dwContextHelpId	= msgbox->dwContextHelpId;
+    msgbox32.lpfnMsgBoxCallback	= msgbox->lpfnMsgBoxCallback;
+    msgbox32.dwLanguageId	= msgbox->dwLanguageId;
+
+    return DialogBoxIndirectParam32A( msgbox32.hInstance,
+                                      SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
+                                      msgbox32.hwndOwner, MSGBOX_DlgProc,
+                                      (LPARAM)&msgbox32 );
 }
 
 /**************************************************************************

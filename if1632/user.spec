@@ -521,10 +521,10 @@ file	user.exe
 821 stub TranslateMessage32	
 #821 stub IsDialogMessage32		# FIXME: two ordinal 821???
 822 stub DispatchMessage32
+823 stub CallMsgFilter32
 825 stub PostMessage32
 826 stub PostThreadMessage32
-827 stub MessageBoxIndirect
-823 stub CallMsgFilter32
+827 pascal16 MessageBoxIndirect(ptr) MessageBoxIndirect16
 851 stub MsgThkConnectionDataLS
 853 stub FT_USRFTHKTHKCONNECTIONDATA
 854 stub FT__USRF2THKTHKCONNECTIONDATA

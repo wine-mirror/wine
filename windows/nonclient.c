@@ -158,7 +158,7 @@ static void NC_AdjustRect95( LPRECT16 rect, DWORD style, BOOL32 menu,
 
 
 /***********************************************************************
- *           DrawCaptionTempA    (USER32.)
+ *           DrawCaptionTempA    (USER32.599)
  */
 DWORD
 DrawCaptionTemp32A(HWND32 hwnd,HDC32 hdc,LPRECT32 rect,HFONT32 hfont,DWORD x1,LPCSTR str,DWORD x2) {
@@ -179,7 +179,7 @@ BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
 
 
 /***********************************************************************
- *           AdjustWindowRect32    (USER32.)
+ *           AdjustWindowRect32    (USER32.2)
  */
 BOOL32 WINAPI AdjustWindowRect32( LPRECT32 rect, DWORD style, BOOL32 menu )
 {
@@ -215,7 +215,7 @@ BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
 
 
 /***********************************************************************
- *           AdjustWindowRectEx32    (USER32.)
+ *           AdjustWindowRectEx32    (USER32.3)
  */
 BOOL32 WINAPI AdjustWindowRectEx32( LPRECT32 rect, DWORD style,
                                     BOOL32 menu, DWORD exStyle )
@@ -854,14 +854,14 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
 
     if (!hbitmapClose)
     {
-	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_CLOSE) )))
+	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) )))
 	    return;
-	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_REDUCE) );
-	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_REDUCED) );
-	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_ZOOM) );
-	hbitmapMaximizeD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_ZOOMD) );
-	hbitmapRestore   = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RESTORE) );
-	hbitmapRestoreD  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RESTORED) );
+	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCE) );
+	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCED) );
+	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOM) );
+	hbitmapMaximizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOMD) );
+	hbitmapRestore   = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORE) );
+	hbitmapRestoreD  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORED) );
     }
     
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
@@ -950,14 +950,14 @@ static void  NC_DrawCaption95(
 					    COLOR_INACTIVECAPTION) );
 
     if (!hbitmapClose) {
-	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_CLOSE) )))
+	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) )))
 	    return;
-	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_REDUCE) );
-	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_REDUCED) );
-	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_ZOOM) );
-	hbitmapMaximizeD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_ZOOMD) );
-	hbitmapRestore   = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RESTORE) );
-	hbitmapRestoreD  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RESTORED) );
+	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCE) );
+	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCED) );
+	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOM) );
+	hbitmapMaximizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOMD) );
+	hbitmapRestore   = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORE) );
+	hbitmapRestoreD  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORED) );
     }
     
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME) {
@@ -1297,23 +1297,23 @@ LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 
     case HTLEFT:
     case HTRIGHT:
-	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZEWE ) );
+	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZEWE16 ) );
 
     case HTTOP:
     case HTBOTTOM:
-	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENS ) );
+	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENS16 ) );
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:	
-	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENWSE ) );
+	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENWSE16 ) );
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENESW ) );
+	return (LONG)SetCursor16( LoadCursor16( 0, IDC_SIZENESW16 ) );
     }
 
     /* Default cursor: arrow */
-    return (LONG)SetCursor16( LoadCursor16( 0, IDC_ARROW ) );
+    return (LONG)SetCursor16( LoadCursor16( 0, IDC_ARROW16 ) );
 }
 
 /***********************************************************************

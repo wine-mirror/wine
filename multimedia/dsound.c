@@ -28,6 +28,7 @@
  *   Sound works for the intromovie.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <assert.h>
 #include <sys/types.h>
@@ -45,12 +46,13 @@
 #include "debug.h"
 
 #ifdef HAVE_OSS
-#include <sys/ioctl.h>
-#ifdef HAVE_MACHINE_SOUNDCARD_H
-#include <machine/soundcard.h>
-#else /* HAVE_MACHINE_SOUNDCARD_H */
-#include <sys/soundcard.h>
-#endif /* HAVE_MACHINE_SOUNDCARD_H */
+# include <sys/ioctl.h>
+# ifdef HAVE_MACHINE_SOUNDCARD_H
+#  include <machine/soundcard.h>
+# endif
+# ifdef HAVE_SYS_SOUNDCARD_H
+#  include <sys/soundcard.h>
+# endif
 
 static int audiofd = -1;
 static LPDIRECTSOUND	dsound = NULL;
@@ -845,7 +847,7 @@ DSOUND_thread(LPVOID arg) {
 #endif /* HAVE_OSS */
 
 HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUnkOuter ) {
-	int	xx;
+	int xx;
 	if (lpGUID)
 		fprintf(stderr,"DirectSoundCreate(%p,%p,%p)\n",lpGUID,ppDS,pUnkOuter);
 #ifdef HAVE_OSS

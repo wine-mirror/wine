@@ -2105,9 +2105,6 @@ BOOL32	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 }
 
 
-static char* test_string = "Abc Def Ghi Jkl Mno Pqr Stu Vwx Yz";
-
-
 /***********************************************************************
  *           X11DRV_GetTextExtentPoint
  */
@@ -2213,7 +2210,7 @@ INT16 WINAPI AddFontResource16( LPCSTR filename )
  */
 INT32 WINAPI AddFontResource32A( LPCSTR str )
 {
-    FIXME(font, "(%s): stub\n", debugres(str));
+    FIXME(font, "(%s): stub\n", debugres_a(str));
     return 1;
 }
 
@@ -2223,7 +2220,7 @@ INT32 WINAPI AddFontResource32A( LPCSTR str )
  */
 INT32 WINAPI AddFontResource32W( LPCWSTR str )
 {
-    FIXME(font, "(%p): stub\n", str );
+    FIXME(font, "(%s): stub\n", debugres_w(str) );
     return 1;
 }
 
@@ -2232,7 +2229,7 @@ INT32 WINAPI AddFontResource32W( LPCWSTR str )
  */
 BOOL16 WINAPI RemoveFontResource16( SEGPTR str )
 {
-    FIXME(font, "(%s): stub\n",	debugres(PTR_SEG_TO_LIN(str)));
+    FIXME(font, "(%s): stub\n",	debugres_a(PTR_SEG_TO_LIN(str)));
     return TRUE;
 }
 
@@ -2242,7 +2239,7 @@ BOOL16 WINAPI RemoveFontResource16( SEGPTR str )
  */
 BOOL32 WINAPI RemoveFontResource32A( LPCSTR str )
 {
-    FIXME(font, "(%s): stub\n", debugres(str));
+    FIXME(font, "(%s): stub\n", debugres_a(str));
     return TRUE;
 }
 
@@ -2252,7 +2249,7 @@ BOOL32 WINAPI RemoveFontResource32A( LPCSTR str )
  */
 BOOL32 WINAPI RemoveFontResource32W( LPCWSTR str )
 {
-    FIXME(font, "(%p): stub\n", str );
+    FIXME(font, "(%s): stub\n", debugres_w(str) );
     return TRUE;
 }
 

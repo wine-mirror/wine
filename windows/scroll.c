@@ -37,7 +37,7 @@ void WINAPI ScrollWindow16(HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
 }
 
 /*************************************************************************
- *             ScrollWindow32   (USER32.449)
+ *             ScrollWindow32   (USER32.450)
  *
  * FIXME: verify clipping region calculations
  */
@@ -140,7 +140,7 @@ BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
 
 
 /*************************************************************************
- *             ScrollDC32   (USER32.448)
+ *             ScrollDC32   (USER32.449)
  * 
  * Both 'rc' and 'prLClip' are in logical units but update info is 
  * returned in device coordinates.
@@ -344,7 +344,7 @@ static BOOL32 SCROLL_FixCaret(HWND32 hWnd, LPRECT32 lprc, UINT32 flags)
 }
 
 /*************************************************************************
- *             ScrollWindowEx32   (USER32.450)
+ *             ScrollWindowEx32   (USER32.451)
  *
  * NOTE: Use this function instead of ScrollWindow32
  */

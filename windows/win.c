@@ -438,6 +438,7 @@ BOOL32 WIN_CreateDesktopWindow(void)
     pWndDesktop->pHScroll          = NULL;
     pWndDesktop->pProp             = NULL;
     pWndDesktop->wIDmenu           = 0;
+    pWndDesktop->helpContext       = 0;
     pWndDesktop->flags             = 0;
     pWndDesktop->window            = rootWindow;
     pWndDesktop->hSysMenu          = 0;
@@ -467,8 +468,8 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     LRESULT (WINAPI *localSend32)(HWND32, UINT32, WPARAM32, LPARAM);
 
     TRACE(win, "%s %s %08lx %08lx %d,%d %dx%d "
-		 "%04x %04x %08x %p\n", debugres(cs->lpszName), 
-		 debugres(cs->lpszClass), cs->dwExStyle, 
+		 "%04x %04x %08x %p\n", debugres_a(cs->lpszName), 
+		 debugres_a(cs->lpszClass), cs->dwExStyle, 
 		 cs->style, cs->x, cs->y, cs->cx, cs->cy,
 		 cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams);
 
@@ -551,6 +552,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = cs->dwExStyle;
     wndPtr->wIDmenu        = 0;
+    wndPtr->helpContext    = 0;
     wndPtr->flags          = win32 ? WIN_ISWIN32 : 0;
     wndPtr->pVScroll       = NULL;
     wndPtr->pHScroll       = NULL;
@@ -2300,6 +2302,29 @@ HWND16 WINAPI GetSysModalWindow16(void)
 
 
 /*******************************************************************
+ *           GetWindowContextHelpId   (USER32.303)
+ */
+DWORD WINAPI GetWindowContextHelpId( HWND32 hwnd )
+{
+    WND *wnd = WIN_FindWndPtr( hwnd );
+    if (!wnd) return 0;
+    return wnd->helpContext;
+}
+
+
+/*******************************************************************
+ *           SetWindowContextHelpId   (USER32.515)
+ */
+BOOL32 WINAPI SetWindowContextHelpId( HWND32 hwnd, DWORD id )
+{
+    WND *wnd = WIN_FindWndPtr( hwnd );
+    if (!wnd) return FALSE;
+    wnd->helpContext = id;
+    return TRUE;
+}
+
+
+/*******************************************************************
  *			DRAG_QueryUpdate
  *
  * recursively find a child that contains spDragInfo->pt point 
@@ -2440,7 +2465,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 
     if( !lpDragInfo || !spDragInfo ) return 0L;
 
-    hBummer = LoadCursor16(0, IDC_BUMMER);
+    hBummer = LoadCursor16(0, IDC_BUMMER16);
 
     if( !hBummer || !wndPtr )
     {

@@ -91,7 +91,7 @@ INT32 WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
     int ret;
 
     if (srclen == -1)
-	srclen = lstrlen32A(src)+1;
+	srclen = lstrlen32A(src);
     if (!dstlen || !dst)
 	return srclen;
 
@@ -103,7 +103,7 @@ INT32 WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
 	dst++;    src++;
 	dstlen--; srclen--;
     }
-    if (dstlen == 0) {
+    if ((dstlen == 0) && *src) {
 	SetLastError(ERROR_INSUFFICIENT_BUFFER);
 	return 0;
     }

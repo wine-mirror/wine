@@ -13,9 +13,9 @@ type	win32
   6 stdcall CreateStatusWindowA(long ptr long long) CreateStatusWindow32A
   7 stub CreateToolbar
   8 stub CreateMappedBitmap
-#  9 stub COMCTL32_9
-# 10 stub COMCTL32_10
-# 11 stub COMCTL32_11
+  9 stub COMCTL32_9
+ 10 stub COMCTL32_10
+ 11 stub COMCTL32_11
  12 stub Cctl1632_ThunkData32
  13 stub MakeDragList
  14 stub LBItemFromPt
@@ -72,15 +72,16 @@ type	win32
  63 stdcall ImageList_LoadImageA(long ptr long long long long long) ImageList_LoadImage32A
  64 stdcall ImageList_LoadImageW(long ptr long long long long long) ImageList_LoadImage32W
  65 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
+# 66 stdcall ImageList_Read(ptr) ImageList_Read
  66 stub ImageList_Read
  67 stdcall ImageList_Remove(ptr long) ImageList_Remove
  68 stdcall ImageList_Replace(ptr long long long) ImageList_Replace
  69 stdcall ImageList_ReplaceIcon(ptr long long) ImageList_ReplaceIcon
  70 stdcall ImageList_SetBkColor(ptr long) ImageList_SetBkColor
-# 71
-# 72
-# 73
-# 74 stub GetSize # 1 parameter
+ 71 stub Alloc
+ 72 stub ReAlloc
+ 73 stub Free
+ 74 stub GetSize
  75 stdcall ImageList_SetDragCursorImage(ptr long long long) ImageList_SetDragCursorImage
  76 stub ImageList_SetFilter
  77 stdcall ImageList_SetIconSize(ptr long long) ImageList_SetIconSize
@@ -95,58 +96,95 @@ type	win32
  86 stub UninitializeFlatSB
  87 stub _TrackMouseEvent
 
-#151
-#152 stub FreeMRUList  # 1 parameter
-#153
-#154
-#155 stub FindMRUStringA  # 3 parameters
-#156
-#157
-#163
-#164
-#167
-#169 stub FindMRUData
-#233 - 236
+151 stub CreateMRUList
+152 stub FreeMRUList
+153 stub AddMRUStringA
+154 stub EnumMRUListA
+155 stub FindMRUStringA
+156 stub DelMRUString
+157 stub COMCTL32_157
 
-#320
-#321
-#322
-#323
-#324
-#325
-#326
-#327
-#328
-#329 stub DPA_Create
-#330 stub DPA_Destroy
-#331
-#332 stub DPA_GetPtr
-#333
-#334 stub DPA_InsertPtr
-#335
-#336 stub DPA_DeletePtr
-#337
-#338
-#339 stub DPA_Search
-#340
-#341
-#342
+163 stub CreatePage
+164 stub CreateProxyPage
 
-#350 stub StrChrA
-#351
-#352 stub StrCmpA
-#353
-#354 stub StrStrA
-#355
-#356
-#357 stub StrToIntA
-#358 - 369
+167 stub AddMRUData
+169 stub FindMRUData
 
-#372 - 375
-#376 stub IntlStrEqWorkerA
-#377 stub IntlStrEqWorkerW
-#382
-#383 stub DoReaderMode
-#384 - 390
-#400 - 404
-#410 - 413
+233 stub Str_GetPtrA
+234 stub Str_SetPtrA
+235 stub Str_GetPtrW
+236 stub Str_SetPtrW
+
+320 stub DSA_Create
+321 stub DSA_Destroy
+322 stub DSA_GetItem
+323 stub DSA_GetItemPtr
+324 stub DSA_InsertItem
+325 stub DSA_SetItem
+326 stub DSA_DeleteItem
+327 stub DSA_DeleteAllItems
+328 stub DPA_Create
+329 stub DPA_Destroy
+330 stub DPA_Grow
+331 stub DPA_Clone
+332 stub DPA_GetPtr
+333 stub DPA_GetPtrIndex
+334 stub DPA_InsertPtr
+335 stub DPA_SetPtr
+336 stub DPA_DeletePtr
+337 stub DPA_DeleteAllPtrs
+338 stub DPA_Sort
+339 stub DPA_Search
+340 stub DPA_CreateEx
+341 stub SendNotify
+342 stub SendNotifyEx
+
+350 stub StrChrA
+351 stub StrRChr
+352 stub StrCmpNA
+353 stub StrCmpNIA
+354 stub StrStrA
+355 stub StrStrIA
+356 stub StrCSpnA
+357 stub StrToIntA
+358 stub StrChrW
+359 stub StrRChrW
+360 stub StrCmpNW
+361 stub StrCmpNIW
+362 stub StrStrW
+363 stub StrStrIW
+364 stub StrSpnW
+365 stub StrToIntW
+366 stub StrChrIA
+367 stub StrChrIW
+368 stub StrRChrIA
+369 stub StrRChrIW
+
+372 stub StrRStrIA
+373 stub StrRStrIW
+374 stub StrCSpnIA
+375 stub StrCSpnIW
+376 stub IntlStrEqWorkerA
+377 stub IntlStrEqWorkerW
+
+382 stub SmoothScrollWindow
+383 stub DoReaderMode
+384 stub SetPathWordBreakProc
+385 stub COMCTL32_385
+386 stub COMCTL32_386
+387 stub COMCTL32_387
+388 stub COMCTL32_388
+389 stub COMCTL32_389
+390 stub COMCTL32_390
+
+400 stub COMCTL32_400
+401 stub COMCTL32_401
+402 stub COMCTL32_402
+403 stub COMCTL32_403
+404 stub COMCTL32_404
+
+410 stub COMCTL32_410
+411 stub COMCTL32_411
+412 stub COMCTL32_412
+413 stub COMCTL32_413
+

@@ -2,6 +2,7 @@
  * KERNEL32 thunks and other undocumented stuff
  *
  * Copyright 1997-1998 Marcus Meissner
+ * Copyright 1998      Ulrich Weigand
  */
 
 #include <stdio.h>
@@ -30,31 +31,21 @@
  * Generates a FT_Prolog call.
  *	
  *  0FB6D1                  movzbl edx,cl
- *  8B1495xxxxxxxx	    mov edx,[4*edx + xxxxxxxx]
+ *  8B1495xxxxxxxx	    mov edx,[4*edx + targetTable]
  *  68xxxxxxxx		    push FT_Prolog
  *  C3			    lret
  */
-static void _write_ftprolog(LPBYTE thunk,DWORD thunkstart) {
+static void _write_ftprolog(LPBYTE relayCode ,DWORD *targetTable) {
 	LPBYTE	x;
 
-	x	= thunk;
+	x	= relayCode;
 	*x++	= 0x0f;*x++=0xb6;*x++=0xd1; /* movzbl edx,cl */
-	*x++	= 0x8B;*x++=0x14;*x++=0x95;*(DWORD*)x= thunkstart;
-	x+=4;	/* mov edx, [4*edx + thunkstart] */
+	*x++	= 0x8B;*x++=0x14;*x++=0x95;*(DWORD**)x= targetTable;
+	x+=4;	/* mov edx, [4*edx + targetTable] */
 	*x++	= 0x68; *(DWORD*)x = (DWORD)GetProcAddress32(GetModuleHandle32A("KERNEL32"),"FT_Prolog");
 	x+=4; 	/* push FT_Prolog */
 	*x++	= 0xC3;		/* lret */
 	/* fill rest with 0xCC / int 3 */
-}
-
-/***********************************************************************
- *			FT_PrologPrime			(KERNEL32.89)
- */
-void WINAPI FT_PrologPrime(
-	DWORD startind,		/* [in] start of thunktable */
-	LPBYTE thunk		/* [in] thunk codestart */
-) {
-	_write_ftprolog(thunk,*(DWORD*)(startind+thunk));
 }
 
 /***********************************************************************
@@ -63,21 +54,21 @@ void WINAPI FT_PrologPrime(
  *
  *  33C9                    xor ecx, ecx
  *  8A4DFC                  mov cl , [ebp-04]
- *  8B148Dxxxxxxxx          mov edx, [4*ecx + (EAX+EDX)]
+ *  8B148Dxxxxxxxx          mov edx, [4*ecx + targetTable]
  *  B8yyyyyyyy              mov eax, QT_Thunk
  *  FFE0                    jmp eax
  */
 static void _write_qtthunk(
-	LPBYTE start,		/* [in] start of QT_Thunk stub */
-	DWORD thunkstart	/* [in] start of thunk (for index lookup) */
+	LPBYTE relayCode,	/* [in] start of QT_Thunk stub */
+	DWORD *targetTable	/* [in] start of thunk (for index lookup) */
 ) {
 	LPBYTE	x;
 
-	x	= start;
+	x	= relayCode;
 	*x++	= 0x33;*x++=0xC9; /* xor ecx,ecx */
 	*x++	= 0x8A;*x++=0x4D;*x++=0xFC; /* movb cl,[ebp-04] */
-	*x++	= 0x8B;*x++=0x14;*x++=0x8D;*(DWORD*)x= thunkstart;
-	x+=4;	/* mov edx, [4*ecx + (EAX+EDX) */
+	*x++	= 0x8B;*x++=0x14;*x++=0x8D;*(DWORD**)x= targetTable;
+	x+=4;	/* mov edx, [4*ecx + targetTable */
 	*x++	= 0xB8; *(DWORD*)x = (DWORD)GetProcAddress32(GetModuleHandle32A("KERNEL32"),"QT_Thunk");
 	x+=4; 	/* mov eax , QT_Thunk */
 	*x++	= 0xFF; *x++ = 0xE0;	/* jmp eax */
@@ -153,9 +144,9 @@ UINT32 WINAPI ThunkConnect32(
 			return 0;
 		ths->ptr = (DWORD)PTR_SEG_TO_LIN(ths16->ptr);
 		/* code offset for QT_Thunk is at 0x1C...  */
-		_write_qtthunk (((LPBYTE)ths) + ths->x1C,ths->ptr);
+		_write_qtthunk (((LPBYTE)ths) + ths->x1C,(DWORD *)ths->ptr);
 		/* code offset for FT_Prolog is at 0x20...  */
-		_write_ftprolog(((LPBYTE)ths) + ths->x20,ths->ptr);
+		_write_ftprolog(((LPBYTE)ths) + ths->x20,(DWORD *)ths->ptr);
 		return 1;
 	}
 	return TRUE;
@@ -190,6 +181,185 @@ VOID WINAPI QT_Thunk(CONTEXT *context)
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
 }
+
+
+/**********************************************************************
+ * 		FT_Prolog			(KERNEL32.233)
+ * 
+ * The set of FT_... thunk routines is used instead of QT_Thunk,
+ * if structures have to be converted from 32-bit to 16-bit
+ * (change of member alignment, conversion of members).
+ *
+ * The thunk function (as created by the thunk compiler) calls
+ * FT_Prolog at the beginning, to set up a stack frame and
+ * allocate a 64 byte buffer on the stack.
+ * The input parameters (target address and some flags) are
+ * saved for later use by FT_Thunk.
+ *
+ * Input:  EDX  16-bit target address (SEGPTR)
+ *         CX   bits  0..7   target number (in target table)
+ *              bits  8..9   some flags (unclear???)
+ *              bits 10..15  number of DWORD arguments
+ *
+ * Output: A new stackframe is created, and a 64 byte buffer
+ *         allocated on the stack. The layout of the stack 
+ *         on return is as follows:
+ *
+ *  (ebp+4)  return address to caller of thunk function
+ *  (ebp)    old EBP
+ *  (ebp-4)  saved EBX register of caller
+ *  (ebp-8)  saved ESI register of caller
+ *  (ebp-12) saved EDI register of caller
+ *  (ebp-16) saved ECX register, containing flags
+ *  (ebp-20) bitmap containing parameters that are to be converted
+ *           by FT_Thunk; it is initialized to 0 by FT_Prolog and
+ *           filled in by the thunk code before calling FT_Thunk
+ *  (ebp-24)
+ *    ...    (unclear)
+ *  (ebp-44)
+ *  (ebp-48) saved EAX register of caller (unclear, never restored???)
+ *  (ebp-52) saved EDX register, containing 16-bit thunk target
+ *  (ebp-56)
+ *    ...    (unclear)
+ *  (ebp-64)
+ *
+ *  ESP is EBP-68 on return.
+ *         
+ */
+
+#define POP_DWORD(ctx)		(*((DWORD *)ESP_reg(ctx))++)
+#define PUSH_DWORD(ctx, val) 	*--((DWORD *)ESP_reg(ctx)) = (val)
+
+VOID WINAPI FT_Prolog(CONTEXT *context)
+{
+    /* Pop return address to thunk code */
+    EIP_reg(context) = POP_DWORD(context);
+
+    /* Build stack frame */
+    PUSH_DWORD(context, EBP_reg(context));
+    EBP_reg(context) = ESP_reg(context);
+
+    /* Allocate 64-byte Thunk Buffer */
+    ESP_reg(context) -= 64;
+    memset((char *)ESP_reg(context), '\0', 64);
+
+    /* Store Flags (ECX) and Target Address (EDX) */
+    /* Save other registers to be restored later */
+    *(DWORD *)(EBP_reg(context) -  4) = EBX_reg(context);
+    *(DWORD *)(EBP_reg(context) -  8) = ESI_reg(context);
+    *(DWORD *)(EBP_reg(context) - 12) = EDI_reg(context);
+    *(DWORD *)(EBP_reg(context) - 16) = ECX_reg(context);
+
+    *(DWORD *)(EBP_reg(context) - 48) = EAX_reg(context);
+    *(DWORD *)(EBP_reg(context) - 52) = EDX_reg(context);
+    
+    /* Push return address back onto stack */
+    PUSH_DWORD(context, EIP_reg(context));
+}
+
+/**********************************************************************
+ * 		FT_Thunk			(KERNEL32.234)
+ *
+ * This routine performs the actual call to 16-bit code, 
+ * similar to QT_Thunk. The differences are:
+ *  - The call target is taken from the buffer created by FT_Prolog
+ *  - Those arguments requested by the thunk code (by setting the
+ *    corresponding bit in the bitmap at EBP-20) are converted
+ *    from 32-bit pointers to segmented pointers (those pointers
+ *    are guaranteed to point to structures copied to the stack
+ *    by the thunk code, so we always use the 16-bit stack selector
+ *    for those addresses).
+ * 
+ *    The bit #i of EBP-20 corresponds here to the DWORD starting at
+ *    ESP+4 + 2*i.
+ * 
+ * FIXME: It is unclear what happens if there are more than 32 WORDs 
+ *        of arguments, so that the single DWORD bitmap is no longer
+ *        sufficient ...
+ */
+
+VOID WINAPI FT_Thunk(CONTEXT *context)
+{
+    DWORD mapESPrelative = *(DWORD *)(EBP_reg(context) - 20);
+    DWORD callTarget     = *(DWORD *)(EBP_reg(context) - 52);
+
+    CONTEXT context16;
+    DWORD i, argsize;
+    LPBYTE newstack;
+    THDB *thdb = THREAD_Current();
+
+    memcpy(&context16,context,sizeof(context16));
+
+    CS_reg(&context16)  = HIWORD(callTarget);
+    IP_reg(&context16)  = LOWORD(callTarget);
+    EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
+                           + (WORD)&((STACK16FRAME*)0)->bp;
+
+    argsize  = EBP_reg(context)-ESP_reg(context)-0x44;
+    newstack = ((LPBYTE)THREAD_STACK16(thdb))-argsize;
+
+    memcpy( newstack, (LPBYTE)ESP_reg(context)+4, argsize );
+
+    for (i = 0; i < 32; i++)	/* NOTE: What about > 32 arguments? */
+	if (mapESPrelative & (1 << i))
+	{
+	    SEGPTR *arg = (SEGPTR *)(newstack + 2*i);
+	    *arg = PTR_SEG_OFF_TO_SEGPTR(SELECTOROF(thdb->cur_stack), 
+					 *(LPBYTE *)arg - newstack);
+	}
+
+    EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
+}
+
+/**********************************************************************
+ * 		FT_ExitNN		(KERNEL32.218 - 232)
+ *
+ * One of the FT_ExitNN functions is called at the end of the thunk code.
+ * It removes the stack frame created by FT_Prolog, moves the function
+ * return from EBX to EAX (yes, FT_Thunk did use EAX for the return 
+ * value, but the thunk code has moved it from EAX to EBX in the 
+ * meantime ... :-), restores the caller's EBX, ESI, and EDI registers,
+ * and perform a return to the CALLER of the thunk code (while removing
+ * the given number of arguments from the caller's stack).
+ */
+
+VOID WINAPI FT_Exit(CONTEXT *context, int nPopArgs)
+{
+    /* Return value is in EBX */
+    EAX_reg(context) = EBX_reg(context);
+
+    /* Restore EBX, ESI, and EDI registers */
+    EBX_reg(context) = *(DWORD *)(EBP_reg(context) -  4);
+    ESI_reg(context) = *(DWORD *)(EBP_reg(context) -  8);
+    EDI_reg(context) = *(DWORD *)(EBP_reg(context) - 12);
+
+    /* Clean up stack frame */
+    ESP_reg(context) = EBP_reg(context);
+    EBP_reg(context) = POP_DWORD(context);
+
+    /* Pop return address to CALLER of thunk code */
+    EIP_reg(context) = POP_DWORD(context);
+    /* Remove arguments */
+    ESP_reg(context) += nPopArgs;
+    /* Push return address back onto stack */
+    PUSH_DWORD(context, EIP_reg(context));
+}
+
+VOID WINAPI FT_Exit0 (CONTEXT *context) { FT_Exit(context,  0); }
+VOID WINAPI FT_Exit4 (CONTEXT *context) { FT_Exit(context,  4); }
+VOID WINAPI FT_Exit8 (CONTEXT *context) { FT_Exit(context,  8); }
+VOID WINAPI FT_Exit12(CONTEXT *context) { FT_Exit(context, 12); }
+VOID WINAPI FT_Exit16(CONTEXT *context) { FT_Exit(context, 16); }
+VOID WINAPI FT_Exit20(CONTEXT *context) { FT_Exit(context, 20); }
+VOID WINAPI FT_Exit24(CONTEXT *context) { FT_Exit(context, 24); }
+VOID WINAPI FT_Exit28(CONTEXT *context) { FT_Exit(context, 28); }
+VOID WINAPI FT_Exit32(CONTEXT *context) { FT_Exit(context, 32); }
+VOID WINAPI FT_Exit36(CONTEXT *context) { FT_Exit(context, 36); }
+VOID WINAPI FT_Exit40(CONTEXT *context) { FT_Exit(context, 40); }
+VOID WINAPI FT_Exit44(CONTEXT *context) { FT_Exit(context, 44); }
+VOID WINAPI FT_Exit48(CONTEXT *context) { FT_Exit(context, 48); }
+VOID WINAPI FT_Exit52(CONTEXT *context) { FT_Exit(context, 52); }
+VOID WINAPI FT_Exit56(CONTEXT *context) { FT_Exit(context, 56); }
 
 
 /**********************************************************************
@@ -242,7 +412,7 @@ LPVOID WINAPI _KERNEL32_52()
 }
 
 /***********************************************************************
- * 		_KERNEL32_43 	(KERNEL32.42)
+ * 		ThunkInitLS 	(KERNEL32.43)
  * A thunkbuffer link routine 
  * The thunkbuf looks like:
  *
@@ -254,7 +424,7 @@ LPVOID WINAPI _KERNEL32_52()
  * RETURNS
  *	segmented pointer to thunk?
  */
-DWORD WINAPI _KERNEL32_43(
+DWORD WINAPI ThunkInitLS(
 	LPDWORD thunk,	/* [in] win32 thunk */
 	LPCSTR thkbuf,	/* [in] thkbuffer name in win16 dll */
 	DWORD len,	/* [in] thkbuffer length */
@@ -293,39 +463,70 @@ DWORD WINAPI _KERNEL32_43(
 }
 
 /***********************************************************************
- * 		_KERNEL32_45 	(KERNEL32.44)
- * Another 32->16 thunk, the difference to QT_Thunk is, that the called routine
- * uses 0x66 lret, and that we have to pass CX in DI.
- * (there seems to be some kind of BL/BX return magic too...)
+ * 		Common32ThkLS 	(KERNEL32.45)
+ * 
+ * This is another 32->16 thunk, independent of the QT_Thunk/FT_Thunk
+ * style thunks. The basic difference is that the parameter conversion 
+ * is done completely on the *16-bit* side here. Thus we do not call
+ * the 16-bit target directly, but call a common entry point instead.
+ * This entry function then calls the target according to the target
+ * number passed in the DI register.
+ * 
+ * Input:  EAX    SEGPTR to the common 16-bit entry point
+ *         CX     offset in thunk table (target number * 4)
+ *         DX     error return value if execution fails (unclear???)
+ *         EDX.HI number of DWORD parameters
  *
- * [crashes]
+ * (Note that we need to move the thunk table offset from CX to DI !)
+ *
+ * The called 16-bit stub expects its stack to look like this:
+ *     ...
+ *   (esp+40)  32-bit arguments
+ *     ...
+ *   (esp+8)   32 byte of stack space available as buffer
+ *   (esp)     8 byte return address for use with 0x66 lret 
+ * 
+ * The called 16-bit stub uses a 0x66 lret to return to 32-bit code,
+ * and uses the EAX register to return a DWORD return value.
+ * Thus we need to use a special assembly glue routine 
+ * (CallRegisterLongProc instead of CallRegisterShortProc).
+ *
+ * Finally, we return to the caller, popping the arguments off 
+ * the stack.
+ *
+ * FIXME: The called function uses EBX to return the number of 
+ *        arguments that are to be popped off the caller's stack.
+ *        This is clobbered by the assembly glue, so we simply use
+ *        the original EDX.HI to get the number of arguments.
+ *        (Those two values should be equal anyway ...?)
+ * 
  */
-VOID WINAPI _KERNEL32_45(CONTEXT *context)
+VOID WINAPI Common32ThkLS(CONTEXT *context)
 {
-	CONTEXT	context16;
-	LPBYTE	curstack;
-        DWORD ret,stacksize;
-	THDB *thdb = THREAD_Current();
+    CONTEXT context16;
+    DWORD argsize;
+    THDB *thdb = THREAD_Current();
 
-	TRACE(thunk,"(%%eax=0x%08lx(%%cx=0x%04lx,%%edx=0x%08lx))\n",
-		(DWORD)EAX_reg(context),(DWORD)CX_reg(context),(DWORD)EDX_reg(context)
-	);
-	stacksize = EBP_reg(context)-ESP_reg(context);
-	TRACE(thunk,"	stacksize = %ld\n",stacksize);
+    memcpy(&context16,context,sizeof(context16));
 
-	memcpy(&context16,context,sizeof(context16));
+    DI_reg(&context16)  = CX_reg(context);
+    CS_reg(&context16)  = HIWORD(EAX_reg(context));
+    IP_reg(&context16)  = LOWORD(EAX_reg(context));
+    EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
+                           + (WORD)&((STACK16FRAME*)0)->bp;
 
-	DI_reg(&context16)	 = CX_reg(context);
-	CS_reg(&context16)	 = HIWORD(EAX_reg(context));
-	IP_reg(&context16)	 = LOWORD(EAX_reg(context));
+    argsize = HIWORD(EDX_reg(context)) * 4;
 
-	curstack = PTR_SEG_TO_LIN(STACK16_PUSH( thdb, stacksize ));
-	memcpy(curstack - stacksize,(LPBYTE)ESP_reg(context),stacksize);
-	ret = Callbacks->CallRegisterLongProc(&context16,0);
-	STACK16_POP( thdb, stacksize );
+    memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
+            (LPBYTE)ESP_reg(context)+4, argsize );
 
-	TRACE(thunk,". returned %08lx\n",ret);
-	EAX_reg(context) 	 = ret;
+    EAX_reg(context) = Callbacks->CallRegisterLongProc(&context16, argsize + 32);
+
+    /* Clean up caller's stack frame */
+
+    EIP_reg(context) = POP_DWORD(context);
+    ESP_reg(context) += argsize;
+    PUSH_DWORD(context, EIP_reg(context));
 }
 
 /***********************************************************************
@@ -364,7 +565,7 @@ VOID WINAPI _KERNEL32_40(CONTEXT *context)
 
 
 /***********************************************************************
- *		(KERNEL32.41)
+ *		ThunkInitLSF		(KERNEL32.41)
  * A thunk setup routine.
  * Expects a pointer to a preinitialized thunkbuffer in the first argument
  * looking like:
@@ -401,7 +602,7 @@ VOID WINAPI _KERNEL32_40(CONTEXT *context)
  * RETURNS
  *	unclear, pointer to win16 thkbuffer?
  */
-LPVOID WINAPI _KERNEL32_41(
+LPVOID WINAPI ThunkInitLSF(
 	LPBYTE thunk,	/* [in] win32 thunk */
 	LPCSTR thkbuf,	/* [in] thkbuffer name in win16 dll */
 	DWORD len,	/* [in] length of thkbuffer */
@@ -447,33 +648,73 @@ LPVOID WINAPI _KERNEL32_41(
 }
 
 /***********************************************************************
- *							(KERNEL32.90)
- * QT Thunk priming function
- * Rewrites the first part of the thunk to use the QT_Thunk interface
- * and jumps to the start of that code.
- * [ok]
+ *		FT_PrologPrime			(KERNEL32.89)
+ * 
+ * This function is called from the relay code installed by
+ * ThunkInitLSF. It replaces the location from where it was 
+ * called by a standard FT_Prolog call stub (which is 'primed'
+ * by inserting the correct target table pointer).
+ * Finally, it calls that stub.
+ * 
+ * Input:  ECX    target number + flags (passed through to FT_Prolog)
+ *        (ESP)   offset of location where target table pointer 
+ *                is stored, relative to the start of the relay code
+ *        (ESP+4) pointer to start of relay code
+ *                (this is where the FT_Prolog call stub gets written to)
+ * 
+ * Note: The two DWORD arguments get popped from the stack.
+ *        
  */
-VOID WINAPI _KERNEL32_90(CONTEXT *context)
+VOID WINAPI FT_PrologPrime(CONTEXT *context)
 {
-	TRACE(thunk, "QT Thunk priming; context %p\n", context);
-	
-	_write_qtthunk((LPBYTE)EAX_reg(context),*(DWORD*)(EAX_reg(context)+EDX_reg(context)));
-	/* we just call the real QT_Thunk right now 
-	 * we can bypass the relaycode, for we already have the registercontext
-	 */
-	EDX_reg(context) = *(DWORD*)((*(DWORD*)(EAX_reg(context)+EDX_reg(context)))+4*(((BYTE*)EBP_reg(context))[-4]));
-	return QT_Thunk(context);
+    DWORD  targetTableOffset = POP_DWORD(context);
+    LPBYTE relayCode = (LPBYTE)POP_DWORD(context);
+    DWORD *targetTable = *(DWORD **)(relayCode+targetTableOffset);
+    DWORD  targetNr = LOBYTE(ECX_reg(context));
+
+    _write_ftprolog(relayCode, targetTable);
+
+    /* We should actually call the relay code now, */
+    /* but we skip it and go directly to FT_Prolog */
+    EDX_reg(context) = targetTable[targetNr];
+    FT_Prolog(context);
 }
 
 /***********************************************************************
- *							(KERNEL32.45)
+ *		QT_ThunkPrime			(KERNEL32.90)
+ *
+ * This function corresponds to FT_PrologPrime, but installs a 
+ * call stub for QT_Thunk instead.
+ *
+ * Input: (EBP-4) target number (passed through to QT_Thunk)
+ *         EDX    target table pointer location offset
+ *         EAX    start of relay code
+ *      
+ */
+VOID WINAPI QT_ThunkPrime(CONTEXT *context)
+{
+    DWORD  targetTableOffset = EDX_reg(context);
+    LPBYTE relayCode = (LPBYTE)EAX_reg(context);
+    DWORD *targetTable = *(DWORD **)(relayCode+targetTableOffset);
+    DWORD  targetNr = *(DWORD *)(EBP_reg(context) - 4);
+
+    _write_qtthunk(relayCode, targetTable);
+
+    /* We should actually call the relay code now, */
+    /* but we skip it and go directly to QT_Thunk */
+    EDX_reg(context) = targetTable[targetNr];
+    QT_Thunk(context);
+}
+
+/***********************************************************************
+ *							(KERNEL32.46)
  * Another thunkbuf link routine.
  * The start of the thunkbuf looks like this:
  * 	00: DWORD	length
  *	04: SEGPTR	address for thunkbuffer pointer
  * [ok probably]
  */
-VOID WINAPI _KERNEL32_46(
+VOID WINAPI ThunkInitSL(
 	LPBYTE thunk,		/* [in] start of thunkbuffer */
 	LPCSTR thkbuf,		/* [in] name/ordinal of thunkbuffer in win16 dll */
 	DWORD len,		/* [in] length of thunkbuffer */
@@ -508,28 +749,28 @@ VOID WINAPI _KERNEL32_46(
 }
 
 /**********************************************************************
- *           _KERNEL32_87
+ *           SSOnBigStack	KERNEL32.87
  * Check if thunking is initialized (ss selector set up etc.)
  * We do that differently, so just return TRUE.
  * [ok]
  * RETURNS
  *	TRUE for success.
  */
-BOOL32 WINAPI _KERNEL32_87()
+BOOL32 WINAPI SSOnBigStack()
 {
     TRACE(thunk, "Yes, thunking is initialized\n");
     return TRUE;
 }
 
 /**********************************************************************
- *           _KERNEL32_88
+ *           SSCall
  * One of the real thunking functions. This one seems to be for 32<->32
  * thunks. It should probably be capable of crossing processboundaries.
  *
  * And YES, I've seen nr=48 (somewhere in the Win95 32<->16 OLE coupling)
  * [ok]
  */
-DWORD WINAPIV _KERNEL32_88(
+DWORD WINAPIV SSCall(
 	DWORD nr,	/* [in] number of argument bytes */
 	DWORD flags,	/* [in] FIXME: flags ? */
 	FARPROC32 fun,	/* [in] function to call */
@@ -655,40 +896,6 @@ FreeSLCallback(
 	fprintf(stderr,"FreeSLCallback(0x%08lx)\n",x);
 }
 
-/**********************************************************************
- * 		KERNEL_358		(KERNEL)
- * Allocates a code segment which starts at the address passed in x. limit
- * 0xfffff, and returns the pointer to the start.
- * RETURNS
- *	a segmented pointer 
- */
-DWORD WINAPI
-_KERNEL_358(DWORD x) {
-	WORD	sel;
-
-	fprintf(stderr,"_KERNEL_358(0x%08lx),stub\n",x);
-	if (!HIWORD(x))
-		return x;
-
-	sel = SELECTOR_AllocBlock( PTR_SEG_TO_LIN(x) , 0xffff, SEGMENT_CODE, FALSE, FALSE );
-	return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
-}
-
-/**********************************************************************
- * 		KERNEL_359		(KERNEL)
- * Frees the code segment of the passed linear pointer (This has usually
- * been allocated by _KERNEL_358).
- */
-VOID WINAPI
-_KERNEL_359(
-	DWORD x	/* [in] segmented pointer? */
-) {
-	fprintf(stderr,"_KERNEL_359(0x%08lx),stub\n",x);
-	if ((HIWORD(x) & 7)!=7)
-		return;
-	SELECTOR_FreeBlock(x>>16,1);
-	return;
-}
 
 /**********************************************************************
  * 		KERNEL_471		(KERNEL.471)

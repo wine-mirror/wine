@@ -9,6 +9,8 @@
  *       Netscape 4.0).
  */
 
+#include "config.h"
+
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
@@ -19,12 +21,16 @@
 #include <sys/wait.h>
 #include <errno.h>
 #ifdef __EMX__
-#include <sys/so_ioctl.h>
-#include <sys/param.h>
+# include <sys/so_ioctl.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_FILIO_H
+# include <sys/filio.h>
 #endif
 #ifdef __svr4__
-#include <sys/file.h>
-#include <sys/filio.h>
+# include <sys/file.h>
 #endif
 
 extern int h_errno;
@@ -364,6 +370,9 @@ HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, L
 	    }
 	    else
 	    {
+	    	extern BOOL32 THREAD_InitDone;
+
+	        THREAD_InitDone = FALSE;
 		/* child process */
 
 		close(async_ctl.ws_aop->fd[0]);  /* read endpoint */

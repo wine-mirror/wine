@@ -590,7 +590,7 @@ HDC16 WINAPI GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
 
 
 /***********************************************************************
- *           GetDCEx32    (USER32.230)
+ *           GetDCEx32    (USER32.231)
  *
  * Unimplemented flags: DCX_LOCKWINDOWUPDATE
  *
@@ -808,7 +808,7 @@ HDC16 WINAPI GetDC16( HWND16 hwnd )
 
 
 /***********************************************************************
- *           GetDC32    (USER32.229)
+ *           GetDC32    (USER32.230)
  * RETURNS
  *	:Handle to DC
  *	NULL: Failure
@@ -833,7 +833,7 @@ HDC16 WINAPI GetWindowDC16( HWND16 hwnd )
 
 
 /***********************************************************************
- *           GetWindowDC32    (USER32.)
+ *           GetWindowDC32    (USER32.304)
  */
 HDC32 WINAPI GetWindowDC32( HWND32 hwnd )
 {
@@ -852,7 +852,7 @@ INT16 WINAPI ReleaseDC16( HWND16 hwnd, HDC16 hdc )
 
 
 /***********************************************************************
- *           ReleaseDC32    (USER32.439)
+ *           ReleaseDC32    (USER32.440)
  *
  * RETURNS
  *	1: Success
@@ -937,7 +937,7 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 
 
 /**********************************************************************
- *          WindowFromDC16   (USER32.580)
+ *          WindowFromDC16   (USER.117)
  */
 HWND16 WINAPI WindowFromDC16( HDC16 hDC )
 {
@@ -946,7 +946,7 @@ HWND16 WINAPI WindowFromDC16( HDC16 hDC )
 
 
 /**********************************************************************
- *          WindowFromDC32   (USER32.580)
+ *          WindowFromDC32   (USER32.581)
  */
 HWND32 WINAPI WindowFromDC32( HDC32 hDC )
 {
@@ -966,7 +966,7 @@ BOOL16 WINAPI LockWindowUpdate16( HWND16 hwnd )
 
 
 /***********************************************************************
- *           LockWindowUpdate32   (USER32.377)
+ *           LockWindowUpdate32   (USER32.378)
  */
 BOOL32 WINAPI LockWindowUpdate32( HWND32 hwnd )
 {

@@ -16,6 +16,8 @@ typedef struct
   INT32       MinVal;       /* Minimum progress value */
   INT32       MaxVal;       /* Maximum progress value */
   INT32       Step;         /* Step to use on PMB_STEPIT */
+  COLORREF    ColorBar;     /* Bar color */
+  COLORREF    ColorBk;      /* Background color */
 } PROGRESS_INFO;
 
 LRESULT WINAPI ProgressWindowProc(HWND32, UINT32, WPARAM32, LPARAM);

@@ -13,6 +13,7 @@
 /*#include "callback.h"*/
 #include "heap.h"
 #include "x11font.h"
+#include "debugstr.h"
 #include "debug.h"
 
 #define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
@@ -43,10 +44,16 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     lfUnderline = (pfo->fo_flags & FO_SYNTH_UNDERLINE) ? 1 : 0;
     lfStrikeOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT) ? 1 : 0;
 
-    TRACE(text,"hdc=%04x df=%04x %d,%d '%.*s', %d  flags=%d\n",
-                 dc->hSelf, (UINT16)(dc->u.x.font), x, y, (int)count, str, count, flags);
+    TRACE(text,"hdc=%04x df=%04x %d,%d %s, %d  flags=%d\n",
+	  dc->hSelf, (UINT16)(dc->u.x.font), x, y,
+	  debugstr_an (str, count), count, flags);
 
-    if (lprect != NULL) TRACE(text, "\trect=(%d,%d- %d,%d)\n",
+    /* some strings sent here end in a newline for whatever reason.  I have no
+       clue what the right treatment should be in general, but ignoring
+       terminating newlines seems ok.  MW, April 1998.  */
+    if (count > 0 && str[count - 1] == '\n') count--;
+
+    if (lprect != NULL) TRACE(text, "\trect=(%d,%d - %d,%d)\n",
                                      lprect->left, lprect->top,
                                      lprect->right, lprect->bottom );
       /* Setup coordinates */
@@ -85,7 +92,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     x = XLPTODP( dc, x );
     y = YLPTODP( dc, y );
 
-    TRACE(text,"\treal coord: x=%i, y=%i, rect=(%d,%d-%d,%d)\n",
+    TRACE(text,"\treal coord: x=%i, y=%i, rect=(%d,%d - %d,%d)\n",
 			  x, y, rect.left, rect.top, rect.right, rect.bottom);
 
       /* Draw the rectangle */

@@ -10,21 +10,30 @@
  *
  */
  
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
+#ifdef HAVE_SYS_FILIO_H
+# include <sys/filio.h>
+#endif
 #if defined(__svr4__)
-#include <sys/filio.h>
 #include <sys/ioccom.h>
 #include <sys/sockio.h>
 #endif
+
 #if defined(__EMX__)
-#include <sys/so_ioctl.h>
-#include <sys/param.h>
+# include <sys/so_ioctl.h>
 #endif
+
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+
 #include <sys/msg.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -1227,7 +1236,16 @@ INT32 WINAPI WINSOCK_setsockopt32(SOCKET16 s, INT32 level, INT32 optname,
 			  (unsigned)pwsi, s, level, optname, (int) optval, optlen);
     if( _check_ws(pwsi, pws) )
     {
+	struct	linger linger;
+
 	convert_sockopt(&level, &optname);
+	if (optname == SO_LINGER) {
+		/* yes, uses unsigned short in both win16/win32 */
+		linger.l_onoff	= ((UINT16*)optval)[0];
+		linger.l_linger	= ((UINT16*)optval)[1];
+		optval = (char*)&linger;
+		optlen = sizeof(struct linger);
+	}
 	if (setsockopt(pws->fd, level, optname, optval, optlen) == 0) return 0;
 	pwsi->err = wsaErrno();
     }
@@ -1241,16 +1259,7 @@ INT32 WINAPI WINSOCK_setsockopt32(SOCKET16 s, INT32 level, INT32 optname,
 INT16 WINAPI WINSOCK_setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
                                   char *optval, INT16 optlen)
 {
-    INT32 linger32[2];
     if( !optval ) return SOCKET_ERROR;
-    if( optname == SO_LINGER )
-    {
-	INT16* ptr = (INT16*)optval;
-	linger32[0] = ptr[0];
-	linger32[1] = ptr[1];
-	optval = (char*)&linger32;
-	optlen = sizeof(linger32);
-    }
     return (INT16)WINSOCK_setsockopt32( s, (UINT16)level, optname, optval, optlen );
 }
 
@@ -2668,5 +2677,3 @@ UINT16 wsaHerrno(void)
 		return WSAEOPNOTSUPP;
     }
 }
-
-

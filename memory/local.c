@@ -26,10 +26,6 @@
 #include "toolhelp.h"
 #include "debug.h"
 
-/* needed only  for GDI_HeapSel and USER_HeapSel */
-#include "gdi.h"
-#include "user.h"
-
 typedef struct
 {
 /* Arena header */
@@ -103,6 +99,8 @@ typedef struct
 
 #define LOCAL_HEAP_MAGIC  0x484c  /* 'LH' */
 
+WORD USER_HeapSel = 0;  /* USER heap selector */
+WORD GDI_HeapSel = 0;   /* GDI heap selector */
 
   /* All local heap allocations are aligned on 4-byte boundaries */
 #define LALIGN(word)          (((word) + 3) & ~3)
@@ -1099,7 +1097,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;
     LOCALARENA *pArena, *pNext;
-    LOCALHANDLEENTRY *pEntry;
+    LOCALHANDLEENTRY *pEntry = NULL;
     WORD arena, oldsize;
     HLOCAL16 hmem, blockhandle;
     LONG nextarena;

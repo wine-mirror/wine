@@ -52,7 +52,7 @@ static BOOL32 COMBO_Init()
   if( (hDC = CreateCompatibleDC32(0)) )
   {
     BOOL32	bRet = FALSE;
-    if( (hComboBmp = LoadBitmap32A(0, MAKEINTRESOURCE(OBM_COMBO))) )
+    if( (hComboBmp = LoadBitmap32A(0, MAKEINTRESOURCE32A(OBM_COMBO))) )
     {
       BITMAP32      bm;
       HBITMAP32     hPrevB;

@@ -8,9 +8,9 @@
 #include "windows.h"
 
 /* resource ids for different version infos */
-#define	VS_FILE_INFO	MAKEINTRESOURCE(16)
-#define	VS_VERSION_INFO	MAKEINTRESOURCE(1)
-#define	VS_USER_INFO	MAKEINTRESOURCE(100)
+#define	VS_FILE_INFO	MAKEINTRESOURCE16(16)
+#define	VS_VERSION_INFO	MAKEINTRESOURCE16(1)
+#define	VS_USER_INFO	MAKEINTRESOURCE16(100)
 
 #define	VS_FFI_SIGNATURE	0xfeef04bdL	/* FileInfo Magic */
 #define	VS_FFI_STRUCVERSION	0x00010000L	/* struc version 1.0 */

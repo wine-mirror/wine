@@ -17,15 +17,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__svr4__) || defined(_SCO_DS) || defined(__EMX__)
-# if !defined(_SCO_DS) && !defined(__EMX__)
-#  include <sys/syscall.h>
-# endif
-# include <sys/param.h>
-#else
-# include <syscall.h>
-#endif
-
 #include "debugger.h"
 #include "options.h"
 #include "sig_context.h"

@@ -1855,7 +1855,7 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
 
 
 /**********************************************************************
- *	     CallWindowProc32A    (USER32.17)
+ *	     CallWindowProc32A    (USER32.18)
  */
 LRESULT WINAPI CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
                                   WPARAM32 wParam, LPARAM lParam )
@@ -1891,7 +1891,7 @@ LRESULT WINAPI CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
 
 
 /**********************************************************************
- *	     CallWindowProc32W    (USER32.18)
+ *	     CallWindowProc32W    (USER32.19)
  */
 LRESULT WINAPI CallWindowProc32W( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
                                   WPARAM32 wParam, LPARAM lParam )

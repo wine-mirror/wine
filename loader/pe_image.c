@@ -21,15 +21,23 @@
  *   state MUST be correct since this function can be called with the SAME image
  *   AGAIN. (Thats recursion for you.) That means MODREF.module and
  *   NE_MODULE.module32.
- * - No, you cannot use Linux mmap() to mmap() the images directly. Linux aligns
- *   them at pagesize (4096), Win32 requires 512 byte alignment.
+ * - No, you (usually) cannot use Linux mmap() to mmap() the images directly.
+ *
+ *   The problem is, that there is not direct 1:1 mapping from a diskimage and
+ *   a memoryimage. The headers at the start are mapped linear, but the sections
+ *   are not. For x86 the sections are 512 byte aligned in file and 4096 byte
+ *   aligned in memory. Linux likes them 4096 byte aligned in memory (due to
+ *   x86 pagesize, this cannot be fixed without a rather large kernel rewrite)
+ *   and 'blocksize' file-aligned (offsets). Since we have 512/1024/2048 (CDROM)
+ *   and other byte blocksizes, we can't do this. However, this could be less
+ *   difficult to support... (See mm/filemap.c).
  * - All those function map things into a new addresspace. From the wrong
  *   process and the wrong thread. So calling other API functions will mess 
  *   things up badly sometimes.
  */
 
-/*#include <ctype.h>*/
 #include <errno.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,9 +57,7 @@
 #include "module.h"
 #include "global.h"
 #include "task.h"
-#include "ldt.h"
 #include "debug.h"
-#include "xmalloc.h"
 
 static void PE_InitDLL(PE_MODREF* modref, DWORD type, LPVOID lpReserved);
 
@@ -721,8 +727,6 @@ static BOOL32 PE_MapImage( HMODULE32 *phModule, PDB32 *process,
         return 1;
 }
 
-HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
-
 /******************************************************************************
  * The PE Library Loader frontend. 
  * FIXME: handle the flags.
@@ -743,11 +747,14 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
 			return hModule;
 		/* check if this module is already mapped */
 		pem 	= process->modref_list;
+		pModule = MODULE_GetPtr(hModule);
 		while (pem) {
-			if (pem->module == hModule) return hModule;
+			if (pem->module == hModule) {
+				pModule->count++;
+				return hModule;
+			}
 			pem = pem->next;
 		}
-		pModule = MODULE_GetPtr(hModule);
 		if (pModule->flags & NE_FFLAGS_BUILTIN) {
 			IMAGE_DOS_HEADER	*dh;
 			IMAGE_NT_HEADERS	*nh;
@@ -804,9 +811,10 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
 /*****************************************************************************
  * Load the PE main .EXE. All other loading is done by PE_LoadLibraryEx32A
  * FIXME: this function should use PE_LoadLibraryEx32A, but currently can't
- * due to the TASK_CreateTask stuff.
+ * due to the PROCESS_Create stuff.
  */
-HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
+HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
+                           LPCSTR env, UINT16 show_cmd )
 {
     HMODULE16 hModule16;
     HMODULE32 hModule32;
@@ -819,17 +827,15 @@ HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
     pModule->flags = NE_FFLAGS_WIN32;
 
     pModule->module32 = hModule32 = PE_LoadImage( hFile );
-    CloseHandle( hFile );
     if (hModule32 < 32) return 21;
 
-    hInstance = MODULE_CreateInstance( hModule16, params );
-    if (!(PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL))
+    hInstance = MODULE_CreateInstance( hModule16, (cmd_line == NULL) );
+    if (cmd_line &&
+        !(PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
-        HTASK16 hTask = TASK_CreateTask( hModule16, hInstance, 0,
-                                         params->hEnvironment,
-                                      (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
-                               *((WORD*)PTR_SEG_TO_LIN(params->showCmd) + 1) );
-        TDB *pTask = (TDB *)GlobalLock16( hTask );
+        PDB32 *pdb = PROCESS_Create( pModule, cmd_line, env,
+                                     hInstance, 0, show_cmd );
+        TDB *pTask = (TDB *)GlobalLock16( pdb->task );
         thdb = pTask->thdb;
     }
     if (!PE_MapImage( &(pModule->module32), thdb->process, ofs, 0 ))

@@ -30,8 +30,6 @@ NOTEPAD_GLOBALS Globals;
 
 int NOTEPAD_MenuCommand (WPARAM wParam)
 {  
-//   printf("NOTEPAD_MenuCommand()\n");
-
    switch (wParam) {
      case NP_FILE_NEW:          DIALOG_FileNew(); break;
      case NP_FILE_OPEN:         DIALOG_FileOpen(); break;
@@ -82,22 +80,18 @@ LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg) {
 
        case WM_CREATE:
-        printf("WM_CREATE\n");
    	break;
 
-        case WM_PAINT:
-	  printf("WM_PAINT\n");
+       case WM_PAINT:
           BeginPaint(hWnd, &ps);
           EndPaint(hWnd, &ps);
    	break;
 
        case WM_COMMAND:
-          printf("WM_COMMAND\n");
           NOTEPAD_MenuCommand(wParam);
           break;
 
        case WM_DESTROY:
-          printf("WM_DESTROY\n");
           PostQuitMessage (0);
           break;
 

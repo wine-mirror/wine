@@ -2,6 +2,8 @@
 #ifndef __WINE_DEBUGTOOLS_H
 #define __WINE_DEBUGTOOLS_H
 
+#ifdef __WINE__  /* Debugging interface is internal to Wine */
+
 #include <stdio.h>
 #include "debugstr.h"
 
@@ -49,5 +51,7 @@ extern short debug_msg_enabled[][DEBUG_CLASS_COUNT];
 #define ERR_ON(ch)    DEBUGGING(err, ch)
 #define WARN_ON(ch)   DEBUGGING(warn, ch)
 #define TRACE_ON(ch)  DEBUGGING(trace, ch)
+
+#endif  /* __WINE__ */
 
 #endif  /* __WINE_DEBUGTOOLS_H */

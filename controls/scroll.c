@@ -81,18 +81,18 @@ static BOOL32 SCROLL_MovingThumb = FALSE;
  */
 static void SCROLL_LoadBitmaps(void)
 {
-    hUpArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_UPARROW) );
-    hDnArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_DNARROW) );
-    hLfArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_LFARROW) );
-    hRgArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_RGARROW) );
-    hUpArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_UPARROWD) );
-    hDnArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_DNARROWD) );
-    hLfArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_LFARROWD) );
-    hRgArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_RGARROWD) );
-    hUpArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_UPARROWI) );
-    hDnArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_DNARROWI) );
-    hLfArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_LFARROWI) );
-    hRgArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE(OBM_RGARROWI) );
+    hUpArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_UPARROW) );
+    hDnArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_DNARROW) );
+    hLfArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_LFARROW) );
+    hRgArrow  = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_RGARROW) );
+    hUpArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_UPARROWD) );
+    hDnArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_DNARROWD) );
+    hLfArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_LFARROWD) );
+    hRgArrowD = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_RGARROWD) );
+    hUpArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_UPARROWI) );
+    hDnArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_DNARROWI) );
+    hLfArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_LFARROWI) );
+    hRgArrowI = LoadBitmap32A( 0, MAKEINTRESOURCE32A(OBM_RGARROWI) );
 }
 
 
@@ -1018,7 +1018,7 @@ BOOL16 WINAPI GetScrollInfo16( HWND16 hwnd, INT16 nBar, LPSCROLLINFO info )
 
 
 /*************************************************************************
- *           GetScrollInfo32   (USER32.283)
+ *           GetScrollInfo32   (USER32.284)
  */
 BOOL32 WINAPI GetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO info )
 {
@@ -1082,7 +1082,7 @@ INT16 WINAPI GetScrollPos16( HWND16 hwnd, INT16 nBar )
 
 
 /*************************************************************************
- *           GetScrollPos32   (USER32.284)
+ *           GetScrollPos32   (USER32.285)
  */
 INT32 WINAPI GetScrollPos32( HWND32 hwnd, INT32 nBar )
 {
@@ -1171,7 +1171,7 @@ BOOL16 WINAPI GetScrollRange16( HWND16 hwnd, INT16 nBar,
 
 
 /*************************************************************************
- *           GetScrollRange32   (USER32.285)
+ *           GetScrollRange32   (USER32.286)
  */
 BOOL32 WINAPI GetScrollRange32( HWND32 hwnd, INT32 nBar,
                                 LPINT32 lpMin, LPINT32 lpMax)
@@ -1200,7 +1200,7 @@ void WINAPI ShowScrollBar16( HWND16 hwnd, INT16 nBar, BOOL16 fShow )
 
 
 /*************************************************************************
- *           ShowScrollBar32   (USER32.531)
+ *           ShowScrollBar32   (USER32.532)
  */
 BOOL32 WINAPI ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
 {
@@ -1276,7 +1276,7 @@ BOOL16 WINAPI EnableScrollBar16( HWND16 hwnd, INT16 nBar, UINT16 flags )
 
 
 /*************************************************************************
- *           EnableScrollBar32   (USER32.170)
+ *           EnableScrollBar32   (USER32.171)
  */
 BOOL32 WINAPI EnableScrollBar32( HWND32 hwnd, INT32 nBar, UINT32 flags )
 {

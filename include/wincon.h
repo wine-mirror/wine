@@ -40,8 +40,8 @@ typedef struct tagCOORD
 typedef struct tagSMALL_RECT
 {
     INT16 Left;
-    INT16 Right;
     INT16 Top;
+    INT16 Right;
     INT16 Bottom;
 } SMALL_RECT,*LPSMALL_RECT;
 

@@ -60,6 +60,60 @@ Winelib-specific directories:
 	programs/		- utilities (Progman, WinHelp)
 	libtest/		- Winelib test samples
 
+IMPLEMENTING NEW API CALLS
+==========================
+
+This is the simple version, and covers only Win32. Win16 is slightly uglier,
+because of the Pascal heritage and the segmented memory model.
+
+All of the Win32 APIs known to Wine are listed in [relay32/*.spec]. An
+unimplemented call will look like (from gdi32.spec)
+  269 stub PolyBezierTo
+To implement this call, you need to do the following four things.
+
+1. Find the appropriate parameters for the call, and add a prototype to
+[include/windows.h]. In this case, it might look like
+  BOOL32 WINAPI PolyBezierTo32(HDC32, LPCVOID, DWORD);
+  #define       PolyBezierTo WINELIB_NAME(PolyBezierTo)
+Note the use of the #define for Winelib. See below for discussion of
+function naming conventions.
+  
+2. Modify the .spec file to tell Wine that the function has an
+implementation, what the parameters look like and what Wine function
+to use for the implementation. In Win32, things are simple--everything
+is 32-bits. However, the relay code handles pointers and pointers to
+strings slightly differently, so you should use 'str' and 'wstr' for
+strings, 'ptr' for other pointer types, and 'long' for everything else.
+  269 stdcall PolyBezierTo(long ptr long) PolyBezierTo32
+The 'PolyBezierTo32' at the end of the line is which Wine function to use
+for the implementation.
+
+3. Implement the function as a stub. Once you add the function to the .spec
+file, you must add the function to the Wine source before it will link.
+Add a function called 'PolyBezierTo32' somewhere. Good things to put
+into a stub:
+  o a correct prototype, including the WINAPI
+  o header comments, including full documentation for the function and
+    arguments
+  o A FIXME message and an appropriate return value are good things to
+    put in a stub.
+
+  /************************************************************
+   *  PolyBezierTo32   (GDI32.269)  Draw many Bezier curves
+   *
+   * BUGS
+   *   Unimplemented
+   */
+   BOOL32 WINAPI PolyBezierTo32(HDC32 hdc, LPCVOID p, DWORD count) {
+	/* tell the user they've got a substandard implementation */
+      FIXME(gdi, ":(%x,%p,%d): stub\n", hdc, p, count);
+	/* some programs may be able to compensate, 
+           if they know what happened */
+      SetLastError(ERROR_CALL_NOT_IMPLEMENTED);  
+      return FALSE;    /* error value */
+   }
+
+4. Implement and test the function.
 
 MEMORY AND SEGMENTS
 ===================
@@ -147,8 +201,10 @@ the correct 'xxx' function or type for Winelib. When compiling the
 emulator, 'xxx' is _not_ defined, meaning that you must always specify
 explicitly whether you want the 16-bit or 32-bit version.
 
-Note: if 'xxx' is the same in Win16 and Win32, you can simply use the
-same name as Windows.
+If 'xxx' is the same in Win16 and Win32, or if 'xxx' is Win16 only,
+you can simply use the same name as Windows, i.e. just 'xxx'.  If
+'xxx' is Win32 only, you can use 'xxx' if there are no strings
+involved, otherwise you must use the 'xxx32A' and 'xxx32W' forms.
 
 Examples:
 
@@ -173,7 +229,7 @@ The Winelib user can then say:
     RegisterClass( &wc );
 
 and this will use the correct declaration depending on the definition
-of the symbols WINELIB16, WINELIB32 and UNICODE.
+of the symbols WINELIB and UNICODE.
 
 
 API ENTRY POINTS

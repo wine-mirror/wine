@@ -153,7 +153,7 @@ UINT16 WINAPI ArrangeIconicWindows16( HWND16 parent)
     return ArrangeIconicWindows32(parent);
 }
 /***********************************************************************
- *           ArrangeIconicWindows32   (USER32.6)
+ *           ArrangeIconicWindows32   (USER32.7)
  */
 UINT32 WINAPI ArrangeIconicWindows32( HWND32 parent )
 {
@@ -201,7 +201,7 @@ void WINAPI SwitchToThisWindow16( HWND16 hwnd, BOOL16 restore )
 
 
 /***********************************************************************
- *             SwitchToThisWindow32   (USER32.538)
+ *             SwitchToThisWindow32   (USER32.539)
  */
 void WINAPI SwitchToThisWindow32( HWND32 hwnd, BOOL32 restore )
 {
@@ -254,7 +254,7 @@ void WINAPI GetClientRect16( HWND16 hwnd, LPRECT16 rect )
 
 
 /***********************************************************************
- *           GetClientRect32   (USER32.219)
+ *           GetClientRect32   (USER32.220)
  */
 void WINAPI GetClientRect32( HWND32 hwnd, LPRECT32 rect ) 
 {
@@ -279,7 +279,7 @@ void WINAPI ClientToScreen16( HWND16 hwnd, LPPOINT16 lppnt )
 
 
 /*******************************************************************
- *         ClientToScreen32   (USER32.51)
+ *         ClientToScreen32   (USER32.52)
  */
 BOOL32 WINAPI ClientToScreen32( HWND32 hwnd, LPPOINT32 lppnt )
 {
@@ -298,7 +298,7 @@ void WINAPI ScreenToClient16( HWND16 hwnd, LPPOINT16 lppnt )
 
 
 /*******************************************************************
- *         ScreenToClient32   (USER32.446)
+ *         ScreenToClient32   (USER32.447)
  */
 void WINAPI ScreenToClient32( HWND32 hwnd, LPPOINT32 lppnt )
 {
@@ -394,7 +394,7 @@ HWND16 WINAPI WindowFromPoint16( POINT16 pt )
 
 
 /*******************************************************************
- *         WindowFromPoint32   (USER32.581)
+ *         WindowFromPoint32   (USER32.582)
  */
 HWND32 WINAPI WindowFromPoint32( POINT32 pt )
 {
@@ -418,7 +418,7 @@ HWND16 WINAPI ChildWindowFromPoint16( HWND16 hwndParent, POINT16 pt )
 
 
 /*******************************************************************
- *         ChildWindowFromPoint32   (USER32.48)
+ *         ChildWindowFromPoint32   (USER32.49)
  */
 HWND32 WINAPI ChildWindowFromPoint32( HWND32 hwndParent, POINT32 pt )
 {
@@ -513,7 +513,7 @@ void WINAPI MapWindowPoints16( HWND16 hwndFrom, HWND16 hwndTo,
 
 
 /*******************************************************************
- *         MapWindowPoints32   (USER32.385)
+ *         MapWindowPoints32   (USER32.386)
  */
 void WINAPI MapWindowPoints32( HWND32 hwndFrom, HWND32 hwndTo,
                                LPPOINT32 lppt, UINT32 count )
@@ -540,7 +540,7 @@ BOOL16 WINAPI IsIconic16(HWND16 hWnd)
 
 
 /***********************************************************************
- *           IsIconic32   (USER32.344)
+ *           IsIconic32   (USER32.345)
  */
 BOOL32 WINAPI IsIconic32(HWND32 hWnd)
 {
@@ -560,7 +560,7 @@ BOOL16 WINAPI IsZoomed16(HWND16 hWnd)
 
 
 /***********************************************************************
- *           IsZoomed   (USER32.351)
+ *           IsZoomed   (USER32.352)
  */
 BOOL32 WINAPI IsZoomed32(HWND32 hWnd)
 {
@@ -579,7 +579,7 @@ HWND16 WINAPI GetActiveWindow16(void)
 }
 
 /*******************************************************************
- *         GetActiveWindow    (USER32.204)
+ *         GetActiveWindow    (USER32.205)
  */
 HWND32 WINAPI GetActiveWindow32(void)
 {
@@ -608,7 +608,7 @@ HWND16 WINAPI SetActiveWindow16( HWND16 hwnd )
 
 
 /*******************************************************************
- *         SetActiveWindow32    (USER32.462)
+ *         SetActiveWindow32    (USER32.463)
  */
 HWND32 WINAPI SetActiveWindow32( HWND32 hwnd )
 {
@@ -668,7 +668,7 @@ HWND16 WINAPI GetShellWindow16(void)
 }
 
 /*******************************************************************
- *         SetShellWindow32    (USER32.287)
+ *         SetShellWindow32    (USER32.504)
  */
 HWND32 WINAPI SetShellWindow32(HWND32 hwndshell)
 {
@@ -697,7 +697,7 @@ BOOL16 WINAPI BringWindowToTop16( HWND16 hwnd )
 
 
 /***********************************************************************
- *           BringWindowToTop32   (USER32.10)
+ *           BringWindowToTop32   (USER32.11)
  */
 BOOL32 WINAPI BringWindowToTop32( HWND32 hwnd )
 {
@@ -716,7 +716,7 @@ BOOL16 WINAPI MoveWindow16( HWND16 hwnd, INT16 x, INT16 y, INT16 cx, INT16 cy,
 
 
 /***********************************************************************
- *           MoveWindow32   (USER32.398)
+ *           MoveWindow32   (USER32.399)
  */
 BOOL32 WINAPI MoveWindow32( HWND32 hwnd, INT32 x, INT32 y, INT32 cx, INT32 cy,
                             BOOL32 repaint )
@@ -1111,7 +1111,7 @@ UINT16 WINAPI GetInternalWindowPos16( HWND16 hwnd, LPRECT16 rectWnd,
 
 
 /***********************************************************************
- *           GetInternalWindowPos32   (USER32.244)
+ *           GetInternalWindowPos32   (USER32.245)
  */
 UINT32 WINAPI GetInternalWindowPos32( HWND32 hwnd, LPRECT32 rectWnd,
                                       LPPOINT32 ptIcon )
@@ -1156,7 +1156,7 @@ BOOL16 WINAPI GetWindowPlacement16( HWND16 hwnd, WINDOWPLACEMENT16 *wndpl )
 
 
 /***********************************************************************
- *           GetWindowPlacement32   (USER32.306)
+ *           GetWindowPlacement32   (USER32.307)
  */
 BOOL32 WINAPI GetWindowPlacement32( HWND32 hwnd, WINDOWPLACEMENT32 *pwpl32 )
 {
@@ -1238,7 +1238,7 @@ BOOL16 WINAPI SetWindowPlacement16(HWND16 hwnd, const WINDOWPLACEMENT16 *wndpl)
 }
 
 /***********************************************************************
- *           SetWindowPlacement32   (USER32.518)
+ *           SetWindowPlacement32   (USER32.519)
  */
 BOOL32 WINAPI SetWindowPlacement32( HWND32 hwnd, const WINDOWPLACEMENT32 *pwpl32 )
 {
@@ -1289,7 +1289,7 @@ void WINAPI SetInternalWindowPos16( HWND16 hwnd, UINT16 showCmd,
 
 
 /***********************************************************************
- *           SetInternalWindowPos32   (USER32.482)
+ *           SetInternalWindowPos32   (USER32.483)
  */
 void WINAPI SetInternalWindowPos32( HWND32 hwnd, UINT32 showCmd,
                                     LPRECT32 rect, LPPOINT32 pt )
@@ -2042,7 +2042,7 @@ BOOL16 WINAPI SetWindowPos16( HWND16 hwnd, HWND16 hwndInsertAfter,
 }
 
 /***********************************************************************
- *           SetWindowPos   (USER32.519)
+ *           SetWindowPos   (USER32.520)
  */
 BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
                               INT32 x, INT32 y, INT32 cx, INT32 cy, WORD flags)
@@ -2054,6 +2054,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     HWND32	tempInsertAfter= 0;
     int 	result = 0;
     UINT32 	uFlags = 0;
+    BOOL32      resync = FALSE;
 
     TRACE(win,"hwnd %04x, (%i,%i)-(%i,%i) flags %08x\n", 
 						 hwnd, x, y, x+cx, y+cy, flags);  
@@ -2324,6 +2325,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
               winpos.hwndInsertAfter = tempInsertAfter;
 	    }
             TSXMapWindow( display, wndPtr->window );
+            if (wndPtr->flags & WIN_MANAGED) resync = TRUE;
 
 	    /* If focus was set to an unmapped window, reset X focus now */
 	    focus = curr = GetFocus32();
@@ -2398,9 +2400,13 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 
     TRACE(win,"\tstatus flags = %04x\n", winpos.flags & SWP_AGG_STATUSFLAGS);
 
-    if ( ((winpos.flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) && 
-	 !(winpos.flags & SWP_NOSENDCHANGING))
+    if ( resync ||
+        (((winpos.flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) && 
+         !(winpos.flags & SWP_NOSENDCHANGING)) )
+    {
         SendMessage32A( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
+        if (resync) EVENT_Synchronize ();
+    }
 
     return TRUE;
 }
@@ -2416,7 +2422,7 @@ HDWP16 WINAPI BeginDeferWindowPos16( INT16 count )
 
 
 /***********************************************************************
- *           BeginDeferWindowPos32   (USER32.8)
+ *           BeginDeferWindowPos32   (USER32.9)
  */
 HDWP32 WINAPI BeginDeferWindowPos32( INT32 count )
 {
@@ -2449,7 +2455,7 @@ HDWP16 WINAPI DeferWindowPos16( HDWP16 hdwp, HWND16 hwnd, HWND16 hwndAfter,
 
 
 /***********************************************************************
- *           DeferWindowPos32   (USER32.127)
+ *           DeferWindowPos32   (USER32.128)
  */
 HDWP32 WINAPI DeferWindowPos32( HDWP32 hdwp, HWND32 hwnd, HWND32 hwndAfter,
                                 INT32 x, INT32 y, INT32 cx, INT32 cy,
@@ -2537,7 +2543,7 @@ BOOL16 WINAPI EndDeferWindowPos16( HDWP16 hdwp )
 
 
 /***********************************************************************
- *           EndDeferWindowPos32   (USER32.172)
+ *           EndDeferWindowPos32   (USER32.173)
  */
 BOOL32 WINAPI EndDeferWindowPos32( HDWP32 hdwp )
 {

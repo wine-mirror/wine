@@ -824,6 +824,38 @@ static void fLock( CONTEXT * context )
      }
 } 
 
+static BOOL32
+INT21_networkfunc (CONTEXT *context)
+{
+     switch (AL_reg(context)) {
+     case 0x00: /* Get machine name. */
+     {
+	  char *dst = PTR_SEG_OFF_TO_LIN (DS_reg(context),DX_reg(context));
+	  TRACE(int21, "getting machine name to %p\n", dst);
+	  if (gethostname (dst, 15))
+	  {
+	       WARN(int21,"failed!\n");
+	       DOS_ERROR( ER_NoNetwork, EC_NotFound, SA_Abort, EL_Network );
+	       return TRUE;
+	  } else {
+	       int len = strlen (dst);
+	       while (len < 15)
+		    dst[len++] = ' ';
+	       dst[15] = 0;
+	       CH_reg(context) = 1; /* Valid */
+	       CL_reg(context) = 1; /* NETbios number??? */
+	       TRACE(int21, "returning %s\n", debugstr_an (dst, 16));
+	       return FALSE;
+	  }
+     }
+
+     default:
+	  DOS_ERROR( ER_NoNetwork, EC_NotFound, SA_Abort, EL_Network );
+	  return TRUE;
+     }
+}
+
+
 SEGPTR INT21_GetListOfLists()
 {
 	static DOS_LISTOFLISTS *LOL;
@@ -891,13 +923,15 @@ void WINAPI DOS3Call( CONTEXT *context )
 {
     BOOL32	bSetDOSExtendedError = FALSE;
 
-    /*    TRACE(int21, "AX=%04x BX=%04x CX=%04x DX=%04x "
-                 "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
-                 AX_reg(context), BX_reg(context), CX_reg(context),
-                 DX_reg(context), SI_reg(context), DI_reg(context),
-                 (WORD)DS_reg(context), (WORD)ES_reg(context),
-                 EFL_reg(context) );
-		 */
+#if 0
+    TRACE(int21, "AX=%04x BX=%04x CX=%04x DX=%04x "
+	  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
+	  AX_reg(context), BX_reg(context), CX_reg(context), DX_reg(context),
+	  SI_reg(context), DI_reg(context),
+	  (WORD)DS_reg(context), (WORD)ES_reg(context),
+	  EFL_reg(context) );
+#endif
+
     if (AH_reg(context) == 0x59)  /* Get extended error info */
     {
         TRACE(int21, "GET EXTENDED ERROR code 0x%02x class 0x%02x action 0x%02x locus %02x\n",
@@ -1526,11 +1560,14 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 
     case 0x5d: /* NETWORK */
-    case 0x5e:
-        TRACE(int21,"Network function AX=%04x\n",AX_reg(context));
-        /* network software not installed */
+        FIXME(int21,"Function 0x%04x not implemented.\n", AX_reg (context));
+	/* Fix the following while you're at it.  */
         DOS_ERROR( ER_NoNetwork, EC_NotFound, SA_Abort, EL_Network );
 	bSetDOSExtendedError = TRUE;
+        break;
+
+    case 0x5e:
+	bSetDOSExtendedError = INT21_networkfunc (context);
         break;
 
     case 0x5f: /* NETWORK */

@@ -66,7 +66,7 @@ HANDLE16 WINAPI GetProp16( HWND16 hwnd, LPCSTR str )
 
 
 /***********************************************************************
- *           GetProp32A   (USER32.280)
+ *           GetProp32A   (USER32.281)
  */
 HANDLE32 WINAPI GetProp32A( HWND32 hwnd, LPCSTR str )
 {
@@ -84,7 +84,7 @@ HANDLE32 WINAPI GetProp32A( HWND32 hwnd, LPCSTR str )
 
 
 /***********************************************************************
- *           GetProp32W   (USER32.281)
+ *           GetProp32W   (USER32.282)
  */
 HANDLE32 WINAPI GetProp32W( HWND32 hwnd, LPCWSTR str )
 {
@@ -109,7 +109,7 @@ BOOL16 WINAPI SetProp16( HWND16 hwnd, LPCSTR str, HANDLE16 handle )
 
 
 /***********************************************************************
- *           SetProp32A   (USER32.496)
+ *           SetProp32A   (USER32.497)
  */
 BOOL32 WINAPI SetProp32A( HWND32 hwnd, LPCSTR str, HANDLE32 handle )
 {
@@ -141,7 +141,7 @@ BOOL32 WINAPI SetProp32A( HWND32 hwnd, LPCSTR str, HANDLE32 handle )
 
 
 /***********************************************************************
- *           SetProp32W   (USER32.497)
+ *           SetProp32W   (USER32.498)
  */
 BOOL32 WINAPI SetProp32W( HWND32 hwnd, LPCWSTR str, HANDLE32 handle )
 {
@@ -167,7 +167,7 @@ HANDLE16 WINAPI RemoveProp16( HWND16 hwnd, LPCSTR str )
 
 
 /***********************************************************************
- *           RemoveProp32A   (USER32.441)
+ *           RemoveProp32A   (USER32.442)
  */
 HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
 {
@@ -218,7 +218,7 @@ HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
 
 
 /***********************************************************************
- *           RemoveProp32W   (USER32.442)
+ *           RemoveProp32W   (USER32.443)
  */
 HANDLE32 WINAPI RemoveProp32W( HWND32 hwnd, LPCWSTR str )
 {
@@ -280,7 +280,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 
 
 /***********************************************************************
- *           EnumProps32A   (USER32.185)
+ *           EnumProps32A   (USER32.186)
  */
 INT32 WINAPI EnumProps32A( HWND32 hwnd, PROPENUMPROC32A func )
 {
@@ -289,7 +289,7 @@ INT32 WINAPI EnumProps32A( HWND32 hwnd, PROPENUMPROC32A func )
 
 
 /***********************************************************************
- *           EnumProps32W   (USER32.188)
+ *           EnumProps32W   (USER32.189)
  */
 INT32 WINAPI EnumProps32W( HWND32 hwnd, PROPENUMPROC32W func )
 {
@@ -298,7 +298,7 @@ INT32 WINAPI EnumProps32W( HWND32 hwnd, PROPENUMPROC32W func )
 
 
 /***********************************************************************
- *           EnumPropsEx32A   (USER32.186)
+ *           EnumPropsEx32A   (USER32.187)
  */
 INT32 WINAPI EnumPropsEx32A(HWND32 hwnd, PROPENUMPROCEX32A func, LPARAM lParam)
 {
@@ -325,7 +325,7 @@ INT32 WINAPI EnumPropsEx32A(HWND32 hwnd, PROPENUMPROCEX32A func, LPARAM lParam)
 
 
 /***********************************************************************
- *           EnumPropsEx32W   (USER32.187)
+ *           EnumPropsEx32W   (USER32.188)
  */
 INT32 WINAPI EnumPropsEx32W(HWND32 hwnd, PROPENUMPROCEX32W func, LPARAM lParam)
 {

@@ -11,24 +11,8 @@
 #include "windows.h"
 #include "builtin32.h"
 #include "selectors.h"
+#include "debugstr.h"
 #include "debug.h"
-
-static void _dumpstr(unsigned char *s) {
-	fputs("\"",stdout);
-	while (*s) {
-		if (*s<' ') {
-			printf("\\0x%02x",*s++);
-			continue;
-		}
-		if (*s=='\\') {
-			fputs("\\\\",stdout);
-			s++;
-			continue;
-		}
-		fputc(*s++,stdout);
-	}
-	fputs("\"",stdout);
-}
 
 /***********************************************************************
  *           RELAY_CallFrom32
@@ -69,11 +53,11 @@ int RELAY_CallFrom32( int ret_addr, ... )
                 lstrcpynWtoA( buff, (LPWSTR)args[i], sizeof(buff) );
 		buff[sizeof(buff)-1]='\0';
 	    	printf( "%08x L", args[i] );
-		_dumpstr((unsigned char*)buff);
+		debug_dumpstr( buff );
 	    }
             else {
 	    	printf( "%08x ", args[i] );
-		_dumpstr((unsigned char*)args[i]);
+		debug_dumpstr((LPCSTR)args[i]);
 	    }
 	}
         else printf( "%08x", args[i] );
@@ -170,19 +154,45 @@ int RELAY_CallFrom32( int ret_addr, ... )
 /***********************************************************************
  *           RELAY_CallFrom32Regs
  *
- * 'stack' points to the relay addr on the stack.
- * Stack layout:
- *  ...      ...
- * (esp+216) ret_addr
- * (esp+212) return to relay debugging code (only when debugging(relay))
- * (esp+208) entry point to call
- * (esp+4)   CONTEXT
- * (esp)     return addr to relay code
+ * 'context' contains the register contents at the point of call of
+ * the REG_ENTRY_POINT. The stack layout of the stack pointed to by
+ * ESP_reg(&context) is as follows:
+ *
+ * If debugmsg(relay) is OFF:
+ *  ...    ...
+ * (esp+4) args
+ * (esp)   return addr to caller
+ * (esp-4) function entry point
+ *
+ * If debugmsg(relay) is ON:
+ *  ...    ...
+ * (esp+8) args
+ * (esp+4) return addr to caller
+ * (esp)   return addr to DEBUG_ENTRY_POINT
+ * (esp-4) function entry point
+ *
+ * As the called function might change the stack layout
+ * (e.g. FT_Prolog, FT_ExitNN), we remove all modifications to the stack,
+ * so that the called function sees (in both cases):
+ *
+ *  ...    ...
+ * (esp+4) args
+ * (esp)   return addr to caller
+ *  ...    >128 bytes space free to be modified (ensured by the assembly glue)
+ *
+ * NOTE: This routine makes no assumption about the relative position of
+ *       its own stack to the stack pointed to by ESP_reg(&context),
+ *	 except that the latter must have >128 bytes space to grow.
+ *	 This means the assembly glue could even switch stacks completely
+ *	 (e.g. to allow for large stacks).
+ *
  */
-void RELAY_CallFrom32Regs( CONTEXT context,
-                           void (CALLBACK *entry_point)(CONTEXT *),
-                           BYTE *relay_addr, int ret_addr )
+
+void RELAY_CallFrom32Regs( CONTEXT context )
 {
+    void (CALLBACK *entry_point)(CONTEXT *) = 
+	 *(void (CALLBACK **)(CONTEXT *)) (ESP_reg(&context) - 4);
+
     if (!TRACE_ON(relay))
     {
         /* Simply call the entry point */
@@ -192,16 +202,25 @@ void RELAY_CallFrom32Regs( CONTEXT context,
     {
         char buffer[80];
         unsigned int typemask;
+	BYTE *relay_addr;
 
     	__RESTORE_ES;
-        /* Fixup the context structure because of the extra parameter */
-        /* pushed by the relay debugging code */
 
-        EIP_reg(&context) = ret_addr;
-        ESP_reg(&context) += sizeof(int);
+        /*
+	 * Fixup the context structure because of the extra parameter
+         * pushed by the relay debugging code.
+	 * Note that this implicitly does a RET on the CALL from the
+	 * DEBUG_ENTRY_POINT to the REG_ENTRY_POINT;  setting the EIP register
+	 * ensures that the assembly glue will directly return to the
+	 * caller, just as in the non-debugging case.
+	 */
+
+        relay_addr = *(BYTE **) ESP_reg(&context); 
+        ESP_reg(&context) += sizeof(BYTE *);
+	EIP_reg(&context) = *(DWORD *)ESP_reg(&context);
 
         BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask );
-        printf("Call %s(regs) ret=%08x\n", buffer, ret_addr );
+        printf("Call %s(regs) ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
         printf(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
                 EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
                 EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
@@ -213,7 +232,7 @@ void RELAY_CallFrom32Regs( CONTEXT context,
         /* Now call the real function */
         entry_point( &context );
 
-        printf("Ret  %s() retval=regs ret=%08x\n", buffer, ret_addr );
+        printf("Ret  %s() retval=regs ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
         printf(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
                 EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
                 EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );

@@ -11,8 +11,8 @@ struct _IMAGELIST
 {
     HBITMAP32 hbmImage;
     HBITMAP32 hbmMask;
-    HBRUSH32  hbrushBlend25;
-    HBRUSH32  hbrushBlend50;
+    HBRUSH32  hbrBlend25;
+    HBRUSH32  hbrBlend50;
     COLORREF  clrBk;
     INT32     cInitial;
     INT32     cGrow;

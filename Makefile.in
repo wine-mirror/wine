@@ -128,7 +128,7 @@ install_lib: install_includes
 
 install_includes: dummy
 	if [ -d $(includedir) ]; then : ; else $(MKDIR) $(includedir); fi 
-	cd include; $(INSTALL_DATA) windows.h wintypes.h $(includedir)
+	cd $(TOPSRCDIR)/include; $(INSTALL_DATA) windows.h wintypes.h $(includedir)
 
 $(ALLSUBDIRS): dummy
 	@cd $@; $(SUBMAKE)

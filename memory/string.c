@@ -542,7 +542,7 @@ void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
 
 
 /***********************************************************************
- *           CharToOem32A   (USER32.36)
+ *           CharToOem32A   (USER32.37)
  */
 BOOL32 WINAPI CharToOem32A( LPCSTR s, LPSTR d )
 {
@@ -556,7 +556,7 @@ BOOL32 WINAPI CharToOem32A( LPCSTR s, LPSTR d )
 
 
 /***********************************************************************
- *           CharToOemBuff32A   (USER32.37)
+ *           CharToOemBuff32A   (USER32.38)
  */
 BOOL32 WINAPI CharToOemBuff32A( LPCSTR s, LPSTR d, DWORD len )
 {
@@ -566,7 +566,7 @@ BOOL32 WINAPI CharToOemBuff32A( LPCSTR s, LPSTR d, DWORD len )
 
 
 /***********************************************************************
- *           CharToOemBuff32W   (USER32.38)
+ *           CharToOemBuff32W   (USER32.39)
  */
 BOOL32 WINAPI CharToOemBuff32W( LPCWSTR s, LPSTR d, DWORD len )
 {
@@ -576,7 +576,7 @@ BOOL32 WINAPI CharToOemBuff32W( LPCWSTR s, LPSTR d, DWORD len )
 
 
 /***********************************************************************
- *           CharToOem32W   (USER32.39)
+ *           CharToOem32W   (USER32.40)
  */
 BOOL32 WINAPI CharToOem32W( LPCWSTR s, LPSTR d )
 {
@@ -590,7 +590,7 @@ BOOL32 WINAPI CharToOem32W( LPCWSTR s, LPSTR d )
 
 
 /***********************************************************************
- *           OemToChar32A   (USER32.401)
+ *           OemToChar32A   (USER32.402)
  */
 BOOL32 WINAPI OemToChar32A( LPCSTR s, LPSTR d )
 {
@@ -603,7 +603,7 @@ BOOL32 WINAPI OemToChar32A( LPCSTR s, LPSTR d )
 
 
 /***********************************************************************
- *           OemToCharBuff32A   (USER32.402)
+ *           OemToCharBuff32A   (USER32.403)
  */
 BOOL32 WINAPI OemToCharBuff32A( LPCSTR s, LPSTR d, DWORD len )
 {
@@ -614,7 +614,7 @@ BOOL32 WINAPI OemToCharBuff32A( LPCSTR s, LPSTR d, DWORD len )
 
 
 /***********************************************************************
- *           OemToCharBuff32W   (USER32.403)
+ *           OemToCharBuff32W   (USER32.404)
  */
 BOOL32 WINAPI OemToCharBuff32W( LPCSTR s, LPWSTR d, DWORD len )
 {
@@ -625,7 +625,7 @@ BOOL32 WINAPI OemToCharBuff32W( LPCSTR s, LPWSTR d, DWORD len )
 
 
 /***********************************************************************
- *           OemToChar32W   (USER32.404)
+ *           OemToChar32W   (USER32.405)
  */
 BOOL32 WINAPI OemToChar32W( LPCSTR s, LPWSTR d )
 {

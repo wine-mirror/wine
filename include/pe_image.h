@@ -42,6 +42,8 @@ extern HRSRC32 PE_FindResourceEx32W(HINSTANCE32,LPCWSTR,LPCWSTR,WORD);
 extern DWORD PE_SizeofResource32(HINSTANCE32,HRSRC32);
 extern HMODULE32 PE_LoadLibraryEx32A(LPCSTR,struct _PDB32*,HFILE32,DWORD);
 extern HGLOBAL32 PE_LoadResource32(HINSTANCE32,HRSRC32);
+extern HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs,
+                                  LPCSTR cmd_line, LPCSTR env, UINT16 showCmd);
 
 struct _PDB32; /* forward definition */
 struct _THDB; /* forward definition */

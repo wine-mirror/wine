@@ -89,8 +89,9 @@ static HFILE32 FILE_Alloc( FILE_OBJECT **file )
     (*file)->unix_name = NULL;
     (*file)->type = FILE_TYPE_DISK;
 
-    handle = HANDLE_Alloc( &(*file)->header, FILE_ALL_ACCESS | GENERIC_READ |
-                           GENERIC_WRITE | GENERIC_EXECUTE /*FIXME*/, FALSE );
+    handle = HANDLE_Alloc( PROCESS_Current(), &(*file)->header,
+                           FILE_ALL_ACCESS | GENERIC_READ |
+                           GENERIC_WRITE | GENERIC_EXECUTE /*FIXME*/, TRUE );
     /* If the allocation failed, the object is already destroyed */
     if (handle == INVALID_HANDLE_VALUE32) *file = NULL;
     return handle;
@@ -187,7 +188,8 @@ static void FILE_Destroy( K32OBJ *ptr )
  */
 static FILE_OBJECT *FILE_GetFile( HFILE32 handle )
 {
-    return (FILE_OBJECT *)HANDLE_GetObjPtr( handle, K32OBJ_FILE, 0 /*FIXME*/ );
+    return (FILE_OBJECT *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
+                                            K32OBJ_FILE, 0 /*FIXME*/ );
 }
 
 
@@ -359,7 +361,7 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode )
 		return ret;
 
 	/* Do not silence this please. It is a critical error. -MM */
-        fprintf(stderr, "FILE_Open: Couldn't open device '%s'!\n",path);
+        ERR(file, "Couldn't open device '%s'!\n",path);
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return HFILE_ERROR32;
 	
@@ -389,7 +391,7 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
 
     if (DOSFS_IsDevice( path ))
     {
-        fprintf(stderr, "FILE_Create: cannot create DOS device '%s'!\n", path);
+        WARN(file, "cannot create DOS device '%s'!\n", path);
         DOS_ERROR( ER_AccessDenied, EC_NotFound, SA_Abort, EL_Disk );
         return INVALID_HANDLE_VALUE32;
     }
@@ -579,13 +581,12 @@ INT32 WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
  */
 HFILE32 FILE_Dup( HFILE32 hFile )
 {
-    FILE_OBJECT *file;
     HFILE32 handle;
 
     TRACE(file, "FILE_Dup for handle %d\n", hFile );
-    if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR32;
-    handle = HANDLE_Alloc( &file->header, FILE_ALL_ACCESS /*FIXME*/, FALSE );
-    FILE_ReleaseFile( file );
+    if (!DuplicateHandle( GetCurrentProcess(), hFile, GetCurrentProcess(),
+                          &handle, FILE_ALL_ACCESS /* FIXME */, FALSE, 0 ))
+        handle = HFILE_ERROR32;
     TRACE(file, "FILE_Dup return handle %d\n", handle );
     return handle;
 }
@@ -603,7 +604,8 @@ HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 )
     TRACE(file, "FILE_Dup2 for handle %d\n", hFile1 );
     /* FIXME: should use DuplicateHandle */
     if (!(file = FILE_GetFile( hFile1 ))) return HFILE_ERROR32;
-    if (!HANDLE_SetObjPtr( hFile2, &file->header, 0 )) hFile2 = HFILE_ERROR32;
+    if (!HANDLE_SetObjPtr( PROCESS_Current(), hFile2, &file->header, 0 ))
+        hFile2 = HFILE_ERROR32;
     FILE_ReleaseFile( file );
     return hFile2;
 }
@@ -624,8 +626,7 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
         !DRIVE_IsValid( toupper(drive & ~TF_FORCEDRIVE) - 'A' ))
     {
         drive &= ~TF_FORCEDRIVE;
-        fprintf( stderr, "Warning: GetTempFileName: invalid drive %d specified\n",
-                 drive );
+        WARN(file, "invalid drive %d specified\n", drive );
     }
 
     if (drive & TF_FORCEDRIVE)
@@ -691,10 +692,8 @@ UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
         /* Check if we have write access in the directory */
         if ((p = strrchr( full_name.long_name, '/' ))) *p = '\0';
         if (access( full_name.long_name, W_OK ) == -1)
-            fprintf( stderr,
-                     "Warning: GetTempFileName returns '%s', which doesn't seem to be writeable.\n"
-                     "Please check your configuration file if this generates a failure.\n",
-                     buffer);
+            WARN(file, "returns '%s', which doesn't seem to be writeable.\n",
+		 buffer);
     }
     TRACE(file, "returning %s\n", buffer );
     return unique ? unique : num;
@@ -745,8 +744,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     if (mode & OF_REOPEN) name = ofs->szPathName;
 
     if (!name) {
-	fprintf(stderr, "ERROR: FILE_DoOpenFile() called with `name' set to NULL ! Please debug.\n");
- 
+	ERR(file, "called with `name' set to NULL ! Please debug.\n");
 	return HFILE_ERROR32;
     }
 
@@ -930,7 +928,8 @@ UINT32 WINAPI _lread32( HFILE32 handle, LPVOID buffer, UINT32 count )
     BOOL32 result = FALSE;
 
     TRACE( file, "%d %p %d\n", handle, buffer, count);
-    if (!(ptr = HANDLE_GetObjPtr( handle, K32OBJ_UNKNOWN, 0))) return -1;
+    if (!(ptr = HANDLE_GetObjPtr( PROCESS_Current(), handle,
+                                  K32OBJ_UNKNOWN, 0))) return -1;
     if (K32OBJ_OPS(ptr)->read)
         result = K32OBJ_OPS(ptr)->read(ptr, buffer, count, &numWritten, NULL);
     K32OBJ_DecCount( ptr );
@@ -992,12 +991,12 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
 
     if (highword && *highword)
     {
-        fprintf( stderr, "SetFilePointer: 64-bit offsets not supported yet\n");
+        FIXME(file, "64-bit offsets not supported yet\n");
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0xffffffff;
     }
     TRACE(file, "handle %d offset %ld origin %ld\n",
-                  hFile, distance, method );
+	  hFile, distance, method );
 
     if (!(file = FILE_GetFile( hFile ))) return 0xffffffff;
     switch(method)
@@ -1143,7 +1142,8 @@ LONG WINAPI _hwrite32( HFILE32 handle, LPCSTR buffer, LONG count )
 		}
 	}
 	
-	if (!(ioptr = HANDLE_GetObjPtr( handle, K32OBJ_UNKNOWN, 0 )))
+	if (!(ioptr = HANDLE_GetObjPtr( PROCESS_Current(), handle,
+                                        K32OBJ_UNKNOWN, 0 )))
             return HFILE_ERROR32;
         if (K32OBJ_OPS(ioptr)->write)
             status = K32OBJ_OPS(ioptr)->write(ioptr, buffer, count, &result, NULL);
@@ -1276,7 +1276,7 @@ BOOL32 WINAPI DeleteFile32A( LPCSTR path )
 
     if (DOSFS_IsDevice( path ))
     {
-        fprintf(stderr, "DeleteFile: cannot remove DOS device '%s'!\n", path);
+        WARN(file, "cannot remove DOS device '%s'!\n", path);
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return FALSE;
     }
@@ -1347,7 +1347,7 @@ LPVOID FILE_dommap( FILE_OBJECT *file, LPVOID start,
     LPVOID ret;
 
     if (size_high || offset_high)
-        fprintf( stderr, "FILE_mmap: offsets larger than 4Gb not supported\n");
+        FIXME(file, "offsets larger than 4Gb not supported\n");
 
     if (!file)
     {
@@ -1420,7 +1420,7 @@ LPVOID FILE_dommap( FILE_OBJECT *file, LPVOID start,
 int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low )
 {
     if (size_high)
-      fprintf( stderr, "FILE_munmap: offsets larger than 4Gb not supported\n");
+      FIXME(file, "offsets larger than 4Gb not supported\n");
     return munmap( start, size_low );
 }
 
@@ -1470,8 +1470,7 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
     else /* fn2 == NULL means delete source */
       if (flag & MOVEFILE_DELAY_UNTIL_REBOOT) {
 	if (flag & MOVEFILE_COPY_ALLOWED) {  
-	  fprintf( stderr,
-		   "MoveFileEx32A: Illegal flag\n");
+	  WARN(file, "Illegal flag\n");
 	  DOS_ERROR( ER_GeneralFailure, EC_SystemFailure, SA_Abort,
 		     EL_Unknown );
 	  return FALSE;
@@ -1480,11 +1479,8 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 	   Perhaps we should queue these command and execute it 
 	   when exiting... What about using on_exit(2)
 	   */
-	fprintf( stderr,"MoveFileEx32A: Please delete file %s\n",
-		 full_name1.long_name);
-	fprintf( stderr,"               when Wine has finished\n");
-	fprintf( stderr,"               like \"rm %s\"\n",
-		 full_name1.long_name);
+	FIXME(file, "Please delete file '%s' when Wine has finished\n",
+	      full_name1.long_name);
 	return TRUE;
       }
       else if (unlink( full_name1.long_name ) == -1)
@@ -1499,13 +1495,9 @@ BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 	   Perhaps we should queue these command and execute it 
 	   when exiting... What about using on_exit(2)
 	   */
-	fprintf( stderr,"MoveFileEx32A: Please move existing file %s\n"
-		 ,full_name1.long_name);
-	fprintf( stderr,"               to file %s\n"
-		 ,full_name2.long_name);
-	fprintf( stderr,"               when Wine has finished\n");
-	fprintf( stderr,"               like \" mv %s %s\"\n",
-		 full_name1.long_name,full_name2.long_name);
+	FIXME(file,"Please move existing file '%s' to file '%s'"
+	      "when Wine has finished\n", 
+	      full_name1.long_name, full_name2.long_name);
 	return TRUE;
     }
 

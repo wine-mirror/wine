@@ -5,6 +5,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include "config.h"
 #include <sys/types.h>
 #include <ctype.h>
 #include <dirent.h>
@@ -17,8 +18,8 @@
 #include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
-#if defined(__svr4__) || defined(_SCO_DS)
-#include <sys/statfs.h>
+#ifdef HAVE_SYS_STATFS_H
+# include <sys/statfs.h>
 #endif
 
 #include "windows.h"
@@ -646,8 +647,7 @@ static int DOSFS_GetPathDrive( const char **name )
     {
         if ((drive = DRIVE_FindDriveRoot( name )) == -1)
         {
-            fprintf( stderr, "Warning: %s not accessible from a DOS drive\n",
-                     *name );
+            MSG("Warning: %s not accessible from a DOS drive\n", *name );
             /* Assume it really was a DOS name */
             drive = DRIVE_GetCurrentDrive();            
         }
@@ -1335,7 +1335,7 @@ void DOSFS_UnixTimeToFileTime( time_t unix_time, FILETIME *filetime,
        Claus Fischer, fischer@iue.tuwien.ac.at
        */
 
-#if __GNUC__
+#if (SIZEOF_LONG_LONG >= 8)
 #  define USE_LONG_LONG 1
 #else
 #  define USE_LONG_LONG 0

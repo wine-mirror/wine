@@ -1,33 +1,57 @@
 #!/usr/bin/perl -w
 # -----------------------------------------------------------------------------
+#
+# Relay-checker.
+#
+# This program will inspect a log file with relay information and tell you
+# whether calls and returns match.  If not, this suggests that the parameter
+# list might be incorrect.  (It could be something else also.)
+#
+# Copyright 1997-1998 Morten Welinder (terra@diku.dk)
+#
+# -----------------------------------------------------------------------------
 
 my $srcfile = $ARGV[0];
 my @callstack = ();
+my $newlineerror = 0;
+my $indentp = 1;
 
 open (IN, "<$srcfile") || die "Cannot open $srcfile for reading: $!\n";
 LINE:
 while (<IN>) {
-    if (/^Call ([A-Za-z0-9]+\.[0-9]+): .*\)/) {
+    if (/^Call ([A-Za-z0-9]+\.\d+): .*\)/) {
 	my $func = $1;
 	if (/ ret=(........)$/ ||
-	    / ret=(....:....) ds=....$/) {
+	    / ret=(....:....) (ds=....)$/ ||
+	    / ret=(........) (fs=....)$/) {
 	    my $retaddr = $1;
-	    push @callstack, [$func,$retaddr];
+	    my $segreg = $2;
+
+	    $segreg = "none" unless defined $segreg;
+	    push @callstack, [$func,$retaddr, $segreg];
 	    next;
 	} else {
 	    # Assume a line got cut by a line feed in a string.
 	    $_ .= scalar (<IN>);
-	    print "[$_]";
+	    if (!$newlineerror) {
+		print "Error: string probably cut by newline.\n";
+		$newlineerror = 1;
+	    }	    
+	    # print "[$_]";
 	    redo;
 	}
     }
 
 
-    if (/^Ret  ([A-Za-z0-9]+\.[0-9]+): .* ret=(........)$/ ||
-	/^Ret  ([A-Za-z0-9]+\.[0-9]+): .* ret=(....:....) ds=....$/) {
+    if (/^Ret  ([A-Za-z0-9]+\.\d+): .* ret=(........)$/ ||
+	/^Ret  ([A-Za-z0-9]+\.\d+): .* ret=(....:....) (ds=....)$/ ||
+	/^Ret  ([A-Za-z0-9]+\.\d+): .* ret=(........) (fs=....)$/) {
 	my $func = $1;
 	my $retaddr = $2;
-	my ($topfunc,$topaddr);
+	my $segreg = $3;
+	my ($topfunc,$topaddr,$topseg);
+
+	$segreg = "none" unless defined $segreg;
 
       POP:
 	while (1) {
@@ -36,7 +60,7 @@ while (<IN>) {
 		next LINE;
 	    }
 
-	    ($topfunc,$topaddr) = @{pop @callstack};
+	    ($topfunc,$topaddr,$topseg) = @{pop @callstack};
 
 	    if ($topfunc ne $func) {
 		print "Error: Return from $topfunc, but call from $func.\n";
@@ -45,10 +69,16 @@ while (<IN>) {
 	    last POP;
 	}
 
-	if ($topaddr eq $retaddr) {
-	    print "OK: $func from $retaddr.\n";
+	my $addrok = ($topaddr eq $retaddr);
+	my $segok = ($topseg eq $segreg);
+	if ($addrok && $segok) {
+	    print "OK: ", ($indentp ? (' ' x (1 + $#callstack)) : '');
+	    print "$func from $retaddr with $segreg.\n";
 	} else {
-	    print "Error: Return from $func is to $retaddr, not $topaddr.\n";
+	    print "Error: Return from $func is to $retaddr, not $topaddr.\n"
+		if !$addrok;
+	    print "Error: Return from $func with segreg $segreg, not $topseg.\n"
+		if !$segok;
 	}    
     }
 }

@@ -278,8 +278,8 @@ file	krnl386.exe
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
 357 stub KERNEL_357
-358 pascal KERNEL_358(long) _KERNEL_358
-359 pascal KERNEL_359(long) _KERNEL_359
+358 pascal MapLS(long) MapLS
+359 pascal UnMapLS(ptr) UnMapLS
 360 stub OpenFileEx
 #361 PIGLET_361
 365 stub KERNEL_365

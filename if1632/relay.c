@@ -13,6 +13,7 @@
 #include "module.h"
 #include "stackframe.h"
 #include "task.h"
+#include "debugstr.h"
 #include "debug.h"
 
 #if 0
@@ -33,8 +34,10 @@ BOOL32 RELAY_Init(void)
 
     extern void CALLTO16_Start(), CALLTO16_End();
     extern void CALLTO16_Ret_word(), CALLTO16_Ret_long();
+    extern void CALLTO16_Ret_eax();
     extern DWORD CALLTO16_RetAddr_word;
     extern DWORD CALLTO16_RetAddr_long;
+    extern DWORD CALLTO16_RetAddr_eax;
 
     codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALLTO16_Start,
                                    (int)CALLTO16_End - (int)CALLTO16_Start,
@@ -47,6 +50,8 @@ BOOL32 RELAY_Init(void)
                                     codesel );
     CALLTO16_RetAddr_long=MAKELONG( (int)CALLTO16_Ret_long-(int)CALLTO16_Start,
                                     codesel );
+    CALLTO16_RetAddr_eax =MAKELONG( (int)CALLTO16_Ret_eax -(int)CALLTO16_Start,
+                                    codesel );
 
     /* Create built-in modules */
     if (!BUILTIN_Init()) return FALSE;
@@ -55,19 +60,6 @@ BOOL32 RELAY_Init(void)
     return THUNK_Init();
 }
 
-
- 
-static void RELAY_dumpstr( unsigned char *s )
-{
-    fputc( '\"', stdout );
-    for ( ; *s; s++)
-    {
-        if (*s < ' ') printf( "\\0x%02x", *s );
-        else if (*s == '\\') fputs( "\\\\", stdout );
-        else fputc( *s, stdout );
-    }
-    fputc( '\"', stdout );
-}
 
 
 /***********************************************************************
@@ -107,7 +99,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
             case 't':
                 printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 if (HIWORD(*(SEGPTR *)args16))
-                    RELAY_dumpstr( (LPBYTE)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                    debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
                 args16 += 4;
                 break;
             case 'p':
@@ -117,7 +109,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
             case 'T':
                 printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 if (HIWORD( *(SEGPTR *)args16 ))
-                    RELAY_dumpstr( (LPBYTE)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                    debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
                 args16 += 4;
                 break;
             }
@@ -162,7 +154,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
                 args16 -= 4;
                 printf( "0x%08x", *(int *)args16 );
                 if (HIWORD(*(SEGPTR *)args16))
-                    RELAY_dumpstr( (LPBYTE)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                    debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
                 break;
             case 'p':
                 args16 -= 4;
@@ -172,7 +164,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
                 args16 -= 4;
                 printf( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 if (HIWORD( *(SEGPTR *)args16 ))
-                    RELAY_dumpstr( (LPBYTE)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                    debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
                 break;
             }
             args++;

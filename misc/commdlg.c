@@ -27,6 +27,7 @@ static HBITMAP16 hFloppy = 0;
 static HBITMAP16 hHDisk = 0;
 static HBITMAP16 hCDRom = 0;
 static HBITMAP16 hBitmapTT = 0;
+static const char defaultfilter[]=" \0\0";
 
 /***********************************************************************
  * 				FileDlg_Init			[internal]
@@ -36,11 +37,11 @@ static BOOL32 FileDlg_Init()
     static BOOL32 initialized = 0;
     
     if (!initialized) {
-	if (!hFolder) hFolder = LoadBitmap16(0, MAKEINTRESOURCE(OBM_FOLDER));
-	if (!hFolder2) hFolder2 = LoadBitmap16(0, MAKEINTRESOURCE(OBM_FOLDER2));
-	if (!hFloppy) hFloppy = LoadBitmap16(0, MAKEINTRESOURCE(OBM_FLOPPY));
-	if (!hHDisk) hHDisk = LoadBitmap16(0, MAKEINTRESOURCE(OBM_HDISK));
-	if (!hCDRom) hCDRom = LoadBitmap16(0, MAKEINTRESOURCE(OBM_CDROM));
+	if (!hFolder) hFolder = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_FOLDER));
+	if (!hFolder2) hFolder2 = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_FOLDER2));
+	if (!hFloppy) hFloppy = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_FLOPPY));
+	if (!hHDisk) hHDisk = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_HDISK));
+	if (!hCDRom) hCDRom = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_CDROM));
 	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
 	    hHDisk == 0 || hCDRom == 0)
 	{	
@@ -63,6 +64,8 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
     HWND32 hwndDialog;
     LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(ofn);
     LPCVOID template;
+    char defaultopen[]="Open File";
+    char *str=0,*str1=0;
 
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
@@ -78,7 +81,7 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
 	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
 	    {
 		if (!(hResInfo = FindResource32A(lpofn->hInstance,
-						PTR_SEG_TO_LIN(lpofn->lpTemplateName), (LPSTR)RT_DIALOG)))
+						PTR_SEG_TO_LIN(lpofn->lpTemplateName), RT_DIALOG32A)))
 		{
 		    CommDlgLastError = CDERR_FINDRESFAILURE;
 		    return FALSE;
@@ -105,7 +108,8 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
 	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
 	    {
 		if (!(hResInfo = FindResource16(lpofn->hInstance,
-						lpofn->lpTemplateName, RT_DIALOG)))
+						lpofn->lpTemplateName,
+                                                RT_DIALOG16)))
 		{
 		    CommDlgLastError = CDERR_FINDRESFAILURE;
 		    return FALSE;
@@ -123,12 +127,43 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
     }
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
+
+    if (!(lpofn->lpstrFilter))
+      {
+       str = SEGPTR_ALLOC(sizeof(defaultfilter));
+       TRACE(commdlg,"Alloc %p default for Filetype in GetOpenFileName\n",str);
+       memcpy(str,defaultfilter,sizeof(defaultfilter));
+       lpofn->lpstrFilter=SEGPTR_GET(str);
+      }
+
+    if (!(lpofn->lpstrTitle))
+      {
+       str1 = SEGPTR_ALLOC(strlen(defaultopen)+1);
+       TRACE(commdlg,"Alloc %p default for Title in GetOpenFileName\n",str1);
+       strcpy(str1,defaultopen);
+       lpofn->lpstrTitle=SEGPTR_GET(str1);
+      }
+
     /* FIXME: doesn't handle win32 format correctly yet */
     hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
                                         lpofn->hwndOwner,
                                         (DLGPROC16)MODULE_GetWndProcEntry16("FileOpenDlgProc"),
                                         ofn, WIN_PROC_16 );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpofn->hwndOwner );
+
+    if (str1)
+      {
+       TRACE(commdlg,"Freeing %p default for Title in GetOpenFileName\n",str1);
+        SEGPTR_FREE(str1);
+       lpofn->lpstrTitle=0;
+      }
+
+    if (str)
+      {
+       TRACE(commdlg,"Freeing %p default for Filetype in GetOpenFileName\n",str);
+        SEGPTR_FREE(str);
+       lpofn->lpstrFilter=0;
+      }
 
     if (hDlgTmpl) {
 	    if (lpofn->Flags & OFN_WINE32)
@@ -154,6 +189,8 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
     LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(ofn);
     LPCVOID template;
     HWND32 hwndDialog;
+    char defaultsave[]="Save as";
+    char *str =0,*str1=0;
 
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
@@ -170,7 +207,8 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
 	    {
 		HANDLE32 hResInfo;
 		if (!(hResInfo = FindResource32A(lpofn->hInstance,
-						 PTR_SEG_TO_LIN(lpofn->lpTemplateName), (LPSTR)RT_DIALOG)))
+						 PTR_SEG_TO_LIN(lpofn->lpTemplateName),
+                                                 RT_DIALOG32A)))
 		{
 		    CommDlgLastError = CDERR_FINDRESFAILURE;
 		    return FALSE;
@@ -199,7 +237,8 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
 	    {
 		HANDLE16 hResInfo;
 		if (!(hResInfo = FindResource16(lpofn->hInstance,
-						lpofn->lpTemplateName, RT_DIALOG)))
+						lpofn->lpTemplateName,
+                                                RT_DIALOG16)))
 		{
 		    CommDlgLastError = CDERR_FINDRESFAILURE;
 		    return FALSE;
@@ -218,12 +257,42 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
 
+    if (!(lpofn->lpstrFilter))
+      {
+       str = SEGPTR_ALLOC(sizeof(defaultfilter));
+       TRACE(commdlg,"Alloc default for Filetype in GetSaveFileName\n");
+       memcpy(str,defaultfilter,sizeof(defaultfilter));
+       lpofn->lpstrFilter=SEGPTR_GET(str);
+      }
+
+    if (!(lpofn->lpstrTitle))
+      {
+       str1 = SEGPTR_ALLOC(sizeof(defaultsave)+1);
+       TRACE(commdlg,"Alloc default for Title in GetSaveFileName\n");
+       strcpy(str1,defaultsave);
+       lpofn->lpstrTitle=SEGPTR_GET(str1);
+      }
+
     hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
                                         lpofn->hwndOwner,
                                         (DLGPROC16)MODULE_GetWndProcEntry16("FileSaveDlgProc"),
                                         ofn, WIN_PROC_16 );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpofn->hwndOwner );
 
+    if (str1)
+      {
+       TRACE(commdlg,"Freeing %p default for Title in GetSaveFileName\n",str1);
+        SEGPTR_FREE(str1);
+       lpofn->lpstrTitle=0;
+      }
+ 
+    if (str)
+      {
+       TRACE(commdlg,"Freeing %p default for Filetype in GetSaveFileName\n",str);
+        SEGPTR_FREE(str);
+       lpofn->lpstrFilter=0;
+      }
+    
     if (hDlgTmpl) {
 	    if (lpofn->Flags & OFN_WINE32)
 		    FreeResource32( hDlgTmpl );
@@ -561,6 +630,9 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              FILEDLG_WMCommand               [internal]
  */
+BOOL32 in_lst1=FALSE;
+BOOL32 in_update=FALSE;
+
 static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
   LONG lRet;
@@ -580,7 +652,10 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
     case lst1: /* file list */
       FILEDLG_StripEditControl(hWnd);
       if (notification == LBN_DBLCLK)
+	{
+	  in_lst1=TRUE;
 	goto almost_ok;
+	}
       lRet = SendDlgItemMessage16(hWnd, lst1, LB_GETCURSEL16, 0, 0);
       if (lRet == LB_ERR) return TRUE;
       if ((pstr = SEGPTR_ALLOC(512)))
@@ -623,6 +698,10 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	  goto reset_scan;
 	}
       return TRUE;
+    case chx1:
+      return TRUE;
+    case pshHelp:
+      return TRUE;
     case cmb2: /* disk drop list */
       FILEDLG_StripEditControl(hWnd);
       lRet = SendDlgItemMessage16(hWnd, cmb2, CB_GETCURSEL16, 0, 0L);
@@ -640,11 +719,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       TRACE(commdlg,"Selected filter : %s\n", pstr);
       SetDlgItemText32A( hWnd, edt1, pstr );
       FILEDLG_ScanDir(hWnd, tmpstr);
-      return TRUE;
-    case chx1:
-      return TRUE;
-    case pshHelp:
-      return TRUE;
+      in_update=TRUE;
     case IDOK:
     almost_ok:
       ofn2=*lpofn; /* for later restoring */
@@ -684,8 +759,12 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
 				 lRet), sizeof(tmpstr2));
       SetDlgItemText32A( hWnd, edt1, tmpstr2 );
+      if (in_lst1)
+	{
       /* if ScanDir succeeds, we have changed the directory */
+	  in_lst1 = FALSE;
       if (FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
+	}
       /* if not, this must be a filename */
       *pstr2 = 0;
       if (pstr != NULL)
@@ -711,9 +790,13 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	if (strlen(tmpstr2) > 3)
 	   strcat(tmpstr2, "\\");
 	strncat(tmpstr2, tmpstr, 511-strlen(tmpstr2)); tmpstr2[511]=0;
-	strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), tmpstr2);
+	if (lpofn->lpstrFile)
+	  {
+	    strncpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), tmpstr2,lpofn->nMaxFile-1);
+	    *((LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile)+lpofn->nMaxFile) ='\0';
       }
-      lpofn->nFileOffset = 0;
+      }
+      lpofn->nFileOffset = strrchr(tmpstr2,'\\') - tmpstr2 +1;
       lpofn->nFileExtension = 0;
       while(tmpstr2[lpofn->nFileExtension] != '.' && tmpstr2[lpofn->nFileExtension] != '\0')
         lpofn->nFileExtension++;
@@ -721,6 +804,17 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	lpofn->nFileExtension = 0;
       else
 	lpofn->nFileExtension++;
+
+      if(in_update)
+       {
+         if (FILEDLG_HookCallChk(lpofn))
+           FILEDLG_CallWindowProc(lpofn,hWnd,
+                                  RegisterWindowMessage32A( LBSELCHSTRING ),
+                                  control, MAKELONG(lRet,CD_LBSELCHANGE));
+
+         in_update = FALSE;
+         return TRUE;
+       }
       if (PTR_SEG_TO_LIN(lpofn->lpstrFileTitle) != NULL) 
 	{
 	  lRet = SendDlgItemMessage16(hWnd, lst1, LB_GETCURSEL16, 0, 0);
@@ -843,13 +937,13 @@ LRESULT WINAPI FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           FindTextDlg   (COMMDLG.11)
+ *           FindText16   (COMMDLG.11)
  */
-HWND16 WINAPI FindText( SEGPTR find )
+HWND16 WINAPI FindText16( SEGPTR find )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
-    LPFINDREPLACE lpFind = (LPFINDREPLACE)PTR_SEG_TO_LIN(find);
+    LPFINDREPLACE16 lpFind = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
 
     /*
      * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
@@ -866,15 +960,58 @@ HWND16 WINAPI FindText( SEGPTR find )
                                   find, WIN_PROC_16 );
 }
 
-
 /***********************************************************************
- *           ReplaceText   (COMMDLG.12)
+ *           FindText32A   (COMMDLG.6)
  */
-HWND16 WINAPI ReplaceText( SEGPTR find )
+HWND32 WINAPI FindText32A( LPFINDREPLACE32A lpFind )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
-    LPFINDREPLACE lpFind = (LPFINDREPLACE)PTR_SEG_TO_LIN(find);
+
+    /*
+     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
+     * For now, only the standard dialog works.
+     */
+    /*
+     * FIXME : We should do error checking on the lpFind structure here
+     * and make CommDlgExtendedError() return the error condition.
+     */
+    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_FIND_TEXT );
+    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
+    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
+                (DLGPROC16)FindTextDlgProc32A, (LPARAM)lpFind, WIN_PROC_32A );
+}
+
+/***********************************************************************
+ *           FindText32W   (COMMDLG.7)
+ */
+HWND32 WINAPI FindText32W( LPFINDREPLACE32W lpFind )
+{
+    HANDLE16 hInst;
+    LPCVOID ptr;
+
+    /*
+     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
+     * For now, only the standard dialog works.
+     */
+    /*
+     * FIXME : We should do error checking on the lpFind structure here
+     * and make CommDlgExtendedError() return the error condition.
+     */
+    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_FIND_TEXT );
+    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
+    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
+                (DLGPROC16)FindTextDlgProc32W, (LPARAM)lpFind, WIN_PROC_32W );
+}
+
+/***********************************************************************
+ *           ReplaceText16   (COMMDLG.12)
+ */
+HWND16 WINAPI ReplaceText16( SEGPTR find )
+{
+    HANDLE16 hInst;
+    LPCVOID ptr;
+    LPFINDREPLACE16 lpFind = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
 
     /*
      * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
@@ -891,44 +1028,87 @@ HWND16 WINAPI ReplaceText( SEGPTR find )
                                   find, WIN_PROC_16 );
 }
 
+/***********************************************************************
+ *           ReplaceText32A   (COMDLG32.19)
+ */
+HWND32 WINAPI ReplaceText32A( LPFINDREPLACE32A lpFind )
+{
+    HANDLE16 hInst;
+    LPCVOID ptr;
+
+    /*
+     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
+     * For now, only the standard dialog works.
+     */
+    /*
+     * FIXME : We should do error checking on the lpFind structure here
+     * and make CommDlgExtendedError() return the error condition.
+     */
+    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_REPLACE_TEXT );
+    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
+    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
+		(DLGPROC16)ReplaceTextDlgProc32A, (LPARAM)lpFind, WIN_PROC_32A );
+}
+
+/***********************************************************************
+ *           ReplaceText32W   (COMDLG32.20)
+ */
+HWND32 WINAPI ReplaceText32W( LPFINDREPLACE32W lpFind )
+{
+    HANDLE16 hInst;
+    LPCVOID ptr;
+
+    /*
+     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
+     * For now, only the standard dialog works.
+     */
+    /*
+     * FIXME : We should do error checking on the lpFind structure here
+     * and make CommDlgExtendedError() return the error condition.
+     */
+    ptr = SYSRES_GetResPtr( SYSRES_DIALOG_REPLACE_TEXT );
+    hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
+    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
+		(DLGPROC16)ReplaceTextDlgProc32W, (LPARAM)lpFind, WIN_PROC_32W );
+}
+
 
 /***********************************************************************
  *                              FINDDLG_WMInitDialog            [internal]
  */
-static LRESULT FINDDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
+static LRESULT FINDDLG_WMInitDialog(HWND32 hWnd, LPARAM lParam, LPDWORD lpFlags,
+                                    LPSTR lpstrFindWhat, BOOL32 fUnicode)
 {
-    LPFINDREPLACE lpfr;
-
     SetWindowLong32A(hWnd, DWL_USER, lParam);
-    lpfr = (LPFINDREPLACE)PTR_SEG_TO_LIN(lParam);
-    lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
+    *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
     /*
      * FIXME : If the initial FindWhat string is empty, we should disable the
      * FindNext (IDOK) button.  Only after typing some text, the button should be
      * enabled.
      */
-    SetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat);
-    CheckRadioButton32(hWnd, rad1, rad2, (lpfr->Flags & FR_DOWN) ? rad2 : rad1);
-    if (lpfr->Flags & (FR_HIDEUPDOWN | FR_NOUPDOWN)) {
+    if (fUnicode) SetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat);
+	else SetDlgItemText32A(hWnd, edt1, lpstrFindWhat);
+    CheckRadioButton32(hWnd, rad1, rad2, (*lpFlags & FR_DOWN) ? rad2 : rad1);
+    if (*lpFlags & (FR_HIDEUPDOWN | FR_NOUPDOWN)) {
 	EnableWindow32(GetDlgItem32(hWnd, rad1), FALSE);
 	EnableWindow32(GetDlgItem32(hWnd, rad2), FALSE);
     }
-    if (lpfr->Flags & FR_HIDEUPDOWN) {
+    if (*lpFlags & FR_HIDEUPDOWN) {
 	ShowWindow32(GetDlgItem32(hWnd, rad1), SW_HIDE);
 	ShowWindow32(GetDlgItem32(hWnd, rad2), SW_HIDE);
 	ShowWindow32(GetDlgItem32(hWnd, grp1), SW_HIDE);
     }
-    CheckDlgButton32(hWnd, chx1, (lpfr->Flags & FR_WHOLEWORD) ? 1 : 0);
-    if (lpfr->Flags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
+    CheckDlgButton32(hWnd, chx1, (*lpFlags & FR_WHOLEWORD) ? 1 : 0);
+    if (*lpFlags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
 	EnableWindow32(GetDlgItem32(hWnd, chx1), FALSE);
-    if (lpfr->Flags & FR_HIDEWHOLEWORD)
+    if (*lpFlags & FR_HIDEWHOLEWORD)
 	ShowWindow32(GetDlgItem32(hWnd, chx1), SW_HIDE);
-    CheckDlgButton32(hWnd, chx2, (lpfr->Flags & FR_MATCHCASE) ? 1 : 0);
-    if (lpfr->Flags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
+    CheckDlgButton32(hWnd, chx2, (*lpFlags & FR_MATCHCASE) ? 1 : 0);
+    if (*lpFlags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
 	EnableWindow32(GetDlgItem32(hWnd, chx2), FALSE);
-    if (lpfr->Flags & FR_HIDEMATCHCASE)
+    if (*lpFlags & FR_HIDEMATCHCASE)
 	ShowWindow32(GetDlgItem32(hWnd, chx2), SW_HIDE);
-    if (!(lpfr->Flags & FR_SHOWHELP)) {
+    if (!(*lpFlags & FR_SHOWHELP)) {
 	EnableWindow32(GetDlgItem32(hWnd, pshHelp), FALSE);
 	ShowWindow32(GetDlgItem32(hWnd, pshHelp), SW_HIDE);
     }
@@ -940,40 +1120,43 @@ static LRESULT FINDDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              FINDDLG_WMCommand               [internal]
  */
-static LRESULT FINDDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
+static LRESULT FINDDLG_WMCommand(HWND32 hWnd, WPARAM32 wParam, 
+			HWND32 hwndOwner, LPDWORD lpFlags,
+			LPSTR lpstrFindWhat, WORD wFindWhatLen, 
+			BOOL32 fUnicode)
 {
-    LPFINDREPLACE lpfr;
     int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
     int uHelpMessage = RegisterWindowMessage32A( HELPMSGSTRING );
 
-    lpfr = (LPFINDREPLACE)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
     switch (wParam) {
 	case IDOK:
-	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
+	    if (fUnicode) 
+	      GetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
+	      else GetDlgItemText32A(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
 	    if (IsDlgButtonChecked32(hWnd, rad2))
-		lpfr->Flags |= FR_DOWN;
-		else lpfr->Flags &= ~FR_DOWN;
+		*lpFlags |= FR_DOWN;
+		else *lpFlags &= ~FR_DOWN;
 	    if (IsDlgButtonChecked32(hWnd, chx1))
-		lpfr->Flags |= FR_WHOLEWORD; 
-		else lpfr->Flags &= ~FR_WHOLEWORD;
+		*lpFlags |= FR_WHOLEWORD; 
+		else *lpFlags &= ~FR_WHOLEWORD;
 	    if (IsDlgButtonChecked32(hWnd, chx2))
-		lpfr->Flags |= FR_MATCHCASE; 
-		else lpfr->Flags &= ~FR_MATCHCASE;
-            lpfr->Flags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
-	    lpfr->Flags |= FR_FINDNEXT;
-	    SendMessage16(lpfr->hwndOwner, uFindReplaceMessage, 0,
+		*lpFlags |= FR_MATCHCASE; 
+		else *lpFlags &= ~FR_MATCHCASE;
+            *lpFlags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
+	    *lpFlags |= FR_FINDNEXT;
+	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
                           GetWindowLong32A(hWnd, DWL_USER) );
 	    return TRUE;
 	case IDCANCEL:
-            lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL);
-	    lpfr->Flags |= FR_DIALOGTERM;
-	    SendMessage16(lpfr->hwndOwner, uFindReplaceMessage, 0,
+            *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL);
+	    *lpFlags |= FR_DIALOGTERM;
+	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
                           GetWindowLong32A(hWnd, DWL_USER) );
-	    DestroyWindow16(hWnd);
+	    DestroyWindow32(hWnd);
 	    return TRUE;
 	case pshHelp:
 	    /* FIXME : should lpfr structure be passed as an argument ??? */
-	    SendMessage16(lpfr->hwndOwner, uHelpMessage, 0, 0);
+	    SendMessage32A(hwndOwner, uHelpMessage, 0, 0);
 	    return TRUE;
     }
     return FALSE;
@@ -981,16 +1164,64 @@ static LRESULT FINDDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 
 
 /***********************************************************************
- *           FindTextDlgProc   (COMMDLG.13)
+ *           FindTextDlgProc16   (COMMDLG.13)
  */
-LRESULT WINAPI FindTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
-                               LPARAM lParam)
+LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+                                 LPARAM lParam)
 {
+    LPFINDREPLACE16 lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
-	    return FINDDLG_WMInitDialog(hWnd, wParam, lParam);
+            lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(lParam);
+	    return FINDDLG_WMInitDialog(hWnd, lParam, &(lpfr->Flags),
+		PTR_SEG_TO_LIN(lpfr->lpstrFindWhat), FALSE);
 	case WM_COMMAND:
-	    return FINDDLG_WMCommand(hWnd, wParam, lParam);
+	    lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
+		&lpfr->Flags, PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
+		lpfr->wFindWhatLen, FALSE);
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *           FindTextDlgProc32A
+ */
+LRESULT WINAPI FindTextDlgProc32A(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
+                                 LPARAM lParam)
+{
+    LPFINDREPLACE32A lpfr;
+    switch (wMsg) {
+	case WM_INITDIALOG:
+	    lpfr=(LPFINDREPLACE32A)lParam;
+	    return FINDDLG_WMInitDialog(hWnd, lParam, &(lpfr->Flags),
+	      lpfr->lpstrFindWhat, FALSE);
+	case WM_COMMAND:
+	    lpfr=(LPFINDREPLACE32A)GetWindowLong32A(hWnd, DWL_USER);
+	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
+		&lpfr->Flags, lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
+		FALSE);
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *           FindTextDlgProc32W
+ */
+LRESULT WINAPI FindTextDlgProc32W(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
+                                 LPARAM lParam)
+{
+    LPFINDREPLACE32W lpfr;
+    switch (wMsg) {
+	case WM_INITDIALOG:
+	    lpfr=(LPFINDREPLACE32W)lParam;
+	    return FINDDLG_WMInitDialog(hWnd, lParam, &(lpfr->Flags),
+	      (LPSTR)lpfr->lpstrFindWhat, TRUE);
+	case WM_COMMAND:
+	    lpfr=(LPFINDREPLACE32W)GetWindowLong32A(hWnd, DWL_USER);
+	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
+		&lpfr->Flags, (LPSTR)lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
+		TRUE);
     }
     return FALSE;
 }
@@ -999,31 +1230,37 @@ LRESULT WINAPI FindTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 /***********************************************************************
  *                              REPLACEDLG_WMInitDialog         [internal]
  */
-static LRESULT REPLACEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
+static LRESULT REPLACEDLG_WMInitDialog(HWND32 hWnd, LPARAM lParam,
+		    LPDWORD lpFlags, LPSTR lpstrFindWhat, 
+		    LPSTR lpstrReplaceWith, BOOL32 fUnicode)
 {
-    LPFINDREPLACE lpfr;
-
     SetWindowLong32A(hWnd, DWL_USER, lParam);
-    lpfr = (LPFINDREPLACE)PTR_SEG_TO_LIN(lParam);
-    lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
+    *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
     /*
      * FIXME : If the initial FindWhat string is empty, we should disable the FinNext /
      * Replace / ReplaceAll buttons.  Only after typing some text, the buttons should be
      * enabled.
      */
-    SetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat);
-    SetDlgItemText16(hWnd, edt2, lpfr->lpstrReplaceWith);
-    CheckDlgButton32(hWnd, chx1, (lpfr->Flags & FR_WHOLEWORD) ? 1 : 0);
-    if (lpfr->Flags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
+    if (fUnicode)     
+    {
+	SetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat);
+	SetDlgItemText32W(hWnd, edt2, (LPWSTR)lpstrReplaceWith);
+    } else
+    {
+	SetDlgItemText32A(hWnd, edt1, lpstrFindWhat);
+	SetDlgItemText32A(hWnd, edt2, lpstrReplaceWith);
+    }
+    CheckDlgButton32(hWnd, chx1, (*lpFlags & FR_WHOLEWORD) ? 1 : 0);
+    if (*lpFlags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
 	EnableWindow32(GetDlgItem32(hWnd, chx1), FALSE);
-    if (lpfr->Flags & FR_HIDEWHOLEWORD)
+    if (*lpFlags & FR_HIDEWHOLEWORD)
 	ShowWindow32(GetDlgItem32(hWnd, chx1), SW_HIDE);
-    CheckDlgButton32(hWnd, chx2, (lpfr->Flags & FR_MATCHCASE) ? 1 : 0);
-    if (lpfr->Flags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
+    CheckDlgButton32(hWnd, chx2, (*lpFlags & FR_MATCHCASE) ? 1 : 0);
+    if (*lpFlags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
 	EnableWindow32(GetDlgItem32(hWnd, chx2), FALSE);
-    if (lpfr->Flags & FR_HIDEMATCHCASE)
+    if (*lpFlags & FR_HIDEMATCHCASE)
 	ShowWindow32(GetDlgItem32(hWnd, chx2), SW_HIDE);
-    if (!(lpfr->Flags & FR_SHOWHELP)) {
+    if (!(*lpFlags & FR_SHOWHELP)) {
 	EnableWindow32(GetDlgItem32(hWnd, pshHelp), FALSE);
 	ShowWindow32(GetDlgItem32(hWnd, pshHelp), SW_HIDE);
     }
@@ -1035,66 +1272,89 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lPar
 /***********************************************************************
  *                              REPLACEDLG_WMCommand            [internal]
  */
-static LRESULT REPLACEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
+static LRESULT REPLACEDLG_WMCommand(HWND32 hWnd, WPARAM16 wParam,
+		    HWND32 hwndOwner, LPDWORD lpFlags,
+		    LPSTR lpstrFindWhat, WORD wFindWhatLen,
+		    LPSTR lpstrReplaceWith, WORD wReplaceWithLen,
+		    BOOL32 fUnicode)
 {
-    LPFINDREPLACE lpfr;
     int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
     int uHelpMessage = RegisterWindowMessage32A( HELPMSGSTRING );
 
-    lpfr = (LPFINDREPLACE)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
     switch (wParam) {
 	case IDOK:
-	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
-	    GetDlgItemText16(hWnd, edt2, lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen);
+	    if (fUnicode)
+	    {
+		GetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
+		GetDlgItemText32W(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
+	    }  else
+	    {
+		GetDlgItemText32A(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
+		GetDlgItemText32A(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
+	    }
 	    if (IsDlgButtonChecked32(hWnd, chx1))
-		lpfr->Flags |= FR_WHOLEWORD; 
-		else lpfr->Flags &= ~FR_WHOLEWORD;
+		*lpFlags |= FR_WHOLEWORD; 
+		else *lpFlags &= ~FR_WHOLEWORD;
 	    if (IsDlgButtonChecked32(hWnd, chx2))
-		lpfr->Flags |= FR_MATCHCASE; 
-		else lpfr->Flags &= ~FR_MATCHCASE;
-            lpfr->Flags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
-	    lpfr->Flags |= FR_FINDNEXT;
-	    SendMessage16(lpfr->hwndOwner, uFindReplaceMessage, 0,
+		*lpFlags |= FR_MATCHCASE; 
+		else *lpFlags &= ~FR_MATCHCASE;
+            *lpFlags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
+	    *lpFlags |= FR_FINDNEXT;
+	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
                           GetWindowLong32A(hWnd, DWL_USER) );
 	    return TRUE;
 	case IDCANCEL:
-            lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL);
-	    lpfr->Flags |= FR_DIALOGTERM;
-	    SendMessage16(lpfr->hwndOwner, uFindReplaceMessage, 0,
+            *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL);
+	    *lpFlags |= FR_DIALOGTERM;
+	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
                           GetWindowLong32A(hWnd, DWL_USER) );
-	    DestroyWindow16(hWnd);
+	    DestroyWindow32(hWnd);
 	    return TRUE;
 	case psh1:
-	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
-	    GetDlgItemText16(hWnd, edt2, lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen);
+	    if (fUnicode)
+	    {
+		GetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
+		GetDlgItemText32W(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
+	    }  else
+	    {	
+		GetDlgItemText32A(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
+		GetDlgItemText32A(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
+	    }
 	    if (IsDlgButtonChecked32(hWnd, chx1))
-		lpfr->Flags |= FR_WHOLEWORD; 
-		else lpfr->Flags &= ~FR_WHOLEWORD;
+		*lpFlags |= FR_WHOLEWORD; 
+		else *lpFlags &= ~FR_WHOLEWORD;
 	    if (IsDlgButtonChecked32(hWnd, chx2))
-		lpfr->Flags |= FR_MATCHCASE; 
-		else lpfr->Flags &= ~FR_MATCHCASE;
-            lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACEALL | FR_DIALOGTERM);
-	    lpfr->Flags |= FR_REPLACE;
-	    SendMessage16(lpfr->hwndOwner, uFindReplaceMessage, 0,
+		*lpFlags |= FR_MATCHCASE; 
+		else *lpFlags &= ~FR_MATCHCASE;
+            *lpFlags &= ~(FR_FINDNEXT | FR_REPLACEALL | FR_DIALOGTERM);
+	    *lpFlags |= FR_REPLACE;
+	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
                           GetWindowLong32A(hWnd, DWL_USER) );
 	    return TRUE;
 	case psh2:
-	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
-	    GetDlgItemText16(hWnd, edt2, lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen);
+	    if (fUnicode)
+	    {
+		GetDlgItemText32W(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
+		GetDlgItemText32W(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
+	    }  else
+	    {
+		GetDlgItemText32A(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
+		GetDlgItemText32A(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
+	    }
 	    if (IsDlgButtonChecked32(hWnd, chx1))
-		lpfr->Flags |= FR_WHOLEWORD; 
-		else lpfr->Flags &= ~FR_WHOLEWORD;
+		*lpFlags |= FR_WHOLEWORD; 
+		else *lpFlags &= ~FR_WHOLEWORD;
 	    if (IsDlgButtonChecked32(hWnd, chx2))
-		lpfr->Flags |= FR_MATCHCASE; 
-		else lpfr->Flags &= ~FR_MATCHCASE;
-            lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_DIALOGTERM);
-	    lpfr->Flags |= FR_REPLACEALL;
-	    SendMessage16(lpfr->hwndOwner, uFindReplaceMessage, 0,
+		*lpFlags |= FR_MATCHCASE; 
+		else *lpFlags &= ~FR_MATCHCASE;
+            *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_DIALOGTERM);
+	    *lpFlags |= FR_REPLACEALL;
+	    SendMessage32A(hwndOwner, uFindReplaceMessage, 0,
                           GetWindowLong32A(hWnd, DWL_USER) );
 	    return TRUE;
 	case pshHelp:
 	    /* FIXME : should lpfr structure be passed as an argument ??? */
-	    SendMessage16(lpfr->hwndOwner, uHelpMessage, 0, 0);
+	    SendMessage32A(hwndOwner, uHelpMessage, 0, 0);
 	    return TRUE;
     }
     return FALSE;
@@ -1102,16 +1362,67 @@ static LRESULT REPLACEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 
 
 /***********************************************************************
- *           ReplaceTextDlgProc   (COMMDLG.14)
+ *           ReplaceTextDlgProc16   (COMMDLG.14)
  */
-LRESULT WINAPI ReplaceTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
-                                  LPARAM lParam)
+LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+                                    LPARAM lParam)
 {
+    LPFINDREPLACE16 lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
-	    return REPLACEDLG_WMInitDialog(hWnd, wParam, lParam);
+            lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(lParam);
+	    return REPLACEDLG_WMInitDialog(hWnd, lParam, &lpfr->Flags,
+		    PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
+		    PTR_SEG_TO_LIN(lpfr->lpstrReplaceWith), FALSE);
 	case WM_COMMAND:
-	    return REPLACEDLG_WMCommand(hWnd, wParam, lParam);
+	    lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
+		    &lpfr->Flags, PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
+		    lpfr->wFindWhatLen, PTR_SEG_TO_LIN(lpfr->lpstrReplaceWith),
+		    lpfr->wReplaceWithLen, FALSE);
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *           ReplaceTextDlgProc32A
+ */ 
+LRESULT WINAPI ReplaceTextDlgProc32A(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
+                                    LPARAM lParam)
+{
+    LPFINDREPLACE32A lpfr;
+    switch (wMsg) {
+	case WM_INITDIALOG:
+            lpfr=(LPFINDREPLACE32A)lParam;
+	    return REPLACEDLG_WMInitDialog(hWnd, lParam, &lpfr->Flags,
+		    lpfr->lpstrFindWhat, lpfr->lpstrReplaceWith, FALSE);
+	case WM_COMMAND:
+	    lpfr=(LPFINDREPLACE32A)GetWindowLong32A(hWnd, DWL_USER);
+	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
+		    &lpfr->Flags, lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
+		    lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen, FALSE);
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *           ReplaceTextDlgProc32W
+ */ 
+LRESULT WINAPI ReplaceTextDlgProc32W(HWND32 hWnd, UINT32 wMsg, WPARAM32 wParam,
+                                    LPARAM lParam)
+{
+    LPFINDREPLACE32W lpfr;
+    switch (wMsg) {
+	case WM_INITDIALOG:
+            lpfr=(LPFINDREPLACE32W)lParam;
+	    return REPLACEDLG_WMInitDialog(hWnd, lParam, &lpfr->Flags,
+		    (LPSTR)lpfr->lpstrFindWhat, (LPSTR)lpfr->lpstrReplaceWith,
+		    TRUE);
+	case WM_COMMAND:
+	    lpfr=(LPFINDREPLACE32W)GetWindowLong32A(hWnd, DWL_USER);
+	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
+		    &lpfr->Flags, (LPSTR)lpfr->lpstrFindWhat, lpfr->wFindWhatLen,
+		    (LPSTR)lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen, TRUE);
     }
     return FALSE;
 }
@@ -1321,7 +1632,8 @@ BOOL16 WINAPI ChooseColor(LPCHOOSECOLOR lpChCol)
     {
         HANDLE16 hResInfo;
         if (!(hResInfo = FindResource16(lpChCol->hInstance,
-                                        lpChCol->lpTemplateName, RT_DIALOG)))
+                                        lpChCol->lpTemplateName,
+                                        RT_DIALOG16)))
         {
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
@@ -1798,7 +2110,7 @@ static void CC_PrepareColorGraph(HWND16 hDlg)
  HBRUSH32 hbrush;
  HDC32 hdc ;
  RECT16 rect,client;
- HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT));
+ HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT16));
 
  GetClientRect16(hwnd,&client);
  hdc=GetDC32(hwnd);
@@ -2416,7 +2728,8 @@ BOOL16 WINAPI ChooseFont(LPCHOOSEFONT lpChFont)
     {
         HANDLE16 hResInfo;
         if (!(hResInfo = FindResource16( lpChFont->hInstance,
-                                         lpChFont->lpTemplateName, RT_DIALOG)))
+                                         lpChFont->lpTemplateName,
+                                         RT_DIALOG16)))
         {
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
@@ -2635,7 +2948,7 @@ LRESULT CFn_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
   int i,j,res,init=0;
   long l;
   LPLOGFONT16 lpxx;
-  HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT));
+  HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT16));
   LPCHOOSEFONT lpcf;
 
   SetWindowLong32A(hDlg, DWL_USER, lParam); 
@@ -2650,7 +2963,7 @@ LRESULT CFn_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
     return FALSE;
   }
   if (!hBitmapTT)
-    hBitmapTT = LoadBitmap16(0, MAKEINTRESOURCE(OBM_TRTYPE));
+    hBitmapTT = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_TRTYPE));
 			 
   if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow32(lpcf->hwndOwner))
     ShowWindow32(GetDlgItem32(hDlg,pshHelp),SW_HIDE);
@@ -2754,7 +3067,7 @@ LRESULT CFn_WMMeasureItem(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
   BITMAP16 bm;
   LPMEASUREITEMSTRUCT16 lpmi=PTR_SEG_TO_LIN((LPMEASUREITEMSTRUCT16)lParam);
   if (!hBitmapTT)
-    hBitmapTT = LoadBitmap16(0, MAKEINTRESOURCE(OBM_TRTYPE));
+    hBitmapTT = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_TRTYPE));
   GetObject16( hBitmapTT, sizeof(bm), &bm );
   lpmi->itemHeight=bm.bmHeight;
   /* FIXME: use MAX of bm.bmHeight and tm.tmHeight .*/
@@ -2896,7 +3209,7 @@ LRESULT CFn_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 		      i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL16,0,0);
 		      if (i!=CB_ERR)
 		      {
-		        HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT));
+		        HCURSOR16 hcursor=SetCursor16(LoadCursor16(0,IDC_WAIT16));
                         char *str = SEGPTR_ALLOC(256);
                         SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT16,i,
                                              (LPARAM)SEGPTR_GET(str));
@@ -3084,11 +3397,14 @@ BOOL32 WINAPI xxx##32A( LPOPENFILENAME32A ofn )				\
 	}								\
 	ofn16->nMaxCustFilter = ofn->nMaxCustFilter;			\
 	ofn16->nFilterIndex = ofn->nFilterIndex;			\
+	if (ofn->nMaxFile)                                              \
 	ofn16->lpstrFile = SEGPTR_GET(SEGPTR_ALLOC(ofn->nMaxFile));	\
 	ofn16->nMaxFile = ofn->nMaxFile;				\
-	if (ofn->lpstrFileTitle)					\
+	if (ofn16->lpstrFileTitle)					\
 		ofn16->lpstrFileTitle= SEGPTR_GET(SEGPTR_STRDUP(ofn->lpstrFileTitle));\
 	ofn16->nMaxFileTitle = ofn->nMaxFileTitle;			\
+        if (ofn16->nMaxFileTitle)                                       \
+                ofn16->lpstrFileTitle = SEGPTR_GET(SEGPTR_ALLOC(ofn->nMaxFileTitle));\
 	if (ofn->lpstrInitialDir)					\
 		ofn16->lpstrInitialDir = SEGPTR_GET(SEGPTR_STRDUP(ofn->lpstrInitialDir));\
 	if (ofn->lpstrTitle)						\
@@ -3106,6 +3422,8 @@ BOOL32 WINAPI xxx##32A( LPOPENFILENAME32A ofn )				\
 									\
 	ret = xxx##16(SEGPTR_GET(ofn16));				\
 									\
+	ofn->nFileOffset = ofn16->nFileOffset;				\
+	ofn->nFileExtension = ofn16->nFileExtension;			\
 	if (ofn16->lpstrFilter)						\
 		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFilter));	\
 	if (ofn16->lpTemplateName)					\
@@ -3119,11 +3437,15 @@ BOOL32 WINAPI xxx##32A( LPOPENFILENAME32A ofn )				\
 	if (ofn16->lpstrCustomFilter)					\
 		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrCustomFilter));	\
 									\
+	if (ofn16->lpstrFile) {                                         \
 	strcpy(ofn->lpstrFile,PTR_SEG_TO_LIN(ofn16->lpstrFile));	\
 	SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFile));			\
+	}                                                               \
 									\
-	if (ofn16->lpstrFileTitle)					\
+	if (ofn16->lpstrFileTitle) {         				\
+                strcpy(ofn->lpstrFileTitle,PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));\
 		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));	\
+	}                                                               \
 	SEGPTR_FREE(ofn16);						\
 	return ret;							\
 }									\
@@ -3182,11 +3504,14 @@ BOOL32 WINAPI xxx##32W( LPOPENFILENAME32W ofn )				\
 	}								\
 	ofn16->nMaxCustFilter = ofn->nMaxCustFilter;			\
 	ofn16->nFilterIndex = ofn->nFilterIndex;			\
+        if (ofn->nMaxFile)                                              \
 	ofn16->lpstrFile = SEGPTR_GET(SEGPTR_ALLOC(ofn->nMaxFile));	\
 	ofn16->nMaxFile = ofn->nMaxFile;				\
-	if (ofn->lpstrFileTitle)					\
+	if (ofn16->lpstrFileTitle)					\
 		ofn16->lpstrFileTitle= SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpstrFileTitle));\
 	ofn16->nMaxFileTitle = ofn->nMaxFileTitle;			\
+        if (ofn->nMaxFileTitle)                                         \
+		ofn16->lpstrFileTitle = SEGPTR_GET(SEGPTR_ALLOC(ofn->nMaxFileTitle));\
 	if (ofn->lpstrInitialDir)					\
 		ofn16->lpstrInitialDir = SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpstrInitialDir));\
 	if (ofn->lpstrTitle)						\
@@ -3203,6 +3528,8 @@ BOOL32 WINAPI xxx##32W( LPOPENFILENAME32W ofn )				\
 	}								\
 	ret = xxx##16(SEGPTR_GET(ofn16));				\
 									\
+	ofn->nFileOffset = ofn16->nFileOffset;				\
+	ofn->nFileExtension = ofn16->nFileExtension;			\
 	if (ofn16->lpstrFilter)						\
 		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFilter));	\
 	if (ofn16->lpTemplateName)					\
@@ -3216,11 +3543,15 @@ BOOL32 WINAPI xxx##32W( LPOPENFILENAME32W ofn )				\
 	if (ofn16->lpstrCustomFilter)					\
 		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrCustomFilter));	\
 									\
+	if (ofn16->lpstrFile) {                                         \
 	lstrcpyAtoW(ofn->lpstrFile,PTR_SEG_TO_LIN(ofn16->lpstrFile));	\
 	SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFile));			\
+	}                                                               \
 									\
-	if (ofn16->lpstrFileTitle)					\
+	if (ofn16->lpstrFileTitle) {					\
+                lstrcpyAtoW(ofn->lpstrFileTitle,PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));\
 		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));	\
+	}                                                               \
 	SEGPTR_FREE(ofn16);						\
 	return ret;							\
 }

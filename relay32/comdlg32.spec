@@ -7,8 +7,8 @@ type	win32
  3 stdcall ChooseFontA(ptr) ChooseFont32A
  4 stub ChooseFontW
  5 stdcall CommDlgExtendedError() CommDlgExtendedError
- 6 stub FindTextA
- 7 stub FindTextW
+ 6 stdcall FindTextA(ptr) FindText32A
+ 7 stdcall FindTextW(ptr) FindText32W
  8 stdcall GetFileTitleA(ptr ptr long) GetFileTitle32A
  9 stdcall GetFileTitleW(ptr ptr long) GetFileTitle32W
 10 stdcall GetOpenFileNameA(ptr) GetOpenFileName32A
@@ -20,8 +20,8 @@ type	win32
 16 stub PageSetupDlgW
 17 stdcall PrintDlgA(ptr) PrintDlg32A
 18 stdcall PrintDlgW(ptr) PrintDlg32W
-19 stub ReplaceTextA
-20 stub ReplaceTextW
+19 stdcall ReplaceTextA(ptr) ReplaceText32A
+20 stdcall ReplaceTextW(ptr) ReplaceText32W
 21 stub WantArrows
 22 stub dwLBSubclass
 23 stub dwOKSubclass

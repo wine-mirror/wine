@@ -4,8 +4,8 @@ type	win16
 14 pascal FileOpenDlgProc(word word word long) FileOpenDlgProc
 15 pascal FileSaveDlgProc(word word word long) FileSaveDlgProc
 16 pascal ColorDlgProc(word word word long) ColorDlgProc
-17 pascal FindTextDlgProc(word word word long) FindTextDlgProc
-18 pascal ReplaceTextDlgProc(word word word long) ReplaceTextDlgProc
+17 pascal FindTextDlgProc(word word word long) FindTextDlgProc16
+18 pascal ReplaceTextDlgProc(word word word long) ReplaceTextDlgProc16
 19 pascal PrintSetupDlgProc(word word word long) PrintSetupDlgProc
 20 pascal PrintDlgProc(word word word long) PrintDlgProc
 24 pascal16 TASK_Reschedule() TASK_Reschedule

@@ -133,6 +133,7 @@ static VERSION VERSION_GetVersion(void)
         /* Win3.10 */
         if (peheader->OptionalHeader.MinorSubsystemVersion <= 11) return WIN31;
         /* NT 3.51 */
+        if (peheader->OptionalHeader.MinorSubsystemVersion == 50) return NT351;
         if (peheader->OptionalHeader.MinorSubsystemVersion == 51) return NT351;
     }
     ERR(ver,"unknown subsystem version: %04x.%04x, please report.\n",

@@ -27,7 +27,7 @@ static const char * const DefSysColors[] =
     "ActiveBorder", "128 128 128",   /* COLOR_ACTIVEBORDER        */
     "InactiveBorder", "255 255 255", /* COLOR_INACTIVEBORDER      */
     "AppWorkspace", "255 255 232",   /* COLOR_APPWORKSPACE        */
-    "Hilight", "166 202 240",        /* COLOR_HIGHLIGHT           */
+    "Hilight", "224 224 224",        /* COLOR_HIGHLIGHT           */
     "HilightText", "0 0 0",          /* COLOR_HIGHLIGHTTEXT       */
     "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */
     "ButtonShadow", "128 128 128",   /* COLOR_BTNSHADOW           */
@@ -56,7 +56,7 @@ static const char * const DefSysColors95[] =
     "ActiveBorder", "128 128 128",   /* COLOR_ACTIVEBORDER        */
     "InactiveBorder", "255 255 255", /* COLOR_INACTIVEBORDER      */
     "AppWorkspace", "255 255 232",   /* COLOR_APPWORKSPACE        */
-    "Hilight", "166 202 240",        /* COLOR_HIGHLIGHT           */
+    "Hilight", "224 224 224",        /* COLOR_HIGHLIGHT           */
     "HilightText", "0 0 0",          /* COLOR_HIGHLIGHTTEXT       */
     "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */
     "ButtonShadow", "128 128 128",   /* COLOR_BTNSHADOW           */
@@ -123,7 +123,7 @@ COLORREF WINAPI GetSysColor16( INT16 nIndex )
 
 
 /*************************************************************************
- *             GetSysColor32   (USER32.288)
+ *             GetSysColor32   (USER32.289)
  */
 COLORREF WINAPI GetSysColor32( INT32 nIndex )
 {
@@ -159,7 +159,7 @@ VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
 
 
 /*************************************************************************
- *             SetSysColors32   (USER32.504)
+ *             SetSysColors32   (USER32.505)
  */
 BOOL32 WINAPI SetSysColors32( INT32 nChanges, const INT32 *lpSysColor,
                               const COLORREF *lpColorValues )
@@ -193,7 +193,7 @@ HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
 
 
 /***********************************************************************
- *           GetSysColorBrush32    (USER32.289)
+ *           GetSysColorBrush32    (USER32.290)
  */
 HBRUSH32 WINAPI GetSysColorBrush32( INT32 index )
 {

@@ -352,11 +352,14 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 
     case WM_QUERYDRAGICON:
         {
-            HICON16 hI = 0;
-            UINT16 len = 1;
-            while(len < 64)
-		if( (hI = LoadIcon16(wndPtr->hInstance,MAKEINTRESOURCE(len))) )
-                    return (LRESULT)hI;
+            HICON16 hIcon=0;
+            UINT16 len;
+
+            if( (hIcon=wndPtr->class->hCursor) ) return (LRESULT)hIcon;
+            for(len=1; len<64; len++)
+                if((hIcon=LoadIcon16(wndPtr->hInstance,MAKEINTRESOURCE16(len))))
+                    return (LRESULT)hIcon;
+            return (LRESULT)LoadIcon16(NULL,IDI_APPLICATION16);
         }
         break;
 
@@ -440,7 +443,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           DefWindowProc32A   (USER32.125)
+ *           DefWindowProc32A   (USER32.126)
  */
 LRESULT WINAPI DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                                  LPARAM lParam )
@@ -501,7 +504,7 @@ LRESULT WINAPI DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
 
 /***********************************************************************
- *           DefWindowProc32W   (USER32.126)
+ *           DefWindowProc32W   (USER32.127)
  */
 LRESULT WINAPI DefWindowProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                                  LPARAM lParam )

@@ -1,4 +1,6 @@
 
+ - Logfile feature
+
  - Notepad segfaults when selecting "Find" button in "Search" dialog.
  
  - create new *.rc files for all languages you know.

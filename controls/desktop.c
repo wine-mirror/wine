@@ -160,7 +160,7 @@ LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,
 	ExitWindows16( 0, 0 ); 
 
     case WM_SETCURSOR:
-        return (LRESULT)SetCursor16( LoadCursor16( 0, IDC_ARROW ) );
+        return (LRESULT)SetCursor16( LoadCursor16( 0, IDC_ARROW16 ) );
     }
     
     return 0;

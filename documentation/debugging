@@ -83,7 +83,9 @@ relevant developer as feasonable.
  6. If that isn't enough add more debug output for yourself into the
     functions you find relevant.
     You might also try to run the program in gdb instead of using the
-    WINE-debugger.
+    WINE-debugger. If you don't use the "-desktop" or "-managed" option,
+    start the WINE process with "-sync", or chances are good to get X into
+    an unusable state.
   
  7. You can also set a breakpoint for that function. Start wine with the
     "-debug" option added to the commandline. After loading the executable

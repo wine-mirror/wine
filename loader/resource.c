@@ -61,8 +61,8 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
     }
 
     TRACE(resource, "module=%04x name=%s type=%s\n", 
-		 hModule, debugres(PTR_SEG_TO_LIN(name)), 
-		 debugres(PTR_SEG_TO_LIN(type)) );
+		 hModule, debugres_a(PTR_SEG_TO_LIN(name)), 
+		 debugres_a(PTR_SEG_TO_LIN(type)) );
 
     if ((pModule = MODULE_GetPtr( hModule )))
     {
@@ -414,7 +414,6 @@ HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
 HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
 {
     HRSRC16	hRsrc;
-    HACCEL16    hAccel;
 
     if (HIWORD(lpTableName))
         TRACE(accel, "%04x '%s'\n",
@@ -423,7 +422,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
         TRACE(accel, "%04x %04x\n",
                        instance, LOWORD(lpTableName) );
 
-    if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATOR ))) {
+    if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATOR16 ))) {
       WARN(accel, "couldn't find accelerator table resource\n");
       return 0;
     }
@@ -453,8 +452,8 @@ HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
         TRACE(accel, "%p 0x%04x\n",
                        (LPVOID)instance, LOWORD(lpTableName) );
 
-    if (!(hRsrc = FindResource32W( instance, lpTableName, 
-				   (LPCWSTR)RT_ACCELERATOR ))) {
+    if (!(hRsrc = FindResource32W( instance, lpTableName, RT_ACCELERATOR32W )))
+    {
       WARN(accel, "couldn't find accelerator table resource\n");
       hRetval = 0;
     }
@@ -625,7 +624,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     TRACE(resource,"inst=%04x id=%04x buff=%08x len=%d\n",
                      instance, resource_id, (int) buffer, buflen);
 
-    hrsrc = FindResource16( instance, (SEGPTR)((resource_id>>4)+1), RT_STRING );
+    hrsrc = FindResource16( instance, (SEGPTR)((resource_id>>4)+1), RT_STRING16 );
     if (!hrsrc) return 0;
     hmem = LoadResource16( instance, hrsrc );
     if (!hmem) return 0;
@@ -658,7 +657,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
 }
 
 /**********************************************************************
- *	LoadString32W		(USER32.375)
+ *	LoadString32W		(USER32.376)
  */
 INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
                             LPWSTR buffer, INT32 buflen )
@@ -674,8 +673,8 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
     TRACE(resource, "instance = %04x, id = %04x, buffer = %08x, "
 	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
-    hrsrc = FindResource32W( instance, (LPCWSTR)((resource_id>>4)+1), 
-		(LPCWSTR)RT_STRING );
+    hrsrc = FindResource32W( instance, (LPCWSTR)((resource_id>>4)+1),
+                             RT_STRING32W );
     if (!hrsrc) return 0;
     hmem = LoadResource32( instance, hrsrc );
     if (!hmem) return 0;
@@ -709,7 +708,7 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
 }
 
 /**********************************************************************
- *	LoadString32A	(USER32.374)
+ *	LoadString32A	(USER32.375)
  */
 INT32 WINAPI LoadString32A( HINSTANCE32 instance, UINT32 resource_id,
                             LPSTR buffer, INT32 buflen )
@@ -726,6 +725,8 @@ INT32 WINAPI LoadString32A( HINSTANCE32 instance, UINT32 resource_id,
 	    lstrcpynWtoA( buffer, buffer2, buflen );
 	    retval = lstrlen32A( buffer );
 	}
+	else
+	    *buffer = 0;
 	HeapFree( GetProcessHeap(), 0, buffer2 );
     }
     return retval;
@@ -777,7 +778,7 @@ INT32 LoadMessage32A( HINSTANCE32 instance, UINT32 id, WORD lang,
     TRACE(resource, "instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
 
     /*FIXME: I am not sure about the '1' ... But I've only seen those entries*/
-    hrsrc = FindResourceEx32W(instance,(LPWSTR)1,(LPCWSTR)RT_MESSAGELIST,lang);
+    hrsrc = FindResourceEx32W(instance,(LPWSTR)1,RT_MESSAGELIST32W,lang);
     if (!hrsrc) return 0;
     hmem = LoadResource32( instance, hrsrc );
     if (!hmem) return 0;
@@ -854,7 +855,7 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR s,
     hModule = GetExePtr( hModule );
 
     TRACE(resource, "module=%04x type=%s\n", 
-		 hModule, debugres(PTR_SEG_TO_LIN(s)) );
+		 hModule, debugres_a(PTR_SEG_TO_LIN(s)) );
 
     if ((pModule = MODULE_GetPtr( hModule )))
     {

@@ -40,7 +40,8 @@ BOOL32 WINAPI WriteFile(HANDLE32 hFile, LPCVOID lpBuffer,
 	TRACE(file, "%d %p %ld\n", hFile, lpBuffer, 
 		     numberOfBytesToWrite);
 	
-	if (!(ioptr = HANDLE_GetObjPtr( hFile, K32OBJ_UNKNOWN, 0 ))) 
+	if (!(ioptr = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
+                                        K32OBJ_UNKNOWN, 0 ))) 
 		return HFILE_ERROR32;
         if (K32OBJ_OPS(ioptr)->write)
             status = K32OBJ_OPS(ioptr)->write(ioptr, lpBuffer, numberOfBytesToWrite, 
@@ -61,7 +62,8 @@ BOOL32 WINAPI ReadFile(HANDLE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToRea
 	TRACE(file, "%d %p %ld\n", hFile, lpBuffer, 
 		     numberOfBytesToRead);
 	
-	if (!(ioptr = HANDLE_GetObjPtr( hFile, K32OBJ_UNKNOWN, 0 ))) 
+	if (!(ioptr = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
+                                        K32OBJ_UNKNOWN, 0 ))) 
 		return HFILE_ERROR32;
         if (K32OBJ_OPS(ioptr)->read)
             status = K32OBJ_OPS(ioptr)->read(ioptr, lpBuffer, numberOfBytesToRead, 

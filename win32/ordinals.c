@@ -13,6 +13,7 @@
 #include "winnt.h"
 #include "process.h"
 #include "module.h"
+#include "task.h"
 #include "callback.h"
 #include "debug.h"
 
@@ -20,7 +21,7 @@ static CRITICAL_SECTION Win16Mutex;
 static SEGPTR segWin16Mutex = NULL;
 
 /***********************************************
- *           GetPWinLock    (KERNEL32)
+ *           GetPWinLock    (KERNEL32.93)
  * Return the infamous Win16Mutex.
  */
 VOID WINAPI GetPWinLock(CRITICAL_SECTION **lock)
@@ -30,7 +31,7 @@ VOID WINAPI GetPWinLock(CRITICAL_SECTION **lock)
 }
 
 /**********************************************************************
- *           _KERNEL32_88
+ *           WOW32_1        (KERNEL32.88)
  */
 BOOL32 WINAPI WOW32_1(SEGPTR segptr,LPLDT_ENTRY ldtent)
 {
@@ -39,11 +40,11 @@ BOOL32 WINAPI WOW32_1(SEGPTR segptr,LPLDT_ENTRY ldtent)
 
 
 /***********************************************************************
- *           _KERNEL32_18    (KERNEL32.18)
+ *           GetProcessDWORD    (KERNEL32.18)
  * 'Of course you cannot directly access Windows internal structures'
  */
 
-DWORD WINAPI _KERNEL32_18(DWORD processid,DWORD action)
+DWORD WINAPI GetProcessDWORD(DWORD processid,DWORD action)
 {
 	PDB32	*process;
 	TDB	*pTask;
@@ -114,22 +115,22 @@ DWORD WINAPI _KERNEL32_18(DWORD processid,DWORD action)
 
 
 /***********************************************************************
- *							(KERNEL32.33)
+ *		GetWin16DOSEnv			(KERNEL32.34)
  * Returns some internal value.... probably the default environment database?
  */
-DWORD WINAPI _KERNEL32_34()
+DWORD WINAPI GetWin16DOSEnv()
 {
-	fprintf(stderr,"KERNEL32_34(), STUB returning 0\n");
+	fprintf(stderr,"GetWin16DOSEnv(), STUB returning 0\n");
 	return 0;
 }
 
-BOOL32 WINAPI _KERNEL32_99(HANDLE32 threadid,DWORD exitcode,DWORD x) {
-	fprintf(stderr,"KERNEL32_99(%d,%ld,0x%08lx),stub\n",threadid,exitcode,x);
+BOOL32 WINAPI _KERNEL32_100(HANDLE32 threadid,DWORD exitcode,DWORD x) {
+	fprintf(stderr,"KERNEL32_100(%d,%ld,0x%08lx),stub\n",threadid,exitcode,x);
 	return TRUE;
 }
 
-DWORD WINAPI _KERNEL32_98(DWORD x) {
-	fprintf(stderr,"KERNEL32_98(0x%08lx),stub\n",x);
+DWORD WINAPI _KERNEL32_99(DWORD x) {
+	fprintf(stderr,"KERNEL32_99(0x%08lx),stub\n",x);
 	return 1;
 }
 

@@ -21,6 +21,8 @@ BEGIN
     END
     POPUP "&Pan"
     BEGIN
+      MENUITEM "&Scale to Window",              IDM_SET_EXT_TO_WIN
+      MENUITEM SEPARATOR
       MENUITEM "&Left",				IDM_LEFT
       MENUITEM "&Right",			IDM_RIGHT
       MENUITEM "&Up",				IDM_UP

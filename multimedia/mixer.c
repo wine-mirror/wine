@@ -15,10 +15,11 @@
 #include "mmsystem.h"
 #include "debug.h"
 
-#ifdef linux
-#include <linux/soundcard.h>
-#elif __FreeBSD__
-#include <machine/soundcard.h>
+#ifdef HAVE_SYS_SOUNDCARD_H
+# include <sys/soundcard.h>
+#endif
+#ifdef HAVE_MACHINE_SOUNDCARD_H
+# include <machine/soundcard.h>
 #endif
 
 #define MIXER_DEV "/dev/mixer"
@@ -35,7 +36,7 @@
  */
 static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPS16 lpCaps, DWORD dwSize)
 {
-#ifdef linux
+#ifdef HAVE_OSS
 	int 		mixer,mask;
 
 	TRACE(mmaux,"(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
@@ -64,7 +65,7 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPS16 lpCaps, DWORD dwSize)
 #endif
 }
 
-#ifdef linux
+#ifdef HAVE_OSS
 static char *sdlabels[SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_LABELS;
 static char *sdnames[SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
 #endif
@@ -74,7 +75,7 @@ static char *sdnames[SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
  */
 static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINE16 lpml, DWORD fdwInfo)
 {
-#ifdef linux
+#ifdef HAVE_OSS
 	int 		mixer,i,j,devmask,recsrc,recmask;
 
 	TRACE(mmaux,"(%04X, %p, %lu);\n", wDevID, lpml, fdwInfo);
@@ -176,7 +177,7 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINE16 lpml, DWORD fdwInfo)
  */
 static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpmod, DWORD flags)
 {
-#ifdef linux
+#ifdef HAVE_OSS
 
 	TRACE(mmaux,"(%04X, %p, %lu);\n",wDevID,lpmod,flags);
 	if (lpmod == NULL) return MMSYSERR_NOTENABLED;
