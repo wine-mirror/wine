@@ -5,6 +5,7 @@
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
  */
+#include "wine/port.h"
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"

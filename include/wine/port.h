@@ -142,4 +142,55 @@ extern int wine_dlclose( void *handle, char *error, int errorsize );
 #define RTLD_GLOBAL	0x100
 #endif
 
+
+/* Macros to access unaligned or wrong-endian WORDs and DWORDs. */
+
+#define PUT_WORD(ptr, w)  (*(WORD *)(ptr) = (w))
+#define GET_WORD(ptr)     (*(WORD *)(ptr))
+#define PUT_DWORD(ptr, d) (*(DWORD *)(ptr) = (d))
+#define GET_DWORD(ptr)    (*(DWORD *)(ptr))
+
+#define PUT_LE_WORD(ptr, w) \
+        do { ((BYTE *)(ptr))[0] = LOBYTE(w); \
+             ((BYTE *)(ptr))[1] = HIBYTE(w); } while (0)
+#define GET_LE_WORD(ptr) \
+        MAKEWORD( ((BYTE *)(ptr))[0], \
+                  ((BYTE *)(ptr))[1] )
+#define PUT_LE_DWORD(ptr, d) \
+        do { PUT_LE_WORD(&((WORD *)(ptr))[0], LOWORD(d)); \
+             PUT_LE_WORD(&((WORD *)(ptr))[1], HIBYTE(d)); } while (0)
+#define GET_LE_DWORD(ptr) \
+        ((DWORD)MAKELONG( GET_LE_WORD(&((WORD *)(ptr))[0]), \
+                          GET_LE_WORD(&((WORD *)(ptr))[1]) ))
+
+#define PUT_BE_WORD(ptr, w) \
+        do { ((BYTE *)(ptr))[1] = LOBYTE(w); \
+             ((BYTE *)(ptr))[0] = HIBYTE(w); } while (0)
+#define GET_BE_WORD(ptr) \
+        MAKEWORD( ((BYTE *)(ptr))[1], \
+                  ((BYTE *)(ptr))[0] )
+#define PUT_BE_DWORD(ptr, d) \
+        do { PUT_BE_WORD(&((WORD *)(ptr))[1], LOWORD(d)); \
+             PUT_BE_WORD(&((WORD *)(ptr))[0], HIBYTE(d)); } while (0)
+#define GET_BE_DWORD(ptr) \
+        ((DWORD)MAKELONG( GET_BE_WORD(&((WORD *)(ptr))[1]), \
+                          GET_BE_WORD(&((WORD *)(ptr))[0]) ))
+
+#if defined(ALLOW_UNALIGNED_ACCESS)
+#define PUT_UA_WORD(ptr, w)  PUT_WORD(ptr, w)
+#define GET_UA_WORD(ptr)     GET_WORD(ptr)
+#define PUT_UA_DWORD(ptr, d) PUT_DWORD(ptr, d)
+#define GET_UA_DWORD(ptr)    GET_DWORD(ptr)
+#elif defined(WORDS_BIGENDIAN)
+#define PUT_UA_WORD(ptr, w)  PUT_BE_WORD(ptr, w)
+#define GET_UA_WORD(ptr)     GET_BE_WORD(ptr)
+#define PUT_UA_DWORD(ptr, d) PUT_BE_DWORD(ptr, d)
+#define GET_UA_DWORD(ptr)    GET_BE_DWORD(ptr)
+#else
+#define PUT_UA_WORD(ptr, w)  PUT_LE_WORD(ptr, w)
+#define GET_UA_WORD(ptr)     GET_LE_WORD(ptr)
+#define PUT_UA_DWORD(ptr, d) PUT_LE_DWORD(ptr, d)
+#define GET_UA_DWORD(ptr)    GET_LE_DWORD(ptr)
+#endif
+
 #endif /* !defined(__WINE_WINE_PORT_H) */

@@ -20,6 +20,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
+#include "wine/port.h"
 #include "heap.h"
 #include "win.h"
 #include "controls.h"

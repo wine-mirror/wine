@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "config.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "selectors.h"
@@ -682,6 +683,16 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 {
     char *heapEnd = (char *)subheap + subheap->size;
 
+#if !defined(ALLOW_UNALIGNED_ACCESS)
+    /* Check for unaligned pointers */
+    if ( (long)pArena % sizeof(void *) != 0 )
+    {
+        ERR( "Heap %08lx: unaligned arena pointer %08lx\n",
+             (DWORD)subheap->heap, (DWORD)pArena );
+        return FALSE;
+    }
+#endif
+
     /* Check magic number */
     if (pArena->magic != ARENA_FREE_MAGIC)
     {
@@ -765,6 +776,28 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL quiet )
 {
     char *heapEnd = (char *)subheap + subheap->size;
+
+#if !defined(ALLOW_UNALIGNED_ACCESS)
+    /* Check for unaligned pointers */
+    if ( (long)pArena % sizeof(void *) != 0 )
+    {
+        if ( quiet == NOISY )
+        {
+            ERR( "Heap %08lx: unaligned arena pointer %08lx\n",
+                  (DWORD)subheap->heap, (DWORD)pArena );
+            if ( TRACE_ON(heap) )
+                HEAP_Dump( subheap->heap );
+        }
+        else if ( WARN_ON(heap) )
+        {
+            WARN( "Heap %08lx: unaligned arena pointer %08lx\n",
+                  (DWORD)subheap->heap, (DWORD)pArena );
+            if ( TRACE_ON(heap) )
+                HEAP_Dump( subheap->heap );
+        }
+        return FALSE;
+    }
+#endif
 
     /* Check magic number */
     if (pArena->magic != ARENA_INUSE_MAGIC)

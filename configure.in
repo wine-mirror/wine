@@ -782,6 +782,21 @@ then
   AC_DEFINE(BITFIELDS_BIGENDIAN)
 fi
 
+AC_CACHE_CHECK( "whether unaligned memory access is allowed", wine_cv_allow_unaligned_access,
+  [AC_TRY_RUN([
+long volatile test[2];
+main()
+{
+    long volatile *ua = (long volatile *)((char *)test + 1);
+    *ua = 0;
+    exit(0);
+} ], wine_cv_allow_unaligned_access=yes, wine_cv_allow_unaligned_access=no,
+     wine_cv_allow_unaligned_access=no ) ])
+if test "$wine_allow_unaligned_access" = "yes"
+then
+  AC_DEFINE(ALLOW_UNALIGNED_ACCESS)
+fi
+
 
 dnl **** Check for functions ****
 

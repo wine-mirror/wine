@@ -9,6 +9,7 @@
 #include <stdlib.h>	/* abs() */
 #include <sys/types.h>
 #include <unistd.h>
+#include "config.h"
 #include "winbase.h"
 #include "windef.h"
 #include "winerror.h"

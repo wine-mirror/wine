@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "wine/port.h"
 #include "windef.h"
 #include "winnls.h"
 #include "winerror.h"
@@ -59,7 +60,7 @@ static const char ENV_program_name[] = "C:\\WINDOWS\\SYSTEM\\KRNL386.EXE";
 /* Fill the extra bytes with the program name and stuff */
 #define FILL_EXTRA_ENV(p) \
     *(p) = '\0'; \
-    PUT_WORD( (p) + 1, 1 ); \
+    PUT_UA_WORD( (p) + 1, 1 ); \
     strcpy( (p) + 3, ENV_program_name );
 
 STARTUPINFOA current_startupinfo =

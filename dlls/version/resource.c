@@ -11,6 +11,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "config.h"
+
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winnls.h"
