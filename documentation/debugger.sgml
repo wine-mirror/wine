@@ -1337,6 +1337,11 @@ watch &lt;id&gt;	adds a watch command (on write) at the address of
 		symbol &lt;id&gt;
 info break	lists all (break|watch)points (with state)
         </screen>
+	<para>
+	  When setting a breakpoint on an &lt;id&gt;, if several symbols with this 
+	  &lt;id&gt; exist, the debugger will prompt for the symbol you want to use. 
+	  Pick up the one you want from its number.
+	</para>
       </sect2>
 
       <sect2>
@@ -1470,6 +1475,33 @@ c =&gt; character (only printable 0x20-0x7f are actually
 b =&gt; 8 bit unsigned hexadecimal integer
         </screen>
       </sect2>
+
+      <sect2>
+	<title>Expressions</title>
+	
+	<para>
+	  Expressions in Wine Debugger are mostly written in a C form. However, there
+	  are a few discrepancies:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		Identifiers can take a '.' in their names. This allow mainly to access symbols
+	        from different DLLs like USER32.DLL.CreateWindowA
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        Because of previous rule, fields access from a struct must be written as:
+<screen>
+	my_struct . my_field	
+</screen>
+	        (note the spaces after and before the dot).
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+      </sect2>
+
     </sect1>
 
 
