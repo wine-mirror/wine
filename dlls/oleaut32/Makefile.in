@@ -11,6 +11,7 @@ C_SRCS = \
 	ole2disp.c \
 	oleaut.c \
 	olefont.c \
+	olepicture.c \
 	parsedt.c \
 	safearray.c \
 	stubs.c \

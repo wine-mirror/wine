@@ -44,27 +44,3 @@ HRESULT WINAPI OleCreatePropertyFrame( HWND hwndOwner, UINT x, UINT y,
 	return S_OK;
 }
  
-/***********************************************************************
- * OleLoadPicture
- */
-HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
-		            REFIID reed, LPVOID *lplpvObj )
-{
-	FIXME("(%p,%ld,%d,%p,%p), not implemented (olepro32.dll) \n",
-		lpstream,lSize,fRunmode,reed,lplpvObj
-	);
-	return S_OK;
-}
- 
-/***********************************************************************
- * OleCreatePictureIndirect
- */
-HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
-		            BOOL fOwn, LPVOID * lplpvObj )
-{
-	FIXME("(%p,%p,%d,%p), not implemented (olepro32.dll)\n",
-		lpPictDesc,riid,fOwn,lplpvObj
-	);
-	return S_OK;
-}
-
