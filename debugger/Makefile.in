@@ -43,7 +43,7 @@ lex.yy.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
 
 winedbg: $(OBJS)
-	$(CC) -o $@ $(OBJS) $(DLL_LINK) $(LIBS)
+	$(CC) -o $@ $(OBJS) $(DLL_LINK) $(LIBS) $(LDFLAGS)
 
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
