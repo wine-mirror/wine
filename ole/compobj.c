@@ -507,20 +507,93 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
                         LPVOID pvReserved, REFIID iid, LPVOID *ppv)
 {
     char xclsid[50],xiid[50];
-    LPCLASSFACTORY lpclf;
     HRESULT hres = E_UNEXPECTED;
+    char dllName[MAX_PATH+1];
+    LONG dllNameLen = MAX_PATH+1;
+    HINSTANCE32 hLibrary;
+    typedef HRESULT (*DllGetClassObjectFunc)(REFCLSID clsid,
+                            REFIID iid, LPVOID *ppv);
+    DllGetClassObjectFunc DllGetClassObject;
+
+    HKEY CLSIDkey;
+    char buf[MAX_PATH + 1];
+    int i;
+    int found;
 
     WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
     WINE_StringFromCLSID((LPCLSID)iid,xiid);
     TRACE(ole,"\n\tCLSID:\t%s,\n\tIID:\t%s\n",xclsid,xiid);
 
-    *ppv = NULL;
-    lpclf = IClassFactory_Constructor();
-    if (lpclf)
-    {
-        hres = lpclf->lpvtbl->fnQueryInterface(lpclf,iid, ppv);
-        lpclf->lpvtbl->fnRelease(lpclf);
+    /* out of process and remote servers not supported yet */
+    if ((CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER) & dwClsContext) {
+        FIXME(ole, "CLSCTX_LOCAL_SERVER and CLSCTX_REMOTE_SERVER not supported!\n");
+       return E_ACCESSDENIED;
     }
+
+    if ((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext) {
+
+        /* lookup CLSID in registry key HKCR/CLSID */
+        hres = RegOpenKeyEx32A(HKEY_CLASSES_ROOT, "CLSID", 0,
+                              KEY_ENUMERATE_SUB_KEYS, &CLSIDkey);
+
+       if (hres != ERROR_SUCCESS) {
+           return REGDB_E_READREGDB;
+       }
+
+       /* search all the subkeys for a match to xclsid */
+       found=FALSE;
+       for (i=0; i<100000; i++) {
+
+           char clsidKeyPath[MAX_PATH + 1];
+           HKEY key;
+           LONG res;
+
+           res = RegEnumKey32A(CLSIDkey, i, buf, MAX_PATH);
+           if (res == ERROR_NO_MORE_ITEMS)
+               break;
+           if (res != ERROR_SUCCESS)
+               continue;
+
+           sprintf(clsidKeyPath, "CLSID\\%s", buf);
+
+           if (lstrcmpi32A(buf, xclsid) != 0)
+               continue;
+
+           res = RegOpenKeyEx32A(HKEY_CLASSES_ROOT, clsidKeyPath, 0,
+                                 KEY_QUERY_VALUE, &key);
+           if (res != ERROR_SUCCESS) {
+               return REGDB_E_READREGDB;
+           }
+           hres = RegQueryValue32A(key, "InprocServer32", dllName, &dllNameLen);
+           if (res != ERROR_SUCCESS) {
+               return REGDB_E_READREGDB;
+           }
+           TRACE(ole,"found InprocServer32 dll %s\n", dllName);
+           found = TRUE;
+           break;
+       }
+
+       if (!found) {
+           return REGDB_E_CLASSNOTREG;
+       }
+
+       /* open dll, call DllGetClassFactory */
+       hLibrary = LoadLibrary32A(dllName);
+
+       if (hLibrary == 0) {
+           TRACE(ole,"couldn't load InprocServer32 dll %s\n", dllName);
+
+           return E_ACCESSDENIED; /* or should this be CO_E_DLLNOTFOUND? */
+       }
+
+       DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress32(hLibrary, "DllGetClassObject");
+       if (DllGetClassObject == NULL) {
+           TRACE(ole,"couldn't find function DllGetClassObject in %s\n", dllName);
+           return E_ACCESSDENIED;
+       }
+       return DllGetClassObject(rclsid, iid, ppv);
+    }
+
     return hres;
 }
 
@@ -563,7 +636,8 @@ HRESULT WINAPI CoCreateInstance(
 	HRESULT hres;
 	LPCLASSFACTORY lpclf = 0;
 
-	CoGetClassObject(rclsid, dwClsContext, NULL, &IID_IClassFactory, (LPVOID)&lpclf);
+        hres = CoGetClassObject(rclsid, dwClsContext, NULL, &IID_IClassFactory, (LPVOID)&lpclf);
+        if (!SUCCEEDED(hres)) return hres;
 	hres = lpclf->lpvtbl->fnCreateInstance(lpclf, pUnkOuter, iid, ppv);
 	lpclf->lpvtbl->fnRelease(lpclf);
 	return hres;

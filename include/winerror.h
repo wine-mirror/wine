@@ -169,4 +169,9 @@ extern int WIN32_LastError;
 /* Obtained from lcc-win32 include files */
 #define GDI_ERROR			0xffffffff
 
+
+/* registry errors */
+#define REGDB_E_READREGDB               0x80040150
+#define REGDB_E_CLASSNOTREG             0x80040154
+
 #endif  /* __WINE_WINERROR_H */
