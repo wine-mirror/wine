@@ -4127,8 +4127,14 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeAttr( ITypeInfo2 *iface,
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TRACE("(%p)\n",This);
-    /* FIXME: must do a copy here */
-    *ppTypeAttr=&This->TypeAttr;
+    *ppTypeAttr = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppTypeAttr));
+    memcpy(*ppTypeAttr, &This->TypeAttr, sizeof(**ppTypeAttr));
+    if((*ppTypeAttr)->typekind == TKIND_DISPATCH && (*ppTypeAttr)->wTypeFlags & TYPEFLAG_FDUAL) {
+        (*ppTypeAttr)->cFuncs = (*ppTypeAttr)->cbSizeVft / 4; /* This should include all the inherited
+                                                                 funcs */
+        (*ppTypeAttr)->cbSizeVft = 28; /* This is always the size of IDispatch's vtbl */
+        (*ppTypeAttr)->wTypeFlags &= ~TYPEFLAG_FOLEAUTOMATION;
+    }
     return S_OK;
 }
 
@@ -5176,6 +5182,7 @@ static void WINAPI ITypeInfo_fnReleaseTypeAttr( ITypeInfo2 *iface,
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TRACE("(%p)->(%p)\n", This, pTypeAttr);
+    HeapFree(GetProcessHeap(), 0, pTypeAttr);
 }
 
 /* ITypeInfo::ReleaseFuncDesc
