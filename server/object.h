@@ -48,7 +48,7 @@ struct object_ops
     /* flush the object buffers */
     int  (*flush)(struct object *);
     /* get file information */
-    int  (*get_file_info)(struct object *,struct get_file_info_reply *);
+    int  (*get_file_info)(struct object *,struct get_file_info_reply *, int *flags);
     /* queue an async operation */
     struct async_queue* (*queue_async)(struct object *, struct async *async, int type, int count);
     /* destroy on refcount == 0 */
@@ -92,7 +92,7 @@ extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_get_fd( struct object *obj );
 extern int no_flush( struct object *obj );
-extern int no_get_file_info( struct object *obj, struct get_file_info_reply *info );
+extern int no_get_file_info( struct object *obj, struct get_file_info_reply *info, int *flags );
 extern void no_destroy( struct object *obj );
 extern int default_poll_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void default_poll_remove_queue( struct object *obj, struct wait_queue_entry *entry );

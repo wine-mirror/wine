@@ -25,7 +25,7 @@ static void console_input_destroy( struct object *obj );
 static int console_input_signaled( struct object *obj, struct thread *thread );
 
 /* common routine */
-static int console_get_file_info( struct object *obj, struct get_file_info_reply *reply );
+static int console_get_file_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 
 static const struct object_ops console_input_ops =
 {
@@ -785,7 +785,7 @@ static void console_input_dump( struct object *obj, int verbose )
 	     console->active, console->evt );
 }
 
-static int console_get_file_info( struct object *obj, struct get_file_info_reply *reply )
+static int console_get_file_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
 {
     if (reply)
     {
@@ -800,6 +800,7 @@ static int console_get_file_info( struct object *obj, struct get_file_info_reply
         reply->index_low   = 0;
         reply->serial      = 0;
     }
+    *flags = 0;
     return FD_TYPE_CONSOLE;
 }
 

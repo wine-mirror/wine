@@ -210,7 +210,7 @@ HANDLE FILE_DupUnixHandle( int fd, DWORD access, BOOL inherit )
  * Retrieve the Unix handle corresponding to a file handle.
  * Returns -1 on failure.
  */
-int FILE_GetUnixHandleType( HANDLE handle, DWORD access, DWORD *type )
+static int FILE_GetUnixHandleType( HANDLE handle, DWORD access, enum fd_type *type, DWORD *flags )
 {
     int ret, fd = -1;
 
@@ -225,6 +225,7 @@ int FILE_GetUnixHandleType( HANDLE handle, DWORD access, DWORD *type )
                 fd = reply->fd;
             }
             if (type) *type = reply->type;
+            if (flags) *flags = reply->flags;
         }
         SERVER_END_REQ;
         if (ret) return -1;
@@ -250,7 +251,7 @@ int FILE_GetUnixHandleType( HANDLE handle, DWORD access, DWORD *type )
  */
 int FILE_GetUnixHandle( HANDLE handle, DWORD access )
 {
-    return FILE_GetUnixHandleType(handle, access, NULL);
+    return FILE_GetUnixHandleType( handle, access, NULL, NULL );
 }
 
 /*************************************************************************
@@ -1449,7 +1450,8 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
                         LPDWORD bytesRead, LPOVERLAPPED overlapped )
 {
     int unix_handle, result;
-    DWORD type;
+    enum fd_type type;
+    DWORD flags;
 
     TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToRead, 
           bytesRead, overlapped );
@@ -1457,11 +1459,10 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
-    unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_READ, &type );
+    unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_READ, &type, &flags );
 
-    switch (type)
+    if (flags & FD_FLAG_OVERLAPPED)
     {
-    case FD_TYPE_OVERLAPPED:
 	if (unix_handle == -1) return FALSE;
         if ( (overlapped==NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
         {
@@ -1506,13 +1507,16 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         /* fail on return, with ERROR_IO_PENDING */
         SetLastError(ERROR_IO_PENDING);
         return FALSE;
-
-    case FD_TYPE_CONSOLE:
-	return ReadConsoleA(hFile, buffer, bytesToRead, bytesRead, NULL);
-
-    case FD_TYPE_TIMEOUT:
+    }
+    if (flags & FD_FLAG_TIMEOUT)
+    {
         close(unix_handle);
         return FILE_TimeoutRead(hFile, buffer, bytesToRead, bytesRead);
+    }
+    switch(type)
+    {
+    case FD_TYPE_CONSOLE:
+	return ReadConsoleA(hFile, buffer, bytesToRead, bytesRead, NULL);
 
     default:
 	/* normal unix files */
@@ -1668,7 +1672,8 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
                          LPDWORD bytesWritten, LPOVERLAPPED overlapped )
 {
     int unix_handle, result;
-    DWORD type;
+    enum fd_type type;
+    DWORD flags;
 
     TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToWrite, 
           bytesWritten, overlapped );
@@ -1676,11 +1681,10 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
     if (!bytesToWrite) return TRUE;
 
-    unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_WRITE, &type );
+    unix_handle = FILE_GetUnixHandleType( hFile, GENERIC_WRITE, &type, &flags );
 
-    switch (type)
+    if (flags & FD_FLAG_OVERLAPPED)
     {
-    case FD_TYPE_OVERLAPPED:
 	if (unix_handle == -1) return FALSE;
         if ( (overlapped==NULL) || NtResetEvent( overlapped->hEvent, NULL ) )
         {
@@ -1727,7 +1731,10 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         /* fail on return, with ERROR_IO_PENDING */
         SetLastError(ERROR_IO_PENDING);
         return FALSE;
+    }
 
+    switch(type)
+    {
     case FD_TYPE_CONSOLE:
 	TRACE("%d %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite, 
 	      bytesWritten, overlapped );

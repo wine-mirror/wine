@@ -37,7 +37,7 @@ struct pipe
 static void pipe_dump( struct object *obj, int verbose );
 static int pipe_get_poll_events( struct object *obj );
 static int pipe_get_fd( struct object *obj );
-static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply );
+static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void pipe_destroy( struct object *obj );
 
 static const struct object_ops pipe_ops =
@@ -125,7 +125,7 @@ static int pipe_get_fd( struct object *obj )
     return pipe->obj.fd;
 }
 
-static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply )
+static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
 {
     if (reply)
     {
@@ -140,6 +140,7 @@ static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply 
         reply->index_low   = 0;
         reply->serial      = 0;
     }
+    *flags = 0;
     return FD_TYPE_DEFAULT;
 }
 

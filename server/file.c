@@ -53,7 +53,7 @@ static int file_get_poll_events( struct object *obj );
 static void file_poll_event( struct object *obj, int event );
 static int file_get_fd( struct object *obj );
 static int file_flush( struct object *obj );
-static int file_get_info( struct object *obj, struct get_file_info_reply *reply );
+static int file_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void file_destroy( struct object *obj );
 static struct async_queue * file_queue_async(struct object *obj, struct async* async, int type, int count);
 
@@ -303,7 +303,7 @@ static int file_flush( struct object *obj )
     return ret;
 }
 
-static int file_get_info( struct object *obj, struct get_file_info_reply *reply )
+static int file_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
 {
     struct stat st;
     struct file *file = (struct file *)obj;
@@ -339,9 +339,8 @@ static int file_get_info( struct object *obj, struct get_file_info_reply *reply 
         reply->index_low   = st.st_ino;
         reply->serial      = 0; /* FIXME */
     }
-
-    if (file->flags & FILE_FLAG_OVERLAPPED) return FD_TYPE_OVERLAPPED;
-
+    *flags = 0;
+    if (file->flags & FILE_FLAG_OVERLAPPED) *flags |= FD_FLAG_OVERLAPPED;
     return FD_TYPE_DEFAULT;
 }
 
@@ -587,7 +586,7 @@ DECL_HANDLER(get_handle_fd)
             if ((fd = obj->ops->get_fd( obj )) != -1)
                 send_client_fd( current->process, fd, req->handle );
         }
-        reply->type = obj->ops->get_file_info( obj, NULL );
+        reply->type = obj->ops->get_file_info( obj, NULL, &reply->flags );
         release_object( obj );
     }
 }
@@ -633,7 +632,8 @@ DECL_HANDLER(get_file_info)
 
     if ((obj = get_handle_obj( current->process, req->handle, 0, NULL )))
     {
-        obj->ops->get_file_info( obj, reply );
+        int flags;
+        obj->ops->get_file_info( obj, reply, &flags );
         release_object( obj );
     }
 }

@@ -29,7 +29,7 @@ struct device
 };
 
 static void device_dump( struct object *obj, int verbose );
-static int device_get_info( struct object *obj, struct get_file_info_reply *reply );
+static int device_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 
 static const struct object_ops device_ops =
 {
@@ -65,7 +65,7 @@ static void device_dump( struct object *obj, int verbose )
     fprintf( stderr, "Device id=%08x\n", dev->id );
 }
 
-static int device_get_info( struct object *obj, struct get_file_info_reply *reply )
+static int device_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
 {
     struct device *dev = (struct device *)obj;
     assert( obj->ops == &device_ops );
@@ -83,6 +83,7 @@ static int device_get_info( struct object *obj, struct get_file_info_reply *repl
         reply->index_low   = 0;
         reply->serial      = 0;
     }
+    *flags = 0;
     return FD_TYPE_DEFAULT;
 }
 

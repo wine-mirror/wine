@@ -59,7 +59,7 @@ static int sock_signaled( struct object *obj, struct thread *thread );
 static int sock_get_poll_events( struct object *obj );
 static void sock_poll_event( struct object *obj, int event );
 static int sock_get_fd( struct object *obj );
-static int sock_get_info( struct object *obj, struct get_file_info_reply *reply );
+static int sock_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void sock_destroy( struct object *obj );
 static int sock_get_error( int err );
 static void sock_set_error(void);
@@ -273,7 +273,7 @@ static int sock_get_fd( struct object *obj )
     return sock->obj.fd;
 }
 
-static int sock_get_info( struct object *obj, struct get_file_info_reply *reply )
+static int sock_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
 {
     if (reply)
     {
@@ -288,6 +288,7 @@ static int sock_get_info( struct object *obj, struct get_file_info_reply *reply 
         reply->index_low   = 0;
         reply->serial      = 0;
     }
+    *flags = 0;
     return FD_TYPE_DEFAULT;
 }
 

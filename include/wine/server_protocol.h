@@ -730,12 +730,16 @@ struct get_handle_fd_reply
     struct reply_header __header;
     int          fd;
     int          type;
+    int          flags;
 };
-#define FD_TYPE_INVALID    0
-#define FD_TYPE_DEFAULT    1
-#define FD_TYPE_CONSOLE    2
-#define FD_TYPE_OVERLAPPED 3
-#define FD_TYPE_TIMEOUT    4
+enum fd_type
+{
+    FD_TYPE_INVALID,
+    FD_TYPE_DEFAULT,
+    FD_TYPE_CONSOLE
+};
+#define FD_FLAG_OVERLAPPED 0x01
+#define FD_FLAG_TIMEOUT    0x02
 
 
 
@@ -3038,6 +3042,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 68
+#define SERVER_PROTOCOL_VERSION 69
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

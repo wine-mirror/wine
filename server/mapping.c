@@ -34,7 +34,7 @@ struct mapping
 };
 
 static int mapping_get_fd( struct object *obj );
-static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply );
+static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void mapping_dump( struct object *obj, int verbose );
 static void mapping_destroy( struct object *obj );
 
@@ -264,9 +264,10 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         }
         if (!size_high && !size_low)
         {
+            int flags;
             struct get_file_info_reply reply;
             struct object *obj = (struct object *)mapping->file;
-            obj->ops->get_file_info( obj, &reply );
+            obj->ops->get_file_info( obj, &reply, &flags );
             size_high = reply.size_high;
             size_low  = ROUND_SIZE( 0, reply.size_low );
         }
@@ -312,14 +313,14 @@ static int mapping_get_fd( struct object *obj )
     return get_mmap_fd( mapping->file );
 }
 
-static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply )
+static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
 {
     struct mapping *mapping = (struct mapping *)obj;
     struct object *file = (struct object *)mapping->file;
 
     assert( obj->ops == &mapping_ops );
     assert( file );
-    return file->ops->get_file_info( file, reply );
+    return file->ops->get_file_info( file, reply, flags );
 }
 
 static void mapping_destroy( struct object *obj )
