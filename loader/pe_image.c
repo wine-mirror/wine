@@ -56,7 +56,10 @@ WINE_DECLARE_DEBUG_CHANNEL(segment);
 
 
 /* convert PE image VirtualAddress to Real Address */
-#define RVA(x) ((void *)((char *)load_addr+(unsigned int)(x)))
+inline static void *get_rva( HMODULE module, DWORD va )
+{
+    return (void *)((char *)module + va);
+}
 
 #define AdjustPtr(ptr,delta) ((char *)(ptr) + (delta))
 
@@ -66,37 +69,36 @@ void dump_exports( HMODULE hModule )
   int		i, j;
   WORD		*ordinal;
   DWORD		*function,*functions;
-  BYTE		**name;
-  unsigned int load_addr = hModule;
+  DWORD *name;
   IMAGE_EXPORT_DIRECTORY *pe_exports;
   DWORD rva_start, size;
 
   pe_exports = RtlImageDirectoryEntryToData( hModule, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
   rva_start = (char *)pe_exports - (char *)hModule;
 
-  Module = (char*)RVA(pe_exports->Name);
+  Module = get_rva(hModule, pe_exports->Name);
   DPRINTF("*******EXPORT DATA*******\n");
   DPRINTF("Module name is %s, %ld functions, %ld names\n",
           Module, pe_exports->NumberOfFunctions, pe_exports->NumberOfNames);
 
-  ordinal = RVA(pe_exports->AddressOfNameOrdinals);
-  functions = function = RVA(pe_exports->AddressOfFunctions);
-  name = RVA(pe_exports->AddressOfNames);
+  ordinal = get_rva(hModule, pe_exports->AddressOfNameOrdinals);
+  functions = function = get_rva(hModule, pe_exports->AddressOfFunctions);
+  name = get_rva(hModule, pe_exports->AddressOfNames);
 
   DPRINTF(" Ord    RVA     Addr   Name\n" );
   for (i=0;i<pe_exports->NumberOfFunctions;i++, function++)
   {
       if (!*function) continue;  /* No such function */
-      DPRINTF( "%4ld %08lx %p", i + pe_exports->Base, *function, RVA(*function) );
+      DPRINTF( "%4ld %08lx %p", i + pe_exports->Base, *function, get_rva(hModule, *function) );
       /* Check if we have a name for it */
       for (j = 0; j < pe_exports->NumberOfNames; j++)
           if (ordinal[j] == i)
           {
-              DPRINTF( "  %s", (char*)RVA(name[j]) );
+              DPRINTF( "  %s", (char*)get_rva(hModule, name[j]) );
               break;
           }
       if ((*function >= rva_start) && (*function <= rva_start + size))
-	  DPRINTF(" (forwarded -> %s)", (char *)RVA(*function));
+	  DPRINTF(" (forwarded -> %s)", (char *)get_rva(hModule, *function));
       DPRINTF("\n");
   }
 }
@@ -117,11 +119,11 @@ static FARPROC PE_FindExportedFunction(
 {
 	WORD				* ordinals;
 	DWORD				* function;
-	BYTE				** name, *ename = NULL;
 	int				i, ordinal;
-	unsigned int			load_addr = wm->module;
 	DWORD				rva_start, addr;
 	char				* forward;
+        DWORD *name;
+        char *ename = NULL;
         FARPROC proc;
         IMAGE_EXPORT_DIRECTORY *exports;
         DWORD exp_size;
@@ -133,9 +135,9 @@ static FARPROC PE_FindExportedFunction(
         if (HIWORD(funcName)) TRACE("(%s)\n",funcName);
         else TRACE("(%d)\n",LOWORD(funcName));
 
-	ordinals= RVA(exports->AddressOfNameOrdinals);
-	function= RVA(exports->AddressOfFunctions);
-	name	= RVA(exports->AddressOfNames);
+	ordinals= get_rva(wm->module, exports->AddressOfNameOrdinals);
+	function= get_rva(wm->module, exports->AddressOfFunctions);
+	name    = get_rva(wm->module, exports->AddressOfNames);
 	forward = NULL;
         rva_start = (char *)exports - (char *)wm->module;
 
@@ -146,7 +148,7 @@ static FARPROC PE_FindExportedFunction(
             /* first check the hint */
             if (hint >= 0 && hint <= max)
             {
-                ename = RVA(name[hint]);
+                ename = get_rva(wm->module, name[hint]);
                 if (!strcmp( ename, funcName ))
                 {
                     ordinal = ordinals[hint];
@@ -158,7 +160,7 @@ static FARPROC PE_FindExportedFunction(
             while (min <= max)
             {
                 int res, pos = (min + max) / 2;
-                ename = RVA(name[pos]);
+                ename = get_rva(wm->module, name[pos]);
                 if (!(res = strcmp( ename, funcName )))
                 {
                     ordinal = ordinals[pos];
@@ -177,7 +179,7 @@ static FARPROC PE_FindExportedFunction(
                 for (i = 0; i < exports->NumberOfNames; i++)
                     if (ordinals[i] == ordinal)
                     {
-                        ename = RVA(name[i]);
+                        ename = get_rva(wm->module, name[i]);
                         break;
                     }
             }
@@ -192,7 +194,7 @@ static FARPROC PE_FindExportedFunction(
         addr = function[ordinal];
         if (!addr) return NULL;
 
-        proc = RVA(addr);
+        proc = get_rva(wm->module, addr);
         if (((char *)proc < (char *)exports) || ((char *)proc >= (char *)exports + exp_size))
         {
             if (snoop)
@@ -229,8 +231,7 @@ static FARPROC PE_FindExportedFunction(
  */
 DWORD PE_fixup_imports( WINE_MODREF *wm )
 {
-    unsigned int load_addr	= wm->module;
-    int				i,characteristics_detection=1;
+    int i,characteristics_detection=1;
     IMAGE_IMPORT_DESCRIPTOR *imports, *pe_imp;
     DWORD size;
 
@@ -268,7 +269,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
     	WINE_MODREF		*wmImp;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	PIMAGE_THUNK_DATA	import_list,thunk_list;
- 	char			*name = (char *) RVA(pe_imp->Name);
+ 	char			*name = get_rva(wm->module, pe_imp->Name);
 
 	if (characteristics_detection && !pe_imp->u.Characteristics)
 		break;
@@ -284,8 +285,8 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 
 	if (pe_imp->u.OriginalFirstThunk != 0) { /* original MS style */
 	    TRACE("Microsoft style imports used\n");
-	    import_list =(PIMAGE_THUNK_DATA) RVA(pe_imp->u.OriginalFirstThunk);
-	    thunk_list = (PIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
+	    import_list = get_rva(wm->module, (DWORD)pe_imp->u.OriginalFirstThunk);
+	    thunk_list = get_rva(wm->module, (DWORD)pe_imp->FirstThunk);
 
 	    while (import_list->u1.Ordinal) {
 		if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal)) {
@@ -301,7 +302,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
                         thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		} else {		/* import by name */
-		    pe_name = (PIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
+		    pe_name = get_rva(wm->module, (DWORD)import_list->u1.AddressOfData);
 		    TRACE("--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
                         wmImp->module, pe_name->Name, pe_name->Hint, TRUE
@@ -317,7 +318,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 	    }
 	} else {	/* Borland style */
 	    TRACE("Borland style imports used\n");
-	    thunk_list = (PIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
+	    thunk_list = get_rva(wm->module, (DWORD)pe_imp->FirstThunk);
 	    while (thunk_list->u1.Ordinal) {
 		if (IMAGE_SNAP_BY_ORDINAL(thunk_list->u1.Ordinal)) {
 		    /* not sure about this branch, but it seems to work */
@@ -333,7 +334,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
                         thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		} else {
-		    pe_name=(PIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
+		    pe_name=get_rva(wm->module, (DWORD)thunk_list->u1.AddressOfData);
 		    TRACE("--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
@@ -411,7 +412,6 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
 WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
                               HANDLE hFile, BOOL builtin )
 {
-    DWORD load_addr = (DWORD)hModule;  /* for RVA */
     IMAGE_NT_HEADERS *nt;
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_EXPORT_DIRECTORY *pe_export = NULL;
@@ -422,8 +422,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
 
     nt = RtlImageNtHeader(hModule);
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_EXPORT;
-    if (dir->Size)
-        pe_export = (PIMAGE_EXPORT_DIRECTORY)RVA(dir->VirtualAddress);
+    if (dir->Size) pe_export = get_rva(hModule, dir->VirtualAddress);
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_EXCEPTION;
     if (dir->Size) FIXME("Exception directory ignored\n" );
@@ -451,29 +450,29 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT;
     if (dir->Size)
     {
-		TRACE("Delayed import, stub calls LoadLibrary\n" );
-		/*
-		 * Nothing to do here.
-		 */
+        TRACE("Delayed import, stub calls LoadLibrary\n" );
+        /*
+         * Nothing to do here.
+         */
 
 #ifdef ImgDelayDescr
-		/*
-		 * This code is useful to observe what the heck is going on.
-		 */
-		{
-		ImgDelayDescr *pe_delay = NULL;
-        pe_delay = (PImgDelayDescr)RVA(dir->VirtualAddress);
-        TRACE_(delayhlp)("pe_delay->grAttrs = %08x\n", pe_delay->grAttrs);
-        TRACE_(delayhlp)("pe_delay->szName = %s\n", pe_delay->szName);
-        TRACE_(delayhlp)("pe_delay->phmod = %08x\n", pe_delay->phmod);
-        TRACE_(delayhlp)("pe_delay->pIAT = %08x\n", pe_delay->pIAT);
-        TRACE_(delayhlp)("pe_delay->pINT = %08x\n", pe_delay->pINT);
-        TRACE_(delayhlp)("pe_delay->pBoundIAT = %08x\n", pe_delay->pBoundIAT);
-        TRACE_(delayhlp)("pe_delay->pUnloadIAT = %08x\n", pe_delay->pUnloadIAT);
-        TRACE_(delayhlp)("pe_delay->dwTimeStamp = %08x\n", pe_delay->dwTimeStamp);
+        /*
+         * This code is useful to observe what the heck is going on.
+         */
+        {
+            ImgDelayDescr *pe_delay = NULL;
+            pe_delay = get_rva(hModule, dir->VirtualAddress);
+            TRACE_(delayhlp)("pe_delay->grAttrs = %08x\n", pe_delay->grAttrs);
+            TRACE_(delayhlp)("pe_delay->szName = %s\n", pe_delay->szName);
+            TRACE_(delayhlp)("pe_delay->phmod = %08x\n", pe_delay->phmod);
+            TRACE_(delayhlp)("pe_delay->pIAT = %08x\n", pe_delay->pIAT);
+            TRACE_(delayhlp)("pe_delay->pINT = %08x\n", pe_delay->pINT);
+            TRACE_(delayhlp)("pe_delay->pBoundIAT = %08x\n", pe_delay->pBoundIAT);
+            TRACE_(delayhlp)("pe_delay->pUnloadIAT = %08x\n", pe_delay->pUnloadIAT);
+            TRACE_(delayhlp)("pe_delay->dwTimeStamp = %08x\n", pe_delay->dwTimeStamp);
         }
 #endif /* ImgDelayDescr */
-	}
+    }
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR;
     if (dir->Size) FIXME("Unknown directory 14 ignored\n" );

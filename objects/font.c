@@ -469,7 +469,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
 
     if (ret && dc->gdiFont) dc->gdiFont = 0;
 
-    if (ret == GDI_ERROR)
+    if (ret == HGDI_ERROR)
         ret = 0; /* SelectObject returns 0 on error */
     else
     {

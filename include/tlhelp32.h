@@ -114,7 +114,7 @@ typedef struct tagMODULEENTRY32
     DWORD  ProccntUsage;
     BYTE  *modBaseAddr;
     DWORD  modBaseSize;
-    DWORD  hModule;
+    HMODULE hModule;
     char   szModule[MAX_MODULE_NAME32 + 1];
     char   szExePath[MAX_PATH];
 } MODULEENTRY32, *PMODULEENTRY32, *LPMODULEENTRY32;
@@ -128,7 +128,7 @@ typedef struct tagMODULEENTRY32W
     DWORD  ProccntUsage;
     BYTE  *modBaseAddr;
     DWORD  modBaseSize;
-    DWORD  hModule;
+    HMODULE hModule;
     WCHAR  szModule[MAX_MODULE_NAME32 + 1];
     WCHAR  szExePath[MAX_PATH];
 } MODULEENTRY32W, *PMODULEENTRY32W, *LPMODULEENTRY32W;

@@ -37,7 +37,7 @@ static PLOADED_IMAGE IMAGEHLP_pLastLoadedImage=NULL;
 
 static LOADED_IMAGE IMAGEHLP_EmptyLoadedImage = {
   NULL,       /* ModuleName */
-  0xffffffff, /* hFile */
+  0,          /* hFile */
   NULL,       /* MappedAddress */
   NULL,       /* FileHeader */
   NULL,       /* LastRvaSection */
@@ -317,5 +317,3 @@ BOOL WINAPI UnMapAndLoad(PLOADED_IMAGE LoadedImage)
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
-
-

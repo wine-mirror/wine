@@ -181,8 +181,8 @@ BOOL16 WINAPI GetIconInfo16(HICON16 hIcon, LPICONINFO16 iconinfo)
   iconinfo->fIcon = ii32.fIcon;
   iconinfo->xHotspot = ii32.xHotspot;
   iconinfo->yHotspot = ii32.yHotspot;
-  iconinfo->hbmMask = ii32.hbmMask;
-  iconinfo->hbmColor = ii32.hbmColor;
+  iconinfo->hbmMask  = HBITMAP_16(ii32.hbmMask);
+  iconinfo->hbmColor = HBITMAP_16(ii32.hbmColor);
   return ret;
 }
 
@@ -204,8 +204,7 @@ HCURSOR16 WINAPI CreateCursor16(HINSTANCE16 hInstance,
   info.bPlanes = 1;
   info.bBitsPerPixel = 1;
 
-  return CreateCursorIconIndirect16(HINSTANCE_32(hInstance), &info, lpANDbits,
-				    lpXORbits);
+  return CreateCursorIconIndirect16(hInstance, &info, lpANDbits, lpXORbits);
 }
 
 /**********************************************************************

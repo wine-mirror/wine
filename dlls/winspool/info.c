@@ -1074,7 +1074,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
      * just create to find a DEVMODEA struct (it will use the WINEPS default
      * one in case it is not there, so we are ok).
      */
-    size = DocumentPropertiesW(0, -1, pi->pPrinterName, NULL, NULL, 0);
+    size = DocumentPropertiesW(0, 0, pi->pPrinterName, NULL, NULL, 0);
     if(size < 0) {
         FIXME("DocumentPropertiesW on printer '%s' fails\n", debugstr_w(pi->pPrinterName));
 	size = sizeof(DEVMODEW);
@@ -1084,7 +1084,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     else {
 	dmW = HeapAlloc(GetProcessHeap(), 0, size);
 	dmW->dmSize = size;
-	if (0>DocumentPropertiesW(0,-1,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER)) {
+	if (0>DocumentPropertiesW(0,0,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER)) {
 	    ERR("DocumentPropertiesW on printer '%s' failed!\n", debugstr_w(pi->pPrinterName));
 	    SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER);
 	    return 0;

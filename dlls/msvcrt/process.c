@@ -453,7 +453,7 @@ int MSVCRT_system(const char* cmd)
  */
 int _loaddll(const char* dllname)
 {
-  return LoadLibraryA(dllname);
+  return (int)LoadLibraryA(dllname);
 }
 
 /*********************************************************************
@@ -461,7 +461,7 @@ int _loaddll(const char* dllname)
  */
 int _unloaddll(int dll)
 {
-  if (FreeLibrary((HANDLE)dll))
+  if (FreeLibrary((HMODULE)dll))
     return 0;
   else
   {

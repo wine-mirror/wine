@@ -726,7 +726,7 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
 {
     HGDIOBJ new_handle;
 
-    if (handle & 2)  /* GDI heap handle */
+    if ((UINT_PTR)handle & 2)  /* GDI heap handle */
     {
         LOCAL_Unlock( GDI_HeapSel, handle );
         if ((new_handle = LOCAL_ReAlloc( GDI_HeapSel, handle, size, LMEM_MOVEABLE )))
@@ -764,7 +764,7 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
 
     object->wMagic = 0;  /* Mark it as invalid */
     object->funcs  = NULL;
-    if (handle & 2)  /* GDI heap handle */
+    if ((UINT_PTR)handle & 2)  /* GDI heap handle */
     {
         LOCAL_Unlock( GDI_HeapSel, handle );
         LOCAL_Free( GDI_HeapSel, handle );
@@ -798,7 +798,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
 
     _EnterSysLevel( &GDI_level );
 
-    if (handle & 2)  /* GDI heap handle */
+    if ((UINT_PTR)handle & 2)  /* GDI heap handle */
     {
         ptr = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, handle );
         if (ptr)
@@ -814,7 +814,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
     }
     else  /* large heap handle */
     {
-        int i = (handle >> 2) - FIRST_LARGE_HANDLE;
+        int i = ((UINT_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
         if (i >= 0 && i < MAX_LARGE_HANDLES)
         {
             ptr = large_handles[i];
@@ -840,7 +840,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
  */
 void GDI_ReleaseObj( HGDIOBJ handle )
 {
-    if (handle & 2) LOCAL_Unlock( GDI_HeapSel, handle );
+    if ((UINT_PTR)handle & 2) LOCAL_Unlock( GDI_HeapSel, handle );
     TRACE_SEC( handle, "leave" );
     _LeaveSysLevel( &GDI_level );
 }
