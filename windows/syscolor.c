@@ -53,7 +53,7 @@ static const char * const DefSysColors[] =
     "TitleText", "255 255 255",      /* COLOR_CAPTIONTEXT         */
     "ActiveBorder", "192 192 192",   /* COLOR_ACTIVEBORDER        */
     "InactiveBorder", "192 192 192", /* COLOR_INACTIVEBORDER      */
-    "AppWorkspace", "128 128 128",   /* COLOR_APPWORKSPACE        */
+    "AppWorkSpace", "128 128 128",   /* COLOR_APPWORKSPACE        */
     "Hilight", "0 0 128",            /* COLOR_HIGHLIGHT           */
     "HilightText", "255 255 255",    /* COLOR_HIGHLIGHTTEXT       */
     "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */
@@ -62,11 +62,11 @@ static const char * const DefSysColors[] =
     "ButtonText", "0 0 0",           /* COLOR_BTNTEXT             */
     "InactiveTitleText", "192 192 192",/* COLOR_INACTIVECAPTIONTEXT */
     "ButtonHilight", "255 255 255",  /* COLOR_BTNHIGHLIGHT        */
-    "3DDarkShadow", "0 0 0",         /* COLOR_3DDKSHADOW          */
-    "3DLight", "224 224 224",        /* COLOR_3DLIGHT             */
+    "ButtonDkShadow", "0 0 0",       /* COLOR_3DDKSHADOW          */
+    "ButtonLight", "224 224 224",    /* COLOR_3DLIGHT             */
     "InfoText", "0 0 0",             /* COLOR_INFOTEXT            */
-    "InfoBackground", "255 255 225", /* COLOR_INFOBK              */
-    "AlternateButtonFace", "180 180 180",  /* COLOR_ALTERNATEBTNFACE */
+    "InfoWindow", "255 255 225",     /* COLOR_INFOBK              */
+    "ButtonAlternateFace", "180 180 180",  /* COLOR_ALTERNATEBTNFACE */
     "HotTrackingColor", "0 0 255",         /* COLOR_HOTLIGHT */
     "GradientActiveTitle", "16 132 208",   /* COLOR_GRADIENTACTIVECAPTION */
     "GradientInactiveTitle", "181 181 181" /* COLOR_GRADIENTINACTIVECAPTION */

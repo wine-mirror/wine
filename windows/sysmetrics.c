@@ -166,8 +166,8 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CXMIN] = 112;
     sysMetrics[SM_CYMIN] = 27;
 
-    sysMetrics[SM_CXSIZE] = sysMetrics[SM_CYCAPTION] - 1;
-    sysMetrics[SM_CYSIZE] = sysMetrics[SM_CXSIZE];
+    sysMetrics[SM_CXSIZE] = SYSMETRICS_GetRegistryMetric (hkey, "CaptionWidth", sysMetrics[SM_CYCAPTION] - 1);
+    sysMetrics[SM_CYSIZE] = sysMetrics[SM_CYCAPTION] - 1;
     sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
     sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
 
@@ -195,13 +195,13 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYEDGE] = sysMetrics[SM_CXEDGE];
     sysMetrics[SM_CXMINSPACING] = 160;
     sysMetrics[SM_CYMINSPACING] = 24;
-    sysMetrics[SM_CXSMICON] = sysMetrics[SM_CYSIZE] - (sysMetrics[SM_CYSIZE] % 2);
-    sysMetrics[SM_CYSMICON] = sysMetrics[SM_CXSMICON];
-    sysMetrics[SM_CYSMCAPTION] = 16;
-    sysMetrics[SM_CXSMSIZE] = 13;
-    sysMetrics[SM_CYSMSIZE] = 15;
-    sysMetrics[SM_CXMENUSIZE] = sysMetrics[SM_CYMENU] - 1;
-    sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CXMENUSIZE];
+    sysMetrics[SM_CXSMICON] = 16;
+    sysMetrics[SM_CYSMICON] = 16;
+    sysMetrics[SM_CYSMCAPTION] = SYSMETRICS_GetRegistryMetric(hkey, "SmCaptionHeight", 15) + 1;
+    sysMetrics[SM_CXSMSIZE] = SYSMETRICS_GetRegistryMetric(hkey, "SmCaptionWidth", 13);
+    sysMetrics[SM_CYSMSIZE] = sysMetrics[SM_CYSMCAPTION] - 1;
+    sysMetrics[SM_CXMENUSIZE] = SYSMETRICS_GetRegistryMetric(hkey, "MenuWidth", sysMetrics[SM_CYMENU] - 1);
+    sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CYMENU] - 1;
 
     /* FIXME: What do these mean? */
     sysMetrics[SM_ARRANGE] = ARW_HIDE;
@@ -214,8 +214,8 @@ void SYSMETRICS_Init(void)
     /* For the following: 0 = ok, 1 = failsafe, 2 = failsafe + network */
     sysMetrics[SM_CLEANBOOT] = 0;
 
-    sysMetrics[SM_CXDRAG] = 2;
-    sysMetrics[SM_CYDRAG] = 2;
+    sysMetrics[SM_CXDRAG] = 4;
+    sysMetrics[SM_CYDRAG] = 4;
     sysMetrics[SM_CXMENUCHECK] = 13;
     sysMetrics[SM_CYMENUCHECK] = 13;
 
