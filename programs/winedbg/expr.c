@@ -321,15 +321,13 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
   switch(exp->type)
     {
     case EXPR_TYPE_CAST:
-      rtn = DEBUG_EvalExpr(exp->un.cast.expr);
-      rtn.type = exp->un.cast.cast;
-      if (!rtn.type)
+      if (!exp->un.cast.cast)
       {
 	  DEBUG_Printf(DBG_CHN_MESG, "Can't cast to unknown type\n");
 	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
       }
-      if (DEBUG_GetType(rtn.type) == DT_POINTER)
-	 rtn.cookie = DV_TARGET;
+      rtn = DEBUG_EvalExpr(exp->un.cast.expr);
+      rtn.type = exp->un.cast.cast;
       break;
     case EXPR_TYPE_STRING:
       rtn.type = DEBUG_GetBasicType(DT_BASIC_STRING);
