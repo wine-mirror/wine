@@ -113,7 +113,7 @@ Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geometry )
 {
     int x = 0, y = 0, flags;
     unsigned int width = 640, height = 480;  /* Default size = 640x480 */
-    char *name = "Wine desktop";
+    char *name = GetCommandLineA();
     XSizeHints *size_hints;
     XWMHints   *wm_hints;
     XClassHint *class_hints;
