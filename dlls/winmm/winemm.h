@@ -243,6 +243,8 @@ LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType, BOOL bSrcCanBeID, UINT ds
 DWORD		MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1, DWORD dwParam2, BOOL bFrom32);
 UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
 BOOL            MMDRV_Is32(unsigned int);
+void            MMDRV_InstallMap(unsigned int, MMDRV_MAPFUNC, MMDRV_MAPFUNC,
+                                 MMDRV_MAPFUNC, MMDRV_MAPFUNC, LPDRVCALLBACK);
 
 BOOL    	MCI_Init(void);
 WINE_MCIDRIVER* MCI_GetDriver(UINT16 uDevID);
@@ -289,47 +291,6 @@ BOOL            MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD f
 void    	TIME_MMTimeStart(void);
 void		TIME_MMTimeStop(void);
 
-/* temporary definitions */
-void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
-
-WINMM_MapType	MMDRV_Aux_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_Aux_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_Aux_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_Aux_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-void	CALLBACK MMDRV_Aux_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
-
-WINMM_MapType	MMDRV_Mixer_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_Mixer_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_Mixer_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_Mixer_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-void	CALLBACK MMDRV_Mixer_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
-
-WINMM_MapType	MMDRV_MidiIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_MidiIn_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_MidiIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_MidiIn_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
-
-WINMM_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_MidiOut_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_MidiOut_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
-
-WINMM_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_WaveIn_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_WaveIn_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
-
-WINMM_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_WaveOut_UnMap16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-WINMM_MapType	MMDRV_WaveOut_UnMap32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
-
-BOOL	MMDRV_GetDescription16(const char* fname, char* buf, int buflen);
-
 /* Global variables */
 extern LPWINE_MM_IDATA  WINMM_IData;
 
@@ -344,6 +305,8 @@ extern  WINMM_MapType   (*pFnMciMapMsg16To32A)(WORD,WORD,DWORD*);
 extern  WINMM_MapType   (*pFnMciUnMapMsg16To32A)(WORD,WORD,DWORD);
 extern  WINMM_MapType   (*pFnMciMapMsg32ATo16)(WORD,WORD,DWORD,DWORD*);
 extern  WINMM_MapType   (*pFnMciUnMapMsg32ATo16)(WORD,WORD,DWORD,DWORD);
+extern  LRESULT         (*pFnCallMMDrvFunc16)(FARPROC16,WORD,WORD,LONG,LONG,LONG);
+extern  unsigned        (*pFnLoadMMDrvFunc16)(LPCSTR,LPWINE_DRIVER, LPWINE_MM_DRIVER);
 extern  LRESULT         (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
 
 /* mmsystem only functions */
