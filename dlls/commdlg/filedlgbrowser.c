@@ -17,50 +17,29 @@
 #include "debugtools.h"
 #include "cdlg.h"
 
+#define INITGUID
+#include "initguid.h"
+#include "wine/obj_serviceprovider.h"
+
 DEFAULT_DEBUG_CHANNEL(commdlg);
 
+typedef struct
+{
+
+    ICOM_VTABLE(IShellBrowser)   * lpVtbl;
+    ICOM_VTABLE(ICommDlgBrowser) * lpVtblCommDlgBrowser;
+    ICOM_VTABLE(IServiceProvider)* lpVtblServiceProvider;
+    DWORD ref;                                  /* Reference counter */
+    HWND hwndOwner;                             /* Owner dialog of the interface */
+
+} IShellBrowserImpl;
+
 /**************************************************************************
-*   Structure
+*   vtable
 */
-static ICOM_VTABLE(IShellBrowser) IShellBrowserImpl_Vtbl =
-{
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-        /* IUnknown */
-        IShellBrowserImpl_QueryInterface,
-        IShellBrowserImpl_AddRef,
-        IShellBrowserImpl_Release,
-        /* IOleWindow */
-        IShellBrowserImpl_GetWindow,
-        IShellBrowserImpl_ContextSensitiveHelp,
-        /*  IShellBrowser */
-        IShellBrowserImpl_InsertMenusSB,
-        IShellBrowserImpl_SetMenuSB,
-        IShellBrowserImpl_RemoveMenusSB,
-        IShellBrowserImpl_SetStatusTextSB,
-        IShellBrowserImpl_EnableModelessSB,
-        IShellBrowserImpl_TranslateAcceleratorSB,
-        IShellBrowserImpl_BrowseObject,
-        IShellBrowserImpl_GetViewStateStream,
-        IShellBrowserImpl_GetControlWindow,
-        IShellBrowserImpl_SendControlMsg,
-        IShellBrowserImpl_QueryActiveShellView,
-        IShellBrowserImpl_OnViewWindowActive,
-        IShellBrowserImpl_SetToolbarItems
-};
-
-static ICOM_VTABLE(ICommDlgBrowser) IShellBrowserImpl_ICommDlgBrowser_Vtbl =
-{
-        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-        /* IUnknown */
-        IShellBrowserImpl_ICommDlgBrowser_QueryInterface,
-        IShellBrowserImpl_ICommDlgBrowser_AddRef,
-        IShellBrowserImpl_ICommDlgBrowser_Release,
-        /* ICommDlgBrowser */
-        IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand,
-        IShellBrowserImpl_ICommDlgBrowser_OnStateChange,
-        IShellBrowserImpl_ICommDlgBrowser_IncludeObject
-};
-
+static ICOM_VTABLE(IShellBrowser) IShellBrowserImpl_Vtbl;
+static ICOM_VTABLE(ICommDlgBrowser) IShellBrowserImpl_ICommDlgBrowser_Vtbl;
+static ICOM_VTABLE(IServiceProvider) IShellBrowserImpl_IServiceProvider_Vtbl;
 
 /**************************************************************************
 *   Local Prototypes
@@ -91,6 +70,47 @@ extern BOOL    FILEDLG95_OnOpen(HWND hwnd);
 extern HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 
 
+/*
+ *   Helper functions
+ */
+
+/* copied from shell32 to avoid linking to it */
+static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+{
+	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+
+	switch (src->uType)
+	{
+	  case STRRET_WSTR:
+	    lstrcpynW((LPWSTR)dest, src->u.pOleStr, len);
+	    COMDLG32_SHFree(src->u.pOleStr);
+	    break;
+
+	  case STRRET_CSTRA:
+	    lstrcpynAtoW((LPWSTR)dest, src->u.cStr, len);
+	    break;
+
+	  case STRRET_OFFSETA:
+	    if (pidl)
+	    {
+	      lstrcpynAtoW((LPWSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+	    }
+	    break;
+
+	  default:
+	    FIXME("unknown type!\n");
+	    if (len)
+	    { *(LPSTR)dest = '\0';
+	    }
+	    return(FALSE);
+	}
+	return S_OK;
+}
+
+/*
+ *	IShellBrowser
+ */
+ 
 /**************************************************************************
 *  IShellBrowserImpl_Construct
 */
@@ -107,8 +127,8 @@ IShellBrowser * IShellBrowserImpl_Construct(HWND hwndOwner)
 
     /* Initialisation of the vTables */
     sb->lpVtbl = &IShellBrowserImpl_Vtbl;
-    sb->lpVtbl2 = &IShellBrowserImpl_ICommDlgBrowser_Vtbl;
-
+    sb->lpVtblCommDlgBrowser = &IShellBrowserImpl_ICommDlgBrowser_Vtbl;
+    sb->lpVtblServiceProvider = &IShellBrowserImpl_IServiceProvider_Vtbl;
     COMDLG32_SHGetSpecialFolderLocation(hwndOwner, CSIDL_DESKTOP,
                                &fodInfos->ShellInfos.pidlAbsCurrent);
 
@@ -116,17 +136,6 @@ IShellBrowser * IShellBrowserImpl_Construct(HWND hwndOwner)
 
     return (IShellBrowser *) sb;
 }
-
-/**************************************************************************
-*
-*
-*  The INTERFACE of the IShellBrowser object
-*
-*/
-
-/*
- * IUnknown
- */
 
 /***************************************************************************
 *  IShellBrowserImpl_QueryInterface
@@ -137,7 +146,7 @@ HRESULT WINAPI IShellBrowserImpl_QueryInterface(IShellBrowser *iface,
 {
     ICOM_THIS(IShellBrowserImpl, iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)\n\t%s\n", This, debugstr_guid(riid));
 
     *ppvObj = NULL;
 
@@ -153,13 +162,18 @@ HRESULT WINAPI IShellBrowserImpl_QueryInterface(IShellBrowser *iface,
     }
 
     else if(IsEqualIID(riid, &IID_ICommDlgBrowser))  /*ICommDlgBrowser*/
-    { *ppvObj = (ICommDlgBrowser*) &(This->lpVtbl2);
+    { *ppvObj = (ICommDlgBrowser*) &(This->lpVtblCommDlgBrowser);
+    }
+
+    else if(IsEqualIID(riid, &IID_IServiceProvider))  /* IServiceProvider */
+    { *ppvObj = (ICommDlgBrowser*) &(This->lpVtblServiceProvider);
     }
 
     if(*ppvObj)
     { IUnknown_AddRef( (IShellBrowser*) *ppvObj);
       return S_OK;
     }
+    FIXME("Unknown interface requested\n");
     return E_NOINTERFACE;
 }
 
@@ -296,7 +310,11 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
         psfTmp = GetShellFolderFromPidl(pidlTmp);
     }
     
-    if(!psfTmp) return E_FAIL;
+    if(!psfTmp)
+    {
+      ERR("could not browse to folder\n");
+      return E_FAIL;
+    }
 
     /* If the pidl to browse to is equal to the actual pidl ... 
        do nothing and pretend you did it*/
@@ -304,6 +322,7 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     {
         IShellFolder_Release(psfTmp);
 	COMDLG32_SHFree(pidlTmp);
+        TRACE("keep current folder\n");
         return NOERROR;
     }
 
@@ -315,8 +334,9 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     }
 
     /* Create the associated view */
+    TRACE("create view object\n");
     if(FAILED(hRes = IShellFolder_CreateViewObject(psfTmp, fodInfos->ShellInfos.hwndOwner,
-           &IID_IShellView, (LPVOID *)&psvTmp))) return hRes;
+           &IID_IShellView, (LPVOID *)&psvTmp))) goto error;
 
     /* Check if listview has focus */
     bViewHasFocus = IsChild(fodInfos->ShellInfos.hwndView,GetFocus());
@@ -348,7 +368,7 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     TRACE("create view window\n");
     if(FAILED(hRes = IShellView_CreateViewWindow(psvTmp, NULL,
          &fodInfos->ShellInfos.folderSettings, fodInfos->Shell.FOIShellBrowser,
-         &fodInfos->ShellInfos.rectView, &hwndView))) return hRes;
+         &fodInfos->ShellInfos.rectView, &hwndView))) goto error;
 
     fodInfos->ShellInfos.hwndView = hwndView;
 
@@ -364,6 +384,9 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
       SetFocus(fodInfos->ShellInfos.hwndView);
 
     return hRes; 
+error:
+    ERR("Failed with error 0x%08lx\n", hRes);
+    return hRes;
 }
 
 /**************************************************************************
@@ -406,7 +429,7 @@ HRESULT WINAPI IShellBrowserImpl_GetViewStateStream(IShellBrowser *iface,
 {
     ICOM_THIS(IShellBrowserImpl, iface);
 
-    TRACE("(%p)\n", This);
+    FIXME("(%p 0x%08lx %p)\n", This, grfMode, ppStrm);
 
     /* Feature not implemented */
     return E_NOTIMPL;
@@ -566,6 +589,34 @@ HRESULT WINAPI IShellBrowserImpl_TranslateAcceleratorSB(IShellBrowser *iface,
     return E_NOTIMPL;
 }
 
+static ICOM_VTABLE(IShellBrowser) IShellBrowserImpl_Vtbl =
+{
+        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+        /* IUnknown */
+        IShellBrowserImpl_QueryInterface,
+        IShellBrowserImpl_AddRef,
+        IShellBrowserImpl_Release,
+        /* IOleWindow */
+        IShellBrowserImpl_GetWindow,
+        IShellBrowserImpl_ContextSensitiveHelp,
+        /*  IShellBrowser */
+        IShellBrowserImpl_InsertMenusSB,
+        IShellBrowserImpl_SetMenuSB,
+        IShellBrowserImpl_RemoveMenusSB,
+        IShellBrowserImpl_SetStatusTextSB,
+        IShellBrowserImpl_EnableModelessSB,
+        IShellBrowserImpl_TranslateAcceleratorSB,
+        IShellBrowserImpl_BrowseObject,
+        IShellBrowserImpl_GetViewStateStream,
+        IShellBrowserImpl_GetControlWindow,
+        IShellBrowserImpl_SendControlMsg,
+        IShellBrowserImpl_QueryActiveShellView,
+        IShellBrowserImpl_OnViewWindowActive,
+        IShellBrowserImpl_SetToolbarItems
+};
+
+
+
 /*
  * ICommDlgBrowser
  */
@@ -573,9 +624,10 @@ HRESULT WINAPI IShellBrowserImpl_TranslateAcceleratorSB(IShellBrowser *iface,
 /***************************************************************************
 *  IShellBrowserImpl_ICommDlgBrowser_QueryInterface
 */
-HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_QueryInterface(ICommDlgBrowser *iface,
-                                            REFIID riid, 
-                                            LPVOID *ppvObj)
+HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_QueryInterface(
+	ICommDlgBrowser *iface,
+	REFIID riid, 
+	LPVOID *ppvObj)
 {
     _ICOM_THIS_FromICommDlgBrowser(IShellBrowser,iface);
 
@@ -689,38 +741,6 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBrowser *
     return NOERROR;     
 }
 
-/* copied from shell32 to avoid linking to it */
-static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
-{
-	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
-
-	switch (src->uType)
-	{
-	  case STRRET_WSTR:
-	    lstrcpynW((LPWSTR)dest, src->u.pOleStr, len);
-	    COMDLG32_SHFree(src->u.pOleStr);
-	    break;
-
-	  case STRRET_CSTRA:
-	    lstrcpynAtoW((LPWSTR)dest, src->u.cStr, len);
-	    break;
-
-	  case STRRET_OFFSETA:
-	    if (pidl)
-	    {
-	      lstrcpynAtoW((LPWSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
-	    }
-	    break;
-
-	  default:
-	    FIXME("unknown type!\n");
-	    if (len)
-	    { *(LPSTR)dest = '\0';
-	    }
-	    return(FALSE);
-	}
-	return S_OK;
-}
 /**************************************************************************
 *  IShellBrowserImpl_ICommDlgBrowser_IncludeObject
 */
@@ -793,3 +813,104 @@ HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IS
     return S_OK;
 }
 
+static ICOM_VTABLE(ICommDlgBrowser) IShellBrowserImpl_ICommDlgBrowser_Vtbl =
+{
+        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+        /* IUnknown */
+        IShellBrowserImpl_ICommDlgBrowser_QueryInterface,
+        IShellBrowserImpl_ICommDlgBrowser_AddRef,
+        IShellBrowserImpl_ICommDlgBrowser_Release,
+        /* ICommDlgBrowser */
+        IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand,
+        IShellBrowserImpl_ICommDlgBrowser_OnStateChange,
+        IShellBrowserImpl_ICommDlgBrowser_IncludeObject
+};
+
+
+
+
+/*
+ * IServiceProvider
+ */
+
+/***************************************************************************
+*  IShellBrowserImpl_IServiceProvider_QueryInterface
+*/
+HRESULT WINAPI IShellBrowserImpl_IServiceProvider_QueryInterface(
+	IServiceProvider *iface,
+	REFIID riid, 
+	LPVOID *ppvObj)
+{
+    _ICOM_THIS_FromIServiceProvider(IShellBrowser,iface);
+
+    FIXME("(%p)\n", This);
+
+    return IShellBrowserImpl_QueryInterface(This,riid,ppvObj);
+}
+
+/**************************************************************************
+*  IShellBrowserImpl_IServiceProvider_AddRef
+*/
+ULONG WINAPI IShellBrowserImpl_IServiceProvider_AddRef(IServiceProvider * iface)
+{
+    _ICOM_THIS_FromIServiceProvider(IShellBrowser,iface);
+
+    FIXME("(%p)\n", This);
+
+    return IShellBrowserImpl_AddRef(This);
+}
+
+/**************************************************************************
+*  IShellBrowserImpl_IServiceProvider_Release
+*/
+ULONG WINAPI IShellBrowserImpl_IServiceProvider_Release(IServiceProvider * iface)
+{
+    _ICOM_THIS_FromIServiceProvider(IShellBrowser,iface);
+
+    FIXME("(%p)\n", This);
+
+    return IShellBrowserImpl_Release(This);
+}
+
+/**************************************************************************
+*  IShellBrowserImpl_IServiceProvider_Release
+*
+* NOTES
+*  the w2k shellview asks for 
+*   guidService = SID_STopLevelBrowser
+*   riid = IShellBrowser
+*
+* FIXME
+*  this is a hack!
+*/
+
+HRESULT WINAPI IShellBrowserImpl_IServiceProvider_QueryService(
+	IServiceProvider * iface,
+	REFGUID guidService,
+	REFIID riid,
+	void** ppv)
+{
+    _ICOM_THIS_FromIServiceProvider(IShellBrowser,iface);
+
+    FIXME("(%p)\n\t%s\n\t%s\n", This,debugstr_guid(guidService), debugstr_guid(riid) );
+
+    *ppv = NULL;
+    if(guidService && IsEqualIID(guidService, &SID_STopLevelBrowser))
+    {
+      return IShellBrowserImpl_QueryInterface(This,riid,ppv);
+    }
+    FIXME("(%p) unknown interface requested\n", This);
+    return E_NOINTERFACE;
+
+}
+
+static ICOM_VTABLE(IServiceProvider) IShellBrowserImpl_IServiceProvider_Vtbl =
+{
+        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+        /* IUnknown */
+        IShellBrowserImpl_IServiceProvider_QueryInterface,
+        IShellBrowserImpl_IServiceProvider_AddRef,
+        IShellBrowserImpl_IServiceProvider_Release,
+        /* IServiceProvider */
+        IShellBrowserImpl_IServiceProvider_QueryService
+};

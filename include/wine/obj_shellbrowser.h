@@ -15,6 +15,8 @@ extern "C" {
 
 #define SID_SShellBrowser IID_IShellBrowser
 
+DEFINE_GUID(SID_STopLevelBrowser, 0x4C96BE40L, 0x915C, 0x11CF, 0x99, 0xD3, 0x00, 0xAA, 0x00, 0x4A, 0xE8, 0x37);
+
 /* targets for GetWindow/SendControlMsg */
 #define FCW_STATUS		0x0001
 #define FCW_TOOLBAR		0x0002
