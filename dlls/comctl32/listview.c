@@ -297,9 +297,6 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, INT, INT, INT, INT
 /******** Defines that LISTVIEW_ProcessLetterKeys uses ****************/
 #define KEY_DELAY       450
 
-#define COUNTOF(array) (sizeof(array)/sizeof(array[0]))
-
-
 /******** Text handling functions *************************************/
 
 /* A text pointer is either NULL, LPSTR_TEXTCALLBACK, or points to a
@@ -564,73 +561,66 @@ static int get_ansi_notification(INT unicodeNotificationCode)
 */
 static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNMLVDISPINFOW pdi, BOOL isW)
 {
-  BOOL bResult = FALSE;
-  BOOL convertToAnsi = FALSE, convertToUnicode = FALSE;
-  INT realNotifCode;
-  INT cchTempBufMax = 0, savCchTextMax = 0;
-  LPWSTR pszTempBuf = NULL, savPszText = NULL;
+    BOOL bResult = FALSE;
+    BOOL convertToAnsi = FALSE, convertToUnicode = FALSE;
+    INT realNotifCode;
+    INT cchTempBufMax = 0, savCchTextMax = 0;
+    LPWSTR pszTempBuf = NULL, savPszText = NULL;
 
-  TRACE("(code=%x, pdi=%p, isW=%d)\n", notificationCode, pdi, isW);
-  TRACE("   notifyFormat=%s\n",
-	infoPtr->notifyFormat == NFR_UNICODE ? "NFR_UNICODE" :
-	infoPtr->notifyFormat == NFR_ANSI ? "NFR_ANSI" : "(not set)");
-  if (infoPtr->notifyFormat == NFR_ANSI)
-    realNotifCode = get_ansi_notification(notificationCode);
-  else
-    realNotifCode = notificationCode;
-
-  if ((pdi->item.mask & LVIF_TEXT) && is_textT(pdi->item.pszText, isW))
-  {
-    if (isW && infoPtr->notifyFormat == NFR_ANSI)
-        convertToAnsi = TRUE;
-    if (!isW && infoPtr->notifyFormat == NFR_UNICODE)
-        convertToUnicode = TRUE;
-  }
-
-  if (convertToAnsi || convertToUnicode)
-  {
-    TRACE("   we have to convert the text to the correct format\n");
-    if (notificationCode != LVN_GETDISPINFOW)
-    { /* length of existing text */
-      cchTempBufMax = convertToUnicode ?
-      MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1, NULL, 0):
-      WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, NULL, 0, NULL, NULL);
+    if ((pdi->item.mask & LVIF_TEXT) && is_textT(pdi->item.pszText, isW))
+    {
+	convertToAnsi = (isW && infoPtr->notifyFormat == NFR_ANSI);
+        convertToUnicode = (!isW && infoPtr->notifyFormat == NFR_UNICODE);
     }
-    else
-      cchTempBufMax = pdi->item.cchTextMax;
 
-    pszTempBuf = HeapAlloc(GetProcessHeap(), 0,
-        (convertToUnicode ? sizeof(WCHAR) : sizeof(CHAR)) * cchTempBufMax);
-    if (!pszTempBuf) return FALSE;
-    if (convertToUnicode)
-      MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1,
-                          pszTempBuf, cchTempBufMax);
-    else
-      WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) pszTempBuf,
-                          cchTempBufMax, NULL, NULL);
-    TRACE("   text=%s\n", debugtext_t(pszTempBuf, convertToUnicode));
-    savCchTextMax = pdi->item.cchTextMax;
-    savPszText = pdi->item.pszText;
-    pdi->item.pszText = pszTempBuf;
-    pdi->item.cchTextMax = cchTempBufMax;
-  }
+    if (convertToAnsi || convertToUnicode)
+    {
+	if (notificationCode != LVN_GETDISPINFOW)
+	{
+	    cchTempBufMax = convertToUnicode ?
+      		MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1, NULL, 0):
+      		WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, NULL, 0, NULL, NULL);
+        }
+	else
+	{
+	    cchTempBufMax = pdi->item.cchTextMax;
+	    pdi->item.pszText = 0; /* make sure we don't process garbage */
+	}
 
-  bResult = notify(infoPtr, realNotifCode, (LPNMHDR)pdi);
+        pszTempBuf = HeapAlloc(GetProcessHeap(), 0,
+            (convertToUnicode ? sizeof(WCHAR) : sizeof(CHAR)) * cchTempBufMax);
+        if (!pszTempBuf) return FALSE;
+        if (convertToUnicode)
+	    MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1,
+                                pszTempBuf, cchTempBufMax);
+        else
+            WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) pszTempBuf,
+                                cchTempBufMax, NULL, NULL);
+        savCchTextMax = pdi->item.cchTextMax;
+        savPszText = pdi->item.pszText;
+        pdi->item.pszText = pszTempBuf;
+        pdi->item.cchTextMax = cchTempBufMax;
+    }
 
-  if (convertToUnicode || convertToAnsi)
-  { /* convert back result */
-    TRACE("   returned text=%s\n", debugtext_t(pdi->item.pszText, convertToUnicode));
-    if (convertToUnicode) /* note : pointer can be changed by app ! */
-      WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) savPszText,
-                          savCchTextMax, NULL, NULL);
+    if (infoPtr->notifyFormat == NFR_ANSI)
+	realNotifCode = get_ansi_notification(notificationCode);
     else
-      MultiByteToWideChar(CP_ACP, 0, (LPSTR) pdi->item.pszText, -1,
-                          savPszText, savCchTextMax);
-    pdi->item.pszText = savPszText; /* restores our buffer */
-    pdi->item.cchTextMax = savCchTextMax;
-    HeapFree(GetProcessHeap(), 0, pszTempBuf);
-  }
-  return bResult;
+	realNotifCode = notificationCode;
+    bResult = notify(infoPtr, realNotifCode, (LPNMHDR)pdi);
+
+    if (convertToUnicode || convertToAnsi)
+    {
+	if (convertToUnicode) /* note : pointer can be changed by app ! */
+	    WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) savPszText,
+                                savCchTextMax, NULL, NULL);
+        else
+            MultiByteToWideChar(CP_ACP, 0, (LPSTR) pdi->item.pszText, -1,
+                                savPszText, savCchTextMax);
+        pdi->item.pszText = savPszText; /* restores our buffer */
+        pdi->item.cchTextMax = savCchTextMax;
+        HeapFree(GetProcessHeap(), 0, pszTempBuf);
+    }
+    return bResult;
 }
 
 static inline void notify_odcachehint(LISTVIEW_INFO *infoPtr, INT iFrom, INT iTo)
@@ -904,7 +894,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
     /* update the search parameters */
     infoPtr->lastKeyPressTimestamp=timestamp;
     if (elapsed < KEY_DELAY) {
-        if (infoPtr->nSearchParamLength < COUNTOF(infoPtr->szSearchParam)) {
+        if (infoPtr->nSearchParamLength < MAX_PATH) {
             infoPtr->szSearchParam[infoPtr->nSearchParamLength++]=charCode;
         }
         if (infoPtr->charCode != charCode) {
@@ -944,7 +934,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
         item.iItem = idx;
         item.iSubItem = 0;
         item.pszText = buffer;
-        item.cchTextMax = COUNTOF(buffer);
+        item.cchTextMax = MAX_PATH;
         if (!LISTVIEW_GetItemW(infoPtr, &item)) return 0;
 
         /* check for a match */
@@ -3002,7 +2992,7 @@ static BOOL LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem,
     lvItem.mask = LVIF_TEXT | LVIF_IMAGE;
     lvItem.iItem = nItem;
     lvItem.iSubItem = nSubItem;
-    lvItem.cchTextMax = COUNTOF(szDispText);
+    lvItem.cchTextMax = DISP_TEXT_SIZE;
     lvItem.pszText = szDispText;
     *lvItem.pszText = '\0';
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
