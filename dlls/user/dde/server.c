@@ -577,7 +577,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleRequest(WDML_CONV* pConv, WDML_XACT* pX
 	WDML_PostAck(pConv, WDML_SERVER_SIDE, 0, FALSE, FALSE, pXAct->atom,
                      pXAct->lParam, WM_DDE_REQUEST);
 	break;
-    case CBR_BLOCK:
+    case (ULONG_PTR)CBR_BLOCK:
 	ret = WDML_QS_BLOCK;
 	break;
     default:
