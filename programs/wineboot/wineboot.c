@@ -16,9 +16,35 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/* Bugs:
- * - If a pending rename registry does not start with \??\, the first four
- *   chars are still going to be skipped.
+/* Wine "bootup" handler application
+ *
+ * This app handles the various "hooks" windows allows for applications to perform
+ * as part of the bootstrap process. Theses are roughly devided into three types.
+ * Knowledge base articles that explain this are 137367, 179365, 232487 and 232509.
+ * The operations performed are (by order of execution):
+ *
+ * Preboot (prior to fully loading the Windows kernel):
+ * - wininit.exe (rename operations left in wininit.ini - Win 9x only)
+ * - PendingRenameOperations (rename operations left in the registry - Win NT+ only)
+ *
+ * Startup (before the user logs in)
+ * - Services (NT, ?semi-synchronous?, not implemented yet)
+ * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce (9x, asynch, not inmplemented)
+ * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices (9x, asynch, no imp)
+ * 
+ * After log in
+ * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce (all, synch, no imp)
+ * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run (all, asynch, no imp)
+ * - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run (all, asynch, no imp)
+ * - Startup folders (all, ?asynch?, no imp)
+ * - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce (all, asynch, no imp)
+ *   
+ * Somewhere in there is processing the RunOnceEx entries (also no imp)
+ * 
+ * 
+ * Bugs:
+ * - If a pending rename registry does not start with \??\ the entry is
+ *   processed anyways. I'm not sure that is the Windows behaviour.
  * - Need to check what is the windows behaviour when trying to delete files
  *   and directories that are read-only
  * - In the pending rename registry processing - there are no traces of the files
@@ -339,6 +365,8 @@ int main( int argc, char *argv[] )
     /* Perform the operations by order, stopping if one fails */
     res=wininit()&&
         pendingRename();
+
+    WINE_TRACE("Operation done\n");
 
     return res?0:101;
 }
