@@ -53,8 +53,8 @@
 #ifndef PT_WORKGRP
 #define PT_WORKGRP    0x41 /* no path */
 #endif
-#ifndef PT_PRINTERS
-#define PT_PRINTERS   0x70 /* no path */
+#ifndef PT_YAGUID
+#define PT_YAGUID     0x70 /* no path */
 #endif
 /* FIXME: this is used for history/favorites folders; what's a better name? */
 #ifndef PT_IESPECIAL2
@@ -81,9 +81,7 @@ static DLLVERSIONINFO shellVersion = { 0 };
 static LPMALLOC pMalloc;
 static const struct shellExpectedValues requiredShellValues[] = {
  { CSIDL_BITBUCKET, PT_GUID },
-/* FIXME: the following fails in Wine, returns type PT_FOLDER
  { CSIDL_CONTROLS, PT_SHELLEXT },
- */
  { CSIDL_COOKIES, PT_FOLDER },
  { CSIDL_DESKTOPDIRECTORY, PT_FOLDER },
  { CSIDL_DRIVES, PT_GUID },
@@ -95,9 +93,7 @@ static const struct shellExpectedValues requiredShellValues[] = {
  { CSIDL_INTERNET, PT_GUID },
  { CSIDL_NETHOOD, PT_FOLDER },
  { CSIDL_NETWORK, PT_GUID },
-/* FIXME: the following fails in Wine, returns type PT_FOLDER
- { CSIDL_PRINTERS, PT_PRINTERS },
- */
+ { CSIDL_PRINTERS, PT_YAGUID },
  { CSIDL_PRINTHOOD, PT_FOLDER },
  { CSIDL_PROGRAMS, PT_FOLDER },
  { CSIDL_RECENT, PT_FOLDER },

@@ -1493,7 +1493,7 @@ LPITEMIDLIST _ILCreateControlPanel()
     TRACE("()\n");
     if (parent)
     {
-        LPITEMIDLIST cpl = _ILCreateGuid(PT_GUID, &CLSID_ControlPanel);
+        LPITEMIDLIST cpl = _ILCreateGuid(PT_SHELLEXT, &CLSID_ControlPanel);
 
         if (cpl)
         {
@@ -1512,7 +1512,7 @@ LPITEMIDLIST _ILCreatePrinters()
     TRACE("()\n");
     if (parent)
     {
-        LPITEMIDLIST printers = _ILCreateGuid(PT_GUID, &CLSID_Printers);
+        LPITEMIDLIST printers = _ILCreateGuid(PT_YAGUID, &CLSID_Printers);
 
         if (printers)
         {
@@ -1538,7 +1538,7 @@ LPITEMIDLIST _ILCreateGuid(PIDLTYPE type, REFIID guid)
 {
     LPITEMIDLIST pidlOut;
 
-    if (type == PT_SHELLEXT || type == PT_GUID)
+    if (type == PT_SHELLEXT || type == PT_GUID || type == PT_YAGUID)
     {
         pidlOut = _ILAlloc(type, sizeof(GUIDStruct));
         if (pidlOut)
@@ -1883,6 +1883,7 @@ LPSTR _ILGetTextPointer(LPCITEMIDLIST pidl)
 	  {
 	    case PT_GUID:
 	    case PT_SHELLEXT:
+	    case PT_YAGUID:
 	      return NULL;
 
 	    case PT_DRIVE:
@@ -1895,7 +1896,6 @@ LPSTR _ILGetTextPointer(LPCITEMIDLIST pidl)
 	    case PT_FOLDER1:
 	    case PT_VALUE:
 	    case PT_IESPECIAL1:
-	    case PT_RAS_FOLDER:
 	    case PT_IESPECIAL2:
 	      return (LPSTR)&(pdata->u.file.szNames);
 
@@ -1926,7 +1926,6 @@ LPSTR _ILGetSTextPointer(LPCITEMIDLIST pidl)
 	    case PT_FOLDER:
 	    case PT_VALUE:
 	    case PT_IESPECIAL1:
-	    case PT_RAS_FOLDER:
 	    case PT_IESPECIAL2:
 	      return (LPSTR)(pdata->u.file.szNames + strlen (pdata->u.file.szNames) + 1);
 
