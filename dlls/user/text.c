@@ -574,6 +574,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
     int line_fits;
     int j_in_seg;
     int ellipsified;
+    *pprefix_offset = -1;
 
     /* For each text segment in the line */
 
