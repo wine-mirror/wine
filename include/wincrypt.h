@@ -777,6 +777,7 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define CRYPT_UPDATE_KEY        0x00000008
 #define CRYPT_NO_SALT           0x00000010
 #define CRYPT_PREGEN            0x00000040
+#define CRYPT_SERVER            0x00000400
 #define CRYPT_ARCHIVABLE        0x00004000
 
 /* CryptExportKey */
