@@ -1154,6 +1154,8 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     SIZE tSize;
     BOOL ret = FALSE;
 
+    TRACE("(%08x, %s, %d)\n",hdc,debugstr_wn(str,count),maxExt);
+
     size->cx = size->cy = nFit = extent = 0;
     for(index = 0; index < count; index++)
     {
@@ -1176,8 +1178,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     if(lpnFit) *lpnFit = nFit;
     ret = TRUE;
 
-    TRACE("(%08x %s %d) returning %d %ld x %ld\n",
-          hdc,debugstr_wn(str,count),maxExt,nFit, size->cx,size->cy);
+    TRACE("returning %d %ld x %ld\n",nFit,size->cx,size->cy);
 
 done:
     return ret;
