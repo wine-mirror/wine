@@ -83,7 +83,7 @@ static	BOOL	WINMM_CreateIData(HINSTANCE hInstDLL)
 	return FALSE;
     WINMM_IData->hWinMM32Instance = hInstDLL;
     InitializeCriticalSection(&WINMM_IData->cs);
-    WINMM_IData->cs.DebugInfo = (void*)__FILE__ ": WinMM";
+    WINMM_IData->cs.DebugInfo->Spare[1] = (DWORD)"WINMM_IData";
     WINMM_IData->psStopEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
     WINMM_IData->psLastEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
     TRACE("Created IData (%p)\n", WINMM_IData);
@@ -103,7 +103,7 @@ static	void WINMM_DeleteIData(void)
         CloseHandle(WINMM_IData->psStopEvent);
         CloseHandle(WINMM_IData->psLastEvent);
         DeleteCriticalSection(&WINMM_IData->cs);
-	HeapFree(GetProcessHeap(), 0, WINMM_IData);
+        HeapFree(GetProcessHeap(), 0, WINMM_IData);
         WINMM_IData = NULL;
     }
 }
@@ -2658,6 +2658,7 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
 				 WAVEHDR* lpWaveOutHdr, UINT uSize)
 {
     LPWINE_MLD		wmld;
+    UINT		result;
 
     TRACE("(%p, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 
@@ -2667,7 +2668,17 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_PREPARE, (DWORD_PTR)lpWaveOutHdr, uSize, TRUE);
+    if ((result = MMDRV_Message(wmld, WODM_PREPARE, (DWORD_PTR)lpWaveOutHdr,
+                                uSize, TRUE)) != MMSYSERR_NOTSUPPORTED)
+        return result;
+
+    if (lpWaveOutHdr->dwFlags & WHDR_INQUEUE)
+	return WAVERR_STILLPLAYING;
+
+    lpWaveOutHdr->dwFlags |= WHDR_PREPARED;
+    lpWaveOutHdr->dwFlags &= ~WHDR_DONE;
+
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -2677,6 +2688,7 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
 				   LPWAVEHDR lpWaveOutHdr, UINT uSize)
 {
     LPWINE_MLD		wmld;
+    UINT		result;
 
     TRACE("(%p, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 
@@ -2690,7 +2702,17 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WODM_UNPREPARE, (DWORD_PTR)lpWaveOutHdr, uSize, TRUE);
+    if ((result = MMDRV_Message(wmld, WODM_UNPREPARE, (DWORD_PTR)lpWaveOutHdr,
+                                uSize, TRUE)) != MMSYSERR_NOTSUPPORTED)
+        return result;
+
+    if (lpWaveOutHdr->dwFlags & WHDR_INQUEUE)
+	return WAVERR_STILLPLAYING;
+
+    lpWaveOutHdr->dwFlags &= ~WHDR_PREPARED;
+    lpWaveOutHdr->dwFlags |= WHDR_DONE;
+
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -3173,4 +3195,47 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 
 
     return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
+}
+
+struct mm_starter
+{
+    LPTASKCALLBACK      cb;
+    DWORD               client;
+    HANDLE              event;
+};
+
+DWORD WINAPI mmTaskRun(void* pmt)
+{
+    struct mm_starter mms;
+
+    memcpy(&mms, pmt, sizeof(struct mm_starter));
+    HeapFree(GetProcessHeap(), 0, pmt);
+    mms.cb(mms.client);
+    if (mms.event) SetEvent(mms.event);
+    return 0;
+}
+
+MMRESULT WINAPI mmTaskCreate(LPTASKCALLBACK cb, HANDLE* ph, DWORD client)
+{
+    HANDLE               hThread;
+    HANDLE               hEvent = 0;
+    struct mm_starter   *mms;
+
+    mms = HeapAlloc(GetProcessHeap(), 0, sizeof(struct mm_starter));
+    if (mms == NULL) { return TASKERR_OUTOFMEMORY; }
+
+    mms->cb = cb;
+    mms->client = client;
+    if (ph) hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    mms->event = hEvent;
+
+    hThread = CreateThread(0, 0, mmTaskRun, mms, 0, NULL);
+    if (!hThread) {
+        HeapFree(GetProcessHeap(), 0, mms);
+        if (hEvent) CloseHandle(hEvent);
+        return TASKERR_OUTOFMEMORY;
+    }
+    if (ph) *ph = hEvent;
+    CloseHandle(hThread);
+    return 0;
 }
