@@ -622,6 +622,7 @@ graphics/ttydrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile
+include/Makefile
 ipc/Makefile
 library/Makefile
 libtest/Makefile

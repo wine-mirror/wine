@@ -80,8 +80,10 @@ PROGSUBDIRS = libtest programs
 
 DOCSUBDIRS = documentation
 
-# All sub-directories
-ALLSUBDIRS = \
+INCSUBDIRS = include
+
+# Sub-directories to run make into
+BUILDSUBDIRS = \
 	$(LIBSUBDIRS) \
 	$(X11SUBDIRS) \
 	$(EMUSUBDIRS) \
@@ -92,7 +94,7 @@ ALLSUBDIRS = \
 DEPENDSUBDIRS = $(LIBSUBDIRS) $(X11SUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
 
 # Sub-directories to run make install into
-INSTALLSUBDIRS = $(DOCSUBDIRS)
+INSTALLSUBDIRS = $(DOCSUBDIRS) $(INCSUBDIRS)
 
 LIBOBJS = \
 	controls/controls.o \
@@ -186,28 +188,16 @@ install_emu: install_lib
 uninstall_emu: uninstall_lib
 	$(RM) $(bindir)/wine $(bindir)/dosmod
 
-install_lib: install_includes
+install_lib: dummy
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	if [ $(LIB_TARGET) ]; then $(INSTALL_DATA) $(LIB_TARGET) $(libdir); fi
 	$(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 
-uninstall_lib: uninstall_includes
+uninstall_lib: dummy
 	cd $(libdir); $(RM) $(LIB_TARGET)
 	$(RM) $(libdir)/wine.sym
 
-install_includes: dummy
-# Testing LIB_TARGET prevents installing header files
-# when --disable-lib is used.
-	if [ $(LIB_TARGET) ]; then [ -d $(includedir) ] || $(MKDIR) $(includedir); \
-	cd $(TOPSRCDIR)/include; $(INSTALL_DATA) windows.h wintypes.h $(includedir); fi
-
-# Don't just do a rm -rf on $(includedir) -- don't want to wipe out 
-# anything extra the user may have put there.
-uninstall_includes: dummy
-	$(RM) $(includedir)/windows.h $(includedir)/wintypes.h
-	-rmdir $(includedir)
-
-$(ALLSUBDIRS): dummy
+$(BUILDSUBDIRS): dummy
 	@cd $@; $(SUBMAKE)
 
 install_programs: dummy
@@ -237,7 +227,7 @@ htmlpages:
 	for i in $(LIBSUBDIRS); do (cd $$i && $(MAKE) html); done
 
 clean::
-	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
+	for i in $(BUILDSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
 	for i in include; do (cd $$i; $(RM) *.o \#*\# .#* *~ *% *.bak *.orig *.rej *.flc); done
 	$(RM) wine wine.sym libwine.a libwine.so.1.0 libwine.so TAGS .#*
 

@@ -1,0 +1,31 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH	  = @srcdir@
+MODULE	  = none
+
+LIB_TARGET = @LIB_TARGET@
+
+INSTALLED_INCLUDES = \
+	windows.h \
+	wingdi.h \
+	wintypes.h \
+	winuser.h
+
+@MAKE_RULES@
+
+# Testing LIB_TARGET prevents installing header files
+# when --disable-lib is used
+install:: dummy
+	if [ $(LIB_TARGET) ]; then [ -d $(includedir) ] || $(MKDIR) $(includedir); \
+	$(INSTALL_DATA) $(INSTALLED_INCLUDES) $(includedir); fi
+
+# Don't just do a rm -rf on $(includedir) -- don't want to wipe out 
+# anything extra the user may have put there.
+uninstall::
+	cd $(includedir); $(RM) $(INSTALLED_INCLUDES)
+	-rmdir $(includedir)
+
+dummy:
+
+### Dependencies:
