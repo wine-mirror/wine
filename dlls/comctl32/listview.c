@@ -1113,8 +1113,13 @@ static RANGE iterator_range(ITERATOR* i)
 
     if (!i->ranges) return i->range;
 
-    range.lower = (*(RANGE*)DPA_GetPtr(i->ranges->hdpa, 0)).lower;
-    range.upper = (*(RANGE*)DPA_GetPtr(i->ranges->hdpa, DPA_GetPtrCount(i->ranges->hdpa) - 1)).upper;
+    if (DPA_GetPtrCount(i->ranges->hdpa) > 0)
+    {
+        range.lower = (*(RANGE*)DPA_GetPtr(i->ranges->hdpa, 0)).lower;
+        range.upper = (*(RANGE*)DPA_GetPtr(i->ranges->hdpa, DPA_GetPtrCount(i->ranges->hdpa) - 1)).upper;
+    }
+    else range.lower = range.upper = 0;
+
     return range;
 }
 
