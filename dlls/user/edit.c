@@ -2250,6 +2250,8 @@ static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
 
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL))
 		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, NULL);
+	
+	EDIT_SetCaretPos(es, es->selection_end, es->flags & EF_AFTER_WRAP);
 }
 
 
