@@ -1838,7 +1838,7 @@ static void test_pack_TOKEN_STATISTICS(void)
     /* TOKEN_STATISTICS (pack 4) */
     TEST_FIELD(TOKEN_STATISTICS, LUID, TokenId, 0, 8, 4);
     TEST_FIELD(TOKEN_STATISTICS, LUID, AuthenticationId, 8, 8, 4);
-    TEST_FIELD(TOKEN_STATISTICS, LARGE_INTEGER, ExpirationTime, 16, 8, 8);
+    TEST_FIELD(TOKEN_STATISTICS, LARGE_INTEGER, ExpirationTime, 16, 8, 4);
 }
 
 static void test_pack_TOKEN_USER(void)
