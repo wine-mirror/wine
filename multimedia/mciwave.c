@@ -14,22 +14,13 @@
 
 #define DEBUG_MCIWAVE
 
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
 #include "winuser.h"
 #include "driver.h"
 #include "multimedia.h"
-#include "mmsystem.h"
 #include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mciwave)
-
-#define MAX_MCIWAVEDRV 	(1)
 
 typedef struct {
     UINT16			wDevID;
@@ -51,8 +42,6 @@ typedef struct {
     DWORD			dwPosition;	/* position in bytes in chunk for playing */
 } WINE_MCIWAVE;
 
-static WINE_MCIWAVE	MCIWaveDev[MAX_MCIWAVEDRV];
-
 /*======================================================================*
  *                  	    MCI WAVE implemantation			*
  *======================================================================*/
@@ -60,36 +49,20 @@ static WINE_MCIWAVE	MCIWaveDev[MAX_MCIWAVEDRV];
 static DWORD WAVE_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
 
 /**************************************************************************
- * 				MCIWAVE_drvGetDrv		[internal]	
- */
-static WINE_MCIWAVE*  WAVE_drvGetDrv(UINT16 wDevID)
-{
-    int	i;
-
-    for (i = 0; i < MAX_MCIWAVEDRV; i++) {
-	if (MCIWaveDev[i].wDevID == wDevID) {
-	    return &MCIWaveDev[i];
-	}
-    }
-    return 0;
-}
-
-/**************************************************************************
  * 				MCIWAVE_drvOpen			[internal]	
  */
 static	DWORD	WAVE_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    int	i;
+    WINE_MCIWAVE*	wmw = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIWAVE));
 
-    for (i = 0; i < MAX_MCIWAVEDRV; i++) {
-	if (MCIWaveDev[i].wDevID == 0) {
-	    MCIWaveDev[i].wDevID = modp->wDeviceID;
-	    modp->wCustomCommandTable = -1;
-	    modp->wType = MCI_DEVTYPE_WAVEFORM_AUDIO;
-	    return modp->wDeviceID;
-	}
-    }
-    return 0;
+    if (!wmw)
+	return 0;
+
+    wmw->wDevID = modp->wDeviceID;
+    mciSetDriverData(wmw->wDevID, (DWORD)wmw);
+    modp->wCustomCommandTable = -1;
+    modp->wType = MCI_DEVTYPE_WAVEFORM_AUDIO;
+    return modp->wDeviceID;
 }
 
 /**************************************************************************
@@ -97,10 +70,11 @@ static	DWORD	WAVE_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
  */
 static	DWORD	WAVE_drvClose(DWORD dwDevID)
 {
-    WINE_MCIWAVE*  wmcda = WAVE_drvGetDrv(dwDevID);
+    WINE_MCIWAVE*  wmw = (WINE_MCIWAVE*)mciGetDriverData(dwDevID);
 
-    if (wmcda) {
-	wmcda->wDevID = 0;
+    if (wmw) {
+	HeapFree(GetProcessHeap(), 0, wmw);	
+	mciSetDriverData(dwDevID, 0);
 	return 1;
     }
     return 0;
@@ -111,7 +85,7 @@ static	DWORD	WAVE_drvClose(DWORD dwDevID)
  */
 static WINE_MCIWAVE*  WAVE_mciGetOpenDev(UINT16 wDevID)
 {
-    WINE_MCIWAVE*	wmw = WAVE_drvGetDrv(wDevID);
+    WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)mciGetDriverData(wDevID);
     
     if (wmw == NULL || wmw->nUseCount == 0) {
 	WARN("Invalid wDevID=%u\n", wDevID);
@@ -181,9 +155,13 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
     TRACE("nAvgBytesPerSec=%ld\n", wmw->WaveFormat.wf.nAvgBytesPerSec);
     TRACE("nBlockAlign=%d \n",     wmw->WaveFormat.wf.nBlockAlign);
     TRACE("wBitsPerSample=%u !\n", wmw->WaveFormat.wBitsPerSample);
+
     mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
-    if (mmioDescend(wmw->hFile, &mmckInfo, pckMainRIFF, MMIO_FINDCHUNK) != 0)
+    mmioSeek(wmw->hFile, mmckInfo.dwDataOffset + ((mmckInfo.cksize + 1) & ~1), SEEK_SET);
+    if (mmioDescend(wmw->hFile, &mmckInfo, pckMainRIFF, MMIO_FINDCHUNK) != 0) {
+	TRACE("can't find data chunk\n");
 	return MCIERR_INVALID_FILE;
+    }
     TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
 	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
     TRACE("nChannels=%d nSamplesPerSec=%ld\n",
@@ -200,7 +178,7 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA l
 {
     DWORD		dwRet = 0;
     DWORD		dwDeviceID;
-    WINE_MCIWAVE*	wmw = WAVE_drvGetDrv(wDevID);
+    WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)mciGetDriverData(wDevID);
     
     TRACE("(%04X, %08lX, %p)\n", wDevID, dwFlags, lpOpenParms);
     if (lpOpenParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -237,7 +215,7 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA l
 	    TRACE("MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 	    if (lpstrElementName && (strlen(lpstrElementName) > 0)) {
 		wmw->hFile = mmioOpenA((LPSTR)lpstrElementName, NULL, 
-				       MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_DENYWRITE);
+				       MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
 		if (wmw->hFile == 0) {
 		    WARN("can't find file='%s' !\n", lpstrElementName);
 		    dwRet = MCIERR_FILE_NOT_FOUND;
