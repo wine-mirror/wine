@@ -41,29 +41,25 @@ BOOL32 MAIN_EmulatorInit(void)
     return TRUE;
 }
 
-typedef BOOL32 (*WINAPI tGetMessage)(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max);
-typedef BOOL32 (*WINAPI tTranslateMessage)(const MSG32* msg);
-typedef LONG   (*WINAPI tDispatchMessage)( const MSG32* msg );
 
 /***********************************************************************
  *           Main loop of initial task
  */
 void MAIN_EmulatorRun( void )
 {
+    extern void THUNK_InitCallout( void );
     char startProg[256], defProg[256];
     HINSTANCE32 handle;
     int i;
-
-    tGetMessage		pGetMessage;
-    tTranslateMessage	pTranslateMessage;
-    tDispatchMessage	pDispatchMessage;
-    HMODULE32		hModule;
-    MSG32		msg;
+    MSG32 msg;
 
     /* Load system DLLs into the initial process (and initialize them) */
     if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibrary32A("GDI32.DLL" )
         || !LoadLibrary16("USER.EXE") || !LoadLibrary32A("USER32.DLL"))
         ExitProcess( 1 );
+
+    /* Get pointers to USER routines called by KERNEL */
+    THUNK_InitCallout();
 
     /* Add the Default Program if no program on the command line */
     if (!MAIN_argv[1])
@@ -107,19 +103,10 @@ void MAIN_EmulatorRun( void )
 
     /* Start message loop for desktop window */
 
-    hModule = GetModuleHandle32A( "USER32" );
-    pGetMessage       = (tGetMessage)GetProcAddress32( hModule, "GetMessageA" ); 
-    pTranslateMessage = (tTranslateMessage)GetProcAddress32( hModule, "TranslateMessage" ); 
-    pDispatchMessage  = (tDispatchMessage)GetProcAddress32( hModule, "DispatchMessageA" ); 
-
-    assert( pGetMessage );
-    assert( pTranslateMessage );
-    assert( pDispatchMessage );
-
-    while ( GetNumTasks() > 1 && pGetMessage( &msg, 0, 0, 0 ) )
+    while ( GetNumTasks() > 1 && Callout.GetMessage32A( &msg, 0, 0, 0 ) )
     {
-        pTranslateMessage( &msg );
-        pDispatchMessage( &msg );
+        Callout.TranslateMessage32( &msg );
+        Callout.DispatchMessage32A( &msg );
     }
 
     ExitProcess( 0 );

@@ -604,20 +604,13 @@ void TASK_KillCurrentTask( INT16 exitCode )
         USER_ExitWindows();
     }
 
-    if (!__winelib)
-    {
     /* FIXME: Hack! Send a message to the initial task so that
      * the GetMessage wakes up and the initial task can check whether
      * it is the only remaining one and terminate itself ...
      * The initial task should probably install hooks or something
      * to get informed about task termination :-/
      */
-        HTASK16 hTask = PROCESS_Initial()->task;
-        HMODULE16 hModule = GetModuleHandle16( "USER" );
-        FARPROC16 postFunc = WIN32_GetProcAddress16( hModule, "PostAppMessage" );
-        if (postFunc) 
-            Callbacks->CallPostAppMessageProc( postFunc, hTask, WM_NULL, 0, 0 );
-    }
+    Callout.PostAppMessage16( PROCESS_Initial()->task, WM_NULL, 0, 0 );
 
     /* Remove the task from the list to be sure we never switch back to it */
     TASK_UnlinkTask( hCurrentTask );
@@ -1043,33 +1036,6 @@ void WINAPI DirectedYield( HTASK16 hTask )
     TRACE(task, "%04x: back from DirectedYield(%04x)\n", pCurTask->hSelf, hTask );
 }
 
-
-/***********************************************************************
- *           UserYield  (USER.332)
- */
-void WINAPI UserYield(void)
-{
-    TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
-
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
-    {
-        FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
-        return;
-    }
-
-    /* Handle sent messages */
-    while (queue && (queue->wakeBits & QS_SENDMESSAGE))
-        QUEUE_ReceiveMessage( queue );
-
-    OldYield();
-
-    queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
-    while (queue && (queue->wakeBits & QS_SENDMESSAGE))
-        QUEUE_ReceiveMessage( queue );
-}
-
-
 /***********************************************************************
  *           Yield16  (KERNEL.29)
  */
@@ -1084,7 +1050,7 @@ void WINAPI Yield16(void)
     }
 
     if (pCurTask) pCurTask->hYieldTo = 0;
-    if (pCurTask && pCurTask->hQueue) UserYield();
+    if (pCurTask && pCurTask->hQueue) Callout.UserYield();
     else OldYield();
 }
 
@@ -1260,7 +1226,7 @@ HQUEUE16 WINAPI GetTaskQueue( HTASK16 hTask )
  */
 HQUEUE16 WINAPI SetThreadQueue( DWORD thread, HQUEUE16 hQueue )
 {
-    THDB *thdb = THREAD_IdToTHDB( thread );
+    THDB *thdb = thread? THREAD_IdToTHDB( thread ) : THREAD_Current();
     HQUEUE16 oldQueue = thdb? thdb->teb.queue : 0;
 
     if ( thdb )
@@ -1279,7 +1245,7 @@ HQUEUE16 WINAPI SetThreadQueue( DWORD thread, HQUEUE16 hQueue )
  */
 HQUEUE16 WINAPI GetThreadQueue( DWORD thread )
 {
-    THDB *thdb = THREAD_IdToTHDB( thread );
+    THDB *thdb = thread? THREAD_IdToTHDB( thread ) : THREAD_Current();
     return (HQUEUE16)(thdb? thdb->teb.queue : 0);
 }
 
@@ -1288,7 +1254,7 @@ HQUEUE16 WINAPI GetThreadQueue( DWORD thread )
  */
 VOID WINAPI SetFastQueue( DWORD thread, HANDLE32 hQueue )
 {
-    THDB *thdb = THREAD_IdToTHDB( thread );
+    THDB *thdb = thread? THREAD_IdToTHDB( thread ) : THREAD_Current();
     if ( thdb ) thdb->teb.queue = (HQUEUE16) hQueue;
 }
 
@@ -1300,14 +1266,10 @@ HANDLE32 WINAPI GetFastQueue( void )
     THDB *thdb = THREAD_Current();
     if (!thdb) return 0;
 
-    if (!(thdb->teb.queue))
-    {
-        HMODULE16 hModule = GetModuleHandle16( "USER" );
-        FARPROC16 proc = WIN32_GetProcAddress16( hModule, "InitThreadInput" );
-        Callbacks->CallBootAppProc( proc, 0, THREAD_IsWin16(thdb)? 4 : 5 );  /* FIXME! */
-    }
+    if (!thdb->teb.queue)
+        Callout.InitThreadInput( 0, THREAD_IsWin16(thdb)? 4 : 5 );
 
-    if (!(thdb->teb.queue))
+    if (!thdb->teb.queue)
         FIXME( task, "(): should initialize thread-local queue, expect failure!\n" );
 
     return (HANDLE32)thdb->teb.queue;
