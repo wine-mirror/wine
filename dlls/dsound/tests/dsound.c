@@ -543,10 +543,12 @@ static HRESULT test_primary(LPGUID lpGuid)
     primary=NULL;
     ZeroMemory(&bufdesc, sizeof(bufdesc));
     bufdesc.dwSize=sizeof(bufdesc);
-    bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER;
+    bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER|DSBCAPS_CTRLVOLUME;
     rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
     ok(rc==DS_OK && primary!=NULL,"CreateSoundBuffer failed to create a primary buffer: 0x%lx\n",rc);
     if (rc==DS_OK && primary!=NULL) {
+        LONG vol;
+
         /* Try to create a second primary buffer */
         /* DSOUND: Error: The primary buffer already exists.  Any changes made to the buffer description will be ignored. */
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&second,NULL);
@@ -560,9 +562,14 @@ static HRESULT test_primary(LPGUID lpGuid)
         /* rc=0x88780032 */
         ok(rc!=DS_OK,"IDirectSound_DuplicateSoundBuffer primary buffer should have failed 0x%lx\n",rc);
 
+        rc=IDirectSoundBuffer_GetVolume(primary,&vol);
+        ok(rc==DS_OK,"GetVolume failed: 0x%lx\n",rc);
+
         if (winetest_interactive)
         {
-            trace("Playing a 5 seconds reference tone.\n");
+            trace("Playing a 5 seconds reference tone at the current volume.\n");
+            if (rc==DS_OK)
+                trace("(the current volume is %ld according to DirectSound)\n",vol);
             trace("All subsequent tones should be identical to this one.\n");
             trace("Listen for stutter, changes in pitch, volume, etc.\n");
         }
