@@ -1638,8 +1638,15 @@ INT WINAPI WINSOCK_setsockopt(SOCKET16 s, INT level, INT optname,
 	struct	linger linger;
 	int fd = _get_sock_fd(s);
 
-	convert_sockopt(&level, &optname);
-	if (optname == SO_LINGER && optval) {
+        if(optname == WS_SO_DONTLINGER) {
+            linger.l_onoff	= *((int*)optval) ? 0: 1;
+            linger.l_linger	= 0;
+            optname=SO_LINGER;
+            optval = (char*)&linger;
+            optlen = sizeof(struct linger);
+        }else{
+            convert_sockopt(&level, &optname);
+            if (optname == SO_LINGER && optval) {
 		/* yes, uses unsigned short in both win16/win32 */
 		linger.l_onoff	= ((UINT16*)optval)[0];
 		linger.l_linger	= ((UINT16*)optval)[1];
@@ -1647,7 +1654,8 @@ INT WINAPI WINSOCK_setsockopt(SOCKET16 s, INT level, INT optname,
 		   is null?? */
 		optval = (char*)&linger;
 		optlen = sizeof(struct linger);
-	}
+            }
+        }
 	if (setsockopt(fd, level, optname, optval, optlen) == 0)
 	{
 	    close(fd);
