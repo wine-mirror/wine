@@ -39,8 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  *    we're supposed to use RE, it doesn't make use of our hash tables. Therefore,
  *    we could use hash if name isn't a RE, and fall back to a full search when we
  *    get a full RE
- *  - in most of the module enumeration for symbol lookup, we don't search in
- *    the ELF modules (should we turn wine extented flag for ELF modules on ?)
  *  - (un)decoration is not handled (should make winedump's code a (.a) library
  *    and link it to winedump, and potentially to msvcrt and dbghelp (check best
  *    way not to duplicate code in msvcrt & dbghelp)

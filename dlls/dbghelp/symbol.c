@@ -560,10 +560,10 @@ static BOOL symt_enum_module(struct module* module, regex_t* regex,
             sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
             sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
             symt_fill_sym_info(module, &sym->symt, sym_info);
-            if (!cb(sym_info, sym_info->Size, user)) break;
+            if (!cb(sym_info, sym_info->Size, user)) return TRUE;
         }
     }   
-    return sym ? FALSE : TRUE;
+    return FALSE;
 }
 
 /***********************************************************************
@@ -788,8 +788,26 @@ BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
         {
             if (module->type == DMT_PE && (dbg_module = module_get_debug(pcs, module)))
             {
-                if (regexec(&mod_regex, module->module.ModuleName, 0, NULL, 0) == 0)
-                    symt_enum_module(dbg_module, &sym_regex, EnumSymbolsCallback, UserContext);
+                if (regexec(&mod_regex, module->module.ModuleName, 0, NULL, 0) == 0 &&
+                    symt_enum_module(dbg_module, &sym_regex, 
+                                     EnumSymbolsCallback, UserContext))
+                    break;
+            }
+        }
+        /* not found in PE modules, retry on the ELF ones
+         */
+        if (!module && (dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES))
+        {
+            for (module = pcs->lmodules; module; module = module->next)
+            {
+                if (module->type == DMT_ELF &&
+                    !module_get_containee(pcs, module) &&
+                    (dbg_module = module_get_debug(pcs, module)))
+                {
+                    if (regexec(&mod_regex, module->module.ModuleName, 0, NULL, 0) == 0 &&
+                        symt_enum_module(dbg_module, &sym_regex, EnumSymbolsCallback, UserContext))
+                    break;
+                }
             }
         }
         regfree(&mod_regex);
@@ -921,7 +939,7 @@ BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol)
     else module = pcs->lmodules;
 
     /* FIXME: Name could be made out of a regular expression */
-    while (module)
+    for (; module; module = (name) ? NULL : module->next)
     {
         if (module->module.SymType == SymNone) continue;
         if (module->module.SymType == SymDeferred)
@@ -940,7 +958,6 @@ BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol)
                 return TRUE;
             }
         }
-        module = (name) ? NULL : module->next;
     }
     return FALSE;
 }

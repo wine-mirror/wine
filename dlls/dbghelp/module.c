@@ -149,11 +149,11 @@ struct module* module_find_by_name(const struct process* pcs,
 }
 
 /***********************************************************************
- *           module_has_container
+ *           module_get_container
  *
  */
-static struct module* module_get_container(const struct process* pcs, 
-                                           const struct module* inner)
+struct module* module_get_container(const struct process* pcs, 
+                                    const struct module* inner)
 {
     struct module*      module;
      
@@ -163,6 +163,26 @@ static struct module* module_get_container(const struct process* pcs,
             module->module.BaseOfImage <= inner->module.BaseOfImage &&
             module->module.BaseOfImage + module->module.ImageSize >=
             inner->module.BaseOfImage + inner->module.ImageSize)
+            return module;
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *           module_get_containee
+ *
+ */
+struct module* module_get_containee(const struct process* pcs, 
+                                    const struct module* outter)
+{
+    struct module*      module;
+     
+    for (module = pcs->lmodules; module; module = module->next)
+    {
+        if (module != outter &&
+            outter->module.BaseOfImage <= module->module.BaseOfImage &&
+            outter->module.BaseOfImage + outter->module.ImageSize >=
+            module->module.BaseOfImage + module->module.ImageSize)
             return module;
     }
     return NULL;
@@ -463,4 +483,23 @@ DWORD WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr)
     module = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
     if (!module) return 0;
     return module->module.BaseOfImage;
+}
+
+/******************************************************************
+ *		module_reset_debug_info
+ * Removes any debug information linked to a given module.
+ */
+void module_reset_debug_info(struct module* module)
+{
+    module->sortlist_valid = TRUE;
+    module->addr_sorttab = NULL;
+    hash_table_destroy(&module->ht_symbols);
+    module->ht_symbols.num_buckets = 0;
+    module->ht_symbols.buckets = NULL;
+    hash_table_destroy(&module->ht_types);
+    module->ht_types.num_buckets = 0;
+    module->ht_types.buckets = NULL;
+    hash_table_destroy(&module->ht_symbols);
+    module->sources_used = module->sources_alloc = 0;
+    module->sources = NULL;
 }

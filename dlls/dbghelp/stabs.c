@@ -107,7 +107,20 @@ static void stab_strcpy(char* dest, int sz, const char* source)
      */
     while (*source != '\0' && *source != ':' && sz-- > 0)
         *dest++ = *source++;
-    *dest = '\0';
+    *dest-- = '\0';
+    /* GCC seems to emit, in some cases, a .<digit>+ suffix.
+     * This is used for static variable inside functions, so
+     * that we can have several such variables with same name in
+     * the same compilation unit
+     * We simply ignore that suffix when present (we also get rid
+     * of it in ELF symtab parsing)
+     */
+    if (isdigit(*dest))
+    {
+        while (isdigit(*dest)) dest--;
+        if (*dest == '.') *dest = '\0';
+    }
+        
     assert(sz > 0);
 }
 
@@ -166,7 +179,7 @@ static int stabs_find_include(const char* file, unsigned long val)
 
 static int stabs_add_include(int idx)
 {
-    assert(idx >= 0);
+    if (idx < 0) return -1;
     cu_include_stk_idx++;
 
     /* if this happens, just bump MAX_INCLUDES */
@@ -1088,6 +1101,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
     struct pending_loc_var*     pending_vars = NULL;
     unsigned                    num_pending_vars = 0;
     unsigned                    num_allocated_pending_vars = 0;
+    SYM_TYPE                    ret = SymDia;
 
     nstab = stablen / sizeof(struct stab_nlist);
     stab_ptr = (const struct stab_nlist*)(addr + staboff);
@@ -1403,7 +1417,13 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
             source_idx = incl[--incl_stk];
             break;
 	case N_EXCL:
-            stabs_add_include(stabs_find_include(ptr, stab_ptr->n_value));
+            if (stabs_add_include(stabs_find_include(ptr, stab_ptr->n_value)) < 0)
+            {
+                ERR("Excluded header not found (%s,%ld)\n", ptr, stab_ptr->n_value);
+                module_reset_debug_info(module);
+                ret = SymNone;
+                goto done;
+            }
             break;
         case N_MAIN:
             /* Always ignore these. GCC doesn't even generate them. */
@@ -1416,10 +1436,10 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
         TRACE("0x%02x %lx %s\n", 
               stab_ptr->n_type, stab_ptr->n_value, strs + stab_ptr->n_un.n_strx);
     }
-
+done:
     HeapFree(GetProcessHeap(), 0, stabbuff);
     stabs_free_includes();
     if (pending_vars) HeapFree(GetProcessHeap(), 0, pending_vars);
 
-    return SymSym;
+    return ret;
 }

@@ -318,7 +318,13 @@ extern struct module*
                                enum module_type type, unsigned long addr, 
                                unsigned long size, unsigned long stamp, 
                                unsigned long checksum);
-
+extern struct module*
+                    module_get_container(const struct process* pcs,
+                                         const struct module* inner);
+extern struct module*
+                    module_get_containee(const struct process* pcs,
+                                         const struct module* inner);
+extern void         module_reset_debug_info(struct module* module);
 extern BOOL         module_remove(struct process* pcs, 
                                   struct module* module);
 /* msc.c */

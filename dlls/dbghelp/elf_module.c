@@ -119,6 +119,7 @@ static void elf_hash_symtab(const struct module* module, struct pool* pool,
     const char*                 strp;
     const char*                 symname;
     const char*                 filename = NULL;
+    const char*                 ptr;
     const Elf32_Sym*            symp;
     struct symtab_elt*          ste;
 
@@ -156,8 +157,28 @@ static void elf_hash_symtab(const struct module* module, struct pool* pool,
             }
         }
         if (j < num_areas) continue;
+
         ste = pool_alloc(pool, sizeof(*ste));
+        /* GCC seems to emit, in some cases, a .<digit>+ suffix.
+         * This is used for static variable inside functions, so
+         * that we can have several such variables with same name in
+         * the same compilation unit
+         * We simply ignore that suffix when present (we also get rid
+         * of it in stabs parsing)
+         */
+        ptr = symname + strlen(symname) - 1;
         ste->ht_elt.name = symname;
+        if (isdigit(*ptr))
+        {
+            while (*ptr >= '0' && *ptr <= '9' && ptr >= symname) ptr--;
+            if (ptr > symname && *ptr == '.')
+            {
+                char* n = pool_alloc(pool, ptr - symname + 1);
+                memcpy(n, symname, ptr - symname + 1);
+                n[ptr - symname] = '\0';
+                ste->ht_elt.name = n;
+            }
+        }
         ste->symp        = symp;
         ste->filename    = filename;
         ste->used        = 0;
@@ -381,10 +402,14 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                 symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_ADDRESS, &xaddr);
                 symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_LENGTH,  &xsize);
 
-                FIXME("Duplicate in %s: %s<%08lx-%08x> %s<%08lx-%08lx>\n", 
-                      module->module.ModuleName,
-                      ste->ht_elt.name, addr, ste->symp->st_size,
-                      module->addr_sorttab[idx]->hash_elt.name, xaddr, xsize);
+                /* if none of symbols has a correct size, we consider they are both markers
+                 * Hence, we can silence this warning
+                 */
+                if (xsize || ste->symp->st_size)
+                    FIXME("Duplicate in %s: %s<%08lx-%08x> %s<%08lx-%08lx>\n", 
+                          module->module.ModuleName,
+                          ste->ht_elt.name, addr, ste->symp->st_size,
+                          module->addr_sorttab[idx]->hash_elt.name, xaddr, xsize);
             }
         }
     }
@@ -406,7 +431,7 @@ static int elf_new_public_symbols(struct module* module, struct hash_table* symt
     struct hash_table_iter      hti;
     struct symtab_elt*          ste;
 
-    if (!(dbghelp_options & SYMOPT_NO_PUBLICS)) return TRUE;
+    if (dbghelp_options & SYMOPT_NO_PUBLICS) return TRUE;
 
     hash_table_iter_init(symtab, &hti, NULL);
     while ((ste = hash_table_iter_up(&hti)))
@@ -541,27 +566,29 @@ SYM_TYPE elf_load_debug_info(struct module* module)
                     spnt + symtab_sect, spnt + spnt[symtab_sect].sh_link,
                     sizeof(thunks) / sizeof(thunks[0]), thunks);
 
-    if (stab_sect != -1 && stabstr_sect != -1 && 
-        !(dbghelp_options & SYMOPT_PUBLICS_ONLY))
+    if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
     {
-        /* OK, now just parse all of the stabs. */
-        sym_type = stabs_parse(module, addr, module->elf_info->elf_addr,
-                               spnt[stab_sect].sh_offset, spnt[stab_sect].sh_size,
-                               spnt[stabstr_sect].sh_offset,
-                               spnt[stabstr_sect].sh_size);
-        if (sym_type == -1)
+        if (stab_sect != -1 && stabstr_sect != -1)
         {
-            WARN("Couldn't read correctly read stabs\n");
-            goto leave;
+            /* OK, now just parse all of the stabs. */
+            sym_type = stabs_parse(module, addr, module->elf_info->elf_addr,
+                                   spnt[stab_sect].sh_offset, spnt[stab_sect].sh_size,
+                                   spnt[stabstr_sect].sh_offset,
+                                   spnt[stabstr_sect].sh_size);
+            if (sym_type == -1)
+            {
+                WARN("Couldn't read correctly read stabs\n");
+                goto leave;
+            }
+            /* and fill in the missing information for stabs */
+            elf_finish_stabs_info(module, &ht_symtab);
         }
-        /* and fill in the missing information for stabs */
-        elf_finish_stabs_info(module, &ht_symtab);
-    }
-    else if (debug_sect != -1)
-    {
-        /* Dwarf 2 debug information */
-        FIXME("Unsupported Dwarf2 information\n");
-        sym_type = SymNone;
+        else if (debug_sect != -1)
+        {
+            /* Dwarf 2 debug information */
+            FIXME("Unsupported Dwarf2 information\n");
+            sym_type = SymNone;
+        }
     }
     if (strstr(module->module.ModuleName, "<elf>") ||
         !strcmp(module->module.ModuleName, "<wine-loader>"))
@@ -571,8 +598,8 @@ SYM_TYPE elf_load_debug_info(struct module* module)
             elf_new_wine_thunks(module, &ht_symtab, 
                                 sizeof(thunks) / sizeof(thunks[0]), thunks);
         /* add the public symbols from symtab
-        * (only if they haven't been defined yet)
-        */
+         * (only if they haven't been defined yet)
+         */
         elf_new_public_symbols(module, &ht_symtab, FALSE);
     }
     else
