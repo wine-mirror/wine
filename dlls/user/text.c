@@ -42,6 +42,24 @@ static int tabwidth;
 static int spacewidth;
 static int prefix_offset;
 
+/* ### start build ### */
+extern WORD CALLBACK TEXT_CallTo16_word_wlw(GRAYSTRINGPROC16,WORD,LONG,WORD);
+/* ### stop build ### */
+
+struct gray_string_info
+{
+    GRAYSTRINGPROC16 proc;
+    LPARAM           param;
+};
+
+/* callback for 16-bit gray string proc */
+static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
+{
+    const struct gray_string_info *info = (struct gray_string_info *)param;
+    return TEXT_CallTo16_word_wlw( info->proc, hdc, info->param, len );
+}
+
+
 /*********************************************************************
  *  Return next line of text from a string.
  * 
@@ -585,8 +603,13 @@ BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
                             LPARAM lParam, INT16 cch, INT16 x, INT16 y,
                             INT16 cx, INT16 cy )
 {
-    return TEXT_GrayString(hdc, hbr, (GRAYSTRINGPROC)gsprc, lParam, cch,
-                           x, y, cx, cy, FALSE, FALSE);
+    struct gray_string_info info;
+
+    if (!gsprc) return TEXT_GrayString(hdc, hbr, NULL, lParam, cch, x, y, cx, cy, FALSE, FALSE);
+    info.proc  = gsprc;
+    info.param = lParam;
+    return TEXT_GrayString( hdc, hbr, gray_string_callback, (LPARAM)&info,
+                            cch, x, y, cx, cy, FALSE, FALSE);
 }
 
 

@@ -1,4 +1,10 @@
-*.spec.c
-*.spec.glue.s
 Makefile
-thunk.glue.c
+ddeml.spec.c
+display.spec.c
+keyboard.spec.c
+mouse.spec.c
+property.glue.c
+text.glue.c
+user.spec.c
+user32.spec.c
+wnd16.glue.c

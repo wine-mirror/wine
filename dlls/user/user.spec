@@ -30,7 +30,7 @@ rsrc	resources/version16.res
 24  pascal16 RemoveProp(word ptr) RemoveProp16
 25  pascal16 GetProp(word str) GetProp16
 26  pascal16 SetProp(word str word) SetProp16
-27  pascal16 EnumProps(word segptr) THUNK_EnumProps16
+27  pascal16 EnumProps(word segptr) EnumProps16
 28  pascal16 ClientToScreen(word ptr) ClientToScreen16
 29  pascal16 ScreenToClient(word ptr) ScreenToClient16
 30  pascal16 WindowFromPoint(long) WindowFromPoint16
@@ -189,7 +189,7 @@ rsrc	resources/version16.res
 182 pascal16 KillSystemTimer(word word) KillSystemTimer16 # BEAR182
 183 pascal16 GetCaretPos(ptr) GetCaretPos16
 184 stub QuerySendMessage # W1.1, W2.0: SYSHASKANJI
-185 pascal16 GrayString(word word segptr segptr s_word s_word s_word s_word s_word) THUNK_GrayString16
+185 pascal16 GrayString(word word segptr segptr s_word s_word s_word s_word s_word) GrayString16
 186 pascal16 SwapMouseButton(word) SwapMouseButton16
 187 pascal16 EndMenu() EndMenu
 188 pascal16 SetSysModalWindow(word) SetSysModalWindow16
@@ -231,7 +231,7 @@ rsrc	resources/version16.res
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
 223 pascal16 SetKeyboardState(ptr) SetKeyboardState
 224 pascal16 GetWindowTask(word) GetWindowTask16
-225 pascal16 EnumTaskWindows(word segptr long) THUNK_EnumTaskWindows16
+225 pascal16 EnumTaskWindows(word segptr long) EnumTaskWindows16
 226 stub LockInput # not in W2.0
 227 pascal16 GetNextDlgGroupItem(word word word) GetNextDlgGroupItem16
 228 pascal16 GetNextDlgTabItem(word word word) GetNextDlgTabItem16
@@ -510,7 +510,7 @@ rsrc	resources/version16.res
 606 pascal16 FormatMessage(long segptr word word ptr word ptr) FormatMessage16
 608 pascal16 GetForegroundWindow() GetForegroundWindow16
 609 pascal16 SetForegroundWindow(word) SetForegroundWindow16
-610 pascal16 DestroyIcon32(word word) CURSORICON_Destroy
+610 pascal16 DestroyIcon32(word word) DestroyIcon32
 620 pascal   ChangeDisplaySettings(ptr long) ChangeDisplaySettings16
 621 pascal16 EnumDisplaySettings(str long ptr) EnumDisplaySettings16
 640 pascal   MsgWaitForMultipleObjects(long ptr long long long) MsgWaitForMultipleObjects16

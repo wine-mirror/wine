@@ -27,7 +27,6 @@ C_SRCS = \
 	property.c \
 	resource.c \
 	text.c \
-	thunk.c \
 	user_main.c \
 	wnd16.c \
 	wsprintf.c
@@ -42,7 +41,9 @@ RC_SRCS16 = \
 
 GLUE = \
 	dde/ddeml16.c \
-	thunk.c
+	property.c \
+	text.c \
+	wnd16.c
 
 EXTRA_OBJS = \
 	$(TOPOBJDIR)/controls/controls.o \

@@ -15,6 +15,9 @@
 /* size of buffer needed to store an atom string */
 #define ATOM_BUFFER_SIZE 256
 
+/* ### start build ### */
+extern WORD CALLBACK PROP_CallTo16_word_wlw(PROPENUMPROC16,WORD,LONG,WORD);
+/* ### stop build ### */
 
 /***********************************************************************
  *              get_properties
@@ -292,10 +295,10 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
             if (list[i].string)  /* it was a string originally */
             {
                 if (!GlobalGetAtomNameA( list[i].atom, string, ATOM_BUFFER_SIZE )) continue;
-                ret = func( hwnd, SEGPTR_GET(string), list[i].handle );
+                ret = PROP_CallTo16_word_wlw( func, hwnd, SEGPTR_GET(string), list[i].handle );
             }
             else
-                ret = func( hwnd, list[i].atom, list[i].handle );
+                ret = PROP_CallTo16_word_wlw( func, hwnd, list[i].atom, list[i].handle );
             if (!ret) break;
         }
         SEGPTR_FREE( string );

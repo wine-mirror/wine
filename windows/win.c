@@ -2903,18 +2903,6 @@ BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 
 
 /**********************************************************************
- *		EnumTaskWindows16   (USER.225)
- */
-BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
-                                 LPARAM lParam )
-{
-    TDB *tdb = TASK_GetPtr( hTask );
-    if (!tdb) return FALSE;
-    return EnumThreadWindows( (DWORD)tdb->teb->tid, (WNDENUMPROC)func, lParam );
-}
-
-
-/**********************************************************************
  *		EnumThreadWindows (USER32.@)
  */
 BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )

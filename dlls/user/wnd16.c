@@ -7,9 +7,27 @@
 #include "wine/winuser16.h"
 #include "user.h"
 #include "win.h"
+#include "task.h"
 #include "stackframe.h"
 
 static HWND16 hwndSysModal;
+
+/* ### start build ### */
+extern WORD CALLBACK WIN_CallTo16_word_wl(WNDENUMPROC16,WORD,LONG);
+/* ### stop build ### */
+
+struct wnd_enum_info
+{
+    WNDENUMPROC16 proc;
+    LPARAM        param;
+};
+
+/* callback for 16-bit window enumeration functions */
+static BOOL CALLBACK wnd_enum_callback( HWND hwnd, LPARAM param )
+{
+    const struct wnd_enum_info *info = (struct wnd_enum_info *)param;
+    return WIN_CallTo16_word_wl( info->proc, hwnd, info->param );
+}
 
 /* convert insert after window handle to 32-bit */
 inline static HWND full_insert_after_hwnd( HWND16 hwnd )
@@ -335,6 +353,32 @@ HWND16 WINAPI FindWindow16( LPCSTR className, LPCSTR title )
 BOOL16 WINAPI DestroyWindow16( HWND16 hwnd )
 {
     return DestroyWindow( WIN_Handle32(hwnd) );
+}
+
+
+/*******************************************************************
+ *           EnumWindows   (USER.54)
+ */
+BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 func, LPARAM lParam )
+{
+    struct wnd_enum_info info;
+
+    info.proc  = func;
+    info.param = lParam;
+    return EnumWindows( wnd_enum_callback, (LPARAM)&info );
+}
+
+
+/**********************************************************************
+ *           EnumChildWindows   (USER.55)
+ */
+BOOL16 WINAPI EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lParam )
+{
+    struct wnd_enum_info info;
+
+    info.proc  = func;
+    info.param = lParam;
+    return EnumChildWindows( WIN_Handle32(parent), wnd_enum_callback, (LPARAM)&info );
 }
 
 
@@ -912,6 +956,21 @@ INT16 WINAPI DlgDirListComboBox16( HWND16 hDlg, LPSTR spec, INT16 idCBox,
                                    INT16 idStatic, UINT16 attrib )
 {
     return DlgDirListComboBoxA( WIN_Handle32(hDlg), spec, idCBox, idStatic, attrib );
+}
+
+
+/**********************************************************************
+ *		EnumTaskWindows   (USER.225)
+ */
+BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
+{
+    struct wnd_enum_info info;
+    TDB *tdb = TASK_GetPtr( hTask );
+
+    if (!tdb) return FALSE;
+    info.proc  = func;
+    info.param = lParam;
+    return EnumThreadWindows( (DWORD)tdb->teb->tid, wnd_enum_callback, (LPARAM)&info );
 }
 
 

@@ -43,6 +43,24 @@ DECLARE_DEBUG_CHANNEL(nonclient);
 #define COLOR_MAX   COLOR_GRADIENTINACTIVECAPTION
 
 
+/* ### start build ### */
+extern WORD CALLBACK PAINTING_CallTo16_word_wlwww(DRAWSTATEPROC16,WORD,LONG,WORD,WORD,WORD);
+/* ### stop build ### */
+
+struct draw_state_info
+{
+    DRAWSTATEPROC16 proc;
+    LPARAM          param;
+};
+
+/* callback for 16-bit DrawState functions */
+static BOOL CALLBACK draw_state_callback( HDC hdc, LPARAM lparam, WPARAM wparam, int cx, int cy )
+{
+    const struct draw_state_info *info = (struct draw_state_info *)lparam;
+    return PAINTING_CallTo16_word_wlwww( info->proc, hdc, info->param, wparam, cx, cy );
+}
+
+
 /***********************************************************************
  *           add_paint_count
  *
@@ -1334,6 +1352,34 @@ BOOL WINAPI DrawStateW(HDC hdc, HBRUSH hbr,
 {
     return PAINTING_DrawState(hdc, hbr, func, ldata, wdata, x, y, cx, cy, flags, TRUE);
 }
+
+
+/**********************************************************************
+ *	     DrawState    (USER.449)
+ */
+BOOL16 WINAPI DrawState16( HDC16 hdc, HBRUSH16 hbr, DRAWSTATEPROC16 func, LPARAM ldata,
+                           WPARAM16 wdata, INT16 x, INT16 y, INT16 cx, INT16 cy, UINT16 flags )
+{
+    struct draw_state_info info;
+    UINT opcode = flags & 0xf;
+
+    if (opcode == DST_TEXT || opcode == DST_PREFIXTEXT)
+    {
+        /* make sure DrawStateA doesn't try to use ldata as a pointer */
+        if (!wdata) wdata = strlen( MapSL(ldata) );
+        if (!cx || !cy)
+        {
+            SIZE s;
+            if (!GetTextExtentPoint32A( hdc, MapSL(ldata), wdata, &s )) return FALSE;
+            if (!cx) cx = s.cx;
+            if (!cy) cy = s.cy;
+        }
+    }
+    info.proc  = func;
+    info.param = ldata;
+    return DrawStateA( hdc, hbr, draw_state_callback, (LPARAM)&info, wdata, x, y, cx, cy, flags );
+}
+
 
 /***********************************************************************
  *		SelectPalette (USER.282)
