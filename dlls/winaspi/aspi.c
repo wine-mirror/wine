@@ -459,7 +459,7 @@ SCSI_MapHCtoController()
 	DWORD disposition;
 
 	char idstr[20];
-	DWORD cbIdStr = 20;
+	DWORD cbIdStr;
 	int i = 0;
 	DWORD type = 0;
 	DWORD error;
@@ -487,9 +487,15 @@ SCSI_MapHCtoController()
 		return;
 	}
 	
-	for( i=0; (error=RegEnumValueA( hkeyScsi, i, idstr, &cbIdStr, NULL, &type, NULL, NULL )) == ERROR_SUCCESS; i++ )
+	for( i=0; cbIdStr = sizeof(idstr), (error=RegEnumValueA( hkeyScsi, i, idstr, &cbIdStr, NULL, &type, NULL, NULL )) == ERROR_SUCCESS; i++ )
 	{
-		sscanf(idstr, "h%02dc%02dt%*02dd%*02d", &ha, &chan);
+	        if(idstr[0] == '\0') continue; /* skip the default value */
+
+		if(sscanf(idstr, "h%02dc%02dt%*02dd%*02d", &ha, &chan) != 2) {
+			ERR("incorrect reg. value %s\n", debugstr_a(idstr));
+			continue;
+		}
+
 		if( last_ha < ha )
 		{	/* Next HA */
 			last_ha = ha;
