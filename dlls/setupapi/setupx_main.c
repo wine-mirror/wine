@@ -1133,6 +1133,7 @@ static BOOL SETUPX_CopyFiles(LPSTR *pSub, HINF16 hInf)
 
 	/* entry wasn't a single file, so let's iterate over section */
 	pFileEntries = SETUPX_GetSectionEntries(filename, pCopyEntry);
+        if (pFileEntries == NULL) continue;
         for (p=pFileEntries; *p; p +=strlen(p)+1)
 	{
 	    pSubFile = SETUPX_GetSubStrings(p, ',');
