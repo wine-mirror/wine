@@ -3286,7 +3286,7 @@ typedef struct tagCOMBOBOXEXITEMW
 typedef struct tagNMCBEENDEDITW
 {
     NMHDR hdr;
-    BOOL fChandged;
+    BOOL fChanged;
     int iNewSelection;
     WCHAR szText[CBEMAXSTRLEN];
     int iWhy;
@@ -3305,6 +3305,21 @@ typedef struct tagNMCBEENDEDITA
 #define LPNMCBEENDEDIT WINELIB_NAME_AW(LPNMCBEENDEDIT)
 #define PNMCBEENDEDIT WINELIB_NAME_AW(PNMCBEENDEDIT)
 
+
+typedef struct tagNMCOMBOBOXEXA
+{
+    NMHDR        hdr;
+    COMBOBOXEXITEMA  ceItem;
+} NMCOMBOBOXEXA, *PNMCOMBOBOXEXA;
+
+typedef struct tagNMCOMBOBOXEXW
+{
+    NMHDR        hdr;
+    COMBOBOXEXITEMW  ceItem;
+} NMCOMBOBOXEXW, *PNMCOMBOBOXEXW;
+
+#define NMCOMBOBOXEX WINELIB_NAME_AW(NMCOMBOBOXEX)
+#define PNMCOMBOBOXEX WINELIB_NAME_AW(PNMCOMBOBOXEX)
 
 
 /* Hotkey control */
