@@ -959,7 +959,6 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
             wine_tsx11_unlock();
         }
 
-        wine_tsx11_lock();
         if (bChangePos)
             X11DRV_sync_whole_window_position( display, wndPtr, !(winpos->flags & SWP_NOZORDER) );
         else
@@ -973,7 +972,9 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
             (winpos->flags & SWP_FRAMECHANGED))
         {
             /* if we moved the client area, repaint the whole non-client window */
+            wine_tsx11_lock();
             XClearArea( display, get_whole_window(wndPtr), 0, 0, 0, 0, True );
+            wine_tsx11_unlock();
             winpos->flags |= SWP_FRAMECHANGED;
         }
         if (winpos->flags & SWP_SHOWWINDOW)
@@ -986,8 +987,11 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         {
             /* resizing from zero size to non-zero -> map */
             TRACE( "mapping non zero size or off-screen win %p\n", winpos->hwnd );
+            wine_tsx11_lock();
             XMapWindow( display, get_whole_window(wndPtr) );
+            wine_tsx11_unlock();
         }
+        wine_tsx11_lock();
         XFlush( display );  /* FIXME: should not be necessary */
         wine_tsx11_unlock();
     }
