@@ -61,6 +61,16 @@ init	RPCRT4_LibMain
 @ stub RpcEpRegisterNoReplaceW
 @ stub RpcEpResolveBinding
 @ stub RpcEpUnregister
+@ stub RpcErrorAddRecord # wxp
+@ stub RpcErrorClearInformation # wxp
+@ stub RpcErrorEndEnumeration # wxp
+@ stub RpcErrorGetNextRecord # wxp
+@ stub RpcErrorNumberOfRecords # wxp
+@ stub RpcErrorLoadErrorInfo # wxp
+@ stub RpcErrorResetEnumeration # wxp
+@ stub RpcErrorSaveErrorInfo # wxp
+@ stub RpcErrorStartEnumeration # wxp
+@ stub RpcFreeAuthorizationContext # wxp
 @ stub RpcGetAsyncCallStatus
 @ stub RpcIfIdVectorFree
 @ stub RpcIfInqId
@@ -106,6 +116,8 @@ init	RPCRT4_LibMain
 @ stub RpcRevertToSelf
 @ stub RpcRevertToSelfEx
 @ stdcall RpcServerInqBindings(ptr) RpcServerInqBindings
+@ stub RpcServerInqCallAttributesA # wxp
+@ stub RpcServerInqCallAttributesW # wxp
 @ stub RpcServerInqDefaultPrincNameA
 @ stub RpcServerInqDefaultPrincNameW
 @ stub RpcServerInqIf
@@ -117,6 +129,7 @@ init	RPCRT4_LibMain
 @ stdcall RpcServerRegisterIf2(ptr ptr ptr long long long ptr) RpcServerRegisterIf2
 @ stub RpcServerTestCancel
 @ stub RpcServerUnregisterIf
+@ stub RpcServerUnregisterIfEx # wxp
 @ stub RpcServerUseAllProtseqs
 @ stub RpcServerUseAllProtseqsEx
 @ stub RpcServerUseAllProtseqsIf
@@ -145,6 +158,8 @@ init	RPCRT4_LibMain
 @ stub RpcSmSetThreadHandle
 @ stub RpcSmSwapClientAllocFree
 @ stub RpcSsAllocate
+@ stub RpcSsContextLockExclusive # wxp
+@ stub RpcSsContextLockShared # wxp
 @ stub RpcSsDestroyClientContext
 @ stub RpcSsDisableAllocate
 @ stub RpcSsDontSerializeContext
@@ -162,9 +177,19 @@ init	RPCRT4_LibMain
 @ stdcall RpcStringFreeA(ptr) RpcStringFreeA
 @ stdcall RpcStringFreeW(ptr) RpcStringFreeW
 @ stub RpcTestCancel
+@ stub RpcUserFree # wxp
 
 @ stub TowerConstruct
 @ stub TowerExplode
+
+@ stub SimpleTypeAlignment # wxp
+@ stub SimpleTypeBufferSize # wxp
+@ stub SimpleTypeMemorySize # wxp
+
+@ stub pfnFreeRoutines # wxp
+@ stub pfnMarshallRouteines # wxp
+@ stub pfnSizeRoutines # wxp
+@ stub pfnUnmarshallRouteines # wxp
 
 @ stdcall UuidCompare(ptr ptr ptr) UuidCompare
 @ stdcall UuidCreate(ptr) UuidCreate
@@ -214,6 +239,7 @@ init	RPCRT4_LibMain
 @ stub NdrCorrelationFree
 @ stub NdrCorrelationInitialize
 @ stub NdrCorrelationPass
+@ stub CreateServerInterfaceFromStub # wxp
 @ stub NdrDcomAsyncClientCall
 @ stub NdrDcomAsyncStubCall
 @ stdcall NdrFreeBuffer(ptr) NdrFreeBuffer
@@ -225,9 +251,13 @@ init	RPCRT4_LibMain
 @ stub NdrFullPointerXlatInit
 @ stdcall NdrGetBuffer(ptr long ptr) NdrGetBuffer
 @ stub NdrGetDcomProtocolVersion
+@ stub NdrGetSimpleTypeBufferAlignment # wxp
+@ stub NdrGetSimpleTypeBufferSize # wxp
+@ stub NdrGetSimpleTypeMemorySize # wxp
+@ stub NdrGetTypeFlags # wxp
 @ stub NdrGetPartialBuffer
 @ stub NdrGetPipeBuffer
-@ stub NdrGetUserMarshalInfo
+@ stub NdrGetUserMarshallInfo
 @ stub NdrIsAppDoneWithPipes
 @ stub NdrMapCommAndFaultStatus
 @ stub NdrMarkNextActivePipe
@@ -247,6 +277,11 @@ init	RPCRT4_LibMain
 @ stub NdrNsSendReceive
 @ stdcall NdrOleAllocate(long) NdrOleAllocate
 @ stdcall NdrOleFree(ptr) NdrOleFree
+@ stub NdrOutInit # wxp
+@ stub NdrPartialIgnoreClientBufferSize # wxp
+@ stub NdrPartialIgnoreClientMarshall # wxp
+@ stub NdrPartialIgnoreServerInitialize # wxp
+@ stub NdrPartialIgnoreServerUnmarshall # wxp
 @ stub NdrPipePull
 @ stub NdrPipePush
 @ stub NdrPipeSendReceive
@@ -274,7 +309,22 @@ init	RPCRT4_LibMain
 @ stdcall NdrStubGetBuffer(ptr ptr ptr) NdrStubGetBuffer
 @ stdcall NdrStubInitialize(ptr ptr ptr ptr) NdrStubInitialize
 @ stub NdrStubInitializeMarshall
+@ stub NdrpCreateProxy # wxp
+@ stub NdrpCreateStub # wxp
+@ stub NdrpGetProcFormatString # wxp
+@ stub NdrpGetTypeFormatString # wxp
+@ stub NdrpGetTypeGenCookie # wxp
+@ stub NdrpMemoryIncrement # wxp
+@ stub NdrpReleaseTypeFormatString # wxp
+@ stub NdrpReleaseTypeGenCookie # wxp
 @ stub NdrpSetRpcSsDefaults
+@ stub NdrpVarVtOfTypeDesc # wxp
+@ stub NdrTypeFlags # wxp
+@ stub NdrTypeFree # wxp
+@ stub NdrTypeMarshall # wxp
+@ stub NdrTypeSize # wxp
+@ stub NdrTypeUnmarshall # wxp
+@ stub NdrUnmarshallBasetypeInline # wxp
 
 @ stub NdrByteCountPointerBufferSize
 @ stub NdrByteCountPointerFree
@@ -347,9 +397,12 @@ init	RPCRT4_LibMain
 @ stub NdrPointerUnmarshall
 @ stub NdrServerContextMarshall
 @ stub NdrServerContextUnmarshall
+@ stub NdrServerContextNewMarshall # wxp
+@ stub NdrServerContextNewUnmarshall # wxp
 @ stub NdrServerInitialize
 @ stub NdrServerInitializeMarshall
 @ stdcall NdrServerInitializeNew(ptr ptr ptr) NdrServerInitializeNew
+@ stub NdrServerInitializePartial # wxp
 @ stub NdrServerInitializeUnmarshall
 @ stub NdrServerMarshall
 @ stub NdrServerUnmarshall
@@ -422,6 +475,7 @@ init	RPCRT4_LibMain
 @ stub I_RpcBindingInqDynamicEndPoint
 @ stub I_RpcBindingInqDynamicEndPointA
 @ stub I_RpcBindingInqDynamicEndPointW
+@ stub I_RpcBindingInqLocalClientPID # wxp
 @ stub I_RpcBindingInqSecurityContext
 @ stub I_RpcBindingInqTransportType
 @ stub I_RpcBindingInqWireIdForSnego
@@ -434,6 +488,8 @@ init	RPCRT4_LibMain
 @ stub I_RpcConnectionInqSockBuffSize2
 @ stub I_RpcConnectionSetSockBuffSize
 @ stub I_RpcDeleteMutex
+@ stub I_RpcEnableWmiTrace # wxp
+@ stub I_RpcExceptionFilter # wxp
 @ stub I_RpcFree
 @ stdcall I_RpcFreeBuffer(ptr) I_RpcFreeBuffer
 @ stub I_RpcFreePipeBuffer
@@ -450,6 +506,7 @@ init	RPCRT4_LibMain
 @ stub I_RpcLogEvent
 @ stub I_RpcMapWin32Status
 @ stub I_RpcMonitorAssociation
+@ stub I_RpcNegotiateTransferSyntax # wxp
 @ stub I_RpcNsBindingSetEntryName
 @ stub I_RpcNsBindingSetEntryNameA
 @ stub I_RpcNsBindingSetEntryNameW
@@ -457,6 +514,7 @@ init	RPCRT4_LibMain
 @ stub I_RpcNsInterfaceUnexported
 @ stub I_RpcParseSecurity
 @ stub I_RpcPauseExecution
+@ stub I_RpcProxyNewConnection # wxp
 @ stub I_RpcReallocPipeBuffer
 @ stdcall I_RpcReceive(ptr) I_RpcReceive
 @ stub I_RpcRequestMutex
@@ -464,6 +522,7 @@ init	RPCRT4_LibMain
 @ stdcall I_RpcSendReceive(ptr) I_RpcSendReceive
 @ stub I_RpcServerAllocateIpPort
 @ stub I_RpcServerInqAddressChangeFn
+@ stub I_RpcServerInqLocalConnAddress # wxp
 @ stub I_RpcServerInqTransportType
 @ stub I_RpcServerRegisterForwardFunction
 @ stub I_RpcServerSetAddressChangeFn
@@ -481,6 +540,7 @@ init	RPCRT4_LibMain
 @ stub I_RpcSetThreadParams # win9x
 @ stub I_RpcSetWMsgEndpoint # NT4
 @ stub I_RpcSsDontSerializeContext
+@ stub I_RpcSystemFunction001 # wxp (oh, brother!)
 @ stub I_RpcStopMonitorAssociation
 @ stub I_RpcTransCancelMigration # win9x
 @ stub I_RpcTransClientMaxFrag # win9x
@@ -505,6 +565,7 @@ init	RPCRT4_LibMain
 @ stub I_RpcTransServerReallocBuffer # win9x
 @ stub I_RpcTransServerReceiveDirectReady # win9x
 @ stub I_RpcTransServerUnprotectThread # win9x
+@ stub I_RpcTurnOnEEInfoPropagation # wxp
 @ stdcall I_RpcWindowProc(ptr long long long) I_RpcWindowProc # win9x
 @ stub I_RpcltDebugSetPDUFilter
 @ stub I_UuidCreate
