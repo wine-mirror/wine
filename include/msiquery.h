@@ -146,15 +146,12 @@ MSICONDITION WINAPI MsiEvaluateConditionW(MSIHANDLE,LPCWSTR);
 #define     MsiEvaluateCondition WINELIB_NAME_AW(MsiEvaluateCondition)
 
 /* property functions */
-UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName,
-                           LPSTR szValueBuf, DWORD* pchValueBuf);
-UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName,
-                           LPWSTR szValueBuf, DWORD* pchValueBuf);
+UINT WINAPI MsiGetPropertyA(MSIHANDLE, LPCSTR, LPSTR, DWORD*);
+UINT WINAPI MsiGetPropertyW(MSIHANDLE, LPCWSTR, LPWSTR, DWORD*);
 #define     MsiGetProperty WINELIB_NAME_AW(MsiGetProperty)
 
-UINT WINAPI MsiSetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPCSTR szValue);
-UINT WINAPI MsiSetPropertyW(MSIHANDLE hInstall, LPCWSTR szName, 
-                              LPCWSTR szValue);
+UINT WINAPI MsiSetPropertyA(MSIHANDLE, LPCSTR, LPCSTR);
+UINT WINAPI MsiSetPropertyW(MSIHANDLE, LPCWSTR, LPCWSTR);
 #define     MsiSetProperty WINELIB_NAME_AW(MsiSetProperty)
 
 UINT WINAPI MsiGetTargetPathA(MSIHANDLE,LPCSTR,LPSTR,DWORD*);
@@ -171,11 +168,11 @@ UINT WINAPI MsiGetSourcePathW(MSIHANDLE,LPCWSTR,LPWSTR,DWORD*);
 
 MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE);
 
-UINT WINAPI MsiViewGetColumnInfo( MSIHANDLE, MSICOLINFO, MSIHANDLE*);
-INT WINAPI MsiProcessMessage( MSIHANDLE, INSTALLMESSAGE, MSIHANDLE);
+UINT WINAPI MsiViewGetColumnInfo(MSIHANDLE, MSICOLINFO, MSIHANDLE*);
+INT WINAPI MsiProcessMessage(MSIHANDLE, INSTALLMESSAGE, MSIHANDLE);
 
-UINT WINAPI MsiSetFeatureStateA( MSIHANDLE, LPCSTR, INSTALLSTATE);
-UINT WINAPI MsiSetFeatureStateW( MSIHANDLE, LPCWSTR, INSTALLSTATE);
+UINT WINAPI MsiSetFeatureStateA(MSIHANDLE, LPCSTR, INSTALLSTATE);
+UINT WINAPI MsiSetFeatureStateW(MSIHANDLE, LPCWSTR, INSTALLSTATE);
 #define     MsiSetFeatureState WINELIB_NAME_AW(MsiSetFeatureState)
 
 BOOL WINAPI MsiGetMode(MSIHANDLE, MSIRUNMODE);

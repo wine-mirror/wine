@@ -144,6 +144,10 @@ UINT WINAPI MsiAdvertiseProductA(LPCSTR, LPCSTR, LPCSTR, LANGID);
 UINT WINAPI MsiAdvertiseProductW(LPCWSTR, LPCWSTR, LPCWSTR, LANGID);
 #define     MsiAdvertiseProduct WINELIB_NAME_AW(MsiAdvertiseProduct)
 
+UINT WINAPI MsiAdvertiseProductExA(LPCSTR, LPCSTR, LPCSTR, LANGID, DWORD, DWORD);
+UINT WINAPI MsiAdvertiseProductExW(LPCWSTR, LPCWSTR, LPCWSTR, LANGID, DWORD, DWORD);
+#define     MsiAdvertiseProductEx WINELIB_NAME_AW(MsiAdvertiseProductEx)
+
 UINT WINAPI MsiInstallProductA(LPCSTR, LPCSTR);
 UINT WINAPI MsiInstallProductW(LPCWSTR, LPCWSTR);
 #define     MsiInstallProduct WINELIB_NAME_AW(MsiInstallProduct)
@@ -156,8 +160,8 @@ UINT WINAPI MsiApplyPatchA(LPCSTR, LPCSTR, INSTALLTYPE, LPCSTR);
 UINT WINAPI MsiApplyPatchW(LPCWSTR, LPCWSTR, INSTALLTYPE, LPCWSTR);
 #define     MsiApplyPatch WINELIB_NAME_AW(MsiApplyPatch)
 
-UINT WINAPI MsiEnumProductsA(DWORD index, LPSTR lpguid);
-UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid);
+UINT WINAPI MsiEnumProductsA(DWORD, LPSTR);
+UINT WINAPI MsiEnumProductsW(DWORD, LPWSTR);
 #define     MsiEnumProducts WINELIB_NAME_AW(MsiEnumProducts)
 
 UINT WINAPI MsiEnumFeaturesA(LPCSTR, DWORD, LPSTR, LPSTR);
@@ -263,6 +267,10 @@ UINT WINAPI MsiEnumComponentQualifiersW(LPWSTR, DWORD, LPWSTR, DWORD*, LPWSTR, D
 UINT WINAPI MsiGetFileVersionA(LPCSTR, LPSTR, DWORD*, LPSTR, DWORD*);
 UINT WINAPI MsiGetFileVersionW(LPCWSTR, LPWSTR, DWORD*, LPWSTR, DWORD*);
 #define MsiGetFileVersion WINELIB_NAME_AW(MsiGetFileVersion)
+
+UINT WINAPI MsiMessageBoxA(HWND, LPCSTR, LPCSTR, UINT, WORD, DWORD);
+UINT WINAPI MsiMessageBoxW(HWND, LPCWSTR, LPCWSTR, UINT, WORD, DWORD);
+#define MsiMessageBox WINELIB_NAME_AW(MsiMessageBox)
 
 /* Non Unicode */
 UINT WINAPI MsiCloseHandle(MSIHANDLE);
