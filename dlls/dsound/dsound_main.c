@@ -1826,14 +1826,13 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	if ((dsb->freq == primarybuf->wfx.nSamplesPerSec) &&
 	    (dsb->wfx.wBitsPerSample == primarybuf->wfx.wBitsPerSample) &&
 	    (dsb->wfx.nChannels == primarybuf->wfx.nChannels)) {
+	        DWORD bytesleft = dsb->buflen - dsb->playpos;
 		TRACE("(%p) Best case\n", dsb);
-	    	if ((ibp + len) < (BYTE *)(dsb->buffer + dsb->buflen))
+	    	if (len <= bytesleft )
 			memcpy(obp, ibp, len);
 		else { /* wrap */
-			memcpy(obp, ibp, dsb->buflen - dsb->playpos);
-			memcpy(obp + (dsb->buflen - dsb->playpos),
-			    dsb->buffer,
-			    len - (dsb->buflen - dsb->playpos));
+			memcpy(obp, ibp, bytesleft );
+			memcpy(obp + bytesleft, dsb->buffer, len - bytesleft);
 		}
 		return len;
 	}
