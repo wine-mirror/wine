@@ -199,6 +199,10 @@ static SuffixCharset sufch_unicode[] = {
     { "0", DEFAULT_CHARSET, 0 },
     { NULL, DEFAULT_CHARSET, 0 }};
 
+static SuffixCharset sufch_iso10646[] = {
+    { "1", DEFAULT_CHARSET, 0 },
+    { NULL, DEFAULT_CHARSET, 0 }};
+
 /* Each of these must be matched explicitly */
 static SuffixCharset sufch_any[] = {
     { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL },
@@ -234,6 +238,7 @@ static fontEncodingTemplate __fETTable[] = {
 			{ "gb2312.1980",  sufch_gb2312,       &__fETTable[16]},
 			{ "big5.et",      sufch_big5,         &__fETTable[17]},
 			{ "unicode",      sufch_unicode,      &__fETTable[18]},
+			{ "iso10646",     sufch_iso10646,     &__fETTable[19]},
 			/* NULL prefix matches anything so put it last */
 			{   NULL,         sufch_any,          NULL },
 };
@@ -2058,6 +2063,8 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 			{
 			   if( offset > length ||
 			      (int)(pfi->next) != j++ ) goto fail;
+
+			   if( pfi->df.dfPixHeight == 0 ) goto fail;
 
 			   pfi->df.dfFace = pfr->lfFaceName;
 			   if( pfi->fi_flags & FI_SCALABLE )
