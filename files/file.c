@@ -45,24 +45,29 @@
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
+#if 0
 static BOOL32 FILE_Signaled(K32OBJ *ptr, DWORD tid);
 static BOOL32 FILE_Satisfied(K32OBJ *ptr, DWORD thread_id);
 static void FILE_AddWait(K32OBJ *ptr, DWORD tid);
 static void FILE_RemoveWait(K32OBJ *ptr, DWORD thread_id);
-static BOOL32 FILE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
-			LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped);
-static BOOL32 FILE_Write(K32OBJ *ptr, LPCVOID lpBuffer, DWORD nNumberOfChars,
-			 LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped);
+#endif
 static void FILE_Destroy( K32OBJ *obj );
 
 const K32OBJ_OPS FILE_Ops =
 {
+#if 0
     FILE_Signaled,     /* signaled */
     FILE_Satisfied,    /* satisfied */
     FILE_AddWait,      /* add_wait */
     FILE_RemoveWait,   /* remove_wait */
-    FILE_Read,	       /* read */
-    FILE_Write,        /* write */
+#else
+    NULL,              /* signaled */
+    NULL,              /* satisfied */
+    NULL,              /* add_wait */
+    NULL,              /* remove_wait */
+#endif
+    NULL,              /* read */
+    NULL,              /* write */
     FILE_Destroy       /* destroy */
 };
 
@@ -91,7 +96,6 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle )
     struct create_file_request req;
     struct create_file_reply reply;
     int len;
-    int fd = dup(unix_handle);
 
     req.access = FILE_ALL_ACCESS | GENERIC_READ |
                  GENERIC_WRITE | GENERIC_EXECUTE;  /* FIXME */
@@ -111,9 +115,7 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle )
     (*file)->header.type = K32OBJ_FILE;
     (*file)->header.refcount = 0;
     (*file)->unix_name = NULL;
-    (*file)->unix_handle = fd;
     (*file)->type = FILE_TYPE_DISK;
-    (*file)->pos = 0;
     (*file)->mode = 0;
     (*file)->wait_queue = NULL;
 
@@ -127,7 +129,7 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle )
 /***********************************************************************
  *		FILE_async_handler			[internal]
  */
-#if 1
+#if 0
 static void
 FILE_async_handler(int unixfd,void *private) {
 	FILE_OBJECT *file = (FILE_OBJECT*)private;
@@ -175,76 +177,6 @@ static BOOL32 FILE_Satisfied(K32OBJ *ptr, DWORD thread_id)
 	return FALSE; /* not abandoned. Hmm? */
 }
 #endif
-
-/* FIXME: lpOverlapped is ignored */
-static BOOL32 FILE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
-			LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped)
-{
-	FILE_OBJECT *file = (FILE_OBJECT *)ptr;
-	int result;
-
-	TRACE(file, "%p %p %ld\n", ptr, lpBuffer,
-                     nNumberOfChars);
-
-	if (nNumberOfChars == 0) {
-		*lpNumberOfChars = 0;  /* FIXME: does this change */
-		return TRUE;
-	}
-
-        if ( (file->pos < 0) || /* workaround, see SetFilePointer */
-        ((result = read(file->unix_handle, lpBuffer, nNumberOfChars)) == -1) )
-        {
-            FILE_SetDosError();
-            return FALSE;
-	}
-	file->pos += result;
-	*lpNumberOfChars = result;
-	return TRUE;
-}
-
-/**
- *  experimentation yields that WriteFile:
- *	o does not truncate on write of 0
- *	o always changes the *lpNumberOfChars to actual number of
- *	  characters written
- *	o write of 0 nNumberOfChars returns TRUE
- */
-static BOOL32 FILE_Write(K32OBJ *ptr, LPCVOID lpBuffer, DWORD nNumberOfChars,
-			 LPDWORD lpNumberOfChars, LPOVERLAPPED lpOverlapped)
-{
-	FILE_OBJECT *file = (FILE_OBJECT *)ptr;
-	int result;
-
-	TRACE(file, "%p %p %ld\n", ptr, lpBuffer,
-		      nNumberOfChars);
-
-	*lpNumberOfChars = 0; 
-
-	/* 
-	 * I assume this loop around EAGAIN is here because
-	 * win32 doesn't have interrupted system calls 
-	 */
-
-        if (file->pos < 0) { /* workaround, see SetFilePointer */
-            FILE_SetDosError();
-            return FALSE;
-        }
-
-	for (;;)
-        {
-		result = write(file->unix_handle, lpBuffer, nNumberOfChars);
-		if (result != -1) {
-			*lpNumberOfChars = result;
-			file->pos += result;
-			return TRUE;
-		}
-		if (errno != EINTR) {
-			FILE_SetDosError();
-			return FALSE;
-		}
-        }
-}
-
 
 
 /***********************************************************************
@@ -1309,6 +1241,96 @@ HFILE32 WINAPI _lclose32( HFILE32 hFile )
 
 
 /***********************************************************************
+ *              ReadFile                (KERNEL32.428)
+ */
+BOOL32 WINAPI ReadFile( HANDLE32 hFile, LPVOID buffer, DWORD bytesToRead,
+                        LPDWORD bytesRead, LPOVERLAPPED overlapped )
+{
+    K32OBJ *ptr;
+    struct get_read_fd_request req;
+
+    TRACE(file, "%d %p %ld\n", hFile, buffer, bytesToRead );
+
+    if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
+    if (!bytesToRead) return TRUE;
+
+    if (!(ptr = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
+                                  K32OBJ_UNKNOWN, GENERIC_READ, &req.handle )))
+        return FALSE;
+
+    if (req.handle != -1)  /* We have a server handle */
+    {
+        int unix_handle, result;
+
+        CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &req, sizeof(req) );
+        CLIENT_WaitReply( NULL, &unix_handle, 0 );
+        if (unix_handle == -1) return FALSE;
+        if ((result = read( unix_handle, buffer, bytesToRead )) == -1)
+            FILE_SetDosError();
+        close( unix_handle );
+        K32OBJ_DecCount( ptr );
+        if (result == -1) return FALSE;
+        if (bytesRead) *bytesRead = result;
+        return TRUE;
+    }
+    else
+    {
+        BOOL32 status = FALSE;
+        if (K32OBJ_OPS(ptr)->read)
+            status = K32OBJ_OPS(ptr)->read(ptr, buffer, bytesToRead, bytesRead, overlapped );
+        K32OBJ_DecCount( ptr );
+        return status;
+    }
+}
+
+
+/***********************************************************************
+ *             WriteFile               (KERNEL32.578)
+ */
+BOOL32 WINAPI WriteFile( HANDLE32 hFile, LPCVOID buffer, DWORD bytesToWrite,
+                         LPDWORD bytesWritten, LPOVERLAPPED overlapped )
+{
+    K32OBJ *ptr;
+    struct get_write_fd_request req;
+
+    TRACE(file, "%d %p %ld\n", hFile, buffer, bytesToWrite );
+
+    if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
+    if (!bytesToWrite) return TRUE;
+
+    if (!(ptr = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
+                                  K32OBJ_UNKNOWN, GENERIC_WRITE, &req.handle )))
+        return FALSE;
+
+    if (req.handle != -1)  /* We have a server handle */
+    {
+        int unix_handle, result;
+
+        CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
+        CLIENT_WaitReply( NULL, &unix_handle, 0 );
+        if (unix_handle == -1) return FALSE;
+
+        if ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
+            FILE_SetDosError();
+        close( unix_handle );
+        K32OBJ_DecCount( ptr );
+        if (result == -1) return FALSE;
+        if (bytesWritten) *bytesWritten = result;
+        return TRUE;
+    }
+    else
+    {
+        BOOL32 status = FALSE;
+        if (K32OBJ_OPS(ptr)->write)
+            status = K32OBJ_OPS(ptr)->write( ptr, buffer, bytesToWrite,
+                                             bytesWritten, overlapped );
+        K32OBJ_DecCount( ptr );
+        return status;
+    }
+}
+
+
+/***********************************************************************
  *           WIN16_hread
  */
 LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
@@ -1339,18 +1361,9 @@ UINT16 WINAPI WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
  */
 UINT32 WINAPI _lread32( HFILE32 handle, LPVOID buffer, UINT32 count )
 {
-    K32OBJ *ptr;
-    DWORD numWritten;
-    BOOL32 result = FALSE;
-
-    TRACE( file, "%d %p %d\n", handle, buffer, count);
-    if (!(ptr = HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                  K32OBJ_UNKNOWN, 0, NULL))) return -1;
-    if (K32OBJ_OPS(ptr)->read)
-        result = K32OBJ_OPS(ptr)->read(ptr, buffer, count, &numWritten, NULL);
-    K32OBJ_DecCount( ptr );
-    if (!result) return -1;
-    return (UINT32)numWritten;
+    DWORD result;
+    if (!ReadFile( handle, buffer, count, &result, NULL )) return -1;
+    return result;
 }
 
 
@@ -1403,8 +1416,9 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
                              DWORD method )
 {
     FILE_OBJECT *file;
-    DWORD result = 0xffffffff;
-    int unix_handle;
+    struct set_file_pointer_request req;
+    struct set_file_pointer_reply reply;
+    int len, err;
 
     if (highword && *highword)
     {
@@ -1415,64 +1429,31 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
     TRACE(file, "handle %d offset %ld origin %ld\n",
           hFile, distance, method );
 
-    if (!(file = FILE_GetFile( hFile, 0, NULL ))) return 0xffffffff;
-    if ((unix_handle = FILE_GetUnixHandle( hFile, 0 )) == -1)
-    {
-        FILE_ReleaseFile( file );
-        return 0xffffffff;
-    }
+    if (!(file = FILE_GetFile( hFile, 0, &req.handle ))) return 0xffffffff;
+    assert( req.handle != -1 );
 
-    /* the pointer may be positioned before the start of the file;
-        no error is returned in that case,
-        but subsequent attempts at I/O will produce errors.
-        This is not allowed with Unix lseek(),
-        so we'll need some emulation here */
-    switch(method)
-    {
-        case FILE_CURRENT:
-            distance += file->pos; /* fall through */
-        case FILE_BEGIN:
-            if ((result = lseek(unix_handle, distance, SEEK_SET)) == -1)
-            {
-                if ((INT32)distance < 0)
-                    file->pos = result = distance;
-            }
-            else
-            file->pos = result;
-            break;
-        case FILE_END:
-            if ((result = lseek(unix_handle, distance, SEEK_END)) == -1)
-            {
-                if ((INT32)distance < 0)
-                {
-                    /* get EOF */
-                    result = lseek(unix_handle, 0, SEEK_END);
-
-                    /* return to the old pos, as the first lseek failed */
-                    lseek(unix_handle, file->pos, SEEK_END);
-
-                    file->pos = (result += distance);
-                }
-                else
-                ERR(file, "lseek: unknown error. Please report.\n");
-            }
-            else file->pos = result;
-            break;
-        default:
-            ERR(file, "Unknown origin %ld !\n", method);
-    }
-
-    if (result == -1)
-        FILE_SetDosError();
-
-    close( unix_handle );
+    req.low = distance;
+    req.high = highword ? *highword : 0;
+    /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
+    req.whence = method;
+    CLIENT_SendRequest( REQ_SET_FILE_POINTER, -1, 1, &req, sizeof(req) );
+    err = CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
     FILE_ReleaseFile( file );
-    return result;
+    if (err) return 0xffffffff;
+    SetLastError( 0 );
+    if (highword) *highword = reply.high;
+    return reply.low;
 }
 
 
 /***********************************************************************
  *           _llseek16   (KERNEL.84)
+ *
+ * FIXME:
+ *   Seeking before the start of the file should be allowed for _llseek16,
+ *   but cause subsequent I/O operations to fail (cf. interrupt list)
+ *
  */
 LONG WINAPI _llseek16( HFILE16 hFile, LONG lOffset, INT16 nOrigin )
 {
@@ -1521,7 +1502,7 @@ UINT16 WINAPI _lwrite16( HFILE16 hFile, LPCSTR buffer, UINT16 count )
 }
 
 /***********************************************************************
- *           _lwrite32   (KERNEL.86)
+ *           _lwrite32   (KERNEL32.761)
  */
 UINT32 WINAPI _lwrite32( HFILE32 hFile, LPCSTR buffer, UINT32 count )
 {
@@ -1559,7 +1540,7 @@ LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 /***********************************************************************
  *           _hwrite32   (KERNEL32.591)
  *
- *	experimenation yields that _lwrite:
+ *	experimentation yields that _lwrite:
  *		o truncates the file at the current position with 
  *		  a 0 len write
  *		o returns 0 on a 0 length write
@@ -1568,35 +1549,19 @@ LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
  */
 LONG WINAPI _hwrite32( HFILE32 handle, LPCSTR buffer, LONG count )
 {
-	K32OBJ *ioptr;
-	DWORD result;
-	BOOL32 status = FALSE;
-	
-	TRACE(file, "%d %p %ld\n", handle, buffer, count );
+    DWORD result;
 
-	if (count == 0) {       /* Expand or truncate at current position */
-                int unix_handle = FILE_GetUnixHandle( handle, GENERIC_WRITE );
-                if ((unix_handle != -1) &&
-                    (ftruncate(unix_handle,
-			       lseek( unix_handle, 0, SEEK_CUR)) == 0 ))
-                {
-                        close( unix_handle );
-			return 0;
-		} else {
-			FILE_SetDosError();
-                        close( unix_handle );
-			return HFILE_ERROR32;
-		}
-	}
-	
-	if (!(ioptr = HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                        K32OBJ_UNKNOWN, 0, NULL )))
-            return HFILE_ERROR32;
-        if (K32OBJ_OPS(ioptr)->write)
-            status = K32OBJ_OPS(ioptr)->write(ioptr, buffer, count, &result, NULL);
-	K32OBJ_DecCount( ioptr );
-	if (!status) result = HFILE_ERROR32;
-	return result;
+    TRACE(file, "%d %p %ld\n", handle, buffer, count );
+
+    if (!count)
+    {
+        /* Expand or truncate at current position */
+        if (!SetEndOfFile( handle )) return HFILE_ERROR32;
+        return 0;
+    }
+    if (!WriteFile( handle, buffer, count, &result, NULL ))
+        return HFILE_ERROR32;
+    return result;
 }
 
 
@@ -1666,18 +1631,16 @@ UINT32 WINAPI SetHandleCount32( UINT32 count )
  */
 BOOL32 WINAPI FlushFileBuffers( HFILE32 hFile )
 {
-    int unix_handle;
+    FILE_OBJECT *file;
     BOOL32 ret;
+    struct flush_file_request req;
 
-    TRACE(file, "(%d)\n", hFile );
-    if ((unix_handle = FILE_GetUnixHandle( hFile, 0)) == -1) return FALSE;
-    if (fsync( unix_handle ) != -1) ret = TRUE;
-    else
-    {
-        FILE_SetDosError();
-        ret = FALSE;
-    }
-    close( unix_handle );
+    if (!(file = FILE_GetFile( hFile, GENERIC_WRITE, &req.handle ))) return FALSE;
+    assert( req.handle != -1 );
+
+    CLIENT_SendRequest( REQ_FLUSH_FILE, -1, 1, &req, sizeof(req) );
+    ret = !CLIENT_WaitReply( NULL, NULL, 0 );
+    FILE_ReleaseFile( file );
     return ret;
 }
 
@@ -1687,18 +1650,16 @@ BOOL32 WINAPI FlushFileBuffers( HFILE32 hFile )
  */
 BOOL32 WINAPI SetEndOfFile( HFILE32 hFile )
 {
-    int unix_handle;
-    BOOL32 ret = TRUE;
+    FILE_OBJECT *file;
+    BOOL32 ret;
+    struct truncate_file_request req;
 
-    TRACE(file, "(%d)\n", hFile );
-    if ((unix_handle = FILE_GetUnixHandle( hFile, GENERIC_WRITE )) == -1) return FALSE;
-    if (ftruncate( unix_handle,
-                   lseek( unix_handle, 0, SEEK_CUR ) ))
-    {
-        FILE_SetDosError();
-        ret = FALSE;
-    }
-    close( unix_handle );
+    if (!(file = FILE_GetFile( hFile, GENERIC_WRITE, &req.handle ))) return FALSE;
+    assert( req.handle != -1 );
+
+    CLIENT_SendRequest( REQ_TRUNCATE_FILE, -1, 1, &req, sizeof(req) );
+    ret = !CLIENT_WaitReply( NULL, NULL, 0 );
+    FILE_ReleaseFile( file );
     return ret;
 }
 
@@ -1760,30 +1721,6 @@ BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type )
     file->type = type;
     FILE_ReleaseFile( file );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           FILE_mmap
- */
-LPVOID FILE_mmap( HFILE32 hFile, LPVOID start,
-                  DWORD size_high, DWORD size_low,
-                  DWORD offset_high, DWORD offset_low,
-                  int prot, int flags )
-{
-    LPVOID ret;
-    int unix_handle;
-    FILE_OBJECT *file = FILE_GetFile( hFile, 0, NULL );
-    if (!file) return (LPVOID)-1;
-    if ((unix_handle = FILE_GetUnixHandle( hFile, 0 )) == -1) ret = (LPVOID)-1;
-    else
-    {
-        ret = FILE_dommap( file, unix_handle, start, size_high, size_low,
-                           offset_high, offset_low, prot, flags );
-        close( unix_handle );
-    }
-    FILE_ReleaseFile( file );
-    return ret;
 }
 
 

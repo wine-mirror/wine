@@ -18,12 +18,9 @@
 typedef struct
 {
     K32OBJ    header;
-    int       unix_handle;
     int       mode;
     char     *unix_name;
     DWORD     type;         /* Type for win32 apps */
-    DWORD     pos;	    /* workaround to emulate weird DOS error handling */
-
     THREAD_QUEUE	wait_queue;
 } FILE_OBJECT;
 
@@ -75,14 +72,10 @@ extern HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 );
 extern HFILE32 FILE_Open( LPCSTR path, INT32 mode ,INT32 sharemode);
 extern HFILE32 FILE_OpenUnixFile( LPCSTR path, INT32 mode );
 extern BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type );
-extern LPVOID FILE_mmap( HFILE32 hFile, LPVOID start,
-                         DWORD size_high, DWORD size_low,
-                         DWORD offset_high, DWORD offset_low,
-                         int prot, int flags );
 extern LPVOID FILE_dommap( FILE_OBJECT *file, int unix_handle, LPVOID start,
                            DWORD size_high, DWORD size_low,
                            DWORD offset_high, DWORD offset_low,
-                         int prot, int flags );
+                           int prot, int flags );
 extern int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low );
 extern HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr );
 

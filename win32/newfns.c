@@ -114,21 +114,6 @@ HANDLE32 WINAPI CreateNamedPipeW (LPCWSTR lpName, DWORD dwOpenMode,
 }
 
 /***********************************************************************
- *	CreatePipe (KERNEL32.170)
- */
-
-BOOL32 WINAPI CreatePipe(PHANDLE hReadPipe,
-                         PHANDLE hWritePipe,
-                         LPSECURITY_ATTRIBUTES lpPipeAttributes,
-                         DWORD nSize)
-{
-  FIXME (win32,"ReadPipe=%p WritePipe=%p SecAttr=%p Size=%ld",
-               hReadPipe,hWritePipe,lpPipeAttributes,nSize);
-  SetLastError(ERROR_UNKNOWN);
-  return FALSE;
-}
-
-/***********************************************************************
  *           GetSystemPowerStatus      (KERNEL32.621)
  */
 BOOL32 WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)

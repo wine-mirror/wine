@@ -648,22 +648,15 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 			    handle = HFILE_ERROR32;
 			return handle;
 		}
-		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$")) {
-		        if ((handle = FILE_Alloc( &file, -1 )) == INVALID_HANDLE_VALUE32)
-				return HFILE_ERROR32;
-			else {
-				file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
-				return handle;
-			}
+		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$") ||
+                    !strcmp(DOSFS_Devices[i].name,"HPSCAN"))
+                {
+                    int fd = open( "/dev/null", unixmode );
+                    if ((handle = FILE_Alloc( &file, fd )) == INVALID_HANDLE_VALUE32)
+                        return HFILE_ERROR32;
+                    file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
+                    return handle;
 		}
-                if (!strcmp(DOSFS_Devices[i].name,"HPSCAN")) {
-                        if ((handle = FILE_Alloc( &file, -1 )) == INVALID_HANDLE_VALUE32)
-                                return HFILE_ERROR32;
-                        else {
-                                file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
-                                return handle;
-                        }
-                }
 		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return HFILE_ERROR32;
 	    }
