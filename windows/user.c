@@ -345,6 +345,19 @@ BOOL32 WINAPI EnumDisplaySettings32A(LPCSTR name,DWORD n,LPDEVMODE32A devmode) {
 	return FALSE;
 }
 
+/***********************************************************************
+ *           EnumDisplaySettingsW   (USER32.593)
+ */
+BOOL32 WINAPI EnumDisplaySettings32W(LPCWSTR name,DWORD n,LPDEVMODE32W devmode) {
+	TRACE(system,"(%s,%ld,%p)\n",debugstr_w(name),n,devmode);
+	if (n==0) {
+		devmode->dmBitsPerPel = DefaultDepthOfScreen(screen);
+		devmode->dmPelsHeight = screenHeight;
+		devmode->dmPelsWidth = screenWidth;
+		return TRUE;
+	}
+	return FALSE;
+}
 
 /***********************************************************************
  *           SetEventHook   (USER.321)

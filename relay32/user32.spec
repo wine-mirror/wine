@@ -436,7 +436,7 @@ type	win32
 433 stdcall RegisterHotKey(long long long long) RegisterHotKey
 434 stub RegisterLogonProcess
 435 stub RegisterSystemThread
-436 stub RegisterTasklist
+436 stdcall RegisterTasklist (long) RegisterTaskList32
 437 stdcall RegisterWindowMessageA(ptr) RegisterWindowMessage32A
 438 stdcall RegisterWindowMessageW(ptr) RegisterWindowMessage32W
 439 stdcall ReleaseCapture() ReleaseCapture
@@ -594,7 +594,7 @@ type	win32
 590 stub ChangeDisplaySettingsW
 591 stub EnumDesktopWindows
 592 stdcall EnumDisplaySettingsA(str long ptr) EnumDisplaySettings32A
-593 stub EnumDisplaySettingsW
+593 stdcall EnumDisplaySettingsW(wstr long ptr ) EnumDisplaySettings32W
 594 stdcall GetWindowRgn(long long) GetWindowRgn32
 595 stub MapVirtualKeyExW
 596 stub RegisterServicesProcess
