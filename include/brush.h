@@ -9,16 +9,12 @@
 
 #include "gdi.h"
 
-#pragma pack(1)
-
   /* GDI logical brush object */
 typedef struct
 {
     GDIOBJHDR   header;
-    LOGBRUSH16  logbrush WINE_PACKED;
+    LOGBRUSH16  logbrush;
 } BRUSHOBJ;
-
-#pragma pack(4)
 
 extern BOOL BRUSH_Init(void);
 extern int BRUSH_GetObject( BRUSHOBJ * brush, int count, LPSTR buffer );

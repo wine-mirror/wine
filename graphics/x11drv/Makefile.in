@@ -1,0 +1,13 @@
+DEFS   = -D__WINE__ -DNO_TRANSITION_TYPES
+TOPSRC = @top_srcdir@
+MODULE = x11drv
+
+C_SRCS = \
+	font.c \
+	init.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

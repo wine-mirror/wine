@@ -40,3 +40,14 @@ BOOL UnhookWindowsHookEx32(HHOOK hHook)
 	fprintf(stdnimp, "UnhookWindowsHookEx32 Stub called!\n");
 	return FALSE;
 }
+
+/****************************************************************************
+ *		QueryPerformanceCounter (KERNEL32.415)
+ */
+BOOL32
+QueryPerformanceCounter(LPLARGE_INTEGER counter) {
+	/* FIXME: don't know what are good values */
+	counter->LowPart	= 1;
+	counter->HighPart	= 0;
+	return TRUE;
+}

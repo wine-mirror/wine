@@ -15,6 +15,7 @@ C_SRCS = \
 	lstr.c \
 	lzexpand.c \
 	main.c \
+	mpr.c \
 	network.c \
 	ole2.c \
 	ole2disp.c \
@@ -22,6 +23,7 @@ C_SRCS = \
 	olecli.c \
 	olesvr.c \
 	port.c \
+	printdrv.c \
 	rect.c \
 	registry.c \
 	shell.c \

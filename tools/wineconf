@@ -1,0 +1,418 @@
+#!/usr/bin/perl
+
+# This program generates wine.conf files on STDOUT.
+# (C) 1996 Stephen Simmons
+# Redistributable under Wine License
+
+$RCS_ID = '$Id$ ';
+
+# This program examines the contents of the DOS filesystems and
+# attempts to generate a sensible wine.conf file.  This is output
+# to STDOUT.
+# It reads /etc/FSTAB to find mounting locations of the hard disk drives
+# It uses the correct algorithm for ordering DOS drives, with the
+# exception of the case of multiple drive controller types, where I don't
+# know what DOS's algorithm is.
+# It uses find to find all of the win.ini files on any DOS partition
+# and sorts them by age to guess which is part of the active Windows
+# installation.
+# It reads the autoexec.bat file (if found) and records all variable
+# settings.   There are some inaccuracies in its determination.
+# First, while variables are interpolated properly, no control
+# structures are supported so calls and execs to other batch files are
+# ignored, and all variable settings take effect regardless of whether
+# they would in DOS (i,e., both if and else clauses are read).
+# This is used to determine the path and temp directories.  Duplicate
+# path directories and path directories that don't exist are thrown
+# out.
+# On failing to find C:\AUTOEXEC.BAT, wineconf finds all executables
+# in the windows directory and subdirectories, and generates an
+# optimized path statement encompassing all the executables.
+# Then it also looks for \TEMP and \TMP on all drives taking the first
+# one it finds.
+# wineconf doesn't support floppy drives, network drives, printers,
+# and serial device configuration is hardcoded and not configured for
+# the machine it runs on.  Similarly, spy parameters are hard coded.
+
+# It would make sense to incorporate much of the hueristic code in
+# this program into a library to be shared with a dosemu configuration
+# program, because it seems that at least some of the same stuff will
+# be wanted.  The program needs to be cleaned up still.  A better tmp
+# search algorithm could be written.  A fast option is planned.  Less
+# Linux-dependence is desired.  Should look for devices independent
+# of /etc/fstab; then sanity checks on /etc/fstab can be performed.
+
+use Getopt::Long;
+use File::Basename;
+use Carp;
+
+GetOptions('windir=s', 'sysdir=s', 'thorough', 'debug:s') || &Usage;
+
+&ReadFSTAB();
+&FindWindowsDir();
+&ReadAutoexecBat();
+&StandardStuff();
+
+sub Usage {
+    print "Usage: $0 <options>\n";
+#    print "-fstab <filename>    Location of alternate fstab file\n";
+    print "-windir <filename>   Location of windows dir in DOS space\n";
+    print "-thorough            Do careful analysis (default)\n";
+    print "-sysdir <filename>   Location of systems dir in DOS space\n";
+#    print "-tmpdir <filename>   Location of tmp directory\n";
+    print "Generates (to STDOUT) a wine configuration file based on\n";
+    print "/etc/fstab and searching around in DOS directories\n";
+    print "The options above can override certain values\n";
+    print "This should be considered ALPHA code\n";
+    exit(0);
+}
+
+sub ReadFSTAB {
+    $opt_f = $opt_f ? $opt_f : '/etc/fstab';
+    open(FSTAB, $opt_f) || die "Cannot read $opt_f\n";
+    while(<FSTAB>) {
+	next if /^\s*\#/;
+	next if /^\s*$/;
+	($device, $mntpoint, $type, @rest) = split(' ', $_);
+	if ($type eq "msdos") {
+	    push(@FatDrives, [$device, $mntpoint]);
+	}
+	elsif ($type eq "iso9660") {
+	    push(@CdromDrives, [$device, $mntpoint]);
+	}
+    }
+    if (!@FatDrives) {
+	warn "ERROR ($0): Cannot find any MSDOS drives.\n";
+	warn "This does not mean you cannot run Wine, but $0\n";
+	warn "cannot help you (yet)\n";
+	exit(1);
+    }
+    $MagicDrive = 'C';
+    @FatDrives = sort byDriveOrder @FatDrives;
+    @CdromDrives = sort byCdOrder @CdromDrives;
+    foreach $FatDrive (@FatDrives) {
+	print "[Drive $MagicDrive]\n";
+	$MntPoint = $FatDrive->[1];
+	print "Path=$MntPoint\n";
+	print "Type=hd\n";
+	print "\n";
+	&RegisterDrive($MagicDrive, $FatDrive);
+	if(!&IsMounted($FatDrive->[0])) {
+	    warn "WARNING: DOS Drive $MagicDrive (" . $FatDrive->[0] . 
+		") is not mounted\n";
+	}
+	$MagicDrive++;
+    }
+    foreach $CdromDrive (@CdromDrives) {
+	print "[Drive $MagicDrive]\n";
+	$MntPoint = $CdromDrive->[1];
+	print "Path=$MntPoint\n";
+	print "Type=cdrom\n";
+	print "\n";
+	&RegisterDrive($MagicDrive, $CdromDrive);
+	$MagicDrive++;
+    }
+}
+
+sub FindWindowsDir {
+    my($MagicDrive) = 'C';
+    my(@FATD)=@FatDrives;
+    my(@wininis) = ();
+    if (!$opt_windir && !$opt_fast && !$opt_thorough) {
+	$opt_thorough++;
+    }
+    if ($opt_windir) {
+	$winini = &ToUnix($opt_windir);
+	if (!-e $winini) {
+	    die "ERROR: Specified winini file does not exist\n";
+	}
+    }
+    elsif ($opt_fast) {
+	die "-fast code can be implemented\n";
+    }
+    elsif ($opt_thorough) {
+	if ($opt_debug) { print STDERR "DEBUG: Num FATD = ", $#FATD+1, "\n"; }
+	foreach(@FATD) {
+	    $ThisDrive = shift(@FATD);
+	    $MntPoint = $ThisDrive->[1];
+	    push(@wininis, `find $MntPoint -name win.ini -print`);
+	}
+	foreach $winini (@wininis) {
+	    chomp $winini;
+	}
+	my($winini_cnt) = $#wininis+1;
+	if ($opt_debug) { 
+	    print STDERR "DEBUG: Num wininis found: $winini_cnt\n";}
+	if ($winini_cnt > 1) {
+	    warn "$winini_cnt win.ini files found:\n";
+	    @wininis = sort byFileAge @wininis;
+	    warn join("\n", @wininis), "\n";
+	    $winini = $wininis[0];
+	    warn "Using most recent one: $winini\n";
+	}
+	elsif ($winini_cnt == 0) {
+	    die "ERROR: No win.ini found in DOS partitions\n";
+	}
+	else {
+	    $winini = $wininis[0];
+	}
+    }
+    else {
+	die "ERROR: None of -windir, -fast, or -thorough set\n";
+    }
+    $windir = &ToDos(dirname($winini));
+    print "[wine]\n";
+    print "windows=$windir\n";
+    if ($opt_sysdir) {
+	print "system=$opt_sysdir\n";
+    }
+    else {
+	print "system=$windir\\SYSTEM\n";
+    }
+}
+
+# Returns 1 if the device is mounted; -1 if mount check failed; 0 if not
+# mounted.
+# This code is Linux specific, and needs to be broadened.
+sub IsMounted {
+    my($Device) = @_;
+    if (-d "/proc") {
+	if (-e "/proc/mounts") {
+	    open(MOUNTS, "/proc/mounts") || 
+		(warn "Cannot open /proc/mounts, although it exists\n" &&
+		 return -1);
+	    while(<MOUNTS>) {
+		if (/^$Device/) { 
+		    return 1; # Tested 1.4
+		}
+	    }
+	    return 0; # Tested 1.4
+	}
+    }
+    return -1;
+}
+
+sub RegisterDrive {
+    my($DOSdrive, $Drive) = @_;
+    $DOS2Unix{$DOSdrive} = $Drive;
+    $Device2DOS{$Drive->[0]} = $DOSdrive;
+    $MntPoint2DOS{$Drive->[1]} = $DOSdrive;
+    $DOS2MntPoint{$DOSdrive} = $Drive->[1];
+    $DOS2Device{$DOSdrive} = $Drive->[0];
+}
+
+sub ReadAutoexecBat {
+    if (!%DOS2Unix) { &ReadFSTAB; }
+    my($DriveC) = $DOS2MntPoint{"C"};
+    $DriveC =~ s%/$%%;
+    my($path);
+    if ($opt_debug) { 
+	print STDERR "DEBUG: Looking for $DriveC/autoexec.bat\n"; }
+    if (-e "$DriveC/autoexec.bat") {
+	# Tested 1.4
+        open(AUTOEXEC, "$DriveC/autoexec.bat") || 
+            die "Cannot read autoexec.bat\n";
+        while(<AUTOEXEC>) {
+	    s/\015//;
+            if (/^\s*(set\s+)?(\w+)\s*[\s\=]\s*(.*)$/i) {
+		my($varname) = $2;
+	        my($varvalue) = $3;
+		chomp($varvalue);
+		$varname =~ tr/A-Z/a-z/;
+		while ($varvalue =~ /%(\w+)%/) {
+		    $matchname = $subname = $1;
+		    $subname =~ tr/A-Z/a-z/;
+		    if ($opt_debug =~ /path/i) {
+			print STDERR "DEBUG: Found $matchname as $subname\n";
+			print STDERR "DEBUG: Old varvalue:\n$varvalue\n";
+			print STDERR "DEBUG: Old subname value:\n" .
+			    $DOSenv{$subname} . "\n";
+		    }
+		    if ($DOSenv{$subname}) {
+			$varvalue =~ s/\%$matchname\%/$DOSenv{$subname}/;
+		    }
+		    else {
+			warn "DOS environment variable $subname not\n"; 
+			warn "defined in autoexec.bat. (Reading config.sys\n";
+			warn "is not implemented.)  Using null value\n";
+			$varvalue =~ s/%$matchname%//;
+		    }
+		    if ($opt_debug =~ /path/i) {
+			print STDERR "DEBUG: New varvalue:\n$varvalue\n";
+		    }
+		}
+		if ($opt_debug) {
+		    print STDERR "DEBUG: $varname = $varvalue\n";
+		}
+		$DOSenv{$varname} = $varvalue;
+            }
+        }
+	close(AUTOEXEC);
+    }
+    else {
+	# Tested 1.4
+	warn "WARNING: C:\AUTOEXEC.BAT was not found.\n";
+    }
+
+    if ($DOSenv{"path"}) {
+	@pathdirs = split(/\s*;\s*/, $DOSenv{"path"});
+	if ($opt_debug =~ /path/i) {
+	    print STDERR "DEBUG (path): @pathdirs\n";
+	}
+	foreach $pathdir (@pathdirs) {
+	    if (-d &ToUnix($pathdir)) {
+		if ($DOSpathdir{$pathdir}++) {
+		    warn "Ignoring duplicate DOS path entry $pathdir\n";
+		}
+		else {
+		    if ($opt_debug =~ /path/i) {
+			print STDERR "DEBUG (path): Found $pathdir\n";
+		    }
+		    push(@DOSpathlist, $pathdir);
+		}
+	    }
+	    else {
+	        warn "Ignoring DOS path directory $pathdir, as it does not\n";
+		warn "exist\n";
+	    }
+	}
+	print "path=" . join(";", @DOSpathlist) . "\n";
+    }
+    else {
+	# Code status: tested 1.4
+	warn "WARNING: Making assumptions for PATH\n";
+	warn "Will scan windows directory for executables and generate\n";
+	warn "path from that\n";
+	$shellcmd = 'find ' . &ToUnix($windir) . " -iregex '" .
+	    '.*\.\(exe\|bat\|com\|dll\)' . "' -print";
+	if ($opt_debug) { 
+	    print STDERR "DEBUG: autoexec.bat search command:\n $shellcmd\n";
+	}
+	push(@DOScommand, `$shellcmd`);
+	if ($opt_debug =~ /autoexec/i) { 
+	    print STDERR "DEBUG: autoexec.bat search results:\n@DOScommand\n";
+	}
+	foreach $command (@DOScommand) {
+	    $command =~ s%[^/]+$%%;
+	    $DOSexecdir{$command}++;
+	}
+	print "path=" . 
+	    join(";", 
+		 grep(s%/$%%, 
+		      sort {$DOSexecdir{$b} <=> $DOSexecdir{$a}}
+		      (keys %DOSexecdir))) . "\n";
+    }
+
+    if ($DOSenv{"temp"} && -d &ToUnix($DOSenv{"temp"})) {
+	print "temp=" . $DOSenv{"temp"} . "\n";
+    }
+    else {
+        warn "WARNING: Making assumptions for TEMP\n";
+	warn "Looking for \\TEMP and then \\TMP on every drive\n";
+	# Watch out .. might pick CDROM drive :-)
+	foreach $DOSdrive (keys %DOS2Unix) {
+	    $tmp = &ToUnix("$DOSdrive:\\temp");
+	    if (-d $tmp) { $TheTemp = "$DOSdrive:\\temp"; last; }
+	    $tmp = &ToUnix("$DOSdrive:\\tmp");
+	    if (-d $tmp) { $TheTemp = "$DOSdrive:\\tmp"; last; }
+	}
+	if ($TheTemp) {
+	    warn "Using $TheTemp\n";
+	    print "temp=$TheTemp\n";
+	}
+	else {
+	    warn "Using C:\\\n";
+	    print "temp=C:\\\n";
+	}
+    }
+    print "\n";
+}
+
+# FNunix = &ToUnix(FNdos);
+#   Converts DOS filenames to Unix filenames, leaving Unix filenames
+#   untouched.
+sub ToUnix {
+    my($FNdos) = @_;
+    my($FNunix);
+
+    # Initialize tables if necessary.
+    if (!%DOS2Unix) { &ReadFSTAB; }
+
+    # Determine which type of conversion is necessary
+    if ($FNdos =~ /^([A-Z])\:(.*)$/) { # DOS drive specified
+	$FNunix = $DOS2MntPoint{$1} . "/$2";
+    }
+    elsif ($FNdos =~ m%\\%) { # DOS drive not specified, C: is default
+	$FNunix = $DOS2MntPoint{"C"} . "/$FNdos";
+    }
+    else { # Unix filename
+	$FNunix = $FNdos;
+    }
+    1 while ($FNunix =~ s%\\%/%);    # Convert \ to /
+    $FNunix =~ tr/A-Z/a-z/;          # Translate to lower case
+    1 while ($FNunix =~ s%//%/%);    # Translate double / to /
+    return $FNunix;
+}
+
+# FNdos = &ToDOS(FNunix)
+#   Converts Unix filenames to DOS filenames
+sub ToDos {
+    my($FNunix) = @_;
+    my(@MntList) = keys %MntPoint2DOS;
+    foreach $MntPt (@MntList) { # Scan mount point list to see if path matches
+	if ($FNunix =~ /^$MntPt/) {
+	    $TheMntPt = $MntPt;
+	    last;
+	}
+    }
+    if (!$TheMntPt) {
+	Carp("ERROR: $FNunix not found in DOS directories\n");
+	exit(1);
+    }
+    $FNdos = $FNunix;
+    $FNdos =~ s/^$TheMntPt//;
+    $FNdos = $MntPoint2DOS{$TheMntPt} . ":" . $FNdos;
+    1 while($FNdos =~ s%/%\\%);
+    return $FNdos;
+}
+
+
+sub StandardStuff {
+    print "[serial]\n";
+    print "com1=/dev/cua0\n";
+    print "com2=/dev/cua1\n";
+    print "\n";
+    print "[spy]\n";
+    print ";File=CON\n";
+    print ";File=spy.log\n";
+    print "Exclude=WM_TIMER;WM_SETCURSOR;WM_MOUSEMOVE;WM_NCHITTEST;\n";
+    print "Include=WM_COMMAND;\n";
+}
+
+sub byFileAge {
+    -M $a <=> -M $b;
+}
+
+sub byDriveOrder {
+    my($DeviceA) = $a->[0];
+    my($DeviceB) = $b->[0];
+
+    # Primary drives come first, logical drives last
+    # DOS User's Guide (version 6) p. 70, IBM version.
+    # If both drives are the same type, sort alphabetically
+    # This makes drive a come before b, etc.
+    # It also makes SCSI drives come before IDE drives;
+    # this may or may not be right :-(
+    my($Alogical, $Blogical);
+    if (substr($DeviceA, 3, 1) >= 5) { $Alogical++; }
+    if (substr($DeviceB, 3, 1) >= 5) { $Blogical++; }
+    if ($Alogical && !$Blogical) { return -1; }
+    elsif ($Blogical && !$Alogical) { return 1; }
+    else { return ($DeviceA cmp $DeviceB); }
+}
+
+sub byCdOrder {
+    my($DeviceA) = $a->[0];
+    my($DeviceB) = $b->[0];
+    $DeviceA cmp $DeviceB;
+}

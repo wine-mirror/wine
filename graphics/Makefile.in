@@ -1,0 +1,12 @@
+DEFS   = -D__WINE__ -DNO_TRANSITION_TYPES
+TOPSRC = @top_srcdir@
+MODULE = graphics
+
+C_SRCS = \
+	driver.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

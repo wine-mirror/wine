@@ -31,7 +31,7 @@ typedef enum
     TYPE_LONG,         /* long variable */
     TYPE_PASCAL_16,    /* pascal function with 16-bit return (Win16) */
     TYPE_PASCAL,       /* pascal function with 32-bit return (Win16) */
-    TYPE_REGISTER,     /* register function (Win16) */
+    TYPE_REGISTER,     /* register function */
     TYPE_ABS,          /* absolute value */
     TYPE_RETURN,       /* simple return value function */
     TYPE_STUB,         /* unimplemented stub */
@@ -131,9 +131,12 @@ int Line;
 
 static int debugging = 1;
 
-  /* Offset of register relative to the end of the context struct */
-#define CONTEXTOFFSET(reg) \
+  /* Offset of register relative to the end of the SIGCONTEXT struct */
+#define SIGCONTEXTOFFSET(reg) \
     ((int)&reg##_reg((SIGCONTEXT *)0) - sizeof(SIGCONTEXT))
+
+  /* Offset of register relative to the start of the CONTEXT struct */
+#define CONTEXTOFFSET(reg) ((int)&((CONTEXT *)0)->reg)
 
 static void *xmalloc (size_t size)
 {
@@ -970,13 +973,15 @@ static void BuildSpec32Files(void)
         case TYPE_STDCALL:
         case TYPE_CDECL:
         case TYPE_STUB:
+        case TYPE_REGISTER:
             printf( "/* %s.%d (%s) */\n",
                      DLLName, i, odp->name);
             printf( "%s_%d:\n", DLLName, i );
             printf( "\tpushl %%ebp\n" );
             printf( "\tpushl $" PREFIX "%s\n", odp->u.func.link_name );
             printf( "\tcall " PREFIX "CallFrom32_%s_%d\n",
-                    (odp->type == TYPE_STDCALL) ? "stdcall" : "cdecl",
+                    (odp->type == TYPE_REGISTER) ? "regs" :
+                    ((odp->type == TYPE_STDCALL) ? "stdcall" : "cdecl"),
                     strlen(odp->u.func.arg_types));
             printf( "\tnop\n" );
             break;
@@ -1409,13 +1414,13 @@ static int TransferArgs16To32( char *args )
 
 
 /*******************************************************************
- *         BuildContext
+ *         BuildContext16
  *
  * Build the context structure on the 32-bit stack.
  * The only valid registers in the context structure are:
  *   eax, ebx, ecx, edx, esi, edi, ds, es, (some of the) flags
  */
-static void BuildContext(void)
+static void BuildContext16(void)
 {
     /* Save ebx first */
 
@@ -1427,27 +1432,27 @@ static void BuildContext(void)
 
     /* Store the registers */
 
-    printf( "\tpopl %d(%%ebx)\n", CONTEXTOFFSET(EBX) ); /* Get ebx from stack*/
-    printf( "\tmovl %%eax,%d(%%ebx)\n", CONTEXTOFFSET(EAX) );
-    printf( "\tmovl %%ecx,%d(%%ebx)\n", CONTEXTOFFSET(ECX) );
-    printf( "\tmovl %%edx,%d(%%ebx)\n", CONTEXTOFFSET(EDX) );
-    printf( "\tmovl %%esi,%d(%%ebx)\n", CONTEXTOFFSET(ESI) );
-    printf( "\tmovl %%edi,%d(%%ebx)\n", CONTEXTOFFSET(EDI) );
+    printf( "\tpopl %d(%%ebx)\n", SIGCONTEXTOFFSET(EBX) ); /* Get ebx from stack*/
+    printf( "\tmovl %%eax,%d(%%ebx)\n", SIGCONTEXTOFFSET(EAX) );
+    printf( "\tmovl %%ecx,%d(%%ebx)\n", SIGCONTEXTOFFSET(ECX) );
+    printf( "\tmovl %%edx,%d(%%ebx)\n", SIGCONTEXTOFFSET(EDX) );
+    printf( "\tmovl %%esi,%d(%%ebx)\n", SIGCONTEXTOFFSET(ESI) );
+    printf( "\tmovl %%edi,%d(%%ebx)\n", SIGCONTEXTOFFSET(EDI) );
     printf( "\tmovw -10(%%ebp),%%ax\n" );  /* Get saved ds from stack */
-    printf( "\tmovw %%ax,%d(%%ebx)\n", CONTEXTOFFSET(DS) );
+    printf( "\tmovw %%ax,%d(%%ebx)\n", SIGCONTEXTOFFSET(DS) );
     printf( "\tmovw -6(%%ebp),%%ax\n" );  /* Get saved es from stack */
-    printf( "\tmovw %%ax,%d(%%ebx)\n", CONTEXTOFFSET(ES) );
+    printf( "\tmovw %%ax,%d(%%ebx)\n", SIGCONTEXTOFFSET(ES) );
     printf( "\tpushfl\n" );
-    printf( "\tpopl %d(%%ebx)\n", CONTEXTOFFSET(EFL) );
+    printf( "\tpopl %d(%%ebx)\n", SIGCONTEXTOFFSET(EFL) );
 }
 
 
 /*******************************************************************
- *         RestoreContext
+ *         RestoreContext16
  *
  * Restore the registers from the context structure
  */
-static void RestoreContext(void)
+static void RestoreContext16(void)
 {
     /* Get the 32-bit stack pointer */
 
@@ -1455,18 +1460,18 @@ static void RestoreContext(void)
 
     /* Restore the registers */
 
-    printf( "\tmovl %d(%%ebx),%%ecx\n", CONTEXTOFFSET(ECX) );
-    printf( "\tmovl %d(%%ebx),%%edx\n", CONTEXTOFFSET(EDX) );
-    printf( "\tmovl %d(%%ebx),%%esi\n", CONTEXTOFFSET(ESI) );
-    printf( "\tmovl %d(%%ebx),%%edi\n", CONTEXTOFFSET(EDI) );
+    printf( "\tmovl %d(%%ebx),%%ecx\n", SIGCONTEXTOFFSET(ECX) );
+    printf( "\tmovl %d(%%ebx),%%edx\n", SIGCONTEXTOFFSET(EDX) );
+    printf( "\tmovl %d(%%ebx),%%esi\n", SIGCONTEXTOFFSET(ESI) );
+    printf( "\tmovl %d(%%ebx),%%edi\n", SIGCONTEXTOFFSET(EDI) );
     printf( "\tpopl %%eax\n" );  /* Remove old ds and ip from stack */
     printf( "\tpopl %%eax\n" );  /* Remove old cs and es from stack */
-    printf( "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(DS) ); /* Push new ds */
-    printf( "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(ES) ); /* Push new es */
-    printf( "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(EFL) );
+    printf( "\tpushw %d(%%ebx)\n", SIGCONTEXTOFFSET(DS) ); /* Push new ds */
+    printf( "\tpushw %d(%%ebx)\n", SIGCONTEXTOFFSET(ES) ); /* Push new es */
+    printf( "\tpushl %d(%%ebx)\n", SIGCONTEXTOFFSET(EFL) );
     printf( "\tpopfl\n" );
-    printf( "\tmovl %d(%%ebx),%%eax\n", CONTEXTOFFSET(EAX) );
-    printf( "\tmovl %d(%%ebx),%%ebx\n", CONTEXTOFFSET(EBX) );
+    printf( "\tmovl %d(%%ebx),%%eax\n", SIGCONTEXTOFFSET(EAX) );
+    printf( "\tmovl %d(%%ebx),%%ebx\n", SIGCONTEXTOFFSET(EBX) );
 }
 
 
@@ -1551,7 +1556,7 @@ static void BuildCallFrom16Func( char *profile )
 
     /* Transfer the arguments */
 
-    if (reg_func) BuildContext();
+    if (reg_func) BuildContext16();
     else if (*args) argsize = TransferArgs16To32( args );
 
     /* Get the address of the API function */
@@ -1624,7 +1629,7 @@ static void BuildCallFrom16Func( char *profile )
     if (reg_func)
     {
         /* Restore registers from the context structure */
-        RestoreContext();
+        RestoreContext16();
         
         /* Calc the arguments size */
         while (*args)
@@ -1919,6 +1924,91 @@ static void BuildRet16Func()
 
 
 /*******************************************************************
+ *         BuildContext32
+ *
+ * Build the context structure on the stack.
+ */
+static void BuildContext32(void)
+{
+    /* Build the context structure */
+
+    printf( "\tpushfl\n" );
+    printf( "\tsubl $%d,%%esp\n", sizeof(CONTEXT) );
+    printf( "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Eax) );
+    printf( "\tmovl %%ebx,%d(%%esp)\n", CONTEXTOFFSET(Ebx) );
+    printf( "\tmovl %%ecx,%d(%%esp)\n", CONTEXTOFFSET(Ecx) );
+    printf( "\tmovl %%edx,%d(%%esp)\n", CONTEXTOFFSET(Edx) );
+    printf( "\tmovl %%esi,%d(%%esp)\n", CONTEXTOFFSET(Esi) );
+    printf( "\tmovl %%edi,%d(%%esp)\n", CONTEXTOFFSET(Edi) );
+
+    printf( "\tmovl %d(%%esp),%%eax\n", sizeof(CONTEXT) );
+    printf( "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(EFlags) );
+
+    printf( "\tmovl %%cs,%d(%%esp)\n", CONTEXTOFFSET(SegCs) );
+    printf( "\tmovl %%ds,%d(%%esp)\n", CONTEXTOFFSET(SegDs) );
+    printf( "\tmovl %%es,%d(%%esp)\n", CONTEXTOFFSET(SegEs) );
+    printf( "\tmovl %%fs,%d(%%esp)\n", CONTEXTOFFSET(SegFs) );
+    printf( "\tmovl %%gs,%d(%%esp)\n", CONTEXTOFFSET(SegGs) );
+    printf( "\tmovl %%ss,%d(%%esp)\n", CONTEXTOFFSET(SegSs) );
+
+    printf( "\tfsave %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
+
+    printf( "\tmovl 4(%%ebp),%%eax\n" ); /* %eip at time of call */
+    printf( "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Eip) );
+    printf( "\tmovl 0(%%ebp),%%eax\n" ); /* %ebp at time of call */
+    printf( "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Ebp) );
+    printf( "\tleal 8(%%ebp),%%eax\n" ); /* %esp at time of call */
+    printf( "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Esp) );
+
+    /* Push pointer to context */
+
+    printf( "\tpushl %%esp\n" );
+}
+
+
+/*******************************************************************
+ *         RestoreContext32
+ *
+ * Restore the registers from the context structure
+ */
+static void RestoreContext32(void)
+{
+    /* Restore the context structure */
+
+    printf( "\tleal %d(%%ebp),%%esp\n", -sizeof(CONTEXT)-12 );
+    printf( "\tfrstor %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
+
+    printf( "\tmovl %d(%%esp),%%ebx\n", CONTEXTOFFSET(Ebx) );
+    printf( "\tmovl %d(%%esp),%%ecx\n", CONTEXTOFFSET(Ecx) );
+    printf( "\tmovl %d(%%esp),%%edx\n", CONTEXTOFFSET(Edx) );
+    printf( "\tmovl %d(%%esp),%%esi\n", CONTEXTOFFSET(Esi) );
+    printf( "\tmovl %d(%%esp),%%edi\n", CONTEXTOFFSET(Edi) );
+
+    printf( "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(EFlags) );
+    printf( "\tmovl %%eax,%d(%%esp)\n", sizeof(CONTEXT) );
+
+/*    printf( "\tmovl %d(%%esp),%%cs\n", CONTEXTOFFSET(SegCs) ); */
+    printf( "\tmovl %d(%%esp),%%ds\n", CONTEXTOFFSET(SegDs) );
+    printf( "\tmovl %d(%%esp),%%es\n", CONTEXTOFFSET(SegEs) );
+    printf( "\tmovl %d(%%esp),%%fs\n", CONTEXTOFFSET(SegFs) );
+    printf( "\tmovl %d(%%esp),%%gs\n", CONTEXTOFFSET(SegGs) );
+
+    printf( "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Eip) );
+    printf( "\tmovl %%eax,4(%%ebp)\n" ); /* %eip at time of call */
+    printf( "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Ebp) );
+    printf( "\tmovl %%eax,0(%%ebp)\n" ); /* %ebp at time of call */
+
+/*    printf( "\tmovl %d(%%esp),%%ss\n", CONTEXTOFFSET(SegSs) ); */
+/*    printf( "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Esp) ); */
+
+    printf( "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Eax) );
+
+    printf( "\taddl $%d,%%esp\n", sizeof(CONTEXT) );
+    printf( "\tpopfl\n" );
+}
+
+
+/*******************************************************************
  *         BuildCallFrom32Func
  *
  * Build a 32-bit-to-Wine call-back function.
@@ -1931,21 +2021,27 @@ static void BuildRet16Func()
  * (ebp+4)   ret addr
  * (ebp)     ebp
  * (ebp-4)   entry point
- * (ebp-8)   func name
+ * (ebp-8)   relay addr
  */
 static void BuildCallFrom32Func( const char *profile )
 {
-    int args, stdcall;
+    int args, stdcall, reg_func;
 
     if (!strncmp( profile, "stdcall", 7 ))
     {
         stdcall = 1;
+        reg_func = 0;
         args = atoi( profile + 8 );
     }
     else if (!strncmp( profile, "cdecl", 5 ))
     {
-        stdcall = 0;
+        stdcall = reg_func = 0;
         args = atoi( profile + 6 );
+    }
+    else if (!strncmp( profile, "regs", 4 ))
+    {
+        stdcall = reg_func = 1;
+        args = atoi( profile + 5 );
     }
     else
     {
@@ -1966,28 +2062,31 @@ static void BuildCallFrom32Func( const char *profile )
 
     printf( "\tleal 8(%%esp),%%ebp\n" );
 
-    /* Print the debugging info */
-
-    if (debugging)
-    {
-        printf( "\tpushl $%d\n", args );
-        printf( "\tcall " PREFIX "RELAY_DebugCallFrom32\n" );
-        printf( "\tadd $4, %%esp\n" );
-    }
-
     /* Transfer the arguments */
+
+    if (reg_func) BuildContext32();
 
     if (args)
     {
         int i;
         for (i = args; i > 0; i--) printf( "\tpushl %d(%%ebp)\n", 4 * i + 4 );
     }
-    else
+    else if (!reg_func)
     {
         /* Push the address of the arguments. The called function will */
         /* ignore this if it really takes no arguments. */
         printf( "\tleal 8(%%ebp),%%eax\n" );
         printf( "\tpushl %%eax\n" );
+    }
+
+    /* Print the debugging info */
+
+    if (debugging)
+    {
+        printf( "\tpushl $%d\n", reg_func ? -1 : args );  /* Nb args */
+        printf( "\tpushl %%ebp\n" );
+        printf( "\tcall " PREFIX "RELAY_DebugCallFrom32\n" );
+        printf( "\tadd $8, %%esp\n" );
     }
 
     /* Call the function */
@@ -1998,11 +2097,16 @@ static void BuildCallFrom32Func( const char *profile )
 
     if (debugging)
     {
-        printf( "\tadd $%d,%%esp\n", args ? (args * 4) : 4 );
         printf( "\tpushl %%eax\n" );
+        printf( "\tpushl $%d\n", reg_func ? -1 : args );  /* Nb args */
+        printf( "\tpushl %%ebp\n" );
         printf( "\tcall " PREFIX "RELAY_DebugCallFrom32Ret\n" );
         printf( "\tpopl %%eax\n" );
+        printf( "\tpopl %%eax\n" );
+        printf( "\tpopl %%eax\n" );
     }
+
+    if (reg_func) RestoreContext32();
 
     printf( "\tmovl %%ebp,%%esp\n" );
     printf( "\tpopl %%ebp\n" );

@@ -168,10 +168,113 @@ CRTDLL_gets(LPSTR buf) {
 	return gets(buf);
 }
 
-CHAR
-CRTDLL_toupper(CHAR x) {
+
+/*********************************************************************
+ *                  isalnum       (CRTDLL.394)
+ */
+CHAR CRTDLL_isalnum(CHAR x)
+{
+    return isalnum(x);
+}
+
+
+/*********************************************************************
+ *                  isalpha       (CRTDLL.395)
+ */
+CHAR CRTDLL_isalpha(CHAR x)
+{
+    return isalpha(x);
+}
+
+
+/*********************************************************************
+ *                  iscntrl       (CRTDLL.396)
+ */
+CHAR CRTDLL_iscntrl(CHAR x)
+{
+    return iscntrl(x);
+}
+
+
+/*********************************************************************
+ *                  isdigit       (CRTDLL.397)
+ */
+CHAR CRTDLL_isdigit(CHAR x)
+{
+    return isdigit(x);
+}
+
+
+/*********************************************************************
+ *                  isgraph       (CRTDLL.398)
+ */
+CHAR CRTDLL_isgraph(CHAR x)
+{
+    return isgraph(x);
+}
+
+
+/*********************************************************************
+ *                  islower       (CRTDLL.400)
+ */
+CHAR CRTDLL_islower(CHAR x)
+{
+    return islower(x);
+}
+
+
+/*********************************************************************
+ *                  isprint       (CRTDLL.401)
+ */
+CHAR CRTDLL_isprint(CHAR x)
+{
+    return isprint(x);
+}
+
+
+/*********************************************************************
+ *                  ispunct       (CRTDLL.402)
+ */
+CHAR CRTDLL_ispunct(CHAR x)
+{
+    return ispunct(x);
+}
+
+
+/*********************************************************************
+ *                  isspace       (CRTDLL.403)
+ */
+CHAR CRTDLL_isspace(CHAR x)
+{
+    return isspace(x);
+}
+
+
+/*********************************************************************
+ *                  isupper       (CRTDLL.404)
+ */
+CHAR CRTDLL_isupper(CHAR x)
+{
+    return isupper(x);
+}
+
+
+/*********************************************************************
+ *                  tolower       (CRTDLL.491)
+ */
+CHAR CRTDLL_tolower(CHAR x)
+{
+    return tolower(x);
+}
+
+
+/*********************************************************************
+ *                  toupper       (CRTDLL.492)
+ */
+CHAR CRTDLL_toupper(CHAR x) {
 	return toupper(x);
 }
+
 
 void
 CRTDLL_putchar(INT32 x) {

@@ -602,7 +602,7 @@ HPALETTE16 COLOR_Init(void)
  *
  * Check whether 'color' can be represented with a solid color.
  */
-BOOL COLOR_IsSolid( COLORREF color )
+BOOL32 COLOR_IsSolid( COLORREF color )
 {
     int i;
     const PALETTEENTRY *pEntry = COLOR_sysPal;
@@ -626,7 +626,7 @@ BOOL COLOR_IsSolid( COLORREF color )
  *	     COLOR_PaletteLookupPixel
  */
 int COLOR_PaletteLookupPixel( PALETTEENTRY* palPalEntry, int size,
-                              int* mapping, COLORREF col, BOOL skipReserved )
+                              int* mapping, COLORREF col, BOOL32 skipReserved )
 {
     int i, best = 0, diff = 0x7fffffff;
     int r,g,b;
@@ -898,7 +898,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
  * Set the color-mapping table for selected palette. 
  * Return number of entries which mapping has changed.
  */
-int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL mapOnly )
+int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL32 mapOnly )
 {
     int  i, index;
     char flag;

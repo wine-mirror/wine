@@ -83,10 +83,8 @@ static KEYSTRUCT	*key_dyn_data=NULL;
 #define strdupA2W(x)	STRING32_DupAnsiToUni(x)
 #define strdupW2A(x)	STRING32_DupUniToAnsi(x)
 #define strdupW(x)	STRING32_strdupW(x)
-#define strcmpW(a,b)	lstrcmp32W(a,b)
 #define strcmpniW(a,b)	STRING32_lstrcmpniW(a,b)
 #define strchrW(a,c)	STRING32_lstrchrW(a,c)
-#define strlenW(a)	lstrlen32W(a)
 #define strcpyWA(a,b)	STRING32_UniToAnsi(a,b)
 
 static struct openhandle {
@@ -466,7 +464,7 @@ _find_or_add_key(LPKEYSTRUCT lpkey,LPWSTR keyname) {
 	lplpkey= &(lpkey->nextsub);
 	lpxkey	= *lplpkey;
 	while (lpxkey) {
-		if (!strcmpW(lpxkey->keyname,keyname))
+		if (!lstrcmp32W(lpxkey->keyname,keyname))
 			break;
 		lplpkey	= &(lpxkey->next);
 		lpxkey	= *lplpkey;
@@ -496,7 +494,7 @@ _find_or_add_value(
 				break;
 		} else {
 			if (	val->name!=NULL && 
-				!strcmpW(val->name,name)
+				!lstrcmp32W(val->name,name)
 			)
 				break;
 		}
@@ -676,7 +674,7 @@ _wine_loadsubkey(
 				if ((1<<type) & UNICONVMASK) {
 					s=_wine_read_USTRING(s,(LPWSTR*)&data);
 					if (data)
-						len = strlenW((LPWSTR)data)*2+2;
+						len = lstrlen32W((LPWSTR)data)*2+2;
 					else	
 						len = 0;
 				} else {
@@ -931,7 +929,7 @@ _w95_walk_tree(LPKEYSTRUCT lpkey,struct _w95key *key) {
 			data	= key->values[i].data;
 			if ((1<<key->values[i].type) & UNICONVMASK) {
 				data = (BYTE*)strdupA2W(data);
-				len  = strlenW((LPWSTR)data)*2+2;
+				len  = lstrlen32W((LPWSTR)data)*2+2;
 				free(key->values[i].data);
 			}
 			_find_or_add_value(
@@ -1367,7 +1365,7 @@ DWORD RegOpenKeyEx32W(
 	while (i<wpc) {
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
-			if (!strcmpW(wps[i],lpxkey->keyname))
+			if (!lstrcmp32W(wps[i],lpxkey->keyname))
 				break;
 			lpxkey=lpxkey->next;
 		}
@@ -1502,7 +1500,7 @@ DWORD RegCreateKeyEx32W(
 	while (i<wpc) {
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
-			if (!strcmpW(wps[i],lpxkey->keyname))
+			if (!lstrcmp32W(wps[i],lpxkey->keyname))
 				break;
 			lpxkey=lpxkey->next;
 		}
@@ -1710,7 +1708,9 @@ DWORD RegQueryValueEx32W(
 				break;
 	} else {
 		for (i=0;i<lpkey->nrofvalues;i++)
-			if (!strcmpW(lpszValueName,lpkey->values[i].name))
+			if (	lpkey->values[i].name &&
+				!lstrcmp32W(lpszValueName,lpkey->values[i].name)
+			)
 				break;
 	}
 	if (i==lpkey->nrofvalues) {
@@ -1972,7 +1972,9 @@ DWORD RegSetValueEx32W(
 				break;
 	} else {
 		for (i=0;i<lpkey->nrofvalues;i++)
-			if (!strcmpW(lpszValueName,lpkey->values[i].name))
+			if (	lpkey->values[i].name &&
+				!lstrcmp32W(lpszValueName,lpkey->values[i].name)
+			)
 				break;
 	}
 	if (i==lpkey->nrofvalues) {
@@ -2070,11 +2072,11 @@ DWORD RegSetValue32W(
 		fprintf(stddeb,"RegSetValueX called with dwType=%ld!\n",dwType);
 		dwType=REG_SZ;
 	}
-	if (cbData!=2*strlenW(lpszData)+2) {
+	if (cbData!=2*lstrlen32W(lpszData)+2) {
 		dprintf_reg(stddeb,"RegSetValueX called with len=%ld != strlen(%s)+1=%d!\n",
-			cbData,W2C(lpszData,0),2*strlenW(lpszData)+2
+			cbData,W2C(lpszData,0),2*lstrlen32W(lpszData)+2
 		);
-		cbData=2*strlenW(lpszData)+2;
+		cbData=2*lstrlen32W(lpszData)+2;
 	}
 	ret=RegSetValueEx32W(xhkey,NULL,0,dwType,(LPBYTE)lpszData,cbData);
 	if (hkey!=xhkey)
@@ -2167,9 +2169,9 @@ DWORD RegEnumKeyEx32W(
 	}
 	if (iSubkey || !lpxkey)
 		return ERROR_NO_MORE_ITEMS;
-	if (2*strlenW(lpxkey->keyname)+2>*lpcchName)
+	if (2*lstrlen32W(lpxkey->keyname)+2>*lpcchName)
 		return ERROR_MORE_DATA;
-	memcpy(lpszName,lpxkey->keyname,strlenW(lpxkey->keyname)*2+2);
+	memcpy(lpszName,lpxkey->keyname,lstrlen32W(lpxkey->keyname)*2+2);
 	if (lpszClass) {
 		/* what should we write into it? */
 		*lpszClass		= 0;
@@ -2319,12 +2321,12 @@ DWORD RegEnumValue32W(
 	val	= lpkey->values+iValue;
 
 	if (val->name) {
-		if (strlenW(val->name)*2+2>*lpcchValue) {
-			*lpcchValue = strlenW(val->name)*2+2;
+		if (lstrlen32W(val->name)*2+2>*lpcchValue) {
+			*lpcchValue = lstrlen32W(val->name)*2+2;
 			return ERROR_MORE_DATA;
 		}
-		memcpy(lpszValue,val->name,2*strlenW(val->name)+2);
-		*lpcchValue=strlenW(val->name)*2+2;
+		memcpy(lpszValue,val->name,2*lstrlen32W(val->name)+2);
+		*lpcchValue=lstrlen32W(val->name)*2+2;
 	} else {
 		/* how to handle NULL value? */
 		*lpszValue	= 0;
@@ -2459,7 +2461,7 @@ DWORD RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 	while (i<wpc-1) {
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
-			if (!strcmpW(wps[i],lpxkey->keyname))
+			if (!lstrcmp32W(wps[i],lpxkey->keyname))
 				break;
 			lpxkey=lpxkey->next;
 		}
@@ -2474,7 +2476,7 @@ DWORD RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 	lpxkey	= lpNextKey->nextsub;
 	lplpPrevKey = &(lpNextKey->nextsub);
 	while (lpxkey) {
-		if (!strcmpW(wps[i],lpxkey->keyname))
+		if (!lstrcmp32W(wps[i],lpxkey->keyname))
 			break;
 		lplpPrevKey	= &(lpxkey->next);
 		lpxkey		= lpxkey->next;
@@ -2536,7 +2538,9 @@ DWORD RegDeleteValue32W(HKEY hkey,LPWSTR lpszValue) {
 		return SHELL_ERROR_BADKEY;
 	if (lpszValue) {
 		for (i=0;i<lpkey->nrofvalues;i++)
-			if (!strcmpW(lpkey->values[i].name,lpszValue))
+			if (	lpkey->values[i].name &&
+				!lstrcmp32W(lpkey->values[i].name,lpszValue)
+			)
 				break;
 	} else {
 		for (i=0;i<lpkey->nrofvalues;i++)
@@ -2616,35 +2620,35 @@ DWORD RegQueryInfoKey32W(
 		return SHELL_ERROR_BADKEY;
 	if (lpszClass) {
 		if (lpkey->class) {
-			if (strlenW(lpkey->class)*2+2>*lpcchClass) {
-				*lpcchClass=strlenW(lpkey->class)*2;
+			if (lstrlen32W(lpkey->class)*2+2>*lpcchClass) {
+				*lpcchClass=lstrlen32W(lpkey->class)*2;
 				return ERROR_MORE_DATA;
 			}
-			*lpcchClass=strlenW(lpkey->class)*2;
-			memcpy(lpszClass,lpkey->class,strlenW(lpkey->class));
+			*lpcchClass=lstrlen32W(lpkey->class)*2;
+			memcpy(lpszClass,lpkey->class,lstrlen32W(lpkey->class));
 		} else {
 			*lpszClass	= 0;
 			*lpcchClass	= 0;
 		}
 	} else {
 		if (lpcchClass)
-			*lpcchClass	= strlenW(lpkey->class)*2;
+			*lpcchClass	= lstrlen32W(lpkey->class)*2;
 	}
 	lpxkey=lpkey->nextsub;
 	nrofkeys=maxsubkey=maxclass=maxvalues=maxvname=maxvdata=0;
 	while (lpxkey) {
 		nrofkeys++;
-		if (strlenW(lpxkey->keyname)>maxsubkey)
-			maxsubkey=strlenW(lpxkey->keyname);
-		if (lpxkey->class && strlenW(lpxkey->class)>maxclass)
-			maxclass=strlenW(lpxkey->class);
+		if (lstrlen32W(lpxkey->keyname)>maxsubkey)
+			maxsubkey=lstrlen32W(lpxkey->keyname);
+		if (lpxkey->class && lstrlen32W(lpxkey->class)>maxclass)
+			maxclass=lstrlen32W(lpxkey->class);
 		if (lpxkey->nrofvalues>maxvalues)
 			maxvalues=lpxkey->nrofvalues;
 		for (i=0;i<lpxkey->nrofvalues;i++) {
 			LPKEYVALUE	val=lpxkey->values+i;
 
-			if (val->name && strlenW(val->name)>maxvname)
-				maxvname=strlenW(val->name);
+			if (val->name && lstrlen32W(val->name)>maxvname)
+				maxvname=lstrlen32W(val->name);
 			if (val->len>maxvdata)
 				maxvdata=val->len;
 		}

@@ -9,16 +9,12 @@
 
 #include "gdi.h"
 
-#pragma pack(1)
-
   /* GDI logical pen object */
 typedef struct
 {
     GDIOBJHDR   header;
-    LOGPEN16    logpen WINE_PACKED;
+    LOGPEN16    logpen;
 } PENOBJ;
-
-#pragma pack(4)
 
 extern int PEN_GetObject( PENOBJ * pen, int count, LPSTR buffer );
 extern HPEN16 PEN_SelectObject( DC * dc, HPEN16 hpen, PENOBJ * pen );

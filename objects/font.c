@@ -64,7 +64,7 @@ int FontSize;
 /***********************************************************************
  *           FONT_Init
  */
-BOOL FONT_Init( void )
+BOOL32 FONT_Init( void )
 {
   char  temp[1024];
   LPSTR ptr;
@@ -480,9 +480,9 @@ HFONT32 CreateFont32W( INT32 height, INT32 width, INT32 esc, INT32 orient,
 
 
 /***********************************************************************
- *           FONT_GetObject
+ *           FONT_GetObject16
  */
-int FONT_GetObject( FONTOBJ * font, int count, LPSTR buffer )
+INT16 FONT_GetObject16( FONTOBJ * font, INT16 count, LPSTR buffer )
 {
     if (count > sizeof(LOGFONT16)) count = sizeof(LOGFONT16);
     memcpy( buffer, &font->logfont, count );
@@ -491,9 +491,39 @@ int FONT_GetObject( FONTOBJ * font, int count, LPSTR buffer )
 
 
 /***********************************************************************
+ *           FONT_GetObject32A
+ */
+INT32 FONT_GetObject32A( FONTOBJ *font, INT32 count, LPSTR buffer )
+{
+    LOGFONT32A fnt32;
+
+    memset(&fnt32, 0, sizeof(fnt32));
+    fnt32.lfHeight         = font->logfont.lfHeight;
+    fnt32.lfWidth          = font->logfont.lfWidth;
+    fnt32.lfEscapement     = font->logfont.lfEscapement;
+    fnt32.lfOrientation    = font->logfont.lfOrientation;
+    fnt32.lfWeight         = font->logfont.lfWeight;
+    fnt32.lfItalic         = font->logfont.lfItalic;
+    fnt32.lfUnderline      = font->logfont.lfUnderline;
+    fnt32.lfStrikeOut      = font->logfont.lfStrikeOut;
+    fnt32.lfCharSet        = font->logfont.lfCharSet;
+    fnt32.lfOutPrecision   = font->logfont.lfOutPrecision;
+    fnt32.lfClipPrecision  = font->logfont.lfClipPrecision;
+    fnt32.lfQuality        = font->logfont.lfQuality;
+    fnt32.lfPitchAndFamily = font->logfont.lfPitchAndFamily;
+    strncpy( fnt32.lfFaceName, font->logfont.lfFaceName,
+             sizeof(fnt32.lfFaceName) );
+
+    if (count > sizeof(fnt32)) count = sizeof(fnt32);
+    memcpy( buffer, &fnt32, count );
+    return count;
+}
+
+
+/***********************************************************************
  *           FONT_SelectObject
  */
-HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
+HFONT16 FONT_SelectObject( DC * dc, HFONT16 hfont, FONTOBJ * font )
 {
     static X_PHYSFONT stockFonts[LAST_STOCK_FONT-FIRST_STOCK_FONT+1];
 
@@ -749,20 +779,19 @@ BOOL16 GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count, LPSIZE16 size)
 BOOL32 GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
                               LPSIZE32 size )
 {
-    int dir, ascent, descent;
-    XCharStruct info;
-
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
-    XTextExtents( dc->u.x.font.fstruct, str, count, &dir,
-		  &ascent, &descent, &info );
-    size->cx = abs((info.width + dc->w.breakRem + count * dc->w.charExtra)
-		    * dc->w.WndExtX / dc->w.VportExtX);
-    size->cy = abs((dc->u.x.font.fstruct->ascent+dc->u.x.font.fstruct->descent)
-		    * dc->w.WndExtY / dc->w.VportExtY);
+    if (!dc)
+    {
+	if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC )))
+            return FALSE;
+    }
 
-    dprintf_font(stddeb,"GetTextExtentPoint(%08x '%*.*s' %d %p): returning %d,%d\n",
-		 hdc, count, count, str, count, size, size->cx, size->cy );
+    if (!dc->funcs->pGetTextExtentPoint ||
+        !dc->funcs->pGetTextExtentPoint( dc, str, count, size ))
+        return FALSE;
+
+    dprintf_font(stddeb,"GetTextExtentPoint(%08x '%.*s' %d %p): returning %d,%d\n",
+		 hdc, count, str, count, size, size->cx, size->cy );
     return TRUE;
 }
 

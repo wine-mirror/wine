@@ -17,8 +17,6 @@
 #include "callback.h"
 #include "xmalloc.h"
 
-static DeviceCaps * displayDevCaps = NULL;
-
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
 extern BOOL DCHook( HDC, WORD, DWORD, DWORD );      /* windows/dce.c */
 
@@ -158,8 +156,6 @@ void DC_InitDC( DC* dc )
     SelectObject( dc->hSelf, dc->w.hPen );
     SelectObject( dc->hSelf, dc->w.hBrush );
     SelectObject( dc->hSelf, dc->w.hFont );
-    XSetGraphicsExposures( display, dc->u.x.gc, False );
-    XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
     CLIPPING_UpdateGCRegion( dc );
 }
 
@@ -491,8 +487,11 @@ BOOL RestoreDC( HDC hdc, short level )
 HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
 {
     DC * dc;
-    HANDLE handle;
-    
+    HDC16 handle;
+    const DC_FUNCTIONS *funcs;
+
+    if (!(funcs = DRIVER_FindDriver( driver ))) return 0;
+
     handle = GDI_AllocObject( sizeof(DC), DC_MAGIC );
     if (!handle) return 0;
     dc = (DC *) GDI_HEAP_LIN_ADDR( handle );
@@ -500,29 +499,20 @@ HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initDa
     dprintf_dc(stddeb, "CreateDC(%s %s %s): returning %04x\n",
 	    driver, device, output, handle );
 
-    if (!displayDevCaps)
-    {
-	displayDevCaps = (DeviceCaps *) xmalloc( sizeof(DeviceCaps) );
-	DC_FillDevCaps( displayDevCaps );
-    }
-
-    dc->hSelf = (HDC)handle;
-    dc->saveLevel = 0;
+    dc->hSelf      = handle;
+    dc->funcs      = funcs;
+    dc->physDev    = NULL;
+    dc->saveLevel  = 0;
     dc->dwHookData = 0L;
-    dc->hookProc = (SEGPTR)NULL;
+    dc->hookProc   = (SEGPTR)0;
 
     memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
-    memset( &dc->u.x, 0, sizeof(dc->u.x) );
+    dc->w.flags = 0;
 
-    dc->u.x.drawable   = rootWindow;
-    dc->u.x.gc         = XCreateGC( display, dc->u.x.drawable, 0, NULL );
-    dc->w.flags        = 0;
-    dc->w.devCaps      = displayDevCaps;
-    dc->w.bitsPerPixel = displayDevCaps->bitsPixel;
-    dc->w.hVisRgn      = CreateRectRgn( 0, 0, displayDevCaps->horzRes,
-                                        displayDevCaps->vertRes );
-    if (!dc->w.hVisRgn)
+    if (dc->funcs->pCreateDC &&
+        !dc->funcs->pCreateDC( dc, driver, device, output, initData ))
     {
+        dprintf_dc( stddeb, "CreateDC: creation aborted by device\n" );
         GDI_HEAP_FREE( handle );
         return 0;
     }
@@ -548,10 +538,14 @@ HDC CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initDa
  */
 HDC CreateCompatibleDC( HDC hdc )
 {
-    DC * dc;
-    HANDLE handle;
+    DC *dc, *origDC;
+    HDC16 handle;
     HBITMAP hbitmap;
-    BITMAPOBJ *bmp;
+    const DC_FUNCTIONS *funcs;
+
+    if ((origDC = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC ))) funcs = origDC->funcs;
+    else funcs = DRIVER_FindDriver( "DISPLAY" );
+    if (!funcs) return 0;
 
     handle = GDI_AllocObject( sizeof(DC), DC_MAGIC );
     if (!handle) return 0;
@@ -565,33 +559,28 @@ HDC CreateCompatibleDC( HDC hdc )
 	GDI_HEAP_FREE( handle );
 	return 0;
     }
-    bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-
-    dc->hSelf = (HDC)handle;    
-    dc->saveLevel = 0;
-    dc->dwHookData = 0L; 
-    dc->hookProc = (SEGPTR)NULL;
 
     memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
-    memset( &dc->u.x, 0, sizeof(dc->u.x) );
 
-    dc->u.x.drawable   = bmp->pixmap;
-    dc->u.x.gc         = XCreateGC( display, dc->u.x.drawable, 0, NULL );
+    dc->hSelf          = handle;
+    dc->funcs          = funcs;
+    dc->physDev        = NULL;
+    dc->saveLevel      = 0;
+    dc->dwHookData     = 0L;
+    dc->hookProc       = (SEGPTR)0;
     dc->w.flags        = DC_MEMORY;
     dc->w.bitsPerPixel = 1;
-    dc->w.devCaps      = displayDevCaps;
     dc->w.hBitmap      = hbitmap;
     dc->w.hFirstBitmap = hbitmap;
-    dc->w.hVisRgn      = CreateRectRgn( 0, 0, 1, 1 );
 
-    if (!dc->w.hVisRgn)
+    if (dc->funcs->pCreateDC &&
+        !dc->funcs->pCreateDC( dc, NULL, NULL, NULL, NULL ))
     {
+        dprintf_dc( stddeb, "CreateDC: creation aborted by device\n" );
         DeleteObject( hbitmap );
         GDI_HEAP_FREE( handle );
         return 0;
     }
-
-    DC_InitDC( dc );
 
     return handle;
 }
@@ -622,8 +611,8 @@ BOOL DeleteDC( HDC hdc )
 	SelectObject( hdc, STOCK_BLACK_PEN );
 	SelectObject( hdc, STOCK_WHITE_BRUSH );
 	SelectObject( hdc, STOCK_SYSTEM_FONT );
-	XFreeGC( display, dc->u.x.gc );
         if (dc->w.flags & DC_MEMORY) DeleteObject( dc->w.hFirstBitmap );
+        if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc);
     }
 
     if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );

@@ -9,6 +9,70 @@
 
 #include "wintypes.h"
 
+/* The Win32 register context */
+
+#define CONTEXT_i386      0x00010000
+#define CONTEXT_i486      CONTEXT_i386
+#define CONTEXT_CONTROL   (CONTEXT_i386 | 0x0001) /* SS:SP, CS:IP, FLAGS, BP */
+#define CONTEXT_INTEGER   (CONTEXT_i386 | 0x0002) /* AX, BX, CX, DX, SI, DI */
+#define CONTEXT_SEGMENTS  (CONTEXT_i386 | 0x0004) /* DS, ES, FS, GS */
+#define CONTEXT_FLOATING_POINT  (CONTEXT_i386 | 0x0008L) /* 387 state */
+#define CONTEXT_DEBUG_REGISTERS (CONTEXT_i386 | 0x0010L) /* DB 0-3,6,7 */
+#define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS)
+
+#define SIZE_OF_80387_REGISTERS      80
+
+typedef struct
+{
+    DWORD   ControlWord;
+    DWORD   StatusWord;
+    DWORD   TagWord;    
+    DWORD   ErrorOffset;
+    DWORD   ErrorSelector;
+    DWORD   DataOffset;
+    DWORD   DataSelector;    
+    BYTE    RegisterArea[SIZE_OF_80387_REGISTERS];
+    DWORD   Cr0NpxState;
+} FLOATING_SAVE_AREA;
+
+typedef struct
+{
+    DWORD   ContextFlags;
+
+    /* These are selected by CONTEXT_DEBUG_REGISTERS */
+    DWORD   Dr0;
+    DWORD   Dr1;
+    DWORD   Dr2;
+    DWORD   Dr3;
+    DWORD   Dr6;
+    DWORD   Dr7;
+
+    /* These are selected by CONTEXT_FLOATING_POINT */
+    FLOATING_SAVE_AREA FloatSave;
+
+    /* These are selected by CONTEXT_SEGMENTS */
+    DWORD   SegGs;
+    DWORD   SegFs;
+    DWORD   SegEs;
+    DWORD   SegDs;    
+
+    /* These are selected by CONTEXT_INTEGER */
+    DWORD   Edi;
+    DWORD   Esi;
+    DWORD   Ebx;
+    DWORD   Edx;    
+    DWORD   Ecx;
+    DWORD   Eax;
+
+    /* These are selected by CONTEXT_CONTROL */
+    DWORD   Ebp;    
+    DWORD   Eip;
+    DWORD   SegCs;
+    DWORD   EFlags;
+    DWORD   Esp;
+    DWORD   SegSs;
+} CONTEXT, *PCONTEXT;
+
 #ifndef WINELIB
 
 #ifdef i386

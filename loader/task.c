@@ -493,7 +493,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
       /* Get the compatibility flags */
 
-    pTask->compat_flags = GetProfileInt( name, "Compatibility", 0 );
+    pTask->compat_flags = GetProfileInt( "Compatibility", name, 0 );
 
       /* Allocate a code segment alias for the TDB */
 

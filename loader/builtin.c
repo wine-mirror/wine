@@ -101,6 +101,7 @@ extern const DLL_DESCRIPTOR OLE32_Descriptor;
 extern const DLL_DESCRIPTOR GDI32_Descriptor;
 extern const DLL_DESCRIPTOR KERNEL32_Descriptor;
 extern const DLL_DESCRIPTOR LZ32_Descriptor;
+extern const DLL_DESCRIPTOR MPR_Descriptor;
 extern const DLL_DESCRIPTOR NTDLL_Descriptor;
 extern const DLL_DESCRIPTOR SHELL32_Descriptor;
 extern const DLL_DESCRIPTOR USER32_Descriptor;
@@ -151,6 +152,7 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &GDI32_Descriptor,    0 },
     { &KERNEL32_Descriptor, DLL_FLAG_ALWAYS_USED },
     { &LZ32_Descriptor,     0 },
+    { &MPR_Descriptor,      0 },
     { &NTDLL_Descriptor,    0 },
     { &SHELL32_Descriptor,  0 },
     { &USER32_Descriptor,   0 },

@@ -1,7 +1,7 @@
 #ifndef __WINE_WINBASE_H
 #define __WINE_WINBASE_H
 
-#include "wintypes.h"
+#include "windows.h"
 
 #define INVALID_HANDLE_VALUE    ((HANDLE32) -1)
 

@@ -117,6 +117,13 @@ void SetLastError(DWORD error)
     WIN32_LastError = error;
 }
 
+/**********************************************************************
+ *              SetLastErrorEx            (USER32.484)
+ */
+void SetLastErrorEx(DWORD error,DWORD type) {
+    WIN32_LastError = error;
+}
+
 DWORD ErrnoToLastError(int errno_num)
 {
     DWORD rc = ERROR_UNKNOWN;

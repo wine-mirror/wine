@@ -25,7 +25,7 @@ extern void CLIPPING_UpdateGCRegion( DC * dc );  /* objects/clipping.c */
 /***********************************************************************
  *           BITMAP_Init
  */
-BOOL BITMAP_Init(void)
+BOOL32 BITMAP_Init(void)
 {
     Pixmap tmpPixmap;
     
@@ -356,7 +356,7 @@ HBITMAP32 LoadBitmap32A( HINSTANCE32 instance, LPCSTR name )
 /***********************************************************************
  *           BITMAP_DeleteObject
  */
-BOOL BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap )
+BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap )
 {
     XFreePixmap( display, bitmap->pixmap );
     return GDI_FreeObject( hbitmap );
@@ -396,8 +396,8 @@ INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
 /***********************************************************************
  *           BITMAP_SelectObject
  */
-HBITMAP BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
-			     BITMAPOBJ * bmp )
+HBITMAP16 BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
+                               BITMAPOBJ * bmp )
 {
     HRGN hrgn;
     HBITMAP prevHandle = dc->w.hBitmap;

@@ -51,7 +51,7 @@ HANDLE16 HOOK_GetHook( INT16 id , HQUEUE16 hQueue )
     MESSAGEQUEUE *queue;
     HANDLE16 hook = 0;
 
-    if ((queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(hQueue) )) != NULL)
+    if ((queue = (MESSAGEQUEUE *)GlobalLock16( hQueue )) != NULL)
         hook = queue->hooks[id - WH_FIRST_HOOK];
     if (!hook) hook = HOOK_systemHooks[id - WH_FIRST_HOOK];
     return hook;
@@ -208,7 +208,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT16 code,
  */
 LRESULT HOOK_CallHooks( INT16 id, INT16 code, WPARAM16 wParam, LPARAM lParam )
 {
-    HANDLE16 hook = HOOK_GetHook( id , 0 );
+    HANDLE16 hook = HOOK_GetHook( id , GetTaskQueue(0) );
     if (!hook) return 0;
     return HOOK_CallHook( hook, code, wParam, lParam );
 }

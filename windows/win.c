@@ -1023,9 +1023,14 @@ HWND16 FindWindow16( SEGPTR className, LPCSTR title )
 HWND16 FindWindowEx16( HWND16 parent, HWND16 child,
                        SEGPTR className, LPCSTR title )
 {
-    ATOM atom;
+    ATOM atom = 0;
 
-    atom = className ? GlobalFindAtom16( className ) : 0;
+    if (className)
+    {
+        /* If the atom doesn't exist, then no class */
+        /* with this name exists either. */
+        if (!(atom = GlobalFindAtom16( className ))) return 0;
+    }
     return WIN_FindWindow( parent, child, atom, title );
 }
 
@@ -1045,9 +1050,14 @@ HWND32 FindWindow32A( LPCSTR className, LPCSTR title )
 HWND32 FindWindowEx32A( HWND32 parent, HWND32 child,
                         LPCSTR className, LPCSTR title )
 {
-    ATOM atom;
+    ATOM atom = 0;
 
-    atom = className ? GlobalFindAtom32A( className ) : 0;
+    if (className)
+    {
+        /* If the atom doesn't exist, then no class */
+        /* with this name exists either. */
+        if (!(atom = GlobalFindAtom32A( className ))) return 0;
+    }
     return WIN_FindWindow( 0, 0, atom, title );
 }
 
@@ -1058,11 +1068,16 @@ HWND32 FindWindowEx32A( HWND32 parent, HWND32 child,
 HWND32 FindWindowEx32W( HWND32 parent, HWND32 child,
                         LPCWSTR className, LPCWSTR title )
 {
-    ATOM atom;
+    ATOM atom = 0;
     char *buffer;
     HWND hwnd;
 
-    atom = className ? GlobalFindAtom32W( className ) : 0;
+    if (className)
+    {
+        /* If the atom doesn't exist, then no class */
+        /* with this name exists either. */
+        if (!(atom = GlobalFindAtom32W( className ))) return 0;
+    }
     buffer = title ? STRING32_DupUniToAnsi( title ) : NULL;
     hwnd = WIN_FindWindow( 0, 0, atom, buffer );
     if (buffer) free( buffer );

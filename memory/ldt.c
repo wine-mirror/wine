@@ -14,11 +14,12 @@
 #include "debug.h"
 
 #ifdef linux
-#include <linux/unistd.h>
+#include <syscall.h>
 #include <linux/head.h>
 #include <linux/ldt.h>
 
-_syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount)
+static __inline__ _syscall3(int, modify_ldt, int, func, void *, ptr,
+                            unsigned long, bytecount);
 #endif  /* linux */
 
 #if defined(__svr4__) || defined(_SCO_DS)

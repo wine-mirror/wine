@@ -287,7 +287,7 @@ base	1
 0280 stdcall GetPropA(long ptr) GetProp32A
 0281 stdcall GetPropW(long ptr) GetProp32W
 0282 stub GetQueueStatus
-0283 stub GetScrollInfo
+0283 stdcall GetScrollInfo(long long ptr) GetScrollInfo32
 0284 stub GetScrollPos
 0285 stub GetScrollRange
 0286 stub GetShellWindow
@@ -488,7 +488,7 @@ base	1
 0481 stub SetForegroundWindow
 0482 stdcall SetInternalWindowPos(long long ptr ptr) SetInternalWindowPos32
 0483 stub SetKeyboardState
-0484 stub SetLastErrorEx
+0484 stdcall SetLastErrorEx(long long) SetLastErrorEx
 0485 stub SetLogonNotifyWindow
 0486 stdcall SetMenu(long long) SetMenu
 0487 stub SetMenuContextHelpId
@@ -504,7 +504,7 @@ base	1
 0497 stdcall SetPropW(long ptr long) SetProp32W
 0498 stdcall SetRect(ptr long long long long) SetRect32
 0499 stdcall SetRectEmpty(ptr) SetRectEmpty32
-0500 stub SetScrollInfo
+0500 stdcall SetScrollInfo(long long ptr long) SetScrollInfo32
 0501 stdcall SetScrollPos(long long long long) SetScrollPos
 0502 stdcall SetScrollRange(long long long long long) SetScrollRange
 0503 stub SetShellWindow

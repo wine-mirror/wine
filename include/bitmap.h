@@ -36,12 +36,12 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 }
 
   /* objects/bitmap.c */
-extern BOOL BITMAP_Init(void);
+extern BOOL32 BITMAP_Init(void);
 extern INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer );
 extern INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer );
-extern BOOL BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap );
-extern HBITMAP BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
-                                    BITMAPOBJ * bmp );
+extern BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
+extern HBITMAP16 BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
+                                      BITMAPOBJ * bmp );
 
   /* objects/dib.c */
 extern int DIB_GetImageWidthBytes( int width, int depth );

@@ -6,8 +6,8 @@
 #ifndef __WINE_EXCEPT_H
 #define __WINE_EXCEPT_H
 
-#include"wintypes.h"
-
+#include "wintypes.h"
+#include "registers.h"
 /*
  * exception codes
  */
@@ -88,59 +88,6 @@
 #define EXCEPTION_CONTINUABLE        0
 #define EXCEPTION_NONCONTINUABLE     EH_NONCONTINUABLE
  
-/* 
- * data types
- */
-
-/*
- * The i386 context used by Win32 for almost everything. 
- */
-  
-#define SIZE_OF_80387_REGISTERS      80
-
-typedef struct _FLOATING_SAVE_AREA
-{
-    DWORD   ControlWord;
-    DWORD   StatusWord;
-    DWORD   TagWord;    
-    DWORD   ErrorOffset;
-    DWORD   ErrorSelector;
-    DWORD   DataOffset;
-    DWORD   DataSelector;    
-    BYTE    RegisterArea[SIZE_OF_80387_REGISTERS];
-    DWORD   Cr0NpxState;
-} FLOATING_SAVE_AREA;
-
-typedef struct __CONTEXT
-{
-    DWORD   ContextFlags;
-    DWORD   Dr0;
-    DWORD   Dr1;    
-    DWORD   Dr2;    
-    DWORD   Dr3;
-    DWORD   Dr6;
-    DWORD   Dr7;    
-    FLOATING_SAVE_AREA FloatSave;
-    DWORD   SegGs;
-    DWORD   SegFs;
-    DWORD   SegEs;
-    DWORD   SegDs;    
-    DWORD   Edi;
-    DWORD   Esi;
-    DWORD   Ebx;
-    DWORD   Edx;    
-    DWORD   Ecx;
-    DWORD   Eax;
-    DWORD   Ebp;    
-    DWORD   Eip;
-    DWORD   SegCs;
-    DWORD   EFlags;
-    DWORD   Esp;
-    DWORD   SegSs;
-} CONTEXT;
-
-typedef struct __CONTEXT *PCONTEXT;
-
 /*
  * The exception record used by Win32 to give additional information 
  * about exception to exception handlers.

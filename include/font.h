@@ -25,8 +25,8 @@ typedef struct
 #define GGO_NATIVE	0x4F50
 typedef struct
 {
-	UINT	gmBlackBoxX;
-	UINT	gmBlackBoxY;
+	UINT16	gmBlackBoxX;
+	UINT16	gmBlackBoxY;
 	POINT16	gmptGlyphOrigin;
 	int	gmCellIncX;
 	int	gmCellIncY;
@@ -40,8 +40,9 @@ typedef struct
 } MAT2,*LPMAT2;
 
 
-extern BOOL FONT_Init( void );
-extern int FONT_GetObject( FONTOBJ * font, int count, LPSTR buffer );
-extern HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font );
+extern BOOL32 FONT_Init( void );
+extern INT16 FONT_GetObject16( FONTOBJ * font, INT16 count, LPSTR buffer );
+extern INT32 FONT_GetObject32A( FONTOBJ * font, INT32 count, LPSTR buffer );
+extern HFONT16 FONT_SelectObject( DC * dc, HFONT16 hfont, FONTOBJ * font );
 
 #endif /* __WINE_FONT_H */

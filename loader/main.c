@@ -56,6 +56,7 @@ HANDLE32 SegptrHeap = 0;
 int MAIN_Init(void)
 {
     extern BOOL32 RELAY_Init(void);
+    extern BOOL32 WIN16DRV_Init(void);
     extern BOOL32 SIGNAL_Init(void);
     extern BOOL32 WIDGETS_Init(void);
     extern int KERN32_Init(void);
@@ -93,6 +94,9 @@ int MAIN_Init(void)
 
       /* Initialize signal handling */
     if (!SIGNAL_Init()) return 0;
+
+    /* Create the Win16 printer driver */
+    if (!WIN16DRV_Init()) return 0;
 #endif  /* WINELIB */
 
     /* Initialise DOS drives */

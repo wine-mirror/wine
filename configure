@@ -2065,6 +2065,9 @@ Makefile
 controls/Makefile
 debugger/Makefile
 files/Makefile
+graphics/Makefile
+graphics/win16drv/Makefile
+graphics/x11drv/Makefile
 if1632/Makefile
 ipc/Makefile
 library/Makefile
@@ -2140,6 +2143,9 @@ Makefile
 controls/Makefile
 debugger/Makefile
 files/Makefile
+graphics/Makefile
+graphics/win16drv/Makefile
+graphics/x11drv/Makefile
 if1632/Makefile
 ipc/Makefile
 library/Makefile

@@ -1261,7 +1261,7 @@ BOOL MF_ExtTextOut(DC *dc, short x, short y, UINT16 flags, const RECT16 *rect,
     *(mr->rdParam + 1) = x;
     *(mr->rdParam + 2) = count;
     *(mr->rdParam + 3) = flags;
-    memcpy(mr->rdParam + 4, rect, sizeof(RECT16));
+    if (rect) memcpy(mr->rdParam + 4, rect, sizeof(RECT16));
     memcpy(mr->rdParam + 8, str, count);
     if (lpDx)
      memcpy(mr->rdParam + 8+ ((count + 1) >> 1),lpDx,count*sizeof(INT16));

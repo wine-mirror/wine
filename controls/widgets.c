@@ -30,7 +30,7 @@ static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
     { CS_GLOBALCLASS | CS_PARENTDC,
        sizeof(STATICINFO), 0, "StaticWndProc", "STATIC" },
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-      sizeof(SCROLLINFO), 0, "ScrollBarWndProc", "SCROLLBAR" },
+      sizeof(SCROLLBAR_INFO), 0, "ScrollBarWndProc", "SCROLLBAR" },
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
       8, 0, "ListBoxWndProc", "LISTBOX" },
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,

@@ -32,96 +32,96 @@ WORD GDI_HeapSel = 0;
 
 static BRUSHOBJ WhiteBrush =
 {
-    { 0, BRUSH_MAGIC, 1, 0 },          /* header */
+    { 0, BRUSH_MAGIC, 1 },             /* header */
     { BS_SOLID, RGB(255,255,255), 0 }  /* logbrush */
 };
 
 static BRUSHOBJ LtGrayBrush =
 {
-    { 0, BRUSH_MAGIC, 1, 0 },          /* header */
+    { 0, BRUSH_MAGIC, 1 },             /* header */
     { BS_SOLID, RGB(192,192,192), 0 }  /* logbrush */
 };
 
 static BRUSHOBJ GrayBrush =
 {
-    { 0, BRUSH_MAGIC, 1, 0 },          /* header */
+    { 0, BRUSH_MAGIC, 1 },             /* header */
     { BS_SOLID, RGB(128,128,128), 0 }  /* logbrush */
 };
 
 static BRUSHOBJ DkGrayBrush =
 {
-    { 0, BRUSH_MAGIC, 1, 0 },       /* header */
+    { 0, BRUSH_MAGIC, 1 },          /* header */
     { BS_SOLID, RGB(64,64,64), 0 }  /* logbrush */
 };
 
 static BRUSHOBJ BlackBrush =
 {
-    { 0, BRUSH_MAGIC, 1, 0 },    /* header */
+    { 0, BRUSH_MAGIC, 1 },       /* header */
     { BS_SOLID, RGB(0,0,0), 0 }  /* logbrush */
 };
 
 static BRUSHOBJ NullBrush =
 {
-    { 0, BRUSH_MAGIC, 1, 0 },  /* header */
-    { BS_NULL, 0, 0 }          /* logbrush */
+    { 0, BRUSH_MAGIC, 1 },  /* header */
+    { BS_NULL, 0, 0 }       /* logbrush */
 };
 
 static PENOBJ WhitePen =
 {
-    { 0, PEN_MAGIC, 1, 0 },                  /* header */
+    { 0, PEN_MAGIC, 1 },                     /* header */
     { PS_SOLID, { 1, 0 }, RGB(255,255,255) } /* logpen */
 };
 
 static PENOBJ BlackPen =
 {
-    { 0, PEN_MAGIC, 1, 0 },            /* header */
+    { 0, PEN_MAGIC, 1 },               /* header */
     { PS_SOLID, { 1, 0 }, RGB(0,0,0) } /* logpen */
 };
 
 static PENOBJ NullPen =
 {
-    { 0, PEN_MAGIC, 1, 0 },   /* header */
+    { 0, PEN_MAGIC, 1 },      /* header */
     { PS_NULL, { 1, 0 }, 0 }  /* logpen */
 };
 
 static FONTOBJ OEMFixedFont =
 {
-    { 0, FONT_MAGIC, 1, 0 },   /* header */
+    { 0, FONT_MAGIC, 1 },   /* header */
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, OEM_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
 
 static FONTOBJ AnsiFixedFont =
 {
-    { 0, FONT_MAGIC, 1, 0 },   /* header */
+    { 0, FONT_MAGIC, 1 },   /* header */
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
 
 static FONTOBJ AnsiVarFont =
 {
-    { 0, FONT_MAGIC, 1, 0 },   /* header */
+    { 0, FONT_MAGIC, 1 },   /* header */
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "" }
 };
 
 static FONTOBJ SystemFont =
 {
-    { 0, FONT_MAGIC, 1, 0 },   /* header */
+    { 0, FONT_MAGIC, 1 },   /* header */
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "" }
 };
 
 static FONTOBJ DeviceDefaultFont =
 {
-    { 0, FONT_MAGIC, 1, 0 },   /* header */
+    { 0, FONT_MAGIC, 1 },   /* header */
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "" }
 };
 
 static FONTOBJ SystemFixedFont =
 {
-    { 0, FONT_MAGIC, 1, 0 },   /* header */
+    { 0, FONT_MAGIC, 1 },   /* header */
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
@@ -159,6 +159,13 @@ static FARPROC16 defDCHookCallback;
 BOOL32 GDI_Init(void)
 {
     HPALETTE16 hpalette;
+    extern BOOL32 X11DRV_Init(void);
+
+    /* Initialize drivers */
+
+    if (!X11DRV_Init()) return FALSE;
+
+    /* Get default hook */
 
     defDCHookCallback = (FARPROC16)MODULE_GetEntryPoint(GetModuleHandle("USER"),
                                                         362  /* DCHook */ );
@@ -317,7 +324,7 @@ INT16 GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
       case BITMAP_MAGIC: 
 	  return BITMAP_GetObject16( (BITMAPOBJ *)ptr, count, buffer );
       case FONT_MAGIC:
-	  return FONT_GetObject( (FONTOBJ *)ptr, count, buffer );
+	  return FONT_GetObject16( (FONTOBJ *)ptr, count, buffer );
       case PALETTE_MAGIC:
 	  return PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
     }
@@ -344,9 +351,10 @@ INT32 GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
     {
       case BITMAP_MAGIC: 
 	  return BITMAP_GetObject32( (BITMAPOBJ *)ptr, count, buffer );
+      case FONT_MAGIC:
+	  return FONT_GetObject32A( (FONTOBJ *)ptr, count, buffer );
       case PEN_MAGIC:
       case BRUSH_MAGIC: 
-      case FONT_MAGIC:
       case PALETTE_MAGIC:
           fprintf( stderr, "GetObject32: magic %04x not implemented\n",
                    ptr->wMagic );

@@ -63,8 +63,13 @@ HANDLE32 GetProp32A( HWND32 hwnd, LPCSTR str )
 {
     PROPERTY *prop = PROP_FindProp( hwnd, str );
 
-    dprintf_prop( stddeb, "GetProp(%08x,'%s'): returning %08x\n",
-                  hwnd, str, prop ? prop->handle : 0 );
+    if (HIWORD(str))
+        dprintf_prop( stddeb, "GetProp(%08x,'%s'): returning %08x\n",
+                      hwnd, str, prop ? prop->handle : 0 );
+    else
+        dprintf_prop( stddeb, "GetProp(%08x,#%04x): returning %08x\n",
+                      hwnd, LOWORD(str), prop ? prop->handle : 0 );
+
     return prop ? prop->handle : 0;
 }
 
@@ -101,7 +106,12 @@ BOOL32 SetProp32A( HWND32 hwnd, LPCSTR str, HANDLE32 handle )
 {
     PROPERTY *prop;
 
-    dprintf_prop( stddeb, "SetProp: %04x '%s' %08x\n", hwnd, str, handle );
+    if (HIWORD(str))
+        dprintf_prop( stddeb, "SetProp: %04x '%s' %08x\n", hwnd, str, handle );
+    else
+        dprintf_prop( stddeb, "SetProp: %04x #%04x %08x\n",
+                      hwnd, LOWORD(str), handle );
+
     if (!(prop = PROP_FindProp( hwnd, str )))
     {
         /* We need to create it */

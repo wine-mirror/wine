@@ -7,12 +7,10 @@
 #ifndef GDI_H
 #define GDI_H
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-
 #include "windows.h"
 #include "ldt.h"
 #include "local.h"
+#include "x11drv.h"
 
   /* GDI objects magic numbers */
 #define PEN_MAGIC             0x4f47
@@ -33,7 +31,6 @@ typedef struct tagGDIOBJHDR
     HANDLE16    hNext;
     WORD        wMagic;
     DWORD       dwCount;
-    WORD        wMetaList;
 } GDIOBJHDR;
 
 
@@ -71,11 +68,12 @@ typedef struct
     WORD   colorRes;      /* 108: color resolution */    
 } DeviceCaps;
 
+
   /* Device independent DC information */
 typedef struct
 {
     int           flags;
-    DeviceCaps   *devCaps;
+    const DeviceCaps *devCaps;
 
     HANDLE16      hMetaFile;
     HRGN16        hClipRgn;     /* Clip region (may be 0) */
@@ -125,58 +123,92 @@ typedef struct
     short         VportExtY;
 } WIN_DC_INFO;
 
-
-  /* X physical pen */
-typedef struct
-{
-    int          style;
-    int          pixel;
-    int          width;
-    char *       dashes;
-    int          dash_len;
-} X_PHYSPEN;
-
-  /* X physical brush */
-typedef struct
-{
-    int          style;
-    int          fillStyle;
-    int          pixel;
-    Pixmap       pixmap;
-} X_PHYSBRUSH;
-
-  /* X physical font */
-typedef struct
-{
-    XFontStruct * fstruct;
-    TEXTMETRIC16  metrics;
-} X_PHYSFONT;
-
-  /* X-specific DC information */
-typedef struct
-{
-    GC            gc;          /* X Window GC */
-    Drawable      drawable;
-    X_PHYSFONT    font;
-    X_PHYSPEN     pen;
-    X_PHYSBRUSH   brush;
-} X_DC_INFO;
-
+typedef X11DRV_PDEVICE X_DC_INFO;  /* Temporary */
 
 typedef struct tagDC
 {
-    GDIOBJHDR     header;
-    WORD          saveLevel;
-    DWORD         dwHookData;
-    FARPROC16     hookProc;
-    HDC16         hSelf;
-    WIN_DC_INFO   w;
+    GDIOBJHDR      header;
+    HDC16          hSelf;            /* Handle to this DC */
+    const struct tagDC_FUNCS *funcs; /* DC function table */
+    void          *physDev;          /* Physical device (driver-specific) */
+    WORD           saveLevel;
+    DWORD          dwHookData;
+    FARPROC16      hookProc;
+
+    WIN_DC_INFO w;
     union
     {
 	X_DC_INFO x;
 	/* other devices (e.g. printer) */
     } u;
 } DC;
+
+/* Device functions for the Wine driver interface */
+typedef struct tagDC_FUNCS
+{
+    BOOL32     (*pArc)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
+    BOOL32     (*pBitBlt)(DC*,INT32,INT32,INT32,INT32,DC*,INT32,INT32,DWORD);
+    BOOL32     (*pChord)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
+    BOOL32     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODE*);
+    BOOL32     (*pDeleteDC)(DC*);
+    BOOL32     (*pDeleteObject)(HGDIOBJ16);
+    BOOL32     (*pEllipse)(DC*,INT32,INT32,INT32,INT32);
+    INT32      (*pEscape)(DC*,INT32,INT32,SEGPTR,SEGPTR);
+    INT32      (*pExcludeClipRect)(DC*,INT32,INT32,INT32,INT32);
+    INT32      (*pExcludeVisRect)(DC*,INT32,INT32,INT32,INT32);
+    BOOL32     (*pExtFloodFill)(DC*,INT32,INT32,COLORREF,UINT32);
+    BOOL32     (*pExtTextOut)(DC*,INT32,INT32,UINT32,const RECT32*,LPCSTR,UINT32,const INT32*);
+    BOOL32     (*pFillRgn)(DC*,HRGN32,HBRUSH32);
+    BOOL32     (*pFloodFill)(DC*,INT32,INT32,COLORREF);
+    BOOL32     (*pFrameRgn)(DC*,HRGN32,HBRUSH32,INT32,INT32);
+    BOOL32     (*pGetTextExtentPoint)(DC*,LPCSTR,INT32,LPSIZE32);
+    BOOL32     (*pGetTextMetrics)(DC*,TEXTMETRIC32A*);
+    INT32      (*pIntersectClipRect)(DC*,INT32,INT32,INT32,INT32);
+    INT32      (*pIntersectVisRect)(DC*,INT32,INT32,INT32,INT32);
+    BOOL32     (*pInvertRgn)(DC*,HRGN32);
+    BOOL32     (*pLineTo)(DC*,INT32,INT32);
+    BOOL32     (*pMoveToEx)(DC*,INT32,INT32,LPPOINT32);
+    INT32      (*pOffsetClipRgn)(DC*,INT32,INT32);
+    BOOL32     (*pOffsetViewportOrgEx)(DC*,INT32,INT32,LPPOINT32);
+    BOOL32     (*pOffsetWindowOrgEx)(DC*,INT32,INT32,LPPOINT32);
+    BOOL32     (*pPaintRgn)(DC*,HRGN32);
+    BOOL32     (*pPatBlt)(DC*,INT32,INT32,INT32,INT32,DWORD);
+    BOOL32     (*pPie)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32);
+    BOOL32     (*pPolyPolygon)(DC*,LPPOINT32,LPINT32,UINT32);
+    BOOL32     (*pPolygon)(DC*,LPPOINT32,INT32);
+    BOOL32     (*pPolyline)(DC*,LPPOINT32,INT32);
+    UINT32     (*pRealizePalette)(DC*);
+    BOOL32     (*pRectangle)(DC*,INT32,INT32,INT32,INT32);
+    BOOL32     (*pRestoreDC)(DC*,INT32);
+    BOOL32     (*pRoundRect)(DC*,INT32,INT32,INT32,INT32,INT32,INT32);
+    INT32      (*pSaveDC)(DC*);
+    BOOL32     (*pScaleViewportExtEx)(DC*,INT32,INT32,INT32,INT32,LPSIZE32);
+    BOOL32     (*pScaleWindowExtEx)(DC*,INT32,INT32,INT32,INT32,LPSIZE32);
+    INT32      (*pSelectClipRgn)(DC*,HRGN32);
+    HANDLE32   (*pSelectObject)(DC*,HANDLE32);
+    HPALETTE32 (*pSelectPalette)(DC*,HPALETTE32,BOOL32);
+    COLORREF   (*pSetBkColor)(DC*,COLORREF);
+    WORD       (*pSetBkMode)(DC*,WORD);
+    INT32      (*pSetDIBitsToDevice)(DC*,INT32,INT32,DWORD,DWORD,INT32,INT32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
+    WORD       (*pSetMapMode)(DC*,WORD);
+    DWORD      (*pSetMapperFlags)(DC*,DWORD);
+    COLORREF   (*pSetPixel)(DC*,INT32,INT32,COLORREF);
+    WORD       (*pSetPolyFillMode)(DC*,WORD);
+    WORD       (*pSetROP2)(DC*,WORD);
+    WORD       (*pSetRelAbs)(DC*,WORD);
+    WORD       (*pSetStretchBltMode)(DC*,WORD);
+    WORD       (*pSetTextAlign)(DC*,WORD);
+    INT32      (*pSetTextCharacterExtra)(DC*,INT32);
+    DWORD      (*pSetTextColor)(DC*,DWORD);
+    INT32      (*pSetTextJustification)(DC*,INT32,INT32);
+    BOOL32     (*pSetViewportExtEx)(DC*,INT32,INT32,LPSIZE32);
+    BOOL32     (*pSetViewportOrgEx)(DC*,INT32,INT32,LPPOINT32);
+    BOOL32     (*pSetWindowExtEx)(DC*,INT32,INT32,LPSIZE32);
+    BOOL32     (*pSetWindowOrgEx)(DC*,INT32,INT32,LPPOINT32);
+    BOOL32     (*pStretchBlt)(DC*,INT32,INT32,INT32,INT32,DC*,INT32,INT32,INT32,INT32,DWORD);
+    INT32      (*pStretchDIBits)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,LPSTR,LPBITMAPINFO,WORD,DWORD);
+    BOOL32     (*pTextOut)(DC*,INT32,INT32,LPCSTR,INT32);
+} DC_FUNCTIONS;
 
   /* DC hook codes */
 #define DCHC_INVALIDVISRGN      0x0001
@@ -256,6 +288,10 @@ extern HANDLE16 GDI_AllocObject( WORD, WORD );
 extern BOOL32 GDI_FreeObject( HANDLE16 );
 extern GDIOBJHDR * GDI_GetObjPtr( HANDLE16, WORD );
 extern FARPROC16 GDI_GetDefDCHook(void);
+
+extern BOOL32 DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
+extern const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name );
+extern BOOL32 DRIVER_UnregisterDriver( LPCSTR name );
 
 extern Display * display;
 extern Screen * screen;

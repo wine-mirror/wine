@@ -243,7 +243,7 @@ int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer )
 /***********************************************************************
  *           PALETTE_UnrealizeObject
  */
-BOOL PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
+BOOL32 PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 {
     if (palette->mapping)
     {
@@ -258,7 +258,7 @@ BOOL PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 /***********************************************************************
  *           PALETTE_DeleteObject
  */
-BOOL PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
+BOOL32 PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 {
     free( palette->mapping );
     return GDI_FreeObject( hpalette );

@@ -1,4 +1,101 @@
 ----------------------------------------------------------------------
+Sat Aug 24 13:57:01 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/scroll.c]
+	Renamed SCROLLINFO to SCROLLBAR_INFO to avoid conflict with Win32.
+
+	* [graphics/driver.c] [include/x11drv.h]
+	New files for graphics driver handling.
+
+	* [if1632/relay.c] [include/registers.h] [tools/build.c]
+	Implemented Win32 register functions. Not really tested yet.
+
+	* [include/gdi.h]
+	Added a lot of functions to the DC func table.
+
+	* [loader/pe_image.c]
+	Initialise %fs before calling out to 32-bit code.
+
+	* [windows/hook.c]
+	Fixed bug in HOOK_GetHook().
+
+	* [windows/win.c]
+	Fixed FindWindow to return an error if the class name doesn't exist.
+
+Wed Aug 21 15:15:53 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [if1632/Makefile.in] [misc/mpr.c] [if1632/mpr.spec]
+	mpr.dll specs added.
+
+	* [if1632/kernel32.spec] [win32/newfns.c] [memory/global.c]
+	QueryPerformanceCounter(), GlobalMemoryStatus() added.
+
+	* [if1632/user32.spec] [win32/error.c]
+	SetLastErrorEx() added.
+
+	* [misc/commdlg.c]
+	lpstrFilter might be NULL in FILE_WMInitDialog (NS 3.0 setup).
+
+	* [misc/registry.c]
+	Some missing NULL ptr checks added, misc clean up.
+
+Tue Aug 20 21:00:00 1996 Alex Korobka  <alex@pharm.sunysb.edu>
+
+	* [controls/menu.c]
+	Adjust popup menu coordinates so that it always stays within 
+	the desktop.
+
+	* [misc/main.c]
+	Fixed GetEnvironment() return value for lpEnv == NULL case.
+
+Mon Aug 19 22:48:36 1996  Jukka Iivonen <iivonen@cc.helsinki.fi>
+
+	* [misc/crtdll.c] [if1632/crtdll.spec]
+	Added some is* functions, strlen and tolower.
+	
+Mon Aug 19 13:33:13 1996  Stephen Simmons  <ssimmons@vitsemi.com>
+
+	* [tools/wineconf]
+	New perl script to generate the wine.conf file.
+
+Fri Aug 16 15:31:44 1996   John Harvey <john@division.co.uk>
+
+	* [if1632/gdi.spec]
+        Lots of printer functions.
+	
+	* [include/callback.h]
+        New functions for printer driver support.
+
+	* [include/gdi.h]
+        New/changed structures to support printer driver.
+
+	* [misc/escape.c]
+        New version that uses function table in DC structure.
+
+	* [objects/dc.c]
+        CreateDC copes with things other than Display.
+	X code for CreateDC moved to graphics/x11drv directory.
+	CreateCompatibleDC copies func table from original DC.
+
+	* [objects/font.c]
+        GetTextExtentPoint32A,GetTextMetrics16 use function table in
+        DC and code moved to drivers directory.
+
+	* [misc/printdrv.c] [graphics/*/*] [include/win16drv.h]
+        New files for printer support. 
+
+Fri Aug 16 12:33:00 1996  Bruce Milner <Bruce.Milner@genetics.utah.edu>
+
+	* [controls/scroll.c]
+	Added SetScrollInfo32 and GetScrollInfo32.  These just call existing
+	code. There are a few options in which I'm probably the wrong person
+	for the job (page size and disable bar). There are comments in the
+	code as to what they should do.
+
+	* [objects/gdiobj.c] [objects/font.c] [include/font.h]
+	Added 32 bit version of FONT_GetObject.
+
+----------------------------------------------------------------------
 Sun Aug 18 12:17:54 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [files/drive.c]
@@ -596,7 +693,7 @@ Wed Jul 10 22:11:12 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.
 	Char* added.
 	CompareString* added.
 
-Sun Jul  7 01:22:14  Jukka Iivonen <iivonen@cc.helsinki.fi>
+Sun Jul  7 01:22:14 1996  Jukka Iivonen <iivonen@cc.helsinki.fi>
 
 	* [objects/font.c] [if1632/gdi32.spec]
 	CreateFontIndirect32A and CreateFontIndirect32W added.

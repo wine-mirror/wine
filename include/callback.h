@@ -39,6 +39,14 @@ extern WORD CallTo16_word_wwlll( FARPROC16, WORD, WORD, LONG, LONG, LONG );
 extern LONG CallTo16_long_lllllllwlwwwl( FARPROC16, LONG, LONG, LONG,
                                          LONG, LONG, LONG, LONG, WORD, LONG,
                                          WORD, WORD, WORD, LONG );
+extern WORD CallTo16_word_lwll ( FARPROC16, LONG, WORD, LONG, LONG);
+extern WORD CallTo16_word_lwlll( FARPROC16, LONG, WORD, LONG, LONG, LONG );
+extern WORD CallTo16_word_llll ( FARPROC16, LONG, LONG, LONG, LONG);
+extern LONG CallTo16_long_lwlll( FARPROC16, LONG, WORD, LONG, LONG, LONG );
+extern LONG CallTo16_long_lwwllwlllllw( FARPROC16, LONG, WORD, WORD, LONG, 
+				       LONG, WORD, LONG, LONG, LONG, LONG, 
+				       LONG, WORD);
+
 
 extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
                             WORD bx, WORD cx, WORD dx, WORD si, WORD di );

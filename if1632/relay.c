@@ -212,32 +212,73 @@ void RELAY_DebugCallTo16( int* stack, int nbargs )
 
 /***********************************************************************
  *           RELAY_DebugCallFrom32
+ *
+ * 'stack' points to the saved ebp on the stack.
+ * Stack layout:
+ *  ...        ...
+ * (stack+12)  arg2
+ * (stack+8)   arg1
+ * (stack+4)   ret addr
+ * (stack)     ebp
+ * (stack-4)   entry point
+ * (stack-8)   relay addr
  */
-void RELAY_DebugCallFrom32( int nb_args, void *relay_addr,
-                            void *entry_point, int ebp, int ret_addr, int arg1)
+void RELAY_DebugCallFrom32( int *stack, int nb_args )
 {
     int *parg;
 
     if (!debugging_relay) return;
-    printf( "Call %s(", BUILTIN_GetEntryPoint32( relay_addr ));
-    for (parg = &arg1; nb_args; parg++, nb_args--)
+    printf( "Call %s(", BUILTIN_GetEntryPoint32( (void *)stack[-2] ));
+    if (nb_args > 0)
     {
-        printf( "%08x", *parg );
-        if (nb_args > 1) printf( "," );
+        for (parg = &stack[2]; nb_args; parg++, nb_args--)
+        {
+            printf( "%08x", *parg );
+            if (nb_args > 1) printf( "," );
+        }
     }
-    printf( ") ret=%08x\n", ret_addr );
+    printf( ") ret=%08x\n", stack[1] );
+    if (nb_args == -1)  /* Register function */
+    {
+        CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 12);
+        printf( " EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
+                context->Eax, context->Ebx, context->Ecx, context->Edx,
+                context->Esi, context->Edi );
+        printf( " EBP=%08lx ESP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+                context->Ebp, context->Esp, context->SegDs, context->SegEs,
+                context->SegFs, context->SegGs, context->EFlags );
+    }
 }
 
 
 /***********************************************************************
  *           RELAY_DebugCallFrom32Ret
+ *
+ * 'stack' points to the saved ebp on the stack.
+ * Stack layout:
+ *  ...        ...
+ * (stack+12)  arg2
+ * (stack+8)   arg1
+ * (stack+4)   ret addr
+ * (stack)     ebp
+ * (stack-4)   entry point
+ * (stack-8)   relay addr
  */
-void RELAY_DebugCallFrom32Ret( int ret_val, void *relay_addr,
-                               void *entry_point, int ebp, int ret_addr )
+void RELAY_DebugCallFrom32Ret( int *stack, int nb_args, int ret_val )
 {
     if (!debugging_relay) return;
-    printf( "Ret  %s() retval=0x%08x ret=%08x\n",
-            BUILTIN_GetEntryPoint32( relay_addr ), ret_val, ret_addr );
+    printf( "Ret  %s() retval=%08x ret=%08x\n",
+            BUILTIN_GetEntryPoint32( (void *)stack[-2] ), ret_val, stack[1] );
+    if (nb_args == -1)  /* Register function */
+    {
+        CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 12);
+        printf( " EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
+                context->Eax, context->Ebx, context->Ecx, context->Edx,
+                context->Esi, context->Edi );
+        printf( " EBP=%08lx ESP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+                context->Ebp, context->Esp, context->SegDs, context->SegEs,
+                context->SegFs, context->SegGs, context->EFlags );
+    }
 }
 
 

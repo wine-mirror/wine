@@ -396,17 +396,17 @@ base	1
 391 cdecl gets(ptr) CRTDLL_gets
 392 stub gmtime
 393 stub is_wctype
-394 stub isalnum
-395 stub isalpha
-396 stub iscntrl
-397 stub isdigit
-398 stub isgraph
+394 cdecl isalnum(long) CRTDLL_isalnum
+395 cdecl isalpha(long) CRTDLL_isalpha
+396 cdecl iscntrl(long) CRTDLL_iscntrl
+397 cdecl isdigit(long) CRTDLL_isdigit
+398 cdecl isgraph(long) CRTDLL_isgraph
 399 stub isleadbyte
-400 stub islower
-401 stub isprint
-402 stub ispunct
-403 stub isspace
-404 stub isupper
+400 cdecl islower(long) CRTDLL_islower
+401 cdecl isprint(long) CRTDLL_isprint
+402 cdecl ispunct(long) CRTDLL_ispunct
+403 cdecl isspace(long) CRTDLL_isspace
+404 cdecl isupper(long) CRTDLL_isupper
 405 stub iswalnum
 406 stub iswalpha
 407 stub iswascii
@@ -464,18 +464,18 @@ base	1
 459 stub sqrt
 460 cdecl srand(long) CRTDLL_srand
 461 stub sscanf
-462 stub strcat
+462 cdecl strcat(ptr ptr) lstrcat32A
 463 stub strchr
-464 stub strcmp
+464 cdecl strcmp(ptr ptr) lstrcmp32A
 465 stub strcoll
-466 stub strcpy
+466 cdecl strcpy(ptr ptr) lstrcpy32A
 467 stub strcspn
 468 stub strerror
 469 stub strftime
-470 stub strlen
-471 stub strncat
-472 stub strncmp
-473 stub strncpy
+470 cdecl strlen(ptr) lstrlen32A
+471 cdecl strncat(ptr ptr long) lstrcatn32A
+472 cdecl strncmp(ptr ptr long) lstrncmp32A
+473 cdecl strncpy(ptr ptr long) lstrcpyn32A
 474 stub strpbrk
 475 stub strrchr
 476 stub strspn
@@ -493,7 +493,7 @@ base	1
 488 cdecl time(ptr) CRTDLL_time
 489 stub tmpfile
 490 stub tmpnam
-491 stub tolower
+491 cdecl tolower(long) CRTDLL_tolower
 492 cdecl toupper(long) CRTDLL_toupper
 493 stub towlower
 494 stub towupper

@@ -46,6 +46,8 @@ COMMONSUBDIRS = \
 	rc \
 	controls \
 	files \
+	graphics \
+	graphics/x11drv \
 	ipc \
 	loader \
 	memory \
@@ -59,6 +61,7 @@ COMMONSUBDIRS = \
 EMUSUBDIRS = \
 	tools \
 	debugger \
+	graphics/win16drv \
 	if1632 \
 	miscemu
 
@@ -71,6 +74,8 @@ ALLSUBDIRS = $(COMMONSUBDIRS) $(EMUSUBDIRS) $(LIBSUBDIRS) $(PROGSUBDIRS)
 COMMONOBJS = \
 	controls/controls.o \
 	files/files.o \
+	graphics/graphics.o \
+	graphics/x11drv/x11drv.o \
 	ipc/ipc.o \
 	loader/loader.o \
 	memory/memory.o \
@@ -83,6 +88,7 @@ COMMONOBJS = \
 
 EMUOBJS = \
 	debugger/debugger.o \
+	graphics/win16drv/win16drv.o \
 	if1632/if1632.o \
 	miscemu/miscemu.o
 

@@ -2521,6 +2521,40 @@ typedef struct
 #define SBM_REDRAW            (WM_USER+3)
 #define SBM_ENABLE            (WM_USER+4)
 
+/* Scrollbar info */
+typedef struct
+{
+    UINT16    cbSize;
+    UINT16    fMask;
+    INT16     nMin;
+    INT16     nMax;
+    UINT16    nPage;
+    INT16     nPos;
+    INT16     nTrackPos;
+} SCROLLINFO16, *LPSCROLLINFO16;
+
+typedef struct
+{
+    UINT32    cbSize;
+    UINT32    fMask;
+    INT32     nMin;
+    INT32     nMax;
+    UINT32    nPage;
+    INT32     nPos;
+    INT32     nTrackPos;
+} SCROLLINFO32, *LPSCROLLINFO32;
+ 
+DECL_WINELIB_TYPE(SCROLLINFO);
+DECL_WINELIB_TYPE(LPSCROLLINFO);
+
+/* GetScrollInfo() flags */ 
+#define SIF_RANGE           0x0001
+#define SIF_PAGE            0x0002
+#define SIF_POS             0x0004
+#define SIF_DISABLENOSCROLL 0x0008
+#define SIF_TRACKPOS        0x0010
+#define SIF_ALL             (SIF_RANGE | SIF_PAGE | SIF_POS | SIF_TRACKPOS)
+
 /* Listbox styles */
 #define LBS_NOTIFY            0x0001L
 #define LBS_SORT              0x0002L
@@ -2941,6 +2975,18 @@ DECL_WINELIB_TYPE(LPCOMPAREITEMSTRUCT);
 #define GHND                (GMEM_MOVEABLE | GMEM_ZEROINIT)
 #define GPTR                (GMEM_FIXED | GMEM_ZEROINIT)
 
+
+typedef struct tagMEMORYSTATUS
+{
+    DWORD    dwLength;
+    DWORD    dwMemoryLoad;
+    DWORD    dwTotalPhys;
+    DWORD    dwAvailPhys;
+    DWORD    dwTotalPageFile;
+    DWORD    dwAvailPageFile;
+    DWORD    dwTotalVirtual;
+    DWORD    dwAvailVirtual;
+} MEMORYSTATUS, *LPMEMORYSTATUS;
 
 /* Predefined Clipboard Formats */
 #define CF_TEXT              1
@@ -3396,6 +3442,23 @@ typedef struct _SYSTEM_POWER_STATUS
 #define LR_LOADREALSIZE		0x0020
 #define LR_LOADMAP3DCOLORS	0x1000
 
+typedef struct _LARGE_INTEGER
+{
+    DWORD    LowPart;
+    LONG     HighPart;
+} LARGE_INTEGER,*LPLARGE_INTEGER;
+
+typedef struct _ULARGE_INTEGER
+{
+    DWORD    LowPart;
+    DWORD    HighPart;
+} ULARGE_INTEGER,*LPULARGE_INTEGER;
+
+/* SetLastErrorEx types */
+#define	SLE_ERROR	0x00000001
+#define	SLE_MINORERROR	0x00000002
+#define	SLE_WARNING	0x00000003
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -3459,6 +3522,7 @@ LPCWSTR    GetCommandLine32W();
 BOOL32     GetCommTimeouts(HANDLE32,LPCOMMTIMEOUTS);
 DWORD      GetLogicalDrives(void);
 HANDLE32   GetProcessHeap(void);
+VOID       GlobalMemoryStatus(LPMEMORYSTATUS);
 LPVOID     HeapAlloc(HANDLE32,DWORD,DWORD);
 DWORD      HeapCompact(HANDLE32,DWORD);
 HANDLE32   HeapCreate(DWORD,DWORD,DWORD);
@@ -3470,6 +3534,7 @@ DWORD      HeapSize(HANDLE32,DWORD,LPVOID);
 BOOL32     HeapUnlock(HANDLE32);
 BOOL32     HeapValidate(HANDLE32,DWORD,LPVOID);
 BOOL32     IsWindowUnicode(HWND32);
+BOOL32     QueryPerformanceCounter(LPLARGE_INTEGER);
 DWORD      RegCreateKeyEx32A(HKEY,LPCSTR,DWORD,LPSTR,DWORD,REGSAM,
                              LPSECURITY_ATTRIBUTES,LPHKEY,LPDWORD);
 DWORD      RegCreateKeyEx32W(HKEY,LPCWSTR,DWORD,LPWSTR,DWORD,REGSAM,
@@ -3545,7 +3610,8 @@ BOOL16     SetCaretPos(INT32,INT32);
 WORD       SetClassWord(HWND32,INT32,WORD);
 INT16      SetDIBits(HDC32,HBITMAP32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
 INT16      SetDIBitsToDevice(HDC32,INT32,INT32,DWORD,DWORD,INT32,INT32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
-void       SetLastError(DWORD); /* FIXME: not 100% sure about that */
+VOID       SetLastError(DWORD); /* FIXME: not 100% sure it's only in win32 */
+VOID       SetLastErrorEx(DWORD,DWORD);
 VOID       SetRectRgn(HRGN32,INT32,INT32,INT32,INT32);
 WORD       SetWindowWord(HWND32,INT32,WORD);
 BOOL16     ShowCaret(HWND32);
@@ -3914,6 +3980,9 @@ HANDLE32   GetProp32W(HWND32,LPCWSTR);
 INT16      GetRgnBox16(HRGN16,LPRECT16);
 INT32      GetRgnBox32(HRGN32,LPRECT32);
 #define    GetRgnBox WINELIB_NAME(GetRgnBox)
+BOOL16     GetScrollInfo16(HWND16,INT16,LPSCROLLINFO16);
+BOOL32     GetScrollInfo32(HWND32,INT32,LPSCROLLINFO32);
+#define    GetScrollInfo WINELIB_NAME(GetScrollInfo)
 DWORD      GetShortPathName32A(LPCSTR,LPSTR,DWORD);
 DWORD      GetShortPathName32W(LPCWSTR,LPWSTR,DWORD);
 #define    GetShortPathName WINELIB_NAME_AW(GetShortPathName)
@@ -4309,6 +4378,9 @@ void       SetRect32(LPRECT32,INT32,INT32,INT32,INT32);
 void       SetRectEmpty16(LPRECT16);
 void       SetRectEmpty32(LPRECT32);
 #define    SetRectEmpty WINELIB_NAME(SetRectEmpty)
+INT16      SetScrollInfo16(HWND16,INT16,LPSCROLLINFO16,BOOL16);
+INT32      SetScrollInfo32(HWND32,INT32,LPSCROLLINFO32,BOOL32);
+#define    SetScrollInfo WINELIB_NAME(SetScrollInfo)
 HWND16     SetSysModalWindow16(HWND16);
 #define    SetSysModalWindow32(hwnd) ((HWND32)0)
 #define    SetSysModalWindow WINELIB_NAME(SetSysModalWindow)
@@ -4578,7 +4650,7 @@ INT        EnumFontFamilies(HDC,LPCSTR,FONTENUMPROC16,LPARAM);
 INT        EnumFonts(HDC,LPCSTR,FONTENUMPROC16,LPARAM);
 BOOL       EnumMetaFile(HDC,HMETAFILE16,MFENUMPROC16,LPARAM);
 INT        EnumObjects(HDC,INT,GOBJENUMPROC16,LPARAM);
-INT        Escape(HDC,INT,INT,LPCSTR,LPVOID);
+INT        Escape(HDC,INT,INT,SEGPTR,SEGPTR);
 int        ExcludeClipRect(HDC,short,short,short,short);
 int        ExcludeVisRect(HDC,short,short,short,short);
 BOOL       ExitWindows(DWORD,WORD);
@@ -4819,7 +4891,7 @@ HPALETTE16 SelectPalette(HDC,HPALETTE16,BOOL);
 int        SelectVisRgn(HDC,HRGN);
 WORD       SelectorAccessRights(WORD,WORD,WORD);
 HWND       SetActiveWindow(HWND);
-DWORD      SetBkColor(HDC,COLORREF);
+COLORREF   SetBkColor(HDC,COLORREF);
 WORD       SetBkMode(HDC,WORD);
 HWND       SetCapture(HWND);
 HANDLE     SetClipboardData(WORD,HANDLE);

@@ -97,22 +97,22 @@ static void SCROLL_LoadBitmaps(void)
 /***********************************************************************
  *           SCROLL_GetPtrScrollInfo
  */
-static SCROLLINFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, int nBar )
+static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, int nBar )
 {
-    SCROLLINFO *infoPtr;
+    SCROLLBAR_INFO *infoPtr;
 
     if (!wndPtr) return NULL;
     switch(nBar)
     {
-        case SB_HORZ: infoPtr = (SCROLLINFO *)wndPtr->pHScroll; break;
-        case SB_VERT: infoPtr = (SCROLLINFO *)wndPtr->pVScroll; break;
-        case SB_CTL:  infoPtr = (SCROLLINFO *)wndPtr->wExtra; break;
+        case SB_HORZ: infoPtr = (SCROLLBAR_INFO *)wndPtr->pHScroll; break;
+        case SB_VERT: infoPtr = (SCROLLBAR_INFO *)wndPtr->pVScroll; break;
+        case SB_CTL:  infoPtr = (SCROLLBAR_INFO *)wndPtr->wExtra; break;
         default:      return NULL;
     }
 
     if (!infoPtr)  /* Create the info structure if needed */
     {
-        if ((infoPtr = HeapAlloc( SystemHeap, 0, sizeof(SCROLLINFO) )))
+        if ((infoPtr = HeapAlloc( SystemHeap, 0, sizeof(SCROLLBAR_INFO) )))
         {
             infoPtr->MinVal = infoPtr->CurVal = 0;
             infoPtr->MaxVal = 100;
@@ -129,7 +129,7 @@ static SCROLLINFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, int nBar )
 /***********************************************************************
  *           SCROLL_GetScrollInfo
  */
-static SCROLLINFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
+static SCROLLBAR_INFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
 {
    WND *wndPtr = WIN_FindWndPtr( hwnd );
    return SCROLL_GetPtrScrollInfo( wndPtr, nBar );
@@ -195,7 +195,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT16 *lprect,
     
     if ((pixels -= 3*SYSMETRICS_CXVSCROLL+1) > 0)
     {
-        SCROLLINFO *info = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
+        SCROLLBAR_INFO *info = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
         if ((info->flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH)
             *thumbPos = 0;
         else if (info->MinVal == info->MaxVal)
@@ -215,7 +215,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT16 *lprect,
  * Compute the current scroll position based on the thumb position in pixels
  * from the top of the scroll-bar.
  */
-static UINT SCROLL_GetThumbVal( SCROLLINFO *infoPtr, RECT16 *rect,
+static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT16 *rect,
                                 BOOL vertical, WORD pos )
 {
     int pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
@@ -274,7 +274,7 @@ static enum SCROLL_HITTEST SCROLL_HitTest( HWND hwnd, int nBar, POINT16 pt )
  *
  * Draw the scroll bar arrows.
  */
-static void SCROLL_DrawArrows( HDC hdc, SCROLLINFO *infoPtr, RECT16 *rect,
+static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr, RECT16 *rect,
                                WORD arrowSize, BOOL vertical,
                                BOOL top_pressed, BOOL bottom_pressed )
 {
@@ -451,7 +451,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar )
     RECT16 rect;
     BOOL vertical;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    SCROLLINFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
+    SCROLLBAR_INFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
 
     if (!wndPtr || !infoPtr ||
         ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
@@ -482,7 +482,7 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, int nBar )
     BOOL vertical;
     HDC hdc;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    SCROLLINFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
+    SCROLLBAR_INFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
 
     if (!wndPtr || !infoPtr ||
         ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
@@ -552,7 +552,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
     RECT16 rect;
     HDC hdc;
 
-    SCROLLINFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
+    SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
     if (!infoPtr) return;
     if ((trackHitTest == SCROLL_NOWHERE) && (msg != WM_LBUTTONDOWN)) return;
 
@@ -827,7 +827,7 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
  */
 int SetScrollPos( HWND hwnd, int nBar, int nPos, BOOL bRedraw )
 {
-    SCROLLINFO *infoPtr;
+    SCROLLBAR_INFO *infoPtr;
     INT oldPos;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return 0;
@@ -849,7 +849,7 @@ int SetScrollPos( HWND hwnd, int nBar, int nPos, BOOL bRedraw )
  */
 int GetScrollPos( HWND hwnd, int nBar )
 {
-    SCROLLINFO *infoPtr;
+    SCROLLBAR_INFO *infoPtr;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return 0;
     return infoPtr->CurVal;
@@ -861,7 +861,7 @@ int GetScrollPos( HWND hwnd, int nBar )
  */
 void SetScrollRange(HWND hwnd, int nBar, int MinVal, int MaxVal, BOOL bRedraw)
 {
-    SCROLLINFO *infoPtr;
+    SCROLLBAR_INFO *infoPtr;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return;
 
@@ -889,7 +889,7 @@ void SetScrollRange(HWND hwnd, int nBar, int MinVal, int MaxVal, BOOL bRedraw)
 DWORD SCROLL_SetNCSbState(WND* wndPtr, int vMin, int vMax, int vPos,
 				       int hMin, int hMax, int hPos)
 {
-  SCROLLINFO  *infoPtr = SCROLL_GetPtrScrollInfo(wndPtr, SB_VERT);
+  SCROLLBAR_INFO  *infoPtr = SCROLL_GetPtrScrollInfo(wndPtr, SB_VERT);
  
   wndPtr->dwStyle |= (WS_VSCROLL | WS_HSCROLL);
 
@@ -919,7 +919,7 @@ DWORD SCROLL_SetNCSbState(WND* wndPtr, int vMin, int vMax, int vPos,
  */
 void GetScrollRange(HWND hwnd, int nBar, LPINT16 lpMin, LPINT16 lpMax)
 {
-    SCROLLINFO *infoPtr;
+    SCROLLBAR_INFO *infoPtr;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return;
     if (lpMin) *lpMin = infoPtr->MinVal;
@@ -997,7 +997,7 @@ void ShowScrollBar( HWND hwnd, WORD wBar, BOOL fShow )
  */
 BOOL EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
 {
-    SCROLLINFO *infoPtr;
+    SCROLLBAR_INFO *infoPtr;
     HDC hdc;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
@@ -1010,5 +1010,61 @@ BOOL EnableScrollBar( HWND hwnd, UINT nBar, UINT flags )
     hdc = (nBar == SB_CTL) ? GetDC(hwnd) : GetWindowDC(hwnd);
     SCROLL_DrawScrollBar( hwnd, hdc, nBar );
     ReleaseDC( hwnd, hdc );
+    return TRUE;
+}
+
+
+/*************************************************************************
+ *           SetScrollInfo32   (USER32.500)
+ */
+INT32 SetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO32 lpsi,
+                       BOOL32 bRedraw )
+{
+    SCROLLBAR_INFO *infoPtr;
+
+    if (!(infoPtr = SCROLL_GetScrollInfo(hwnd, nBar))) return 0;
+
+    if (lpsi->fMask & SIF_PAGE) {
+	/* fixme: The page size isn't used in the current
+	 * scrolling code - it's new for win32
+	 */
+	infoPtr->Page = lpsi->nPage;
+    }
+    if (lpsi->fMask & SIF_POS)
+        SetScrollPos(hwnd, nBar, lpsi->nPos, FALSE);
+    if (lpsi->fMask & SIF_RANGE)
+        SetScrollRange(hwnd, nBar, lpsi->nMin, lpsi->nMax, FALSE);
+    if (lpsi->fMask & SIF_DISABLENOSCROLL) {
+	/* fixme: Disable scroll bar if the new parameters make
+	 * the scroll bar unneeded
+	 */
+	dprintf_scroll(stddeb, "SetScrollInfo: SIF_DISABLENOSCROLL not supported yet\n");
+    }
+
+    if (bRedraw) SCROLL_RefreshScrollBar(hwnd, nBar);
+
+    /* return current thumb position */
+    return (infoPtr->CurVal);
+}
+
+
+/*************************************************************************
+ *           GetScrollInfo32   (USER32.283)
+ */
+BOOL32 GetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO32 lpsi )
+{
+    SCROLLBAR_INFO *infoPtr;
+
+    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
+
+    if (lpsi->fMask & SIF_PAGE) lpsi->nPage = infoPtr->Page;
+    if (lpsi->fMask & SIF_POS) lpsi->nPos = infoPtr->CurVal;
+    if (lpsi->fMask & SIF_TRACKPOS)
+        lpsi->nTrackPos = hwndTracking ? uTrackingPos : 0;
+    if (lpsi->fMask & SIF_RANGE)
+    {
+	lpsi->nMin = infoPtr->MinVal;
+	lpsi->nMax = infoPtr->MaxVal;
+    }
     return TRUE;
 }

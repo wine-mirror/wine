@@ -890,3 +890,18 @@ BOOL32 GlobalUnlock32( HGLOBAL32 handle )
 {
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           GlobalMemoryStatus   (KERNEL32.327)
+ */
+VOID GlobalMemoryStatus( LPMEMORYSTATUS lpmem )
+{
+    /* FIXME: should do something like MemManInfo() here */
+    lpmem->dwMemoryLoad    = 0;
+    lpmem->dwTotalPhys     = 16*1024*1024;
+    lpmem->dwAvailPhys     = 16*1024*1024;
+    lpmem->dwTotalPageFile = 0;
+    lpmem->dwAvailPageFile = 16*1024*1024;
+    lpmem->dwAvailVirtual  = 16*1024*1024;
+}

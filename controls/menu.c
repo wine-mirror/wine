@@ -751,11 +751,13 @@ static BOOL MENU_SwitchTPWndTo( HTASK hTask)
  *
  * Display a popup menu.
  */
-static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
+static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y, 
+						        int xanchor, int yanchor)
 {
     POPUPMENU 	*menu;
     WND 	*wndPtr = NULL;
     BOOL	 skip_init = 0;
+    UINT	 width, height;
 
     if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu ))) return FALSE;
     if (menu->FocusedItem != NO_SELECTED_ITEM)
@@ -767,6 +769,31 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
 		 MAKELONG( id, (menu->wFlags & MF_SYSMENU) ? 1 : 0 ));
     MENU_PopupMenuCalcSize( menu, hwndOwner );
 
+    /* adjust popup menu pos so that it fits within the desktop */
+
+    width = menu->Width + 2*SYSMETRICS_CXBORDER;
+    height = menu->Height + 2*SYSMETRICS_CYBORDER; 
+
+    if( x + width > SYSMETRICS_CXSCREEN )
+    {
+	if( xanchor )
+            x -= width - xanchor;
+        if( x + width > SYSMETRICS_CXSCREEN)
+	    x = SYSMETRICS_CXSCREEN - width;
+    }
+    if( x < 0 )
+         x = 0;
+
+    if( y + height > SYSMETRICS_CYSCREEN )
+    { 
+	if( yanchor )
+	    y -= height + yanchor;
+	if( y + height > SYSMETRICS_CYSCREEN )
+	    y = SYSMETRICS_CYSCREEN - height;
+    }
+    if( y < 0 )
+	y = 0;
+
     wndPtr = WIN_FindWndPtr( hwndOwner );
     if (!wndPtr) return FALSE;
 
@@ -774,8 +801,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
     {
 	pTopPWnd = WIN_FindWndPtr(CreateWindow16( POPUPMENU_CLASS_ATOM, NULL,
                                           WS_POPUP | WS_BORDER, x, y,
-                                          menu->Width + 2*SYSMETRICS_CXBORDER,
-                                          menu->Height + 2*SYSMETRICS_CYBORDER,
+                                          width, height,
                                           0, 0, wndPtr->hInstance,
                                           (LPVOID)(HMENU32)hmenu ));
 	if (!pTopPWnd) return FALSE;
@@ -787,8 +813,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
 	/* create new window for the submenu */
 	HWND  hWnd = CreateWindow16( POPUPMENU_CLASS_ATOM, NULL,
                                    WS_POPUP | WS_BORDER, x, y,
-                                   menu->Width + 2*SYSMETRICS_CXBORDER,
-                                   menu->Height + 2*SYSMETRICS_CYBORDER,
+				   width, height,
                                    menu->hWnd, 0, wndPtr->hInstance,
                                    (LPVOID)(HMENU32)hmenu );
 	if( !hWnd ) return FALSE;
@@ -808,8 +833,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y)
 
     wndPtr = WIN_FindWndPtr( menu->hWnd );
 
-    SetWindowPos(menu->hWnd, 0, x, y, menu->Width + 2*SYSMETRICS_CXBORDER, 
-				      menu->Height + 2*SYSMETRICS_CYBORDER,
+    SetWindowPos(menu->hWnd, 0, x, y, width, height,
 		  		      SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOREDRAW);
       /* Display the window */
 
@@ -1164,7 +1188,8 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu, BOOL selectFirst )
     if (menu->FocusedItem == SYSMENU_SELECTED)
     {
 	MENU_ShowPopup(hwndOwner, wndPtr->hSysMenu, 0, wndPtr->rectClient.left,
-		wndPtr->rectClient.top - menu->Height - 2*SYSMETRICS_CYBORDER);
+		wndPtr->rectClient.top - menu->Height - 2*SYSMETRICS_CYBORDER,
+		SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE );
 	if (selectFirst) MENU_SelectItemRel( hwndOwner, wndPtr->hSysMenu, ITEM_NEXT );
 	return wndPtr->hSysMenu;
     }
@@ -1176,13 +1201,16 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu, BOOL selectFirst )
     {
 	MENU_ShowPopup( hwndOwner, (HMENU)item->item_id, menu->FocusedItem,
 		 wndPtr->rectWindow.left + item->rect.right-arrow_bitmap_width,
-		 wndPtr->rectWindow.top + item->rect.top );
+		 wndPtr->rectWindow.top + item->rect.top,
+		 item->rect.left - item->rect.right + 2*arrow_bitmap_width, 
+		 item->rect.top - item->rect.bottom );
     }
     else
     {
 	MENU_ShowPopup( hwndOwner, (HMENU)item->item_id, menu->FocusedItem,
 		        wndPtr->rectWindow.left + item->rect.left,
-		        wndPtr->rectWindow.top + item->rect.bottom );
+		        wndPtr->rectWindow.top + item->rect.bottom,
+			item->rect.right - item->rect.left, item->rect.bottom - item->rect.top );
     }
     if (selectFirst) MENU_SelectItemRel( hwndOwner, (HMENU)item->item_id, ITEM_NEXT );
     return (HMENU)item->item_id;
@@ -1451,7 +1479,8 @@ static LRESULT MENU_DoNextMenu( HWND* hwndOwner, HMENU* hmenu, HMENU *hmenuCurre
 	  else
 	  { 
 	     if( NC_GetSysPopupPos( wndPtr, &rect ) )
-	         MENU_ShowPopup( *hwndOwner, *hmenu, 0, rect.left, rect.bottom );
+	         MENU_ShowPopup( *hwndOwner, *hmenu, 0, rect.left, rect.bottom,
+		 SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE );
 
              if( !IsIconic( *hwndOwner ) )
              {
@@ -1837,7 +1866,7 @@ BOOL16 TrackPopupMenu16( HMENU16 hMenu, UINT16 wFlags, INT16 x, INT16 y,
     BOOL ret = FALSE;
 
     HideCaret(0);
-    if (MENU_ShowPopup( hWnd, hMenu, 0, x, y )) 
+    if (MENU_ShowPopup( hWnd, hMenu, 0, x, y, 0, 0 )) 
 	ret = MENU_TrackMenu( hMenu, wFlags, 0, 0, hWnd, lpRect );
     ShowCaret(0);
     return ret;

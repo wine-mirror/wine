@@ -15,9 +15,9 @@ typedef struct
     INT   CurVal;   /* Current scroll-bar value */
     INT   MinVal;   /* Minimum scroll-bar value */
     INT   MaxVal;   /* Maximum scroll-bar value */
-    WORD  unused;   /* Unused word, for MS-Windows compatibility */
+    INT   Page;     /* Page size of scroll bar (Win32) */
     WORD  flags;    /* EnableScrollBar flags */
-} SCROLLINFO;
+} SCROLLBAR_INFO;
 
 extern LONG ScrollBarWndProc( HWND hwnd, WORD uMsg, WORD wParam, LONG lParam );
 extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar );

@@ -45,7 +45,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
                         s_word s_word long) StretchBlt
 36  pascal16 Polygon (word ptr word) Polygon16
 37  pascal16 Polyline (word ptr word) Polyline16
-38  pascal Escape(word word word ptr ptr) Escape
+38  pascal Escape(word word word segptr segptr) Escape
 39  pascal16 RestoreDC(word s_word) RestoreDC
 40  pascal16 FillRgn(word word word) FillRgn
 41  pascal16 FrameRgn(word word word word word) FrameRgn
@@ -141,6 +141,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 154 pascal GetNearestColor(word long) GetNearestColor
 155 stub QueryAbort
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap
+158 pascal16 EnumCallback(ptr ptr word long) WineEnumDFontCallback
 159 pascal16 GetMetaFileBits(word) GetMetaFileBits
 160 pascal16 SetMetaFileBits(word) SetMetaFileBits
 161 pascal16 PtInRegion(word s_word s_word) PtInRegion
@@ -180,20 +181,20 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 218 stub DMSTRETCHDIBITS
 219 stub DMSETDIBTODEV
 220 stub DMTRANSPOSE
-230 stub CREATEPQ
-231 stub MINPQ
-232 stub EXTRACTPQ
-233 stub INSERTPQ
-234 stub SIZEPQ
-235 stub DELETEPQ
-240 stub OPENJOB
-241 stub WRITESPOOL
-242 stub WRITEDIALOG
-243 stub CLOSEJOB
-244 stub DELETEJOB
-245 stub GetSpoolJob
-246 stub StartSpoolPage
-247 stub EndSpoolPage
+230 pascal16 CreatePQ(word) CreatePQ
+231 pascal16 MinPQ(word) MinPQ
+232 pascal16 ExtractPQ(word) ExtractPQ
+233 pascal16 InsertPQ(word word word) InsertPQ
+234 pascal16 SizePQ(word word) SizePQ
+235 pascal16 DeletePQ(word) DeletePQ
+240 pascal16 OpenJob(ptr ptr word) OpenJob
+241 pascal16 WriteSpool(word ptr word) WriteSpool
+242 pascal16 WriteDialog(word ptr word) WriteDialog
+243 pascal16 CloseJob(word) CloseJob
+244 pascal16 DeleteJob(word word) DeleteJob
+245 pascal GetSpoolJob(word ptr) GetSpoolJob
+246 pascal16 StartSpoolPage(word) StartSpoolPage
+247 pascal16 EndSpoolPage(word) EndSpoolPage
 248 stub QueryJob
 250 pascal16 Copy(ptr ptr word) Copy
 253 stub DeleteSpoolPage
@@ -206,8 +207,8 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 272 stub EndDocPrinter
 274 stub ClosePrinter
 280 stub GetRealDriverInfo
-281 stub DrvSetPrinterData
-282 stub DrvGetPrinterData
+281 pascal DrvSetPrinterData(ptr ptr ptr ptr long) DrvSetPrinterData
+282 pascal DrvGetPrinterData(ptr ptr ptr ptr long ptr) DrvGetPrinterData
 299 stub ENGINEGETCHARWIDTHEX
 300 stub ENGINEENUMERATEFONT
 301 stub ENGINEDELETEFONT

@@ -329,7 +329,7 @@ base	1
 0324 stdcall GlobalGetAtomNameW(long ptr long) GlobalGetAtomName32W
 0325 stdcall GlobalHandle(ptr) GlobalHandle32
 0326 stdcall GlobalLock(long) GlobalLock32
-0327 stub GlobalMemoryStatus
+0327 stdcall GlobalMemoryStatus(ptr) GlobalMemoryStatus
 0328 stdcall GlobalReAlloc(long long long) GlobalReAlloc32
 0329 stdcall GlobalSize(long) GlobalSize32
 0330 stub GlobalUnWire
@@ -417,7 +417,7 @@ base	1
 0412 stub PurgeComm
 0413 stub QueryDosDeviceA
 0414 stub QueryDosDeviceW
-0415 stub QueryPerformanceCounter
+0415 stdcall QueryPerformanceCounter(ptr) QueryPerformanceCounter
 0416 stub QueryPerformanceFrequency
 0417 stub QueryWin31IniFilesMappedToRegistry
 0418 stdcall RaiseException(long long long ptr) RaiseException

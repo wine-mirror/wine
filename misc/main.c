@@ -892,13 +892,15 @@ int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
 {
     WORD       nCount;
     LPENVENTRY lpEnv = lpEnvList;
+
     dprintf_env(stddeb, "GetEnvironment('%s', '%s', %d) !\n",
 		lpPortName, lpEnviron, nMaxSiz);
     while (lpEnv != NULL) {
 	if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
+	    if( lpEnviron == NULL ) return lpEnv->wSize;
 	    nCount = MIN(nMaxSiz, lpEnv->wSize);
-	    memcpy(lpEnviron, lpEnv->Value, nCount);
-	    dprintf_env(stddeb, "GetEnvironment() // found '%s' !\n", lpEnviron);
+            memcpy(lpEnviron, lpEnv->Value, nCount);
+	    dprintf_env(stddeb, "GetEnvironment() // found '%s' !\n", lpEnv->Value);
 	    return nCount;
 	}
 	lpEnv = lpEnv->Next;

@@ -360,20 +360,21 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	}
     }
   /* read filter information */
-  pstr = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFilter);
-  n = 0;
-  while(*pstr)
-    {
-      dprintf_commdlg(stddeb,"lpstrFilter // add str='%s' ", pstr);
-      i = SendDlgItemMessage16(hWnd, cmb1, CB_ADDSTRING, 0,
-                               (LPARAM)lpofn->lpstrFilter + n );
-      n += strlen(pstr) + 1;
-      pstr += strlen(pstr) + 1;
-      dprintf_commdlg(stddeb,"associated to '%s'\n", pstr);
-      SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA, i, (LPARAM)pstr);
-      n += strlen(pstr) + 1;
-      pstr += strlen(pstr) + 1;
-    }
+  if (lpofn->lpstrFilter) {
+	pstr = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFilter);
+	n = 0;
+	while(*pstr) {
+	  dprintf_commdlg(stddeb,"lpstrFilter // add str='%s' ", pstr);
+	  i = SendDlgItemMessage16(hWnd, cmb1, CB_ADDSTRING, 0,
+				       (LPARAM)lpofn->lpstrFilter + n );
+	  n += strlen(pstr) + 1;
+	  pstr += strlen(pstr) + 1;
+	  dprintf_commdlg(stddeb,"associated to '%s'\n", pstr);
+	  SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA, i, (LPARAM)pstr);
+	  n += strlen(pstr) + 1;
+	  pstr += strlen(pstr) + 1;
+	}
+  }
   /* set default filter */
   if (lpofn->nFilterIndex == 0 && lpofn->lpstrCustomFilter == (SEGPTR)NULL)
   	lpofn->nFilterIndex = 1;

@@ -614,10 +614,10 @@ BOOL MSG_InternalGetMessage( MSG16 *msg, HWND hwnd, HWND hwndOwner, short code,
             {
                 BOOL32 ret;
                 *pmsg = *msg;
-                ret = (HOOK_CallHooks( WH_SYSMSGFILTER, code, 0,
-                                       (LPARAM)SEGPTR_GET(pmsg) ) ||
-                       HOOK_CallHooks( WH_MSGFILTER, code, 0,
-                                       (LPARAM)SEGPTR_GET(pmsg) ));
+                ret = ((BOOL16)HOOK_CallHooks( WH_SYSMSGFILTER, code, 0,
+                                               (LPARAM)SEGPTR_GET(pmsg) ) ||
+                       (BOOL16)HOOK_CallHooks( WH_MSGFILTER, code, 0,
+                                               (LPARAM)SEGPTR_GET(pmsg) ));
                 SEGPTR_FREE(pmsg);
                 if (ret)
                 {
