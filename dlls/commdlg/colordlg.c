@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
 
-static LRESULT WINAPI ColorDlgProc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam );
+static INT_PTR CALLBACK ColorDlgProc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam );
 
 #define CONV_LPARAMTOPOINT(lp,p) do { (p)->x = SLOWORD(lp); (p)->y = SHIWORD(lp); } while(0)
 
@@ -1239,7 +1239,7 @@ static LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam )
  *           ColorDlgProc32 [internal]
  *
  */
-static LRESULT WINAPI ColorDlgProc( HWND hDlg, UINT message,
+static INT_PTR CALLBACK ColorDlgProc( HWND hDlg, UINT message,
                                    WPARAM wParam, LPARAM lParam )
 {
 
@@ -1302,10 +1302,10 @@ static LRESULT WINAPI ColorDlgProc( HWND hDlg, UINT message,
 /***********************************************************************
  *           ColorDlgProc   (COMMDLG.8)
  */
-LRESULT WINAPI ColorDlgProc16( HWND16 hDlg16, UINT16 message,
+BOOL16 CALLBACK ColorDlgProc16( HWND16 hDlg16, UINT16 message,
                             WPARAM16 wParam, LONG lParam )
 {
- int res;
+ BOOL16 res;
  HWND hDlg = HWND_32(hDlg16);
 
  LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
@@ -1506,7 +1506,7 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
     }
 
     bRet = DialogBoxIndirectParamW(COMMDLG_hInstance32, template, lpChCol->hwndOwner,
-                     (DLGPROC)ColorDlgProc, (DWORD)lpChCol);
+                     ColorDlgProc, (DWORD)lpChCol);
     return bRet;
 }
 

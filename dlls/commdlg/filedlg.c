@@ -89,12 +89,12 @@ static char defaultsave[]="Save as";
  *
  */
 
-LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+BOOL16 CALLBACK FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 				 LPARAM lParam);
-LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+BOOL16 CALLBACK FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 				 LPARAM lParam);
 
-static LRESULT WINAPI FileOpenDlgProc(HWND hDlg, UINT msg,
+static INT_PTR CALLBACK FileOpenDlgProc(HWND hDlg, UINT msg,
                                       WPARAM wParam, LPARAM lParam);
 
 /***********************************************************************
@@ -1301,7 +1301,7 @@ BOOL WINAPI GetFileName31A(
     {
         hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
         bRet = DialogBoxIndirectParamA( hInst, lfs->template, lpofn->hwndOwner,
-             (DLGPROC) FileOpenDlgProc, (DWORD) lfs);
+                                        FileOpenDlgProc, (LPARAM)lfs);
         FILEDLG_DestroyPrivate(lfs);
     }
 
@@ -1331,7 +1331,7 @@ BOOL WINAPI GetFileName31W(
     {
         hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
         bRet = DialogBoxIndirectParamW( hInst, lfs->template, lpofn->hwndOwner,
-             (DLGPROC) FileOpenDlgProc, (DWORD) lfs);
+                                        FileOpenDlgProc, (LPARAM)lfs);
         FILEDLG_DestroyPrivate(lfs);
     }
 
@@ -1345,7 +1345,7 @@ BOOL WINAPI GetFileName31W(
 /***********************************************************************
  *           FileOpenDlgProc   (COMMDLG.6)
  */
-LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
+BOOL16 CALLBACK FileOpenDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
 {
     HWND hWnd = HWND_32(hWnd16);
@@ -1394,7 +1394,7 @@ LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
 /***********************************************************************
  *           FileSaveDlgProc   (COMMDLG.7)
  */
-LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
+BOOL16 CALLBACK FileSaveDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
 {
  HWND hWnd = HWND_32(hWnd16);
@@ -1446,7 +1446,7 @@ LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
  *           FileOpenDlgProc                                    [internal]
  *      Used for open and save, in fact.
  */
-static LRESULT WINAPI FileOpenDlgProc(HWND hWnd, UINT wMsg,
+static INT_PTR CALLBACK FileOpenDlgProc(HWND hWnd, UINT wMsg,
                                       WPARAM wParam, LPARAM lParam)
 {
     LFSPRIVATE lfs = (LFSPRIVATE)GetPropA(hWnd,OFN_PROP);
@@ -1454,8 +1454,8 @@ static LRESULT WINAPI FileOpenDlgProc(HWND hWnd, UINT wMsg,
     TRACE("msg=%x wparam=%x lParam=%lx\n", wMsg, wParam, lParam);
     if ((wMsg != WM_INITDIALOG) && lfs && lfs->hook)
         {
-            LRESULT lRet;
-            lRet  = (BOOL)FILEDLG_CallWindowProc(lfs, wMsg, wParam, lParam);
+            INT_PTR lRet;
+            lRet  = (INT_PTR)FILEDLG_CallWindowProc(lfs, wMsg, wParam, lParam);
             if (lRet)
                 return lRet;         /* else continue message processing */
         }
@@ -1522,7 +1522,7 @@ BOOL16 WINAPI GetOpenFileName16(
         hInst = GetWindowLongA( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 6);
         bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner,
-             (DLGPROC16) ptr, (DWORD) lfs);
+                                         (DLGPROC16) ptr, (LPARAM) lfs);
         FILEDLG_DestroyPrivate(lfs);
     }
 
@@ -1560,7 +1560,7 @@ BOOL16 WINAPI GetSaveFileName16(
         hInst = GetWindowLongA( HWND_32(lpofn->hwndOwner), GWL_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 7);
         bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner,
-             (DLGPROC16) ptr, (DWORD) lfs);
+                                         (DLGPROC16) ptr, (LPARAM) lfs);
         FILEDLG_DestroyPrivate(lfs);
     }
 

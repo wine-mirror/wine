@@ -347,7 +347,7 @@ UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
  *		keybd_event (USER32.@)
  */
 void WINAPI keybd_event( BYTE bVk, BYTE bScan,
-                         DWORD dwFlags, DWORD dwExtraInfo )
+                         DWORD dwFlags, ULONG_PTR dwExtraInfo )
 {
     INPUT input;
 
@@ -380,7 +380,7 @@ void WINAPI keybd_event16( CONTEXT86 *context )
  *		mouse_event (USER32.@)
  */
 void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
-                         DWORD dwData, DWORD dwExtraInfo )
+                         DWORD dwData, ULONG_PTR dwExtraInfo )
 {
     INPUT input;
 

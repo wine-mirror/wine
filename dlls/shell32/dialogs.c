@@ -46,7 +46,7 @@ typedef struct
 typedef BOOL (*LPFNOFN) (OPENFILENAMEA *) ;
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
-BOOL CALLBACK RunDlgProc (HWND, UINT, WPARAM, LPARAM) ;
+INT_PTR CALLBACK RunDlgProc (HWND, UINT, WPARAM, LPARAM) ;
 void FillList (HWND, char *) ;
 
 
@@ -109,7 +109,7 @@ void WINAPI RunFileDlg(
 }
 
 /* Dialog procedure for RunFileDlg */
-BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     int ic ;
     char *psz, szMsg[256] ;

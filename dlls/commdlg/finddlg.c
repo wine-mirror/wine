@@ -45,9 +45,9 @@ struct FRPRIVATE
 
 #define LFRPRIVATE struct FRPRIVATE *
 
-LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+BOOL16 CALLBACK FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                  LPARAM lParam);
-LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+BOOL16 CALLBACK ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 				    LPARAM lParam);
 
 /***********************************************************************
@@ -312,7 +312,7 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam,
 /***********************************************************************
  *           FindTextDlgProc   (COMMDLG.13)
  */
-LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
+BOOL16 CALLBACK FindTextDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
                                  LPARAM lParam)
 {
     HWND hWnd = HWND_32(hWnd16);
@@ -469,7 +469,7 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam,
 /***********************************************************************
  *           ReplaceTextDlgProc   (COMMDLG.14)
  */
-LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
+BOOL16 CALLBACK ReplaceTextDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
                                     LPARAM lParam)
 {
     HWND hWnd = HWND_32(hWnd16);

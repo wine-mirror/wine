@@ -188,7 +188,7 @@ WORD WINAPI PSDRV_AdvancedSetupDialog16(HWND16 hwnd, HANDLE16 hDriver,
  *
  * Dialog proc for 'Paper' propsheet
  */
-BOOL WINAPI PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
+INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			       lParam)
 {
   PSDRV_DLGINFO *di;

@@ -579,9 +579,9 @@ static HWND hDlgCopy = 0;
 static HKEY hKeyFiles = 0, hKeyRename = 0, hKeyConflict = 0;
 static char BackupDir[12];
 
-static BOOL CALLBACK VCP_UI_FileCopyDlgProc(HWND hWndDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK VCP_UI_FileCopyDlgProc(HWND hWndDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
-    BOOL retval = FALSE;
+    INT_PTR retval = FALSE;
 
     if (iMsg == WM_INITDIALOG)
     {

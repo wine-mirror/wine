@@ -263,7 +263,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
  *
  * Dialog procedure for message boxes.
  */
-static BOOL CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
+static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
                                         WPARAM wParam, LPARAM lParam )
 {
   HFONT hFont;

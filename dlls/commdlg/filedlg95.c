@@ -213,7 +213,7 @@ static void *MemAlloc(UINT size);
 static void MemFree(void *mem);
 
 BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos);
-HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
@@ -284,7 +284,7 @@ BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
     lRes = DialogBoxIndirectParamA(COMMDLG_hInstance32,
                                   (LPDLGTEMPLATEA) template,
                                   fodInfos->ofnInfos->hwndOwner,
-                                  (DLGPROC) FileOpenDlgProc95,
+                                  FileOpenDlgProc95,
                                   (LPARAM) fodInfos);
 
     /* Unable to create the dialog */
@@ -642,7 +642,7 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
 }
 
 
-HRESULT WINAPI FileOpenDlgProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK FileOpenDlgProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(GetParent(hwnd),FileOpenDlgInfosStr);
 
@@ -729,7 +729,7 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
       }
 
       hChildDlg= CreateDialogIndirectParamA(hinst, template,
-           hwnd,(DLGPROC)FileOpenDlgProcUserTemplate,(LPARAM)fodInfos);
+           hwnd, FileOpenDlgProcUserTemplate, (LPARAM)fodInfos);
       if(hChildDlg)
       {
         ShowWindow(hChildDlg,SW_SHOW);
@@ -752,8 +752,8 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
       temp.tmplate.cx = rectHwnd.right-rectHwnd.left;
       temp.tmplate.cy = rectHwnd.bottom-rectHwnd.top;
       temp.menu = temp.class = temp.title = 0;
-      hChildDlg = CreateDialogIndirectParamA(fodInfos->ofnInfos->hInstance,&temp,
-                  hwnd,(DLGPROC)FileOpenDlgProcUserTemplate,(LPARAM)fodInfos);
+      hChildDlg = CreateDialogIndirectParamA(fodInfos->ofnInfos->hInstance,&temp.tmplate,
+                  hwnd, FileOpenDlgProcUserTemplate, (LPARAM)fodInfos);
       return hChildDlg;
     }
     return (HWND)NULL;
@@ -858,7 +858,7 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
  *
  * File open dialog procedure
  */
-HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 #if 0
   TRACE("0x%04x 0x%04x\n", hwnd, uMsg);

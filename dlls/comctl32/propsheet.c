@@ -170,7 +170,7 @@ static PADDING_INFO PROPSHEET_GetPaddingInfoWizard(HWND hwndDlg, const PropSheet
 static BOOL PROPSHEET_IsDialogMessage(HWND hwnd, LPMSG lpMsg);
 static BOOL PROPSHEET_DoCommand(HWND hwnd, WORD wID);
 
-BOOL WINAPI
+INT_PTR CALLBACK
 PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 WINE_DEFAULT_DEBUG_CHANNEL(propsheet);
@@ -592,13 +592,13 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
       ret = DialogBoxIndirectParamW(psInfo->ppshheader.hInstance,
                                     (LPDLGTEMPLATEW) temp,
                                     psInfo->ppshheader.hwndParent,
-                                    (DLGPROC) PROPSHEET_DialogProc,
+                                    PROPSHEET_DialogProc,
                                     (LPARAM)psInfo);
   else
       ret = CreateDialogIndirectParamW(psInfo->ppshheader.hInstance,
                                        (LPDLGTEMPLATEW) temp,
                                        psInfo->ppshheader.hwndParent,
-                                       (DLGPROC) PROPSHEET_DialogProc,
+                                       PROPSHEET_DialogProc,
                                        (LPARAM)psInfo) ? TRUE : FALSE;
 
   COMCTL32_Free(temp);
@@ -2662,7 +2662,7 @@ static BOOL PROPSHEET_DoCommand(HWND hwnd, WORD wID)
 /******************************************************************************
  *            PROPSHEET_DialogProc
  */
-BOOL WINAPI
+INT_PTR CALLBACK
 PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n",

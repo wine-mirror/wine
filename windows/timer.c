@@ -111,7 +111,7 @@ void TIMER_RemoveThreadTimers(void)
 /***********************************************************************
  *           TIMER_SetTimer
  */
-static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
+static UINT_PTR TIMER_SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
                               WNDPROC16 proc, WINDOWPROCTYPE type, BOOL sys )
 {
     int i;
@@ -195,7 +195,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
 /***********************************************************************
  *           TIMER_KillTimer
  */
-static BOOL TIMER_KillTimer( HWND hwnd, UINT id, BOOL sys )
+static BOOL TIMER_KillTimer( HWND hwnd, UINT_PTR id, BOOL sys )
 {
     int i;
     TIMER * pTimer;
@@ -252,7 +252,7 @@ UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 /***********************************************************************
  *		SetTimer (USER32.@)
  */
-UINT WINAPI SetTimer( HWND hwnd, UINT id, UINT timeout,
+UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
                           TIMERPROC proc )
 {
     TRACE("%04x %d %d %08lx\n",
@@ -264,7 +264,7 @@ UINT WINAPI SetTimer( HWND hwnd, UINT id, UINT timeout,
 /***********************************************************************
  *           TIMER_IsTimerValid
  */
-BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc )
+BOOL TIMER_IsTimerValid( HWND hwnd, UINT_PTR id, HWINDOWPROC hProc )
 {
     int i;
     TIMER *pTimer;
@@ -302,7 +302,7 @@ UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 /***********************************************************************
  *		SetSystemTimer (USER32.@)
  */
-UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
+UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout,
                                 TIMERPROC proc )
 {
     TRACE("%04x %d %d %08lx\n",
@@ -314,7 +314,7 @@ UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
 /***********************************************************************
  *		KillTimer (USER32.@)
  */
-BOOL WINAPI KillTimer( HWND hwnd, UINT id )
+BOOL WINAPI KillTimer( HWND hwnd, UINT_PTR id )
 {
     TRACE("%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
@@ -324,7 +324,7 @@ BOOL WINAPI KillTimer( HWND hwnd, UINT id )
 /***********************************************************************
  *		KillSystemTimer (USER32.@)
  */
-BOOL WINAPI KillSystemTimer( HWND hwnd, UINT id )
+BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 {
     TRACE("%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );

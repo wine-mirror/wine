@@ -338,7 +338,7 @@ static void SERIALUI_DialogInfoToDCB(HWND hDlg, SERIALUI_DialogInfo *info)
  *
  * Shows a dialog for configuring a COMM port
  */
-BOOL WINAPI SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     CHAR szTitle[30];
     SERIALUI_DialogInfo *info;
@@ -423,7 +423,7 @@ BOOL WINAPI SERIALUI_CommConfigDialog(
     return DialogBoxParamA(SERIALUI_hModule,
                            MAKEINTRESOURCEA(IDD_SERIALUICONFIG),
                            hWndParent,
-                           (DLGPROC) SERIALUI_ConfigDialogProc,
+                           SERIALUI_ConfigDialogProc,
                            (LPARAM)&info);
 }
 

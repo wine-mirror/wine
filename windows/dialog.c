@@ -686,7 +686,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
  *       (it's more compatible to do it here, as under Windows the owner
  *       is never disabled if the dialog fails because of an invalid template)
  */
-static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
+static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
                                    HWND owner, DLGPROC dlgProc, LPARAM param,
                                    WINDOWPROCTYPE procType, BOOL modal )
 {
@@ -982,7 +982,7 @@ HWND16 WINAPI CreateDialogIndirectParam16( HINSTANCE16 hInst,
  *		CreateDialogIndirectParamA (USER32.@)
  */
 HWND WINAPI CreateDialogIndirectParamA( HINSTANCE hInst,
-                                            LPCVOID dlgTemplate,
+                                            LPCDLGTEMPLATEA dlgTemplate,
                                             HWND owner, DLGPROC dlgProc,
                                             LPARAM param )
 {
@@ -1004,7 +1004,7 @@ HWND WINAPI CreateDialogIndirectParamAorW( HINSTANCE hInst,
  *		CreateDialogIndirectParamW (USER32.@)
  */
 HWND WINAPI CreateDialogIndirectParamW( HINSTANCE hInst,
-                                            LPCVOID dlgTemplate,
+                                            LPCDLGTEMPLATEW dlgTemplate,
                                             HWND owner, DLGPROC dlgProc,
                                             LPARAM param )
 {
@@ -1096,7 +1096,7 @@ INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, LPCSTR template,
 /***********************************************************************
  *		DialogBoxParamA (USER32.@)
  */
-INT WINAPI DialogBoxParamA( HINSTANCE hInst, LPCSTR name,
+INT_PTR WINAPI DialogBoxParamA( HINSTANCE hInst, LPCSTR name,
                                 HWND owner, DLGPROC dlgProc, LPARAM param )
 {
     HWND hwnd;
@@ -1112,7 +1112,7 @@ INT WINAPI DialogBoxParamA( HINSTANCE hInst, LPCSTR name,
 /***********************************************************************
  *		DialogBoxParamW (USER32.@)
  */
-INT WINAPI DialogBoxParamW( HINSTANCE hInst, LPCWSTR name,
+INT_PTR WINAPI DialogBoxParamW( HINSTANCE hInst, LPCWSTR name,
                                 HWND owner, DLGPROC dlgProc, LPARAM param )
 {
     HWND hwnd;
@@ -1157,7 +1157,7 @@ INT16 WINAPI DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
 /***********************************************************************
  *		DialogBoxIndirectParamA (USER32.@)
  */
-INT WINAPI DialogBoxIndirectParamA(HINSTANCE hInstance, LPCVOID template,
+INT_PTR WINAPI DialogBoxIndirectParamA(HINSTANCE hInstance, LPCDLGTEMPLATEA template,
                                        HWND owner, DLGPROC dlgProc,
                                        LPARAM param )
 {
@@ -1171,7 +1171,7 @@ INT WINAPI DialogBoxIndirectParamA(HINSTANCE hInstance, LPCVOID template,
 /***********************************************************************
  *		DialogBoxIndirectParamW (USER32.@)
  */
-INT WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCVOID template,
+INT_PTR WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATEW template,
                                        HWND owner, DLGPROC dlgProc,
                                        LPARAM param )
 {
@@ -1184,7 +1184,7 @@ INT WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCVOID template,
 /***********************************************************************
  *		DialogBoxIndirectParamAorW (USER32.@)
  */
-INT WINAPI DialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCVOID template,
+INT_PTR WINAPI DialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCVOID template,
                                        HWND owner, DLGPROC dlgProc,
                                        LPARAM param, DWORD x )
 {
@@ -1199,7 +1199,7 @@ INT WINAPI DialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCVOID template,
 /***********************************************************************
  *		EndDialog (USER32.@)
  */
-BOOL WINAPI EndDialog( HWND hwnd, INT retval )
+BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
 {
     BOOL wasEnabled = TRUE;
     DIALOGINFO * dlgInfo;

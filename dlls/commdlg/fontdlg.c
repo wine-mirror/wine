@@ -42,11 +42,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 static HBITMAP16 hBitmapTT = 0;
 
 
-LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
+INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 				  LPARAM lParam);
-LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
+INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
 				  LPARAM lParam);
-LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
+BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
                                    LPARAM lParam);
 
 static void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 )
@@ -281,7 +281,7 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
   if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS | CF_ENABLETEMPLATE |
     CF_ENABLETEMPLATEHANDLE)) FIXME(": unimplemented flag (ignored)\n");
   return DialogBoxIndirectParamA(COMMDLG_hInstance32, template,
-            lpChFont->hwndOwner, (DLGPROC)FormatCharDlgProcA, (LPARAM)lpChFont );
+            lpChFont->hwndOwner, FormatCharDlgProcA, (LPARAM)lpChFont );
 }
 
 /***********************************************************************
@@ -433,7 +433,7 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
   cf32a.lpszStyle=HEAP_strdupWtoA(GetProcessHeap(), 0, lpChFont->lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)&cf32a;
   bRet = DialogBoxIndirectParamW(COMMDLG_hInstance32, template,
-            lpChFont->hwndOwner, (DLGPROC)FormatCharDlgProcW, (LPARAM)lpChFont );
+            lpChFont->hwndOwner, FormatCharDlgProcW, (LPARAM)lpChFont );
   HeapFree(GetProcessHeap(), 0, cf32a.lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)cf32a.lpTemplateName;
   memcpy(lpChFont->lpLogFont, &lf32a, sizeof(CHOOSEFONTA));
@@ -1120,13 +1120,13 @@ static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
                     2. some CF_.. flags are not supported
                     3. some TType extensions
  */
-LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
+BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
 				   WPARAM16 wParam, LPARAM lParam)
 {
   HWND hDlg = HWND_32(hDlg16);
   LPCHOOSEFONT16 lpcf;
   LPCHOOSEFONTA lpcf32a;
-  LRESULT res=0;
+  BOOL16 res=0;
   if (message!=WM_INITDIALOG)
   {
    lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER);
@@ -1204,11 +1204,11 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
 /***********************************************************************
  *           FormatCharDlgProcA   [internal]
  */
-LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
+INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam)
 {
   LPCHOOSEFONTA lpcf;
-  LRESULT res=FALSE;
+  INT_PTR res = FALSE;
   if (uMsg!=WM_INITDIALOG)
   {
    lpcf=(LPCHOOSEFONTA)GetWindowLongA(hDlg, DWL_USER);
@@ -1254,12 +1254,12 @@ LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 /***********************************************************************
  *           FormatCharDlgProcW   [internal]
  */
-LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
+INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam)
 {
   LPCHOOSEFONTW lpcf32w;
   LPCHOOSEFONTA lpcf32a;
-  LRESULT res=FALSE;
+  INT_PTR res = FALSE;
   if (uMsg!=WM_INITDIALOG)
   {
    lpcf32w=(LPCHOOSEFONTW)GetWindowLongA(hDlg, DWL_USER);

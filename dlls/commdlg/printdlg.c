@@ -2002,11 +2002,11 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
 /***********************************************************************
  *           PrintDlgProcA			[internal]
  */
-BOOL WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
+INT_PTR CALLBACK PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 			  LPARAM lParam)
 {
     PRINT_PTRA* PrintStructures;
-    LRESULT res=FALSE;
+    INT_PTR res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
         PrintStructures = (PRINT_PTRA*)GetPropA(hDlg,"__WINE_PRINTDLGDATA");
@@ -2046,11 +2046,11 @@ BOOL WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     return res;
 }
 
-BOOL WINAPI PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
+INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
 			  LPARAM lParam)
 {
     PRINT_PTRW* PrintStructures;
-    LRESULT res=FALSE;
+    INT_PTR res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
         PrintStructures = (PRINT_PTRW*) GetWindowLongA(hDlg, DWL_USER);
@@ -3163,11 +3163,11 @@ PRINTDLG_PS_WMCommandW(
 }
 
 
-static BOOL WINAPI
+static INT_PTR CALLBACK
 PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     PageSetupDataA	*pda;
-    BOOL		res = FALSE;
+    INT_PTR		res = FALSE;
 
     if (uMsg==WM_INITDIALOG) {
 	res = TRUE;
@@ -3245,7 +3245,7 @@ PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-static BOOL WINAPI
+static INT_PTR CALLBACK
 PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     PageSetupDataW	*pda;
@@ -3469,12 +3469,12 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 /***********************************************************************
  *           PrintDlgProc   (COMMDLG.21)
  */
-LRESULT WINAPI PrintDlgProc16(HWND16 hDlg16, UINT16 uMsg, WPARAM16 wParam,
+BOOL16 CALLBACK PrintDlgProc16(HWND16 hDlg16, UINT16 uMsg, WPARAM16 wParam,
                             LPARAM lParam)
 {
     HWND hDlg = HWND_32(hDlg16);
     PRINT_PTRA* PrintStructures;
-    LRESULT res=FALSE;
+    BOOL16 res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
         PrintStructures = (PRINT_PTRA*)GetPropA(hDlg,"__WINE_PRINTDLGDATA");
@@ -3528,7 +3528,7 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hDlg16, UINT16 uMsg, WPARAM16 wParam,
 /***********************************************************************
  *           PrintSetupDlgProc   (COMMDLG.22)
  */
-LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
+BOOL16 CALLBACK PrintSetupDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
 				   LPARAM lParam)
 {
   HWND hWnd = HWND_32(hWnd16);

@@ -1705,7 +1705,7 @@ static LRESULT send_inter_thread_message( DWORD dest_tid, const struct send_mess
  *		SendMessageTimeoutW  (USER32.@)
  */
 LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                    UINT flags, UINT timeout, LPDWORD res_ptr )
+                                    UINT flags, UINT timeout, PDWORD_PTR res_ptr )
 {
     struct send_message_info info;
     DWORD dest_tid, dest_pid;
@@ -1753,7 +1753,7 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
  *		SendMessageTimeoutA  (USER32.@)
  */
 LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                    UINT flags, UINT timeout, LPDWORD res_ptr )
+                                    UINT flags, UINT timeout, PDWORD_PTR res_ptr )
 {
     struct send_message_info info;
     DWORD dest_tid, dest_pid;

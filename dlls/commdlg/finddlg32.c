@@ -172,10 +172,10 @@ Replace:
  *	COMDLG32_FindReplaceDlgProc		[internal]
  * [Find/Replace]Text32[A/W] window procedure.
  */
-static BOOL CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	COMDLG32_FR_Data *pdata = (COMDLG32_FR_Data *)GetPropA(hDlgWnd, (LPSTR)COMDLG32_Atom);
-	BOOL retval = TRUE;
+	INT_PTR retval = TRUE;
 
 	if(iMsg == WM_INITDIALOG)
         {
@@ -425,7 +425,7 @@ static HWND COMDLG32_FR_DoFindReplace(
         hdlgwnd = CreateDialogIndirectParamA(COMDLG32_hInstance,
         				     rcs,
                                              pdata->fr.hwndOwner,
-                                             (DLGPROC)COMDLG32_FindReplaceDlgProc,
+                                             COMDLG32_FindReplaceDlgProc,
                                              (LPARAM)pdata);
 	if(!hdlgwnd)
         {
@@ -554,5 +554,3 @@ HWND WINAPI ReplaceTextW(
                              pdata->fr.lpstrReplaceWith, len2, NULL, NULL );
         return COMDLG32_FR_DoFindReplace(pdata);
 }
-
-

@@ -1629,7 +1629,7 @@ TOOLBAR_RelayEvent (HWND hwndTip, HWND hwndMsg, UINT uMsg,
  * TOOLBAR_CustomizeDialogProc
  * This function implements the toolbar customization dialog.
  */
-static BOOL WINAPI
+static INT_PTR CALLBACK
 TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     PCUSTDLG_INFO custInfo = (PCUSTDLG_INFO)GetWindowLongA (hwnd, DWL_USER);
@@ -2769,7 +2769,7 @@ TOOLBAR_Customize (HWND hwnd)
     ret = DialogBoxIndirectParamA ((HINSTANCE)GetWindowLongA(hwnd, GWL_HINSTANCE),
                                    (LPDLGTEMPLATEA)template,
                                    hwnd,
-                                   (DLGPROC)TOOLBAR_CustomizeDialogProc,
+                                   TOOLBAR_CustomizeDialogProc,
                                    (LPARAM)&custInfo);
 
     /* send TBN_ENDADJUST notification */

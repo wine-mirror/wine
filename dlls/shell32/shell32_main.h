@@ -63,7 +63,7 @@ BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr);
 BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len);
 BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest);
 
-BOOL  WINAPI AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
+INT_PTR CALLBACK AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
 DWORD WINAPI ParseFieldA(LPCSTR src,DWORD field,LPSTR dst,DWORD len);
 
 /****************************************************************************

@@ -78,8 +78,7 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
 /**********************************************************************
  *		WinHelpA (USER32.@)
  */
-BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
-                          DWORD dwData )
+BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand, ULONG_PTR dwData )
 {
 	static WORD WM_WINHELP = 0;
 	HWND hDest;
@@ -164,7 +163,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 /**********************************************************************
  *		WinHelpW (USER32.@)
  */
-BOOL WINAPI WinHelpW( HWND hWnd, LPCWSTR helpFile, UINT command, DWORD dwData )
+BOOL WINAPI WinHelpW( HWND hWnd, LPCWSTR helpFile, UINT command, ULONG_PTR dwData )
 {
     INT len;
     LPSTR file;

@@ -193,7 +193,7 @@ static MMRESULT MSACM_GetWFX(HWND hWnd, PACMFORMATCHOOSEA afc)
     return affd.ret;
 }
 
-static BOOL WINAPI FormatChooseDlgProc(HWND hWnd, UINT msg,
+static INT_PTR CALLBACK FormatChooseDlgProc(HWND hWnd, UINT msg,
 				       WPARAM wParam, LPARAM lParam)
 {
 

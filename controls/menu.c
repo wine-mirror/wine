@@ -61,7 +61,7 @@ typedef struct {
     /* ----------- MENUITEMINFO Stuff ----------- */
     UINT fType;			/* Item type. */
     UINT fState;		/* Item state.  */
-    UINT wID;			/* Item id.  */
+    UINT_PTR wID;		/* Item id.  */
     HMENU hSubMenu;		/* Pop-up menu.  */
     HBITMAP hCheckBit;		/* Bitmap when checked.  */
     HBITMAP hUnCheckBit;	/* Bitmap when unchecked.  */
@@ -1757,7 +1757,7 @@ static void MENU_MoveSelection( HWND hwndOwner, HMENU hmenu, INT offset )
  * Set an item's flags, id and text ptr. Called by InsertMenu() and
  * ModifyMenu().
  */
-static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
+static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT_PTR id,
                                 LPCWSTR str )
 {
     LPWSTR prevText = IS_STRING_ITEM(item->fType) ? item->text : NULL;
@@ -3531,7 +3531,7 @@ BOOL16 WINAPI InsertMenu16( HMENU16 hMenu, UINT16 pos, UINT16 flags,
  *         InsertMenuW    (USER32.@)
  */
 BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
-                             UINT id, LPCWSTR str )
+                         UINT_PTR id, LPCWSTR str )
 {
     MENUITEM *item;
 
@@ -3563,7 +3563,7 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
  *         InsertMenuA    (USER32.@)
  */
 BOOL WINAPI InsertMenuA( HMENU hMenu, UINT pos, UINT flags,
-                             UINT id, LPCSTR str )
+                         UINT_PTR id, LPCSTR str )
 {
     BOOL ret = FALSE;
 
@@ -3596,7 +3596,7 @@ BOOL16 WINAPI AppendMenu16(HMENU16 hMenu, UINT16 flags, UINT16 id, SEGPTR data)
  *         AppendMenuA    (USER32.@)
  */
 BOOL WINAPI AppendMenuA( HMENU hMenu, UINT flags,
-                             UINT id, LPCSTR data )
+                         UINT_PTR id, LPCSTR data )
 {
     return InsertMenuA( hMenu, -1, flags | MF_BYPOSITION, id, data );
 }
@@ -3606,7 +3606,7 @@ BOOL WINAPI AppendMenuA( HMENU hMenu, UINT flags,
  *         AppendMenuW    (USER32.@)
  */
 BOOL WINAPI AppendMenuW( HMENU hMenu, UINT flags,
-                             UINT id, LPCWSTR data )
+                         UINT_PTR id, LPCWSTR data )
 {
     return InsertMenuW( hMenu, -1, flags | MF_BYPOSITION, id, data );
 }
@@ -3696,7 +3696,7 @@ BOOL16 WINAPI ModifyMenu16( HMENU16 hMenu, UINT16 pos, UINT16 flags,
  *         ModifyMenuW    (USER32.@)
  */
 BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
-                             UINT id, LPCWSTR str )
+                         UINT_PTR id, LPCWSTR str )
 {
     MENUITEM *item;
 
@@ -3721,7 +3721,7 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
  *         ModifyMenuA    (USER32.@)
  */
 BOOL WINAPI ModifyMenuA( HMENU hMenu, UINT pos, UINT flags,
-                             UINT id, LPCSTR str )
+                         UINT_PTR id, LPCSTR str )
 {
     BOOL ret = FALSE;
 

@@ -30,7 +30,7 @@ extern "C" {
 /* Define a bunch of callback types */
 
 #if defined(STRICT) || defined(__WINE__)
-typedef BOOL    (CALLBACK *DLGPROC)(HWND,UINT,WPARAM,LPARAM);
+typedef INT_PTR (CALLBACK *DLGPROC)(HWND,UINT,WPARAM,LPARAM);
 typedef BOOL    (CALLBACK *DRAWSTATEPROC)(HDC,LPARAM,WPARAM,int,int);
 typedef INT     (CALLBACK *EDITWORDBREAKPROCA)(LPSTR,INT,INT,INT);
 typedef INT     (CALLBACK *EDITWORDBREAKPROCW)(LPWSTR,INT,INT,INT);
@@ -43,7 +43,7 @@ typedef BOOL    (CALLBACK *PROPENUMPROCW)(HWND,LPCWSTR,HANDLE);
 typedef BOOL    (CALLBACK *PROPENUMPROCEXA)(HWND,LPCSTR,HANDLE,ULONG_PTR);
 typedef BOOL    (CALLBACK *PROPENUMPROCEXW)(HWND,LPCWSTR,HANDLE,ULONG_PTR);
 typedef VOID    (CALLBACK *SENDASYNCPROC)(HWND,UINT,ULONG_PTR,LRESULT);
-typedef VOID    (CALLBACK *TIMERPROC)(HWND,UINT,UINT,DWORD);
+typedef VOID    (CALLBACK *TIMERPROC)(HWND,UINT,UINT_PTR,DWORD);
 typedef VOID    (CALLBACK *WINEVENTPROC)(HWINEVENTHOOK,DWORD,HWND,LONG,LONG,
                                          DWORD,DWORD);
 typedef BOOL    (CALLBACK *WNDENUMPROC)(HWND,LPARAM);
@@ -317,7 +317,7 @@ typedef struct
     POINT pt;
     HWND  hwnd;
     UINT  wHitTestCode;
-    DWORD   dwExtraInfo;
+    ULONG_PTR dwExtraInfo;
 } MOUSEHOOKSTRUCT, *PMOUSEHOOKSTRUCT, *LPMOUSEHOOKSTRUCT;
 
 
@@ -439,7 +439,7 @@ typedef struct tagANIMATIONINFO
 typedef struct tagNMHDR
 {
     HWND  hwndFrom;
-    UINT  idFrom;
+    UINT_PTR idFrom;
     UINT  code;
 } NMHDR, *LPNMHDR;
 
@@ -495,8 +495,8 @@ typedef struct
 
 /***** Dialogs *****/
 
-#define MAKEINTRESOURCEA(i) (LPSTR)((DWORD)((WORD)(i)))
-#define MAKEINTRESOURCEW(i) (LPWSTR)((DWORD)((WORD)(i)))
+#define MAKEINTRESOURCEA(i) (LPSTR)((ULONG_PTR)((WORD)(i)))
+#define MAKEINTRESOURCEW(i) (LPWSTR)((ULONG_PTR)((WORD)(i)))
 #define MAKEINTRESOURCE WINELIB_NAME_AW(MAKEINTRESOURCE)
 
 /* Predefined resource types */
@@ -1669,9 +1669,9 @@ DECL_WINELIB_TYPE_AW(PWNDCLASS)
 DECL_WINELIB_TYPE_AW(LPWNDCLASS)
 
 typedef struct {
-    DWORD dwData;
+    ULONG_PTR dwData;
     DWORD cbData;
-    LPVOID lpData;
+    PVOID lpData;
 } COPYDATASTRUCT, *PCOPYDATASTRUCT;
 
 typedef struct {
@@ -1894,7 +1894,7 @@ typedef struct {
   HMENU   hSubMenu;
   HBITMAP hbmpChecked;
   HBITMAP hbmpUnchecked;
-  DWORD   dwItemData;
+  ULONG_PTR dwItemData;
   LPSTR   dwTypeData;
   UINT    cch;
   HBITMAP hbmpItem;
@@ -1909,7 +1909,7 @@ typedef struct {
   HMENU   hSubMenu;
   HBITMAP hbmpChecked;
   HBITMAP hbmpUnchecked;
-  DWORD   dwItemData;
+  ULONG_PTR dwItemData;
   LPWSTR  dwTypeData;
   UINT    cch;
   HBITMAP hbmpItem;
@@ -1928,7 +1928,7 @@ typedef struct {
   UINT    cyMax;
   HBRUSH  hbrBack;
   DWORD   dwContextHelpID;
-  DWORD   dwMenuData;
+  ULONG_PTR dwMenuData;
 } MENUINFO, *LPMENUINFO;
 
 typedef const MENUINFO *LPCMENUINFO;
@@ -2404,8 +2404,6 @@ typedef BOOL  (CALLBACK *MONITORENUMPROC)(HMONITOR,HDC,LPRECT,LPARAM);
 
 #include "pshpack2.h"
 
-/* FIXME: use this instead of LPCVOID for CreateDialogIndirectParam
-   and DialogBoxIndirectParam */
 typedef struct tagDLGTEMPLATE
 {
     DWORD style;
@@ -3203,7 +3201,7 @@ typedef struct
     HWND      hwndItem;
     HDC       hDC;
     RECT      rcItem WINE_PACKED;
-    DWORD       itemData WINE_PACKED;
+    ULONG_PTR itemData WINE_PACKED;
 } DRAWITEMSTRUCT, *PDRAWITEMSTRUCT, *LPDRAWITEMSTRUCT;
 
 
@@ -3214,7 +3212,7 @@ typedef struct
     UINT      itemID;
     UINT      itemWidth;
     UINT      itemHeight;
-    DWORD       itemData;
+    ULONG_PTR itemData;
 } MEASUREITEMSTRUCT, *PMEASUREITEMSTRUCT, *LPMEASUREITEMSTRUCT;
 
 
@@ -3224,7 +3222,7 @@ typedef struct
     UINT     CtlID;
     UINT     itemID;
     HWND     hwndItem;
-    DWORD      itemData;
+    ULONG_PTR itemData;
 } DELETEITEMSTRUCT, *PDELETEITEMSTRUCT, *LPDELETEITEMSTRUCT;
 
 
@@ -3234,10 +3232,10 @@ typedef struct
     UINT      CtlID;
     HWND      hwndItem;
     UINT      itemID1;
-    DWORD       itemData1;
+    ULONG_PTR itemData1;
     UINT      itemID2;
-    DWORD       itemData2;
-    DWORD       dwLocaleId;
+    ULONG_PTR itemData2;
+    DWORD     dwLocaleId;
 } COMPAREITEMSTRUCT, *PCOMPAREITEMSTRUCT, *LPCOMPAREITEMSTRUCT;
 
 
@@ -3807,8 +3805,8 @@ BOOL        WINAPI UnhookWinEvent(HWINEVENTHOOK);
 BOOL        WINAPI UnregisterDeviceNotification(HDEVNOTIFY);
 BOOL        WINAPI UnregisterHotKey(HWND,INT);
 DWORD       WINAPI WaitForInputIdle(HANDLE,DWORD);
-VOID        WINAPI keybd_event(BYTE,BYTE,DWORD,DWORD);
-VOID        WINAPI mouse_event(DWORD,DWORD,DWORD,DWORD,DWORD);
+VOID        WINAPI keybd_event(BYTE,BYTE,DWORD,ULONG_PTR);
+VOID        WINAPI mouse_event(DWORD,DWORD,DWORD,DWORD,ULONG_PTR);
 
 /* Declarations for functions that are the same in Win16 and Win32 */
 VOID        WINAPI EndMenu(void);
@@ -3846,8 +3844,8 @@ BOOL        WINAPI AnimateWindow(HWND,DWORD,DWORD);
 #define     AnsiUpperBuffW CharUpperBuffW
 #define     AnsiUpperBuff WINELIB_NAME_AW(AnsiUpperBuff)
 BOOL      WINAPI AnyPopup(void);
-BOOL      WINAPI AppendMenuA(HMENU,UINT,UINT,LPCSTR);
-BOOL      WINAPI AppendMenuW(HMENU,UINT,UINT,LPCWSTR);
+BOOL      WINAPI AppendMenuA(HMENU,UINT,UINT_PTR,LPCSTR);
+BOOL      WINAPI AppendMenuW(HMENU,UINT,UINT_PTR,LPCWSTR);
 #define     AppendMenu WINELIB_NAME_AW(AppendMenu)
 UINT      WINAPI ArrangeIconicWindows(HWND);
 HDWP      WINAPI BeginDeferWindowPos(INT);
@@ -3922,9 +3920,9 @@ HCURSOR   WINAPI CreateCursor(HINSTANCE,INT,INT,INT,INT,LPCVOID,LPCVOID);
 #define     CreateDialogIndirectW(inst,ptr,hwnd,dlg) \
            CreateDialogIndirectParamW(inst,ptr,hwnd,dlg,0)
 #define     CreateDialogIndirect WINELIB_NAME_AW(CreateDialogIndirect)
-HWND      WINAPI CreateDialogIndirectParamA(HINSTANCE,LPCVOID,HWND,
+HWND      WINAPI CreateDialogIndirectParamA(HINSTANCE,LPCDLGTEMPLATEA,HWND,
                                                 DLGPROC,LPARAM);
-HWND      WINAPI CreateDialogIndirectParamW(HINSTANCE,LPCVOID,HWND,
+HWND      WINAPI CreateDialogIndirectParamW(HINSTANCE,LPCDLGTEMPLATEW,HWND,
                                                 DLGPROC,LPARAM);
 #define     CreateDialogIndirectParam WINELIB_NAME_AW(CreateDialogIndirectParam)
 HWND      WINAPI CreateDialogParamA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);
@@ -3988,11 +3986,11 @@ BOOL      WINAPI DestroyWindow(HWND);
 #define     DialogBoxIndirectW(inst,template,owner,func) \
             DialogBoxIndirectParamW(inst,template,owner,func,0)
 #define     DialogBoxIndirect WINELIB_NAME_AW(DialogBoxIndirect)
-INT       WINAPI DialogBoxIndirectParamA(HINSTANCE,LPCVOID,HWND,DLGPROC,LPARAM);
-INT       WINAPI DialogBoxIndirectParamW(HINSTANCE,LPCVOID,HWND,DLGPROC,LPARAM);
+INT_PTR   WINAPI DialogBoxIndirectParamA(HINSTANCE,LPCDLGTEMPLATEA,HWND,DLGPROC,LPARAM);
+INT_PTR   WINAPI DialogBoxIndirectParamW(HINSTANCE,LPCDLGTEMPLATEW,HWND,DLGPROC,LPARAM);
 #define     DialogBoxIndirectParam WINELIB_NAME_AW(DialogBoxIndirectParam)
-INT       WINAPI DialogBoxParamA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);
-INT       WINAPI DialogBoxParamW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);
+INT_PTR   WINAPI DialogBoxParamA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);
+INT_PTR   WINAPI DialogBoxParamW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);
 #define     DialogBoxParam WINELIB_NAME_AW(DialogBoxParam)
 LONG        WINAPI DispatchMessageA(const MSG*);
 LONG        WINAPI DispatchMessageW(const MSG*);
@@ -4010,7 +4008,7 @@ BOOL      WINAPI DlgDirSelectExA(HWND,LPSTR,INT,INT);
 BOOL      WINAPI DlgDirSelectExW(HWND,LPWSTR,INT,INT);
 #define     DlgDirSelectEx WINELIB_NAME_AW(DlgDirSelectEx)
 BOOL      WINAPI DragDetect(HWND,POINT);
-DWORD       WINAPI DragObject(HWND,HWND,UINT,DWORD,HCURSOR);
+DWORD     WINAPI DragObject(HWND,HWND,UINT,ULONG_PTR,HCURSOR);
 BOOL      WINAPI DrawAnimatedRects(HWND,int,const RECT*,const RECT*);
 BOOL      WINAPI DrawCaption(HWND,HDC,const RECT*,UINT);
 BOOL      WINAPI DrawCaptionTempA(HWND,HDC,const RECT*,HFONT,HICON,LPCSTR,UINT);
@@ -4036,7 +4034,7 @@ UINT        WINAPI EnableMenuItem(HMENU,UINT,UINT);
 BOOL        WINAPI EnableScrollBar(HWND,INT,UINT);
 BOOL        WINAPI EnableWindow(HWND,BOOL);
 BOOL        WINAPI EndDeferWindowPos(HDWP);
-BOOL        WINAPI EndDialog(HWND,INT);
+BOOL        WINAPI EndDialog(HWND,INT_PTR);
 BOOL        WINAPI EndPaint(HWND,const PAINTSTRUCT*);
 BOOL        WINAPI EnumChildWindows(HWND,WNDENUMPROC,LPARAM);
 UINT        WINAPI EnumClipboardFormats(UINT);
@@ -4184,8 +4182,8 @@ BOOL        WINAPI HiliteMenuItem(HWND,HMENU,UINT,UINT);
 BOOL        WINAPI InflateRect(LPRECT,INT,INT);
 BOOL        WINAPI InSendMessage(void);
 DWORD       WINAPI InSendMessageEx(LPVOID);
-BOOL        WINAPI InsertMenuA(HMENU,UINT,UINT,UINT,LPCSTR);
-BOOL        WINAPI InsertMenuW(HMENU,UINT,UINT,UINT,LPCWSTR);
+BOOL        WINAPI InsertMenuA(HMENU,UINT,UINT,UINT_PTR,LPCSTR);
+BOOL        WINAPI InsertMenuW(HMENU,UINT,UINT,UINT_PTR,LPCWSTR);
 #define     InsertMenu WINELIB_NAME_AW(InsertMenu)
 BOOL        WINAPI InsertMenuItemA(HMENU,UINT,BOOL,const MENUITEMINFOA*);
 BOOL        WINAPI InsertMenuItemW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
@@ -4220,8 +4218,8 @@ BOOL      WINAPI IsWindow(HWND);
 BOOL      WINAPI IsWindowEnabled(HWND);
 BOOL      WINAPI IsWindowVisible(HWND);
 BOOL      WINAPI IsZoomed(HWND);
-BOOL      WINAPI KillSystemTimer(HWND,UINT);
-BOOL      WINAPI KillTimer(HWND,UINT);
+BOOL      WINAPI KillSystemTimer(HWND,UINT_PTR);
+BOOL      WINAPI KillTimer(HWND,UINT_PTR);
 HACCEL    WINAPI LoadAcceleratorsA(HINSTANCE,LPCSTR);
 HACCEL    WINAPI LoadAcceleratorsW(HINSTANCE,LPCWSTR);
 #define     LoadAccelerators WINELIB_NAME_AW(LoadAccelerators)
@@ -4268,8 +4266,8 @@ INT         WINAPI MessageBoxW(HWND,LPCWSTR,LPCWSTR,UINT);
 INT       WINAPI MessageBoxIndirectA(LPMSGBOXPARAMSA);
 INT       WINAPI MessageBoxIndirectW(LPMSGBOXPARAMSW);
 #define     MessageBoxIndirect WINELIB_NAME_AW(MessageBoxIndirect)
-BOOL      WINAPI ModifyMenuA(HMENU,UINT,UINT,UINT,LPCSTR);
-BOOL      WINAPI ModifyMenuW(HMENU,UINT,UINT,UINT,LPCWSTR);
+BOOL      WINAPI ModifyMenuA(HMENU,UINT,UINT,UINT_PTR,LPCSTR);
+BOOL      WINAPI ModifyMenuW(HMENU,UINT,UINT,UINT_PTR,LPCWSTR);
 #define     ModifyMenu WINELIB_NAME_AW(ModifyMenu)
 BOOL      WINAPI MoveWindow(HWND,INT,INT,INT,INT,BOOL);
 BOOL      WINAPI OemToCharA(LPCSTR,LPSTR);
@@ -4328,8 +4326,8 @@ UINT        WINAPI SendInput(UINT,LPINPUT,int);
 LRESULT     WINAPI SendMessageA(HWND,UINT,WPARAM,LPARAM);
 LRESULT     WINAPI SendMessageW(HWND,UINT,WPARAM,LPARAM);
 #define     SendMessage WINELIB_NAME_AW(SendMessage)
-LRESULT     WINAPI SendMessageTimeoutA(HWND,UINT,WPARAM,LPARAM,UINT,UINT,LPDWORD);
-LRESULT     WINAPI SendMessageTimeoutW(HWND,UINT,WPARAM,LPARAM,UINT,UINT,LPDWORD);
+LRESULT     WINAPI SendMessageTimeoutA(HWND,UINT,WPARAM,LPARAM,UINT,UINT,PDWORD_PTR);
+LRESULT     WINAPI SendMessageTimeoutW(HWND,UINT,WPARAM,LPARAM,UINT,UINT,PDWORD_PTR);
 #define     SendMessageTimeout WINELIB_NAME_AW(SendMessageTimeout)
 HWND        WINAPI SetActiveWindow(HWND);
 HWND        WINAPI SetCapture(HWND);
@@ -4370,8 +4368,8 @@ BOOL      WINAPI SetScrollRange(HWND,INT,INT,INT,BOOL);
 #define     SetSysModalWindow(hwnd) ((HWND)0)
 BOOL      WINAPI SetSystemCursor(HCURSOR,DWORD);
 BOOL      WINAPI SetSystemMenu(HWND,HMENU);
-UINT      WINAPI SetSystemTimer(HWND,UINT,UINT,TIMERPROC);
-UINT      WINAPI SetTimer(HWND,UINT,UINT,TIMERPROC);
+UINT_PTR  WINAPI SetSystemTimer(HWND,UINT_PTR,UINT,TIMERPROC);
+UINT_PTR  WINAPI SetTimer(HWND,UINT_PTR,UINT,TIMERPROC);
 BOOL        WINAPI SetUserObjectSecurity(HANDLE,PSECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
 LONG        WINAPI SetWindowLongA(HWND,INT,LONG);
 LONG        WINAPI SetWindowLongW(HWND,INT,LONG);
@@ -4432,8 +4430,8 @@ WORD        WINAPI VkKeyScanExW(WCHAR, HKL);
 BOOL        WINAPI WaitMessage(void);
 HWND      WINAPI WindowFromDC(HDC);
 HWND      WINAPI WindowFromPoint(POINT);
-BOOL      WINAPI WinHelpA(HWND,LPCSTR,UINT,DWORD);
-BOOL      WINAPI WinHelpW(HWND,LPCWSTR,UINT,DWORD);
+BOOL      WINAPI WinHelpA(HWND,LPCSTR,UINT,ULONG_PTR);
+BOOL      WINAPI WinHelpW(HWND,LPCWSTR,UINT,ULONG_PTR);
 #define     WinHelp WINELIB_NAME_AW(WinHelp)
 INT       WINAPIV wsprintfA(LPSTR,LPCSTR,...);
 INT       WINAPIV wsprintfW(LPWSTR,LPCWSTR,...);

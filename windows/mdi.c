@@ -2114,7 +2114,7 @@ TileWindows (HWND hwndParent, UINT wFlags, const LPRECT lpRect,
  *
  */
 
-static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (iMsg)
     {

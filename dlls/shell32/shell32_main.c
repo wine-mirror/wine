@@ -677,7 +677,7 @@ DWORD WINAPI SHLoadInProc (REFCLSID rclsid)
 /*************************************************************************
  * AboutDlgProc			(internal)
  */
-BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
+INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
                               LPARAM lParam )
 {   HWND hWndCtl;
     char Template[512], AppTitle[512];
