@@ -2589,6 +2589,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     BOOL fRemove;
     INT executedMenuId = 0;
     MTRACKER mt;
+    BOOL enterIdleSent = FALSE;
 
     mt.trackFlags = 0;
     mt.hCurrentMenu = hmenu;
@@ -2617,10 +2618,13 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	 * clear that menu loop is not over yet. */
 
 	if (!MSG_InternalGetMessage( &msg, msg.hwnd, mt.hOwnerWnd,
-				     MSGF_MENU, PM_NOREMOVE, TRUE )) break;
+				     MSGF_MENU, PM_NOREMOVE, !enterIdleSent, &enterIdleSent )) break;
 
         TranslateMessage( &msg );
         mt.pt = msg.pt;
+
+	if ( (msg.hwnd==menu->hWnd) || (msg.message!=WM_TIMER) )
+	  enterIdleSent=FALSE;
 
         fRemove = FALSE;
 	if ((msg.message >= WM_MOUSEFIRST) && (msg.message <= WM_MOUSELAST))

@@ -1182,7 +1182,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
  * 'code' is the message filter value (MSGF_??? codes).
  */
 BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd, HWND hwndOwner,
-                               WPARAM code, WORD flags, BOOL sendIdle ) 
+                               WPARAM code, WORD flags, BOOL sendIdle, BOOL* idleSent ) 
 {
     for (;;)
     {
@@ -1192,8 +1192,13 @@ BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd, HWND hwndOwner,
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
                 if (IsWindow(hwndOwner))
+		{
                     SendMessageA( hwndOwner, WM_ENTERIDLE,
                                    code, (LPARAM)hwnd );
+
+		    if (idleSent!=NULL)
+		      *idleSent=TRUE;
+		}
 		MSG_PeekMessage( msg, 0, 0, 0, flags, FALSE );
 	    }
 	}
