@@ -3,12 +3,27 @@ in this file, at least under Win98.
 The (16/32) or (16) or (32) at the end shows whether the sequence has been
 confirmed for win16, win32, or both.
 
-Window Edge Styles (Win95/98 look):
+Window Edge Styles (Win31 look), in order of precedence:
  WS_EX_DLGMODALFRAME: double border, WS_CAPTION allowed
- WS_DLGFRAME: double border, WS_CAPTION not allowed (but possibly shown anyway)
  WS_THICKFRAME: thick border
- WS_BORDER (default for top-level windows): single black border
- none (default for child windows): no border
+ WS_DLGFRAME: double border, WS_CAPTION not allowed (but possibly shown anyway, untested)
+ WS_BORDER (default for overlapped windows): single black border
+ none (default for child and popup windows): no border
+
+Window Edge Styles (Win95/98 look), in order of precedence:
+ WS_EX_DLGMODALFRAME: double border, WS_CAPTION allowed
+ WS_THICKFRAME: thick border
+ WS_DLGFRAME: double border, WS_CAPTION not allowed (but possibly shown anyway)
+ WS_BORDER (default for overlapped windows): single black border
+ none (default for child (and popup?) windows): no border
+
+Win31 look, system metrics relations:
+ CYFRAME    = 5, thick border, includes both edges (the colored inside is thus 3 pixels)
+ CYDLGFRAME = 4, double border
+ CYBORDER   = 1, thin border
+ CYCAPTION  = 20, includes both borders (the colored inside is thus 18 pixels)
+ CYMENU     = 18, does not include any borders
+ CYHSCROLL  = 17, includes both borders (the colored inside is thus 15 pixels)
 
 CreateWindow (for overlapped window, not initially visible) (16/32)
 Messages sent:
@@ -54,7 +69,8 @@ Messages sent:
 
 CreateWindow (for child window, not initially visible)
 Messages sent:
- WM_NCCREATE (Note that win->parent->child will not contain win. link is done after sucessfull WM_NCCREATE)
+ WM_NCCREATE
+ (child is inserted into parent's child list after WM_NCCREATE returns)
  WM_NCCALCSIZE (wParam=0)
  WM_CREATE
  WM_SIZE
