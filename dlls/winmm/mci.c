@@ -278,6 +278,11 @@ static int MCI_MapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
     case MCI_UPDATE:
     case MCI_RESUME:
     case MCI_DELETE:
+    case MCI_MONITOR:
+    case MCI_SETAUDIO:
+    case MCI_SIGNAL:
+    case MCI_SETVIDEO:
+    case MCI_LIST:
         return 0;
 
     case MCI_OPEN:
