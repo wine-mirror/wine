@@ -623,7 +623,7 @@ static BOOL DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name, BOOL win32
  */
 static BOOL DIR_TryAppPath( LPCSTR name, DOS_FULL_NAME *full_name )
 {
-    HKEY hkAppPaths, hkApp;
+    HKEY hkAppPaths = 0, hkApp = 0;
     char lpAppName[MAX_PATHNAME_LEN], lpAppPaths[MAX_PATHNAME_LEN];
     LPSTR lpFileName;
     BOOL res = FALSE;
