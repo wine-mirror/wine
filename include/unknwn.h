@@ -69,10 +69,12 @@ struct IUnknownVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IUnknown_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IUnknown_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IUnknown_Release(p) (p)->lpVtbl->Release(p)
+#endif
 
 #endif
 
@@ -168,6 +170,7 @@ struct IClassFactoryVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IClassFactory_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IClassFactory_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -175,6 +178,7 @@ struct IClassFactoryVtbl {
 /*** IClassFactory methods ***/
 #define IClassFactory_CreateInstance(p,a,b,c) (p)->lpVtbl->CreateInstance(p,a,b,c)
 #define IClassFactory_LockServer(p,a) (p)->lpVtbl->LockServer(p,a)
+#endif
 
 #endif
 

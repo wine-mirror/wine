@@ -122,6 +122,7 @@ struct IAudioMediaStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAudioMediaStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAudioMediaStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -137,6 +138,7 @@ struct IAudioMediaStreamVtbl {
 #define IAudioMediaStream_GetFormat(p,a) (p)->lpVtbl->GetFormat(p,a)
 #define IAudioMediaStream_SetFormat(p,a) (p)->lpVtbl->SetFormat(p,a)
 #define IAudioMediaStream_CreateSample(p,a,b,c) (p)->lpVtbl->CreateSample(p,a,b,c)
+#endif
 
 #endif
 
@@ -256,6 +258,7 @@ struct IAudioStreamSampleVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAudioStreamSample_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAudioStreamSample_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -268,6 +271,7 @@ struct IAudioStreamSampleVtbl {
 #define IAudioStreamSample_CompletionStatus(p,a,b) (p)->lpVtbl->CompletionStatus(p,a,b)
 /*** IAudioStreamSample methods ***/
 #define IAudioStreamSample_GetAudioData(p,a) (p)->lpVtbl->GetAudioData(p,a)
+#endif
 
 #endif
 
@@ -360,6 +364,7 @@ struct IMemoryDataVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMemoryData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMemoryData_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -368,6 +373,7 @@ struct IMemoryDataVtbl {
 #define IMemoryData_SetBuffer(p,a,b,c) (p)->lpVtbl->SetBuffer(p,a,b,c)
 #define IMemoryData_GetInfo(p,a,b,c) (p)->lpVtbl->GetInfo(p,a,b,c)
 #define IMemoryData_SetActual(p,a) (p)->lpVtbl->SetActual(p,a)
+#endif
 
 #endif
 
@@ -478,6 +484,7 @@ struct IAudioDataVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAudioData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAudioData_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -489,6 +496,7 @@ struct IAudioDataVtbl {
 /*** IAudioData methods ***/
 #define IAudioData_GetFormat(p,a) (p)->lpVtbl->GetFormat(p,a)
 #define IAudioData_SetFormat(p,a) (p)->lpVtbl->SetFormat(p,a)
+#endif
 
 #endif
 

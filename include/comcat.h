@@ -92,6 +92,7 @@ struct IEnumGUIDVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumGUID_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumGUID_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -101,6 +102,7 @@ struct IEnumGUIDVtbl {
 #define IEnumGUID_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumGUID_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumGUID_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -230,6 +232,7 @@ struct IEnumCATEGORYINFOVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumCATEGORYINFO_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumCATEGORYINFO_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -239,6 +242,7 @@ struct IEnumCATEGORYINFOVtbl {
 #define IEnumCATEGORYINFO_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumCATEGORYINFO_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumCATEGORYINFO_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -399,6 +403,7 @@ struct ICatInformationVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICatInformation_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICatInformation_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -410,6 +415,7 @@ struct ICatInformationVtbl {
 #define ICatInformation_IsClassOfCategories(p,a,b,c,d,e) (p)->lpVtbl->IsClassOfCategories(p,a,b,c,d,e)
 #define ICatInformation_EnumImplCategoriesOfClass(p,a,b) (p)->lpVtbl->EnumImplCategoriesOfClass(p,a,b)
 #define ICatInformation_EnumReqCategoriesOfClass(p,a,b) (p)->lpVtbl->EnumReqCategoriesOfClass(p,a,b)
+#endif
 
 #endif
 
@@ -622,6 +628,7 @@ struct ICatRegisterVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICatRegister_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICatRegister_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -633,6 +640,7 @@ struct ICatRegisterVtbl {
 #define ICatRegister_UnRegisterClassImplCategories(p,a,b,c) (p)->lpVtbl->UnRegisterClassImplCategories(p,a,b,c)
 #define ICatRegister_RegisterClassReqCategories(p,a,b,c) (p)->lpVtbl->RegisterClassReqCategories(p,a,b,c)
 #define ICatRegister_UnRegisterClassReqCategories(p,a,b,c) (p)->lpVtbl->UnRegisterClassReqCategories(p,a,b,c)
+#endif
 
 #endif
 

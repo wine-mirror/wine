@@ -60,12 +60,14 @@ struct IServiceProviderVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IServiceProvider_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IServiceProvider_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IServiceProvider_Release(p) (p)->lpVtbl->Release(p)
 /*** IServiceProvider methods ***/
 #define IServiceProvider_QueryService(p,a,b,c) (p)->lpVtbl->QueryService(p,a,b,c)
+#endif
 
 #endif
 

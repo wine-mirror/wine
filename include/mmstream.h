@@ -181,6 +181,7 @@ struct IMultiMediaStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMultiMediaStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMultiMediaStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -195,6 +196,7 @@ struct IMultiMediaStreamVtbl {
 #define IMultiMediaStream_GetDuration(p,a) (p)->lpVtbl->GetDuration(p,a)
 #define IMultiMediaStream_Seek(p,a) (p)->lpVtbl->Seek(p,a)
 #define IMultiMediaStream_GetEndOfStreamEventHandle(p,a) (p)->lpVtbl->GetEndOfStreamEventHandle(p,a)
+#endif
 
 #endif
 
@@ -379,6 +381,7 @@ struct IMediaStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -390,6 +393,7 @@ struct IMediaStreamVtbl {
 #define IMediaStream_AllocateSample(p,a,b) (p)->lpVtbl->AllocateSample(p,a,b)
 #define IMediaStream_CreateSharedSample(p,a,b,c) (p)->lpVtbl->CreateSharedSample(p,a,b,c)
 #define IMediaStream_SendEndOfStream(p,a) (p)->lpVtbl->SendEndOfStream(p,a)
+#endif
 
 #endif
 
@@ -546,6 +550,7 @@ struct IStreamSampleVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IStreamSample_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IStreamSample_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -556,6 +561,7 @@ struct IStreamSampleVtbl {
 #define IStreamSample_SetSampleTimes(p,a,b) (p)->lpVtbl->SetSampleTimes(p,a,b)
 #define IStreamSample_Update(p,a,b,c,d) (p)->lpVtbl->Update(p,a,b,c,d)
 #define IStreamSample_CompletionStatus(p,a,b) (p)->lpVtbl->CompletionStatus(p,a,b)
+#endif
 
 #endif
 

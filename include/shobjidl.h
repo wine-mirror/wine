@@ -66,6 +66,7 @@ struct IPersistFolderVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPersistFolder_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPersistFolder_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -74,6 +75,7 @@ struct IPersistFolderVtbl {
 #define IPersistFolder_GetClassID(p,a) (p)->lpVtbl->GetClassID(p,a)
 /*** IPersistFolder methods ***/
 #define IPersistFolder_Initialize(p,a) (p)->lpVtbl->Initialize(p,a)
+#endif
 
 #endif
 
@@ -157,6 +159,7 @@ struct IPersistFolder2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPersistFolder2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPersistFolder2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -167,6 +170,7 @@ struct IPersistFolder2Vtbl {
 #define IPersistFolder2_Initialize(p,a) (p)->lpVtbl->Initialize(p,a)
 /*** IPersistFolder2 methods ***/
 #define IPersistFolder2_GetCurFolder(p,a) (p)->lpVtbl->GetCurFolder(p,a)
+#endif
 
 #endif
 
@@ -266,6 +270,7 @@ struct IEnumIDListVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumIDList_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumIDList_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -275,6 +280,7 @@ struct IEnumIDListVtbl {
 #define IEnumIDList_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumIDList_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumIDList_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -547,6 +553,7 @@ struct IShellFolderVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellFolder_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellFolder_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -562,6 +569,7 @@ struct IShellFolderVtbl {
 #define IShellFolder_GetUIObjectOf(p,a,b,c,d,e,f) (p)->lpVtbl->GetUIObjectOf(p,a,b,c,d,e,f)
 #define IShellFolder_GetDisplayNameOf(p,a,b,c) (p)->lpVtbl->GetDisplayNameOf(p,a,b,c)
 #define IShellFolder_SetNameOf(p,a,b,c,d,e) (p)->lpVtbl->SetNameOf(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -774,6 +782,7 @@ struct IEnumExtraSearchVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumExtraSearch_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumExtraSearch_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -783,6 +792,7 @@ struct IEnumExtraSearchVtbl {
 #define IEnumExtraSearch_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumExtraSearch_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumExtraSearch_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -1031,6 +1041,7 @@ struct IShellFolder2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellFolder2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellFolder2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1054,6 +1065,7 @@ struct IShellFolder2Vtbl {
 #define IShellFolder2_GetDetailsEx(p,a,b,c) (p)->lpVtbl->GetDetailsEx(p,a,b,c)
 #define IShellFolder2_GetDetailsOf(p,a,b,c) (p)->lpVtbl->GetDetailsOf(p,a,b,c)
 #define IShellFolder2_MapColumnToSCID(p,a,b) (p)->lpVtbl->MapColumnToSCID(p,a,b)
+#endif
 
 #endif
 
@@ -1376,6 +1388,7 @@ struct IShellViewVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellView_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellView_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1395,6 +1408,7 @@ struct IShellViewVtbl {
 #define IShellView_SaveViewState(p) (p)->lpVtbl->SaveViewState(p)
 #define IShellView_SelectItem(p,a,b) (p)->lpVtbl->SelectItem(p,a,b)
 #define IShellView_GetItemObject(p,a,b,c) (p)->lpVtbl->GetItemObject(p,a,b,c)
+#endif
 
 #endif
 
@@ -1702,6 +1716,7 @@ struct IShellBrowserVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellBrowser_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellBrowser_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1723,6 +1738,7 @@ struct IShellBrowserVtbl {
 #define IShellBrowser_QueryActiveShellView(p,a) (p)->lpVtbl->QueryActiveShellView(p,a)
 #define IShellBrowser_OnViewWindowActive(p,a) (p)->lpVtbl->OnViewWindowActive(p,a)
 #define IShellBrowser_SetToolbarItems(p,a,b,c) (p)->lpVtbl->SetToolbarItems(p,a,b,c)
+#endif
 
 #endif
 
@@ -2053,6 +2069,7 @@ struct IShellLinkAVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellLinkA_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellLinkA_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2076,6 +2093,7 @@ struct IShellLinkAVtbl {
 #define IShellLinkA_SetRelativePath(p,a,b) (p)->lpVtbl->SetRelativePath(p,a,b)
 #define IShellLinkA_Resolve(p,a,b) (p)->lpVtbl->Resolve(p,a,b)
 #define IShellLinkA_SetPath(p,a) (p)->lpVtbl->SetPath(p,a)
+#endif
 
 #endif
 
@@ -2450,6 +2468,7 @@ struct IShellLinkWVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellLinkW_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellLinkW_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2473,6 +2492,7 @@ struct IShellLinkWVtbl {
 #define IShellLinkW_SetRelativePath(p,a,b) (p)->lpVtbl->SetRelativePath(p,a,b)
 #define IShellLinkW_Resolve(p,a,b) (p)->lpVtbl->Resolve(p,a,b)
 #define IShellLinkW_SetPath(p,a) (p)->lpVtbl->SetPath(p,a)
+#endif
 
 #endif
 
@@ -2713,12 +2733,14 @@ struct IShellExtInitVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellExtInit_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellExtInit_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IShellExtInit_Release(p) (p)->lpVtbl->Release(p)
 /*** IShellExtInit methods ***/
 #define IShellExtInit_Initialize(p,a,b,c) (p)->lpVtbl->Initialize(p,a,b,c)
+#endif
 
 #endif
 
@@ -2824,6 +2846,7 @@ struct IPersistFolder3Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPersistFolder3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPersistFolder3_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2837,6 +2860,7 @@ struct IPersistFolder3Vtbl {
 /*** IPersistFolder3 methods ***/
 #define IPersistFolder3_InitializeEx(p,a,b,c) (p)->lpVtbl->InitializeEx(p,a,b,c)
 #define IPersistFolder3_GetFolderTargetInfo(p,a) (p)->lpVtbl->GetFolderTargetInfo(p,a)
+#endif
 
 #endif
 
@@ -2958,6 +2982,7 @@ struct IExtractIconAVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IExtractIconA_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IExtractIconA_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2965,6 +2990,7 @@ struct IExtractIconAVtbl {
 /*** IExtractIconA methods ***/
 #define IExtractIconA_GetIconLocation(p,a,b,c,d,e) (p)->lpVtbl->GetIconLocation(p,a,b,c,d,e)
 #define IExtractIconA_Extract(p,a,b,c,d,e) (p)->lpVtbl->Extract(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -3076,6 +3102,7 @@ struct IExtractIconWVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IExtractIconW_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IExtractIconW_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3083,6 +3110,7 @@ struct IExtractIconWVtbl {
 /*** IExtractIconW methods ***/
 #define IExtractIconW_GetIconLocation(p,a,b,c,d,e) (p)->lpVtbl->GetIconLocation(p,a,b,c,d,e)
 #define IExtractIconW_Extract(p,a,b,c,d,e) (p)->lpVtbl->Extract(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -3196,6 +3224,7 @@ struct ICommDlgBrowserVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICommDlgBrowser_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICommDlgBrowser_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3204,6 +3233,7 @@ struct ICommDlgBrowserVtbl {
 #define ICommDlgBrowser_OnDefaultCommand(p,a) (p)->lpVtbl->OnDefaultCommand(p,a)
 #define ICommDlgBrowser_OnStateChange(p,a,b) (p)->lpVtbl->OnStateChange(p,a,b)
 #define ICommDlgBrowser_IncludeObject(p,a,b) (p)->lpVtbl->IncludeObject(p,a,b)
+#endif
 
 #endif
 
@@ -3329,6 +3359,7 @@ struct IDockingWindowFrameVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDockingWindowFrame_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDockingWindowFrame_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3340,6 +3371,7 @@ struct IDockingWindowFrameVtbl {
 #define IDockingWindowFrame_AddToolbar(p,a,b,c) (p)->lpVtbl->AddToolbar(p,a,b,c)
 #define IDockingWindowFrame_RemoveToolbar(p,a,b) (p)->lpVtbl->RemoveToolbar(p,a,b)
 #define IDockingWindowFrame_FindToolbar(p,a,b,c) (p)->lpVtbl->FindToolbar(p,a,b,c)
+#endif
 
 #endif
 
@@ -3455,6 +3487,7 @@ struct IDragSourceHelperVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDragSourceHelper_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDragSourceHelper_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3462,6 +3495,7 @@ struct IDragSourceHelperVtbl {
 /*** IDragSourceHelper methods ***/
 #define IDragSourceHelper_InitializeFromBitmap(p,a,b) (p)->lpVtbl->InitializeFromBitmap(p,a,b)
 #define IDragSourceHelper_InitializeFromWindow(p,a,b,c) (p)->lpVtbl->InitializeFromWindow(p,a,b,c)
+#endif
 
 #endif
 
@@ -3582,6 +3616,7 @@ struct IDropTargetHelperVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDropTargetHelper_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDropTargetHelper_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3592,6 +3627,7 @@ struct IDropTargetHelperVtbl {
 #define IDropTargetHelper_DragOver(p,a,b) (p)->lpVtbl->DragOver(p,a,b)
 #define IDropTargetHelper_Drop(p,a,b,c) (p)->lpVtbl->Drop(p,a,b,c)
 #define IDropTargetHelper_Show(p,a) (p)->lpVtbl->Show(p,a)
+#endif
 
 #endif
 
@@ -3817,6 +3853,7 @@ struct IContextMenuVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IContextMenu_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IContextMenu_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3825,6 +3862,7 @@ struct IContextMenuVtbl {
 #define IContextMenu_QueryContextMenu(p,a,b,c,d,e) (p)->lpVtbl->QueryContextMenu(p,a,b,c,d,e)
 #define IContextMenu_InvokeCommand(p,a) (p)->lpVtbl->InvokeCommand(p,a)
 #define IContextMenu_GetCommandString(p,a,b,c,d,e) (p)->lpVtbl->GetCommandString(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -3947,6 +3985,7 @@ struct IContextMenu2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IContextMenu2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IContextMenu2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3957,6 +3996,7 @@ struct IContextMenu2Vtbl {
 #define IContextMenu2_GetCommandString(p,a,b,c,d,e) (p)->lpVtbl->GetCommandString(p,a,b,c,d,e)
 /*** IContextMenu2 methods ***/
 #define IContextMenu2_HandleMenuMsg(p,a,b,c) (p)->lpVtbl->HandleMenuMsg(p,a,b,c)
+#endif
 
 #endif
 
@@ -4068,6 +4108,7 @@ struct IContextMenu3Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IContextMenu3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IContextMenu3_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4080,6 +4121,7 @@ struct IContextMenu3Vtbl {
 #define IContextMenu3_HandleMenuMsg(p,a,b,c) (p)->lpVtbl->HandleMenuMsg(p,a,b,c)
 /*** IContextMenu3 methods ***/
 #define IContextMenu3_HandleMenuMsg2(p,a,b,c,d) (p)->lpVtbl->HandleMenuMsg2(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -4159,12 +4201,14 @@ struct IShellExecuteHookAVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellExecuteHookA_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellExecuteHookA_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IShellExecuteHookA_Release(p) (p)->lpVtbl->Release(p)
 /*** IShellExecuteHookA methods ***/
 #define IShellExecuteHookA_Execute(p,a) (p)->lpVtbl->Execute(p,a)
+#endif
 
 #endif
 
@@ -4235,12 +4279,14 @@ struct IShellExecuteHookWVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellExecuteHookW_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellExecuteHookW_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IShellExecuteHookW_Release(p) (p)->lpVtbl->Release(p)
 /*** IShellExecuteHookW methods ***/
 #define IShellExecuteHookW_Execute(p,a) (p)->lpVtbl->Execute(p,a)
+#endif
 
 #endif
 

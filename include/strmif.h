@@ -63,12 +63,14 @@ struct ICreateDevEnumVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICreateDevEnum_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICreateDevEnum_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define ICreateDevEnum_Release(p) (p)->lpVtbl->Release(p)
 /*** ICreateDevEnum methods ***/
 #define ICreateDevEnum_CreateClassEnumerator(p,a,b,c) (p)->lpVtbl->CreateClassEnumerator(p,a,b,c)
+#endif
 
 #endif
 
@@ -351,6 +353,7 @@ struct IPinVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPin_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPin_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -371,6 +374,7 @@ struct IPinVtbl {
 #define IPin_BeginFlush(p) (p)->lpVtbl->BeginFlush(p)
 #define IPin_EndFlush(p) (p)->lpVtbl->EndFlush(p)
 #define IPin_NewSegment(p,a,b,c) (p)->lpVtbl->NewSegment(p,a,b,c)
+#endif
 
 #endif
 
@@ -588,6 +592,7 @@ struct IEnumPinsVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumPins_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumPins_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -597,6 +602,7 @@ struct IEnumPinsVtbl {
 #define IEnumPins_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumPins_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumPins_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -715,6 +721,7 @@ struct IEnumMediaTypesVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumMediaTypes_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumMediaTypes_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -724,6 +731,7 @@ struct IEnumMediaTypesVtbl {
 #define IEnumMediaTypes_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumMediaTypes_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumMediaTypes_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -874,6 +882,7 @@ struct IFilterGraphVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFilterGraph_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFilterGraph_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -887,6 +896,7 @@ struct IFilterGraphVtbl {
 #define IFilterGraph_Reconnect(p,a) (p)->lpVtbl->Reconnect(p,a)
 #define IFilterGraph_Disconnect(p,a) (p)->lpVtbl->Disconnect(p,a)
 #define IFilterGraph_SetDefaultSyncSource(p) (p)->lpVtbl->SetDefaultSyncSource(p)
+#endif
 
 #endif
 
@@ -1043,6 +1053,7 @@ struct IEnumFiltersVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumFilters_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumFilters_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1052,6 +1063,7 @@ struct IEnumFiltersVtbl {
 #define IEnumFilters_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumFilters_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumFilters_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -1192,6 +1204,7 @@ struct IMediaFilterVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaFilter_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaFilter_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1205,6 +1218,7 @@ struct IMediaFilterVtbl {
 #define IMediaFilter_GetState(p,a,b) (p)->lpVtbl->GetState(p,a,b)
 #define IMediaFilter_SetSyncSource(p,a) (p)->lpVtbl->SetSyncSource(p,a)
 #define IMediaFilter_GetSyncSource(p,a) (p)->lpVtbl->GetSyncSource(p,a)
+#endif
 
 #endif
 
@@ -1383,6 +1397,7 @@ struct IBaseFilterVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBaseFilter_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBaseFilter_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1402,6 +1417,7 @@ struct IBaseFilterVtbl {
 #define IBaseFilter_QueryFilterInfo(p,a) (p)->lpVtbl->QueryFilterInfo(p,a)
 #define IBaseFilter_JoinFilterGraph(p,a,b) (p)->lpVtbl->JoinFilterGraph(p,a,b)
 #define IBaseFilter_QueryVendorInfo(p,a) (p)->lpVtbl->QueryVendorInfo(p,a)
+#endif
 
 #endif
 
@@ -1548,6 +1564,7 @@ struct IReferenceClockVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IReferenceClock_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IReferenceClock_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1557,6 +1574,7 @@ struct IReferenceClockVtbl {
 #define IReferenceClock_AdviseTime(p,a,b,c,d) (p)->lpVtbl->AdviseTime(p,a,b,c,d)
 #define IReferenceClock_AdvisePeriodic(p,a,b,c,d) (p)->lpVtbl->AdvisePeriodic(p,a,b,c,d)
 #define IReferenceClock_Unadvise(p,a) (p)->lpVtbl->Unadvise(p,a)
+#endif
 
 #endif
 
@@ -1764,6 +1782,7 @@ struct IMediaSampleVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaSample_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaSample_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1785,6 +1804,7 @@ struct IMediaSampleVtbl {
 #define IMediaSample_SetDiscontinuity(p,a) (p)->lpVtbl->SetDiscontinuity(p,a)
 #define IMediaSample_GetMediaTime(p,a,b) (p)->lpVtbl->GetMediaTime(p,a,b)
 #define IMediaSample_SetMediaTime(p,a,b) (p)->lpVtbl->SetMediaTime(p,a,b)
+#endif
 
 #endif
 
@@ -2092,6 +2112,7 @@ struct IMediaSample2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaSample2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaSample2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2116,6 +2137,7 @@ struct IMediaSample2Vtbl {
 /*** IMediaSample2 methods ***/
 #define IMediaSample2_GetProperties(p,a,b) (p)->lpVtbl->GetProperties(p,a,b)
 #define IMediaSample2_SetProperties(p,a,b) (p)->lpVtbl->SetProperties(p,a,b)
+#endif
 
 #endif
 
@@ -2254,6 +2276,7 @@ struct IMemAllocatorVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMemAllocator_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMemAllocator_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2265,6 +2288,7 @@ struct IMemAllocatorVtbl {
 #define IMemAllocator_Decommit(p) (p)->lpVtbl->Decommit(p)
 #define IMemAllocator_GetBuffer(p,a,b,c,d) (p)->lpVtbl->GetBuffer(p,a,b,c,d)
 #define IMemAllocator_ReleaseBuffer(p,a) (p)->lpVtbl->ReleaseBuffer(p,a)
+#endif
 
 #endif
 
@@ -2412,6 +2436,7 @@ struct IMemAllocatorCallbackTempVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMemAllocatorCallbackTemp_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMemAllocatorCallbackTemp_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2426,6 +2451,7 @@ struct IMemAllocatorCallbackTempVtbl {
 /*** IMemAllocatorCallbackTemp methods ***/
 #define IMemAllocatorCallbackTemp_SetNotify(p,a) (p)->lpVtbl->SetNotify(p,a)
 #define IMemAllocatorCallbackTemp_GetFreeCount(p,a) (p)->lpVtbl->GetFreeCount(p,a)
+#endif
 
 #endif
 
@@ -2505,12 +2531,14 @@ struct IMemAllocatorNotifyCallbackTempVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMemAllocatorNotifyCallbackTemp_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMemAllocatorNotifyCallbackTemp_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IMemAllocatorNotifyCallbackTemp_Release(p) (p)->lpVtbl->Release(p)
 /*** IMemAllocatorNotifyCallbackTemp methods ***/
 #define IMemAllocatorNotifyCallbackTemp_NotifyRelease(p) (p)->lpVtbl->NotifyRelease(p)
+#endif
 
 #endif
 
@@ -2614,6 +2642,7 @@ struct IMemInputPinVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMemInputPin_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMemInputPin_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2625,6 +2654,7 @@ struct IMemInputPinVtbl {
 #define IMemInputPin_Receive(p,a) (p)->lpVtbl->Receive(p,a)
 #define IMemInputPin_ReceiveMultiple(p,a,b,c) (p)->lpVtbl->ReceiveMultiple(p,a,b,c)
 #define IMemInputPin_ReceiveCanBlock(p) (p)->lpVtbl->ReceiveCanBlock(p)
+#endif
 
 #endif
 
@@ -2743,6 +2773,7 @@ struct IAMovieSetupVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAMovieSetup_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAMovieSetup_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2750,6 +2781,7 @@ struct IAMovieSetupVtbl {
 /*** IAMovieSetup methods ***/
 #define IAMovieSetup_Register(p) (p)->lpVtbl->Register(p)
 #define IAMovieSetup_Unregister(p) (p)->lpVtbl->Unregister(p)
+#endif
 
 #endif
 
@@ -2980,6 +3012,7 @@ struct IMediaSeekingVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaSeeking_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaSeeking_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3002,6 +3035,7 @@ struct IMediaSeekingVtbl {
 #define IMediaSeeking_SetRate(p,a) (p)->lpVtbl->SetRate(p,a)
 #define IMediaSeeking_GetRate(p,a) (p)->lpVtbl->GetRate(p,a)
 #define IMediaSeeking_GetPreroll(p,a) (p)->lpVtbl->GetPreroll(p,a)
+#endif
 
 #endif
 
@@ -3513,6 +3547,7 @@ struct IEnumRegFiltersVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumRegFilters_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumRegFilters_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3522,6 +3557,7 @@ struct IEnumRegFiltersVtbl {
 #define IEnumRegFilters_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumRegFilters_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumRegFilters_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -3720,6 +3756,7 @@ struct IFilterMapperVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFilterMapper_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFilterMapper_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3733,6 +3770,7 @@ struct IFilterMapperVtbl {
 #define IFilterMapper_UnregisterFilterInstance(p,a) (p)->lpVtbl->UnregisterFilterInstance(p,a)
 #define IFilterMapper_UnregisterPin(p,a,b) (p)->lpVtbl->UnregisterPin(p,a,b)
 #define IFilterMapper_EnumMatchingFilters(p,a,b,c,d,e,f,g,h,i) (p)->lpVtbl->EnumMatchingFilters(p,a,b,c,d,e,f,g,h,i)
+#endif
 
 #endif
 
@@ -4005,6 +4043,7 @@ struct IFilterMapper2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFilterMapper2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFilterMapper2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4014,6 +4053,7 @@ struct IFilterMapper2Vtbl {
 #define IFilterMapper2_UnregisterFilter(p,a,b,c) (p)->lpVtbl->UnregisterFilter(p,a,b,c)
 #define IFilterMapper2_RegisterFilter(p,a,b,c,d,e,f) (p)->lpVtbl->RegisterFilter(p,a,b,c,d,e,f)
 #define IFilterMapper2_EnumMatchingFilters(p,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) (p)->lpVtbl->EnumMatchingFilters(p,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)
+#endif
 
 #endif
 
@@ -4173,6 +4213,7 @@ struct IFilterMapper3Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFilterMapper3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFilterMapper3_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4184,6 +4225,7 @@ struct IFilterMapper3Vtbl {
 #define IFilterMapper3_EnumMatchingFilters(p,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) (p)->lpVtbl->EnumMatchingFilters(p,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)
 /*** IFilterMapper3 methods ***/
 #define IFilterMapper3_GetICreateDevEnum(p,a) (p)->lpVtbl->GetICreateDevEnum(p,a)
+#endif
 
 #endif
 
@@ -4276,6 +4318,7 @@ struct IQualityControlVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IQualityControl_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IQualityControl_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4283,6 +4326,7 @@ struct IQualityControlVtbl {
 /*** IQualityControl methods ***/
 #define IQualityControl_Notify(p,a,b) (p)->lpVtbl->Notify(p,a,b)
 #define IQualityControl_SetSink(p,a) (p)->lpVtbl->SetSink(p,a)
+#endif
 
 #endif
 
@@ -4427,6 +4471,7 @@ struct IOverlayNotifyVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOverlayNotify_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOverlayNotify_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4436,6 +4481,7 @@ struct IOverlayNotifyVtbl {
 #define IOverlayNotify_OnClipChange(p,a,b,c) (p)->lpVtbl->OnClipChange(p,a,b,c)
 #define IOverlayNotify_OnColorKeyChange(p,a) (p)->lpVtbl->OnColorKeyChange(p,a)
 #define IOverlayNotify_OnPositionChange(p,a,b) (p)->lpVtbl->OnPositionChange(p,a,b)
+#endif
 
 #endif
 
@@ -4558,6 +4604,7 @@ struct IOverlayNotify2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOverlayNotify2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOverlayNotify2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4569,6 +4616,7 @@ struct IOverlayNotify2Vtbl {
 #define IOverlayNotify2_OnPositionChange(p,a,b) (p)->lpVtbl->OnPositionChange(p,a,b)
 /*** IOverlayNotify2 methods ***/
 #define IOverlayNotify2_OnDisplayChange(p,a) (p)->lpVtbl->OnDisplayChange(p,a)
+#endif
 
 #endif
 
@@ -4714,6 +4762,7 @@ struct IOverlayVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOverlay_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOverlay_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4729,6 +4778,7 @@ struct IOverlayVtbl {
 #define IOverlay_GetVideoPosition(p,a,b) (p)->lpVtbl->GetVideoPosition(p,a,b)
 #define IOverlay_Advise(p,a,b) (p)->lpVtbl->Advise(p,a,b)
 #define IOverlay_Unadvise(p) (p)->lpVtbl->Unadvise(p)
+#endif
 
 #endif
 
@@ -4885,12 +4935,14 @@ struct IMediaEventSinkVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaEventSink_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaEventSink_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IMediaEventSink_Release(p) (p)->lpVtbl->Release(p)
 /*** IMediaEventSink methods ***/
 #define IMediaEventSink_Notify(p,a,b,c) (p)->lpVtbl->Notify(p,a,b,c)
+#endif
 
 #endif
 
@@ -4970,6 +5022,7 @@ struct IFileSourceFilterVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFileSourceFilter_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFileSourceFilter_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4977,6 +5030,7 @@ struct IFileSourceFilterVtbl {
 /*** IFileSourceFilter methods ***/
 #define IFileSourceFilter_Load(p,a,b) (p)->lpVtbl->Load(p,a,b)
 #define IFileSourceFilter_GetCurFile(p,a,b) (p)->lpVtbl->GetCurFile(p,a,b)
+#endif
 
 #endif
 
@@ -5065,6 +5119,7 @@ struct IFileSinkFilterVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFileSinkFilter_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFileSinkFilter_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5072,6 +5127,7 @@ struct IFileSinkFilterVtbl {
 /*** IFileSinkFilter methods ***/
 #define IFileSinkFilter_SetFileName(p,a,b) (p)->lpVtbl->SetFileName(p,a,b)
 #define IFileSinkFilter_GetCurFile(p,a,b) (p)->lpVtbl->GetCurFile(p,a,b)
+#endif
 
 #endif
 
@@ -5167,6 +5223,7 @@ struct IFileSinkFilter2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFileSinkFilter2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFileSinkFilter2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5177,6 +5234,7 @@ struct IFileSinkFilter2Vtbl {
 /*** IFileSinkFilter2 methods ***/
 #define IFileSinkFilter2_SetMode(p,a) (p)->lpVtbl->SetMode(p,a)
 #define IFileSinkFilter2_GetMode(p,a) (p)->lpVtbl->GetMode(p,a)
+#endif
 
 #endif
 
@@ -5343,6 +5401,7 @@ struct IGraphBuilderVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IGraphBuilder_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IGraphBuilder_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5364,6 +5423,7 @@ struct IGraphBuilderVtbl {
 #define IGraphBuilder_SetLogFile(p,a) (p)->lpVtbl->SetLogFile(p,a)
 #define IGraphBuilder_Abort(p) (p)->lpVtbl->Abort(p)
 #define IGraphBuilder_ShouldOperationContinue(p) (p)->lpVtbl->ShouldOperationContinue(p)
+#endif
 
 #endif
 
@@ -5578,6 +5638,7 @@ struct ICaptureGraphBuilderVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICaptureGraphBuilder_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICaptureGraphBuilder_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5591,6 +5652,7 @@ struct ICaptureGraphBuilderVtbl {
 #define ICaptureGraphBuilder_ControlStream(p,a,b,c,d,e,f) (p)->lpVtbl->ControlStream(p,a,b,c,d,e,f)
 #define ICaptureGraphBuilder_AllocCapFile(p,a,b) (p)->lpVtbl->AllocCapFile(p,a,b)
 #define ICaptureGraphBuilder_CopyCaptureFile(p,a,b,c,d) (p)->lpVtbl->CopyCaptureFile(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -5748,12 +5810,14 @@ struct IAMCopyCaptureFileProgressVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAMCopyCaptureFileProgress_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAMCopyCaptureFileProgress_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IAMCopyCaptureFileProgress_Release(p) (p)->lpVtbl->Release(p)
 /*** IAMCopyCaptureFileProgress methods ***/
 #define IAMCopyCaptureFileProgress_Progress(p,a) (p)->lpVtbl->Progress(p,a)
+#endif
 
 #endif
 
@@ -5928,6 +5992,7 @@ struct ICaptureGraphBuilder2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICaptureGraphBuilder2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICaptureGraphBuilder2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5942,6 +6007,7 @@ struct ICaptureGraphBuilder2Vtbl {
 #define ICaptureGraphBuilder2_AllocCapFile(p,a,b) (p)->lpVtbl->AllocCapFile(p,a,b)
 #define ICaptureGraphBuilder2_CopyCaptureFile(p,a,b,c,d) (p)->lpVtbl->CopyCaptureFile(p,a,b,c,d)
 #define ICaptureGraphBuilder2_FindPin(p,a,b,c,d,e,f,g) (p)->lpVtbl->FindPin(p,a,b,c,d,e,f,g)
+#endif
 
 #endif
 
@@ -6221,6 +6287,7 @@ struct IFilterGraph2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFilterGraph2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFilterGraph2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6246,6 +6313,7 @@ struct IFilterGraph2Vtbl {
 #define IFilterGraph2_AddSourceFilterForMoniker(p,a,b,c,d) (p)->lpVtbl->AddSourceFilterForMoniker(p,a,b,c,d)
 #define IFilterGraph2_ReconnectEx(p,a,b) (p)->lpVtbl->ReconnectEx(p,a,b)
 #define IFilterGraph2_RenderEx(p,a,b,c) (p)->lpVtbl->RenderEx(p,a,b,c)
+#endif
 
 #endif
 
@@ -6367,6 +6435,7 @@ struct IStreamBuilderVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IStreamBuilder_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IStreamBuilder_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6374,6 +6443,7 @@ struct IStreamBuilderVtbl {
 /*** IStreamBuilder methods ***/
 #define IStreamBuilder_Render(p,a,b) (p)->lpVtbl->Render(p,a,b)
 #define IStreamBuilder_Backout(p,a,b) (p)->lpVtbl->Backout(p,a,b)
+#endif
 
 #endif
 
@@ -6517,6 +6587,7 @@ struct IAsyncReaderVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAsyncReader_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAsyncReader_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6530,6 +6601,7 @@ struct IAsyncReaderVtbl {
 #define IAsyncReader_Length(p,a,b) (p)->lpVtbl->Length(p,a,b)
 #define IAsyncReader_BeginFlush(p) (p)->lpVtbl->BeginFlush(p)
 #define IAsyncReader_EndFlush(p) (p)->lpVtbl->EndFlush(p)
+#endif
 
 #endif
 
@@ -6668,12 +6740,14 @@ struct IGraphVersionVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IGraphVersion_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IGraphVersion_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IGraphVersion_Release(p) (p)->lpVtbl->Release(p)
 /*** IGraphVersion methods ***/
 #define IGraphVersion_QueryVersion(p,a) (p)->lpVtbl->QueryVersion(p,a)
+#endif
 
 #endif
 
@@ -6750,6 +6824,7 @@ struct IResourceConsumerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IResourceConsumer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IResourceConsumer_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6757,6 +6832,7 @@ struct IResourceConsumerVtbl {
 /*** IResourceConsumer methods ***/
 #define IResourceConsumer_AcquireResource(p,a) (p)->lpVtbl->AcquireResource(p,a)
 #define IResourceConsumer_ReleaseResource(p,a) (p)->lpVtbl->ReleaseResource(p,a)
+#endif
 
 #endif
 
@@ -6908,6 +6984,7 @@ struct IResourceManagerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IResourceManager_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IResourceManager_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6921,6 +6998,7 @@ struct IResourceManagerVtbl {
 #define IResourceManager_CancelRequest(p,a,b) (p)->lpVtbl->CancelRequest(p,a,b)
 #define IResourceManager_SetFocus(p,a) (p)->lpVtbl->SetFocus(p,a)
 #define IResourceManager_ReleaseFocus(p,a) (p)->lpVtbl->ReleaseFocus(p,a)
+#endif
 
 #endif
 
@@ -7104,6 +7182,7 @@ struct IKsPropertySetVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IKsPropertySet_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IKsPropertySet_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -7112,6 +7191,7 @@ struct IKsPropertySetVtbl {
 #define IKsPropertySet_Set(p,a,b,c,d,e,f) (p)->lpVtbl->Set(p,a,b,c,d,e,f)
 #define IKsPropertySet_Get(p,a,b,c,d,e,f,g) (p)->lpVtbl->Get(p,a,b,c,d,e,f,g)
 #define IKsPropertySet_QuerySupported(p,a,b,c) (p)->lpVtbl->QuerySupported(p,a,b,c)
+#endif
 
 #endif
 
@@ -7247,6 +7327,7 @@ struct IPinConnectionVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPinConnection_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPinConnection_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -7256,6 +7337,7 @@ struct IPinConnectionVtbl {
 #define IPinConnection_NotifyEndOfStream(p,a) (p)->lpVtbl->NotifyEndOfStream(p,a)
 #define IPinConnection_IsEndPin(p) (p)->lpVtbl->IsEndPin(p)
 #define IPinConnection_DynamicDisconnect(p) (p)->lpVtbl->DynamicDisconnect(p)
+#endif
 
 #endif
 
@@ -7347,12 +7429,14 @@ struct IPinFlowControlVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPinFlowControl_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPinFlowControl_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IPinFlowControl_Release(p) (p)->lpVtbl->Release(p)
 /*** IPinFlowControl methods ***/
 #define IPinFlowControl_Block(p,a,b) (p)->lpVtbl->Block(p,a,b)
+#endif
 
 #endif
 
@@ -7525,6 +7609,7 @@ struct IGraphConfigVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IGraphConfig_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IGraphConfig_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -7540,6 +7625,7 @@ struct IGraphConfigVtbl {
 #define IGraphConfig_SetFilterFlags(p,a,b) (p)->lpVtbl->SetFilterFlags(p,a,b)
 #define IGraphConfig_GetFilterFlags(p,a,b) (p)->lpVtbl->GetFilterFlags(p,a,b)
 #define IGraphConfig_RemoveFilterEx(p,a,b) (p)->lpVtbl->RemoveFilterEx(p,a,b)
+#endif
 
 #endif
 
@@ -7700,12 +7786,14 @@ struct IGraphConfigCallbackVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IGraphConfigCallback_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IGraphConfigCallback_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IGraphConfigCallback_Release(p) (p)->lpVtbl->Release(p)
 /*** IGraphConfigCallback methods ***/
 #define IGraphConfigCallback_Reconfigure(p,a,b) (p)->lpVtbl->Reconfigure(p,a,b)
+#endif
 
 #endif
 
@@ -7805,6 +7893,7 @@ struct IFilterChainVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFilterChain_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFilterChain_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -7814,6 +7903,7 @@ struct IFilterChainVtbl {
 #define IFilterChain_PauseChain(p,a,b) (p)->lpVtbl->PauseChain(p,a,b)
 #define IFilterChain_StopChain(p,a,b) (p)->lpVtbl->StopChain(p,a,b)
 #define IFilterChain_RemoveChain(p,a,b) (p)->lpVtbl->RemoveChain(p,a,b)
+#endif
 
 #endif
 

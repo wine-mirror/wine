@@ -81,6 +81,7 @@ struct IOleWindowVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleWindow_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleWindow_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -88,6 +89,7 @@ struct IOleWindowVtbl {
 /*** IOleWindow methods ***/
 #define IOleWindow_GetWindow(p,a) (p)->lpVtbl->GetWindow(p,a)
 #define IOleWindow_ContextSensitiveHelp(p,a) (p)->lpVtbl->ContextSensitiveHelp(p,a)
+#endif
 
 #endif
 
@@ -197,6 +199,7 @@ struct IOleInPlaceObjectVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleInPlaceObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleInPlaceObject_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -209,6 +212,7 @@ struct IOleInPlaceObjectVtbl {
 #define IOleInPlaceObject_UIDeactivate(p) (p)->lpVtbl->UIDeactivate(p)
 #define IOleInPlaceObject_SetObjectRects(p,a,b) (p)->lpVtbl->SetObjectRects(p,a,b)
 #define IOleInPlaceObject_ReactivateAndUndo(p) (p)->lpVtbl->ReactivateAndUndo(p)
+#endif
 
 #endif
 
@@ -357,6 +361,7 @@ struct IOleInPlaceActiveObjectVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleInPlaceActiveObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleInPlaceActiveObject_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -370,6 +375,7 @@ struct IOleInPlaceActiveObjectVtbl {
 #define IOleInPlaceActiveObject_OnDocWindowActivate(p,a) (p)->lpVtbl->OnDocWindowActivate(p,a)
 #define IOleInPlaceActiveObject_ResizeBorder(p,a,b,c) (p)->lpVtbl->ResizeBorder(p,a,b,c)
 #define IOleInPlaceActiveObject_EnableModeless(p,a) (p)->lpVtbl->EnableModeless(p,a)
+#endif
 
 #endif
 
@@ -531,6 +537,7 @@ struct IOleInPlaceUIWindowVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleInPlaceUIWindow_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleInPlaceUIWindow_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -543,6 +550,7 @@ struct IOleInPlaceUIWindowVtbl {
 #define IOleInPlaceUIWindow_RequestBorderSpace(p,a) (p)->lpVtbl->RequestBorderSpace(p,a)
 #define IOleInPlaceUIWindow_SetBorderSpace(p,a) (p)->lpVtbl->SetBorderSpace(p,a)
 #define IOleInPlaceUIWindow_SetActiveObject(p,a,b) (p)->lpVtbl->SetActiveObject(p,a,b)
+#endif
 
 #endif
 
@@ -729,6 +737,7 @@ struct IOleInPlaceFrameVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleInPlaceFrame_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleInPlaceFrame_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -748,6 +757,7 @@ struct IOleInPlaceFrameVtbl {
 #define IOleInPlaceFrame_SetStatusText(p,a) (p)->lpVtbl->SetStatusText(p,a)
 #define IOleInPlaceFrame_EnableModeless(p,a) (p)->lpVtbl->EnableModeless(p,a)
 #define IOleInPlaceFrame_TranslateAccelerator(p,a,b) (p)->lpVtbl->TranslateAccelerator(p,a,b)
+#endif
 
 #endif
 
@@ -950,6 +960,7 @@ struct IOleInPlaceSiteVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleInPlaceSite_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleInPlaceSite_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -968,6 +979,7 @@ struct IOleInPlaceSiteVtbl {
 #define IOleInPlaceSite_DiscardUndoState(p) (p)->lpVtbl->DiscardUndoState(p)
 #define IOleInPlaceSite_DeactivateAndUndo(p) (p)->lpVtbl->DeactivateAndUndo(p)
 #define IOleInPlaceSite_OnPosRectChange(p,a) (p)->lpVtbl->OnPosRectChange(p,a)
+#endif
 
 #endif
 
@@ -1127,12 +1139,14 @@ struct IParseDisplayNameVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IParseDisplayName_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IParseDisplayName_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IParseDisplayName_Release(p) (p)->lpVtbl->Release(p)
 /*** IParseDisplayName methods ***/
 #define IParseDisplayName_ParseDisplayName(p,a,b,c,d) (p)->lpVtbl->ParseDisplayName(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -1224,6 +1238,7 @@ struct IOleContainerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleContainer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleContainer_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1233,6 +1248,7 @@ struct IOleContainerVtbl {
 /*** IOleContainer methods ***/
 #define IOleContainer_EnumObjects(p,a,b) (p)->lpVtbl->EnumObjects(p,a,b)
 #define IOleContainer_LockContainer(p,a) (p)->lpVtbl->LockContainer(p,a)
+#endif
 
 #endif
 
@@ -1379,6 +1395,7 @@ struct IOleItemContainerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleItemContainer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleItemContainer_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1392,6 +1409,7 @@ struct IOleItemContainerVtbl {
 #define IOleItemContainer_GetObject(p,a,b,c,d,e) (p)->lpVtbl->GetObject(p,a,b,c,d,e)
 #define IOleItemContainer_GetObjectStorage(p,a,b,c,d) (p)->lpVtbl->GetObjectStorage(p,a,b,c,d)
 #define IOleItemContainer_IsRunning(p,a) (p)->lpVtbl->IsRunning(p,a)
+#endif
 
 #endif
 
@@ -1574,6 +1592,7 @@ struct IOleLinkVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleLink_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleLink_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1590,6 +1609,7 @@ struct IOleLinkVtbl {
 #define IOleLink_GetBoundSource(p,a) (p)->lpVtbl->GetBoundSource(p,a)
 #define IOleLink_UnbindSource(p) (p)->lpVtbl->UnbindSource(p)
 #define IOleLink_Update(p,a) (p)->lpVtbl->Update(p,a)
+#endif
 
 #endif
 
@@ -1787,6 +1807,7 @@ struct IOleClientSiteVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleClientSite_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleClientSite_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1798,6 +1819,7 @@ struct IOleClientSiteVtbl {
 #define IOleClientSite_ShowObject(p) (p)->lpVtbl->ShowObject(p)
 #define IOleClientSite_OnShowWindow(p,a) (p)->lpVtbl->OnShowWindow(p,a)
 #define IOleClientSite_RequestNewObjectLayout(p) (p)->lpVtbl->RequestNewObjectLayout(p)
+#endif
 
 #endif
 
@@ -1949,6 +1971,7 @@ struct IOleCacheVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleCache_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleCache_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1959,6 +1982,7 @@ struct IOleCacheVtbl {
 #define IOleCache_EnumCache(p,a) (p)->lpVtbl->EnumCache(p,a)
 #define IOleCache_InitCache(p,a) (p)->lpVtbl->InitCache(p,a)
 #define IOleCache_SetData(p,a,b,c) (p)->lpVtbl->SetData(p,a,b,c)
+#endif
 
 #endif
 
@@ -2129,6 +2153,7 @@ struct IOleCache2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleCache2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleCache2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2142,6 +2167,7 @@ struct IOleCache2Vtbl {
 /*** IOleCache2 methods ***/
 #define IOleCache2_UpdateCache(p,a,b,c) (p)->lpVtbl->UpdateCache(p,a,b,c)
 #define IOleCache2_DiscardCache(p,a) (p)->lpVtbl->DiscardCache(p,a)
+#endif
 
 #endif
 
@@ -2246,6 +2272,7 @@ struct IOleCacheControlVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleCacheControl_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleCacheControl_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2253,6 +2280,7 @@ struct IOleCacheControlVtbl {
 /*** IOleCacheControl methods ***/
 #define IOleCacheControl_OnRun(p,a) (p)->lpVtbl->OnRun(p,a)
 #define IOleCacheControl_OnStop(p) (p)->lpVtbl->OnStop(p)
+#endif
 
 #endif
 
@@ -2368,6 +2396,7 @@ struct IEnumOLEVERBVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumOLEVERB_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumOLEVERB_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2377,6 +2406,7 @@ struct IEnumOLEVERBVtbl {
 #define IEnumOLEVERB_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumOLEVERB_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumOLEVERB_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -2708,6 +2738,7 @@ struct IOleObjectVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleObject_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2734,6 +2765,7 @@ struct IOleObjectVtbl {
 #define IOleObject_EnumAdvise(p,a) (p)->lpVtbl->EnumAdvise(p,a)
 #define IOleObject_GetMiscStatus(p,a,b) (p)->lpVtbl->GetMiscStatus(p,a,b)
 #define IOleObject_SetColorScheme(p,a) (p)->lpVtbl->SetColorScheme(p,a)
+#endif
 
 #endif
 
@@ -3035,6 +3067,7 @@ struct IOleAdviseHolderVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleAdviseHolder_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleAdviseHolder_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3046,6 +3079,7 @@ struct IOleAdviseHolderVtbl {
 #define IOleAdviseHolder_SendOnRename(p,a) (p)->lpVtbl->SendOnRename(p,a)
 #define IOleAdviseHolder_SendOnSave(p) (p)->lpVtbl->SendOnSave(p)
 #define IOleAdviseHolder_SendOnClose(p) (p)->lpVtbl->SendOnClose(p)
+#endif
 
 #endif
 
@@ -3158,12 +3192,14 @@ struct IContinueVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IContinue_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IContinue_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IContinue_Release(p) (p)->lpVtbl->Release(p)
 /*** IContinue methods ***/
 #define IContinue_FContinue(p) (p)->lpVtbl->FContinue(p)
+#endif
 
 #endif
 
@@ -3311,6 +3347,7 @@ struct IViewObjectVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IViewObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IViewObject_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3322,6 +3359,7 @@ struct IViewObjectVtbl {
 #define IViewObject_Unfreeze(p,a) (p)->lpVtbl->Unfreeze(p,a)
 #define IViewObject_SetAdvise(p,a,b,c) (p)->lpVtbl->SetAdvise(p,a,b,c)
 #define IViewObject_GetAdvise(p,a,b,c) (p)->lpVtbl->GetAdvise(p,a,b,c)
+#endif
 
 #endif
 
@@ -3571,6 +3609,7 @@ struct IViewObject2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IViewObject2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IViewObject2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3584,6 +3623,7 @@ struct IViewObject2Vtbl {
 #define IViewObject2_GetAdvise(p,a,b,c) (p)->lpVtbl->GetAdvise(p,a,b,c)
 /*** IViewObject2 methods ***/
 #define IViewObject2_GetExtent(p,a,b,c,d) (p)->lpVtbl->GetExtent(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -3674,6 +3714,7 @@ struct IDropSourceVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDropSource_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDropSource_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3681,6 +3722,7 @@ struct IDropSourceVtbl {
 /*** IDropSource methods ***/
 #define IDropSource_QueryContinueDrag(p,a,b) (p)->lpVtbl->QueryContinueDrag(p,a,b)
 #define IDropSource_GiveFeedback(p,a) (p)->lpVtbl->GiveFeedback(p,a)
+#endif
 
 #endif
 
@@ -3820,6 +3862,7 @@ struct IDropTargetVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDropTarget_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDropTarget_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3829,6 +3872,7 @@ struct IDropTargetVtbl {
 #define IDropTarget_DragOver(p,a,b,c) (p)->lpVtbl->DragOver(p,a,b,c)
 #define IDropTarget_DragLeave(p) (p)->lpVtbl->DragLeave(p)
 #define IDropTarget_Drop(p,a,b,c,d) (p)->lpVtbl->Drop(p,a,b,c,d)
+#endif
 
 #endif
 

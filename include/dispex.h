@@ -199,6 +199,7 @@ struct IDispatchExVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDispatchEx_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDispatchEx_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -217,6 +218,7 @@ struct IDispatchExVtbl {
 #define IDispatchEx_GetMemberName(p,a,b) (p)->lpVtbl->GetMemberName(p,a,b)
 #define IDispatchEx_GetNextDispID(p,a,b,c) (p)->lpVtbl->GetNextDispID(p,a,b,c)
 #define IDispatchEx_GetNameSpaceParent(p,a) (p)->lpVtbl->GetNameSpaceParent(p,a)
+#endif
 
 #endif
 
@@ -431,6 +433,7 @@ struct IDispErrorVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDispError_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDispError_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -442,6 +445,7 @@ struct IDispErrorVtbl {
 #define IDispError_GetSource(p,a) (p)->lpVtbl->GetSource(p,a)
 #define IDispError_GetHelpInfo(p,a,b) (p)->lpVtbl->GetHelpInfo(p,a,b)
 #define IDispError_GetDescription(p,a) (p)->lpVtbl->GetDescription(p,a)
+#endif
 
 #endif
 
@@ -564,12 +568,14 @@ struct IVariantChangeTypeVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IVariantChangeType_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IVariantChangeType_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IVariantChangeType_Release(p) (p)->lpVtbl->Release(p)
 /*** IVariantChangeType methods ***/
 #define IVariantChangeType_ChangeType(p,a,b,c,d) (p)->lpVtbl->ChangeType(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -642,12 +648,14 @@ struct IObjectIdentityVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IObjectIdentity_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IObjectIdentity_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IObjectIdentity_Release(p) (p)->lpVtbl->Release(p)
 /*** IObjectIdentity methods ***/
 #define IObjectIdentity_IsEqualObject(p,a) (p)->lpVtbl->IsEqualObject(p,a)
+#endif
 
 #endif
 

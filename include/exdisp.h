@@ -272,6 +272,7 @@ struct IWebBrowserVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IWebBrowser_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWebBrowser_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -307,6 +308,7 @@ struct IWebBrowserVtbl {
 #define IWebBrowser_get_LocationName(p,a) (p)->lpVtbl->get_LocationName(p,a)
 #define IWebBrowser_get_LocationURL(p,a) (p)->lpVtbl->get_LocationURL(p,a)
 #define IWebBrowser_get_Busy(p,a) (p)->lpVtbl->get_Busy(p,a)
+#endif
 
 #endif
 
@@ -862,6 +864,7 @@ struct IWebBrowserAppVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IWebBrowserApp_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWebBrowserApp_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -918,6 +921,7 @@ struct IWebBrowserAppVtbl {
 #define IWebBrowserApp_put_MenuBar(p,a) (p)->lpVtbl->put_MenuBar(p,a)
 #define IWebBrowserApp_get_FullScreen(p,a) (p)->lpVtbl->get_FullScreen(p,a)
 #define IWebBrowserApp_put_FullScreen(p,a) (p)->lpVtbl->put_FullScreen(p,a)
+#endif
 
 #endif
 
@@ -1323,6 +1327,7 @@ struct IShellWindowsVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IShellWindows_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellWindows_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1344,6 +1349,7 @@ struct IShellWindowsVtbl {
 #define IShellWindows_FindWindowSW(p,a,b,c,d,e,f) (p)->lpVtbl->FindWindowSW(p,a,b,c,d,e,f)
 #define IShellWindows_OnCreated(p,a,b) (p)->lpVtbl->OnCreated(p,a,b)
 #define IShellWindows_ProcessAttachDetach(p,a) (p)->lpVtbl->ProcessAttachDetach(p,a)
+#endif
 
 #endif
 

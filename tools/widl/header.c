@@ -773,7 +773,9 @@ void write_com_interface(type_t *iface)
   indentation--;
   fprintf(header, "};\n");
   fprintf(header, "\n");
+  fprintf(header, "#ifdef COBJMACROS\n");
   write_method_macro(iface, iface->name);
+  fprintf(header, "#endif\n");
   fprintf(header, "\n");
   fprintf(header, "#endif\n");
   fprintf(header, "\n");

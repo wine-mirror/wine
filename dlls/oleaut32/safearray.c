@@ -36,6 +36,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+
+#define COBJMACROS
+
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"

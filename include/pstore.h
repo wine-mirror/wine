@@ -135,6 +135,7 @@ struct IEnumPStoreItemsVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumPStoreItems_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumPStoreItems_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -144,6 +145,7 @@ struct IEnumPStoreItemsVtbl {
 #define IEnumPStoreItems_Next(p,a,b,c) (p)->lpVtbl->Next(p,a,b,c)
 #define IEnumPStoreItems_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumPStoreItems_Skip(p,a) (p)->lpVtbl->Skip(p,a)
+#endif
 
 #endif
 
@@ -264,6 +266,7 @@ struct IEnumPStoreTypesVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumPStoreTypes_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumPStoreTypes_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -273,6 +276,7 @@ struct IEnumPStoreTypesVtbl {
 #define IEnumPStoreTypes_Next(p,a,b,c) (p)->lpVtbl->Next(p,a,b,c)
 #define IEnumPStoreTypes_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumPStoreTypes_Skip(p,a) (p)->lpVtbl->Skip(p,a)
+#endif
 
 #endif
 
@@ -645,6 +649,7 @@ struct IPStoreVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPStore_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPStore_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -669,6 +674,7 @@ struct IPStoreVtbl {
 #define IPStore_OpenItem(p,a,b,c,d,e,f,g) (p)->lpVtbl->OpenItem(p,a,b,c,d,e,f,g)
 #define IPStore_CloseItem(p,a,b,c,d,e) (p)->lpVtbl->CloseItem(p,a,b,c,d,e)
 #define IPStore_EnumItems(p,a,b,c,d,e) (p)->lpVtbl->EnumItems(p,a,b,c,d,e)
+#endif
 
 #endif
 

@@ -134,6 +134,7 @@ struct IActiveScriptErrorVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IActiveScriptError_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IActiveScriptError_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -142,6 +143,7 @@ struct IActiveScriptErrorVtbl {
 #define IActiveScriptError_GetExceptionInfo(p,a) (p)->lpVtbl->GetExceptionInfo(p,a)
 #define IActiveScriptError_GetSourcePosition(p,a,b,c) (p)->lpVtbl->GetSourcePosition(p,a,b,c)
 #define IActiveScriptError_GetSourceLineText(p,a) (p)->lpVtbl->GetSourceLineText(p,a)
+#endif
 
 #endif
 
@@ -286,6 +288,7 @@ struct IActiveScriptSiteVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IActiveScriptSite_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IActiveScriptSite_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -299,6 +302,7 @@ struct IActiveScriptSiteVtbl {
 #define IActiveScriptSite_OnScriptError(p,a) (p)->lpVtbl->OnScriptError(p,a)
 #define IActiveScriptSite_OnEnterScript(p) (p)->lpVtbl->OnEnterScript(p)
 #define IActiveScriptSite_OnLeaveScript(p) (p)->lpVtbl->OnLeaveScript(p)
+#endif
 
 #endif
 
@@ -441,6 +445,7 @@ struct IActiveScriptSiteWindowVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IActiveScriptSiteWindow_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IActiveScriptSiteWindow_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -448,6 +453,7 @@ struct IActiveScriptSiteWindowVtbl {
 /*** IActiveScriptSiteWindow methods ***/
 #define IActiveScriptSiteWindow_GetWindow(p,a) (p)->lpVtbl->GetWindow(p,a)
 #define IActiveScriptSiteWindow_EnableModeless(p,a) (p)->lpVtbl->EnableModeless(p,a)
+#endif
 
 #endif
 
@@ -525,12 +531,14 @@ struct IActiveScriptSiteInterruptPollVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IActiveScriptSiteInterruptPoll_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IActiveScriptSiteInterruptPoll_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IActiveScriptSiteInterruptPoll_Release(p) (p)->lpVtbl->Release(p)
 /*** IActiveScriptSiteInterruptPoll methods ***/
 #define IActiveScriptSiteInterruptPoll_QueryContinue(p) (p)->lpVtbl->QueryContinue(p)
+#endif
 
 #endif
 
@@ -702,6 +710,7 @@ struct IActiveScriptVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IActiveScript_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IActiveScript_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -720,6 +729,7 @@ struct IActiveScriptVtbl {
 #define IActiveScript_GetScriptThreadState(p,a,b) (p)->lpVtbl->GetScriptThreadState(p,a,b)
 #define IActiveScript_InterruptScriptThread(p,a,b,c) (p)->lpVtbl->InterruptScriptThread(p,a,b,c)
 #define IActiveScript_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -956,6 +966,7 @@ struct IActiveScriptParseVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IActiveScriptParse_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IActiveScriptParse_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -964,6 +975,7 @@ struct IActiveScriptParseVtbl {
 #define IActiveScriptParse_InitNew(p) (p)->lpVtbl->InitNew(p)
 #define IActiveScriptParse_AddScriptlet(p,a,b,c,d,e,f,g,h,i,j,k) (p)->lpVtbl->AddScriptlet(p,a,b,c,d,e,f,g,h,i,j,k)
 #define IActiveScriptParse_ParseScriptText(p,a,b,c,d,e,f,g,h,i) (p)->lpVtbl->ParseScriptText(p,a,b,c,d,e,f,g,h,i)
+#endif
 
 #endif
 
@@ -1085,12 +1097,14 @@ struct IActiveScriptParseProcedureOldVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IActiveScriptParseProcedureOld_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IActiveScriptParseProcedureOld_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IActiveScriptParseProcedureOld_Release(p) (p)->lpVtbl->Release(p)
 /*** IActiveScriptParseProcedureOld methods ***/
 #define IActiveScriptParseProcedureOld_ParseProcedureText(p,a,b,c,d,e,f,g,h,i) (p)->lpVtbl->ParseProcedureText(p,a,b,c,d,e,f,g,h,i)
+#endif
 
 #endif
 
@@ -1186,12 +1200,14 @@ struct IActiveScriptParseProcedureVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IActiveScriptParseProcedure_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IActiveScriptParseProcedure_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IActiveScriptParseProcedure_Release(p) (p)->lpVtbl->Release(p)
 /*** IActiveScriptParseProcedure methods ***/
 #define IActiveScriptParseProcedure_ParseProcedureText(p,a,b,c,d,e,f,g,h,i,j) (p)->lpVtbl->ParseProcedureText(p,a,b,c,d,e,f,g,h,i,j)
+#endif
 
 #endif
 
@@ -1272,12 +1288,14 @@ struct IBindEventHandlerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBindEventHandler_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBindEventHandler_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IBindEventHandler_Release(p) (p)->lpVtbl->Release(p)
 /*** IBindEventHandler methods ***/
 #define IBindEventHandler_BindHandler(p,a,b) (p)->lpVtbl->BindHandler(p,a,b)
+#endif
 
 #endif
 
@@ -1369,6 +1387,7 @@ struct IActiveScriptStatsVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IActiveScriptStats_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IActiveScriptStats_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1377,6 +1396,7 @@ struct IActiveScriptStatsVtbl {
 #define IActiveScriptStats_GetStat(p,a,b,c) (p)->lpVtbl->GetStat(p,a,b,c)
 #define IActiveScriptStats_GetStatEx(p,a,b,c) (p)->lpVtbl->GetStatEx(p,a,b,c)
 #define IActiveScriptStats_ResetStats(p) (p)->lpVtbl->ResetStats(p)
+#endif
 
 #endif
 

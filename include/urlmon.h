@@ -96,6 +96,7 @@ struct IBindingVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBinding_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBinding_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -107,6 +108,7 @@ struct IBindingVtbl {
 #define IBinding_SetPriority(p,a) (p)->lpVtbl->SetPriority(p,a)
 #define IBinding_GetPriority(p,a) (p)->lpVtbl->GetPriority(p,a)
 #define IBinding_GetBindResult(p,a,b,c,d) (p)->lpVtbl->GetBindResult(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -437,6 +439,7 @@ struct IBindStatusCallbackVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBindStatusCallback_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBindStatusCallback_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -450,6 +453,7 @@ struct IBindStatusCallbackVtbl {
 #define IBindStatusCallback_GetBindInfo(p,a,b) (p)->lpVtbl->GetBindInfo(p,a,b)
 #define IBindStatusCallback_OnDataAvailable(p,a,b,c,d) (p)->lpVtbl->OnDataAvailable(p,a,b,c,d)
 #define IBindStatusCallback_OnObjectAvailable(p,a,b) (p)->lpVtbl->OnObjectAvailable(p,a,b)
+#endif
 
 #endif
 
@@ -654,6 +658,7 @@ struct IBindHostVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBindHost_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBindHost_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -662,6 +667,7 @@ struct IBindHostVtbl {
 #define IBindHost_CreateMoniker(p,a,b,c,d) (p)->lpVtbl->CreateMoniker(p,a,b,c,d)
 #define IBindHost_MonikerBindToStorage(p,a,b,c,d,e) (p)->lpVtbl->MonikerBindToStorage(p,a,b,c,d,e)
 #define IBindHost_MonikerBindToObject(p,a,b,c,d,e) (p)->lpVtbl->MonikerBindToObject(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -794,12 +800,14 @@ struct IWinInetInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IWinInetInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWinInetInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IWinInetInfo_Release(p) (p)->lpVtbl->Release(p)
 /*** IWinInetInfo methods ***/
 #define IWinInetInfo_QueryOption(p,a,b,c) (p)->lpVtbl->QueryOption(p,a,b,c)
+#endif
 
 #endif
 
@@ -898,6 +906,7 @@ struct IWinInetHttpInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IWinInetHttpInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWinInetHttpInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -906,6 +915,7 @@ struct IWinInetHttpInfoVtbl {
 #define IWinInetHttpInfo_QueryOption(p,a,b,c) (p)->lpVtbl->QueryOption(p,a,b,c)
 /*** IWinInetHttpInfo methods ***/
 #define IWinInetHttpInfo_QueryInfo(p,a,b,c,d,e) (p)->lpVtbl->QueryInfo(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -1043,6 +1053,7 @@ struct IPersistMonikerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPersistMoniker_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPersistMoniker_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1054,6 +1065,7 @@ struct IPersistMonikerVtbl {
 #define IPersistMoniker_Save(p,a,b,c) (p)->lpVtbl->Save(p,a,b,c)
 #define IPersistMoniker_SaveCompleted(p,a,b) (p)->lpVtbl->SaveCompleted(p,a,b)
 #define IPersistMoniker_GetCurMoniker(p,a) (p)->lpVtbl->GetCurMoniker(p,a)
+#endif
 
 #endif
 
@@ -1280,6 +1292,7 @@ struct IInternetProtocolInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IInternetProtocolInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IInternetProtocolInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1289,6 +1302,7 @@ struct IInternetProtocolInfoVtbl {
 #define IInternetProtocolInfo_CombineUrl(p,a,b,c,d,e,f,g) (p)->lpVtbl->CombineUrl(p,a,b,c,d,e,f,g)
 #define IInternetProtocolInfo_CompareUrl(p,a,b,c) (p)->lpVtbl->CompareUrl(p,a,b,c)
 #define IInternetProtocolInfo_QueryInfo(p,a,b,c,d,e,f,g) (p)->lpVtbl->QueryInfo(p,a,b,c,d,e,f,g)
+#endif
 
 #endif
 
@@ -1481,6 +1495,7 @@ struct IInternetSessionVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IInternetSession_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IInternetSession_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1492,6 +1507,7 @@ struct IInternetSessionVtbl {
 #define IInternetSession_UnregisterMimeFilter(p,a,b) (p)->lpVtbl->UnregisterMimeFilter(p,a,b)
 #define IInternetSession_CreateBinding(p,a,b,c,d,e,f) (p)->lpVtbl->CreateBinding(p,a,b,c,d,e,f)
 #define IInternetSession_SetSessionOption(p,a,b,c,d) (p)->lpVtbl->SetSessionOption(p,a,b,c,d)
+#endif
 
 #endif
 

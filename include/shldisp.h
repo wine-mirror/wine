@@ -74,6 +74,7 @@ struct IAutoCompleteVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAutoComplete_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAutoComplete_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -81,6 +82,7 @@ struct IAutoCompleteVtbl {
 /*** IAutoComplete methods ***/
 #define IAutoComplete_Init(p,a,b,c,d) (p)->lpVtbl->Init(p,a,b,c,d)
 #define IAutoComplete_Enable(p,a) (p)->lpVtbl->Enable(p,a)
+#endif
 
 #endif
 
@@ -194,6 +196,7 @@ struct IAutoComplete2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAutoComplete2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAutoComplete2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -204,6 +207,7 @@ struct IAutoComplete2Vtbl {
 /*** IAutoComplete2 methods ***/
 #define IAutoComplete2_SetOptions(p,a) (p)->lpVtbl->SetOptions(p,a)
 #define IAutoComplete2_GetOptions(p,a) (p)->lpVtbl->GetOptions(p,a)
+#endif
 
 #endif
 
@@ -315,6 +319,7 @@ struct IFolderViewOCVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFolderViewOC_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFolderViewOC_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -326,6 +331,7 @@ struct IFolderViewOCVtbl {
 #define IFolderViewOC_Invoke(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->Invoke(p,a,b,c,d,e,f,g,h)
 /*** IFolderViewOC methods ***/
 #define IFolderViewOC_SetFolderView(p,a) (p)->lpVtbl->SetFolderView(p,a)
+#endif
 
 #endif
 

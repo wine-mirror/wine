@@ -36,6 +36,7 @@
 #include <winnt.h>
 
 #include <wtypes.h>
+#define COBJMACROS
 #include <olectl.h>
 
 static HMODULE hOleaut32;

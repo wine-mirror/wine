@@ -198,6 +198,7 @@ struct IDirectDrawVideoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDirectDrawVideo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawVideo_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -219,6 +220,7 @@ struct IDirectDrawVideoVtbl {
 #define IDirectDrawVideo_CanUseOverlayStretch(p,a) (p)->lpVtbl->CanUseOverlayStretch(p,a)
 #define IDirectDrawVideo_UseWhenFullScreen(p,a) (p)->lpVtbl->UseWhenFullScreen(p,a)
 #define IDirectDrawVideo_WillUseFullScreen(p,a) (p)->lpVtbl->WillUseFullScreen(p,a)
+#endif
 
 #endif
 
@@ -457,6 +459,7 @@ struct IQualPropVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IQualProp_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IQualProp_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -468,6 +471,7 @@ struct IQualPropVtbl {
 #define IQualProp_get_Jitter(p,a) (p)->lpVtbl->get_Jitter(p,a)
 #define IQualProp_get_AvgSyncOffset(p,a) (p)->lpVtbl->get_AvgSyncOffset(p,a)
 #define IQualProp_get_DevSyncOffset(p,a) (p)->lpVtbl->get_DevSyncOffset(p,a)
+#endif
 
 #endif
 
@@ -699,6 +703,7 @@ struct IFullScreenVideoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFullScreenVideo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFullScreenVideo_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -721,6 +726,7 @@ struct IFullScreenVideoVtbl {
 #define IFullScreenVideo_SetCaption(p,a) (p)->lpVtbl->SetCaption(p,a)
 #define IFullScreenVideo_GetCaption(p,a) (p)->lpVtbl->GetCaption(p,a)
 #define IFullScreenVideo_SetDefault(p) (p)->lpVtbl->SetDefault(p)
+#endif
 
 #endif
 
@@ -1031,6 +1037,7 @@ struct IFullScreenVideoExVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFullScreenVideoEx_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFullScreenVideoEx_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1058,6 +1065,7 @@ struct IFullScreenVideoExVtbl {
 #define IFullScreenVideoEx_GetAcceleratorTable(p,a,b) (p)->lpVtbl->GetAcceleratorTable(p,a,b)
 #define IFullScreenVideoEx_KeepPixelAspectRatio(p,a) (p)->lpVtbl->KeepPixelAspectRatio(p,a)
 #define IFullScreenVideoEx_IsKeepPixelAspectRatio(p,a) (p)->lpVtbl->IsKeepPixelAspectRatio(p,a)
+#endif
 
 #endif
 
@@ -1215,6 +1223,7 @@ struct IBaseVideoMixerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBaseVideoMixer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBaseVideoMixer_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1227,6 +1236,7 @@ struct IBaseVideoMixerVtbl {
 #define IBaseVideoMixer_SetUsingClock(p,a) (p)->lpVtbl->SetUsingClock(p,a)
 #define IBaseVideoMixer_GetClockPeriod(p,a) (p)->lpVtbl->GetClockPeriod(p,a)
 #define IBaseVideoMixer_SetClockPeriod(p,a) (p)->lpVtbl->SetClockPeriod(p,a)
+#endif
 
 #endif
 

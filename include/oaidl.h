@@ -688,6 +688,7 @@ struct IDispatchVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDispatch_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDispatch_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -697,6 +698,7 @@ struct IDispatchVtbl {
 #define IDispatch_GetTypeInfo(p,a,b,c) (p)->lpVtbl->GetTypeInfo(p,a,b,c)
 #define IDispatch_GetIDsOfNames(p,a,b,c,d,e) (p)->lpVtbl->GetIDsOfNames(p,a,b,c,d,e)
 #define IDispatch_Invoke(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->Invoke(p,a,b,c,d,e,f,g,h)
+#endif
 
 #endif
 
@@ -858,6 +860,7 @@ struct IEnumVARIANTVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumVARIANT_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumVARIANT_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -867,6 +870,7 @@ struct IEnumVARIANTVtbl {
 #define IEnumVARIANT_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumVARIANT_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumVARIANT_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -1014,6 +1018,7 @@ struct ITypeCompVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ITypeComp_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ITypeComp_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1021,6 +1026,7 @@ struct ITypeCompVtbl {
 /*** ITypeComp methods ***/
 #define ITypeComp_Bind(p,a,b,c,d,e,f) (p)->lpVtbl->Bind(p,a,b,c,d,e,f)
 #define ITypeComp_BindType(p,a,b,c,d) (p)->lpVtbl->BindType(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -1322,6 +1328,7 @@ struct ITypeInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ITypeInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ITypeInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1346,6 +1353,7 @@ struct ITypeInfoVtbl {
 #define ITypeInfo_ReleaseTypeAttr(p,a) (p)->lpVtbl->ReleaseTypeAttr(p,a)
 #define ITypeInfo_ReleaseFuncDesc(p,a) (p)->lpVtbl->ReleaseFuncDesc(p,a)
 #define ITypeInfo_ReleaseVarDesc(p,a) (p)->lpVtbl->ReleaseVarDesc(p,a)
+#endif
 
 #endif
 
@@ -1970,6 +1978,7 @@ struct ITypeInfo2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ITypeInfo2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ITypeInfo2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2010,6 +2019,7 @@ struct ITypeInfo2Vtbl {
 #define ITypeInfo2_GetAllParamCustData(p,a,b,c) (p)->lpVtbl->GetAllParamCustData(p,a,b,c)
 #define ITypeInfo2_GetAllVarCustData(p,a,b) (p)->lpVtbl->GetAllVarCustData(p,a,b)
 #define ITypeInfo2_GetAllImplTypeCustData(p,a,b) (p)->lpVtbl->GetAllImplTypeCustData(p,a,b)
+#endif
 
 #endif
 
@@ -2370,6 +2380,7 @@ struct ITypeLibVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ITypeLib_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ITypeLib_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2385,6 +2396,7 @@ struct ITypeLibVtbl {
 #define ITypeLib_IsName(p,a,b,c) (p)->lpVtbl->IsName(p,a,b,c)
 #define ITypeLib_FindName(p,a,b,c,d,e) (p)->lpVtbl->FindName(p,a,b,c,d,e)
 #define ITypeLib_ReleaseTLibAttr(p,a) (p)->lpVtbl->ReleaseTLibAttr(p,a)
+#endif
 
 #endif
 
@@ -2697,6 +2709,7 @@ struct ITypeLib2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ITypeLib2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ITypeLib2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2717,6 +2730,7 @@ struct ITypeLib2Vtbl {
 #define ITypeLib2_GetLibStatistics(p,a,b) (p)->lpVtbl->GetLibStatistics(p,a,b)
 #define ITypeLib2_GetDocumentation2(p,a,b,c,d,e) (p)->lpVtbl->GetDocumentation2(p,a,b,c,d,e)
 #define ITypeLib2_GetAllCustData(p,a) (p)->lpVtbl->GetAllCustData(p,a)
+#endif
 
 #endif
 
@@ -2884,6 +2898,7 @@ struct ITypeChangeEventsVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ITypeChangeEvents_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ITypeChangeEvents_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2891,6 +2906,7 @@ struct ITypeChangeEventsVtbl {
 /*** ITypeChangeEvents methods ***/
 #define ITypeChangeEvents_RequestTypeChange(p,a,b,c,d) (p)->lpVtbl->RequestTypeChange(p,a,b,c,d)
 #define ITypeChangeEvents_AfterTypeChange(p,a,b,c) (p)->lpVtbl->AfterTypeChange(p,a,b,c)
+#endif
 
 #endif
 
@@ -3004,6 +3020,7 @@ struct IErrorInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IErrorInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IErrorInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3014,6 +3031,7 @@ struct IErrorInfoVtbl {
 #define IErrorInfo_GetDescription(p,a) (p)->lpVtbl->GetDescription(p,a)
 #define IErrorInfo_GetHelpFile(p,a) (p)->lpVtbl->GetHelpFile(p,a)
 #define IErrorInfo_GetHelpContext(p,a) (p)->lpVtbl->GetHelpContext(p,a)
+#endif
 
 #endif
 
@@ -3149,6 +3167,7 @@ struct ICreateErrorInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICreateErrorInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICreateErrorInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3159,6 +3178,7 @@ struct ICreateErrorInfoVtbl {
 #define ICreateErrorInfo_SetDescription(p,a) (p)->lpVtbl->SetDescription(p,a)
 #define ICreateErrorInfo_SetHelpFile(p,a) (p)->lpVtbl->SetHelpFile(p,a)
 #define ICreateErrorInfo_SetHelpContext(p,a) (p)->lpVtbl->SetHelpContext(p,a)
+#endif
 
 #endif
 
@@ -3266,12 +3286,14 @@ struct ISupportErrorInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ISupportErrorInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ISupportErrorInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define ISupportErrorInfo_Release(p) (p)->lpVtbl->Release(p)
 /*** ISupportErrorInfo methods ***/
 #define ISupportErrorInfo_InterfaceSupportsErrorInfo(p,a) (p)->lpVtbl->InterfaceSupportsErrorInfo(p,a)
+#endif
 
 #endif
 
@@ -3345,12 +3367,14 @@ struct ITypeFactoryVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ITypeFactory_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ITypeFactory_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define ITypeFactory_Release(p) (p)->lpVtbl->Release(p)
 /*** ITypeFactory methods ***/
 #define ITypeFactory_CreateFromTypeInfo(p,a,b,c) (p)->lpVtbl->CreateFromTypeInfo(p,a,b,c)
+#endif
 
 #endif
 
@@ -3467,6 +3491,7 @@ struct ITypeMarshalVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ITypeMarshal_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ITypeMarshal_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3476,6 +3501,7 @@ struct ITypeMarshalVtbl {
 #define ITypeMarshal_Marshal(p,a,b,c,d,e,f) (p)->lpVtbl->Marshal(p,a,b,c,d,e,f)
 #define ITypeMarshal_Unmarshal(p,a,b,c,d,e) (p)->lpVtbl->Unmarshal(p,a,b,c,d,e)
 #define ITypeMarshal_Free(p,a) (p)->lpVtbl->Free(p,a)
+#endif
 
 #endif
 
@@ -3713,6 +3739,7 @@ struct IRecordInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRecordInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRecordInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3734,6 +3761,7 @@ struct IRecordInfoVtbl {
 #define IRecordInfo_RecordCreate(p) (p)->lpVtbl->RecordCreate(p)
 #define IRecordInfo_RecordCreateCopy(p,a,b) (p)->lpVtbl->RecordCreateCopy(p,a,b)
 #define IRecordInfo_RecordDestroy(p,a) (p)->lpVtbl->RecordDestroy(p,a)
+#endif
 
 #endif
 
@@ -4138,6 +4166,7 @@ struct ICreateTypeInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICreateTypeInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICreateTypeInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4166,6 +4195,7 @@ struct ICreateTypeInfoVtbl {
 #define ICreateTypeInfo_SetMops(p,a,b) (p)->lpVtbl->SetMops(p,a,b)
 #define ICreateTypeInfo_SetTypeIdldesc(p,a) (p)->lpVtbl->SetTypeIdldesc(p,a)
 #define ICreateTypeInfo_LayOut(p) (p)->lpVtbl->LayOut(p)
+#endif
 
 #endif
 
@@ -4681,6 +4711,7 @@ struct ICreateTypeInfo2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICreateTypeInfo2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICreateTypeInfo2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4725,6 +4756,7 @@ struct ICreateTypeInfo2Vtbl {
 #define ICreateTypeInfo2_SetVarHelpStringContext(p,a,b) (p)->lpVtbl->SetVarHelpStringContext(p,a,b)
 #define ICreateTypeInfo2_Invalidate(p) (p)->lpVtbl->Invalidate(p)
 #define ICreateTypeInfo2_SetName(p,a) (p)->lpVtbl->SetName(p,a)
+#endif
 
 #endif
 
@@ -5026,6 +5058,7 @@ struct ICreateTypeLibVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICreateTypeLib_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICreateTypeLib_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5041,6 +5074,7 @@ struct ICreateTypeLibVtbl {
 #define ICreateTypeLib_SetLcid(p,a) (p)->lpVtbl->SetLcid(p,a)
 #define ICreateTypeLib_SetLibFlags(p,a) (p)->lpVtbl->SetLibFlags(p,a)
 #define ICreateTypeLib_SaveAllChanges(p) (p)->lpVtbl->SaveAllChanges(p)
+#endif
 
 #endif
 
@@ -5261,6 +5295,7 @@ struct ICreateTypeLib2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ICreateTypeLib2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ICreateTypeLib2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5281,6 +5316,7 @@ struct ICreateTypeLib2Vtbl {
 #define ICreateTypeLib2_SetCustData(p,a,b) (p)->lpVtbl->SetCustData(p,a,b)
 #define ICreateTypeLib2_SetHelpStringContext(p,a) (p)->lpVtbl->SetHelpStringContext(p,a)
 #define ICreateTypeLib2_SetHelpStringDll(p,a) (p)->lpVtbl->SetHelpStringDll(p,a)
+#endif
 
 #endif
 
@@ -5393,12 +5429,14 @@ struct IErrorLogVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IErrorLog_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IErrorLog_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IErrorLog_Release(p) (p)->lpVtbl->Release(p)
 /*** IErrorLog methods ***/
 #define IErrorLog_AddError(p,a,b) (p)->lpVtbl->AddError(p,a,b)
+#endif
 
 #endif
 
@@ -5484,6 +5522,7 @@ struct IPropertyBagVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPropertyBag_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPropertyBag_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5491,6 +5530,7 @@ struct IPropertyBagVtbl {
 /*** IPropertyBag methods ***/
 #define IPropertyBag_Read(p,a,b,c) (p)->lpVtbl->Read(p,a,b,c)
 #define IPropertyBag_Write(p,a,b) (p)->lpVtbl->Write(p,a,b)
+#endif
 
 #endif
 

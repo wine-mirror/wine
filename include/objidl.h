@@ -155,6 +155,7 @@ struct IMarshalVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMarshal_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMarshal_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -166,6 +167,7 @@ struct IMarshalVtbl {
 #define IMarshal_UnmarshalInterface(p,a,b,c) (p)->lpVtbl->UnmarshalInterface(p,a,b,c)
 #define IMarshal_ReleaseMarshalData(p,a) (p)->lpVtbl->ReleaseMarshalData(p,a)
 #define IMarshal_DisconnectObject(p,a) (p)->lpVtbl->DisconnectObject(p,a)
+#endif
 
 #endif
 
@@ -303,12 +305,14 @@ struct IStdMarshalInfoVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IStdMarshalInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IStdMarshalInfo_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IStdMarshalInfo_Release(p) (p)->lpVtbl->Release(p)
 /*** IStdMarshalInfo methods ***/
 #define IStdMarshalInfo_GetClassForHandler(p,a,b,c) (p)->lpVtbl->GetClassForHandler(p,a,b,c)
+#endif
 
 #endif
 
@@ -401,6 +405,7 @@ struct IExternalConnectionVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IExternalConnection_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IExternalConnection_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -408,6 +413,7 @@ struct IExternalConnectionVtbl {
 /*** IExternalConnection methods ***/
 #define IExternalConnection_AddConnection(p,a,b) (p)->lpVtbl->AddConnection(p,a,b)
 #define IExternalConnection_ReleaseConnection(p,a,b,c) (p)->lpVtbl->ReleaseConnection(p,a,b,c)
+#endif
 
 #endif
 
@@ -499,12 +505,14 @@ struct IMultiQIVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMultiQI_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMultiQI_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IMultiQI_Release(p) (p)->lpVtbl->Release(p)
 /*** IMultiQI methods ***/
 #define IMultiQI_QueryMultipleInterfaces(p,a,b) (p)->lpVtbl->QueryMultipleInterfaces(p,a,b)
+#endif
 
 #endif
 
@@ -613,6 +621,7 @@ struct IMallocVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMalloc_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMalloc_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -624,6 +633,7 @@ struct IMallocVtbl {
 #define IMalloc_GetSize(p,a) (p)->lpVtbl->GetSize(p,a)
 #define IMalloc_DidAlloc(p,a) (p)->lpVtbl->DidAlloc(p,a)
 #define IMalloc_HeapMinimize(p) (p)->lpVtbl->HeapMinimize(p)
+#endif
 
 #endif
 
@@ -835,6 +845,7 @@ struct IMallocSpyVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMallocSpy_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMallocSpy_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -852,6 +863,7 @@ struct IMallocSpyVtbl {
 #define IMallocSpy_PostDidAlloc(p,a,b,c) (p)->lpVtbl->PostDidAlloc(p,a,b,c)
 #define IMallocSpy_PreHeapMinimize(p) (p)->lpVtbl->PreHeapMinimize(p)
 #define IMallocSpy_PostHeapMinimize(p) (p)->lpVtbl->PostHeapMinimize(p)
+#endif
 
 #endif
 
@@ -1054,6 +1066,7 @@ struct IEnumUnknownVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumUnknown_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumUnknown_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1063,6 +1076,7 @@ struct IEnumUnknownVtbl {
 #define IEnumUnknown_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumUnknown_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumUnknown_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -1178,6 +1192,7 @@ struct ISurrogateVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ISurrogate_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ISurrogate_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1185,6 +1200,7 @@ struct ISurrogateVtbl {
 /*** ISurrogate methods ***/
 #define ISurrogate_LoadDllServer(p,a) (p)->lpVtbl->LoadDllServer(p,a)
 #define ISurrogate_FreeSurrogate(p) (p)->lpVtbl->FreeSurrogate(p)
+#endif
 
 #endif
 
@@ -1286,6 +1302,7 @@ struct IGlobalInterfaceTableVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IGlobalInterfaceTable_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IGlobalInterfaceTable_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1294,6 +1311,7 @@ struct IGlobalInterfaceTableVtbl {
 #define IGlobalInterfaceTable_RegisterInterfaceInGlobal(p,a,b,c) (p)->lpVtbl->RegisterInterfaceInGlobal(p,a,b,c)
 #define IGlobalInterfaceTable_RevokeInterfaceFromGlobal(p,a) (p)->lpVtbl->RevokeInterfaceFromGlobal(p,a)
 #define IGlobalInterfaceTable_GetInterfaceFromGlobal(p,a,b,c) (p)->lpVtbl->GetInterfaceFromGlobal(p,a,b,c)
+#endif
 
 #endif
 
@@ -1478,6 +1496,7 @@ struct IBindCtxVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IBindCtx_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IBindCtx_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1493,6 +1512,7 @@ struct IBindCtxVtbl {
 #define IBindCtx_GetObjectParam(p,a,b) (p)->lpVtbl->GetObjectParam(p,a,b)
 #define IBindCtx_EnumObjectParam(p,a) (p)->lpVtbl->EnumObjectParam(p,a)
 #define IBindCtx_RevokeObjectParam(p,a) (p)->lpVtbl->RevokeObjectParam(p,a)
+#endif
 
 #endif
 
@@ -1682,6 +1702,7 @@ struct IEnumMonikerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumMoniker_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumMoniker_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1691,6 +1712,7 @@ struct IEnumMonikerVtbl {
 #define IEnumMoniker_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumMoniker_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumMoniker_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -1829,6 +1851,7 @@ struct IRunnableObjectVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRunnableObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRunnableObject_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1839,6 +1862,7 @@ struct IRunnableObjectVtbl {
 #define IRunnableObject_IsRunning(p) (p)->lpVtbl->IsRunning(p)
 #define IRunnableObject_LockRunning(p,a,b) (p)->lpVtbl->LockRunning(p,a,b)
 #define IRunnableObject_SetContainedObject(p,a) (p)->lpVtbl->SetContainedObject(p,a)
+#endif
 
 #endif
 
@@ -2002,6 +2026,7 @@ struct IRunningObjectTableVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRunningObjectTable_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRunningObjectTable_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2014,6 +2039,7 @@ struct IRunningObjectTableVtbl {
 #define IRunningObjectTable_NoteChangeTime(p,a,b) (p)->lpVtbl->NoteChangeTime(p,a,b)
 #define IRunningObjectTable_GetTimeOfLastChange(p,a,b) (p)->lpVtbl->GetTimeOfLastChange(p,a,b)
 #define IRunningObjectTable_EnumRunning(p,a) (p)->lpVtbl->EnumRunning(p,a)
+#endif
 
 #endif
 
@@ -2145,12 +2171,14 @@ struct IPersistVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPersist_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPersist_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IPersist_Release(p) (p)->lpVtbl->Release(p)
 /*** IPersist methods ***/
 #define IPersist_GetClassID(p,a) (p)->lpVtbl->GetClassID(p,a)
+#endif
 
 #endif
 
@@ -2249,6 +2277,7 @@ struct IPersistStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPersistStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPersistStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2260,6 +2289,7 @@ struct IPersistStreamVtbl {
 #define IPersistStream_Load(p,a) (p)->lpVtbl->Load(p,a)
 #define IPersistStream_Save(p,a,b) (p)->lpVtbl->Save(p,a,b)
 #define IPersistStream_GetSizeMax(p,a) (p)->lpVtbl->GetSizeMax(p,a)
+#endif
 
 #endif
 
@@ -2540,6 +2570,7 @@ struct IMonikerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMoniker_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMoniker_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2567,6 +2598,7 @@ struct IMonikerVtbl {
 #define IMoniker_GetDisplayName(p,a,b,c) (p)->lpVtbl->GetDisplayName(p,a,b,c)
 #define IMoniker_ParseDisplayName(p,a,b,c,d,e) (p)->lpVtbl->ParseDisplayName(p,a,b,c,d,e)
 #define IMoniker_IsSystemMoniker(p,a) (p)->lpVtbl->IsSystemMoniker(p,a)
+#endif
 
 #endif
 
@@ -2821,12 +2853,14 @@ struct IROTDataVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IROTData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IROTData_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IROTData_Release(p) (p)->lpVtbl->Release(p)
 /*** IROTData methods ***/
 #define IROTData_GetComparisonData(p,a,b,c) (p)->lpVtbl->GetComparisonData(p,a,b,c)
+#endif
 
 #endif
 
@@ -2919,6 +2953,7 @@ struct IEnumStringVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumString_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumString_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -2928,6 +2963,7 @@ struct IEnumStringVtbl {
 #define IEnumString_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumString_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumString_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -3043,12 +3079,14 @@ struct IClassActivatorVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IClassActivator_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IClassActivator_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IClassActivator_Release(p) (p)->lpVtbl->Release(p)
 /*** IClassActivator methods ***/
 #define IClassActivator_GetClassObject(p,a,b,c,d,e) (p)->lpVtbl->GetClassObject(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -3137,6 +3175,7 @@ struct ISequentialStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ISequentialStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ISequentialStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3144,6 +3183,7 @@ struct ISequentialStreamVtbl {
 /*** ISequentialStream methods ***/
 #define ISequentialStream_Read(p,a,b,c) (p)->lpVtbl->Read(p,a,b,c)
 #define ISequentialStream_Write(p,a,b,c) (p)->lpVtbl->Write(p,a,b,c)
+#endif
 
 #endif
 
@@ -3368,6 +3408,7 @@ struct IStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3385,6 +3426,7 @@ struct IStreamVtbl {
 #define IStream_UnlockRegion(p,a,b,c) (p)->lpVtbl->UnlockRegion(p,a,b,c)
 #define IStream_Stat(p,a,b) (p)->lpVtbl->Stat(p,a,b)
 #define IStream_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -3586,6 +3628,7 @@ struct IEnumSTATSTGVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumSTATSTG_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumSTATSTG_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3595,6 +3638,7 @@ struct IEnumSTATSTGVtbl {
 #define IEnumSTATSTG_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumSTATSTG_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumSTATSTG_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -3879,6 +3923,7 @@ struct IStorageVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IStorage_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -3899,6 +3944,7 @@ struct IStorageVtbl {
 #define IStorage_SetClass(p,a) (p)->lpVtbl->SetClass(p,a)
 #define IStorage_SetStateBits(p,a,b) (p)->lpVtbl->SetStateBits(p,a,b)
 #define IStorage_Stat(p,a,b) (p)->lpVtbl->Stat(p,a,b)
+#endif
 
 #endif
 
@@ -4193,6 +4239,7 @@ struct IPersistFileVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPersistFile_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPersistFile_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4205,6 +4252,7 @@ struct IPersistFileVtbl {
 #define IPersistFile_Save(p,a,b) (p)->lpVtbl->Save(p,a,b)
 #define IPersistFile_SaveCompleted(p,a) (p)->lpVtbl->SaveCompleted(p,a)
 #define IPersistFile_GetCurFile(p,a) (p)->lpVtbl->GetCurFile(p,a)
+#endif
 
 #endif
 
@@ -4355,6 +4403,7 @@ struct IPersistStorageVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPersistStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPersistStorage_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4368,6 +4417,7 @@ struct IPersistStorageVtbl {
 #define IPersistStorage_Save(p,a,b) (p)->lpVtbl->Save(p,a,b)
 #define IPersistStorage_SaveCompleted(p,a) (p)->lpVtbl->SaveCompleted(p,a)
 #define IPersistStorage_HandsOffStorage(p) (p)->lpVtbl->HandsOffStorage(p)
+#endif
 
 #endif
 
@@ -4485,12 +4535,14 @@ struct IRootStorageVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRootStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRootStorage_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IRootStorage_Release(p) (p)->lpVtbl->Release(p)
 /*** IRootStorage methods ***/
 #define IRootStorage_SwitchToFile(p,a) (p)->lpVtbl->SwitchToFile(p,a)
+#endif
 
 #endif
 
@@ -4625,6 +4677,7 @@ struct ILockBytesVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ILockBytes_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ILockBytes_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4637,6 +4690,7 @@ struct ILockBytesVtbl {
 #define ILockBytes_LockRegion(p,a,b,c) (p)->lpVtbl->LockRegion(p,a,b,c)
 #define ILockBytes_UnlockRegion(p,a,b,c) (p)->lpVtbl->UnlockRegion(p,a,b,c)
 #define ILockBytes_Stat(p,a,b) (p)->lpVtbl->Stat(p,a,b)
+#endif
 
 #endif
 
@@ -4825,6 +4879,7 @@ struct IFillLockBytesVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IFillLockBytes_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IFillLockBytes_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -4834,6 +4889,7 @@ struct IFillLockBytesVtbl {
 #define IFillLockBytes_FillAt(p,a,b,c,d) (p)->lpVtbl->FillAt(p,a,b,c,d)
 #define IFillLockBytes_SetFillSize(p,a) (p)->lpVtbl->SetFillSize(p,a)
 #define IFillLockBytes_Terminate(p,a) (p)->lpVtbl->Terminate(p,a)
+#endif
 
 #endif
 
@@ -4963,12 +5019,14 @@ struct IProgressNotifyVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IProgressNotify_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IProgressNotify_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IProgressNotify_Release(p) (p)->lpVtbl->Release(p)
 /*** IProgressNotify methods ***/
 #define IProgressNotify_OnProgress(p,a,b,c,d) (p)->lpVtbl->OnProgress(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -5078,6 +5136,7 @@ struct ILayoutStorageVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define ILayoutStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ILayoutStorage_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5088,6 +5147,7 @@ struct ILayoutStorageVtbl {
 #define ILayoutStorage_EndMonitor(p) (p)->lpVtbl->EndMonitor(p)
 #define ILayoutStorage_ReLayoutDocfile(p,a) (p)->lpVtbl->ReLayoutDocfile(p,a)
 #define ILayoutStorage_ReLayoutDocfileOnILockBytes(p,a) (p)->lpVtbl->ReLayoutDocfileOnILockBytes(p,a)
+#endif
 
 #endif
 
@@ -5238,6 +5298,7 @@ struct IEnumFORMATETCVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumFORMATETC_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumFORMATETC_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5247,6 +5308,7 @@ struct IEnumFORMATETCVtbl {
 #define IEnumFORMATETC_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumFORMATETC_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumFORMATETC_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -5397,6 +5459,7 @@ struct IEnumSTATDATAVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumSTATDATA_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumSTATDATA_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5406,6 +5469,7 @@ struct IEnumSTATDATAVtbl {
 #define IEnumSTATDATA_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumSTATDATA_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumSTATDATA_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -5635,6 +5699,7 @@ struct IAdviseSinkVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAdviseSink_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAdviseSink_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5645,6 +5710,7 @@ struct IAdviseSinkVtbl {
 #define IAdviseSink_OnRename(p,a) (p)->lpVtbl->OnRename(p,a)
 #define IAdviseSink_OnSave(p) (p)->lpVtbl->OnSave(p)
 #define IAdviseSink_OnClose(p) (p)->lpVtbl->OnClose(p)
+#endif
 
 #endif
 
@@ -5811,6 +5877,7 @@ struct IAdviseSink2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAdviseSink2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAdviseSink2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -5823,6 +5890,7 @@ struct IAdviseSink2Vtbl {
 #define IAdviseSink2_OnClose(p) (p)->lpVtbl->OnClose(p)
 /*** IAdviseSink2 methods ***/
 #define IAdviseSink2_OnLinkSrcChange(p,a) (p)->lpVtbl->OnLinkSrcChange(p,a)
+#endif
 
 #endif
 
@@ -5987,6 +6055,7 @@ struct IDataObjectVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDataObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDataObject_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6001,6 +6070,7 @@ struct IDataObjectVtbl {
 #define IDataObject_DAdvise(p,a,b,c,d) (p)->lpVtbl->DAdvise(p,a,b,c,d)
 #define IDataObject_DUnadvise(p,a) (p)->lpVtbl->DUnadvise(p,a)
 #define IDataObject_EnumDAdvise(p,a) (p)->lpVtbl->EnumDAdvise(p,a)
+#endif
 
 #endif
 
@@ -6212,6 +6282,7 @@ struct IDataAdviseHolderVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDataAdviseHolder_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDataAdviseHolder_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6221,6 +6292,7 @@ struct IDataAdviseHolderVtbl {
 #define IDataAdviseHolder_Unadvise(p,a) (p)->lpVtbl->Unadvise(p,a)
 #define IDataAdviseHolder_EnumAdvise(p,a) (p)->lpVtbl->EnumAdvise(p,a)
 #define IDataAdviseHolder_SendOnDataChange(p,a,b,c) (p)->lpVtbl->SendOnDataChange(p,a,b,c)
+#endif
 
 #endif
 
@@ -6384,6 +6456,7 @@ struct IMessageFilterVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMessageFilter_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMessageFilter_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6392,6 +6465,7 @@ struct IMessageFilterVtbl {
 #define IMessageFilter_HandleIncomingCall(p,a,b,c,d) (p)->lpVtbl->HandleIncomingCall(p,a,b,c,d)
 #define IMessageFilter_RetryRejectedCall(p,a,b,c) (p)->lpVtbl->RetryRejectedCall(p,a,b,c)
 #define IMessageFilter_MessagePending(p,a,b,c) (p)->lpVtbl->MessagePending(p,a,b,c)
+#endif
 
 #endif
 
@@ -6535,6 +6609,7 @@ struct IRpcChannelBufferVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRpcChannelBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRpcChannelBuffer_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6545,6 +6620,7 @@ struct IRpcChannelBufferVtbl {
 #define IRpcChannelBuffer_FreeBuffer(p,a) (p)->lpVtbl->FreeBuffer(p,a)
 #define IRpcChannelBuffer_GetDestCtx(p,a,b) (p)->lpVtbl->GetDestCtx(p,a,b)
 #define IRpcChannelBuffer_IsConnected(p) (p)->lpVtbl->IsConnected(p)
+#endif
 
 #endif
 
@@ -6677,6 +6753,7 @@ struct IRpcChannelBuffer2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRpcChannelBuffer2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRpcChannelBuffer2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6689,6 +6766,7 @@ struct IRpcChannelBuffer2Vtbl {
 #define IRpcChannelBuffer2_IsConnected(p) (p)->lpVtbl->IsConnected(p)
 /*** IRpcChannelBuffer2 methods ***/
 #define IRpcChannelBuffer2_GetProtocolVersion(p,a) (p)->lpVtbl->GetProtocolVersion(p,a)
+#endif
 
 #endif
 
@@ -6854,6 +6932,7 @@ struct IRpcChannelBuffer3Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRpcChannelBuffer3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRpcChannelBuffer3_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -6874,6 +6953,7 @@ struct IRpcChannelBuffer3Vtbl {
 #define IRpcChannelBuffer3_GetDestCtxEx(p,a,b,c) (p)->lpVtbl->GetDestCtxEx(p,a,b,c)
 #define IRpcChannelBuffer3_GetState(p,a,b) (p)->lpVtbl->GetState(p,a,b)
 #define IRpcChannelBuffer3_RegisterAsync(p,a,b) (p)->lpVtbl->RegisterAsync(p,a,b)
+#endif
 
 #endif
 
@@ -7022,6 +7102,7 @@ struct IRpcProxyBufferVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRpcProxyBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRpcProxyBuffer_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -7029,6 +7110,7 @@ struct IRpcProxyBufferVtbl {
 /*** IRpcProxyBuffer methods ***/
 #define IRpcProxyBuffer_Connect(p,a) (p)->lpVtbl->Connect(p,a)
 #define IRpcProxyBuffer_Disconnect(p) (p)->lpVtbl->Disconnect(p)
+#endif
 
 #endif
 
@@ -7150,6 +7232,7 @@ struct IRpcStubBufferVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRpcStubBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRpcStubBuffer_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -7162,6 +7245,7 @@ struct IRpcStubBufferVtbl {
 #define IRpcStubBuffer_CountRefs(p) (p)->lpVtbl->CountRefs(p)
 #define IRpcStubBuffer_DebugServerQueryInterface(p,a) (p)->lpVtbl->DebugServerQueryInterface(p,a)
 #define IRpcStubBuffer_DebugServerRelease(p,a) (p)->lpVtbl->DebugServerRelease(p,a)
+#endif
 
 #endif
 
@@ -7303,6 +7387,7 @@ struct IPSFactoryBufferVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPSFactoryBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPSFactoryBuffer_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -7310,6 +7395,7 @@ struct IPSFactoryBufferVtbl {
 /*** IPSFactoryBuffer methods ***/
 #define IPSFactoryBuffer_CreateProxy(p,a,b,c,d) (p)->lpVtbl->CreateProxy(p,a,b,c,d)
 #define IPSFactoryBuffer_CreateStub(p,a,b,c) (p)->lpVtbl->CreateStub(p,a,b,c)
+#endif
 
 #endif
 
@@ -7481,6 +7567,7 @@ struct IChannelHookVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IChannelHook_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IChannelHook_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -7492,6 +7579,7 @@ struct IChannelHookVtbl {
 #define IChannelHook_ServerNotify(p,a,b,c,d,e) (p)->lpVtbl->ServerNotify(p,a,b,c,d,e)
 #define IChannelHook_ServerGetSize(p,a,b,c,d) (p)->lpVtbl->ServerGetSize(p,a,b,c,d)
 #define IChannelHook_ServerFillBuffer(p,a,b,c,d,e) (p)->lpVtbl->ServerFillBuffer(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -7948,6 +8036,7 @@ struct IPropertyStorageVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPropertyStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPropertyStorage_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -7965,6 +8054,7 @@ struct IPropertyStorageVtbl {
 #define IPropertyStorage_SetTimes(p,a,b,c) (p)->lpVtbl->SetTimes(p,a,b,c)
 #define IPropertyStorage_SetClass(p,a) (p)->lpVtbl->SetClass(p,a)
 #define IPropertyStorage_Stat(p,a) (p)->lpVtbl->Stat(p,a)
+#endif
 
 #endif
 
@@ -8180,6 +8270,7 @@ struct IPropertySetStorageVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPropertySetStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPropertySetStorage_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -8189,6 +8280,7 @@ struct IPropertySetStorageVtbl {
 #define IPropertySetStorage_Open(p,a,b,c) (p)->lpVtbl->Open(p,a,b,c)
 #define IPropertySetStorage_Delete(p,a) (p)->lpVtbl->Delete(p,a)
 #define IPropertySetStorage_Enum(p,a) (p)->lpVtbl->Enum(p,a)
+#endif
 
 #endif
 
@@ -8312,6 +8404,7 @@ struct IEnumSTATPROPSTGVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumSTATPROPSTG_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumSTATPROPSTG_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -8321,6 +8414,7 @@ struct IEnumSTATPROPSTGVtbl {
 #define IEnumSTATPROPSTG_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumSTATPROPSTG_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumSTATPROPSTG_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -8449,6 +8543,7 @@ struct IEnumSTATPROPSETSTGVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumSTATPROPSETSTG_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumSTATPROPSETSTG_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -8458,6 +8553,7 @@ struct IEnumSTATPROPSETSTGVtbl {
 #define IEnumSTATPROPSETSTG_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumSTATPROPSETSTG_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumSTATPROPSETSTG_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -8627,6 +8723,7 @@ struct IClientSecurityVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IClientSecurity_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IClientSecurity_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -8635,6 +8732,7 @@ struct IClientSecurityVtbl {
 #define IClientSecurity_QueryBlanket(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->QueryBlanket(p,a,b,c,d,e,f,g,h)
 #define IClientSecurity_SetBlanket(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->SetBlanket(p,a,b,c,d,e,f,g,h)
 #define IClientSecurity_CopyProxy(p,a,b) (p)->lpVtbl->CopyProxy(p,a,b)
+#endif
 
 #endif
 
@@ -8767,6 +8865,7 @@ struct IServerSecurityVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IServerSecurity_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IServerSecurity_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -8776,6 +8875,7 @@ struct IServerSecurityVtbl {
 #define IServerSecurity_ImpersonateClient(p) (p)->lpVtbl->ImpersonateClient(p)
 #define IServerSecurity_RevertToSelf(p) (p)->lpVtbl->RevertToSelf(p)
 #define IServerSecurity_IsImpersonating(p) (p)->lpVtbl->IsImpersonating(p)
+#endif
 
 #endif
 
@@ -8883,12 +8983,14 @@ struct IAsyncSetupVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAsyncSetup_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAsyncSetup_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IAsyncSetup_Release(p) (p)->lpVtbl->Release(p)
 /*** IAsyncSetup methods ***/
 #define IAsyncSetup_GetAsyncManager(p,a,b,c,d,e) (p)->lpVtbl->GetAsyncManager(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -8979,6 +9081,7 @@ struct IAsyncManagerVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAsyncManager_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAsyncManager_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -8987,6 +9090,7 @@ struct IAsyncManagerVtbl {
 #define IAsyncManager_CompleteCall(p,a) (p)->lpVtbl->CompleteCall(p,a)
 #define IAsyncManager_GetCallContext(p,a,b) (p)->lpVtbl->GetCallContext(p,a,b)
 #define IAsyncManager_GetState(p,a) (p)->lpVtbl->GetState(p,a)
+#endif
 
 #endif
 

@@ -99,6 +99,7 @@ struct IOleDocumentVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleDocument_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleDocument_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -107,6 +108,7 @@ struct IOleDocumentVtbl {
 #define IOleDocument_CreateView(p,a,b,c,d) (p)->lpVtbl->CreateView(p,a,b,c,d)
 #define IOleDocument_GetDocMiscStatus(p,a) (p)->lpVtbl->GetDocMiscStatus(p,a)
 #define IOleDocument_EnumViews(p,a,b) (p)->lpVtbl->EnumViews(p,a,b)
+#endif
 
 #endif
 
@@ -200,12 +202,14 @@ struct IOleDocumentSiteVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleDocumentSite_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleDocumentSite_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IOleDocumentSite_Release(p) (p)->lpVtbl->Release(p)
 /*** IOleDocumentSite methods ***/
 #define IOleDocumentSite_ActivateMe(p,a) (p)->lpVtbl->ActivateMe(p,a)
+#endif
 
 #endif
 
@@ -363,6 +367,7 @@ struct IOleDocumentViewVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleDocumentView_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleDocumentView_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -381,6 +386,7 @@ struct IOleDocumentViewVtbl {
 #define IOleDocumentView_SaveViewState(p,a) (p)->lpVtbl->SaveViewState(p,a)
 #define IOleDocumentView_ApplyViewState(p,a) (p)->lpVtbl->ApplyViewState(p,a)
 #define IOleDocumentView_Clone(p,a,b) (p)->lpVtbl->Clone(p,a,b)
+#endif
 
 #endif
 
@@ -582,6 +588,7 @@ struct IEnumOleDocumentViewsVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumOleDocumentViews_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumOleDocumentViews_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -591,6 +598,7 @@ struct IEnumOleDocumentViewsVtbl {
 #define IEnumOleDocumentViews_Skip(p,a) (p)->lpVtbl->Skip(p,a)
 #define IEnumOleDocumentViews_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumOleDocumentViews_Clone(p,a) (p)->lpVtbl->Clone(p,a)
+#endif
 
 #endif
 
@@ -810,6 +818,7 @@ struct IOleCommandTargetVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IOleCommandTarget_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleCommandTarget_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -817,6 +826,7 @@ struct IOleCommandTargetVtbl {
 /*** IOleCommandTarget methods ***/
 #define IOleCommandTarget_QueryStatus(p,a,b,c,d) (p)->lpVtbl->QueryStatus(p,a,b,c,d)
 #define IOleCommandTarget_Exec(p,a,b,c,d,e) (p)->lpVtbl->Exec(p,a,b,c,d,e)
+#endif
 
 #endif
 
@@ -914,6 +924,7 @@ struct IContinueCallbackVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IContinueCallback_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IContinueCallback_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -921,6 +932,7 @@ struct IContinueCallbackVtbl {
 /*** IContinueCallback methods ***/
 #define IContinueCallback_FContinue(p) (p)->lpVtbl->FContinue(p)
 #define IContinueCallback_FContinuePrinting(p,a,b,c) (p)->lpVtbl->FContinuePrinting(p,a,b,c)
+#endif
 
 #endif
 
@@ -1055,6 +1067,7 @@ struct IPrintVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IPrint_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPrint_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1063,6 +1076,7 @@ struct IPrintVtbl {
 #define IPrint_SetInitialPageNum(p,a) (p)->lpVtbl->SetInitialPageNum(p,a)
 #define IPrint_GetPageInfo(p,a,b) (p)->lpVtbl->GetPageInfo(p,a,b)
 #define IPrint_Print(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->Print(p,a,b,c,d,e,f,g,h)
+#endif
 
 #endif
 

@@ -215,6 +215,7 @@ struct IAMMultiMediaStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAMMultiMediaStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAMMultiMediaStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -237,6 +238,7 @@ struct IAMMultiMediaStreamVtbl {
 #define IAMMultiMediaStream_OpenFile(p,a,b) (p)->lpVtbl->OpenFile(p,a,b)
 #define IAMMultiMediaStream_OpenMoniker(p,a,b,c) (p)->lpVtbl->OpenMoniker(p,a,b,c)
 #define IAMMultiMediaStream_Render(p,a) (p)->lpVtbl->Render(p,a)
+#endif
 
 #endif
 
@@ -437,6 +439,7 @@ struct IAMMediaStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAMMediaStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAMMediaStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -454,6 +457,7 @@ struct IAMMediaStreamVtbl {
 #define IAMMediaStream_JoinAMMultiMediaStream(p,a) (p)->lpVtbl->JoinAMMultiMediaStream(p,a)
 #define IAMMediaStream_JoinFilter(p,a) (p)->lpVtbl->JoinFilter(p,a)
 #define IAMMediaStream_JoinFilterGraph(p,a) (p)->lpVtbl->JoinFilterGraph(p,a)
+#endif
 
 #endif
 
@@ -675,6 +679,7 @@ struct IMediaStreamFilterVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMediaStreamFilter_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMediaStreamFilter_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -704,6 +709,7 @@ struct IMediaStreamFilterVtbl {
 #define IMediaStreamFilter_WaitUntil(p,a) (p)->lpVtbl->WaitUntil(p,a)
 #define IMediaStreamFilter_Flush(p,a) (p)->lpVtbl->Flush(p,a)
 #define IMediaStreamFilter_EndOfStream(p) (p)->lpVtbl->EndOfStream(p)
+#endif
 
 #endif
 
@@ -861,12 +867,14 @@ struct IDirectDrawMediaSampleAllocatorVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDirectDrawMediaSampleAllocator_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawMediaSampleAllocator_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IDirectDrawMediaSampleAllocator_Release(p) (p)->lpVtbl->Release(p)
 /*** IDirectDrawMediaSampleAllocator methods ***/
 #define IDirectDrawMediaSampleAllocator_GetDirectDraw(p,a) (p)->lpVtbl->GetDirectDraw(p,a)
+#endif
 
 #endif
 
@@ -944,6 +952,7 @@ struct IDirectDrawMediaSampleVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDirectDrawMediaSample_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawMediaSample_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -951,6 +960,7 @@ struct IDirectDrawMediaSampleVtbl {
 /*** IDirectDrawMediaSample methods ***/
 #define IDirectDrawMediaSample_GetSurfaceAndReleaseLock(p,a,b) (p)->lpVtbl->GetSurfaceAndReleaseLock(p,a,b)
 #define IDirectDrawMediaSample_LockMediaSamplePointer(p) (p)->lpVtbl->LockMediaSamplePointer(p)
+#endif
 
 #endif
 
@@ -1094,6 +1104,7 @@ struct IAMMediaTypeStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAMMediaTypeStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAMMediaTypeStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1111,6 +1122,7 @@ struct IAMMediaTypeStreamVtbl {
 #define IAMMediaTypeStream_CreateSample(p,a,b,c,d,e) (p)->lpVtbl->CreateSample(p,a,b,c,d,e)
 #define IAMMediaTypeStream_GetStreamAllocatorRequirements(p,a) (p)->lpVtbl->GetStreamAllocatorRequirements(p,a)
 #define IAMMediaTypeStream_SetStreamAllocatorRequirements(p,a) (p)->lpVtbl->SetStreamAllocatorRequirements(p,a)
+#endif
 
 #endif
 
@@ -1369,6 +1381,7 @@ struct IAMMediaTypeSampleVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IAMMediaTypeSample_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAMMediaTypeSample_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1397,6 +1410,7 @@ struct IAMMediaTypeSampleVtbl {
 #define IAMMediaTypeSample_SetDiscontinuity(p,a) (p)->lpVtbl->SetDiscontinuity(p,a)
 #define IAMMediaTypeSample_GetMediaTime(p,a,b) (p)->lpVtbl->GetMediaTime(p,a,b)
 #define IAMMediaTypeSample_SetMediaTime(p,a,b) (p)->lpVtbl->SetMediaTime(p,a,b)
+#endif
 
 #endif
 

@@ -24,8 +24,10 @@
 #include <stdarg.h>
 #include <string.h>
 
+#define COBJMACROS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"

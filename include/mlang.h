@@ -99,6 +99,7 @@ struct IMLangCodePagesVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMLangCodePages_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMLangCodePages_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -108,6 +109,7 @@ struct IMLangCodePagesVtbl {
 #define IMLangCodePages_GetStrCodePages(p,a,b,c,d,e) (p)->lpVtbl->GetStrCodePages(p,a,b,c,d,e)
 #define IMLangCodePages_CodePageToCodePages(p,a,b) (p)->lpVtbl->CodePageToCodePages(p,a,b)
 #define IMLangCodePages_CodePagesToCodePage(p,a,b,c) (p)->lpVtbl->CodePagesToCodePage(p,a,b,c)
+#endif
 
 #endif
 
@@ -266,6 +268,7 @@ struct IMLangFontLinkVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMLangFontLink_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMLangFontLink_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -280,6 +283,7 @@ struct IMLangFontLinkVtbl {
 #define IMLangFontLink_MapFont(p,a,b,c,d) (p)->lpVtbl->MapFont(p,a,b,c,d)
 #define IMLangFontLink_ReleaseFont(p,a) (p)->lpVtbl->ReleaseFont(p,a)
 #define IMLangFontLink_ResetFontMapping(p) (p)->lpVtbl->ResetFontMapping(p)
+#endif
 
 #endif
 
@@ -484,6 +488,7 @@ struct IEnumScriptVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumScript_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumScript_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -493,6 +498,7 @@ struct IEnumScriptVtbl {
 #define IEnumScript_Next(p,a,b,c) (p)->lpVtbl->Next(p,a,b,c)
 #define IEnumScript_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumScript_Skip(p,a) (p)->lpVtbl->Skip(p,a)
+#endif
 
 #endif
 
@@ -652,6 +658,7 @@ struct IEnumCodePageVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumCodePage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumCodePage_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -661,6 +668,7 @@ struct IEnumCodePageVtbl {
 #define IEnumCodePage_Next(p,a,b,c) (p)->lpVtbl->Next(p,a,b,c)
 #define IEnumCodePage_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumCodePage_Skip(p,a) (p)->lpVtbl->Skip(p,a)
+#endif
 
 #endif
 
@@ -821,6 +829,7 @@ struct IMLangConvertCharsetVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMLangConvertCharset_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMLangConvertCharset_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -833,6 +842,7 @@ struct IMLangConvertCharsetVtbl {
 #define IMLangConvertCharset_DoConversion(p,a,b,c,d) (p)->lpVtbl->DoConversion(p,a,b,c,d)
 #define IMLangConvertCharset_DoConversionToUnicode(p,a,b,c,d) (p)->lpVtbl->DoConversionToUnicode(p,a,b,c,d)
 #define IMLangConvertCharset_DoConversionFromUnicode(p,a,b,c,d) (p)->lpVtbl->DoConversionFromUnicode(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -996,6 +1006,7 @@ struct IEnumRfc1766Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IEnumRfc1766_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IEnumRfc1766_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1005,6 +1016,7 @@ struct IEnumRfc1766Vtbl {
 #define IEnumRfc1766_Next(p,a,b,c) (p)->lpVtbl->Next(p,a,b,c)
 #define IEnumRfc1766_Reset(p) (p)->lpVtbl->Reset(p)
 #define IEnumRfc1766_Skip(p,a) (p)->lpVtbl->Skip(p,a)
+#endif
 
 #endif
 
@@ -1252,6 +1264,7 @@ struct IMultiLanguageVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMultiLanguage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMultiLanguage_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1272,6 +1285,7 @@ struct IMultiLanguageVtbl {
 #define IMultiLanguage_EnumRfc1766(p,a) (p)->lpVtbl->EnumRfc1766(p,a)
 #define IMultiLanguage_GetRfc1766Info(p,a,b) (p)->lpVtbl->GetRfc1766Info(p,a,b)
 #define IMultiLanguage_CreateConvertCharset(p,a,b,c,d) (p)->lpVtbl->CreateConvertCharset(p,a,b,c,d)
+#endif
 
 #endif
 
@@ -1816,6 +1830,7 @@ struct IMultiLanguage2Vtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IMultiLanguage2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMultiLanguage2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -1848,6 +1863,7 @@ struct IMultiLanguage2Vtbl {
 #define IMultiLanguage2_GetNumberOfScripts(p,a) (p)->lpVtbl->GetNumberOfScripts(p,a)
 #define IMultiLanguage2_EnumScripts(p,a,b,c) (p)->lpVtbl->EnumScripts(p,a,b,c)
 #define IMultiLanguage2_ValidateCodePageEx(p,a,b,c) (p)->lpVtbl->ValidateCodePageEx(p,a,b,c)
+#endif
 
 #endif
 

@@ -165,6 +165,7 @@ struct IDirectDrawMediaStreamVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDirectDrawMediaStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawMediaStream_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -183,6 +184,7 @@ struct IDirectDrawMediaStreamVtbl {
 #define IDirectDrawMediaStream_SetDirectDraw(p,a) (p)->lpVtbl->SetDirectDraw(p,a)
 #define IDirectDrawMediaStream_CreateSample(p,a,b,c,d) (p)->lpVtbl->CreateSample(p,a,b,c,d)
 #define IDirectDrawMediaStream_GetTimePerFrame(p,a) (p)->lpVtbl->GetTimePerFrame(p,a)
+#endif
 
 #endif
 
@@ -343,6 +345,7 @@ struct IDirectDrawStreamSampleVtbl {
 
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IDirectDrawStreamSample_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectDrawStreamSample_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -356,6 +359,7 @@ struct IDirectDrawStreamSampleVtbl {
 /*** IDirectDrawStreamSample methods ***/
 #define IDirectDrawStreamSample_GetSurface(p,a,b) (p)->lpVtbl->GetSurface(p,a,b)
 #define IDirectDrawStreamSample_SetRect(p,a) (p)->lpVtbl->SetRect(p,a)
+#endif
 
 #endif
 
