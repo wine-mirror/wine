@@ -33,10 +33,6 @@ typedef GUID UUID;
 #define TRUE 1
 #define FALSE 0
 
-#define LOWORD(l) ((unsigned short)(l))
-#define HIWORD(l) ((unsigned short)((unsigned long)(l) >> 16))
-#define MAKELONG(low,high) ((unsigned long)(((unsigned short)(low)) | (((unsigned long)((unsigned short)(high))) << 16)))
-
 typedef struct _attr_t attr_t;
 typedef struct _expr_t expr_t;
 typedef struct _type_t type_t;
@@ -177,7 +173,7 @@ struct _type_t {
   var_t *fields;
   int ignore, is_const, sign;
   int defined, written;
-
+  int typelib_idx;
   /* parser-internal */
   DECL_LINK(type_t)
 };

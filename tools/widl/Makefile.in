@@ -10,11 +10,13 @@ PROGRAMS = widl$(EXEEXT)
 MODULE   = none
 
 C_SRCS = \
+	hash.c \
 	header.c \
 	proxy.c \
 	typelib.c \
 	utils.c \
-	widl.c
+	widl.c \
+	write_msft.c
 
 EXTRA_SRCS = parser.y parser.l
 EXTRA_OBJS = y.tab.o @LEX_OUTPUT_ROOT@.o

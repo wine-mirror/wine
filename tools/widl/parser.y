@@ -31,6 +31,8 @@
 #include <alloca.h>
 #endif
 
+#include "windef.h"
+
 #include "widl.h"
 #include "utils.h"
 #include "parser.h"
@@ -969,6 +971,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->sign = 0;
   t->defined = FALSE;
   t->written = FALSE;
+  t->typelib_idx = -1;
   INIT_LINK(t);
   return t;
 }
