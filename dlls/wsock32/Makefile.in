@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wsock32.dll
-IMPORTS   = ws2_32 kernel32
+IMPORTS   = ws2_32 iphlpapi kernel32
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

@@ -31,30 +31,6 @@
 typedef unsigned char uchar; /* This doesn't seem to be in any standard headers */
 
 #define WSCTL_SUCCESS        0
-#define PROCFS_NETDEV_FILE   "/proc/net/dev" /* Points to the file in the /proc fs
-                                                that lists the network devices.
-                                                Do we need an #ifdef LINUX for this? */
-#define PROCFS_ROUTE_FILE    "/proc/net/route" /* Points to the file in the /proc fs
-						  that contains the routing table */
-#define WSCNTL_COUNT_INTERFACES	1
-#define WSCNTL_COUNT_ROUTES	2
-
-/* struct contains a routing table entry */
-typedef struct wscntl_routeentry
-{
-    unsigned long wre_intf;
-    unsigned long wre_dest;
-    unsigned long wre_gw;
-    unsigned long wre_mask;
-    unsigned long wre_metric;
-} wscntl_routeentry;
-
-/* WsControl Helper Functions */
-int WSCNTL_GetEntryCount(const int); /* Obtains the number of network interfaces/routes */
-int WSCNTL_GetInterfaceName(int, char *); /* Obtains the name of an interface */
-int WSCNTL_GetTransRecvStat(int intNumber, unsigned long *transBytes,
-       	unsigned long *recvBytes); /* Obtains bytes recv'd/trans by interface */
-int WSCNTL_GetRouteTable(int numRoutes, wscntl_routeentry *routeTable); /* get the routing for the interface intf */
 
 /*
  *      TCP/IP action codes.
