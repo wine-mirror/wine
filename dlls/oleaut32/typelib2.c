@@ -86,6 +86,36 @@ WINE_DEFAULT_DEBUG_CHANNEL(typelib2);
  * METHODS
  */
 
+/******************************************************************************
+ * ITypeLib2 {OLEAUT32}
+ *
+ * NOTES
+ *  The ITypeLib2 interface provides an interface whereby one may query MSFT
+ *  format type library (.tlb) files.
+ *
+ *  This interface inherits from ITypeLib, and can be freely cast back and
+ *  forth between an ITypeLib and an ITypeLib2 on local clients. This
+ *  dispensation applies only to ITypeLib objects obtained on MSFT format type
+ *  libraries (those made through CreateTypeLib2).
+ *
+ * METHODS
+ */
+
+/******************************************************************************
+ * ITypeInfo2 {OLEAUT32}
+ *
+ * NOTES
+ *  The ITypeInfo2 interface provides an interface whereby one may query type
+ *  information stored in MSFT format type library (.tlb) files.
+ *
+ *  This interface inherits from ITypeInfo, and can be freely cast back and
+ *  forth between an ITypeInfo and an ITypeInfo2 on local clients. This
+ *  dispensation applies only to ITypeInfo objects obtained on MSFT format type
+ *  libraries (those made through CreateTypeLib2).
+ *
+ * METHODS
+ */
+
 /*================== Implementation Structures ===================================*/
 
 enum MSFT_segment_index {
@@ -136,6 +166,9 @@ typedef struct tagICreateTypeLib2Impl
     struct tagICreateTypeInfo2Impl *typeinfos;
     struct tagICreateTypeInfo2Impl *last_typeinfo;
 } ICreateTypeLib2Impl;
+
+#define _ITypeLib2_Offset(impl) ((int)(&(((impl*)0)->lpVtblTypeLib2)))
+#define ICOM_THIS_From_ITypeLib2(impl, iface) impl* This = (impl*)(((char*)iface)-_ITypeLib2_Offset(impl))
 
 typedef struct tagICreateTypeInfo2Impl
 {
@@ -1210,13 +1243,12 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
 
     if (container == (ITypeLib *)&This->typelib->lpVtblTypeLib2) {
 	*phRefType = This->typelib->typelib_typeinfo_offsets[index];
-	This->typelib->ref--; /* FIXME: no vtbl yet. */
-	return S_OK;
     } else {
 	FIXME("(%p,%p,%p), pTInfo from different typelib.\n", iface, pTInfo, phRefType);
-	ITypeLib_Release(container);
-	return S_OK;
     }
+
+    ITypeLib_Release(container);
+    return S_OK;
 }
 
 /******************************************************************************
@@ -2802,7 +2834,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnQueryInterface(
         *ppvObject = This;
     } else if (IsEqualIID(riid, &IID_ITypeLib) ||
 	       IsEqualIID(riid, &IID_ITypeLib2)) {
-	FIXME("QI for ITypeLib interfaces not supported yet.\n");
+	*ppvObject = &This->lpVtblTypeLib2;
     }
 
     if(*ppvObject)
@@ -3235,6 +3267,307 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetHelpStringDll(
     return E_OUTOFMEMORY;
 }
 
+/*================== ITypeLib2 Implementation ===================================*/
+
+/******************************************************************************
+ * ITypeLib2_QueryInterface {OLEAUT32}
+ *
+ *  See IUnknown_QueryInterface.
+ */
+static HRESULT WINAPI ITypeLib2_fnQueryInterface(ITypeLib2 * iface, REFIID riid, LPVOID * ppv)
+{
+    ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface);
+
+    return ICreateTypeLib2_QueryInterface((ICreateTypeLib2 *)This, riid, ppv);
+}
+
+/******************************************************************************
+ * ITypeLib2_AddRef {OLEAUT32}
+ *
+ *  See IUnknown_AddRef.
+ */
+static ULONG WINAPI ITypeLib2_fnAddRef(ITypeLib2 * iface)
+{
+    ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface);
+
+    return ICreateTypeLib2_AddRef((ICreateTypeLib2 *)This);
+}
+
+/******************************************************************************
+ * ITypeLib2_Release {OLEAUT32}
+ *
+ *  See IUnknown_Release.
+ */
+static ULONG WINAPI ITypeLib2_fnRelease(ITypeLib2 * iface)
+{
+    ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface);
+
+    return ICreateTypeLib2_Release((ICreateTypeLib2 *)This);
+}
+
+/******************************************************************************
+ * ITypeLib2_GetTypeInfoCount {OLEAUT32}
+ *
+ *  See ITypeLib_GetTypeInfoCount.
+ */
+static UINT WINAPI ITypeLib2_fnGetTypeInfoCount(
+        ITypeLib2 * iface)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p), stub!\n", iface);
+
+    return 0;
+}
+
+/******************************************************************************
+ * ITypeLib2_GetTypeInfo {OLEAUT32}
+ *
+ *  See ITypeLib_GetTypeInfo.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
+        ITypeLib2 * iface,
+        UINT index,
+        ITypeInfo** ppTInfo)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%d,%p), stub!\n", iface, index, ppTInfo);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeLib2_GetTypeInfoType {OLEAUT32}
+ *
+ *  See ITypeLib_GetTypeInfoType.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
+        ITypeLib2 * iface,
+        UINT index,
+        TYPEKIND* pTKind)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%d,%p), stub!\n", iface, index, pTKind);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeLib2_GetTypeInfoOfGuid {OLEAUT32}
+ *
+ *  See ITypeLib_GetTypeInfoOfGuid.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
+        ITypeLib2 * iface,
+        REFGUID guid,
+        ITypeInfo** ppTinfo)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%s,%p), stub!\n", iface, debugstr_guid(guid), ppTinfo);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeLib2_GetLibAttr {OLEAUT32}
+ *
+ *  See ITypeLib_GetLibAttr.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
+        ITypeLib2 * iface,
+        TLIBATTR** ppTLibAttr)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%p), stub!\n", iface, ppTLibAttr);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeLib2_GetTypeComp {OLEAUT32}
+ *
+ *  See ITypeLib_GetTypeComp.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetTypeComp(
+        ITypeLib2 * iface,
+        ITypeComp** ppTComp)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%p), stub!\n", iface, ppTComp);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeLib2_GetDocumentation {OLEAUT32}
+ *
+ *  See ITypeLib_GetDocumentation.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetDocumentation(
+        ITypeLib2 * iface,
+        INT index,
+        BSTR* pBstrName,
+        BSTR* pBstrDocString,
+        DWORD* pdwHelpContext,
+        BSTR* pBstrHelpFile)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%d,%p,%p,%p,%p), stub!\n", iface, index, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeLib2_IsName {OLEAUT32}
+ *
+ *  See ITypeLib_IsName.
+ */
+static HRESULT WINAPI ITypeLib2_fnIsName(
+        ITypeLib2 * iface,
+        LPOLESTR szNameBuf,
+        ULONG lHashVal,
+        BOOL* pfName)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%s,%lx,%p), stub!\n", iface, debugstr_w(szNameBuf), lHashVal, pfName);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeLib2_FindName {OLEAUT32}
+ *
+ *  See ITypeLib_FindName.
+ */
+static HRESULT WINAPI ITypeLib2_fnFindName(
+        ITypeLib2 * iface,
+        LPOLESTR szNameBuf,
+        ULONG lHashVal,
+        ITypeInfo** ppTInfo,
+        MEMBERID* rgMemId,
+        USHORT* pcFound)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%s,%lx,%p,%p,%p), stub!\n", iface, debugstr_w(szNameBuf), lHashVal, ppTInfo, rgMemId, pcFound);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeLib2_ReleaseTLibAttr {OLEAUT32}
+ *
+ *  See ITypeLib_ReleaseTLibAttr.
+ */
+static void WINAPI ITypeLib2_fnReleaseTLibAttr(
+        ITypeLib2 * iface,
+        TLIBATTR* pTLibAttr)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%p), stub!\n", iface, pTLibAttr);
+}
+
+/******************************************************************************
+ * ICreateTypeLib2_GetCustData {OLEAUT32}
+ *
+ *  Retrieves a custom data value stored on a type library.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK
+ *  Failure: E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetCustData(
+        ITypeLib2 * iface, /* [I] The type library in which to find the custom data. */
+        REFGUID guid,      /* [I] The GUID under which the custom data is stored. */
+        VARIANT* pVarVal)  /* [O] The custom data. */
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%s,%p), stub!\n", iface, debugstr_guid(guid), pVarVal);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ICreateTypeLib2_GetLibStatistics {OLEAUT32}
+ *
+ *  Retrieves some statistics about names in a type library, supposedly for
+ *  hash table optimization purposes.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK
+ *  Failure: E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetLibStatistics(
+        ITypeLib2 * iface,      /* [I] The type library to get statistics about. */
+        ULONG* pcUniqueNames,   /* [O] The number of unique names in the type library. */
+        ULONG* pcchUniqueNames) /* [O] The number of changed (?) characters in names in the type library. */
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%p,%p), stub!\n", iface, pcUniqueNames, pcchUniqueNames);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ICreateTypeLib2_GetDocumentation2 {OLEAUT32}
+ *
+ *  Obtain locale-aware help string information.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK
+ *  Failure: STG_E_INSUFFICIENTMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetDocumentation2(
+        ITypeLib2 * iface,
+        INT index,
+        LCID lcid,
+        BSTR* pbstrHelpString,
+        DWORD* pdwHelpStringContext,
+        BSTR* pbstrHelpStringDll)
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%d,%ld,%p,%p,%p), stub!\n", iface, index, lcid, pbstrHelpString, pdwHelpStringContext, pbstrHelpStringDll);
+
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ICreateTypeLib2_GetAllCustData {OLEAUT32}
+ *
+ *  Retrieve all of the custom data for a type library.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK
+ *  Failure: E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeLib2_fnGetAllCustData(
+        ITypeLib2 * iface,   /* [I] The type library in which to find the custom data. */
+        CUSTDATA* pCustData) /* [O] The structure in which to place the custom data. */
+{
+/*     ICOM_THIS_From_ITypeLib2(ICreateTypeLib2Impl, iface); */
+
+    FIXME("(%p,%p), stub!\n", iface, pCustData);
+
+    return E_OUTOFMEMORY;
+}
+
+
+/*================== ICreateTypeLib2 & ITypeLib2 VTABLEs And Creation ===================================*/
 
 static ICOM_VTABLE(ICreateTypeLib2) ctypelib2vt =
 {
@@ -3259,6 +3592,31 @@ static ICOM_VTABLE(ICreateTypeLib2) ctypelib2vt =
     ICreateTypeLib2_fnSetCustData,
     ICreateTypeLib2_fnSetHelpStringContext,
     ICreateTypeLib2_fnSetHelpStringDll
+};
+
+static ICOM_VTABLE(ITypeLib2) typelib2vt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+
+    ITypeLib2_fnQueryInterface,
+    ITypeLib2_fnAddRef,
+    ITypeLib2_fnRelease,
+
+    ITypeLib2_fnGetTypeInfoCount,
+    ITypeLib2_fnGetTypeInfo,
+    ITypeLib2_fnGetTypeInfoType,
+    ITypeLib2_fnGetTypeInfoOfGuid,
+    ITypeLib2_fnGetLibAttr,
+    ITypeLib2_fnGetTypeComp,
+    ITypeLib2_fnGetDocumentation,
+    ITypeLib2_fnIsName,
+    ITypeLib2_fnFindName,
+    ITypeLib2_fnReleaseTLibAttr,
+
+    ITypeLib2_fnGetCustData,
+    ITypeLib2_fnGetLibStatistics,
+    ITypeLib2_fnGetDocumentation2,
+    ITypeLib2_fnGetAllCustData,
 };
 
 static ICreateTypeLib2 *ICreateTypeLib2_Constructor(SYSKIND syskind, LPCOLESTR szFile)
@@ -3297,6 +3655,7 @@ static ICreateTypeLib2 *ICreateTypeLib2_Constructor(SYSKIND syskind, LPCOLESTR s
     memset(pCreateTypeLib2Impl->typelib_namehash_segment, 0xff, 0x200);
 
     pCreateTypeLib2Impl->lpVtbl = &ctypelib2vt;
+    pCreateTypeLib2Impl->lpVtblTypeLib2 = &typelib2vt;
     pCreateTypeLib2Impl->ref = 1;
 
     if (failed) {
