@@ -314,7 +314,7 @@
 319 stdcall VarDateFromUdateEx(ptr long long ptr)
 320 stdcall -private DllRegisterServer() OLEAUT32_DllRegisterServer
 321 stdcall -private DllUnregisterServer() OLEAUT32_DllUnregisterServer
-322 stub GetRecordInfoFromGuids # stdcall (ptr long long long ptr ptr)
+322 stdcall GetRecordInfoFromGuids(ptr long long long ptr ptr)
 323 stub GetRecordInfoFromTypeInfo # stdcall (ptr ptr)
 325 stub SetVarConversionLocaleSetting
 326 stub GetVarConversionLocaleSetting
