@@ -1476,8 +1476,7 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     SCROLLINFO horzInfo, vertInfo;
 
-    if (infoPtr->dwStyle & LVS_NOSCROLL) return;
-    if (!is_redrawing(infoPtr)) return;
+    if ((infoPtr->dwStyle & LVS_NOSCROLL) || !is_redrawing(infoPtr)) return;
 
     ZeroMemory(&horzInfo, sizeof(SCROLLINFO));
     horzInfo.cbSize = sizeof(SCROLLINFO);
@@ -4102,9 +4101,13 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     rcScroll.right = rcScroll.left + infoPtr->nItemWidth;
     rcScroll.bottom = nPerCol * infoPtr->nItemHeight;
     OffsetRect(&rcScroll, Origin.x, Origin.y);
+    TRACE("rcScroll=%s, dx=%d\n", debugrect(&rcScroll), dir * infoPtr->nItemHeight);
     if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
+    {
+	TRACE("Scrolling rcScroll=%s, rcList=%s\n", debugrect(&rcScroll), debugrect(&infoPtr->rcList));
 	ScrollWindowEx(infoPtr->hwndSelf, 0, dir * infoPtr->nItemHeight, 
 		       &rcScroll, &rcScroll, 0, 0, SW_ERASE | SW_INVALIDATE);
+    }
 
     /* report has only that column, so we're done */
     if (uView == LVS_REPORT) return;
@@ -7739,7 +7742,6 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 	UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
 	
 	infoPtr->bFirstPaint = FALSE;
-	LISTVIEW_UpdateSize(infoPtr);
 	LISTVIEW_UpdateItemSize(infoPtr);
 	if (uView == LVS_ICON || uView == LVS_SMALLICON)
 	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
@@ -7989,17 +7991,13 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
  */
 static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
 {
-    UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
-    
     infoPtr->bRedraw = bRedraw;
 
     if(!bRedraw) return 0;
     
-    LISTVIEW_UpdateSize(infoPtr);
-    if (uView == LVS_ICON || uView == LVS_SMALLICON)
+    if (is_autoarrange(infoPtr))
 	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
     LISTVIEW_UpdateScroll(infoPtr);
-    LISTVIEW_InvalidateList(infoPtr);
 
     return 0;
 }
@@ -8021,10 +8019,11 @@ static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
 {
     TRACE("(width=%d, height=%d)\n", Width, Height);
 
+    if (!LISTVIEW_UpdateSize(infoPtr)) return 0;
+  
+    /* do not bother with display related stuff if we're not redrawing */ 
     if (!is_redrawing(infoPtr)) return 0;
     
-    if (!LISTVIEW_UpdateSize(infoPtr)) return 0;
-   
     if (is_autoarrange(infoPtr)) 
 	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
 
