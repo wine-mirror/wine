@@ -4,12 +4,17 @@
     <sect1 id="testing-intro">
       <title>Introduction</title>
       <para>
-        With more The Windows API follows no standard, it is itself a de facto
-        standard, and deviations from that standard, even small ones, often
-        cause applications to crash or misbehave in some way. Furthermore
-        a conformance test suite is the most accurate (if not necessarily
-        the most complete) form of API documentation and can be used to
-        supplement the Windows API documentation.
+	The Windows API follows no standard, it is itself a de facto standard,
+	and deviations from that standard, even small ones, often cause
+	applications to crash or misbehave in some way.
+      </para>	
+      <para>
+	The question becomes, "How do we ensure compliance with that standard?"
+	The answer is, "By using the API documentation available to us and
+	backing that up with conformance tests." Furthermore, a conformance
+	test suite is the most accurate (if not necessarily the most complete)
+	form of API documentation and can be used to supplement the Windows
+	API documentation.
       </para>
       <para>
         Writing a conformance test suite for more than 10000 APIs is no small
