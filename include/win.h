@@ -93,7 +93,6 @@ extern LRESULT WIN_DestroyWindow( HWND hwnd );
 extern void WIN_DestroyThreadWindows( HWND hwnd );
 extern BOOL WIN_CreateDesktopWindow(void);
 extern BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL );
-extern HWND *WIN_ListParents( HWND hwnd );
 extern HWND *WIN_ListChildren( HWND hwnd );
 extern void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta );
 

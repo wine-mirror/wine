@@ -194,6 +194,72 @@ static HWND *list_window_children( HWND hwnd, ATOM atom, DWORD tid )
 
 
 /*******************************************************************
+ *           list_window_parents
+ *
+ * Build an array of all parents of a given window, starting with
+ * the immediate parent. The array must be freed with HeapFree.
+ * Returns NULL if window is a top-level window.
+ */
+static HWND *list_window_parents( HWND hwnd )
+{
+    WND *win;
+    HWND current, *list;
+    int pos = 0, size = 16, count = 0;
+
+    if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
+
+    current = hwnd;
+    for (;;)
+    {
+        if (!(win = WIN_GetPtr( current ))) goto empty;
+        if (win == WND_OTHER_PROCESS) break;  /* need to do it the hard way */
+        list[pos] = win->parent;
+        WIN_ReleasePtr( win );
+        if (!(current = list[pos]))
+        {
+            if (!pos) goto empty;
+            return list;
+        }
+        if (++pos == size - 1)
+        {
+            /* need to grow the list */
+            HWND *new_list = HeapReAlloc( GetProcessHeap(), 0, list, (size+16) * sizeof(HWND) );
+            if (!new_list) goto empty;
+            list = new_list;
+            size += 16;
+        }
+    }
+
+    /* at least one parent belongs to another process, have to query the server */
+
+    for (;;)
+    {
+        count = 0;
+        SERVER_START_REQ( get_window_parents )
+        {
+            req->handle = hwnd;
+            wine_server_set_reply( req, list, (size-1) * sizeof(HWND) );
+            if (!wine_server_call( req )) count = reply->count;
+        }
+        SERVER_END_REQ;
+        if (!count) goto empty;
+        if (size > count)
+        {
+            list[count] = 0;
+            return list;
+        }
+        HeapFree( GetProcessHeap(), 0, list );
+        size = count + 1;
+        if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
+    }
+
+ empty:
+    HeapFree( GetProcessHeap(), 0, list );
+    return NULL;
+}
+
+
+/*******************************************************************
  *           send_parent_notify
  */
 static void send_parent_notify( HWND hwnd, UINT msg )
@@ -2549,7 +2615,7 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
         break;
 
     case GA_ROOT:
-        if (!(list = WIN_ListParents( hwnd ))) return 0;
+        if (!(list = list_window_parents( hwnd ))) return 0;
 
         if (!list[0] || !list[1]) ret = WIN_GetFullHandle( hwnd );  /* top-level window */
         else
@@ -2647,7 +2713,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
  */
 BOOL WINAPI IsChild( HWND parent, HWND child )
 {
-    HWND *list = WIN_ListParents( child );
+    HWND *list = list_window_parents( child );
     int i;
     BOOL ret;
 
@@ -2670,7 +2736,7 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
     int i;
 
     if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)) return FALSE;
-    if (!(list = WIN_ListParents( hwnd ))) return TRUE;
+    if (!(list = list_window_parents( hwnd ))) return TRUE;
     for (i = 0; list[i]; i++)
         if (!(GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE)) break;
     retval = !list[i];
@@ -2696,7 +2762,7 @@ BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL icon )
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & WS_MINIMIZE) && icon && GetClassLongA( hwnd, GCL_HICON ))  return FALSE;
 
-    if (!(list = WIN_ListParents( hwnd ))) return TRUE;
+    if (!(list = list_window_parents( hwnd ))) return TRUE;
     for (i = 0; list[i]; i++)
         if ((GetWindowLongW( list[i], GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) != WS_VISIBLE)
             break;
@@ -2843,72 +2909,6 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
     }
     SERVER_END_REQ;
     return retval;
-}
-
-
-/*******************************************************************
- *           WIN_ListParents
- *
- * Build an array of all parents of a given window, starting with
- * the immediate parent. The array must be freed with HeapFree.
- * Returns NULL if window is a top-level window.
- */
-HWND *WIN_ListParents( HWND hwnd )
-{
-    WND *win;
-    HWND current, *list;
-    int pos = 0, size = 16, count = 0;
-
-    if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
-
-    current = hwnd;
-    for (;;)
-    {
-        if (!(win = WIN_GetPtr( current ))) goto empty;
-        if (win == WND_OTHER_PROCESS) break;  /* need to do it the hard way */
-        list[pos] = win->parent;
-        WIN_ReleasePtr( win );
-        if (!(current = list[pos]))
-        {
-            if (!pos) goto empty;
-            return list;
-        }
-        if (++pos == size - 1)
-        {
-            /* need to grow the list */
-            HWND *new_list = HeapReAlloc( GetProcessHeap(), 0, list, (size+16) * sizeof(HWND) );
-            if (!new_list) goto empty;
-            list = new_list;
-            size += 16;
-        }
-    }
-
-    /* at least one parent belongs to another process, have to query the server */
-
-    for (;;)
-    {
-        count = 0;
-        SERVER_START_REQ( get_window_parents )
-        {
-            req->handle = hwnd;
-            wine_server_set_reply( req, list, (size-1) * sizeof(HWND) );
-            if (!wine_server_call( req )) count = reply->count;
-        }
-        SERVER_END_REQ;
-        if (!count) goto empty;
-        if (size > count)
-        {
-            list[count] = 0;
-            return list;
-        }
-        HeapFree( GetProcessHeap(), 0, list );
-        size = count + 1;
-        if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
-    }
-
- empty:
-    HeapFree( GetProcessHeap(), 0, list );
-    return NULL;
 }
 
 
