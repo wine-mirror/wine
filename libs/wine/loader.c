@@ -71,6 +71,13 @@ static const char **dll_paths;
 static int nb_dll_paths;
 static int dll_path_maxlen;
 
+#ifdef __APPLE__
+#include <crt_externs.h>
+#define environ (*_NSGetEnviron())
+#else
+extern char **environ;
+#endif
+
 extern void mmap_init(void);
 
 /* build the dll load path from the WINEDLLPATH variable */
@@ -506,7 +513,6 @@ static void debug_usage(void)
  */
 void wine_init( int argc, char *argv[], char *error, int error_size )
 {
-    extern char **environ;
     char *wine_debug;
     int file_exists;
     void *ntdll;

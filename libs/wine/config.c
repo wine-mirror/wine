@@ -276,9 +276,8 @@ const char *wine_get_user_name(void)
 void wine_exec_wine_binary( const char *name, char **argv, char **envp )
 {
     const char *path, *pos, *ptr;
-    extern char **environ;
 
-    if (!envp) envp = environ;
+    if (!envp) envp = __wine_main_environ;
     if (!name) name = argv0_name;
 
     /* first, try bin directory */
