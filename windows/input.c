@@ -774,11 +774,11 @@ INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
  */
 HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
 {
-        HKL layout;
+        UINT layout;
         layout = GetSystemDefaultLCID(); /* FIXME */
         layout |= (layout<<16);          /* FIXME */
         TRACE_(keyboard)("returning %08x\n",layout);
-        return layout;
+        return (HKL)layout;
 }
 
 /****************************************************************************
@@ -1184,6 +1184,3 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
 
     return TRUE;
 }
-
-
-
