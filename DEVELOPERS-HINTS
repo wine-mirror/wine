@@ -222,17 +222,18 @@ into a stub:
   /************************************************************
    *                    PolyBezierTo   (GDI32.269)  
    *  
-   * Draw many Bezier curves
+   * Draw many Bezier curves.
    *
    * RETURNS
-   *   nonzero on success or zero on faillure
+   *   Success: Non-zero.
+   *   Failure: FALSE. Use GetLastError() to find the error cause.
    *
    * BUGS
    *   Unimplemented
    */
-   BOOL WINAPI PolyBezierTo(HDC hdc,     /* handle to device context */
-                            LPCVOID p,   /* ptr to array of Point structs */
-                            DWORD count  /* nr of points in array */
+   BOOL WINAPI PolyBezierTo(HDC hdc,     /* [In] Device context to draw to */
+                            LPCVOID p,   /* [In] Array of POINT structs */
+                            DWORD count  /* [In] Number of points in p */
    ) 
    {
       /* tell the user they've got a substandard implementation */
@@ -515,5 +516,3 @@ MORE INFO
 3. http://www.sonic.net/~undoc/bookstore.html
 
 4. In 1993 Dr. Dobbs Journal published a column called "Undocumented Corner".
-
-
