@@ -77,7 +77,7 @@ VOID WINAPI _KERNEL32_86(CRITICAL_SECTION *lock)
 }
 
 /************************************************************************
- *           SYSLEVEL_EnterWin16Lock
+ *           SYSLEVEL_EnterWin16Lock			[KERNEL.480]
  */
 VOID WINAPI SYSLEVEL_EnterWin16Lock(VOID)
 {
@@ -91,7 +91,7 @@ VOID WINAPI SYSLEVEL_EnterWin16Lock(VOID)
 }
 
 /************************************************************************
- *           SYSLEVEL_LeaveWin16Lock
+ *           SYSLEVEL_LeaveWin16Lock		[KERNEL.481]
  */
 VOID WINAPI SYSLEVEL_LeaveWin16Lock(VOID)
 {
