@@ -400,8 +400,7 @@ OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     TRACE("(%p,%p,%ld)\n",hSCManager, lpServiceName,
           dwDesiredAccess);
 
-    /* FIXME: dwDesiredAccess may need some processing */
-    r = RegOpenKeyExW(hSCManager, lpServiceName, 0, dwDesiredAccess, &hKey );
+    r = RegOpenKeyExW(hSCManager, lpServiceName, 0, KEY_ALL_ACCESS, &hKey );
     if (r!=ERROR_SUCCESS)
         return 0;
 
