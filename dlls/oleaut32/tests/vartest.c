@@ -127,39 +127,38 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 static const struct _vartypes {
     int ind;
     HRESULT vcind1,vcind2,vcex1,vcex2;
-    int todoind1,todoind2,todowcex1,todowcex2;
 } vartypes[] = {
-    {0, 0,          0x80070057, 0,          0x80020008,0,1 },
-    {1, 0,          0x80070057, 0,          0x80020008,0,1 },
+    {0, 0,          0x80070057, 0,          0x80020008 },
+    {1, 0,          0x80070057, 0,          0x80020008 },
     {2, 0,          0,          0,          0x80020005 },
     {3, 0,          0,          0,          0x80020005 },
     {4, 0,          0,          0,          0x80020005 },
     {5, 0,          0,          0,          0x80020005 },
     {6, 0,          0,          0,          0x80020005 },
     {7, 0,          0,          0,          0x80020005 },
-    {77,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
-    {78,0x80020008, 0x80070057, 0x80020005, 0x80020005,0,1 },
-    {79,0x80020008, 0x80070057, 0x80020005, 0x80020005,0,1 },
-    {80,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
-    {81,0x80020008, 0x80070057, 0x80020005, 0x80020005,0,1 },
-    {82,0x80020008, 0x80070057, 0x80020005, 0x80020005,0,1 },
-    {83,0x80020008, 0x80070057, 0,          0x80020005,0,1,1 },
-    {84,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
-    {85,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
-    {86,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
-    {87,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
-    {88,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
-    {89,0x80020008, 0x80070057, 0,          0x80020005,0,1,1 },
-    {90,0x80020008, 0x80070057, 0,          0x80020005,0,1,1 },
-    {91,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
-    {92,0x80020008, 0x80070057, 0,          0x80020005,0,1 },
-    {93,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
-    {94,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
-    {95,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
-    {96,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
-    {97,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
-    {98,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
-    {99,0x80020008, 0x80070057, 0x80020008, 0x80020008,0,1,1,1 },
+    {77,0x80020008, 0x80070057, 0,          0x80020005 },
+    {78,0x80020008, 0x80070057, 0x80020005, 0x80020005 },
+    {79,0x80020008, 0x80070057, 0x80020005, 0x80020005 },
+    {80,0x80020008, 0x80070057, 0,          0x80020005 },
+    {81,0x80020008, 0x80070057, 0x80020005, 0x80020005 },
+    {82,0x80020008, 0x80070057, 0x80020005, 0x80020005 },
+    {83,0x80020008, 0x80070057, 0,          0x80020005 },
+    {84,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
+    {85,0x80020008, 0x80070057, 0,          0x80020005 },
+    {86,0x80020008, 0x80070057, 0,          0x80020005 },
+    {87,0x80020008, 0x80070057, 0,          0x80020005 },
+    {88,0x80020008, 0x80070057, 0,          0x80020005 },
+    {89,0x80020008, 0x80070057, 0,          0x80020005 },
+    {90,0x80020008, 0x80070057, 0,          0x80020005 },
+    {91,0x80020008, 0x80070057, 0,          0x80020005 },
+    {92,0x80020008, 0x80070057, 0,          0x80020005 },
+    {93,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
+    {94,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
+    {95,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
+    {96,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
+    {97,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
+    {98,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
+    {99,0x80020008, 0x80070057, 0x80020008, 0x80020008 },
 };
 
 static const char *strfromr8[] = {
@@ -2502,11 +2501,10 @@ static void test_variant(void)
 		ok(S_OK == VarBstrFromR4( (float)d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
         if (istodo[i]) {
-            todo_wine {
-                ok(!strcmp(xval,WtoA(bstr)),
-                       "%d: d is %.8f, should be cvt. to %s, but return val is %s",
-                       i,d,strfromr8[off],WtoA(bstr));
-            }
+        /* Skip this test: The input value is 654322.23456.
+         * Native converts this to 654322.3, Wine to 654322.2
+         * I consider Wines behaviour to be correct and Native buggy.
+         */
         } else {
             ok(!strcmp(xval,WtoA(bstr)),
                    "%d: d is %.8f, should be cvt. to %s, but return val is %s",
@@ -2516,11 +2514,7 @@ static void test_variant(void)
 		ok(S_OK == VarBstrFromR4( (float)-d, lcid, 0, &bstr ), XOK);
 		sprintf(xval,"\"%s\"",strfromr8[off]);
         if (istodo[i]) {
-            todo_wine {
-		        ok(!strcmp(xval,WtoA(bstr)),
-                           "%d: d is %.8f, should be cvt. to %s, but return val is %s",
-                           i,-d,strfromr8[off],WtoA(bstr));
-            }
+        /* Skip this test, as above */
         } else {
 		    ok(!strcmp(xval,WtoA(bstr)),
                        "%d: d is %.8f, should be cvt. to %s, but return val is %s",
@@ -2668,17 +2662,9 @@ static void test_variant(void)
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
 		    rc = VariantCopyInd( &vb, &va );
-            if (vartypes[i].todoind1) {
-                todo_wine {
-		            ok(vartypes[i].vcind1 == rc,
-                               "%d: vt %d, return value %lx, expected was %lx",
-                               i,vartypes[i].ind,rc,vartypes[i].vcind1);
-                }
-            } else {
 		        ok(vartypes[i].vcind1 == rc,
                            "%d: vt %d, return value %lx, expected was %lx",
                            i,vartypes[i].ind,rc,vartypes[i].vcind1);
-            }
 		    V_VT(&va) = vartypes[i].ind | VT_BYREF;
 		    d = 4.123;
 		    V_UNION(&va,pdblVal) = &d;
@@ -2690,32 +2676,16 @@ static void test_variant(void)
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
 		    rc = VariantChangeTypeEx( &vb, &va, lcid, 0, (VARTYPE)i );
-            if (vartypes[i].todowcex1) {
-                todo_wine {
-		            ok(vartypes[i].vcex1 == rc || rc == DISP_E_BADVARTYPE,
-                               "%d: vt %d, return value %lx, expected was %lx",
-                               i,vartypes[i].ind,rc,vartypes[i].vcex1);
-                }
-            } else {
 		        ok(vartypes[i].vcex1 == rc || rc == DISP_E_BADVARTYPE,
                            "%d: vt %d, return value %lx, expected was %lx",
                            i,vartypes[i].ind,rc,vartypes[i].vcex1);
-            }
 		    V_VT(&va) = VT_R8;
 		    d = 4.123;
 		    V_UNION(&va,dblVal) = d;
 		    rc = VariantChangeTypeEx( &vb, &va, lcid, 0, (VARTYPE)(i | VT_BYREF) );
-            if (vartypes[i].todowcex2) {
-                todo_wine {
-		            ok(vartypes[i].vcex2 == rc || rc == DISP_E_BADVARTYPE,
-                               "%d: vt %d, return value %lx, expected was %lx",
-                               i,vartypes[i].ind,rc,vartypes[i].vcex2);
-                }
-            } else {
 		        ok(vartypes[i].vcex2 == rc || rc == DISP_E_BADVARTYPE,
                            "%d: vt %d, return value %lx, expected was %lx",
                            i,vartypes[i].ind,rc,vartypes[i].vcex2);
-            }
 
 		V_VT(&va) = 99;
 		d = 4.123;
@@ -3838,9 +3808,10 @@ static void test_VarFormatNumber(void)
   FMT_NUMBER(VT_UI2, V_UI2);
   FMT_NUMBER(VT_I4, V_I4);
   FMT_NUMBER(VT_UI4, V_UI4);
-  todo_wine {
-  FMT_NUMBER(VT_I8, V_I8);
-  FMT_NUMBER(VT_UI8, V_UI8);
+  if (HAVE_OLEAUT32_I8)
+  {
+    FMT_NUMBER(VT_I8, V_I8);
+    FMT_NUMBER(VT_UI8, V_UI8);
   }
   FMT_NUMBER(VT_R4, V_R4);
   FMT_NUMBER(VT_R8, V_R8);
@@ -4006,15 +3977,17 @@ static void test_VarFormat(void)
   VNUMFMT(VT_I1,V_I1);
   VNUMFMT(VT_I2,V_I2);
   VNUMFMT(VT_I4,V_I4);
-  todo_wine {
-  VNUMFMT(VT_I8,V_I8);
+  if (HAVE_OLEAUT32_I8)
+  {
+    VNUMFMT(VT_I8,V_I8);
   }
   VNUMFMT(VT_INT,V_INT);
   VNUMFMT(VT_UI1,V_UI1);
   VNUMFMT(VT_UI2,V_UI2);
   VNUMFMT(VT_UI4,V_UI4);
-  todo_wine {
-  VNUMFMT(VT_UI8,V_UI8);
+  if (HAVE_OLEAUT32_I8)
+  {
+    VNUMFMT(VT_UI8,V_UI8);
   }
   VNUMFMT(VT_UINT,V_UINT);
   VNUMFMT(VT_R4,V_R4);
@@ -4220,16 +4193,8 @@ static void test_VarNot(void)
             }
 
             hres = pVarNot(&v,&vDst);
-            if (V_VT(&v) == VT_DECIMAL)
-            {
-              todo_wine {
-              ok(hres == hExpected, "VarNot: expected 0x%lX, got 0x%lX vt %d|0x%X\n",
-                 hExpected, hres, vt, ExtraFlags[i]);
-              }
-            }
-            else
-              ok(hres == hExpected, "VarNot: expected 0x%lX, got 0x%lX vt %d|0x%X\n",
-                 hExpected, hres, vt, ExtraFlags[i]);
+            ok(hres == hExpected, "VarNot: expected 0x%lX, got 0x%lX vt %d|0x%X\n",
+               hExpected, hres, vt, ExtraFlags[i]);
         }
     }
     /* R4,R8,BSTR,DECIMAL,CY->I4, all others remain the same */
@@ -4249,7 +4214,6 @@ static void test_VarNot(void)
     VARNOT(BSTR,(BSTR)szNum0,I4,-1);
     VARNOT(BSTR,(BSTR)szNum1,I4,-2);
 
-    todo_wine {
     V_VT(&v) = VT_DECIMAL;
     pdec->u.s.sign = DECIMAL_NEG;
     pdec->u.s.scale = 0;
@@ -4257,6 +4221,7 @@ static void test_VarNot(void)
     pdec->u1.s1.Mid32 = 0;
     pdec->u1.s1.Lo32 = 1;
     VARNOT(DECIMAL,*pdec,I4,0);
+    todo_wine {
     pcy->int64 = 10000;
     VARNOT(CY,*pcy,I4,-2);
     }

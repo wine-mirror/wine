@@ -26,7 +26,8 @@ C_SRCS = \
 	typelib.c \
 	usrmarshal.c \
 	varformat.c \
-	variant.c
+	variant.c \
+	vartype.c
 
 C_SRCS16 = \
 	ole2disp.c \
