@@ -235,6 +235,7 @@ static void comm_notification(int fd,void*private)
   WORD mask = 0;
   int cid = GetCommPort_fd(fd);
 
+  TRACE(comm, "async notification\n");
   /* read data from comm port */
   prev = comm_inbuf(ptr);
   do {
@@ -249,8 +250,10 @@ static void comm_notification(int fd,void*private)
 	if (ptr->ibuf_head >= ptr->ibuf_size)
 	  ptr->ibuf_head = 0;
 	/* flag event */
-	if (ptr->eventmask & EV_RXCHAR)
+	if (ptr->eventmask & EV_RXCHAR) {
 	  *(WORD*)(unknown[cid]) |= EV_RXCHAR;
+	  mask |= CN_EVENT;
+	}
 	/* FIXME: check for event character (EV_RXFLAG) */
       }
     }
@@ -278,8 +281,10 @@ static void comm_notification(int fd,void*private)
       if (ptr->obuf_tail >= ptr->obuf_size)
 	ptr->obuf_tail = 0;
       /* flag event */
-      if ((ptr->obuf_tail == ptr->obuf_head) && (ptr->eventmask & EV_TXEMPTY))
+      if ((ptr->obuf_tail == ptr->obuf_head) && (ptr->eventmask & EV_TXEMPTY)) {
 	*(WORD*)(unknown[cid]) |= EV_TXEMPTY;
+	mask |= CN_EVENT;
+      }
     }
   } while (len > 0);
   /* check for notification */
@@ -291,6 +296,7 @@ static void comm_notification(int fd,void*private)
 
   /* send notifications, if any */
   if (ptr->wnd && mask) {
+    TRACE(comm, "notifying %04x: cid=%d, mask=%02x\n", ptr->wnd, cid, mask);
     PostMessage16(ptr->wnd, WM_COMMNOTIFY, cid, mask);
   }
 }
@@ -412,6 +418,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 
 		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK);
 		if (fd == -1) {
+			ERR(comm, "error=%d\n", errno);
 			return IE_HARDWARE;
 		} else {
                         unknown[port] = SEGPTR_ALLOC(40);
@@ -450,11 +457,14 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			  /* not enough memory */
 			  tcsetattr(COM[port].fd,TCSANOW,&m_stat[port]);
 			  close(COM[port].fd);
+			  ERR(comm, "out of memory");
 			  return IE_MEMORY;
 			}
 
 			/* enable async notifications */
 			ASYNC_RegisterFD(COM[port].fd,comm_notification,&COM[port]);
+			/* bootstrap notifications, just in case */
+			comm_notification(COM[port].fd,&COM[port]);
 			return port;
 		}
 	} 
