@@ -268,11 +268,12 @@ done:
 NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PWSTR renv, const UNICODE_STRING* us_src,
                                               PUNICODE_STRING us_dst, PULONG plen)
 {
-    DWORD       len, count, total_size = 1;  /* 1 for terminating '\0' */
+    DWORD src_len, len, count, total_size = 1;  /* 1 for terminating '\0' */
     LPCWSTR     env, src, p, var;
     LPWSTR      dst;
 
     src = us_src->Buffer;
+    src_len = us_src->Length / sizeof(WCHAR);
     count = us_dst->MaximumLength / sizeof(WCHAR);
     dst = count ? us_dst->Buffer : NULL;
 
@@ -283,23 +284,25 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PWSTR renv, const UNICODE_STRING* 
     }
     else env = renv;
 
-    while (*src)
+    while (src_len)
     {
         if (*src != '%')
         {
-            if ((p = strchrW( src, '%' ))) len = p - src;
-            else len = strlenW(src);
+            if ((p = memchrW( src, '%', src_len ))) len = p - src;
+            else len = src_len;
             var = src;
             src += len;
+            src_len -= len;
         }
         else  /* we are at the start of a variable */
         {
-            if ((p = strchrW( src + 1, '%' )))
+            if ((p = memchrW( src + 1, '%', src_len - 1 )))
             {
                 len = p - src - 1;  /* Length of the variable name */
                 if ((var = ENV_FindVariable( env, src + 1, len )))
                 {
                     src += len + 2;  /* Skip the variable name */
+                    src_len -= len + 2;
                     len = strlenW(var);
                 }
                 else
@@ -307,13 +310,15 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings_U(PWSTR renv, const UNICODE_STRING* 
                     var = src;  /* Copy original name instead */
                     len += 2;
                     src += len;
+                    src_len -= len;
                 }
             }
             else  /* unfinished variable name, ignore it */
             {
                 var = src;
-                len = strlenW(src);  /* Copy whole string */
+                len = src_len;  /* Copy whole string */
                 src += len;
+                src_len = 0;
             }
         }
         total_size += len;
