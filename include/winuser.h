@@ -92,11 +92,9 @@ typedef struct
 
 #define KL_NAMELENGTH      9
 
-  /***** Dialogs *****/
-#ifdef FSHIFT
-/* Gcc on Solaris has a version of this that we don't care about.  */
+/***** Dialogs *****/
+/* Gcc on Solaris has a version of this that we don't care about */
 #undef FSHIFT
-#endif
 
 #define	FVIRTKEY	TRUE          /* Assumed to be == TRUE */
 #define	FNOINVERT	0x02
@@ -1219,7 +1217,8 @@ typedef struct
 #define MSGF_SCROLLBAR      5
 #define MSGF_NEXTWINDOW     6
 #define MSGF_MAINLOOP       8
-#define MSGF_USER        4096
+#define MSGF_USER           0x1000
+#define MSGF_DDEMGR         0x8001
 
 typedef struct
 {
