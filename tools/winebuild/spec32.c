@@ -143,7 +143,7 @@ static int output_exports( FILE *outfile, int nr_exports )
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* Characteristics */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* TimeDateStamp */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* MajorVersion/MinorVersion */
-    fprintf( outfile, "    \"\\t.long " __ASM_NAME("dllname") "\\n\"\n" ); /* Name */
+    fprintf( outfile, "    \"\\t.long __wine_spec_exp_names\\n\"\n" ); /* Name */
     fprintf( outfile, "    \"\\t.long %d\\n\"\n", Base );          /* Base */
     fprintf( outfile, "    \"\\t.long %d\\n\"\n", nr_exports );    /* NumberOfFunctions */
     fprintf( outfile, "    \"\\t.long %d\\n\"\n", nb_names );      /* NumberOfNames */
@@ -197,7 +197,7 @@ static int output_exports( FILE *outfile, int nr_exports )
     {
         /* output the function name pointers */
 
-        int namepos = 0;
+        int namepos = strlen(dll_file_name) + 1;
 
         fprintf( outfile, "    \"__wine_spec_exp_name_ptrs:\\n\"\n" );
         for (i = 0; i < nb_names; i++)
@@ -206,15 +206,19 @@ static int output_exports( FILE *outfile, int nr_exports )
             namepos += strlen(Names[i]->name) + 1;
         }
         total_size += nb_names * sizeof(int);
+    }
 
-        /* output the function names */
+    /* output the function names */
 
-        fprintf( outfile, "    \"\\t.text\\n\"\n" );
-        fprintf( outfile, "    \"__wine_spec_exp_names:\\n\"\n" );
-        for (i = 0; i < nb_names; i++)
-            fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", Names[i]->name );
-        fprintf( outfile, "    \"\\t.data\\n\"\n" );
+    fprintf( outfile, "    \"\\t.text\\n\"\n" );
+    fprintf( outfile, "    \"__wine_spec_exp_names:\\n\"\n" );
+    fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", dll_file_name );
+    for (i = 0; i < nb_names; i++)
+        fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", Names[i]->name );
+    fprintf( outfile, "    \"\\t.data\\n\"\n" );
 
+    if (nb_names)
+    {
         /* output the function ordinals */
 
         fprintf( outfile, "    \"__wine_spec_exp_ordinals:\\n\"\n" );
@@ -333,7 +337,7 @@ static void output_stub_funcs( FILE *outfile )
         fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
         fprintf( outfile, "  rec.rec     = 0;\n" );
         fprintf( outfile, "  rec.params  = 2;\n" );
-        fprintf( outfile, "  rec.info[0] = dllname;\n" );
+        fprintf( outfile, "  rec.info[0] = \"%s\";\n", dll_file_name );
         fprintf( outfile, "  rec.info[1] = func;\n" );
         fprintf( outfile, "#ifdef __GNUC__\n" );
         fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
@@ -498,7 +502,6 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
 
-    fprintf( outfile, "const char dllname[] = \"%s\";\n\n", dll_file_name );
     fprintf( outfile, "extern int __wine_spec_exports[];\n\n" );
 
 #ifdef __i386__
