@@ -957,6 +957,110 @@ static DWORD modReset(WORD wDevID)
     return MMSYSERR_NOERROR;
 }
 
+
+/**************************************************************************
+ *                      ALSA_AddMidiPort			[internal]
+ *
+ * Helper for ALSA_MidiInit
+ */
+void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, int cap, int type)
+{
+    if (cap & SND_SEQ_PORT_CAP_WRITE) {
+	TRACE("OUT (%d:%s:%s:%d:%s:%x)\n",snd_seq_client_info_get_client(cinfo),
+					  snd_seq_client_info_get_name(cinfo),
+					  snd_seq_client_info_get_type(cinfo) == SND_SEQ_USER_CLIENT ? "user" : "kernel",
+					  snd_seq_port_info_get_port(pinfo),
+					  snd_seq_port_info_get_name(pinfo),
+					  type);
+		
+	if (MODM_NumDevs >= MAX_MIDIOUTDRV)
+	    return;
+	if (!type)
+            return;
+
+	memcpy(&MidiOutDev[MODM_NumDevs].addr, snd_seq_port_info_get_addr(pinfo), sizeof(snd_seq_addr_t));
+		
+	/* Manufac ID. We do not have access to this with soundcard.h
+	 * Does not seem to be a problem, because in mmsystem.h only
+	 * Microsoft's ID is listed.
+	 */
+	MidiOutDev[MODM_NumDevs].caps.wMid = 0x00FF;
+	MidiOutDev[MODM_NumDevs].caps.wPid = 0x0001; 	/* FIXME Product ID  */
+	/* Product Version. We simply say "1" */
+	MidiOutDev[MODM_NumDevs].caps.vDriverVersion = 0x001;
+	MidiOutDev[MODM_NumDevs].caps.wChannelMask   = 0xFFFF;
+
+	/* FIXME Do we have this information?
+	 * Assuming the soundcards can handle
+	 * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
+	 * not MIDICAPS_CACHE.
+	 */
+	MidiOutDev[MODM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
+	strcpy(MidiOutDev[MODM_NumDevs].caps.szPname, snd_seq_client_info_get_name(cinfo));
+
+	MidiOutDev[MODM_NumDevs].caps.wTechnology = MIDI_AlsaToWindowsDeviceType(type);
+	MidiOutDev[MODM_NumDevs].caps.wVoices     = 16;
+
+        /* FIXME Is it possible to know the maximum
+         * number of simultaneous notes of a soundcard ?
+         * I believe we don't have this information, but
+         * it's probably equal or more than wVoices
+         */
+	MidiOutDev[MODM_NumDevs].caps.wNotes = 16;
+	MidiOutDev[MODM_NumDevs].bEnabled    = TRUE;
+
+	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
+	    "\tALSA info: midi dev-type=%lx, capa=%lx\n",
+	    MODM_NumDevs, MidiOutDev[MODM_NumDevs].caps.szPname, MidiOutDev[MODM_NumDevs].caps.wTechnology,
+	    MidiOutDev[MODM_NumDevs].caps.wVoices, MidiOutDev[MODM_NumDevs].caps.wNotes,
+	    MidiOutDev[MODM_NumDevs].caps.wChannelMask, MidiOutDev[MODM_NumDevs].caps.dwSupport,
+	    (long)type, (long)0);
+		
+	MODM_NumDevs++;
+    }
+    if (cap & SND_SEQ_PORT_CAP_READ) {
+        TRACE("IN  (%d:%s:%s:%d:%s:%x)\n",snd_seq_client_info_get_client(cinfo),
+			                  snd_seq_client_info_get_name(cinfo),
+					  snd_seq_client_info_get_type(cinfo) == SND_SEQ_USER_CLIENT ? "user" : "kernel",
+					  snd_seq_port_info_get_port(pinfo),
+					  snd_seq_port_info_get_name(pinfo),
+					  type);
+		
+	if (MIDM_NumDevs >= MAX_MIDIINDRV)
+	    return;
+	if (!type)
+	    return;
+
+	memcpy(&MidiInDev[MIDM_NumDevs].addr, snd_seq_port_info_get_addr(pinfo), sizeof(snd_seq_addr_t));
+		
+	/* Manufac ID. We do not have access to this with soundcard.h
+	 * Does not seem to be a problem, because in mmsystem.h only
+	 * Microsoft's ID is listed.
+	 */
+	MidiInDev[MIDM_NumDevs].caps.wMid = 0x00FF;
+	MidiInDev[MIDM_NumDevs].caps.wPid = 0x0001; 	/* FIXME Product ID  */
+	/* Product Version. We simply say "1" */
+	MidiInDev[MIDM_NumDevs].caps.vDriverVersion = 0x001;
+
+	/* FIXME Do we have this information?
+	 * Assuming the soundcards can handle
+	 * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
+	 * not MIDICAPS_CACHE.
+	 */
+	MidiInDev[MIDM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
+	strcpy(MidiInDev[MIDM_NumDevs].caps.szPname, snd_seq_client_info_get_name(cinfo));
+
+	MidiInDev[MIDM_NumDevs].state = 0;
+
+	TRACE("MidiIn [%d]\tname='%s' support=%ld\n"
+	    "\tALSA info: midi dev-type=%lx, capa=%lx\n",
+	    MIDM_NumDevs, MidiInDev[MIDM_NumDevs].caps.szPname, MidiInDev[MIDM_NumDevs].caps.dwSupport,
+	    (long)type, (long)0);
+
+	MIDM_NumDevs++;
+    }
+}
+
 #endif /* defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1) */
 
 
@@ -975,7 +1079,6 @@ LONG ALSA_MidiInit(void)
     static	BOOL	bInitDone = FALSE;
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
-    int count;
 
     if (bInitDone)
 	return TRUE;
@@ -994,109 +1097,30 @@ LONG ALSA_MidiInit(void)
     
     snd_seq_client_info_alloca(&cinfo);
     snd_seq_port_info_alloca(&pinfo);
+
+    /* First, search for all internal midi devices */
     snd_seq_client_info_set_client(cinfo, -1);
     while(snd_seq_query_next_client(midiSeq, cinfo) >= 0) {
         snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
 	snd_seq_port_info_set_port(pinfo, -1);
-	count = 0;
 	while (snd_seq_query_next_port(midiSeq, pinfo) >= 0) {
             int cap = snd_seq_port_info_get_capability(pinfo);
 	    int type = snd_seq_port_info_get_type(pinfo);
-	    if (cap & SND_SEQ_PORT_CAP_WRITE) {
-                TRACE("OUT (%d:%s:%s:%d:%s:%x)\n",snd_seq_client_info_get_client(cinfo),
-				                snd_seq_client_info_get_name(cinfo),
-						snd_seq_client_info_get_type(cinfo) == SND_SEQ_USER_CLIENT ? "user" : "kernel",
-						snd_seq_port_info_get_port(pinfo),
-						snd_seq_port_info_get_name(pinfo),
-						type);
-		
-		if (MODM_NumDevs >= MAX_MIDIOUTDRV)
-		    continue;
-		if (!type)
-	            continue;
+	    if (type != SND_SEQ_PORT_TYPE_MIDI_GENERIC)
+	        ALSA_AddMidiPort(cinfo, pinfo, cap, type);
+	}
+    }
 
-		memcpy(&MidiOutDev[MODM_NumDevs].addr, snd_seq_port_info_get_addr(pinfo), sizeof(snd_seq_addr_t));
-		
-		/* Manufac ID. We do not have access to this with soundcard.h
-		 * Does not seem to be a problem, because in mmsystem.h only
-		 * Microsoft's ID is listed.
-		 */
-		MidiOutDev[MODM_NumDevs].caps.wMid = 0x00FF;
-		MidiOutDev[MODM_NumDevs].caps.wPid = 0x0001; 	/* FIXME Product ID  */
-		/* Product Version. We simply say "1" */
-		MidiOutDev[MODM_NumDevs].caps.vDriverVersion = 0x001;
-		MidiOutDev[MODM_NumDevs].caps.wChannelMask   = 0xFFFF;
-
-		/* FIXME Do we have this information?
-		 * Assuming the soundcards can handle
-		 * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
-		 * not MIDICAPS_CACHE.
-		 */
-		MidiOutDev[MODM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-                strcpy(MidiOutDev[MODM_NumDevs].caps.szPname, snd_seq_client_info_get_name(cinfo));
-
-                MidiOutDev[MODM_NumDevs].caps.wTechnology = MIDI_AlsaToWindowsDeviceType(type);
-                MidiOutDev[MODM_NumDevs].caps.wVoices     = 16;
-
-                /* FIXME Is it possible to know the maximum
-                 * number of simultaneous notes of a soundcard ?
-                 * I believe we don't have this information, but
-                 * it's probably equal or more than wVoices
-                 */
-                MidiOutDev[MODM_NumDevs].caps.wNotes = 16;
-                MidiOutDev[MODM_NumDevs].bEnabled    = TRUE;
-
-	        TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
-	      	      "\tALSA info: midi dev-type=%lx, capa=%lx\n",
-	      	      MODM_NumDevs, MidiOutDev[MODM_NumDevs].caps.szPname, MidiOutDev[MODM_NumDevs].caps.wTechnology,
-	      	      MidiOutDev[MODM_NumDevs].caps.wVoices, MidiOutDev[MODM_NumDevs].caps.wNotes,
-	              MidiOutDev[MODM_NumDevs].caps.wChannelMask, MidiOutDev[MODM_NumDevs].caps.dwSupport,
-	              (long)type, (long)0);
-
-		
-		MODM_NumDevs++;
-            }
-	    if (cap & SND_SEQ_PORT_CAP_READ) {
-                TRACE("IN  (%d:%s:%s:%d:%s:%x)\n",snd_seq_client_info_get_client(cinfo),
-				                snd_seq_client_info_get_name(cinfo),
-						snd_seq_client_info_get_type(cinfo) == SND_SEQ_USER_CLIENT ? "user" : "kernel",
-						snd_seq_port_info_get_port(pinfo),
-						snd_seq_port_info_get_name(pinfo),
-						type);
-		
-		if (MIDM_NumDevs >= MAX_MIDIINDRV)
-		    continue;
-		if (!type)
-		    continue;
-
-		memcpy(&MidiInDev[MIDM_NumDevs].addr, snd_seq_port_info_get_addr(pinfo), sizeof(snd_seq_addr_t));
-		
-		/* Manufac ID. We do not have access to this with soundcard.h
-		 * Does not seem to be a problem, because in mmsystem.h only
-		 * Microsoft's ID is listed.
-		 */
-		MidiInDev[MIDM_NumDevs].caps.wMid = 0x00FF;
-		MidiInDev[MIDM_NumDevs].caps.wPid = 0x0001; 	/* FIXME Product ID  */
-		/* Product Version. We simply say "1" */
-		MidiInDev[MIDM_NumDevs].caps.vDriverVersion = 0x001;
-
-		/* FIXME Do we have this information?
-		 * Assuming the soundcards can handle
-		 * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
-		 * not MIDICAPS_CACHE.
-		 */
-		MidiInDev[MIDM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-                strcpy(MidiInDev[MIDM_NumDevs].caps.szPname, snd_seq_client_info_get_name(cinfo));
-
-                MidiInDev[MIDM_NumDevs].state = 0;
-
-                TRACE("MidiIn [%d]\tname='%s' support=%ld\n"
-	      	      "\tALSA info: midi dev-type=%lx, capa=%lx\n",
-	              MIDM_NumDevs, MidiInDev[MIDM_NumDevs].caps.szPname, MidiInDev[MIDM_NumDevs].caps.dwSupport,
-	              (long)type, (long)0);
-
-		MIDM_NumDevs++;
-	    }
+    /* Second, search for all external ports */
+    snd_seq_client_info_set_client(cinfo, -1);
+    while(snd_seq_query_next_client(midiSeq, cinfo) >= 0) {
+        snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
+	snd_seq_port_info_set_port(pinfo, -1);
+	while (snd_seq_query_next_port(midiSeq, pinfo) >= 0) {
+            int cap = snd_seq_port_info_get_capability(pinfo);
+	    int type = snd_seq_port_info_get_type(pinfo);
+	    if (type == SND_SEQ_PORT_TYPE_MIDI_GENERIC)
+	        ALSA_AddMidiPort(cinfo, pinfo, cap, type);
 	}
     }
 
