@@ -95,13 +95,11 @@ static void test_acquire_context(void)
 	result = CryptAcquireContext(&hProv, NULL, NULL, NON_DEF_PROV_TYPE, 0);
 	ok(!result && GetLastError()==NTE_PROV_TYPE_NOT_DEF, "%08x\n", (unsigned int)GetLastError());
 	
-	todo_wine {
-		result = CryptAcquireContext(&hProv, szKeySet, szNonExistentProv, PROV_RSA_FULL, 0);
-		ok(!result && GetLastError()==NTE_KEYSET_NOT_DEF, "%08x\n", (unsigned int)GetLastError());
+	result = CryptAcquireContext(&hProv, szKeySet, szNonExistentProv, PROV_RSA_FULL, 0);
+	ok(!result && GetLastError()==NTE_KEYSET_NOT_DEF, "%08x\n", (unsigned int)GetLastError());
 
-		result = CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, NON_DEF_PROV_TYPE, 0);
-		ok(!result && GetLastError()==NTE_PROV_TYPE_NO_MATCH, "%08x\n", (unsigned int)GetLastError());
-	}
+	result = CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, NON_DEF_PROV_TYPE, 0);
+	ok(!result && GetLastError()==NTE_PROV_TYPE_NO_MATCH, "%08x\n", (unsigned int)GetLastError());
 	
 	result = CryptAcquireContext(NULL, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
 	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%08x\n", (unsigned int)GetLastError());
@@ -113,14 +111,12 @@ static void test_acquire_context(void)
 	if (GetLastError() == ERROR_SUCCESS) 
 		CryptReleaseContext(hProv, 0);
 
-	todo_wine {
-		/* Try again, witch an empty ("\0") szProvider parameter */
-		result = CryptAcquireContext(&hProv, szKeySet, "", PROV_RSA_FULL, 0);
-		ok(result, "%08x\n", (unsigned int)GetLastError());
+	/* Try again, witch an empty ("\0") szProvider parameter */
+	result = CryptAcquireContext(&hProv, szKeySet, "", PROV_RSA_FULL, 0);
+	ok(result, "%08x\n", (unsigned int)GetLastError());
 
-		if (GetLastError() == ERROR_SUCCESS)
-			CryptReleaseContext(hProv, 0);
-	}
+	if (GetLastError() == ERROR_SUCCESS)
+		CryptReleaseContext(hProv, 0);
 }
 
 START_TEST(crypt)

@@ -278,13 +278,13 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		return FALSE;
 	}
 
-	if (!pszProvider)
+	if (!pszProvider || !*pszProvider)
 	{
 		/* No CSP name specified so try the user default CSP first
 		 * then try the machine default CSP
 		 */
 		if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, TRUE)) ) {
-			FIXME("No provider registered for crypto provider type %ld.\n", dwProvType);
+			TRACE("No provider registered for crypto provider type %ld.\n", dwProvType);
 			SetLastError(NTE_PROV_TYPE_NOT_DEF);
 			return FALSE;
 		}
@@ -292,13 +292,13 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		{
 			CRYPT_Free(keyname);
 			if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, FALSE)) ) {
-				FIXME("No type registered for crypto provider type %ld.\n", dwProvType);
+				TRACE("No type registered for crypto provider type %ld.\n", dwProvType);
 				RegCloseKey(key);
 				SetLastError(NTE_PROV_TYPE_NOT_DEF);
 				goto error;
 			}
 			if (RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &key)) {
-				FIXME("Did not find registry entry of crypto provider for %s.\n", debugstr_a(keyname));
+				TRACE("Did not find registry entry of crypto provider for %s.\n", debugstr_a(keyname));
 				CRYPT_Free(keyname);
 				RegCloseKey(key);
 				SetLastError(NTE_PROV_TYPE_NOT_DEF);
@@ -341,13 +341,22 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	keyname = CRYPT_GetProvKeyName(provname);
 	r = RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &key);
 	CRYPT_Free(keyname);
-	if (r) goto error;
+	if (r != ERROR_SUCCESS)
+	{
+		SetLastError(NTE_KEYSET_NOT_DEF);
+		goto error;
+	}
 	len = sizeof(DWORD);
 	r = RegQueryValueExA(key, "Type", NULL, NULL, (BYTE*)&type, &len);
-	if (r != ERROR_SUCCESS || type != dwProvType)
+	if (r != ERROR_SUCCESS)
 	{
-		FIXME("Crypto provider has wrong type (%ld vs expected %ld).\n", type, dwProvType);
-		SetLastError(NTE_BAD_PROV_TYPE);
+		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+		goto error;
+	}
+	if (type != dwProvType)
+	{
+		TRACE("Crypto provider has wrong type (%ld vs expected %ld).\n", type, dwProvType);
+		SetLastError(NTE_PROV_TYPE_NO_MATCH);
 		goto error;
 	}
 
