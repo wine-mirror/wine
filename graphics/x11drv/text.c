@@ -210,37 +210,15 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     /* Draw the text (count > 0 verified) */
 
     TSXSetForeground( display, physDev->gc, physDev->textPixel );
-    if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
+    if(!rotated)
     {
-      if(!rotated)
+      if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
       {
         TSXDrawString( display, physDev->drawable, physDev->gc, 
                      dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
       }
-      else 
-      {  
-	/* have to render character by character. */
-	double offset = 0.0;
-	int i;
-
-	for(i=0; i<count; i++) {
-	  int char_metric_offset = (unsigned char) str[i] 
-	    - font->min_char_or_byte2;
-	  int x_i = IROUND((double) (dc->w.DCOrgX + x) + offset *
-			   pfo->lpX11Trans->a / 1000.0 );
-	  int y_i = IROUND((double) (dc->w.DCOrgY + y) - offset *
-			   pfo->lpX11Trans->b / 1000.0 );
-
-	  TSXDrawString( display, physDev->drawable, physDev->gc,
-			 x_i, y_i, &str[i], 1);
-	  offset += (double) (font->per_char ?
-		     font->per_char[char_metric_offset].attributes:
-		     font->min_bounds.attributes);
-	}
-      }
-    }
-    else  /* Now the fun begins... */
-    {
+      else  /* Now the fun begins... */
+      {
         XTextItem *items, *pitem;
 	int delta;
 
@@ -298,6 +276,38 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
         TSXDrawText( display, physDev->drawable, physDev->gc,
                    dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, pitem - items );
         HeapFree( GetProcessHeap(), 0, items );
+      }
+    }
+    else /* rotated */
+    {  
+      /* have to render character by character. */
+      double offset = 0.0;
+      int i;
+
+      for (i=0; i<count; i++)
+      {
+	int char_metric_offset = (unsigned char) str[i] 
+	  - font->min_char_or_byte2;
+	int x_i = IROUND((double) (dc->w.DCOrgX + x) + offset *
+			 pfo->lpX11Trans->a / pfo->lpX11Trans->pixelsize );
+	int y_i = IROUND((double) (dc->w.DCOrgY + y) - offset *
+			 pfo->lpX11Trans->b / pfo->lpX11Trans->pixelsize );
+
+	TSXDrawString( display, physDev->drawable, physDev->gc,
+		       x_i, y_i, &str[i], 1);
+	if (lpDx)
+	  offset += XLSTODS(dc, lpDx[i]);
+	else
+	{
+	  offset += (double) (font->per_char ?
+			      font->per_char[char_metric_offset].attributes:
+			      font->min_bounds.attributes)
+	                  * pfo->lpX11Trans->pixelsize / 1000.0;
+	  offset += dc->w.charExtra;
+	  if (str[i] == (char)dfBreakChar)
+	    offset += dc->w.breakExtra;
+	}
+      }
     }
 
       /* Draw underline and strike-out if needed */
