@@ -36,6 +36,8 @@ void VGA_Get16Palette(char *Table);
 void VGA_SetQuadPalette(RGBQUAD*color,int start,int len);
 LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth);
 void VGA_Unlock(void);
+void VGA_SetWindowStart(int start);
+int  VGA_GetWindowStart();
 
 /* text mode */
 int VGA_SetAlphaMode(unsigned Xres,unsigned Yres);

@@ -62,6 +62,11 @@ static HANDLE poll_timer;
  *              VGA framebuffers are always larger than display size and
  *              SVGA framebuffers may also be.
  * vga_fb_data: Pointer to framebuffer start.
+ * vga_fb_window: Offset of 64k window 0xa0000 in bytes from framebuffer start.
+ *                This value is >= 0, if mode uses linear framebuffer and
+ *                -1, if mode uses color planes. This value is fixed
+ *                in all modes except 0x13 (256 color VGA) where
+ *                0 means normal mode and -1 means Mode-X (unchained mode).
  */
 static int   vga_fb_width;
 static int   vga_fb_height;
@@ -70,6 +75,7 @@ static int   vga_fb_pitch;
 static int   vga_fb_offset;
 static int   vga_fb_size = 0;
 static void *vga_fb_data = 0;
+static int   vga_fb_window = 0;
 
 static BYTE vga_text_attr;
 static char *textbuf_old = NULL;
@@ -400,6 +406,8 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
       par.Yres = 480;
     }
 
+    VGA_SetWindowStart((Depth < 8) ? -1 : 0);
+
     par.Depth = (Depth < 8) ? 8 : Depth;
 
     vga_mode_initialized = TRUE;
@@ -506,6 +514,38 @@ LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth)
 void VGA_Unlock(void)
 {
     IDirectDrawSurface_Unlock(lpddsurf,sdesc.lpSurface);
+}
+
+/*
+ * Set start of 64k window at 0xa0000 in bytes.
+ * If value is -1, initialize color plane support.
+ * If value is >= 0, window contains direct copy of framebuffer.
+ */
+void VGA_SetWindowStart(int start)
+{
+    if(start == vga_fb_window)
+        return;
+
+    if(vga_fb_window == -1)
+        FIXME("Remove VGA memory emulation.\n");
+    else
+        memmove(vga_fb_data + vga_fb_window, DOSMEM_MapDosToLinear(0xa0000), 64 * 1024);
+
+    vga_fb_window = start;
+
+    if(vga_fb_window == -1)
+        FIXME("Install VGA memory emulation.\n");
+    else
+        memmove(DOSMEM_MapDosToLinear(0xa0000), vga_fb_data + vga_fb_window, 64 * 1024);
+}
+
+/*
+ * Get start of 64k window at 0xa0000 in bytes.
+ * Value is -1 in color plane modes.
+ */
+int VGA_GetWindowStart()
+{
+    return vga_fb_window;
 }
 
 /*** TEXT MODE ***/
@@ -770,24 +810,6 @@ void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
 
 /*** CONTROL ***/
 
-/*
- * Copy part of VGA framebuffer to VGA window.
- */
-static void VGA_CopyFrameToWindow(void)
-{
-  /* FIXME: add implementation */
-}
-
-/*
- * Copy contents of VGA window to VGA framebuffer.
- */
-static void VGA_CopyWindowToFrame(void)
-{
-  /* FIXME: fix implementation */
-  char *dat = DOSMEM_MapDosToLinear(0xa0000);
-  memmove(vga_fb_data, dat, 65536);
-}
-
 /* FIXME: optimize by doing this only if the data has actually changed
  *        (in a way similar to DIBSection, perhaps) */
 static void VGA_Poll_Graphics(void)
@@ -803,7 +825,8 @@ static void VGA_Poll_Graphics(void)
   /*
    * Synchronize framebuffer contents.
    */
-  VGA_CopyWindowToFrame();
+  if(vga_fb_window != -1)
+    memmove(vga_fb_data + vga_fb_window, DOSMEM_MapDosToLinear(0xa0000), 64 * 1024);
 
   /*
    * Double VGA framebuffer (320x200 -> 640x400), if needed.
@@ -897,6 +920,19 @@ void VGA_ioport_out( WORD port, BYTE val )
            vga_index_3c4 = val;
            break;
         case 0x3c5:
+          switch(vga_index_3c4) {
+               case 0x04: /* Sequencer: Memory Mode Register */
+                  if(vga_fb_depth == 8)
+                      VGA_SetWindowStart((val & 8) ? 0 : -1);
+                  else
+                      FIXME("Memory Mode Register not supported in this mode.\n");
+               break;
+               default:
+                  FIXME("Unsupported index, register 0x3c4: 0x%02x (value 0x%02x)\n",
+                        vga_index_3c4, val);
+           }
+           break;
+
            FIXME("Unsupported index, register 0x3c4: 0x%02x (value 0x%02x)\n",
                  vga_index_3c4, val);
            break;
@@ -938,9 +974,14 @@ BYTE VGA_ioport_in( WORD port )
                  vga_index_3c0);
            return 0xff;
         case 0x3c5:
-            FIXME("Unsupported index, register 0x3c4: 0x%02x\n",
-                 vga_index_3c4);
-           return 0xff;
+           switch(vga_index_3c4) {
+               case 0x04: /* Sequencer: Memory Mode Register */
+                    return (VGA_GetWindowStart() == -1) ? 0xf7 : 0xff;
+               default:
+                   FIXME("Unsupported index, register 0x3c4: 0x%02x\n",
+                         vga_index_3c4);
+                   return 0xff;
+           }
         case 0x3cf:
            FIXME("Unsupported index, register 0x3ce: 0x%02x\n",
                  vga_index_3ce);

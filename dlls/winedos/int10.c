@@ -82,219 +82,261 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
  *      Added additional vga graphic support - 3/99
  */
 
-void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
+static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
 {
     BIOSDATA *data = DOSMEM_BiosData();
 
-    if(AH_reg(context) == 0x4F) { /* VESA functions */
-	switch(AL_reg(context)) {
+    switch(AL_reg(context)) {
 
-	case 0x00: /* GET SuperVGA INFORMATION */
-	    TRACE("VESA GET SuperVGA INFORMATION\n");
-	    memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
-	    DOSMEM_BiosSys()+DOSMEM_GetBiosSysStructOffset(OFF_VESAINFO),sizeof(VESAINFO));
-	    AL_reg(context) = 0x4f;
-	    AH_reg(context) = 0x00; /* 0x00 = successful 0x01 = failed */
-	    break;
+    case 0x00: /* GET SuperVGA INFORMATION */
+        TRACE("VESA GET SuperVGA INFORMATION\n");
+        memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
+               DOSMEM_BiosSys()+DOSMEM_GetBiosSysStructOffset(OFF_VESAINFO),
+               sizeof(VESAINFO));
+        AL_reg(context) = 0x4f;
+        AH_reg(context) = 0x00; /* 0x00 = successful 0x01 = failed */
+        break;
 
-	case 0x01: /* GET SuperVGA MODE INFORMATION */
-	    FIXME("VESA GET SuperVGA Mode Information - Not supported\n");
-	    AL_reg(context) = 0x4f;
-	    AH_reg(context) = 0x01; /* 0x00 = successful 0x01 = failed */
-	    break;
-	case 0x02: /* SET SuperVGA VIDEO MODE */
-	    switch(BX_reg(context)) {
-	 	/* OEM Video Modes */
-		case 0x00: /* 40x25 */
-            	case 0x01:
-                	TRACE("Set VESA Text Mode - 0x0%x\n",
-                	   BX_reg(context));
-                	VGA_SetAlphaMode(40, 25);
-                        data->VideoColumns = 40;
-                	break;
-            	case 0x02:
-            	case 0x03:
-            	case 0x07:
-            	    TRACE("Set VESA Text Mode - 0x0%x\n",
-            	       BX_reg(context));
-            	    VGA_SetAlphaMode(80, 25);
-                    data->VideoColumns = 80;
-            	    break;
-	        case 0x0D:
-                    TRACE("Setting VESA 320x200 16-color mode\n");
-                    VGA_SetMode(320,200,4);
-                    break;
- 	        case 0x0E:
-                    TRACE("Setting VESA 640x200 16-color mode\n");
-                    VGA_SetMode(640,200,4);
-                    break;
-	        case 0x10:
-                    TRACE("Setting VESA 640x350 16-color mode\n");
-                    VGA_SetMode(640,350,4);
-                    break;
-	        case 0x12:
-                    TRACE("Setting VESA 640x480 16-color mode\n");
-                    VGA_SetMode(640,480,4);
-                    break;
-                case 0x13:
-            	    TRACE("Setting VESA 320x200 256-color mode\n");
-            	    VGA_SetMode(320,200,8);
-            	    break;
-		/* VBE Modes */
-		case 0x100:
-		    TRACE("Setting VESA 640x400 256-color mode\n");
-		    VGA_SetMode(640,400,8);
-		    break;
-		case 0x101:
-		    TRACE("Setting VESA 640x480 256-color mode\n");
-		    VGA_SetMode(640,480,8);
-		    break;
-		case 0x102:
-		    TRACE("Setting VESA 800x600 16-color mode\n");
-		    VGA_SetMode(800,600,4);
-		    break;
-		case 0x103:
-		    TRACE("Setting VESA 800x600 256-color mode\n");
-		    VGA_SetMode(800,600,8);
-		    break;
-		case 0x104:
-		    TRACE("Setting VESA 1024x768 16-color mode\n");
-		    VGA_SetMode(1024,768,4);
-		    break;
-		case 0x105:
-		    TRACE("Setting VESA 1024x768 256-color mode\n");
-		    VGA_SetMode(1024,768,8);
-		    break;
-		case 0x106:
-		    TRACE("Setting VESA 1280x1024 16-color mode\n");
-		    VGA_SetMode(1280,1024,4);
-		    break;
-		case 0x107:
-		    TRACE("Setting VESA 1280x1024 256-color mode\n");
-		    VGA_SetMode(1280,1024,8);
-		    break;
-		/* 108h - 10Ch are text modes and im lazy so :p */
-		/* VBE v1.2+ */
-		case 0x10D:
-  		    TRACE("Setting VESA 320x200 15bpp\n");
-		    VGA_SetMode(320,200,15);
-		    break;
-		case 0x10E:
-  		    TRACE("Setting VESA 320x200 16bpp\n");
-		    VGA_SetMode(320,200,16);
-		    break;
-		case 0x10F:
-  		    TRACE("Setting VESA 320x200 24bpp\n");
-		    VGA_SetMode(320,200,24);
-		    break;
-		case 0x110:
-  		    TRACE("Setting VESA 640x480 15bpp\n");
-		    VGA_SetMode(640,480,15);
-		    break;
-		case 0x111:
-  		    TRACE("Setting VESA 640x480 16bpp\n");
-		    VGA_SetMode(640,480,16);
-		    break;
-		case 0x112:
-  		    TRACE("Setting VESA 640x480 24bpp\n");
-		    VGA_SetMode(640,480,24);
-		    break;
-		case 0x113:
- 		    TRACE("Setting VESA 800x600 15bpp\n");
-		    VGA_SetMode(800,600,15);
-		    break;
-		case 0x114:
- 		    TRACE("Setting VESA 800x600 16bpp\n");
-		    VGA_SetMode(800,600,16);
-		    break;
-		case 0x115:
- 		    TRACE("Setting VESA 800x600 24bpp\n");
-		    VGA_SetMode(800,600,24);
-		    break;
-		case 0x116:
- 		    TRACE("Setting VESA 1024x768 15bpp\n");
-		    VGA_SetMode(1024,768,15);
-		    break;
-		case 0x117:
- 		    TRACE("Setting VESA 1024x768 16bpp\n");
-		    VGA_SetMode(1024,768,16);
-		    break;
-		case 0x118:
- 		    TRACE("Setting VESA 1024x768 24bpp\n");
-		    VGA_SetMode(1024,768,24);
-		    break;
-		case 0x119:
- 		    TRACE("Setting VESA 1280x1024 15bpp\n");
-		    VGA_SetMode(1280,1024,15);
-		    break;
-		case 0x11A:
- 		    TRACE("Setting VESA 1280x1024 16bpp\n");
-		    VGA_SetMode(1280,1024,16);
-		    break;
-		case 0x11B:
- 		    TRACE("Setting VESA 1280x1024 24bpp\n");
-		    VGA_SetMode(1280,1024,24);
-		    break;
-		default:
-		    FIXME("VESA Set Video Mode (0x%x) - Not Supported\n", BX_reg(context));
-	    }
-            data->VideoMode = BX_reg(context);
-            AL_reg(context) = 0x4f;
-	    AH_reg(context) = 0x00;
-	    break;
-	case 0x03: /* VESA SuperVGA BIOS - GET CURRENT VIDEO MODE */
-		AL_reg(context) = 0x4f;
-		AH_reg(context) = 0x00; /* should probly check if a vesa mode has ben set */
-		BX_reg(context) = data->VideoMode;
-		break;
-	case 0x04: /* VESA SuperVGA BIOS - SAVE/RESTORE SuperVGA VIDEO STATE */
-		ERR("VESA SAVE/RESTORE Video State - Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
-		/* maybe we should do this instead ? */
-		/* AH_reg(context = 0x01;  not implemented so just fail */
-		break;
-	case 0x05: /* VESA SuperVGA BIOS - CPU VIDEO MEMORY CONTROL */
-		ERR("VESA CPU VIDEO MEMORY CONTROL\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
-		/* maybe we should do this instead ? */
-		/* AH_reg(context = 0x001; not implemented so just fail */
-		break;
-	case 0x06: /* VESA GET/SET LOGICAL SCAN LINE LENGTH */
-		ERR("VESA GET/SET LOGICAL SCAN LINE LENGTH - Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
-		/* maybe we should do this instead ? */
-		/* AH_reg(context = 0x001; not implemented so just fail */
-		break;
-	case 0x07: /* GET/SET DISPLAY START */
-		ERR("VESA GET/SET DISPLAY START - Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
-		/* maybe we should do this instead ? */
-		/* AH_reg(context = 0x001; not implemented so just fail */
-		break;
-	case 0x08: /* GET/SET DAC PALETTE CONTROL */
-		ERR("VESA GET/SET DAC PALETTE CONTROL- Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
-		/* maybe we should do this instead ? */
-		/* AH_reg(context = 0x001; not implemented so just fail */
-		break;
-	case 0x09: /* SET PALETTE ENTRIES */
-		FIXME("VESA Set palette entries - not implemented\n");
-		break;
-        case 0xef:  /* get video mode for hercules-compatibles   */
-                    /* There's no reason to really support this  */
-                    /* is there?....................(A.C.)       */
-                TRACE("Just report the video not hercules compatible\n");
-                DX_reg(context) = 0xffff;
-                break;
-	case 0xff: /* Turn VESA ON/OFF */
-		/* i dont know what to do */
-		break;
+    case 0x01: /* GET SuperVGA MODE INFORMATION */
+        FIXME("VESA GET SuperVGA Mode Information - Not supported\n");
+        AL_reg(context) = 0x4f;
+        AH_reg(context) = 0x01; /* 0x00 = successful 0x01 = failed */
+        break;
+
+    case 0x02: /* SET SuperVGA VIDEO MODE */
+        switch(BX_reg(context)) {
+            /* OEM Video Modes */
+        case 0x00: /* 40x25 */
+        case 0x01:
+            TRACE("Set VESA Text Mode - 0x0%x\n",
+                  BX_reg(context));
+            VGA_SetAlphaMode(40, 25);
+            data->VideoColumns = 40;
+            break;
+        case 0x02:
+        case 0x03:
+        case 0x07:
+            TRACE("Set VESA Text Mode - 0x0%x\n",
+                  BX_reg(context));
+            VGA_SetAlphaMode(80, 25);
+            data->VideoColumns = 80;
+            break;
+        case 0x0D:
+            TRACE("Setting VESA 320x200 16-color mode\n");
+            VGA_SetMode(320,200,4);
+            break;
+        case 0x0E:
+            TRACE("Setting VESA 640x200 16-color mode\n");
+            VGA_SetMode(640,200,4);
+            break;
+        case 0x10:
+            TRACE("Setting VESA 640x350 16-color mode\n");
+            VGA_SetMode(640,350,4);
+            break;
+        case 0x12:
+            TRACE("Setting VESA 640x480 16-color mode\n");
+            VGA_SetMode(640,480,4);
+            break;
+        case 0x13:
+            TRACE("Setting VESA 320x200 256-color mode\n");
+            VGA_SetMode(320,200,8);
+            break;
+            /* VBE Modes */
+        case 0x100:
+            TRACE("Setting VESA 640x400 256-color mode\n");
+            VGA_SetMode(640,400,8);
+            break;
+        case 0x101:
+            TRACE("Setting VESA 640x480 256-color mode\n");
+            VGA_SetMode(640,480,8);
+            break;
+        case 0x102:
+            TRACE("Setting VESA 800x600 16-color mode\n");
+            VGA_SetMode(800,600,4);
+            break;
+        case 0x103:
+            TRACE("Setting VESA 800x600 256-color mode\n");
+            VGA_SetMode(800,600,8);
+            break;
+        case 0x104:
+            TRACE("Setting VESA 1024x768 16-color mode\n");
+            VGA_SetMode(1024,768,4);
+            break;
+        case 0x105:
+            TRACE("Setting VESA 1024x768 256-color mode\n");
+            VGA_SetMode(1024,768,8);
+            break;
+        case 0x106:
+            TRACE("Setting VESA 1280x1024 16-color mode\n");
+            VGA_SetMode(1280,1024,4);
+            break;
+        case 0x107:
+            TRACE("Setting VESA 1280x1024 256-color mode\n");
+            VGA_SetMode(1280,1024,8);
+            break;
+            /* 108h - 10Ch are text modes and im lazy so :p */
+            /* VBE v1.2+ */
+        case 0x10D:
+            TRACE("Setting VESA 320x200 15bpp\n");
+            VGA_SetMode(320,200,15);
+            break;
+        case 0x10E:
+            TRACE("Setting VESA 320x200 16bpp\n");
+            VGA_SetMode(320,200,16);
+            break;
+        case 0x10F:
+            TRACE("Setting VESA 320x200 24bpp\n");
+            VGA_SetMode(320,200,24);
+            break;
+        case 0x110:
+            TRACE("Setting VESA 640x480 15bpp\n");
+            VGA_SetMode(640,480,15);
+            break;
+        case 0x111:
+            TRACE("Setting VESA 640x480 16bpp\n");
+            VGA_SetMode(640,480,16);
+            break;
+        case 0x112:
+            TRACE("Setting VESA 640x480 24bpp\n");
+            VGA_SetMode(640,480,24);
+            break;
+        case 0x113:
+            TRACE("Setting VESA 800x600 15bpp\n");
+            VGA_SetMode(800,600,15);
+            break;
+        case 0x114:
+            TRACE("Setting VESA 800x600 16bpp\n");
+            VGA_SetMode(800,600,16);
+            break;
+        case 0x115:
+            TRACE("Setting VESA 800x600 24bpp\n");
+            VGA_SetMode(800,600,24);
+            break;
+        case 0x116:
+            TRACE("Setting VESA 1024x768 15bpp\n");
+            VGA_SetMode(1024,768,15);
+            break;
+        case 0x117:
+            TRACE("Setting VESA 1024x768 16bpp\n");
+            VGA_SetMode(1024,768,16);
+            break;
+        case 0x118:
+            TRACE("Setting VESA 1024x768 24bpp\n");
+            VGA_SetMode(1024,768,24);
+            break;
+        case 0x119:
+            TRACE("Setting VESA 1280x1024 15bpp\n");
+            VGA_SetMode(1280,1024,15);
+            break;
+        case 0x11A:
+            TRACE("Setting VESA 1280x1024 16bpp\n");
+            VGA_SetMode(1280,1024,16);
+            break;
+        case 0x11B:
+            TRACE("Setting VESA 1280x1024 24bpp\n");
+            VGA_SetMode(1280,1024,24);
+            break;
+        default:
+            FIXME("VESA Set Video Mode (0x%x) - Not Supported\n", BX_reg(context));
+        }
+        data->VideoMode = BX_reg(context);
+        AL_reg(context) = 0x4f;
+        AH_reg(context) = 0x00;
+        break;
+
+    case 0x03: /* VESA SuperVGA BIOS - GET CURRENT VIDEO MODE */
+        AL_reg(context) = 0x4f;
+        AH_reg(context) = 0x00; /* should probly check if a vesa mode has ben set */
+        BX_reg(context) = data->VideoMode;
+        break;
+
+    case 0x04: /* VESA SuperVGA BIOS - SAVE/RESTORE SuperVGA VIDEO STATE */
+        ERR("VESA SAVE/RESTORE Video State - Not Implemented\n");
+        /* AL_reg(context) = 0x4f; = supported so not set since not implemented */
+        /* maybe we should do this instead ? */
+        /* AH_reg(context = 0x01;  not implemented so just fail */
+        break;
+
+    case 0x05: /* VESA SuperVGA BIOS - CPU VIDEO MEMORY CONTROL */
+        /*
+         * This subfunction supports only Window A (BL_reg == 0) and
+         * is assumes that window granularity is 64k.
+         */
+        switch(BH_reg(context)) {
+        case 0x00: /* select video memory window */
+            AL_reg(context) = 0x4f; /* function supported */
+            if(BL_reg(context) == 0) {
+                VGA_SetWindowStart(DX_reg(context) * 64 * 1024);
+                AH_reg(context) = 0x00; /* status: successful */
+            } else
+                AH_reg(context) = 0x01; /* status: failed */
+            break;
+        case 0x01: /* get video memory window */
+            AL_reg(context) = 0x4f; /* function supported */
+            if(BL_reg(context) == 0) {
+                DX_reg(context) = VGA_GetWindowStart() / 64 / 1024;
+                AH_reg(context) = 0x00; /* status: successful */
+            } else
+                AH_reg(context) = 0x01; /* status: failed */
+            break;
 	default:
-		FIXME("VESA Function (0x%x) - Not Supported\n", AH_reg(context));
-		break;
+            INT_BARF( context, 0x10 );
 	}
+        break;
+
+    case 0x06: /* VESA GET/SET LOGICAL SCAN LINE LENGTH */
+        ERR("VESA GET/SET LOGICAL SCAN LINE LENGTH - Not Implemented\n");
+        /* AL_reg(context) = 0x4f; = supported so not set since not implemented */
+        /* maybe we should do this instead ? */
+        /* AH_reg(context = 0x001; not implemented so just fail */
+        break;
+
+    case 0x07: /* GET/SET DISPLAY START */
+        ERR("VESA GET/SET DISPLAY START - Not Implemented\n");
+        /* AL_reg(context) = 0x4f; = supported so not set since not implemented */
+        /* maybe we should do this instead ? */
+        /* AH_reg(context = 0x001; not implemented so just fail */
+        break;
+
+    case 0x08: /* GET/SET DAC PALETTE CONTROL */
+        ERR("VESA GET/SET DAC PALETTE CONTROL- Not Implemented\n");
+        /* AL_reg(context) = 0x4f; = supported so not set since not implemented */
+        /* maybe we should do this instead ? */
+        /* AH_reg(context = 0x001; not implemented so just fail */
+        break;
+
+    case 0x09: /* SET PALETTE ENTRIES */
+        FIXME("VESA Set palette entries - not implemented\n");
+        break;
+
+    case 0x0a: /* GET PROTECTED-MODE CODE */
+        FIXME("VESA Get protected-mode code - not implemented\n");
+        break;
+
+    case 0x10: /* Display Power Management Extensions */
+        FIXME("VESA Display Power Management Extensions - not implemented\n");
+        break;
+
+    case 0xef:  /* get video mode for hercules-compatibles   */
+        /* There's no reason to really support this  */
+        /* is there?....................(A.C.)       */
+        TRACE("Just report the video not hercules compatible\n");
+        DX_reg(context) = 0xffff;
+        break;
+
+    case 0xff: /* Turn VESA ON/OFF */
+        /* i dont know what to do */
+        break;
+
+    default:
+        FIXME("VESA Function (0x%x) - Not Supported\n", AH_reg(context));
+        break;
     }
-    else {
+}
+
+void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
+{
+    BIOSDATA *data = DOSMEM_BiosData();
 
     switch(AH_reg(context)) {
 
@@ -364,7 +406,10 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         break;
 
     case 0x01: /* SET CURSOR SHAPE */
-        TRACE("Set Cursor Shape start %d end %d options %d\n", CH_reg(context) & 0x1f, CL_reg(context) & 0x1f, CH_reg(context) & 0xe0);
+        TRACE("Set Cursor Shape start %d end %d options %d\n",
+              CH_reg(context) & 0x1f,
+              CL_reg(context) & 0x1f,
+              CH_reg(context) & 0xe0);
         data->VideoCursorType = CX_reg(context); /* direct copy */
 	VGA_SetCursorShape(CH_reg(context), CL_reg(context));
         break;
@@ -757,10 +802,14 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                 TRACE("Just report the video not hercules compatible\n");
                 DX_reg(context) = 0xffff;
                 break;
+
+    case 0x4f: /* VESA */
+        DOSVM_Int10Handler_VESA(context);
+        break;
+
     default:
         FIXME("Unknown - 0x%x\n", AH_reg(context));
         INT_BARF( context, 0x10 );
-    }
     }
 }
 
