@@ -707,20 +707,19 @@ UINT WINAPI auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
 /**************************************************************************
  * 				mciGetErrorStringW		[WINMM.@]
  */
-BOOL WINAPI mciGetErrorStringW(DWORD wError, LPWSTR lpstrBuffer, UINT uLength)
+BOOL WINAPI mciGetErrorStringW(MCIERROR wError, LPWSTR lpstrBuffer, UINT uLength)
 {
-    LPSTR	bufstr = HeapAlloc(GetProcessHeap(), 0, uLength);
-    BOOL	ret = mciGetErrorStringA(wError, bufstr, uLength);
+    char       bufstr[MAXERRORLENGTH];
+    BOOL       ret = mciGetErrorStringA(wError, bufstr, MAXERRORLENGTH);
 
     MultiByteToWideChar( CP_ACP, 0, bufstr, -1, lpstrBuffer, uLength );
-    HeapFree(GetProcessHeap(), 0, bufstr);
     return ret;
 }
 
 /**************************************************************************
  * 				mciGetErrorStringA		[WINMM.@]
  */
-BOOL WINAPI mciGetErrorStringA(DWORD dwError, LPSTR lpstrBuffer, UINT uLength)
+BOOL WINAPI mciGetErrorStringA(MCIERROR dwError, LPSTR lpstrBuffer, UINT uLength)
 {
     BOOL		ret = FALSE;
 
@@ -738,18 +737,18 @@ BOOL WINAPI mciGetErrorStringA(DWORD dwError, LPSTR lpstrBuffer, UINT uLength)
 /**************************************************************************
  *			mciDriverNotify				[WINMM.@]
  */
-BOOL WINAPI mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
+BOOL WINAPI mciDriverNotify(HWND hWndCallBack, MCIDEVICEID wDevID, UINT wStatus)
 {
 
     TRACE("(%p, %04x, %04X)\n", hWndCallBack, wDevID, wStatus);
 
-    return PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
+    return PostMessageW(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
 }
 
 /**************************************************************************
  * 			mciGetDriverData			[WINMM.@]
  */
-DWORD WINAPI mciGetDriverData(UINT uDeviceID)
+DWORD WINAPI mciGetDriverData(MCIDEVICEID uDeviceID)
 {
     LPWINE_MCIDRIVER	wmd;
 
@@ -768,7 +767,7 @@ DWORD WINAPI mciGetDriverData(UINT uDeviceID)
 /**************************************************************************
  * 			mciSetDriverData			[WINMM.@]
  */
-BOOL WINAPI mciSetDriverData(UINT uDeviceID, DWORD data)
+BOOL WINAPI mciSetDriverData(MCIDEVICEID uDeviceID, DWORD data)
 {
     LPWINE_MCIDRIVER	wmd;
 
@@ -788,7 +787,7 @@ BOOL WINAPI mciSetDriverData(UINT uDeviceID, DWORD data)
 /**************************************************************************
  * 				mciSendCommandA			[WINMM.@]
  */
-DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI mciSendCommandA(MCIDEVICEID wDevID, UINT wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     DWORD	dwRet;
 
@@ -801,14 +800,189 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
     return dwRet;
 }
 
+inline static LPSTR strdupWtoA( LPCWSTR str )
+{
+    LPSTR ret;
+    INT len;
+
+    if (!str) return NULL;
+    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+    ret = HeapAlloc( GetProcessHeap(), 0, len );
+    if(ret) WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    return ret;
+}
+
+static int MCI_MapMsgWtoA(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
+{
+    switch(msg)
+    {
+    case MCI_CLOSE:
+    case MCI_PLAY:
+    case MCI_SEEK:
+    case MCI_STOP:
+    case MCI_PAUSE:
+    case MCI_GETDEVCAPS:
+    case MCI_SPIN:
+    case MCI_SET:
+    case MCI_STEP:
+    case MCI_RECORD:
+    case MCI_BREAK:
+    case MCI_SOUND:
+    case MCI_STATUS:
+    case MCI_CUE:
+    case MCI_REALIZE:
+    case MCI_PUT:
+    case MCI_WHERE:
+    case MCI_FREEZE:
+    case MCI_UNFREEZE:
+    case MCI_CUT:
+    case MCI_COPY:
+    case MCI_PASTE:
+    case MCI_UPDATE:
+    case MCI_RESUME:
+    case MCI_DELETE:
+        return 0;
+
+    case MCI_OPEN:
+        {
+            MCI_OPEN_PARMSW *mci_openW = (MCI_OPEN_PARMSW *)*dwParam2;
+            MCI_OPEN_PARMSA *mci_openA;
+            DWORD_PTR *ptr;
+
+            ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(*mci_openA) + sizeof(DWORD_PTR));
+            if (!ptr) return -1;
+
+            *ptr++ = *dwParam2; /* save the previous pointer */
+            *dwParam2 = (DWORD_PTR)ptr;
+            mci_openA = (MCI_OPEN_PARMSA *)ptr;
+
+            if (dwParam1 & MCI_NOTIFY)
+                mci_openA->dwCallback = mci_openW->dwCallback;
+
+            if (dwParam1 & MCI_OPEN_TYPE)
+            {
+                if (dwParam1 & MCI_OPEN_TYPE_ID)
+                    mci_openA->lpstrDeviceType = (LPSTR)mci_openW->lpstrDeviceType;
+                else
+                    mci_openA->lpstrDeviceType = strdupWtoA(mci_openW->lpstrDeviceType);
+            }
+            if (dwParam1 & MCI_OPEN_ELEMENT)
+            {
+                if (dwParam1 & MCI_OPEN_ELEMENT_ID)
+                    mci_openA->lpstrElementName = (LPSTR)mci_openW->lpstrElementName;
+                else
+                    mci_openA->lpstrElementName = strdupWtoA(mci_openW->lpstrElementName);
+            }
+            if (dwParam1 & MCI_OPEN_ALIAS)
+                mci_openA->lpstrAlias = strdupWtoA(mci_openW->lpstrAlias);
+        }
+        return 1;
+
+    case MCI_WINDOW:
+        if (dwParam1 & MCI_ANIM_WINDOW_TEXT)
+        {
+            MCI_ANIM_WINDOW_PARMSW *mci_windowW = (MCI_ANIM_WINDOW_PARMSW *)*dwParam2;
+            MCI_ANIM_WINDOW_PARMSA *mci_windowA;
+
+            mci_windowA = HeapAlloc(GetProcessHeap(), 0, sizeof(*mci_windowA));
+            if (!mci_windowA) return -1;
+
+            *dwParam2 = (DWORD_PTR)mci_windowA;
+
+            mci_windowA->lpstrText = strdupWtoA(mci_windowW->lpstrText);
+
+            if (dwParam1 & MCI_NOTIFY)
+                mci_windowA->dwCallback = mci_windowW->dwCallback;
+            if (dwParam1 & MCI_ANIM_WINDOW_HWND)
+                mci_windowA->hWnd = mci_windowW->hWnd;
+            if (dwParam1 & MCI_ANIM_WINDOW_STATE)
+                mci_windowA->nCmdShow = mci_windowW->nCmdShow;
+
+            return 1;
+        }
+        return 0;
+
+    case MCI_INFO:
+    case MCI_SYSINFO:
+    case MCI_SAVE:
+    case MCI_LOAD:
+    case MCI_ESCAPE:
+    default:
+        FIXME("Message 0x%04x needs translation\n", msg);
+        return -1;
+    }
+    return 0;
+}
+
+static void MCI_UnmapMsgWtoA(UINT msg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+{
+    switch(msg)
+    {
+    case MCI_OPEN:
+        {
+            DWORD_PTR *ptr = (DWORD_PTR *)dwParam2 - 1;
+            MCI_OPEN_PARMSW *mci_openW = (MCI_OPEN_PARMSW *)*ptr;
+            MCI_OPEN_PARMSA *mci_openA = (MCI_OPEN_PARMSA *)(ptr + 1);
+
+            mci_openW->wDeviceID = mci_openA->wDeviceID;
+
+            if (dwParam1 & MCI_OPEN_TYPE)
+            {
+                if (!(dwParam1 & MCI_OPEN_TYPE_ID))
+                    HeapFree(GetProcessHeap(), 0, mci_openA->lpstrDeviceType);
+            }
+            if (dwParam1 & MCI_OPEN_ELEMENT)
+            {
+                if (!(dwParam1 & MCI_OPEN_ELEMENT_ID))
+                    HeapFree(GetProcessHeap(), 0, mci_openA->lpstrElementName);
+            }
+            if (dwParam1 & MCI_OPEN_ALIAS)
+                HeapFree(GetProcessHeap(), 0, mci_openA->lpstrAlias);
+            HeapFree(GetProcessHeap(), 0, ptr);
+        }
+        break;
+
+    case MCI_WINDOW:
+        if (dwParam1 & MCI_ANIM_WINDOW_TEXT)
+        {
+            MCI_ANIM_WINDOW_PARMSA *mci_windowA = (MCI_ANIM_WINDOW_PARMSA *)dwParam2;
+
+            HeapFree(GetProcessHeap(), 0, (void *)mci_windowA->lpstrText);
+            HeapFree(GetProcessHeap(), 0, mci_windowA);
+        }
+        break;
+
+    default:
+        FIXME("Message 0x%04x needs unmapping\n", msg);
+        break;
+    }
+}
+
+
 /**************************************************************************
  * 				mciSendCommandW			[WINMM.@]
+ *
+ * FIXME: we should do the things other way around, but since our
+ * MM subsystem is not unicode aware...
  */
-DWORD WINAPI mciSendCommandW(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI mciSendCommandW(MCIDEVICEID wDevID, UINT wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    FIXME("(%08x, %s, %08lx, %08lx): stub\n",
+    DWORD ret;
+    int mapped;
+
+    TRACE("(%08x, %s, %08lx, %08lx)\n",
 	  wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
-    return MCIERR_UNSUPPORTED_FUNCTION;
+
+    mapped = MCI_MapMsgWtoA(wMsg, dwParam1, &dwParam2);
+    if (mapped == -1)
+    {
+        FIXME("message %04x mapping failed\n", wMsg);
+        return MMSYSERR_NOMEM;
+    }
+    ret = mciSendCommandA(wDevID, wMsg, dwParam1, dwParam2);
+    if (mapped)
+        MCI_UnmapMsgWtoA(wMsg, dwParam1, dwParam2);
+    return ret;
 }
 
 /**************************************************************************
@@ -864,7 +1038,7 @@ UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data)
 /**************************************************************************
  * 				mciSetYieldProc			[WINMM.@]
  */
-BOOL WINAPI mciSetYieldProc(UINT uDeviceID, YIELDPROC fpYieldProc, DWORD dwYieldData)
+BOOL WINAPI mciSetYieldProc(MCIDEVICEID uDeviceID, YIELDPROC fpYieldProc, DWORD dwYieldData)
 {
     LPWINE_MCIDRIVER	wmd;
 
@@ -897,7 +1071,7 @@ UINT WINAPI mciGetDeviceIDFromElementIDW(DWORD dwElementID, LPCWSTR lpstrType)
 /**************************************************************************
  * 				mciGetYieldProc			[WINMM.@]
  */
-YIELDPROC WINAPI mciGetYieldProc(UINT uDeviceID, DWORD* lpdwYieldData)
+YIELDPROC WINAPI mciGetYieldProc(MCIDEVICEID uDeviceID, DWORD* lpdwYieldData)
 {
     LPWINE_MCIDRIVER	wmd;
 
@@ -921,7 +1095,7 @@ YIELDPROC WINAPI mciGetYieldProc(UINT uDeviceID, DWORD* lpdwYieldData)
 /**************************************************************************
  * 				mciGetCreatorTask		[WINMM.@]
  */
-HTASK WINAPI mciGetCreatorTask(UINT uDeviceID)
+HTASK WINAPI mciGetCreatorTask(MCIDEVICEID uDeviceID)
 {
     LPWINE_MCIDRIVER	wmd;
     HTASK ret = 0;
@@ -935,7 +1109,7 @@ HTASK WINAPI mciGetCreatorTask(UINT uDeviceID)
 /**************************************************************************
  * 			mciDriverYield				[WINMM.@]
  */
-UINT WINAPI mciDriverYield(UINT uDeviceID)
+UINT WINAPI mciDriverYield(MCIDEVICEID uDeviceID)
 {
     LPWINE_MCIDRIVER	wmd;
     UINT		ret = 0;

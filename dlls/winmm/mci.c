@@ -1157,7 +1157,7 @@ BOOL WINAPI mciFreeCommandResource(UINT uTable)
 /**************************************************************************
  * 			MCI_SendCommandFrom32			[internal]
  */
-DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
+DWORD MCI_SendCommandFrom32(MCIDEVICEID wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     DWORD		dwRet = MCIERR_INVALID_DEVICE_ID;
     LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);
@@ -1192,7 +1192,7 @@ DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 /**************************************************************************
  * 			MCI_SendCommandFrom16			[internal]
  */
-DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
+DWORD MCI_SendCommandFrom16(MCIDEVICEID wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     DWORD		dwRet = MCIERR_INVALID_DEVICE_ID;
     LPWINE_MCIDRIVER	wmd = MCI_GetDriver(wDevID);

@@ -87,6 +87,7 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
     HWND	hParent = 0;
     DWORD	dwStyle = WS_OVERLAPPEDWINDOW;
     int		p = CW_USEDEFAULT;
+    RECT rc;
 
     /* what should be done ? */
     if (wma->hWnd) return TRUE;
@@ -106,11 +107,17 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
     if (dwFlags & MCI_DGV_OPEN_WS)	dwStyle = lpOpenParms->dwStyle;
     if (dwStyle & WS_CHILD)		p = 0;
 
+    rc.left = p;
+    rc.top = p;
+    rc.right = (wma->hic ? wma->outbih : wma->inbih)->biWidth;
+    rc.bottom = (wma->hic ? wma->outbih : wma->inbih)->biHeight;
+    AdjustWindowRect(&rc, dwStyle, FALSE);
+
     wma->hWnd = CreateWindowA("MCIAVI", "Wine MCI-AVI player",
-			      dwStyle, p, p,
-			      (wma->hic ? wma->outbih : wma->inbih)->biWidth,
-			      (wma->hic ? wma->outbih : wma->inbih)->biHeight,
+                             dwStyle, rc.left, rc.top,
+                             rc.right, rc.bottom,
 			      hParent, 0, MCIAVI_hInstance, wma);
+    wma->hWndPaint = wma->hWnd;
     return (BOOL)wma->hWnd;
 }
 
@@ -193,7 +200,7 @@ DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
     }
     if (dwFlags & MCI_DGV_WHERE_WINDOW) {
 	x = "Window";
-	GetClientRect(wma->hWnd, &lpParms->rc);
+       GetClientRect(wma->hWndPaint, &lpParms->rc);
     }
     TRACE("%s -> (%ld,%ld,%ld,%ld)\n",
 	  x, lpParms->rc.left, lpParms->rc.top, lpParms->rc.right, lpParms->rc.bottom);
@@ -214,20 +221,18 @@ DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA lpPar
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
     if (dwFlags & MCI_DGV_WINDOW_HWND) {
-	FIXME("Setting hWnd to %08lx\n", (DWORD)lpParms->hWnd);
-#if 0
-	if (wma->hWnd) DestroyWindow(wma->hWnd);
-	/* is the window to be subclassed ? */
-	wma->hWnd = lpParms->hWnd;
-#endif
+       TRACE("Setting hWnd to %p\n", lpParms->hWnd);
+       if (wma->hWnd) ShowWindow(wma->hWnd, SW_HIDE);
+       wma->hWndPaint = (lpParms->hWnd == MCI_DGV_WINDOW_DEFAULT) ? wma->hWnd : lpParms->hWnd;
+        InvalidateRect(wma->hWndPaint, NULL, FALSE);
     }
     if (dwFlags & MCI_DGV_WINDOW_STATE) {
 	TRACE("Setting nCmdShow to %d\n", lpParms->nCmdShow);
-	ShowWindow(wma->hWnd, lpParms->nCmdShow);
+       ShowWindow(wma->hWndPaint, lpParms->nCmdShow);
     }
     if (dwFlags & MCI_DGV_WINDOW_TEXT) {
 	TRACE("Setting caption to '%s'\n", lpParms->lpstrText);
-	SetWindowTextA(wma->hWnd, lpParms->lpstrText);
+       SetWindowTextA(wma->hWndPaint, lpParms->lpstrText);
     }
 
     return 0;

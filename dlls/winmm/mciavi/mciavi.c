@@ -135,7 +135,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 static	DWORD	MCIAVI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
     WINE_MCIAVI*	wma;
-    static WCHAR	mciAviWStr[] = {'M','C','I','A','V','I',0};
+    static const WCHAR mciAviWStr[] = {'M','C','I','A','V','I',0};
 
     if (!modp) return 0xFFFFFFFF;
 
@@ -356,7 +356,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
 
     if (!wma->hFile)		return MCIERR_FILE_NOT_FOUND;
-    if (!wma->hWnd) 		return MCIERR_NO_WINDOW;
+    if (!wma->hWndPaint)       return MCIERR_NO_WINDOW;
 
     wma->dwStatus = MCI_MODE_PLAY;
 
@@ -365,7 +365,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 				    (DWORD)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
-    ShowWindow(wma->hWnd, SW_SHOW);
+    ShowWindow(wma->hWndPaint, SW_SHOW);
 
     dwFromFrame = wma->dwCurrVideoFrame;
     dwToFrame = wma->dwPlayableVideoFrames - 1;

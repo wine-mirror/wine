@@ -575,13 +575,12 @@ LRESULT MCIAVI_DrawFrame(WINE_MCIAVI* wma)
 	return FALSE;
     }
 
-    if (IsWindowVisible(wma->hWnd) && (hDC = GetDC(wma->hWnd)) != 0) {
+    if (IsWindowVisible(wma->hWndPaint) && (hDC = GetDC(wma->hWndPaint)) != 0) {
 	MCIAVI_PaintFrame(wma, hDC);
-	ReleaseDC(wma->hWnd, hDC);
+       ReleaseDC(wma->hWndPaint, hDC);
     }
 
     LeaveCriticalSection(&wma->cs);
 
     return TRUE;
 }
-

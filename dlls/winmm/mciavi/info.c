@@ -401,8 +401,8 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 	    TRACE("MCI_DGV_STATUS_HPAL => %lx\n", lpParms->dwReturn);
 	    break;
 	case MCI_DGV_STATUS_HWND:
-	    lpParms->dwReturn = (DWORD)wma->hWnd;
-	    TRACE("MCI_DGV_STATUS_HWND => %p\n", wma->hWnd);
+           lpParms->dwReturn = (DWORD)wma->hWndPaint;
+           TRACE("MCI_DGV_STATUS_HWND => %p\n", wma->hWndPaint);
 	    break;
 #if 0
 	case MCI_DGV_STATUS_KEY_COLOR:

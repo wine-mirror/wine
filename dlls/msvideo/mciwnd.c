@@ -60,7 +60,7 @@ typedef struct
         SendMessageW((info)->hwndOwner, MCIWNDM_NOTIFYMODE, (WPARAM)(info)->hWnd, (LPARAM)SendMessageW((info)->hWnd, MCIWNDM_GETMODEW, 0, 0))
 
 #define MCIWND_NOTIFY_SIZE(info) \
-    if (mwi->dwStyle & MCIWNDF_NOTIFYSIZE) \
+    if ((info)->dwStyle & MCIWNDF_NOTIFYSIZE) \
         SendMessageW((info)->hwndOwner, MCIWNDM_NOTIFYSIZE, (WPARAM)(info)->hWnd, 0);
 
 #define MCIWND_NOTIFY_ERROR(info) \
@@ -84,7 +84,13 @@ BOOL VFWAPIV MCIWndRegisterClass(HINSTANCE hInst)
 {
     WNDCLASSW wc;
 
-    wc.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS | CS_OWNDC;
+    /* Since we are going to register a class belonging to MSVFW32
+     * and later we will create windows with a different hInstance
+     * CS_GLOBALCLASS is needed. And because the second attempt
+     * to register a global class will fail we need to test whether
+     * the class was already registered.
+     */
+    wc.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS | CS_OWNDC | CS_GLOBALCLASS;
     wc.lpfnWndProc = MCIWndProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = sizeof(MCIWndInfo*);
@@ -95,7 +101,10 @@ BOOL VFWAPIV MCIWndRegisterClass(HINSTANCE hInst)
     wc.lpszMenuName = NULL;
     wc.lpszClassName = mciWndClassW;
 
-    return RegisterClassW(&wc);
+    if (RegisterClassW(&wc)) return TRUE;
+    if (GetLastError() == ERROR_CLASS_ALREADY_EXISTS) return TRUE;
+
+    return FALSE;
 }
 
 /***********************************************************************
@@ -189,7 +198,7 @@ static void MCIWND_UpdateText(MCIWndInfo *mwi)
             case MCI_MODE_STOP: strcatW(buffer, stoppedW); break;
             case MCI_MODE_OPEN: strcatW(buffer, openW); break;
             case MCI_MODE_RECORD: strcatW(buffer, recordingW); break;
-            case MCI_MODE_SEEK:        strcatW(buffer, seekingW); break;
+            case MCI_MODE_SEEK: strcatW(buffer, seekingW); break;
             default: strcatW(buffer, unknownW); break;
         }
     }
@@ -394,7 +403,6 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
         MCIWND_NOTIFY_MODE(mwi);
         return 0;
 
-
     case MCIWNDM_OPENA:
         {
             UNICODE_STRING nameW;
@@ -447,13 +455,9 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
                 mci_devcaps.dwItem = MCI_GETDEVCAPS_DEVICE_TYPE;
                 mwi->lasterror = mciSendCommandW(mwi->mci, MCI_GETDEVCAPS,
                                                  MCI_GETDEVCAPS_ITEM,
-                                                (DWORD_PTR)&mci_devcaps);
+                                                 (DWORD_PTR)&mci_devcaps);
                 if (mwi->lasterror)
                 {
-                    WCHAR error_str[MAXERRORLENGTH];
-
-                    mciGetErrorStringW(mwi->lasterror, error_str, MAXERRORLENGTH);
-
                     MCIWND_NOTIFY_ERROR(mwi);
                     goto end_of_mci_open;
                 }
@@ -486,10 +490,8 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
             if (!(mwi->dwStyle & MCIWNDF_NOPLAYBAR))
                 rc.bottom += 32; /* add the height of the playbar */
             SetWindowPos(hWnd, 0, 0, 0, rc.right - rc.left,
-                rc.bottom - rc.top, SWP_NOMOVE | SWP_NOZORDER);
+                rc.bottom - rc.top, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
-            if (mwi->dwStyle & MCIWNDF_NOOPEN)
-                ShowWindow(mwi->hWnd, SW_SHOW);
             MCIWND_NOTIFY_MEDIA(mwi);
 
             SendDlgItemMessageW(hWnd, CTL_TRACKBAR, TBM_SETRANGEMIN, 0L, 0L);
@@ -670,6 +672,27 @@ end_of_mci_open:
         mwi->hwndOwner = (HWND)wParam;
         return 0;
 
+    case MCI_PLAY:
+        {
+            LRESULT end = SendMessageW(hWnd, MCIWNDM_GETEND, 0, 0);
+            return SendMessageW(hWnd, MCIWNDM_PLAYTO, 0, end);
+        }
+
+    case MCI_STOP:
+        {
+            MCI_GENERIC_PARMS mci_generic;
+
+            mci_generic.dwCallback = 0;
+            mwi->lasterror = mciSendCommandW(mwi->mci, MCI_STOP, 0, (DWORD_PTR)&mci_generic);
+
+            if (mwi->lasterror)
+            {
+                MCIWND_NOTIFY_ERROR(mwi);
+                return mwi->lasterror;
+            }
+            return 0;
+        }
+
     case MCI_SEEK:
         {
             MCI_SEEK_PARMS mci_seek;
@@ -697,15 +720,19 @@ end_of_mci_open:
         }
 
     case MCI_CLOSE:
-        if (mwi->mci)
         {
             MCI_GENERIC_PARMS mci_generic;
 
             mci_generic.dwCallback = 0;
-            mciSendCommandW(mwi->mci, MCI_CLOSE, 0, (DWORD_PTR)&mci_generic);
-            mwi->mci = 0;
+            mwi->lasterror = mciSendCommandW(mwi->mci, MCI_CLOSE, 0, (DWORD_PTR)&mci_generic);
+
+            if (mwi->lasterror)
+            {
+                MCIWND_NOTIFY_ERROR(mwi);
+                return mwi->lasterror;
+            }
+            return 0;
         }
-        return 0;
     }
 
     if ((wMsg >= WM_USER) && (wMsg < WM_APP))

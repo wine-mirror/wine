@@ -72,7 +72,7 @@ typedef struct {
     HANDLE		hEvent;			/* for synchronization */
     DWORD		dwEventCount;		/* for synchronization */
     /* data for play back */
-    HWND		hWnd;
+    HWND               hWnd, hWndPaint;
     DWORD		dwCurrVideoFrame;	/* video frame to display and current position */
     DWORD		dwCurrAudioBlock;	/* current audio block being played */
     /* data for the background mechanism */
