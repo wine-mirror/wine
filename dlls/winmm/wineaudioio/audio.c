@@ -1501,7 +1501,7 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDES
     pDesc->dwFlags = DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT |
 	DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK;
     strcpy(pDesc->szDesc,"Wine AudioIO DirectSound Driver");
-    strcpy(pDesc->szDrvName,"wineaudioio.drv");
+    strcpy(pDesc->szDrvname,"wineaudioio.drv");
     pDesc->dnDevNode		= WOutDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId		= 0;
     pDesc->wReserved		= 0;
@@ -1678,7 +1678,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
     memset(desc, 0, sizeof(*desc));
     strcpy(desc->szDesc, "Wine LIBAUDIOIO DirectSound Driver");
-    strcpy(desc->szDrvName, "wineaudioio.drv");
+    strcpy(desc->szDrvname, "wineaudioio.drv");
     return MMSYSERR_NOERROR;
 }
 
@@ -2250,7 +2250,7 @@ static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
     memset(desc, 0, sizeof(*desc));
     strcpy(desc->szDesc, "Wine LIBAUDIOIO DirectSound Driver");
-    strcpy(desc->szDrvName, "wineaudioio.drv");
+    strcpy(desc->szDrvname, "wineaudioio.drv");
     return MMSYSERR_NOERROR;
 }
 

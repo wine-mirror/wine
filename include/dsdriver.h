@@ -62,7 +62,7 @@ typedef struct _DSDRIVERDESC
 {
     DWORD      	dwFlags;
     CHAR	szDesc[256];
-    CHAR	szDrvName[256];
+    CHAR	szDrvname[256];
     DWORD	dnDevNode;
     WORD	wVxdId;
     WORD	wReserved;

@@ -2111,7 +2111,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
     memset(desc, 0, sizeof(*desc));
     strcpy(desc->szDesc, "Wine aRts DirectSound Driver");
-    strcpy(desc->szDrvName, "winearts.drv");
+    strcpy(desc->szDrvname, "winearts.drv");
     return MMSYSERR_NOERROR;
 }
 

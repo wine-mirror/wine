@@ -687,7 +687,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
             mixer_info info;
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
                 strncpy(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
-                strcpy(ossdev->ds_desc.szDrvName, "wineoss.drv");
+                strcpy(ossdev->ds_desc.szDrvname, "wineoss.drv");
                 MultiByteToWideChar(CP_ACP, 0, info.name, sizeof(info.name), 
                                     ossdev->out_caps.szPname, 
                                     sizeof(ossdev->out_caps.szPname) / sizeof(WCHAR));

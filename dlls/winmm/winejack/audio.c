@@ -1795,7 +1795,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
     memset(desc, 0, sizeof(*desc));
     strcpy(desc->szDesc, "Wine jack DirectSound Driver");
-    strcpy(desc->szDrvName, "winejack.drv");
+    strcpy(desc->szDrvname, "winejack.drv");
     return MMSYSERR_NOERROR;
 }
 

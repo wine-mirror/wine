@@ -1297,7 +1297,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
     memset(desc, 0, sizeof(*desc));
     strcpy(desc->szDesc, "Wine NAS DirectSound Driver");
-    strcpy(desc->szDrvName, "winenas.drv");
+    strcpy(desc->szDrvname, "winenas.drv");
     return MMSYSERR_NOERROR;
 }
 

@@ -707,7 +707,7 @@ LONG ALSA_WaveInit(void)
     wwo->caps.dwFormats = 0x00000000;
     wwo->caps.dwSupport = WAVECAPS_VOLUME;
     strcpy(wwo->ds_desc.szDesc, "WineALSA DirectSound Driver");
-    strcpy(wwo->ds_desc.szDrvName, "winealsa.drv");
+    strcpy(wwo->ds_desc.szDrvname, "winealsa.drv");
 
     if (!wine_dlopen("libasound.so.2", RTLD_LAZY|RTLD_GLOBAL, NULL, 0))
     {
@@ -821,7 +821,7 @@ LONG ALSA_WaveInit(void)
     wwi->caps.dwFormats = 0x00000000;
     wwi->caps.dwSupport = WAVECAPS_VOLUME;
     strcpy(wwi->ds_desc.szDesc, "WineALSA DirectSound Driver");
-    strcpy(wwi->ds_desc.szDrvName, "winealsa.drv");
+    strcpy(wwi->ds_desc.szDrvname, "winealsa.drv");
 
     snd_pcm_info_alloca(&info);
     snd_pcm_hw_params_alloca(&hw_params);
