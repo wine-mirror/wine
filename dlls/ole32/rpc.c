@@ -65,6 +65,14 @@ typedef struct _wine_rpc_response_header {
     DWORD		retval;
 } wine_rpc_response_header;
 
+/* used when shutting down a pipe, e.g. at the end of a process */
+#define REQTYPE_DISCONNECT	2
+typedef struct _wine_rpc_disconnect_header {
+  DWORD reqid;
+  wine_marshal_id mid; /* mid of stub to delete */
+} wine_rpc_disconnect_header;
+
+
 #define REQSTATE_START			0
 #define REQSTATE_REQ_QUEUED		1
 #define REQSTATE_REQ_WAITING_FOR_REPLY	2
@@ -285,10 +293,25 @@ PipeBuf_AddRef(LPRPCCHANNELBUFFER iface) {
 static ULONG WINAPI
 PipeBuf_Release(LPRPCCHANNELBUFFER iface) {
     ICOM_THIS(PipeBuf,iface);
+    wine_rpc_disconnect_header header;
+    HANDLE pipe;
+    DWORD reqtype = REQTYPE_DISCONNECT;
+
     This->ref--;
     if (This->ref)
 	return This->ref;
-    ERR("Free all stuff.\n");
+
+    FIXME("Free all stuff\n");
+
+    memcpy(&header.mid, &This->mid, sizeof(wine_marshal_id));
+
+    pipe = PIPE_FindByMID(&This->mid);
+
+    _xwrite(pipe, &reqtype, sizeof(reqtype));
+    _xwrite(pipe, &header, sizeof(wine_rpc_disconnect_header));
+
+    TRACE("written disconnect packet\n");
+
     HeapFree(GetProcessHeap(),0,This);
     return 0;
 }
@@ -631,7 +654,35 @@ _read_one(wine_pipe *xpipe) {
     EnterCriticalSection(&(xpipe->crit));
     /*FIXME("%lx got reqtype %ld\n",GetCurrentProcessId(),reqtype);*/
 
-    if (reqtype == REQTYPE_REQUEST) {
+    if (reqtype == REQTYPE_DISCONNECT) { /* only received by servers */
+        wine_rpc_disconnect_header header;
+        IRpcStubBuffer *stub;
+        ULONG ret;
+
+        hres = _xread(xhPipe, &header, sizeof(header));
+        if (hres) {
+            ERR("could not read disconnect header\n");
+            goto end;
+        }
+
+        TRACE("read disconnect header\n");
+
+        hres = MARSHAL_Find_Stub_Buffer(&header.mid, &stub);
+        if (hres) {
+            ERR("could not locate stub to disconnect, mid.objectid=%p\n", (void*)header.mid.objectid);
+            goto end;
+        }
+
+
+        /* release reference added by MARSHAL_Find_Stub_Buffer call */
+        IRpcStubBuffer_Release(stub);
+        /* release it for real */
+        ret = IRpcStubBuffer_Release(stub);
+        /* FIXME: race */
+        if (ret == 0)
+            MARSHAL_Invalidate_Stub_From_MID(&header.mid);
+        goto end;
+    } else if (reqtype == REQTYPE_REQUEST) {
 	wine_rpc_request	*xreq;
 	RPC_GetRequest(&xreq);
 	xreq->hPipe = xhPipe;
@@ -643,8 +694,7 @@ _read_one(wine_pipe *xpipe) {
 	if (hres) goto end;
 	xreq->state = REQSTATE_REQ_GOT;
 	goto end;
-    }
-    if (reqtype == REQTYPE_RESPONSE) {
+    } else if (reqtype == REQTYPE_RESPONSE) {
 	wine_rpc_response_header	resph;
 	int i;
 

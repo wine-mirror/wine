@@ -91,6 +91,21 @@ static int nrofstubs = 0;
 static mid2unknown *proxies = NULL;
 static int nrofproxies = 0;
 
+void MARSHAL_Invalidate_Stub_From_MID(wine_marshal_id *mid) {
+    int i;
+
+    for (i=0;i<nrofstubs;i++) {
+        if (!stubs[i].valid) continue;
+        
+	if (MARSHAL_Compare_Mids(mid,&(stubs[i].mid))) {
+            stubs[i].valid = FALSE;
+	    return;
+	}
+    }
+    
+    return;
+}
+
 HRESULT
 MARSHAL_Find_Stub_Server(wine_marshal_id *mid,LPUNKNOWN *punk) {
     int i;

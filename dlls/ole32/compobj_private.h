@@ -147,6 +147,7 @@ MARSHAL_Compare_Mids_NoInterface(wine_marshal_id *mid1, wine_marshal_id *mid2) {
 }
 
 HRESULT MARSHAL_Find_Stub_Buffer(wine_marshal_id *mid,IRpcStubBuffer **stub);
+void    MARSHAL_Invalidate_Stub_From_MID(wine_marshal_id *mid);
 
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
