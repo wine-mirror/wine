@@ -73,20 +73,6 @@ static aliasTemplate faTemplate[4] = {
 			  { "-adobe-helvetica-", "Arial" }
 			  };
 
-/* Charset translation table, microsoft-cp125.. encoded fonts are produced by
- * the fnt2bdf or the True Type X11 font servers */
-
-static int	 numCPTranslation = 8;
-static BYTE	 CPTranslation[] = { EE_CHARSET,	/* cp1250 */
-				     RUSSIAN_CHARSET,	/* cp1251 */
-				     ANSI_CHARSET,	/* cp1252 */
-				     GREEK_CHARSET,	/* cp1253 */
-				     TURKISH_CHARSET,	/* cp1254 */
-				     HEBREW_CHARSET,	/* cp1255 */
-				     ARABIC_CHARSET,	/* cp1256 */
-				     BALTIC_CHARSET	/* cp1257 */
-				   }; 
-
 UINT16			XTextCaps = TC_OP_CHARACTER | TC_OP_STROKE |
 TC_CP_STROKE | TC_CR_ANY |
 				    TC_SA_DOUBLE | TC_SA_INTEGER | TC_SA_CONTIN |
@@ -104,7 +90,7 @@ static const char*	INIResolution = "Resolution";
 static const char*	INIGlobalMetrics = "FontMetrics";
 
 static const char*	LFDSeparator = "*-";
-static const char*	localMSEncoding = "microsoft-cp125";
+static const char*	MSEncoding = "microsoft-";
 static const char*	iso8859Encoding = "iso8859-";
 static const char*	iso646Encoding = "iso646.1991-";
 static const char*	ansiEncoding = "ansi-";
@@ -363,30 +349,63 @@ static int LFD_InitFontInfo( fontInfo* fi, LPSTR lpstr )
 /* charset registry, charset encoding - */
    if( strstr(lpch, "jisx") || 
        strstr(lpch, "ksc") || 
-       strstr(lpch, "gb2312") ) return FALSE;	/* 2-byte stuff */
+       strstr(lpch, "gb2312") ||
+       strstr(lpch, "big5") ||
+       strstr(lpch, "unicode") ) return FALSE;	/* 2-byte stuff */
 
    fi->df.dfCharSet = ANSI_CHARSET;
-   if( strstr(lpch, iso8859Encoding) )
+   if( strstr(lpch, iso8859Encoding) ) {
      fi->fi_flags |= FI_ENC_ISO8859;
-   else if( strstr(lpch, iso646Encoding) )
+     if( strstr(lpch, "iso8859-15") ) fi->df.dfCharSet = ANSI_CHARSET;
+     else if( strstr(lpch, "iso8859-11") ) fi->df.dfCharSet = THAI_CHARSET;
+     else if( strstr(lpch, "iso8859-10") ) fi->df.dfCharSet = BALTIC_CHARSET;
+     else if( strstr(lpch, "iso8859-9") ) fi->df.dfCharSet = TURKISH_CHARSET;
+     else if( strstr(lpch, "iso8859-8") ) fi->df.dfCharSet = HEBREW_CHARSET;
+     else if( strstr(lpch, "iso8859-7") ) fi->df.dfCharSet = GREEK_CHARSET;
+     else if( strstr(lpch, "iso8859-6") ) fi->df.dfCharSet = ARABIC_CHARSET;
+     else if( strstr(lpch, "iso8859-5") ) fi->df.dfCharSet = RUSSIAN_CHARSET;
+     else if( strstr(lpch, "iso8859-4") ) fi->df.dfCharSet = ISO4_CHARSET;
+     else if( strstr(lpch, "iso8859-3") ) fi->df.dfCharSet = ISO3_CHARSET;
+     else if( strstr(lpch, "iso8859-2") ) fi->df.dfCharSet = EE_CHARSET;
+     else if( strstr(lpch, "iso8859-1") ) fi->df.dfCharSet = ANSI_CHARSET;
+     else fi->df.dfCharSet = SYMBOL_CHARSET;
+   } else if( strstr(lpch, iso646Encoding) ) {
      fi->fi_flags |= FI_ENC_ISO646;
-   else if( strstr(lpch, ansiEncoding) )	/* fnt2bdf produces -ansi-0 LFD */
+   } else if( strstr(lpch, ansiEncoding) ) { /* fnt2bdf produces -ansi-0 LFD */
      fi->fi_flags |= FI_ENC_ANSI;
-   else						/* ... and -microsoft-cp125x */
-   {
+   } else {				     /* ... and -microsoft-cp125x */
+   
 	fi->df.dfCharSet = OEM_CHARSET;
-	if( !strncasecmp(lpch, localMSEncoding, strlen(localMSEncoding)) )
-	{
-	    lpch = LFD_Advance( lpch, 1 );
-	    if( lpch && (i = atoi( lpch )) < numCPTranslation )
-	    {
-		fi->fi_flags |= FI_ENC_MSCODEPAGE;
-		fi->df.dfCharSet = CPTranslation[i];
-	    }
-	}
-	else if( strstr(lpch, "fontspecific") ||
-		 strstr(lpch, "microsoft-symbol") )
+	if( !strncasecmp(lpch, "microsoft-", 10) ) {
+	    fi->fi_flags |= FI_ENC_MSCODEPAGE;
+	    if( strstr(lpch, "-cp1250") ) fi->df.dfCharSet = EE_CHARSET;
+	    else if( strstr(lpch, "-cp1251") ) fi->df.dfCharSet = RUSSIAN_CHARSET;
+	    else if( strstr(lpch, "-cp1252") ) fi->df.dfCharSet = ANSI_CHARSET;
+	    else if( strstr(lpch, "-cp1253") ) fi->df.dfCharSet = GREEK_CHARSET;
+	    else if( strstr(lpch, "-cp1254") ) fi->df.dfCharSet = TURKISH_CHARSET;
+	    else if( strstr(lpch, "-cp1255") ) fi->df.dfCharSet = HEBREW_CHARSET;
+	    else if( strstr(lpch, "-cp1256") ) fi->df.dfCharSet = ARABIC_CHARSET;
+	    else if( strstr(lpch, "-cp1257") ) fi->df.dfCharSet = BALTIC_CHARSET;
+	    else if( strstr(lpch, "-fontspecific") ) fi->df.dfCharSet = ANSI_CHARSET;
+	    else if( strstr(lpch, "-symbol") ) fi->df.dfCharSet = SYMBOL_CHARSET;
+	    else fi->df.dfCharSet = SYMBOL_CHARSET;
+	} else if( !strncasecmp(lpch, "koi8-", 5) ) {
+	    fi->df.dfCharSet = KOI8_CHARSET;
+        } else if( !strncasecmp(lpch, "viscii", 6) ) {
+	    fi->fi_flags |= FI_ENC_ISO8859;
+            fi->df.dfCharSet = VISCII_CHARSET;
+        } else if( !strncasecmp(lpch, "tcvn-", 5) ) {
+            fi->df.dfCharSet = TCVN_CHARSET;
+        } else if( !strncasecmp(lpch, "tis620", 6) ) {
+	    fi->fi_flags |= FI_ENC_ISO8859;
+            fi->df.dfCharSet = THAI_CHARSET;
+        } else if( !strncasecmp(lpch, "ascii", 5) ) {
+	    fi->fi_flags |= FI_ENC_ISO646;
+            fi->df.dfCharSet = ANSI_CHARSET;
+	} else if( strstr(lpch, "fontspecific") ||
+		 strstr(lpch, "microsoft-symbol") ) {
 	    fi->df.dfCharSet = SYMBOL_CHARSET;
+	}
    }
    return TRUE;					
 }
@@ -398,9 +417,9 @@ static int LFD_InitFontInfo( fontInfo* fi, LPSTR lpstr )
 static BOOL32  LFD_ComposeLFD( fontObject* fo, 
 			       INT32 height, LPSTR lpLFD, UINT32 uRelax )
 {
-   int		h, w, ch, enc_ch, point = 0;
+   int		h, w, ch, point = 0;
    char*	lpch; 
-   const char*  lpEncoding = NULL;
+   char		lpEncoding[32];
    char         h_string[64], point_string[64];
 
    *(lpLFD+MAX_LFD_LENGTH-1)=0;
@@ -487,33 +506,152 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
 
 /* encoding */
 
-   enc_ch = '*';
+#define CHRS_CASE1(charset)	case 0: \
+				case 3: \
+		     		case 6: \
+				case 9: sprintf(lpEncoding, charset ); break; 
+#define CHRS_CASE2(charset)	case 1: \
+                                case 4: \
+                                case 7: \
+                                case 10: sprintf(lpEncoding, charset ); break;
+#define CHRS_CASE3(charset)	case 2: \
+                                case 5: \
+                                case 8: \
+                                case 11: sprintf(lpEncoding, charset ); break;
+#define CHRS_DEF(charset)	default: sprintf(lpEncoding, charset ); break;
+
    if( fo->fi->df.dfCharSet == ANSI_CHARSET )
    {
 	if( fo->fi->fi_flags & FI_ENC_ISO8859 )
-	     lpEncoding = iso8859Encoding;
-	else if( fo->fi->fi_flags & FI_ENC_ISO646 )
-	     lpEncoding = iso646Encoding;
-	else if( fo->fi->fi_flags & FI_ENC_MSCODEPAGE )
-	{
-	     enc_ch = '2';
-	     lpEncoding = localMSEncoding;
+	switch (uRelax) {
+	    CHRS_CASE1( "iso8859-1" );
+	    CHRS_CASE2( "iso8859-1" );
+	    CHRS_CASE3( "iso8859-15" );
+	    CHRS_DEF( "iso8859-*" );
 	}
-	else lpEncoding = ansiEncoding;
+	else if( fo->fi->fi_flags & FI_ENC_ISO646 )
+	switch (uRelax) {
+            CHRS_CASE1( "ascii-0" );
+            CHRS_DEF( "iso8859-1" );
+	}
+	else if( fo->fi->fi_flags & FI_ENC_MSCODEPAGE )
+	switch (uRelax) {
+            CHRS_CASE1( "microsoft-cp1252" );
+            CHRS_CASE2( "microsoft-fontspecific" );
+            CHRS_CASE3( "microsoft-cp125*" );
+            CHRS_DEF( "microsoft-*" );
+	}
+	else
+        switch (uRelax) {
+            CHRS_CASE1( "ansi-0" );
+            CHRS_CASE2( "microsoft-125*" );
+            CHRS_CASE3( "microsoft-*");
+            CHRS_DEF( "iso8859-*" );
+	}
    } 
    else if( fo->fi->fi_flags & FI_ENC_MSCODEPAGE )
    {
-	int i;
-
-	lpEncoding = localMSEncoding;
-	for( i = 0; i < numCPTranslation; i++ )
-	     if( CPTranslation[i] == fo->fi->df.dfCharSet )
-	     {
-		enc_ch = '0' + i;
-		break;
-	     }
+	switch (fo->fi->df.dfCharSet) {
+	case EE_CHARSET: 
+		switch (uRelax) {
+		CHRS_CASE1( "microsoft-1250" );
+		CHRS_CASE2( "iso8859-2" );
+		CHRS_DEF( "iso8859-*" );
+		} ; break;
+	case RUSSIAN_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "microsoft-1251" );
+                CHRS_CASE2( "iso8859-5" );
+                CHRS_CASE3( "koi8-*" );
+		CHRS_DEF( "iso8859-*" );
+                } ; break;
+	case ANSI_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "microsoft-1252" );
+                CHRS_CASE2( "iso8859-1" );
+                CHRS_CASE3( "iso8859-15" );
+		CHRS_DEF( "iso8859-*" );
+		} ; break;
+	case GREEK_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "microsoft-1253" );
+                CHRS_CASE2( "iso8859-7" );
+		CHRS_DEF( "iso8859-*" );
+                } ; break;
+	case TURKISH_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "microsoft-1254" );
+                CHRS_CASE2( "iso8859-9" );
+		CHRS_DEF( "iso8859-*" );
+                } ; break;
+	case HEBREW_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "microsoft-1255" );
+                CHRS_CASE2( "iso8859-8" );
+		CHRS_DEF( "iso8859-*" );
+                } ; break;
+	case ARABIC_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "microsoft-1256" );
+                CHRS_CASE2( "iso8859-6" );
+                CHRS_DEF( "iso8859-*" );
+                } ; break;
+	case BALTIC_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "microsoft-1257" );
+                CHRS_CASE2( "iso8859-10" );
+                CHRS_CASE3( "iso8859-15" );
+                CHRS_DEF( "iso8859-*" );
+                } ; break;
+	case THAI_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "iso8859-11" );
+                CHRS_CASE2( "tis620*" );
+		CHRS_DEF( "iso8859-*" );
+                } ; break;
+        case VISCII_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "viscii1.1-1" );
+                CHRS_CASE2( "viscii*" );
+                CHRS_DEF( "iso8859-*" );
+                } ; break;
+        case TCVN_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "tcvn-0" );
+                CHRS_CASE2( "tcvn*" );
+                CHRS_DEF( "iso8859-*" );
+                } ; break;
+        case KOI8_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "koi8-ru" );
+                CHRS_CASE2( "koi8-r" );
+                CHRS_CASE3( "koi8-*" );
+                CHRS_DEF( "iso8859-*" );
+                } ; break;
+        case ISO3_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "iso8859-3" );
+                CHRS_DEF( "iso8859-*" );
+                } ; break;
+        case ISO4_CHARSET:
+                switch (uRelax) {
+                CHRS_CASE1( "iso8859-4" );
+                CHRS_DEF( "iso8859-*" );
+                } ; break;
+	default:
+                switch (uRelax) {
+                CHRS_CASE1( "microsoft-symbol" );
+		CHRS_DEF( "microsoft-fontspecific" );
+		} ; break;
+	}
    }
-   else lpEncoding = LFDSeparator;	/* whatever */
+   else {
+	switch (uRelax) {
+	CHRS_CASE1( "*-fontspecific" );
+        CHRS_CASE2( "*-symbol" );
+	CHRS_DEF( "*" ); /* whatever */
+	}
+   }
 
    lpch = lpLFD + lstrlen32A(lpLFD);
    ch = (fo->fi->fi_flags & FI_SCALABLE) ? '0' : LFDSeparator[0];
@@ -524,35 +662,56 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
 	* until XLoadFont() succeeds. */
 
        case 0: 
+       case 1:
+       case 2:
 	    if( point )
 	    {
-	        sprintf( lpch, "%s-%s-%i-%c-%c-*-%s%c", h_string, 
+	        sprintf( lpch, "%s-%s-%i-%c-%c-*-%s", h_string, 
 			 point_string, 
-			 fo->fi->lfd_resolution, ch, w, lpEncoding, enc_ch );
+			 fo->fi->lfd_resolution, ch, w, lpEncoding );
 	        break;
 	    }
 	    /* fall through */
 
-       case 1: 
-	    sprintf( lpch, "%s-*-%i-%c-%c-*-%s%c", h_string, 
-			fo->fi->lfd_resolution, ch, w, lpEncoding, enc_ch );
+       case 3: 
+       case 4:
+       case 5:
+	    sprintf( lpch, "%s-*-%i-%c-%c-*-%s", h_string, 
+			fo->fi->lfd_resolution, ch, w, lpEncoding );
 	    break;
 
-       case 2:
-	    sprintf( lpch, "%s-*-%i-%c-*-*-%s%c",
-			h_string, fo->fi->lfd_resolution, ch, lpEncoding, enc_ch );
+       case 6:
+       case 7:
+       case 8:
+	    sprintf( lpch, "%s-*-%i-%c-*-*-%s",
+			h_string, fo->fi->lfd_resolution, ch, lpEncoding );
 	    break;
 
-       case 3:
-	    sprintf( lpch, "%i-*-%i-%c-*-*-%s*", fo->fi->lfd_height,
+       case 9:
+       case 10:
+       case 11:
+	    sprintf( lpch, "%i-*-%i-%c-*-*-%s", fo->fi->lfd_height,
 			fo->fi->lfd_resolution, ch, lpEncoding );
 	    break;
 
+       case 12:
+	    sprintf( lpch, "%i-*-*-*-*-*-%s", fo->fi->lfd_height, lpEncoding );
+	    break;
+
        default:
-	    sprintf( lpch, "%i-*-*-*-*-*-%s*", fo->fi->lfd_height, lpEncoding );
+	    sprintf( lpch, "%i-*-*-*-*-*-*", fo->fi->lfd_height);
+	    break;
+
+       /* to avoid an infinite loop; those will allways match */
+       case 200:
+            sprintf( lpLFD, "-*-*-*-*-*-*-*-*-*-*-*-*-iso8859-1" );
+            break;
+       case 201:
+            sprintf( lpLFD, "-*-*-*-*-*-*-*-*-*-*-*-*-*" );
+            break;
    }
 
-   TRACE(font,"\tLFD: %s\n", lpLFD );
+   TRACE(font,"\tLFD(uRelax=%d): %s\n", uRelax, lpLFD );
    assert(*(lpLFD+MAX_LFD_LENGTH-1)==0); /* check if overwrittem */
    return TRUE;
 }
@@ -2081,7 +2240,7 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
 		    if( (pfo->fs = TSXLoadQueryFont( display, lpLFD )) ) break;
 		} while( uRelaxLevel );
 
-
+		
 		if(pfo->lf.lfEscapement != 0) {
 		    pfo->lpX11Trans = HeapAlloc(SystemHeap, 0,
 						sizeof(XFONTTRANS));

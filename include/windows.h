@@ -1373,21 +1373,30 @@ typedef struct
 #define FW_BLACK	    900
 
   /* lfCharSet values */
-#define ANSI_CHARSET	      0
-#define DEFAULT_CHARSET       1
-#define SYMBOL_CHARSET	      2
-#define SHIFTJIS_CHARSET      128
-#define HANGEUL_CHARSET       129
-#define GB2313_CHARSET        134
-#define CHINESEBIG5_CHARSET   136
-#define GREEK_CHARSET         161	/* CP1253 */
-#define TURKISH_CHARSET       162	/* CP1254, -iso8859-9 */
-#define HEBREW_CHARSET        177	/* CP1255 */
-#define ARABIC_CHARSET        178	/* CP1256 */
-#define BALTIC_CHARSET        186	/* CP1257 */
-#define RUSSIAN_CHARSET       204	/* CP1251 */
-#define EE_CHARSET	      238	/* CP1250, -iso8859-2 */
-#define OEM_CHARSET	      255
+#define ANSI_CHARSET	      (CHAR)0   /* CP1252, ansi-0, iso8859-{1,15} */
+#define DEFAULT_CHARSET       (CHAR)1
+#define SYMBOL_CHARSET	      (CHAR)2
+#define SHIFTJIS_CHARSET      (CHAR)128
+#define HANGEUL_CHARSET       (CHAR)129 /* ksc5601.1987-0 */
+#define GB2312_CHARSET        (CHAR)134 /* gb2312.1980-0 */
+#define CHINESEBIG5_CHARSET   (CHAR)136 /* big5.et-0 */
+#define GREEK_CHARSET         (CHAR)161	/* CP1253 */
+#define TURKISH_CHARSET       (CHAR)162	/* CP1254, -iso8859-9 */
+#define HEBREW_CHARSET        (CHAR)177	/* CP1255, -iso8859-8 */
+#define ARABIC_CHARSET        (CHAR)178	/* CP1256, -iso8859-6 */
+#define BALTIC_CHARSET        (CHAR)186	/* CP1257, -iso8859-10 */
+#define RUSSIAN_CHARSET       (CHAR)204	/* CP1251, -iso8859-5 */
+#define EE_CHARSET	      (CHAR)238	/* CP1250, -iso8859-2 */
+#define OEM_CHARSET	      (CHAR)255
+/* I don't know if the values of *_CHARSET macros are defined in Windows
+ * or if we can choose them as we want. -- srtxg
+ */
+#define THAI_CHARSET	      (CHAR)239 /* iso8859-11, tis620 */
+#define VISCII_CHARSET        (CHAR)240 /* viscii1.1-1 */
+#define TCVN_CHARSET          (CHAR)241 /* tcvn-0 */
+#define KOI8_CHARSET          (CHAR)242 /* koi8-{r,u,ru} */
+#define ISO3_CHARSET          (CHAR)243 /* iso8859-3 */
+#define ISO4_CHARSET          (CHAR)244 /* iso8859-4 */
 
   /* lfOutPrecision values */
 #define OUT_DEFAULT_PRECIS	0

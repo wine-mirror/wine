@@ -350,7 +350,7 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
       {
 	/* Microsoft just had to invent its own charsets! */
 
-	case ANSI_CHARSET: 	fputs("ansi-0\n", fs); break;
+	case ANSI_CHARSET: 	fputs("microsoft-cp1252\n", fs); break;
 	case GREEK_CHARSET: 	fputs("microsoft-cp1253\n", fs); break;
 	case TURKISH_CHARSET: 	fputs("microsoft-cp1254\n", fs); break;
 	case HEBREW_CHARSET: 	fputs("microsoft-cp1255\n", fs); break;
