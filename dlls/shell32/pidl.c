@@ -629,11 +629,11 @@ LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
  *
  * NOTES
  */
-LPITEMIDLIST WINAPI SHGetRealIDL(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl, DWORD z)
+HRESULT WINAPI SHGetRealIDL(LPSHELLFOLDER lpsf, LPCITEMIDLIST pidlSimple, LPITEMIDLIST *pidlReal)
 {
-	FIXME("sf=%p pidl=%p 0x%04lx\n",lpsf,pidl,z);
+	FIXME("sf=%p pidlSimple=%p pidlReal=%p\n", lpsf, pidlSimple, pidlReal);
 
-	pdump (pidl);
+	pdump (pidlSimple);
 	return 0;
 }
 

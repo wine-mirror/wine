@@ -89,7 +89,7 @@ typedef struct
 	UINT		cidl;
 	LPITEMIDLIST	*apidl;
         LISTVIEW_SORT_INFO ListViewSortInfo;
-	HANDLE		hNotify;	/* change notification handle */
+	ULONG			hNotify;	/* change notification handle */
 	HANDLE		hAccel;
 } IShellViewImpl;
 
@@ -630,7 +630,7 @@ static HRESULT ShellView_FillList(IShellViewImpl * This)
 static LRESULT ShellView_OnCreate(IShellViewImpl * This)
 {
 	IDropTarget* pdt;
-	NOTIFYREGISTER ntreg;
+	SHChangeNotifyEntry ntreg;
 	IPersistFolder2 * ppf2 = NULL;
 
 	TRACE("%p\n",This);
@@ -656,10 +656,10 @@ static LRESULT ShellView_OnCreate(IShellViewImpl * This)
 	IShellFolder_QueryInterface(This->pSFParent, &IID_IPersistFolder2, (LPVOID*)&ppf2);
 	if (ppf2)
 	{
-	  IPersistFolder2_GetCurFolder(ppf2, &ntreg.pidlPath);
-	  ntreg.bWatchSubtree = FALSE;
+	  IPersistFolder2_GetCurFolder(ppf2, (LPITEMIDLIST*)&ntreg.pidl);
+	  ntreg.fRecursive = FALSE;
 	  This->hNotify = SHChangeNotifyRegister(This->hWnd, SHCNF_IDLIST, SHCNE_ALLEVENTS, SHV_CHANGE_NOTIFY, 1, &ntreg);
-	  SHFree(ntreg.pidlPath);
+	  SHFree((LPITEMIDLIST)ntreg.pidl);
 	  IPersistFolder2_Release(ppf2);
 	}
 

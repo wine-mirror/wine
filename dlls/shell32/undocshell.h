@@ -148,39 +148,6 @@ HRESULT WINAPI StrRetToStrNAW (
 #define SHCNRF_RecursiveInterrupt	0x1000	/* Must be combined with SHCNRF_InterruptLevel */
 #define SHCNRF_NewDelivery		0x8000	/* Messages use shared memory */
 
-typedef struct
-{
-        LPITEMIDLIST pidlPath;
-        BOOL bWatchSubtree;
-} NOTIFYREGISTER, *LPNOTIFYREGISTER;
-
-typedef const LPNOTIFYREGISTER LPCNOTIFYREGISTER;
-
-typedef struct
-{
-	USHORT	cb;
-	DWORD	dwItem1;
-	DWORD	dwItem2;
-} DWORDITEMID;
-
-HANDLE WINAPI SHChangeNotifyRegister(
-	HWND hwnd,
-	LONG dwFlags,
-	LONG wEventMask,
-	UINT uMsg,
-	int cItems,
-	LPNOTIFYREGISTER lpItems);
-
-BOOL WINAPI SHChangeNotifyDeregister(HANDLE hNotify);
-
-HANDLE WINAPI SHChangeNotification_Lock(
-	HANDLE hMemoryMap,
-	DWORD dwProcessId,
-	LPCITEMIDLIST **lppidls,
-	LPLONG lpwEventId);
-
-BOOL WINAPI SHChangeNotification_Unlock(HANDLE hLock);
-
 /****************************************************************************
  * Shell Common Dialogs
  */

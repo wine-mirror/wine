@@ -495,9 +495,15 @@ VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask);
 #define SSF_NOCONFIRMRECYCLE		0x8000
 #define SSF_HIDEICONS			0x4000
 
-/**********************************************************************
- * SHChangeNotify
- */
+/****************************************************************************
+* SHChangeNotify API
+*/
+typedef struct _SHChangeNotifyEntry
+{
+    LPCITEMIDLIST pidl;
+    BOOL   fRecursive;
+} SHChangeNotifyEntry;
+
 #define SHCNE_RENAMEITEM	0x00000001
 #define SHCNE_CREATE		0x00000002
 #define SHCNE_DELETE		0x00000004
@@ -525,7 +531,9 @@ VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask);
 #define SHCNE_ALLEVENTS		0x7FFFFFFF
 #define SHCNE_INTERRUPT		0x80000000
 
-#define SHCNEE_ORDERCHANGED	0x00000002
+#define SHCNEE_ORDERCHANGED	0x0002L
+#define SHCNEE_MSI_CHANGE	0x0004L
+#define SHCNEE_MSI_UNINSTALL	0x0005L
 
 #define SHCNF_IDLIST		0x0000
 #define SHCNF_PATHA		0x0001
@@ -537,7 +545,54 @@ VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask);
 #define SHCNF_FLUSH		0x1000
 #define SHCNF_FLUSHNOWAIT	0x2000
 
+#define SHCNF_PATH              WINELIB_NAME_AW(SHCNF_PATH)
+#define SHCNF_PRINTER           WINELIB_NAME_AW(SHCNF_PRINTER)
+
 void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2);
+
+/*
+ * IShellChangeNotify
+ */
+typedef struct IShellChangeNotify IShellChangeNotify, *LPSHELLCHANGENOTIFY;
+
+#define INTERFACE IShellChangeNotify
+#define IShellChangeNotify_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(OnChange)(THIS_ LONG lEvent, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2) PURE;
+
+ICOM_DEFINE(IShellChangeNotify, IUnknown)
+#undef INTERFACE
+
+#ifdef COBJMACROS
+/*** IUnknown methods ***/
+#define IShellChangeNotify_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IShellChangeNotify_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IShellChangeNotify_Release(p)                 (p)->lpVtbl->Release(p)
+/*** IShellChangeNotify methods ***/
+#define IShellChangeNotify_OnChange(p,a,b,c)         (p)->lpVtbl->OnChange(p,a,b,c)
+#endif
+
+typedef struct _SHChangeDWORDAsIDList {
+    USHORT   cb;
+    DWORD    dwItem1;
+    DWORD    dwItem2;
+    USHORT   cbZero;
+} SHChangeDWORDAsIDList, *LPSHChangeDWORDAsIDList;
+
+typedef struct _SHChangeProductKeyAsIDList {
+    USHORT cb;
+    WCHAR wszProductKey[39];
+    USHORT cbZero;
+} SHChangeProductKeyAsIDList, *LPSHChangeProductKeyAsIDList;
+
+ULONG WINAPI SHChangeNotifyRegister(HWND hwnd, int fSources, LONG fEvents, UINT wMsg,
+                                    int cEntries, SHChangeNotifyEntry *pshcne);
+BOOL WINAPI SHChangeNotifyDeregister(ULONG ulID);
+HANDLE WINAPI SHChangeNotification_Lock(HANDLE hChangeNotification, DWORD dwProcessId,
+                                        LPITEMIDLIST **pppidl, LONG *plEvent);
+BOOL WINAPI SHChangeNotification_Unlock(HANDLE hLock);
+
+HRESULT WINAPI SHGetRealIDL(IShellFolder *psf, LPCITEMIDLIST pidlSimple, LPITEMIDLIST * ppidlReal);
 
 /****************************************************************************
 * SHCreateDirectory API

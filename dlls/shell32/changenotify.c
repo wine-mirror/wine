@@ -18,10 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdarg.h>
 #include <string.h>
 
-#include "wine/debug.h"
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
+#include "wine/debug.h"
 #include "wingdi.h"
 #include "pidl.h"
 #include "shell32_main.h"
@@ -37,6 +41,8 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { 0, (DWORD)(__FILE__ ": SHELL32_ChangenotifyCS") }
 };
 static CRITICAL_SECTION SHELL32_ChangenotifyCS = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+typedef SHChangeNotifyEntry *LPNOTIFYREGISTER;
 
 /* internal list of notification clients (internal) */
 typedef struct _NOTIFICATIONLIST
@@ -107,7 +113,7 @@ static const char * NodeName(LPNOTIFICATIONLIST item)
     const char *str;
     WCHAR path[MAX_PATH];
 
-    if(SHGetPathFromIDListW(item->apidl[0].pidlPath, path ))
+    if(SHGetPathFromIDListW(item->apidl[0].pidl, path ))
         str = wine_dbg_sprintf("%s", debugstr_w(path));
     else
         str = wine_dbg_sprintf("<not a disk file>" );
@@ -155,7 +161,7 @@ static void DeleteNode(LPNOTIFICATIONLIST item)
 
     /* free the item */
     for (i=0; i<item->cidl; i++)
-        SHFree(item->apidl[i].pidlPath);
+        SHFree((LPITEMIDLIST)item->apidl[i].pidl);
     SHFree(item->apidl);
     SHFree(item);
 }
@@ -182,37 +188,37 @@ void FreeChangeNotifications(void)
  * SHChangeNotifyRegister			[SHELL32.2]
  *
  */
-HANDLE WINAPI
+ULONG WINAPI
 SHChangeNotifyRegister(
     HWND hwnd,
-    LONG dwFlags,
+    int fSources,
     LONG wEventMask,
     UINT uMsg,
     int cItems,
-    LPCNOTIFYREGISTER lpItems)
+    SHChangeNotifyEntry *lpItems)
 {
     LPNOTIFICATIONLIST item;
     int i;
 
     item = SHAlloc(sizeof(NOTIFICATIONLIST));
 
-    TRACE("(%p,0x%08lx,0x%08lx,0x%08x,0x%08x,%p) item=%p\n",
-	hwnd, dwFlags, wEventMask, uMsg, cItems, lpItems, item);
+    TRACE("(%p,0x%08x,0x%08lx,0x%08x,%d,%p) item=%p\n",
+	hwnd, fSources, wEventMask, uMsg, cItems, lpItems, item);
 
     item->next = NULL;
     item->prev = NULL;
     item->cidl = cItems;
-    item->apidl = SHAlloc(sizeof(NOTIFYREGISTER) * cItems);
+    item->apidl = SHAlloc(sizeof(SHChangeNotifyEntry) * cItems);
     for(i=0;i<cItems;i++)
     {
-        item->apidl[i].pidlPath = ILClone(lpItems[i].pidlPath);
-        item->apidl[i].bWatchSubtree = lpItems[i].bWatchSubtree;
+        item->apidl[i].pidl = ILClone(lpItems[i].pidl);
+        item->apidl[i].fRecursive = lpItems[i].fRecursive;
     }
     item->hwnd = hwnd;
     item->uMsg = uMsg;
     item->wEventMask = wEventMask;
     item->wSignalledEvent = 0;
-    item->dwFlags = dwFlags;
+    item->dwFlags = fSources;
 
     TRACE("new node: %s\n", NodeName( item ));
 
@@ -222,21 +228,21 @@ SHChangeNotifyRegister(
 
     LeaveCriticalSection(&SHELL32_ChangenotifyCS);
 
-    return (HANDLE)item;
+    return (ULONG)item;
 }
 
 /*************************************************************************
  * SHChangeNotifyDeregister			[SHELL32.4]
  */
-BOOL WINAPI SHChangeNotifyDeregister(HANDLE hNotify)
+BOOL WINAPI SHChangeNotifyDeregister(ULONG hNotify)
 {
     LPNOTIFICATIONLIST node;
 
-    TRACE("(%p)\n",hNotify);
+    TRACE("(0x%08lx)\n", hNotify);
 
     EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
-    node = FindNode(hNotify);
+    node = FindNode((HANDLE)hNotify);
     if( node )
         DeleteNode(node);
 
@@ -257,7 +263,7 @@ BOOL WINAPI SHChangeNotifyUpdateEntryList(DWORD unknown1, DWORD unknown2,
     return -1;
 }
 
-static BOOL should_notify( LPITEMIDLIST changed, LPITEMIDLIST watched, BOOL sub )
+static BOOL should_notify( LPITEMIDLIST changed, LPCITEMIDLIST watched, BOOL sub )
 {
     TRACE("%p %p %d\n", changed, watched, sub );
     if ( !watched )
@@ -357,8 +363,8 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
 
         for( i=0; (i<ptr->cidl) && !notify ; i++ )
         {
-            LPITEMIDLIST pidl = ptr->apidl[i].pidlPath;
-            BOOL subtree = ptr->apidl[i].bWatchSubtree;
+            LPCITEMIDLIST pidl = ptr->apidl[i].pidl;
+            BOOL subtree = ptr->apidl[i].fRecursive;
 
             if (wEventId & ptr->wEventMask)
             {
@@ -411,7 +417,7 @@ DWORD WINAPI NTSHChangeNotifyRegister(
     LONG events2,
     DWORD msg,
     int count,
-    LPCNOTIFYREGISTER idlist)
+    SHChangeNotifyEntry *idlist)
 {
     FIXME("(%p,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p):semi stub.\n",
 		hwnd,events1,events2,msg,count,idlist);
@@ -425,12 +431,12 @@ DWORD WINAPI NTSHChangeNotifyRegister(
 HANDLE WINAPI SHChangeNotification_Lock(
 	HANDLE hChange,
 	DWORD dwProcessId,
-	LPCITEMIDLIST **lppidls,
+	LPITEMIDLIST **lppidls,
 	LPLONG lpwEventId)
 {
     DWORD i;
     LPNOTIFICATIONLIST node;
-    LPCITEMIDLIST *idlist;
+    LPITEMIDLIST *idlist;
 
     TRACE("%p %08lx %p %p\n", hChange, dwProcessId, lppidls, lpwEventId);
 
@@ -441,7 +447,7 @@ HANDLE WINAPI SHChangeNotification_Lock(
     {
         idlist = SHAlloc( sizeof(LPCITEMIDLIST *) * node->cidl );
         for(i=0; i<node->cidl; i++)
-            idlist[i] = node->pidlSignaled; 
+            idlist[i] = (LPITEMIDLIST)node->pidlSignaled;
         *lpwEventId = node->wSignalledEvent;
         *lppidls = idlist;
         node->wSignalledEvent = 0;
@@ -466,9 +472,9 @@ BOOL WINAPI SHChangeNotification_Unlock ( HANDLE hLock)
 /*************************************************************************
  * NTSHChangeNotifyDeregister			[SHELL32.641]
  */
-DWORD WINAPI NTSHChangeNotifyDeregister(LONG x1)
+DWORD WINAPI NTSHChangeNotifyDeregister(ULONG x1)
 {
     FIXME("(0x%08lx):semi stub.\n",x1);
 
-    return SHChangeNotifyDeregister( (HANDLE)x1 );
+    return SHChangeNotifyDeregister( x1 );
 }
