@@ -94,7 +94,6 @@ static DWORD dosvm_tid, loop_tid;
 
 static void MZ_Launch(void);
 static BOOL MZ_InitTask(void);
-static void MZ_KillTask(void);
 
 static void MZ_CreatePSP( LPVOID lpPSP, WORD env, WORD par )
 {
@@ -474,6 +473,7 @@ static void MZ_Launch(void)
   TDB *pTask = TASK_GetCurrent();
   BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
   LPSTR cmdline = GetCommandLineA();
+  DWORD rv;
 
   MZ_FillPSP(psp_start, cmdline, cmdline ? strlen(cmdline) : 0);
   pTask->flags |= TDBF_WINOLDAP;
@@ -481,20 +481,15 @@ static void MZ_Launch(void)
   _LeaveWin16Lock();
   
   ResumeThread(dosvm_thread);
-  DOSVM_Loop(NULL);
-  ExitThread(0);
-}
+  rv = DOSVM_Loop(dosvm_thread);
 
-static void MZ_KillTask(void)
-{
-  TRACE("killing DOS task\n");
-  VGA_Clean();
-  PostThreadMessageA(loop_tid, WM_QUIT, 0, 0);
-  WaitForSingleObject(loop_thread, INFINITE); /* ? */
   CloseHandle(dosvm_thread);
   dosvm_thread = 0; dosvm_tid = 0;
   CloseHandle(loop_thread);
   loop_thread = 0; loop_tid = 0;
+
+  VGA_Clean();
+  ExitThread(rv);
 }
 
 /***********************************************************************
@@ -531,7 +526,7 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
       context->Esp   = OFFSETOF(psp->saveStack);
       return;
     } else
-      MZ_KillTask();
+      TRACE("killing DOS task\n");
   }
   ExitThread( retval );
 }
