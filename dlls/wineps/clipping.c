@@ -29,6 +29,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  */
 VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN ignored )
 {
+    /* We could set a dirty flag here to speed up PSDRV_SetClip */
+    return;
+}
+
+/***********************************************************************
+ *           PSDRV_SetClip
+ *
+ * The idea here is that every graphics operation should bracket
+ * output in PSDRV_SetClip/ResetClip calls.  The clip path outside
+ * these calls will be empty; the reason for this is that it is
+ * impossible in PostScript to cleanly make the clip path larger than
+ * the current one.  Also Photoshop assumes that despite having set a
+ * small clip area in the printer dc that it can still write raw
+ * PostScript to the driver and expect this code not to be clipped.
+ */
+void PSDRV_SetClip( PSDRV_PDEVICE *physDev )
+{
     CHAR szArrayName[] = "clippath";
     DWORD size;
     RGNDATA *rgndata = NULL;
@@ -38,9 +55,6 @@ VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN ignored )
     TRACE("hdc=%p\n", physDev->hdc);
 
     empty = !GetClipRgn(physDev->hdc, hrgn);
-
-    /* We really shouldn't be using initclip */
-    PSDRV_WriteInitClip(physDev);
 
     if(!empty) {
         size = GetRegionData(hrgn, 0, NULL);
@@ -56,6 +70,8 @@ VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN ignored )
         }
 
         GetRegionData(hrgn, size, rgndata);
+
+        PSDRV_WriteGSave(physDev);
 
         /* check for NULL region */
         if (rgndata->rdh.nCount == 0)
@@ -95,5 +111,20 @@ VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN ignored )
     }
 end:
     if(rgndata) HeapFree( GetProcessHeap(), 0, rgndata );
+    DeleteObject(hrgn);
+}
+
+
+/***********************************************************************
+ *           PSDRV_ResetClip
+ */
+void PSDRV_ResetClip( PSDRV_PDEVICE *physDev )
+{
+    HRGN hrgn = CreateRectRgn(0,0,0,0);
+    BOOL empty;
+
+     empty = !GetClipRgn(physDev->hdc, hrgn);
+     if(!empty)
+         PSDRV_WriteGRestore(physDev);
     DeleteObject(hrgn);
 }

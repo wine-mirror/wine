@@ -145,19 +145,20 @@ BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
 
     switch (logbrush.lbStyle) {
     case BS_SOLID:
-        PSDRV_SetBrush(physDev);
 	PSDRV_WriteGSave(physDev);
+        PSDRV_SetBrush(physDev);
         PSDRV_Fill(physDev, EO);
 	PSDRV_WriteGRestore(physDev);
 	break;
 
     case BS_HATCHED:
+        PSDRV_WriteGSave(physDev);
         PSDRV_SetBrush(physDev);
 
 	switch(logbrush.lbHatch) {
 	case HS_VERTICAL:
 	case HS_CROSS:
-	    PSDRV_WriteGSave(physDev);
+            PSDRV_WriteGSave(physDev);
 	    PSDRV_Clip(physDev, EO);
 	    PSDRV_WriteHatch(physDev);
 	    PSDRV_WriteStroke(physDev);
@@ -167,7 +168,7 @@ BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
 	    /* else fallthrough for HS_CROSS */
 
 	case HS_HORIZONTAL:
-	    PSDRV_WriteGSave(physDev);
+            PSDRV_WriteGSave(physDev);
 	    PSDRV_Clip(physDev, EO);
 	    PSDRV_WriteRotate(physDev, 90.0);
 	    PSDRV_WriteHatch(physDev);
@@ -201,6 +202,7 @@ BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
 	    ret = FALSE;
             break;
 	}
+        PSDRV_WriteGRestore(physDev);
 	break;
 
     case BS_NULL:

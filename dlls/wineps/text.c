@@ -47,6 +47,8 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     /* write font if not already written */
     PSDRV_SetFont(physDev);
 
+    PSDRV_SetClip(physDev);
+
     /* set clipping and/or draw background */
     if ((flags & (ETO_CLIPPED | ETO_OPAQUE)) && (lprect != NULL))
     {
@@ -79,6 +81,7 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	bResult = PSDRV_Text(physDev, x, y, flags, str, count, TRUE, lpDx);
     }
 
+    PSDRV_ResetClip(physDev);
     return bResult;
 }
 

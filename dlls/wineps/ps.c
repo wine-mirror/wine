@@ -603,7 +603,7 @@ BOOL PSDRV_WriteRGB(PSDRV_PDEVICE *physDev, COLORREF *map, int number)
 
 BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst,
 			  INT widthDst, INT heightDst, INT widthSrc,
-			  INT heightSrc, char *bits)
+			  INT heightSrc, char *bits, BOOL mask)
 {
     char start[] = "%d %d translate\n%d %d scale\n<<\n"
       " /ImageType 1\n /Width %d\n /Height %d\n /BitsPerComponent %d\n"
@@ -613,6 +613,8 @@ BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst
     char decode3[] = " /Decode [0 1 0 1 0 1]\n";
 
     char end[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> image\n";
+    char endmask[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> imagemask\n";
+
     char endbits[] = " /DataSource <%s>\n>> image\n";
 
     char *buf = HeapAlloc(PSDRV_Heap, 0, 1000);
@@ -642,9 +644,12 @@ BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst
 
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
-    if(!bits)
-        PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
-    else {
+    if(!bits) {
+        if(!mask)
+            PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
+        else
+            PSDRV_WriteSpool(physDev, endmask, sizeof(endmask) - 1);
+    } else {
         sprintf(buf, endbits, bits);
         PSDRV_WriteSpool(physDev, buf, strlen(buf));
     }
@@ -810,7 +815,7 @@ BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits)
 	    ptr += 2;
 	}
     }
-    PSDRV_WriteImageDict(physDev, 1, 0, 0, 8, 8, 8, 8, buf);
+    PSDRV_WriteImageDict(physDev, 1, 0, 0, 8, 8, 8, 8, buf, FALSE);
     PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
@@ -858,7 +863,7 @@ BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usa
 	    ptr += 2;
 	}
     }
-    PSDRV_WriteImageDict(physDev, 1, 0, 0, 8, 8, 8, 8, buf);
+    PSDRV_WriteImageDict(physDev, 1, 0, 0, 8, 8, 8, 8, buf, FALSE);
     PSDRV_WriteSpool(physDev, end, sizeof(end) - 1);
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;

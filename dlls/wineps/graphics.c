@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #if defined(HAVE_FLOAT_H)
@@ -34,6 +35,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+/***********************************************************************
+ *           PSDRV_DrawLine
+ */
+static void PSDRV_DrawLine( PSDRV_PDEVICE *physDev )
+{
+    if(physDev->pathdepth)
+        return;
+
+    if (physDev->pen.style == PS_NULL)
+	PSDRV_WriteNewPath(physDev);
+    else
+	PSDRV_WriteStroke(physDev);
+}
 
 /***********************************************************************
  *           PSDRV_LineTo
@@ -50,9 +64,12 @@ BOOL PSDRV_LineTo(PSDRV_PDEVICE *physDev, INT x, INT y)
     LPtoDP( physDev->hdc, pt, 2 );
 
     PSDRV_SetPen(physDev);
+
+    PSDRV_SetClip(physDev);
     PSDRV_WriteMoveTo(physDev, pt[0].x, pt[0].y );
     PSDRV_WriteLineTo(physDev, pt[1].x, pt[1].y );
     PSDRV_DrawLine(physDev);
+    PSDRV_ResetClip(physDev);
 
     return TRUE;
 }
@@ -73,11 +90,23 @@ BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT 
     rect.bottom = bottom;
     LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
 
+    /* HACK to get inserted eps files printing from Office 2k */
+    if(GetROP2(physDev->hdc) == R2_NOP) {
+      char buf[256];
+      sprintf(buf, "%ld %ld %ld %ld B\n", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top);
+      PSDRV_WriteSpool(physDev, buf, strlen(buf));
+      return TRUE;
+    }
+
+    PSDRV_WriteSpool(physDev, "%Rectangle\n",11); 
+    PSDRV_SetPen(physDev);
+
+    PSDRV_SetClip(physDev);
     PSDRV_WriteRectangle(physDev, rect.left, rect.top, rect.right - rect.left,
                          rect.bottom - rect.top );
     PSDRV_Brush(physDev,0);
-    PSDRV_SetPen(physDev);
     PSDRV_DrawLine(physDev);
+    PSDRV_ResetClip(physDev);
     return TRUE;
 }
 
@@ -112,6 +141,10 @@ BOOL PSDRV_RoundRect( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
     if (ell_width > right - left) ell_width = right - left;
     if (ell_height > bottom - top) ell_height = bottom - top;
 
+    PSDRV_WriteSpool(physDev, "%RoundRect\n",11);
+    PSDRV_SetPen(physDev);
+
+    PSDRV_SetClip(physDev);
     PSDRV_WriteMoveTo( physDev, left, top + ell_height/2 );
     PSDRV_WriteArc( physDev, left + ell_width/2, top + ell_height/2, ell_width,
 		    ell_height, 90.0, 180.0);
@@ -127,8 +160,8 @@ BOOL PSDRV_RoundRect( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
     PSDRV_WriteClosePath( physDev );
 
     PSDRV_Brush(physDev,0);
-    PSDRV_SetPen(physDev);
     PSDRV_DrawLine(physDev);
+    PSDRV_ResetClip(physDev);
     return TRUE;
 }
 
@@ -176,6 +209,10 @@ static BOOL PSDRV_DrawArc( PSDRV_PDEVICE *physDev, INT left, INT top,
     start_angle *= 180.0 / PI;
     end_angle *= 180.0 / PI;
 
+    PSDRV_WriteSpool(physDev,"%DrawArc\n", 9);
+    PSDRV_SetPen(physDev);
+
+    PSDRV_SetClip(physDev);
     if(lines == 2) /* pie */
         PSDRV_WriteMoveTo(physDev, x, y);
     else
@@ -186,8 +223,9 @@ static BOOL PSDRV_DrawArc( PSDRV_PDEVICE *physDev, INT left, INT top,
         PSDRV_WriteClosePath(physDev);
 	PSDRV_Brush(physDev,0);
     }
-    PSDRV_SetPen(physDev);
     PSDRV_DrawLine(physDev);
+    PSDRV_ResetClip(physDev);
+
     return TRUE;
 }
 
@@ -242,12 +280,16 @@ BOOL PSDRV_Ellipse( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bo
     w = rect.right - rect.left;
     h = rect.bottom - rect.top;
 
+    PSDRV_WriteSpool(physDev, "%Ellipse\n", 9);
+    PSDRV_SetPen(physDev);
+
+    PSDRV_SetClip(physDev);
     PSDRV_WriteNewPath(physDev);
     PSDRV_WriteArc(physDev, x, y, w, h, 0.0, 360.0);
     PSDRV_WriteClosePath(physDev);
     PSDRV_Brush(physDev,0);
-    PSDRV_SetPen(physDev);
     PSDRV_DrawLine(physDev);
+    PSDRV_ResetClip(physDev);
     return TRUE;
 }
 
@@ -269,6 +311,11 @@ BOOL PSDRV_PolyPolyline( PSDRV_PDEVICE *physDev, const POINT* pts, const DWORD* 
     LPtoDP( physDev->hdc, dev_pts, total );
 
     pt = dev_pts;
+
+    PSDRV_WriteSpool(physDev, "%PolyPolyline\n",14);
+    PSDRV_SetPen(physDev);
+    PSDRV_SetClip(physDev);
+
     for(polyline = 0; polyline < polylines; polyline++) {
         PSDRV_WriteMoveTo(physDev, pt->x, pt->y);
 	pt++;
@@ -276,8 +323,9 @@ BOOL PSDRV_PolyPolyline( PSDRV_PDEVICE *physDev, const POINT* pts, const DWORD* 
             PSDRV_WriteLineTo(physDev, pt->x, pt->y);
     }
     HeapFree( GetProcessHeap(), 0, dev_pts );
-    PSDRV_SetPen(physDev);
+
     PSDRV_DrawLine(physDev);
+    PSDRV_ResetClip(physDev);
     return TRUE;
 }
 
@@ -308,6 +356,11 @@ BOOL PSDRV_PolyPolygon( PSDRV_PDEVICE *physDev, const POINT* pts, const INT* cou
     LPtoDP( physDev->hdc, dev_pts, total );
 
     pt = dev_pts;
+
+    PSDRV_WriteSpool(physDev, "%PolyPolygon\n",13);
+    PSDRV_SetPen(physDev);
+    PSDRV_SetClip(physDev);
+
     for(polygon = 0; polygon < polygons; polygon++) {
         PSDRV_WriteMoveTo(physDev, pt->x, pt->y);
 	pt++;
@@ -321,8 +374,9 @@ BOOL PSDRV_PolyPolygon( PSDRV_PDEVICE *physDev, const POINT* pts, const INT* cou
         PSDRV_Brush(physDev, 1);
     else /* WINDING */
         PSDRV_Brush(physDev, 0);
-    PSDRV_SetPen(physDev);
+
     PSDRV_DrawLine(physDev);
+    PSDRV_ResetClip(physDev);
     return TRUE;
 }
 
@@ -348,24 +402,15 @@ COLORREF PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
     pt.y = y;
     LPtoDP( physDev->hdc, &pt, 1 );
 
+    PSDRV_SetClip(physDev);
+    /* we bracket the setcolor in gsave/grestore so that we don't trash
+       the current pen colour */
+    PSDRV_WriteGSave(physDev);
     PSDRV_WriteRectangle( physDev, pt.x, pt.y, 0, 0 );
     PSDRV_CreateColor( physDev, &pscolor, color );
     PSDRV_WriteSetColor( physDev, &pscolor );
     PSDRV_WriteFill( physDev );
+    PSDRV_WriteGRestore(physDev);
+    PSDRV_ResetClip(physDev);
     return color;
-}
-
-
-/***********************************************************************
- *           PSDRV_DrawLine
- */
-VOID PSDRV_DrawLine( PSDRV_PDEVICE *physDev )
-{
-    if(physDev->pathdepth)
-        return;
-
-    if (physDev->pen.style == PS_NULL)
-	PSDRV_WriteNewPath(physDev);
-    else
-	PSDRV_WriteStroke(physDev);
 }

@@ -384,6 +384,9 @@ extern BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO);
 extern BOOL PSDRV_SetFont( PSDRV_PDEVICE *physDev );
 extern BOOL PSDRV_SetPen( PSDRV_PDEVICE *physDev );
 
+extern void PSDRV_SetClip(PSDRV_PDEVICE* phyDev);
+extern void PSDRV_ResetClip(PSDRV_PDEVICE* phyDev);
+
 extern BOOL PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2);
 extern BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2);
 extern void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
@@ -427,7 +430,7 @@ extern BOOL PSDRV_WriteIndexColorSpaceEnd(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteRGB(PSDRV_PDEVICE *physDev, COLORREF *map, int number);
 extern BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst,
 				 INT widthDst, INT heightDst, INT widthSrc,
-				 INT heightSrc, char *bits);
+				 INT heightSrc, char *bits, BOOL mask);
 extern BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, int number);
 extern BOOL PSDRV_WriteDIBits16(PSDRV_PDEVICE *physDev, const WORD *words, int number);
 extern BOOL PSDRV_WriteDIBits24(PSDRV_PDEVICE *physDev, const BYTE *bits, int number);
@@ -491,8 +494,7 @@ extern INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd,
 extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 				      LPCSTR lpszPort,
 				      WORD fwCapability, LPSTR lpszOutput,
-				      LPDEVMODEA lpDevMode);
-VOID PSDRV_DrawLine( PSDRV_PDEVICE *physDev );
+				      LPDEVMODEA lpdm);
 INT PSDRV_GlyphListInit(void);
 const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
 VOID PSDRV_IndexGlyphList(void);

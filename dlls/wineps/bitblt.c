@@ -41,10 +41,12 @@ BOOL PSDRV_PatBlt(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, D
 
     switch(dwRop) {
     case PATCOPY:
+        PSDRV_SetClip(physDev);
         PSDRV_WriteGSave(physDev);
         PSDRV_WriteRectangle(physDev, pt[0].x, pt[0].y, pt[1].x - pt[0].x, pt[1].y - pt[0].y );
 	PSDRV_Brush(physDev, FALSE);
 	PSDRV_WriteGRestore(physDev);
+        PSDRV_ResetClip(physDev);
 	return TRUE;
 
     case BLACKNESS:
@@ -52,6 +54,7 @@ BOOL PSDRV_PatBlt(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, D
       {
 	PSCOLOR pscol;
 
+        PSDRV_SetClip(physDev);
         PSDRV_WriteGSave(physDev);
         PSDRV_WriteRectangle(physDev, pt[0].x, pt[0].y, pt[1].x - pt[0].x, pt[1].y - pt[0].y );
 	PSDRV_CreateColor( physDev, &pscol, (dwRop == BLACKNESS) ?
@@ -59,6 +62,7 @@ BOOL PSDRV_PatBlt(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, D
 	PSDRV_WriteSetColor(physDev, &pscol);
 	PSDRV_WriteFill(physDev);
 	PSDRV_WriteGRestore(physDev);
+        PSDRV_ResetClip(physDev);
 	return TRUE;
       }
     default:

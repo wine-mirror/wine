@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <assert.h>
+
 #include "psdrv.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -147,7 +149,57 @@ static BOOL PSDRV_WriteImageHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *inf
     }
 
     PSDRV_WriteImageDict(physDev, info->bmiHeader.biBitCount, xDst, yDst,
-			  widthDst, heightDst, widthSrc, heightSrc, NULL);
+			  widthDst, heightDst, widthSrc, heightSrc, NULL, FALSE);
+    return TRUE;
+}
+
+
+/***************************************************************************
+ *                PSDRV_WriteImageMaskHeader
+ *
+ * Helper for PSDRV_StretchDIBits
+ *
+ * We use the imagemask operator for 1bpp bitmaps since the output
+ * takes much less time for the printer to render.
+ *
+ * BUGS
+ *  Uses level 2 PostScript
+ */
+
+static BOOL PSDRV_WriteImageMaskHeader(PSDRV_PDEVICE *physDev, const BITMAPINFO *info, INT xDst,
+                                       INT yDst, INT widthDst, INT heightDst,
+                                       INT widthSrc, INT heightSrc)
+{
+    COLORREF map[2];
+    PSCOLOR bkgnd, foregnd;
+    int i;
+
+    assert(info->bmiHeader.biBitCount == 1);
+
+    for(i = 0; i < 2; i++) {
+        map[i] =  info->bmiColors[i].rgbRed |
+            info->bmiColors[i].rgbGreen << 8 |
+            info->bmiColors[i].rgbBlue << 16;
+    }
+
+    /* We'll write the mask with -ve polarity so that 
+       the foregnd color corresponds to a bit equal to
+       0 in the bitmap.
+    */
+    PSDRV_CreateColor(physDev, &foregnd, map[0]);
+    PSDRV_CreateColor(physDev, &bkgnd, map[1]);
+
+    PSDRV_WriteGSave(physDev);
+    PSDRV_WriteNewPath(physDev);
+    PSDRV_WriteRectangle(physDev, xDst, yDst, widthDst, heightDst);
+    PSDRV_WriteSetColor(physDev, &bkgnd);
+    PSDRV_WriteFill(physDev);
+    PSDRV_WriteGRestore(physDev);
+
+    PSDRV_WriteSetColor(physDev, &foregnd);
+    PSDRV_WriteImageDict(physDev, 1, xDst, yDst, widthDst, heightDst,
+                         widthSrc, heightSrc, NULL, TRUE);
+
     return TRUE;
 }
 
@@ -180,8 +232,8 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 
     widthbytes = get_dib_width_bytes(fullSrcWidth, bpp);
 
-    TRACE("full size=%ldx%ld bpp=%d compression=%d\n", fullSrcWidth,
-	  fullSrcHeight, bpp, compression);
+    TRACE("full size=%ldx%ld bpp=%d compression=%d rop=%08lx\n", fullSrcWidth,
+	  fullSrcHeight, bpp, compression, dwRop);
 
 
     if(compression != BI_RGB) {
@@ -202,9 +254,12 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
     switch(bpp) {
 
     case 1:
+        PSDRV_SetClip(physDev);
 	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
-			       widthSrc, heightSrc);
+
+        /* Use imagemask rather than image */
+	PSDRV_WriteImageMaskHeader(physDev, info, xDst, yDst, widthDst, heightDst,
+                                   widthSrc, heightSrc);
 	ptr = bits;
 	ptr += (ySrc * widthbytes);
 	if(xSrc & 7)
@@ -214,6 +269,7 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	break;
 
     case 4:
+        PSDRV_SetClip(physDev);
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
@@ -226,6 +282,7 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	break;
 
     case 8:
+        PSDRV_SetClip(physDev);
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
@@ -237,6 +294,7 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 
     case 15:
     case 16:
+        PSDRV_SetClip(physDev);
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
@@ -248,6 +306,7 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	break;
 
     case 24:
+        PSDRV_SetClip(physDev);
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
@@ -259,6 +318,7 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
 	break;
 
     case 32:
+        PSDRV_SetClip(physDev);
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteImageHeader(physDev, info, xDst, yDst, widthDst, heightDst,
 			       widthSrc, heightSrc);
@@ -276,11 +336,6 @@ INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst, INT widthDs
     }
     PSDRV_WriteSpool(physDev, ">\n", 2);  /* End-of-Data for /HexASCIIDecodeFilter */
     PSDRV_WriteGRestore(physDev);
+    PSDRV_ResetClip(physDev);
     return TRUE;
 }
-
-
-
-
-
-
